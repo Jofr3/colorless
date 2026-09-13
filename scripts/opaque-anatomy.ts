@@ -370,8 +370,18 @@ export const MARKERS: readonly Marker[] = [
     name: "CARD-NAME-COUNT",
     rx: /has "[^"]+" in its name|your Drifloon and Drifblim|number of Fennel cards/,
     verdict: "co-marker",
+    // 🆕🆕🆕 **D510 CONFIRMED THIS `needs` STRING BY BUILDING ONE OF ITS ROWS**, and the
+    // verdict did NOT flip: the built side was already live (1/1) and is now 2/3, so the
+    // marker was a co-marker before and after. ⚠️ **IT IS ALSO THE STRING THAT WAS RIGHT
+    // WHERE TWO ENGINE DOC BLOCKS WERE WRONG.** `CardFilter.attackNamePokemon` and
+    // `matchesFilter`'s arm for it both asserted *"no `CardFilter` member does substring
+    // matching at any width"*; this line has said since D471 that `ownerPokemon` reads
+    // `Card.name`, and it does — a PREFIX, at `card.name.startsWith(...)`. Both engine
+    // sentences were corrected at D510. **D508's rule, paid in the direction it was
+    // written for**: sweep a claim across `packages/**` AND `scripts/**`, because the
+    // copy nobody is editing is the one that stays false.
     needs:
-      "nothing this marker can name — `CardFilter.ownerPokemon` reads `Card.name` and has since D200",
+      "nothing this marker can name — `CardFilter.ownerPokemon` reads `Card.name` (a PREFIX) and has since D200, and D510's `supporterNameContaining` reads it UNANCHORED",
   },
   {
     name: "OPP-HAND-CHOICE",

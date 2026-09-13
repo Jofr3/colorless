@@ -513,10 +513,15 @@ export function matchesFilter(card: Card | undefined, filter: CardFilter): boole
       //
       // ⚠️ `.some` AND AN EXACT `===`, AND BOTH ARE DELIBERATE. A card may print
       // two attacks and the sentence names ONE, so the question is membership and
-      // not `attacks[0]`; and the comparison is `byName`'s exact equality rather
-      // than a substring, because no member of this union does substring matching
-      // at any width and the printed noun does not ask for one. A misspelled name
-      // matches the empty set — a loud zero on every board, never a wrong card.
+      // not `attacks[0]`; and the comparison is `byName`'s exact equality because
+      // THE PRINTED NOUN DOES NOT ASK FOR ANYTHING ELSE. A misspelled name matches
+      // the empty set — a loud zero on every board, never a wrong card.
+      // 🆕🆕🆕 **D510 — THE SECOND HALF OF THAT SENTENCE USED TO BE A CLAIM ABOUT THE
+      // WHOLE UNION AND IT WAS NEVER TRUE.** It read *"because no member of this union
+      // does substring matching at any width"*; `ownerPokemon` five arms down has
+      // matched a proper PREFIX of `Card.name` since D200, and D510's
+      // `supporterNameContaining` now matches an UNANCHORED one. The exactness here is
+      // the PRINT's, not the union's, which is the form that cannot rot.
       return attacksOf(card).some((attack) => attack.name === filter.attack);
     case "suffixPokemon":
       // 🆕🆕 D446 — a Pokémon of a printed RULE-BOX CLASS ("your opponent's Pokémon
@@ -563,6 +568,40 @@ export function matchesFilter(card: Card | undefined, filter: CardFilter): boole
       return card.name === filter.name;
     case "supporter":
       return card.category === "Trainer" && card.trainerType === "Supporter";
+    case "supporterNameContaining":
+      // 🆕🆕🆕 D510 — the printed *"Supporter card that has "Team Rocket" in its
+      // name"* (`censusAttackCorpus.ts` FILE LINE 543, 2 legal printings). TWO
+      // conjuncts, and each one is load-bearing on the board this filter is printed
+      // for:
+      //   • the HEAD NOUN, delegated to the `supporter` arm one line up through
+      //     THIS function rather than re-spelled as `category`/`trainerType` —
+      //     D159's rule and `anyOf`'s own idiom. *"Is this a Supporter"* is one
+      //     question with one implementation, so a fifth printed Trainer subtype or
+      //     a re-ingested `trainerType` moves both arms at once. The conjunct is
+      //     NOT decoration: the real pool prints Team Rocket ITEMS and TOOLS, so a
+      //     build that dropped it counts cards the sentence excludes.
+      //   • `.includes` — UNANCHORED, case-sensitive, un-normalised, which is
+      //     `BoardCondition.yourBenchHasNameContaining`'s reading verbatim
+      //     (interpreter.ts, D392) and the catalog `name` IS the printed name.
+      //
+      // 🛑 **IT IS DELIBERATELY NOT `startsWith`, AND THE WRONG BUILD IS A NEIGHBOUR
+      // RATHER THAN A STRAW**: `ownerPokemon` five arms down reads
+      // `card.name.startsWith(...)`, so a prefix read is what an author writing this
+      // arm by imitation reaches for. The printed words are *"has X IN its name"* —
+      // a containment, not a prefix — and D392 refuted the prefix reading on a real
+      // board one vocabulary over, for the same reason (an owner possessive puts the
+      // fragment at a NON-ZERO offset).
+      //
+      // ⚠️ **THE NAME IS READ INLINE AND NOT THROUGH A HELPER**, which is this
+      // function's own idiom rather than an omission: `byName` and `ownerPokemon`
+      // both read `card.name` here, and D392's block records that `cards.ts` carries
+      // no name-matching predicate at all. The BENCH clause's read is a different
+      // QUESTION (which body on a board, through `topCardOf`) and shares only an
+      // operator, so unifying them would buy nothing D159 asks for and would
+      // re-transcribe four shipped mutant rows for zero behaviour (D359).
+      return (
+        matchesFilter(card, { kind: "supporter" }) && card.name.includes(filter.fragment)
+      );
     case "item":
       // D231 — an Item Trainer, `supporter`'s arm one value over. ⚠️ A Pokémon
       // Tool is NOT one: since SM they are separate printed subtypes, and the

@@ -5230,7 +5230,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D275",
     what: "🛑 THE DEBT THIS SLICE PAID FOR THE FIFTH TIME, RE-INSTALLED: `engineVersion` falls a minor behind `packages/engine/package.json`, which is EXACTLY the state the tree was in at the head of D275 (0.187.0 against 0.189.0) and had been for two slices with nothing comparing them. The tie is the guard; this row is the proof it is one",
     file: "packages/engine/src/index.ts",
-    // ⚠️ RE-POINTED AT D508 (0.396.0 → 0.397.0), at D507 (0.395.0 → 0.396.0), at D505 (0.394.0 → 0.395.0), at D490 (0.384.0 → 0.385.0), at D489 (0.383.0 → 0.384.0), at D488 (0.382.0 → 0.383.0), at D487 (0.381.0 → 0.382.0), at D486 (0.380.0 → 0.381.0), at D485 (0.379.0 → 0.380.0), at D450 (0.351.0 → 0.352.0), at D449 (0.350.0 → 0.351.0), at D448 (0.349.0 → 0.350.0), at D447 (0.348.0 → 0.349.0), at D446 (0.347.0 → 0.348.0), at D445 (0.346.0 → 0.347.0), at D444 (0.345.0 → 0.346.0), at D443 (0.344.0 → 0.345.0), at D442 (0.343.0 → 0.344.0), at D441 (0.342.0 → 0.343.0), at D440 (0.341.0 → 0.342.0), at D439 (0.340.0 → 0.341.0), at D438 (0.339.0 → 0.340.0), at D437 (0.338.0 → 0.339.0), at D436 (0.337.0 → 0.338.0), at D435 (0.336.0 → 0.337.0), at D434 (0.335.0 → 0.336.0), at D433 (0.334.0 → 0.335.0), at D432 (0.333.0 → 0.334.0), at D431 (0.332.0 → 0.333.0), at D430 (0.331.0 → 0.332.0), at D429 (0.330.0 → 0.331.0), at D428 (0.329.0 → 0.330.0), at D427 (0.328.0 → 0.329.0), at D426 (0.327.0 → 0.328.0), at D425 (0.326.0 → 0.327.0), at D424 (0.325.0 → 0.326.0), at D423 (0.324.0 → 0.325.0), at D422 (0.323.0 → 0.324.0), at D421 (0.322.0 → 0.323.0), at D420 (0.321.0 → 0.322.0), at D417 (0.320.0 → 0.321.0), at D416 (0.319.0 → 0.320.0), at D415 (0.318.0 → 0.319.0), at D414 (0.317.0 → 0.318.0), at D413 (0.316.0 → 0.317.0), at D412 (0.315.0 → 0.316.0), at D410 (0.314.0 → 0.315.0), at D409 (0.313.0 → 0.314.0), at D408 (0.312.0 → 0.313.0), at D407 (0.311.0 → 0.312.0), at D402 (0.306.0 → 0.307.0), at D401 (0.305.0 → 0.306.0), at D400 (0.304.0 → 0.305.0), at D399 (0.303.0 → 0.304.0), at D398 (0.302.0 → 0.303.0), at D397 (0.301.0 → 0.302.0), at D396 (0.300.0 → 0.301.0), at D395 (0.299.0 → 0.300.0), at D394 (0.298.0 → 0.299.0), at D393 (0.297.0 → 0.298.0), at D392 (0.296.0 → 0.297.0), at D391 (0.295.0 → 0.296.0), at D390 (0.294.0 → 0.295.0), at D389 (0.293.0 → 0.294.0), at D388 (0.292.0 → 0.293.0), at D387 (0.291.0 → 0.292.0), at D386 (0.290.0 → 0.291.0),
+    // ⚠️ RE-POINTED AT D510 (0.397.0 → 0.398.0), at D508 (0.396.0 → 0.397.0), at D507 (0.395.0 → 0.396.0), at D505 (0.394.0 → 0.395.0), at D490 (0.384.0 → 0.385.0), at D489 (0.383.0 → 0.384.0), at D488 (0.382.0 → 0.383.0), at D487 (0.381.0 → 0.382.0), at D486 (0.380.0 → 0.381.0), at D485 (0.379.0 → 0.380.0), at D450 (0.351.0 → 0.352.0), at D449 (0.350.0 → 0.351.0), at D448 (0.349.0 → 0.350.0), at D447 (0.348.0 → 0.349.0), at D446 (0.347.0 → 0.348.0), at D445 (0.346.0 → 0.347.0), at D444 (0.345.0 → 0.346.0), at D443 (0.344.0 → 0.345.0), at D442 (0.343.0 → 0.344.0), at D441 (0.342.0 → 0.343.0), at D440 (0.341.0 → 0.342.0), at D439 (0.340.0 → 0.341.0), at D438 (0.339.0 → 0.340.0), at D437 (0.338.0 → 0.339.0), at D436 (0.337.0 → 0.338.0), at D435 (0.336.0 → 0.337.0), at D434 (0.335.0 → 0.336.0), at D433 (0.334.0 → 0.335.0), at D432 (0.333.0 → 0.334.0), at D431 (0.332.0 → 0.333.0), at D430 (0.331.0 → 0.332.0), at D429 (0.330.0 → 0.331.0), at D428 (0.329.0 → 0.330.0), at D427 (0.328.0 → 0.329.0), at D426 (0.327.0 → 0.328.0), at D425 (0.326.0 → 0.327.0), at D424 (0.325.0 → 0.326.0), at D423 (0.324.0 → 0.325.0), at D422 (0.323.0 → 0.324.0), at D421 (0.322.0 → 0.323.0), at D420 (0.321.0 → 0.322.0), at D417 (0.320.0 → 0.321.0), at D416 (0.319.0 → 0.320.0), at D415 (0.318.0 → 0.319.0), at D414 (0.317.0 → 0.318.0), at D413 (0.316.0 → 0.317.0), at D412 (0.315.0 → 0.316.0), at D410 (0.314.0 → 0.315.0), at D409 (0.313.0 → 0.314.0), at D408 (0.312.0 → 0.313.0), at D407 (0.311.0 → 0.312.0), at D402 (0.306.0 → 0.307.0), at D401 (0.305.0 → 0.306.0), at D400 (0.304.0 → 0.305.0), at D399 (0.303.0 → 0.304.0), at D398 (0.302.0 → 0.303.0), at D397 (0.301.0 → 0.302.0), at D396 (0.300.0 → 0.301.0), at D395 (0.299.0 → 0.300.0), at D394 (0.298.0 → 0.299.0), at D393 (0.297.0 → 0.298.0), at D392 (0.296.0 → 0.297.0), at D391 (0.295.0 → 0.296.0), at D390 (0.294.0 → 0.295.0), at D389 (0.293.0 → 0.294.0), at D388 (0.292.0 → 0.293.0), at D387 (0.291.0 → 0.292.0), at D386 (0.290.0 → 0.291.0),
     //    each in the SAME COMMIT as the bump —
     // the TENTH slice running to do it that way, and the practice is now the one
     // thing about this row that has never cost an ERROR since it started.
@@ -5777,7 +5777,7 @@ export const MUTANTS: Mutant[] = [
     // CORPUS QUOTES** (D414/D415), so a value-keyed sweep over `toBe("0.391.0")` cannot
     // see it — this row's `find` spells the DECLARATION, not an assertion. Run
     // `precheck` after every version bump, not after the sweep tells you.
-    find: 'export const engineVersion = "0.397.0";',
+    find: 'export const engineVersion = "0.398.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -20533,10 +20533,15 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D440-vocabulary-defaults-instead-of-staying-loud",
     decision: "D440",
-    what: "🛑 C7 — **THE UNREADABLE NOUN DEFAULTS TO `anyCard` INSTEAD OF RETURNING null**, so both refused sentences become CLAIMED and score the pile's LENGTH. This is the mutation that moves a CENSUS figure as well as a board: `Ancient card` (2 printings) and the Team Rocket name-substring row (2) leave the residue, `BUILT.attack` steps from 1,499 to 1,503, and the engine reports SIMULATED on a sentence it is answering with the wrong number rather than refusing. **A wrong-but-plausible program is strictly worse than an unbuilt one** (D190b/D199), and at the instrument layer it is worse still — the coverage figure records success it did not earn",
+    what: "🛑 C7 — **THE UNREADABLE NOUN DEFAULTS TO `anyCard` INSTEAD OF RETURNING null**, so both refused sentences become CLAIMED and score the pile's LENGTH. This is the mutation that moves a CENSUS figure as well as a board: the engine reports SIMULATED on a sentence it is answering with the wrong number rather than refusing. \u26a0\ufe0f **THE POPULATION SHRANK AT D510 AND THE ROW IS RE-STATED RATHER THAN LEFT** (D466 — a declared reason is a doc figure and rots): this used to read *\"`Ancient card` (2 printings) and the Team Rocket name-substring row (2) leave the residue, `BUILT.attack` steps from 1,499 to 1,503\"*. D510 BUILT the Team Rocket row, so the only noun still reaching the `null` tail in the legal column is `Ancient card` \u2014 2 printings, one sentence, and DATA-BLOCKED permanently. **A wrong-but-plausible program is strictly worse than an unbuilt one** (D190b/D199), and at the instrument layer it is worse still — the coverage figure records success it did not earn",
     file: "packages/engine/src/effects.ts",
-    find: "  return literalClauseRow(DISCARD_PILE_NOUNS, noun) ?? null;",
-    replace: "  return literalClauseRow(DISCARD_PILE_NOUNS, noun) ?? { kind: \"anyCard\" };",
+    // ⚠️ RE-TRANSCRIBED AT D510: `discardPileFilter` gained a PARAMETERISED branch, so
+    //    the `?? null` tail this row quoted is now a ternary on the pattern's miss. The
+    //    DEFECT is unchanged — an unreadable noun defaults instead of staying loud — and
+    //    the `find` is SHORTENED onto the line that decides it (D446).
+    find: '  return fragment === null ? null : { kind: "supporterNameContaining", fragment: fragment[1] ?? "" };',
+    replace:
+      '  return fragment === null ? { kind: "anyCard" } : { kind: "supporterNameContaining", fragment: fragment[1] ?? "" };',
     expectKilledBy: ["packages/engine/src/discardPileScaling.test.ts", "packages/engine/src/censusAtHead.test.ts"],
   },
   {
@@ -20544,8 +20549,16 @@ export const MUTANTS: Mutant[] = [
     decision: "D440",
     what: "🛑 C8 — **THE CLOSED MAP GAINS AN OPEN `^(.+) card$` FALL-THROUGH TO `byName`**, which is the *tempting generalisation* the vocabulary's own doc block refuses in as many words: it spells \"Ethan's Adventure card\" without this file learning a card name, and it also claims **\"Ancient card\"** as `byName { name: \"Ancient\" }` — a filter that matches nothing in the catalog, counts 0 on every board, and leaves a DATA-BLOCKED sentence scoring its printed base forever while `BUILT.attack` steps for it. ⚠️ **IT IS THE SUBTLEST ROW IN THE SET BECAUSE IT IS RIGHT ABOUT EVERY SENTENCE THIS SLICE CLAIMS** — all four printed nouns resolve identically under it, every board number is unchanged, and only the REFUSAL rung and the census move. That is exactly why the refusals are pinned on the population and not left as prose",
     file: "packages/engine/src/effects.ts",
-    find: "  return literalClauseRow(DISCARD_PILE_NOUNS, noun) ?? null;",
-    replace: "  const named = /^(.+) card$/.exec(noun);\n  return (\n    literalClauseRow(DISCARD_PILE_NOUNS, noun) ??\n    (named === null ? null : { kind: \"byName\", name: named[1] ?? \"\" })\n  );",
+    // ⚠️ RE-TRANSCRIBED AT D510 onto the ternary that replaced the `?? null` tail.
+    //    🛑 **AND THE MUTANT IS STILL THE ONE THIS BLOCK REFUSES, WHICH IS WORTH SAYING
+    //    BECAUSE D510 ADDED A CAPTURE TO THIS VERY FUNCTION.** `^(.+) card$` cannot reach
+    //    D510's noun — that string does not END in ` card` — so the two patterns are
+    //    disjoint and this row still claims exactly `Ancient card` and
+    //    `Ethan's Adventure card`, as it did before. The refusal D440 wrote is about the
+    //    HEAD NOUN being captured; D510 captures the FRAGMENT and spells the noun.
+    find: '  return fragment === null ? null : { kind: "supporterNameContaining", fragment: fragment[1] ?? "" };',
+    replace:
+      '  const named = /^(.+) card$/.exec(noun);\n  if (named !== null) return { kind: "byName", name: named[1] ?? "" };\n  return fragment === null ? null : { kind: "supporterNameContaining", fragment: fragment[1] ?? "" };',
     expectKilledBy: ["packages/engine/src/discardPileScaling.test.ts", "packages/engine/src/censusAtHead.test.ts"],
   },
   {
@@ -20553,8 +20566,12 @@ export const MUTANTS: Mutant[] = [
     decision: "D440",
     what: "⚠️ C9 — **THE LOOKUP GOES BACK TO A BARE `Map.get` AND LOSES D137's U+2019 RETRY.** It reads like a simplification, and it is invisible on every board and in every census: the committed corpus stores U+0027, so all four sentences resolve and every number stays put. ⚠️ **THE ONLY INSTRUMENT THAT SEES IT IS THE RE-INGEST SWEEP**, and it sees it because THIS map is the first noun table in the family with an apostrophe in a KEY — `IN_PLAY_BODY_NOUNS` one vocabulary up has three keys and none carries one, so a successor copying that function's bare `.get` writes this defect by imitation. `clauseApostrophe.test.ts` rewrites every derivable apostrophe-bearing fixture sentence at U+2019 and requires reader-for-reader EQUALITY; under the mutant the `Ethan's Adventure card` row folds to null on one side and a value on the other",
     file: "packages/engine/src/effects.ts",
-    find: "  return literalClauseRow(DISCARD_PILE_NOUNS, noun) ?? null;",
-    replace: "  return DISCARD_PILE_NOUNS.get(noun) ?? null;",
+    // ⚠️ RE-TRANSCRIBED AT D510, and the new form is the one D446 asks for: the `find`
+    //    is SHORTENED onto the single line the row is about — the lookup itself — which
+    //    is strictly more durable than the old whole-tail quote, because a further branch
+    //    below it can no longer break this row.
+    find: "  const literal = literalClauseRow(DISCARD_PILE_NOUNS, noun);",
+    replace: "  const literal = DISCARD_PILE_NOUNS.get(noun);",
     expectKilledBy: ["packages/engine/src/discardPileScaling.test.ts", "packages/engine/src/clauseApostrophe.test.ts"],
   },
   {
@@ -27837,8 +27854,17 @@ export const MUTANTS: Mutant[] = [
     //    because the SLICE is +1. The claim and the arithmetic agree.
     //    ⚠️ PREDICTED BEFORE THE BUILD, off the standing instruction two entries up - and
     //    `precheck` reported it at 0x anyway, on the edit round that moved the constant.
-    find: "  attack: 1623,",
-    replace: "  attack: 1622,",
+    // 🆕🆕🆕 D510 - RE-TRANSCRIBED AGAIN, 1623 -> 1625, replace 1622 -> 1623.
+    //    D510's step is +2 PRINTINGS on +1 SENTENCE, so the PRE-SLICE value is 1623 and
+    //    the regression is ONE step of the constant while being a TWO-printing step of
+    //    the column - the first head in this row's history where "one step" and "one
+    //    printing" come apart, and worth stating because the arithmetic looks like
+    //    D508's and is not. ⚠️ PREDICTED BEFORE THE BUILD off the standing
+    //    instruction above, and `precheck` reported it at 0x on the edit round that moved
+    //    the constant - which is the fourth consecutive slice where the prediction and
+    //    the instrument agreed and the instrument still ran first.
+    find: "  attack: 1625,",
+    replace: "  attack: 1623,",
     expectKilledBy: [
       "packages/engine/src/censusAtHead.test.ts",
     ],
@@ -28993,10 +29019,10 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D506-changelog-head-unnamed",
     decision: "D506",
-    what: "🛑 C1 — THE DEFECT D502 AND D505 BOTH SHIPPED: a version goes out and NO HEADING CLAIMS IT. The edit un-bolds the NEWEST heading's target, so the parser stops seeing it and the chain's head falls back a release while `package.json` says otherwise — which is byte-for-byte the state of this file at D505's head, twice over. ⚠️ IT IS THE CHEAPEST WAY FOR THIS RECORD TO GO WRONG AND WAS INVISIBLE TO EVERY OTHER INSTRUMENT IN THE REPO: `tsc`, `biome`, every test, `precheck` and all five gates are green on both sides of it, because until D506 nothing read the headings at all. Killed by the HEAD case alone, which is the point — one tripwire, named (D453/D498). 🛑 RE-POINTED AT D507 ONTO THE 0.395.0 → 0.396.0 HEADING, AND THE RE-POINT WAS OWED RATHER THAN TIDY (D444): left on D505's heading it would have gone INERT ON THE VERDICT the moment a newer heading existed — un-bolding a heading that is no longer the head leaves NEWEST equal to HEAD, so the HEAD case stays green and the kill arrives, if at all, through the CHAIN case instead. The row's own stated reason (killed by the HEAD case alone) is exactly the sentence that would have quietly become false. THIS ROW IS PART OF THE VERSION TAX: every bump owes its re-point, in the same edit as the heading. \U0001f195 RE-POINTED AGAIN AT D508 ONTO THE 0.396.0 → 0.397.0 HEADING, and this one is UNLABELLED — the `find` quotes the heading's first prose words instead of a `(D<nnn> —`, which is strictly more durable: the label is the byte the close-out ritual inserts, and quoting it is exactly what broke this row at D507. \u26a0\ufe0f The heading is the CHAIN HEAD again, so the HEAD case is the killer again — the re-point is what keeps that sentence true rather than quietly false.",
+    what: "🛑 C1 — THE DEFECT D502 AND D505 BOTH SHIPPED: a version goes out and NO HEADING CLAIMS IT. The edit un-bolds the NEWEST heading's target, so the parser stops seeing it and the chain's head falls back a release while `package.json` says otherwise — which is byte-for-byte the state of this file at D505's head, twice over. ⚠️ IT IS THE CHEAPEST WAY FOR THIS RECORD TO GO WRONG AND WAS INVISIBLE TO EVERY OTHER INSTRUMENT IN THE REPO: `tsc`, `biome`, every test, `precheck` and all five gates are green on both sides of it, because until D506 nothing read the headings at all. Killed by the HEAD case alone, which is the point — one tripwire, named (D453/D498). 🛑 RE-POINTED AT D507 ONTO THE 0.395.0 → 0.396.0 HEADING, AND THE RE-POINT WAS OWED RATHER THAN TIDY (D444): left on D505's heading it would have gone INERT ON THE VERDICT the moment a newer heading existed — un-bolding a heading that is no longer the head leaves NEWEST equal to HEAD, so the HEAD case stays green and the kill arrives, if at all, through the CHAIN case instead. The row's own stated reason (killed by the HEAD case alone) is exactly the sentence that would have quietly become false. THIS ROW IS PART OF THE VERSION TAX: every bump owes its re-point, in the same edit as the heading. \U0001f195 RE-POINTED AGAIN AT D508 ONTO THE 0.396.0 → 0.397.0 HEADING, and this one is UNLABELLED — the `find` quotes the heading's first prose words instead of a `(D<nnn> —`, which is strictly more durable: the label is the byte the close-out ritual inserts, and quoting it is exactly what broke this row at D507. \u26a0\ufe0f The heading is the CHAIN HEAD again, so the HEAD case is the killer again — the re-point is what keeps that sentence true rather than quietly false. \U0001f195 RE-POINTED AGAIN AT D510 ONTO THE 0.397.0 \u2192 0.398.0 HEADING, also UNLABELLED, and the `find` is kept in D508's TRIMMED form \u2014 it stops before the `(` where the close-out ritual inserts the label, which is the shape D508 proved survives that edit (precheck clean, label inserted, clean again). A `find` that spanned the paren would re-open the coupling that broke this row at D507.",
     file: "packages/engine/src/index.ts",
-    find: "engineVersion 0.396.0 → **0.397.0**",
-    replace: "engineVersion 0.396.0 → 0.397.0",
+    find: "engineVersion 0.397.0 → **0.398.0**",
+    replace: "engineVersion 0.397.0 → 0.398.0",
     expectKilledBy: ["packages/engine/src/engineVersionChangelog.test.ts"],
   },
   {
@@ -29305,5 +29331,85 @@ export const MUTANTS: Mutant[] = [
     find: "battle !== undefined && battle.conditions.rotation === \"confused\"",
     replace: "battle!.conditions.rotation === \"confused\"",
     expectKilledBy: ["src/features/online/components/OnlineHud.confusion.dom.test.tsx"],
+  },
+  // ── D510 — THE DISCARD PILE NARROWED BY A PRINTED NAME FRAGMENT. Seven rows, and
+  //    the SHAPE of the set is the finding: FOUR of them live in ONE `matchesFilter`
+  //    arm and THREE in ONE regex, because that is the whole of the slice — the ANCHOR
+  //    was never the blocker (D440's `DISCARD_PILE_COUNT_MULTIPLY` has matched this row
+  //    since it was written), so there is no anchor to mutate and D440's own eight rows
+  //    already own the SEAT, the FOLD, the zero guard and the shared walk.
+  //    🛑 **EVERY ONE OF THE SEVEN IS A NEIGHBOUR RATHER THAN A STRAW** (D190b): the
+  //    four arm rows are the three OTHER name reads this engine performs (`startsWith`
+  //    at `ownerPokemon`, `===` at `byName`, and the `supporter`/`item` subtype pair)
+  //    plus the conjunct simply dropped; the three regex rows are the head-noun capture
+  //    D440 refused in as many words, the `^` end of the anchor, and the `+`/`*` that
+  //    decides whether an EMPTY fragment can be built.
+  //    ⚠️ **NONE of the seven moves a CENSUS figure**, measured rather than assumed:
+  //    all seven leave the derivation of all 640 corpus rows identical except for this
+  //    one row's VALUE (four rows) or admit constructed strings the column prints zero
+  //    times (three rows). So every killer is the one suite, alone — D453/D498's
+  //    preference, and the reason no row here lists `censusAtHead.test.ts`.
+  {
+    id: "D510-filter-drops-the-supporter-conjunct",
+    decision: "D510",
+    what: "🛑 C1 — **THE HEAD NOUN IS DROPPED AND THE FRAGMENT ALONE DECIDES.** This is the defect the whole member exists to be distinguishable from: the printed phrase is *\"Supporter card that has …\"*, a CONJUNCTION baked into one member because this union has no INTERSECTION combinator — so a build that read only the name is a build that forgot the half the type was shaped around. ⚠️ **AND IT IS WRONG ON A CARD CLASS THE REAL COLUMN PRINTS**, not on an invented one: the owner possessive is a NAME prefix and the catalog puts it on every card type (`CardFilter.ownerPokemon`'s own block names `Team Rocket's Energy` `sv10-182` as the reason IT carries a category conjunct). §3's pile holds TWO `fix-trtransceiver` — an ITEM named *\"Team Rocket's Transceiver\"* — so the mutant counts 5 and deals **100** where the print deals 60, a plausible number on a plausible board.",
+    file: "packages/engine/src/cards.ts",
+    find: '        matchesFilter(card, { kind: "supporter" }) && card.name.includes(filter.fragment)',
+    replace: "        card.name.includes(filter.fragment)",
+    expectKilledBy: ["packages/engine/src/pileByNameFragment.test.ts"],
+  },
+  {
+    id: "D510-filter-reads-a-prefix-not-a-substring",
+    decision: "D510",
+    what: "🛑 C2 — **`.includes` BECOMES `.startsWith`, AND THE WRONG READ IS COPIED FROM FIVE `case`s AWAY IN THIS VERY `switch`.** `matchesFilter`'s `ownerPokemon` arm really does spell `card.name.startsWith(`${filter.owner}'s `)`, so a prefix read is what an author writing this arm by imitation reaches for — a neighbour, not a straw. The printed words are *\"has X **IN** its name\"*, a containment, and D392 refuted the prefix reading one vocabulary over on a PRINTED board (an owner possessive puts the fragment at a non-zero offset). ⚠️ **THE ROW IS ALSO THE ONLY REASON `fix-trgrunt` EXISTS**: without a Supporter carrying the fragment at a NON-ZERO offset the two readings are the same number on every board and this mutant would have nowhere to die (D456). §3's pile holds one, so the mutant reads 2 and deals **40**; §1's four-card table separates it from C4, which reads the same 40 for a different reason.",
+    file: "packages/engine/src/cards.ts",
+    find: '        matchesFilter(card, { kind: "supporter" }) && card.name.includes(filter.fragment)',
+    replace: '        matchesFilter(card, { kind: "supporter" }) && card.name.startsWith(filter.fragment)',
+    expectKilledBy: ["packages/engine/src/pileByNameFragment.test.ts"],
+  },
+  {
+    id: "D510-filter-collapses-into-byname",
+    decision: "D510",
+    what: "🛑 C3 — **`.includes` BECOMES `===`, WHICH IS THE MEMBER COLLAPSING INTO `byName` AND IS THE DOCTRINE THIS SLICE HAD TO CORRECT.** Two shipped doc blocks said *\"no `CardFilter` member does substring matching at any width\"*; an author who believed them writes this line. The whole point of the member is that the printed fragment is a PROPER substring of the names it admits — *\"Team Rocket\"* is no card's whole name — so the mutant counts **0** on every board and the `×` fold files **no `DAMAGE_DEALT` row at all**. ⚠️ **THE LOUD DIRECTION, AND STILL WORTH A ROW**: the sentence is still SIMULATED and `BUILT.attack` still counts it, so the census is green and only a board can see it (D190b at the instrument layer, pointed at a zero instead of at a wrong number).",
+    file: "packages/engine/src/cards.ts",
+    find: '        matchesFilter(card, { kind: "supporter" }) && card.name.includes(filter.fragment)',
+    replace: '        matchesFilter(card, { kind: "supporter" }) && card.name === filter.fragment',
+    expectKilledBy: ["packages/engine/src/pileByNameFragment.test.ts"],
+  },
+  {
+    id: "D510-filter-delegates-to-the-neighbouring-subtype",
+    decision: "D510",
+    what: "⚠️ C4 — **THE DELEGATED HEAD NOUN BECOMES `item`**, the printed Trainer subtype one `case` away and the mistake an author copying `supporter`'s neighbour makes (D231's four subtypes are adjacent arms and read alike). It is the row that proves the delegation is DOING something rather than being decoration: the conjunct is `matchesFilter(card, { kind: \"supporter\" })` — this function called on itself, D159's rule and `anyOf`'s own idiom — so a wrong SUBTYPE is a one-word edit that typechecks. §3's pile answers 2 and the attack deals **40**, the same number C2 produces by a different route, which is why §1's four-card table asserts the two cards separately: C2 makes `fix-trgrunt` false where C4 makes `fix-trtransceiver` true.",
+    file: "packages/engine/src/cards.ts",
+    find: '        matchesFilter(card, { kind: "supporter" }) && card.name.includes(filter.fragment)',
+    replace: '        matchesFilter(card, { kind: "item" }) && card.name.includes(filter.fragment)',
+    expectKilledBy: ["packages/engine/src/pileByNameFragment.test.ts"],
+  },
+  {
+    id: "D510-noun-pattern-captures-the-head-instead-of-spelling-it",
+    decision: "D510",
+    what: "🛑 C5 — **THE HEAD NOUN STOPS BEING A LITERAL AND THE PATTERN ADMITS THE OTHER PRINTED TRAINER SUBTYPES**, which is the generalisation `DISCARD_PILE_NOUNS`' own doc block refuses in as many words one screen up (*\"the tempting generalisation is `^(.+) card$` → `byName`\"*). Spelled as a closed alternation rather than a `(.+)` capture ON PURPOSE, so the row is a ONE-TRIPWIRE experiment (D453/D498): the group index does not move, every board number for the printed row is unchanged, and **the only thing that dies is §2's near-miss ladder** — *\"…for each Item card that has \\\"Team Rocket\\\" in its name…\"* and its `Trainer card` twin stop being null and start deriving a SUPPORTER filter. ⚠️ **THAT IS THE INTERSECTION THIS UNION DOES NOT HAVE, ARRIVING BY THE BACK DOOR**: the mutant's derived value says *\"a Supporter\"* about a sentence that says *\"an Item\"*, and no `CardFilter` can say both. The column prints neither spelling (measured, 0 of 640), so no census figure moves and no board moves.",
+    file: "packages/engine/src/effects.ts",
+    find: 'const PILE_SUPPORTER_NAME_FRAGMENT = /^Supporter card that has "([^"]+)" in its name$/;',
+    replace: 'const PILE_SUPPORTER_NAME_FRAGMENT = /^(?:Supporter|Item|Trainer) card that has "([^"]+)" in its name$/;',
+    expectKilledBy: ["packages/engine/src/pileByNameFragment.test.ts"],
+  },
+  {
+    id: "D510-noun-pattern-loses-its-head-anchor",
+    decision: "D510",
+    what: "⚠️ C6 — **THE `^` GOES AND THE NOUN PATTERN BECOMES A SUBSTRING TEST ON THE NOUN**, which is D464's *the `^` end and the `$` end of an anchor fail differently* at a fresh address. The `$` end is guarded by the outer anchor — `DISCARD_PILE_COUNT_MULTIPLY` already requires ` in your discard pile.` immediately after the captured noun — but the `^` end is guarded by NOTHING except this character, because the outer `([^.]+)` will hand over any prefix at all. 🛑 **AND THE STRING THAT WALKS THROUGH IS PRINTED VOCABULARY**: *\"…for each **Ancient** Supporter card that has \\\"Team Rocket\\\" in its name in your discard pile.\"* — the column spells `Ancient Supporter card` on corpus file line 82 — so the mutant would claim a DATA-BLOCKED banner as a plain Supporter count, which is the exact defect D440's closed map exists to prevent (D190b/D199: a wrong-but-plausible program is strictly worse than an unbuilt one). §2's near-miss ladder carries that row.",
+    file: "packages/engine/src/effects.ts",
+    find: 'const PILE_SUPPORTER_NAME_FRAGMENT = /^Supporter card that has "([^"]+)" in its name$/;',
+    replace: 'const PILE_SUPPORTER_NAME_FRAGMENT = /Supporter card that has "([^"]+)" in its name$/;',
+    expectKilledBy: ["packages/engine/src/pileByNameFragment.test.ts"],
+  },
+  {
+    id: "D510-noun-pattern-admits-an-empty-fragment",
+    decision: "D510",
+    what: "⚠️ C7 — **`[^\"]+` BECOMES `[^\"]*`, SO AN EMPTY QUOTED SPAN BUILDS.** This is the one line standing behind the member's own stated invariant — *\"an EMPTY fragment would match every Supporter, and the producer cannot emit one\"* — and `String.includes(\"\")` is TRUE for every string, so the derived filter would silently become a bare `supporter` count. ⚠️ **IT IS A CLAIM ABOUT THE PRODUCER AND NOT ABOUT THE PREDICATE**, which is why the row is written here rather than in `matchesFilter`: the arm is correct under both builds and only the regex decides whether the value is reachable. Observable ONLY through a constructed string, stated rather than hidden (D420): the column prints `has \"\" in its name` zero times, so no board and no census figure moves and §2's near-miss ladder is the whole killer.",
+    file: "packages/engine/src/effects.ts",
+    find: 'const PILE_SUPPORTER_NAME_FRAGMENT = /^Supporter card that has "([^"]+)" in its name$/;',
+    replace: 'const PILE_SUPPORTER_NAME_FRAGMENT = /^Supporter card that has "([^"]*)" in its name$/;',
+    expectKilledBy: ["packages/engine/src/pileByNameFragment.test.ts"],
   },
 ];

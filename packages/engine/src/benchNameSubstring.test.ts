@@ -209,11 +209,28 @@ describe("§1 — the price, RE-DERIVED off the corpus rather than inherited", (
     const shaped = phrase.filter(([, s]) => BONUS.test(s.trim()));
     expect(shaped).toHaveLength(1);
     expect(shaped[0]?.[1]).toBe(TAKEN);
-    // …and neither of the other two resolves, so this slice did not quietly widen a
-    // reader into a sentence it was never priced for.
-    for (const [, s] of named.filter(([, t]) => t !== TAKEN)) {
-      expect(resolvedByAnyReader(s), s).toBe(false);
-    }
+    // 🆕🆕🆕 **D510 TURNED ONE OF THE TWO OVER, AND THIS RUNG WENT RED FIRST.** It used
+    // to read *"…and neither of the other two resolves, so this slice did not quietly
+    // widen a reader into a sentence it was never priced for"* — a loop asserting
+    // `false` over both. The POPULATION half is kept verbatim and only the verdict is
+    // split, which is what stops a re-point from deleting the evidence (D508):
+    //   · the Supporter/discard-pile row is **BUILT at D510**, through
+    //     `CardFilter.supporterNameContaining` and NOT through D392's member — the two
+    //     vocabularies still share an OPERATOR and not a question;
+    //   · the Koffing/Weezing row is **STILL REFUSED**, and D510 refused it explicitly
+    //     rather than by omission: it needs a BOTH-SIDES body count that `CountSeat`
+    //     cannot spell, on top of a Pokémon-headed fragment filter.
+    const TR_PILE =
+      'This attack does 20 damage for each Supporter card that has "Team Rocket" in its name in your discard pile.';
+    const KOFFING =
+      'This attack does 40 damage for each Pokémon in play that has "Koffing" or "Weezing" in its name (both yours and your opponent\'s).';
+    expect(named.map(([, s]) => s).sort()).toEqual([KOFFING, TAKEN, TR_PILE].sort());
+    expect(resolvedByAnyReader(TR_PILE)).toBe(true);
+    expect(resolvedByAnyReader(KOFFING)).toBe(false);
+    // …and D392's OWN member is still the only thing that claims THIS row, which is the
+    // half the loop above was really guarding: the new `CardFilter` member did not reach
+    // back into the `BoardCondition` clause.
+    expect(resolvedByAnyReader(TAKEN)).toBe(true);
     // ⚠️ AND THE WHOLE-NAME FAMILY IS THE ONE THAT IS BIG, which is the asymmetry that
     // makes the substring row a row and the equality row a row for DIFFERENT reasons:
     // four `<Name> is on your Bench` sentences are printed and all four already resolve.

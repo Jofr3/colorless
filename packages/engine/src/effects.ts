@@ -379,10 +379,17 @@ export type CardFilter =
       — so this rests on the same ingested fact `abilityPokemon` rests on, stated
       rather than assumed.)
 
-      ⚠️ **EQUALITY AND NOT A SUBSTRING.** `byName`'s arm is an exact `===` and
-      *"no `CardFilter` member does substring matching at any width"* — this member
-      does not change that, and the printed noun does not ask it to: the sentence
-      names one attack, whole. */
+      ⚠️ **EQUALITY AND NOT A SUBSTRING, AND THE WARRANT IS THE PRINT.** `byName`'s
+      arm is an exact `===`, and the printed noun does not ask for anything else: the
+      sentence names one attack, whole.
+      🆕🆕🆕 **D510 — THIS PARAGRAPH USED TO REST ON A UNION-WIDE CLAIM THAT WAS
+      FALSE WHEN IT WAS WRITTEN.** It quoted *"no `CardFilter` member does substring
+      matching at any width"*; `ownerPokemon` has matched a proper PREFIX of `Card.name`
+      since D200 (`card.name.startsWith(\`${owner}'s \`)`, cards.ts), and
+      `scripts/opaque-anatomy.ts`'s `CARD-NAME-COUNT` marker has recorded exactly that
+      since D471. D510's `supporterNameContaining` is the first UNANCHORED one. The
+      exactness above is a property of THIS printed noun, which is the form that cannot
+      rot. */
   | { kind: "attackNamePokemon"; attack: string }
   /** 🆕🆕 D446 — a Pokémon of a printed RULE-BOX CLASS: the printed *"your
       opponent's **Pokémon ex** in play"* (2 legal printings) and *"your opponent's
@@ -456,6 +463,71 @@ export type CardFilter =
   /** A Supporter Trainer card (Pal Pad shuffles Supporters from the discard
       pile back into the deck). */
   | { kind: "supporter" }
+  /** 🆕🆕 D510 — a Supporter card whose printed NAME CONTAINS `fragment`:
+      *"each **Supporter card that has "Team Rocket" in its name** in your discard
+      pile."* — **1 sentence / 2 legal printings** (`censusAttackCorpus.ts` FILE LINE
+      543), on `DamageCountSource.cardsInDiscardPile`. The card ids are not resolvable
+      in this checkout and are therefore not named (D425).
+
+      🛑 **THE FIRST UNANCHORED NAME READ IN THIS UNION — AND NOT THE FIRST PARTIAL
+      ONE, WHICH IS THE HALF TWO DOC BLOCKS GOT WRONG.** `attackNamePokemon`'s block and
+      `matchesFilter`'s arm both said *"no `CardFilter` member does substring matching at
+      any width"*, and read as a warrant that is false: `ownerPokemon` has matched a
+      proper PREFIX of `Card.name` (`card.name.startsWith(\`${owner}'s \`)`) since D200,
+      and `scripts/opaque-anatomy.ts`'s `CARD-NAME-COUNT` marker — the marker that covers
+      THIS row — has said so since D471 (*"`CardFilter.ownerPokemon` reads `Card.name`
+      and has since D200"*). Both sentences are corrected in place. What is genuinely new
+      here is the ANCHORING: `includes`, not `startsWith` and not `===`.
+
+      🛑 **THE DATUM IS A PERSISTED COLUMN, WHICH IS THE WHOLE OF WHY A CAPTURE IS
+      SAFE HERE** — `attackNamePokemon`'s argument re-derived rather than inherited, and
+      the axis D440 refused on is the one this passes. `Card.name` is the catalog's own
+      column; a fragment that matches nothing is a genuine ZERO on a real column, never a
+      data gap. D440's refused `^(.+) card$` → `byName` was refused because it would
+      have claimed *"Ancient card"*, and the Ancient/Future banner is in NO column at all.
+      ⚠️ **AND THE PRINT ITSELF DECLARES THE DATUM**: the sentence says *"in its
+      name"*, so the quoted span is a claim about the name column BY CONSTRUCTION. A
+      banner cannot arrive through this shape — the column spells banners as an ADJECTIVE
+      (*"an Ancient Supporter card"*, corpus file line 82) and never inside the quotes.
+
+      🛑 **THE HEAD NOUN IS BAKED IN, AND THAT IS A PRICED DECISION RATHER THAN AN
+      IDIOM COPIED.** This union has no INTERSECTION combinator, deliberately (see
+      `anyOf`), so *"a Supporter card that has X in its name"* cannot be `supporter` AND
+      something. Spelling the noun into the member makes the whole printed phrase resolve
+      to ONE member — `attackNamePokemon`'s move — and the cost of that move is
+      COMBINATORIAL: one member per (noun × predicate) pair. **Priced, at this head:**
+      the column prints the quoted-fragment predicate under TWO head nouns (file lines
+      543 `Supporter card` and 583 `Pokémon`), so the idiom costs 2 members at full
+      coverage. The alternative — a general `allOf` plus a bare `nameContaining` — costs
+      **3** (two members plus a RECURSIVE combinator every exhaustive reader owes an arm
+      to, one of which must recurse, and a `retrieveNoun` join with *"and"* that no
+      printed sentence drives). So the baked noun wins 1→3 today and 2→3 at full
+      coverage; **the crossover is the THIRD head noun**, and a successor who meets one
+      should re-run this comparison rather than adding a third member by habit.
+
+      🛑 **A MEMBER AND NOT AN OPTIONAL `nameContaining?:` RIDER ON `supporter`,
+      AND D392's AMENDED RULE IS WHAT DECIDES IT** — *a filter is a FIELD only when a
+      SHIPPED delegate already accepts it; otherwise it is a MEMBER*. `cards.ts` carries
+      no name-matching predicate at all (checked, not remembered: `ownerPokemon` and
+      `byName` both read `card.name` INLINE), so there is no delegate. And D392's second
+      clause bites harder: an optional field is invisible to the compiler, so a producer
+      spelling the printed noun and forgetting the rider would silently get the
+      UNNARROWED read — every Supporter in the pile — which is a wrong number on the one
+      board the card is printed for.
+
+      ⚠️ **THE FIELD IS `fragment` AND NOT `name`, AND THAT IS A COMPILER PROPERTY
+      RATHER THAN A NAMING TASTE** — D392's rule at its second address. Were it `name`,
+      this member and `byName` would differ by their `kind` token alone and a mistyped
+      `kind` would still typecheck, silently swapping an exact read for a substring one
+      or the reverse. Differently-named fields make that swap a type error in both
+      directions. `BoardCondition.yourBenchHasNameContaining` spells `fragment` for the
+      identical reason, so the two vocabularies agree on one word for one thing.
+
+      ⚠️ **CASE-SENSITIVE AND UN-NORMALISED**, `yourBenchHasNameContaining`'s
+      reading verbatim: the catalog `name` IS the printed name. An EMPTY fragment would
+      match every Supporter, and the producer cannot emit one — `PILE_SUPPORTER_NAME_FRAGMENT`
+      spells `([^"]+)`, which requires at least one byte between the printed quotes. */
+  | { kind: "supporterNameContaining"; fragment: string }
   /** An ITEM Trainer card — the catalog's `trainerType: "Item"`, read exactly as
       `supporter` and `toolCard` read theirs one field over (D231).
 
@@ -15029,20 +15101,20 @@ function inPlayBodyFilter(noun: string): CardFilter | null {
 //     the banner is a per-PRINTING fact. **The fix is an INGEST change; nothing in this
 //     file can be the fix.** D439 refused the same banner one zone over for the same
 //     reason and this is the second reading of one permanent block, not a second block.
-//   • **Supporter card that has "Team Rocket" in its name** (2 printings) is UNBUILT,
-//     which is a different thing. `matchesFilter`'s `byName` arm is EXACT EQUALITY
-//     (`cards.ts`:518 — `      return card.name === filter.name;`) and **no `CardFilter`
-//     member does substring matching at any width**. A substring reading of a printed
-//     name DOES exist in this file — `CONDITIONAL_DAMAGE_CLAUSES` carries
-//     `'a Pokémon that has "Nidoking" in its name is on your Bench'` mapped to
-//     `{ kind: "yourBenchHasNameContaining", fragment: "Nidoking" }` (effects.ts:12608-12609) —
-//     but that is a `BoardCondition` member reading `topCardOf` on a BENCH, not a
-//     `CardFilter` scanning a pile, and the two vocabularies do not share a predicate.
-//     ⚠️ **THE FALSIFIER IS EXECUTABLE AND IS PINNED ON THE POPULATION** (D422/D423/D428):
-//     `discardPileScaling.test.ts` §6 asserts that the corpus row is claimed by NO
-//     reader, so the day a `CardFilter` member reads a name SUBSTRING and this map gains
-//     the row, that rung goes RED and the refusal stops being true LOUDLY. It is not
-//     asserted against a hand-written specimen.
+//   ✅ **Supporter card that has "Team Rocket" in its name** (2 printings) was the
+//     SECOND refusal here and it is **BUILT at D510**. It was never data-blocked: the
+//     survey called it UNBUILT and pinned the falsifier on the population, and that
+//     falsifier FIRED — `discardPileScaling.test.ts` §6 went RED against the build and
+//     was re-pointed rather than narrowed. The block used to argue that a substring
+//     reading *"does exist in this file"* for a `BoardCondition`
+//     (`yourBenchHasNameContaining`, D392) *"but the two vocabularies do not share a
+//     predicate"*; that is still true — they share an OPERATOR and not a question — and
+//     `CardFilter.supporterNameContaining` is now the `CardFilter` half.
+//     🛑 **AND ONE CLAUSE OF THE OLD TEXT WAS FALSE WHEN IT WAS WRITTEN**: it read
+//     *"no `CardFilter` member does substring matching at any width"*, where
+//     `ownerPokemon` has matched a proper PREFIX of `Card.name` since D200. Corrected at
+//     the member, at `matchesFilter`'s arm and here — D508's rule, swept across
+//     `packages/**` and `scripts/**` rather than fixed in the one file being edited.
 //
 // 🛑 THE VOCABULARY IS A CLOSED MAP AND NOT A CAPTURE, AND THAT IS WHAT KEEPS THE
 // ANCIENT ROW HONEST. The tempting generalisation is `^(.+) card$` → `byName`, which
@@ -15056,15 +15128,18 @@ function inPlayBodyFilter(noun: string): CardFilter | null {
 // refusing is the map and not the regex."*
 //
 // 🛑 THE SEAT IS CAPTURED FROM THE PRINTED WORDS AND IS NEVER INFERRED FROM THE FOLD.
-// ⚠️ **IN THE BUILDABLE CORE THE TWO ARE PERFECTLY CONFOUNDED — MEASURED — AND A BUILD
-// THAT DERIVED EITHER FROM THE OTHER WOULD READ ALL FOUR PRINTED SENTENCES AND ALL
-// EIGHT PRINTINGS CORRECTLY.** Every claimed "more" sentence is YOUR pile and every
-// claimed bare sentence is your OPPONENT's. **The confound is a property of the
-// BUILDABLE SUBSET and not of the print**: the MULTIPLY × YOUR-pile cell IS printed
-// (the Team Rocket row above, 2 legal), and it is refused for its FILTER rather than
-// for its seat — so the day a substring member lands, a fold-derived seat would score
-// that card off the WRONG PILE. The empty cell is the other diagonal, ADDITIVE ×
-// OPPONENT, which the column prints nowhere at all.
+// ✅ **D510 BROKE THE CONFOUND WITH A PRINTED ROW, WHICH IS WHAT THIS PARAGRAPH
+// FORECAST.** It used to read: *"in the buildable core the two are perfectly
+// confounded — measured — and a build that derived either from the other would read all
+// four printed sentences and all eight printings correctly … the MULTIPLY × YOUR-pile
+// cell IS printed (the Team Rocket row above, 2 legal), and it is refused for its
+// FILTER rather than for its seat — so the day a substring member lands, a fold-derived
+// seat would score that card off the WRONG PILE."* **That day is D510.** The MULTIPLY ×
+// YOUR-pile cell is now BUILT and PRINTED at 2 legal printings, so a build that derived
+// the seat from the fold is wrong on a real corpus row rather than on a constructed
+// one, and `discardPileScaling.test.ts` §2's constructed rungs are no longer the ONLY
+// thing separating the two axes. The empty cell is still the other diagonal, ADDITIVE ×
+// OPPONENT, which the column prints nowhere at all — re-measured at this head.
 // ⚠️ **BOTH EMPTY CELLS ARE DRIVEN ON CONSTRUCTED TEXT RATHER THAN ARGUED**
 // (`discardPileScaling.test.ts` §2, labelled as constructed — `bodiesInPlayScaling.test.ts`
 // §2's own posture, which drives three non-corpus sentences to positive values and says
@@ -15159,12 +15234,17 @@ const DISCARD_PILE_COUNT_SCALE =
 const DISCARD_PILE_ATTACK_NAME_MULTIPLY =
   /^This attack does (\d+) damage for each Pokémon in your discard pile that has the ([^.]+) attack\.$/;
 /** The four printed nouns, mapped to the `CardFilter` members that already spell
-    them. **ZERO new `CardFilter` members**, which is what keeps this slice out of
+    them. **ZERO new `CardFilter` members**, which is what keeps D440's slice out of
     `retrieveNoun`'s exhaustive switch (interpreter.ts) and out of
     `BENCHABLE_RETRIEVAL_KINDS` (effects.ts) — the two other consumers of that union,
     where D222's closed-world hazard means an omission from the `Set` compiles
     silently. D439 refused its largest countable on exactly that cost; this family was
     chosen because it does not pay it.
+    🆕🆕🆕 **D510 PAID IT, AND THE MAP IS STILL FOUR ROWS.** The fifth printed noun
+    is PARAMETERISED, so it lives in `PILE_SUPPORTER_NAME_FRAGMENT` beside
+    `discardPileFilter` rather than here, and it brought `supporterNameContaining` with
+    it: one `retrieveNoun` arm, and a DELIBERATE absence from `BENCHABLE_RETRIEVAL_KINDS`
+    (a Supporter is a Trainer and can never be benched — see that Set's own block).
 
     A MAP and not a regex alternation, for `CLAUSE_ENERGY_TOKENS`' reason: the accepted
     vocabulary is a single list rather than something somebody edits by hand in two
@@ -15195,19 +15275,61 @@ const DISCARD_PILE_NOUNS: ReadonlyMap<string, CardFilter> = new Map<string, Card
   // member captions nothing, so emitting it would be an inert value nothing reads.
   ["Ethan's Adventure card", { kind: "byName", name: "Ethan's Adventure" }],
 ]);
+/** 🆕🆕🆕 **D510 — THE ONE PARAMETERISED NOUN IN THIS VOCABULARY**, and the whole
+    of what corpus FILE LINE 543 was missing: *"each **Supporter card that has "Team
+    Rocket" in its name** in your discard pile."* — **1 sentence / 2 legal printings.**
+
+    🛑 **ZERO NEW ANCHORS, AND THAT IS A MEASUREMENT RATHER THAN A CLAIM.**
+    `DISCARD_PILE_COUNT_MULTIPLY`'s `([^.]+)` noun group has swallowed this whole phrase
+    since D440 — run against the printed row it captures `20` / `Supporter card that has
+    "Team Rocket" in its name` / `your` — so the sentence has always REACHED the reader
+    and been refused one step later, by `discardPileFilter` having no way to spell the
+    noun. That block says exactly that (*"…or `null` when this file has no way to spell
+    it (Ancient, the Team Rocket name substring)"*). **The blocker was a NAME, not a
+    machine** (D505's shape), which is why this slice adds no pattern to either anchor.
+
+    🛑 **THE HEAD NOUN IS A LITERAL AND THE FRAGMENT IS A CAPTURE**, D446's
+    `IN_PLAY_ATTACK_NAME_MULTIPLY` idiom at a different address, and both halves are
+    decisions. A CAPTURED head noun (`^(.+) card that has …$`) would need an INTERSECTION
+    this union deliberately does not have, and it is the shape D440 refused outright one
+    block up. A LITERAL fragment would be a map key per printed card name, which is the
+    open-set argument `ownerPokemon` and `attackNamePokemon` both make.
+
+    🛑 **THE CAPTURE IS `([^"]+)` AND THE DELIMITERS ARE THE PRINTED QUOTES,
+    WHICH IS STRICTLY TIGHTER THAN THE `[^.]+` THIS FAMILY USES ELSEWHERE.** The quotes
+    are the card face's own bytes — **U+0022 on all three corpus rows that print this
+    shape** (file lines 240, 543 and 583), measured with `codePointAt` over
+    `legalAttackCorpus()` rather than read visually, which is the same check D440 ran for
+    the apostrophe. A class that cannot cross a `"` cannot run past the printed span, and
+    it cannot match EMPTY — so the producer can never emit a fragment that matches every
+    Supporter. */
+const PILE_SUPPORTER_NAME_FRAGMENT = /^Supporter card that has "([^"]+)" in its name$/;
 /** 🆕🆕 D440 — the printed noun between "for each " and " in your[ opponent's] discard
     pile.", resolved to the `CardFilter` that already answers it, or `null` when this
-    file has no way to spell it (Ancient, the Team Rocket name substring) — which keeps
-    the sentence on the loud ATTACK_EFFECT_SKIPPED path.
+    file has no way to spell it (Ancient) — which keeps the sentence on the loud
+    ATTACK_EFFECT_SKIPPED path.
 
-    ONE lookup and no fall-through patterns, unlike `inPlayBodyFilter` one vocabulary
-    up: that function needs three branches because two of its nouns are PARAMETERISED
-    (an owner prefix and a type code), and none of this family's four is. There is
-    therefore no branch ORDER here to be right or wrong about — which is worth saying
-    rather than leaving implicit, because D439's block asserted the opposite about its
-    own three branches and a surviving mutant disproved it. */
+    🆕🆕🆕 **D510 — IT HAS A SECOND BRANCH NOW, AND THE PARAGRAPH BELOW USED TO SAY
+    THERE COULD NEVER BE ONE.** The original text read *"ONE lookup and no fall-through
+    patterns, unlike `inPlayBodyFilter` one vocabulary up … There is therefore no branch
+    ORDER here to be right or wrong about"*, and named the Team Rocket name substring as
+    a permanent `null`. Both halves are corrected here rather than left standing: this
+    family now has a PARAMETERISED noun exactly as that one does.
+
+    🛑 **THE LITERAL TABLE RUNS FIRST, WHICH IS `boardConditionForClause`'s STATED
+    RULE VERBATIM** (*"Literals win by construction, so adding a template can never
+    re-interpret a clause a row already owns"*) — followed, not invented. ⚠️ **AND THE
+    ORDER IS UNOBSERVABLE ON TODAY'S VOCABULARY FOR A STRUCTURAL REASON RATHER THAN A
+    LUCKY ONE, WHICH D503 SAYS TO CHECK**: the pattern demands the literal bytes
+    ` that has "`, and this map is CLOSED at four keys none of which contains them — so
+    no string can reach both branches, provable by reading the map rather than by
+    running the column. The order is kept anyway, because the map is the thing a
+    successor adds a key to. */
 function discardPileFilter(noun: string): CardFilter | null {
-  return literalClauseRow(DISCARD_PILE_NOUNS, noun) ?? null;
+  const literal = literalClauseRow(DISCARD_PILE_NOUNS, noun);
+  if (literal !== undefined) return literal;
+  const fragment = PILE_SUPPORTER_NAME_FRAGMENT.exec(noun);
+  return fragment === null ? null : { kind: "supporterNameContaining", fragment: fragment[1] ?? "" };
 }
 
 // 🆕🆕 D488 — MILL YOUR OWN DECK, THEN SCALE THE DAMAGE BY A **FILTERED** COUNT OF
@@ -22276,6 +22398,18 @@ const BENCHABLE_RETRIEVAL_KINDS: ReadonlySet<CardFilter["kind"]> = new Set<CardF
   // gains a Stage row this Set decides whether the printed sentence benches, and an
   // omission would compile.
   "stagePokemon",
+  // 🆕🆕🆕 **D510 — THE FIRST MEMBER THIS SET REFUSES BY CATEGORY RATHER THAN BY
+  // REACHABILITY, AND THE ABSENCE IS A DECISION WITH A REASON.**
+  // `supporterNameContaining` is EXCLUDED — deliberately, and not for the
+  // "unobservable in both directions" reason the three blocks above give. Its head
+  // noun delegates to `matchesFilter`'s `supporter` arm, so every card it can ever
+  // admit is `category: "Trainer"` — and a Trainer can never be put onto a Bench.
+  // This Set's stated rule is *"every sentence that benches names a Pokémon noun"*,
+  // and this member names a Trainer noun, so admitting it would be the FIRST row that
+  // breaks the rule rather than the fourth that documents it.
+  // ⚠️ **AND THE WRONG DIRECTION IS THE ONE THAT COMPILES**: adding this kind is a
+  // one-word edit that typechecks, which is D222's closed-world hazard pointed the
+  // other way, so the refusal is written here rather than left to the absence.
 ]);
 /** The two printed noun ALTERNATIONS, built FROM `HAND_SEARCH_NOUNS` rather than
     listed beside it — so a row added to that table is admitted here by

@@ -1148,6 +1148,24 @@ describe("FIXTURE_POOL, swept as its own population", () => {
         // finding D337 wrote three expiries up, arriving from the other side.
         // The list edit is the whole cost.
         "fix-ethansadv",
+        // 🆕🆕🆕 **D510 — TWO MORE, AND THIS SWEEP IS THE ONLY THING IN THE REPO
+        // THAT SEES EITHER OF THEM.** The PRINTED NAME FRAGMENT count is demonstrated on
+        // *"each Supporter card that has "Team Rocket" in its name"*, and the fragment's
+        // real-world carriers are owner-possessive cards — so `fix-trsupporter` ("Team
+        // Rocket's Ambition", the Supporter positive) and `fix-trtransceiver` ("Team
+        // Rocket's Transceiver", the ITEM that proves the head-noun conjunct is
+        // load-bearing) both carry the prefix, and neither is a Pokémon.
+        // 🛑 **THE PRICE FOR THIS SLICE NAMED THIS READER BEFORE THE SWEEP RAN, WHICH IS
+        // THE FIRST TIME IN THE RUN OF EXPIRIES ABOVE.** D337, D374, D392 and D440 each
+        // recorded that their price had MISSED it; D510's did not, because the rule was
+        // read off this very comment. ⚠️ **AND THE THIRD FIXTURE IS DELIBERATELY NOT
+        // PREFIXED**: `fix-trgrunt` ("Grunt of Team Rocket") puts the fragment at a
+        // NON-ZERO offset with no possessive, which is what separates `.includes` from
+        // `.startsWith` — so it is invisible to this pattern by design rather than by
+        // luck, and a successor who "tidies" it into a possessive would both break that
+        // separation AND land here.
+        "fix-trsupporter",
+        "fix-trtransceiver",
       ].sort(),
     );
     // …and NONE of the four is a Pokémon this file's ops can reach: three are

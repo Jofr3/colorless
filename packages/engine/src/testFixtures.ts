@@ -10700,6 +10700,69 @@ export const FIXTURE_POOL: Record<string, Card> = {
     name: "Ethan's Adventure",
   },
 
+  /** 🆕🆕🆕 D510 — FIXTURE. A **Supporter** whose printed name CONTAINS
+      `Team Rocket` **at offset 0**, the positive of `CardFilter.supporterNameContaining`
+      (`pileByNameFragment.test.ts`).
+
+      🛑 **IT IS BUILT `fix-ethansadv`'s WAY — a spread over `trainerCard` with an
+      explicit `name` — AND FOR THAT FIXTURE'S STATED REASON.** `trainerCard` sets
+      `name: id` for every Trainer in this pool, so a helper-built Supporter is named
+      `"fix-…"` and can never carry a printed fragment. That is also why
+      `fix-ethansadventure` is this card's *negative*: it IS a Supporter and its name
+      contains nothing, so `supporter` and `supporterNameContaining` answer different
+      numbers on one pile.
+
+      Its `effect` is synthetic and nothing reads it — this pool's Trainer programs are
+      keyed by id, and `clauseApostrophe.test.ts`'s derivable sweep reads
+      `card.attacks[].effect` only, so a Trainer's `effect` enters no census here
+      (`fix-ethansadv`'s own note). */
+  "fix-trsupporter": {
+    ...trainerCard("fix-trsupporter", "Supporter", "Draw 3 cards."),
+    name: "Team Rocket's Ambition",
+  },
+
+  /** 🆕🆕🆕 D510 — FIXTURE. A **Supporter** whose printed name contains
+      `Team Rocket` at a **NON-ZERO offset**, and it exists for exactly one wrong build:
+      `card.name.startsWith(...)` instead of `.includes(...)`.
+
+      🛑 **THE WRONG BUILD IS A NEIGHBOUR, NOT A STRAW** (D190b). `matchesFilter`'s
+      `ownerPokemon` arm — five `case`s from the new one, in the same `switch` — reads
+      `card.name.startsWith(\`${filter.owner}'s \`)`, so a prefix read is what an author
+      writing the new arm by imitation reaches for. Without a body at a non-zero offset,
+      `startsWith` and `includes` are the SAME number on every board and the mutant would
+      have nowhere to die (D456).
+
+      🛑 **CONSTRUCTED, AND LABELLED SO** — `discardPileScaling.test.ts` §2's own
+      posture, and D440's: the legal column's Team Rocket Supporters are all
+      owner-prefixed, so this NAME is a claim about the READER and not about the pool.
+      A reader is a function of TEXT; a fixture that puts the fragment where the print
+      could put it is what separates two readings no printed card separates today.
+      D392 made the identical move one vocabulary over and got a PRINTED board for it
+      (Team Rocket's Nidoking ex, the fragment behind an owner possessive). */
+  "fix-trgrunt": {
+    ...trainerCard("fix-trgrunt", "Supporter", "Draw 2 cards."),
+    name: "Grunt of Team Rocket",
+  },
+
+  /** 🆕🆕🆕 D510 — FIXTURE. An **ITEM** whose printed name contains
+      `Team Rocket`, and it is the conjunct control: the printed noun is *"Supporter
+      card that has …"*, so a build that dropped the HEAD NOUN and kept only the
+      fragment counts this card and the print does not.
+
+      🛑 **THE REAL COLUMN PRINTS THIS CARD CLASS, WHICH IS WHY THE CONJUNCT IS
+      LOAD-BEARING RATHER THAN DECORATIVE.** The owner prefix is a NAME prefix and the
+      catalog puts it on every card type — `CardFilter.ownerPokemon`'s own block names
+      `Team Rocket's Energy` (`sv10-182`) as the reason IT carries a `category`
+      conjunct. An Item is the same hazard one subtype over.
+
+      ⚠️ **AN ITEM AND NOT A TOOL**, because `item` and `toolCard` are disjoint printed
+      subtypes (D231) and the head noun refuses both the same way — one negative is
+      enough, and `itemTrainer`'s helper is already the pool's idiom for it. */
+  "fix-trtransceiver": {
+    ...itemTrainer("fix-trtransceiver"),
+    name: "Team Rocket's Transceiver",
+  },
+
   /** D256 — the HOLDER of "Flower Curtain" (Shaymin `sv10-010`/`-185`,
       `preventBenchDamageNoRuleBox`). ONE new body, and the sweep that decided that
       is D250's rule run on BOTH sides of the new conjunct:
@@ -12042,6 +12105,36 @@ export const FIXTURE_POOL: Record<string, Card> = {
         damage: "20\u00d7",
         effect:
           "This attack does 20 damage for each Pokémon in your discard pile that has the United Wings attack.",
+      },
+    ],
+  }),
+  /** 🆕🆕🆕 D510 — FIXTURE. The HOLDER of corpus FILE LINE 543,
+      *"This attack does 20 damage for each Supporter card that has "Team Rocket" in its
+      name in your discard pile."* (**2 legal printings**).
+
+      🛑 **IT IS A POKÉMON AND THE THING IT COUNTS IS A TRAINER, SO THE HOLDER
+      CANNOT COUNT ITSELF AND THE ZONE AXIS IS FREE.** That is `fix-pilewings`' one
+      design decision arriving for nothing here: a Supporter is never in play, so the
+      wrong-zone build (`countPokemonInPlay` over the same filter, the member one `case`
+      up in `attack.ts`'s own switch) reads **0** on every board this suite can make —
+      a LOUD zero rather than a plausible smaller number, and that is stated rather than
+      discovered.
+
+      340 HP so nothing in the suite can Knock it out — the widest wrong build on the
+      canonical board deals 160 — `retreat: 1` so no rung depends on a Retreat Cost,
+      ONE printed {C} so a single attachment arms it, and the `×` marker on the damage
+      because the print is the MULTIPLY fold: the base is DROPPED, not kept, which is
+      what makes an empty pile a missing `DAMAGE_DEALT` row instead of a 20. */
+  "fix-pilerocket": battler("fix-pilerocket", {
+    types: ["Colorless"],
+    hp: 340,
+    attacks: [
+      {
+        cost: ["Colorless"],
+        name: "Rocket Dossier",
+        damage: "20\u00d7",
+        effect:
+          'This attack does 20 damage for each Supporter card that has "Team Rocket" in its name in your discard pile.',
       },
     ],
   }),
@@ -16154,6 +16247,57 @@ export const PILE_ATTACK_NAME_DECK = deckOf({
   "fix-benchfiller": 6, // a Pokémon with NO attacks — the other negative
   "fix-item": 6, // an Item Trainer — `attacksOf` is null, and the pile-LENGTH control
   "fix-titan": 10, // 340 HP, no attacks — the defender, the opener, the third negative
+  "fix-energy": 8, // Basic {C} — the one printed symbol of the one attack
+});
+
+/** 🆕🆕🆕 D510 — the DISCARD PILE NARROWED BY A PRINTED NAME FRAGMENT
+    (`pileByNameFragment.test.ts`). ITS OWN 60 on D270's rule and NOT a widened
+    `DISCARD_PILE_COUNT_DECK`: `deckOf` order feeds the shuffle, so moving one card in
+    a shared deck reshuffles every seed-pinned board that reads it — D412 added ONE
+    card to a shared deck and reddened three of another slice's boards.
+
+    🛑 **THE CAST IS CHOSEN SO THAT SEVEN WRONG BUILDS READ SEVEN DIFFERENT NUMBERS
+    ON ONE BOARD.** On the canonical board, at the printed 20 per card:
+
+      the print        — `supporterNameContaining "Team Rocket"`, YOUR pile   3 → **60**
+      `startsWith`     — the same fragment read as a PREFIX                   2 → 40
+      the NOUN dropped — the fragment alone, over every card class            5 → 100
+      the FRAGMENT dropped — bare `supporter` over the pile                   4 → 80
+      the SEAT wrong   — the printed filter over your OPPONENT's pile         6 → 120
+      the pile LENGTH  — no filter at all                                     8 → 160
+      `byName` exact   — an equality on the fragment                          0 → no row
+
+    Seven distinct counts, none a multiple of another by accident, and the defender
+    (`fix-titan`, 340 HP) survives the largest of them, so every rung reads
+    `DAMAGE_DEALT` rather than a Knock Out.
+
+      • `fix-trsupporter` — the POSITIVE: a Supporter whose name carries the fragment at
+        offset 0. It sits in BOTH piles, which is what makes the seat a separable axis;
+      • `fix-trgrunt` — the same card with the fragment at a NON-ZERO offset, the only
+        thing that separates `.includes` from `.startsWith` (constructed, and labelled
+        so at the fixture);
+      • `fix-trtransceiver` — an ITEM carrying the fragment: the HEAD-NOUN control, the
+        card a build that kept only the fragment would count;
+      • `fix-ethansadventure` — a Supporter carrying NO fragment: the mirror control,
+        the card a build that kept only the noun would count. Reused rather than added,
+        for the sixth slice running;
+      • `fix-titan` — 340 HP, no attacks: the defender, the only opener, and the pile's
+        non-card-class control (a Pokémon matches neither conjunct);
+      • `fix-energy` — Basic {C}, the single printed symbol of the one attack.
+
+    ⚠️ **`fix-trsupporter` IS ASKED FOR EIGHT TIMES ACROSS THE TWO SEATS** (2 into the
+    attacker's pile, 6 into the defender's), which is why its count is 14 rather than
+    the pool's usual 4: setup has already moved 7 cards to hand and 6 to prizes on each
+    seat before any surgery runs.
+
+    4 + 14 = 18, + 8 = 26, + 8 = 34, + 8 = 42, + 10 = 52, + 8 = **60**. */
+export const PILE_NAME_FRAGMENT_DECK = deckOf({
+  "fix-pilerocket": 4, // the holder of the one printed sentence
+  "fix-trsupporter": 14, // Supporter, fragment at offset 0 — the positive, in BOTH piles
+  "fix-trgrunt": 8, // Supporter, fragment at a NON-ZERO offset — the `startsWith` control
+  "fix-trtransceiver": 8, // an ITEM carrying the fragment — the HEAD-NOUN control
+  "fix-ethansadventure": 8, // a Supporter carrying NO fragment — the FRAGMENT control
+  "fix-titan": 10, // 340 HP, no attacks — the defender, the opener, the non-card-class control
   "fix-energy": 8, // Basic {C} — the one printed symbol of the one attack
 });
 

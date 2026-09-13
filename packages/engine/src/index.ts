@@ -19984,6 +19984,92 @@ import type { GameState, Seat } from "./types";
     `expect(manifest.version)`, `it(…)` titles, the declaration and `package.json` —
     **not** as a value-keyed grep — because a value-keyed grep is precisely the mechanism
     that ate D500's heading.)
+    🆕🆕🆕 engineVersion 0.397.0 → **0.398.0** (D510 — THE DISCARD PILE NARROWED BY A PRINTED
+    NAME FRAGMENT — AND THE ANCHOR WAS NEVER THE BLOCKER. `censusAttackCorpus.ts`
+    **FILE LINE 543** — *"This attack does 20 damage for each Supporter card that has
+    "Team Rocket" in its name in your discard pile."*, **1 sentence / 2 legal
+    printings**, claimed by `deriveAttackDamageMultiplier`.
+    🛑 **ZERO NEW ANCHORS, AND THAT IS A MEASUREMENT RATHER THAN A BOAST.** D440's
+    shipped `DISCARD_PILE_COUNT_MULTIPLY` has matched this row since the day it was
+    written — run against the printed bytes it captures `20` / `Supporter card that has
+    "Team Rocket" in its name` / `your` — so the sentence always REACHED the reader and
+    was refused one step later, by `discardPileFilter` having no way to spell the noun.
+    That function's own doc block said exactly that. **The blocker was a NAME, not a
+    machine** (D505's shape), and the cost is ONE parameterised noun
+    (`PILE_SUPPORTER_NAME_FRAGMENT`), ONE `CardFilter` member
+    (`supporterNameContaining { fragment }`), ONE `matchesFilter` arm and ONE
+    `retrieveNoun` arm. **ZERO** new `DamageCountSource` members, `EffectOp`s, readers
+    (surface unmoved at **13**), prompts, parks, events, error codes, `GameState` fields,
+    registry rows, `redact.ts` bytes, `packages/schema` bytes or `MATCH_RECORD_VERSION`
+    bytes. `attack.ts` gains **ZERO** bytes: its `cardsInDiscardPile` arm has always
+    taken an arbitrary `CardFilter`.
+    🛑 **THE FIRST UNANCHORED NAME READ IN `CardFilter` — AND NOT THE FIRST PARTIAL
+    ONE, WHICH IS THE HALF TWO SHIPPED DOC BLOCKS GOT WRONG.**
+    `CardFilter.attackNamePokemon`'s block and `matchesFilter`'s arm for it both rested
+    on *"no `CardFilter` member does substring matching at any width"*. `ownerPokemon`
+    has matched a proper PREFIX of `Card.name` since **D200**, and
+    `scripts/opaque-anatomy.ts`'s `CARD-NAME-COUNT` marker — the marker that covers THIS
+    row — has recorded it since **D471** (*"`CardFilter.ownerPokemon` reads `Card.name`
+    and has since D200"*). D508's rule applied before the build rather than after:
+    corrected in `effects.ts`, in `cards.ts` and in the D440 survey, swept across
+    `packages/**` and `scripts/**`.
+    🛑 **THE HEAD NOUN IS BAKED INTO THE MEMBER, AND THE COMBINATORIAL COST IS
+    PRICED RATHER THAN PAID SILENTLY.** This union has no INTERSECTION combinator,
+    deliberately, so the idiom is one member per (noun × predicate) pair. The column
+    prints this predicate under TWO head nouns (file lines 543 and 583), so full
+    coverage costs **2** members against **3** for the alternative (a general `allOf`
+    plus a bare `nameContaining` — two members AND a recursive combinator every
+    exhaustive reader owes an arm to). **The crossover is the THIRD head noun**, which
+    the column does not print.
+    🛑 **A MEMBER AND NOT AN OPTIONAL RIDER, ON D392's AMENDED RULE** — *a filter
+    is a FIELD only when a SHIPPED delegate already accepts it; otherwise it is a
+    MEMBER*. `cards.ts` carries no name-matching predicate at all, and an optional rider
+    is invisible to the compiler: a producer that forgot it would silently get the
+    UNNARROWED read. The field is `fragment` and not `name` for D392's compiler reason.
+    `MATCH_RECORD_VERSION` **HELD at 30**, resting on the OP (D507's correction of
+    D505): a damage FOLD emits no `EffectOp` at all, so there is no park, no
+    continuation and nothing for a `MatchRecord` to carry — and the `CardFilter`
+    widening reaches the persisted address only through op fields that no producer
+    can put this member into (D333: a union that gains an INHABITANT is free).
+    🛑 **`:583` IS REFUSED, WITH A MEASURED FALSIFIER, AND THE REASON IS THE COUNT
+    RATHER THAN THE FILTER.** *"…for each Pokémon in play that has "Koffing" or
+    "Weezing" in its name (both yours and your opponent's)."* needs a BOTH-SIDES body
+    count, and D507's answer to the same printed parenthetical — a COMPOSITION, two
+    `spreadDamage` ops — **does not transfer**: `spreadDamage` is an OP run twice, where
+    this is a COUNT feeding `per × count` through a single `AttackDamageBonus`, so two
+    counts would have to be SUMMED into one number and the reader's return type would
+    have to change. The shipped answer for a both-sides count is a MEMBER
+    (`bothSidesBenchCount`, `bothActivesEnergyCount`), never a third `CountSeat` value —
+    and a third value would be silently wrong at `attack.ts`'s
+    `seat === "you" ? attackerSeat : defenderSeat` ternary, where a new MEMBER is caught
+    by the total `switch` (D447).
+    **A TENTH LATTICE SHAPE: FIVE AXES, EVERY ONE FLIPPING AT THE MINIMUM 1/16, AND A
+    SINGLETON BUILT SET** — the 2⁵ NOUN × PREDICATE × ORDER × SEAT × FOLD reads
+    `0/1 · 0/5 · 0/10 · 1/10 · 0/5 · 0/1` = **1 of 32** before this slice and **5 of 32**
+    after, identical readers-only and residue-predicate, all four splitters null at
+    **128/128** and all 32 points distinct strings. Zero inert axes, zero free axes, and
+    the one pre-existing built point is D508's row at Hamming weight THREE.
+    ⚠️ **THIS HEADING NAMES NO `D<nnn>` AND THAT IS DELIBERATE, NOT AN OMISSION** —
+    D507/D508's posture, for their reason. `engineVersionChangelog.test.ts`'s ATTRIBUTION
+    case asserts `adjudicated === LABELLED.length` with no tolerance, so a labelled
+    heading without its `docs/decisions.md` row ships `check` RED. **The debt is
+    D510**: whoever writes `| **D510** | … engine 0.397.0 → 0.398.0 … |` should rewrite
+    this heading's opening parenthesis as `(D510 — THE DISCARD PILE…` in the same
+    commit, and not before.
+    🛑 **VERSION-TAX EXCEPTION LIST FOR THIS BUMP, NAMING THE HEADING BEING WRITTEN
+    THIS SLICE (D506's rule (b)).** `0.397.0` legitimately survives at SIX kinds of site
+    and none of them may be swept: **THIS HEADING'S OWN SOURCE, one line up**; D508's
+    heading TARGET directly below and its decisions-row sentence; `pileByAttackName.test.ts`'s
+    header arrow and `pileByNameFragment.test.ts`'s (which already reads
+    `0.397.0 → 0.398.0`); `mutants.ts`'s D275 re-point ledger, which is APPENDED to
+    rather than rewritten; `D506-changelog-head-unnamed`'s `find`/`replace`, which is
+    RE-POINTED wholesale onto the heading above rather than value-swept — **kept in
+    D508's trimmed, label-proof form `engineVersion <old> → **<new>**`, stopping before
+    the `(`**; and the `docs/` history. The sweep was run as a WHITELIST of ten exact
+    line shapes — **102 sites, written out and counted BEFORE the edit and re-grepped
+    after** — **not** as a value-keyed grep, because a value-keyed grep would have
+    rewritten `D506-changelog-head-unnamed`'s `find` to a heading that does not exist.
+    ⚠️ **AND `precheck` WAS RE-RUN AFTER EVERY `index.ts` EDIT** (D507's finding).)
     🆕🆕🆕 engineVersion 0.396.0 → **0.397.0** (D508 — THE DISCARD PILE NARROWED BY A
     PRINTED ATTACK NAME — THE CROSS PRODUCT OF TWO SHIPPED PIECES, AND ZERO MEMBERS IN
     EITHER UNION. `censusAttackCorpus.ts` **FILE LINE 542** — *"This attack does 20
@@ -20707,7 +20793,7 @@ import type { GameState, Seat } from "./types";
     WITNESS** — the count was re-derived every slice and the word *"three"* was carried.
     A successor of this slice inherits **81 / 61 / 17** again, over **FIVE** history
     occurrences: those four plus `deckMillFilteredScale.test.ts`'s own header arrow.) */
-export const engineVersion = "0.397.0";
+export const engineVersion = "0.398.0";
 
 export type {
   ApplyResult,

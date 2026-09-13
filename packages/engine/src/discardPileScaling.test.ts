@@ -113,10 +113,17 @@ const CLAIMED = [ENERGY_PILE, ETHAN_PILE, FOE_BASIC_PILE, FOE_ITEM_PILE] as cons
     (`types.ts`:146-149, re-read at D440). The fix is an INGEST change. */
 const ANCIENT_PILE = "This attack does 10 more damage for each Ancient card in your discard pile.";
 
-/** 🛑 THE SENTENCE THE ANCHOR REACHES AND THE VOCABULARY REFUSES FOR A COMPLETELY
-    DIFFERENT REASON — **UNBUILT**, with an executable falsifier in §6. `byName` is
-    exact equality (`cards.ts`:518) and no `CardFilter` member matches a name
-    SUBSTRING at any width. */
+/** ✅ **BUILT AT D510**, and it used to be this file's second refusal. The block read:
+    *"THE SENTENCE THE ANCHOR REACHES AND THE VOCABULARY REFUSES FOR A COMPLETELY
+    DIFFERENT REASON — UNBUILT, with an executable falsifier in §6. `byName` is exact
+    equality (`cards.ts`:518) and no `CardFilter` member matches a name SUBSTRING at any
+    width."* **The first clause was right and the last one was wrong when it was
+    written** — `ownerPokemon` has matched a proper PREFIX of `Card.name` since D200 —
+    and the falsifier FIRED exactly as designed: §2 and §6 both went RED against D510's
+    build and were re-pointed rather than narrowed. `supporterNameContaining` is the
+    member; `pileByNameFragment.test.ts` owns the row now. Kept here as a named constant
+    because it is still a member of THIS anchor's family and §1's eight-row survey
+    counts it (D428: never truncate an enumeration). */
 const TR_NAME_PILE =
   'This attack does 20 damage for each Supporter card that has "Team Rocket" in its name in your discard pile.';
 
@@ -410,14 +417,27 @@ describe("§2 — the two anchors, the vocabulary, and the seat/fold confound", 
     });
   });
 
-  it("🛑 the two vocabulary refusals are refused, and for two DIFFERENT reasons", () => {
-    // Both reach an anchor — the regex matches, the `per` is fine — and both leave the
-    // vocabulary as null, which is what keeps them on the loud ATTACK_EFFECT_SKIPPED
-    // path. They are asserted together here and pinned apart, on the POPULATION, in §6.
-    for (const text of [ANCIENT_PILE, TR_NAME_PILE]) {
-      expect(deriveAttackDamageBonus(text)).toBeNull();
-      expect(deriveAttackDamageMultiplier(text)).toBeNull();
-    }
+  it("🛑 the ONE vocabulary refusal that is left, and the one that stopped being one", () => {
+    // 🆕🆕🆕 **D510 HALVED THIS RUNG, AND IT WENT RED HERE FIRST.** It used to loop over
+    // `[ANCIENT_PILE, TR_NAME_PILE]` under the title *"the two vocabulary refusals are
+    // refused, and for two DIFFERENT reasons"*. Both reached an anchor — the regex
+    // matched, the `per` was fine — and both left the vocabulary as null. **The reasons
+    // really were different, and that is why only one of them survived**: `Ancient` is
+    // DATA-BLOCKED (no catalog column classifies the banner, so no `CardFilter` at any
+    // width can express it and the fix is an INGEST change), where the Team Rocket row
+    // was merely UNBUILT and D510 built it.
+    expect(deriveAttackDamageBonus(ANCIENT_PILE)).toBeNull();
+    expect(deriveAttackDamageMultiplier(ANCIENT_PILE)).toBeNull();
+    // …and the one that moved, asserted AT THE VALUE rather than dropped from the file,
+    // so this rung now pins the DIRECTION of the change as well as the survivor.
+    expect(deriveAttackDamageMultiplier(TR_NAME_PILE)).toEqual({
+      per: 20,
+      count: {
+        kind: "cardsInDiscardPile",
+        seat: "you",
+        filter: { kind: "supporterNameContaining", fragment: "Team Rocket" },
+      },
+    });
     // …and the ADMITTED twin on the same axis, so the refusals are not passing because
     // the reader refuses everything (D424: every "X is refused" owes a "Y is admitted").
     // One character apart from `ANCIENT_PILE` in the fold, one noun apart in the map.
@@ -546,15 +566,25 @@ describe("§2 — the two anchors, the vocabulary, and the seat/fold confound", 
       for (const reader of OTHERS) expect(reader(text)).toBeNull();
       expect(resolvedByAnyReader(text)).toBe(true);
     }
-    // …and the THREE the family still leaves behind are refused by EVERY reader, which
+    // 🆕🆕🆕 **D510 CLAIMS `TR_NAME_PILE`, so it moves UP into a named-owner loop of its
+    // own** — the whole point of keeping it as a constant. It is asserted through the
+    // SAME thirteen-way shape as its four siblings, so the new member is pinned by
+    // WHICH reader owns it rather than by a bare `=== true`.
+    for (const text of [TR_NAME_PILE]) {
+      expect(deriveAttackDamageMultiplier(text)).not.toBeNull();
+      expect(deriveAttackDamageBonus(text)).toBeNull();
+      for (const reader of OTHERS) expect(reader(text)).toBeNull();
+      expect(resolvedByAnyReader(text)).toBe(true);
+    }
+    // …and the TWO the family still leaves behind are refused by EVERY reader, which
     // is the thirteen-way negative KEPT rather than replaced.
-    // 🆕🆕🆕 **D508 TOOK `UNITED_WINGS_PILE` OUT OF THIS LIST**, and it went RED here
-    // rather than being noticed: the list is a `for` over named constants, so a row that
-    // becomes buildable fails by NAME instead of by count. The two that remain are the
-    // two genuine refusals — `ANCIENT_PILE` is DATA-BLOCKED permanently (no catalog
-    // column classifies the banner) and `TR_NAME_PILE` is UNBUILT on a name SUBSTRING —
-    // plus the counter-placement compound, which is not this family at all.
-    for (const text of [ANCIENT_PILE, TR_NAME_PILE, COUNTER_PLACEMENT_PILE]) {
+    // 🆕🆕🆕 **D508 TOOK `UNITED_WINGS_PILE` OUT OF THIS LIST AND D510 TOOK
+    // `TR_NAME_PILE`**, and both went RED here rather than being noticed: the list is a
+    // `for` over named constants, so a row that becomes buildable fails by NAME instead
+    // of by count. **The one genuine refusal left is `ANCIENT_PILE`** — DATA-BLOCKED
+    // permanently, because no catalog column classifies the banner — plus the
+    // counter-placement compound, which is not this family at all.
+    for (const text of [ANCIENT_PILE, COUNTER_PLACEMENT_PILE]) {
       expect(deriveAttackDamageBonus(text)).toBeNull();
       expect(deriveAttackDamageMultiplier(text)).toBeNull();
       for (const reader of OTHERS) expect(reader(text)).toBeNull();
@@ -833,23 +863,33 @@ describe("§6 — `MATCH_RECORD_VERSION` STAYS 29, driven in both directions", (
     expect(ancient.reduce((sum, [n]) => sum + n, 0)).toBe(2);
     expect(resolvedByAnyReader(ANCIENT_PILE)).toBe(false);
 
-    // ⑵ **The name SUBSTRING — UNBUILT, WITH AN EXECUTABLE FALSIFIER** (D428/D422).
-    //    `byName` is exact equality and no `CardFilter` member matches a substring; the
-    //    day one does and `DISCARD_PILE_NOUNS` gains the row, THIS RUNG GOES RED and the
-    //    refusal stops being true loudly. That is the condition, stated as a test rather
-    //    than as prose.
+    // ⑵ ✅ **THE NAME SUBSTRING — THE FALSIFIER FIRED, AND THIS IS WHAT IT LOOKS LIKE
+    //    AFTERWARDS.** The rung used to read *"UNBUILT, WITH AN EXECUTABLE FALSIFIER
+    //    (D428/D422). `byName` is exact equality and no `CardFilter` member matches a
+    //    substring; the day one does and `DISCARD_PILE_NOUNS` gains the row, THIS RUNG
+    //    GOES RED and the refusal stops being true loudly."* **D510 is that day** — and
+    //    the mechanism was very slightly different from the one predicted: the noun is
+    //    PARAMETERISED, so `DISCARD_PILE_NOUNS` gained no row at all and
+    //    `discardPileFilter` gained a second branch. The population half is KEPT
+    //    VERBATIM and only the verdict is turned over, which is what stops a re-point
+    //    from quietly deleting the evidence (D508).
     const substring = legalAttackCorpus().filter(
       ([, s]) => s.includes('has "Team Rocket" in its name') && s.includes("discard pile"),
     );
     expect(substring.map(([, s]) => s)).toEqual([TR_NAME_PILE]);
     expect(substring.reduce((sum, [n]) => sum + n, 0)).toBe(2);
-    expect(resolvedByAnyReader(TR_NAME_PILE)).toBe(false);
-    // The predicate that would have to change, asserted at the value rather than in a
-    // comment: an exact-equality filter says NO to a name that CONTAINS the fragment.
+    expect(resolvedByAnyReader(TR_NAME_PILE)).toBe(true);
+    // The predicate that DID change, asserted at the value rather than in a comment: an
+    // exact-equality filter still says NO to a name that merely CONTAINS the fragment —
+    // `byName` was not widened, a member was ADDED beside it — and the two readings are
+    // driven against each other on ONE pile in the same run.
     expect(
       countCardsInDiscardPile(canonical(), "p1", { kind: "byName", name: "Ethan's" }),
     ).toBe(0);
     expect(countCardsInDiscardPile(canonical(), "p1", ETHAN_BY_NAME)).toBe(1);
+    // …and the ONE refusal this file has left, so ⑴ and ⑵ no longer read as one claim:
+    // the Ancient banner is still printed, still unclaimed, and still an INGEST problem.
+    expect(resolvedByAnyReader(ANCIENT_PILE)).toBe(false);
   });
 
   it("the FROZEN board is handed back untouched — the purity pair", () => {
@@ -868,6 +908,6 @@ describe("§6 — `MATCH_RECORD_VERSION` STAYS 29, driven in both directions", (
   });
 
   it("the engine version moved with the behaviour", () => {
-    expect(engineVersion).toBe("0.397.0");
+    expect(engineVersion).toBe("0.398.0");
   });
 });

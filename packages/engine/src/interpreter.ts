@@ -14325,6 +14325,34 @@ function retrieveNoun(filter: CardFilter): { singular: string; plural: string } 
         : { singular: "a Pokémon", plural: "Pokémon" };
     case "supporter":
       return { singular: "a Supporter card", plural: "Supporter cards" };
+    case "supporterNameContaining":
+      // 🆕🆕🆕 D510 — the printed *"Supporter card that has "Team Rocket" in its
+      // name"*, and it is the arm one line up with the printed fragment interpolated:
+      // the same head noun, the same "card"/"cards" pair, plus the printed narrowing
+      // in the printed word order.
+      //
+      // ⚠️ **THE QUOTATION MARKS ARE PRINTED BYTES RATHER THAN PUNCTUATION THIS ARM
+      // CHOSE** — `yourBenchHasNameContaining`'s note (§ the `describeCondition`
+      // switch) makes the identical call for the identical reason: the card face
+      // quotes its fragment (ASCII U+0022, checked against the committed corpus), and
+      // dropping them would make the phrase read as a whole card name and mean
+      // `byName` instead.
+      //
+      // ⚠️ **THE PLURAL MOVES THE POSSESSIVE AS WELL AS THE VERB** — "have" and
+      // "their names" — which is one more moving part than `attackNamePokemon`'s pair
+      // has, because that phrase's tail ("the Round attack") carries no pronoun.
+      //
+      // ⚠️ **NO PRINTED RETRIEVAL, PROMPT OR ATTACH NAMES THIS FILTER TODAY**, so it
+      // is a reachability arm exactly like `attackNamePokemon`'s: the member's only
+      // producer is `deriveAttackDamageMultiplier`, which builds a `DamageCountSource`
+      // and never an op, and every caller of this function reads an `op.filter`. The
+      // arm exists because this switch is exhaustive over `CardFilter` — which is what
+      // makes a new member impossible to add without answering the noun question — and
+      // because a REGISTRY author can hand-write the filter into an op tomorrow.
+      return {
+        singular: `a Supporter card that has "${filter.fragment}" in its name`,
+        plural: `Supporter cards that have "${filter.fragment}" in their names`,
+      };
     case "item":
       // D231 — the printed "an Item card" / "Item cards". The ARTICLE is "an",
       // which is why these phrases are spelled per kind here rather than built

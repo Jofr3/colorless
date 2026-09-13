@@ -6886,6 +6886,192 @@ and a second board at the rulebook default keeps the pair one-axis apart (D427).
 both `poisonDamage` and `confusionDamage`; a board that raises only one of them cannot separate a
 reader that grabbed the wrong sibling from one that grabbed the right one.
 
+## "No member of this union does X" is a claim that rots differently from "this print does not ask for X" (D510)
+
+Two shipped doc blocks justified `attackNamePokemon`'s exact `===` by asserting **"no `CardFilter`
+member does substring matching at any width"**. It was false when it was written: `ownerPokemon`
+has matched a proper PREFIX of `Card.name` since **D200** (`card.name.startsWith(\`${owner}'s \`)`),
+and `scripts/opaque-anatomy.ts`'s `CARD-NAME-COUNT` marker — the marker covering the very row D510
+built — has recorded it since **D471**.
+
+🛑 **The conclusion was right and the warrant was wrong, which is D503's fourth mode arriving in a
+new place.** The exactness really is correct; what is false is the survey it rests on. **Rest an
+exactness on the PRINTED NOUN, not on a census of the union** — *"the sentence names one attack,
+whole"* cannot rot, and *"no member does X"* rots the day any member does.
+
+⚠️ **And the script said so before any engine file did.** D508's rule (sweep a corrected claim
+across `packages/**` AND `scripts/**`) has a converse: **when a `scripts/` instrument and an engine
+doc block disagree about the engine, the instrument is not automatically the stale one.** Check
+both directions before correcting either.
+
+## The ANCHOR may not be the blocker — run the pattern before pricing the slice (D510)
+
+D440's census block listed the Team Rocket row as needing a `CardFilter` member, and every resume
+point since repeated it. What nobody ran was the anchor. `DISCARD_PILE_COUNT_MULTIPLY`'s `([^.]+)`
+noun group has swallowed the whole narrowed phrase since the day it was written — against the
+printed bytes it captures `20` / `Supporter card that has "Team Rocket" in its name` / `your` — so
+the sentence had always REACHED the reader and was refused one step later, at the noun resolver.
+That function's own doc block said so (*"or `null` when this file has no way to spell it (Ancient,
+the Team Rocket name substring)"*) and the price still read as if an anchor were owed.
+
+🛑 **Before pricing a residue row, `exec` its family's shipped anchors against the printed bytes.**
+It is one line and it distinguishes D505's shape (*the blocker is a NAME, not a machine*) from
+D508's (*the blocker is a PATTERN*). D510's whole engine change was one regex **added beside** a
+resolver and one union member; the anchors were untouched, so **no existing mutant row quoting them
+rotted** — which is the second payoff and is not visible from the sentence alone.
+
+## A both-sides COUNT is not a both-sides OP — D507's composition does not transfer (D510)
+
+D507 answered *"(both yours and your opponent's)"* with a COMPOSITION: `spreadDamage{yourBench}`
+then `spreadDamage{opponentBench}`, two ops, **zero type bytes**. That works because `spreadDamage`
+is an **op** and a program is a **list**. The same printed parenthetical over a **count** does not
+compose: `AttackDamageBonus` is `{ per, count }` with ONE count, the fold is `per × count`, and two
+counts would have to be **summed into one number** — which changes the reader's RETURN TYPE, not
+its program.
+
+**Measured, at this head, rather than argued:**
+
+| question | answer |
+|---|---|
+| `CountSeat` members | **2** (`"you" \| "opponent"`) |
+| `seat: "both"` occurrences in the repo | **0** |
+| sites that READ `CountSeat` | **2**, both `seat === "you" ? attackerSeat : defenderSeat` |
+| exhaustive consumers of `DamageCountSource` | **1** (`scaledAttackDamage`, attack.ts) |
+| shipped both-sides counts | **2**, and BOTH are MEMBERS (`bothSidesBenchCount`, `bothActivesEnergyCount`) |
+
+🛑 **The decider is not member-count, it is which mistake the compiler catches.** A third
+`CountSeat` value is read as `"opponent"` by both binary ternaries, **silently, with no type
+error** — and it hands `cardsInDiscardPile` a value nothing prints (D104). A new MEMBER is caught by
+`attack.ts`'s total `switch` (D447). **When a widening and an addition are otherwise equal, take
+the one a total switch can see.**
+
+## The BAKED HEAD NOUN is combinatorial — price it with a crossover, not with a shrug (D510)
+
+`CardFilter` has no intersection combinator, deliberately, so `attackNamePokemon` and D510's
+`supporterNameContaining` both spell the head noun INTO the member. **The cost of that idiom is one
+member per (noun × predicate) pair**, and a price that does not say where it stops is not a price.
+
+D510's, stated: the column prints the quoted-fragment predicate under **two** head nouns
+(`censusAttackCorpus.ts` file lines 543 `Supporter card` and 583 `Pokémon`), so full coverage costs
+**2 members**. The alternative — a general `allOf` plus a bare `nameContaining` — costs **3**: two
+members plus a RECURSIVE combinator every exhaustive `CardFilter` reader owes an arm to, one of
+which must recurse (`anyOf`'s own stated cost), plus a `retrieveNoun` join with *"and"* that no
+printed sentence drives. **The crossover is the THIRD head noun**, which this column does not
+print. A successor who meets one should re-run the comparison rather than adding a third member by
+habit.
+
+⚠️ **And D392's amended rule decides MEMBER vs OPTIONAL RIDER here too, at a union it was not
+written for**: *a filter is a FIELD only when a SHIPPED delegate already accepts it; otherwise it is
+a MEMBER*. `cards.ts` carries no name-matching predicate at all — `byName` and `ownerPokemon` both
+read `card.name` INLINE — so there is no delegate, and an optional rider is invisible to the
+compiler: a producer that spelled the printed noun and forgot it would silently get the UNNARROWED
+read. The field is `fragment` and not `name` for D392's compiler reason, in both unions.
+
+## A tenth lattice shape: FIVE axes, every one flipping at the MINIMUM 1/16, singleton built set (D510)
+
+D505's shape was one blocking axis at 16/16 with four inert at 0/16; D507's a conjunctive pair at
+8/16 with three inert; D508's one blocker at 7/16 with four live and none inert. D510's 2⁵
+(NOUN × PREDICATE × ORDER × SEAT × FOLD) reads
+
+> `0/1 · 0/5 · 0/10 · 1/10 · 0/5 · 0/1` — **1 of 32** before the slice, **5 of 32** after,
+> identical readers-only and under `builds()`, **0 divergent points**, all four splitters null at
+> **128/128**, all 32 points distinct strings.
+
+Flip table: **1/16 on every one of the five axes** — the minimum a live axis can have. **Zero inert
+axes AND zero free axes**, which is new: D505 had four free, D507 three, D508 none-free-but-none-at-one.
+
+🛑 **Read as a price, the shape says the row shares no sub-expression with anything built.** The
+single pre-existing built point is D508's row at Hamming weight THREE, and every axis flips only in
+that one cell — so the sentence's built neighbourhood is a single distant point, not a region.
+⚠️ **Which is exactly why the flip table is not the whole price.** Three of the five axes are
+literals the new noun pattern carries and owe a *"printed zero times"* measurement; the other two
+(SEAT, FOLD) flip at 1/16 **because the shipped anchor pair already varies them for free**. **A
+1/16 axis can be either owed or free — look at WHICH point it flips at, not just at the count.**
+
+## The row-selection flag is `--only`, and an UNRECOGNISED flag runs the WHOLE corpus silently (D510)
+
+D510 typed `bun scripts/mutation/run.ts --id <row> --allow-dirty` three times. **There is no `--id`
+flag.** `run.ts` takes `--only a,b,c` and `--decision D<nnn>`; an unknown flag is not rejected, so
+each of those invocations started a **2,541-row, ~3-hour sweep** that looked like a row probe for
+its first few seconds. Killing them on a timeout is what produced the damage below.
+
+🛑 **Check the flag against `run.ts`'s own usage block (lines ~90–100) before quoting a probe
+command in a brief or a resume point.** The failure mode is silent and expensive in both directions:
+the run does far more than asked, and the OUTPUT you skim looks like the run you wanted.
+
+## A killed `--allow-dirty` probe leaves its PATCH, and two concurrent ones restore each other's files (D510)
+
+The harness patches a source file, runs a suite, restores it. **A killed run leaves the patch in
+place.** D510 had two running at once and killed both: the tree was left carrying **fourteen**
+leftover mutant patches across `effects.ts`, `interpreter.ts`, `cards.ts`, `cardplay.ts` and
+`registry.ts` — **three of them files the slice was itself editing**, so a blind `HEAD` restore
+would have destroyed real work.
+
+✅ **`run.ts` HAS A JOURNAL AND SELF-HEALS ON THE NEXT RUN** — *"A previous mutation run (pid …) did
+not restore its files. Restoring them now from the journal."* — which is the FIRST thing to try, and
+which D510 discovered only after recovering by hand. The manual recovery is still worth knowing
+because it works when the journal does not cover a file: for each id `precheck` reports at `find
+occurs 0×`, assert the row's `replace` occurs exactly **1×** and its `find` **0×**, then substitute
+back. **Row-wise, never file-wise**, whenever the file is one the slice has touched.
+
+⚠️ **And `git status` after an interrupted probe is not optional.** Two of the five clobbered files
+(`cardplay.ts`, `registry.ts`) were not in the slice's edit set at all and would have been committed
+as silent behaviour changes. **`bun run check` was GREEN on one of them**: `cardplay.ts` carried a
+`switchActive` mutant whose killing suite had already been restored out from under it — so the
+green suite proves the tree is consistent, not that it is the tree you wrote.
+
+**Rules**: one probe at a time; `--only` / `--decision` and nothing else; and after ANY interrupted
+probe run `precheck` **and** `git status` before doing anything else.
+
+### `run.ts` does not reject unknown flags, so a typo launches a three-hour whole-corpus sweep (D510)
+
+`scripts/mutation/run.ts` selects rows with **`--only`**. There is **no `--id`**. But unknown flags
+are **not rejected** — they are ignored — so `--id <row>` does not probe one row: it **matches
+nothing to filter on and runs the entire corpus**.
+
+At D510 this happened **three times**. Two of those sweeps ran **concurrently**, were killed, and
+left **14 mutant patches across five files** — three of which were being edited at the time. ⚠️ **And
+`bun run check` was GREEN on one of those patched trees**, because a mutation is by construction a
+plausible edit.
+
+**Why this is worse than a wasted three hours:** the harness patches the working tree in place and
+restores on exit. A killed sweep does not restore. So a mistyped flag can leave the repository in a
+state that **looks healthy to `check`** and silently corrupts whatever is committed next.
+
+**The rules:**
+
+1. **Probe with `--only <id>` or `--decision <Dnnn>`.** If a "probe" takes more than a minute,
+   **it is not a probe** — stop it and read the flag you typed.
+2. **`precheck` is the detector.** It asserts every row's `find` occurs exactly once, and a leftover
+   patch has *replaced* a `find` — so **`precheck` clean is proof the tree is unpatched**, and
+   `check` green is not. Run it after any interrupted sweep, and before any commit that followed one.
+3. **Never run two sweeps at once.** They patch the same files.
+4. `run.ts` keeps a **journal that self-heals on the next run**, which is a recovery path but not a
+   safety net — it only helps if a next run happens before a commit.
+
+⚠️ **The guard is cheap and is not yet written**: reject any argument beginning `--` that is not in
+the known-flag set, and exit non-zero naming it. Until then this convention is the only thing between
+a typo and a corrupted commit.
+
+### When a `scripts/` instrument and an engine doc block disagree about the engine, the instrument is not automatically the stale one (D510)
+
+Two doc blocks in `effects.ts` stated *"no `CardFilter` member does substring matching at any
+width"*, and used it as the warrant for refusing a name-fragment member. **The sentence was false
+when it was written**: `ownerPokemon` has matched a proper **prefix** of `Card.name` since D200
+(`card.name.startsWith(\`${owner}'s \`)`, `cards.ts`), and a prefix is a substring at a fixed offset.
+
+⚠️ **And `scripts/opaque-anatomy.ts`'s `CARD-NAME-COUNT` marker — the marker covering the very row
+the doctrine was refusing — had recorded the truth since D471.** For thirty-nine decisions the repo
+held both claims at once, and the engine's own prose was the wrong half.
+
+**The habit this corrects:** `scripts/` is treated as derived commentary and `packages/engine` as the
+source of truth, so a conflict gets resolved toward the engine by reflex. But a marker in `scripts/`
+is **re-derived against the tree every run**, while a doc block is **prose that nothing executes**.
+**On a question of fact about the engine, prefer the one something checks.** Cf. D508, where a false
+price survived in `scripts/` for thirty-three decisions because nobody looked there — the lesson runs
+in *both* directions: **neither side of that boundary is automatically fresher.**
+
+
 ## Git / commits
 - Branch off `main` for non-trivial work; commit/push only when asked.
 - Commit trailer per global config: `Co-Authored-By: Claude ...`.

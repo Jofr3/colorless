@@ -1359,6 +1359,7 @@ describe("§6 — `MATCH_RECORD_VERSION` STAYS 29, driven at all THREE addresses
       basicEnergy: { kind: "basicEnergy" },
       byName: { kind: "byName", name: "Fixmon ex" },
       supporter: { kind: "supporter" },
+      supporterNameContaining: { kind: "supporterNameContaining", fragment: "Team Rocket" },
       item: { kind: "item" },
       stadium: { kind: "stadium" },
       trainerCard: { kind: "trainerCard" },
@@ -1368,7 +1369,8 @@ describe("§6 — `MATCH_RECORD_VERSION` STAYS 29, driven at all THREE addresses
       specialEnergy: { kind: "specialEnergy" },
       providesEnergy: { kind: "providesEnergy", energyType: "Grass" },
     };
-    // **NINETEEN BEFORE D446, TWENTY-ONE AFTER, TWENTY-TWO AFTER D466.** The count is
+    // **NINETEEN BEFORE D446, TWENTY-ONE AFTER, TWENTY-TWO AFTER D466, TWENTY-THREE
+    // AFTER D510.** The count is
     // the second half of the guard: a diff alone stays green when a member is dropped
     // from the union and from this list in one edit.
     // 🆕🆕 **D466 — AND THIS `Record` IS THE ALPHABET GATE, WHICH WAS OBSERVED RATHER
@@ -1376,7 +1378,12 @@ describe("§6 — `MATCH_RECORD_VERSION` STAYS 29, driven at all THREE addresses
     // `TS2741: Property 'stagePokemon' is missing`, before any test ran. That is the
     // whole reason the enumeration is compile-enforced instead of hand-kept (D424) —
     // a new `CardFilter` member cannot reach the bytes without passing this line.
-    expect(Object.keys(EVERY_KIND)).toHaveLength(22);
+    // 🆕🆕🆕 **D510 — THE ALPHABET GATE FIRED AGAIN, AND IT IS RECORDED BECAUSE IT IS
+    // THE ONLY THING THAT MADE THE NEW MEMBER IMPOSSIBLE TO SHIP HALF-WIRED**: adding
+    // `supporterNameContaining` to the union made `tsc -b` fail HERE, with
+    // `TS2741: Property 'supporterNameContaining' is missing`, before any test ran —
+    // the same observation D466 recorded one member earlier.
+    expect(Object.keys(EVERY_KIND)).toHaveLength(23);
     // 🛑 **THE BYTES.** Each filter is written out and read back the way
     // `MatchRecord.state` is, and `matchesFilter` must give the IDENTICAL answer over
     // a cast that spans every category the catalog has — a Pokémon with a rule box
@@ -1394,6 +1401,11 @@ describe("§6 — `MATCH_RECORD_VERSION` STAYS 29, driven at all THREE addresses
       "fix-item",
       "fix-energy",
       "fix-stage2body",
+      // 🆕🆕🆕 D510 — without an actual Supporter carrying the fragment in the cast,
+      // `supporterNameContaining` answers false to every member of it and is
+      // indistinguishable from a member that answers false to everything (D424's
+      // anti-vacuity rule, the reason `fix-stage2body` is on the line above).
+      "fix-trsupporter",
     ];
     for (const [kind, filter] of Object.entries(EVERY_KIND)) {
       const readBack = JSON.parse(JSON.stringify(filter)) as CardFilter;
@@ -1430,6 +1442,29 @@ describe("§6 — `MATCH_RECORD_VERSION` STAYS 29, driven at all THREE addresses
     expect(matchesFilter(FIXTURE_POOL["fix-stage1"], EVERY_KIND.evolutionPokemon)).toBe(true);
     expect(
       matchesFilter(FIXTURE_POOL["fix-stage2body"], { kind: "stagePokemon", stage: "Stage1" }),
+    ).toBe(false);
+    // 🆕🆕🆕 D510 — the new member's positive and its THREE different negatives, each
+    // false for a DIFFERENT reason: an Item carrying the fragment (the head noun), a
+    // Supporter carrying none (the fragment), and a Pokémon (neither conjunct).
+    expect(
+      matchesFilter(FIXTURE_POOL["fix-trsupporter"], EVERY_KIND.supporterNameContaining),
+    ).toBe(true);
+    expect(
+      matchesFilter(FIXTURE_POOL["fix-trtransceiver"], EVERY_KIND.supporterNameContaining),
+    ).toBe(false);
+    expect(
+      matchesFilter(FIXTURE_POOL["fix-ethansadventure"], EVERY_KIND.supporterNameContaining),
+    ).toBe(false);
+    expect(
+      matchesFilter(FIXTURE_POOL["fix-roundbody"], EVERY_KIND.supporterNameContaining),
+    ).toBe(false);
+    // …and the NEIGHBOURS it must not be, on the same three cards in the same run:
+    // `supporter` admits the Supporter this member refuses, and `byName` — the EXACT
+    // read — refuses the very card this member's fragment was taken from.
+    expect(matchesFilter(FIXTURE_POOL["fix-ethansadventure"], EVERY_KIND.supporter)).toBe(true);
+    expect(matchesFilter(FIXTURE_POOL["fix-trtransceiver"], EVERY_KIND.item)).toBe(true);
+    expect(
+      matchesFilter(FIXTURE_POOL["fix-trsupporter"], { kind: "byName", name: "Team Rocket" }),
     ).toBe(false);
   });
 
@@ -1498,7 +1533,7 @@ describe("§6 — `MATCH_RECORD_VERSION` STAYS 29, driven at all THREE addresses
   });
 
   it("the engine version moved with the behaviour", () => {
-    expect(engineVersion).toBe("0.397.0");
+    expect(engineVersion).toBe("0.398.0");
   });
 });
 
