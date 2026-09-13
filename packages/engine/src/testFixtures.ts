@@ -10763,6 +10763,26 @@ export const FIXTURE_POOL: Record<string, Card> = {
     name: "Team Rocket's Transceiver",
   },
 
+  /** 🆕🆕🆕 D512 — FIXTURE. An **ITEM** whose printed name contains *"Weezing"*, and it
+      is `CardFilter.pokemonNameContaining`'s HEAD-NOUN control — the only card in the
+      pool on which that member's category conjunct is OBSERVABLE.
+
+      🛑 **THE CONJUNCT IS INERT ON EVERY BOARD, WHICH IS EXACTLY WHY THIS CARD EXISTS
+      RATHER THAN WHY IT DOES NOT.** The member's only producer feeds a
+      `countPokemonInPlay` walk, and every body in play is already a Pokémon — so no
+      damage number this engine can compute changes if the conjunct is deleted, and a
+      board-level rung for it would be vacuous (D200/D214). `matchesFilter` is EXPORTED
+      and answers about a CARD, so the conjunct is driven there instead, on this card.
+      That is the whole of D442's rule: write the row for the observable direction.
+
+      ⚠️ **AN ITEM AND NOT A TOOL**, `fix-trtransceiver`'s reason one fixture up: `item`
+      and `toolCard` are disjoint printed subtypes (D231) and the head noun refuses both
+      the same way, so one negative is enough. */
+  "fix-weezingcanister": {
+    ...itemTrainer("fix-weezingcanister"),
+    name: "Weezing Gas Canister",
+  },
+
   /** D256 — the HOLDER of "Flower Curtain" (Shaymin `sv10-010`/`-185`,
       `preventBenchDamageNoRuleBox`). ONE new body, and the sweep that decided that
       is D250's rule run on BOTH sides of the new conjunct:
@@ -12137,6 +12157,105 @@ export const FIXTURE_POOL: Record<string, Card> = {
           'This attack does 20 damage for each Supporter card that has "Team Rocket" in its name in your discard pile.',
       },
     ],
+  }),
+  /** 🆕🆕🆕 D512 — FIXTURE. The HOLDER of corpus **FILE LINE 583**,
+      *"This attack does 40 damage for each Pokémon in play that has "Koffing" or
+      "Weezing" in its name (both yours and your opponent's)."* (**2 legal printings**).
+
+      🛑 **ITS NAME CARRIES NEITHER FRAGMENT, AND THAT IS A DECISION AGAINST THE
+      OBVIOUS ONE.** Naming the holder *"Weezing"* would have been realistic — the real
+      card almost certainly is one — and it would have made the count STRUCTURALLY
+      non-zero on every board the attack can be used from, retiring the `×` fold's
+      printed floor (an empty count is no `DAMAGE_DEALT` row at all) for the whole
+      suite. ⚠️ **AND THE REAL CARD'S NAME IS NOT RESOLVABLE IN THIS CHECKOUT** (D425),
+      so "the holder counts itself" would have been a claim about a card this repo
+      cannot see. The Active-Spot axis is carried by `fix-weezingwall` on the DEFENDER's
+      side instead, where it costs the zero board nothing.
+
+      340 HP so nothing in the suite can Knock it out, `retreat: 1` so no rung depends
+      on a Retreat Cost, ONE printed {C} so a single attachment arms it, and the `×`
+      marker on the damage because the print is the MULTIPLY fold: the base is DROPPED,
+      not kept, which is what makes an empty board a missing `DAMAGE_DEALT` row rather
+      than a 40. */
+  "fix-inplaynames": battler("fix-inplaynames", {
+    types: ["Colorless"],
+    hp: 340,
+    attacks: [
+      {
+        cost: ["Colorless"],
+        name: "Gas Cloud",
+        damage: "40×",
+        effect:
+          'This attack does 40 damage for each Pokémon in play that has "Koffing" or "Weezing" in its name (both yours and your opponent\'s).',
+      },
+    ],
+  }),
+  /** 🆕🆕🆕 D512 — FIXTURE. A Pokémon whose printed name carries the fragment
+      *"Weezing"* at a **NON-ZERO offset**, and it exists for exactly one wrong build:
+      `card.name.startsWith(...)` instead of `.includes(...)`.
+
+      🛑 **THE WRONG BUILD IS A NEIGHBOUR, NOT A STRAW** (D190b). `matchesFilter`'s
+      `ownerPokemon` arm — three `case`s from the new one, in the same `switch` — reads
+      `card.name.startsWith(...)`, so a prefix read is what an author writing
+      `pokemonNameContaining` by imitation reaches for. Without a body at a non-zero
+      offset the two readings are the same number on every board and the mutant has
+      nowhere to die (D456).
+
+      ⚠️ **THE NAME IS REALISTIC RATHER THAN CONSTRUCTED, WHICH IS THE OPPOSITE OF
+      `fix-trgrunt`'s POSITION AND IS WORTH THE CONTRAST.** D510 had to construct a
+      non-zero offset because the legal column's Team Rocket Supporters are all
+      owner-prefixed; the regional-form prefix is how this family ACTUALLY spells the
+      offset, so this fixture claims something about the pool as well as about the
+      reader. ⚠️ **AND IT CARRIES NO APOSTROPHE AND NO OWNER POSSESSIVE** — a
+      `"<Owner>'s "` prefix would have put this card inside `ownerPokemon`'s read and in
+      front of `clauseApostrophe.test.ts`'s re-ingest sweep for no coverage at all. */
+  "fix-galarweezing": battler("fix-galarweezing", {
+    types: ["Colorless"],
+    name: "Galarian Weezing",
+  }),
+  /** 🆕🆕🆕 D512 — FIXTURE. A Pokémon whose printed name carries the **FIRST**
+      fragment, *"Koffing"*, also at a non-zero offset.
+
+      🛑 **IT IS WHAT MAKES THE PRINTED *"or"* AN AXIS RATHER THAN A DECORATION.** The
+      sentence names TWO fragments and the arm spells them as an `anyOf`; with only one
+      fragment represented on the board, a build that dropped either disjunct — or read
+      `.every` instead of `.some` — would answer the same number as the print. This body
+      and `fix-galarweezing` are on OPPOSITE fragments, so the canonical board reads a
+      different total for "Koffing only", for "Weezing only" and for the intersection.
+
+      ⚠️ **NO APOSTROPHE AND NO OWNER POSSESSIVE**, `fix-galarweezing`'s reason
+      verbatim: *"Team Rocket's Koffing"* would have been the obvious spelling and it
+      would have put this card inside `ownerPokemon`'s prefix read. */
+  "fix-darkkoffing": battler("fix-darkkoffing", {
+    types: ["Colorless"],
+    name: "Dark Koffing",
+  }),
+  /** 🆕🆕🆕 D512 — FIXTURE. A 340 HP body named *"Weezing"* — the fragment at **OFFSET
+      0** — with **no attacks**, fielded as the DEFENDER's ACTIVE.
+
+      🛑 **IT CARRIES TWO AXES THAT NO OTHER BODY IN THE CAST CAN CARRY, AND BOTH ARE
+      ABOUT WHAT THE COUNT REACHES RATHER THAN ABOUT WHAT IT MATCHES.**
+        · **THE ACTIVE SPOT.** §4 defines *"in play"* as the Active PLUS the Bench, and
+          the wrong neighbour here is `benchBodies` — the walk three `case`s up in
+          `attack.ts`'s own switch, which deliberately skips the Active. With no
+          MATCHING Active anywhere on the table the two walks answer the same number on
+          every board and that mistake is invisible (`fix-stage2body`'s lesson, at a
+          different zone). It sits on the DEFENDER's side so the attacker's own Active
+          can stay fragment-free and the `×` fold's zero board stays reachable.
+        · **THE ANCHORING.** It is the ONLY body in the cast whose name STARTS with a
+          fragment, so it is the whole of what separates `.includes` from `.startsWith`
+          — `matchesFilter`'s `ownerPokemon` arm reads `startsWith`, which is what an
+          author writing the new member by imitation reaches for (D190b). D510's
+          `fix-trgrunt` separates the same pair from the other side.
+
+      340 HP because it must survive the printed swing on the canonical board (**280**)
+      — a Knock Out would put a §8.1 Prize tail underneath an assertion whose subject is
+      a damage number — and NO ATTACKS (`fix-spherical`/`fix-titan`'s trick) so nothing
+      here reads them and no new sentence enters `clauseApostrophe.test.ts`'s sweep. */
+  "fix-weezingwall": battler("fix-weezingwall", {
+    types: ["Colorless"],
+    hp: 340,
+    name: "Weezing",
   }),
   /** 🆕🆕 D466 — FIXTURE. A **Stage 2** body carrying the printed *"…for each Stage 2
       Pokémon on your Bench."* attack (`censusAttackCorpus.ts` file line 589, 2 legal
@@ -16299,6 +16418,69 @@ export const PILE_NAME_FRAGMENT_DECK = deckOf({
   "fix-ethansadventure": 8, // a Supporter carrying NO fragment — the FRAGMENT control
   "fix-titan": 10, // 340 HP, no attacks — the defender, the opener, the non-card-class control
   "fix-energy": 8, // Basic {C} — the one printed symbol of the one attack
+});
+
+/** 🆕🆕🆕 D512 — the BOTH-SIDES BODY COUNT NARROWED BY TWO PRINTED NAME FRAGMENTS
+    (`bothSidesNameFragment.test.ts`). ITS OWN 60 on D270's rule and NOT a widened
+    `IN_PLAY_BODIES_DECK` or `PILE_NAME_FRAGMENT_DECK`: `deckOf` order feeds the
+    shuffle, so moving one card in a shared deck reshuffles every seed-pinned board
+    that reads it — D412 added ONE card to a shared deck and reddened three of another
+    slice's boards.
+
+    🛑 **THE CAST IS CHOSEN SO THAT NINE WRONG BUILDS READ NINE DIFFERENT NUMBERS ON
+    ONE BOARD**, which is `PILE_NAME_FRAGMENT_DECK`'s rule one zone over and two builds
+    further. On the canonical board, at the printed 40 per body:
+
+      the print        — both seats, IN PLAY, either fragment      7 → **280**
+      the SEAT half    — the ATTACKER's side alone                 3 → 120
+      the SEAT half    — the DEFENDER's side alone                 4 → 160
+      the ZONE wrong   — both BENCHES, neither Active              6 → 240
+      the FILTER wide  — `anyPokemon` over both sides              9 → 360
+      `startsWith`     — the same fragments read as a PREFIX       1 → 40
+      the `or` as AND  — `.every` over the two disjuncts           0 → no row
+      the FIRST alone  — `"Koffing"` only                          2 → 80
+      the SECOND alone — `"Weezing"` only                          5 → 200
+
+    Nine distinct counts, none a multiple of another by accident. ⚠️ **ONLY THE PRINT IS
+    DEALT AS DAMAGE**; the other eight are read through `countPokemonInPlay`, the walk the
+    arm itself performs, so the defending Active (`fix-weezingwall`, 340 HP) only has to
+    survive 280 — which it does, so the printed rung reads `DAMAGE_DEALT` and never a
+    Knock Out.
+
+      • `fix-inplaynames` — the HOLDER, the attacker's Active, and its name carries
+        NEITHER fragment: that is what keeps a ZERO-count board reachable, which is the
+        `×` fold's printed floor;
+      • `fix-weezingwall` — 340 HP, named *"Weezing"*, the DEFENDER's Active. It carries
+        the ACTIVE-SPOT axis and the `startsWith` axis and is the only body that can
+        carry either;
+      • `fix-galarweezing` — *"Galarian Weezing"*, the same fragment at a NON-ZERO
+        offset, four copies fielded across the two Benches;
+      • `fix-darkkoffing` — *"Dark Koffing"*, the OTHER printed fragment: what makes the
+        printed `or` an axis rather than a decoration;
+      • `fix-benchfiller` — a Pokémon carrying NEITHER fragment: the filter control, the
+        body a build that dropped the fragments counts;
+      • `fix-titan` — 340 HP, no attacks, no fragment: the defending Active of the ZERO
+        board, and the only other legal opener the suite needs;
+      • `fix-energy` — Basic {C}, the single printed symbol of the one attack;
+      • `fix-weezingcanister` — an ITEM carrying a fragment. It is in this 60 so the deck
+        can hold it, NOT so a board can play it: a Trainer is never in play, so it
+        contributes to no count here and its whole job is at `matchesFilter`.
+
+    ⚠️ **`fix-galarweezing` IS ASKED FOR TWICE ON EACH SEAT ON THE CANONICAL BOARD AND
+    THE MIRROR ASKS BOTH SEATS**, which is why its count is 14 rather than the pool's
+    usual 4: setup has already moved 7 cards to hand and 6 to prizes on each seat before
+    any surgery runs.
+
+    4 + 8 = 12, + 14 = 26, + 8 = 34, + 8 = 42, + 8 = 50, + 6 = 56, + 4 = **60**. */
+export const IN_PLAY_NAME_FRAGMENT_DECK = deckOf({
+  "fix-inplaynames": 4, // the holder of the one printed sentence — NEITHER fragment
+  "fix-weezingwall": 8, // 340 HP "Weezing" — the defender's Active, the ACTIVE and PREFIX axes
+  "fix-galarweezing": 14, // "Galarian Weezing" — the fragment at a NON-ZERO offset
+  "fix-darkkoffing": 8, // "Dark Koffing" — the OTHER printed fragment
+  "fix-benchfiller": 8, // a Pokémon carrying NEITHER fragment — the filter control
+  "fix-titan": 8, // 340 HP, no attacks — the ZERO board's defending Active and the opener
+  "fix-energy": 6, // Basic {C} — the one printed symbol of the one attack
+  "fix-weezingcanister": 4, // an ITEM carrying a fragment — in the deck, never in play
 });
 
 export const IN_PLAY_TYPE_DECK = deckOf({

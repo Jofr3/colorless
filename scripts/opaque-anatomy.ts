@@ -364,7 +364,16 @@ export const MARKERS: readonly Marker[] = [
     name: "BOTH-SIDES-BOARD",
     rx: /both yours and your opponent's/,
     verdict: "co-marker",
-    needs: "nothing this marker can name — the both-seats board scope ships",
+    // 🆕🆕🆕 **D512 EXTENDED THIS `needs` RATHER THAN ITS `rx`, AND THE VERDICT DID NOT
+    // FLIP**: the built side was already live and grew by one, so the marker is a
+    // co-marker before and after. What changed is that *"the both-seats board scope"*
+    // now covers a COUNT as well as a walk — `DamageCountSource.bothSidesPokemonInPlay`
+    // joins `bothSidesBenchCount` and `bothActivesEnergyCount`, and all three are
+    // MEMBERS with no seat field because `attack.ts` resolves `CountSeat` with a binary
+    // ternary. ⚠️ **THE `rx` IS UNTOUCHED** (D508): narrowing it would restore the old
+    // verdict by deleting the evidence.
+    needs:
+      "nothing this marker can name — the both-seats board scope ships, as a WALK (`counterEachAll.side`, `handRefresh.who`, `spreadDamage` composed twice) and, since D512, as a COUNT (`bothSidesPokemonInPlay`, beside `bothSidesBenchCount` and `bothActivesEnergyCount`)",
   },
   {
     name: "CARD-NAME-COUNT",
@@ -380,8 +389,11 @@ export const MARKERS: readonly Marker[] = [
     // sentences were corrected at D510. **D508's rule, paid in the direction it was
     // written for**: sweep a claim across `packages/**` AND `scripts/**`, because the
     // copy nobody is editing is the one that stays false.
+    // 🆕🆕🆕 **D512 BUILT THE SECOND OF THIS MARKER'S THREE ROWS AND THE VERDICT STILL
+    // DID NOT FLIP** — the built side was 2/3 and is now 3/3, so it was a co-marker
+    // before and after, for the third slice running. The `rx` is UNTOUCHED.
     needs:
-      "nothing this marker can name — `CardFilter.ownerPokemon` reads `Card.name` (a PREFIX) and has since D200, and D510's `supporterNameContaining` reads it UNANCHORED",
+      "nothing this marker can name — `CardFilter.ownerPokemon` reads `Card.name` (a PREFIX) and has since D200, D510's `supporterNameContaining` reads it UNANCHORED under a Supporter head, and D512's `pokemonNameContaining` reads it UNANCHORED under a Pokémon head",
   },
   {
     name: "OPP-HAND-CHOICE",

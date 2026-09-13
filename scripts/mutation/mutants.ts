@@ -5230,7 +5230,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D275",
     what: "🛑 THE DEBT THIS SLICE PAID FOR THE FIFTH TIME, RE-INSTALLED: `engineVersion` falls a minor behind `packages/engine/package.json`, which is EXACTLY the state the tree was in at the head of D275 (0.187.0 against 0.189.0) and had been for two slices with nothing comparing them. The tie is the guard; this row is the proof it is one",
     file: "packages/engine/src/index.ts",
-    // ⚠️ RE-POINTED AT D510 (0.397.0 → 0.398.0), at D508 (0.396.0 → 0.397.0), at D507 (0.395.0 → 0.396.0), at D505 (0.394.0 → 0.395.0), at D490 (0.384.0 → 0.385.0), at D489 (0.383.0 → 0.384.0), at D488 (0.382.0 → 0.383.0), at D487 (0.381.0 → 0.382.0), at D486 (0.380.0 → 0.381.0), at D485 (0.379.0 → 0.380.0), at D450 (0.351.0 → 0.352.0), at D449 (0.350.0 → 0.351.0), at D448 (0.349.0 → 0.350.0), at D447 (0.348.0 → 0.349.0), at D446 (0.347.0 → 0.348.0), at D445 (0.346.0 → 0.347.0), at D444 (0.345.0 → 0.346.0), at D443 (0.344.0 → 0.345.0), at D442 (0.343.0 → 0.344.0), at D441 (0.342.0 → 0.343.0), at D440 (0.341.0 → 0.342.0), at D439 (0.340.0 → 0.341.0), at D438 (0.339.0 → 0.340.0), at D437 (0.338.0 → 0.339.0), at D436 (0.337.0 → 0.338.0), at D435 (0.336.0 → 0.337.0), at D434 (0.335.0 → 0.336.0), at D433 (0.334.0 → 0.335.0), at D432 (0.333.0 → 0.334.0), at D431 (0.332.0 → 0.333.0), at D430 (0.331.0 → 0.332.0), at D429 (0.330.0 → 0.331.0), at D428 (0.329.0 → 0.330.0), at D427 (0.328.0 → 0.329.0), at D426 (0.327.0 → 0.328.0), at D425 (0.326.0 → 0.327.0), at D424 (0.325.0 → 0.326.0), at D423 (0.324.0 → 0.325.0), at D422 (0.323.0 → 0.324.0), at D421 (0.322.0 → 0.323.0), at D420 (0.321.0 → 0.322.0), at D417 (0.320.0 → 0.321.0), at D416 (0.319.0 → 0.320.0), at D415 (0.318.0 → 0.319.0), at D414 (0.317.0 → 0.318.0), at D413 (0.316.0 → 0.317.0), at D412 (0.315.0 → 0.316.0), at D410 (0.314.0 → 0.315.0), at D409 (0.313.0 → 0.314.0), at D408 (0.312.0 → 0.313.0), at D407 (0.311.0 → 0.312.0), at D402 (0.306.0 → 0.307.0), at D401 (0.305.0 → 0.306.0), at D400 (0.304.0 → 0.305.0), at D399 (0.303.0 → 0.304.0), at D398 (0.302.0 → 0.303.0), at D397 (0.301.0 → 0.302.0), at D396 (0.300.0 → 0.301.0), at D395 (0.299.0 → 0.300.0), at D394 (0.298.0 → 0.299.0), at D393 (0.297.0 → 0.298.0), at D392 (0.296.0 → 0.297.0), at D391 (0.295.0 → 0.296.0), at D390 (0.294.0 → 0.295.0), at D389 (0.293.0 → 0.294.0), at D388 (0.292.0 → 0.293.0), at D387 (0.291.0 → 0.292.0), at D386 (0.290.0 → 0.291.0),
+    // ⚠️ RE-POINTED AT D512 (0.398.0 → 0.399.0), at D510 (0.397.0 → 0.398.0), at D508 (0.396.0 → 0.397.0), at D507 (0.395.0 → 0.396.0), at D505 (0.394.0 → 0.395.0), at D490 (0.384.0 → 0.385.0), at D489 (0.383.0 → 0.384.0), at D488 (0.382.0 → 0.383.0), at D487 (0.381.0 → 0.382.0), at D486 (0.380.0 → 0.381.0), at D485 (0.379.0 → 0.380.0), at D450 (0.351.0 → 0.352.0), at D449 (0.350.0 → 0.351.0), at D448 (0.349.0 → 0.350.0), at D447 (0.348.0 → 0.349.0), at D446 (0.347.0 → 0.348.0), at D445 (0.346.0 → 0.347.0), at D444 (0.345.0 → 0.346.0), at D443 (0.344.0 → 0.345.0), at D442 (0.343.0 → 0.344.0), at D441 (0.342.0 → 0.343.0), at D440 (0.341.0 → 0.342.0), at D439 (0.340.0 → 0.341.0), at D438 (0.339.0 → 0.340.0), at D437 (0.338.0 → 0.339.0), at D436 (0.337.0 → 0.338.0), at D435 (0.336.0 → 0.337.0), at D434 (0.335.0 → 0.336.0), at D433 (0.334.0 → 0.335.0), at D432 (0.333.0 → 0.334.0), at D431 (0.332.0 → 0.333.0), at D430 (0.331.0 → 0.332.0), at D429 (0.330.0 → 0.331.0), at D428 (0.329.0 → 0.330.0), at D427 (0.328.0 → 0.329.0), at D426 (0.327.0 → 0.328.0), at D425 (0.326.0 → 0.327.0), at D424 (0.325.0 → 0.326.0), at D423 (0.324.0 → 0.325.0), at D422 (0.323.0 → 0.324.0), at D421 (0.322.0 → 0.323.0), at D420 (0.321.0 → 0.322.0), at D417 (0.320.0 → 0.321.0), at D416 (0.319.0 → 0.320.0), at D415 (0.318.0 → 0.319.0), at D414 (0.317.0 → 0.318.0), at D413 (0.316.0 → 0.317.0), at D412 (0.315.0 → 0.316.0), at D410 (0.314.0 → 0.315.0), at D409 (0.313.0 → 0.314.0), at D408 (0.312.0 → 0.313.0), at D407 (0.311.0 → 0.312.0), at D402 (0.306.0 → 0.307.0), at D401 (0.305.0 → 0.306.0), at D400 (0.304.0 → 0.305.0), at D399 (0.303.0 → 0.304.0), at D398 (0.302.0 → 0.303.0), at D397 (0.301.0 → 0.302.0), at D396 (0.300.0 → 0.301.0), at D395 (0.299.0 → 0.300.0), at D394 (0.298.0 → 0.299.0), at D393 (0.297.0 → 0.298.0), at D392 (0.296.0 → 0.297.0), at D391 (0.295.0 → 0.296.0), at D390 (0.294.0 → 0.295.0), at D389 (0.293.0 → 0.294.0), at D388 (0.292.0 → 0.293.0), at D387 (0.291.0 → 0.292.0), at D386 (0.290.0 → 0.291.0),
     //    each in the SAME COMMIT as the bump —
     // the TENTH slice running to do it that way, and the practice is now the one
     // thing about this row that has never cost an ERROR since it started.
@@ -5777,7 +5777,7 @@ export const MUTANTS: Mutant[] = [
     // CORPUS QUOTES** (D414/D415), so a value-keyed sweep over `toBe("0.391.0")` cannot
     // see it — this row's `find` spells the DECLARATION, not an assertion. Run
     // `precheck` after every version bump, not after the sweep tells you.
-    find: 'export const engineVersion = "0.398.0";',
+    find: 'export const engineVersion = "0.399.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -27863,8 +27863,14 @@ export const MUTANTS: Mutant[] = [
     //    instruction above, and `precheck` reported it at 0x on the edit round that moved
     //    the constant - which is the fourth consecutive slice where the prediction and
     //    the instrument agreed and the instrument still ran first.
-    find: "  attack: 1625,",
-    replace: "  attack: 1623,",
+    // 🆕🆕🆕 D512 - RE-TRANSCRIBED AGAIN, 1625 -> 1627 (replace 1623 -> 1625), the same
+    //    two-step regression this row has always expressed, and the step is TWO because
+    //    D512's row is a TWO-printing sentence. ⚠️ FOUND BY `precheck` AT 0x IN SECONDS,
+    //    for the fourth slice running — which is the whole argument for running it after
+    //    every edit round rather than once at the end (D414/D437/D445), and the reason
+    //    it is run after EVERY `index.ts` and census edit in this slice rather than once.
+    find: "  attack: 1627,",
+    replace: "  attack: 1625,",
     expectKilledBy: [
       "packages/engine/src/censusAtHead.test.ts",
     ],
@@ -29019,10 +29025,10 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D506-changelog-head-unnamed",
     decision: "D506",
-    what: "🛑 C1 — THE DEFECT D502 AND D505 BOTH SHIPPED: a version goes out and NO HEADING CLAIMS IT. The edit un-bolds the NEWEST heading's target, so the parser stops seeing it and the chain's head falls back a release while `package.json` says otherwise — which is byte-for-byte the state of this file at D505's head, twice over. ⚠️ IT IS THE CHEAPEST WAY FOR THIS RECORD TO GO WRONG AND WAS INVISIBLE TO EVERY OTHER INSTRUMENT IN THE REPO: `tsc`, `biome`, every test, `precheck` and all five gates are green on both sides of it, because until D506 nothing read the headings at all. Killed by the HEAD case alone, which is the point — one tripwire, named (D453/D498). 🛑 RE-POINTED AT D507 ONTO THE 0.395.0 → 0.396.0 HEADING, AND THE RE-POINT WAS OWED RATHER THAN TIDY (D444): left on D505's heading it would have gone INERT ON THE VERDICT the moment a newer heading existed — un-bolding a heading that is no longer the head leaves NEWEST equal to HEAD, so the HEAD case stays green and the kill arrives, if at all, through the CHAIN case instead. The row's own stated reason (killed by the HEAD case alone) is exactly the sentence that would have quietly become false. THIS ROW IS PART OF THE VERSION TAX: every bump owes its re-point, in the same edit as the heading. \U0001f195 RE-POINTED AGAIN AT D508 ONTO THE 0.396.0 → 0.397.0 HEADING, and this one is UNLABELLED — the `find` quotes the heading's first prose words instead of a `(D<nnn> —`, which is strictly more durable: the label is the byte the close-out ritual inserts, and quoting it is exactly what broke this row at D507. \u26a0\ufe0f The heading is the CHAIN HEAD again, so the HEAD case is the killer again — the re-point is what keeps that sentence true rather than quietly false. \U0001f195 RE-POINTED AGAIN AT D510 ONTO THE 0.397.0 \u2192 0.398.0 HEADING, also UNLABELLED, and the `find` is kept in D508's TRIMMED form \u2014 it stops before the `(` where the close-out ritual inserts the label, which is the shape D508 proved survives that edit (precheck clean, label inserted, clean again). A `find` that spanned the paren would re-open the coupling that broke this row at D507.",
+    what: "🛑 C1 — THE DEFECT D502 AND D505 BOTH SHIPPED: a version goes out and NO HEADING CLAIMS IT. The edit un-bolds the NEWEST heading's target, so the parser stops seeing it and the chain's head falls back a release while `package.json` says otherwise — which is byte-for-byte the state of this file at D505's head, twice over. ⚠️ IT IS THE CHEAPEST WAY FOR THIS RECORD TO GO WRONG AND WAS INVISIBLE TO EVERY OTHER INSTRUMENT IN THE REPO: `tsc`, `biome`, every test, `precheck` and all five gates are green on both sides of it, because until D506 nothing read the headings at all. Killed by the HEAD case alone, which is the point — one tripwire, named (D453/D498). 🛑 RE-POINTED AT D507 ONTO THE 0.395.0 → 0.396.0 HEADING, AND THE RE-POINT WAS OWED RATHER THAN TIDY (D444): left on D505's heading it would have gone INERT ON THE VERDICT the moment a newer heading existed — un-bolding a heading that is no longer the head leaves NEWEST equal to HEAD, so the HEAD case stays green and the kill arrives, if at all, through the CHAIN case instead. The row's own stated reason (killed by the HEAD case alone) is exactly the sentence that would have quietly become false. THIS ROW IS PART OF THE VERSION TAX: every bump owes its re-point, in the same edit as the heading. \U0001f195 RE-POINTED AGAIN AT D508 ONTO THE 0.396.0 → 0.397.0 HEADING, and this one is UNLABELLED — the `find` quotes the heading's first prose words instead of a `(D<nnn> —`, which is strictly more durable: the label is the byte the close-out ritual inserts, and quoting it is exactly what broke this row at D507. \u26a0\ufe0f The heading is the CHAIN HEAD again, so the HEAD case is the killer again — the re-point is what keeps that sentence true rather than quietly false. \U0001f195 RE-POINTED AGAIN AT D510 ONTO THE 0.397.0 \u2192 0.398.0 HEADING, also UNLABELLED, and the `find` is kept in D508's TRIMMED form \u2014 it stops before the `(` where the close-out ritual inserts the label, which is the shape D508 proved survives that edit (precheck clean, label inserted, clean again). A `find` that spanned the paren would re-open the coupling that broke this row at D507. \U0001f195 RE-POINTED AGAIN AT D512 ONTO THE 0.398.0 \u2192 0.399.0 HEADING, also UNLABELLED and kept in the same TRIMMED form. \u26a0\ufe0f The re-point is what keeps this row's own stated reason (killed by the HEAD case ALONE) true rather than quietly false: left on D510's heading it would go INERT ON THE VERDICT the moment a newer heading exists, because un-bolding a heading that is no longer the head leaves NEWEST equal to HEAD and the kill arrives, if at all, through the CHAIN case instead.",
     file: "packages/engine/src/index.ts",
-    find: "engineVersion 0.397.0 → **0.398.0**",
-    replace: "engineVersion 0.397.0 → 0.398.0",
+    find: "engineVersion 0.398.0 → **0.399.0**",
+    replace: "engineVersion 0.398.0 → 0.399.0",
     expectKilledBy: ["packages/engine/src/engineVersionChangelog.test.ts"],
   },
   {
@@ -29526,5 +29532,109 @@ export const MUTANTS: Mutant[] = [
     find: "      (decision === undefined || m.decision.includes(decision)),",
     replace: "      (decision === undefined || m.decision === decision),",
     expectKilledBy: ["packages/engine/src/mutationArgvGuard.test.ts"],
+  },
+  // ── D512 — THE BOTH-SIDES BODY COUNT NARROWED BY TWO PRINTED NAME FRAGMENTS. Ten
+  //    rows across THREE files, and the split is the shape of the slice: three on the
+  //    PREDICATE (`cards.ts`), four on the PATTERN and the ARM (`effects.ts`), two on
+  //    the SUM (`attack.ts`), plus one on the printed ORDER that no board can see.
+  //    ⚠️ EVERY KILLER IS THE ONE SUITE, ALONE (D453/D498) — except the apostrophe
+  //    row, whose tripwire is `clauseApostrophe.test.ts` and nothing else, and the
+  //    conjunct row, whose only observable witness is a `matchesFilter` rung.
+  //
+  //    🛑 NO ROW IS WRITTEN FOR THE ARM'S `first !== "" && second !== ""` GUARD, AND
+  //    THE ABSENCE IS A DECISION (D420/D442). That guard and the pattern's `([^"]+)`
+  //    are REDUNDANT — each alone refuses an empty fragment — so a mutant on either
+  //    survives by construction and would report a suite gap that does not exist. The
+  //    redundancy is D446's shipped shape at `IN_PLAY_ATTACK_NAME_MULTIPLY` and is kept
+  //    for its reason; it is recorded at the arm rather than left to an absence.
+  {
+    id: "D512-filter-drops-the-pokemon-conjunct",
+    decision: "D512",
+    what: "⚠️ C1 — **THE HEAD NOUN IS DROPPED AND THE FRAGMENT ALONE DECIDES.** The printed phrase is *\"Pokémon in play that has \\\"…\\\" in its name\"*, a CONJUNCTION baked into one member because this union has no INTERSECTION combinator — so a build that read only the name forgot the half the type was shaped around. 🛑 **AND THIS ROW IS THE ONE PLACE IN THE WHOLE CORPUS WHERE THAT CONJUNCT IS OBSERVABLE, WHICH IS WHY IT EXISTS AND WHY ITS KILLER IS A `matchesFilter` RUNG RATHER THAN A DAMAGE NUMBER.** The member's only producer feeds `countPokemonInPlay`, a walk over bodies IN PLAY, every one of which is already a Pokémon — so NO board this engine can build reads a different number under this mutation. `matchesFilter` is EXPORTED and answers about a CARD, so §1 drives it directly on `fix-weezingcanister`, an ITEM named \"Weezing Gas Canister\". D442's rule: write the row for the observable direction, and here the observable direction is the predicate rather than the board. ⚠️ Without that fixture this mutant would SURVIVE, which is the anti-vacuity argument stated as a row.",
+    file: "packages/engine/src/cards.ts",
+    find: '      return matchesFilter(card, { kind: "anyPokemon" }) && card.name.includes(filter.fragment);',
+    replace: "      return card.name.includes(filter.fragment);",
+    expectKilledBy: ["packages/engine/src/bothSidesNameFragment.test.ts"],
+  },
+  {
+    id: "D512-filter-reads-a-prefix-not-a-substring",
+    decision: "D512",
+    what: "\U0001f6d1 C2 — **`.includes` BECOMES `.startsWith`, AND THE WRONG READ IS COPIED FROM THREE `case`s AWAY IN THIS VERY `switch`.** `matchesFilter`'s `ownerPokemon` arm really does spell `card.name.startsWith(...)`, so a prefix read is what an author writing this arm by imitation reaches for — a neighbour, not a straw (D190b). The printed words are *\"has X **IN** its name\"*, a containment, and the real catalog puts the fragment at a non-zero offset on this very family: a regional-form prefix does it (*\"Galarian Weezing\"*) and so does an owner possessive. On §3's canonical board the count falls from **7 to 1** and the attack deals **40** instead of **280** — the largest single wrong answer any row here produces, because five of the seven matching bodies carry the fragment at a non-zero offset. ⚠️ **THE ROW IS ALSO THE WHOLE REASON `fix-weezingwall` IS THE ONLY BODY IN THE CAST WHOSE NAME STARTS WITH A FRAGMENT**: with no offset variation the two readings are the same number on every board and the mutant has nowhere to die (D456).",
+    file: "packages/engine/src/cards.ts",
+    find: '      return matchesFilter(card, { kind: "anyPokemon" }) && card.name.includes(filter.fragment);',
+    replace: '      return matchesFilter(card, { kind: "anyPokemon" }) && card.name.startsWith(filter.fragment);',
+    expectKilledBy: ["packages/engine/src/bothSidesNameFragment.test.ts"],
+  },
+  {
+    id: "D512-filter-collapses-into-byname",
+    decision: "D512",
+    what: "⚠️ C3 — **`.includes` BECOMES `===`, WHICH IS THE MEMBER COLLAPSING INTO `byName`.** The whole point of the member is that the printed fragment is a PROPER substring of most names it admits, so the count falls to **1** on §3's board (only `fix-weezingwall`, named exactly \"Weezing\", survives an equality) and the attack deals **40**. \U0001f6d1 **IT IS NOT A LOUD ZERO HERE, WHICH IS THE DIFFERENCE FROM D510's TWIN ONE FAMILY OVER AND IS WORTH THE ROW.** There, *\"Team Rocket\"* is no card's whole name and the equality build filed no `DAMAGE_DEALT` row at all; here one printed fragment IS a whole card name, so the equality build deals a plausible smaller number rather than nothing — the quiet direction. ⚠️ It reads the SAME 40 as C2 by a DIFFERENT route, which is why both are rows: one board number, two defects, and a suite that asserted only the number would have called either a kill.",
+    file: "packages/engine/src/cards.ts",
+    find: '      return matchesFilter(card, { kind: "anyPokemon" }) && card.name.includes(filter.fragment);',
+    replace: '      return matchesFilter(card, { kind: "anyPokemon" }) && card.name === filter.fragment;',
+    expectKilledBy: ["packages/engine/src/bothSidesNameFragment.test.ts"],
+  },
+  {
+    id: "D512-anchor-admits-a-stage-narrowed-head",
+    decision: "D512",
+    what: "\U0001f6d1 C4 — **THE HEAD NOUN STOPS BEING A LITERAL AND THE PATTERN ADMITS THE STAGE-NARROWED NOUNS**, which is the generalisation this anchor's own block refuses in as many words (*\"this anchor reads the bare `Pokémon` head ONLY\"*). Spelled as a CLOSED alternation rather than a capture ON PURPOSE, so the row is a one-tripwire experiment (D453/D498): the group indices do not move, every board number for the printed row is unchanged, and **the only thing that dies is §2's near-miss ladder** — *\"…for each Basic Pokémon in play that has \\\"Koffing\\\" or \\\"Weezing\\\" in its name (both yours and your opponent's).\"* would start resolving, to a filter that does NOT carry the printed stage word, which is the silent-wrong-card direction D264 names. ⚠️ **AND THE WIDENING IS UNOBSERVABLE IN THE CORPUS**: that sentence is printed ZERO times (§1 measures it), so no census figure moves and no other suite goes red. A row whose only killer is a constructed near-miss is exactly what a near-miss ladder is for.",
+    file: "packages/engine/src/effects.ts",
+    find: '  /^This attack does (\\d+) damage for each Pokémon in play that has "([^"]+)" or "([^"]+)" in its name \\(both yours and your opponent[\'’]s\\)\\.$/;',
+    replace: '  /^This attack does (\\d+) damage for each (?:Basic |Evolution )?Pokémon in play that has "([^"]+)" or "([^"]+)" in its name \\(both yours and your opponent[\'’]s\\)\\.$/;',
+    expectKilledBy: ["packages/engine/src/bothSidesNameFragment.test.ts"],
+  },
+  {
+    id: "D512-anchor-drops-the-apostrophe-class",
+    decision: "D512",
+    what: "⚠️ C5 — **THE `['’]` CLASS BECOMES A BARE U+0027**, D137's standing insurance deleted. It is INERT on the committed corpus — the printed row's possessive is U+0027, measured with `codePointAt` and not read visually — and that is precisely why it needs a row rather than a board: the defect is invisible until the catalog is re-ingested with typographic apostrophes, at which point the sentence falls silently off the built set and the card does nothing. \U0001f6d1 **THE KILLER IS `clauseApostrophe.test.ts` AND NOTHING ELSE**, named alone (D453/D498): that suite rewrites every apostrophe-bearing fixture sentence to U+2019 and asserts reader-for-reader EQUALITY, and D512's new attack text enters its census (191 → 192 derivable sentences) precisely because it carries `opponent's`. ⚠️ **THE CENSUS STEP IS THE OTHER HALF OF THE ROW**: an anchor that could not be re-ingested would still be counted by that suite, so the figure moving and the equality holding are two different claims and this row only tests the second.",
+    file: "packages/engine/src/effects.ts",
+    find: '  /^This attack does (\\d+) damage for each Pokémon in play that has "([^"]+)" or "([^"]+)" in its name \\(both yours and your opponent[\'’]s\\)\\.$/;',
+    replace: '  /^This attack does (\\d+) damage for each Pokémon in play that has "([^"]+)" or "([^"]+)" in its name \\(both yours and your opponent\'s\\)\\.$/;',
+    expectKilledBy: ["packages/engine/src/clauseApostrophe.test.ts"],
+  },
+  {
+    id: "D512-anchor-drops-the-both-sides-parenthetical",
+    decision: "D512",
+    what: "\U0001f6d1 C6 — **THE PRINTED PARENTHETICAL LEAVES THE PATTERN, AND WITH IT THE ONLY THING THAT SAYS WHOSE BODIES ARE COUNTED.** *\"(both yours and your opponent's)\"* is not decoration on this sentence: the head is SEATLESS, so the parenthetical is the entire seat declaration, and it is what earns a `bothSidesPokemonInPlay` rather than a `pokemonInPlay`. The mutated pattern requires the sentence to END at `in its name.`, which the printed row does not — so the row falls to the loud `ATTACK_EFFECT_SKIPPED` path, `resolvedByAnyReader` answers false, and every census figure this slice moved moves back. ⚠️ **THE LOUD DIRECTION, AND STILL WORTH A ROW**: the whole census apparatus would notice, but §2's owner rung and §4's claimed-set rung are what NAME the sentence, and a row that dies in the suite that owns the sentence is the one a successor can read.",
+    file: "packages/engine/src/effects.ts",
+    find: '  /^This attack does (\\d+) damage for each Pokémon in play that has "([^"]+)" or "([^"]+)" in its name \\(both yours and your opponent[\'’]s\\)\\.$/;',
+    replace: '  /^This attack does (\\d+) damage for each Pokémon in play that has "([^"]+)" or "([^"]+)" in its name\\.$/;',
+    expectKilledBy: ["packages/engine/src/bothSidesNameFragment.test.ts"],
+  },
+  {
+    id: "D512-arm-swaps-the-two-printed-fragments",
+    decision: "D512",
+    what: "\U0001f6d1 C7 — **THE TWO CAPTURES ARE SWAPPED, AND NO BOARD IN THE UNIVERSE CAN SEE IT.** `anyOf` is `.some`, so a set built from {Koffing, Weezing} and one built from {Weezing, Koffing} admit exactly the same cards and every damage number on every board is IDENTICAL. The only witness is the DERIVED VALUE, and §2 asserts the `filters` array in printed left-to-right order for exactly this reason (D509's rule: when the point is that a value is right, assert the VALUE, not a number computed from it). ⚠️ **IT IS THE ROW THAT SAYS WHY THE ORDER RUNG IS NOT DECORATION.** A reader that swapped the groups would be caught by nothing else in the repo — not by a census figure, not by a board, not by `tsc` — and the day this member reaches `retrieveNoun` for real the two orders spell two different printed captions.",
+    file: "packages/engine/src/effects.ts",
+    find: '              { kind: "pokemonNameContaining", fragment: first },\n              { kind: "pokemonNameContaining", fragment: second },',
+    replace: '              { kind: "pokemonNameContaining", fragment: second },\n              { kind: "pokemonNameContaining", fragment: first },',
+    expectKilledBy: ["packages/engine/src/bothSidesNameFragment.test.ts"],
+  },
+  {
+    id: "D512-arm-drops-the-second-disjunct",
+    decision: "D512",
+    what: "\U0001f6d1 C8 — **THE `anyOf` GOES AND ONLY THE FIRST PRINTED FRAGMENT SURVIVES**, which is the sentence read as if it named ONE name. The printed `or` is the whole reason the combinator is here — it is N-ary over exactly this axis (D245) — and dropping it is a one-expression edit that typechecks, because `CardFilter` is what the field takes either way. On §3's canonical board the count falls from **7 to 2** and the attack deals **80** instead of **280**. ⚠️ **THE BOARD IS BUILT SO THAT THIS IS A DIFFERENT NUMBER FROM BOTH SEAT HALVES AND FROM THE OTHER DISJUNCT** — \"Koffing\" alone is 2, \"Weezing\" alone is 5, your side alone is 3, the defender's alone is 4 — which is what `fix-darkkoffing` exists for. Without a body on the OTHER fragment the two disjuncts answer the same number and this mutant has nowhere to die (D456).",
+    file: "packages/engine/src/effects.ts",
+    find: '          filter: {\n            kind: "anyOf",\n            filters: [\n              { kind: "pokemonNameContaining", fragment: first },\n              { kind: "pokemonNameContaining", fragment: second },\n            ],\n          },',
+    replace: '          filter: { kind: "pokemonNameContaining", fragment: first },',
+    expectKilledBy: ["packages/engine/src/bothSidesNameFragment.test.ts"],
+  },
+  {
+    id: "D512-count-reads-one-seat-only",
+    decision: "D512",
+    what: "\U0001f6d1 C9 — **THE SUM LOSES ONE OF ITS TWO TERMS, WHICH IS THE MEMBER COLLAPSING INTO `pokemonInPlay` — THE ARM DIRECTLY ABOVE IT IN THIS VERY `switch`.** This is the defect the whole member exists to be distinguishable from: the printed parenthetical names BOTH sides, and a one-seat read is the sentence the union already spells. On §3's board the attacker's side holds 3 matching bodies and the defender's 4, so the mutant deals **120** where the print deals **280** — and the mirror board deals 120 as well, where a `defenderSeat`-only build would deal 160 on both. \U0001f6d1 **THE SEAT CROSSING IS THE WORST UNCAUGHT DEFECT THIS ENGINE HAS (D447/D454)** and a both-sides count is where it hides best, because the sum is right on any board where the two sides happen to be equal. §3's board is deliberately ASYMMETRIC — 3 against 4 — and §3 drives BOTH seats, because one side passing says nothing about the other (D213).",
+    file: "packages/engine/src/attack.ts",
+    find: "        (countPokemonInPlay(state, attackerSeat, bonus.count.filter) +\n          countPokemonInPlay(state, defenderSeat, bonus.count.filter)) *",
+    replace: "        countPokemonInPlay(state, attackerSeat, bonus.count.filter) *",
+    expectKilledBy: ["packages/engine/src/bothSidesNameFragment.test.ts"],
+  },
+  {
+    id: "D512-count-reads-the-same-seat-twice",
+    decision: "D512",
+    what: "⚠️ C10 — **BOTH TERMS BECOME THE ATTACKER'S SEAT, SO THE COUNT IS DOUBLED RATHER THAN SPANNED.** A one-word edit that typechecks, and the direction a copy-paste of the first term produces — the arm is two nearly identical calls and that is exactly the shape D437/D442 warn about. On §3's board it deals **240** instead of **280**, a plausible number that is neither of the seat halves and neither the print. ⚠️ **AND IT IS WHY THE BOARD IS ASYMMETRIC RATHER THAN MIRRORED.** With 3 matching bodies a side, doubling the attacker's count and summing the two sides are the SAME number and this mutant survives; at 3 against 4 they are 240 and 280. The nine-number table in `IN_PLAY_NAME_FRAGMENT_DECK`'s block is that constraint written down.",
+    file: "packages/engine/src/attack.ts",
+    find: "          countPokemonInPlay(state, defenderSeat, bonus.count.filter)) *",
+    replace: "          countPokemonInPlay(state, attackerSeat, bonus.count.filter)) *",
+    expectKilledBy: ["packages/engine/src/bothSidesNameFragment.test.ts"],
   },
 ];

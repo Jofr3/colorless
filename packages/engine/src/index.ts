@@ -19984,6 +19984,95 @@ import type { GameState, Seat } from "./types";
     `expect(manifest.version)`, `it(…)` titles, the declaration and `package.json` —
     **not** as a value-keyed grep — because a value-keyed grep is precisely the mechanism
     that ate D500's heading.)
+    🆕🆕🆕 engineVersion 0.398.0 → **0.399.0** (D512 — THE BOTH-SIDES BODY COUNT NARROWED BY TWO
+    PRINTED NAME FRAGMENTS — AND A REFUSAL WHOSE FALSIFIER DID NOT FIRE.
+    `censusAttackCorpus.ts` **FILE LINE 583** — *"This attack does 40 damage for each
+    Pokémon in play that has "Koffing" or "Weezing" in its name (both yours and your
+    opponent's)."*, **1 sentence / 2 legal printings**, claimed by
+    `deriveAttackDamageMultiplier`.
+    🛑 **THE ROW NEEDED TWO THINGS AND THE RESUME POINT SAID ONE.** It was recorded as
+    *"half-built — the predicate ships"*. It was not: D510 built `supporterNameContaining`
+    and NOTHING ELSE, and `CardFilter` had no Pokémon-headed fragment member at all.
+    The cost is ONE new anchor (`IN_PLAY_BOTH_SIDES_NAME_MULTIPLY`), ONE new `CardFilter`
+    member (`pokemonNameContaining { fragment }`) with its `matchesFilter` and
+    `retrieveNoun` arms and its `BENCHABLE_RETRIEVAL_KINDS` row, ONE new
+    `DamageCountSource` member (`bothSidesPokemonInPlay { filter }`) with its `attack.ts`
+    arm, and ONE reader arm. **ZERO new `EffectOp`s, ZERO state fields, ZERO prompts,
+    ZERO error codes, ZERO registry rows.**
+    🛑 **THE SHIPPED ANCHORS WERE RUN AGAINST THE ROW FIRST (D510's LESSON) AND THEY
+    REFUSE IT AT THE PATTERN, WHICH IS THE OPPOSITE ANSWER TO D510's.** All four in-play
+    anchors require the literal `for each of your `, and this sentence's head is
+    SEATLESS — *"for each Pokémon in play"* — with the side named by a trailing
+    parenthetical. `IN_PLAY_BODY_MULTIPLY`'s `(?!opponent)` lookahead and
+    `IN_PLAY_FOE_BODY_MULTIPLY`'s literal `opponent['’]s ` both sit INSIDE that phrase,
+    so neither can be reached by relaxing the other. Reported whichever way it came out,
+    which is the point of running it.
+    🛑 **THE FIRST BOTH-SIDES COUNT IN THIS UNION THAT CARRIES A `CardFilter`.**
+    `bothSidesBenchCount` (D193) and `bothActivesEnergyCount` (D196) are BARE because
+    their printed nouns carry no adjective; this one's noun is NARROWED in print, so the
+    filter is not an extra — it IS the printed noun, and it is REQUIRED on
+    `cardsInDiscardPile`'s ground (nothing here is persisted, so REQUIRED is free and the
+    next producer is a compile error rather than a silent "every body on the table").
+    ⚠️ **A MEMBER AND NEVER A THIRD `CountSeat` VALUE**, and the shipped rule at
+    `bothSidesBenchCount` is followed rather than re-derived: `attack.ts` resolves the
+    seat with a BINARY ternary, so `"both"` would be read as the OPPONENT silently, where
+    a MEMBER is caught by that file's total `switch` (D447).
+    🛑 **AND THE REFUSAL THIS OVERTURNS HAD A FALSIFIER THAT COULD NOT FIRE — WHICH IS
+    THE FINDING, NOT THE BUILD.** `pileByNameFragment.test.ts` §4 pinned D510's refusal of
+    this row with `const SEAT_VALUES: readonly CountSeat[] = ["you", "opponent"]` plus a
+    `toHaveLength(2)`, and claimed *"the day `CountSeat` gains a third member, this rung
+    goes RED"*. **It does not.** A `readonly T[]` holding two literals still typechecks
+    when `T` gains an inhabitant, and the length is a property of the literal. Measured
+    at D512's head by doing it: `CountSeat` widened to three values, `tsc -b` **exit 0**,
+    that suite **20 of 20 GREEN**. The rung is REPAIRED into a `Record<CountSeat, Seat>`
+    — D446's compile-enforced idiom for `CardFilter["kind"]`, one file over — and
+    re-pointed rather than deleted (D178/D418/D438). ⚠️ **The general form is
+    conventions.md's own rule at a type-level address**: an array ANNOTATED with a union
+    is not a guard on that union, because widening the union cannot make a narrower
+    array illegal. Only a `Record` keyed on it is.
+    ⚠️ `MATCH_RECORD_VERSION` **HELD at 30**, addressed FIRST and rested on the OP
+    (D507's correction of D505): a damage FOLD emits no `EffectOp` at all (D508), so
+    there is no park, no continuation and nothing for a `MatchRecord` to carry;
+    `DamageCountSource` is a PARSE-TIME type that no op, event or state field holds
+    (re-derived at this head, not inherited); and the `CardFilter` widening reaches the
+    persisted address only through op fields no producer can put this member into, which
+    is D333's free case — a union that gains an INHABITANT.
+    **AN ELEVENTH LATTICE SHAPE: FOUR AXES, EVERY ONE FLIPPING, AND A SINGLETON CLAIM.**
+    The 2⁴ NOUN × PREDICATE × SEAT × FOLD reads **1 of 16 before and 2 of 16 after**,
+    identical readers-only and residue-predicate, both splitters null at **32/32**, all
+    16 points distinct, and the two built points at Hamming distance TWO. Every axis
+    flips at 1/8 before and 2/8 after — **zero inert axes, zero free axes** — so all four
+    literals owe a printed-zero measurement and all four are paid. What distinguishes it
+    from D510's tenth shape: **the new anchor claims exactly ONE point**, because every
+    axis is a LITERAL in the pattern, where D510's shipped anchor pair already varied
+    SEAT and FOLD and its new NAME claimed four at once. ⚠️ **And the BUILT set of this
+    lattice equals its PRINTED set** — the other fourteen points are printed ZERO times —
+    so no literal is refusing a sentence the column carries.
+    ⚠️ **THIS HEADING NAMES NO `D<nnn>` AND THAT IS DELIBERATE, NOT AN OMISSION** —
+    D507/D508/D510's posture, for their reason. `engineVersionChangelog.test.ts`'s
+    ATTRIBUTION case asserts `adjudicated === LABELLED.length` with no tolerance, so a
+    labelled heading without its `docs/decisions.md` row ships `check` RED, and this
+    slice is scoped away from that file. **The debt is D512**: whoever writes
+    `| **D512** | … engine 0.398.0 → 0.399.0 … |` should rewrite this heading's opening
+    parenthesis as `(D512 — THE BOTH-SIDES BODY COUNT…` in the same commit, and not
+    before.
+    🛑 **VERSION-TAX EXCEPTION LIST FOR THIS BUMP, NAMING THE HEADING BEING WRITTEN THIS
+    SLICE (D506's rule (b)).** `0.398.0` legitimately survives at SIX kinds of site and
+    none of them may be swept: **THIS HEADING'S OWN SOURCE, one line up**; D510's heading
+    TARGET directly below and the two sentences of its own exception list;
+    `pileByNameFragment.test.ts`'s header arrow; `bothSidesNameFragment.test.ts`'s header
+    arrow, which reads `0.398.0 → 0.399.0` and is this slice's own; `mutants.ts`'s D275
+    re-point ledger, which is APPENDED to rather than rewritten; and the `docs/` history.
+    `D506-changelog-head-unnamed`'s `find`/`replace` is RE-POINTED wholesale onto the
+    heading above rather than value-swept — **kept in D508's trimmed, label-proof form
+    `engineVersion <old> → **<new>**`, stopping before the `(`**, which D508 and D510 both
+    proved survives the caller's labelling; a `find` spanning the paren re-opens the
+    coupling that broke this row at D507. The sweep was run as a WHITELIST of SIX exact
+    line shapes — **103 sites, written out and counted BEFORE the edit and re-grepped
+    after** — **not** as a value-keyed grep, because a value-keyed grep would have
+    rewritten this heading's source and `D506-changelog-head-unnamed`'s `find` to a
+    heading that does not exist. ⚠️ **AND `precheck` WAS RE-RUN AFTER EVERY `index.ts`
+    EDIT** (D507's finding; it is not part of `check`).)
     🆕🆕🆕 engineVersion 0.397.0 → **0.398.0** (D510 — THE DISCARD PILE NARROWED BY A PRINTED
     NAME FRAGMENT — AND THE ANCHOR WAS NEVER THE BLOCKER. `censusAttackCorpus.ts`
     **FILE LINE 543** — *"This attack does 20 damage for each Supporter card that has
@@ -20793,7 +20882,7 @@ import type { GameState, Seat } from "./types";
     WITNESS** — the count was re-derived every slice and the word *"three"* was carried.
     A successor of this slice inherits **81 / 61 / 17** again, over **FIVE** history
     occurrences: those four plus `deckMillFilteredScale.test.ts`'s own header arrow.) */
-export const engineVersion = "0.398.0";
+export const engineVersion = "0.399.0";
 
 export type {
   ApplyResult,

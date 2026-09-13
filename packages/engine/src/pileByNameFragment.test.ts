@@ -625,45 +625,63 @@ describe("§4 — the census step this slice is", () => {
     }
   });
 
-  it("🛑 `:583` IS REFUSED, and the refusal is pinned on the POPULATION with its reason", () => {
-    // D422/D423/D428: a refusal is pinned on the population and carries an EXECUTABLE
-    // falsifier, never on prose. The sibling row the resume point named alongside this
-    // one is *"This attack does 40 damage for each Pokémon in play that has "Koffing" or
-    // "Weezing" in its name (both yours and your opponent's)."* — 2 legal printings —
-    // and D510 refused it DELIBERATELY rather than leaving it unmentioned.
+  it("🛑 `:583` IS BUILT AT D512 — the refusal is RE-POINTED, and its falsifier REPAIRED", () => {
+    // 🆕🆕🆕 **D512 TURNED THIS ROW OVER, AND THE RE-POINT SPLITS THE VERDICT WITHOUT
+    // DELETING THE EVIDENCE** (D178/D418/D438, and D508's rule about narrowing an `rx`
+    // to restore an old verdict). What D510 wrote here is kept verbatim as the REASON:
     //
-    // 🛑 **IT IS REFUSED FOR ITS COUNT AND NOT FOR ITS FILTER, WHICH IS THE HALF A
-    // SUCCESSOR WILL GET WRONG.** The OR is free (`anyOf` ships and is N-ary over one
-    // axis). A Pokémon-headed fragment member is the second of this slice's priced pair
-    // and is cheap. What is NOT cheap is *"(both yours and your opponent's)"* over a
-    // COUNT.
+    //   · **THE OR WAS FREE AND STILL IS** — `anyOf` ships and is N-ary over one axis,
+    //     and D512's arm wraps its two fragments in exactly that combinator;
+    //   · **THE FILTER WAS THE CHEAP HALF** — D510 called a Pokémon-headed fragment
+    //     member *"the second of this slice's priced pair"* and *"cheap"*, and it was:
+    //     `CardFilter.pokemonNameContaining`, one `matchesFilter` arm, one `retrieveNoun`
+    //     arm, one `BENCHABLE_RETRIEVAL_KINDS` row;
+    //   · **THE COUNT WAS THE EXPENSIVE HALF AND THAT WAS RIGHT** — it took a new
+    //     `DamageCountSource` member, `bothSidesPokemonInPlay`, the FIRST both-sides
+    //     count in that union to carry a `CardFilter` at all;
+    //   · **AND D507's COMPOSITION ANSWER STILL DOES NOT TRANSFER.** Two counts cannot
+    //     be two ops, because `deriveAttackDamageMultiplier` returns ONE optional count
+    //     and not a list — which is asserted below rather than argued, exactly as D510
+    //     asserted it.
     //
-    // 🛑 **AND D507's ANSWER TO THE IDENTICAL PRINTED PARENTHETICAL DOES NOT TRANSFER.**
-    // D507 read *"(both yours and your opponent's)"* as a COMPOSITION — `spreadDamage`
-    // over `yourBench` then over `opponentBench`, two ops, zero type bytes. That works
-    // because `spreadDamage` is an OP and a program is a LIST. This is a COUNT feeding
-    // `per × count` through a single `AttackDamageBonus`, so two counts would have to be
-    // SUMMED into ONE number and `deriveAttackDamageMultiplier`'s return type would have
-    // to change. Different manoeuvre, and it is asserted here rather than argued: the
-    // reader returns ONE optional count, not a list.
+    // 🛑 **WHAT DOES THE RE-POINTED RUNG STILL CATCH (D438's SECOND HALF)?** Three
+    // things, none of which is "the row is unbuilt": that the row is a TWO-printing
+    // sentence on ONE record; that the reader's return type is still a single optional
+    // count rather than a list, which is the property D507's answer fails on; and that
+    // `CountSeat` is still TWO values — now with a falsifier that fires.
     const twin =
       'This attack does 40 damage for each Pokémon in play that has "Koffing" or "Weezing" in its name (both yours and your opponent\'s).';
     const rows = legalAttackCorpus().filter(([, s]) => s === twin);
     expect(rows.map(([, s]) => s)).toEqual([twin]);
     expect(rows.reduce((sum, [n]) => sum + n, 0)).toBe(2);
-    expect(resolvedByAnyReader(twin)).toBe(false);
-    // ⚠️ **AND THE FALSIFIER IS THE MEASUREMENT, NOT THE VERDICT.** `CountSeat` is a
-    // TWO-value union and the column spells `seat: "both"` ZERO times, so a third value
-    // would be read by `attack.ts`'s two BINARY ternaries
-    // (`seat === "you" ? attackerSeat : defenderSeat`) as the OPPONENT, silently, with
-    // no compile error — where a new `DamageCountSource` MEMBER is caught by that file's
-    // total `switch` (D447). `bothSidesBenchCount` and `bothActivesEnergyCount` are the
-    // two shipped both-sides counts and BOTH are members. The day `CountSeat` gains a
-    // third member, this rung goes RED and the refusal stops being true loudly.
-    const SEAT_VALUES: readonly CountSeat[] = ["you", "opponent"];
-    expect(SEAT_VALUES).toHaveLength(2);
+    // 🆕🆕🆕 D512 — the VERDICT, and the only line of this rung that moved.
+    expect(resolvedByAnyReader(twin)).toBe(true);
+    expect(deriveAttackDamageMultiplier(twin)?.count.kind).toBe("bothSidesPokemonInPlay");
+    // …and the RETURN TYPE, which is why a composition was never available: ONE count,
+    // not a list. A build that summed two counts would have had to change this shape.
+    const derived = deriveAttackDamageMultiplier(twin);
+    expect(Array.isArray(derived?.count)).toBe(false);
+    expect(Object.keys(derived ?? {}).sort()).toEqual(["count", "per"]);
+    // 🛑 **THE FALSIFIER THIS RUNG USED TO CARRY DID NOT FIRE, AND THAT IS THE FINDING
+    // D512 PAID FOR.** It read `const SEAT_VALUES: readonly CountSeat[] = ["you",
+    // "opponent"]` plus `expect(SEAT_VALUES).toHaveLength(2)`, under the sentence *"the
+    // day `CountSeat` gains a third member, this rung goes RED"*. **It does not.** A
+    // `readonly T[]` holding two literals still typechecks when `T` gains an inhabitant,
+    // and the length is a property of the literal, not of the type. Measured at D512's
+    // head by doing it: `CountSeat` widened to three values, `tsc -b` **exit 0**, this
+    // file **20 of 20 GREEN**.
+    //
+    // The repair is a `Record` KEYED on the union — D446's compile-enforced enumeration
+    // idiom for `CardFilter["kind"]`, in `bodiesInPlayScaling.test.ts` — which cannot
+    // compile with a value missing. ⚠️ **THE GENERAL RULE, because this will happen
+    // again**: an array ANNOTATED with a union is not a guard on that union. Widening a
+    // union can never make a narrower array illegal; only a `Record` keyed on it fails.
+    const SEATS: Record<CountSeat, Seat> = { you: "p1", opponent: "p2" };
+    expect(Object.keys(SEATS).sort()).toEqual(["opponent", "you"]);
     // …driven rather than enumerated: both shipped values resolve to a real seat, and
-    // the ternary that reads them is exhaustive over exactly those two.
+    // `attack.ts`'s ternary is exhaustive over exactly those two — which is why D512
+    // shipped a MEMBER, caught by that file's total `switch` (D447), rather than a third
+    // value that ternary would have read as the OPPONENT in silence.
     expect(deriveAttackDamageMultiplier(PRINTED)).toEqual({
       per: 20,
       count: { kind: "cardsInDiscardPile", seat: "you", filter: TR_SUPPORTER },
@@ -679,6 +697,6 @@ describe("§4 — the census step this slice is", () => {
   });
 
   it("the engine version moved with the behaviour", () => {
-    expect(engineVersion).toBe("0.398.0");
+    expect(engineVersion).toBe("0.399.0");
   });
 });

@@ -14526,6 +14526,37 @@ function retrieveNoun(filter: CardFilter): { singular: string; plural: string } 
         singular: `a Pokémon that has the ${filter.attack} attack`,
         plural: `Pokémon that have the ${filter.attack} attack`,
       };
+    case "pokemonNameContaining":
+      // 🆕🆕🆕 D512 — the printed *"Pokémon … that has "Koffing" in its name"*, and it
+      // is the arm one case up with the printed FRAGMENT interpolated in place of the
+      // printed attack: the same invariant "Pokémon" head, the same HAS/HAVE swap
+      // between the numbers, the same literal article.
+      //
+      // ⚠️ **THE QUOTATION MARKS ARE PRINTED BYTES RATHER THAN PUNCTUATION THIS ARM
+      // CHOSE** — `supporterNameContaining`'s call verbatim, for its reason: the card
+      // face quotes its fragment (ASCII U+0022, checked against the committed corpus),
+      // and dropping them would make the phrase read as a whole card NAME and mean
+      // `byName` instead.
+      //
+      // ⚠️ **THE PLURAL MOVES THE POSSESSIVE AS WELL AS THE VERB** — "have" and "their
+      // names" — the same extra moving part `supporterNameContaining`'s pair has and
+      // `attackNamePokemon`'s does not, because that phrase's tail carries no pronoun.
+      //
+      // ⚠️ **THE PRINTED SENTENCE'S *"or"* IS NOT THIS ARM'S BUSINESS** — the pair
+      // arrives as an `anyOf`, whose own arm JOINS the two phrases this one returns, so
+      // the disjunction is captioned exactly once and in one place (D245).
+      //
+      // ⚠️ **NO PRINTED RETRIEVAL, PROMPT OR ATTACH NAMES THIS FILTER TODAY**, so it is
+      // a reachability arm exactly like the two above: the member's only producer is
+      // `deriveAttackDamageMultiplier`, which builds a `DamageCountSource` and never an
+      // op, and every caller of this function reads an `op.filter`. The arm exists
+      // because this switch is exhaustive over `CardFilter` — which is what makes a new
+      // member impossible to add without answering the noun question — and because a
+      // REGISTRY author can hand-write the filter into an op tomorrow.
+      return {
+        singular: `a Pokémon that has "${filter.fragment}" in its name`,
+        plural: `Pokémon that have "${filter.fragment}" in their names`,
+      };
     case "suffixPokemon":
       // 🆕🆕 D446 — the printed rule-box class, whole: "a Pokémon ex", "a Pokémon V".
       // INVARIANT IN NUMBER like the bare "Basic Pokémon" two arms down — the suffix

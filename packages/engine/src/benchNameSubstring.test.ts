@@ -217,16 +217,39 @@ describe("§1 — the price, RE-DERIVED off the corpus rather than inherited", (
     //   · the Supporter/discard-pile row is **BUILT at D510**, through
     //     `CardFilter.supporterNameContaining` and NOT through D392's member — the two
     //     vocabularies still share an OPERATOR and not a question;
-    //   · the Koffing/Weezing row is **STILL REFUSED**, and D510 refused it explicitly
-    //     rather than by omission: it needs a BOTH-SIDES body count that `CountSeat`
-    //     cannot spell, on top of a Pokémon-headed fragment filter.
+    //   · the Koffing/Weezing row was **STILL REFUSED at D510** — explicitly, not by
+    //     omission — because it needed a BOTH-SIDES body count on top of a Pokémon-headed
+    //     fragment filter;
+    // 🆕🆕🆕 **D512 TURNED THE SECOND ONE OVER TOO, SO THE VERDICT SPLITS AGAIN AND THE
+    // POPULATION HALF IS KEPT VERBATIM** (D508's rule: a re-point must not delete the
+    // evidence). All three rows now resolve, through THREE DIFFERENT vocabularies:
+    //   · `:292` through D392's `BoardCondition.yourBenchHasNameContaining`;
+    //   · `:543` through D510's `CardFilter.supporterNameContaining`;
+    //   · `:583` through D512's `CardFilter.pokemonNameContaining`, wrapped in `anyOf`
+    //     and fed to the new `DamageCountSource.bothSidesPokemonInPlay`.
+    // 🛑 **WHAT THIS RUNG STILL CATCHES (D438's second half), now that no verdict on it
+    // is a refusal**: that the family is exactly THREE printed rows and that the three
+    // vocabularies stay SEPARATE — D392's member must not reach back into a `CardFilter`
+    // row and neither `CardFilter` member may claim the `BoardCondition` one. That is
+    // the half the original loop was really guarding, and it is the half that can still
+    // go red.
     const TR_PILE =
       'This attack does 20 damage for each Supporter card that has "Team Rocket" in its name in your discard pile.';
     const KOFFING =
       'This attack does 40 damage for each Pokémon in play that has "Koffing" or "Weezing" in its name (both yours and your opponent\'s).';
     expect(named.map(([, s]) => s).sort()).toEqual([KOFFING, TAKEN, TR_PILE].sort());
     expect(resolvedByAnyReader(TR_PILE)).toBe(true);
-    expect(resolvedByAnyReader(KOFFING)).toBe(false);
+    expect(resolvedByAnyReader(KOFFING)).toBe(true); // 🆕🆕🆕 D512 — was `false` until this slice
+    // …and the three OWNERS are three different vocabularies, asserted at the VALUE so a
+    // reader that started claiming a neighbour's row would go red here rather than in a
+    // count somewhere downstream.
+    expect(JSON.stringify(deriveAttackDamageMultiplier(TR_PILE))).toContain(
+      "supporterNameContaining",
+    );
+    expect(JSON.stringify(deriveAttackDamageMultiplier(KOFFING))).toContain(
+      "pokemonNameContaining",
+    );
+    expect(deriveAttackDamageMultiplier(TAKEN)).toBeNull();
     // …and D392's OWN member is still the only thing that claims THIS row, which is the
     // half the loop above was really guarding: the new `CardFilter` member did not reach
     // back into the `BoardCondition` clause.

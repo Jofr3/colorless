@@ -523,6 +523,32 @@ export function matchesFilter(card: Card | undefined, filter: CardFilter): boole
       // `supporterNameContaining` now matches an UNANCHORED one. The exactness here is
       // the PRINT's, not the union's, which is the form that cannot rot.
       return attacksOf(card).some((attack) => attack.name === filter.attack);
+    case "pokemonNameContaining":
+      // 🆕🆕🆕 D512 — the printed *"Pokémon in play that has "Koffing" or "Weezing" in
+      // its name"* (`censusAttackCorpus.ts` FILE LINE 583, 2 legal printings), ONE
+      // fragment per member and the printed *"or"* spelled as the `anyOf` above.
+      // TWO conjuncts, and they are load-bearing for OPPOSITE reasons:
+      //   • the HEAD NOUN, delegated to the `anyPokemon` arm through THIS function
+      //     rather than re-spelled as `card.category === "Pokemon"` — D159's rule and
+      //     `supporterNameContaining`'s idiom eight arms down. *"Is this a Pokémon"* is
+      //     one question with one implementation. 🛑 **IT IS INERT ON EVERY BOARD THE
+      //     ONE PRODUCER CAN REACH**, and that is stated rather than left to be
+      //     discovered: the only producer feeds a `countPokemonInPlay` walk, and a body
+      //     in play is already a Pokémon. It is pinned HERE instead, on a Trainer
+      //     carrying the fragment (`fix-weezingcanister`), because `matchesFilter` is
+      //     exported and answers about a CARD;
+      //   • `.includes` — UNANCHORED, case-sensitive, un-normalised, which is
+      //     `supporterNameContaining`'s and `BoardCondition.yourBenchHasNameContaining`'s
+      //     reading verbatim, and the catalog `name` IS the printed name.
+      //
+      // 🛑 **DELIBERATELY NOT `startsWith`, AND THE WRONG BUILD IS A NEIGHBOUR RATHER
+      // THAN A STRAW** (D190b): `ownerPokemon` three arms down reads
+      // `card.name.startsWith(...)`, so a prefix read is what an author writing this arm
+      // by imitation reaches for. The printed words are *"has X **in** its name"* — a
+      // containment — and the real catalog puts the fragment at a non-zero offset on
+      // this very family (an owner possessive does it), which is why the fixture that
+      // separates the two readings is a body and not a construction.
+      return matchesFilter(card, { kind: "anyPokemon" }) && card.name.includes(filter.fragment);
     case "suffixPokemon":
       // 🆕🆕 D446 — a Pokémon of a printed RULE-BOX CLASS ("your opponent's Pokémon
       // ex in play"). An EQUALITY on `pokemonSuffixOf` and deliberately NOT

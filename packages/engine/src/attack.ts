@@ -499,6 +499,43 @@ function scaledAttackDamage(
       const bodySeat = bonus.count.seat === "you" ? attackerSeat : defenderSeat;
       return countPokemonInPlay(state, bodySeat, bonus.count.filter) * bonus.per;
     }
+    case "bothSidesPokemonInPlay": {
+      // 🆕🆕🆕 D512 — the bodies in play matching the printed noun, on BOTH sides of the
+      // table ("This attack does 40 damage for each Pokémon in play that has "Koffing"
+      // or "Weezing" in its name (both yours and your opponent's).", 1 sentence / 2
+      // legal printings). The SEAT-SPANNING twin of the arm directly above, placed
+      // against it so the two readings of one zone are read together.
+      //
+      // 🛑 **A MEMBER AND NOT A THIRD `CountSeat` VALUE, AND THIS FILE IS EXACTLY WHERE
+      // THAT WOULD HAVE GONE WRONG.** The arm above resolves its seat with
+      // `seat === "you" ? attackerSeat : defenderSeat` — a BINARY ternary — so a
+      // `seat: "both"` would have fallen into the `defenderSeat` branch and scored the
+      // whole sentence off ONE board, silently. Measured rather than argued: `CountSeat`
+      // was widened to three values at D512's head and `tsc -b` exited 0 with the engine
+      // suite green. A new member cannot do that — this `switch` is total over the union
+      // and a missing arm is a compile error (D447).
+      //
+      // 🛑 **TWO CALLS TO `countPokemonInPlay`, AT THE SAME FILTER, AND NOT A SECOND
+      // WALK.** `bothActivesEnergyCount` makes the identical move one noun over, and
+      // D159's rule is that "how many bodies does this seat have in play matching this
+      // filter" has ONE answer whichever vocabulary asks. The plausible mistake here is
+      // counting one end and calling it "both" — which is precisely the arm above — and
+      // it is driven apart on a board where the two sides hold different numbers.
+      //
+      // ⚠️ **`benchBodies` IS THE WRONG NEIGHBOUR AND ANSWERS ONE LOWER PER SEAT.**
+      // §4 defines "in play" as the Active PLUS the Bench; the printed words here are
+      // "in play", so both Actives contribute and the suite drives an Active-contributes
+      // board separately from a Bench-contributes one.
+      //
+      // The sum is taken BEFORE the multiply — the printed "40×" scales the TOTAL body
+      // count and not each side — and a board matching nothing on either seat is 0,
+      // which on this fold (printed base dropped) is no DAMAGE_DEALT row at all.
+      return (
+        (countPokemonInPlay(state, attackerSeat, bonus.count.filter) +
+          countPokemonInPlay(state, defenderSeat, bonus.count.filter)) *
+        bonus.per
+      );
+    }
     case "cardsInDiscardPile": {
       // 🆕🆕 D440 — the cards in a DISCARD PILE matching the printed noun, on the seat
       // the sentence NAMED ("…for each Item card in your opponent's discard pile.").

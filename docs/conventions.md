@@ -7129,6 +7129,51 @@ touch the tree wholesale" rule at an instrument rather than at `git`. **Format e
 mutant row's `find`.
 
 
+### A union-annotated ARRAY is not a guard on that union (D512)
+
+🛑 **`const SEATS: readonly CountSeat[] = ["you", "opponent"]` plus `expect(SEATS).toHaveLength(2)`
+CANNOT go red when `CountSeat` gains a third value.** Widening a union never makes a narrower array
+illegal — every element is still assignable — and the length is a property of the literal, not of
+the type. D510 shipped exactly that as the executable falsifier for a refusal (*"the day `CountSeat`
+gains a third member, this rung goes RED"*) and it stood, green and vacuous, until D512 ran the
+experiment: `CountSeat` widened to three values, **`tsc -b` exit 0, the whole suite green**.
+
+**The shape that does fire is a `Record` KEYED on the union** — `const SEATS: Record<CountSeat, Seat>
+= { you: "p1", opponent: "p2" }` fails to compile with a value missing. D446 already used it for
+`CardFilter["kind"]` in `bodiesInPlayScaling.test.ts`, and that one HAS fired, three times now, each
+time as the only compile error a new member produced. **Prefer the refusal the model re-derives**
+(D424); an annotated array is a list a human keeps.
+
+⚠️ **The general test is conventions' own: say what change would turn the rung red, then make that
+change.** It costs one `sed`, one `tsc -b` and one suite run here — about two minutes — and it is the
+only thing that separates a falsifier from a sentence about one.
+
+### Run the shipped anchors against the row FIRST, and report whichever way it comes out (D510 → D512)
+
+D510 found its row had matched a shipped anchor since D440 and was refused one step later, which
+turned *"new machine"* into *"new name"* for the cost of one `exec`. **D512 ran the same check and got
+the opposite answer** — all four in-play anchors refuse its row **at the pattern**, because every one
+of them requires the literal `for each of your ` and the printed sentence's head is SEATLESS, with the
+side named by a trailing parenthetical instead. Both answers are worth the minute. The check is not
+*"is an anchor owed"*; it is *"where exactly does this sentence stop being read"*, and the answer
+names the slice.
+
+### A both-sides reading is a MEMBER, and the reason is a ternary (D193/D196 → D512)
+
+Three shipped counts now span both seats and **all three are members with no seat field**:
+`bothSidesBenchCount`, `bothActivesEnergyCount`, `bothSidesPokemonInPlay`. The reason is mechanical
+rather than stylistic — `attack.ts` resolves a `CountSeat` with `seat === "you" ? attackerSeat :
+defenderSeat`, a BINARY ternary, so a third value is read as the OPPONENT with no complaint anywhere,
+where a new member is a compile error in that file's total `switch` (D447).
+
+⚠️ **And D507's composition answer does not transfer from ops to counts.** Two `spreadDamage` ops are
+two elements of a LIST; two counts would have to be SUMMED into one number, and the reader returns
+ONE optional count. The recursive alternative (a `sumOf` combinator) was priced at D512 and refused
+for two measured reasons: it gives two shipped members a SECOND spelling each (D159), and it makes
+the evaluator's `switch` total over the KINDS but no longer over the VALUES — which is the
+exhaustiveness the switch was worth having.
+
+
 ## Git / commits
 - Branch off `main` for non-trivial work; commit/push only when asked.
 - Commit trailer per global config: `Co-Authored-By: Claude ...`.

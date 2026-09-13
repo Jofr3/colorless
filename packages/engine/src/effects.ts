@@ -391,6 +391,83 @@ export type CardFilter =
       exactness above is a property of THIS printed noun, which is the form that cannot
       rot. */
   | { kind: "attackNamePokemon"; attack: string }
+  /** 🆕🆕🆕 **D512 — A POKÉMON WHOSE PRINTED NAME CONTAINS A QUOTED FRAGMENT**:
+      *"…for each Pokémon in play that has **"Koffing" or "Weezing" in its name**
+      (both yours and your opponent's)."* — `censusAttackCorpus.ts` **FILE LINE 583**,
+      **1 sentence / 2 legal printings**. The card ids are not resolvable in this
+      checkout and are not named (D425).
+
+      🛑 **THE SECOND HEAD NOUN OF D510's PRICED PAIR, AND THE ARITHMETIC WAS
+      RE-RUN RATHER THAN INHERITED.** `supporterNameContaining`'s block priced the
+      baked-head-noun idiom as *"2 members at full coverage, against 3 for a general
+      `allOf` plus a bare `nameContaining`"*, and named **the THIRD head noun** as the
+      crossover a successor must re-check. This slice IS the second member, so the
+      check is owed and it was run: over all 640 corpus rows the string `in its name`
+      is printed on **exactly three** — file line 292 (*"a Pokémon that has "Nidoking"
+      in its name **is on your Bench**"*, a `BoardCondition` and not a `CardFilter` at
+      all), 543 (`Supporter card`) and 583 (`Pokémon`). So the `CardFilter` vocabulary
+      has **exactly TWO** head nouns for this predicate, full coverage costs **2** and
+      the alternative still costs **3**. The crossover is still the third head noun and
+      the column still does not print it. ⚠️ **The comparison is re-measured and not
+      re-argued** — a price is a forecast and rots (D427).
+
+      🛑 **THE PREDICATE'S WARRANT IS RE-DERIVED FOR A POKÉMON-HEADED READ, NOT
+      INHERITED FROM D510.** Two things have to hold and both do:
+        · **the datum is a persisted column** — `Card.name`, the catalog's own, read
+          here exactly as `byName` and `ownerPokemon` read it. A fragment that matches
+          nothing is a genuine ZERO on a real column, never a data gap. This is the
+          axis D440 refused `^(.+) card$` on (*"Ancient"* is in NO column);
+        · **the print declares the datum** — the sentence says *"in its name"*, so the
+          quoted span is a claim about that column BY CONSTRUCTION. A banner cannot
+          arrive through this shape: the column spells banners as an ADJECTIVE
+          (*"an Ancient Supporter card"*, corpus file line 82) and never inside quotes.
+      ⚠️ **AND D510's CORRECTION IS CARRIED FORWARD RATHER THAN ITS ERROR**: the old
+      doctrine *"no `CardFilter` member does substring matching at any width"* was FALSE
+      when it was written — `ownerPokemon` has matched a proper PREFIX of `Card.name`
+      since D200 — so what is new here is neither the column nor the substring but the
+      pairing of an UNANCHORED read with a POKÉMON head.
+
+      🛑 **THE CATEGORY CONJUNCT IS DELEGATED, AND IT IS INERT ON EVERY BOARD THE ONE
+      PRODUCER CAN REACH — WHICH IS SAID HERE RATHER THAN DISCOVERED.** The head noun
+      goes through `matchesFilter`'s own `anyPokemon` arm (D159: *"is this a Pokémon"* is
+      one question with one implementation), and today's only producer feeds
+      `DamageCountSource.bothSidesPokemonInPlay`, whose walk is `countPokemonInPlay` —
+      a walk over bodies IN PLAY, every one of which is already a Pokémon. So dropping
+      the conjunct would change NO damage number this engine can compute.
+      ⚠️ **It is kept anyway, and it is driven where it IS observable**: `matchesFilter`
+      is exported and answers about a CARD, so the conjunct is pinned directly on a
+      Trainer whose name carries the fragment (`fix-weezingcanister`) rather than left to
+      an absence. D442's rule — write the row for the observable direction — and the
+      observable direction here is the predicate, not the board.
+
+      🛑 **A MEMBER AND NOT AN OPTIONAL `nameContaining?:` RIDER ON `anyPokemon`**,
+      D392's amended rule verbatim: *a filter is a FIELD only when a SHIPPED delegate
+      already accepts it; otherwise it is a MEMBER*. `cards.ts` still carries no
+      name-matching predicate (re-checked at this head, not remembered: `byName`,
+      `ownerPokemon` and `supporterNameContaining` all read `card.name` INLINE), so there
+      is no delegate. And a rider on `anyPokemon` would be invisible to the compiler —
+      a producer spelling the bare noun and forgetting it gets the UNNARROWED read,
+      which on this sentence is *every body on the table*.
+
+      ⚠️ **THE FIELD IS `fragment` AND NOT `name`**, D392's compiler property at its
+      third address: were it `name`, this member and `byName` would differ by their
+      `kind` token alone and a mistyped `kind` would still typecheck, silently swapping
+      a substring read for an equality one. `supporterNameContaining` and
+      `BoardCondition.yourBenchHasNameContaining` both spell `fragment`, so all three
+      vocabularies now agree on one word for one thing.
+
+      ⚠️ **CASE-SENSITIVE AND UN-NORMALISED**, the other two members' reading verbatim:
+      the catalog `name` IS the printed name. An EMPTY fragment would match every Pokémon
+      and the producer cannot emit one — `IN_PLAY_BOTH_SIDES_NAME_MULTIPLY` spells
+      `([^"]+)` on both captures, which requires at least one byte between the printed
+      quotes.
+
+      ⚠️ **THE PRINTED *"or"* IS `anyOf` AND IS NOT THIS MEMBER'S BUSINESS.** The
+      sentence names TWO fragments; this member holds ONE, and the producer wraps the pair
+      in the combinator that already spells a printed disjunction (D245). That is why the
+      member is not `fragments: readonly string[]` — an N-ary field here would be a second
+      spelling of `anyOf` for one axis only (D159), and `anyOf` is already N-ary. */
+  | { kind: "pokemonNameContaining"; fragment: string }
   /** 🆕🆕 D446 — a Pokémon of a printed RULE-BOX CLASS: the printed *"your
       opponent's **Pokémon ex** in play"* (2 legal printings) and *"your opponent's
       **Pokémon ex and Pokémon V** in play"* (1) — **2 sentences / 3 legal printings**
@@ -14793,6 +14870,85 @@ const IN_PLAY_FOE_BODY_MULTIPLY =
     noun ZERO times. */
 const IN_PLAY_ATTACK_NAME_MULTIPLY =
   /^This attack does (\d+) damage for each of your Pokémon in play that has the ([^.]+) attack\.$/;
+/** 🆕🆕🆕 **D512 — BODIES IN PLAY ON BOTH SIDES OF THE TABLE, NARROWED BY TWO PRINTED
+    NAME FRAGMENTS**: *"This attack does 40 damage for each Pokémon in play that has
+    "Koffing" or "Weezing" in its name (both yours and your opponent's)."* — corpus
+    **FILE LINE 583**, **1 sentence / 2 legal printings**, measured over
+    `legalAttackCorpus()` by running this pattern against all 640 rows.
+
+    🛑 **THE SHIPPED ANCHORS WERE RUN AGAINST THE ROW FIRST, AND — UNLIKE D510's — THEY
+    ALL REFUSE IT, AT THE PATTERN.** D510's lesson is that a row is often blocked one
+    step PAST the anchor, so the check is owed before a new pattern is priced. Run at
+    D512's head, all four in-play patterns answer `null`, and the reason is one token:
+    every one of them requires the literal `for each of your `, and this sentence's head
+    is **SEATLESS** (*"for each Pokémon in play"*), with the side named by the trailing
+    parenthetical instead. `IN_PLAY_BODY_MULTIPLY`'s `(?!opponent)` lookahead and
+    `IN_PLAY_FOE_BODY_MULTIPLY`'s literal `opponent['’]s ` both sit INSIDE that phrase,
+    so neither can be reached by relaxing the other. So this row genuinely owed a
+    pattern, and that is a measurement rather than an assumption.
+
+    🛑 **A NEW ANCHOR AND NOT A RELAXATION, D441's RULE, AND THE KINDS DO DIFFER.**
+    Dropping ` of your ` from `IN_PLAY_ATTACK_NAME_MULTIPLY` would make ONE pattern read
+    two SEAT SCOPES and force the arm to ask which — where two anchors dispatch on WHICH
+    PATTERN MATCHED (`DAMAGE_SUPPRESSION`'s rule, this file's everywhere). And a new
+    anchor breaks no existing row: `D439-anchor-swallows-the-owner-prefix`,
+    `D439-anchor-swallows-the-compound` and D446's rows quote those patterns VERBATIM as
+    their `find`, so an in-place widening would have rotted them (D414's lesson, avoided
+    rather than paid).
+
+    🛑 **THE HEAD NOUN IS A LITERAL AND THE TWO FRAGMENTS ARE CAPTURES**, D446's and
+    D510's idiom at a third address, and both halves are decisions. This union has no
+    INTERSECTION combinator, deliberately (see `anyOf`), so a CAPTURED head noun would
+    produce two filters the vocabulary cannot conjoin; spelling `Pokémon` in makes the
+    whole printed phrase resolve to one `pokemonNameContaining` per fragment. A LITERAL
+    fragment would be a map key per printed card name, the open-set argument
+    `ownerPokemon`, `attackNamePokemon` and `supporterNameContaining` all make.
+    ⚠️ The consequence, stated: this anchor reads the bare `Pokémon` head ONLY, and
+    *"…for each Basic Pokémon in play that has …"* is a sentence the column prints ZERO
+    times (measured over all 640 rows) and does not match.
+
+    🛑 **THE ARITY IS BAKED AT TWO, AND THAT IS THE DECISION THIS PATTERN INVITES
+    GETTING WRONG IN THE EXPENSIVE DIRECTION.** The printed row names exactly two names,
+    and the column prints the one-name and three-name forms of this shape **ZERO** times
+    (measured: `in its name` appears on three rows, and the only other quoted-fragment
+    `for each` row is file line 543's single `Supporter card` fragment). A general list
+    parser — *"A", "B", or "C"* with its Oxford comma and its trailing `or` — would be an
+    arm no printed sentence drives (D104/D435), and it would have to be right about
+    punctuation the pool does not exhibit. Two captures are what is printed. ⚠️ **AND
+    THE REFUSAL DIRECTION IS THE SAFE ONE**: a future one-name or three-name printing
+    falls to the loud `ATTACK_EFFECT_SKIPPED` path rather than being read as something
+    narrower, which is the direction this file always chooses.
+    ⚠️ **THE VALUE IS STILL N-ARY** — the arm wraps the pair in `anyOf`, which is N-ary
+    over exactly this axis (D245) — so the baked arity is a property of the PATTERN and
+    never of the vocabulary.
+
+    ⚠️ **THE CAPTURES ARE `([^"]+)` AND THE DELIMITERS ARE THE PRINTED QUOTES**,
+    D510's call re-derived here: the quotes are the card face's own bytes — **U+0022 on
+    all three corpus rows that print this shape** (file lines 292, 543, 583), measured
+    with `codePointAt` over `legalAttackCorpus()` rather than read visually. A class that
+    cannot cross a `"` cannot run past a printed span, and it cannot match EMPTY, so the
+    producer can never emit a fragment that matches every Pokémon.
+
+    ⚠️ **THE POSSESSIVE CARRIES THE `['’]` CLASS AND THE CORPUS BYTE IS U+0027**,
+    measured rather than remembered (D421's byte, D440's habit): the printed row carries
+    exactly one apostrophe, in `opponent's` inside the parenthetical, and `codePointAt`
+    over `legalAttackCorpus()` says U+0027. `Pokémon` carries the real é (U+00E9). The
+    parentheses are escaped literals — `BOTH_BENCH_SCALE` spells its own the same way.
+
+    ⚠️ **DISJOINT FROM EVERY NEIGHBOUR BY CONSTRUCTION, AND MEASURED AT HEAD.** The four
+    in-play patterns require ` of your `; `BOTH_BENCH_SCALE` requires ` more damage for
+    each Benched Pokémon` and this is the bare fold over a different noun; the two pile
+    patterns require ` discard pile` and `DISCARD_PILE_ATTACK_NAME_MULTIPLY` requires
+    ` in your discard pile that has the `. All 640 corpus rows were run against all of
+    them to say so rather than argue it, so the arm ORDER is free.
+
+    ⚠️ **NO ADDITIVE TWIN**, `IN_PLAY_FOE_BODY_MULTIPLY`'s and
+    `IN_PLAY_ATTACK_NAME_MULTIPLY`'s reason: the printed row is the bare `×` fold and the
+    column prints the *"more"* form of this noun ZERO times. No /i, whole-sentence
+    anchored with a required trailing period and a capital `This`, for the family's
+    stated reason. */
+const IN_PLAY_BOTH_SIDES_NAME_MULTIPLY =
+  /^This attack does (\d+) damage for each Pokémon in play that has "([^"]+)" or "([^"]+)" in its name \(both yours and your opponent['’]s\)\.$/;
 /** The three printed nouns with no parameter, mapped to the `CardFilter` members
     that already spell them. A MAP and not a regex alternation, for
     `CLAUSE_ENERGY_TOKENS`' reason: the accepted vocabulary is a single list rather
@@ -22398,6 +22554,25 @@ const BENCHABLE_RETRIEVAL_KINDS: ReadonlySet<CardFilter["kind"]> = new Set<CardF
   // gains a Stage row this Set decides whether the printed sentence benches, and an
   // omission would compile.
   "stagePokemon",
+  // 🆕🆕🆕 **D512 — ADMITTED, AND IT IS THE MIRROR OF THE REFUSAL DIRECTLY BELOW.**
+  // `pokemonNameContaining`'s head noun delegates to `matchesFilter`'s `anyPokemon` arm,
+  // so every card it can ever admit is `category: "Pokemon"` — this Set's stated rule is
+  // *"every sentence that benches names a Pokémon noun"* and this member names one. The
+  // pair is worth reading together: the same PREDICATE under two head nouns lands on
+  // opposite sides of this Set, and the head noun is the whole of why.
+  //
+  // 🛑 **NEITHER DIRECTION IS OBSERVABLE TODAY, MEASURED RATHER THAN ASSUMED**, which
+  // is D446's and D466's finding at this address re-run: this Set has exactly ONE call
+  // site (the `ATTACK_DISCARD_RETRIEVAL` arm below), the `filter` it guards can only come
+  // from `HAND_SEARCH_SINGULAR` / `HAND_SEARCH_PLURAL` / `typedNounFilter` / a bare
+  // `byName`, and NONE of those can produce this member — `HAND_SEARCH_NOUNS` carries no
+  // quoted-fragment row and cannot, because the fragment is a CAPTURE. So omitting this
+  // line refuses nothing and adding it benches nothing.
+  // ⚠️ **THAT IS WHY NO MUTANT ROW IS WRITTEN FOR IT** — D420/D442's rule and D446's
+  // call verbatim: a row that changes nothing reports a suite gap that does not exist.
+  // The line is still owed, because the day a benching sentence names a quoted fragment
+  // this Set decides whether it benches, and an omission would compile (D222).
+  "pokemonNameContaining",
   // 🆕🆕🆕 **D510 — THE FIRST MEMBER THIS SET REFUSES BY CATEGORY RATHER THAN BY
   // REACHABILITY, AND THE ABSENCE IS A DECISION WITH A REASON.**
   // `supporterNameContaining` is EXCLUDED — deliberately, and not for the
@@ -28161,7 +28336,85 @@ export type DamageCountSource =
   | { kind: "bothActivesEnergyCount" }
   | { kind: "toolsOnYourBoard" }
   | { kind: "extraEnergyUnitsBeyondCost"; extra: number }
+  /** 🆕🆕🆕 **D512 — THE SAME BODIES, ON BOTH SEATS AT ONCE, AND IT IS A MEMBER AND
+      NOT A THIRD `CountSeat` VALUE.** *"This attack does 40 damage for each Pokémon in
+      play that has "Koffing" or "Weezing" in its name **(both yours and your
+      opponent's)**."* — `censusAttackCorpus.ts` **FILE LINE 583**, **1 sentence / 2
+      legal printings**, measured over `legalAttackCorpus()` by running the new anchor
+      against all 640 rows.
+
+      🛑 **A THIRD `CountSeat` VALUE WOULD BE SILENTLY WRONG, AND THAT WAS MEASURED AT
+      THIS HEAD RATHER THAN QUOTED.** `attack.ts` reads the seat through
+      `seat === "you" ? attackerSeat : defenderSeat`, a BINARY ternary, so a `"both"`
+      would be read as the OPPONENT — one board's worth of bodies, on the wrong side,
+      with no complaint anywhere. **The experiment was run**: `CountSeat` was widened to
+      three values at D512's head and `tsc -b` exited **0** while the whole engine suite
+      stayed GREEN. ⚠️ **D510's rung claimed that widening would go RED and it does
+      NOT** — a `readonly CountSeat[]` holding two literals still typechecks when the
+      union gains a third — so that rung is REPAIRED in this slice (a
+      `Record<CountSeat, Seat>`, which is the compile-enforced enumeration idiom D446
+      already uses for `CardFilter["kind"]`) rather than merely re-pointed. A new MEMBER
+      needs no such insurance: `attack.ts`'s `switch` is total over this union and a
+      missing arm is a compile error (D447).
+
+      🛑 **AND IT IS THE FIRST BOTH-SIDES COUNT THAT CARRIES A `CardFilter`, WHICH IS
+      THE ONE THING ABOUT IT THAT IS NOT A COPY.** The two shipped both-sides members
+      are BARE — `bothSidesBenchCount` (D193) and `bothActivesEnergyCount` (D196) take no
+      payload at all — because their printed nouns carry no adjective (*"each Benched
+      Pokémon"*, *"the Energy attached to each Active Pokémon"*). This sentence's noun is
+      NARROWED in print (*"Pokémon in play **that has …in its name**"*), so the filter is
+      not an extra: it IS the printed noun. **REQUIRED and not optional**, on
+      `cardsInDiscardPile`'s and `cardsInOpponentHand`'s stated ground — nothing here is
+      persisted, so REQUIRED is free and the next producer of this member is a compile
+      error rather than a silent "every body on the table". The unfiltered reading is not
+      a different sentence, it is the same question with the widest answer, and
+      `anyPokemon` already spells that.
+
+      🛑 **THE COMPOSITION ROUTE WAS PRICED AND REFUSED, AND IT IS NOT D507's.** D507
+      read the IDENTICAL printed parenthetical as a composition — `spreadDamage` over one
+      Bench then the other, two ops, zero type bytes — and that does not transfer: an op
+      is an element of a LIST, where this is a COUNT feeding `per × count` through ONE
+      `AttackDamageBonus`, so two counts would have to be SUMMED and
+      `deriveAttackDamageMultiplier`'s return type would have to change. The composition
+      that WOULD work inside this union is a recursive `{ kind: "sumOf"; counts: readonly
+      DamageCountSource[] }`, and it is refused for two measured reasons rather than one:
+      it would give `bothSidesBenchCount` and `bothActivesEnergyCount` a SECOND spelling
+      each (D159's second answer to one question, and both are load-bearing on shipped
+      mutant rows), and it would be this union's first RECURSIVE member — `attack.ts`'s
+      `switch` stays total over the KINDS but no longer over the VALUES, which is exactly
+      the exhaustiveness D447 buys. One member for one printed sentence, bounded, is
+      cheaper than a combinator for one printed sentence, unbounded.
+
+      🛑 **THE NAME IS `pokemonInPlay`'s WITH A PREFIX, DELIBERATELY, AND NOT
+      `…Count`.** The two older both-sides members end in `Count`; five of this union's
+      members do and twelve do not, so that is not a convention to match. What IS
+      load-bearing is that a reader meeting this member sees the seat-scoped twin it sums
+      — the walk, the filter and the zone are `pokemonInPlay`'s exactly, and the ONLY
+      difference is that both seats contribute. Naming them apart would have hidden that.
+
+      ⚠️ **THE WALK IS `countPokemonInPlay` (interpreter.ts), CALLED TWICE, AND IT IS
+      NOT A SECOND IMPLEMENTATION.** `bothActivesEnergyCount` makes the identical move
+      one noun over (two `countAttachedEnergy` calls at the same filter), and D159's rule
+      is that *"how many bodies does this seat have in play matching this filter"* has one
+      answer whichever vocabulary asks. §4 defines *"in play"* as Active **plus** Bench,
+      so `benchBodies` — three members up — is the wrong neighbour and answers one lower
+      per seat on every board with a matching Active.
+
+      ⚠️ **REACHABLE FROM ONE READER ONLY, AND THAT IS A CENSUS RATHER THAN AN
+      OMISSION.** The printed row is the bare `×` fold. The column prints *"does N MORE
+      damage for each Pokémon in play … (both yours and your opponent's)"* **ZERO** times
+      over all 640 rows — the only both-sides `more` row is file line 554's bare
+      *"each Benched Pokémon"*, which is `bothSidesBenchCount` — so an additive twin
+      would be an arm no sentence drives (`IN_PLAY_FOE_BODY_MULTIPLY`'s call, and D435's
+      *not incrementing is also a measurement*). The absence is pinned as a census rung,
+      not left to prose.
+
+      An empty board contributes 0 from each seat and the arm is TOTAL — a seat whose
+      Active Spot is empty answers with its Bench and never throws, which is
+      `countPokemonInPlay`'s own guarantee. On this fold the printed base is DROPPED, so
+      a 0 is no `DAMAGE_DEALT` row at all rather than a 40. */
   | { kind: "pokemonInPlay"; seat: CountSeat; filter: CardFilter }
+  | { kind: "bothSidesPokemonInPlay"; filter: CardFilter }
   | { kind: "cardsInDiscardPile"; seat: DiscardPileSeat; filter: CardFilter }
   | { kind: "cardsInOpponentHand"; filter: CardFilter };
 
@@ -28861,6 +29114,69 @@ export function deriveAttackDamageMultiplier(text: string): AttackDamageBonus | 
           kind: "pokemonInPlay",
           seat: "you",
           filter: { kind: "attackNamePokemon", attack: attackName },
+        },
+      };
+    }
+  }
+  // 🆕🆕🆕 D512 — THE SAME BODIES ON BOTH SIDES OF THE TABLE, NARROWED BY TWO PRINTED
+  // NAME FRAGMENTS ("This attack does 40 damage for each Pokémon in play that has
+  // "Koffing" or "Weezing" in its name (both yours and your opponent's).", 1 sentence /
+  // 2 legal printings). It sits directly after the attack-name arm for that arm's own
+  // stated reason: a narrowed reading of the in-play zone belongs beside the other
+  // narrowed reading of it, and the patterns are mutually exclusive so the placement is
+  // legibility rather than behaviour.
+  //
+  // 🛑 THERE IS NO SEAT TO CAPTURE AND NO SEAT TO HARD-CODE, WHICH IS WHAT MAKES THIS
+  // A DIFFERENT MEMBER RATHER THAN A THIRD `seat` VALUE. The two arms above dispatch on
+  // WHICH PATTERN MATCHED and each writes a seat literal; this pattern's printed
+  // parenthetical names BOTH sides, so the count it produces carries no seat at all and
+  // `attack.ts` sums the two walks. A `seat: "both"` would have typechecked and been
+  // read as the OPPONENT by that file's binary ternary — measured at this head, not
+  // assumed (see the member's own block).
+  //
+  // 🛑 THE PRINTED "or" BECOMES `anyOf` AND NOT A SECOND ARM. `anyOf` is N-ary over
+  // exactly this axis (D245) and `.some` is the printed reading — a body named "Koffing"
+  // is in the set — so the pair is ONE filter and the count is walked ONCE per seat. An
+  // intersection reading would count only bodies carrying BOTH names, of which the
+  // catalog holds none: a sentence that pays nobody, which is `anyOf`'s own argument.
+  //
+  // THE SAME TWO GUARDS THE WHOLE FAMILY CARRIES, and the second has the fragment shape
+  // rather than the vocabulary shape: `per >= 1` is the printed-zero guard, and what
+  // stands in for `filter !== null` is the ANCHOR — `([^"]+)` cannot match empty and
+  // cannot cross a `"`, so every string reaching this line carries two non-empty
+  // fragments. The `?? ""` on each is the type-narrowing idiom the sibling arms use and
+  // is unreachable; a captured empty string would be a filter matching every Pokémon,
+  // which is the one direction this family refuses, so BOTH captures are tested and not
+  // one.
+  //
+  // 🛑 **THE EMPTINESS TEST AND THE PATTERN'S `+` ARE REDUNDANT, AND THAT IS WHY NO
+  // MUTANT ROW IS WRITTEN FOR EITHER** (D420/D442's rule at a fresh address). Each alone
+  // refuses an empty fragment, so a mutant on the regex (`[^"]*`) is caught by this line
+  // and a mutant on this line is caught by the regex — both survive by construction, and
+  // a row that changes nothing reports a suite gap that does not exist. The redundancy
+  // is D446's shipped shape at `IN_PLAY_ATTACK_NAME_MULTIPLY` and is kept for its stated
+  // reason rather than trimmed; it is recorded HERE so the absence of the rows is a
+  // decision instead of an oversight. ⚠️ The invariant is still ASSERTED — §2 of
+  // `bothSidesNameFragment.test.ts` drives constructed text with an empty quoted span
+  // through this reader and requires `null` — it simply cannot be reached by a
+  // single-line mutation.
+  const bothSidesNamed = IN_PLAY_BOTH_SIDES_NAME_MULTIPLY.exec(effect);
+  if (bothSidesNamed !== null) {
+    const per = Number(bothSidesNamed[1]);
+    const first = bothSidesNamed[2] ?? "";
+    const second = bothSidesNamed[3] ?? "";
+    if (per >= 1 && first !== "" && second !== "") {
+      return {
+        per,
+        count: {
+          kind: "bothSidesPokemonInPlay",
+          filter: {
+            kind: "anyOf",
+            filters: [
+              { kind: "pokemonNameContaining", fragment: first },
+              { kind: "pokemonNameContaining", fragment: second },
+            ],
+          },
         },
       };
     }

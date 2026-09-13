@@ -1354,6 +1354,7 @@ describe("§6 — `MATCH_RECORD_VERSION` STAYS 29, driven at all THREE addresses
       ownerPokemon: { kind: "ownerPokemon", owner: "Team Rocket" },
       abilityPokemon: { kind: "abilityPokemon" },
       attackNamePokemon: { kind: "attackNamePokemon", attack: "Round" },
+      pokemonNameContaining: { kind: "pokemonNameContaining", fragment: "Weezing" },
       suffixPokemon: { kind: "suffixPokemon", suffix: "ex" },
       toolCard: { kind: "toolCard" },
       basicEnergy: { kind: "basicEnergy" },
@@ -1370,7 +1371,7 @@ describe("§6 — `MATCH_RECORD_VERSION` STAYS 29, driven at all THREE addresses
       providesEnergy: { kind: "providesEnergy", energyType: "Grass" },
     };
     // **NINETEEN BEFORE D446, TWENTY-ONE AFTER, TWENTY-TWO AFTER D466, TWENTY-THREE
-    // AFTER D510.** The count is
+    // AFTER D510, TWENTY-FOUR AFTER D512.** The count is
     // the second half of the guard: a diff alone stays green when a member is dropped
     // from the union and from this list in one edit.
     // 🆕🆕 **D466 — AND THIS `Record` IS THE ALPHABET GATE, WHICH WAS OBSERVED RATHER
@@ -1383,7 +1384,13 @@ describe("§6 — `MATCH_RECORD_VERSION` STAYS 29, driven at all THREE addresses
     // `supporterNameContaining` to the union made `tsc -b` fail HERE, with
     // `TS2741: Property 'supporterNameContaining' is missing`, before any test ran —
     // the same observation D466 recorded one member earlier.
-    expect(Object.keys(EVERY_KIND)).toHaveLength(23);
+    // 🆕🆕🆕 **D512 — THE ALPHABET GATE FIRED A THIRD TIME, AND IT WAS THE ONLY
+    // COMPILE ERROR THE WHOLE SLICE PRODUCED**: adding `pokemonNameContaining` to the
+    // union made `tsc -b` fail HERE, with `TS2741: Property 'pokemonNameContaining' is
+    // missing`, before any test ran — and nothing else in `packages/**`, `src/**` or
+    // `apps/**` complained, which is the measurement that says this union's other
+    // consumers are exhaustive `switch`es rather than hand-kept lists (D222).
+    expect(Object.keys(EVERY_KIND)).toHaveLength(24);
     // 🛑 **THE BYTES.** Each filter is written out and read back the way
     // `MatchRecord.state` is, and `matchesFilter` must give the IDENTICAL answer over
     // a cast that spans every category the catalog has — a Pokémon with a rule box
@@ -1406,6 +1413,15 @@ describe("§6 — `MATCH_RECORD_VERSION` STAYS 29, driven at all THREE addresses
       // indistinguishable from a member that answers false to everything (D424's
       // anti-vacuity rule, the reason `fix-stage2body` is on the line above).
       "fix-trsupporter",
+      // 🆕🆕🆕 D512 — without a POKÉMON carrying a name fragment in the cast,
+      // `pokemonNameContaining` answers false to every member of it and is
+      // indistinguishable from a member that answers false to everything (D424's
+      // anti-vacuity rule again, and the reason the two lines above are here).
+      "fix-galarweezing",
+      // …and the ITEM that carries the SAME fragment, which is the ONLY card in this
+      // pool on which the member's category conjunct is observable at all: the one
+      // producer walks bodies IN PLAY, and every one of those is already a Pokémon.
+      "fix-weezingcanister",
     ];
     for (const [kind, filter] of Object.entries(EVERY_KIND)) {
       const readBack = JSON.parse(JSON.stringify(filter)) as CardFilter;
@@ -1466,6 +1482,33 @@ describe("§6 — `MATCH_RECORD_VERSION` STAYS 29, driven at all THREE addresses
     expect(
       matchesFilter(FIXTURE_POOL["fix-trsupporter"], { kind: "byName", name: "Team Rocket" }),
     ).toBe(false);
+    // 🆕🆕🆕 D512 — the new member's positive and its THREE different negatives, each
+    // false for a DIFFERENT reason: an ITEM carrying the fragment (the head noun — the
+    // ONLY observable witness this conjunct has anywhere), a Pokémon carrying NO
+    // fragment (the fragment), and a Pokémon carrying the OTHER printed fragment (the
+    // disjunct, which is what makes the printed `or` an axis rather than a decoration).
+    expect(
+      matchesFilter(FIXTURE_POOL["fix-galarweezing"], EVERY_KIND.pokemonNameContaining),
+    ).toBe(true);
+    expect(
+      matchesFilter(FIXTURE_POOL["fix-weezingcanister"], EVERY_KIND.pokemonNameContaining),
+    ).toBe(false);
+    expect(matchesFilter(FIXTURE_POOL["fix-benchfiller"], EVERY_KIND.pokemonNameContaining)).toBe(
+      false,
+    );
+    expect(matchesFilter(FIXTURE_POOL["fix-darkkoffing"], EVERY_KIND.pokemonNameContaining)).toBe(
+      false,
+    );
+    // …and the NEIGHBOURS it must not be, on the same cards in the same run:
+    // `startsWith` would refuse `"Galarian Weezing"` and `byName` — the EXACT read —
+    // refuses the very card the fragment was taken from, while `item` admits the
+    // Trainer this member refuses.
+    expect(FIXTURE_POOL["fix-galarweezing"]?.name.startsWith("Weezing")).toBe(false);
+    expect(FIXTURE_POOL["fix-galarweezing"]?.name.includes("Weezing")).toBe(true);
+    expect(
+      matchesFilter(FIXTURE_POOL["fix-galarweezing"], { kind: "byName", name: "Weezing" }),
+    ).toBe(false);
+    expect(matchesFilter(FIXTURE_POOL["fix-weezingcanister"], EVERY_KIND.item)).toBe(true);
   });
 
   it("the FROZEN board is handed back untouched — the purity pair", () => {
@@ -1533,7 +1576,7 @@ describe("§6 — `MATCH_RECORD_VERSION` STAYS 29, driven at all THREE addresses
   });
 
   it("the engine version moved with the behaviour", () => {
-    expect(engineVersion).toBe("0.398.0");
+    expect(engineVersion).toBe("0.399.0");
   });
 });
 
