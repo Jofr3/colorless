@@ -14989,21 +14989,34 @@ function inPlayBodyFilter(noun: string): CardFilter | null {
 //     • "This attack does 30 damage for each Item card in your opponent's discard pile."          2 → item
 //   MULTIPLY, YOUR pile — 1 sentence / 2 printings reaches it:
 //     • "This attack does 20 damage for each Supporter card that has "Team Rocket" in its name in your discard pile."  2 → 🛑 NO FILTER (below)
-//   REACHES NEITHER ANCHOR, and each for its own structural reason:
+//   REACHES NEITHER OF THE TWO ANCHORS ABOVE, and each for its own structural reason:
 //     • "This attack does 20 damage for each Pokémon in your discard pile that has the United Wings attack."  1 —
 //       the noun is SPLIT AROUND the zone phrase, so the sentence does not END at
-//       "discard pile." and an `^…$` anchor cannot see it at all. It also needs a
-//       `CardFilter` member reading `attacksOf`, which is D439's refused widening one
-//       zone over — two independent blocks, and the anchor is the cheaper one to state.
+//       "discard pile." and NEITHER OF THE TWO `^…$` ANCHORS ABOVE can see it at any
+//       vocabulary width. 🆕🆕🆕 **D508 BUILT IT ON A THIRD ANCHOR**
+//       (`DISCARD_PILE_ATTACK_NAME_MULTIPLY`, two constants down) and this paragraph is
+//       corrected in place rather than deleted, because BOTH of the reasons it once gave
+//       have now expired and the order in which they did is the finding. It said the row
+//       needed *"a `CardFilter` member reading `attacksOf`, which is D439's refused
+//       widening one zone over"*; **D446 built that member** (`attackNamePokemon`) and
+//       corrected the sentence in `discardPileScaling.test.ts` without correcting it
+//       here. What was left was ONE block — this anchor's `$` — and D508 is a new anchor
+//       rather than a relaxation of either of these two, so the sentences they claim are
+//       untouched. The count and the filter are BOTH shipped; the cross product cost
+//       zero members in either union.
 //     • "Put 2 damage counters on 1 of your opponent's Pokémon for each Basic {G} Energy card in your discard pile. Then, shuffle those Energy cards into your deck."  3 —
 //       a counter PLACEMENT compound, not a damage fold: its count scales an op's
 //       amount rather than the attack's damage, so it belongs to no reader in this
 //       family. Listed because the loose pattern found it and a survey that silently
 //       drops a hit is the defect this file keeps paying for.
 //
-// So the ANCHORS reach 6 sentences / 12 printings and the VOCABULARY claims
+// So the TWO ANCHORS ABOVE reach 6 sentences / 12 printings and the VOCABULARY claims
 // **4 sentences / 8 printings**; the other two fall through `discardPileFilter` to
-// null and stay on the loud ATTACK_EFFECT_SKIPPED path.
+// null and stay on the loud ATTACK_EFFECT_SKIPPED path. 🆕🆕🆕 **D508 ADDS A THIRD
+// ANCHOR AND A FIFTH CLAIMED SENTENCE** (the United Wings row, 1 printing), which this
+// family's totals therefore now read **5 sentences / 9 printings** — but the 6/12 and
+// 4/8 figures above are UNCHANGED, because they are about these two patterns and this
+// map, and D508 touched neither.
 //
 // 🛑 THE TWO REFUSALS, EACH WITH ITS OWN REASON — NOT ONE REASON TWICE.
 //   • **Ancient card** (2 printings) is DATA-BLOCKED and permanently so, not unbuilt.
@@ -15077,6 +15090,74 @@ const DISCARD_PILE_COUNT_MULTIPLY =
   /^This attack does (\d+) damage for each ([^.]+) in (your opponent['’]s|your) discard pile\.$/;
 const DISCARD_PILE_COUNT_SCALE =
   /^This attack does (\d+) more damage for each ([^.]+) in (your opponent['’]s|your) discard pile\.$/;
+/** 🆕🆕 D508 — THE DISCARD PILE NARROWED BY A PRINTED ATTACK NAME:
+    *"This attack does 20 damage for each Pokémon in your discard pile that has the
+    United Wings attack."* — **1 sentence / 1 legal printing** (corpus FILE LINE 542),
+    measured over `legalAttackCorpus()` by running this anchor against all 640 rows.
+
+    🛑 **THIS IS THE THIRD REFUSAL REASON THE SURVEY ABOVE NAMED, AND IT IS THE ONLY
+    ONE LEFT.** That block listed this row as reaching NEITHER `discard pile` anchor
+    *"because the noun is SPLIT AROUND the zone phrase, so the sentence does not END at
+    `discard pile.`"* — an anchor block — and added a SECOND one: *"it also needs a
+    `CardFilter` member reading `attacksOf`."* **D446 built that member**
+    (`attackNamePokemon`, for the IN-PLAY twin of this very noun) and
+    `discardPileScaling.test.ts` §7 was corrected in place at the time. So what shipped
+    here is ONE ANCHOR and ONE ARM over a count and a filter that BOTH already shipped:
+    **ZERO new `CardFilter` members, ZERO new `DamageCountSource` members, ZERO evaluator
+    bytes** — `attack.ts`'s `cardsInDiscardPile` arm takes an arbitrary `CardFilter`
+    and `matchesFilter`'s `attackNamePokemon` arm reads `attacksOf(card)`.
+
+    🛑 **THE ANCHOR IS A CROSS PRODUCT OF TWO SHIPPED ANCHORS AND IS WRITTEN AS A THIRD
+    ONE RATHER THAN AS A RELAXATION OF EITHER** — D441's rule, and the kinds do differ.
+    Relaxing `DISCARD_PILE_COUNT_MULTIPLY`'s `\.$` to admit a trailing clause is exactly
+    the widening D207 paid for three times; relaxing `IN_PLAY_ATTACK_NAME_MULTIPLY`'s
+    ` in play ` into an alternation would make ONE pattern read two ZONES and force the
+    arm to ask which. A new anchor also breaks no existing row — four `D440-*` mutant
+    rows quote the two patterns above verbatim as their `find`.
+
+    ⚠️ **THE NOUN IS A LITERAL AND THE ATTACK NAME IS A CAPTURE, AND THE ARGUMENT IS
+    RE-DERIVED HERE RATHER THAN INHERITED FROM THE IN-PLAY TWIN.** `CardFilter` has no
+    INTERSECTION combinator (deliberately — see `anyOf`), so capturing the head noun as
+    well would produce two filters this vocabulary cannot conjoin; spelling `Pokémon`
+    into the pattern makes the whole phrase resolve to the single `attackNamePokemon`
+    member that IS it. The captured ATTACK NAME is a different question with a different
+    answer: a printed attack name is `attacks_json[].name`, a **persisted catalog
+    column**, so a captured name is answerable by construction and a misspelling matches
+    the empty set — a loud zero on every board. That is the property D440's refused
+    `^(.+) card$` capture lacked: *"Ancient"* is in NO column at all, so that capture
+    would have scored a printed base forever.
+
+    ⚠️ **THE HEAD NOUN RESTRICTION IS THE IN-PLAY TWIN'S, AND IT IS THE SAME
+    MEASUREMENT ONE ZONE OVER.** This anchor reads the bare `Pokémon` head ONLY;
+    *"…for each Basic Pokémon in your discard pile that has the United Wings attack."*
+    does not match and is printed ZERO times (measured over all 640 corpus rows).
+
+    🛑 **THE SEAT IS SPELLED INTO THE ANCHOR AND IS STILL READ FROM THE PRINTED
+    WORDS, WHICH IS NOT D440's DEFECT.** That block's rule is *"the seat is captured from
+    the printed words and is NEVER inferred from the fold"* — a ban on deriving one axis
+    from another. Here the printed word `your` is a LITERAL of the pattern, so a sentence
+    naming the opponent's pile cannot reach this arm at all; it would fall to the loud
+    `ATTACK_EFFECT_SKIPPED` path rather than be scored off the wrong pile.
+    **Measured: `opponent['’]s discard pile that has` occurs ZERO times in the column**,
+    so a seat capture would be an arm no sentence drives (`IN_PLAY_BODY_NOUNS`' rule).
+    ⚠️ **NO ADDITIVE TWIN**, for the same reason and measured the same way: the column
+    prints *"does N MORE damage for each Pokémon in your discard pile that has …"* ZERO
+    times, so a `DISCARD_PILE_ATTACK_NAME_SCALE` would be dead code.
+
+    ⚠️ **NO `['’]` CLASS, AND THAT IS A MEASUREMENT RATHER THAN AN OMISSION** — D137's
+    insurance applies to a pattern that SPELLS an apostrophe, and this one spells none
+    (the possessive seat token is not in it). The corpus row's only non-ASCII byte is the
+    real é of `Pokémon` at index 39 (`codePointAt`, not a visual read), which this
+    pattern carries verbatim.
+
+    ⚠️ **DISJOINT FROM BOTH NEIGHBOURS BY CONSTRUCTION, AND MEASURED AT HEAD**:
+    `DISCARD_PILE_COUNT_MULTIPLY` requires ` discard pile.` at END OF STRING and this
+    sentence ends `that has the United Wings attack.`;
+    `IN_PLAY_ATTACK_NAME_MULTIPLY` requires ` in play that has `, which no pile sentence
+    prints. So no string matches two of the three and the arm ORDER is free — all 640
+    corpus rows were run against all three patterns to say so rather than argue it. */
+const DISCARD_PILE_ATTACK_NAME_MULTIPLY =
+  /^This attack does (\d+) damage for each Pokémon in your discard pile that has the ([^.]+) attack\.$/;
 /** The four printed nouns, mapped to the `CardFilter` members that already spell
     them. **ZERO new `CardFilter` members**, which is what keeps this slice out of
     `retrieveNoun`'s exhaustive switch (interpreter.ts) and out of
@@ -28668,6 +28749,44 @@ export function deriveAttackDamageMultiplier(text: string): AttackDamageBonus | 
     const seat: DiscardPileSeat = foeDiscard[3] === "your" ? "you" : "opponent";
     if (per >= 1 && filter !== null) {
       return { per, count: { kind: "cardsInDiscardPile", seat, filter } };
+    }
+  }
+  // 🆕🆕 D508 — THE SAME PILE NARROWED BY A PRINTED ATTACK NAME
+  // ("…for each Pokémon in your discard pile that has the United Wings attack.",
+  // 1 sentence / 1 legal printing). It sits directly after the unnarrowed pile arm
+  // for the reason the in-play attack-name arm sits after ITS unnarrowed pair: the
+  // narrowed reading of a zone belongs next to the wide one, and the two are
+  // mutually exclusive so the placement is legibility rather than behaviour.
+  //
+  // 🛑 THE COUNT AND THE FILTER BOTH ALREADY SHIPPED AND THIS ARM IS THEIR CROSS
+  // PRODUCT — `cardsInDiscardPile` (D440, one arm up) over `attackNamePokemon`
+  // (D446, the IN-PLAY twin's filter). No member of either union moves.
+  //
+  // THE SAME TWO GUARDS the whole family carries, and the second one has the
+  // attack-name shape rather than the vocabulary shape for the twin's stated
+  // reason: there is no noun map to miss here, so what stands in for
+  // `filter !== null` is the ANCHOR — `([^.]+)` cannot match an empty name and
+  // cannot cross a `.`, so every string reaching this line carries a name. The
+  // `?? ""` is the family's type-narrowing idiom and is unreachable; a captured
+  // empty string would be a filter matching no card, i.e. a loud zero.
+  //
+  // 🛑 THE SEAT IS `"you"` BECAUSE THE PATTERN SPELLS `your`, NOT BECAUSE THE
+  // FOLD IS THE BARE ONE. D440's confound warning is about inferring the seat from
+  // the fold; a seat that is a LITERAL of the anchor cannot be wrong about a
+  // sentence, because a sentence naming the other pile does not reach this line.
+  const pileByAttackName = DISCARD_PILE_ATTACK_NAME_MULTIPLY.exec(effect);
+  if (pileByAttackName !== null) {
+    const per = Number(pileByAttackName[1]);
+    const attackName = pileByAttackName[2] ?? "";
+    if (per >= 1 && attackName !== "") {
+      return {
+        per,
+        count: {
+          kind: "cardsInDiscardPile",
+          seat: "you",
+          filter: { kind: "attackNamePokemon", attack: attackName },
+        },
+      };
     }
   }
   // 🆕🆕 D445 — the OPPONENT'S HAND, on the only fold the column prints it with.

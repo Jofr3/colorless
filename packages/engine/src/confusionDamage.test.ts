@@ -207,7 +207,7 @@ describe("§2 — a WHOLE-SENTENCE anchor, and the two measurements that warrant
     const claimedEndingInPeriod = legalAttackCorpus().filter(
       ([, t]) => resolvedByAnyReader(t) && t.endsWith("."),
     );
-    expect(claimedEndingInPeriod.length).toBe(494);
+    expect(claimedEndingInPeriod.length).toBe(495);  // (🆕🆕🆕 **D508 +1 sentence — THE DISCARD PILE NARROWED BY A PRINTED ATTACK NAME** — `censusAttackCorpus.ts` **FILE LINE 542**, *"This attack does 20 damage for each Pokémon in your discard pile that has the United Wings attack."*, **1 sentence / 1 legal printing**, claimed by `deriveAttackDamageMultiplier` over ONE new anchor (`DISCARD_PILE_ATTACK_NAME_MULTIPLY`) crossing D440's `cardsInDiscardPile` count with D446's `attackNamePokemon` filter — **ZERO new members in either union, ZERO evaluator bytes**. READER summand ALONE; registry, gate and trailing stand still at 10/16, 5/13, 11/21. ⚠️ **THE SENTENCE STEP AND THE PRINTING STEP AGREE AT 1 AND 1**, measured per site rather than copied between the two kinds of site (D451/D461).) 
     const burnedHead = "Flip a coin. If heads, your opponent's Active Pokémon is now Burned.";
     expect(resolvedByAnyReader(burnedHead)).toBe(true);
     expect(deriveAttackEffect(`${burnedHead} ${TAIL}`)).toBeNull();
@@ -820,8 +820,8 @@ describe("§7 — the bump, and the corruption it refuses", () => {
   });
 
   it("the engine version moved with the behaviour, and the manifest agrees", () => {
-    expect(engineVersion).toBe("0.396.0");
-    expect(manifest.version).toBe("0.396.0");
+    expect(engineVersion).toBe("0.397.0");
+    expect(manifest.version).toBe("0.397.0");
   });
 });
 

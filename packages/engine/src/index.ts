@@ -19984,6 +19984,59 @@ import type { GameState, Seat } from "./types";
     `expect(manifest.version)`, `it(…)` titles, the declaration and `package.json` —
     **not** as a value-keyed grep — because a value-keyed grep is precisely the mechanism
     that ate D500's heading.)
+    🆕🆕🆕 engineVersion 0.396.0 → **0.397.0** (D508 — THE DISCARD PILE NARROWED BY A
+    PRINTED ATTACK NAME — THE CROSS PRODUCT OF TWO SHIPPED PIECES, AND ZERO MEMBERS IN
+    EITHER UNION. `censusAttackCorpus.ts` **FILE LINE 542** — *"This attack does 20
+    damage for each Pokémon in your discard pile that has the United Wings attack."*,
+    **1 sentence / 1 legal printing**, claimed by `deriveAttackDamageMultiplier` over
+    ONE new anchor `DISCARD_PILE_ATTACK_NAME_MULTIPLY`.
+    🛑 **THE WHOLE ENGINE CHANGE IS ONE REGEX AND ONE ARM.** The COUNT is D440's
+    shipped `DamageCountSource.cardsInDiscardPile` and the FILTER is D446's shipped
+    `CardFilter.attackNamePokemon`; this sentence is their cross product, so **neither
+    union gains a member, no `EffectOp` moves, and `attack.ts` gains ZERO bytes** — its
+    `cardsInDiscardPile` arm has always taken an arbitrary `CardFilter` and
+    `matchesFilter`'s `attackNamePokemon` arm has always read `attacksOf(card)`.
+    `MATCH_RECORD_VERSION` **HELD at 30**, and the argument rests on the OP rather than
+    on an arm's shape (D507's rule): a damage FOLD emits no `EffectOp` at all, so there
+    is nothing for a `MatchRecord` to carry — the derived `AttackDamageBonus` is
+    recomputed from `Card.attacks[].effect` on every read and is never serialized.
+    🛑 **IT OVERTURNS A REFUSAL THAT HAD ALREADY BEEN CORRECTED ONCE AND WAS STILL
+    ONE REASON TOO LONG IN A SECOND PLACE.** D440 blocked this row TWICE — on the
+    ANCHOR and on a `CardFilter` *"reading `attacksOf`"* — and D446 built that filter and
+    corrected `discardPileScaling.test.ts` in place. **`scripts/opaque-anatomy.ts`'s
+    `NAMED-ATTACK` marker was never corrected**: its `needs` still priced FILE LINE 542
+    at *"a `CardFilter` over a card's printed attack list"*, which had been false since
+    D446. Corrected in place (D178), and the marker's VERDICT flipped `blocker` →
+    `co-marker` because its built side is now live — which is the falsification
+    `opaque-anatomy-gate.ts` §C was written to force.
+    **A NINTH LATTICE SHAPE: ONE BLOCKING AXIS AND FOUR LIVE ONES, ZERO FREE** —
+    `0/1 · 1/5 · 1/10 · 3/10 · 2/5 · 0/1`, identical readers-only and
+    splitter-inclusive, both splitters null at 32/32. The ZONE axis is one-sidedly
+    blocking (**0 of 16** discard-pile points build before this slice, 1 after) and the
+    other four flip the verdict at 5, 3, 3 and 1 of 16 — so unlike D505's free 2⁴ and
+    D507's free 2³, **no axis here is inert**, and all 32 points are distinct strings.
+    ⚠️ **THIS HEADING NAMES NO `D<nnn>` AND THAT IS DELIBERATE, NOT AN OMISSION** —
+    D507's posture, for D507's reason. `engineVersionChangelog.test.ts`'s ATTRIBUTION
+    case asserts `adjudicated === LABELLED.length` with no tolerance, so a labelled
+    heading without its `docs/decisions.md` row ships `check` RED. **The debt is
+    D508**: whoever writes `| **D508** | … engine 0.396.0 → 0.397.0 … |` should rewrite
+    this heading's opening parenthesis as `(D508 — THE DISCARD PILE…` in the same
+    commit, and not before.
+    🛑 **VERSION-TAX EXCEPTION LIST FOR THIS BUMP, NAMING THE HEADING BEING WRITTEN
+    THIS SLICE (D506's rule (b)).** `0.396.0` legitimately survives at SIX kinds of site
+    and none of them may be swept: **THIS HEADING'S OWN SOURCE**; D507's heading TARGET
+    at index.ts 19922 and its decisions-row sentence at 19974;
+    `engineVersionChangelog.test.ts`'s forward-looking illustration at lines 39–41,
+    written at D506 and deliberately left standing by D507; `mutants.ts`'s D275
+    re-point ledger, which is APPENDED to rather than rewritten;
+    `D506-changelog-head-unnamed`'s `find`/`replace`, which is RE-POINTED wholesale onto
+    the heading above rather than value-swept; and the `docs/` history. The sweep was
+    run as a WHITELIST over `expect(engineVersion)`, `expect(manifest.version)`, `it(…)`
+    titles, the declaration, `package.json` and the ONE `mutants.ts` `find` that quotes
+    the declaration — **not** as a value-keyed grep.
+    ⚠️ **AND `precheck` WAS RE-RUN AFTER EVERY `index.ts` EDIT** (D507's finding): a
+    mutant row's `find` is a dependency on exact bytes here, `precheck` is NOT part of
+    `bun run check`, and the sweep dies on row 1 of 2,500-odd if the two disagree.)
     🆕🆕🆕 engineVersion 0.390.0 → **0.391.0** (D499 — THE PRINTED CANCEL WITH A
     HEADS CONSEQUENT ON THE SAME FLIP. `censusAttackCorpus.ts` **FILE LINE 268** —
     *"Flip a coin. If tails, this attack does nothing. If heads, during your opponent's
@@ -20654,7 +20707,7 @@ import type { GameState, Seat } from "./types";
     WITNESS** — the count was re-derived every slice and the word *"three"* was carried.
     A successor of this slice inherits **81 / 61 / 17** again, over **FIVE** history
     occurrences: those four plus `deckMillFilteredScale.test.ts`'s own header arrow.) */
-export const engineVersion = "0.396.0";
+export const engineVersion = "0.397.0";
 
 export type {
   ApplyResult,

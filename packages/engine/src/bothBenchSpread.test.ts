@@ -1020,7 +1020,7 @@ describe("D507 §8 — the FOUR-ZONE sibling is REFUSED, and the condition that 
 describe("D507 §9 — the residue, the surface, the version, and what stands still", () => {
   it("🛑 the RAW reader-only residue fell by exactly 2 sentences / 2 printings, and both rows left it", () => {
     const unbuilt = legalAttackCorpus().filter(([, s]) => !resolvedByAnyReader(s));
-    expect([unbuilt.length, units(unbuilt)]).toEqual([104, 160]);
+    expect([unbuilt.length, units(unbuilt)]).toEqual([103, 159]);  // (🆕🆕🆕 **D508 −1 sentence / −1 printing — THE DISCARD PILE NARROWED BY A PRINTED ATTACK NAME** — `censusAttackCorpus.ts` **FILE LINE 542**, *"This attack does 20 damage for each Pokémon in your discard pile that has the United Wings attack."*, **1 sentence / 1 legal printing**, claimed by `deriveAttackDamageMultiplier` over ONE new anchor (`DISCARD_PILE_ATTACK_NAME_MULTIPLY`) crossing D440's `cardsInDiscardPile` count with D446's `attackNamePokemon` filter — **ZERO new members in either union, ZERO evaluator bytes**. READER summand ALONE; registry, gate and trailing stand still at 10/16, 5/13, 11/21. ⚠️ **THE SENTENCE STEP AND THE PRINTING STEP AGREE AT 1 AND 1**, measured per site rather than copied between the two kinds of site (D451/D461).) 
     // …and this slice's rows are not in it any more, which is the only way the pair above
     // reads as a measurement of THIS head rather than of a number (D483's move).
     expect(unbuilt.map(([, s]) => s)).not.toContain(PRINTED_BOTH);

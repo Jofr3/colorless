@@ -5230,7 +5230,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D275",
     what: "🛑 THE DEBT THIS SLICE PAID FOR THE FIFTH TIME, RE-INSTALLED: `engineVersion` falls a minor behind `packages/engine/package.json`, which is EXACTLY the state the tree was in at the head of D275 (0.187.0 against 0.189.0) and had been for two slices with nothing comparing them. The tie is the guard; this row is the proof it is one",
     file: "packages/engine/src/index.ts",
-    // ⚠️ RE-POINTED AT D507 (0.395.0 → 0.396.0), at D505 (0.394.0 → 0.395.0), at D490 (0.384.0 → 0.385.0), at D489 (0.383.0 → 0.384.0), at D488 (0.382.0 → 0.383.0), at D487 (0.381.0 → 0.382.0), at D486 (0.380.0 → 0.381.0), at D485 (0.379.0 → 0.380.0), at D450 (0.351.0 → 0.352.0), at D449 (0.350.0 → 0.351.0), at D448 (0.349.0 → 0.350.0), at D447 (0.348.0 → 0.349.0), at D446 (0.347.0 → 0.348.0), at D445 (0.346.0 → 0.347.0), at D444 (0.345.0 → 0.346.0), at D443 (0.344.0 → 0.345.0), at D442 (0.343.0 → 0.344.0), at D441 (0.342.0 → 0.343.0), at D440 (0.341.0 → 0.342.0), at D439 (0.340.0 → 0.341.0), at D438 (0.339.0 → 0.340.0), at D437 (0.338.0 → 0.339.0), at D436 (0.337.0 → 0.338.0), at D435 (0.336.0 → 0.337.0), at D434 (0.335.0 → 0.336.0), at D433 (0.334.0 → 0.335.0), at D432 (0.333.0 → 0.334.0), at D431 (0.332.0 → 0.333.0), at D430 (0.331.0 → 0.332.0), at D429 (0.330.0 → 0.331.0), at D428 (0.329.0 → 0.330.0), at D427 (0.328.0 → 0.329.0), at D426 (0.327.0 → 0.328.0), at D425 (0.326.0 → 0.327.0), at D424 (0.325.0 → 0.326.0), at D423 (0.324.0 → 0.325.0), at D422 (0.323.0 → 0.324.0), at D421 (0.322.0 → 0.323.0), at D420 (0.321.0 → 0.322.0), at D417 (0.320.0 → 0.321.0), at D416 (0.319.0 → 0.320.0), at D415 (0.318.0 → 0.319.0), at D414 (0.317.0 → 0.318.0), at D413 (0.316.0 → 0.317.0), at D412 (0.315.0 → 0.316.0), at D410 (0.314.0 → 0.315.0), at D409 (0.313.0 → 0.314.0), at D408 (0.312.0 → 0.313.0), at D407 (0.311.0 → 0.312.0), at D402 (0.306.0 → 0.307.0), at D401 (0.305.0 → 0.306.0), at D400 (0.304.0 → 0.305.0), at D399 (0.303.0 → 0.304.0), at D398 (0.302.0 → 0.303.0), at D397 (0.301.0 → 0.302.0), at D396 (0.300.0 → 0.301.0), at D395 (0.299.0 → 0.300.0), at D394 (0.298.0 → 0.299.0), at D393 (0.297.0 → 0.298.0), at D392 (0.296.0 → 0.297.0), at D391 (0.295.0 → 0.296.0), at D390 (0.294.0 → 0.295.0), at D389 (0.293.0 → 0.294.0), at D388 (0.292.0 → 0.293.0), at D387 (0.291.0 → 0.292.0), at D386 (0.290.0 → 0.291.0),
+    // ⚠️ RE-POINTED AT D508 (0.396.0 → 0.397.0), at D507 (0.395.0 → 0.396.0), at D505 (0.394.0 → 0.395.0), at D490 (0.384.0 → 0.385.0), at D489 (0.383.0 → 0.384.0), at D488 (0.382.0 → 0.383.0), at D487 (0.381.0 → 0.382.0), at D486 (0.380.0 → 0.381.0), at D485 (0.379.0 → 0.380.0), at D450 (0.351.0 → 0.352.0), at D449 (0.350.0 → 0.351.0), at D448 (0.349.0 → 0.350.0), at D447 (0.348.0 → 0.349.0), at D446 (0.347.0 → 0.348.0), at D445 (0.346.0 → 0.347.0), at D444 (0.345.0 → 0.346.0), at D443 (0.344.0 → 0.345.0), at D442 (0.343.0 → 0.344.0), at D441 (0.342.0 → 0.343.0), at D440 (0.341.0 → 0.342.0), at D439 (0.340.0 → 0.341.0), at D438 (0.339.0 → 0.340.0), at D437 (0.338.0 → 0.339.0), at D436 (0.337.0 → 0.338.0), at D435 (0.336.0 → 0.337.0), at D434 (0.335.0 → 0.336.0), at D433 (0.334.0 → 0.335.0), at D432 (0.333.0 → 0.334.0), at D431 (0.332.0 → 0.333.0), at D430 (0.331.0 → 0.332.0), at D429 (0.330.0 → 0.331.0), at D428 (0.329.0 → 0.330.0), at D427 (0.328.0 → 0.329.0), at D426 (0.327.0 → 0.328.0), at D425 (0.326.0 → 0.327.0), at D424 (0.325.0 → 0.326.0), at D423 (0.324.0 → 0.325.0), at D422 (0.323.0 → 0.324.0), at D421 (0.322.0 → 0.323.0), at D420 (0.321.0 → 0.322.0), at D417 (0.320.0 → 0.321.0), at D416 (0.319.0 → 0.320.0), at D415 (0.318.0 → 0.319.0), at D414 (0.317.0 → 0.318.0), at D413 (0.316.0 → 0.317.0), at D412 (0.315.0 → 0.316.0), at D410 (0.314.0 → 0.315.0), at D409 (0.313.0 → 0.314.0), at D408 (0.312.0 → 0.313.0), at D407 (0.311.0 → 0.312.0), at D402 (0.306.0 → 0.307.0), at D401 (0.305.0 → 0.306.0), at D400 (0.304.0 → 0.305.0), at D399 (0.303.0 → 0.304.0), at D398 (0.302.0 → 0.303.0), at D397 (0.301.0 → 0.302.0), at D396 (0.300.0 → 0.301.0), at D395 (0.299.0 → 0.300.0), at D394 (0.298.0 → 0.299.0), at D393 (0.297.0 → 0.298.0), at D392 (0.296.0 → 0.297.0), at D391 (0.295.0 → 0.296.0), at D390 (0.294.0 → 0.295.0), at D389 (0.293.0 → 0.294.0), at D388 (0.292.0 → 0.293.0), at D387 (0.291.0 → 0.292.0), at D386 (0.290.0 → 0.291.0),
     //    each in the SAME COMMIT as the bump —
     // the TENTH slice running to do it that way, and the practice is now the one
     // thing about this row that has never cost an ERROR since it started.
@@ -5777,7 +5777,7 @@ export const MUTANTS: Mutant[] = [
     // CORPUS QUOTES** (D414/D415), so a value-keyed sweep over `toBe("0.391.0")` cannot
     // see it — this row's `find` spells the DECLARATION, not an assertion. Run
     // `precheck` after every version bump, not after the sweep tells you.
-    find: 'export const engineVersion = "0.396.0";',
+    find: 'export const engineVersion = "0.397.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -21401,8 +21401,15 @@ export const MUTANTS: Mutant[] = [
     decision: "D446",
     what: "🛑 **THE SEAT ON THE ARM THAT READS THE ATTACKER, i.e. the mirror of `D446-foe-arm-hardcodes-the-attacker` and its control** (D442: two riders on one member need one row each, each the other's control). The printed word is «your», and the arm sits immediately below one that legitimately spells `\"opponent\"`. The Round board deals 20 where it prints 60",
     file: "packages/engine/src/effects.ts",
-    find: '          seat: "you",\n          filter: { kind: "attackNamePokemon", attack: attackName },',
-    replace: '          seat: "opponent",\n          filter: { kind: "attackNamePokemon", attack: attackName },',
+    // \U0001f195\U0001f195\U0001f195 RE-ANCHORED AT D508 — the DISCARD-PILE reading of this very filter shipped
+    // one arm down, and it emits `seat: "you"` above the SAME `attackNamePokemon` line, so
+    // the bare pair became a `find` occurring 2\u00d7: a row broken by an arm it does not
+    // describe. The repair is `D446-pair-noun-drops-the-second-suffix`'s, one union over —
+    // extend the `find` by the ONE line the two arms cannot share, which is the COUNT's
+    // `kind`. **THE CLAIM IS UNCHANGED** (the seat on the in-play arm), and the twin row on
+    // the new arm is `D508-pile-arm-reads-the-defenders-pile`.
+    find: '          kind: "pokemonInPlay",\n          seat: "you",\n          filter: { kind: "attackNamePokemon", attack: attackName },',
+    replace: '          kind: "pokemonInPlay",\n          seat: "opponent",\n          filter: { kind: "attackNamePokemon", attack: attackName },',
     expectKilledBy: ["packages/engine/src/bodiesInPlayScaling.test.ts"],
   },
   {
@@ -27820,8 +27827,18 @@ export const MUTANTS: Mutant[] = [
     //    divergence becomes visible**, so the replace is the genuine pre-slice value 1617
     //    and the claim is true again. ⚠️ PREDICTED BEFORE THE BUILD this time, off D502's
     //    own instruction two entries up - the audit needled the census constant first.
-    find: "  attack: 1622,",
-    replace: "  attack: 1620,",
+    // \U0001f195\U0001f195\U0001f195 D508 - RE-TRANSCRIBED AGAIN, 1622 -> 1623, replace 1620 -> 1622.
+    //    D508's step is +1, so the PRE-SLICE value is 1622 and the regression is ONE step
+    //    this time - which is the correct reading of this row's own `what` (*"put back to
+    //    its pre-slice value"*) and NOT a narrowing of D505's repair. ⚠️ A one-step
+    //    regression is exactly the shape D501 and D502 shipped while their claim said
+    //    something else, so the distinction is worth stating: theirs was one step because
+    //    the AUTHOR wrote a two-step arithmetic onto a +1 slice; this one is one step
+    //    because the SLICE is +1. The claim and the arithmetic agree.
+    //    ⚠️ PREDICTED BEFORE THE BUILD, off the standing instruction two entries up - and
+    //    `precheck` reported it at 0x anyway, on the edit round that moved the constant.
+    find: "  attack: 1623,",
+    replace: "  attack: 1622,",
     expectKilledBy: [
       "packages/engine/src/censusAtHead.test.ts",
     ],
@@ -28976,10 +28993,10 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D506-changelog-head-unnamed",
     decision: "D506",
-    what: "🛑 C1 — THE DEFECT D502 AND D505 BOTH SHIPPED: a version goes out and NO HEADING CLAIMS IT. The edit un-bolds the NEWEST heading's target, so the parser stops seeing it and the chain's head falls back a release while `package.json` says otherwise — which is byte-for-byte the state of this file at D505's head, twice over. ⚠️ IT IS THE CHEAPEST WAY FOR THIS RECORD TO GO WRONG AND WAS INVISIBLE TO EVERY OTHER INSTRUMENT IN THE REPO: `tsc`, `biome`, every test, `precheck` and all five gates are green on both sides of it, because until D506 nothing read the headings at all. Killed by the HEAD case alone, which is the point — one tripwire, named (D453/D498). 🛑 RE-POINTED AT D507 ONTO THE 0.395.0 → 0.396.0 HEADING, AND THE RE-POINT WAS OWED RATHER THAN TIDY (D444): left on D505's heading it would have gone INERT ON THE VERDICT the moment a newer heading existed — un-bolding a heading that is no longer the head leaves NEWEST equal to HEAD, so the HEAD case stays green and the kill arrives, if at all, through the CHAIN case instead. The row's own stated reason (killed by the HEAD case alone) is exactly the sentence that would have quietly become false. THIS ROW IS PART OF THE VERSION TAX: every bump owes its re-point, in the same edit as the heading.",
+    what: "🛑 C1 — THE DEFECT D502 AND D505 BOTH SHIPPED: a version goes out and NO HEADING CLAIMS IT. The edit un-bolds the NEWEST heading's target, so the parser stops seeing it and the chain's head falls back a release while `package.json` says otherwise — which is byte-for-byte the state of this file at D505's head, twice over. ⚠️ IT IS THE CHEAPEST WAY FOR THIS RECORD TO GO WRONG AND WAS INVISIBLE TO EVERY OTHER INSTRUMENT IN THE REPO: `tsc`, `biome`, every test, `precheck` and all five gates are green on both sides of it, because until D506 nothing read the headings at all. Killed by the HEAD case alone, which is the point — one tripwire, named (D453/D498). 🛑 RE-POINTED AT D507 ONTO THE 0.395.0 → 0.396.0 HEADING, AND THE RE-POINT WAS OWED RATHER THAN TIDY (D444): left on D505's heading it would have gone INERT ON THE VERDICT the moment a newer heading existed — un-bolding a heading that is no longer the head leaves NEWEST equal to HEAD, so the HEAD case stays green and the kill arrives, if at all, through the CHAIN case instead. The row's own stated reason (killed by the HEAD case alone) is exactly the sentence that would have quietly become false. THIS ROW IS PART OF THE VERSION TAX: every bump owes its re-point, in the same edit as the heading. \U0001f195 RE-POINTED AGAIN AT D508 ONTO THE 0.396.0 → 0.397.0 HEADING, and this one is UNLABELLED — the `find` quotes the heading's first prose words instead of a `(D<nnn> —`, which is strictly more durable: the label is the byte the close-out ritual inserts, and quoting it is exactly what broke this row at D507. \u26a0\ufe0f The heading is the CHAIN HEAD again, so the HEAD case is the killer again — the re-point is what keeps that sentence true rather than quietly false.",
     file: "packages/engine/src/index.ts",
-    find: "engineVersion 0.395.0 → **0.396.0** (D507 — THE SPREAD",
-    replace: "engineVersion 0.395.0 → 0.396.0 (D507 — THE SPREAD",
+    find: "engineVersion 0.396.0 → **0.397.0**",
+    replace: "engineVersion 0.396.0 → 0.397.0",
     expectKilledBy: ["packages/engine/src/engineVersionChangelog.test.ts"],
   },
   {
@@ -29112,5 +29129,105 @@ export const MUTANTS: Mutant[] = [
     find: "          snipeAmount(op, state, ctx, record),\n          op.damagedOnly === true,",
     replace: "          snipeAmount(op, state, ctx, record),\n          false,",
     expectKilledBy: ["packages/engine/src/bothBenchSpread.test.ts"],
+  },
+  {
+    id: "D508-pile-arm-reads-the-defenders-pile",
+    decision: "D508",
+    what: "🛑 A1 — THE SEAT. `DiscardPileSeat` is CONTROLLER-RELATIVE and the printed words are «your discard pile», but the arm sits one case below a sibling that legitimately captures a seat and two arms below one that legitimately spells «opponent», so this is the substitution an author makes by copying the line above. The canonical board deals 80 where the card prints 60, because the DEFENDER's pile holds four of the named body against the attacker's three. ⚠️ IT IS SILENT IN EVERY CENSUS — the sentence still derives, `BUILT.attack` still steps, and only a board separates the two piles",
+    file: "packages/engine/src/effects.ts",
+    find: "          kind: \"cardsInDiscardPile\",\n          seat: \"you\",\n          filter: { kind: \"attackNamePokemon\", attack: attackName },",
+    replace: "          kind: \"cardsInDiscardPile\",\n          seat: \"opponent\",\n          filter: { kind: \"attackNamePokemon\", attack: attackName },",
+    expectKilledBy: ["packages/engine/src/pileByAttackName.test.ts"],
+  },
+  {
+    id: "D508-pile-arm-counts-bodies-in-play",
+    decision: "D508",
+    what: "🛑 A2 — THE ZONE, and it is the wrong build this whole slice is a cross product away from. The count becomes `pokemonInPlay`, i.e. D446's member for the sentence that differs from this one on exactly one axis, so the fold walks the attacker's BOARD instead of the attacker's PILE and deals 40 where the card prints 60. ⚠️ THE DERIVED VALUE IS STILL WELL TYPED AND STILL CARRIES THE RIGHT FILTER — `attack.ts` has an arm for both members and neither complains — which is precisely why the canonical board fields TWO named bodies on the Bench against THREE in the pile rather than leaving the board empty",
+    file: "packages/engine/src/effects.ts",
+    find: "          kind: \"cardsInDiscardPile\",\n          seat: \"you\",\n          filter: { kind: \"attackNamePokemon\", attack: attackName },",
+    replace: "          kind: \"pokemonInPlay\",\n          seat: \"you\",\n          filter: { kind: \"attackNamePokemon\", attack: attackName },",
+    expectKilledBy: ["packages/engine/src/pileByAttackName.test.ts"],
+  },
+  {
+    id: "D508-filter-widens-to-any-pokemon",
+    decision: "D508",
+    what: "🛑 A3 — THE FILTER DROPPED ENTIRELY: every Pokémon in the pile counts, not only the ones printing the named attack. It deals 140 where the card prints 60, and it is the mutation that would make the whole slice a re-spelling of a count `DamageCountSource` could already express — so a suite that only asserted «the sentence is claimed» would be green on it. `pileByAttackName.test.ts` §3 reads the two counts on ONE board",
+    file: "packages/engine/src/effects.ts",
+    find: "          filter: { kind: \"attackNamePokemon\", attack: attackName },\n        },\n      };\n    }\n  }\n  // 🆕🆕 D445",
+    replace: "          filter: { kind: \"anyPokemon\" },\n        },\n      };\n    }\n  }\n  // 🆕🆕 D445",
+    expectKilledBy: ["packages/engine/src/pileByAttackName.test.ts"],
+  },
+  {
+    id: "D508-arm-hardcodes-the-attack-name",
+    decision: "D508",
+    what: "🛑 A4 — THE CAPTURE THROWN AWAY for a hand-written name, which is the shape D440 refused at the vocabulary and the reason the attack name is a CAPTURE rather than a map row: a printed attack name is `attacks_json[].name`, a persisted column, so the capture is answerable and a literal is a claim about one card forever. The board reads 1 instead of 3 and deals 20, because `fix-roundbody` is in the same pile — the near-miss is a real body rather than an absence, so the mutant deals the WRONG number rather than zero",
+    file: "packages/engine/src/effects.ts",
+    find: "filter: { kind: \"attackNamePokemon\", attack: attackName },\n        },\n      };\n    }\n  }\n  // 🆕🆕 D445",
+    replace: "filter: { kind: \"attackNamePokemon\", attack: \"Round\" },\n        },\n      };\n    }\n  }\n  // 🆕🆕 D445",
+    expectKilledBy: ["packages/engine/src/pileByAttackName.test.ts"],
+  },
+  {
+    id: "D508-anchor-drops-the-terminator",
+    decision: "D508",
+    what: "⚠️ B1 — the whole-sentence `$` goes, so the anchor claims the PREFIX of any compound that opens with this sentence and simulates a card whose printed tail it never read. That is the defect D207 paid for three times, and it is the reason every anchor in both scaling families is whole-sentence anchored. Killed by §2's trailing-clause near-miss, which is the ONLY member of that list able to see the terminator",
+    file: "packages/engine/src/effects.ts",
+    find: "/^This attack does (\\d+) damage for each Pokémon in your discard pile that has the ([^.]+) attack\\.$/;",
+    replace: "/^This attack does (\\d+) damage for each Pokémon in your discard pile that has the ([^.]+) attack\\./;",
+    expectKilledBy: ["packages/engine/src/pileByAttackName.test.ts"],
+  },
+  {
+    id: "D508-anchor-drops-the-caret",
+    decision: "D508",
+    what: "⚠️ B2 — the leading `^` goes, so a sentence carrying this text after a coin flip or a gate clause is claimed as if it stood alone. ⚠️ THE FAMILY'S STANDING NEAR-MISS, AND IT IS NOT VACUOUS HERE FOR A REASON WORTH NAMING: D202 recorded a leading-`^` mutant that SURVIVED as `unreachable-population`, because the catalog printed no such compound; this one dies because §2 drives the constructed `Flip a coin. …` form, and a reader is a function of TEXT",
+    file: "packages/engine/src/effects.ts",
+    find: "/^This attack does (\\d+) damage for each Pokémon in your discard pile that has the ([^.]+) attack\\.$/;",
+    replace: "/This attack does (\\d+) damage for each Pokémon in your discard pile that has the ([^.]+) attack\\.$/;",
+    expectKilledBy: ["packages/engine/src/pileByAttackName.test.ts"],
+  },
+  {
+    id: "D508-anchor-widens-the-head-noun",
+    decision: "D508",
+    what: "🛑 B3 — THE HEAD-NOUN RESTRICTION RELAXED. `Pokémon` becomes `[^.]*Pokémon`, so *«…for each Basic Pokémon in your discard pile that has the United Wings attack.»* is claimed and resolved to the UNNARROWED `attackNamePokemon` filter — a printed adjective silently dropped, which is exactly what `CardFilter`'s missing INTERSECTION combinator means the vocabulary cannot express. The doc block states the restriction and this row is what makes the statement falsifiable; §2 drives the Basic spelling as a one-axis near-miss",
+    file: "packages/engine/src/effects.ts",
+    find: "/^This attack does (\\d+) damage for each Pokémon in your discard pile that has the ([^.]+) attack\\.$/;",
+    replace: "/^This attack does (\\d+) damage for each [^.]*Pokémon in your discard pile that has the ([^.]+) attack\\.$/;",
+    expectKilledBy: ["packages/engine/src/pileByAttackName.test.ts"],
+  },
+  {
+    id: "D508-anchor-admits-the-opponents-pile",
+    decision: "D508",
+    what: "🛑 B4 — THE SEAT LITERAL RELAXED WHILE THE ARM STILL EMITS `seat: \"you\"`, which is the pairing that makes a hard-coded seat dangerous rather than merely narrow: the anchor now matches *«…in your opponent's discard pile that has …»* and scores it off the WRONG pile. ⚠️ IT IS UNREACHABLE FROM THE PRINTED COLUMN TODAY — that spelling is printed ZERO times, measured over all 640 rows — so the killer is the CONSTRUCTED near-miss in §2, which is `bodiesInPlayScaling.test.ts` §2's own labelled posture and the only instrument that can see a confound no printed sentence breaks (D440)",
+    file: "packages/engine/src/effects.ts",
+    find: "/^This attack does (\\d+) damage for each Pokémon in your discard pile that has the ([^.]+) attack\\.$/;",
+    replace: "/^This attack does (\\d+) damage for each Pokémon in your(?: opponent's)? discard pile that has the ([^.]+) attack\\.$/;",
+    expectKilledBy: ["packages/engine/src/pileByAttackName.test.ts"],
+  },
+  {
+    id: "D508-arm-drops-the-printed-zero-guard",
+    decision: "D508",
+    what: "⚠️ B5 — `per >= 1` goes, the family's printed-zero guard on its newest arm. A printed `0` would derive to a fold that deals nothing while marking the sentence SIMULATED, which is D190b/D199's rule at the census: a wrong-but-plausible program is strictly worse than an unbuilt one. ⚠️ THE SECOND GUARD IS DELIBERATELY LEFT IN PLACE so this row and the vocabulary question stay separate experiments (D442: two guards on one arm need one row each)",
+    file: "packages/engine/src/effects.ts",
+    find: "    if (per >= 1 && attackName !== \"\") {\n      return {\n        per,\n        count: {\n          kind: \"cardsInDiscardPile\",",
+    replace: "    if (attackName !== \"\") {\n      return {\n        per,\n        count: {\n          kind: \"cardsInDiscardPile\",",
+    expectKilledBy: ["packages/engine/src/pileByAttackName.test.ts"],
+  },
+  {
+    id: "D508-fold-moves-to-the-additive-reader",
+    decision: "D508",
+    what: "🛑 C1 — THE FOLD. The anchor gains the printed word «more», so the sentence the column actually prints stops matching and the one it prints NOWHERE would. The census figure falls back by one and the row returns to the residue — which is the step `censusAtHead.test.ts`'s four pinned literals and `residue-census-gate.ts` §A both measure, so this is the row that proves the census moved for this BUILD rather than the suite agreeing with itself. ⚠️ Killed by the new suite too, but the census pins are the point",
+    file: "packages/engine/src/effects.ts",
+    find: "/^This attack does (\\d+) damage for each Pokémon in your discard pile that has the ([^.]+) attack\\.$/;",
+    replace: "/^This attack does (\\d+) more damage for each Pokémon in your discard pile that has the ([^.]+) attack\\.$/;",
+    expectKilledBy: ["packages/engine/src/pileByAttackName.test.ts", "packages/engine/src/censusAtHead.test.ts"],
+  },
+  {
+    id: "D508-named-attack-marker-kept-as-blocker",
+    decision: "D508",
+    what: "🛑 D1 — THE INSTRUMENT'S OWN CLAIM, PUT BACK TO THE ONE THIS SLICE FALSIFIED. `NAMED-ATTACK` is re-declared a `blocker` while the corpus now BUILDS one of its rows, which is `opaque-anatomy-gate.ts` §C's stated failure mode arriving for real: *«the day a slice builds an attack-copy sentence, its built side goes positive and this gate goes RED and names it»*. ⚠️ THE KILLER IS A SCRIPT AND NOT A SUITE (D212's `killedByCommand` precedent): `scripts/**` is outside vitest's include globs and outside `tsc -b`'s project references, so nothing in `bun run check` reads this file at all — which is exactly why the gate exists. It also re-labels three OPAQUE rows, so the row is not merely a verdict string",
+    file: "scripts/opaque-anatomy.ts",
+    find: "    verdict: \"co-marker\",\n    needs:\n      // 🛑🛑 D479",
+    replace: "    verdict: \"blocker\",\n    needs:\n      // 🛑🛑 D479",
+    expectKilledBy: [],
+    killedByCommand: ["bun", "scripts/opaque-anatomy-gate.ts"],
   },
 ];

@@ -11993,6 +11993,58 @@ export const FIXTURE_POOL: Record<string, Card> = {
     hp: 60,
     attacks: [{ cost: ["Colorless"], name: "Round", damage: 10 }],
   }),
+  /** 🆕🆕 D508 — FIXTURE. A body whose printed attack is NAMED "United Wings",
+      the DISCARD-PILE reading of `CardFilter.attackNamePokemon`
+      (`pileByAttackName.test.ts`).
+
+      🛑 **A SECOND NAMED BODY RATHER THAN A SECOND ATTACK ON `fix-roundbody`, AND
+      THE REASON IS THE NEAR-MISS.** This suite's whole subject is which NAME the
+      filter carries, so the board needs two bodies whose attack names DIFFER and
+      whose everything else is identical — `fix-roundbody` is exactly that card one
+      string over (same `battler` defaults, same 60 HP, same single Colorless cost,
+      same harmless printed damage, same absent effect text). Giving one body both
+      names would have made `attackNamePokemon { "Round" }` and
+      `attackNamePokemon { "United Wings" }` answer the SAME number on every pile and
+      tested neither (D427).
+
+      ⚠️ **NO EFFECT TEXT, DELIBERATELY.** `attackNamePokemon` reads
+      `attacksOf(card)[].name` and nothing else, so an effect string would add a
+      reader to a suite whose every number is `per × count` — `fix-roundbody`'s own
+      stated reason, inherited rather than re-invented. */
+  "fix-wingsbody": battler("fix-wingsbody", {
+    hp: 60,
+    attacks: [{ cost: ["Colorless"], name: "United Wings", damage: 10 }],
+  }),
+  /** 🆕🆕 D508 — FIXTURE. The HOLDER of corpus FILE LINE 542,
+      *"This attack does 20 damage for each Pokémon in your discard pile that has the
+      United Wings attack."* (1 legal printing).
+
+      🛑 **ITS OWN ATTACK IS NOT NAMED "United Wings", AND THAT IS THE FIXTURE'S
+      ONE DESIGN DECISION.** The printed count walks a PILE, so the wrong build this
+      family invites is the in-play walk one `DamageCountSource` member over — and
+      that walk is only observable when the board's count differs from the pile's.
+      `pileByAttackName.test.ts`'s canonical board fields TWO `fix-wingsbody` on the
+      attacker's Bench against THREE in the pile, so the zone mistake reads 40 where
+      the print reads 60. A holder that counted itself would have moved both numbers
+      together.
+
+      340 HP so nothing in the suite can Knock it out, `retreat: 1` so no rung depends
+      on a Retreat Cost, ONE printed {C} so a single attachment arms it, and the
+      `×` marker on the damage because the print is the MULTIPLY fold — the base is
+      dropped, not kept. */
+  "fix-pilewings": battler("fix-pilewings", {
+    types: ["Colorless"],
+    hp: 340,
+    attacks: [
+      {
+        cost: ["Colorless"],
+        name: "Flock Memory",
+        damage: "20\u00d7",
+        effect:
+          "This attack does 20 damage for each Pokémon in your discard pile that has the United Wings attack.",
+      },
+    ],
+  }),
   /** 🆕🆕 D466 — FIXTURE. A **Stage 2** body carrying the printed *"…for each Stage 2
       Pokémon on your Bench."* attack (`censusAttackCorpus.ts` file line 589, 2 legal
       printings; `bodiesInPlayScaling.test.ts` §8).
@@ -16048,6 +16100,61 @@ export const DISCARD_PILE_COUNT_DECK = deckOf({
   "fix-item": 8, // Item Trainer — `item` YES, and NOT a Pokémon Tool
   "fix-ethansadv": 5, // the Supporter NAMED "Ethan's Adventure" — `byName` YES
   "fix-ethansadventure": 5, // a Supporter named otherwise — `byName` NO, `supporter` YES
+});
+
+/** 🆕🆕 D508 — the DISCARD PILE NARROWED BY A PRINTED ATTACK NAME
+    (`pileByAttackName.test.ts`). ITS OWN 60 on D270's rule, and NOT a widened
+    `DISCARD_PILE_COUNT_DECK` or `IN_PLAY_BODIES_DECK`: `deckOf` order feeds the
+    shuffle, so moving one card in a shared deck reshuffles every seed-pinned board
+    that reads it — D412 added ONE card to a shared deck and reddened three of
+    another slice's boards.
+
+    🛑 **THE CAST IS CHOSEN SO THAT SEVEN WRONG BUILDS READ SEVEN DIFFERENT DAMAGE
+    NUMBERS ON ONE BOARD**, which is `IN_PLAY_BODIES_DECK`'s own rule at a different
+    zone. On the canonical board, at the printed 20 per card:
+
+      the print        — `attackNamePokemon "United Wings"` in YOUR pile   3 → **60**
+      the NAME wrong   — the same filter spelling "Round"                  1 → 20
+      the ZONE wrong   — the same filter over bodies IN PLAY               2 → 40
+      the SEAT wrong   — the same filter over your OPPONENT's pile         4 → 80
+      the FILTER wide  — `anyPokemon` over the pile                        7 → 140
+      has-attacks      — any Pokémon with a non-empty attack list          5 → 100
+      the pile LENGTH  — no filter at all                                  8 → 160
+
+    Seven distinct totals, none of them a multiple of another by accident, and the
+    defender (`fix-titan`, 340 HP) survives all seven so every rung reads
+    `DAMAGE_DEALT` rather than a Knock Out.
+
+      • `fix-wingsbody` — the only body whose attack is NAMED "United Wings"; it sits
+        in BOTH piles and on the attacker's Bench, which is what makes name, seat and
+        zone three separable axes rather than one;
+      • `fix-roundbody` — the NAME near-miss, identical in every other respect (D427);
+      • `fix-attacker-ex` — HAS attacks ("Bite", "Spread Shot") and none of them is
+        the named one, so a build reading `attacksOf(card).length > 0` counts it;
+      • `fix-benchfiller` — a Pokémon with NO attacks at all, the other negative, false
+        through the empty list rather than through the name;
+      • `fix-item` — a TRAINER in the pile: `attacksOf` is null on it, so a build that
+        dropped the category test through the card field rather than through a guard
+        is still correct, and a build counting pile LENGTH is not;
+      • `fix-titan` — 340 HP, no attacks: the defender, the only opener, and the pile's
+        third negative;
+      • `fix-energy` — Basic {C}, the single printed symbol of the one attack.
+
+    ⚠️ **`fix-wingsbody` IS ASKED FOR FIVE TIMES ON THE ATTACKER'S SEAT** (3 into the
+    pile, 2 onto the Bench) **and four times on the defender's**, which is why its
+    count is 12 rather than the pool's usual 4: setup has already moved 7 cards to
+    hand and 6 to prizes before any surgery runs.
+
+    4 + 12 = 16, + 8 = 24, + 6 = 30, + 6 = 36, + 6 = 42, + 10 = 52, + 8 = **60**. */
+export const PILE_ATTACK_NAME_DECK = deckOf({
+  "fix-pilewings": 4, // the holder of the one printed sentence
+  "fix-wingsbody": 12, // attack NAMED "United Wings" — the positive, in both piles and in play
+  "fix-roundbody": 8, // attack NAMED "Round" — the NAME near-miss
+  "fix-attacker-ex": 6, // has attacks, none of them named — the `attacksOf().length > 0` control
+  "fix-benchfiller": 6, // a Pokémon with NO attacks — the other negative
+  "fix-item": 6, // an Item Trainer — `attacksOf` is null, and the pile-LENGTH control
+  "fix-titan": 10, // 340 HP, no attacks — the defender, the opener, the third negative
+  "fix-energy": 8, // Basic {C} — the one printed symbol of the one attack
 });
 
 export const IN_PLAY_TYPE_DECK = deckOf({

@@ -49,11 +49,14 @@
  *                      it is NOT why these rows are opaque, and a brief that
  *                      names it as the reason is wrong.
  *    **Only a `BLOCKER` may label a row.** A `CO-MARKER` is reported and never
- *    used, which is the point: FIVE of the ten markers below were written as
+ *    used, which is the point: SIX of the ten markers below were written as
  *    blockers by the author of this file and REFUTED by their own control —
  *    continuing effects, Prize-zone reads, both-sides board scope, card-name
  *    counting and opponent-hand choice all appear in sentences this engine
- *    builds today.
+ *    builds today, and 🆕🆕🆕 **D508 made `NAMED-ATTACK` the sixth by BUILDING one
+ *    of its rows** rather than by re-reading the column. FIVE of the six were
+ *    refuted the day this file was written; the sixth was refuted by a slice, which
+ *    is the § C failure mode the gate was installed to force.
  *
  * ⚠️ **AND THE BIGGEST REFUTATION IS THE ONE THAT LOOKED MOST OBVIOUS.** The
  * single most plausible story about `OPAQUE` — *"it is the continuing-effect
@@ -274,7 +277,24 @@ export const MARKERS: readonly Marker[] = [
   {
     name: "NAMED-ATTACK",
     rx: /used (?:Angelite|Rollout)|Hyper Fang|United Wings/,
-    verdict: "blocker",
+    // 🛑🛑 D508 — **RE-DECLARED `blocker` → `co-marker`, BY THIS FILE'S OWN CONTROL AND
+    //    NOT BY AN OPINION.** D508 built corpus line 542 (*"…for each Pokémon in your
+    //    discard pile that has the United Wings attack."*), so this marker's BUILT side
+    //    went 0 / 0 → 1 / 1 and `opaque-anatomy-gate.ts` § C went RED naming it —
+    //    exactly the falsification that section's doc block forecasts for
+    //    `COPY-ATTACK` (*"the day a slice builds an attack-copy sentence, its built
+    //    side goes positive and this gate goes RED and names it"*). ⚠️ The marker is
+    //    KEPT with the verdict corrected rather than narrowed to dodge the refutation
+    //    (D178: the refutation IS the finding), and narrowing the alternation to drop
+    //    `United Wings` would have been the dishonest repair — it would restore the
+    //    `blocker` verdict by deleting the evidence against it.
+    //    🛑 AND THE CONSEQUENCE IS INTENDED, NOT COLLATERAL: a co-marker never LABELS a
+    //    row, so the three rows this marker used to carry fall to `UNEXPLAINED`. That is
+    //    the correct place for them — D479 had already measured that those three are
+    //    blocked for three DIFFERENT reasons, none of them a named-attack fact
+    //    (D463: a refusal grouping N rows under ONE reason is N refusals until each is
+    //    priced), so the label was doing no work it could justify.
+    verdict: "co-marker",
     needs:
       // 🛑🛑 D479 — THE FIRST CLAUSE OF THIS `needs` WAS FALSE AND IS CORRECTED IN
       //    PLACE (D442/D466); the original is kept below the corrected text as the
@@ -289,17 +309,25 @@ export const MARKERS: readonly Marker[] = [
       //    today; it sits in the residue only because `builds()` refuses a gate split
       //    whose `body` is `""` (D395's clause-only case), which is a fact about the
       //    CENSUS and not about expressibility.
-      //    ⚠️ The verdict stays `blocker` because the OTHER three rows still are —
-      //    but for three different reasons, none of them this one: line 82 is blocked
-      //    on its "Choose 2 … Shuffle those … into your opponent's deck" HEAD, line
-      //    166 on a named-attack BASE-DAMAGE override, line 542 on a `CardFilter` over
-      //    a card's printed attack list. D463: a refusal grouping N rows under ONE
-      //    reason is N refusals until each is priced.
-      "a mechanism per row, and NOT the one this marker used to name: line 82's head, " +
-      "line 166's named-attack base-damage override, line 542's `CardFilter` over a " +
-      "card's printed attack list — while line 630's named-attack fact is SHIPPED " +
+      //    ⚠️ D479 wrote *"the verdict stays `blocker` because the OTHER three rows
+      //    still are"* and listed four rows under three different reasons: line 82 on
+      //    its "Choose 2 … Shuffle those … into your opponent's deck" HEAD, line 166 on
+      //    a named-attack BASE-DAMAGE override, line 542 on a `CardFilter` over a
+      //    card's printed attack list. 🛑🛑 **THAT THIRD CLAUSE WAS ALREADY FALSE WHEN
+      //    D479 WROTE IT AND IS CORRECTED HERE (D178/D442/D466 — the second correction
+      //    this `needs` has taken).** `CardFilter.attackNamePokemon` shipped at D446,
+      //    THIRTY-THREE decisions before D479, and `matchesFilter`'s arm for it reads
+      //    `attacksOf(card)` — so line 542's stated blocker had an expiry date that had
+      //    already passed. What actually blocked it was an ANCHOR (`^…$` cannot see a
+      //    sentence whose noun is split around the zone phrase), and D508 wrote that
+      //    anchor. ⚠️ **THE LESSON IS THE ONE D413 NAMES**: a refusal that names its own
+      //    falsifier must be RE-READ against today's tree, not inherited.
+      "a mechanism per row, and NOT the one this marker used to name: line 82's head " +
+      "and line 166's named-attack base-damage override — while line 630's named-attack " +
+      "fact is SHIPPED " +
       "(`InPlayPokemon.usedAttack`, `BoardCondition.yourActiveUsedAttackLastTurn`, and " +
-      "an `ATTACK_GATE_CLAUSE_GATES` row for that very sentence). " +
+      "an `ATTACK_GATE_CLAUSE_GATES` row for that very sentence) and line 542 is BUILT " +
+      "(D508, the anchor — its filter had been spellable since D446). " +
       "[D479 corrected. WAS: \u201Ca record of WHICH ATTACK a body used, keyed by the " +
       "attack\u2019s printed NAME \u2014 a fact no state field carries and no CardFilter " +
       "member spells\u201D]",
@@ -311,7 +339,11 @@ export const MARKERS: readonly Marker[] = [
     needs:
       "a choice whose MAXIMUM is computed at resolve time from the board or from a flip count, where every shipped `up to N` op takes a printed integer",
   },
-  // ── THE FOUR THAT WERE WRITTEN AS BLOCKERS AND REFUTED BY THEIR OWN CONTROL.
+  // ── THE FIVE THAT WERE WRITTEN AS BLOCKERS AND REFUTED BY THEIR OWN CONTROL
+  //    ON THE DAY THIS FILE WAS WRITTEN. (`NAMED-ATTACK` above is the sixth
+  //    co-marker and is kept in its original position, because it was refuted
+  //    LATER — by D508 building one of its rows — and moving it would erase which
+  //    kind of refutation it was.)
   //    Kept, with the verdict corrected rather than the marker deleted, because
   //    the refutation is the finding (D178 — annotate provenance, never
   //    overwrite it). Each of these reads like a reason and is not one.
@@ -468,9 +500,10 @@ if (import.meta.main) {
     "\n⚠️ A CO-MARKER NEVER LABELS A ROW. Its built side is > 0, so the phrase is",
   );
   console.log(
-    "   served somewhere and is NOT why these sentences are opaque. FIVE of the",
+    "   served somewhere and is NOT why these sentences are opaque. SIX of the",
   );
-  console.log("   six were written as blockers and refuted by this very column.");
+  console.log("   seven were written as blockers and refuted by this very column —");
+  console.log("   five on the day it was written, and NAMED-ATTACK at D508, by a build."); 
 
   console.log("\n=== ROWS, BY CLASS ===");
   for (const c of classes) {

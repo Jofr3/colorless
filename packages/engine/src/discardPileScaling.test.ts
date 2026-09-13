@@ -429,22 +429,53 @@ describe("§2 — the two anchors, the vocabulary, and the seat/fold confound", 
     });
   });
 
-  it("🛑 the United Wings row reaches NEITHER anchor, which is a STRUCTURAL refusal", () => {
-    // Not a vocabulary miss: the sentence does not END at "discard pile.", because its
-    // noun is split around the zone phrase. An `^…$` anchor cannot see it however wide
-    // the map grows, so it is a different refusal from the two above and is stated as
-    // one. 🆕🆕 **D446 — IT IS BLOCKED ONCE NOW, WHERE THIS COMMENT SAID TWICE.**
-    // The second block was *"its filter would also need a `CardFilter` member reading
-    // `attacksOf` — D439's refused widening one zone over"*; D446 built that member
-    // (`attackNamePokemon`, for the IN-PLAY twin of this very noun), so the FILTER is
-    // spellable and only the ANCHOR still refuses. Corrected in place rather than left
-    // to rot, because a reader acting on the old sentence would price this row at two
-    // mechanisms when it costs one. ⚠️ **AND THE RUNG IS UNCHANGED AND STILL THE RIGHT
-    // ONE** — its subject was always the structural refusal, so it keeps its
-    // discrimination and needed no re-pointing (D418: ask what the old claim caught).
+  it("🛑 the United Wings row is claimed by a THIRD anchor, and NOT by either of ours", () => {
+    // 🆕🆕🆕 **D508 RE-POINTED THIS RUNG, AND THE OLD CLAIM IS WHY IT COULD BE** (D418:
+    // ask what the old claim caught before replacing it). It used to read *"reaches
+    // NEITHER anchor, which is a STRUCTURAL refusal"* — the sentence does not END at
+    // `discard pile.` because its noun is split around the zone phrase — and it WENT RED
+    // against D508's build, which is exactly the service a refusal rung is for. D446 had
+    // already corrected the other half of the same refusal in place (*"it also needs a
+    // `CardFilter` member reading `attacksOf`"* stopped being true when
+    // `attackNamePokemon` shipped), leaving this row blocked ONCE.
+    //
+    // 🛑 **WHAT IT CATCHES NOW IS STRICTLY MORE THAN WHAT IT CAUGHT BEFORE.** The
+    // structural fact is UNCHANGED and still asserted — the sentence does not end at
+    // `discard pile.`, so neither of THIS FILE'S two anchors can see it however wide
+    // `DISCARD_PILE_NOUNS` grows — and the claim on top of it is that the third anchor
+    // resolves it through a filter this file's vocabulary does not contain. A build that
+    // relaxed either `\.$` here would be a DIFFERENT derived value, not a null.
     expect(UNITED_WINGS_PILE.endsWith("discard pile.")).toBe(false);
+    // The MULTIPLY fold, and the filter is `attackNamePokemon` — NOT one of this file's
+    // four nouns, which is what says the new arm and not a widened map claimed it.
+    expect(deriveAttackDamageMultiplier(UNITED_WINGS_PILE)).toEqual({
+      per: 20,
+      count: {
+        kind: "cardsInDiscardPile",
+        seat: "you",
+        filter: { kind: "attackNamePokemon", attack: "United Wings" },
+      },
+    });
+    const count = deriveAttackDamageMultiplier(UNITED_WINGS_PILE)?.count;
+    // `"filter" in count` rather than a cast: three members of this union carry no
+    // filter at all, and the narrowing is what says so out loud.
+    const filter = count !== undefined && "filter" in count ? count.filter : null;
+    expect(filter).not.toBeNull();
+    for (const noun of NOUNS) expect(filter).not.toEqual(noun);
+    // …and the ADDITIVE reader still refuses it, because the column prints no "more"
+    // spelling of this noun at all — the empty cell of D508's own 2×2, measured there.
     expect(deriveAttackDamageBonus(UNITED_WINGS_PILE)).toBeNull();
-    expect(deriveAttackDamageMultiplier(UNITED_WINGS_PILE)).toBeNull();
+    // The new anchor claims exactly ONE corpus row, so nothing this file owns moved.
+    expect(
+      legalAttackCorpus().filter(([, text]) => {
+        const value = deriveAttackDamageMultiplier(text);
+        return (
+          value !== null &&
+          value.count.kind === "cardsInDiscardPile" &&
+          value.count.filter.kind === "attackNamePokemon"
+        );
+      }),
+    ).toHaveLength(1);
   });
 
   it("the whole-sentence anchor holds at both ends, on the capital, and on the zero", () => {
@@ -515,9 +546,15 @@ describe("§2 — the two anchors, the vocabulary, and the seat/fold confound", 
       for (const reader of OTHERS) expect(reader(text)).toBeNull();
       expect(resolvedByAnyReader(text)).toBe(true);
     }
-    // …and the four the family leaves behind are refused by EVERY reader, which is the
-    // thirteen-way negative KEPT rather than replaced.
-    for (const text of [ANCIENT_PILE, TR_NAME_PILE, UNITED_WINGS_PILE, COUNTER_PLACEMENT_PILE]) {
+    // …and the THREE the family still leaves behind are refused by EVERY reader, which
+    // is the thirteen-way negative KEPT rather than replaced.
+    // 🆕🆕🆕 **D508 TOOK `UNITED_WINGS_PILE` OUT OF THIS LIST**, and it went RED here
+    // rather than being noticed: the list is a `for` over named constants, so a row that
+    // becomes buildable fails by NAME instead of by count. The two that remain are the
+    // two genuine refusals — `ANCIENT_PILE` is DATA-BLOCKED permanently (no catalog
+    // column classifies the banner) and `TR_NAME_PILE` is UNBUILT on a name SUBSTRING —
+    // plus the counter-placement compound, which is not this family at all.
+    for (const text of [ANCIENT_PILE, TR_NAME_PILE, COUNTER_PLACEMENT_PILE]) {
       expect(deriveAttackDamageBonus(text)).toBeNull();
       expect(deriveAttackDamageMultiplier(text)).toBeNull();
       for (const reader of OTHERS) expect(reader(text)).toBeNull();
@@ -831,6 +868,6 @@ describe("§6 — `MATCH_RECORD_VERSION` STAYS 29, driven in both directions", (
   });
 
   it("the engine version moved with the behaviour", () => {
-    expect(engineVersion).toBe("0.396.0");
+    expect(engineVersion).toBe("0.397.0");
   });
 });

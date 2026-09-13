@@ -6775,6 +6775,82 @@ correcting one — **run `bun scripts/mutation/precheck.ts` before committing.**
 Cf. [[the version tax now has three parts]] — this is its fourth.
 
 
+## A ninth lattice shape: ONE blocking axis and FOUR live ones, zero free (D508)
+
+D505's shape was one blocking axis at 16/16 with **four inert axes at 0/16**; D507's was a
+conjunctive pair at 8/16 each with **three inert at 0/16**. D508's 2⁵ reads
+`0/1 · 1/5 · 1/10 · 3/10 · 2/5 · 0/1` (**7 of 32** pre-slice, 8 after) and its flip table is
+`7 · 5 · 3 · 3 · 1` of 16 — **no axis flips at zero.** The ZONE axis is the blocker, and it is
+blocking ONE-SIDEDLY rather than symmetrically: all 16 discard-pile points are dead before the
+slice and exactly one is alive after, while the in-play half builds at 7/16 on its own.
+
+**The distinction the flip table buys you is a price.** An axis at 0/16 is free — you can move it
+without changing the verdict, so it costs nothing to spell. An axis that flips anywhere is a
+LITERAL the anchor has to carry, and every one of them is a measurement you owe (*"the column
+prints this spelling zero times"*). D508 owed four such measurements and D505 owed none.
+
+⚠️ **`INERT ON THE VERDICT` is still not `DEGENERATE`** (D491's identity sense). Here the question
+does not even arise — all 32 points are distinct strings AND no axis is inert — but say which you
+mean, because a 0/16 axis whose two values produce the same bytes is a different finding from a
+0/16 axis whose values differ and are simply not read.
+
+## A refusal corrected IN PLACE can stay false in the file you were not editing (D508)
+
+D440 blocked a corpus row for two reasons. D446 built the mechanism behind the second one and
+corrected the sentence **in `discardPileScaling.test.ts`**, leaving the row *"blocked ONCE where it
+used to be blocked twice"* — exactly the in-place correction this repo asks for.
+
+🛑 **The same refusal was ALSO written into `scripts/opaque-anatomy.ts`'s marker table, and nobody
+re-read it.** D479 then audited that very `needs` string, found its FIRST clause false, corrected it
+at length — and copied the already-stale third clause forward untouched, thirty-three decisions
+after the mechanism it names had shipped. The false sentence survived two deliberate corrections of
+the paragraph containing it.
+
+**The rule:** when you correct a refusal in place, the unit of the sweep is the refusal's
+VOCABULARY, not the file you are standing in. `grep` for the mechanism the refusal names
+(`attacksOf`, `CardFilter` over…) across `packages/**` **and `scripts/**`, and for the corpus line
+number if the refusal cites one. D414's *"find every read site before you fix any of them"* applies
+to CLAIMS as well as to fields.
+
+## A marker's verdict is DATA a build can falsify, and narrowing the marker is the dishonest repair (D508)
+
+`scripts/opaque-anatomy.ts` declares each marker `blocker` or `co-marker` and
+`opaque-anatomy-gate.ts` § C checks the declaration against the corpus: a `blocker` must have a
+ZERO built side. That section's own doc block forecasts its failure — *"the day a slice builds an
+attack-copy sentence, its built side goes positive and this gate goes RED and names it"* — and
+D508 is the first time it happened for real.
+
+**Two repairs are available and only one is honest.** Narrowing the marker's `rx` so the newly
+built sentence stops matching restores the `blocker` verdict *by deleting the evidence against it*.
+Re-declaring the verdict keeps the marker, keeps the refutation, and is D178's rule (annotate
+provenance, never overwrite it). ⚠️ **Take the consequence with it**: a co-marker never LABELS a
+row, so the rows it used to carry fall to `UNEXPLAINED`. That is not collateral damage — if the
+marker was not the reason, the label was doing work it could not justify (D463).
+
+## A census step rots pins in five different SHAPES, so a value-keyed pass is a partial sweep (D508)
+
+The per-slice suites mirror `censusAtHead.test.ts`'s figures, and at this head they spell the same
+two numbers as `toEqual([536, 1572])`, `toBe(1572)`, `toHaveLength(536)`, `units(resolved)`,
+`p(resolved)`, `resolvedP` and `rawHead`. A pass keyed on one of those shapes moves some of them,
+re-greps clean for its own pattern, and leaves the rest red.
+
+**The instrument that enumerates them is the test run, not a grep.** Run the whole suite, take the
+failing `file:line` list, and patch from that — the same reason `precheck` rather than reading is
+what answers the rot question for mutant rows (D441).
+
+## A new arm that is a CROSS PRODUCT collides with its parents' mutant rows (D508)
+
+D508's arm emits `seat: "you"` above the identical `filter: { kind: "attackNamePokemon", … }` line
+that D446's arm emits, so a shipped row whose `find` was those two lines became `find occurs 2×`
+and `precheck` refused the corpus. **This is structural, not bad luck**: a cross product of two
+shipped pieces is *by construction* byte-similar to both parents, so expect at least one collision
+per parent and predict it before `precheck` does.
+
+The repair is `D483`'s, one union over: extend the `find` by the ONE line the two arms cannot
+share — here the count's `kind` — rather than re-pointing onto something arbitrary. **The claim
+must come through unchanged**; a re-transcription that quietly changes what a row tests is worth
+less than a broken row (D498).
+
 ## Git / commits
 - Branch off `main` for non-trivial work; commit/push only when asked.
 - Commit trailer per global config: `Co-Authored-By: Claude ...`.

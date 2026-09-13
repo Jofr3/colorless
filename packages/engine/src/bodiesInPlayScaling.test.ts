@@ -843,20 +843,38 @@ describe("§2 — the two anchors and the `inPlayBodyFilter` vocabulary", () => 
     expect(round.map(([, text]) => deriveAttackDamageMultiplier(text)?.per).sort()).toEqual([
       20, 40, 70,
     ]);
-    // 🛑 **THE NEW SUBJECT FOR THE OLD DISCRIMINATION (D444), AND IT IS A REAL
-    // PRINTING RATHER THAN A CONSTRUCTED NEAR-MISS.** *"This attack does 20 damage
-    // for each Pokémon in your discard pile that has the United Wings attack."*
-    // (1 legal) differs from the Round rows on exactly ONE axis — the ZONE — and it
-    // is STILL unclaimed by every reader, because the discard-pile anchors end at
-    // `discard pile\.$` and its noun is split around the zone phrase. Its filter is
-    // now spellable (`attackNamePokemon` is exactly what D440 said it needed), so it
-    // is blocked ONCE where it used to be blocked twice, and this rung is what
-    // reddens the day somebody widens that anchor.
+    // 🛑 **THE ZONE TWIN — AND D508 TURNED IT FROM A REFUSAL INTO A CONTROL.**
+    // *"This attack does 20 damage for each Pokémon in your discard pile that has the
+    // United Wings attack."* (1 legal) differs from the Round rows on exactly ONE axis,
+    // the ZONE. This rung used to assert it was unclaimed by every reader and said *"it
+    // is what reddens the day somebody widens that anchor"*; **it went RED against
+    // D508's build**, which is the service it was installed for. 🆕🆕🆕 **RE-POINTED,
+    // NOT DELETED** (D418/D421): the discrimination it always carried is *"the ZONE is
+    // a real axis and this file's two anchors are scoped to one side of it"*, and that
+    // claim is now sharper as a POSITIVE, because both sentences resolve to the SAME
+    // `CardFilter` under DIFFERENT `DamageCountSource` members. A build that widened
+    // `IN_PLAY_ATTACK_NAME_MULTIPLY` across zones would read `pokemonInPlay` here and
+    // fail by VALUE rather than by a missing null.
     const unitedWings =
       "This attack does 20 damage for each Pokémon in your discard pile that has the United Wings attack.";
     expect(legalAttackCorpus().filter(([, text]) => text === unitedWings)).toHaveLength(1);
-    expect(resolvedByAnyReader(unitedWings)).toBe(false);
-    expect(deriveAttackDamageMultiplier(unitedWings)).toBeNull();
+    const pile = deriveAttackDamageMultiplier(unitedWings)?.count;
+    const play = deriveAttackDamageMultiplier(ROUND_BODIES)?.count;
+    expect(pile?.kind).toBe("cardsInDiscardPile");
+    expect(play?.kind).toBe("pokemonInPlay");
+    // …the SAME filter shape under both counts, one payload string apart — which is what
+    // makes the pair a one-axis near-miss rather than two unrelated sentences.
+    // `"filter" in …` rather than a cast: three members of this union carry no filter at
+    // all, and the narrowing is what says so out loud.
+    expect(pile !== undefined && "filter" in pile ? pile.filter : null).toEqual({
+      kind: "attackNamePokemon",
+      attack: "United Wings",
+    });
+    expect(play !== undefined && "filter" in play ? play.filter : null).toEqual({
+      kind: "attackNamePokemon",
+      attack: "Round",
+    });
+    // The ADDITIVE reader still refuses both — neither noun is printed with a "more".
     expect(deriveAttackDamageBonus(unitedWings)).toBeNull();
   });
 
@@ -1480,7 +1498,7 @@ describe("§6 — `MATCH_RECORD_VERSION` STAYS 29, driven at all THREE addresses
   });
 
   it("the engine version moved with the behaviour", () => {
-    expect(engineVersion).toBe("0.396.0");
+    expect(engineVersion).toBe("0.397.0");
   });
 });
 
