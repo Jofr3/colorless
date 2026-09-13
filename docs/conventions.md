@@ -7174,6 +7174,40 @@ the evaluator's `switch` total over the KINDS but no longer over the VALUES — 
 exhaustiveness the switch was worth having.
 
 
+### Stage by listing what changed, not by listing what you remember changing (D512)
+
+At D512's ritual the caller staged eight explicit paths — including
+`scripts/mutation/mutants.ts` — and missed **`scripts/opaque-anatomy.ts`**, which carried a real
+change from the same slice. The commit went in incomplete and a whole-corpus sweep was launched on
+the resulting dirty tree. **Eight mutant rows target that file**, so the run would have reported
+**8 SKIPPED-DIRTY** and broken a prediction that had already been committed.
+
+⚠️ **The check that would have caught it ran, printed the file, and was read past.** The staging step
+ended with:
+
+```
+git status --porcelain | grep -v '^[MA] ' || echo "nothing unstaged"
+```
+
+which emitted ` M scripts/opaque-anatomy.ts` — and the next line of output, `scope clean`, was the
+one that got read.
+
+**The rules:**
+
+1. **Derive the path list from `git status`, do not compose it from memory.** `git add` with explicit
+   paths is right (never `git add -A`), but the list must come from what the tree reports.
+2. **Make the unstaged check FAIL, not print.** A line that emits a warning among other output is a
+   line that gets skimmed. Prefer something that exits non-zero, or read `git status --porcelain`
+   once and confirm every line begins `M ` or `A ` before committing.
+3. **`git status --porcelain` immediately before `setsid`.** A sweep is three hours and its
+   prediction is already committed; a dirty tree invalidates it silently until the summary line.
+4. ✅ **Recovery is cheap and safe**: `kill -TERM` the sweep — the harness traps it and restored in
+   **2 s** at D512 — then amend, re-verify, relaunch. Nothing was pushed, so amending is correct.
+
+**The self-description worth keeping:** `0 skipped(dirty)` in a sweep's summary is not decoration —
+it is the line that proves the run saw the tree you committed.
+
+
 ## Git / commits
 - Branch off `main` for non-trivial work; commit/push only when asked.
 - Commit trailer per global config: `Co-Authored-By: Claude ...`.
