@@ -1780,6 +1780,37 @@ function AttackPanel({
         {firstTurn && (
           <p className="mt-2 text-[11px] text-white/45">No attacking on the first turn (§4).</p>
         )}
+        {/* 🆕🆕 **D509 — THE §12 CONFUSION HINT, THE LOCAL HUD'S TWIN, AND THE
+            NUMBER COMES OFF THE WIRE.** This panel had NO condition hint at all until
+            D509 while `GameHud.tsx` has printed one since long before: the two HUDs
+            answer the same board and disagreed about whether the player is told that
+            attacking costs a flip — D226/D412's two-read-sites defect, with the online
+            half missing rather than wrong.
+
+            ⚠️ **ONLY CONFUSION, AND THE ASYMMETRY IS THE REASON.** Asleep and
+            Paralyzed are already CARRIED here without prose: `redactedAttacksOf`
+            (redact.ts) folds `isImmobilized(active.conditions)` into `banned`, so every
+            attack row arrives `playable: false` and the buttons are grey. Confusion
+            blocks nothing — `isImmobilized` is `asleep || paralyzed` — so there is no
+            greyed button to carry it and the decision-relevant content (a flip, its
+            cost, the turn ending) has no other surface. The playmat's `CNF` chip is
+            three letters and no number.
+
+            🛑 **NO `?? 30` FALLBACK, DELIBERATELY — THAT LITERAL IS THE DEFECT D501
+            EXISTS TO FIX.** `confusionDamage` is REQUIRED on `redactedConditionsSchema`
+            and `conditions` is REQUIRED on `redactedBattleSchema`, so once `battle` is
+            present the number is too and a fallback could only ever print a WRONG one —
+            at the single moment a player is deciding whether to attack, on the raised
+            printing D501 landed. `battle` itself is optional (a setup-phase hidden back
+            carries none), which is what the first conjunct is for; the local HUD's
+            `?? 30` is there for the same totality reason and nothing else. Same fact,
+            same spelling as `GameHud.tsx` (D421). */}
+        {battle !== undefined && battle.conditions.rotation === "confused" && (
+          <p className="mt-2 text-[11px] text-white/45">
+            Confused: attacking flips a coin — tails: {battle.conditions.confusionDamage} damage to
+            itself, turn ends.
+          </p>
+        )}
         {abilities.length > 0 && (
           <div className="mt-3">
             <p className="text-[10px] font-semibold uppercase tracking-wide text-white/40">

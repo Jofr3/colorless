@@ -92,6 +92,33 @@ describe("TurnPanel — §12 status gating", () => {
     expect(screen.getByText(/Confused: attacking flips a coin/)).toBeTruthy();
   });
 
+  // 🆕 D509 — THE NUMBER, NOT JUST THE SENTENCE. The case above stops its regex
+  // before the digits, so `{conditions?.confusionDamage ?? 30}` → `{30}` passed it
+  // for eight decisions — the exact hard-coded claim D501 existed to delete, free to
+  // come back unnoticed on the panel a player reads while deciding whether to attack.
+  //
+  // 🛑 WHAT GOES RED HERE: hard-code the number; read `poisonDamage` instead; or drop
+  // the read entirely. The board raises confusion to 80 AND sets poison to a DIFFERENT
+  // non-default (20), so "reads `confusionDamage`" and "grabbed the neighbouring
+  // number" are separated by the fixture rather than by argument.
+  //
+  // ⚠️ LIMIT: this pins what the panel RENDERS for a given board. That the engine ever
+  // writes 80 is `confusionDamage.test.ts`'s claim, not this one.
+  it("prints the board's confusion number rather than the rulebook default", () => {
+    renderHud(
+      setConditions(battleReady(), "p1", {
+        rotation: "confused",
+        confusionDamage: 80,
+        poisonDamage: 20,
+      }),
+    );
+    expect(
+      screen.getByText(/Confused: attacking flips a coin — tails: 80 damage to itself, turn ends\./),
+    ).toBeTruthy();
+    expect(screen.queryByText(/tails: 30 damage/)).toBeNull();
+    expect(screen.queryByText(/tails: 20 damage/)).toBeNull();
+  });
+
   it("never gates on Poison or Burn", () => {
     renderHud(setConditions(battleReady(), "p1", { poisonDamage: 20, burned: true }));
     expect(attackButton().disabled).toBe(false);

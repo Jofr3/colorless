@@ -6851,6 +6851,41 @@ share — here the count's `kind` — rather than re-pointing onto something arb
 must come through unchanged**; a re-transcription that quietly changes what a row tests is worth
 less than a broken row (D498).
 
+## `src/**` IS in the mutation corpus — D215 is a DIRTY-FILE refusal, not a path allowlist (D509)
+
+D509 was briefed to check "whether the harness can even patch `src/`" before writing rows against a
+React component, on the reading that D215's *"the harness STOPS WRITING TO FILES IT DOES NOT OWN"*
+is a scope restriction on the corpus. **It is not.** `runMutant` resolves any repo-relative path and
+refuses exactly two things: a path that escapes `REPO_ROOT`, and a file `git status --porcelain`
+reports as modified (per file, re-checked after the baseline run, overridable with `--allow-dirty`).
+Measured at D509's head, the corpus already targets `src/` **34 times** — six of them
+`OnlineHud.tsx` itself — plus `scripts/`, `docs/`, `apps/`, `biome.json` and three `tsconfig`s.
+
+⚠️ **The ownership `run.ts` enforces is TEMPORAL — "is another agent holding this file right now" —
+and its own doc block says so**: a whole-tree refusal was rejected because *"it lets the engine half
+of the corpus run while `src/**` is live."* Read the refusal's mechanism before inferring a
+population from its slogan (D423: sites are not mechanisms).
+
+## A rendered NUMBER needs its own rung; asserting the SENTENCE leaves the number free (D509)
+
+`GameHud.dom.test.tsx` has pinned the local Confusion hint since long before D501 — with
+`expect(screen.getByText(/Confused: attacking flips a coin/))`. D501 then made that line read its
+amount off the board instead of a hard-coded `30`, **and the dom rung never moved**, because the
+regex stops before the number. At D509's head the local HUD's amount is pinned by **no** dom rung at
+all, and D501 shipped no mutant row on it either: `{conditions?.confusionDamage ?? 30}` → `{30}`
+dies to nothing on that surface. The engine suites pin the engine's number; nothing pins what the
+panel PRINTS.
+
+**This is D466's *"only the row LIST was asserted, leaving the REASON free to be wrong"* at a UI
+string.** When a slice's whole content is *which* value a surface renders, the rung must drive a
+value the old build could not produce — D509's online twin asserts the FULL sentence against a board
+carrying `confusionDamage: 80`, so a literal `30` and a neighbouring `poisonDamage` both redden it,
+and a second board at the rulebook default keeps the pair one-axis apart (D427).
+
+⚠️ **And a pair of same-typed fields on one record is its own hazard.** `RedactedConditions` carries
+both `poisonDamage` and `confusionDamage`; a board that raises only one of them cannot separate a
+reader that grabbed the wrong sibling from one that grabbed the right one.
+
 ## Git / commits
 - Branch off `main` for non-trivial work; commit/push only when asked.
 - Commit trailer per global config: `Co-Authored-By: Claude ...`.

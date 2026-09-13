@@ -29230,4 +29230,80 @@ export const MUTANTS: Mutant[] = [
     expectKilledBy: [],
     killedByCommand: ["bun", "scripts/opaque-anatomy-gate.ts"],
   },
+  // ────────────────────────────────────────────────────────────────────────────
+  // D509 — THE ONLINE HUD'S §12 CONFUSION HINT. A UI slice: ZERO engine bytes, no
+  // engine bump, no `MATCH_RECORD_VERSION` question. `OnlineHud.tsx` carried NO
+  // condition hint at all (zero occurrences of `confus`/`rotation`/`asleep` in
+  // 2,355 lines) while `GameHud.tsx` has printed one for a long time, so the two
+  // HUDs answering the same board disagreed about whether the player is told that
+  // attacking costs a flip — D226/D412's two-read-sites defect, with the online
+  // half MISSING rather than wrong.
+  //
+  // SCOPE, AND WHY IT IS CONFUSION ALONE: `redactedAttacksOf` folds
+  // `isImmobilized(active.conditions)` into `banned`, so an Asleep/Paralyzed body
+  // already arrives with every attack row `playable: false` and the meaning rides
+  // the grey buttons. `isImmobilized` is `asleep || paralyzed` (types.ts);
+  // Confusion blocks nothing, so there is no greyed button to carry it. The
+  // playmat's `CNF` chip (Card.tsx) is three letters and no number — the absent
+  // content is the DECISION-RELEVANT half: a flip, its cost, the turn ending.
+  //
+  // ⚠️ NO ROW ON `GameHud.tsx`'s TWIN HINT, AND THAT IS A FINDING RATHER THAN A
+  // CHOICE. D501 shipped none, and `GameHud.dom.test.tsx` asserts only
+  // `/Confused: attacking flips a coin/` — the LOCAL number is pinned by no dom
+  // rung at all, so a `{30}` there dies to nothing. Named here, not fixed here:
+  // this slice's scope is the online panel.
+  {
+    id: "D509-local-hud-hardcodes-the-confusion-number",
+    decision: "D509",
+    what: "\ud83d\uded1 THE DEFECT D501 DELETED, FREE TO COME BACK UNNOTICED FOR EIGHT DECISIONS. D501 found `GameHud` printing a hard-coded \u201ctails: 30 damage to itself\u201d off `rotation` alone \u2014 a FALSE NUMBER shown to a player at the exact moment they decide whether to attack \u2014 and replaced it with a read of the board. It then shipped NO rung on the rendered number: `GameHud.dom.test.tsx`\u2019s case stops its regex at `/Confused: attacking flips a coin/`, BEFORE the digits. Measured at D509: hard-coding the number back leaves that case GREEN and 14 of 15 passing. \u26a0\ufe0f So the panel could silently resume lying and every instrument in the repo would agree it was fine \u2014 D496\u2013D498\u2019s blind spot on a player-facing surface. The new rung separates \u201creads `confusionDamage`\u201d from \u201cgrabbed the neighbouring number\u201d with a board where confusion is 80 and poison is 20, so a kill proves the READ rather than the sentence.",
+    file: "src/features/game/GameHud.tsx",
+    find: "{conditions?.confusionDamage ?? 30}",
+    replace: "{30}",
+    expectKilledBy: ["src/features/game/GameHud.dom.test.tsx"],
+  },
+  {
+    id: "D509-online-hud-drops-the-confusion-hint",
+    decision: "D509",
+    what: "\ud83d\uded1 A1 \u2014 THE PANEL GOES BACK TO THE PRE-D509 BUILD, which is what this repo shipped for seven resume points and what a successor restores by \u201ctidying\u201d a hint that looks decorative. It is not decorative: a Confused body may still DECLARE an attack, so the button stays live and this line is the only thing on the online surface saying what pressing it risks. \u26a0\ufe0f NOTHING ELSE GOES RED UNDER IT \u2014 the engine is untouched, `redact.ts` still puts `confusionDamage` on the wire, and `GameHud`'s own rung is green, which is exactly how the gap survived D457, D501 and five resume points after them.",
+    file: "src/features/online/components/OnlineHud.tsx",
+    find: "{battle !== undefined && battle.conditions.rotation === \"confused\" && (",
+    replace: "{false && battle !== undefined && battle.conditions.rotation === \"confused\" && (",
+    expectKilledBy: ["src/features/online/components/OnlineHud.confusion.dom.test.tsx"],
+  },
+  {
+    id: "D509-online-hud-hardcodes-the-confusion-amount",
+    decision: "D509",
+    what: "\ud83d\uded1 A2 \u2014 THE NUMBER BECOMES THE LITERAL `30`, the exact defect D501 exists to fix, re-committed on the one surface D501 did not reach. Every board where no effect raised the amount is byte-identical under it, so only a board carrying the RAISED figure can separate the two \u2014 \u00a72 drives 80, the value D501's own printing produces. The claim is FALSE at the single moment it is read (a player deciding whether to attack through a Confusion), which is D421's rule that a rendered claim has the same standing as a predicate.",
+    file: "src/features/online/components/OnlineHud.tsx",
+    find: "{battle.conditions.confusionDamage} damage to",
+    replace: "{30} damage to",
+    expectKilledBy: ["src/features/online/components/OnlineHud.confusion.dom.test.tsx"],
+  },
+  {
+    id: "D509-online-hud-hint-reads-the-poison-number",
+    decision: "D509",
+    what: "\u26a0\ufe0f A3 \u2014 THE SIBLING FIELD. `conditions` carries TWO numbers and the hint grabs `poisonDamage` instead. A suite that drove only a raised-Confusion board stays green under it on every board where poison is 0, so \u00a73's second case is the board where BOTH numbers are non-default AND DIFFERENT \u2014 D427's one-axis rule applied to a pair of same-typed fields on one record.",
+    file: "src/features/online/components/OnlineHud.tsx",
+    find: "{battle.conditions.confusionDamage} damage to",
+    replace: "{battle.conditions.poisonDamage} damage to",
+    expectKilledBy: ["src/features/online/components/OnlineHud.confusion.dom.test.tsx"],
+  },
+  {
+    id: "D509-online-hud-hint-fires-on-every-rotation",
+    decision: "D509",
+    what: "\ud83d\uded1 A4 \u2014 THE GUARD WIDENS TO `!== \u201cnone\u201d`, so an ASLEEP or PARALYZED body is told that attacking flips a coin when it cannot attack at all \u2014 every attack row arrived `playable: false` from `redactedAttacksOf`. This is the row that makes the slice's SCOPE argument falsifiable: the stated reason for omitting the immobilizing rotations is that `banned` already carries them, and a guard that fires on all three contradicts it while every positive rung stays green.",
+    file: "src/features/online/components/OnlineHud.tsx",
+    find: "battle.conditions.rotation === \"confused\"",
+    replace: "battle.conditions.rotation !== \"none\"",
+    expectKilledBy: ["src/features/online/components/OnlineHud.confusion.dom.test.tsx"],
+  },
+  {
+    id: "D509-online-hud-drops-the-optional-battle-guard",
+    decision: "D509",
+    what: "\u26a0\ufe0f A5 \u2014 THE `battle !== undefined` CONJUNCT BECOMES A NON-NULL ASSERTION, the shape a reader writes once they notice `conditions` and `confusionDamage` are both REQUIRED and stop reading one field earlier. `redactedInPlaySchema.battle` is OPTIONAL \u2014 `hiddenInPlay` (redact.ts) omits it so a face-down setup back cannot leak a printed HP \u2014 so the panel THROWS rather than omitting a line. \ud83d\uded1 THIS ROW IS WHY THE HINT CARRIES NO `?? 30`: the totality the local HUD buys with a fallback is bought here by the conjunct, and a fallback that can print a wrong number is the defect D501 fixed.",
+    file: "src/features/online/components/OnlineHud.tsx",
+    find: "battle !== undefined && battle.conditions.rotation === \"confused\"",
+    replace: "battle!.conditions.rotation === \"confused\"",
+    expectKilledBy: ["src/features/online/components/OnlineHud.confusion.dom.test.tsx"],
+  },
 ];
