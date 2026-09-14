@@ -193,11 +193,36 @@ const CLAUSES = [
     reveal: true,
     legalPrintings: 1, // svp-199
   },
+  // 🆕🆕🆕 **D513 — THE ROW A DISTINCTNESS CONSTRAINT BOUGHT, MOVED UP OUT OF
+  // `DEFERRED` RATHER THAN ADDED BESIDE IT** — D238's call three rows up, for the same
+  // reason: the deferral was the CLAIM, and the claim has expired. It was pinned
+  // derived-to-null one commit ago with the reason *"a DISTINCTNESS constraint on the
+  // pick"*, which was true about the mechanism and WRONG about the carrier — the two
+  // shipped refusal comments in `effects.ts` both said the missing piece was a
+  // *"distinctness `CardFilter`"*, and no `CardFilter` could ever have expressed it.
+  //
+  // 🛑 **AND THIS ANCHOR NEEDED ONE OPTIONAL GROUP, NOT A SECOND ANCHOR — BUT IT DID
+  // NEED ONE, WHICH IS WHERE D238's PARAGRAPH ABOVE AND THIS ONE COME APART.** D238's
+  // three rows were admitted by the `[^,.]+?` capture and refused by the TABLE alone.
+  // This row was ALSO admitted by that capture — measured, not assumed: it captured
+  // `Basic Energy cards of different types` whole — so the anchor was never the blocker
+  // here either. What the new group does is move the phrase OUT of the noun so the
+  // closed table is asked about a noun it can name, and hand the phrase to a rider.
+  // **Same diagnosis as D238, different repair.**
+  {
+    text: "Search your deck for up to 3 Basic Energy cards of different types, reveal them, and put them into your hand. Then, shuffle your deck.",
+    filter: { kind: "basicEnergy" },
+    max: 3,
+    reveal: true,
+    distinctEnergyTypes: true,
+    legalPrintings: 1, // sv06.5-050
+  },
 ] as const satisfies readonly {
   text: string;
   filter: CardFilter;
   max: number;
   reveal: boolean;
+  distinctEnergyTypes?: true;
   legalPrintings: number;
 }[];
 
@@ -281,11 +306,6 @@ const DEFERRED: readonly (readonly [string, string, number])[] = [
     "You may search your deck for any number of Fennel cards, reveal them, and put them into your hand. Then, shuffle your deck.",
     "`byName` at an UNBOUNDED max the (\\d+) group cannot spell (sv10.5b-036/-117)",
     2,
-  ],
-  [
-    "Search your deck for up to 3 Basic Energy cards of different types, reveal them, and put them into your hand. Then, shuffle your deck.",
-    "a DISTINCTNESS constraint on the pick (sv06.5-050)",
-    1,
   ],
   [
     "Search your deck for up to 5 Pokémon that are the same type as any Basic Energy attached to this Pokémon, reveal them, and put them into your hand. Then, shuffle your deck.",
@@ -389,6 +409,11 @@ function programOf(clause: (typeof CLAUSES)[number]): EffectOp[] {
       dest: "hand",
       max: clause.max,
       ...(clause.reveal ? { reveal: true } : {}),
+      // 🆕🆕🆕 D513 — the printed *"of different types"*. Optional on the row
+      // for the same reason `reveal` is: the ABSENT key is a different wire value from
+      // `false` (D135), and these programs are compared by VALUE against the twelve
+      // rows that print no such phrase.
+      ...("distinctEnergyTypes" in clause ? { distinctEnergyTypes: true } : {}),
     },
     { op: "shuffleDeck" },
   ];
@@ -398,7 +423,7 @@ function programOf(clause: (typeof CLAUSES)[number]): EffectOp[] {
 // 1. THE ANCHOR — one regex, one closed noun table, one optional rider
 // ─────────────────────────────────────────────────────────────────────────────
 
-describe("the anchor — thirteen printed sentences, ONE regex", () => {
+describe("the anchor — seventeen printed sentences, ONE regex", () => {
   it("derives each printed sentence to its program", () => {
     for (const clause of CLAUSES) {
       expect(deriveAttackEffect(clause.text), clause.text).toEqual(programOf(clause));
@@ -422,14 +447,25 @@ describe("the anchor — thirteen printed sentences, ONE regex", () => {
     // 🛑 THE ARITHMETIC, STATED RATHER THAN DESCRIBED — D230's rule, and the row
     // that caught its own author's census a slice ago. The backlog row said 25
     // legal for ~15 arms; measured BY SENTENCE it is 42 legal for ONE.
+    // ⚠️ THE HEADING'S COUNT WAS STALE BEFORE THIS SLICE TOUCHED IT, and it is
+    // recorded rather than quietly fixed (D433's derived noun, D425's rotting doc
+    // figure). It read "thirteen" — D231's measured `CLAUSES` length — and D238 added
+    // THREE rows without moving it, so it was wrong for 275 decisions. Measured here:
+    // `CLAUSES` holds SEVENTEEN rows, sixteen before this slice.
     // ⚠️ D238 moved 4 printings over 3 sentences from `DEFERRED` into `CLAUSES`
-    // (28 → 32 read, 14 → 10 left). The 42 is UNMOVED and is the same census
-    // D231 measured — a family total does not change because a reader got wider.
-    expect(CLAUSES.reduce((sum, c) => sum + c.legalPrintings, 0)).toBe(32);
-    expect(DEFERRED.reduce((sum, [, , n]) => sum + n, 0)).toBe(10);
-    expect(32 + 10).toBe(42);
-    // …and the fourteen left are all pinned derived-to-null, so the deferral is a
-    // fact about the code rather than a note in a comment.
+    // (28 → 32 read, 14 → 10 left). 🆕 D513 moved ONE more printing over ONE sentence
+    // the same way (32 → 33 read, 10 → 9 left). The 42 is UNMOVED across both and is
+    // the same census D231 measured — a family total does not change because a reader
+    // got wider, which is exactly what the third rung below asserts.
+    expect(CLAUSES.reduce((sum, c) => sum + c.legalPrintings, 0)).toBe(33);
+    expect(DEFERRED.reduce((sum, [, , n]) => sum + n, 0)).toBe(9);
+    expect(33 + 9).toBe(42);
+    // …and the six left are all pinned derived-to-null, so the deferral is a
+    // fact about the code rather than a note in a comment. ⚠️ The count in this
+    // sentence is a DERIVED NOUN and has rotted twice (D433): it read "fourteen" while
+    // `DEFERRED` held seven sentences / ten printings, because it was written against
+    // the PRINTINGS figure of a table that has since been stepped twice. It now names
+    // the SENTENCES, which is what the loop below actually walks.
     for (const [text, why] of DEFERRED) expect(deriveAttackEffect(text), why).toBeNull();
   });
 

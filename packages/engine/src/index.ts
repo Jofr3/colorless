@@ -19984,6 +19984,103 @@ import type { GameState, Seat } from "./types";
     `expect(manifest.version)`, `it(…)` titles, the declaration and `package.json` —
     **not** as a value-keyed grep — because a value-keyed grep is precisely the mechanism
     that ate D500's heading.)
+    🆕🆕🆕 engineVersion 0.399.0 → **0.400.0** (D513 — THE PRINTED *"of different types"* — A
+    PAIRWISE RELATION AMONG THE PICKS, AND THE FIRST DISTINCTNESS CONSTRAINT THIS ENGINE
+    READS. `censusAttackCorpus.ts` **FILE LINE 473** — *"Search your deck for up to 3
+    Basic Energy cards of different types, reveal them, and put them into your hand.
+    Then, shuffle your deck."*, **1 sentence / 1 legal printing** (Sylveon ex
+    `sv06.5-050`), claimed by `deriveAttackEffect`.
+    🛑 **NO `CardFilter` COULD EVER HAVE BUILT THIS ROW, AND TWO SHIPPED REFUSAL
+    COMMENTS IN `effects.ts` SAID ONE WOULD.** Both called the missing piece a
+    *"distinctness `CardFilter`"*, and `derivedDeckSearchAttach.test.ts` pinned the same
+    words as a reason. **A `CardFilter` is answered by `matchesFilter` ONE UID AT A
+    TIME**; *"of different types"* is a predicate on the ANSWER SET, so it is false of no
+    card and true of no card. It is a different KIND of constraint, not a missing member,
+    and widening that union however far never reaches it. All three sites are corrected
+    IN PLACE (D178/D457/D466/D508) and the attach-family refusal they belong to is
+    NARROWED rather than retired: `sv08-161` is still blocked, by the Tera banner AND by
+    `DECK_SEARCH_ATTACH`'s welded `Energy cards and attach them`, which does not admit the
+    phrase at all. **The two printings of one phrase are blocked at DIFFERENT LAYERS.**
+    ✅ **WHAT CARRIES IT ALREADY SHIPPED, ONE LAYER DOWN: D332's `chooseCards.caps`.** A
+    cap on how many picks may come out of a named uid set, built for Drayton's *"a
+    Pokémon **and** a Trainer card"* and enforced by `validateChoice`, whose own comment
+    says *"this is the ONLY place they can be enforced"*. **A distinctness relation over a
+    FINITE PARTITION is a set of caps**: partition the candidates by `energyProvidesOf`
+    and cap every cell at ONE. So the cost is ONE optional anchor group, ONE optional
+    `searchDeck` key (`distinctEnergyTypes`), ONE partition in the park and ONE caption
+    parameter — with **ZERO** new `CardFilter` members, prompt fields, choice kinds,
+    validator branches, events, error codes, `GameState` fields, registry rows,
+    `FIXTURE_POOL` ids (file-local `cardPool`, D414/D452), `redact.ts` bytes,
+    `packages/schema` bytes or client mirrors. **D457's rule — a PROMPT field costs five
+    mirrors and an OP field costs none — prices this at the cheap end because no prompt
+    field is added at all.**
+    🛑 **AND THE ANCHOR WAS NEVER THE BLOCKER — D510's RULE, PAYING OUT A SECOND TIME,
+    AND DRIVEN RATHER THAN NARRATED.** `ATTACK_HAND_SEARCH`'s `([^,.]+?)` plural-noun
+    group contains neither a comma nor a period, so it has captured `Basic Energy cards of
+    different types` WHOLE since D231: the sentence REACHED this reader for 282 decisions
+    and died one step later, in `HAND_SEARCH_PLURAL.get`. `distinctEnergyTypes.test.ts` §2
+    reconstructs the PRE-slice pattern and execs it against the printed bytes, and asserts
+    that the old and new patterns match the SAME set of 640 legal sentences — so the new
+    group admits nothing the old one refused; it MOVES a phrase out of the noun so the
+    closed table is asked about a noun it can name. **The blocker was a NAME.**
+    ⚠️ **THE RIDER IS DEFINED OVER `basicEnergy` AND THE REFUSAL IS LOUD.** The
+    partition key is `energyProvidesOf`, which answers for an Energy card and nothing
+    else, so a printed *"3 Pokémon of different types"* has no partition to be distinct
+    over; deriving it anyway would cap every body into its own cell and quietly admit
+    three of a kind — the wrong-but-plausible program D190b/D199 rank below an unbuilt
+    one. **That form is printed ZERO times** over all 640 legal sentences (*"of different
+    types"* appears on exactly 2 rows and *"different"* on exactly those 2), so the guard
+    is on a FUTURE print and is driven on a real board rather than asserted.
+    ⚠️ `MATCH_RECORD_VERSION` **HELD at 30, and the DOOR IS NAMED because this op is
+    not a fold.** `searchDeck` PARKS, so its literal rides `EffectContinuation.pendingOp`
+    inside `MatchRecord.state.phase.cont` (D457 — the park IS the road to storage), and
+    D508/D512's fold-shaped argument is simply not available. D125's test — *"would an old
+    record MEAN something else"* — is answered at that real address and **the LOSS
+    DIRECTION IS DRIVEN**: the key is stripped from a live persisted op, the continuation
+    re-run, and the park is byte-identical to the one the built sibling produces (no
+    `caps`, min 0, max 3, same candidates, same note). The same shape as `also` (D336) and
+    `recordAs` (D502) on this very op.
+    **A LATTICE THAT CHANGES SHAPE ACROSS ITS OWN SLICE — the twelfth entry on the
+    register, and it is a PRICE.** The 2⁵ NOUN × DISTINCTNESS × REVEAL × OPENER × COUNT reads
+    **16 of 32 before and 24 of 32 after**, identical readers-only and under `builds()`,
+    both splitters null at **64/64** (not a formality: every point carries a second
+    depth-0 segment whose tail the trailing splitter could claim), all 32 points distinct.
+    **PRE flip table `NOUN 0 · DISTINCTNESS 16 · REVEAL 0 · OPENER 0 · COUNT 0` of 16 — D505's
+    SEVENTH shape exactly, one blocking axis on a free 2⁴**, the signature of a row whose
+    blocker is a name rather than a machine, reached by an instrument that knows nothing
+    of the anchor. **POST it is `8 · 8 · 0 · 0 · 0` — D507's EIGHTH shape, a conjunctive
+    pair** — because the loud refusal MADE the NOUN axis load-bearing where it had been
+    free. 🛑 **Read as D508 reads a flip table, that is the guard's entire price: one
+    axis moved from 0/16 to 8/16, so it owes exactly ONE *"printed zero times"*
+    measurement, and §1 pays it.**
+    ⚠️ **THIS HEADING NAMES NO `D<nnn>` AND THAT IS DELIBERATE, NOT AN OMISSION** —
+    D507/D508/D510/D512's posture, for their reason. `engineVersionChangelog.test.ts`'s
+    ATTRIBUTION case asserts `adjudicated === LABELLED.length` with no tolerance, so a
+    labelled heading without its `docs/decisions.md` row ships `check` RED, and this slice
+    is scoped away from that file. **The debt is D513**: whoever writes
+    `| **D513** | … engine 0.399.0 → 0.400.0 … |` should rewrite this heading's opening
+    parenthesis as `(D513 — THE PRINTED "of different types"…` in the same commit, and not
+    before.
+    🛑 **VERSION-TAX EXCEPTION LIST FOR THIS BUMP, NAMING THE HEADING BEING WRITTEN THIS
+    SLICE (D506's rule (b)).** `0.399.0` legitimately survives at SIX kinds of site and
+    none of them may be swept: **THIS HEADING'S OWN SOURCE, one line up, plus the four
+    lines of this very paragraph**; D512's heading TARGET directly below and the two
+    sentences of its own exception list; `bothSidesNameFragment.test.ts`'s header arrow,
+    which reads `0.398.0 → 0.399.0`; `distinctEnergyTypes.test.ts`'s header arrow, which
+    reads `0.399.0 → 0.400.0` and is this slice's own; `mutants.ts`'s D275 re-point
+    ledger, which is APPENDED to rather than rewritten; and
+    `D506-changelog-head-unnamed`'s own `what`, which is a re-point HISTORY and whose
+    `find`/`replace` carry `0.399.0` as the SOURCE of the heading they now name. **The
+    re-grep after the edit returned exactly these fourteen lines and nothing else** —
+    which is the check, not the intention. `D506-changelog-head-unnamed`'s `find`/`replace` is RE-POINTED
+    WHOLESALE onto the heading above rather than value-swept — **kept in D508's trimmed,
+    label-proof form `engineVersion <old> → **<new>**`, stopping before the `(`**, which
+    D508, D510 and D512 all proved survives the caller's labelling. The sweep was run as a
+    WHITELIST of SIX exact line shapes — **104 sites, written out and counted BEFORE the
+    edit and re-grepped after** — **not** as a value-keyed grep, because a value-keyed
+    grep would rewrite this heading's own source and point that mutant at a heading that
+    does not exist. ⚠️ **AND `precheck` WAS RE-RUN AFTER EVERY `index.ts` EDIT** (it is
+    not part of `check`).)
     🆕🆕🆕 engineVersion 0.398.0 → **0.399.0** (D512 — THE BOTH-SIDES BODY COUNT NARROWED BY TWO
     PRINTED NAME FRAGMENTS — AND A REFUSAL WHOSE FALSIFIER DID NOT FIRE.
     `censusAttackCorpus.ts` **FILE LINE 583** — *"This attack does 40 damage for each
@@ -20882,7 +20979,7 @@ import type { GameState, Seat } from "./types";
     WITNESS** — the count was re-derived every slice and the word *"three"* was carried.
     A successor of this slice inherits **81 / 61 / 17** again, over **FIVE** history
     occurrences: those four plus `deckMillFilteredScale.test.ts`'s own header arrow.) */
-export const engineVersion = "0.399.0";
+export const engineVersion = "0.400.0";
 
 export type {
   ApplyResult,

@@ -2164,6 +2164,65 @@ function stepOp(
       // against the sum rather than left to be discovered by the first one that does.
       const total = groups.reduce((sum, g) => sum + g.max, 0);
       const max = op.dest === "bench" ? Math.min(total, benchSpace(state, ctx.seat)) : total;
+      // 🆕🆕🆕 D513 — THE PRINTED *"of different types"*, AS A PARTITION OF THE
+      // CANDIDATES WITH EVERY CELL CAPPED AT ONE. Sylveon ex `sv06.5-050`.
+      //
+      // 🛑 THIS IS WHY THE CONSTRAINT IS NOT A `CardFilter` AND NEVER COULD BE.
+      // `matchesFilter` answers for ONE uid; *"of different types"* is a predicate
+      // on the ANSWER SET. But D332's `caps` is already exactly that shape — a cap
+      // on how many picks may come out of a named uid set — so the pairwise
+      // relation factors into `k` independent per-cell caps with no new vocabulary
+      // anywhere: an answer is pairwise type-distinct **iff** it takes at most one
+      // from each cell. `validateChoice` enforces it, and its own comment says that
+      // is the only place it can be enforced.
+      //
+      // ⚠️ THE CELLS ARE BUILT FROM THE CANDIDATES, NOT FROM THE NINE PRINTED
+      // TYPES, which is what keeps the caps HONEST rather than merely correct: an
+      // empty cell would cap nothing and a cell for a type the deck does not hold
+      // would put a group in the persisted prompt that no answer can reach. The key
+      // is `energyProvidesOf` — the SAME function `matchesFilter`'s `basicEnergy`
+      // arm reads for `filter.energyType` (cards.ts), so the partition and the
+      // filter cannot come to disagree about what a type is (D159, one noun one
+      // answer).
+      //
+      // ⚠️ AND THE TOTAL IS UNTOUCHED, which is the whole reason this is a rider
+      // and not nine `also` groups: `total` above is the SUM of the group maxes, so
+      // spelling the partition as `also` would turn the printed ceiling of 3 into
+      // 9. The printed "up to" survives as `min: 0` below — a player may legally
+      // take two, one, or NONE, and only a pair sharing a type is refused.
+      //
+      // ⚠️ A uid whose card cannot be resolved is dropped from the partition rather
+      // than pooled into a cell of its own. It is unreachable — every uid here came
+      // off this seat's own deck and `matchesFilter` already answered TRUE for it,
+      // which it cannot do for an absent card — and pooling would have been the
+      // wrong answer if it ever were reachable: two unresolvable uids sharing one
+      // cell would refuse a pick the print allows.
+      const distinctCells = new Map<string, string[]>();
+      if (op.distinctEnergyTypes === true) {
+        for (const uid of candidates) {
+          const card = cardOf(state, uid);
+          if (card === undefined) continue;
+          const key = energyProvidesOf(card);
+          const cell = distinctCells.get(key);
+          if (cell === undefined) distinctCells.set(key, [uid]);
+          else cell.push(uid);
+        }
+      }
+      const distinctCaps = [...distinctCells.values()].map((uids) => ({ uids, max: 1 }));
+      // The two cap sources CONCATENATE rather than choose, so the field pair has no
+      // hidden precedence: a uid in two groups counts against both, which is this
+      // op's stated conservative rule for overlapping `also` groups and is the only
+      // reading that can never admit an answer the print did not promise. No printed
+      // sentence spells both riders today (`also` is a multi-noun search and this
+      // rider is defined over one Energy noun), so the combination is unreachable
+      // from the deriver — but it is spelled to be right rather than left to be
+      // discovered by the first row that prints it.
+      const caps = [
+        ...(op.also === undefined
+          ? []
+          : groups.map((g) => ({ uids: groupMatches(g.filter), max: g.max }))),
+        ...distinctCaps,
+      ];
       if (candidates.length === 0 || max <= 0) {
         // A search that can find nothing (or has nowhere to put it) is a
         // no-op — the trailing shuffleDeck op still fires.
@@ -2199,12 +2258,12 @@ function stepOp(
           // Spelled as two whole literals rather than a conditional spread, this
           // file's rule for an ABSENT key (D135): `caps: undefined` is not the
           // same wire value as no key at all, and these prompts are compared by
-          // value. A single-group search reaches `null` down exactly the path it
-          // always did, and the six older parks are untouched.
-          ...(op.also === undefined
-            ? {}
-            : { caps: groups.map((g) => ({ uids: groupMatches(g.filter), max: g.max })) }),
-          note: searchNote(groups, op.dest, max, op.exact === true),
+          // value. A single-group search with no distinctness rider reaches `null`
+          // down exactly the path it always did, and the six older parks are
+          // untouched. 🆕 D513 keys the spread on the CAP LIST being empty rather
+          // than on `also` being absent, because there are now two producers of it.
+          ...(caps.length === 0 ? {} : { caps }),
+          note: searchNote(groups, op.dest, max, op.exact === true, op.distinctEnergyTypes === true),
         },
       };
     }
@@ -13554,6 +13613,14 @@ function searchNote(
       one caption over. Absent on every producer before this row, where the note
       is the byte-identical "up to" it always was. */
   exact = false,
+  /** 🆕🆕🆕 D513 — the op's `distinctEnergyTypes`. The caption has to carry the
+      printed *"of different types"* for D342's recorded reason one parameter up: a
+      heading reading *"up to 3 Basic Energy cards"* over a dialog that rejects a
+      second Fire is the dialog contradicting itself in its own words, and the
+      player has no other way to learn why the pick was refused. Absent on every
+      producer before this row, where the caption is the byte-identical one it
+      always was. */
+  distinctEnergyTypes = false,
 ): string {
   const where =
     dest === "bench"
@@ -13575,15 +13642,22 @@ function searchNote(
   if (first === undefined) return `Search your deck ${where}.`;
   if (groups.length === 1) {
     const { singular, plural } = retrieveNoun(first.filter);
+    // 🆕🆕🆕 D513 — THE PRINTED PHRASE RIDES THE PLURAL NOUN AND ONLY THE PLURAL
+    // NOUN. "a Basic Energy card of different types" is not English, and it is not
+    // a caption this dialog could ever be honest about either: a pairwise relation
+    // over a ONE-card answer is VACUOUSLY true, so a singular take is genuinely
+    // unconstrained and must not claim otherwise. The `max > 1` branches below are
+    // the only ones the rider can reach, which is asserted rather than assumed.
+    const many = distinctEnergyTypes ? `${plural} of different types` : plural;
     // 🆕 D342 — an EXACT take drops the "up to" and keeps the number, which is
     // the printed sentence ("Search your deck for 2 cards") and also the only
     // caption the Confirm button below it can be true about.
     if (exact)
       return max > 1
-        ? `Search your deck for ${max} ${plural} ${where}.`
+        ? `Search your deck for ${max} ${many} ${where}.`
         : `Search your deck for ${singular} ${where}.`;
     return max > 1
-      ? `Search your deck for up to ${max} ${plural} ${where}.`
+      ? `Search your deck for up to ${max} ${many} ${where}.`
       : `Search your deck for ${singular} ${where}.`;
   }
   // 🆕 D336 — THE PRINTED CONJUNCTION, AND IT IS A SERIAL LIST RATHER THAN

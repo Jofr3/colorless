@@ -27025,8 +27025,8 @@ null, and a minimal pair per row isolating the axis — never by reading the sen
 |---|---|---|---|
 | 403 / 412 | 2 / 1 | the batch pinned to ONE body | ✅ **BUILT at D457** (`attachFromDeck.oneTarget`) |
 | 404 / 419 | 2 / 1 | the Future / Tera SUBGROUP | **DATA-BLOCKED** — `cardSchema` has no subtype column |
-| 419 | (1) | *"of different types"* AND the Tera banner | two blockers on ONE printing, measured by minimal pair |
-| 420 | 1 | *"of different types"* — a DISTINCTNESS constraint | open |
+| 419 | (1) | *"of different types"* AND the Tera banner | **STILL BLOCKED — and the CARRIER was named wrong.** 🆕 D513: the phrase is NOT a `CardFilter` need; and its second blocker here is the ANCHOR, whose `Energy cards and attach them` is welded, not just the banner |
+| 420 | 1 | *"of different types"* — a DISTINCTNESS constraint | ✅ **BUILT at D513** (`searchDeck.distinctEnergyTypes` + D332's shipped `chooseCards.caps`) |
 | 410 | 2 | a SECOND printed noun (`{G}` … and `{L}` …) | open — **cheapest row left: two `attachFromDeck` ops, ZERO new fields** |
 | 401 | 1 | a DYNAMIC max (*"up to the number of your Benched Pokémon"*) | open — the widening precedent is `attachFromTop.max: number \| "any"` |
 | 430 | 1 | a filter computed from BOARD STATE | open — no `CardFilter` member can read the board |
@@ -27575,3 +27575,82 @@ slice**, which is the condition D465's rule attaches to reading the table at all
 · **`opcoverage.ts`** is keyed on `EffectOp` KINDS and this slice authors no op, so it is **blind by
   construction** — measured, not asserted: `SEAT LINES 207/471` and `DECISION POINTS 884/1329` are
   identical before and after.
+## D513 — the printed *"of different types"*: a PAIRWISE relation among the picks, and the layer that could already carry it (engine 0.400.0)
+
+`censusAttackCorpus.ts` **FILE LINE 473** — *"Search your deck for up to 3 Basic Energy cards of
+different types, reveal them, and put them into your hand. Then, shuffle your deck."* — **1 sentence
+/ 1 legal printing** (Sylveon ex `sv06.5-050`), claimed by `deriveAttackEffect`.
+
+### (a) The question the slice was set, and the answer
+
+*"Where can a set-level constraint honestly live?"* — with two candidates offered: an optional field
+on the op (D125's widening), or the prompt/choice layer **if the park that asks the player to pick
+already validates the answer**.
+
+**It does, and it has since D332.** `validateChoice` (cardplay.ts) matches a wire answer against the
+**PROMPT and nothing else** — `filter` is enforced only transitively through `prompt.candidates`,
+`max` as `prompt.max`, `exact` as `prompt.min`, `also` as `prompt.caps`, and **no code on the resolve
+path calls `matchesFilter` at all**. So the two candidates are not alternatives: D332's own doc block
+says the op field and the prompt field are *"two halves of one narrowing and neither is useful
+alone"*, and the validator arm says `caps` is *"the ONLY place they can be enforced"*.
+
+🛑 **And `caps` — `{ uids, max }[]` — is ALREADY a set-level constraint.** A distinctness relation
+over a FINITE PARTITION factors into one cap of **ONE** per cell: partition the candidates by
+`energyProvidesOf`, cap every cell at 1, and an answer is pairwise type-distinct **iff** it satisfies
+all of them. The printed *"up to"* survives untouched as `min: 0` — fewer, and NONE, stay legal.
+
+### (b) Why it could not be `also`, measured
+
+Nine `{ filter: basicEnergy(T), max: 1 }` groups would build the right caps and the **wrong total**:
+the park derives `max` as `groups.reduce((sum, g) => sum + g.max)`, so the printed ceiling of **3**
+becomes **9**. `also` welds the cap list to the total; this row needs them decoupled, and that is the
+whole of the new key. The suite's board carries **four** provided types so the total (3) and the sum
+of the caps (4) genuinely differ — on a three-type deck an `also`-shaped build passes every rung.
+
+### (c) The carrier that three shipped sites named wrong
+
+Two refusal comments in `effects.ts` and one pinned reason in `derivedDeckSearchAttach.test.ts`
+called the missing piece a **"distinctness `CardFilter`"**. `matchesFilter` answers for ONE uid;
+*"of different types"* is a predicate on the ANSWER SET, so **no widening of that union could ever
+have reached it**. One of the two sits three lines below that file's own warning that *"a 'cannot'
+that names the wrong carrier reads as a fact about the sentence"*. All three corrected in place.
+
+### (d) The anchor was never the blocker — D510's rule, paying out a second time
+
+`ATTACK_HAND_SEARCH`'s `([^,.]+?)` plural-noun group excludes a comma and a period, and the printed
+phrase contains neither — so it captured `Basic Energy cards of different types` **whole from the day
+it was written** and the sentence died one step later in `HAND_SEARCH_PLURAL.get`. **The row had
+reached this reader since D231.** The new optional group admits nothing the old pattern refused; the
+suite reconstructs the pre-slice pattern and asserts both match the same set of 640 legal sentences.
+
+🛑 **The OTHER printing of the phrase (FILE LINE 472) is blocked at a DIFFERENT LAYER.**
+`DECK_SEARCH_ATTACH` welds `Energy cards and attach them`, so that pattern does not admit the phrase
+at all — on top of the `Tera` banner. Two rows, one phrase, two layers; building one says nothing
+about the other, and the minimal pair that shows it is driven in the suite.
+
+### (e) The lattice CHANGED SHAPE across the slice
+
+2⁵, NOUN × DISTINCTNESS × REVEAL × OPENER × COUNT, **16/32 before and 24/32 after**, identical
+readers-only and under `builds()`, both splitters null at **64/64** (not a formality — every point
+carries a second depth-0 segment), all 32 points distinct.
+
+| state | flip table (of 16) | recorded shape |
+|---|---|---|
+| PRE | `0 · 16 · 0 · 0 · 0` | **D505's seventh** — one blocking axis, free 2⁴ |
+| POST | `8 · 8 · 0 · 0 · 0` | **D507's eighth** — a conjunctive pair |
+
+The NOUN axis moved from **free** to **live** because the slice added the loud refusal of a
+non-Energy distinctness. Read as D508 reads a flip table, **that shape change is the guard's entire
+price**: one axis off zero, so one *"printed zero times"* measurement is owed — and paid (the form is
+printed 0 times over all 640 legal sentences; *"different"* appears on exactly the two known rows).
+
+### (f) What the instruments could and could not see
+
+· `residue-census.ts` classified the row **SUBST-5 at `SUBMAX=12`** onto the built sibling — one
+  substitution, `«cards of different types,» → «cards,»` — and named the built string itself. The
+  census and the anchor agreed about the lone load-bearing span from two directions.
+· **`opaque-anatomy` stood completely still**: 57 sentences / 82 printings, 3 blockers / 7
+  co-markers, **no marker flipped verdict**. The row was never `OPAQUE`, so D508's §C hazard did not
+  arise — measured, not assumed.
+· **The census step rotted pins in FOUR WAVES** (26 → 19 → 9 → 7 failures), because vitest stops an
+  `it` at its first throw. Several later waves were in files edited in an earlier one.

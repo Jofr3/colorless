@@ -6142,6 +6142,61 @@ export type EffectOp =
           bump because a v19 `discardRest: true` kept its type and lost its
           meaning. */
       also?: readonly { filter: CardFilter; max: number }[];
+      /** 🆕🆕🆕 **D513 — THE PRINTED *"of different types"*, AND IT IS A PAIRWISE
+          RELATION AMONG THE PICKS RATHER THAN A NARROWING OF ANY ONE OF THEM.**
+          Sylveon ex `sv06.5-050` "Crystal Wing" (`censusAttackCorpus.ts` **FILE LINE
+          473**, *"Search your deck for up to 3 Basic Energy cards of different types,
+          reveal them, and put them into your hand. Then, shuffle your deck."*, **1
+          sentence / 1 legal printing**).
+
+          🛑 **NO `CardFilter` CAN EVER SPELL THIS, AND THAT IS A STATEMENT ABOUT THE
+          KIND OF CONSTRAINT RATHER THAN ABOUT THE UNION'S MEMBERSHIP.** `matchesFilter`
+          answers *"does THIS card match"* for one uid at a time; *"of different types"*
+          is a predicate on the ANSWER SET, so it is false of no card and true of no
+          card. A successor who reaches for a filter member here — and **two shipped
+          refusal comments in this very file named a "distinctness `CardFilter`" as the
+          missing carrier, which is exactly that mistake written down** — will find that
+          widening `CardFilter` however far never reaches it.
+
+          ✅ **WHAT DOES CARRY IT ALREADY SHIPS, ONE LAYER DOWN: `chooseCards.caps`.**
+          D332 built `{ uids, max }[]` for Drayton's printed *"a Pokémon **and** a
+          Trainer card"* — a cap on how many of the picks may come out of ONE named uid
+          set — and `validateChoice` (cardplay.ts) enforces it, its own comment saying
+          *"this is the ONLY place they can be enforced"*. **A distinctness constraint
+          over a finite partition IS a set of caps**: partition the candidates by
+          `energyProvidesOf` and cap every cell at ONE, and an answer is pairwise
+          type-distinct exactly when it satisfies all of them. So this rider buys **no
+          new prompt field, no new validator branch and no new client mirror** — it
+          only asks the park to build a partition it could always have carried.
+
+          🛑 **WHY IT COULD NOT BE SPELLED AS `also` INSTEAD, MEASURED RATHER THAN
+          ASSERTED.** Nine groups of `{ filter: basicEnergy(T), max: 1 }` would produce
+          the right caps and the WRONG TOTAL: the park derives `max` as
+          `groups.reduce((sum, g) => sum + g.max)`, so the printed ceiling of **3**
+          would become **9**. `also` welds the cap list to the total; this row needs
+          them decoupled, which is the whole of the new key.
+
+          ⚠️ **`basicEnergy` IS THE ONLY NOUN THIS RIDER IS DEFINED OVER, AND THE
+          DERIVER REFUSES RATHER THAN APPROXIMATES.** The partition key is
+          `energyProvidesOf`, which answers for an Energy card and for nothing else, so
+          a printed *"3 Pokémon of different types"* — which no legal row spells, 0 of
+          640, measured — must reach the loud `ATTACK_EFFECT_SKIPPED` path instead of
+          deriving a search whose caps are all singletons. The name says `Energy` for
+          D438's reason: the day a second type axis is printed it is a SECOND rider
+          with its own partition, not a widening of this one that silently reads the
+          wrong column.
+
+          ⚠️ **`MATCH_RECORD_VERSION` DOES NOT MOVE FOR THIS**, and the door is the one
+          `also` and `recordAs` already name: `searchDeck` parks, so its literal rides
+          `EffectContinuation.pendingOp` inside `MatchRecord.state.phase.cont`. D125's
+          test is *"can the PREVIOUS deploy's RECORD hold the new TYPE"* — a v30 record
+          carries NO `distinctEnergyTypes`, this build reads that as `undefined`, and
+          `undefined` is the unconstrained search those records already meant. **The
+          loss direction is driven** (`distinctEnergyTypes.test.ts` §4) rather than
+          argued: a reconstructed v30 `pendingOp` resumes to the same program, and the
+          prompt it parks carries no `caps` — which is what v30's writers meant, because
+          no v30 program could set the key. */
+      distinctEnergyTypes?: true;
       /** 🆕🆕 **D502 — THE §9.2 FILING, AT THE TWELFTH OP AND THE FIRST SEARCH.**
           File the uids this search ACTUALLY MOVED under `slot`, so a following
           `recordGate` can read the printed *"If you put any Pokémon onto your Bench
@@ -21162,8 +21217,14 @@ const ATTACK_BENCH_SEARCH_THEN_MOVE = new RegExp(
 // Basic {R} Energy cards" (2) is a typed DISJUNCTION; "any number of Fennel
 // cards" (2) is `byName` at an UNBOUNDED max the `(\d+)` group cannot spell;
 // "up to 3 Basic {G} Energy cards" (1) wants the brace code resolved;
-// "up to 3 Basic Energy cards of different types" (1) is a distinctness
-// constraint; "up to 5 Pokémon that are the same type as any Basic Energy
+// 🆕🆕🆕 **D513 BUILT "up to 3 Basic Energy cards of different types" (1) AND THE
+// REFUSAL BELOW IS RETIRED RATHER THAN RE-POINTED** — it read *"is a distinctness
+// constraint"*, which was true and told a successor nothing about where to put one.
+// **The phrase never reached the noun table as a noun problem at all**: the
+// `([^,.]+?)` capture swallowed it whole, so this list has been mis-filing it under
+// "ALL NOUNS" since D231. It is now GROUP 5 of the anchor and a `searchDeck` rider;
+// see that key's doc block for why no `CardFilter` could have taken it.
+// "up to 5 Pokémon that are the same type as any Basic Energy
 // attached to this Pokémon" (1) is board-dependent; "a number of cards up to the
 // number of your Benched Pokémon" (1) is a DYNAMIC max; and `sv07-011`'s
 // "Put this Pokémon and all attached cards into your deck. If you do, …" (1) is a
@@ -21213,12 +21274,36 @@ const HAND_SEARCH_NOUNS: readonly (readonly [string, string, CardFilter])[] = [
 const HAND_SEARCH_SINGULAR = new Map(HAND_SEARCH_NOUNS.map(([one, , filter]) => [one, filter]));
 const HAND_SEARCH_PLURAL = new Map(HAND_SEARCH_NOUNS.map(([, many, filter]) => [many, filter]));
 // Groups: 1 the singular noun phrase WITH its article, 2 the singular reveal
-// clause, 3 the printed count, 4 the plural noun phrase, 5 the plural reveal
-// clause. The pronoun is welded to the number on both halves ("a … put it" /
-// "up to N … put them"), so the crossed forms no card prints cannot match.
+// clause, 3 the printed count, 4 the plural noun phrase, 5 the DISTINCTNESS
+// clause, 6 the plural reveal clause. The pronoun is welded to the number on both
+// halves ("a … put it" / "up to N … put them"), so the crossed forms no card
+// prints cannot match.
+//
+// 🆕🆕🆕 **D513 — GROUP 5 IS ONE OPTIONAL GROUP AND NOT A SECOND ANCHOR**, D458's
+// call on the attach family's second noun, made again for the same reason: the
+// sentence differs from corpus FILE LINE 474 in this phrase and in NOTHING else —
+// same verb, same pronoun, same count, same reveal clause, same destination, same
+// trailing shuffle — so a second anchor would duplicate the noun table lookup, the
+// count guard and the reveal rider into a place that could come to disagree with
+// this one (D416: copying a function copies its mutants' anchors).
+//
+// 🛑 **AND THE ANCHOR WAS NEVER THE BLOCKER, WHICH IS D510's RULE PAYING OUT A
+// SECOND TIME.** Run against `:473`'s printed bytes BEFORE this group existed, the
+// pattern MATCHED: `([^,.]+?)` contains no comma and no period, so it captured
+// `Basic Energy cards of different types` WHOLE and the sentence died one step
+// later, in `HAND_SEARCH_PLURAL.get`. The group below does not admit a sentence
+// the anchor refused; it moves a phrase OUT of the noun group so the table is
+// asked about a noun it can actually name. **`:473` had reached this reader since
+// D231.**
+//
+// ⚠️ The group sits BETWEEN the lazy noun and the reveal clause, and the laziness
+// is what makes it reachable: `([^,.]+?)` prefers the shortest match, so it stops
+// at `cards` and lets this group take the phrase rather than swallowing it. Both
+// orderings are driven, and so is the fact that the six OTHER plural nouns in the
+// table still capture with group 5 absent.
 const ATTACK_HAND_SEARCH = new RegExp(
   "^(?:You may search|Search) your deck for (?:(an? [^,.]+?)(, reveal it,)? and put it" +
-    "|up to (\\d+) ([^,.]+?)(, reveal them,)? and put them)" +
+    "|up to (\\d+) ([^,.]+?)( of different types)?(, reveal them,)? and put them)" +
     " into your hand\\. Then, shuffle your deck\\.$",
 );
 
@@ -21833,7 +21918,9 @@ const DISCARD_ATTACH = attachFromZoneAnchor(SOURCE_ZONE_PHRASE, "");
 // derived-to-null in `derivedDeckSearchAttach.test.ts` and written back to the
 // backlog as a measured sub-row, never as "the rest of row 10". Two of the four
 // were priced by the row up front (a Future/Tera SUBGROUP rider, 3 printings; a
-// "of different types" distinctness `CardFilter`, 1 — and they overlap on
+// "of different types" distinctness constraint, 1 — 🆕 D513 corrected the CARRIER
+// here (it was written "`CardFilter`", and no filter can express a pairwise relation
+// among the picks — see the D513 block below) — and they overlap on
 // `sv08-161`, which needs both); **two were not** — the batch-onto-one-body gap
 // above (3) and a SECOND printed noun, *"up to 2 Basic {G} … **and** up to 2
 // Basic {L} …"* (2), which is a different sentence SHAPE and therefore its own
@@ -21853,10 +21940,32 @@ const DISCARD_ATTACH = attachFromZoneAnchor(SOURCE_ZONE_PHRASE, "");
 // Future/Tera SUBGROUP rider (3 printings — DATA-BLOCKED, no ingested column
 // classifies either banner: `packages/schema/src/catalog/card.ts` `cardSchema`
 // carries `stage`/`types`/`trainerType`/`energyType` and no subtype column), the
-// "of different types" distinctness `CardFilter` (1, on the same `sv08-161` as
+// "of different types" distinctness constraint (1, on the same `sv08-161` as
 // the Tera one — BOTH blockers on one printing, re-measured by minimal pair:
 // dropping either one alone still derives to null), and the SECOND printed noun
 // (2).
+//
+// 🆕🆕🆕 **D513 — AND THE PARAGRAPH DIRECTLY ABOVE NAMED THE WRONG CARRIER IN THE
+// VERY SENTENCE AFTER WARNING AGAINST IT.** Both occurrences of this refusal in this
+// file called the missing piece a *"distinctness `CardFilter`"*. **No `CardFilter`
+// could ever have carried it**, however far the union were widened: `matchesFilter`
+// answers *"does THIS card match"* for one uid at a time, and *"of different types"*
+// is a predicate on the ANSWER SET — false of no card and true of no card. It is a
+// different KIND of constraint, not a missing member. The word is corrected to
+// `constraint` in both places and the count is UNCHANGED, because the refusal still
+// holds for `sv08-161`: it is blocked by the Tera banner (data, no `cardSchema` key)
+// AND by this anchor, whose `Energy cards and attach them` is welded — unlike
+// `ATTACK_HAND_SEARCH`'s open `([^,.]+?)` noun group, the attach pattern does not
+// admit the phrase at all. **The two "of different types" rows are blocked at
+// DIFFERENT LAYERS, and only the hand row's blocker was a name.**
+//
+// ✅ **THE HAND-SIDE TWIN (corpus FILE LINE 473) IS BUILT AT D513** through
+// `searchDeck.distinctEnergyTypes`, carried by D332's shipped `chooseCards.caps` —
+// one cap of ONE per `energyProvidesOf` cell. **That mechanism does NOT transfer to
+// this family for free**, because `attachFromDeck` parks the compound `attachCards`
+// prompt, which has no `caps` of its own; so the price for `sv08-161` is the banner
+// PLUS an anchor branch PLUS a second carrier at a second prompt. This refusal is
+// narrower and better-founded than it was, not retired.
 //
 // ✅ EVERY READ SITE PRICED BY GREPPING THE FIELDS, NOT THE OPS. `programPlayable`
 // is ZERO by the op's own doc (cardplay.ts:759 — `attachFromDeck` is deliberately
@@ -26738,10 +26847,35 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
     // on the loud path rather than deriving a search that moves nothing and
     // shuffles anyway.
     const max = match[3] === undefined ? 1 : Number(match[3]);
-    const revealed = (match[2] ?? match[5]) !== undefined;
-    if (filter !== undefined && max >= 1) {
+    // 🆕🆕🆕 D513 — GROUP 5 WAS INSERTED AHEAD OF THE PLURAL REVEAL CLAUSE, so this
+    // is a RE-TRANSCRIPTION and not a rename (D458): the plural reveal moved from
+    // group 5 to group 6 and reading the old index would silently drop `reveal` off
+    // every plural printing in the family. The singular index is untouched.
+    const revealed = (match[2] ?? match[6]) !== undefined;
+    // 🛑 D513 — THE RIDER IS DEFINED OVER `basicEnergy` AND THE REFUSAL IS LOUD
+    // RATHER THAN SILENT. The park partitions the candidates by `energyProvidesOf`,
+    // which answers for an Energy card and for nothing else, so a printed *"up to 3
+    // Pokémon of different types"* has no partition to be distinct over. Deriving it
+    // anyway would cap every Pokémon into its own cell and quietly let the player
+    // take three of the same — a wrong-but-plausible program, which D190b/D199 rank
+    // strictly worse than an unbuilt one. So the whole arm declines and the sentence
+    // leaves on the loud `ATTACK_EFFECT_SKIPPED` path. **The column prints that form
+    // ZERO times** (measured over all 640 legal sentences: `of different types`
+    // appears on exactly 2 rows, both `Basic Energy cards`), so this is a guard on a
+    // future print rather than on a current one — and it is driven, because a guard
+    // nothing reaches is a guard nobody can trust.
+    const distinct = match[5] !== undefined;
+    const spellable = !distinct || filter?.kind === "basicEnergy";
+    if (filter !== undefined && max >= 1 && spellable) {
       return [
-        { op: "searchDeck", filter, dest: "hand", max, ...(revealed ? { reveal: true } : {}) },
+        {
+          op: "searchDeck",
+          filter,
+          dest: "hand",
+          max,
+          ...(revealed ? { reveal: true } : {}),
+          ...(distinct ? { distinctEnergyTypes: true as const } : {}),
+        },
         { op: "shuffleDeck" },
       ];
     }

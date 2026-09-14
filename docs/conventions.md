@@ -7208,6 +7208,125 @@ one that got read.
 it is the line that proves the run saw the tree you committed.
 
 
+## A SET-LEVEL constraint lives at the PROMPT, and an op field alone is invisible to the validator (D513)
+
+D513's brief asked where *"the picks are pairwise type-distinct"* could honestly live and offered
+two candidates: **a new optional field on the op** (D125's widening) **or the prompt/choice layer,
+if the park that asks the player to pick already validates the answer**. The measurement is that
+the question is not a choice, and the answer has been written down since D332:
+
+> `interpreter.ts`, `chooseCards.caps`: *"**IT IS A PROMPT FIELD AND NOT AN OP FIELD, WHICH IS THE
+> WHOLE COST OF THE DRAYTON ROW.** `validateChoice` (cardplay.ts) matches a wire answer against the
+> PROMPT and nothing else — that is the architecture, and it is what a P4 client is checked by. A
+> cap that lived only on the op would be invisible there… **The op field and this one are two
+> halves of one narrowing and neither is useful alone.**"*
+
+And `validateChoice`'s own `chooseCards` arm says *"this is the ONLY place they can be enforced"*.
+
+**So: YES, the park validates — against the PROMPT, never against the op.** `filter` is enforced
+only transitively (membership in `prompt.candidates`, computed at park time), `max` as `prompt.max`,
+`exact` as `prompt.min`, `also` as `prompt.caps`. **No code on the resolve path calls
+`matchesFilter` at all.** A constraint added to an op and not mirrored into the prompt is a
+constraint a crafted frame walks past.
+
+🛑 **The corollary that decided D513's price: a DISTINCTNESS relation over a FINITE PARTITION is
+already expressible in the shipped vocabulary.** `caps` is `{ uids, max }[]` — a cap on how many
+picks may come out of a named uid set — so *"of different types"* is one cap of **ONE** per type
+cell. The slice cost one optional anchor group, one optional op key, one partition in the park and
+one caption parameter, with **zero** new prompt fields, validator branches or client mirrors.
+D457's *"a PROMPT field costs five mirrors; an OP field costs none"* prices it at the cheap end
+**because no prompt field is added at all** — the cost was paid at D332 and this is its second
+producer.
+
+⚠️ **What does NOT transfer, measured rather than assumed:** the sibling `attachFromDeck` family
+parks the compound `attachCards` prompt, which has no `caps` of its own. A mechanism that reaches
+one park does not reach its neighbour just because the printed phrase is the same.
+
+## "No filter can express it" is a claim about the KIND of constraint, not about the union's membership (D513)
+
+`CardFilter` is answered by `matchesFilter` **one uid at a time**. *"of different types"* is a
+predicate on the ANSWER SET, so it is false of no card and true of no card — **widening the union
+however far never reaches it.** That is a different statement from *"the union is missing a
+member"*, and the difference is not academic:
+
+🛑 **Two shipped refusal comments in `effects.ts` and one pinned test reason named a *"distinctness
+`CardFilter`"* as the missing carrier** — a work order pointing at a union that could never have
+carried it. One of them sits **three lines below** that same file's own warning that *"a 'cannot'
+that names the wrong carrier reads as a fact about the sentence"* (D456, quoted there). All three
+were corrected in place (D178/D457/D466/D508).
+
+**The rule:** before recording *"this needs a new `X` member"*, ask whether the printed relation is
+**per-item or across-items**. A per-item predicate is a member; an across-items one is a different
+layer, and naming the wrong one sends the next three slices to the wrong file.
+
+## D510's anchor rule pays a second time, and TWO PRINTINGS OF ONE PHRASE can be blocked at DIFFERENT LAYERS (D513)
+
+D510: *"before pricing a residue row, `exec` its family's shipped anchors against the printed
+bytes."* Run before D513 touched anything, `ATTACK_HAND_SEARCH` **matched** corpus line 473 and its
+`([^,.]+?)` noun group captured `Basic Energy cards of different types` **whole** — the class
+excludes a comma and a period and the printed phrase contains neither. So the sentence had reached
+that reader **since D231** and died one step later, in `HAND_SEARCH_PLURAL.get`. The new optional
+group admits nothing the old pattern refused; it MOVES a phrase out of the noun so the closed table
+is asked about a noun it can name. *(Asserted executably: the pre-slice pattern is reconstructed in
+the suite and both patterns are shown to match the same set of 640 legal sentences.)*
+
+🛑 **And the other printing of the same phrase is blocked somewhere else entirely.** Corpus line 472
+reaches `DECK_SEARCH_ATTACH`, whose `Energy cards and attach them` is **welded**, so that pattern
+does not admit the phrase at all — on top of the `Tera` banner. **Two rows, one printed phrase, two
+layers**, so building one says nothing about the other. A residue pass that groups rows by their
+printed text will price them as one slice and be wrong.
+
+## A lattice can CHANGE SHAPE across its own slice, and the change IS the price (D513)
+
+Every lattice on the register has been reported as ONE vector. D513's 2⁵
+(NOUN × DISTINCTNESS × REVEAL × OPENER × COUNT) is **16 of 32 before and 24 of 32 after**, and the
+flip tables are different SHAPES:
+
+| state | flip table (of 16) | shape |
+|---|---|---|
+| PRE | `NOUN 0 · DISTINCT 16 · REVEAL 0 · OPENER 0 · COUNT 0` | **D505's seventh** — one blocking axis on a free 2⁴ |
+| POST | `NOUN 8 · DISTINCT 8 · REVEAL 0 · OPENER 0 · COUNT 0` | **D507's eighth** — a conjunctive pair |
+
+The NOUN axis was **free** (0/16) and became **live** (8/16) because the slice added a guard that
+refuses a non-Energy distinctness. 🛑 **Read as D508 reads a flip table — a 0/16 axis is free to
+spell, and every axis that flips anywhere is a literal owing a *"printed zero times"* measurement —
+the shape change is exactly the guard's price: one axis moved off zero, so the slice owes one
+measurement and no more.** That is a sharper price than "the guard costs a few lines", and it comes
+out of the instrument rather than out of a judgement.
+
+**Report both tables when a slice adds a REFUSAL.** A slice that only widens leaves the flip table's
+zeros where they were; one that also narrows moves an axis off zero, and that is the part a
+successor needs to know about.
+
+## A census step rots pins in WAVES, not just in shapes — count the rounds, not the sites (D513)
+
+D508 found that a census step rots pins in five different SHAPES. D513 found the orthogonal fact:
+because **vitest stops an `it` at its first throw** (D462), the same round of edits reveals only the
+FIRST stale rung in each `it`. D513's single-printing step took **FOUR full suite rounds** —
+26 failures, then 19, then 9, then 7 — and the later waves were the *second, third and fourth*
+assertions inside `it`s whose first assertion had just been fixed. Several were in files already
+edited in the previous round.
+
+- ⚠️ **A green round is not evidence the step is complete until a round produces ZERO failures.**
+  "I fixed every file that failed" is a statement about one round.
+- ⚠️ **When a file's chain is one very long line holding BOTH a sentence chain and a printings
+  chain, fixing the first leaves the second on the same line** — `retreatCostBonus.test.ts` needed
+  three separate terms on two lines and reddened once per round.
+- **Budget the rounds.** At ~140 s a round, a one-printing census step is ten minutes of suite time
+  before any of the real work is checked.
+
+## `re.sub`'s replacement string interprets backslashes — D462's rule, in Python (D513)
+
+D462 recorded that `String.replace(find, replacementString)` interprets `$` in the REPLACEMENT.
+Python's `re.sub` has the same hazard one character over: **`\\d` in a replacement string is
+processed as an escape**, so splicing a mutant `find` that quotes a regex source line silently
+halves its backslashes. The symptom is a `precheck` report of `find occurs 0×` on a row you just
+wrote, with a `find` that LOOKS right.
+
+**Use a literal splice — `s[:m.start()] + new + s[m.end():]` — whenever the replacement contains
+a backslash.** The same applies to `str.replace` in JS and to `sed`. And re-run `precheck` after
+every mutants edit, not after the batch.
+
 ## Git / commits
 - Branch off `main` for non-trivial work; commit/push only when asked.
 - Commit trailer per global config: `Co-Authored-By: Claude ...`.
