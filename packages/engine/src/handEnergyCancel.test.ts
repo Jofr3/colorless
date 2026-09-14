@@ -122,6 +122,12 @@ const ETERNATUS = "Discard a Stadium in play. If you can't, this attack does not
     §4's partition rung asserts they are exactly the gated half. */
 const DRAW2 = "Discard a card from your hand. If you do, draw 2 cards.";
 const DRAW3 = "Discard a card from your hand. If you do, draw 3 cards.";
+/** 🆕🆕🆕 D515 - the THIRD member of the same printed family (corpus FILE LINE 103),
+    whose consequent is an OPPONENT-hand discard. It takes `handCostIsSlotGated`'s exemption
+    on exactly the same shape, which is why this file's POPULATION moves and its PREDICATE
+    does not. */
+const GATED_OPPONENT_DISCARD =
+  "Discard a card from your hand. If you do, your opponent discards a card from their hand.";
 
 /** The `payFromHand` the three heads derive, spelled once. */
 const pay = (count: number): EffectOp => ({
@@ -767,9 +773,16 @@ describe("§4 — THE STRUCTURAL GUARD: a hand cost in an attack program owes a 
     // WRITTEN OUT RATHER THAN SHARED** (D451): the row carries 2 legal printings, so
     // `paying.length` takes +1 and `units(paying)` takes +2. Measured off the corpus,
     // not inferred from the previous line.
-    expect([paying.length, units(paying)]).toEqual([6, 8]);
+    // 🆕🆕🆕 **D515 +1 sentence / +1 printing** — the THIRD member of D473's printed
+    // `Discard a card from your hand. If you do, …` family, whose consequent is an
+    // OPPONENT-hand discard rather than a draw. It takes the SAME exemption for the same
+    // reason and by nothing looser: two ops, the gate's `slot` equal to the payment's
+    // `recordAs`, no payment nested in the branch. ⚠️ **THE SENTENCE STEP AND THE
+    // PRINTING STEP AGREE AT 1 HERE**, unlike D489's 1-and-2 one line up, so a pass that
+    // copied the neighbour's pair would be wrong on both chains (D451).
+    expect([paying.length, units(paying)]).toEqual([7, 9]);
     expect(paying.map(([, s]) => s).sort()).toEqual(
-      [KO6, COST2, COST1, DRAW2, DRAW3, HAND_SCALED].sort(),
+      [KO6, COST2, COST1, DRAW2, DRAW3, HAND_SCALED, GATED_OPPONENT_DISCARD].sort(),
     );
     // 🆕 D473 — SPLIT BY REASON rather than counted together (D463: a grouped claim
     // takes its reason from its cheapest member and its cost from its dearest). Each
@@ -780,7 +793,9 @@ describe("§4 — THE STRUCTURAL GUARD: a hand cost in an attack program owes a 
     const gated = paying.filter(([, s]) => handCostIsSlotGated(programOf(s)));
     const scaled = paying.filter(([, s]) => handCostIsSlotScaled(programOf(s)));
     expect(cancelled.map(([, s]) => s).sort()).toEqual([KO6, COST2, COST1].sort());
-    expect(gated.map(([, s]) => s).sort()).toEqual([DRAW2, DRAW3].sort());
+    expect(gated.map(([, s]) => s).sort()).toEqual(
+      [DRAW2, DRAW3, GATED_OPPONENT_DISCARD].sort(),
+    );
     expect(scaled.map(([, s]) => s)).toEqual([HAND_SCALED]);
     expect(cancelled.length + gated.length + scaled.length).toBe(paying.length);
     for (const [, s] of cancelled) {

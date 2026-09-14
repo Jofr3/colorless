@@ -7466,6 +7466,86 @@ usable because the miss was *identical on both sides*; a one-sided extractor wou
 difference.
 
 
+## D510's anchor habit has a THIRD layer, and only that layer fails SILENTLY (D515)
+
+D512 answered **null**. D513 matched and died in a `Map.get`. D514 answered null, then matched once
+the count was repaired. D515 has **three**:
+
+| layer | question | answer | how it fails |
+|---|---|---|---|
+| 1 — the anchor | does any shipped reader or splitter claim the print? | **no**, 13 readers × 4 splitters, all null | LOUDLY (`ATTACK_EFFECT_SKIPPED`) |
+| 2 — the composition | repair the documented widening in a scratch copy — does it reach? | **yes**: the pattern matches and the captured consequent is ITSELF claimed | LOUDLY |
+| 3 — the describer | does `describeBranch` have a phrase for the consequent op? | **no** | **SILENTLY** |
+
+🛑 **THE THIRD LAYER IS THE ONE A CENSUS CANNOT SEE, AND IT IS THE ONE THAT BLOCKED THE ROW.** A
+missing describer arm does not throw, does not return null from the reader, and does not move any
+count. It degrades the parking prompt's caption to bytes an honest program **also** produces — here,
+the gated payment's note collapsed to exactly the ungated payment's note — so the sentence reads as
+built while the dialog stops saying what the price buys. **When the anchor probe answers "no" at
+layer 1, keep going: repair, re-run, and then ask what reads the VALUE the arm would produce.**
+
+## A refusal that names its blocker by NAME is a work order with a receipt (D515, contrasting D486)
+
+D473 measured the widening that would claim this row and refused it in one clause: *"a different op
+that `describeBranch` has no phrase for, so the park's caption would silently degrade to the bare
+cost while the sentence read as claimed."* Forty-two decisions later **every word of that was still
+true**, and paying the named blocker was the whole slice.
+
+⚠️ **THAT IS THE OPPOSITE OUTCOME FROM D486's AND D505's, AND THE DIFFERENCE IS WHAT THE REFUSAL
+NAMED.** D486's deferred reason named a *condition of the splitter* and was true-but-not-the-blocker;
+D505's named a persistence fact and read it as an expressiveness one. **D473's named a FUNCTION.** A
+refusal that names a function, a field or a line is checkable in one command and ages well; a refusal
+that names a property of the sentence ages badly. **Prefer the former when you write one**, and when
+you inherit one, check which kind it is before re-deriving the whole price.
+
+## A THIRD lattice PHENOMENON: one axis moves ONTO zero while another moves OFF it (D515)
+
+⚠️ **THIS IS A PHENOMENON, NOT A TWELFTH SHAPE** — the shape register is eleven long and D513's
+shape-change and D514's outside-the-axis-set guard are phenomena beside it, not entries in it. Say
+which you are adding, because an ordinal nobody re-derives is the figure that rots (D488).
+
+D513 established that a narrowing moves an axis from free to live. D514 found the case where the
+narrowing is invisible because its subject is outside the axis set. D515 does both at once:
+
+| state | built | flip table (of 8) |
+|---|---|---|
+| PRE | 6 of 16 | `OPENER 6 · GATE 6 · CONSEQ 2 · COUNT 0` |
+| POST | 7 of 16 | `OPENER 7 · GATE 7 · CONSEQ 1 · COUNT 1` |
+
+**CONSEQ falls to 1 because the widening retired a cell; COUNT rises to 1 because the slice spells
+the consequent's count out instead of capturing it.** The two moves are independent and a slice that
+reported only the total (6 → 7) would have shown neither. ⚠️ **A flip table is not a scalar — read
+it per axis on BOTH sides**, and pay the *"printed zero times"* measurement for every axis that ends
+non-zero (here: the column prints no gated plural, measured over all 640 sentences).
+
+⚠️ **AND D503's RULE EARNED ITS KEEP AGAIN**: the readers-only reading of the same lattice is
+2 → 3 of 16, and the two predicates disagree at **4 of the 16 points** — every one of them a
+gate-less point that `splitAttackTrailingClause` composes out of a claimed head and a claimed tail.
+The slice's arm touches none of the four. A readers-only lattice would have reported a different
+shape for this sentence.
+
+## A census step can take SEVEN rounds (D515, extending D513/D514)
+
+D513 counted waves; D514 counted six rounds. D515 took **seven** `vitest run` rounds to close, and
+the last three were single assertions each. The reason is structural and worth stating: **vitest
+stops an `it` at its first throw**, so a chain with N stale operands can only surface one per round,
+and a file with M sibling chains can only surface one chain per round. **The stopping rule is a
+GREEN run, never "the count I expected stopped appearing"** — and a round that fixes one site and
+goes green is evidence the runner stopped early, not evidence the pass is done (D462/D431).
+
+## Count the CANDIDATES, not the cards — `payFromHand` collapses interchangeable copies (D515, applying D416/D464)
+
+A board built by taking N cards off the deck bottom can hand a payment N copies of ONE card id.
+`handCostCandidates` keeps at most `count` copies per `cardIdentity`, so the offer collapses to one,
+`parkOrForce` resolves it inline, and **the suite silently exercises the FORCED path while reading as
+the parked one**. D515's first draft did exactly that and the symptom was a `WRONG_SEAT` error from a
+park it did not expect. **Name the card ids when a board must park**; a count is not a board.
+
+⚠️ **AND READ THE DISCARD PILES, NOT THE HANDS, AFTER A SETTLED ATTACK** (D491): the attack ends the
+turn inside the same action, so the defender's turn-start draw lands before the state is observed and
+their hand comes back one HIGHER than it went in. A hand-size assertion written the obvious way is
+off by one in the direction that looks like the effect failing.
+
 ## Git / commits
 - Branch off `main` for non-trivial work; commit/push only when asked.
 - Commit trailer per global config: `Co-Authored-By: Claude ...`.

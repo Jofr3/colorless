@@ -1391,6 +1391,36 @@ function describeBranch(ops: readonly EffectOp[]): string | null {
             : `your opponent may draw ${op.count} cards`,
         );
         break;
+      case "opponentDiscardsFromHand":
+        // 🆕🆕🆕 D515 — *"Discard a card from your hand. If you do, your opponent
+        // discards a card from their hand."*'s consequent, in the card's own printed
+        // words minus its capital, exactly as the six arms above take theirs. THIS
+        // CASE IS THE WHOLE REASON D473 REFUSED THE ROW: its anchor's block records
+        // the measurement — widening that consequent to `(.+)` claims this sentence
+        // and no other — and names this switch as the blocker, because with no phrase
+        // here `describeBranch` answers null, `withConsequence` returns the prompt
+        // unchanged, and the parking payment's caption degrades to the bare
+        // *"Discard a card from your hand."*, which is BYTE-IDENTICAL to the caption
+        // of an UNGATED payment. The player would be asked to pay a price with no
+        // statement of what it buys. D473's finding verbatim, one op over: a reader
+        // can be correct while its describer quietly says less, and only the describer
+        // is user-visible.
+        //
+        // ⚠️ THE PLURAL BRANCH IS UNREACHABLE FROM ANY PRINTED SENTENCE TODAY AND IS
+        // WRITTEN ANYWAY, for `drawCards`' stated reason one screen up. No printing
+        // pairs a §9.2 gate with *"…discards 2 cards from their hand."* — the column
+        // prints that sentence four times and always STANDALONE — but the op IS in
+        // this switch now, so the day one is composed the caption would otherwise
+        // announce a single card over a sentence that says two. It is DRIVEN from a
+        // hand-built program rather than left as an equivalent mutant, which is the
+        // correction D455 made to three "recorded as an equivalent mutant" claims in
+        // this very file.
+        parts.push(
+          op.count === 1
+            ? "your opponent discards a card from their hand"
+            : `your opponent discards ${op.count} cards from their hand`,
+        );
+        break;
       case "applyStatus":
         // Only the controller-relative arm: "self" is the controller's own Active
         // in a Trainer/Ability program (applyStatus reads ctx.seat), which is what

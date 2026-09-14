@@ -116,6 +116,17 @@ const CLAUSES = [
 
     `[printed sentence, why it is left, legal printings]`. */
 const DEFERRED: readonly (readonly [string, string, number])[] = [
+  // 🆕🆕🆕 **D515 REMOVED THIS LIST'S SECOND ROW — THE §9.2 *"IF YOU DO"* COMPOUND IS BUILT**,
+  // and its recorded reason was TRUE IN EVERY CLAUSE ON THE DAY IT WAS CHECKED: *"an §9.2
+  // *If you do* whose CONSEQUENT is this op — the tail clause is unread, and the head (a
+  // bare hand cost with no destination printed) is unread too"*. Both halves are STILL
+  // unread standalone at this head, which is precisely why D515 claims the sentence with a
+  // WHOLE-SENTENCE anchor rather than through a splitter — so unlike D486's row, the
+  // reason here did not rot, it was simply not a refusal of the sentence (D473 had already
+  // measured the anchor; what blocked the row was `describeBranch` having no phrase for
+  // `opponentDiscardsFromHand`, which would have degraded the park's caption to the bare
+  // cost). ⚠️ **The reason is kept rather than deleted** (D178/D438), and the sentence
+  // moves to `BUILT_ELSEWHERE` below so all three lists still partition the family.
   // 🆕🆕 **D486 REMOVED THIS LIST'S FIRST ROW — THE SALANDIT COMPOUND IS BUILT.** Its
   // reason was *"the TAIL is an evolution-history gate over a MORE-cards fold —
   // `deriveAttackEffect` claims neither, so `splitAttackTrailingClause` refuses it however
@@ -128,11 +139,6 @@ const DEFERRED: readonly (readonly [string, string, number])[] = [
   // guarded below, and the sentence itself is driven in
   // `evolvedDiscardCompound.test.ts`. The list is a TERM in the sums at the end of §1, so
   // both of them move with it.
-  [
-    "Discard a card from your hand. If you do, your opponent discards a card from their hand.",
-    "an §9.2 *If you do* whose CONSEQUENT is this op — the tail clause is unread, and the head (a bare hand cost with no destination printed) is unread too",
-    1,
-  ],
   [
     "Your opponent chooses 3 cards from their hand and shuffles those cards into their deck.",
     "this mechanism with a DIFFERENT DESTINATION (§15.E deck, plus a shuffle), and the op prints no `to` field — D231's unkillable-singleton rule is what kept it off",
@@ -152,6 +158,11 @@ const BUILT_ELSEWHERE: readonly (readonly [string, string, number])[] = [
   [
     "Your opponent discards a card from their hand. If this Pokémon evolved from Salandit during this turn, your opponent discards 2 more cards.",
     "D486 — the gated increment: this file's own head op, then a `conditionGate` on `yourActiveEvolvedFromThisTurn { name: \"Salandit\" }` over a second `opponentDiscardsFromHand`. ZERO new mechanism; driven in `evolvedDiscardCompound.test.ts`",
+    1,
+  ],
+  [
+    "Discard a card from your hand. If you do, your opponent discards a card from their hand.",
+    "D515 — D473's printed `Discard a card from your hand. If you do, …` family, third member: `payFromHand` then a §9.2 `recordGate` over this file's own head op. The blocker was never the anchor (D473 measured that) but `describeBranch`, which had no phrase for the op and so degraded the park's caption to the bare cost; driven in `handCostOpponentDiscard.test.ts`",
     1,
   ],
 ];
@@ -310,7 +321,7 @@ describe("§1 — the census, measured over the corpus rather than quoted", () =
     expect(corpus.filter(([, s]) => /into (?:the|their) discard pile/i.test(s))).toEqual([]);
   });
 
-  it("this slice takes 2 of the 5, and the other 3 are still refused WHOLE", () => {
+  it("this slice takes 2 of the 5, and ONE of the other 3 is still refused WHOLE", () => {
     // D190b's exact-map-or-flag rule: every deferred row lands on the loud
     // ATTACK_EFFECT_SKIPPED path rather than deriving half of what it prints.
     for (const [sentence] of DEFERRED) expect(deriveAttackEffect(sentence)).toBeNull();
@@ -320,8 +331,12 @@ describe("§1 — the census, measured over the corpus rather than quoted", () =
     // 6 → 7. The family TOTAL is unmoved at 9, which is the whole reason both halves are
     // written: a count of the deferred rows alone cannot tell *"a row was built"* from
     // *"a row left the corpus"*, and the closing sum can.
-    expect(DEFERRED.reduce((sum, [, , n]) => sum + n, 0)).toBe(2);
-    expect(DEFERRED.reduce((sum, [, , n]) => sum + n, 0) + 7).toBe(9);
+    // 🆕🆕🆕 **D515: THE DEFERRED SIDE LOST ITS SECOND ROW AND `BUILT_ELSEWHERE` GAINED
+    // IT** — 2 → 1 and 7 → 8. The family TOTAL is unmoved at 9, which is the whole reason
+    // both halves are written: a count of the deferred rows alone cannot tell *"a row was
+    // built"* from *"a row left the corpus"*, and the closing sum can.
+    expect(DEFERRED.reduce((sum, [, , n]) => sum + n, 0)).toBe(1);
+    expect(DEFERRED.reduce((sum, [, , n]) => sum + n, 0) + 8).toBe(9);
   });
 
   it("🛑 NEITHER COMPOUND COMPOSES FOR FREE — measured AFTER the arm landed", () => {
@@ -345,9 +360,20 @@ describe("§1 — the census, measured over the corpus rather than quoted", () =
     // rung that has stopped measuring what it says it measures, so the two
     // sentences are now asked SEPARATELY: the `If you do` compound keeps the
     // original claim, and the Salandit one is asserted at the new condition.
+    //
+    // 🆕🆕🆕 **D515 RE-POINTED IT AGAIN, AND THE SAME MOVE TWICE IS THE FINDING.** The
+    // `If you do` compound is now claimed WHOLE too, so it crosses from the SECOND
+    // condition to the FIRST exactly as the Salandit row did at D486 — and this rung
+    // would have gone green for a new reason without saying so. ⚠️ **THE OLD
+    // DISCRIMINATION IS NOT LOST, IT IS MOVED** (D418's second half): the claim *"the
+    // splitter refuses this because its TAIL is unclaimed"* now lives on the REMAINING
+    // `DEFERRED` row, which is still unread by every reader, and the two built rows are
+    // asserted at the first condition. A rung with nothing left on the second condition
+    // would be a rung that had quietly stopped testing the splitter at all.
     const SALANDIT =
       "Your opponent discards a card from their hand. If this Pokémon evolved from Salandit during this turn, your opponent discards 2 more cards.";
-    const IF_YOU_DO = DEFERRED[0]?.[0] as string;
+    const IF_YOU_DO = BUILT_ELSEWHERE[1]?.[0] as string;
+    const STILL_DEFERRED = DEFERRED[0]?.[0] as string;
     // The HEAD of the Salandit compound is claimed — this is the thing D426
     // actually changed, and it is asserted so the "no gain" verdict below cannot
     // be confused with "nothing moved at all".
@@ -368,14 +394,18 @@ describe("§1 — the census, measured over the corpus rather than quoted", () =
     // Driven through the splitters themselves rather than inferred from their
     // conditions, and through BOTH of the two that serve unresolved sentences
     // (D425: the requirement and cancel splitters serve zero).
-    expect(splitAttackTrailingClause(IF_YOU_DO)).toBeNull();
-    expect(splitAttackGateClause(IF_YOU_DO)).toBeNull();
-    expect(resolvedByAnyReader(IF_YOU_DO)).toBe(false);
-    // …and the Salandit compound, at the OTHER condition: RESOLVED, and therefore
-    // never offered to a splitter at all.
-    expect(resolvedByAnyReader(SALANDIT)).toBe(true);
-    expect(splitAttackTrailingClause(SALANDIT)).toBeNull();
-    expect(splitAttackGateClause(SALANDIT)).toBeNull();
+    // 🛑 THE SECOND CONDITION, still carried by the one row nobody reads. This is the
+    // claim D486 and D515 each took a sentence away from, kept alive on the survivor.
+    expect(resolvedByAnyReader(STILL_DEFERRED)).toBe(false);
+    expect(splitAttackTrailingClause(STILL_DEFERRED)).toBeNull();
+    expect(splitAttackGateClause(STILL_DEFERRED)).toBeNull();
+    // …and BOTH built compounds at the OTHER condition: RESOLVED, and therefore never
+    // offered to a splitter at all.
+    for (const built of [SALANDIT, IF_YOU_DO]) {
+      expect(resolvedByAnyReader(built), built).toBe(true);
+      expect(splitAttackTrailingClause(built), built).toBeNull();
+      expect(splitAttackGateClause(built), built).toBeNull();
+    }
   });
 
   it("⚠️ NO APOSTROPHE ON EITHER SENTENCE, so the BEARING census stands still", () => {
@@ -1058,6 +1088,6 @@ describe("§8 — the structural answers", () => {
   });
 
   it("the engine version moved and the two spellings agree", () => {
-    expect(engineVersion).toBe("0.401.0");
+    expect(engineVersion).toBe("0.402.0");
   });
 });

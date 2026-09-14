@@ -98,9 +98,16 @@ const DRAW3 = "Discard a card from your hand. If you do, draw 3 cards.";
 
 /** The THIRD member of the printed `Discard a card from your hand. If you do, …`
     family (file line 103, 1 printing), which this anchor must NOT claim. It is the
-    live subject of the consequent-widening control in §1, and it is separately
-    tracked as a named `DEFERRED` row in `opponentHandDiscard.test.ts`. */
-const SIBLING_UNBUILT = "Discard a card from your hand. If you do, your opponent discards a card from their hand.";
+    live subject of the consequent-widening control in §1.
+
+    🆕🆕🆕 **D515 BUILT IT, AND THE NAME MOVED WITH THE FACT** (D446: re-transcribe by
+    shortening onto the line the row is about). It was `SIBLING_BUILT_AT_D515` and tracked as
+    a named `DEFERRED` row in `opponentHandDiscard.test.ts`; that row is now in that
+    file's `BUILT_ELSEWHERE` list and the sentence is driven whole in
+    `handCostOpponentDiscard.test.ts`. **What this file still asserts is unchanged**:
+    `HAND_COST_THEN_DRAW`'s reach is 2 of the 3, not 3. */
+const SIBLING_BUILT_AT_D515 =
+  "Discard a card from your hand. If you do, your opponent discards a card from their hand.";
 
 /** Every reader `censusAtHead.test.ts` sweeps with, so a sentence this file calls
     "unread" is unread by the WHOLE engine and not by the one reader it is about.
@@ -194,19 +201,42 @@ describe("D473 §1 — the two sentences, measured live over the legal column", 
     ).toBeNull();
   });
 
-  it("🛑 WIDENING THE CONSEQUENT claims a THIRD row, and that row stays LOUD", () => {
-    // The other half of D472's measurement, and this one is not risk-free at all: the
-    // third member's consequent is `opponentDiscardsFromHand`, which `describeBranch`
-    // has no phrase for — so a wide anchor would claim the sentence, the census would
-    // record it built, and the park's caption would silently drop the consequent.
+  it("🛑 WIDENING THE CONSEQUENT claims a THIRD row, and THIS anchor still must not", () => {
+    // The other half of D472's measurement, and this one was never risk-free: the third
+    // member's consequent is `opponentDiscardsFromHand`, which `describeBranch` had no
+    // phrase for — so a wide anchor would claim the sentence, the census would record it
+    // built, and the park's caption would silently drop the consequent.
     const wide = legalAttackCorpus().filter(([, s]) =>
       /^Discard a card from your hand\. If you do, (.+)\.$/.test(s),
     );
     expect([wide.length, units(wide)]).toEqual([3, 3]);
-    expect(wide.map(([, s]) => s).sort()).toEqual([DRAW2, DRAW3, SIBLING_UNBUILT].sort());
-    // THE REFUSAL, off the MODULE surface first (D419) and then reader by reader.
-    expect(resolvedByAnyReader(SIBLING_UNBUILT)).toBe(false);
-    for (const read of READERS) expect(read(SIBLING_UNBUILT), read.name).toBeNull();
+    expect(wide.map(([, s]) => s).sort()).toEqual([DRAW2, DRAW3, SIBLING_BUILT_AT_D515].sort());
+    // 🆕🆕🆕 **D515 BUILT THE THIRD ROW, AND THIS RUNG IS RE-POINTED RATHER THAN DELETED
+    // (D438/D444/D475).** The old claim was *"no reader takes this sentence"*; it is now
+    // false, and replacing it with *"a reader takes it"* would be a claim that is TRUE
+    // under the mutant and under the real build alike — exactly the discrimination loss
+    // D418 found the hard way. So the rung keeps the property it was FOR: **this
+    // anchor's reach is still 2 of the 3**, and the third is claimed by a SEPARATE
+    // anchor with its own describer arm. A widening of `HAND_COST_THEN_DRAW` that
+    // swallowed the third row would now be invisible to a `toBeNull` and is caught here.
+    const byThisAnchor = legalAttackCorpus().filter(([, s]) => {
+      const derived = deriveAttackEffect(s);
+      if (derived === null || derived.length !== 2) return false;
+      const gate = derived[1];
+      return gate?.op === "recordGate" && gate.then[0]?.op === "drawCards";
+    });
+    expect(byThisAnchor.map(([, s]) => s).sort()).toEqual([DRAW2, DRAW3].sort());
+    expect(byThisAnchor.map(([, s]) => s)).not.toContain(SIBLING_BUILT_AT_D515);
+    // …and the third row's program is the OTHER anchor's, asserted positively so the
+    // exclusion above cannot be satisfied by the sentence going unbuilt again — off the
+    // MODULE SURFACE first (D419) and then as the program, because the two claims fail
+    // differently: a deleted reader empties the surface, a broken arm empties the program.
+    expect(resolvedByAnyReader(SIBLING_BUILT_AT_D515)).toBe(true);
+    expect(deriveAttackEffect(SIBLING_BUILT_AT_D515)).toEqual([
+      { op: "payFromHand", count: 1, to: "discard", recordAs: "paid" },
+      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
+      { op: "recordGate", slot: "paid", then: [{ op: "opponentDiscardsFromHand", count: 1 }] },
+    ]);
   });
 });
 
@@ -755,6 +785,6 @@ describe("D473 §6 — `MATCH_RECORD_VERSION` stays 29, and the argument is DRIV
     // D471 correctly REFUSED this step because `packages/engine` was byte-unchanged;
     // this slice adds an anchor and an arm, so a printed sentence the engine refused
     // yesterday resolves today and the bump is owed.
-    expect(engineVersion).toBe("0.401.0");
+    expect(engineVersion).toBe("0.402.0");
   });
 });

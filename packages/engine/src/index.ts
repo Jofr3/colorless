@@ -19984,6 +19984,84 @@ import type { GameState, Seat } from "./types";
     `expect(manifest.version)`, `it(…)` titles, the declaration and `package.json` —
     **not** as a value-keyed grep — because a value-keyed grep is precisely the mechanism
     that ate D500's heading.)
+    🆕🆕🆕 engineVersion 0.401.0 → **0.402.0** (D515 — THE THIRD MEMBER OF THE PRINTED *"Discard a
+    card from your hand. If you do, …"* FAMILY — AND THE BLOCKER WAS THE DESCRIBER, NOT THE
+    ANCHOR. `censusAttackCorpus.ts` **FILE LINE 103** — *"Discard a card from your hand. If you
+    do, your opponent discards a card from their hand."*, **1 sentence / 1 legal printing**,
+    claimed by `deriveAttackEffect`.
+    🛑 **D473 MEASURED THIS ROW, NAMED ITS BLOCKER IN WRITING, AND THE NAMED ONE WAS RIGHT.**
+    `HAND_COST_THEN_DRAW`'s doc block records D472's whole-corpus measurement — widening that
+    anchor's consequent to `(.+)` claims THIS row and no other — and refuses it because
+    `interpreter.ts`'s `describeBranch` had **no phrase** for `opponentDiscardsFromHand`. With
+    none, `describeBranch` answers null, `withConsequence` returns the prompt unchanged, and the
+    parking payment's caption degrades to the bare *"Discard a card from your hand."* — which is
+    **BYTE-IDENTICAL to an UNGATED payment's caption**, so the player is asked to pay a price
+    with no statement of what it buys while the census records the sentence built. **That is why
+    the row sat in the residue for 42 decisions with a shipped anchor one regex away.**
+    ✅ **D510's ANCHOR HABIT IS FIVE-FOR-FIVE, AND THIS TIME IT ANSWERED *NO* AT LAYER ONE AND
+    *YES* AT LAYER TWO.** Every one of the thirteen readers and all four splitters answer **null**
+    on the printed sentence — measured, not assumed. But repair the one obvious blocker in a
+    scratch copy (D472's own widened consequent) and the pattern MATCHES, captures *"your opponent
+    discards a card from their hand"* whole, and that capture is itself claimed by
+    `deriveAttackEffect`. The chain then dies at a THIRD layer — the describer — and it dies
+    **silently**, which is the whole finding. Both later layers are driven in the suite.
+    ✅ **ZERO new ops, op FIELDS, op VALUES, prompts, prompt fields, choice kinds, events, error
+    codes, `CardFilter`/`BoardCondition` members, clause-table rows, registry rows, `FIXTURE_POOL`
+    ids (file-local `cardPool`, D414/D452), `redact.ts` bytes, `packages/schema` bytes or client
+    mirrors.** `payFromHand` + `recordGate` + `opponentDiscardsFromHand` is three shipped ops in
+    the shipped order; the price is ONE anchor, ONE arm and ONE `describeBranch` case. The reader
+    surface stays **13**. `MATCH_RECORD_VERSION` **HELD at 30** on the SERIALIZED-ALPHABET
+    argument (D452/D462/D463) — reachability is FALSE here and saying so is the point, because
+    the payment PARKS; the loss direction is driven over a truncated `rest`.
+    🛑 **THE BOARD IS THE PART THAT IS GENUINELY NEW**: this is a derived ATTACK program that
+    parks TWICE for TWO DIFFERENT SEATS, the second park sitting behind a §9.2 gate on the first
+    one's filing. Measured as a CLASS rather than claimed as a FIRST (D443/D452): exactly ONE row
+    of the 640-sentence column derives a `recordGate` whose branch holds an op the interpreter
+    hands to the other seat, and it is this one.
+    🆕 **THE LATTICE CHANGES SHAPE IN BOTH DIRECTIONS AT ONCE, WHICH NO SLICE ON THE REGISTER HAS
+    DONE.** OPENER × GATE × CONSEQUENT × COUNT, 16 distinct strings, over the RESIDUE PREDICATE:
+    **PRE `0/1 · 1/4 · 2/6 · 2/4 · 1/1` = 6 of 16, flips `6 · 6 · 2 · 0` of 8; POST 7 of 16,
+    flips `7 · 7 · 1 · 1`.** CONSEQ moves ONTO zero as the widening retires a cell and COUNT moves
+    OFF it as the narrowing (the consequent's count is spelled out, not captured) creates one —
+    so D513's rule is paid on the axis it names and the owed *"printed zero times"* measurement
+    (**no gated plural anywhere in the column**) is driven in the suite's §1.
+    🛑 **AND D503's RULE EARNED ITS KEEP AGAIN**: readers-only reads **2 of 16 → 3 of 16** with
+    flips `2 · 2 · 2 · 0` → `3 · 3 · 1 · 1`, and the two predicates **disagree at 4 of the 16
+    points** — every one a gate-less, OPENER-substituted point that `splitAttackTrailingClause`
+    composes. A readers-only lattice would have reported a different shape for this sentence.
+    ⚠️ **THIS HEADING NAMES NO `D<nnn>` AND THAT IS DELIBERATE, NOT AN OMISSION** —
+    D507/D508/D510/D512/D513/D514's posture, for their reason. `engineVersionChangelog.test.ts`'s
+    ATTRIBUTION case asserts `adjudicated === LABELLED.length` with no tolerance, so a labelled
+    heading without its `docs/decisions.md` row ships `check` RED, and this slice is scoped away
+    from that file. **The debt is D515**: whoever writes
+    `| **D515** | … engine 0.401.0 → 0.402.0 … |` should rewrite this heading's opening
+    parenthesis as `(D515 — THE THIRD MEMBER…` in the same commit, and not before.
+    🛑 **VERSION-TAX EXCEPTION LIST FOR THIS BUMP, NAMING THE HEADING BEING WRITTEN THIS SLICE
+    (D506's rule (b)).** `0.401.0` legitimately survives at FIVE kinds of site outside `docs/` and
+    none of them may be swept: **THIS HEADING'S OWN SOURCE, one line up, plus the three lines of
+    this very paragraph**; D514's heading TARGET directly below together with the two sentences of
+    its own exception list; `namedDeckSearch.test.ts`'s header arrow, which reads
+    `0.400.0 → 0.401.0`; `handCostOpponentDiscard.test.ts`'s header arrow, which reads
+    `0.401.0 → 0.402.0` and is this slice's own; `mutants.ts`'s D275 re-point ledger, which is
+    APPENDED to rather than rewritten; and `D506-changelog-head-unnamed`'s `find`/`replace`, which
+    are **RE-POINTED WHOLESALE onto the heading above rather than value-swept** — kept in D508's
+    trimmed, label-proof form `engineVersion <old> → **<new>**`, **stopping before the `(`**,
+    which D508, D510, D512, D513 and D514 have now each proved survives the caller's labelling.
+    The sweep was run as a WHITELIST of SIX exact line shapes — **written out and counted BEFORE
+    the edit and re-grepped after** — **not** as a value-keyed grep, because a value-keyed grep
+    would rewrite this heading's own source and point that mutant at a heading that does not
+    exist. **THE ARITHMETIC, MEASURED ON BOTH SIDES.** The six classes counted `74 + 5 + 24 + 1
+    + 1 + 1 = 106` before and `75 + 5 + 25 + 1 + 1 + 1 = 108` after; the difference is **exactly
+    two**, and both are this slice's OWN new suite — its `it(…)` title and its
+    `expect(engineVersion)` line, which are one assertion counted under two rules. **So 106
+    sites moved.** The OUTGOING LITERAL's re-grep outside `docs/` then returned exactly **FOURTEEN**
+    lines and nothing else — `1 + 1 + 3` for this heading's source, its labelling-debt sentence
+    and this paragraph; `1 + 1 + 1` for D514's target, its debt sentence and its exception list;
+    `1 + 1` for the two header arrows; `1` for the D275 ledger; and `3` for
+    `D506-changelog-head-unnamed`'s `what`, `find` and `replace` — which is the check rather
+    than the intention (D488: a version grep is an instrument and owes the same literal check as
+    any other).
+    ⚠️ **AND `precheck` WAS RE-RUN AFTER EVERY `index.ts` EDIT** (it is not part of `check`).)
     🆕🆕🆕 engineVersion 0.400.0 → **0.401.0** (D514 — THE PRINTED *"any number of"* AND A
     PROPER NAME AS THE DECK-SEARCH NOUN. `censusAttackCorpus.ts` **FILE LINE 657** —
     *"You may search your deck for any number of Fennel cards, reveal them, and put them
@@ -21073,7 +21151,7 @@ import type { GameState, Seat } from "./types";
     WITNESS** — the count was re-derived every slice and the word *"three"* was carried.
     A successor of this slice inherits **81 / 61 / 17** again, over **FIVE** history
     occurrences: those four plus `deckMillFilteredScale.test.ts`'s own header arrow.) */
-export const engineVersion = "0.401.0";
+export const engineVersion = "0.402.0";
 
 export type {
   ApplyResult,

@@ -23351,12 +23351,64 @@ const SHUFFLE_HAND_DRAW = /^Shuffle your hand into your deck\. Then, draw (\d+) 
         has no phrase for, so the park's caption would silently degrade to the bare
         cost while the sentence read as claimed. That row is already tracked as a
         named `DEFERRED` in `opponentHandDiscard.test.ts` with its own reason.
+        🆕🆕🆕 **D515 BUILT THAT ROW, AND EVERY CLAUSE ABOVE WAS TRUE WHEN WRITTEN AND
+        IS NOW HISTORY RATHER THAN A REFUSAL** (D178: provenance is annotated, never
+        overwritten). The blocker named here — `describeBranch` — was the real one and
+        the only one: D515 pays it with ONE case in that switch and claims the row with
+        its OWN anchor (`HAND_COST_THEN_OPPONENT_DISCARD`, arm 44b), so the widening
+        this bullet refuses is STILL refused and for the same reason it always was. The
+        caption degradation is no longer a forecast; it is driven on both sides of the
+        describer arm in `handCostOpponentDiscard.test.ts` §5.
 
     ⚠️ **THE COUNT IS CAPTURED FOR D404'S REASON**: the column prints 2 and 3 on the
     same skeleton, which is D121's two-printings-one-token-varying warrant met inside
     this single anchor rather than argued for across files. The `>= 1` guard is the one
     every counted arm here carries. */
 const HAND_COST_THEN_DRAW = /^Discard a card from your hand\. If you do, draw (\d+) cards\.$/;
+
+/** 🆕🆕🆕 D515 — *"Discard a card from your hand. If you do, your opponent discards a
+    card from their hand."* — **1 sentence / 1 legal printing** (file line 103), the
+    THIRD and LAST member of the printed `Discard a card from your hand. If you do, …`
+    family, and the exact row `HAND_COST_THEN_DRAW`'s block one screen up measured,
+    named and refused.
+
+    🛑 **THE ANCHOR WAS NEVER THE BLOCKER, AND D473 WROTE DOWN WHICH ONE WAS.** D472's
+    measurement is on record: widening that anchor's consequent to `(.+)` claims THIS
+    row and no other, and the reason it was refused is not the regex and not a missing
+    op — it is `interpreter.ts`'s `describeBranch`, which had **no phrase** for
+    `opponentDiscardsFromHand`. `withConsequence` looks DOWN THE QUEUE from the parking
+    payment for the gate that reads its slot and appends the printed conditional; with
+    no phrase for the branch it returns the prompt unchanged, so the park's caption
+    degrades to the bare *"Discard a card from your hand."* — byte-identical to the
+    caption of an UNGATED payment — while the census records the sentence built. That
+    degradation is DRIVEN in this slice's suite on both sides of the new arm, which is
+    what turns D473's forecast into a measurement (D446: a predicted SHAPE is not the
+    measurement that predicted it).
+
+    🛑 **SO THE PRICE IS ONE ANCHOR, ONE ARM AND ONE DESCRIBER CASE — AND ZERO NEW
+    MECHANISM.** `payFromHand` is the head (the only op in the union that removes a
+    CHOSEN card from the controller's own hand), `recordGate` is §9.2's op-result
+    branch, and `opponentDiscardsFromHand { count: 1 }` has been produced by the
+    OPPONENT-CHOOSES arm of this very function since D426 and by D486's gated
+    increment since. This slice writes no op, no op field and no op value.
+
+    ⚠️ **THE CONSEQUENT IS SPELLED OUT AND ITS COUNT IS NOT CAPTURED, WHICH IS THE
+    OPPOSITE CALL FROM THE SIBLING ANCHOR'S — MEASURED, NOT PREFERRED.** The draw
+    anchor captures `(\d+)` because the column prints 2 and 3 on one skeleton (D121's
+    two-printings-one-token-varying warrant). Here the column prints the GATED form
+    exactly once, at *"a card"*: a `(a card|\d+ cards)` alternation claims the
+    identical 1 sentence / 1 printing, buys nothing, and ships a capture no printing
+    can falsify (D231's unkillable singleton). The standalone family DOES print both
+    counts (*"Your opponent discards a card from their hand."*, 2 printings, and
+    *"…discards 2 cards from their hand."*, 4) and `ATTACK_OPPONENT_DISCARDS_HAND`
+    already reads both — so the plural is not unexpressible, it is unprinted HERE, and
+    §1 of the suite measures that as zero rather than asserting it.
+
+    ⚠️ **AND THE HEAD IS SPELLED OUT FOR D473's REASON VERBATIM**: a captured noun
+    would derive a FILTERED printed cost as this arm's unfiltered `payFromHand`
+    (D190b/D199), and the widening buys the identical row count. */
+const HAND_COST_THEN_OPPONENT_DISCARD =
+  /^Discard a card from your hand\. If you do, your opponent discards a card from their hand\.$/;
 
 /** Parse printed attack text into executable ops, or null when the text is
     ANYTHING but one of the recognized whole sentences (leading/trailing
@@ -28076,6 +28128,40 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
         { op: "recordGate", slot: "paid", then: [{ op: "drawCards", count: drawn }] },
       ];
     }
+  }
+
+  // 44b. 🆕🆕🆕 D515 — "Discard a card from your hand. If you do, your opponent
+  //      discards a card from their hand." — the THIRD and LAST member of D473's
+  //      printed family, and the row D473 measured, named and left. See
+  //      `HAND_COST_THEN_OPPONENT_DISCARD` for why the blocker was the DESCRIBER
+  //      rather than this regex, and `interpreter.ts`'s `describeBranch` for the arm
+  //      that pays it.
+  //
+  //      🛑 A SEPARATE ANCHOR RATHER THAN A WIDER ALTERNATION ON 44a, AND D441's RULE
+  //      IS THE REASON: the two rows' consequents are different KINDS — one is a
+  //      captured count on a `drawCards`, this one is a whole op with no number the
+  //      print varies — so a shared `(.+)` would have to re-derive its own capture and
+  //      dispatch on it, which is a second reader wearing one anchor's clothes. Two
+  //      anchors, two arms, each falsifiable on its own bytes.
+  //
+  //      🛑 THE GATE IS WHAT MAKES THE HAND COST SAFE AT THE ATTACK SEAM, exactly as
+  //      44a's block says: `attack.ts` never calls `handCostUnmet`, so an empty hand
+  //      files an empty slot, `recordGateHolds` returns false, and the OPPONENT
+  //      discards nothing. `handEnergyCancel.test.ts` §4's `handCostIsSlotGated`
+  //      admits this program under the SAME exemption and by nothing looser — its
+  //      population moves from 6 sentences / 8 printings to 7 / 9 and the split by
+  //      reason moves with it.
+  //
+  //      ⚠️ NO `>= 1` GUARD AND NO LOCAL, because there is no captured number to
+  //      floor — arm 45's absence for arm 45's stated reason. The `count: 1` is the
+  //      printed article, D426's "the absent group is the ARTICLE, not a default" read
+  //      off a sentence that spells the article out.
+  if (HAND_COST_THEN_OPPONENT_DISCARD.test(effect)) {
+    return [
+      { op: "payFromHand", count: 1, to: "discard", recordAs: "paid" },
+      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
+      { op: "recordGate", slot: "paid", then: [{ op: "opponentDiscardsFromHand", count: 1 }] },
+    ];
   }
 
   // 45. 🆕🆕 D427 — "Heal from this Pokémon the same amount of damage you did to
