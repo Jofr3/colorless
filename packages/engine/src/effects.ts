@@ -789,12 +789,68 @@ export type EffectSlot = "paid" | "moved" | "discarded";
     a program is never authored against `p1`/`p2` and the same object is correct
     for either seat playing it. On `who: "you"` or `who: "opponent"` only ONE of
     the two numbers is ever consulted; that is representable and no printed card
-    uses it, the same authoring caution the op's own riders carry. */
+    uses it, the same authoring caution the op's own riders carry.
+
+    🆕🆕 **D516 — `opponentHandSize`, THE FIFTH MEMBER, AND THE ROW
+    `SHUFFLE_HAND_DRAW`'s BLOCK HAS NAMED SINCE D479**: *"Shuffle your hand into your
+    deck. Then, draw a card for each card in your opponent's hand."*
+    (`censusAttackCorpus.ts` file line 487, **1 sentence / 1 legal printing**). The count
+    is the other seat's hand SIZE, one card per card, and the member is NULLARY for the
+    same reason `prizeCount` is — the printed sentence carries no per-card rate and no
+    filter to apply.
+
+    🛑 **A MEMBER HERE AND NOT A `DamageCountSource`, AND THE REASON IS THE
+    EVALUATOR RATHER THAN THE NOUN.** `DamageCountSource.cardsInOpponentHand` spells the
+    identical printed phrase one file line apart (corpus file line 564, *"This attack
+    does 30 damage for each card in your opponent's hand."*) — but its ONLY evaluator is
+    `attack.ts`'s `scaledAttackDamage(attacker, bonus, state, defenderSeat, attackerSeat,
+    cost)`, and FOUR of those six parameters are ATTACK-DECLARATION facts that do not
+    exist on the Trainer and Ability paths where `registry.ts` authors every other
+    `handRefresh` (Youngster, Judge, Brassius, Katy, Iono, Skwovet, Gothitelle, Lacey,
+    Drasna, Harlequin, Unfair Stamp and Team Rocket's Archer — **30 registry card ids**,
+    counted off `registryCardIds()`). Embedding that union here would
+    therefore buy a SECOND evaluator for it — D159's own failure mode, one noun with two
+    answers — or an `InPlayPokemon` and an effective cost plumbed through a Supporter.
+    ⚠️ **THE HOUSE HAS MADE THIS CALL TWICE AND WROTE THE REASON DOWN BOTH TIMES**:
+    `AttackFlipCount` re-spells `attachedEnergy` / `pokemonInPlay` / `bothActivesEnergy`
+    under *"Deliberately not a `DamageCountSource` arm"* (attack.ts `takeFlips`), and
+    `MaxHpScale` re-spells `attachedEnergy` / `opponentPrizesTaken` under *"naming this
+    member after the existing one is what keeps them from drifting"* (registry.ts). FOUR
+    count vocabularies, zero embeddings — what D159 makes single is the WALK, never the
+    union.
+
+    ⚠️ **AND `prizeCount` IS NOT THE PRECEDENT IT LOOKS LIKE.** It reads the affected
+    player's REMAINING Prizes; `DamageCountSource.opponentPrizesTaken` reads `6 −
+    remaining` for the opponent, and `BoardCondition.opponentPrizesRemaining` is a
+    threshold rather than a count. registry.ts's D207 block states it outright — *"TWO
+    SPELLINGS EXIST AND THEY ARE NOT THE SAME NUMBER"* — so this union's Prize member is
+    a DIFFERENT question from the damage union's, not one question answered twice, and
+    it cannot be cited either for or against the duplication above.
+
+    🛑 **`opponent` MEANS THE CONTROLLER'S OPPONENT, BECAUSE `who: "opponent"` ONE
+    FIELD UP ALREADY DOES.** The alternative reading — the DEALT-TO seat's opponent,
+    which is the seat `handPlus` and `prizeCount` read their board off — would make one
+    word name two seats inside one op, and it would falsify this block's own standing
+    claim above that `perSeat` is THE ONE member that is not one answer for every
+    affected seat. On the only printed sentence (`who: "you"`) the two readings are the
+    SAME seat, so no board separates them (D104) and the choice is made on the vocabulary
+    rather than on a fixture.
+
+    ⚠️ **IT READS A HAND'S SIZE AND NEVER ITS CONTENTS, SO IT LEAKS NOTHING.** A hand
+    COUNT is already public — `DamageCountSource.cardsInOpponentHand`'s block says so in
+    those words — which is why this member is `hand.length`, `handPlus`'s implementation
+    of the same question, rather than `countCardsInHand(…, anyCard)`: there is no printed
+    filter to apply, and the two answers differ only where a uid does not resolve, which
+    is `cardOfUid`'s business and not this member's. ⚠️ **THE DRAW PASS RUNS AFTER
+    EVERY AFFECTED SEAT HAS MOVED**, so `who: "both"` or `who: "opponent"` would count a
+    hand this op has just emptied and draw ZERO. Representable, printed by nothing, and
+    the same authoring caution the op's two riders already carry. */
 export type HandRefreshDraw =
   | { kind: "fixed"; count: number }
   | { kind: "handPlus"; delta: number }
   | { kind: "prizeCount" }
-  | { kind: "perSeat"; you: number; opponent: number };
+  | { kind: "perSeat"; you: number; opponent: number }
+  | { kind: "opponentHandSize" };
 
 /** §6.1's full type wheel, exactly as the CATALOG spells it in `Card.types` —
     the nine Basic-Energy types plus the two that have no Basic Energy of their
@@ -23313,8 +23369,61 @@ const DISCARD_HAND_DRAW = /^Discard your hand and draw (\d+) cards\.$/;
     count. `HandRefreshDraw` has four members (`fixed`, `handPlus`, `prizeCount`,
     `perSeat`) and **not one of them counts the opponent's HAND**, so that row needs a
     fifth member and stays on the loud ATTACK_EFFECT_SKIPPED path. That refusal is
-    driven in the suite as this anchor's own falsifier. */
+    driven in the suite as this anchor's own falsifier.
+
+    🆕 **D516 PAID IT, AND THE PARAGRAPH ABOVE IS KEPT VERBATIM WITH ITS RECEIPT
+    DATED HERE** (D178/D442). Every clause of it was true when written and is still true
+    of THIS anchor: the `(\d+)` is what refuses file line 487, and the fifth member is
+    exactly what that row needed. `HandRefreshDraw.opponentHandSize` now ships and
+    `SHUFFLE_HAND_DRAW_PER_OPPONENT_HAND` directly below claims the row — so the only
+    sentence that has stopped being true is *"stays on the loud ATTACK_EFFECT_SKIPPED
+    path"*, and the falsifier the suite drove for it has been re-pointed rather than
+    deleted (`shuffleHandDraw.test.ts` §3). ⚠️ **A REFUSAL THAT NAMES WHAT IS
+    MISSING AGES WELL** — D515's rule, paid one slice later at a second address: this
+    block named a MEMBER of a union, and thirty-seven decisions on it was still right in
+    every clause. */
 const SHUFFLE_HAND_DRAW = /^Shuffle your hand into your deck\. Then, draw (\d+) cards\.$/;
+
+/** 🆕🆕 D516 — *"Shuffle your hand into your deck. Then, draw a card for each
+    card in your opponent's hand."* — **1 sentence / 1 legal printing**
+    (`censusAttackCorpus.ts` file line 487), the row the anchor DIRECTLY ABOVE has been
+    naming as unbuilt since D479, and the FIRST derived draw count on the attack path.
+
+    🛑 **A SECOND ANCHOR AND NOT A WIDER ALTERNATION, WHICH IS D441's RULE RATHER
+    THAN A PREFERENCE.** The two sentences share a head and disagree on the KIND of their
+    tail: `SHUFFLE_HAND_DRAW` captures an INTEGER and this one captures NOTHING, so a
+    merged `(?:(\d+) cards|a card for each card in your opponent's hand)` would hand the
+    arm an optional group whose absence is the discriminator — the shape D451 refuses for
+    two printed tokens that CO-VARY. Two `^…$` anchors cannot both match a string (they
+    disagree on a mandatory run of bytes at the same position), so their ORDER here is
+    legibility and not behaviour, exactly as the sibling's own block records.
+
+    🛑 **IT BUYS ONE UNION MEMBER AND ONE EVALUATOR ARM — NO OP, NO OP FIELD, NO
+    NEW VALUE FOR ANY SHIPPED FIELD.** The program is `[{op:"handRefresh", who:"you",
+    draw:{kind:"opponentHandSize"}}]`: the op, the `who` and the `draw` KEY are all
+    Youngster `sv01-198`'s hand-authored trainer program, and the only new byte in the
+    vocabulary is the fifth `HandRefreshDraw` member. `interpreter.ts`'s
+    `handRefreshDrawCount` is the SOLE consumer that switches on the draw kind — measured
+    over the repo, not assumed — so the addition is compiler-caught at exactly one site
+    (D512's census-by-compile-error) and the op's own `case` is byte-unchanged.
+
+    ⚠️ **NOTHING IS CAPTURED, AND THAT IS THE DIFFERENCE FROM THE SIBLING'S
+    ARGUMENT.** `SHUFFLE_HAND_DRAW` captures because the SAME printed skeleton carries 5,
+    6 and 8 across the two columns. This skeleton carries no number at all: the rate is
+    the printed word *"a card"*, the source is a named zone, and neither is a parameter a
+    reprint could move without becoming a different sentence. So `.test()` rather than
+    `.exec()`, which is safe here for the reason D445 names — no second arm shares this
+    anchor, so there is no guard for a `.test()` to drop.
+
+    ⚠️ **THE PRINTED ORDER IS THE PROGRAM ORDER AND THE COUNT IS UNAFFECTED BY IT.**
+    *"Shuffle your hand into your deck"* empties the CONTROLLER's hand; the count reads the
+    OPPONENT's, which `who: "you"` never touches — so the *"Then,"* is a sequencing word
+    with no arithmetic in it here, and the same program would answer identically if the
+    engine counted first. That is asserted on a board rather than argued
+    (`handRefreshOpponentHand.test.ts` §4) because it is the one clause a successor
+    widening `who` would silently break. */
+const SHUFFLE_HAND_DRAW_PER_OPPONENT_HAND =
+  /^Shuffle your hand into your deck\. Then, draw a card for each card in your opponent's hand\.$/;
 
 /** 🆕🆕 D473 — *"Discard a card from your hand. If you do, draw {N} cards."* — **2
     sentences / 2 legal printings** (file lines 101 and 102, `N` = 2 and 3), and the
@@ -28096,6 +28205,31 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
     if (redrawn >= 1) {
       return [{ op: "handRefresh", who: "you", draw: { kind: "fixed", count: redrawn } }];
     }
+  }
+
+  // 44c. 🆕🆕 D516 — "Shuffle your hand into your deck. Then, draw a card for each
+  //      card in your opponent's hand." — arm 44b's sentence with the COUNT changed from a
+  //      printed integer to a DERIVED one, and the row arm 44b's own doc block has been
+  //      naming since D479 (*"that row needs a fifth member"*). ONE anchor, ONE arm, ONE
+  //      `HandRefreshDraw` member, ONE evaluator arm; zero new ops, op fields, op values,
+  //      prompts, choices, events, error codes, filters, registry rows or schema bytes.
+  //      See `SHUFFLE_HAND_DRAW_PER_OPPONENT_HAND` for why the anchor is a SECOND one
+  //      rather than an alternation, and `HandRefreshDraw` for why the count is a member
+  //      of THIS union and not a `DamageCountSource`.
+  //
+  //      🛑 NOTHING IS CAPTURED, SO THERE IS NO `>= 1` GUARD AND NOTHING TO GUARD.
+  //      Arms 44 and 44b both read a printed integer and both refuse a printed 0 loudly;
+  //      this arm's count is a BOARD fact, and an opponent holding no cards draws no
+  //      cards — a legal outcome the op already owns (`drawToHand` with 0) and not a
+  //      sentence the engine failed to read. The two cases must not be confused: a
+  //      printed 0 is a sentence nobody prints, an empty hand is a Tuesday.
+  //
+  //      🛑 EVERY EXPLANATORY LINE SITS ABOVE THE `if` RATHER THAN INSIDE THE ARM,
+  //      arm 44b's rule verbatim (D403): the statements here are what this arm's mutant
+  //      rows have to name, and a comment spliced into the body would break every such
+  //      row without a character of the code moving.
+  if (SHUFFLE_HAND_DRAW_PER_OPPONENT_HAND.test(effect)) {
+    return [{ op: "handRefresh", who: "you", draw: { kind: "opponentHandSize" } }];
   }
 
   // 44a. 🆕🆕 D473 — "Discard a card from your hand. If you do, draw {N} cards." —

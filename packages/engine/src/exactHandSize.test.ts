@@ -228,7 +228,15 @@ const SIZE_CEILING = [
   // sentence that STILL has the old property**, and the second entry does: it reads the far
   // hand's size, no reader claims it, and it wants a DRAW COUNT rather than this member. The
   // departure is asserted below beside D385's, so an "un-build" reddens this file.
-  "Shuffle your hand into your deck. Then, draw a card for each card in your opponent's hand.",
+  // 🆕🛑 **D516 REMOVED THE LAST ENTRY, AND THE LIST IS NOW EMPTY — WHICH IS THE
+  // FINDING RATHER THAN THE ABSENCE OF ONE** (D435/D496). *"Shuffle your hand into your
+  // deck. Then, draw a card for each card in your opponent's hand."* is claimed by
+  // `deriveAttackEffect` through `HandRefreshDraw.opponentHandSize` — the DRAW COUNT this
+  // very comment said the sentence wanted, named at D445 and built 71 decisions later.
+  // D445's move (*"find the sentence that STILL has the old property"*) has no candidate
+  // left: the ceiling is EXHAUSTED over the legal column, and §1's rung below asserts THAT
+  // instead of iterating an empty array, because a `for` over `[]` is a guard that cannot
+  // go red (D200).
 ] as const;
 /** 🆕🆕 **D445 — THE SECOND CEILING ENTRY TO LEAVE, AND IT LEAVES FOR A DIFFERENT REASON
     THAN D385's.** D385's entry was taken by a reader that was already in the file's array
@@ -237,6 +245,16 @@ const SIZE_CEILING = [
     `DamageCountSource`, where an exact-hand-size READ is a `BoardCondition` — the ceiling
     block's own distinction, and the reason it was priced and left rather than built. */
 const CEILING_TAKEN_AT_D445 = "This attack does 30 damage for each card in your opponent's hand.";
+
+/** 🆕🆕 **D516 — THE THIRD CEILING ENTRY TO LEAVE, AND THE ONE THAT EMPTIES THE
+    LIST.** D445's block said this sentence *"reads the far hand's size, no reader claims
+    it, and it wants a DRAW COUNT rather than this member"* — three clauses, and D516 paid
+    the third exactly as written: `HandRefreshDraw` gained a fifth member
+    (`opponentHandSize`) and `deriveAttackEffect` claims the row whole. ⚠️ **A REFUSAL THAT
+    NAMES WHAT IS MISSING AGES WELL** (D515), and this one named a DRAW COUNT rather than a
+    spelling. */
+const CEILING_TAKEN_AT_D516 =
+  "Shuffle your hand into your deck. Then, draw a card for each card in your opponent's hand.";
 /** …and the entry that LEFT the ceiling at D385, kept so this file still says what
     happened to it. ~~Refused by this file's nine readers and resolved by the tenth.~~
     🆕🆕 **D418 — struck: there is one oracle now and it RESOLVES this sentence.** The
@@ -507,11 +525,37 @@ describe("§1 — the price, RE-DERIVED: the does-nothing skeleton goes EMPTY", 
     // that still reads a hand's size is refused, and none of them wants this member —
     // one is a per-card damage scaler over the FAR hand, one an op plus a did-it
     // clause, one a draw whose count is the far hand.
+    // 🆕 D516 — THE LOOP IS KEPT (it reddens the moment a successor re-adds an entry
+    // that IS read) AND THE POPULATION IS ASSERTED BESIDE IT, because with the array empty
+    // the loop alone is vacuous.
     for (const sentence of SIZE_CEILING) {
       const rows = corpus().filter(([, s]) => s === sentence);
       expect(rows, sentence).toHaveLength(1);
       expect(readByAny(sentence), sentence).toBe(false);
     }
+    // 🛑 **THE CEILING IS EXHAUSTED, MEASURED OVER THE WHOLE LEGAL COLUMN RATHER THAN
+    // OFF THE ARRAY** (D455: the instrument that defines a class must enumerate it). Every
+    // legal sentence that reads a HAND'S SIZE — the printed noun, in both seats' spellings
+    // — is claimed by some reader at this head: **9 sentences / 22 printings, 0 unread.**
+    // A new printing that reads a hand size and is refused reddens this line on the day it
+    // arrives, which is what the array used to do and can no longer.
+    const sizeReads = corpus().filter(([, s]) =>
+      /\bcards? in (?:your|their)(?: opponent's)? hand\b/.test(s),
+    );
+    expect([sizeReads.length, units(sizeReads)]).toEqual([9, 22]);
+    expect(sizeReads.filter(([, s]) => !readByAny(s))).toEqual([]);
+    // …and the sentence that left at D516 is named, so an "un-build" reddens this file the
+    // same way D385's and D445's departures do.
+    expect(corpus().filter(([, s]) => s === CEILING_TAKEN_AT_D516)).toHaveLength(1);
+    expect(readByAny(CEILING_TAKEN_AT_D516)).toBe(true);
+    expect(deriveAttackEffect(CEILING_TAKEN_AT_D516)).toEqual([
+      { op: "handRefresh", who: "you", draw: { kind: "opponentHandSize" } },
+    ]);
+    // 🛑 AND THE CEILING'S OWN CLAIM IS UNCHANGED BY THE BUILD: this sentence still
+    // wants NO `BoardCondition`. It reads a hand's size as a DRAW COUNT, where this file's
+    // member reads one against a printed number — the block's own distinction, and the
+    // reason it was priced and left rather than built here.
+    expect(deriveAttackRequirement(CEILING_TAKEN_AT_D516)).toBeNull();
     // 🛑 🆕🆕 **D385 — THE THIRD ENTRY IS GONE FROM THE LIST AND ITS DEPARTURE IS
     // ASSERTED**, which is the only way this file can go red if it is ever "un-built".
     // ⚠️ AND THE TWO ORACLES ARE READ SIDE BY SIDE ON PURPOSE: this file's NINE-reader
@@ -548,7 +592,15 @@ describe("§1 — the price, RE-DERIVED: the does-nothing skeleton goes EMPTY", 
     // your hand` member reads a SIZE against a printed number; this reads a COUNT as a
     // multiplicand. Two different questions, and the survivor above is the proof the list
     // still discriminates rather than having been emptied.
-    expect(SIZE_CEILING).toHaveLength(1);
+    // 🆕🛑 **D516 — THE SENTENCE ABOVE IS KEPT VERBATIM AND IT IS NOW FALSE IN ITS LAST
+    // CLAUSE: the list HAS been emptied, and by the build its own words asked for.** The
+    // survivor it names left at D516, so the list length is ZERO and the discrimination
+    // it used to carry moved to §1's population rung, which is measured over the whole
+    // legal column instead of off this array (D455 — the instrument that DEFINES a class
+    // must be the one that ENUMERATES it). ⚠️ An emptied array is not a retired claim:
+    // re-adding an entry that IS read reddens §1's loop, and a new printing that reads a
+    // hand size and is refused reddens §1's population count.
+    expect(SIZE_CEILING).toHaveLength(0);
     expect(deriveAttackOptionalCostBoost(CEILING_TAKEN_AT_D385)).not.toBeNull();
     // 🛑 …and the SPECIFICITY is kept too, so "resolved" cannot come to mean "some
     // reader somewhere": the other two readers D418 added to this array refuse it, so

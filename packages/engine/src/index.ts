@@ -19984,6 +19984,135 @@ import type { GameState, Seat } from "./types";
     `expect(manifest.version)`, `it(…)` titles, the declaration and `package.json` —
     **not** as a value-keyed grep — because a value-keyed grep is precisely the mechanism
     that ate D500's heading.)
+    🆕🆕🆕 engineVersion 0.402.0 → **0.403.0** (D516 — THE DRAW COUNT THAT READS THE OPPONENT'S
+    HAND — AND THE REFUSAL THAT ORDERED IT WAS RIGHT IN EVERY CLAUSE, THIRTY-SEVEN
+    DECISIONS OLD. `censusAttackCorpus.ts` **FILE LINE 487** — *"Shuffle your hand into your
+    deck. Then, draw a card for each card in your opponent's hand."*, **1 sentence / 1 legal
+    printing**, claimed WHOLE by `deriveAttackEffect` through ONE new anchor
+    (`SHUFFLE_HAND_DRAW_PER_OPPONENT_HAND`) and arm 44c, deriving `[{op: "handRefresh", who:
+    "you", draw: {kind: "opponentHandSize"}}]`.
+    🛑 **THE PRICE IS ONE ANCHOR, ONE ARM, ONE UNION MEMBER AND ONE EVALUATOR ARM.**
+    `HandRefreshDraw` gains its FIFTH member; `handRefreshDrawCount` (interpreter.ts) gains
+    the matching `case`. ZERO new `EffectOp` members, op FIELDS, op VALUES on shipped fields,
+    readers (surface unmoved at 13), prompts, choice kinds, events, error codes,
+    `CardFilter`/`BoardCondition` members, registry rows, `FIXTURE_POOL` ids, `redact.ts`
+    bytes or `packages/schema` bytes.
+    🛑 **`handRefreshDrawCount` IS THE SOLE CONSUMER THAT SWITCHES ON THE DRAW KIND, AND
+    THAT WAS ESTABLISHED BY DELETING THE ARM AND READING `tsc`** — D512's
+    census-by-compile-error rather than a grep: one unique site, `interpreter.ts:9777`,
+    reported once per tsconfig project.
+    🛑 **THE ROAD NOT TAKEN, PRICED.** `DamageCountSource.cardsInOpponentHand` spells the
+    identical printed phrase at corpus file line 564, so *"reuse the shipped count"* looks like
+    D159's own rule. It is not: that union's ONLY evaluator is `attack.ts`'s
+    `scaledAttackDamage(attacker, bonus, state, defenderSeat, attackerSeat, cost)`, and FOUR of
+    those six parameters are ATTACK-DECLARATION facts that do not exist on the Trainer and
+    Ability paths where `registry.ts` authors every other `handRefresh`. Embedding it would buy
+    a SECOND evaluator for a 19-member union (D159's own failure mode) or plumb an
+    `InPlayPokemon` and an effective cost through a Supporter — against ONE nullary member and
+    ONE `return` on the road taken. ⚠️ **THE HOUSE HAD ALREADY MADE THIS CALL TWICE, IN
+    WRITING**: `AttackFlipCount` re-spells `attachedEnergy`/`pokemonInPlay`/`bothActivesEnergy`
+    under *"Deliberately not a `DamageCountSource` arm"*, and `MaxHpScale` re-spells
+    `attachedEnergy`/`opponentPrizesTaken` under *"naming this member after the existing one is
+    what keeps them from drifting"*. **FOUR count vocabularies at this head, ZERO embeddings**
+    — what D159 makes single is the WALK, never the union.
+    ⚠️ **AND THE CONSISTENCY ARGUMENT OFFERED FOR IT WAS FALSE.** A pre-slice brief cited
+    `HandRefreshDraw.prizeCount` and `DamageCountSource.opponentPrizesTaken` as one concept
+    spelled twice. They are OPPOSITE ENDS OF ONE PILE — REMAINING against `6 − remaining`, for
+    different seats — which `registry.ts`'s D207 block states outright (*"TWO SPELLINGS EXIST
+    AND THEY ARE NOT THE SAME NUMBER"*), and `BoardCondition.opponentPrizesRemaining` is a
+    third reading again. The row is driven in `handRefreshOpponentHand.test.ts` §7 at the value
+    where it shows.
+    🛑 **D479's REFUSAL NAMED THE MISSING MEMBER AND WAS RIGHT IN EVERY CLAUSE.**
+    `SHUFFLE_HAND_DRAW`'s block said *"`HandRefreshDraw` has four members … and not one of them
+    counts the opponent's HAND, so that row needs a fifth member"*, and it DROVE that refusal as
+    its own falsifier. Thirty-seven decisions later every word held — D515's rule (*a refusal
+    that names a FUNCTION ages well; one that names a SPELLING rots*) paid one slice after it
+    was written, because this one named a MEMBER OF A UNION. **THREE rungs in
+    `shuffleHandDraw.test.ts` carried that unbuiltness as their premise** (§1's reader pair,
+    §3's COUNT falsifier, §6's ZERO-MATCH board) and all three are RE-POINTED rather than
+    deleted (D444); a pass that chased only the one that reddened would have left two green and
+    wrong. `exactHandSize.test.ts`'s `SIZE_CEILING` loses its LAST entry and is now EMPTY — the
+    ceiling is EXHAUSTED at **9 sentences / 22 printings, 0 unread**, asserted over the column
+    because a `for` over `[]` cannot go red (D200).
+    ✅ **THE DESCRIBER SURFACES WERE CHECKED AND THERE IS NO OBLIGATION, MEASURED RATHER THAN
+    INFERRED** (D515's own finding, applied). `handRefresh` never parks, so `describeBranch`
+    never sees it; `log.ts` has NO `handRefresh` arm at all and renders both of this program's
+    rows — `HAND_SHUFFLED_INTO_DECK` and `CARDS_DRAWN` — from a COUNT the evaluator has already
+    produced, so a fifth draw kind renders correctly by construction. ⚠️ **THAT IS THE
+    GENERIC-EVENT SHAPE THAT FAILED SILENTLY AT D515 AND IT IS BENIGN HERE FOR A REASON WORTH
+    SAYING**: D515's describer switched on the OP and had no arm; nothing here switches on the
+    draw kind except the evaluator.
+    🆕 **AN ELEVENTH LATTICE SHAPE: TWO SINGLETON ISLANDS AT HAMMING DISTANCE 2, BOTH
+    MIDPOINTS DARK.** HEAD-ZONE × SEAT × JOIN × COUNT reads `0/1 · 1/4 · 0/6 · 1/4 · 0/1` —
+    **2 of 16**, 16/16 distinct strings, and the two predicates AGREE at every point (**0
+    divergent**, both splitters null at **16/16**), which is D503's rule run and answering NO
+    this time. The built set is `0001` (`SHUFFLE_HAND_DRAW`) and `1011` (`DISCARD_HAND_DRAW`),
+    two ISLANDS two flips apart with `0011` and `1001` both dark: the head verb and the join
+    token are COUPLED, so no axis is free anywhere and each flips the verdict at the minimum
+    `2/8`. 🛑 **THE PRINTED ROW SITS DISTANCE 1 FROM AN ISLAND ON EXACTLY ONE LIVE AXIS**
+    (the COUNT) **with the other three walled** — the mirror of D505's one-blocking-×-free-2⁴,
+    and it prices the slice correctly: a missing cell of a table, not a machine. 🆕 **AND
+    THE SHAPE CHANGES ACROSS ITS OWN SLICE** (D513's phenomenon, third occurrence): after the
+    build the vector reads `1/1 · 1/4 · 0/6 · 1/4 · 0/1` — **3 of 16**, flips `3 · 3 · 3 · 1`
+    — the two islands become three with two of them ADJACENT, so the COUNT axis falls from
+    `2/8` to `1/8` (it has stopped blocking at the printed point) while the other three each
+    RISE, having gained a dark neighbour. ⚠️ **The pre-state was computed BEFORE the arm
+    landed and is not a subtraction** (D491); both readings are recorded because only the pair
+    shows which axis the slice actually spent.
+    **`MATCH_RECORD_VERSION` STAYS 30, ARGUED AT THE HARD ADDRESS.** D452's *"this byte already
+    ships"* out is NOT available — the SERIALIZED ALPHABET GROWS, because
+    `{"kind":"opponentHandSize"}` is a byte string no v30 deploy can write. The claim therefore
+    rests on REACHABILITY (D450) alone, and reachability is a measurement over the PRODUCERS
+    rather than a property of the op: `EffectContinuation` carries `{pendingOp, rest}` and
+    `rest` holds every op AFTER the parking one, so a `handRefresh` is persisted the moment any
+    authored list places it, or a gate containing it, behind another op. **It does not.** All
+    **30 registry card ids** that produce one (Youngster, Judge, Brassius, Katy, Iono, Skwovet,
+    Gothitelle, Lacey, Drasna, Harlequin, Unfair Stamp, Team Rocket's Archer and the six
+    fixture programs — COUNTED by walking `registryCardIds()` rather than by naming the ones
+    that came to mind, which is how the first draft of this paragraph said *"ten"*) and the two
+    deriver arms place the op, or
+    its enclosing `conditionGate`/`coinFlipGate`, at index 0 of its list. ⚠️ **AND THAT IS
+    DRIVEN RATHER THAN GREPPED**: `handRefreshOpponentHand.test.ts` §7 walks every
+    `registryCardIds()` program object and every program `deriveAttackEffect` returns over the
+    legal column and asserts the invariant — *anything containing a `handRefresh` sits at index
+    0* — so a successor who appends one after another op reddens that rung and owes the bump.
+    Nothing else in the repo would notice.
+    ⚠️ **THIS HEADING NAMES NO `D<nnn>` AND THAT IS DELIBERATE, NOT AN OMISSION** —
+    D507/D508/D510/D512/D513/D514/D515's posture, for their reason.
+    `engineVersionChangelog.test.ts`'s ATTRIBUTION case asserts `adjudicated ===
+    LABELLED.length` with no tolerance, so a labelled heading without its `docs/decisions.md`
+    row ships `check` RED, and this slice is scoped away from that file. **The debt is D516**:
+    whoever writes `| **D516** | … engine 0.402.0 → 0.403.0 … |` should rewrite this heading's
+    opening parenthesis as `(D516 — THE DRAW COUNT…` in the same commit, and not before.
+    🛑 **VERSION-TAX EXCEPTION LIST FOR THIS BUMP, NAMING THE HEADING BEING WRITTEN THIS
+    SLICE (D506's rule (b)).** `0.402.0` legitimately survived at NINE lines outside `docs/`
+    BEFORE this paragraph existed, and at **FOURTEEN** after it — the five new ones are this
+    heading's own source, its labelling-debt sentence, this sentence, and the two lines below
+    that quote the two header arrows. ⚠️ **D515's BLOCK PREDICTED "FOURTEEN" AND GOT IT; ITS
+    PREDECESSORS ALL QUOTED THE PRE-EDIT FIGURE AND CALLED IT THE ANSWER** — the count and the
+    moment you take it are two claims (D488), so both are written here. None of the fourteen
+    may be swept: **THIS HEADING'S OWN SOURCE, one line up, plus this sentence and the
+    labelling-debt sentence above it**; D515's heading TARGET below together with its own debt
+    sentence and its exception list (three lines);
+    `handCostOpponentDiscard.test.ts`'s header arrow, which reads `0.401.0 → 0.402.0`;
+    `handRefreshOpponentHand.test.ts`'s header arrow, which reads `0.402.0 → 0.403.0` and is
+    this slice's own; `mutants.ts`'s D275 re-point ledger, which is APPENDED to rather than
+    rewritten; and `D506-changelog-head-unnamed`'s `what`, `find` and `replace`, which are
+    **RE-POINTED WHOLESALE onto the heading above rather than value-swept** — kept in D508's
+    trimmed, label-proof form `engineVersion <old> → **<new>**`, **stopping before the `(`**,
+    which D508, D510, D512, D513, D514 and D515 have now each proved survives the caller's
+    labelling. The sweep ran as a WHITELIST of SIX exact line shapes — **written out and
+    counted BEFORE the edit and re-grepped after** — and never as a value-keyed grep, which is
+    the mechanism that ate D500's heading. **THE ARITHMETIC, MEASURED ON BOTH SIDES.** The six
+    classes counted `75 + 5 + 25 + 1 + 1 + 1 = 108` lines, and `108 + 9 = 117`, which was the
+    whole-literal grep before the edit. Afterwards the INCOMING literal greps to **117** lines
+    (`76 + 5 + 25 + 1 + 1 + 1 = 109` swept sites — the extra `expect(engineVersion)` is this
+    slice's own new suite — plus **EIGHT** lines no class covers, ENUMERATED rather than
+    rounded: this heading's source, its labelling-debt sentence and one line of this exception
+    list; `handRefreshOpponentHand.test.ts`'s header arrow; `mutants.ts`'s D275 ledger; and
+    `D506-changelog-head-unnamed`'s `what`, `find` and `replace`) and the OUTGOING one to
+    **FOURTEEN**, enumerated above and nothing else. That is the check rather than the intention (D488).
+    ⚠️ **AND `precheck` WAS RE-RUN AFTER EVERY `index.ts` EDIT** (it is not part of `check`).)
     🆕🆕🆕 engineVersion 0.401.0 → **0.402.0** (D515 — THE THIRD MEMBER OF THE PRINTED *"Discard a
     card from your hand. If you do, …"* FAMILY — AND THE BLOCKER WAS THE DESCRIBER, NOT THE
     ANCHOR. `censusAttackCorpus.ts` **FILE LINE 103** — *"Discard a card from your hand. If you
@@ -21151,7 +21280,7 @@ import type { GameState, Seat } from "./types";
     WITNESS** — the count was re-derived every slice and the word *"three"* was carried.
     A successor of this slice inherits **81 / 61 / 17** again, over **FIVE** history
     occurrences: those four plus `deckMillFilteredScale.test.ts`'s own header arrow.) */
-export const engineVersion = "0.402.0";
+export const engineVersion = "0.403.0";
 
 export type {
   ApplyResult,

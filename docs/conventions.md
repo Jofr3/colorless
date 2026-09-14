@@ -7546,6 +7546,52 @@ turn inside the same action, so the defender's turn-start draw lands before the 
 their hand comes back one HIGHER than it went in. A hand-size assertion written the obvious way is
 off by one in the direction that looks like the effect failing.
 
+### In `effects.ts`, a regex over raw text measures the commentary too (D516, naming D506's mechanism)
+
+D506 established that *a verifying regex must be at least as permissive as the one it checks*. D516
+found **why that keeps happening in this repo specifically**, after **four consecutive failed
+attempts by the caller to enumerate one union**:
+
+**`effects.ts`'s doc blocks quote code-like prose.** They contain `type`, `kind: "…"`, `{ op: … }`
+and whole sentences about types. So a regex run over the raw file matches **the commentary as well as
+the code**, and the failure is silent — it returns a shorter list, never an error.
+
+Two measured instances from one slice:
+
+- A window-limited enumeration of `DamageCountSource` reported **6 members**, and a brace-aware walk
+  reported the same, because both terminated on punctuation inside a doc comment. The union has
+  **19**.
+- Twice the extraction reported `cardsInOpponentHand` **absent** — moments after the caller had
+  watched that exact kind derive live from `deriveAttackDamageMultiplier`.
+- A search for the nearest preceding `type ` declaration anchored on the words *"type would have to
+  change"*, **inside a comment**.
+
+**The rules:**
+
+1. **Prefer asking the type over parsing the text.** `count: DamageCountSource` at the field's
+   declaration settled in one line what four regexes could not.
+2. **Prefer driving over reading.** A value that derives live is proof of membership; an extraction
+   that disagrees with a live derivation is wrong, and the derivation wins.
+3. If you must parse, **strip comments first** — and treat a shorter-than-expected list as a
+   suspected instrument failure, not a finding.
+4. ⚠️ **A disagreement between your extraction and someone else's is not evidence they are wrong.**
+   Resolve it to a cause. At D516 the caller's four attempts all lost to the builder's one.
+
+### A refusal that names a function ages well — second confirmation (D516, with D515)
+
+D515 found that **D473 named its blocker 42 decisions early and was right in every clause**, because
+it named *what was missing* rather than *what the text looked like*. D516 is the same result on a
+different row: **`SHUFFLE_HAND_DRAW`'s D479 doc block names the row, names the axis, enumerates the
+four existing members, concludes "that row needs a fifth member" — and drives that refusal as an
+executable falsifier.** 37 decisions later it was exactly right.
+
+⚠️ **And the operational half, which cost real time at D516:** the row carried **three** shipped
+witnesses, and only one of them reddened when the row was built. **A pass that chases only the rung
+that goes red leaves the others green and wrong.** When a refusal is overturned, **sweep every rung
+that carried its unbuiltness as a premise** — they are findable because a function-shaped refusal
+names the thing they all depend on.
+
+
 ## Git / commits
 - Branch off `main` for non-trivial work; commit/push only when asked.
 - Commit trailer per global config: `Co-Authored-By: Claude ...`.

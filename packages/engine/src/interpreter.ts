@@ -9784,6 +9784,17 @@ function handRefreshDrawCount(
       return state.players[seat].prizes.length;
     case "perSeat":
       return seat === controller ? draw.you : draw.opponent;
+    // 🆕 D516 — the CONTROLLER's opponent, and never `otherSeat(seat)`. `who:
+    // "opponent"` one field up already reads the word that way, so a second reading here
+    // would make one word name two seats inside one op; and this arm is ONE ANSWER FOR
+    // EVERY AFFECTED SEAT, which is what keeps `HandRefreshDraw`'s standing claim that
+    // `perSeat` is the only member that is not. On the printed sentence (`who: "you"`)
+    // the two readings are the same seat, so no board separates them (D104).
+    // `hand.length` and not `countCardsInHand(…, anyCard)`: the printed noun has no
+    // filter, the SIZE of a hand is public, and this is `handPlus`'s own reading of the
+    // same question one arm up.
+    case "opponentHandSize":
+      return state.players[otherSeat(controller)].hand.length;
   }
 }
 

@@ -98,13 +98,30 @@ const PRINTED = "Shuffle your hand into your deck. Then, draw 6 cards.";
     of them counts the OPPONENT's hand: `fixed` is a constant, `handPlus` reads the
     drawing seat's own pre-move hand, `prizeCount` its own Prizes, `perSeat` picks one
     of a printed PAIR by seat. So this row needs a FIFTH member and stays LOUD, and that
-    refusal is this anchor's own falsifier rather than a constructed one (D399). */
+    refusal is this anchor's own falsifier rather than a constructed one (D399).
+
+    🆕 **D516 BUILT IT, AND THE PARAGRAPH ABOVE IS KEPT VERBATIM WITH ITS RECEIPT
+    DATED HERE** (D178/D438). Every clause was true when written: the fifth member is
+    exactly what the row needed, and it is now `HandRefreshDraw.opponentHandSize`, claimed
+    by `SHUFFLE_HAND_DRAW_PER_OPPONENT_HAND` — a SECOND anchor, so `SHUFFLE_HAND_DRAW`'s
+    own `(\d+)` still refuses this string and every rung below that says so is re-pointed
+    ONTO THE SHAPE rather than deleted. ⚠️ **THREE RUNGS IN THIS FILE HAD THIS
+    SENTENCE'S UNBUILTNESS AS THEIR PREMISE** — §1's reader pair, §3's COUNT
+    falsifier and §6's ZERO-MATCH board — and a re-point that only chased the one
+    that reddened would have left the other two green and wrong (D444). */
 const DERIVED_COUNT = "Shuffle your hand into your deck. Then, draw a card for each card in your opponent's hand.";
 
 /** D404's sentence — the SIBLING, and the reason §3's sharpest rung is a `not.toEqual`
     rather than a `toBeNull`: both anchors are `^…$` and a string cannot begin two ways,
     so the disjointness is STRUCTURAL (D467's first preference) and carries no guard. */
 const SIBLING = "Discard your hand and draw 6 cards.";
+
+/** 🆕 D516 — THE CONSTRUCTED NEAR-MISS §6's zero-match board runs on, now that the
+    printed one it used (`DERIVED_COUNT`, corpus line 487) is BUILT. It varies the count's
+    SOURCE ZONE and nothing else, which is the axis `opponentHandSize` names; no anchor in
+    `effects.ts` claims it and §3 drives that in the same pass. */
+const UNREAD_COUNT_SOURCE =
+  "Shuffle your hand into your deck. Then, draw a card for each card in your hand.";
 
 /** THE PROGRAM, spelled once and reused, so a case cannot pass against a hand-copied
     literal that has drifted from what the file means by it. */
@@ -167,11 +184,27 @@ describe("D479 §1 — the printed data, measured live over the legal column", (
       if (read === deriveAttackEffect) continue;
       expect(read(PRINTED), read.name).toBeNull();
     }
-    // …and its near-miss is still refused by ALL THIRTEEN. This is the pair that makes
-    // the rung above a claim about the ANCHOR and not about the corpus: one sentence in
-    // and one out, differing on the count alone.
-    expect(resolvedByAnyReader(DERIVED_COUNT)).toBe(false);
-    for (const read of READERS) expect(read(DERIVED_COUNT), read.name).toBeNull();
+    // 🆕 D516 RE-POINTED THIS PAIR RATHER THAN DELETING IT (D444). It used to read
+    // *"one sentence in and one out, differing on the count alone"*; both are in now, so
+    // the pair is re-pointed onto what it was always for — that each is claimed by
+    // EXACTLY ONE reader, and that the two differ in their PROGRAMS on the draw member
+    // alone. That is a strictly sharper claim about the anchors than a `toBeNull` was:
+    // a widening of either anchor across the other's string reddens it.
+    expect(resolvedByAnyReader(DERIVED_COUNT)).toBe(true);
+    expect(deriveAttackEffect(DERIVED_COUNT)).toEqual([
+      { op: "handRefresh", who: "you", draw: { kind: "opponentHandSize" } },
+    ]);
+    for (const read of READERS) {
+      if (read === deriveAttackEffect) continue;
+      expect(read(DERIVED_COUNT), read.name).toBeNull();
+    }
+    // …and the two programs are the SAME op with the SAME seat and differ in `draw` only.
+    const near = deriveAttackEffect(DERIVED_COUNT);
+    const base = deriveAttackEffect(PRINTED);
+    expect(near).toHaveLength(1);
+    expect(base).toHaveLength(1);
+    expect({ ...near?.[0], draw: null }).toEqual({ ...base?.[0], draw: null });
+    expect(near).not.toEqual(base);
   });
 });
 
@@ -243,9 +276,25 @@ describe("D479 §3 — the refusals, each pinned on ONE printed byte", () => {
   });
 
   it("🛑 the COUNT, the SEAT, the DESTINATION and the JOIN refuse INDEPENDENTLY", () => {
-    // …the COUNT alone, and it is the REAL printing rather than a construction: corpus
-    // line 487 needs a fifth `HandRefreshDraw` member.
-    expect(deriveAttackEffect(DERIVED_COUNT)).toBeNull();
+    // …the COUNT alone. 🆕 D516 RE-POINTED THIS RUNG ONTO THE SHAPE (D444/D438): the
+    // real printing at corpus line 487 is BUILT now, by a SECOND anchor, so the claim
+    // this rung has always made — *"this anchor's `(\d+)` refuses a derived count"* — is
+    // asserted as *"the derived string does not produce THIS arm's program"* rather than
+    // as a `toBeNull` that has stopped being true. A widening of `SHUFFLE_HAND_DRAW`
+    // onto the derived string reddens it, which is exactly what the `toBeNull` bought.
+    expect(deriveAttackEffect(DERIVED_COUNT)).not.toEqual(program(6));
+    expect(deriveAttackEffect(DERIVED_COUNT)?.[0]).toMatchObject({
+      draw: { kind: "opponentHandSize" },
+    });
+    // …and the COUNT axis still has a LOUD side, on a string this column does not print
+    // and no anchor claims. It is CONSTRUCTED and says so (D452: a byte pin on an
+    // invented string is green by construction, so it is a control and never evidence
+    // about the column) — the real near-miss was spent when D516 built it.
+    expect(
+      deriveAttackEffect(
+        "Shuffle your hand into your deck. Then, draw a card for each card in your hand.",
+      ),
+    ).toBeNull();
     // …the SEAT alone: the printed subject is "your", and `who: "opponent"` /
     // `who: "both"` are the op's other two values. Neither spelling is printed in the
     // attack column, and admitting either would empty a hand this sentence never names.
@@ -511,9 +560,14 @@ describe("D479 §6 — the falsifiers, driven rather than argued", () => {
   it("🛑 ZERO-MATCH BOARD — the near-miss on the SAME body is SILENT, and loudly so", () => {
     // THE CONTROL THAT SEPARATES THIS ARM FROM SILENCE-FOR-ANOTHER-REASON. The board,
     // the fixture, the cost, the seat and the damage are identical to §4's; only the
-    // printed STRING differs, and it differs on the count alone (corpus line 487). So a
-    // green §4 plus a green rung here cannot both be explained by the board.
-    const state = fielded(8, DERIVED_COUNT);
+    // printed STRING differs, and it differs on the count alone. So a green §4 plus a
+    // green rung here cannot both be explained by the board.
+    // 🆕 D516 RE-POINTED THE STRING, NOT THE RUNG (D444). It was corpus line 487, which
+    // this repo BUILT one slice later; the control still has to exist, so it now runs on
+    // a CONSTRUCTED sibling that varies the same axis (the count's SOURCE zone) and that
+    // no anchor claims. ⚠️ A constructed specimen is a control and never evidence about
+    // the printed column (D452) — the column claim §1 makes is measured there.
+    const state = fielded(8, UNREAD_COUNT_SOURCE);
     const before = state.players.p1;
     const oldHand = [...before.hand];
     const oldDeck = [...before.deck];
@@ -561,6 +615,6 @@ describe("D479 §7 — what this slice did NOT buy, measured", () => {
     //   • REACHABILITY (D450) — the op NEVER PARKS, so no `phase.cont.pendingOp` or
     //     `rest` can hold it and no saved match can contain a shape an older deploy
     //     could not read. `interpreter.ts`'s case returns `{ done: … }` and nothing else.
-    expect(engineVersion).toBe("0.402.0");
+    expect(engineVersion).toBe("0.403.0");
   });
 });
