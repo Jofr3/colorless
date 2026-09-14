@@ -27654,3 +27654,99 @@ printed 0 times over all 640 legal sentences; *"different"* appears on exactly t
   arise — measured, not assumed.
 · **The census step rotted pins in FOUR WAVES** (26 → 19 → 9 → 7 failures), because vitest stops an
   `it` at its first throw. Several later waves were in files edited in an earlier one.
+
+## D514 — the printed *"any number of"* and a proper NAME as the deck-search noun: the road that looked cheaper paid the same field (engine 0.401.0)
+
+`censusAttackCorpus.ts` **FILE LINE 657** — *"You may search your deck for any number of Fennel
+cards, reveal them, and put them into your hand. Then, shuffle your deck."* — **1 sentence / 2 legal
+printings** (`sv10.5b-036` / `sv10.5b-117`), claimed by `deriveAttackEffect`.
+
+### (a) The question the slice was set, and the answer
+
+*"One more registry row, or a reader for the family?"* — with the registry road offered as the cheap
+one. **It is not cheaper, and the reason is in the sibling's own program.** The bench twin
+(`sv09-068`, FILE LINE 656, *"…any number of Basic Lillie's Pokémon and put them onto your Bench…"*)
+IS a registry row, and `LILLIES_COMFEY` spells its printed *"any number"* as `max: BENCH_MAX` —
+sound **because the DESTINATION supplies a cap**: a bench-bound search is clamped to `benchSpace` in
+two places, so `BENCH_MAX` is the largest value that sentence can ever mean.
+
+**A HAND has no cap at all.** The hand printing therefore has no number a registry author could write
+down — only a deck size, which is not a printed word — so the registry road would have had to widen
+`searchDeck.max` too, or caption the dialog with a number the card does not print (D190b's
+wrong-but-plausible program). **The op field is the half BOTH roads pay.** What the reader road buys
+on top is an arm that serves every reprint (D187) and a noun the whole family shares.
+
+### (b) Both halves of the mechanism already shipped, and one of them 284 decisions ago
+
+- **`"any"`** is `lookAtTopN.max`'s member since **D333**, and `attachFromTop.max` has carried it
+  since M5. D333's finding is the whole reason it is spelled rather than resolved: *"a value that is
+  equivalent as a PREDICATE is not equivalent as a CAPTION"*.
+- **`byName { cardNoun }`** has spelled *"⟨Name⟩ cards"* since **D264**, and **`ATTACK_BENCH_SEARCH`
+  has captured a proper name into `byName` since D230** — *"Search your deck for a Pikachu and put
+  it onto your Bench…"* (FILE LINE 447) has been BUILT all along, and the column carries **four**
+  such rows (Pikachu, Froakie, Grubbin, Charjabug), every one onto the BENCH. The named deck search
+  was never missing; ONE of the family's three anchors could not ask the question.
+
+So: **ZERO** new ops, `CardFilter` members, prompt kinds, prompt fields, choice kinds, validator
+branches, events, error codes, registry rows, `FIXTURE_POOL` ids, `redact.ts` bytes or
+`packages/schema` bytes. ONE op-field widening, ONE anchor alternative, ONE resolver, ONE caption
+branch.
+
+### (c) The anchor answered NULL — and it was only the FIRST of two layers
+
+D510's habit is now four-for-four and this is the first YES. The PRE-slice `ATTACK_HAND_SEARCH`
+returns **null** on the printed bytes: its plural branch demands a literal `up to \d+`. 🛑 **Repair
+the count alone and the pattern MATCHES**, captures `Fennel cards` whole, and dies one step later in
+`HAND_SEARCH_PLURAL.get` — the very call that killed D513's row. The 2⁴ lattice says the same thing
+from the instrument side: **COUNT and NOUN each flip the verdict at 4 of 8 cells**, D507's
+conjunctive signature.
+
+⚠️ The recorded deferral reason was the only entry in either refusal table that named **both** of its
+blockers (*"`byName` at an UNBOUNDED max the `(\d+)` group cannot spell"*) — and it was still filed
+under a heading claiming the remaining rows were *"ALL NOUNS"*. **That heading has now been wrong in
+the same direction twice** (D513, D514).
+
+### (d) The third mechanism the standing pricing named was already FREE
+
+The D473-era resume point priced this row at *"three mechanisms — a `byName` filter, an unbounded
+count, and the `You may` optional wrapper"*. The wrapper is the anchor's leading
+`(?:You may search|Search)` alternative and has been there since **D231**. The OPENER axis flips the
+verdict at **0 of 8** cells, before the slice and after it. **Two, not three** — and the difference
+is a lattice run rather than a reading.
+
+### (e) The lattice ends ALL-ZERO and that does NOT mean the guard was free
+
+| state | flip table (of 8) | built |
+|---|---|---|
+| PRE | `OPENER 0 · COUNT 4 · NOUN 4 · REVEAL 0` | 4 of 16 |
+| POST | `OPENER 0 · COUNT 0 · NOUN 0 · REVEAL 0` | **16 of 16** |
+
+Readers-only and `builds()` agree at every point, both splitters null at **32/32** (a real
+opportunity: every point carries a second depth-0 segment), all 16 points distinct.
+
+🛑 This slice also NARROWS — `namedCardNounFilter` refuses `Ancient`/`Future`/`Tera`, the one axis
+D440 refused `^(.+) card$` on — and D513's rule says a narrowing moves an axis off zero. **It does
+not here, because the lattice's axes are the SENTENCE'S OWN variation and the banner is a value this
+sentence never takes.** The *"printed zero times"* measurement is paid by hand in the suite's §1
+instead, and the omission is recorded in the lattice rung so a successor does not read `[0,0,0,0]`
+as *"cost nothing"*.
+
+### (f) A shipped claim that was false as stated, in the file nobody was editing
+
+`attachFromDeck.max` read *"no `"any"`: no printed search says 'any number', because a search that
+emptied your deck of Energy would be a different card"*. The REASON is about ENERGY and holds; the
+CLAIM quantifies over every printed search and the attack column falsifies it — FILE LINES 656 and
+657, **2 sentences / 3 legal printings**. `registry.ts`'s `LILLIES_COMFEY` block caught it at
+**D313** and corrected it **in the file it was editing**, which is why it stood in `effects.ts` for
+two hundred decisions. **D508's rule at its second address.** Both copies now agree.
+
+### (g) What the instruments could and could not see
+
+- `residue-census.ts` classified the row **SUBST-11** onto the built sibling and named the whole
+  11-token span — right about the delta, silent about the fact that it is TWO independent axes.
+- `opaque-anatomy.ts` never had it: the row sat in **MULTI-2**, and its `ANY-NUMBER-OF` marker was
+  already a **co-marker** (built side 5/12 before, 6/14 after) — i.e. the instrument had recorded
+  that the phrase was served somewhere and was NOT why the sentence was opaque. **`VARIABLE-MAX`
+  stands still at 3/4 and is still a blocker**, so the D473-era pricing that put this row in *"the
+  `BLOCKED-VARIABLE-MAX` neighbourhood"* was about proximity and not membership.
+- `OPAQUE` **57/82 → 56/80** at SUBMAX=4; `MULTI-2` **7/10 → 6/8**; **no verdict flipped**.

@@ -6038,7 +6038,51 @@ export type EffectOp =
 
           🛑 **AND IT IS WHY `exact` BELOW IS A CORRECTNESS FIELD.** See there. */
       dest: "bench" | "hand" | "deckTop";
-      max: number;
+      /** 🆕🆕🆕 **D514 — `"any"` IS THE PRINTED *"any number of"*, AND IT IS
+          `lookAtTopN.max`'s MEMBER (D333) AT A THIRD OP RATHER THAN A NEW IDEA.**
+          *"You may search your deck for **any number of** Fennel cards, reveal them,
+          and put them into your hand. Then, shuffle your deck."* —
+          `censusAttackCorpus.ts` **FILE LINE 657**, **1 sentence / 2 legal printings**.
+
+          🛑 **THE FIELD'S OWN DOC SAID THIS VALUE COULD NOT ARISE, AND THAT SENTENCE
+          WAS FALSE WHEN IT WAS WRITTEN.** `attachFromDeck`'s `max` bullet reads *"no
+          `"any"`: no printed search says "any number", because a search that emptied
+          your deck of Energy would be a different card"* — true of the ENERGY searches
+          it was written about, and false as stated: the attack column prints *"search
+          your deck for any number of …"* on **2 sentences / 3 legal printings** (file
+          lines 656 and 657). `registry.ts`'s `LILLIES_COMFEY` block spotted it and
+          corrected it **in the file it was editing**, which left the claim standing in
+          THIS one — D508's *"a refusal corrected in place can stay false in the file
+          you were not editing"*, at its second address. Corrected here too.
+
+          🛑 **AND THE BENCH TWIN IS WHY A REGISTRY ROW COULD NOT HAVE PAID FOR THIS
+          ONE.** `sv09-068` spells its printed *"any number"* as `max: BENCH_MAX`, and
+          that is sound **because the DESTINATION supplies a cap**: a bench-bound search
+          is clamped to `benchSpace` in two places, so `BENCH_MAX` is the largest value
+          the sentence can ever mean. A **HAND** has no cap at all. So the hand printing
+          has no number to hand-write — only a deck size, which is not a printed word —
+          and a registry road would have had to spell this member anyway or ship a
+          caption the card does not carry. **The op field is not the expensive half of
+          the reader road; it is the half BOTH roads pay.**
+
+          **NO WIRE SHAPE MOVES FOR IT**, `moveCap`'s and D333's stated reason at a
+          third address: the park resolves `"any"` against the FIRST GROUP's own
+          candidate count before anything reaches `prompt.max`, which stays a `number`.
+          `also[].max` stays a bare `number` because no printing spells an unbounded
+          SECOND noun (D331's rule against shipping a value no card reaches).
+
+          ⚠️ **`MATCH_RECORD_VERSION` DOES NOT MOVE FOR THIS, AND THE ARGUMENT IS A
+          WIDENING RATHER THAN D125's ABSENT-KEY TEST** (D463: pick the argument SHAPE
+          that is true). The door is the one `also`, `distinctEnergyTypes` and
+          `recordAs` already name — `searchDeck` parks, so its literal rides
+          `EffectContinuation.pendingOp` inside `MatchRecord.state.phase.cont`. No key
+          is added and none is removed: every v30 record's `pendingOp.max` is a
+          `number`, `number` is still an inhabitant of this type, and it still means
+          exactly what it meant. That is D359's *"a WIDENING is free and a RENAME is
+          not"*, and it is `lookAtTopN.max`'s own precedent, which this op's doc block
+          has cited as a no-bump case since D336. Driven over a reconstructed v30
+          `pendingOp` in `namedDeckSearch.test.ts` §4 rather than argued. */
+      max: number | "any";
       /** 🆕 **D342 — THE PRINTED TAKE WITH NO *"up to"*, `lookAtTopN.exact`
           (D334) one op over and the same field name deliberately.** Absent on
           every producer before this row, where the search is the standing
@@ -8591,9 +8635,20 @@ export type EffectOp =
         search-then-shuffle pattern every deck search in this vocabulary follows,
         and it runs on the whiff and the decline exactly as a whiffed search does.
       • **`n` has no meaning** — a search sees the whole deck. `max` is the
-        printed "up to N", already a number (no `"any"`: no printed search says
-        "any number", because a search that emptied your deck of Energy would be
-        a different card).
+        printed "up to N", already a number, and on THIS op it stays one because
+        every sentence that reaches it spells a digit.
+        🛑 **D514 — THE PARENTHETICAL THAT USED TO SIT HERE WAS FALSE AS STATED AND
+        IS CORRECTED RATHER THAN DELETED (D178/D466).** It read *"no `"any"`: no
+        printed search says "any number", because a search that emptied your deck of
+        Energy would be a different card"*. The REASON is sound and is about ENERGY,
+        which is the population this op reads; the CLAIM quantifies over every printed
+        search and the attack column falsifies it — file lines 656 and 657 spell
+        *"search your deck for **any number of** Basic Lillie's Pokémon / Fennel
+        cards"*, **2 sentences / 3 legal printings**. `registry.ts`'s `LILLIES_COMFEY`
+        block caught it at D313 and corrected it **in the file it was editing**, which
+        is why it stood here for two hundred decisions — D508's rule, at its second
+        address. `searchDeck.max` now carries the `"any"` member; this op still does
+        not, and the difference is a measurement rather than an oversight.
 
       `maxPerTarget` is the printed "**for EACH of those Pokémon** … attach it to
       THAT Pokémon". Charizard's "in any way you like" allows every split
@@ -21066,6 +21121,57 @@ function typedNounFilter(phrase: string, plural: boolean): CardFilter | undefine
   const energyType = ENERGY_TYPE_BY_CODE[code];
   return energyType === undefined ? undefined : { kind: "basicEnergy", energyType };
 }
+/** 🆕🆕🆕 **D514 — A PRINTED PROPER NAME CARRYING THE "cards" HEAD NOUN, resolved
+    to `byName`.** *"…search your deck for any number of **Fennel cards**…"*
+    (`censusAttackCorpus.ts` FILE LINE 657). `undefined` for anything else, which is
+    `typedNounFilter`'s contract one function up and this family's standing rule: an
+    unresolvable phrase falls through to the loud `ATTACK_EFFECT_SKIPPED` path rather
+    than being approximated.
+
+    🛑 **A CAPTURE RATHER THAN A MAP, AND D440's OWN TEST IS WHAT DECIDES IT —
+    "CLASSIFY THE DATUM".** `Card.name` is the catalog's own persisted column
+    (`attackNamePokemon` and `supporterNameContaining` both make this argument at this
+    exact address), so a captured name that matches nothing is a genuine ZERO on a real
+    column rather than a permanently-empty candidate set. A closed map would spell one
+    row and make the next reprint a second row, where the arm this feeds serves every
+    printing of the sentence.
+
+    🛑 **WHICH IS EXACTLY WHY THE BANNERS ARE REFUSED HERE, AND THIS IS THE ONE AXIS
+    D440 REFUSED `^(.+) card$` ON.** *"Ancient"*, *"Future"* and *"Tera"* are printed
+    on the card FACE and are in **no column of the persisted catalog** (D204/D205/D207,
+    re-confirmed every slice since) — `byName { name: "Ancient" }` would match nothing
+    on every board FOREVER while `BUILT.attack` stepped for it, which is D190b/D199's
+    wrong-but-plausible program at the instrument layer. **The column prints
+    *"search your deck for … Ancient/Future/Tera cards"* ZERO times** (measured over all
+    640 legal attack sentences), so this is a guard on a future print rather than on a
+    current one — and it is DRIVEN, because a guard nothing reaches is a guard nobody
+    can trust.
+
+    ⚠️ **AND IT IS WHY THIS ANCHOR CARRIES A GUARD ITS TWO SIBLINGS DO NOT.**
+    `ATTACK_BENCH_SEARCH` and `ATTACK_DISCARD_RETRIEVAL` both capture
+    `([A-Z][a-zé]+)` with NO banner refusal, and that is not an omission: their name
+    slot is BARE (*"up to 2 Duskull"*, *"a Pikachu"*), and *"an Ancient"* is not a
+    printed noun phrase in any column. D440's refusal is about the **"card"-suffixed**
+    form, which is the form THIS anchor's slot takes.
+
+    ⚠️ **THE NAME CLASS IS `ATTACK_BENCH_SEARCH`'s, RE-READ RATHER THAN
+    RE-INVENTED** — a single capitalised word, so a hyphenated / spaced /
+    apostrophised name falls through to the loud skip path rather than being
+    approximated. `cardNoun` is the printed "cards" itself: `retrieveNoun` spells
+    `${name} cards` back for exactly this value, which is what keeps the dialog
+    caption and the printed sentence the same phrase (`HAND_SEARCH_NOUNS`' contract,
+    honoured by a capture instead of by a row). */
+const NAMED_CARD_NOUN = /^([A-Z][a-zé]+) cards$/;
+/** The three printed FACE BANNERS. Not a `CardFilter`, not a `Card` column, not a
+    catalog key — demand with no supply (D207), which is the whole reason this Set
+    exists rather than the capture being trusted. */
+const PRINTED_CARD_BANNERS: ReadonlySet<string> = new Set(["Ancient", "Future", "Tera"]);
+function namedCardNounFilter(phrase: string): CardFilter | undefined {
+  const match = NAMED_CARD_NOUN.exec(phrase);
+  if (match === null) return undefined;
+  const name = match[1] ?? "";
+  return PRINTED_CARD_BANNERS.has(name) ? undefined : { kind: "byName", name, cardNoun: true };
+}
 /** The same phrases as a regex FRAGMENT, per grammatical number and per anchor.
     Three constants rather than one because each anchor spells the article in a
     different place, and welding the article to the number is what stops the
@@ -21210,19 +21316,31 @@ const ATTACK_BENCH_SEARCH_THEN_MOVE = new RegExp(
 // and at the sentence end, and it is why the table can be consulted with a whole
 // printed phrase.
 //
-// ⚠️ THE FOURTEEN LEFT ARE ALL NOUNS, AND THE TABLE REFUSES EVERY ONE (asserted,
-// not listed): "up to 3 {D} Pokémon" (2) and "up to 2 {L} Pokémon" (1) want a
+// ⚠️ THE FOURTEEN LEFT WERE FILED AS "ALL NOUNS" AND TWO OF THEM WERE NOT (D513,
+// D514 — the heading is wrong in the same direction twice, so read each entry and
+// not the heading). The table refuses every NOUN among them (asserted, not listed): "up to 3 {D} Pokémon" (2) and "up to 2 {L} Pokémon" (1) want a
 // TYPE-narrowed Pokémon filter; "up to 3 Misty's Pokémon" (2) is `ownerPokemon`
 // behind a possessive capture; "up to 3 in any combination of {R} Pokémon and
-// Basic {R} Energy cards" (2) is a typed DISJUNCTION; "any number of Fennel
-// cards" (2) is `byName` at an UNBOUNDED max the `(\d+)` group cannot spell;
+// Basic {R} Energy cards" (2) is a typed DISJUNCTION;
+// 🆕🆕🆕 **D514 BUILT "any number of Fennel cards" (2) AND THE REFUSAL BELOW IS
+// RETIRED RATHER THAN RE-POINTED.** It read *"is `byName` at an UNBOUNDED max the
+// `(\d+)` group cannot spell"*, and **that is the only entry in this list that ever
+// named its blocker correctly and named it TWICE OVER** — the noun AND the count,
+// a genuine conjunction. It was still mis-FILED, for D513's reason one entry up: the
+// heading says these fourteen are "ALL NOUNS" and this one is a noun problem **and**
+// a count problem, so a successor reading the heading would have priced half of it.
+// Both halves are now shipped — the count as `(any number of)`, GROUP 4 of the
+// anchor and `searchDeck.max: "any"`; the noun as `namedCardNounFilter`, the THIRD
+// resolver behind the table. **The `You may` wrapper the standing pricing named as a
+// third mechanism was already free and had been since D231.**
 // "up to 3 Basic {G} Energy cards" (1) wants the brace code resolved;
 // 🆕🆕🆕 **D513 BUILT "up to 3 Basic Energy cards of different types" (1) AND THE
 // REFUSAL BELOW IS RETIRED RATHER THAN RE-POINTED** — it read *"is a distinctness
 // constraint"*, which was true and told a successor nothing about where to put one.
 // **The phrase never reached the noun table as a noun problem at all**: the
 // `([^,.]+?)` capture swallowed it whole, so this list has been mis-filing it under
-// "ALL NOUNS" since D231. It is now GROUP 5 of the anchor and a `searchDeck` rider;
+// "ALL NOUNS" since D231. It is now GROUP 6 of the anchor (group 5 until D514) and a
+// `searchDeck` rider;
 // see that key's doc block for why no `CardFilter` could have taken it.
 // "up to 5 Pokémon that are the same type as any Basic Energy
 // attached to this Pokémon" (1) is board-dependent; "a number of cards up to the
@@ -21274,12 +21392,34 @@ const HAND_SEARCH_NOUNS: readonly (readonly [string, string, CardFilter])[] = [
 const HAND_SEARCH_SINGULAR = new Map(HAND_SEARCH_NOUNS.map(([one, , filter]) => [one, filter]));
 const HAND_SEARCH_PLURAL = new Map(HAND_SEARCH_NOUNS.map(([, many, filter]) => [many, filter]));
 // Groups: 1 the singular noun phrase WITH its article, 2 the singular reveal
-// clause, 3 the printed count, 4 the plural noun phrase, 5 the DISTINCTNESS
-// clause, 6 the plural reveal clause. The pronoun is welded to the number on both
-// halves ("a … put it" / "up to N … put them"), so the crossed forms no card
-// prints cannot match.
+// clause, 3 the printed count, 4 the printed UNBOUNDED quantifier, 5 the plural
+// noun phrase, 6 the DISTINCTNESS clause, 7 the plural reveal clause. The pronoun
+// is welded to the number on both halves ("a … put it" / "up to N … put them" /
+// "any number of … put them"), so the crossed forms no card prints cannot match.
 //
-// 🆕🆕🆕 **D513 — GROUP 5 IS ONE OPTIONAL GROUP AND NOT A SECOND ANCHOR**, D458's
+// 🆕🆕🆕 **D514 — GROUP 4 IS THE PRINTED *"any number of"*, AND IT IS AN
+// ALTERNATIVE TO THE COUNT RATHER THAN AN OPTIONAL GROUP BESIDE IT.** *"You may
+// search your deck for **any number of** Fennel cards, reveal them, and put them
+// into your hand. Then, shuffle your deck."* — `censusAttackCorpus.ts` **FILE LINE
+// 657**, **1 sentence / 2 legal printings**.
+//
+// 🛑 **THE COUNT AND THE QUANTIFIER ARE THE SAME SLOT AND EXACTLY ONE IS PRINTED**,
+// so they are two alternatives of one group rather than two optional groups — D451's
+// rule pointed the other way round. Written as `(up to \d+)?(any number of)?` the
+// pattern would admit the empty slot and the crossed slot, neither of which any card
+// prints; written as an alternation it admits exactly the two printed forms and the
+// arm still dispatches on WHICH GROUP MATCHED and never on the matched text.
+//
+// ⚠️ **THE OPENER AXIS WAS ALREADY FREE AND THIS SLICE DID NOT PAY FOR IT.** The
+// standing pricing of this row (the D473-era resume point) named THREE mechanisms —
+// the name, the unbounded count and *"the `You may` optional wrapper"*. The wrapper
+// is the leading `(?:You may search|Search)` alternative and has been in this
+// anchor since **D231**; D514's own 2⁴ lattice measures it flipping the verdict at
+// **0 of 8** cells. **Two mechanisms, not three.**
+//
+// 🆕🆕🆕 **D513 — GROUP 6 IS ONE OPTIONAL GROUP AND NOT A SECOND ANCHOR**, D458's
+// (RE-POINTED BY D514: it was group 5 until the quantifier alternative was inserted
+// ahead of it — D458's re-transcription rule, paid at the comment as well as at the code.)
 // call on the attach family's second noun, made again for the same reason: the
 // sentence differs from corpus FILE LINE 474 in this phrase and in NOTHING else —
 // same verb, same pronoun, same count, same reveal clause, same destination, same
@@ -21300,10 +21440,10 @@ const HAND_SEARCH_PLURAL = new Map(HAND_SEARCH_NOUNS.map(([, many, filter]) => [
 // is what makes it reachable: `([^,.]+?)` prefers the shortest match, so it stops
 // at `cards` and lets this group take the phrase rather than swallowing it. Both
 // orderings are driven, and so is the fact that the six OTHER plural nouns in the
-// table still capture with group 5 absent.
+// table still capture with group 6 absent.
 const ATTACK_HAND_SEARCH = new RegExp(
   "^(?:You may search|Search) your deck for (?:(an? [^,.]+?)(, reveal it,)? and put it" +
-    "|up to (\\d+) ([^,.]+?)( of different types)?(, reveal them,)? and put them)" +
+    "|(?:up to (\\d+)|(any number of)) ([^,.]+?)( of different types)?(, reveal them,)? and put them)" +
     " into your hand\\. Then, shuffle your deck\\.$",
 );
 
@@ -26831,27 +26971,56 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   match = ATTACK_HAND_SEARCH.exec(effect);
   if (match !== null) {
     const one = match[1];
-    const many = match[4];
+    const many = match[5];
     // ⚠️ D238 — THE TABLE IS CONSULTED FIRST AND THE BRACE PATTERN ONLY EVER SEES
     // A PHRASE NO ROW CLAIMED, which is `CONDITIONAL_DAMAGE_CLAUSES`' ordering
     // rule one family over. **This anchor needed NO regex change at all**: its
     // `[^,.]+?` capture has always admitted a brace phrase, and the table's
     // silence was the whole refusal — so the fix here is one `??` and the pattern
     // that answers it.
+    //
+    // 🆕🆕🆕 **D514 — THE NAME IS THE THIRD FALLTHROUGH AND IT IS ORDERED LAST,
+    // WHICH IS THE WHOLE OF WHY IT CAN BE A CAPTURE AT ALL.** The closed table runs
+    // first, so *"Energy cards"*, *"Item cards"*, *"Supporter cards"*, *"Stadium
+    // cards"*, *"Pokémon Tool cards"* and *"Trainer cards"* are all claimed as
+    // CATEGORIES before any name pattern sees them — a name group ordered FIRST would
+    // read *"Energy cards"* as a card called "Energy".
+    // 🛑 **AND IT IS A FALLTHROUGH RATHER THAN AN ALTERNATIVE IN THE PATTERN, WHICH IS
+    // THE ONE PLACE THIS ANCHOR DIFFERS FROM ITS TWO SIBLINGS AND THE REASON IS THE
+    // LAZY CAPTURE.** `ATTACK_DISCARD_RETRIEVAL`'s block states the constraint from
+    // the other side: a lazy `([^,.]+?)` "would swallow `Duskull` before the name
+    // branch was ever tried", so that anchor spells its nouns as ALTERNATIVES and
+    // orders them table-first. This anchor keeps ONE lazy noun group and orders the
+    // RESOLVERS instead — same guarantee, same ordering, resolved after the match
+    // rather than during it.
     const filter =
       one === undefined
-        ? (HAND_SEARCH_PLURAL.get(many ?? "") ?? typedNounFilter(many ?? "", true))
+        ? (HAND_SEARCH_PLURAL.get(many ?? "") ??
+          typedNounFilter(many ?? "", true) ??
+          namedCardNounFilter(many ?? ""))
         : (HAND_SEARCH_SINGULAR.get(one) ?? typedNounFilter(one, false));
     // The absent count IS the article, `ATTACK_DRAW`'s reading for the fourth
     // slice running; `max >= 1` keeps a printed "up to 0" (unspelled by any card)
     // on the loud path rather than deriving a search that moves nothing and
     // shuffles anyway.
-    const max = match[3] === undefined ? 1 : Number(match[3]);
+    //
+    // 🆕🆕🆕 **D514 — AND THE PRINTED *"any number of"* IS `"any"`, SPELLED RATHER
+    // THAN RESOLVED.** D333's call on `lookAtTopN.max` and D244's on
+    // `moveEnergy.max`, made a third time for the same reason: the park can resolve
+    // the quantifier against the candidate count, but `searchNote` cannot un-print a
+    // number the card does not carry, and a dialog reading *"up to 4 Fennel cards"*
+    // over a sentence that spells none is the engine authoring text. Dispatched on
+    // WHICH GROUP MATCHED (group 4) and never on the matched text.
+    const max = match[4] !== undefined ? "any" : match[3] === undefined ? 1 : Number(match[3]);
     // 🆕🆕🆕 D513 — GROUP 5 WAS INSERTED AHEAD OF THE PLURAL REVEAL CLAUSE, so this
     // is a RE-TRANSCRIPTION and not a rename (D458): the plural reveal moved from
     // group 5 to group 6 and reading the old index would silently drop `reveal` off
     // every plural printing in the family. The singular index is untouched.
-    const revealed = (match[2] ?? match[6]) !== undefined;
+    // 🆕🆕🆕 D514 — RE-TRANSCRIBED AGAIN, one slice later and for the same reason:
+    // group 4 is now the quantifier, so the plural noun is 5, the distinctness clause
+    // is 6 and the plural reveal is 7. **Every index in this arm moved except the two
+    // singular ones**, which is why they are all re-read rather than patched.
+    const revealed = (match[2] ?? match[7]) !== undefined;
     // 🛑 D513 — THE RIDER IS DEFINED OVER `basicEnergy` AND THE REFUSAL IS LOUD
     // RATHER THAN SILENT. The park partitions the candidates by `energyProvidesOf`,
     // which answers for an Energy card and for nothing else, so a printed *"up to 3
@@ -26864,9 +27033,13 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
     // appears on exactly 2 rows, both `Basic Energy cards`), so this is a guard on a
     // future print rather than on a current one — and it is driven, because a guard
     // nothing reaches is a guard nobody can trust.
-    const distinct = match[5] !== undefined;
+    const distinct = match[6] !== undefined;
     const spellable = !distinct || filter?.kind === "basicEnergy";
-    if (filter !== undefined && max >= 1 && spellable) {
+    // 🆕 D514 — the floor guards the PRINTED count only. `"any"` carries no digit to
+    // be zero, so the guard is stated over the number rather than over the union and
+    // a fourth quantifier cannot fall silently through it (`moveCap`'s own rule, one
+    // file over: test `typeof === "number"`, never `!== "any"`).
+    if (filter !== undefined && (typeof max !== "number" || max >= 1) && spellable) {
       return [
         {
           op: "searchDeck",

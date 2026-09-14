@@ -7327,6 +7327,145 @@ wrote, with a `find` that LOOKS right.
 a backslash.** The same applies to `str.replace` in JS and to `sed`. And re-run `precheck` after
 every mutants edit, not after the batch.
 
+## A lattice cannot price a guard on a value OUTSIDE its own axis set (D514, sharpening D513)
+
+D513 established that a slice which NARROWS moves an axis off zero in the flip table, and that the
+move IS the guard's price. D514 narrows too — `namedCardNounFilter` refuses the three printed FACE
+BANNERS, which is the one axis D440 refused `^(.+) card$` on — and its flip table goes the other
+way:
+
+| state | flip table (of 8) | built |
+|---|---|---|
+| PRE | `OPENER 0 · COUNT 4 · NOUN 4 · REVEAL 0` | 4 of 16 |
+| POST | `OPENER 0 · COUNT 0 · NOUN 0 · REVEAL 0` | **16 of 16** |
+
+**Every axis ends FREE and nothing is owed — and that reading is wrong.** The lattice's axes are the
+PRINTED SENTENCE'S OWN variation, and `Ancient cards` is a value this sentence never takes, so the
+guard is invisible to the instrument by construction.
+
+🛑 **An all-zero POST flip table means *"no axis this sentence varies over is load-bearing"*, NOT
+*"this slice narrowed nothing"*.** When a slice adds a refusal whose subject is outside the axis
+set, the *"printed zero times"* measurement is still owed and must be paid BY HAND, with the
+omission recorded next to the table — otherwise a successor reads `[0,0,0,0]` as *"cost nothing"*
+and deletes the guard. D514 pays it in its suite's §1 (no deck-search row in the 640-sentence column
+names `Ancient`/`Future`/`Tera` as its noun) and says so in the lattice rung itself.
+
+## The CHEAPER-LOOKING ROAD can be the one that pays the same field (D514)
+
+D514's brief offered two roads: one more REGISTRY row (cheap, bespoke, linear in printings forever)
+or a reader arm. The registry road looked strictly cheaper and it was not, for a reason that is only
+visible by reading the sibling's PROGRAM rather than its verdict.
+
+The bench twin (`sv09-068`) is a registry row and spells its printed *"any number"* as
+`max: BENCH_MAX` — sound **because the DESTINATION supplies a cap**: a bench-bound search is clamped
+to `benchSpace` in two places, so `BENCH_MAX` is the largest value the sentence can ever mean. **A
+HAND has no cap at all.** So the hand printing has no number a registry author could write down, and
+the registry road would have had to widen `searchDeck.max` anyway — or ship a caption naming a
+number the card does not print, which D190b ranks below an unbuilt row.
+
+🛑 **Price a road by the FIELDS it forces, not by the file it edits.** *"A registry row is a
+hand-written program, so it costs no engine change"* is true only when a value already exists that
+the program can name. Read the sibling row's actual literal and ask WHY that literal is sound; if the
+reason is a property of its destination, its zone or its noun, it does not transfer.
+
+## D510's anchor habit answered YES for the first time — and the blocker was a CONJUNCTION (D514)
+
+Four slices have now run the shipped anchors against the row before pricing it. D510: matched since
+D440. D513: matched since D231, died in a `Map.get`. D512: answered **null** at the pattern. D514:
+also **null** — and this is the first time the anchor really was A blocker.
+
+🛑 **It was not THE blocker, and stopping at the first null would have under-priced the row by
+half.** Repair the count alone and the same pattern matches, captures the noun whole, and dies one
+step later in the very `HAND_SEARCH_PLURAL.get` that killed D513's row. Two layers, and the 2⁴
+lattice says the same thing independently — COUNT and NOUN each flip the verdict at **4 of 8** cells,
+D507's CONJUNCTIVE signature.
+
+**When the anchor answers null, repair THAT axis and run it again.** One `exec` more, and it is the
+difference between *"the anchor is the blocker"* and *"the anchor is the FIRST of two blockers"*.
+⚠️ And the corollary for a refusal list: this row's recorded deferral reason named **both** blockers
+(*"`byName` at an UNBOUNDED max the `(\d+)` group cannot spell"*) and was still filed under a
+heading that said the remaining rows were *"ALL NOUNS"*. **Read each entry, never the heading** —
+that heading has now been wrong in the same direction twice (D513, D514).
+
+## A census step can take SIX rounds, and a round is not cheap (D514, extending D513)
+
+D513 measured four full suite rounds for a one-printing step. D514's two-printing step took **six**:
+**26 → 21 → 10 → 7 → 1 → 0** failing tests, at ~180 s a round. The last two rounds were single
+assertions — a percentage whose DENOMINATOR had shrunk while its numerator stood still, and a
+`BUILT.attack - …` subtraction chain in an `it` whose earlier rungs had only just been fixed.
+
+- **Budget the rounds**, and do not treat a small round as evidence you are nearly done: rounds 5
+  and 6 revealed one rung each and were the two that mattered most (the `inRows` check is what says a
+  build left the residue WITHOUT leaving any tabulated row).
+- ⚠️ **A percentage rung reddens on a step it has no numerator in.** `Math.round((inRows /
+  unbuiltAttack) * 100)` moved 23 % → 24 % because the DENOMINATOR fell. Say which half moved in the
+  note, or the next reader records a numerator that never changed.
+
+## `biome check --write` on an EXPLICIT path still reformats a file the repo has never formatted (D514)
+
+The standing rule is *"never run a whole-tree formatter; format explicit paths only"*. **That is not
+sufficient**, and D514 paid for the difference. `bun run check` runs `biome lint` and has **no
+formatting step**, so most long-lived files are not format-clean. Running `biome check --write` on
+four explicit paths rewrote **5,527 lines of `scripts/mutation/mutants.ts`**, 280 of `effects.ts` and
+144 of `interpreter.ts` — and broke **26 mutant `find` strings**, because a `find` is exact source
+text and the formatter had moved it.
+
+- **On an EXISTING file run `bunx biome lint <paths>` — no `--write`.** That is what `check` runs and
+  it is the only thing the repo is green under.
+- **`--write` is for a file this slice CREATED**, where the whole file is the diff anyway.
+- **Recovery is `git show HEAD:<path> > <path>` plus re-applying the slice's own edits** (never
+  `git checkout --`, never `git restore` — see *"Working beside other agents"*). Save the current
+  bytes to scratch first; the re-apply is scripted, the lost work is not.
+- ⚠️ And the symptom arrives at `precheck`, not at `check`: a formatted tree is still GREEN.
+
+### `biome --write` on explicit paths is still a whole-file rewrite (D514, sharpening D511)
+
+D511 established *"format explicit paths only"* after a bare `biome format . --write` rewrote 360
+files. **That rule was necessary and not sufficient.** At D514 a builder ran `biome check --write` on
+**explicit paths** — obeying D511 — and it **rewrote 5,527 lines of `scripts/mutation/mutants.ts` and
+broke 26 mutant `find` strings.**
+
+The reason is that `--write` does not format *your change*; it formats **the file**. In a repo with
+**no formatting step in `check`** (D511), almost every existing file is unformatted, so naming it as
+an explicit path is naming a whole-file rewrite.
+
+**The rule:**
+
+1. **On a file that already existed: `bunx biome lint <path>` with NO `--write`.** Read the
+   diagnostics and fix by hand.
+2. **`--write` only on files the slice CREATED**, where a whole-file rewrite is the whole file you
+   just wrote.
+3. ⚠️ **`mutants.ts` is the worst possible target**, because a mutant `find` is a dependency on exact
+   bytes in another file and **nothing type-checks it**. `precheck` is the only instrument that knows
+   — and it is **not part of `check`**.
+4. **Recovery without the forbidden commands**: `git show HEAD:<path> > <path>`, then re-apply the
+   slice's edits. No `checkout`, no `restore`, no `stash`, no `reset`.
+
+### Line-level diff stats overstate change in a file of repeated records (D514)
+
+While D514 was building, `git diff --numstat` reported **+3140 / −2387** on `mutants.ts` — a file
+whose slice added nine rows. That looked like the D492 mass-edit signature and was investigated as
+one.
+
+It was not. Comparing the **records** rather than the lines showed **every one of the 2,566
+pre-existing rows byte-identical**, with only added rows accounting for the change. `mutants.ts` is
+thousands of structurally near-identical blocks, so inserting rows mid-file makes the diff matcher
+re-align large regions and report them as delete-plus-add of content that never moved.
+
+⚠️ **A naive cross-check misleads here too**: "how many removed lines reappear among added lines"
+reported 12%, because identical lines recur many times across records and multiset overlap does not
+track them.
+
+**The rule: for a file of repeated similar records, diff line counts are not a measure of semantic
+change. Parse the records and compare them by key.** A one-line extractor over `id:` blocks answered
+in seconds what the line stats could not answer at all.
+
+⚠️ And note the honest limit found the same day: such an extractor has its own blind spot — D514's
+missed **8 of 2,583 rows** at both revisions because they close at a different indentation. It was
+usable because the miss was *identical on both sides*; a one-sided extractor would have invented a
+difference.
+
+
 ## Git / commits
 - Branch off `main` for non-trivial work; commit/push only when asked.
 - Commit trailer per global config: `Co-Authored-By: Claude ...`.

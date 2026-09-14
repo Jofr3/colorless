@@ -217,10 +217,36 @@ const CLAUSES = [
     distinctEnergyTypes: true,
     legalPrintings: 1, // sv06.5-050
   },
+  // 🆕🆕🆕 **D514 — THE ROW A PROPER NAME AND AN UNBOUNDED COUNT BOUGHT, MOVED UP
+  // OUT OF `DEFERRED` RATHER THAN ADDED BESIDE IT** — D238's and D513's call, a third time.
+  //
+  // 🛑 **ITS DEFERRAL REASON WAS THE ONLY ONE IN EITHER TABLE THAT NAMED BOTH OF ITS
+  // BLOCKERS, AND BOTH WERE STILL TRUE.** It read *"`byName` at an UNBOUNDED max the `(\d+)`
+  // group cannot spell"* — a NOUN clause and a COUNT clause, joined. D451's shape with the
+  // unusual answer (a refusal that names two things and BOTH hold), so neither clause was
+  // stale and the price was real. The 2⁴ lattice says the same thing from the instrument
+  // side: COUNT and NOUN each flip the verdict at **4 of 8** cells and neither alone reaches
+  // a built string — D507's CONJUNCTIVE pair.
+  //
+  // ⚠️ **AND THE ROW'S STANDING PRICING NAMED A THIRD MECHANISM THAT WAS ALREADY
+  // FREE.** The D473-era resume point priced this sentence at *"a `byName` filter, an
+  // unbounded count, and the `You may` optional wrapper"*. The wrapper is the anchor's
+  // leading `(?:You may search|Search)` alternative and has been there since **D231**; the
+  // OPENER axis flips the verdict at **0 of 8** cells, before the slice and after it.
+  {
+    text: "You may search your deck for any number of Fennel cards, reveal them, and put them into your hand. Then, shuffle your deck.",
+    filter: { kind: "byName", name: "Fennel", cardNoun: true },
+    max: "any",
+    reveal: true,
+    legalPrintings: 2, // sv10.5b-036, sv10.5b-117
+  },
 ] as const satisfies readonly {
   text: string;
   filter: CardFilter;
-  max: number;
+  /** 🆕 D514 — `"any"` is the printed *"any number of"*, `lookAtTopN.max`'s D333
+      member at a third op. The table carries the union because a printed quantifier is
+      what the row is a witness FOR. */
+  max: number | "any";
   reveal: boolean;
   distinctEnergyTypes?: true;
   legalPrintings: number;
@@ -300,11 +326,6 @@ const DEFERRED: readonly (readonly [string, string, number])[] = [
   [
     "Search your deck for up to 3 in any combination of {R} Pokémon and Basic {R} Energy cards, reveal them, and put them into your hand. Then, shuffle your deck.",
     "a typed DISJUNCTION (sv10.5w-019/-104) — D230's Maushold case, typed",
-    2,
-  ],
-  [
-    "You may search your deck for any number of Fennel cards, reveal them, and put them into your hand. Then, shuffle your deck.",
-    "`byName` at an UNBOUNDED max the (\\d+) group cannot spell (sv10.5b-036/-117)",
     2,
   ],
   [
@@ -423,7 +444,7 @@ function programOf(clause: (typeof CLAUSES)[number]): EffectOp[] {
 // 1. THE ANCHOR — one regex, one closed noun table, one optional rider
 // ─────────────────────────────────────────────────────────────────────────────
 
-describe("the anchor — seventeen printed sentences, ONE regex", () => {
+describe("the anchor — eighteen printed sentences, ONE regex", () => {
   it("derives each printed sentence to its program", () => {
     for (const clause of CLAUSES) {
       expect(deriveAttackEffect(clause.text), clause.text).toEqual(programOf(clause));
@@ -443,7 +464,7 @@ describe("the anchor — seventeen printed sentences, ONE regex", () => {
     }
   });
 
-  it("adds up: 28 of the family's 42 legal printings, on ONE anchor", () => {
+  it("adds up: 35 of the family's 42 legal printings, on ONE anchor", () => {
     // 🛑 THE ARITHMETIC, STATED RATHER THAN DESCRIBED — D230's rule, and the row
     // that caught its own author's census a slice ago. The backlog row said 25
     // legal for ~15 arms; measured BY SENTENCE it is 42 legal for ONE.
@@ -451,15 +472,25 @@ describe("the anchor — seventeen printed sentences, ONE regex", () => {
     // recorded rather than quietly fixed (D433's derived noun, D425's rotting doc
     // figure). It read "thirteen" — D231's measured `CLAUSES` length — and D238 added
     // THREE rows without moving it, so it was wrong for 275 decisions. Measured here:
-    // `CLAUSES` holds SEVENTEEN rows, sixteen before this slice.
+    // `CLAUSES` holds EIGHTEEN rows, seventeen before D514.
+    // 🛑 🆕 **D514 — AND THE `it` TITLE ABOVE HAD ROTTED THE SAME WAY AND IS CORRECTED
+    // IN THE SAME EDIT RATHER THAN LEFT.** It read *"adds up: 28 of the family's 42"* — the
+    // figure D231 measured — while the assertion three lines down said 32 (D238) and then
+    // 33 (D513). **Two rungs of the same arithmetic, two hundred and eighty decisions out
+    // of step, in one `it`.** A derived noun in a TITLE has no rung behind it, which is
+    // D433's whole point; the repair is to re-point it in the edit that moves the number,
+    // and this comment is the trail.
     // ⚠️ D238 moved 4 printings over 3 sentences from `DEFERRED` into `CLAUSES`
     // (28 → 32 read, 14 → 10 left). 🆕 D513 moved ONE more printing over ONE sentence
-    // the same way (32 → 33 read, 10 → 9 left). The 42 is UNMOVED across both and is
+    // the same way (32 → 33 read, 10 → 9 left). 🆕🆕🆕 D514 moved TWO more printings over
+    // ONE sentence (33 → 35 read, 9 → 7 left) — the FENNEL row, whose deferral named a
+    // NOUN blocker and a COUNT blocker and needed both paid. The 42 is UNMOVED across all
+    // three and is
     // the same census D231 measured — a family total does not change because a reader
     // got wider, which is exactly what the third rung below asserts.
-    expect(CLAUSES.reduce((sum, c) => sum + c.legalPrintings, 0)).toBe(33);
-    expect(DEFERRED.reduce((sum, [, , n]) => sum + n, 0)).toBe(9);
-    expect(33 + 9).toBe(42);
+    expect(CLAUSES.reduce((sum, c) => sum + c.legalPrintings, 0)).toBe(35);
+    expect(DEFERRED.reduce((sum, [, , n]) => sum + n, 0)).toBe(7);
+    expect(35 + 7).toBe(42);
     // …and the six left are all pinned derived-to-null, so the deferral is a
     // fact about the code rather than a note in a comment. ⚠️ The count in this
     // sentence is a DERIVED NOUN and has rotted twice (D433): it read "fourteen" while

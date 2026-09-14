@@ -2156,13 +2156,29 @@ function stepOp(
       const candidates = state.players[ctx.seat].deck.filter((uid) =>
         groups.some((g) => matchesFilter(cardOf(state, uid), g.filter)),
       );
+      // 🆕🆕🆕 D514 — THE PRINTED *"any number of"*, RESOLVED AGAINST THE GROUP'S OWN
+      // CANDIDATE COUNT AND NOT AGAINST THE UNION. `attachFromTop`'s line (D333),
+      // re-read rather than re-invented: the resolution happens HERE so `prompt.max`
+      // stays a `number` and no wire shape moves for the op's `"any"`. Per-group
+      // rather than flat because the number feeds `total` — the SUM — and a group
+      // resolved against the union would count cards a second filter contributed.
+      // `also[].max` is a bare `number` in the type, so only the first group can ever
+      // be `"any"`; the `.map` is total anyway, which is what keeps a future unbounded
+      // second noun honest instead of silently summing a string.
+      // ⚠️ THE CAP IS THE MATCHES, NOT `Number.MAX_SAFE_INTEGER` OR A DECK SIZE: the
+      // printed sentence offers the whole matching set and nothing wider, and a
+      // sentinel here would have to be un-printed again by every caption downstream.
+      const sized = groups.map((g) => ({
+        filter: g.filter,
+        max: g.max === "any" ? groupMatches(g.filter).length : g.max,
+      }));
       // ⚠️ THE BENCH CLAMP IS THE TOTAL'S, NOT THE FIRST GROUP'S. `benchSpace` is
       // one number for the whole answer, so it has to bind the SUM; clamping
       // `op.max` alone would let a 4-noun search put four Pokémon onto a Bench
       // with room for two. No printed multi-noun sentence benches anything today
       // (both rows are `dest: "hand"`), which is exactly why the clamp is written
       // against the sum rather than left to be discovered by the first one that does.
-      const total = groups.reduce((sum, g) => sum + g.max, 0);
+      const total = sized.reduce((sum, g) => sum + g.max, 0);
       const max = op.dest === "bench" ? Math.min(total, benchSpace(state, ctx.seat)) : total;
       // 🆕🆕🆕 D513 — THE PRINTED *"of different types"*, AS A PARTITION OF THE
       // CANDIDATES WITH EVERY CELL CAPPED AT ONE. Sylveon ex `sv06.5-050`.
@@ -2220,7 +2236,10 @@ function stepOp(
       const caps = [
         ...(op.also === undefined
           ? []
-          : groups.map((g) => ({ uids: groupMatches(g.filter), max: g.max }))),
+          : // 🆕 D514 — `sized` and not `groups`: a cap is a NUMBER on the wire, and
+            // it must be the same number `total` was summed from or the prompt's
+            // per-group caps and its flat ceiling would disagree.
+            sized.map((g) => ({ uids: groupMatches(g.filter), max: g.max }))),
         ...distinctCaps,
       ];
       if (candidates.length === 0 || max <= 0) {
@@ -13603,7 +13622,14 @@ function cardOf(state: GameState, uid: string): Card | undefined {
     other reader is `byName` (Flamigo's "up to 3 Flamigo"), which reads correctly
     because that noun carries no article. Both forms are pinned by tests now. */
 function searchNote(
-  groups: readonly { filter: CardFilter; max: number }[],
+  /** 🆕🆕🆕 D514 — the PRINTED group maxes and NOT the park's resolved ones, which
+      is why this parameter carries the union where `max` below carries a number.
+      `lookNote`'s call, one prompt over, for D333's reason: *"any number of Fennel
+      cards"* prints no digit, and a caption reading *"up to 4"* over it would be the
+      engine authoring text the card does not have. The clamped total is still a
+      separate parameter (D336's rule — a bench search cut by `benchSpace` must
+      caption the number its own validator will accept). */
+  groups: readonly { filter: CardFilter; max: number | "any" }[],
   dest: "bench" | "hand" | "deckTop",
   max: number,
   /** 🆕 D342 — the op's `exact`. The heading has to say WHICH pick it is, because
@@ -13649,6 +13675,15 @@ function searchNote(
     // unconstrained and must not claim otherwise. The `max > 1` branches below are
     // the only ones the rider can reach, which is asserted rather than assumed.
     const many = distinctEnergyTypes ? `${plural} of different types` : plural;
+    // 🆕🆕🆕 D514 — THE PRINTED *"any number of"*, AHEAD OF BOTH NUMBER BRANCHES AND
+    // READ OFF THE GROUP RATHER THAN OFF THE CLAMP. `lookNote`'s `"any"` arm (D333)
+    // at a second prompt: the clamped `max` is a real number here (the park resolved
+    // it against the candidates), and printing it would caption a sentence that
+    // spells no digit with the size of the player's own deck — which also LEAKS a
+    // count of hidden cards before the offer is opened. It sits above `exact`
+    // because the two cannot co-occur: `exact` is the printed take with no *"up
+    // to"*, and *"any number of"* is the printed take with no CEILING.
+    if (first.max === "any") return `Search your deck for any number of ${many} ${where}.`;
     // 🆕 D342 — an EXACT take drops the "up to" and keeps the number, which is
     // the printed sentence ("Search your deck for 2 cards") and also the only
     // caption the Confirm button below it can be true about.
@@ -13675,9 +13710,21 @@ function searchNote(
   // and which this join gets right anyway. The flat `max` is deliberately NOT
   // used: it is the SUM, and captioning "up to 3 Pokémon" over three different
   // nouns is the mis-caption this arm exists to prevent.
-  const phrase = (g: { filter: CardFilter; max: number }) => {
+  // 🆕 D514 — the `"any"` branch is `lookNote`'s `phrase` verbatim and is spelled
+  // rather than narrowed away. It is UNREACHABLE from the deriver today — `also` is
+  // only produced by D336's multi-noun anchors, every one of which spells a digit,
+  // and `also[].max` is a bare `number` — but a REGISTRY author can hand-write
+  // `{ max: "any", also: [...] }` tomorrow, and the alternative to this line is a
+  // caption that silently drops the printed quantifier. D513 made the same call one
+  // field over for `caps`. It is DRIVEN off a hand-authored op rather than left as a
+  // line no test can reach.
+  const phrase = (g: { filter: CardFilter; max: number | "any" }) => {
     const { singular, plural } = retrieveNoun(g.filter);
-    return g.max > 1 ? `up to ${g.max} ${plural}` : singular;
+    return g.max === "any"
+      ? `any number of ${plural}`
+      : g.max > 1
+        ? `up to ${g.max} ${plural}`
+        : singular;
   };
   const parts = groups.map(phrase);
   const last = parts[parts.length - 1] ?? "";

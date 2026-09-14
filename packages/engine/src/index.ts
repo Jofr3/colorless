@@ -19984,6 +19984,100 @@ import type { GameState, Seat } from "./types";
     `expect(manifest.version)`, `it(…)` titles, the declaration and `package.json` —
     **not** as a value-keyed grep — because a value-keyed grep is precisely the mechanism
     that ate D500's heading.)
+    🆕🆕🆕 engineVersion 0.400.0 → **0.401.0** (D514 — THE PRINTED *"any number of"* AND A
+    PROPER NAME AS THE DECK-SEARCH NOUN. `censusAttackCorpus.ts` **FILE LINE 657** —
+    *"You may search your deck for any number of Fennel cards, reveal them, and put them
+    into your hand. Then, shuffle your deck."*, **1 sentence / 2 legal printings**
+    (`sv10.5b-036` / `sv10.5b-117`), claimed by `deriveAttackEffect`.
+    🛑 **THE ROAD NOT TAKEN WAS A REGISTRY ROW, AND IT WOULD HAVE PAID FOR THE OP FIELD
+    ANYWAY — WHICH IS WHY THE READER ROAD IS NOT THE EXPENSIVE ONE.** The sibling one
+    destination over (`sv09-068`, FILE LINE 656, *"…any number of Basic Lillie's Pokémon and
+    put them onto your Bench…"*) IS a registry row, and `LILLIES_COMFEY` spells its printed
+    *"any number"* as `max: BENCH_MAX` — sound only because the DESTINATION supplies a cap.
+    **A HAND HAS NO CAP AT ALL**, so the hand printing has no number a registry author could
+    write down; the registry road would have had to widen `searchDeck.max` too, or ship a
+    caption naming a number the card does not print (D190b: a wrong-but-plausible program is
+    worse than an unbuilt one). The reader road buys the same 2 printings, the same op field,
+    and in addition an arm that serves every reprint (D187) and a NOUN the whole family shares.
+    ✅ **BOTH HALVES OF THE MECHANISM ALREADY SHIPPED, AND ONE OF THEM 284 DECISIONS AGO**
+    (D513's rule — search for the capability under another name — paid a fourth time).
+    `CardFilter.byName` has carried `cardNoun?: true` since **D264** (`retrieveNoun` spells
+    `${name} cards` for exactly that value) and **`ATTACK_BENCH_SEARCH` has captured a proper
+    name into `byName` since D230** — *"Search your deck for a Pikachu and put it onto your
+    Bench. Then, shuffle your deck."*, FILE LINE 447, BUILT. `ATTACK_DISCARD_RETRIEVAL` does
+    the same one zone over (D237). The NAMED deck search was never missing; ONE of the three
+    anchors in the family could not ask the question. **ZERO new `CardFilter` members.**
+    🛑 **AND THE ANCHOR REALLY WAS THE BLOCKER THIS TIME — D510's HABIT, FOUR-FOR-FOUR AND
+    THE FIRST TIME IT ANSWERED "YES".** D510's row had matched since D440 and D513's since
+    D231; run against this row's bytes the PRE-slice `ATTACK_HAND_SEARCH` returns **null** —
+    its plural branch demands a literal `up to \d+`. **But the count was only the FIRST of two
+    layers**: repair the count alone and the pattern matches, captures `Fennel cards` whole and
+    dies one step later in `HAND_SEARCH_PLURAL.get`. `namedDeckSearch.test.ts` §2 drives both.
+    ⚠️ **THE STANDING PRICING NAMED A THIRD MECHANISM THAT WAS ALREADY FREE.** The D473-era
+    resume point priced this row at *"three mechanisms — a `byName` filter, an unbounded count,
+    and the `You may` optional wrapper"*. The wrapper is the anchor's leading
+    `(?:You may search|Search)` alternative and has been there since **D231**; the OPENER axis
+    flips the verdict at **0 of 8** cells before the slice and after it. **Two, not three.**
+    ⚠️ **A SHIPPED DOC-BLOCK CLAIM WAS FALSE AS STATED AND IS CORRECTED IN PLACE.**
+    `attachFromDeck.max` read *"no `"any"`: no printed search says 'any number'"*. The REASON
+    is about ENERGY searches and holds; the CLAIM quantifies over every printed search, and the
+    attack column falsifies it — FILE LINES 656 and 657, **2 sentences / 3 legal printings**.
+    `registry.ts`'s `LILLIES_COMFEY` block caught it at **D313** and corrected it in the file it
+    was editing, which left it standing here for two hundred decisions — **D508's rule at its
+    second address**. Both copies now agree.
+    ⚠️ `MATCH_RECORD_VERSION` **HELD at 30, and the ARGUMENT IS A WIDENING RATHER THAN D125's
+    ABSENT-KEY TEST** (D463: pick the argument SHAPE that is true). The DOOR is named because
+    this op is not a fold: `searchDeck` PARKS, so its literal rides
+    `EffectContinuation.pendingOp` inside `MatchRecord.state.phase.cont` (D457). No key is added
+    and none removed — every v30 `pendingOp.max` is a `number`, `number` is still an inhabitant
+    of `number | "any"`, and it still means what it meant (D359). **The loss direction is
+    DRIVEN**: the built sibling's parked op is v30 bytes exactly, and resuming it under this
+    build parks `[0, 2]` with the *"up to 2"* caption.
+    **THE LATTICE, AND A NEW READING OF THE FLIP TABLE.** The 2⁴ OPENER × COUNT × NOUN ×
+    REVEAL reads `0/1 · 0/4 · 1/6 · 2/4 · 1/1` — **4 of 16** — identical readers-only and
+    under `builds()`, both splitters null at **32/32** (not a formality: every point carries a
+    second depth-0 segment), all 16 points distinct. **PRE flip table `OPENER 0 · COUNT 4 ·
+    NOUN 4 · REVEAL 0` of 8 — D507's EIGHTH shape, a CONJUNCTIVE PAIR**, so neither blocker
+    alone reaches a built string. **POST it is `0 · 0 · 0 · 0` and all 16 points build.**
+    🛑 **AND THE ALL-ZERO POST TABLE MUST NOT BE READ AS "THE GUARD COST NOTHING".** This
+    slice also NARROWS — `namedCardNounFilter` refuses the three printed BANNERS, which is the
+    one axis D440 refused `^(.+) card$` on — and D513's rule says a narrowing moves an axis off
+    zero. It does not here, because **the lattice's axes are the SENTENCE'S OWN variation and
+    the banner is a value this sentence never takes**. A lattice cannot price a guard on a
+    value outside its own axis set; the *"printed zero times"* measurement is therefore paid by
+    hand in §1 (no deck-search row in the column names `Ancient`/`Future`/`Tera` as its noun,
+    over all 640 legal sentences) and the omission is recorded rather than left to be inferred.
+    ✅ **ZERO** new ops, `CardFilter` members, prompt kinds, prompt fields, choice kinds,
+    validator branches, events, error codes, `GameState` fields, registry rows, `FIXTURE_POOL`
+    ids (file-local `cardPool`, D414/D452), `redact.ts` bytes, `packages/schema` bytes or client
+    mirrors. ONE op-field WIDENING (`searchDeck.max: number | "any"`, `lookAtTopN.max`'s D333
+    member at a third op), ONE anchor alternative, ONE new resolver and ONE caption branch.
+    ⚠️ **THIS HEADING NAMES NO `D<nnn>` AND THAT IS DELIBERATE, NOT AN OMISSION** —
+    D507/D508/D510/D512/D513's posture, for their reason. `engineVersionChangelog.test.ts`'s
+    ATTRIBUTION case asserts `adjudicated === LABELLED.length` with no tolerance, so a labelled
+    heading without its `docs/decisions.md` row ships `check` RED, and this slice is scoped away
+    from that file. **The debt is D514**: whoever writes
+    `| **D514** | … engine 0.400.0 → 0.401.0 … |` should rewrite this heading's opening
+    parenthesis as `(D514 — THE PRINTED "any number of"…` in the same commit, and not before.
+    🛑 **VERSION-TAX EXCEPTION LIST FOR THIS BUMP, NAMING THE HEADING BEING WRITTEN THIS
+    SLICE (D506's rule (b)).** `0.400.0` legitimately survives at SIX kinds of site and none of
+    them may be swept: **THIS HEADING'S OWN SOURCE, one line up, plus the four lines of this very
+    paragraph**; D513's heading TARGET directly below and the two sentences of its own exception
+    list; `distinctEnergyTypes.test.ts`'s header arrow, which reads `0.399.0 → 0.400.0`;
+    `namedDeckSearch.test.ts`'s header arrow, which reads `0.400.0 → 0.401.0` and is this
+    slice's own; `mutants.ts`'s D275 re-point ledger, which is APPENDED to rather than
+    rewritten; and `D506-changelog-head-unnamed`'s own `what` (a re-point HISTORY) together
+    with its `find`/`replace`, which now carry `0.400.0` as the SOURCE of the heading they
+    name. **The re-grep after the edit returned exactly FOURTEEN lines and nothing else** —
+    1 + 1 + 4 + 1 + 2 + 1 + 1 + 1 + 2, counted by category — which is the check, not the
+    intention. `D506-changelog-head-unnamed`'s `find`/`replace` is RE-POINTED
+    WHOLESALE onto the heading above rather than value-swept — **kept in D508's trimmed,
+    label-proof form `engineVersion <old> → **<new>**`, stopping before the `(`**, which D508,
+    D510, D512 and D513 all proved survives the caller's labelling. The sweep was run as a
+    WHITELIST of SIX exact line shapes — **105 sites, written out and counted BEFORE the edit
+    and re-grepped after** — **not** as a value-keyed grep, because a value-keyed grep would
+    rewrite this heading's own source and point that mutant at a heading that does not exist.
+    ⚠️ **AND `precheck` WAS RE-RUN AFTER EVERY `index.ts` EDIT** (it is not part of `check`).)
     🆕🆕🆕 engineVersion 0.399.0 → **0.400.0** (D513 — THE PRINTED *"of different types"* — A
     PAIRWISE RELATION AMONG THE PICKS, AND THE FIRST DISTINCTNESS CONSTRAINT THIS ENGINE
     READS. `censusAttackCorpus.ts` **FILE LINE 473** — *"Search your deck for up to 3
@@ -20979,7 +21073,7 @@ import type { GameState, Seat } from "./types";
     WITNESS** — the count was re-derived every slice and the word *"three"* was carried.
     A successor of this slice inherits **81 / 61 / 17** again, over **FIVE** history
     occurrences: those four plus `deckMillFilteredScale.test.ts`'s own header arrow.) */
-export const engineVersion = "0.400.0";
+export const engineVersion = "0.401.0";
 
 export type {
   ApplyResult,

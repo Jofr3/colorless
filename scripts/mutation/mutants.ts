@@ -1552,7 +1552,7 @@ export const MUTANTS: Mutant[] = [
     //    D458 names: inserting a capture group AHEAD of an existing one is a
     //    re-transcription event, and this row's `find` is the byte that proves it
     //    happened. The plural reveal clause moved from group 5 to group 6.
-    find: "    const revealed = (match[2] ?? match[6]) !== undefined;",
+    find: "    const revealed = (match[2] ?? match[7]) !== undefined;",
     replace: "    const revealed = false;",
     expectKilledBy: ["packages/engine/src/derivedHandSearch.test.ts"],
   },
@@ -1565,7 +1565,7 @@ export const MUTANTS: Mutant[] = [
     //    D458 names: inserting a capture group AHEAD of an existing one is a
     //    re-transcription event, and this row's `find` is the byte that proves it
     //    happened. The plural reveal clause moved from group 5 to group 6.
-    find: "    const revealed = (match[2] ?? match[6]) !== undefined;",
+    find: "    const revealed = (match[2] ?? match[7]) !== undefined;",
     replace: "    const revealed = match[2] !== undefined;",
     expectKilledBy: ["packages/engine/src/derivedHandSearch.test.ts"],
   },
@@ -1590,9 +1590,9 @@ export const MUTANTS: Mutant[] = [
     // RE-TRANSCRIBED AT D238, which appended a brace-code fallback to each
     // branch. Only the TABLE lookups are crossed here, so the mutant stays
     // about the two same-shaped Maps and not about the new resolver.
-    find: '        ? (HAND_SEARCH_PLURAL.get(many ?? "") ?? typedNounFilter(many ?? "", true))\n        : (HAND_SEARCH_SINGULAR.get(one) ?? typedNounFilter(one, false));',
+    find: '        ? (HAND_SEARCH_PLURAL.get(many ?? "") ??\n          typedNounFilter(many ?? "", true) ??\n          namedCardNounFilter(many ?? ""))\n        : (HAND_SEARCH_SINGULAR.get(one) ?? typedNounFilter(one, false));',
     replace:
-      '        ? (HAND_SEARCH_SINGULAR.get(many ?? "") ?? typedNounFilter(many ?? "", true))\n        : (HAND_SEARCH_PLURAL.get(one) ?? typedNounFilter(one, false));',
+      '        ? (HAND_SEARCH_SINGULAR.get(many ?? "") ??\n          typedNounFilter(many ?? "", true) ??\n          namedCardNounFilter(many ?? ""))\n        : (HAND_SEARCH_PLURAL.get(one) ?? typedNounFilter(one, false));',
     expectKilledBy: ["packages/engine/src/derivedHandSearch.test.ts"],
   },
   {
@@ -1605,8 +1605,8 @@ export const MUTANTS: Mutant[] = [
     //    The `replace` still deletes ONLY the filter conjunct, so the row expresses the
     //    same defect it always did - an unresolvable noun falling through to whatever
     //    `filter` happens to hold - rather than a new one about the new guard.
-    find: "    if (filter !== undefined && max >= 1 && spellable) {",
-    replace: "    if (max >= 1 && spellable) {",
+    find: "    if (filter !== undefined && (typeof max !== \"number\" || max >= 1) && spellable) {",
+    replace: "    if ((typeof max !== \"number\" || max >= 1) && spellable) {",
     expectKilledBy: ["packages/engine/src/derivedHandSearch.test.ts"],
   },
   {
@@ -5251,7 +5251,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D275",
     what: "🛑 THE DEBT THIS SLICE PAID FOR THE FIFTH TIME, RE-INSTALLED: `engineVersion` falls a minor behind `packages/engine/package.json`, which is EXACTLY the state the tree was in at the head of D275 (0.187.0 against 0.189.0) and had been for two slices with nothing comparing them. The tie is the guard; this row is the proof it is one",
     file: "packages/engine/src/index.ts",
-    // ⚠️ RE-POINTED AT D513 (0.399.0 → 0.400.0), at D512 (0.398.0 → 0.399.0), at D510 (0.397.0 → 0.398.0), at D508 (0.396.0 → 0.397.0), at D507 (0.395.0 → 0.396.0), at D505 (0.394.0 → 0.395.0), at D490 (0.384.0 → 0.385.0), at D489 (0.383.0 → 0.384.0), at D488 (0.382.0 → 0.383.0), at D487 (0.381.0 → 0.382.0), at D486 (0.380.0 → 0.381.0), at D485 (0.379.0 → 0.380.0), at D450 (0.351.0 → 0.352.0), at D449 (0.350.0 → 0.351.0), at D448 (0.349.0 → 0.350.0), at D447 (0.348.0 → 0.349.0), at D446 (0.347.0 → 0.348.0), at D445 (0.346.0 → 0.347.0), at D444 (0.345.0 → 0.346.0), at D443 (0.344.0 → 0.345.0), at D442 (0.343.0 → 0.344.0), at D441 (0.342.0 → 0.343.0), at D440 (0.341.0 → 0.342.0), at D439 (0.340.0 → 0.341.0), at D438 (0.339.0 → 0.340.0), at D437 (0.338.0 → 0.339.0), at D436 (0.337.0 → 0.338.0), at D435 (0.336.0 → 0.337.0), at D434 (0.335.0 → 0.336.0), at D433 (0.334.0 → 0.335.0), at D432 (0.333.0 → 0.334.0), at D431 (0.332.0 → 0.333.0), at D430 (0.331.0 → 0.332.0), at D429 (0.330.0 → 0.331.0), at D428 (0.329.0 → 0.330.0), at D427 (0.328.0 → 0.329.0), at D426 (0.327.0 → 0.328.0), at D425 (0.326.0 → 0.327.0), at D424 (0.325.0 → 0.326.0), at D423 (0.324.0 → 0.325.0), at D422 (0.323.0 → 0.324.0), at D421 (0.322.0 → 0.323.0), at D420 (0.321.0 → 0.322.0), at D417 (0.320.0 → 0.321.0), at D416 (0.319.0 → 0.320.0), at D415 (0.318.0 → 0.319.0), at D414 (0.317.0 → 0.318.0), at D413 (0.316.0 → 0.317.0), at D412 (0.315.0 → 0.316.0), at D410 (0.314.0 → 0.315.0), at D409 (0.313.0 → 0.314.0), at D408 (0.312.0 → 0.313.0), at D407 (0.311.0 → 0.312.0), at D402 (0.306.0 → 0.307.0), at D401 (0.305.0 → 0.306.0), at D400 (0.304.0 → 0.305.0), at D399 (0.303.0 → 0.304.0), at D398 (0.302.0 → 0.303.0), at D397 (0.301.0 → 0.302.0), at D396 (0.300.0 → 0.301.0), at D395 (0.299.0 → 0.300.0), at D394 (0.298.0 → 0.299.0), at D393 (0.297.0 → 0.298.0), at D392 (0.296.0 → 0.297.0), at D391 (0.295.0 → 0.296.0), at D390 (0.294.0 → 0.295.0), at D389 (0.293.0 → 0.294.0), at D388 (0.292.0 → 0.293.0), at D387 (0.291.0 → 0.292.0), at D386 (0.290.0 → 0.291.0),
+    // ⚠️ RE-POINTED AT D514 (0.400.0 → 0.401.0), at D513 (0.399.0 → 0.400.0), at D512 (0.398.0 → 0.399.0), at D510 (0.397.0 → 0.398.0), at D508 (0.396.0 → 0.397.0), at D507 (0.395.0 → 0.396.0), at D505 (0.394.0 → 0.395.0), at D490 (0.384.0 → 0.385.0), at D489 (0.383.0 → 0.384.0), at D488 (0.382.0 → 0.383.0), at D487 (0.381.0 → 0.382.0), at D486 (0.380.0 → 0.381.0), at D485 (0.379.0 → 0.380.0), at D450 (0.351.0 → 0.352.0), at D449 (0.350.0 → 0.351.0), at D448 (0.349.0 → 0.350.0), at D447 (0.348.0 → 0.349.0), at D446 (0.347.0 → 0.348.0), at D445 (0.346.0 → 0.347.0), at D444 (0.345.0 → 0.346.0), at D443 (0.344.0 → 0.345.0), at D442 (0.343.0 → 0.344.0), at D441 (0.342.0 → 0.343.0), at D440 (0.341.0 → 0.342.0), at D439 (0.340.0 → 0.341.0), at D438 (0.339.0 → 0.340.0), at D437 (0.338.0 → 0.339.0), at D436 (0.337.0 → 0.338.0), at D435 (0.336.0 → 0.337.0), at D434 (0.335.0 → 0.336.0), at D433 (0.334.0 → 0.335.0), at D432 (0.333.0 → 0.334.0), at D431 (0.332.0 → 0.333.0), at D430 (0.331.0 → 0.332.0), at D429 (0.330.0 → 0.331.0), at D428 (0.329.0 → 0.330.0), at D427 (0.328.0 → 0.329.0), at D426 (0.327.0 → 0.328.0), at D425 (0.326.0 → 0.327.0), at D424 (0.325.0 → 0.326.0), at D423 (0.324.0 → 0.325.0), at D422 (0.323.0 → 0.324.0), at D421 (0.322.0 → 0.323.0), at D420 (0.321.0 → 0.322.0), at D417 (0.320.0 → 0.321.0), at D416 (0.319.0 → 0.320.0), at D415 (0.318.0 → 0.319.0), at D414 (0.317.0 → 0.318.0), at D413 (0.316.0 → 0.317.0), at D412 (0.315.0 → 0.316.0), at D410 (0.314.0 → 0.315.0), at D409 (0.313.0 → 0.314.0), at D408 (0.312.0 → 0.313.0), at D407 (0.311.0 → 0.312.0), at D402 (0.306.0 → 0.307.0), at D401 (0.305.0 → 0.306.0), at D400 (0.304.0 → 0.305.0), at D399 (0.303.0 → 0.304.0), at D398 (0.302.0 → 0.303.0), at D397 (0.301.0 → 0.302.0), at D396 (0.300.0 → 0.301.0), at D395 (0.299.0 → 0.300.0), at D394 (0.298.0 → 0.299.0), at D393 (0.297.0 → 0.298.0), at D392 (0.296.0 → 0.297.0), at D391 (0.295.0 → 0.296.0), at D390 (0.294.0 → 0.295.0), at D389 (0.293.0 → 0.294.0), at D388 (0.292.0 → 0.293.0), at D387 (0.291.0 → 0.292.0), at D386 (0.290.0 → 0.291.0),
     //    each in the SAME COMMIT as the bump —
     // the TENTH slice running to do it that way, and the practice is now the one
     // thing about this row that has never cost an ERROR since it started.
@@ -5798,7 +5798,7 @@ export const MUTANTS: Mutant[] = [
     // CORPUS QUOTES** (D414/D415), so a value-keyed sweep over `toBe("0.391.0")` cannot
     // see it — this row's `find` spells the DECLARATION, not an assertion. Run
     // `precheck` after every version bump, not after the sweep tells you.
-    find: 'export const engineVersion = "0.400.0";',
+    find: 'export const engineVersion = "0.401.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -11828,8 +11828,8 @@ export const MUTANTS: Mutant[] = [
     // \U0001f195 RE-TRANSCRIBED AT D513: same cause as the row above - the `also` cap list
     //    moved into the `caps` local - and the mutation is unchanged, reading the UNION
     //    where the GROUP belongs.
-    find: "          : groups.map((g) => ({ uids: groupMatches(g.filter), max: g.max }))),",
-    replace: "          : groups.map((g) => ({ uids: candidates, max: g.max }))),",
+    find: "            sized.map((g) => ({ uids: groupMatches(g.filter), max: g.max }))),",
+    replace: "            sized.map((g) => ({ uids: candidates, max: g.max }))),",
     expectKilledBy: ["packages/engine/src/larrysSkill.test.ts"],
   },
   {
@@ -11837,8 +11837,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D336",
     what: "U0001f6d1 the total collapses to the FIRST group's `max`, which is what `searchDeck` computed before this slice and therefore the single most likely wrong build of it. Larry's Skill offers all three nouns and lets the player take ONE; the caps are all correct and never bind, because a ceiling of 1 is below every one of them. A cap is safe when it is too high and a TOTAL is not",
     file: "packages/engine/src/interpreter.ts",
-    find: "      const total = groups.reduce((sum, g) => sum + g.max, 0);",
-    replace: "      const total = op.max;",
+    find: "      const total = sized.reduce((sum, g) => sum + g.max, 0);",
+    replace: "      const total = sized[0]?.max ?? 0;",
     expectKilledBy: ["packages/engine/src/larrysSkill.test.ts"],
   },
   {
@@ -27907,8 +27907,8 @@ export const MUTANTS: Mutant[] = [
     //    this file's value at D512's head. **A census step rots this row EVERY TIME, and
     //    this slice PREDICTED it in the pre-build audit rather than letting `precheck`
     //    discover it** - which is what D502's note asked the next slice to do.
-    find: "  attack: 1628,",
-    replace: "  attack: 1627,",
+    find: "  attack: 1630,",
+    replace: "  attack: 1629,",
     expectKilledBy: [
       "packages/engine/src/censusAtHead.test.ts",
     ],
@@ -29065,8 +29065,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D506",
     what: "🛑 C1 — THE DEFECT D502 AND D505 BOTH SHIPPED: a version goes out and NO HEADING CLAIMS IT. The edit un-bolds the NEWEST heading's target, so the parser stops seeing it and the chain's head falls back a release while `package.json` says otherwise — which is byte-for-byte the state of this file at D505's head, twice over. ⚠️ IT IS THE CHEAPEST WAY FOR THIS RECORD TO GO WRONG AND WAS INVISIBLE TO EVERY OTHER INSTRUMENT IN THE REPO: `tsc`, `biome`, every test, `precheck` and all five gates are green on both sides of it, because until D506 nothing read the headings at all. Killed by the HEAD case alone, which is the point — one tripwire, named (D453/D498). 🛑 RE-POINTED AT D507 ONTO THE 0.395.0 → 0.396.0 HEADING, AND THE RE-POINT WAS OWED RATHER THAN TIDY (D444): left on D505's heading it would have gone INERT ON THE VERDICT the moment a newer heading existed — un-bolding a heading that is no longer the head leaves NEWEST equal to HEAD, so the HEAD case stays green and the kill arrives, if at all, through the CHAIN case instead. The row's own stated reason (killed by the HEAD case alone) is exactly the sentence that would have quietly become false. THIS ROW IS PART OF THE VERSION TAX: every bump owes its re-point, in the same edit as the heading. \U0001f195 RE-POINTED AGAIN AT D508 ONTO THE 0.396.0 → 0.397.0 HEADING, and this one is UNLABELLED — the `find` quotes the heading's first prose words instead of a `(D<nnn> —`, which is strictly more durable: the label is the byte the close-out ritual inserts, and quoting it is exactly what broke this row at D507. \u26a0\ufe0f The heading is the CHAIN HEAD again, so the HEAD case is the killer again — the re-point is what keeps that sentence true rather than quietly false. \U0001f195 RE-POINTED AGAIN AT D510 ONTO THE 0.397.0 \u2192 0.398.0 HEADING, also UNLABELLED, and the `find` is kept in D508's TRIMMED form \u2014 it stops before the `(` where the close-out ritual inserts the label, which is the shape D508 proved survives that edit (precheck clean, label inserted, clean again). A `find` that spanned the paren would re-open the coupling that broke this row at D507. \U0001f195 RE-POINTED AGAIN AT D512 ONTO THE 0.398.0 \u2192 0.399.0 HEADING, also UNLABELLED and kept in the same TRIMMED form. \u26a0\ufe0f The re-point is what keeps this row's own stated reason (killed by the HEAD case ALONE) true rather than quietly false: left on D510's heading it would go INERT ON THE VERDICT the moment a newer heading exists, because un-bolding a heading that is no longer the head leaves NEWEST equal to HEAD and the kill arrives, if at all, through the CHAIN case instead. \U0001f195 RE-POINTED AGAIN AT D513 ONTO THE 0.399.0 \u2192 0.400.0 HEADING, also UNLABELLED and kept in the same TRIMMED form that stops before the `(`. \u26a0\ufe0f **AND THE TRIM WAS PROVEN AGAIN RATHER THAN ASSUMED**: `precheck` clean before the heading exists, the heading written, `precheck` clean after \u2014 the third consecutive slice to demonstrate that a `find` ending at `**<new>**` survives the close-out label insertion, and the fourth to state that a `find` spanning the paren re-opens the coupling that broke this row at D507.",
     file: "packages/engine/src/index.ts",
-    find: "engineVersion 0.399.0 → **0.400.0**",
-    replace: "engineVersion 0.399.0 → 0.400.0",
+    find: "engineVersion 0.400.0 → **0.401.0**",
+    replace: "engineVersion 0.400.0 → 0.401.0",
     expectKilledBy: ["packages/engine/src/engineVersionChangelog.test.ts"],
   },
   {
@@ -29680,8 +29680,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D513",
     what: "\ud83d\uded1 C1 \u2014 **THE PRINTED PHRASE IS NO LONGER ITS OWN GROUP, SO THE LAZY NOUN SWALLOWS IT AGAIN AND THE TABLE REFUSES THE WHOLE ROW.** This is the PRE-SLICE STATE OF THE ENGINE, replayed exactly: `([^,.]+?)` contains neither a comma nor a period, so it captures `Basic Energy cards of different types` WHOLE and `HAND_SEARCH_PLURAL.get` has no such key \u2014 which is where corpus FILE LINE 473 died for 282 decisions. \u26a0\ufe0f **IT IS NOT A STRAW: it is the byte this slice added, and the mutant is the file as it shipped at D512.** The row therefore proves the census step is REAL rather than the suite agreeing with itself \u2014 the sentence stops deriving at all, so the reader rung, the board and the whole of \u00a73 go red together.",
     file: "packages/engine/src/effects.ts",
-    find: "    \"|up to (\\\\d+) ([^,.]+?)( of different types)?(, reveal them,)? and put them)\" +",
-    replace: "    \"|up to (\\\\d+) ([^,.]+?)(, reveal them,)? and put them)\" +",
+    find: "    \"|(?:up to (\\\\d+)|(any number of)) ([^,.]+?)( of different types)?(, reveal them,)? and put them)\" +",
+    replace: "    \"|(?:up to (\\\\d+)|(any number of)) ([^,.]+?)(, reveal them,)? and put them)\" +",
     expectKilledBy: ["packages/engine/src/distinctEnergyTypes.test.ts"],
   },
   {
@@ -29698,7 +29698,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D513",
     what: "\u26a0\ufe0f C3 \u2014 **THE PHRASE IS READ AND THEN DROPPED: the op derives with no `distinctEnergyTypes`, so the row becomes a byte-for-byte copy of the built sibling.** This is the SILENT half of the slice and the one no census can see \u2014 `BUILT.attack` still steps, `resolvedByAnyReader` still claims the sentence, the residue still falls by one, and the engine simply plays a card that says *'of different types'* as though it did not. **The only thing that catches it is a board where a same-type pair is offered and accepted**, which is \u00a73's second answer. The neighbouring `revealed` line one row up is spelled the same way, so this is a real omission rather than an invented one.",
     file: "packages/engine/src/effects.ts",
-    find: "    const distinct = match[5] !== undefined;",
+    find: "    const distinct = match[6] !== undefined;",
     replace: "    const distinct = false;",
     expectKilledBy: ["packages/engine/src/distinctEnergyTypes.test.ts"],
   },
@@ -29707,7 +29707,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D513",
     what: "\u26a0\ufe0f C4 \u2014 **THE MIRROR OF C3: every sentence this arm reads becomes type-distinct, whether it prints the phrase or not.** It is the direction a hard-coded rider takes (D225's recorded `reveal: true` hazard, one line over, on the same op) and it is why the SIBLING is a fixture in this file rather than a sentence in a comment: without corpus FILE LINE 474 on the board, an always-on rider passes every rung about line 473 and quietly caps sixteen other printings in the family at one card per Energy type.",
     file: "packages/engine/src/effects.ts",
-    find: "    const distinct = match[5] !== undefined;",
+    find: "    const distinct = match[6] !== undefined;",
     replace: "    const distinct = true;",
     expectKilledBy: ["packages/engine/src/distinctEnergyTypes.test.ts"],
   },
@@ -29725,8 +29725,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D513",
     what: "\u26a0\ufe0f C6 \u2014 **THE INDEX SHIFT THIS SLICE CAUSED, LEFT UNPAID.** Inserting a capture group ahead of the plural reveal clause moved it from `match[5]` to `match[6]`; an author who adds the group and forgets the renumber writes exactly this line. The effect is that `reveal` is read off the DISTINCTNESS group, so the only printing in the family that reveals is the one that prints the phrase \u2014 sixteen sentences silently lose their `reveal: true` and stop naming the found cards in `DECK_SEARCHED`. \ud83d\uded1 **D231's two existing reveal rows cannot see it**: one sets the flag to `false` and one reads the singular half, and this mutant is neither. **A re-transcription event owes a row of its own** (D458), and this is it.",
     file: "packages/engine/src/effects.ts",
-    find: "    const revealed = (match[2] ?? match[6]) !== undefined;",
-    replace: "    const revealed = (match[2] ?? match[5]) !== undefined;",
+    find: "    const revealed = (match[2] ?? match[7]) !== undefined;",
+    replace: "    const revealed = (match[2] ?? match[6]) !== undefined;",
     expectKilledBy: ["packages/engine/src/distinctEnergyTypes.test.ts"],
   },
   {
@@ -29782,5 +29782,86 @@ export const MUTANTS: Mutant[] = [
     find: "      ...(\"distinctEnergyTypes\" in clause ? { distinctEnergyTypes: true } : {}),",
     replace: "",
     expectKilledBy: ["packages/engine/src/derivedHandSearch.test.ts"],
+  },
+  {
+    id: "D514-any-number-group-dropped",
+    decision: "D514",
+    what: "🛑 C1 — **THE PRINTED QUANTIFIER IS NO LONGER AN ALTERNATIVE, SO THE ANCHOR REFUSES THE ROW OUTRIGHT.** This is the PRE-SLICE STATE OF THE ENGINE replayed exactly, and it is the mistake a successor makes by treating the count group as the only count: the plural branch again demands a literal `up to \\\\d+`, `any number of` is not that, and corpus FILE LINE 657 leaves on the loud ATTACK_EFFECT_SKIPPED path. Killed by the rung that derives the printed sentence to its program.",
+    file: "packages/engine/src/effects.ts",
+    find: "    \"|(?:up to (\\\\d+)|(any number of)) ([^,.]+?)( of different types)?(, reveal them,)? and put them)\" +",
+    replace: "    \"|up to (\\\\d+) ([^,.]+?)( of different types)?(, reveal them,)? and put them)\" +",
+    expectKilledBy: ["packages/engine/src/namedDeckSearch.test.ts"],
+  },
+  {
+    id: "D514-quantifier-read-as-the-article",
+    decision: "D514",
+    what: "🛑 C2 — **THE PRINTED *\"any number of\"* READ AS THE ABSENT COUNT, i.e. as `max: 1`.** The neighbouring arm's REAL reading copied verbatim: *\"the absent count IS the article\"* is `ATTACK_DRAW`'s rule and it is right for the sentence that prints `a card`, and WRONG here — the quantifier is printed, it names no ceiling, and one is not it. The board offers a single card and the dialog captions a singular noun. Killed by the ceiling rung.",
+    file: "packages/engine/src/effects.ts",
+    find: "    const max = match[4] !== undefined ? \"any\" : match[3] === undefined ? 1 : Number(match[3]);",
+    replace: "    const max = match[3] === undefined ? 1 : Number(match[3]);",
+    expectKilledBy: ["packages/engine/src/namedDeckSearch.test.ts"],
+  },
+  {
+    id: "D514-plural-noun-index-stale",
+    decision: "D514",
+    what: "🛑 C3 — **THE PLURAL NOUN READ OFF ITS PRE-SLICE INDEX.** D458's re-transcription hazard at its second address in this arm: inserting the quantifier group ahead of the noun moved the plural noun from group 4 to group 5, and a patch that renamed instead of re-reading gets the QUANTIFIER text where the noun should be. Every plural printing in the family loses its noun, which is why this row's killer is the OLD family suite rather than this slice's.",
+    file: "packages/engine/src/effects.ts",
+    find: "    const many = match[5];",
+    replace: "    const many = match[4];",
+    expectKilledBy: ["packages/engine/src/derivedHandSearch.test.ts"],
+  },
+  {
+    id: "D514-named-noun-ordered-first",
+    decision: "D514",
+    what: "🛑 C4 — **THE NAME RESOLVER ASKED BEFORE THE CLOSED TABLE, so every printed CATEGORY becomes a card NAME.** `ATTACK_DISCARD_RETRIEVAL`'s own block states the constraint from the other side (*\"Ordering the alternatives table-first is what keeps 'Pokémon' an `anyPokemon` rather than a card called Pokémon\"*) — this row is that sentence disobeyed. *\"Energy cards\"* derives to `byName { name: \"Energy\" }`, which matches nothing on any board. Killed by the ordering rung.",
+    file: "packages/engine/src/effects.ts",
+    find: "        ? (HAND_SEARCH_PLURAL.get(many ?? \"\") ??\n          typedNounFilter(many ?? \"\", true) ??\n          namedCardNounFilter(many ?? \"\"))",
+    replace: "        ? (namedCardNounFilter(many ?? \"\") ??\n          HAND_SEARCH_PLURAL.get(many ?? \"\") ??\n          typedNounFilter(many ?? \"\", true))",
+    expectKilledBy: ["packages/engine/src/namedDeckSearch.test.ts"],
+  },
+  {
+    id: "D514-banner-guard-dropped",
+    decision: "D514",
+    what: "🛑 C5 — **THE BANNER REFUSAL DELETED, which is D440's refused template arriving by the back door.** *\"Ancient\"*, *\"Future\"* and *\"Tera\"* are printed on the card FACE and are in NO column of the persisted catalog, so `byName { name: \"Ancient\" }` counts 0 on every board FOREVER while `BUILT.attack` steps for it — the wrong-but-plausible program D190b/D199 rank below an unbuilt one. Killed by the banner rung.",
+    file: "packages/engine/src/effects.ts",
+    find: "  return PRINTED_CARD_BANNERS.has(name) ? undefined : { kind: \"byName\", name, cardNoun: true };",
+    replace: "  return { kind: \"byName\", name, cardNoun: true };",
+    expectKilledBy: ["packages/engine/src/namedDeckSearch.test.ts"],
+  },
+  {
+    id: "D514-name-class-is-d440s-template",
+    decision: "D514",
+    what: "🛑 C6 — **THE NAME CLASS WIDENED TO D440's REFUSED `^(.+) card$` TEMPLATE.** The class is `ATTACK_BENCH_SEARCH`'s, re-read rather than re-invented: a single capitalised word, so a hyphenated / spaced / apostrophised name falls to the loud path instead of being approximated. Widened, *\"Iono's Bellibolt cards\"* and *\"Ho-Oh cards\"* derive to exact-equality filters that can never match — the same 0-forever failure the banner set exists to prevent, one axis over. Killed by the name-class rung.",
+    file: "packages/engine/src/effects.ts",
+    find: "const NAMED_CARD_NOUN = /^([A-Z][a-zé]+) cards$/;",
+    replace: "const NAMED_CARD_NOUN = /^(.+) cards$/;",
+    expectKilledBy: ["packages/engine/src/namedDeckSearch.test.ts"],
+  },
+  {
+    id: "D514-cardNoun-dropped",
+    decision: "D514",
+    what: "🛑 C7 — **THE PRINTED \"cards\" DROPPED FROM THE FILTER.** `cardNoun` is not decoration: `retrieveNoun` reads it to spell the caption, so without it the dialog heading reads *\"any number of Fennel\"* — the Pokémon-name spelling, on a Supporter. D264 put the field on the member precisely because a NON-Pokémon name carries the noun and a Pokémon name does not, and nothing downstream re-derives it. Killed by the caption rung.",
+    file: "packages/engine/src/effects.ts",
+    find: "  return PRINTED_CARD_BANNERS.has(name) ? undefined : { kind: \"byName\", name, cardNoun: true };",
+    replace: "  return PRINTED_CARD_BANNERS.has(name) ? undefined : { kind: \"byName\", name };",
+    expectKilledBy: ["packages/engine/src/namedDeckSearch.test.ts"],
+  },
+  {
+    id: "D514-caption-prints-the-resolved-clamp",
+    decision: "D514",
+    what: "🛑 C8 — **THE CAPTION ARM DELETED, SO THE DIALOG PRINTS THE NUMBER THE PARK RESOLVED.** D333's finding at a second prompt: a value that is equivalent as a PREDICATE is not equivalent as a CAPTION. The park has already turned `\"any\"` into the candidate count, so without this line the heading reads *\"up to N Fennel cards\"* over a sentence that spells no digit — and N is a count of HIDDEN cards, leaked before the offer is opened. Killed by the caption rung.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "    if (first.max === \"any\") return `Search your deck for any number of ${many} ${where}.`;\n",
+    replace: "",
+    expectKilledBy: ["packages/engine/src/namedDeckSearch.test.ts"],
+  },
+  {
+    id: "D514-any-resolved-against-the-union",
+    decision: "D514",
+    what: "🛑 C9 — **THE UNBOUNDED GROUP RESOLVED AGAINST THE UNION RATHER THAN AGAINST ITS OWN FILTER.** D336's neighbouring mistake — *\"the caps read the union, not the group\"* — copied onto the new line. Invisible on every printed sentence, because every one of them has a single group and the two sets coincide; it is wrong the moment an `also` group rides beside an unbounded first noun, where the total becomes the whole offer twice over. Killed by the multi-group caption rung, which is the only place the two numbers differ.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "        max: g.max === \"any\" ? groupMatches(g.filter).length : g.max,",
+    replace: "        max: g.max === \"any\" ? candidates.length : g.max,",
+    expectKilledBy: ["packages/engine/src/namedDeckSearch.test.ts"],
   },
 ];
