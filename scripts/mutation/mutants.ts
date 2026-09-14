@@ -5251,7 +5251,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D275",
     what: "🛑 THE DEBT THIS SLICE PAID FOR THE FIFTH TIME, RE-INSTALLED: `engineVersion` falls a minor behind `packages/engine/package.json`, which is EXACTLY the state the tree was in at the head of D275 (0.187.0 against 0.189.0) and had been for two slices with nothing comparing them. The tie is the guard; this row is the proof it is one",
     file: "packages/engine/src/index.ts",
-    // ⚠️ RE-POINTED AT D516 (0.402.0 → 0.403.0), at D515 (0.401.0 → 0.402.0), at D514 (0.400.0 → 0.401.0), at D513 (0.399.0 → 0.400.0), at D512 (0.398.0 → 0.399.0), at D510 (0.397.0 → 0.398.0), at D508 (0.396.0 → 0.397.0), at D507 (0.395.0 → 0.396.0), at D505 (0.394.0 → 0.395.0), at D490 (0.384.0 → 0.385.0), at D489 (0.383.0 → 0.384.0), at D488 (0.382.0 → 0.383.0), at D487 (0.381.0 → 0.382.0), at D486 (0.380.0 → 0.381.0), at D485 (0.379.0 → 0.380.0), at D450 (0.351.0 → 0.352.0), at D449 (0.350.0 → 0.351.0), at D448 (0.349.0 → 0.350.0), at D447 (0.348.0 → 0.349.0), at D446 (0.347.0 → 0.348.0), at D445 (0.346.0 → 0.347.0), at D444 (0.345.0 → 0.346.0), at D443 (0.344.0 → 0.345.0), at D442 (0.343.0 → 0.344.0), at D441 (0.342.0 → 0.343.0), at D440 (0.341.0 → 0.342.0), at D439 (0.340.0 → 0.341.0), at D438 (0.339.0 → 0.340.0), at D437 (0.338.0 → 0.339.0), at D436 (0.337.0 → 0.338.0), at D435 (0.336.0 → 0.337.0), at D434 (0.335.0 → 0.336.0), at D433 (0.334.0 → 0.335.0), at D432 (0.333.0 → 0.334.0), at D431 (0.332.0 → 0.333.0), at D430 (0.331.0 → 0.332.0), at D429 (0.330.0 → 0.331.0), at D428 (0.329.0 → 0.330.0), at D427 (0.328.0 → 0.329.0), at D426 (0.327.0 → 0.328.0), at D425 (0.326.0 → 0.327.0), at D424 (0.325.0 → 0.326.0), at D423 (0.324.0 → 0.325.0), at D422 (0.323.0 → 0.324.0), at D421 (0.322.0 → 0.323.0), at D420 (0.321.0 → 0.322.0), at D417 (0.320.0 → 0.321.0), at D416 (0.319.0 → 0.320.0), at D415 (0.318.0 → 0.319.0), at D414 (0.317.0 → 0.318.0), at D413 (0.316.0 → 0.317.0), at D412 (0.315.0 → 0.316.0), at D410 (0.314.0 → 0.315.0), at D409 (0.313.0 → 0.314.0), at D408 (0.312.0 → 0.313.0), at D407 (0.311.0 → 0.312.0), at D402 (0.306.0 → 0.307.0), at D401 (0.305.0 → 0.306.0), at D400 (0.304.0 → 0.305.0), at D399 (0.303.0 → 0.304.0), at D398 (0.302.0 → 0.303.0), at D397 (0.301.0 → 0.302.0), at D396 (0.300.0 → 0.301.0), at D395 (0.299.0 → 0.300.0), at D394 (0.298.0 → 0.299.0), at D393 (0.297.0 → 0.298.0), at D392 (0.296.0 → 0.297.0), at D391 (0.295.0 → 0.296.0), at D390 (0.294.0 → 0.295.0), at D389 (0.293.0 → 0.294.0), at D388 (0.292.0 → 0.293.0), at D387 (0.291.0 → 0.292.0), at D386 (0.290.0 → 0.291.0),
+    // ⚠️ RE-POINTED AT D517 (0.403.0 → 0.404.0), at D516 (0.402.0 → 0.403.0), at D515 (0.401.0 → 0.402.0), at D514 (0.400.0 → 0.401.0), at D513 (0.399.0 → 0.400.0), at D512 (0.398.0 → 0.399.0), at D510 (0.397.0 → 0.398.0), at D508 (0.396.0 → 0.397.0), at D507 (0.395.0 → 0.396.0), at D505 (0.394.0 → 0.395.0), at D490 (0.384.0 → 0.385.0), at D489 (0.383.0 → 0.384.0), at D488 (0.382.0 → 0.383.0), at D487 (0.381.0 → 0.382.0), at D486 (0.380.0 → 0.381.0), at D485 (0.379.0 → 0.380.0), at D450 (0.351.0 → 0.352.0), at D449 (0.350.0 → 0.351.0), at D448 (0.349.0 → 0.350.0), at D447 (0.348.0 → 0.349.0), at D446 (0.347.0 → 0.348.0), at D445 (0.346.0 → 0.347.0), at D444 (0.345.0 → 0.346.0), at D443 (0.344.0 → 0.345.0), at D442 (0.343.0 → 0.344.0), at D441 (0.342.0 → 0.343.0), at D440 (0.341.0 → 0.342.0), at D439 (0.340.0 → 0.341.0), at D438 (0.339.0 → 0.340.0), at D437 (0.338.0 → 0.339.0), at D436 (0.337.0 → 0.338.0), at D435 (0.336.0 → 0.337.0), at D434 (0.335.0 → 0.336.0), at D433 (0.334.0 → 0.335.0), at D432 (0.333.0 → 0.334.0), at D431 (0.332.0 → 0.333.0), at D430 (0.331.0 → 0.332.0), at D429 (0.330.0 → 0.331.0), at D428 (0.329.0 → 0.330.0), at D427 (0.328.0 → 0.329.0), at D426 (0.327.0 → 0.328.0), at D425 (0.326.0 → 0.327.0), at D424 (0.325.0 → 0.326.0), at D423 (0.324.0 → 0.325.0), at D422 (0.323.0 → 0.324.0), at D421 (0.322.0 → 0.323.0), at D420 (0.321.0 → 0.322.0), at D417 (0.320.0 → 0.321.0), at D416 (0.319.0 → 0.320.0), at D415 (0.318.0 → 0.319.0), at D414 (0.317.0 → 0.318.0), at D413 (0.316.0 → 0.317.0), at D412 (0.315.0 → 0.316.0), at D410 (0.314.0 → 0.315.0), at D409 (0.313.0 → 0.314.0), at D408 (0.312.0 → 0.313.0), at D407 (0.311.0 → 0.312.0), at D402 (0.306.0 → 0.307.0), at D401 (0.305.0 → 0.306.0), at D400 (0.304.0 → 0.305.0), at D399 (0.303.0 → 0.304.0), at D398 (0.302.0 → 0.303.0), at D397 (0.301.0 → 0.302.0), at D396 (0.300.0 → 0.301.0), at D395 (0.299.0 → 0.300.0), at D394 (0.298.0 → 0.299.0), at D393 (0.297.0 → 0.298.0), at D392 (0.296.0 → 0.297.0), at D391 (0.295.0 → 0.296.0), at D390 (0.294.0 → 0.295.0), at D389 (0.293.0 → 0.294.0), at D388 (0.292.0 → 0.293.0), at D387 (0.291.0 → 0.292.0), at D386 (0.290.0 → 0.291.0),
     //    each in the SAME COMMIT as the bump —
     // the TENTH slice running to do it that way, and the practice is now the one
     // thing about this row that has never cost an ERROR since it started.
@@ -5798,7 +5798,7 @@ export const MUTANTS: Mutant[] = [
     // CORPUS QUOTES** (D414/D415), so a value-keyed sweep over `toBe("0.391.0")` cannot
     // see it — this row's `find` spells the DECLARATION, not an assertion. Run
     // `precheck` after every version bump, not after the sweep tells you.
-    find: 'export const engineVersion = "0.403.0";',
+    find: 'export const engineVersion = "0.404.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -19277,8 +19277,15 @@ export const MUTANTS: Mutant[] = [
     decision: "D429",
     what: "row 74's anchor claims the Asleep spelling instead of the Paralyzed one — a REAL neighbouring status word from the same `rotation` slot (D190b's rule: mutate onto a neighbour's real code, not onto a straw). The printed sentence stops deriving, so the Tool discard is lost as well as the condition, and the whole printing lands back on the loud path",
     file: "packages/engine/src/effects.ts",
-    find: "Active Pokémon is now Paralyzed\\.$/;",
-    replace: "Active Pokémon is now Asleep\\.$/;",
+    // 🆕🆕 D517 — THE `find` IS WIDENED, AND THE REASON IS A NEW ANCHOR RATHER THAN A
+    //    DEFECT IN THIS ROW'S MEANING. D517 adds `SELF_PRIZE_GATE_PARALYZE`, whose source
+    //    line ENDS in the same fourteen characters this row used to key on, so the old
+    //    `find` began matching 2x and `precheck` reported it BROKEN. The five preceding
+    //    words (`in this way, your opponent['’]s`) are row 74's own printed clause and
+    //    restore uniqueness without changing what the mutation DOES: the same status word
+    //    in the same slot of the same anchor.
+    find: "in this way, your opponent['’]s Active Pokémon is now Paralyzed\\.$/;",
+    replace: "in this way, your opponent['’]s Active Pokémon is now Asleep\\.$/;",
     expectKilledBy: ["packages/engine/src/preDamageFamily.test.ts"],
   },
   {
@@ -27914,8 +27921,12 @@ export const MUTANTS: Mutant[] = [
     //    that reason. The regression is kept at ONE step (`replace` is the pre-slice value),
     //    so the row still expresses *"a slice built a sentence and left the constant
     //    behind"* and not a two-release drift.
-    find: "  attack: 1632,",
-    replace: "  attack: 1631,",
+    // 🆕🆕 D517 — RE-TRANSCRIBED AGAIN, 1632 -> 1633 (replace 1631 -> 1632), the same
+    //    two-step regression this row has always expressed, and found by `precheck` in
+    //    seconds rather than by the suite — the whole argument for running it after every
+    //    edit round (D414/D437/D445).
+    find: "  attack: 1633,",
+    replace: "  attack: 1632,",
     expectKilledBy: [
       "packages/engine/src/censusAtHead.test.ts",
     ],
@@ -29070,10 +29081,10 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D506-changelog-head-unnamed",
     decision: "D506",
-    what: "🛑 C1 — THE DEFECT D502 AND D505 BOTH SHIPPED: a version goes out and NO HEADING CLAIMS IT. The edit un-bolds the NEWEST heading's target, so the parser stops seeing it and the chain's head falls back a release while `package.json` says otherwise — which is byte-for-byte the state of this file at D505's head, twice over. ⚠️ IT IS THE CHEAPEST WAY FOR THIS RECORD TO GO WRONG AND WAS INVISIBLE TO EVERY OTHER INSTRUMENT IN THE REPO: `tsc`, `biome`, every test, `precheck` and all five gates are green on both sides of it, because until D506 nothing read the headings at all. Killed by the HEAD case alone, which is the point — one tripwire, named (D453/D498). 🛑 RE-POINTED AT D507 ONTO THE 0.395.0 → 0.396.0 HEADING, AND THE RE-POINT WAS OWED RATHER THAN TIDY (D444): left on D505's heading it would have gone INERT ON THE VERDICT the moment a newer heading existed — un-bolding a heading that is no longer the head leaves NEWEST equal to HEAD, so the HEAD case stays green and the kill arrives, if at all, through the CHAIN case instead. The row's own stated reason (killed by the HEAD case alone) is exactly the sentence that would have quietly become false. THIS ROW IS PART OF THE VERSION TAX: every bump owes its re-point, in the same edit as the heading. \U0001f195 RE-POINTED AGAIN AT D508 ONTO THE 0.396.0 → 0.397.0 HEADING, and this one is UNLABELLED — the `find` quotes the heading's first prose words instead of a `(D<nnn> —`, which is strictly more durable: the label is the byte the close-out ritual inserts, and quoting it is exactly what broke this row at D507. \u26a0\ufe0f The heading is the CHAIN HEAD again, so the HEAD case is the killer again — the re-point is what keeps that sentence true rather than quietly false. \U0001f195 RE-POINTED AGAIN AT D510 ONTO THE 0.397.0 \u2192 0.398.0 HEADING, also UNLABELLED, and the `find` is kept in D508's TRIMMED form \u2014 it stops before the `(` where the close-out ritual inserts the label, which is the shape D508 proved survives that edit (precheck clean, label inserted, clean again). A `find` that spanned the paren would re-open the coupling that broke this row at D507. \U0001f195 RE-POINTED AGAIN AT D512 ONTO THE 0.398.0 \u2192 0.399.0 HEADING, also UNLABELLED and kept in the same TRIMMED form. \u26a0\ufe0f The re-point is what keeps this row's own stated reason (killed by the HEAD case ALONE) true rather than quietly false: left on D510's heading it would go INERT ON THE VERDICT the moment a newer heading exists, because un-bolding a heading that is no longer the head leaves NEWEST equal to HEAD and the kill arrives, if at all, through the CHAIN case instead. \U0001f195 RE-POINTED AGAIN AT D513 ONTO THE 0.399.0 \u2192 0.400.0 HEADING, also UNLABELLED and kept in the same TRIMMED form that stops before the `(`. \u26a0\ufe0f **AND THE TRIM WAS PROVEN AGAIN RATHER THAN ASSUMED**: `precheck` clean before the heading exists, the heading written, `precheck` clean after \u2014 the third consecutive slice to demonstrate that a `find` ending at `**<new>**` survives the close-out label insertion, and the fourth to state that a `find` spanning the paren re-opens the coupling that broke this row at D507. \U0001f195 RE-POINTED AGAIN AT D515 ONTO THE 0.401.0 \u2192 0.402.0 HEADING, also UNLABELLED and kept in the same TRIMMED form that stops before the `(`. \u26a0\ufe0f **THE RE-POINT IS THE PART OF THE VERSION TAX THAT HAS NO AUTOMATIC DETECTOR**: left on D514's heading this row would go INERT ON THE VERDICT the moment a newer heading exists \u2014 un-bolding a heading that is no longer the head leaves NEWEST equal to HEAD, the HEAD case stays green, and the kill arrives (if at all) through the CHAIN case instead, so the row would report KILLED while its own stated reason (killed by the HEAD case ALONE) had quietly become false. \u26a0\ufe0f **AND THE TRIM WAS PROVEN A FIFTH TIME RATHER THAN ASSUMED**: `precheck` clean before the heading exists, the heading written, `precheck` clean after. \U0001f195 RE-POINTED AGAIN AT D516 ONTO THE 0.402.0 \u2192 0.403.0 HEADING, also UNLABELLED and kept in the same TRIMMED form that stops before the `(`. \u26a0\ufe0f **THE TRIM WAS PROVEN A SIXTH TIME RATHER THAN ASSUMED**: `precheck` clean before the heading exists, the heading written, `precheck` clean after \u2014 and the re-point remains the part of the version tax with no automatic detector, because left on D515\u2019s heading this row would report KILLED while its own stated reason (killed by the HEAD case ALONE) had quietly become false.",
+    what: "🛑 C1 — THE DEFECT D502 AND D505 BOTH SHIPPED: a version goes out and NO HEADING CLAIMS IT. The edit un-bolds the NEWEST heading's target, so the parser stops seeing it and the chain's head falls back a release while `package.json` says otherwise — which is byte-for-byte the state of this file at D505's head, twice over. ⚠️ IT IS THE CHEAPEST WAY FOR THIS RECORD TO GO WRONG AND WAS INVISIBLE TO EVERY OTHER INSTRUMENT IN THE REPO: `tsc`, `biome`, every test, `precheck` and all five gates are green on both sides of it, because until D506 nothing read the headings at all. Killed by the HEAD case alone, which is the point — one tripwire, named (D453/D498). 🛑 RE-POINTED AT D507 ONTO THE 0.395.0 → 0.396.0 HEADING, AND THE RE-POINT WAS OWED RATHER THAN TIDY (D444): left on D505's heading it would have gone INERT ON THE VERDICT the moment a newer heading existed — un-bolding a heading that is no longer the head leaves NEWEST equal to HEAD, so the HEAD case stays green and the kill arrives, if at all, through the CHAIN case instead. The row's own stated reason (killed by the HEAD case alone) is exactly the sentence that would have quietly become false. THIS ROW IS PART OF THE VERSION TAX: every bump owes its re-point, in the same edit as the heading. \U0001f195 RE-POINTED AGAIN AT D508 ONTO THE 0.396.0 → 0.397.0 HEADING, and this one is UNLABELLED — the `find` quotes the heading's first prose words instead of a `(D<nnn> —`, which is strictly more durable: the label is the byte the close-out ritual inserts, and quoting it is exactly what broke this row at D507. \u26a0\ufe0f The heading is the CHAIN HEAD again, so the HEAD case is the killer again — the re-point is what keeps that sentence true rather than quietly false. \U0001f195 RE-POINTED AGAIN AT D510 ONTO THE 0.397.0 \u2192 0.398.0 HEADING, also UNLABELLED, and the `find` is kept in D508's TRIMMED form \u2014 it stops before the `(` where the close-out ritual inserts the label, which is the shape D508 proved survives that edit (precheck clean, label inserted, clean again). A `find` that spanned the paren would re-open the coupling that broke this row at D507. \U0001f195 RE-POINTED AGAIN AT D512 ONTO THE 0.398.0 \u2192 0.399.0 HEADING, also UNLABELLED and kept in the same TRIMMED form. \u26a0\ufe0f The re-point is what keeps this row's own stated reason (killed by the HEAD case ALONE) true rather than quietly false: left on D510's heading it would go INERT ON THE VERDICT the moment a newer heading exists, because un-bolding a heading that is no longer the head leaves NEWEST equal to HEAD and the kill arrives, if at all, through the CHAIN case instead. \U0001f195 RE-POINTED AGAIN AT D513 ONTO THE 0.399.0 \u2192 0.400.0 HEADING, also UNLABELLED and kept in the same TRIMMED form that stops before the `(`. \u26a0\ufe0f **AND THE TRIM WAS PROVEN AGAIN RATHER THAN ASSUMED**: `precheck` clean before the heading exists, the heading written, `precheck` clean after \u2014 the third consecutive slice to demonstrate that a `find` ending at `**<new>**` survives the close-out label insertion, and the fourth to state that a `find` spanning the paren re-opens the coupling that broke this row at D507. \U0001f195 RE-POINTED AGAIN AT D515 ONTO THE 0.401.0 \u2192 0.402.0 HEADING, also UNLABELLED and kept in the same TRIMMED form that stops before the `(`. \u26a0\ufe0f **THE RE-POINT IS THE PART OF THE VERSION TAX THAT HAS NO AUTOMATIC DETECTOR**: left on D514's heading this row would go INERT ON THE VERDICT the moment a newer heading exists \u2014 un-bolding a heading that is no longer the head leaves NEWEST equal to HEAD, the HEAD case stays green, and the kill arrives (if at all) through the CHAIN case instead, so the row would report KILLED while its own stated reason (killed by the HEAD case ALONE) had quietly become false. \u26a0\ufe0f **AND THE TRIM WAS PROVEN A FIFTH TIME RATHER THAN ASSUMED**: `precheck` clean before the heading exists, the heading written, `precheck` clean after. \U0001f195 RE-POINTED AGAIN AT D516 ONTO THE 0.402.0 \u2192 0.403.0 HEADING, also UNLABELLED and kept in the same TRIMMED form that stops before the `(`. \u26a0\ufe0f **THE TRIM WAS PROVEN A SIXTH TIME RATHER THAN ASSUMED**: `precheck` clean before the heading exists, the heading written, `precheck` clean after \u2014 and the re-point remains the part of the version tax with no automatic detector, because left on D515\u2019s heading this row would report KILLED while its own stated reason (killed by the HEAD case ALONE) had quietly become false. \U0001f195 RE-POINTED AGAIN AT D517 ONTO THE 0.403.0 \u2192 0.404.0 HEADING, also UNLABELLED and kept in the same TRIMMED form that stops before the `(`. \u26a0\ufe0f **THE TRIM WAS PROVEN A SEVENTH TIME RATHER THAN ASSUMED**: `precheck` clean before the heading exists, the heading written, `precheck` clean after \u2014 seven consecutive slices now, which is the evidence that the label a caller later adds cannot reach this `find`.",
     file: "packages/engine/src/index.ts",
-    find: "engineVersion 0.402.0 → **0.403.0**",
-    replace: "engineVersion 0.402.0 → 0.403.0",
+    find: "engineVersion 0.403.0 → **0.404.0**",
+    replace: "engineVersion 0.403.0 → 0.404.0",
     expectKilledBy: ["packages/engine/src/engineVersionChangelog.test.ts"],
   },
   {
@@ -29993,5 +30004,85 @@ export const MUTANTS: Mutant[] = [
     find: "  /^Shuffle your hand into your deck\\. Then, draw a card for each card in your opponent's hand\\.$/;",
     replace: "  /^Shuffle your hand into your deck\\. Then, draw a card for each card in your (?:opponent's )?hand\\.$/;",
     expectKilledBy: ["packages/engine/src/handRefreshOpponentHand.test.ts"],
+  },
+
+  // ── D517 — THE PRIZE-GATED PARALYSIS. Eight rows, ONE PER CLAIM. The SHAPE of the
+  //    set is the finding and it is the mirror of D516's: only C4 and C5 (the anchor's
+  //    two ends) can move a census figure at all. C1, C2, C3, C6 and C7 leave the
+  //    sentence deriving, `BUILT.attack` unmoved and every reader-surface rung green
+  //    while the gate reads the wrong seat, the wrong count, or lands the wrong status on
+  //    the wrong body — SIX of eight silent in every census, which is D402's ratio at a
+  //    third anchor. C8 is the describer, which no census has ever been able to see.
+  {
+    id: "D517-gate-reads-the-opponents-prizes",
+    decision: "D517",
+    what: "\U0001f6d1 C1 \u2014 ARM 6a-iii'S GATE IS RE-SEATED ONTO THE OPPONENT, which is the defect the whole slice exists to prevent and the one a successor reaches for by reflex: `opponentPrizesRemaining` is the SHIPPED member, it is one line up in the union, it takes the same `counts` parameter, and swapping it typechecks. It is INVISIBLE TO EVERY CENSUS \u2014 the sentence still derives, `BUILT.attack` still reads 1633, the reader surface is still 13 and the residue is still 70/99 \u2014 while the card paralyses on the board its print says nothing about. On 12 of the 49 reachable prize boards the two members answer differently, which is the whole content of the mirror.",
+    file: "packages/engine/src/effects.ts",
+    find: "        cond: { kind: \"yourPrizesRemaining\", counts: [1] },",
+    replace: "        cond: { kind: \"opponentPrizesRemaining\", counts: [1] },",
+    expectKilledBy: ["packages/engine/src/prizeGateParalyze.test.ts"],
+  },
+  {
+    id: "D517-evaluator-drops-the-re-seat",
+    decision: "D517",
+    what: "\U0001f6d1 C2 \u2014 THE SAME DEFECT ONE LAYER DOWN, and it is a SEPARATE claim rather than C1 restated: `conditionHolds`'s new arm gains the `otherSeat` its twin carries, so the MEMBER means the opponent's prizes while the ARM that emits it still names the controller's. A row that only killed C1 would leave the union honest and the evaluator lying, and every other producer of this member \u2014 a registry row a later slice authors, a Trainer play gate \u2014 would inherit the lie with nothing naming it.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      return cond.counts.includes(state.players[seat].prizes.length);",
+    replace: "      return cond.counts.includes(state.players[otherSeat(seat)].prizes.length);",
+    expectKilledBy: ["packages/engine/src/prizeGateParalyze.test.ts"],
+  },
+  {
+    id: "D517-gate-count-is-off-by-one",
+    decision: "D517",
+    what: "\u26a0\ufe0f C3 \u2014 THE PRINTED COUNT BECOMES ZERO, the fencepost on a clause whose whole content is one number. `counts: [0]` is a REACHABLE board rather than a straw (the \u00a714 check runs on the TAKE, not on the count, so a seat sits at zero prizes for the instant between), so the card still paralyses \u2014 just never on the turn it is printed for and sometimes on one it is not. Silent in every census.",
+    file: "packages/engine/src/effects.ts",
+    find: "        cond: { kind: \"yourPrizesRemaining\", counts: [1] },",
+    replace: "        cond: { kind: \"yourPrizesRemaining\", counts: [0] },",
+    expectKilledBy: ["packages/engine/src/prizeGateParalyze.test.ts"],
+  },
+  {
+    id: "D517-anchor-loses-its-caret",
+    decision: "D517",
+    what: "\U0001f6d1 C4 \u2014 THE `^` END. Without it the anchor floats and a sentence that merely ENDS with this text is claimed WHOLE while its leading clause is dropped in silence \u2014 the loud/silent split this repo names for D278/D279, at a third anchor. This is one of only two rows in the set a census can see.",
+    file: "packages/engine/src/effects.ts",
+    find: "  /^If you have exactly 1 Prize card remaining, your opponent['’]s Active Pokémon is now Paralyzed\\.$/;",
+    replace: "  /If you have exactly 1 Prize card remaining, your opponent['\u2019]s Active Pok\u00e9mon is now Paralyzed\\.$/;",
+    expectKilledBy: ["packages/engine/src/prizeGateParalyze.test.ts"],
+  },
+  {
+    id: "D517-anchor-loses-its-dollar",
+    decision: "D517",
+    what: "\U0001f6d1 C5 \u2014 THE `$` END, and it fails DIFFERENTLY from C4 (D464's rule that the two ends are two claims): a dropped `$` claims sentences that CONTINUE, so a trailing *\"Draw a card.\"* or *\"Your turn ends.\"* is silently discarded while the gate and the status still run. The other of the two rows in this set a census can see.",
+    file: "packages/engine/src/effects.ts",
+    find: "  /^If you have exactly 1 Prize card remaining, your opponent['’]s Active Pokémon is now Paralyzed\\.$/;",
+    replace: "  /^If you have exactly 1 Prize card remaining, your opponent['\u2019]s Active Pok\u00e9mon is now Paralyzed\\./;",
+    expectKilledBy: ["packages/engine/src/prizeGateParalyze.test.ts"],
+  },
+  {
+    id: "D517-anchor-drops-the-curly-apostrophe",
+    decision: "D517",
+    what: "\u26a0\ufe0f C6 \u2014 THE `['\u2019]` CLASS COLLAPSES TO A BARE ASCII `'`, which is D136/D137's exposure at a new anchor and the exact defect D414 shipped twice in this same family. It is INERT ON TODAY'S CATALOG (the pool holds zero U+2019 in `attacks_json`) and fires the day a punctuation-normalising re-ingest lands \u2014 at which point the row stops deriving and falls SILENTLY to the loud skip path, reading as *\"a card broke\"* rather than as *\"a class was dropped\"*.",
+    file: "packages/engine/src/effects.ts",
+    find: "  /^If you have exactly 1 Prize card remaining, your opponent['’]s Active Pokémon is now Paralyzed\\.$/;",
+    replace: "  /^If you have exactly 1 Prize card remaining, your opponent's Active Pok\u00e9mon is now Paralyzed\\.$/;",
+    expectKilledBy: ["packages/engine/src/prizeGateParalyze.test.ts"],
+  },
+  {
+    id: "D517-status-lands-on-the-attacker",
+    decision: "D517",
+    what: "\U0001f6d1 C7 \u2014 THE PAYLOAD'S `target` FLIPS TO `self`, so the printed sentence paralyses the ATTACKER. `\"self\"` is a real shipped value of this op's own field (D190b \u2014 mutate onto a neighbour's real code, not onto a straw), the op count is unchanged, `STATUS_APPLIED` still fires, and no census figure moves; the only witness is WHICH body carries the condition afterwards.",
+    file: "packages/engine/src/effects.ts",
+    find: "        then: [{ op: \"applyStatus\", target: \"defender\", status: \"paralyzed\" }],",
+    replace: "        then: [{ op: \"applyStatus\", target: \"self\", status: \"paralyzed\" }],",
+    expectKilledBy: ["packages/engine/src/prizeGateParalyze.test.ts"],
+  },
+  {
+    id: "D517-describer-names-the-wrong-seat",
+    decision: "D517",
+    what: "\U0001f6d1 C8 \u2014 `conditionNote`'S NEW ARM SAYS *\"your opponent has\u2026\"*, which is the twin's own string and the copy-paste a successor makes. \u26a0\ufe0f **NO CENSUS AND NO BOARD ASSERTION CAN SEE THIS** \u2014 the describer is a reject/tooltip fragment and this member's only producer today is an attack gate that never rejects, so the wrong seat would ship the moment a registry row or a Trainer play gate reached for it. That is D515's silent-describer failure mode pinned BEFORE it can happen rather than after, and it is why the round-trip is asserted against the printed clause instead of merely against non-empty.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      return `you have exactly ${printedList(cond.counts)} Prize card${",
+    replace: "      return `your opponent has exactly ${printedList(cond.counts)} Prize card${",
+    expectKilledBy: ["packages/engine/src/prizeGateParalyze.test.ts"],
   },
 ];

@@ -1702,6 +1702,53 @@ export type BoardCondition =
       COUNTS are public and survive redaction as counts, so — unlike
       `yourStadiumInPlay` — this member does not widen the P4 gap. */
   | { kind: "opponentPrizesRemaining"; counts: readonly number[] }
+  /** 🆕🆕 D517 — §3.8 — **YOUR OWN** REMAINING Prize count is one of `counts`:
+      `censusAttackCorpus.ts` **FILE LINE 342**, *"If you have exactly 1 Prize card
+      remaining, your opponent's Active Pokémon is now Paralyzed."*, `[1]`, **1
+      sentence / 1 legal printing**. ⚠️ **THE CARD ID IS UNRESOLVED AND IS LEFT SO**
+      — this checkout has no D1 (D425), and a plausible-looking invented id is
+      indistinguishable from a real one to every later reader. The SENTENCE and the
+      PRINTING COUNT are measured off the committed corpus row, which is what the
+      census subtracts. **THE SEAT MIRROR OF THE MEMBER
+      DIRECTLY ABOVE, SPELLED WITH ITS SHAPE BYTE FOR BYTE** — a `counts` LIST and
+      the same `counts.includes(…)` fold — so the pair cannot drift and a printed
+      *"you have 3 or fewer Prize cards remaining"* needs no third member.
+
+      🛑 **A FOURTH PRIZE READING SHIPS IN THIS REPO AND THIS IS THE FIFTH NAME FOR
+      IT, WHICH IS THE IDIOM RATHER THAN A SLIP.** `registry.ts`'s D207 block says
+      outright *"TWO SPELLINGS EXIST AND THEY ARE NOT THE SAME NUMBER"*, and at this
+      head there are four readings of one pile:
+        · `BoardCondition.opponentPrizesRemaining` — the OPPONENT's remaining;
+        · `DamageCountSource.opponentPrizesTaken` — `6 − remaining`, opponent;
+        · `MaxHpScale.opponentPrizesTaken` — the same number in a third union;
+        · `HandRefreshDraw.prizeCount` — the AFFECTED PLAYER's remaining, which under
+          `who: "you"` **is exactly the number this member reads.**
+      **EMBEDDING `HandRefreshDraw` HERE WAS PRICED AND REFUSED FOR D516's REASON, NOT
+      BY REFLEX.** What D159 makes single is the WALK, never the union: this member's
+      walk is `conditionHolds` (interpreter.ts), the ONE evaluator behind all three
+      `BoardCondition` consumers, and `handRefreshDrawCount` is a different walk that
+      takes a DEALT-TO SEAT rather than an ACTING seat and answers a DRAW COUNT rather
+      than a boolean. `AttackFlipCount` and `MaxHpScale` both re-spell a shipped member
+      under exactly that argument, in writing; five count vocabularies at this head,
+      still ZERO embeddings.
+
+      ⚠️ **AND THE SEAT IS A MEMBER RATHER THAN A FIELD ON THE MEMBER ABOVE, WHICH IS
+      THIS UNION'S OWN IDIOM MEASURED RATHER THAN ASSERTED.** `BoardCondition` already
+      spells SIX seat mirrors as separate members — `yourActiveDamaged` /
+      `opponentActiveDamaged`, `yourActiveHasEnergyAttached` /
+      `opponentActiveHasEnergyAttached`, `yourActiveHasToolAttached` /
+      `opponentActiveHasToolAttached`, `yourActivePoisoned` / `opponentActivePoisoned`,
+      `yourBenchAtLeast` / `opponentBenchAtLeast`, `yourStadiumInPlay` /
+      `stadiumInPlay` — and ZERO seat FIELDS. Adding `seat` to
+      `opponentPrizesRemaining` would also be a RENAME with live consumers (two
+      `registry.ts` authorings, three `CONDITIONAL_DAMAGE_CLAUSES` rows and the
+      `refusedPrintings.ts` row that cites it by name), which D362 records as the
+      opposite of a free widening.
+
+      Remaining, not taken: `prizes.length` is what is still face down — the reading
+      `morePrizesThanOpponent` and the member above both make. Prize COUNTS are public
+      and survive redaction as counts, so this member does not widen the P4 gap. */
+  | { kind: "yourPrizesRemaining"; counts: readonly number[] }
   /** Your opponent is holding AT MOST `count` cards — Absol ex sv03-135/-214
       "Cursed Slug" (+120, `3`).
 
@@ -14127,6 +14174,28 @@ const BOTH_ACTIVES_KO = /^Both Active Pokémon are Knocked Out\.$/;
 // asymmetry rather than by any rung.
 const OPPONENT_ACTIVE_SPECIAL_ENERGY_KO =
   /^If your opponent['’]s Active Pokémon has any Special Energy attached, it is Knocked Out\.$/;
+// 🆕🆕 D517 — `censusAttackCorpus.ts` **FILE LINE 342**, **1 sentence / 1 legal
+// printing**, and it is the two anchors above with the CONDITION re-seated and the
+// CONSEQUENT swapped: same `^If <clause>, <consequent>\.$` shape, same
+// `conditionGate` program, a `BoardCondition` on the ATTACKER's own board instead of
+// the defender's body, and `applyStatus` instead of `knockOutDefender`.
+//
+// 🛑 **THE CLAUSE IS SPELLED INTO THE ANCHOR RATHER THAN DELEGATED TO
+// `boardConditionForClause`, AND THAT IS THE SAME CALL ARMS 6a AND 6a-ii MADE.**
+// Widening this arm to `/^If (.+), your opponent's Active Pokémon is now
+// Paralyzed\.$/` over the clause table was MEASURED over `legalAttackCorpus()`
+// before it was refused: it claims this row and NO OTHER, so the generality buys
+// zero printings today, and it would make a table written for the *"does N more
+// damage"* consequent reachable from a STATUS consequent — the separation D125
+// installed on purpose (*"a clause meaning 'does 120 more damage if X' must never be
+// reachable from a sentence meaning 'does nothing if X'"*). One printed sentence,
+// one anchor; the table stays where its own consequent is.
+//
+// ⚠️ THE POSSESSIVE CARRIES `['’]` FROM THE FIRST DRAFT (D136/D137) — the two
+// D414 anchors above shipped a bare `'` and were caught by a suite author noticing
+// the asymmetry rather than by any rung.
+const SELF_PRIZE_GATE_PARALYZE =
+  /^If you have exactly 1 Prize card remaining, your opponent['’]s Active Pokémon is now Paralyzed\.$/;
 const SELF_DAMAGE_THEN_COIN_KO =
   /^This Pokémon does (\d+) damage to itself\. Flip a coin\. If heads, your opponent['’]s Active Pokémon is Knocked Out\.$/;
 // 🆕🆕 D416 — the two PICK sentences of the same family, built together because
@@ -23929,6 +23998,36 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
         cond: { kind: "opponentActiveHasEnergyAttached", energy: "special" },
         // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
         then: [{ op: "knockOutDefender" }],
+      },
+    ];
+  }
+
+  // 6a-iii. 🆕🆕 D517 — "If you have exactly 1 Prize card remaining, your opponent's
+  //     Active Pokémon is now Paralyzed." (`censusAttackCorpus.ts` FILE LINE 342,
+  //     1 sentence / 1 legal printing). **ARMS 6a/6a-ii WITH THE GATE RE-SEATED AND
+  //     THE PAYLOAD SWAPPED** — same `conditionGate`, one new `BoardCondition`
+  //     member behind it (`yourPrizesRemaining`, the 61st), and a payload that is
+  //     `deriveAttackEffect`'s OWN output for the bare printed sentence *"Your
+  //     opponent's Active Pokémon is now Paralyzed."* byte for byte. **ZERO new
+  //     `EffectOp` members, op FIELDS and op VALUES.**
+  //
+  //     🛑 **THE CONSEQUENT WAS ALREADY BUILT AND THE GATE WAS THE WHOLE BLOCKER,
+  //     MEASURED RATHER THAN ASSUMED.** Driven at this head: the bare consequent
+  //     resolves through this very reader to `[{op:"applyStatus",target:"defender",
+  //     status:"paralyzed"}]`, while the printed row resolved through NO reader, NO
+  //     registry row, NO gate split and NO trailing split. The 2⁴ lattice
+  //     (WRAP × SEAT × COUNT × CONSEQUENT) puts the printed point at Hamming
+  //     distance **2** from the nearest built string with BOTH midpoints dark, so
+  //     TWO axes blocked at once — the seat and the consequent — which is why this
+  //     arm costs a union member as well as an anchor.
+  match = SELF_PRIZE_GATE_PARALYZE.exec(effect);
+  if (match !== null) {
+    return [
+      {
+        op: "conditionGate",
+        cond: { kind: "yourPrizesRemaining", counts: [1] },
+        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
+        then: [{ op: "applyStatus", target: "defender", status: "paralyzed" }],
       },
     ];
   }

@@ -404,12 +404,38 @@ describe("the near-misses that stay UNMAPPED (and therefore LOUD)", () => {
 
   it("refuses Slaking V swsh10.5-058/-077 — an OWN-seat, three-value list on an ABILITY", () => {
     // The pool's third grammatical form of "exactly" (a three-value list) and its
-    // only own-seat one. It would want a `yourPrizesRemaining` sibling; nothing
-    // here claims it, so it stays loud.
+    // only own-seat one.
+    //
+    // 🆕🆕 **D517 — RE-POINTED, AND THIS RUNG IS THE OLDEST FUNCTION-SHAPED REFUSAL ON
+    // RECORD TO PAY OUT.** It used to end *"It would want a `yourPrizesRemaining`
+    // sibling; nothing here claims it, so it stays loud."* — written at **D119**
+    // (`48f38c0c`, 2026-08-01), naming the missing member BY THE NAME IT WAS EVENTUALLY
+    // GIVEN, **398 decisions** before D517 built it. D473 aged 42 and D479 aged 37; this
+    // is an order of magnitude past both, and it is the same reason: a refusal that names
+    // a MEMBER OF A UNION names a thing that cannot be re-spelled away (D515's rule).
+    //
+    // 🛑 **AND IT STAYED GREEN WHEN THE MEMBER LANDED, WHICH IS EXACTLY D516's HAZARD.**
+    // Building `yourPrizesRemaining` did not redden this line — the sentence is still
+    // refused — so a pass that chased only the rungs that went red would have left this
+    // one GREEN AND WRONG, still telling a reader that no member reads the controller's
+    // own Prize count. **The verdict is unchanged; the REASON is not**, and the reason is
+    // what the next slice reads. The member now EXISTS and is asserted here; what still
+    // blocks this sentence is its CONSEQUENT — an attack lock on an ABILITY, which is a
+    // `PassiveEffects` gate rather than anything `deriveAttack*` reads — and its
+    // three-value count list, which the member admits but no ATTACK sentence prints.
     const kindaLazy =
       "If you have exactly 2, 4, or 6 Prize cards remaining, this Pokémon can't attack.";
     expect(deriveAttackDamageBonus(kindaLazy)).toBeNull();
     expect(deriveAttackEffect(kindaLazy)).toBeNull();
+    // ✅ THE HALF OF THE OLD SENTENCE THAT IS NOW FALSE, asserted POSITIVE rather than
+    // deleted (D444): the sibling it asked for ships, it reads the controller's own seat,
+    // and it carries the three-value list this printing would need.
+    expect(conditionNote({ kind: "yourPrizesRemaining", counts: [2, 4, 6] })).toBe(
+      "you have exactly 2, 4, or 6 Prize cards remaining",
+    );
+    expect(kindaLazy).toContain(
+      `If ${conditionNote({ kind: "yourPrizesRemaining", counts: [2, 4, 6] })},`,
+    );
   });
 
   it("refuses count VALUES the pool does not print — the literal table's whole point", () => {
@@ -904,6 +930,15 @@ describe("conditionHolds / conditionNote — the three members, directly", () =>
   it("spells a three-value list the way the pool prints one", () => {
     // Not reachable from any printed sentence today — Slaking V's list is on an
     // Ability and own-seat — but the member admits it, so the note has to.
+    // 🆕🆕 D517 — and the OWN-SEAT half of that sentence now has a member of its own
+    // (`yourPrizesRemaining`), whose note is built from the SAME `printedList` helper and
+    // the SAME singular rule, so the pair cannot drift on the grammar either.
+    expect(conditionNote({ kind: "yourPrizesRemaining", counts: [2, 4, 6] })).toBe(
+      "you have exactly 2, 4, or 6 Prize cards remaining",
+    );
+    expect(conditionNote({ kind: "yourPrizesRemaining", counts: [3] })).toBe(
+      "you have exactly 3 Prize cards remaining",
+    );
     expect(conditionNote({ kind: "opponentPrizesRemaining", counts: [2, 4, 6] })).toBe(
       "your opponent has exactly 2, 4, or 6 Prize cards remaining",
     );

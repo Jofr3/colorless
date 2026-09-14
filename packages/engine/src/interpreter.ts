@@ -4120,6 +4120,15 @@ export function conditionHolds(state: GameState, seat: Seat, cond: BoardConditio
       // printed "exactly" makes this set MEMBERSHIP: on `[2, 4]` a 3-Prize board
       // is FALSE, sitting between two true values.
       return cond.counts.includes(state.players[otherSeat(seat)].prizes.length);
+    case "yourPrizesRemaining":
+      // 🆕🆕 D517 — the arm directly above with `otherSeat(seat)` replaced by `seat`,
+      // and NOTHING else: same `.prizes.length` (§3.8's face-down count), same
+      // `counts.includes` set membership, same bound of 0-6. The two members are a
+      // SEAT MIRROR and this is the whole of the difference between them, which is
+      // the checkable claim the pair makes — `prizeGateParalyze.test.ts` §3 drives
+      // both on one board at every one of the seven reachable counts and asserts
+      // they disagree wherever the two seats disagree.
+      return cond.counts.includes(state.players[seat].prizes.length);
     case "opponentHandAtMost":
       // The SIZE of their hand, never its contents — the line the union's
       // public-state invariant draws, and the reason this survives P4 redaction
@@ -5380,6 +5389,16 @@ export function conditionNote(cond: BoardCondition): string {
       // singular exactly when the only admitted count is 1. `printedList` spells
       // the list the way the pool does, Oxford comma included.
       return `your opponent has exactly ${printedList(cond.counts)} Prize card${
+        cond.counts.length === 1 && cond.counts[0] === 1 ? "" : "s"
+      } remaining`;
+    case "yourPrizesRemaining":
+      // 🆕🆕 D517 — the arm above re-seated, and it ROUND-TRIPS to the printed clause
+      // byte for byte on the one printing that exists (*"you have exactly 1 Prize
+      // card remaining"*), which the arm above does too. The singular branch is
+      // shared rather than copied reasoning: the noun is singular exactly when the
+      // only admitted count is 1, so a future *"you have exactly 2 or 4 Prize cards
+      // remaining"* agrees without a second edit.
+      return `you have exactly ${printedList(cond.counts)} Prize card${
         cond.counts.length === 1 && cond.counts[0] === 1 ? "" : "s"
       } remaining`;
     case "opponentHandAtMost":

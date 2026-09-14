@@ -7592,6 +7592,57 @@ that carried its unbuiltness as a premise** — they are findable because a func
 names the thing they all depend on.
 
 
+### The "gate arm" is a closed four-entry timing list, not a general `If …,` splitter (D517)
+
+`builds()`'s third arm is `splitAttackGateClause`, and its name invites a wrong model. D517's brief
+asserted that a sentence opening *"If you have exactly 1 Prize card remaining, …"* therefore "lands on
+the gate arm". **It cannot.**
+
+`ATTACK_GATE_CLAUSES` (`effects.ts`) is a **closed list of four whole printed sentences**, all about
+**turn timing**:
+
+```
+"If you go second, you can't use this attack during your first turn."
+"If you go first, you can use this attack during your first turn."
+"You can use this attack only if you go second, and only during your first turn."
+"You can use this attack only if this Pokémon used Rollout during your last turn."
+```
+
+It matches whole-string or with a trailing space. **A leading comma clause of any other kind never
+reaches it** — measured null at 16/16 lattice cells and on all six members of the prize-gate family.
+
+**Consequences worth holding:**
+
+1. **A printed `If …,` gate is ordinary reader work**, not splitter work. D517's row is claimed whole
+   by a `deriveAttackEffect` arm emitting a `conditionGate` op — a *runtime* gate, which is a
+   different thing from the *parse-time* gate the arm is named for.
+2. **The gate arm has stood at 5 sentences / 13 printings for many slices and is not a growth area.**
+   When pricing a conditional row, expect the **reader** arm.
+3. ⚠️ **Check which arm a built sibling uses before reasoning from it** (D514's rule, at a new
+   address): all three built members of D517's family are reader-arm builds, two through
+   `deriveAttackDamageBonus` and one through `deriveAttackRequirement`. **Zero were gate-arm.**
+
+### Grepping the refusal's noun found a rung that had been right for 398 decisions — and was green (D517, cashing D516)
+
+D516 established: **when a refusal is overturned, sweep every rung that carried its unbuiltness**, and
+they are findable because a function-shaped refusal *names* the thing they depend on. D517 ran that
+grep and found `publicCount.test.ts`'s Slaking V rung, written at **D119** (2026-08-01):
+
+> *"It would want a `yourPrizesRemaining` sibling; nothing here claims it, so it stays loud."*
+
+It named the missing member **by the exact name it was eventually given, 398 decisions early.** D473
+aged 42 decisions and D479 aged 37; this is an order of magnitude past both.
+
+🛑 **And it stayed GREEN when the member landed**, because its own sentence is an Ability attack-lock
+and remains refused for a different reason. **Nothing would have surfaced it.** A slice that chased
+only the rungs that reddened would have left a live, confidently-worded rung telling every future
+reader that no member reads your own Prize count — **false the moment the member existed.**
+
+**The rule, sharpened:** after adding a named thing, **grep the name across the whole test corpus**,
+not just the files that failed. A refusal naming what is missing is a **standing claim about
+absence**, and absence-claims do not fail when the absence ends — they just quietly become lies.
+
+
 ## Git / commits
 - Branch off `main` for non-trivial work; commit/push only when asked.
 - Commit trailer per global config: `Co-Authored-By: Claude ...`.
