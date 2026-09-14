@@ -114,7 +114,14 @@ import type { CoinFace } from "./rng";
 import { damagedByAttackAbility, koToolTriggersOf } from "./triggers";
 import { isBenchIndex, turnGate } from "./turn";
 import type { GameState, InPlayPokemon, PendingStage, Phase, Seat } from "./types";
-import { isImmobilized, otherSeat, takenPrizes, withActive, withSide } from "./types";
+import {
+  isImmobilized,
+  otherSeat,
+  presentStatuses,
+  takenPrizes,
+  withActive,
+  withSide,
+} from "./types";
 
 // The attack step (§8) and the two KO-resolution decisions it can park on
 // (§8.1). Declaring an attack ends the turn (§5.3), so every path out of
@@ -234,6 +241,40 @@ function scaledAttackDamage(
       // above uses for the same reason.
       const defenderActive = state.players[defenderSeat].active;
       return defenderActive === null ? 0 : Math.floor(defenderActive.damage / 10) * bonus.per;
+    }
+    case "specialConditionsOnOpponentActive": {
+      // 🆕🆕🆕 D518 — HOW MANY §12 SPECIAL CONDITIONS ARE ON THE DEFENDING BODY
+      // ("This attack does 100 damage for each Special Condition affecting your opponent's
+      // Active Pokémon.", corpus FILE LINE 537, 2 legal printings).
+      //
+      // 🛑 **`presentStatuses`, NOT THE FIELDS, AND THE REASON IS THE PREDICATE ONE UNION
+      // OVER.** `BoardCondition.opponentActiveHasSpecialCondition` — which the `boardCondition`
+      // arm at the bottom of this switch reaches for the SAME printed noun on the additive fold
+      // — is `presentStatuses(...).length > 0`. Spelling the tally off the raw fields here
+      // would give the §12 vocabulary two readers free to drift apart, which is D222's defect
+      // exactly; asking the same projection makes **"affected by a Special Condition" ⟺ this
+      // count >= 1** true BY CONSTRUCTION rather than by agreement, and
+      // `specialConditionCount.test.ts` §5 sweeps that biconditional over every inhabitant of
+      // `SpecialConditions`.
+      //
+      // 🛑 **AND IT IS NOT "HOW MANY FIELDS ARE SET".** `SpecialConditions` carries FOUR
+      // fields and only THREE conditions: `rotation` is an exclusive enum (0 or 1),
+      // `poisonDamage > 0` is Poison's flag, `burned` is Burn's — and `confusionDamage` (D501)
+      // is a PARAMETER of Confusion, not a condition. A Confused body whose self-hit was raised
+      // to 8 counts **1**, and a naive field tally would say 2. `presentStatuses` is the one
+      // place in this engine where those three model shapes become `StatusName`, so this arm
+      // never has to know which is which.
+      //
+      // Read at DECLARATION like every other member, so an attack cannot bootstrap the
+      // conditions it is priced on — which matters here more than at most arms, since the §8
+      // step-3 flip and the Checkup both move these fields. A missing Active can't happen (the
+      // attack gate requires a Defending Pokémon); 0 keeps the arm total, the shape the two
+      // arms above use for the same reason. A clean defender is 0, and on this fold (printed
+      // base dropped) that is no `DAMAGE_DEALT` row at all — the printed floor.
+      const defenderActive = state.players[defenderSeat].active;
+      return defenderActive === null
+        ? 0
+        : presentStatuses(defenderActive.conditions).length * bonus.per;
     }
     case "damageCountersOnYourBench": {
       // D170 — the first member that tallies over a ZONE rather than off a single

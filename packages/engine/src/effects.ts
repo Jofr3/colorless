@@ -14564,6 +14564,34 @@ const OPPONENT_COUNTER_SCALE =
 // for the family's stated reason.
 const OPPONENT_COUNTER_MULTIPLY =
   /^This attack does (\d+) damage for each damage counter on your opponent['’]s Active Pokémon\.$/;
+/** 🆕🆕🆕 D518 — THE SAME DEFENDING BODY, COUNTED BY ITS SPECIAL CONDITIONS
+    RATHER THAN BY ITS DAMAGE COUNTERS: *"This attack does 100 damage for each Special
+    Condition affecting your opponent's Active Pokémon."* — `censusAttackCorpus.ts`
+    **FILE LINE 537**, **1 sentence / 2 legal printings**, and the only row in the
+    column that spells a §12 TALLY on either fold (measured over all 640 legal
+    sentences, both folds and both seats: the other four `Special Condition` rows are
+    file lines 324, 386, 513 and 685, and none of them counts).
+
+    🛑 **THE PRINTED PREPOSITION IS `affecting` AND NOT `on`, WHICH IS WHY THIS IS A
+    SECOND ANCHOR AND NOT AN ALTERNATION ON THE LINE ABOVE.** The two patterns differ
+    in the head noun AND in the preposition, so folding them into one would mean two
+    capture groups whose combinations include *"for each Special Condition on"* and
+    *"for each damage counter affecting"* — two strings the column never prints, admitted
+    for free. Kept apart, each pattern spells exactly the one phrase its member means.
+
+    ⚠️ **MULTIPLY ONLY, AND THE ADDITIVE TWIN IS DELIBERATELY ABSENT** (`OPPONENT_COUNTER`'s
+    pair one line up has both). The column prints *"more damage for each Special Condition
+    …"* ZERO times — the additive reading of this noun is spelled as the 0-or-1 INDICATOR
+    instead (file line 386, `BoardCondition.opponentActiveHasSpecialCondition`, 8 printings)
+    — so an additive anchor here would be an arm no board reaches, which is D440's rule and
+    `specialConditionCount.test.ts` §1 measures rather than assumes.
+
+    The possessive carries the `['’]` class per D137's fix — the corpus row prints ASCII
+    `0x27` today (byte-verified with `cat -A` on file line 537, not eyeballed) — and
+    `Pokémon` carries the real é (U+00E9). No /i, whole-sentence anchored with a required
+    trailing period and a capital `This`, for the family's stated reason. */
+const OPPONENT_CONDITION_COUNT_MULTIPLY =
+  /^This attack does (\d+) damage for each Special Condition affecting your opponent['’]s Active Pokémon\.$/;
 /** 🆕🆕 D469 — THE OPPONENT'S WHOLE BOARD OF DAMAGE COUNTERS, on the ADDITIVE
     fold: *"This attack does 10 more damage for each damage counter on all of your
     opponent's Pokémon."* — `censusAttackCorpus.ts` **file line 534**, 1 sentence /
@@ -28875,6 +28903,49 @@ export type DamageCountSource =
   | { kind: "opponentActiveRetreatCost" }
   | { kind: "boardCondition"; cond: BoardCondition }
   | { kind: "damageCountersOnOpponentActive" }
+  /** 🆕🆕🆕 **D518 — THE SAME DEFENDING BODY, TALLIED BY ITS §12 SPECIAL
+      CONDITIONS.** *"This attack does 100 damage for each Special Condition affecting
+      your opponent's Active Pokémon."* — `censusAttackCorpus.ts` **FILE LINE 537**,
+      **1 sentence / 2 legal printings**, claimed by `deriveAttackDamageMultiplier`
+      through `OPPONENT_CONDITION_COUNT_MULTIPLY`.
+
+      🛑 **A COUNT AND NOT A `boardCondition`, AND THE DIFFERENCE IS STRUCTURAL
+      RATHER THAN STYLISTIC.** `BoardCondition.opponentActiveHasSpecialCondition` ships
+      and file line 386 reads it through the `boardCondition` member one arm up — but
+      that member is the 0-or-1 INDICATOR (D115): `attack.ts` spells it
+      `conditionHolds(...) ? bonus.per : 0`, so the most it can ever return is `per`.
+      This sentence pays `per` per CONDITION and a body can carry three at once, so the
+      indicator cannot express it at any `per`.
+
+      🛑 **THE WALK IS `presentStatuses` (types.ts) — THE SAME ONE THE PREDICATE
+      USES, WHICH IS WHAT MAKES THE INVARIANT STRUCTURAL.** `opponentActiveHasSpecialCondition`
+      is `presentStatuses(active.conditions).length > 0`; this member is
+      `presentStatuses(active.conditions).length`. So *"affected by a Special Condition"*
+      and *"how many Special Conditions"* are the SAME projection folded two ways, and
+      **predicate ⟺ count ≥ 1 holds BY CONSTRUCTION on every board** rather than by two
+      readers agreeing — D159/D222 at this union's address, and the reason
+      `opponentActiveBurned` and `opponentActiveConfused` already ask the projection
+      instead of the fields. `specialConditionCount.test.ts` §5 sweeps the biconditional
+      over every inhabitant of `SpecialConditions` rather than asserting it once.
+
+      🛑 **THE COUNT IS AT MOST **3**, AND `confusionDamage` IS NOT ONE OF THEM.**
+      `SpecialConditions` has FOUR fields but only three of them are conditions:
+      `rotation` is an EXCLUSIVE enum contributing 0 or 1 (a body cannot be Asleep and
+      Confused at once), `poisonDamage > 0` is Poison's own flag, `burned` is Burn's, and
+      `confusionDamage` is a PARAMETER of Confusion (D501) that is meaningful only while
+      `rotation === "confused"`. **Counting SET FIELDS would answer 4 on a Confused body
+      with a raised amount, where the printed answer is 1** — which is precisely the
+      arithmetic `presentStatuses` already gets right, and precisely why this member
+      delegates instead of reading the interface.
+
+      Seat lives in the member NAME (D168): the column prints this tally on the OPPONENT's
+      Active and on no other body, so a `seat` field would have one reachable value and an
+      arm no board drives (D104). False-with-no-Active has no analogue here — a missing
+      Active contributes **0**, which on the `×` fold (printed base dropped) is no
+      `DAMAGE_DEALT` row at all, the printed floor. Reachable from ONE reader only: the
+      column spells no *"more damage for each Special Condition"*, so
+      `deriveAttackDamageBonus` never sees this member. */
+  | { kind: "specialConditionsOnOpponentActive" }
   /** 🆕🆕 D467 — the OPTIONAL printed noun, the same shape `yourBenchCount` two
       members down took at D466 and `energyOnSelf.zone` took at D407: `undefined`
       is EVERY body on the Bench, so every sentence that reached this member before
@@ -29598,6 +29669,23 @@ export function deriveAttackDamageMultiplier(text: string): AttackDamageBonus | 
   // D170 — the BENCH-WIDE damage-counter count. Same `×` fold, same `per >= 1`
   // guard, a different ZONE: the only thing separating this arm from the first
   // one above is the literal tail of its anchored sentence.
+  // 🆕🆕🆕 D518 — THE SAME DEFENDING BODY, TALLIED BY ITS §12 SPECIAL CONDITIONS
+  // rather than by its damage counters. Placed directly after the arm it mirrors, which is
+  // this chain's stated rule: the two arms read the SAME body and differ only in the printed
+  // NOUN, so a reader meeting one meets the other. The patterns are whole-sentence anchored
+  // and disjoint on a mandatory run of bytes at the same position (`damage counter on`
+  // against `Special Condition affecting`), so the order is legibility and not behaviour —
+  // structural in D467's sense rather than measured-and-hoped.
+  //
+  // ONE guard and not two: `per >= 1` is the family's printed-zero guard, and there is no
+  // VOCABULARY to miss — the noun is spelled into the pattern rather than captured, so
+  // nothing can reach this line carrying an unresolvable token. That is
+  // `OPPONENT_COUNTER_MULTIPLY`'s shape, not `IN_PLAY_BODY_MULTIPLY`'s.
+  const opponentConditions = OPPONENT_CONDITION_COUNT_MULTIPLY.exec(effect);
+  if (opponentConditions !== null) {
+    const per = Number(opponentConditions[1]);
+    if (per >= 1) return { per, count: { kind: "specialConditionsOnOpponentActive" } };
+  }
   const benchCounters = BENCH_COUNTER_MULTIPLY.exec(effect);
   if (benchCounters !== null) {
     const per = Number(benchCounters[1]);

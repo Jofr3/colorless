@@ -7643,6 +7643,94 @@ not just the files that failed. A refusal naming what is missing is a **standing
 absence**, and absence-claims do not fail when the absence ends — they just quietly become lies.
 
 
+### A printed COUNT over a shipped PREDICATE: take the predicate's walk, and never the model's field count (D518)
+
+Two things came out of building *"This attack does 100 damage for each Special Condition affecting
+your opponent's Active Pokémon."* on top of a predicate that had read the same printed noun since
+D116.
+
+**1. The predicate is not a cheaper count, and the reason is the EVALUATOR rather than the noun.**
+`BoardCondition.opponentActiveHasSpecialCondition` ships and reaches the damage fold through
+`DamageCountSource.boardCondition` — but that member is the **0-or-1 indicator** (D115), spelled
+`conditionHolds(...) ? bonus.per : 0`. Its ceiling is `per` at every `per`, so no reparameterisation
+of a shipped predicate ever pays a per-unit tally. 🛑 **When a row's delta is COUNTING rather than
+TESTING, the price is a union member — check the EVALUATOR's arithmetic before pricing it as
+"the predicate already ships".**
+
+**2. Derive the count from the predicate's WALK, not from a second reading of the model.** D159 as
+this repo applies it (D516, D517, D518 — three consecutive slices): *what D159 makes single is the
+walk.* Here the walk already existed. `presentStatuses` (`types.ts`) is the projection the predicate
+folds as `.length > 0`; the count folds the same call as `.length`. That makes
+**`predicate ⟺ count ≥ 1` true by construction** rather than by two readers agreeing — the same
+reason `opponentActiveBurned` and `opponentActiveConfused` ask the projection instead of the fields
+(D377). If the two folds *could* disagree on some board, that is a finding; if they cannot, assert
+it and say why.
+
+🛑 **THE TRAP, AND IT IS THE WHOLE REASON (2) IS A RULE AND NOT A PREFERENCE: A MODEL'S FIELD COUNT
+IS NOT ITS CONCEPT COUNT.** `SpecialConditions` has **four** fields and holds at most **three**
+conditions:
+
+| field | contributes |
+|---|---|
+| `rotation: "none" \| "asleep" \| "paralyzed" \| "confused"` | **0 or 1** — EXCLUSIVE, three printed words share one slot |
+| `poisonDamage: number` | 1 iff `> 0` — the amount doubles as Poison's flag |
+| `burned: boolean` | 1 iff true |
+| `confusionDamage: number` | **0, always** — a PARAMETER of Confusion (D501), not a condition |
+
+A naive set-fields tally reads **4** where the print says **3**, and — because `noConditions()`
+seeds `confusionDamage` to `DEFAULT_CONFUSION_DAMAGE` rather than to 0 — it reads **1 on a clean
+body**, turning the printed floor of *no damage at all* into a live hit. Both errors are invisible
+to every census: the sentence still derives, `BUILT.attack` does not move, and the arm split does not
+budge. **Only a board carrying two conditions at once, or a Confused body with a raised amount, can
+see it** — which is why the suite drives those boards rather than asserting the arm.
+
+⚠️ **The general form:** before writing `Object.values(x).filter(Boolean).length` over a state
+interface, ask which fields are *flags*, which are *amounts serving as flags*, which are *exclusive
+enums*, and which are *parameters of another field*. Four shapes, one interface — and the
+projection that already knows the difference is usually one file away.
+
+
+### Settle a "does anything else consume this?" question by DELETING the arm and running `tsc -b --force` (D518)
+
+D515 established that shipped ops do not imply a shipped sentence, because a missing **describer**
+arm fails silently. The follow-on question — *which surfaces consume this type?* — is usually
+answered by grepping, which in `effects.ts` measures the commentary too (D516).
+
+D518 answered it by **experiment**: delete the evaluator arm, run **`tsc -b --force`**, and read the
+error set. Result: **exactly one file, two errors** — so `attack.ts`'s `switch (bonus.count.kind)` is
+the sole exhaustive consumer, and `DamageCountSource` has **no describer surface at all**.
+
+⚠️ **The `--force` is load-bearing.** `tsc -b` is **incremental** (D517: it once reported clean over a
+test file that did not yet exist), so without it the experiment can answer "nothing consumes this"
+when the truth is "nothing was recompiled."
+
+**The rule:** to enumerate a union's real consumers, **break it and ask the compiler**, with
+`--force`. It is faster than a grep, it cannot be fooled by prose, and the error set *is* the
+consumer list. Pair with D512's census-by-compile-error: **one** error tree-wide means the other
+consumers are exhaustive switches; **many** means hand-kept lists.
+
+### A model's FIELD count is not its CONCEPT count (D518)
+
+`SpecialConditions` has four fields:
+
+```ts
+rotation: "none" | "asleep" | "paralyzed" | "confused";   // EXCLUSIVE — 0 or 1 conditions
+poisonDamage: number;                                      // poisoned iff > 0
+burned: boolean;
+confusionDamage: number;                                   // a PARAMETER of confusion, not a condition
+```
+
+…and represents **at most three** conditions. A printed *"for each Special Condition"* fold that
+tallied set fields would answer **2** on a Confused body with a raised confusion number, and deal
+double. D518 drove that board: `presentStatuses` returns **1**, the fold deals **100**, not 200.
+
+**The rule:** when a printed noun counts *concepts*, do not count *fields*. Find the shipped walk that
+already decides the concept — here `presentStatuses`, the same call behind the shipped
+*"is affected by a Special Condition"* predicate — and **take that walk**, so predicate and count
+cannot disagree. ⚠️ **A second definition of the same concept is the defect**, even when it happens to
+agree today; this is what *"what D159 makes single is the WALK"* (D516/D517) means in practice.
+
+
 ## Git / commits
 - Branch off `main` for non-trivial work; commit/push only when asked.
 - Commit trailer per global config: `Co-Authored-By: Claude ...`.

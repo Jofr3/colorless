@@ -19984,6 +19984,173 @@ import type { GameState, Seat } from "./types";
     `expect(manifest.version)`, `it(…)` titles, the declaration and `package.json` —
     **not** as a value-keyed grep — because a value-keyed grep is precisely the mechanism
     that ate D500's heading.)
+    🆕🆕🆕 engineVersion 0.404.0 → **0.405.0** (D518 — THE §12 SPECIAL-CONDITION TALLY ON THE
+    DEFENDING ACTIVE, AND THE COUNT THAT SHARES ITS PREDICATE'S WALK. `censusAttackCorpus.ts`
+    **FILE LINE 537** — *"This attack does 100 damage for each Special Condition affecting your
+    opponent's Active Pokémon."*, **1 sentence / 2 legal printings**, claimed by
+    `deriveAttackDamageMultiplier` through ONE new anchor (`OPPONENT_CONDITION_COUNT_MULTIPLY`),
+    deriving `{per:100, count:{kind:"specialConditionsOnOpponentActive"}}`.
+    🛑 **THE PRICE IS ONE ANCHOR, ONE READER ARM, ONE UNION MEMBER AND ONE EVALUATOR ARM.**
+    `DamageCountSource` gains its **20th** member; `attack.ts`'s `scaledAttackDamage` gains the
+    matching `case`, and it is the **SOLE** exhaustive consumer — established by DELETING the arm
+    and running `tsc -b --force` (D512's census-by-compile-error) rather than by grep. **The
+    measured answer is ONE FILE and TWO errors**: `TS2366` *"Function lacks ending return
+    statement"* on `scaledAttackDamage` itself — the switch has no `default` and a non-`undefined`
+    return type, so a member without an arm is a BUILD ERROR rather than a silent 0 — plus `TS6133`
+    on the now-unused `presentStatuses` import. **No other module reports anything**, which is the
+    half a grep cannot establish. ⚠️ **AND `tsc -b` ALONE WOULD HAVE LIED**: it is incremental, and
+    the experiment was run with `--force` for D517's reason. The result agrees with the union's own
+    nullary precedent — `toolsOnYourBoard` occurs at exactly THREE non-test sites (the member, the
+    reader arm, the evaluator arm) and this member occurs at the same three. **ZERO
+    new readers (surface unmoved at 13), ZERO new `EffectOp` members, ZERO new op FIELDS, ZERO new
+    op VALUES on shipped fields, ZERO `BoardCondition`/`CardFilter`/`AttackFlipCount`/
+    `HandRefreshDraw` members, ZERO registry rows, ZERO `FIXTURE_POOL` ids, ZERO decks, ZERO
+    prompts, ZERO choice kinds, ZERO events, ZERO error codes, ZERO `redact.ts` bytes and ZERO
+    `packages/schema` bytes.**
+    🛑 **THE PREDICATE ALREADY SHIPPED AND WAS STRUCTURALLY UNABLE TO PAY — WHICH IS THE WHOLE
+    PRICING ARGUMENT AND IS MEASURED RATHER THAN ASSERTED.**
+    `BoardCondition.opponentActiveHasSpecialCondition` has read *"If your opponent's Active Pokémon
+    is affected by a Special Condition, this attack does 120 more damage."* (corpus **FILE LINE
+    386**, **8 printings**, the family's largest row) since D116, and it reaches the damage fold
+    through `DamageCountSource.boardCondition`. **That member is the 0-or-1 INDICATOR (D115):**
+    `attack.ts` spells it `conditionHolds(...) ? bonus.per : 0`, so its ceiling is `per` at every
+    `per` and no reparameterisation reaches `2 × per`. The printed row pays per CONDITION and a
+    body can carry **three at once**, so the delta is COUNTING rather than TESTING and it costs a
+    member. ⚠️ **AND `boardCondition` IS NOT NARROWED BY THIS SLICE** — line 386 derives byte for
+    byte what it derived before, which `specialConditionCount.test.ts` §2 asserts beside the new
+    reading rather than leaving to be inferred.
+    🛑 **THE COUNT SHARES THE PREDICATE'S WALK, AND THAT IS WHAT MAKES THE INVARIANT STRUCTURAL.**
+    D159 as this repo actually applies it — *what D159 makes single is the WALK* (D516, D517,
+    now three consecutive slices) — and here the walk already existed: `presentStatuses`
+    (types.ts) projects the rotation slot, Poison and Burn onto `StatusName`, and the shipped
+    predicate is `presentStatuses(active.conditions).length > 0`. The new evaluator arm is
+    `presentStatuses(active.conditions).length`. So *"affected by a Special Condition"* and
+    *"how many Special Conditions"* are ONE projection folded two ways, and **predicate ⟺ count ≥ 1
+    holds BY CONSTRUCTION on every board** — there is no second definition that could disagree.
+    That is the same reason `opponentActiveBurned` and `opponentActiveConfused` (D377) ask the
+    projection instead of the fields, applied one union over. §5 sweeps the biconditional over
+    every inhabitant of `SpecialConditions` rather than asserting it once.
+    🛑 **THE COUNT IS AT MOST 3, AND THE NAÏVE READING ANSWERS 4 — DRIVEN ON A BOARD, NOT
+    ARGUED.** `SpecialConditions` carries FOUR fields and only THREE conditions: `rotation` is an
+    EXCLUSIVE enum (Asleep, Paralyzed and Confused are one slot, so it contributes 0 or 1),
+    `poisonDamage > 0` is Poison's own flag, `burned` is Burn's — and **`confusionDamage` (D501) is
+    a PARAMETER of Confusion rather than a condition**, meaningful only while
+    `rotation === "confused"`. A Confused body whose §8 step-3 self-hit was raised to 8 counters
+    counts **ONE**, and a set-fields tally would say TWO. `specialConditionCount.test.ts` §3 drives
+    exactly that board — Confused with `confusionDamage: 80` — and reads 100 damage rather than
+    200. Delegating to `presentStatuses` is what makes the three model shapes (counter, boolean,
+    enum) stop mattering at this address.
+    ⚠️ **MULTIPLY ONLY, AND THE ADDITIVE TWIN IS DELIBERATELY ABSENT.** The column prints
+    *"…more damage for each Special Condition…"* **ZERO** times over all 640 legal sentences —
+    the additive reading of this noun is spelled as the INDICATOR at line 386 instead — so
+    `deriveAttackDamageBonus` gains nothing and this member is reachable from ONE reader. An
+    additive anchor would be an arm no board reaches (D440's rule), and §1 measures the zero
+    rather than assuming it.
+    ⚠️ **THE SEAT LIVES IN THE MEMBER NAME AND NOT IN A FIELD** (D168), for D104's reason: the
+    column spells this tally on the OPPONENT's Active and on no other body, so a `seat` field
+    would carry one reachable value and one arm no board drives. The SELF form is printed zero
+    times and §4's lattice pins it.
+    🆕 **A THIRTEENTH LATTICE SHAPE: A SATURATED 2-FACE, TWO OFF-FACE LIT POINTS, AND THE PRINTED
+    ROW ONE FLIP OFF THE FACE ALONG THE BUSIEST AXIS — WHICH IS NOT A BLOCKER.** SHAPE × NOUN ×
+    SEAT × FOLD reads **6 of 16** before the build with flip table `4 · 6 · 2 · 2` of 8, identical
+    readers-only and residue-predicate, 16/16 distinct strings, both splitters null at **16/16**.
+    The built set is the whole `SHAPE=count, NOUN=counter` **2-FACE** (`0000` `0001` `0010` `0011`)
+    plus `1001` (adjacent to it) and `1111` (an island at distance 2) — so unlike D505's seventh
+    shape there are **zero inert axes and zero free axes**, and unlike D507's eighth and D510's
+    ninth the busiest axis is **not one-sidedly blocking**: NOUN flips at 6 of 8 yet has a lit
+    point on BOTH sides (`1111`). The printed row sits at Hamming distance **1** from the face,
+    flipping NOUN off `0010`. ⚠️ **AND THE SHAPE CHANGES ACROSS ITS OWN SLICE** (D513's
+    phenomenon, FIFTH occurrence): after the build it reads **7 of 16** with flips `5 · 5 · 3 · 3`
+    — NOUN FALLS (it has stopped blocking at the printed point) while all three others RISE,
+    having each gained a lit neighbour. 🛑 **AND THE ORDINAL IS A LABEL RATHER THAN A COUNT**
+    (D517's warning, which this file earns twice: TWO blocks already open *"AN ELEVENTH LATTICE
+    SHAPE"*). What is CHECKED is the part that matters — this shape matches none of the recorded
+    ones, every previous entry being a free-axis × blocking-axis PRODUCT, a set of SINGLETON
+    islands, or a point at distance 2 from a connected pair, and none of them placing the printed
+    point one flip off a SATURATED FACE. ✅ **And the BUILT set now CONTAINS the PRINTED set**:
+    six of the sixteen points are printed, all six build after this slice, and the one
+    built-but-unprinted point (`1001`) was already built before it — so no literal in the new
+    anchor refuses a sentence the column carries.
+    🛑 **THE REFUSAL THIS OVERTURNS WAS 49 DECISIONS OLD, RIGHT IN BOTH OF ITS CLAUSES, AND IT
+    REDDENED ON ITS OWN.** `scaledDamage.test.ts`'s *"count source with no reader at all"* witness
+    has now moved FIVE times, and D469 homed its FOURTH on this very row, arguing it is unread
+    because the tally is one *"no `DamageCountSource` member answers"* and one *"`boardCondition`
+    (a 0-or-1 indicator) structurally cannot"*. **This slice pays the first clause and leaves the
+    second TRUE FOREVER.** ⚠️ **AND THE CORPUS-WIDE GREP OF THE NEW NAME AND OF `Special
+    Condition` FOUND NOTHING ELSE** — D516's rule (4) run and answering NO this time, which is
+    reported because a clean sweep is a measurement: the one carrier was the rung that failed, so
+    unlike D517 there was no green-and-wrong rung left behind. The witness is re-homed onto corpus
+    **FILE LINE 596** (*"This attack does 50 damage for each of your Pokémon that has any damage
+    counters on it."*, 1 printing) and RE-POINTED rather than deleted (D444), with the old subject
+    asserted LIVE beside it. ⚠️ **THE FIFTH HOME IS A STEP DOWN IN PRINTINGS, 2 → 1, AND IT IS
+    SAID** — D469 called the fourth *"strictly better than the third"* on that measure and this
+    one is not; the column offers nothing better, every other single-fold residue row whose blocker
+    is the COUNT SOURCE being either a banner or a compound. Its refusal is written against the
+    TYPE (`CardFilter` carries no damaged-body member; `damagedOnly` lives on `spreadDamage` and
+    `counterEachAll`, which are OP fields in a different union and unreachable from a count), so
+    it names what is MISSING — D473/D479's shape, which aged 42 and 37 decisions.
+    ⚠️ **`MATCH_RECORD_VERSION` **HELD at 30**, AND THE QUESTION IS SETTLED RATHER THAN IMPLIED.**
+    🛑 **DOES A `DamageCountSource` REACH A PERSISTED ADDRESS AT ALL? NO — THERE IS NO CARRIER**,
+    which is D498's case rather than D450's reachability one or D462's serialized-alphabet one, and
+    it was RE-DERIVED at this head instead of inherited from D512. `AttackDamageBonus` (the only
+    type that holds a `DamageCountSource`) occurs in exactly two non-test modules that USE it —
+    `effects.ts`, which produces it, and `attack.ts`, which consumes it as a LOCAL inside
+    `attack()`; `index.ts` re-exports the TYPE and touches no value. Comment-stripped, it appears
+    ZERO times in `interpreter.ts`, `registry.ts` and `testFixtures.ts`, which is the measurement
+    and not the impression. It is
+    in no `GameState` field, no `EffectOp`, no `PendingStage`, no `EffectContinuation` and no
+    `GameEvent`. A damage FOLD emits no op at all (D508), so there is no park and no continuation
+    for a `MatchRecord` to carry. `scale?: DamageCountSource` — the field that WOULD create the
+    carrier — stands refused for the third time (D448/D449/D507) and is untouched here. The day it
+    lands, this union inherits the whole `BoardCondition` argument and the next member owes the
+    bump; `specialConditionCount.test.ts` §6 asserts the absence of the carrier over every op name
+    every producer in the repo emits rather than by grep.
+    ⚠️ **THIS HEADING NAMES NO `D<nnn>` AND THAT IS DELIBERATE, NOT AN OMISSION** —
+    D507/D508/D510/D512/D513/D514/D515/D516/D517's posture, for their reason.
+    `engineVersionChangelog.test.ts`'s ATTRIBUTION case asserts `adjudicated === LABELLED.length`
+    with no tolerance, so a labelled heading without its `docs/decisions.md` row ships `check` RED,
+    and this slice is scoped away from that file. **The debt is D518**: whoever writes
+    `| **D518** | … engine 0.404.0 → 0.405.0 … |` should rewrite this heading's opening
+    parenthesis as `(D518 — THE §12 SPECIAL-CONDITION TALLY…` in the same commit, and not before.
+    🛑 **VERSION-TAX EXCEPTION LIST FOR THIS BUMP, NAMING THE HEADING BEING WRITTEN THIS SLICE
+    (D506's rule (b)).** `0.404.0` legitimately survived at **EIGHT** lines outside `docs/` BEFORE
+    this paragraph existed and at **FOURTEEN** after it — the six new ones are this heading's own
+    source, its labelling-debt sentence, this sentence, the two lines below that quote the two
+    header arrows, and the line naming `D506-changelog-head-unnamed`. ⚠️ **THE COUNT AND THE MOMENT
+    YOU TAKE IT ARE TWO CLAIMS (D488), so both are written here**, which is the practice D515
+    started and D516/D517 confirmed. None of the fourteen may be swept: **THIS HEADING'S OWN
+    SOURCE, one line up, plus this sentence and the labelling-debt sentence above it**; D517's
+    heading TARGET below together with its own debt sentence and one line of its exception list
+    (three lines); `prizeGateParalyze.test.ts`'s header arrow, which reads `0.403.0 → 0.404.0`;
+    `specialConditionCount.test.ts`'s header arrow, which reads `0.404.0 → 0.405.0` and is this
+    slice's own; `mutants.ts`'s D275 re-point ledger, which is APPENDED to rather than rewritten;
+    and `D506-changelog-head-unnamed`'s `what`, `find` and `replace`, which are **RE-POINTED
+    WHOLESALE onto the heading above rather than value-swept** — kept in D508's trimmed,
+    label-proof form `engineVersion <old> → **<new>**`, **stopping before the `(`**, which D508,
+    D510 and D512–D517 have now each proved survives the caller's labelling. The sweep ran as a
+    WHITELIST of SIX exact line shapes — **written out and counted BEFORE the edit and re-grepped
+    after** — and never as a value-keyed grep, which is the mechanism that ate D500's heading.
+    **THE ARITHMETIC, MEASURED ON BOTH SIDES — AND THE FORECAST WAS WRONG IN TWO PLACES, WHICH IS
+    EXACTLY WHY IT IS RE-COUNTED AFTERWARDS RATHER THAN ASSERTED BEFOREHAND (D488).** BEFORE the
+    edit the six classes counted `77 + 5 + 25 + 1 + 1 + 1 = 110` lines and `110 + 8 = 118`, which
+    was the whole-literal grep. AFTER it the INCOMING literal greps to **120**, not the 118 this
+    paragraph first predicted: the six classes read `78 + 6 + 25 + 1 + 1 + 1 = 112` — **TWO** new
+    assertions rather than one, because `specialConditionCount.test.ts`'s version rung pins
+    `manifest.version` BESIDE `engineVersion` (class (b) goes 5 → 6, and the first draft of this
+    sentence assumed only class (a) could grow) — plus **EIGHT** lines no class covers, ENUMERATED
+    rather than rounded: this heading's source, its labelling-debt sentence, the one line of this
+    exception list that quotes the new suite's header arrow, that header arrow itself,
+    `mutants.ts`'s D275 ledger, and `D506-changelog-head-unnamed`'s `what`, `find` and `replace`.
+    `112 + 8 = 120`. The OUTGOING literal greps to **FOURTEEN**, which IS the figure predicted:
+    **EIGHT** in `index.ts` (this heading's source, its labelling-debt sentence, THREE lines of
+    this exception list, and D517's heading TARGET with its own debt sentence and one line of its
+    list), ONE in `prizeGateParalyze.test.ts`, ONE in `specialConditionCount.test.ts`, and FOUR in
+    `mutants.ts` (the D275 ledger plus `D506-changelog-head-unnamed`'s `what`, `find` and
+    `replace`). ⚠️ **The per-class SPLIT of that fourteen was also wrong in the first draft** — it
+    said three index.ts lines where there are five on this slice's side — and is corrected here
+    from the re-grep, because a total that happens to be right over a decomposition that is not is
+    the shape D451 keeps finding.
+    ⚠️ **AND `precheck` WAS RE-RUN AFTER EVERY `index.ts` EDIT** (it is not part of `check`).)
     🆕🆕🆕 engineVersion 0.403.0 → **0.404.0** (D517 — THE PRIZE-GATED PARALYSIS, AND THE FIRST
     `BoardCondition` THAT READS **YOUR OWN** PRIZE COUNT. `censusAttackCorpus.ts` **FILE LINE
     342** — *"If you have exactly 1 Prize card remaining, your opponent's Active Pokémon is now
@@ -21460,7 +21627,7 @@ import type { GameState, Seat } from "./types";
     WITNESS** — the count was re-derived every slice and the word *"three"* was carried.
     A successor of this slice inherits **81 / 61 / 17** again, over **FIVE** history
     occurrences: those four plus `deckMillFilteredScale.test.ts`'s own header arrow.) */
-export const engineVersion = "0.404.0";
+export const engineVersion = "0.405.0";
 
 export type {
   ApplyResult,

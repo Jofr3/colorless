@@ -89,11 +89,36 @@ function matchup(
   return setActiveFromDeck(state, "p2", opts.defender);
 }
 
-/** 🆕🆕 **D469 — the "count source with no reader at all" witness, FOURTH home.**
-    `censusAttackCorpus.ts` FILE LINE 537, **2 legal printings** — one more than the
-    third home carried. See the rung below for why the OPPONENT-BOARD form stopped
-    being one, and D467's block above it for why the Pachirisu form did. */
+/** 🆕🆕🆕 **D518 — the "count source with no reader at all" witness, FIFTH home, and
+    the FOURTH went the way of the three before it.** `censusAttackCorpus.ts` FILE LINE
+    **596**, *"This attack does 50 damage for each of your Pokémon that has any damage
+    counters on it."*, **1 sentence / 1 legal printing** — ONE sentence and ONE fold, so
+    the count SOURCE is the only ground the null can rest on, which is what this witness
+    is actually for.
+
+    ⚠️ **AND IT IS A STEP DOWN IN PRINTINGS — 2 → 1 — WHICH IS SAID RATHER THAN GLOSSED.**
+    D469 called the fourth home *"strictly better than the third"* on exactly that measure;
+    this one is not, and the column offers nothing better: every other single-fold residue
+    row whose blocker is the COUNT SOURCE is either a banner (`Ancient`/`Future`/`Tera`, a
+    vocabulary blocker rather than a count one) or a compound.
+
+    🛑 **WHY IT IS UNREAD, AT THE TYPE RATHER THAN AT THE ANCHOR** (D473/D479's shape — name
+    what is MISSING, not what is spelled). The count is *"bodies of mine carrying at least
+    one damage counter"*. `DamageCountSource.pokemonInPlay { seat, filter }` has the right
+    zone and the right seat; what it has no way to say is the PREDICATE, because `CardFilter`
+    carries no damaged-body member at all — `damagedOnly` exists on `spreadDamage` (D507) and
+    on `counterEachAll`, which are OP fields in a different union and cannot be reached from
+    a count. So this row needs a `CardFilter` inhabitant, not an anchor. §"REFUSES" drives
+    that as a falsifier: the day `CardFilter` gains it, `deriveAttackDamageMultiplier` claims
+    this string and the rung goes RED naming its own replacement. */
 const UNREAD_COUNT_SOURCE =
+  "This attack does 50 damage for each of your Pokémon that has any damage counters on it.";
+
+/** 🆕🆕🆕 D518 — the FOURTH home, kept as the LIVE counter-example so *"we re-homed it"* is
+    a measurement rather than a story. `censusAttackCorpus.ts` FILE LINE 537, **2 legal
+    printings**: the §12 SPECIAL-CONDITION tally on the defending Active, now claimed by
+    `deriveAttackDamageMultiplier` through `DamageCountSource.specialConditionsOnOpponentActive`. */
+const BUILT_FORMER_WITNESS =
   "This attack does 100 damage for each Special Condition affecting your opponent's Active Pokémon.";
 
 describe("deriveAttackDamageBonus — the additive counter-scaling reader", () => {
@@ -176,16 +201,32 @@ describe("deriveAttackDamageBonus — the additive counter-scaling reader", () =
     // pinning the old side would be pinning a falsehood. It is asserted LIVE two lines
     // down rather than merely dropped, which is what makes the move a measurement.
     //
-    // 🆕🆕 **THE FOURTH HOME, AND IT IS A STRICTLY BETTER WITNESS THAN THE THIRD** —
-    // `censusAttackCorpus.ts` FILE LINE 537, **2 legal printings** against 534's one,
-    // ONE sentence, ONE fold: *"This attack does 100 damage for each Special Condition
-    // affecting your opponent's Active Pokémon."* The count is how many Special
-    // Conditions are on the DEFENDING Active — a 0..N tally of board state that no
-    // `DamageCountSource` member answers and that `boardCondition` (a 0-or-1 indicator)
-    // structurally cannot. One sentence and one fold, so the count source is the ONLY
-    // ground, which is what this assertion is actually about.
+    // 🛑🆕🆕🆕 **D518 — AND THE FOURTH HOME HAS NOW GONE THE SAME WAY, WHICH IS THE
+    // FOURTH TIME THIS WITNESS HAS MOVED AND THE THIRD TIME THE MOVE WAS RECORDED RATHER
+    // THAN THE RUNG QUIETLY RE-POINTED (D444/D447).** D469 homed it on `censusAttackCorpus.ts`
+    // FILE LINE 537 — *"This attack does 100 damage for each Special Condition affecting your
+    // opponent's Active Pokémon."* — and argued it was unread because *"no `DamageCountSource`
+    // member answers"* the tally and *"`boardCondition` (a 0-or-1 indicator) structurally
+    // cannot"*. **BOTH CLAUSES WERE EXACTLY RIGHT, 49 DECISIONS EARLY**, and D518 paid the
+    // first of them: ONE new member (`specialConditionsOnOpponentActive`) whose walk is
+    // `presentStatuses` — the very projection the indicator folds — leaving the second clause
+    // TRUE FOREVER, since an indicator's ceiling is `per` at any `per`.
+    //
+    // 🛑 **THE WITNESS IS RE-POINTED AND THE OLD SUBJECT IS ASSERTED LIVE TWO LINES DOWN**,
+    // because a lone `toBeNull` on a fresh string would pass even if every reader in the file
+    // were dead. The new home is FILE LINE 596 — one sentence, one fold, and a count no
+    // `CardFilter` inhabitant can express (see its block above).
     expect(deriveAttackDamageBonus(UNREAD_COUNT_SOURCE)).toBeNull();
     expect(deriveAttackDamageMultiplier(UNREAD_COUNT_SOURCE)).toBeNull();
+    // …and the row this witness REPLACES, asserted from the other side.
+    expect(deriveAttackDamageMultiplier(BUILT_FORMER_WITNESS)).toEqual({
+      per: 100,
+      count: { kind: "specialConditionsOnOpponentActive" },
+    });
+    // ⚠️ **AND THE ADDITIVE READER STILL REFUSES IT**, which is what says the new member is
+    // reachable from ONE reader rather than from the family: the column prints no
+    // *"more damage for each Special Condition …"*, so no additive anchor was written.
+    expect(deriveAttackDamageBonus(BUILT_FORMER_WITNESS)).toBeNull();
     // …and the row this witness REPLACES is asserted from the other side, so "we
     // re-homed it" is a claim with a live counter-example instead of a story.
     expect(

@@ -803,10 +803,10 @@ describe("§7 — purity and the structural answers", () => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("§8 — the version", () => {
-  it("engineVersion is 0.404.0 and the bump is owed for BEHAVIOUR", () => {
+  it("engineVersion is 0.405.0 and the bump is owed for BEHAVIOUR", () => {
     // A sentence that fell to the loud `ATTACK_EFFECT_SKIPPED` path now flips three coins
     // and queues one park per tails, and a shipped union member gained a REQUIRED field —
     // so `packages/engine` behaviour moved and the minor is owed (D275).
-    expect(engineVersion).toBe("0.404.0");
+    expect(engineVersion).toBe("0.405.0");
   });
 });
