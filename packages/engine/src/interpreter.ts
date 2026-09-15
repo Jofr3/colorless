@@ -4927,10 +4927,35 @@ export function countOwnerPokemonInPlay(state: GameState, seat: Seat, owner: str
     guard is explicit rather than a non-null assertion — and `matchesFilter`'s own
     first line refuses `undefined` as well, which makes this belt-and-braces on
     the data gap rather than on the category. */
-export function countPokemonInPlay(state: GameState, seat: Seat, filter: CardFilter): number {
+export function countPokemonInPlay(
+  state: GameState,
+  seat: Seat,
+  filter: CardFilter,
+  /** 🆕🆕🆕 **D519 — `DamageCountSource.pokemonInPlay.damagedOnly`, and it is a
+      PARAMETER OF THIS WALK rather than a second walk beside it.** *"…50 damage for each
+      of your Pokémon that has any damage counters on it."* (corpus FILE LINE 596) asks the
+      same seat, the same zone and the same noun, narrowed by a BOARD fact — so the only
+      honest place for it is inside the one loop that already visits the bodies.
+
+      🛑 **IT DECIDES THROUGH `hasAnyDamageCounters`, THE SHIPPED PREDICATE'S OWN CALL.**
+      `spreadDamage` (D507), `counterEachAll` and `damageChosen` (D437) all narrow their
+      candidate sets with that function; a count that re-spelled `damage > 0` here would be
+      a SECOND definition of one concept, which is the defect even while it agrees (D518).
+      Because the call is shared, *"this body is counted" ⟺ "this body satisfies the
+      predicate"* is true by construction on every board.
+
+      ⚠️ **IT IS TESTED BEFORE `topCardOf`, AND THE ORDER IS OBSERVABLE.** A body whose
+      stack outruns the catalog is dropped by the guard below at any value of this flag, so
+      the two refusals compose; putting the board test first also means an undamaged body
+      never costs a catalog lookup. Defaulting to `false` is what keeps every existing
+      caller — `countOwnerPokemonInPlay`, both `DamageCountSource` count arms and the
+      `perHeads` flip count — reading byte for byte what it read before. */
+  damagedOnly = false,
+): number {
   const side = state.players[seat];
   return [side.active, ...side.bench].filter((body) => {
     if (body === null) return false;
+    if (damagedOnly && !hasAnyDamageCounters(body)) return false;
     const card = topCardOf(state, body);
     return card !== undefined && matchesFilter(card, filter);
   }).length;

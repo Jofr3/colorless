@@ -19984,6 +19984,112 @@ import type { GameState, Seat } from "./types";
     `expect(manifest.version)`, `it(…)` titles, the declaration and `package.json` —
     **not** as a value-keyed grep — because a value-keyed grep is precisely the mechanism
     that ate D500's heading.)
+    🆕🆕🆕 engineVersion 0.405.0 → **0.406.0** (D519 — THE BODIES YOU HAVE IN PLAY THAT ARE ALREADY
+    HURT — A COUNT NARROWED BY A **BOARD** FACT RATHER THAN BY A `CardFilter`.
+    `censusAttackCorpus.ts` **FILE LINE 596** — *"This attack does 50 damage for each of your
+    Pokémon that has any damage counters on it."*, **1 sentence / 1 legal printing**, claimed by
+    `deriveAttackDamageMultiplier` through ONE new anchor (`IN_PLAY_DAMAGED_BODY_MULTIPLY`) and
+    ONE new OPTIONAL FIELD on a SHIPPED member, deriving
+    `{per:50, count:{kind:"pokemonInPlay", seat:"you", filter:{kind:"anyPokemon"}, damagedOnly:true}}`.
+    🛑 **THE PRICE IS ONE ANCHOR, ONE READER ARM, ONE OPTIONAL BOOLEAN AND ONE ARGUMENT — NO NEW
+    UNION MEMBER ANYWHERE.** `DamageCountSource` stands still at **20** members;
+    `DamageCountSource.pokemonInPlay` gains `damagedOnly?: true`; `attack.ts`'s existing
+    `case "pokemonInPlay"` passes it through; `countPokemonInPlay` (interpreter.ts) gains a
+    defaulted fourth parameter. **ZERO** new readers (surface unmoved at 13), `EffectOp` members,
+    op fields, `BoardCondition`/`CardFilter`/`AttackFlipCount`/`HandRefreshDraw` members, registry
+    rows, `FIXTURE_POOL` ids, decks, prompts, choice kinds, events, error codes, `redact.ts` bytes
+    or `packages/schema` bytes. The real consumers were enumerated by BREAKING the field name and
+    running `tsc -b --force` (D512/D518's census-by-compile-error): **exactly two source sites** —
+    the producer in `effects.ts` and the consumer in `attack.ts` — and renaming the whole member
+    `kind` reaches **three files and no more** (`effects.ts`, `attack.ts`, one test's total
+    `Record`). **There is NO describer surface, re-derived rather than cited.**
+    🛑 **THE REFUSAL THIS OVERTURNS WAS ONE SLICE OLD, ITS VERDICT WAS RIGHT AND ITS STATED CAUSE
+    WAS WRONG** (D479's third mode; D503's warning that a successor reuses the PREMISE). D518
+    homed `scaledDamage.test.ts`'s *"count source with no reader at all"* witness on this row and
+    argued *"this row needs a `CardFilter` inhabitant, not an anchor"*. It needed the opposite:
+    `matchesFilter` is handed a `Card` off `topCardOf`, and a card has no `damage` field at all —
+    the number lives on the `InPlayPokemon`. **A damaged-body member of `CardFilter` is a question
+    the matcher structurally cannot answer**, so the narrowing rides on the COUNT, where the walk
+    over BODIES already happens. The heading of this entry is the correction; D518's own entry
+    above is left standing as the record of what it believed.
+    🛑 **THE COUNT TAKES THE SHIPPED PREDICATE'S OWN WALK — THE SAME CALL, NOT A SECOND
+    DEFINITION** (D518's rule, FOURTH consecutive slice). `hasAnyDamageCounters` decides
+    `spreadDamage.damagedOnly` (D507), `counterEachAll.damagedOnly` and `damageChosen.damagedOnly`
+    (D437); `countPokemonInPlay` now calls it too. So *"this body is counted" ⟺ "this body is a
+    candidate of the shipped op"* holds BY CONSTRUCTION, and `damagedBodyScaling.test.ts` §5
+    drives that biconditional BODY BY BODY against corpus FILE LINE 526's two-op `spreadDamage`
+    program over six damage patterns of a six-body board. **This is the FOURTH spelling of
+    `damagedOnly` and the FIRST on a count: what D159 makes single is the WALK, never the union.**
+    ⚠️ **THE NOUN STAYS A CAPTURE, AND THAT IS THE ARCHITECTURAL CLAIM MADE EXECUTABLE.** Because
+    the narrowing is not a filter, the filter axis is FREE: the same arm reads
+    *"…for each of your Basic Pokémon that has any damage counters on it."* through the shared
+    `inPlayBodyFilter` map with no second anchor, no second member and no intersection combinator —
+    which an `allOf`-shaped reading would have needed. §4's lattice measures that freedom as an
+    INERT noun axis. ⚠️ Only the bare `Pokémon` head is PRINTED today, measured over all 640 rows.
+    ⚠️ **MULTIPLY ONLY, ATTACKER-SEAT ONLY, AND BOTH ZEROS ARE MEASURED.** The column prints the
+    *"more"* form of this clause ZERO times and the opponent-seat form ZERO times, so neither an
+    additive twin nor a foe anchor was written (D440's rule, D435's *not incrementing is also a
+    measurement*). The `(?!opponent)` lookahead is `IN_PLAY_BODY_MULTIPLY`'s, verbatim, and is what
+    keeps the attacker's anchor off an opponent-seat print the day one is ingested.
+    🆕 **A FOURTEENTH LATTICE SHAPE: THREE LIVE AXES EACH FLIPPING AT EXACTLY HALF, ONE INERT
+    AXIS, AND THE BUILT SET A RADIUS-1 HAMMING BALL.** NARROWING × SEAT × NOUN × FOLD reads
+    **6 of 16** before the build with flip table `6 · 2 · 0 · 2` of 8 and **8 of 16** after with
+    `4 · 4 · 0 · 4`; 16/16 distinct strings, readers-only and the residue predicate identical
+    everywhere, both splitters null at **16/16**. The post set is characterised rather than
+    listed: **a point builds exactly when AT MOST ONE of {board narrowing, opponent seat, additive
+    fold} is set** — a Hamming ball of radius 1 on the three live axes, doubled by the free one.
+    That is distinct from every recorded shape: D505's seventh halves by ONE axis blocking at
+    16/16 with four inert, where here NO axis blocks and NO axis is free-and-lit; D507's eighth is
+    a conjunctive pair; D508's ninth has zero free axes; D510's tenth is a singleton; D512's and
+    D516's elevenths are islands; D517's twelfth is a distance-2 pair; D518's thirteenth is a
+    saturated face. ⚠️ **THE ORDINAL IS A LABEL RATHER THAN A COUNT** — the sequence already
+    carries two *"ELEVENTH"* entries (D512 and D516), so what is checked is that the shape matches
+    none on record, not the number. ⚠️ **AND D513's PHENOMENON RECURS, SIXTH OCCURRENCE**: the
+    NARROWING axis FELL (6 → 4) as the printed point stopped blocking while SEAT and FOLD each
+    ROSE (2 → 4), having gained lit neighbours.
+    ⚠️ **INERT IS NOT DEGENERATE** (D505's distinction): the eight noun pairs are eight distinct
+    string pairs that never move the verdict, and the inertness IS the claim — a rider orthogonal
+    to the filter costs nothing on the filter axis, before or after.
+    🛑 **THE CORPUS-WIDE GREP FOUND THREE CARRIERS, ONE OF WHICH WOULD HAVE STAYED GREEN AND
+    WRONG** (D516's rule (4), and D517's warning). `scaledDamage.test.ts`'s witness and
+    `filteredBenchSnipe.test.ts`'s family rung both REDDENED; `index.ts`'s own D518 entry did not,
+    because prose is not executable. All three are corrected in place (D444), and
+    `testFixtures.ts`'s `fix-filteredsnipe` index 2 — a *"deliberately unread"* control that
+    named itself a tripwire for exactly this slice — is re-texted onto corpus FILE LINE 601, the
+    one row of that family still unbuilt.
+    🛑 **AND THE *"UNREAD COUNT SOURCE"* WITNESS HAS RUN OUT OF SUBJECTS, WHICH IS A MEASUREMENT
+    ABOUT THE UNION RATHER THAN ABOUT THE WITNESS.** For four homes running (D196 → D467 → D469 →
+    D518) its blocker was a missing `DamageCountSource` member. At this head **no residue row has
+    that blocker**: every remaining `for each` sentence is blocked by a COMPOUND or by the printed
+    noun's VOCABULARY. The sixth home is corpus FILE LINE 565 (*"…for each of your Ancient Pokémon
+    in play."*, **2 printings, a step UP**), whose null is one layer LOWER — the anchor matches and
+    the count is shipped; `inPlayBodyFilter` cannot name an Ancient body and never will, because
+    the banner is in no persisted column (`types.ts`:146-149). It can still FIRE, on an ingest
+    change.
+    ⚠️ **`MATCH_RECORD_VERSION` HELD at 30, RE-DERIVED RATHER THAN INHERITED (D517's rule).**
+    D518 established that `DamageCountSource` has NO carrier; this slice widens an EXISTING
+    member's shape, which is the same question about a different edit, and the walk is re-run at
+    this head: every op object every producer in the repo emits is visited and no VALUE inside one
+    is a `DamageCountSource`. A damage FOLD emits no `EffectOp` at all (D508), and
+    `scale?: DamageCountSource` — the field that WOULD create the carrier — stands refused for the
+    third time (D448/D449/D507). ⚠️ **AND THE RIDER IS `true`-ONLY AND OPTIONAL**, so even if a
+    carrier landed, every count this engine has ever written serializes byte-identically.
+    ⚠️ **THIS HEADING NAMES NO `D<nnn>` AND THAT IS DELIBERATE, NOT AN OMISSION.**
+    `engineVersionChangelog.test.ts`'s ATTRIBUTION case requires every heading naming a slice to
+    have a matching `| **D<nnn>** |` row in `docs/decisions.md` recording the same arrow, with
+    `adjudicated` asserted equal to `LABELLED.length` and no tolerance. This slice was scoped NOT
+    to touch `docs/decisions.md`, so a labelled heading would have shipped `check` RED. **THE DEBT,
+    NAMED**: whoever writes `| **D519** | … engine 0.405.0 → 0.406.0 … |` should rewrite this
+    heading's opening parenthesis as `(D519 — THE BODIES…` in the SAME commit, and not before.
+    🛑 **VERSION-TAX EXCEPTION LIST FOR THIS BUMP, NAMING THE HEADING BEING WRITTEN THIS SLICE
+    (D506's rule (b)).** `0.405.0` legitimately survives at FIVE kinds of site and none may be
+    swept: **THIS HEADING'S OWN SOURCE, one line up**; D518's heading target one block down;
+    `specialConditionCount.test.ts`'s header arrow and its own version rung, both of which name
+    0.405.0 as the version THAT slice shipped; `damagedBodyScaling.test.ts`'s header arrow
+    `0.405.0 → 0.406.0`; and the `docs/` history. The sweep was run as a WHITELIST over
+    `expect(engineVersion)`, `expect(manifest.version)`, `it(…)` titles, the declaration and
+    `package.json` — **not** as a value-keyed grep, which is the mechanism that ate D500's
+    heading.)
     🆕🆕🆕 engineVersion 0.404.0 → **0.405.0** (D518 — THE §12 SPECIAL-CONDITION TALLY ON THE
     DEFENDING ACTIVE, AND THE COUNT THAT SHARES ITS PREDICATE'S WALK. `censusAttackCorpus.ts`
     **FILE LINE 537** — *"This attack does 100 damage for each Special Condition affecting your
@@ -20089,6 +20195,18 @@ import type { GameState, Seat } from "./types";
     TYPE (`CardFilter` carries no damaged-body member; `damagedOnly` lives on `spreadDamage` and
     `counterEachAll`, which are OP fields in a different union and unreachable from a count), so
     it names what is MISSING — D473/D479's shape, which aged 42 and 37 decisions.
+    🛑 **[D519, ONE SLICE LATER — THIS PARAGRAPH'S SECOND CLAUSE IS FALSE, AND IT IS CORRECTED IN
+    PLACE RATHER THAN DELETED (D508's precedent; the heading and its arrow are untouched).** The
+    first clause is true and permanent: `CardFilter` carries no damaged-body member and **cannot**,
+    because `matchesFilter` is handed a `Card` off `topCardOf` and a card has no `damage`. The
+    second does not follow. `damagedOnly` was never *"unreachable from a count"* — a COUNT walks
+    BODIES, and D519 put the rider on `DamageCountSource.pokemonInPlay` and passed it into
+    `countPokemonInPlay`, where `hasAnyDamageCounters` already lived. **The verdict was right and
+    the stated cause was wrong** (D479's third mode), which matters because a successor reuses the
+    PREMISE (D503). ⚠️ **AND THE CORRECTION WAS ALREADY ON RECORD, 69 DECISIONS EARLY AND GREEN THE
+    WHOLE TIME**: `counterFold.test.ts`'s D450 header says in as many words that *"a board fact does
+    not have to travel through `CardFilter` at all"*. Nothing reddened it, and D518's corpus-wide
+    grep — run on `Special Condition`, not on `CardFilter` — could not have seen it.]**
     ⚠️ **`MATCH_RECORD_VERSION` **HELD at 30**, AND THE QUESTION IS SETTLED RATHER THAN IMPLIED.**
     🛑 **DOES A `DamageCountSource` REACH A PERSISTED ADDRESS AT ALL? NO — THERE IS NO CARRIER**,
     which is D498's case rather than D450's reachability one or D462's serialized-alphabet one, and
@@ -21627,7 +21745,7 @@ import type { GameState, Seat } from "./types";
     WITNESS** — the count was re-derived every slice and the word *"three"* was carried.
     A successor of this slice inherits **81 / 61 / 17** again, over **FIVE** history
     occurrences: those four plus `deckMillFilteredScale.test.ts`'s own header arrow.) */
-export const engineVersion = "0.405.0";
+export const engineVersion = "0.406.0";
 
 export type {
   ApplyResult,

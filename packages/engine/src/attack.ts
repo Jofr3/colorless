@@ -537,8 +537,21 @@ function scaledAttackDamage(
       // that hard-coded `attackerSeat` scores the opponent's three printings off the
       // attacker's board on every board that differs — which is what §4's rungs
       // drive, one seat per board rather than one mirrored pair.
+      //
+      // 🆕🆕🆕 **D519 — THE `damagedOnly` RIDER IS PASSED THROUGH, NOT RE-DECIDED
+      // HERE.** *"…50 damage for each of your Pokémon that has any damage counters on it."*
+      // (corpus FILE LINE 596) narrows this very count by a BOARD fact, and the narrowing
+      // lives inside `countPokemonInPlay` where the body walk already is — decided by
+      // `hasAnyDamageCounters`, the same call behind `spreadDamage`'s, `counterEachAll`'s
+      // and `damageChosen`'s riders. Filtering the result here would need a second walk and
+      // a second definition of "damaged" (D518's rule). `=== true` rather than a truthiness
+      // read, the union's own spelling: the field is `true`-only and OPTIONAL, so an absent
+      // rider is the unnarrowed count every other printed row of this member wants.
       const bodySeat = bonus.count.seat === "you" ? attackerSeat : defenderSeat;
-      return countPokemonInPlay(state, bodySeat, bonus.count.filter) * bonus.per;
+      return (
+        countPokemonInPlay(state, bodySeat, bonus.count.filter, bonus.count.damagedOnly === true) *
+        bonus.per
+      );
     }
     case "bothSidesPokemonInPlay": {
       // 🆕🆕🆕 D512 — the bodies in play matching the printed noun, on BOTH sides of the

@@ -15101,6 +15101,38 @@ const IN_PLAY_BODY_SCALE =
     stage word, and D435's *not incrementing is also a measurement*. */
 const IN_PLAY_FOE_BODY_MULTIPLY =
   /^This attack does (\d+) damage for each of your opponent['’]s ([^.]+) in play\.$/;
+/** 🆕🆕🆕 **D519 — THE ATTACKER'S BODIES NARROWED BY A BOARD FACT**:
+    *"This attack does 50 damage for each of your Pokémon that has any damage counters
+    on it."* — corpus **FILE LINE 596**, **1 sentence / 1 legal printing**, measured by
+    running this pattern against all 640 rows of `legalAttackCorpus()` (exactly one hit).
+
+    🛑 **IT IS A SEPARATE ANCHOR AND NOT A RELAXATION OF EITHER PATTERN ABOVE**
+    (D441/D446's rule, and the kinds DO differ here). Both of those require ` in play.` at
+    END OF STRING; this sentence ends `damage counters on it.` and names no zone word at
+    all, so the three patterns are disjoint by construction rather than by ordering —
+    asserted over the whole column rather than argued. A widening of
+    `IN_PLAY_BODY_MULTIPLY` would also have rotted the two `find`-quoting mutant rows that
+    hold its line byte for byte (D414's lesson, avoided rather than paid).
+
+    ⚠️ **THE NOUN IS A CAPTURE, WHERE `IN_PLAY_ATTACK_NAME_MULTIPLY` SPELLS ITS
+    HEAD NOUN AS A LITERAL — AND THE DIFFERENCE IS WHETHER THE NARROWING IS A FILTER.**
+    D446 wrote "Pokémon" into that pattern because *"your Pokémon … that has the Round
+    attack"* is ONE noun that had to resolve to ONE `CardFilter`, and this union has no
+    intersection combinator. Here the narrowing is **not a `CardFilter` at all** — it is a
+    BOARD fact, carried as the `damagedOnly` rider on the COUNT — so the filter axis is
+    free and the capture goes through `inPlayBodyFilter` whole, exactly as the two anchors
+    above. The column prints only the bare `Pokémon` head today (measured); the map is
+    shared because *"which bodies does this printed noun name"* is one question with one
+    answer (D159), not because a second row is expected.
+
+    ⚠️ **NO ADDITIVE TWIN, AND THAT IS A CENSUS RATHER THAN AN OMISSION.** The
+    column prints *"does N MORE damage for each of your … that has any damage counters on
+    it."* **ZERO** times over all 640 rows, and the OPPONENT-seat spelling zero times too —
+    so both would be arms no sentence drives (`IN_PLAY_FOE_BODY_MULTIPLY`'s call, and D435's
+    *not incrementing is also a measurement*). The `(?!opponent)` lookahead is the guard
+    that keeps the attacker's anchor off an opponent-seat print the day one is ingested. */
+const IN_PLAY_DAMAGED_BODY_MULTIPLY =
+  /^This attack does (\d+) damage for each of your ((?!opponent)[^.]+) that has any damage counters on it\.$/;
 /** 🆕🆕 D446 — the ATTACKER's bodies in play NARROWED BY A PRINTED ATTACK NAME:
     *"This attack does N damage for each of your Pokémon in play that has the Round
     attack."* — 3 sentences / 6 legal printings, the largest single group in this
@@ -29109,8 +29141,28 @@ export type DamageCountSource =
       An empty board contributes 0 from each seat and the arm is TOTAL — a seat whose
       Active Spot is empty answers with its Bench and never throws, which is
       `countPokemonInPlay`'s own guarantee. On this fold the printed base is DROPPED, so
-      a 0 is no `DAMAGE_DEALT` row at all rather than a 40. */
-  | { kind: "pokemonInPlay"; seat: CountSeat; filter: CardFilter }
+      a 0 is no `DAMAGE_DEALT` row at all rather than a 40.
+
+      ⚠️ **🆕🆕🆕 D519 — `damagedOnly`, AND IT IS A RIDER ON THE COUNT RATHER THAN A
+      MEMBER OF `CardFilter`.** *"…50 damage for each of your Pokémon that has any damage
+      counters on it."* (corpus FILE LINE 596) narrows the same seat, the same zone and the
+      same noun by a BOARD fact. `CardFilter` narrows a CARD — it is matched against
+      `topCardOf`, which knows nothing about `damage` — so a `damagedBody` inhabitant there
+      would be a member the matcher structurally cannot answer. The rider rides here, where
+      the walk over BODIES happens, and it is the FOURTH spelling of a name `spreadDamage`
+      (D507), `counterEachAll` and `damageChosen` (D437) already carry as an OP field:
+      **what D159 makes single is the WALK, never the union** (D516/D517).
+
+      🛑 **AND THE WALK IS THE PREDICATE'S OWN.** `countPokemonInPlay` decides it with
+      `hasAnyDamageCounters` — literally the call behind all three shipped op riders — so
+      *"this body counts" ⟺ "this body satisfies the predicate"* holds BY CONSTRUCTION and
+      not because two definitions agree today. `damagedBodyScaling.test.ts` §5 sweeps the
+      biconditional over a six-body board rather than asserting it once.
+
+      It is OPTIONAL and `true`-only, the shape all three op riders take: absent means the
+      unnarrowed count, so every sentence the two `in play` anchors claim reads byte for
+      byte what it read before. */
+  | { kind: "pokemonInPlay"; seat: CountSeat; filter: CardFilter; damagedOnly?: true }
   | { kind: "bothSidesPokemonInPlay"; filter: CardFilter }
   | { kind: "cardsInDiscardPile"; seat: DiscardPileSeat; filter: CardFilter }
   | { kind: "cardsInOpponentHand"; filter: CardFilter };
@@ -29772,6 +29824,30 @@ export function deriveAttackDamageMultiplier(text: string): AttackDamageBonus | 
     const filter = inPlayBodyFilter(inPlayBodies[2] ?? "");
     if (per >= 1 && filter !== null) {
       return { per, count: { kind: "pokemonInPlay", seat: "you", filter } };
+    }
+  }
+  // 🆕🆕🆕 **D519 — the same seat, the same zone and the same noun map, with the
+  // printed BOARD narrowing carried as a rider on the COUNT.** Placed directly against the
+  // arm above because the two differ in exactly one printed clause, and the order between
+  // them is FREE rather than load-bearing: `IN_PLAY_BODY_MULTIPLY` needs ` in play.` at end
+  // of string and this one needs ` that has any damage counters on it.`, so no string
+  // reaches both (asserted over all 640 rows in `damagedBodyScaling.test.ts` §1).
+  //
+  // 🛑 **THE RIDER IS `damagedOnly`, THE FOURTH SPELLING OF A NAME THIS REPO ALREADY
+  // HAS** — `spreadDamage` (D507), `counterEachAll` and `damageChosen` (D437) carry it as an
+  // OP field, and this is the first time a COUNT does. The refusal that stood on this row
+  // (D518, `scaledDamage.test.ts`) said it needed *"a `CardFilter` inhabitant"*; it does not,
+  // and could not have one — damage is a BOARD fact and a `CardFilter` narrows a CARD. The
+  // rider is orthogonal to the filter, which is why the noun stays a capture.
+  //
+  // TWO guards, refusing for two different reasons, the arms above's verbatim: `per >= 1` is
+  // the family's printed-zero guard and `filter !== null` is the VOCABULARY.
+  const damagedInPlayBodies = IN_PLAY_DAMAGED_BODY_MULTIPLY.exec(effect);
+  if (damagedInPlayBodies !== null) {
+    const per = Number(damagedInPlayBodies[1]);
+    const filter = inPlayBodyFilter(damagedInPlayBodies[2] ?? "");
+    if (per >= 1 && filter !== null) {
+      return { per, count: { kind: "pokemonInPlay", seat: "you", filter, damagedOnly: true } };
     }
   }
   // 🆕🆕 D446 — THE OPPONENT'S bodies in play, the SEAT twin of the arm directly

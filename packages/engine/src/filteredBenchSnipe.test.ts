@@ -6,6 +6,7 @@ import {
 } from "./censusAttackCorpus";
 import * as effects from "./effects";
 import {
+  deriveAttackDamageMultiplier,
   deriveAttackEffect,
   deriveAttackOptionalCostBoost,
   splitAttackGateClause,
@@ -81,15 +82,33 @@ const UNNARROWED =
 /** The printed clause, spelled once. */
 const CLAUSE = " that has any damage counters on it";
 
-/** Corpus row 596 — one of the FOUR siblings of the printed predicate this slice
-    deliberately does NOT build, carried on the demonstrator at index 2 so the
-    `ATTACK_EFFECT_SKIPPED` rung has its control on the SAME body. */
+/** 🛑 **🆕🆕🆕 D519 — RE-POINTED, AND THE ROW IT LEFT IS ASSERTED LIVE IN §1 (D444/D447).**
+    This constant held corpus row **596** (*"This attack does 50 damage for each of your
+    Pokémon that has any damage counters on it."*) from D437 to D518, and D519 BUILT it —
+    ONE anchor (`IN_PLAY_DAMAGED_BODY_MULTIPLY`) and a `damagedOnly` rider on
+    `DamageCountSource.pokemonInPlay`, decided by `hasAnyDamageCounters`: the SAME predicate
+    this slice's own rider uses, taken a fourth time. ⚠️ **D507's note two screens down
+    predicted it and was right in kind and slightly off in price** — it said the row needs
+    *"a new `DamageCountSource` member folded in `attack.ts`"*, and what it actually cost was
+    an optional FIELD on a member that already shipped, which is cheaper.
+
+    The demonstrator's index 2 moves with it. The new subject is corpus **FILE LINE 601** —
+    *"This attack does 50 damage to each Pokémon that has any damage counters on it (both
+    yours and your opponent's), except for this Pokémon. (Don't apply…)"*, 1 legal printing —
+    **the LAST unbuilt damage row of this family**, and the one `bothBenchSpread.test.ts` §8
+    refuses by name. Kept as a real printed sentence rather than an invented one so the
+    `ATTACK_EFFECT_SKIPPED` rung's control is on the SAME body as the claim it controls. */
 const UNREAD_SIBLING =
+  "This attack does 50 damage to each Pokémon that has any damage counters on it (both yours and your opponent's), except for this Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)";
+
+/** The row `UNREAD_SIBLING` just vacated, kept as the LIVE counter-example so *"we re-pointed
+    it"* is a measurement rather than a story. */
+const BUILT_FORMER_SIBLING =
   "This attack does 50 damage for each of your Pokémon that has any damage counters on it.";
 
 const PICKY = 0; // {C}, 30 damage, corpus row 528 — the NARROWED rider
 const BLUNT = 1; // {C}, 30 damage — the same rider UN-narrowed: the one-axis control
-const IDLE = 2; // {C}, 30 damage, corpus row 596 — deliberately unread
+const IDLE = 2; // {C}, 30 damage, corpus row 601 (596 until D519) — deliberately unread
 
 const units = (rows: readonly (readonly [number, string])[]): number =>
   rows.reduce((sum, [n]) => sum + n, 0);
@@ -198,25 +217,51 @@ describe("§1 — the price and the family, re-derived off the corpus rather tha
     // cost**, which is D437's claim confirmed for the second time.
     // 🛑 **THE TWO THAT REMAIN ARE NOT ALIKE, AND D507 PRICED THE SECOND RATHER THAN
     // LEAVING IT AS A GROUP (D463: N rows under one reason is N refusals until each is
-    // priced).** `UNREAD_SIBLING` is a COUNT — a new `DamageCountSource` member folded
-    // in `attack.ts`, where this reader is not in scope (D436's shape). The other is
+    // priced).** It called the COUNT *"a new `DamageCountSource` member folded in
+    // `attack.ts`, where this reader is not in scope (D436's shape)"*. The other is
     // corpus FILE LINE 601, *"…to each Pokémon that has any damage counters on it (both
     // yours and your opponent's), except for this Pokémon."*, and the refusal that names
     // its condition lives in `bothBenchSpread.test.ts` §8.
+    // 🆕🆕🆕 **D519 — THE SPLIT IS NOW 4 BUILT / 1 REFUSED, AND IT WAS THE COUNT.** Corpus
+    // FILE LINE 596 is claimed by `deriveAttackDamageMultiplier` through ONE anchor and a
+    // `damagedOnly` rider on `DamageCountSource.pokemonInPlay`, decided by
+    // `hasAnyDamageCounters` — **the FOURTH consequent this one predicate has paid for, on
+    // a fourth carrier, and it has still never once been the cost.** D437's claim, confirmed
+    // a third time. ⚠️ **D507's own sentence above was right in KIND and off in PRICE**: the
+    // fix was an optional FIELD on a member that already shipped, not a new member. The row
+    // is asserted BUILT three lines down rather than merely dropped from the list.
     const built = family.filter(([, s]) => resolvedByAnyReader(s));
     expect(built.map(([, s]) => s).sort()).toEqual(
       [
         PRINTED,
         "Put 2 damage counters on each of your opponent's Pokémon that has any damage counters on it.",
         "This attack also does 40 damage to each Benched Pokémon that has any damage counters on it (both yours and your opponent's). (Don't apply Weakness and Resistance for Benched Pokémon.)",
+        BUILT_FORMER_SIBLING,
       ].sort(),
     );
-    expect(units(family.filter(([, s]) => !resolvedByAnyReader(s)))).toBe(2);
+    expect(units(family.filter(([, s]) => !resolvedByAnyReader(s)))).toBe(1);
+    // …and the row this suite's demonstrator carried at index 2 until D519, asserted from
+    // the other side, so the re-point is a measurement rather than a story.
+    expect(resolvedByAnyReader(BUILT_FORMER_SIBLING)).toBe(true);
+    expect(deriveAttackDamageMultiplier(BUILT_FORMER_SIBLING)).toEqual({
+      per: 50,
+      count: {
+        kind: "pokemonInPlay",
+        seat: "you",
+        filter: { kind: "anyPokemon" },
+        damagedOnly: true,
+      },
+    });
     // The unread sibling this suite's demonstrator carries at index 2 is one of the
-    // four, so the `ATTACK_EFFECT_SKIPPED` control in §2 is a REAL printed sentence
-    // rather than an invented one — and this rung is its tripwire.
+    // five, so the `ATTACK_EFFECT_SKIPPED` control in §7 is a REAL printed sentence
+    // rather than an invented one — and this rung is its tripwire. ⚠️ **IT IS NOW THE LAST
+    // ONE**: the day FILE LINE 601 is built there is no honest sibling left, and this rung
+    // reddens rather than letting a successor invent a sentence the column does not print.
     expect(family.map(([, s]) => s)).toContain(UNREAD_SIBLING);
     expect(resolvedByAnyReader(UNREAD_SIBLING)).toBe(false);
+    expect(family.filter(([, s]) => !resolvedByAnyReader(s)).map(([, s]) => s)).toEqual([
+      UNREAD_SIBLING,
+    ]);
   });
 
   it("🛑 the concept grepped the OTHER way: 13 sentences say 'any damage counters'", () => {
@@ -761,6 +806,6 @@ describe("§8 — the persisted question: `MATCH_RECORD_VERSION` STAYS 29", () =
   });
 
   it("🛑 the engine version moved with `package.json`", () => {
-    expect(engineVersion).toBe("0.405.0");
+    expect(engineVersion).toBe("0.406.0");
   });
 });

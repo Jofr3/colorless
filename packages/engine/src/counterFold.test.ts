@@ -60,6 +60,17 @@ import {
 // printed words off an `InPlayPokemon` since it shipped. The rider was reused verbatim
 // and the sentence is built. **The boundary was real and it was the wrong boundary.**
 //
+// 🆕🆕🆕 **[D519 — THIS PARAGRAPH WAS RIGHT AND STAYED GREEN FOR SIXTY-NINE DECISIONS WHILE A
+// LATER SLICE WROTE ITS OPPOSITE ONE FILE OVER.** D518 refused corpus FILE LINE 596 (*"This
+// attack does 50 damage for each of your Pokémon that has any damage counters on it."*) on the
+// ground that it *"needs a `CardFilter` inhabitant"* — the exact inference this block had
+// already shown does not follow. D519 built it the way this block says: a `damagedOnly` rider on
+// `DamageCountSource.pokemonInPlay`, decided by `hasAnyDamageCounters` on an `InPlayPokemon`,
+// which is now the **FOURTH** carrier of that one predicate. ⚠️ **NOTHING REDDENED HERE, AND
+// NOTHING COULD HAVE**: this is prose, and D518's corpus-wide sweep was keyed on the printed
+// noun (`Special Condition`) rather than on the TYPE the refusal named. **Grep the refusal's
+// TYPE as well as its NOUN** — D516's rule (4), one axis wider.]**
+//
 // 🛑 **`MATCH_RECORD_VERSION` STAYS 29, AND THE REASON IS NOT THE USUAL ONE.** Two
 // REQUIRED fields on a shipped op is D386's case — normally a bump. It is free here
 // because **no v29 record can contain a `counterEachAll` literal at all**: an `EffectOp`
@@ -518,7 +529,7 @@ describe("§3 — TWO REQUIRED fields on a shipped op, and the record version do
   });
 
   it("the engine version moved and the record version did not", () => {
-    expect(engineVersion).toBe("0.405.0");
+    expect(engineVersion).toBe("0.406.0");
   });
 });
 

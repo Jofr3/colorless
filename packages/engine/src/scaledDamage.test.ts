@@ -45,7 +45,9 @@ import {
 // D467, so a TYPED body count on that Bench IS answered now. Pachirisu's PRINTING
 // is still unread — the two-sentence ground is untouched — but the COUNT-SOURCE
 // ground is gone, so the "count source with no reader at all" claim is re-homed a
-// third time, onto `censusAttackCorpus.ts` FILE LINE 534 (`UNREAD_COUNT_SOURCE`
+// third time, onto `censusAttackCorpus.ts` FILE LINE 534 (the constant now spelled
+// `UNREAD_COUNT_NOUN`, re-pointed twice more since and renamed at D519 because its
+// claim is no longer about a count SOURCE at all — see its block
 // below): one sentence, the additive fold, and the OPPONENT's whole board of damage
 // counters, which no `DamageCountSource` member answers. Wo-Chien ex (benched-target) and Chien-Pao ex (discarded-Energy
 // count) are the multiply deriver's.
@@ -89,36 +91,57 @@ function matchup(
   return setActiveFromDeck(state, "p2", opts.defender);
 }
 
-/** 🆕🆕🆕 **D518 — the "count source with no reader at all" witness, FIFTH home, and
-    the FOURTH went the way of the three before it.** `censusAttackCorpus.ts` FILE LINE
-    **596**, *"This attack does 50 damage for each of your Pokémon that has any damage
-    counters on it."*, **1 sentence / 1 legal printing** — ONE sentence and ONE fold, so
-    the count SOURCE is the only ground the null can rest on, which is what this witness
-    is actually for.
+/** 🛑🆕🆕🆕 **D519 — THE WITNESS IS RE-POINTED A SIXTH TIME, AND ITS CLAIM HAS CHANGED
+    SHAPE — WHICH IS THE FINDING RATHER THAN A BOOKKEEPING NOTE.** For four homes running
+    (D196 → D467 → D469 → D518) this rung named *"a count source with no reader at all"*,
+    and every time the fix was a new `DamageCountSource` member. **After D519 there is no
+    such row left.** Re-measured over the whole legal column at this head: every residue
+    sentence still carrying a `for each` is blocked either by a COMPOUND (a second clause
+    no whole-sentence anchor can see) or by the printed noun's **VOCABULARY** — and none by
+    the count union, which now answers every count the column prints on a single-fold row.
 
-    ⚠️ **AND IT IS A STEP DOWN IN PRINTINGS — 2 → 1 — WHICH IS SAID RATHER THAN GLOSSED.**
-    D469 called the fourth home *"strictly better than the third"* on exactly that measure;
-    this one is not, and the column offers nothing better: every other single-fold residue
-    row whose blocker is the COUNT SOURCE is either a banner (`Ancient`/`Future`/`Tera`, a
-    vocabulary blocker rather than a count one) or a compound.
+    So the sixth home is a different KIND of null, and it is labelled as one.
+    `censusAttackCorpus.ts` FILE LINE **565**, *"This attack does 30 damage for each of your
+    Ancient Pokémon in play."*, **1 sentence / 2 legal printings** — ⚠️ **a step UP in
+    printings (1 → 2), where D518's move was a step DOWN and said so.**
 
-    🛑 **WHY IT IS UNREAD, AT THE TYPE RATHER THAN AT THE ANCHOR** (D473/D479's shape — name
-    what is MISSING, not what is spelled). The count is *"bodies of mine carrying at least
-    one damage counter"*. `DamageCountSource.pokemonInPlay { seat, filter }` has the right
-    zone and the right seat; what it has no way to say is the PREDICATE, because `CardFilter`
-    carries no damaged-body member at all — `damagedOnly` exists on `spreadDamage` (D507) and
-    on `counterEachAll`, which are OP fields in a different union and cannot be reached from
-    a count. So this row needs a `CardFilter` inhabitant, not an anchor. §"REFUSES" drives
-    that as a falsifier: the day `CardFilter` gains it, `deriveAttackDamageMultiplier` claims
-    this string and the rung goes RED naming its own replacement. */
-const UNREAD_COUNT_SOURCE =
+    🛑 **WHY IT IS UNREAD, AND THE BLOCKER IS ONE LAYER LOWER THAN AT ANY PREVIOUS HOME**
+    (D473/D479's shape — name what is MISSING, not what is spelled). The ANCHOR matches:
+    `IN_PLAY_BODY_MULTIPLY` captures the noun `Ancient Pokémon` off this very string. The
+    COUNT is shipped: `DamageCountSource.pokemonInPlay { seat, filter }` has the right zone,
+    the right seat and the right fold. What fails is `inPlayBodyFilter`, because **no
+    `CardFilter` inhabitant can name an Ancient body and none can be written**: the
+    Ancient/Future banner is printed on the card FACE and appears in NO field of the
+    persisted catalog and none of tcgdex's own card model (`types.ts`:146-149, re-read word
+    for word at D440). **The fix is an INGEST change, not a type change** — which is why
+    this witness has come to rest one layer below every home it has had.
+
+    ⚠️ **AND IT CAN STILL FIRE**, which is what keeps it a falsifier rather than a monument:
+    the day the banner reaches a persisted column and `inPlayBodyFilter` answers it,
+    `deriveAttackDamageMultiplier` claims this string and the rung goes RED naming its own
+    replacement. §"REFUSES" drives exactly that. */
+const UNREAD_COUNT_NOUN = "This attack does 30 damage for each of your Ancient Pokémon in play.";
+
+/** 🆕🆕🆕 D519 — the FIFTH home, kept as the LIVE counter-example so *"we re-homed it"* is a
+    measurement rather than a story. `censusAttackCorpus.ts` FILE LINE 596, **1 legal
+    printing**: the bodies-in-play tally NARROWED BY A BOARD FACT, now claimed by
+    `deriveAttackDamageMultiplier` through the `damagedOnly` rider on
+    `DamageCountSource.pokemonInPlay`.
+
+    ⚠️ **D518's VERDICT WAS RIGHT AND ITS STATED CAUSE WAS NOT** (D479's third mode). It said
+    this row *"needs a `CardFilter` inhabitant, not an anchor"*; it needed the opposite.
+    `matchesFilter` is handed a `Card` off `topCardOf` and a card carries no `damage` — the
+    number lives on the `InPlayPokemon` — so a damaged-body member of that union would have
+    been a question the matcher structurally cannot answer. The narrowing rides on the COUNT,
+    where the walk over bodies already is, and it is the FOURTH spelling of a rider name
+    `spreadDamage`, `counterEachAll` and `damageChosen` already carry. */
+const BUILT_FORMER_WITNESS =
   "This attack does 50 damage for each of your Pokémon that has any damage counters on it.";
 
-/** 🆕🆕🆕 D518 — the FOURTH home, kept as the LIVE counter-example so *"we re-homed it"* is
-    a measurement rather than a story. `censusAttackCorpus.ts` FILE LINE 537, **2 legal
-    printings**: the §12 SPECIAL-CONDITION tally on the defending Active, now claimed by
-    `deriveAttackDamageMultiplier` through `DamageCountSource.specialConditionsOnOpponentActive`. */
-const BUILT_FORMER_WITNESS =
+/** D518's home, kept a second slice as a live counter-example as well — two consecutive
+    re-pointings both asserted POSITIVE is what makes the sequence auditable rather than
+    anecdotal. `censusAttackCorpus.ts` FILE LINE 537, 2 legal printings. */
+const BUILT_D518_WITNESS =
   "This attack does 100 damage for each Special Condition affecting your opponent's Active Pokémon.";
 
 describe("deriveAttackDamageBonus — the additive counter-scaling reader", () => {
@@ -212,21 +235,58 @@ describe("deriveAttackDamageBonus — the additive counter-scaling reader", () =
     // `presentStatuses` — the very projection the indicator folds — leaving the second clause
     // TRUE FOREVER, since an indicator's ceiling is `per` at any `per`.
     //
-    // 🛑 **THE WITNESS IS RE-POINTED AND THE OLD SUBJECT IS ASSERTED LIVE TWO LINES DOWN**,
-    // because a lone `toBeNull` on a fresh string would pass even if every reader in the file
-    // were dead. The new home is FILE LINE 596 — one sentence, one fold, and a count no
-    // `CardFilter` inhabitant can express (see its block above).
-    expect(deriveAttackDamageBonus(UNREAD_COUNT_SOURCE)).toBeNull();
-    expect(deriveAttackDamageMultiplier(UNREAD_COUNT_SOURCE)).toBeNull();
+    // 🛑🆕🆕🆕 **D519 — AND THE FIFTH HOME HAS NOW GONE THE SAME WAY, WHICH IS THE FIFTH TIME
+    // THIS WITNESS HAS MOVED AND THE FOURTH TIME THE MOVE WAS RECORDED RATHER THAN THE RUNG
+    // QUIETLY RE-POINTED (D444/D447).** D518 homed it on `censusAttackCorpus.ts` FILE LINE
+    // 596 — *"This attack does 50 damage for each of your Pokémon that has any damage
+    // counters on it."* — and argued it was unread because *"this row needs a `CardFilter`
+    // inhabitant, not an anchor"*. ⚠️ **THE VERDICT WAS RIGHT AND THE STATED CAUSE WAS
+    // WRONG** (D479's third mode, and D503's warning that a successor reuses the PREMISE):
+    // `matchesFilter` is handed a `Card`, which has no `damage` field at all, so the member
+    // it named could not have been written. D519 paid the row the other way — a `damagedOnly`
+    // rider on `DamageCountSource.pokemonInPlay`, deciding through `hasAnyDamageCounters`,
+    // the same call behind the three SHIPPED op riders.
+    //
+    // 🛑 **AND THE CLAIM THIS RUNG CARRIES HAS CHANGED SHAPE, WHICH IS THE REAL FINDING.**
+    // Four homes running, the blocker was a missing `DamageCountSource` member; at this head
+    // there is no residue row left with that blocker. The sixth home is blocked one layer
+    // LOWER — at the printed noun's VOCABULARY, and permanently, because the Ancient banner
+    // is in no persisted column. See its block above.
+    //
+    // 🛑 **THE WITNESS IS RE-POINTED AND EVERY OLD SUBJECT IS ASSERTED LIVE BELOW**, because
+    // a lone `toBeNull` on a fresh string would pass even if every reader in this file were
+    // dead.
+    expect(deriveAttackDamageBonus(UNREAD_COUNT_NOUN)).toBeNull();
+    expect(deriveAttackDamageMultiplier(UNREAD_COUNT_NOUN)).toBeNull();
+    // …and the ANCHOR is not what refuses it: the same pattern claims the same shape at a
+    // noun the shared map DOES answer, so the null above is the VOCABULARY and nothing else.
+    expect(
+      deriveAttackDamageMultiplier(UNREAD_COUNT_NOUN.replace("Ancient", "Basic")),
+    ).toEqual({
+      per: 30,
+      count: { kind: "pokemonInPlay", seat: "you", filter: { kind: "basicPokemon" } },
+    });
     // …and the row this witness REPLACES, asserted from the other side.
     expect(deriveAttackDamageMultiplier(BUILT_FORMER_WITNESS)).toEqual({
+      per: 50,
+      count: {
+        kind: "pokemonInPlay",
+        seat: "you",
+        filter: { kind: "anyPokemon" },
+        damagedOnly: true,
+      },
+    });
+    // ⚠️ **AND THE ADDITIVE READER STILL REFUSES IT**, which is what says the new rider is
+    // reachable from ONE reader rather than from the family: the column prints no
+    // *"more damage for each of your … that has any damage counters on it."*, so no additive
+    // anchor was written.
+    expect(deriveAttackDamageBonus(BUILT_FORMER_WITNESS)).toBeNull();
+    // …and D518's own home, one slice on, still asserted positive.
+    expect(deriveAttackDamageMultiplier(BUILT_D518_WITNESS)).toEqual({
       per: 100,
       count: { kind: "specialConditionsOnOpponentActive" },
     });
-    // ⚠️ **AND THE ADDITIVE READER STILL REFUSES IT**, which is what says the new member is
-    // reachable from ONE reader rather than from the family: the column prints no
-    // *"more damage for each Special Condition …"*, so no additive anchor was written.
-    expect(deriveAttackDamageBonus(BUILT_FORMER_WITNESS)).toBeNull();
+    expect(deriveAttackDamageBonus(BUILT_D518_WITNESS)).toBeNull();
     // …and the row this witness REPLACES is asserted from the other side, so "we
     // re-homed it" is a claim with a live counter-example instead of a story.
     expect(

@@ -98,6 +98,15 @@ import { presentStatuses } from "./types";
 // corpus-wide grep of `specialConditionsOnOpponentActive` and of `Special Condition`
 // found no OTHER rung carrying this row's unbuiltness — D516's rule (4) run and
 // answering NO, which is reported because a clean sweep is a measurement.
+//
+// ⚠️ **[D519, ONE SLICE LATER — FILE LINE 596 IS BUILT, so the sentence above is a record of
+// what THIS slice did and not a statement about the column today.** The witness moved on to a
+// SIXTH home. ⚠️ And the refusal D518 wrote for it was right in its verdict and wrong in its
+// stated cause: the row needed a rider on the COUNT, not a `CardFilter` inhabitant — a card has
+// no `damage` field, so the member it named could not have been written. **D519's grep, run on
+// `CardFilter`-plus-damage rather than on the printed noun, found the correction already on
+// record in `counterFold.test.ts` (D450) and green the whole time** — which is the half of
+// D516's rule (4) that a noun-keyed sweep cannot reach.]**
 
 /** Corpus FILE LINE 537, byte for byte. */
 const PRINTED =
@@ -752,7 +761,7 @@ describe("D518 §6 — `MATCH_RECORD_VERSION` HOLDS at 30: there is no carrier a
   });
 
   it("the engine version moved with the behaviour, and `manifest.version` agrees", () => {
-    expect(engineVersion).toBe("0.405.0");
-    expect(manifest.version).toBe("0.405.0");
+    expect(engineVersion).toBe("0.406.0");
+    expect(manifest.version).toBe("0.406.0");
   });
 });

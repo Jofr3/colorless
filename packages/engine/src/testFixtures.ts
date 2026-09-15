@@ -13893,12 +13893,23 @@ export const FIXTURE_POOL: Record<string, Card> = {
       move between them is which benched bodies the snipe offers.
 
       ⚠️ Index 2 is a **deliberately unread row**, and it is a real corpus sentence
-      rather than an invented one: *"This attack does 50 damage for each of your
-      Pokémon that has any damage counters on it."* (row 596, 1 legal printing) is
-      one of the four SIBLINGS of D437's printed predicate that this slice does not
-      build. It gives the `ATTACK_EFFECT_SKIPPED` rung its control **on the same
-      body**, and it doubles as a tripwire: the day someone claims that sentence,
-      the rung goes red and points at the slice that did it.
+      rather than an invented one. It gives the `ATTACK_EFFECT_SKIPPED` rung its
+      control **on the same body**, and it doubles as a tripwire: the day someone
+      claims that sentence, the rung goes red and points at the slice that did it.
+
+      🛑 **🆕🆕🆕 D519 — THE TRIPWIRE FIRED, WHICH IS WHY THIS ROW HAS MOVED.** It
+      carried corpus row **596** (*"This attack does 50 damage for each of your
+      Pokémon that has any damage counters on it."*, 1 legal printing) from D437 to
+      D518, and D519 BUILT it — one anchor and a `damagedOnly` rider on
+      `DamageCountSource.pokemonInPlay`. The row is re-pointed onto corpus **FILE
+      LINE 601** (*"This attack does 50 damage to each Pokémon that has any damage
+      counters on it (both yours and your opponent's), except for this Pokémon.
+      (Don't apply…)"*, 1 legal printing) rather than deleted (D444), because the
+      property this index exists for — a REAL printed sentence of the SAME family
+      that no reader claims — is exactly what the re-point preserves. It is the LAST
+      unbuilt damage row of that family; `filteredBenchSnipe.test.ts` §1 pins that,
+      so the day IT is built this fixture has no honest sibling left and the suite
+      says so instead of quietly inventing one.
 
       🛑 **NO ids ARE INVENTED.** This checkout has no D1 — no local sqlite, no
       remote credentials — so the three carriers of row 528 could not be resolved and
@@ -13935,7 +13946,8 @@ export const FIXTURE_POOL: Record<string, Card> = {
         cost: ["Colorless"],
         name: "Idle Barrage",
         damage: "30",
-        effect: "This attack does 50 damage for each of your Pokémon that has any damage counters on it.",
+        effect:
+          "This attack does 50 damage to each Pokémon that has any damage counters on it (both yours and your opponent's), except for this Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)",
       },
     ],
   }),

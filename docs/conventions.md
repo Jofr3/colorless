@@ -7731,6 +7731,59 @@ cannot disagree. ⚠️ **A second definition of the same concept is the defect*
 agree today; this is what *"what D159 makes single is the WALK"* (D516/D517) means in practice.
 
 
+### Grep the refusal's TYPE as well as its NOUN (D519, widening D516's rule 4)
+
+D516 established: when a refusal is overturned, **grep its noun** across the whole corpus, because
+absence-claims stay green while quietly becoming lies. D517 cashed that against a rung 398 decisions
+old. **D519 found the rule's blind spot.**
+
+D518 refused a row saying it wanted a damaged-body **`CardFilter`** member. The verdict was right and
+**the cause was wrong**: `matchesFilter` is handed a **`Card`** (off `topCardOf`), and **a card has no
+`damage`** — so no `CardFilter` inhabitant could ever have expressed it. The narrowing belongs on the
+**count**.
+
+🛑 **And the correction had been on record for 69 decisions, green the whole time.**
+`counterFold.test.ts` (D450) says outright *"a board fact does not have to travel through `CardFilter`
+at all"*, naming `matchesFilter(card: Card)` as the reason. **D518's sweep could not see it, because
+that sweep was keyed on the printed noun** — and D450's note never mentions the printed noun at all.
+
+**The rule:** after overturning or re-homing a refusal, grep **both**:
+
+1. the **noun** it named (the printed phrase, the member name) — D516's rule; and
+2. the **type** it blamed (`CardFilter`, `DamageCountSource`, the function it said was missing).
+
+A refusal that blames the wrong carrier is invisible to a noun-keyed sweep **and** is exactly the kind
+most worth finding, because every successor it misleads goes to the wrong layer. Cf. D479's third
+failure mode: *true in every clause, wrong about the carrier.*
+
+### `precheck` cannot see a mutant row that is its own experiment (D519)
+
+A D519 row shipped with `find` and `replace` **byte-identical** — an escaping slip while building the
+replacement by string surgery. The consequences are worth stating exactly:
+
+- the patch was a **no-op**, so the file was unchanged;
+- the suite therefore **passed**;
+- and the row reported **SURVIVED**.
+
+⚠️ **`precheck` is blind to this by construction.** It asserts that each `find` occurs **exactly once**
+in its target, and that **no two rows are the same experiment**. A row whose `find` equals its
+`replace` satisfies both: it occurs once, and it is not the *same experiment as some other row* — it
+is its own. **It is well-formed, unique, patchable, and asserts nothing.**
+
+This is **D481's class one layer deeper** (a data error in the corpus that every gate calls healthy).
+The only instrument that caught it was the **probe's undeclared-survivor report**.
+
+**The rules:**
+
+1. **Treat an unexpected SURVIVED on a brand-new row as a suspected no-op first**, before blaming the
+   killer set — check `find` against `replace` before anything else.
+2. **Never build a `replace` by string surgery on the `find`** without diffing the two.
+3. ✅ **A corpus-wide sweep for `find === replace` is one line and worth running** after any slice that
+   adds rows. D519's caller ran it: **zero rows anywhere**.
+4. **The cheap guard is unwritten**: `precheck` could reject `find === replace` outright. Until it
+   exists, (1)–(3) are what stands between a vacuous row and a green corpus.
+
+
 ## Git / commits
 - Branch off `main` for non-trivial work; commit/push only when asked.
 - Commit trailer per global config: `Co-Authored-By: Claude ...`.
