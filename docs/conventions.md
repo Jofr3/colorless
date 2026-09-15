@@ -7784,6 +7784,66 @@ The only instrument that caught it was the **probe's undeclared-survivor report*
    exists, (1)–(3) are what stands between a vacuous row and a green corpus.
 
 
+### Enumerate what the log contains; never grep for the token you expect (D519)
+
+Through the whole of D519's 3.1-hour sweep the caller reported *"0 non-KILLED"*, computed with
+`grep -cE 'SURVIVED|GAP| ERROR|STALE|CLOBBER'`. The harness spells a declared survivor
+**`SURVIVES(known)`** — present tense, parenthesised — so the pattern matched **none of the 50**
+and returned 0 for hours while survivors were being printed on screen.
+
+**Why:** the run really was clean, so the wrong number and the right number agreed *by luck*. That
+is what makes this class hard to catch and worth a rule: a pattern built out of what you expect can
+only ever confirm you, and it is indistinguishable from a correct one on precisely the inputs where
+the expectation happens to hold. The same grep would have reported `0 non-KILLED` through a run with
+fifty undeclared survivors.
+
+**How to apply:** when you want to know what a log says, enumerate its tokens rather than testing
+for one:
+
+```
+grep -oE '^  [A-Za-z0-9_.:-]+ +… +[A-Za-z()]+' sweep.log | grep -oE '[A-Za-z()]+$' | sort | uniq -c
+```
+
+This proves cleanliness *and* yields the survivor count in one pass, with no guessed spelling
+anywhere in it. ⚠️ **Anchor the enumeration to the indented verdict lines.** Once the run's survivor
+report prints, its explanatory prose contains both `…` and the word `KILLED`, so an unanchored tally
+reads **2576** against a true 2572 — the replacement instrument needs its own scope stated, which is
+D519's file-scope lesson recurring one layer out.
+
+### `pgrep -f` matches the command that is doing the asking (D519)
+
+`pgrep -af 'mutation/run.ts'` reported the sweep **alive for twenty minutes after it had exited**.
+`-f` matches against the whole command line, and the shell wrapper running the check contains the
+literal string `mutation/run.ts` — so the predicate was satisfied by itself.
+
+**Why:** this is the same defect as the two entries above, and naming the three together is the
+point. In one session: a survivor grep that could not match the harness's token; a `KILLED` tally
+that swept the report's own prose; and a liveness check that matched the checker. **Every one was an
+instrument whose scope silently included something it was not meant to measure, or excluded what it
+was** — and every one returned a plausible number that happened to be wrong.
+
+**How to apply:** ask for the thing, not for a string that appears near it. For liveness, match the
+program rather than any substring of the command line — `pgrep -af '^bun ' | grep 'mutation/run'`,
+or check whether the log is still growing (`wc -c` twice), which asks the process's *effect* instead
+of its name. More generally: **before believing a measurement, ask what else could satisfy it.**
+
+### During a sweep, nothing that reads the working tree is trustworthy — including tools you did not run (D519)
+
+The mutation harness patches files in place and restores them seconds later, so any read of the
+working tree during a run may catch a mutated byte. Verify against `git show HEAD:<path>` instead.
+
+**Why:** this is not only about commands you type. During D519's sweep the editor's language server
+reported three `Type '"any"' is not assignable` errors at `prizeGateParalyze.test.ts:574-575`. At
+HEAD — and in the tree moments later — those lines are **comments**. Eight mutant rows target that
+file, and one was patched in when the diagnostic was sampled. A running sweep therefore manufactures
+plausible, specific, entirely false diagnostics.
+
+**How to apply:** the tell is that the complaint names a file the corpus targets
+(`grep -c '<file>' scripts/mutation/mutants.ts`). Before acting on *any* tool output that read the
+tree during a sweep — yours or the harness's or the IDE's — re-check the same lines through
+`git show HEAD:`. And do not edit the tree at all until the run reports: a write mid-sweep is a
+CLOBBER.
+
 ## Git / commits
 - Branch off `main` for non-trivial work; commit/push only when asked.
 - Commit trailer per global config: `Co-Authored-By: Claude ...`.
