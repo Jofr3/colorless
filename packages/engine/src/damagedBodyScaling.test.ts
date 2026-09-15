@@ -309,6 +309,13 @@ describe("D519 §1 — the printed data, measured live over the legal column", (
     expect(units(family)).toBe(20);
     // 🛑 TEN OF THE TWELVE BUILD AFTER THIS SLICE, AND THE TWO THAT DO NOT ARE NAMED so a
     // successor does not read this slice as having closed the family.
+    // 🆕🆕🆕 **D520 — ELEVEN OF THE TWELVE (11 built / 1 unbuilt, 12 rows / 20 printings).**
+    // `:601` is BUILT by arm 6-iii as three shipped ops — the Active predicate is the shipped
+    // one-body `BoardCondition` `opponentActiveDamaged` in a `conditionGate` (NOT a rider on
+    // the op, and NOT a third `spreadDamage.target`), then D507's two `damagedOnly` spreads;
+    // *"except for this Pokémon"* is structural. The reason recorded below at D519 was right
+    // that it is *"not a count"* and wrong about the rest. The list is RE-POINTED to `:316`
+    // alone (D444), and `:601` is asserted from the other side beneath it.
     const unbuilt = family.filter(([, s]) => !resolvedByAnyReader(s)).map(([, s]) => s);
     expect(unbuilt).toEqual([
       // `:316` — a COST MODIFIER ("this attack can be used for {F}"). 🛑 **ITS BLOCKER IS
@@ -327,12 +334,18 @@ describe("D519 §1 — the printed data, measured live over the legal column", (
       // READ the cost through the shipped `extraEnergyUnitsBeyondCost` and are built —
       // reading a cost is not modifying one.
       "If this Pokémon has any damage counters on it, this attack can be used for {F}.",
-      // `:601` — a BOTH-SIDES whole-board spread with an EXCEPT-SELF exclusion.
-      // `spreadDamage.target` is `"opponentBench" | "yourBench"`: it has neither a
-      // both-sides inhabitant nor an Active, and nothing in the op union spells
-      // "except for this Pokémon". Not a count, and not this slice.
-      "This attack does 50 damage to each Pokémon that has any damage counters on it (both yours and your opponent's), except for this Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)",
+      // `:601` — a BOTH-SIDES whole-board spread with an EXCEPT-SELF exclusion — WAS listed
+      // here at D519 with the reason: "`spreadDamage.target` is `"opponentBench" |
+      // `"yourBench"`: it has neither a both-sides inhabitant nor an Active, and nothing in
+      // the op union spells "except for this Pokémon". Not a count, and not this slice." True
+      // of the op, and the row never needed the op widened — D520 built it (see above).
     ]);
+    expect(
+      resolvedByAnyReader(
+        "This attack does 50 damage to each Pokémon that has any damage counters on it (both yours and your opponent's), except for this Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)",
+      ),
+    ).toBe(true);
+    expect(family.filter(([, s]) => resolvedByAnyReader(s))).toHaveLength(11);
   });
 
   it("🛑 BOTH zeros are MEASURED — no additive twin and no opponent-seat twin", () => {
@@ -993,7 +1006,7 @@ describe("D519 §6 — `MATCH_RECORD_VERSION` HOLDS at 30: there is still no car
   });
 
   it("the engine version moved with the behaviour, and `manifest.version` agrees", () => {
-    expect(engineVersion).toBe("0.406.0");
-    expect(manifest.version).toBe("0.406.0");
+    expect(engineVersion).toBe("0.407.0");
+    expect(manifest.version).toBe("0.407.0");
   });
 });

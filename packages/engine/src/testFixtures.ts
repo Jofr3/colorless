@@ -13911,6 +13911,20 @@ export const FIXTURE_POOL: Record<string, Card> = {
       so the day IT is built this fixture has no honest sibling left and the suite
       says so instead of quietly inventing one.
 
+      🛑 **🆕🆕🆕 D520 — THE TRIPWIRE FIRED A SECOND TIME, AND THE `that has any damage
+      counters` FAMILY IS NOW CLOSED (5 built / 0 unbuilt).** D520 built corpus FILE LINE
+      601 as a three-op program of SHIPPED ops (`conditionGate{opponentActiveDamaged}` →
+      `damageDefender`, then D507's two `damagedOnly` spreads) — D507's refusal was wrong in
+      verdict AND carrier. ⚠️ **THIS ROW HAD TO BE RE-TEXTED BEFORE THAT SUITE COULD RUN**:
+      left as it was, a `damage: "30"` body printing the :601 sentence would silently have
+      become a base-30 + gated-50 attack (the BASE RULE at arm 6-iii). The row is re-homed
+      onto corpus **FILE LINE 316** (*"If this Pokémon has any damage counters on it, this
+      attack can be used for {F}."*, 1 legal printing) — a REAL printed sentence that no
+      reader of the thirteen claims (a COST MODIFIER; the blocker is recorded at
+      `damagedBodyScaling.test.ts` §1) — so the `ATTACK_EFFECT_SKIPPED` control keeps its
+      property: unread, on the same body. It is no longer of the damage family, because that
+      family has no unbuilt member left; `filteredBenchSnipe.test.ts` §1 says so.
+
       🛑 **NO ids ARE INVENTED.** This checkout has no D1 — no local sqlite, no
       remote credentials — so the three carriers of row 528 could not be resolved and
       are NOT guessed (D425). The SENTENCES are transcribed off `censusAttackCorpus.ts`
@@ -13946,8 +13960,7 @@ export const FIXTURE_POOL: Record<string, Card> = {
         cost: ["Colorless"],
         name: "Idle Barrage",
         damage: "30",
-        effect:
-          "This attack does 50 damage to each Pokémon that has any damage counters on it (both yours and your opponent's), except for this Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)",
+        effect: "If this Pokémon has any damage counters on it, this attack can be used for {F}.",
       },
     ],
   }),

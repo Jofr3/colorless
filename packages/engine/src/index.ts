@@ -18779,6 +18779,12 @@ import type { GameState, Seat } from "./types";
       • *"…does 50 damage to each Pokémon that has… (both yours and your opponent's),
         except for this Pokémon."* (1) — the dearest: all four zones, W/R applying on
         the two Actives and not on the Benches, plus a self-exclusion.
+        🛑 **[D520 — BUILT, and this entry's price was wrong in kind.** Not *"all four zones …
+        plus a self-exclusion"* as a mechanism: the Active predicate is the ONE-BODY
+        `BoardCondition` `opponentActiveDamaged` in a `conditionGate`, the Benches are D507's
+        two `damagedOnly` spreads, and the self-exclusion is STRUCTURAL (the attacker is its own
+        Active). Three shipped ops, zero new vocabulary. The D507 block below priced it on a
+        rider the flat arm never needed.]**
 
     ⚠️ **THE THREE CARRIERS ARE UNRESOLVED AND SAID TO BE.** No D1 in this checkout;
     the corpus is grouped by sentence and records the COUNT, not the ids (D425). The
@@ -19965,6 +19971,16 @@ import type { GameState, Seat } from "./types";
     union whose whole purpose is keeping `amount` and `per`/`count` apart, so the rider
     owes a `damagedOnly?: never` on the sibling arm in the same edit — for ONE printing.
     `bothBenchSpread.test.ts` §8 is the refusal, with its falsifier.
+    🛑 **[D520, 13 SLICES LATER — THIS PARAGRAPH'S VERDICT AND ITS CARRIER ARE BOTH FALSE, AND IT
+    IS CORRECTED IN PLACE RATHER THAN DELETED (D178/D442/D466; the heading and its arrow are
+    untouched).** The row is BUILT at 0.407.0 with ZERO new vocabulary. The Active half never
+    needed *"a per-body board predicate on `damageDefender`'s FLAT arm"*: the flat arm hits ONE
+    body, and *"has any damage counters on it"* asked of ONE body is the shipped ONE-BODY
+    `BoardCondition` `opponentActiveDamaged` (D115), carried by the shipped `conditionGate`. The
+    two-member union is untouched and no `damagedOnly?: never` was ever owed. The self-exclusion
+    is exactly what note (a) above says — structural. **D479's third mode**: the falsifier
+    (*"a per-body predicate for a reason of its own, or a second four-zone print"*) never fired
+    because the PREMISE was wrong, not because the world stood still.]**
     ⚠️ **THIS HEADING NAMES NO `D<nnn>` AND THAT IS DELIBERATE, NOT AN OMISSION.**
     `engineVersionChangelog.test.ts`'s ATTRIBUTION case requires that EVERY heading naming
     a slice have a matching `| **D<nnn>** |` row in `docs/decisions.md` recording the same
@@ -19984,6 +20000,73 @@ import type { GameState, Seat } from "./types";
     `expect(manifest.version)`, `it(…)` titles, the declaration and `package.json` —
     **not** as a value-keyed grep — because a value-keyed grep is precisely the mechanism
     that ate D500's heading.)
+    🆕🆕🆕 engineVersion 0.406.0 → **0.407.0** (D520 — THE FOUR-ZONE DAMAGED-BODY SPREAD, AND
+    D507's REFUSAL WAS WRONG IN ITS VERDICT *AND* IN ITS CARRIER. `censusAttackCorpus.ts`
+    **FILE LINE 601** — *"This attack does 50 damage to each Pokémon that has any damage counters
+    on it (both yours and your opponent's), except for this Pokémon. (Don't apply Weakness and
+    Resistance for Benched Pokémon.)"*, **1 sentence / 1 legal printing**, claimed by
+    `deriveAttackEffect` through ONE new anchor (`SPREAD_EACH_DAMAGED_FOUR_ZONE`) and ONE new
+    arm (6-iii), deriving a THREE-op program of SHIPPED ops:
+    `[{op:"conditionGate", cond:{kind:"opponentActiveDamaged"}, then:[{op:"damageDefender", amount:50}]},
+    {op:"spreadDamage", target:"yourBench", amount:50, damagedOnly:true},
+    {op:"spreadDamage", target:"opponentBench", amount:50, damagedOnly:true}]`.
+    🛑 **THE PRICE IS ONE ANCHOR AND ONE ARM — ZERO NEW VOCABULARY ANYWHERE.** No new `EffectOp`
+    kind or field, no `BoardCondition`/`CardFilter`/`DamageCountSource` member, no
+    `interpreter.ts` byte, no `attack.ts` byte, no reader (surface unmoved at 13), registry row,
+    `FIXTURE_POOL` id, prompt, event, error code, `redact.ts` or `packages/schema` byte. The four
+    zones are two §8.5 answers on two shipped ops: the opponent's Active through
+    `damageDefender`'s FLAT arm (W/R applied, `snipeActive`'s pipeline, never parks) gated by
+    the shipped ONE-BODY predicate `opponentActiveDamaged` (D115) inside the shipped
+    `conditionGate`; both Benches through D507's two `damagedOnly` `spreadDamage` ops (flat —
+    the printed parenthetical). *"except for this Pokémon"* is STRUCTURAL: the attacker is its
+    own Active and no op names that spot.
+    🛑 **D507 REFUSED THIS ROW WITH THE WRONG VERDICT AND THE WRONG CARRIER.** It priced the Active
+    half as *"a per-body board predicate on `damageDefender`'s FLAT arm"* — a `damagedOnly`
+    rider on a two-member union owing a `damagedOnly?: never` on the sibling — and left the row
+    with a falsifier (*"the flat arm carries a per-body predicate for a reason of its own, or a
+    second four-zone print"*). **The falsifier never fired because the premise was wrong**: the
+    flat arm hits ONE body, and *"has any damage counters on it"* asked of ONE body is a
+    `BoardCondition` that has shipped since D115. A rider on the op would have been a SECOND
+    spelling of a shipped predicate (D159). D479's third mode, and D518→D519's shape ONE slice
+    later: the row's OWN note (a) said the self-exclusion was structural, and then priced the
+    row on something else. D507's block below and D450's row list are corrected IN PLACE
+    (D178/D442/D466); the arity argument in `bothBenchSpread.test.ts` §8 is rewritten as the
+    correction — the arity was never the price.
+    🛑 **THE BASE RULE, WRITTEN AT THE ARM.** `attack.ts`'s `programDamage` walks the TOP LEVEL
+    only, so the gated `damageDefender` is invisible to it and a printed base would land
+    PRE-program. Correct here ONLY because the printing is read as base-less: the gate is the
+    FIRST op and reads *"has any damage counters"* off the board BEFORE this attack's own hit,
+    honouring the predicate's declared *"already"* timing. ⚠️ **The printing's damage box is
+    UNRESOLVABLE on this checkout** (no local D1, no catalog sqlite; the id is stated
+    unresolved, never invented — D425). If it carries a damage box, `attack.ts` owes a
+    D316/D317-style claim at its `scaledBase` ternary, because the gate would then read the
+    defender as damaged by the base hit itself. The fixture is base-less (no `damage` key,
+    D228's precedent) and `fourZoneSpread.test.ts` §2 asserts both halves.
+    ⚠️ **TWO SPELLINGS OF "DAMAGED", DRIVEN RATHER THAN UNIFIED.** `opponentActiveDamaged`
+    reads `active.damage > 0` (D115's bytes) while the walks read `hasAnyDamageCounters`
+    (`pokemon.damage > 0`); `interpreter.ts` is NOT edited, and §4 drives the biconditional
+    body by body — gate fires ⟺ the shipped walk counts the defender (damage 0 / 10 / max−1),
+    and each bench's hit set equals `countPokemonInPlay(…, damagedOnly = true)`'s set.
+    ⚠️ **THE ORDER IS ACTIVE → OWN BENCH → OPPONENT BENCH**, D482's *"Active first"* composed
+    with D507's controller-first walk, observable in the `DAMAGE_DEALT` log and in the resulting
+    state against a hand-built sequence (D258/D482); `D520-four-zone-order-flips` is the row.
+    ⚠️ **NO `(?:also )?`** — this arm emits a MAIN hit (D505's discriminator: which op the arm
+    emits), and the column prints no `also` form, no `more` twin and no second four-zone print
+    (all measured ZERO in §7; printed 0 derives null). The four sibling anchors' claimed-row
+    sets over all 640 rows are asserted unchanged.
+    ⚠️ **`MATCH_RECORD_VERSION` HELD at 30, RE-DERIVED.** Zero new serialized bytes — every
+    kind, field and value in the program already ships and every v30 deploy could already
+    write them; neither damage op parks (both `stepOp` arms return `{ done }` unconditionally)
+    and the gate is SPLICED, so `phase.cont.pendingOp` and `rest` are the same shut doors D507
+    shut by the op property. Driven over the whole program in `fourZoneSpread.test.ts` §9.
+    ⚠️ **THIS HEADING IS LABELLED `(D520 —` BECAUSE `docs/decisions.md`'s `| **D520** |` row
+    SHIPS IN THE SAME COMMIT** (D507's rule: the label and the row are ONE edit).
+    🛑 **VERSION-TAX EXCEPTION LIST FOR THIS BUMP (D506's rule (b)).** `0.406.0` legitimately
+    survives at: THIS HEADING'S OWN SOURCE; D519's heading target one block down and its two
+    prose lines; `damagedBodyScaling.test.ts`'s header arrow; `fourZoneSpread.test.ts`'s header
+    arrow `0.406.0 → 0.407.0`; `mutants.ts`'s D275 re-point ledger; and the `docs/` history.
+    The sweep was run as a WHITELIST over `expect(engineVersion)`, `expect(manifest.version)`,
+    `it(…)` titles, the declaration and `package.json` — never as a value-keyed grep.)
     🆕🆕🆕 engineVersion 0.405.0 → **0.406.0** (D519 — THE BODIES YOU HAVE IN PLAY THAT ARE ALREADY
     HURT — A COUNT NARROWED BY A **BOARD** FACT RATHER THAN BY A `CardFilter`.
     `censusAttackCorpus.ts` **FILE LINE 596** — *"This attack does 50 damage for each of your
@@ -21745,7 +21828,7 @@ import type { GameState, Seat } from "./types";
     WITNESS** — the count was re-derived every slice and the word *"three"* was carried.
     A successor of this slice inherits **81 / 61 / 17** again, over **FIVE** history
     occurrences: those four plus `deckMillFilteredScale.test.ts`'s own header arrow.) */
-export const engineVersion = "0.406.0";
+export const engineVersion = "0.407.0";
 
 export type {
   ApplyResult,

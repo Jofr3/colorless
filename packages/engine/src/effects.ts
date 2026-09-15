@@ -13495,6 +13495,88 @@ const SPREAD_EACH_BOTH_BENCH = new RegExp(
     ` \\(both yours and your opponent['’]s\\)\\.` +
     `(?: \\(Don['’]t apply Weakness and Resistance for Benched Pokémon\\.\\))?$`,
 );
+// 🆕🆕🆕 **D520 — THE FOUR-ZONE DAMAGED-BODY SPREAD, AND D507's REFUSAL OF IT WAS WRONG IN
+// ITS VERDICT *AND* IN ITS CARRIER.** *"This attack does 50 damage to each Pokémon that has
+// any damage counters on it (both yours and your opponent's), except for this Pokémon.
+// (Don't apply Weakness and Resistance for Benched Pokémon.)"* — `censusAttackCorpus.ts`
+// **FILE LINE 601**, **1 sentence / 1 legal printing**, the LAST unbuilt damage row of the
+// `that has any damage counters` family (rows 414, 526, 528, 596, 601 — now 5 of 5 built).
+//
+// 🛑 **THE PROGRAM IS THREE SHIPPED OPS AND ZERO NEW BYTES OF VOCABULARY.** Four zones,
+// two §8.5 answers, one self-exclusion:
+//
+//     conditionGate { cond: opponentActiveDamaged, then: [ damageDefender { amount } ] },
+//     spreadDamage  { target: yourBench,     amount, damagedOnly: true },
+//     spreadDamage  { target: opponentBench, amount, damagedOnly: true }
+//
+//   (spelled WITHOUT the `op: "…",` form on purpose — a raw-text producer count reads the
+//   commentary too, D516's trap, and `fourZoneSpread.test.ts` §9 counts producers.)
+//
+//   · the OPPONENT'S ACTIVE is `damageDefender`'s FLAT arm (D316 — `snipeActive`'s full
+//     §8.5 pipeline, Weakness and Resistance applied, never parks, `amount <= 0` guarded),
+//     gated by the shipped ONE-BODY `BoardCondition` `opponentActiveDamaged` (D115) inside
+//     the shipped `conditionGate` (spliced by `runProgram`, evaluated against the board AS
+//     OF the op);
+//   · BOTH BENCHES are D507's two-op `spreadDamage` program with its `damagedOnly` rider —
+//     flat, no W/R, which IS the printed parenthetical;
+//   · the ATTACKER'S OWN ACTIVE — *"except for this Pokémon"* — is excluded STRUCTURALLY:
+//     the attacker is its own Active, and no op in this program names that spot. D507's
+//     own note (a) said exactly this and then priced the row on something else.
+//
+// 🛑 **D507 REFUSED THIS ROW SAYING THE ACTIVE HALF NEEDS A PER-BODY BOARD PREDICATE ON
+// `damageDefender`'s FLAT ARM — A `damagedOnly` RIDER ON A TWO-MEMBER UNION, OWING A
+// `damagedOnly?: never` ON THE SIBLING. IT NEVER DID.** `damageDefender` hits ONE body,
+// the opponent's Active; *"has any damage counters on it"* asked of ONE body is a
+// `BoardCondition`, and `opponentActiveDamaged` has spelled that exact question since
+// D115 (*"If your opponent's Active Pokémon already has any damage counters on it, this
+// attack does N more damage"*, corpus rows 357–359, 5 printings). A per-body rider on the
+// op would have been a SECOND spelling of a shipped predicate — the thing D159 forbids.
+// So the verdict was wrong (buildable, at zero vocabulary) AND the carrier was wrong (a
+// `BoardCondition` in a gate, not a field on the op): D479's third mode, D518→D519's shape
+// one slice later, and D507's own falsifier (*"the flat arm carries a per-body predicate
+// for a reason of its own, or a second four-zone print"*) never fired — the premise was
+// wrong, not overtaken.
+//
+// 🛑 **THE ORDER IS ACTIVE → OWN BENCH → OPPONENT BENCH, AND IT IS OBSERVABLE.** D482's
+// *"Active first"* (§8.5 resolves the Active Spot before anything splashes) composed with
+// D507's *"controller/printed order first"* (`yourBench` before `opponentBench`). Every leg
+// files `DAMAGE_DEALT` per body and `spreadDamage` is a FOLD carrying `rngState` (D258), so
+// a swapped order re-orders the log and re-draws every shield coin. The mutant row
+// `D520-four-zone-order-flips` is what says so; `fourZoneSpread.test.ts` §5 drives it.
+//
+// 🛑 **THE BASE RULE (attack.ts, NOT edited).** `programDamage` walks the TOP LEVEL only
+// (`program?.some((step) => step.op === "damageDefender")`), so the gated hit is INVISIBLE
+// to it and the printed base — if any — lands PRE-program. That is correct here ONLY
+// because the one legal printing is read as BASE-LESS: `attack.ts` deals nothing before the
+// program, the gate reads *"has any damage counters"* off the board BEFORE this attack's
+// own hit, and the predicate's declared *"already"* timing is honoured. ⚠️ **THE
+// PRINTING'S DAMAGE BOX IS UNRESOLVABLE ON THIS CHECKOUT** (no local D1, no catalog
+// sqlite; the corpus records the sentence and its count, never the id — D425), and the
+// id is NOT invented. If the printing carries a damage box, `attack.ts` owes a
+// D316/D317-style claim at its `scaledBase` ternary — the gate would otherwise read the
+// defender as damaged BY THE BASE HIT ITSELF, and the base would land twice. The fixture
+// is base-less (NO `damage` key — D228's precedent), and `fourZoneSpread.test.ts` §2
+// asserts both halves of the rule: the top level has NO `damageDefender`, and the
+// fixture prints no `damage`.
+//
+// ⚠️ **NO `(?:also )?`, FOR `SPREAD_EACH_OPPONENT_POKEMON`'s REASON** — D505's
+// discriminator is which op the arm EMITS, and this arm emits a MAIN hit
+// (`damageDefender`), so an *"also"* wording would be a silent deletion of a printed base.
+// The column prints no `also` form of this sentence (measured, §7). ⚠️ **NO `more` TWIN
+// EITHER** (measured ZERO, §7). ⚠️ **THE W/R PARENTHETICAL STAYS OPTIONAL**, the family's
+// shape verbatim; the mandatory form claims the same 1 / 1 (§6).
+//
+// ⚠️ **DISJOINT FROM ITS FOUR SIBLINGS ON THE TOKEN AFTER `each `**: arm 6 demands `of `,
+// 6-ii `Benched`, 6a-bis/6a-ter `of your opponent['’]s`, and this one `Pokémon that has`.
+// §1 asserts the four sibling anchors' claimed-row sets over all 640 rows are UNCHANGED.
+// ⚠️ **BOTH APOSTROPHES IN THE PRINT ARE U+0027**, measured with `codePointAt` in §1
+// rather than remembered (D421/D425/D440); the `['’]` class is kept on both slots for the
+// family's standing reason (a re-ingest could curl them).
+const SPREAD_EACH_DAMAGED_FOUR_ZONE = new RegExp(
+  "^This attack does (\\d+) damage to each Pokémon that has any damage counters on it" +
+    ` \\(both yours and your opponent['’]s\\), except for this Pokémon\\.` +
+    `(?: \\(Don['’]t apply Weakness and Resistance for Benched Pokémon\\.\\))?$`,
+);
 // 🆕🆕🆕 **D482 — THE WHOLE-SIDE SPREAD, AND IT NEEDS NO OP AT ALL.**
 // *"This attack does 30 damage to each of your opponent's Pokémon. (Don't apply
 // Weakness and Resistance for Benched Pokémon.)"* — `censusAttackCorpus.ts` FILE
@@ -24430,6 +24512,44 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
         ? { op: "spreadDamage", target: "opponentBench", amount, damagedOnly: true }
         : { op: "spreadDamage", target: "opponentBench", amount },
     ];
+  }
+
+  // 🆕🆕🆕 6-iii. D520 — "This attack does {N} damage to each Pokémon that has any damage
+  //     counters on it (both yours and your opponent's), except for this Pokémon. (Don't
+  //     apply Weakness and Resistance for Benched Pokémon.)" — corpus FILE LINE 601,
+  //     1 sentence / 1 legal printing. THREE shipped ops: the opponent's Active through
+  //     `damageDefender`'s flat arm (W/R applied) gated on the shipped ONE-BODY predicate
+  //     `opponentActiveDamaged`, then D507's two `damagedOnly` bench spreads. See the
+  //     anchor's block for why the gate is a `BoardCondition` and not a rider on the op
+  //     (D507's refusal, overturned in verdict AND carrier), for the ORDER, and for the
+  //     BASE RULE — the gate is FIRST in the program with no pre-program base, so *"has
+  //     any damage counters"* is read BEFORE this attack's own hit.
+  //
+  //     ⚠️ **THE SELF-EXCLUSION IS STRUCTURAL.** *"except for this Pokémon"* costs no op
+  //     and no field: the attacker IS its own Active, and none of the three ops names
+  //     that spot — `damageDefender` hits the opponent's Active, `spreadDamage` walks
+  //     `side.bench` only (index.ts 0.327.0's invariant, leaned on in three files).
+  //
+  //     ⚠️ **THE FAMILY'S PRINTED-ZERO GUARD**: a `0 damage` print derives null rather
+  //     than a program that gates and spreads nothing (`D520-printed-zero-derives`).
+  //     ⚠️ **NEITHER LEG GUARDS THE OTHERS' EMPTY CASE AND NONE HAS TO** — D482's line:
+  //     `spreadDamage` returns the state untouched on an empty Bench, the gate's
+  //     `otherwise` is absent so an undamaged defender takes nothing and files no row.
+  match = SPREAD_EACH_DAMAGED_FOUR_ZONE.exec(effect);
+  if (match !== null) {
+    const amount = Number(match[1]);
+    if (amount >= 1) {
+      return [
+        {
+          op: "conditionGate",
+          cond: { kind: "opponentActiveDamaged" },
+          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
+          then: [{ op: "damageDefender", amount }],
+        },
+        { op: "spreadDamage", target: "yourBench", amount, damagedOnly: true },
+        { op: "spreadDamage", target: "opponentBench", amount, damagedOnly: true },
+      ];
+    }
   }
 
   // 🆕🆕🆕 6a-bis. D482 — "This attack does {N} damage to each of your opponent's

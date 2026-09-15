@@ -5251,7 +5251,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D275",
     what: "🛑 THE DEBT THIS SLICE PAID FOR THE FIFTH TIME, RE-INSTALLED: `engineVersion` falls a minor behind `packages/engine/package.json`, which is EXACTLY the state the tree was in at the head of D275 (0.187.0 against 0.189.0) and had been for two slices with nothing comparing them. The tie is the guard; this row is the proof it is one",
     file: "packages/engine/src/index.ts",
-    // ⚠️ RE-POINTED AT D519 (0.405.0 → 0.406.0), at D518 (0.404.0 → 0.405.0), at D517 (0.403.0 → 0.404.0), at D516 (0.402.0 → 0.403.0), at D515 (0.401.0 → 0.402.0), at D514 (0.400.0 → 0.401.0), at D513 (0.399.0 → 0.400.0), at D512 (0.398.0 → 0.399.0), at D510 (0.397.0 → 0.398.0), at D508 (0.396.0 → 0.397.0), at D507 (0.395.0 → 0.396.0), at D505 (0.394.0 → 0.395.0), at D490 (0.384.0 → 0.385.0), at D489 (0.383.0 → 0.384.0), at D488 (0.382.0 → 0.383.0), at D487 (0.381.0 → 0.382.0), at D486 (0.380.0 → 0.381.0), at D485 (0.379.0 → 0.380.0), at D450 (0.351.0 → 0.352.0), at D449 (0.350.0 → 0.351.0), at D448 (0.349.0 → 0.350.0), at D447 (0.348.0 → 0.349.0), at D446 (0.347.0 → 0.348.0), at D445 (0.346.0 → 0.347.0), at D444 (0.345.0 → 0.346.0), at D443 (0.344.0 → 0.345.0), at D442 (0.343.0 → 0.344.0), at D441 (0.342.0 → 0.343.0), at D440 (0.341.0 → 0.342.0), at D439 (0.340.0 → 0.341.0), at D438 (0.339.0 → 0.340.0), at D437 (0.338.0 → 0.339.0), at D436 (0.337.0 → 0.338.0), at D435 (0.336.0 → 0.337.0), at D434 (0.335.0 → 0.336.0), at D433 (0.334.0 → 0.335.0), at D432 (0.333.0 → 0.334.0), at D431 (0.332.0 → 0.333.0), at D430 (0.331.0 → 0.332.0), at D429 (0.330.0 → 0.331.0), at D428 (0.329.0 → 0.330.0), at D427 (0.328.0 → 0.329.0), at D426 (0.327.0 → 0.328.0), at D425 (0.326.0 → 0.327.0), at D424 (0.325.0 → 0.326.0), at D423 (0.324.0 → 0.325.0), at D422 (0.323.0 → 0.324.0), at D421 (0.322.0 → 0.323.0), at D420 (0.321.0 → 0.322.0), at D417 (0.320.0 → 0.321.0), at D416 (0.319.0 → 0.320.0), at D415 (0.318.0 → 0.319.0), at D414 (0.317.0 → 0.318.0), at D413 (0.316.0 → 0.317.0), at D412 (0.315.0 → 0.316.0), at D410 (0.314.0 → 0.315.0), at D409 (0.313.0 → 0.314.0), at D408 (0.312.0 → 0.313.0), at D407 (0.311.0 → 0.312.0), at D402 (0.306.0 → 0.307.0), at D401 (0.305.0 → 0.306.0), at D400 (0.304.0 → 0.305.0), at D399 (0.303.0 → 0.304.0), at D398 (0.302.0 → 0.303.0), at D397 (0.301.0 → 0.302.0), at D396 (0.300.0 → 0.301.0), at D395 (0.299.0 → 0.300.0), at D394 (0.298.0 → 0.299.0), at D393 (0.297.0 → 0.298.0), at D392 (0.296.0 → 0.297.0), at D391 (0.295.0 → 0.296.0), at D390 (0.294.0 → 0.295.0), at D389 (0.293.0 → 0.294.0), at D388 (0.292.0 → 0.293.0), at D387 (0.291.0 → 0.292.0), at D386 (0.290.0 → 0.291.0),
+    // ⚠️ RE-POINTED AT D520 (0.406.0 → 0.407.0), at D519 (0.405.0 → 0.406.0), at D518 (0.404.0 → 0.405.0), at D517 (0.403.0 → 0.404.0), at D516 (0.402.0 → 0.403.0), at D515 (0.401.0 → 0.402.0), at D514 (0.400.0 → 0.401.0), at D513 (0.399.0 → 0.400.0), at D512 (0.398.0 → 0.399.0), at D510 (0.397.0 → 0.398.0), at D508 (0.396.0 → 0.397.0), at D507 (0.395.0 → 0.396.0), at D505 (0.394.0 → 0.395.0), at D490 (0.384.0 → 0.385.0), at D489 (0.383.0 → 0.384.0), at D488 (0.382.0 → 0.383.0), at D487 (0.381.0 → 0.382.0), at D486 (0.380.0 → 0.381.0), at D485 (0.379.0 → 0.380.0), at D450 (0.351.0 → 0.352.0), at D449 (0.350.0 → 0.351.0), at D448 (0.349.0 → 0.350.0), at D447 (0.348.0 → 0.349.0), at D446 (0.347.0 → 0.348.0), at D445 (0.346.0 → 0.347.0), at D444 (0.345.0 → 0.346.0), at D443 (0.344.0 → 0.345.0), at D442 (0.343.0 → 0.344.0), at D441 (0.342.0 → 0.343.0), at D440 (0.341.0 → 0.342.0), at D439 (0.340.0 → 0.341.0), at D438 (0.339.0 → 0.340.0), at D437 (0.338.0 → 0.339.0), at D436 (0.337.0 → 0.338.0), at D435 (0.336.0 → 0.337.0), at D434 (0.335.0 → 0.336.0), at D433 (0.334.0 → 0.335.0), at D432 (0.333.0 → 0.334.0), at D431 (0.332.0 → 0.333.0), at D430 (0.331.0 → 0.332.0), at D429 (0.330.0 → 0.331.0), at D428 (0.329.0 → 0.330.0), at D427 (0.328.0 → 0.329.0), at D426 (0.327.0 → 0.328.0), at D425 (0.326.0 → 0.327.0), at D424 (0.325.0 → 0.326.0), at D423 (0.324.0 → 0.325.0), at D422 (0.323.0 → 0.324.0), at D421 (0.322.0 → 0.323.0), at D420 (0.321.0 → 0.322.0), at D417 (0.320.0 → 0.321.0), at D416 (0.319.0 → 0.320.0), at D415 (0.318.0 → 0.319.0), at D414 (0.317.0 → 0.318.0), at D413 (0.316.0 → 0.317.0), at D412 (0.315.0 → 0.316.0), at D410 (0.314.0 → 0.315.0), at D409 (0.313.0 → 0.314.0), at D408 (0.312.0 → 0.313.0), at D407 (0.311.0 → 0.312.0), at D402 (0.306.0 → 0.307.0), at D401 (0.305.0 → 0.306.0), at D400 (0.304.0 → 0.305.0), at D399 (0.303.0 → 0.304.0), at D398 (0.302.0 → 0.303.0), at D397 (0.301.0 → 0.302.0), at D396 (0.300.0 → 0.301.0), at D395 (0.299.0 → 0.300.0), at D394 (0.298.0 → 0.299.0), at D393 (0.297.0 → 0.298.0), at D392 (0.296.0 → 0.297.0), at D391 (0.295.0 → 0.296.0), at D390 (0.294.0 → 0.295.0), at D389 (0.293.0 → 0.294.0), at D388 (0.292.0 → 0.293.0), at D387 (0.291.0 → 0.292.0), at D386 (0.290.0 → 0.291.0),
     //    each in the SAME COMMIT as the bump —
     // the TENTH slice running to do it that way, and the practice is now the one
     // thing about this row that has never cost an ERROR since it started.
@@ -5798,7 +5798,7 @@ export const MUTANTS: Mutant[] = [
     // CORPUS QUOTES** (D414/D415), so a value-keyed sweep over `toBe("0.391.0")` cannot
     // see it — this row's `find` spells the DECLARATION, not an assertion. Run
     // `precheck` after every version bump, not after the sweep tells you.
-    find: 'export const engineVersion = "0.406.0";',
+    find: 'export const engineVersion = "0.407.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -27944,8 +27944,11 @@ export const MUTANTS: Mutant[] = [
     //    the genuine pre-slice value is 1633 and a reflexive `find - 1` would have put the
     //    constant at a number no head has ever held — an experiment that proves nothing about
     //    THIS slice (D451/D461 at a mutant row). Found by `precheck` in seconds, as always.
-    find: "  attack: 1636,",
-    replace: "  attack: 1634,",
+    // 🆕🆕🆕 D520 — RE-TRANSCRIBED AGAIN, 1636 -> 1637 (replace 1634 -> 1635): the sentence and
+    //    printing steps AGREE at 1 and 1 (corpus FILE LINE 601 carries ONE printing), so the
+    //    regression stays the two-step it has always expressed. Found by `precheck`, as always.
+    find: "  attack: 1637,",
+    replace: "  attack: 1635,",
     expectKilledBy: [
       "packages/engine/src/censusAtHead.test.ts",
     ],
@@ -29102,8 +29105,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D506",
     what: "🛑 C1 — THE DEFECT D502 AND D505 BOTH SHIPPED: a version goes out and NO HEADING CLAIMS IT. The edit un-bolds the NEWEST heading's target, so the parser stops seeing it and the chain's head falls back a release while `package.json` says otherwise — which is byte-for-byte the state of this file at D505's head, twice over. ⚠️ IT IS THE CHEAPEST WAY FOR THIS RECORD TO GO WRONG AND WAS INVISIBLE TO EVERY OTHER INSTRUMENT IN THE REPO: `tsc`, `biome`, every test, `precheck` and all five gates are green on both sides of it, because until D506 nothing read the headings at all. Killed by the HEAD case alone, which is the point — one tripwire, named (D453/D498). 🛑 RE-POINTED AT D507 ONTO THE 0.395.0 → 0.396.0 HEADING, AND THE RE-POINT WAS OWED RATHER THAN TIDY (D444): left on D505's heading it would have gone INERT ON THE VERDICT the moment a newer heading existed — un-bolding a heading that is no longer the head leaves NEWEST equal to HEAD, so the HEAD case stays green and the kill arrives, if at all, through the CHAIN case instead. The row's own stated reason (killed by the HEAD case alone) is exactly the sentence that would have quietly become false. THIS ROW IS PART OF THE VERSION TAX: every bump owes its re-point, in the same edit as the heading. \U0001f195 RE-POINTED AGAIN AT D508 ONTO THE 0.396.0 → 0.397.0 HEADING, and this one is UNLABELLED — the `find` quotes the heading's first prose words instead of a `(D<nnn> —`, which is strictly more durable: the label is the byte the close-out ritual inserts, and quoting it is exactly what broke this row at D507. \u26a0\ufe0f The heading is the CHAIN HEAD again, so the HEAD case is the killer again — the re-point is what keeps that sentence true rather than quietly false. \U0001f195 RE-POINTED AGAIN AT D510 ONTO THE 0.397.0 \u2192 0.398.0 HEADING, also UNLABELLED, and the `find` is kept in D508's TRIMMED form \u2014 it stops before the `(` where the close-out ritual inserts the label, which is the shape D508 proved survives that edit (precheck clean, label inserted, clean again). A `find` that spanned the paren would re-open the coupling that broke this row at D507. \U0001f195 RE-POINTED AGAIN AT D512 ONTO THE 0.398.0 \u2192 0.399.0 HEADING, also UNLABELLED and kept in the same TRIMMED form. \u26a0\ufe0f The re-point is what keeps this row's own stated reason (killed by the HEAD case ALONE) true rather than quietly false: left on D510's heading it would go INERT ON THE VERDICT the moment a newer heading exists, because un-bolding a heading that is no longer the head leaves NEWEST equal to HEAD and the kill arrives, if at all, through the CHAIN case instead. \U0001f195 RE-POINTED AGAIN AT D513 ONTO THE 0.399.0 \u2192 0.400.0 HEADING, also UNLABELLED and kept in the same TRIMMED form that stops before the `(`. \u26a0\ufe0f **AND THE TRIM WAS PROVEN AGAIN RATHER THAN ASSUMED**: `precheck` clean before the heading exists, the heading written, `precheck` clean after \u2014 the third consecutive slice to demonstrate that a `find` ending at `**<new>**` survives the close-out label insertion, and the fourth to state that a `find` spanning the paren re-opens the coupling that broke this row at D507. \U0001f195 RE-POINTED AGAIN AT D515 ONTO THE 0.401.0 \u2192 0.402.0 HEADING, also UNLABELLED and kept in the same TRIMMED form that stops before the `(`. \u26a0\ufe0f **THE RE-POINT IS THE PART OF THE VERSION TAX THAT HAS NO AUTOMATIC DETECTOR**: left on D514's heading this row would go INERT ON THE VERDICT the moment a newer heading exists \u2014 un-bolding a heading that is no longer the head leaves NEWEST equal to HEAD, the HEAD case stays green, and the kill arrives (if at all) through the CHAIN case instead, so the row would report KILLED while its own stated reason (killed by the HEAD case ALONE) had quietly become false. \u26a0\ufe0f **AND THE TRIM WAS PROVEN A FIFTH TIME RATHER THAN ASSUMED**: `precheck` clean before the heading exists, the heading written, `precheck` clean after. \U0001f195 RE-POINTED AGAIN AT D516 ONTO THE 0.402.0 \u2192 0.403.0 HEADING, also UNLABELLED and kept in the same TRIMMED form that stops before the `(`. \u26a0\ufe0f **THE TRIM WAS PROVEN A SIXTH TIME RATHER THAN ASSUMED**: `precheck` clean before the heading exists, the heading written, `precheck` clean after \u2014 and the re-point remains the part of the version tax with no automatic detector, because left on D515\u2019s heading this row would report KILLED while its own stated reason (killed by the HEAD case ALONE) had quietly become false. \U0001f195 RE-POINTED AGAIN AT D517 ONTO THE 0.403.0 \u2192 0.404.0 HEADING, also UNLABELLED and kept in the same TRIMMED form that stops before the `(`. \u26a0\ufe0f **THE TRIM WAS PROVEN A SEVENTH TIME RATHER THAN ASSUMED**: `precheck` clean before the heading exists, the heading written, `precheck` clean after \u2014 seven consecutive slices now, which is the evidence that the label a caller later adds cannot reach this `find`. 🆕 RE-POINTED AGAIN AT D518 ONTO THE 0.404.0 → 0.405.0 HEADING, also UNLABELLED and kept in the same TRIMMED form that stops before the `(`. ⚠️ **THE TRIM WAS PROVEN AN EIGHTH TIME RATHER THAN ASSUMED**: `precheck` clean before the heading exists, the heading written, `precheck` clean after — eight consecutive slices, and this one carried an extra hazard worth naming: the incoming literal `0.405.0` did NOT collide at 2× the way D517's did, because this slice's `find` quotes the heading ARROW (which is unique) rather than a source line the corpus already patches, so no FOURTH version-tax row was owed.",
     file: "packages/engine/src/index.ts",
-    find: "engineVersion 0.405.0 → **0.406.0**",
-    replace: "engineVersion 0.405.0 → 0.406.0",
+    find: "engineVersion 0.406.0 → **0.407.0**",
+    replace: "engineVersion 0.406.0 → 0.407.0",
     expectKilledBy: ["packages/engine/src/engineVersionChangelog.test.ts"],
   },
   {
@@ -30311,5 +30314,103 @@ export const MUTANTS: Mutant[] = [
     find: "  damagedOnly = false,\n): number {\n  const side = state.players[seat];",
     replace: "  damagedOnly = true,\n): number {\n  const side = state.players[seat];",
     expectKilledBy: ["packages/engine/src/bodiesInPlayScaling.test.ts", "packages/engine/src/damagedBodyScaling.test.ts"],
+  },
+  // ── D520 — THE FOUR-ZONE DAMAGED-BODY SPREAD. Nine rows, ONE PER CLAIM. ⚠️ **THE CENSUS
+  //    VISIBILITY WAS MEASURED, NOT FORECAST** (D518/D519's finding, re-run here): EIGHT of
+  //    the nine are SILENT in every census — the reader summand holds at 547 / 1,587, the
+  //    residue at 67 / 95 and `BUILT.attack` at 1,637 under each — and ONE (C3, the
+  //    except-clause literal) is VISIBLE, because the mutant anchor stops matching the one
+  //    printed row and the row falls back into the residue. The instrument's non-vacuity is
+  //    therefore checked by the corpus itself in this batch rather than by deleting the arm.
+  //    **The census counts SENTENCES; eight of these rows corrupt a VALUE.**
+  //
+  //    🛑 **NO C10 (`then` → `otherwise`)**: the harness type-checks a `replace`, and `then`
+  //    is REQUIRED on `conditionGate`, so that row would report ERROR rather than a verdict
+  //    (the D476 lesson recorded in conventions.md). The gate's polarity is covered from the
+  //    other side by C4 (the gate removed) and C8 (the gate's seat mirrored).
+  //
+  //    ⚠️ **EVERY `find`/`replace` PAIR WAS DIFFED BEFORE SHIPPING AND ASSERTED UNEQUAL BY THE
+  //    SCRIPT THAT WROTE THEM** (D519 (4): a row that is its own experiment is a no-op that
+  //    only the probe's undeclared-survivor report can see).
+  {
+    id: "D520-four-zone-anchor-loses-the-head",
+    decision: "D520",
+    what: "🛑 C1 — **THE `^` DROPPED FROM THE NEW ANCHOR.** Without it the pattern matches anywhere in a longer sentence, so a compound whose SECOND clause happens to print this spread is claimed WHOLE and dealt as though its first clause did not exist — and this arm emits a MAIN hit, so the loud/silent inversion is a whole missing consequent. The family's standing rule is whole-sentence anchoring (D207 paid for the alternative three times). ⚠️ **SILENT IN EVERY CENSUS** (D518/D519's finding, measured again): dropping `^` un-claims nothing and no other row newly matches, so the reader summand holds at 547 / 1,587. ⚠️ **AND §6's SINGLE-AXIS DELETIONS CANNOT SEE IT** — every lattice point starts with `This attack` — which the first probe measured as a SURVIVED before the both-ends rung was written (D519 (4)(a): find ≠ replace was checked first, so this was a suite gap and not a no-op). `fourZoneSpread.test.ts` §7's both-ends rung (a PREFIXED print derives null) is what kills it.",
+    file: "packages/engine/src/effects.ts",
+    find: "  \"^This attack does (\\\\d+) damage to each Pokémon that has any damage counters on it\" +",
+    replace: "  \"This attack does (\\\\d+) damage to each Pokémon that has any damage counters on it\" +",
+    expectKilledBy: ["packages/engine/src/fourZoneSpread.test.ts"],
+  },
+  {
+    id: "D520-four-zone-anchor-loses-the-tail",
+    decision: "D520",
+    what: "🛑 C2 — **THE `$` DROPPED, THE OTHER END OF C1 AND A DIFFERENT DEFECT (D497's pair rule).** With no terminator the anchor swallows a trailing clause: *\"<row> Then, draw a card.\"* derives as though the second sentence were not printed and the attack reports SIMULATED while doing half of what the card says. ⚠️ **SILENT IN EVERY CENSUS** — the printed row still derives and no other row newly matches. ⚠️ `find` and `replace` were DIFFED before shipping (D519 (4): a row that is its own experiment is a no-op the probe alone can see) — and this row still SURVIVED the first probe, for the same reason as C1: no lattice point of §6 carries a trailing clause. `fourZoneSpread.test.ts` §7's both-ends rung (a SUFFIXED print derives null) is what kills it.",
+    file: "packages/engine/src/effects.ts",
+    find: "    ` \\\\(both yours and your opponent['’]s\\\\), except for this Pokémon\\\\.` +\n    `(?: \\\\(Don['’]t apply Weakness and Resistance for Benched Pokémon\\\\.\\\\))?$`,\n);\n// 🆕🆕🆕 **D482",
+    replace: "    ` \\\\(both yours and your opponent['’]s\\\\), except for this Pokémon\\\\.` +\n    `(?: \\\\(Don['’]t apply Weakness and Resistance for Benched Pokémon\\\\.\\\\))?`,\n);\n// 🆕🆕🆕 **D482",
+    expectKilledBy: ["packages/engine/src/fourZoneSpread.test.ts"],
+  },
+  {
+    id: "D520-four-zone-anchor-drops-the-except-clause",
+    decision: "D520",
+    what: "🛑 C3 — **THE LITERAL `, except for this Pokémon` DROPPED FROM THE ANCHOR.** The mutant anchor demands `…opponent's).` where the print carries `…opponent's), except for this Pokémon.`, so it STOPS matching the one legal printing (LOUD — §2's program rung reddens) while admitting a constructed except-less string that no card prints and whose self-exclusion this program does not spell as a field. ⚠️ **CENSUS-VISIBLE, and the ONLY row of the nine that is**: the printed row leaves the claimed set, so the reader arm falls 547 → 546 and §7's residue rung reddens as well — measured, and the except-less anchor variant is asserted to claim ZERO rows in §7 so the omission cannot pass as a widening.",
+    file: "packages/engine/src/effects.ts",
+    find: " \\\\(both yours and your opponent['’]s\\\\), except for this Pokémon\\\\.` +",
+    replace: " \\\\(both yours and your opponent['’]s\\\\)\\\\.` +",
+    expectKilledBy: ["packages/engine/src/fourZoneSpread.test.ts"],
+  },
+  {
+    id: "D520-four-zone-arm-drops-the-gate",
+    decision: "D520",
+    what: "🛑 C4 — **THE `conditionGate` WRAPPER DROPPED: an UNCONDITIONAL `damageDefender`, which is arm 6a-bis's real code one screen down copied verbatim (D190b's neighbour-copy shape).** The opponent's Active takes the hit whether or not it *\"has any damage counters on it\"* — the printed predicate deleted on ONE of the four zones while the other three keep it — and the program's top level now carries a `damageDefender`, so `attack.ts`'s `programDamage` flips to true as a side effect. Killed by §3's UNDAMAGED-defender board (no Active row, defender untouched) and by §2's exact program. ⚠️ **SILENT IN EVERY CENSUS** — the sentence still derives.",
+    file: "packages/engine/src/effects.ts",
+    find: "      return [\n        {\n          op: \"conditionGate\",\n          cond: { kind: \"opponentActiveDamaged\" },\n          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).\n          then: [{ op: \"damageDefender\", amount }],\n        },\n        { op: \"spreadDamage\", target: \"yourBench\", amount, damagedOnly: true },\n        { op: \"spreadDamage\", target: \"opponentBench\", amount, damagedOnly: true },\n      ];",
+    replace: "      return [\n        { op: \"damageDefender\", amount },\n        { op: \"spreadDamage\", target: \"yourBench\", amount, damagedOnly: true },\n        { op: \"spreadDamage\", target: \"opponentBench\", amount, damagedOnly: true },\n      ];",
+    expectKilledBy: ["packages/engine/src/fourZoneSpread.test.ts"],
+  },
+  {
+    id: "D520-four-zone-own-bench-leg-drops-the-rider",
+    decision: "D520",
+    what: "🛑 C5 — **`damagedOnly: true` DROPPED FROM THE `yourBench` LEG** — the flat spelling of the same op, arm 6-ii's un-riddered branch copied onto this arm. The attacker's CLEAN benched bodies take 50 too: the printed predicate deleted on one zone of four. Killed by §3's canonical board (ally 0 is clean and must stay at 0) and §4's hit-set biconditional on the `p1` seat. ⚠️ **SILENT IN EVERY CENSUS.**",
+    file: "packages/engine/src/effects.ts",
+    find: "        { op: \"spreadDamage\", target: \"yourBench\", amount, damagedOnly: true },",
+    replace: "        { op: \"spreadDamage\", target: \"yourBench\", amount },",
+    expectKilledBy: ["packages/engine/src/fourZoneSpread.test.ts"],
+  },
+  {
+    id: "D520-four-zone-opponent-bench-leg-drops-the-rider",
+    decision: "D520",
+    what: "🛑 C6 — **`damagedOnly: true` DROPPED FROM THE `opponentBench` LEG**, the OTHER leg of C5 and a separate row because a fix for one does not imply the other (D497's pair rule). The opponent's CLEAN benched body (foe 1 on the canonical board) takes 50. Killed by §3 and by §4's hit-set biconditional on the `p2` seat. ⚠️ **SILENT IN EVERY CENSUS.**",
+    file: "packages/engine/src/effects.ts",
+    find: "        { op: \"spreadDamage\", target: \"opponentBench\", amount, damagedOnly: true },",
+    replace: "        { op: \"spreadDamage\", target: \"opponentBench\", amount },",
+    expectKilledBy: ["packages/engine/src/fourZoneSpread.test.ts"],
+  },
+  {
+    id: "D520-four-zone-order-flips",
+    decision: "D520",
+    what: "🛑 C7 — **THE GATE MOVED BEHIND THE TWO SPREADS**, so the benches are walked before the opponent's Active. 🛑 **THE ORDER IS OBSERVABLE TWICE OVER AND NEITHER IS COSMETIC**: every leg files `DAMAGE_DEALT` per body, so the log's seat sequence changes from `p2,p1,p2,p2` to `p1,p2,p2,p2`; and `spreadDamage` is a FOLD carrying `rngState` (D258), so the gate's evaluation would read a board the spreads had already moved through. D482's *\"Active first\"* composed with D507's controller-first walk. Killed by §5's log-order rung, its hand-built-sequence state equality, and its derived-order rung (which needs no board). ⚠️ **SILENT IN EVERY CENSUS.**",
+    file: "packages/engine/src/effects.ts",
+    find: "      return [\n        {\n          op: \"conditionGate\",\n          cond: { kind: \"opponentActiveDamaged\" },\n          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).\n          then: [{ op: \"damageDefender\", amount }],\n        },\n        { op: \"spreadDamage\", target: \"yourBench\", amount, damagedOnly: true },\n        { op: \"spreadDamage\", target: \"opponentBench\", amount, damagedOnly: true },\n      ];",
+    replace: "      return [\n        { op: \"spreadDamage\", target: \"yourBench\", amount, damagedOnly: true },\n        { op: \"spreadDamage\", target: \"opponentBench\", amount, damagedOnly: true },\n        {\n          op: \"conditionGate\",\n          cond: { kind: \"opponentActiveDamaged\" },\n          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).\n          then: [{ op: \"damageDefender\", amount }],\n        },\n      ];",
+    expectKilledBy: ["packages/engine/src/fourZoneSpread.test.ts"],
+  },
+  {
+    id: "D520-four-zone-gate-reads-the-attacker",
+    decision: "D520",
+    what: "🛑 C8 — **THE GATE'S `cond` FLIPPED TO `yourActiveDamaged`, THE SEAT MIRROR** — a real `BoardCondition` member two lines down in the union, so the mutant type-checks and derives. The opponent's Active is then hit iff the ATTACKER is damaged: on a board where only the attacker's Active carries counters the defender takes 50 it does not owe, and on the canonical board with a clean attacker a damaged defender takes nothing. Killed by §4's seat-mirror rung, which drives BOTH directions on one board pair (D445: a mirror board is not a seat inversion). ⚠️ **SILENT IN EVERY CENSUS.**",
+    file: "packages/engine/src/effects.ts",
+    find: "          cond: { kind: \"opponentActiveDamaged\" },",
+    replace: "          cond: { kind: \"yourActiveDamaged\" },",
+    expectKilledBy: ["packages/engine/src/fourZoneSpread.test.ts"],
+  },
+  {
+    id: "D520-printed-zero-derives",
+    decision: "D520",
+    what: "⚠️ C9 — **THE FAMILY'S PRINTED-ZERO GUARD RELAXED TO `>= 0`.** A `0 damage` print derives a program that gates, spreads and deals nothing, reporting SIMULATED for an attack that does nothing at all — the loud/silent inversion this column exists to avoid. The guard is `>= 1` at every arm of this family (D519's C6 is the sibling row) and §7's printed-zero rung is its local witness. ⚠️ **VISIBLE IN NO CENSUS**: the column prints no `0 damage to each` row, which is exactly why the guard needs a row rather than a corpus rung.",
+    file: "packages/engine/src/effects.ts",
+    find: "    if (amount >= 1) {\n      return [\n        {\n          op: \"conditionGate\",",
+    replace: "    if (amount >= 0) {\n      return [\n        {\n          op: \"conditionGate\",",
+    expectKilledBy: ["packages/engine/src/fourZoneSpread.test.ts"],
   },
 ];

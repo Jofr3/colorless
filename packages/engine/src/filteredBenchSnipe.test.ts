@@ -97,8 +97,24 @@ const CLAUSE = " that has any damage counters on it";
     yours and your opponent's), except for this Pokémon. (Don't apply…)"*, 1 legal printing —
     **the LAST unbuilt damage row of this family**, and the one `bothBenchSpread.test.ts` §8
     refuses by name. Kept as a real printed sentence rather than an invented one so the
-    `ATTACK_EFFECT_SKIPPED` rung's control is on the SAME body as the claim it controls. */
-const UNREAD_SIBLING =
+    `ATTACK_EFFECT_SKIPPED` rung's control is on the SAME body as the claim it controls.
+
+    🛑 **🆕🆕🆕 D520 — RE-POINTED A SECOND TIME, AND THE FAMILY IS CLOSED.** D520 BUILT
+    FILE LINE 601 as three shipped ops (`conditionGate{opponentActiveDamaged}` →
+    `damageDefender`, then D507's two `damagedOnly` spreads) — D507's refusal was wrong in
+    verdict AND carrier. The `that has any damage counters` family is now **5 built / 0
+    unbuilt**, so there is no honest sibling of the DAMAGE family left. The constant is
+    re-homed onto corpus **FILE LINE 316** — *"If this Pokémon has any damage counters on
+    it, this attack can be used for {F}."*, 1 legal printing — a REAL printed sentence of
+    the wider `any damage counters` concept that NO reader of the thirteen claims (a COST
+    MODIFIER; the blocker is recorded at `damagedBodyScaling.test.ts` §1 and the resume
+    point (5)), which is exactly the property the `ATTACK_EFFECT_SKIPPED` control needs.
+    ⚠️ It is NOT of the `/that ha[sv]e? any damage counters/` family, and §1 says so. */
+const UNREAD_SIBLING = "If this Pokémon has any damage counters on it, this attack can be used for {F}.";
+
+/** 🆕🆕🆕 D520 — the row `UNREAD_SIBLING` vacated at D520, kept LIVE as the counter-example
+    (D444/D447) beside D519's. */
+const BUILT_FOUR_ZONE =
   "This attack does 50 damage to each Pokémon that has any damage counters on it (both yours and your opponent's), except for this Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)";
 
 /** The row `UNREAD_SIBLING` just vacated, kept as the LIVE counter-example so *"we re-pointed
@@ -108,7 +124,7 @@ const BUILT_FORMER_SIBLING =
 
 const PICKY = 0; // {C}, 30 damage, corpus row 528 — the NARROWED rider
 const BLUNT = 1; // {C}, 30 damage — the same rider UN-narrowed: the one-axis control
-const IDLE = 2; // {C}, 30 damage, corpus row 601 (596 until D519) — deliberately unread
+const IDLE = 2; // {C}, 30 damage, corpus row 316 (601 until D520, 596 until D519) — deliberately unread
 
 const units = (rows: readonly (readonly [number, string])[]): number =>
   rows.reduce((sum, [n]) => sum + n, 0);
@@ -230,6 +246,15 @@ describe("§1 — the price and the family, re-derived off the corpus rather tha
     // a third time. ⚠️ **D507's own sentence above was right in KIND and off in PRICE**: the
     // fix was an optional FIELD on a member that already shipped, not a new member. The row
     // is asserted BUILT three lines down rather than merely dropped from the list.
+    // 🆕🆕🆕 **D520 — THE SPLIT IS NOW 5 BUILT / 0 REFUSED: THE FAMILY IS CLOSED.** Corpus
+    // FILE LINE 601 is claimed by `deriveAttackEffect` arm 6-iii as THREE shipped ops —
+    // `conditionGate{opponentActiveDamaged}` → `damageDefender` (the one-body predicate in a
+    // GATE, not a rider on the op), then D507's two `damagedOnly` spreads. **The FIFTH
+    // consequent this one predicate has paid for, and it has still never once been the
+    // cost** — this time it was not even a new spelling: the Active half took D115's shipped
+    // `BoardCondition`. D507's refusal (two screens down) was wrong in verdict AND carrier.
+    // The unbuilt count is rewritten `1 → 0` with this reason rather than deleted (D226): an
+    // EMPTY unbuilt set is the claim, and the five built rows are enumerated beside it.
     const built = family.filter(([, s]) => resolvedByAnyReader(s));
     expect(built.map(([, s]) => s).sort()).toEqual(
       [
@@ -237,9 +262,11 @@ describe("§1 — the price and the family, re-derived off the corpus rather tha
         "Put 2 damage counters on each of your opponent's Pokémon that has any damage counters on it.",
         "This attack also does 40 damage to each Benched Pokémon that has any damage counters on it (both yours and your opponent's). (Don't apply Weakness and Resistance for Benched Pokémon.)",
         BUILT_FORMER_SIBLING,
+        BUILT_FOUR_ZONE,
       ].sort(),
     );
-    expect(units(family.filter(([, s]) => !resolvedByAnyReader(s)))).toBe(1);
+    expect(units(family.filter(([, s]) => !resolvedByAnyReader(s)))).toBe(0);
+    expect(resolvedByAnyReader(BUILT_FOUR_ZONE)).toBe(true);
     // …and the row this suite's demonstrator carried at index 2 until D519, asserted from
     // the other side, so the re-point is a measurement rather than a story.
     expect(resolvedByAnyReader(BUILT_FORMER_SIBLING)).toBe(true);
@@ -252,16 +279,16 @@ describe("§1 — the price and the family, re-derived off the corpus rather tha
         damagedOnly: true,
       },
     });
-    // The unread sibling this suite's demonstrator carries at index 2 is one of the
-    // five, so the `ATTACK_EFFECT_SKIPPED` control in §7 is a REAL printed sentence
-    // rather than an invented one — and this rung is its tripwire. ⚠️ **IT IS NOW THE LAST
-    // ONE**: the day FILE LINE 601 is built there is no honest sibling left, and this rung
-    // reddens rather than letting a successor invent a sentence the column does not print.
-    expect(family.map(([, s]) => s)).toContain(UNREAD_SIBLING);
+    // The unread sibling this suite's demonstrator carries at index 2 WAS one of the
+    // five until D520 built the last of them. 🆕🆕🆕 **D520 — RE-POINTED (D444)**: the
+    // control at index 2 is now corpus FILE LINE 316, a real printed sentence OUTSIDE this
+    // family (a cost modifier, unread by every reader), so the `ATTACK_EFFECT_SKIPPED`
+    // control in §7 is still a REAL printed sentence rather than an invented one — and this
+    // rung still says which side of the family line it is on.
+    expect(family.map(([, s]) => s)).not.toContain(UNREAD_SIBLING);
+    expect(corpus().filter(([, s]) => s === UNREAD_SIBLING)).toHaveLength(1);
     expect(resolvedByAnyReader(UNREAD_SIBLING)).toBe(false);
-    expect(family.filter(([, s]) => !resolvedByAnyReader(s)).map(([, s]) => s)).toEqual([
-      UNREAD_SIBLING,
-    ]);
+    expect(family.filter(([, s]) => !resolvedByAnyReader(s)).map(([, s]) => s)).toEqual([]);
   });
 
   it("🛑 the concept grepped the OTHER way: 13 sentences say 'any damage counters'", () => {
@@ -806,6 +833,6 @@ describe("§8 — the persisted question: `MATCH_RECORD_VERSION` STAYS 29", () =
   });
 
   it("🛑 the engine version moved with `package.json`", () => {
-    expect(engineVersion).toBe("0.406.0");
+    expect(engineVersion).toBe("0.407.0");
   });
 });

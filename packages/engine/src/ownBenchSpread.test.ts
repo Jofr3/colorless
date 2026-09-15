@@ -414,15 +414,64 @@ describe("§2 — one anchor, two possessives, three amounts", () => {
     // `[]` is the vacuous guard `conventions.md` forbids (D226). What stands in its place
     // is the row that is genuinely still refused on this axis, with the reason D507
     // MEASURED rather than guessed — see `bothBenchSpread.test.ts` §8.
-    const stillUnbuilt = [
-      // corpus FILE LINE 601. FOUR ZONES, not two: it reaches both ACTIVES, where §8.5
-      // applies Weakness and Resistance, and `spreadDamage` is bench-only by name, by
-      // its `target` union and by its helper (`side.bench` — the invariant index.ts
-      // 0.327.0 records and three files lean on). Composing it is D482's shape plus a
-      // `damagedOnly` rider on `damageDefender`'s FLAT arm, which is this engine's
-      // most-produced damage op, for ONE printing.
-      "This attack does 50 damage to each Pokémon that has any damage counters on it (both yours and your opponent's), except for this Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)",
+    // 🛑🛑🛑 **🆕🆕🆕 D520 — THE FALSIFIER FIRED A THIRD TIME, AND THE LIST IS EMPTY.** Corpus
+    // FILE LINE 601 (the one row below) is BUILT — and NOT by *"a `damagedOnly` rider on
+    // `damageDefender`'s FLAT arm"*: the Active predicate is the shipped ONE-BODY
+    // `BoardCondition` `opponentActiveDamaged` in a `conditionGate`, the benches are D507's
+    // two `damagedOnly` spreads, and *"except for this Pokémon"* is STRUCTURAL. D507's
+    // reason, quoted below, was wrong in verdict AND carrier for 13 decisions. ⚠️ **A `for`
+    // over `[]` is the vacuous guard D226 forbids**, so the population is RE-POINTED rather
+    // than emptied: what stands in its place is the THREE COMPOSED PROGRAMS this axis has
+    // produced (6a-bis, 6-ii, 6-iii), each asserted to its whole program, with
+    // `spreadDamage.target` asserted STILL two-valued — the invariant every refusal on this
+    // rung was protecting, and the thing a successor who "widened `target`" would redden.
+    //   (D507's reason, kept as the record: "corpus FILE LINE 601. FOUR ZONES, not two: it
+    //   reaches both ACTIVES, where §8.5 applies Weakness and Resistance, and `spreadDamage`
+    //   is bench-only … Composing it is D482's shape plus a `damagedOnly` rider on
+    //   `damageDefender`'s FLAT arm, which is this engine's most-produced damage op, for ONE
+    //   printing.")
+    const stillUnbuilt: readonly string[] = [];
+    const composed: readonly (readonly [string, readonly EffectOp[]])[] = [
+      [
+        // 6a-bis (D482): the whole-side spread — Active through the flat arm, bench flat.
+        "This attack does 30 damage to each of your opponent's Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)",
+        [
+          { op: "damageDefender", amount: 30 },
+          { op: "spreadDamage", target: "opponentBench", amount: 30 },
+        ],
+      ],
+      [
+        // 6-ii (D507): both benches, the damaged rider on both legs.
+        "This attack also does 40 damage to each Benched Pokémon that has any damage counters on it (both yours and your opponent's). (Don't apply Weakness and Resistance for Benched Pokémon.)",
+        [
+          { op: "spreadDamage", target: "yourBench", amount: 40, damagedOnly: true },
+          { op: "spreadDamage", target: "opponentBench", amount: 40, damagedOnly: true },
+        ],
+      ],
+      [
+        // 6-iii (D520): four zones — the gated flat arm, then both damaged benches.
+        "This attack does 50 damage to each Pokémon that has any damage counters on it (both yours and your opponent's), except for this Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)",
+        [
+          {
+            op: "conditionGate",
+            cond: { kind: "opponentActiveDamaged" },
+            // biome-ignore lint/suspicious/noThenProperty: gated-step list, not a thenable.
+            then: [{ op: "damageDefender", amount: 50 }],
+          },
+          { op: "spreadDamage", target: "yourBench", amount: 50, damagedOnly: true },
+          { op: "spreadDamage", target: "opponentBench", amount: 50, damagedOnly: true },
+        ],
+      ],
     ];
+    const targets = new Set<string>();
+    for (const [text, ops] of composed) {
+      expect(resolvedByAnyReader(text), `composed: ${text}`).toBe(true);
+      expect(deriveAttackEffect(text), text).toEqual(ops);
+      for (const op of ops) if (op.op === "spreadDamage") targets.add(op.target);
+    }
+    // `spreadDamage.target` is STILL `"opponentBench" | "yourBench"` — every composition
+    // above reaches an Active through `damageDefender`, never through a third member.
+    expect([...targets].sort()).toEqual(["opponentBench", "yourBench"]);
     // 🆕🆕🆕 D507 — the two that LEFT THIS SLICE, pinned on the other side of the same
     // predicate with their WHOLE programs, so the transition is recorded and a successor
     // that widened `spreadDamage.target` instead reddens here (D444).
@@ -529,7 +578,7 @@ describe("§3 — `target` is a union now, and the record version does not move"
   });
 
   it("the engine version moved and the two spellings agree", () => {
-    expect(engineVersion).toBe("0.406.0");
+    expect(engineVersion).toBe("0.407.0");
   });
 });
 

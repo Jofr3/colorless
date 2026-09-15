@@ -7844,6 +7844,36 @@ tree during a sweep — yours or the harness's or the IDE's — re-check the sam
 `git show HEAD:`. And do not edit the tree at all until the run reports: a write mid-sweep is a
 CLOBBER.
 
+### A refusal's falsifier is only as good as its premise — ask what the named op HITS (D520)
+
+D507 refused corpus `:601` and named a falsifier: *"the flat arm carries a per-body predicate for a
+reason of its own, or a second four-zone print."* Thirteen slices later neither had happened, and the
+row was buildable the whole time at **zero** vocabulary — because the premise was wrong. The Active
+half never needed *"a per-body board predicate on `damageDefender`'s flat arm"*: that arm hits **one**
+body, and *"has any damage counters on it"* asked of one body is the shipped `BoardCondition`
+`opponentActiveDamaged` (D115) in the shipped `conditionGate`. A rider on the op would have been a
+second spelling of a shipped predicate (D159).
+
+**The rule:** before waiting on a refusal's falsifier, re-derive the premise it stands on. The
+cheapest question is *what does the op the refusal names actually HIT?* A one-body question is a
+`BoardCondition`; a many-body question is a rider on the walk. D507's own note (a) had already said
+the self-exclusion was structural — and then priced the row on the wrong carrier. This is D479's
+third mode (true in every clause, wrong about the carrier) with D518→D519's shape, one slice later.
+
+### A lattice over AXES is blind to the anchor's ENDS (D520)
+
+The 2⁵ lattice deletes and substitutes printed axes, so every point starts with `This attack` and ends
+with the parenthetical. Two rows that drop `^` and `$` from the anchor SURVIVED the first probe —
+`find ≠ replace` had been asserted first (D519 (4)(a)), so it was a suite gap and not a no-op.
+**Write the both-ends rung explicitly**: a prefixed print and a suffixed print each derive null.
+D519's §1 carried it; a suite that copies the lattice without it is green under both mutants.
+
+### The harness type-checks a `replace`, so a mutant that drops a REQUIRED field is ERROR, not a verdict (D520, applying D476)
+
+`then` is required on `conditionGate`, so a `then → otherwise` row would report ERROR rather than
+KILLED or SURVIVED. Cover the polarity from the other side instead (the gate removed; the gate's seat
+mirrored), and say in the batch header why the obvious row is absent.
+
 ## Git / commits
 - Branch off `main` for non-trivial work; commit/push only when asked.
 - Commit trailer per global config: `Co-Authored-By: Claude ...`.
