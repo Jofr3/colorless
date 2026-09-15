@@ -5914,7 +5914,19 @@ export type EffectOp =
       Standard-legal cards (`sv06-090`, `sv10-148`, `sv10-202`, measured over all
       three text columns 2026-08-16). All three are ATTACK text, so this op cannot
       be pointed at them today — they are out of reach by COLUMN, not because the
-      sentence does not exist. The field does not legalise an outcome the pool
+      sentence does not exist. 🛑 **[D521 — THAT SENTENCE WAS FALSE THE DAY IT WAS
+      WRITTEN, AND IS CORRECTED IN PLACE (D442/D508).** `deriveAttackEffect` has
+      emitted this op for ATTACK text since D144/D145 (the one-coin `onTails` gates,
+      arms 27–28), so `coins: 2` + `onTails: true` was reachable from the attack
+      column the day this field shipped — nothing was ever out of reach by COLUMN.
+      The recoil row that prints the clause (corpus FILE LINE 202, 2 legal
+      printings, *"Flip 2 coins. If both of them are tails, this Pokémon also does
+      90 damage to itself."*) was simply UNANCHORED until D521's
+      `FLIP_TWO_BOTH_TAILS_SELF_DAMAGE`; the column's other both-tails row (FILE
+      LINE 213, a per-heads count with a Confusion tail) is `deriveAttackCoinFlip`'s
+      `perHeadsThenThreshold` and never wanted this op. Which two of the three ids
+      carry :202 is unresolvable on this checkout (no D1, no sqlite) and is not
+      guessed.]** The field does not legalise an outcome the pool
       does not print.
 
       ⚠️ THE COMPLEMENT IS DELIBERATELY NOT EXPRESSIBLE. *"If **either** of them
@@ -13056,6 +13068,64 @@ const FLIP_TAILS_SELF_DISCARD_ALL =
 // keeps `SELF_DAMAGE`'s own `^This` off this string in the other direction.
 const FLIP_TAILS_SELF_DAMAGE =
   /^Flip a coin\. If tails, this Pokémon also does (\d+) damage to itself\.$/;
+// 🆕🆕🆕 **D521 — THE TWO-COIN BOTH-TAILS RECOIL, AND THE REFUSAL THAT KEPT IT UNBUILT WAS
+// WRONG IN ITS CARRIER.** *"Flip 2 coins. If both of them are tails, this Pokémon also does
+// 90 damage to itself."* — `censusAttackCorpus.ts` **FILE LINE 202**, **1 sentence / 2 legal
+// printings**, the TWO-COIN twin of the anchor directly above (its one-coin sibling, D145).
+//
+// 🛑 **ZERO NEW VOCABULARY.** The program is D145's gate with D355's shipped `coins` field
+// set to the printed 2 and D144's `onTails`, wrapping the BARE recoil op byte for byte:
+//
+//     coinFlipGate { coins: 2, onTails: true, then: [ damageSelf { amount } ] }
+//
+//   (spelled WITHOUT the `op: "…",` form on purpose — a raw-text producer count reads the
+//   commentary too, D516's trap, re-paid at D520 (4).)
+//
+// 🛑 **THE STALE REFUSAL, AND WHY IT WAS WRONG.** `selfDamagePerCounter.test.ts` §4 carried
+// this row as *"blocked on the coin structure (`AttackFlipCount` + a both-tails gate)"*, and
+// the D355 block at `coinFlipGate.coins` (above, ~5911) said the three `both of them are
+// tails` printings were *"out of reach by COLUMN"*. Both named the wrong carrier:
+// `AttackFlipCount` is `deriveAttackCoinFlip`'s DAMAGE-COUNT type (it is what claims the
+// column's other both-tails row, FILE LINE 213, a per-heads count with a Confusion tail),
+// and the recoil is not a damage count — it is a program op behind a gate, the exact shape
+// D145 shipped for the one-coin print. `deriveAttackEffect` has emitted `coinFlipGate` for
+// ATTACK text since D144/D145, so `coins: 2` was reachable from this column the day D355
+// shipped the field. The op HITS ONE BODY — the attacker — and a one-body recoil behind a
+// coin is a gate, not a count (D520 (2): re-derive what the named op HITS before waiting on
+// a falsifier). The row was simply UNANCHORED until this slice.
+//
+// 🛑 **LITERAL `2` AND LITERAL `both of them are`, BECAUSE THEY CO-VARY.** A `(\d+)`-coins
+// widening or an `all of them` alternative would claim strings the column does not print:
+// the COUNT × UNANIMITY lattice measured over the 640 rows reads
+//   · `a coin` × `If tails`                    → built since D145 (the anchor above);
+//   · `2 coins` × `If both of them are tails`  → built HERE;
+//   · `a coin` × `If both of them are tails`   → null (unprinted, ungrammatical);
+//   · `2 coins` × `If tails`                   → null (unprinted — two coins need a
+//                                                unanimity clause).
+// 1 of 4 built pre-slice, 2 of 4 post-slice, and exactly the two PRINTED corners build.
+// The AMOUNT is captured, not pinned to the printed 90 — D316's precedent and the anchor
+// above's own reasoning (the bare arm reads any N; the capture keeps the derived `then`
+// byte-identical to the bare anchor's output for every N). The `>= 1` guard below is the
+// bare arm's, verbatim. No /i, `^…$`, NO apostrophe slot — the sibling's three guards.
+//
+// ⚠️ **THE NEGATIVE CONTROLS ARE PINNED BY THE LIVE NULL, MEASURED** (`twoCoinTailsRecoil.
+// test.ts` §1b): *"both of them are heads"*, *"either of them is tails"*, *"Flip 3 coins.
+// If all of them are tails"*, the `also`-less spelling and a printed 0 all derive null at
+// this head — there is NO heads-gated recoil anchor anywhere in this file to cite as a
+// disjointness witness, so the control is a measurement rather than a citation.
+//
+// ⚠️ **THE BASE RULE IS THE ONE-COIN SIBLING'S, AND IT IS THE OPPOSITE CASE FROM D520's.**
+// Every printing of this sentence carries a printed base (*"also"*). `attack.ts`'s
+// `programDamage` walks the top level only and the gate is not a damage op, so the base
+// lands in §8.5 and the recoil runs at the program's tail, AFTER the main hit — Oinkologne
+// sv03-183's exact path (`testFixtures.ts` "High-Impact Kick"). The recoil is FLAT (never
+// re-enters §8.5, no W/R against the attacker's own Weakness) and a self-KO it causes is
+// swept by the attack epilogue's two-seat §8.1 sweep. ⚠️ **WHICH TWO OF `sv06-090`,
+// `sv10-148`, `sv10-202` CARRY THIS ROW IS UNRESOLVABLE ON THIS CHECKOUT** (no local D1,
+// no catalog sqlite; the D355 census named all three across FILE LINES 202 AND 213 without
+// splitting them — D425) and the ids are NOT invented.
+const FLIP_TWO_BOTH_TAILS_SELF_DAMAGE =
+  /^Flip 2 coins\. If both of them are tails, this Pokémon also does (\d+) damage to itself\.$/;
 const DEFENDER_POISON_N =
   /^Your opponent['’]s Active Pokémon is now Poisoned\. During Pokémon Checkup, put (\d+) damage counters on that Pokémon instead of 1\.$/;
 // 🆕🆕🆕 **D501 — THE CONFUSION TWIN OF THE ANCHOR DIRECTLY ABOVE.** Corpus FILE
@@ -26789,6 +26859,35 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
       return [
         {
           op: "coinFlipGate",
+          onTails: true,
+          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
+          then: [{ op: "damageSelf", amount }],
+        },
+      ];
+    }
+  }
+  // 🆕🆕🆕 D521 — "Flip 2 coins. If both of them are tails, this Pokémon also does {N}
+  //     damage to itself." — corpus FILE LINE 202, 1 sentence / 2 legal printings. The
+  //     arm directly above with D355's shipped `coins` set to the printed 2: same
+  //     `onTails`, same `then`, same `>= 1` guard, verbatim. See the anchor's block for
+  //     the lattice, the stale refusal's wrong carrier (`AttackFlipCount` is a damage
+  //     count's type; this is a gate over a one-body op) and the ids left unresolved.
+  //
+  //     🛑 **THE BASE RULE.** The printing carries a base ("also"). `attack.ts`'s
+  //     `programDamage` walks the top level and this gate is not a damage op, so the
+  //     printed base lands in §8.5 and the recoil runs at the program's tail — Oinkologne
+  //     sv03-183's exact path (`testFixtures.ts` "High-Impact Kick"). Both coins are
+  //     taken and filed as two ATTACK_EFFECT_COIN_FLIP rows in printed order BEFORE the
+  //     branch is consulted (`runProgram`, D355), so `rngState` advances two steps on
+  //     every face and the recoil lands on the unanimous tails face only.
+  match = FLIP_TWO_BOTH_TAILS_SELF_DAMAGE.exec(effect);
+  if (match !== null) {
+    const amount = Number(match[1]);
+    if (amount >= 1) {
+      return [
+        {
+          op: "coinFlipGate",
+          coins: 2,
           onTails: true,
           // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
           then: [{ op: "damageSelf", amount }],

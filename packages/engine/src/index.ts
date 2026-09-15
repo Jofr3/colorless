@@ -16463,7 +16463,16 @@ import type { GameState, Seat } from "./types";
     IS SAFE.** `coins: 2` + `onTails: true` reads *"Flip 2 coins. If both of them
     are tails, …"*, printed on THREE Standard-legal cards (`sv06-090`, `sv10-148`,
     `sv10-202`, all attack text — out of this op's reach by COLUMN, not by
-    absence). The COMPLEMENT is deliberately unspellable: *"if EITHER of them is
+    absence). 🛑 **[D521 — THE PARENTHETICAL IS CORRECTED IN PLACE (D442/D508): NOTHING
+    WAS EVER OUT OF THIS OP'S REACH BY COLUMN.** `deriveAttackEffect` has emitted
+    `coinFlipGate` for ATTACK text since D144/D145, so a `coins: 2` + `onTails: true`
+    program was reachable from the attack column the day this field shipped. The recoil
+    row that prints the clause — corpus FILE LINE 202, 2 legal printings — was simply
+    UNANCHORED until D521's `FLIP_TWO_BOTH_TAILS_SELF_DAMAGE` (0.408.0); the column's
+    other both-tails row (FILE LINE 213) is `deriveAttackCoinFlip`'s
+    `perHeadsThenThreshold` and never wanted this op. Which two of the three ids carry
+    :202 is unresolvable on this checkout and is not guessed.]** The COMPLEMENT is
+    deliberately unspellable: *"if EITHER of them is
     tails"* is 3 printings / **0** Standard-legal, so a second predicate would be
     bought for nothing the pool prints (D331's speculative-field rule).
 
@@ -20000,6 +20009,75 @@ import type { GameState, Seat } from "./types";
     `expect(manifest.version)`, `it(…)` titles, the declaration and `package.json` —
     **not** as a value-keyed grep — because a value-keyed grep is precisely the mechanism
     that ate D500's heading.)
+    🆕🆕🆕 engineVersion 0.407.0 → **0.408.0** (D521 — THE TWO-COIN BOTH-TAILS RECOIL — ZERO
+    VOCABULARY, AND A REFUSAL THAT WAS WRONG IN ITS CARRIER. `censusAttackCorpus.ts` **FILE
+    LINE 202** — *"Flip 2 coins. If both of them are tails, this Pokémon also does 90 damage
+    to itself."*, **1 sentence / 2 legal printings**, claimed by `deriveAttackEffect` through
+    ONE new anchor (`FLIP_TWO_BOTH_TAILS_SELF_DAMAGE`, beside D145's one-coin
+    `FLIP_TAILS_SELF_DAMAGE`) and ONE new arm directly after D145's, deriving
+    `[{op:"coinFlipGate", coins:2, onTails:true, then:[{op:"damageSelf", amount:90}]}]`.
+    🛑 **THE PRICE IS ONE ANCHOR AND ONE ARM — ZERO NEW VOCABULARY ANYWHERE.** No new
+    `EffectOp` kind or field (`coins` is D355's, `onTails` is D144's, `damageSelf` is M5's),
+    no `interpreter.ts` byte, no `attack.ts` byte, no reader (surface unmoved at 13),
+    registry row, `FIXTURE_POOL` id, prompt, event, error code, `redact.ts` or
+    `packages/schema` byte. The `then` is byte-identical to what the bare recoil anchor
+    derives for the same N — one action per sentence, the coins procedure in front of it.
+    🛑 **THE REFUSAL THAT KEPT THIS ROW UNBUILT NAMED THE WRONG CARRIER.**
+    `selfDamagePerCounter.test.ts` §4 said *"blocked on the coin structure
+    (`AttackFlipCount` + a both-tails gate)"*, and the D355 block above said the three
+    both-tails printings were *"out of reach by COLUMN"*. `AttackFlipCount` is
+    `deriveAttackCoinFlip`'s DAMAGE-COUNT type — it claims the column's OTHER both-tails
+    row (FILE LINE 213, a per-heads count with a Confusion tail, `perHeadsThenThreshold`) —
+    and this recoil is not a count: it is a program op behind D355's shipped `coins`, the
+    exact shape D145 shipped for the one-coin print. `deriveAttackEffect` has emitted
+    `coinFlipGate` for attack text since D144/D145, so the column argument was false the
+    day it was written. The premise re-derived per D520 (2): the op HITS ONE BODY — the
+    attacker — and a one-body recoil behind a coin is a GATE, not a count. Four stale
+    copies corrected in place (D442/D508): the D355 block in `effects.ts`, the D355
+    changelog prose above, the §4 rung, and the `what` of
+    `D355-energycoin-gains-ontails` in `mutants.ts`.
+    🛑 **THE BASE RULE — THE ONE-COIN SIBLING'S, THE OPPOSITE CASE FROM D520's.** Every
+    printing carries a printed base (*"also"*). `programDamage` walks the top level and
+    the gate is not a damage op, so the base lands in §8.5 and the recoil runs at the
+    program's tail — Oinkologne sv03-183's exact path. The recoil is FLAT (no W/R against
+    the attacker's own Weakness — driven on a body Weak to its own type) and a self-KO is
+    swept by the attack epilogue's two-seat §8.1 sweep, with the turn ending only after the
+    Prize and the forced promotion (D491: an attack ENDS the turn; sequenced explicitly).
+    ⚠️ **Which two of `sv06-090`, `sv10-148`, `sv10-202` carry :202 is UNRESOLVABLE on this
+    checkout** (no D1, no sqlite; the D355 census named all three across :202 AND :213
+    without splitting them — D425) and the ids are stated unresolved, never invented; the
+    demonstrator is a FILE-LOCAL pool with its own deck (D414/D452/D520's shape).
+    🛑 **THE COUNT × UNANIMITY LATTICE, MEASURED OVER ALL 640 ROWS.** `a coin`/`2 coins` ×
+    `If tails`/`If both of them are tails`: exactly the two PRINTED corners build (1 of 4
+    pre-slice, 2 of 4 post-slice) and both single-axis points derive null; the literal `2`
+    and the literal `both of them are` co-vary, so a `(\d+)`-coins or `all of them` widening
+    would claim strings the column does not print. Both anchor ENDS are exercised
+    explicitly (D520 (3): a prefixed print and a suffixed print derive null). Negative
+    controls, all null and pinned by the LIVE null rather than by a citation (there is no
+    heads-gated recoil anchor to cite): *"both of them are heads"*, *"either of them is
+    tails"*, *"Flip 3 coins. If all/both of them are tails"*, the `also`-less spelling,
+    printed 0.
+    ⚠️ **THE EXECUTOR IS DRIVEN ON FOUR SEEDED BOARDS** ([T,T], [H,T], [T,H], [H,H] — the
+    seed is a RESULT of a search over the log, never a constant), asserting by ENUMERATING
+    the `ATTACK_EFFECT_COIN_FLIP` rows: recoil on [T,T] only, exactly TWO rows on every
+    board in printed order, `rngState` two `flipCoin` steps ahead on every face (D144's
+    invariant at N=2), the printed base on the defender on every face, no
+    `ATTACK_EFFECT_SKIPPED`, `programPlayable` true with an empty Bench, the 50-amount
+    print recoiling 50 (the amount is captured, not pinned).
+    ⚠️ **`MATCH_RECORD_VERSION` HELD at 30, RE-DERIVED.** Zero new serialized bytes — every
+    kind, field and value in the program already ships and every v30 deploy could already
+    write them; `damageSelf` never parks and the gate is SPLICED, so `phase.cont.pendingOp`
+    and `rest` are the same shut doors D355 shut.
+    ⚠️ **THIS HEADING IS LABELLED `(D521 —` BECAUSE `docs/decisions.md`'s `| **D521** |` row
+    SHIPS IN THE SAME COMMIT** (D507's rule: the label and the row are ONE edit).
+    🛑 **VERSION-TAX EXCEPTION LIST FOR THIS BUMP (D506's rule (b)).** `0.407.0` legitimately
+    survives at: THIS HEADING'S OWN SOURCE; D520's heading target one block down, its
+    *"BUILT at 0.407.0"* prose and its exception-list line; `fourZoneSpread.test.ts`'s header
+    arrow `0.406.0 → 0.407.0` and its heading assertion; `bothBenchSpread.test.ts`'s
+    *"derives at 0.407.0"* prose; `twoCoinTailsRecoil.test.ts`'s header arrow
+    `0.407.0 → 0.408.0`; `mutants.ts`'s D275 re-point ledger; and the `docs/` history. The
+    sweep was run as a WHITELIST over `expect(engineVersion)`, `expect(manifest.version)`,
+    `it(…)` titles, the declaration and `package.json` — never as a value-keyed grep.)
     🆕🆕🆕 engineVersion 0.406.0 → **0.407.0** (D520 — THE FOUR-ZONE DAMAGED-BODY SPREAD, AND
     D507's REFUSAL WAS WRONG IN ITS VERDICT *AND* IN ITS CARRIER. `censusAttackCorpus.ts`
     **FILE LINE 601** — *"This attack does 50 damage to each Pokémon that has any damage counters
@@ -21828,7 +21906,7 @@ import type { GameState, Seat } from "./types";
     WITNESS** — the count was re-derived every slice and the word *"three"* was carried.
     A successor of this slice inherits **81 / 61 / 17** again, over **FIVE** history
     occurrences: those four plus `deckMillFilteredScale.test.ts`'s own header arrow.) */
-export const engineVersion = "0.407.0";
+export const engineVersion = "0.408.0";
 
 export type {
   ApplyResult,

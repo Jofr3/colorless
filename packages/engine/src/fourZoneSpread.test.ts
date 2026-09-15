@@ -762,10 +762,13 @@ describe("D520 §7 — zeros measured over all 640 rows", () => {
 
   it("🛑 the RAW reader-only residue fell by exactly 1 sentence / 1 printing, and the row left it", () => {
     const unbuilt = legalAttackCorpus().filter(([, s]) => !resolvedByAnyReader(s));
-    expect([unbuilt.length, units(unbuilt)]).toEqual([93, 145]);
+    // 🆕🆕🆕 D521 −1 sentence / −2 printings (THE TWO-COIN BOTH-TAILS RECOIL — corpus FILE LINE 202,
+    // claimed by `deriveAttackEffect` through `FLIP_TWO_BOTH_TAILS_SELF_DAMAGE`; the sentence and
+    // printing steps DISAGREE, 1 vs 2): 93/145 → 92/143 and 547/1587 → 548/1589.
+    expect([unbuilt.length, units(unbuilt)]).toEqual([92, 143]);
     expect(unbuilt.map(([, s]) => s)).not.toContain(FOUR_ZONE);
     const resolved = legalAttackCorpus().filter(([, s]) => resolvedByAnyReader(s));
-    expect([resolved.length, units(resolved)]).toEqual([547, 1587]);
+    expect([resolved.length, units(resolved)]).toEqual([548, 1589]);
   });
 });
 
@@ -785,7 +788,7 @@ const RAW: Record<string, string> = (
 describe("D520 §8 — the version steps, and the heading is written", () => {
   it("engineVersion and `manifest.version` agree, and the bump is owed for BEHAVIOUR", () => {
     // ⚠️ The version is NOT spelled in this `it(…)` title (D460's fourth class).
-    expect(engineVersion).toBe("0.407.0");
+    expect(engineVersion).toBe("0.408.0");
     expect(manifest.version).toBe(engineVersion);
   });
 
