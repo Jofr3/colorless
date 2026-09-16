@@ -14530,6 +14530,15 @@ import type { GameState, Seat } from "./types";
     ANCHOR would have swallowed it. The `discard that Stadium` family is **2
     sentences / 2 printings**; this slice claims **1 / 1** and leaves **1 / 1**,
     named and driven.
+    🆕🆕🆕 **[D522 — THE 1 / 1 LEFT IS NOW 0 / 0, AND THE READER THIS PARAGRAPH IMPLIED WAS
+    THE WRONG CARRIER (annotated in place, D178/D442/D508).** Ting-Lu's row was built at
+    0.409.0 by a plain `conditionGate { stadiumInPlay }` program in `deriveAttackEffect`
+    (arm 43-bis, anchor `STADIUM_GATED_BENCH_SPREAD`), NOT by a widened join: its middle
+    clause is a SECOND HIT — the shipped body-set `spreadDamage` — never a bonus, so
+    `deriveAttackBonusConsequent` still returns null on it and the control above is
+    unchanged. The family is **2 / 2 built by TWO readers, 1 / 1 each**; the swept
+    refusal rungs (`stadiumDiscard.test.ts` §1/§2/§6, `stadiumPresence.test.ts` §1/§6,
+    `bonusConsequentThen.test.ts` §2/§7) were kept and INVERTED with D522 provenance.]**
 
     🛑 **THE ORDER OF THE HIT AND THE DISCARD IS UNOBSERVABLE ON THIS PRINTING, AND
     THAT IS STATED RATHER THAN GLOSSED.** D381's rule says to go looking for the one
@@ -20009,6 +20018,95 @@ import type { GameState, Seat } from "./types";
     `expect(manifest.version)`, `it(…)` titles, the declaration and `package.json` —
     **not** as a value-keyed grep — because a value-keyed grep is precisely the mechanism
     that ate D500's heading.)
+    🆕🆕🆕 engineVersion 0.408.0 → **0.409.0** (D522 — THE STADIUM-GATED BENCH SPREAD WITH THE
+    STADIUM DISCARD — ZERO VOCABULARY, AND A REFUSAL THAT WAS RIGHT ABOUT THE OP AND WRONG
+    ABOUT THE READER. `censusAttackCorpus.ts` **FILE LINE 293** (`legalAttackCorpus()` index
+    240) — *"If a Stadium is in play, this attack also does 30 damage to each of your
+    opponent's Benched Pokémon, and discard that Stadium. (Don't apply Weakness and
+    Resistance for Benched Pokémon.)"*, Ting-Lu `sv06-110` "Ground Crasher", **1 sentence /
+    1 legal printing**, claimed by `deriveAttackEffect` through ONE new anchor
+    (`STADIUM_GATED_BENCH_SPREAD`, directly under D380's `MAY_DISCARD_STADIUM`) and ONE new
+    arm directly after arm 43 (43-bis), deriving
+    `[{op:"conditionGate", cond:{kind:"stadiumInPlay"}, then:[{op:"spreadDamage",
+    target:"opponentBench", amount:30}, {op:"discardStadium"}]}]` — arm 43's exact shape
+    minus the `optional`.
+    🛑 **THE PRICE IS ONE ANCHOR AND ONE ARM — ZERO NEW VOCABULARY ANYWHERE.** No new
+    `EffectOp` kind or field (`conditionGate` is D111's, `stadiumInPlay` D378's,
+    `spreadDamage {opponentBench}` D134/D425's, `discardStadium` D380's), no
+    `interpreter.ts` byte, no `attack.ts` byte, no reader (surface unmoved at 13), registry
+    row, `FIXTURE_POOL` id, prompt, event, error code, `redact.ts` or `packages/schema`
+    byte. The `then` is byte-equal to the two halves' OWN derivations concatenated in
+    printed order (measured: `[{spreadDamage, opponentBench, 30}]` + `[{discardStadium}]`);
+    no `otherwise` (D135), no `damagedOnly` (D507's rider is not printed).
+    🛑 **THE REFUSAL WAS RIGHT ABOUT THE OP AND WRONG ABOUT THE READER.** The row sat in
+    `stadiumDiscard.test.ts`'s `STILL_OWED`, `stadiumPresence.test.ts`'s `CEILING` and the
+    D382 block above under *"needs a bonus-consequent reader as well as the op"* / *"this
+    slice claims 1/1 and leaves 1/1"*. Both halves had shipped by D382 (`discardStadium` at
+    D380, `stadiumInPlay` at D378) and the reader named was the wrong carrier: the middle
+    clause is a SECOND HIT — the body-set `spreadDamage` `deriveAttackEffect` has walked
+    since D134 — never a bonus, so no `AttackBonusConsequent` join could read it at any
+    spelling. D521 (2)'s rule applied: ask what the op HITS — a bench set is a rider on the
+    walk (the spread op) and the singleton §7.3 zone is a gate; both shipped. The
+    `, and discard that Stadium` join is DISJOINT from `BONUS_CONSEQUENT_COIN`/
+    `_CONDITION_THEN`'s (those demand `more damage, and` / `more damage. Then, `), so
+    `deriveAttackBonusConsequent` STAYS null on this row and `bonusConsequentThen.test.ts`
+    §2's control keeps its claim. Three refusal families kept and INVERTED with D522
+    provenance (D436/D418): `stadiumDiscard` §1/§2/§6 (`STILL_OWED` → empty, the row now
+    `TAKEN_BY_D522`; partition [5,10]+[1,1] → [6,11]+[0,0] over the same [6,11] family),
+    `stadiumPresence` §1/§6 (`CEILING` → empty, the row moved into `TAKEN_SINCE`; `sinceRows`
+    [3,4] → [4,5], `sinceDiscardFamily` STAYS [2,3]), `bonusConsequentThen` §2/§7 (every
+    OTHER_READERS member EXCEPT `deriveAttackEffect` null, `resolvedByAnyReader` true, the
+    family 2 / 2 BUILT by two readers 1 / 1 each); two prose copies corrected in place —
+    the D380 op block in `effects.ts` (~7505, *"the tails will reuse this op unchanged"* was
+    exactly right) and the D382 block above.
+    🛑 **THE CLARIFIER IS A REQUIRED LITERAL, MEASURED AGAINST THE OPTIONAL-GROUP FORM.**
+    Both spellings claim the identical **1 / 1** over the 640 rows at this head; the
+    literal is kept because it is the print, and the clarifier-less string is asserted
+    null. Apostrophe slots on BOTH apostrophes (D421/D425), real `é`, `^…$`, no `/i`; the
+    amount captured, not pinned (D316/D521 C7). `cond` is SPELLED (arm 43's precedent), not
+    reached through `boardConditionForClause` (D472's shape), so the census claim stays
+    exactly 1 / 1. The `>= 1` guard is redundant at the interpreter (`spreadDamage` returns
+    on `amount <= 0`) and is kept for the LOUD printed-zero path (D521's precedent): a
+    printed 0 derives null, which the census can see where it cannot see a no-op.
+    🛑 **THE ORDER — SPREAD, THEN DISCARD — IS PRINTED AND UNOBSERVABLE ON EVERY LEGAL
+    BOARD** (the D382 block's argument, re-run): the spread is flat bench HP (no W/R), the
+    only Stadium whose presence moves a damage number is Neutralization Zone `sv06.5-060`
+    and only for an attacking Pokémon ex (Ting-Lu is not ex), and a vacated `hpDelta`
+    Stadium lowers a maximum that `finishAttack`'s `collectKnockOuts` checks AFTER the
+    whole program on both seats. The order is pinned in the ASSEMBLED PROGRAM by §1's
+    `toEqual` (D382's route) and the swapped-order mutant is DECLARED killed by that rung.
+    🛑 **THE BASE RULE — D521's "also" path.** The top level is a `conditionGate`, not
+    `damageDefender`, so `attack.ts`'s top-level `programDamage` stays false and the
+    printed base lands in §8.5 BEFORE the program; the spread and the discard run at the
+    tail. Driven (`stadiumGatedSpread.test.ts` §2, a FILE-LOCAL pool with its own 60-card
+    deck, a P2-OWNED Beach Court `sv01-167` in the zone): exactly one DAMAGE_DEALT base row
+    on the defender BEFORE the program; each benched body takes the printed 30 FLAT (a body
+    Weak to the attacker takes 30, not 60); `STADIUM_DISCARDED` under the OWNER's seat and
+    the card in P2's pile; the zone null after; no `ATTACK_EFFECT_SKIPPED`; the turn ends
+    (D491). Stadium ABSENT → base only, bench untouched, no discard. Stadium present with an
+    EMPTY opponent Bench → the discard still happens (`spreadDamage`'s empty early return)
+    and `programPlayable` is true. A benched body at 30 remaining is Knocked Out by the
+    spread and the attacker's Prize is owed (`finishAttack`'s two-seat sweep). The
+    attacker's own Bench is untouched. `rngState` is unmoved (no coin, no shuffle). The
+    50-print spreads 50.
+    ⚠️ **Ting-Lu `sv06-110`'s printed base and cost CANNOT BE READ ON THIS CHECKOUT** (not in
+    `FIXTURE_POOL`; no D1, no sqlite — D425/D521 (5)); the demonstrator is file-local with
+    declared values and NO invented id.
+    ⚠️ **`MATCH_RECORD_VERSION` HELD at 30, RE-DERIVED.** Zero new serialized bytes — every
+    kind, field and value in the program already ships and every v30 deploy could already
+    write them; neither `spreadDamage` nor `discardStadium` parks and the gate is SPLICED, so
+    `phase.cont.pendingOp` and `rest` are the same shut doors D355/D521 shut.
+    ⚠️ **THIS HEADING IS LABELLED `(D522 —` BECAUSE `docs/decisions.md`'s `| **D522** |` row
+    SHIPS IN THE SAME COMMIT** (D507's rule: the label and the row are ONE edit).
+    🛑 **VERSION-TAX EXCEPTION LIST FOR THIS BUMP (D506's rule (b)).** `0.408.0` legitimately
+    survives at: THIS HEADING'S OWN SOURCE; D521's heading target one block down and its
+    exception-list line; the D521 correction prose above (~16471, *"(0.408.0)"*);
+    `twoCoinTailsRecoil.test.ts`'s header arrow `0.407.0 → 0.408.0` and its heading
+    assertion; `selfDamagePerCounter.test.ts`'s *"derives at 0.408.0"* prose;
+    `stadiumGatedSpread.test.ts`'s header arrow `0.408.0 → 0.409.0`; `mutants.ts`'s D275
+    re-point ledger; and the `docs/` history. The sweep was run as a WHITELIST over
+    `expect(engineVersion)`, `expect(manifest.version)`, `it(…)` titles, the declaration and
+    `package.json` — never as a value-keyed grep.)
     🆕🆕🆕 engineVersion 0.407.0 → **0.408.0** (D521 — THE TWO-COIN BOTH-TAILS RECOIL — ZERO
     VOCABULARY, AND A REFUSAL THAT WAS WRONG IN ITS CARRIER. `censusAttackCorpus.ts` **FILE
     LINE 202** — *"Flip 2 coins. If both of them are tails, this Pokémon also does 90 damage
@@ -21906,7 +22004,7 @@ import type { GameState, Seat } from "./types";
     WITNESS** — the count was re-derived every slice and the word *"three"* was carried.
     A successor of this slice inherits **81 / 61 / 17** again, over **FIVE** history
     occurrences: those four plus `deckMillFilteredScale.test.ts`'s own header arrow.) */
-export const engineVersion = "0.408.0";
+export const engineVersion = "0.409.0";
 
 export type {
   ApplyResult,

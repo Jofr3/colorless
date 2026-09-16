@@ -633,21 +633,27 @@ describe("D521 §2b — the self-KO on a pre-damaged body, and the turn ends onl
 describe("D521 §3 — the census moved in exactly ONE summand, by 1 sentence / 2 printings", () => {
   it("🛑 the reader arm reads 548 sentences / 1,589 printings, and the row is IN it", () => {
     const resolved = legalAttackCorpus().filter(([, s]) => resolvedByAnyReader(s));
-    expect([resolved.length, units(resolved)]).toEqual([548, 1589]);
+    // 🆕🆕🆕 D522 +1 sentence / +1 printing (THE STADIUM-GATED BENCH SPREAD WITH THE STADIUM DISCARD —
+    // corpus FILE LINE 293, claimed by `deriveAttackEffect` arm 43-bis through
+    // `STADIUM_GATED_BENCH_SPREAD`; the sentence and printing steps AGREE, 1 and 1): 548/1589 →
+    // 549/1590 and 547/1587 → 548/1588. ⚠️ This suite's own literals sat OUTSIDE the annotated-chain
+    // sweep's shape (they were never annotated at D521) and were found by the full `check` (D419).
+    expect([resolved.length, units(resolved)]).toEqual([549, 1590]);
     expect(resolved.map(([, s]) => s)).toContain(PRINTED);
     // …and the step is THIS sentence and nothing else: remove it and the pair is D520's.
     const without = resolved.filter(([, s]) => s !== PRINTED);
-    expect([without.length, units(without)]).toEqual([547, 1587]);
+    expect([without.length, units(without)]).toEqual([548, 1588]);
   });
 
   it("🛑 the RAW reader-only residue fell by exactly 1 sentence / 2 printings — 92 / 143 — and the row left it", () => {
     const unbuilt = legalAttackCorpus().filter(([, s]) => !resolvedByAnyReader(s));
-    expect([unbuilt.length, units(unbuilt)]).toEqual([92, 143]);
+    // 🆕🆕🆕 D522 −1 sentence / −1 printing (corpus FILE LINE 293, see §3's first rung): 92/143 → 91/142.
+    expect([unbuilt.length, units(unbuilt)]).toEqual([91, 142]);
     expect(unbuilt.map(([, s]) => s)).not.toContain(PRINTED);
     // The parts add up to the whole quoted in the same case.
     const all = legalAttackCorpus();
-    expect(unbuilt.length + 548).toBe(all.length);
-    expect(units(unbuilt) + 1589).toBe(units(all));
+    expect(unbuilt.length + 549).toBe(all.length);
+    expect(units(unbuilt) + 1590).toBe(units(all));
     expect([all.length, units(all)]).toEqual([640, 1732]);
   });
 
@@ -675,7 +681,7 @@ const RAW: Record<string, string> = (
 describe("D521 §4 — the version steps, the heading is written, and what stands still", () => {
   it("engineVersion and `manifest.version` agree, and the bump is owed for BEHAVIOUR", () => {
     // ⚠️ The version is NOT spelled in this `it(…)` title (D460's fourth class).
-    expect(engineVersion).toBe("0.408.0");
+    expect(engineVersion).toBe("0.409.0");
     expect(manifest.version).toBe(engineVersion);
   });
 

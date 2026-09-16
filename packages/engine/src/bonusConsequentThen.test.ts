@@ -463,17 +463,40 @@ describe("D382 §2 — the REFUSALS, which are what keep an unread sentence loud
     for (const read of OTHER_READERS) expect(read(INNER_CONSEQUENT)).toBeNull();
   });
 
-  it("🛑 THE CATALOG'S OWN NEAR MISS — same antecedent, same consequent, REFUSED", () => {
+  it("🛑 THE CATALOG'S OWN NEAR MISS — same antecedent, same consequent, REFUSED by the JOIN reader — 🆕 D522: and BUILT by `deriveAttackEffect`, the carrier the refusal did not name", () => {
     // Ting-Lu `sv06-110` "Ground Crasher" is the sharpest control available because
     // nobody invented it: it shares BOTH halves and the `, and ` join, and differs
     // only in that its middle clause is a SECOND HIT rather than a bonus. A reader
     // widened at the JOIN rather than at the ANCHOR would have swallowed it.
     expect(corpus().filter(([, s]) => s === TINGLU_TEXT)).toEqual([[1, TINGLU_TEXT]]);
+    // 🛑 THE CONTROL'S WHOLE POINT, UNCHANGED AT D522: the JOIN reader was never widened.
     expect(deriveAttackBonusConsequent(TINGLU_TEXT)).toBeNull();
     // 🆕🆕 D419 — the near miss is refused by the MODULE's whole surface, so a reader
     // added tomorrow that swallows it reddens here rather than passing unasked.
-    expect(resolvedByAnyReader(TINGLU_TEXT), TINGLU_TEXT).toBe(false);
-    for (const read of OTHER_READERS) expect(read(TINGLU_TEXT)).toBeNull();
+    // 🆕🆕🆕 **D522 — THAT READER ARRIVED, AND IT WAS NOT A BONUS READER (kept and INVERTED,
+    // D436/D418).** `deriveAttackEffect` arm 43-bis (`STADIUM_GATED_BENCH_SPREAD`) now
+    // derives the row as `conditionGate { stadiumInPlay }` over `[spreadDamage {
+    // opponentBench, 30 }, discardStadium]` — the middle clause is a SECOND HIT, the shipped
+    // body-set op, and never a bonus, which is exactly what this control has claimed since
+    // D382. Every OTHER reader stays null, and the two lines this rung used to assert
+    // (`resolvedByAnyReader === false`, `deriveAttackEffect === null`) are the ones that
+    // went red on contact and are inverted here with D522 provenance.
+    expect(resolvedByAnyReader(TINGLU_TEXT), TINGLU_TEXT).toBe(true);
+    for (const read of OTHER_READERS) {
+      if (read === deriveAttackEffect) continue;
+      expect(read(TINGLU_TEXT), read.name).toBeNull();
+    }
+    expect(deriveAttackEffect(TINGLU_TEXT)).toEqual([
+      {
+        op: "conditionGate",
+        cond: { kind: "stadiumInPlay" },
+        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
+        then: [
+          { op: "spreadDamage", target: "opponentBench", amount: 30 },
+          { op: "discardStadium" },
+        ],
+      },
+    ]);
   });
 
   it("🛑 an UNRECOGNISED consequent refuses the WHOLE sentence — never a prefix match", () => {
@@ -718,17 +741,26 @@ describe("D382 §7 — the CENSUS, re-derived off the corpus rather than quoted"
     for (const [, s] of matched) expect(deriveAttackBonusConsequent(s)).not.toBeNull();
   });
 
-  it("⚠️ `discard that Stadium` is TWO sentences and this slice claims ONE of them", () => {
+  it("⚠️ `discard that Stadium` is TWO sentences and this slice claims ONE of them — 🆕 D522: the family is 2 / 2 BUILT by TWO readers, 1 / 1 each", () => {
     // The residue, named rather than glossed: Ting-Lu's Bench-spread twin still
     // needs a payoff shape this family has no room for, so it stays refused and
     // stays LOUD. Reported as both columns (D381's rule: a reader slice is priced
     // in refused sentences claimed, measured at BOTH ends).
+    // 🆕🆕🆕 **D522 — "a payoff shape this family has no room for" was exactly right, and
+    // the shape lives in `deriveAttackEffect` (arm 43-bis): a `conditionGate` over the
+    // bare spread and the bare discard.** Every line below stays green as written under
+    // `deriveAttackBonusConsequent` — `claimed` is still [MELTER], `left` is still [TINGLU]
+    // — because the JOIN reader was never widened; what is added is the reader PARTITION
+    // in BOTH directions, so a successor cannot re-home either row silently.
     const family = corpus().filter(([, s]) => s.includes("discard that Stadium"));
     expect([family.length, units(family)]).toEqual([2, 2]);
     const claimed = family.filter(([, s]) => deriveAttackBonusConsequent(s) !== null);
     expect(claimed.map(([, s]) => s)).toEqual([MELTER_TEXT]);
     const left = family.filter(([, s]) => deriveAttackBonusConsequent(s) === null);
     expect(left.map(([, s]) => s)).toEqual([TINGLU_TEXT]);
+    expect(deriveAttackEffect(TINGLU_TEXT)).not.toBeNull();
+    expect(deriveAttackEffect(MELTER_TEXT)).toBeNull();
+    for (const [, s] of family) expect(resolvedByAnyReader(s), s).toBe(true);
   });
 });
 

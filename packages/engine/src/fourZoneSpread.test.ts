@@ -765,10 +765,15 @@ describe("D520 §7 — zeros measured over all 640 rows", () => {
     // 🆕🆕🆕 D521 −1 sentence / −2 printings (THE TWO-COIN BOTH-TAILS RECOIL — corpus FILE LINE 202,
     // claimed by `deriveAttackEffect` through `FLIP_TWO_BOTH_TAILS_SELF_DAMAGE`; the sentence and
     // printing steps DISAGREE, 1 vs 2): 93/145 → 92/143 and 547/1587 → 548/1589.
-    expect([unbuilt.length, units(unbuilt)]).toEqual([92, 143]);
+    // 🆕🆕🆕 D522 −1 sentence / −1 printing (THE STADIUM-GATED BENCH SPREAD WITH THE STADIUM DISCARD —
+    // corpus FILE LINE 293, Ting-Lu `sv06-110`, claimed by `deriveAttackEffect` arm 43-bis through
+    // `STADIUM_GATED_BENCH_SPREAD`; the sentence and printing steps AGREE, 1 and 1): 92/143 → 91/142
+    // and 548/1589 → 549/1590. ⚠️ This site sits OUTSIDE the annotated-chain sweep's shape (D521 (4))
+    // and is stepped by hand; the full `check` is what finds it.
+    expect([unbuilt.length, units(unbuilt)]).toEqual([91, 142]);
     expect(unbuilt.map(([, s]) => s)).not.toContain(FOUR_ZONE);
     const resolved = legalAttackCorpus().filter(([, s]) => resolvedByAnyReader(s));
-    expect([resolved.length, units(resolved)]).toEqual([548, 1589]);
+    expect([resolved.length, units(resolved)]).toEqual([549, 1590]);
   });
 });
 
@@ -788,7 +793,7 @@ const RAW: Record<string, string> = (
 describe("D520 §8 — the version steps, and the heading is written", () => {
   it("engineVersion and `manifest.version` agree, and the bump is owed for BEHAVIOUR", () => {
     // ⚠️ The version is NOT spelled in this `it(…)` title (D460's fourth class).
-    expect(engineVersion).toBe("0.408.0");
+    expect(engineVersion).toBe("0.409.0");
     expect(manifest.version).toBe(engineVersion);
   });
 
@@ -821,7 +826,10 @@ describe("D520 §9 — no new op kind, the producer counts moved as stated, and 
   it("🛑 the producer counts moved by exactly this arm: `spreadDamage` 7 → 9, `damageDefender` 9 → 10", () => {
     // D507's confound, restated as the CORRECTION: the arity was never the price, and the
     // producer count is reported with the sites this slice authored named (D427).
-    expect(producers("spreadDamage")).toBe(9);
+    // 🆕🆕🆕 D522 — `spreadDamage` 9 → 10: arm 43-bis (the Stadium-gated Bench spread, corpus FILE
+    // LINE 293) is one more raw site; `damageDefender` is untouched at 10. Outside the sweep's
+    // shape, found by the full `check` (D419/D521 (4)).
+    expect(producers("spreadDamage")).toBe(10);
     expect(producers("damageDefender")).toBe(10);
   });
 

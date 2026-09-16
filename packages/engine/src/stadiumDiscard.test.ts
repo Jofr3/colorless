@@ -190,8 +190,29 @@ const STILL_OWED = [
   // each…"*), which no bonus anchor can read at any join. **A reader widened at the
   // JOIN rather than at the ANCHOR would have swallowed it**, which is exactly why
   // `bonusConsequentThen.test.ts` §2 keeps it as its sharpest control.
-  "If a Stadium is in play, this attack also does 30 damage to each of your opponent's Benched Pokémon, and discard that Stadium. (Don't apply Weakness and Resistance for Benched Pokémon.)",
+  // 🆕🆕🆕 **D522 TOOK IT — AND THIS LIST IS NOW EMPTY.** The paragraph above was RIGHT that no
+  // bonus anchor can read the middle clause at any join, and WRONG in what it implied the
+  // row was waiting for: a SECOND HIT is a body-set `spreadDamage`, which `deriveAttackEffect`
+  // has walked since D134, and the antecedent is D378's `stadiumInPlay` on the shipped
+  // `conditionGate` — arm 43's exact shape minus the `optional`. The row moved to
+  // `TAKEN_BY_D522` below (D178: annotate provenance, never overwrite it) and is asserted
+  // RESOLVED in §1/§2/§6, so none of those rungs can go green by a quiet shortening of this
+  // list (D379's saturation trap). Kept at zero rather than deleted, like `DISCARD_OP` in
+  // `stadiumPresence.test.ts`: an EMPTY refusal list that is asserted empty says something a
+  // deleted one cannot.
 ] as const;
+
+/** 🆕🆕🆕 D522 — the row that LEFT `STILL_OWED`, kept rather than deleted (D178). Ting-Lu
+    `sv06-110` "Ground Crasher" — corpus FILE LINE 293, 1 legal printing; its printed base
+    and cost cannot be read on this checkout (D425) — derives through `deriveAttackEffect`
+    arm 43-bis (`STADIUM_GATED_BENCH_SPREAD`) as `conditionGate { stadiumInPlay }` over
+    `[spreadDamage { opponentBench, 30 }, discardStadium]`: D378's member, D134's op and
+    THIS slice's op, on ZERO new readers and ZERO new ops — the THIRD row to leave this list
+    that way, after D381's and D382's. `deriveAttackBonusConsequent` STILL returns null on it
+    (§2 below), which is exactly what the paragraph above claimed and is now asserted in
+    both directions. */
+const TAKEN_BY_D522 =
+  "If a Stadium is in play, this attack also does 30 damage to each of your opponent's Benched Pokémon, and discard that Stadium. (Don't apply Weakness and Resistance for Benched Pokémon.)";
 
 /** 🆕🆕 D382 — the row that LEFT `STILL_OWED`, kept rather than deleted (D178:
     annotate provenance, never overwrite it). Chi-Yu `sv06-039` "Ground Melter"
@@ -316,14 +337,21 @@ describe("§1 — the price, MEASURED: six printings on one op, against ONE for 
     // D417's reader. The predicate is now imported from `censusAttackCorpus.ts` and
     // derived from the module, so a sixth departure cannot go unnoticed the same way.
     const taken = family.filter(([, s]) => s === BARE || s === MAY || readByAny(s));
-    expect([taken.length, units(taken)]).toEqual([5, 10]);
+    // 🆕🆕🆕 D522 — 5 / 10 -> **6 / 11**, and the SIXTH row cost no new op and no new reader
+    // either: Ting-Lu's tail is a plain `conditionGate` program in `deriveAttackEffect`
+    // (arm 43-bis), the family's own two ops behind D378's member. The family total is
+    // UNMOVED at [6, 11] — its predicate is `includes("Stadium") && includes("iscard")`.
+    expect([taken.length, units(taken)]).toEqual([6, 11]);
     expect(taken.map(([, s]) => s)).toContain(TAKEN_BY_D382);
     expect(taken.map(([, s]) => s)).toContain(TAKEN_BY_D417);
+    expect(taken.map(([, s]) => s)).toContain(TAKEN_BY_D522);
     const left = family.filter(([, s]) => (STILL_OWED as readonly string[]).includes(s));
     // 🆕🆕 D418 — 2 / 2 -> **1 / 1**, the other half of D417's step: the row moved OUT
     // of `STILL_OWED` rather than the total moving, which is what keeps the partition
     // below a partition.
-    expect([left.length, units(left)]).toEqual([1, 1]);
+    // 🆕🆕🆕 D522 — 1 / 1 -> **0 / 0**, the same way a third time: the LAST row moved out
+    // and the list is empty. The partition sums below are unchanged.
+    expect([left.length, units(left)]).toEqual([0, 0]);
     // The parts sum, which is what makes a partition a partition — and what stops a
     // successor quietly moving a sentence from one list to the other.
     expect(taken.length + left.length).toBe(family.length);
@@ -483,9 +511,24 @@ describe("§2 — the two readings, pinned byte-for-byte", () => {
   });
 
   it("🛑 the anchors are WHOLE-SENTENCE, so every compound printing of the family is refused", () => {
+    // 🆕🆕🆕 D522 — `STILL_OWED` is EMPTY now, so this loop is D382's row alone, and that row
+    // MUST stay null here: it is `deriveAttackBonusConsequent`'s, not this reader's. The
+    // positive twin directly below is what stops the loop being vacuous (D379).
     for (const sentence of [...STILL_OWED, TAKEN_BY_D382]) {
       expect(deriveAttackEffect(sentence), sentence).toBeNull();
     }
+    expect(deriveAttackEffect(TAKEN_BY_D522)).not.toBeNull();
+    expect(deriveAttackEffect(TAKEN_BY_D522)).toEqual([
+      {
+        op: "conditionGate",
+        cond: { kind: "stadiumInPlay" },
+        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
+        then: [
+          { op: "spreadDamage", target: "opponentBench", amount: 30 },
+          { op: "discardStadium" },
+        ],
+      },
+    ]);
     // …and the near misses a floating match would have swallowed. Neither is a printed
     // sentence; both are the fragments the four compounds are built out of.
     expect(deriveAttackEffect("discard that Stadium.")).toBeNull();
@@ -678,7 +721,7 @@ describe("§5 — the printed 'You may': a confirm that is asked ONLY when it ha
 });
 
 describe("§6 — what this slice did NOT buy", () => {
-  it("🛑 the ONE COMPOUND printing left stays LOUD, waiting on a named mechanism", () => {
+  it("🛑 the ONE COMPOUND printing left stays LOUD, waiting on a named mechanism — 🆕 D522: NONE is left, and the list is asserted EMPTY", () => {
     for (const sentence of STILL_OWED) {
       expect(readByAny(sentence), sentence).toBe(false);
     }
@@ -695,11 +738,16 @@ describe("§6 — what this slice did NOT buy", () => {
     // reason** (D211/D379), for the third time in this file. The loop is unchanged;
     // what changed is the list it walks and the predicate it walks with.
     const left = corpus().filter(([, s]) => (STILL_OWED as readonly string[]).includes(s));
-    expect(units(left)).toBe(1);
+    // 🆕🆕🆕 D522 — 1 -> **0**: the last compound left, through `deriveAttackEffect` arm
+    // 43-bis, and the loop above is now VACUOUS by construction — which is exactly why the
+    // positive twin below names the row that left (D379's saturation trap, a fourth time).
+    expect(units(left)).toBe(0);
+    expect(STILL_OWED).toHaveLength(0);
     // 🛑 …and the rows that LEFT are asserted to have left, so this rung cannot go
     // green by a successor quietly shortening the list (D379's saturation trap).
     expect(readByAny(TAKEN_BY_D382)).toBe(true);
     expect(readByAny(TAKEN_BY_D417)).toBe(true);
+    expect(readByAny(TAKEN_BY_D522)).toBe(true);
   });
 
   it("🛑 the TRAILING ANAPHORIC cancel is a FAMILY of 3 printings, not one card — and D420 closed it", () => {

@@ -172,10 +172,20 @@ const PRESENT: BoardCondition = { kind: "stadiumInPlay" };
 const OWNED: BoardCondition = { kind: "yourStadiumInPlay" };
 
 /** THE CEILING, PRICED FROM THE CORPUS AND LEFT. Both read the same board fact and
-    both carry a TAIL that needs a Stadium-DISCARD op this engine does not have. */
-const CEILING = [
-  "If a Stadium is in play, this attack also does 30 damage to each of your opponent's Benched Pokémon, and discard that Stadium. (Don't apply Weakness and Resistance for Benched Pokémon.)",
-] as const;
+    both carry a TAIL that needs a Stadium-DISCARD op this engine does not have.
+    🆕🆕🆕 **D522 — THIS LIST IS NOW EMPTY, AND ITS LAST ENTRY LEFT THROUGH THE READER THE
+    PRICE DID NOT NAME.** The op the block above asked for shipped at D380; Chi-Yu's row
+    left at D382 (a widened bonus-consequent JOIN, as §6 below predicted); Ting-Lu's row
+    left at D522 through a plain `conditionGate { stadiumInPlay }` program in
+    `deriveAttackEffect` (arm 43-bis, `STADIUM_GATED_BENCH_SPREAD`) — NOT through a
+    bonus-consequent reader, because its middle clause is a SECOND HIT (the shipped
+    body-set `spreadDamage`) and never a bonus. The ceiling priced at D378 is therefore
+    FULLY climbed, on zero new members: every step after the op cost no new mechanism.
+    The row moved to `TAKEN_SINCE` (D178: annotate, never overwrite) and this list is kept
+    at zero rather than deleted, exactly as `DISCARD_OP` below is: §1 and §6 still name
+    it, and an EMPTY refusal list that is asserted empty says something a deleted one
+    cannot. */
+const CEILING = [] as const;
 /** …and the op itself, which is a BIGGER slice than the floor this one took.
 
     🛑 **THE HANDOFF PRICED THIS AT 8 PRINTINGS AND IT IS 9.** It enumerated
@@ -234,6 +244,13 @@ const TAKEN_SINCE = [
   // above was eleven entries against a twelve-reader module — which is why D418 stops
   // computing these figures from an array at all rather than widening one again.
   "Discard a Stadium in play. If you can't, this attack does nothing.",
+  // 🆕🆕🆕 **D522** — Ting-Lu `sv06-110` "Ground Crasher" (**1** printing, corpus FILE LINE
+  // 293) left `CEILING`, through `deriveAttackEffect` arm 43-bis — a `conditionGate` on
+  // THIS file's own `stadiumInPlay` over `[spreadDamage { opponentBench, 30 },
+  // discardStadium]`, zero new readers and zero new ops. ⚠️ It is NOT a
+  // `/iscard a Stadium in play/` row, so `sinceDiscardFamily` in §1 stays [2, 3] while
+  // `sinceRows` steps [3, 4] → [4, 5].
+  "If a Stadium is in play, this attack also does 30 damage to each of your opponent's Benched Pokémon, and discard that Stadium. (Don't apply Weakness and Resistance for Benched Pokémon.)",
 ] as const;
 
 // ── boards ─────────────────────────────────────────────────────────────────────
@@ -452,6 +469,8 @@ describe("§1 — the price, RE-DERIVED: a 2:3 step whose CANCEL half is the big
   it("🛑 THE CEILING IS PRICED AND LEFT — 'discard that Stadium' is a WHOLE OP at 8 printings", () => {
     // The handoff's warning, measured rather than repeated: do not let the ceiling eat
     // the floor. Two more legal sentences read THIS board fact and both carry a tail…
+    // 🆕🆕🆕 D522 — `CEILING` is EMPTY, so this loop is VACUOUS by construction; the positive
+    // twin directly below names the row that left it (D379's saturation trap).
     for (const sentence of CEILING) {
       const rows = corpus().filter(([, s]) => s === sentence);
       expect(rows, sentence).toHaveLength(1);
@@ -460,6 +479,13 @@ describe("§1 — the price, RE-DERIVED: a 2:3 step whose CANCEL half is the big
       // separate slice rather than a thing this one half-did.
       expect(readByAny(sentence), sentence).toBe(false);
     }
+    expect(CEILING).toHaveLength(0);
+    const tingLu = TAKEN_SINCE[TAKEN_SINCE.length - 1] ?? "";
+    expect(tingLu).toContain("also does 30 damage to each of your opponent's Benched Pokémon, and discard that Stadium.");
+    expect(corpus().filter(([, s]) => s === tingLu)).toEqual([[1, tingLu]]);
+    expect(readByAny(tingLu)).toBe(true);
+    expect(deriveAttackEffect(tingLu)).not.toBeNull();
+    expect(deriveAttackBonusConsequent(tingLu)).toBeNull();
     // The op they need was worth more on its own than this whole slice: four
     // sentences, NINE legal printings, none of them read at D378 — and the handoff
     // said eight, having counted the family under one consequent only.
@@ -485,12 +511,16 @@ describe("§1 — the price, RE-DERIVED: a 2:3 step whose CANCEL half is the big
     const sinceRows = corpus().filter(([, s]) => (TAKEN_SINCE as readonly string[]).includes(s));
     // 🆕🆕 D418 — 2 / 3 -> **3 / 4**: exactly what `opRows` lost, which is what makes
     // this a re-partition rather than a deletion.
-    expect([sinceRows.length, units(sinceRows)]).toEqual([3, 4]);
+    // 🆕🆕🆕 D522 — 3 / 4 -> **4 / 5**: exactly what `CEILING` lost.
+    expect([sinceRows.length, units(sinceRows)]).toEqual([4, 5]);
     // …and the family total is UNMOVED at 4 / 9. The two rows that left `DISCARD_OP`
     // are the `TAKEN_SINCE` entries still inside the DISCARD family — Chi-Yu's is a
     // `discard that Stadium` CEILING row, not one of these four — so the addend is
     // DERIVED here rather than written as the literal it used to be.
     const sinceDiscardFamily = sinceRows.filter(([, s]) => /iscard a Stadium in play/.test(s));
+    // 🆕🆕🆕 D522 — STAYS [2, 3]: Ting-Lu's row prints `discard that Stadium`, not
+    // `iscard a Stadium in play` (VERIFIED against the regex, not assumed), so the 4 / 9
+    // family total below is unchanged.
     expect([sinceDiscardFamily.length, units(sinceDiscardFamily)]).toEqual([2, 3]);
     expect([
       builtRows.length + opRows.length + sinceDiscardFamily.length,
@@ -795,7 +825,7 @@ describe("§5 — the CANCEL consequent on a board: the zone is the gate", () =>
 });
 
 describe("§6 — what this slice did NOT buy", () => {
-  it("bought no Stadium-DISCARD op, and the sentences that need one stay LOUD", () => {
+  it("bought no Stadium-DISCARD op, and the sentences that need one stay LOUD — 🆕 D522: NONE is left, both lists are asserted EMPTY", () => {
     // ⚠️ 🆕🆕 **RE-AIMED AT D380, AND THE EXPIRY WAS PREDICTED BY THIS FILE'S OWN
     // CEILING BLOCK.** D380 built `discardStadium`, so the two BARE spellings this
     // rung used to name now resolve — they are asserted RESOLVED in §1 and dropped
@@ -814,7 +844,15 @@ describe("§6 — what this slice did NOT buy", () => {
     // NOT re-pointed at a narrower reader set — the claim *"no live reader takes this"*
     // is still exactly true of the row that is left, and weakening it would throw away
     // the only thing this rung is for.
-    expect(CEILING.length + DISCARD_OP.length).toBe(1);
+    // 🆕🆕🆕 **D522 — AND THE CEILING'S LAST ROW LEFT, THROUGH A READER THIS PARAGRAPH DID NOT
+    // NAME.** *"needs a bonus-consequent reader as well as the op"* was right about the OP
+    // (D380) and wrong about the READER: Ting-Lu's middle clause is a SECOND HIT — the
+    // shipped body-set `spreadDamage` — so it derives through `deriveAttackEffect` arm
+    // 43-bis as a plain `conditionGate` on this file's `stadiumInPlay`, and
+    // `deriveAttackBonusConsequent` still returns null on it. 1 -> **0**, both lists empty,
+    // the loop below VACUOUS by construction and the positive twin naming every row that
+    // left (D436/D418: the slice that expires a refusal owns the rewrite).
+    expect(CEILING.length + DISCARD_OP.length).toBe(0);
     for (const sentence of [...CEILING, ...DISCARD_OP]) {
       expect(readByAny(sentence), sentence).toBe(false);
     }

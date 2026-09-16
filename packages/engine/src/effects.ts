@@ -7507,6 +7507,14 @@ export type EffectOp =
       every legal board: the antecedent tests the singleton and the tail discards
       the singleton. There is nothing to parameterise and no referent to carry, so
       the tails will reuse this op unchanged rather than widen it.
+      🆕🆕🆕 **[D522 — BOTH TAILS ARE NOW BUILT, AND "reuse this op unchanged" WAS
+      EXACTLY RIGHT (annotated in place, D178/D442/D508).** Chi-Yu's *". Then, discard
+      that Stadium."* left at D382 through `deriveAttackBonusConsequent`'s widened join;
+      Ting-Lu's *", and discard that Stadium."* left at D522 through a plain
+      `conditionGate { stadiumInPlay }` program in `deriveAttackEffect` (arm 43-bis,
+      anchor `STADIUM_GATED_BENCH_SPREAD`) whose `then` is the bare spread op followed by
+      THIS op, byte for byte — the family is 2 / 2 built by TWO readers, and neither
+      widened `discardStadium` by a field.]**
 
       ⚠️ **AN EMPTY ZONE IS A SILENT NO-OP, NOT AN ERROR** — §8.6's "do as much as
       you can", the same ending `discardDeckTop` takes on a short deck. The printed
@@ -23587,9 +23595,105 @@ const RETURN_BENCHED = new RegExp(
     Cetitan ex `sv10-065`/`-210`'s *"If you do, this attack does 140 more damage."*,
     and Chi-Yu `sv06-039` / Ting-Lu `sv06-110`'s *"discard that Stadium"* tails), and
     each needs a mechanism this pair does not have. `^…$` refuses all five printings
-    LOUDLY, on the skipped-effect path, which is what a census can see. */
+    LOUDLY, on the skipped-effect path, which is what a census can see.
+    🆕🆕🆕 **[D522 — all four compounds are now BUILT elsewhere, and this pair still refuses
+    every one of them (asserted in `stadiumDiscard.test.ts` §2 and `stadiumGatedSpread.
+    test.ts` §1): Eternatus at D417, Cetitan ex at D381, Chi-Yu at D382, and Ting-Lu at
+    D522 through `STADIUM_GATED_BENCH_SPREAD` directly below — the last of them on this
+    op unchanged, exactly as the D380 op block predicted.]** */
 const DISCARD_STADIUM = /^Discard a Stadium in play\.$/;
 const MAY_DISCARD_STADIUM = /^You may discard a Stadium in play\.$/;
+/** 🆕🆕🆕 **D522 — THE STADIUM-GATED BENCH SPREAD WITH THE STADIUM DISCARD, AND THE
+    REFUSAL THAT KEPT IT UNBUILT WAS RIGHT ABOUT THE OP AND WRONG ABOUT THE READER.**
+    Ting-Lu `sv06-110` "Ground Crasher" — `censusAttackCorpus.ts` **FILE LINE 293**
+    (`legalAttackCorpus()` index 240), **1 sentence / 1 legal printing**:
+
+        *"If a Stadium is in play, this attack also does 30 damage to each of your
+         opponent's Benched Pokémon, and discard that Stadium. (Don't apply Weakness
+         and Resistance for Benched Pokémon.)"*
+
+    🛑 **ZERO NEW VOCABULARY.** The program is arm 43's (`MAY_DISCARD_STADIUM`, the
+    anchor directly above) EXACT shape minus the `optional`: D378's `stadiumInPlay`
+    on the shipped `conditionGate`, whose `then` is the two halves' OWN derivations
+    concatenated in printed order —
+
+        conditionGate { cond: stadiumInPlay,
+                        then: [ spreadDamage { opponentBench, amount },
+                                discardStadium ] }
+
+      (spelled WITHOUT the `op: "…",` form on purpose — a raw-text producer count reads
+      the commentary too, D516's trap, re-paid at D520 (4) and D521.)
+
+    The `then` is byte-equal to `[...deriveAttackEffect("This attack also does 30 damage
+    to each of your opponent's Benched Pokémon. (Don't apply Weakness and Resistance for
+    Benched Pokémon.)"), ...deriveAttackEffect("Discard a Stadium in play.")]` — MEASURED
+    at this head as `[{spreadDamage, opponentBench, 30}]` and `[{discardStadium}]`
+    (`stadiumGatedSpread.test.ts` §1). No `otherwise` (D135: absent is the unmarked
+    printing) and no `damagedOnly` (D507's rider is not printed here).
+
+    🛑 **THE STALE REFUSAL, AND WHY IT WAS WRONG.** `stadiumPresence.test.ts` §6 and
+    `stadiumDiscard.test.ts`'s `STILL_OWED` carried this row under *"needs a
+    bonus-consequent reader AS WELL AS the op"*; `index.ts`'s D382 block priced the
+    family as *"this slice claims 1/1 and leaves 1/1, named and driven"*. The OP half was
+    right and shipped at D380 (`discardStadium`); the READER half was the wrong carrier:
+    `AttackBonusConsequent` (D317/D382) reads *"…this attack does {N} MORE damage{join}"*
+    and this row's middle clause is not a bonus — it is a SECOND HIT, a body-set
+    `spreadDamage` that `deriveAttackEffect` has walked since D134 and that hits the
+    singleton §7.3 zone's other side. D521 (2)'s rule applied: ask what the op HITS. A
+    bench set → a rider on the walk (the spread op), a singleton zone → a gate; both were
+    shipped, and the carrier is a plain `conditionGate` program in `deriveAttackEffect`,
+    not a widened join. The row was simply UNANCHORED until this slice.
+
+    ⚠️ **THE `, and discard that Stadium` JOIN IS DISJOINT FROM THE BONUS READERS' JOIN.**
+    `BONUS_CONSEQUENT_CONDITION`/`_COIN` demand a literal `more damage, and ` and
+    `BONUS_CONSEQUENT_CONDITION_THEN` a literal `more damage. Then, `; this sentence prints
+    neither (`damage to each of your opponent's Benched Pokémon, and`), so no bonus anchor
+    can ever match it at any join — which is exactly why `bonusConsequentThen.test.ts` §2
+    keeps it as its control, and that control STAYS null under
+    `deriveAttackBonusConsequent` after this slice (the join reader was never widened).
+
+    🛑 **THE CLARIFIER IS A REQUIRED LITERAL, NOT AN OPTIONAL GROUP — MEASURED.** The one
+    printing carries *"(Don't apply Weakness and Resistance for Benched Pokémon.)"*, and the
+    optional-group spelling `(?: \(Don['’]t apply …\))?$` claims the IDENTICAL 1 / 1 over
+    the 640 rows (measured at this head), so the two forms are indistinguishable on the
+    column. The literal is kept because it is the PRINT, and a successor should "tidy" it
+    in neither direction: the clarifier-less string derives null and is asserted so.
+    Apostrophe slots on BOTH apostrophes (the family's standing re-ingest reason,
+    D421/D425), real `é`, `^…$`, no `/i`. The AMOUNT is captured, not pinned (D316/D521
+    C7): the bare spread arm reads any N and the capture keeps the derived `then`
+    byte-equal to it for every N.
+
+    ⚠️ **THE GUARD `>= 1` IS KEPT, AND IT IS REDUNDANT AT THE INTERPRETER.**
+    `spreadDamage`'s own first line is `if (amount <= 0) return state`, so a printed 0
+    would be a silent no-op at run time; the guard is kept for the LOUD path (D521 ships
+    one and declares "printed-zero-derives" as a mutant; sibling arm 24b too): a printed
+    0 derives null, which the census can SEE where it cannot see a no-op.
+
+    🛑 **THE ORDER — SPREAD, THEN DISCARD — IS PRINTED, AND IT IS UNOBSERVABLE ON EVERY
+    LEGAL BOARD.** D381's rule says go looking for the one card that observes it; this
+    slice looked, as `index.ts`'s D382 block did: the spread is FLAT bench HP (no W/R,
+    the clarifier says so and `spreadDamage` files `weakness: null`), the only Stadium in
+    the pool whose presence moves a damage number is Neutralization Zone `sv06.5-060`
+    and only for an attacking Pokémon **ex** (Ting-Lu is a Basic with no Rule Box), and
+    a vacated `hpDelta` Stadium (Lively Stadium `sv02-196`) lowers a MAXIMUM that
+    `finishAttack`'s `collectKnockOuts` checks AFTER the whole program on BOTH seats — so
+    KO-by-maximum is the same in both orders. The order is therefore pinned in the
+    ASSEMBLED PROGRAM by §1's `toEqual` (D382's route), and the swapped-order mutant is
+    DECLARED killed by that rung alone.
+
+    🛑 **THE BASE RULE.** The top-level op is a `conditionGate`, not `damageDefender`, so
+    `attack.ts`'s `programDamage` (a top-level `some`) stays false and the printed base
+    lands in §8.5 BEFORE the program runs; the spread and the discard run at the program's
+    tail — D521's *"also"* path. Bench Knock Outs from the spread and any lowered maximum
+    from the discard are swept by `finishAttack`'s two-seat `collectKnockOuts` (D380's op
+    block above, ~7519). No `attack.ts` byte, no `interpreter.ts` byte.
+
+    ⚠️ **THE CARD CANNOT BE READ ON THIS CHECKOUT.** Ting-Lu `sv06-110` is not in
+    `FIXTURE_POOL` and there is no D1 and no sqlite here, so its printed base and cost are
+    UNRESOLVABLE (D425/D521 (5)); the demonstrator is a FILE-LOCAL pool with declared values
+    and NO invented id. */
+const STADIUM_GATED_BENCH_SPREAD =
+  /^If a Stadium is in play, this attack also does (\d+) damage to each of your opponent['’]s Benched Pokémon, and discard that Stadium\. \(Don['’]t apply Weakness and Resistance for Benched Pokémon\.\)$/;
 
 /** 🆕🆕 D404 — *"Discard your hand and draw 6 cards."*, the biggest single sentence
     left in the split-aware residue (**1 sentence / 7 legal printings**), and the
@@ -28492,6 +28596,42 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
         // (D135: absent is the unmarked printing).
       },
     ];
+  }
+  // 43-bis. 🆕🆕🆕 D522 — "If a Stadium is in play, this attack also does {N} damage to
+  //     each of your opponent's Benched Pokémon, and discard that Stadium. (Don't apply
+  //     Weakness and Resistance for Benched Pokémon.)" — corpus FILE LINE 293, 1 sentence /
+  //     1 legal printing (Ting-Lu sv06-110). Arm 43's exact shape MINUS the `optional`:
+  //     D378's `stadiumInPlay` on the shipped gate, the `then` being the two halves' own
+  //     derivations in printed order. See the anchor's block for the stale refusal (right
+  //     about the op, wrong about the reader — the middle clause is a SECOND HIT, never a
+  //     bonus), the join disjointness, the required clarifier and the unobservable order.
+  //
+  //     🛑 `cond` is SPELLED here (arm 43's precedent), NOT reached through
+  //     `boardConditionForClause` (D472's shape): the anchor captures no clause, so the
+  //     census claim stays exactly 1 / 1 and no clause-table row is bought.
+  //
+  //     🛑 **THE BASE RULE.** The top level is a `conditionGate`, so `attack.ts`'s
+  //     top-level `programDamage` stays false and the printed base lands in §8.5 BEFORE
+  //     the program; the spread and the discard run at the tail (D521's "also" path). Bench
+  //     KOs and a lowered maximum are swept by `finishAttack`'s two-seat `collectKnockOuts`.
+  //     The `>= 1` guard is redundant at the interpreter (`spreadDamage` returns on
+  //     `amount <= 0`) and is kept for the LOUD printed-zero path (D521's precedent).
+  match = STADIUM_GATED_BENCH_SPREAD.exec(effect);
+  if (match !== null) {
+    const amount = Number(match[1]);
+    if (amount >= 1) {
+      return [
+        {
+          op: "conditionGate",
+          cond: { kind: "stadiumInPlay" },
+          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
+          then: [
+            { op: "spreadDamage", target: "opponentBench", amount },
+            { op: "discardStadium" },
+          ],
+        },
+      ];
+    }
   }
 
   // 44. 🆕🆕 D404 — "Discard your hand and draw 6 cards." — SEVEN legal printings on
