@@ -19341,6 +19341,12 @@ const ATTACK_COIN_UNTIL_TAILS_MULTI =
 // sv03-184 "Flip 3 coins. Put a number of cards up to the number of heads from
 // your discard pile into your hand." shares the opening and not the shape at all
 // — a heads COUNT read as an "up to" ceiling by ONE op, not a repeat.
+// 🆕🆕🆕 **D525 — BUILT: the heads COUNT as an "up to" ceiling by ONE op is now
+// `AttackCoinFlip.retrievalUpToHeads`** (anchor `ATTACK_COIN_RETRIEVAL_UP_TO_HEADS`
+// below, corpus FILE LINE 219, 2 legal printings): `attack.ts` writes the count into
+// the shipped `discardPileRetrieval` op's `max` at the fold — ONE park, never a
+// repeat — which is exactly the reading this paragraph named and did not price. The
+// `$` above still refuses the sentence for THIS anchor, as it should.
 //
 // No /i, for the family's standing reason: a capitalised first word is half of
 // what keeps a mid-sentence clause off the derived path and the anchors are the
@@ -19580,6 +19586,22 @@ const ATTACK_COIN_ENERGY_UNTIL_TAILS =
 // family's other standing reason.
 const ATTACK_COIN_SELF_ENERGY_PER_TAILS =
   /^Flip (\d+) coins\. For each tails, discard an Energy from this Pokémon\.$/;
+
+// 🆕🆕🆕 D525 — THE HEADS COUNT AS AN "UP TO" CEILING, corpus FILE LINE 219 (2 legal
+// printings). The eighth anchor of the family, disjoint from every one above by its
+// consequent ("Put a number of cards up to the number of heads …" — no other pattern
+// spans "up to the number of heads", and D452's `$` refuses this consequent by
+// construction, as its own block says of Oinkologne). The count is CAPTURED and
+// guarded at the arm (`>= 2 && <= MAX_PRINTED_FLIPS`, the family's guards); the noun
+// "cards" is FIXED in the anchor — not captured — because the sentence prints only
+// that noun, so the filter is the literal `{ kind: "anyCard" }` at the arm. The attach
+// twin (corpus FILE LINE 215, "Flip 3 coins. Attach a number of Basic {L} Energy
+// cards up to the number of heads from your discard pile to your Benched Pokémon in
+// any way you like.", 1 printing) is a DIFFERENT op (`attachEnergyFrom`) and stays
+// refused by this anchor's "Put a number of cards" (D442/D448). No /i, `^…$`, and NO
+// apostrophe class — the sentence has no apostrophe slot (D136/D137).
+const ATTACK_COIN_RETRIEVAL_UP_TO_HEADS =
+  /^Flip (\d+) coins\. Put a number of cards up to the number of heads from your discard pile into your hand\.$/;
 
 /** The most flips a printed attack may call for before this deriver refuses the
     sentence. The pool's maximum is 4 (Unfezant swsh10.5-063, the family's only
@@ -19878,6 +19900,25 @@ export type AttackCoinFlip =
   | { kind: "cancelOnTailsElseProgram"; ops: EffectOp[] }
   | { kind: "perHeads"; flips: AttackFlipCount; per: number }
   | { kind: "programPerHeads"; flips: AttackFlipCount; ops: EffectOp[]; face: CoinFace }
+  // 🆕🆕🆕 D525 — THE HEADS COUNT READ AS AN "UP TO" CEILING BY ONE OP, corpus FILE
+  // LINE 219 (*"Flip 3 coins. Put a number of cards up to the number of heads from
+  // your discard pile into your hand."*, 2 legal printings). The SEVENTH member, and
+  // it carries the `discardPileRetrieval` op's payload MINUS `max`: `ops` on the
+  // members above is fixed at DERIVE time and the heads count does not exist until
+  // the flip site runs, so there is no H to put in an op field here
+  // (`perHeadsEnergyDiscard.test.ts`'s argument for the EXPANSION, read the other
+  // way — that member repeats a countless op H times; this one emits ONE shipped op
+  // whose `max` is H). `attack.ts` builds `{op:"discardPileRetrieval", filter, dest,
+  // max: heads}` from the member at the fold and appends it to the program; on zero
+  // heads it appends nothing. NOT `programPerHeads` with a zero-member `ops` (H
+  // declinable `max: 1` parks — H prompts and H record parks for one printed
+  // question), and NOT a generic `programMaxHeads` that substitutes `'max' in op` at
+  // runtime (type-loose; the attach twin at corpus FILE LINE 215 is a DIFFERENT op,
+  // `attachEnergyFrom`, and stays refused — D442/D448's one-printing rule). `dest`
+  // is the literal `"hand"` because the sentence prints it; `filter` is a
+  // `CardFilter` because the interpreter's park takes one, and the arm writes
+  // `{ kind: "anyCard" }` (the noun "cards" is fixed in the anchor, not captured).
+  | { kind: "retrievalUpToHeads"; flips: AttackFlipCount; filter: CardFilter; dest: "hand" }
   | {
       kind: "perHeadsThenThreshold";
       flips: AttackFlipCount;
@@ -19887,7 +19928,7 @@ export type AttackCoinFlip =
     };
 
 /** The coin flip an attack's printed text calls for, or null when the text is not
-    one of the six recognised whole sentences — null keeps the attack on the loud
+    one of the seven recognised whole sentences (D525) — null keeps the attack on the loud
     ATTACK_EFFECT_SKIPPED path, never on a silent unflipped resolution.
 
     Pure in its string, like its three sibling derivers, and disjoint from all of
@@ -20256,6 +20297,25 @@ export function deriveAttackCoinFlip(text: string): AttackCoinFlip | null {
           face: "tails",
         }
       : null;
+  }
+  // 🆕🆕🆕 D525 — THE "UP TO" CEILING, corpus FILE LINE 219. The flip guards are the
+  // family's (`>= 2` because the regex's own "coins" is plural; `<= MAX_PRINTED_FLIPS`
+  // because the digits are third-party text and the count becomes a park's `max`).
+  // The member carries the shipped `discardPileRetrieval` op's payload MINUS `max` —
+  // `attack.ts` writes `max: heads` at the fold — so there is no `ops` array here and
+  // no repeat: ONE park, `chooseCards{min 0, max H, dest "hand"}`, the interpreter's
+  // own "up to" reading of the op. The filter is the LITERAL `{ kind: "anyCard" }`:
+  // byte-equal to `HAND_SEARCH_PLURAL`'s "cards" row, and NOT read off that map
+  // (which returns `CardFilter | undefined` and would need a guard nothing prints —
+  // the anchor fixes the noun). ⚠️ The local is `upToHeads` and the guard is ONE
+  // `if`/`return` line rather than the family's multi-line ternary (D446/D452/D463/
+  // D476's rows anchor on that ternary's bytes; a byte-twin would make their `find`
+  // occur twice — D404's wrong-arm trap).
+  const upToHeads = ATTACK_COIN_RETRIEVAL_UP_TO_HEADS.exec(effect);
+  if (upToHeads !== null) {
+    const n = Number(upToHeads[1]);
+    if (n < 2 || n > MAX_PRINTED_FLIPS) return null;
+    return { kind: "retrievalUpToHeads", flips: { kind: "printed", count: n }, filter: { kind: "anyCard" }, dest: "hand" };
   }
   // 🛑 **D499 — THE BARE CANCEL RUNS FIRST, AND THE ORDER IS BEHAVIOUR RATHER THAN
   // LEGIBILITY (D467).** Under the shipped build the two anchors are STRUCTURALLY
@@ -22170,6 +22230,13 @@ const ATTACK_OPPONENT_DISCARDS_HAND_MORE =
 //   · "**Flip 3 coins.** Attach a number … up to the number of heads…" (1) — a
 //     `programPerHeads` over a PARKING op, which nothing in the pool has yet
 //     printed and which `deriveAttackCoinFlip` (a different reader) would own.
+//     🆕🆕🆕 **D525 — THE PREMISE WAS FALSE, AND THE HAND TWIN IS BUILT.** Not a
+//     `programPerHeads` at all: the count is an "up to" CEILING, and the hand twin
+//     one verb over (corpus FILE LINE 219) now derives on `deriveAttackCoinFlip` as
+//     `retrievalUpToHeads` — ONE `discardPileRetrieval` op whose `max` is the heads
+//     count, written at `attack.ts`'s fold. THIS row (the attach twin, corpus FILE
+//     LINE 215) STAYS refused: it is a DIFFERENT op (`attachEnergyFrom`) with one
+//     printing, and D442/D448's rule holds it out until a second prints.
 //
 // ⚠️ AND THE ARM IS DELIBERATELY WIDER THAN THE LEGAL POOL. "1 of your Pokémon"
 // has **5 catalog printings and 0 legal** — every one rotated — and it is read
@@ -23012,6 +23079,14 @@ function attachFromZoneProgram(
 //     leading clause is a property of NEITHER the zone NOR the verb — it is a
 //     property of the per-heads FOLD, which recurs across both** and is the same
 //     unanswered `attack.ts` question D234 named and did not answer.
+//     🆕🆕🆕 **D525 — THE PREMISE WAS FALSE: `attack.ts`'s fold question WAS
+//     answered** (the fold chain has appended `programPerHeads`'s copies to
+//     `program` since D130), and this slice SPENDS the answer: the "Put" twin
+//     (corpus FILE LINE 219, 2 printings) is BUILT as
+//     `AttackCoinFlip.retrievalUpToHeads` — ONE `discardPileRetrieval { anyCard,
+//     hand, max: heads }` appended at the fold, the interpreter's own "up to" park.
+//     The "Attach" twin (FILE LINE 215, 1 printing, `attachEnergyFrom`) stays
+//     refused as a different op with one printing (D442/D448).
 //
 // WHAT THIS ANCHOR READS — 10 of the 16 legal printings, on 5 of the 8 sentences:
 //   • "Put a Supporter card … into your hand."            **3** (`sv06-055`,

@@ -168,8 +168,17 @@ const DIG_A_LITTLE = "Flip a coin. If heads, discard the top card of your oppone
     CONSEQUENT (a heads count read as an "up to" ceiling by one op, not a repeat) and by
     nothing else. ⚠️ **THE BYTE PINS ON THE ROW THAT LEFT ARE KEPT, NOT DELETED** — D463's
     rule read the other way round: they were never evidence the sentence was refused, they are
-    evidence it is the sentence the CORPUS prints. */
-const OUT_OF_SCOPE = [
+    evidence it is the sentence the CORPUS prints.
+
+    🆕🆕🆕 **D525 — THE SET IS NOW EMPTY, AND THE ARRAY IS RENAMED RATHER THAN DELETED.** Line
+    219 leaves through `AttackCoinFlip.retrievalUpToHeads` — exactly the "up to" ceiling by ONE
+    op this block named: `attack.ts` writes the heads count into the shipped
+    `discardPileRetrieval`'s `max` at the fold, one park, never a repeat. `OUT_OF_SCOPE` is
+    `BUILT_AT_D525` (D463/D476's pattern): an EMPTY array would make the loop below go QUIET
+    rather than red, so the row stays in it and the loop asserts the reading — with the four
+    other readers STILL null as the control and a one-token near-miss FALSE (D418's second
+    half). The corpus pin (2 printings) stays. */
+const BUILT_AT_D525 = [
   "Flip 3 coins. Put a number of cards up to the number of heads from your discard pile into your hand.",
 ] as const;
 
@@ -509,7 +518,7 @@ describe("the printed sentences — the fixture-text-verbatim guards", () => {
     // for 322 decisions. A byte pin on an invented string is green by construction;
     // membership in the measured corpus is not.
     const corpus = new Map(legalAttackCorpus().map(([units, sentence]) => [sentence, units]));
-    for (const sentence of [...OUT_OF_SCOPE, ...BUILT_AT_D476, ...BUILT_AT_D463]) {
+    for (const sentence of [...BUILT_AT_D525, ...BUILT_AT_D476, ...BUILT_AT_D463]) {
       expect(sentence).toBe(sentence.trim());
       expect(sentence).not.toContain(RSQUO);
       expect(corpus.has(sentence), `not a corpus sentence: ${sentence}`).toBe(true);
@@ -522,7 +531,7 @@ describe("the printed sentences — the fixture-text-verbatim guards", () => {
     }
     // The printing counts, off the corpus rather than off this file: three singletons
     // and one pair. A set that drifted onto a different sentence would move these.
-    expect(OUT_OF_SCOPE.map((sentence) => corpus.get(sentence))).toEqual([2]);
+    expect(BUILT_AT_D525.map((sentence) => corpus.get(sentence))).toEqual([2]);
     expect(BUILT_AT_D476.map((sentence) => corpus.get(sentence))).toEqual([1]);
     expect(BUILT_AT_D463.map((sentence) => corpus.get(sentence))).toEqual([1, 1]);
 
@@ -533,17 +542,17 @@ describe("the printed sentences — the fixture-text-verbatim guards", () => {
     expect(utf8Bytes(BUILT_AT_D476[0])).toBe(67);
     expect(BUILT_AT_D476[0]).toContain("For each tails,");
     expect(
-      [...OUT_OF_SCOPE, ...BUILT_AT_D476, ...BUILT_AT_D463].filter((s) =>
+      [...BUILT_AT_D525, ...BUILT_AT_D476, ...BUILT_AT_D463].filter((s) =>
         s.includes("For each tails,"),
       ),
     ).toHaveLength(1);
-    // OUT_OF_SCOPE[0] — Oinkologne, line 219: shares WUGTRIO'S OPENING verbatim — "Flip 3
+    // BUILT_AT_D525[0] (was OUT_OF_SCOPE[0] until D525) — Oinkologne, line 219: shares WUGTRIO'S OPENING verbatim — "Flip 3
     // coins." — and nothing else. A heads COUNT read as an "up to" ceiling by one op, not a
     // repeat, which is why it is refused by the consequent rather than by the count.
-    expect(OUT_OF_SCOPE[0].startsWith("Flip 3 coins. ")).toBe(true);
+    expect(BUILT_AT_D525[0].startsWith("Flip 3 coins. ")).toBe(true);
     expect(UNDERSEA_TUNNEL.startsWith("Flip 3 coins. ")).toBe(true);
-    expect(OUT_OF_SCOPE[0]).not.toContain("For each heads");
-    expect(OUT_OF_SCOPE[0].length).toBe(100);
+    expect(BUILT_AT_D525[0]).not.toContain("For each heads");
+    expect(BUILT_AT_D525[0].length).toBe(100);
     // 🆕🆕 D463 — BUILT_AT_D463[0], line 200: the PRINTED-count `discardEnergy`. It names a
     // Pokémon, so its bytes exceed its length by one (the é). The byte pins are KEPT after the
     // build, for D452's reason read the other way round: they were never evidence the sentence
@@ -1043,18 +1052,34 @@ describe("constructed near-misses stay NULL", () => {
     }
   });
 
-  it("leaves the ONE out-of-scope printing on the loud path, on EVERY reader", () => {
+  it("🆕🆕🆕 D525 — the last out-of-scope printing is BUILT: the coin reader derives `retrievalUpToHeads`, the four other readers STILL refuse it (the control), and a one-token near-miss is still refused by ALL", () => {
     // 🆕 D452 — and the strong form: not "on the five readers this file imports"
     // but on the WHOLE live surface, taken off the module. A refusal rung that names
     // its own reader list is a rung that goes QUIET when a thirteenth reader claims
     // the sentence (D418), and this is the file where that would be least visible.
-    for (const sentence of OUT_OF_SCOPE) {
-      expect(resolvedByAnyReader(sentence), `newly resolved: ${sentence}`).toBe(false);
-      expect(deriveAttackCoinFlip(sentence)).toBeNull();
+    // 🆕🆕🆕 **D525 — INVERTED, WITH ITS CONTROL IN THE SAME `it` (D418's second half).** The
+    // `toBe(false)` this loop used to hold was a claim-false rung; `toBe(true)` is true under
+    // `D498-resolution-compares-against-undefined` too, so the `into your deck` near-miss below
+    // (false on the real build, TRUE under A2) is what keeps this rung armed, and the four
+    // sibling readers' nulls are what says ONE reader owns the sentence.
+    for (const sentence of BUILT_AT_D525) {
+      expect(resolvedByAnyReader(sentence), `not resolved: ${sentence}`).toBe(true);
+      expect(deriveAttackCoinFlip(sentence)).toEqual({
+        kind: "retrievalUpToHeads",
+        flips: { kind: "printed", count: 3 },
+        filter: { kind: "anyCard" },
+        dest: "hand",
+      });
       expect(deriveAttackEffect(sentence)).toBeNull();
       expect(deriveAttackDamageBonus(sentence)).toBeNull();
       expect(deriveAttackDamageMultiplier(sentence)).toBeNull();
       expect(deriveAttackRequirement(sentence)).toBeNull();
+      // THE CONTROL: one token over (`deck` for `hand`) nothing reads it — false on the real
+      // build, true under A2.
+      const nearMiss = sentence.replace("into your hand.", "into your deck.");
+      expect(nearMiss).not.toBe(sentence);
+      expect(resolvedByAnyReader(nearMiss), `near-miss resolved: ${nearMiss}`).toBe(false);
+      expect(deriveAttackCoinFlip(nearMiss)).toBeNull();
     }
     // 🆕🆕 **D476 — THE OTHER HALF OF WHAT THIS LOOP USED TO COVER, INVERTED IN THE SAME
     // RUNG.** Line 217 used to sit in the array above; the null it asserted is replaced by a

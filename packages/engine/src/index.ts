@@ -1305,6 +1305,10 @@ import type { GameState, Seat } from "./types";
     discards a RANDOM card from the hand (the first EffectOp that would consume
     `state.rngState`). Oinkologne sv03-184 shares the opening and not the shape — a
     heads COUNT read as an "up to" ceiling by one op. All three stay loudly unmapped,
+    🆕🆕🆕 **D525 — BUILT: Oinkologne's ceiling is `AttackCoinFlip.retrievalUpToHeads`**
+    (corpus FILE LINE 219, 2 legal printings; the other two landed at D452/D463), spent
+    at the fold as ONE `discardPileRetrieval { anyCard, hand, max: heads }` — the
+    "one op" this paragraph named. "All three stay loudly unmapped" is history.
     and untilTailsFlip.test.ts's end-to-end witness was RE-POINTED from Gyarados
     (which this slice maps) onto Krookodile rather than deleted.
 
@@ -20018,6 +20022,74 @@ import type { GameState, Seat } from "./types";
     `expect(manifest.version)`, `it(…)` titles, the declaration and `package.json` —
     **not** as a value-keyed grep — because a value-keyed grep is precisely the mechanism
     that ate D500's heading.)
+    🆕🆕🆕 engineVersion 0.411.0 → **0.412.0** (D525 — THE HEADS COUNT READ AS AN "UP TO"
+    CEILING BY ONE OP — ZERO VOCABULARY, A SEVENTH `AttackCoinFlip` MEMBER.
+    `censusAttackCorpus.ts` **FILE LINE 219** (`legalAttackCorpus()` index 166) — *"Flip 3
+    coins. Put a number of cards up to the number of heads from your discard pile into your
+    hand."*, **1 sentence / 2 legal printings** (Oinkologne; sv03-184 is named for ONE of them
+    and neither id is on this checkout — the demonstrator is DECLARED, D425), claimed by
+    `deriveAttackCoinFlip` through ONE new anchor (`ATTACK_COIN_RETRIEVAL_UP_TO_HEADS`, beside
+    D476's) as `{kind:"retrievalUpToHeads", flips:{kind:"printed", count:3},
+    filter:{kind:"anyCard"}, dest:"hand"}` — the SEVENTH member — and spent at `attack.ts`'s
+    fold as ONE shipped op, `discardPileRetrieval {filter, dest, max: heads}`, APPENDED to the
+    program when heads > 0 (D130's carry); on zero heads nothing is appended and `program`
+    stays null (not an empty array, not a `max: 0` op — both would be `settleProgram`'s
+    different ending with the same result). The interpreter's own "up to" reading does the
+    rest: `chooseCards {min 0, max: H, dest: "hand"}` over the public pile when it holds a
+    card, `done` when it is empty.
+    🛑 **THE PRICE IS ONE ANCHOR, ONE ARM, ONE UNION MEMBER AND FOUR `attack.ts` SITES — ZERO
+    NEW VOCABULARY.** No op, op field, op value, filter, prompt, event, error code, registry
+    row, `FIXTURE_POOL` id, `interpreter.ts`, `redact.ts`, `log.ts`, `cardplay.ts`,
+    `packages/schema` or projection byte; reader surface 13. The member carries the op's
+    payload MINUS `max` because `ops` on the members beside it is fixed at DERIVE time and H
+    exists only at the flip site (`perHeadsEnergyDiscard.test.ts`'s argument for the
+    expansion, read the other way). The four sites: `printedFlips` (a total `switch` — the
+    member was TS2366 until its case was written, D474/D499's loudness), the fold chain (the
+    `else if` between `programPerHeads` and the damage fold — TS2339 on `per` until written),
+    `coinExplainsModifier` (a FOURTH exception: the member folds no damage and explains no
+    printed `+`/`×`; without the term it would silently claim the modifier and SUPPRESS a loud
+    row — driven by a DECLARED "30+" print), and `scaledBase` — NO edit: the member keeps the
+    printed base, dealt in FULL beside the park (measured: `DAMAGE_DEALT` precedes
+    `EFFECT_PENDING`).
+    🛑 **THE DESIGN, TAKEN: ONE `max: H` PARK.** Rejected: H declinable `max: 1` parks through a
+    zero-member `programPerHeads` (H prompts, H record parks for ONE printed question) and a
+    generic `programMaxHeads` substituting `'max' in op` at runtime (type-loose; the attach twin
+    at corpus FILE LINE 215 is a DIFFERENT op, `attachEnergyFrom`, and stays refused —
+    D442/D448's one-printing rule, held as the suite's control).
+    🛑 **THE REFUSAL ON RECORD HAD A FALSE PREMISE, AND IT IS ANNOTATED, NOT DELETED
+    (D178/D442).** `derivedDiscardRetrieval.test.ts`, `derivedDiscardAttach.test.ts` and the
+    D234 blocks in `effects.ts` called this *"the SAME unanswered `attack.ts` fold question"*
+    — the fold chain answers it (D130 appended; D460 and D499 appended again), and D525 spends
+    the answer. `perHeadsProgram.test.ts`'s `OUT_OF_SCOPE` → `BUILT_AT_D525` (D463/D476's
+    pattern; the array would otherwise be EMPTY and the loop quiet), its loop INVERTED with the
+    four other readers STILL null as the control plus an `into your deck` near-miss (D418's
+    second half); `derivedDiscardRetrieval`'s `UNREAD` keeps `deriveAttackEffect` null TRUE and
+    adds the coin reader non-null beside it; `censusAtHead` row 13's attack residue → `[]`
+    (the "refused by ALL SEVEN readers" sweep fails BY NAME otherwise). `--only` re-probed on
+    every row naming those suites as killers.
+    🛑 **`MATCH_RECORD_VERSION` HOLDS at 30.** `AttackCoinFlip` is never serialized (zero hits
+    for `coinFlip` in `types`/`matchRecord`/`redact`); what reaches the continuation is the
+    shipped op with a `number` max — driven in three directions (JSON round-trip and resume
+    from bytes; the pending op's FULL JSON equal to the string D237's reader emits for
+    *"Put up to 3 cards from your discard pile into your hand."*; a record whose `max` is
+    LOST refuses the pick a live one accepts — `BAD_EFFECT_CHOICE`).
+    ✅ Driven (`upToHeadsRetrieval.test.ts`, file-local demonstrator with DECLARED base 30 /
+    cost {C}, a DECLARED "30+" twin, P1's pile seeded 2 + 2 through `discardFromDeck`, the
+    faces surgered through `rngState`): 3 heads → ONE `chooseCards {min 0, max 3, dest hand}`
+    over the whole public pile, note *"Put up to 3 cards from your discard pile into your
+    hand."* (MEASURED), base 30 already dealt; pick 2 → both to the hand, `DISCARD_RETRIEVED
+    {dest: "hand"}` with exactly those uids, log row *"took 2 cards from their discard pile"*
+    (MEASURED), turn ends; 1 head → `max 1`, *"Put a card from your discard pile into your
+    hand."* (MEASURED singular); 0 heads → no park, 30 dealt, turn ends; 2 heads over an EMPTY
+    pile → no park; decline → nothing moves; `rngState` steps exactly 3 with one
+    `ATTACK_EFFECT_COIN_FLIP` row per coin; replay by `rngState`; the opponent's redacted view
+    gets `prompt: null` and sees every candidate in `board.opponent.discard` (public); a Weak
+    defender pays 60; the index-1 control neither flips nor parks.
+    Census, with units: `BUILT.attack` 1642 → 1644; built sentences 577 → 578 / 640; residue
+    63/90 → 62/88; reader 551/1592 → 552/1594 (registry 10/16, gate 5/13, trailing 11/21
+    unmoved; sum 1,644); raw reader-only residue 89/140 → 88/138; `OPAQUE` 46/68 → 45/66 at
+    SUBMAX=4, 27/43 → 26/41 at SUBMAX=12 — the row was OPAQUE at BOTH caps. ⚠️ The sentence
+    step is 1 and the PRINTING step is 2 — the two chains move by different amounts.)
     🆕🆕🆕 engineVersion 0.410.0 → **0.411.0** (D524 — THE PURPOSE-CONNECTIVE OPTIONAL-COST
     BOOST WITH THE ALL-SELF-ENERGY-TO-HAND COST — ZERO VOCABULARY. `censusAttackCorpus.ts`
     **FILE LINE 652** (`legalAttackCorpus()` index 599) — *"You may put all Energy attached to
@@ -22150,7 +22222,7 @@ import type { GameState, Seat } from "./types";
     WITNESS** — the count was re-derived every slice and the word *"three"* was carried.
     A successor of this slice inherits **81 / 61 / 17** again, over **FIVE** history
     occurrences: those four plus `deckMillFilteredScale.test.ts`'s own header arrow.) */
-export const engineVersion = "0.411.0";
+export const engineVersion = "0.412.0";
 
 export type {
   ApplyResult,

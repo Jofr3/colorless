@@ -230,7 +230,7 @@ const UNREAD: readonly (readonly [string, number, string])[] = [
   [
     "Flip 3 coins. Attach a number of Basic {L} Energy cards up to the number of heads from your discard pile to your Benched Pokémon in any way you like.",
     1,
-    "a `programPerHeads` over a PARKING op — a shape nothing in the pool has printed, and owned by `deriveAttackCoinFlip`, a different reader",
+    "the batch op `attachEnergyFrom` under a heads CEILING — a DIFFERENT op from the discard-to-hand twin, which is BUILT at D525 on `deriveAttackCoinFlip` as `retrievalUpToHeads` (one `discardPileRetrieval` with `max: heads`); this row stays refused as ONE printing of a second op (D442/D448), not as an unprinted shape",
   ],
 ] as const;
 

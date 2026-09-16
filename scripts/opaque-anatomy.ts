@@ -56,7 +56,9 @@
  *    builds today, and 🆕🆕🆕 **D508 made `NAMED-ATTACK` the sixth by BUILDING one
  *    of its rows** rather than by re-reading the column. FIVE of the six were
  *    refuted the day this file was written; the sixth was refuted by a slice, which
- *    is the § C failure mode the gate was installed to force.
+ *    is the § C failure mode the gate was installed to force. 🆕🆕🆕 **D525 made
+ *    `VARIABLE-MAX` the SEVENTH, the same way** — by building corpus FILE LINE 219
+ *    (the heads-count ceiling) — and the gate fired exactly as at D508.
  *
  * ⚠️ **AND THE BIGGEST REFUTATION IS THE ONE THAT LOOKED MOST OBVIOUS.** The
  * single most plausible story about `OPAQUE` — *"it is the continuing-effect
@@ -85,7 +87,11 @@
  *   one alternative `any number of` and its built side goes to 5 sentences / 12
  *   printings and it is refuted. That is not a flaw to be hidden — it is why
  *   `ANY-NUMBER-OF` ships beside it as a declared `CO-MARKER`, so the sensitivity
- *   is visible in the output rather than in this paragraph.
+ *   is visible in the output rather than in this paragraph. 🆕🆕🆕 **D525 — AND
+ *   `VARIABLE-MAX` IS NOW A CO-MARKER AS SPELLED**, refuted by a BUILD (corpus FILE
+ *   LINE 219, `retrievalUpToHeads`): its built side is 1 sentence / 2 printings and
+ *   §C of the gate said so on the first run after the arm — the paragraph above
+ *   is kept as the record of what the marker was when it was a blocker.
  * · 🛑 **`UNEXPLAINED` IS THE HONEST RESIDUAL AND IT IS THE BIGGEST CLASS OF THE
  *   FAR HALF.** 31 sentences / 41 printings carry no marker this instrument
  *   holds. That number is meant to stay visible; the alternative — inventing a
@@ -335,9 +341,21 @@ export const MARKERS: readonly Marker[] = [
   {
     name: "VARIABLE-MAX",
     rx: /up to the number of|number of cards up to/,
-    verdict: "blocker",
+    // 🆕🆕🆕 D525 — REFUTED BY A BUILD, THE SEVENTH CO-MARKER, and the second refuted the
+    //    way `NAMED-ATTACK` was (by a slice, not by the column on the day). Corpus FILE
+    //    LINE 219, *"Flip 3 coins. Put a number of cards up to the number of heads from
+    //    your discard pile into your hand."* (2 printings), is BUILT on `deriveAttackCoinFlip`
+    //    as `AttackCoinFlip.retrievalUpToHeads`: `attack.ts` writes the heads count into
+    //    the shipped `discardPileRetrieval`'s `max` at the fold, so the maximum IS computed
+    //    at resolve time from a flip count — exactly what `needs` said no shipped op could
+    //    take. The gate's §C fired on the first run after the arm was written (a blocker
+    //    with a non-empty built side), which is the failure mode it was installed to force.
+    //    Kept in position with the verdict corrected (D178): what is left under this marker
+    //    is the ATTACH twin (FILE LINE 215, `attachEnergyFrom`, 1 printing) — refused as a
+    //    DIFFERENT op with one printing (D442/D448), not as a variable maximum.
+    verdict: "co-marker",
     needs:
-      "a choice whose MAXIMUM is computed at resolve time from the board or from a flip count, where every shipped `up to N` op takes a printed integer",
+      "nothing this marker can name since D525 — the heads-count ceiling ships as `retrievalUpToHeads` (one `discardPileRetrieval` with `max: heads` written at the fold). [D525 corrected. WAS: \u201ca choice whose MAXIMUM is computed at resolve time from the board or from a flip count, where every shipped `up to N` op takes a printed integer\u201d]",
   },
   // ── THE FIVE THAT WERE WRITTEN AS BLOCKERS AND REFUTED BY THEIR OWN CONTROL
   //    ON THE DAY THIS FILE WAS WRITTEN. (`NAMED-ATTACK` above is the sixth

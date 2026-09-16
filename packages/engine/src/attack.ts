@@ -921,6 +921,10 @@ function printedFlips(coinFlip: AttackCoinFlip): AttackFlipCount {
     case "bonusOnHeads":
     case "perHeads":
     case "programPerHeads":
+    // 🆕🆕🆕 D525 — the "up to" ceiling carries its printed count like the four
+    // above; the switch is what made the member a MISSING CASE (TS2366) until this
+    // line was written, which is the loudness the block above was rewritten for.
+    case "retrievalUpToHeads":
     case "perHeadsThenThreshold":
       return coinFlip.flips;
   }
@@ -2193,11 +2197,17 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
   // printings is UNRESOLVED (D425) and deliberately not the reason: the default —
   // riding the `!== "cancelOnTails"` test — would have been silently wrong the first
   // time such a printing arrived with a marker, exactly as D130's note predicted.
+  // 🆕🆕🆕 D525 — THE FOURTH EXCEPTION, from the same rule: `retrievalUpToHeads` folds
+  // no damage (its heads go into a park's `max`) and so explains no printed `+`/`×`;
+  // claiming the modifier for it would SUPPRESS a loud row the engine has not earned.
+  // Neither printing carries a marker on this checkout (D425: unresolved, not the
+  // reason) — the term is written from the rule, exactly as D499's was.
   const coinExplainsModifier =
     coinFlip !== null &&
     coinFlip.kind !== "cancelOnTails" &&
     coinFlip.kind !== "cancelOnTailsElseProgram" &&
-    coinFlip.kind !== "programPerHeads";
+    coinFlip.kind !== "programPerHeads" &&
+    coinFlip.kind !== "retrievalUpToHeads";
   // 🆕🆕 D383 adds NO term and NARROWS one, which is D130's rule applied to a
   // widened reading rather than to a new reader. The `moreDamage` payoff consumes a
   // printed "+" marker (`140+`) and is exactly what explains it; the `benchSnipe`
@@ -2465,6 +2475,26 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
       // different ending with the same result, and "different ending" is how a
       // no-op grows a KO sweep it did not have.
       program = expanded.length > 0 ? expanded : null;
+    } else if (coinFlip.kind === "retrievalUpToHeads") {
+      // 🆕🆕🆕 D525 — THE "UP TO" CEILING: the heads count is spent into ONE shipped
+      // op's `max`, not into N copies of an op. `ops` cannot carry H (it is fixed at
+      // derive time, `perHeadsEnergyDiscard.test.ts`'s argument), so the member carries
+      // the op's payload MINUS `max` and this is the one place the number can be
+      // written. APPENDED to whatever program the attack already had (D130's carry —
+      // null on both printings, asserted rather than assumed in
+      // `upToHeadsRetrieval.test.ts`), never assigned over it. On ZERO heads nothing is
+      // appended and `program` stays what it was: NOT an empty array, which would route
+      // the attack through `settleProgram` to say nothing — a different ending with the
+      // same result (the `programPerHeads` block's rule one branch up); and NOT a
+      // `max: 0` op, which the interpreter would answer `done` for the same different
+      // ending. The interpreter's own "up to" reading does the rest: `chooseCards{min 0,
+      // max: heads}` over the public pile when it holds a card, `done` when it is empty.
+      if (heads > 0) {
+        program = [
+          ...(program ?? []),
+          { op: "discardPileRetrieval", filter: coinFlip.filter, dest: coinFlip.dest, max: heads },
+        ];
+      }
     } else {
       coinBonus = heads * coinFlip.per;
     }

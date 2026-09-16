@@ -761,7 +761,7 @@ describe("D518 §6 — `MATCH_RECORD_VERSION` HOLDS at 30: there is no carrier a
   });
 
   it("the engine version moved with the behaviour, and `manifest.version` agrees", () => {
-    expect(engineVersion).toBe("0.411.0");
-    expect(manifest.version).toBe("0.411.0");
+    expect(engineVersion).toBe("0.412.0");
+    expect(manifest.version).toBe("0.412.0");
   });
 });

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { matchesFilter } from "./cards";
-import { deriveAttackEffect } from "./effects";
+import { deriveAttackCoinFlip, deriveAttackEffect } from "./effects";
 import type { CardFilter, EffectOp, GameEvent, GameState } from "./index";
 import { logFromEvents } from "./log";
 import {
@@ -274,6 +274,16 @@ const CATALOG_ONLY: readonly (readonly [string, number, EffectOp])[] = [
     count and the reason. Pinned derived-to-null so the residue is a fact about
     the code rather than a note in a doc.
 
+    🆕🆕🆕 **D525 — RE-SCOPED, NOT DELETED: THIS FAMILY (`deriveAttackEffect`) STILL DOES
+    NOT READ IT, AND THAT IS STILL TRUE; THE COIN READER OWNS IT SINCE D525.** The row is
+    BUILT as `AttackCoinFlip.retrievalUpToHeads` (anchor `ATTACK_COIN_RETRIEVAL_UP_TO_HEADS`,
+    `upToHeadsRetrieval.test.ts`), spent at `attack.ts`'s fold as ONE `discardPileRetrieval
+    {anyCard, hand, max: heads}` — the SAME op this family emits, with the count written at
+    the flip site. The `deriveAttackEffect` null below is KEPT (one reader owns the sentence)
+    and `deriveAttackCoinFlip` is asserted non-null beside it. ⚠️ The paragraph below said the
+    `attack.ts` fold question was "unanswered" — it was answered at D130 (`programPerHeads`
+    appends to `program`), and D525 spent the answer.
+
     ⚠️ **ONE BLOCKER, ONE SENTENCE — THE SMALLEST RESIDUE ON THE WHOLE BACKLOG
     PAGE**, and it is not a noun at all: D237 left two blockers here and D238's
     brace code took the larger of them, which is the entire reason that slice
@@ -284,7 +294,7 @@ const UNREAD: readonly (readonly [string, number, string])[] = [
   [
     "Flip 3 coins. Put a number of cards up to the number of heads from your discard pile into your hand.",
     2,
-    "a `programPerHeads` over a PARKING op — owned by `deriveAttackCoinFlip`, a different reader, and the SAME unanswered `attack.ts` fold question D234's residue named one verb over",
+    "BUILT at D525 on `deriveAttackCoinFlip` (a different reader) as `retrievalUpToHeads` — ONE `discardPileRetrieval` with `max: heads` written at `attack.ts`'s fold, NOT a `programPerHeads` repeat; this family still does not read it, by design",
   ],
 ] as const;
 
@@ -453,6 +463,8 @@ describe("the anchor — seven printed sentences, ONE arm", () => {
     expect(UNREAD).toHaveLength(1);
     expect(UNREAD.reduce((sum, [, legal]) => sum + legal, 0)).toBe(2);
     for (const [text] of UNREAD) expect(deriveAttackEffect(text), text).toBeNull();
+    // 🆕🆕🆕 D525 — and the coin reader DOES read it now (the same op, the count at the fold).
+    for (const [text] of UNREAD) expect(deriveAttackCoinFlip(text)?.kind, text).toBe("retrievalUpToHeads");
     // 14 + 2 = 16, which is still exactly what the backlog row measured. D237
     // read 10 of the 16 and D238 takes the 4 it had pinned on the brace code —
     // the SAME total, re-derived a second time by a second slice.
