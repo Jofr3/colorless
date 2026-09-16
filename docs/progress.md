@@ -3,7 +3,7 @@
 > Update this at the **end of every session**: bump the status table, append a
 > session-log entry, and rewrite the **Resume point** to the next concrete action.
 
-**Last updated:** 2026-09-16 — build session #464 (**P3-M5 — D524, *the purpose-connective optional-cost boost with the all-self-Energy-to-hand cost (“You may put all Energy attached to this Pokémon into your hand to have this attack do 80 more damage.”) — ZERO vocabulary.*** Built `censusAttackCorpus.ts` **file line 652** (`legalAttackCorpus()` index 599) — **1 sentence / 1 legal printing** — as `{cond:{kind:"yourActiveEnergyAtLeast", count:1}, ops:[{op:"discardEnergy", from:"yourActive", filter:{kind:"anyEnergy"}, count:"all", to:"hand"}], payoff:{kind:"moreDamage", bonus:80}}`: a SECOND skeleton on `deriveAttackOptionalCostBoost` (`OPTIONAL_COST_PURPOSE_BOOST`, the purpose connective beside D381's “. If you do, ”) over ONE new cost-table row (`OPTIONAL_COST_PUT_ALL_SELF_ENERGY_TO_HAND`), the assembler and the read site UNCHANGED — D405's op at `all`, D383's gate at 1, D381's payoff, no `interpreter.ts` byte. 🛑 **`count: 1` is the payability of `count: "all"` (a non-empty set), not D385's invented arity; the payoff table is NOT widened to `(does|do)` (D190b) — a second SKELETON, not a third connective; the D405 refusal (“refuses it three times over”) stays true of its anchor and is annotated in place; `selfEnergyToHand`'s rung INVERTED with a `does`-for-`do` CONTROL so it still kills A2 (D418's second half, paid and probed).** Engine **0.410.0 → 0.411.0**, `MATCH_RECORD_VERSION` **HELD at 30**; corpus **2,660 → 2,670** (+10 killed, +0 declared; probe **10 killed · 0 survivors · 0 GAP · 0 error**); `check` GREEN, OBSERVED: **`Test Files 507 passed (507) / Tests 11639 passed (11639) / CHECK_EXIT=0`**; residue **64/91 → 63/90**; `BUILT.attack` **1641 → 1642**; `OPAQUE` **47/69 → 46/68** at `SUBMAX=4` (**28/44 → 27/43** at `SUBMAX=12`); the NAMED-FRACTION ratio **26 → 27 %** (24/90, measured); archive ratchet **193 → 194**. ⚠️ **NOT COMMITTED; WHOLE-CORPUS SWEEP PENDING** — predicted `2620 killed · 50 known survivor(s) · 0 GAP(S) · 0 stale · 0 skipped(dirty) · 0 clobber(s) · 0 error(s)` over 2,670 (`+10 killed, +0 declared`).)
+**Last updated:** 2026-09-16 — build session #464 (**P3-M5 — D524, *the purpose-connective optional-cost boost with the all-self-Energy-to-hand cost (“You may put all Energy attached to this Pokémon into your hand to have this attack do 80 more damage.”) — ZERO vocabulary.*** Built `censusAttackCorpus.ts` **file line 652** (`legalAttackCorpus()` index 599) — **1 sentence / 1 legal printing** — as `{cond:{kind:"yourActiveEnergyAtLeast", count:1}, ops:[{op:"discardEnergy", from:"yourActive", filter:{kind:"anyEnergy"}, count:"all", to:"hand"}], payoff:{kind:"moreDamage", bonus:80}}`: a SECOND skeleton on `deriveAttackOptionalCostBoost` (`OPTIONAL_COST_PURPOSE_BOOST`, the purpose connective beside D381's “. If you do, ”) over ONE new cost-table row (`OPTIONAL_COST_PUT_ALL_SELF_ENERGY_TO_HAND`), the assembler and the read site UNCHANGED — D405's op at `all`, D383's gate at 1, D381's payoff, no `interpreter.ts` byte. 🛑 **`count: 1` is the payability of `count: "all"` (a non-empty set), not D385's invented arity; the payoff table is NOT widened to `(does|do)` (D190b) — a second SKELETON, not a third connective; the D405 refusal (“refuses it three times over”) stays true of its anchor and is annotated in place; `selfEnergyToHand`'s rung INVERTED with a `does`-for-`do` CONTROL so it still kills A2 (D418's second half, paid and probed).** Engine **0.410.0 → 0.411.0**, `MATCH_RECORD_VERSION` **HELD at 30**; corpus **2,660 → 2,670** (+10 killed, +0 declared; probe **10 killed · 0 survivors · 0 GAP · 0 error**); `check` GREEN, OBSERVED: **`Test Files 507 passed (507) / Tests 11639 passed (11639) / CHECK_EXIT=0`**; residue **64/91 → 63/90**; `BUILT.attack` **1641 → 1642**; `OPAQUE` **47/69 → 46/68** at `SUBMAX=4` (**28/44 → 27/43** at `SUBMAX=12`); the NAMED-FRACTION ratio **26 → 27 %** (24/90, measured); archive ratchet **193 → 194**. ✅ **Committed as `e95b2547`. WHOLE-CORPUS SWEEP GREEN AND EXACTLY AS PREDICTED IN EVERY NUMBER: `2620 killed · 50 known survivor(s) · 0 GAP(S) · 0 stale · 0 skipped(dirty) · 0 clobber(s) · 0 error(s) · 11747.0s total`** — `+10 killed, +0 declared`, the **eighty-fifth** consecutive slice to commit its number before the run and hit it. Completeness structural: **2,670 unique progress-line ids / 2,670 rows / 0 unmatched**, set-compared against `MUTANTS.map(m => m.id)` in both directions; the **eighty-sixth** consecutive clean run. `setsid` held for the **thirty-fifth** consecutive reuse. ✅ **D519 (9)'s instrument, used as written a fifth time**: the verdict enumeration was anchored to the indented verdict lines and read `2620 KILLED` / `50 SURVIVES(known)` and **nothing else** — the unanchored tally reads 5261 `KILLED` / 32 `STALE` / 3 `GAP` / 100 `SURVIVES(known)` off the survivor report's prose, which is exactly the trap the anchor exists for — and the 50 `SURVIVES(known)` ids are the declared `survives` set **exactly, both ways**. ⚠️ A SECOND instance of D519's phantom-diagnostic class, no new rule: mid-sweep the editor's language server reported six type errors in `optionalCostEnergyToHand.test.ts` (:445/:535/:560/:562/:564 — `'card'`/`'players'` do not exist) while `continuous.ts` was patched; the same lines at HEAD hold none of those identifiers.)
 
 **Last updated (was):** 2026-09-16 — build session #463 (**P3-M5 — D523, *the deck-destination discard-pile retrieval (“Shuffle … from your discard pile into your deck”) — ZERO vocabulary, and a refusal whose premise was FALSE OF THE LEGAL ATTACK COLUMN.*** Built `censusAttackCorpus.ts` **file line 485** (`legalAttackCorpus()` index 432), *“Shuffle up to 3 Basic {W} Energy cards from your discard pile into your deck.”* — **1 sentence / 1 legal printing** — as `[{op:"discardPileRetrieval", filter:{kind:"basicEnergy", energyType:"Water"}, dest:"deck", max:3}, {op:"shuffleDeck"}]`, PAL PAD's registry shape with the hand twin's OWN filter: ONE anchor (`ATTACK_DISCARD_SHUFFLE_BACK`, directly under D237's `ATTACK_DISCARD_RETRIEVAL`), ONE arm (directly after the D237 arm), ZERO new vocabulary, no `interpreter.ts` byte. 🛑 **The refusal on record (*“no attack sentence in the catalog spells the deck destination”*, the destination-table block and `derivedDiscardRetrieval.test.ts`'s “MEASURED absence” rung) was FALSE of the legal attack column and RIGHT in its rule (a different verb is a different family): the row spells it once, with the Shuffle verb, and gets its own anchor; the `Put` table and its type are unchanged, the rung kept and INVERTED (the `Put` control STAYS null), three prose sites corrected in place. The trailing `shuffleDeck` is REQUIRED (`retrieveMove`'s deck arm APPENDS) and is pinned three ways.** Engine **0.409.0 → 0.410.0**, `MATCH_RECORD_VERSION` **HELD at 30**; corpus **2,650 → 2,660** (+10 killed, +0 declared; probe **10 killed · 0 survivors · 0 GAP · 0 error**); `check` GREEN, OBSERVED: **`Test Files 506 passed (506) / Tests 11609 passed (11609) / CHECK_EXIT=0`**; residue **65/92 → 64/91**; `BUILT.attack` **1640 → 1641**; `OPAQUE` **48/70 → 47/69** at `SUBMAX=4` (**28/44** UNCHANGED at `SUBMAX=12`, where the row was SUBST-20, 4 → 3); archive ratchet **192 → 193**. ✅ **Committed as `9b0626af`. WHOLE-CORPUS SWEEP GREEN AND EXACTLY AS PREDICTED IN EVERY NUMBER: `2610 killed · 50 known survivor(s) · 0 GAP(S) · 0 stale · 0 skipped(dirty) · 0 clobber(s) · 0 error(s) · 11540.9s total`** — `+10 killed, +0 declared`, the **eighty-fourth** consecutive slice to commit its number before the run and hit it. Completeness structural: **2,660 unique progress-line ids / 2,660 rows / 0 unmatched**, set-compared against `MUTANTS.map(m => m.id)` in both directions; the **eighty-fifth** consecutive clean run. `setsid` held for the **thirty-fourth** consecutive reuse. ✅ **D519 (9)'s instrument, used as written a fourth time**: the verdict enumeration was anchored to the indented verdict lines and read `2610 KILLED` / `50 SURVIVES(known)` and **nothing else** — the unanchored tally reads 5241 `KILLED` / 32 `STALE` / 3 `GAP` / 100 `SURVIVES(known)` off the survivor report's prose, which is exactly the trap the anchor exists for — and the 50 `SURVIVES(known)` ids are the declared `survives` set **exactly, both ways**.)
 
@@ -681,19 +681,30 @@
 > Residue **64/91 → 63/90**, `BUILT.attack` **1641 → 1642**, `OPAQUE` **47/69 → 46/68** (gate, default
 > `SUBMAX=4`; **28/44 → 27/43** at `SUBMAX=12`, census — the row was OPAQUE at BOTH caps).
 >
-> 🛑 **(0) THE DEBT: D524 IS BUILT AND VERIFIED BUT NOT COMMITTED, AND ITS WHOLE-CORPUS SWEEP IS
-> PENDING.** Predicted figure, committed here BEFORE the run (D504): **`+10 killed, +0 declared`** —
-> `2620 killed · 50 known survivor(s) · 0 GAP(S) · 0 stale · 0 skipped(dirty) · 0 clobber(s) · 0 error(s)`
-> over **2,670**. The close-out's obligation, in order: `git status --porcelain` (only the intended
-> files, no mutant left applied), commit, `git status --porcelain` again IMMEDIATELY before
-> `setsid nohup bun scripts/mutation/run.ts > "$CLAUDE_JOB_DIR/tmp/sweep-D524.log" 2>&1 < /dev/null &`
-> (D489), poll with `ps`, then read the verdict with D519 (9)'s instrument AS WRITTEN — enumerate the
-> indented verdict lines, anchor, set-compare the `SURVIVES(known)` ids against
-> `MUTANTS.filter(m => m.survives).map(m => m.id)` in BOTH directions, and never grep for the token
-> you expect (the unanchored tally of D523's log read `5241 KILLED · 32 STALE · 3 GAP` off the
-> survivor report's prose). Completeness structural: 2,670 unique progress-line ids / 2,670 rows /
-> 0 unmatched. If the figure lands, paste it out of the log into the header stamp, the status row,
-> this block and the session-log entry, never retyped.
+> ✅ **(0) THE DEBT IS PAID — D524 IS COMMITTED (`e95b2547`) AND ITS WHOLE-CORPUS SWEEP IS GREEN.**
+> Pasted out of the log, never retyped (D504):
+>
+> > ```
+> > 2620 killed · 50 known survivor(s) · 0 GAP(S) · 0 stale · 0 skipped(dirty) · 0 clobber(s) · 0 error(s) · 11747.0s total
+> > ```
+>
+> Exactly the number committed before the run — `+10 killed, +0 declared`, the **eighty-fifth**
+> consecutive slice to name its figure first and hit it, and the **eighty-sixth** consecutive clean
+> run. Completeness structural: **2,670 unique progress-line ids / 2,670 rows / 0 unmatched**,
+> set-compared against `MUTANTS.map(m => m.id)` in BOTH directions. `setsid` reuse **thirty-fifth**.
+>
+> ✅ **D519 (9)'s INSTRUMENT, USED AS WRITTEN, READ CLEANLY A FIFTH TIME.** The enumeration anchored
+> to the indented verdict lines returned `2620 KILLED` / `50 SURVIVES(known)` and **nothing else**; the
+> unanchored tally of the same log reads `5261 KILLED · 32 STALE · 3 GAP · 100 SURVIVES(known)` off
+> the survivor report's prose — the trap the anchor exists for, measured rather than assumed. The 50
+> `SURVIVES(known)` ids are the declared `survives` set **exactly, in both directions**. ⚠️ **A SECOND
+> INSTANCE of D519's phantom-diagnostic class — no new rule, the rule already stands** (conventions,
+> *"During a sweep, nothing that reads the working tree is trustworthy"*): mid-sweep the editor's
+> language server reported six type errors in `optionalCostEnergyToHand.test.ts` (:445/:535/:560/:562/
+> :564 — `'card'`/`'players'` do not exist) while `continuous.ts` (174 corpus rows) was patched; the
+> same lines at HEAD hold none of those identifiers. 🛑 **Keep using the instrument on the next
+> slice's sweep**: enumerate, anchor, set-compare — never grep for the token you expect; and re-check
+> any mid-sweep diagnostic through `git show HEAD:` before acting on it.
 >
 > **(1) ALREADY VERIFIED INDEPENDENTLY.** `tsc -b --force` clean; `check` GREEN, OBSERVED **`Test Files 507 passed (507) / Tests 11639 passed (11639) / CHECK_EXIT=0`**;
 > `precheck` clean at **2,670** (run TWICE — at 2,660 the moment the arm was written, and at 2,670
@@ -772,26 +783,30 @@
 >
 > 🛑 **(7) PICKING THE NEXT ROW.** `SUBMAX=12 bun scripts/residue-census.ts`, ⚠️ **the census ranks
 > STRING DISTANCE, not COST**. 🛑 **`Ancient`/`Future`/`Tera` off the table, 61st slice.**
-> ✅ `:652` is BUILT (this slice, uncommitted) and is OFF the list. 🆕 **HOW D521–D524 WERE FOUND**: a
-> scout over the residue for a row under a refusal that named the WRONG CARRIER, a FALSE PREMISE, or
-> (this slice) a FAMILY whose reader already owned three of the row's four parts — four slices
-> running, ZERO vocabulary each, and every one cheaper than every row on the standing list below.
-> ✅ **Scout the 63-sentence residue again BEFORE pricing the standing list**, and for every refusal
-> that names a family, open that family's reader and count its tables against the row (2). The
-> standing list, each with its latest price — every price is a SCOUT's estimate, not a
-> measurement: **(a)** `:665`, *"Your opponent chooses 3 cards from their hand and shuffles those
-> cards into their deck."* (1 printing) — priced **low M** THREE times (one optional `to?: "deck"`
-> rider on the SHIPPED `opponentDiscardsFromHand` op, `effects.ts` ~22065; the refusal on record,
+> ✅ `:652` is BUILT (this slice, `e95b2547`, sweep GREEN) and is OFF the list. 🆕 **HOW D521–D524
+> WERE FOUND**: a census scout over the residue for a row under a refusal that named the WRONG
+> CARRIER, a FALSE PREMISE, or a FAMILY whose reader already owned most of the row — FOUR SESSIONS
+> RUNNING the scout's row was cheaper than every row on the standing list below (`:202` at D521,
+> `:293` at D522, `:485` at D523, `:652` at D524), ZERO vocabulary each. ✅ **Scout the 63-sentence
+> residue again BEFORE pricing the standing list**, and for every refusal that names a family, open
+> that family's reader and count its tables against the row (2). The standing list, each with its
+> latest price — every price is a SCOUT's estimate, not a measurement: **(a)** `:82`, Angelite's body
+> plus a trailing gate strip (3 legal printings) — priced **low M** at D524: the engine bytes are S,
+> but three D396 controls INVERT and five gate-count rungs step, and the printing step is 3 while
+> the sentence step is 1 (two chains stepping by different amounts — D431/D419);
+> **(b)** `:219`, *"Flip 3 coins. Put a number of cards up to the number of heads from your discard
+> pile into your hand."* (Oinkologne) — re-priced **low M** at D524: a SEVENTH `AttackCoinFlip` member
+> and four `attack.ts` sites (D523's S rested on an untaken design decision — H declinable `max: 1`
+> parks vs ONE `max: H` park — still untaken); **(c)** `:665`, *"Your opponent chooses 3 cards from their hand and shuffles those cards into
+> their deck."* (1 printing) — **low M** (one optional `to?: "deck"` rider on the SHIPPED
+> `opponentDiscardsFromHand` op, `effects.ts` ~22065; the refusal on record,
 > `opponentHandDiscard.test.ts` ~143, is *"the op prints no `to` field — D231"*: an optional field
 > defaulting to the shipped destination is D407's `energyOnSelf.zone` shape, and its `undefined` arm
-> is every shipped printing byte for byte — re-price THAT premise first); **(b)** `:219`, *"Flip 3
-> coins. Put a number of cards up to the number of heads from your discard pile into your hand."*
-> (2 printings; Oinkologne) — **S** at D523, but the price rests on a DESIGN DECISION nobody has
-> taken (H declinable `max: 1` parks, or ONE `max: H` park) — decide that first; **(c)** **SUBST-11,
-> the Hyper Fang named-attack override** — **low M** (four engine source files; check
-> `BLOCKED-NAMED-ATTACK`); **(d)** **SUBST-16, vulnerability** — **L** (a required `InPlayPokemon`
-> field, `MATCH_RECORD_VERSION` 30 → 31); **(e)** `:316` + `:324`, the cost-modifier pair — **M** at
-> the §8.2 cost seam; **(f)** the copy-attack family, 12 printings — BLOCKED; **(g)** `:607`, the
+> is every shipped printing byte for byte — re-price THAT premise first); **(d)** **SUBST-11, the
+> Hyper Fang named-attack override** — **M** across EIGHT files with a persisted-record rider (check
+> `BLOCKED-NAMED-ATTACK`); **(e)** **SUBST-16, vulnerability** — **L** (a required `InPlayPokemon`
+> field, `MATCH_RECORD_VERSION` 30 → 31); **(f)** `:316` + `:324`, the cost-modifier pair — **M** at
+> the §8.2 cost seam; **(g)** the copy-attack family, 12 printings — BLOCKED; **(h)** `:607`, the
 > `to itself` COMPOUND — blocked on the JOIN. ✅ **Before pricing**: anchors AND splitters at every
 > layer; read the sibling's PROGRAM and ARM; break the type and ask `tsc -b --force` (D518); grep the
 > refusal's NOUN *and TYPE* (D519 (3)); re-derive the refusal's PREMISE (D520 (2)); when it names a
@@ -25265,7 +25280,7 @@ the next api deploy (D18).
 |---|---|---|
 | backend-data | P1 | ✅ M1–M9 + P2-M1 + task-17 api deployed (Worker `9b1ec1d1`, 2026-07-16); OAuth secrets pending (user) |
 | deck-builder | P2 | ✅ ALL 19 tasks closed (task 17 landed + e2e-verified locally); only follow-ups left |
-| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D524, *the purpose-connective optional-cost boost with the all-self-Energy-to-hand cost — zero vocabulary; D381's reader given a second skeleton over one new cost-table row, D405's op at `all` behind D383's gate at 1.*** Corpus **2,660 → 2,670**; `check` GREEN, OBSERVED **`Test Files 507 passed (507) / Tests 11639 passed (11639) / CHECK_EXIT=0`**; engine **0.410.0 → 0.411.0**; `MATCH_RECORD_VERSION` **30 HELD**; residue **64/91 → 63/90**; `BUILT.attack` **1641 → 1642**; `OPAQUE` **47/69 → 46/68** at SUBMAX=4 (**28/44 → 27/43** at 12); probe **10 killed · 0 survivors · 0 GAP · 0 error**; ⚠️ NOT committed; whole-corpus sweep PENDING — predicted `2620 killed · 50 known survivor(s) · 0 GAP(S) · 0 stale · 0 skipped(dirty) · 0 clobber(s) · 0 error(s)` over 2,670, `+10 killed, +0 declared`.) |
+| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D524, *the purpose-connective optional-cost boost with the all-self-Energy-to-hand cost — zero vocabulary; D381's reader given a second skeleton over one new cost-table row, D405's op at `all` behind D383's gate at 1.*** Corpus **2,660 → 2,670**; `check` GREEN, OBSERVED **`Test Files 507 passed (507) / Tests 11639 passed (11639) / CHECK_EXIT=0`**; engine **0.410.0 → 0.411.0**; `MATCH_RECORD_VERSION` **30 HELD**; residue **64/91 → 63/90**; `BUILT.attack` **1641 → 1642**; `OPAQUE` **47/69 → 46/68** at SUBMAX=4 (**28/44 → 27/43** at 12); probe **10 killed · 0 survivors · 0 GAP · 0 error**; committed `e95b2547`; sweep GREEN and exact in every number: `2620 killed · 50 known survivor(s) · 0 GAP(S) · 0 stale · 0 skipped(dirty) · 0 clobber(s) · 0 error(s) · 11747.0s total` — `+10 killed, +0 declared`, eighty-sixth consecutive clean run, 2,670 / 2,670 / 0 unmatched.) |
 | simulator (prior) | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D523, *the deck-destination discard-pile retrieval — zero vocabulary, and a refusal whose premise was false of the legal attack column; Pal Pad's registry pair with the hand twin's own filter, the trailing shuffle REQUIRED because `retrieveMove` appends.*** Corpus **2,650 → 2,660**; `check` GREEN, OBSERVED **`506 passed (506) / 11609 passed (11609) / CHECK_EXIT=0`**; engine **0.409.0 → 0.410.0**; `MATCH_RECORD_VERSION` **30 HELD**; residue **65/92 → 64/91**; `BUILT.attack` **1640 → 1641**; `OPAQUE` **48/70 → 47/69** at SUBMAX=4 (28/44 unchanged at 12); probe **10 killed · 0 survivors · 0 GAP · 0 error**; committed `9b0626af`; sweep GREEN and exact in every number: `2610 killed · 50 known survivor(s) · 0 GAP(S) · 0 stale · 0 skipped(dirty) · 0 clobber(s) · 0 error(s) · 11540.9s total` — `+10 killed, +0 declared`, eighty-fifth consecutive clean run, 2,660 / 2,660 / 0 unmatched.) |
 | simulator (prior) | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D522, *the Stadium-gated Bench spread with the Stadium discard — zero vocabulary, and a refusal that was right about the op and wrong about the reader; a second hit is a body-set spread op, never a bonus, and arm 43 minus the `optional` was the whole carrier.*** Corpus **2,640 → 2,650**; `check` GREEN **505 / 11,578**; engine **0.408.0 → 0.409.0**; `MATCH_RECORD_VERSION` **30 HELD**; residue **66/93 → 65/92**; `BUILT.attack` **1639 → 1640**; `OPAQUE` **49/71 → 48/70** at SUBMAX=4; probe **10 killed · 0 survivors · 0 GAP · 0 error**; sweep GREEN and exact in every number: `2600 killed · 50 known survivor(s) · 0 GAP(S) · 0 stale · 0 skipped(dirty) · 0 clobber(s) · 0 error(s) · 11482.5s total` — `+10 killed, +0 declared`, eighty-fourth consecutive clean run, 2,650 / 2,650 / 0 unmatched.) |
 | simulator (prior) | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D521, *the two-coin both-tails recoil — zero vocabulary, and a refusal that named the wrong carrier; `AttackFlipCount` is a damage-count type, and a one-body recoil behind a coin is a gate.*** Corpus **2,631 → 2,640**; `check` GREEN **504 / 11,542**; engine **0.407.0 → 0.408.0**; `MATCH_RECORD_VERSION` **30 HELD**; residue **67/95 → 66/93**; `BUILT.attack` **1637 → 1639**; `OPAQUE` **50/73 → 49/71** at SUBMAX=4; sweep GREEN and exact in every number: `2590 killed · 50 known survivor(s) · 0 GAP(S) · 0 stale · 0 skipped(dirty) · 0 clobber(s) · 0 error(s) · 11400.4s total` — `+9 killed, +0 declared`, eighty-third consecutive clean run, 2,640 / 2,640 / 0 unmatched.) |
@@ -25528,8 +25543,42 @@ header arrow and heading assertion, the D275 ledger, `docs/`).
 `precheck` clean at **2,670**; `residue-census-gate` OK **§A 89 / 63 / 90**; `opaque-anatomy-gate`
 OK **46 / 68 at SUBMAX=4**; `splice-gate` and `partition-gate` OK; probes **10 · 1 · 8 killed, 0
 survivors**; arms **551/1592 · 10/16 · 5/13 · 11/21 = 1,642**; `mutants.ts` by record **10 added, 0
-removed, 4 changed**; corpus-wide `find === replace` sweep **zero**. ⚠️ **NOT committed; the
-whole-corpus sweep is the close-out's obligation** — see the resume point's (0).
+removed, 4 changed**; corpus-wide `find === replace` sweep **zero**.
+✅ **Committed as `e95b2547`; the whole-corpus sweep — GREEN and exact; see (9).**
+
+**(9) THE WHOLE-CORPUS SWEEP — GREEN, AND EXACTLY THE NUMBER COMMITTED BEFORE IT RAN.**
+Pasted out of the log, not retyped (D504):
+
+```
+2620 killed · 50 known survivor(s) · 0 GAP(S) · 0 stale · 0 skipped(dirty) · 0 clobber(s) · 0 error(s) · 11747.0s total
+```
+
+`+10 killed, +0 declared` — the **eighty-fifth** consecutive slice to commit its number before the
+run and hit it, and the **eighty-sixth** consecutive clean run. Completeness is structural rather
+than asserted: **2,670 unique progress-line ids / 2,670 rows / 0 unmatched**, set-compared against
+`MUTANTS.map(m => m.id)` in both directions. `setsid` held for the **thirty-fifth** consecutive reuse.
+
+✅ **D519 (9)'s INSTRUMENT, USED AS WRITTEN, A FIFTH TIME.** The verdict enumeration anchored to the
+indented verdict lines (`grep -oE '^  [A-Za-z0-9_.:-]+ +… +[A-Za-z()]+' | grep -oE '[A-Za-z()]+$' |
+sort | uniq -c`) returned `2620 KILLED` / `50 SURVIVES(known)` and **nothing else**. For contrast the
+UNANCHORED tally of the same file reads `5261 KILLED · 32 STALE · 3 GAP · 100 SURVIVES(known)` — every
+extra hit is the survivor report's own prose (each of the 50 survivors is printed twice: once as a
+verdict line, once as a `known survivor` report), which is the trap D519 named and the reason the
+anchor is not optional. The 50 `SURVIVES(known)` ids were set-compared against
+`MUTANTS.filter(m => m.survives).map(m => m.id)`: **50 / 50 / 0 either way**. Liveness was asked of
+the program (`pgrep -af '^bun ' | grep mutation/run` → 0) and of the log (`wc -c` 434,523, stable),
+not of a substring of the command line.
+
+⚠️ **A SECOND INSTANCE OF D519's PHANTOM-DIAGNOSTIC CLASS — recorded, not legislated.** While the
+sweep had `continuous.ts` patched (174 corpus rows target it), the editor's language server reported
+six type errors in the NEW suite `optionalCostEnergyToHand.test.ts` — lines 445/535/560/562/564,
+`'card'` / `'players'` *does not exist* — and the committed lines at HEAD (`git show HEAD:`) contain
+none of those identifiers (:445 is an `it(` title, :535 an `expect(attached(before))`, :560–:564 the
+log-row rungs). Exactly the shape D519 wrote down: a plausible, specific, entirely false diagnostic
+manufactured by a read of the tree mid-run. The rule already stands in conventions (*"During a sweep,
+nothing that reads the working tree is trustworthy — including tools you did not run"*); no new
+convention this session — the three instruments D519 wrote down were the three used, and each
+returned the number the log actually holds.
 
 ### 2026-09-16 — build session #463 (P3-M5 — D523)
 
