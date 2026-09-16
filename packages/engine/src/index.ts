@@ -20022,6 +20022,61 @@ import type { GameState, Seat } from "./types";
     `expect(manifest.version)`, `it(…)` titles, the declaration and `package.json` —
     **not** as a value-keyed grep — because a value-keyed grep is precisely the mechanism
     that ate D500's heading.)
+    🆕🆕🆕 engineVersion 0.412.0 → **0.413.0** (D526 — THE THREE-TIER HEADS LADDER — ZERO
+    VOCABULARY, AN EIGHTH `AttackCoinFlip` MEMBER SPENT AT THE EXISTING DAMAGE FOLD.
+    `censusAttackCorpus.ts` **FILE LINE 218** (`legalAttackCorpus()` index 165) — *"Flip 3
+    coins. If 1 of them is heads, this attack does 20 more damage. If 2 of them are heads,
+    this attack does 50 more damage. If all of them are heads, this attack does 80 more
+    damage."*, **1 sentence / 1 legal printing** (no id on this checkout — the demonstrator is
+    FILE-LOCAL and DECLARED, D425), claimed by `deriveAttackCoinFlip` through ONE new anchor
+    (`ATTACK_COIN_BONUS_LADDER`, beside D525's) as `{kind:"bonusLadder", flips:{kind:"printed",
+    count:3}, ladder:[20, 50, 80]}` — the EIGHTH member — and spent at `attack.ts`'s existing
+    damage fold as ONE rung-by-rung table lookup over the destructured tiers,
+    `coinBonus = heads === 0 ? 0 : heads === 1 ? onOneHead : heads === 2 ? onTwoHeads : onAllThree`
+    (not `ladder[heads - 1]`, which is not total under `noUncheckedIndexedAccess`).
+    🛑 **THE SEMANTICS, PINNED (D421 "Deciding a discrepancy"): THE TIERS ARE EXCLUSIVE BY
+    HEADS COUNT.** Exactly 1 head → +20, exactly 2 → +50, all 3 → +80, 0 → +0. NOT cumulative
+    (3 heads → +80, not +150) and NOT per-heads (2 heads → +50, not +40) — the standard reading
+    of this exact wording (Bisharp sv03-149's 20/60/120 print is ruled the same way). Stated in
+    the member's doc block and driven by the HHH = 110 and HHT = 80 rungs, so a future
+    correction is ONE fold line and ONE mutant row.
+    🛑 **THE PRICE IS ONE ANCHOR, ONE ARM, ONE UNION MEMBER AND TWO `attack.ts` SITES — ZERO
+    VOCABULARY, ZERO OPS, ZERO EVENTS, ZERO PERSISTED BYTES.** The anchor pins the count at
+    `3` (the third tier is spelled "all of them" — a 4-coin print with three tiers is a
+    different sentence and refuses) and CAPTURES the three amounts (the D413/D121 warrant:
+    the legal row prints 20/50/80, the pool's Bisharp prints 20/60/120). The arm asks the
+    family's `per >= 1` of each tier (a printed 0 tier refuses the sentence). The two sites,
+    both tsc-measured before they were written: `printedFlips` (TS2366 at :914 — the member
+    carries its printed count like the five around it) and the fold chain (TS2339 at :2499 —
+    its own `else if` branch, because the member has no `per` and D460's "one expression"
+    rule protects the `per × heads` fold; this is a lookup, not that arithmetic). NO
+    `scaledBase` edit ("more damage" keeps the base, exactly like `bonusOnHeads`) and NO
+    `coinExplainsModifier` term (the member FOLDS damage and explains a printed `+`, so the
+    default is right — driven the OPPOSITE way from D525: the "30+" print emits ZERO
+    `ATTACK_EFFECT_SKIPPED` rows). Reader surface 13; `MATCH_RECORD_VERSION` HELD at 30 (the
+    member is never serialized — a JSON round-trip of the post-attack board is byte-equal and
+    the attack never parks).
+    🛑 **TWO REFUSALS INVERTED IN PLACE (D178/D418's second half).** `coinFlipDamage.test.ts`'s
+    multi-flip witness list loses Bisharp's string to a positive `toEqual` of the member
+    (`ladder: [20, 60, 120]` — the digit-capture witness) while Magikarp's null and BOTH
+    strings' `startsWith("Flip a coin. ")` false stay — the old claim ("the `^Flip a coin\.`
+    literal did not loosen") is what still discriminates. `multiCoinFlip.test.ts`'s "refuses
+    the STEPPED PAYOUT table" becomes the reading, keeping "NOT perHeads: the payout is a
+    table" as `not.toHaveProperty("per")` on a `bonusLadder`.
+    ✅ Driven (`headsLadderBonus.test.ts`, file-local demonstrator with DECLARED base "30+" /
+    cost {C}, a flat-30 unmarked control at index 1 and the same sentence under a flat "30"
+    at index 2, the faces surgered through `rngState`): TTT → 30, HTT → 50, HHT → 80 (not
+    70, not 90), HHH → 110 (not 180, not 90); a Weak defender pays 220 on HHH (2 × (30 +
+    80) — the base is unscaled by the member); exactly three `ATTACK_EFFECT_COIN_FLIP` rows
+    and three `flipCoin` steps; replay-identical; no park ever, `turn:action` for P2 after
+    the attack; ZERO skipped rows on the "30+" print; the index-1 control neither flips nor
+    moves `rngState`; the post-attack board JSON round-trips byte-equal.
+    Census, with units: `BUILT.attack` 1644 → 1645; built sentences 578 → 579 / 640; residue
+    62/88 → 61/87; reader 552/1594 → 553/1595 (registry 10/16, gate 5/13, trailing 11/21
+    unmoved; sum 1,645); raw reader-only residue 88/138 → 87/137; `OPAQUE` 45/66 → 44/65 at
+    SUBMAX=4, 26/41 → 25/40 at SUBMAX=12 — the row was OPAQUE at BOTH caps and sat in
+    UNEXPLAINED (no marker names it, so §C cannot fire). The sentence and printing steps
+    AGREE at 1 — the first single-unit sweep since D521.)
     🆕🆕🆕 engineVersion 0.411.0 → **0.412.0** (D525 — THE HEADS COUNT READ AS AN "UP TO"
     CEILING BY ONE OP — ZERO VOCABULARY, A SEVENTH `AttackCoinFlip` MEMBER.
     `censusAttackCorpus.ts` **FILE LINE 219** (`legalAttackCorpus()` index 166) — *"Flip 3
@@ -22222,7 +22277,7 @@ import type { GameState, Seat } from "./types";
     WITNESS** — the count was re-derived every slice and the word *"three"* was carried.
     A successor of this slice inherits **81 / 61 / 17** again, over **FIVE** history
     occurrences: those four plus `deckMillFilteredScale.test.ts`'s own header arrow.) */
-export const engineVersion = "0.412.0";
+export const engineVersion = "0.413.0";
 
 export type {
   ApplyResult,

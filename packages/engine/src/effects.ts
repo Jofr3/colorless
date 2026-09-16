@@ -19603,6 +19603,34 @@ const ATTACK_COIN_SELF_ENERGY_PER_TAILS =
 const ATTACK_COIN_RETRIEVAL_UP_TO_HEADS =
   /^Flip (\d+) coins\. Put a number of cards up to the number of heads from your discard pile into your hand\.$/;
 
+// 🆕🆕🆕 D526 — THE THREE-TIER HEADS LADDER, corpus FILE LINE 218 (1 legal printing):
+// "Flip 3 coins. If 1 of them is heads, this attack does 20 more damage. If 2 of them
+// are heads, this attack does 50 more damage. If all of them are heads, this attack does
+// 80 more damage." The ninth anchor of the family, and the one whose payoff is a TABLE
+// rather than `per × heads` — which is exactly why D129's `perHeads` refusal
+// (`multiCoinFlip.test.ts`, "a count with no per-heads amount at all") was right to keep
+// it OFF that member and why it lands as its own `AttackCoinFlip` member (`bonusLadder`)
+// rather than as a `per` widening. THE COUNT IS PINNED AT `3`, NOT CAPTURED: the third
+// tier is spelled "all of them", so the sentence's own words fix the coin count at three
+// and a 4-coin print with three tiers would be a DIFFERENT sentence (its "all" would be a
+// fourth rung) that must refuse rather than derive a 3-entry table over 4 coins. THE
+// THREE AMOUNTS ARE CAPTURED (the D413/D121 warrant): the legal row prints 20/50/80 and
+// the pool's Bisharp sv03-149 prints 20/60/120 — two printings of one skeleton with the
+// tokens varying. THE TIERS ARE EXCLUSIVE by heads count (exactly 1 → tier 1, exactly 2 →
+// tier 2, all 3 → tier 3, 0 → nothing): "more damage" on each clause is the printed
+// total for THAT outcome, not a sum over the clauses below it (3 heads → +80, NOT +150)
+// and not a per-heads rate (2 heads → +50, NOT +40) — the standard reading of this exact
+// wording, stated once in the union member's doc block and driven by the HHH and HHT
+// rungs of `headsLadderBonus.test.ts`. Disjoint from every anchor above by its
+// consequent ("If 1 of them is heads" is read by nothing else in this reader — verified
+// by grep at D526, not assumed) and from D460's `perHeadsThenThreshold` by the absence
+// of "for each heads". No /i, `^…$`, and NO apostrophe class — the sentence has no
+// apostrophe slot (D136/D137). D178 provenance: refused by D126 (`coinFlipDamage.test.ts`,
+// the multi-flip witness list) and D129 (`multiCoinFlip.test.ts`, the stepped-payout
+// rung) on Bisharp's 20/60/120 bytes; both rungs INVERTED at D526 with their controls kept.
+const ATTACK_COIN_BONUS_LADDER =
+  /^Flip 3 coins\. If 1 of them is heads, this attack does (\d+) more damage\. If 2 of them are heads, this attack does (\d+) more damage\. If all of them are heads, this attack does (\d+) more damage\.$/;
+
 /** The most flips a printed attack may call for before this deriver refuses the
     sentence. The pool's maximum is 4 (Unfezant swsh10.5-063, the family's only
     one); the ceiling exists because the digits are read out of THIRD-PARTY
@@ -19919,6 +19947,30 @@ export type AttackCoinFlip =
   // `CardFilter` because the interpreter's park takes one, and the arm writes
   // `{ kind: "anyCard" }` (the noun "cards" is fixed in the anchor, not captured).
   | { kind: "retrievalUpToHeads"; flips: AttackFlipCount; filter: CardFilter; dest: "hand" }
+  // 🆕🆕🆕 D526 — THE THREE-TIER HEADS LADDER, corpus FILE LINE 218 (*"Flip 3 coins. If 1
+  // of them is heads, this attack does 20 more damage. If 2 of them are heads, this
+  // attack does 50 more damage. If all of them are heads, this attack does 80 more
+  // damage."*, 1 legal printing). The EIGHTH member. `flips` is always the literal
+  // `{ kind: "printed", count: 3 }` — the anchor pins the count because the third tier
+  // is spelled "all of them" — and `printedFlips` reads it exactly like the five
+  // count-carrying members above. `ladder[i]` is the bonus for EXACTLY i + 1 heads:
+  // `ladder[0]` on one head, `ladder[1]` on two, `ladder[2]` on three, and NOTHING on
+  // zero. THE TIERS ARE EXCLUSIVE, NOT CUMULATIVE: three heads pay `ladder[2]` alone
+  // (80 on the legal row, NOT 20 + 50 + 80 = 150) and two heads pay `ladder[1]` alone
+  // (50, NOT 2 × 20 = 40) — the standard reading of this wording (Bisharp sv03-149's
+  // 20/60/120 print is ruled the same way). A future correction is ONE fold line in
+  // `attack.ts` and ONE mutant row; the pin is `headsLadderBonus.test.ts`'s HHH = 110
+  // and HHT = 80 rungs. There is NO `per` on this member on purpose: its payoff is a
+  // TABLE, which is precisely why D129's refusal was right to keep the sentence off
+  // `perHeads` (`per × heads` is wrong on every outcome) and why this is a MEMBER rather
+  // than a `per` widening — the fold is a rung-by-rung table lookup (the tuple is
+  // destructured into named tiers in `attack.ts`; `ladder[heads - 1]` is NOT total under
+  // `noUncheckedIndexedAccess`, so it is deliberately not spelled that way), not the
+  // `per × heads` arithmetic D460's "one expression" rule protects. Never serialized:
+  // the member is derived from text at the attack site and spent into a NUMBER at the
+  // fold, so `MATCH_RECORD_VERSION` holds (driven in the suite by a byte-equal JSON
+  // round-trip of the post-attack board).
+  | { kind: "bonusLadder"; flips: AttackFlipCount; ladder: readonly [number, number, number] }
   | {
       kind: "perHeadsThenThreshold";
       flips: AttackFlipCount;
@@ -19928,7 +19980,7 @@ export type AttackCoinFlip =
     };
 
 /** The coin flip an attack's printed text calls for, or null when the text is not
-    one of the seven recognised whole sentences (D525) — null keeps the attack on the loud
+    one of the eight recognised whole sentences (D526) — null keeps the attack on the loud
     ATTACK_EFFECT_SKIPPED path, never on a silent unflipped resolution.
 
     Pure in its string, like its three sibling derivers, and disjoint from all of
@@ -20316,6 +20368,27 @@ export function deriveAttackCoinFlip(text: string): AttackCoinFlip | null {
     const n = Number(upToHeads[1]);
     if (n < 2 || n > MAX_PRINTED_FLIPS) return null;
     return { kind: "retrievalUpToHeads", flips: { kind: "printed", count: n }, filter: { kind: "anyCard" }, dest: "hand" };
+  }
+  // 🆕🆕🆕 D526 — THE THREE-TIER HEADS LADDER, corpus FILE LINE 218. The count is PINNED
+  // at 3 by the anchor ("all of them" is the third tier), so there is no `n` to guard
+  // here and no `MAX_PRINTED_FLIPS` read; the three captured amounts are the printed
+  // tiers, and each is asked the family's `per >= 1` question (`ATTACK_COIN_BONUS`'s
+  // reason, tier by tier): a printed 0 tier would spend a flip to add nothing, so a 0
+  // in ANY position refuses the whole sentence and keeps it on the loud
+  // ATTACK_EFFECT_SKIPPED path. The tuple is in PRINTED order — `[tier 1, tier 2,
+  // tier 3]` — and `attack.ts` indexes it by `heads - 1`. ⚠️ The local is `ladder` and
+  // the guard is ONE `if`/`return` line rather than the family's multi-line ternary
+  // (D446/D448/D452/D463/D476's rows anchor on that ternary's bytes and D525's on the
+  // `upToHeads` block; a byte-twin would make a `find` occur twice — D404's wrong-arm
+  // trap). No ordering guard is needed: no other anchor in this reader spans "If 1 of
+  // them is heads" (grep-verified at D526) and no splitter reaches the built string.
+  const ladder = ATTACK_COIN_BONUS_LADDER.exec(effect);
+  if (ladder !== null) {
+    const t1 = Number(ladder[1]);
+    const t2 = Number(ladder[2]);
+    const t3 = Number(ladder[3]);
+    if (t1 < 1 || t2 < 1 || t3 < 1) return null;
+    return { kind: "bonusLadder", flips: { kind: "printed", count: 3 }, ladder: [t1, t2, t3] };
   }
   // 🛑 **D499 — THE BARE CANCEL RUNS FIRST, AND THE ORDER IS BEHAVIOUR RATHER THAN
   // LEGIBILITY (D467).** Under the shipped build the two anchors are STRUCTURALLY

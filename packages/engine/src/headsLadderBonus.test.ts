@@ -1,0 +1,787 @@
+import type { Card } from "@luminous/schema";
+import { describe, expect, it } from "vitest";
+import manifest from "../package.json" with { type: "json" };
+import { attackReaderSurface, legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
+import {
+  deriveAttackBonusConsequent,
+  deriveAttackCancelRequirement,
+  deriveAttackCoinFlip,
+  deriveAttackDamageBonus,
+  deriveAttackDamageMultiplier,
+  deriveAttackDamagePenalty,
+  deriveAttackDamageSuppression,
+  deriveAttackDiscardScaledBoost,
+  deriveAttackEffect,
+  deriveAttackOptionalBoost,
+  deriveAttackOptionalCostBoost,
+  deriveAttackPreDamage,
+  deriveAttackRequirement,
+  splitAttackCancelClause,
+  splitAttackGateClause,
+  splitAttackRequirementClause,
+  splitAttackTrailingClause,
+} from "./effects";
+import type { AttackCoinFlip } from "./effects";
+import { applyAction, createGame, engineVersion } from "./index";
+import type { GameEvent, GameState, Seat } from "./index";
+import { flipCoin } from "./rng";
+import type { CoinFace } from "./rng";
+import {
+  FIXTURE_POOL,
+  activeUid,
+  attachFromDeck,
+  battler,
+  clearBench,
+  deckOf,
+  firstBasicInHand,
+  must,
+  mustApply,
+  setActiveFromDeck,
+  types,
+} from "./testFixtures";
+
+// 0.412.0 → 0.413.0 — 🆕🆕🆕 D526: THE THREE-TIER HEADS LADDER — ZERO VOCABULARY, AN EIGHTH
+// `AttackCoinFlip` MEMBER SPENT AT THE EXISTING DAMAGE FOLD.
+//
+// *"Flip 3 coins. If 1 of them is heads, this attack does 20 more damage. If 2 of them are heads, this
+// attack does 50 more damage. If all of them are heads, this attack does 80 more damage."* —
+// `censusAttackCorpus.ts` **FILE LINE 218** (`legalAttackCorpus()` index 165), **1 sentence / 1 legal
+// printing** (no id on this checkout — the demonstrator below is FILE-LOCAL and DECLARED, D425),
+// claimed by `deriveAttackCoinFlip` through ONE new anchor (`ATTACK_COIN_BONUS_LADDER`) as the EIGHTH
+// member of the union:
+//
+//   { kind: "bonusLadder", flips: { kind: "printed", count: 3 }, ladder: [20, 50, 80] }
+//
+// and spent at `attack.ts`'s EXISTING damage fold as ONE table lookup — exactly one head pays
+// `ladder[0]`, exactly two pay `ladder[1]`, all three pay `ladder[2]`, zero pay nothing. ZERO ops,
+// ZERO events, ZERO persisted bytes: the member is derived from text at the attack site and spent into
+// a NUMBER (`coinBonus`) before W/R, never parked and never serialized, so `MATCH_RECORD_VERSION` HOLDS
+// at 30 (§4 drives it: the attack ends with no park and the post-attack board JSON round-trips
+// byte-equal).
+//
+// 🛑 **THE SEMANTICS, PINNED (D421 "Deciding a discrepancy"): THE TIERS ARE EXCLUSIVE BY HEADS
+// COUNT.** 1 head → +20, 2 → +50, 3 → +80, 0 → +0. The printed "more damage" is NOT cumulative
+// (3 heads → +80, NOT 20 + 50 + 80 = 150) and NOT per-heads (2 heads → +50, NOT 2 × 20 = 40) — the
+// standard reading of this exact wording (Bisharp sv03-149's 20/60/120 print is ruled the same way).
+// The HHH = 110 and HHT = 80 rungs in §2 are the pin; a future correction is ONE fold line in
+// `attack.ts` and ONE mutant row.
+//
+// 🛑 **THE COUNT IS PINNED AT 3, THE AMOUNTS ARE CAPTURED.** The third tier is spelled "all of them",
+// so a 4-coin print with three tiers is a DIFFERENT sentence and must refuse (§1's `Flip 4 coins.`
+// rung, written before `D526-anchor-count-loosened`). The three amounts vary between the legal row
+// (20/50/80) and the pool's Bisharp (20/60/120) — the D413/D121 warrant for a capture.
+//
+// 🛑 **TWO REFUSALS INVERTED IN PLACE (D178/D418's second half).** `coinFlipDamage.test.ts`'s
+// multi-flip witness list and `multiCoinFlip.test.ts`'s "refuses the STEPPED PAYOUT table" both quoted
+// Bisharp's 20/60/120 bytes; both now assert the positive reading and KEEP the claim that still
+// discriminates (the `^Flip a coin\.` literal did not loosen; the payout is a table, not `per`).
+
+/** Corpus FILE LINE 218, read OFF `legalAttackCorpus()` (D183 — never retyped): the one row whose
+    opening is the ladder's. Its bytes and index are asserted in §1. */
+const LADDER_ROW = legalAttackCorpus().find(([, s]) => s.startsWith("Flip 3 coins. If 1 of them is heads"));
+if (LADDER_ROW === undefined) throw new Error("corpus FILE LINE 218 is not in legalAttackCorpus()");
+const PRINTED: string = LADDER_ROW[1];
+/** Bisharp sv03-149's pool print — the SAME skeleton with two tokens varying (20/60/120), the digit-capture
+    witness. Constructed off the legal row by substitution rather than retyped; the two inverted suites
+    hold the same bytes independently. */
+const BISHARP = PRINTED.replace("does 50 more damage", "does 60 more damage").replace(
+  "does 80 more damage",
+  "does 120 more damage",
+);
+/** The same three tiers at a different printed count — the count is PINNED (the third tier says "all of
+    them"), so these must refuse. Constructed. */
+const atCount = (n: number): string => PRINTED.replace("Flip 3 coins", `Flip ${n} coins`);
+/** A 0 in tier position `i` (1-based). Constructed. */
+const zeroTier = (i: 1 | 2 | 3): string => {
+  const amounts = ["20", "50", "80"] as const;
+  return PRINTED.replace(`does ${amounts[i - 1]} more damage`, "does 0 more damage");
+};
+/** Magikarp sv02-042 — TWO coins gating D126's consequent; the family's closest live near-miss and the
+    control that STAYS null. */
+const MAGIKARP = "Flip 2 coins. If both of them are heads, this attack does 20 more damage.";
+/** `coinThreshold.test.ts`'s `perHeadsThenThreshold` print and `multiCoinFlip.test.ts`'s `perHeads` print —
+    the two members whose programs must stay UNEQUAL to the ladder. */
+const THRESHOLD =
+  "Flip 2 coins. This attack does 90 damage for each heads. If either of them is heads, your opponent's Active Pokémon is now Paralyzed.";
+const PER_HEADS = "Flip 2 coins. This attack does 80 damage for each heads.";
+
+/** THE READING, spelled once. */
+const reading = (ladder: readonly [number, number, number]): AttackCoinFlip => ({
+  kind: "bonusLadder",
+  flips: { kind: "printed", count: 3 },
+  ladder,
+});
+const READING = reading([20, 50, 80]);
+
+const READERS = [
+  deriveAttackBonusConsequent,
+  deriveAttackCancelRequirement,
+  deriveAttackCoinFlip,
+  deriveAttackDamageBonus,
+  deriveAttackDamageMultiplier,
+  deriveAttackDamagePenalty,
+  deriveAttackDamageSuppression,
+  deriveAttackDiscardScaledBoost,
+  deriveAttackEffect,
+  deriveAttackOptionalBoost,
+  deriveAttackOptionalCostBoost,
+  deriveAttackPreDamage,
+  deriveAttackRequirement,
+];
+const SPLITTERS = [
+  splitAttackCancelClause,
+  splitAttackGateClause,
+  splitAttackRequirementClause,
+  splitAttackTrailingClause,
+];
+
+const units = (rows: readonly (readonly [number, string])[]) => rows.reduce((s, [n]) => s + n, 0);
+const claims = (re: RegExp): readonly [number, number, readonly string[]] => {
+  const rows = legalAttackCorpus().filter(([, s]) => re.test(s));
+  return [rows.length, units(rows), rows.map(([, s]) => s)];
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// The demonstrator — a FILE-LOCAL pool and its own deck (D414/D452/D520/D522/D523/D524/D525).
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** DECLARED, not read: the printing's base and cost are unresolvable here (no D1, no `FIXTURE_POOL`
+    id). 30 keeps the four outcomes (30 / 50 / 80 / 110) and the Weak hit (220) pairwise distinct from
+    every wrong reading (70, 90, 100, 150, 180). */
+const BASE = 30;
+const PLAIN = "fix-energy";
+const WALL = "d526-wall";
+
+const LADDER_CARDS: Record<string, Card> = {
+  "d526-climber": battler("d526-climber", {
+    name: "D526 Climber",
+    types: ["Colorless"],
+    hp: 130,
+    retreat: 2,
+    attacks: [
+      /** index 0 — FILE LINE 218 verbatim, with a DECLARED base "30+" and cost: the member EXPLAINS the
+          printed `+` (it folds the bonus that marker means), so NO `ATTACK_EFFECT_SKIPPED` row may appear. */
+      { cost: ["Colorless"], name: "Triple Toss", damage: "30+", effect: PRINTED },
+      /** index 1 — the control: no effect, no flip, no bonus. */
+      { cost: ["Colorless"], name: "Plain Jab", damage: BASE },
+      /** index 2 — the SAME sentence under a flat, UNMARKED 30: the fold still pays and no skipped row
+          appears either way. */
+      { cost: ["Colorless"], name: "Unmarked Triple Toss", damage: BASE, effect: PRINTED },
+    ],
+  }),
+  /** The defender — 400 HP, no W/R. */
+  [WALL]: battler(WALL, { name: "D526 Wall", types: ["Colorless"], hp: 400 }),
+  /** The Weak defender — 400 HP, Weak ×2 to the attacker's Colorless: base AND bonus are W/R-scaled
+      together (the fold lands pre-W/R), and the member neither drops nor scales the base itself. */
+  "d526-weakwall": battler("d526-weakwall", {
+    name: "D526 Weak Wall",
+    types: ["Colorless"],
+    hp: 400,
+    weaknesses: [{ type: "Colorless", value: "×2" }],
+  }),
+};
+
+const LADDER_POOL: Record<string, Card> = { ...FIXTURE_POOL, ...LADDER_CARDS };
+
+/** Its own deck (D270), 60 counted before the first run: 12 + 12 + 8 + 28. */
+const LADDER_DECK = deckOf({
+  "d526-climber": 12,
+  [WALL]: 12,
+  "d526-weakwall": 8,
+  [PLAIN]: 28,
+});
+
+/** The opening shuffle only — the three flips are driven off a SURGERED `rngState` (below), so the
+    seed never decides a face. Stated (D523 (8)). */
+const SEED = 11;
+
+function openTable(seed: number, first: Seat): GameState {
+  const created = createGame({
+    seed,
+    decks: { p1: LADDER_DECK, p2: LADDER_DECK },
+    cardPool: LADDER_POOL,
+  });
+  if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
+  let table = created.state;
+  if (table.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
+  table = must(applyAction(table, { type: "chooseFirstPlayer", seat: table.phase.coinWinner, first }));
+  while (table.phase.kind === "setup:drawExtra") {
+    const drawing = table.phase;
+    const owing = (["p1", "p2"] as const).find((s) => !drawing.decided[s]);
+    if (owing === undefined) throw new Error("setup:drawExtra with every seat decided");
+    table = must(applyAction(table, { type: "setupDrawExtra", seat: owing, count: drawing.owed[owing] }));
+  }
+  for (const seat of ["p1", "p2"] as const) {
+    table = must(applyAction(table, { type: "setupPlaceActive", seat, uid: firstBasicInHand(table, seat) }));
+  }
+  for (const seat of ["p1", "p2"] as const) {
+    table = must(applyAction(table, { type: "setupReady", seat }));
+  }
+  return table;
+}
+
+/** `perTailsSelfDiscard.test.ts`'s idiom: the smallest `rngState` whose next `faces.length` draws are
+    exactly `faces`, in order. Derived from `flipCoin`, never hardcoded. */
+function rngForFaces(faces: readonly CoinFace[]): number {
+  for (let candidate = 1; candidate < 200_000; candidate += 1) {
+    let rng = candidate;
+    let agrees = true;
+    for (const wanted of faces) {
+      const [drawn, next] = flipCoin(rng);
+      rng = next;
+      if (drawn !== wanted) {
+        agrees = false;
+        break;
+      }
+    }
+    if (agrees) return candidate;
+  }
+  throw new Error(`no rngState draws ${faces.join(",")}`);
+}
+
+const HHH: readonly CoinFace[] = ["heads", "heads", "heads"];
+const HHT: readonly CoinFace[] = ["heads", "heads", "tails"];
+const HTT: readonly CoinFace[] = ["heads", "tails", "tails"];
+const TTT: readonly CoinFace[] = ["tails", "tails", "tails"];
+/** The same heads COUNT in a different ORDER — the fold reads the tally, not the sequence. */
+const THT: readonly CoinFace[] = ["tails", "heads", "tails"];
+const THH: readonly CoinFace[] = ["tails", "heads", "heads"];
+
+type Board = {
+  /** The three faces, in flip order. */
+  readonly faces: readonly CoinFace[];
+  /** The Weak defender instead of the plain wall. */
+  readonly weak?: boolean;
+};
+
+/** p1 owns TURN 2 with the attacker Active holding ONE Colorless Basic (the {C} cost); P2 went first.
+    The rng is surgered so the attack's three flips draw `faces`. */
+function table(board: Board): GameState {
+  let state = openTable(SEED, "p2");
+  state = mustApply(state, { type: "endTurn", seat: "p2" }).state;
+  if (state.turn !== 2) throw new Error(`expected turn 2, got ${String(state.turn)}`);
+  state = setActiveFromDeck(state, "p1", "d526-climber");
+  state = setActiveFromDeck(state, "p2", board.weak === true ? "d526-weakwall" : WALL);
+  state = clearBench(state, "p1");
+  state = clearBench(state, "p2");
+  state = attachFromDeck(state, "p1", PLAIN, 1);
+  return { ...state, rngState: rngForFaces(board.faces) };
+}
+
+type Swing = { before: GameState; after: GameState; events: GameEvent[] };
+
+function swing(board: Board, index = 0): Swing {
+  const before = table(board);
+  const { state: after, events } = mustApply(before, { type: "attack", seat: "p1", index });
+  return { before, after, events };
+}
+
+function dealtRows(events: readonly GameEvent[]) {
+  return events.filter((e): e is Extract<GameEvent, { type: "DAMAGE_DEALT" }> => e.type === "DAMAGE_DEALT");
+}
+function flipRows(events: readonly GameEvent[]) {
+  return events.filter(
+    (e): e is Extract<GameEvent, { type: "ATTACK_EFFECT_COIN_FLIP" }> => e.type === "ATTACK_EFFECT_COIN_FLIP",
+  );
+}
+function skippedRows(events: readonly GameEvent[]) {
+  return events.filter(
+    (e): e is Extract<GameEvent, { type: "ATTACK_EFFECT_SKIPPED" }> => e.type === "ATTACK_EFFECT_SKIPPED",
+  );
+}
+/** `rngState` after exactly `n` `flipCoin` steps from `from`. */
+function stepped(from: number, n: number): number {
+  let rng = from;
+  for (let i = 0; i < n; i += 1) rng = flipCoin(rng)[1];
+  return rng;
+}
+/** The dealt number on the one `DAMAGE_DEALT` row, or a throw — every board deals exactly once. */
+function dealt(events: readonly GameEvent[]): number {
+  const rows = dealtRows(events);
+  if (rows.length !== 1) throw new Error(`expected one DAMAGE_DEALT row, got ${rows.length}`);
+  const [only] = rows;
+  if (only === undefined) throw new Error("no DAMAGE_DEALT row");
+  return only.dealt;
+}
+
+/** The events every board emits, in order: the flips, ONE hit, and the turn ending (no park anywhere). */
+const ATTACK_SHAPE = [
+  "ATTACK_DECLARED",
+  "ATTACK_EFFECT_COIN_FLIP",
+  "ATTACK_EFFECT_COIN_FLIP",
+  "ATTACK_EFFECT_COIN_FLIP",
+  "DAMAGE_DEALT",
+  "TURN_ENDED",
+  "TURN_STARTED",
+  "CARDS_DRAWN",
+];
+
+// ─────────────────────────────────────────────────────────────────────────────
+// §1 — derivation: the exact reading, the captured amounts, the pinned count, the zero tiers, both
+// anchor ends, the one-token near-misses, the controls, the only claimant, the census identity.
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe("D526 §1 — the printed row derives to EXACTLY the eighth member: printed 3, ladder [20, 50, 80], no `per`", () => {
+  it("🛑 (a) file line 218 derives to the reading — kind, `flips: printed 3`, `ladder: [20, 50, 80]`, and NOTHING else (`D526-arm-reverses-the-tuple`)", () => {
+    expect(deriveAttackCoinFlip(PRINTED)).toEqual(READING);
+    const got = deriveAttackCoinFlip(PRINTED);
+    if (got === null) throw new Error("the row derived null");
+    expect(Object.keys(got).sort()).toEqual(["flips", "kind", "ladder"]);
+    expect(got.kind).toBe("bonusLadder");
+    // No `per`, no `ops`, no `face`, no `threshold`: the payoff is a TABLE, which is why D129's refusal
+    // was right to keep the sentence off `perHeads` and why this is a member rather than a `per` widening.
+    expect(got).not.toHaveProperty("per");
+    expect("ops" in got).toBe(false);
+    expect("face" in got).toBe(false);
+    expect("threshold" in got).toBe(false);
+    if (got.kind !== "bonusLadder") throw new Error("not the ladder");
+    expect(got.ladder).toEqual([20, 50, 80]);
+    expect(got.ladder).toHaveLength(3);
+    expect(got.flips).toEqual({ kind: "printed", count: 3 });
+  });
+
+  it("🛑 (b) the AMOUNTS are captured, not pinned — Bisharp sv03-149's pool print (20/60/120, the OLD refusal witness) derives `[20, 60, 120]` (the D413/D121 warrant: two printings, tokens varying)", () => {
+    expect(BISHARP).not.toBe(PRINTED);
+    expect(BISHARP).toContain("does 60 more damage");
+    expect(BISHARP).toContain("does 120 more damage");
+    expect(deriveAttackCoinFlip(BISHARP)).toEqual(reading([20, 60, 120]));
+    // Not a legal row — the pool's print is the witness, not a census subject.
+    expect(legalAttackCorpus().some(([, s]) => s === BISHARP)).toBe(false);
+    // A third variation, constructed: the capture is a capture.
+    const other = PRINTED.replace("does 20 more damage", "does 10 more damage");
+    expect(deriveAttackCoinFlip(other)).toEqual(reading([10, 50, 80]));
+  });
+
+  it("🛑 (c) the COUNT is PINNED at 3 — `Flip 4 coins.` and `Flip 2 coins.` with the same three tiers derive null on EVERY reader (the third tier is spelled \"all of them\"; `D526-anchor-count-loosened`)", () => {
+    for (const n of [4, 2, 1, 5, 10]) {
+      const s = atCount(n);
+      expect(s, String(n)).not.toBe(PRINTED);
+      expect(deriveAttackCoinFlip(s), String(n)).toBeNull();
+      for (const reader of READERS) expect(reader(s), `${reader.name} at ${n}`).toBeNull();
+      expect(resolvedByAnyReader(s), String(n)).toBe(false);
+      expect(legalAttackCorpus().some(([, t]) => t === s), String(n)).toBe(false);
+    }
+    // …and the legal count itself is what the member carries, read off the sentence and not off `\d+`.
+    expect(atCount(3)).toBe(PRINTED);
+  });
+
+  it("🛑 (d) a printed 0 tier in ANY position refuses the whole sentence (the family's `per >= 1`, asked tier by tier; `D526-arm-admits-a-zero-tier`)", () => {
+    for (const i of [1, 2, 3] as const) {
+      const s = zeroTier(i);
+      expect(s, `tier ${i}`).not.toBe(PRINTED);
+      expect(s, `tier ${i}`).toContain("does 0 more damage");
+      expect(deriveAttackCoinFlip(s), `tier ${i}`).toBeNull();
+      expect(resolvedByAnyReader(s), `tier ${i}`).toBe(false);
+    }
+    // The control: every tier at 1 (the boundary) derives.
+    const ones = PRINTED.replace("does 20 more", "does 1 more").replace("does 50 more", "does 1 more").replace(
+      "does 80 more",
+      "does 1 more",
+    );
+    expect(deriveAttackCoinFlip(ones)).toEqual(reading([1, 1, 1]));
+  });
+
+  it("🛑 (e) the anchor is WHOLE-SENTENCE at BOTH ends — a prefixed print and a suffixed print each derive null on every reader (D520 (3); `D526-anchor-loses-the-head` / `-tail`); the trailing splitter composes on the TAIL of the suffixed print by design (D426), and nothing resolves either", () => {
+    const prefixed = `Draw a card. ${PRINTED}`;
+    const suffixed = `${PRINTED} Draw a card.`;
+    expect(legalAttackCorpus().some(([, s]) => s === prefixed || s === suffixed)).toBe(false);
+    for (const s of [prefixed, suffixed]) {
+      expect(deriveAttackCoinFlip(s)).toBeNull();
+      for (const reader of READERS) expect(reader(s), reader.name).toBeNull();
+      expect(resolvedByAnyReader(s)).toBe(false);
+    }
+    // The PREFIXED print reaches no splitter at all.
+    for (const splitter of SPLITTERS) expect(splitter(prefixed), splitter.name).toBeNull();
+    // The SUFFIXED print: the gate, cancel and requirement splitters are null; the TRAILING splitter
+    // composes on the tail (D426 — it splits a claimed head off a trailing clause, and the head IS
+    // claimed as of this slice), which is measured here rather than assumed. The tail "Draw a card."
+    // is read by no reader, so the composition resolves nothing — `resolvedByAnyReader` is false above.
+    expect(splitAttackGateClause(suffixed)).toBeNull();
+    expect(splitAttackCancelClause(suffixed)).toBeNull();
+    expect(splitAttackRequirementClause(suffixed)).toBeNull();
+    expect(splitAttackTrailingClause(suffixed)).toEqual({ head: PRINTED, tail: "Draw a card." });
+  });
+
+  it("🛑 (f) one-token near-misses, all null on EVERY reader — `If 3 of them`, `less damage`, the trailing period dropped, an NBSP, `head` for `heads`, `are heads` in tier 1", () => {
+    const controls: Record<string, string> = {
+      "`If 3 of them is heads` for `If 1 of them` — the tier's count is a literal": PRINTED.replace(
+        "If 1 of them is heads",
+        "If 3 of them is heads",
+      ),
+      "`less damage` for `more damage` in tier 1 — the direction is a literal": PRINTED.replace(
+        "does 20 more damage",
+        "does 20 less damage",
+      ),
+      "the trailing period dropped — the `$` needs the printed terminator": PRINTED.slice(0, -1),
+      "an NBSP for the space after `Flip 3 coins.` — bytes, not words": PRINTED.replace(
+        "Flip 3 coins. If",
+        "Flip 3 coins. If",
+      ),
+      "`head` for `heads` in tier 1 — the noun is a literal": PRINTED.replace("If 1 of them is heads", "If 1 of them is head"),
+      "`are heads` for `is heads` in tier 1 — the verb agrees with the printed count": PRINTED.replace(
+        "If 1 of them is heads",
+        "If 1 of them are heads",
+      ),
+      "`each of them` for `all of them` — the third tier's quantifier is a literal": PRINTED.replace(
+        "If all of them are heads",
+        "If each of them are heads",
+      ),
+    };
+    expect(Object.keys(controls)).toHaveLength(7);
+    for (const [why, s] of Object.entries(controls)) {
+      expect(s, why).not.toBe(PRINTED);
+      expect(deriveAttackCoinFlip(s), why).toBeNull();
+      for (const reader of READERS) expect(reader(s), `${reader.name}: ${why}`).toBeNull();
+      expect(resolvedByAnyReader(s), why).toBe(false);
+      expect(legalAttackCorpus().some(([, t]) => t === s), why).toBe(false);
+    }
+  });
+
+  it("🛑 (g) THE CONTROLS stay where they are: Magikarp's two-coin gate is null on every reader; the `perHeadsThenThreshold` and `perHeads` prints still derive their OWN members, UNEQUAL to the ladder", () => {
+    for (const reader of READERS) expect(reader(MAGIKARP), reader.name).toBeNull();
+    expect(resolvedByAnyReader(MAGIKARP)).toBe(false);
+    const threshold = deriveAttackCoinFlip(THRESHOLD);
+    expect(threshold?.kind).toBe("perHeadsThenThreshold");
+    expect(threshold).toHaveProperty("per", 90);
+    expect(threshold).not.toHaveProperty("ladder");
+    const perHeads = deriveAttackCoinFlip(PER_HEADS);
+    expect(perHeads).toEqual({ kind: "perHeads", flips: { kind: "printed", count: 2 }, per: 80 });
+    expect(perHeads).not.toHaveProperty("ladder");
+    for (const other of [threshold, perHeads]) {
+      expect(other).not.toEqual(READING);
+      expect(other?.kind).not.toBe("bonusLadder");
+    }
+    // …and D126's one-coin bonus, the member whose base-keeping this one mirrors, is untouched.
+    expect(deriveAttackCoinFlip("Flip a coin. If heads, this attack does 30 more damage.")).toEqual({
+      kind: "bonusOnHeads",
+      flips: { kind: "printed", count: 1 },
+      per: 30,
+    });
+  });
+
+  it("🛑 (h) `deriveAttackCoinFlip` is the ONLY claimant — twelve readers and four splitters are null — and the reader surface is still THIRTEEN", () => {
+    for (const reader of READERS) {
+      if (reader === deriveAttackCoinFlip) continue;
+      expect(reader(PRINTED), reader.name).toBeNull();
+    }
+    for (const splitter of SPLITTERS) expect(splitter(PRINTED), splitter.name).toBeNull();
+    expect(deriveAttackCoinFlip(PRINTED)).not.toBeNull();
+    expect(attackReaderSurface()).toHaveLength(13);
+    expect(attackReaderSurface()).toContain("deriveAttackCoinFlip");
+    expect(READERS.map((read) => read.name).sort()).toEqual(attackReaderSurface());
+  });
+
+  it("🛑 (i) the sentence is the CORPUS's bytes at exactly ONE printing, at index 165, it is RESOLVED, and the raw file line IS 218", () => {
+    const corpus = legalAttackCorpus();
+    expect(corpus.filter(([, s]) => s === PRINTED)).toEqual([[1, PRINTED]]);
+    expect(corpus.findIndex(([, s]) => s === PRINTED)).toBe(165);
+    expect(LADDER_ROW).toEqual([1, PRINTED]);
+    expect(resolvedByAnyReader(PRINTED)).toBe(true);
+    const raw = Object.entries(RAW).find(([k]) => k.endsWith("/censusAttackCorpus.ts"))?.[1] ?? "";
+    expect(raw.split("\n")[217]).toBe(`1 ${PRINTED}`);
+    // The printed words the anchor pins and captures, present in the bytes read off the corpus.
+    expect(PRINTED.startsWith("Flip 3 coins. If 1 of them is heads, this attack does 20 more damage. ")).toBe(true);
+    expect(PRINTED).toContain("If 2 of them are heads, this attack does 50 more damage.");
+    expect(PRINTED.endsWith("If all of them are heads, this attack does 80 more damage.")).toBe(true);
+    // The apostrophe-free sentence: no `['’]` slot exists for the anchor to class (D136/D137).
+    expect(PRINTED).not.toContain("'");
+    expect(PRINTED).not.toContain("’");
+  });
+
+  it("🛑 (j) the anchor's claimed set over all 640 rows is EXACTLY {file line 218} — 1 sentence / 1 printing — and the member appears on exactly that row", () => {
+    const [n, u, claimed] = claims(
+      /^Flip 3 coins\. If 1 of them is heads, this attack does (\d+) more damage\. If 2 of them are heads, this attack does (\d+) more damage\. If all of them are heads, this attack does (\d+) more damage\.$/,
+    );
+    expect([n, u]).toEqual([1, 1]);
+    expect(claimed).toEqual([PRINTED]);
+    expect(legalAttackCorpus()).toHaveLength(640);
+    const members = legalAttackCorpus().filter(([, s]) => deriveAttackCoinFlip(s)?.kind === "bonusLadder");
+    expect(members).toEqual([[1, PRINTED]]);
+    // …and no other "of them is heads" / "of them are heads" row in the column reaches the member.
+    const cousins = legalAttackCorpus().filter(([, s]) => /of them (is|are) heads/.test(s) && s !== PRINTED);
+    for (const [, s] of cousins) expect(deriveAttackCoinFlip(s)?.kind, s).not.toBe("bonusLadder");
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// §2 — the executor: the four outcomes by exact number, the exclusivity pin, the order-blindness,
+// Weakness, the rng, the replay, no park, the "30+" marker explained, the control.
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe("D526 §2 — exactly 1 / 2 / 3 heads pay +20 / +50 / +80 on top of the base; 0 heads pay the base alone; nothing parks", () => {
+  it("🛑 the board is what it says: P1's attacker is Active with one Colorless Basic, P2's wall is Active, both benches empty, turn 2, the three prints DECLARED", () => {
+    const before = table({ faces: HHH });
+    expect(before.players.p1.active?.energy).toHaveLength(1);
+    expect(before.cardIdByUid[activeUid(before, "p1")]).toBe("d526-climber");
+    expect(before.cardIdByUid[activeUid(before, "p2")]).toBe(WALL);
+    expect(before.players.p1.bench).toHaveLength(0);
+    expect(before.players.p2.bench).toHaveLength(0);
+    expect(before.turn).toBe(2);
+    expect(LADDER_CARDS["d526-climber"]?.attacks?.[0]?.effect).toBe(PRINTED);
+    expect(LADDER_CARDS["d526-climber"]?.attacks?.[0]?.damage).toBe("30+");
+    expect(LADDER_CARDS["d526-climber"]?.attacks?.[1]?.effect).toBeUndefined();
+    expect(LADDER_CARDS["d526-climber"]?.attacks?.[1]?.damage).toBe(BASE);
+    expect(LADDER_CARDS["d526-climber"]?.attacks?.[2]?.effect).toBe(PRINTED);
+    expect(LADDER_CARDS["d526-climber"]?.attacks?.[2]?.damage).toBe(BASE);
+  });
+
+  it("🛑 (i) TTT → EXACTLY 30 dealt (the base alone, `coinBonus` 0) — NOT 50, the `ladder[heads]` off-by-one that would pay tier 1 on zero heads (`D526-fold-indexes-from-zero-heads`); NOT 0, the dropped base (`D526-scaled-base-drops-the-base`)", () => {
+    const { before, after, events } = swing({ faces: TTT });
+    expect(flipRows(events).map((e) => e.result)).toEqual(TTT);
+    expect(dealt(events)).toBe(BASE);
+    expect(dealt(events)).not.toBe(BASE + 20);
+    expect(dealt(events)).not.toBe(0);
+    expect(dealtRows(events)[0]).toMatchObject({ seat: "p2", by: "p1", uid: activeUid(before, "p2"), dealt: BASE });
+    expect(after.players.p2.active?.damage).toBe(BASE);
+    expect(types(events)).toEqual(ATTACK_SHAPE);
+  });
+
+  it("🛑 (ii) HTT → EXACTLY 50 dealt (30 + tier 1) — NOT 110, the reversed tuple (`D526-arm-reverses-the-tuple`); NOT 80, the shifted index", () => {
+    const { after, events } = swing({ faces: HTT });
+    expect(flipRows(events).map((e) => e.result)).toEqual(HTT);
+    expect(dealt(events)).toBe(BASE + 20);
+    expect(dealt(events)).not.toBe(BASE + 80);
+    expect(dealt(events)).not.toBe(BASE + 50);
+    expect(after.players.p2.active?.damage).toBe(BASE + 20);
+    expect(types(events)).toEqual(ATTACK_SHAPE);
+  });
+
+  it("🛑 (iii) HHT → EXACTLY 80 dealt (30 + tier 2) — NOT 70 (2 × 20, the per-heads copy: `D526-fold-copies-the-per-heads-neighbour`); NOT 100 (20 + 50, the cumulative sum); NOT 110 (the shifted index)", () => {
+    const { after, events } = swing({ faces: HHT });
+    expect(flipRows(events).map((e) => e.result)).toEqual(HHT);
+    expect(dealt(events)).toBe(BASE + 50);
+    expect(dealt(events)).not.toBe(BASE + 2 * 20);
+    expect(dealt(events)).not.toBe(BASE + 20 + 50);
+    expect(dealt(events)).not.toBe(BASE + 80);
+    expect(after.players.p2.active?.damage).toBe(BASE + 50);
+    expect(types(events)).toEqual(ATTACK_SHAPE);
+  });
+
+  it("🛑 (iv) HHH → EXACTLY 110 dealt (30 + tier 3) — THE EXCLUSIVITY PIN: NOT 180 (30 + 20 + 50 + 80, `D526-fold-sums-the-tiers`); NOT 90 (30 + 3 × 20, the per-heads copy); NOT 80 (the base dropped)", () => {
+    const { after, events } = swing({ faces: HHH });
+    expect(flipRows(events).map((e) => e.result)).toEqual(HHH);
+    expect(dealt(events)).toBe(BASE + 80);
+    expect(dealt(events)).not.toBe(BASE + 20 + 50 + 80);
+    expect(dealt(events)).not.toBe(BASE + 3 * 20);
+    expect(dealt(events)).not.toBe(80);
+    expect(after.players.p2.active?.damage).toBe(BASE + 80);
+    expect(types(events)).toEqual(ATTACK_SHAPE);
+  });
+
+  it("🛑 (v) the four outcomes are pairwise DISTINCT and MONOTONE — 30 < 50 < 80 < 110 — and each equals base + the printed tier, read back from the derived member", () => {
+    const member = deriveAttackCoinFlip(PRINTED);
+    if (member === null || member.kind !== "bonusLadder") throw new Error("not the ladder");
+    const paid = [TTT, HTT, HHT, HHH].map((faces) => dealt(swing({ faces }).events));
+    expect(paid).toEqual([BASE, BASE + member.ladder[0], BASE + member.ladder[1], BASE + member.ladder[2]]);
+    expect(paid).toEqual([30, 50, 80, 110]);
+    for (let i = 1; i < paid.length; i += 1) {
+      const lower = paid[i - 1];
+      const upper = paid[i];
+      if (lower === undefined || upper === undefined) throw new Error("missing outcome");
+      expect(upper).toBeGreaterThan(lower);
+    }
+  });
+
+  it("🛑 (vi) the fold reads the heads TALLY, not the sequence: THT pays what HTT pays, THH what HHT pays", () => {
+    expect(dealt(swing({ faces: THT }).events)).toBe(dealt(swing({ faces: HTT }).events));
+    expect(dealt(swing({ faces: THH }).events)).toBe(dealt(swing({ faces: HHT }).events));
+    expect(flipRows(swing({ faces: THT }).events).map((e) => e.result)).toEqual(THT);
+    expect(flipRows(swing({ faces: THH }).events).map((e) => e.result)).toEqual(THH);
+  });
+
+  it("🛑 (vii) a Weak defender pays 220 on HHH — 2 × (30 + 80): the base is UNSCALED by the member (no `scaledBase` term) and the bonus lands PRE-W/R, so Weakness doubles both together", () => {
+    const { after, events } = swing({ faces: HHH, weak: true });
+    expect(after.cardIdByUid[activeUid(after, "p2")]).toBe("d526-weakwall");
+    expect(dealt(events)).toBe((BASE + 80) * 2);
+    expect(dealt(events)).not.toBe(BASE * 2 + 80); // the bonus is not added after W/R
+    expect(after.players.p2.active?.damage).toBe(220);
+    // …and on TTT the Weak wall pays the doubled base alone.
+    expect(dealt(swing({ faces: TTT, weak: true }).events)).toBe(BASE * 2);
+  });
+
+  it("🛑 (viii) `rngState` advances EXACTLY three `flipCoin` steps and the log carries ONE `ATTACK_EFFECT_COIN_FLIP` row per coin, on every face pattern (`D526-printed-flips-reads-one-flip`)", () => {
+    for (const faces of [HHH, HHT, HTT, TTT, THT, THH]) {
+      const { before, after, events } = swing({ faces });
+      expect(after.rngState, faces.join("-")).toBe(stepped(before.rngState, 3));
+      expect(after.rngState, faces.join("-")).not.toBe(stepped(before.rngState, 1));
+      expect(after.rngState, faces.join("-")).not.toBe(before.rngState);
+      expect(flipRows(events), faces.join("-")).toHaveLength(3);
+      expect(flipRows(events).map((e) => e.result), faces.join("-")).toEqual(faces);
+      for (const row of flipRows(events)) expect(row.seat).toBe("p1");
+    }
+  });
+
+  it("🛑 (ix) replays identically from one `rngState` — the same board and the same events twice", () => {
+    const a = swing({ faces: HHT });
+    const b = swing({ faces: HHT });
+    expect(b.before.rngState).toBe(a.before.rngState);
+    expect(b.after).toEqual(a.after);
+    expect(b.events).toEqual(a.events);
+  });
+
+  it("🛑 (x) NO park, EVER: on every face pattern the phase is `turn:action` for P2 after the attack (the attack ends the turn, D491), no `EFFECT_PENDING`, `TURN_ENDED` present", () => {
+    for (const faces of [HHH, HHT, HTT, TTT]) {
+      const { after, events } = swing({ faces });
+      expect(after.phase, faces.join("-")).toEqual({ kind: "turn:action", seat: "p2" });
+      expect(after.phase.kind, faces.join("-")).not.toBe("effect:choose");
+      expect(types(events), faces.join("-")).not.toContain("EFFECT_PENDING");
+      expect(types(events), faces.join("-")).toContain("TURN_ENDED");
+      expect(after.turn, faces.join("-")).toBe(3);
+    }
+  });
+
+  it("🛑 (xi) the DECLARED \"30+\" print IS explained by the member: ZERO `ATTACK_EFFECT_SKIPPED` rows on every face pattern — the MIRROR of D525 (xiv)'s polarity (`D526-modifier-disowned-by-the-member`)", () => {
+    for (const faces of [HHH, HHT, HTT, TTT]) {
+      const { events } = swing({ faces }, 0);
+      expect(skippedRows(events), faces.join("-")).toHaveLength(0);
+      expect(types(events), faces.join("-")).not.toContain("ATTACK_EFFECT_SKIPPED");
+    }
+    // The marker is a `+` on a base of 30 — DECLARED on the print, read here so the rung cannot go
+    // quiet by the demonstrator losing its marker.
+    expect(LADDER_CARDS["d526-climber"]?.attacks?.[0]?.damage).toBe("30+");
+  });
+
+  it("🛑 (xii) the same sentence under a flat, UNMARKED 30 (index 2): the fold still pays 110 on HHH and 30 on TTT, and NO skipped row appears either way", () => {
+    const marked = swing({ faces: HHH }, 0);
+    const unmarked = swing({ faces: HHH }, 2);
+    expect(dealt(unmarked.events)).toBe(BASE + 80);
+    expect(dealt(unmarked.events)).toBe(dealt(marked.events));
+    expect(skippedRows(unmarked.events)).toHaveLength(0);
+    expect(dealt(swing({ faces: TTT }, 2).events)).toBe(BASE);
+    expect(skippedRows(swing({ faces: TTT }, 2).events)).toHaveLength(0);
+    expect(unmarked.after.phase).toEqual({ kind: "turn:action", seat: "p2" });
+  });
+
+  it("🛑 (xiii) the index-1 control: no flip, `rngState` UNMOVED, 30 dealt, no skipped row, the turn ends", () => {
+    const { before, after, events } = swing({ faces: HHH }, 1);
+    expect(flipRows(events)).toHaveLength(0);
+    expect(after.rngState).toBe(before.rngState);
+    expect(dealt(events)).toBe(BASE);
+    expect(after.players.p2.active?.damage).toBe(BASE);
+    expect(skippedRows(events)).toHaveLength(0);
+    expect(after.phase).toEqual({ kind: "turn:action", seat: "p2" });
+    expect(types(events)).toEqual(["ATTACK_DECLARED", "DAMAGE_DEALT", "TURN_ENDED", "TURN_STARTED", "CARDS_DRAWN"]);
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// §3 — the census figures, with their units.
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe("D526 §3 — the census moved in exactly ONE summand, by 1 sentence / 1 printing", () => {
+  it("🛑 the reader arm reads 553 sentences / 1,595 printings, and the row is IN it", () => {
+    // 🆕🆕🆕 D526's OWN literals, annotated in-slice so the next sweep sees them (D523 (4)/D524 (4)/D525 (5)):
+    // the reader arm 552/1594 → 553/1595 — corpus FILE LINE 218, ⚠️ sentence step 1 / printing step 1
+    // (ONE legal printing — the two chains step by the SAME amount this slice, the first since D521).
+    const resolved = legalAttackCorpus().filter(([, s]) => resolvedByAnyReader(s));
+    expect([resolved.length, units(resolved)]).toEqual([553, 1595]);
+    expect(resolved.map(([, s]) => s)).toContain(PRINTED);
+    // …and the step is THIS sentence and nothing else: remove it and the pair is D525's. ⚠️ THE OWN-ROW
+    // `without` PAIR: resolved 553/1595 minus THIS suite's ONE-printing row is 552/1594 (D525 (5)'s trap
+    // — the next sweep re-derives this by hand as resolved − its row, never by value).
+    const without = resolved.filter(([, s]) => s !== PRINTED);
+    expect([without.length, units(without)]).toEqual([552, 1594]);
+  });
+
+  it("🛑 the RAW reader-only residue fell by exactly 1 sentence / 1 printing — 87 / 137 — and the row left it", () => {
+    // 🆕🆕🆕 D526's OWN literal (corpus FILE LINE 218, see §3's first rung): 88/138 → 87/137.
+    const unbuilt = legalAttackCorpus().filter(([, s]) => !resolvedByAnyReader(s));
+    expect([unbuilt.length, units(unbuilt)]).toEqual([87, 137]);
+    expect(unbuilt.map(([, s]) => s)).not.toContain(PRINTED);
+    // The parts add up to the whole quoted in the same case.
+    const all = legalAttackCorpus();
+    expect(unbuilt.length + 553).toBe(all.length);
+    expect(units(unbuilt) + 1595).toBe(units(all));
+    expect([all.length, units(all)]).toEqual([640, 1732]);
+  });
+
+  it("🛑 the move is READER-keyed: no gate clause, no trailing split, no cancel split, no requirement split claims the row", () => {
+    expect(splitAttackGateClause(PRINTED)).toBeNull();
+    expect(splitAttackTrailingClause(PRINTED)).toBeNull();
+    expect(splitAttackCancelClause(PRINTED)).toBeNull();
+    expect(splitAttackRequirementClause(PRINTED)).toBeNull();
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// §4 — the version, the heading, the corrected prose, and what stands still.
+// ─────────────────────────────────────────────────────────────────────────────
+
+const RAW: Record<string, string> = (
+  import.meta as unknown as {
+    glob(
+      pattern: string,
+      options: { query: "?raw"; import: "default"; eager: true },
+    ): Record<string, string>;
+  }
+).glob("./{censusAttackCorpus,index,effects,attack,coinFlipDamage.test,multiCoinFlip.test}.ts", {
+  query: "?raw",
+  import: "default",
+  eager: true,
+});
+
+describe("D526 §4 — the version steps, the heading is written, the prose is corrected, and what stands still", () => {
+  it("engineVersion and `manifest.version` agree, and the bump is owed for BEHAVIOUR", () => {
+    // ⚠️ The version is NOT spelled in this `it(…)` title (D460's fourth class).
+    expect(engineVersion).toBe("0.413.0");
+    expect(manifest.version).toBe(engineVersion);
+  });
+
+  it("🛑 the changelog heading for this bump is present in `index.ts`, labelled with its decision", () => {
+    const index = Object.entries(RAW).find(([k]) => k.endsWith("/index.ts"))?.[1] ?? "";
+    expect(index.length).toBeGreaterThan(1_000_000);
+    expect(index).toContain("engineVersion 0.412.0 → **0.413.0** (D526");
+  });
+
+  it("🛑 the prose is corrected IN PLACE (D178/D442): `effects.ts` says EIGHT recognised sentences, the two refusal suites carry the inversion, and the anchor, the member and the fold are byte for byte what this suite drove", () => {
+    const effects = Object.entries(RAW).find(([k]) => k.endsWith("/effects.ts"))?.[1] ?? "";
+    expect(effects).toContain(
+      "const ATTACK_COIN_BONUS_LADDER =\n  /^Flip 3 coins\\. If 1 of them is heads, this attack does (\\d+) more damage\\. If 2 of them are heads, this attack does (\\d+) more damage\\. If all of them are heads, this attack does (\\d+) more damage\\.$/;",
+    );
+    expect(effects).toContain(
+      '| { kind: "bonusLadder"; flips: AttackFlipCount; ladder: readonly [number, number, number] }',
+    );
+    expect(effects).toContain("one of the eight recognised whole sentences (D526)");
+    expect(effects).not.toContain("one of the seven recognised whole sentences");
+    expect(effects).toContain("if (t1 < 1 || t2 < 1 || t3 < 1) return null;");
+    const attack = Object.entries(RAW).find(([k]) => k.endsWith("/attack.ts"))?.[1] ?? "";
+    expect(attack).toContain('} else if (coinFlip.kind === "bonusLadder") {');
+    expect(attack).toContain(
+      "coinBonus = heads === 0 ? 0 : heads === 1 ? onOneHead : heads === 2 ? onTwoHeads : onAllThree;",
+    );
+    expect(attack).toContain('case "bonusLadder":');
+    // The two sites deliberately NOT edited: no `scaledBase` term and no `coinExplainsModifier` term.
+    expect(attack).not.toContain('coinFlip?.kind === "bonusLadder"');
+    expect(attack).not.toContain('coinFlip.kind !== "bonusLadder"');
+    expect(attack).toContain('coinFlip.kind !== "retrievalUpToHeads";');
+    const coinFlipDamage = Object.entries(RAW).find(([k]) => k.endsWith("/coinFlipDamage.test.ts"))?.[1] ?? "";
+    expect(coinFlipDamage).toContain("D526 — BISHARP LEFT THE `toBeNull` LOOP");
+    const multiCoinFlip = Object.entries(RAW).find(([k]) => k.endsWith("/multiCoinFlip.test.ts"))?.[1] ?? "";
+    expect(multiCoinFlip).toContain("D526 — INVERTED, NOT DELETED");
+    expect(multiCoinFlip).not.toContain('it("refuses the STEPPED PAYOUT table');
+  });
+
+  it("🛑 `MATCH_RECORD_VERSION` HOLDS at 30 — DRIVEN: the member is never serialized (it is spent into a NUMBER at the fold), the attack never parks, and the post-attack board is BYTE-EQUAL through a JSON round-trip", () => {
+    // The member is derived from text at the attack site and consumed as `coinBonus` before W/R; what a
+    // v30 record holds after this slice is the same board shape D126's `bonusOnHeads` has produced since
+    // it shipped — damage counters and a turn boundary, no continuation.
+    expect(JSON.parse(JSON.stringify(READING))).toEqual(READING);
+    for (const faces of [HHH, HHT, HTT, TTT]) {
+      const { after } = swing({ faces });
+      expect(after.phase.kind, faces.join("-")).not.toBe("effect:choose");
+      const persisted = JSON.parse(JSON.stringify(after)) as GameState;
+      expect(persisted, faces.join("-")).toEqual(after);
+      expect(JSON.stringify(persisted), faces.join("-")).toBe(JSON.stringify(after));
+      // Nothing in the persisted bytes names the member or its table.
+      expect(JSON.stringify(after), faces.join("-")).not.toContain("bonusLadder");
+      expect(JSON.stringify(after), faces.join("-")).not.toContain("ladder");
+    }
+  });
+
+  it("🛑 the demonstrator is FILE-LOCAL — zero `FIXTURE_POOL` ids, the deck is 60, the Energy is the shared pool's Colorless Basic", () => {
+    expect(Object.keys(LADDER_CARDS).every((id) => FIXTURE_POOL[id] === undefined)).toBe(true);
+    expect(LADDER_DECK).toHaveLength(60);
+    expect(FIXTURE_POOL[PLAIN]?.name).toBe(PLAIN);
+    expect(FIXTURE_POOL["sv03-149"]).toBeUndefined();
+  });
+});

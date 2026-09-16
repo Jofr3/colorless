@@ -783,10 +783,15 @@ describe("D520 §7 — zeros measured over all 640 rows", () => {
     // FILE LINE 219, 2 legal printings, claimed by `deriveAttackCoinFlip` as the seventh member
     // `retrievalUpToHeads`; ⚠️ the sentence step is 1 and the PRINTING step is 2): 89/140 → 88/138 and
     // 551/1592 → 552/1594. Stepped by hand a fourth time — outside the annotated-chain sweep's shape.
-    expect([unbuilt.length, units(unbuilt)]).toEqual([88, 138]);
+    // 🆕🆕🆕 D526 −1 sentence / −1 printing (corpus FILE LINE 218, see §3's first rung; the two steps agree at 1): 88/138 → 87/137.
+    expect([unbuilt.length, units(unbuilt)]).toEqual([87, 137]);
     expect(unbuilt.map(([, s]) => s)).not.toContain(FOUR_ZONE);
     const resolved = legalAttackCorpus().filter(([, s]) => resolvedByAnyReader(s));
-    expect([resolved.length, units(resolved)]).toEqual([552, 1594]);
+    // 🆕🆕🆕 D526 +1 sentence / +1 printing (THE THREE-TIER HEADS LADDER — corpus FILE LINE 218, *"Flip 3 coins. If 1 of them is heads, this attack does 20 more damage. If 2 of them are heads, this attack does 50 more damage. If all of them are heads, this attack does 80 more damage."*,
+    // 1 legal printing, claimed by `deriveAttackCoinFlip` as the eighth member `bonusLadder`, spent at `attack.ts`'s existing damage fold as an
+    // exclusive three-tier table, ZERO new vocabulary; the sentence and printing steps AGREE at 1): 552/1594 → 553/1595, and the own-row
+    // `without` pair re-derived BY HAND as resolved minus this suite's row (D525 (5)). Stepped by hand again (outside the annotated-chain sweep's shape).
+    expect([resolved.length, units(resolved)]).toEqual([553, 1595]);
   });
 });
 
@@ -806,7 +811,7 @@ const RAW: Record<string, string> = (
 describe("D520 §8 — the version steps, and the heading is written", () => {
   it("engineVersion and `manifest.version` agree, and the bump is owed for BEHAVIOUR", () => {
     // ⚠️ The version is NOT spelled in this `it(…)` title (D460's fourth class).
-    expect(engineVersion).toBe("0.412.0");
+    expect(engineVersion).toBe("0.413.0");
     expect(manifest.version).toBe(engineVersion);
   });
 

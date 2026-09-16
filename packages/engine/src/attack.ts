@@ -921,6 +921,9 @@ function printedFlips(coinFlip: AttackCoinFlip): AttackFlipCount {
     case "bonusOnHeads":
     case "perHeads":
     case "programPerHeads":
+    // 🆕🆕🆕 D526 — the three-tier ladder carries its printed count (always 3, pinned by
+    // the anchor's "all of them") like the five members around it; TS2366 until written.
+    case "bonusLadder":
     // 🆕🆕🆕 D525 — the "up to" ceiling carries its printed count like the four
     // above; the switch is what made the member a MISSING CASE (TS2366) until this
     // line was written, which is the loudness the block above was rewritten for.
@@ -2495,6 +2498,26 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
           { op: "discardPileRetrieval", filter: coinFlip.filter, dest: coinFlip.dest, max: heads },
         ];
       }
+    } else if (coinFlip.kind === "bonusLadder") {
+      // 🆕🆕🆕 D526 — THE THREE-TIER HEADS LADDER: a TABLE lookup, not `per × heads`. The
+      // tiers are EXCLUSIVE by heads count — `ladder[0]` on exactly one head, `ladder[1]`
+      // on exactly two, `ladder[2]` on all three, and nothing on zero — so three heads pay
+      // the third tier ALONE (the legal row's 80, never 20 + 50 + 80) and two heads pay the
+      // second ALONE (50, never 2 × 20). The HHH = 110 rung of `headsLadderBonus.test.ts`
+      // is the pin; a future re-ruling is this one line and one mutant row. Its own branch
+      // rather than the `else` below because the member carries no `per`: D460's "one
+      // expression" rule protects the `per × heads` arithmetic, and this is not that
+      // arithmetic. `heads` is bounded by `printedFlips` (the member's count is the pinned
+      // 3), so every non-zero outcome lands on exactly one named tier. The base is KEPT
+      // (`scaledBase` has no term for the member — "more damage" adds to the printed base
+      // exactly as `bonusOnHeads` does) and the member EXPLAINS its printed `+` marker
+      // (`coinExplainsModifier`'s default), so a "30+" print emits no skipped row.
+      // The tuple is destructured into NAMED tiers and the lookup spelled rung by rung
+      // rather than as `ladder[heads - 1]`: under `noUncheckedIndexedAccess` a runtime index
+      // into the tuple reads `number | undefined`, and a `?? 0` there would silently absorb
+      // an out-of-range head instead of being the total function this chain is.
+      const [onOneHead, onTwoHeads, onAllThree] = coinFlip.ladder;
+      coinBonus = heads === 0 ? 0 : heads === 1 ? onOneHead : heads === 2 ? onTwoHeads : onAllThree;
     } else {
       coinBonus = heads * coinFlip.per;
     }

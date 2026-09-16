@@ -690,16 +690,29 @@ describe("the rest of the flip family — what stays LOUD, and the one shape D12
     );
   });
 
-  it("refuses the STEPPED PAYOUT table — a count with no per-heads amount at all", () => {
+  it("reads the STEPPED PAYOUT table as its OWN member — a TABLE, not `perHeads` (BUILT at D526)", () => {
     // Bisharp sv03-149. Three coins, like Meowth, and a payout that is NOT `per ×
     // heads` but a printed table (1 → 20, 2 → 60, all → 120). Reading it as `perHeads`
     // would be arithmetically wrong on every outcome, and it is refused by the
     // consequent rather than by the count.
-    expect(
-      deriveAttackCoinFlip(
-        "Flip 3 coins. If 1 of them is heads, this attack does 20 more damage. If 2 of them are heads, this attack does 60 more damage. If all of them are heads, this attack does 120 more damage.",
-      ),
-    ).toBe(null);
+    // 🆕🆕🆕 D526 — INVERTED, NOT DELETED (D178/D418's second half). The refusal above was RIGHT
+    // about `perHeads` and is kept as the claim that still discriminates: the sentence derives to
+    // the EIGHTH `AttackCoinFlip` member, `bonusLadder` (anchor `ATTACK_COIN_BONUS_LADDER`, corpus
+    // FILE LINE 218 — the legal row prints 20/50/80; these 20/60/120 bytes are the pool's Bisharp
+    // and the digit-capture witness), whose payoff is the TABLE itself, indexed by the exact heads
+    // count at `attack.ts`'s fold — and it carries NO `per`, which is the sentence this rung has
+    // always been making. A reader that widened `perHeads` instead would put a `per` here and this
+    // `not.toHaveProperty` is what would go red.
+    const bisharp =
+      "Flip 3 coins. If 1 of them is heads, this attack does 20 more damage. If 2 of them are heads, this attack does 60 more damage. If all of them are heads, this attack does 120 more damage.";
+    const member = deriveAttackCoinFlip(bisharp);
+    expect(member).toEqual({ kind: "bonusLadder", flips: { kind: "printed", count: 3 }, ladder: [20, 60, 120] });
+    expect(member?.kind).toBe("bonusLadder");
+    // NOT perHeads: the payout is a table, not per × heads.
+    expect(member).not.toHaveProperty("per");
+    expect(member?.kind).not.toBe("perHeads");
+    // …and the `$` still holds: a trailing clause keeps the sentence off the member.
+    expect(deriveAttackCoinFlip(`${bisharp} Draw a card.`)).toBeNull();
   });
 });
 

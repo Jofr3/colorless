@@ -510,16 +510,32 @@ describe("the rest of the coin family stays LOUD", () => {
     // literal ever loosened, Magikarp is the first printing that would silently
     // resolve as a ONE-flip bonus — paying out on a single head where the card
     // demands two.
-    for (const text of [
-      // Magikarp sv02-042 (+ its sv02-203 reprint) — TWO coins gating D126's own
-      // consequent, and the closest live near-miss this slice has.
-      "Flip 2 coins. If both of them are heads, this attack does 20 more damage.",
-      // Bisharp sv03-149 — THREE coins with a stepped payout table.
-      "Flip 3 coins. If 1 of them is heads, this attack does 20 more damage. If 2 of them are heads, this attack does 60 more damage. If all of them are heads, this attack does 120 more damage.",
-    ]) {
-      expect(deriveAttackCoinFlip(text)).toBeNull();
+    // 🆕🆕🆕 D526 — BISHARP LEFT THE `toBeNull` LOOP AND IS RE-POINTED RATHER THAN DELETED (D178/D418's
+    // second half). Its stepped payout table is BUILT at D526 as the EIGHTH `AttackCoinFlip` member
+    // (`bonusLadder`, anchor `ATTACK_COIN_BONUS_LADDER`, corpus FILE LINE 218 — the LEGAL row prints
+    // 20/50/80; these 20/60/120 bytes are the pool's Bisharp sv03-149 and are KEPT as the
+    // digit-capture witness: two printings of one skeleton with the tokens varying, D413/D121). What
+    // this rung asserted was never "nothing reads it" — it was **`^Flip a coin\.` does not swallow a
+    // multi-coin sentence**, and that claim is kept for BOTH strings below (`startsWith` false), with
+    // Magikarp's null STANDING as the control: a `^Flip a coin\.` literal that loosened would read
+    // Magikarp back as a ONE-flip `bonusOnHeads`, and this loop is what would go red.
+    const magikarp = "Flip 2 coins. If both of them are heads, this attack does 20 more damage.";
+    // Bisharp sv03-149 — THREE coins with a stepped payout table (BUILT at D526, see above).
+    const bisharp =
+      "Flip 3 coins. If 1 of them is heads, this attack does 20 more damage. If 2 of them are heads, this attack does 60 more damage. If all of them are heads, this attack does 120 more damage.";
+    for (const text of [magikarp, bisharp]) {
       expect(text.startsWith("Flip a coin. ")).toBe(false); // the opening sentence differs
     }
+    // Magikarp sv02-042 (+ its sv02-203 reprint) — TWO coins gating D126's own consequent, and the
+    // closest live near-miss this slice has: STILL null on this reader (the control).
+    expect(deriveAttackCoinFlip(magikarp)).toBeNull();
+    // Bisharp: the POSITIVE reading — pinned by value, not by a null (a null goes green the day the
+    // whole family stops resolving; `ladder: [20, 60, 120]` does not).
+    expect(deriveAttackCoinFlip(bisharp)).toEqual({
+      kind: "bonusLadder",
+      flips: { kind: "printed", count: 3 },
+      ladder: [20, 60, 120],
+    });
     // 🆕🆕 D413 — MELMETAL swsh10.5-046 LEFT THAT LIST, AND IT IS RE-POINTED RATHER
     // THAN DELETED, BECAUSE THE CLAIM IT WAS MAKING IS STILL THE ONE THAT MATTERS.
     // Its sentence used to be refused by everything; D413 maps it. What this rung
