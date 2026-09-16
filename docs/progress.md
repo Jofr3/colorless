@@ -3,7 +3,7 @@
 > Update this at the **end of every session**: bump the status table, append a
 > session-log entry, and rewrite the **Resume point** to the next concrete action.
 
-**Last updated:** 2026-09-15 — build session #461 (**P3-M5 — D521, *the two-coin both-tails recoil — ZERO vocabulary, and a refusal that was WRONG IN ITS CARRIER.*** Built `censusAttackCorpus.ts` **file line 202**, *“Flip 2 coins. If both of them are tails, this Pokémon also does 90 damage to itself.”* — **1 sentence / 2 legal printings** — as `[{op:"coinFlipGate", coins:2, onTails:true, then:[{op:"damageSelf", amount:90}]}]`. **Price: 1 anchor, 1 reader arm — ZERO new vocabulary** (`coins` D355, `onTails` D144, `damageSelf` M5). 🛑 **`AttackFlipCount` was never the carrier**: it is `deriveAttackCoinFlip`'s damage-count type (it claims `:213`); a one-body recoil behind a coin is a GATE, not a count (D520 (2)'s premise rule), and `deriveAttackEffect` has emitted `coinFlipGate` for attack text since D144/D145 — the *“out of reach by COLUMN”* sentence was false the day it was written; four copies corrected in place (D442/D508). Engine **0.407.0 → 0.408.0**, `MATCH_RECORD_VERSION` **HELD at 30**; corpus **2,631 → 2,640** (+9 killed, +0 declared); archive ratchet **190 → 191**; `bun run check` GREEN **504 / 11,542**; residue **67/95 → 66/93**; `BUILT.attack` **1637 → 1639**; reader **548/1589** · registry 10/16 · gate 5/13 · trailing 11/21 = **1,639**; `OPAQUE` **50/73 → 49/71** at `SUBMAX=4`, **30/47 → 29/45** at 12. 🛑 **Sweep PENDING — predicted `2590 killed · 50 known survivor(s) · 0 GAP(S) · 0 stale · 0 skipped(dirty) · 0 clobber(s) · 0 error(s)` over 2,640.**)
+**Last updated:** 2026-09-15 — build session #461 (**P3-M5 — D521, *the two-coin both-tails recoil — ZERO vocabulary, and a refusal that was WRONG IN ITS CARRIER.*** Built `censusAttackCorpus.ts` **file line 202**, *“Flip 2 coins. If both of them are tails, this Pokémon also does 90 damage to itself.”* — **1 sentence / 2 legal printings** — as `[{op:"coinFlipGate", coins:2, onTails:true, then:[{op:"damageSelf", amount:90}]}]`. **Price: 1 anchor, 1 reader arm — ZERO new vocabulary** (`coins` D355, `onTails` D144, `damageSelf` M5). 🛑 **`AttackFlipCount` was never the carrier**: it is `deriveAttackCoinFlip`'s damage-count type (it claims `:213`); a one-body recoil behind a coin is a GATE, not a count (D520 (2)'s premise rule), and `deriveAttackEffect` has emitted `coinFlipGate` for attack text since D144/D145 — the *“out of reach by COLUMN”* sentence was false the day it was written; four copies corrected in place (D442/D508). Engine **0.407.0 → 0.408.0**, `MATCH_RECORD_VERSION` **HELD at 30**; corpus **2,631 → 2,640** (+9 killed, +0 declared); archive ratchet **190 → 191**; `bun run check` GREEN **504 / 11,542**; residue **67/95 → 66/93**; `BUILT.attack` **1637 → 1639**; reader **548/1589** · registry 10/16 · gate 5/13 · trailing 11/21 = **1,639**; `OPAQUE` **50/73 → 49/71** at `SUBMAX=4`, **30/47 → 29/45** at 12. ✅ **WHOLE-CORPUS SWEEP GREEN AND EXACTLY AS PREDICTED IN EVERY NUMBER: `2590 killed · 50 known survivor(s) · 0 GAP(S) · 0 stale · 0 skipped(dirty) · 0 clobber(s) · 0 error(s) · 11400.4s total`** — `+9 killed, +0 declared`, the **eighty-second** consecutive slice to commit its number before the run and hit it. Completeness structural: **2,640 unique progress-line ids / 2,640 rows / 0 unmatched**, set-compared against `MUTANTS.map(m => m.id)` in both directions; the **eighty-third** consecutive clean run. `setsid` held for the **thirty-second** consecutive reuse. ✅ **D519 (9)'s instrument, used as written**: the verdict enumeration was anchored to the indented verdict lines and read `2590 KILLED` / `50 SURVIVES(known)` and **nothing else** — the unanchored tally reads 5201 `KILLED` / 32 `STALE` / 3 `GAP` off the survivor report's prose, which is exactly the trap the anchor exists for — and the 50 `SURVIVES(known)` ids are the declared `survives` set **exactly, both ways**.)
 
 **Last updated (was):** 2026-09-15 — build session #460 (**P3-M5 — D520, *the four-zone damaged-body spread — and D507's REFUSAL WAS WRONG IN ITS VERDICT AND IN ITS CARRIER.*** Built `censusAttackCorpus.ts` **file line 601**, *“This attack does 50 damage to each Pokémon that has any damage counters on it (both yours and your opponent's), except for this Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)”* — **1 sentence / 1 legal printing** — as `[conditionGate{opponentActiveDamaged} → damageDefender{50}, spreadDamage{yourBench,50,damagedOnly}, spreadDamage{opponentBench,50,damagedOnly}]`. **Price: 1 anchor, 1 reader arm — ZERO new vocabulary**: no `EffectOp` kind or field, no `BoardCondition`/`CardFilter`/`DamageCountSource` member, no `interpreter.ts` or `attack.ts` byte, no reader (surface 13), registry row, `FIXTURE_POOL` id, prompt, event or schema byte. 🛑 **D507 REFUSED THIS ROW SAYING THE ACTIVE HALF NEEDED A PER-BODY PREDICATE ON `damageDefender`'s FLAT ARM. IT NEVER DID**: the flat arm hits ONE body, and *“has any damage counters on it”* asked of ONE body is the shipped ONE-BODY `BoardCondition` `opponentActiveDamaged` (D115) in the shipped `conditionGate`; the Benches are D507's own two `damagedOnly` spreads; *“except for this Pokémon”* is STRUCTURAL (D507's own note (a) said so). **The falsifier D507 named never fired because the PREMISE was wrong — D479's third mode, D518→D519's shape one slice later.** ✅ **The `that has any damage counters` family is CLOSED, 5 of 5 built.** ⚠️ **Two rows survived the first probe — a suite gap (the lattice cannot see the anchor's ENDS), not a no-op; a both-ends rung was added, second probe 9/9.** ⚠️ **D516's trap re-paid**: the anchor's commentary spelled `op: "spreadDamage",` and the raw producer count read the commentary. `MATCH_RECORD_VERSION` **HELD at 30**. Engine **0.406.0 → 0.407.0**; corpus **2,622 → 2,631** (+9 killed, +0 declared); survivors **50**; `check` GREEN **503 / 11,506**; residue **68/96 → 67/95**; `BUILT.attack` **1636 → 1637** (reader 546/1586 → 547/1587, other arms unmoved); `OPAQUE` **51/74 → 50/73** at `SUBMAX=4`. ✅ **WHOLE-CORPUS SWEEP GREEN AND EXACTLY AS PREDICTED IN EVERY NUMBER: `2581 killed · 50 known survivor(s) · 0 GAP(S) · 0 stale · 0 skipped(dirty) · 0 clobber(s) · 0 error(s) · 11356.9s total`** — `+9 killed, +0 declared`, the **eighty-first** consecutive slice to commit its number before the run and hit it. Completeness structural: **2,631 unique progress-line ids / 2,631 rows / 0 unmatched**, set-compared against `MUTANTS.map(m => m.id)` in both directions; the **eighty-second** consecutive clean run. `setsid` held for the **thirty-first** consecutive reuse. ✅ **D519 (9)'s instrument, used as written**: the verdict enumeration was anchored to the indented verdict lines and read `2581 KILLED` / `50 SURVIVES(known)` and **nothing else** — the unanchored tally reads 5183 `KILLED` / 32 `STALE` / 3 `GAP` off the survivor report's prose, which is exactly the trap the anchor exists for — and the 50 `SURVIVES(known)` ids are the declared `survives` set **exactly, both ways**.)
 
@@ -675,19 +675,24 @@
 > Residue **67/95 → 66/93**, `BUILT.attack` **1637 → 1639**, `OPAQUE` **50/73 → 49/71** (gate, default
 > `SUBMAX=4`; **29/45** at `SUBMAX=12`, census).
 >
-> 🛑 **(0) THE DEBT — THE WHOLE-CORPUS SWEEP IS PENDING, AND ITS FIGURE IS COMMITTED BEFORE THE
-> RUN.** Predicted, `+9 killed, +0 declared` over **2,640** rows:
+> ✅ **(0) THE DEBT IS PAID — D521 IS COMMITTED (`4de4a66e`) AND ITS WHOLE-CORPUS SWEEP IS GREEN.**
+> Pasted out of the log, never retyped (D504):
 >
 > > ```
-> > 2590 killed · 50 known survivor(s) · 0 GAP(S) · 0 stale · 0 skipped(dirty) · 0 clobber(s) · 0 error(s)
+> > 2590 killed · 50 known survivor(s) · 0 GAP(S) · 0 stale · 0 skipped(dirty) · 0 clobber(s) · 0 error(s) · 11400.4s total
 > > ```
 >
-> Run it DETACHED (`setsid nohup bun scripts/mutation/run.ts > tmp/sweep-D521.log 2>&1 &`, D489), poll
-> the log, and read the result with D519 (9)'s instrument USED AS WRITTEN (D520 (0)): enumerate the
-> indented verdict lines, anchor, set-compare the `SURVIVES(known)` ids against
-> `MUTANTS.filter(m => m.survives).map(m => m.id)` in BOTH directions, and compare the id set of the
-> progress lines against `MUTANTS.map(m => m.id)` both ways. **Never grep for the token you expect.**
-> If the number differs, the slice is NOT closed — find the row, not the excuse.
+> Exactly the number committed before the run — `+9 killed, +0 declared`, the **eighty-second**
+> consecutive slice to name its figure first and hit it, and the **eighty-third** consecutive clean
+> run. Completeness structural: **2,640 unique progress-line ids / 2,640 rows / 0 unmatched**,
+> set-compared against `MUTANTS.map(m => m.id)` in BOTH directions. `setsid` reuse **thirty-second**.
+>
+> ✅ **D519 (9)'s INSTRUMENT, USED AS WRITTEN, READ CLEANLY A SECOND TIME.** The enumeration anchored
+> to the indented verdict lines returned `2590 KILLED` / `50 SURVIVES(known)` and **nothing else**; the
+> unanchored tally of the same log reads `5201 KILLED · 32 STALE · 3 GAP` off the survivor report's
+> prose — the trap the anchor exists for, measured rather than assumed. The 50 `SURVIVES(known)` ids
+> are the declared `survives` set **exactly, in both directions**. 🛑 **Keep using it on D522's
+> sweep**: enumerate, anchor, set-compare — never grep for the token you expect.
 >
 > **(1) ALREADY VERIFIED INDEPENDENTLY.** `tsc -b --force` clean; `check` GREEN **504 / 11,542**;
 > `precheck` clean at **2,640**; `residue-census-gate` **OK §A 92 / 66 / 93**; `opaque-anatomy-gate`
@@ -741,17 +746,25 @@
 >
 > 🛑 **(7) PICKING THE NEXT ROW.** `SUBMAX=12 bun scripts/residue-census.ts`, ⚠️ **the census ranks
 > STRING DISTANCE, not COST**. 🛑 **`Ancient`/`Future`/`Tera` off the table, 58th slice.**
-> ✅ The `that has any damage counters` family is CLOSED (5/5); the `to itself` family is now
-> **1 unbuilt / 4 printings** — `:607`, a COMPOUND (a Prize-taken multiplier head + the bare recoil
-> tail), blocked on the JOIN, not on either half. D520 (7)'s list stands: **(a)** the **Hyper Fang**
-> named-attack override (check `BLOCKED-NAMED-ATTACK`); **(b)** *"the Defending Pokémon takes 50 more
-> damage from attacks"* (re-check vulnerability machinery across ALL of `packages/engine/src`);
-> **(c)** `:316` + `:324`, the cost-modifier pair (no reader produces a cost modifier; `:316` is the
-> `Idle Barrage` control's sentence); **(d)** the copy-attack family, 12 printings. ✅ **Before
-> pricing**: anchors AND splitters at every layer; read the sibling's PROGRAM and ARM; break the type
-> and ask `tsc -b --force` (D518); grep the refusal's NOUN *and TYPE* (D519 (3)); re-derive the
-> refusal's PREMISE — what does the named op HIT (D520 (2)); 🆕 **and when it names a TYPE, ask which
-> READER owns it** (2).
+> ✅ The `that has any damage counters` family is CLOSED (5/5); `:202` is BUILT (this slice) and is
+> OFF the list; the `to itself` family is now **1 unbuilt / 4 printings** — `:607`, a COMPOUND (a
+> Prize-taken multiplier head + the bare recoil tail), blocked on the JOIN, not on either half.
+> 🆕 **HOW D521 WAS FOUND, AND WHY THAT MATTERS FOR D522**: the listed rows were each PRICED at D521
+> and every one came out dearer than a census scout over the 66-sentence residue, which turned up
+> `:202` at ONE anchor and ONE arm with ZERO vocabulary. ✅ **Scout the residue again BEFORE pricing
+> the rows below** — a row that fell to zero vocabulary was sitting under a refusal that named the
+> wrong carrier, and the residue may hold another. The standing list, each with its D521 price:
+> **(a)** **SUBST-11, the Hyper Fang named-attack override** — priced **M**: one new `EffectOp`
+> member, a persisted `BoostedAttack` rider (`types.ts`), seven engine files (check
+> `BLOCKED-NAMED-ATTACK`); **(b)** **SUBST-16, vulnerability** — *"the Defending Pokémon takes 50
+> more damage from attacks"* — priced **L**: a required `InPlayPokemon` field, so
+> `MATCH_RECORD_VERSION` **30 → 31**, and four arithmetic sites; **(c)** `:316` + `:324`, the
+> cost-modifier pair — priced **M** at the §8.2 cost seam (`effectiveAttackCost`; no reader produces a
+> cost modifier; `:316` is the `Idle Barrage` control's sentence); **(d)** the copy-attack family, 12
+> printings — BLOCKED. ✅ **Before pricing**: anchors AND splitters at every layer; read the sibling's
+> PROGRAM and ARM; break the type and ask `tsc -b --force` (D518); grep the refusal's NOUN *and TYPE*
+> (D519 (3)); re-derive the refusal's PREMISE — what does the named op HIT (D520 (2)); **and when it
+> names a TYPE, ask which READER owns it** (2).
 >
 > ⚠️ **(8) TOOLING TRAPS.** `grep` is `ugrep` (**silent on untracked files** — `git add -N` or `rg`).
 > **In `effects.ts` a regex over raw text measures the COMMENTARY too** (D516/D520 (4) — this slice's
@@ -24810,7 +24823,7 @@ the next api deploy (D18).
 |---|---|---|
 | backend-data | P1 | ✅ M1–M9 + P2-M1 + task-17 api deployed (Worker `9b1ec1d1`, 2026-07-16); OAuth secrets pending (user) |
 | deck-builder | P2 | ✅ ALL 19 tasks closed (task 17 landed + e2e-verified locally); only follow-ups left |
-| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D521, *the two-coin both-tails recoil — zero vocabulary, and a refusal that named the wrong carrier; `AttackFlipCount` is a damage-count type, and a one-body recoil behind a coin is a gate.*** Corpus **2,631 → 2,640**; `check` GREEN **504 / 11,542**; engine **0.407.0 → 0.408.0**; `MATCH_RECORD_VERSION` **30 HELD**; residue **67/95 → 66/93**; `BUILT.attack` **1637 → 1639**; `OPAQUE` **50/73 → 49/71** at SUBMAX=4; 🛑 sweep PENDING — predicted `2590 killed · 50 known survivor(s) · 0 GAP(S) · 0 stale · 0 skipped(dirty) · 0 clobber(s) · 0 error(s)` over 2,640, `+9 killed, +0 declared`.) |
+| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D521, *the two-coin both-tails recoil — zero vocabulary, and a refusal that named the wrong carrier; `AttackFlipCount` is a damage-count type, and a one-body recoil behind a coin is a gate.*** Corpus **2,631 → 2,640**; `check` GREEN **504 / 11,542**; engine **0.407.0 → 0.408.0**; `MATCH_RECORD_VERSION` **30 HELD**; residue **67/95 → 66/93**; `BUILT.attack` **1637 → 1639**; `OPAQUE` **50/73 → 49/71** at SUBMAX=4; sweep GREEN and exact in every number: `2590 killed · 50 known survivor(s) · 0 GAP(S) · 0 stale · 0 skipped(dirty) · 0 clobber(s) · 0 error(s) · 11400.4s total` — `+9 killed, +0 declared`, eighty-third consecutive clean run, 2,640 / 2,640 / 0 unmatched.) |
 | simulator (prior) | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D519, *the damaged-body count — D518's refusal was right in its verdict and wrong in its cause, and the correction had been green on record for 69 decisions.*** Corpus **2,613 → 2,622**; `check` GREEN **502 files / 11,463 tests**; engine **0.405.0 → 0.406.0**; residue **69/97 → 68/96**) |
 | simulator (prior) | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D518, *the special-condition tally — a count built on the shipped predicate's own walk, and a four-field model that means three conditions.*** Corpus **2,604 → 2,613**; `check` GREEN **501 files / 11,431 tests**; engine **0.404.0 → 0.405.0**; residue **70/99 → 69/97**) |
 | simulator (prior) | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D517, *the gate on your own prize count — a D119 refusal named the missing member by name 398 decisions early and stayed GREEN when it landed.*** Corpus **2,596 → 2,604**; `check` GREEN **500 files / 11,402 tests**; engine **0.403.0 → 0.404.0**; residue **71/100 → 70/99**) |
@@ -25044,7 +25057,31 @@ ledger, `docs/`).
 SUBMAX=4, no verdict flipped**; `splice-gate` and `partition-gate` OK; probe **9 killed · 0
 survivors · 0 GAP · 0 error**; arms **548/1589 · 10/16 · 5/13 · 11/21 = 1,639**; `mutants.ts` by
 record **9 added, 0 removed, 4 changed**; corpus-wide `find === replace` sweep **zero**.
-🛑 **The whole-corpus sweep is PENDING** — predicted `2590 killed · 50 known survivor(s) · 0 GAP(S) · 0 stale · 0 skipped(dirty) · 0 clobber(s) · 0 error(s)` over 2,640.
+✅ **The whole-corpus sweep — GREEN and exact; see (9).**
+
+**(9) THE WHOLE-CORPUS SWEEP — GREEN, AND EXACTLY THE NUMBER COMMITTED BEFORE IT RAN.**
+Pasted out of the log, not retyped (D504):
+
+```
+2590 killed · 50 known survivor(s) · 0 GAP(S) · 0 stale · 0 skipped(dirty) · 0 clobber(s) · 0 error(s) · 11400.4s total
+```
+
+`+9 killed, +0 declared` — the **eighty-second** consecutive slice to commit its number before the
+run and hit it, and the **eighty-third** consecutive clean run. Completeness is structural rather
+than asserted: **2,640 unique progress-line ids / 2,640 rows / 0 unmatched**, set-compared against
+`MUTANTS.map(m => m.id)` in both directions. `setsid` held for the **thirty-second** consecutive reuse.
+
+✅ **D519 (9)'s INSTRUMENT, USED AS WRITTEN, A SECOND TIME.** The verdict enumeration anchored to the
+indented verdict lines (`grep -oE '^  [A-Za-z0-9_.:-]+ +… +[A-Za-z()]+' | grep -oE '[A-Za-z()]+$' |
+sort | uniq -c`) returned `2590 KILLED` / `50 SURVIVES(known)` and **nothing else**. For contrast the
+UNANCHORED tally of the same file reads `5201 KILLED · 32 STALE · 3 GAP · 100 SURVIVES(known)` — every
+extra hit is the survivor report's own prose (each of the 50 survivors is printed twice: once as a
+verdict line, once as a `known survivor` report), which is the trap D519 named and the reason the
+anchor is not optional. The 50 `SURVIVES(known)` ids were set-compared against
+`MUTANTS.filter(m => m.survives).map(m => m.id)`: **50 / 50 / 0 either way**. Liveness was asked of
+the program (`pgrep -af '^bun ' | grep mutation/run` → 0) and of the log (`wc -c` 430,291, stable),
+not of a substring of the command line. No new lesson: the three instruments D519 wrote down were
+the three used, and each returned the number the log actually holds.
 
 ### 2026-09-15 — build session #460 (P3-M5 — D520)
 
