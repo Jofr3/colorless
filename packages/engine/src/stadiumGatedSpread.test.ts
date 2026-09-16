@@ -647,21 +647,29 @@ describe("D522 §2b — Stadium ABSENT, an EMPTY Bench, and the Knock Out the sp
 describe("D522 §3 — the census moved in exactly ONE summand, by 1 sentence / 1 printing", () => {
   it("🛑 the reader arm reads 549 sentences / 1,590 printings, and the row is IN it", () => {
     const resolved = legalAttackCorpus().filter(([, s]) => resolvedByAnyReader(s));
-    expect([resolved.length, units(resolved)]).toEqual([549, 1590]);
+    // 🆕🆕🆕 D523 +1 sentence / +1 printing (THE DECK-DESTINATION DISCARD-PILE RETRIEVAL — corpus
+    // FILE LINE 485, *"Shuffle up to 3 Basic {W} Energy cards from your discard pile into your
+    // deck."*, claimed by `deriveAttackEffect` through `ATTACK_DISCARD_SHUFFLE_BACK`, the arm after
+    // the D237 arm — Pal Pad's registry pair with the hand twin's filter, ZERO new vocabulary; the
+    // sentence and printing steps AGREE, 1 and 1): 549/1590 → 550/1591 and 548/1589 → 549/1590.
+    // ⚠️ This suite's own literals sat OUTSIDE the annotated-chain sweep's shape (never annotated at
+    // D522) and are stepped by hand (D522 (4)).
+    expect([resolved.length, units(resolved)]).toEqual([550, 1591]);
     expect(resolved.map(([, s]) => s)).toContain(PRINTED);
     // …and the step is THIS sentence and nothing else: remove it and the pair is D521's.
     const without = resolved.filter(([, s]) => s !== PRINTED);
-    expect([without.length, units(without)]).toEqual([548, 1589]);
+    expect([without.length, units(without)]).toEqual([549, 1590]);
   });
 
   it("🛑 the RAW reader-only residue fell by exactly 1 sentence / 1 printing — 91 / 142 — and the row left it", () => {
     const unbuilt = legalAttackCorpus().filter(([, s]) => !resolvedByAnyReader(s));
-    expect([unbuilt.length, units(unbuilt)]).toEqual([91, 142]);
+    // 🆕🆕🆕 D523 −1 sentence / −1 printing (corpus FILE LINE 485, see §3's first rung): 91/142 → 90/141.
+    expect([unbuilt.length, units(unbuilt)]).toEqual([90, 141]);
     expect(unbuilt.map(([, s]) => s)).not.toContain(PRINTED);
     // The parts add up to the whole quoted in the same case.
     const all = legalAttackCorpus();
-    expect(unbuilt.length + 549).toBe(all.length);
-    expect(units(unbuilt) + 1590).toBe(units(all));
+    expect(unbuilt.length + 550).toBe(all.length);
+    expect(units(unbuilt) + 1591).toBe(units(all));
     expect([all.length, units(all)]).toEqual([640, 1732]);
   });
 
@@ -689,7 +697,7 @@ const RAW: Record<string, string> = (
 describe("D522 §4 — the version steps, the heading is written, the prose is corrected, and what stands still", () => {
   it("engineVersion and `manifest.version` agree, and the bump is owed for BEHAVIOUR", () => {
     // ⚠️ The version is NOT spelled in this `it(…)` title (D460's fourth class).
-    expect(engineVersion).toBe("0.409.0");
+    expect(engineVersion).toBe("0.410.0");
     expect(manifest.version).toBe(engineVersion);
   });
 

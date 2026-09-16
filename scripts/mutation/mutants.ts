@@ -5251,7 +5251,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D275",
     what: "🛑 THE DEBT THIS SLICE PAID FOR THE FIFTH TIME, RE-INSTALLED: `engineVersion` falls a minor behind `packages/engine/package.json`, which is EXACTLY the state the tree was in at the head of D275 (0.187.0 against 0.189.0) and had been for two slices with nothing comparing them. The tie is the guard; this row is the proof it is one",
     file: "packages/engine/src/index.ts",
-    // ⚠️ RE-POINTED AT D522 (0.408.0 → 0.409.0), at D521 (0.407.0 → 0.408.0), at D520 (0.406.0 → 0.407.0), at D519 (0.405.0 → 0.406.0), at D518 (0.404.0 → 0.405.0), at D517 (0.403.0 → 0.404.0), at D516 (0.402.0 → 0.403.0), at D515 (0.401.0 → 0.402.0), at D514 (0.400.0 → 0.401.0), at D513 (0.399.0 → 0.400.0), at D512 (0.398.0 → 0.399.0), at D510 (0.397.0 → 0.398.0), at D508 (0.396.0 → 0.397.0), at D507 (0.395.0 → 0.396.0), at D505 (0.394.0 → 0.395.0), at D490 (0.384.0 → 0.385.0), at D489 (0.383.0 → 0.384.0), at D488 (0.382.0 → 0.383.0), at D487 (0.381.0 → 0.382.0), at D486 (0.380.0 → 0.381.0), at D485 (0.379.0 → 0.380.0), at D450 (0.351.0 → 0.352.0), at D449 (0.350.0 → 0.351.0), at D448 (0.349.0 → 0.350.0), at D447 (0.348.0 → 0.349.0), at D446 (0.347.0 → 0.348.0), at D445 (0.346.0 → 0.347.0), at D444 (0.345.0 → 0.346.0), at D443 (0.344.0 → 0.345.0), at D442 (0.343.0 → 0.344.0), at D441 (0.342.0 → 0.343.0), at D440 (0.341.0 → 0.342.0), at D439 (0.340.0 → 0.341.0), at D438 (0.339.0 → 0.340.0), at D437 (0.338.0 → 0.339.0), at D436 (0.337.0 → 0.338.0), at D435 (0.336.0 → 0.337.0), at D434 (0.335.0 → 0.336.0), at D433 (0.334.0 → 0.335.0), at D432 (0.333.0 → 0.334.0), at D431 (0.332.0 → 0.333.0), at D430 (0.331.0 → 0.332.0), at D429 (0.330.0 → 0.331.0), at D428 (0.329.0 → 0.330.0), at D427 (0.328.0 → 0.329.0), at D426 (0.327.0 → 0.328.0), at D425 (0.326.0 → 0.327.0), at D424 (0.325.0 → 0.326.0), at D423 (0.324.0 → 0.325.0), at D422 (0.323.0 → 0.324.0), at D421 (0.322.0 → 0.323.0), at D420 (0.321.0 → 0.322.0), at D417 (0.320.0 → 0.321.0), at D416 (0.319.0 → 0.320.0), at D415 (0.318.0 → 0.319.0), at D414 (0.317.0 → 0.318.0), at D413 (0.316.0 → 0.317.0), at D412 (0.315.0 → 0.316.0), at D410 (0.314.0 → 0.315.0), at D409 (0.313.0 → 0.314.0), at D408 (0.312.0 → 0.313.0), at D407 (0.311.0 → 0.312.0), at D402 (0.306.0 → 0.307.0), at D401 (0.305.0 → 0.306.0), at D400 (0.304.0 → 0.305.0), at D399 (0.303.0 → 0.304.0), at D398 (0.302.0 → 0.303.0), at D397 (0.301.0 → 0.302.0), at D396 (0.300.0 → 0.301.0), at D395 (0.299.0 → 0.300.0), at D394 (0.298.0 → 0.299.0), at D393 (0.297.0 → 0.298.0), at D392 (0.296.0 → 0.297.0), at D391 (0.295.0 → 0.296.0), at D390 (0.294.0 → 0.295.0), at D389 (0.293.0 → 0.294.0), at D388 (0.292.0 → 0.293.0), at D387 (0.291.0 → 0.292.0), at D386 (0.290.0 → 0.291.0),
+    // ⚠️ RE-POINTED AT D523 (0.409.0 → 0.410.0), at D522 (0.408.0 → 0.409.0), at D521 (0.407.0 → 0.408.0), at D520 (0.406.0 → 0.407.0), at D519 (0.405.0 → 0.406.0), at D518 (0.404.0 → 0.405.0), at D517 (0.403.0 → 0.404.0), at D516 (0.402.0 → 0.403.0), at D515 (0.401.0 → 0.402.0), at D514 (0.400.0 → 0.401.0), at D513 (0.399.0 → 0.400.0), at D512 (0.398.0 → 0.399.0), at D510 (0.397.0 → 0.398.0), at D508 (0.396.0 → 0.397.0), at D507 (0.395.0 → 0.396.0), at D505 (0.394.0 → 0.395.0), at D490 (0.384.0 → 0.385.0), at D489 (0.383.0 → 0.384.0), at D488 (0.382.0 → 0.383.0), at D487 (0.381.0 → 0.382.0), at D486 (0.380.0 → 0.381.0), at D485 (0.379.0 → 0.380.0), at D450 (0.351.0 → 0.352.0), at D449 (0.350.0 → 0.351.0), at D448 (0.349.0 → 0.350.0), at D447 (0.348.0 → 0.349.0), at D446 (0.347.0 → 0.348.0), at D445 (0.346.0 → 0.347.0), at D444 (0.345.0 → 0.346.0), at D443 (0.344.0 → 0.345.0), at D442 (0.343.0 → 0.344.0), at D441 (0.342.0 → 0.343.0), at D440 (0.341.0 → 0.342.0), at D439 (0.340.0 → 0.341.0), at D438 (0.339.0 → 0.340.0), at D437 (0.338.0 → 0.339.0), at D436 (0.337.0 → 0.338.0), at D435 (0.336.0 → 0.337.0), at D434 (0.335.0 → 0.336.0), at D433 (0.334.0 → 0.335.0), at D432 (0.333.0 → 0.334.0), at D431 (0.332.0 → 0.333.0), at D430 (0.331.0 → 0.332.0), at D429 (0.330.0 → 0.331.0), at D428 (0.329.0 → 0.330.0), at D427 (0.328.0 → 0.329.0), at D426 (0.327.0 → 0.328.0), at D425 (0.326.0 → 0.327.0), at D424 (0.325.0 → 0.326.0), at D423 (0.324.0 → 0.325.0), at D422 (0.323.0 → 0.324.0), at D421 (0.322.0 → 0.323.0), at D420 (0.321.0 → 0.322.0), at D417 (0.320.0 → 0.321.0), at D416 (0.319.0 → 0.320.0), at D415 (0.318.0 → 0.319.0), at D414 (0.317.0 → 0.318.0), at D413 (0.316.0 → 0.317.0), at D412 (0.315.0 → 0.316.0), at D410 (0.314.0 → 0.315.0), at D409 (0.313.0 → 0.314.0), at D408 (0.312.0 → 0.313.0), at D407 (0.311.0 → 0.312.0), at D402 (0.306.0 → 0.307.0), at D401 (0.305.0 → 0.306.0), at D400 (0.304.0 → 0.305.0), at D399 (0.303.0 → 0.304.0), at D398 (0.302.0 → 0.303.0), at D397 (0.301.0 → 0.302.0), at D396 (0.300.0 → 0.301.0), at D395 (0.299.0 → 0.300.0), at D394 (0.298.0 → 0.299.0), at D393 (0.297.0 → 0.298.0), at D392 (0.296.0 → 0.297.0), at D391 (0.295.0 → 0.296.0), at D390 (0.294.0 → 0.295.0), at D389 (0.293.0 → 0.294.0), at D388 (0.292.0 → 0.293.0), at D387 (0.291.0 → 0.292.0), at D386 (0.290.0 → 0.291.0),
     //    each in the SAME COMMIT as the bump —
     // the TENTH slice running to do it that way, and the practice is now the one
     // thing about this row that has never cost an ERROR since it started.
@@ -5798,7 +5798,7 @@ export const MUTANTS: Mutant[] = [
     // CORPUS QUOTES** (D414/D415), so a value-keyed sweep over `toBe("0.391.0")` cannot
     // see it — this row's `find` spells the DECLARATION, not an assertion. Run
     // `precheck` after every version bump, not after the sweep tells you.
-    find: 'export const engineVersion = "0.409.0";',
+    find: 'export const engineVersion = "0.410.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -27960,8 +27960,11 @@ export const MUTANTS: Mutant[] = [
     // 🆕🆕🆕 D522 — RE-TRANSCRIBED AGAIN, 1639 -> 1640 (replace 1637 -> 1638): the sentence and
     //    printing steps AGREE at 1 and 1 (corpus FILE LINE 293 carries ONE printing), so the
     //    regression stays the two-step it has always expressed. Found by `precheck`, as always.
-    find: "  attack: 1640,",
-    replace: "  attack: 1638,",
+    // 🆕🆕🆕 D523 — RE-TRANSCRIBED AGAIN, 1640 -> 1641 (replace 1638 -> 1639): the sentence and
+    //    printing steps AGREE at 1 and 1 (corpus FILE LINE 485 carries ONE printing), so the
+    //    regression stays the two-step it has always expressed. Found by `precheck`, as always.
+    find: "  attack: 1641,",
+    replace: "  attack: 1639,",
     expectKilledBy: [
       "packages/engine/src/censusAtHead.test.ts",
     ],
@@ -29118,8 +29121,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D506",
     what: "🛑 C1 — THE DEFECT D502 AND D505 BOTH SHIPPED: a version goes out and NO HEADING CLAIMS IT. The edit un-bolds the NEWEST heading's target, so the parser stops seeing it and the chain's head falls back a release while `package.json` says otherwise — which is byte-for-byte the state of this file at D505's head, twice over. ⚠️ IT IS THE CHEAPEST WAY FOR THIS RECORD TO GO WRONG AND WAS INVISIBLE TO EVERY OTHER INSTRUMENT IN THE REPO: `tsc`, `biome`, every test, `precheck` and all five gates are green on both sides of it, because until D506 nothing read the headings at all. Killed by the HEAD case alone, which is the point — one tripwire, named (D453/D498). 🛑 RE-POINTED AT D507 ONTO THE 0.395.0 → 0.396.0 HEADING, AND THE RE-POINT WAS OWED RATHER THAN TIDY (D444): left on D505's heading it would have gone INERT ON THE VERDICT the moment a newer heading existed — un-bolding a heading that is no longer the head leaves NEWEST equal to HEAD, so the HEAD case stays green and the kill arrives, if at all, through the CHAIN case instead. The row's own stated reason (killed by the HEAD case alone) is exactly the sentence that would have quietly become false. THIS ROW IS PART OF THE VERSION TAX: every bump owes its re-point, in the same edit as the heading. \U0001f195 RE-POINTED AGAIN AT D508 ONTO THE 0.396.0 → 0.397.0 HEADING, and this one is UNLABELLED — the `find` quotes the heading's first prose words instead of a `(D<nnn> —`, which is strictly more durable: the label is the byte the close-out ritual inserts, and quoting it is exactly what broke this row at D507. \u26a0\ufe0f The heading is the CHAIN HEAD again, so the HEAD case is the killer again — the re-point is what keeps that sentence true rather than quietly false. \U0001f195 RE-POINTED AGAIN AT D510 ONTO THE 0.397.0 \u2192 0.398.0 HEADING, also UNLABELLED, and the `find` is kept in D508's TRIMMED form \u2014 it stops before the `(` where the close-out ritual inserts the label, which is the shape D508 proved survives that edit (precheck clean, label inserted, clean again). A `find` that spanned the paren would re-open the coupling that broke this row at D507. \U0001f195 RE-POINTED AGAIN AT D512 ONTO THE 0.398.0 \u2192 0.399.0 HEADING, also UNLABELLED and kept in the same TRIMMED form. \u26a0\ufe0f The re-point is what keeps this row's own stated reason (killed by the HEAD case ALONE) true rather than quietly false: left on D510's heading it would go INERT ON THE VERDICT the moment a newer heading exists, because un-bolding a heading that is no longer the head leaves NEWEST equal to HEAD and the kill arrives, if at all, through the CHAIN case instead. \U0001f195 RE-POINTED AGAIN AT D513 ONTO THE 0.399.0 \u2192 0.400.0 HEADING, also UNLABELLED and kept in the same TRIMMED form that stops before the `(`. \u26a0\ufe0f **AND THE TRIM WAS PROVEN AGAIN RATHER THAN ASSUMED**: `precheck` clean before the heading exists, the heading written, `precheck` clean after \u2014 the third consecutive slice to demonstrate that a `find` ending at `**<new>**` survives the close-out label insertion, and the fourth to state that a `find` spanning the paren re-opens the coupling that broke this row at D507. \U0001f195 RE-POINTED AGAIN AT D515 ONTO THE 0.401.0 \u2192 0.402.0 HEADING, also UNLABELLED and kept in the same TRIMMED form that stops before the `(`. \u26a0\ufe0f **THE RE-POINT IS THE PART OF THE VERSION TAX THAT HAS NO AUTOMATIC DETECTOR**: left on D514's heading this row would go INERT ON THE VERDICT the moment a newer heading exists \u2014 un-bolding a heading that is no longer the head leaves NEWEST equal to HEAD, the HEAD case stays green, and the kill arrives (if at all) through the CHAIN case instead, so the row would report KILLED while its own stated reason (killed by the HEAD case ALONE) had quietly become false. \u26a0\ufe0f **AND THE TRIM WAS PROVEN A FIFTH TIME RATHER THAN ASSUMED**: `precheck` clean before the heading exists, the heading written, `precheck` clean after. \U0001f195 RE-POINTED AGAIN AT D516 ONTO THE 0.402.0 \u2192 0.403.0 HEADING, also UNLABELLED and kept in the same TRIMMED form that stops before the `(`. \u26a0\ufe0f **THE TRIM WAS PROVEN A SIXTH TIME RATHER THAN ASSUMED**: `precheck` clean before the heading exists, the heading written, `precheck` clean after \u2014 and the re-point remains the part of the version tax with no automatic detector, because left on D515\u2019s heading this row would report KILLED while its own stated reason (killed by the HEAD case ALONE) had quietly become false. \U0001f195 RE-POINTED AGAIN AT D517 ONTO THE 0.403.0 \u2192 0.404.0 HEADING, also UNLABELLED and kept in the same TRIMMED form that stops before the `(`. \u26a0\ufe0f **THE TRIM WAS PROVEN A SEVENTH TIME RATHER THAN ASSUMED**: `precheck` clean before the heading exists, the heading written, `precheck` clean after \u2014 seven consecutive slices now, which is the evidence that the label a caller later adds cannot reach this `find`. 🆕 RE-POINTED AGAIN AT D518 ONTO THE 0.404.0 → 0.405.0 HEADING, also UNLABELLED and kept in the same TRIMMED form that stops before the `(`. ⚠️ **THE TRIM WAS PROVEN AN EIGHTH TIME RATHER THAN ASSUMED**: `precheck` clean before the heading exists, the heading written, `precheck` clean after — eight consecutive slices, and this one carried an extra hazard worth naming: the incoming literal `0.405.0` did NOT collide at 2× the way D517's did, because this slice's `find` quotes the heading ARROW (which is unique) rather than a source line the corpus already patches, so no FOURTH version-tax row was owed. 🆕 RE-POINTED AGAIN AT D521 ONTO THE 0.407.0 → 0.408.0 HEADING, also UNLABELLED and kept in the same TRIMMED form that stops before the `(` — the heading was written labelled in the same edit as the `docs/decisions.md` row (D507), and `precheck` was run clean with the row re-pointed.",
     file: "packages/engine/src/index.ts",
-    find: "engineVersion 0.408.0 → **0.409.0**",
-    replace: "engineVersion 0.408.0 → 0.409.0",
+    find: "engineVersion 0.409.0 → **0.410.0**",
+    replace: "engineVersion 0.409.0 → 0.410.0",
     expectKilledBy: ["packages/engine/src/engineVersionChangelog.test.ts"],
   },
   {
@@ -30639,5 +30642,117 @@ export const MUTANTS: Mutant[] = [
     find: "    if (amount >= 1) {\n      return [\n        {\n          op: \"conditionGate\",\n          cond: { kind: \"stadiumInPlay\" },",
     replace: "    if (amount >= 0) {\n      return [\n        {\n          op: \"conditionGate\",\n          cond: { kind: \"stadiumInPlay\" },",
     expectKilledBy: ["packages/engine/src/stadiumGatedSpread.test.ts"],
+  },
+  // ── D523 — THE DECK-DESTINATION DISCARD-PILE RETRIEVAL ("Shuffle … from your discard pile into
+  //    your deck"). Ten rows, ONE PER CLAIM. ⚠️ **THE CENSUS VISIBILITY WAS MEASURED, NOT FORECAST**
+  //    (D518–D522's finding, re-run here): C10 (the plural flag flipped) is VISIBLE — the printed row
+  //    derives null and the reader summand falls 550/1591 → 549/1590 — and the other nine are SILENT:
+  //    they corrupt a VALUE (an anchor end, the `up to`, the destination, the second op, the order, the
+  //    count, a guard) and the sentence still derives. C1/C2 (the anchor's ends) are killed by the
+  //    suite's EXPLICIT both-ends rung (D520 (3)). C5/C6 (the shuffle dropped / the order swapped) are
+  //    killed by §1's program `toEqual` AND by the executor: `rngState` unmoved at the park and moved
+  //    after the resolve, the `SHUFFLE` row after `DISCARD_RETRIEVED`, and the seeded deck-bottom rung
+  //    (seed 7 — the shuffle demonstrably moves the two picks off the bottom; measured before the seed
+  //    was fixed, and stated in the suite). NO declared survivor.
+  //
+  //    🛑 **NO ROW ON THE `dest` TYPE OR ON `recordAs`/`exclude`**: the harness type-checks a `replace`,
+  //    `dest` is a closed union (C4 takes its other live member), and an `exclude` slot would need a
+  //    writer no attack program has (D135) — such rows would report ERROR or be unkillable (D231).
+  //
+  //    ⚠️ **EVERY `find`/`replace` PAIR WAS DIFFED BEFORE SHIPPING AND ASSERTED UNEQUAL BY THE SCRIPT
+  //    THAT WROTE THEM** (D519 (4)(a)), and every `find` was counted at exactly one occurrence in
+  //    `effects.ts` by the same script before the probe ran. ⚠️ The arm's guard was spelled on ONE
+  //    line precisely so no older row's multi-line `find` (D234's floor, D458's second cap, the D237
+  //    arm's own `max` line) started occurring twice — `precheck` was run the moment the arm was
+  //    written and was clean at 2,650 (D522 (3)'s trap, avoided rather than repaired).
+  {
+    id: "D523-shuffle-back-anchor-loses-the-head",
+    decision: "D523",
+    what: "🛑 C1 — **THE `^` DROPPED FROM THE NEW ANCHOR.** Without it the pattern matches anywhere in a longer sentence, so a compound whose SECOND clause happens to print this shuffle-back is claimed WHOLE and its first clause is silently dropped from the program. Killed by the suite's EXPLICIT both-ends rung (D520 (3)): a CONSTRUCTED prefixed print (`Discard a card from your hand. <row>`) derives null on the real build and to Pal Pad's pair on the mutant. Silent to the census (the printed row still derives).",
+    file: "packages/engine/src/effects.ts",
+    find: "  `^Shuffle up to (\\\\d+) (${RETRIEVAL_PLURAL_ALT})` +",
+    replace: "  `Shuffle up to (\\\\d+) (${RETRIEVAL_PLURAL_ALT})` +",
+    expectKilledBy: ["packages/engine/src/discardShuffleBack.test.ts"],
+  },
+  {
+    id: "D523-shuffle-back-anchor-loses-the-tail",
+    decision: "D523",
+    what: "🛑 C2 — **THE `$` DROPPED, THE OTHER END OF C1 AND A DIFFERENT DEFECT (D497's pair rule).** With no terminator the anchor swallows a trailing clause: *\"<row> Then, draw a card.\"* derives as though the second sentence were not there — a sentence the D237 anchor's own dropped-`$` mutant guards against one constant up. Killed by the both-ends rung's SUFFIXED print. Silent to the census.",
+    file: "packages/engine/src/effects.ts",
+    find: "    `${SOURCE_ZONE_PHRASE} into your deck\\\\.$`,",
+    replace: "    `${SOURCE_ZONE_PHRASE} into your deck\\\\.`,",
+    expectKilledBy: ["packages/engine/src/discardShuffleBack.test.ts"],
+  },
+  {
+    id: "D523-shuffle-back-anchor-drops-up-to",
+    decision: "D523",
+    what: "🛑 C3 — **THE LITERAL `up to ` MADE OPTIONAL** (`(?:up to )?`), the regex an author writes who thinks *\"the count is what matters\"*. The mutant then admits *\"Shuffle 3 Basic {W} Energy cards from your discard pile into your deck.\"* — an EXACT count the card does not print — as a `min: 0` / `max: 3` park, so a printed \"exactly 3\" would be played as \"up to 3\". Killed by the single-axis control (the `up to` dropped → null on the real build, Pal Pad's pair on the mutant). The column prints no such row, so the census is silent.",
+    file: "packages/engine/src/effects.ts",
+    find: "  `^Shuffle up to (\\\\d+) (${RETRIEVAL_PLURAL_ALT})` +",
+    replace: "  `^Shuffle (?:up to )?(\\\\d+) (${RETRIEVAL_PLURAL_ALT})` +",
+    expectKilledBy: ["packages/engine/src/discardShuffleBack.test.ts"],
+  },
+  {
+    id: "D523-shuffle-back-arm-dest-hand",
+    decision: "D523",
+    what: "🛑 C4 — **`dest: \"deck\"` → `\"hand\"`** — the D237 arm's destination one arm up, copied by an author who reads the sibling's return and forgets the anchor pinned a different destination; the op type-checks (`\"hand\"` is a member). The cards then go to the HAND and the deck is shuffled for nothing, while every count in the log stays plausible. Killed by §1's `toEqual` against the derived program, §2's park (`prompt.dest` is \"deck\") and the resolve (deck +2 / discard −2, `DISCARD_RETRIEVED { dest: \"deck\" }`, the \"shuffled … into their deck\" caption rather than \"took\"), and by `derivedDiscardRetrieval.test.ts`'s inverted rung (Pal Pad's text derives `dest: \"deck\"`).",
+    file: "packages/engine/src/effects.ts",
+    find: "        { op: \"discardPileRetrieval\", filter, dest: \"deck\", max },",
+    replace: "        { op: \"discardPileRetrieval\", filter, dest: \"hand\", max },",
+    expectKilledBy: ["packages/engine/src/discardShuffleBack.test.ts", "packages/engine/src/derivedDiscardRetrieval.test.ts"],
+  },
+  {
+    id: "D523-shuffle-back-arm-drops-the-shuffle",
+    decision: "D523",
+    what: "🛑 C5 — **THE TRAILING `shuffleDeck` DROPPED** — the arm becomes the D237 arm with a deck destination, which is exactly what `retrieveMove`'s deck arm does NOT do: it APPENDS (`deck: [...side.deck, ...moved]`), so the picks sit at the deck bottom in pick order and the printed \"Shuffle\" never happens. Killed by §1's `toEqual` (two ops, not one), §2's `rngState`-moved rung after the resolve, the `SHUFFLE` row, the decline and the whiff (both still shuffle on the real build), and the seeded deck-bottom rung (`after.deck` !== `[...parkedDeck, ...picks]`). The inverted rung in `derivedDiscardRetrieval.test.ts` reddens too.",
+    file: "packages/engine/src/effects.ts",
+    find: "        { op: \"discardPileRetrieval\", filter, dest: \"deck\", max },\n        { op: \"shuffleDeck\" },",
+    replace: "        { op: \"discardPileRetrieval\", filter, dest: \"deck\", max },",
+    expectKilledBy: ["packages/engine/src/discardShuffleBack.test.ts", "packages/engine/src/derivedDiscardRetrieval.test.ts"],
+  },
+  {
+    id: "D523-shuffle-back-arm-order-swapped",
+    decision: "D523",
+    what: "⚠️ C6 — **THE TWO OPS SWAPPED: shuffle first, retrieval second.** The printed order is retrieve THEN shuffle; the swapped program shuffles a deck the picks are not yet in and then APPENDS them at the bottom in pick order — a deck whose last two cards the player chose. Killed by §1's `toEqual` (the order is pinned in the assembled program) AND by the executor: `rngState` is UNMOVED at the park on the real build (the shuffle has not run yet) and MOVED on the mutant; the `SHUFFLE` row comes AFTER `DISCARD_RETRIEVED`; and on the seeded deck (seed 7) the two picks are NOT the last two cards in pick order after the resolve — the shuffle demonstrably moved them off the bottom, measured before the seed was fixed.",
+    file: "packages/engine/src/effects.ts",
+    find: "        { op: \"discardPileRetrieval\", filter, dest: \"deck\", max },\n        { op: \"shuffleDeck\" },",
+    replace: "        { op: \"shuffleDeck\" },\n        { op: \"discardPileRetrieval\", filter, dest: \"deck\", max },",
+    expectKilledBy: ["packages/engine/src/discardShuffleBack.test.ts"],
+  },
+  {
+    id: "D523-shuffle-back-arm-pins-the-max",
+    decision: "D523",
+    what: "⚠️ C7 — **THE CAPTURED COUNT PINNED TO THE PRINTED 3.** The row's one legal printing prints 3, so every corpus rung stays green and the printed fixture parks correctly; what breaks is the SHAPE claim — the derived program no longer follows the sentence. Killed by the 2-print rungs: §1's `program(2)` / `program(5)` / `program(10)` derivations and §2's `Twin Recall` board parking at `max: 2`. The transfer rungs (Pal Pad `max: 2`, Energy Recycler / Sacred Ash `max: 5`) redden as well.",
+    file: "packages/engine/src/effects.ts",
+    find: "        { op: \"discardPileRetrieval\", filter, dest: \"deck\", max },",
+    replace: "        { op: \"discardPileRetrieval\", filter, dest: \"deck\", max: 3 },",
+    expectKilledBy: ["packages/engine/src/discardShuffleBack.test.ts"],
+  },
+  {
+    id: "D523-shuffle-back-printed-zero-derives",
+    decision: "D523",
+    what: "⚠️ C8 — **THE FAMILY'S PRINTED-ZERO GUARD RELAXED TO `>= 0`.** An `up to 0` print derives a program whose retrieval offers nothing (`retrieveMax <= 0` returns early) and then shuffles the deck, reporting SIMULATED for a sentence that moves no card — the loud/silent inversion every numeric arm in this file guards against (D234's row one family over, D520/D521/D522's C10). Killed by the printed-zero rung (null on the real build, Pal Pad's pair at `max: 0` on the mutant).",
+    file: "packages/engine/src/effects.ts",
+    find: "    if (filter !== undefined && max >= 1 && max <= MAX_PRINTED_ATTACH_COUNT) {",
+    replace: "    if (filter !== undefined && max >= 0 && max <= MAX_PRINTED_ATTACH_COUNT) {",
+    expectKilledBy: ["packages/engine/src/discardShuffleBack.test.ts"],
+  },
+  {
+    id: "D523-shuffle-back-arm-drops-the-cap",
+    decision: "D523",
+    what: "⚠️ C9 — **THE `<= MAX_PRINTED_ATTACH_COUNT` CEILING DROPPED**, the guard an author skips because *\"the sibling already checks it\"* — it does, in ITS arm. An unbounded `\\d+` then lets one malformed third-party row size a prompt (`up to 11`, `up to 999`). Killed by the `up to 11` → null rung (the mutant derives `max: 11`); the `up to 10` ceiling rung stays green on both, which is why the row is written against 11.",
+    file: "packages/engine/src/effects.ts",
+    find: "    if (filter !== undefined && max >= 1 && max <= MAX_PRINTED_ATTACH_COUNT) {",
+    replace: "    if (filter !== undefined && max >= 1) {",
+    expectKilledBy: ["packages/engine/src/discardShuffleBack.test.ts"],
+  },
+  {
+    id: "D523-shuffle-back-arm-reads-the-singular-flag",
+    decision: "D523",
+    what: "🛑 C10 — **`typedNounFilter(noun, true)` → `false`** — the plural flag flipped to the D237 arm's SINGULAR branch value, copied by an author who takes the first call in the sibling's ternary. `typedNounFilter` then demands \"Energy card\" and refuses the printed \"Energy cards\", so the ONE legal printing derives null again — the row falls back into the residue while the table phrases (Pal Pad's `Supporter cards`) still derive, so the anchor LOOKS alive. The one CENSUS-VISIBLE row: §1's `toEqual` and §3's 550/1591 redden, and `censusAtHead`'s `attack: 1641` reddens with them.",
+    file: "packages/engine/src/effects.ts",
+    find: "    const filter = HAND_SEARCH_PLURAL.get(noun) ?? typedNounFilter(noun, true);",
+    replace: "    const filter = HAND_SEARCH_PLURAL.get(noun) ?? typedNounFilter(noun, false);",
+    expectKilledBy: ["packages/engine/src/discardShuffleBack.test.ts", "packages/engine/src/censusAtHead.test.ts"],
   },
 ];

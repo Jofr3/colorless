@@ -770,10 +770,14 @@ describe("D520 §7 — zeros measured over all 640 rows", () => {
     // `STADIUM_GATED_BENCH_SPREAD`; the sentence and printing steps AGREE, 1 and 1): 92/143 → 91/142
     // and 548/1589 → 549/1590. ⚠️ This site sits OUTSIDE the annotated-chain sweep's shape (D521 (4))
     // and is stepped by hand; the full `check` is what finds it.
-    expect([unbuilt.length, units(unbuilt)]).toEqual([91, 142]);
+    // 🆕🆕🆕 D523 −1 sentence / −1 printing (THE DECK-DESTINATION DISCARD-PILE RETRIEVAL — corpus FILE
+    // LINE 485, claimed by `deriveAttackEffect` through `ATTACK_DISCARD_SHUFFLE_BACK`, the arm after
+    // the D237 arm; the sentence and printing steps AGREE, 1 and 1): 91/142 → 90/141 and 549/1590 →
+    // 550/1591. Stepped by hand again — this site sits outside the annotated-chain sweep's shape.
+    expect([unbuilt.length, units(unbuilt)]).toEqual([90, 141]);
     expect(unbuilt.map(([, s]) => s)).not.toContain(FOUR_ZONE);
     const resolved = legalAttackCorpus().filter(([, s]) => resolvedByAnyReader(s));
-    expect([resolved.length, units(resolved)]).toEqual([549, 1590]);
+    expect([resolved.length, units(resolved)]).toEqual([550, 1591]);
   });
 });
 
@@ -793,7 +797,7 @@ const RAW: Record<string, string> = (
 describe("D520 §8 — the version steps, and the heading is written", () => {
   it("engineVersion and `manifest.version` agree, and the bump is owed for BEHAVIOUR", () => {
     // ⚠️ The version is NOT spelled in this `it(…)` title (D460's fourth class).
-    expect(engineVersion).toBe("0.409.0");
+    expect(engineVersion).toBe("0.410.0");
     expect(manifest.version).toBe(engineVersion);
   });
 

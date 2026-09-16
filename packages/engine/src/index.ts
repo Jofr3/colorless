@@ -20018,6 +20018,80 @@ import type { GameState, Seat } from "./types";
     `expect(manifest.version)`, `it(…)` titles, the declaration and `package.json` —
     **not** as a value-keyed grep — because a value-keyed grep is precisely the mechanism
     that ate D500's heading.)
+    🆕🆕🆕 engineVersion 0.409.0 → **0.410.0** (D523 — THE DECK-DESTINATION DISCARD-PILE
+    RETRIEVAL ("Shuffle … from your discard pile into your deck") — ZERO VOCABULARY, AND A
+    REFUSAL WHOSE PREMISE WAS FALSE OF THE LEGAL ATTACK COLUMN. `censusAttackCorpus.ts`
+    **FILE LINE 485** (`legalAttackCorpus()` index 432) — *"Shuffle up to 3 Basic {W} Energy
+    cards from your discard pile into your deck."*, **1 sentence / 1 legal printing**, claimed
+    by `deriveAttackEffect` through ONE new anchor (`ATTACK_DISCARD_SHUFFLE_BACK`, directly
+    under D237's `ATTACK_DISCARD_RETRIEVAL`) and ONE new arm directly after the D237 arm,
+    deriving `[{op:"discardPileRetrieval", filter:{kind:"basicEnergy", energyType:"Water"},
+    dest:"deck", max:3}, {op:"shuffleDeck"}]` — PAL PAD's registry shape (`registry.ts`
+    `PAL_PAD`; Super Rod, Energy Recycler, Sacred Ash spell the same pair) with the hand
+    twin's OWN filter (*"Put up to 3 Basic {W} Energy cards … into your hand."* derives the
+    same op with `dest: "hand"`, measured).
+    🛑 **THE PRICE IS ONE ANCHOR AND ONE ARM — ZERO NEW VOCABULARY ANYWHERE.** No new
+    `EffectOp` kind, field or value (`discardPileRetrieval { dest: "deck" }` is D231/D237's
+    and every Pal Pad record already serializes it; `shuffleDeck` is the Nest Ball pattern's),
+    no `interpreter.ts`, `attack.ts`, `types.ts`, `redact.ts`, `cardplay.ts`, `events.ts`,
+    `log.ts` or projection byte, no reader (surface 13), registry row, `FIXTURE_POOL` id,
+    prompt or schema byte. The park (`chooseCards`, `min: 0`, `dest` off the op,
+    `retrieveNote`'s *"Shuffle up to N … into your deck."* caption), the resolve
+    (`retrieveMove`), the `DISCARD_RETRIEVED { dest: "deck" }` event and `log.ts`'s third arm
+    (*"shuffled N cards from their discard pile into their deck"*) all shipped for the
+    Trainers and are DRIVEN off an attack for the first time (`discardShuffleBack.test.ts` §2).
+    🛑 **THE TRAILING `shuffleDeck` IS REQUIRED.** `retrieveMove`'s deck arm is
+    `{ ...side, discard, deck: [...side.deck, ...moved] }` — an APPEND, no shuffle (verified) —
+    so the second op is what the printed verb means; a whiff and a decline still shuffle
+    (Pal Pad's own rule). §2 pins it three ways: `rngState` UNMOVED at the park and MOVED
+    after the resolve, a `SHUFFLE` row after `DISCARD_RETRIEVED`, and the two picks NOT at
+    the deck bottom in pick order on a seeded deck — the twin of the order-swapped mutant.
+    🛑 **THE REFUSAL'S PREMISE WAS FALSE OF THE LEGAL ATTACK COLUMN.**
+    `DISCARD_RETRIEVAL_DESTINATIONS`'s block (`effects.ts`) and
+    `derivedDiscardRetrieval.test.ts`'s *"MEASURED absence"* rung said the op's `dest: "deck"`
+    is spelled by *"no attack sentence in the catalog"* — *"printed as 'Shuffle … into your
+    deck', a different verb and therefore a different family (D232)"*. The second half was
+    right and is honoured (a SEPARATE anchor, verb and destination pinned as literals, not a
+    third `Put` row and not a wider alternation — D441; the table's type stays
+    `"hand" | "bench"`); the first half was false: file line 485 spells the deck destination
+    ONCE, with the Shuffle verb, and sat in the residue as SUBST-20 (`SUBMAX=12`) / OPAQUE
+    (`SUBMAX=4`) with its hand twin built one arm up. The rung is kept and INVERTED with D523
+    provenance (D418/D436): *"Put up to 2 Supporter cards … into your deck."* STAYS null (the
+    control), *"Shuffle up to 2 Supporter cards … into your deck."* now derives Pal Pad's
+    program byte for byte. Three prose sites corrected IN PLACE (D178/D442/D508): the
+    destination-table block, the D237 arm's *"never spells"* comment (true of the `Put`
+    family only), and the op block's producer note.
+    ⚠️ **PLURAL BRANCH ONLY — NO SINGULAR, NO BARE-NAME GROUP.** The Shuffle verb prints
+    neither in the legal attack column (every other `^Shuffle ` row is disjoint on `up to`:
+    484 `returnBenched`, 486/487 `handRefresh`, all built), so each would be an unkillable
+    branch (D231); *"Shuffle up to 2 Duskull …"* derives null and is driven as a near-miss.
+    The PLURAL TABLE TRANSFERS and is stated, not filtered: the typed-Pokémon plural and the
+    Trainer sentences of Pal Pad / Energy Recycler / Sacred Ash are admitted as attack text
+    (0 legal printings each). Count CAPTURED (a 2-print derives `max: 2`), bounded by the
+    D237 arm's shared guard (`>= 1`, `<= MAX_PRINTED_ATTACH_COUNT`); `^…$`, no `/i`; real `é`
+    only through the table; the anchor's claimed set over the 640 rows is EXACTLY {485},
+    measured. The guard is spelled on ONE line so no older mutant `find` starts occurring
+    twice (D522 (3)); `precheck` was run the moment the arm was written and was clean.
+    🛑 **THE BASE RULE.** No `damageDefender` in the program, so `attack.ts`'s top-level
+    `programDamage` stays false and the printed base lands in §8.5 BEFORE the program parks
+    (§2: `ATTACK_DECLARED`, `DAMAGE_DEALT`, then `effect:choose`); the resolve drains the
+    tail and the turn ends (D491). Whiff (no Water Energy in the pile) → no park, no
+    `ATTACK_EFFECT_SKIPPED`, the shuffle still fires, the turn ends.
+    ⚠️ **THE PRINTING'S CARD CANNOT BE READ ON THIS CHECKOUT** (not in `FIXTURE_POOL`; no D1,
+    no sqlite — D425/D521 (5)); the demonstrator is FILE-LOCAL with a DECLARED base and cost
+    and NO invented id, over `fix-water-energy` (typed Water) and `fix-energy` (Colorless).
+    ⚠️ **`MATCH_RECORD_VERSION` HELD at 30, RE-DERIVED.** Zero new serialized bytes: the park
+    is a shipped shape (`chooseCards { dest: "deck" }`, Pal Pad's), the program survives a
+    JSON round trip unchanged, and no new op, field, event or value exists.
+    ⚠️ **THIS HEADING IS LABELLED `(D523 —` BECAUSE `docs/decisions.md`'s `| **D523** |` row
+    SHIPS IN THE SAME COMMIT** (D507's rule: the label and the row are ONE edit).
+    🛑 **VERSION-TAX EXCEPTION LIST FOR THIS BUMP (D506's rule (b)).** `0.409.0` legitimately
+    survives at: THIS HEADING'S OWN SOURCE; D522's heading target one block down and its
+    exception-list line; `stadiumGatedSpread.test.ts`'s header arrow `0.408.0 → 0.409.0` and
+    its heading assertion; `discardShuffleBack.test.ts`'s header arrow `0.409.0 → 0.410.0`;
+    `mutants.ts`'s D275 re-point ledger; and the `docs/` history. The sweep was run as a
+    WHITELIST over `expect(engineVersion)`, `expect(manifest.version)`, `it(…)` titles, the
+    declaration and `package.json` — never as a value-keyed grep.)
     🆕🆕🆕 engineVersion 0.408.0 → **0.409.0** (D522 — THE STADIUM-GATED BENCH SPREAD WITH THE
     STADIUM DISCARD — ZERO VOCABULARY, AND A REFUSAL THAT WAS RIGHT ABOUT THE OP AND WRONG
     ABOUT THE READER. `censusAttackCorpus.ts` **FILE LINE 293** (`legalAttackCorpus()` index
@@ -22004,7 +22078,7 @@ import type { GameState, Seat } from "./types";
     WITNESS** — the count was re-derived every slice and the word *"three"* was carried.
     A successor of this slice inherits **81 / 61 / 17** again, over **FIVE** history
     occurrences: those four plus `deckMillFilteredScale.test.ts`'s own header arrow.) */
-export const engineVersion = "0.409.0";
+export const engineVersion = "0.410.0";
 
 export type {
   ApplyResult,

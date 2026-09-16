@@ -1,0 +1,715 @@
+import type { Card } from "@luminous/schema";
+import { describe, expect, it } from "vitest";
+import manifest from "../package.json" with { type: "json" };
+import { programPlayable } from "./cardplay";
+import { attackReaderSurface, legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
+import {
+  deriveAttackBonusConsequent,
+  deriveAttackCancelRequirement,
+  deriveAttackCoinFlip,
+  deriveAttackDamageBonus,
+  deriveAttackDamageMultiplier,
+  deriveAttackDamagePenalty,
+  deriveAttackDamageSuppression,
+  deriveAttackDiscardScaledBoost,
+  deriveAttackEffect,
+  deriveAttackOptionalBoost,
+  deriveAttackOptionalCostBoost,
+  deriveAttackPreDamage,
+  deriveAttackRequirement,
+  splitAttackCancelClause,
+  splitAttackGateClause,
+  splitAttackRequirementClause,
+  splitAttackTrailingClause,
+} from "./effects";
+import { applyAction, createGame, engineVersion } from "./index";
+import type { EffectOp, GameEvent, GameState, Seat } from "./index";
+import { logFromEvents } from "./log";
+import {
+  FIXTURE_POOL,
+  activeUid,
+  attachFromDeck,
+  battler,
+  clearBench,
+  deckOf,
+  discardFromDeck,
+  firstBasicInHand,
+  must,
+  mustApply,
+  setActiveFromDeck,
+  types,
+} from "./testFixtures";
+
+// 0.409.0 → 0.410.0 — 🆕🆕🆕 D523: THE DECK-DESTINATION DISCARD-PILE RETRIEVAL ("Shuffle … from your
+// discard pile into your deck") — ZERO VOCABULARY, AND A REFUSAL WHOSE PREMISE WAS FALSE OF THE
+// LEGAL ATTACK COLUMN.
+//
+// *"Shuffle up to 3 Basic {W} Energy cards from your discard pile into your deck."* —
+// `censusAttackCorpus.ts` **FILE LINE 485** (`legalAttackCorpus()` index 432), **1 sentence / 1
+// legal printing**, claimed by `deriveAttackEffect` through ONE new anchor
+// (`ATTACK_DISCARD_SHUFFLE_BACK`, directly under D237's `ATTACK_DISCARD_RETRIEVAL`) and ONE new arm
+// directly after the D237 arm, deriving PAL PAD's registry shape with the hand twin's OWN filter:
+//
+//     [ { op: "discardPileRetrieval", filter: { kind: "basicEnergy", energyType: "Water" },
+//         dest: "deck", max: 3 },
+//       { op: "shuffleDeck" } ]
+//
+// 🛑 **THE PRICE IS ONE ANCHOR AND ONE ARM — ZERO NEW VOCABULARY.** `discardPileRetrieval { dest:
+// "deck" }` is D231/D237's (every Pal Pad record already serializes it); `shuffleDeck` is the Nest
+// Ball pattern's. No `interpreter.ts`, `attack.ts`, `types.ts`, `redact.ts`, `cardplay.ts`,
+// `events.ts`, `log.ts` or projection byte, no reader (surface 13), registry row, `FIXTURE_POOL`
+// id, prompt, event or schema byte. §1 measures the program as the hand twin's derivation with the
+// destination swapped plus the shuffle, rather than quoting it.
+//
+// 🛑 **THE TRAILING `shuffleDeck` IS REQUIRED.** `retrieveMove`'s deck arm is
+// `{ ...side, discard, deck: [...side.deck, ...moved] }` — an APPEND, no shuffle — so the second op
+// is what the printed verb means, and a whiff / a decline still shuffle (Pal Pad's own rule). §2
+// pins it three ways: `rngState` UNMOVED at the park and MOVED after the resolve; a `SHUFFLE` row
+// AFTER `DISCARD_RETRIEVED`; and the two picks NOT at the deck bottom in pick order on a seeded
+// deck — the twin of the order-swapped mutant (`D523-shuffle-back-arm-order-swapped`) and of the
+// dropped-shuffle one (`D523-shuffle-back-arm-drops-the-shuffle`).
+//
+// 🛑 **THE REFUSAL'S PREMISE WAS FALSE OF THE LEGAL ATTACK COLUMN.** `DISCARD_RETRIEVAL_DESTINATIONS`'s
+// block and `derivedDiscardRetrieval.test.ts`'s *"MEASURED absence"* rung said *"no attack sentence
+// in the catalog spells"* the deck destination — *"those are printed as 'Shuffle … into your deck',
+// a different verb and therefore a different family (D232)"*. The second half was right and is
+// honoured (a SEPARATE anchor with verb and destination pinned as literals — D441; the `Put` table
+// and its `"hand" | "bench"` type are unchanged); the first half was false: file line 485 spells it
+// once, and sat in the residue as SUBST-20 (`SUBMAX=12`) / OPAQUE (`SUBMAX=4`) with its hand twin
+// built one arm up. The rung is kept and INVERTED with D523 provenance (D418/D436): the `Put … into
+// your deck` control STAYS null; the `Shuffle … into your deck` string derives Pal Pad's program.
+//
+// ⚠️ **PLURAL BRANCH ONLY — NO SINGULAR, NO BARE-NAME GROUP** (the verb prints neither in the legal
+// attack column; every other `^Shuffle ` row is disjoint on `up to`), so *"Shuffle up to 2 Duskull
+// …"* derives null and is driven as a near-miss. **THE PLURAL TABLE TRANSFERS AND IS STATED, NOT
+// FILTERED**: the typed-Pokémon plural and the Trainer sentences of Pal Pad / Energy Recycler /
+// Sacred Ash are admitted as attack text (0 legal printings each) — asserted as properties of the
+// shared table (D421).
+//
+// 🛑 **THE BASE RULE.** No `damageDefender` in the program, so `attack.ts`'s top-level `programDamage`
+// stays false and the printed base lands in §8.5 BEFORE the program parks: `ATTACK_DECLARED`,
+// `DAMAGE_DEALT`, then `effect:choose`. The resolve drains the tail and the turn ends (D491).
+//
+// ⚠️ **THE PRINTING'S CARD CANNOT BE READ ON THIS CHECKOUT** — it is not in `FIXTURE_POOL` and there
+// is no D1 and no sqlite here (D425/D521 (5)). The demonstrator is a FILE-LOCAL pool with its own
+// 60-card deck and DECLARED base and cost (D414/D452/D520/D522's shape); no id is invented. The
+// Water Energy is `fix-water-energy` (`typedEnergy` Water) beside `fix-energy` (Colorless).
+
+/** Corpus FILE LINE 485, byte for byte. */
+const PRINTED = "Shuffle up to 3 Basic {W} Energy cards from your discard pile into your deck.";
+/** The same shape at a different N — the count is CAPTURED, not pinned (C7). Constructed. */
+const TWO = "Shuffle up to 2 Basic {W} Energy cards from your discard pile into your deck.";
+/** The HAND TWIN — a REAL printed sentence read by the D237 arm since D238: the program is its
+    derivation with the destination swapped plus the shuffle. */
+const HAND_TWIN = "Put up to 3 Basic {W} Energy cards from your discard pile into your hand.";
+/** Pal Pad's printed text (`registry.ts` `PAL_PAD`) — the transfer property, and the string
+    `derivedDiscardRetrieval.test.ts`'s inverted rung reads. */
+const PAL_PAD_TEXT = "Shuffle up to 2 Supporter cards from your discard pile into your deck.";
+const ENERGY_RECYCLER_TEXT = "Shuffle up to 5 Basic Energy cards from your discard pile into your deck.";
+const SACRED_ASH_TEXT = "Shuffle up to 5 Pokémon from your discard pile into your deck.";
+
+/** THE PROGRAM, spelled once at the captured count. */
+const program = (max: number): EffectOp[] => [
+  { op: "discardPileRetrieval", filter: { kind: "basicEnergy", energyType: "Water" }, dest: "deck", max },
+  { op: "shuffleDeck" },
+];
+const PROGRAM = program(3);
+
+const READERS = [
+  deriveAttackBonusConsequent,
+  deriveAttackCancelRequirement,
+  deriveAttackCoinFlip,
+  deriveAttackDamageBonus,
+  deriveAttackDamageMultiplier,
+  deriveAttackDamagePenalty,
+  deriveAttackDamageSuppression,
+  deriveAttackDiscardScaledBoost,
+  deriveAttackEffect,
+  deriveAttackOptionalBoost,
+  deriveAttackOptionalCostBoost,
+  deriveAttackPreDamage,
+  deriveAttackRequirement,
+];
+const SPLITTERS = [
+  splitAttackCancelClause,
+  splitAttackGateClause,
+  splitAttackRequirementClause,
+  splitAttackTrailingClause,
+];
+
+const units = (rows: readonly (readonly [number, string])[]) => rows.reduce((s, [n]) => s + n, 0);
+const claims = (re: RegExp): readonly [number, number, readonly string[]] => {
+  const rows = legalAttackCorpus().filter(([, s]) => re.test(s));
+  return [rows.length, units(rows), rows.map(([, s]) => s)];
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// The demonstrator — a FILE-LOCAL pool and its own deck (D414/D452/D520/D522).
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** DECLARED, not read: the printing's base is unresolvable here. 40 keeps the base row
+    distinguishable from every count in the program. */
+const BASE = 40;
+const WATER = "fix-water-energy";
+const PLAIN = "fix-energy";
+
+const SHUFFLE_BACK_CARDS: Record<string, Card> = {
+  "d523-recycler": battler("d523-recycler", {
+    name: "D523 Recycler",
+    types: ["Water"],
+    hp: 130,
+    retreat: 2,
+    attacks: [
+      /** index 0 — the control: no effect, no program. */
+      { cost: ["Colorless"], name: "Plain Jab", damage: 30 },
+      /** index 1 — FILE LINE 485 verbatim, with a DECLARED base so the base-lands-then-park path
+          is driven (the BASE RULE). */
+      { cost: ["Colorless"], name: "Energy Recall", damage: BASE, effect: PRINTED },
+      /** index 2 — the SAME shape at 2: the count-not-pinned witness (C7). */
+      { cost: ["Colorless"], name: "Twin Recall", damage: BASE, effect: TWO },
+    ],
+  }),
+  /** The defender — 400 HP, no W/R — and the Pokémon that sits in the pile beside the Energy. */
+  "d523-wall": battler("d523-wall", { name: "D523 Wall", types: ["Colorless"], hp: 400 }),
+};
+
+const SHUFFLE_BACK_POOL: Record<string, Card> = { ...FIXTURE_POOL, ...SHUFFLE_BACK_CARDS };
+
+/** Its own deck (D270), 60 counted before the first run: 12 + 16 + 16 + 16. */
+const SHUFFLE_BACK_DECK = deckOf({
+  "d523-recycler": 12,
+  "d523-wall": 16,
+  [WATER]: 16,
+  [PLAIN]: 16,
+});
+
+/** The program's ONLY rng draw is the trailing shuffle (§2 asserts `rngState` unmoved at the park
+    and moved after the resolve), so the seed describes the opening shuffle and the one deck
+    shuffle. ⚠️ THE SEED IS LOAD-BEARING FOR THE DECK-BOTTOM RUNG: at this seed the shuffle after
+    the resolve demonstrably moves the two picks off the bottom (measured, §2) — the twin of the
+    order-swapped mutant, which would leave them there in pick order. */
+const SEED = 7;
+
+function openTable(seed: number, first: Seat): GameState {
+  const created = createGame({
+    seed,
+    decks: { p1: SHUFFLE_BACK_DECK, p2: SHUFFLE_BACK_DECK },
+    cardPool: SHUFFLE_BACK_POOL,
+  });
+  if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
+  let table = created.state;
+  if (table.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
+  table = must(applyAction(table, { type: "chooseFirstPlayer", seat: table.phase.coinWinner, first }));
+  while (table.phase.kind === "setup:drawExtra") {
+    const drawing = table.phase;
+    const owing = (["p1", "p2"] as const).find((s) => !drawing.decided[s]);
+    if (owing === undefined) throw new Error("setup:drawExtra with every seat decided");
+    table = must(applyAction(table, { type: "setupDrawExtra", seat: owing, count: drawing.owed[owing] }));
+  }
+  for (const seat of ["p1", "p2"] as const) {
+    table = must(applyAction(table, { type: "setupPlaceActive", seat, uid: firstBasicInHand(table, seat) }));
+  }
+  for (const seat of ["p1", "p2"] as const) {
+    table = must(applyAction(table, { type: "setupReady", seat }));
+  }
+  return table;
+}
+
+type Board = {
+  /** Water Energy in P1's discard pile. Default 3 — the printed cap exactly. */
+  readonly water?: number;
+};
+
+/** p1 owns TURN 2 with the attacker Active; P2 went first. P1's pile holds `water` Water Energy,
+    ONE Colorless Energy and ONE Pokémon — the two non-candidates that make the filter observable.
+    NONE of the surgeries touches `rngState`. */
+function table(board: Board = {}): GameState {
+  let state = openTable(SEED, "p2");
+  state = mustApply(state, { type: "endTurn", seat: "p2" }).state;
+  if (state.turn !== 2) throw new Error(`expected turn 2, got ${String(state.turn)}`);
+  state = setActiveFromDeck(state, "p1", "d523-recycler");
+  state = setActiveFromDeck(state, "p2", "d523-wall");
+  state = clearBench(state, "p1");
+  state = clearBench(state, "p2");
+  state = attachFromDeck(state, "p1", PLAIN, 1);
+  const water = board.water ?? 3;
+  if (water > 0) state = discardFromDeck(state, "p1", WATER, water);
+  state = discardFromDeck(state, "p1", PLAIN, 1);
+  state = discardFromDeck(state, "p1", "d523-wall", 1);
+  return state;
+}
+
+type Swing = { before: GameState; after: GameState; events: GameEvent[] };
+
+function swing(board: Board = {}, index = 1): Swing {
+  const before = table(board);
+  const { state: after, events } = mustApply(before, { type: "attack", seat: "p1", index });
+  return { before, after, events };
+}
+
+function cardsPrompt(state: GameState) {
+  if (state.phase.kind !== "effect:choose") throw new Error(`expected a park, got ${state.phase.kind}`);
+  if (state.phase.prompt.kind !== "chooseCards") {
+    throw new Error(`expected chooseCards, got ${state.phase.prompt.kind}`);
+  }
+  return state.phase.prompt;
+}
+
+/** The uids in p1's discard pile whose card id is `id`. */
+function pileUids(state: GameState, id: string): string[] {
+  return state.players.p1.discard.filter((uid) => state.cardIdByUid[uid] === id);
+}
+
+const resolve = (state: GameState, uids: string[]) =>
+  mustApply(state, { type: "resolveEffect", seat: "p1", choice: { kind: "cards", uids } });
+
+const NAMES = { p1: "P1", p2: "P2" } as const;
+const rows = (events: readonly GameEvent[], state: GameState): string[] =>
+  logFromEvents(events, { names: NAMES, state, elapsed: "+00:09" }).map((entry) =>
+    entry.kind === "turn" ? `— turn ${entry.turn} —` : entry.segments.map((s) => s.text).join(""),
+  );
+
+function retrievedRows(events: readonly GameEvent[]) {
+  return events.filter(
+    (e): e is Extract<GameEvent, { type: "DISCARD_RETRIEVED" }> => e.type === "DISCARD_RETRIEVED",
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// §1 — derivation: the exact program, its ORDER, its key set, the hand twin, the row's census
+// identity, the anchor's claim over the column, and the negative controls.
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe("D523 §1 — the printed row derives to EXACTLY Pal Pad's shape with the hand twin's filter", () => {
+  it("🛑 file line 485 derives to [retrieval to deck, shuffleDeck] — and this `toEqual` is what pins the printed ORDER (`D523-shuffle-back-arm-order-swapped`) and the second op (`-arm-drops-the-shuffle`)", () => {
+    expect(deriveAttackEffect(PRINTED)).toEqual(PROGRAM);
+    expect(deriveAttackEffect(PRINTED)).toHaveLength(2);
+    expect((deriveAttackEffect(PRINTED) as EffectOp[]).map((o) => o.op)).toEqual([
+      "discardPileRetrieval",
+      "shuffleDeck",
+    ]);
+  });
+
+  it("🛑 op 0's sorted KEY SET is exactly [dest, filter, max, op] — no `recordAs`, no `exclude` (D135) — and op 1 is the bare shuffle", () => {
+    const [retrieval, shuffle] = deriveAttackEffect(PRINTED) as EffectOp[];
+    if (retrieval?.op !== "discardPileRetrieval") throw new Error("op 0 is not a discardPileRetrieval");
+    if (shuffle?.op !== "shuffleDeck") throw new Error("op 1 is not a shuffleDeck");
+    expect(Object.keys(retrieval).sort()).toEqual(["dest", "filter", "max", "op"]);
+    expect(retrieval.recordAs).toBeUndefined();
+    expect(retrieval.exclude).toBeUndefined();
+    expect(retrieval.dest).toBe("deck");
+    expect(Object.keys(shuffle)).toEqual(["op"]);
+  });
+
+  it("🛑 the program is BYTE-EQUAL to the HAND TWIN's own derivation with `dest` swapped to `deck`, plus the shuffle (measured, not quoted) — the `Put` arm reads the twin with `dest: \"hand\"` (`D523-shuffle-back-arm-dest-hand`)", () => {
+    const twin = deriveAttackEffect(HAND_TWIN);
+    expect(twin).toEqual([
+      { op: "discardPileRetrieval", filter: { kind: "basicEnergy", energyType: "Water" }, dest: "hand", max: 3 },
+    ]);
+    const [twinOp] = twin as EffectOp[];
+    if (twinOp?.op !== "discardPileRetrieval") throw new Error("the twin's op 0 is not a discardPileRetrieval");
+    expect(deriveAttackEffect(PRINTED)).toEqual([{ ...twinOp, dest: "deck" }, { op: "shuffleDeck" }]);
+    // …and the two filters are the SAME bytes: the shared plural table / brace pattern.
+    const [mine] = deriveAttackEffect(PRINTED) as EffectOp[];
+    if (mine?.op !== "discardPileRetrieval") throw new Error("op 0 is not a discardPileRetrieval");
+    expect(mine.filter).toEqual(twinOp.filter);
+    expect(mine.max).toBe(twinOp.max);
+  });
+
+  it("🛑 the sentence is the CORPUS's bytes at exactly ONE printing, at index 432, it is RESOLVED, and the raw file line IS 485", () => {
+    const corpus = legalAttackCorpus();
+    const rows = corpus.filter(([, s]) => s === PRINTED);
+    expect(rows).toEqual([[1, PRINTED]]);
+    expect(corpus.findIndex(([, s]) => s === PRINTED)).toBe(432);
+    expect(resolvedByAnyReader(PRINTED)).toBe(true);
+    // FILE LINE 485 is a claim about the FILE, so it is read off the file (1-indexed).
+    const raw = Object.entries(RAW).find(([k]) => k.endsWith("/censusAttackCorpus.ts"))?.[1] ?? "";
+    expect(raw.split("\n")[484]).toBe(`1 ${PRINTED}`);
+  });
+
+  it("🛑 the anchor's claimed set over all 640 rows is EXACTLY {file line 485} — re-spelled over the column with the SHARED plural table, and a looser verb+zone+destination probe claims the IDENTICAL 1 / 1", () => {
+    // Re-spelled here so the claim is a MEASUREMENT over the column rather than a reading of
+    // the regex (D472/D477): the plural table's nine phrases plus `TYPED_NOUN_PLURAL`, the
+    // count captured, the verb and destination literals, `^…$`.
+    const mine =
+      /^Shuffle up to (\d+) (cards|Pokémon|Item cards|Supporter cards|Stadium cards|Pokémon Tool cards|Trainer cards|Basic Energy cards|Energy cards|(?:Basic )?\{[A-Z]\} Pokémon|Basic \{[A-Z]\} Energy cards) from your discard pile into your deck\.$/;
+    const [n, u, claimed] = claims(mine);
+    expect([n, u]).toEqual([1, 1]);
+    expect(claimed).toEqual([PRINTED]);
+    expect(legalAttackCorpus()).toHaveLength(640);
+    // The LOOSER probe — any noun at all between the count and the zone — claims the same
+    // 1 / 1, so no neighbour of this row is sitting one noun away in the column.
+    expect(claims(/^Shuffle up to \d+ .+ from your discard pile into your deck\.$/).slice(0, 2)).toEqual([1, 1]);
+    expect(claims(/from your discard pile into your deck/)[2]).toEqual([PRINTED]);
+    // …and the other `^Shuffle ` rows are DISJOINT on `up to` — 484 (`returnBenched`, 2
+    // printings) and 486/487 (`handRefresh`), all built by OTHER arms.
+    const shuffles = legalAttackCorpus().filter(([, s]) => /^Shuffle /.test(s));
+    expect([shuffles.length, units(shuffles)]).toEqual([4, 5]);
+    for (const [, s] of shuffles) {
+      expect(resolvedByAnyReader(s), s).toBe(true);
+      if (s !== PRINTED) expect(s, s).not.toContain("up to");
+    }
+  });
+
+  it("🛑 `deriveAttackEffect` is the ONLY claimant — twelve readers and four splitters are null", () => {
+    for (const reader of READERS) {
+      if (reader === deriveAttackEffect) continue;
+      expect(reader(PRINTED), reader.name).toBeNull();
+    }
+    for (const splitter of SPLITTERS) expect(splitter(PRINTED), splitter.name).toBeNull();
+    expect(deriveAttackEffect(PRINTED)).not.toBeNull();
+  });
+
+  it("🛑 the anchor is WHOLE-SENTENCE at BOTH ends — a prefixed print and a suffixed print each derive null (D520 (3); `D523-shuffle-back-anchor-loses-the-head` / `-tail`)", () => {
+    // Both strings are CONSTRUCTED and labelled as such (D440); neither is printed.
+    const prefixed = `Discard a card from your hand. ${PRINTED}`;
+    const suffixed = `${PRINTED} Then, draw a card.`;
+    expect(legalAttackCorpus().some(([, s]) => s === prefixed || s === suffixed)).toBe(false);
+    expect(deriveAttackEffect(prefixed)).toBeNull();
+    expect(deriveAttackEffect(suffixed)).toBeNull();
+    expect(resolvedByAnyReader(prefixed)).toBe(false);
+    expect(resolvedByAnyReader(suffixed)).toBe(false);
+  });
+
+  it("🛑 single-axis controls, ONE token apart each, all null — the `Put` table is UNCHANGED, the verb and both zones are literals, the noun table is closed, and there is NO name branch", () => {
+    const controls: Record<string, string> = {
+      "the VERB swapped to Put (the `Put` table still has no deck row — the kept control)":
+        "Put up to 3 Basic {W} Energy cards from your discard pile into your deck.",
+      "the DESTINATION swapped to the hand (Shuffle prints no hand destination)":
+        "Shuffle up to 3 Basic {W} Energy cards from your discard pile into your hand.",
+      "the `up to` dropped (`D523-shuffle-back-anchor-drops-up-to`)":
+        "Shuffle 3 Basic {W} Energy cards from your discard pile into your deck.",
+      "the ZONES swapped (deck → discard pile)":
+        "Shuffle up to 3 Basic {W} Energy cards from your deck into your discard pile.",
+      "a NOUN outside the shared table":
+        "Shuffle up to 3 Berry cards from your discard pile into your deck.",
+      "a bare PROPER NAME — the sibling's name branch is NOT carried (D121/D190b's warrant is unmet for this verb)":
+        "Shuffle up to 2 Duskull from your discard pile into your deck.",
+      "the SINGULAR — no singular branch (D231's unkillable-singleton rule)":
+        "Shuffle a Basic {W} Energy card from your discard pile into your deck.",
+      "the OPPONENT's deck":
+        "Shuffle up to 3 Basic {W} Energy cards from your discard pile into your opponent's deck.",
+    };
+    for (const [why, s] of Object.entries(controls)) {
+      expect(s, why).not.toBe(PRINTED);
+      expect(deriveAttackEffect(s), why).toBeNull();
+      expect(resolvedByAnyReader(s), why).toBe(false);
+      expect(legalAttackCorpus().some(([, t]) => t === s), why).toBe(false);
+    }
+  });
+
+  it("🛑 a printed ZERO derives null and `up to 11` derives null — the D237 arm's shared guard, both ends (`D523-shuffle-back-printed-zero-derives` / `-arm-drops-the-cap`); `up to 10` is the ceiling and derives", () => {
+    expect(deriveAttackEffect(PRINTED.replace("up to 3", "up to 0"))).toBeNull();
+    expect(resolvedByAnyReader(PRINTED.replace("up to 3", "up to 0"))).toBe(false);
+    expect(deriveAttackEffect(PRINTED.replace("up to 3", "up to 11"))).toBeNull();
+    expect(resolvedByAnyReader(PRINTED.replace("up to 3", "up to 11"))).toBe(false);
+    expect(deriveAttackEffect(PRINTED.replace("up to 3", "up to 10"))).toEqual(program(10));
+  });
+
+  it("🛑 the count is CAPTURED, not pinned — the 2-print derives the same shape at 2 (`D523-shuffle-back-arm-pins-the-max`)", () => {
+    expect(deriveAttackEffect(TWO)).toEqual(program(2));
+    expect(deriveAttackEffect(PRINTED.replace("up to 3", "up to 5"))).toEqual(program(5));
+    // …and the constructed 2-print is not itself in the column (D440 — labelled constructed).
+    expect(legalAttackCorpus().some(([, s]) => s === TWO)).toBe(false);
+  });
+
+  it("🛑 the noun goes through the brace pattern with the PLURAL flag — the singular flag would refuse `Energy cards` (`D523-shuffle-back-arm-reads-the-singular-flag`)", () => {
+    // The hand twin's own arm resolves "Basic {W} Energy cards" through `typedNounFilter(…, true)`;
+    // the same phrase with `false` demands "Energy card" and returns undefined. Driven here by
+    // the LIVE derivation of the printed row (which the mutant turns null — census-visible).
+    const [mine] = deriveAttackEffect(PRINTED) as EffectOp[];
+    if (mine?.op !== "discardPileRetrieval") throw new Error("op 0 is not a discardPileRetrieval");
+    expect(mine.filter).toEqual({ kind: "basicEnergy", energyType: "Water" });
+    // The other typed code the table admits, the same way.
+    expect(deriveAttackEffect(PRINTED.replace("{W}", "{R}"))).toEqual([
+      { op: "discardPileRetrieval", filter: { kind: "basicEnergy", energyType: "Fire" }, dest: "deck", max: 3 },
+      { op: "shuffleDeck" },
+    ]);
+  });
+
+  it("⚠️ the SHARED plural table TRANSFERS, by construction (D421): the typed-Pokémon plural DERIVES, and it is stated, not filtered", () => {
+    expect(deriveAttackEffect("Shuffle up to 2 {W} Pokémon from your discard pile into your deck.")).toEqual([
+      { op: "discardPileRetrieval", filter: { kind: "typedPokemon", pokemonType: "Water" }, dest: "deck", max: 2 },
+      { op: "shuffleDeck" },
+    ]);
+    expect(deriveAttackEffect("Shuffle up to 2 Basic {W} Pokémon from your discard pile into your deck.")).toEqual([
+      {
+        op: "discardPileRetrieval",
+        filter: { kind: "typedPokemon", pokemonType: "Water", stage: "basic" },
+        dest: "deck",
+        max: 2,
+      },
+      { op: "shuffleDeck" },
+    ]);
+    // 0 legal attack printings spell either — measured.
+    expect(claims(/^Shuffle up to \d+ (?:Basic )?\{[A-Z]\} Pokémon from your discard pile/).slice(0, 2)).toEqual([0, 0]);
+  });
+
+  it("⚠️ the TRANSFER PROPERTY: Pal Pad, Energy Recycler and Sacred Ash's printed texts derive their own registry programs AS ATTACK TEXT (0 legal attack printings each) — stated, not refused", () => {
+    expect(deriveAttackEffect(PAL_PAD_TEXT)).toEqual([
+      { op: "discardPileRetrieval", filter: { kind: "supporter" }, dest: "deck", max: 2 },
+      { op: "shuffleDeck" },
+    ]);
+    expect(deriveAttackEffect(ENERGY_RECYCLER_TEXT)).toEqual([
+      { op: "discardPileRetrieval", filter: { kind: "basicEnergy" }, dest: "deck", max: 5 },
+      { op: "shuffleDeck" },
+    ]);
+    expect(deriveAttackEffect(SACRED_ASH_TEXT)).toEqual([
+      { op: "discardPileRetrieval", filter: { kind: "anyPokemon" }, dest: "deck", max: 5 },
+      { op: "shuffleDeck" },
+    ]);
+    for (const s of [PAL_PAD_TEXT, ENERGY_RECYCLER_TEXT, SACRED_ASH_TEXT]) {
+      expect(legalAttackCorpus().some(([, t]) => t === s), s).toBe(false);
+    }
+  });
+
+  it("AUTHORS nothing — the legal printing is read off the TEXT, and the reader surface is still THIRTEEN", () => {
+    expect(attackReaderSurface()).toHaveLength(13);
+    expect(attackReaderSurface()).toContain("deriveAttackEffect");
+    expect(READERS.map((read) => read.name).sort()).toEqual(attackReaderSurface());
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// §2 — the executor: the base lands, the park, the resolve, the shuffle, the decline and the whiff.
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe("D523 §2 — the base lands FIRST, then the shipped park with `dest: \"deck\"`, then the resolve and the REQUIRED shuffle", () => {
+  it("🛑 the board is what it says: P1's attacker is Active with one Energy, its pile holds 3 Water Energy + 1 Colorless Energy + 1 Pokémon, and NO surgery moved `rngState`", () => {
+    const before = table();
+    expect(before.players.p1.active?.energy).toHaveLength(1);
+    expect(pileUids(before, WATER)).toHaveLength(3);
+    expect(pileUids(before, PLAIN)).toHaveLength(1);
+    expect(pileUids(before, "d523-wall")).toHaveLength(1);
+    expect(before.players.p1.discard).toHaveLength(5);
+    expect(before.turn).toBe(2);
+    expect(SHUFFLE_BACK_CARDS["d523-recycler"]?.attacks?.[1]?.effect).toBe(PRINTED);
+    expect(SHUFFLE_BACK_CARDS["d523-recycler"]?.attacks?.[2]?.effect).toBe(TWO);
+    expect(FIXTURE_POOL[WATER]?.name).toBe("Water Energy");
+    expect(openTable(SEED, "p2").rngState).toBe(mustApply(openTable(SEED, "p2"), { type: "endTurn", seat: "p2" }).state.rngState);
+  });
+
+  it("🛑 exactly ONE base row on the DEFENDER, and it lands BEFORE the park (the BASE RULE): ATTACK_DECLARED, DAMAGE_DEALT, then `effect:choose`", () => {
+    const { before, after, events } = swing();
+    const defender = activeUid(before, "p2");
+    const damage = events.filter((e): e is Extract<GameEvent, { type: "DAMAGE_DEALT" }> => e.type === "DAMAGE_DEALT");
+    expect(damage).toHaveLength(1);
+    expect(damage[0]).toMatchObject({ seat: "p2", by: "p1", uid: defender, base: BASE, dealt: BASE });
+    expect(types(events).slice(0, 2)).toEqual(["ATTACK_DECLARED", "DAMAGE_DEALT"]);
+    expect(after.players.p2.active?.damage).toBe(BASE);
+    expect(after.phase.kind).toBe("effect:choose");
+    expect(types(events)).not.toContain("TURN_ENDED");
+    expect(types(events)).not.toContain("SHUFFLE");
+  });
+
+  it("🛑 the park is the SHIPPED `chooseCards` with `dest: \"deck\"`, `min: 0`, `max: 3`, candidates = EXACTLY the three Water uids, and `retrieveNote`'s deck caption (MEASURED)", () => {
+    const { before, after } = swing();
+    const prompt = cardsPrompt(after);
+    expect(prompt.dest).toBe("deck");
+    expect(prompt.min).toBe(0);
+    expect(prompt.max).toBe(3);
+    expect([...prompt.candidates].sort()).toEqual([...pileUids(before, WATER)].sort());
+    expect(prompt.candidates).not.toContain(pileUids(before, PLAIN)[0]);
+    expect(prompt.candidates).not.toContain(pileUids(before, "d523-wall")[0]);
+    // `retrieveNote`: the verb is decided by the deck destination ("Shuffle"), the plural noun
+    // is `retrieveNoun`'s `basicEnergy { Water }` arm ("Basic Water Energy cards").
+    expect(prompt.note).toBe("Shuffle up to 3 Basic Water Energy cards from your discard pile into your deck.");
+    // The prompt's KEY SET is the shipped one — Pal Pad's park, byte for byte in shape.
+    expect(Object.keys(prompt).sort()).toEqual(["candidates", "dest", "kind", "max", "min", "note"]);
+    // …and `rngState` is UNMOVED at the park: the shuffle is the SECOND op and has not run
+    // (the order-swapped mutant shuffles before the park).
+    expect(after.rngState).toBe(before.rngState);
+    expect(after.phase.kind === "effect:choose" && after.phase.seat).toBe("p1");
+  });
+
+  it("🛑 resolving with 2 picks: deck +2 / discard −2, `DISCARD_RETRIEVED { dest: \"deck\" }` under the attacker's seat, then `SHUFFLE`, `rngState` MOVED, the log row, and the turn ends (D491)", () => {
+    const { after: parked } = swing();
+    const picks = pileUids(parked, WATER).slice(0, 2);
+    const { state, events } = resolve(parked, picks);
+    expect(state.players.p1.deck).toHaveLength(parked.players.p1.deck.length + 2);
+    expect(state.players.p1.discard).toHaveLength(parked.players.p1.discard.length - 2);
+    for (const uid of picks) {
+      expect(state.players.p1.deck).toContain(uid);
+      expect(state.players.p1.discard).not.toContain(uid);
+    }
+    // The third Water card and the two non-candidates are still in the pile.
+    expect(pileUids(state, WATER)).toHaveLength(1);
+    expect(pileUids(state, PLAIN)).toHaveLength(1);
+    expect(pileUids(state, "d523-wall")).toHaveLength(1);
+    expect(retrievedRows(events)).toEqual([{ type: "DISCARD_RETRIEVED", seat: "p1", dest: "deck", uids: picks }]);
+    // The shuffle is a SEPARATE row AFTER the retrieval — the printed order.
+    const retrievedAt = types(events).indexOf("DISCARD_RETRIEVED");
+    const shuffleAt = types(events).indexOf("SHUFFLE");
+    expect(shuffleAt).toBeGreaterThan(retrievedAt);
+    expect(events[shuffleAt]).toEqual({ type: "SHUFFLE", seat: "p1" });
+    expect(state.rngState).not.toBe(parked.rngState);
+    expect(rows(events, state)).toContain("shuffled 2 cards from their discard pile into their deck");
+    expect(types(events)).toContain("TURN_ENDED");
+    expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
+    expect(state.phase).toEqual({ kind: "turn:action", seat: "p2" });
+    expect(state.turn).toBe(3);
+    // The defender still carries the base and nothing else.
+    expect(state.players.p2.active?.damage).toBe(BASE);
+  });
+
+  it("🛑 the picks are NOT left at the deck bottom in pick order — the shuffle after the append MOVED them (seeded; the twin of `-arm-order-swapped` and `-arm-drops-the-shuffle`)", () => {
+    const { after: parked } = swing();
+    const picks = pileUids(parked, WATER).slice(0, 2);
+    const { state } = resolve(parked, picks);
+    // What the APPEND alone would have produced — `retrieveMove`'s deck arm, verbatim — and what
+    // a shuffle-then-append (the swapped order) would leave at the bottom.
+    const appended = [...parked.players.p1.deck, ...picks];
+    expect(state.players.p1.deck).not.toEqual(appended);
+    expect(state.players.p1.deck.slice(-2)).not.toEqual(picks);
+    // …while the deck is the same MULTISET: nothing was lost or invented by the shuffle.
+    expect([...state.players.p1.deck].sort()).toEqual([...appended].sort());
+  });
+
+  it("🛑 DECLINE (0 picks): nothing moves, no `DISCARD_RETRIEVED`, the shuffle STILL fires (`rngState` moves, a `SHUFFLE` row), the turn ends", () => {
+    const { after: parked } = swing();
+    const { state, events } = resolve(parked, []);
+    expect(state.players.p1.deck).toHaveLength(parked.players.p1.deck.length);
+    expect(state.players.p1.discard).toEqual(parked.players.p1.discard);
+    expect(retrievedRows(events)).toHaveLength(0);
+    expect(types(events)).toContain("SHUFFLE");
+    expect(state.rngState).not.toBe(parked.rngState);
+    expect(rows(events, state).some((r) => r.includes("from their discard pile"))).toBe(false);
+    expect(state.phase).toEqual({ kind: "turn:action", seat: "p2" });
+  });
+
+  it("🛑 WHIFF (no Water Energy in the pile): NO park, no `ATTACK_EFFECT_SKIPPED`, the shuffle still fires, the turn ends — the base still lands", () => {
+    const { before, after, events } = swing({ water: 0 });
+    expect(pileUids(before, WATER)).toHaveLength(0);
+    expect(pileUids(before, PLAIN)).toHaveLength(1);
+    expect(after.phase.kind).not.toBe("effect:choose");
+    expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
+    expect(retrievedRows(events)).toHaveLength(0);
+    expect(types(events)).toContain("SHUFFLE");
+    expect(after.rngState).not.toBe(before.rngState);
+    expect(types(events)).toContain("TURN_ENDED");
+    expect(after.phase).toEqual({ kind: "turn:action", seat: "p2" });
+    expect(after.players.p2.active?.damage).toBe(BASE);
+    expect(after.players.p1.discard).toEqual(before.players.p1.discard);
+  });
+
+  it("🛑 the 2-print parks at `max: 2` on the same pile (the count is CAPTURED — `D523-shuffle-back-arm-pins-the-max`), and the index-0 control neither parks nor shuffles", () => {
+    const { before, after } = swing({}, 2);
+    const prompt = cardsPrompt(after);
+    expect(prompt.max).toBe(2);
+    expect(prompt.dest).toBe("deck");
+    expect([...prompt.candidates].sort()).toEqual([...pileUids(before, WATER)].sort());
+    expect(prompt.note).toBe("Shuffle up to 2 Basic Water Energy cards from your discard pile into your deck.");
+    const control = swing({}, 0);
+    expect(control.after.phase).toEqual({ kind: "turn:action", seat: "p2" });
+    expect(control.after.rngState).toBe(control.before.rngState);
+    expect(types(control.events)).not.toContain("SHUFFLE");
+    expect(control.after.players.p2.active?.damage).toBe(30);
+    expect(control.after.players.p1.discard).toEqual(control.before.players.p1.discard);
+  });
+
+  it("🛑 `programPlayable` is TRUE on the full pile and on the whiff pile — an attack is declared and paid for (§8), the park is not a gate", () => {
+    const full = table();
+    expect(programPlayable(full, PROGRAM, "p1")).toBe(true);
+    expect(programPlayable(full, PROGRAM, "p1", activeUid(full, "p1"))).toBe(true);
+    const whiff = table({ water: 0 });
+    expect(programPlayable(whiff, PROGRAM, "p1")).toBe(true);
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// §3 — the census figures, with their units.
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe("D523 §3 — the census moved in exactly ONE summand, by 1 sentence / 1 printing", () => {
+  it("🛑 the reader arm reads 550 sentences / 1,591 printings, and the row is IN it", () => {
+    // 🆕🆕🆕 D523's OWN literals, annotated in-slice so the next sweep sees them (D522 (4)): the
+    // reader arm 549/1590 → 550/1591, the `without` pair 548/1589 → 549/1590 — corpus FILE LINE
+    // 485, sentence step == printing step == 1.
+    const resolved = legalAttackCorpus().filter(([, s]) => resolvedByAnyReader(s));
+    expect([resolved.length, units(resolved)]).toEqual([550, 1591]);
+    expect(resolved.map(([, s]) => s)).toContain(PRINTED);
+    // …and the step is THIS sentence and nothing else: remove it and the pair is D522's.
+    const without = resolved.filter(([, s]) => s !== PRINTED);
+    expect([without.length, units(without)]).toEqual([549, 1590]);
+  });
+
+  it("🛑 the RAW reader-only residue fell by exactly 1 sentence / 1 printing — 90 / 141 — and the row left it", () => {
+    // 🆕🆕🆕 D523's OWN literal (corpus FILE LINE 485, see §3's first rung): 91/142 → 90/141.
+    const unbuilt = legalAttackCorpus().filter(([, s]) => !resolvedByAnyReader(s));
+    expect([unbuilt.length, units(unbuilt)]).toEqual([90, 141]);
+    expect(unbuilt.map(([, s]) => s)).not.toContain(PRINTED);
+    // The parts add up to the whole quoted in the same case.
+    const all = legalAttackCorpus();
+    expect(unbuilt.length + 550).toBe(all.length);
+    expect(units(unbuilt) + 1591).toBe(units(all));
+    expect([all.length, units(all)]).toEqual([640, 1732]);
+  });
+
+  it("🛑 the move is READER-keyed: no gate clause, no trailing split, no cancel split, no requirement split claims the row", () => {
+    expect(splitAttackGateClause(PRINTED)).toBeNull();
+    expect(splitAttackTrailingClause(PRINTED)).toBeNull();
+    expect(splitAttackCancelClause(PRINTED)).toBeNull();
+    expect(splitAttackRequirementClause(PRINTED)).toBeNull();
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// §4 — the version, the heading, the corrected prose, and what stands still.
+// ─────────────────────────────────────────────────────────────────────────────
+
+const RAW: Record<string, string> = (
+  import.meta as unknown as {
+    glob(
+      pattern: string,
+      options: { query: "?raw"; import: "default"; eager: true },
+    ): Record<string, string>;
+  }
+).glob("./{censusAttackCorpus,index,effects}.ts", { query: "?raw", import: "default", eager: true });
+
+describe("D523 §4 — the version steps, the heading is written, the prose is corrected, and what stands still", () => {
+  it("engineVersion and `manifest.version` agree, and the bump is owed for BEHAVIOUR", () => {
+    // ⚠️ The version is NOT spelled in this `it(…)` title (D460's fourth class).
+    expect(engineVersion).toBe("0.410.0");
+    expect(manifest.version).toBe(engineVersion);
+  });
+
+  it("🛑 the changelog heading for this bump is present in `index.ts`, labelled with its decision", () => {
+    const index = Object.entries(RAW).find(([k]) => k.endsWith("/index.ts"))?.[1] ?? "";
+    expect(index.length).toBeGreaterThan(1_000_000);
+    expect(index).toContain("engineVersion 0.409.0 → **0.410.0** (D523");
+  });
+
+  it("🛑 the stale premise is corrected IN PLACE at all three `effects.ts` sites (D442/D508), and the anchor's commentary does not inflate the producer counts (D516)", () => {
+    const effects = Object.entries(RAW).find(([k]) => k.endsWith("/effects.ts"))?.[1] ?? "";
+    // The destination-table block, the D237 arm's "never spells" comment, the op block.
+    expect(effects).toContain("D523 — THE FIRST HALF OF THAT SENTENCE WAS FALSE OF THE LEGAL ATTACK");
+    expect(effects).toContain("D523 — TRUE OF THE `Put` FAMILY, AND ONLY OF IT");
+    expect(effects).toContain("D523 — A SECOND DERIVER PRODUCER, AND THE FIRST ATTACK TEXT WITH `dest:");
+    // …and the raw producer counts read CODE, one new site each — the anchor block spells the
+    // program without the `op: "…",` form (D516/D520 (4)/D521/D522): 1 → 2 and 16 → 17, MEASURED
+    // at the head before the arm was written.
+    expect(effects.split('op: "discardPileRetrieval",').length - 1).toBe(2);
+    expect(effects.split('{ op: "shuffleDeck" }').length - 1).toBe(17);
+    // The table's TYPE is unchanged: the deck destination never entered the `Put` table.
+    expect(effects).toContain('const DISCARD_RETRIEVAL_DESTINATIONS: ReadonlyMap<string, "hand" | "bench"> = new Map([');
+  });
+
+  it("🛑 `MATCH_RECORD_VERSION` HOLDS at 30: zero new serialized bytes — the program round-trips unchanged and the park is Pal Pad's shipped shape", () => {
+    // Every kind, field and value in the program already ships (`discardPileRetrieval { dest:
+    // "deck" }` since D231 for Pal Pad, `shuffleDeck` since the Nest Ball pattern), so the program
+    // survives a JSON round trip unchanged and a v30 deploy could already have written it.
+    expect(JSON.parse(JSON.stringify(PROGRAM))).toEqual(PROGRAM);
+    // The park's prompt is a shipped shape too: `chooseCards` with `dest: "deck"`.
+    const { after } = swing();
+    const prompt = cardsPrompt(after);
+    expect(JSON.parse(JSON.stringify(prompt))).toEqual(prompt);
+    expect(prompt.dest).toBe("deck");
+  });
+
+  it("🛑 the demonstrator is FILE-LOCAL — zero `FIXTURE_POOL` ids, the deck is 60, and the Water Energy is the fixture's own typed Basic", () => {
+    expect(Object.keys(SHUFFLE_BACK_CARDS).every((id) => FIXTURE_POOL[id] === undefined)).toBe(true);
+    expect(SHUFFLE_BACK_DECK).toHaveLength(60);
+    expect(FIXTURE_POOL[WATER]?.name).toBe("Water Energy");
+    expect(FIXTURE_POOL[PLAIN]?.name).toBe(PLAIN);
+  });
+});

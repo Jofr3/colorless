@@ -8005,7 +8005,14 @@ export type EffectOp =
       refuses a Bench destination for every noun that is not a Pokémon noun (see
       `BENCHABLE_RETRIEVAL_KINDS`) — and the registry authors none. Naming it
       here so the next author of a `discardPileRetrieval` row knows the check is
-      upstream of them and not under them. */
+      upstream of them and not under them.
+
+      🆕🆕🆕 **D523 — A SECOND DERIVER PRODUCER, AND THE FIRST ATTACK TEXT WITH `dest:
+      "deck"`.** `ATTACK_DISCARD_SHUFFLE_BACK` (corpus FILE LINE 485, *"Shuffle up to 3
+      Basic {W} Energy cards from your discard pile into your deck."*) emits this op with
+      `dest: "deck"` followed by the trailing `shuffleDeck` — Pal Pad's registry pair,
+      now reachable from an attack. Nothing here widens: the deck arm of `retrieveMove`,
+      the `chooseCards` park and `log.ts`'s third arm all shipped for the Trainers. */
   | {
       op: "discardPileRetrieval";
       filter: CardFilter;
@@ -23063,6 +23070,15 @@ function attachFromZoneProgram(
     catalog spells it** — those are printed as *"Shuffle … into your deck"*, a
     different verb and therefore a different family (D232's rule). The table is
     authored off the bytes, not off the union.
+    🆕🆕🆕 **[D523 — THE FIRST HALF OF THAT SENTENCE WAS FALSE OF THE LEGAL ATTACK
+    COLUMN, AND THE SECOND HALF IS WHY THIS TABLE IS UNCHANGED (annotated in place,
+    D178/D442/D508).** `censusAttackCorpus.ts` FILE LINE 485 — *"Shuffle up to 3 Basic
+    {W} Energy cards from your discard pile into your deck."*, 1 sentence / 1 legal
+    printing — spells the DECK destination ONCE, with the Shuffle verb, and it is read by
+    its own anchor (`ATTACK_DISCARD_SHUFFLE_BACK`, directly under the D237 anchor) into
+    Pal Pad's program with the hand twin's filter. The verb IS a different family, so the
+    row stays OFF this table: `Put … into your deck` still derives null (the control is
+    kept), and the type below stays `"hand" | "bench"`.]**
 
     A `Map` for D115's reason (the key is arbitrary PRINTED text, and an object
     lookup on arbitrary text can hit `Object.prototype`), and consulted with a
@@ -23236,6 +23252,95 @@ const ATTACK_DISCARD_RETRIEVAL = new RegExp(
     // INTERPOLATING, which is the only way to satisfy Biome's `useTemplate` and
     // `noUnusedTemplateLiteral` at once (the trap D236 documented).
     `${SOURCE_ZONE_PHRASE} ([^.]+)\\.$`,
+);
+/** 🆕🆕🆕 **D523 — THE DECK-DESTINATION DISCARD-PILE RETRIEVAL ("Shuffle … from your
+    discard pile into your deck"), ZERO VOCABULARY, AND THE REFUSAL ABOVE WAS FALSE OF
+    THE LEGAL ATTACK COLUMN.** `censusAttackCorpus.ts` **FILE LINE 485**
+    (`legalAttackCorpus()` index 432), **1 sentence / 1 legal printing**:
+
+        *"Shuffle up to 3 Basic {W} Energy cards from your discard pile into your deck."*
+
+    🛑 **ZERO NEW VOCABULARY.** The program is PAL PAD's registry shape (`registry.ts`
+    `PAL_PAD`; Super Rod, Energy Recycler and Sacred Ash spell the same pair) with the
+    hand twin's OWN filter — the D237 arm one constant up derives *"Put up to 3 Basic {W}
+    Energy cards from your discard pile into your hand."* to a `basicEnergy { Water }`
+    retrieval with `dest: "hand"`, and this sentence is that program with the destination
+    swapped and the deck shuffle appended:
+
+        [ discardPileRetrieval { filter: basicEnergy { energyType: "Water" },
+                                 dest: "deck", max: 3 },
+          shuffleDeck ]
+
+      (spelled WITHOUT the `op: "…",` form on purpose — a raw-text producer count reads
+      the commentary too, D516's trap, re-paid at D520 (4), D521 and D522.)
+
+    🛑 **THE TRAILING `shuffleDeck` IS REQUIRED, NOT DECORATIVE.** `interpreter.ts`'s
+    `retrieveMove` deck arm is `{ ...side, discard, deck: [...side.deck, ...moved] }` — an
+    APPEND to the bottom, no shuffle (verified at this head) — so a program without the
+    second op would leave the picks at the deck bottom in pick order, which is not what
+    the card says and is exactly what Pal Pad's own row guards against (*"a whiff still
+    shuffles"*: the shuffle is a separate op precisely so it runs whether or not anything
+    moved). `discardShuffleBack.test.ts` §2 drives both faces: a 2-pick resolve moves
+    `rngState` and does NOT leave the picks at the bottom (seeded deck); a decline and a
+    whiff both still shuffle.
+
+    🛑 **THE STALE PREMISE, AND WHY IT WAS FALSE.** `DISCARD_RETRIEVAL_DESTINATIONS`'s block
+    (one constant up) says the op's `dest: "deck"` is spelled by *"no attack sentence in
+    the catalog"* — *"those are printed as 'Shuffle … into your deck', a different verb and
+    therefore a different family (D232)"*. The second half was exactly right and is what
+    this anchor honours: the verb is DIFFERENT, so this is a SEPARATE anchor with the verb
+    AND the destination pinned as literals, not a third row in the `Put` table and not a
+    wider alternation (D441). The first half was false of the LEGAL ATTACK COLUMN: file
+    line 485 spells the deck destination ONCE, with the Shuffle verb, and sat unbuilt in
+    the residue as class SUBST-20 (`SUBMAX=12`) / OPAQUE (`SUBMAX=4`) with its hand twin
+    built one arm up. `derivedDiscardRetrieval.test.ts`'s *"MEASURED absence"* rung is
+    kept and INVERTED with D523 provenance: the `Put … into your deck` control STAYS null
+    (the `Put` table keeps its two rows), and the `Shuffle … into your deck` string now
+    derives Pal Pad's program byte for byte.
+
+    ⚠️ **PLURAL BRANCH ONLY — NO SINGULAR BRANCH, NO BARE-NAME GROUP.** The sibling anchor
+    carries `(${RETRIEVAL_SINGULAR_ALT})` and a `([A-Z][a-zé]+)` proper-name group because
+    its column prints both (*"Put a Supporter card…"*; *"Put up to 2 Duskull…"*, D121/D190b's
+    two-printings-one-token warrant). The Shuffle verb prints NEITHER in the legal attack
+    column — every `^Shuffle ` row other than 485 is disjoint on `up to` (file line 484 is
+    `returnBenched`, 486/487 are `handRefresh`, all built) — so a singular branch and a
+    name branch would each be a branch no printing reaches and no mutant can kill (D231's
+    unkillable-singleton rule). *"Shuffle up to 2 Duskull from your discard pile into your
+    deck."* therefore derives null and is driven as a near-miss.
+
+    ⚠️ **THE PLURAL TABLE TRANSFERS, AND THAT IS STATED RATHER THAN FILTERED.**
+    `RETRIEVAL_PLURAL_ALT` is the SHARED table (`HAND_SEARCH_NOUNS`'s plurals plus
+    `TYPED_NOUN_PLURAL`), so this anchor also admits the typed-Pokémon plural
+    (*"Shuffle up to 2 {W} Pokémon from your discard pile into your deck."* → a
+    `typedPokemon` retrieval, 0 legal attack printings) and the Trainer sentences of Pal
+    Pad (`supporter`), Energy Recycler (`basicEnergy`) and Sacred Ash (`anyPokemon`) AS
+    ATTACK TEXT — the "an arm transfers" trade this file takes every slice (D237's own
+    `trainerCard` row expired a control the same way). Each is asserted in §1 as a
+    property of the table, not refused.
+
+    🛑 **THE CLAIMED SET OVER ALL 640 ROWS IS EXACTLY {FILE LINE 485 / INDEX 432}** —
+    measured in `discardShuffleBack.test.ts` §1 by re-spelling the pattern over the
+    column. `^…$`, no `/i`, the count CAPTURED (a 2-print derives `max: 2`) and bounded by
+    the D237 arm's own shared guard (`>= 1`, `<= MAX_PRINTED_ATTACH_COUNT`); the real `é`
+    reaches the pattern only through the table; the sentence prints no apostrophe. Every
+    segment of the concatenation INTERPOLATES (Biome `useTemplate` /
+    `noUnusedTemplateLiteral`, D236's trap), and `SOURCE_ZONE_PHRASE` is D234's own
+    constant shared rather than re-typed, for the D237 anchor's reason exactly.
+
+    ⚠️ **NO `interpreter.ts`, `attack.ts`, `types.ts`, `redact.ts`, `cardplay.ts`,
+    `events.ts`, `log.ts` OR PROJECTION BYTE.** The park (`chooseCards`, `min: 0`, `dest`
+    off the op, `retrieveNote`'s *"Shuffle up to N … into your deck."* caption), the
+    resolve (`retrieveMove`), the `DISCARD_RETRIEVED { dest: "deck" }` event and `log.ts`'s
+    third arm (*"shuffled N cards from their discard pile into their deck"*) all shipped
+    for Pal Pad; `redact.ts` redacts `chooseCards` by kind. `MATCH_RECORD_VERSION` HOLDS
+    at 30: `dest: "deck"` is a value every Pal Pad record already serializes. */
+const ATTACK_DISCARD_SHUFFLE_BACK = new RegExp(
+  `^Shuffle up to (\\d+) (${RETRIEVAL_PLURAL_ALT})` +
+    // The same shared zone constant as the sibling anchor above, and the
+    // destination pinned as a LITERAL — the D237 block's own rule (the table is
+    // authored off the bytes) applied to the one destination the `Put` table
+    // does not carry.
+    `${SOURCE_ZONE_PHRASE} into your deck\\.$`,
 );
 
 // ⚠️⚠️ D241 — LOOK AT THE TOP N, backlog row 11. THE COUNT RE-DERIVED TO THE
@@ -28372,7 +28477,40 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
       // catalog sentences), and an unread field would be one with no observable
       // meaning (D135). NO trailing `shuffleDeck` either — that op belongs to the
       // `dest: "deck"` printings, which this family's attack column never spells.
+      // 🆕🆕🆕 D523 — TRUE OF THE `Put` FAMILY, AND ONLY OF IT (annotated in place,
+      //     D178/D442/D508): the `Shuffle … into your deck` family ONE ARM DOWN carries the
+      //     trailing shuffle, off corpus FILE LINE 485 — the deck destination the legal
+      //     attack column DOES spell, with the other verb (`ATTACK_DISCARD_SHUFFLE_BACK`).
       return [{ op: "discardPileRetrieval", filter, dest, max }];
+    }
+  }
+  // 🆕🆕🆕 D523 — "Shuffle up to {N} {plural noun} from your discard pile into your deck."
+  //     — corpus FILE LINE 485 (`legalAttackCorpus()` index 432), 1 sentence / 1 legal
+  //     printing: "Shuffle up to 3 Basic {W} Energy cards from your discard pile into
+  //     your deck." PAL PAD's registry shape with the hand twin's own filter — the D237
+  //     arm's plural-branch resolution (`HAND_SEARCH_PLURAL` first, then the brace
+  //     pattern, never the other way round) and its shared printed-number guard, the
+  //     destination pinned to `"deck"` by the anchor's literal, and the REQUIRED trailing
+  //     shuffle (`retrieveMove`'s deck arm APPENDS — see the anchor's block).
+  //
+  //     No `BENCHABLE_RETRIEVAL_KINDS` guard (the destination is never the Bench), no
+  //     `recordAs` / `exclude` (D135 — no printing carries a §9.2 tail), and NO singular
+  //     or bare-name branch (the column prints neither for this verb).
+  //
+  //     🛑 The guard is spelled on ONE line, deliberately: the D237 arm's guard is the
+  //     same two conditions across two lines, and an older mutant row keys on that
+  //     multi-line shape — a byte-identical copy here would make its `find` occur twice
+  //     (D522 (3)'s trap, `precheck` run the moment this arm was written).
+  match = ATTACK_DISCARD_SHUFFLE_BACK.exec(effect);
+  if (match !== null) {
+    const noun = match[2] ?? "";
+    const filter = HAND_SEARCH_PLURAL.get(noun) ?? typedNounFilter(noun, true);
+    const max = Number(match[1]);
+    if (filter !== undefined && max >= 1 && max <= MAX_PRINTED_ATTACH_COUNT) {
+      return [
+        { op: "discardPileRetrieval", filter, dest: "deck", max },
+        { op: "shuffleDeck" },
+      ];
     }
   }
 

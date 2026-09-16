@@ -537,18 +537,32 @@ describe("the anchor — seven printed sentences, ONE arm", () => {
     }
   });
 
-  it("🛑 the printed DECK destination is a MEASURED absence, not an oversight", () => {
-    // The op carries `dest: "deck"` (Pal Pad, Super Rod) and no attack sentence in
-    // the catalog spells it: those printings say "**Shuffle** … into your deck",
-    // a different verb and therefore a different family (D232's rule). The table
-    // is authored off the bytes, so the phrase is refused rather than admitted on
-    // the strength of the union.
+  it("🛑 the printed DECK destination is OFF the `Put` table (the control), and the `Shuffle` verb reads it — 🆕🆕🆕 D523 INVERTED the second half (D418/D436)", () => {
+    // The op carries `dest: "deck"` (Pal Pad, Super Rod), and this rung said no attack
+    // sentence in the catalog spells it: those printings say "**Shuffle** … into your
+    // deck", a different verb and therefore a different family (D232's rule). The table
+    // is authored off the bytes, so the phrase is refused rather than admitted on the
+    // strength of the union.
+    //
+    // 🆕🆕🆕 **D523 — THE PREMISE WAS FALSE OF THE LEGAL ATTACK COLUMN, AND THE RULE WAS
+    // RIGHT.** `censusAttackCorpus.ts` FILE LINE 485 — *"Shuffle up to 3 Basic {W} Energy
+    // cards from your discard pile into your deck."*, 1 sentence / 1 legal printing — spells
+    // the deck destination ONCE, with the Shuffle verb, and D523 built it as its OWN family
+    // (`ATTACK_DISCARD_SHUFFLE_BACK`, directly under `ATTACK_DISCARD_RETRIEVAL`): Pal Pad's
+    // registry program byte for byte, the retrieval to deck THEN the REQUIRED `shuffleDeck`
+    // (`retrieveMove`'s deck arm APPENDS). The `Put` table keeps its two rows, so the first
+    // control STAYS null and is kept as the control; the second is INVERTED, not deleted —
+    // the old claim ("no reader takes it") could go red only on the mutant this rung now
+    // catches the other way round (the arm reading `"hand"`, or dropping the shuffle).
     expect(
       deriveAttackEffect("Put up to 2 Supporter cards from your discard pile into your deck."),
     ).toBeNull();
     expect(
       deriveAttackEffect("Shuffle up to 2 Supporter cards from your discard pile into your deck."),
-    ).toBeNull();
+    ).toEqual([
+      { op: "discardPileRetrieval", filter: { kind: "supporter" }, dest: "deck", max: 2 },
+      { op: "shuffleDeck" },
+    ]);
   });
 });
 
