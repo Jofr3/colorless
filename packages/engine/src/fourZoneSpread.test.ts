@@ -774,10 +774,15 @@ describe("D520 §7 — zeros measured over all 640 rows", () => {
     // LINE 485, claimed by `deriveAttackEffect` through `ATTACK_DISCARD_SHUFFLE_BACK`, the arm after
     // the D237 arm; the sentence and printing steps AGREE, 1 and 1): 91/142 → 90/141 and 549/1590 →
     // 550/1591. Stepped by hand again — this site sits outside the annotated-chain sweep's shape.
-    expect([unbuilt.length, units(unbuilt)]).toEqual([90, 141]);
+    // 🆕🆕🆕 D524 −1 sentence / −1 printing (THE PURPOSE-CONNECTIVE OPTIONAL-COST BOOST WITH THE
+    // ALL-SELF-ENERGY-TO-HAND COST — corpus FILE LINE 652, claimed by `deriveAttackOptionalCostBoost`
+    // through the purpose skeleton over one new cost-table row; the sentence and printing steps AGREE,
+    // 1 and 1): 90/141 → 89/140 and 550/1591 → 551/1592. Stepped by hand a third time — outside the
+    // annotated-chain sweep's shape.
+    expect([unbuilt.length, units(unbuilt)]).toEqual([89, 140]);
     expect(unbuilt.map(([, s]) => s)).not.toContain(FOUR_ZONE);
     const resolved = legalAttackCorpus().filter(([, s]) => resolvedByAnyReader(s));
-    expect([resolved.length, units(resolved)]).toEqual([550, 1591]);
+    expect([resolved.length, units(resolved)]).toEqual([551, 1592]);
   });
 });
 
@@ -797,7 +802,7 @@ const RAW: Record<string, string> = (
 describe("D520 §8 — the version steps, and the heading is written", () => {
   it("engineVersion and `manifest.version` agree, and the bump is owed for BEHAVIOUR", () => {
     // ⚠️ The version is NOT spelled in this `it(…)` title (D460's fourth class).
-    expect(engineVersion).toBe("0.410.0");
+    expect(engineVersion).toBe("0.411.0");
     expect(manifest.version).toBe(engineVersion);
   });
 

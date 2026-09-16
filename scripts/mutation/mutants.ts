@@ -5251,7 +5251,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D275",
     what: "🛑 THE DEBT THIS SLICE PAID FOR THE FIFTH TIME, RE-INSTALLED: `engineVersion` falls a minor behind `packages/engine/package.json`, which is EXACTLY the state the tree was in at the head of D275 (0.187.0 against 0.189.0) and had been for two slices with nothing comparing them. The tie is the guard; this row is the proof it is one",
     file: "packages/engine/src/index.ts",
-    // ⚠️ RE-POINTED AT D523 (0.409.0 → 0.410.0), at D522 (0.408.0 → 0.409.0), at D521 (0.407.0 → 0.408.0), at D520 (0.406.0 → 0.407.0), at D519 (0.405.0 → 0.406.0), at D518 (0.404.0 → 0.405.0), at D517 (0.403.0 → 0.404.0), at D516 (0.402.0 → 0.403.0), at D515 (0.401.0 → 0.402.0), at D514 (0.400.0 → 0.401.0), at D513 (0.399.0 → 0.400.0), at D512 (0.398.0 → 0.399.0), at D510 (0.397.0 → 0.398.0), at D508 (0.396.0 → 0.397.0), at D507 (0.395.0 → 0.396.0), at D505 (0.394.0 → 0.395.0), at D490 (0.384.0 → 0.385.0), at D489 (0.383.0 → 0.384.0), at D488 (0.382.0 → 0.383.0), at D487 (0.381.0 → 0.382.0), at D486 (0.380.0 → 0.381.0), at D485 (0.379.0 → 0.380.0), at D450 (0.351.0 → 0.352.0), at D449 (0.350.0 → 0.351.0), at D448 (0.349.0 → 0.350.0), at D447 (0.348.0 → 0.349.0), at D446 (0.347.0 → 0.348.0), at D445 (0.346.0 → 0.347.0), at D444 (0.345.0 → 0.346.0), at D443 (0.344.0 → 0.345.0), at D442 (0.343.0 → 0.344.0), at D441 (0.342.0 → 0.343.0), at D440 (0.341.0 → 0.342.0), at D439 (0.340.0 → 0.341.0), at D438 (0.339.0 → 0.340.0), at D437 (0.338.0 → 0.339.0), at D436 (0.337.0 → 0.338.0), at D435 (0.336.0 → 0.337.0), at D434 (0.335.0 → 0.336.0), at D433 (0.334.0 → 0.335.0), at D432 (0.333.0 → 0.334.0), at D431 (0.332.0 → 0.333.0), at D430 (0.331.0 → 0.332.0), at D429 (0.330.0 → 0.331.0), at D428 (0.329.0 → 0.330.0), at D427 (0.328.0 → 0.329.0), at D426 (0.327.0 → 0.328.0), at D425 (0.326.0 → 0.327.0), at D424 (0.325.0 → 0.326.0), at D423 (0.324.0 → 0.325.0), at D422 (0.323.0 → 0.324.0), at D421 (0.322.0 → 0.323.0), at D420 (0.321.0 → 0.322.0), at D417 (0.320.0 → 0.321.0), at D416 (0.319.0 → 0.320.0), at D415 (0.318.0 → 0.319.0), at D414 (0.317.0 → 0.318.0), at D413 (0.316.0 → 0.317.0), at D412 (0.315.0 → 0.316.0), at D410 (0.314.0 → 0.315.0), at D409 (0.313.0 → 0.314.0), at D408 (0.312.0 → 0.313.0), at D407 (0.311.0 → 0.312.0), at D402 (0.306.0 → 0.307.0), at D401 (0.305.0 → 0.306.0), at D400 (0.304.0 → 0.305.0), at D399 (0.303.0 → 0.304.0), at D398 (0.302.0 → 0.303.0), at D397 (0.301.0 → 0.302.0), at D396 (0.300.0 → 0.301.0), at D395 (0.299.0 → 0.300.0), at D394 (0.298.0 → 0.299.0), at D393 (0.297.0 → 0.298.0), at D392 (0.296.0 → 0.297.0), at D391 (0.295.0 → 0.296.0), at D390 (0.294.0 → 0.295.0), at D389 (0.293.0 → 0.294.0), at D388 (0.292.0 → 0.293.0), at D387 (0.291.0 → 0.292.0), at D386 (0.290.0 → 0.291.0),
+    // ⚠️ RE-POINTED AT D524 (0.410.0 → 0.411.0), at D523 (0.409.0 → 0.410.0), at D522 (0.408.0 → 0.409.0), at D521 (0.407.0 → 0.408.0), at D520 (0.406.0 → 0.407.0), at D519 (0.405.0 → 0.406.0), at D518 (0.404.0 → 0.405.0), at D517 (0.403.0 → 0.404.0), at D516 (0.402.0 → 0.403.0), at D515 (0.401.0 → 0.402.0), at D514 (0.400.0 → 0.401.0), at D513 (0.399.0 → 0.400.0), at D512 (0.398.0 → 0.399.0), at D510 (0.397.0 → 0.398.0), at D508 (0.396.0 → 0.397.0), at D507 (0.395.0 → 0.396.0), at D505 (0.394.0 → 0.395.0), at D490 (0.384.0 → 0.385.0), at D489 (0.383.0 → 0.384.0), at D488 (0.382.0 → 0.383.0), at D487 (0.381.0 → 0.382.0), at D486 (0.380.0 → 0.381.0), at D485 (0.379.0 → 0.380.0), at D450 (0.351.0 → 0.352.0), at D449 (0.350.0 → 0.351.0), at D448 (0.349.0 → 0.350.0), at D447 (0.348.0 → 0.349.0), at D446 (0.347.0 → 0.348.0), at D445 (0.346.0 → 0.347.0), at D444 (0.345.0 → 0.346.0), at D443 (0.344.0 → 0.345.0), at D442 (0.343.0 → 0.344.0), at D441 (0.342.0 → 0.343.0), at D440 (0.341.0 → 0.342.0), at D439 (0.340.0 → 0.341.0), at D438 (0.339.0 → 0.340.0), at D437 (0.338.0 → 0.339.0), at D436 (0.337.0 → 0.338.0), at D435 (0.336.0 → 0.337.0), at D434 (0.335.0 → 0.336.0), at D433 (0.334.0 → 0.335.0), at D432 (0.333.0 → 0.334.0), at D431 (0.332.0 → 0.333.0), at D430 (0.331.0 → 0.332.0), at D429 (0.330.0 → 0.331.0), at D428 (0.329.0 → 0.330.0), at D427 (0.328.0 → 0.329.0), at D426 (0.327.0 → 0.328.0), at D425 (0.326.0 → 0.327.0), at D424 (0.325.0 → 0.326.0), at D423 (0.324.0 → 0.325.0), at D422 (0.323.0 → 0.324.0), at D421 (0.322.0 → 0.323.0), at D420 (0.321.0 → 0.322.0), at D417 (0.320.0 → 0.321.0), at D416 (0.319.0 → 0.320.0), at D415 (0.318.0 → 0.319.0), at D414 (0.317.0 → 0.318.0), at D413 (0.316.0 → 0.317.0), at D412 (0.315.0 → 0.316.0), at D410 (0.314.0 → 0.315.0), at D409 (0.313.0 → 0.314.0), at D408 (0.312.0 → 0.313.0), at D407 (0.311.0 → 0.312.0), at D402 (0.306.0 → 0.307.0), at D401 (0.305.0 → 0.306.0), at D400 (0.304.0 → 0.305.0), at D399 (0.303.0 → 0.304.0), at D398 (0.302.0 → 0.303.0), at D397 (0.301.0 → 0.302.0), at D396 (0.300.0 → 0.301.0), at D395 (0.299.0 → 0.300.0), at D394 (0.298.0 → 0.299.0), at D393 (0.297.0 → 0.298.0), at D392 (0.296.0 → 0.297.0), at D391 (0.295.0 → 0.296.0), at D390 (0.294.0 → 0.295.0), at D389 (0.293.0 → 0.294.0), at D388 (0.292.0 → 0.293.0), at D387 (0.291.0 → 0.292.0), at D386 (0.290.0 → 0.291.0),
     //    each in the SAME COMMIT as the bump —
     // the TENTH slice running to do it that way, and the practice is now the one
     // thing about this row that has never cost an ERROR since it started.
@@ -5798,7 +5798,7 @@ export const MUTANTS: Mutant[] = [
     // CORPUS QUOTES** (D414/D415), so a value-keyed sweep over `toBe("0.391.0")` cannot
     // see it — this row's `find` spells the DECLARATION, not an assertion. Run
     // `precheck` after every version bump, not after the sweep tells you.
-    find: 'export const engineVersion = "0.410.0";',
+    find: 'export const engineVersion = "0.411.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -27963,8 +27963,11 @@ export const MUTANTS: Mutant[] = [
     // 🆕🆕🆕 D523 — RE-TRANSCRIBED AGAIN, 1640 -> 1641 (replace 1638 -> 1639): the sentence and
     //    printing steps AGREE at 1 and 1 (corpus FILE LINE 485 carries ONE printing), so the
     //    regression stays the two-step it has always expressed. Found by `precheck`, as always.
-    find: "  attack: 1641,",
-    replace: "  attack: 1639,",
+    // 🆕🆕🆕 D524 — RE-TRANSCRIBED AGAIN, 1641 -> 1642 (replace 1639 -> 1640): the sentence and
+    //    printing steps AGREE at 1 and 1 (corpus FILE LINE 652 carries ONE printing), so the
+    //    regression stays the two-step it has always expressed. Found by `precheck`, as always.
+    find: "  attack: 1642,",
+    replace: "  attack: 1640,",
     expectKilledBy: [
       "packages/engine/src/censusAtHead.test.ts",
     ],
@@ -28287,7 +28290,7 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D498-resolution-compares-against-undefined",
     decision: "D498",
-    what: "🛑 A2 — **THE SENTINEL BECOMES `undefined`, AND THE PREDICATE CLAIMS EVERY SENTENCE IN THE CORPUS.** This is the cascade `resolvedByAnyReader`'s own doc block names — *a name lookup that missed would yield `undefined`, and `undefined !== null` is TRUE … so a typo'd or renamed reader would make this predicate claim EVERY sentence and every census figure in the repo would move at once, upward, with nothing naming the cause* — authored at the COMPARISON instead of at the lookup the block rules out. D444 is the shipped incident: `deriveAttackTimingGate` enrolled itself by NAME, answered `undefined`, and 22 rungs across 5 files went red in one run. Measured over 8,320 calls: **`undefined` returns 0, `null` returns 7,788**, so every `null` is re-read as a claim and the count goes **529 → 640 of 640**; the raw residue goes 111 → 0. ⚠️ **ITS VISIBILITY IS THE EXACT COMPLEMENT OF A1's**: a `toBe(true)` rung stays green under it, so only a CLAIM-FALSE or POPULATION rung can fire. MEASURED first failures: `selfEnergyToHand.test.ts` D405 §1, a suite whose ONLY rung on this predicate is a `toBe(false)` — *expected true to be false* on `You may put all Energy attached to this Pokémon into your hand to have this attack do 80 more damage.`; and `censusAtHead.test.ts` at 8 failed / 42 passed, first at *every printed sentence in every backlog family is refused by ALL SEVEN readers*. ⚠️ `!== null` → `=== null` was MEASURED and DELIBERATELY NOT WRITTEN: it claims the same 640 of 640 over the same corpus and expresses the same observable defect, so it would be a second row of one experiment (D484/D475)",
+    what: "🛑 A2 — **THE SENTINEL BECOMES `undefined`, AND THE PREDICATE CLAIMS EVERY SENTENCE IN THE CORPUS.** This is the cascade `resolvedByAnyReader`'s own doc block names — *a name lookup that missed would yield `undefined`, and `undefined !== null` is TRUE … so a typo'd or renamed reader would make this predicate claim EVERY sentence and every census figure in the repo would move at once, upward, with nothing naming the cause* — authored at the COMPARISON instead of at the lookup the block rules out. D444 is the shipped incident: `deriveAttackTimingGate` enrolled itself by NAME, answered `undefined`, and 22 rungs across 5 files went red in one run. Measured over 8,320 calls: **`undefined` returns 0, `null` returns 7,788**, so every `null` is re-read as a claim and the count goes **529 → 640 of 640**; the raw residue goes 111 → 0. ⚠️ **ITS VISIBILITY IS THE EXACT COMPLEMENT OF A1's**: a `toBe(true)` rung stays green under it, so only a CLAIM-FALSE or POPULATION rung can fire. MEASURED first failures: `selfEnergyToHand.test.ts` D405 §1, a suite whose ONLY rung on this predicate WAS a `toBe(false)` on the printed row `You may put all Energy attached to this Pokémon into your hand to have this attack do 80 more damage.` — 🆕 **D524 BUILT THAT ROW** (`deriveAttackOptionalCostBoost`, the purpose skeleton), so that claim is INVERTED to `toBe(true)` (true under this mutant too — D418's second half) and the same `it` now carries the CONTROL this row needs: the one-token `does`-for-`do` near-miss `You may put all Energy attached to this Pokémon into your hand to have this attack does 80 more damage.`, false on the real build — *expected true to be false* on IT (re-probed `--only` at D524: KILLED); and `censusAtHead.test.ts` at 8 failed / 42 passed, first at *every printed sentence in every backlog family is refused by ALL SEVEN readers*. ⚠️ `!== null` → `=== null` was MEASURED and DELIBERATELY NOT WRITTEN: it claims the same 640 of 640 over the same corpus and expresses the same observable defect, so it would be a second row of one experiment (D484/D475)",
     file: "packages/engine/src/censusAttackCorpus.ts",
     find: "  return surface().some(([, read]) => read(text) !== null);",
     replace: "  return surface().some(([, read]) => read(text) !== undefined);",
@@ -29121,8 +29124,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D506",
     what: "🛑 C1 — THE DEFECT D502 AND D505 BOTH SHIPPED: a version goes out and NO HEADING CLAIMS IT. The edit un-bolds the NEWEST heading's target, so the parser stops seeing it and the chain's head falls back a release while `package.json` says otherwise — which is byte-for-byte the state of this file at D505's head, twice over. ⚠️ IT IS THE CHEAPEST WAY FOR THIS RECORD TO GO WRONG AND WAS INVISIBLE TO EVERY OTHER INSTRUMENT IN THE REPO: `tsc`, `biome`, every test, `precheck` and all five gates are green on both sides of it, because until D506 nothing read the headings at all. Killed by the HEAD case alone, which is the point — one tripwire, named (D453/D498). 🛑 RE-POINTED AT D507 ONTO THE 0.395.0 → 0.396.0 HEADING, AND THE RE-POINT WAS OWED RATHER THAN TIDY (D444): left on D505's heading it would have gone INERT ON THE VERDICT the moment a newer heading existed — un-bolding a heading that is no longer the head leaves NEWEST equal to HEAD, so the HEAD case stays green and the kill arrives, if at all, through the CHAIN case instead. The row's own stated reason (killed by the HEAD case alone) is exactly the sentence that would have quietly become false. THIS ROW IS PART OF THE VERSION TAX: every bump owes its re-point, in the same edit as the heading. \U0001f195 RE-POINTED AGAIN AT D508 ONTO THE 0.396.0 → 0.397.0 HEADING, and this one is UNLABELLED — the `find` quotes the heading's first prose words instead of a `(D<nnn> —`, which is strictly more durable: the label is the byte the close-out ritual inserts, and quoting it is exactly what broke this row at D507. \u26a0\ufe0f The heading is the CHAIN HEAD again, so the HEAD case is the killer again — the re-point is what keeps that sentence true rather than quietly false. \U0001f195 RE-POINTED AGAIN AT D510 ONTO THE 0.397.0 \u2192 0.398.0 HEADING, also UNLABELLED, and the `find` is kept in D508's TRIMMED form \u2014 it stops before the `(` where the close-out ritual inserts the label, which is the shape D508 proved survives that edit (precheck clean, label inserted, clean again). A `find` that spanned the paren would re-open the coupling that broke this row at D507. \U0001f195 RE-POINTED AGAIN AT D512 ONTO THE 0.398.0 \u2192 0.399.0 HEADING, also UNLABELLED and kept in the same TRIMMED form. \u26a0\ufe0f The re-point is what keeps this row's own stated reason (killed by the HEAD case ALONE) true rather than quietly false: left on D510's heading it would go INERT ON THE VERDICT the moment a newer heading exists, because un-bolding a heading that is no longer the head leaves NEWEST equal to HEAD and the kill arrives, if at all, through the CHAIN case instead. \U0001f195 RE-POINTED AGAIN AT D513 ONTO THE 0.399.0 \u2192 0.400.0 HEADING, also UNLABELLED and kept in the same TRIMMED form that stops before the `(`. \u26a0\ufe0f **AND THE TRIM WAS PROVEN AGAIN RATHER THAN ASSUMED**: `precheck` clean before the heading exists, the heading written, `precheck` clean after \u2014 the third consecutive slice to demonstrate that a `find` ending at `**<new>**` survives the close-out label insertion, and the fourth to state that a `find` spanning the paren re-opens the coupling that broke this row at D507. \U0001f195 RE-POINTED AGAIN AT D515 ONTO THE 0.401.0 \u2192 0.402.0 HEADING, also UNLABELLED and kept in the same TRIMMED form that stops before the `(`. \u26a0\ufe0f **THE RE-POINT IS THE PART OF THE VERSION TAX THAT HAS NO AUTOMATIC DETECTOR**: left on D514's heading this row would go INERT ON THE VERDICT the moment a newer heading exists \u2014 un-bolding a heading that is no longer the head leaves NEWEST equal to HEAD, the HEAD case stays green, and the kill arrives (if at all) through the CHAIN case instead, so the row would report KILLED while its own stated reason (killed by the HEAD case ALONE) had quietly become false. \u26a0\ufe0f **AND THE TRIM WAS PROVEN A FIFTH TIME RATHER THAN ASSUMED**: `precheck` clean before the heading exists, the heading written, `precheck` clean after. \U0001f195 RE-POINTED AGAIN AT D516 ONTO THE 0.402.0 \u2192 0.403.0 HEADING, also UNLABELLED and kept in the same TRIMMED form that stops before the `(`. \u26a0\ufe0f **THE TRIM WAS PROVEN A SIXTH TIME RATHER THAN ASSUMED**: `precheck` clean before the heading exists, the heading written, `precheck` clean after \u2014 and the re-point remains the part of the version tax with no automatic detector, because left on D515\u2019s heading this row would report KILLED while its own stated reason (killed by the HEAD case ALONE) had quietly become false. \U0001f195 RE-POINTED AGAIN AT D517 ONTO THE 0.403.0 \u2192 0.404.0 HEADING, also UNLABELLED and kept in the same TRIMMED form that stops before the `(`. \u26a0\ufe0f **THE TRIM WAS PROVEN A SEVENTH TIME RATHER THAN ASSUMED**: `precheck` clean before the heading exists, the heading written, `precheck` clean after \u2014 seven consecutive slices now, which is the evidence that the label a caller later adds cannot reach this `find`. 🆕 RE-POINTED AGAIN AT D518 ONTO THE 0.404.0 → 0.405.0 HEADING, also UNLABELLED and kept in the same TRIMMED form that stops before the `(`. ⚠️ **THE TRIM WAS PROVEN AN EIGHTH TIME RATHER THAN ASSUMED**: `precheck` clean before the heading exists, the heading written, `precheck` clean after — eight consecutive slices, and this one carried an extra hazard worth naming: the incoming literal `0.405.0` did NOT collide at 2× the way D517's did, because this slice's `find` quotes the heading ARROW (which is unique) rather than a source line the corpus already patches, so no FOURTH version-tax row was owed. 🆕 RE-POINTED AGAIN AT D521 ONTO THE 0.407.0 → 0.408.0 HEADING, also UNLABELLED and kept in the same TRIMMED form that stops before the `(` — the heading was written labelled in the same edit as the `docs/decisions.md` row (D507), and `precheck` was run clean with the row re-pointed.",
     file: "packages/engine/src/index.ts",
-    find: "engineVersion 0.409.0 → **0.410.0**",
-    replace: "engineVersion 0.409.0 → 0.410.0",
+    find: "engineVersion 0.410.0 → **0.411.0**",
+    replace: "engineVersion 0.410.0 → 0.411.0",
     expectKilledBy: ["packages/engine/src/engineVersionChangelog.test.ts"],
   },
   {
@@ -30754,5 +30757,119 @@ export const MUTANTS: Mutant[] = [
     find: "    const filter = HAND_SEARCH_PLURAL.get(noun) ?? typedNounFilter(noun, true);",
     replace: "    const filter = HAND_SEARCH_PLURAL.get(noun) ?? typedNounFilter(noun, false);",
     expectKilledBy: ["packages/engine/src/discardShuffleBack.test.ts", "packages/engine/src/censusAtHead.test.ts"],
+  },
+  // ── D524 — THE PURPOSE-CONNECTIVE OPTIONAL-COST BOOST WITH THE ALL-SELF-ENERGY-TO-HAND COST
+  //    ("You may put all Energy attached to this Pokémon into your hand to have this attack do 80
+  //    more damage."). Ten rows, ONE PER CLAIM. ⚠️ **THE CENSUS VISIBILITY WAS MEASURED, NOT
+  //    FORECAST** (D518–D523's finding, re-run here): C10 (the purpose anchor's verb copied from the
+  //    payoff table) is VISIBLE — the printed row derives null and the reader summand falls 551/1592
+  //    → 550/1591 — and the other nine are SILENT: they corrupt a VALUE (an anchor end, the gate's
+  //    kind or count, the op's count or destination, the bonus guard) and the sentence still
+  //    derives. C1/C2 (the purpose anchor's ends) are killed by the suite's EXPLICIT both-ends rung
+  //    (D520 (3)); C3 (the cost anchor's `$`) by a constructed rider; C4 (a vacuous gate) by the
+  //    0-Energy board on the DECLARED cost-free print; C5 (the gate copied from the Stadium row) by
+  //    the no-Stadium confirm; C6/C7/C9 (the op's count, destination, and the `"any"` second park)
+  //    by the executor's hand/discard/phase rungs; C8 (`< 0`) by the printed-zero rung. NO declared
+  //    survivor.
+  //
+  //    🛑 **NO ROW ON THE `to` OR `count` TYPES**: the harness type-checks a `replace`, and both are
+  //    closed unions (C7 and C6 take the ABSENT member, C9 the other live literal).
+  //
+  //    ⚠️ **EVERY `find`/`replace` PAIR WAS DIFFED BEFORE SHIPPING AND ASSERTED UNEQUAL BY THE SCRIPT
+  //    THAT WROTE THEM** (D519 (4)(a)), and every `find` was counted at exactly one occurrence in
+  //    `effects.ts` by the same script before the probe ran. ⚠️ The cost row and the arm's guard are
+  //    spelled on ONE line each, and the row sits ABOVE the D383 shuffle exec, so no older row's
+  //    multi-line `find` (D383's `shuffleDeck … return null;` tail, D385's one-liners) started
+  //    occurring twice or stopped occurring — `precheck` was run the moment the arm was written and
+  //    was clean at 2,660 (D522 (3)'s trap, avoided rather than repaired).
+  {
+    id: "D524-purpose-anchor-loses-the-head",
+    decision: "D524",
+    what: "🛑 C1 — **THE `^` DROPPED FROM THE PURPOSE ANCHOR.** Without it the pattern matches anywhere in a longer sentence, so a compound whose SECOND clause prints this offer is claimed WHOLE and its first clause silently dropped. Killed by the suite's EXPLICIT both-ends rung (D520 (3)): a CONSTRUCTED prefixed print (`Draw a card. <row>`) derives null on the real build and to the reading on the mutant. Silent to the census (the printed row still derives).",
+    file: "packages/engine/src/effects.ts",
+    find: "const OPTIONAL_COST_PURPOSE_BOOST = /^You may (.+) to have this attack do (\\d+) more damage\\.$/;",
+    replace: "const OPTIONAL_COST_PURPOSE_BOOST = /You may (.+) to have this attack do (\\d+) more damage\\.$/;",
+    expectKilledBy: ["packages/engine/src/optionalCostEnergyToHand.test.ts"],
+  },
+  {
+    id: "D524-purpose-anchor-loses-the-tail",
+    decision: "D524",
+    what: "🛑 C2 — **THE `$` DROPPED, THE OTHER END OF C1 AND A DIFFERENT DEFECT (D497's pair rule).** With no terminator the anchor swallows a trailing clause: `<row> Draw a card.` derives as though the second sentence were not there. Killed by the both-ends rung's SUFFIXED print. Silent to the census.",
+    file: "packages/engine/src/effects.ts",
+    find: "const OPTIONAL_COST_PURPOSE_BOOST = /^You may (.+) to have this attack do (\\d+) more damage\\.$/;",
+    replace: "const OPTIONAL_COST_PURPOSE_BOOST = /^You may (.+) to have this attack do (\\d+) more damage\\./;",
+    expectKilledBy: ["packages/engine/src/optionalCostEnergyToHand.test.ts"],
+  },
+  {
+    id: "D524-cost-row-anchor-loses-the-tail",
+    decision: "D524",
+    what: "🛑 C3 — **THE COST ANCHOR'S `$` DROPPED.** The cost half is dispatched over `^…$` anchors so a cost with a rider is refused whole; without the terminator *\"put all Energy attached to this Pokémon into your hand and draw a card\"* is read as the plain cost and the rider is silently dropped from the program. Killed by the single-axis control (the constructed `… into your hand and draw a card to have this attack do 80 more damage.` derives null on the real build, the reading on the mutant). Silent to the census.",
+    file: "packages/engine/src/effects.ts",
+    find: "const OPTIONAL_COST_PUT_ALL_SELF_ENERGY_TO_HAND = /^put all Energy attached to this Pokémon into your hand$/;",
+    replace: "const OPTIONAL_COST_PUT_ALL_SELF_ENERGY_TO_HAND = /^put all Energy attached to this Pokémon into your hand/;",
+    expectKilledBy: ["packages/engine/src/optionalCostEnergyToHand.test.ts"],
+  },
+  {
+    id: "D524-gate-count-zero",
+    decision: "D524",
+    what: "🛑 C4 — **THE GATE'S `count: 1` → `count: 0`, A VACUOUS GATE.** `yourActiveEnergyAtLeast 0` is true on every non-empty Active, so the confirm is asked of an attacker holding NO Energy and a \"yes\" moves nothing and collects the +80 — the free boost the gate exists to refuse (the connective block's necessary-AND-sufficient obligation). Killed by §2 (iv): on the DECLARED cost-free print with 0 Energy attached the real build asks NO question (base dealt, turn ends) and the mutant parks a confirm. Silent to the census.",
+    file: "packages/engine/src/effects.ts",
+    find: "  if (OPTIONAL_COST_PUT_ALL_SELF_ENERGY_TO_HAND.test(cost)) return { cond: { kind: \"yourActiveEnergyAtLeast\", count: 1 }, ops: [{ op: \"discardEnergy\", from: \"yourActive\", filter: { kind: \"anyEnergy\" }, count: \"all\", to: \"hand\" }] };",
+    replace: "  if (OPTIONAL_COST_PUT_ALL_SELF_ENERGY_TO_HAND.test(cost)) return { cond: { kind: \"yourActiveEnergyAtLeast\", count: 0 }, ops: [{ op: \"discardEnergy\", from: \"yourActive\", filter: { kind: \"anyEnergy\" }, count: \"all\", to: \"hand\" }] };",
+    expectKilledBy: ["packages/engine/src/optionalCostEnergyToHand.test.ts"],
+  },
+  {
+    id: "D524-gate-copies-the-stadium-row",
+    decision: "D524",
+    what: "🛑 C5 — **THE GATE COPIED FROM THE FIRST COST ROW (`stadiumInPlay`).** The author who copies the Stadium row's shape and forgets its gate: with no Stadium in play the gate is false and the confirm is never asked — the printed offer silently becomes the bare base on every board this pool fields. Killed by §1's `toEqual` on the reading and by §2 (i): 2 Energy attached, no Stadium — the real build parks the confirm, the mutant deals 40 and ends the turn. Silent to the census.",
+    file: "packages/engine/src/effects.ts",
+    find: "  if (OPTIONAL_COST_PUT_ALL_SELF_ENERGY_TO_HAND.test(cost)) return { cond: { kind: \"yourActiveEnergyAtLeast\", count: 1 }, ops: [{ op: \"discardEnergy\", from: \"yourActive\", filter: { kind: \"anyEnergy\" }, count: \"all\", to: \"hand\" }] };",
+    replace: "  if (OPTIONAL_COST_PUT_ALL_SELF_ENERGY_TO_HAND.test(cost)) return { cond: { kind: \"stadiumInPlay\" }, ops: [{ op: \"discardEnergy\", from: \"yourActive\", filter: { kind: \"anyEnergy\" }, count: \"all\", to: \"hand\" }] };",
+    expectKilledBy: ["packages/engine/src/optionalCostEnergyToHand.test.ts"],
+  },
+  {
+    id: "D524-cost-row-drops-all",
+    decision: "D524",
+    what: "🛑 C6 — **`count: \"all\"` DROPPED — the D405 arm's absent-means-ONE.** The cost then moves a single Energy (auto-resolved on identical prints; a SECOND park on distinct ones) and the boosted hit still lands: the player pays one card for a cost printed as all of them. Killed by §1's `toEqual` (the op's key set), §2 (ii) (hand +2, attacker at 0, the event's two uids) and (x) (a Special beside a Basic — both move on the real build; the mutant parks a pick and never reaches `turn:action`). Silent to the census.",
+    file: "packages/engine/src/effects.ts",
+    find: "  if (OPTIONAL_COST_PUT_ALL_SELF_ENERGY_TO_HAND.test(cost)) return { cond: { kind: \"yourActiveEnergyAtLeast\", count: 1 }, ops: [{ op: \"discardEnergy\", from: \"yourActive\", filter: { kind: \"anyEnergy\" }, count: \"all\", to: \"hand\" }] };",
+    replace: "  if (OPTIONAL_COST_PUT_ALL_SELF_ENERGY_TO_HAND.test(cost)) return { cond: { kind: \"yourActiveEnergyAtLeast\", count: 1 }, ops: [{ op: \"discardEnergy\", from: \"yourActive\", filter: { kind: \"anyEnergy\" }, to: \"hand\" }] };",
+    expectKilledBy: ["packages/engine/src/optionalCostEnergyToHand.test.ts"],
+  },
+  {
+    id: "D524-cost-row-drops-hand",
+    decision: "D524",
+    what: "🛑 C7 — **`to: \"hand\"` DROPPED — the Energy goes to the DISCARD PILE.** The absent `to` is every pre-D295 producer's pile, so the printed *\"into your hand\"* becomes a discard: the hand stands still, the pile grows by two, the log row reads \"discarded\" instead of \"put … into P1's hand\". Killed by §1's `toEqual`, §2 (ii) (hand +2, discard UNCHANGED, `ENERGY_DISCARDED { to: \"hand\" }`) and (vii) (the measured log row). Silent to the census.",
+    file: "packages/engine/src/effects.ts",
+    find: "  if (OPTIONAL_COST_PUT_ALL_SELF_ENERGY_TO_HAND.test(cost)) return { cond: { kind: \"yourActiveEnergyAtLeast\", count: 1 }, ops: [{ op: \"discardEnergy\", from: \"yourActive\", filter: { kind: \"anyEnergy\" }, count: \"all\", to: \"hand\" }] };",
+    replace: "  if (OPTIONAL_COST_PUT_ALL_SELF_ENERGY_TO_HAND.test(cost)) return { cond: { kind: \"yourActiveEnergyAtLeast\", count: 1 }, ops: [{ op: \"discardEnergy\", from: \"yourActive\", filter: { kind: \"anyEnergy\" }, count: \"all\" }] };",
+    expectKilledBy: ["packages/engine/src/optionalCostEnergyToHand.test.ts"],
+  },
+  {
+    id: "D524-purpose-bonus-zero-derives",
+    decision: "D524",
+    what: "⚠️ C8 — **THE INLINE PAYOFF'S PRINTED-ZERO GUARD RELAXED TO `< 0`.** A `do 0 more damage` print derives an offer that charges every Energy for nothing — the decision with no upside `optionalCostPayoff`'s own guard refuses for the finite skeleton, re-stated in the arm because the payoff is built there. Killed by the printed-zero rung (null on the real build, the reading at `bonus: 0` on the mutant). Silent to the census.",
+    file: "packages/engine/src/effects.ts",
+    find: "    if (purposeCost === null || bonus < 1) return null;",
+    replace: "    if (purposeCost === null || bonus < 0) return null;",
+    expectKilledBy: ["packages/engine/src/optionalCostEnergyToHand.test.ts"],
+  },
+  {
+    id: "D524-cost-row-count-any",
+    decision: "D524",
+    what: "⚠️ C9 — **`count: \"all\"` → `count: \"any\"` — a SECOND park on top of the confirm.** The declinable Hail Blade quantifier one op over, copied by an author who reads `\"all\"` as \"whatever is there\": after the confirm's YES the interpreter parks a `discardEnergy` pick (0..all, the player choosing HOW MANY) instead of moving every card inline, so the phase is `effect:choose` AGAIN and the player can say yes to the offer and then move nothing — the whiff the gate forbids, re-opened one op later (a real D402-family author mistake). Killed by §2 (ii)/(v)/(x) (the phase is `turn:action` after YES on the real build) and the only-park rung. Silent to the census.",
+    file: "packages/engine/src/effects.ts",
+    find: "  if (OPTIONAL_COST_PUT_ALL_SELF_ENERGY_TO_HAND.test(cost)) return { cond: { kind: \"yourActiveEnergyAtLeast\", count: 1 }, ops: [{ op: \"discardEnergy\", from: \"yourActive\", filter: { kind: \"anyEnergy\" }, count: \"all\", to: \"hand\" }] };",
+    replace: "  if (OPTIONAL_COST_PUT_ALL_SELF_ENERGY_TO_HAND.test(cost)) return { cond: { kind: \"yourActiveEnergyAtLeast\", count: 1 }, ops: [{ op: \"discardEnergy\", from: \"yourActive\", filter: { kind: \"anyEnergy\" }, count: \"any\", to: \"hand\" }] };",
+    expectKilledBy: ["packages/engine/src/optionalCostEnergyToHand.test.ts"],
+  },
+  {
+    id: "D524-purpose-anchor-takes-the-finite-verb",
+    decision: "D524",
+    what: "🛑 C10 — **THE PURPOSE ANCHOR'S VERB COPIED FROM THE PAYOFF TABLE (`does` for `do`).** The author who spells the new skeleton from `OPTIONAL_COST_PAYOFF_MORE_DAMAGE`'s finite verb: the printed row (infinitive `do`) derives null and falls back into the residue while the `does`-for-`do` near-miss — a sentence nobody prints — derives. The one CENSUS-VISIBLE row: §1's `toEqual` reddens, the reader summand falls 551/1592 → 550/1591, and `censusAtHead`'s `attack: 1642` reddens with it; `selfEnergyToHand.test.ts`'s inverted rung reddens too (the control derives, the row does not).",
+    file: "packages/engine/src/effects.ts",
+    find: "const OPTIONAL_COST_PURPOSE_BOOST = /^You may (.+) to have this attack do (\\d+) more damage\\.$/;",
+    replace: "const OPTIONAL_COST_PURPOSE_BOOST = /^You may (.+) to have this attack does (\\d+) more damage\\.$/;",
+    expectKilledBy: ["packages/engine/src/optionalCostEnergyToHand.test.ts", "packages/engine/src/censusAtHead.test.ts", "packages/engine/src/selfEnergyToHand.test.ts"],
   },
 ];

@@ -20018,6 +20018,78 @@ import type { GameState, Seat } from "./types";
     `expect(manifest.version)`, `it(…)` titles, the declaration and `package.json` —
     **not** as a value-keyed grep — because a value-keyed grep is precisely the mechanism
     that ate D500's heading.)
+    🆕🆕🆕 engineVersion 0.410.0 → **0.411.0** (D524 — THE PURPOSE-CONNECTIVE OPTIONAL-COST
+    BOOST WITH THE ALL-SELF-ENERGY-TO-HAND COST — ZERO VOCABULARY. `censusAttackCorpus.ts`
+    **FILE LINE 652** (`legalAttackCorpus()` index 599) — *"You may put all Energy attached to
+    this Pokémon into your hand to have this attack do 80 more damage."*, **1 sentence / 1 legal
+    printing**, claimed by `deriveAttackOptionalCostBoost` through a SECOND SKELETON
+    (`OPTIONAL_COST_PURPOSE_BOOST` — the purpose connective *"to have this attack do N more
+    damage"* beside D381's *". If you do, "* skeleton) over ONE new cost-table row
+    (`OPTIONAL_COST_PUT_ALL_SELF_ENERGY_TO_HAND`, directly beside D383's shuffle row), deriving
+    `{cond:{kind:"yourActiveEnergyAtLeast", count:1}, ops:[{op:"discardEnergy", from:"yourActive",
+    filter:{kind:"anyEnergy"}, count:"all", to:"hand"}], payoff:{kind:"moreDamage", bonus:80}}`
+    and assembled by the UNCHANGED `optionalCostBoostProgram` (gate → confirm → [all→hand,
+    damageDefender(base+80)] / [damageDefender(base)]).
+    🛑 **THE PRICE IS ONE ANCHOR PAIR, ONE COST ROW AND ONE ARM — ZERO NEW VOCABULARY.** The op
+    is D405's `PUT_SELF_ENERGY_TO_HAND` arm with `count: "all"` (D361's literal, D295's `to`);
+    the gate is D383's `yourActiveEnergyAtLeast` at `count: 1`; the payoff is D381's
+    `moreDamage`; `attack.ts`'s read site, `interpreter.ts`, `types.ts`, `redact.ts`,
+    `cardplay.ts`, `events.ts`, `log.ts` and every projection are UNTOUCHED; no reader (surface
+    13), registry row, `FIXTURE_POOL` id, prompt, event or schema byte.
+    🛑 **`count: 1` IS NOT D385's "INVENTED ARITY".** It is the PAYABILITY of `count: "all"` over
+    `anyEnergy` — a non-empty set — the same fact `yourHandNotEmpty` states nullarily for the
+    hand; an all-of-nothing cost would buy a free +80 on a bare attacker. A new nullary member
+    would be vocabulary for a fact a shipped member already answers:
+    `countAttachedEnergy(state, pokemon, null)` is the UNFILTERED card count, false on an empty
+    Active — necessary AND sufficient against `count: "all"` over `anyEnergy`, which is the
+    obligation D385's connective block states for every cost row. `from: "yourActive"`, not
+    `self`, for the D383 row's stated reason. Driven: 0 Energy → NO question, base dealt, turn
+    ends; 1 Energy → asked; 2 → both uids to the hand.
+    🛑 **A SECOND SKELETON, NOT A THIRD CONNECTIVE.** The connective still carries no data
+    (identical `{cond, ops, payoff}`), so it is still not a table row — but the purpose spelling
+    changes the payoff's VERB (*"do"* for *"does"*) and its punctuation, so
+    `OPTIONAL_COST_PAYOFF_MORE_DAMAGE` is NOT widened to `(does|do)` (that would make *". If you
+    do, this attack do N more damage."* readable — D190b's "exact map or flag"): the purpose
+    anchor captures the bonus and the arm builds the `moreDamage` payoff inline, guarded `>= 1`
+    on ONE line (D522 (3)). The COST goes through the SAME table, so every row transfers across
+    BOTH skeletons — D383's table composition, STATED in `optionalCostEnergyToHand.test.ts` §1
+    in both directions (this cost under *". If you do, "* derives the same reading; D385's hand
+    cost under *"to have"* derives its own) rather than filtered. The claimed set over the 640
+    rows is EXACTLY {652}; D381's `/^You may .*If you do,/` (7/14) and the WIDE
+    `/^You may .*\. If /` (8/15) still EXCLUDE it, so `optionalCostBoost.test.ts` and
+    `purgingStrike.test.ts`'s partitions do not move (measured).
+    🛑 **THE REFUSAL ON RECORD WAS TRUE AND STAYS TRUE, AND IT IS ANNOTATED, NOT DELETED
+    (D178/D442).** The D405 anchor's block says the compound *"differs in three printed places"*
+    and its `^…$` *"refuses it three times over"* — still exactly right of THAT anchor; the block
+    now adds that D524 reads it one reader over. `selfEnergyToHand.test.ts`'s *"refused by all
+    twelve"* rung is kept and INVERTED with D524 provenance (D418/D436): exactly ONE reader
+    (`deriveAttackOptionalCostBoost`) is non-null, the other twelve null, D405's mandatory TAKEN
+    still derives ONLY through `deriveAttackEffect`. 🛑 **D418's SECOND HALF, PAID:** that rung's
+    `resolvedByAnyReader(...) toBe(false)` was the suite's ONLY claim-false rung and the sole
+    reason it kills `D498-resolution-compares-against-undefined`; a `toBe(true)` is true under
+    that mutant too, so the same `it` gains a CONTROL — the `does`-for-`do` near-miss, false on
+    the real build and true under A2 — and the A2 row's prose names the control (`--only`
+    re-probed KILLED, and `--decision D405` re-probed all KILLED by §3's one-token rungs).
+    🛑 **THE BASE IS INSIDE THE ARMS.** `costBoostOwnsTheBase` is true for a `moreDamage` payoff,
+    so no `DAMAGE_DEALT` lands before the confirm (measured): YES → `ENERGY_DISCARDED {to:"hand"}`
+    then `DAMAGE_DEALT 120`, the log row *"put … from P1's … into P1's hand"* (never
+    "discarded"), the turn ends (D491); NO → 40; a Weak defender → (40+80)×2 = 240
+    (`boostedArms` folds pre-W/R); a Special beside a Basic → both move (`anyEnergy`); the
+    confirm is the program's ONLY park (`"all"` resolves inline). The demonstrator is FILE-LOCAL
+    with DECLARED base 40 / cost {C} over `fix-energy` / `fix-special` — the printing's card is
+    unresolvable on this checkout (no D1, not in `FIXTURE_POOL`), no id invented (D425).
+    ⚠️ **`MATCH_RECORD_VERSION` HELD at 30, RE-DERIVED.** Zero new serialized bytes: every kind,
+    field and value in the reading and the program already ships, the park is D381's confirm,
+    and both round-trip unchanged.
+    ⚠️ **THIS HEADING IS LABELLED `(D524 —` BECAUSE `docs/decisions.md`'s `| **D524** |` row
+    SHIPS IN THE SAME COMMIT** (D507's rule: the label and the row are ONE edit).
+    🛑 **VERSION-TAX EXCEPTION LIST FOR THIS BUMP (D506's rule (b)).** `0.410.0` legitimately
+    survives at: THIS HEADING'S OWN SOURCE; D523's heading target one block down and its
+    exception-list line; `discardShuffleBack.test.ts`'s header arrow `0.409.0 → 0.410.0` and
+    its heading assertion; `optionalCostEnergyToHand.test.ts`'s header arrow `0.410.0 → 0.411.0`
+    and its heading assertion; `mutants.ts`'s D275 re-point ledger; and the `docs/` history. The
+    sweep was run as a WHITELIST over `expect(engineVersion)`, `expect(manifest.version)`,
+    `it(…)` titles, the declaration and `package.json` — never as a value-keyed grep.)
     🆕🆕🆕 engineVersion 0.409.0 → **0.410.0** (D523 — THE DECK-DESTINATION DISCARD-PILE
     RETRIEVAL ("Shuffle … from your discard pile into your deck") — ZERO VOCABULARY, AND A
     REFUSAL WHOSE PREMISE WAS FALSE OF THE LEGAL ATTACK COLUMN. `censusAttackCorpus.ts`
@@ -22078,7 +22150,7 @@ import type { GameState, Seat } from "./types";
     WITNESS** — the count was re-derived every slice and the word *"three"* was carried.
     A successor of this slice inherits **81 / 61 / 17** again, over **FIVE** history
     occurrences: those four plus `deckMillFilteredScale.test.ts`'s own header arrow.) */
-export const engineVersion = "0.410.0";
+export const engineVersion = "0.411.0";
 
 export type {
   ApplyResult,

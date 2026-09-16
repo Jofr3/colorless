@@ -14266,6 +14266,13 @@ const MAY_PUT_OPPONENT_ACTIVE_ENERGY_TO_HAND =
 // refusals `selfEnergyToHand.test.ts` §4 asserts are the ONE-token ones this anchor
 // actually owns (the possessive and the article), D399's rule: a near-miss the sentence
 // already fails on three counts proves nothing about any single byte here.
+// 🆕🆕🆕 D524 — STILL TRUE OF THIS ANCHOR, AND THE COMPOUND IS BUILT ONE READER OVER (annotated
+// in place, D178/D442): `deriveAttackOptionalCostBoost` reads it through its purpose skeleton
+// (`OPTIONAL_COST_PURPOSE_BOOST`) over the cost-table row
+// `OPTIONAL_COST_PUT_ALL_SELF_ENERGY_TO_HAND` — this op with `count: "all"` behind a
+// `yourActiveEnergyAtLeast 1` gate and a confirm. This anchor and this arm are unchanged;
+// `selfEnergyToHand.test.ts`'s refusal rung is kept and INVERTED (exactly one reader, not
+// `deriveAttackEffect`).
 //
 // The apostrophe class the twin carries is absent because this sentence contains no
 // apostrophe at all — said out loud, so the asymmetry does not read as an oversight.
@@ -31434,6 +31441,36 @@ export type AttackOptionalCostPayoff =
     is where it is stated and where it is driven. */
 const OPTIONAL_COST_CONNECTIVE = "(?:If you do|If you discarded any cards in this way)";
 const OPTIONAL_COST_BOOST = new RegExp(`^You may (.+)\\. ${OPTIONAL_COST_CONNECTIVE}, (.+)$`);
+/** 🆕🆕🆕 **D524 — A SECOND SKELETON, NOT A THIRD CONNECTIVE, AND THE PARAGRAPH ABOVE IS
+    STILL TRUE.** `censusAttackCorpus.ts` **FILE LINE 652** (`legalAttackCorpus()` index 599),
+    **1 sentence / 1 legal printing**:
+
+        *"You may put all Energy attached to this Pokémon into your hand to have this
+        attack do 80 more damage."*
+
+    The cost half and the payoff half are D381's tables; what differs is the CONNECTIVE — a
+    PURPOSE clause (*"… to have this attack do N more damage."*) in place of the sentence
+    break plus *". If you do, "*. A connective still carries no data (the reading is the
+    identical `{cond, ops, payoff}`), so it is still not a table row — but it is not a third
+    member of `OPTIONAL_COST_CONNECTIVE` either, because the purpose spelling changes the
+    PAYOFF's VERB (*"do"*, infinitive, where the finite skeleton prints *"does"*) and its
+    punctuation (no period before the connective). Widening `OPTIONAL_COST_PAYOFF_MORE_DAMAGE`
+    to `(does|do)` would make *". If you do, this attack do N more damage."* readable — a
+    sentence nobody prints (D190b's "exact map or flag") — so the purpose skeleton captures the
+    bonus itself and `deriveAttackOptionalCostBoost`'s SECOND arm builds the `moreDamage`
+    payoff INLINE; the payoff table is untouched. The COST between `You may ` and ` to have`
+    goes through `optionalCostOps` exactly as the first skeleton's does — never interpreted as
+    text here — which is what makes every cost row transfer across BOTH skeletons (D383's
+    table composition, stated rather than filtered: *"You may discard your hand to have this
+    attack do 30 more damage."* derives, and so does *"You may put all Energy … into your
+    hand. If you do, this attack does 80 more damage."*; `optionalCostEnergyToHand.test.ts`
+    §1 drives both). `^…$`, the bonus CAPTURED and guarded `>= 1` on one line (a printed 0 is
+    not an offer — `optionalCostPayoff`'s own rule, restated because the payoff is built in
+    the arm). The claimed set over all 640 rows is EXACTLY {file line 652}, measured in that
+    suite; D381's `/^You may .*If you do,/` and the WIDE `/^You may .*\. If /` census regexes
+    still exclude it (no `. If ` in the sentence), so `optionalCostBoost.test.ts`'s 7/14 and
+    `purgingStrike.test.ts`'s 8/15 partitions do not move. */
+const OPTIONAL_COST_PURPOSE_BOOST = /^You may (.+) to have this attack do (\d+) more damage\.$/;
 const OPTIONAL_COST_DISCARD_STADIUM = /^discard a Stadium in play$/;
 /** 🆕🆕 D385 — the THIRD cost row, and the first whose noun is a WHOLE ZONE rather
     than a counted set. *"your hand"* — no digit, no filter, no upper bound — which is
@@ -31451,6 +31488,15 @@ const OPTIONAL_COST_DISCARD_HAND = /^discard your hand$/;
     member. */
 const OPTIONAL_COST_SHUFFLE_SELF_ENERGY =
   /^shuffle (\d+) Energy attached to this Pokémon into your deck$/;
+/** 🆕🆕🆕 D524 — the FOURTH cost row, and the first whose quantifier is the printed *"all"*.
+    *"put all Energy attached to this Pokémon into your hand"* is the D405 arm's mandatory
+    *"Put an Energy attached to this Pokémon into your hand."* with `all` for `an`, the
+    lower-case verb at its own anchor (D246/D316), whole-string `^…$` so *"… into your hand
+    and draw a card"* is refused. No digit is captured because none is printed (D385's rule:
+    an arity invented for a sentence that prints no number is not evidence).
+    `optionalCostEnergyToHand.test.ts` §1 drives the single-axis controls (`an` for `all`,
+    `discard` for `put`, `deck` for `hand`, the opponent's Active for `this Pokémon`). */
+const OPTIONAL_COST_PUT_ALL_SELF_ENERGY_TO_HAND = /^put all Energy attached to this Pokémon into your hand$/;
 const OPTIONAL_COST_PAYOFF_MORE_DAMAGE = /^this attack does (\d+) more damage\.$/;
 /** 🆕🆕 D383 — the SECOND payoff row. Lower-case `this`, sharing its body with
     `ALSO_BENCHED_SNIPE` so the two spellings of one printed clause cannot drift. */
@@ -31495,6 +31541,28 @@ function optionalCostOps(cost: string): { cond: BoardCondition; ops: EffectOp[] 
   if (OPTIONAL_COST_DISCARD_HAND.test(cost)) {
     return { cond: { kind: "yourHandNotEmpty" }, ops: [{ op: "discardHand" }] };
   }
+  // 🆕🆕🆕 D524 — THE FOURTH ROW, AND IT BUYS NO OP AND NO GATE MEMBER. The op is D405's arm
+  // byte for byte with `count: "all"` (`discardEnergy` from `yourActive`, `anyEnergy`, Chill
+  // Teaser Toy's `to: "hand"` — the D405 arm's caption branch), which the interpreter resolves
+  // INLINE: `"all"` asks nothing, so the confirm is the program's only park.
+  //
+  // 🛑 `count: 1` IS NOT D385's "INVENTED ARITY". The gate is the PAYABILITY of `count: "all"`
+  // over `anyEnergy` — a NON-EMPTY set — exactly the fact `yourHandNotEmpty` states nullarily
+  // for the hand one row up: an all-of-nothing cost would buy a free +80 on a bare attacker
+  // (a "yes" that moves nothing and collects the boost — the whiff the connective block's
+  // obligation forbids). A new nullary member (`yourActiveHasEnergy`) would be VOCABULARY for
+  // a fact a shipped member already answers: `yourActiveEnergyAtLeast` at `count: 1` is
+  // `countAttachedEnergy(state, pokemon, null) >= 1` (interpreter.ts) — the UNFILTERED card
+  // count, false on an empty Active Spot — which is necessary AND sufficient against
+  // `count: "all"` over `anyEnergy`, the obligation D385's connective block states for every
+  // cost row. `from: "yourActive"` and not `self`, for the D383 row's stated reason below.
+  //
+  // ⚠️ ONE LINE ON PURPOSE (D522 (3)/D523): older mutant rows quote the D383 row below across
+  // its line breaks, and a multi-line copy of that shape here would make their `find`s occur
+  // twice. Placed ABOVE the shuffle exec rather than after it because
+  // `D383-the-printed-verb-loses-its-shuffle` quotes that block's tail through `return null;`;
+  // the anchors are disjoint on their verbs, so the order is not observable on any input.
+  if (OPTIONAL_COST_PUT_ALL_SELF_ENERGY_TO_HAND.test(cost)) return { cond: { kind: "yourActiveEnergyAtLeast", count: 1 }, ops: [{ op: "discardEnergy", from: "yourActive", filter: { kind: "anyEnergy" }, count: "all", to: "hand" }] };
   const shuffle = OPTIONAL_COST_SHUFFLE_SELF_ENERGY.exec(cost);
   if (shuffle !== null) {
     const count = Number(shuffle[1]);
@@ -31604,7 +31672,19 @@ function optionalCostPayoff(payoff: string): AttackOptionalCostPayoff | null {
     two siblings'. */
 export function deriveAttackOptionalCostBoost(text: string): AttackOptionalCostBoost | null {
   const match = OPTIONAL_COST_BOOST.exec(text.trim());
-  if (match === null) return null;
+  if (match === null) {
+    // 🆕🆕🆕 D524 — THE SECOND SKELETON: the purpose connective (corpus FILE LINE 652). The
+    // cost half goes through the SAME table — never read as text here — and the payoff is
+    // `moreDamage` BUILT INLINE from the captured digit, because the purpose spelling's verb
+    // ("do") exists only under this connective and widening the payoff table would admit a
+    // sentence nobody prints (the anchor's block). The guard is on ONE line (D522 (3)).
+    const purpose = OPTIONAL_COST_PURPOSE_BOOST.exec(text.trim());
+    if (purpose === null) return null;
+    const purposeCost = optionalCostOps(purpose[1] ?? "");
+    const bonus = Number(purpose[2]);
+    if (purposeCost === null || bonus < 1) return null;
+    return { cond: purposeCost.cond, ops: purposeCost.ops, payoff: { kind: "moreDamage", bonus } };
+  }
   const cost = optionalCostOps(match[1] ?? "");
   if (cost === null) return null;
   // 🆕🆕 D383 — BOTH HALVES ARE TABLES NOW, and the symmetry is the point: an

@@ -98,9 +98,22 @@ const MAY_TWIN = "You may put an Energy attached to your opponent's Active Poké
 
 /** THE ONE REAL NEAR-MISS IN THE SAME COLUMN, and it differs in THREE printed places at
     once (the "may", the "all", and a payoff tail) — which is exactly why §3 pins the
-    refusals on constructed ONE-TOKEN variants instead (D399's rule). */
+    refusals on constructed ONE-TOKEN variants instead (D399's rule).
+    ✅ 🆕🆕🆕 **D524 BUILT IT, ONE READER OVER** (annotated in place, D178/D442): it is now read
+    by `deriveAttackOptionalCostBoost` through the purpose skeleton over a cost-table row
+    (`OPTIONAL_COST_PUT_ALL_SELF_ENERGY_TO_HAND` — this file's op with `count: "all"` behind a
+    `yourActiveEnergyAtLeast 1` gate and a confirm). Everything above stays true of THIS
+    anchor: `deriveAttackEffect` still refuses it three times over, and §1's rung below is
+    kept and INVERTED (D418/D436) — exactly one reader, and not this one. */
 const ALL_FOR_DAMAGE =
   "You may put all Energy attached to this Pokémon into your hand to have this attack do 80 more damage.";
+/** 🛑 D418's SECOND HALF, PAID (D524): the `toBe(false)` on `ALL_FOR_DAMAGE` was this suite's
+    ONLY claim-false rung on `resolvedByAnyReader` and the sole reason it kills
+    `D498-resolution-compares-against-undefined` (every `null` re-read as a claim). A `toBe(true)`
+    is true under that mutant too, so the inverted rung carries a CONTROL — the `does`-for-`do`
+    near-miss, ONE token off the printed row: false on the real build, TRUE under A2. */
+const ALL_FOR_DAMAGE_DOES =
+  "You may put all Energy attached to this Pokémon into your hand to have this attack does 80 more damage.";
 
 /** The PROGRAM, spelled once so no case can pass against a hand-copied literal that has
     drifted from what this file means by it. */
@@ -165,17 +178,30 @@ describe("D405 §1 — the sentence, measured live over the legal column", () =>
     expect(deriveAttackEffect("Put 2 Energy attached to this Pokémon into your hand.")).toBeNull();
   });
 
-  it("⚠️ the ALL-for-damage compound is a real printing and is still refused by all twelve", () => {
-    // It is a slice of its own (an `optional` cost with a damage payoff — D381's
-    // family), and its being refused here is what stops this anchor drifting toward it.
+  it("⚠️ the ALL-for-damage compound is a real printing — 🆕🆕🆕 D524: read by EXACTLY ONE reader (`deriveAttackOptionalCostBoost`), still refused by the other twelve and by THIS arm, with a one-token control that stays refused", () => {
+    // It WAS a slice of its own (an `optional` cost with a damage payoff — D381's family),
+    // and D524 built it one reader over. Its being refused HERE (by `deriveAttackEffect`) is
+    // still what stops this anchor drifting toward it — the rung is INVERTED, not deleted
+    // (D418/D436): the old claim ("no reader") became "exactly one reader, not this one".
     const rows = legalAttackCorpus().filter(([, s]) => s === ALL_FOR_DAMAGE);
     expect([rows.length, units(rows)]).toEqual([1, 1]);
-    // 🆕🆕 D419 — THE REFUSAL IS NOW ASSERTED OFF THE MODULE FIRST. The loop
-    // below names WHICH reader broke and is kept for that; but it can only ever
-    // walk the readers this file happens to list, which is the failure mode D418
-    // measured in 38 files. This line walks whatever `effects.ts` exports today.
-    expect(resolvedByAnyReader(ALL_FOR_DAMAGE), ALL_FOR_DAMAGE).toBe(false);
-    for (const read of READERS) expect(read(ALL_FOR_DAMAGE), read.name).toBeNull();
+    // 🆕🆕 D419 — ASSERTED OFF THE MODULE FIRST. The loop below names WHICH reader
+    // claims it and is kept for that; but it can only ever walk the readers this file
+    // happens to list, which is the failure mode D418 measured in 38 files. This line
+    // walks whatever `effects.ts` exports today.
+    expect(resolvedByAnyReader(ALL_FOR_DAMAGE), ALL_FOR_DAMAGE).toBe(true);
+    for (const read of READERS) {
+      if (read === deriveAttackOptionalCostBoost) expect(read(ALL_FOR_DAMAGE), read.name).not.toBeNull();
+      else expect(read(ALL_FOR_DAMAGE), read.name).toBeNull();
+    }
+    expect(deriveAttackEffect(ALL_FOR_DAMAGE)).toBeNull();
+    // 🛑 THE CONTROL (D418's second half): a `toBe(true)` cannot see
+    // `D498-resolution-compares-against-undefined`; this one-token near-miss can — it is
+    // false on the real build and true under that mutant, which keeps this suite the
+    // killer the corpus names.
+    expect(legalAttackCorpus().some(([, s]) => s === ALL_FOR_DAMAGE_DOES)).toBe(false);
+    expect(resolvedByAnyReader(ALL_FOR_DAMAGE_DOES), ALL_FOR_DAMAGE_DOES).toBe(false);
+    for (const read of READERS) expect(read(ALL_FOR_DAMAGE_DOES), read.name).toBeNull();
   });
 });
 
