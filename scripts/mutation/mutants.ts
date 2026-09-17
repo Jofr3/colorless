@@ -5251,7 +5251,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D275",
     what: "🛑 THE DEBT THIS SLICE PAID FOR THE FIFTH TIME, RE-INSTALLED: `engineVersion` falls a minor behind `packages/engine/package.json`, which is EXACTLY the state the tree was in at the head of D275 (0.187.0 against 0.189.0) and had been for two slices with nothing comparing them. The tie is the guard; this row is the proof it is one",
     file: "packages/engine/src/index.ts",
-    // ⚠️ RE-POINTED AT D526 (0.412.0 → 0.413.0), at D525 (0.411.0 → 0.412.0), at D524 (0.410.0 → 0.411.0), at D523 (0.409.0 → 0.410.0), at D522 (0.408.0 → 0.409.0), at D521 (0.407.0 → 0.408.0), at D520 (0.406.0 → 0.407.0), at D519 (0.405.0 → 0.406.0), at D518 (0.404.0 → 0.405.0), at D517 (0.403.0 → 0.404.0), at D516 (0.402.0 → 0.403.0), at D515 (0.401.0 → 0.402.0), at D514 (0.400.0 → 0.401.0), at D513 (0.399.0 → 0.400.0), at D512 (0.398.0 → 0.399.0), at D510 (0.397.0 → 0.398.0), at D508 (0.396.0 → 0.397.0), at D507 (0.395.0 → 0.396.0), at D505 (0.394.0 → 0.395.0), at D490 (0.384.0 → 0.385.0), at D489 (0.383.0 → 0.384.0), at D488 (0.382.0 → 0.383.0), at D487 (0.381.0 → 0.382.0), at D486 (0.380.0 → 0.381.0), at D485 (0.379.0 → 0.380.0), at D450 (0.351.0 → 0.352.0), at D449 (0.350.0 → 0.351.0), at D448 (0.349.0 → 0.350.0), at D447 (0.348.0 → 0.349.0), at D446 (0.347.0 → 0.348.0), at D445 (0.346.0 → 0.347.0), at D444 (0.345.0 → 0.346.0), at D443 (0.344.0 → 0.345.0), at D442 (0.343.0 → 0.344.0), at D441 (0.342.0 → 0.343.0), at D440 (0.341.0 → 0.342.0), at D439 (0.340.0 → 0.341.0), at D438 (0.339.0 → 0.340.0), at D437 (0.338.0 → 0.339.0), at D436 (0.337.0 → 0.338.0), at D435 (0.336.0 → 0.337.0), at D434 (0.335.0 → 0.336.0), at D433 (0.334.0 → 0.335.0), at D432 (0.333.0 → 0.334.0), at D431 (0.332.0 → 0.333.0), at D430 (0.331.0 → 0.332.0), at D429 (0.330.0 → 0.331.0), at D428 (0.329.0 → 0.330.0), at D427 (0.328.0 → 0.329.0), at D426 (0.327.0 → 0.328.0), at D425 (0.326.0 → 0.327.0), at D424 (0.325.0 → 0.326.0), at D423 (0.324.0 → 0.325.0), at D422 (0.323.0 → 0.324.0), at D421 (0.322.0 → 0.323.0), at D420 (0.321.0 → 0.322.0), at D417 (0.320.0 → 0.321.0), at D416 (0.319.0 → 0.320.0), at D415 (0.318.0 → 0.319.0), at D414 (0.317.0 → 0.318.0), at D413 (0.316.0 → 0.317.0), at D412 (0.315.0 → 0.316.0), at D410 (0.314.0 → 0.315.0), at D409 (0.313.0 → 0.314.0), at D408 (0.312.0 → 0.313.0), at D407 (0.311.0 → 0.312.0), at D402 (0.306.0 → 0.307.0), at D401 (0.305.0 → 0.306.0), at D400 (0.304.0 → 0.305.0), at D399 (0.303.0 → 0.304.0), at D398 (0.302.0 → 0.303.0), at D397 (0.301.0 → 0.302.0), at D396 (0.300.0 → 0.301.0), at D395 (0.299.0 → 0.300.0), at D394 (0.298.0 → 0.299.0), at D393 (0.297.0 → 0.298.0), at D392 (0.296.0 → 0.297.0), at D391 (0.295.0 → 0.296.0), at D390 (0.294.0 → 0.295.0), at D389 (0.293.0 → 0.294.0), at D388 (0.292.0 → 0.293.0), at D387 (0.291.0 → 0.292.0), at D386 (0.290.0 → 0.291.0),
+    // ⚠️ RE-POINTED AT D527 (0.413.0 → 0.414.0), at D526 (0.412.0 → 0.413.0), at D525 (0.411.0 → 0.412.0), at D524 (0.410.0 → 0.411.0), at D523 (0.409.0 → 0.410.0), at D522 (0.408.0 → 0.409.0), at D521 (0.407.0 → 0.408.0), at D520 (0.406.0 → 0.407.0), at D519 (0.405.0 → 0.406.0), at D518 (0.404.0 → 0.405.0), at D517 (0.403.0 → 0.404.0), at D516 (0.402.0 → 0.403.0), at D515 (0.401.0 → 0.402.0), at D514 (0.400.0 → 0.401.0), at D513 (0.399.0 → 0.400.0), at D512 (0.398.0 → 0.399.0), at D510 (0.397.0 → 0.398.0), at D508 (0.396.0 → 0.397.0), at D507 (0.395.0 → 0.396.0), at D505 (0.394.0 → 0.395.0), at D490 (0.384.0 → 0.385.0), at D489 (0.383.0 → 0.384.0), at D488 (0.382.0 → 0.383.0), at D487 (0.381.0 → 0.382.0), at D486 (0.380.0 → 0.381.0), at D485 (0.379.0 → 0.380.0), at D450 (0.351.0 → 0.352.0), at D449 (0.350.0 → 0.351.0), at D448 (0.349.0 → 0.350.0), at D447 (0.348.0 → 0.349.0), at D446 (0.347.0 → 0.348.0), at D445 (0.346.0 → 0.347.0), at D444 (0.345.0 → 0.346.0), at D443 (0.344.0 → 0.345.0), at D442 (0.343.0 → 0.344.0), at D441 (0.342.0 → 0.343.0), at D440 (0.341.0 → 0.342.0), at D439 (0.340.0 → 0.341.0), at D438 (0.339.0 → 0.340.0), at D437 (0.338.0 → 0.339.0), at D436 (0.337.0 → 0.338.0), at D435 (0.336.0 → 0.337.0), at D434 (0.335.0 → 0.336.0), at D433 (0.334.0 → 0.335.0), at D432 (0.333.0 → 0.334.0), at D431 (0.332.0 → 0.333.0), at D430 (0.331.0 → 0.332.0), at D429 (0.330.0 → 0.331.0), at D428 (0.329.0 → 0.330.0), at D427 (0.328.0 → 0.329.0), at D426 (0.327.0 → 0.328.0), at D425 (0.326.0 → 0.327.0), at D424 (0.325.0 → 0.326.0), at D423 (0.324.0 → 0.325.0), at D422 (0.323.0 → 0.324.0), at D421 (0.322.0 → 0.323.0), at D420 (0.321.0 → 0.322.0), at D417 (0.320.0 → 0.321.0), at D416 (0.319.0 → 0.320.0), at D415 (0.318.0 → 0.319.0), at D414 (0.317.0 → 0.318.0), at D413 (0.316.0 → 0.317.0), at D412 (0.315.0 → 0.316.0), at D410 (0.314.0 → 0.315.0), at D409 (0.313.0 → 0.314.0), at D408 (0.312.0 → 0.313.0), at D407 (0.311.0 → 0.312.0), at D402 (0.306.0 → 0.307.0), at D401 (0.305.0 → 0.306.0), at D400 (0.304.0 → 0.305.0), at D399 (0.303.0 → 0.304.0), at D398 (0.302.0 → 0.303.0), at D397 (0.301.0 → 0.302.0), at D396 (0.300.0 → 0.301.0), at D395 (0.299.0 → 0.300.0), at D394 (0.298.0 → 0.299.0), at D393 (0.297.0 → 0.298.0), at D392 (0.296.0 → 0.297.0), at D391 (0.295.0 → 0.296.0), at D390 (0.294.0 → 0.295.0), at D389 (0.293.0 → 0.294.0), at D388 (0.292.0 → 0.293.0), at D387 (0.291.0 → 0.292.0), at D386 (0.290.0 → 0.291.0),
     //    each in the SAME COMMIT as the bump —
     // the TENTH slice running to do it that way, and the practice is now the one
     // thing about this row that has never cost an ERROR since it started.
@@ -5798,7 +5798,7 @@ export const MUTANTS: Mutant[] = [
     // CORPUS QUOTES** (D414/D415), so a value-keyed sweep over `toBe("0.391.0")` cannot
     // see it — this row's `find` spells the DECLARATION, not an assertion. Run
     // `precheck` after every version bump, not after the sweep tells you.
-    find: 'export const engineVersion = "0.413.0";',
+    find: 'export const engineVersion = "0.414.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -27975,8 +27975,12 @@ export const MUTANTS: Mutant[] = [
     //    regression stays the two-step it has always expressed. Re-transcribed in the SAME edit as
     //    the `censusAtHead` literal and the other two version-tax rows (D525 (1)), so no phantom
     //    stale row appeared between the census step and `precheck`.
-    find: "  attack: 1645,",
-    replace: "  attack: 1643,",
+    // 🆕🆕🆕 D527 — RE-TRANSCRIBED AGAIN, 1645 -> 1646 (replace 1643 -> 1644): the sentence and
+    //    printing steps AGREE at 1 and 1 (corpus FILE LINE 454 carries ONE printing), so the
+    //    regression stays the two-step it has always expressed. Re-transcribed in the SAME edit as
+    //    the `censusAtHead` literal and the other two version-tax rows (D525 (1)).
+    find: "  attack: 1646,",
+    replace: "  attack: 1644,",
     expectKilledBy: [
       "packages/engine/src/censusAtHead.test.ts",
     ],
@@ -29133,8 +29137,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D506",
     what: "🛑 C1 — THE DEFECT D502 AND D505 BOTH SHIPPED: a version goes out and NO HEADING CLAIMS IT. The edit un-bolds the NEWEST heading's target, so the parser stops seeing it and the chain's head falls back a release while `package.json` says otherwise — which is byte-for-byte the state of this file at D505's head, twice over. ⚠️ IT IS THE CHEAPEST WAY FOR THIS RECORD TO GO WRONG AND WAS INVISIBLE TO EVERY OTHER INSTRUMENT IN THE REPO: `tsc`, `biome`, every test, `precheck` and all five gates are green on both sides of it, because until D506 nothing read the headings at all. Killed by the HEAD case alone, which is the point — one tripwire, named (D453/D498). 🛑 RE-POINTED AT D507 ONTO THE 0.395.0 → 0.396.0 HEADING, AND THE RE-POINT WAS OWED RATHER THAN TIDY (D444): left on D505's heading it would have gone INERT ON THE VERDICT the moment a newer heading existed — un-bolding a heading that is no longer the head leaves NEWEST equal to HEAD, so the HEAD case stays green and the kill arrives, if at all, through the CHAIN case instead. The row's own stated reason (killed by the HEAD case alone) is exactly the sentence that would have quietly become false. THIS ROW IS PART OF THE VERSION TAX: every bump owes its re-point, in the same edit as the heading. \U0001f195 RE-POINTED AGAIN AT D508 ONTO THE 0.396.0 → 0.397.0 HEADING, and this one is UNLABELLED — the `find` quotes the heading's first prose words instead of a `(D<nnn> —`, which is strictly more durable: the label is the byte the close-out ritual inserts, and quoting it is exactly what broke this row at D507. \u26a0\ufe0f The heading is the CHAIN HEAD again, so the HEAD case is the killer again — the re-point is what keeps that sentence true rather than quietly false. \U0001f195 RE-POINTED AGAIN AT D510 ONTO THE 0.397.0 \u2192 0.398.0 HEADING, also UNLABELLED, and the `find` is kept in D508's TRIMMED form \u2014 it stops before the `(` where the close-out ritual inserts the label, which is the shape D508 proved survives that edit (precheck clean, label inserted, clean again). A `find` that spanned the paren would re-open the coupling that broke this row at D507. \U0001f195 RE-POINTED AGAIN AT D512 ONTO THE 0.398.0 \u2192 0.399.0 HEADING, also UNLABELLED and kept in the same TRIMMED form. \u26a0\ufe0f The re-point is what keeps this row's own stated reason (killed by the HEAD case ALONE) true rather than quietly false: left on D510's heading it would go INERT ON THE VERDICT the moment a newer heading exists, because un-bolding a heading that is no longer the head leaves NEWEST equal to HEAD and the kill arrives, if at all, through the CHAIN case instead. \U0001f195 RE-POINTED AGAIN AT D513 ONTO THE 0.399.0 \u2192 0.400.0 HEADING, also UNLABELLED and kept in the same TRIMMED form that stops before the `(`. \u26a0\ufe0f **AND THE TRIM WAS PROVEN AGAIN RATHER THAN ASSUMED**: `precheck` clean before the heading exists, the heading written, `precheck` clean after \u2014 the third consecutive slice to demonstrate that a `find` ending at `**<new>**` survives the close-out label insertion, and the fourth to state that a `find` spanning the paren re-opens the coupling that broke this row at D507. \U0001f195 RE-POINTED AGAIN AT D515 ONTO THE 0.401.0 \u2192 0.402.0 HEADING, also UNLABELLED and kept in the same TRIMMED form that stops before the `(`. \u26a0\ufe0f **THE RE-POINT IS THE PART OF THE VERSION TAX THAT HAS NO AUTOMATIC DETECTOR**: left on D514's heading this row would go INERT ON THE VERDICT the moment a newer heading exists \u2014 un-bolding a heading that is no longer the head leaves NEWEST equal to HEAD, the HEAD case stays green, and the kill arrives (if at all) through the CHAIN case instead, so the row would report KILLED while its own stated reason (killed by the HEAD case ALONE) had quietly become false. \u26a0\ufe0f **AND THE TRIM WAS PROVEN A FIFTH TIME RATHER THAN ASSUMED**: `precheck` clean before the heading exists, the heading written, `precheck` clean after. \U0001f195 RE-POINTED AGAIN AT D516 ONTO THE 0.402.0 \u2192 0.403.0 HEADING, also UNLABELLED and kept in the same TRIMMED form that stops before the `(`. \u26a0\ufe0f **THE TRIM WAS PROVEN A SIXTH TIME RATHER THAN ASSUMED**: `precheck` clean before the heading exists, the heading written, `precheck` clean after \u2014 and the re-point remains the part of the version tax with no automatic detector, because left on D515\u2019s heading this row would report KILLED while its own stated reason (killed by the HEAD case ALONE) had quietly become false. \U0001f195 RE-POINTED AGAIN AT D517 ONTO THE 0.403.0 \u2192 0.404.0 HEADING, also UNLABELLED and kept in the same TRIMMED form that stops before the `(`. \u26a0\ufe0f **THE TRIM WAS PROVEN A SEVENTH TIME RATHER THAN ASSUMED**: `precheck` clean before the heading exists, the heading written, `precheck` clean after \u2014 seven consecutive slices now, which is the evidence that the label a caller later adds cannot reach this `find`. 🆕 RE-POINTED AGAIN AT D518 ONTO THE 0.404.0 → 0.405.0 HEADING, also UNLABELLED and kept in the same TRIMMED form that stops before the `(`. ⚠️ **THE TRIM WAS PROVEN AN EIGHTH TIME RATHER THAN ASSUMED**: `precheck` clean before the heading exists, the heading written, `precheck` clean after — eight consecutive slices, and this one carried an extra hazard worth naming: the incoming literal `0.405.0` did NOT collide at 2× the way D517's did, because this slice's `find` quotes the heading ARROW (which is unique) rather than a source line the corpus already patches, so no FOURTH version-tax row was owed. 🆕 RE-POINTED AGAIN AT D521 ONTO THE 0.407.0 → 0.408.0 HEADING, also UNLABELLED and kept in the same TRIMMED form that stops before the `(` — the heading was written labelled in the same edit as the `docs/decisions.md` row (D507), and `precheck` was run clean with the row re-pointed. 🆕 RE-POINTED AGAIN AT D526 ONTO THE 0.412.0 → 0.413.0 HEADING, UNLABELLED and kept in the same TRIMMED form that stops before the `(` — re-transcribed in the same edit as the D275 ledger row and the census row (the version-tax trio), and `precheck` run clean with the row re-pointed.",
     file: "packages/engine/src/index.ts",
-    find: "engineVersion 0.412.0 → **0.413.0**",
-    replace: "engineVersion 0.412.0 → 0.413.0",
+    find: "engineVersion 0.413.0 → **0.414.0**",
+    replace: "engineVersion 0.413.0 → 0.414.0",
     expectKilledBy: ["packages/engine/src/engineVersionChangelog.test.ts"],
   },
   {
@@ -29928,8 +29932,12 @@ export const MUTANTS: Mutant[] = [
     decision: "D514",
     what: "🛑 C9 — **THE UNBOUNDED GROUP RESOLVED AGAINST THE UNION RATHER THAN AGAINST ITS OWN FILTER.** D336's neighbouring mistake — *\"the caps read the union, not the group\"* — copied onto the new line. Invisible on every printed sentence, because every one of them has a single group and the two sets coincide; it is wrong the moment an `also` group rides beside an unbounded first noun, where the total becomes the whole offer twice over. Killed by the multi-group caption rung, which is the only place the two numbers differ.",
     file: "packages/engine/src/interpreter.ts",
-    find: "        max: g.max === \"any\" ? groupMatches(g.filter).length : g.max,",
-    replace: "        max: g.max === \"any\" ? candidates.length : g.max,",
+    // 🆕🆕🆕 D527 — RE-TRANSCRIBED: the `sized` map's `max` is now a three-way chain
+    //    (`typeof g.max === "number"` → `"any"` → `"yourBenchCount"`), so the row anchors
+    //    on the `"any"` arm's own line and the experiment is byte-for-byte the same one
+    //    (the union resolved against `candidates` instead of the group's filter).
+    find: "              ? groupMatches(g.filter).length\n",
+    replace: "              ? candidates.length\n",
     expectKilledBy: ["packages/engine/src/namedDeckSearch.test.ts"],
   },
   {
@@ -31127,5 +31135,120 @@ export const MUTANTS: Mutant[] = [
     find: "    return { kind: \"bonusLadder\", flips: { kind: \"printed\", count: 3 }, ladder: [t1, t2, t3] };",
     replace: "    return { kind: \"bonusLadder\", flips: { kind: \"printed\", count: 3 }, ladder: [t3, t2, t1] };",
     expectKilledBy: ["packages/engine/src/headsLadderBonus.test.ts"],
+  },
+  // ── D527 — THE DYNAMIC-max HAND SEARCH ("Search your deck for a number of cards up to the number of
+  //    your Benched Pokémon and put them into your hand. Then, shuffle your deck."), corpus FILE LINE 454,
+  //    1 legal printing. Eleven rows, ONE PER CLAIM, over the anchor (C1–C2), the arm (C3, C4, C10, C11),
+  //    the interpreter's `sized` resolution (C5–C8) and the caption (C9). ⚠️ **NONE IS CENSUS-VISIBLE**:
+  //    every row corrupts a VALUE (an anchor end, the literal, the seat, the count, the type test, the
+  //    caption, a rider, the filter) and the printed row still derives — the suite's executor and §1's
+  //    `toEqual` / near-miss rungs are the killers, never `censusAtHead`.
+  //
+  //    ⚠️ **EVERY `find`/`replace` PAIR WAS DIFFED BEFORE SHIPPING AND ASSERTED UNEQUAL BY THE SCRIPT
+  //    THAT WROTE THEM** (D519 (4)(a)); the two anchor `replace`s were EVALUATED against the row and
+  //    against the print each is meant to admit (D526 (1)'s rule — `find !== replace` cannot check
+  //    that); every `find` counted at exactly one occurrence in its target; every `replace` counted at
+  //    ZERO before the probe ran; and every row PROBED UNDECLARED FIRST (D525 (3)). C8 was probed for
+  //    OBSERVABILITY before it was written (D420): the string reaches `sum + g.max` as concatenation,
+  //    so the park opens with a string ceiling, which the Bench-2 rung's `typeof` sees. Every `find`
+  //    sits OUTSIDE the byte ranges the D231/D514 noun-lookup rows quote.
+  {
+    id: "D527-anchor-loses-the-head",
+    decision: "D527",
+    what: "🛑 C1 — **THE `^` DROPPED FROM THE BENCH-COUNT ANCHOR.** Without it the pattern matches anywhere in a longer sentence, so a compound whose SECOND clause prints this search is claimed WHOLE and its first clause silently dropped. Killed by §1's EXPLICIT prefixed rung (D520 (3)): the CONSTRUCTED `Draw a card. <row>` derives null on every reader on the real build and to the two-op program on the mutant. NOT caught by the inverted `derivedHandSearch.test.ts` (its new rung reads the row's own bytes only). Silent to the census.",
+    file: "packages/engine/src/effects.ts",
+    find: "  /^Search your deck for a number of cards up to the number of your Benched Pokémon and put them into your hand\\. Then, shuffle your deck\\.$/;",
+    replace: "  /Search your deck for a number of cards up to the number of your Benched Pokémon and put them into your hand\\. Then, shuffle your deck\\.$/;",
+    expectKilledBy: ["packages/engine/src/benchCountedHandSearch.test.ts"],
+  },
+  {
+    id: "D527-anchor-loses-the-tail",
+    decision: "D527",
+    what: "🛑 C2 — **THE `$` DROPPED, THE OTHER END OF C1 AND A DIFFERENT DEFECT (D497's pair rule).** With no terminator the anchor swallows a trailing clause: `<row> Draw a card.` derives as though the second sentence were not there and the draw is silently lost — and the trailing splitter's composition (D526 (5)) is pre-empted by the reader. Killed by §1's SUFFIXED rung: `deriveAttackEffect(suffixed)` is null on the real build (the splitter composes `{head: row, tail}` instead) and the program on the mutant. Silent to the census.",
+    file: "packages/engine/src/effects.ts",
+    find: "  /^Search your deck for a number of cards up to the number of your Benched Pokémon and put them into your hand\\. Then, shuffle your deck\\.$/;",
+    replace: "  /^Search your deck for a number of cards up to the number of your Benched Pokémon and put them into your hand\\. Then, shuffle your deck\\./;",
+    expectKilledBy: ["packages/engine/src/benchCountedHandSearch.test.ts"],
+  },
+  {
+    id: "D527-arm-copies-the-any-neighbour",
+    decision: "D527",
+    what: "🛑 C3 — **THE ARM RETURNS `max: \"any\"` (D514's neighbour copied onto the new print).** The literal resolves against the DECK rather than the Bench: a Bench-2 board offers a deck-sized ceiling (43 on the demonstrator's board) and an empty Bench still parks. Killed by §2's Bench-2 rung (`prompt.max` is 2 EXACTLY, the note is the printed Bench phrase rather than *any number of*) and the Bench-0 no-park rung. ⚠️ Census-INVISIBLE: the row still derives, so `resolvedByAnyReader` is unmoved.",
+    file: "packages/engine/src/effects.ts",
+    find: "      { op: \"searchDeck\", filter: { kind: \"anyCard\" }, dest: \"hand\", max: \"yourBenchCount\" },",
+    replace: "      { op: \"searchDeck\", filter: { kind: \"anyCard\" }, dest: \"hand\", max: \"any\" },",
+    expectKilledBy: ["packages/engine/src/benchCountedHandSearch.test.ts"],
+  },
+  {
+    id: "D527-arm-max-is-the-article",
+    decision: "D527",
+    what: "🛑 C4 — **THE ARM RETURNS `max: 1` (the sibling's absent-count-is-the-article reading copied onto a print with a phrase in the count slot).** Every Bench above one is silently capped at a single card and an empty Bench still parks. Killed by §2's Bench-2 rung (`max` 2, not 1), the Bench-5 rung and the Bench-0 no-park rung. Census-invisible.",
+    file: "packages/engine/src/effects.ts",
+    find: "      { op: \"searchDeck\", filter: { kind: \"anyCard\" }, dest: \"hand\", max: \"yourBenchCount\" },",
+    replace: "      { op: \"searchDeck\", filter: { kind: \"anyCard\" }, dest: \"hand\", max: 1 },",
+    expectKilledBy: ["packages/engine/src/benchCountedHandSearch.test.ts"],
+  },
+  {
+    id: "D527-sized-reads-the-opponents-bench",
+    decision: "D527",
+    what: "🛑 C5 — **THE `sized` BRANCH READS THE OPPONENT's BENCH (`otherSeat(ctx.seat)` — the seat slip the interpreter's cross-seat ops make a real idiom of).** The printed *your Benched Pokémon* becomes the defender's board. Killed by §2's opponent-Bench rung (P1 Bench 2 against P2 Bench 0/3/5 parks `max 2` every time; the mirror board 4-against-1 reads 4, not 1) and by the Bench-0 rung (P2's Bench is 0 there too, so the mutant is told apart by the boards where the two counts DIFFER). Census-invisible.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "              : state.players[ctx.seat].bench.length,",
+    replace: "              : state.players[otherSeat(ctx.seat)].bench.length,",
+    expectKilledBy: ["packages/engine/src/benchCountedHandSearch.test.ts"],
+  },
+  {
+    id: "D527-sized-reads-bench-plus-one",
+    decision: "D527",
+    what: "🛑 C6 — **`bench.length + 1` — THE ACTIVE COUNTED (the *Pokémon in play* reading of a print that says *Benched*).** An empty Bench parks a one-card search instead of taking the no-op. Killed by §2's Bench-0 rung (no `EFFECT_PENDING`, the attack completes) and the Bench-2 rung (`max` 2, not 3). Census-invisible.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "              : state.players[ctx.seat].bench.length,",
+    replace: "              : state.players[ctx.seat].bench.length + 1,",
+    expectKilledBy: ["packages/engine/src/benchCountedHandSearch.test.ts"],
+  },
+  {
+    id: "D527-sized-reads-bench-max",
+    decision: "D527",
+    what: "🛑 C7 — **THE BRANCH READS `BENCH_MAX` — the registry's `\"any number\"` spelling for a BENCH-bound search (`sv09-068`) copied onto a Bench-COUNTED hand search.** The ceiling is the constant 5 on every board. Killed by §2's Bench-2 rung (`max` 2, not 5) and the Bench-0 no-park rung; the Bench-5 rung alone could NOT tell it apart, which its title says. Census-invisible.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "              : state.players[ctx.seat].bench.length,",
+    replace: "              : BENCH_MAX,",
+    expectKilledBy: ["packages/engine/src/benchCountedHandSearch.test.ts"],
+  },
+  {
+    id: "D527-sized-tests-not-any-instead-of-typeof",
+    decision: "D527",
+    what: "🛑 C8 — **THE `typeof g.max === \"number\"` TEST REPLACED BY `g.max !== \"any\"` — the exact shape D514's rule forbids (`moveCap`'s: test the number, never the absence of one literal).** The new literal falls through the first arm as ITSELF, reaches `sized.reduce((sum, g) => sum + g.max, 0)` and is CONCATENATED, not NaN'd: `total` becomes the string `\"0yourBenchCount\"`, `max <= 0` is false on a string, and the park opens with a STRING ceiling. PROBED before it was declared (D420: a row that changes nothing is worse than no row): the outcome is observable — `prompt.max` is not a number. Killed by §2's Bench-2 rung (`max` is the number 2, `typeof` asserted) and the Bench-0 rung (a string ceiling still parks). Census-invisible.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "          typeof g.max === \"number\"\n            ? g.max\n",
+    replace: "          g.max !== \"any\"\n            ? g.max\n",
+    expectKilledBy: ["packages/engine/src/benchCountedHandSearch.test.ts"],
+  },
+  {
+    id: "D527-caption-prints-the-digit",
+    decision: "D527",
+    what: "🛑 C9 — **`searchNote` CAPTIONS THE LITERAL AS `up to ${max}` (the number branch's spelling applied to a print that spells no digit).** The dialog reads *up to 2 cards* over a card that says *a number of cards up to the number of your Benched Pokémon* — the engine authoring text the card does not carry, D514's stated reason for the `\"any\"` branch. Killed by §2's byte-for-byte note rung (the Bench-2 park's `note` is the PRINTED caption, and `not.toContain(\"up to 2\")` names the defect). Census-invisible.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      return `Search your deck for a number of ${many} up to the number of your Benched Pokémon ${where}.`;",
+    replace: "      return `Search your deck for up to ${max} ${many} ${where}.`;",
+    expectKilledBy: ["packages/engine/src/benchCountedHandSearch.test.ts"],
+  },
+  {
+    id: "D527-arm-adds-reveal",
+    decision: "D527",
+    what: "🛑 C10 — **THE ARM ADDS `reveal: true` (the plural-reveal rider set from the destination rather than from the printed clause — D225's exact defect).** The picked cards are NAMED in `DECK_SEARCHED` and in the log, leaking a hand the print keeps private. Killed by §1's exact-program rung (`\"reveal\" in search` is false) and §2's pick rung (`DECK_SEARCHED` has no `reveal`, the log row is the count-only *put 2 cards in hand*). Census-invisible.",
+    file: "packages/engine/src/effects.ts",
+    find: "      { op: \"searchDeck\", filter: { kind: \"anyCard\" }, dest: \"hand\", max: \"yourBenchCount\" },",
+    replace: "      { op: \"searchDeck\", filter: { kind: \"anyCard\" }, dest: \"hand\", max: \"yourBenchCount\", reveal: true },",
+    expectKilledBy: ["packages/engine/src/benchCountedHandSearch.test.ts"],
+  },
+  {
+    id: "D527-arm-filter-copies-any-pokemon",
+    decision: "D527",
+    what: "🛑 C11 — **THE FILTER NEIGHBOUR COPY: `anyCard` → `anyPokemon`.** The printed *cards* becomes Pokémon only: an Energy or an Item in the deck is no longer offered. Killed by §1's exact-program rung (`filter` is `{kind: \"anyCard\"}`) and §2's candidates rung (the offer is the WHOLE deck in deck order, which holds Energy and Items). Census-invisible.",
+    file: "packages/engine/src/effects.ts",
+    find: "      { op: \"searchDeck\", filter: { kind: \"anyCard\" }, dest: \"hand\", max: \"yourBenchCount\" },",
+    replace: "      { op: \"searchDeck\", filter: { kind: \"anyPokemon\" }, dest: \"hand\", max: \"yourBenchCount\" },",
+    expectKilledBy: ["packages/engine/src/benchCountedHandSearch.test.ts"],
   },
 ];

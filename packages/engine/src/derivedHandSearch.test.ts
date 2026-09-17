@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { legalAttackCorpus } from "./censusAttackCorpus";
 import { programPlayable } from "./cardplay";
 import { matchesFilter } from "./cards";
 import { deriveAttackCoinFlip, deriveAttackEffect } from "./effects";
@@ -334,11 +335,6 @@ const DEFERRED: readonly (readonly [string, string, number])[] = [
     1,
   ],
   [
-    "Search your deck for a number of cards up to the number of your Benched Pokémon and put them into your hand. Then, shuffle your deck.",
-    "a DYNAMIC max (svp-188) — `max` is a number, not an expression",
-    1,
-  ],
-  [
     "Put this Pokémon and all attached cards into your deck. If you do, search your deck for up to 3 cards and put them into your hand. Then, shuffle your deck.",
     "a §9.2 LEADING clause (sv07-011) — refused by the VERB'S CASE, not by `^`",
     1,
@@ -488,9 +484,16 @@ describe("the anchor — eighteen printed sentences, ONE regex", () => {
     // three and is
     // the same census D231 measured — a family total does not change because a reader
     // got wider, which is exactly what the third rung below asserts.
+    // 🆕🆕🆕 D527 moved ONE more printing over ONE sentence OUT of `DEFERRED` (7 → 6 left) —
+    // the DYNAMIC-max row (svp-188, corpus FILE LINE 454), BUT NOT INTO `CLAUSES`: it is
+    // claimed by its OWN anchor (`ATTACK_HAND_SEARCH_BENCH_COUNT`) with nothing captured, so
+    // the closed noun table never sees it and the `CLAUSES` count stays 35. The 42 is still
+    // UNMOVED: CLAUSES 35 + DEFERRED 6 + 1 built row on its own anchor. The third rung below
+    // is the sum spelled with its three summands so the next inversion cannot fold the
+    // built row back into a table it does not go through.
     expect(CLAUSES.reduce((sum, c) => sum + c.legalPrintings, 0)).toBe(35);
-    expect(DEFERRED.reduce((sum, [, , n]) => sum + n, 0)).toBe(7);
-    expect(35 + 7).toBe(42);
+    expect(DEFERRED.reduce((sum, [, , n]) => sum + n, 0)).toBe(6);
+    expect(35 + 6 + 1).toBe(42);
     // …and the six left are all pinned derived-to-null, so the deferral is a
     // fact about the code rather than a note in a comment. ⚠️ The count in this
     // sentence is a DERIVED NOUN and has rotted twice (D433): it read "fourteen" while
@@ -498,6 +501,25 @@ describe("the anchor — eighteen printed sentences, ONE regex", () => {
     // the PRINTINGS figure of a table that has since been stepped twice. It now names
     // the SENTENCES, which is what the loop below actually walks.
     for (const [text, why] of DEFERRED) expect(deriveAttackEffect(text), why).toBeNull();
+  });
+
+  it("🆕🆕🆕 D527 — the retired deferral: \"a DYNAMIC max (svp-188) — `max` is a number, not an expression\" was TRUE at D231 and FALSE since D514, and the row now derives on its OWN anchor to the exact two-op program with `max: \"yourBenchCount\"`", () => {
+    // D178/D418's second half: the refusal is INVERTED in place, its reason quoted as prose
+    // rather than deleted. `max` became `number | "any"` at D514 and `number | "any" |
+    // "yourBenchCount"` at D527; the row goes through NO noun table (the noun is fixed in the
+    // anchor), which is why it left `DEFERRED` without entering `CLAUSES`.
+    const dynamic =
+      "Search your deck for a number of cards up to the number of your Benched Pokémon and put them into your hand. Then, shuffle your deck.";
+    expect(DEFERRED.some(([text]) => text === dynamic)).toBe(false);
+    expect(CLAUSES.some((c) => (c.text as string) === dynamic)).toBe(false);
+    expect(deriveAttackEffect(dynamic)).toEqual([
+      { op: "searchDeck", filter: { kind: "anyCard" }, dest: "hand", max: "yourBenchCount" },
+      { op: "shuffleDeck" },
+    ]);
+    expect(legalAttackCorpus().filter(([, s]) => s === dynamic)).toEqual([[1, dynamic]]);
+    // …and the six still deferred are still null (the loop above), so the table shrank by
+    // exactly this row and nothing else moved.
+    expect(DEFERRED).toHaveLength(4);
   });
 
   it("🛑 the NOUN is a closed TABLE, and an unknown phrase is a REFUSAL", () => {

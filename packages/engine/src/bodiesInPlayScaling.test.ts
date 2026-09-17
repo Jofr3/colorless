@@ -1576,7 +1576,7 @@ describe("§6 — `MATCH_RECORD_VERSION` STAYS 29, driven at all THREE addresses
   });
 
   it("the engine version moved with the behaviour", () => {
-    expect(engineVersion).toBe("0.413.0");
+    expect(engineVersion).toBe("0.414.0");
   });
 });
 
@@ -1972,8 +1972,18 @@ describe("§8 — `stagePokemon`: the printed ordinal, at two zones and two fold
     // the moment somebody reverts (D446's rule at this address).
     const ops = legalAttackCorpus().flatMap(([, text]) => deriveAttackEffect(text) ?? []);
     const wire = JSON.stringify(ops);
-    expect(wire).not.toContain("yourBenchCount");
+    // 🆕🆕🆕 D527 — RE-POINTED, NOT DELETED (D418's second half): the bare-string test went
+    // RED the moment `searchDeck.max` gained the literal `"yourBenchCount"` (corpus FILE
+    // LINE 454, the dynamic-max hand search), because that op DOES ride the wire and
+    // deliberately reuses the MODEL's noun rather than inventing a word. The claim this
+    // rung makes is about the COUNT SOURCE — no `DamageCountSource` member reaches a
+    // record — so it is now asserted as the KEYED spelling `"kind":"yourBenchCount"`,
+    // which still goes red on a reverted or leaked count source; and the D527 op is
+    // asserted PRESENT, keyed on `max`, so the two readings of one word cannot be
+    // confused again.
+    expect(wire).not.toContain('"kind":"yourBenchCount"');
     expect(wire).not.toContain("stagePokemon");
+    expect(wire).toContain('"max":"yourBenchCount"');
     expect(ops.length).toBeGreaterThan(0);
     // DIRECTION 3 — the LOSS. A `{ kind: "yourBenchCount", filter }` that is written out
     // and read back WITHOUT its `filter` key degrades to the shipped unfiltered member,

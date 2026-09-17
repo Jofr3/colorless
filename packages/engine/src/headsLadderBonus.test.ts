@@ -674,24 +674,29 @@ describe("D526 §3 — the census moved in exactly ONE summand, by 1 sentence / 
     // the reader arm 552/1594 → 553/1595 — corpus FILE LINE 218, ⚠️ sentence step 1 / printing step 1
     // (ONE legal printing — the two chains step by the SAME amount this slice, the first since D521).
     const resolved = legalAttackCorpus().filter(([, s]) => resolvedByAnyReader(s));
-    expect([resolved.length, units(resolved)]).toEqual([553, 1595]);
+    // 🆕🆕🆕 D527 +1 sentence / +1 printing (THE DYNAMIC-max HAND SEARCH — corpus FILE LINE 454, *"Search your deck for a number of cards up to the number of your Benched Pokémon and put them into your hand. Then, shuffle your deck."*,
+    // 1 legal printing, claimed by `deriveAttackEffect` through `ATTACK_HAND_SEARCH_BENCH_COUNT` as the sibling's two-op shape with `max: "yourBenchCount"`, resolved at the park against the
+    // attacker's Bench at step time, ZERO new vocabulary, one persisted-field widening with `MATCH_RECORD_VERSION` HELD at 30; the sentence and printing steps AGREE at 1): 553/1595 → 554/1596, and the own-row
+    // `without` pair re-derived BY HAND as resolved minus this suite's row (D525 (5)). Stepped by hand again (outside the annotated-chain sweep's shape).
+    expect([resolved.length, units(resolved)]).toEqual([554, 1596]);
     expect(resolved.map(([, s]) => s)).toContain(PRINTED);
     // …and the step is THIS sentence and nothing else: remove it and the pair is D525's. ⚠️ THE OWN-ROW
     // `without` PAIR: resolved 553/1595 minus THIS suite's ONE-printing row is 552/1594 (D525 (5)'s trap
     // — the next sweep re-derives this by hand as resolved − its row, never by value).
     const without = resolved.filter(([, s]) => s !== PRINTED);
-    expect([without.length, units(without)]).toEqual([552, 1594]);
+    expect([without.length, units(without)]).toEqual([553, 1595]);
   });
 
   it("🛑 the RAW reader-only residue fell by exactly 1 sentence / 1 printing — 87 / 137 — and the row left it", () => {
     // 🆕🆕🆕 D526's OWN literal (corpus FILE LINE 218, see §3's first rung): 88/138 → 87/137.
     const unbuilt = legalAttackCorpus().filter(([, s]) => !resolvedByAnyReader(s));
-    expect([unbuilt.length, units(unbuilt)]).toEqual([87, 137]);
+    // 🆕🆕🆕 D527 −1 sentence / −1 printing (corpus FILE LINE 454, see the reader-arm rung above; the two steps agree at 1): 87/137 → 86/136.
+    expect([unbuilt.length, units(unbuilt)]).toEqual([86, 136]);
     expect(unbuilt.map(([, s]) => s)).not.toContain(PRINTED);
     // The parts add up to the whole quoted in the same case.
     const all = legalAttackCorpus();
-    expect(unbuilt.length + 553).toBe(all.length);
-    expect(units(unbuilt) + 1595).toBe(units(all));
+    expect(unbuilt.length + 554).toBe(all.length);
+    expect(units(unbuilt) + 1596).toBe(units(all));
     expect([all.length, units(all)]).toEqual([640, 1732]);
   });
 
@@ -723,7 +728,7 @@ const RAW: Record<string, string> = (
 describe("D526 §4 — the version steps, the heading is written, the prose is corrected, and what stands still", () => {
   it("engineVersion and `manifest.version` agree, and the bump is owed for BEHAVIOUR", () => {
     // ⚠️ The version is NOT spelled in this `it(…)` title (D460's fourth class).
-    expect(engineVersion).toBe("0.413.0");
+    expect(engineVersion).toBe("0.414.0");
     expect(manifest.version).toBe(engineVersion);
   });
 

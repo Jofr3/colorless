@@ -6196,8 +6196,32 @@ export type EffectOp =
           exactly what it meant. That is D359's *"a WIDENING is free and a RENAME is
           not"*, and it is `lookAtTopN.max`'s own precedent, which this op's doc block
           has cited as a no-bump case since D336. Driven over a reconstructed v30
-          `pendingOp` in `namedDeckSearch.test.ts` §4 rather than argued. */
-      max: number | "any";
+          `pendingOp` in `namedDeckSearch.test.ts` §4 rather than argued.
+
+          🆕🆕🆕 **D527 — `"yourBenchCount"` IS THE PRINTED *"a number of cards up to the
+          number of your Benched Pokémon"*, AND IT IS THE ATTACKER'S BENCH LENGTH READ
+          WHEN THE OP STEPS.** *"Search your deck for a number of cards up to the number
+          of your Benched Pokémon and put them into your hand. Then, shuffle your deck."*
+          — `censusAttackCorpus.ts` **FILE LINE 454**, **1 sentence / 1 legal printing**
+          (svp-188; no id on this checkout). The literal is the model's own noun
+          (`DamageCountSource.yourBenchCount`, one union over) rather than a new word,
+          and it names the ATTACKER's Bench (`ctx.seat`) as that noun does — never the
+          opponent's, never the Active. It resolves at the SAME site `"any"` does (the
+          park's `sized` map, `interpreter.ts`), so `prompt.max`, `total` and `caps` stay
+          numbers and no wire shape moves; an empty Bench resolves to 0 and takes the
+          existing `max <= 0` no-op (nothing parks, the trailing `shuffleDeck` still runs).
+          It is read at STEP time — after the attack's damage, before the KO sweep — which
+          is the only moment the op has a board to read. `searchNote` captions it with the
+          PRINTED phrase (D514's precedent on this field: the card prints no digit, and the
+          resolved number reaches the HUD through `prompt.max` regardless).
+          ⚠️ **A SECOND WIDENING AT THE SAME PERSISTED ADDRESS, AND THE SAME ARGUMENT
+          HOLDS**: no key is added and none is removed, every v30 `pendingOp.max` (a
+          `number`, or D514's `"any"`) is still an inhabitant and still means what it
+          meant, so `MATCH_RECORD_VERSION` HOLDS at 30 (D359/D514) — DRIVEN over a
+          reconstructed v30 numeric op in `benchCountedHandSearch.test.ts` §3, not argued.
+          `also[].max` stays a bare `number` (no printing spells a dynamic SECOND noun —
+          D331). */
+      max: number | "any" | "yourBenchCount";
       /** 🆕 **D342 — THE PRINTED TAKE WITH NO *"up to"*, `lookAtTopN.exact`
           (D334) one op over and the same field name deliberately.** Absent on
           every producer before this row, where the search is the standing
@@ -21939,6 +21963,26 @@ const ATTACK_HAND_SEARCH = new RegExp(
     " into your hand\\. Then, shuffle your deck\\.$",
 );
 
+// 🆕🆕🆕 D527 — THE DYNAMIC-max HAND SEARCH, corpus FILE LINE 454 (1 legal printing,
+// svp-188): "Search your deck for a number of cards up to the number of your Benched
+// Pokémon and put them into your hand. Then, shuffle your deck." A SEPARATE literal
+// beside `ATTACK_HAND_SEARCH` rather than a THIRD alternative inside its quantifier
+// group: that group's indices have shifted twice already (D513 inserted group 5, D514
+// inserted group 4, and every index in the arm below was re-transcribed both times),
+// and this sentence has NOTHING to capture — the noun is fixed ("cards" → `anyCard`),
+// there is no reveal clause, there is no digit, and the quantifier is a PHRASE that
+// resolves at the park (`searchDeck.max: "yourBenchCount"`, `interpreter.ts`'s `sized`
+// map, the same site D514's `"any"` resolves at). Zero captures, no /i, `^…$`, and no
+// apostrophe class — the sentence has no apostrophe slot (D136/D137). MEASURED, not
+// assumed: "up to the number of" appears on corpus rows 215, 219 (built D525) and 454
+// only, and "a number of cards" on 219 and 454 only; D525's anchor is disjoint by its
+// head verb ("Flip 3 coins. Put …" against "Search …"). D178 provenance: refused by
+// D231 (`derivedHandSearch.test.ts`'s DEFERRED table, *"a DYNAMIC max — `max` is a
+// number, not an expression"*) — a premise D514 made false when `max` became a union;
+// INVERTED at D527 with the row's positive rung beside the table.
+const ATTACK_HAND_SEARCH_BENCH_COUNT =
+  /^Search your deck for a number of cards up to the number of your Benched Pokémon and put them into your hand\. Then, shuffle your deck\.$/;
+
 /** 🆕 D307 — THE EVOLVE-FROM-DECK FAMILY, and the anchor is the WHOLE printed
     sentence with not one capture in it. There is nothing to capture: the four
     cards print byte-identical text (D1, 2026-08-09), the noun is a pronoun and
@@ -27848,6 +27892,21 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
           },
         ],
       },
+    ];
+  }
+  // 🆕🆕🆕 D527 — THE DYNAMIC-max HAND SEARCH, corpus FILE LINE 454, placed BEFORE the
+  // sibling's `exec` so the two anchors are asked in a fixed order (they are
+  // structurally disjoint — the sibling's plural branch demands `up to \d+` or `any
+  // number of`, and this print spells neither — but D467/D499's rule is that arm
+  // order is behaviour, so it is fixed rather than left to a future widening). No
+  // guard: nothing is captured, so there is no count to floor and no noun to look up.
+  // The program is EXACTLY the sibling's two-op shape with the literal in `max`: the
+  // park resolves it against the attacker's Bench at STEP time and an empty Bench is
+  // the interpreter's existing `max <= 0` no-op (the shuffle still runs).
+  if (ATTACK_HAND_SEARCH_BENCH_COUNT.test(effect)) {
+    return [
+      { op: "searchDeck", filter: { kind: "anyCard" }, dest: "hand", max: "yourBenchCount" },
+      { op: "shuffleDeck" },
     ];
   }
   // ⚠️⚠️ D231 — THE DECK SEARCH INTO YOUR OWN HAND. D230's arm one word over, and

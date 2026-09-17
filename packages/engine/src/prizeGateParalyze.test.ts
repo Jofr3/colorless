@@ -664,7 +664,7 @@ describe("D517 §7 — the price, and both version constants", () => {
   });
 
   it("🛑 the ENGINE version moved and `MATCH_RECORD_VERSION` did not, and both are argued", () => {
-    expect(engineVersion).toBe("0.413.0");
+    expect(engineVersion).toBe("0.414.0");
   });
 
   it("🛑 REACHABILITY IS EMPTY, MEASURED OVER EVERY PRODUCER RATHER THAN ASSERTED", () => {

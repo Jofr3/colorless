@@ -20022,6 +20022,77 @@ import type { GameState, Seat } from "./types";
     `expect(manifest.version)`, `it(…)` titles, the declaration and `package.json` —
     **not** as a value-keyed grep — because a value-keyed grep is precisely the mechanism
     that ate D500's heading.)
+    🆕🆕🆕 engineVersion 0.413.0 → **0.414.0** (D527 — THE DYNAMIC-max HAND SEARCH —
+    `searchDeck.max` GAINS THE LITERAL `"yourBenchCount"`, A SECOND WIDENING AT D514's
+    PERSISTED ADDRESS. `censusAttackCorpus.ts` **FILE LINE 454** (`legalAttackCorpus()` index
+    401) — *"Search your deck for a number of cards up to the number of your Benched Pokémon
+    and put them into your hand. Then, shuffle your deck."*, **1 sentence / 1 legal printing**
+    (svp-188; no id on this checkout — the demonstrator is FILE-LOCAL and DECLARED, D425),
+    claimed by `deriveAttackEffect` through ONE new anchor (`ATTACK_HAND_SEARCH_BENCH_COUNT`,
+    a SEPARATE literal beside `ATTACK_HAND_SEARCH` — NOT a third alternative in the shared
+    regex whose groups D513/D514 already shifted twice; zero captures, no /i, `^…$`, no
+    apostrophe slot) as EXACTLY the sibling's two-op shape with the literal in `max`:
+    `[{op:"searchDeck", filter:{kind:"anyCard"}, dest:"hand", max:"yourBenchCount"},
+    {op:"shuffleDeck"}]`. The spelling is the MODEL's own noun (`DamageCountSource.
+    yourBenchCount`), not a new word.
+    🛑 **THE LITERAL RESOLVES WHERE `"any"` RESOLVES** — the park's `sized` map in
+    `interpreter.ts`, against `state.players[ctx.seat].bench.length`: the ATTACKER's own
+    Bench (never the opponent's, never the Active), read when the op STEPS (after the
+    attack's damage, before the KO sweep) — so `prompt.max`, `total` and `caps` stay
+    numbers and NO wire shape moves. The test is `typeof === "number"`, never `!== "any"`
+    (D514's rule: a string reaching `sum + g.max` is concatenation, not NaN — the C8
+    mutant parks a string ceiling and dies on the bench-2 rung). An empty Bench resolves
+    to 0 and takes the existing `max <= 0` no-op: nothing parks, no `DECK_SEARCHED`, the
+    trailing `shuffleDeck` still runs.
+    🛑 **THE CAPTION DECISION, STATED ONCE (in `searchNote`'s doc block) AND PINNED ONCE
+    (`benchCountedHandSearch.test.ts` §2, byte for byte):** the note is the PRINTED phrase
+    — *"Search your deck for a number of cards up to the number of your Benched Pokémon into
+    your hand."* — D514's own precedent on this field: the card prints no digit, and the
+    resolved number reaches the HUD through `prompt.max` regardless, so nothing is hidden
+    and nothing leaks. `searchNote`'s `groups` element type is now the op's own union
+    spelled ONCE (`SearchDeckMax = Extract<EffectOp, {op:"searchDeck"}>["max"]`).
+    🛑 **THE PRICE, tsc-MEASURED BEFORE IT WAS WRITTEN (D518/D526 (3)):** the widening
+    alone reddened EXACTLY the three predicted `interpreter.ts` sites — the `sized` sum
+    (TS2365), the prompt's `caps` (TS2322) and the `searchNote` call (TS2345); widening
+    `searchNote`'s parameter then reddened a FOURTH, the multi-group `phrase` closure's
+    inline spelling of the same union (TS2345 at its `.map`), which is why the union now has
+    one name. 1 anchor, 1 arm, 1 type widening, 2 caption branches (single-group and
+    multi-group, the latter reachable only from a hand-authored registry op and driven off
+    one, D514's call), 0 new ops/filters/prompts/events. NO `attack.ts`, `redact.ts`,
+    `cardplay.ts`, `continuous.ts` or `apps/api` bytes: 0 `pendingOp` reads in any of them,
+    and every `.max` read outside the interpreter is of a prompt/cap/scope that is already a
+    number.
+    ⚠️ **A SECOND WIDENING AT A PERSISTED ADDRESS, DRIVEN NOT ARGUED:** `searchDeck` parks,
+    so the literal rides `EffectContinuation.pendingOp` in `MatchRecord.state.phase.cont`.
+    No key added or removed; every v30 `pendingOp.max` (a `number`, or D514's `"any"`) is
+    still an inhabitant and still means what it meant (D359/D514) — §3 resumes a
+    reconstructed v30 NUMERIC op under this build to the prompt v30 meant (`max 3`, the
+    digit caption) and D514's `"any"` to the deck. `MATCH_RECORD_VERSION` HELD at 30.
+    `also[].max` stays a bare `number` (no printing spells a dynamic SECOND noun — D331).
+    🛑 **ONE REFUSAL INVERTED IN PLACE (D178/D418's second half):** `derivedHandSearch.test.ts`'s
+    DEFERRED row *"a DYNAMIC max (svp-188) — `max` is a number, not an expression"* — true at
+    D231, FALSE since D514 — leaves the table (7 → 6 printings deferred); the family total 42
+    is re-derived as CLAUSES 35 + DEFERRED 6 + 1 built row on its OWN anchor; a positive rung
+    quotes the retired reason and asserts the exact program.
+    ✅ Driven (`benchCountedHandSearch.test.ts`, 31 `it`, file-local demonstrator with a
+    DECLARED base 30 / cost {C}, the printed-digit sibling at index 1 as the attribution
+    control and a no-effect index 2): Bench 0 → no park, SHUFFLE under the attacker, the
+    attack completes; Bench 2 → `chooseCards {min 0, max 2, dest hand}` over the whole deck,
+    the note byte for byte; Bench 1/3/4/5 → max = the count; a 3-card deck under Bench 5 →
+    3 candidates under `max 5` (measured: the hand park does NOT clamp the ceiling to the
+    candidates — it need not, the validator refuses a non-candidate and the printed
+    ceiling is the Bench); the opponent's Bench at 0/3/5 leaves `max 2` unmoved; the pick
+    lands in the ATTACKER's hand with a count-only `DECK_SEARCHED` (no `reveal`) and the
+    opponent's redacted hand is face-down placeholders; a pick above the ceiling is
+    `BAD_EFFECT_CHOICE`; declining takes nothing and still shuffles; STEP-TIME pinned
+    through `runProgram` → `resumeProgram` on a hand-authored two-op program that benches a
+    body and THEN searches (Bench 1 at program start → `max 2` at the step); the multi-group
+    caption driven; JSON round-trip byte-equal and resumed from its bytes; replay-identical.
+    Census, with units: `BUILT.attack` 1645 → 1646; built sentences 579 → 580 / 640; residue
+    61/87 → 60/86; reader 553/1595 → 554/1596 (registry 10/16, gate 5/13, trailing 11/21
+    unmoved; sum 1,646); raw reader-only residue 87/137 → 86/136; the trailing splitter
+    COMPOSES on the suffixed print now that the head is claimed (D526 (5) — asserted as the
+    composition). The sentence and printing steps AGREE at 1.)
     🆕🆕🆕 engineVersion 0.412.0 → **0.413.0** (D526 — THE THREE-TIER HEADS LADDER — ZERO
     VOCABULARY, AN EIGHTH `AttackCoinFlip` MEMBER SPENT AT THE EXISTING DAMAGE FOLD.
     `censusAttackCorpus.ts` **FILE LINE 218** (`legalAttackCorpus()` index 165) — *"Flip 3
@@ -22277,7 +22348,7 @@ import type { GameState, Seat } from "./types";
     WITNESS** — the count was re-derived every slice and the word *"three"* was carried.
     A successor of this slice inherits **81 / 61 / 17** again, over **FIVE** history
     occurrences: those four plus `deckMillFilteredScale.test.ts`'s own header arrow.) */
-export const engineVersion = "0.413.0";
+export const engineVersion = "0.414.0";
 
 export type {
   ApplyResult,

@@ -2198,9 +2198,26 @@ function stepOp(
       // ⚠️ THE CAP IS THE MATCHES, NOT `Number.MAX_SAFE_INTEGER` OR A DECK SIZE: the
       // printed sentence offers the whole matching set and nothing wider, and a
       // sentinel here would have to be un-printed again by every caption downstream.
+      // 🆕🆕🆕 D527 — `"yourBenchCount"` RESOLVES HERE TOO, AGAINST THE ATTACKER'S OWN
+      // BENCH, and the test is `typeof === "number"` rather than `!== "any"` (D514's
+      // rule, `moveCap`'s own: a fourth quantifier must not fall silently through the
+      // arithmetic below as string concatenation). The count is `ctx.seat`'s — the
+      // printed *"your Benched Pokémon"* — never the opponent's and never the Active
+      // (`bench` excludes it by construction; `+ 1` here is the classic slip). It is
+      // read at STEP time: the op steps after the attack's damage has landed and
+      // before the KO sweep, so a Bench body knocked out by THIS attack's spread is
+      // still counted, and a body benched between declaration and step is too — the
+      // only moment the op has a board to read, pinned by `benchCountedHandSearch.test.ts`
+      // §2. An empty Bench resolves to 0 and takes the `max <= 0` no-op below: nothing
+      // parks, no `DECK_SEARCHED`, and the trailing `shuffleDeck` still runs.
       const sized = groups.map((g) => ({
         filter: g.filter,
-        max: g.max === "any" ? groupMatches(g.filter).length : g.max,
+        max:
+          typeof g.max === "number"
+            ? g.max
+            : g.max === "any"
+              ? groupMatches(g.filter).length
+              : state.players[ctx.seat].bench.length,
       }));
       // ⚠️ THE BENCH CLAMP IS THE TOTAL'S, NOT THE FIRST GROUP'S. `benchSpace` is
       // one number for the whole answer, so it has to bind the SUM; clamping
@@ -13706,6 +13723,10 @@ function cardOf(state: GameState, uid: string): Card | undefined {
     because no test asserted any search note at all — the plural branch's only
     other reader is `byName` (Flamigo's "up to 3 Flamigo"), which reads correctly
     because that noun carries no article. Both forms are pinned by tests now. */
+/** 🆕🆕🆕 D527 — `searchDeck.max`'s union, named ONCE off the op so the caption's
+    parameter and the op cannot drift apart. */
+type SearchDeckMax = Extract<EffectOp, { op: "searchDeck" }>["max"];
+
 function searchNote(
   /** 🆕🆕🆕 D514 — the PRINTED group maxes and NOT the park's resolved ones, which
       is why this parameter carries the union where `max` below carries a number.
@@ -13713,8 +13734,16 @@ function searchNote(
       cards"* prints no digit, and a caption reading *"up to 4"* over it would be the
       engine authoring text the card does not have. The clamped total is still a
       separate parameter (D336's rule — a bench search cut by `benchSpace` must
-      caption the number its own validator will accept). */
-  groups: readonly { filter: CardFilter; max: number | "any" }[],
+      caption the number its own validator will accept).
+      🆕🆕🆕 D527 — the element type is the op's OWN `max` union, spelled ONCE through
+      `Extract<…>` so a third quantifier cannot be added to the op and left off the
+      caption's type (the widening that reddened this line is the loudness). 🛑 THE
+      DECISION, STATED ONCE: `"yourBenchCount"` is captioned with the PRINTED phrase
+      (*"a number of cards up to the number of your Benched Pokémon"*), following
+      D514's own precedent on this field — the card prints no digit, and the resolved
+      number reaches the HUD through `prompt.max` regardless, so nothing is hidden and
+      nothing leaks. Pinned byte-for-byte in `benchCountedHandSearch.test.ts` §2. */
+  groups: readonly { filter: CardFilter; max: SearchDeckMax }[],
   dest: "bench" | "hand" | "deckTop",
   max: number,
   /** 🆕 D342 — the op's `exact`. The heading has to say WHICH pick it is, because
@@ -13768,6 +13797,13 @@ function searchNote(
     // count of hidden cards before the offer is opened. It sits above `exact`
     // because the two cannot co-occur: `exact` is the printed take with no *"up
     // to"*, and *"any number of"* is the printed take with no CEILING.
+    // 🆕🆕🆕 D527 — THE PRINTED *"a number of … up to the number of your Benched
+    // Pokémon"*, ahead of both number branches for D514's reason one line down: the
+    // clamped `max` is the resolved Bench count, and printing it would caption a
+    // sentence that spells no digit. It sits with `"any"` rather than with `exact`
+    // because it is the printed take with no PRINTED ceiling.
+    if (first.max === "yourBenchCount")
+      return `Search your deck for a number of ${many} up to the number of your Benched Pokémon ${where}.`;
     if (first.max === "any") return `Search your deck for any number of ${many} ${where}.`;
     // 🆕 D342 — an EXACT take drops the "up to" and keeps the number, which is
     // the printed sentence ("Search your deck for 2 cards") and also the only
@@ -13803,13 +13839,20 @@ function searchNote(
   // caption that silently drops the printed quantifier. D513 made the same call one
   // field over for `caps`. It is DRIVEN off a hand-authored op rather than left as a
   // line no test can reach.
-  const phrase = (g: { filter: CardFilter; max: number | "any" }) => {
+  // 🆕🆕🆕 D527 — the parameter is the op's union spelled through `SearchDeckMax` (this
+  // inline spelling was the FOURTH site the widening reddened — TS2345 at the `.map`
+  // — and the reason the union now has one name), and the `"yourBenchCount"` phrase
+  // is D514's call again: unreachable from the deriver, hand-writable by a registry
+  // author, driven off a hand-authored op in `benchCountedHandSearch.test.ts` §2.
+  const phrase = (g: { filter: CardFilter; max: SearchDeckMax }) => {
     const { singular, plural } = retrieveNoun(g.filter);
-    return g.max === "any"
-      ? `any number of ${plural}`
-      : g.max > 1
-        ? `up to ${g.max} ${plural}`
-        : singular;
+    return g.max === "yourBenchCount"
+      ? `a number of ${plural} up to the number of your Benched Pokémon`
+      : g.max === "any"
+        ? `any number of ${plural}`
+        : g.max > 1
+          ? `up to ${g.max} ${plural}`
+          : singular;
   };
   const parts = groups.map(phrase);
   const last = parts[parts.length - 1] ?? "";
