@@ -565,9 +565,30 @@ describe("§3 — the class group is a MAP, and the two wider forms are measured
     expect(extra.map(([, s]) => s)).toEqual([
       "This attack does 20 damage to 1 of your opponent's Benched Pokémon for each damage counter on that Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)",
     ]);
-    // …and that sentence is genuinely unbuilt at this head, so the saturating form would
-    // have LOOKED like a coverage win (D479's class: the census rises and the board lies).
-    expect(resolvedByAnyReader(extra[0]?.[1] ?? "")).toBe(false);
+    // 🆕🆕🆕 **D530 — RE-POINTED, NOT DELETED (D418), AND THE MEASUREMENT ABOVE IS KEPT.** This
+    // rung read *"that sentence is genuinely unbuilt at this head"* with `toBe(false)`. D530 built
+    // the row — by its OWN anchor (`BENCHED_SNIPE_TARGET_COUNTERS`, arm 6b′) and its OWN rider
+    // (`damageChosen.perDamageCounterOnTarget`), NOT by the saturating form of THIS arm — so the
+    // polarity flips while the claim that matters is unchanged: the saturating form STILL claims
+    // the row here (`extra` is STILL exactly that one sentence, asserted above), and it would STILL
+    // flatten it. ⚠️ What the OLD claim caught that a bare `toBe(true)` cannot: a build that let
+    // THIS arm swallow the row FLAT would also read `true`. So the re-point pins the RIDER — the row
+    // derives WITH `perDamageCounterOnTarget`, i.e. on the scaled arm and not on this one — which is
+    // `false` under exactly that wrong build and `true` only on the one that shipped.
+    expect(resolvedByAnyReader(extra[0]?.[1] ?? "")).toBe(true);
+    expect(deriveAttackEffect(extra[0]?.[1] ?? "")).toEqual([
+      {
+        op: "damageChosen",
+        target: "opponentBench",
+        amount: 20,
+        count: 1,
+        source: "attack",
+        deals: true,
+        perDamageCounterOnTarget: true,
+      },
+    ]);
+    // …and the map's own class arm is NOT what claims it: the row carries no class noun.
+    expect(MAPPED.test(extra[0]?.[1] ?? "")).toBe(false);
   });
 
   it("🛑 the observable direction is CLOSED: every key the map carries resolves", () => {
@@ -1001,10 +1022,10 @@ describe("§7 — what the class group refuses, and what it must not have moved"
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("§8 — the persisted address, and why 29 does not move", () => {
-  it("engineVersion is 0.415.0 and `manifest.version` agrees", () => {
+  it("engineVersion is 0.416.0 and `manifest.version` agrees", () => {
     // `packages/engine` behaviour moved (a new op field, a new candidate funnel branch and
     // a new caption arm), so the version steps.
-    expect(engineVersion).toBe("0.415.0");
+    expect(engineVersion).toBe("0.416.0");
     expect(manifest.version).toBe(engineVersion);
   });
 

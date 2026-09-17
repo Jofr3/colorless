@@ -5526,6 +5526,41 @@ export type EffectOp =
           ⚠️ **`true` AND NOT `boolean`**, the riders around it: an absent key and
           `false` are two spellings of one board and this op is compared by value. */
       perEnergyOnSelf?: true;
+      /** 🆕🆕🆕 **D530 — `perDamageCounterOnTarget`, THE FOURTH RIDER, AND THE FIRST WHOSE
+          MULTIPLIER IS A FACT ABOUT THE BODY THE PLAYER HAS NOT CHOSEN YET.** *"This
+          attack does 20 damage to 1 of your opponent's Benched Pokémon **for each damage
+          counter on that Pokémon**. (Don't apply Weakness and Resistance for Benched
+          Pokémon.)"* — `censusAttackCorpus.ts` FILE LINE 551, **1 sentence / 1 legal
+          printing**, anchor `BENCHED_SNIPE_TARGET_COUNTERS`, arm 6b′.
+
+          🛑 **READ PER REF AT THE ANSWER, NEVER AT THE PARK.** `snipeAmount` takes the
+          chosen `PokemonRef` as a fifth argument and multiplies `amount` by
+          `damageCountersOn(<that body>)` (§12: one counter = 10 HP, `Math.floor`, the
+          house spelling — see the helper's own block in interpreter.ts). Both sites
+          where damage is dealt fold PER REF — the forced branch of `stepOp` walks
+          `candidates`, `applyChoice` walks `choice.refs` — so a registry-authored
+          `count: 2` op would read each pick's OWN counters rather than one number
+          for both. The anchor keeps that case unprinted: its `1 of` is a LITERAL and
+          not a capture. At the park itself the fold is called WITHOUT a ref and
+          returns the bare `amount` (≥ 1), so the `amount <= 0` early return and the
+          park are byte-for-byte D437/D448's; the prompt's caption quotes the printed
+          RULE (*"20 damage for each damage counter on it"*) rather than a number the
+          engine cannot know yet (D478: a describer obligation follows the call path).
+
+          ⚠️ **A 0-COUNTER PICK DEALS NOTHING AND FILES NO `DAMAGE_DEALT`** —
+          `placeSnipe`'s `if (amount <= 0) return state;` — and that is a DECIDED
+          discrepancy pinned in `targetCounterSnipe.test.ts`, not an oversight: the card
+          does not narrow to damaged bodies (D437's `damagedOnly` would be AUTHORING a
+          window the print does not carry), so an undamaged body is still a candidate,
+          the pick still parks, and choosing it is choosing 20 × 0.
+
+          ⚠️ **ABSENT = UNSCALED; `true` AND NOT `boolean`** (the riders around it).
+          🛑 **`MATCH_RECORD_VERSION` HELD at 30**: the rider rides
+          `phase.cont.pendingOp` into a stored record, but it is a WIDENING at a
+          persisted address (D448/D489's serialized-alphabet argument) — every v30
+          byte string is unchanged and absence still means unscaled — driven over v30
+          bytes in three directions in `targetCounterSnipe.test.ts` §3. */
+      perDamageCounterOnTarget?: true;
       /** Umbreon "Feint Attack" (sv03-130): "This attack's damage isn't affected by
           Weakness or Resistance, or by any effects on that Pokémon." — the snipe's
           hit skips BOTH the target's Weakness/Resistance AND its `damageReductionAfterWR`
@@ -13773,6 +13808,25 @@ const BENCHED_SNIPE_TAKEN_PRIZES = new RegExp(
     "for each Prize card your opponent has taken\\." +
     `(?: \\(Don['’]t apply Weakness and Resistance for Benched Pokémon\\.\\))?$`,
 );
+// 🆕🆕🆕 D530 — The CHOSEN-single benched hit SCALED by the damage counters ON THE
+// CHOSEN BODY — corpus FILE LINE 551, *"This attack does 20 damage to 1 of your
+// opponent's Benched Pokémon for each damage counter on that Pokémon. (Don't apply
+// Weakness and Resistance for Benched Pokémon.)"*, 1 sentence / 1 legal printing.
+// BENCHED_SNIPE_TAKEN_PRIZES's construction one anchor up (template, `['’]` slots, no
+// /i, `^…$`, the spread family's optional W/R clarifier tail), disjoint from it by the
+// TAIL (*"for each damage counter on that Pokémon"* against *"for each Prize card your
+// opponent has taken"*) and from `ALSO_BENCHED_SNIPE_BODY` by the same tail — that
+// fragment demands `\.` directly after its class/window group, and this sentence
+// continues past the noun. The count is the LITERAL `1 of` and not a capture: the
+// column prints no count-2 spelling of a per-target fold, and the interpreter's
+// per-ref fold keeps a registry-authored count-2 op honest regardless (each pick
+// reads ITS OWN counters). The op is `damageChosen` with `perDamageCounterOnTarget`
+// — see the rider's block for why the multiplier is read at the ANSWER.
+const BENCHED_SNIPE_TARGET_COUNTERS = new RegExp(
+  `^This attack does (\\d+) damage to 1 of your opponent['’]s Benched Pokémon ` +
+    "for each damage counter on that Pokémon\\." +
+    `(?: \\(Don['’]t apply Weakness and Resistance for Benched Pokémon\\.\\))?$`,
+);
 // The flat, un-scaled RIDER: "This attack ALSO does N damage to 1 of your
 // opponent's Benched Pokémon." — a SECONDARY snipe after the main damage (which
 // rides the attack's own `damage` field). Miraidon "Lightning Laser", Pawmot,
@@ -13890,6 +13944,12 @@ const BENCHED_SNIPE_TAKEN_PRIZES = new RegExp(
 // per-body multiply this arm has no way to perform, so it would derive a FLAT hit where
 // the card prints a scaled one. D472's rule with the sign flipped, for the second slice
 // running.
+// 🆕🆕🆕 **D530 — THAT ROW NOW HAS ITS OWN ANCHOR (`BENCHED_SNIPE_TARGET_COUNTERS`, arm
+// 6b′) AND ITS OWN RIDER (`damageChosen.perDamageCounterOnTarget`), AND THE PARAGRAPH
+// ABOVE STAYS TRUE**: the saturating form would STILL claim file line 551 on THIS arm
+// and STILL flatten it — the row resolving elsewhere makes the wrong answer no less
+// wrong, and `classNarrowedBenchSnipe.test.ts` keeps the `extra === [row]` measurement
+// with its polarity re-pointed (the row is built by its OWN anchor, not by this one).
 //
 // ⚠️ **THE PAIR IS AN `anyOf` AND NOT A NEW FILTER MEMBER**, D446's argument one table
 // over: the printed *"or"* names a SET each body is asked about one at a time, which is
@@ -25222,6 +25282,32 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
           source: "attack",
           deals: true,
           perTakenPrize: true,
+        },
+      ];
+    }
+  }
+
+  // 6b′. 🆕🆕🆕 D530 — "This attack does N damage to 1 of your opponent's Benched
+  //     Pokémon for each damage counter on that Pokémon. (Don't apply Weakness and
+  //     Resistance for Benched Pokémon.)" — corpus FILE LINE 551, 1 legal printing.
+  //     Arm 6b's shape with the rider swapped: the multiplier is a fact about the
+  //     TARGET, which does not exist until the pick, so `perDamageCounterOnTarget`
+  //     is read PER REF at the answer (interpreter.ts `snipeAmount`'s fifth argument,
+  //     at both sites that deal damage) and never at the park. The count is the
+  //     printed literal `1`. A printed 0-per is not a real card — left on the loud path.
+  match = BENCHED_SNIPE_TARGET_COUNTERS.exec(effect);
+  if (match !== null) {
+    const per = Number(match[1]);
+    if (per >= 1) {
+      return [
+        {
+          op: "damageChosen",
+          target: "opponentBench",
+          amount: per,
+          count: 1,
+          source: "attack",
+          deals: true,
+          perDamageCounterOnTarget: true,
         },
       ];
     }

@@ -2053,6 +2053,27 @@ function stepOp(
       // §8.6: with fewer candidates than the printed number, take them all.
       const take = Math.min(ceiling, candidates.length);
       if (!declinable && candidates.length <= ceiling) {
+        // 🆕🆕🆕 D530 — the per-TARGET fold: each forced pick reads ITS OWN counters, so
+        // the placement walks the refs one at a time with the ref-bearing `snipeAmount`.
+        // A 0-counter body folds to 0 and `placeSnipe` deals nothing there — decided,
+        // pinned (the rider's block in effects.ts). Without the rider the single call
+        // below is byte-for-byte what it has been since D345.
+        if (op.perDamageCounterOnTarget === true) {
+          let next = state;
+          for (const ref of candidates) {
+            next = placeSnipe(
+              next,
+              [ref],
+              snipeAmount(op, next, ctx, record, ref),
+              op.deals === true,
+              op.ignoreWR === true,
+              op.source,
+              ctx,
+              events,
+            );
+          }
+          return { done: next };
+        }
         return {
           done: placeSnipe(
             state,
@@ -2081,6 +2102,7 @@ function stepOp(
             op.target,
             op.damagedOnly === true,
             op.filter,
+            op.perDamageCounterOnTarget === true,
           ),
         },
       };
@@ -6236,6 +6258,28 @@ export function applyChoice(
       return moveCountersFromBench(state, chosen, choice.ref, ctx, events);
     }
     case "damageChosen":
+      // 🆕🆕🆕 D530 — the per-TARGET fold on the RESUMED side: the multiplier is the
+      // chosen body's own counters, so the pick is walked ref by ref with the
+      // ref-bearing `snipeAmount` — the same shape `stepOp`'s forced branch takes, and
+      // the second of the two sites the rider's block in effects.ts names. The caption
+      // quoted the printed rule, not a number, so there is nothing to agree with here
+      // except the board. Without the rider the ternary below is untouched.
+      if (choice.kind === "pokemonMulti" && op.perDamageCounterOnTarget === true) {
+        let resumed = state;
+        for (const ref of choice.refs) {
+          resumed = placeSnipe(
+            resumed,
+            [ref],
+            snipeAmount(op, resumed, ctx, record, ref),
+            op.deals === true,
+            op.ignoreWR === true,
+            op.source,
+            ctx,
+            events,
+          );
+        }
+        return resumed;
+      }
       // Recompute the (possibly Prize-scaled) amount from state: no KO has
       // happened between parking and this pick, so the count is unchanged — the
       // same value snipeNote quoted in the prompt.
@@ -8893,13 +8937,40 @@ function reactToAttackDamage(
 
     ⚠️ **THE TWO RIDERS ARE MUTUALLY EXCLUSIVE BY CONSTRUCTION AT EVERY WRITER**, and
     the `if` order below is therefore not a precedence: `deriveAttackEffect` refuses the
-    string that spells both, and no other producer sets either alongside the other. */
+    string that spells both, and no other producer sets either alongside the other.
+
+    🆕🆕🆕 **D530 — `perDamageCounterOnTarget`, THE FOURTH RIDER, AND THE FIRST THAT
+    NEEDS THE TARGET.** *"…for each damage counter on THAT Pokémon"* (corpus FILE LINE
+    551) counts on the body the pick names, so the fold takes an optional fifth
+    argument, the chosen `PokemonRef`, and both sites that deal damage call it PER REF
+    (`stepOp`'s forced branch over `candidates`, `applyChoice` over `choice.refs`).
+    Called WITHOUT a ref — the park site, where the caption is built — it returns the
+    bare `amount`, which keeps the `<= 0` early return and the park unchanged and lets
+    the caption quote the printed RULE instead of a number. The unit is
+    `damageCountersOn` (§12, `Math.floor(damage / 10)` — the house spelling for every
+    printed *"for each damage counter on …"*, see that helper's block). ⚠️ **A 0-counter
+    body folds to 0 and `placeSnipe` then deals nothing and files no `DAMAGE_DEALT`** —
+    the decided discrepancy pinned beside the rider in effects.ts. Mutually exclusive
+    with the three riders above at every writer, same as they are with each other; it
+    is FIRST-CHECKED here only because it is the one branch that reads the argument. */
 function snipeAmount(
-  op: { amount: number; perTakenPrize?: true; perEnergyOnSelf?: true; perRecorded?: EffectSlot },
+  op: {
+    amount: number;
+    perTakenPrize?: true;
+    perEnergyOnSelf?: true;
+    perRecorded?: EffectSlot;
+    perDamageCounterOnTarget?: true;
+  },
   state: GameState,
   ctx: EffectContext,
   record: EffectRecord,
+  target?: PokemonRef,
 ): number {
+  if (op.perDamageCounterOnTarget === true) {
+    if (target === undefined) return op.amount;
+    const body = refPokemon(state, target);
+    return body === undefined ? 0 : op.amount * damageCountersOn(body);
+  }
   if (op.perTakenPrize === true) return op.amount * takenPrizes(state, otherSeat(ctx.seat));
   // 🆕🆕🆕 **D489 — THE THIRD RIDER, AND THE ONLY ONE THAT NEEDS AN ARGUMENT THIS
   // FUNCTION DID NOT TAKE.** *"…for each Energy card you discarded in this way"*
@@ -8964,6 +9035,16 @@ function snipeNote(
       candidates are all Benched. A second spelling here would be the second answer to one
       question (D159), and it is the answer `matchesFilter` does not have. */
   narrowing?: CardFilter,
+  /** 🆕🆕🆕 **D530 — `op.perDamageCounterOnTarget`, and it is owed for the same reason
+      the two parameters above are (D478: a describer obligation follows the CALL
+      PATH).** The multiplier is a fact about the body the player has not chosen yet,
+      so the folded `amount` this function is handed is the bare printed 20 — and the
+      shipped template would caption *"(20 damage each)"*, which is a LIE on a board
+      where the pick deals 60 or 140. When the rider is set the parenthetical quotes the
+      printed RULE instead: *"(20 damage for each damage counter on it)"* — D489's
+      `handCostPhrase` precedent, a caption that names the rule where the number is not
+      known at the park. */
+  perDamageCounterOnTarget = false,
 ): string {
   const verb = optional ? "You may choose" : "Choose";
   const each = deals
@@ -8987,6 +9068,9 @@ function snipeNote(
   // spelling here would be a branch no build can reach — the unreachable arm D205
   // says to remove rather than test around.
   const window = damagedOnly ? " that has any damage counters on it" : "";
+  if (perDamageCounterOnTarget) {
+    return `${verb} ${count} of ${owner} ${zone}${window} (${amount} damage for each damage counter on it).`;
+  }
   return `${verb} ${count} of ${owner} ${zone}${window} (${each} each).`;
 }
 

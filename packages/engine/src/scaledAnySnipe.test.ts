@@ -170,7 +170,13 @@ describe("§1 — the two printed sentences, and what they cost the residue", ()
     // and says nothing about WHAT, and cannot tell *"D505 gave `spreadDamage` the rider"*
     // from *"a reader widened past the count clause and ate a chosen-target row"*. The pair
     // under (c) names the row and pins the op and the rider it derives to.
-    expect(unbuilt).toHaveLength(5);
+    // 🆕🛑 **D530 — FIVE → FOUR, AND THE ROW THAT LEFT IS THE ONE BULLET (b) REFUSED ON THE
+    // "ARITY OF THE FOLD".** Re-pointed rather than decremented, for the fourth time in this rung
+    // and on the same reasoning: a count that steps 5 → 4 records that something left and says
+    // nothing about WHAT, and cannot tell *"D530 gave `damageChosen` a per-target rider"* from
+    // *"a reader widened past the count clause and ate a chosen-target row"*. Bullet (b) below
+    // names the row and pins the op and the rider it derives to.
+    expect(unbuilt).toHaveLength(4);
     // (e) THE SELF-HIT THE PATTERN OVER-INCLUDES — corpus line 500, 1 printing, BUILT
     //     at D465. Not a refusal at all: it is here so the 8 → 7 step is attributable.
     const SELF_RECOIL_SCALED = "This Pokémon also does 10 damage to itself for each damage counter on it.";
@@ -226,17 +232,51 @@ describe("§1 — the two printed sentences, and what they cost the residue", ()
         perRecorded: "discarded",
       },
     ]);
-    // (b) THE TARGET-DEPENDENT COUNT — corpus line 551, 1 printing. *"…for each damage
-    //     counter on THAT Pokémon"* counts on the body the player has not chosen yet,
-    //     so the multiplier is unknown when `stepOp` builds the prompt. Every rung in
-    //     §4 below rests on the opposite fact: `snipeNote` quotes the folded amount, so
-    //     the caption and the damage cannot disagree. A per-TARGET amount would make
-    //     `snipeAmount(op, state, ctx)` a function of a fourth argument that does not
-    //     exist until `applyChoice`, and would make the prompt unable to quote itself.
-    //     Refused on the ARITY OF THE FOLD, which is a different reason from (a).
-    expect(unbuilt).toContain(
-      "This attack does 20 damage to 1 of your opponent's Benched Pokémon for each damage counter on that Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)",
-    );
+    // (b) THE TARGET-DEPENDENT COUNT — corpus line 551, 1 printing. **BUILT AT D530.**
+    //
+    //     🛑 **THE REFUSAL THIS BULLET CARRIED WAS TRUE IN ITS PREMISE AND WRONG IN ITS
+    //     CONCLUSION, AND IT IS CORRECTED IN PLACE AND DATED (D442) RATHER THAN DELETED.**
+    //     It read: *"…for each damage counter on THAT Pokémon counts on the body the player
+    //     has not chosen yet, so the multiplier is unknown when `stepOp` builds the prompt
+    //     … A per-TARGET amount would make `snipeAmount(op, state, ctx)` a function of a
+    //     fourth argument that does not exist until `applyChoice`, and would make the
+    //     prompt unable to quote itself. Refused on the ARITY OF THE FOLD."* Every clause of
+    //     that describes the PARK site, and the park site is not where damage is dealt.
+    //     **The fourth argument EXISTS at BOTH sites that deal damage**: `candidates[]` at
+    //     `stepOp`'s forced branch (a one-body Bench) and `choice.refs` at `applyChoice`
+    //     (the answered park) — and at each the fold is called PER REF, so every pick reads
+    //     ITS OWN counters. What the park site cannot know it does not pretend to: the
+    //     caption quotes the printed RULE — *"(20 damage for each damage counter on it)"* —
+    //     rather than a number, which is D489's `handCostPhrase` precedent one op over, and
+    //     the §4 rungs below ("the caption and the damage cannot disagree") stay true for
+    //     the riders they drive, because THOSE riders fold before the park.
+    //
+    //     🛑 **RE-POINTED ONTO THE OP AND THE RIDER, NOT ONTO `.not.toBeNull()`** (D438's
+    //     polarity rule, and this rung's own move at (a), (c) and (d)): what discriminates
+    //     is the RIDER, and the FLAT sibling beside it, which must NOT have gained one.
+    const TARGET_COUNTER_SNIPE =
+      "This attack does 20 damage to 1 of your opponent's Benched Pokémon for each damage counter on that Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)";
+    expect(family.map(([, t]) => t)).toContain(TARGET_COUNTER_SNIPE);
+    expect(unbuilt).not.toContain(TARGET_COUNTER_SNIPE);
+    expect(deriveAttackEffect(TARGET_COUNTER_SNIPE)).toEqual([
+      {
+        op: "damageChosen",
+        target: "opponentBench",
+        amount: 20,
+        count: 1,
+        source: "attack",
+        deals: true,
+        perDamageCounterOnTarget: true,
+      },
+    ]);
+    // …and the FLAT `1 of` twin (arm 6c's shape, constructed at this amount) is UNMOVED and
+    // carries no rider — the control that keeps the assertion above a statement about the
+    // clause rather than about the anchor (D424).
+    expect(
+      deriveAttackEffect(
+        "This attack does 20 damage to 1 of your opponent's Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)",
+      ),
+    ).toEqual([{ op: "damageChosen", target: "opponentBench", amount: 20, count: 1, source: "attack", deals: true }]);
     // (c) THE SPREAD TWIN — corpus line 517, 3 printings, the largest unbuilt printing
     //     count in the whole bench family. **BUILT AT D505.**
     //
@@ -516,7 +556,7 @@ describe("§3 — a new optional rider on a PERSISTED op, and the record version
   });
 
   it("the engine version moved and the two spellings agree", () => {
-    expect(engineVersion).toBe("0.415.0");
+    expect(engineVersion).toBe("0.416.0");
   });
 });
 

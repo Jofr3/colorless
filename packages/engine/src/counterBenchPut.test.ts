@@ -177,7 +177,14 @@ const NEAR_MISSES = [
   // exact noun phrase and quantifier with the DAMAGE verb instead of the placement verb,
   // and a per-target count. Refused on the VERB alone, which is the tightest axis this
   // slot has ever held.
-  "This attack does 20 damage to 1 of your opponent's Benched Pokémon for each damage counter on that Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)",
+  // 🆕🆕🆕 **D530 — THAT ROW LEFT THIS LIST (corpus FILE LINE 551 at this head), AND THE
+  // WITNESS MOVED RATHER THAN BEING DELETED (the standing note above; D418).** D530 claims
+  // it WHOLE through its OWN anchor (`BENCHED_SNIPE_TARGET_COUNTERS`, arm 6b′) as
+  // `damageChosen { deals, perDamageCounterOnTarget }` — the DAMAGE verb, a DEALT hit, a
+  // per-TARGET multiplier — none of which this PUT anchor could spell. The `toBeNull` loop
+  // below would go red on it, so the claim is now an INEQUALITY of derived programs
+  // (`TARGET_COUNTER_SNIPE`, the D451 pattern), strictly stronger than the nullity it had.
+  // No replacement occupant: the VERB axis is now pinned by the inequality itself.
   "Put 1 damage counter on each of your opponent's Pokémon for each of your Maushold in play.",
   // ⚠️ RE-POINTED AT D450 — this slot held the windowed opponent-side fold (corpus line 414), which D450 MAPPED (arms 23d/23e/23f
   // over `counterEachAll`), so the witness MOVED rather than being deleted (the standing
@@ -218,6 +225,13 @@ const ACTIVE_HP_TARGET =
     `NEAR_MISSES`, because it is MAPPED: the claim about it is not `toBeNull` but
     that each anchor keeps deriving its OWN op, in both directions. */
 const DEFENDER_PUT_CLAUSE = "Put 7 damage counters on your opponent's Active Pokémon.";
+
+/** 🆕🆕🆕 D530 — corpus FILE LINE 551, this anchor's exact zone and quantifier with the
+    DAMAGE verb and a per-TARGET multiplier. It sat in `NEAR_MISSES` from D456 to D529;
+    D530 MAPPED it (arm 6b′, `damageChosen { deals, perDamageCounterOnTarget }`), so the
+    claim about it is an INEQUALITY of derived programs (D450/D451's rule), not a nullity. */
+const TARGET_COUNTER_SNIPE =
+  "This attack does 20 damage to 1 of your opponent's Benched Pokémon for each damage counter on that Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)";
 
 /** U+2019, spelled as an ESCAPE rather than typed. */
 const RSQUO = "\u2019";
@@ -399,10 +413,31 @@ describe("the anchor — 4 printings, 1 clause, one regex with one (\\d+) captur
     expect((deriveAttackEffect(CLAUSE)?.[0] as Record<string, unknown>).source).toBe("attack");
   });
 
-  it("refuses the SEVEN real catalog rows that share its words", () => {
+  it("refuses the SIX real catalog rows that share its words — and the SEVENTH, MAPPED at D530, keeps its OWN op", () => {
     for (const text of NEAR_MISSES) {
       expect(deriveAttackEffect(text)).toBeNull();
     }
+    // 🆕🆕🆕 D530 — the DAMAGE-verb row that left the list: it derives, to a DEALT snipe with
+    // the per-target rider, and NOT to this anchor's placement op. Asserted as an INEQUALITY
+    // plus the positive, never as a nullity (D418's second half): a reader widened past the
+    // verb would derive the PUT op here and go red; the shipped build derives the snipe.
+    expect(deriveAttackEffect(TARGET_COUNTER_SNIPE)).not.toEqual(deriveAttackEffect(CLAUSE));
+    expect(deriveAttackEffect(TARGET_COUNTER_SNIPE)).toEqual([
+      {
+        op: "damageChosen",
+        target: "opponentBench",
+        amount: 20,
+        count: 1,
+        source: "attack",
+        deals: true,
+        perDamageCounterOnTarget: true,
+      },
+    ]);
+    expect(deriveAttackEffect(TARGET_COUNTER_SNIPE)).not.toContainEqual(
+      expect.objectContaining({ source: "ability" }),
+    );
+    expect(deriveAttackEffect(CLAUSE)?.[0]).not.toHaveProperty("perDamageCounterOnTarget");
+    expect(NEAR_MISSES).toHaveLength(6);
     // THE TWO THAT MATTER MOST are the ABILITY printings of this exact action.
     // Both already produce this op through the REGISTRY, so a reader that swallowed
     // them would author the same placement twice — and both are refused by the

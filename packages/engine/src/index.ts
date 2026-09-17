@@ -20022,6 +20022,57 @@ import type { GameState, Seat } from "./types";
     `expect(manifest.version)`, `it(…)` titles, the declaration and `package.json` —
     **not** as a value-keyed grep — because a value-keyed grep is precisely the mechanism
     that ate D500's heading.)
+    🆕🆕🆕 engineVersion 0.415.0 → **0.416.0** (D530 — THE TARGET-COUNTER-SCALED BENCH SNIPE —
+    A FOURTH RIDER ON `damageChosen`, THE FIRST WHOSE MULTIPLIER IS A FACT ABOUT THE BODY THE
+    PLAYER HAS NOT CHOSEN YET. `censusAttackCorpus.ts` **FILE LINE 551** (`legalAttackCorpus()`
+    index 498) — *"This attack does 20 damage to 1 of your opponent's Benched Pokémon for each
+    damage counter on that Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)"*,
+    **1 sentence / 1 legal printing** (no catalog id on this checkout — the demonstrator is
+    FILE-LOCAL and DECLARED, D425), claimed by `deriveAttackEffect` through ONE new anchor
+    (`BENCHED_SNIPE_TARGET_COUNTERS`, beside `BENCHED_SNIPE_TAKEN_PRIZES`, the same construction —
+    template, `['’]` slots, no /i, `^…$`, the spread family's optional W/R tail — disjoint from it
+    by TAIL and from `ALSO_BENCHED_SNIPE_BODY` by the same tail; the count is the LITERAL `1 of`,
+    no capture) as arm 6b′, ONE whole literal: `[{op:"damageChosen", target:"opponentBench",
+    amount:20, count:1, source:"attack", deals:true, perDamageCounterOnTarget:true}]`.
+    🛑 **READ PER REF AT THE ANSWER, NEVER AT THE PARK.** `snipeAmount` gains an optional fifth
+    argument, the chosen `PokemonRef`, and a FIRST-CHECKED branch: `amount × damageCountersOn(<that
+    body>)` (§12, `Math.floor(damage / 10)`, the house spelling). BOTH sites that deal damage fold
+    PER REF — `stepOp`'s forced branch walks `candidates`, `applyChoice` walks `choice.refs` — so
+    each pick reads ITS OWN counters (a registry-authored count-2 op stays honest). Called WITHOUT
+    a ref (the park site) it returns the bare `amount` ≥ 1, so the `<= 0` early return and the park
+    are byte-for-byte D437/D448's. `snipeNote` gains a `perDamageCounterOnTarget` parameter and
+    captions the printed RULE — *"Choose 1 of your opponent's Benched Pokémon (20 damage for each
+    damage counter on it)."* — because the shipped *"(20 damage each)"* would LIE on a board where
+    the pick deals 60 or 140 (D478: the describer obligation follows the call path; D489's
+    `handCostPhrase` precedent).
+    🛑 **A DECIDED DISCREPANCY, PINNED:** the card does NOT narrow to damaged bodies (D437's
+    `damagedOnly` would be AUTHORING), so an undamaged body is still a candidate and picking it is
+    picking 20 × 0 — `placeSnipe`'s `amount <= 0` guard deals nothing and files NO `DAMAGE_DEALT`
+    (and no `ATTACK_EFFECT_SKIPPED`); `targetCounterSnipe.test.ts` §4 (v) drives it on a one-body
+    and a two-body Bench. `programPlayable` is UNCHANGED (it reads `snipeTargets` only — a
+    damage-free Bench is still playable, pinned in §5). Bench targets take no W/R (§8.5, driven
+    against a ×2 body). Zero new op / prompt / event / log / HUD / schema / redact bytes.
+    🛑 **THE REFUSAL ON RECORD — "THE ARITY OF THE FOLD" — DESCRIBED ONE CALL SITE, NOT A
+    BLOCKER:** four suites (`scaledAnySnipe` (b), `handDiscardScaledSnipe` (ii), `counterBenchPut`'s
+    `NEAR_MISSES`, `classNarrowedBenchSnipe`'s saturating rung) held the row out because "the fourth
+    argument does not exist until `applyChoice`, and the prompt could not quote its own number". The
+    argument EXISTS at both dealing sites and the caption quotes the RULE. All four RE-POINTED, never
+    deleted (D418), each asked what its OLD claim caught: the saturating form STILL claims the row on
+    the class arm — the measurement is kept with its polarity re-pointed (built by its OWN anchor).
+    ⚠️ `MATCH_RECORD_VERSION` **HELD at 30**: the rider rides `phase.cont.pendingOp` — this op PARKS
+    on a two-body Bench — but it is a WIDENING at a persisted address (D448/D489's serialized-alphabet
+    argument): every v30 byte string is unchanged, absence still means unscaled, the new value is
+    unreachable backwards; driven over v30 bytes in THREE directions (§3), not inherited. Reader arm
+    555/1597 → 556/1598; raw residue 85/135 → 84/134; residue 58/84 → 57/83; `BUILT.attack`
+    1648 → 1649; `OPAQUE` 41/62 HELD at SUBMAX=4 and 23/38 HELD at SUBMAX=12 (the row was PHRASE-7
+    at cap 4 and SUBST-15 at cap 12, never OPAQUE — measured off the cap-4 census at HEAD via git
+    stash).
+    🛑 **VERSION-TAX EXCEPTION LIST FOR THIS BUMP (D506 (b)):** `0.415.0` legitimately survives at
+    THIS HEADING'S OWN SOURCE, one line up in the arrow; D528's heading target below;
+    `headsCeilingDiscardAttach.test.ts`'s header arrow and its two heading pins; `mutants.ts`'s D275
+    re-point ledger; and the `docs/` history. The sweep was run as a WHITELIST over
+    `expect(engineVersion)`, `expect(manifest.version)`, `it(…)` titles, the declaration and
+    `package.json`.)
     🆕🆕🆕 engineVersion 0.414.0 → **0.415.0** (D528 — THE HEADS-CEILINGED DISCARD-TO-BENCH
     ENERGY ATTACH — THE ATTACH TWIN OF D525, ZERO VOCABULARY, NO NEW `AttackCoinFlip` MEMBER.
     `censusAttackCorpus.ts` **FILE LINE 215** (`legalAttackCorpus()` index 162) — *"Flip 3
@@ -22401,7 +22452,7 @@ import type { GameState, Seat } from "./types";
     WITNESS** — the count was re-derived every slice and the word *"three"* was carried.
     A successor of this slice inherits **81 / 61 / 17** again, over **FIVE** history
     occurrences: those four plus `deckMillFilteredScale.test.ts`'s own header arrow.) */
-export const engineVersion = "0.415.0";
+export const engineVersion = "0.416.0";
 
 export type {
   ApplyResult,
