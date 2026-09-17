@@ -20022,6 +20022,51 @@ import type { GameState, Seat } from "./types";
     `expect(manifest.version)`, `it(…)` titles, the declaration and `package.json` —
     **not** as a value-keyed grep — because a value-keyed grep is precisely the mechanism
     that ate D500's heading.)
+    🆕🆕🆕 engineVersion 0.414.0 → **0.415.0** (D528 — THE HEADS-CEILINGED DISCARD-TO-BENCH
+    ENERGY ATTACH — THE ATTACH TWIN OF D525, ZERO VOCABULARY, NO NEW `AttackCoinFlip` MEMBER.
+    `censusAttackCorpus.ts` **FILE LINE 215** (`legalAttackCorpus()` index 162) — *"Flip 3
+    coins. Attach a number of Basic {L} Energy cards up to the number of heads from your
+    discard pile to your Benched Pokémon in any way you like."*, **1 sentence / 1 legal
+    printing** (no catalog id on this checkout — the demonstrator is FILE-LOCAL and DECLARED,
+    D425), claimed by `deriveAttackCoinFlip` through ONE new anchor
+    (`ATTACK_COIN_ATTACH_UP_TO_HEADS`, beside D525's; count and Energy code CAPTURED; no /i,
+    `^…$`, no apostrophe slot; disjoint from D525's anchor by VERB and from
+    `attachFromZoneClause`'s `^Attach…` anchors by the "Flip N coins. " head) as the SHIPPED
+    member `programPerHeads` over ONE copy of D358's discard-spread op:
+    `{kind:"programPerHeads", flips:{kind:"printed", count:3}, ops:[{op:"attachEnergyFrom",
+    source:"discard", energyType:"Lightning", benchOnly:true, declinable:true}], face:"heads"}`
+    — BYTE-IDENTICAL to the op `attachFromZoneProgram` emits (twice) for the printed-digit
+    sibling *"Attach up to 2 Basic {L} Energy cards from your discard pile to your Benched
+    Pokémon in any way you like."*, asserted off the deriver.
+    🛑 **NO FOLD BYTES, NO INTERPRETER BYTES:** `attack.ts`'s `programPerHeads` expansion (D130,
+    D476's face count) appends H copies of the op and leaves the program null on zero heads;
+    the interpreter parks each copy DECLINABLY over `attachEnergyTargets` (`benchOnly` — the
+    Active is never a candidate), `parkOrForce` answers `done` on an empty Bench, the op's own
+    guard answers `done` when the pile holds no matching Basic Energy (a copy after the pile
+    runs dry is a silent no-op), and D359's `upTo` makes a ONE-body Bench ASK rather than force.
+    🛑 **WHY THIS DOES NOT CONTRADICT D525:** D525 rejected H `max: 1` parks for the RETRIEVAL
+    print because that print is ONE question ("put cards into your hand") and built ONE
+    `max: H` park; the ATTACH print is a DISTRIBUTION ("to your Benched Pokémon in any way you
+    like") — each card is an independent card+body decision, the reading D358/D360 already give
+    the printed "up to N … in any way you like" as N independent declinable parks; this row is
+    that reading with N = heads. Two verbs, two members, two anchors, on ONE reader.
+    🛑 **THE REFUSAL'S PREMISE, RE-DERIVED:** D525's anchor block, member block, the D234
+    residue block and this file's D130 paragraph held the row out as "D442/D448's one-printing
+    rule". D448 (`conventions.md`, *A one-print fixture makes a filter unfalsifiable*) is a
+    FIXTURE rule — satisfied by a Basic Water AND a Colorless card in the demonstrator's pile
+    that the type filter must never offer; D442 (*Two riders need two rows*) is a MUTANT-ROW
+    rule; neither forbids a one-printing build (D527 built line 454 at one). Annotated in place,
+    never deleted (D178/D442); `upToHeadsRetrieval.test.ts`'s control rung INVERTED (the twin
+    derives, on the OTHER member); `derivedDiscardAttach.test.ts` UNREAD 2 → 1 with the row in a
+    `BUILT_ELSEWHERE` term named for the coin reader; `censusAtHead` row 9's attack half 2 → 1.
+    ⚠️ `AttackCoinFlip` reaches NO record (derived at the attack site, spent at the fold); what
+    parks is D358's op bytes — `MATCH_RECORD_VERSION` HELD at 30, pinned. Reader arm 554/1596 →
+    555/1597; residue 60/86 → 59/85; `BUILT.attack` 1646 → 1647.
+    🛑 **VERSION-TAX EXCEPTION LIST FOR THIS BUMP (D506 (b)):** `0.414.0` legitimately survives
+    at THIS HEADING'S OWN SOURCE, one line up in the arrow; D527's heading target below;
+    `benchCountedHandSearch.test.ts`'s header arrow; `mutants.ts`'s D275 re-point ledger; and
+    the `docs/` history. The sweep was run as a WHITELIST over `expect(engineVersion)`,
+    `expect(manifest.version)`, `it(…)` titles, the declaration and `package.json`.)
     🆕🆕🆕 engineVersion 0.413.0 → **0.414.0** (D527 — THE DYNAMIC-max HAND SEARCH —
     `searchDeck.max` GAINS THE LITERAL `"yourBenchCount"`, A SECOND WIDENING AT D514's
     PERSISTED ADDRESS. `censusAttackCorpus.ts` **FILE LINE 454** (`legalAttackCorpus()` index
@@ -20182,6 +20227,14 @@ import type { GameState, Seat } from "./types";
     generic `programMaxHeads` substituting `'max' in op` at runtime (type-loose; the attach twin
     at corpus FILE LINE 215 is a DIFFERENT op, `attachEnergyFrom`, and stays refused —
     D442/D448's one-printing rule, held as the suite's control).
+    🆕🆕🆕 **D528 — THE ATTACH TWIN IS BUILT (0.415.0), AND THE TWO DESIGNS DO NOT CONTRADICT.**
+    D525 rejected H `max: 1` parks for the RETRIEVAL print because that print is ONE question
+    ("put cards into your hand"); the ATTACH print is a DISTRIBUTION ("to your Benched Pokémon
+    in any way you like"), where each card is an independent card+body decision — the reading
+    D358/D360 already give "up to N … in any way you like" as N independent declinable parks.
+    So the twin is `programPerHeads` over ONE copy of D358's op with N = heads, no new member;
+    `upToHeadsRetrieval.test.ts`'s control rung is INVERTED (the twin derives, on the OTHER
+    member). The "one-printing rule" was D448's fixture rule, not a build rule.
     🛑 **THE REFUSAL ON RECORD HAD A FALSE PREMISE, AND IT IS ANNOTATED, NOT DELETED
     (D178/D442).** `derivedDiscardRetrieval.test.ts`, `derivedDiscardAttach.test.ts` and the
     D234 blocks in `effects.ts` called this *"the SAME unanswered `attack.ts` fold question"*
@@ -22348,7 +22401,7 @@ import type { GameState, Seat } from "./types";
     WITNESS** — the count was re-derived every slice and the word *"three"* was carried.
     A successor of this slice inherits **81 / 61 / 17** again, over **FIVE** history
     occurrences: those four plus `deckMillFilteredScale.test.ts`'s own header arrow.) */
-export const engineVersion = "0.414.0";
+export const engineVersion = "0.415.0";
 
 export type {
   ApplyResult,

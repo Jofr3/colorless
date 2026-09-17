@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { programPlayable } from "./cardplay";
-import { POKEMON_TYPE_BY_CODE, POKEMON_TYPES, deriveAttackEffect } from "./effects";
+import { POKEMON_TYPE_BY_CODE, POKEMON_TYPES, deriveAttackCoinFlip, deriveAttackEffect } from "./effects";
 import type { EffectOp, GameEvent, GameState, PokemonRef } from "./index";
 import { runProgram } from "./interpreter";
 import {
@@ -227,10 +227,23 @@ const UNREAD: readonly (readonly [string, number, string])[] = [
     1,
     "`source` names a ZONE, never a SEAT: every target the op can produce is `ctx.seat`'s, and every card it can take is theirs too",
   ],
+  // 🆕🆕🆕 D528 REMOVED THE PER-HEADS ROW FROM THIS TABLE BY BUILDING IT — ELSEWHERE. It is
+  // `BUILT_ELSEWHERE` below (`derivedHandAttach.test.ts`'s idiom): the row is read by the COIN
+  // reader, `deriveAttackCoinFlip`, as `programPerHeads` over ONE copy of the op THIS arm builds for
+  // the printed-digit spread, so THIS anchor still refuses it (asserted) and the family's arithmetic
+  // keeps it. Its reason here — *"stays refused as ONE printing of a second op (D442/D448)"* — was a
+  // FIXTURE/mutant-row rule, never a build rule (D527 built corpus FILE LINE 454 at one printing).
+] as const;
+
+/** 🆕🆕🆕 D528 — THE ROW THIS TABLE HELD FROM D234 TO D527 AND ANOTHER READER NOW OWNS: corpus FILE
+    LINE 215, 1 legal printing, `deriveAttackCoinFlip`'s `programPerHeads` over ONE copy of D358's
+    discard-spread op (H independent declinable parks at `attack.ts`'s fold). Named for the coin
+    reader rather than deleted, so the family total (17) still adds up in one place. */
+const BUILT_ELSEWHERE: readonly (readonly [string, number, string])[] = [
   [
     "Flip 3 coins. Attach a number of Basic {L} Energy cards up to the number of heads from your discard pile to your Benched Pokémon in any way you like.",
     1,
-    "the batch op `attachEnergyFrom` under a heads CEILING — a DIFFERENT op from the discard-to-hand twin, which is BUILT at D525 on `deriveAttackCoinFlip` as `retrievalUpToHeads` (one `discardPileRetrieval` with `max: heads`); this row stays refused as ONE printing of a second op (D442/D448), not as an unprinted shape",
+    "BUILT at D528 on `deriveAttackCoinFlip` (`ATTACK_COIN_ATTACH_UP_TO_HEADS`) as `programPerHeads` over one `attachEnergyFrom { discard, Lightning, benchOnly, declinable }` — this arm's own op for the printed-digit sibling, with N = heads; THIS anchor never spans the \"Flip N coins.\" head",
   ],
 ] as const;
 
@@ -370,14 +383,26 @@ describe("the anchor — twelve printed sentences, ONE arm", () => {
     // …and the residue, which is the other half of the same census: 2 more legal
     // printings over 2 sentences, each pinned derived-to-null so the deferral has
     // a live subject.
-    expect(UNREAD).toHaveLength(2);
-    expect(UNREAD.reduce((sum, [, legal]) => sum + legal, 0)).toBe(2);
+    // 🆕🆕🆕 D528 — WAS 2 / 2: the per-heads row walked from `UNREAD` into `BUILT_ELSEWHERE` (the
+    // COIN reader owns it), so this table is ONE row / ONE printing and the family's 17 is now
+    // CLAUSES 15 + UNREAD 1 + BUILT_ELSEWHERE 1.
+    expect(UNREAD).toHaveLength(1);
+    expect(UNREAD.reduce((sum, [, legal]) => sum + legal, 0)).toBe(1);
     for (const [text] of UNREAD) expect(deriveAttackEffect(text), text).toBeNull();
-    // 15 + 2 = 17, which is exactly what the backlog row measured. This is the
+    expect(BUILT_ELSEWHERE).toHaveLength(1);
+    expect(BUILT_ELSEWHERE.reduce((sum, [, legal]) => sum + legal, 0)).toBe(1);
+    for (const [text] of BUILT_ELSEWHERE) {
+      // THIS anchor still refuses it (the "Flip N coins." head defeats `^Attach`); the coin reader
+      // claims it — the positive reading lives in `headsCeilingDiscardAttach.test.ts`.
+      expect(deriveAttackEffect(text), text).toBeNull();
+      expect(deriveAttackCoinFlip(text)?.kind, text).toBe("programPerHeads");
+    }
+    // 15 + 1 + 1 = 17, which is exactly what the backlog row measured. This is the
     // FIRST row on that page whose count survived re-derivation unchanged, and the
-    // TOTAL is what has to keep holding as printings move between the two halves.
-    expect(CLAUSES.reduce((sum, c) => sum + c.legalPrintings, 0) + 2).toBe(17);
-    expect(CLAUSES.length + UNREAD.length).toBe(12);
+    // TOTAL is what has to keep holding as printings move between the halves.
+    expect(CLAUSES.reduce((sum, c) => sum + c.legalPrintings, 0) + 1 + 1).toBe(17);
+    expect(CLAUSES.length + UNREAD.length).toBe(11);
+    expect(CLAUSES.length + UNREAD.length + BUILT_ELSEWHERE.length).toBe(12);
   });
 
   it("reads 40 of the family's 43 CATALOG printings too — an arm transfers", () => {

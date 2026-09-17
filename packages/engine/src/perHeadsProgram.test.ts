@@ -182,6 +182,16 @@ const BUILT_AT_D525 = [
   "Flip 3 coins. Put a number of cards up to the number of heads from your discard pile into your hand.",
 ] as const;
 
+/** 🆕🆕🆕 **D528 — THE ATTACH TWIN OF LINE 219, corpus file line 215, BUILT ON THIS FAMILY'S OWN
+    MEMBER.** `programPerHeads` over ONE copy of D358's discard-spread op (`attachEnergyFrom {
+    discard, Lightning, benchOnly, declinable }`), expanded at the fold into H independent declinable
+    parks — the distribution reading "up to N … in any way you like" has carried since D358/D360,
+    with N = heads. NOT a repeat spelling ("For each heads,") and NOT a `retrievalUpToHeads`: the
+    verb decides the member. A NAMED SET of one, fed to the same corpus loop as the three above. */
+const BUILT_AT_D528 = [
+  "Flip 3 coins. Attach a number of Basic {L} Energy cards up to the number of heads from your discard pile to your Benched Pokémon in any way you like.",
+] as const;
+
 /** 🆕🆕 **D476 — THE ROW THIS FILE REFUSED FOR TWENTY-FOUR DECISIONS AND NOW DERIVES**,
     corpus file line 217 verbatim. A NAMED SET of one rather than a deletion, for the reason
     `BUILT_AT_D463` is one: every rung below that used to say "this stays loud" now says the
@@ -518,7 +528,7 @@ describe("the printed sentences — the fixture-text-verbatim guards", () => {
     // for 322 decisions. A byte pin on an invented string is green by construction;
     // membership in the measured corpus is not.
     const corpus = new Map(legalAttackCorpus().map(([units, sentence]) => [sentence, units]));
-    for (const sentence of [...BUILT_AT_D525, ...BUILT_AT_D476, ...BUILT_AT_D463]) {
+    for (const sentence of [...BUILT_AT_D528, ...BUILT_AT_D525, ...BUILT_AT_D476, ...BUILT_AT_D463]) {
       expect(sentence).toBe(sentence.trim());
       expect(sentence).not.toContain(RSQUO);
       expect(corpus.has(sentence), `not a corpus sentence: ${sentence}`).toBe(true);
@@ -532,6 +542,8 @@ describe("the printed sentences — the fixture-text-verbatim guards", () => {
     // The printing counts, off the corpus rather than off this file: three singletons
     // and one pair. A set that drifted onto a different sentence would move these.
     expect(BUILT_AT_D525.map((sentence) => corpus.get(sentence))).toEqual([2]);
+    // 🆕🆕🆕 D528 — the attach twin, ONE legal printing, off the corpus.
+    expect(BUILT_AT_D528.map((sentence) => corpus.get(sentence))).toEqual([1]);
     expect(BUILT_AT_D476.map((sentence) => corpus.get(sentence))).toEqual([1]);
     expect(BUILT_AT_D463.map((sentence) => corpus.get(sentence))).toEqual([1, 1]);
 
@@ -542,10 +554,18 @@ describe("the printed sentences — the fixture-text-verbatim guards", () => {
     expect(utf8Bytes(BUILT_AT_D476[0])).toBe(67);
     expect(BUILT_AT_D476[0]).toContain("For each tails,");
     expect(
-      [...BUILT_AT_D525, ...BUILT_AT_D476, ...BUILT_AT_D463].filter((s) =>
+      [...BUILT_AT_D528, ...BUILT_AT_D525, ...BUILT_AT_D476, ...BUILT_AT_D463].filter((s) =>
         s.includes("For each tails,"),
       ),
     ).toHaveLength(1);
+    // 🆕🆕🆕 D528 — BUILT_AT_D528[0], line 215: shares Oinkologne's OPENING verbatim ("Flip 3 coins.")
+    // and the ceiling phrase, and derives on THIS family's member (`programPerHeads`) rather than on
+    // D525's — the verb ("Attach" for "Put") is what picks the member. No repeat spelling in it.
+    expect(BUILT_AT_D528[0].startsWith("Flip 3 coins. ")).toBe(true);
+    expect(BUILT_AT_D528[0]).toContain("up to the number of heads");
+    expect(BUILT_AT_D528[0]).not.toContain("For each heads");
+    expect(deriveAttackCoinFlip(BUILT_AT_D528[0])?.kind).toBe("programPerHeads");
+    expect(deriveAttackCoinFlip(BUILT_AT_D525[0])?.kind).toBe("retrievalUpToHeads");
     // BUILT_AT_D525[0] (was OUT_OF_SCOPE[0] until D525) — Oinkologne, line 219: shares WUGTRIO'S OPENING verbatim — "Flip 3
     // coins." — and nothing else. A heads COUNT read as an "up to" ceiling by one op, not a
     // repeat, which is why it is refused by the consequent rather than by the count.

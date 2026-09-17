@@ -751,24 +751,29 @@ describe("D527 §4 — the census moved in exactly ONE summand, by 1 sentence / 
     // the reader arm 553/1595 → 554/1596 — corpus FILE LINE 454, ⚠️ sentence step 1 / printing step 1
     // (ONE legal printing — the two chains step by the SAME amount this slice).
     const resolved = legalAttackCorpus().filter(([, s]) => resolvedByAnyReader(s));
-    expect([resolved.length, units(resolved)]).toEqual([554, 1596]);
+    // 🆕🆕🆕 D528 +1 sentence / +1 printing (THE HEADS-CEILINGED DISCARD-TO-BENCH ENERGY ATTACH — THE ATTACH TWIN OF D525, ZERO VOCABULARY, NO NEW `AttackCoinFlip` MEMBER — corpus FILE LINE 215, *"Flip 3 coins. Attach a number of Basic {L} Energy cards up to the number of heads from your discard pile to your Benched Pokémon in any way you like."*, 1 legal printing, claimed by `deriveAttackCoinFlip` as `programPerHeads` over ONE copy of D358's discard-spread op, H declinable parks at the existing fold, ZERO new vocabulary, no fold/interpreter bytes; the sentence and printing steps AGREE at 1): 554/1596 → 555/1597. Stepped by hand (outside the annotated-chain sweep's shape).
+    expect([resolved.length, units(resolved)]).toEqual([555, 1597]);
     expect(resolved.map(([, s]) => s)).toContain(PRINTED);
     // …and the step is THIS sentence and nothing else: remove it and the pair is D526's. ⚠️ THE OWN-ROW
     // `without` PAIR: resolved 554/1596 minus THIS suite's ONE-printing row is 553/1595 (D525 (5)'s trap
     // — the next sweep re-derives this by hand as resolved − its row, never by value).
     const without = resolved.filter(([, s]) => s !== PRINTED);
-    expect([without.length, units(without)]).toEqual([553, 1595]);
+    // 🆕🆕🆕 D528 +1 sentence / +1 printing (THE HEADS-CEILINGED DISCARD-TO-BENCH ENERGY ATTACH — THE ATTACH TWIN OF D525, ZERO VOCABULARY, NO NEW `AttackCoinFlip` MEMBER — corpus FILE LINE 215, *"Flip 3 coins. Attach a number of Basic {L} Energy cards up to the number of heads from your discard pile to your Benched Pokémon in any way you like."*, 1 legal printing, claimed by `deriveAttackCoinFlip` as `programPerHeads` over ONE copy of D358's discard-spread op, H declinable parks at the existing fold, ZERO new vocabulary, no fold/interpreter bytes; the sentence and printing steps AGREE at 1): 553/1595 → 554/1596 (own-row `without` pair, re-derived by hand as resolved − this suite's row). Stepped by hand (outside the annotated-chain sweep's shape).
+    expect([without.length, units(without)]).toEqual([554, 1596]);
   });
 
   it("🛑 the RAW reader-only residue fell by exactly 1 sentence / 1 printing — 86 / 136 — and the row left it", () => {
     // 🆕🆕🆕 D527's OWN literal (corpus FILE LINE 454, see §4's first rung): 87/137 → 86/136.
     const unbuilt = legalAttackCorpus().filter(([, s]) => !resolvedByAnyReader(s));
-    expect([unbuilt.length, units(unbuilt)]).toEqual([86, 136]);
+    // 🆕🆕🆕 D528 −1 sentence / −1 printing (THE HEADS-CEILINGED DISCARD-TO-BENCH ENERGY ATTACH — THE ATTACH TWIN OF D525, ZERO VOCABULARY, NO NEW `AttackCoinFlip` MEMBER — corpus FILE LINE 215, *"Flip 3 coins. Attach a number of Basic {L} Energy cards up to the number of heads from your discard pile to your Benched Pokémon in any way you like."*, 1 legal printing, claimed by `deriveAttackCoinFlip` as `programPerHeads` over ONE copy of D358's discard-spread op, H declinable parks at the existing fold, ZERO new vocabulary, no fold/interpreter bytes; the sentence and printing steps AGREE at 1): 86/136 → 85/135. Stepped by hand (outside the annotated-chain sweep's shape).
+    expect([unbuilt.length, units(unbuilt)]).toEqual([85, 135]);
     expect(unbuilt.map(([, s]) => s)).not.toContain(PRINTED);
     // The parts add up to the whole quoted in the same case.
     const all = legalAttackCorpus();
-    expect(unbuilt.length + 554).toBe(all.length);
-    expect(units(unbuilt) + 1596).toBe(units(all));
+    // 🆕🆕🆕 D528 +1 sentence (THE HEADS-CEILINGED DISCARD-TO-BENCH ENERGY ATTACH — THE ATTACH TWIN OF D525, ZERO VOCABULARY, NO NEW `AttackCoinFlip` MEMBER — corpus FILE LINE 215, *"Flip 3 coins. Attach a number of Basic {L} Energy cards up to the number of heads from your discard pile to your Benched Pokémon in any way you like."*, 1 legal printing, claimed by `deriveAttackCoinFlip` as `programPerHeads` over ONE copy of D358's discard-spread op, H declinable parks at the existing fold, ZERO new vocabulary, no fold/interpreter bytes; the sentence and printing steps AGREE at 1): 554 → 555. Stepped by hand (outside the annotated-chain sweep's shape).
+    expect(unbuilt.length + 555).toBe(all.length);
+    // 🆕🆕🆕 D528 +1 printing (THE HEADS-CEILINGED DISCARD-TO-BENCH ENERGY ATTACH — THE ATTACH TWIN OF D525, ZERO VOCABULARY, NO NEW `AttackCoinFlip` MEMBER — corpus FILE LINE 215, *"Flip 3 coins. Attach a number of Basic {L} Energy cards up to the number of heads from your discard pile to your Benched Pokémon in any way you like."*, 1 legal printing, claimed by `deriveAttackCoinFlip` as `programPerHeads` over ONE copy of D358's discard-spread op, H declinable parks at the existing fold, ZERO new vocabulary, no fold/interpreter bytes; the sentence and printing steps AGREE at 1): 1596 → 1597. Stepped by hand (outside the annotated-chain sweep's shape).
+    expect(units(unbuilt) + 1597).toBe(units(all));
     expect([all.length, units(all)]).toEqual([640, 1732]);
   });
 
@@ -781,7 +786,7 @@ describe("D527 §4 — the census moved in exactly ONE summand, by 1 sentence / 
 
   it("engineVersion and `manifest.version` agree, and the bump is owed for BEHAVIOUR", () => {
     // ⚠️ The version is NOT spelled in this `it(…)` title (D460's fourth class).
-    expect(engineVersion).toBe("0.414.0");
+    expect(engineVersion).toBe("0.415.0");
     expect(manifest.version).toBe(engineVersion);
   });
 

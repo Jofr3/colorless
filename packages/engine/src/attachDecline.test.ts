@@ -4,7 +4,7 @@ import type { EffectOp, GameEvent, GameState, PokemonRef } from "./index";
 import { applyAction, createGame } from "./index";
 import { redactGame } from "./redact";
 import { legalAttackCorpus } from "./censusAttackCorpus";
-import { deriveAttackEffect } from "./effects";
+import { deriveAttackCoinFlip, deriveAttackEffect } from "./effects";
 import { programFor, registryCardIds } from "./registry";
 import { battler, deckOf, typedEnergy } from "./testFixtures";
 
@@ -979,6 +979,33 @@ describe("D360 §7 — no `anyWay` spread in EITHER producer is still an exact N
     }
     expect(hedgedOntoOneBody).toBeGreaterThan(0);
     expect(unhedged).toBeGreaterThan(0);
+  });
+
+  it("🆕🆕🆕 D528 — the THIRD producer: a coin member's `ops` carries ONE declinable spread op that the FOLD repeats — the flag is on the op, H copies of it are the distribution, and this reader's corpus walk above cannot see it (the sentence is `deriveAttackCoinFlip`'s)", () => {
+    // "in BOTH producers" above walks `deriveAttackEffect` programs and the registry. D528 added a
+    // THIRD place a hedged spread op is produced: `AttackCoinFlip.programPerHeads` over ONE copy of
+    // D358's op, expanded to H copies at `attack.ts`'s fold. Named here rather than folded into the
+    // biconditional (whose corpus walk is `deriveAttackEffect`-keyed and stays green by scope), so
+    // the claim "every hedged spread op carries the flag" has its third producer on record.
+    const ceilinged = legalAttackCorpus().filter(([, text]) => {
+      const coin = deriveAttackCoinFlip(text);
+      return coin?.kind === "programPerHeads" && coin.ops.some((op) => op.op === "attachEnergyFrom");
+    });
+    expect(ceilinged.map(([, text]) => text)).toEqual([
+      "Flip 3 coins. Attach a number of Basic {L} Energy cards up to the number of heads from your discard pile to your Benched Pokémon in any way you like.",
+    ]);
+    for (const [, text] of ceilinged) {
+      const coin = deriveAttackCoinFlip(text);
+      if (coin?.kind !== "programPerHeads") throw new Error("not programPerHeads");
+      expect(text).toContain("in any way you like");
+      expect(coin.ops).toHaveLength(1); // ONE op in the member; the fold makes the copies
+      const ops = attachOpsIn(coin.ops);
+      expect(ops).toHaveLength(1);
+      expect(ops[0]?.declinable).toBe(true);
+      expect(ops[0]?.count).toBeUndefined();
+      // …and this reader's walk does NOT see it: the sentence is null on `deriveAttackEffect`.
+      expect(deriveAttackEffect(text)).toBeNull();
+    }
   });
 
   it("🛑 the REGISTRY half: every multi-op `anyWay` program is flagged, Infernape excepted", () => {

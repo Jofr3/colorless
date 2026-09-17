@@ -19624,8 +19624,34 @@ const ATTACK_COIN_SELF_ENERGY_PER_TAILS =
 // any way you like.", 1 printing) is a DIFFERENT op (`attachEnergyFrom`) and stays
 // refused by this anchor's "Put a number of cards" (D442/D448). No /i, `^…$`, and NO
 // apostrophe class — the sentence has no apostrophe slot (D136/D137).
+// 🆕🆕🆕 **D528 — THE ATTACH TWIN IS BUILT, ON ITS OWN ANCHOR BELOW.** "Stays refused by
+// THIS anchor" is still true (the verb is fixed here); "D442/D448's one-printing rule"
+// was never a build rule — D448 (conventions.md, *A one-print fixture makes a filter
+// unfalsifiable*) is a FIXTURE rule, paid by a non-{L} card in the demonstrator's pile,
+// and D442 (*Two riders need two rows*) is a MUTANT-ROW rule; D527 built corpus FILE
+// LINE 454 at ONE printing. The twin derives on `ATTACK_COIN_ATTACH_UP_TO_HEADS`.
 const ATTACK_COIN_RETRIEVAL_UP_TO_HEADS =
   /^Flip (\d+) coins\. Put a number of cards up to the number of heads from your discard pile into your hand\.$/;
+
+// 🆕🆕🆕 D528 — THE HEADS-CEILINGED DISCARD-TO-BENCH ENERGY ATTACH, corpus FILE LINE 215
+// (1 legal printing): "Flip 3 coins. Attach a number of Basic {L} Energy cards up to the
+// number of heads from your discard pile to your Benched Pokémon in any way you like."
+// The ATTACH twin of D525's anchor one block up, and the tenth anchor of the family —
+// disjoint from D525's by its VERB ("Attach" against "Put": no pattern in the family
+// spans both), and disjoint from `attachFromZoneClause`'s `^Attach…` anchors because
+// the "Flip N coins. " head defeats their `^`. The count is CAPTURED and guarded at the
+// arm (`>= 2 && <= MAX_PRINTED_FLIPS`, the family's guards); the Energy CODE is captured
+// (`[A-Z]`) and resolved through `ENERGY_TYPE_BY_CODE` at the arm — an unmapped code
+// refuses to the loud path exactly as `attachFromZoneProgram` refuses one. The noun
+// phrase "Basic … Energy cards" and the destination "your Benched Pokémon in any way
+// you like" are FIXED in the anchor — they are `DISCARD_ATTACH_DESTINATIONS`' `benchOnly`
+// + `anyWay` row, and the arm writes that row's op literal. ZERO vocabulary: the reading
+// is `AttackCoinFlip.programPerHeads` over ONE copy of D358's shipped op, expanded at
+// `attack.ts`'s fold into H independent declinable parks — the distribution reading
+// D358/D360 already give "up to N … in any way you like" with N = heads. No /i, `^…$`,
+// and NO apostrophe class — the sentence has no apostrophe slot (D136/D137).
+const ATTACK_COIN_ATTACH_UP_TO_HEADS =
+  /^Flip (\d+) coins\. Attach a number of Basic \{([A-Z])\} Energy cards up to the number of heads from your discard pile to your Benched Pokémon in any way you like\.$/;
 
 // 🆕🆕🆕 D526 — THE THREE-TIER HEADS LADDER, corpus FILE LINE 218 (1 legal printing):
 // "Flip 3 coins. If 1 of them is heads, this attack does 20 more damage. If 2 of them
@@ -19967,6 +19993,13 @@ export type AttackCoinFlip =
   // question), and NOT a generic `programMaxHeads` that substitutes `'max' in op` at
   // runtime (type-loose; the attach twin at corpus FILE LINE 215 is a DIFFERENT op,
   // `attachEnergyFrom`, and stays refused — D442/D448's one-printing rule). `dest`
+  // 🆕🆕🆕 D528 — the attach twin is BUILT, and NOT as a ninth member: it is
+  // `programPerHeads` over ONE copy of D358's `attachEnergyFrom { discard, energyType,
+  // benchOnly, declinable }`, because the print is a DISTRIBUTION ("to your Benched
+  // Pokémon in any way you like") — each card is an independent card+body decision,
+  // which D358/D360 already read as N independent declinable parks; H `max: 1` parks
+  // were rejected HERE for the RETRIEVAL print because that print is ONE question.
+  // "D442/D448's one-printing rule" was a fixture/mutant-row rule, never a build rule.
   // is the literal `"hand"` because the sentence prints it; `filter` is a
   // `CardFilter` because the interpreter's park takes one, and the arm writes
   // `{ kind: "anyCard" }` (the noun "cards" is fixed in the anchor, not captured).
@@ -20392,6 +20425,44 @@ export function deriveAttackCoinFlip(text: string): AttackCoinFlip | null {
     const n = Number(upToHeads[1]);
     if (n < 2 || n > MAX_PRINTED_FLIPS) return null;
     return { kind: "retrievalUpToHeads", flips: { kind: "printed", count: n }, filter: { kind: "anyCard" }, dest: "hand" };
+  }
+  // 🆕🆕🆕 D528 — THE ATTACH TWIN, corpus FILE LINE 215 (1 legal printing). NO new member:
+  // the reading is `programPerHeads` over ONE copy of D358's shipped discard-spread op —
+  // `attachEnergyFrom { source: "discard", energyType, benchOnly: true, declinable: true }`,
+  // byte-identical to what `attachFromZoneProgram` emits (twice) for "Attach up to 2 Basic
+  // {L} Energy cards from your discard pile to your Benched Pokémon in any way you like."
+  // — expanded at `attack.ts`'s fold into H independent DECLINABLE parks over the Bench.
+  // That is the D525 design question answered the OTHER way, and the two do not
+  // contradict: the retrieval print is ONE question ("put cards into your hand"), so H
+  // `max: 1` parks were rejected there; this print is a DISTRIBUTION ("in any way you
+  // like"), where every card is an independent card+body decision — the reading D358/D360
+  // already give the printed "up to N … in any way you like", with N = heads here.
+  // The flip guards are the family's (`>= 2` because the regex's own "coins" is plural;
+  // `<= MAX_PRINTED_FLIPS` because the digits are third-party text and the count becomes
+  // the expansion's length). The Energy code resolves through `ENERGY_TYPE_BY_CODE` and an
+  // unmapped code refuses to the loud path, as `attachFromZoneProgram` refuses one. The
+  // interpreter does the rest: `parkOrForce` returns `done` on an empty Bench, the op's
+  // own guard returns `done` when the pile holds no matching Basic Energy (a later copy
+  // after the pile runs dry is a silent no-op), and each copy parks declinably at ANY
+  // non-empty candidate set (D359's `upTo` moves the forced arm).
+  // ⚠️ The local is `attachUpToHeads` and the count local is `coins`, and the guard is TWO
+  // one-line `if`/`return`s — none of D525's `upToHeads` block's lines (`n`), the family's
+  // ternary (`flips`) or D526's `ladder` block recur here, so no older row's `find` starts
+  // occurring twice (D437/D446/D448's byte-twin rule; `precheck` run the moment this arm
+  // was written).
+  const attachUpToHeads = ATTACK_COIN_ATTACH_UP_TO_HEADS.exec(effect);
+  if (attachUpToHeads !== null) {
+    const coins = Number(attachUpToHeads[1]);
+    if (coins < 2) return null;
+    if (coins > MAX_PRINTED_FLIPS) return null;
+    const attachType = ENERGY_TYPE_BY_CODE[attachUpToHeads[2] ?? ""];
+    if (attachType === undefined) return null;
+    return {
+      kind: "programPerHeads",
+      flips: { kind: "printed", count: coins },
+      ops: [{ op: "attachEnergyFrom", source: "discard", energyType: attachType, benchOnly: true, declinable: true }],
+      face: "heads",
+    };
   }
   // 🆕🆕🆕 D526 — THE THREE-TIER HEADS LADDER, corpus FILE LINE 218. The count is PINNED
   // at 3 by the anchor ("all of them" is the third tier), so there is no `n` to guard
@@ -22354,6 +22425,12 @@ const ATTACK_OPPONENT_DISCARDS_HAND_MORE =
 //     count, written at `attack.ts`'s fold. THIS row (the attach twin, corpus FILE
 //     LINE 215) STAYS refused: it is a DIFFERENT op (`attachEnergyFrom`) with one
 //     printing, and D442/D448's rule holds it out until a second prints.
+//     🆕🆕🆕 **D528 — BUILT AT ONE PRINTING, AND NOT BY THIS ANCHOR.** The row derives
+//     on `deriveAttackCoinFlip` (`ATTACK_COIN_ATTACH_UP_TO_HEADS`) as `programPerHeads`
+//     over ONE copy of the op THIS arm builds for "Attach up to 2 Basic {L} Energy
+//     cards from your discard pile to your Benched Pokémon in any way you like." —
+//     byte-identical, the `benchOnly` + `anyWay` destination row — with N = heads.
+//     "Until a second prints" was never a build rule (D527 built line 454 at one).
 //
 // ⚠️ AND THE ARM IS DELIBERATELY WIDER THAN THE LEGAL POOL. "1 of your Pokémon"
 // has **5 catalog printings and 0 legal** — every one rotated — and it is read
@@ -23204,6 +23281,13 @@ function attachFromZoneProgram(
 //     hand, max: heads }` appended at the fold, the interpreter's own "up to" park.
 //     The "Attach" twin (FILE LINE 215, 1 printing, `attachEnergyFrom`) stays
 //     refused as a different op with one printing (D442/D448).
+//     🆕🆕🆕 **D528 — THE "Attach" TWIN IS BUILT TOO**, on `deriveAttackCoinFlip` as
+//     `programPerHeads` over ONE copy of D358's discard-spread op (`attachEnergyFrom
+//     { source: "discard", energyType, benchOnly: true, declinable: true }`) —
+//     H independent declinable parks at `attack.ts`'s fold, the distribution reading
+//     the "up to N … in any way you like" printings have carried since D358/D360.
+//     The one-printing rule cited above was D448's FIXTURE rule (a non-{L} card in
+//     the pile makes the type filter falsifiable), not a rule against building.
 //
 // WHAT THIS ANCHOR READS — 10 of the 16 legal printings, on 5 of the 8 sentences:
 //   • "Put a Supporter card … into your hand."            **3** (`sv06-055`,

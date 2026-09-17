@@ -81,7 +81,12 @@ const PRINTED =
 /** The same skeleton at a different printed count — the digit is CAPTURED, not pinned. Constructed. */
 const at = (n: number): string => PRINTED.replace("Flip 3 coins", `Flip ${n} coins`);
 /** Corpus FILE LINE 215 (census output line 271), 1 legal printing — the attach TWIN, a DIFFERENT op
-    (`attachEnergyFrom`), refused by every reader: THE CONTROL. */
+    (`attachEnergyFrom`), refused by every reader: THE CONTROL.
+    🆕🆕🆕 **D528 — BUILT, and the control INVERTED (D418's second half): the twin now derives on the
+    SAME reader as the OTHER member** — `programPerHeads` over ONE copy of D358's discard-spread op,
+    NOT `retrievalUpToHeads` — so what the old claim caught ("this anchor does not span the attach
+    verb") is kept as `deriveAttackCoinFlip(ATTACH_TWIN).kind !== "retrievalUpToHeads"`, and the
+    positive reading is asserted in `headsCeilingDiscardAttach.test.ts`. */
 const ATTACH_TWIN =
   "Flip 3 coins. Attach a number of Basic {L} Energy cards up to the number of heads from your discard pile to your Benched Pokémon in any way you like.";
 /** The REPEAT spelling of the same count — the `programPerHeads` reading this slice rejected. Constructed;
@@ -377,16 +382,38 @@ describe("D525 §1 — the printed row derives to EXACTLY the seventh member: pr
     }
   });
 
-  it("🛑 THE CONTROL: the attach twin (corpus FILE LINE 215, 1 printing, `attachEnergyFrom`) STAYS null on every reader and every splitter — while the row IS claimed", () => {
+  it("🛑 THE CONTROL, INVERTED AT D528: the attach twin (corpus FILE LINE 215, 1 printing, `attachEnergyFrom`) now DERIVES on this reader — as `programPerHeads` over ONE copy of D358's op, NOT as `retrievalUpToHeads` — twelve readers and four splitters still null on it, and BOTH ceilings derive", () => {
     expect(legalAttackCorpus().filter(([, s]) => s === ATTACH_TWIN)).toEqual([[1, ATTACH_TWIN]]);
-    for (const reader of READERS) expect(reader(ATTACH_TWIN), reader.name).toBeNull();
+    // 🆕🆕🆕 D528 — was `toBeNull()` on every reader and `resolvedByAnyReader` false (the twin was the
+    // suite's control from D525 to D527). What the old claim caught — THIS anchor does not span the
+    // attach verb, and the retrieval member is not the twin's — is kept below as the member's kind.
+    for (const reader of READERS) {
+      if (reader === deriveAttackCoinFlip) continue;
+      expect(reader(ATTACH_TWIN), reader.name).toBeNull();
+    }
     for (const splitter of SPLITTERS) expect(splitter(ATTACH_TWIN), splitter.name).toBeNull();
-    expect(resolvedByAnyReader(ATTACH_TWIN)).toBe(false);
+    const twin = deriveAttackCoinFlip(ATTACH_TWIN);
+    expect(twin).not.toBeNull();
+    expect(twin?.kind).toBe("programPerHeads");
+    expect(twin?.kind).not.toBe("retrievalUpToHeads");
+    if (twin?.kind !== "programPerHeads") throw new Error("the twin is not programPerHeads");
+    expect(twin.flips).toEqual({ kind: "printed", count: 3 });
+    expect(twin.face).toBe("heads");
+    expect(twin.ops).toEqual([
+      { op: "attachEnergyFrom", source: "discard", energyType: "Lightning", benchOnly: true, declinable: true },
+    ]);
+    expect(resolvedByAnyReader(ATTACH_TWIN)).toBe(true);
     // …and the two "up to the number of heads" ceilings in the column are exactly these two rows,
-    // ONE of which now derives (`perHeadsConsequent.test.ts`'s ceilings rung, read from this side).
+    // BOTH of which now derive on this reader — on DIFFERENT members (`perHeadsConsequent.test.ts`'s
+    // ceilings rung, read from this side).
     const ceilings = legalAttackCorpus().filter(([, s]) => s.includes("up to the number of heads"));
     expect(ceilings.map(([, s]) => s).sort()).toEqual([ATTACH_TWIN, PRINTED].sort());
-    expect(ceilings.filter(([, s]) => deriveAttackCoinFlip(s) !== null).map(([, s]) => s)).toEqual([PRINTED]);
+    expect(ceilings.filter(([, s]) => deriveAttackCoinFlip(s) !== null).map(([, s]) => s).sort()).toEqual(
+      [ATTACH_TWIN, PRINTED].sort(),
+    );
+    expect(ceilings.map(([, s]) => deriveAttackCoinFlip(s)?.kind).sort()).toEqual(["programPerHeads", "retrievalUpToHeads"]);
+    // The retrieval member is on EXACTLY the retrieval row — the twin never reaches it.
+    expect(legalAttackCorpus().filter(([, s]) => deriveAttackCoinFlip(s)?.kind === "retrievalUpToHeads")).toEqual([[2, PRINTED]]);
   });
 
   it("🛑 `deriveAttackCoinFlip` is the ONLY claimant — twelve readers and four splitters are null — and the reader surface is still THIRTEEN", () => {
@@ -706,11 +733,13 @@ describe("D525 §3 — the census moved in exactly ONE summand, by 1 sentence / 
     // 1 legal printing, claimed by `deriveAttackEffect` through `ATTACK_HAND_SEARCH_BENCH_COUNT` as the sibling's two-op shape with `max: "yourBenchCount"`, resolved at the park against the
     // attacker's Bench at step time, ZERO new vocabulary, one persisted-field widening with `MATCH_RECORD_VERSION` HELD at 30; the sentence and printing steps AGREE at 1): 553/1595 → 554/1596, and the own-row
     // `without` pair re-derived BY HAND as resolved minus this suite's row (D525 (5)). Stepped by hand again (outside the annotated-chain sweep's shape).
-    expect([resolved.length, units(resolved)]).toEqual([554, 1596]);
+    // 🆕🆕🆕 D528 +1 sentence / +1 printing (THE HEADS-CEILINGED DISCARD-TO-BENCH ENERGY ATTACH — THE ATTACH TWIN OF D525, ZERO VOCABULARY, NO NEW `AttackCoinFlip` MEMBER — corpus FILE LINE 215, *"Flip 3 coins. Attach a number of Basic {L} Energy cards up to the number of heads from your discard pile to your Benched Pokémon in any way you like."*, 1 legal printing, claimed by `deriveAttackCoinFlip` as `programPerHeads` over ONE copy of D358's discard-spread op, H declinable parks at the existing fold, ZERO new vocabulary, no fold/interpreter bytes; the sentence and printing steps AGREE at 1): 554/1596 → 555/1597. Stepped by hand (outside the annotated-chain sweep's shape).
+    expect([resolved.length, units(resolved)]).toEqual([555, 1597]);
     expect(resolved.map(([, s]) => s)).toContain(PRINTED);
     // …and the step is THIS sentence and nothing else: remove it and the pair is D524's.
     const without = resolved.filter(([, s]) => s !== PRINTED);
-    expect([without.length, units(without)]).toEqual([553, 1594]);
+    // 🆕🆕🆕 D528 +1 sentence / +1 printing (THE HEADS-CEILINGED DISCARD-TO-BENCH ENERGY ATTACH — THE ATTACH TWIN OF D525, ZERO VOCABULARY, NO NEW `AttackCoinFlip` MEMBER — corpus FILE LINE 215, *"Flip 3 coins. Attach a number of Basic {L} Energy cards up to the number of heads from your discard pile to your Benched Pokémon in any way you like."*, 1 legal printing, claimed by `deriveAttackCoinFlip` as `programPerHeads` over ONE copy of D358's discard-spread op, H declinable parks at the existing fold, ZERO new vocabulary, no fold/interpreter bytes; the sentence and printing steps AGREE at 1): 553/1594 → 554/1595 (own-row `without` pair, re-derived by hand as resolved − this suite's row). Stepped by hand (outside the annotated-chain sweep's shape).
+    expect([without.length, units(without)]).toEqual([554, 1595]);
   });
 
   it("🛑 the RAW reader-only residue fell by exactly 1 sentence / 2 printings — 88 / 138 — and the row left it", () => {
@@ -718,13 +747,18 @@ describe("D525 §3 — the census moved in exactly ONE summand, by 1 sentence / 
     const unbuilt = legalAttackCorpus().filter(([, s]) => !resolvedByAnyReader(s));
     // 🆕🆕🆕 D526 −1 sentence / −1 printing (corpus FILE LINE 218, see §3's first rung; the two steps agree at 1): 88/138 → 87/137.
     // 🆕🆕🆕 D527 −1 sentence / −1 printing (corpus FILE LINE 454, see the reader-arm rung above; the two steps agree at 1): 87/137 → 86/136.
-    expect([unbuilt.length, units(unbuilt)]).toEqual([86, 136]);
+    // 🆕🆕🆕 D528 −1 sentence / −1 printing (THE HEADS-CEILINGED DISCARD-TO-BENCH ENERGY ATTACH — THE ATTACH TWIN OF D525, ZERO VOCABULARY, NO NEW `AttackCoinFlip` MEMBER — corpus FILE LINE 215, *"Flip 3 coins. Attach a number of Basic {L} Energy cards up to the number of heads from your discard pile to your Benched Pokémon in any way you like."*, 1 legal printing, claimed by `deriveAttackCoinFlip` as `programPerHeads` over ONE copy of D358's discard-spread op, H declinable parks at the existing fold, ZERO new vocabulary, no fold/interpreter bytes; the sentence and printing steps AGREE at 1): 86/136 → 85/135. Stepped by hand (outside the annotated-chain sweep's shape).
+    expect([unbuilt.length, units(unbuilt)]).toEqual([85, 135]);
     expect(unbuilt.map(([, s]) => s)).not.toContain(PRINTED);
-    expect(unbuilt.map(([, s]) => s)).toContain(ATTACH_TWIN);
+    // 🆕🆕🆕 D528 — was `toContain(ATTACH_TWIN)`: the twin LEFT the residue when it was built (corpus FILE
+    // LINE 215, `headsCeilingDiscardAttach.test.ts`). Re-pointed, not deleted (D418).
+    expect(unbuilt.map(([, s]) => s)).not.toContain(ATTACH_TWIN);
     // The parts add up to the whole quoted in the same case.
     const all = legalAttackCorpus();
-    expect(unbuilt.length + 554).toBe(all.length);
-    expect(units(unbuilt) + 1596).toBe(units(all));
+    // 🆕🆕🆕 D528 +1 sentence (THE HEADS-CEILINGED DISCARD-TO-BENCH ENERGY ATTACH — THE ATTACH TWIN OF D525, ZERO VOCABULARY, NO NEW `AttackCoinFlip` MEMBER — corpus FILE LINE 215, *"Flip 3 coins. Attach a number of Basic {L} Energy cards up to the number of heads from your discard pile to your Benched Pokémon in any way you like."*, 1 legal printing, claimed by `deriveAttackCoinFlip` as `programPerHeads` over ONE copy of D358's discard-spread op, H declinable parks at the existing fold, ZERO new vocabulary, no fold/interpreter bytes; the sentence and printing steps AGREE at 1): 554 → 555. Stepped by hand (outside the annotated-chain sweep's shape).
+    expect(unbuilt.length + 555).toBe(all.length);
+    // 🆕🆕🆕 D528 +1 printing (THE HEADS-CEILINGED DISCARD-TO-BENCH ENERGY ATTACH — THE ATTACH TWIN OF D525, ZERO VOCABULARY, NO NEW `AttackCoinFlip` MEMBER — corpus FILE LINE 215, *"Flip 3 coins. Attach a number of Basic {L} Energy cards up to the number of heads from your discard pile to your Benched Pokémon in any way you like."*, 1 legal printing, claimed by `deriveAttackCoinFlip` as `programPerHeads` over ONE copy of D358's discard-spread op, H declinable parks at the existing fold, ZERO new vocabulary, no fold/interpreter bytes; the sentence and printing steps AGREE at 1): 1596 → 1597. Stepped by hand (outside the annotated-chain sweep's shape).
+    expect(units(unbuilt) + 1597).toBe(units(all));
     expect([all.length, units(all)]).toEqual([640, 1732]);
   });
 
@@ -752,7 +786,7 @@ const RAW: Record<string, string> = (
 describe("D525 §4 — the version steps, the heading is written, the prose is corrected, and what stands still", () => {
   it("engineVersion and `manifest.version` agree, and the bump is owed for BEHAVIOUR", () => {
     // ⚠️ The version is NOT spelled in this `it(…)` title (D460's fourth class).
-    expect(engineVersion).toBe("0.414.0");
+    expect(engineVersion).toBe("0.415.0");
     expect(manifest.version).toBe(engineVersion);
   });
 
