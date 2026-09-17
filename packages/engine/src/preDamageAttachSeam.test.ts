@@ -398,7 +398,9 @@ describe("§6 every branch frees the SAME single row, so the fork was never a fo
       .filter(([, text]) => !resolvedByAnyReader(text))
       .filter(([, text]) => {
         const gate = splitAttackGateClause(text);
-        if (gate !== null && gate.body !== "" && resolvedByAnyReader(gate.body)) return false;
+        // 🆕 D529 — widened with the census: a clause-only split (`body: ""`) is credited; the
+        // one such row (the Rollout gate) matches none of the three branch patterns below.
+        if (gate !== null && (gate.body === "" || resolvedByAnyReader(gate.body))) return false;
         return splitAttackTrailingClause(text) === null;
       });
 

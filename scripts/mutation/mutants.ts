@@ -27983,8 +27983,15 @@ export const MUTANTS: Mutant[] = [
     //    printing steps AGREE at 1 and 1 (corpus FILE LINE 215 carries ONE printing), so the
     //    regression stays the two-step it has always expressed. Re-transcribed in the SAME edit as
     //    the `censusAtHead` literal and the other two version-tax rows (D525 (1)).
-    find: "  attack: 1647,",
-    replace: "  attack: 1645,",
+    // 🆕🆕🆕 D529 — RE-TRANSCRIBED AGAIN, 1647 -> 1648 (replace 1645 -> 1646), AND FOR THE FIRST TIME
+    //    WITHOUT AN ENGINE BYTE BEHIND THE STEP: the census credited the clause-only Rollout gate
+    //    (corpus FILE LINE 630, 1 sentence / 1 printing, BUILT since D395) once the four-arm predicate
+    //    stopped demanding `gate.body !== ""`, so `BUILT.attack` moved through the SPLIT summand
+    //    (13 -> 14) and no version-tax trio was owed (D471/D504 precedent — no bump, so only THIS row
+    //    of the trio is re-transcribed, in the SAME edit as the literal, D525 (1)). The regression
+    //    stays the two-step it has always expressed.
+    find: "  attack: 1648,",
+    replace: "  attack: 1646,",
     expectKilledBy: [
       "packages/engine/src/censusAtHead.test.ts",
     ],
@@ -31374,5 +31381,76 @@ export const MUTANTS: Mutant[] = [
     find: "      ops: [{ op: \"attachEnergyFrom\", source: \"discard\", energyType: attachType, benchOnly: true, declinable: true }],",
     replace: "      ops: [{ op: \"attachEnergyFrom\", source: \"hand\", energyType: attachType, benchOnly: true, declinable: true }],",
     expectKilledBy: ["packages/engine/src/headsCeilingDiscardAttach.test.ts"],
+  },
+  // ── D529 — THE ROLLOUT CENSUS-INSTRUMENT FIX: the clause-only attack gate credited by the residue
+  //    predicate. Corpus FILE LINE 630 (`legalAttackCorpus()` index 577), *"You can use this attack
+  //    only if this Pokémon used Rollout during your last turn."*, 1 sentence / 1 printing — BUILT
+  //    since D395 (`splitAttackGateClause` claims it WHOLE as `{ clause, body: "" }`, the gate row is
+  //    enforced at the §8 declaration seam, no `ATTACK_EFFECT_SKIPPED`) and in the residue for 134
+  //    decisions ONLY because `builds()` / `arm()` / `censusAtHead`'s filter / the SPLIT summand all
+  //    required `gate.body !== ""` before crediting the gate arm. ZERO engine bytes, NO version bump
+  //    (D471 / D504 precedent), `MATCH_RECORD_VERSION` HELD at 30. Five rows, ONE PER SITE the
+  //    predicate was widened at, plus the constant: each is the pre-D529 line put back.
+  //
+  //    🛑 R1 IS THE ROW THE NEW GATE CLAIM EXISTS FOR (D465 "an instrument must be killable"):
+  //    the residue rows come from `arm()`, so reverting `builds()` ALONE moves none of §A's three
+  //    literals — the ONLY thing that sees it is the builds()⇔arm() partition claim added at D529,
+  //    which was driven RED by hand (exit 1, three claims: 581 + 58 ≠ 640, one sentence where
+  //    builds() and arm() disagree, one sentence in neither set — the Rollout row each time)
+  //    BEFORE this row was written. R2 reddens both the pinned literals (59 vs 58, 85 vs 84) and
+  //    the partition claim. R3–R5 are `censusAtHead`'s: residueSentences 59 ≠ 58, splitUnits 13 ≠
+  //    14 and the closing rung, the constant 13 against a live 14.
+  //
+  //    ⚠️ The two `residue-census.ts` predicate lines differ ONLY by their return (`return true;`
+  //    vs `return "gate";`), so each `find` was counted at ONE occurrence before `precheck`; every
+  //    `replace` counted at ZERO in its target; `find !== replace` asserted by the writing helper;
+  //    every row probed UNDECLARED first (D525 (3)). Existing `D395-clause-only-split-refuses-again`
+  //    keeps its killers and now ALSO reddens the residue rung — no edit.
+  {
+    id: "D529-builds-refuses-the-clause-only-gate-again",
+    decision: "D529",
+    what: "🛑 R1 — **THE PRE-D529 `builds()` LINE PUT BACK, ALONE.** The census instrument's build predicate demands a non-empty body again and the clause-only Rollout gate falls out of `builtSentences` — but the residue `rows` come from `arm()`, which is still widened, so §A's three pinned literals (85 / 58 / 84) DO NOT MOVE and `censusAtHead` is untouched. **Killed ONLY by the builds()⇔arm() partition claim D529 added to `residue-census-gate.ts` §A** (581 + 58 ≠ 640; one sentence where the two predicates disagree; one sentence in neither set), which is the claim that was driven RED by hand before this row existed. Without it this row SURVIVES — an instrument whose two copies of one predicate can drift with nothing reddening (D465)",
+    file: "scripts/residue-census.ts",
+    find: "  if (gate !== null && (gate.body === \"\" || resolvedByAnyReader(gate.body))) return true;",
+    replace: "  if (gate !== null && gate.body !== \"\" && resolvedByAnyReader(gate.body)) return true;",
+    expectKilledBy: [],
+    killedByCommand: ["bun", "scripts/residue-census-gate.ts"],
+  },
+  {
+    id: "D529-arm-refuses-the-clause-only-gate-again",
+    decision: "D529",
+    what: "🛑 R2 — **THE PRE-D529 `arm()` LINE PUT BACK, ALONE.** The subtraction breakdown refuses the clause-only gate again, so the Rollout row re-enters the residue `rows` (59 sentences / 85 printings) while `builds()` still credits it. Killed TWICE over by `residue-census-gate.ts` §A: the pinned literals disagree with the suite (59 vs 58, 85 vs 84 — the same defect D465's §A was written for, seen from the instrument side) AND the partition claim (582 + 59 ≠ 640; the Rollout row in BOTH sets)",
+    file: "scripts/residue-census.ts",
+    find: "  if (gate !== null && (gate.body === \"\" || resolvedByAnyReader(gate.body))) return \"gate\";",
+    replace: "  if (gate !== null && gate.body !== \"\" && resolvedByAnyReader(gate.body)) return \"gate\";",
+    expectKilledBy: [],
+    killedByCommand: ["bun", "scripts/residue-census-gate.ts"],
+  },
+  {
+    id: "D529-census-filter-refuses-the-clause-only-gate-again",
+    decision: "D529",
+    what: "🛑 R3 — **THE SUITE'S OWN `residueSentences` FILTER PUT BACK TO ITS PRE-D529 LINE.** The canonical four-way subtraction demands `gate.body !== \"\"` again and the Rollout row is counted UNBUILT by the suite while `BUILT.attack` says 1648: `residueSentences.length` reads 59 against the pinned 58. This is the line every verbatim copy (the instrument, six outsider suites) was transcribed from, so it is the one whose regression the pinned literal must see",
+    file: "packages/engine/src/censusAtHead.test.ts",
+    find: "      if (gate !== null && (gate.body === \"\" || resolvedByAnyReader(gate.body))) return false;",
+    replace: "      if (gate !== null && gate.body !== \"\" && resolvedByAnyReader(gate.body)) return false;",
+    expectKilledBy: ["packages/engine/src/censusAtHead.test.ts"],
+  },
+  {
+    id: "D529-split-summand-refuses-the-clause-only-gate-again",
+    decision: "D529",
+    what: "🛑 R4 — **THE SPLIT SUMMAND'S LOOP ASKS THE READER ABOUT THE EMPTY BODY AGAIN.** `resolvedByAnyReader(\"\")` is false, so the clause-only printing drops out of `splitUnits` (13 against `SPLIT_ATTACK_UNITS` 14) and the closing rung `derived + registryUnits + splitUnits + compoundUnits === BUILT.attack` reads 1647 against 1648 — the summand and the constant disagree, which is exactly what deriving the summand rather than asserting it is for",
+    file: "packages/engine/src/censusAtHead.test.ts",
+    find: "      if (split.body === \"\" || resolvedByAnyReader(split.body)) splitUnits += units;",
+    replace: "      if (resolvedByAnyReader(split.body)) splitUnits += units;",
+    expectKilledBy: ["packages/engine/src/censusAtHead.test.ts"],
+  },
+  {
+    id: "D529-split-constant-not-stepped",
+    decision: "D529",
+    what: "⚠️ R5 — **THE CONSTANT LEFT AT ITS PRE-D529 VALUE WHILE THE LOOP IS WIDENED.** `SPLIT_ATTACK_UNITS` 13 against a live `splitUnits` of 14 and against the third-class rung's 13 + 1 — the D495 census-constant row's shape for the SPLIT summand: a stale constant is the one thing that cannot be true at both heads",
+    file: "packages/engine/src/censusAtHead.test.ts",
+    find: "const SPLIT_ATTACK_UNITS = 14;",
+    replace: "const SPLIT_ATTACK_UNITS = 13;",
+    expectKilledBy: ["packages/engine/src/censusAtHead.test.ts"],
   },
 ];

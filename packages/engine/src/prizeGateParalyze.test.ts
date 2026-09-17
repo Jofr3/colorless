@@ -308,7 +308,8 @@ describe("D517 §2 — the program, read against the consequent and against the 
     const armOf = (text: string): string => {
       if (resolvedByAnyReader(text)) return "reader";
       const g = splitAttackGateClause(text);
-      if (g !== null && g.body !== "" && resolvedByAnyReader(g.body)) return "gate";
+      // 🆕 D529 — widened with the census: a clause-only split (`body: ""`) is the gate arm.
+      if (g !== null && (g.body === "" || resolvedByAnyReader(g.body))) return "gate";
       return splitAttackTrailingClause(text) !== null ? "trailing" : "none";
     };
     expect(armOf(PRINTED)).toBe("reader");
@@ -493,7 +494,8 @@ function cell(i: number): string {
 function cellBuilds(text: string): boolean {
   if (resolvedByAnyReader(text)) return true;
   const g = splitAttackGateClause(text);
-  if (g !== null && g.body !== "" && resolvedByAnyReader(g.body)) return true;
+  // 🆕 D529 — widened with the census: a clause-only split (`body: ""`) is credited. No cell is one.
+  if (g !== null && (g.body === "" || resolvedByAnyReader(g.body))) return true;
   return splitAttackTrailingClause(text) !== null;
 }
 

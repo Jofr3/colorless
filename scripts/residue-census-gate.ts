@@ -52,14 +52,21 @@
  * CLASS any row lands in — a class list is exactly the pinned figure this file
  * refuses to hold, because building a row is supposed to move it. It says
  * nothing about whether `builds()` is the right predicate; that is
- * `censusAtHead.test.ts`'s job and § A only checks the two agree. And it says
+ * `censusAtHead.test.ts`'s job and § A only checks the two agree. 🆕 D529 — § A
+ * ALSO pins a RELATION inside the instrument: `builds()` and `arm()` are the same
+ * predicate, sentence by sentence, and `builtSentences` + `rows` partition the
+ * corpus in BOTH directions. That still says nothing about the predicate's
+ * CORRECTNESS (the three literals do), but it is what makes a mutant that reverts
+ * `builds()` ALONE killable: the residue rows come from `arm()`, so the three
+ * literals do not move when only `builds()` regresses (driven RED by hand at D529
+ * before its row was written — D465 "an instrument must be killable"). And it says
  * nothing about the SEGMENT or SUBSTITUTION probes, which are unchanged by D465
  * and remain, as they were, untested.
  */
 
 import { readFileSync } from "node:fs";
 import { legalAttackCorpus, resolvedByAnyReader } from "../packages/engine/src/censusAttackCorpus";
-import { keptAfterDeletion, rows } from "./residue-census";
+import { arm, builds, builtSentences, keptAfterDeletion, rows } from "./residue-census";
 
 const CENSUS = "packages/engine/src/censusAtHead.test.ts";
 const failures: string[] = [];
@@ -101,6 +108,32 @@ for (const [label, needle, mine] of PINS) {
       : `residue-census.ts says ${mine}, the suite pins ${theirs}`,
   );
 }
+// 🆕 D529 — `builds()` AND `arm()` ARE ONE PREDICATE, AND THEY PARTITION THE POPULATION.
+// The residue `rows` are produced by `arm()` and `builtSentences` by `builds()`; the two
+// functions carry the SAME four-arm predicate by transcription, and nothing above could
+// see them drift apart: revert `builds()` alone and the three literals still agree.
+// Compared in BOTH directions — the built set and the residue set must be disjoint AND
+// must cover the corpus — and per sentence, so a drift on one row is named.
+const builtSet = new Set(builtSentences);
+const residueSet = new Set(rows.map((r) => r.text));
+check(
+  "§A builds() and arm() partition the population: builtSentences + rows === corpus",
+  builtSentences.length + rows.length === corpus.length,
+  `${builtSentences.length} built + ${rows.length} residue ≠ ${corpus.length} corpus sentences`,
+);
+const disagree = corpus.filter(([, t]) => builds(t) !== (arm(t) !== null)).map(([, t]) => t);
+check(
+  "§A builds() and arm() are the same predicate, sentence by sentence",
+  disagree.length === 0,
+  `${disagree.length} sentence(s) where builds() and arm() disagree; first: «${disagree[0] ?? "—"}»`,
+);
+const inBoth = corpus.filter(([, t]) => builtSet.has(t) && residueSet.has(t)).map(([, t]) => t);
+const inNeither = corpus.filter(([, t]) => !builtSet.has(t) && !residueSet.has(t)).map(([, t]) => t);
+check(
+  "§A every corpus sentence is in exactly ONE of builtSentences / rows (both directions)",
+  inBoth.length === 0 && inNeither.length === 0,
+  `${inBoth.length} in both, ${inNeither.length} in neither; first: «${inBoth[0] ?? inNeither[0] ?? "—"}»`,
+);
 
 // ─── § B. THE TAIL REPAIR, PURE, ON LITERAL INPUTS ───────────────────────────
 /** `keptAfterDeletion(text, tok, i, len)` → the candidate remainders, plain
@@ -208,5 +241,5 @@ if (failures.length > 0) {
   process.exit(1);
 }
 console.log(
-  `residue-census-gate: OK — §A three pinned literals agree (${measured.raw} / ${measured.residue} / ${measured.printings}), §B ${B_CASES.length + 2} tail-repair claims hold, §C ${offered} repaired candidate(s) over ${spans} spans in ${rows.length} residue sentences, none outside a tail span.`,
+  `residue-census-gate: OK — §A three pinned literals agree (${measured.raw} / ${measured.residue} / ${measured.printings}) and builds()/arm() partition ${corpus.length} sentences as ${builtSentences.length} + ${rows.length}, §B ${B_CASES.length + 2} tail-repair claims hold, §C ${offered} repaired candidate(s) over ${spans} spans in ${rows.length} residue sentences, none outside a tail span.`,
 );

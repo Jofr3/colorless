@@ -381,7 +381,8 @@ describe("D518 §2 — the reading, the arm, and the indicator sibling it does N
     const armOf = (text: string): string => {
       if (resolvedByAnyReader(text)) return "reader";
       const g = splitAttackGateClause(text);
-      if (g !== null && g.body !== "" && resolvedByAnyReader(g.body)) return "gate";
+      // 🆕 D529 — widened with the census: a clause-only split (`body: ""`) is the gate arm.
+      if (g !== null && (g.body === "" || resolvedByAnyReader(g.body))) return "gate";
       return splitAttackTrailingClause(text) !== null ? "trailing" : "none";
     };
     expect(armOf(PRINTED)).toBe("reader");

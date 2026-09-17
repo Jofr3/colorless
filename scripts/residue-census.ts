@@ -36,7 +36,11 @@
  *   ② it is one of `REGISTRY_ATTACKS`'s printed sentences — a REGISTRY row
  *     builds it and `censusAtHead`'s `registryUnits` rung asserts that no reader
  *     claims it, so **a reader arm for one of these REDDENS the census** (D457);
- *   ③ D444's GATE SPLITTER strips a timing clause and a reader claims the body;
+ *   ③ D444's GATE SPLITTER strips a timing clause and a reader claims the body —
+ *     OR the printed text IS the clause (D395's clause-only case, `{ clause, body: "" }`:
+ *     the gate row is enforced whole at the §8 declaration seam and there is no body
+ *     to read — credited here since D529; until then the predicate demanded
+ *     `gate.body !== ""` and the ONE such row sat in the residue as `OPAQUE`);
  *   ④ D409's TRAILING SPLITTER splits it into a head and a claimed tail.
  * RESIDUE = population − BUILT.
  *
@@ -88,7 +92,9 @@
  * **THE CLASS TABLE, BEFORE → AFTER, AT D465's HEAD BEFORE ANYTHING WAS BUILT:** `OPAQUE`
  * **86/123 → 81/116**, `PHRASE-6` 0/0 → **2/2**, `PHRASE-15` 0/0 → **1/1**, `PHRASE-16`
  * 0/0 → **1/1**, `PHRASE-18` 0/0 → **1/3**. **NOTHING ELSE MOVED**, and the residue itself
- * did not move at all (120 / 166 both sides) — `builds()` is untouched, so the three pinned
+ * did not move at all (120 / 166 both sides) — `builds()` is untouched (⚠️ D529: true AT D465 and
+ * kept as written; `builds()` has since been widened ONCE, by D529, to credit a gate split whose
+ * `body` is `""` — see ③ above and the D529 note on the predicate), so the three pinned
  * literals still agreed to the digit across the fix. The five rows, by corpus FILE LINE:
  * **126** `OPAQUE`→`PHRASE-15`, **129** →`PHRASE-16`, **143** →`PHRASE-6`,
  * **412** →`PHRASE-18`, **500** →`PHRASE-6`. **D465 THEN BUILT 500**, which is why
@@ -308,21 +314,33 @@ const { sentences: REGISTRY, pairs: REGISTRY_PAIRS } = registryAttackSentences()
 
 // ─── 2. THE BUILD PREDICATE ──────────────────────────────────────────────────
 /** ① reader ② registry ③ gate splitter ④ trailing splitter. The transcription of
-    `censusAtHead.test.ts`'s `residueSentences` filter, negated. */
+    `censusAtHead.test.ts`'s `residueSentences` filter, negated.
+    🆕 D529 — THE GATE ARM CREDITS THE CLAUSE-ONLY SPLIT. `splitAttackGateClause` answers
+    `{ clause, body: "" }` for a printed text that IS a gate clause (D395, corpus FILE LINE
+    630 — *"You can use this attack only if this Pokémon used Rollout during your last
+    turn."*, 1 sentence / 1 printing, enforced whole at the §8 seam since D395 with no
+    `ATTACK_EFFECT_SKIPPED`). Until D529 this predicate and `arm()` both required
+    `gate.body !== ""` BEFORE asking the reader, so the one such row was counted UNBUILT
+    for 134 decisions — a fact about this instrument, not about the engine (D528 (7)).
+    The widening is `gate.body === "" || resolvedByAnyReader(gate.body)`: a body that
+    exists must still resolve. `scripts/residue-census-gate.ts` §A pins that `builds()`
+    and `arm()` are ONE predicate partitioning the population, so reverting either
+    line alone reddens the gate. */
 export function builds(text: string): boolean {
   if (resolvedByAnyReader(text)) return true;
   if (REGISTRY.has(text)) return true;
   const gate = splitAttackGateClause(text);
-  if (gate !== null && gate.body !== "" && resolvedByAnyReader(gate.body)) return true;
+  if (gate !== null && (gate.body === "" || resolvedByAnyReader(gate.body))) return true;
   return splitAttackTrailingClause(text) !== null;
 }
 
-/** Which arm claimed it — for the subtraction breakdown, not for the filter. */
-function arm(text: string): "reader" | "registry" | "gate" | "trailing" | null {
+/** Which arm claimed it — for the subtraction breakdown, not for the filter.
+    Exported since D529 so `residue-census-gate.ts` can pin it against `builds()`. */
+export function arm(text: string): "reader" | "registry" | "gate" | "trailing" | null {
   if (resolvedByAnyReader(text)) return "reader";
   if (REGISTRY.has(text)) return "registry";
   const gate = splitAttackGateClause(text);
-  if (gate !== null && gate.body !== "" && resolvedByAnyReader(gate.body)) return "gate";
+  if (gate !== null && (gate.body === "" || resolvedByAnyReader(gate.body))) return "gate";
   if (splitAttackTrailingClause(text) !== null) return "trailing";
   return null;
 }
@@ -510,7 +528,9 @@ for (const [units, text] of corpus) {
   slot[0]++;
   slot[1] += units;
 }
-const builtSentences = corpus.filter(([, t]) => builds(t)).map(([, t]) => t);
+/** Exported since D529 — `residue-census-gate.ts` §A checks `builtSentences` + `rows`
+    partition the corpus, which is the claim that makes a `builds()`-only mutant killable. */
+export const builtSentences = corpus.filter(([, t]) => builds(t)).map(([, t]) => t);
 
 export type Row = {
   units: number;

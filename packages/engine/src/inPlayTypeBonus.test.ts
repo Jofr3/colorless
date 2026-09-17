@@ -672,6 +672,7 @@ describe("§6 — the fixture, the census this row moves, and the questions aske
       // *"Both Active Pokémon are Knocked Out."* (1) and *"This Pokémon does 100 damage to
       // itself. Flip a coin. If heads, your opponent's Active Pokémon is Knocked Out."* (1) —
       // through the RAW summand ALONE, each sentence claimed WHOLE by a `deriveAttackEffect`
+      // (🆕 D529: `SPLIT_ATTACK_UNITS` reads 14 since D529 credited the clause-only Rollout gate — a census step, not a reader one; the 13 below is this slice's figure.)
       // arm over ONE new FIELD-FREE op (`knockOutDefender`), so `SPLIT_ATTACK_UNITS` (13),
       // `COMPOUND_ATTACK_UNITS` (18) and `REGISTRY_ATTACK_UNITS` (16) ALL stand still.
       // ⚠️ THE CHAIN IS EDITED AT THE FRONT, NEVER AT THE END — the frozen tail is what

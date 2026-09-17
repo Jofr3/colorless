@@ -497,7 +497,9 @@ function latticePoint(a: Bit, s: Bit, n: Bit, w: Bit, o: Bit): string {
 function buildsHere(text: string): boolean {
   if (resolvedByAnyReader(text)) return true;
   const gate = splitAttackGateClause(text);
-  if (gate !== null && gate.body !== "" && resolvedByAnyReader(gate.body)) return true;
+  // 🆕 D529 — widened with the census: a clause-only split (`body: ""`) is credited to the
+  // gate arm. No lattice point here is a gate clause, so no table below can move (run to prove).
+  if (gate !== null && (gate.body === "" || resolvedByAnyReader(gate.body))) return true;
   return splitAttackTrailingClause(text) !== null;
 }
 

@@ -312,9 +312,11 @@ export const MARKERS: readonly Marker[] = [
       //    this marker's own corpus line 630 —
       //    `{ kind: "onlyIf", condition: { kind: "yourActiveUsedAttackLastTurn",
       //    attack: "Rollout" } }`. That row is ENFORCED at the §8 declaration seam
-      //    today; it sits in the residue only because `builds()` refuses a gate split
-      //    whose `body` is `""` (D395's clause-only case), which is a fact about the
-      //    CENSUS and not about expressibility.
+      //    today; it WAS in the residue until D529 widened `builds()` (it refused a gate
+      //    split whose `body` is `""` — D395's clause-only case — which was a fact about
+      //    the CENSUS and not about expressibility; corrected in place, D178/D442: the
+      //    row is now BUILT, so this marker's OPAQUE/RESIDUE/BUILT columns moved one row
+      //    toward BUILT at D529 with zero engine bytes).
       //    ⚠️ D479 wrote *"the verdict stays `blocker` because the OTHER three rows
       //    still are"* and listed four rows under three different reasons: line 82 on
       //    its "Choose 2 … Shuffle those … into your opponent's deck" HEAD, line 166 on

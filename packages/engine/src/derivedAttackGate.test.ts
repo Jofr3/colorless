@@ -38,7 +38,9 @@ import {
 // It does **not** build three unbuilt sentences. **MEASURED at this head**:
 // `splitAttackGateClause` claims **6 corpus sentences / 14 printings**, every one of
 // them already carries a registry `attackGate`, and 13 of the 14 are already inside
-// `BUILT.attack`'s SPLIT summand (`censusAtHead.test.ts`, "the SPLIT half"). The
+// `BUILT.attack`'s SPLIT summand (`censusAtHead.test.ts`, "the SPLIT half"). (🆕 D529:
+// 14 of the 14 — the 14th, D395's clause-only Rollout row, was outside the summand only
+// because the census asked a reader about an EMPTY body; comment only, no rung inverts.) The
 // three sentences a residue ranking surfaces here —
 //
 //   7p  "If you go second, you can't use this attack during your first turn. This
