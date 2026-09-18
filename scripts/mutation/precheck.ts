@@ -8,7 +8,8 @@
 // corpus caught it AFTER the commit.
 //
 // This asserts the one property that makes a row runnable, over the WHOLE corpus,
-// in about a second and with no mutant executed: **every `find` must occur
+// in a few seconds (under ~10 s since D533's binding gate re-parses each row's
+// top-level statement) and with no mutant executed: **every `find` must occur
 // EXACTLY ONCE in its target file.** Zero is a row whose code moved; two is a row
 // whose patch site is ambiguous.
 //
@@ -18,6 +19,7 @@
 // file that appears in `MUTANTS`.
 
 import { readFileSync } from "node:fs";
+import { bindingReport } from "./binding-gate";
 import { MUTANTS } from "./mutants";
 import { partitionReport } from "./partition-gate";
 import { spliceReport } from "./splice-gate";
@@ -92,6 +94,22 @@ const splice = spliceReport();
 // rung that asserts THIS call is here.
 const partition = partitionReport();
 
+// 🆕🆕 **D533 — THE FOURTH PROPERTY: A ROW MUST DIE ON AN ASSERTION, NOT ON A NAME ITS
+// PATCH NEVER BOUND.** vitest transpiles with esbuild and never type-checks, and the
+// harness reads only the exit code, so a `replace` that calls an identifier its file
+// neither imports nor defines throws a `ReferenceError` the first time the suite reaches
+// it and reports KILLED — D532 found `D445-log-row-derives-the-actor` killed that way for
+// 87 decisions, and the class at HEAD was SEVEN rows (D226, D232, D237, D242, D252, D278,
+// D377), not the three a raw-text sweep named.
+//
+// 🛑 **DELEGATED, FOR THE SAME ATTRIBUTION REASON AS THE TWO ABOVE (D159, D470).** The
+// property lives in `binding-gate.ts`, a script with no `find` check in it, so a red there
+// is attributable; the gate's own rows (`killedByCommand`) could not be killed through
+// this file without being over-determined by the loop above. This file calls the report so
+// the command everyone actually runs before a sweep still reports it, and the gate's
+// wiring rung asserts that the call is here.
+const binding = bindingReport();
+
 console.log(`checked ${String(MUTANTS.length)} mutants`);
 if (broken.length > 0) {
   console.error(`\n${String(broken.length)} BROKEN ROW(S):`);
@@ -99,7 +117,8 @@ if (broken.length > 0) {
 }
 if (!splice.ok) for (const line of splice.lines) console.error(line);
 if (!partition.ok) for (const line of partition.lines) console.error(line);
-if (broken.length > 0 || !splice.ok || !partition.ok) process.exit(1);
+if (!binding.ok) for (const line of binding.lines) console.error(line);
+if (broken.length > 0 || !splice.ok || !partition.ok || !binding.ok) process.exit(1);
 console.log(
-  `every \`find\` occurs exactly once in its target, ${partition.lines[0] ?? ""}, and ${splice.lines[0] ?? ""} — corpus is runnable`,
+  `every \`find\` occurs exactly once in its target, ${partition.lines[0] ?? ""}, ${binding.lines[0] ?? ""}, and ${splice.lines[0] ?? ""} — corpus is runnable`,
 );

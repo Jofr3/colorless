@@ -4103,6 +4103,16 @@ spanned the affected arm needed re-anchoring in **both** `find` and `replace` �
 just `find`. A `replace` that omits a now-required field does not compile, and the
 harness reports ERROR rather than a verdict.
 
+> ⚠️ **D533 CORRECTION — THE LAST SENTENCE ABOVE IS FALSE OF `run.ts`.** The harness never
+> compiles a `replace`: it patches the file and runs `expectKilledBy` under vitest, which
+> transpiles with esbuild and does not type-check. ERROR is reserved for a bad path
+> (`run.ts` "path escapes the repo" / "file does not exist"), a `find` that no longer resolves
+> (the stale-row branch) and a red baseline — nothing else (`run.ts:402` `green: code === 0`,
+> `:611` `const killed = !mutated.green`). A `replace` that omits a required field TRANSPILES and
+> RUNS: it reports KILLED if the missing field makes something throw or an assertion go red, and
+> SURVIVED if it does not. The advice below (re-read every dependent `replace`) stands; the
+> reason is that the verdict is silent, not that it is ERROR.
+
 **So making a field required is a corpus-wide edit, not a type-local one.** After
 adding a required field, `precheck` for `find` breakage and then read every
 dependent row's `replace` for the same omission; the first is automatic and the
@@ -4115,6 +4125,16 @@ A mutant row has two halves and they fail differently. `precheck` reads every
 break is reported in seconds. The `replace` half has no gate at all: it is never
 compiled until the row runs, and a `replace` that no longer type-checks reports
 **ERROR**, which is neither KILLED nor SURVIVED.
+
+> ⚠️ **D533 CORRECTION — IT IS NEVER COMPILED EVEN WHEN THE ROW RUNS, AND IT DOES NOT REPORT
+> ERROR.** Per `run.ts:402`/`:611` the verdict is the killer's exit code; ERROR is only a bad path
+> (`:460`/`:463`), a stale `find` (`:499`) or a red baseline (`:522`). A `replace` that would not
+> type-check transpiles and RUNS — which is how `D445-log-row-derives-the-actor` reported KILLED
+> for 87 decisions on a `ReferenceError` (D532 close-out). And the "no gate at all" half is now
+> half-gated: **`binding-gate.ts` (D533), called from `precheck`, rejects a `replace` that names an
+> identifier its file does not bind, or deletes a top-level binding another statement still
+> reads.** It does NOT type-check (a dropped required field still passes it) — see the D533 section
+> at the end of this file.
 
 That matters most when a change makes a field **required**. D476 did, and four
 pre-existing rows had `replace` strings that omitted the new field. `precheck`
@@ -7868,11 +7888,19 @@ with the parenthetical. Two rows that drop `^` and `$` from the anchor SURVIVED 
 **Write the both-ends rung explicitly**: a prefixed print and a suffixed print each derive null.
 D519's §1 carried it; a suite that copies the lattice without it is green under both mutants.
 
-### The harness type-checks a `replace`, so a mutant that drops a REQUIRED field is ERROR, not a verdict (D520, applying D476)
+### ⚠️ FALSE (D532 close-out / D533): The harness type-checks a `replace`, so a mutant that drops a REQUIRED field is ERROR, not a verdict (D520, applying D476)
 
 `then` is required on `conditionGate`, so a `then → otherwise` row would report ERROR rather than
 KILLED or SURVIVED. Cover the polarity from the other side instead (the gate removed; the gate's seat
 mirrored), and say in the batch header why the obvious row is absent.
+
+> ⚠️ **THE HEADING IS FALSE (D532 close-out, corrected at D533).** `run.ts` does not type-check a
+> `replace`; it reads the killer's exit code, and ERROR is only a bad path, a stale `find` or a red
+> baseline (`run.ts:402`/`:611`, `:460`/`:463`/`:499`/`:522`). A `replace` that drops `then`
+> transpiles and RUNS. **So D520's `then → otherwise` row is WRITABLE after all** — it would report
+> a real verdict, and `binding-gate.ts` (D533) does not stand in its way because it names no unbound
+> identifier. Writing it is a follow-up, OUT OF SCOPE for D533 (an instrument slice). The
+> other-side rows D520 wrote in its place stand on their own.
 
 ### A `replace` that names an identifier its file does not have is killed by the compiler, not by the suite (D532 close-out, applying D416)
 
@@ -7904,7 +7932,7 @@ day the file imports that name for an unrelated reason, as D445's did 87 decisio
 `replace` introduces that its `find` does not carry (comments, string and regex literals, member names
 after `.`/`?.`, keywords and builtins stripped), flagged when absent from `git show HEAD:<file>` with
 the `find` span removed. 2,700 rows scanned; 447 introduce at least one identifier; **19 flagged**, of
-which **three are true members** — `D242-gate-read-off-the-catalog-past-the-ability-lock`,
+which **three are true members** (⚠️ **WRONG — THE CLASS WAS SEVEN; see the correction below**) — `D242-gate-read-off-the-catalog-past-the-ability-lock`,
 `D252-effects-off-top-card` and `D278-predicate-bypasses-the-ability-lock` each call `programFor(...)`
 in `interpreter.ts`, which is exported only from `registry.ts` and has never been imported or defined
 in `interpreter.ts` (`git log -S programFor -- packages/engine/src/interpreter.ts` is empty) — so all
@@ -7912,10 +7940,59 @@ three are KILLED today by the missing name and their true status is unknown unti
 with a temporary import. The other 16 are names the `replace` itself defines (9), object-literal keys
 (4) and prose or regex text the stripper did not classify (5).
 
-**Next instrument slice, not built here: extend `precheck` to reject such rows.** `precheck` proves
-every `find` occurs once and (since D470) that no `replace` splices; it should also prove that every
-identifier a `replace` introduces resolves in its target. Until it does, the check is by hand, and the
-sweep script above is the hand.
+> ⚠️ **D533 CORRECTION — SEVEN TRUE MEMBERS, NOT THREE, AND THE RAW-TEXT SWEEP MISSED EACH OF THE
+> FOUR EXTRAS FOR ITS OWN REASON.** Read by the D533 judge and flagged by the built gate at HEAD
+> (`FLAGGED 7`): **D242, D252, D278** (`programFor`, imported TYPE-ONLY in `interpreter.ts` — the
+> registry import must stay type-only, so `git log -S` was right that it was never a value there);
+> **`D377-confused-reaches-for-isImmobilized`** — `isImmobilized` is defined in `types.ts` and appears
+> in `interpreter.ts` only in a COMMENT, which a raw-text "absent from the file" test counts as present;
+> **`D226-one-event-for-every-source`** (reads `moved`) and **`D237-bench-clamp-dropped-at-the-move`**
+> (its `replace` deletes `const moved` while the function below still reads it) — `moved` is declared
+> in OTHER functions of the same file, so "absent from the file" is false and the out-of-scope read
+> passes; and **`D232-random-discard-anchor-drops-the-apostrophe-class`** — the DELETION direction: its
+> `replace` dropped the `const ATTACK_RANDOM_DISCARD_FROM_HAND = ` prefix while `effects.ts` still
+> reads the name, and a scan of the identifiers a `replace` INTRODUCES cannot see a binding that went
+> away. All seven were re-spelled at D533 and each now dies by ASSERTION (probed `--only`, no
+> `ReferenceError` in any failure); none is equivalent, so no survivor declaration was owed.
+
+**✅ BUILT AT D533: `precheck` now rejects such rows** through `binding-gate.ts` — see the D533 section
+below. (Was: *"Next instrument slice, not built here: extend `precheck` to reject such rows … Until it
+does, the check is by hand, and the sweep script above is the hand."*)
+
+### A `replace` may only name what its file binds — and the gate that says so is a FLOOR (D533)
+
+`scripts/mutation/binding-gate.ts`, called from `precheck` as its fourth property (after `find` ×1,
+the splice gate and the partition gate), re-parses with the TypeScript compiler API the TOP-LEVEL
+statement(s) each row's `find` overlaps, before and after the patch, and checks two directions:
+
+- **INTRODUCTION** — a value-position identifier in the mutated region bound by none of: the
+  region's own declarations (params, `var`/`let`/`const`, destructured names, function/class names,
+  catch vars), the file's OTHER top-level declarations, its VALUE imports (`import type` and
+  `{ type X }` bind nothing at run time), or `globalThis`. Taken BY DIFFERENCE against the original
+  region, so a name already unresolved there (`expect` in a suite) is never the row's fault.
+- **DELETION** — a name the original region declared at top level and the mutated one does not,
+  still read by another top-level statement and declared by none (D232's shape).
+
+Only `Identifier` nodes are visited, so comments, strings, templates and regex text drop out by
+construction; member names after `.`/`?.`, object keys, class and enum members, binding property
+names, labels, import/export specifiers, JSX attribute names and lowercase JSX tags are not
+references; type nodes are skipped. **No hand-kept exemption list.** Measured at HEAD before the
+re-spellings: **FLAGGED 7** — exactly D226, D232, D237, D242, D252, D278, D377 — and **0** after.
+Runtime about 9 s over ~2,750 rows (per-file and per-region parses cached).
+
+**⚠️ IT IS A FLOOR, NOT A PROOF.** Scope is top-level-statement granularity: a same-named binding in
+a SIBLING nested function inside the same top-level statement masks a miss. It does not type-check
+either — a `replace` that drops a required field passes it (and RUNS, see the D520 correction above).
+
+**🛑 A GATE ROW MUST GO RED FOR ITS OWN REASON (D484's note, applied).** The corpus is clean at HEAD,
+so every mutation that makes the gate vacuous or over-eager is visible only on the self-check's
+synthetic board: thirteen fixtures, each ONE difference from a correct row — four positives (an
+unimported call whose name sits in a COMMENT of the file, a type-only import used as a value in
+both spellings, D237's removed-local shape, D232's deleted-top-level shape) and nine negatives (a
+name the replace declares, a value import, a member, an object key, comment/string/template/regex
+text, a type-position name, a global, a pre-existing unresolved name, a name the enclosing function
+declares). The self-check names EVERY failing fixture, not the first, so each of the eleven D533
+rows was SEEN to fail the fixture built for it — not merely to exit 1.
 
 ## Git / commits
 - Branch off `main` for non-trivial work; commit/push only when asked.

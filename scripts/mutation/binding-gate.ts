@@ -1,0 +1,577 @@
+/**
+ * 🆕🆕 D533 — THE BINDING GATE: A `replace` MAY ONLY NAME WHAT ITS FILE BINDS.
+ *
+ * WHY THIS EXISTS, AND IT IS A LIVE WITNESS RATHER THAN A WORRY. D532's
+ * whole-corpus sweep came back one short: `D445-log-row-derives-the-actor`
+ * had reported KILLED on every sweep from D445 to D531, and it was killed by a
+ * MISSING NAME — `log.ts` did not import `otherSeat`, so the mutated line threw
+ * a `ReferenceError` the first time the suite reached it. vitest transpiles
+ * with esbuild and never type-checks, and the harness reads the exit code
+ * (`run.ts` `green: code === 0`, `const killed = !mutated.green`), so **a row
+ * that dies because its patch does not LINK reports exactly what a row that
+ * dies on an assertion reports.** D416: a row that dies for the wrong reason is
+ * worth less than one that survives, because it reports success.
+ *
+ * 🛑 **AND THE CLASS WAS SEVEN, NOT THE THREE THE FIRST SWEEP NAMED.** D532's
+ * close-out swept the corpus with a regex over raw text and found three
+ * (`programFor` in `interpreter.ts`, imported TYPE-ONLY there — D242, D252,
+ * D278). Reading the code found four more, and each hides from raw text for
+ * its own reason:
+ *
+ *   - D377 calls `isImmobilized`, which `interpreter.ts` mentions only in a
+ *     COMMENT — a raw-text binding set counts the comment as a definition;
+ *   - D226 reads `moved` and D237 deletes `const moved` while the function
+ *     still reads it — `moved` is declared ELSEWHERE in the file, in other
+ *     functions, so "declared anywhere in the file" masks both;
+ *   - D232 deletes a top-level `const ATTACK_… =` prefix that another
+ *     statement still reads — the DELETION direction, which no scan of what a
+ *     `replace` INTRODUCES can see.
+ *
+ * ─── THE PREDICATE, IN TWO DIRECTIONS ────────────────────────────────────────
+ * Per row, the TOP-LEVEL statement(s) the `find` overlaps are re-parsed with
+ * the TypeScript compiler API before and after the patch.
+ *
+ *   INTRODUCTION — a value-position identifier in the MUTATED region that is
+ *   bound by none of: the region's own declarations (params, var/let/const,
+ *   destructured names, function/class names, catch vars), the file's OTHER
+ *   top-level declarations, its VALUE imports (`import type` and `{ type X }`
+ *   bind nothing at run time), or `globalThis`. Compared against the ORIGINAL
+ *   region BY DIFFERENCE, so a name already unresolved there (`expect` in a
+ *   suite with vitest globals) is never the row's fault.
+ *
+ *   DELETION — a name the original region declared at top level and the
+ *   mutated one no longer does, still read by ANOTHER top-level statement and
+ *   declared by none.
+ *
+ * Only `Identifier` nodes are visited, so comments, strings, templates and
+ * regex text drop out BY CONSTRUCTION; member names after `.`/`?.`, object
+ * keys, class members, enum members, binding property names, labels,
+ * import/export specifiers, JSX attribute names and lowercase JSX tags are not
+ * references; type nodes are skipped (a `heritage` `extends` expression is a
+ * value and is kept). **There is NO hand-kept exemption list** — partition-gate's
+ * rule, for partition-gate's reason.
+ *
+ * ─── WHAT IT DOES NOT COVER, STATED ──────────────────────────────────────────
+ * ⚠️ **THE GATE IS A FLOOR, NOT A PROOF.** Scope is TOP-LEVEL-STATEMENT
+ * granularity: a same-named binding in a SIBLING nested function inside the
+ * same top-level statement masks a miss (a `replace` reading `x` where only a
+ * neighbouring closure declares `x` passes here and throws at run time). Only
+ * `tsc` over the mutated file settles that, and running `tsc` per row is the
+ * ~3-hour sweep's cost again. What this gate buys is the class as it has
+ * actually occurred — seven rows over 300 decisions — in seconds.
+ *
+ * ─── WHY A SCRIPT, AND WHY NOT INSIDE `precheck.ts` ──────────────────────────
+ * D470's attribution reason, as for `splice-gate.ts` and `partition-gate.ts`:
+ * `precheck.ts` exits 1 whenever any row's `find` moves, so a guard living
+ * inside it would be over-determined for every mutant that touches a corpus
+ * row. `precheck.ts` imports `bindingReport` so the command everyone runs
+ * before a sweep still reports it, and the wiring rung asserts that it does.
+ *
+ *   bun scripts/mutation/binding-gate.ts
+ */
+
+import { readFileSync } from "node:fs";
+import ts from "typescript";
+import { MUTANTS } from "./mutants";
+
+/** The script that must call this gate, so the pre-sweep command reports it. */
+const WIRING_SITE = "scripts/mutation/precheck.ts";
+/** The exact call the wiring rung looks for in `WIRING_SITE`. */
+const WIRING_CALL = "bindingReport()";
+
+/** Cap the naming so a wholly-broken corpus prints a page, not a book. */
+const MAX_NAMED = 30;
+
+/** One top-level statement of a target file, with what it binds and reads. */
+type TopStatement = {
+  start: number;
+  end: number;
+  /** VALUE names this statement declares at top level. */
+  names: string[];
+  /** Names this statement reads that it does not itself declare. */
+  free: Set<string>;
+};
+
+/** A parsed target file, cached per path: every row re-uses one parse. */
+export type FileInfo = {
+  text: string;
+  kind: ts.ScriptKind;
+  top: TopStatement[];
+  /** Original-region scans, keyed by `lo:hi`. */
+  regions: Map<string, Original>;
+};
+
+/** The script kind of a target, or `null` for a non-code target (JSON, Markdown). */
+function kindOf(file: string): ts.ScriptKind | null {
+  if (file.endsWith(".tsx")) return ts.ScriptKind.TSX;
+  if (file.endsWith(".ts")) return ts.ScriptKind.TS;
+  if (file.endsWith(".jsx")) return ts.ScriptKind.JSX;
+  if (/\.(m|c)?js$/.test(file)) return ts.ScriptKind.JS;
+  return null;
+}
+
+function parse(text: string, kind: ts.ScriptKind): ts.SourceFile {
+  return ts.createSourceFile("fragment.tsx", text, ts.ScriptTarget.Latest, false, kind);
+}
+
+function bindingNames(name: ts.BindingName, out: string[]): void {
+  if (ts.isIdentifier(name)) {
+    out.push(name.text);
+    return;
+  }
+  for (const el of name.elements) if (ts.isBindingElement(el)) bindingNames(el.name, out);
+}
+
+/**
+ * The VALUE names an import binds. ⚠️ `import type { X }` and `import { type X }`
+ * bind NOTHING at run time — esbuild erases them — which is exactly how
+ * `programFor` was "imported" into `interpreter.ts` for D242/D252/D278.
+ */
+function importNames(st: ts.ImportDeclaration, out: string[]): void {
+  const c = st.importClause;
+  if (c === undefined) return;
+  const typeOnly = (spec?: { isTypeOnly: boolean }): boolean =>
+    c.isTypeOnly || spec?.isTypeOnly === true;
+  if (c.name !== undefined && !typeOnly()) out.push(c.name.text);
+  const nb = c.namedBindings;
+  if (nb === undefined) return;
+  if (ts.isNamespaceImport(nb)) {
+    if (!typeOnly()) out.push(nb.name.text);
+    return;
+  }
+  for (const e of nb.elements) if (!typeOnly(e)) out.push(e.name.text);
+}
+
+/** The VALUE names a statement declares at its own top level. */
+function topNames(st: ts.Statement): string[] {
+  const out: string[] = [];
+  if (ts.isVariableStatement(st)) {
+    for (const d of st.declarationList.declarations) bindingNames(d.name, out);
+  } else if (
+    (ts.isFunctionDeclaration(st) ||
+      ts.isClassDeclaration(st) ||
+      ts.isEnumDeclaration(st) ||
+      ts.isModuleDeclaration(st)) &&
+    st.name !== undefined &&
+    ts.isIdentifier(st.name)
+  ) {
+    out.push(st.name.text);
+  } else if (ts.isImportDeclaration(st)) {
+    importNames(st, out);
+  } else if (ts.isImportEqualsDeclaration(st) && !st.isTypeOnly) {
+    out.push(st.name.text);
+  }
+  return out;
+}
+
+/** Is this identifier the NAME a declaration introduces? */
+function isDeclarationName(n: ts.Identifier, p: ts.Node): boolean {
+  return (
+    (ts.isVariableDeclaration(p) ||
+      ts.isParameter(p) ||
+      ts.isBindingElement(p) ||
+      ts.isFunctionDeclaration(p) ||
+      ts.isFunctionExpression(p) ||
+      ts.isClassDeclaration(p) ||
+      ts.isClassExpression(p) ||
+      ts.isEnumDeclaration(p) ||
+      ts.isModuleDeclaration(p) ||
+      ts.isImportEqualsDeclaration(p)) &&
+    p.name === n
+  );
+}
+
+/** Is this identifier in a position that is NOT a read of a binding? */
+function isNonReference(n: ts.Identifier, p: ts.Node): boolean {
+  return (
+    (ts.isPropertyAccessExpression(p) && p.name === n) ||
+    (ts.isPropertyAssignment(p) && p.name === n) ||
+    ((ts.isMethodDeclaration(p) ||
+      ts.isPropertyDeclaration(p) ||
+      ts.isGetAccessor(p) ||
+      ts.isSetAccessor(p) ||
+      ts.isPropertySignature(p) ||
+      ts.isMethodSignature(p) ||
+      ts.isEnumMember(p)) &&
+      p.name === n) ||
+    (ts.isBindingElement(p) && p.propertyName === n) ||
+    ((ts.isLabeledStatement(p) || ts.isBreakStatement(p) || ts.isContinueStatement(p)) &&
+      p.label === n) ||
+    (ts.isQualifiedName(p) && p.right === n) ||
+    ts.isImportSpecifier(p) ||
+    ts.isExportSpecifier(p) ||
+    ts.isNamespaceExport(p) ||
+    ts.isMetaProperty(p) ||
+    (ts.isJsxAttribute(p) && p.name === n) ||
+    ((ts.isJsxOpeningElement(p) || ts.isJsxSelfClosingElement(p) || ts.isJsxClosingElement(p)) &&
+      p.tagName === n &&
+      /^[a-z]/.test(n.text))
+  );
+}
+
+/** The value-position reads and the declared names inside one parsed region. */
+type Scan = { refs: Set<string>; decls: Set<string> };
+
+function scan(root: ts.Node): Scan {
+  const refs = new Set<string>();
+  const decls = new Set<string>();
+  // Parents are threaded through the walk rather than set on the tree: parsing
+  // without `setParentNodes` is what keeps the whole corpus near ten seconds.
+  const walk = (n: ts.Node, p: ts.Node): void => {
+    if (ts.isTypeNode(n) && !ts.isExpressionWithTypeArguments(n)) return;
+    if (
+      ts.isInterfaceDeclaration(n) ||
+      ts.isTypeAliasDeclaration(n) ||
+      ts.isTypeParameterDeclaration(n) ||
+      ts.isExportDeclaration(n)
+    )
+      return;
+    if (ts.isHeritageClause(n) && n.token === ts.SyntaxKind.ImplementsKeyword) return;
+    if (ts.isImportDeclaration(n)) {
+      const out: string[] = [];
+      importNames(n, out);
+      for (const name of out) decls.add(name);
+      return;
+    }
+    if (ts.isIdentifier(n)) {
+      if (isDeclarationName(n, p)) decls.add(n.text);
+      else if (!isNonReference(n, p)) refs.add(n.text);
+      return;
+    }
+    ts.forEachChild(n, (c) => walk(c, n));
+  };
+  walk(root, root);
+  return { refs, decls };
+}
+
+/** Top-level VALUE names of a parsed region, statement by statement. */
+function regionTopNames(sf: ts.SourceFile): Set<string> {
+  return new Set(sf.statements.flatMap(topNames));
+}
+
+/** Build the per-file index. Exported shape for the self-check's synthetic files. */
+export function fileInfoOf(file: string, text: string): FileInfo | null {
+  const kind = kindOf(file);
+  if (kind === null) return null;
+  const sf = parse(text, kind);
+  const top = sf.statements.map((st) => {
+    const { refs, decls } = scan(st);
+    return {
+      start: st.pos,
+      end: st.end,
+      names: topNames(st),
+      free: new Set([...refs].filter((r) => !decls.has(r))),
+    };
+  });
+  return { text, kind, top, regions: new Map() };
+}
+
+const files = new Map<string, FileInfo | null>();
+function fileInfo(file: string): FileInfo | null {
+  const cached = files.get(file);
+  if (cached !== undefined) return cached;
+  const fi = fileInfoOf(file, readFileSync(file, "utf8"));
+  files.set(file, fi);
+  return fi;
+}
+
+/** Is `name` bound by a top-level statement OUTSIDE the region [lo, hi)? */
+function boundInFile(fi: FileInfo, lo: number, hi: number, name: string): boolean {
+  return fi.top.some((t) => (t.end <= lo || t.start >= hi) && t.names.includes(name));
+}
+
+/** Is `name` a run-time global? The one exemption, and it is the platform's, not a list. */
+const isGlobal = (name: string): boolean => name in globalThis;
+
+/** Names read in a scanned region that nothing binds. */
+function unresolvedIn(s: Scan, fi: FileInfo, lo: number, hi: number): Set<string> {
+  return new Set(
+    [...s.refs].filter((r) => !s.decls.has(r) && !boundInFile(fi, lo, hi, r) && !isGlobal(r)),
+  );
+}
+
+/** The ORIGINAL region's scan, cached: 654 regions serve ~2,700 rows (effects.ts's
+    `deriveAttackEffect` alone carries hundreds), so it is parsed once, not per row. */
+type Original = { refs: Set<string>; top: Set<string>; baseline: Set<string> };
+function originalRegion(fi: FileInfo, lo: number, hi: number): Original {
+  const key = `${String(lo)}:${String(hi)}`;
+  const cached = fi.regions.get(key);
+  if (cached !== undefined) return cached;
+  const sf = parse(fi.text.slice(lo, hi), fi.kind);
+  const s = scan(sf);
+  const made = { refs: s.refs, top: regionTopNames(sf), baseline: unresolvedIn(s, fi, lo, hi) };
+  fi.regions.set(key, made);
+  return made;
+}
+
+/** One row's verdict: what it flags, and whether it introduces any identifier at all. */
+export type RowVerdict = { flagged: string[]; introduces: boolean };
+
+/**
+ * ⚠️ THE CORE, driven identically by the self-check's synthetic files and by
+ * the live corpus. `null` when the `find` does not occur exactly once —
+ * `precheck`'s loop owns that verdict, and a guard over it here would be
+ * over-determined (D470).
+ */
+export function judgeRow(fi: FileInfo, find: string, replace: string): RowVerdict | null {
+  const at = fi.text.indexOf(find);
+  if (at === -1 || fi.text.indexOf(find, at + 1) !== -1) return null;
+  const stop = at + find.length;
+  const covering = fi.top.filter((t) => t.end > at && t.start < stop);
+  const lo = covering[0]?.start ?? at;
+  const hi = covering.at(-1)?.end ?? stop;
+  const before = originalRegion(fi, lo, hi);
+  const afterSf = parse(fi.text.slice(lo, at) + replace + fi.text.slice(stop, hi), fi.kind);
+  const after = scan(afterSf);
+
+  // INTRODUCTION — unresolved after, and not already unresolved before (the baseline).
+  const fresh = [...unresolvedIn(after, fi, lo, hi)].filter((r) => !before.baseline.has(r));
+
+  // DELETION — a top-level name the region stopped declaring that another statement still reads.
+  const afterTop = regionTopNames(afterSf);
+  const lost = [...before.top].filter((name) => !afterTop.has(name));
+  const orphaned = lost.filter(
+    (name) =>
+      !boundInFile(fi, lo, hi, name) &&
+      fi.top.some((t) => (t.end <= lo || t.start >= hi) && t.free.has(name)),
+  );
+
+  return {
+    flagged: [...fresh, ...orphaned],
+    introduces: [...after.refs].some((r) => !before.refs.has(r)),
+  };
+}
+
+function fail(message: string): never {
+  console.error(message);
+  process.exit(1);
+}
+
+/** One synthetic case: a file, a patch, and the names it must flag (exactly). */
+type Fixture = { name: string; text: string; find: string; replace: string; flags: string[] };
+
+const FN = "export function f(a: number, b: number): number {\n  return a;\n}\n";
+
+/**
+ * ⚠️ THE SELF-CHECK, AND IT IS WHY A MUTANT AGAINST THIS FILE IS A ROW RATHER
+ * THAN A DECORATION (D481). The corpus is CLEAN at HEAD once D533's seven rows
+ * are re-spelled, so every mutation that makes this gate VACUOUS stays green on
+ * the live corpus — only a board built with a known answer can show it. Each
+ * fixture is ONE difference from a correct row; each named mutation of the gate
+ * fails the fixture built for it and says so by name.
+ */
+const FIXTURES: Fixture[] = [
+  // ── POSITIVES — the gate must flag exactly these names ────────────────────
+  {
+    name: "an unimported call (with the name in a COMMENT of the file — D377's mask)",
+    text: `// helper() is defined in another module and is not imported here.\nimport { used } from "./m";\n${FN.replace("return a;", "return used(a);")}`,
+    find: "  return used(a);",
+    replace: "  return helper(a);",
+    flags: ["helper"],
+  },
+  {
+    name: "a type-only import used as a value (both spellings — D242's `programFor`)",
+    text: `import type { Shape } from "./t";\nimport { type Kind, live } from "./t";\n${FN.replace("return a;", "return live(a);")}`,
+    find: "  return live(a);",
+    replace: "  return live(Shape, Kind);",
+    flags: ["Shape", "Kind"],
+  },
+  {
+    name: "a local removed while the same statement still reads it (D237's shape)",
+    text: "export function f(xs: number[]): number {\n  const moved = xs.slice(1);\n  return moved.length;\n}\n",
+    find: "  const moved = xs.slice(1);",
+    replace: "  xs.slice(1);",
+    flags: ["moved"],
+  },
+  {
+    name: "a top-level declaration deleted while another statement reads it (D232's shape)",
+    text: "const ANCHOR = /^x$/;\nexport function f(s: string): boolean {\n  return ANCHOR.test(s);\n}\n",
+    find: "const ANCHOR = /^x$/;",
+    replace: "/^x$/;",
+    flags: ["ANCHOR"],
+  },
+  // ── NEGATIVES — the gate must flag nothing ────────────────────────────────
+  {
+    name: "names the replace itself declares (a const, a destructured pair, a param)",
+    text: FN,
+    find: "  return a;",
+    replace:
+      "  const [c, { d }] = [a, { d: 2 }];\n  const add = (e: number): number => c + d + e;\n  return add(a);",
+    flags: [],
+  },
+  {
+    name: "a VALUE-imported name",
+    text: `import { live } from "./t";\n${FN}`,
+    find: "  return a;",
+    replace: "  return live(a);",
+    flags: [],
+  },
+  {
+    name: "a member after `.` and after `?.`",
+    text: FN,
+    find: "  return a;",
+    replace: "  return a.toFixed.length + (a?.toPrecision.length ?? 0);",
+    flags: [],
+  },
+  {
+    name: "an object key",
+    text: FN,
+    find: "  return a;",
+    replace: "  return Object.keys({ brandNewKey: a }).length;",
+    flags: [],
+  },
+  {
+    name: "a name in a comment, a string, a template and a regex",
+    text: FN,
+    find: "  return a;",
+    replace: '  // ghostA\n  return `ghostB ${"ghostC"}`.length + /ghostD/.source.length + a;',
+    flags: [],
+  },
+  {
+    name: "a type-position name",
+    text: FN,
+    find: "  return a;",
+    replace: "  const t: GhostType = a as unknown as GhostType;\n  return t;",
+    flags: [],
+  },
+  {
+    name: "a run-time global (Number, Object, undefined)",
+    text: FN,
+    find: "  return a;",
+    replace: "  return Number(a) + Object.keys({}).length + (undefined === undefined ? 0 : 1);",
+    flags: [],
+  },
+  {
+    name: "a name already unresolved in the original (the baseline — `expect` in a suite)",
+    text: "export function f(): void {\n  expect(1).toBe(1);\n}\n",
+    find: "  expect(1).toBe(1);",
+    replace: "  expect(2).toBe(1);",
+    flags: [],
+  },
+  {
+    name: "a name the ENCLOSING function declares, outside the `find` span",
+    text: FN,
+    find: "  return a;",
+    replace: "  return b;",
+    flags: [],
+  },
+];
+
+export function selfCheck(): void {
+  // Every fixture is run and every failure named, not just the first: a mutation
+  // of this gate must be SEEN to fail the fixture built for it (D484's note — a
+  // rung that fires for a neighbour's reason proves nothing about its own).
+  const failed: string[] = [];
+  for (const fx of FIXTURES) {
+    const fi = fileInfoOf("fixture.ts", fx.text);
+    const verdict = fi === null ? null : judgeRow(fi, fx.find, fx.replace);
+    const got = verdict === null ? "(no verdict)" : JSON.stringify([...verdict.flagged].sort());
+    const want = JSON.stringify([...fx.flags].sort());
+    if (got !== want) failed.push(`   - ${fx.name}: flagged ${got}, expected ${want}`);
+  }
+  if (failed.length > 0) {
+    fail(
+      [
+        `binding-gate: SELF-CHECK FAILED on ${String(failed.length)} of ${String(FIXTURES.length)} fixture(s):`,
+        ...failed,
+        "The guard cannot be trusted about the real corpus, so its verdict means nothing.",
+      ].join("\n"),
+    );
+  }
+}
+
+/**
+ * ⚠️ THE WIRING RUNG — partition-gate's, for partition-gate's reason: a gate
+ * nothing calls is indistinguishable from a gate that passes, and the command
+ * that precedes every sweep is `bun scripts/mutation/precheck.ts`.
+ */
+export function checkWiring(): void {
+  const text = readFileSync(WIRING_SITE, "utf8");
+  if (!text.includes(WIRING_CALL)) {
+    fail(
+      [
+        `binding-gate: FAIL — \`${WIRING_SITE}\` does not call \`${WIRING_CALL}\`.\n`,
+        "This gate would then run only when someone runs it by hand, which is never.\n",
+        "Re-add the call (NOT by deleting this rung).",
+      ].join(""),
+    );
+  }
+}
+
+export type BindingReport = {
+  /** True when no row's patch names an identifier its file does not bind. */
+  ok: boolean;
+  /** Human-readable lines; `lines[0]` is the one-line summary on the green path. */
+  lines: string[];
+};
+
+export function bindingReport(): BindingReport {
+  selfCheck();
+  checkWiring();
+
+  const named: string[] = [];
+  let code = 0;
+  let nonCode = 0;
+  let introducing = 0;
+  let flaggedRows = 0;
+  for (const m of MUTANTS) {
+    const fi = fileInfo(m.file);
+    if (fi === null) {
+      nonCode++;
+      continue;
+    }
+    code++;
+    const verdict = judgeRow(fi, m.find, m.replace);
+    if (verdict === null) continue;
+    if (verdict.introduces) introducing++;
+    if (verdict.flagged.length === 0) continue;
+    flaggedRows++;
+    if (named.length < MAX_NAMED) {
+      named.push(`   ${m.id}  [${m.file}] → ${verdict.flagged.join(", ")}`);
+    }
+  }
+
+  if (flaggedRows === 0) {
+    return {
+      ok: true,
+      lines: [
+        `every one of ${String(introducing)} row(s) whose patch brings a name new to its statement names only what its file binds (${String(code)} code row(s), ${String(nonCode)} non-code skipped)`,
+      ],
+    };
+  }
+  const more =
+    flaggedRows > named.length
+      ? [`   … and ${String(flaggedRows - named.length)} more row(s).`]
+      : [];
+  return {
+    ok: false,
+    lines: [
+      `\n🛑 binding-gate: FLAGGED ${String(flaggedRows)} ROW(S) — each patch names an identifier its file does not bind.`,
+      "   Such a row is killed by a ReferenceError the first time the suite reaches it,",
+      "   never by an assertion — and the verdict column cannot tell the two apart.",
+      "   This is D532's D445: KILLED for 87 decisions by a missing import.",
+      "",
+      ...named,
+      ...more,
+      "",
+      "   Fix by re-spelling the `replace` with names its file already imports or",
+      "   defines (D533), NOT by adding an import to the target for the mutant's sake.",
+      "",
+    ],
+  };
+}
+
+function main(): void {
+  const t0 = performance.now();
+  const report = bindingReport();
+  if (!report.ok) {
+    for (const line of report.lines) console.error(line);
+    process.exit(1);
+  }
+  const ms = (performance.now() - t0).toFixed(0);
+  console.log(`binding-gate: OK — ${report.lines[0] ?? ""} · ${ms}ms.`);
+}
+
+// Only when RUN, never when IMPORTED — `precheck.ts` calls the report and must
+// not inherit this file's console output or its exit.
+if (import.meta.main) main();

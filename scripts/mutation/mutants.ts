@@ -1104,10 +1104,10 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D226-one-event-for-every-source",
     decision: "D226",
-    what: "every per-source ENERGY_MOVED carries the WHOLE move — the pre-slice line (`uids: [...moved]`) copied into the new loop, so each row claims both cards came off its own body and the log prints a false sentence",
+    what: "every per-source ENERGY_MOVED carries the WHOLE move — the loop stamps `groups.flatMap((g) => g.uids)` (every group's uids, the move's full set) where it owes `group.uids`, so each row claims both cards came off its own body and the log prints a false sentence. ⚠️ RE-SPELLED AT D533: the row used to write the pre-slice line `uids: [...moved]`, and `moved` is NOT in scope in this function — the only `const moved` declarations in interpreter.ts belong to OTHER functions — so from D226 to D532 it died on a `ReferenceError`, never on an assertion (D532's D445 class; `binding-gate.ts` flagged it). The new spelling names only what the loop binds and dies by ASSERTION in nsPlan.test.ts's \"takes one Energy off EACH benched body onto the Active, in ONE reduction\" (`[['p1#45','p1#52'], …]` against `[['p1#45'], ['p1#52']]`)",
     file: "packages/engine/src/interpreter.ts",
     find: "      uids: [...group.uids],",
-    replace: "      uids: [...moved],",
+    replace: "      uids: groups.flatMap((g) => g.uids),",
     expectKilledBy: ["packages/engine/src/nsPlan.test.ts"],
   },
   {
@@ -1765,10 +1765,10 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D232-random-discard-anchor-drops-the-apostrophe-class",
     decision: "D232",
-    what: "the random-discard anchor spells `opponent's` straight-only, dropping D137's `['’]` class — so a re-ingest that curls the byte silently un-derives eight legal printings. ⚠️ THIS ROW WAS FIRST FILED AS A DECLARED `unreachable-population` SURVIVOR AND THE HARNESS REPORTED **STALE-SURVIVOR**: the declaration reasoned that a catalog with zero curly printings cannot tell the two patterns apart, which is true of the CATALOG and false of the SUITE — `clauseApostrophe.test.ts` and this slice's own reader both drive a CONSTRUCTED curly spelling, exactly as D227 says a parser property should be checked. A measured zero in the catalog is a reason to label the witness constructed, never a reason to declare a mutant unkillable",
+    what: "the random-discard anchor spells `opponent's` straight-only, dropping D137's `['’]` class — so a re-ingest that curls the byte silently un-derives eight legal printings. ⚠️ RE-SPELLED AT D533: the row used to replace the whole declaration with the bare regex, DROPPING the `const ATTACK_RANDOM_DISCARD_FROM_HAND = ` prefix while effects.ts still reads the name — the DELETION direction of D532's D445 class, a reader that throws the first time any sentence reaches that arm rather than one that misses a byte; `binding-gate.ts` flagged it. The prefix is restored and only the class is narrowed, so the row now dies by ASSERTION on the curly-apostrophe rungs (clauseApostrophe.test.ts's U+2019 fold, opponentHandFamily.test.ts's \"reads the U+2019 spelling identically\"). ⚠️ THIS ROW WAS FIRST FILED AS A DECLARED `unreachable-population` SURVIVOR AND THE HARNESS REPORTED **STALE-SURVIVOR**: the declaration reasoned that a catalog with zero curly printings cannot tell the two patterns apart, which is true of the CATALOG and false of the SUITE — `clauseApostrophe.test.ts` and this slice's own reader both drive a CONSTRUCTED curly spelling, exactly as D227 says a parser property should be checked. A measured zero in the catalog is a reason to label the witness constructed, never a reason to declare a mutant unkillable",
     file: "packages/engine/src/effects.ts",
     find: "const ATTACK_RANDOM_DISCARD_FROM_HAND = /^Discard a random card from your opponent['\u2019]s hand\\.$/;",
-    replace: "  /^Discard a random card from your opponent's hand\\.$/;",
+    replace: "const ATTACK_RANDOM_DISCARD_FROM_HAND = /^Discard a random card from your opponent's hand\\.$/;",
     expectKilledBy: [
       "packages/engine/src/opponentHandFamily.test.ts",
       "packages/engine/src/clauseApostrophe.test.ts",
@@ -2276,10 +2276,10 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D237-bench-clamp-dropped-at-the-move",
     decision: "D237",
-    what: "🛑 THE CARD-DESTRUCTION SHAPE THE M1 REVIEW NAMED. The move stops clamping, so on a full Bench the uids leave the discard pile and land NOWHERE — removed from one zone and appended to a bench the sixth slot of which does not exist. The park's clamp hides it on every board except the one where the Bench filled between the park and the answer",
+    what: "🛑 THE CARD-DESTRUCTION SHAPE THE M1 REVIEW NAMED. The move stops clamping — `const moved = inDiscard;` — so on a full Bench the uids leave the discard pile and land NOWHERE — removed from one zone and appended to a bench the sixth slot of which does not exist. The park's clamp hides it on every board except the one where the Bench filled between the park and the answer. ⚠️ RE-SPELLED AT D533: the row used to replace the line with `    inDiscard;`, DELETING `const moved` while the lines below still read it — a `ReferenceError` on the first answer, never an assertion (D532's D445 class, masked from a raw-text sweep because OTHER functions in the file declare a `moved`; `binding-gate.ts` flagged it). The new spelling keeps the binding and drops only the clamp, and dies by ASSERTION on \"the MOVE clamps too, on a Bench that filled AFTER the park was raised\" (a Bench of 8)",
     file: "packages/engine/src/interpreter.ts",
     find: '  const moved = dest === "bench" ? inDiscard.slice(0, benchSpace(state, ctx.seat)) : inDiscard;',
-    replace: "    inDiscard;",
+    replace: "  const moved = inDiscard;",
     expectKilledBy: ["packages/engine/src/derivedDiscardRetrieval.test.ts"],
   },
   {
@@ -2682,11 +2682,11 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D242-gate-read-off-the-catalog-past-the-ability-lock",
     decision: "D242",
-    what: '🛑🛑 THE CHANNEL MUTANT, AND THE ONE THE WHOLE `passivesOf` ARGUMENT IS FOR. The reader goes straight to `programFor(top.id)` instead of the §9-SUPPRESSED fold, so Klefki `sv01-096` "Mischievous Lock" no longer silences Power Saver and a Team Rocket\'s Mewtwo under an Ability lock stays barred by an Ability that is not running. Shorter, obvious, and wrong — exactly the build a slice that had priced the TOKEN rather than the CHANNEL would have shipped',
+    what: "🛑🛑 THE CHANNEL MUTANT, AND THE ONE THE WHOLE `passivesOf` ARGUMENT IS FOR. The reader keeps the fold but hands it a LOCK-BLIND board — `cardIdByUid` narrowed to the holder's own stack, Tools and Energy — so `disabledAbilityUids`' aura scan resolves no lock holder and Klefki `sv01-096` \"Mischievous Lock\" no longer silences Power Saver: a Team Rocket's Mewtwo under an Ability lock stays barred by an Ability that is not running. Shorter-looking, plausible, and wrong — exactly the build a slice that had priced the TOKEN rather than the CHANNEL would have shipped. ⚠️ RE-SPELLED AT D533: the row used to call `programFor(top.id)`, which interpreter.ts imports TYPE-ONLY (the registry import must stay type-only — its own comment says why) — so it died on a `ReferenceError` from D242 to D532, never on the lock rung (D532's D445 class; `binding-gate.ts` flagged it). The new spelling names only what the file binds and dies by ASSERTION on \"a §9 ABILITY-LOCK SILENCES the gate\"",
     file: "packages/engine/src/interpreter.ts",
     find: "  return passivesOf(state, pokemon).cantAttackUnless.find(\n    (cond) => !conditionHolds(state, seat, cond),\n  );",
     replace:
-      '  const printed = programFor(topCardOf(state, pokemon)?.id ?? "")?.passive?.cantAttackUnless;\n  return printed !== undefined && !conditionHolds(state, seat, printed) ? printed : undefined;',
+      "  return passivesOf({ ...state, cardIdByUid: Object.fromEntries([...pokemon.stack, ...pokemon.tools, ...pokemon.energy].map((u) => [u, state.cardIdByUid[u] ?? \"\"])) }, pokemon).cantAttackUnless.find(\n    (cond) => !conditionHolds(state, seat, cond),\n  );",
     expectKilledBy: ["packages/engine/src/abilityAttackGate.test.ts"],
   },
   {
@@ -3473,11 +3473,11 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D252-effects-off-top-card",
     decision: "D252",
-    what: "🛑 the EFFECTS half reads the holder's CATALOG ROW instead of the `passivesOf` fold. Correct on every board except one under a §9 Ability lock, where the damage half correctly stops and the effects half keeps refusing — one printed sentence answering two ways about the same lock",
+    what: "🛑 the EFFECTS half reads the holder's printed passives on a LOCK-BLIND board — `passivesOf` over a `cardIdByUid` narrowed to the holder's own cards, so no lock holder resolves — instead of the real `passivesOf` fold. Correct on every board except one under a §9 Ability lock, where the damage half correctly stops and the effects half keeps refusing — one printed sentence answering two ways about the same lock. ⚠️ RE-SPELLED AT D533: the row used to call `programFor(...)`, imported TYPE-ONLY in interpreter.ts, so it died on a `ReferenceError` from D252 to D532 (D532's D445 class; `binding-gate.ts` flagged it); it now dies by ASSERTION on \"a lock over the HOLDER switches the EFFECTS half off as well\"",
     file: "packages/engine/src/interpreter.ts",
     find: "    (passivesOf(state, target).preventDamageAndEffectsFromSpecialEnergy &&",
     replace:
-      '    (programFor(topUid(target) === undefined ? "" : (state.cardIdByUid[topUid(target) ?? ""] ?? ""))?.passive?.preventDamageAndEffectsFromSpecialEnergy === true &&',
+      "    (passivesOf({ ...state, cardIdByUid: Object.fromEntries([...target.stack, ...target.tools, ...target.energy].map((u) => [u, state.cardIdByUid[u] ?? \"\"])) }, target).preventDamageAndEffectsFromSpecialEnergy &&",
     expectKilledBy: ["packages/engine/src/mightyShell.test.ts"],
   },
   {
@@ -6549,7 +6549,7 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D278-predicate-bypasses-the-ability-lock",
     decision: "D278",
-    what: 'the predicate reads the catalog row straight off the target\'s top card instead of through `passivesOf`, so a Klefki `sv01-096` Ability-lock no longer silences "Boosted Evolution". The licence IS a printed Ability on a BASIC — exactly what that lock reaches — and this is the shorter build that gets §9 wrong SILENTLY, which is why the field rides the fold at all',
+    what: "the predicate reads the target's printed licence on a LOCK-BLIND board — `passivesOf` over a `cardIdByUid` narrowed to the target's own cards, so no lock holder resolves — so a Klefki `sv01-096` Ability-lock no longer silences \"Boosted Evolution\". The licence IS a printed Ability on a BASIC — exactly what that lock reaches — and this is the shorter build that gets §9 wrong SILENTLY, which is why the field rides the fold at all. ⚠️ RE-SPELLED AT D533: the row used to read `programFor(top.id)` straight off the top card, and `programFor` is imported TYPE-ONLY in interpreter.ts, so it died on a `ReferenceError` from D278 to D532 (D532's D445 class; `binding-gate.ts` flagged it); it now dies by ASSERTION on exactly the two §9 lock rungs (boostedEvolution.test.ts and stimulatedEvolution.test.ts, \"a §9 ABILITY-LOCK SILENCES THE LICENCE AND HANDS BOTH BANS BACK\")",
     // ⚠️ RE-ANCHORED AT D279: the predicate MOVED continuous.ts → interpreter.ts
     // (it needs `conditionHolds` for the partner gate) and its body became a fold
     // over a list. The mutant's meaning is unchanged — read the catalog row
@@ -6558,7 +6558,7 @@ export const MUTANTS: Mutant[] = [
     file: "packages/engine/src/interpreter.ts",
     find: "  return passivesOf(state, pokemon).evolveEarlyExempt.some(",
     replace:
-      '  const top = topCardOf(state, pokemon);\n  const direct = top === undefined ? undefined : programFor(top.id)?.passive?.evolveEarlyExempt;\n  return (direct === undefined ? [] : [direct.ifInPlay === undefined ? undefined : ({ kind: "yourNamedPokemonInPlay", name: direct.ifInPlay } as const)]).some(',
+      "  return passivesOf({ ...state, cardIdByUid: Object.fromEntries([...pokemon.stack, ...pokemon.tools, ...pokemon.energy].map((u) => [u, state.cardIdByUid[u] ?? \"\"])) }, pokemon).evolveEarlyExempt.some(",
     expectKilledBy: [
       "packages/engine/src/boostedEvolution.test.ts",
       "packages/engine/src/stimulatedEvolution.test.ts",
@@ -15151,10 +15151,10 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D377-confused-reaches-for-isImmobilized",
     decision: "D377",
-    what: "🛑 C1 — **THE VACUITY MODE THE HANDOFF NAMED BEFORE THE BUILD**, and it is the nearest rotation predicate rather than a straw: `isImmobilized` (types.ts) is `rotation === “asleep” || rotation === “paralyzed”` and is what an author reaching for an existing helper finds. **Confused is DELIBERATELY NOT IN IT** — §12 lets a Confused Pokémon attack and retreat — so this arm is FALSE on every board the clause is about and TRUE on the two it is not. `crossBoardStatus.test.ts` §5 tables all ten condition sets at once, so the mutant is caught THREE ways in one assertion: `confused` flips false, `asleep` and `paralyzed` flip true",
+    what: "🛑 C1 — **THE VACUITY MODE THE HANDOFF NAMED BEFORE THE BUILD**, and it is the nearest rotation predicate rather than a straw: `isImmobilized` (types.ts) is `rotation === “asleep” || rotation === “paralyzed”` and is what an author reaching for an existing helper finds. **Confused is DELIBERATELY NOT IN IT** — §12 lets a Confused Pokémon attack and retreat — so this arm is FALSE on every board the clause is about and TRUE on the two it is not. ⚠️ RE-SPELLED AT D533 as that predicate's BODY inlined (`active.conditions.rotation === \"asleep\" || … === \"paralyzed\"`): the row used to CALL `isImmobilized`, which interpreter.ts neither imports nor defines — it appears there only in a COMMENT, which is why a raw-text sweep missed it — so from D377 to D532 it died on a `ReferenceError` (D532's D445 class; `binding-gate.ts` flagged it). `crossBoardStatus.test.ts` §5 tables all ten condition sets at once, so the re-spelled mutant is caught by ASSERTION three ways in one: `confused` flips false, `asleep` and `paralyzed` flip true (9 rungs fail)",
     file: "packages/engine/src/interpreter.ts",
     find: "      return active !== null && presentStatuses(active.conditions).includes(\"confused\");",
-    replace: "      return active !== null && isImmobilized(active.conditions);",
+    replace: "      return active !== null && (active.conditions.rotation === \"asleep\" || active.conditions.rotation === \"paralyzed\");",
     expectKilledBy: ["packages/engine/src/crossBoardStatus.test.ts"],
   },
   {
@@ -31849,5 +31849,122 @@ export const MUTANTS: Mutant[] = [
     find: "        attachSeat(op, seat), // 🆕 D532 — the printed pile's owner; the gate asks the apply's question",
     replace: "        seat, // 🆕 D532 — the printed pile's owner; the gate asks the apply's question",
     expectKilledBy: ["packages/engine/src/opponentDiscardAttach.test.ts"],
+  },
+  // ── D533 · the precheck BINDING GATE — an instrument slice, 0 printings ────
+  // "A `replace` may only introduce identifiers the target file already imports or defines"
+  // (conventions.md, D532 close-out, applying D416). Every row below is killed by
+  // `binding-gate.ts` itself and each goes RED for its OWN reason: the self-check
+  // names every fixture that fails, and each row's `what` says which one it is.
+  // 🛑 THE CORPUS IS CLEAN AT HEAD (the seven members re-spelled), so only the
+  // self-check's synthetic board can show a vacuous or over-eager gate (D481).
+  {
+    id: "D533-precheck-stops-calling-the-gate",
+    decision: "D533",
+    what: "🛑 (a) **THE WIRING IS CUT: `precheck.ts` STUBS THE BINDING GATE INSTEAD OF CALLING IT** — D484-precheck-stops-calling-the-gate's shape one gate over. `bun run check` is green with a broken corpus by design, so `precheck` is the only command that precedes every sweep, and a gate it does not call runs when someone runs it by hand, which is never. Killed by the gate's WIRING rung (`checkWiring` looks for the call in `precheck.ts`), and by nothing else: the corpus and the self-check are untouched.",
+    file: "scripts/mutation/precheck.ts",
+    find: "const binding = bindingReport();",
+    replace: "const binding = { ok: true, lines: [\"stubbed\"] };",
+    expectKilledBy: [],
+    killedByCommand: ["bun", "scripts/mutation/binding-gate.ts"],
+  },
+  {
+    id: "D533-flagged-list-hardwired-empty",
+    decision: "D533",
+    what: "🛑 (b) **VACUITY: EVERY ROW's FLAGGED LIST IS HARD-WIRED EMPTY.** The corpus is CLEAN at HEAD once D533 re-spelled its seven rows, so a gate that never flags stays GREEN on this repo and on a broken one — and a mutation against a vacuous guard reports SURVIVED, which this corpus treats as informative (D481). Dies on the SELF-CHECK's four positives (the unimported call, the type-only import, D237's shape, D232's shape), which are the board on which this gate's absence is observable.",
+    file: "scripts/mutation/binding-gate.ts",
+    find: "    flagged: [...fresh, ...orphaned],",
+    replace: "    flagged: [],",
+    expectKilledBy: [],
+    killedByCommand: ["bun", "scripts/mutation/binding-gate.ts"],
+  },
+  {
+    id: "D533-file-bindings-read-off-raw-text",
+    decision: "D533",
+    what: "🛑 (c) **THE FILE-LEVEL BINDING SET BECOMES THE RAW TEXT OF THE FILE** — a name counts as bound when its bytes appear anywhere, comments included. **This is the commentary trap that hid D377**: `isImmobilized` occurs in `interpreter.ts` only inside a comment, so D532's raw-text sweep counted it as defined and named three members of a class of seven. Dies on the self-check's first positive, whose file mentions `helper()` in a comment and never binds it (and on the other three positives, whose names — `Shape`/`Kind` in their `import type` lines, `moved`, `ANCHOR` — all occur somewhere in their files' text: probed, the self-check names all four).",
+    file: "scripts/mutation/binding-gate.ts",
+    find: "  return fi.top.some((t) => (t.end <= lo || t.start >= hi) && t.names.includes(name));",
+    replace: "  return fi.text.includes(name);",
+    expectKilledBy: [],
+    killedByCommand: ["bun", "scripts/mutation/binding-gate.ts"],
+  },
+  {
+    id: "D533-member-names-counted-as-references",
+    decision: "D533",
+    what: "⚠️ (d) **THE MEMBER-NAME SKIP IS DROPPED**, so the `.name` of every property access and `?.` chain is read as a binding — `a.toFixed` asks whether the FILE binds `toFixed`. The false-positive direction, and the one that gets a guard deleted rather than fixed: the live corpus would go red on hundreds of rows whose patches are fine. Dies on the self-check's member fixture (`a.toFixed.length + (a?.toPrecision.length ?? 0)` must flag nothing).",
+    file: "scripts/mutation/binding-gate.ts",
+    find: "    (ts.isPropertyAccessExpression(p) && p.name === n) ||\n    (ts.isPropertyAssignment(p) && p.name === n) ||",
+    replace: "    (ts.isPropertyAssignment(p) && p.name === n) ||",
+    expectKilledBy: [],
+    killedByCommand: ["bun", "scripts/mutation/binding-gate.ts"],
+  },
+  {
+    id: "D533-object-keys-counted-as-references",
+    decision: "D533",
+    what: "⚠️ (e) **THE OBJECT-KEY SKIP IS DROPPED**, so `{ brandNewKey: a }` asks whether the file binds `brandNewKey`. D532's close-out counted four object-literal keys among its nineteen raw-text flags — this is that false positive, rebuilt inside the AST gate. Dies on the self-check's object-key fixture.",
+    file: "scripts/mutation/binding-gate.ts",
+    find: "    (ts.isPropertyAssignment(p) && p.name === n) ||\n    ((ts.isMethodDeclaration(p) ||",
+    replace: "    ((ts.isMethodDeclaration(p) ||",
+    expectKilledBy: [],
+    killedByCommand: ["bun", "scripts/mutation/binding-gate.ts"],
+  },
+  {
+    id: "D533-own-declarations-ignored",
+    decision: "D533",
+    what: "⚠️ (f) **THE STATEMENT's OWN DECLARATIONS ARE IGNORED** — a `const`, a destructured name or a parameter the patched statement itself declares no longer binds anything. Both directions go wrong at once: the names a `replace` declares are flagged (nine of D532's nineteen raw-text flags were exactly that), and a local REMOVED while still read (D237's shape) stops flagging, because the name was already 'unresolved' in the original and the baseline difference swallows it. Dies on the self-check's D237-shape positive and on its declares-its-own-names negative.",
+    file: "scripts/mutation/binding-gate.ts",
+    find: "    [...s.refs].filter((r) => !s.decls.has(r) && !boundInFile(fi, lo, hi, r) && !isGlobal(r)),",
+    replace: "    [...s.refs].filter((r) => !boundInFile(fi, lo, hi, r) && !isGlobal(r)),",
+    expectKilledBy: [],
+    killedByCommand: ["bun", "scripts/mutation/binding-gate.ts"],
+  },
+  {
+    id: "D533-type-only-imports-bind-values",
+    decision: "D533",
+    what: "🛑 (g) **TYPE-ONLY IMPORTS ARE COUNTED AS VALUE BINDINGS** — `import type { X }` and `import { type X }` bind X. **This is how D242, D252 and D278 hid**: `interpreter.ts` imports the registry TYPE-ONLY (and must — its own comment says why), so `programFor` LOOKS imported and is erased by esbuild; the three rows died on a `ReferenceError` from their own decisions to D532. Dies on the self-check's type-only fixture, which uses BOTH spellings.",
+    file: "scripts/mutation/binding-gate.ts",
+    find: "    c.isTypeOnly || spec?.isTypeOnly === true;",
+    replace: "    false;",
+    expectKilledBy: [],
+    killedByCommand: ["bun", "scripts/mutation/binding-gate.ts"],
+  },
+  {
+    id: "D533-deletion-direction-dropped",
+    decision: "D533",
+    what: "🛑 (h) **THE DELETION DIRECTION IS DROPPED** — the gate only asks what a `replace` INTRODUCES, never what it REMOVES. **That is exactly D232's hiding place**: its `replace` dropped the `const ATTACK_RANDOM_DISCARD_FROM_HAND = ` prefix while another top-level statement still read the name, and no scan of introduced names can see a binding that went away. Dies on the self-check's D232-shape positive (a top-level `const` deleted while a function reads it).",
+    file: "scripts/mutation/binding-gate.ts",
+    find: "  const lost = [...before.top].filter((name) => !afterTop.has(name));",
+    replace: "  const lost: string[] = [];",
+    expectKilledBy: [],
+    killedByCommand: ["bun", "scripts/mutation/binding-gate.ts"],
+  },
+  {
+    id: "D533-baseline-difference-dropped",
+    decision: "D533",
+    what: "⚠️ (i) **THE BASELINE DIFFERENCE IS DROPPED** — a name ALREADY unresolved in the original statement (vitest's `expect` in a suite, an ambient global the platform exemption does not know) is charged to every row that patches that statement. The false-positive direction: the live corpus goes red on rows that introduced nothing, and a row's verdict stops being about the row. Dies on the self-check's pre-existing-name fixture (`expect(1)` → `expect(2)` must flag nothing).",
+    file: "scripts/mutation/binding-gate.ts",
+    find: "  const fresh = [...unresolvedIn(after, fi, lo, hi)].filter((r) => !before.baseline.has(r));",
+    replace: "  const fresh = [...unresolvedIn(after, fi, lo, hi)];",
+    expectKilledBy: [],
+    killedByCommand: ["bun", "scripts/mutation/binding-gate.ts"],
+  },
+  {
+    id: "D533-global-exemption-dropped",
+    decision: "D533",
+    what: "⚠️ (j) **THE `globalThis` EXEMPTION IS DROPPED**, so `Number`, `Object` and `undefined` are names the file must bind. The platform's run-time globals are the gate's ONE exemption and it is the platform's, not a hand-kept list — without it every row whose patch reaches for `Object.fromEntries` (D533's own lock-blind re-spellings do) goes red. Dies on the self-check's globals fixture.",
+    file: "scripts/mutation/binding-gate.ts",
+    find: "const isGlobal = (name: string): boolean => name in globalThis;",
+    replace: "const isGlobal = (_name: string): boolean => false;",
+    expectKilledBy: [],
+    killedByCommand: ["bun", "scripts/mutation/binding-gate.ts"],
+  },
+  {
+    id: "D533-region-narrows-to-the-find",
+    decision: "D533",
+    what: "🛑 (k) **THE COVERING REGION NARROWS TO THE `find` SPAN ALONE**, losing the enclosing top-level statement — so a patch reading its function's own parameter looks unbound, and a local REMOVED while the lines below still read it looks harmless because those lines are no longer in the region. **The second half is D237's hiding place from the other side**: its `replace` deleted `const moved` inside a function that goes on reading it. Dies on the self-check's D237-shape positive and on its enclosing-function negative (`return a;` → `return b;` must flag nothing).",
+    file: "scripts/mutation/binding-gate.ts",
+    find: "  const lo = covering[0]?.start ?? at;\n  const hi = covering.at(-1)?.end ?? stop;",
+    replace: "  const lo = at;\n  const hi = stop;",
+    expectKilledBy: [],
+    killedByCommand: ["bun", "scripts/mutation/binding-gate.ts"],
   },
 ];
