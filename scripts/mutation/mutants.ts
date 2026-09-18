@@ -21354,11 +21354,28 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D445-log-row-derives-the-actor",
     decision: "D445",
-    what: "🛑 C11 — **THE LOG DERIVES THE ACTOR FROM THE OWNER INSTEAD OF READING IT**, `otherSeat(event.seat)` where `event.actor` belongs. `D433-log-row-derives-the-actor` verbatim, at the row D426's block predicted would need an `actor` — and it is TRUE TODAY BY CONSTRUCTION OF ONE OP, which is exactly what makes it D425's `DAMAGE_DEALT` defect waiting to happen rather than a harmless equivalence. The row renders identically on every board this op can reach and would flip the moment a same-seat producer arrives",
+    // 🆕🆕🆕 D532 CLOSE-OUT — DECLARED `equivalent`, NOT RE-KILLED. This row reported KILLED on
+    //    every sweep from D445 to D531 and SURVIVED (the D532 sweep's one GAP) with the producer,
+    //    the log arm and the killer suite all byte-unchanged. What changed is ONE import line:
+    //    D532 added `otherSeat` to log.ts's `./types` import for `energyHostName` (log.ts:131).
+    //    Before that line existed this `replace` referenced a name log.ts neither defined nor
+    //    imported, so every "kill" was a ReferenceError thrown at the mutated line the first
+    //    time the suite reached it — a missing name, never an assertion going red. D519's right-verdict-wrong-carrier class (D479's third
+    //    failure mode, *true in every clause, wrong about the carrier*), for the first time on
+    //    a MUTANT ROW rather than a refusal: the verdict was right for 87 decisions and the
+    //    carrier named in `expectKilledBy` was never the thing killing it. `expectKilledBy` is
+    //    KEPT (the file's convention for declared survivors, D196), so the row reports
+    //    STALE-SURVIVOR — loudly — the day that suite CAN kill it (D427).
+    what: "🛑 C11 — **THE LOG DERIVES THE ACTOR FROM THE OWNER INSTEAD OF READING IT**, `otherSeat(event.seat)` where `event.actor` belongs. `D433-log-row-derives-the-actor` verbatim, at the row D426's block predicted would need an `actor`. ⚠️ EQUIVALENT TODAY BY CONSTRUCTION OF THE ONE PRODUCER (declared at D532's close-out — see `survives`; it was never killed by a test, only by a missing import), which is exactly what makes it D425's `DAMAGE_DEALT` defect waiting to happen rather than a harmless equivalence: the row renders identically on every board this op can reach and would flip the moment a same-seat producer arrives",
     file: "packages/engine/src/log.ts",
     find: "      return row(event.actor, [\n        plain(\"chose \"),",
     replace: "      return row(otherSeat(event.seat), [\n        plain(\"chose \"),",
     expectKilledBy: ["packages/engine/src/opponentHandScaling.test.ts"],
+    survives: {
+      kind: "equivalent",
+      reason:
+        "`CARD_DISCARDED_FROM_HAND` has exactly ONE producer — interpreter.ts's opponent-hand discard, which binds `const owner = otherSeat(ctx.seat)` and files `events.push({ type: \"CARD_DISCARDED_FROM_HAND\", seat: owner, uid, actor: ctx.seat })` — so `actor === otherSeat(seat)` on every reachable board and `row(otherSeat(event.seat), …)` files the row under the same seat as `row(event.actor, …)`; opponentHandScaling.test.ts's `who` rung reads p1 under both. The row was KILLED from D445 to D531 ONLY because log.ts did not import `otherSeat`: the mutated line threw a ReferenceError the first time the suite reached it (a missing name, not a test assertion) — D519's right-verdict-wrong-carrier class, here on a mutant row rather than a refusal. D532 imported `otherSeat` for `energyHostName` and removed the accidental carrier, and the true status surfaced as the sweep's one GAP. FALSIFIER — RE-OPEN THIS ROW (delete this `survives`) THE MOMENT A SAME-SEAT PRODUCER OF `CARD_DISCARDED_FROM_HAND` ARRIVES, i.e. any push whose `actor` is not `otherSeat(seat)`, and pin that producer's log row under `who`; until then a second producer with the same cross-seat pairing keeps the row equivalent, and `expectKilledBy` stays so a future rung that CAN tell the two apart reports STALE-SURVIVOR rather than passing quietly.",
+    },
   },
   {
     id: "D445-log-row-drops-the-word-chose",

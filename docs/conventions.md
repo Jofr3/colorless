@@ -7874,6 +7874,49 @@ D519's §1 carried it; a suite that copies the lattice without it is green under
 KILLED or SURVIVED. Cover the polarity from the other side instead (the gate removed; the gate's seat
 mirrored), and say in the batch header why the obvious row is absent.
 
+### A `replace` that names an identifier its file does not have is killed by the compiler, not by the suite (D532 close-out, applying D416)
+
+D532's sweep came back ONE short of its prediction (`2700 · 52 · 1 GAP` against `2701 · 52 · 0`) and
+the survivor was not a D532 row. `D445-log-row-derives-the-actor` (`log.ts`, `row(event.actor, …)` →
+`row(otherSeat(event.seat), …)`) had reported KILLED on 87 consecutive sweeps with its producer, its
+arm and its killer suite byte-unchanged. What changed at D532 was one import line: `log.ts` gained
+`otherSeat` for `energyHostName`. Until then the `replace` named an identifier `log.ts` neither
+imported nor defined, so every "kill" was a `ReferenceError` thrown at the mutated line the first
+time the suite reached it. The harness reads the exit code (`run.ts` `green: code === 0`;
+`const killed = !mutated.green`) and vitest transpiles with esbuild without type-checking, so a
+missing name is neither ERROR nor a compile failure — it is a runtime throw that reads exactly like an
+assertion going red. (The heading above says the harness type-checks a `replace`; what `run.ts` does
+is read the exit code of `expectKilledBy` under vitest, and ERROR is reserved for a `find` that no
+longer resolves, a red baseline or a bad path — a `replace` that would not type-check but transpiles
+RUNS.) The true status was EQUIVALENT — the event has ONE producer, which binds `actor` to
+`otherSeat(seat)` — and it was declared at the close-out with `expectKilledBy` kept. This is D416's
+*a row that dies for the wrong reason is worth less than one that survives, because it reports
+success*, and D519's right-verdict-wrong-carrier mode, on a mutant row rather than a refusal. D388's
+session log had already said it (*"a mutant that cannot run is not a mutant that was caught … ASK OF
+EVERY MUTANT: WOULD THIS COMPILE AND RUN?"*) and it never became a rule. This is the rule.
+
+**A `replace` may only introduce identifiers the target file already imports or defines.** If it
+introduces one it does not, the kill is the compiler's (a `ReferenceError` at the mutated line), not
+the suite's — the row reports coverage the suite never earned, and it will show its true status the
+day the file imports that name for an unrelated reason, as D445's did 87 decisions later.
+
+**The class, swept at the close-out (nothing fixed):** for each undeclared row, the identifiers its
+`replace` introduces that its `find` does not carry (comments, string and regex literals, member names
+after `.`/`?.`, keywords and builtins stripped), flagged when absent from `git show HEAD:<file>` with
+the `find` span removed. 2,700 rows scanned; 447 introduce at least one identifier; **19 flagged**, of
+which **three are true members** — `D242-gate-read-off-the-catalog-past-the-ability-lock`,
+`D252-effects-off-top-card` and `D278-predicate-bypasses-the-ability-lock` each call `programFor(...)`
+in `interpreter.ts`, which is exported only from `registry.ts` and has never been imported or defined
+in `interpreter.ts` (`git log -S programFor -- packages/engine/src/interpreter.ts` is empty) — so all
+three are KILLED today by the missing name and their true status is unknown until each is re-probed
+with a temporary import. The other 16 are names the `replace` itself defines (9), object-literal keys
+(4) and prose or regex text the stripper did not classify (5).
+
+**Next instrument slice, not built here: extend `precheck` to reject such rows.** `precheck` proves
+every `find` occurs once and (since D470) that no `replace` splices; it should also prove that every
+identifier a `replace` introduces resolves in its target. Until it does, the check is by hand, and the
+sweep script above is the hand.
+
 ## Git / commits
 - Branch off `main` for non-trivial work; commit/push only when asked.
 - Commit trailer per global config: `Co-Authored-By: Claude ...`.
