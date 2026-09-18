@@ -330,11 +330,6 @@ const DEFERRED: readonly (readonly [string, string, number])[] = [
     2,
   ],
   [
-    "Search your deck for up to 5 Pokémon that are the same type as any Basic Energy attached to this Pokémon, reveal them, and put them into your hand. Then, shuffle your deck.",
-    "a BOARD-DEPENDENT noun (sv07-065) — the filter would read the attacker",
-    1,
-  ],
-  [
     "Put this Pokémon and all attached cards into your deck. If you do, search your deck for up to 3 cards and put them into your hand. Then, shuffle your deck.",
     "a §9.2 LEADING clause (sv07-011) — refused by the VERB'S CASE, not by `^`",
     1,
@@ -492,8 +487,13 @@ describe("the anchor — eighteen printed sentences, ONE regex", () => {
     // is the sum spelled with its three summands so the next inversion cannot fold the
     // built row back into a table it does not go through.
     expect(CLAUSES.reduce((sum, c) => sum + c.legalPrintings, 0)).toBe(35);
-    expect(DEFERRED.reduce((sum, [, , n]) => sum + n, 0)).toBe(6);
-    expect(35 + 6 + 1).toBe(42);
+    // 🆕🆕🆕 D531 moved ONE more printing over ONE sentence OUT of `DEFERRED` (6 → 5) — the
+    // BOARD-TYPED row (sv07-065, corpus FILE LINE 483), AGAIN NOT INTO `CLAUSES`: it is claimed by
+    // its OWN zero-capture anchor (`ATTACK_HAND_SEARCH_TYPED_AS_ATTACHED`) and a park-time rider,
+    // so the closed noun table never sees it and the `CLAUSES` count stays 35. The 42 is still
+    // UNMOVED: CLAUSES 35 + DEFERRED 5 + 2 rows built on their own anchors (D527's and this one).
+    expect(DEFERRED.reduce((sum, [, , n]) => sum + n, 0)).toBe(5);
+    expect(35 + 5 + 2).toBe(42);
     // …and the six left are all pinned derived-to-null, so the deferral is a
     // fact about the code rather than a note in a comment. ⚠️ The count in this
     // sentence is a DERIVED NOUN and has rotted twice (D433): it read "fourteen" while
@@ -517,9 +517,42 @@ describe("the anchor — eighteen printed sentences, ONE regex", () => {
       { op: "shuffleDeck" },
     ]);
     expect(legalAttackCorpus().filter(([, s]) => s === dynamic)).toEqual([[1, dynamic]]);
-    // …and the six still deferred are still null (the loop above), so the table shrank by
-    // exactly this row and nothing else moved.
-    expect(DEFERRED).toHaveLength(4);
+    // …and the rows still deferred are still null (the loop above), so the table shrank by
+    // exactly this row and nothing else moved. ⚠️ D531 retired a SECOND row the same way — the
+    // count here is the table's length, re-derived: 4 → 3 (three sentences / five printings).
+    expect(DEFERRED).toHaveLength(3);
+  });
+
+  it("🆕🆕🆕 D531 — the retired deferral: \"a BOARD-DEPENDENT noun (sv07-065) — the filter would read the attacker\" was TRUE about the FILTER and named the wrong LAYER; the row now derives on its OWN anchor to the flat sibling's program plus the park-time rider `typedAsAttachedBasicEnergy`", () => {
+    // D178/D418's second half: the refusal is INVERTED in place, its reason quoted as prose rather
+    // than deleted. The premise STILL HOLDS — `matchesFilter` is a pure predicate and no
+    // `CardFilter` reads the board — which is exactly why the board is read at the PARK (the
+    // interpreter narrows the printed `anyPokemon` to `anyOf(typedPokemon × T)` when the op steps)
+    // and never through this table; the row leaves `DEFERRED` without entering `CLAUSES`.
+    const typed =
+      "Search your deck for up to 5 Pokémon that are the same type as any Basic Energy attached to this Pokémon, reveal them, and put them into your hand. Then, shuffle your deck.";
+    expect(DEFERRED.some(([text]) => text === typed)).toBe(false);
+    expect(CLAUSES.some((c) => (c.text as string) === typed)).toBe(false);
+    expect(deriveAttackEffect(typed)).toEqual([
+      {
+        op: "searchDeck",
+        filter: { kind: "anyPokemon" },
+        dest: "hand",
+        max: 5,
+        reveal: true,
+        typedAsAttachedBasicEnergy: true,
+      },
+      { op: "shuffleDeck" },
+    ]);
+    expect(legalAttackCorpus().filter(([, s]) => s === typed)).toEqual([[1, typed]]);
+    // …and the flat twin still derives WITHOUT the rider on the sibling anchor — the rider is the
+    // one key between the two programs, not a change to this table's reading.
+    expect(
+      deriveAttackEffect("Search your deck for up to 5 Pokémon, reveal them, and put them into your hand. Then, shuffle your deck."),
+    ).toEqual([
+      { op: "searchDeck", filter: { kind: "anyPokemon" }, dest: "hand", max: 5, reveal: true },
+      { op: "shuffleDeck" },
+    ]);
   });
 
   it("🛑 the NOUN is a closed TABLE, and an unknown phrase is a REFUSAL", () => {

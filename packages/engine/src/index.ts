@@ -20022,6 +20022,68 @@ import type { GameState, Seat } from "./types";
     `expect(manifest.version)`, `it(…)` titles, the declaration and `package.json` —
     **not** as a value-keyed grep — because a value-keyed grep is precisely the mechanism
     that ate D500's heading.)
+    🆕🆕🆕 engineVersion 0.416.0 → **0.417.0** (D531 — THE BOARD-TYPED HAND SEARCH — `searchDeck`
+    GAINS THE OPTIONAL RIDER `typedAsAttachedBasicEnergy`, THE FIRST SEARCH RIDER WHOSE FILTER IS
+    A FACT ABOUT THE BOARD, READ AT THE PARK. `censusAttackCorpus.ts` **FILE LINE 483**
+    (`legalAttackCorpus()` index 430) — *"Search your deck for up to 5 Pokémon that are the same
+    type as any Basic Energy attached to this Pokémon, reveal them, and put them into your hand.
+    Then, shuffle your deck."*, **1 sentence / 1 legal printing** (sv07-065 per the retired D231
+    deferral; no catalog id on this checkout — the demonstrator is FILE-LOCAL and DECLARED, D425),
+    claimed by `deriveAttackEffect` through ONE new ZERO-CAPTURE whole-sentence anchor
+    (`ATTACK_HAND_SEARCH_TYPED_AS_ATTACHED`, a separate literal beside
+    `ATTACK_HAND_SEARCH_BENCH_COUNT`, D527's construction — no /i, `^…$`, no apostrophe slot; the
+    `5` is a LITERAL and not a capture, D121's warrant needs two printings and the pool has one)
+    as EXACTLY the flat sibling's two-op shape ONE KEY OVER: `[{op:"searchDeck",
+    filter:{kind:"anyPokemon"}, dest:"hand", max:5, reveal:true, typedAsAttachedBasicEnergy:true},
+    {op:"shuffleDeck"}]`. MEASURED: the sibling `ATTACK_HAND_SEARCH` matches the sentence (group 3
+    "5", group 5 the whole noun phrase, group 7 the reveal clause) and its arm falls through on the
+    closed-table miss, so arm order is NOT load-bearing for this row; the arm sits with its
+    zero-capture sibling BEFORE the sibling's `exec` for D467/D499's rule anyway.
+    🛑 **READ AT THE PARK, NEVER AT THE ANSWER.** When the op STEPS (after the attack's damage,
+    before the KO sweep — D527's timing at the same site), `interpreter.ts`'s new
+    `attachedBasicEnergyTypedFilter` narrows group 0's printed `anyPokemon` to
+    `anyOf(typedPokemon × T)`: `sourceRef` (the printed *"this Pokémon"*, `ctx.sourceUid`) →
+    `refPokemon` → the body's `energy` uids → `cardOf` → keep ONLY cards passing
+    `matchesFilter(card, {kind:"basicEnergy"})` → `energyProvidesOf`, de-duplicated. The
+    RESOLVED groups feed the union, the resolved ceiling and the caps (D336's one-array rule kept:
+    `groups` is the resolved list, `printedGroups` the new local); the PRINTED groups feed
+    `searchNote` alone, which gains a sixth flag and captions the printed RULE on the plural noun
+    (D513's shape): *"Search your deck for up to 5 Pokémon that are the same type as any Basic
+    Energy attached to this Pokémon into your hand."* — pinned byte for byte. 🛑 **DECIDED AND
+    PINNED (D421): "Basic Energy" IS THE CARD CATEGORY** — a Special Energy never counts, and the
+    category filter runs BEFORE `energyProvidesOf` because an unauthored Special's *"Colorless"*
+    fallback would otherwise admit every Colorless Pokémon in the deck; driven on a Special-only
+    attacker with Colorless Pokémon in the deck. **ZERO types → `anyOf([])`, which matches
+    NOTHING** — no source (a Trainer-shaped `ctx`), a source off the board, or no Basic Energy
+    attached all take the existing `candidates.length === 0` whiff (no park, no `DECK_SEARCHED`,
+    the empty D502 record, the trailing shuffle) — NO fallback to `anyPokemon`. The answer site is
+    UNCHANGED (`applyChoice` / `validateChoice` validate against the parked `candidates` — one read
+    site); `programPlayable` has no `searchDeck` arm and is unchanged (§5 pins it); `redact.ts`,
+    the HUD, the schema and the app name no `searchDeck` byte that moves. 🛑 **THE REFUSAL ON
+    RECORD WAS TRUE AND NAMED THE WRONG LAYER**: D231's *"a BOARD-DEPENDENT noun (sv07-065) — the
+    filter would read the attacker"* rests on a premise that STILL HOLDS (`matchesFilter` is a pure
+    predicate over ~56 call sites, D521), which is exactly WHY the board is read once at the park
+    and the predicate is handed two members it already has (`anyOf`, `typedPokemon` — whose
+    `types.includes` admits a dual-type body, driven). `derivedHandSearch.test.ts` RE-POINTED, never
+    deleted (D418): the row leaves DEFERRED (6 → 5), the family total 42 is re-derived as CLAUSES 35
+    + DEFERRED 5 + 2 rows built on their OWN anchors, and the retired reason is quoted beside a
+    positive rung. ⚠️ `MATCH_RECORD_VERSION` **HELD at 30**: the op PARKS, so the rider rides
+    `EffectContinuation.pendingOp` inside `MatchRecord.state.phase.cont` — but a v30 record carries
+    NO such key, this build reads that as `undefined`, and `undefined` is the unconstrained search
+    v30's writers meant (D125's test); no v30 program could have parked this row. Driven over v30
+    bytes in THREE directions (`typedAttachedHandSearch.test.ts` §3), the LOSS direction ON THE
+    BOARD: the dropped rider is the flat sibling's op and an off-type Pokémon in the deck becomes a
+    candidate — DETECTABLE (D421). Reader arm 556/1598 → 557/1599; raw residue 84/134 → 83/133;
+    residue 57/83 → 56/82; `BUILT.attack` 1649 → 1650; `OPAQUE` 41/62 HELD at SUBMAX=4 and 23/38
+    HELD at SUBMAX=12 (the row was PHRASE-13 at BOTH caps — the 13-token span *"Pokémon that are
+    the same type as any Basic Energy attached to this"* deletes to the flat sibling — so it leaves
+    both tables and neither OPAQUE figure moves; measured at HEAD before the build and again after).
+    🛑 **VERSION-TAX EXCEPTION LIST FOR THIS BUMP (D506 (b)):** `0.416.0` legitimately survives at
+    THIS HEADING'S OWN SOURCE, one line up in the arrow; D530's heading target below;
+    `targetCounterSnipe.test.ts`'s header arrow and its heading pin; the D531 census annotations'
+    own `engine 0.416.0 → 0.417.0` arrows; `mutants.ts`'s D275 re-point ledger; and the `docs/`
+    history. The sweep was run as a WHITELIST over `expect(engineVersion)`,
+    `expect(manifest.version)`, `it(…)` titles, the declaration and `package.json`.)
     🆕🆕🆕 engineVersion 0.415.0 → **0.416.0** (D530 — THE TARGET-COUNTER-SCALED BENCH SNIPE —
     A FOURTH RIDER ON `damageChosen`, THE FIRST WHOSE MULTIPLIER IS A FACT ABOUT THE BODY THE
     PLAYER HAS NOT CHOSEN YET. `censusAttackCorpus.ts` **FILE LINE 551** (`legalAttackCorpus()`
@@ -22452,7 +22514,7 @@ import type { GameState, Seat } from "./types";
     WITNESS** — the count was re-derived every slice and the word *"three"* was carried.
     A successor of this slice inherits **81 / 61 / 17** again, over **FIVE** history
     occurrences: those four plus `deckMillFilteredScale.test.ts`'s own header arrow.) */
-export const engineVersion = "0.416.0";
+export const engineVersion = "0.417.0";
 
 export type {
   ApplyResult,

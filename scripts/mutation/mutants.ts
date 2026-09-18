@@ -5251,7 +5251,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D275",
     what: "🛑 THE DEBT THIS SLICE PAID FOR THE FIFTH TIME, RE-INSTALLED: `engineVersion` falls a minor behind `packages/engine/package.json`, which is EXACTLY the state the tree was in at the head of D275 (0.187.0 against 0.189.0) and had been for two slices with nothing comparing them. The tie is the guard; this row is the proof it is one",
     file: "packages/engine/src/index.ts",
-    // ⚠️ RE-POINTED AT D530 (0.415.0 → 0.416.0), at D528 (0.414.0 → 0.415.0), at D527 (0.413.0 → 0.414.0), at D526 (0.412.0 → 0.413.0), at D525 (0.411.0 → 0.412.0), at D524 (0.410.0 → 0.411.0), at D523 (0.409.0 → 0.410.0), at D522 (0.408.0 → 0.409.0), at D521 (0.407.0 → 0.408.0), at D520 (0.406.0 → 0.407.0), at D519 (0.405.0 → 0.406.0), at D518 (0.404.0 → 0.405.0), at D517 (0.403.0 → 0.404.0), at D516 (0.402.0 → 0.403.0), at D515 (0.401.0 → 0.402.0), at D514 (0.400.0 → 0.401.0), at D513 (0.399.0 → 0.400.0), at D512 (0.398.0 → 0.399.0), at D510 (0.397.0 → 0.398.0), at D508 (0.396.0 → 0.397.0), at D507 (0.395.0 → 0.396.0), at D505 (0.394.0 → 0.395.0), at D490 (0.384.0 → 0.385.0), at D489 (0.383.0 → 0.384.0), at D488 (0.382.0 → 0.383.0), at D487 (0.381.0 → 0.382.0), at D486 (0.380.0 → 0.381.0), at D485 (0.379.0 → 0.380.0), at D450 (0.351.0 → 0.352.0), at D449 (0.350.0 → 0.351.0), at D448 (0.349.0 → 0.350.0), at D447 (0.348.0 → 0.349.0), at D446 (0.347.0 → 0.348.0), at D445 (0.346.0 → 0.347.0), at D444 (0.345.0 → 0.346.0), at D443 (0.344.0 → 0.345.0), at D442 (0.343.0 → 0.344.0), at D441 (0.342.0 → 0.343.0), at D440 (0.341.0 → 0.342.0), at D439 (0.340.0 → 0.341.0), at D438 (0.339.0 → 0.340.0), at D437 (0.338.0 → 0.339.0), at D436 (0.337.0 → 0.338.0), at D435 (0.336.0 → 0.337.0), at D434 (0.335.0 → 0.336.0), at D433 (0.334.0 → 0.335.0), at D432 (0.333.0 → 0.334.0), at D431 (0.332.0 → 0.333.0), at D430 (0.331.0 → 0.332.0), at D429 (0.330.0 → 0.331.0), at D428 (0.329.0 → 0.330.0), at D427 (0.328.0 → 0.329.0), at D426 (0.327.0 → 0.328.0), at D425 (0.326.0 → 0.327.0), at D424 (0.325.0 → 0.326.0), at D423 (0.324.0 → 0.325.0), at D422 (0.323.0 → 0.324.0), at D421 (0.322.0 → 0.323.0), at D420 (0.321.0 → 0.322.0), at D417 (0.320.0 → 0.321.0), at D416 (0.319.0 → 0.320.0), at D415 (0.318.0 → 0.319.0), at D414 (0.317.0 → 0.318.0), at D413 (0.316.0 → 0.317.0), at D412 (0.315.0 → 0.316.0), at D410 (0.314.0 → 0.315.0), at D409 (0.313.0 → 0.314.0), at D408 (0.312.0 → 0.313.0), at D407 (0.311.0 → 0.312.0), at D402 (0.306.0 → 0.307.0), at D401 (0.305.0 → 0.306.0), at D400 (0.304.0 → 0.305.0), at D399 (0.303.0 → 0.304.0), at D398 (0.302.0 → 0.303.0), at D397 (0.301.0 → 0.302.0), at D396 (0.300.0 → 0.301.0), at D395 (0.299.0 → 0.300.0), at D394 (0.298.0 → 0.299.0), at D393 (0.297.0 → 0.298.0), at D392 (0.296.0 → 0.297.0), at D391 (0.295.0 → 0.296.0), at D390 (0.294.0 → 0.295.0), at D389 (0.293.0 → 0.294.0), at D388 (0.292.0 → 0.293.0), at D387 (0.291.0 → 0.292.0), at D386 (0.290.0 → 0.291.0),
+    // ⚠️ RE-POINTED AT D531 (0.416.0 → 0.417.0), at D530 (0.415.0 → 0.416.0), at D528 (0.414.0 → 0.415.0), at D527 (0.413.0 → 0.414.0), at D526 (0.412.0 → 0.413.0), at D525 (0.411.0 → 0.412.0), at D524 (0.410.0 → 0.411.0), at D523 (0.409.0 → 0.410.0), at D522 (0.408.0 → 0.409.0), at D521 (0.407.0 → 0.408.0), at D520 (0.406.0 → 0.407.0), at D519 (0.405.0 → 0.406.0), at D518 (0.404.0 → 0.405.0), at D517 (0.403.0 → 0.404.0), at D516 (0.402.0 → 0.403.0), at D515 (0.401.0 → 0.402.0), at D514 (0.400.0 → 0.401.0), at D513 (0.399.0 → 0.400.0), at D512 (0.398.0 → 0.399.0), at D510 (0.397.0 → 0.398.0), at D508 (0.396.0 → 0.397.0), at D507 (0.395.0 → 0.396.0), at D505 (0.394.0 → 0.395.0), at D490 (0.384.0 → 0.385.0), at D489 (0.383.0 → 0.384.0), at D488 (0.382.0 → 0.383.0), at D487 (0.381.0 → 0.382.0), at D486 (0.380.0 → 0.381.0), at D485 (0.379.0 → 0.380.0), at D450 (0.351.0 → 0.352.0), at D449 (0.350.0 → 0.351.0), at D448 (0.349.0 → 0.350.0), at D447 (0.348.0 → 0.349.0), at D446 (0.347.0 → 0.348.0), at D445 (0.346.0 → 0.347.0), at D444 (0.345.0 → 0.346.0), at D443 (0.344.0 → 0.345.0), at D442 (0.343.0 → 0.344.0), at D441 (0.342.0 → 0.343.0), at D440 (0.341.0 → 0.342.0), at D439 (0.340.0 → 0.341.0), at D438 (0.339.0 → 0.340.0), at D437 (0.338.0 → 0.339.0), at D436 (0.337.0 → 0.338.0), at D435 (0.336.0 → 0.337.0), at D434 (0.335.0 → 0.336.0), at D433 (0.334.0 → 0.335.0), at D432 (0.333.0 → 0.334.0), at D431 (0.332.0 → 0.333.0), at D430 (0.331.0 → 0.332.0), at D429 (0.330.0 → 0.331.0), at D428 (0.329.0 → 0.330.0), at D427 (0.328.0 → 0.329.0), at D426 (0.327.0 → 0.328.0), at D425 (0.326.0 → 0.327.0), at D424 (0.325.0 → 0.326.0), at D423 (0.324.0 → 0.325.0), at D422 (0.323.0 → 0.324.0), at D421 (0.322.0 → 0.323.0), at D420 (0.321.0 → 0.322.0), at D417 (0.320.0 → 0.321.0), at D416 (0.319.0 → 0.320.0), at D415 (0.318.0 → 0.319.0), at D414 (0.317.0 → 0.318.0), at D413 (0.316.0 → 0.317.0), at D412 (0.315.0 → 0.316.0), at D410 (0.314.0 → 0.315.0), at D409 (0.313.0 → 0.314.0), at D408 (0.312.0 → 0.313.0), at D407 (0.311.0 → 0.312.0), at D402 (0.306.0 → 0.307.0), at D401 (0.305.0 → 0.306.0), at D400 (0.304.0 → 0.305.0), at D399 (0.303.0 → 0.304.0), at D398 (0.302.0 → 0.303.0), at D397 (0.301.0 → 0.302.0), at D396 (0.300.0 → 0.301.0), at D395 (0.299.0 → 0.300.0), at D394 (0.298.0 → 0.299.0), at D393 (0.297.0 → 0.298.0), at D392 (0.296.0 → 0.297.0), at D391 (0.295.0 → 0.296.0), at D390 (0.294.0 → 0.295.0), at D389 (0.293.0 → 0.294.0), at D388 (0.292.0 → 0.293.0), at D387 (0.291.0 → 0.292.0), at D386 (0.290.0 → 0.291.0),
     //    each in the SAME COMMIT as the bump —
     // the TENTH slice running to do it that way, and the practice is now the one
     // thing about this row that has never cost an ERROR since it started.
@@ -5798,7 +5798,7 @@ export const MUTANTS: Mutant[] = [
     // CORPUS QUOTES** (D414/D415), so a value-keyed sweep over `toBe("0.391.0")` cannot
     // see it — this row's `find` spells the DECLARATION, not an assertion. Run
     // `precheck` after every version bump, not after the sweep tells you.
-    find: 'export const engineVersion = "0.416.0";',
+    find: 'export const engineVersion = "0.417.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -27994,8 +27994,12 @@ export const MUTANTS: Mutant[] = [
     //    printing steps AGREE at 1 and 1 (corpus FILE LINE 551 carries ONE printing), so the
     //    regression stays the two-step it has always expressed. Re-transcribed in the SAME edit as
     //    the `censusAtHead` literal and the other two version-tax rows (D525 (1)).
-    find: "  attack: 1649,",
-    replace: "  attack: 1647,",
+    // 🆕🆕🆕 D531 — RE-TRANSCRIBED AGAIN, 1649 -> 1650 (replace 1647 -> 1648): the sentence and
+    //    printing steps AGREE at 1 and 1 (corpus FILE LINE 483 carries ONE printing), so the
+    //    regression stays the two-step it has always expressed. Re-transcribed in the SAME edit as
+    //    the `censusAtHead` literal and the other two version-tax rows (D525 (1)).
+    find: "  attack: 1650,",
+    replace: "  attack: 1648,",
     expectKilledBy: [
       "packages/engine/src/censusAtHead.test.ts",
     ],
@@ -29152,8 +29156,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D506",
     what: "🛑 C1 — THE DEFECT D502 AND D505 BOTH SHIPPED: a version goes out and NO HEADING CLAIMS IT. The edit un-bolds the NEWEST heading's target, so the parser stops seeing it and the chain's head falls back a release while `package.json` says otherwise — which is byte-for-byte the state of this file at D505's head, twice over. ⚠️ IT IS THE CHEAPEST WAY FOR THIS RECORD TO GO WRONG AND WAS INVISIBLE TO EVERY OTHER INSTRUMENT IN THE REPO: `tsc`, `biome`, every test, `precheck` and all five gates are green on both sides of it, because until D506 nothing read the headings at all. Killed by the HEAD case alone, which is the point — one tripwire, named (D453/D498). 🛑 RE-POINTED AT D507 ONTO THE 0.395.0 → 0.396.0 HEADING, AND THE RE-POINT WAS OWED RATHER THAN TIDY (D444): left on D505's heading it would have gone INERT ON THE VERDICT the moment a newer heading existed — un-bolding a heading that is no longer the head leaves NEWEST equal to HEAD, so the HEAD case stays green and the kill arrives, if at all, through the CHAIN case instead. The row's own stated reason (killed by the HEAD case alone) is exactly the sentence that would have quietly become false. THIS ROW IS PART OF THE VERSION TAX: every bump owes its re-point, in the same edit as the heading. \U0001f195 RE-POINTED AGAIN AT D508 ONTO THE 0.396.0 → 0.397.0 HEADING, and this one is UNLABELLED — the `find` quotes the heading's first prose words instead of a `(D<nnn> —`, which is strictly more durable: the label is the byte the close-out ritual inserts, and quoting it is exactly what broke this row at D507. \u26a0\ufe0f The heading is the CHAIN HEAD again, so the HEAD case is the killer again — the re-point is what keeps that sentence true rather than quietly false. \U0001f195 RE-POINTED AGAIN AT D510 ONTO THE 0.397.0 \u2192 0.398.0 HEADING, also UNLABELLED, and the `find` is kept in D508's TRIMMED form \u2014 it stops before the `(` where the close-out ritual inserts the label, which is the shape D508 proved survives that edit (precheck clean, label inserted, clean again). A `find` that spanned the paren would re-open the coupling that broke this row at D507. \U0001f195 RE-POINTED AGAIN AT D512 ONTO THE 0.398.0 \u2192 0.399.0 HEADING, also UNLABELLED and kept in the same TRIMMED form. \u26a0\ufe0f The re-point is what keeps this row's own stated reason (killed by the HEAD case ALONE) true rather than quietly false: left on D510's heading it would go INERT ON THE VERDICT the moment a newer heading exists, because un-bolding a heading that is no longer the head leaves NEWEST equal to HEAD and the kill arrives, if at all, through the CHAIN case instead. \U0001f195 RE-POINTED AGAIN AT D513 ONTO THE 0.399.0 \u2192 0.400.0 HEADING, also UNLABELLED and kept in the same TRIMMED form that stops before the `(`. \u26a0\ufe0f **AND THE TRIM WAS PROVEN AGAIN RATHER THAN ASSUMED**: `precheck` clean before the heading exists, the heading written, `precheck` clean after \u2014 the third consecutive slice to demonstrate that a `find` ending at `**<new>**` survives the close-out label insertion, and the fourth to state that a `find` spanning the paren re-opens the coupling that broke this row at D507. \U0001f195 RE-POINTED AGAIN AT D515 ONTO THE 0.401.0 \u2192 0.402.0 HEADING, also UNLABELLED and kept in the same TRIMMED form that stops before the `(`. \u26a0\ufe0f **THE RE-POINT IS THE PART OF THE VERSION TAX THAT HAS NO AUTOMATIC DETECTOR**: left on D514's heading this row would go INERT ON THE VERDICT the moment a newer heading exists \u2014 un-bolding a heading that is no longer the head leaves NEWEST equal to HEAD, the HEAD case stays green, and the kill arrives (if at all) through the CHAIN case instead, so the row would report KILLED while its own stated reason (killed by the HEAD case ALONE) had quietly become false. \u26a0\ufe0f **AND THE TRIM WAS PROVEN A FIFTH TIME RATHER THAN ASSUMED**: `precheck` clean before the heading exists, the heading written, `precheck` clean after. \U0001f195 RE-POINTED AGAIN AT D516 ONTO THE 0.402.0 \u2192 0.403.0 HEADING, also UNLABELLED and kept in the same TRIMMED form that stops before the `(`. \u26a0\ufe0f **THE TRIM WAS PROVEN A SIXTH TIME RATHER THAN ASSUMED**: `precheck` clean before the heading exists, the heading written, `precheck` clean after \u2014 and the re-point remains the part of the version tax with no automatic detector, because left on D515\u2019s heading this row would report KILLED while its own stated reason (killed by the HEAD case ALONE) had quietly become false. \U0001f195 RE-POINTED AGAIN AT D517 ONTO THE 0.403.0 \u2192 0.404.0 HEADING, also UNLABELLED and kept in the same TRIMMED form that stops before the `(`. \u26a0\ufe0f **THE TRIM WAS PROVEN A SEVENTH TIME RATHER THAN ASSUMED**: `precheck` clean before the heading exists, the heading written, `precheck` clean after \u2014 seven consecutive slices now, which is the evidence that the label a caller later adds cannot reach this `find`. 🆕 RE-POINTED AGAIN AT D518 ONTO THE 0.404.0 → 0.405.0 HEADING, also UNLABELLED and kept in the same TRIMMED form that stops before the `(`. ⚠️ **THE TRIM WAS PROVEN AN EIGHTH TIME RATHER THAN ASSUMED**: `precheck` clean before the heading exists, the heading written, `precheck` clean after — eight consecutive slices, and this one carried an extra hazard worth naming: the incoming literal `0.405.0` did NOT collide at 2× the way D517's did, because this slice's `find` quotes the heading ARROW (which is unique) rather than a source line the corpus already patches, so no FOURTH version-tax row was owed. 🆕 RE-POINTED AGAIN AT D521 ONTO THE 0.407.0 → 0.408.0 HEADING, also UNLABELLED and kept in the same TRIMMED form that stops before the `(` — the heading was written labelled in the same edit as the `docs/decisions.md` row (D507), and `precheck` was run clean with the row re-pointed. 🆕 RE-POINTED AGAIN AT D526 ONTO THE 0.412.0 → 0.413.0 HEADING, UNLABELLED and kept in the same TRIMMED form that stops before the `(` — re-transcribed in the same edit as the D275 ledger row and the census row (the version-tax trio), and `precheck` run clean with the row re-pointed.",
     file: "packages/engine/src/index.ts",
-    find: "engineVersion 0.415.0 → **0.416.0**",
-    replace: "engineVersion 0.415.0 → 0.416.0",
+    find: "engineVersion 0.416.0 → **0.417.0**",
+    replace: "engineVersion 0.416.0 → 0.417.0",
     expectKilledBy: ["packages/engine/src/engineVersionChangelog.test.ts"],
   },
   {
@@ -31564,5 +31568,127 @@ export const MUTANTS: Mutant[] = [
     find: "    return `${verb} ${count} of ${owner} ${zone}${window} (${amount} damage for each damage counter on it).`;",
     replace: "    return `${verb} ${count} of ${owner} ${zone}${window} (${each} each).`;",
     expectKilledBy: ["packages/engine/src/targetCounterSnipe.test.ts"],
+  },
+  // ── D531 — THE BOARD-TYPED HAND SEARCH ("Search your deck for up to 5 Pokémon that are the same type as any
+  //    Basic Energy attached to this Pokémon, reveal them, and put them into your hand. Then, shuffle your
+  //    deck."), corpus FILE LINE 483, 1 legal printing (sv07-065) — a `searchDeck` rider `typedAsAttachedBasicEnergy`
+  //    READ AT THE PARK: the interpreter narrows the printed `anyPokemon` to `anyOf(typedPokemon × T)` off the
+  //    SOURCE body's attached BASIC Energy when the op steps. Eleven rows, ONE PER CLAIM, over the anchor (C1–C2),
+  //    the arm (C3), the park (C4′ — the brief's C4 "arm after the sibling" is DROPPED as EQUIVALENT: the sibling
+  //    falls through on the closed-table miss, measured; C11 "rider typed boolean" is DROPPED as compiler-erased,
+  //    D420), the resolver (C5 opponent's body, C7 the seat's Active — CONDITIONAL, written because a Bench-sourced
+  //    `ctx` is drivable through `runProgram`; C6 the category filter; C8 the empty-types fallback; C12 the
+  //    stack for the energy), the caption (C9) and the sized map (C10 — CONDITIONAL, written because a
+  //    hand-authored `max: "any"` op reaches the resolved-count branch). ⚠️ **NONE IS CENSUS-VISIBLE**: every
+  //    row corrupts a VALUE or a SITE and the printed row still derives — the suite's board and §1's `toEqual`
+  //    / caption rungs are the killers, never `censusAtHead`.
+  //
+  //    ⚠️ **EVERY `find`/`replace` PAIR WAS DIFFED BEFORE SHIPPING AND ASSERTED UNEQUAL BY THE SCRIPT THAT
+  //    WROTE THEM** (D519 (4)(a)); the two anchor `replace`s were EVALUATED against the row and against the
+  //    print each is meant to admit (D526 (1)); every `find` counted at exactly one occurrence in its target
+  //    and every `replace` at ZERO before the probe ran (C6 is spelled as the `anyEnergy` neighbour because
+  //    the bare `if (card === undefined) continue;` already occurs once in the file); every row PROBED
+  //    UNDECLARED FIRST (D525 (3)). D513's caption line and D336's union line are BYTE-INTACT (the D531 caption
+  //    rides a shadow of `plural`; the resolved list is `groups` and the new local is `printedGroups`), so
+  //    `D513-caption-drops-the-printed-phrase` and `D336-union-is-the-first-filter-only` keep their finds —
+  //    `precheck` was run the moment the engine bytes existed and was clean at 2,729, and again after these rows.
+  {
+    id: "D531-anchor-loses-the-head",
+    decision: "D531",
+    what: "🛑 C1 — **THE `^` DROPPED FROM THE BOARD-TYPED ANCHOR.** Without it the pattern matches anywhere in a longer sentence, so a compound whose SECOND clause prints this search is claimed WHOLE and its first clause silently dropped. Killed by §1's EXPLICIT prefixed rung (D520 (3)): the CONSTRUCTED `Draw a card. <row>` derives null on every reader on the real build and to the program on the mutant. Evaluated against the row and the prefixed print before shipping (D526 (1)): the un-caretted form still claims the row and ALSO claims the prefixed print. Silent to the census.",
+    file: "packages/engine/src/effects.ts",
+    find: "const ATTACK_HAND_SEARCH_TYPED_AS_ATTACHED =\n  /^Search your deck for up to 5 Pokémon that are the same type as any Basic Energy attached to this Pokémon, reveal them, and put them into your hand\\. Then, shuffle your deck\\.$/;",
+    replace: "const ATTACK_HAND_SEARCH_TYPED_AS_ATTACHED =\n  /Search your deck for up to 5 Pokémon that are the same type as any Basic Energy attached to this Pokémon, reveal them, and put them into your hand\\. Then, shuffle your deck\\.$/;",
+    expectKilledBy: ["packages/engine/src/typedAttachedHandSearch.test.ts"],
+  },
+  {
+    id: "D531-anchor-loses-the-tail",
+    decision: "D531",
+    what: "🛑 C2 — **THE `$` DROPPED, THE OTHER END OF C1 AND A DIFFERENT DEFECT (D497's pair rule).** With no terminator the anchor swallows a trailing clause: `<row> Draw a card.` derives as though the second sentence were not there and the draw is silently lost. Killed by §1's SUFFIXED rung: null on every reader on the real build (⚠️ the trailing splitter COMPOSES `{head: row, tail}` on the real build — measured, pinned — and on the mutant the READER swallows the whole string instead), the program on the mutant. Evaluated against the row and the suffixed print before shipping. Silent to the census.",
+    file: "packages/engine/src/effects.ts",
+    find: "const ATTACK_HAND_SEARCH_TYPED_AS_ATTACHED =\n  /^Search your deck for up to 5 Pokémon that are the same type as any Basic Energy attached to this Pokémon, reveal them, and put them into your hand\\. Then, shuffle your deck\\.$/;",
+    replace: "const ATTACK_HAND_SEARCH_TYPED_AS_ATTACHED =\n  /^Search your deck for up to 5 Pokémon that are the same type as any Basic Energy attached to this Pokémon, reveal them, and put them into your hand\\. Then, shuffle your deck\\./;",
+    expectKilledBy: ["packages/engine/src/typedAttachedHandSearch.test.ts"],
+  },
+  {
+    id: "D531-arm-drops-the-rider",
+    decision: "D531",
+    what: "🛑 C3 — **THE ARM DERIVES THE FLAT SIBLING'S PROGRAM WITHOUT THE RIDER, AND THE CENSUS STILL MOVES** (D465's `-rider-not-set` shape, D530's C3 one op over). `BUILT.attack` reads 1650, the residue 56/82, every census rung in forty files stays green — and the card offers EVERY Pokémon in the deck forever where it prints the typed subset. **The census cannot see a wrong VALUE, only a wrong CLAIM.** Killed by §1's `toEqual` on the program (the six-key set is pinned and the inequality against the flat twin is asserted), by §3's fresh-bytes and loss-direction rungs, by §4 (i)/(iii) on the board (the {G} and Colorless bodies offered where they must not be), and by `derivedHandSearch.test.ts`'s re-pointed positive rung. ⚠️ The `find` carries the `reveal: true,` line above the rider and the closing brace below it, at EIGHT spaces of indent, so its `replace` occurs ZERO times in the file.",
+    file: "packages/engine/src/effects.ts",
+    find: "        reveal: true,\n        typedAsAttachedBasicEnergy: true,\n      },",
+    replace: "        reveal: true,\n      },",
+    expectKilledBy: ["packages/engine/src/typedAttachedHandSearch.test.ts", "packages/engine/src/derivedHandSearch.test.ts"],
+  },
+  {
+    id: "D531-park-ignores-the-rider",
+    decision: "D531",
+    what: "🛑 C4′ — **THE KEY IS DECLARED AND NEVER READ: the park's ternary collapses to the printed groups on both arms.** The single most plausible wrong build of an optional rider — the type admits it, the deriver emits it, `pendingOp` carries it, the caption even quotes it, and the OFFER is the flat sibling's. Every reading rung, every census rung and the caption pin stay green; killed by §4 (i) (the {G}/Colorless bodies offered), (iv) (a park where a whiff is pinned), (v)/(vi)/(vii)/(ix)/(x)/(xi) and §3's loss-direction board. This is the row that says a reader test is not a board test (D465). ⚠️ NOT the brief's C4 (\"arm after the sibling\"), which is DROPPED as an EQUIVALENT mutant: the sibling falls through on the closed-table miss (measured), so moving the arm changes no answer.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "          ? printedGroups.map((g, i) =>\n              i === 0 ? { ...g, filter: attachedBasicEnergyTypedFilter(state, ctx) } : g,\n            )\n          : printedGroups;",
+    replace: "          ? printedGroups\n          : printedGroups;",
+    expectKilledBy: ["packages/engine/src/typedAttachedHandSearch.test.ts"],
+  },
+  {
+    id: "D531-resolver-reads-the-opponents-body",
+    decision: "D531",
+    what: "🛑 C5 — **THE RESOLVER READS THE OPPONENT's ACTIVE** (`otherSeat(ctx.seat)` — the seat slip the interpreter's cross-seat ops make a real idiom of; D527's C5 shape at the BODY instead of the Bench count). The printed *this Pokémon* becomes the defender. Killed by §4 (vii) (a {G} Basic on P2's Active must NOT type the {G} body — on the mutant it does, and the Special-only attacker against a {G} defender PARKS where a whiff is pinned) and by (i) (P2's Active holds no Energy, so the two-Basic board whiffs where a park is pinned). `host` goes unused under the mutant; esbuild does not care and `tsc` is not the killer.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  const [host] = sourceRef(state, ctx);\n  const body = host === undefined ? undefined : refPokemon(state, host);",
+    replace: "  const body = state.players[otherSeat(ctx.seat)].active ?? undefined;",
+    expectKilledBy: ["packages/engine/src/typedAttachedHandSearch.test.ts"],
+  },
+  {
+    id: "D531-resolver-reads-the-seats-active",
+    decision: "D531",
+    what: "🛑 C7 — **THE RESOLVER READS THE SEAT's ACTIVE INSTEAD OF THE SOURCE BODY** — `state.players[ctx.seat].active` for `sourceRef(state, ctx)`, the *this Pokémon* = *your Active* conflation every attack-only board is green under. CONDITIONAL in the brief, WRITTEN because the killer is drivable: §4 (ix) runs the op under an Ability-shaped `ctx` whose `sourceUid` names a BENCH body holding a {G} Basic while the Active holds {W}+{R} — the real build offers the {G} and dual bodies, the mutant offers the {W}/{R}/dual ones. Also killed by (viii): a `ctx` with NO `sourceUid` must whiff, and the mutant parks off the Active anyway.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  const [host] = sourceRef(state, ctx);\n  const body = host === undefined ? undefined : refPokemon(state, host);",
+    replace: "  const body = state.players[ctx.seat].active ?? undefined;",
+    expectKilledBy: ["packages/engine/src/typedAttachedHandSearch.test.ts"],
+  },
+  {
+    id: "D531-resolver-skips-the-basic-energy-filter",
+    decision: "D531",
+    what: "🛑 C6 — **THE CATEGORY FILTER LOOSENED TO `anyEnergy`** — the reading *\"any Energy attached\"* for the printed *\"any Basic Energy attached\"* (§1's near-miss, as a resolver defect). The category filter exists to run BEFORE `energyProvidesOf`, whose fallback for an unauthored Special is *\"Colorless\"* — so under the mutant a Special-only attacker types every Colorless Pokémon in the deck. Killed by §4 (iv) (the Special-only board must WHIFF: no park, no `DECK_SEARCHED`, the shuffle runs — the mutant parks the Colorless bodies), by (vi)'s `{W}+{R}+Special` board (the Colorless bodies appear) and by (vii). ⚠️ The natural `if (card === undefined) continue;` spelling occurs ONCE in the file already (D513's partition loop), so the mutant is spelled as the `anyEnergy` neighbour — the same defect, an author's own reading.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "    if (card === undefined || !matchesFilter(card, { kind: \"basicEnergy\" })) continue;",
+    replace: "    if (card === undefined || !matchesFilter(card, { kind: \"anyEnergy\" })) continue;",
+    expectKilledBy: ["packages/engine/src/typedAttachedHandSearch.test.ts"],
+  },
+  {
+    id: "D531-empty-types-fall-back-to-any-pokemon",
+    decision: "D531",
+    what: "🛑 C8 — **ZERO TYPES WIDEN TO `anyPokemon` INSTEAD OF WHIFFING.** D421's plausible degradation: an author who reads *\"nothing to narrow by\"* as *\"no narrowing\"* and offers the whole deck's Pokémon to a Special-only attacker, a Trainer-shaped context or a source that has left the board — AUTHORING a wider offer than the print carries (D190b/D199). Killed by §4 (iv) (the Special-only board parks under the mutant where a whiff is pinned), (vii) and (viii) (no `sourceUid` → done on the real build, a park on the mutant).",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  return { kind: \"anyOf\", filters: types.map((pokemonType) => ({ kind: \"typedPokemon\", pokemonType })) };",
+    replace: "  if (types.length === 0) return { kind: \"anyPokemon\" };\n  return { kind: \"anyOf\", filters: types.map((pokemonType) => ({ kind: \"typedPokemon\", pokemonType })) };",
+    expectKilledBy: ["packages/engine/src/typedAttachedHandSearch.test.ts"],
+  },
+  {
+    id: "D531-resolver-reads-the-stack-not-the-energy",
+    decision: "D531",
+    what: "🛑 C12 — **THE RESOLVER WALKS `body.stack` INSTEAD OF `body.energy`** — the two `InPlayPokemon` uid lists one field apart (`types.ts`), and the Pokémon cards in the stack never pass the `basicEnergy` filter, so every board resolves to ZERO types and the row whiffs everywhere. Every reading rung and every census rung stay green; the caption is never built. Killed by §4 (i) (the two-Basic board must PARK — the mutant takes the whiff path), (ii), (iii)'s typed half, (v), (vi), (ix), (x), (xi) and §3's board rung.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  for (const uid of body?.energy ?? []) {",
+    replace: "  for (const uid of body?.stack ?? []) {",
+    expectKilledBy: ["packages/engine/src/typedAttachedHandSearch.test.ts"],
+  },
+  {
+    id: "D531-caption-drops-the-rule",
+    decision: "D531",
+    what: "⚠️ C9 — **THE CAPTION FALLS BACK TO THE BARE PLURAL** — `searchNote` takes the sixth flag and ignores it, so the dialog reads *\"Search your deck for up to 5 Pokémon into your hand.\"* over an offer that omits every off-type Pokémon in the deck: the dialog contradicting itself in its own words (D342/D513's recorded failure, D478's describer obligation). Every offer assertion stays green; killed by §4 (i)'s byte-for-byte caption pin and its `toContain` of the printed rule, by (v)/(ix)'s caption pins, by (xi)'s `\"any\"` caption and by §3's board rung. ⚠️ Spelled on the D531 shadow line, NOT on D513's `const many = …` line one statement down — that line is byte-intact and `D513-caption-drops-the-printed-phrase`'s `find` still holds.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "    const plural = typedAsAttachedBasicEnergy\n      ? `${printedPlural} that are the same type as any Basic Energy attached to this Pokémon`\n      : printedPlural;",
+    replace: "    const plural = printedPlural;",
+    expectKilledBy: ["packages/engine/src/typedAttachedHandSearch.test.ts"],
+  },
+  {
+    id: "D531-sized-reads-the-printed-groups",
+    decision: "D531",
+    what: "⚠️ C10 — **THE `sized` MAP IS DERIVED FROM THE PRINTED GROUPS, NOT THE RESOLVED ONES** — the candidates are typed, the ceiling and the caps are not. CONDITIONAL in the brief (\"only if drivable\"), WRITTEN because it is: the printed row's `max: 5` never reaches the resolved-count branch, but a hand-authored `max: \"any\"` op with the rider does (D514's own precedent for driving a branch off a hand-authored op), and §4 (xi) pins `prompt.max === candidates.length` (the typed count) and `< the deck's Pokémon count` — under the mutant the ceiling is the printed `anyPokemon` count, wider than the offer. D336's one-array rule is what this row guards: the union, the total and the caps come off ONE list.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      const sized = groups.map((g) => ({",
+    replace: "      const sized = printedGroups.map((g) => ({",
+    expectKilledBy: ["packages/engine/src/typedAttachedHandSearch.test.ts"],
   },
 ];

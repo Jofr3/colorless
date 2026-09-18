@@ -6415,6 +6415,54 @@ export type EffectOp =
           prompt it parks carries no `caps` — which is what v30's writers meant, because
           no v30 program could set the key. */
       distinctEnergyTypes?: true;
+      /** 🆕🆕🆕 **D531 — `typedAsAttachedBasicEnergy`, THE BOARD-TYPED HAND SEARCH, AND
+          THE FIRST `searchDeck` RIDER WHOSE FILTER IS A FACT ABOUT THE BOARD.** *"Search
+          your deck for up to 5 **Pokémon that are the same type as any Basic Energy
+          attached to this Pokémon**, reveal them, and put them into your hand. Then,
+          shuffle your deck."* — `censusAttackCorpus.ts` FILE LINE 483, **1 sentence /
+          1 legal printing** (sv07-065 per `derivedHandSearch.test.ts`; no catalog id on
+          this checkout), anchor `ATTACK_HAND_SEARCH_TYPED_AS_ATTACHED`, its own arm.
+
+          🛑 **READ AT THE PARK ONLY (STEP TIME), NEVER AT THE ANSWER.** When the op
+          steps, the interpreter NARROWS the printed `filter` (`anyPokemon`) to
+          `anyOf(typedPokemon × T)` where T is the de-duplicated set of types the
+          **Basic Energy cards** attached to the SOURCE body (`ctx.sourceUid`, the
+          printed *"this Pokémon"*) provide — `sourceRef` → `refPokemon` → the body's
+          `energy` uids → `cardOf` → keep ONLY cards passing `matchesFilter(card,
+          {kind:"basicEnergy"})` → `energyProvidesOf`. The resolved filter feeds the
+          candidates, the caps and the resolved ceiling; the PRINTED groups feed the
+          caption alone. The step happens after the attack's damage has landed and
+          before the KO sweep (D527's timing at the same site), so the Energy read is
+          the Energy on the body at that moment. ⚠️ **"Basic Energy" IS THE CARD
+          CATEGORY (D421, pinned):** a Special Energy does not count, authored
+          provision or not — and the `basicEnergy` filter runs BEFORE
+          `energyProvidesOf`, because an unauthored Special's *"Colorless"* fallback
+          would otherwise admit every Colorless Pokémon in the deck. ZERO types (no
+          source, source off the board, no Basic Energy attached) resolve to
+          `anyOf([])`, which matches nothing — the existing `candidates.length === 0`
+          path: no park, no `DECK_SEARCHED`, the empty D502 record filed, the trailing
+          `shuffleDeck` still runs. **NO fallback to `anyPokemon`** — a search the
+          board cannot type is a search that finds nothing, decided (D421).
+
+          🛑 **THIS IS WHY THE RESOLUTION IS AT THE PARK AND NOT IN `CardFilter`.**
+          D231's refusal (*"a BOARD-DEPENDENT noun — the filter would read the
+          attacker"*) rests on a premise that is STILL TRUE: `matchesFilter` is a pure
+          predicate over ~56 call sites (D521) and sees no board. So the board is read
+          ONCE, where the board exists, and what reaches `matchesFilter` is two members
+          it already has (`anyOf`, `typedPokemon` — whose `types.includes` admits a
+          dual-type body, D238).
+
+          ⚠️ **ABSENT = THE UNCONSTRAINED SEARCH; `true` AND NOT `boolean`** (D135/D530:
+          these ops are compared by value). 🛑 **THE LOSS DIRECTION, WRITTEN DOWN
+          (D421):** a build that DROPS the rider degrades to the flat sibling's *"up to 5
+          Pokémon"* — DETECTABLE on any board whose deck holds an off-type Pokémon,
+          because that Pokémon becomes a candidate; `typedAttachedHandSearch.test.ts` §3
+          drives it. 🛑 **`MATCH_RECORD_VERSION` HELD at 30**: the op rides
+          `EffectContinuation.pendingOp` inside `MatchRecord.state.phase.cont`, but a v30
+          record carries NO such key, this build reads that as `undefined`, and
+          `undefined` is what v30's writers meant (D125's test) — no v30 program could
+          have parked this row. Driven over v30 bytes in three directions in §3. */
+      typedAsAttachedBasicEnergy?: true;
       /** 🆕🆕 **D502 — THE §9.2 FILING, AT THE TWELFTH OP AND THE FIRST SEARCH.**
           File the uids this search ACTUALLY MOVED under `slot`, so a following
           `recordGate` can read the printed *"If you put any Pokémon onto your Bench
@@ -21990,7 +22038,11 @@ const ATTACK_BENCH_SEARCH_THEN_MOVE = new RegExp(
 // `searchDeck` rider;
 // see that key's doc block for why no `CardFilter` could have taken it.
 // "up to 5 Pokémon that are the same type as any Basic Energy
-// attached to this Pokémon" (1) is board-dependent; "a number of cards up to the
+// attached to this Pokémon" (1) is board-dependent — 🆕🆕🆕 **BUILT AT D531 (D442: dated
+// in place)**: by its OWN anchor (`ATTACK_HAND_SEARCH_TYPED_AS_ATTACHED`, zero captures)
+// and a PARK-TIME rider (`searchDeck.typedAsAttachedBasicEnergy`), never through this
+// table — the noun is still not a `CardFilter`, and the board is read where the board
+// exists; "a number of cards up to the
 // number of your Benched Pokémon" (1) is a DYNAMIC max; and `sv07-011`'s
 // "Put this Pokémon and all attached cards into your deck. If you do, …" (1) is a
 // §9.2 leading clause. **The last one is also the anchor's leading-`^` witness,
@@ -22113,6 +22165,27 @@ const ATTACK_HAND_SEARCH = new RegExp(
 // INVERTED at D527 with the row's positive rung beside the table.
 const ATTACK_HAND_SEARCH_BENCH_COUNT =
   /^Search your deck for a number of cards up to the number of your Benched Pokémon and put them into your hand\. Then, shuffle your deck\.$/;
+
+// 🆕🆕🆕 D531 — THE BOARD-TYPED HAND SEARCH, corpus FILE LINE 483 (1 legal printing,
+// sv07-065): "Search your deck for up to 5 Pokémon that are the same type as any Basic
+// Energy attached to this Pokémon, reveal them, and put them into your hand. Then,
+// shuffle your deck." A SEPARATE zero-capture whole-sentence literal beside
+// `ATTACK_HAND_SEARCH_BENCH_COUNT`, D527's construction: no /i, `^…$`, no apostrophe
+// class (the sentence has no apostrophe slot, D136/D137). DECIDED: the `5` is a
+// LITERAL and not a `(\d+)` capture — the pool is ONE printing and no second printing
+// varies the token (D121's warrant needs two), so a capture would want the family's
+// `>= 1` guard for nothing; an "up to 3 …" near-miss is the control. D178 provenance:
+// refused by D231 (`derivedHandSearch.test.ts`'s DEFERRED table, *"a BOARD-DEPENDENT
+// noun (sv07-065) — the filter would read the attacker"*). The premise — no
+// `CardFilter` could read the board — STAYS TRUE: `matchesFilter` is a pure predicate
+// over ~56 call sites (D521), which is WHY the resolution happens at the PARK
+// (`interpreter.ts` `searchDeck`, the `typedAsAttachedBasicEnergy` rider) and not in a
+// filter member. MEASURED: the sibling `ATTACK_HAND_SEARCH` MATCHES this sentence
+// (group 3 "5", group 5 the whole noun phrase, group 7 ", reveal them,") and its arm
+// falls through on the closed-table miss — so this row never reached a program, and
+// the arm order below is not what keeps the two apart.
+const ATTACK_HAND_SEARCH_TYPED_AS_ATTACHED =
+  /^Search your deck for up to 5 Pokémon that are the same type as any Basic Energy attached to this Pokémon, reveal them, and put them into your hand\. Then, shuffle your deck\.$/;
 
 /** 🆕 D307 — THE EVOLVE-FROM-DECK FAMILY, and the anchor is the WHOLE printed
     sentence with not one capture in it. There is nothing to capture: the four
@@ -28076,6 +28149,29 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   if (ATTACK_HAND_SEARCH_BENCH_COUNT.test(effect)) {
     return [
       { op: "searchDeck", filter: { kind: "anyCard" }, dest: "hand", max: "yourBenchCount" },
+      { op: "shuffleDeck" },
+    ];
+  }
+  // 🆕🆕🆕 D531 — THE BOARD-TYPED HAND SEARCH, corpus FILE LINE 483. No guard: nothing
+  // is captured (the `5` is a literal, the noun is fixed, the reveal is printed). The
+  // program is EXACTLY the flat sibling's two-op shape ONE KEY OVER — `anyPokemon`,
+  // `max: 5`, `reveal: true`, plus the `typedAsAttachedBasicEnergy` rider the park
+  // reads to NARROW the filter against the source body's attached Basic Energy (see
+  // the rider's block). ⚠️ ORDER IS NOT LOAD-BEARING FOR THIS ROW — measured: the
+  // sibling's `exec` below matches the sentence and falls through on the closed-table
+  // miss, so this arm would claim the row from either side of it — but it sits here,
+  // with its zero-capture sibling and BEFORE the sibling's `exec`, for D467/D499's
+  // rule that arm order is behaviour and is fixed rather than left to a widening.
+  if (ATTACK_HAND_SEARCH_TYPED_AS_ATTACHED.test(effect)) {
+    return [
+      {
+        op: "searchDeck",
+        filter: { kind: "anyPokemon" },
+        dest: "hand",
+        max: 5,
+        reveal: true,
+        typedAsAttachedBasicEnergy: true,
+      },
       { op: "shuffleDeck" },
     ];
   }

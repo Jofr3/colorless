@@ -71,7 +71,7 @@ import {
   seatShieldedFromSupporterEffects,
   stadiumPreventsDamage,
 } from "./continuous";
-import { STATUS_WORD_OF, foldApostrophes } from "./effects";
+import { POKEMON_TYPES, STATUS_WORD_OF, foldApostrophes } from "./effects";
 // TYPE-ONLY — interpreter.ts must not gain a runtime edge to registry.ts (the
 // registry imports effects.ts for its op vocabulary and this file evaluates it);
 // `AttackTimingGate` is a shape, so the edge is erased wholesale.
@@ -2199,7 +2199,26 @@ function stepOp(
       // The groups are spelled as ONE list here — the op's first group is
       // `filter`/`max` — so the union, the total and the caps are all derived from
       // the same array and cannot disagree about arity.
-      const groups = [{ filter: op.filter, max: op.max }, ...(op.also ?? [])];
+      // 🆕🆕🆕 D531 — THE PRINTED GROUPS AND THE RESOLVED GROUPS ARE TWO LISTS, AND ONLY
+      // THE CAPTION READS THE PRINTED ONE. `typedAsAttachedBasicEnergy` (corpus FILE
+      // LINE 483, *"Pokémon that are the same type as any Basic Energy attached to this
+      // Pokémon"*) narrows group 0's `anyPokemon` to `anyOf(typedPokemon × T)` at STEP
+      // time — after the attack's damage has landed and before the KO sweep (D527's
+      // timing at this site, one quantifier over) — through `attachedBasicEnergyTypes`,
+      // which reads the SOURCE body's attached BASIC Energy (the card category, D421)
+      // and nothing else; see that helper's block for the whiff and the Special-Energy
+      // decision. `groups` below is the RESOLVED list and feeds the union, the total and
+      // the caps (D336's one-array rule, kept: they cannot disagree about arity), and
+      // `printedGroups` feeds `searchNote` alone, so the caption quotes the printed rule
+      // over the printed noun rather than an `anyOf` join of whatever the board held.
+      // Without the rider the two are the SAME array and every line below is D336's.
+      const printedGroups = [{ filter: op.filter, max: op.max }, ...(op.also ?? [])];
+      const groups =
+        op.typedAsAttachedBasicEnergy === true
+          ? printedGroups.map((g, i) =>
+              i === 0 ? { ...g, filter: attachedBasicEnergyTypedFilter(state, ctx) } : g,
+            )
+          : printedGroups;
       const groupMatches = (filter: CardFilter) =>
         state.players[ctx.seat].deck.filter((uid) => matchesFilter(cardOf(state, uid), filter));
       // The union is taken in DECK ORDER off the deck itself, one pass, so a uid
@@ -2351,7 +2370,16 @@ function stepOp(
           // untouched. 🆕 D513 keys the spread on the CAP LIST being empty rather
           // than on `also` being absent, because there are now two producers of it.
           ...(caps.length === 0 ? {} : { caps }),
-          note: searchNote(groups, op.dest, max, op.exact === true, op.distinctEnergyTypes === true),
+          // 🆕🆕🆕 D531 — the PRINTED groups, never the resolved ones (the caption quotes
+          // the printed rule on the printed noun; the resolved filter is the board's).
+          note: searchNote(
+            printedGroups,
+            op.dest,
+            max,
+            op.exact === true,
+            op.distinctEnergyTypes === true,
+            op.typedAsAttachedBasicEnergy === true,
+          ),
         },
       };
     }
@@ -12388,6 +12416,50 @@ export function attachEnergyTargets(
     context would have been a lie about what this function reads; narrowing the
     parameter to the two fields it actually reads is the same helper, honestly
     typed, and every existing call site still passes its `ctx` unchanged. */
+/** 🆕🆕🆕 **D531 — THE BOARD-TYPED FILTER, RESOLVED AT THE PARK.** *"Pokémon that are
+    the same type as any Basic Energy attached to this Pokémon"* (corpus FILE LINE 483;
+    `searchDeck.typedAsAttachedBasicEnergy`). Returns `anyOf(typedPokemon × T)` where T
+    is the de-duplicated set of types the BASIC Energy cards attached to the source body
+    provide, in attachment order.
+
+    THE READ, IN ORDER: `sourceRef` (the printed *"this Pokémon"* — `ctx.sourceUid`, set
+    by `attack.ts` for the attacker and by the Ability runners for their own body) →
+    `refPokemon` → the body's `energy` uids (attached Energy, `types.ts`; never `stack`)
+    → `cardOf` → **keep ONLY cards passing `matchesFilter(card, {kind:"basicEnergy"})`**
+    → `energyProvidesOf`. 🛑 **"Basic Energy" IS THE CARD CATEGORY (D421, pinned):** a
+    Special Energy does not count, authored provision or not — and the category filter
+    runs BEFORE `energyProvidesOf`, because an unauthored Special's *"Colorless"*
+    fallback would otherwise admit every Colorless Pokémon in the deck. (A fixture Basic
+    whose name parses to no type provides Colorless and therefore types Colorless
+    Pokémon — no real Basic Energy card does that, and it is the honest reading of one
+    that did.)
+
+    🛑 **ZERO TYPES IS `anyOf([])`, WHICH MATCHES NOTHING — NEVER `anyPokemon`.** No
+    source (a Trainer-shaped `ctx`), a source no longer on the board, or a body with no
+    Basic Energy attached all resolve to a search the board cannot type, and the caller
+    takes its existing `candidates.length === 0` whiff (no park, no `DECK_SEARCHED`, the
+    empty D502 record, the trailing shuffle). Falling back to the unconstrained search
+    would be AUTHORING a wider offer than the print carries (D190b/D199).
+
+    Why here and not in `CardFilter`: `matchesFilter` is a pure predicate over ~56 call
+    sites (D521) and sees no board — D231's premise, still true — so the board is read
+    ONCE where it exists and the predicate is handed two members it already has
+    (`anyOf`, `typedPokemon`; the latter's `types.includes` admits a dual-type body). */
+function attachedBasicEnergyTypedFilter(state: GameState, ctx: EffectContext): CardFilter {
+  const [host] = sourceRef(state, ctx);
+  const body = host === undefined ? undefined : refPokemon(state, host);
+  const types: PokemonType[] = [];
+  for (const uid of body?.energy ?? []) {
+    const card = cardOf(state, uid);
+    if (card === undefined || !matchesFilter(card, { kind: "basicEnergy" })) continue;
+    const provided = energyProvidesOf(card);
+    if (!(POKEMON_TYPES as readonly string[]).includes(provided)) continue;
+    const pokemonType = provided as PokemonType;
+    if (!types.includes(pokemonType)) types.push(pokemonType);
+  }
+  return { kind: "anyOf", filters: types.map((pokemonType) => ({ kind: "typedPokemon", pokemonType })) };
+}
+
 function sourceRef(state: GameState, ctx: Pick<EffectContext, "seat" | "sourceUid">): PokemonRef[] {
   if (ctx.sourceUid === undefined) return [];
   const side = state.players[ctx.seat];
@@ -13845,6 +13917,16 @@ function searchNote(
       producer before this row, where the caption is the byte-identical one it
       always was. */
   distinctEnergyTypes = false,
+  /** 🆕🆕🆕 **D531 — the op's `typedAsAttachedBasicEnergy`.** The caption has to carry
+      the printed *"that are the same type as any Basic Energy attached to this
+      Pokémon"* for D513's reason one parameter up: the dialog's candidates are the
+      board-typed subset, and a heading reading *"up to 5 Pokémon"* over an offer that
+      omits every off-type Pokémon in the deck is the dialog contradicting itself in
+      its own words. The caption quotes the RULE (D478/D489's `handCostPhrase`
+      precedent), not the resolved types — the player can read those off the offer.
+      Rides the PLURAL noun only (D513's shape): the printed count is 5. Absent on
+      every producer before this row, where the caption is byte-identical. */
+  typedAsAttachedBasicEnergy = false,
 ): string {
   const where =
     dest === "bench"
@@ -13865,7 +13947,15 @@ function searchNote(
   const first = groups[0];
   if (first === undefined) return `Search your deck ${where}.`;
   if (groups.length === 1) {
-    const { singular, plural } = retrieveNoun(first.filter);
+    const { singular, plural: printedPlural } = retrieveNoun(first.filter);
+    // 🆕🆕🆕 D531 — THE PRINTED *"that are the same type as any Basic Energy attached to
+    // this Pokémon"*, on the plural noun and only the plural noun (D513's shape, one
+    // rider over). The noun is the PRINTED group's (`anyPokemon` → "Pokémon"), never
+    // the resolved `anyOf` join, so the heading reads the card's own words. Spelled as
+    // a shadow of `plural` so D513's line below stays byte-for-byte what it was.
+    const plural = typedAsAttachedBasicEnergy
+      ? `${printedPlural} that are the same type as any Basic Energy attached to this Pokémon`
+      : printedPlural;
     // 🆕🆕🆕 D513 — THE PRINTED PHRASE RIDES THE PLURAL NOUN AND ONLY THE PLURAL
     // NOUN. "a Basic Energy card of different types" is not English, and it is not
     // a caption this dialog could ever be honest about either: a pairwise relation
