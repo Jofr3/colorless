@@ -6125,8 +6125,37 @@ export type EffectOp =
   | { op: "drawUntilHandSize"; size: number }
   /** Discard the controller's whole hand (Professor's Research precedes a draw). */
   | { op: "discardHand" }
-  /** Shuffle the controller's deck (the tail of every search). */
-  | { op: "shuffleDeck" }
+  /** Shuffle the controller's deck (the tail of every search).
+
+      🆕🆕 **D534 — `whose: "opponent"` SHUFFLES THE OTHER SEAT's DECK.** Inkay
+      `sv06.5-033`: *"Look at the top card of your opponent's deck. You may have
+      your opponent shuffle their deck."* The shuffle is the printed SECOND ARM of
+      a one-card `reorderTop` over the opponent's deck (`otherwise`), and the deck
+      it randomizes is theirs.
+
+      ⚠️ **ABSENT IS THE CONTROLLER's OWN DECK** — D135's absent-key rule, so every
+      construction site written before this slice (the tail of every search, the
+      trailing op of every look) keeps its exact bytes and its exact meaning.
+
+      **THE SPELLING IS `whose`, THE SAME KEY AND THE SAME VALUE** as
+      `discardDeckTop.whose` (D131) and `attachEnergyFrom.whose` (D532): one seat
+      fork, one spelling, every op that has one.
+
+      ⚠️ **THE KEY IS PERSISTED.** Parked inside `reorderTop.otherwise`, it rides
+      `phase.cont` until the answer runs the arm. It is an OPTIONAL WIDENING — a
+      v30 record carries no such key and this build reads that as the own deck,
+      which is what every v30 writer meant — so `MATCH_RECORD_VERSION` HOLDS at 30,
+      D532's precedent one op over (D125's widening test).
+
+      🛑 **THE LOSS DIRECTION (D421/D435), WRITTEN DOWN BECAUSE IT IS NOT LOUD.** A
+      build that DROPS the key — or an older deploy reading a record a newer one
+      parked — resolves the empty answer by shuffling the **ATTACKER's** deck
+      instead of the opponent's. It is not corruption (a shuffle of a hidden zone
+      breaks no invariant) but it is not detectable from the board either: the
+      evidence is the `SHUFFLE` row's seat and the two decks' orders.
+      `opponentTopLookShuffle.test.ts` §4 pins it — the key deleted from a parked
+      record, the resume shuffles p1. */
+  | { op: "shuffleDeck"; whose?: "opponent" }
   /** Search the controller's deck for up to `max` cards matching `filter` and
       move them to `dest`. "Up to" — the player may take fewer (or none), so
       this PARKS on a card choice unless the deck holds no candidate.
@@ -8600,7 +8629,14 @@ export type EffectOp =
           are the same state": with 0 or 1 cards in the deck, shuffling the window
           onto the bottom of what is left of it changes nothing. The only board
           that separates the two tests is `n === 1` over a long deck, and no
-          printed sentence offers an alternative to ordering ONE card. */
+          printed sentence offers an alternative to ordering ONE card.
+          🛑 **D534 — EXPIRED FALSIFIER: THAT LAST CLAUSE IS FALSE.** Inkay
+          `sv06.5-033` spells exactly `n === 1` over a long deck with an
+          alternative (*"You may have your opponent shuffle their deck."*), so the
+          guard now parks iff the two arms DIFFER: a 1-card window parks when
+          `otherwise` is present and the owner's deck holds ≥ 2 cards (a shuffle of
+          a 0- or 1-card deck is the state it was already in). Every `n ≥ 2` board
+          keeps the arithmetic above unchanged. */
       otherwise?: EffectOp[];
       /** The printed second arm's own words, rendered as the alternative's
           button. REQUIRED-in-practice beside `otherwise` and optional in the
@@ -23873,6 +23909,14 @@ const ATTACK_DISCARD_SHUFFLE_BACK = new RegExp(
 // answers with a SET; and "You may have your opponent shuffle their deck" (1) is
 // a second seat's deck under a "you may". Both are written back to the backlog as
 // a measured residue row rather than approximated here.
+// 🆕🆕🆕 **D534 — THE SECOND OF THE TWO IS BUILT, AND "a second seat's deck under a
+// 'you may'" PRICED IT WRONG.** The look is `reorderTop{n:1, side:"opponent"}` and
+// the "you may" is its printed `otherwise` arm — D344's EMPTY-ORDERING answer, a
+// decision the LOOKER makes over their own prompt. No consent passes between the
+// seats: "have your opponent shuffle" names who handles the deck, not who
+// decides. What the row actually cost was `shuffleDeck.whose` and one guard
+// conjunct (`reorderTop` parks on ONE card when its two arms differ). See
+// `ATTACK_OPPONENT_TOP_LOOK_SHUFFLE` below.
 // 🆕🆕 **D341 TOOK THE FIRST OF THE TWO — ALL FOUR PRINTINGS — AND THIS PARAGRAPH
 // IS WHY IT COULD.** The residue was recorded as a MECHANISM with its riders named
 // ("an ORDERED answer"; "a `whose` fork and the event's `actor` field arrive with
@@ -23881,6 +23925,7 @@ const ATTACK_DISCARD_SHUFFLE_BACK = new RegExp(
 // order. **A RESIDUE NOTE THAT NAMES THE MECHANISM IS A PRICE A LATER SLICE CAN
 // SPEND; THE ONES THAT ROT NAME A CARD.** What is left of this row's refusal is
 // the shuffle-consent sentence alone — 1 legal printing (Inkay `sv06.5-033`).
+// ✅ **D534 SPENT IT** — and it was never a consent (see the note above).
 //
 // ⚠️ READ SITES, PRICED BY GREP RATHER THAN INHERITED — and the row's own
 // predictions lost twice:
@@ -24014,6 +24059,31 @@ const ATTACK_REORDER_TOP = new RegExp(
     `|(\\d+) cards of your opponent['’]s deck` +
     ") and put them back in any order\\.$",
 );
+
+/** 🆕🆕🆕 **D534 — "Look at the top card of your opponent's deck. You may have
+    your opponent shuffle their deck."** Inkay `sv06.5-033` (1 legal printing;
+    `censusAttackCorpus.ts` FILE LINE 401). No catalog id on this checkout, so the
+    suite's demonstrator is file-local and declared (D425).
+
+    **THE PROGRAM IS D341's OP WITH D344's SECOND ARM, ONE CARD WIDE:**
+    `reorderTop{ n: 1, side: "opponent", otherwise: [shuffleDeck{ whose:
+    "opponent" }], otherwiseNote }`. The look is the ordering park over the
+    opponent's top card (the prompt delivers the card to the ANSWERER alone —
+    `redactPrompt`), and the printed "you may" is the park's alternative button:
+    answering the one-card "ordering" puts the card back; answering `[]` runs the
+    shuffle. The prompt that asks the `or` is the prompt that delivers the look —
+    D344's reason for hanging the arm off this op rather than off `optional`,
+    whose `confirm` carries no candidates and would make the player choose blind.
+
+    ⚠️ **A LITERAL, ZERO CAPTURES, NO `/i`, `^…$`, THE APOSTROPHE CLASSED `['’]`.**
+    Nothing varies, so nothing is captured (`ATTACK_LOOK_TOP_DISCARD`'s shape).
+    MEASURED: `ATTACK_REORDER_TOP` cannot claim the sentence — its tail is the
+    literal *"and put them back in any order."* — so arm order is not load-bearing;
+    the arm sits beside it anyway, because that is where a reader of this family
+    looks. The `$` is load-bearing for the family's usual reason: a trailing
+    printed clause must refuse rather than be dropped. */
+const ATTACK_OPPONENT_TOP_LOOK_SHUFFLE =
+  /^Look at the top card of your opponent['’]s deck\. You may have your opponent shuffle their deck\.$/;
 
 /** 🆕🆕 **D342 — "Search your deck for N cards, shuffle your deck, then put
     those cards on top of it in any order."** The BIGGEST remaining member of the
@@ -29178,6 +29248,19 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
         own === undefined ? { op: "reorderTop", n, side: "opponent" } : { op: "reorderTop", n },
       ];
     }
+  }
+  // 🆕🆕🆕 D534 — Inkay `sv06.5-033`: the one-card look at the opponent's deck
+  // whose printed "you may" is the ordering park's alternative (see the constant).
+  if (ATTACK_OPPONENT_TOP_LOOK_SHUFFLE.test(effect)) {
+    return [
+      {
+        op: "reorderTop",
+        n: 1,
+        side: "opponent",
+        otherwise: [{ op: "shuffleDeck", whose: "opponent" }],
+        otherwiseNote: "Have your opponent shuffle their deck.",
+      },
+    ];
   }
   // 🆕🆕 D342 — "Search your deck for N cards, shuffle your deck, then put those
   // cards on top of it in any order." Dialga `sv08-135` "Time Manipulation", the

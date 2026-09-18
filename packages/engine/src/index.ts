@@ -20025,6 +20025,47 @@ import type { GameState, Seat } from "./types";
     `expect(manifest.version)`, `it(…)` titles, the declaration and `package.json` —
     **not** as a value-keyed grep — because a value-keyed grep is precisely the mechanism
     that ate D500's heading.)
+    🆕🆕🆕 engineVersion 0.418.0 → **0.419.0** (D534 — THE ONE-CARD LOOK AT THE OPPONENT's DECK
+    WITH A PRINTED SHUFFLE — `shuffleDeck` GAINS THE OPTIONAL KEY `whose?: "opponent"` AND
+    `reorderTop` PARKS A ONE-CARD WINDOW WHEN ITS TWO ARMS DIFFER. `censusAttackCorpus.ts` **FILE
+    LINE 401** — *"Look at the top card of your opponent's deck. You may have your opponent shuffle
+    their deck."*, **1 sentence / 1 legal printing** (Inkay `sv06.5-033`; no catalog id on this
+    checkout — the demonstrator is FILE-LOCAL and DECLARED, D425), claimed by `deriveAttackEffect`
+    through ONE new ZERO-CAPTURE whole-sentence anchor (`ATTACK_OPPONENT_TOP_LOOK_SHUFFLE`, beside
+    `ATTACK_REORDER_TOP` — no /i, `^…$`, the apostrophe classed `['’]`; MEASURED: the sibling cannot
+    claim the sentence) as D341's op with D344's second arm, one card wide: `[{ op: "reorderTop",
+    n: 1, side: "opponent", otherwise: [{ op: "shuffleDeck", whose: "opponent" }], otherwiseNote:
+    "Have your opponent shuffle their deck." }]`. The look is the `orderCards` park over the
+    opponent's top card (redacted to the ANSWERER alone); answering the one card puts it back,
+    answering `[]` (licensed by `alt`) runs the shuffle of the OPPONENT's deck — `SHUFFLE { seat:
+    opponent }`, the rng spent. 🛑 **THE REFUSAL ON RECORD PRICED THE WRONG THING** — "a second
+    seat's deck under a 'you may' … the two-seat CONSENT": no consent passes between the seats; the
+    looker decides over their own prompt, and the row cost ONE optional key and ONE guard conjunct.
+    `interpreter.ts`: the `shuffleDeck` helper takes the op and resolves ONE seat (`op.whose ===
+    "opponent" ? otherSeat(ctx.seat) : ctx.seat`) for the side read, the `SHUFFLE` row and
+    `withSide`; the `reorderTop` guard is `top.length < 2 && !armsDiffer` with `armsDiffer =
+    op.otherwise !== undefined && top.length === 1 && owner's deck.length >= 2` (D344's "no printed
+    sentence spells n === 1 over a long deck" is an EXPIRED FALSIFIER — every `n ≥ 2` board is
+    unchanged, because there a 1-card window already means a 1-card deck); `reorderNote` gains an
+    `n === 1` branch ABOVE the side test (opponent: *"Look at the top card of your opponent's deck
+    — put it back, or have your opponent shuffle their deck."*; own, reachable only by a constructed
+    op: *"Look at the top card of your deck — put it back on top."*). `log.ts`: the
+    `DECK_TOP_REORDERED` top arms gain a `count === 1` branch without "in a chosen order" (*"had the
+    top card of their deck looked at"* / *"looked at the top card of their deck"*) — which also
+    re-words the 1-card no-park D341 paths. ⚠️ INHERITED LIMITATION: a 1-card opponent deck does not
+    park, so the looker is never SHOWN that card (D341's no-choice doctrine). `redact.ts`,
+    `events.ts`, `cardplay.ts`, `attack.ts`, `flow.ts`, the schema, `apps/` and both HUDs move NO
+    byte. ⚠️ `MATCH_RECORD_VERSION` **HELD at 30**: the key rides `phase.cont.pendingOp.otherwise`
+    once parked, but a v30 record carries no such key and this build reads that as the own deck —
+    what every v30 writer meant (D125's test). THE LOSS DIRECTION (D421/D435), pinned in
+    `opponentTopLookShuffle.test.ts` §4: a dropped key shuffles the ATTACKER's deck — not
+    corruption, not loud either; the `SHUFFLE` row's seat is the evidence.
+    🛑 **VERSION-TAX EXCEPTION LIST FOR THIS BUMP (D506 (b)):** `0.418.0` legitimately survives at
+    THIS HEADING'S OWN SOURCE, one line up in the arrow; D532's heading target below;
+    `opponentDiscardAttach.test.ts`'s header arrow and its heading pin; the D532 census annotations'
+    own `engine 0.417.0 → 0.418.0` arrows; `mutants.ts`'s D275 re-point ledger; and the `docs/`
+    history. The sweep was run as a WHITELIST over `expect(engineVersion)`,
+    `expect(manifest.version)`, `it(…)` titles, the declaration and `package.json`.)
     🆕🆕🆕 engineVersion 0.417.0 → **0.418.0** (D532 — THE CROSS-SEAT DISCARD-PILE ATTACH —
     `attachEnergyFrom` GAINS THE OPTIONAL KEY `whose?: "opponent"` (ON THE OP AND ON
     `AttachTargetRiders`), READ THROUGH ONE RESOLVER FOR THE PRINTED PILE AND THE PRINTED BOARD
@@ -22593,7 +22634,7 @@ import type { GameState, Seat } from "./types";
     WITNESS** — the count was re-derived every slice and the word *"three"* was carried.
     A successor of this slice inherits **81 / 61 / 17** again, over **FIVE** history
     occurrences: those four plus `deckMillFilteredScale.test.ts`'s own header arrow.) */
-export const engineVersion = "0.418.0";
+export const engineVersion = "0.419.0";
 
 export type {
   ApplyResult,

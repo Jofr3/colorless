@@ -854,7 +854,12 @@ describe("the engine version", () => {
     // **`MATCH_RECORD_VERSION` IS 20 AT BOTH ENDS**, grepped rather than assumed:
     // `reorderTop.otherwise` / `.otherwiseNote` are registry-side program
     // vocabulary that is never persisted (D343's precedent verbatim, one field
-    // over), `orderCards.alt` is an ADDED OPTIONAL FIELD on a persisted union so
+    // over) — 🛑 **D534: FALSE ONCE PARKED.** The `reorderTop` op that parks IS
+    // `phase.cont.pendingOp`, `otherwise` and all, so the arm rides the record
+    // (Deduction Kit's since D344, Inkay's `shuffleDeck{whose:"opponent"}` since
+    // D534); the version held for D125's reason (added optional fields), not
+    // because the field is unpersisted. The round-trip rung is
+    // `opponentTopLookShuffle.test.ts` §4 — `orderCards.alt` is an ADDED OPTIONAL FIELD on a persisted union so
     // a v20 record cannot hold one (D125's widening test), and
     // `DECK_TOP_TO_BOTTOM` is an EVENT — rendered into `record.log` rows rather
     // than stored. Three widenings, no rename, no required field: D125's
@@ -1081,8 +1086,8 @@ describe("the engine version", () => {
     // 🆕🆕 D416 — 0.319.0 → **0.320.0**, moved with the behaviour: THE PARKING KO PAIR (*"Flip a coin. If heads, Knock Out your opponent's Active Basic Pokémon. If tails, Knock Out 1 of your opponent's Benched Basic Pokémon."*, 4 printings, and *"Knock Out 1 of your opponent's Pokémon that has exactly 6 damage counters on it."*, 2 printings — **2 sentences / 6 printings**, both claimed WHOLE by `deriveAttackEffect`) is a WIDENING — ONE new PARKING `EffectOp` (`knockOutChosen`, required `target` plus two optional riders) reached through the EXISTING `choosePokemon` prompt and the EXISTING `KNOCKED_OUT` sweep, ZERO new persisted record fields — so the engine version moves and `MATCH_RECORD_VERSION` STAYS 26 (D307's paragraph: no v26 deploy can author `{ op: "knockOutChosen", … }` into a record THIS deploy reads).
     // 🆕🆕 D417 — 0.320.0 → **0.321.0**, moved with the behaviour: THE TRAILING CANCEL (*"Discard a Stadium in play. If you can't, this attack does nothing."*, Eternatus `sv08-141`, **1 legal printing**) gains a TWELFTH whole-sentence reader, `deriveAttackCancelRequirement` — the anaphoric cancel `deriveAttackRequirement`'s leading `^If` could never see. `MATCH_RECORD_VERSION` **STAYS 26**, asked rather than assumed: the reader returns an EXISTING `BoardCondition` through the EXISTING requirement channel and adds NO persisted field, so no v26 record gains a shape this deploy would not already read.
     // 🆕🆕 D422 — 0.323.0 → **0.324.0**, moved with the behaviour: THE OPTIONAL SELF-SWITCH (*"You may switch this Pokémon with 1 of your Benched Pokémon."*, **3 legal printings** — the last unbuilt sentence of the family D181 opened and D189 half-closed) is a pure READER widening: ONE anchor and ONE `deriveAttackEffect` arm returning `[{ op: "optional", note, then: [{ op: "switchActive" }] }]`, both ops shipped. `MATCH_RECORD_VERSION` **STAYS 26**, DRIVEN rather than asserted (`optionalSelfSwitch.test.ts` §8 round-trips BOTH parks through JSON, replays each through `applyAction`, and compares their key sets against the parks THIS build writes for two SHIPPED sentences — D227's mirror for the `confirm`, D189's bare self-switch for the `choosePokemon`). ZERO new ops, fields, prompt kinds, events, log rows, redactions or persisted shapes, so no v26 record gains a shape this deploy would not already read.
-    expect(engineVersion).toBe("0.418.0");
-    expect(manifest.version).toBe("0.418.0");
+    expect(engineVersion).toBe("0.419.0");
+    expect(manifest.version).toBe("0.419.0");
     expect(manifest.version).toBe(engineVersion);
   });
 });

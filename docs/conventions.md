@@ -7901,6 +7901,11 @@ mirrored), and say in the batch header why the obvious row is absent.
 > a real verdict, and `binding-gate.ts` (D533) does not stand in its way because it names no unbound
 > identifier. Writing it is a follow-up, OUT OF SCOPE for D533 (an instrument slice). The
 > other-side rows D520 wrote in its place stand on their own.
+>
+> ✅ **WRITTEN AT D534** — `D520-four-zone-gate-polarity-swapped` (decision D534, zero engine
+> bytes): `then: []` plus an `otherwise` arm carrying the Active's hit, never the literal key
+> rename; killed by `fourZoneSpread.test.ts` and census-silent. It is distinct from C4 (the gate
+> removed) and C8 (the gate's seat mirrored).
 
 ### A `replace` that names an identifier its file does not have is killed by the compiler, not by the suite (D532 close-out, applying D416)
 

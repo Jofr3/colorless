@@ -5251,7 +5251,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D275",
     what: "🛑 THE DEBT THIS SLICE PAID FOR THE FIFTH TIME, RE-INSTALLED: `engineVersion` falls a minor behind `packages/engine/package.json`, which is EXACTLY the state the tree was in at the head of D275 (0.187.0 against 0.189.0) and had been for two slices with nothing comparing them. The tie is the guard; this row is the proof it is one",
     file: "packages/engine/src/index.ts",
-    // ⚠️ RE-POINTED AT D532 (0.417.0 → 0.418.0), at D531 (0.416.0 → 0.417.0), at D530 (0.415.0 → 0.416.0), at D528 (0.414.0 → 0.415.0), at D527 (0.413.0 → 0.414.0), at D526 (0.412.0 → 0.413.0), at D525 (0.411.0 → 0.412.0), at D524 (0.410.0 → 0.411.0), at D523 (0.409.0 → 0.410.0), at D522 (0.408.0 → 0.409.0), at D521 (0.407.0 → 0.408.0), at D520 (0.406.0 → 0.407.0), at D519 (0.405.0 → 0.406.0), at D518 (0.404.0 → 0.405.0), at D517 (0.403.0 → 0.404.0), at D516 (0.402.0 → 0.403.0), at D515 (0.401.0 → 0.402.0), at D514 (0.400.0 → 0.401.0), at D513 (0.399.0 → 0.400.0), at D512 (0.398.0 → 0.399.0), at D510 (0.397.0 → 0.398.0), at D508 (0.396.0 → 0.397.0), at D507 (0.395.0 → 0.396.0), at D505 (0.394.0 → 0.395.0), at D490 (0.384.0 → 0.385.0), at D489 (0.383.0 → 0.384.0), at D488 (0.382.0 → 0.383.0), at D487 (0.381.0 → 0.382.0), at D486 (0.380.0 → 0.381.0), at D485 (0.379.0 → 0.380.0), at D450 (0.351.0 → 0.352.0), at D449 (0.350.0 → 0.351.0), at D448 (0.349.0 → 0.350.0), at D447 (0.348.0 → 0.349.0), at D446 (0.347.0 → 0.348.0), at D445 (0.346.0 → 0.347.0), at D444 (0.345.0 → 0.346.0), at D443 (0.344.0 → 0.345.0), at D442 (0.343.0 → 0.344.0), at D441 (0.342.0 → 0.343.0), at D440 (0.341.0 → 0.342.0), at D439 (0.340.0 → 0.341.0), at D438 (0.339.0 → 0.340.0), at D437 (0.338.0 → 0.339.0), at D436 (0.337.0 → 0.338.0), at D435 (0.336.0 → 0.337.0), at D434 (0.335.0 → 0.336.0), at D433 (0.334.0 → 0.335.0), at D432 (0.333.0 → 0.334.0), at D431 (0.332.0 → 0.333.0), at D430 (0.331.0 → 0.332.0), at D429 (0.330.0 → 0.331.0), at D428 (0.329.0 → 0.330.0), at D427 (0.328.0 → 0.329.0), at D426 (0.327.0 → 0.328.0), at D425 (0.326.0 → 0.327.0), at D424 (0.325.0 → 0.326.0), at D423 (0.324.0 → 0.325.0), at D422 (0.323.0 → 0.324.0), at D421 (0.322.0 → 0.323.0), at D420 (0.321.0 → 0.322.0), at D417 (0.320.0 → 0.321.0), at D416 (0.319.0 → 0.320.0), at D415 (0.318.0 → 0.319.0), at D414 (0.317.0 → 0.318.0), at D413 (0.316.0 → 0.317.0), at D412 (0.315.0 → 0.316.0), at D410 (0.314.0 → 0.315.0), at D409 (0.313.0 → 0.314.0), at D408 (0.312.0 → 0.313.0), at D407 (0.311.0 → 0.312.0), at D402 (0.306.0 → 0.307.0), at D401 (0.305.0 → 0.306.0), at D400 (0.304.0 → 0.305.0), at D399 (0.303.0 → 0.304.0), at D398 (0.302.0 → 0.303.0), at D397 (0.301.0 → 0.302.0), at D396 (0.300.0 → 0.301.0), at D395 (0.299.0 → 0.300.0), at D394 (0.298.0 → 0.299.0), at D393 (0.297.0 → 0.298.0), at D392 (0.296.0 → 0.297.0), at D391 (0.295.0 → 0.296.0), at D390 (0.294.0 → 0.295.0), at D389 (0.293.0 → 0.294.0), at D388 (0.292.0 → 0.293.0), at D387 (0.291.0 → 0.292.0), at D386 (0.290.0 → 0.291.0),
+    // ⚠️ RE-POINTED AT D534 (0.418.0 → 0.419.0), at D532 (0.417.0 → 0.418.0), at D531 (0.416.0 → 0.417.0), at D530 (0.415.0 → 0.416.0), at D528 (0.414.0 → 0.415.0), at D527 (0.413.0 → 0.414.0), at D526 (0.412.0 → 0.413.0), at D525 (0.411.0 → 0.412.0), at D524 (0.410.0 → 0.411.0), at D523 (0.409.0 → 0.410.0), at D522 (0.408.0 → 0.409.0), at D521 (0.407.0 → 0.408.0), at D520 (0.406.0 → 0.407.0), at D519 (0.405.0 → 0.406.0), at D518 (0.404.0 → 0.405.0), at D517 (0.403.0 → 0.404.0), at D516 (0.402.0 → 0.403.0), at D515 (0.401.0 → 0.402.0), at D514 (0.400.0 → 0.401.0), at D513 (0.399.0 → 0.400.0), at D512 (0.398.0 → 0.399.0), at D510 (0.397.0 → 0.398.0), at D508 (0.396.0 → 0.397.0), at D507 (0.395.0 → 0.396.0), at D505 (0.394.0 → 0.395.0), at D490 (0.384.0 → 0.385.0), at D489 (0.383.0 → 0.384.0), at D488 (0.382.0 → 0.383.0), at D487 (0.381.0 → 0.382.0), at D486 (0.380.0 → 0.381.0), at D485 (0.379.0 → 0.380.0), at D450 (0.351.0 → 0.352.0), at D449 (0.350.0 → 0.351.0), at D448 (0.349.0 → 0.350.0), at D447 (0.348.0 → 0.349.0), at D446 (0.347.0 → 0.348.0), at D445 (0.346.0 → 0.347.0), at D444 (0.345.0 → 0.346.0), at D443 (0.344.0 → 0.345.0), at D442 (0.343.0 → 0.344.0), at D441 (0.342.0 → 0.343.0), at D440 (0.341.0 → 0.342.0), at D439 (0.340.0 → 0.341.0), at D438 (0.339.0 → 0.340.0), at D437 (0.338.0 → 0.339.0), at D436 (0.337.0 → 0.338.0), at D435 (0.336.0 → 0.337.0), at D434 (0.335.0 → 0.336.0), at D433 (0.334.0 → 0.335.0), at D432 (0.333.0 → 0.334.0), at D431 (0.332.0 → 0.333.0), at D430 (0.331.0 → 0.332.0), at D429 (0.330.0 → 0.331.0), at D428 (0.329.0 → 0.330.0), at D427 (0.328.0 → 0.329.0), at D426 (0.327.0 → 0.328.0), at D425 (0.326.0 → 0.327.0), at D424 (0.325.0 → 0.326.0), at D423 (0.324.0 → 0.325.0), at D422 (0.323.0 → 0.324.0), at D421 (0.322.0 → 0.323.0), at D420 (0.321.0 → 0.322.0), at D417 (0.320.0 → 0.321.0), at D416 (0.319.0 → 0.320.0), at D415 (0.318.0 → 0.319.0), at D414 (0.317.0 → 0.318.0), at D413 (0.316.0 → 0.317.0), at D412 (0.315.0 → 0.316.0), at D410 (0.314.0 → 0.315.0), at D409 (0.313.0 → 0.314.0), at D408 (0.312.0 → 0.313.0), at D407 (0.311.0 → 0.312.0), at D402 (0.306.0 → 0.307.0), at D401 (0.305.0 → 0.306.0), at D400 (0.304.0 → 0.305.0), at D399 (0.303.0 → 0.304.0), at D398 (0.302.0 → 0.303.0), at D397 (0.301.0 → 0.302.0), at D396 (0.300.0 → 0.301.0), at D395 (0.299.0 → 0.300.0), at D394 (0.298.0 → 0.299.0), at D393 (0.297.0 → 0.298.0), at D392 (0.296.0 → 0.297.0), at D391 (0.295.0 → 0.296.0), at D390 (0.294.0 → 0.295.0), at D389 (0.293.0 → 0.294.0), at D388 (0.292.0 → 0.293.0), at D387 (0.291.0 → 0.292.0), at D386 (0.290.0 → 0.291.0),
     //    each in the SAME COMMIT as the bump —
     // the TENTH slice running to do it that way, and the practice is now the one
     // thing about this row that has never cost an ERROR since it started.
@@ -5798,7 +5798,7 @@ export const MUTANTS: Mutant[] = [
     // CORPUS QUOTES** (D414/D415), so a value-keyed sweep over `toBe("0.391.0")` cannot
     // see it — this row's `find` spells the DECLARATION, not an assertion. Run
     // `precheck` after every version bump, not after the sweep tells you.
-    find: 'export const engineVersion = "0.418.0";',
+    find: 'export const engineVersion = "0.419.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -12474,10 +12474,10 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D341-reorder-parks-on-a-single-card",
     decision: "D341",
-    what: "the degenerate guard loosens from `< 2` to `< 1`, so a ONE-CARD window parks. One card admits exactly one ordering, so the engine stops the game to ask a question with a single legal answer \u2014 M1's no-choice doctrine broken in the direction that is hardest to notice, because every answer that arrives is correct. The dialogs are written assuming this never happens (a reorder control with one row is not a control)",
+    what: "the degenerate guard loosens from `< 2` to `< 1`, so a ONE-CARD window parks. One card admits exactly one ordering, so the engine stops the game to ask a question with a single legal answer \u2014 M1's no-choice doctrine broken in the direction that is hardest to notice, because every answer that arrives is correct. The dialogs are written assuming this never happens (a reorder control with one row is not a control). \u26a0\ufe0f **re-anchored D534** (D466): the guard is now `top.length < 2 && !armsDiffer` (a one-card window parks when a printed alternative makes the two arms differ — Inkay); the loosening is the same `< 2` \u2192 `< 1`, the rest of the line byte-identical, and it still parks a 1-card window with NO alternative",
     file: "packages/engine/src/interpreter.ts",
-    find: "      if (top.length < 2) return { done: state };",
-    replace: "      if (top.length < 1) return { done: state };",
+    find: "      if (top.length < 2 && !armsDiffer) return { done: state };",
+    replace: "      if (top.length < 1 && !armsDiffer) return { done: state };",
     expectKilledBy: ["packages/engine/src/derivedReorderTop.test.ts"],
   },
   {
@@ -22789,10 +22789,10 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D455-the-shuffle-lands-on-the-opponents-deck",
     decision: "D455",
-    what: "⚠ **THE WRONG DECK IS RANDOMIZED** — `shuffleDeck` is appended to nearly every search program in the engine, which is exactly why it accumulated 104 producer rows and none on its four lines. Crossed, every Nest Ball / Ultra Ball / Professor's Research in the game shuffles the OPPONENT's deck instead: the searcher's own deck keeps the order the search just disturbed (so the cards they saw stay findable), and the opponent's carefully-known top is destroyed once per turn. The SHUFFLE row moves with it, so the log agrees with the board about the wrong player. **43 attack-corpus sentences / 91 legal printings, plus 105 registry cards** — the widest producer-ONLY population in the corpus (104 producer-side rows against, until now, zero implementation rows), measured this slice",
+    what: "⚠ **THE WRONG DECK IS RANDOMIZED** — `shuffleDeck` is appended to nearly every search program in the engine, which is exactly why it accumulated 104 producer rows and none on its four lines. Crossed, every Nest Ball / Ultra Ball / Professor's Research in the game shuffles the OPPONENT's deck instead: the searcher's own deck keeps the order the search just disturbed (so the cards they saw stay findable), and the opponent's carefully-known top is destroyed once per turn. The SHUFFLE row moves with it, so the log agrees with the board about the wrong player. **43 attack-corpus sentences / 91 legal printings, plus 105 registry cards** — the widest producer-ONLY population in the corpus (104 producer-side rows against, until now, zero implementation rows), measured this slice. ⚠️ **re-anchored D534** (D466): the helper now takes the op and resolves ONE `seat` (`op.whose === \"opponent\" ? otherSeat(ctx.seat) : ctx.seat`) for the side, the row and `withSide`; the same defect is re-spelled on that line, the killers unchanged",
     file: "packages/engine/src/interpreter.ts",
-    find: "function shuffleDeck(state: GameState, ctx: EffectContext, events: GameEvent[]): GameState {\n  const side = state.players[ctx.seat];\n  const [deck, rngState] = shuffle(side.deck, state.rngState);\n  events.push({ type: \"SHUFFLE\", seat: ctx.seat });\n  return { ...withSide(state, ctx.seat, { ...side, deck }), rngState };\n}",
-    replace: "function shuffleDeck(state: GameState, ctx: EffectContext, events: GameEvent[]): GameState {\n  const side = state.players[otherSeat(ctx.seat)];\n  const [deck, rngState] = shuffle(side.deck, state.rngState);\n  events.push({ type: \"SHUFFLE\", seat: otherSeat(ctx.seat) });\n  return { ...withSide(state, otherSeat(ctx.seat), { ...side, deck }), rngState };\n}",
+    find: "  const seat = op.whose === \"opponent\" ? otherSeat(ctx.seat) : ctx.seat;\n  const side = state.players[seat];\n  const [deck, rngState] = shuffle(side.deck, state.rngState);",
+    replace: "  const seat = otherSeat(ctx.seat);\n  const side = state.players[seat];\n  const [deck, rngState] = shuffle(side.deck, state.rngState);",
     expectKilledBy: [
       "packages/engine/src/torrentialPump.test.ts",
       "packages/engine/src/explorersGuidance.test.ts",
@@ -22801,10 +22801,10 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D455-the-shuffle-never-advances-the-rng",
     decision: "D455",
-    what: "⚠ **THE SPENT RNG STATE IS THROWN AWAY** — `shuffle` returns a NEW `rngState` and dropping it leaves `state.rngState` where it was, so the deck is still shuffled and every single-shuffle board is unchanged. The defect only appears on the SECOND draw from the same generator: two searches in one match produce the identical permutation, and a coin flip taken after a shuffle repeats the face it would have taken before it — a match that is deterministic in a way no player can see and no snapshot of one board can catch. `D335-shuffle-is-spent-and-thrown-away` records this defect on a DIFFERENT function; the op every search program ends with had no such row. 🛑 **THIS ROW SURVIVED A FULL-SUITE RUN AT D455 — A REAL HOLE, NOT A NARROW `expectKilledBy`** — and the rung that closes it (`torrentialPump.test.ts` §5) was written for it, with the decline as its control **43 attack-corpus sentences / 91 legal printings, plus 105 registry cards** — the widest producer-ONLY population in the corpus (104 producer-side rows against, until now, zero implementation rows), measured this slice",
+    what: "⚠ **THE SPENT RNG STATE IS THROWN AWAY** — `shuffle` returns a NEW `rngState` and dropping it leaves `state.rngState` where it was, so the deck is still shuffled and every single-shuffle board is unchanged. The defect only appears on the SECOND draw from the same generator: two searches in one match produce the identical permutation, and a coin flip taken after a shuffle repeats the face it would have taken before it — a match that is deterministic in a way no player can see and no snapshot of one board can catch. `D335-shuffle-is-spent-and-thrown-away` records this defect on a DIFFERENT function; the op every search program ends with had no such row. 🛑 **THIS ROW SURVIVED A FULL-SUITE RUN AT D455 — A REAL HOLE, NOT A NARROW `expectKilledBy`** — and the rung that closes it (`torrentialPump.test.ts` §5) was written for it, with the decline as its control **43 attack-corpus sentences / 91 legal printings, plus 105 registry cards** — the widest producer-ONLY population in the corpus (104 producer-side rows against, until now, zero implementation rows), measured this slice. ⚠️ **re-anchored D534** (D466): the helper now takes the op and resolves ONE `seat` (`op.whose === \"opponent\" ? otherSeat(ctx.seat) : ctx.seat`) for the side, the row and `withSide`; the same defect is re-spelled on that line, the killers unchanged",
     file: "packages/engine/src/interpreter.ts",
-    find: "  return { ...withSide(state, ctx.seat, { ...side, deck }), rngState };",
-    replace: "  return withSide(state, ctx.seat, { ...side, deck });",
+    find: "  return { ...withSide(state, seat, { ...side, deck }), rngState };",
+    replace: "  return withSide(state, seat, { ...side, deck });",
     expectKilledBy: [
       "packages/engine/src/torrentialPump.test.ts",
     ],
@@ -28019,8 +28019,11 @@ export const MUTANTS: Mutant[] = [
     //    printing steps AGREE at 1 and 1 (corpus FILE LINE 70 carries ONE printing), so the
     //    regression stays the two-step it has always expressed. Re-transcribed in the SAME edit as
     //    the `censusAtHead` literal and the other two version-tax rows (D525 (1)).
-    find: "  attack: 1651,",
-    replace: "  attack: 1649,",
+    // 🆕🆕🆕 D534 — RE-TRANSCRIBED AGAIN, 1651 -> 1652 (replace 1649 -> 1650): the sentence and
+    //    printing steps agree at 1 (corpus FILE LINE 401, Inkay's one-card look), the same
+    //    two-step regression; `precheck` named the `find` at 0x the moment the pin moved.
+    find: "  attack: 1652,",
+    replace: "  attack: 1650,",
     expectKilledBy: [
       "packages/engine/src/censusAtHead.test.ts",
     ],
@@ -29177,8 +29180,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D506",
     what: "🛑 C1 — THE DEFECT D502 AND D505 BOTH SHIPPED: a version goes out and NO HEADING CLAIMS IT. The edit un-bolds the NEWEST heading's target, so the parser stops seeing it and the chain's head falls back a release while `package.json` says otherwise — which is byte-for-byte the state of this file at D505's head, twice over. ⚠️ IT IS THE CHEAPEST WAY FOR THIS RECORD TO GO WRONG AND WAS INVISIBLE TO EVERY OTHER INSTRUMENT IN THE REPO: `tsc`, `biome`, every test, `precheck` and all five gates are green on both sides of it, because until D506 nothing read the headings at all. Killed by the HEAD case alone, which is the point — one tripwire, named (D453/D498). 🛑 RE-POINTED AT D507 ONTO THE 0.395.0 → 0.396.0 HEADING, AND THE RE-POINT WAS OWED RATHER THAN TIDY (D444): left on D505's heading it would have gone INERT ON THE VERDICT the moment a newer heading existed — un-bolding a heading that is no longer the head leaves NEWEST equal to HEAD, so the HEAD case stays green and the kill arrives, if at all, through the CHAIN case instead. The row's own stated reason (killed by the HEAD case alone) is exactly the sentence that would have quietly become false. THIS ROW IS PART OF THE VERSION TAX: every bump owes its re-point, in the same edit as the heading. \U0001f195 RE-POINTED AGAIN AT D508 ONTO THE 0.396.0 → 0.397.0 HEADING, and this one is UNLABELLED — the `find` quotes the heading's first prose words instead of a `(D<nnn> —`, which is strictly more durable: the label is the byte the close-out ritual inserts, and quoting it is exactly what broke this row at D507. \u26a0\ufe0f The heading is the CHAIN HEAD again, so the HEAD case is the killer again — the re-point is what keeps that sentence true rather than quietly false. \U0001f195 RE-POINTED AGAIN AT D510 ONTO THE 0.397.0 \u2192 0.398.0 HEADING, also UNLABELLED, and the `find` is kept in D508's TRIMMED form \u2014 it stops before the `(` where the close-out ritual inserts the label, which is the shape D508 proved survives that edit (precheck clean, label inserted, clean again). A `find` that spanned the paren would re-open the coupling that broke this row at D507. \U0001f195 RE-POINTED AGAIN AT D512 ONTO THE 0.398.0 \u2192 0.399.0 HEADING, also UNLABELLED and kept in the same TRIMMED form. \u26a0\ufe0f The re-point is what keeps this row's own stated reason (killed by the HEAD case ALONE) true rather than quietly false: left on D510's heading it would go INERT ON THE VERDICT the moment a newer heading exists, because un-bolding a heading that is no longer the head leaves NEWEST equal to HEAD and the kill arrives, if at all, through the CHAIN case instead. \U0001f195 RE-POINTED AGAIN AT D513 ONTO THE 0.399.0 \u2192 0.400.0 HEADING, also UNLABELLED and kept in the same TRIMMED form that stops before the `(`. \u26a0\ufe0f **AND THE TRIM WAS PROVEN AGAIN RATHER THAN ASSUMED**: `precheck` clean before the heading exists, the heading written, `precheck` clean after \u2014 the third consecutive slice to demonstrate that a `find` ending at `**<new>**` survives the close-out label insertion, and the fourth to state that a `find` spanning the paren re-opens the coupling that broke this row at D507. \U0001f195 RE-POINTED AGAIN AT D515 ONTO THE 0.401.0 \u2192 0.402.0 HEADING, also UNLABELLED and kept in the same TRIMMED form that stops before the `(`. \u26a0\ufe0f **THE RE-POINT IS THE PART OF THE VERSION TAX THAT HAS NO AUTOMATIC DETECTOR**: left on D514's heading this row would go INERT ON THE VERDICT the moment a newer heading exists \u2014 un-bolding a heading that is no longer the head leaves NEWEST equal to HEAD, the HEAD case stays green, and the kill arrives (if at all) through the CHAIN case instead, so the row would report KILLED while its own stated reason (killed by the HEAD case ALONE) had quietly become false. \u26a0\ufe0f **AND THE TRIM WAS PROVEN A FIFTH TIME RATHER THAN ASSUMED**: `precheck` clean before the heading exists, the heading written, `precheck` clean after. \U0001f195 RE-POINTED AGAIN AT D516 ONTO THE 0.402.0 \u2192 0.403.0 HEADING, also UNLABELLED and kept in the same TRIMMED form that stops before the `(`. \u26a0\ufe0f **THE TRIM WAS PROVEN A SIXTH TIME RATHER THAN ASSUMED**: `precheck` clean before the heading exists, the heading written, `precheck` clean after \u2014 and the re-point remains the part of the version tax with no automatic detector, because left on D515\u2019s heading this row would report KILLED while its own stated reason (killed by the HEAD case ALONE) had quietly become false. \U0001f195 RE-POINTED AGAIN AT D517 ONTO THE 0.403.0 \u2192 0.404.0 HEADING, also UNLABELLED and kept in the same TRIMMED form that stops before the `(`. \u26a0\ufe0f **THE TRIM WAS PROVEN A SEVENTH TIME RATHER THAN ASSUMED**: `precheck` clean before the heading exists, the heading written, `precheck` clean after \u2014 seven consecutive slices now, which is the evidence that the label a caller later adds cannot reach this `find`. 🆕 RE-POINTED AGAIN AT D518 ONTO THE 0.404.0 → 0.405.0 HEADING, also UNLABELLED and kept in the same TRIMMED form that stops before the `(`. ⚠️ **THE TRIM WAS PROVEN AN EIGHTH TIME RATHER THAN ASSUMED**: `precheck` clean before the heading exists, the heading written, `precheck` clean after — eight consecutive slices, and this one carried an extra hazard worth naming: the incoming literal `0.405.0` did NOT collide at 2× the way D517's did, because this slice's `find` quotes the heading ARROW (which is unique) rather than a source line the corpus already patches, so no FOURTH version-tax row was owed. 🆕 RE-POINTED AGAIN AT D521 ONTO THE 0.407.0 → 0.408.0 HEADING, also UNLABELLED and kept in the same TRIMMED form that stops before the `(` — the heading was written labelled in the same edit as the `docs/decisions.md` row (D507), and `precheck` was run clean with the row re-pointed. 🆕 RE-POINTED AGAIN AT D526 ONTO THE 0.412.0 → 0.413.0 HEADING, UNLABELLED and kept in the same TRIMMED form that stops before the `(` — re-transcribed in the same edit as the D275 ledger row and the census row (the version-tax trio), and `precheck` run clean with the row re-pointed.",
     file: "packages/engine/src/index.ts",
-    find: "engineVersion 0.417.0 → **0.418.0**",
-    replace: "engineVersion 0.417.0 → 0.418.0",
+    find: "engineVersion 0.418.0 → **0.419.0**",
+    replace: "engineVersion 0.418.0 → 0.419.0",
     expectKilledBy: ["packages/engine/src/engineVersionChangelog.test.ts"],
   },
   {
@@ -30404,6 +30407,9 @@ export const MUTANTS: Mutant[] = [
   //    is REQUIRED on `conditionGate`, so that row would report ERROR rather than a verdict
   //    (the D476 lesson recorded in conventions.md). The gate's polarity is covered from the
   //    other side by C4 (the gate removed) and C8 (the gate's seat mirrored).
+  //    🛑 **D534 — THAT PREMISE WAS FALSE (D533's correction) AND C10 IS NOW WRITTEN** as
+  //    `D520-four-zone-gate-polarity-swapped` (decision D534, in the D534 batch): `run.ts` does
+  //    not type-check a `replace`, and the row keeps the required `then` (as `then: []`) anyway.
   //
   //    ⚠️ **EVERY `find`/`replace` PAIR WAS DIFFED BEFORE SHIPPING AND ASSERTED UNEQUAL BY THE
   //    SCRIPT THAT WROTE THEM** (D519 (4): a row that is its own experiment is a no-op that
@@ -31966,5 +31972,115 @@ export const MUTANTS: Mutant[] = [
     replace: "  const lo = at;\n  const hi = stop;",
     expectKilledBy: [],
     killedByCommand: ["bun", "scripts/mutation/binding-gate.ts"],
+  },
+  // ── D534 — THE ONE-CARD LOOK AT THE OPPONENT's DECK WITH A PRINTED SHUFFLE (corpus FILE LINE
+  //    401, Inkay `sv06.5-033`). Ten rows, ONE PER CLAIM, (a)–(j), plus ONE ride-along with zero
+  //    engine bytes: D520's C10, the `then → otherwise` polarity row D520's header refused on a
+  //    premise D533 found FALSE. ⚠️ **CENSUS VISIBILITY**: (g) and (h) are SILENT in every census
+  //    (no legal print carries a tail or a curly apostrophe), (e)/(f)/(i)/(j) corrupt a VALUE, a
+  //    PROMPT or a ROW and are census-silent too; only removing the arm would move the reader
+  //    summand. Every `find` occurs once, every `find !== replace` was asserted by the script that
+  //    wrote them, and `precheck` (with its binding gate) was run the moment they landed. Re-spelled
+  //    in place, not added: `D341-reorder-parks-on-a-single-card` (the guard line moved) and
+  //    `D455-the-shuffle-lands-on-the-opponents-deck` / `-never-advances-the-rng` (the helper now
+  //    resolves ONE `seat`) — D466.
+  {
+    id: "D534-shuffle-reads-the-actor",
+    decision: "D534",
+    what: "(a) 🛑 **THE HELPER's SEAT TERNARY COLLAPSES TO `ctx.seat`** — the key is declared, derived, persisted and never READ: Inkay's empty answer shuffles the ATTACKER's deck, the `SHUFFLE` row lands under p1, and the opponent's deck keeps the order the looker just saw. This is exactly the LOSS DIRECTION the op's doc block names (D421/D435) reached from the reader's side rather than the record's. Killed by §2's `[]` rung (`SHUFFLE` seats `[\"p2\"]`, p1's deck byte-identical).",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  const seat = op.whose === \"opponent\" ? otherSeat(ctx.seat) : ctx.seat;\n  const side = state.players[seat];\n  const [deck, rngState] = shuffle(side.deck, state.rngState);",
+    replace: "  const seat = ctx.seat;\n  const side = state.players[seat];\n  const [deck, rngState] = shuffle(side.deck, state.rngState);",
+    expectKilledBy: ["packages/engine/src/opponentTopLookShuffle.test.ts"],
+  },
+  {
+    id: "D534-guard-drops-the-new-disjunct",
+    decision: "D534",
+    what: "(b) 🛑 **THE GUARD's NEW DISJUNCT DROPPED** — `top.length < 2` alone, D344's arithmetic restored: a one-card window never parks, so Inkay's look resolves inline, the looker is never shown the card and the printed \"you may\" is unreachable. The attack reads as a bare announced look. Killed by §2's park rung.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      if (top.length < 2 && !armsDiffer) return { done: state };",
+    replace: "      if (top.length < 2) return { done: state };",
+    expectKilledBy: ["packages/engine/src/opponentTopLookShuffle.test.ts"],
+  },
+  {
+    id: "D534-guard-drops-the-deck-conjunct",
+    decision: "D534",
+    what: "(c) ⚠️ **THE `deck.length >= 2` CONJUNCT DROPPED** — a ONE-card opponent deck parks on a prompt whose two answers are the same state (a shuffle of one card changes nothing): M1's no-choice doctrine broken in the direction that is hardest to see, because both answers are correct. Killed by §3's 1-card-deck rung.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "        op.otherwise !== undefined && top.length === 1 && state.players[owner].deck.length >= 2;",
+    replace: "        op.otherwise !== undefined && top.length === 1;",
+    expectKilledBy: ["packages/engine/src/opponentTopLookShuffle.test.ts"],
+  },
+  {
+    id: "D534-guard-drops-the-otherwise-conjunct",
+    decision: "D534",
+    what: "(d) ⚠️ **THE `op.otherwise !== undefined` CONJUNCT DROPPED** — every one-card window over a long deck parks, alternative or not: a constructed `reorderTop{n:1}` with no second arm asks a question with one legal answer (and `validateChoice` refuses `[]` without `alt`, so there is no second answer at all). No printing spells that op today; §3's constructed rung is its witness.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "        op.otherwise !== undefined && top.length === 1 && state.players[owner].deck.length >= 2;",
+    replace: "        top.length === 1 && state.players[owner].deck.length >= 2;",
+    expectKilledBy: ["packages/engine/src/opponentTopLookShuffle.test.ts"],
+  },
+  {
+    id: "D534-arm-drops-whose",
+    decision: "D534",
+    what: "(e) 🛑 **THE DERIVED SHUFFLE LOSES `whose: \"opponent\"`** — the bare `{ op: \"shuffleDeck\" }` every search program ends with, copied into the new arm: the program still parks, still offers the alternative, and the empty answer shuffles the ATTACKER's deck. The loss direction at the READER. Killed by §1's `toEqual` and §2's `[]` rung.",
+    file: "packages/engine/src/effects.ts",
+    find: "        otherwise: [{ op: \"shuffleDeck\", whose: \"opponent\" }],\n        otherwiseNote: \"Have your opponent shuffle their deck.\",",
+    replace: "        otherwise: [{ op: \"shuffleDeck\" }],\n        otherwiseNote: \"Have your opponent shuffle their deck.\",",
+    expectKilledBy: ["packages/engine/src/opponentTopLookShuffle.test.ts"],
+  },
+  {
+    id: "D534-arm-drops-the-note",
+    decision: "D534",
+    what: "(f) ⚠️ **`otherwiseNote` DROPPED FROM THE DERIVE** (a deletion row: the `replace` is the surviving remainder of the `find`, D484). The park carries no `alt`, so the dialog has no second button and `validateChoice` refuses `[]` — the printed \"you may\" is unreachable, and the one-card park offers a single legal answer. Killed by §1's `toEqual` and §2's `alt` pin.",
+    file: "packages/engine/src/effects.ts",
+    find: "        otherwise: [{ op: \"shuffleDeck\", whose: \"opponent\" }],\n        otherwiseNote: \"Have your opponent shuffle their deck.\",",
+    replace: "        otherwise: [{ op: \"shuffleDeck\", whose: \"opponent\" }],",
+    expectKilledBy: ["packages/engine/src/opponentTopLookShuffle.test.ts"],
+  },
+  {
+    id: "D534-anchor-loses-the-tail",
+    decision: "D534",
+    what: "(g) ⚠️ **THE ANCHOR LOSES `$`** — a trailing printed clause is swallowed and silently dropped (`<row> Draw a card.` derives the row's program). The family's standing load-bearing `$` (D234). ⚠️ SILENT IN EVERY CENSUS — no legal print carries a tail. Killed by §1's trailing-clause rung.",
+    file: "packages/engine/src/effects.ts",
+    find: "  /^Look at the top card of your opponent['’]s deck\\. You may have your opponent shuffle their deck\\.$/;",
+    replace: "  /^Look at the top card of your opponent['’]s deck\\. You may have your opponent shuffle their deck\\./;",
+    expectKilledBy: ["packages/engine/src/opponentTopLookShuffle.test.ts"],
+  },
+  {
+    id: "D534-anchor-narrows-the-apostrophe",
+    decision: "D534",
+    what: "(h) ⚠️ **`['’]` NARROWS TO `'`** — the curly-apostrophe spelling of the same printed sentence derives null. ⚠️ SILENT IN EVERY CENSUS — the corpus row is U+0027. Killed by §1's curly rung.",
+    file: "packages/engine/src/effects.ts",
+    find: "  /^Look at the top card of your opponent['’]s deck\\. You may have your opponent shuffle their deck\\.$/;",
+    replace: "  /^Look at the top card of your opponent's deck\\. You may have your opponent shuffle their deck\\.$/;",
+    expectKilledBy: ["packages/engine/src/opponentTopLookShuffle.test.ts"],
+  },
+  {
+    id: "D534-note-drops-the-one-card-branch",
+    decision: "D534",
+    what: "(i) **THE `reorderNote` ONE-CARD BRANCH DROPPED** — the one-card park is captioned *\"Put these cards back on top of your opponent's deck in any order.\"*: plural, an ordering, and silent about the alternative. A caption is a claim (D343). Killed by §2's caption pin.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  if (op.n === 1) {\n    return op.side === \"opponent\"\n      ? \"Look at the top card of your opponent's deck — put it back, or have your opponent shuffle their deck.\"\n      : \"Look at the top card of your deck — put it back on top.\";\n  }\n  if (op.side === \"opponent\") {",
+    replace: "  if (op.side === \"opponent\") {",
+    expectKilledBy: ["packages/engine/src/opponentTopLookShuffle.test.ts"],
+  },
+  {
+    id: "D534-log-drops-the-one-card-branch",
+    decision: "D534",
+    what: "(j) **THE LOG's `count === 1` BRANCH DROPPED** — the one-card look reads *\"had the top 1 card of their deck looked at and put back in a chosen order\"*: a chosen order one card cannot hold, on Inkay AND on every 1-card deck under a D341 printing. Killed by §2's log rung and `derivedReorderTop.test.ts`'s singular rung (re-pointed at D534).",
+    file: "packages/engine/src/log.ts",
+    find: "      if (n === 1) {\n        return row(event.seat, [\n          plain(\n            event.actor === event.seat\n              ? \"looked at the top card of their deck\"\n              : \"had the top card of their deck looked at\",\n          ),\n        ]);\n      }\n      return row(event.seat, [\n        plain(\n          event.actor === event.seat\n            ? `looked at the top ${cards} of their deck and put them back in a chosen order`",
+    replace: "      return row(event.seat, [\n        plain(\n          event.actor === event.seat\n            ? `looked at the top ${cards} of their deck and put them back in a chosen order`",
+    expectKilledBy: ["packages/engine/src/opponentTopLookShuffle.test.ts", "packages/engine/src/derivedReorderTop.test.ts"],
+  },
+  {
+    id: "D520-four-zone-gate-polarity-swapped",
+    decision: "D534",
+    what: "🛑 C10 — **THE GATE's POLARITY SWAPPED: `then` emptied and the Active's hit moved to `otherwise`** (spelled `then: []` plus an `otherwise` arm — never the literal key rename, D476). The Defending Pokémon is hit only when it is UNDAMAGED, which inverts the printed \"if your opponent's Active Pokémon has any damage counters\". DISTINCT from C4 (the gate removed — the hit always lands) and C8 (the gate's seat mirrored — the attacker's Active is read): here the gate is present, reads the right body, and answers backwards. ⚠️ **CENSUS-SILENT** — the anchor and the sentence count are untouched; only the board sees it. Written at D534 as the ride-along D533's correction licensed: the D520 batch header's *\"no C10: the harness type-checks a `replace`\"* was FALSE (conventions.md, the FALSE heading) — `run.ts` reads the killer's exit code, and a `replace` that keeps every required key RUNS.",
+    file: "packages/engine/src/effects.ts",
+    find: "          then: [{ op: \"damageDefender\", amount }],\n        },\n        { op: \"spreadDamage\", target: \"yourBench\", amount, damagedOnly: true },",
+    replace: "          then: [],\n          otherwise: [{ op: \"damageDefender\", amount }],\n        },\n        { op: \"spreadDamage\", target: \"yourBench\", amount, damagedOnly: true },",
+    expectKilledBy: ["packages/engine/src/fourZoneSpread.test.ts"],
   },
 ];

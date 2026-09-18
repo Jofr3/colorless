@@ -1256,7 +1256,9 @@ describe("the gated PREVENT clause — the guard is SWEPT, not listed", () => {
     // this probe green. `derivedBenchSearch.test.ts` drives which side grew.
     searchDeck: "untouched",
     // …and the trailing shuffle, which reaches no board at all: it permutes the
-    // actor's own deck. It is in this table because the printed sentence puts it
+    // actor's own deck (🆕 D534: or, with `whose: "opponent"`, the OPPONENT's deck —
+    // Inkay's printed second arm; still a DECK, never a body, so the verdict holds).
+    // It is in this table because the printed sentence puts it
     // in the derived program ("Then, shuffle your deck."), which is exactly the
     // TOTALITY this table is for — the op nobody would think to classify is the
     // one that gets missed.

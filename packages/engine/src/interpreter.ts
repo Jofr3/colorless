@@ -2179,7 +2179,7 @@ function stepOp(
     case "discardHand":
       return { done: discardHand(state, ctx, events) };
     case "shuffleDeck":
-      return { done: shuffleDeck(state, ctx, events) };
+      return { done: shuffleDeck(state, ctx, op, events) };
     case "bottomDeckTop":
       // 🆕 D344 — "…or shuffle them and put them on the bottom of your deck."
       // Never parks: *"shuffle them"* is exactly the ABSENCE of a decision about
@@ -2740,7 +2740,20 @@ function stepOp(
       // already in. The one board that separates the tests is `op.n === 1` over a
       // long deck, which no printed sentence spells — an alternative to ordering
       // ONE card is not a decision any card offers.
-      if (top.length < 2) return { done: state };
+      // 🛑 D534 — **EXPIRED FALSIFIER (D446's style): the paragraph above was
+      // true of every sentence D344 could see and is false at this head.** Inkay
+      // `sv06.5-033` spells EXACTLY `op.n === 1` over a long deck, with an
+      // alternative ("You may have your opponent shuffle their deck."). So the
+      // guard now asks the D344 question literally — park iff the two arms
+      // DIFFER: a 1-card window whose op carries `otherwise` parks when the
+      // owner's deck holds at least 2 cards (a shuffle of a 0- or 1-card deck is
+      // the state it was already in). Every `op.n >= 2` board (D341/D344) is
+      // untouched, because there a 1-card window already means a 1-card deck.
+      // ⚠️ INHERITED LIMITATION: a 1-card deck does not park, so the looker is
+      // never SHOWN that card — D341's no-choice doctrine, unchanged.
+      const armsDiffer =
+        op.otherwise !== undefined && top.length === 1 && state.players[owner].deck.length >= 2;
+      if (top.length < 2 && !armsDiffer) return { done: state };
       return {
         park: {
           kind: "orderCards",
@@ -9817,11 +9830,21 @@ function discardHand(state: GameState, ctx: EffectContext, events: GameEvent[]):
   return withSide(state, ctx.seat, { ...side, hand: [], discard: [...side.discard, ...side.hand] });
 }
 
-function shuffleDeck(state: GameState, ctx: EffectContext, events: GameEvent[]): GameState {
-  const side = state.players[ctx.seat];
+/** 🆕🆕 D534 — `whose: "opponent"` shuffles the OTHER seat's deck (Inkay
+    `sv06.5-033`'s printed second arm). ONE seat, computed once, read by the side
+    read, the `SHUFFLE` row and `withSide` alike, so the three cannot disagree
+    about whose deck moved. Absent is the controller's own deck (D135). */
+function shuffleDeck(
+  state: GameState,
+  ctx: EffectContext,
+  op: Extract<EffectOp, { op: "shuffleDeck" }>,
+  events: GameEvent[],
+): GameState {
+  const seat = op.whose === "opponent" ? otherSeat(ctx.seat) : ctx.seat;
+  const side = state.players[seat];
   const [deck, rngState] = shuffle(side.deck, state.rngState);
-  events.push({ type: "SHUFFLE", seat: ctx.seat });
-  return { ...withSide(state, ctx.seat, { ...side, deck }), rngState };
+  events.push({ type: "SHUFFLE", seat });
+  return { ...withSide(state, seat, { ...side, deck }), rngState };
 }
 
 /** 🆕 D344 — the top `n` cards of the controller's own deck, SHUFFLED AMONG
@@ -14195,6 +14218,18 @@ function reorderWindow(
     top-deck sentence over a bottom-deck window — wrong, and unreachable, and
     cheaper to leave stated here than to guard with a branch nothing takes. */
 function reorderNote(op: Extract<EffectOp, { op: "reorderTop" }>): string {
+  // 🆕🆕 D534 — ONE CARD IS NOT "these cards … in any order". A one-card window
+  // parks only when a printed alternative makes it a decision (Inkay
+  // `sv06.5-033`), so the caption says what the two answers ARE. The opponent
+  // arm names Inkay's printed alternative; the own-deck arm (no printing —
+  // reachable only by a constructed op) says "put it back on top" and leaves the
+  // alternative to the button's own words. Checked BEFORE `side`, so neither
+  // plural caption below is ever shown over one card.
+  if (op.n === 1) {
+    return op.side === "opponent"
+      ? "Look at the top card of your opponent's deck — put it back, or have your opponent shuffle their deck."
+      : "Look at the top card of your deck — put it back on top.";
+  }
   if (op.side === "opponent") {
     return "Put these cards back on top of your opponent's deck in any order.";
   }

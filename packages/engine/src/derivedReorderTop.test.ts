@@ -804,11 +804,16 @@ describe("§7 the event and its log row — count-only, and the voice follows th
   });
 
   it("the row singularises at a count of 1", () => {
-    expect(
-      logRows(attack(seededOpp(131, 1)))
-        .map(([, t]) => t)
-        .join("\n"),
-    ).toContain("top 1 card of their deck");
+    // 🆕🆕 D534 — RE-POINTED: a one-card look is a look and nothing else, so the
+    // row now drops "in a chosen order" as well as the numeral (log.ts's
+    // `count === 1` branch). It was "had the top 1 card of their deck looked at
+    // and put back in a chosen order" — a claim about an ordering one card
+    // cannot hold. `opponentTopLookShuffle.test.ts` §2 drives the same branch.
+    const text = logRows(attack(seededOpp(131, 1)))
+      .map(([, t]) => t)
+      .join("\n");
+    expect(text).toContain("had the top card of their deck looked at");
+    expect(text).not.toContain("chosen order");
   });
 });
 

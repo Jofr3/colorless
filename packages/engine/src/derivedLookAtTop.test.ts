@@ -176,14 +176,23 @@ const CLAUSES: readonly Clause[] = [BENCH_8, BENCH_10, ATTACH_20, DISCARD_TOP];
     the actor does not own. `reorderTop.side` gave this family its first read of
     another seat's deck, so the zone is no longer the blocker; what still blocks it
     is the two-seat CONSENT (the actor asks, the owner shuffles), which is
-    `opponentMayDraw`'s shape pointed at a deck rather than a hand. */
-const UNREAD: readonly (readonly [string, number, string])[] = [
-  [
-    "Look at the top card of your opponent's deck. You may have your opponent shuffle their deck.",
-    1,
-    "a look into the OPPONENT's deck under a 'you may', whose consequent is a shuffle of a deck the actor does not own — two seats in one sentence (Inkay sv06.5-033)",
-  ],
-] as const;
+    `opponentMayDraw`'s shape pointed at a deck rather than a hand.
+
+    🛑 **D534 — THAT PREMISE WAS FALSE, AND THE ROW IS BUILT.** There is no consent:
+    the LOOKER decides, over their own `orderCards` prompt, whether the card goes back
+    or the deck is shuffled — *"have your opponent shuffle"* names who handles the
+    deck, not who chooses. It is D344's printed second arm one card wide:
+    `reorderTop{n:1, side:"opponent", otherwise:[shuffleDeck{whose:"opponent"}]}`
+    (`opponentTopLookShuffle.test.ts`). `UNREAD` is EMPTY; the sentence is pinned as
+    `BUILT_D534` below, derived non-null, so the rung that re-adds the row's total
+    still counts it. */
+const UNREAD: readonly (readonly [string, number, string])[] = [] as const;
+
+/** 🆕🆕🆕 D534 — the one sentence that left `UNREAD`, with its legal count. */
+const BUILT_D534 = {
+  text: "Look at the top card of your opponent's deck. You may have your opponent shuffle their deck.",
+  legalPrintings: 1, // Inkay sv06.5-033
+} as const;
 
 /** Constructed near misses, kept apart from `UNREAD` because they have no
     printing at all and would otherwise inflate its arithmetic. Each is a program
@@ -329,7 +338,7 @@ describe("the anchors — four printed sentences, THREE arms", () => {
     }
   });
 
-  it("adds up: 10 of the row's 15 legal printings here, 4 more at D341, 1 left", () => {
+  it("adds up: 10 of the row's 15 legal printings here, 4 more at D341, the last 1 at D534", () => {
     // The arithmetic stated rather than described — a slice that quietly dropped
     // one sentence would still pass every accept case above.
     expect(CLAUSES).toHaveLength(4);
@@ -338,20 +347,29 @@ describe("the anchors — four printed sentences, THREE arms", () => {
     // were the ordered answer this file's own residue note priced, and they are
     // read by `reorderTop` now (`derivedReorderTop.test.ts`, 4 legal on 2
     // sentences). What is left is one sentence and it is not an ordering.
-    expect(UNREAD).toHaveLength(1);
-    expect(UNREAD.reduce((sum, [, legal]) => sum + legal, 0)).toBe(1);
+    // 🆕🆕🆕 D534 — AND 1 → **0**: the last sentence is built (`BUILT_D534`), so
+    // `UNREAD` is empty and its loop is vacuous; the sentence is asserted non-null
+    // directly instead, so the claim does not rest on an empty loop.
+    expect(UNREAD).toHaveLength(0);
+    expect(UNREAD.reduce((sum, [, legal]) => sum + legal, 0)).toBe(0);
     for (const [text] of UNREAD) expect(deriveAttackEffect(text), text).toBeNull();
+    expect(deriveAttackEffect(BUILT_D534.text)).not.toBeNull();
     // 🛑 THE ROW'S TOTAL IS RE-ADDED FROM ITS PARTS, NOT DECREMENTED: this file's
     // 10 + D341's 4 + the 1 unread = 15 on 4 + 2 + 1 = 7 sentences — exactly what
     // the backlog row measured, and the same 15/7 the pre-D341 split summed to.
+    // 🆕🆕🆕 D534 — re-derived with the new build counted: 10 + 4 + D534's 1 + 0
+    // unread = 15 on 4 + 2 + 1 + 0 = 7 sentences. The total holds; the unread part
+    // is zero.
     const D341_PRINTINGS = 4;
     const D341_SENTENCES = 2;
+    const D534_SENTENCES = 1;
     expect(
       CLAUSES.reduce((sum, c) => sum + c.legalPrintings, 0) +
         D341_PRINTINGS +
+        BUILT_D534.legalPrintings +
         UNREAD.reduce((sum, [, legal]) => sum + legal, 0),
     ).toBe(15);
-    expect(CLAUSES.length + D341_SENTENCES + UNREAD.length).toBe(7);
+    expect(CLAUSES.length + D341_SENTENCES + D534_SENTENCES + UNREAD.length).toBe(7);
     // …and the four D341 sentences are no longer null, which is the other half of
     // the same claim: this rung must go red if that reader is ever removed.
     for (const text of [

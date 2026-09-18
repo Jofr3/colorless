@@ -1629,6 +1629,20 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
       if (event.end === "bottom") {
         return row(event.seat, [plain(`chose the order of the bottom ${cards} of their deck`)]);
       }
+      // 🆕🆕 D534 — ONE CARD HAS NO "chosen order". A one-card look (Inkay
+      // `sv06.5-033`, and every 1-card deck under a D341 printing) is a look and
+      // nothing else, so the row drops the ordering clause rather than claim a
+      // decision one card cannot hold. Whether the card went back or the deck was
+      // shuffled is the NEXT row's to say (`SHUFFLE`, under the deck's owner).
+      if (n === 1) {
+        return row(event.seat, [
+          plain(
+            event.actor === event.seat
+              ? "looked at the top card of their deck"
+              : "had the top card of their deck looked at",
+          ),
+        ]);
+      }
       return row(event.seat, [
         plain(
           event.actor === event.seat
