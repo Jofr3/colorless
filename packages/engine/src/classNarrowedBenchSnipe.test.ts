@@ -1022,10 +1022,10 @@ describe("§7 — what the class group refuses, and what it must not have moved"
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("§8 — the persisted address, and why 29 does not move", () => {
-  it("engineVersion is 0.417.0 and `manifest.version` agrees", () => {
+  it("engineVersion is 0.418.0 and `manifest.version` agrees", () => {
     // `packages/engine` behaviour moved (a new op field, a new candidate funnel branch and
     // a new caption arm), so the version steps.
-    expect(engineVersion).toBe("0.417.0");
+    expect(engineVersion).toBe("0.418.0");
     expect(manifest.version).toBe(engineVersion);
   });
 

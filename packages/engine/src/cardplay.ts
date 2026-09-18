@@ -17,6 +17,7 @@ import { recoverStatuses, resolveMidTurnKnockOuts, settleProgram } from "./flow"
 import type { EffectChoice, EffectPrompt, PokemonRef } from "./interpreter";
 import {
   attachEnergyTargets,
+  attachSeat,
   conditionHolds,
   conditionNote,
   discardEnergyPlayable,
@@ -1029,12 +1030,13 @@ function attachAlternativesAllWhiff(
     (op) =>
       firstAttachableEnergy(
         state,
-        seat,
+        attachSeat(op, seat), // 🆕 D532 — the printed pile's owner; the gate asks the apply's question
         op.source,
         op.energyType,
         op.anyEnergy,
         op.energyName, // D353 — the play gate asks the apply's question
       ) === undefined ||
+      // D532 — `attachEnergyTargets` resolves the OWNER from the riders itself.
       attachEnergyTargets(state, seat, op).length === 0,
   );
 }

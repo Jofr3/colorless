@@ -103,7 +103,11 @@ const BARE_MILL = "Discard the top 3 cards of your deck.";
 /** A residue sentence no reader claims, fielded as the LOUD control: it is what makes
     "no `ATTACK_EFFECT_SKIPPED`" mean something on the boards where nothing scores. Its
     refusal is asserted live in §11 rather than assumed (D480). */
-const LOUD = "Attach up to 3 Energy cards from your opponent's discard pile to their Pokémon in any way you like.";
+// 🆕🆕🆕 D532 — RE-POINTED (never deleted, D418): the cross-seat discard-pile attach this constant used
+// to hold is BUILT at D532 (corpus FILE LINE 70, `attachEnergyFrom.whose`), so it no longer flags
+// `ATTACK_EFFECT_SKIPPED`. The control now holds a residue sentence with ZERO suites of its own —
+// VERIFIED before choosing: `readersClaiming` is [] and the ENERGY board flags the skip (§11).
+const LOUD = "Look at 1 of your opponent's face-down Prize cards.";
 
 const ENERGY_PROGRAM: readonly EffectOp[] = [
   { op: "discardDeckTop", whose: "self", count: 3, recordAs: "discarded" },

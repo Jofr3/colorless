@@ -16164,8 +16164,11 @@ import type { GameState, Seat } from "./types";
     text columns keyed on `$.effect` (remote D1 `luminous`, 2026-08-18; extractor
     verified against nine known-present rows FIRST) is **23 sentences / 53
     printings / 24 Standard-legal**, and 13 (D359) + 6 (D358) + 4 (D360) + 1
-    refused (Grafaiai `sv08-121`, a cross-seat attach `deriveAttackEffect` returns
-    null for, re-verified at source) = **24**. Infernape ×3 stays refused on §9.1's
+    🆕🆕🆕 BUILT AT D532 (Grafaiai `sv08-121`, the cross-seat attach — THREE declinable
+    one-card ops carrying `whose: "opponent"` and `anyEnergy` on its own anchor
+    `ATTACK_OPPONENT_DISCARD_ATTACH`; `deriveAttackEffect` returned null for it from
+    D360 to D531, re-verified at source then, and the 24th member of the family is
+    the last one built) = **24**. Infernape ×3 stays refused on §9.1's
     grounds — it prints no *"up to"* and no empty arm — and `match[3]` is
     `undefined` on it, so the gate cannot reach it even by accident.
 
@@ -20022,6 +20025,82 @@ import type { GameState, Seat } from "./types";
     `expect(manifest.version)`, `it(…)` titles, the declaration and `package.json` —
     **not** as a value-keyed grep — because a value-keyed grep is precisely the mechanism
     that ate D500's heading.)
+    🆕🆕🆕 engineVersion 0.417.0 → **0.418.0** (D532 — THE CROSS-SEAT DISCARD-PILE ATTACH —
+    `attachEnergyFrom` GAINS THE OPTIONAL KEY `whose?: "opponent"` (ON THE OP AND ON
+    `AttachTargetRiders`), READ THROUGH ONE RESOLVER FOR THE PRINTED PILE AND THE PRINTED BOARD
+    TOGETHER. `censusAttackCorpus.ts` **FILE LINE 70** (`legalAttackCorpus()` index 17) — *"Attach
+    up to 3 Energy cards from your opponent's discard pile to their Pokémon in any way you like."*,
+    **1 sentence / 1 legal printing** (Grafaiai `sv08-121`; no catalog id on this checkout — the
+    demonstrator is FILE-LOCAL and DECLARED, D425), claimed by `deriveAttackEffect` through ONE new
+    ZERO-CAPTURE whole-sentence anchor (`ATTACK_OPPONENT_DISCARD_ATTACH`, a separate literal beside
+    the factory-built `DISCARD_ATTACH` — no /i, `^…$`, the apostrophe classed `['’]`; the `3` is a
+    LITERAL, D121's warrant needs two printings and the pool has one; `attachFromZoneClause` is NOT
+    widened with an optional `(opponent['’]s )?` group, which would shift groups 2–5 across three
+    anchors and `attachFromZoneProgram`'s reads — D447's hazard) as D360's spread ONE KEY OVER:
+    `Array.from({ length: 3 }, () => ({ op: "attachEnergyFrom", source: "discard", anyEnergy: true,
+    declinable: true, whose: "opponent" }))` — THREE independent declinable one-card parks, `count`
+    ABSENT (*"in any way you like"*), the bare plural *"Energy cards"* read as the whole category
+    (`anyEnergy`, D246's reading applied to the plural — a Special in the opponent's pile IS offered;
+    DECIDED and pinned, D421). MEASURED: `SOURCE_ZONE_PHRASE` (" from your discard pile") is not a
+    substring of the print, so the sibling cannot match it and arm order is not load-bearing; the arm
+    sits BEFORE the sibling's `exec` for D467/D499's rule anyway.
+    🛑 **THE SEAT IS RESOLVED ONCE.** `interpreter.ts`'s `attachSeat(op, seat)` (`whose === "opponent"`
+    → `otherSeat`, else the actor — D336's one-resolver rule) is read at the park guard (the printed
+    pile), the target funnel (`attachEnergyTargets`, through the RIDERS — so the three
+    `attachEnergyTargets(state, ctx.seat, op)` call sites stay byte-intact and every ref comes back
+    carrying the OWNER's seat), the apply (`const seat = attachSeat(op, ctx.seat)`: the guard
+    `ref.seat !== seat`, `attachableEnergies` over the OWNER's pile, the OWNER's side rewritten
+    through both `withSide`s) and `cardplay.ts`'s whiff gate (`attachAlternativesAllWhiff`, D222:
+    every read site — drivable through the exported `programPlayable`). NOT by the events:
+    `ENERGY_ATTACHED.seat` stays the ACTOR (every event's seat is the actor — turn.ts's manual attach
+    spells `seat: action.seat`) and `target` is the chosen spot on the OPPONENT's board; `log.ts`'s
+    `energyHostName` scans the OTHER seat before falling back to "a Pokémon", so the row reads
+    *"attached Fire Energy → D532 Wall"* under the attacker. The caption names whose board the rows
+    are on — *"Attach the Energy to which of your opponent's Pokémon?"* — through `attachTargetNoun`
+    as a SHADOW of `zone` (`opponent's ${printedZone}`), so D354's `if (types.length === 0) return …`
+    line and the THREE-LINE caption at the park stay byte for byte (three older mutant rows anchor
+    on that caption — the brief's "0 finds on :3847" was a claim, D432, and `precheck` said so the
+    moment the bytes moved; the caption was re-homed rather than the rows re-anchored). An OPPONENT
+    with only an Active still PARKS (`upTo` 1 keeps `parkOrForce`'s forced arm off). An EMPTY
+    opponent pile is the op's ordinary whiff: no park, no `ENERGY_ATTACHED`, no
+    `ATTACK_EFFECT_SKIPPED` (the program derived). `redact.ts`, the schema, both HUDs, `events.ts`
+    and `apps/` move NO byte — VERIFIED: `ChoosePokemonDialog` already renders `prompt.candidates`
+    by `refName(board, seat, ref)` and tags `ref.seat !== seat` rows "opponent"; `validateChoice`
+    matches refs against `prompt.candidates` by `refEquals`, seat-agnostic; the discard pile is
+    public.
+    🛑 **THE REFUSAL ON RECORD WAS TRUE OF THE FIELD AND NAMED THE WRONG LAYER.** `derivedDiscardAttach
+    .test.ts`'s `UNREAD` row — *"`source` names a ZONE, never a SEAT: every target the op can produce
+    is `ctx.seat`'s, and every card it can take is theirs too"* — was true of the FIELD and still is
+    (`source` still names a zone); the seat was a fact about three `ctx.seat` READS in the
+    interpreter, not about the type (D520 (2)), so the row cost ONE optional key and ONE resolver,
+    no vocabulary. RE-POINTED, never deleted (D418): the row walks from `UNREAD` into a `LITERAL`
+    table, the family's 17 re-derived as CLAUSES 15 + UNREAD 0 + BUILT_ELSEWHERE 1 + LITERAL 1, the
+    D360 §6 rung inverted with the old claim's discrimination kept (every op carries two keys the
+    D234 arm can never emit); `attachDecline.test.ts` §7's derived spreads 3 → 4 sentences / 4 → 5
+    printings and its `+ 1 refused` population note re-pointed; `deckMillFilteredScale.test.ts`'s
+    LOUD control re-pointed onto *"Look at 1 of your opponent's face-down Prize cards."* (a residue
+    sentence with ZERO suites — `readersClaiming` [] and the skip on the ENERGY board verified before
+    choosing); `censusAtHead.test.ts` row 9's attack entry 1 → 0 (`attack: []`, D528's precedent one
+    row over), `inRows` 21 → 20 and the ratio 26 → 25 (the ORDINARY shape, D458 — numerator and
+    denominator together). ⚠️ THE OWN-SEAT BARE-PLURAL TWIN STAYS DARK — *"Attach up to 3 Energy
+    cards from your discard pile to your Pokémon in any way you like."* derives null (the clause
+    spells only "(an) Energy card" and "up to N Basic … Energy cards"); asserted as the SECOND AXIS of
+    D489's lattice, not widened. ⚠️ `MATCH_RECORD_VERSION` **HELD at 30**: the op PARKS, so the key
+    rides `phase.cont.pendingOp`, but a v30 record carries NO such key, this build reads that as
+    `undefined`, and `undefined` is the actor's own pile AND own board — what every v30 writer meant
+    (D125's test). Driven over v30 bytes in THREE directions (`opponentDiscardAttach.test.ts` §3),
+    the LOSS direction ON THE BOARD: the dropped key is a v30-legal own-seat op, it parks the OWN
+    Active under the OWN caption and its answer drains the OWN pile — DETECTABLE (D421). Reader arm
+    557/1599 → 558/1600; raw residue 83/133 → 82/132; residue 56/82 → 55/81; `BUILT.attack` 1650 →
+    1651; `OPAQUE` 41/62 → 40/61 at SUBMAX=4 (the row was OPAQUE at the default cap and left the
+    table) and 23/38 HELD at SUBMAX=12 (it was SUBST-20 there); `UNEXPLAINED` 20/28 HELD (the row
+    sat in MULTI-3, 4/6 → 3/5).
+    🛑 **VERSION-TAX EXCEPTION LIST FOR THIS BUMP (D506 (b)):** `0.417.0` legitimately survives at
+    THIS HEADING'S OWN SOURCE, one line up in the arrow; D531's heading target below;
+    `typedAttachedHandSearch.test.ts`'s header arrow and its heading pin; the D532 census
+    annotations' own `engine 0.417.0 → 0.418.0` arrows; `mutants.ts`'s D275 re-point ledger; and the
+    `docs/` history. The sweep was run as a WHITELIST over `expect(engineVersion)`,
+    `expect(manifest.version)`, `it(…)` titles, the declaration and `package.json`.)
     🆕🆕🆕 engineVersion 0.416.0 → **0.417.0** (D531 — THE BOARD-TYPED HAND SEARCH — `searchDeck`
     GAINS THE OPTIONAL RIDER `typedAsAttachedBasicEnergy`, THE FIRST SEARCH RIDER WHOSE FILTER IS
     A FACT ABOUT THE BOARD, READ AT THE PARK. `censusAttackCorpus.ts` **FILE LINE 483**
@@ -22514,7 +22593,7 @@ import type { GameState, Seat } from "./types";
     WITNESS** — the count was re-derived every slice and the word *"three"* was carried.
     A successor of this slice inherits **81 / 61 / 17** again, over **FIVE** history
     occurrences: those four plus `deckMillFilteredScale.test.ts`'s own header arrow.) */
-export const engineVersion = "0.417.0";
+export const engineVersion = "0.418.0";
 
 export type {
   ApplyResult,

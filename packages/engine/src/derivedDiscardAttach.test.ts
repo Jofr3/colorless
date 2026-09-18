@@ -222,11 +222,16 @@ const UNREAD: readonly (readonly [string, number, string])[] = [
   // `CLAUSES`' ninth entry, reached with no line of this arm's own. The reason it
   // was here ("`attachableEnergies` admits `energyType === \"Normal\"` only") was
   // TRUE and is the field `attachEnergyFrom.anyEnergy` lifted.
-  [
-    "Attach up to 3 Energy cards from your opponent's discard pile to their Pokémon in any way you like.",
-    1,
-    "`source` names a ZONE, never a SEAT: every target the op can produce is `ctx.seat`'s, and every card it can take is theirs too",
-  ],
+  // 🆕🆕🆕 D532 REMOVED THE CROSS-SEAT ROW FROM THIS TABLE BY BUILDING IT — ON THIS SAME READER, ON ITS OWN
+  // ANCHOR. It is `LITERAL` below: `ATTACK_OPPONENT_DISCARD_ATTACH`, a zero-capture literal beside the
+  // D234 anchor (never through it — the factory's zone phrase " from your discard pile" is not a substring
+  // of the print), deriving D360's spread ONE KEY OVER (`whose: "opponent"`, plus `anyEnergy` for the bare
+  // plural). ⚠️ THE REASON IT WAS HERE — *"`source` names a ZONE, never a SEAT: every target the op can
+  // produce is `ctx.seat`'s, and every card it can take is theirs too"* — WAS TRUE OF THE FIELD AND IS
+  // STILL TRUE: `source` still names a zone. The SEAT was a fact about three `ctx.seat` READS in the
+  // interpreter, not about the type (D520 (2)), and it cost ONE optional key and ONE resolver
+  // (`attachSeat`), no vocabulary. The table is EMPTY and stays, so the family's arithmetic keeps its
+  // shape (CLAUSES 15 + UNREAD 0 + BUILT_ELSEWHERE 1 + LITERAL 1 = 17).
   // 🆕🆕🆕 D528 REMOVED THE PER-HEADS ROW FROM THIS TABLE BY BUILDING IT — ELSEWHERE. It is
   // `BUILT_ELSEWHERE` below (`derivedHandAttach.test.ts`'s idiom): the row is read by the COIN
   // reader, `deriveAttackCoinFlip`, as `programPerHeads` over ONE copy of the op THIS arm builds for
@@ -244,6 +249,20 @@ const BUILT_ELSEWHERE: readonly (readonly [string, number, string])[] = [
     "Flip 3 coins. Attach a number of Basic {L} Energy cards up to the number of heads from your discard pile to your Benched Pokémon in any way you like.",
     1,
     "BUILT at D528 on `deriveAttackCoinFlip` (`ATTACK_COIN_ATTACH_UP_TO_HEADS`) as `programPerHeads` over one `attachEnergyFrom { discard, Lightning, benchOnly, declinable }` — this arm's own op for the printed-digit sibling, with N = heads; THIS anchor never spans the \"Flip N coins.\" head",
+  ],
+] as const;
+
+/** 🆕🆕🆕 D532 — THE ROW THIS FILE HELD IN `UNREAD` FROM D234 TO D531 AND THIS READER NOW OWNS ON ITS OWN
+    ANCHOR: corpus FILE LINE 70, 1 legal printing (Grafaiai `sv08-121`), `ATTACK_OPPONENT_DISCARD_ATTACH`
+    — three declinable one-card `attachEnergyFrom { discard, anyEnergy, whose: "opponent" }` ops, the
+    interpreter resolving the printed pile AND board through one seat resolver. Named for the anchor
+    that reads it, because the D234 anchor (this file's subject) does NOT: its zone phrase is not a
+    substring of the print, which is asserted below. */
+const LITERAL: readonly (readonly [string, number, string])[] = [
+  [
+    "Attach up to 3 Energy cards from your opponent's discard pile to their Pokémon in any way you like.",
+    1,
+    "BUILT at D532 on `deriveAttackEffect` (`ATTACK_OPPONENT_DISCARD_ATTACH`, a separate zero-capture literal) as D360's spread one key over — `whose: \"opponent\"` on the op and on `AttachTargetRiders`, read through `attachSeat` for the pile and the board together",
   ],
 ] as const;
 
@@ -386,8 +405,11 @@ describe("the anchor — twelve printed sentences, ONE arm", () => {
     // 🆕🆕🆕 D528 — WAS 2 / 2: the per-heads row walked from `UNREAD` into `BUILT_ELSEWHERE` (the
     // COIN reader owns it), so this table is ONE row / ONE printing and the family's 17 is now
     // CLAUSES 15 + UNREAD 1 + BUILT_ELSEWHERE 1.
-    expect(UNREAD).toHaveLength(1);
-    expect(UNREAD.reduce((sum, [, legal]) => sum + legal, 0)).toBe(1);
+    // 🆕🆕🆕 D532 — WAS 1 / 1: the cross-seat row walked from `UNREAD` into `LITERAL` (this reader's own
+    // anchor), so this table is EMPTY and the family's 17 is now CLAUSES 15 + UNREAD 0 + BUILT_ELSEWHERE 1
+    // + LITERAL 1.
+    expect(UNREAD).toHaveLength(0);
+    expect(UNREAD.reduce((sum, [, legal]) => sum + legal, 0)).toBe(0);
     for (const [text] of UNREAD) expect(deriveAttackEffect(text), text).toBeNull();
     expect(BUILT_ELSEWHERE).toHaveLength(1);
     expect(BUILT_ELSEWHERE.reduce((sum, [, legal]) => sum + legal, 0)).toBe(1);
@@ -397,12 +419,29 @@ describe("the anchor — twelve printed sentences, ONE arm", () => {
       expect(deriveAttackEffect(text), text).toBeNull();
       expect(deriveAttackCoinFlip(text)?.kind, text).toBe("programPerHeads");
     }
+    // 🆕🆕🆕 D532 — the LITERAL row derives on THIS reader, on its OWN anchor: three ops, every one carrying
+    // `whose: "opponent"` and `anyEnergy` (keys the D234 arm can never emit — the discrimination the old
+    // `toBeNull` provided, kept, D418), and the D234 anchor's zone phrase is not in the print.
+    expect(LITERAL).toHaveLength(1);
+    expect(LITERAL.reduce((sum, [, legal]) => sum + legal, 0)).toBe(1);
+    for (const [text] of LITERAL) {
+      const derived = deriveAttackEffect(text);
+      expect(derived, text).not.toBeNull();
+      expect(derived, text).toHaveLength(3);
+      for (const op of derived ?? []) {
+        expect(op, text).toEqual({ op: "attachEnergyFrom", source: "discard", anyEnergy: true, declinable: true, whose: "opponent" });
+      }
+      expect(text.includes(" from your discard pile"), text).toBe(false);
+      expect(deriveAttackCoinFlip(text), text).toBeNull();
+    }
     // 15 + 1 + 1 = 17, which is exactly what the backlog row measured. This is the
     // FIRST row on that page whose count survived re-derivation unchanged, and the
     // TOTAL is what has to keep holding as printings move between the halves.
-    expect(CLAUSES.reduce((sum, c) => sum + c.legalPrintings, 0) + 1 + 1).toBe(17);
-    expect(CLAUSES.length + UNREAD.length).toBe(11);
-    expect(CLAUSES.length + UNREAD.length + BUILT_ELSEWHERE.length).toBe(12);
+    // 🆕🆕🆕 D532 — 15 + 0 (UNREAD) + 1 (BUILT_ELSEWHERE) + 1 (LITERAL) = 17: the row moved between the halves
+    // and the TOTAL held, which is what this rung exists to say.
+    expect(CLAUSES.reduce((sum, c) => sum + c.legalPrintings, 0) + 0 + 1 + 1).toBe(17);
+    expect(CLAUSES.length + UNREAD.length).toBe(10);
+    expect(CLAUSES.length + UNREAD.length + BUILT_ELSEWHERE.length + LITERAL.length).toBe(12);
   });
 
   it("reads 40 of the family's 43 CATALOG printings too — an arm transfers", () => {
@@ -1262,17 +1301,25 @@ describe("D360 §6 — the discriminator is the PRINTED word, not the derived co
     }
   });
 
-  it("🛑 the CROSS-SEAT hedge is still refused, and that is measured rather than assumed", () => {
+  it("🆕🆕🆕 D532 — the CROSS-SEAT hedge is BUILT (re-pointed in place, D418): three declinable ops carrying `whose: \"opponent\"` and `anyEnergy` on its OWN anchor, and the D234 anchor still cannot match it", () => {
     // Grafaiai `sv08-121` — "Attach up to 3 Energy cards from your **opponent's**
     // discard pile to **their** Pokémon in any way you like." — 1 Standard-legal
-    // printing, and the one member of the family no op in this vocabulary can
-    // express. It is the 24th of the 24 and it stays null: this slice widened the
-    // flag, not the arm.
-    expect(
-      deriveAttackEffect(
-        "Attach up to 3 Energy cards from your opponent's discard pile to their Pokémon in any way you like.",
-      ),
-    ).toBeNull();
+    // printing. From D360 to D531 this rung read *"the one member of the family no op in
+    // this vocabulary can express … it stays null: this slice widened the flag, not the
+    // arm"*. D532 widened the OP (one optional key, `whose`) and added an ARM on its own
+    // anchor; the D360 flag is on every op exactly as the printed *"up to 3 … in any way
+    // you like"* says. What the old `toBeNull` could catch — the D234 anchor claiming the
+    // row through a widened clause — is kept: every op carries two keys that arm can never
+    // emit, and the factory's zone phrase is not in the print.
+    const cross = "Attach up to 3 Energy cards from your opponent's discard pile to their Pokémon in any way you like.";
+    const derived = deriveAttackEffect(cross);
+    expect(derived).toHaveLength(3);
+    for (const op of derived ?? []) {
+      expect(op).toEqual({ op: "attachEnergyFrom", source: "discard", anyEnergy: true, declinable: true, whose: "opponent" });
+    }
+    expect(cross.includes(" from your discard pile")).toBe(false);
+    // …and the own-seat bare-plural twin (the SECOND axis, D489) stays DARK: no bare plural in the clause.
+    expect(deriveAttackEffect("Attach up to 3 Energy cards from your discard pile to your Pokémon in any way you like.")).toBeNull();
   });
 });
 

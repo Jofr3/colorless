@@ -5251,7 +5251,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D275",
     what: "🛑 THE DEBT THIS SLICE PAID FOR THE FIFTH TIME, RE-INSTALLED: `engineVersion` falls a minor behind `packages/engine/package.json`, which is EXACTLY the state the tree was in at the head of D275 (0.187.0 against 0.189.0) and had been for two slices with nothing comparing them. The tie is the guard; this row is the proof it is one",
     file: "packages/engine/src/index.ts",
-    // ⚠️ RE-POINTED AT D531 (0.416.0 → 0.417.0), at D530 (0.415.0 → 0.416.0), at D528 (0.414.0 → 0.415.0), at D527 (0.413.0 → 0.414.0), at D526 (0.412.0 → 0.413.0), at D525 (0.411.0 → 0.412.0), at D524 (0.410.0 → 0.411.0), at D523 (0.409.0 → 0.410.0), at D522 (0.408.0 → 0.409.0), at D521 (0.407.0 → 0.408.0), at D520 (0.406.0 → 0.407.0), at D519 (0.405.0 → 0.406.0), at D518 (0.404.0 → 0.405.0), at D517 (0.403.0 → 0.404.0), at D516 (0.402.0 → 0.403.0), at D515 (0.401.0 → 0.402.0), at D514 (0.400.0 → 0.401.0), at D513 (0.399.0 → 0.400.0), at D512 (0.398.0 → 0.399.0), at D510 (0.397.0 → 0.398.0), at D508 (0.396.0 → 0.397.0), at D507 (0.395.0 → 0.396.0), at D505 (0.394.0 → 0.395.0), at D490 (0.384.0 → 0.385.0), at D489 (0.383.0 → 0.384.0), at D488 (0.382.0 → 0.383.0), at D487 (0.381.0 → 0.382.0), at D486 (0.380.0 → 0.381.0), at D485 (0.379.0 → 0.380.0), at D450 (0.351.0 → 0.352.0), at D449 (0.350.0 → 0.351.0), at D448 (0.349.0 → 0.350.0), at D447 (0.348.0 → 0.349.0), at D446 (0.347.0 → 0.348.0), at D445 (0.346.0 → 0.347.0), at D444 (0.345.0 → 0.346.0), at D443 (0.344.0 → 0.345.0), at D442 (0.343.0 → 0.344.0), at D441 (0.342.0 → 0.343.0), at D440 (0.341.0 → 0.342.0), at D439 (0.340.0 → 0.341.0), at D438 (0.339.0 → 0.340.0), at D437 (0.338.0 → 0.339.0), at D436 (0.337.0 → 0.338.0), at D435 (0.336.0 → 0.337.0), at D434 (0.335.0 → 0.336.0), at D433 (0.334.0 → 0.335.0), at D432 (0.333.0 → 0.334.0), at D431 (0.332.0 → 0.333.0), at D430 (0.331.0 → 0.332.0), at D429 (0.330.0 → 0.331.0), at D428 (0.329.0 → 0.330.0), at D427 (0.328.0 → 0.329.0), at D426 (0.327.0 → 0.328.0), at D425 (0.326.0 → 0.327.0), at D424 (0.325.0 → 0.326.0), at D423 (0.324.0 → 0.325.0), at D422 (0.323.0 → 0.324.0), at D421 (0.322.0 → 0.323.0), at D420 (0.321.0 → 0.322.0), at D417 (0.320.0 → 0.321.0), at D416 (0.319.0 → 0.320.0), at D415 (0.318.0 → 0.319.0), at D414 (0.317.0 → 0.318.0), at D413 (0.316.0 → 0.317.0), at D412 (0.315.0 → 0.316.0), at D410 (0.314.0 → 0.315.0), at D409 (0.313.0 → 0.314.0), at D408 (0.312.0 → 0.313.0), at D407 (0.311.0 → 0.312.0), at D402 (0.306.0 → 0.307.0), at D401 (0.305.0 → 0.306.0), at D400 (0.304.0 → 0.305.0), at D399 (0.303.0 → 0.304.0), at D398 (0.302.0 → 0.303.0), at D397 (0.301.0 → 0.302.0), at D396 (0.300.0 → 0.301.0), at D395 (0.299.0 → 0.300.0), at D394 (0.298.0 → 0.299.0), at D393 (0.297.0 → 0.298.0), at D392 (0.296.0 → 0.297.0), at D391 (0.295.0 → 0.296.0), at D390 (0.294.0 → 0.295.0), at D389 (0.293.0 → 0.294.0), at D388 (0.292.0 → 0.293.0), at D387 (0.291.0 → 0.292.0), at D386 (0.290.0 → 0.291.0),
+    // ⚠️ RE-POINTED AT D532 (0.417.0 → 0.418.0), at D531 (0.416.0 → 0.417.0), at D530 (0.415.0 → 0.416.0), at D528 (0.414.0 → 0.415.0), at D527 (0.413.0 → 0.414.0), at D526 (0.412.0 → 0.413.0), at D525 (0.411.0 → 0.412.0), at D524 (0.410.0 → 0.411.0), at D523 (0.409.0 → 0.410.0), at D522 (0.408.0 → 0.409.0), at D521 (0.407.0 → 0.408.0), at D520 (0.406.0 → 0.407.0), at D519 (0.405.0 → 0.406.0), at D518 (0.404.0 → 0.405.0), at D517 (0.403.0 → 0.404.0), at D516 (0.402.0 → 0.403.0), at D515 (0.401.0 → 0.402.0), at D514 (0.400.0 → 0.401.0), at D513 (0.399.0 → 0.400.0), at D512 (0.398.0 → 0.399.0), at D510 (0.397.0 → 0.398.0), at D508 (0.396.0 → 0.397.0), at D507 (0.395.0 → 0.396.0), at D505 (0.394.0 → 0.395.0), at D490 (0.384.0 → 0.385.0), at D489 (0.383.0 → 0.384.0), at D488 (0.382.0 → 0.383.0), at D487 (0.381.0 → 0.382.0), at D486 (0.380.0 → 0.381.0), at D485 (0.379.0 → 0.380.0), at D450 (0.351.0 → 0.352.0), at D449 (0.350.0 → 0.351.0), at D448 (0.349.0 → 0.350.0), at D447 (0.348.0 → 0.349.0), at D446 (0.347.0 → 0.348.0), at D445 (0.346.0 → 0.347.0), at D444 (0.345.0 → 0.346.0), at D443 (0.344.0 → 0.345.0), at D442 (0.343.0 → 0.344.0), at D441 (0.342.0 → 0.343.0), at D440 (0.341.0 → 0.342.0), at D439 (0.340.0 → 0.341.0), at D438 (0.339.0 → 0.340.0), at D437 (0.338.0 → 0.339.0), at D436 (0.337.0 → 0.338.0), at D435 (0.336.0 → 0.337.0), at D434 (0.335.0 → 0.336.0), at D433 (0.334.0 → 0.335.0), at D432 (0.333.0 → 0.334.0), at D431 (0.332.0 → 0.333.0), at D430 (0.331.0 → 0.332.0), at D429 (0.330.0 → 0.331.0), at D428 (0.329.0 → 0.330.0), at D427 (0.328.0 → 0.329.0), at D426 (0.327.0 → 0.328.0), at D425 (0.326.0 → 0.327.0), at D424 (0.325.0 → 0.326.0), at D423 (0.324.0 → 0.325.0), at D422 (0.323.0 → 0.324.0), at D421 (0.322.0 → 0.323.0), at D420 (0.321.0 → 0.322.0), at D417 (0.320.0 → 0.321.0), at D416 (0.319.0 → 0.320.0), at D415 (0.318.0 → 0.319.0), at D414 (0.317.0 → 0.318.0), at D413 (0.316.0 → 0.317.0), at D412 (0.315.0 → 0.316.0), at D410 (0.314.0 → 0.315.0), at D409 (0.313.0 → 0.314.0), at D408 (0.312.0 → 0.313.0), at D407 (0.311.0 → 0.312.0), at D402 (0.306.0 → 0.307.0), at D401 (0.305.0 → 0.306.0), at D400 (0.304.0 → 0.305.0), at D399 (0.303.0 → 0.304.0), at D398 (0.302.0 → 0.303.0), at D397 (0.301.0 → 0.302.0), at D396 (0.300.0 → 0.301.0), at D395 (0.299.0 → 0.300.0), at D394 (0.298.0 → 0.299.0), at D393 (0.297.0 → 0.298.0), at D392 (0.296.0 → 0.297.0), at D391 (0.295.0 → 0.296.0), at D390 (0.294.0 → 0.295.0), at D389 (0.293.0 → 0.294.0), at D388 (0.292.0 → 0.293.0), at D387 (0.291.0 → 0.292.0), at D386 (0.290.0 → 0.291.0),
     //    each in the SAME COMMIT as the bump —
     // the TENTH slice running to do it that way, and the practice is now the one
     // thing about this row that has never cost an ERROR since it started.
@@ -5798,7 +5798,7 @@ export const MUTANTS: Mutant[] = [
     // CORPUS QUOTES** (D414/D415), so a value-keyed sweep over `toBe("0.391.0")` cannot
     // see it — this row's `find` spells the DECLARATION, not an assertion. Run
     // `precheck` after every version bump, not after the sweep tells you.
-    find: 'export const engineVersion = "0.417.0";',
+    find: 'export const engineVersion = "0.418.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -27998,8 +27998,12 @@ export const MUTANTS: Mutant[] = [
     //    printing steps AGREE at 1 and 1 (corpus FILE LINE 483 carries ONE printing), so the
     //    regression stays the two-step it has always expressed. Re-transcribed in the SAME edit as
     //    the `censusAtHead` literal and the other two version-tax rows (D525 (1)).
-    find: "  attack: 1650,",
-    replace: "  attack: 1648,",
+    // 🆕🆕🆕 D532 — RE-TRANSCRIBED AGAIN, 1650 -> 1651 (replace 1648 -> 1649): the sentence and
+    //    printing steps AGREE at 1 and 1 (corpus FILE LINE 70 carries ONE printing), so the
+    //    regression stays the two-step it has always expressed. Re-transcribed in the SAME edit as
+    //    the `censusAtHead` literal and the other two version-tax rows (D525 (1)).
+    find: "  attack: 1651,",
+    replace: "  attack: 1649,",
     expectKilledBy: [
       "packages/engine/src/censusAtHead.test.ts",
     ],
@@ -29156,8 +29160,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D506",
     what: "🛑 C1 — THE DEFECT D502 AND D505 BOTH SHIPPED: a version goes out and NO HEADING CLAIMS IT. The edit un-bolds the NEWEST heading's target, so the parser stops seeing it and the chain's head falls back a release while `package.json` says otherwise — which is byte-for-byte the state of this file at D505's head, twice over. ⚠️ IT IS THE CHEAPEST WAY FOR THIS RECORD TO GO WRONG AND WAS INVISIBLE TO EVERY OTHER INSTRUMENT IN THE REPO: `tsc`, `biome`, every test, `precheck` and all five gates are green on both sides of it, because until D506 nothing read the headings at all. Killed by the HEAD case alone, which is the point — one tripwire, named (D453/D498). 🛑 RE-POINTED AT D507 ONTO THE 0.395.0 → 0.396.0 HEADING, AND THE RE-POINT WAS OWED RATHER THAN TIDY (D444): left on D505's heading it would have gone INERT ON THE VERDICT the moment a newer heading existed — un-bolding a heading that is no longer the head leaves NEWEST equal to HEAD, so the HEAD case stays green and the kill arrives, if at all, through the CHAIN case instead. The row's own stated reason (killed by the HEAD case alone) is exactly the sentence that would have quietly become false. THIS ROW IS PART OF THE VERSION TAX: every bump owes its re-point, in the same edit as the heading. \U0001f195 RE-POINTED AGAIN AT D508 ONTO THE 0.396.0 → 0.397.0 HEADING, and this one is UNLABELLED — the `find` quotes the heading's first prose words instead of a `(D<nnn> —`, which is strictly more durable: the label is the byte the close-out ritual inserts, and quoting it is exactly what broke this row at D507. \u26a0\ufe0f The heading is the CHAIN HEAD again, so the HEAD case is the killer again — the re-point is what keeps that sentence true rather than quietly false. \U0001f195 RE-POINTED AGAIN AT D510 ONTO THE 0.397.0 \u2192 0.398.0 HEADING, also UNLABELLED, and the `find` is kept in D508's TRIMMED form \u2014 it stops before the `(` where the close-out ritual inserts the label, which is the shape D508 proved survives that edit (precheck clean, label inserted, clean again). A `find` that spanned the paren would re-open the coupling that broke this row at D507. \U0001f195 RE-POINTED AGAIN AT D512 ONTO THE 0.398.0 \u2192 0.399.0 HEADING, also UNLABELLED and kept in the same TRIMMED form. \u26a0\ufe0f The re-point is what keeps this row's own stated reason (killed by the HEAD case ALONE) true rather than quietly false: left on D510's heading it would go INERT ON THE VERDICT the moment a newer heading exists, because un-bolding a heading that is no longer the head leaves NEWEST equal to HEAD and the kill arrives, if at all, through the CHAIN case instead. \U0001f195 RE-POINTED AGAIN AT D513 ONTO THE 0.399.0 \u2192 0.400.0 HEADING, also UNLABELLED and kept in the same TRIMMED form that stops before the `(`. \u26a0\ufe0f **AND THE TRIM WAS PROVEN AGAIN RATHER THAN ASSUMED**: `precheck` clean before the heading exists, the heading written, `precheck` clean after \u2014 the third consecutive slice to demonstrate that a `find` ending at `**<new>**` survives the close-out label insertion, and the fourth to state that a `find` spanning the paren re-opens the coupling that broke this row at D507. \U0001f195 RE-POINTED AGAIN AT D515 ONTO THE 0.401.0 \u2192 0.402.0 HEADING, also UNLABELLED and kept in the same TRIMMED form that stops before the `(`. \u26a0\ufe0f **THE RE-POINT IS THE PART OF THE VERSION TAX THAT HAS NO AUTOMATIC DETECTOR**: left on D514's heading this row would go INERT ON THE VERDICT the moment a newer heading exists \u2014 un-bolding a heading that is no longer the head leaves NEWEST equal to HEAD, the HEAD case stays green, and the kill arrives (if at all) through the CHAIN case instead, so the row would report KILLED while its own stated reason (killed by the HEAD case ALONE) had quietly become false. \u26a0\ufe0f **AND THE TRIM WAS PROVEN A FIFTH TIME RATHER THAN ASSUMED**: `precheck` clean before the heading exists, the heading written, `precheck` clean after. \U0001f195 RE-POINTED AGAIN AT D516 ONTO THE 0.402.0 \u2192 0.403.0 HEADING, also UNLABELLED and kept in the same TRIMMED form that stops before the `(`. \u26a0\ufe0f **THE TRIM WAS PROVEN A SIXTH TIME RATHER THAN ASSUMED**: `precheck` clean before the heading exists, the heading written, `precheck` clean after \u2014 and the re-point remains the part of the version tax with no automatic detector, because left on D515\u2019s heading this row would report KILLED while its own stated reason (killed by the HEAD case ALONE) had quietly become false. \U0001f195 RE-POINTED AGAIN AT D517 ONTO THE 0.403.0 \u2192 0.404.0 HEADING, also UNLABELLED and kept in the same TRIMMED form that stops before the `(`. \u26a0\ufe0f **THE TRIM WAS PROVEN A SEVENTH TIME RATHER THAN ASSUMED**: `precheck` clean before the heading exists, the heading written, `precheck` clean after \u2014 seven consecutive slices now, which is the evidence that the label a caller later adds cannot reach this `find`. 🆕 RE-POINTED AGAIN AT D518 ONTO THE 0.404.0 → 0.405.0 HEADING, also UNLABELLED and kept in the same TRIMMED form that stops before the `(`. ⚠️ **THE TRIM WAS PROVEN AN EIGHTH TIME RATHER THAN ASSUMED**: `precheck` clean before the heading exists, the heading written, `precheck` clean after — eight consecutive slices, and this one carried an extra hazard worth naming: the incoming literal `0.405.0` did NOT collide at 2× the way D517's did, because this slice's `find` quotes the heading ARROW (which is unique) rather than a source line the corpus already patches, so no FOURTH version-tax row was owed. 🆕 RE-POINTED AGAIN AT D521 ONTO THE 0.407.0 → 0.408.0 HEADING, also UNLABELLED and kept in the same TRIMMED form that stops before the `(` — the heading was written labelled in the same edit as the `docs/decisions.md` row (D507), and `precheck` was run clean with the row re-pointed. 🆕 RE-POINTED AGAIN AT D526 ONTO THE 0.412.0 → 0.413.0 HEADING, UNLABELLED and kept in the same TRIMMED form that stops before the `(` — re-transcribed in the same edit as the D275 ledger row and the census row (the version-tax trio), and `precheck` run clean with the row re-pointed.",
     file: "packages/engine/src/index.ts",
-    find: "engineVersion 0.416.0 → **0.417.0**",
-    replace: "engineVersion 0.416.0 → 0.417.0",
+    find: "engineVersion 0.417.0 → **0.418.0**",
+    replace: "engineVersion 0.417.0 → 0.418.0",
     expectKilledBy: ["packages/engine/src/engineVersionChangelog.test.ts"],
   },
   {
@@ -31690,5 +31694,143 @@ export const MUTANTS: Mutant[] = [
     find: "      const sized = groups.map((g) => ({",
     replace: "      const sized = printedGroups.map((g) => ({",
     expectKilledBy: ["packages/engine/src/typedAttachedHandSearch.test.ts"],
+  },
+  // ── D532 — THE CROSS-SEAT DISCARD-PILE ATTACH ("Attach up to 3 Energy cards from your opponent's discard pile to
+  //    their Pokémon in any way you like."), corpus FILE LINE 70, 1 legal printing (Grafaiai sv08-121) — `attachEnergyFrom`
+  //    gains the optional key `whose?: "opponent"` (on the op AND on `AttachTargetRiders`), read through ONE resolver
+  //    (`attachSeat`) for the printed PILE and the printed BOARD together. Thirteen rows, ONE PER CLAIM, over the anchor
+  //    (C1–C2), the arm (C3 `whose`, C4 `anyEnergy`), the resolver (C5 — the key declared, emitted, persisted, captioned
+  //    and never READ), the funnel (C6 the actor's board; C12 the actor's SEAT stamped on the opponent's refs), the apply
+  //    (C7 the guard keeps `ctx.seat`; C8 the actor's pile drained; C8′ the ref looked up on the actor's board), the
+  //    caption (C9), the log (C10) and the cardplay gate (C11 — CONDITIONAL in the brief, WRITTEN because the exported
+  //    `programPlayable` drives it). ⚠️ **NONE IS CENSUS-VISIBLE**: every row corrupts a VALUE or a SITE and the printed
+  //    row still derives — the suite's board (from BOTH seats) and §1's `toEqual` rungs are the killers, never `censusAtHead`.
+  //
+  //    ⚠️ **EVERY `find`/`replace` PAIR WAS DIFFED BEFORE SHIPPING AND ASSERTED UNEQUAL BY THE SCRIPT THAT WROTE
+  //    THEM** (D519 (4)(a)); the two anchor `replace`s were EVALUATED against the row and against the print each is
+  //    meant to admit (D526 (1)); every `find` counted at exactly one occurrence in its target and every `replace` at
+  //    ZERO before the probe ran; every row PROBED UNDECLARED FIRST (D525 (3)). The three-line caption at the park,
+  //    D354's noun line and the three `attachEnergyTargets(state, ctx.seat, op)` call sites are BYTE-INTACT (the
+  //    possessive rides a SHADOW of `zone` in `attachTargetNoun`; the funnel resolves the owner from the RIDERS), so
+  //    `D205-caption-count`, `D205-count-le-1`, `D359-park-loses-the-toself-caption`,
+  //    `D354-caption-welds-the-union-into-one-noun`, `D221-…` and `D248-…` keep their finds — `precheck` said so at
+  //    2,740 the moment the engine bytes existed (after ONE re-home: the first caption edit broke three rows and the
+  //    caption was moved, not the rows), and again after these rows.
+  {
+    id: "D532-anchor-loses-the-head",
+    decision: "D532",
+    what: "🛑 C1 — **THE `^` DROPPED FROM THE CROSS-SEAT ANCHOR.** Without it the pattern matches anywhere in a longer sentence, so a compound whose SECOND clause prints this attach is claimed WHOLE and its first clause silently dropped. Killed by §1's EXPLICIT prefixed rung (D520 (3)): the CONSTRUCTED `Draw a card. <row>` derives null on every reader on the real build and to the three-op program on the mutant (the trailing splitter's composition `{head: \"Draw a card.\", tail: row}` is the same on both builds and is pinned beside it). Evaluated against the row and the prefixed print before shipping (D526 (1)): the un-caretted form still claims the row and ALSO claims the prefixed print. Silent to the census.",
+    file: "packages/engine/src/effects.ts",
+    find: "const ATTACK_OPPONENT_DISCARD_ATTACH =\n  /^Attach up to 3 Energy cards from your opponent['’]s discard pile to their Pokémon in any way you like\\.$/;",
+    replace: "const ATTACK_OPPONENT_DISCARD_ATTACH =\n  /Attach up to 3 Energy cards from your opponent['’]s discard pile to their Pokémon in any way you like\\.$/;",
+    expectKilledBy: ["packages/engine/src/opponentDiscardAttach.test.ts"],
+  },
+  {
+    id: "D532-anchor-loses-the-tail",
+    decision: "D532",
+    what: "🛑 C2 — **THE `$` DROPPED, THE OTHER END OF C1 AND A DIFFERENT DEFECT (D497's pair rule).** With no terminator the anchor swallows a trailing clause: `<row> Draw a card.` derives as though the second sentence were not there and the draw is silently lost. Killed by §1's SUFFIXED rung: null on every reader on the real build (the trailing splitter COMPOSES `{head: row, tail}` on the real build — measured, pinned — and on the mutant the READER swallows the whole string instead), the program on the mutant. Evaluated against the row and the suffixed print before shipping. Silent to the census.",
+    file: "packages/engine/src/effects.ts",
+    find: "const ATTACK_OPPONENT_DISCARD_ATTACH =\n  /^Attach up to 3 Energy cards from your opponent['’]s discard pile to their Pokémon in any way you like\\.$/;",
+    replace: "const ATTACK_OPPONENT_DISCARD_ATTACH =\n  /^Attach up to 3 Energy cards from your opponent['’]s discard pile to their Pokémon in any way you like\\./;",
+    expectKilledBy: ["packages/engine/src/opponentDiscardAttach.test.ts"],
+  },
+  {
+    id: "D532-arm-drops-whose",
+    decision: "D532",
+    what: "🛑 C3 — **THE ARM DERIVES THE OWN-SEAT SPREAD — `whose` DROPPED — AND THE CENSUS STILL MOVES** (D465's `-rider-not-set` shape; D531's C3 one op over). `BUILT.attack` reads 1651, the residue 55/81, every census rung in forty files stays green — and the card reads the ATTACKER's pile and feeds the ATTACKER's bodies forever where it prints the opponent's. **The census cannot see a wrong VALUE, only a wrong CLAIM.** Killed by §1's `toEqual` on the program (the five-key set is pinned, the inequality against the own-seat spread asserted), by §3's fresh-bytes and loss-direction rungs, by §4 (i)/(ii) on the board from BOTH seats (the parked candidates carry the OTHER seat — the loss direction is DETECTABLE on any board) and by `derivedDiscardAttach.test.ts`'s re-pointed `LITERAL` rung. ⚠️ The `find` carries the `declinable` line above the key and the closing `}));` below it, so its `replace` occurs ZERO times in the file.",
+    file: "packages/engine/src/effects.ts",
+    find: "      declinable: true as const,\n      whose: \"opponent\" as const,\n    }));",
+    replace: "      declinable: true as const,\n    }));",
+    expectKilledBy: ["packages/engine/src/opponentDiscardAttach.test.ts", "packages/engine/src/derivedDiscardAttach.test.ts"],
+  },
+  {
+    id: "D532-arm-drops-anyEnergy",
+    decision: "D532",
+    what: "🛑 C4 — **THE ARM READS THE BARE PLURAL *\"Energy cards\"* AS *\"Basic Energy cards\"* — `anyEnergy` DROPPED.** The D246 reading applied to the plural is the DECIDED one (D421): a Special in the opponent's pile IS offered. Under the mutant a pile holding only a Special whiffs where a park is pinned, and a mixed pile never reaches its Special. Killed by §1's `toEqual` (five keys), by §4 (ii) (the THIRD park moves the Special, pinned by uid) and by §4 (v) (the Special-only pile PARKS on the real build; the `anyEnergy`-less op on the same board is the pinned control that whiffs). ⚠️ The `find` spans `source` → `anyEnergy` → `declinable` so the `replace` (`source` directly above `declinable`) occurs ZERO times.",
+    file: "packages/engine/src/effects.ts",
+    find: "      source: \"discard\" as const,\n      anyEnergy: true as const,\n      declinable: true as const,",
+    replace: "      source: \"discard\" as const,\n      declinable: true as const,",
+    expectKilledBy: ["packages/engine/src/opponentDiscardAttach.test.ts"],
+  },
+  {
+    id: "D532-resolver-ignores-whose",
+    decision: "D532",
+    what: "🛑 C5 — **THE KEY IS DECLARED, EMITTED, PERSISTED, CAPTIONED AND NEVER READ: `attachSeat` returns the actor unconditionally** (D531's C4′ shape at the ONE resolver). The single most plausible wrong build of an optional key — the type admits it, the deriver emits it, `pendingOp` carries it, the caption even says \"your opponent's\" — and the pile read, the targets offered and the board rewritten are all the ATTACKER's. Every reading rung, every census rung and the caption pin stay green; killed by §3's loss-direction board (the fresh op must park the OPPONENT's refs), by §4 (i)/(ii)/(vi)/(viii) from BOTH seats and by §5 (the gate reads the wrong pile). This is the row that says a reader test is not a board test (D465).",
+    file: "packages/engine/src/interpreter.ts",
+    find: "export function attachSeat(op: { readonly whose?: \"opponent\" }, seat: Seat): Seat {\n  return op.whose === \"opponent\" ? otherSeat(seat) : seat;",
+    replace: "export function attachSeat(_op: { readonly whose?: \"opponent\" }, seat: Seat): Seat {\n  return seat;",
+    expectKilledBy: ["packages/engine/src/opponentDiscardAttach.test.ts"],
+  },
+  {
+    id: "D532-targets-ignore-whose",
+    decision: "D532",
+    what: "🛑 C6 — **THE FUNNEL READS THE ACTOR's BOARD: `attachEnergyTargets` ignores `riders.whose`** — the opponent's PILE is drained onto the ATTACKER's bodies, the seat-slip an author makes when the funnel's `seat` parameter reads as the owner. The guard, the apply and the gate all resolve the seat; only the offer is wrong. Killed by §4 (i) (the candidates must be the OPPONENT's refs in Active-then-bench order, every ref carrying the OPPONENT's seat), by (viii) (`attachEnergyTargets(board, \"p1\", { whose: \"opponent\" })` asked directly) and by §3's fresh-op board.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  const owner = attachSeat(riders, seat);\n  const side = state.players[owner];",
+    replace: "  const owner = seat;\n  const side = state.players[owner];",
+    expectKilledBy: ["packages/engine/src/opponentDiscardAttach.test.ts"],
+  },
+  {
+    id: "D532-funnel-stamps-the-actors-seat",
+    decision: "D532",
+    what: "🛑 C12 — **THE FUNNEL WALKS THE RIGHT BOARD AND STAMPS THE WRONG SEAT ON THE REFS** — `refs.push({ seat, … })` for `{ seat: owner, … }` on the Active row: the offer's bodies are the opponent's, the refs say they are the attacker's. `validateChoice` then admits an answer naming the ATTACKER's Active and the apply's guard (`ref.seat !== seat`) refuses it silently — no `ENERGY_ATTACHED`, the pile untouched, the turn walks on. Killed by §4 (i) (every candidate must carry the OPPONENT's seat; `toEqual(boardRefs(before, defender))`), by (ii) (the first answer must move the Energy) and by (viii). ⚠️ Spelled on the ACTIVE row alone (the bench row is a second, independent site — one defect per row); the `replace` restores the pre-D532 text of that one line, which occurs ZERO times now.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "    refs.push({ seat: owner, spot: { spot: \"active\" } });",
+    replace: "    refs.push({ seat, spot: { spot: \"active\" } });",
+    expectKilledBy: ["packages/engine/src/opponentDiscardAttach.test.ts"],
+  },
+  {
+    id: "D532-apply-guards-against-the-actor",
+    decision: "D532",
+    what: "🛑 C7 — **THE APPLY's GUARD KEEPS `ctx.seat`: `if (ref.seat !== ctx.seat) return state;`** — the ref the player chose carries the OPPONENT's seat, so every answer is silently refused: no `ENERGY_ATTACHED`, no card moves, the next op parks, the turn ends with both piles as they were. Every offer assertion stays green; killed by §4 (ii) (the first answer MUST move `pile[0]` onto the Active and emit the row), (iii) (the log row), (v) and (ix) (the legal answer is accepted and MOVES the Energy). ⚠️ The bare guard line occurs TWICE in the file (`healChosen` has the same line), so the `find` spans the resolver line above it.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  const seat = attachSeat(op, ctx.seat);\n  if (ref.seat !== seat) return state;",
+    replace: "  const seat = attachSeat(op, ctx.seat);\n  if (ref.seat !== ctx.seat) return state;",
+    expectKilledBy: ["packages/engine/src/opponentDiscardAttach.test.ts"],
+  },
+  {
+    id: "D532-apply-drains-the-actors-pile",
+    decision: "D532",
+    what: "🛑 C8 — **THE APPLY DRAINS `state.players[ctx.seat].discard` — the WRONG PILE.** `attachableEnergies` is asked with the actor's seat, so the uids it returns are the ATTACKER's {W} Basics; they are written onto the opponent's body, the `drop` over the OPPONENT's pile removes nothing (the uids are not there), and the attacker's pile keeps them — one uid in two zones. Killed by §4 (ii) (`ENERGY_ATTACHED.uid` must be the OPPONENT's `pile[0]`, the opponent's pile must shrink, the attacker's must NOT), by (v) (the Special-only opponent pile must be what moves) and by (vi) (an EMPTY opponent pile must WHIFF while the own pile is stocked — the mutant parks and feeds off the wrong pile).",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  const energyUids = attachableEnergies(\n    state,\n    seat, // D532 — the printed pile's owner\n    op.source,",
+    replace: "  const energyUids = attachableEnergies(\n    state,\n    ctx.seat,\n    op.source,",
+    expectKilledBy: ["packages/engine/src/opponentDiscardAttach.test.ts"],
+  },
+  {
+    id: "D532-apply-reads-the-actors-board",
+    decision: "D532",
+    what: "🛑 C8′ — **THE APPLY LOOKS THE REF UP ON THE ACTOR's BOARD: `const side = state.players[ctx.seat]`** — the pile is the opponent's and the guard passes, but `side.active` is the ATTACKER's Active, so the Energy lands on the attacker's own body and the opponent's SEAT is then rewritten with the attacker's side data through `withSide(state, seat, …)` — a corrupted board that passes every 'was something attached' assertion. Killed by §4 (ii) (the OPPONENT's Active must carry the {R}; the attacker's Active must still hold exactly its {C}), (iii) and (iv)'s board-as-it-was checks. One read site of five (D412: find every read site before fixing any).",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  const side = state.players[seat]; // D532 — the OWNER's side (the actor's unless `whose`)",
+    replace: "  const side = state.players[ctx.seat]; // D532 — the OWNER's side (the actor's unless `whose`)",
+    expectKilledBy: ["packages/engine/src/opponentDiscardAttach.test.ts"],
+  },
+  {
+    id: "D532-caption-drops-opponents",
+    decision: "D532",
+    what: "⚠️ C9 — **THE CAPTION FALLS BACK TO \"which of your Pokémon?\"** — `attachTargetNoun`'s shadow collapses to the printed zone, so the dialog offers the DEFENDER's bodies under a heading that says they are the player's own: the dialog contradicting its own rows (D342/D513's recorded failure, D478's describer obligation). Every offer assertion stays green; killed by §4 (i)'s byte-for-byte caption pin from BOTH seats, by (vii)'s, by (x)'s redacted-view pin and by §3's fresh-op caption. ⚠️ Spelled on the D532 shadow line, NOT on D354's `if (types.length === 0) return …` line one statement down and NOT on the three-line caption at the park — both byte-intact, and `D354-caption-welds-the-union-into-one-noun`, `D205-caption-count`, `D205-count-le-1` and `D359-park-loses-the-toself-caption` keep their finds.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  const zone = riders.whose === \"opponent\" ? `opponent's ${printedZone}` : printedZone;",
+    replace: "  const zone = printedZone;",
+    expectKilledBy: ["packages/engine/src/opponentDiscardAttach.test.ts"],
+  },
+  {
+    id: "D532-log-drops-the-other-seat",
+    decision: "D532",
+    what: "⚠️ C10 — **THE LOG's HOST LOOKUP STOPS AT THE ACTOR's BOARD** — `energyHostName` scans `state.players[event.seat]` alone, finds no carrier of the uid (the Energy is on the OPPONENT's body) and prints *\"attached Fire Energy → a Pokémon\"*. The only non-engine-internal reader of `ENERGY_ATTACHED` (grepped: none in apps/, packages/schema, redact.ts, projection.ts), and the one describer this slice touches. Killed by §4 (iii)'s byte-for-byte log row from BOTH seats (*\"attached Fire Energy → D532 Wall\"*, and `not.toContain(\"a Pokémon\")`).",
+    file: "packages/engine/src/log.ts",
+    find: "  const host = carrierOf(seat) ?? carrierOf(otherSeat(seat));",
+    replace: "  const host = carrierOf(seat);",
+    expectKilledBy: ["packages/engine/src/opponentDiscardAttach.test.ts"],
+  },
+  {
+    id: "D532-gate-reads-the-actors-pile",
+    decision: "D532",
+    what: "⚠️ C11 — **`programPlayable`'s WHIFF GATE ASKS THE ACTOR's PILE** — `attachAlternativesAllWhiff` passes `seat` where the apply resolves `attachSeat(op, seat)`, so a `whose: \"opponent\"` program is offered when the ATTACKER's pile holds an Energy and refused when it does not — the afford-then-reject D222 named, one read site over (cardplay.ts is unreachable from attack.ts/flow.ts, grep 0, but D222: EVERY read site). CONDITIONAL in the brief, WRITTEN because it is drivable through the exported gate: §5 pins `false` on an EMPTY opponent pile with the own pile STOCKED and `true` on a STOCKED opponent pile with the own pile EMPTY — the mutant answers both the other way — and the flagless twin's answers as the control.",
+    file: "packages/engine/src/cardplay.ts",
+    find: "        attachSeat(op, seat), // 🆕 D532 — the printed pile's owner; the gate asks the apply's question",
+    replace: "        seat, // 🆕 D532 — the printed pile's owner; the gate asks the apply's question",
+    expectKilledBy: ["packages/engine/src/opponentDiscardAttach.test.ts"],
   },
 ];

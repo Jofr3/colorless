@@ -26,6 +26,7 @@ import {
   type GameOverReason,
   type GameState,
   type Seat,
+  otherSeat,
 } from "./types";
 
 export interface LogContext {
@@ -118,9 +119,16 @@ function countedNames(cardNames: readonly string[]): string {
     benched host to the Active Spot in the SAME batch, compacting the bench, so
     the target index no longer names the host). Reads the post-state. */
 function energyHostName(state: GameState, seat: Seat, energyUid: string): string {
-  const side = state.players[seat];
-  const carriers = side.active === null ? side.bench : [side.active, ...side.bench];
-  const host = carriers.find((pokemon) => pokemon.energy.includes(energyUid));
+  const carrierOf = (owner: Seat) => {
+    const side = state.players[owner];
+    const carriers = side.active === null ? side.bench : [side.active, ...side.bench];
+    return carriers.find((pokemon) => pokemon.energy.includes(energyUid));
+  };
+  // 🆕🆕🆕 D532 — the event's seat is the ACTOR; a cross-seat attach (Grafaiai's "to THEIR
+  // Pokémon") puts the Energy on the OTHER seat's body, so scan that board before falling
+  // back to the bare noun. The actor's board is read FIRST, so every pre-D532 row is
+  // byte-identical.
+  const host = carrierOf(seat) ?? carrierOf(otherSeat(seat));
   return host === undefined ? "a Pokémon" : (topCardOf(state, host)?.name ?? "a Pokémon");
 }
 

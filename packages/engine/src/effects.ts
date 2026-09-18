@@ -3716,6 +3716,19 @@ export interface AttachTargetRiders {
   /** Exclude any target `bonusCounters` would Knock Out ("you can't use this on
       a Pokémon that would be Knocked Out"), so the placement is never lethal. */
   notIfKO?: true;
+  /** 🆕🆕🆕 **D532 — THE CROSS-SEAT ATTACH: WHOSE BOARD THE TARGETS ARE ON.** Grafaiai
+      `sv08-121` *"Attach up to 3 Energy cards from your **opponent's** discard pile to
+      **their** Pokémon in any way you like."* (corpus FILE LINE 70, 1 legal printing).
+      Literal `"opponent"` only; ABSENT = the controller's OWN board, which is what every
+      v30 writer meant (no v30 program could set the key — D125's test). Lives on the
+      RIDERS interface rather than on the op alone so `attachEnergyTargets(state, seat,
+      riders)` resolves the OWNER from the riders it already reads (`attachSeat`,
+      interpreter.ts — the ONE resolver, D336's rule) and every existing call site stays
+      byte-intact: `seat` remains the ACTOR, the refs come back carrying the OWNER's seat.
+      🛑 THE LOSS DIRECTION (D421): a build that DROPS the key degrades to *"from YOUR
+      pile to YOUR Pokémon"* — DETECTABLE on any board, because the parked candidates
+      carry the other seat (`opponentDiscardAttach.test.ts` §3 drives it). */
+  whose?: "opponent";
 }
 
 /** One effect operation — the engine's instruction set (D8). Attack-derived
@@ -8054,6 +8067,39 @@ export type EffectOp =
           DERIVER path today; the number arm is driven at the op level, where its
           consumer will be. */
       healTarget?: number | "all";
+      /** 🆕🆕🆕 **D532 — THE CROSS-SEAT DISCARD-PILE ATTACH.** Grafaiai `sv08-121` *"Attach
+          up to 3 Energy cards from your **opponent's** discard pile to **their** Pokémon in
+          any way you like."* — corpus FILE LINE 70, **1 sentence / 1 legal printing**,
+          anchor `ATTACK_OPPONENT_DISCARD_ATTACH`, its own arm: D360's spread (THREE
+          independent declinable one-card ops, `count` ABSENT) with the bare plural
+          *"Energy cards"* read as the whole category (`anyEnergy: true` — D246's reading
+          of *"an Energy card"* applied to the plural; a Special in the opponent's pile IS
+          offered; DECIDED and pinned, D421) and ONE key over: `whose: "opponent"`.
+
+          🛑 **`"opponent"` MOVES BOTH THE SOURCE PILE AND THE TARGET BOARD TOGETHER**,
+          because the print names them together (*"your opponent's discard pile … their
+          Pokémon"*) and no printing crosses them — the same seat is read by
+          `attachableEnergies` (the pile) and `attachEnergyTargets` (the board) through
+          the ONE resolver `attachSeat(op, ctx.seat)` (interpreter.ts). Literal
+          `"opponent"` only; ABSENT = the controller's own pile AND own board, which is
+          what every v30 writer meant (spelling precedent: `returnBenched.whose`,
+          `discardDeckTop.whose`). `MATCH_RECORD_VERSION` HELD at 30: the op PARKS, so
+          the key rides `phase.cont.pendingOp`, but no v30 record carries it and its
+          absence has one meaning before and after (D125's test).
+
+          🛑 **THE LOSS DIRECTION, WRITTEN DOWN (D421):** a build that DROPS the key
+          degrades to *"from YOUR pile to YOUR Pokémon"* — the own-seat D360 spread —
+          DETECTABLE on any board because the parked `candidates` carry the OTHER seat
+          and the answer drains the OTHER pile; `opponentDiscardAttach.test.ts` §3 drives
+          it on the board. **`ENERGY_ATTACHED.seat` STAYS THE ACTOR** (every event's seat
+          is the actor — turn.ts's manual attach spells `seat: action.seat`) and `target`
+          is the chosen spot ON THE OPPONENT's BOARD; `log.ts`'s `energyHostName` scans
+          the other seat when the actor's board holds no carrier. Never co-authored with
+          `toSelf`, `toEach`, `bonusCounters`, `healTarget`, `recordAs`, `count`,
+          `energyType` or `energyName` (asserted; those riders keep reading the actor's
+          board through `side`). An OPPONENT with only an Active still PARKS: `upTo` is 1
+          on a declinable op, which keeps `parkOrForce`'s forced arm off. */
+      whose?: "opponent";
     }
   /** Retrieve up to `max` cards matching `filter` from the controller's DISCARD
       pile into `dest` (their hand or their deck) — the §7.1 recovery-Item family
@@ -22765,6 +22811,30 @@ function attachFromZoneAnchor(zonePhrase: string, tail: string): RegExp {
 }
 const DISCARD_ATTACH = attachFromZoneAnchor(SOURCE_ZONE_PHRASE, "");
 
+// 🆕🆕🆕 D532 — THE CROSS-SEAT DISCARD-PILE ATTACH, corpus FILE LINE 70 (1 legal printing,
+// Grafaiai `sv08-121`): "Attach up to 3 Energy cards from your opponent's discard pile to
+// their Pokémon in any way you like." ONE zero-capture whole-sentence literal beside the
+// factory-built `DISCARD_ATTACH` — D527/D531's construction: no /i, `^…$`, the apostrophe
+// spelled `['’]` (the family convention, D136/D137 — the corpus prints U+0027). DECIDED:
+// the `3` is a LITERAL and not a `(\d+)` capture — the pool is ONE printing and no second
+// printing varies the token (D121's warrant needs two); an "up to 2" near-miss is the
+// control. 🛑 `attachFromZoneClause` is NOT widened with an optional `(opponent['’]s )?`
+// group: that would shift groups 2–5 across all THREE anchors the factory builds and
+// `attachFromZoneProgram`'s `match[5]` / `match[2] ?? match[4]` reads with them — D447's
+// hazard. CENSUS (remote D1 `luminous`, `legal_standard = 1`, all three text columns):
+//   LIKE '%from your opponent''s discard pile to their%'   → 1 row (this one; FILE LINE 70)
+// MEASURED: `SOURCE_ZONE_PHRASE` (" from your discard pile") is NOT a substring of the
+// print (the print reads " from your opponent's discard pile"), so the sibling
+// `DISCARD_ATTACH` cannot match it and arm order is not load-bearing — the arm sits
+// BEFORE the sibling's `exec` anyway (D467/D499's rule: arm order is behaviour, fixed).
+// D178 provenance: refused since D234 (`derivedDiscardAttach.test.ts`'s `UNREAD` table —
+// *"`source` names a ZONE, never a SEAT"*). That premise was true of the FIELD and is
+// still true: `source` still names a zone; the SEAT was a fact about three `ctx.seat`
+// READS in the interpreter, not about the type (D520 (2)) — so the row costs ONE
+// optional key (`attachEnergyFrom.whose`) and ONE resolver, not a vocabulary.
+const ATTACK_OPPONENT_DISCARD_ATTACH =
+  /^Attach up to 3 Energy cards from your opponent['’]s discard pile to their Pokémon in any way you like\.$/;
+
 // ⚠️⚠️ D235 — THE DECK SEARCH THAT **ATTACHES** (backlog row 10), THE BIGGEST
 // ATTACK-COLUMN COUNT LEFT ON THE D233 PAGE, AND THE FIRST PREDICTION ON THAT
 // PAGE TO BE GRADED **PART WRONG**. That is the finding, and it is worth more
@@ -28628,6 +28698,26 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   // reaches this zone by construction. **A widened NOUN transfers across every
   // zone the factory serves** — which is the exact converse of D236's finding
   // that a widened ZONE transfers the anchor and not the family.
+  // 🆕🆕🆕 D532 — THE CROSS-SEAT DISCARD-PILE ATTACH, corpus FILE LINE 70. No guard: nothing
+  // is captured (the `3` is a literal, the noun is the bare plural, the seat is printed).
+  // The program is D360's spread — THREE independent declinable one-card parks, `count`
+  // ABSENT (*"in any way you like"* denies a batch, D205) — with `anyEnergy: true` (the bare
+  // plural *"Energy cards"* is the whole category, D246's reading applied to the plural)
+  // and ONE key the own-seat spread never carries: `whose: "opponent"`, read by the
+  // interpreter's `attachSeat` for the pile AND the board together. ⚠️ ORDER IS NOT
+  // LOAD-BEARING FOR THIS ROW — measured: `SOURCE_ZONE_PHRASE` is not a substring of the
+  // print, so the sibling below cannot match it — but the arm sits BEFORE the sibling's
+  // `exec` for D467/D499's rule that arm order is behaviour and is fixed rather than
+  // left to a widening.
+  if (ATTACK_OPPONENT_DISCARD_ATTACH.test(effect)) {
+    return Array.from({ length: 3 }, () => ({
+      op: "attachEnergyFrom" as const,
+      source: "discard" as const,
+      anyEnergy: true as const,
+      declinable: true as const,
+      whose: "opponent" as const,
+    }));
+  }
   match = DISCARD_ATTACH.exec(effect);
   if (match !== null) {
     const program = attachFromZoneProgram(match, "discard");

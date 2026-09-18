@@ -905,7 +905,9 @@ describe("D358 §6 — the ids this slice rests on are real, and the registry ho
 //       13 bought at D359 (the `count` BATCH, six sentences)
 //      + 6 bought at D358 (Archaludon ex ×3, Magneton ×3 — the registry SPREAD)
 //      + 4 bought at D360 (the derived SPREAD — Morpeko, Lycanroc, Mesprit ×2)
-//      + 1 refused      (Grafaiai `sv08-121`, cross-seat, derives to null)
+//      + 1 🆕🆕🆕 BUILT at D532 (Grafaiai `sv08-121`, cross-seat — three declinable one-card ops
+//                        carrying `whose: "opponent"` on their own anchor; refused, deriving to
+//                        null, from D360 to D531 — re-pointed in place, D442)
 //      = 24.
 //   • plus KORAIDON_EX ×4, which is `legal_standard = 0` and therefore in NONE of
 //     those figures, and which is the whole reason §1's set moved. See §0.
@@ -922,7 +924,7 @@ describe("D360 §7 — no `anyWay` spread in EITHER producer is still an exact N
     return out;
   }
 
-  it("🛑 the DERIVER's spreads are EXACTLY three sentences, and all three are hedged", () => {
+  it("🛑 the DERIVER's spreads are EXACTLY four sentences (🆕🆕🆕 D532: the CROSS-SEAT one joined — corpus FILE LINE 70, three ops carrying `whose: \"opponent\"`), and all four are hedged", () => {
     // ⚠️ THE CONTROL THAT KEEPS THIS FROM BEING VACUOUS: the corpus is the whole
     // Standard-legal attack column (640 sentences) and the readers run LIVE
     // against it, so a broken deriver returns an empty list — which this asserts
@@ -933,13 +935,18 @@ describe("D360 §7 — no `anyWay` spread in EITHER producer is still an exact N
         "Attach up to 2 Basic Energy cards from your discard pile to your Pokémon in any way you like.",
         "Attach up to 2 Basic {F} Energy cards from your discard pile to your Benched Pokémon in any way you like.",
         "Attach up to 2 Basic {P} Energy cards from your hand to your Pokémon in any way you like.",
+        // 🆕🆕🆕 D532 — the FOURTH: the cross-seat spread (Grafaiai `sv08-121`, corpus FILE LINE 70), three
+        // declinable ops ONE KEY OVER (`whose: "opponent"`, plus `anyEnergy` for the bare plural) on its
+        // OWN anchor — refused from D360 to D531, built at D532; the `+ 1 refused` line above is re-pointed.
+        "Attach up to 3 Energy cards from your opponent's discard pile to their Pokémon in any way you like.",
       ].sort(),
     );
-    // 4 Standard-legal printings over those 3 sentences (2 of them Mesprit's).
+    // 4 Standard-legal printings over those 3 sentences (2 of them Mesprit's) — 🆕🆕🆕 D532: 5 over 4,
+    // the cross-seat printing (1) joined.
     const printings = legalAttackCorpus()
       .filter(([, text]) => spreads.some((s) => s.text === text))
       .reduce((n, [count]) => n + count, 0);
-    expect(printings).toBe(4);
+    expect(printings).toBe(5); // (🆕🆕🆕 **D532 +1 printing — the fourth derived spread — THE CROSS-SEAT DISCARD-PILE ATTACH — `censusAttackCorpus.ts` **FILE LINE 70**, *"Attach up to 3 Energy cards from your opponent's discard pile to their Pokémon in any way you like."*, 1 sentence / 1 legal printing, claimed WHOLE by `deriveAttackEffect` on its own zero-capture anchor — stepped OFF THE RED RUN, outside the census-pin sweep's shape (D419: a sweep is as narrow as the shape it greps for).)
   });
 
   it("🛑 EVERY hedged spread op carries the flag, in BOTH producers, and no other op does", () => {

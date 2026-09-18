@@ -3744,7 +3744,7 @@ function stepOp(
       if (
         firstAttachableEnergy(
           state,
-          ctx.seat,
+          attachSeat(op, ctx.seat), // 🆕 D532 — the printed pile's owner (`whose`), ONE resolver
           op.source,
           op.energyType,
           op.anyEnergy,
@@ -12335,7 +12335,13 @@ export function attachEnergyTargets(
   seat: Seat,
   riders: AttachTargetRiders,
 ): PokemonRef[] {
-  const side = state.players[seat];
+  // 🆕🆕🆕 D532 — `seat` is the ACTOR; the board the targets are on is the OWNER, resolved
+  // from the riders' `whose` through the ONE resolver (Grafaiai's printed *"their
+  // Pokémon"*). Every ref below carries the OWNER's seat, so `validateChoice` (which
+  // matches the wire answer against these refs) and the HUD (which tags a foreign-seat
+  // ref "opponent") need no byte of their own. Absent = the actor's own board, as before.
+  const owner = attachSeat(riders, seat);
+  const side = state.players[owner];
   const eligible = (pokemon: InPlayPokemon): boolean => {
     if (
       riders.targetType !== undefined ||
@@ -12387,12 +12393,24 @@ export function attachEnergyTargets(
   };
   const refs: PokemonRef[] = [];
   if (riders.benchOnly !== true && side.active !== null && eligible(side.active)) {
-    refs.push({ seat, spot: { spot: "active" } });
+    refs.push({ seat: owner, spot: { spot: "active" } });
   }
   side.bench.forEach((pokemon, index) => {
-    if (eligible(pokemon)) refs.push({ seat, spot: { spot: "bench", index } });
+    if (eligible(pokemon)) refs.push({ seat: owner, spot: { spot: "bench", index } });
   });
   return refs;
+}
+
+/** 🆕🆕🆕 **D532 — THE ONE RESOLVER FOR THE CROSS-SEAT ATTACH (D336's rule: no second
+    copy).** `whose: "opponent"` (Grafaiai `sv08-121`, corpus FILE LINE 70) names the seat
+    whose DISCARD PILE is read AND whose BOARD is targeted — the print names them together
+    and no printing crosses them. Read at the park guard, the target funnel
+    (`attachEnergyTargets`, through the riders), the apply and `cardplay.ts`'s whiff gate;
+    NOT by the events (`ENERGY_ATTACHED.seat` stays the actor, the target is the chosen
+    spot on the owner's board). Absent = the actor's own seat, which is what every v30
+    program meant. Exported for `cardplay.ts`. */
+export function attachSeat(op: { readonly whose?: "opponent" }, seat: Seat): Seat {
+  return op.whose === "opponent" ? otherSeat(seat) : seat;
 }
 
 /** The printed "this Pokémon" as a (zero- or one-element) target list: the
@@ -12749,11 +12767,16 @@ function attachEnergyFrom(
       validator refuses an over-take first, and this is the belt behind it. */
   take?: number,
 ): GameState {
-  if (ref.seat !== ctx.seat) return state;
+  // 🆕🆕🆕 D532 — THE SEAT IS RESOLVED ONCE, HERE, AND EVERY READ BELOW IS ITS: the pile the
+  // Energy leaves, the board the ref is validated against and the side that is rewritten
+  // are all the OWNER's (`whose: "opponent"` → the opponent; absent → the actor, as every
+  // pre-D532 program meant). `ctx.seat` survives ONLY on the events (the actor).
+  const seat = attachSeat(op, ctx.seat);
+  if (ref.seat !== seat) return state;
   const printed = op.count ?? 1; // absent = the single attach every pre-D205 program meant
   const energyUids = attachableEnergies(
     state,
-    ctx.seat,
+    seat, // D532 — the printed pile's owner
     op.source,
     op.energyType,
     take === undefined ? printed : Math.min(take, printed),
@@ -12761,7 +12784,7 @@ function attachEnergyFrom(
     op.energyName, // D353 — absent = the printed noun is a CATEGORY, not a NAME
   );
   if (energyUids.length === 0) return state;
-  const side = state.players[ctx.seat];
+  const side = state.players[seat]; // D532 — the OWNER's side (the actor's unless `whose`)
   const pokemon = ref.spot.spot === "active" ? side.active : side.bench[ref.spot.index];
   if (pokemon === undefined || pokemon === null) return state;
   const targetUid = topUid(pokemon);
@@ -12801,8 +12824,8 @@ function attachEnergyFrom(
   const index = ref.spot.spot === "active" ? -1 : (ref.spot as { index: number }).index;
   const next =
     index < 0
-      ? withSide(state, ctx.seat, { ...base, active: updated })
-      : withSide(state, ctx.seat, {
+      ? withSide(state, seat, { ...base, active: updated })
+      : withSide(state, seat, {
           ...base,
           bench: side.bench.map((p, i) => (i === index ? updated : p)),
         });
@@ -14260,7 +14283,15 @@ function lookNote(
     be a silent change to an unrelated card's prompt, while "that wouldn't be
     Knocked Out" is a rule about the OFFER, which the offered rows already say. */
 function attachTargetNoun(riders: AttachTargetRiders): string {
-  const zone = riders.benchOnly === true ? "Benched " : "";
+  const printedZone = riders.benchOnly === true ? "Benched " : "";
+  // 🆕🆕🆕 D532 — the printed *"their Pokémon"* (Grafaiai, corpus FILE LINE 70): the caption
+  // names WHOSE board the offered rows are on — "which of your opponent's Pokémon?" — for
+  // D478's describer obligation (a dialog offering the defender's bodies under "which of
+  // your Pokémon?" would contradict its own rows). The possessive rides AHEAD of the zone
+  // word and the owner prefix ("your opponent's Benched Pokémon"), spelled as a shadow of
+  // `zone` so D354's line below and the three-line caption at the park stay byte for byte
+  // what they were (their mutant finds hold). Absent = the byte-identical pre-D532 noun.
+  const zone = riders.whose === "opponent" ? `opponent's ${printedZone}` : printedZone;
   const owner = ownerNoun(riders.ownerPokemon);
   const types = targetTypeNames(riders.targetType);
   // 🆕🆕 D354 — NO TYPE: the bare noun, byte-identical to the pre-D354 spelling.
