@@ -20025,6 +20025,60 @@ import type { GameState, Seat } from "./types";
     `expect(manifest.version)`, `it(…)` titles, the declaration and `package.json` —
     **not** as a value-keyed grep — because a value-keyed grep is precisely the mechanism
     that ate D500's heading.)
+    🆕🆕🆕 engineVersion 0.419.0 → **0.420.0** (D535 — THE PICK-WITH-REPLACEMENT SNIPE, AND IT
+    COSTS **ZERO NEW VOCABULARY**. `censusAttackCorpus.ts` **FILE LINE 81** (`legalAttackCorpus()`
+    index 28) — *"Choose 1 of your opponent's Pokémon 6 times. (You can choose the same Pokémon
+    more than once.) For each time you chose a Pokémon, do 20 damage to it. This damage isn't
+    affected by Weakness or Resistance."*, **1 sentence / 2 legal printings** (card ids UNRESOLVED
+    on this checkout — no D1, no catalog sqlite — so they are stated unresolved and never invented,
+    and the demonstrator is FILE-LOCAL and DECLARED, D425), claimed by `deriveAttackEffect` through
+    ONE new whole-sentence anchor (`ATTACK_PICK_WITH_REPLACEMENT_SNIPE`, beside `CHOSEN_ANY_TARGET`
+    — no /i, `^…$`, `['’]` on BOTH apostrophe slots per D136/D137) with TWO captures, the count and
+    the amount, under the `count >= 1 && amount >= 1` floor both siblings carry. The arm sits AFTER
+    `CHOSEN_ANY_TARGET`'s `exec` — arm order is BEHAVIOUR (D467/D499) — and disjointness is
+    STRUCTURAL and ASSERTED: that sibling demands `^This attack does`, arms 22/23/23a/23b demand
+    `^Put `, this one demands `^Choose 1 of`. 🛑 **THE PROGRAM IS SIX `damageChosen` OPS AT
+    `count: 1`, NEVER ONE OP AT `amount * count`** — the exact direction
+    `COUNTER_SPREAD_ON_OPPONENT`'s comment names as the way this family goes wrong — and the reason
+    is MEASURED, not stylistic: `validateChoice`'s `choosePokemonMulti` arm (`cardplay.ts:1419`)
+    refuses a repeated ref inside ONE prompt, so a single `count: 6` park cannot answer the printed
+    *"(You can choose the same Pokémon more than once.)"* at all. Six independent single-answer
+    parks deliver it out of the SHIPPED mechanism — no `repeatable` rider, no `EffectPrompt` key, no
+    `packages/schema` byte, no HUD byte — and they are the only shape that also works when the
+    opponent holds fewer than six bodies. Each op is BYTE-IDENTICAL to the literal
+    `CHOSEN_ANY_TARGET` has authored since D400/D448, the `deals: true` / `ignoreWR: true` pair
+    included: `deals` because *"do 20 damage to it"* is ATTACK DAMAGE and not a placed counter
+    (`effects.ts:5438`), `ignoreWR` because the BARE W/R tail has set that flag since D400 (corpus
+    FILE LINE 620, 2 printings) and D492's spread reads it the same way at :15881 — a READING with
+    two shipped siblings, re-stated rather than assumed, ⚠️ including its side effect of nulling
+    `damageReductionAfterWR`, which THIS print does not spell. ⚠️ **THE DECIDED DISCREPANCY (D421),
+    PINNED IN §7 RATHER THAN PAPERED OVER**: the print reads *choose six times, THEN damage* and the
+    engine INTERLEAVES pick and hit. The final board is IDENTICAL — `snipeTargets` applies no HP
+    filter and a program op never sweeps Knock Outs (the sweep is `finishAttack`'s epilogue after
+    the program settles) — so only event ORDER differs, and the argument is inherited VERBATIM from
+    `COUNTER_SPREAD_ON_OPPONENT` (4 live printings since D450), not newly claimed here. ⚠️
+    **NOTHING IS ADDED**: no `EffectOp` member, no op field, no `EffectPrompt` key, no `GameEvent`,
+    no `GameOverReason`, no `CardFilter`/`BoardCondition` member; `interpreter.ts`, `log.ts`,
+    `events.ts`, `types.ts`, `redact.ts`, `attack.ts`, `flow.ts`, `cardplay.ts`, `packages/schema`,
+    `apps/` and both HUDs move ZERO bytes (`git diff --stat` empty, D534's shape). ⚠️
+    `MATCH_RECORD_VERSION` **HELD at 30 ON D452's "THIS BYTE ALREADY SHIPS" — NOT on a reachability
+    argument.** The op parks, so it rides `phase.cont.{pendingOp, rest}`; but the literal
+    `{op:"damageChosen",target:"opponentAny",amount,count:1,source:"attack",deals:true,ignoreWR:true}`
+    is authored TODAY by `CHOSEN_ANY_TARGET` and the serialized alphabet does not grow AT ALL. This
+    is D237's POPULATION change — WHICH PRINTINGS carry an existing field — and not a widening and
+    not a rename; see D237's own block at `effects.ts:23564`, which makes exactly this argument for
+    exactly this reason. 🛑 **IF A SUCCESSOR REACHES FOR `repeatable?: true` ON `damageChosen` PLUS
+    A KEY ON `EffectPrompt.choosePokemonMulti`, IT STOPS BEING THIS PRICE** — that shape re-opens
+    the persisted-address argument twice over and owes the schema and HUD bytes this design avoids.
+    ⚠️ KNOWN NIT, UNBUILT: six prompts in a row is a lot of UI, but ZERO HUD bytes are owed — the
+    existing `choosePokemonMulti` dialog at min = max = 1 serves each park and D360/D532 already
+    ship three-park spreads.
+    🛑 **VERSION-TAX EXCEPTION LIST FOR THIS BUMP (D506 (b)):** `0.419.0` legitimately survives at
+    THIS HEADING'S OWN SOURCE, one line up in the arrow; D534's heading target below;
+    `opponentTopLookShuffle.test.ts`'s header arrow and its heading pin; the D532/D534 census
+    annotations' own `engine 0.418.0 → 0.419.0` arrows; `mutants.ts`'s D275 re-point ledger; and the
+    `docs/` history. The sweep was run as a WHITELIST over `expect(engineVersion)`,
+    `expect(manifest.version)`, `it(…)` titles, the declaration and `package.json`.)
     🆕🆕🆕 engineVersion 0.418.0 → **0.419.0** (D534 — THE ONE-CARD LOOK AT THE OPPONENT's DECK
     WITH A PRINTED SHUFFLE — `shuffleDeck` GAINS THE OPTIONAL KEY `whose?: "opponent"` AND
     `reorderTop` PARKS A ONE-CARD WINDOW WHEN ITS TWO ARMS DIFFER. `censusAttackCorpus.ts` **FILE
@@ -22634,7 +22688,7 @@ import type { GameState, Seat } from "./types";
     WITNESS** — the count was re-derived every slice and the word *"three"* was carried.
     A successor of this slice inherits **81 / 61 / 17** again, over **FIVE** history
     occurrences: those four plus `deckMillFilteredScale.test.ts`'s own header arrow.) */
-export const engineVersion = "0.419.0";
+export const engineVersion = "0.420.0";
 
 export type {
   ApplyResult,

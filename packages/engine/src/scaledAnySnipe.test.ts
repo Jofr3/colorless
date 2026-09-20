@@ -176,7 +176,16 @@ describe("§1 — the two printed sentences, and what they cost the residue", ()
     // nothing about WHAT, and cannot tell *"D530 gave `damageChosen` a per-target rider"* from
     // *"a reader widened past the count clause and ate a chosen-target row"*. Bullet (b) below
     // names the row and pins the op and the rider it derives to.
-    expect(unbuilt).toHaveLength(4);
+    // 🆕🛑 **D535 — FOUR → THREE, AND THE ROW THAT LEFT IS THE PICK-WITH-REPLACEMENT SNIPE, WHICH
+    // THIS GREP SEES ONLY BY ACCIDENT.** Re-pointed rather than decremented, for the FIFTH time in
+    // this rung and on the same reasoning: a count that steps 4 → 3 records that something left and
+    // says nothing about WHAT, and cannot tell *"D535 built the six-park snipe"* from *"a reader
+    // widened past the count clause and ate a chosen-target row"*. ⚠️ **AND THE ACCIDENT IS WORTH
+    // NAMING (D465's over-inclusion finding, one row over)**: this sentence's *"For each"* does NOT
+    // scale an amount at all — it counts the PICKS already made, which is why the program is SIX ops
+    // at a FLAT `amount: 20` and carries none of this family's riders. Bullet (f) names the row and
+    // pins the op AND the absence of every scaling rider, which is what discriminates.
+    expect(unbuilt).toHaveLength(3);
     // (e) THE SELF-HIT THE PATTERN OVER-INCLUDES — corpus line 500, 1 printing, BUILT
     //     at D465. Not a refusal at all: it is here so the 8 → 7 step is attributable.
     const SELF_RECOIL_SCALED = "This Pokémon also does 10 damage to itself for each damage counter on it.";
@@ -358,6 +367,47 @@ describe("§1 — the two printed sentences, and what they cost the residue", ()
       ),
     ).toBeNull();
     expect(deriveAttackEffect("Then, shuffle those Energy cards into your deck.")).toBeNull();
+    // (f) THE PICK-WITH-REPLACEMENT SNIPE — corpus FILE LINE 81, 2 printings. **BUILT AT D535.**
+    //
+    //     🛑 **NOT A REFUSAL THIS RUNG EVER CARRIED, AND THAT IS THE POINT.** It was never listed
+    //     under (a)–(e) because it is a THIRD kind of member: the grep's `/for each/i` matches
+    //     *"For each time you chose a Pokémon"* and `includes("damage to ")` matches *"do 20 damage
+    //     to it"*, but neither clause scales an amount — the *"for each"* counts PICKS, not a board
+    //     quantity. D465's over-inclusion finding, in a second flavour: the pattern admits a row
+    //     whose arithmetic lives in the LENGTH of the program rather than in the amount of one op.
+    //
+    //     🛑 **RE-POINTED ONTO THE OP AND ONTO THE ABSENCE OF EVERY RIDER** (D438's polarity rule,
+    //     this rung's move at (a)–(d)): a bare *"it now resolves"* would be true under a reader
+    //     widened to swallow the column. What discriminates is that the six ops are FLAT — no
+    //     `perRecorded`, no `perDamageCounterOnTarget`, no `perEnergyOnSelf`, no `perTakenPrize` —
+    //     so nothing about this row bears on whether the SCALED chosen-hit family is closed.
+    const PICK_WITH_REPLACEMENT =
+      "Choose 1 of your opponent's Pokémon 6 times. (You can choose the same Pokémon more than once.) For each time you chose a Pokémon, do 20 damage to it. This damage isn't affected by Weakness or Resistance.";
+    expect(family.map(([, t]) => t)).toContain(PICK_WITH_REPLACEMENT);
+    expect(unbuilt).not.toContain(PICK_WITH_REPLACEMENT);
+    const SIX = deriveAttackEffect(PICK_WITH_REPLACEMENT);
+    expect(SIX).toHaveLength(6);
+    expect(new Set((SIX ?? []).map((op) => JSON.stringify(op))).size).toBe(1);
+    expect(SIX?.[0]).toEqual({
+      op: "damageChosen",
+      target: "opponentAny",
+      amount: 20,
+      count: 1,
+      source: "attack",
+      deals: true,
+      ignoreWR: true,
+    });
+    // …and the RIDER-FREE claim, driven rather than eyeballed: the key set is EXACTLY these
+    // seven, so a scaling rider added later reddens this line by name.
+    expect(Object.keys(SIX?.[0] ?? {}).sort()).toEqual([
+      "amount",
+      "count",
+      "deals",
+      "ignoreWR",
+      "op",
+      "source",
+      "target",
+    ]);
   });
 });
 
@@ -556,7 +606,7 @@ describe("§3 — a new optional rider on a PERSISTED op, and the record version
   });
 
   it("the engine version moved and the two spellings agree", () => {
-    expect(engineVersion).toBe("0.419.0");
+    expect(engineVersion).toBe("0.420.0");
   });
 });
 

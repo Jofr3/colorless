@@ -410,12 +410,22 @@ describe("the CENSUS — 8 legal printings on 3 sentences, pinned against a live
     // with itself forever. This LOOPS the corpus — the same instrument
     // `censusAtHead` derives `BUILT.attack` from — so widening the anchor by one
     // sentence reddens this file by name.
+    // 🆕🛑 **D535 — THE LOOSE SHAPE GAINED A SECOND PRODUCER, AND THE PREDICATE IS
+    // RE-POINTED ONTO THE FAMILY RATHER THAN DECREMENTED (D418/D438).** "A multi-op
+    // program of nothing but `damageChosen`" was a unique description of this anchor's
+    // unroll until D535's pick-with-replacement snipe derived SIX such ops (corpus FILE
+    // LINE 81, 2 printings). The two families are told apart by the ONE field that says
+    // what a hit IS: this one PLACES COUNTERS (`deals` absent, `COUNTERS_PLACED`), D535's
+    // DEALS DAMAGE (`deals: true`, `DAMAGE_DEALT`) — `effects.ts:5438`'s own split. The
+    // conjunct below is therefore a statement about the mechanism and not a fence around
+    // a count, and the rung underneath names the intruder so the step is attributable.
     const hits = legalAttackCorpus().filter(([, sentence]) => {
       const ops = deriveAttackEffect(sentence);
       return (
         ops !== null &&
         ops.length > 1 &&
-        ops.every((op) => (op as { op: string }).op === "damageChosen")
+        ops.every((op) => (op as { op: string }).op === "damageChosen") &&
+        ops.every((op) => (op as { deals?: true }).deals === undefined)
       );
     });
     expect(hits.map(([, s]) => s).sort()).toEqual(LEGAL_SPREAD.map(([s]) => s).sort());
@@ -429,6 +439,24 @@ describe("the CENSUS — 8 legal printings on 3 sentences, pinned against a live
     expect(
       hits.map(([units, s]) => [s, units] as const).sort((a, b) => a[0].localeCompare(b[0])),
     ).toEqual([...LEGAL_SPREAD].sort((a, b) => a[0].localeCompare(b[0])));
+    // 🆕🛑 **AND THE INTRUDER IS NAMED, SO THE NARROWING ABOVE IS ATTRIBUTABLE.** D535's
+    // row satisfies every conjunct the predicate carried before this slice — a program of
+    // more than one op, every one a `damageChosen` — and is excluded by exactly one field.
+    // Without this pair the `deals` conjunct would read as a fence nobody can date.
+    const PICK_WITH_REPLACEMENT =
+      "Choose 1 of your opponent's Pokémon 6 times. (You can choose the same Pokémon more than once.) For each time you chose a Pokémon, do 20 damage to it. This damage isn't affected by Weakness or Resistance.";
+    const intruder = deriveAttackEffect(PICK_WITH_REPLACEMENT);
+    expect(intruder).toHaveLength(6);
+    expect((intruder ?? []).every((op) => (op as { op: string }).op === "damageChosen")).toBe(true);
+    expect((intruder ?? []).every((op) => (op as { deals?: true }).deals === true)).toBe(true);
+    expect(hits.map(([, s]) => s)).not.toContain(PICK_WITH_REPLACEMENT);
+    // …and THIS family's own rows carry no `deals`, which is the other half of the split
+    // and the control that keeps the conjunct a statement about the mechanism (D424).
+    for (const [sentence] of LEGAL_SPREAD) {
+      const ops = deriveAttackEffect(sentence) ?? [];
+      expect(ops.length, sentence).toBeGreaterThan(1);
+      expect(ops.every((op) => (op as { deals?: true }).deals === undefined), sentence).toBe(true);
+    }
   });
 
   it("reads the SEVEN rotated-out printings too — legality is not a regex property", () => {

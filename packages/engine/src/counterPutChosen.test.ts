@@ -466,9 +466,21 @@ describe("§2 — two arms, and the prefix that is the whole safety property", (
       ["a reworded join", "Choose 2 of your opponent's Pokémon, then put 3 damage counters on each of them."],
       // …and its TAIL re-worded: "on each of them" is what makes the arity a fan-out.
       ["a reworded tail", "Choose 2 of your opponent's Pokémon and put 3 damage counters on them."],
-      // THE REAL CATALOG NEIGHBOURS on the choose-first opening (corpus lines 81/82/84),
+      // THE REAL CATALOG NEIGHBOURS on the choose-first opening (corpus lines 82 and 84),
       // every one a different mechanism and every one still unread by these arms.
-      ["a pick with replacement", "Choose 1 of your opponent's Pokémon 6 times. (You can choose the same Pokémon more than once.) For each time you chose a Pokémon, do 20 damage to it. This damage isn't affected by Weakness or Resistance."],
+      // 🆕🛑 **D535 — CORPUS LINE 81 LEFT THIS TABLE BY BEING BUILT, AND IT IS RE-POINTED
+      // RATHER THAN DELETED (D418).** The row here was *"Choose 1 of your opponent's Pokémon
+      // 6 times. …"* and it is now claimed WHOLE by `ATTACK_PICK_WITH_REPLACEMENT_SNIPE` as six
+      // `damageChosen` parks; a `toBeNull` on it would be a false refusal, so the POSITIVE
+      // derivation is asserted in its own rung below and the CONTROL moves onto corpus line 84
+      // — the third neighbour this comment has always named and the table never carried, a
+      // sentence NO suite in the tree names outside the corpus file. ⚠️ The line list above is
+      // corrected in place: 81 is no longer a neighbour that these arms refuse, it is a
+      // neighbour ANOTHER arm claims, which is a different fact about the same row (D438).
+      [
+        "a bench-shuffle-the-rest, the third neighbour",
+        "Choose 3 of your opponent's Benched Pokémon. If you do, shuffle all of your opponent's Benched Pokémon that you didn't choose, and all cards attached to those Pokémon, into their deck.",
+      ],
       ["a bench shuffle", "Choose 2 of your opponent's Benched Pokémon. Shuffle those Pokémon and all attached cards into your opponent's deck. If 1 of your Pokémon used Angelite during your last turn, this attack can't be used."],
       ["empty", ""],
     ] as const) {
@@ -478,6 +490,41 @@ describe("§2 — two arms, and the prefix that is the whole safety property", (
     // drift is tolerated and which is not.
     expect(deriveAttackEffect(`\t  ${BARE}\n`)).toEqual(deriveAttackEffect(BARE));
     expect(deriveAttackEffect(`\t  ${CHOSEN}\n`)).toEqual(deriveAttackEffect(CHOSEN));
+  });
+
+  it("🆕 D535 — corpus line 81 is BUILT, and it is THESE arms that must not claim it", () => {
+    // 🛑 THE INVERTED CLAIM (D418): the row above used to assert `deriveAttackEffect` is
+    // NULL here. It is not, and pretending otherwise would be a refusal on record that
+    // the tree can no longer falsify. What this suite still owns is the OTHER half —
+    // that the counter-put arms do not claim it — so the claim is re-pointed onto the
+    // PROGRAM and onto the op that tells the two families apart.
+    const PICK_WITH_REPLACEMENT =
+      "Choose 1 of your opponent's Pokémon 6 times. (You can choose the same Pokémon more than once.) For each time you chose a Pokémon, do 20 damage to it. This damage isn't affected by Weakness or Resistance.";
+    const ops = deriveAttackEffect(PICK_WITH_REPLACEMENT);
+    expect(ops).toHaveLength(6);
+    expect(ops?.[0]).toEqual({
+      op: "damageChosen",
+      target: "opponentAny",
+      amount: 20,
+      count: 1,
+      source: "attack",
+      deals: true,
+      ignoreWR: true,
+    });
+    // ⚠️ **AND THE DISCRIMINATOR IS `deals`, NOT THE OP NAME.** Both families derive
+    // `damageChosen`; this suite's arms leave `deals` ABSENT (a placed counter,
+    // `COUNTERS_PLACED`) and D535's sets it (attack damage, `DAMAGE_DEALT`) —
+    // `effects.ts:5438`'s split. A widening that let a counter-put arm eat line 81 would
+    // ship a `deals`-free program and redden this line by name.
+    expect((ops ?? []).every((op) => (op as { deals?: true }).deals === true)).toBe(true);
+    for (const text of [BARE, CHOSEN]) {
+      const mine = deriveAttackEffect(text) ?? [];
+      expect(mine.every((op) => (op as { deals?: true }).deals === undefined), text).toBe(true);
+    }
+    // …and the corpus row itself, read at its printed count rather than retyped.
+    expect(legalAttackCorpus().filter(([, s]) => s === PICK_WITH_REPLACEMENT)).toEqual([
+      [2, PICK_WITH_REPLACEMENT],
+    ]);
   });
 
   it("derives the CURLY apostrophe identically on both new arms", () => {
@@ -572,7 +619,7 @@ describe("§3 — a new PRODUCER of a shipped literal, and the record version do
   });
 
   it("the engine version moved", () => {
-    expect(engineVersion).toBe("0.419.0");
+    expect(engineVersion).toBe("0.420.0");
   });
 });
 

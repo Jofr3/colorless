@@ -5251,7 +5251,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D275",
     what: "🛑 THE DEBT THIS SLICE PAID FOR THE FIFTH TIME, RE-INSTALLED: `engineVersion` falls a minor behind `packages/engine/package.json`, which is EXACTLY the state the tree was in at the head of D275 (0.187.0 against 0.189.0) and had been for two slices with nothing comparing them. The tie is the guard; this row is the proof it is one",
     file: "packages/engine/src/index.ts",
-    // ⚠️ RE-POINTED AT D534 (0.418.0 → 0.419.0), at D532 (0.417.0 → 0.418.0), at D531 (0.416.0 → 0.417.0), at D530 (0.415.0 → 0.416.0), at D528 (0.414.0 → 0.415.0), at D527 (0.413.0 → 0.414.0), at D526 (0.412.0 → 0.413.0), at D525 (0.411.0 → 0.412.0), at D524 (0.410.0 → 0.411.0), at D523 (0.409.0 → 0.410.0), at D522 (0.408.0 → 0.409.0), at D521 (0.407.0 → 0.408.0), at D520 (0.406.0 → 0.407.0), at D519 (0.405.0 → 0.406.0), at D518 (0.404.0 → 0.405.0), at D517 (0.403.0 → 0.404.0), at D516 (0.402.0 → 0.403.0), at D515 (0.401.0 → 0.402.0), at D514 (0.400.0 → 0.401.0), at D513 (0.399.0 → 0.400.0), at D512 (0.398.0 → 0.399.0), at D510 (0.397.0 → 0.398.0), at D508 (0.396.0 → 0.397.0), at D507 (0.395.0 → 0.396.0), at D505 (0.394.0 → 0.395.0), at D490 (0.384.0 → 0.385.0), at D489 (0.383.0 → 0.384.0), at D488 (0.382.0 → 0.383.0), at D487 (0.381.0 → 0.382.0), at D486 (0.380.0 → 0.381.0), at D485 (0.379.0 → 0.380.0), at D450 (0.351.0 → 0.352.0), at D449 (0.350.0 → 0.351.0), at D448 (0.349.0 → 0.350.0), at D447 (0.348.0 → 0.349.0), at D446 (0.347.0 → 0.348.0), at D445 (0.346.0 → 0.347.0), at D444 (0.345.0 → 0.346.0), at D443 (0.344.0 → 0.345.0), at D442 (0.343.0 → 0.344.0), at D441 (0.342.0 → 0.343.0), at D440 (0.341.0 → 0.342.0), at D439 (0.340.0 → 0.341.0), at D438 (0.339.0 → 0.340.0), at D437 (0.338.0 → 0.339.0), at D436 (0.337.0 → 0.338.0), at D435 (0.336.0 → 0.337.0), at D434 (0.335.0 → 0.336.0), at D433 (0.334.0 → 0.335.0), at D432 (0.333.0 → 0.334.0), at D431 (0.332.0 → 0.333.0), at D430 (0.331.0 → 0.332.0), at D429 (0.330.0 → 0.331.0), at D428 (0.329.0 → 0.330.0), at D427 (0.328.0 → 0.329.0), at D426 (0.327.0 → 0.328.0), at D425 (0.326.0 → 0.327.0), at D424 (0.325.0 → 0.326.0), at D423 (0.324.0 → 0.325.0), at D422 (0.323.0 → 0.324.0), at D421 (0.322.0 → 0.323.0), at D420 (0.321.0 → 0.322.0), at D417 (0.320.0 → 0.321.0), at D416 (0.319.0 → 0.320.0), at D415 (0.318.0 → 0.319.0), at D414 (0.317.0 → 0.318.0), at D413 (0.316.0 → 0.317.0), at D412 (0.315.0 → 0.316.0), at D410 (0.314.0 → 0.315.0), at D409 (0.313.0 → 0.314.0), at D408 (0.312.0 → 0.313.0), at D407 (0.311.0 → 0.312.0), at D402 (0.306.0 → 0.307.0), at D401 (0.305.0 → 0.306.0), at D400 (0.304.0 → 0.305.0), at D399 (0.303.0 → 0.304.0), at D398 (0.302.0 → 0.303.0), at D397 (0.301.0 → 0.302.0), at D396 (0.300.0 → 0.301.0), at D395 (0.299.0 → 0.300.0), at D394 (0.298.0 → 0.299.0), at D393 (0.297.0 → 0.298.0), at D392 (0.296.0 → 0.297.0), at D391 (0.295.0 → 0.296.0), at D390 (0.294.0 → 0.295.0), at D389 (0.293.0 → 0.294.0), at D388 (0.292.0 → 0.293.0), at D387 (0.291.0 → 0.292.0), at D386 (0.290.0 → 0.291.0),
+    // ⚠️ RE-POINTED AT D535 (0.419.0 → 0.420.0), at D534 (0.418.0 → 0.419.0), at D532 (0.417.0 → 0.418.0), at D531 (0.416.0 → 0.417.0), at D530 (0.415.0 → 0.416.0), at D528 (0.414.0 → 0.415.0), at D527 (0.413.0 → 0.414.0), at D526 (0.412.0 → 0.413.0), at D525 (0.411.0 → 0.412.0), at D524 (0.410.0 → 0.411.0), at D523 (0.409.0 → 0.410.0), at D522 (0.408.0 → 0.409.0), at D521 (0.407.0 → 0.408.0), at D520 (0.406.0 → 0.407.0), at D519 (0.405.0 → 0.406.0), at D518 (0.404.0 → 0.405.0), at D517 (0.403.0 → 0.404.0), at D516 (0.402.0 → 0.403.0), at D515 (0.401.0 → 0.402.0), at D514 (0.400.0 → 0.401.0), at D513 (0.399.0 → 0.400.0), at D512 (0.398.0 → 0.399.0), at D510 (0.397.0 → 0.398.0), at D508 (0.396.0 → 0.397.0), at D507 (0.395.0 → 0.396.0), at D505 (0.394.0 → 0.395.0), at D490 (0.384.0 → 0.385.0), at D489 (0.383.0 → 0.384.0), at D488 (0.382.0 → 0.383.0), at D487 (0.381.0 → 0.382.0), at D486 (0.380.0 → 0.381.0), at D485 (0.379.0 → 0.380.0), at D450 (0.351.0 → 0.352.0), at D449 (0.350.0 → 0.351.0), at D448 (0.349.0 → 0.350.0), at D447 (0.348.0 → 0.349.0), at D446 (0.347.0 → 0.348.0), at D445 (0.346.0 → 0.347.0), at D444 (0.345.0 → 0.346.0), at D443 (0.344.0 → 0.345.0), at D442 (0.343.0 → 0.344.0), at D441 (0.342.0 → 0.343.0), at D440 (0.341.0 → 0.342.0), at D439 (0.340.0 → 0.341.0), at D438 (0.339.0 → 0.340.0), at D437 (0.338.0 → 0.339.0), at D436 (0.337.0 → 0.338.0), at D435 (0.336.0 → 0.337.0), at D434 (0.335.0 → 0.336.0), at D433 (0.334.0 → 0.335.0), at D432 (0.333.0 → 0.334.0), at D431 (0.332.0 → 0.333.0), at D430 (0.331.0 → 0.332.0), at D429 (0.330.0 → 0.331.0), at D428 (0.329.0 → 0.330.0), at D427 (0.328.0 → 0.329.0), at D426 (0.327.0 → 0.328.0), at D425 (0.326.0 → 0.327.0), at D424 (0.325.0 → 0.326.0), at D423 (0.324.0 → 0.325.0), at D422 (0.323.0 → 0.324.0), at D421 (0.322.0 → 0.323.0), at D420 (0.321.0 → 0.322.0), at D417 (0.320.0 → 0.321.0), at D416 (0.319.0 → 0.320.0), at D415 (0.318.0 → 0.319.0), at D414 (0.317.0 → 0.318.0), at D413 (0.316.0 → 0.317.0), at D412 (0.315.0 → 0.316.0), at D410 (0.314.0 → 0.315.0), at D409 (0.313.0 → 0.314.0), at D408 (0.312.0 → 0.313.0), at D407 (0.311.0 → 0.312.0), at D402 (0.306.0 → 0.307.0), at D401 (0.305.0 → 0.306.0), at D400 (0.304.0 → 0.305.0), at D399 (0.303.0 → 0.304.0), at D398 (0.302.0 → 0.303.0), at D397 (0.301.0 → 0.302.0), at D396 (0.300.0 → 0.301.0), at D395 (0.299.0 → 0.300.0), at D394 (0.298.0 → 0.299.0), at D393 (0.297.0 → 0.298.0), at D392 (0.296.0 → 0.297.0), at D391 (0.295.0 → 0.296.0), at D390 (0.294.0 → 0.295.0), at D389 (0.293.0 → 0.294.0), at D388 (0.292.0 → 0.293.0), at D387 (0.291.0 → 0.292.0), at D386 (0.290.0 → 0.291.0),
     //    each in the SAME COMMIT as the bump —
     // the TENTH slice running to do it that way, and the practice is now the one
     // thing about this row that has never cost an ERROR since it started.
@@ -5798,7 +5798,7 @@ export const MUTANTS: Mutant[] = [
     // CORPUS QUOTES** (D414/D415), so a value-keyed sweep over `toBe("0.391.0")` cannot
     // see it — this row's `find` spells the DECLARATION, not an assertion. Run
     // `precheck` after every version bump, not after the sweep tells you.
-    find: 'export const engineVersion = "0.419.0";',
+    find: 'export const engineVersion = "0.420.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -28022,8 +28022,8 @@ export const MUTANTS: Mutant[] = [
     // 🆕🆕🆕 D534 — RE-TRANSCRIBED AGAIN, 1651 -> 1652 (replace 1649 -> 1650): the sentence and
     //    printing steps agree at 1 (corpus FILE LINE 401, Inkay's one-card look), the same
     //    two-step regression; `precheck` named the `find` at 0x the moment the pin moved.
-    find: "  attack: 1652,",
-    replace: "  attack: 1650,",
+    find: "  attack: 1654,",
+    replace: "  attack: 1652,",
     expectKilledBy: [
       "packages/engine/src/censusAtHead.test.ts",
     ],
@@ -29180,8 +29180,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D506",
     what: "🛑 C1 — THE DEFECT D502 AND D505 BOTH SHIPPED: a version goes out and NO HEADING CLAIMS IT. The edit un-bolds the NEWEST heading's target, so the parser stops seeing it and the chain's head falls back a release while `package.json` says otherwise — which is byte-for-byte the state of this file at D505's head, twice over. ⚠️ IT IS THE CHEAPEST WAY FOR THIS RECORD TO GO WRONG AND WAS INVISIBLE TO EVERY OTHER INSTRUMENT IN THE REPO: `tsc`, `biome`, every test, `precheck` and all five gates are green on both sides of it, because until D506 nothing read the headings at all. Killed by the HEAD case alone, which is the point — one tripwire, named (D453/D498). 🛑 RE-POINTED AT D507 ONTO THE 0.395.0 → 0.396.0 HEADING, AND THE RE-POINT WAS OWED RATHER THAN TIDY (D444): left on D505's heading it would have gone INERT ON THE VERDICT the moment a newer heading existed — un-bolding a heading that is no longer the head leaves NEWEST equal to HEAD, so the HEAD case stays green and the kill arrives, if at all, through the CHAIN case instead. The row's own stated reason (killed by the HEAD case alone) is exactly the sentence that would have quietly become false. THIS ROW IS PART OF THE VERSION TAX: every bump owes its re-point, in the same edit as the heading. \U0001f195 RE-POINTED AGAIN AT D508 ONTO THE 0.396.0 → 0.397.0 HEADING, and this one is UNLABELLED — the `find` quotes the heading's first prose words instead of a `(D<nnn> —`, which is strictly more durable: the label is the byte the close-out ritual inserts, and quoting it is exactly what broke this row at D507. \u26a0\ufe0f The heading is the CHAIN HEAD again, so the HEAD case is the killer again — the re-point is what keeps that sentence true rather than quietly false. \U0001f195 RE-POINTED AGAIN AT D510 ONTO THE 0.397.0 \u2192 0.398.0 HEADING, also UNLABELLED, and the `find` is kept in D508's TRIMMED form \u2014 it stops before the `(` where the close-out ritual inserts the label, which is the shape D508 proved survives that edit (precheck clean, label inserted, clean again). A `find` that spanned the paren would re-open the coupling that broke this row at D507. \U0001f195 RE-POINTED AGAIN AT D512 ONTO THE 0.398.0 \u2192 0.399.0 HEADING, also UNLABELLED and kept in the same TRIMMED form. \u26a0\ufe0f The re-point is what keeps this row's own stated reason (killed by the HEAD case ALONE) true rather than quietly false: left on D510's heading it would go INERT ON THE VERDICT the moment a newer heading exists, because un-bolding a heading that is no longer the head leaves NEWEST equal to HEAD and the kill arrives, if at all, through the CHAIN case instead. \U0001f195 RE-POINTED AGAIN AT D513 ONTO THE 0.399.0 \u2192 0.400.0 HEADING, also UNLABELLED and kept in the same TRIMMED form that stops before the `(`. \u26a0\ufe0f **AND THE TRIM WAS PROVEN AGAIN RATHER THAN ASSUMED**: `precheck` clean before the heading exists, the heading written, `precheck` clean after \u2014 the third consecutive slice to demonstrate that a `find` ending at `**<new>**` survives the close-out label insertion, and the fourth to state that a `find` spanning the paren re-opens the coupling that broke this row at D507. \U0001f195 RE-POINTED AGAIN AT D515 ONTO THE 0.401.0 \u2192 0.402.0 HEADING, also UNLABELLED and kept in the same TRIMMED form that stops before the `(`. \u26a0\ufe0f **THE RE-POINT IS THE PART OF THE VERSION TAX THAT HAS NO AUTOMATIC DETECTOR**: left on D514's heading this row would go INERT ON THE VERDICT the moment a newer heading exists \u2014 un-bolding a heading that is no longer the head leaves NEWEST equal to HEAD, the HEAD case stays green, and the kill arrives (if at all) through the CHAIN case instead, so the row would report KILLED while its own stated reason (killed by the HEAD case ALONE) had quietly become false. \u26a0\ufe0f **AND THE TRIM WAS PROVEN A FIFTH TIME RATHER THAN ASSUMED**: `precheck` clean before the heading exists, the heading written, `precheck` clean after. \U0001f195 RE-POINTED AGAIN AT D516 ONTO THE 0.402.0 \u2192 0.403.0 HEADING, also UNLABELLED and kept in the same TRIMMED form that stops before the `(`. \u26a0\ufe0f **THE TRIM WAS PROVEN A SIXTH TIME RATHER THAN ASSUMED**: `precheck` clean before the heading exists, the heading written, `precheck` clean after \u2014 and the re-point remains the part of the version tax with no automatic detector, because left on D515\u2019s heading this row would report KILLED while its own stated reason (killed by the HEAD case ALONE) had quietly become false. \U0001f195 RE-POINTED AGAIN AT D517 ONTO THE 0.403.0 \u2192 0.404.0 HEADING, also UNLABELLED and kept in the same TRIMMED form that stops before the `(`. \u26a0\ufe0f **THE TRIM WAS PROVEN A SEVENTH TIME RATHER THAN ASSUMED**: `precheck` clean before the heading exists, the heading written, `precheck` clean after \u2014 seven consecutive slices now, which is the evidence that the label a caller later adds cannot reach this `find`. 🆕 RE-POINTED AGAIN AT D518 ONTO THE 0.404.0 → 0.405.0 HEADING, also UNLABELLED and kept in the same TRIMMED form that stops before the `(`. ⚠️ **THE TRIM WAS PROVEN AN EIGHTH TIME RATHER THAN ASSUMED**: `precheck` clean before the heading exists, the heading written, `precheck` clean after — eight consecutive slices, and this one carried an extra hazard worth naming: the incoming literal `0.405.0` did NOT collide at 2× the way D517's did, because this slice's `find` quotes the heading ARROW (which is unique) rather than a source line the corpus already patches, so no FOURTH version-tax row was owed. 🆕 RE-POINTED AGAIN AT D521 ONTO THE 0.407.0 → 0.408.0 HEADING, also UNLABELLED and kept in the same TRIMMED form that stops before the `(` — the heading was written labelled in the same edit as the `docs/decisions.md` row (D507), and `precheck` was run clean with the row re-pointed. 🆕 RE-POINTED AGAIN AT D526 ONTO THE 0.412.0 → 0.413.0 HEADING, UNLABELLED and kept in the same TRIMMED form that stops before the `(` — re-transcribed in the same edit as the D275 ledger row and the census row (the version-tax trio), and `precheck` run clean with the row re-pointed.",
     file: "packages/engine/src/index.ts",
-    find: "engineVersion 0.418.0 → **0.419.0**",
-    replace: "engineVersion 0.418.0 → 0.419.0",
+    find: "engineVersion 0.419.0 → **0.420.0**",
+    replace: "engineVersion 0.419.0 → 0.420.0",
     expectKilledBy: ["packages/engine/src/engineVersionChangelog.test.ts"],
   },
   {
@@ -32082,5 +32082,112 @@ export const MUTANTS: Mutant[] = [
     find: "          then: [{ op: \"damageDefender\", amount }],\n        },\n        { op: \"spreadDamage\", target: \"yourBench\", amount, damagedOnly: true },",
     replace: "          then: [],\n          otherwise: [{ op: \"damageDefender\", amount }],\n        },\n        { op: \"spreadDamage\", target: \"yourBench\", amount, damagedOnly: true },",
     expectKilledBy: ["packages/engine/src/fourZoneSpread.test.ts"],
+  },
+  // ─────────────────────────────────────────────────────────────────────────
+  // 🆕🆕🆕 D535 — THE PICK-WITH-REPLACEMENT SNIPE (`censusAttackCorpus.ts` FILE LINE
+  // 81, 1 sentence / 2 legal printings). Eleven rows: five on the anchor's SHAPE, four on
+  // the PROGRAM's shape, one on the FOLD DIRECTION and one on the guard's floor. Every
+  // `replace` names only what `effects.ts` binds (D533's binding gate), every `find`
+  // occurs once, and every `find` was diffed against its `replace` before it was
+  // written — a `find === replace` is a silent no-op (D451).
+  // ─────────────────────────────────────────────────────────────────────────
+  {
+    id: "D535-anchor-loses-the-head",
+    decision: "D535",
+    what: "🛑 (a) THE `^` DROPPED FROM THE ANCHOR, which makes it a PREFIX-FREE SUBSTRING match: any sentence that CONTAINS the printed one now derives the six-op program, so a gated printing (*\"Flip a coin. If heads, choose 1 of your opponent's Pokémon 6 times. …\"*) would ship six unconditional 20s and SILENTLY DROP its coin flip. Not a straw: every sibling in this block is `^…$` for exactly this reason, and §2 drives the leading-flip spelling by name.",
+    file: "packages/engine/src/effects.ts",
+    find: "  `^Choose 1 of your opponent['’]s Pokémon (\\\\d+) times\\\\. ` +",
+    replace: "  `Choose 1 of your opponent['’]s Pokémon (\\\\d+) times\\\\. ` +",
+    expectKilledBy: ["packages/engine/src/pickWithReplacement.test.ts"],
+  },
+  {
+    id: "D535-anchor-loses-the-tail",
+    decision: "D535",
+    what: "🛑 (b) THE `$` DROPPED, which makes the anchor a PREFIX match: *\"…Weakness or Resistance. Draw a card.\"* would derive the six parks and drop the second sentence on the floor — a compound printing silently resolved as its head. §2 drives the unknown-remainder spelling by name.",
+    file: "packages/engine/src/effects.ts",
+    find: "  `This damage isn['’]t affected by Weakness or Resistance\\\\.$`,",
+    replace: "  `This damage isn['’]t affected by Weakness or Resistance\\\\.`,",
+    expectKilledBy: ["packages/engine/src/pickWithReplacement.test.ts"],
+  },
+  {
+    id: "D535-anchor-narrows-the-possessive-apostrophe",
+    decision: "D535",
+    what: "🛑 (c1) THE `['’]` CLASS NARROWED TO `'` ON THE POSSESSIVE SLOT (`opponent's`). The catalog ships BOTH code points and D136/D137 is the standing rule; narrowed, the U+2019 printing of the same card falls to the loud `ATTACK_EFFECT_SKIPPED` path and the row silently loses printings. ⚠️ THIS ROW HAS A TWIN ON THE OTHER SLOT — the sentence has TWO apostrophes and a class narrowed on one is invisible to a rung that only drives the other, which is why §1 drives each slot ALONE as well as both together.",
+    file: "packages/engine/src/effects.ts",
+    find: "  `^Choose 1 of your opponent['’]s Pokémon (\\\\d+) times\\\\. ` +",
+    replace: "  `^Choose 1 of your opponent's Pokémon (\\\\d+) times\\\\. ` +",
+    expectKilledBy: ["packages/engine/src/pickWithReplacement.test.ts"],
+  },
+  {
+    id: "D535-anchor-narrows-the-contraction-apostrophe",
+    decision: "D535",
+    what: "🛑 (c2) THE `['’]` CLASS NARROWED TO `'` ON THE CONTRACTION SLOT (`isn't`), the twin of (c1) and the half a single-apostrophe rung cannot see. Same loss, different byte: the curly-tail printing stops deriving while the curly-possessive one still does, so a suite that flipped only the possessive would report green over a half-broken class.",
+    file: "packages/engine/src/effects.ts",
+    find: "  `This damage isn['’]t affected by Weakness or Resistance\\\\.$`,",
+    replace: "  `This damage isn't affected by Weakness or Resistance\\\\.$`,",
+    expectKilledBy: ["packages/engine/src/pickWithReplacement.test.ts"],
+  },
+  {
+    id: "D535-anchor-makes-the-parenthetical-optional",
+    decision: "D535",
+    what: "🛑 (d) THE PRINTED PARENTHETICAL MADE OPTIONAL, which claims a string THE COLUMN PRINTS NOWHERE (measured over all 640: `/For each time you chose/` is 1 sentence / 2 printings and every one of them carries the parenthetical). ⚠️ AND IT IS NOT MERELY OVER-WIDE — the parenthetical is the ONLY printed licence for the repeat, so a sentence without it derived as six independent parks would be AUTHORING the rule (D190b). §2 drives the parenthetical-dropped spelling by name.",
+    file: "packages/engine/src/effects.ts",
+    find: "    \"\\\\(You can choose the same Pokémon more than once\\\\.\\\\) \" +",
+    replace: "    \"(?:\\\\(You can choose the same Pokémon more than once\\\\.\\\\) )?\" +",
+    expectKilledBy: ["packages/engine/src/pickWithReplacement.test.ts"],
+  },
+  {
+    id: "D535-program-parks-once-not-six",
+    decision: "D535",
+    what: "🛑 (e) `length: count` BECOMES `length: 1` — ONE park instead of six, so the printed *\"6 times\"* deals 20 and not 120 and the capture becomes dead weight. This is the cheapest way for the derived program to be wrong and the hardest to see in a doc block, because the op LITERAL is untouched and every byte-level rung still passes.",
+    file: "packages/engine/src/effects.ts",
+    find: "      return Array.from({ length: count }, () => ({",
+    replace: "      return Array.from({ length: 1 }, () => ({",
+    expectKilledBy: ["packages/engine/src/pickWithReplacement.test.ts"],
+  },
+  {
+    id: "D535-fold-inverted-one-op-at-the-total",
+    decision: "D535",
+    what: "🛑 (f) THE FOLD INVERTED — ONE op at `amount * count` instead of `count` ops at `amount`. ⚠️ **THIS IS THE EXACT DIRECTION `COUNTER_SPREAD_ON_OPPONENT`'s COMMENT NAMES** as the way this family goes wrong (*\"`amount: 10` on N ops, never `amount: counters * 10` on one\"*), and here it is a DIFFERENT ACTION rather than a different number: one op parks ONCE, cannot be answered with a repeat (`cardplay.ts:1419` refuses a ref picked twice), and lands 120 on a single body in one blow. The printed *\"(You can choose the same Pokémon more than once.)\"* becomes unreachable.",
+    file: "packages/engine/src/effects.ts",
+    find: "      return Array.from({ length: count }, () => ({\n        op: \"damageChosen\" as const,\n        // `opponentAny`, not `opponentBench`: the print says \"your opponent's Pokémon\"\n        // with no zone word, so the ACTIVE is a candidate too.\n        target: \"opponentAny\" as const,\n        amount,",
+    replace: "      return Array.from({ length: 1 }, () => ({\n        op: \"damageChosen\" as const,\n        // `opponentAny`, not `opponentBench`: the print says \"your opponent's Pokémon\"\n        // with no zone word, so the ACTIVE is a candidate too.\n        target: \"opponentAny\" as const,\n        amount: amount * count,",
+    expectKilledBy: ["packages/engine/src/pickWithReplacement.test.ts"],
+  },
+  {
+    id: "D535-program-drops-ignore-wr",
+    decision: "D535",
+    what: "🛑 (g) `ignoreWR: true` DROPPED — a DIFFERENT BOARD on any Active carrying a Weakness (×2 against this attacker's type turns 120 into 240) and on any Resistance body. ⚠️ THIS IS THE LOSS DIRECTION `effects.ts:15893` NAMES for the whole bare-W/R family: *\"would derive an `ignoreWR`-FREE program under a `deals` hit, which is a different board on any Active carrying a Weakness\"*. Not loud, not corrupt — wrong. §6 drives a ×2 body and a −30 body.",
+    file: "packages/engine/src/effects.ts",
+    find: "        ignoreWR: true as const,",
+    replace: "        source: \"attack\" as const,",
+    expectKilledBy: ["packages/engine/src/pickWithReplacement.test.ts"],
+  },
+  {
+    id: "D535-program-drops-deals",
+    decision: "D535",
+    what: "🛑 (h) `deals: true` DROPPED, which turns the printed *\"do 20 damage to it\"* into a PLACED COUNTER: `COUNTERS_PLACED` fires instead of `DAMAGE_DEALT`, a benched reduction passive stops applying, and the caption switches to the counter wording. `effects.ts:5438` states the split in as many words; this row is that sentence made falsifiable.",
+    file: "packages/engine/src/effects.ts",
+    find: "        deals: true as const,",
+    replace: "        optional: undefined,",
+    expectKilledBy: ["packages/engine/src/pickWithReplacement.test.ts"],
+  },
+  {
+    id: "D535-program-narrows-the-zone",
+    decision: "D535",
+    what: "🛑 (i) `target: \"opponentAny\"` BECOMES `\"opponentBench\"` — the ACTIVE stops being a candidate, although the print carries NO zone word. On a bare-Active board the attack then does NOTHING at all (§8.6 softens an empty candidate set), which is the quietest failure in this family: no error, no park, no damage. §5 drives exactly that board.",
+    file: "packages/engine/src/effects.ts",
+    find: "        target: \"opponentAny\" as const,",
+    replace: "        target: \"opponentBench\" as const,",
+    expectKilledBy: ["packages/engine/src/pickWithReplacement.test.ts"],
+  },
+  {
+    id: "D535-guard-floor-dropped",
+    decision: "D535",
+    what: "🛑 (j) THE `count >= 1 && amount >= 1` FLOOR WEAKENED TO `||`, so a printed `0` on ONE of the two numbers is resolved instead of refused: *\"…Pokémon 0 times…\"* emits an EMPTY program — an attack silently reporting an effect that moved nothing — where the shipped guard drops it to the loud `ATTACK_EFFECT_SKIPPED` path. ⚠️ **THIS ROW IS THE WHOLE RETURN ON TAKING CAPTURES RATHER THAN LITERALS**: a literal head would have had no floor to weaken and no rung to write. Both siblings carry the same floor (`COUNTER_SPREAD_ON_OPPONENT` at `counters >= 1`, `CHOSEN_ANY_TARGET` at `amount >= 1 && count >= 1`).",
+    file: "packages/engine/src/effects.ts",
+    find: "    if (count >= 1 && amount >= 1) {",
+    replace: "    if (count >= 1 || amount >= 1) {",
+    expectKilledBy: ["packages/engine/src/pickWithReplacement.test.ts"],
   },
 ];

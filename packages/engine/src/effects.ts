@@ -12305,8 +12305,20 @@ const COUNTER_PUT_ON_OPPONENT_ANY =
 // opponent's **Benched** Pokémon. Shuffle those Pokémon…"* (line 82, 3 printings —
 // the zone word plus a different verb), *"Choose 3 of your opponent's Benched
 // Pokémon. If you do, …"* (line 84, 2) and *"Choose 1 of your opponent's Pokémon 6
-// times. …"* (line 81, 2 — a pick WITH REPLACEMENT, which `choosePokemonMulti`
-// refuses by validating distinctness). All three are refused by this anchor's tail
+// times. …"* (line 81, 2 — a pick WITH REPLACEMENT).
+// 🆕🛑 **D535 — THE PARENTHETICAL ON LINE 81 SAID *"which `choosePokemonMulti` refuses
+// by validating distinctness"*, AND THAT READ A PROMPT FACT AS A BUILDABILITY ONE.**
+// Corrected in place and dated rather than deleted (D442/D446). The premise is TRUE and
+// still is — `validateChoice`'s `choosePokemonMulti` arm at `cardplay.ts:1419` does
+// refuse a repeated ref inside ONE prompt — but *"and so the row cannot be read"* does
+// not follow (D450/D451's shape): the repetition does not have to live inside one
+// prompt. D535 builds the row as SIX independent single-answer parks through
+// `ATTACK_PICK_WITH_REPLACEMENT_SNIPE`, which delivers the printed parenthetical out of
+// the SHIPPED mechanism with no rider and no prompt key. Line 81 is therefore no longer
+// a row this anchor refuses because nothing can read it; it is a row ANOTHER arm claims,
+// and it is still a near miss for THIS anchor's tail (D449's rule: a row this anchor
+// must refuse does not stop being one when another anchor claims it).
+// All three are refused by this anchor's tail
 // rather than by its head, which is why it is a whole-sentence `^…$` like every
 // sibling. ONE apostrophe slot, classed `['’]`.
 const COUNTER_PUT_ON_CHOSEN_OPPONENTS =
@@ -14248,6 +14260,96 @@ const CHOSEN_ANY_TARGET = new RegExp(
     `(?: \\(Don['’]t apply Weakness and Resistance for Benched Pokémon\\.\\)` +
     `|( This attack['’]s damage isn['’]t affected by Weakness or Resistance` +
     "(?:, or by any effects on (that|those) Pokémon)?\\.))?$",
+);
+// 🆕🆕🆕 **D535 — THE PICK-WITH-REPLACEMENT SNIPE, AND IT BUYS ITS WHOLE PROGRAM
+// OUT OF SHIPPED VOCABULARY.** *"Choose 1 of your opponent's Pokémon 6 times. (You
+// can choose the same Pokémon more than once.) For each time you chose a Pokémon, do
+// 20 damage to it. This damage isn't affected by Weakness or Resistance."* —
+// `censusAttackCorpus.ts` **FILE LINE 81**, **1 sentence / 2 legal printings**
+// (`legalAttackCorpus()` index 28, leading count column `2`). ⚠️ **THE CARD IDS ARE
+// UNRESOLVED ON THIS CHECKOUT** — there is no D1 and no catalog sqlite here — so they
+// are stated unresolved rather than invented (D425), and the board is driven from a
+// FILE-LOCAL demonstrator in `pickWithReplacement.test.ts`.
+//
+// ⚠️ **ZERO NEW VOCABULARY, AND THAT IS MEASURED RATHER THAN HOPED FOR.** No
+// `EffectOp` member, no op FIELD, no `EffectPrompt` key, no `GameEvent`, no
+// `GameOverReason`, no `CardFilter`/`BoardCondition` member, no `packages/schema` byte
+// and no HUD byte. The derived program is SIX copies of the op literal
+// `CHOSEN_ANY_TARGET` has authored since D400/D448 — byte for byte, the `deals` /
+// `ignoreWR` pair included (see its arm below at the `exec`). This is D237's
+// POPULATION change — WHICH PRINTINGS CARRY an existing field — and not a widening
+// and not a rename, which is exactly the reasoning D237's own block states at the
+// `Array.from({ length: count }, …)` above it, so `MATCH_RECORD_VERSION` stays **30**.
+//
+// 🛑 **WHY SIX `count: 1` PARKS AND NOT ONE `count: 6` OP. THIS IS THE ROW'S WHOLE
+// DESIGN AND IT IS A MEASUREMENT, NOT A PREFERENCE.** `validateChoice`'s
+// `choosePokemonMulti` arm (`cardplay.ts:1419`) refuses a REPEATED ref inside ONE
+// prompt — `if (seen.has(key)) return err("BAD_EFFECT_CHOICE", "a Pokémon picked
+// twice")` — so a single `count: 6` park could not answer the printed parenthetical
+// *"(You can choose the same Pokémon more than once.)"* at all. SIX independent
+// single-answer parks deliver it out of the shipped mechanism with NO `repeatable`
+// rider, NO prompt key, NO schema byte and NO HUD change, and they are also the only
+// shape that still works when the opponent holds FEWER THAN SIX bodies (each park
+// re-reads the candidate set; §8.6 softens an empty one). The fold direction is the
+// one `COUNTER_SPREAD_ON_OPPONENT`'s comment names verbatim two thousand lines below:
+// **`amount` on N ops, never `amount * count` on one.**
+//
+// 🛑 **IF THIS EVER DRIFTS TOWARD A `repeatable?: true` RIDER ON `damageChosen` PLUS A
+// KEY ON `EffectPrompt.choosePokemonMulti`, IT STOPS BEING THIS PRICE.** That shape
+// re-opens the persisted-address argument twice over (a new op field AND a new prompt
+// key, both on the parked path) and owes the `packages/schema` and HUD bytes this
+// design avoids. A successor who wants it should price it as its own slice.
+//
+// ⚠️ **CAPTURE, NOT LITERAL, ON BOTH NUMBERS — DECIDED HERE AND THE MEASUREMENT
+// WRITTEN DOWN.** The legal column prints exactly ONE count/amount pair for this
+// family (`6` and `20`; measured this slice over all 640 rows: `/Pokémon \d+ times\./`
+// is 1 sentence / 2 printings, `/For each time you chose/` likewise). The range is
+// therefore inhabited by ONE printing and the captures are taken ANYWAY, which is
+// D131/D135/D139's standing habit and the habit BOTH siblings here already follow —
+// `COUNTER_SPREAD_ON_OPPONENT` captures its counter count and `CHOSEN_ANY_TARGET`
+// captures both its amount and (since D400) its arity. The `>= 1` floor is what makes
+// a printed `0` fall to the loud `ATTACK_EFFECT_SKIPPED` path instead of emitting an
+// EMPTY program — an attack silently reporting an effect that moved nothing — and it
+// is the only reason mutant (j) is killable at all. A literal head would have bought
+// no such rung.
+//
+// ⚠️ **THE BARE W/R TAIL SETS `ignoreWR`, AND THAT IS A SHIPPED READING WITH TWO
+// SIBLINGS, RE-STATED RATHER THAN ASSUMED.** `CHOSEN_ANY_TARGET` has derived
+// `ignoreWR: true` off the bare form since D400 (corpus FILE LINE 620, 2 printings)
+// and `SPREAD_EACH_CLASSED_OPPONENT_POKEMON`'s block at :15881 names that sibling
+// explicitly for D492's spread. ⚠️ The flag ALSO nulls `damageReductionAfterWR` — the
+// *"or by any effects on that Pokémon"* the modern SV wording spells and THIS print
+// does NOT — so following the siblings is a READING and is marked as one here, with
+// :15881's pointer, so a successor who disagrees finds all three sites at once.
+// ⚠️ **THIS ROW'S TAIL IS THE BARE `"This damage"` FORM, NOT `"This attack's damage"`,
+// AND THAT SPELLING IS UNIQUE TO IT** over all 640 rows (measured:
+// `/(^|\. )This damage isn['’]t affected by Weakness or Resistance/` → 1 sentence / 2
+// printings). The tail therefore CANNOT be loosened into the sibling's alternation.
+//
+// ⚠️ `deals: true` IS WHAT *"do 20 damage to it"* PRINTS. `effects.ts:5438` states the
+// split: `deals` means ATTACK DAMAGE (emit `DAMAGE_DEALT`, let a benched reduction
+// passive apply) where the flagless put-counter snipe is a PLACED COUNTER emitting
+// `COUNTERS_PLACED`. The verb here is "do … damage", so the flag is printed, not
+// chosen.
+//
+// THE NEAR MISSES IT MUST REFUSE, every one a real catalog row sharing the opening:
+// FILE LINE **78** *"Choose 1 of your opponent's Active Pokémon's attacks and use it
+// as this attack."* (copy-attack, 3 printings — BLOCKED family), FILE LINE **79**
+// *"Choose 1 of your opponent's Active Pokémon's attacks. During your opponent's next
+// turn, that Pokémon can't use that attack."* (an attack LOCK, 3 printings — NOT a
+// copy-attack; the price on record spelled this one wrong and it is corrected here),
+// and FILE LINE **80** *"Choose 1 of your opponent's Active Tera Pokémon's attacks and
+// use it as this attack."* (Tera copy-attack, 1 printing). `startsWith("Choose 1 of
+// your opponent")` is FOUR rows over the whole legal column and this anchor takes
+// exactly one of them. No `/i`; `^…$`; `['’]` on BOTH apostrophe slots — the
+// possessive AND the contraction — per D136/D137. A WHOLE-SENTENCE anchor, because
+// the family is one printed sentence at every candidate head and nothing smaller is
+// claimable (D121/D425/D489).
+const ATTACK_PICK_WITH_REPLACEMENT_SNIPE = new RegExp(
+  `^Choose 1 of your opponent['’]s Pokémon (\\d+) times\\. ` +
+    "\\(You can choose the same Pokémon more than once\\.\\) " +
+    "For each time you chose a Pokémon, do (\\d+) damage to it\\. " +
+    `This damage isn['’]t affected by Weakness or Resistance\\.$`,
 );
 // The self-discard attack COST (§8): "an" leaves the player one pick per
 // distinct Energy attached, "{N}" asks for exactly that many, "all" strips the
@@ -25812,6 +25914,65 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
     }
   }
 
+  // 6b. 🆕🆕🆕 **D535 — THE PICK-WITH-REPLACEMENT SNIPE** (`censusAttackCorpus.ts`
+  //     FILE LINE 81, 1 sentence / 2 legal printings). *"Choose 1 of your opponent's
+  //     Pokémon 6 times. (You can choose the same Pokémon more than once.) For each
+  //     time you chose a Pokémon, do 20 damage to it. This damage isn't affected by
+  //     Weakness or Resistance."* → SIX `damageChosen` ops at `count: 1`, each the
+  //     literal the arm directly above authors. The anchor's block carries the design;
+  //     what belongs HERE is the ORDER and the DISCREPANCY.
+  //
+  //     ⚠️ **ARM ORDER IS BEHAVIOUR AND IS FIXED RATHER THAN LEFT TO A WIDENING**
+  //     (D467/D499). This arm sits AFTER `CHOSEN_ANY_TARGET`'s `exec` and before the
+  //     self-discard family. **DISJOINTNESS IS STRUCTURAL AND IS ASSERTED, NOT
+  //     ASSUMED**: `CHOSEN_ANY_TARGET` demands `^This attack does`, arms 22/23/23a/23b
+  //     demand `^Put `, and this one demands `^Choose 1 of`, all three under `^…$` with
+  //     no `/i` anywhere — so no ordering of the three can change which one claims a
+  //     string. `pickWithReplacement.test.ts` §2 measures it both ways: the siblings
+  //     still derive their own rows unchanged, and neither claims this one.
+  //
+  //     🛑 **THE DECIDED DISCREPANCY, PINNED RATHER THAN PAPERED OVER (D421's rule).**
+  //     The print reads *choose six times, THEN damage*; the engine INTERLEAVES pick
+  //     and hit. The FINAL BOARD is identical, and that is structural rather than
+  //     lucky: `snipeTargets` applies no HP filter, and a program op never sweeps Knock
+  //     Outs — the sweep is `finishAttack`'s epilogue AFTER the program settles — so no
+  //     body leaves the candidate set mid-sequence and stacking all six on one body is
+  //     legal. This is inherited VERBATIM from `COUNTER_SPREAD_ON_OPPONENT` (4 live
+  //     printings, shipped since D450), whose own comment states the argument; it is
+  //     not a new claim of this slice. **Only event ORDER differs**, and §7 of the
+  //     suite drives and pins exactly that.
+  match = ATTACK_PICK_WITH_REPLACEMENT_SNIPE.exec(effect);
+  if (match !== null) {
+    const count = Number(match[1]);
+    const amount = Number(match[2]);
+    // The `>= 1` floor both siblings carry: `COUNTER_SPREAD_ON_OPPONENT` guards
+    // `counters >= 1` and `CHOSEN_ANY_TARGET` guards `amount >= 1 && count >= 1`. A
+    // printed 0 on either number would emit an EMPTY program — an attack silently
+    // reporting an effect that moved nothing — so it falls to the loud
+    // `ATTACK_EFFECT_SKIPPED` path instead. Leave it loud.
+    if (count >= 1 && amount >= 1) {
+      // ONE HIT PER OP — the repetition IS the sequence, so the per-op amount is the
+      // PRINTED amount and never the printed total. `amount: amount * count` on one op
+      // is the exact direction the sibling's comment names as the way this family goes
+      // wrong, and it is a DIFFERENT ACTION here rather than a different number: one op
+      // parks once, cannot be answered with a repeat (`cardplay.ts:1419`), and hands a
+      // single body 120 in one blow instead of six 20s.
+      return Array.from({ length: count }, () => ({
+        op: "damageChosen" as const,
+        // `opponentAny`, not `opponentBench`: the print says "your opponent's Pokémon"
+        // with no zone word, so the ACTIVE is a candidate too.
+        target: "opponentAny" as const,
+        amount,
+        count: 1,
+        source: "attack" as const,
+        // "do 20 damage to it" is ATTACK DAMAGE (`DAMAGE_DEALT`), not a placed counter
+        // (`COUNTERS_PLACED`) — effects.ts:5438.
+        deals: true as const,
+        // The bare W/R tail, read as `CHOSEN_ANY_TARGET` has read it since D400.
+        ignoreWR: true as const,
+      }));
+    }
+  }
   // 7/8/9. "Discard an Energy from this Pokémon." / "Discard {N} Energy from this
   //        Pokémon." / "Discard all Energy from this Pokémon." — the self-discard
   //        attack cost (§8), the first DERIVED attack effect that can PARK: with

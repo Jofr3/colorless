@@ -593,7 +593,7 @@ describe("docs/progress.md — the archived resume points are still there (D318)
   //    D420's resume point. The two-site edit is what keeps this a ratchet.
   // 🆕🆕 D420 — 89 -> 90, ARCHIVED DELIBERATELY AND SAID SO, in the same commit as
   // the demotion of D419's live resume point.
-  const ARCHIVES = 204; // 🆕 D534 — the D533 resume point was demoted to a `### Prior resume point (` block in the same edit that wrote the new one (corpus FILE LINE 401, the one-card look at the opponent's deck with a printed shuffle, `shuffleDeck.whose`); 203 → 204.
+  const ARCHIVES = 205; // 🆕 D535 — the D534 resume point was demoted to a `### Prior resume point (` block in the same edit that wrote the new one (corpus FILE LINE 81, the pick-with-replacement snipe, six `damageChosen` parks and zero new vocabulary); 204 → 205. // 🆕 D534 — the D533 resume point was demoted to a `### Prior resume point (` block in the same edit that wrote the new one (corpus FILE LINE 401, the one-card look at the opponent's deck with a printed shuffle, `shuffleDeck.whose`); 203 → 204.
   // 🆕 D533 — the D532 resume point was demoted to a `### Prior resume point (` block in the same edit that wrote the new one (no corpus row — the precheck BINDING GATE, an instrument slice, zero engine bytes); 202 → 203.
   // 🆕 D532 — the D531 resume point was demoted to a `### Prior resume point (` block in the same edit that wrote the new one (corpus FILE LINE 70, the cross-seat discard-pile attach, `attachEnergyFrom.whose`); 201 → 202.
   // 🆕 D531 — the D530 resume point was demoted to a `### Prior resume point (` block in the same edit that wrote the new one (corpus FILE LINE 483, the board-typed hand search, a park-time `searchDeck` rider); 200 → 201.
