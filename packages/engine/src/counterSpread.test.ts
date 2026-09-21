@@ -79,6 +79,12 @@ const ROTATED_SPREAD: readonly (readonly [string, number])[] = [
   ["Put 3 damage counters on your opponent's Benched Pokémon in any way you like.", 1], // sv03.5-094
 ] as const;
 
+/** 🆕🆕🆕 D538 — corpus FILE LINE 412, **3 legal printings**. It sat at INDEX 2 of
+    `NEAR_MISSES` from D450 to D537; D538 MAPPED it as arm 23b-bis, so the claim about it
+    is an INEQUALITY of derived programs plus the positive rather than a nullity. */
+const SCALED_PILE_TWIN =
+  "Put 2 damage counters on 1 of your opponent's Pokémon for each Basic {G} Energy card in your discard pile. Then, shuffle those Energy cards into your deck.";
+
 /** THE NEAR MISSES — all real catalog rows, all sharing this sentence's opening
     noun phrase, and each refused on a DIFFERENT axis. */
 const NEAR_MISSES = [
@@ -92,7 +98,15 @@ const NEAR_MISSES = [
   // note above). The replacement is the SCALED TWIN, **3 legal printings** and still unread: it shares this anchor's whole opening noun phrase and is refused on its count payload and its tail. The sentence it replaced is not gone from this
   // file: the claim about it is now an INEQUALITY of derived programs below the loop,
   // which is D418's second half and strictly stronger than the `toBeNull` it had.
-  "Put 2 damage counters on 1 of your opponent's Pokémon for each Basic {G} Energy card in your discard pile. Then, shuffle those Energy cards into your deck.",
+  // 🆕🆕🆕 **D538 — AND THE SCALED TWIN HAS NOW LEFT THIS SLOT TOO, witness MOVED
+  // rather than deleted (the standing note above).** Corpus line 412 is claimed WHOLE by
+  // arm 23b-bis as a THREE-op program, so the `toBeNull` rung below would go RED on it;
+  // the claim is re-pointed below the loop as an INEQUALITY plus the positive (D465/D488
+  // — name the OP, never merely decrement). ⚠️ **THE REMOVAL SHIFTS EVERY INDEX AFTER IT
+  // AND THIS ARRAY IS READ BY INDEX** (D501's silent-index-shift class), so the
+  // `toBeNull` rung below is re-pointed onto an OPEN-ENDED `.slice(2)` with its length
+  // asserted, and the two rungs that name index 0 are unaffected because the row that
+  // left sits after them.
   "Put 3 damage counters on each of your opponent's Benched Pokémon that has any damage counters on it.",
   // ⚠️ RE-POINTED AT D451. This slot held *"Put damage counters on your opponent's
   // Active Pokémon until its remaining HP is 10."* — "the amount read off the TARGET
@@ -355,10 +369,32 @@ describe("the SPREAD anchor — N repeated ops, not a new prompt kind", () => {
     ]);
     expect(deriveAttackEffect(NEAR_MISSES[0])).toHaveLength(1);
     expect(deriveAttackEffect(HEX_HURL)).toHaveLength(2);
-    // The four that no anchor in this family reads at all.
-    for (const text of NEAR_MISSES.slice(2, 6)) {
+    // ⚠️ **RE-POINTED BY VALUE WITH BOTH ENDS AND THE LENGTH ASSERTED (D538).** This
+    // was `.slice(2, 6)` over a SEVEN-row array; corpus line 412 left at INDEX 2, which
+    // SHIFTED every index after it (D501's silent-index-shift class, already paid once
+    // in this family). The window is re-derived from the two rows it must EXCLUDE — the
+    // two `1 of` rows at the front, which arm 23 claims, and the attach row at the back,
+    // which its own arm claims — rather than from a literal that a departure re-aims.
+    const UNREAD = NEAR_MISSES.slice(2, NEAR_MISSES.length - 1);
+    expect(NEAR_MISSES).toHaveLength(6);
+    expect(UNREAD).toHaveLength(3);
+    expect(UNREAD).not.toContain(SCALED_PILE_TWIN);
+    for (const text of UNREAD) {
       expect(deriveAttackEffect(text), text).toBeNull();
     }
+    // 🆕🆕🆕 **D538 — THE ROW THAT LEFT THIS LIST, AS AN INEQUALITY PLUS THE POSITIVE.**
+    // It shares this anchor's whole opening noun phrase and differs on the DETERMINER
+    // (*"1 of"* against *"each of"*) and on the count source. Arm 23b-bis derives THREE
+    // ops where this anchor unrolls to N placements, so a reader that dropped the
+    // determiner would redden here.
+    expect(deriveAttackEffect(SCALED_PILE_TWIN), SCALED_PILE_TWIN).not.toEqual(
+      spread(2, "opponentBench"),
+    );
+    expect(deriveAttackEffect(SCALED_PILE_TWIN)?.map((o) => o.op)).toEqual([
+      "damageChosen",
+      "discardPileRetrieval",
+      "shuffleDeck",
+    ]);
     // 🆕🆕🆕 **D451 — THE ROW THAT LEFT THIS LIST, AS AN INEQUALITY.** It shares this
     // anchor's verb and its opponent-side possessive and differs on the TAIL: *"in any
     // way you like"* opens a distribution where *"until its remaining HP is N"* closes

@@ -5507,6 +5507,28 @@ export type EffectOp =
           tail rather than the verb.** The falsifier moved with it:
           `scaledAnySnipe.test.ts` §1(d) now pins the head, the tail and the whole
           sentence as unread, and `counterPutChosen.test.ts` §1 pins the twin as BUILT.
+          🆕🛑 **D538 — THAT NEW EXPIRY DATE HAS FIRED, THE WHOLE ROW IS BUILT, AND THE
+          COLLAPSE IS STILL REFUSED.** Reason (iii) named the tail as what kept the
+          sentence unclaimed even under a collapsed rider; D538 builds the tail as
+          `discardPileRetrieval { filter, dest: "deck", max: "all" }` plus the trailing
+          `shuffleDeck`, so **(iii) is SPENT and is recorded as spent rather than quietly
+          dropped (D346)** — the second of the three to go, after (i) at D449. The line
+          above calling that op *"a different op on a different seam"* is the byte that
+          expires: it IS that op, and the seam turned out to be crossable by binding ONE
+          `CardFilter` and handing it to both clauses.
+          ⚠️ **AND THE ROW STILL DOES NOT TRIGGER THE COLLAPSE, WHICH IS THE POINT WORTH
+          WRITING DOWN.** What arm 23b-bis adds is `perDiscardPileCard?: CardFilter`, a
+          NARROW payload rider declared beside `perRecorded` — not the general
+          `scale?: DamageCountSource` this block prices. Reason (ii) is therefore
+          UNTOUCHED and is now the load-bearing one on its own: the count is
+          `{kind: "cardsInDiscardPile", seat: "you", filter: <a typed Basic Energy>}`, a
+          payload no boolean carries, and D538 answers it by carrying the PAYLOAD rather
+          than by widening the field into a union of five sources. **The collapse remains
+          priced at 24 sites / 10 files plus a `MATCH_RECORD_VERSION` bump — D448/D449's
+          own figure, carried and not re-measured — and it now buys 0 FURTHER printings,
+          because the 3 it would once have unlocked are shipped.** Its expiry date moves
+          a second time and is now the arrival of a SIXTH rider: five narrow keys on one
+          op is a shape, six is a union wearing a disguise.
 
           ⚠️ **THE SPELLING IS WHY THE FIRST MEASUREMENT MISSED IT**: it says *"put
           damage counters on"* where this pair says *"does N damage to"*, so a family
@@ -5715,6 +5737,45 @@ export type EffectOp =
           unscaled hit. D125's distinction, D334's precedent, driven over reconstructed
           v29 bytes rather than argued here. */
       perRecorded?: EffectSlot;
+      /** 🆕🆕🆕 **D538 — `perDiscardPileCard`, THE FIFTH RIDER AND THE FIRST THAT
+          CARRIES A PAYLOAD RATHER THAN A FLAG.** *"Put 2 damage counters on 1 of your
+          opponent's Pokémon **for each Basic {G} Energy card in your discard pile**.
+          Then, shuffle those Energy cards into your deck."* — `censusAttackCorpus.ts`
+          FILE LINE **412**, **1 sentence / 3 legal printings**. The multiplier is how
+          many cards in the CONTROLLER's discard pile match the printed noun
+          (`countCardsInDiscardPile(state, ctx.seat, filter)`, interpreter.ts).
+
+          🛑 **A `CardFilter` AND NOT A `true`, WHICH IS THE WHOLE REASON THE COLLAPSE
+          BLOCK BELOW COULD NEVER HAVE CLAIMED THIS ROW.** The four riders above name an
+          IMPLICIT source — the Prizes taken, the Energy on this Pokémon, the slot, the
+          counters on the target — and each is therefore spellable as a flag. This one
+          names a POPULATION, and the population is printed: *"Basic {G} Energy card"*
+          resolves to `{kind: "basicEnergy", energyType: "G"}` and a different printing
+          would resolve to a different filter. `perRecorded` is the precedent in SHAPE
+          (an address, `undefined`-absent, not a boolean) rather than in kind.
+
+          ⚠️ **MUTUALLY EXCLUSIVE WITH THE FOUR RIDERS ABOVE AT EVERY WRITER**, the same
+          construction they have with each other: `deriveAttackEffect` refuses a string
+          that spells two folds, and no other producer sets this beside another. The
+          `if` order in `snipeAmount` is therefore an ORDER and not a precedence — said
+          again here because this rider's branch is the one a successor would be
+          tempted to append at the BOTTOM of that chain, where `perEnergyOnSelf`'s
+          unconditional `return op.amount` would make it dead code.
+
+          ⚠️ **AN EMPTY PILE FOLDS TO 0 AND THE OP THEN ASKS NOTHING** — `stepOp`'s
+          `amount <= 0` early return fires before the candidates are offered, so the
+          printed placement simply does not happen. Decided and pinned beside arm
+          23b-bis: the trailing `shuffleDeck` STILL takes its RNG draw on that board.
+
+          🛑 **`MATCH_RECORD_VERSION` HELD at 30.** This op PARKS, so the key rides
+          `phase.cont.pendingOp` into a stored record and the serialized alphabet GROWS
+          (D450's second door) — which is a widening at a persisted address and not a
+          rename: no v30 deploy could author the byte, and ABSENT still means exactly
+          what it has meant since 29 (an unscaled hit). D125's distinction, the same
+          one `perEnergyOnSelf` and `perRecorded` were both added under. Driven over
+          v30 bytes in THREE directions, the LOSS direction included, in
+          `counterScaledPileShuffle.test.ts` §7. */
+      perDiscardPileCard?: CardFilter;
     }
   /** Deal `per × N` ATTACK damage to the DEFENDER (the opponent's Active), where
       N is how many cards an earlier op filed under the `count` §9.2 slot —
@@ -8311,6 +8372,18 @@ export type EffectOp =
       `dest: "hand"` just appends to hand. Reuses resolveEffect's chooseCards
       validation and, for the deck destination, the one vetted `shuffleDeck`.
 
+      🆕🛑 **D538 — THE *"up to" → PARKS* DOCTRINE ABOVE NOW HAS EXACTLY ONE
+      EXCEPTION, AND IT IS SPELLED IN THE OP RATHER THAN INFERRED.** Every printing this
+      block describes carries the printed words *"up to"*, so every one of them opens a
+      choice and the park is the right ending. `max: "all"` is the value for a clause
+      that carries NO quantifier at all — *"Then, shuffle **those** Energy cards into
+      your deck."* (corpus FILE LINE 412) — and that clause is MANDATORY: it resolves
+      FORCED, moving the whole matching pile with no prompt. Read `max` as the printed
+      quantifier and the two endings follow from it. The doctrine is corrected here
+      rather than deleted (D178/D442/D466 step 3): *up to* still parks, on every value
+      but this one. `stepOp`'s arm states the two reasons the forced branch is not a
+      `min === max` park.
+
       AUTHORING NOTE: `playTrainer` discards the played card UP FRONT (before its
       program runs), so a card whose own `filter` MATCHES ITS OWN CATEGORY would
       offer ITSELF as a retrieval candidate. No card in scope does — the safety is
@@ -8367,7 +8440,41 @@ export type EffectOp =
       op: "discardPileRetrieval";
       filter: CardFilter;
       dest: "hand" | "deck" | "bench";
-      max: number;
+      /** 🆕🆕🆕 **D538 — `"all"`, THE PRINTED *"those"*.** *"… Then, shuffle those
+          Energy cards into your deck."* (corpus FILE LINE **412**, the tail of arm
+          23b-bis's sentence) names a population rather than a ceiling: EVERY card in
+          the pile matching the filter the head just counted, and no number is printed
+          anywhere in the clause.
+
+          🛑 **A HOUSE LITERAL AND NOT NEW VOCABULARY.** The word is already the
+          spelling five sibling quantifiers take for exactly this reading — re-read at
+          this head rather than inherited from a brief's line numbers:
+            · `damageChosen.count: number | "all";`         (`count: number | "all"`)
+            · `moveEnergy.max: number | "any" | "all";`
+            · `searchDeck.max: number | "any" | "yourBenchCount";`
+            · `lookAtTopN.max: number | "any";`
+            · `attachFromTop.max: number | "any";`
+          `"any"` is the printed *"any number of"* (an UP-TO with no ceiling, still a
+          choice); `"all"` is the printed *"each"/"those"* (no choice at all). This op
+          takes the second because the clause is MANDATORY.
+
+          🛑 **AND IT IS THE ONE VALUE OF THIS FIELD THAT DOES NOT PARK** — see the
+          doctrine paragraph above and `stepOp`'s forced branch: a `chooseCards` park at
+          `min === max === candidates.length` is a question with one answer (D537's M1
+          no-choice rule), and the shipped `min: 0` park would let the player DECLINE a
+          clause the card prints as compulsory (D435's plausible-looking wrong board).
+
+          ⚠️ **`MATCH_RECORD_VERSION` HELD at 30, and the alphabet GROWS.** This op can
+          ride `phase.cont.rest` (arm 23b-bis's program is three ops and the FIRST one
+          parks), so `{"op":"discardPileRetrieval","max":"all"}` really is a byte inside
+          a stored record — stating that rather than claiming the type is unpersisted
+          (D450's second door). 30 holds because this is a PURE ADDITION to a value
+          domain, D333's `lookAtTopN.max: "any"` and D527's
+          `searchDeck.max: "yourBenchCount"` exactly: no v30 deploy can author the
+          byte, and every numeric `max` a v30 deploy did write still means the number it
+          meant. Not D359's rename. Driven over v30 bytes in three directions,
+          the LOSS direction included, in `counterScaledPileShuffle.test.ts` §7. */
+      max: number | "all";
       /** File the uids actually moved under this slot (Miriam). */
       recordAs?: EffectSlot;
       /** Drop the uids filed under this slot from the candidates (SER). */
@@ -12443,6 +12550,17 @@ const COUNTER_SPREAD_ON_OPPONENT =
 // drops its printed drawback. Asserted in BOTH directions rather than reasoned
 // about (`counterPutChosen.test.ts` §2).
 //
+// 🆕🛑 **D538 — THE SCALED TWIN HAS LEFT THE *"still unread"* HALF OF THAT LIST,
+// AND ONLY THAT HALF.** Corpus line **412** (3 printings) is claimed WHOLE by
+// `COUNTER_PUT_SCALED_BY_PILE` / arm 23b-bis, six lines down, as
+// `damageChosen { perDiscardPileCard }` + `discardPileRetrieval { max: "all" }` +
+// `shuffleDeck`. It is therefore **a row ANOTHER arm claims, which is a different fact
+// about the same row (D438)** — it is STILL a near miss THIS anchor must refuse (D449's
+// rule, applied here for the third time after lines 81 and 84 in the sibling block
+// below), and the `$` is still the only thing refusing it, because this anchor's whole
+// string is a strict PREFIX of that sentence exactly as it is of arm 25's. The list is
+// corrected in place rather than deleted (D178/D466 step 3): of the four rows named,
+// 412 is now built elsewhere and 415, 414 and the six Ability printings remain unread.
 // The count is a bare `(\d+)` for D139's reason — a count has no CLOSED vocabulary
 // to be rejected against. ONE apostrophe slot, classed `['’]` (D136/D137): the
 // sentence carries two possessives and only "opponent's" is written with a mark.
@@ -12502,6 +12620,52 @@ const COUNTER_PUT_ON_OPPONENT_ANY =
 // sibling. ONE apostrophe slot, classed `['’]`.
 const COUNTER_PUT_ON_CHOSEN_OPPONENTS =
   /^Choose (\d+) of your opponent['’]s Pokémon and put (\d+) damage counters on each of them\.$/;
+// 🆕🆕🆕 **D538 — THE SCALED TWIN OF THE FIRST ANCHOR IN THIS FAMILY, AND THE ONLY
+// SENTENCE IN IT WHOSE AMOUNT IS A PAYLOAD.** *"Put 2 damage counters on 1 of your
+// opponent's Pokémon for each Basic {G} Energy card in your discard pile. Then, shuffle
+// those Energy cards into your deck."* — `censusAttackCorpus.ts` FILE LINE **412**
+// (`legalAttackCorpus()` index 359), **1 sentence / 3 legal printings**. The carrier is
+// UNRESOLVED on this checkout (D425): a whole-repo `git grep -F` for the sentence at
+// this head returns the corpus row and the refusal rows alone and nothing claims an id
+// or a name — `index.ts`'s D373 name-only block included — so the suite rides the
+// file-local DECLARED demonstrator `d538-pile-sniper`.
+//
+// 🛑 **TWO CLAUSES, ONE `CardFilter`, AND THAT IS THE WHOLE MECHANISM.** The head
+// COUNTS the cards in the controller's discard pile matching the printed noun; the tail
+// says *"those Energy cards"*, which is a CROSS-CLAUSE REFERENCE to the very population
+// the count measured. So the filter is resolved ONCE and handed to BOTH ops — the
+// `damageChosen` rider that folds the amount and the `discardPileRetrieval` that puts
+// them back. A build that narrows one and widens the other deals the right damage and
+// shuffles the wrong cards, and no board that checks only the damage can see it.
+//
+// ⚠️ **THE NOUN IS CAPTURED AND THE CAPTURE IS SINGULAR** — *"for each Basic {G} Energy
+// **card**"*. Resolution is D523's spelling with the NUMBER FLIPPED
+// (`HAND_SEARCH_SINGULAR` first, then `typedNounFilter(noun, false)`), and the flip is
+// load-bearing rather than cosmetic: `typedNounFilter` WELDS the grammatical number, so
+// the plural map and `true` derive nothing at all off this string and the whole sentence
+// would fall to the loud ATTACK_EFFECT_SKIPPED path. D523's own arm reads the plural
+// because its noun is printed plural; copying it here would be a silent zero.
+//
+// 🛑 **AND THE HEAD NOUN IS GUARDED TO `basicEnergy` BECAUSE THE TAIL NAMES IT.** The
+// printed tail is not *"those cards"* but *"those **Energy** cards"*, so a head noun
+// that resolves to something else cannot be what the sentence shuffles — the anaphora
+// made mechanical. 0 printings today; refused to the loud skip path (D190b) and driven
+// as a near miss rather than left to this comment.
+//
+// THE NEAR MISSES, all real catalog rows. The UNSCALED twin, line **413** (*"Put 2
+// damage counters on 1 of your opponent's Pokémon."*, arm 23b) and the compound, line
+// 416 (arm 25, the self-lock tail). Neither can claim this string and this cannot claim
+// theirs: all three are whole-sentence `^…$` with no /i, and arm 23b's requires
+// `Pokémon\.$` at exactly the offset where this sentence continues *" for each"*, so the
+// disjunction holds in EITHER ORDER — which is why arm 23b-bis's placement above arm 23b
+// is a readability choice and not a correctness one, MEASURED in both directions
+// (`counterScaledPileShuffle.test.ts` §2) rather than inherited from a sibling's
+// argument.
+//
+// ONE apostrophe slot, classed `['’]` (D136/D137): *"opponent's"* is the only mark in
+// the sentence — *"your discard pile"* and *"your deck"* carry none.
+const COUNTER_PUT_SCALED_BY_PILE =
+  /^Put (\d+) damage counters on 1 of your opponent['’]s Pokémon for each (.+) in your discard pile\. Then, shuffle those Energy cards into your deck\.$/;
 // 🆕🆕🆕 **D450 — THE THREE *FOLDS*, WHICH ARE THIS FAMILY'S OTHER HALF: NO PICK
 // ANYWHERE IN THEM.** Every anchor above names bodies the player CHOOSES; these
 // three name bodies the BOARD chooses, and the op behind them is `counterEachAll`
@@ -16201,6 +16365,20 @@ function inPlayBodyFilter(noun: string): CardFilter | null {
 //       amount rather than the attack's damage, so it belongs to no reader in this
 //       family. Listed because the loose pattern found it and a survey that silently
 //       drops a hit is the defect this file keeps paying for.
+//       🆕🆕🆕 **D538 CLAIMS IT WHOLE, AND IT STAYS IN THIS BUCKET.** Arm 23b-bis reads
+//       the sentence as `damageChosen { perDiscardPileCard }` + `discardPileRetrieval
+//       { max: "all" }` + `shuffleDeck`. The bucket heading is still TRUE of it — it
+//       reaches NEITHER of the two anchors above, at any vocabulary width, because its
+//       count scales an OP's amount and not the attack's damage, so it still belongs to
+//       no reader in THIS family. What changes is only that it is no longer unread:
+//       corrected in place rather than moved or deleted (D178/D442/D466 step 3), and
+//       the paragraph above it (United Wings, D508) is the same shape of correction.
+//       ⚠️ **ALL THREE FIGURES IN THIS SURVEY WERE RE-MEASURED AT D538's HEAD RATHER
+//       THAN PREDICTED UNMOVED**: the loose `/for each/ ∧ /discard pile/` pattern still
+//       returns **8 hits** over the 640 legal attack sentences, the two anchors above
+//       still reach **6 sentences / 12 printings**, and the vocabulary still claims
+//       **4 sentences / 8 printings**. D538 adds no anchor to THIS family and no row to
+//       THIS map, which is why nothing here moves.
 //
 // So the TWO ANCHORS ABOVE reach 6 sentences / 12 printings and the VOCABULARY claims
 // **4 sentences / 8 printings**; the other two fall through `discardPileFilter` to
@@ -27410,6 +27588,92 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
         count: 1,
         source: "attack" as const,
       }));
+    }
+  }
+
+  // 23b-bis. "Put {N} damage counters on 1 of your opponent's Pokémon for each {noun} in
+  //      your discard pile. Then, shuffle those Energy cards into your deck." — 🆕🆕🆕
+  //      D538, corpus FILE LINE **412** (`legalAttackCorpus()` index 359), **1 sentence /
+  //      3 legal printings**. Arm 23b's action with a PAYLOAD multiplier on the front and
+  //      a printed tail that moves the very cards the multiplier counted.
+  //
+  //      🛑 **ONE FILTER, BOUND ONCE, HANDED TO TWO OPS.** The head's counted noun and
+  //      the tail's *"those Energy cards"* are the same population by construction, so
+  //      giving each op its own literal is the build that damages correctly and shuffles
+  //      the wrong pile — silent in every log row and invisible to an audit that checks
+  //      only the placement.
+  //
+  //      🛑 **THREE OPS IN PRINTED ORDER, AND THE ORDER IS LOAD-BEARING.** The fold
+  //      reads the discard pile, so the retrieval must run AFTER the placement: swap them
+  //      and `countCardsInDiscardPile` sees an emptied pile, the amount folds to 0,
+  //      `damageChosen` returns before it asks, and the attack places NOTHING under a
+  //      log that reads exactly right. Pinned by its own rung rather than by this note.
+  //
+  //      ⚠️ IT MUST NOT SET `deals` — arm 23b's hazard verbatim in force and not in
+  //      bytes, and the rider gives it more reach rather than a different shape. These
+  //      are PLACED counters, so an Active pick has to route through `damageActive`
+  //      (flat, §11-gated) instead of `snipeActive`'s full §8.5 pipeline; a `deals: true`
+  //      here would DOUBLE the placement on a Weakness and cut it on a Resistance,
+  //      against this engine's standing D138/D139 ruling.
+  //
+  //      ⚠️ COUNTERS → HP AT THE PRODUCER (one counter = 10, §12), which is where arms
+  //      22, 23, 23a, 23b and 25 all convert. The interpreter's fold multiplies an HP
+  //      figure and never sees the printed unit.
+  //
+  //      NO `recordAs` and NO `exclude`: no printing of this sentence carries a §9.2 tail
+  //      or Superior Energy Retrieval's parenthetical, and an unread field is one with no
+  //      observable meaning (D135).
+  //
+  //      🛑 **DECIDED DISCREPANCY — A WHIFFED RETRIEVAL STILL SHUFFLES, AND THE
+  //      DECISION IS KEPT.** With no matching card in the pile the fold is 0,
+  //      `damageChosen` returns before asking, `discardPileRetrieval` finds no candidate
+  //      and files nothing — and the trailing `shuffleDeck` STILL takes an RNG draw and
+  //      files a `SHUFFLE` row for a shuffle the card did not print. **That is D523's
+  //      SHIPPED POSTURE one arm down** (a DECLINED `Shuffle up to 3 …` files the same
+  //      row) and `searchDeck`'s since the Nest Ball pattern, so making it conditional
+  //      here would be a second reading of the word *"Then,"* and a divergence between
+  //      two arms emitting the same printed clause. Pinned by its own rungs in
+  //      `counterScaledPileShuffle.test.ts` §8 rather than left for a successor to
+  //      mistake for an oversight (conventions.md, *"Deciding a discrepancy"*, D421).
+  match = COUNTER_PUT_SCALED_BY_PILE.exec(effect);
+  if (match !== null) {
+    const pileCounters = Number(match[1]);
+    const pileNoun = match[2] ?? "";
+    // D523's resolution one family over with the grammatical NUMBER flipped: the printed
+    // noun is SINGULAR ("for each Basic {G} Energy card"), and `typedNounFilter` welds
+    // the number, so the plural map and `true` would derive nothing off this string.
+    const pileFilter = HAND_SEARCH_SINGULAR.get(pileNoun) ?? typedNounFilter(pileNoun, false);
+    if (
+      // The family's printed-zero guard, arm 23b's rule verbatim: a printed 0 would park
+      // the attacker on a choice with no possible outcome. Leave it loud.
+      pileCounters >= 1 &&
+      pileFilter !== undefined &&
+      // 🛑 THE ANAPHORA MADE MECHANICAL. The tail says "those ENERGY cards", so a head
+      // noun that is not a Basic Energy card cannot be the population it shuffles.
+      // Nothing downstream re-checks it and a derived "for each Trainer card …" would
+      // put Trainers into the deck under a caption naming Energy — `searchDeck`'s
+      // upstream-guard precedent, one op over. 0 printings today, refused to the loud
+      // ATTACK_EFFECT_SKIPPED path and driven as a near miss.
+      pileFilter.kind === "basicEnergy"
+    ) {
+      return [
+        {
+          op: "damageChosen",
+          target: "opponentAny",
+          amount: pileCounters * 10,
+          count: 1,
+          source: "attack",
+          // The printed "for each …" as a PAYLOAD and not a flag: the multiplier is a
+          // count of matching cards, so what the fold needs handed to it is the filter.
+          perDiscardPileCard: pileFilter,
+        },
+        // "Then, shuffle those Energy cards into your deck." — the SAME filter object, the
+        // whole matching pile (`max: "all"`, which resolves FORCED: the clause prints no
+        // quantifier and is mandatory), and the trailing shuffle the deck destination
+        // requires (`retrieveMove`'s deck arm APPENDS).
+        { op: "discardPileRetrieval", filter: pileFilter, dest: "deck", max: "all" },
+        { op: "shuffleDeck" },
+      ];
     }
   }
 

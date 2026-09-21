@@ -208,7 +208,19 @@ const NEAR_MISSES = [
   // pile"*) — and it is refused on this anchor's own ZONE besides: it names *"1 of your
   // opponent's Pokémon"* where this anchor requires the printed word **Benched**, so it
   // is one adjective and one count-source away in two different directions.
-  "Put 2 damage counters on 1 of your opponent's Pokémon for each Basic {G} Energy card in your discard pile. Then, shuffle those Energy cards into your deck.",
+  // 🆕🆕🆕 **D538 — AND THAT ROW HAS NOW LEFT THIS LIST TOO, exactly as the D530
+  // occupant above it did, and the witness MOVED rather than being deleted (the standing
+  // note at the top of this array).** D538 claims corpus line 412 WHOLE through its own
+  // anchor (`COUNTER_PUT_SCALED_BY_PILE`, arm 23b-bis) as a THREE-op program:
+  // `damageChosen { perDiscardPileCard }` + `discardPileRetrieval { max: "all" }` +
+  // `shuffleDeck`. The `toBeNull` loop below would go RED on it, so the claim is now an
+  // INEQUALITY of derived programs plus the positive (`SCALED_PILE_TWIN`, the D450/D451
+  // pattern) — strictly stronger than the nullity it replaces, because it reddens on an
+  // anchor widened past the ZONE word *and* on one widened past the count source, where
+  // a nullity only ever reddened on the first. **Re-pointed ONTO THE OP rather than
+  // decremented in silence (D465/D488)**, and referenced BY VALUE below rather than by
+  // index, because removing a row that is not last SHIFTS every index after it (D501's
+  // class, already paid once in this file).
   "You must discard a Basic {G} Energy card from your hand in order to use this Ability. Once during your turn, you may put 3 damage counters on 1 of your opponent's Benched Pokémon.",
   "You must discard a Water Energy card from your hand in order to use this Ability. Once during your turn, you may put 2 damage counters on 1 of your opponent's Benched Pokémon.",
 ] as const;
@@ -232,6 +244,14 @@ const DEFENDER_PUT_CLAUSE = "Put 7 damage counters on your opponent's Active Pok
     claim about it is an INEQUALITY of derived programs (D450/D451's rule), not a nullity. */
 const TARGET_COUNTER_SNIPE =
   "This attack does 20 damage to 1 of your opponent's Benched Pokémon for each damage counter on that Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)";
+
+/** 🆕🆕🆕 D538 — corpus FILE LINE 412, **3 legal printings**: this anchor's verb and
+    quantifier with the ZONE word dropped and an amount COMPUTED off the discard pile. It
+    sat in `NEAR_MISSES` from D456 to D537; D538 MAPPED it (arm 23b-bis, a three-op
+    program), so the claim about it is an INEQUALITY of derived programs plus the
+    positive, not a nullity. */
+const SCALED_PILE_TWIN =
+  "Put 2 damage counters on 1 of your opponent's Pokémon for each Basic {G} Energy card in your discard pile. Then, shuffle those Energy cards into your deck.";
 
 /** U+2019, spelled as an ESCAPE rather than typed. */
 const RSQUO = "\u2019";
@@ -413,7 +433,7 @@ describe("the anchor — 4 printings, 1 clause, one regex with one (\\d+) captur
     expect((deriveAttackEffect(CLAUSE)?.[0] as Record<string, unknown>).source).toBe("attack");
   });
 
-  it("refuses the SIX real catalog rows that share its words — and the SEVENTH, MAPPED at D530, keeps its OWN op", () => {
+  it("refuses the FIVE real catalog rows that share its words — and the TWO MAPPED ones keep their OWN programs", () => {
     for (const text of NEAR_MISSES) {
       expect(deriveAttackEffect(text)).toBeNull();
     }
@@ -437,7 +457,26 @@ describe("the anchor — 4 printings, 1 clause, one regex with one (\\d+) captur
       expect.objectContaining({ source: "ability" }),
     );
     expect(deriveAttackEffect(CLAUSE)?.[0]).not.toHaveProperty("perDamageCounterOnTarget");
-    expect(NEAR_MISSES).toHaveLength(6);
+    // 🆕🆕🆕 **D538 — THE SECOND MAPPED ROW, AND THE ONE THAT MOVES THIS COUNT.** Corpus
+    // line 412 left the array above; its claim is here, as the inequality plus the
+    // positive. The derived program is THREE ops where this anchor's is one, which is a
+    // difference no widening of a `(\d+)` capture could ever produce by accident.
+    expect(deriveAttackEffect(SCALED_PILE_TWIN)).not.toEqual(deriveAttackEffect(CLAUSE));
+    expect(deriveAttackEffect(SCALED_PILE_TWIN)?.map((o) => o.op)).toEqual([
+      "damageChosen",
+      "discardPileRetrieval",
+      "shuffleDeck",
+    ]);
+    // The ZONE is the axis this array is for, so it is asserted directly: this anchor's
+    // op names the BENCH, the mapped row's names the whole board.
+    expect((deriveAttackEffect(CLAUSE)?.[0] as Record<string, unknown>).target).toBe(
+      "opponentBench",
+    );
+    expect((deriveAttackEffect(SCALED_PILE_TWIN)?.[0] as Record<string, unknown>).target).toBe(
+      "opponentAny",
+    );
+    expect(deriveAttackEffect(CLAUSE)?.[0]).not.toHaveProperty("perDiscardPileCard");
+    expect(NEAR_MISSES).toHaveLength(5);
     // THE TWO THAT MATTER MOST are the ABILITY printings of this exact action.
     // Both already produce this op through the REGISTRY, so a reader that swallowed
     // them would author the same placement twice — and both are refused by the

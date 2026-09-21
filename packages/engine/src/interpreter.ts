@@ -2579,6 +2579,13 @@ function stepOp(
       // Also "up to" → parks on the SAME chooseCards prompt whenever ≥1 candidate
       // (the player may still take none); an empty match is a no-op, and any
       // trailing shuffleDeck op still fires — exactly like searchDeck's whiff.
+      // 🆕🛑 **D538 — THAT DOCTRINE NOW HAS EXACTLY ONE EXCEPTION AND IT IS READ OFF
+      // `op.max`, NOT INFERRED**: `"all"` is a clause with no printed quantifier
+      // (*"shuffle those Energy cards into your deck"*), which is MANDATORY and resolves
+      // FORCED in the branch below. Every numeric `max` still means *"up to"* and still
+      // parks, including a number that happens to equal the candidate count. Corrected
+      // in place rather than rewritten (D178/D466 step 3); the op's own block in
+      // effects.ts carries the same correction on the type.
       //
       // `exclude` is Superior Energy Retrieval's "(You can't choose a card you
       // discarded with the effect of this card.)" — the cards its own cost paid
@@ -2590,6 +2597,29 @@ function stepOp(
       const candidates = state.players[ctx.seat].discard.filter(
         (uid) => !barred.has(uid) && matchesFilter(cardOf(state, uid), op.filter),
       );
+      // 🆕🆕🆕 **D538 — `max: "all"` IS THE ONE VALUE OF THIS FIELD THAT DOES NOT PARK.**
+      // *"Then, shuffle **those** Energy cards into your deck."* (corpus FILE LINE 412)
+      // prints NO quantifier and is MANDATORY, so the whole matching pile moves and
+      // there is nothing to ask. 🛑 **A `min === max === candidates.length` PARK WOULD
+      // BE A QUESTION WITH EXACTLY ONE ANSWER** (D537's M1 no-choice rule), and the
+      // shipped `min: 0` park below — whose own comment says *"taking none is a legal
+      // answer"* — would let the player DECLINE a clause the card prints as compulsory,
+      // which is D435's plausible-looking wrong board rather than a softer prompt.
+      //
+      // ⚠️ IT SITS HERE, ABOVE `retrieveMax`, FOR A SECOND AND SMALLER REASON: the
+      // early return NARROWS `op.max` to `number` for the two lines below, so those two
+      // lines stay byte-identical and the bench-clamp they spell keeps its meaning and
+      // its mutant row. The Bench clamp is not owed here — no printing spells
+      // *"all … onto your Bench"*, and `retrieveMove`'s own bench arm clamps anyway.
+      if (op.max === "all") {
+        if (candidates.length === 0) {
+          recordMoved(record, op.recordAs, []);
+          return { done: state };
+        }
+        const forced = retrieveMove(state, candidates, op.dest, ctx, events);
+        recordMoved(record, op.recordAs, forced.moved);
+        return { done: forced.state };
+      }
       const retrieveMax =
         op.dest === "bench" ? Math.min(op.max, benchSpace(state, ctx.seat)) : op.max;
       // A whiff FILES AN EMPTY ANSWER rather than filing nothing. Both are false
@@ -9095,7 +9125,26 @@ function reactToAttackDamage(
     body folds to 0 and `placeSnipe` then deals nothing and files no `DAMAGE_DEALT`** —
     the decided discrepancy pinned beside the rider in effects.ts. Mutually exclusive
     with the three riders above at every writer, same as they are with each other; it
-    is FIRST-CHECKED here only because it is the one branch that reads the argument. */
+    is FIRST-CHECKED here only because it is the one branch that reads the argument.
+
+    🆕🆕🆕 **D538 — `perDiscardPileCard`, THE FIFTH RIDER, AND THE FIRST WHOSE VALUE IS A
+    PAYLOAD.** *"…for each Basic {G} Energy card in your discard pile"* (corpus FILE LINE
+    412) counts the cards in the CONTROLLER's own discard pile matching a printed noun,
+    so the rider carries the `CardFilter` itself rather than a flag and the fold is one
+    call to `countCardsInDiscardPile(state, ctx.seat, op.perDiscardPileCard)` — an
+    `export function` in THIS file, so no import and no channel. ⚠️ **`ctx.seat` AND NOT
+    `otherSeat(ctx.seat)`**: the printed word is *"your"*, and the opponent's pile is a
+    different sentence this corpus also prints (the `×` fold on the two anchors in
+    effects.ts) — the two are one `otherSeat` apart and nothing downstream could tell
+    them apart, which is why a rung drives the opponent's pile held at a different size.
+    ⚠️ **AN EMPTY (or wholly unmatching) PILE FOLDS TO 0**, and `stepOp`'s `amount <= 0`
+    early return then ends the op BEFORE it offers a pick — the same ending a 0-taken
+    Covetous Ivy has. The trailing `shuffleDeck` in arm 23b-bis's program still runs;
+    that discrepancy is decided and pinned at the arm. Mutually exclusive with the four
+    riders above at every writer. 🛑 **AND ITS BRANCH MUST SIT ABOVE
+    `if (op.perEnergyOnSelf !== true) return op.amount;`** — that line returns
+    unconditionally for every op this rider rides, so a branch appended below it is dead
+    code that silently ships a FLAT amount where the card prints amount × N. */
 function snipeAmount(
   op: {
     amount: number;
@@ -9103,6 +9152,7 @@ function snipeAmount(
     perEnergyOnSelf?: true;
     perRecorded?: EffectSlot;
     perDamageCounterOnTarget?: true;
+    perDiscardPileCard?: CardFilter;
   },
   state: GameState,
   ctx: EffectContext,
@@ -9128,6 +9178,14 @@ function snipeAmount(
   // are three of them, so the rider names the one it reads (see effects.ts).
   if (op.perRecorded !== undefined)
     return op.amount * recorded(record, op.perRecorded).length;
+  // 🆕🆕🆕 **D538 — THE FIFTH RIDER, AND IT IS FOUR LINES BECAUSE THE READER ALREADY
+  // LIVES IN THIS FILE.** `countCardsInDiscardPile` is an `export function` here (the
+  // registry's Energy-Retrieval reader), so the printed *"for each <noun> in your
+  // discard pile"* costs one call and no plumbing. 🛑 **PLACED ABOVE THE
+  // `perEnergyOnSelf` LINE ON PURPOSE**: that line returns unconditionally, so this
+  // branch below it would never run and the card would deal a flat amount.
+  if (op.perDiscardPileCard !== undefined)
+    return op.amount * countCardsInDiscardPile(state, ctx.seat, op.perDiscardPileCard);
   if (op.perEnergyOnSelf !== true) return op.amount;
   // ⚠️ NAMED FOR THE PRINTED NOUN AND NOT `attacker`, WHICH IS D446's RULE AND WAS
   // EARNED HERE: `const attacker = activeTop(state, ctx.seat);` is `snipeActive`'s line

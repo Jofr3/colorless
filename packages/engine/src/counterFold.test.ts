@@ -160,7 +160,7 @@ describe("§1 — the three printed folds, and the placement family's remaining 
     expect(attackReaderSurface()).toHaveLength(13);
   });
 
-  it("🛑 the PLACEMENT family closes from TEN rows to SEVEN to TWO, each refusal by name", () => {
+  it("🛑 the PLACEMENT family closes from TEN rows to SEVEN to TWO to ZERO, each departure by name", () => {
     // THE PATTERN, PUBLISHED SO ITS EDGES ARE VISIBLE (D424/D425), and it is D449's
     // pattern re-run rather than re-imagined: `/put \d* ?damage counters/i`, case
     // INSENSITIVE with the count OPTIONAL. The /i catches the lowercase mid-sentence
@@ -190,8 +190,21 @@ describe("§1 — the three printed folds, and the placement family's remaining 
     // ⚠️ THE TWO FIGURES DISAGREE BY ONE AGAIN, −1 SENTENCE AND −1 PRINTING — and this
     // time they AGREE, because the row is 1/1. Verified off the corpus rather than
     // assumed from the row being singular (D451/D461/D464).
-    expect(unread.map(([, t]) => t)).toHaveLength(1);
-    expect(unread.reduce((sum, [n]) => sum + n, 0)).toBe(3);
+    // 🆕🛑 **D538 — ONE BECAME **ZERO** AND THREE BECAME ZERO: THE PLACEMENT FAMILY IS
+    // NOW CLOSED, and an EMPTY table is exactly the shape D536's `ownerPrefix.test.ts`
+    // finding is about.** Every `not.toContain` below this line is VACUOUSLY TRUE the
+    // moment `unbuilt` is empty, so the load-bearing claim is re-pointed onto the
+    // POSITIVE and asserted FIRST: all 19 sentences / 38 printings of this family
+    // resolve through the reader surface. The `not.toContain` bullets are KEPT (D418 —
+    // re-point, never delete: each one still names WHICH row left and why), but they are
+    // no longer the rung that could redden, and this rung says so out loud.
+    expect(family.every(([, t]) => resolvedByAnyReader(t))).toBe(true);
+    expect(family.filter(([, t]) => resolvedByAnyReader(t))).toHaveLength(19);
+    expect(
+      family.filter(([, t]) => resolvedByAnyReader(t)).reduce((sum, [n]) => sum + n, 0),
+    ).toBe(38);
+    expect(unread.map(([, t]) => t)).toHaveLength(0);
+    expect(unread.reduce((sum, [n]) => sum + n, 0)).toBe(0);
     for (const [text, program] of [
       [
         "During your opponent's next turn, if this Pokémon is damaged by an attack (even if this Pokémon is Knocked Out), put 6 damage counters on the Attacking Pokémon.",
@@ -210,14 +223,24 @@ describe("§1 — the three printed folds, and the placement family's remaining 
     // identity rather than as arithmetic in a comment.
     for (const s of [ABILITY_FOLD, BOARD_FOLD, WOUNDED_FOLD]) expect(unbuilt).not.toContain(s);
 
-    // (a) THE SCALED TWIN — corpus line 412, **3 printings**, still the largest unbuilt
-    //     row in this family. D448 refused it three ways; D449 spent the first (no
-    //     anchor claims the verb). The other two are RE-MEASURED here rather than
-    //     inherited and both still hold: the count is `{kind: "cardsInDiscardPile", …}`,
-    //     a PAYLOAD no boolean rider carries, and the tail has no reader.
-    expect(unbuilt).toContain(
+    // (a) THE SCALED TWIN — corpus line 412, **3 printings**, and it was the largest
+    //     unbuilt row in this family until D538.
+    //     🆕🆕🆕 **D538 BUILT IT, AND THE LAST OF D448's THREE REFUSALS IS SPENT.** D449
+    //     spent the first (no anchor claimed the verb); the remaining two were the
+    //     PAYLOAD count and the READERLESS tail, and arm 23b-bis answers both at once
+    //     — `damageChosen { perDiscardPileCard: <the filter> }` carries the payload and
+    //     `discardPileRetrieval { max: "all" } + shuffleDeck` reads the tail. The rung
+    //     INVERTS rather than being deleted (D418): `toContain` becomes the positive,
+    //     and the tail-alone nullity SURVIVES because the anchor is whole-sentence, which
+    //     is the half of the old claim that is still true and still discriminating.
+    expect(unbuilt).not.toContain(
       "Put 2 damage counters on 1 of your opponent's Pokémon for each Basic {G} Energy card in your discard pile. Then, shuffle those Energy cards into your deck.",
     );
+    expect(
+      deriveAttackEffect(
+        "Put 2 damage counters on 1 of your opponent's Pokémon for each Basic {G} Energy card in your discard pile. Then, shuffle those Energy cards into your deck.",
+      )?.map((o) => o.op),
+    ).toEqual(["damageChosen", "discardPileRetrieval", "shuffleDeck"]);
     expect(deriveAttackEffect("Then, shuffle those Energy cards into your deck.")).toBeNull();
 
     // (b) 🆕 THE SCALED FOLD — 1 printing, and it is THIS SLICE'S OWN nearest neighbour
@@ -529,7 +552,7 @@ describe("§3 — TWO REQUIRED fields on a shipped op, and the record version do
   });
 
   it("the engine version moved and the record version did not", () => {
-    expect(engineVersion).toBe("0.422.0");
+    expect(engineVersion).toBe("0.423.0");
   });
 });
 

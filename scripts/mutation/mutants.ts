@@ -5251,7 +5251,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D275",
     what: "🛑 THE DEBT THIS SLICE PAID FOR THE FIFTH TIME, RE-INSTALLED: `engineVersion` falls a minor behind `packages/engine/package.json`, which is EXACTLY the state the tree was in at the head of D275 (0.187.0 against 0.189.0) and had been for two slices with nothing comparing them. The tie is the guard; this row is the proof it is one",
     file: "packages/engine/src/index.ts",
-    // ⚠️ RE-POINTED AT D537 (0.421.0 → 0.422.0), at D536 (0.420.0 → 0.421.0), at D535 (0.419.0 → 0.420.0), at D534 (0.418.0 → 0.419.0), at D532 (0.417.0 → 0.418.0), at D531 (0.416.0 → 0.417.0), at D530 (0.415.0 → 0.416.0), at D528 (0.414.0 → 0.415.0), at D527 (0.413.0 → 0.414.0), at D526 (0.412.0 → 0.413.0), at D525 (0.411.0 → 0.412.0), at D524 (0.410.0 → 0.411.0), at D523 (0.409.0 → 0.410.0), at D522 (0.408.0 → 0.409.0), at D521 (0.407.0 → 0.408.0), at D520 (0.406.0 → 0.407.0), at D519 (0.405.0 → 0.406.0), at D518 (0.404.0 → 0.405.0), at D517 (0.403.0 → 0.404.0), at D516 (0.402.0 → 0.403.0), at D515 (0.401.0 → 0.402.0), at D514 (0.400.0 → 0.401.0), at D513 (0.399.0 → 0.400.0), at D512 (0.398.0 → 0.399.0), at D510 (0.397.0 → 0.398.0), at D508 (0.396.0 → 0.397.0), at D507 (0.395.0 → 0.396.0), at D505 (0.394.0 → 0.395.0), at D490 (0.384.0 → 0.385.0), at D489 (0.383.0 → 0.384.0), at D488 (0.382.0 → 0.383.0), at D487 (0.381.0 → 0.382.0), at D486 (0.380.0 → 0.381.0), at D485 (0.379.0 → 0.380.0), at D450 (0.351.0 → 0.352.0), at D449 (0.350.0 → 0.351.0), at D448 (0.349.0 → 0.350.0), at D447 (0.348.0 → 0.349.0), at D446 (0.347.0 → 0.348.0), at D445 (0.346.0 → 0.347.0), at D444 (0.345.0 → 0.346.0), at D443 (0.344.0 → 0.345.0), at D442 (0.343.0 → 0.344.0), at D441 (0.342.0 → 0.343.0), at D440 (0.341.0 → 0.342.0), at D439 (0.340.0 → 0.341.0), at D438 (0.339.0 → 0.340.0), at D437 (0.338.0 → 0.339.0), at D436 (0.337.0 → 0.338.0), at D435 (0.336.0 → 0.337.0), at D434 (0.335.0 → 0.336.0), at D433 (0.334.0 → 0.335.0), at D432 (0.333.0 → 0.334.0), at D431 (0.332.0 → 0.333.0), at D430 (0.331.0 → 0.332.0), at D429 (0.330.0 → 0.331.0), at D428 (0.329.0 → 0.330.0), at D427 (0.328.0 → 0.329.0), at D426 (0.327.0 → 0.328.0), at D425 (0.326.0 → 0.327.0), at D424 (0.325.0 → 0.326.0), at D423 (0.324.0 → 0.325.0), at D422 (0.323.0 → 0.324.0), at D421 (0.322.0 → 0.323.0), at D420 (0.321.0 → 0.322.0), at D417 (0.320.0 → 0.321.0), at D416 (0.319.0 → 0.320.0), at D415 (0.318.0 → 0.319.0), at D414 (0.317.0 → 0.318.0), at D413 (0.316.0 → 0.317.0), at D412 (0.315.0 → 0.316.0), at D410 (0.314.0 → 0.315.0), at D409 (0.313.0 → 0.314.0), at D408 (0.312.0 → 0.313.0), at D407 (0.311.0 → 0.312.0), at D402 (0.306.0 → 0.307.0), at D401 (0.305.0 → 0.306.0), at D400 (0.304.0 → 0.305.0), at D399 (0.303.0 → 0.304.0), at D398 (0.302.0 → 0.303.0), at D397 (0.301.0 → 0.302.0), at D396 (0.300.0 → 0.301.0), at D395 (0.299.0 → 0.300.0), at D394 (0.298.0 → 0.299.0), at D393 (0.297.0 → 0.298.0), at D392 (0.296.0 → 0.297.0), at D391 (0.295.0 → 0.296.0), at D390 (0.294.0 → 0.295.0), at D389 (0.293.0 → 0.294.0), at D388 (0.292.0 → 0.293.0), at D387 (0.291.0 → 0.292.0), at D386 (0.290.0 → 0.291.0),
+    // ⚠️ RE-POINTED AT D538 (0.422.0 → 0.423.0), at D537 (0.421.0 → 0.422.0), at D536 (0.420.0 → 0.421.0), at D535 (0.419.0 → 0.420.0), at D534 (0.418.0 → 0.419.0), at D532 (0.417.0 → 0.418.0), at D531 (0.416.0 → 0.417.0), at D530 (0.415.0 → 0.416.0), at D528 (0.414.0 → 0.415.0), at D527 (0.413.0 → 0.414.0), at D526 (0.412.0 → 0.413.0), at D525 (0.411.0 → 0.412.0), at D524 (0.410.0 → 0.411.0), at D523 (0.409.0 → 0.410.0), at D522 (0.408.0 → 0.409.0), at D521 (0.407.0 → 0.408.0), at D520 (0.406.0 → 0.407.0), at D519 (0.405.0 → 0.406.0), at D518 (0.404.0 → 0.405.0), at D517 (0.403.0 → 0.404.0), at D516 (0.402.0 → 0.403.0), at D515 (0.401.0 → 0.402.0), at D514 (0.400.0 → 0.401.0), at D513 (0.399.0 → 0.400.0), at D512 (0.398.0 → 0.399.0), at D510 (0.397.0 → 0.398.0), at D508 (0.396.0 → 0.397.0), at D507 (0.395.0 → 0.396.0), at D505 (0.394.0 → 0.395.0), at D490 (0.384.0 → 0.385.0), at D489 (0.383.0 → 0.384.0), at D488 (0.382.0 → 0.383.0), at D487 (0.381.0 → 0.382.0), at D486 (0.380.0 → 0.381.0), at D485 (0.379.0 → 0.380.0), at D450 (0.351.0 → 0.352.0), at D449 (0.350.0 → 0.351.0), at D448 (0.349.0 → 0.350.0), at D447 (0.348.0 → 0.349.0), at D446 (0.347.0 → 0.348.0), at D445 (0.346.0 → 0.347.0), at D444 (0.345.0 → 0.346.0), at D443 (0.344.0 → 0.345.0), at D442 (0.343.0 → 0.344.0), at D441 (0.342.0 → 0.343.0), at D440 (0.341.0 → 0.342.0), at D439 (0.340.0 → 0.341.0), at D438 (0.339.0 → 0.340.0), at D437 (0.338.0 → 0.339.0), at D436 (0.337.0 → 0.338.0), at D435 (0.336.0 → 0.337.0), at D434 (0.335.0 → 0.336.0), at D433 (0.334.0 → 0.335.0), at D432 (0.333.0 → 0.334.0), at D431 (0.332.0 → 0.333.0), at D430 (0.331.0 → 0.332.0), at D429 (0.330.0 → 0.331.0), at D428 (0.329.0 → 0.330.0), at D427 (0.328.0 → 0.329.0), at D426 (0.327.0 → 0.328.0), at D425 (0.326.0 → 0.327.0), at D424 (0.325.0 → 0.326.0), at D423 (0.324.0 → 0.325.0), at D422 (0.323.0 → 0.324.0), at D421 (0.322.0 → 0.323.0), at D420 (0.321.0 → 0.322.0), at D417 (0.320.0 → 0.321.0), at D416 (0.319.0 → 0.320.0), at D415 (0.318.0 → 0.319.0), at D414 (0.317.0 → 0.318.0), at D413 (0.316.0 → 0.317.0), at D412 (0.315.0 → 0.316.0), at D410 (0.314.0 → 0.315.0), at D409 (0.313.0 → 0.314.0), at D408 (0.312.0 → 0.313.0), at D407 (0.311.0 → 0.312.0), at D402 (0.306.0 → 0.307.0), at D401 (0.305.0 → 0.306.0), at D400 (0.304.0 → 0.305.0), at D399 (0.303.0 → 0.304.0), at D398 (0.302.0 → 0.303.0), at D397 (0.301.0 → 0.302.0), at D396 (0.300.0 → 0.301.0), at D395 (0.299.0 → 0.300.0), at D394 (0.298.0 → 0.299.0), at D393 (0.297.0 → 0.298.0), at D392 (0.296.0 → 0.297.0), at D391 (0.295.0 → 0.296.0), at D390 (0.294.0 → 0.295.0), at D389 (0.293.0 → 0.294.0), at D388 (0.292.0 → 0.293.0), at D387 (0.291.0 → 0.292.0), at D386 (0.290.0 → 0.291.0),
     //    each in the SAME COMMIT as the bump —
     // the TENTH slice running to do it that way, and the practice is now the one
     // thing about this row that has never cost an ERROR since it started.
@@ -5798,7 +5798,7 @@ export const MUTANTS: Mutant[] = [
     // CORPUS QUOTES** (D414/D415), so a value-keyed sweep over `toBe("0.391.0")` cannot
     // see it — this row's `find` spells the DECLARATION, not an assertion. Run
     // `precheck` after every version bump, not after the sweep tells you.
-    find: 'export const engineVersion = "0.422.0";',
+    find: 'export const engineVersion = "0.423.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -27903,6 +27903,12 @@ export const MUTANTS: Mutant[] = [
     decision: "D495",
     what: "⚠️ C10 — the census constant is put back to its pre-slice value while the arm stays. This is the row that proves the CENSUS moved for this build rather than the suite merely agreeing with itself: `BUILT.attack`'s live sum is derived from the readers over the committed corpus, so a stale constant is the one thing that cannot be true at both heads. 🆕 RE-TRANSCRIBED AT D499 (1612→1614 / 1611→1612): the row is about the CONSTANT being one slice stale, not about a particular digit, so it follows the constant. Its MEANING is byte-identical — a re-transcription that changes the claim is worth less than a broken row (D498), and this one does not: D499's own step is +2 printings, so the mutated value is exactly this file's value at D498's head",
     file: "packages/engine/src/censusAtHead.test.ts",
+    // 🆕🆕🆕 D538 - RE-TRANSCRIBED AGAIN, 1659 -> 1662 (and the replace 1657 -> 1659), the same
+    //    two-step regression, for the Nth consecutive slice. ⚠️ THE STEP IS **3** AND NOT 1,
+    //    because this column counts PRINTINGS and D538's row has THREE legal printings against
+    //    ONE sentence - the FOURTH consecutive slice whose sentence and printing steps disagree
+    //    (D535 1-vs-2, D536 1-vs-3, D537 1-vs-2, D538 1-vs-3). `precheck` reported the `find` at
+    //    0x on the edit round that moved the constant, exactly as it has since D495.
     // 🆕🆕🆕 D537 - RE-TRANSCRIBED AGAIN, 1657 -> 1659 (and the replace 1654 -> 1657), the same
     //    two-step regression. ⚠️ THE STEP IS **2** AND NOT 1, because this column counts
     //    PRINTINGS and D537's row has TWO legal printings against ONE sentence - the THIRD
@@ -28043,8 +28049,8 @@ export const MUTANTS: Mutant[] = [
     // 🆕🆕🆕 D534 — RE-TRANSCRIBED AGAIN, 1651 -> 1652 (replace 1649 -> 1650): the sentence and
     //    printing steps agree at 1 (corpus FILE LINE 401, Inkay's one-card look), the same
     //    two-step regression; `precheck` named the `find` at 0x the moment the pin moved.
-    find: "  attack: 1659,",
-    replace: "  attack: 1657,",
+    find: "  attack: 1662,",
+    replace: "  attack: 1659,",
     expectKilledBy: [
       "packages/engine/src/censusAtHead.test.ts",
     ],
@@ -32532,5 +32538,171 @@ export const MUTANTS: Mutant[] = [
     find: "    \"attached to those Pokémon, into their deck\\\\.$\",",
     replace: "    \"attached to those Pokémon, into their deck\\\\.\",",
     expectKilledBy: ["packages/engine/src/benchKeepShuffleRest.test.ts"],
+  },
+
+  // ── D538 — THE COUNTER PLACEMENT WHOSE AMOUNT IS A PAYLOAD. SEVENTEEN ROWS, SPLIT BY CLAIM:
+  //    **two on the SHARED FILTER** (the rider dropped, the retrieval's copy widened), **one on
+  //    the PROGRAM ORDER** (the sharpest row this slice declares), **four on the retrieval**
+  //    (destination, `max: "all"`, the trailing shuffle, the forced branch's candidate set),
+  //    **three on the fold** (the seat, the filter, the branch's POSITION in `snipeAmount`),
+  //    **three on the arm's guards** (the printed-zero floor, the Energy-noun guard, the
+  //    singular/plural map), **one on §12** (counters never converted to HP), **one on §8.5**
+  //    (`deals` set on a PLACEMENT) and **two on the anchor** (the `$`, the `['’]` slot).
+  //    🛑 THE TWO ROWS THIS SLICE EXISTS FOR ARE `D538-program-order-swapped` AND
+  //    `D538-retrieval-filter-widened`: the first places NOTHING under a log that reads exactly
+  //    right, the second places the RIGHT damage and shuffles the WRONG cards. Both are silent,
+  //    and an audit that checks only the damage number misses the second entirely.
+  {
+    id: "D538-scale-rider-dropped",
+    decision: "D538",
+    what: "🛑 (a) **THE SCALE RIDER DROPPED FROM THE PLACEMENT: the card deals a FLAT 20 where it prints 20 × N.** D421's degradation class exactly — the degraded op is byte-for-byte the UNSCALED twin's (corpus line 413, arm 23b), a program this engine also ships, so nothing crashes and nothing is logged differently. It is invisible at a one-card pile, which is why §3 drives the fold at THREE.",
+    file: "packages/engine/src/effects.ts",
+    find: "          perDiscardPileCard: pileFilter,\n        },",
+    replace: "        },",
+    expectKilledBy: ["packages/engine/src/counterScaledPileShuffle.test.ts"],
+  },
+  {
+    id: "D538-program-order-swapped",
+    decision: "D538",
+    what: "🛑 (b) **THE SHARPEST ROW IN THIS SLICE: the retrieval runs BEFORE the placement.** The fold reads the discard pile, so the pile is empty by the time `snipeAmount` looks at it, the amount folds to 0, `stepOp`'s `amount <= 0` early return ends `damageChosen` before it asks, and the attack places NOTHING — under a log carrying the right `DISCARD_RETRIEVED` row, the right `SHUFFLE` row and no error at all. The printed ORDER is the whole mechanism and this row is the only thing that says so.",
+    file: "packages/engine/src/effects.ts",
+    find: "      return [\n        {\n          op: \"damageChosen\",\n          target: \"opponentAny\",\n          amount: pileCounters * 10,\n          count: 1,\n          source: \"attack\",\n          // The printed \"for each …\" as a PAYLOAD and not a flag: the multiplier is a\n          // count of matching cards, so what the fold needs handed to it is the filter.\n          perDiscardPileCard: pileFilter,\n        },\n        // \"Then, shuffle those Energy cards into your deck.\" — the SAME filter object, the\n        // whole matching pile (`max: \"all\"`, which resolves FORCED: the clause prints no\n        // quantifier and is mandatory), and the trailing shuffle the deck destination\n        // requires (`retrieveMove`'s deck arm APPENDS).\n        { op: \"discardPileRetrieval\", filter: pileFilter, dest: \"deck\", max: \"all\" },\n        { op: \"shuffleDeck\" },\n      ];",
+    replace: "      return [\n        { op: \"discardPileRetrieval\", filter: pileFilter, dest: \"deck\", max: \"all\" },\n        { op: \"shuffleDeck\" },\n        {\n          op: \"damageChosen\",\n          target: \"opponentAny\",\n          amount: pileCounters * 10,\n          count: 1,\n          source: \"attack\",\n          perDiscardPileCard: pileFilter,\n        },\n      ];",
+    expectKilledBy: ["packages/engine/src/counterScaledPileShuffle.test.ts"],
+  },
+  {
+    id: "D538-retrieval-filter-widened",
+    decision: "D538",
+    what: "🛑 (c) **ONE FILTER, TWO OPS — AND THIS ROW WIDENS ONLY THE SECOND.** The damage stays exactly right (3 matching cards → 60) and the Special Energy and off-type Basics are shuffled into the deck along with the printed population. An audit that checks the damage number sees nothing; only the PILE CONTENTS after the attack can tell the two builds apart.",
+    file: "packages/engine/src/effects.ts",
+    find: "        { op: \"discardPileRetrieval\", filter: pileFilter, dest: \"deck\", max: \"all\" },",
+    replace: "        { op: \"discardPileRetrieval\", filter: { kind: \"anyEnergy\" }, dest: \"deck\", max: \"all\" },",
+    expectKilledBy: ["packages/engine/src/counterScaledPileShuffle.test.ts"],
+  },
+  {
+    id: "D538-retrieval-dest-hand",
+    decision: "D538",
+    what: "🛑 (d) **THE DESTINATION READ AS THE HAND.** *\"shuffle those Energy cards into your **deck**\"* becomes a retrieval to hand — the cards still leave the pile, so every \"it is no longer in the discard\" assertion stays green, and the trailing `shuffleDeck` still fires on a deck that gained nothing. The rung that catches it follows the UIDS rather than the card id, because the opening hand already holds copies of this very card.",
+    file: "packages/engine/src/effects.ts",
+    find: "        { op: \"discardPileRetrieval\", filter: pileFilter, dest: \"deck\", max: \"all\" },",
+    replace: "        { op: \"discardPileRetrieval\", filter: pileFilter, dest: \"hand\", max: \"all\" },",
+    expectKilledBy: ["packages/engine/src/counterScaledPileShuffle.test.ts"],
+  },
+  {
+    id: "D538-max-all-becomes-one",
+    decision: "D538",
+    what: "🛑 (e) **`max: \"all\"` READ AS A NUMBER, so the printed *\"those\"* becomes *\"one of those\"*.** It also puts the op back on the `min: 0` `chooseCards` PARK, which lets the player decline a mandatory clause — two defects from one token, and both invisible on a pile holding exactly one match.",
+    file: "packages/engine/src/effects.ts",
+    find: "        { op: \"discardPileRetrieval\", filter: pileFilter, dest: \"deck\", max: \"all\" },",
+    replace: "        { op: \"discardPileRetrieval\", filter: pileFilter, dest: \"deck\", max: 1 },",
+    expectKilledBy: ["packages/engine/src/counterScaledPileShuffle.test.ts"],
+  },
+  {
+    id: "D538-trailing-shuffle-dropped",
+    decision: "D538",
+    what: "🛑 (f) **THE TRAILING `shuffleDeck` DROPPED.** `retrieveMove`'s deck arm APPENDS, so without it the retrieved cards sit on the BOTTOM of the deck in pile order — a known board rather than a shuffled one, with no `SHUFFLE` row and no RNG draw. The whole printed clause is *\"shuffle … into your deck\"*, and the move alone is only half of it.",
+    file: "packages/engine/src/effects.ts",
+    find: "        { op: \"discardPileRetrieval\", filter: pileFilter, dest: \"deck\", max: \"all\" },\n        { op: \"shuffleDeck\" },",
+    replace: "        { op: \"discardPileRetrieval\", filter: pileFilter, dest: \"deck\", max: \"all\" },",
+    expectKilledBy: ["packages/engine/src/counterScaledPileShuffle.test.ts"],
+  },
+  {
+    id: "D538-counters-not-converted",
+    decision: "D538",
+    what: "🛑 (g) **§12 SKIPPED AT THE PRODUCER: the printed 2 counters reach the interpreter as 2 HP instead of 20.** The family's standing row — arms 22, 23, 23a, 23b and 25 all convert here, and the interpreter never sees the printed unit. Scaled by the pile it reads 6 where the card prints 60, a number small enough to look like a rounding decision.",
+    file: "packages/engine/src/effects.ts",
+    find: "          amount: pileCounters * 10,",
+    replace: "          amount: pileCounters,",
+    expectKilledBy: ["packages/engine/src/counterScaledPileShuffle.test.ts"],
+  },
+  {
+    id: "D538-printed-zero-guard-relaxed",
+    decision: "D538",
+    what: "🛑 (h) **THE PRINTED-ZERO FLOOR RELAXED, `>= 1` → `>= 0`.** A printed 0 then derives to a placement of nothing that still opens a pick — the family's own guard, which every arm here carries for the same reason: leave it loud rather than park the attacker on a choice with no possible outcome.",
+    file: "packages/engine/src/effects.ts",
+    find: "      pileCounters >= 1 &&",
+    replace: "      pileCounters >= 0 &&",
+    expectKilledBy: ["packages/engine/src/counterScaledPileShuffle.test.ts"],
+  },
+  {
+    id: "D538-energy-noun-guard-dropped",
+    decision: "D538",
+    what: "🛑 (i) **THE `basicEnergy` GUARD DROPPED — THE ANAPHORA UNMADE.** The printed tail says *\"those **Energy** cards\"*, so a head noun resolving to anything else cannot be the population it shuffles; without the guard a derived *\"for each Basic {G} Pokémon in your discard pile…\"* would shuffle POKÉMON into the deck under a clause naming Energy. 0 printings today, which is why the guard is DRIVEN rather than trusted (D190b: a guard nothing reaches is a guard nobody can trust).",
+    file: "packages/engine/src/effects.ts",
+    find: "      pileFilter !== undefined &&\n      // 🛑 THE ANAPHORA MADE MECHANICAL. The tail says \"those ENERGY cards\", so a head\n      // noun that is not a Basic Energy card cannot be the population it shuffles.\n      // Nothing downstream re-checks it and a derived \"for each Trainer card …\" would\n      // put Trainers into the deck under a caption naming Energy — `searchDeck`'s\n      // upstream-guard precedent, one op over. 0 printings today, refused to the loud\n      // ATTACK_EFFECT_SKIPPED path and driven as a near miss.\n      pileFilter.kind === \"basicEnergy\"",
+    replace: "      pileFilter !== undefined",
+    expectKilledBy: ["packages/engine/src/counterScaledPileShuffle.test.ts"],
+  },
+  {
+    id: "D538-deals-set-on-the-placement",
+    decision: "D538",
+    what: "🛑 (j) **`deals: true` ON A PLACEMENT — arm 23b's stated hazard, with more reach.** These are PLACED counters, so an Active pick must route through `damageActive` (flat, §11-gated) instead of `snipeActive`'s full §8.5 pipeline; `deals` DOUBLES the placement on a Weakness and cuts it on a Resistance, against this engine's standing D138/D139 ruling. The rider makes the board that shows it bigger, not different.",
+    file: "packages/engine/src/effects.ts",
+    find: "          source: \"attack\",\n          // The printed \"for each …\" as a PAYLOAD and not a flag: the multiplier is a",
+    replace: "          source: \"attack\",\n          deals: true,\n          // The printed \"for each …\" as a PAYLOAD and not a flag: the multiplier is a",
+    expectKilledBy: ["packages/engine/src/counterScaledPileShuffle.test.ts"],
+  },
+  {
+    id: "D538-singular-map-becomes-plural",
+    decision: "D538",
+    what: "🛑 (k) **D523's ARM COPIED BLIND: the PLURAL map and `plural: true`.** `typedNounFilter` WELDS the grammatical number, and the printed noun here is SINGULAR (*\"for each Basic {G} Energy **card**\"*), so the plural spelling resolves NOTHING and the whole sentence falls to the loud `ATTACK_EFFECT_SKIPPED` path. Both identifiers bind in this file, which is exactly why the mistake is available to an author reading the sibling arm.",
+    file: "packages/engine/src/effects.ts",
+    find: "    const pileFilter = HAND_SEARCH_SINGULAR.get(pileNoun) ?? typedNounFilter(pileNoun, false);",
+    replace: "    const pileFilter = HAND_SEARCH_PLURAL.get(pileNoun) ?? typedNounFilter(pileNoun, true);",
+    expectKilledBy: ["packages/engine/src/counterScaledPileShuffle.test.ts"],
+  },
+  {
+    id: "D538-anchor-loses-its-dollar",
+    decision: "D538",
+    what: "🛑 (l) **THE TAIL `$` DROPPED, so the anchor claims any sentence this one PREFIXES** and the reader silently discards whatever followed. Every sibling in this family is a whole-sentence `^…$` for exactly this reason — arm 23b's own block calls the `$` *\"the whole safety property\"* — and this sentence sits between two real catalog rows that share its opening eight words.",
+    file: "packages/engine/src/effects.ts",
+    find: "  /^Put (\\d+) damage counters on 1 of your opponent['’]s Pokémon for each (.+) in your discard pile\\. Then, shuffle those Energy cards into your deck\\.$/;",
+    replace: "  /^Put (\\d+) damage counters on 1 of your opponent['’]s Pokémon for each (.+) in your discard pile\\. Then, shuffle those Energy cards into your deck\\./;",
+    expectKilledBy: ["packages/engine/src/counterScaledPileShuffle.test.ts"],
+  },
+  {
+    id: "D538-anchor-apostrophe-straightened",
+    decision: "D538",
+    what: "🛑 (m) **THE `['’]` CLASS COLLAPSED TO THE STRAIGHT MARK.** The catalog prints both forms and this engine has paid for the half-fix twice (D136/D137); the rung that catches it asserts EQUALITY of the two derived programs rather than non-nullity, because a non-null check passes on a reader that folded the curled sentence into some other row.",
+    file: "packages/engine/src/effects.ts",
+    find: "  /^Put (\\d+) damage counters on 1 of your opponent['’]s Pokémon for each (.+) in your discard pile\\. Then, shuffle those Energy cards into your deck\\.$/;",
+    replace: "  /^Put (\\d+) damage counters on 1 of your opponent's Pokémon for each (.+) in your discard pile\\. Then, shuffle those Energy cards into your deck\\.$/;",
+    expectKilledBy: ["packages/engine/src/counterScaledPileShuffle.test.ts"],
+  },
+  {
+    id: "D538-fold-reads-the-opponents-pile",
+    decision: "D538",
+    what: "🛑 (n) **THE FOLD READS `otherSeat(ctx.seat)` — the printed *\"your\"* becomes *\"your opponent's\"*.** `otherSeat` IS bound in this file and is used eighteen lines down in this very function, so this is a neighbour's real line rather than a straw. The corpus prints BOTH readings (the `×` folds over an opponent's pile, `effects.ts`'s two D440 anchors), so nothing downstream could tell them apart; §3 stocks both piles at different sizes for this row alone.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "    return op.amount * countCardsInDiscardPile(state, ctx.seat, op.perDiscardPileCard);",
+    replace: "    return op.amount * countCardsInDiscardPile(state, otherSeat(ctx.seat), op.perDiscardPileCard);",
+    expectKilledBy: ["packages/engine/src/counterScaledPileShuffle.test.ts"],
+  },
+  {
+    id: "D538-fold-ignores-the-filter",
+    decision: "D538",
+    what: "🛑 (o) **THE FOLD COUNTS THE PILE'S LENGTH INSTEAD OF WALKING IT THROUGH THE FILTER.** The printed noun stops meaning anything and every card in the pile scales the placement. It is right on a pile that happens to hold nothing else, which is why §3's canonical pile carries five decoys in three classes and reads a different number under every widening.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "    return op.amount * countCardsInDiscardPile(state, ctx.seat, op.perDiscardPileCard);",
+    replace: "    return op.amount * state.players[ctx.seat].discard.length;",
+    expectKilledBy: ["packages/engine/src/counterScaledPileShuffle.test.ts"],
+  },
+  {
+    id: "D538-rider-checked-too-late",
+    decision: "D538",
+    what: "🛑 (p) **THE NEW BRANCH MOVED BELOW `if (op.perEnergyOnSelf !== true) return op.amount;`.** That line returns UNCONDITIONALLY for every op carrying this rider, so the branch becomes dead code and the card deals a FLAT `amount` — the same board `D538-scale-rider-dropped` produces, reached from the interpreter instead of from the deriver. The two rows are different experiments at different seams and both are needed: one proves the arm emits the rider, the other proves the fold reads it.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  if (op.perDiscardPileCard !== undefined)\n    return op.amount * countCardsInDiscardPile(state, ctx.seat, op.perDiscardPileCard);\n  if (op.perEnergyOnSelf !== true) return op.amount;",
+    replace: "  if (op.perEnergyOnSelf !== true) return op.amount;\n  if (op.perDiscardPileCard !== undefined)\n    return op.amount * countCardsInDiscardPile(state, ctx.seat, op.perDiscardPileCard);",
+    expectKilledBy: ["packages/engine/src/counterScaledPileShuffle.test.ts"],
+  },
+  {
+    id: "D538-forced-branch-takes-one",
+    decision: "D538",
+    what: "🛑 (q) **THE FORCED RETRIEVAL TAKES ONE CANDIDATE INSTEAD OF ALL OF THEM.** `max: \"all\"` is the printed *\"those\"*, and a branch that moves the first match files a perfectly well-formed `DISCARD_RETRIEVED` row naming one uid. Invisible on any pile holding exactly one match, and it leaves the rest of the printed population in the discard while the shuffle still fires.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "        const forced = retrieveMove(state, candidates, op.dest, ctx, events);",
+    replace: "        const forced = retrieveMove(state, candidates.slice(0, 1), op.dest, ctx, events);",
+    expectKilledBy: ["packages/engine/src/counterScaledPileShuffle.test.ts"],
   },
 ];

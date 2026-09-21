@@ -206,8 +206,19 @@ describe("§1 — three sentences, five printings, and the class is CLOSED", () 
     // 🆕🆕🆕 D501 — TWO BECAME ONE AND FOUR BECAME THREE (corpus FILE LINE 685,
     // 1 sentence / 1 printing, so the two steps AGREE this time — read off the corpus,
     // not assumed from the row being singular).
-    expect(unread).toHaveLength(1);
-    expect(unread.reduce((sum, [n]) => sum + n, 0)).toBe(3);
+    // 🆕🛑 **D538 — ONE BECAME ZERO AND THREE BECAME ZERO; THE PLACEMENT FAMILY IS
+    // CLOSED.** An EMPTY `unbuilt` makes every `not.toContain` below VACUOUSLY TRUE
+    // (D536's `ownerPrefix.test.ts` finding), so the load-bearing claim is re-pointed
+    // onto the POSITIVE and asserted FIRST: all 19 sentences / 38 printings of this
+    // family resolve through the reader surface. The bullets below are KEPT, each still
+    // naming WHICH row left and why (D418), but they are no longer what reddens.
+    expect(family.every(([, t]) => resolvedByAnyReader(t))).toBe(true);
+    expect(family.filter(([, t]) => resolvedByAnyReader(t))).toHaveLength(19);
+    expect(
+      family.filter(([, t]) => resolvedByAnyReader(t)).reduce((sum, [n]) => sum + n, 0),
+    ).toBe(38);
+    expect(unread).toHaveLength(0);
+    expect(unread.reduce((sum, [n]) => sum + n, 0)).toBe(0);
     const unbuilt = unread.map(([, t]) => t);
     for (const s of [BENCH_100, ACTIVE_50, ACTIVE_10]) expect(unbuilt).not.toContain(s);
 
@@ -271,13 +282,22 @@ describe("§1 — three sentences, five printings, and the class is CLOSED", () 
         "During your opponent's next turn, if this Pokémon is damaged by an attack (even if this Pokémon is Knocked Out), put damage counters on the Attacking Pokémon equal to the damage done to this Pokémon.",
       ),
     );
-    // (c) THE SCALED TWIN — 3 printings, and now the largest unread row in the family
-    //     again. RE-MEASURED at this head rather than inherited: the count is a
-    //     `{kind: "cardsInDiscardPile", …}` PAYLOAD no rider carries, and the tail has
-    //     no reader.
-    expect(unbuilt).toContain(
+    // (c) THE SCALED TWIN — 3 printings, and it was the largest unread row in the family
+    //     until D538. 🆕🆕🆕 **BUILT AT D538 AS ARM 23b-bis**, which answers BOTH of the
+    //     reasons this bullet gave at once: the `{kind: "cardsInDiscardPile", …}` count
+    //     is carried as the PAYLOAD rider `damageChosen.perDiscardPileCard`, and the
+    //     readerless tail is `discardPileRetrieval { max: "all" }` + `shuffleDeck`. The
+    //     rung INVERTS rather than being deleted (D418), and the TAIL-ALONE nullity
+    //     SURVIVES unchanged — the anchor is whole-sentence, so no reader takes the tail
+    //     by itself, and that is the half of the old claim still doing work.
+    expect(unbuilt).not.toContain(
       "Put 2 damage counters on 1 of your opponent's Pokémon for each Basic {G} Energy card in your discard pile. Then, shuffle those Energy cards into your deck.",
     );
+    expect(
+      deriveAttackEffect(
+        "Put 2 damage counters on 1 of your opponent's Pokémon for each Basic {G} Energy card in your discard pile. Then, shuffle those Energy cards into your deck.",
+      )?.map((o) => o.op),
+    ).toEqual(["damageChosen", "discardPileRetrieval", "shuffleDeck"]);
     expect(deriveAttackEffect("Then, shuffle those Energy cards into your deck.")).toBeNull();
     // (d) THE CONFUSION SUBSTITUTION — 1 printing. Not a placement at all: it RAISES the
     //     Checkup's own per-condition amount, a status field reached by a status op.
@@ -548,7 +568,7 @@ describe("§3 — a NEW `EffectOp` inhabitant, and the record version does not m
   });
 
   it("the engine version moved and the record version did not", () => {
-    expect(engineVersion).toBe("0.422.0");
+    expect(engineVersion).toBe("0.423.0");
   });
 });
 

@@ -2853,7 +2853,14 @@ different verb.
 
 **So: write the "cannot see" sentence as a QUERY YOU RAN, never as a list you thought
 of.** Two of the three negatives in that comment were true; the one that was not was
-about the family's biggest row. (The case-sensitivity half is the same lesson at one
+about the family's biggest row.
+🆕 **D538 BUILT THAT ROW**, so the example is now a HISTORY rather than a live residue
+quote — corrected in place rather than deleted, because the lesson is about the QUERY and
+not about the row's status. Arm 23b-bis claims it whole as `damageChosen
+{ perDiscardPileCard }` + `discardPileRetrieval { max: "all" }` + `shuffleDeck`, and the
+sentence that D448's shortened query found is exactly the one that closed the placement
+family (19 sentences / 38 printings, all read). The rule stands unchanged: the row was
+found by RE-RUNNING a narrower literal, and it was the largest in its class. (The case-sensitivity half is the same lesson at one
 character: `t.includes("for each")` reports NINE where `/for each/i` reports TEN, because
 one member opens the sentence with *"For each…"*.)
 

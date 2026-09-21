@@ -20025,6 +20025,103 @@ import type { GameState, Seat } from "./types";
     `expect(manifest.version)`, `it(…)` titles, the declaration and `package.json` —
     **not** as a value-keyed grep — because a value-keyed grep is precisely the mechanism
     that ate D500's heading.)
+    🆕🆕🆕 engineVersion 0.422.0 → **0.423.0** (D538 — THE COUNTER PLACEMENT WHOSE AMOUNT IS A
+    PAYLOAD, AND WHOSE TAIL SHUFFLES THE VERY CARDS THE AMOUNT COUNTED. `censusAttackCorpus.ts`
+    **FILE LINE 412** (`legalAttackCorpus()` index 359, leading count column `3`) — *"Put 2
+    damage counters on 1 of your opponent's Pokémon for each Basic {G} Energy card in your
+    discard pile. Then, shuffle those Energy cards into your deck."*, **1 sentence / 3 legal
+    printings**. ⚠️ **NO CARD ID IS RESOLVED FOR THIS SENTENCE ON THIS CHECKOUT AND THAT WAS
+    MEASURED** — a whole-repo `git grep -F` for the sentence at this head returned the corpus row
+    and the placement family's refusal rows and nothing claiming an id or a name (this file's D373
+    name-only block included) — so the suite rides the FILE-LOCAL DECLARED demonstrator
+    `d538-pile-sniper` (D425), D536's stale-population lesson run as a procedure for the second
+    slice running.
+    ONE new whole-sentence anchor `COUNTER_PUT_SCALED_BY_PILE`, declared with the counter-put
+    family — no /i, `^…$`, TWO captures (the count and the NOUN), and ONE `['’]` slot, which is
+    two fewer than D537's and is COUNTED off the printed bytes rather than assumed. ONE new arm
+    **23b-bis** immediately above arm 23b, with the ordering argument RE-MEASURED rather than
+    copied: both anchors are `^…$` and arm 23b's requires `Pokémon\.$` at exactly the offset where
+    this sentence continues *" for each"*, so neither can claim the other's string in EITHER
+    ORDER — which makes the placement a readability choice and not a correctness one, driven in
+    both directions against arm 23b and against arm 25's compound.
+    🛑 **ONE `CardFilter`, TWO OPS, BOUND ONCE — THE WHOLE MECHANISM, AND THE WHOLE HAZARD.**
+    The head counts *"Basic {G} Energy card"*s in the controller's pile; the tail's *"those Energy
+    cards"* is a CROSS-CLAUSE REFERENCE to that same population. The filter is resolved once and
+    handed to both ops, and the suite asserts it by IDENTITY rather than by shape, because a build
+    that narrows one and widens the other deals the RIGHT damage and shuffles the WRONG cards with
+    nothing in any log row to show it.
+    🛑 **THE RESOLUTION USES THE *SINGULAR* MAP, AND THE FLIP IS LOAD-BEARING.**
+    `HAND_SEARCH_SINGULAR.get(noun) ?? typedNounFilter(noun, false)` — D523's spelling one family
+    over with the grammatical NUMBER flipped, because the printed noun is singular
+    (*"… Energy **card**"*). `typedNounFilter` WELDS the number, so copying D523's
+    `HAND_SEARCH_PLURAL`/`true` blind would have derived NOTHING and dropped the sentence on the
+    loud skip path. Driven from both sides: the plural spelling of this sentence derives null.
+    ⚠️ **AND THE HEAD NOUN IS GUARDED TO `filter.kind === "basicEnergy"` — THE ANAPHORA MADE
+    MECHANICAL.** The tail says *"those **Energy** cards"*, so a head noun resolving to anything
+    else cannot be what the sentence shuffles; a derived *"for each a Trainer card …"* would put
+    Trainers into the deck under a caption naming Energy. 0 printings today, refused to the loud
+    `ATTACK_EFFECT_SKIPPED` path (D190b) and DRIVEN through a real attack rather than through the
+    deriver alone.
+    THE PROGRAM IS THREE OPS IN PRINTED ORDER and 🛑 **THE ORDER IS THE MECHANISM**: the fold
+    reads the pile, so a retrieval in front of the placement empties it, folds the amount to 0,
+    ends `damageChosen` before it asks, and places NOTHING under a log that reads exactly right.
+    That is `D538-program-order-swapped`, the sharpest row this slice declares.
+    TWO TYPE CHANGES, BOTH WIDENINGS AND NEITHER A NEW MEMBER. (1) `damageChosen` gains
+    `perDiscardPileCard?: CardFilter` — the FIFTH rider and the first that carries a PAYLOAD
+    rather than a flag, declared beside `perRecorded` (an ADDRESS, `undefined`-absent, not a
+    boolean) because a population is not spellable as `true`. (2) `discardPileRetrieval.max`
+    widens `number` → `number | "all"`, a HOUSE LITERAL re-read at this head rather than
+    inherited: `damageChosen.count: number | "all"`, `moveEnergy.max: number | "any" | "all"`,
+    `searchDeck.max: number | "any" | "yourBenchCount"`, `lookAtTopN.max` and `attachFromTop.max`
+    are the five precedents.
+    🛑 **`max: "all"` IS THE ONE VALUE OF THAT FIELD THAT DOES NOT PARK**, and the *"up to →
+    parks"* doctrine on the op and in `stepOp` is corrected in place to say so (D178/D442/D466
+    step 3). The clause prints no quantifier and is MANDATORY: a `min === max === candidates.length`
+    park would be a question with exactly one answer (D537's M1 no-choice rule), and the shipped
+    `min: 0` park — whose own comment reads *"up to" — taking none is a legal answer* — would let
+    the player DECLINE a compulsory clause (D435's plausible-looking wrong board). The forced
+    branch sits ABOVE the two `retrieveMax` lines so control-flow narrowing leaves them
+    BYTE-IDENTICAL, which keeps `D237-bench-clamp-dropped-at-the-park` from rotting — VERIFIED
+    with `precheck` rather than trusted, and pinned by a rung that quotes the two lines.
+    🛑 **`MATCH_RECORD_VERSION` HOLDS AT 30 AND **BOTH** DOORS ARE MEASURED (D450).** The op
+    PARKS, so `"perDiscardPileCard":{"kind":"basicEnergy","energyType":"Grass"}` rides
+    `phase.cont.pendingOp`; the program is three ops, so `"max":"all"` rides `phase.cont.rest`.
+    **The serialized alphabet GROWS** — stated, not claimed away — and 30 holds because no v30
+    deploy can author either byte and every byte a v30 deploy did write still means what it meant:
+    a NEW OPTIONAL KEY whose absence means what it always meant (D125; `perEnergyOnSelf` and
+    `perRecorded` both landed at 29 through this door) and a PURE ADDITION to a value domain
+    (D333's `lookAtTopN.max:"any"`, D527's `searchDeck.max:"yourBenchCount"`). Neither is D359's
+    RENAME. Driven over the SERIALIZED BYTES in THREE directions, the LOSS direction included.
+    🛑 **A DECIDED DISCREPANCY, PINNED AND DRIVEN RATHER THAN GLOSSED (D421).** With no
+    matching card the fold is 0, `damageChosen` returns before asking, the retrieval whiffs — and
+    the trailing `shuffleDeck` STILL takes an RNG draw and files a `SHUFFLE` row for a shuffle the
+    card did not print. KEPT, because it is D523's shipped posture one arm down (a DECLINED
+    *"Shuffle up to 3 …"* files the same row) and `searchDeck`'s since the Nest Ball pattern; made
+    conditional it would be a second reading of the word *"Then,"* and a divergence between two
+    arms emitting one printed clause.
+    NINE REFUSAL SUITES INVERTED AND NONE DELETED (D418/D465/D488). Every one is re-pointed onto
+    the OP the row went to rather than decremented in silence, and ⚠️ **TWO OF THE NEAR-MISS
+    ARRAYS ARE READ BY INDEX AND THE ROW WAS NOT LAST** — `counterSpread`'s closed `.slice(2, 6)`
+    is re-derived from the rows it must EXCLUDE (D501's silent-index-shift class, already paid once
+    in that family). 🛑 **AND THE PLACEMENT FAMILY IS NOW CLOSED, WHICH MAKES THREE SECTIONS
+    VACUOUS AT ONCE** — `counterFold`, `counterUntilHp` and `counterPutChosen` §1 all lose their
+    last unbuilt row, so every `not.toContain` in them becomes trivially true (D536's
+    `ownerPrefix.test.ts` finding at full force). All three are RE-POINTED ONTO THE POSITIVE:
+    all 19 sentences / 38 printings of `/put \d* ?damage counters/i` resolve, asserted first, with
+    the annotated bullets kept beneath.
+    Census, MEASURED head-vs-after: `BUILT.attack` 1659 → **1662**; reader arm 562/1608 →
+    **563/1611**; `640 = 589 + 51` → **590 + 50**; residue 51/73 → **50/70**; raw residue 78/124
+    → **77/121**. ⚠️ **SENTENCE STEP 1, PRINTING STEP 3 — THE FOURTH CONSECUTIVE SLICE WHOSE
+    TWO STEPS DISAGREE** (D535 1-vs-2, D536 1-vs-3, D537 1-vs-2), so the D426 pin sweep carried a
+    `− 1` term on SENTENCE chains and a `− 3` on PRINTING chains, FRONT TERMS ONLY. ⚠️ **AND
+    THE BRIEF'S `OPAQUE` PREDICTION WAS WRONG AND IS RECORDED AS WRONG**: it predicted
+    `OPAQUE` 36/53 → 35/51, and the row was never OPAQUE — measured in a detached worktree at
+    HEAD, it is **PHRASE-18** (1 sentence / 3 printings) at both `SUBMAX=4` and `SUBMAX=12`, so
+    `OPAQUE` is **36/53 UNMOVED** at SUBMAX=4 and **20/31 UNMOVED** at SUBMAX=12 and it is
+    PHRASE-18 that disappears. `SPLIT_ATTACK_UNITS` 14 and `COMPOUND_ATTACK_UNITS` 21 UNMOVED,
+    re-measured: the whole-sentence anchor leaves `deriveAttackEffect(tail)` null, so
+    `splitAttackTrailingClause` still returns null on it. `attackReaderSurface()` stays **13** — a
+    new ARM is not a new READER.)
     🆕🆕🆕 engineVersion 0.421.0 → **0.422.0** (D537 — KEEP THREE, SHUFFLE THE REST: THE ONLY
     SENTENCE IN THIS CORPUS WHOSE PICK NAMES THE BODIES THAT **STAY**. `censusAttackCorpus.ts`
     **FILE LINE 84** (`legalAttackCorpus()` index 31, leading count column `2`) — *"Choose 3 of
@@ -22908,7 +23005,7 @@ import type { GameState, Seat } from "./types";
     WITNESS** — the count was re-derived every slice and the word *"three"* was carried.
     A successor of this slice inherits **81 / 61 / 17** again, over **FIVE** history
     occurrences: those four plus `deckMillFilteredScale.test.ts`'s own header arrow.) */
-export const engineVersion = "0.422.0";
+export const engineVersion = "0.423.0";
 
 export type {
   ApplyResult,

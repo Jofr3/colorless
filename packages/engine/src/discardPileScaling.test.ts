@@ -584,12 +584,40 @@ describe("§2 — the two anchors, the vocabulary, and the seat/fold confound", 
     // of by count. **The one genuine refusal left is `ANCIENT_PILE`** — DATA-BLOCKED
     // permanently, because no catalog column classifies the banner — plus the
     // counter-placement compound, which is not this family at all.
-    for (const text of [ANCIENT_PILE, COUNTER_PLACEMENT_PILE]) {
+    // 🆕🆕🆕 **D538 TOOK `COUNTER_PLACEMENT_PILE` OUT OF THIS LIST TOO, AND IT WENT RED
+    // HERE BY NAME** — the third row in three slices to leave a `for` over named
+    // constants rather than a count (D508, D510, now D538). **The one genuine refusal
+    // left in this family is `ANCIENT_PILE`**, data-blocked permanently because no
+    // catalog column classifies the banner.
+    for (const text of [ANCIENT_PILE]) {
       expect(deriveAttackDamageBonus(text)).toBeNull();
       expect(deriveAttackDamageMultiplier(text)).toBeNull();
       for (const reader of OTHERS) expect(reader(text)).toBeNull();
       expect(resolvedByAnyReader(text)).toBe(false);
     }
+    // 🛑 **AND THE COUNTER-PLACEMENT COMPOUND IS STILL NOT A DAMAGE FOLD, WHICH IS THE
+    // HALF OF THE OLD CLAIM THAT SURVIVES AND IS NOW THE LOAD-BEARING ONE.** D538 claims
+    // it through `deriveAttackEffect` (arm 23b-bis, a three-op program whose amount rider
+    // is `damageChosen.perDiscardPileCard`), NOT through either of this file's two
+    // damage readers and not through any of the eleven OTHERS. So the nullities are
+    // KEPT verbatim (D418: re-point, never delete) and only `resolvedByAnyReader`
+    // inverts — which is exactly the discrimination this rung exists for: a reader in
+    // THIS family widened to swallow the placement compound still reddens here.
+    expect(deriveAttackDamageBonus(COUNTER_PLACEMENT_PILE)).toBeNull();
+    expect(deriveAttackDamageMultiplier(COUNTER_PLACEMENT_PILE)).toBeNull();
+    // The owner is NAMED and the other ten are still refused one by one — the same
+    // thirteen-way shape the five claimed rows above are asserted through, with the one
+    // reader that took it lifted out by identity rather than the loop weakened.
+    for (const reader of OTHERS.filter((r) => r !== deriveAttackEffect)) {
+      expect(reader(COUNTER_PLACEMENT_PILE)).toBeNull();
+    }
+    expect(OTHERS.filter((r) => r !== deriveAttackEffect)).toHaveLength(10);
+    expect(resolvedByAnyReader(COUNTER_PLACEMENT_PILE)).toBe(true);
+    expect(deriveAttackEffect(COUNTER_PLACEMENT_PILE)?.map((o) => o.op)).toEqual([
+      "damageChosen",
+      "discardPileRetrieval",
+      "shuffleDeck",
+    ]);
   });
 
   it("🛑 no splitter composes on any of the eight, before OR after this slice", () => {
@@ -908,6 +936,6 @@ describe("§6 — `MATCH_RECORD_VERSION` STAYS 29, driven in both directions", (
   });
 
   it("the engine version moved with the behaviour", () => {
-    expect(engineVersion).toBe("0.422.0");
+    expect(engineVersion).toBe("0.423.0");
   });
 });

@@ -143,7 +143,7 @@ describe("§1 — the two printed sentences, and what the placement family still
     expect(attackReaderSurface()).toHaveLength(13);
   });
 
-  it("🛑 the PLACEMENT family, and the TWO rows it still refuses, each for its own reason", () => {
+  it("🛑 the PLACEMENT family, now CLOSED — the positive, and every departure by name", () => {
     // THE PATTERN, PUBLISHED SO ITS EDGES ARE VISIBLE (D424/D425): every corpus sentence
     // whose ACTION is putting damage counters — `/put \d* ?damage counters/i`, case
     // INSENSITIVE and with the count OPTIONAL, which is the loosest plausible shape.
@@ -184,10 +184,24 @@ describe("§1 — the two printed sentences, and what the placement family still
     // 1 sentence / 1 printing, so the two figures AGREE this time after disagreeing in
     // each of the two slices above — read off the corpus rather than assumed from the
     // row being singular (D451/D461/D464).
-    expect(unbuilt).toHaveLength(1);
+    // 🆕🛑 **D538 — ONE BECAME **ZERO** AND THREE BECAME ZERO: THIS FAMILY IS NOW
+    // CLOSED, AND THAT MAKES EVERY `not.toContain` IN THIS SECTION VACUOUSLY TRUE.**
+    // D536's `ownerPrefix.test.ts` finding at full force — a length-0 table asserts
+    // nothing, and there are eight annotated `not.toContain` bullets below this line.
+    // So the load-bearing claim is RE-POINTED ONTO THE POSITIVE and asserted first:
+    // every one of the 19 sentences / 38 printings this pattern matches resolves through
+    // the reader surface. The bullets are KEPT (D418 — a refusal that was SPENT is the
+    // most useful kind to be able to read back), and each one that names a row still
+    // pins the OP that row went to, which is the part that can still redden.
+    expect(family.every(([, t]) => resolvedByAnyReader(t))).toBe(true);
+    expect(family.filter(([, t]) => resolvedByAnyReader(t))).toHaveLength(19);
+    expect(
+      family.filter(([, t]) => resolvedByAnyReader(t)).reduce((sum, [n]) => sum + n, 0),
+    ).toBe(38);
+    expect(unbuilt).toHaveLength(0);
     expect(
       family.filter(([, t]) => !resolvedByAnyReader(t)).reduce((sum, [n]) => sum + n, 0),
-    ).toBe(3);
+    ).toBe(0);
 
     // (a) THE SCALED TWIN — corpus line 412, **3 printings**, the largest unbuilt row in
     //     this family and this slice's own nearest neighbour: `BARE` with a count clause
@@ -198,9 +212,26 @@ describe("§1 — the two printed sentences, and what the placement family still
     //     carries — and the tail *"Then, shuffle those Energy cards into your deck."*
     //     has no reader and the sentence has no splitter, measured directly below.
     //     Refused on the PAYLOAD and on the TAIL, and no longer on the verb.
+    //     🆕🆕🆕 **D538 SPENT BOTH REMAINING REASONS AT ONCE AND THE ROW IS BUILT.** The
+    //     PAYLOAD is carried rather than collapsed — `damageChosen.perDiscardPileCard`
+    //     is a `CardFilter`, the fifth rider and the first that is not a flag — and the
+    //     TAIL is `discardPileRetrieval { filter, dest: "deck", max: "all" }` followed by
+    //     `shuffleDeck`, the SAME filter object the head counted. Arm 23b-bis, corpus
+    //     line 412, 3 printings. The rung INVERTS (D418: re-point, never delete) and the
+    //     two HALF-sentence nullities below it SURVIVE UNCHANGED — they are the claim
+    //     that the anchor is WHOLE-SENTENCE, which is still true and still the thing a
+    //     split reader would break.
     const SCALED_TWIN =
       "Put 2 damage counters on 1 of your opponent's Pokémon for each Basic {G} Energy card in your discard pile. Then, shuffle those Energy cards into your deck.";
-    expect(unbuilt).toContain(SCALED_TWIN);
+    expect(unbuilt).not.toContain(SCALED_TWIN);
+    expect(deriveAttackEffect(SCALED_TWIN)?.map((o) => o.op)).toEqual([
+      "damageChosen",
+      "discardPileRetrieval",
+      "shuffleDeck",
+    ]);
+    // …and it is NOT this section's own program: the head shares `BARE`'s first eight
+    // words, so the inequality is what a reader widened past the count clause reddens on.
+    expect(deriveAttackEffect(SCALED_TWIN)).not.toEqual(deriveAttackEffect(BARE));
     // the head alone and the tail alone are BOTH unread — so even a collapsed rider
     // leaves the sentence unclaimed, because a whole-sentence anchor must read both.
     expect(
@@ -661,7 +692,7 @@ describe("§3 — a new PRODUCER of a shipped literal, and the record version do
   });
 
   it("the engine version moved", () => {
-    expect(engineVersion).toBe("0.422.0");
+    expect(engineVersion).toBe("0.423.0");
   });
 });
 

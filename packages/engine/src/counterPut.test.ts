@@ -64,6 +64,13 @@ import {
     distinct clauses; the ones whose ACTION is putting counters are 24 / 15; the
     ones aimed at "your opponent's Active Pokémon" are 4 / 4, and these are two of
     them. The other two read their amount off the TARGET (see NEAR_MISSES). */
+/** 🆕🆕🆕 D538 — corpus FILE LINE 412, **3 legal printings**. It sat in `NEAR_MISSES`
+    from D450 to D537 on the TARGET axis (this anchor names the Active; that sentence
+    opens an any-zone pick); D538 MAPPED it as arm 23b-bis, so the claim about it is an
+    INEQUALITY of derived programs plus the positive rather than a nullity. */
+const SCALED_PILE_TWIN =
+  "Put 2 damage counters on 1 of your opponent's Pokémon for each Basic {G} Energy card in your discard pile. Then, shuffle those Energy cards into your deck.";
+
 const CLAUSES = [
   { id: "sv02-097", card: "Mimikyu", attack: "Ghost Eye", index: 0, counters: 7, hp: 70 },
   { id: "sv03-098", card: "Polteageist", attack: "Pour Tea", index: 1, counters: 5, hp: 50 },
@@ -166,7 +173,14 @@ const NEAR_MISSES = [
   // note above). The replacement is the SCALED TWIN, **3 legal printings** and the largest unread row left in the placement family: this anchor's verb and count at an any-zone PICK, refused on a count payload no rider carries and on a tail with no reader. The sentence it replaced is not gone from this
   // file: the claim about it is now an INEQUALITY of derived programs below the loop,
   // which is D418's second half and strictly stronger than the `toBeNull` it had.
-  "Put 2 damage counters on 1 of your opponent's Pokémon for each Basic {G} Energy card in your discard pile. Then, shuffle those Energy cards into your deck.",
+  // 🆕🆕🆕 **D538 — AND THE SCALED TWIN HAS NOW LEFT THIS SLOT THE SAME WAY, WITNESS
+  // MOVED RATHER THAN DELETED (the standing note above).** Corpus line 412 is claimed
+  // WHOLE by arm 23b-bis as a THREE-op program, so the `toBeNull` loop below would go
+  // RED on it; the claim is re-pointed below the loop as an INEQUALITY of derived
+  // programs plus the positive (D465/D488 — name the OP, never just decrement). The
+  // axis the slot held it for survives intact: this anchor names the ACTIVE alone where
+  // that sentence opens an any-zone PICK, and the inequality reddens on a reader widened
+  // past the target noun where a nullity only ever reddened on the count clause.
   "Put 1 damage counter on each of your opponent's Pokémon for each of your Maushold in play.",
   // ⚠️ RE-POINTED AT D450 — this slot held the windowed opponent-side fold (corpus line 414), which D450 MAPPED (arms 23d/23e/23f
   // over `counterEachAll`), so the witness MOVED rather than being deleted (the standing
@@ -370,7 +384,7 @@ describe("the anchor — 2 printings, 2 clauses, one regex with one (\\d+) captu
     );
   });
 
-  it("refuses the EIGHT real catalog rows that share its words", () => {
+  it("refuses the SEVEN real catalog rows that share its words", () => {
     for (const text of NEAR_MISSES) {
       expect(deriveAttackEffect(text)).toBeNull();
     }
@@ -427,6 +441,20 @@ describe("the anchor — 2 printings, 2 clauses, one regex with one (\\d+) captu
     expect(deriveAttackEffect("Put 10 damage counters on your opponent's Active Pokémon.")).toEqual([
       { op: "damageActive", amount: 100, source: "attack" },
     ]);
+
+    // 🆕🆕🆕 **D538 — THE SCALED TWIN, THE ROW THAT LEFT THIS LIST THIS SLICE, AS AN
+    // INEQUALITY PLUS THE POSITIVE.** Arm 23b-bis claims corpus line 412 whole. The
+    // difference this rung pins is the one the slot existed for: this anchor derives
+    // ONE op aimed at the ACTIVE, that sentence derives THREE and its first op opens a
+    // PICK over the whole board. A reader widened past the target noun would collapse
+    // them and redden here.
+    expect(deriveAttackEffect(SCALED_PILE_TWIN)).not.toEqual(deriveAttackEffect(clauseText(2)));
+    expect(deriveAttackEffect(SCALED_PILE_TWIN)?.map((o) => o.op)).toEqual([
+      "damageChosen",
+      "discardPileRetrieval",
+      "shuffleDeck",
+    ]);
+    expect(NEAR_MISSES).toHaveLength(7);
 
     // 🆕 D345 — AND THE RE-POINTED WITNESS IS STILL UNMAPPED, DRIVEN RATHER THAN
     // WRITTEN DOWN. `NEAR_MISSES[8]` was Dusknoir's "Cursed Blast" until this slice

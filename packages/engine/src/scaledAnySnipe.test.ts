@@ -346,13 +346,59 @@ describe("§1 — the two printed sentences, and what they cost the residue", ()
     //     ⚠️ **AND THE NEW EXPIRY DATE IS THE TAIL RATHER THAN THE VERB**: the head
     //     ALONE and the tail ALONE are both asserted unread here, so a slice that builds
     //     either one reddens this rung and re-asks the collapse's price.
+    //     🆕🛑 **D538 — THAT EXPIRY DATE FIRED AND REASONS (ii) AND (iii) ARE BOTH SPENT.
+    //     ALL THREE OF THIS BULLET'S REASONS ARE NOW GONE, IN THE ORDER THE BULLET
+    //     PREDICTED, AND THE RUNG IS RE-POINTED ONTO THE POSITIVE RATHER THAN DELETED
+    //     (D418).** (ii) the PAYLOAD count is carried and not collapsed — arm 23b-bis
+    //     emits `damageChosen { perDiscardPileCard: <a typed Basic Energy CardFilter> }`,
+    //     the fifth rider and the first that is a payload rather than a flag; (iii) the
+    //     tail is read as `discardPileRetrieval { filter, dest: "deck", max: "all" }`
+    //     plus `shuffleDeck`, with the SAME filter object the head counted, so the
+    //     *"second mechanism at a different seam"* turned out to be crossable by binding
+    //     one filter once.
+    //     ⚠️ **AND THE DISCRIMINATION IS KEPT AND SHARPENED AGAIN, WHICH IS THE WHOLE
+    //     REASON THIS BULLET IS RE-POINTED AND NOT REMOVED.** The old pair said *"the
+    //     reader stops exactly at the count clause"*; the new pair says *"the reader
+    //     takes the WHOLE sentence and NEITHER HALF ALONE"* — so the two half-sentence
+    //     nullities below SURVIVE UNCHANGED and are now the load-bearing half: they
+    //     redden on a reader split into a head arm and a tail arm, a build this rung
+    //     could not previously tell from the shipped one.
+    //     🛑 **THE COLLAPSE IS STILL REFUSED**, and this rung no longer has an expiry
+    //     date pointing at it: `perDiscardPileCard` is a NARROW rider beside
+    //     `perRecorded`, not the general `scale?: DamageCountSource` the block in
+    //     effects.ts prices at 24 sites / 10 files — which now buys 0 FURTHER printings,
+    //     because the 3 it would once have unlocked are shipped.
     const COUNTER_SCALED =
       "Put 2 damage counters on 1 of your opponent's Pokémon for each Basic {G} Energy card in your discard pile. Then, shuffle those Energy cards into your deck.";
     const COUNTER_PLAIN = "Put 2 damage counters on 1 of your opponent's Pokémon.";
     const rows2 = new Map(legalAttackCorpus().map(([n, s]) => [s, n]));
     expect(rows2.get(COUNTER_SCALED)).toBe(3);
     expect(rows2.get(COUNTER_PLAIN)).toBe(1);
-    expect(resolvedByAnyReader(COUNTER_SCALED)).toBe(false);
+    expect(resolvedByAnyReader(COUNTER_SCALED)).toBe(true);
+    // 🆕 D538 — was `false`. The positive is named as a PROGRAM rather than as a bare
+    // "it resolves" (D438's polarity rule, this rung's move at (a)–(d)): three ops, the
+    // rider present on the first and the SAME filter on the second.
+    expect(deriveAttackEffect(COUNTER_SCALED)).toEqual([
+      {
+        op: "damageChosen",
+        target: "opponentAny",
+        amount: 20,
+        count: 1,
+        source: "attack",
+        perDiscardPileCard: { kind: "basicEnergy", energyType: "Grass" },
+      },
+      {
+        op: "discardPileRetrieval",
+        filter: { kind: "basicEnergy", energyType: "Grass" },
+        dest: "deck",
+        max: "all",
+      },
+      { op: "shuffleDeck" },
+    ]);
+    // …and the SCALED row is not the PLAIN one: the rider is the whole difference at the
+    // first op, and the plain row still carries no rider at all.
+    expect(deriveAttackEffect(COUNTER_SCALED)).not.toEqual(deriveAttackEffect(COUNTER_PLAIN));
+    expect(deriveAttackEffect(COUNTER_PLAIN)?.[0]).not.toHaveProperty("perDiscardPileCard");
     // 🆕 D449 — was `false`; the twin is BUILT, and it derives to the op this whole
     // family would have to scale, which is what makes the refusal above a PRICE and no
     // longer a blockage.
@@ -606,7 +652,7 @@ describe("§3 — a new optional rider on a PERSISTED op, and the record version
   });
 
   it("the engine version moved and the two spellings agree", () => {
-    expect(engineVersion).toBe("0.422.0");
+    expect(engineVersion).toBe("0.423.0");
   });
 });
 

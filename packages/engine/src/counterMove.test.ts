@@ -74,6 +74,13 @@ import {
 const CLAUSE =
   "Move all damage counters from 1 of your Benched Pokémon to your opponent's Active Pokémon.";
 
+/** 🆕🆕🆕 D538 — corpus FILE LINE 412, **3 legal printings**. It sat in
+    `REAL_NEAR_MISSES` from D451 to D537 on the VERB axis (a PUT, not a MOVE); D538
+    MAPPED it (arm 23b-bis, a three-op program), so the claim about it is an INEQUALITY
+    of derived programs plus the positive rather than a nullity. */
+const SCALED_PILE_TWIN =
+  "Put 2 damage counters on 1 of your opponent's Pokémon for each Basic {G} Energy card in your discard pile. Then, shuffle those Energy cards into your deck.";
+
 /** The op, field-less on purpose (D104's minimal shape, with D130's
     `discardOpponentDeckTop` as the precedent for putting the direction in the
     NAME). Every varying token of the neighbouring sentences is fixed in this one —
@@ -158,7 +165,15 @@ const REAL_NEAR_MISSES = [
   // still the family's largest single refusal: a PUT rather than a MOVE (this anchor's
   // verb difference, which is what the slot is for) whose count is a `cardsInDiscardPile`
   // PAYLOAD no rider carries, and whose tail no reader claims.
-  "Put 2 damage counters on 1 of your opponent's Pokémon for each Basic {G} Energy card in your discard pile. Then, shuffle those Energy cards into your deck.",
+  // 🆕🆕🆕 **D538 — THE SCALED TWIN LEFT THIS SLOT, AND THE WITNESS MOVED RATHER THAN
+  // BEING DELETED (the standing note above).** Corpus line 412 is claimed WHOLE by arm
+  // 23b-bis as `damageChosen { perDiscardPileCard }` + `discardPileRetrieval
+  // { max: "all" }` + `shuffleDeck`, so the `toBeNull` loop would go RED on it. The
+  // claim is re-pointed below as an INEQUALITY of derived programs plus the positive
+  // — the VERB axis this slot is for (a PUT, never a MOVE) is now pinned by naming the
+  // op rather than by a nullity, which is D465/D488's *"re-point onto the OP, never
+  // decrement the count"* and strictly stronger (a reader widened past the verb derives
+  // this anchor's op and reddens, where a nullity would not distinguish it).
   // ⚠️ RE-POINTED AT D348 — the slot's THIRD occupant after Ninetales (D143) and
   // Lycanroc ex (D152). It held "Put 8 damage counters on your opponent's Pokémon in
   // any way you like." (sv01-090/sv04.5-156), which D348 MAPPED as arm 23a; the
@@ -357,7 +372,7 @@ describe("the anchor — 2 printings, 1 clause, one regex with NO capture", () =
     );
   });
 
-  it("refuses the FIVE real catalog rows that share its words", () => {
+  it("refuses the FOUR real catalog rows that share its words", () => {
     for (const text of REAL_NEAR_MISSES) {
       expect(deriveAttackEffect(text)).toBeNull();
     }
@@ -402,6 +417,20 @@ describe("the anchor — 2 printings, 1 clause, one regex with NO capture", () =
     expect(
       deriveAttackEffect("Put 2 damage counters on 1 of your opponent's Benched Pokémon."),
     ).not.toBeNull();
+    // 🆕🆕🆕 **D538 — THE SCALED TWIN, THE FOURTH ROW TO LEAVE THIS LIST, AS AN
+    // INEQUALITY PLUS THE POSITIVE.** It shares this anchor's DESTINATION noun phrase
+    // and differs on the VERB, which is the axis the slot held it for; an anchor keyed
+    // on the destination rather than on the whole sentence would claim it, and this
+    // rung still reddens on exactly that defect. The program is THREE ops where this
+    // anchor's is one.
+    expect(deriveAttackEffect(SCALED_PILE_TWIN)).not.toEqual(deriveAttackEffect(CLAUSE));
+    expect(deriveAttackEffect(SCALED_PILE_TWIN)?.map((o) => o.op)).toEqual([
+      "damageChosen",
+      "discardPileRetrieval",
+      "shuffleDeck",
+    ]);
+    expect(deriveAttackEffect(CLAUSE)?.[0]?.op).toBe("moveCountersToDefender");
+    expect(REAL_NEAR_MISSES).toHaveLength(4);
   });
 
   it("refuses the anchor, punctuation and case rewrites — but trims outer space", () => {

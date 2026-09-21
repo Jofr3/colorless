@@ -124,6 +124,32 @@
  * `if` in `spanProbe` — deliberately NOT made here, because changing the instrument in the
  * same slice that uses it to pick a target would leave nothing to check the pick against.
  * It is the next slice's cheapest instrument work, and the six rows are its own test.**
+ *
+ * 🆕🛑 **D538 — LINE 412 HAS LEFT THE RESIDUE, AND THE ENUMERATION IS CORRECTED IN PLACE
+ * RATHER THAN SHORTENED (D178/D442/D466 step 3).** It is claimed WHOLE by
+ * `deriveAttackEffect` through `COUNTER_PUT_SCALED_BY_PILE` / arm 23b-bis as
+ * `damageChosen { perDiscardPileCard }` + `discardPileRetrieval { max: "all" }` +
+ * `shuffleDeck`. ⚠️ **AND THE CLASS IT WAS IN WAS NOT `OPAQUE`, MEASURED RATHER THAN READ
+ * OFF THIS COMMENT**: run in a detached worktree at D537's head it classified **PHRASE-18**
+ * (1 sentence / 3 printings) at both `SUBMAX=4` and `SUBMAX=12`, and after D538 that class
+ * is gone while `OPAQUE` stands at 36/53 and 20/31 UNMOVED. So the *"six rows this
+ * instrument classified `OPAQUE`"* sentence above was already one row generous about this
+ * line when it was written, which is the same over-population it is complaining about, one
+ * level up. 🛑 **AND THE TALLY IS MEASURED, NOT CARRIED FORWARD: with line 412 built that
+ * set is CLOSED — ZERO rows / 0 printings remain.** All six were built between D464 and
+ * D538 — 264 at D464, 500 at D465, 126 and 129 at D488, the bottom-of-deck draw now at
+ * FILE LINE 143 at D487 (⚠️ **that decision row quotes it as FILE LINE 231, so the
+ * CORPUS HAS BEEN RENUMBERED under these annotations and a FILE LINE is only ever a
+ * pointer AT A HEAD**), and 412 here — and the closure is RE-MEASURED at THIS head rather
+ * than subtracted from D464's figure: a bun script that
+ * imports `resolvedByAnyReader` from `censusAttackCorpus.ts` and reads the six FILE LINEs
+ * out of that file returns `resolved=true` for every one of them — 126 (1p), 129 (1p),
+ * 143 (1p), 264 (2p), 412 (3p), 500 (1p). ⚠️ **A first pass at this very correction wrote
+ * "FOUR rows / 4 printings", which is D464's 6/9 minus only 264 and 412** — a subtraction
+ * that ignores FOUR builds, one of which (500, at D465) this very comment records four
+ * lines above, and so a THIRD level of the over-population the paragraph above complains
+ * about. Subtracting from a remembered figure is how all three levels happened; the
+ * instrument was there to be asked, and asking it costs one script.
  * ✅ **D465 PAID IT, AND D464's TWO FIGURES BOTH REPRODUCED EXACTLY.** At D465's head the
  * tail-aware probe reaches **17 sentences / 22 printings** — D464 measured 18 / 24 with line
  * 264 still in the residue, and `18 − 1 = 17`, `24 − 2 = 22`. Of those 17, **12 are already
