@@ -135,6 +135,13 @@ const FOE_EX_V_BODIES =
 const DRIFLOON_COMPOUND =
   "This attack does 50 damage for each of your Drifloon and Drifblim in play. This attack also does 30 damage to each of your Drifloon and Drifblim. (Don't apply Weakness and Resistance for Benched Pokémon.)";
 
+/** 🆕 D539 — THE COMPOUND'S FIRST SENTENCE ALONE, which `IN_PLAY_BODY_MULTIPLY` DOES
+    claim. It is §2's control: the pattern's refusal of the compound is about the
+    sentence BREAK and not about the noun, and without this rung "it refuses" is
+    consistent with a pattern that refuses everything (D424). */
+const DRIFLOON_FIRST_SENTENCE =
+  "This attack does 50 damage for each of your Drifloon and Drifblim in play.";
+
 /** 🛑 THE MID-SENTENCE NOUN — 3 sentences / 6 printings, the largest countable
     record in this family and the one this slice does NOT take. Its noun is not a
     prefix noun (" in play" sits in the MIDDLE), so it cannot ride these anchors at
@@ -772,11 +779,35 @@ describe("§2 — the two anchors and the `inPlayBodyFilter` vocabulary", () => 
     });
   });
 
-  it("🛑 the `[^.]+` capture cannot cross a sentence break — the COMPOUND stays whole", () => {
+  it("🛑 `IN_PLAY_BODY_MULTIPLY`'s `[^.]+` capture cannot cross a sentence break", () => {
     // A greedy `(.+)` would let the anchor span the break on any compound that
     // happens to end in a period, which is the anchor-swallows-a-compound defect
     // D207 paid for three times. A class that cannot match `.` cannot do it.
-    expect(deriveAttackDamageMultiplier(DRIFLOON_COMPOUND)).toBeNull();
+    //
+    // 🆕🛑 **D539 — THIS RUNG IS RE-POINTED ONTO THE PATTERN ITSELF RATHER THAN SWAPPED
+    // TO A `=== true` (D438), AND THE CLAIM IT MAKES IS UNCHANGED AND STILL TRUE.**
+    // `deriveAttackDamageMultiplier(DRIFLOON_COMPOUND)` is no longer null — D539 claims
+    // the whole compound through a SECOND anchor, `NAMED_BODIES_MULTIPLY_SPREAD`, whose
+    // `\2` backreference demands the two printed nouns be the same. What this rung was
+    // ever about is the `[^.]+`, so the question is now asked OF THAT PATTERN, quoted
+    // out of the raw source and executed here: it still refuses this compound, still for
+    // the structural reason, and the two anchors are disjoint by `$` alone.
+    // A `=== true` swap would have been the shape that produced D436's GAP.
+    const IN_PLAY_BODY_MULTIPLY =
+      /^This attack does (\d+) damage for each of your ((?!opponent)[^.]+) in play\.$/;
+    expect(IN_PLAY_BODY_MULTIPLY.test(DRIFLOON_COMPOUND)).toBe(false);
+    // …and the pattern re-spelled here is the SHIPPED one, which is asserted off the raw
+    // source in `namedBodiesSpread.test.ts` §1 rather than twice.
+    // …and the CONTROL that keeps it a measurement: the FIRST SENTENCE ALONE, which the
+    // same pattern does claim — so the refusal is the sentence BREAK's and not the noun's.
+    expect(IN_PLAY_BODY_MULTIPLY.test(DRIFLOON_FIRST_SENTENCE)).toBe(true);
+    // 🛑 AND THE GREEDY TWIN, WHICH IS THE WHOLE DEFECT: `(.+)` DOES span the break.
+    expect(
+      /^This attack does (\d+) damage for each of your ((?!opponent).+) in play\.$/.test(
+        `${DRIFLOON_COMPOUND} This attack does 10 damage for each of your Pokémon in play.`,
+      ),
+    ).toBe(true);
+    // The ADDITIVE reader is untouched by D539 and still refuses the compound outright.
     expect(deriveAttackDamageBonus(DRIFLOON_COMPOUND)).toBeNull();
     // The constructed two-sentence form built out of a noun the map DOES hold —
     // one axis from `GRASS_BODIES`, which is claimed.
@@ -796,7 +827,7 @@ describe("§2 — the two anchors and the `inPlayBodyFilter` vocabulary", () => 
     ).toBeNull();
   });
 
-  it("🛑 the COMPOUND does not COMPOSE either, and the reason is its TAIL", () => {
+  it("🛑 the COMPOUND does not COMPOSE — the REFUSAL KEPT, and the row BUILT anyway", () => {
     // D426's mechanism at the three-way end, measured rather than assumed:
     // `COMPOUND_CLAUSE_BREAK` splits this row into THREE parts, so the tail is the
     // parenthetical W/R reminder — which `deriveAttackEffect` refuses. That is the
@@ -805,9 +836,16 @@ describe("§2 — the two anchors and the `inPlayBodyFilter` vocabulary", () => 
     expect(splitAttackTrailingClause(DRIFLOON_COMPOUND)).toBeNull();
     expect(splitAttackGateClause(DRIFLOON_COMPOUND)).toBeNull();
     expect(deriveAttackEffect("(Don't apply Weakness and Resistance for Benched Pokémon.)")).toBeNull();
-    // …and the row is therefore STILL unresolved at this head, which is the honest
-    // statement of what this slice did and did not buy.
-    expect(resolvedByAnyReader(DRIFLOON_COMPOUND)).toBe(false);
+    // 🆕🛑 **D539 — THE THREE RUNGS ABOVE ARE KEPT AND ARE STILL TRUE; ONLY THE LAST ONE
+    // FLIPS.** The composition route is refused exactly as this rung has always said —
+    // `COMPOUND_CLAUSE_BREAK` still splits the row into THREE parts, the tail is still
+    // the parenthetical and `deriveAttackEffect` still returns null for it — and THAT IS
+    // WHY D539 took a whole-compound ANCHOR instead. The refusal is the record of a
+    // price that came true (D442/D466) and deleting it would delete the reason.
+    // The splitter widening that would reach this row was RE-PRICED at D539's head and
+    // admits 0 sentences / 0 printings; `namedBodiesSpread.test.ts` §1 re-runs that
+    // simulation rather than trusting a comment.
+    expect(resolvedByAnyReader(DRIFLOON_COMPOUND)).toBe(true);
   });
 
   it("🛑 the MID-SENTENCE noun rides its OWN anchor — the Round family, and its zone twin", () => {
@@ -1576,7 +1614,7 @@ describe("§6 — `MATCH_RECORD_VERSION` STAYS 29, driven at all THREE addresses
   });
 
   it("the engine version moved with the behaviour", () => {
-    expect(engineVersion).toBe("0.423.0");
+    expect(engineVersion).toBe("0.424.0");
   });
 });
 

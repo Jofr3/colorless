@@ -20025,6 +20025,191 @@ import type { GameState, Seat } from "./types";
     `expect(manifest.version)`, `it(…)` titles, the declaration and `package.json` —
     **not** as a value-keyed grep — because a value-keyed grep is precisely the mechanism
     that ate D500's heading.)
+    🆕🆕🆕 engineVersion 0.423.0 → **0.424.0** (D539 — THE NAMED-BODY MULTIPLIER WITH A
+    NAMED-BODY OWN-SIDE SPREAD BEHIND IT, AND THE ONE BODY THE SHIPPED MACHINERY COULD NOT
+    REACH. `censusAttackCorpus.ts` **FILE LINE 595** (`legalAttackCorpus()` index 542, leading
+    count column `2`) — *"This attack does 50 damage for each of your Drifloon and Drifblim in
+    play. This attack also does 30 damage to each of your Drifloon and Drifblim. (Don't apply
+    Weakness and Resistance for Benched Pokémon.)"*, **1 sentence / 2 legal printings**, and it
+    is the LAST UNBUILT ROW OF TWO FAMILIES AT ONCE — `/This attack also does /` (17 sentences /
+    41 printings) and `/ damage to each of /` (11 / 20) both CLOSE with it, re-measured live.
+    ⚠️ **NO CARD ID IS RESOLVED FOR THIS SENTENCE ON THIS CHECKOUT AND THAT WAS MEASURED** — a
+    whole-repo `git grep -F` returns the corpus row, `bodiesInPlayScaling.test.ts`'s refusal
+    rungs and one docs paragraph, and `catalogManifest.ts:197`'s `sv01-089 Drifloon` carries a
+    DIFFERENT attack pair (`["Gust","Balloon Blast"]`) — conventions.md:155's two-populations
+    trap. So the suite rides file-local DECLARED demonstrators `d539-*` (D425), whose card
+    NAMES are the printed nouns because the derived filter is `byName`.
+
+    🛑 **ONE ANCHOR, TWO READERS, ONE `effect` STRING — D493/D494's ROUTE FOR THE THIRD TIME,
+    AND `attack.ts` TAKES ZERO CODE BYTES.** `NAMED_BODIES_MULTIPLY_SPREAD` carries a `\2`
+    BACKREFERENCE — the two printed nouns must be the SAME noun, which is the mechanism: the
+    card multiplies by the bodies it then splashes on. `deriveAttackDamageMultiplier` reads it
+    for the × fold (`{per: 50, count: {pokemonInPlay, seat: "you", filter}}`, shape UNCHANGED)
+    and `deriveAttackEffect` reads the SAME string for the own-side spread; `attack.ts:1708`
+    binds `derivedHead` UNCONDITIONALLY and the `damageMultiplier` ternary at
+    `attack.ts:1761-1764` is GUARDED by `damageBonus !== null`, so a sentence both claim
+    reaches both bindings with no branch GIVEN `deriveAttackDamageBonus(PRINTED)` is null —
+    which §3 DRIVES rather than narrates. The COMPOSITION seam was RE-PRICED at this head before it was
+    declined: the narrowest splitter widening that reaches this row admits **0 sentences / 0
+    printings** and leaves all ELEVEN currently-split rows byte-identical, and
+    `namedBodiesSpread.test.ts` §1 re-runs that simulation rather than trusting a comment.
+    `effects.ts:15919`'s refusal paragraph is KEPT and rewritten as the record of a price that
+    came true (D442/D466) — all three of its rungs are still GREEN.
+
+    🛑 **`damageChosen.target` GAINS A FOURTH MEMBER, `yourAny` — THE ATTACKER'S WHOLE OWN
+    SIDE, ACTIVE INCLUDED — AND THAT ONE BODY IS THE WHOLE SLICE.** The printed noun carries no
+    zone word and the attacking Drifblim is one of the bodies it names. A build aimed at
+    `yourBench` TYPECHECKS, ships, logs a plausible board and SILENTLY SPARES THE ATTACKER;
+    `count: "all"` never parks, so no caption contradicts it and **no census figure moves**.
+    That is `D539-target-becomes-yourbench`, killable only by the HP rung in
+    `namedBodiesSpread.test.ts` §4b. ⚠️ **AND THE MULTIPLIER ARM ALONE SATISFIES A GREEN
+    CENSUS** — it flips `resolvedByAnyReader`, steps `BUILT.attack` by 2 and moves every
+    figure with the spread never happening — which is why §4 asserts HP on a board rather than
+    op shape, and why `D539-effect-arm-deleted` exists.
+
+    🛑 **NO `ignoreWR`, DRIVEN RATHER THAN ARGUED.** §8.5 scopes Weakness and Resistance to the
+    DEFENDING Pokémon — D447's own reading for `yourBench` and D425's for
+    `spreadDamage.yourBench` — so the printed parenthetical asks for nothing this engine does
+    not already do, and a named own body carrying a Weakness ×2 takes exactly 30 (§4c, with the
+    same Weakness in the DEFENDING spot as the control that keeps it a measurement).
+
+    🛑 **THE COMPILER NAMED TWO INTERPRETER SITES AND THERE WAS A THIRD IT COULD NOT SEE.**
+    Widening the union stopped `tsc -b --force` at exactly `interpreter.ts(14159,22)` (D447's
+    total `switch`, which gains `case "yourAny": return ownInPlayRefs(state, seat);`) and
+    `interpreter.ts(2129,13)` (`snipeNote`'s parameter) — re-run as this slice's first act and
+    confirmed at TWO. ⚠️ **But `placeSnipe`'s ACTIVE arm was `opponent`-only**, with a comment
+    stating *"no printing aims a chosen hit at the attacker's own Active, and `oppAnyRefs` is
+    the only producer of an Active ref"* — BOTH halves now false. Without a third leg the own
+    Active ref is SILENTLY DROPPED, which is D447's own failure mode one spot over with `tsc`
+    green. `hitOwnActive` is that leg: FLAT on both arms, `damageSelf`'s stated reading
+    verbatim (self-damage sits outside the §8.5 pipeline, and every §11 shield is printed *"by
+    attacks from your opponent's Pokémon"*), filing `DAMAGE_DEALT` on the `deals` arm and
+    `COUNTERS_PLACED` on the placement arm. The stale comment is CORRECTED IN PLACE (D442), and
+    it was found by the §4b rung rather than by the type system.
+    ⚠️ **A CARRIED RADIUS ITEM COMES WITH IT, RECORDED RATHER THAN SCOPED.** `yourAny` is the
+    FIRST op that reaches BOTH zones of the attacker's own side from ONE printing, and the two
+    zones read §11 and the §8.1 KO clamp DIFFERENTLY: this leg is FLAT, while the SAME op's
+    own-side BENCH bodies go through `placeSnipe`'s full funnel (`attackerDebuff`, the three
+    reduction terms, all eight `preventedBeforeFlip` disjuncts, `coinFlipShieldPrevents` and the
+    clamp). So a shielded body on the attacker's own bench takes 0 from its own side's attack
+    while the identical body in the Active spot takes the printed 30. **Neither side is a D539
+    regression** — the bench half shipped with D447's `yourBench` and this slice added no byte to
+    it — but D539 is what makes the disagreement showable on one board, and
+    `namedBodiesSpread.test.ts` §4 asserts nothing on either side of it. Priced as a slice of its
+    own in `hitOwnActive`'s doc block and in `docs/progress.md`'s item (4b).
+
+    ONE new `IN_PLAY_BODY_NOUNS` row — the NINTH exact key, *"Drifloon and Drifblim"*, a PAIR
+    in an `anyOf` (D492's idiom) of CARD NAMES (D467's idiom), third instance of both. The
+    vocabulary arithmetic is RE-DERIVED at the new count — **31 nouns / 9 exact keys** — rather
+    than incremented, and ⚠️ **`inPlayBodyFilter`'s claim that the figure is *"derived from
+    `IN_PLAY_BODY_NOUNS.size` in `benchNounScaling.test.ts` §5"* WAS FALSE**: the map is not
+    exported, §5 holds a HAND LIST, and it did not redden. Corrected in place rather than
+    papered over — D453/D455's class, found for the fourth time.
+    🛑 **AND FOR THE FIFTH TIME, BY THIS SLICE, WHILE IT WAS CLOSING THE FOURTH.** A review pass
+    found that the NEW comment on the ninth key ended with a FRESH COPY of the very sentence being
+    withdrawn 210 lines below it. **A withdrawal is not a fix if the same paragraph is re-typed one
+    block up**, and nothing can see it, because a doc block carries no assertion. The new block now
+    says what the withdrawal says — module-private map, §5 is a HAND LIST plus a hand sum, BOTH
+    figures moved by hand with nothing going red, and what §5 DOES derive is the stronger half
+    (every listed key resolves THROUGH the reader, so a key that stops RESOLVING still reddens;
+    only a key that stops EXISTING does not).
+
+    **ZERO new `EffectOp` members, zero new `DamageCountSource`/`count` kinds, zero new
+    `CardFilter` members, zero new prompt kinds, zero new events or error codes, zero new
+    readers** — `attackReaderSurface()` stays **13** (two EXISTING readers gain an arm), and
+    `attack.ts`, `redact.ts`, `packages/schema`, `cardplay.ts`, `log.ts`, `events.ts`,
+    `registry.ts`, `types.ts`, `turn.ts` and `continuous.ts` take no code bytes.
+
+    **`MATCH_RECORD_VERSION` HELD AT 30, BOTH D450 DOORS DRIVEN OVER THE SERIALIZED BYTES
+    (D427, not from the type's name).** Door 1, the CARRIER: `damageChosen` rides
+    `phase.cont.pendingOp` ONLY when it PARKS, and `count: "all"` resolves INLINE — §7 asserts
+    `"cont" in state.phase === false` and that the serialized state contains no `yourAny` at
+    all. Door 2, the ALPHABET: the union WIDENS at a persisted address, D125's free case, and
+    **D447 added `"yourBench"` to THIS EXACT UNION and held the version**; §7 drives both
+    directions plus a v30 `yourBench` op over THIS board, which is the rung that would have
+    gone red had the member been spelled by RENAMING rather than adding.
+
+    Census, MEASURED head vs after: reader arm **563/1611 → 564/1613**; residue **50/70 →
+    49/68**; raw residue **77/121 → 76/119**; `BUILT.attack` **1662 → 1664**; `640 = 590 + 50`
+    → **`591 + 49`**. Registry 10/16, gate 6/14, trailing 11/21, `SPLIT_ATTACK_UNITS` 14 and
+    `COMPOUND_ATTACK_UNITS` 21 UNMOVED — the row is a RAW whole-sentence claim, not a split.
+    ⚠️ **THE SENTENCE STEP IS 1 AND THE PRINTING STEP IS 2 — THE FIFTH CONSECUTIVE SLICE WHOSE
+    TWO STEPS DISAGREE** (D535 1-vs-2, D536 1-vs-3, D537 1-vs-2, D538 1-vs-3), so sentence
+    chains carried a `− 1` front term and printing chains a `− 2`.
+    ⚠️ **AND THE `OPAQUE` CLASS WAS MEASURED RATHER THAN PREDICTED, BECAUSE D538's BRIEF WAS
+    WRONG ABOUT EXACTLY THIS.** Run at the pre-slice head at BOTH caps, :595 classified
+    **`OPAQUE`** at `SUBMAX=4` AND at `SUBMAX=12` — so the pricing report was right this time,
+    and it is right by measurement: `OPAQUE` **36/53 → 35/51** at 4 and **20/31 → 19/29** at
+    12, with the residue total **50/70 → 49/68** at both.
+
+    🛑 **THE PROBE FOUND TWO REAL THINGS ON ITS FIRST RUN AND BOTH ARE RECORDED RATHER THAN
+    QUIETLY FIXED.** (a) `D539-anchor-loses-its-caret` SURVIVED as a REAL SUITE GAP — checked as
+    a suspected no-op first, then diagnosed: the §1 rung glued the sentence onto a prefix by
+    LOWER-CASING its leading `T`, so the string refused because the pattern demands a capital
+    `This` wherever it starts, and the `^` was never exercised. The killer is a prefix that KEEPS
+    the capital; with the `^` gone the pattern matches from the SECOND sentence on and the engine
+    authors a program for a card whose leading clause it silently dropped. (b)
+    `D539-snipe-note-calls-the-own-side-benched` was DECLARED `survives` and the harness KILLED
+    it — **D427's self-invalidation working on the very slice that wrote the declaration**. Every
+    clause of its call-path reasoning is still TRUE (one caller; `count: "all"` takes the forced
+    branch above the park; no caption is ever built); what it missed is that §8 asserts the
+    widened ternary **off the RAW SOURCE TEXT** rather than asserting a caption, which is
+    D478/D489's own instrument for an unreachable branch — so **the branch's unreachability and
+    the row's killability are INDEPENDENT**. The declaration is WITHDRAWN and the row re-pointed
+    at its real killer.
+
+    🛑 **A REVIEW PASS THEN CLOSED A MEASUREMENT GAP IN §4c AND ADDED THE TWENTIETH MUTANT ROW.**
+    The rung captioned *"a named body carrying a Weakness takes exactly 30 — the no-`ignoreWR`
+    reading"* put the ×2 on an own **BENCH** body, and the own-side bench loop applies W/R in **NO**
+    build of this engine — so 30 there is consistent with BOTH readings of the Active leg, and the
+    only thing killing `D539-own-active-leg-doubles-a-weakness` was the SEAT `snipeActive` aims at,
+    never the reading the row is captioned with. A new demonstrator `d539-drifblim-weak` puts the ×2
+    in the **ATTACKER'S OWN ACTIVE SPOT** — the one spot `yourAny` newly reaches — two rungs assert
+    the printed **30** there and the `DAMAGE_DEALT` row's `weakness: null` beside it, the bench board
+    is re-labelled a CONTROL, and `D539-own-active-leg-runs-weakness-on-itself` is the row that
+    attacks the READING and nothing else (same body, same seat, same event,
+    `weaknessOf(self.card, self.card)` folded into the amount). ⚠️ **The generalisation: a rung whose
+    caption names a rule its board cannot reach passes for the wrong reason** — D424's *"is the axis
+    live?"* question asked of the CONTROL rather than of the measurement.
+
+    🛑 **AND A SECOND REVIEW PASS FOUND THREE MORE CLAIMS THIS SLICE AUTHORED THAT WERE FALSE
+    OR UNREACHABLE — ALL THREE INSIDE `namedBodiesSpread.test.ts` ITSELF, AND ALL THREE
+    COMMENT-LEVEL (no engine byte, no mutant, no figure).** **(1)** §3's rung was captioned
+    *"`attack.ts` binds BOTH readers unconditionally — the route, quoted from source"* and its one
+    assertion was `raw("interpreter.ts")`; the suite's `import.meta.glob` was
+    `./{effects,interpreter}.ts`, so `attack.ts` was not readable there **at all**. That is the
+    paragraph above's own generalisation one section over — a caption naming a file its assertion
+    cannot reach. The glob now carries `attack.ts` and the rung quotes BOTH bindings out of
+    `attack.ts` (`derivedHead` at `:1708`, the four-line `damageMultiplier` ternary at `:1761-1764`).
+    ⚠️ **And the word *"unconditionally"* is WITHDRAWN**: only `derivedHead` is unconditional, the
+    multiplier binding is guarded by `damageBonus !== null`, so the honest claim is *"both readers
+    reach this sentence GIVEN `deriveAttackDamageBonus(PRINTED)` is null"* — and the premise is
+    DRIVEN in the rung rather than narrated. **(2)** the withdrawn `.size` sentence had a **SIXTH**
+    copy, in §2's own title (*"… = 31, DERIVED not transcribed"*, over a body deriving neither
+    figure) and its comment (*"§5 … moved there by going RED"*, which §5's own text denies) — the
+    class fixed here and missed one file over, which is the third time this slice has had to fix
+    it. Retitled to what it reaches and re-worded to the withdrawal's own text. **(3)** a fixture
+    deck comment decomposed 60 as *"8 × 6 + 12"* over SEVEN ids at 6 plus 18 Energy — D425's class,
+    introduced by the FIRST review pass — now **7 × 6 + 18**. ⚠️ And the KEPT refusal paragraph
+    is at **`effects.ts:15919`**; `:15873` is the Ancient/vocabulary two-refusals block, and the
+    off-by-a-block citation was re-pointed in all five places that carried it.
+
+    🛑 **AND A THIRD REVIEW PASS FOUND THE WITHDRAWN WORD STILL STANDING AT SIX SITES — THE
+    SAME DIFF BOTH MAKING THE CLAIM AND RECORDING ITS WITHDRAWAL.** The second pass withdrew
+    *"unconditionally"* in exactly ONE place — §3's rung title — and left the sentence live in
+    six others, TWO of them shipped engine source: `effects.ts`'s `NAMED_BODIES_MULTIPLY_SPREAD`
+    doc block, `effects.ts`'s `deriveAttackDamageMultiplier` arm, THIS changelog block (three
+    paragraphs above its own withdrawal), the suite's own file header, `docs/decisions.md`'s D539
+    row, and a `docs/progress.md` line reading *"`:1764` binds `damageMultiplier`
+    unconditionally"* — false twice over, because `attack.ts:1764` is the ternary's ELSE-ARM and
+    not a binding at all. **That is D453/D455's class reproduced at a THIRD claim by the very fix
+    meant to close it**, and no gate and no suite can see it. All six now carry the withdrawal's
+    own wording — `derivedHead` at `attack.ts:1708` is UNCONDITIONAL, the `damageMultiplier`
+    ternary at `attack.ts:1761-1764` is GUARDED by `damageBonus !== null`, and the route holds
+    for this sentence GIVEN `deriveAttackDamageBonus(PRINTED)` is null, which §3 DRIVES — and the
+    `:1761`-vs-`:1764` spelling is settled to **`attack.ts:1761-1764`** in every one of them.
+    ⚠️ One stale cross-reference in the same rung went with it: the premise was attributed to
+    *"§2's"* `expect`, which lives in §1, and the rung drives it itself.)
     🆕🆕🆕 engineVersion 0.422.0 → **0.423.0** (D538 — THE COUNTER PLACEMENT WHOSE AMOUNT IS A
     PAYLOAD, AND WHOSE TAIL SHUFFLES THE VERY CARDS THE AMOUNT COUNTED. `censusAttackCorpus.ts`
     **FILE LINE 412** (`legalAttackCorpus()` index 359, leading count column `3`) — *"Put 2
@@ -23005,7 +23190,7 @@ import type { GameState, Seat } from "./types";
     WITNESS** — the count was re-derived every slice and the word *"three"* was carried.
     A successor of this slice inherits **81 / 61 / 17** again, over **FIVE** history
     occurrences: those four plus `deckMillFilteredScale.test.ts`'s own header arrow.) */
-export const engineVersion = "0.423.0";
+export const engineVersion = "0.424.0";
 
 export type {
   ApplyResult,

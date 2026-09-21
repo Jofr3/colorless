@@ -423,15 +423,24 @@ describe("§2 — two anchors, one noun map, and the first two-reader sentence",
     // owners answer — a reader mutated to its neighbouring member leaves the list
     // byte-identical. The behavioural suites are what cover that
     // (`energyInPlaySuppressed.test.ts` §5, `benchCounterSuppressed.test.ts` §5).
+    // 🆕🆕🆕 **D539 — THE FOURTH MEMBER, AND IT ARRIVED ON PURPOSE TOO.**
+    // `censusAttackCorpus.ts` FILE LINE 595 — the named-body multiplier with a named-body
+    // OWN-SIDE spread behind it — is `deriveAttackDamageMultiplier` (a pre-§8.5 × fold)
+    // plus `deriveAttackEffect` (a PROGRAM): the first pair in this population whose two
+    // owners are a fold and a program rather than a fold and a §8.5 suppression step, and
+    // the third instance of D493's one-anchor-two-readers route. The list is sorted, so
+    // it lands second. The rung's stated blindness to CORRECTNESS is unchanged and is
+    // covered behaviourally in `namedBodiesSpread.test.ts` §3 and §4.
     expect(dual.map(([, s]) => s)).toEqual([
       "If you have 3 or more Energy in play, this attack does 70 more damage. This attack's damage isn't affected by Weakness.",
       "This attack does 10 damage for each damage counter on all of your Benched Cynthia's Pokémon. This attack's damage isn't affected by Weakness.",
+      "This attack does 50 damage for each of your Drifloon and Drifblim in play. This attack also does 30 damage to each of your Drifloon and Drifblim. (Don't apply Weakness and Resistance for Benched Pokémon.)",
       REVEAL_TRAINER_SCALE,
     ]);
     // The COUNT beside the list, for the reason `censusAtHead.test.ts` pins both a
     // diff and a count: a list assertion alone stays green if a member is dropped
     // from the corpus and from the expectation in one commit.
-    expect(dual).toHaveLength(3);
+    expect(dual).toHaveLength(4);
   });
 
   it("the bare-reveal and bare-count sentences keep exactly ONE owner each", () => {

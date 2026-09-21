@@ -347,7 +347,7 @@ describe("§2 — TWO readers own it, and the other eleven still refuse", () => 
     expect(deriveAttackDamageBonus(PRINTED)).toEqual(deriveAttackDamageBonus(HEAD));
   });
 
-  it("🛑 this is the corpus's THIRD dual-claimed sentence, and it arrived on purpose", () => {
+  it("🛑 this is a dual-claimed sentence, and the population is FOUR — all on purpose", () => {
     // D445 pinned "at most one reader per sentence" as a POPULATION so a second could
     // not arrive by accident; D493 made it two. ⚠️ **AND THE RUNG IS BLIND TO
     // CORRECTNESS** (D493's own finding): it asserts HOW MANY readers claim, never WHAT
@@ -357,7 +357,14 @@ describe("§2 — TWO readers own it, and the other eleven still refuse", () => 
       ([, s]) => attackReaderSurface().filter((n) => (readerByName[n]?.(s) ?? null) !== null).length > 1,
     );
     expect(dual.map(([, s]) => s)).toContain(PRINTED);
-    expect(dual).toHaveLength(3);
+    // 🆕🛑 **D539 — THREE → FOUR, AND THE FOURTH ARRIVED ON PURPOSE TOO.** Corpus FILE
+    // LINE 595 is claimed by `deriveAttackDamageMultiplier` for its × fold AND by
+    // `deriveAttackEffect` for its own-side spread, off ONE `effect` string through ONE
+    // whole-compound anchor — D493's route for the third time (D494 was the second), and
+    // the first instance whose two readers are a FOLD and a PROGRAM rather than a fold
+    // and a §8.5 step. The count moves; the rung's blindness to CORRECTNESS is unchanged
+    // and is still covered behaviourally, now in `namedBodiesSpread.test.ts` §3 and §4.
+    expect(dual).toHaveLength(4);
   });
 });
 
@@ -742,9 +749,9 @@ describe("§10 — `MATCH_RECORD_VERSION` stays 29, and the slice has TWO addres
 });
 
 describe("§11 — the version", () => {
-  it("engineVersion is 0.423.0 and the bump is owed for BEHAVIOUR", () => {
+  it("engineVersion is 0.424.0 and the bump is owed for BEHAVIOUR", () => {
     // A card can reach this: file line 337's printing scores a number it did not score
     // at 0.388.0, and skips a §8.5 step it did not skip.
-    expect(engineVersion).toBe("0.423.0");
+    expect(engineVersion).toBe("0.424.0");
   });
 });

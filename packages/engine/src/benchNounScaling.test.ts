@@ -331,7 +331,7 @@ describe("§1 — the two printed rows, their printing counts, and the fixture",
     // 🛑 The attacker is FIGHTING on purpose — it is what makes the ZONE axis
     // readable on the counter board (see `counterBoard`'s block).
     expect(card?.types).toEqual(["Fighting"]);
-    expect(engineVersion).toBe("0.423.0");
+    expect(engineVersion).toBe("0.424.0");
   });
 });
 
@@ -507,7 +507,7 @@ describe("§4 — DISJOINTNESS, driven over the whole column", () => {
 });
 
 describe("§5 — the `inPlayBodyFilter` vocabulary, DERIVED rather than transcribed", () => {
-  it("🛑 the vocabulary is 8 exact keys + 11 names + 11 codes = 30, and none is possessive", () => {
+  it("🛑 the vocabulary is 9 exact keys + 11 names + 11 codes = 31, and none is possessive", () => {
     // 🆕🆕 **D467 — THIS COUNT LIVED IN TWO FILES AND ROTTED IN BOTH.**
     // `inPlayBodyFilter`'s doc block said *"25 nouns — the 3 exact keys"* from D439
     // until D467, which was already wrong at D446 and wronger at D466; D466 fixed
@@ -525,6 +525,11 @@ describe("§5 — the `inPlayBodyFilter` vocabulary, DERIVED rather than transcr
       "Stage 1 Pokémon",
       "Stage 2 Pokémon",
       "Charjabug",
+      // 🆕🆕🆕 **D539 — THE NINTH KEY**, corpus FILE LINE 595: *"Drifloon and Drifblim"*,
+      // a PAIR in an `anyOf` of CARD NAMES. Like every key above it, it carries no
+      // apostrophe, so `IN_PLAY_OWNER_NOUN` cannot reach it and `inPlayBodyFilter`'s
+      // three branches stay pairwise disjoint.
+      "Drifloon and Drifblim",
     ];
     const OWNER_SHAPE = /['’]s Pokémon$/;
     for (const noun of EXACT) {
@@ -549,7 +554,20 @@ describe("§5 — the `inPlayBodyFilter` vocabulary, DERIVED rather than transcr
         ),
       ).not.toBeNull();
     }
-    expect(EXACT.length + POKEMON_TYPES.length + CODES.length).toBe(30);
+    // 🛑 **D539 — 30 → 31, AND THE HONEST NOTE IS THAT THIS RUNG DID NOT GO RED.**
+    // The block above says the figure is *"DERIVED here, through the reader, and the next
+    // key to land moves this rung instead of silently disagreeing with a comment"*, and
+    // `inPlayBodyFilter`'s own doc block repeated that claim. **It is not true of the
+    // COUNT.** `IN_PLAY_BODY_NOUNS` is module-private to `effects.ts`, so `EXACT` above is
+    // a HAND LIST and this sum is a hand sum: D539's ninth key landed and nothing
+    // reddened — the list and the literal were both moved BY HAND after the map was
+    // edited. What IS derived is the far more valuable half: every listed key is driven
+    // THROUGH `deriveAttackDamageMultiplier` above, so a key that stops resolving reddens
+    // even though a key that stops EXISTING does not. Recorded rather than quietly fixed
+    // (D453/D455: a doc block's "recorded as X" names a file and is one grep from being
+    // checked, and three of four such claims in shipped source were false); closing it
+    // needs an export, which is a change to `effects.ts`'s surface and not this slice's.
+    expect(EXACT.length + POKEMON_TYPES.length + CODES.length).toBe(31);
   });
 
   it("🛑 the `Charjabug` row is reachable from the OTHER anchors too, and that is DELIBERATE", () => {
@@ -763,7 +781,12 @@ describe("§10 — corpus file line 529: BUILT at D493, and what its TWO blocker
     }
     // The count is pinned separately from the comparison, because a comparison over
     // an empty set passes (D417: pin the diff AND the count).
-    expect(compared).toBe(1);
+    // 🆕🆕🆕 **D539 — 1 → 2, AND THE SECOND ROW IS THE POINT.** Corpus FILE LINE 595's
+    // compound derives the SAME `{per, count}` whole as its own FIRST CLAUSE does — which is
+    // exactly this rung's claim, now exercised by two rows instead of one. It is a LIVE HEAD and
+    // not a frozen endpoint (D426: nothing on the left of the `expect(` is a chain), so the
+    // literal moves rather than gaining a term.
+    expect(compared).toBe(2);
   });
 
   it("🛑 BLOCKER 1 SURVIVES: `DAMAGE_SUPPRESSION` still has no WEAKNESS-ONLY arm", () => {

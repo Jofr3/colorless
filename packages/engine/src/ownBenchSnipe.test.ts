@@ -329,7 +329,7 @@ describe("§2 — the two widenings, and what they did NOT admit", () => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("§3 — `damageChosen.target` has three members, and the record version does not move", () => {
-  it("all three values are inhabited by PRINTED sentences, not just by the type", () => {
+  it("every value is inhabited by a PRINTED sentence, not just by the type", () => {
     // ⚠️ A union member no printing produces is a value no board can reach — D205's
     // shape. All three are reached here from the catalog's own text.
     const seen = new Set<string>();
@@ -338,7 +338,18 @@ describe("§3 — `damageChosen.target` has three members, and the record versio
         if (op.op === "damageChosen") seen.add(op.target);
       }
     }
-    expect([...seen].sort()).toEqual(["opponentAny", "opponentBench", "yourBench"]);
+    // 🆕🆕🆕 **D539 — THE FOURTH MEMBER, `yourAny`.** The attacker's own side with the
+    // ACTIVE included — corpus FILE LINE 595, *"…to each of your Drifloon and Drifblim."*
+    // — reached here from the catalog's own text like the other three, which is the whole
+    // point of asking the CORPUS rather than the type. This rung is the one that would
+    // have gone red had D539 spelled its member by RENAMING `yourBench`, which is the
+    // half D125 says is not free.
+    expect([...seen].sort()).toEqual([
+      "opponentAny",
+      "opponentBench",
+      "yourAny",
+      "yourBench",
+    ]);
   });
 
   it("🛑 the version PREDICTION, driven over the SERIALIZED BYTES in both directions", () => {
@@ -381,7 +392,7 @@ describe("§3 — `damageChosen.target` has three members, and the record versio
   });
 
   it("the engine version moved and the two spellings agree", () => {
-    expect(engineVersion).toBe("0.423.0");
+    expect(engineVersion).toBe("0.424.0");
   });
 });
 

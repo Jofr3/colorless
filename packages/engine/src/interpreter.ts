@@ -8555,6 +8555,49 @@ function placeSnipe(
       ? snipeActive(next, amount, ignoreWR, ctx, events)
       : damageActive(next, amount, source, ctx, events);
   }
+  // 🆕🆕🆕 **D539 — THE ATTACKER'S OWN ACTIVE, AND IT IS A THIRD LEG THAT THE
+  // COMPILER COULD NOT NAME.** The comment on the arm above read *"The ACTIVE arm stays
+  // `opponent`-only: no printing aims a chosen hit at the attacker's own Active, and
+  // `oppAnyRefs` is the only producer of an Active ref."* **BOTH HALVES OF THAT ARE NOW
+  // FALSE**: `snipeTargets`' `yourAny` case returns `ownInPlayRefs`, which puts the
+  // ATTACKER's own Active at the head of the list, and corpus FILE LINE 595 prints
+  // *"…to each of your Drifloon and Drifblim"* over a board whose attacking Drifblim is
+  // one of them.
+  //
+  // 🛑 **WITHOUT THIS LEG THE OWN ACTIVE REF IS SILENTLY DROPPED — D447's OWN
+  // FAILURE MODE, ONE SPOT OVER, AND `tsc` REPORTS NOTHING.** Widening
+  // `damageChosen.target` stopped the compile at exactly TWO sites (this function is
+  // neither), and the bench funnel below would have written the other bodies and left
+  // the attacker at zero under a log that reads correctly. **Only an HP rung on the
+  // attacker's own Active can see it** (`namedBodiesSpread.test.ts` §4b), which is why
+  // that section is the one this slice is really about.
+  //
+  // 🛑 **IT IS FLAT, AND THE READING IS `damageSelf`'s VERBATIM RATHER THAN A NEW
+  // ONE.** That function's own block states it: *"Self-damage sits OUTSIDE the §8.5
+  // pipeline: no Weakness/Resistance (you have no Weakness to your own attack) and no
+  // reduction"*, which is also the confusion self-hit's model. §8.5 scopes Weakness and
+  // Resistance to the DEFENDING Pokémon and the attacker is not it, so a named own body
+  // carrying a Weakness takes the printed 30 and not 60 — driven in §4c, and
+  // `snipeActive` is deliberately NOT reused, since it computes the attacker's Weakness
+  // against ITSELF and folds in the attacker's own pre-W/R bonus.
+  //
+  // ⚠️ **AND NO PREVENTION IS ASKED, WHICH IS A READING AND IS STATED RATHER THAN
+  // LEFT TO BE INFERRED.** Every §11 shield the bench loop below consults is printed
+  // *"… by attacks from your opponent's Pokémon"*; none of them speaks to a body being
+  // damaged by its OWN side's attack, which is exactly why `damageSelf` consults none of
+  // them either. The KO-survival clamp is skipped for the same reason and on the same
+  // precedent — and the resulting self-KO is caught by `finishAttack`'s TWO-seat sweep,
+  // whose prizes go to the DEFENDER (§5 drives that rather than inheriting it).
+  //
+  // The two arms mirror the opponent-side leg directly above, one distinction each: a
+  // `deals` hit files `DAMAGE_DEALT` and a placement files `COUNTERS_PLACED`, because
+  // "a placed counter is not damage from an attack" is this engine's standing reading
+  // (D138/D139/D142). No printing reaches the placement arm today; it is DRIVEN through
+  // a constructed op in §4 rather than written and left unread (D205's boundary: an arm
+  // a test can reach is not an arm no build can reach).
+  if (refs.some((r) => r.seat === ctx.seat && r.spot.spot === "active")) {
+    next = hitOwnActive(next, amount, deals, source, ctx, events);
+  }
   // Bench targets — flat (no W/R). Batched in one map so a count-N snipe (Hawlucha)
   // still lands as before.
   //
@@ -8574,6 +8617,14 @@ function placeSnipe(
   // rest are filtered against it, which is exactly as wide as the sets that exist.
   // ⚠️ The ACTIVE arm above stays `opponent`-only: no printing aims a chosen hit at
   // the attacker's own Active, and `oppAnyRefs` is the only producer of an Active ref.
+  // 🆕🛑 **D539 CORRECTS THAT SENTENCE IN PLACE RATHER THAN DELETING IT (D442): BOTH
+  // HALVES OF IT ARE NOW FALSE.** `ownInPlayRefs` is a SECOND producer of an Active ref
+  // and corpus FILE LINE 595 is a printing that aims a hit at the attacker's own. The
+  // arm above is still `opponent`-only and still correct — what changed is that it is no
+  // longer the WHOLE of the Active question, and the `ctx.seat` leg added beneath it is
+  // the other half. Kept as written because it was true when written and because the
+  // reason it gave — *"`oppAnyRefs` is the only producer"* — is exactly the kind of
+  // reachability claim that goes stale like a count (D536).
   const benchVictim = refs.find((r) => r.spot.spot === "bench")?.seat ?? opponent;
   const targeted = new Set<number>();
   for (const ref of refs) {
@@ -8783,6 +8834,77 @@ function placeSnipe(
     bench.push({ ...pokemon, damage });
   }
   return withSide({ ...next, rngState: rng }, benchVictim, { ...side, bench });
+}
+
+/** 🆕🆕🆕 **D539 — THE OWN-SIDE ACTIVE ARM of a `yourAny` snipe** (corpus FILE
+    LINE 595, *"This attack also does 30 damage to each of your Drifloon and
+    Drifblim."*). FLAT on both arms: `damageSelf`'s stated reading — self-damage sits
+    outside the §8.5 pipeline, so no Weakness, no Resistance, no reduction passive and
+    no §11 prevention (every one of those is printed *"by attacks from your opponent's
+    Pokémon"*). `placeSnipe`'s own block, at the call site, carries the argument; this
+    function carries the arithmetic, which is `damageSelf`'s to the byte apart from the
+    EVENT: a `deals` hit is attack damage and files `DAMAGE_DEALT`, a placement files
+    `COUNTERS_PLACED`, which is the same distinction the bench loop one screen up draws
+    and for the same D138/D139/D142 reason.
+
+    🛑🛑 **CARRIED RADIUS ITEM, RECORDED RATHER THAN SCOPED: THIS LEG AND THE OWN-SIDE
+    BENCH LOOP READ §11 AND THE KO CLAMP DIFFERENTLY, AND D539 IS THE FIRST PRINTING THAT
+    MAKES THE DISAGREEMENT OBSERVABLE ON ONE BOARD.** The paragraph above argues the flat
+    reading for the ATTACKER's own spot; the SAME op's own-side BENCH bodies go through
+    `placeSnipe`'s full funnel — `attackerDebuff`, `damageReductionAfterWR` +
+    `installedReductionOf` + `seatDamageReduction`, all eight `preventedBeforeFlip`
+    disjuncts, `coinFlipShieldPrevents` and the §8.1 KO-survival clamp. So a named body on
+    the attacker's own BENCH carrying `preventDamageAndEffectsWhileBenched` (or a coin
+    shield, or a survive-with-10-HP clamp) takes 0 or a reduced hit from its OWN side's
+    attack, while the identical body in the Active spot takes the printed 30 — which is
+    the *"two Active legs disagreeing would be two readings of one rule"* argument this
+    block itself makes, one zone over and failing. ⚠️ **NEITHER SIDE IS A D539
+    REGRESSION**: the bench half shipped with D447's `yourBench` and this slice added no
+    byte to it. It is stated here because D539 is the first op to reach BOTH zones of the
+    attacker's own side from one printing, and `namedBodiesSpread.test.ts` §4 asserts
+    nothing on either side of the question — no own-side body in that suite carries a
+    reduction passive, a §11 shield or a clamp. **The reading is PRICED, not chosen, and
+    the price is a slice of its own**: closing it means deciding whether an own-side hit
+    is "damage from an attack" for §11's *"by attacks from your opponent's Pokémon"* at
+    BOTH zones and then moving whichever leg loses, with rungs on both. Recorded in
+    `docs/progress.md`'s D539 session log as the next scout's, exactly as the *"tries to
+    use an attack"* two-populations finding is.
+
+    ⚠️ `by` IS `ctx.seat` AND SO IS `seat` — the attacker damaged itself, so the two
+    coincide, exactly as they do on `placeSnipe`'s own-side bench rows since D447. The
+    row is written out rather than shared with that loop because the two legs differ on
+    every other field (no `debuff`, no `reduction`, no `prevented`, no `survived`), and
+    a shared literal would make `D425-damage-row-names-the-victim-as-the-dealer`'s `find`
+    occur twice and break the row (`precheck`'s own class of defect). */
+function hitOwnActive(
+  state: GameState,
+  amount: number,
+  deals: boolean,
+  source: "ability" | "attack",
+  ctx: EffectContext,
+  events: GameEvent[],
+): GameState {
+  const active = state.players[ctx.seat].active;
+  if (active === null) return state;
+  const uid = topUid(active);
+  if (uid === undefined) return state;
+  const damage = active.damage + amount;
+  if (!deals) {
+    events.push({ type: "COUNTERS_PLACED", seat: ctx.seat, uid, amount, source });
+    return withActive(state, ctx.seat, { ...active, damage });
+  }
+  events.push({
+    type: "DAMAGE_DEALT",
+    seat: ctx.seat,
+    by: ctx.seat,
+    uid,
+    base: amount,
+    weakness: null,
+    resistance: null,
+    dealt: amount,
+    damage,
+  });
+  return withActive(state, ctx.seat, { ...active, damage });
 }
 
 /** The Active-target arm of an `opponentAny` snipe (Fezandipiti ex "Cruel Arrow"
@@ -9208,7 +9330,17 @@ function snipeNote(
   count: number,
   optional: boolean,
   deals: boolean,
-  target: "opponentBench" | "opponentAny" | "yourBench" = "opponentBench",
+  /** 🆕🆕🆕 **D539 — `yourAny` WIDENS THIS PARAMETER, AND IT IS ONE OF EXACTLY
+      TWO SITES THE COMPILER NAMED** (the other is `snipeTargets`' total `switch`). The
+      caption obligation it carries is REAL but EMPTY, and §8 of
+      `namedBodiesSpread.test.ts` traces that THROUGH THE CALL SITE rather than asserting
+      a caption that can never fail (D478/D489, and `classedBoardSpread.test.ts`'s own
+      shape at D492): `snipeNote` has exactly ONE caller — `damageChosen`'s PARK branch
+      — and D539's op carries `count: "all"`, which takes the FORCED branch above it on
+      every board, so no caption is ever built for this member today. The `zone` ternary
+      below is widened anyway, because the day a `1 of your Pokémon` printing lands it
+      must already read right. */
+  target: "opponentBench" | "opponentAny" | "yourBench" | "yourAny" = "opponentBench",
   /** 🆕🆕 D437 — `op.damagedOnly`. The caption must name exactly the set the funnel
       offers or the dialog contradicts its own validator (`gustTargetNoun`'s and
       `knockOutChosenNote`'s stated rule), and here that matters more than usual:
@@ -9253,7 +9385,14 @@ function snipeNote(
     : `${Math.round(amount / 10)} damage counter${Math.round(amount / 10) === 1 ? "" : "s"}`;
   // `opponentAny` offers the Active too, so the heading drops "Benched".
   const noun = narrowing === undefined ? "Pokémon" : retrieveNoun(narrowing).plural;
-  const zone = target === "opponentAny" ? noun : `Benched ${noun}`;
+  // 🆕🆕🆕 **D539 — `yourAny` OWES THE SAME "DROP THE `Benched`" READING
+  // `opponentAny` HAS, FOR THE SAME REASON**: both name a candidate set that INCLUDES
+  // the Active, and a heading that said *"Benched"* over a list containing an Active
+  // would contradict its own validator — `gustTargetNoun`'s and `knockOutChosenNote`'s
+  // stated rule, and the reason the `owner` line below exists at all. No printing
+  // reaches this line under `yourAny` today (see the parameter's block above); it is
+  // written correctly rather than left to be discovered.
+  const zone = target === "opponentAny" || target === "yourAny" ? noun : `Benched ${noun}`;
   // 🆕🆕🆕 **D447 — THE HEADING NAMES WHOSE BENCH IT IS, BECAUSE THE CANDIDATE SET
   // NOW DEPENDS ON THAT.** `snipeTargets` offers the ATTACKER's own Bench under
   // `yourBench`, and a dialog that still read *"Choose 1 of your opponent's Benched
@@ -9261,7 +9400,10 @@ function snipeNote(
   // validator — `gustTargetNoun`'s and `knockOutChosenNote`'s stated rule, and D437's
   // reason for the window below. The printed sentence is *"1 of YOUR Benched
   // Pokémon"*, so the caption quotes it.
-  const owner = target === "yourBench" ? "your" : "your opponent's";
+  // 🆕 **D539 — AND `yourAny` IS AN OWN-SIDE TARGET TOO**, so the possessive is the
+  // player's on both own-side members. Widened with the `zone` line above for the same
+  // stated reason: unreached today, correct the day it is reached.
+  const owner = target === "yourBench" || target === "yourAny" ? "your" : "your opponent's";
   // 🆕🆕 D437 — the window rides AFTER the noun because that is where the print puts
   // it, `knockOutChosenNote`'s line verbatim. ⚠️ **SINGULAR ONLY, AND THAT IS NOT AN
   // OVERSIGHT**: the clause is printed *"that has … on it"*, and `ALSO_BENCHED_SNIPE`
@@ -14168,6 +14310,24 @@ export function snipeTargets(
       // switch-out family already share — one reading of "your Bench", not a fourth.
       case "yourBench":
         return ownBenchRefs(state, seat);
+      // 🆕🆕🆕 **D539 — THE ATTACKER'S WHOLE OWN SIDE, ACTIVE INCLUDED, AND THIS
+      // LINE IS WHY D447 WROTE A TOTAL `switch` INSTEAD OF A TERNARY.** The block above
+      // says it in as many words: the ternary that stood here would have dropped a new
+      // member SILENTLY out of its `else` and aimed the spread at the wrong board with
+      // `tsc` reporting nothing. It did not: widening the union stopped the compile at
+      // exactly TWO sites, this one and `snipeNote`'s parameter, and both are loud. That
+      // is D222's rule paying out a second time.
+      //
+      // 🛑 **`ownInPlayRefs` IS THE HELPER THAT ALREADY EXISTS — *"Every in-play
+      // Pokémon the controller could heal — Active first, then bench"* — AND IT IS
+      // SHARED RATHER THAN RE-SPELLED.** "Which bodies are yours in play" is ONE
+      // question (D159), and the ORDER it answers in is observable: `placeSnipe` walks
+      // the refs it is handed in order, each hit emits its own `DAMAGE_DEALT`, and an
+      // own-side KO is swept by `finishAttack` afterwards. Active first is what
+      // `ownBenchRefs` one case up cannot express and is the whole of what this member
+      // adds — `D539-snipetargets-case-uses-ownbenchrefs` spares the attacker.
+      case "yourAny":
+        return ownInPlayRefs(state, seat);
     }
   })();
   // 🆕🆕🆕 **D483 — THE PRINTED CANDIDATE CLASS, AT THE SAME SEAM AND FOR THE SAME THREE

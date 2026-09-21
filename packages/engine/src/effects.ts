@@ -5388,8 +5388,43 @@ export type EffectOp =
           record ever written can contain the new value, and both old values still name
           the sets they always named. D125's distinction: a widening is free, a rename
           is not. Driven over the serialized bytes in BOTH directions in
-          `ownBenchSnipe.test.ts` §3 rather than argued here. */
-      target: "opponentBench" | "opponentAny" | "yourBench";
+          `ownBenchSnipe.test.ts` §3 rather than argued here.
+
+          🆕🆕🆕 **D539 — `yourAny`, THE FOURTH MEMBER: the attacker's WHOLE OWN
+          SIDE, ACTIVE INCLUDED.** *"This attack does 50 damage for each of your Drifloon
+          and Drifblim in play. This attack also does 30 damage to each of your Drifloon
+          and Drifblim. (Don't apply Weakness and Resistance for Benched Pokémon.)"* —
+          `censusAttackCorpus.ts` FILE LINE **595**, **1 sentence / 2 legal printings**,
+          read off the whole-compound anchor `NAMED_BODIES_MULTIPLY_SPREAD`.
+
+          🛑 **IT IS `yourBench` WITH THE ONE BODY `yourBench` CANNOT NAME — THE
+          ATTACKER ITSELF.** The printed noun is *"each of your Drifloon and Drifblim"*
+          with NO zone word at all, and the attacking Drifblim is one of them. A build
+          that aimed this at `yourBench` TYPECHECKS, ships, and logs a plausible board
+          while SILENTLY SPARING THE ATTACKER — and because `count: "all"` never parks
+          there is no caption to contradict it and no census figure that moves. That is
+          `D539-target-becomes-yourbench`, and it is killable ONLY by an HP rung on the
+          attacker's own Active (`namedBodiesSpread.test.ts` §4b).
+
+          ⚠️ **NO `ignoreWR`, AND THAT IS A READING THIS SLICE DRIVES RATHER THAN
+          ARGUES.** §8.5 scopes Weakness and Resistance to the DEFENDING Pokémon, which
+          is D447's own reading for `yourBench` four paragraphs up and D425's for
+          `spreadDamage.yourBench`; the printed parenthetical is the spread family's
+          standard reminder and asks for nothing this engine does not already do. A named
+          body of the attacker's carrying a Weakness takes exactly 30 — §4c, on a board,
+          not in this block.
+
+          ⚠️ **A WIDENING AT A PERSISTED ADDRESS, AND `MATCH_RECORD_VERSION` STAYS 30 —
+          BOTH D450 DOORS DRIVEN OVER THE SERIALIZED BYTES (D427, not from the type's
+          name).** Door 1, the CARRIER: this op rides `GameState.phase.cont.pendingOp`
+          ONLY when it PARKS, and `count: "all"` resolves INLINE and never parks (that
+          field's own block below says so), so no record that can exist holds the new
+          value. Door 2, the ALPHABET: the union WIDENS and both old values still name
+          the sets they always named — D125's free case, and D447 added `yourBench` to
+          THIS EXACT UNION and held the version on it. Driven in
+          `namedBodiesSpread.test.ts` §7, both directions, `ownBenchSnipe.test.ts` §3's
+          shape. */
+      target: "opponentBench" | "opponentAny" | "yourBench" | "yourAny";
       amount: number;
       /** How many bodies the printed sentence names.
 
@@ -15891,6 +15926,43 @@ const YOUR_BENCH_FILTERED_SCALE =
 // Stated because "compounds sometimes compose for free" is not something a slice
 // can plan with; the mechanism is.
 //
+// 🆕🛑 **D539 — THE ROW IS BUILT, AND THE PARAGRAPH ABOVE IS KEPT AS THE RECORD OF
+// A PRICE THAT CAME TRUE RATHER THAN DELETED (D442/D466 step 3).** Every clause of it
+// is STILL LITERALLY TRUE at this head and was RE-MEASURED here, not inherited:
+// `splitAttackTrailingClause(row)` is `null`, `splitAttackGateClause(row)` is `null`,
+// and `deriveAttackEffect("(Don't apply Weakness and Resistance for Benched
+// Pokémon.)")` is `null` — the composition route is refused exactly as written, and
+// `bodiesInPlayScaling.test.ts` §1 keeps all three rungs GREEN for that reason.
+//
+// ⚠️ **WHAT EXPIRED IS THE LAST SENTENCE OF IT — *"the row stays in the residue
+// whatever this slice does"* — AND ONLY BECAUSE THE ROUTE TAKEN IS NOT THE ONE THE
+// PARAGRAPH PRICED.** D539 claims the WHOLE COMPOUND with one anchor
+// (`NAMED_BODIES_MULTIPLY_SPREAD`, below the noun map) read by TWO readers off ONE
+// `effect` string — `deriveAttackDamageMultiplier` for the fold and
+// `deriveAttackEffect` for the own-side spread — which is D493's
+// `BENCH_COUNTER_FILTERED_SUPPRESSED` and D494's `CONDITIONAL_BONUS_SUPPRESSED` shape
+// for the third time, with `attack.ts` again BYTE-UNCHANGED apart from comments.
+//
+// 🛑 **AND THE COMPOSITION SEAM WAS RE-PRICED AT THIS HEAD BEFORE IT WAS DECLINED,
+// WITH NUMBERS (D493's arithmetic re-run, not recalled).** The narrowest widening that
+// would reach this row — REGLUE a `(`-leading part onto its predecessor before the
+// head/tail cut, so the parenthetical stops being the tail — admits **0 sentences /
+// 0 printings** over all 640 corpus rows on its own, and leaves ALL ELEVEN currently
+// split rows BYTE-IDENTICAL in both `head` and `tail`. So the seam buys nothing this
+// slice and costs a shared splitter; the anchor buys the row for one regex. Priced,
+// then declined — and `namedBodiesSpread.test.ts` §1 re-runs the simulation rather
+// than trusting this comment.
+//
+// ⚠️ **THE `[^.]+` ARGUMENT ABOVE IS UNTOUCHED BY THAT AND STAYS EXACTLY AS
+// WRITTEN** (D207/D439): `IN_PLAY_BODY_MULTIPLY` still refuses this compound, still for
+// the structural reason, and `bodiesInPlayScaling.test.ts`' rung is RE-POINTED ONTO THE
+// PATTERN ITSELF rather than swapped to a `=== true` (D438), because the pattern's
+// refusal is what the rung is about and it did not change. The two anchors are disjoint
+// by `$` ALONE and by nothing else: `IN_PLAY_BODY_MULTIPLY` requires ` in play.` at END
+// OF STRING, its `[^.]+` cannot cross the break to reach the second sentence, and this
+// row's bytes continue past that period — said out loud because "disjoint by
+// construction" with no named construction is the claim D467/D468 refuse.
+//
 // The possessive in a captured owner noun carries whichever apostrophe the catalog
 // prints — the capture is a character class, so D137's `['’]` fix is not needed
 // HERE and is needed in `IN_PLAY_OWNER_NOUN` below, which spells one. `Pokémon`
@@ -16165,6 +16237,54 @@ const IN_PLAY_BODY_NOUNS: ReadonlyMap<string, CardFilter> = new Map<string, Card
   // owner`'s declared reason) needs from a new exact key. Re-derived here rather than
   // assumed: the exact keys are now **8** and the vocabulary **30**.
   ["Charjabug", { kind: "byName", name: "Charjabug" }],
+  // 🆕🆕🆕 **D539 — THE NINTH EXACT KEY, AND IT IS THE THIRD INSTANCE OF A SHIPPED
+  // IDIOM RATHER THAN A NEW ONE.** *"Drifloon and Drifblim"* — `censusAttackCorpus.ts`
+  // FILE LINE **595**, **1 sentence / 2 legal printings**, the only place this column
+  // prints it. It is a PAIR IN AN `anyOf` (`["Pokémon ex and Pokémon V", …]`, D492,
+  // four rows up) whose members are CARD NAMES (`["Charjabug", byName]`, D467, one row
+  // up); neither half is new and the row costs no vocabulary.
+  //
+  // 🛑 **THE `and` NAMES A SET, NOT AN INTERSECTION** — D245's argument for the
+  // combinator verbatim and D492's own note one pair up. Read as an intersection it
+  // would name bodies that are BOTH a Drifloon and a Drifblim, of which the pool has
+  // none, i.e. a sentence that scores 0 forever and a spread that hits nothing.
+  // `D539-map-value-single-byname` drops one half and scores HALF the board.
+  //
+  // ⚠️ **THE CONSEQUENCE, STATED RATHER THAN DISCOVERED** (D466/D467's own, at a
+  // third key): this map is also `IN_PLAY_BODY_MULTIPLY`/`_SCALE`'s,
+  // `IN_PLAY_FOE_BODY_MULTIPLY`'s and `YOUR_BENCH_FILTERED_SCALE`'s vocabulary, so
+  // *"…for each of your Drifloon and Drifblim in play."* on its own and
+  // *"…for each Drifloon and Drifblim on your Bench."* are readable too, and the column
+  // prints NEITHER. A reader is a function of TEXT, and a noun the column does not print
+  // simply never arrives.
+  //
+  // ⚠️ **NO APOSTROPHE, AND THE ARITHMETIC IS RE-DERIVED AT THE NEW COUNT RATHER
+  // THAN COPIED FROM THE ROW ABOVE** (D425 — a doc-block figure rots like any other):
+  // the exact keys are now **9** and the vocabulary **31** (9 exact + 11
+  // `POKEMON_TYPES` names + 11 `{X}` codes). Neither "Drifloon and Drifblim" nor any
+  // other exact key ends in a possessive, so `IN_PLAY_OWNER_NOUN` still cannot reach one
+  // and `inPlayBodyFilter`'s three branches stay pairwise disjoint.
+  //
+  // 🛑 **AND THE COUNT IS *NOT* DERIVED FROM `IN_PLAY_BODY_NOUNS.size` — D539 CHECKED THE
+  // CLAIM THAT SAID IT WAS AND WITHDREW IT** (`inPlayBodyFilter`'s doc block below, and
+  // `index.ts`'s D539 entry). This map is module-private — it is not exported, so no suite
+  // can read `.size` at all — and `benchNounScaling.test.ts` §5 holds a HAND LIST plus a
+  // hand sum. **BOTH THIS FIGURE AND §5's WERE MOVED BY HAND when the ninth key landed, and
+  // nothing went RED in between.** What §5 DOES derive is the stronger half — every listed
+  // key is driven THROUGH the reader — so a key that stops RESOLVING still reddens; only a
+  // key that stops EXISTING does not. Closing that needs an export, which is a change to
+  // this file's surface and was deliberately not made in the slice that found it (D453/D455:
+  // a doc block's *"recorded as X"* names a file and is one grep from being checked).
+  [
+    "Drifloon and Drifblim",
+    {
+      kind: "anyOf",
+      filters: [
+        { kind: "byName", name: "Drifloon" },
+        { kind: "byName", name: "Drifblim" },
+      ],
+    },
+  ],
 ]);
 /** 🆕🆕🆕 **D492 — THE TWO CLASS NOUNS THIS COLUMN PRINTS IN A WHOLE-SIDE SPREAD'S
     TARGET SLOT**, and they are a SHORTLIST OVER `IN_PLAY_BODY_NOUNS` rather than a
@@ -16240,6 +16360,72 @@ const SPREAD_EACH_CLASSED_OPPONENT_POKEMON = new RegExp(
     "|",
   )})\\. This attack['’]s damage isn['’]t affected by Weakness or Resistance\\.$`,
 );
+/** 🆕🆕🆕 **D539 — THE NAMED-BODY MULTIPLIER WITH A NAMED-BODY OWN-SIDE SPREAD
+    BEHIND IT, CLAIMED AS ONE WHOLE COMPOUND.** *"This attack does 50 damage for each of
+    your Drifloon and Drifblim in play. This attack also does 30 damage to each of your
+    Drifloon and Drifblim. (Don't apply Weakness and Resistance for Benched
+    Pokémon.)"* — `censusAttackCorpus.ts` FILE LINE **595**, `legalAttackCorpus()` index
+    **542**, **1 sentence / 2 legal printings**, and it is the LAST UNBUILT ROW OF TWO
+    FAMILIES AT ONCE: `/This attack also does /` reads **17 sentences / 41 printings** at
+    this head and `/ damage to each of /` reads **11 / 20**, and this row is the only
+    unbuilt member of either.
+
+    🛑 **ONE ANCHOR, TWO READERS, ONE `effect` STRING — AND THAT IS A SHIPPED ROUTE
+    RATHER THAN A NEW ONE.** `deriveAttackDamageMultiplier` reads it for the × fold and
+    `deriveAttackEffect` reads it for the own-side spread, both off the SAME `effect`
+    string `attack.ts` already binds: `derivedHead` at `attack.ts:1708` UNCONDITIONALLY,
+    and the `damageMultiplier` ternary at `attack.ts:1761-1764` GUARDED by
+    `damageBonus !== null`. So a sentence both readers claim reaches both bindings with
+    NO branch GIVEN `deriveAttackDamageBonus(PRINTED)` is null — which it is, and which
+    `namedBodiesSpread.test.ts` §3 DRIVES rather than narrates — and **`attack.ts`
+    takes ZERO code bytes for this row**. That is D493's `BENCH_COUNTER_FILTERED_
+    SUPPRESSED` and D494's `CONDITIONAL_BONUS_SUPPRESSED` for the THIRD time; the
+    precedent is recorded at `attack.ts:1840-1878` and is not re-argued here.
+
+    🛑 **THE `\2` BACKREFERENCE IS THE MECHANISM.** The card names the SAME bodies
+    twice — what it multiplies by is what it then splashes on — and a capture that let
+    the two differ would author a program whose fold counts one population and whose
+    spread hits another, with every log row reading correctly. Dropping it to `([^.]+)`
+    is `D539-anchor-drops-the-backreference`, this slice's sharpest row, and §1 drives
+    the pattern from BOTH sides (matched nouns match, mismatched nouns refuse).
+
+    ⚠️ **THE `(?!opponent)` LOOKAHEAD IS KEPT, FOR `IN_PLAY_BODY_MULTIPLY`'s STATED
+    D407 REASON AND NOT AS A COPYING ARTEFACT.** The slot is a CAPTURE, so without it
+    `for each of your ` would admit a printed `opponent's …` noun and score the
+    OPPONENT's sentence off the ATTACKER's board — which is D407's defect exactly, and
+    the reason applies verbatim at a capture in the same slot. The vocabulary would
+    refuse such a noun today and the card would merely be LOUD; the lookahead is what
+    keeps a refusal from turning into a WRONG CARD the day an owner-prefixed filter
+    lands. `D539-anchor-drops-the-opponent-lookahead`.
+
+    ⚠️ **THE `['’]` CLASS ON `Don't` IS REQUIRED EVEN THOUGH THE CORPUS PRINTS
+    U+0027 HERE** (D137): this pattern SPELLS the apostrophe rather than capturing it,
+    and the catalog carries both bytes across printings of one sentence. Counted off the
+    printed bytes at this head with `cat -A` rather than inherited — index 150 is
+    U+0027 — and `Pokémon` carries the real é (U+00E9) at index 198. ONE apostrophe
+    slot, and `D539-anchor-drops-the-apostrophe-class` is what says the class is not
+    decoration.
+
+    🛑 **DISJOINT FROM `IN_PLAY_BODY_MULTIPLY` BY `$` ALONE — SAID OUT LOUD BECAUSE
+    THAT IS THE WHOLE OF IT** (D467/D468's rule). That anchor requires ` in play.` at END
+    OF STRING and its `[^.]+` cannot cross the break, so it cannot reach this row's
+    second sentence; this anchor requires those same bytes to be FOLLOWED by
+    ` This attack also does …`, so it cannot reach that anchor's rows. The same `$`
+    argument disjoins it from `IN_PLAY_BODY_SCALE` (which additionally demands
+    ` more damage`) and from `SPREAD_EACH_CLASSED_OPPONENT_POKEMON` above (which demands
+    `your opponent's`). No `/i`, whole-string anchored at both ends, for the family's
+    stated reason. Measured over all 640 corpus rows in `namedBodiesSpread.test.ts` §1:
+    it claims EXACTLY 1 sentence / 2 printings, and no corpus row matches it and any
+    other anchor.
+
+    ⚠️ **PLACEMENT IS LEGIBILITY HERE, NOT A TEMPORAL-DEAD-ZONE CONSTRAINT.** Unlike
+    its neighbour above — which interpolates `SPREAD_EACH_CLASS_NOUNS` and so genuinely
+    must sit below the map — this is a static literal with a capture, and it would load
+    anywhere in the file. It sits beside the spread family because that is where its
+    SECOND reader's arm is, and beneath `IN_PLAY_BODY_NOUNS` because that is the
+    vocabulary its capture is resolved through. */
+const NAMED_BODIES_MULTIPLY_SPREAD =
+  /^This attack does (\d+) damage for each of your ((?!opponent)[^.]+) in play\. This attack also does (\d+) damage to each of your \2\. \(Don['’]t apply Weakness and Resistance for Benched Pokémon\.\)$/;
 /** The OWNER-PREFIXED noun ("Team Rocket's Pokémon"). The `['’]` class is D137's
     fix and is needed here because this pattern spells the apostrophe, unlike the
     outer capture which is a character class. The owner is captured rather than
@@ -16284,9 +16470,15 @@ const IN_PLAY_TYPED_NOUN = /^(.+) Pokémon$/;
 
     ⚠️ **WHAT IS ACTUALLY TRUE IS THAT THE THREE BRANCHES ARE PAIRWISE DISJOINT,
     AND IT IS MEASURED EXHAUSTIVELY RATHER THAN ARGUED.** The whole vocabulary is
-    30 nouns — the 8 exact keys, the 11 `POKEMON_TYPES` names and the 11 `{X}`
+    31 nouns — the 9 exact keys, the 11 `POKEMON_TYPES` names and the 11 `{X}`
     codes — and NOT ONE of them matches `IN_PLAY_OWNER_NOUN`, because no Pokémon
     type name ends in a possessive and no exact key carries an apostrophe.
+    🆕 **D539 — `30 nouns / 8 exact keys` UNTIL NOW**, and it is RE-DERIVED at the new
+    count rather than incremented on faith: the ninth exact key is
+    *"Drifloon and Drifblim"* and it carries no apostrophe either. ⚠️ **The rung that
+    moved alongside it is `benchNounScaling.test.ts` §5, and it was moved BY HAND** — see
+    the withdrawal below: §5 drives every listed key THROUGH the reader, but its count is
+    a hand sum over a hand list, not a read of `.size`.
     🆕🆕 **D467 — THIS ARITHMETIC WAS `25 nouns — the 3 exact keys` UNTIL NOW, AND IT
     HAD BEEN WRONG SINCE D446** (which added two keys and did not update it) and
     wronger since D466 (which added two more). ⚠️ **D466 CORRECTED THE COPY OF THIS
@@ -16296,7 +16488,19 @@ const IN_PLAY_TYPED_NOUN = /^(.+) Pokémon$/;
     lives in two files rots in two places and reddens in neither; the count is now
     derived from `IN_PLAY_BODY_NOUNS.size` in
     `benchNounScaling.test.ts` §5, so the next key to land reddens
-    instead of lying. So no
+    instead of lying.
+    🆕🛑 **D539 CHECKED THAT LAST SENTENCE AND IT IS FALSE — THE COUNT IS NOT DERIVED
+    FROM `.size` AND THE NINTH KEY DID NOT REDDEN IT.** This map is module-private: it is
+    not exported, so no suite can read `.size` at all, and `benchNounScaling.test.ts` §5
+    holds a HAND LIST plus a hand sum. D539 added the ninth key and BOTH had to be moved
+    by hand, with nothing going red in between — exactly the failure this paragraph was
+    written to prevent, one level up. ⚠️ **The claim is WITHDRAWN rather than the figure
+    quietly patched** (D453/D455: a doc block's *"recorded as X"* names a file and is one
+    grep from being checked, and three of the four such claims found in shipped source
+    were false). What §5 DOES derive is the stronger half — every listed key is driven
+    THROUGH the reader — so a key that stops RESOLVING still reddens; only a key that
+    stops EXISTING does not. Closing it needs an export, which is a change to this file's
+    surface and was deliberately not made in the same slice that found it. So no
     noun can resolve down two branches, and the order is free. Pinned in
     `bodiesInPlayScaling.test.ts` §2 over the whole of `POKEMON_TYPES`, so the day
     a type name gains a `'s` the disjointness rung goes RED and this paragraph
@@ -25988,6 +26192,70 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
     }
   }
 
+  // 🆕🆕🆕 6a-quater. D539 — "This attack does 50 damage for each of your Drifloon
+  //     and Drifblim in play. This attack also does 30 damage to each of your Drifloon
+  //     and Drifblim. (Don't apply Weakness and Resistance for Benched Pokémon.)" —
+  //     corpus FILE LINE 595, 1 sentence / 2 legal printings. THE SECOND OF THE TWO
+  //     READERS THAT CLAIM THIS ONE STRING; `deriveAttackDamageMultiplier`'s arm holds
+  //     the × fold of the FIRST sentence and this arm holds the own-side spread of the
+  //     SECOND. The anchor's own block has the disjointness and the `\2`; what this arm
+  //     owes is the op.
+  //
+  //     🛑 **`target: "yourAny"` AND NOT `"yourBench"`, AND THE PRINTED NOUN IS WHY.**
+  //     The sentence names *"each of your Drifloon and Drifblim"* with NO zone word, and
+  //     the ATTACKING body is one of them on every board this card can reach. `yourBench`
+  //     typechecks here and SILENTLY SPARES THE ATTACKER — no caption contradicts it
+  //     (`count: "all"` never parks) and no census figure moves — so
+  //     `D539-target-becomes-yourbench` is killable only by an HP rung on the attacker's
+  //     own Active. That rung is `namedBodiesSpread.test.ts` §4b and it is the section
+  //     this slice is really about.
+  //
+  //     🛑 **NO `ignoreWR`, UNLIKE 6a-ter DIRECTLY ABOVE, AND THE DIFFERENCE IS THE
+  //     PRINTED WORDS.** That row prints *"This attack's damage isn't affected by
+  //     Weakness or Resistance."*, a genuine §8.5 suppression; this one prints
+  //     *"(Don't apply Weakness and Resistance for Benched Pokémon.)"*, the spread
+  //     family's standard REMINDER that §8.5 already scopes W/R to the Defending
+  //     Pokémon. Setting the flag here would be a DIFFERENT BOARD on any own body
+  //     carrying a Weakness, and D447's `yourBench` and D425's `spreadDamage.yourBench`
+  //     both read it exactly this way. Driven on a Weakness-carrying own body in §4c.
+  //
+  //     ⚠️ **`count: "all"` AND THE SHARED FUNNEL DO THE REST.** `snipeTargets`'
+  //     total `switch` walks `ownInPlayRefs` (Active first, then Bench) for `yourAny`
+  //     and narrows it by `op.filter`, and `"all"` takes `stepOp`'s FORCED branch on
+  //     every board, so the op resolves INLINE, never parks, and builds no prompt —
+  //     which is D492's own reading one arm up and the reason §8's describer obligation
+  //     is EMPTY rather than assertable. `deals: true`: this is attack damage, so it
+  //     routes the §8.5 pipeline for the bodies that carry one, and the parenthetical
+  //     says the Benched ones do not.
+  //
+  //     ⚠️ **THE NOUN IS RESOLVED THROUGH `inPlayBodyFilter` AND AN UNMAPPED ONE STAYS
+  //     LOUD** — D159: *"which bodies does this printed noun name"* is ONE question and
+  //     gets ONE answer, so the fold's filter and the spread's filter are the SAME
+  //     resolution of the SAME captured bytes, which is what the `\2` guarantees at the
+  //     text level and this line guarantees at the program level. A noun the vocabulary
+  //     cannot spell leaves the sentence on the loud `ATTACK_EFFECT_SKIPPED` path
+  //     (D190b), which is `D539-map-row-dropped`.
+  match = NAMED_BODIES_MULTIPLY_SPREAD.exec(effect);
+  if (match !== null) {
+    const amount = Number(match[3]);
+    const namedFilter = inPlayBodyFilter(match[2] ?? "");
+    // A printed 0 is not a real card — left on the loud path, 6a-ter's rule verbatim
+    // one arm up.
+    if (amount >= 1 && namedFilter !== null) {
+      return [
+        {
+          op: "damageChosen",
+          target: "yourAny",
+          amount,
+          count: "all",
+          source: "attack",
+          deals: true,
+          filter: namedFilter,
+        },
+      ];
+    }
+  }
+
   // 6b. "This attack does N damage to 1 of your opponent's Benched Pokémon for
   //     each Prize card your opponent has taken. (Don't apply Weakness and
   //     Resistance for Benched Pokémon.)" — Wo-Chien ex "Covetous Ivy". A CHOSEN
@@ -31711,6 +31979,42 @@ export function deriveAttackDamageMultiplier(text: string): AttackDamageBonus | 
   if (inPlayBodies !== null) {
     const per = Number(inPlayBodies[1]);
     const filter = inPlayBodyFilter(inPlayBodies[2] ?? "");
+    if (per >= 1 && filter !== null) {
+      return { per, count: { kind: "pokemonInPlay", seat: "you", filter } };
+    }
+  }
+  // 🆕🆕🆕 **D539 — THE SAME FOLD, THE SAME SEAT, THE SAME NOUN MAP AND THE SAME
+  // SHAPE, off a WHOLE-COMPOUND anchor whose SECOND sentence belongs to a different
+  // reader.** Corpus FILE LINE 595, 1 sentence / 2 legal printings. The returned value
+  // is BYTE-FOR-BYTE the shape the arm directly above returns — nothing new is
+  // introduced on this interface — and what differs is only WHICH BYTES the anchor had
+  // to consume to be sure of the number.
+  //
+  // 🛑 **TWO READERS CLAIM THIS ONE STRING AND NEITHER GUARDS THE OTHER.**
+  // `deriveAttackEffect`'s arm 6a-quater reads the own-side spread off the SAME
+  // `effect`; `attack.ts:1708` binds `derivedHead` UNCONDITIONALLY and the
+  // `damageMultiplier` ternary at `attack.ts:1761-1764` is GUARDED by
+  // `damageBonus !== null`, so the sentence reaches both with no branch GIVEN
+  // `deriveAttackDamageBonus(PRINTED)` is null — driven in `namedBodiesSpread.test.ts`
+  // §3, not narrated — and `attack.ts` takes zero code bytes
+  // (D493/D494's shape, third instance). 🛑 **A GREEN CENSUS IS SATISFIED BY THIS
+  // ARM ALONE** — it flips `resolvedByAnyReader`, steps `BUILT.attack` by 2 and moves
+  // every census figure with the spread never happening — which is why
+  // `D539-effect-arm-deleted` exists and why the suite asserts HP on a board rather than
+  // op shape (D421's failure mode, named before it could happen).
+  //
+  // PLACED HERE BECAUSE THE TWO ANCHORS DIFFER IN EXACTLY ONE PRINTED CLAUSE AND THE
+  // ORDER IS FREE RATHER THAN LOAD-BEARING (D519's line one arm down, verbatim):
+  // `IN_PLAY_BODY_MULTIPLY` needs ` in play.` at END OF STRING and this one needs those
+  // same bytes followed by ` This attack also does …`, so no string reaches both —
+  // asserted over all 640 rows in `namedBodiesSpread.test.ts` §1 rather than argued.
+  //
+  // TWO guards, refusing for two different reasons, the arm above's verbatim: `per >= 1`
+  // is the family's printed-zero guard and `filter !== null` is the VOCABULARY.
+  const namedBodiesSpread = NAMED_BODIES_MULTIPLY_SPREAD.exec(effect);
+  if (namedBodiesSpread !== null) {
+    const per = Number(namedBodiesSpread[1]);
+    const filter = inPlayBodyFilter(namedBodiesSpread[2] ?? "");
     if (per >= 1 && filter !== null) {
       return { per, count: { kind: "pokemonInPlay", seat: "you", filter } };
     }

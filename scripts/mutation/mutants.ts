@@ -5246,12 +5246,212 @@ export const MUTANTS: Mutant[] = [
       "packages/engine/src/flipTheScript.test.ts",
     ],
   },
+  // ── D539 — THE NAMED-BODY MULTIPLIER WITH A NAMED-BODY OWN-SIDE SPREAD BEHIND IT.
+  //    Twenty rows. 🛑 THE SHAPE OF THE SET IS THE FINDING: **THREE of the twenty move NO
+  //    CENSUS FIGURE AT ALL** — `D539-target-becomes-yourbench`, `D539-effect-arm-deleted` and
+  //    `D539-placement-drops-the-own-active`. Each leaves `resolvedByAnyReader` true, `BUILT.attack`
+  //    at 1664 and the residue at 49/68, ships a well-formed program and logs an internally
+  //    consistent board — and each is a DIFFERENT half of the card not happening. Only an HP rung
+  //    on the attacker's own side can see any of them, which is why `namedBodiesSpread.test.ts`
+  //    §4 asserts damage vectors rather than op shapes (D421).
+  //    ⚠️ **CENSUS-INVISIBILITY ALONE IS NOT WHAT PICKS THOSE THREE OUT**, and saying so keeps the
+  //    claim honest at a count that grew: the interpreter-side rows move no census figure either,
+  //    by construction — no reader runs at all. What distinguishes the three is that a READER STILL
+  //    CLAIMS THE SENTENCE and the program it authors is well formed, so the ONLY witness left is
+  //    HP on a board.
+  //    🆕 **THE TWENTIETH ROW WAS ADDED BY A REVIEW PASS, AND IT EXISTS BECAUSE A CAPTION NAMED A
+  //    RULE ITS BOARD COULD NOT ASK ABOUT**: `D539-own-active-leg-doubles-a-weakness` is killed by
+  //    the SEAT `snipeActive` aims at, not by the no-`ignoreWR` READING it is captioned with, and
+  //    §4c's Weakness sat on an own BENCH body where W/R is never applied in ANY build.
+  //    `D539-own-active-leg-runs-weakness-on-itself` attacks the reading alone, and §4c now carries
+  //    the ×2 in the ATTACKER'S OWN ACTIVE SPOT with the bench board labelled a CONTROL.
+  {
+    id: "D539-anchor-drops-the-backreference",
+    decision: "D539",
+    what: "🛑🛑 **THE SHARPEST ROW IN THIS SLICE: the `\\2` BACKREFERENCE becomes a fresh capture.** The card multiplies by the bodies it then splashes on — the two printed nouns are THE SAME NOUN and the backreference is the only thing that says so. Widened to `([^.]+)` the anchor claims a MISMATCHED compound: the fold counts one population and the spread hits another, both readers answer non-null, every log row reads correctly and no census figure moves. The corpus prints no such row today, which is what makes it a wrong-CARD defect waiting on one ingest rather than a live one",
+    file: "packages/engine/src/effects.ts",
+    find: "/^This attack does (\\d+) damage for each of your ((?!opponent)[^.]+) in play\\. This attack also does (\\d+) damage to each of your \\2\\. \\(Don['’]t apply Weakness and Resistance for Benched Pokémon\\.\\)$/;",
+    replace: "/^This attack does (\\d+) damage for each of your ((?!opponent)[^.]+) in play\\. This attack also does (\\d+) damage to each of your ([^.]+)\\. \\(Don['’]t apply Weakness and Resistance for Benched Pokémon\\.\\)$/;",
+    expectKilledBy: ["packages/engine/src/namedBodiesSpread.test.ts"],
+  },
+  {
+    id: "D539-anchor-loses-its-caret",
+    decision: "D539",
+    what: "⚠️ A1 — the `^` goes, so any sentence ENDING in this compound is claimed and its leading matter is silently dropped. The family's standing anchor discipline is `^…$` with no `/i`, and this is the half a printed prefix (*“Flip a coin. If heads, …”*) walks through",
+    file: "packages/engine/src/effects.ts",
+    find: "/^This attack does (\\d+) damage for each of your ((?!opponent)[^.]+) in play\\. This attack also does (\\d+) damage to each of your \\2\\. \\(Don['’]t apply Weakness and Resistance for Benched Pokémon\\.\\)$/;",
+    replace: "/This attack does (\\d+) damage for each of your ((?!opponent)[^.]+) in play\\. This attack also does (\\d+) damage to each of your \\2\\. \\(Don['’]t apply Weakness and Resistance for Benched Pokémon\\.\\)$/;",
+    expectKilledBy: ["packages/engine/src/namedBodiesSpread.test.ts"],
+  },
+  {
+    id: "D539-anchor-loses-its-terminator",
+    decision: "D539",
+    what: "⚠️ A2 — the `$` goes, so a printed CONTINUATION rides along and the engine authors a program for half a sentence, dropping the rest with no loud channel. 🛑 It also destroys the disjointness argument this anchor rests on: `IN_PLAY_BODY_MULTIPLY` and this pattern are disjoint BY `$` ALONE",
+    file: "packages/engine/src/effects.ts",
+    find: "/^This attack does (\\d+) damage for each of your ((?!opponent)[^.]+) in play\\. This attack also does (\\d+) damage to each of your \\2\\. \\(Don['’]t apply Weakness and Resistance for Benched Pokémon\\.\\)$/;",
+    replace: "/^This attack does (\\d+) damage for each of your ((?!opponent)[^.]+) in play\\. This attack also does (\\d+) damage to each of your \\2\\. \\(Don['’]t apply Weakness and Resistance for Benched Pokémon\\.\\)/;",
+    expectKilledBy: ["packages/engine/src/namedBodiesSpread.test.ts"],
+  },
+  {
+    id: "D539-anchor-drops-the-apostrophe-class",
+    decision: "D539",
+    what: "⚠️ A3 — the `['’]` class on *“Don't”* collapses to the straight quote. The corpus prints U+0027 at this head, so the sentence still reads and NO census figure moves — which is exactly why D137 made the class a rule about the SITE of a spelled apostrophe rather than about a measurement: the day a printing carries the curly byte the whole row falls to the loud skip path",
+    file: "packages/engine/src/effects.ts",
+    find: "/^This attack does (\\d+) damage for each of your ((?!opponent)[^.]+) in play\\. This attack also does (\\d+) damage to each of your \\2\\. \\(Don['’]t apply Weakness and Resistance for Benched Pokémon\\.\\)$/;",
+    replace: "/^This attack does (\\d+) damage for each of your ((?!opponent)[^.]+) in play\\. This attack also does (\\d+) damage to each of your \\2\\. \\(Don't apply Weakness and Resistance for Benched Pokémon\\.\\)$/;",
+    expectKilledBy: ["packages/engine/src/namedBodiesSpread.test.ts"],
+  },
+  {
+    id: "D539-anchor-drops-the-opponent-lookahead",
+    decision: "D539",
+    what: "⚠️ A4 — the `(?!opponent)` lookahead goes from the CAPTURED noun. D407's defect exactly, reached from the capture side: `for each of your ` then admits a printed *“opponent's …”* noun and scores the OPPONENT's sentence off the ATTACKER's board. The vocabulary would refuse such a noun today and the card would merely be LOUD; the lookahead is what stops the refusal turning into a WRONG CARD the day an owner-prefixed filter lands, and `IN_PLAY_BODY_MULTIPLY` carries it one pattern up for the same stated reason",
+    file: "packages/engine/src/effects.ts",
+    find: "/^This attack does (\\d+) damage for each of your ((?!opponent)[^.]+) in play\\. This attack also does (\\d+) damage to each of your \\2\\. \\(Don['’]t apply Weakness and Resistance for Benched Pokémon\\.\\)$/;",
+    replace: "/^This attack does (\\d+) damage for each of your ([^.]+) in play\\. This attack also does (\\d+) damage to each of your \\2\\. \\(Don['’]t apply Weakness and Resistance for Benched Pokémon\\.\\)$/;",
+    expectKilledBy: ["packages/engine/src/namedBodiesSpread.test.ts"],
+  },
+  {
+    id: "D539-map-row-dropped",
+    decision: "D539",
+    what: "🛑 THE NINTH EXACT KEY IS REMOVED, so `inPlayBodyFilter` answers `null` for the printed noun, BOTH arms decline their guard and the sentence falls to the LOUD `ATTACK_EFFECT_SKIPPED` path (D190b). It is the loud failure rather than a wrong board — which is the point: the map is what refuses, not the regex, and this row is what says the vocabulary is read",
+    file: "packages/engine/src/effects.ts",
+    find: "  [\n    \"Drifloon and Drifblim\",\n    {\n      kind: \"anyOf\",\n      filters: [\n        { kind: \"byName\", name: \"Drifloon\" },\n        { kind: \"byName\", name: \"Drifblim\" },\n      ],\n    },\n  ],\n]);",
+    replace: "]);",
+    expectKilledBy: ["packages/engine/src/namedBodiesSpread.test.ts"],
+  },
+  {
+    id: "D539-map-value-single-byname",
+    decision: "D539",
+    what: "🛑 THE `anyOf` COLLAPSES TO ONE `byName`, so the printed pair names only Drifblim: the × fold counts HALF the board and the spread hits HALF the bodies. Nothing crashes, nothing is logged differently and every op shape is still well-formed — the only thing that moves is the number on the defender and which own bodies took 30. D492's `“Pokémon ex and Pokémon V”` row has the same shape one key up, and D245's argument for the combinator is that the printed *“and”* names a SET",
+    file: "packages/engine/src/effects.ts",
+    find: "  [\n    \"Drifloon and Drifblim\",\n    {\n      kind: \"anyOf\",\n      filters: [\n        { kind: \"byName\", name: \"Drifloon\" },\n        { kind: \"byName\", name: \"Drifblim\" },\n      ],\n    },\n  ],\n]);",
+    replace: "  [\n    \"Drifloon and Drifblim\",\n    { kind: \"byName\", name: \"Drifblim\" },\n  ],\n]);",
+    expectKilledBy: ["packages/engine/src/namedBodiesSpread.test.ts"],
+  },
+  {
+    id: "D539-target-becomes-yourbench",
+    decision: "D539",
+    what: "🛑🛑 **THE QUIET ONE, AND THE REASON §4 ASSERTS HP RATHER THAN OP SHAPE.** `target: “yourAny”` becomes `“yourBench”`: it TYPECHECKS (the member has shipped since D447), it ships, it logs a plausible board, every own BENCHED body still takes its 30 — and it **SILENTLY SPARES THE ATTACKER**, which is the one body `yourBench` cannot name and the whole mechanism this slice added. `count: “all”` never parks, so there is no caption to contradict it; no census figure moves; the sentence still reads. Killable ONLY by an HP rung on the attacker's own Active (§4b)",
+    file: "packages/engine/src/effects.ts",
+    find: "      return [\n        {\n          op: \"damageChosen\",\n          target: \"yourAny\",\n          amount,\n          count: \"all\",\n          source: \"attack\",\n          deals: true,\n          filter: namedFilter,\n        },\n      ];",
+    replace: "      return [\n        {\n          op: \"damageChosen\",\n          target: \"yourBench\",\n          amount,\n          count: \"all\",\n          source: \"attack\",\n          deals: true,\n          filter: namedFilter,\n        },\n      ];",
+    expectKilledBy: ["packages/engine/src/namedBodiesSpread.test.ts"],
+  },
+  {
+    id: "D539-target-becomes-opponentany",
+    decision: "D539",
+    what: "🛑 `target` aims ACROSS THE TABLE. The printed possessive is *“each of YOUR Drifloon and Drifblim”*, and this build splashes the 30 onto the OPPONENT's matching bodies instead — D425's `spread-side-flips` defect at a new op. On a board where the opponent fields none it is a silent no-op; §4e fields two of them on purpose so the two readings differ by a vector rather than by nothing",
+    file: "packages/engine/src/effects.ts",
+    find: "      return [\n        {\n          op: \"damageChosen\",\n          target: \"yourAny\",\n          amount,\n          count: \"all\",\n          source: \"attack\",\n          deals: true,\n          filter: namedFilter,\n        },\n      ];",
+    replace: "      return [\n        {\n          op: \"damageChosen\",\n          target: \"opponentAny\",\n          amount,\n          count: \"all\",\n          source: \"attack\",\n          deals: true,\n          filter: namedFilter,\n        },\n      ];",
+    expectKilledBy: ["packages/engine/src/namedBodiesSpread.test.ts"],
+  },
+  {
+    id: "D539-count-all-becomes-one",
+    decision: "D539",
+    what: "⚠️ `count: “all”` becomes `1`, so the printed *“each of”* turns into a CHOICE: the op PARKS, a prompt is built, the attack stops mid-program and exactly one named body takes the 30 instead of all of them. `SPREAD_EACH_BENCH`'s own block calls the *“1 of”* / *“each of”* split this family's dividing line, and D492's `“all”` block states that the determiner opens no decision",
+    file: "packages/engine/src/effects.ts",
+    find: "      return [\n        {\n          op: \"damageChosen\",\n          target: \"yourAny\",\n          amount,\n          count: \"all\",\n          source: \"attack\",\n          deals: true,\n          filter: namedFilter,\n        },\n      ];",
+    replace: "      return [\n        {\n          op: \"damageChosen\",\n          target: \"yourAny\",\n          amount,\n          count: 1,\n          source: \"attack\",\n          deals: true,\n          filter: namedFilter,\n        },\n      ];",
+    expectKilledBy: ["packages/engine/src/namedBodiesSpread.test.ts"],
+  },
+  {
+    id: "D539-filter-dropped",
+    decision: "D539",
+    what: "🛑 THE PRINTED CANDIDATE CLASS GOES, so the spread hits the attacker's WHOLE board — every own body takes 30 whether the sentence names it or not. `snipeTargets`' narrowing is skipped entirely (`op.filter === undefined` returns the whole scope), so this is a wrong board rather than a missing refinement, and the only rung that can see it is one with an UNNAMED own body on the bench (§4d)",
+    file: "packages/engine/src/effects.ts",
+    find: "      return [\n        {\n          op: \"damageChosen\",\n          target: \"yourAny\",\n          amount,\n          count: \"all\",\n          source: \"attack\",\n          deals: true,\n          filter: namedFilter,\n        },\n      ];",
+    replace: "      return [\n        {\n          op: \"damageChosen\",\n          target: \"yourAny\",\n          amount,\n          count: \"all\",\n          source: \"attack\",\n          deals: true,\n        },\n      ];",
+    expectKilledBy: ["packages/engine/src/namedBodiesSpread.test.ts"],
+  },
+  {
+    id: "D539-effect-arm-deleted",
+    decision: "D539",
+    what: "🛑🛑 **THE D421-SHAPED FAILURE THIS SLICE MUST BE ABLE TO SEE, AND NO CENSUS FIGURE MOVES.** The whole `deriveAttackEffect` arm goes: the MULTIPLIER arm still claims the same string, so `resolvedByAnyReader` is still true, `BUILT.attack` still reads 1664, the residue still reads 49/68 and every pin in this repo stays green — the defender still takes its 50 × N and the attacker's own side is simply never touched. Half a slice, shipping under a fully green census. Only a board rung can kill it",
+    file: "packages/engine/src/effects.ts",
+    find: "      return [\n        {\n          op: \"damageChosen\",\n          target: \"yourAny\",\n          amount,\n          count: \"all\",\n          source: \"attack\",\n          deals: true,\n          filter: namedFilter,\n        },\n      ];",
+    replace: "      return [\n        {\n          op: \"damageChosen\",\n          target: \"yourAny\",\n          amount,\n          count: \"all\",\n          source: \"attack\",\n          deals: true,\n          filter: namedFilter,\n        },\n      ].slice(0, 0);",
+    expectKilledBy: ["packages/engine/src/namedBodiesSpread.test.ts"],
+  },
+  {
+    id: "D539-multiplier-arm-deleted",
+    decision: "D539",
+    what: "🛑 THE × FOLD GOES and the own-side spread stays. `attack.ts` drops the printed base to zero only when a multiply reader consumed the clause, and this printing carries no printed `damage` at all — so the defender takes **NOTHING** while the attacker's own board still takes its 30 each. A board that is wrong in the opposite direction from `D539-effect-arm-deleted`, and the pair is what makes “two readers, one string” an assertion rather than a description",
+    file: "packages/engine/src/effects.ts",
+    find: "  const namedBodiesSpread = NAMED_BODIES_MULTIPLY_SPREAD.exec(effect);\n  if (namedBodiesSpread !== null) {\n    const per = Number(namedBodiesSpread[1]);\n    const filter = inPlayBodyFilter(namedBodiesSpread[2] ?? \"\");\n    if (per >= 1 && filter !== null) {\n      return { per, count: { kind: \"pokemonInPlay\", seat: \"you\", filter } };\n    }\n  }",
+    replace: "",
+    expectKilledBy: ["packages/engine/src/namedBodiesSpread.test.ts"],
+  },
+  {
+    id: "D539-multiplier-arm-reads-the-spread-amount",
+    decision: "D539",
+    what: "⚠️ THE FOLD READS CAPTURE **3** INSTEAD OF **1**, so the × fold is built from the SPREAD's printed 30 rather than the multiplier's printed 50. Both numbers are real, both are in the same sentence, the op shape is unchanged and every reader still answers non-null — the defender simply takes 30 × N where the card prints 50 × N. The arithmetic-identity hazard D486 names, at a CAPTURE INDEX: it is invisible on any board where the two printed numbers happen to coincide, and this one's do not",
+    file: "packages/engine/src/effects.ts",
+    find: "  const namedBodiesSpread = NAMED_BODIES_MULTIPLY_SPREAD.exec(effect);\n  if (namedBodiesSpread !== null) {\n    const per = Number(namedBodiesSpread[1]);\n    const filter = inPlayBodyFilter(namedBodiesSpread[2] ?? \"\");\n    if (per >= 1 && filter !== null) {\n      return { per, count: { kind: \"pokemonInPlay\", seat: \"you\", filter } };\n    }\n  }",
+    replace: "  const namedBodiesSpread = NAMED_BODIES_MULTIPLY_SPREAD.exec(effect);\n  if (namedBodiesSpread !== null) {\n    const per = Number(namedBodiesSpread[3]);\n    const filter = inPlayBodyFilter(namedBodiesSpread[2] ?? \"\");\n    if (per >= 1 && filter !== null) {\n      return { per, count: { kind: \"pokemonInPlay\", seat: \"you\", filter } };\n    }\n  }",
+    expectKilledBy: ["packages/engine/src/namedBodiesSpread.test.ts"],
+  },
+  {
+    id: "D539-snipetargets-case-uses-ownbenchrefs",
+    decision: "D539",
+    what: "🛑 `snipeTargets`' fourth case returns `ownBenchRefs` instead of `ownInPlayRefs`, which is `D539-target-becomes-yourbench` reached from the FUNNEL rather than from the op — and it is worth its own row because the two sites are edited by different people for different reasons. The attacker is spared, the bench is hit, `tsc` is green, no caption exists to contradict it. D447 wrote this as a total `switch` precisely so a member could not fall silently out of an `else`; this row is what says the ARM is read rather than merely present",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      case \"yourAny\":\n        return ownInPlayRefs(state, seat);",
+    replace: "      case \"yourAny\":\n        return ownBenchRefs(state, seat);",
+    expectKilledBy: ["packages/engine/src/namedBodiesSpread.test.ts"],
+  },
+  {
+    id: "D539-placement-drops-the-own-active",
+    decision: "D539",
+    what: "🛑🛑 **THE SILENT NO-OP, AND THE ONE THIS SLICE ACTUALLY WALKED INTO — D447's OWN FAILURE MODE ONE SPOT OVER.** `placeSnipe`'s Active arm was `opponent`-only under a comment claiming *“no printing aims a chosen hit at the attacker's own Active”*; remove the leg D539 added and the own Active ref is filtered away, `targeted` holds only bench indices, and the attacker takes NOTHING while every other named body takes its 30. `tsc` reports nothing, the log is internally consistent, and no census figure moves. It was found by an HP rung and not by the type system",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  if (refs.some((r) => r.seat === ctx.seat && r.spot.spot === \"active\")) {\n    next = hitOwnActive(next, amount, deals, source, ctx, events);\n  }",
+    replace: "",
+    expectKilledBy: ["packages/engine/src/namedBodiesSpread.test.ts"],
+  },
+  {
+    id: "D539-own-active-leg-deals-nothing",
+    decision: "D539",
+    what: "⚠️ THE OWN-ACTIVE LEG FILES ITS ROW AND WRITES NO DAMAGE: `withActive` is handed the body unchanged. The log says the attacker took 30 and the board says it did not — D433's false-log-row class, which is the failure a rung reading only EVENTS cannot see and a rung reading only HP can. §4b asserts both",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  events.push({\n    type: \"DAMAGE_DEALT\",\n    seat: ctx.seat,\n    by: ctx.seat,\n    uid,\n    base: amount,\n    weakness: null,\n    resistance: null,\n    dealt: amount,\n    damage,\n  });\n  return withActive(state, ctx.seat, { ...active, damage });",
+    replace: "  events.push({\n    type: \"DAMAGE_DEALT\",\n    seat: ctx.seat,\n    by: ctx.seat,\n    uid,\n    base: amount,\n    weakness: null,\n    resistance: null,\n    dealt: amount,\n    damage,\n  });\n  return withActive(state, ctx.seat, { ...active });",
+    expectKilledBy: ["packages/engine/src/namedBodiesSpread.test.ts"],
+  },
+  {
+    id: "D539-own-active-leg-doubles-a-weakness",
+    decision: "D539",
+    what: "⚠️ THE OWN-ACTIVE LEG ROUTES THROUGH `snipeActive` INSTEAD, which runs the full §8.5 pipeline. 🛑 **The no-`ignoreWR` READING is what this row falsifies**: §8.5 scopes Weakness and Resistance to the DEFENDING Pokémon, and the attacker is not it — so an own Active carrying a Weakness must take the printed 30 and not 60. `damageSelf`'s own block states the same reading (*“you have no Weakness to your own attack”*), and this is the site where a copy of `placeSnipe`'s opponent-side arm four lines up would have been wrong",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  if (!deals) {\n    events.push({ type: \"COUNTERS_PLACED\", seat: ctx.seat, uid, amount, source });\n    return withActive(state, ctx.seat, { ...active, damage });\n  }",
+    replace: "  if (!deals) {\n    events.push({ type: \"COUNTERS_PLACED\", seat: ctx.seat, uid, amount, source });\n    return withActive(state, ctx.seat, { ...active, damage });\n  }\n  return snipeActive(state, amount, false, ctx, events);",
+    expectKilledBy: ["packages/engine/src/namedBodiesSpread.test.ts"],
+  },
+  {
+    id: "D539-own-active-leg-runs-weakness-on-itself",
+    decision: "D539",
+    what: "⚠️ THE OWN-ACTIVE LEG RUNS WEAKNESS AGAINST ITSELF while keeping the correct SEAT — the row above swaps the whole leg for `snipeActive` and is therefore killed by the SEAT it aims at, not by the READING it carries. 🛑 **This row attacks the READING and nothing else**: same body, same seat, same event, `weaknessOf(self.card, self.card)` folded into the amount, so an own Active carrying ×2 takes 60 where §8.5 says 30. Its killer must be a Weakness in the ATTACKER'S OWN ACTIVE SPOT — a Weakness on an own BENCH body cannot see it, because the own-side bench loop applies W/R in NO build of this engine, which is why `namedBodiesSpread.test.ts` §4c carries `d539-drifblim-weak` BESIDE `WEAK_LOON` and labels the bench board a CONTROL",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  const damage = active.damage + amount;",
+    replace:
+      "  const self = activeTop(state, ctx.seat);\n  const damage =\n    active.damage +\n    applyDamageModifier(amount, self === null ? null : weaknessOf(self.card, self.card));",
+    expectKilledBy: ["packages/engine/src/namedBodiesSpread.test.ts"],
+  },
+  {
+    id: "D539-snipe-note-calls-the-own-side-benched",
+    decision: "D539",
+    what: "⚠️ `snipeNote`'s `zone` ternary loses its `yourAny` disjunct, so a caption built for this member would read *\"Benched …\"* over a candidate set that INCLUDES the Active — the dialog contradicting its own validator, `gustTargetNoun`'s and `knockOutChosenNote`'s stated rule. 🛑 **THIS ROW WAS DECLARED `survives` AND THE PROBE KILLED IT, WHICH IS D427's SELF-INVALIDATION WORKING AND IS WORTH MORE THAN THE DECLARATION WAS.** The declaration reasoned from the CALL PATH — `snipeNote` has exactly ONE caller, `damageChosen`'s PARK branch, and every `yourAny` producer carries `count: \"all\"`, which takes `stepOp`'s FORCED branch above that park on every board, so no caption is ever built — and every clause of that is still TRUE. What it missed is that `namedBodiesSpread.test.ts` §8 does not assert a CAPTION at all: it asserts the widened ternary **off the RAW SOURCE TEXT**, which is exactly the instrument D478/D489 prescribe for an obligation whose branch no board reaches. So the claim has a falsifier after all, the branch's unreachability and the row's killability are INDEPENDENT, and the honest row is a killed one. ⚠️ **A DECLARATION IS A PREDICTION AND THIS ONE WAS WRONG IN THE CHEAP DIRECTION** — recorded rather than silently converted, because a `survives` row that something kills is the one shape the harness reports as STALE and the one a reader must be able to find.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  const zone = target === \"opponentAny\" || target === \"yourAny\" ? noun : `Benched ${noun}`;",
+    replace: "  const zone = target === \"opponentAny\" ? noun : `Benched ${noun}`;",
+    expectKilledBy: ["packages/engine/src/namedBodiesSpread.test.ts"],
+  },
   {
     id: "D275-engine-version-drifts-again",
     decision: "D275",
     what: "🛑 THE DEBT THIS SLICE PAID FOR THE FIFTH TIME, RE-INSTALLED: `engineVersion` falls a minor behind `packages/engine/package.json`, which is EXACTLY the state the tree was in at the head of D275 (0.187.0 against 0.189.0) and had been for two slices with nothing comparing them. The tie is the guard; this row is the proof it is one",
     file: "packages/engine/src/index.ts",
-    // ⚠️ RE-POINTED AT D538 (0.422.0 → 0.423.0), at D537 (0.421.0 → 0.422.0), at D536 (0.420.0 → 0.421.0), at D535 (0.419.0 → 0.420.0), at D534 (0.418.0 → 0.419.0), at D532 (0.417.0 → 0.418.0), at D531 (0.416.0 → 0.417.0), at D530 (0.415.0 → 0.416.0), at D528 (0.414.0 → 0.415.0), at D527 (0.413.0 → 0.414.0), at D526 (0.412.0 → 0.413.0), at D525 (0.411.0 → 0.412.0), at D524 (0.410.0 → 0.411.0), at D523 (0.409.0 → 0.410.0), at D522 (0.408.0 → 0.409.0), at D521 (0.407.0 → 0.408.0), at D520 (0.406.0 → 0.407.0), at D519 (0.405.0 → 0.406.0), at D518 (0.404.0 → 0.405.0), at D517 (0.403.0 → 0.404.0), at D516 (0.402.0 → 0.403.0), at D515 (0.401.0 → 0.402.0), at D514 (0.400.0 → 0.401.0), at D513 (0.399.0 → 0.400.0), at D512 (0.398.0 → 0.399.0), at D510 (0.397.0 → 0.398.0), at D508 (0.396.0 → 0.397.0), at D507 (0.395.0 → 0.396.0), at D505 (0.394.0 → 0.395.0), at D490 (0.384.0 → 0.385.0), at D489 (0.383.0 → 0.384.0), at D488 (0.382.0 → 0.383.0), at D487 (0.381.0 → 0.382.0), at D486 (0.380.0 → 0.381.0), at D485 (0.379.0 → 0.380.0), at D450 (0.351.0 → 0.352.0), at D449 (0.350.0 → 0.351.0), at D448 (0.349.0 → 0.350.0), at D447 (0.348.0 → 0.349.0), at D446 (0.347.0 → 0.348.0), at D445 (0.346.0 → 0.347.0), at D444 (0.345.0 → 0.346.0), at D443 (0.344.0 → 0.345.0), at D442 (0.343.0 → 0.344.0), at D441 (0.342.0 → 0.343.0), at D440 (0.341.0 → 0.342.0), at D439 (0.340.0 → 0.341.0), at D438 (0.339.0 → 0.340.0), at D437 (0.338.0 → 0.339.0), at D436 (0.337.0 → 0.338.0), at D435 (0.336.0 → 0.337.0), at D434 (0.335.0 → 0.336.0), at D433 (0.334.0 → 0.335.0), at D432 (0.333.0 → 0.334.0), at D431 (0.332.0 → 0.333.0), at D430 (0.331.0 → 0.332.0), at D429 (0.330.0 → 0.331.0), at D428 (0.329.0 → 0.330.0), at D427 (0.328.0 → 0.329.0), at D426 (0.327.0 → 0.328.0), at D425 (0.326.0 → 0.327.0), at D424 (0.325.0 → 0.326.0), at D423 (0.324.0 → 0.325.0), at D422 (0.323.0 → 0.324.0), at D421 (0.322.0 → 0.323.0), at D420 (0.321.0 → 0.322.0), at D417 (0.320.0 → 0.321.0), at D416 (0.319.0 → 0.320.0), at D415 (0.318.0 → 0.319.0), at D414 (0.317.0 → 0.318.0), at D413 (0.316.0 → 0.317.0), at D412 (0.315.0 → 0.316.0), at D410 (0.314.0 → 0.315.0), at D409 (0.313.0 → 0.314.0), at D408 (0.312.0 → 0.313.0), at D407 (0.311.0 → 0.312.0), at D402 (0.306.0 → 0.307.0), at D401 (0.305.0 → 0.306.0), at D400 (0.304.0 → 0.305.0), at D399 (0.303.0 → 0.304.0), at D398 (0.302.0 → 0.303.0), at D397 (0.301.0 → 0.302.0), at D396 (0.300.0 → 0.301.0), at D395 (0.299.0 → 0.300.0), at D394 (0.298.0 → 0.299.0), at D393 (0.297.0 → 0.298.0), at D392 (0.296.0 → 0.297.0), at D391 (0.295.0 → 0.296.0), at D390 (0.294.0 → 0.295.0), at D389 (0.293.0 → 0.294.0), at D388 (0.292.0 → 0.293.0), at D387 (0.291.0 → 0.292.0), at D386 (0.290.0 → 0.291.0),
+    // ⚠️ RE-POINTED AT D539 (0.423.0 → 0.424.0), at D538 (0.422.0 → 0.423.0), at D537 (0.421.0 → 0.422.0), at D536 (0.420.0 → 0.421.0), at D535 (0.419.0 → 0.420.0), at D534 (0.418.0 → 0.419.0), at D532 (0.417.0 → 0.418.0), at D531 (0.416.0 → 0.417.0), at D530 (0.415.0 → 0.416.0), at D528 (0.414.0 → 0.415.0), at D527 (0.413.0 → 0.414.0), at D526 (0.412.0 → 0.413.0), at D525 (0.411.0 → 0.412.0), at D524 (0.410.0 → 0.411.0), at D523 (0.409.0 → 0.410.0), at D522 (0.408.0 → 0.409.0), at D521 (0.407.0 → 0.408.0), at D520 (0.406.0 → 0.407.0), at D519 (0.405.0 → 0.406.0), at D518 (0.404.0 → 0.405.0), at D517 (0.403.0 → 0.404.0), at D516 (0.402.0 → 0.403.0), at D515 (0.401.0 → 0.402.0), at D514 (0.400.0 → 0.401.0), at D513 (0.399.0 → 0.400.0), at D512 (0.398.0 → 0.399.0), at D510 (0.397.0 → 0.398.0), at D508 (0.396.0 → 0.397.0), at D507 (0.395.0 → 0.396.0), at D505 (0.394.0 → 0.395.0), at D490 (0.384.0 → 0.385.0), at D489 (0.383.0 → 0.384.0), at D488 (0.382.0 → 0.383.0), at D487 (0.381.0 → 0.382.0), at D486 (0.380.0 → 0.381.0), at D485 (0.379.0 → 0.380.0), at D450 (0.351.0 → 0.352.0), at D449 (0.350.0 → 0.351.0), at D448 (0.349.0 → 0.350.0), at D447 (0.348.0 → 0.349.0), at D446 (0.347.0 → 0.348.0), at D445 (0.346.0 → 0.347.0), at D444 (0.345.0 → 0.346.0), at D443 (0.344.0 → 0.345.0), at D442 (0.343.0 → 0.344.0), at D441 (0.342.0 → 0.343.0), at D440 (0.341.0 → 0.342.0), at D439 (0.340.0 → 0.341.0), at D438 (0.339.0 → 0.340.0), at D437 (0.338.0 → 0.339.0), at D436 (0.337.0 → 0.338.0), at D435 (0.336.0 → 0.337.0), at D434 (0.335.0 → 0.336.0), at D433 (0.334.0 → 0.335.0), at D432 (0.333.0 → 0.334.0), at D431 (0.332.0 → 0.333.0), at D430 (0.331.0 → 0.332.0), at D429 (0.330.0 → 0.331.0), at D428 (0.329.0 → 0.330.0), at D427 (0.328.0 → 0.329.0), at D426 (0.327.0 → 0.328.0), at D425 (0.326.0 → 0.327.0), at D424 (0.325.0 → 0.326.0), at D423 (0.324.0 → 0.325.0), at D422 (0.323.0 → 0.324.0), at D421 (0.322.0 → 0.323.0), at D420 (0.321.0 → 0.322.0), at D417 (0.320.0 → 0.321.0), at D416 (0.319.0 → 0.320.0), at D415 (0.318.0 → 0.319.0), at D414 (0.317.0 → 0.318.0), at D413 (0.316.0 → 0.317.0), at D412 (0.315.0 → 0.316.0), at D410 (0.314.0 → 0.315.0), at D409 (0.313.0 → 0.314.0), at D408 (0.312.0 → 0.313.0), at D407 (0.311.0 → 0.312.0), at D402 (0.306.0 → 0.307.0), at D401 (0.305.0 → 0.306.0), at D400 (0.304.0 → 0.305.0), at D399 (0.303.0 → 0.304.0), at D398 (0.302.0 → 0.303.0), at D397 (0.301.0 → 0.302.0), at D396 (0.300.0 → 0.301.0), at D395 (0.299.0 → 0.300.0), at D394 (0.298.0 → 0.299.0), at D393 (0.297.0 → 0.298.0), at D392 (0.296.0 → 0.297.0), at D391 (0.295.0 → 0.296.0), at D390 (0.294.0 → 0.295.0), at D389 (0.293.0 → 0.294.0), at D388 (0.292.0 → 0.293.0), at D387 (0.291.0 → 0.292.0), at D386 (0.290.0 → 0.291.0),
     //    each in the SAME COMMIT as the bump —
     // the TENTH slice running to do it that way, and the practice is now the one
     // thing about this row that has never cost an ERROR since it started.
@@ -5798,7 +5998,7 @@ export const MUTANTS: Mutant[] = [
     // CORPUS QUOTES** (D414/D415), so a value-keyed sweep over `toBe("0.391.0")` cannot
     // see it — this row's `find` spells the DECLARATION, not an assertion. Run
     // `precheck` after every version bump, not after the sweep tells you.
-    find: 'export const engineVersion = "0.423.0";',
+    find: 'export const engineVersion = "0.424.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -21622,7 +21822,16 @@ export const MUTANTS: Mutant[] = [
     decision: "D447",
     what: "⚠️ the caption hard-codes *\"your opponent's\"*, so the dialog offers the player their OWN bodies under a heading that names the other side of the table — the dialog contradicting its own validator, which is `gustTargetNoun`'s and `knockOutChosenNote`'s stated rule and D437's reason for the window beside it. A one-sided caption defect: every shipped opponent-side prompt still reads correctly, which is what makes it worth a row",
     file: "packages/engine/src/interpreter.ts",
-    find: '  const owner = target === "yourBench" ? "your" : "your opponent\'s";',
+    // 🆕🛑 D539 - RE-POINTED, AND IT IS THE **THIRD** BROKEN ROW `precheck` FOUND THIS SLICE
+    //    RATHER THAN THE TWO STANDING VERSION/CENSUS PINS. D539 widened this very ternary with a
+    //    `|| target === "yourAny"` disjunct (the fourth `damageChosen.target` member is an
+    //    OWN-SIDE one too), so the `find` went 0x on the edit that added it. ⚠️ THE CLAIM IS
+    //    UNCHANGED AND THE ROW IS NOT WEAKENED: the replace still hard-codes *"your opponent's"*
+    //    over BOTH own-side members, so the dialog still contradicts its own validator on every
+    //    board D447's row was ever about, and now on D539's as well. Re-pointed rather than
+    //    re-authored (D498: a re-transcription that changes the claim is worth less than a broken
+    //    row), and found by `precheck` the moment the replace was written rather than by the sweep.
+    find: '  const owner = target === "yourBench" || target === "yourAny" ? "your" : "your opponent\'s";',
     replace: '  const owner = "your opponent\'s";',
     expectKilledBy: ["packages/engine/src/ownBenchSnipe.test.ts"],
   },
@@ -27903,6 +28112,12 @@ export const MUTANTS: Mutant[] = [
     decision: "D495",
     what: "⚠️ C10 — the census constant is put back to its pre-slice value while the arm stays. This is the row that proves the CENSUS moved for this build rather than the suite merely agreeing with itself: `BUILT.attack`'s live sum is derived from the readers over the committed corpus, so a stale constant is the one thing that cannot be true at both heads. 🆕 RE-TRANSCRIBED AT D499 (1612→1614 / 1611→1612): the row is about the CONSTANT being one slice stale, not about a particular digit, so it follows the constant. Its MEANING is byte-identical — a re-transcription that changes the claim is worth less than a broken row (D498), and this one does not: D499's own step is +2 printings, so the mutated value is exactly this file's value at D498's head",
     file: "packages/engine/src/censusAtHead.test.ts",
+    // 🆕🆕🆕 D539 - RE-TRANSCRIBED AGAIN, 1662 -> 1664 (and the replace 1659 -> 1662), the same
+    //    two-step regression, for the Nth consecutive slice. ⚠️ THE STEP IS **2** AND NOT 1,
+    //    because this column counts PRINTINGS and D539's row (corpus FILE LINE 595) has TWO legal
+    //    printings against ONE sentence - the FIFTH consecutive slice whose sentence and printing
+    //    steps disagree (D535 1-vs-2, D536 1-vs-3, D537 1-vs-2, D538 1-vs-3). `precheck` reported
+    //    the `find` at 0x on the edit round that moved the constant, exactly as it has since D495.
     // 🆕🆕🆕 D538 - RE-TRANSCRIBED AGAIN, 1659 -> 1662 (and the replace 1657 -> 1659), the same
     //    two-step regression, for the Nth consecutive slice. ⚠️ THE STEP IS **3** AND NOT 1,
     //    because this column counts PRINTINGS and D538's row has THREE legal printings against
@@ -28049,8 +28264,8 @@ export const MUTANTS: Mutant[] = [
     // 🆕🆕🆕 D534 — RE-TRANSCRIBED AGAIN, 1651 -> 1652 (replace 1649 -> 1650): the sentence and
     //    printing steps agree at 1 (corpus FILE LINE 401, Inkay's one-card look), the same
     //    two-step regression; `precheck` named the `find` at 0x the moment the pin moved.
-    find: "  attack: 1662,",
-    replace: "  attack: 1659,",
+    find: "  attack: 1664,",
+    replace: "  attack: 1662,",
     expectKilledBy: [
       "packages/engine/src/censusAtHead.test.ts",
     ],

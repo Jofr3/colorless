@@ -185,7 +185,26 @@ describe("§1 — the two printed sentences, and what they cost the residue", ()
     // scale an amount at all — it counts the PICKS already made, which is why the program is SIX ops
     // at a FLAT `amount: 20` and carries none of this family's riders. Bullet (f) names the row and
     // pins the op AND the absence of every scaling rider, which is what discriminates.
-    expect(unbuilt).toHaveLength(3);
+    // 🆕🛑 **D539 — THREE → TWO, AND THE ROW THAT LEFT IS THE NAMED-BODY COMPOUND.**
+    // Re-pointed rather than decremented, for the SIXTH time in this rung and on the same
+    // reasoning: a count that steps 3 → 2 records that something left and says nothing about
+    // WHAT, and cannot tell *"D539 claimed corpus FILE LINE 595 with a whole-compound
+    // anchor"* from *"a reader widened past the count clause and ate a chosen-target row"*.
+    // The pair below names the row and pins the op AND the `target` member it derives to,
+    // which is the fact that makes it this family's newest member rather than a stray.
+    expect(unbuilt).toHaveLength(2);
+    // (g) THE NAMED-BODY MULTIPLIER + OWN-SIDE SPREAD — corpus FILE LINE 595, 2 printings,
+    //     BUILT at D539. It is a real member of this family: a chosen-target hit whose
+    //     amount comes off a `for each` fold — and the FIRST one aimed at the ATTACKER's
+    //     OWN side, ACTIVE INCLUDED, which is the `target` member this rung pins.
+    const NAMED_BODIES_COMPOUND =
+      "This attack does 50 damage for each of your Drifloon and Drifblim in play. This attack also does 30 damage to each of your Drifloon and Drifblim. (Don't apply Weakness and Resistance for Benched Pokémon.)";
+    expect(family.map(([, t]) => t)).toContain(NAMED_BODIES_COMPOUND);
+    expect(unbuilt).not.toContain(NAMED_BODIES_COMPOUND);
+    const namedOp = (deriveAttackEffect(NAMED_BODIES_COMPOUND) ?? [])[0];
+    expect(namedOp?.op).toBe("damageChosen");
+    expect((namedOp as { target?: string } | undefined)?.target).toBe("yourAny");
+    expect((namedOp as { count?: unknown } | undefined)?.count).toBe("all");
     // (e) THE SELF-HIT THE PATTERN OVER-INCLUDES — corpus line 500, 1 printing, BUILT
     //     at D465. Not a refusal at all: it is here so the 8 → 7 step is attributable.
     const SELF_RECOIL_SCALED = "This Pokémon also does 10 damage to itself for each damage counter on it.";
@@ -652,7 +671,7 @@ describe("§3 — a new optional rider on a PERSISTED op, and the record version
   });
 
   it("the engine version moved and the two spellings agree", () => {
-    expect(engineVersion).toBe("0.423.0");
+    expect(engineVersion).toBe("0.424.0");
   });
 });
 

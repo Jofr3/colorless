@@ -3,7 +3,9 @@
 > Update this at the **end of every session**: bump the status table, append a
 > session-log entry, and rewrite the **Resume point** to the next concrete action.
 
-**Last updated:** 2026-09-21 — build session #478 (**P3-M5 — D538, *the counter placement whose amount is a PAYLOAD and whose tail shuffles the very cards the amount counted (“Put 2 damage counters on 1 of your opponent's Pokémon for each Basic {G} Energy card in your discard pile. Then, shuffle those Energy cards into your deck.”) — ONE `CardFilter` bound ONCE and handed to TWO ops, a FIFTH `damageChosen` rider that carries a PAYLOAD rather than a flag, and the FIRST `discardPileRetrieval` that does not park.*** Built `censusAttackCorpus.ts` **file line 412** (`legalAttackCorpus()` index 359, **1 sentence / 3 legal printings** — the largest single unbuilt row left in the placement family and the one that CLOSES it; ⚠️ **no card id is resolved for this sentence on this checkout and that was MEASURED, not assumed**, so it rides the file-local declared demonstrator `d538-pile-sniper`, D425). ONE new whole-sentence anchor `COUNTER_PUT_SCALED_BY_PILE` with ONE `['’]` slot and TWO captures, ONE new arm **23b-bis** whose ordering argument is RE-MEASURED in both directions, `damageChosen.perDiscardPileCard?: CardFilter` and `discardPileRetrieval.max: number | "all"` — both WIDENINGS, both persisted, `MATCH_RECORD_VERSION` **30 HELD** on D125 and D333/D527. 🛑 **The program order is the mechanism** (a retrieval in front of the placement empties the pile the fold reads and places NOTHING under a correct-looking log) and 🛑 **the placement family is now CLOSED**, which made three refusal sections VACUOUS and all three were re-pointed onto the positive. Engine **0.422.0 → 0.423.0**. ✅ **Committed `a0102c18`; WHOLE-CORPUS SWEEP GREEN AND EXACTLY AS PREDICTED**, pasted out of the log: `2782 killed · 53 known survivor(s) · 0 GAP(S) · 0 stale · 0 skipped(dirty) · 0 clobber(s) · 0 error(s) · 12387.9s total` — `+17 killed, +0 declared` on D537's `2765 · 53`; the **SIXTH** consecutive exact prediction after the D532 reset (the count stands at **6**) and the **hundredth** consecutive run with `0 error(s) · 0 stale · 0 clobber(s)`. ⚠️ **The `setsid` reuse count is NOT stepped, and the claim that would have stepped it was CHECKED rather than copied** — the ship report records *PPID 1 for pid 810120*, but `810120` appears NOWHERE in `tmp/sweep-D538.log`, NOWHERE under `tmp/` and **zero** times in `git grep` over HEAD, so no launch PPID is on record and D429 forbids asserting a streak nobody measured; it stands at the **forty-fourth**. **2,835 unique progress-line ids / 2,835 rows / 0 unmatched** both ways; the 53 `SURVIVES(known)` ids are HEAD's 53 declared rows exactly; all seventeen `D538-*` rows KILLED (log :2822–:2838). 🛑 **THE MECHANICAL PIN SWEEP CORRUPTED A REAL CATALOG ROW IN CODE, NOT A COMMENT** — the sharpest instance of sweep damage this branch has had: a catalog row carries no assertion and moves no count, so no gate and no suite can see it, and the reviewer caught it in the DIFF. Reverted before the commit, which is why `censusAttackCorpus.ts` does not appear in `a0102c18` at all; `conventions.md` gains ONE section bounding a mechanical pass to **the sites its key names**. ⚠️ **AND A PREDICTED FIGURE MUST CLOSE IN BOTH DIRECTIONS**: the commit body first carried `2798`, which contradicted its own arithmetic (`2765 + 17 = 2782`) AND the live corpus size (`2782 + 53 = 2835`) — corrected before the commit, and both closures cost one line each. 🛑 **THE PLACEMENT FAMILY IS CLOSED — 19 sentences / 38 printings, RE-MEASURED LIVE AT THIS HEAD** — so `counterFold`, `counterUntilHp` and `counterPutChosen` each lost their LAST unbuilt row and were re-pointed onto POSITIVE assertions rather than left as vacuous empty-table loops. The close-out moved NO engine byte: engine **0.423.0 HELD** (the bump to 0.423.0 was the D538 slice's own, at `a0102c18`), `MATCH_RECORD_VERSION` **30 HELD**.)
+**Last updated:** 2026-09-21 — build session #479 (**P3-M5 — D539, *the named-body multiplier with a named-body OWN-SIDE spread behind it, and the one body the shipped machinery could not reach (“This attack does 50 damage for each of your Drifloon and Drifblim in play. This attack also does 30 damage to each of your Drifloon and Drifblim. (Don't apply Weakness and Resistance for Benched Pokémon.)”) — ONE anchor with a `\2` BACKREFERENCE read by TWO readers off ONE `effect` string, the FOURTH `damageChosen.target` member, and a THIRD interpreter site the compiler could not name.*** Built `censusAttackCorpus.ts` **file line 595** (`legalAttackCorpus()` index 542, **1 sentence / 2 legal printings**, leading count column **2**) — the **LAST UNBUILT ROW OF TWO FAMILIES AT ONCE**, re-measured live: `/This attack also does /` (**17 sentences / 41 printings**) and `/ damage to each of /` (**11 / 20**) both CLOSE with it. ⚠️ **No card id is resolved for this sentence on this checkout and that was MEASURED** — `catalogManifest.ts:197`'s `sv01-089 Drifloon` carries a DIFFERENT attack pair, conventions.md:155's two-populations trap — so it rides the file-local declared demonstrators `d539-*` (D425), whose card NAMES are the printed nouns because the derived filter is `byName`. ONE new whole-compound anchor `NAMED_BODIES_MULTIPLY_SPREAD` (the `\2` backreference is the mechanism and the sharpest mutant), ONE new `IN_PLAY_BODY_NOUNS` row (the **NINTH** exact key, a PAIR in an `anyOf` of CARD NAMES), ONE arm in `deriveAttackDamageMultiplier`, ONE arm in `deriveAttackEffect` and ONE new value on the persisted union `damageChosen.target` — **`yourAny`, the attacker's whole own side, ACTIVE INCLUDED**. 🛑 **THAT ONE BODY IS THE WHOLE SLICE**: a build aimed at `yourBench` typechecks, ships, logs a plausible board and SILENTLY SPARES THE ATTACKER, and `count: “all”` never parks so no caption contradicts it and **no census figure moves** — which is also true of deleting the effect arm outright, so §4 asserts HP on a board rather than op shape (D421). 🛑 **THE COMPILER NAMED TWO INTERPRETER SITES AND THERE WAS A THIRD IT COULD NOT SEE**: `placeSnipe`'s ACTIVE arm was `opponent`-only under a comment claiming no printing aims a chosen hit at the attacker's own Active — both halves now false — so the own Active ref was being SILENTLY DROPPED; `hitOwnActive` is the leg, FLAT on `damageSelf`'s stated reading, and it was found by an HP rung rather than by the type system. **ZERO new `EffectOp` members, zero new readers** — `attackReaderSurface()` stays **13** and `attack.ts` takes **ZERO code bytes** (D493/D494's route, third instance). Engine **0.423.0 → 0.424.0**, `MATCH_RECORD_VERSION` **30 HELD** with both D450 doors driven over the serialized bytes. Census: reader arm 563/1611 → **564/1613**, `BUILT.attack` 1662 → **1664**, residue 50/70 → **49/68**. ⚠️ **THE WHOLE-CORPUS SWEEP IS PENDING** and is the resume point's debt.)
+
+**Last updated (was):** 2026-09-21 — build session #478 (**P3-M5 — D538, *the counter placement whose amount is a PAYLOAD and whose tail shuffles the very cards the amount counted (“Put 2 damage counters on 1 of your opponent's Pokémon for each Basic {G} Energy card in your discard pile. Then, shuffle those Energy cards into your deck.”) — ONE `CardFilter` bound ONCE and handed to TWO ops, a FIFTH `damageChosen` rider that carries a PAYLOAD rather than a flag, and the FIRST `discardPileRetrieval` that does not park.*** Built `censusAttackCorpus.ts` **file line 412** (`legalAttackCorpus()` index 359, **1 sentence / 3 legal printings** — the largest single unbuilt row left in the placement family and the one that CLOSES it; ⚠️ **no card id is resolved for this sentence on this checkout and that was MEASURED, not assumed**, so it rides the file-local declared demonstrator `d538-pile-sniper`, D425). ONE new whole-sentence anchor `COUNTER_PUT_SCALED_BY_PILE` with ONE `['’]` slot and TWO captures, ONE new arm **23b-bis** whose ordering argument is RE-MEASURED in both directions, `damageChosen.perDiscardPileCard?: CardFilter` and `discardPileRetrieval.max: number | "all"` — both WIDENINGS, both persisted, `MATCH_RECORD_VERSION` **30 HELD** on D125 and D333/D527. 🛑 **The program order is the mechanism** (a retrieval in front of the placement empties the pile the fold reads and places NOTHING under a correct-looking log) and 🛑 **the placement family is now CLOSED**, which made three refusal sections VACUOUS and all three were re-pointed onto the positive. Engine **0.422.0 → 0.423.0**. ✅ **Committed `a0102c18`; WHOLE-CORPUS SWEEP GREEN AND EXACTLY AS PREDICTED**, pasted out of the log: `2782 killed · 53 known survivor(s) · 0 GAP(S) · 0 stale · 0 skipped(dirty) · 0 clobber(s) · 0 error(s) · 12387.9s total` — `+17 killed, +0 declared` on D537's `2765 · 53`; the **SIXTH** consecutive exact prediction after the D532 reset (the count stands at **6**) and the **hundredth** consecutive run with `0 error(s) · 0 stale · 0 clobber(s)`. ⚠️ **The `setsid` reuse count is NOT stepped, and the claim that would have stepped it was CHECKED rather than copied** — the ship report records *PPID 1 for pid 810120*, but `810120` appears NOWHERE in `tmp/sweep-D538.log`, NOWHERE under `tmp/` and **zero** times in `git grep` over HEAD, so no launch PPID is on record and D429 forbids asserting a streak nobody measured; it stands at the **forty-fourth**. **2,835 unique progress-line ids / 2,835 rows / 0 unmatched** both ways; the 53 `SURVIVES(known)` ids are HEAD's 53 declared rows exactly; all seventeen `D538-*` rows KILLED (log :2822–:2838). 🛑 **THE MECHANICAL PIN SWEEP CORRUPTED A REAL CATALOG ROW IN CODE, NOT A COMMENT** — the sharpest instance of sweep damage this branch has had: a catalog row carries no assertion and moves no count, so no gate and no suite can see it, and the reviewer caught it in the DIFF. Reverted before the commit, which is why `censusAttackCorpus.ts` does not appear in `a0102c18` at all; `conventions.md` gains ONE section bounding a mechanical pass to **the sites its key names**. ⚠️ **AND A PREDICTED FIGURE MUST CLOSE IN BOTH DIRECTIONS**: the commit body first carried `2798`, which contradicted its own arithmetic (`2765 + 17 = 2782`) AND the live corpus size (`2782 + 53 = 2835`) — corrected before the commit, and both closures cost one line each. 🛑 **THE PLACEMENT FAMILY IS CLOSED — 19 sentences / 38 printings, RE-MEASURED LIVE AT THIS HEAD** — so `counterFold`, `counterUntilHp` and `counterPutChosen` each lost their LAST unbuilt row and were re-pointed onto POSITIVE assertions rather than left as vacuous empty-table loops. The close-out moved NO engine byte: engine **0.423.0 HELD** (the bump to 0.423.0 was the D538 slice's own, at `a0102c18`), `MATCH_RECORD_VERSION` **30 HELD**.)
 
 **Last updated (was):** 2026-09-21 — build session #477 (**P3-M5 — D537, *keep three, shuffle the rest (“Choose 3 of your opponent's Benched Pokémon. If you do, shuffle all of your opponent's Benched Pokémon that you didn't choose, and all cards attached to those Pokémon, into their deck.”) — the ONLY sentence in this corpus whose pick names the bodies that STAY; ONE new `EffectOp` member `returnBenchedRest`, ONE new interpreter writer, and a SET-VALUED SPLICE THE SHIPPED ONE-REF WRITER GETS WRONG TWICE.*** Built `censusAttackCorpus.ts` **file line 84** (`legalAttackCorpus()` index 31, **1 sentence / 2 legal printings**; ⚠️ **no card id is resolved for this sentence on this checkout and that was MEASURED, not assumed** — a whole-repo grep for the sentence returns the corpus row and ONE refusal row and nothing claiming an id, so it rides the file-local declared demonstrator `d537-bencher`, D425; D536's stale-population lesson run as a procedure). ONE new whole-sentence anchor `CHOOSE_KEEP_SHUFFLE_REST` beside `RETURN_BENCHED` with 🛑 **THREE `['’]` slots, not two** — two possessives AND the contraction in *“didn't”*, each driven by EQUALITY against the straight form one slot at a time — and ONE new arm **42-bis** with arm 41-bis's ordering argument RE-MEASURED rather than copied. 🛑 **A MEMBER AND NOT AN OPTIONAL `keep` RIDER ON `returnBenched`, WHICH IS D421's EXACT FAILURE MODE**: dropping the rider would not do nothing — `returnBenched` shuffles the body the answer NAMES, so the degraded build shuffles the CHOSEN THREE away and leaves the rest, an INVERTED but entirely plausible board, silent in every log row; D421's *choose the rest of the record* mitigation is unavailable because the printed op IS a complement. `whose`/`dest` OMITTED (D426), `keep` REQUIRED and CAPTURED under a `>= 1` floor, and the capture is the number **KEPT** rather than removed. ZERO `recordGate` for the printed *“If you do”* (D314 — a §9.2 slot is earned by a BOARD), ZERO `describeBranch`/`describeCondition` bytes, ZERO new prompt vocabulary (the `choosePokemonMulti` kind, `validateChoice`'s arm and `redact.ts`'s arm RE-ASKED at `min === max === 3` rather than inherited), and no `decider` — the CONTROLLER answers a pick on the other board. The gate `candidates.length <= keep` refuses to ask a question with one answer at bench 0/1/2/3. 🛑 **THE WRITER IS NEW BECAUSE LOOPING THE SHIPPED `returnBenched` IS WRONG TWICE, SILENTLY**: it removes by `ref.spot.index` and never compares a uid, so on `[A,B,C,D]` removing `{1,3}` the bench compacts and ONE BODY SURVIVES, while removing `{0,1}` takes the WRONG body under a correct-looking `POKEMON_RETURNED`; and its deck arm shuffles PER REF, giving N `SHUFFLE` rows and N RNG draws for one printed shuffle. The new writer is `returnSelf`'s D313 GATHER-BEFORE-APPLY block generalised to N bodies, spliced STRICTLY DESCENDING by index with the **single-seat precondition stated at the site and pinned by a NON-ADJACENT-complement rung**, one `POKEMON_RETURNED` per body and exactly ONE `SHUFFLE` plus ONE RNG draw (pinned by COMPUTING the shuffle's next state, not by remembering it). §11 is asked in `applyChoice` over the COMPLEMENT ONLY — D433's *ask the shield after narrowing* — with a shielded CHOSEN body filing NOTHING as the control that proves the order. Engine **0.421.0 → 0.422.0**, `MATCH_RECORD_VERSION` **30 HELD on D125's WIDENING alone** — and ⚠️ **this op PARKS**, so `{"op":"returnBenchedRest","keep":3}` IS written into `phase.cont.pendingOp`, MEASURED in §7 with the non-parking board as the other direction, and `cont.rest === []` stated as the narrow truth about THIS one-op program rather than claimed for the union. Residue **52/75 → 51/73**, `BUILT.attack` **1657 → 1659**, reader arm **561/1606 → 562/1608**, raw residue **79/126 → 78/124**, `OPAQUE` **37/55 → 36/53** at `SUBMAX=4` — all MEASURED HEAD vs after; registry 10/16, gate 6/14, trailing 11/21 and `SPLIT_ATTACK_UNITS` 14 UNMOVED and RE-MEASURED. 🛑 **THE SENTENCE STEP IS 1 AND THE PRINTING STEP IS 2 — they disagree for the THIRD slice running** (D535 1-vs-2, D536 1-vs-3). ZERO bytes in `types.ts`, `attack.ts`, `flow.ts`, `events.ts`, `log.ts`, `redact.ts`, `cardplay.ts`, `registry.ts`, `continuous.ts`, `triggers.ts`, `turn.ts`, `packages/schema`, `apps/**` and both HUDs — each CHECKED. NEW `benchKeepShuffleRest.test.ts` (62 tests from 59 `it(` sites). RE-POINTED, NEVER DELETED (D418/D438): `counterPutChosen.test.ts`'s *“a bench-shuffle-the-rest, the third neighbour”* `toBeNull` row — the ONLY refusal of this sentence in the tree — becomes a POSITIVE derivation rung plus a kept negative claim, its line list corrected in place, and ✅ the surviving four-row table MEASURED not vacuous (D536's `ownerPrefix.test.ts` finding, applied before it could bite). ⚠️ **TWO BRIEF CLAIMS WERE FALSE ABOUT FILES AND ARE RECORDED AS SUCH**: `applyChoice` does NOT redden on a new op member (it carries a `default` arm — only `stepOp` did, asked with `bunx tsc -b --force`), and `refEquals` is module-private to `cardplay.ts`, so the complement uses this file's own `refKeyOf`. ⚠️ **AND TWO STALE FIGURES IN D536's OWN ANNOTATIONS**, corrected in place where D537 touched the line: its `unbuilt.length + 560 → + 561` sites are annotated *“THIS SITE: 561 → 562”* (the NEXT step, not D536's), and at the `resolving.length`/`units(resolving)` term chains D536 stepped the FROZEN ENDPOINT instead of adding a front term — D537 restores the site's own written rule (D426) and leaves D536's endpoint as the constant it now is. Corpus **2,801 → 2,818** (17 `D537-*` rows). Probe **17 killed · 0 known survivor(s) · 0 GAP(S) · 0 stale · 0 skipped(dirty) · 0 clobber(s) · 0 error(s)**; `check` **518 files / 12,042 tests GREEN**. ⚠️ `opaque-anatomy-gate` FAILS at `SUBMAX=12` — PRE-EXISTING, it failed identically at D536's head — and is GREEN at the calibrated `SUBMAX=4`. ✅ **Committed `0eec3e13`; WHOLE-CORPUS SWEEP GREEN AND EXACTLY AS PREDICTED**, pasted out of the log: `2765 killed · 53 known survivor(s) · 0 GAP(S) · 0 stale · 0 skipped(dirty) · 0 clobber(s) · 0 error(s) · 12309.0s total` — `+17 killed, +0 declared` on D536's `2748 · 53`; the **FIFTH** consecutive exact prediction after the D532 reset (the count stands at **5**) and the **ninety-ninth** consecutive run with `0 error(s) · 0 stale · 0 clobber(s)`. ⚠️ **The `setsid` reuse count is NOT stepped** — no launch PPID is on record for this run, and D429 forbids asserting a streak nobody measured, so it stands at the **forty-fourth**. **2,818 unique progress-line ids / 2,818 rows / 0 unmatched** both ways; the 53 `SURVIVES(known)` ids are HEAD's 53 declared rows exactly; all seventeen `D537-*` rows KILLED (log :2805–:2821). ⚠️ **THE D536 STALE-FIGURE CONVENTION'S OWN CLASS RECURRED ONE SLICE AFTER IT WAS WRITTEN**: the reviewer caught a stale `SUBMAX=12` digit in the D537 resume point that had been copied out of an **ARCHIVED prior resume point**, and the fix was to measure BOTH ENDS (a detached worktree at `49d0d3a1` gave *“all 21 rows carry a hit”*, the working tree *“all 20”*) — so the convention gains ONE PARAGRAPH of THREE sentences naming the archived block as a copy source. ⚠️ **BOTH D537 SCOUTS INDEPENDENTLY FOUND THE SAME LATENT DEFECT IN THE SHIPPED `returnBenched` WRITER** — it removes bodies by `ref.spot.index` and never compares a uid, so any MULTI-REF apply over it mutates the index space its own remaining refs live in; the shipped SINGLE-ref writer is not wrong today, so no engine byte moved, but the finding is now a convention so a future multi-ref use cannot re-introduce it. 🛑 **AND THE CHEAPEST-FIRST METHOD THAT CARRIED D526–D536 HAS EXHAUSTED ITS SUPPLY**: EVERY remaining CORPUS-SENTENCE residue row a scout has priced came in at **M** — all four D537 candidates did (`:84` 2 printings, `:87` 1, `:136` 2, `:82` 3), with the SUBST-16 vulnerability row the **L** exception on the same list — so from here the criterion is **PRINTINGS PER UNIT OF RADIUS**, and the resume point says so, with `:82` and `:412` TIED AT THE HEAD on **3 MEASURED printings** each. The close-out moved NO engine byte: engine **0.422.0 HELD** (the bump to 0.422.0 was the D537 slice's own, at `0eec3e13`), `MATCH_RECORD_VERSION` **30 HELD**.)
 
@@ -700,6 +702,229 @@
 **Not a slice — a review-fix session, and the first `/code-review` this branch has had since D96.** Scope `git diff origin/backend...HEAD`: **25 commits, 50 files, ~33k lines, D112–D135**, run at the USER's trigger (it is user-triggered; no autoloop session can launch it, and all 24 of them ended by saying so). **Three findings — one medium, two low; nothing structural.** The reviewer independently **re-derived D129's termination argument** by scanning the full 2³² mulberry32 cycle (longest heads run **31**, so `MAX_UNTIL_TAILS_FLIPS = 64` really is unreachable), and cleared: the retreat-block lifetime on all four turn orderings, all three bench→Active routes stamping `promotedTurn` with no stale-flag path, the inverted `ATTACK_REQUIREMENT_CLAUSES` polarity, no runtime cycle from the `phaseViewOf` import, disjointness of the four effect-text readers, and `MATCH_RECORD_VERSION = 2`. **⚠️ 1 (medium) — THE MILL LOG ROW CREDITED THE VICTIM.** `DECK_TOP_DISCARDED` files under the deck's OWNER (correct) but read ACTIVE, and rows render after their seat's name: P1's Chi-Yu ex produced "**P2** discarded 2 cards from the top of their deck". **D130 saw half of this and fixed the wrong half** — it dropped the false word "looked-at" and called the row provenance-neutral, but neutral wording addresses PROVENANCE and the VOICE carries the ACTOR. Now PASSIVE (`had {n} cards discarded …`); the seat is untouched. Chosen over `ENERGY_DISCARDED`'s `actor` field because it costs no event field and the producing `ATTACK_DECLARED` row already names the actor directly above. **⚠️ 2 (low) — THREE REGEXES MISSED THE `['’]` CLASS, AND TWO SUITES HAD PINNED THE GAP AS INTENDED.** `ATTACK_COIN_MILL_PRINTED`, `ATTACK_COIN_MILL_UNTIL_TAILS` (D130) and `OPPONENT_ACTIVE_TYPE_CLAUSE` (D120) spelled `opponent's` straight-only while every sibling on the SAME noun phrase carries the class `effects.ts` documents as existing "so a re-ingest changing only punctuation cannot silently un-derive" the sentence. **The ASYMMETRY is the defect**: a U+2019 re-ingest would keep D131's mills deriving while D130's two dropped to the loud path — a regression reading as "two cards broke". **AND THE TESTS ASSERTED THE BUG**: `perHeadsProgram.test.ts` listed both curly variants as must-be-REFUSED near-misses while commenting they "would silently drop both cards onto the loud path with no number to notice it by", and `typeNameClause.test.ts` pinned Wonder Flash's bytes while observing a curly apostrophe "would silently un-map the clause". Both moved to POSITIVE assertions of **equality with the straight form**; the byte-pins stay (they say what the catalog holds, the new tests say the reader does not depend on it). **⚠️ 3 (low, latent) — THE TRUNCATION GUARD HAD NO READER, AND CLOSING IT COST THE ENGINE'S FIRST `throw`.** `rng.ts` returns faces "precisely so a caller can detect the truncation" and no caller did, so a truncated all-heads sequence would quietly score **64 heads**. Guard placed in `takeFlips`, the single choke point for the `untilTails` arm. **The engine has zero other throws and is total by design** — taken because there is no honest value to return, and unreachable by construction so it cannot fire today. **Deliberately untested**: driving it needs `vi.mock` on the RNG, which this suite has never used and which breaks a stronger convention than the throw does. **⚠️ NOT DONE — the LITERAL CLAUSE-TABLE KEYS have the same U+2019 exposure** (~8 exact `Map` lookups); a Map key cannot carry a character class, so the fix is a normalisation pass at lookup — a design call, left out rather than expanded into silently. **THE GENERALISATION IS ABOUT THE LOOP, NOT THE CODE: A SUITE WRITTEN BY THE SESSION THAT WROTE THE CODE INHERITS ITS BLIND SPOT.** Both low findings are places where the author saw the hazard, wrote it down, and asserted the wrong side of it — which is why `/code-review` belongs on a CADENCE rather than at the end. Engine version UNCHANGED (no behaviour a card can reach moved); no `MATCH_RECORD_VERSION` bump, no web/API/DB/schema diff. Full `bun run check` **GREEN exit 0, 178 files / 2859 tests** (was 178 / 2857).
 
 ## NEXT (resume point)
+
+> ### ▶ THE NEXT CONCRETE ACTION (written 2026-09-21, after D539)
+>
+> ✅ **`bun run check` IS GREEN — OBSERVED to completion: `Test Files 520 passed (520) / Tests 12,169
+> passed (12,169) / CHECK_EXIT=0`** (+1 file / +67 tests on D538's 519 / 12,102: the new suite's **67 tests**,
+> and NO ride-along rungs elsewhere — every inverted or re-pointed refusal moved assertions INSIDE existing
+> `it(` blocks rather than adding new ones). D539 built `censusAttackCorpus.ts` **FILE LINE 595** — *"This
+> attack does 50 damage for each of your Drifloon and Drifblim in play. This attack also does 30 damage to
+> each of your Drifloon and Drifblim. (Don't apply Weakness and Resistance for Benched Pokémon.)"* — **1
+> sentence / 2 legal printings** (`legalAttackCorpus()` index 542, leading count column **2**), the **LAST
+> UNBUILT ROW OF TWO FAMILIES AT ONCE**: `/This attack also does /` reads **17 sentences / 41 printings** and
+> `/ damage to each of /` reads **11 / 20**, and both CLOSE with it. ⚠️ **NO CARD ID IS RESOLVED FOR IT AND
+> THAT WAS MEASURED**: a whole-repo `git grep -F` returns the corpus row, `bodiesInPlayScaling.test.ts`'s
+> refusal rungs and one docs paragraph, and `catalogManifest.ts:197`'s `sv01-089 Drifloon` carries a DIFFERENT
+> attack pair (`["Gust","Balloon Blast"]`) — conventions.md:155's two-populations trap — so the suite rides
+> the file-local declared demonstrators **`d539-*`**, whose card NAMES are the printed nouns because the
+> derived filter is `byName`. ONE new whole-compound anchor `NAMED_BODIES_MULTIPLY_SPREAD` with a **`\2`
+> BACKREFERENCE**, ONE new `IN_PLAY_BODY_NOUNS` row (the **NINTH** exact key), ONE arm in
+> `deriveAttackDamageMultiplier`, ONE arm in `deriveAttackEffect` and ONE new value on the persisted union
+> `damageChosen.target` — **`yourAny`**. **ZERO new `EffectOp` members, zero new prompt kinds, zero new
+> readers** — `attackReaderSurface()` stays **13** and `attack.ts` takes ZERO code bytes. Engine **0.423.0 →
+> 0.424.0**, `MATCH_RECORD_VERSION` **30 HELD** on D125's widening, with BOTH D450 doors driven over the
+> SERIALIZED BYTES: `count: "all"` never parks, so `"cont" in state.phase === false` and the serialized state
+> contains no `yourAny` at all.
+>
+> 🛑 **(0) THE DEBT IS THE WHOLE-CORPUS SWEEP, AND IT IS PENDING.** D539 is **NOT COMMITTED** — this prompt
+> authorised neither a commit nor the sweep. The prediction is written down before it runs (D440):
+>
+> > 2802 killed · 53 known survivor(s) · 0 GAP(S) · 0 stale · 0 skipped(dirty) · 0 clobber(s) · 0 error(s)
+>
+> over **2,855** rows — **+20 killed, +0 declared** on D538's close-out figure `2782 · 53`. 🛑 **THE
+> ARITHMETIC CLOSES IN BOTH DIRECTIONS AND WAS CHECKED THAT WAY BEFORE IT WAS WRITTEN DOWN**, which is the
+> check D538's close-out had to add after a predicted figure contradicted its own paragraph: `2782 + 20 =
+> 2802`; `2802 + 53 = 2855`, the live corpus size `precheck` reports; and `2835 + 20 = 2855`, the row delta.
+> ⚠️ **ALL TWENTY ARE KILLABLE AND THE DECLARED COUNT DOES NOT MOVE** — read straight out of `precheck`'s
+> own tally rather than inherited. 🛑 **THAT IS A CORRECTION: THE FIRST PROBE RAN WITH ONE ROW DECLARED
+> `survives` AND THE HARNESS REPORTED IT `STALE-SURVIVOR` BECAUSE IT WAS KILLED** — see (1). ⚠️ **ZERO of
+> the twenty are re-pointed standing rows**: `D275-engine-version-drifts-again`,
+> `D495-census-built-attack-not-stepped` and `D447-note-names-the-opponents-bench` were RE-POINTED rather
+> than added and were already inside the 2,835.
+>
+> 🛑 **(1) THE PROBE, AND IT FOUND TWO REAL THINGS ON THE FIRST RUN — BOTH FIXED, BOTH RECORDED.**
+> `bun scripts/mutation/run.ts --decision D539 --allow-dirty` **ROUND 1** came back
+> **`17 killed · 0 known survivor(s) · 1 GAP(S) · 1 stale · 0 skipped(dirty) · 0 clobber(s) · 0 error(s) ·
+> 364.5s total`**, and neither non-green row was noise:
+> ⚠️ **(a) `D539-anchor-loses-its-caret` SURVIVED — A REAL SUITE GAP, NOT A NO-OP.** Checked as a suspected
+> no-op FIRST (the `find` and `replace` differ and `precheck` is green), then diagnosed: the §1 rung glued
+> the sentence onto a prefix by LOWER-CASING its leading `T`, so the string refuses for a DIFFERENT reason —
+> the pattern demands a capital `This` wherever it starts — and the `^` was never exercised. The killer is a
+> prefix that KEEPS the capital (*"Discard an Energy from this Pokémon. …"*): with the `^` gone the pattern
+> matches from the SECOND sentence on and the engine authors a program for a card whose leading clause it
+> silently dropped. Both spellings are now kept, because they refuse for two different reasons and only one
+> is about the anchor, plus the unprefixed control (D424).
+> 🛑 **(b) `D539-snipe-note-calls-the-own-side-benched` WAS DECLARED `survives` AND THE HARNESS KILLED IT —
+> D427's SELF-INVALIDATION WORKING, AND WORTH MORE THAN THE DECLARATION WAS.** The declaration reasoned from
+> the CALL PATH (one caller, `count: "all"` takes the forced branch above the park, so no caption is ever
+> built) and **every clause of that is still true**. What it missed is that §8 does not assert a CAPTION at
+> all — it asserts the widened ternary **off the RAW SOURCE TEXT**, which is exactly the instrument D478/D489
+> prescribe for an obligation whose branch no board reaches. **The branch's unreachability and the row's
+> killability are INDEPENDENT.** The declaration is WITHDRAWN and the row re-pointed at its real killer;
+> recorded rather than silently converted, because a `survives` row that something kills is the one shape the
+> harness reports as STALE and the one a reader must be able to find.
+> ✅ **ROUND 2, after both fixes: `19 killed · 0 known survivor(s) · 0 GAP(S) · 0 stale · 0 skipped(dirty) ·
+> 0 clobber(s) · 0 error(s)`.** ✅ **ROUND 3, after the REVIEW PASS below added a TWENTIETH row:
+> `20 killed · 0 known survivor(s) · 0 GAP(S) · 0 stale · 0 skipped(dirty) · 0 clobber(s) · 0 error(s) ·
+> 82.3s total`**, `git status --porcelain` byte-identical before and after. `precheck` GREEN at **2,855**
+> rows (2,835 → 2,855, +20 D539 rows, 0
+> find===replace, **53** declared survivors UNMOVED); `splice-gate`,
+> `partition-gate` and `residue-census-gate` GREEN, and `opaque-anatomy-gate` GREEN at `SUBMAX=4`.
+> ⚠️ **THAT GATE STILL FAILS AT `SUBMAX=12` AND IT IS PRE-EXISTING** — said out loud rather than quietly
+> reported as a pass, exactly as D536, D537 and D538 disclosed it; its §E message now reads *"all 19 rows
+> carry a hit"* where D538's head read *"all 20"*, which is the `OPAQUE` step and not a change of state.
+> 🛑 **WHAT THE TWENTIETH ROW IS, AND WHY THE REVIEW PASS ADDED ONE AT ALL: §4c WAS CAPTIONED FOR A QUESTION
+> ITS BOARD COULD NOT ASK.** The rung titled *"a named body carrying a Weakness takes exactly 30 — the
+> no-`ignoreWR` reading"* put the ×2 on an own **BENCH** body, and the own-side bench loop applies W/R in
+> **NO** build of this engine — so 30 there is consistent with BOTH readings of the Active leg, and the only
+> thing killing `D539-own-active-leg-doubles-a-weakness` was the SEAT `snipeActive` aims at, never the
+> reading the row is captioned with. FIXED at the board: a new demonstrator `d539-drifblim-weak` puts the ×2
+> in the **ATTACKER'S OWN ACTIVE SPOT** (the one spot `yourAny` newly reaches), two rungs assert the printed
+> **30** there and the `DAMAGE_DEALT` row's `weakness: null` beside it, the bench board is re-labelled a
+> CONTROL, and **`D539-own-active-leg-runs-weakness-on-itself`** is the row that attacks the READING and
+> nothing else (same seat, same event, `weaknessOf(self.card, self.card)` folded in). ✅ **Verified by
+> applying that patch by hand: exactly one `it()` fails, and it is the new one.** ⚠️ **The generalisation:
+> a rung whose caption names a rule its board cannot reach is a rung that passes for the wrong reason** —
+> D424's *"is the axis live?"* question asked of a CONTROL rather than of the measurement.
+> ✅ **PRECHECK FOUND THE TWO PREDICTED BROKEN ROWS **AND A THIRD**: `D275-engine-version-drifts-again`
+> (re-pointed 0.423.0 → 0.424.0), `D495-census-built-attack-not-stepped` (re-transcribed 1662 → 1664, replace
+> 1659 → 1662) — and 🛑 **`D447-note-names-the-opponents-bench`, ROTTED BY THIS SLICE'S OWN EDIT**: D539
+> widened `snipeNote`'s `owner` ternary with a `|| target === "yourAny"` disjunct, so that row's `find` went
+> 0×. Re-pointed with its CLAIM UNCHANGED (the replace still hard-codes *"your opponent's"* over BOTH
+> own-side members, so it is if anything stronger), found the moment the replace was written rather than by
+> the sweep.
+>
+> ✅ **(2) THE CENSUS, MEASURED HEAD vs AFTER.** Reader arm **563/1611 → 564/1613**; residue **50/70 →
+> 49/68**; `640 = 590 + 50` → **`591 + 49`**; raw residue **77/121 → 76/119**; `BUILT.attack` **1662 →
+> 1664**. Registry 10/16, gate 6/14, trailing 11/21, `SPLIT_ATTACK_UNITS` **14** and `COMPOUND_ATTACK_UNITS`
+> **21** UNMOVED (the row is a RAW whole-sentence claim, not a split); `attackReaderSurface()` **13** UNMOVED.
+> ✅ **THE `OPAQUE` CLASS WAS MEASURED AT BOTH CAPS BEFORE THE BUILD RATHER THAN PREDICTED, AND THIS TIME
+> THE PRICING REPORT WAS RIGHT.** :595 classified **`OPAQUE`** at `SUBMAX=4` AND at `SUBMAX=12`, so `OPAQUE`
+> moves **36/53 → 35/51** at 4 and **20/31 → 19/29** at 12. That it was right is worth no less recording than
+> D538's being wrong: the procedure is what carried, not the prediction.
+> 🛑 **THE SENTENCE STEP IS 1 AND THE PRINTING STEP IS 2 — THE FIFTH CONSECUTIVE SLICE WHOSE TWO STEPS
+> DISAGREE** (D535 1-vs-2, D536 1-vs-3, D537 1-vs-2, D538 1-vs-3), so the D426 pin sweep carried a `− 1` term
+> on SENTENCE chains and a `− 2` on PRINTING chains. Driven off `vitest --reporter=json` to a fixed point over
+> **FIVE** rounds, expected-vs-actual read out of the failure and never retyped.
+>
+> 🛑 **(3) WHAT TO CARRY.**
+> 🛑 **THE PIN SWEEP'S OWN TOOL SILENTLY NO-OPPED, AND IT WAS CAUGHT BY THE NEXT ROUND RATHER THAN BY
+> READING THE DIFF.** The helper that moved a value AND prepended its annotation sliced the line at the
+> statement terminator and then ran the replace over the prefix — so a key spelled `).toBe(1611);`, with the
+> `;` INSIDE it, matched the whole line (the assert passed) and matched nothing in the slice being edited.
+> **Seven sites took their D539 annotation and kept their D538 value**, which is the worst possible state: the
+> comment says the number moved and the number did not. Round 3 caught them, and the helper now asserts the
+> key is present IN THE SLICE IT EDITS, not merely in the line. ⚠️ **The generalisation is D538's one level
+> down**: a mechanical pass must be checked against the thing it EDITED, not against the thing it MATCHED.
+> ✅ **NO CATALOG ROW WAS TOUCHED** — `censusAttackCorpus.ts` is **absent from the diff entirely**, checked
+> by AUDIT rather than by a green run, and the whole-diff count of REMOVED pure-comment lines is **THREE**,
+> each deliberate (two in the `bodiesInPlayScaling` rung whose claim genuinely expired, one D275 ledger line
+> extended at the front).
+> 🛑 **BUT THE SECOND HALF OF THAT AUDIT — *"NO COMMENT WAS CORRUPTED"* — WAS FALSE WHEN IT WAS WRITTEN, AND
+> THE INSTRUMENT IS WHY.** A reviewer found the D539 paragraph in `scripts/residue-census.ts` SPLICED INTO
+> THE MIDDLE OF AN EXISTING SENTENCE: the D464 closure sentence ended *"…a bun script that"* and did not
+> resume until eighteen lines later at *"imports `resolvedByAnyReader` …"*, with the whole new block wedged
+> between the subject and its verb. ⚠️ **The audit missed it because it counts REMOVED pure-comment lines and
+> an INSERTION removes nothing** — so D538's lesson generalises one level further than this entry first
+> claimed: sweep damage is not only DELETION and OVERWRITE, it is also INSERTION AT A POINT THAT IS INSIDE A
+> SENTENCE. FIXED — the block now sits after the D464 paragraph closes, and the diff for that file is a
+> **pure insertion of 19 lines** at a paragraph boundary (`git diff --numstat` reads `19 0`).
+> ✅ **ELEVEN FROZEN ENDPOINTS WERE FOUND AND ALL ELEVEN TOOK FRONT TERMS** (D426), audited by the rule that
+> catches them mechanically: before touching a number, look at what is on the LEFT of the `expect(` — an
+> operand of the form `X - n - n - …` means the right-hand side is a historical constant. **None was
+> stepped**, which is the first slice in three that can say so.
+> 🛑 **A FALSE CLAIM IN SHIPPED SOURCE, FOUND BY MEASUREMENT (D453/D455's class, a fourth instance).**
+> `inPlayBodyFilter`'s doc block said the vocabulary count is *"derived from `IN_PLAY_BODY_NOUNS.size` in
+> `benchNounScaling.test.ts` §5, so the next key to land reddens instead of lying"*. **The map is not
+> exported**, §5 holds a HAND LIST and a hand sum, and D539's ninth key landed with nothing going red — the
+> figure was moved 30 → 31 by hand at both sites. The claim is WITHDRAWN in place rather than the figure
+> quietly patched; closing it needs an export and was deliberately not done in the slice that found it.
+> 🛑 **AND A FIFTH INSTANCE, AUTHORED BY THIS SLICE WHILE IT WAS CLOSING THE FOURTH.** A reviewer found that
+> the NEW D539 comment on the ninth `IN_PLAY_BODY_NOUNS` key ended with a FRESH COPY of the very sentence
+> being withdrawn 210 lines below it — *"The count is DERIVED from `IN_PLAY_BODY_NOUNS.size` in
+> `benchNounScaling.test.ts` §5, so this pin moved there by going RED rather than by being retyped."* So the
+> slice withdrew the claim at THREE sites and planted it at a FOURTH. ⚠️ **That is the sharpest form of
+> D453/D455's class: a withdrawal is not a fix if the same paragraph is re-typed one block up**, and nothing
+> can see it, because a doc block carries no assertion. FIXED in place — the new block now says what the
+> withdrawal says (module-private map, §5 is a hand list, BOTH figures moved by hand, and what §5 DOES derive
+> is that every listed key resolves THROUGH the reader) — and the weaker copy in `inPlayBodyFilter`'s own
+> 🆕 D539 line was re-pointed the same way rather than left to read as the strong claim.
+> ⚠️ **AND A STALE COUNT IN THE SLICE'S OWN NEW MUTANT HEADER**, the D536 class one turn old: the D539
+> section header in `scripts/mutation/mutants.ts` read *"Eighteen rows"* over NINETEEN `id: "D539-…"` rows
+> while every other site said nineteen. A section header carries no assertion, so no gate could see it.
+> Corrected, and it now reads **TWENTY** with the review pass's own row counted.
+>
+> 🛑 **(4) A LIVE STALE REFUSAL IN THREE CODE FILES TODAY, INDEPENDENT OF THIS SLICE — RECORDED FOR THE NEXT
+> SCOUT, NOT SCOPED INTO D539.** Five in-tree sites quote corpus `:176`'s sentence as *"tries to **attack**"*
+> with **4** printings — `effects.ts:12948-12953`, `tailsGatedOp.test.ts:296`, `tailsSelfCost.test.ts:927`,
+> `docs/reference/coverage-backlog.md:464`, `docs/workstreams/simulator.md:9459` — while the corpus prints
+> *"tries to **use an** attack"* with **2**, and the witness spelling appears in **ZERO** of the 640
+> `legal_standard = 1` rows. Byte-compared, not eyeballed; conventions.md:155's two-populations trap, live in
+> three CODE files. ⚠️ **This is carried from D539's brief and was NOT re-measured by this slice**, so it has
+> the standing D429 gives a claim: **check it before acting on it**, and fix it in its own edit.
+>
+> 🛑 **(4b) A CARRIED RADIUS ITEM THIS SLICE PRODUCED THE FIRST OBSERVABLE BOARD FOR — RECORDED, PRICED AS A
+> SLICE OF ITS OWN, NOT SCOPED INTO D539.** `damageChosen{target:"yourAny"}` is the FIRST op that reaches
+> BOTH ZONES of the attacker's own side from ONE printing, and the two zones READ §11 AND THE §8.1 KO CLAMP
+> DIFFERENTLY. `hitOwnActive` is deliberately FLAT and argues it at length (no reduction passive, no §11
+> prevention — *"every one of those is printed 'by attacks from your opponent's Pokémon'"* — no KO-survival
+> clamp). The SAME op's own-side BENCH bodies go through `placeSnipe`'s full funnel: `attackerDebuff`
+> (`installedAttackDebuffOf` + `opposingAttackDebuff`), `targetPassives.damageReductionAfterWR` +
+> `installedReductionOf` + `seatDamageReduction`, all eight `preventedBeforeFlip` disjuncts,
+> `coinFlipShieldPrevents` and the §8.1 clamp. **So a named body on the attacker's own BENCH carrying
+> `preventDamageAndEffectsWhileBenched` (or a Kecleon-style coin shield, or a survive-with-10-HP clamp) takes
+> 0 or a reduced hit from its OWN side's attack while the identical body in the Active spot takes the printed
+> 30** — which is `hitOwnActive`'s own *"two Active legs disagreeing would be two readings of one rule
+> (D131/D159)"* argument, one zone over and failing. ⚠️ **NEITHER SIDE IS A D539 REGRESSION**: the bench half
+> shipped with D447's `yourBench` and this slice added no byte to it; what D539 added is the first printing
+> that makes the disagreement showable on ONE board. ⚠️ **AND `namedBodiesSpread.test.ts` §4 ASSERTS NOTHING
+> ON EITHER SIDE OF IT** — no own-side body in that suite carries a reduction passive, a §11 shield or a
+> clamp — which is stated rather than left to be discovered. **Closing it means DECIDING whether an own-side
+> hit is "damage from an attack" for §11's *"by attacks from your opponent's Pokémon"* at BOTH zones, then
+> moving whichever leg loses, with rungs on both**; it is recorded in `hitOwnActive`'s own doc block and here,
+> exactly as (4) is.
+>
+> 🛑 **(5) PICKING THE NEXT ROW.** `SUBMAX=12 bun scripts/residue-census.ts`, ⚠️ **the census ranks STRING
+> DISTANCE, not COST**, and the criterion since D537 is **PRINTINGS PER UNIT OF RADIUS**.
+> 🛑 **`Ancient`/`Future`/`Tera` off the table, 76th slice.** `:595` leaves the list (BUILT here); `:412`
+> (D538), `:84` (D537), `:100` (D536), `:81` (D535), `:401` (D534), `:70` (D532), `:483` (D531), `:551`
+> (D530), `:215` (D528), `:454` (D527) and `:219` (D525) are off it.
+> 🛑 **`:82`, Angelite (3 printings), IS STILL THE ONLY 3-PRINTING ROW LEFT AND IS UNCONTESTED AT THE HEAD.**
+> It prices **M** and is the most INVASIVE M on the list — it widens a **CLOSED** `ATTACK_GATE_CLAUSES` table
+> with a **CARD-SPECIFIC attack name**, REVERSES a documented policy in **three** places, INVERTS **nine**
+> suites, MOVES `SPLIT_ATTACK_UNITS` and adds a **THIRD pin class** — so the YIELD is what buys it, not the
+> cost. ✅ Its BOARD half is cheap; what is being priced is the TRAILING *"If 1 of your Pokémon used Angelite
+> during your last turn, this attack can't be used."* clause. 🛑 **AND D538's CANDIDATE b STANDS AS A FINDING:
+> the obvious variant of that clause TYPECHECKS AS A SILENT NO-OP** — `tsc` green, no reader null, no log row
+> different, and the gate simply never fires. ⚠️ **A gate that cannot be seen to refuse is D421's failure mode
+> with the compiler on its side**, so the scout must price the REFUSAL — a board on which the attack is
+> actually blocked, and a mutant that removes the block — and must not accept a typecheck as evidence.
+> ⚠️ **AND D539 IS A THIRD PIECE OF EVIDENCE THAT A CARRIED-FORWARD RADIUS IS NOT A MEASUREMENT**: its brief
+> priced the interpreter at *"the two sites the compiler names, and nothing else"* and named them exactly —
+> and there was a **THIRD** the compiler could not see, which only an HP rung found. **Price the sites the
+> TYPE SYSTEM CANNOT CHECK separately from the ones it can.**
+> Then, in printings order — every `:NNN` figure READ OUT of `censusAttackCorpus.ts`, never recalled:
+> **(b)** `:136` (**2 printings**) — **M**, its design question SETTLED at D537; it owes a **REQUIRED
+> `GameEvent` discriminator**, a **log branch**, **~30 assertion edits across FOUR pre-damage suites** and a
+> **two-file HUD change** (D537's recorded wording, carried forward; ⚠️ no scout has re-measured those four
+> figures since). **(c)** `:176` (**2**) — **M**, and ⚠️ **ITS LETTER IS STILL UNDETERMINED**: the effect
+> straddles a turn boundary, so if anything about the coin must PERSIST a `MATCH_RECORD_VERSION` bump is owed
+> and the row becomes an **L**. **Ask D450's two doors FIRST** — the answer moves it up to second or below
+> `:87` — and note that (4) above says its five-file radius is ALSO unverified and that three code files
+> quote its sentence WRONG today. **(d)** `:87` (**1**) — **M**, a 160-line REFACTOR of a shipped writer;
+> **(e)** `:665` (**1**) — **M**; **(f)** `:148` (**1**) — **M**, it WIDENS the persisted REQUIRED field
+> `BoostedAttack.attackIndex` with two reader sites `tsc` cannot check; **(g)** `:316` + `:324` (**1 each**)
+> — **M**; **(h)** SUBST-11 Hyper Fang — **M**; **(i)** SUBST-16 vulnerability — **L**
+> (`MATCH_RECORD_VERSION` 30 → 31). 🛑 **BOTH SUBST ROWS RANK LAST BY CONSTRUCTION**: a SUBST row is a census
+> SUBSTITUTION CLASS at `SUBMAX=12`, not one corpus sentence, so it carries NO `<legal printings>` field and
+> an unknown yield cannot outrank a measured one. **(j)** the copy-attack family — BLOCKED.
+> The residue is now **49 sentences / 68 printings**.
+> ✅ **Recommendation: RUN THE SWEEP AND COMMIT D539 FIRST** — the debt in (0) is this session's, and its
+> prediction must be re-derived from `precheck`'s own declared-survivor count rather than from the paragraph
+> above. Then ONE blast-radius scout on `:82`, PLUS the cheap persistence question asked of `:176`.
+
+### Prior resume point (P3-M5 — D538, the counter placement whose amount is a payload, kept for continuity)
 
 > ### ▶ THE NEXT CONCRETE ACTION (written 2026-09-21, after D538)
 >
@@ -27671,7 +27896,7 @@ the next api deploy (D18).
 |---|---|---|
 | backend-data | P1 | ✅ M1–M9 + P2-M1 + task-17 api deployed (Worker `9b1ec1d1`, 2026-07-16); OAuth secrets pending (user) |
 | deck-builder | P2 | ✅ ALL 19 tasks closed (task 17 landed + e2e-verified locally); only follow-ups left |
-| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D538, *the counter placement whose amount is a PAYLOAD and whose tail shuffles the very cards the amount counted — ONE `CardFilter` bound ONCE and handed to TWO ops, a FIFTH `damageChosen` rider that carries a payload rather than a flag, and the FIRST `discardPileRetrieval` that does not park*** — `censusAttackCorpus.ts` **file line 412** (`legalAttackCorpus()` index 359, **1 sentence / 3 legal printings**; no card id resolved on this checkout and MEASURED so, D425, so it rides `d538-pile-sniper`). ONE new whole-sentence anchor `COUNTER_PUT_SCALED_BY_PILE` and ONE new arm **23b-bis** emitting THREE ops in printed order — `damageChosen{perDiscardPileCard}` + `discardPileRetrieval{max:"all"}` + `shuffleDeck` — with the head's counted filter and the tail's *“those Energy cards”* bound ONCE and asserted by IDENTITY. TWO WIDENINGS, both persisted, `MATCH_RECORD_VERSION` **30 HELD** on D125 plus D333/D527. 🛑 The program ORDER is the mechanism and 🛑 the placement family is now CLOSED (19 sentences / 38 printings, all read), which made three refusal sections VACUOUS and all three were re-pointed onto the positive. Census: `BUILT.attack` 1659 → **1662**, reader arm 562/1608 → **563/1611**, residue 51/73 → **50/70**. Engine **0.422.0 → 0.423.0**. ✅ **CLOSE-OUT: committed `a0102c18`, whole-corpus sweep GREEN and EXACTLY as predicted** — `2782 killed · 53 known survivor(s) · 0 GAP(S) · 0 stale · 0 skipped(dirty) · 0 clobber(s) · 0 error(s) · 12387.9s total` (`+17 killed, +0 declared` on D537's `2765 · 53`), the **SIXTH** consecutive exact prediction after the D532 reset and the **hundredth** consecutive clean run; completeness structural — 2,835 unique progress-line ids / 2,835 rows / 0 unmatched both ways, 53 declared survivors = 53 in the log both ways, all seventeen `D538-*` rows KILLED at :2822–:2838; ⚠️ the `setsid` reuse count HOLDS at the forty-fourth — the ship report's *PPID 1 for pid 810120* was CHECKED and `810120` is nowhere in the log, nowhere under `tmp/` and nowhere in the tree, so D429 forbids stepping it; 🛑 the mechanical pin sweep CORRUPTED A REAL CATALOG ROW IN CODE (not a comment) — caught in the DIFF because no gate or suite can see it, reverted before the commit, and now a convention; ⚠️ a predicted figure (`2798`) contradicted its own arithmetic and the live corpus size in one sentence and was corrected pre-commit — close a prediction in BOTH directions; 🛑 **THE PLACEMENT FAMILY IS CLOSED at 19 sentences / 38 printings**, re-pointing `counterFold`, `counterUntilHp` and `counterPutChosen` onto POSITIVE assertions; engine **0.423.0 HELD** at close-out, `MATCH_RECORD_VERSION` **30 HELD**) |
+| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D539, *the named-body multiplier with a named-body OWN-SIDE spread behind it, and the one body the shipped machinery could not reach*** — `censusAttackCorpus.ts` **file line 595** (`legalAttackCorpus()` index 542, **1 sentence / 2 legal printings**, leading count column 2; no card id resolved on this checkout and MEASURED so, D425 — `catalogManifest.ts:197`'s `sv01-089 Drifloon` carries a DIFFERENT attack pair — so it rides the declared demonstrators `d539-*`), the **LAST UNBUILT ROW OF TWO FAMILIES AT ONCE**: `/This attack also does /` (**17 sentences / 41 printings**) and `/ damage to each of /` (**11 / 20**) both CLOSE with it. ONE new whole-compound anchor `NAMED_BODIES_MULTIPLY_SPREAD` with a **`\2` BACKREFERENCE** read by TWO readers off ONE `effect` string — `deriveAttackDamageMultiplier` for the × fold and `deriveAttackEffect` for `damageChosen{target:“yourAny”, count:“all”}` — plus the NINTH `IN_PLAY_BODY_NOUNS` exact key and the FOURTH `damageChosen.target` member. 🛑 **THAT FOURTH MEMBER IS THE WHOLE SLICE**: `yourBench` typechecks, ships, logs a plausible board and SILENTLY SPARES THE ATTACKER, and `count:“all”` never parks so no caption contradicts it and NO CENSUS FIGURE MOVES — true also of deleting the effect arm outright — so §4 asserts HP on a board rather than op shape (D421). 🛑 **THE COMPILER NAMED TWO INTERPRETER SITES AND THERE WAS A THIRD IT COULD NOT SEE**: `placeSnipe`'s ACTIVE arm was `opponent`-only under a comment both of whose halves are now false, so the own Active ref was being SILENTLY DROPPED; `hitOwnActive` is the leg, FLAT on `damageSelf`'s stated reading, found by an HP rung and not by the type system. The COMPOSITION seam was RE-PRICED before it was declined (**0 sentences / 0 printings**, eleven split rows byte-identical) and `effects.ts:15919`'s refusal is KEPT as the record of a price that came true. **ZERO new `EffectOp` members, zero new readers** — `attackReaderSurface()` **13** and `attack.ts` takes ZERO code bytes (D493/D494's route, third instance). `MATCH_RECORD_VERSION` **30 HELD**, both D450 doors driven over the serialized bytes. Census: `BUILT.attack` 1662 → **1664**, reader arm 563/1611 → **564/1613**, residue 50/70 → **49/68**; `OPAQUE` 36/53 → **35/51** at `SUBMAX=4` and 20/31 → **19/29** at 12, MEASURED at both caps before the build. Engine **0.423.0 → 0.424.0**; `check` GREEN **520 files / 12,169 tests**; `precheck` GREEN at **2,855** rows with a THIRD broken row this slice rotted itself and re-pointed. ⚠️ **A REVIEW PASS THEN FIXED THREE FALSE-OR-CORRUPTED CLAIMS THIS SLICE AUTHORED** (a fresh copy of the withdrawn `.size` claim on the new map row, a stale *"Eighteen rows"* mutant header, and a D539 paragraph spliced INSIDE an existing sentence in `residue-census.ts` — the last of which refutes the slice's own *"no comment was corrupted"* audit, because that audit counts REMOVED lines and an insertion removes nothing), re-pointed §4c onto the ATTACKER'S OWN ACTIVE SPOT (the bench board could not ask the `ignoreWR` question at all) with a TWENTIETH mutant behind it, and RECORDED the own-side §11/KO-clamp asymmetry between `hitOwnActive` and the own-side bench loop as a carried radius item. 🛑 **A SECOND REVIEW PASS THEN FIXED THREE MORE FALSE-OR-UNREACHABLE CLAIMS, ALL IN `namedBodiesSpread.test.ts` ITSELF AND ALL COMMENT-LEVEL**: a §3 rung captioned for `attack.ts` that asserted `interpreter.ts` and could not read `attack.ts` at all (glob widened; both bindings now quoted from `attack.ts`, and *“unconditionally”* withdrawn for the `damageBonus` guard, whose premise is DRIVEN), a SIXTH copy of the withdrawn `.size` claim in §2, and a fixture deck decomposed as *“8 × 6 + 12”* instead of **7 × 6 + 18**; the kept refusal paragraph is re-cited at **`effects.ts:15919`** in five places. ⚠️ **THE WHOLE-CORPUS SWEEP IS PENDING AND IS THE RESUME POINT'S DEBT**, predicted `2802 killed · 53 known survivor(s)` — arithmetic closed in BOTH directions before it was written down) |
 | simulator (prior) | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D537, *keep three, shuffle the rest — the ONLY sentence in this corpus whose pick names the bodies that STAY; ONE new `EffectOp` member `returnBenchedRest`, ONE new set-valued interpreter writer, and a splice the shipped one-ref writer gets wrong TWICE* — corpus file line 84, 1 sentence / 2 legal printings (no id resolved on this checkout — MEASURED by a whole-repo grep, not assumed — so it rides the declared demonstrator `d537-bencher`, D425); anchor `CHOOSE_KEEP_SHUFFLE_REST` with **THREE `['’]` slots** (two possessives AND the contraction in *“didn't”*) + arm 42-bis → one `returnBenchedRest{keep:3}`; a MEMBER and not an optional `keep` rider, because dropping the rider would shuffle the CHOSEN three away and leave the rest — D421's exact failure mode; §11 asked over the COMPLEMENT ONLY (D433) with a shielded CHOSEN body filing NOTHING as the control; the writer GATHERS before it applies and splices STRICTLY DESCENDING on a stated single-seat precondition, one `POKEMON_RETURNED` per body and exactly ONE `SHUFFLE` + ONE RNG draw; engine 0.421.0 → 0.422.0, `MATCH_RECORD_VERSION` 30 held on D125's widening alone — and the op PARKS, so the byte IS persisted in `phase.cont.pendingOp`; residue 51/73, `BUILT.attack` 1659, reader arm 562/1608, raw residue 78/124, `OPAQUE` 36/53 at cap 4 — all measured HEAD vs after; corpus 2,801 → 2,818; check 518 files / 12,042 tests GREEN** — ✅ **WHOLE-CORPUS SWEEP GREEN AND EXACTLY AS PREDICTED**: `2765 killed · 53 known survivor(s) · 0 GAP(S) · 0 stale · 0 skipped(dirty) · 0 clobber(s) · 0 error(s) · 12309.0s total` over 2,818 rows, `+17 killed, +0 declared` on D536's `2748 · 53` — the FIFTH consecutive exact prediction after the D532 reset (count **5**) and the **ninety-ninth** consecutive clean run; the `setsid` reuse count NOT stepped and still forty-fourth (no launch PPID on record, D429); **2,818 ids / 2,818 rows / 0 unmatched** both ways, 53 declared survivors = 53 in the log both ways, all seventeen `D537-*` rows KILLED at :2805–:2821; probe `--decision D537 --allow-dirty` **17 killed · 0 known survivor(s) · 0 GAP(S) · 0 stale · 0 skipped(dirty) · 0 clobber(s) · 0 error(s)**; ⚠️ the D536 stale-figure class RECURRED one slice on, with an ARCHIVED resume point as the copy source (both ends re-measured: 21 rows at `49d0d3a1`, 20 in the tree); ⚠️ both scouts independently found the shipped `returnBenched` writer's index-space defect — single-ref-safe today, so NO engine byte moved, now written down as a convention; 🛑 EVERY remaining CORPUS-SENTENCE residue row a scout has priced prices at **M** (SUBST-16 is the **L** exception), so row-picking moves to PRINTINGS PER UNIT OF RADIUS and `:82`/`:412` TIE at the head on 3 measured printings; engine **0.422.0 HELD** at close-out, `MATCH_RECORD_VERSION` **30 HELD**) |
 | simulator (prior) | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D536, *the body that leaves play without being Knocked Out — ONE new FIELD-FREE `EffectOp` member `discardDefender`, ONE interpreter writer (11 lines), and an §8 ORDERING CALL that costs ZERO code and a rung that DRIVES it* — corpus file line 100, 1 sentence / 3 legal printings (Moltres ex `sv10-031`/`-208`/`-229`, ids RESOLVED; base damage NOT, so it rides the declared demonstrator `d536-moltres`); anchor `TR_ENERGY_COST_THEN_DISCARD_DEFENDER` + arm 44c → `discardEnergy{yourActive, byName “Team Rocket's Energy”, recordAs:“discarded”}` gated through the FIRST shipped `recordGate{slot:“discarded”}`; a lethally damaged defender is DISCARDED and NOT Knocked Out — no Prize, no `KNOCKED_OUT`, no `koRecoilOf` — and §6 of the new suite DRIVES that rather than disclosing it; engine 0.420.0 → 0.421.0, `MATCH_RECORD_VERSION` 30 held; residue 52/75, `BUILT.attack` 1657, reader arm 561/1606, raw residue 79/126, `OPAQUE` 37/55 at cap 4 — all measured HEAD vs after; corpus 2,786 → 2,801; check 517 files / 11,978 tests GREEN** — ✅ **WHOLE-CORPUS SWEEP GREEN AND EXACTLY AS PREDICTED**: `2748 killed · 53 known survivor(s) · 0 GAP(S) · 0 stale · 0 skipped(dirty) · 0 clobber(s) · 0 error(s) · 12309.2s total` over 2,801 rows, `+15 killed, +0 declared` on D535's `2733 · 53` — the FOURTH consecutive exact prediction after the D532 reset (count **4**), the **ninety-eighth** consecutive clean run, and the **forty-fourth** `setsid` reuse, STEPPED on a recorded PPID 1 for pid 410762 (D429); **2,801 ids / 2,801 rows / 0 unmatched** both ways, 53 declared survivors = 53 in the log both ways, all fifteen `D536-*` rows KILLED at :2790–:2804) |
 | simulator (prior) | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D535, *the pick-with-replacement snipe — SIX `damageChosen` parks at `count: 1` through ONE new two-capture anchor `ATTACK_PICK_WITH_REPLACEMENT_SNIPE`, and **ZERO NEW VOCABULARY**: the repetition lives in the program's LENGTH because `validateChoice` refuses a repeated ref inside one prompt (`cardplay.ts:1419`) — corpus file line 81, 1 sentence / 2 legal printings; engine 0.419.0 → 0.420.0, `MATCH_RECORD_VERSION` 30 held on D452's “this byte already ships”; residue 53/78, `BUILT.attack` 1654, reader arm 560/1603, `OPAQUE` 38/58 at cap 4 and 22/36 at 12, `UNEXPLAINED` 18/25 — all measured; corpus 2,786*** (the row read 2,785 — a transcription slip corrected at close-out against `MUTANTS.length`) — committed `bba8d63e`; sweep GREEN and EXACT: `2733 killed · 53 known survivor(s) · 0 GAP(S) · 0 stale · 0 skipped(dirty) · 0 clobber(s) · 0 error(s) · 11967.9s total` — `+11 killed, +0 declared` on D534's `2722 · 53`, the THIRD consecutive exact prediction after the D532 reset (count at 3), ninety-seventh consecutive clean run, 2,786 / 2,786 / 0 unmatched, the 53 survivors exactly the 53 declared, all eleven `D535-*` rows plus D520's C10 ride-along KILLED; the `setsid` reuse count NOT stepped (no PPID read on record, D429); ⚠️ one risk carried forward — the `ignoreWR` reading ALSO nulls `damageReductionAfterWR`, disclosed in four places and driven by NO rung, owed as ONE §6 rung; engine 0.420.0 HELD at close-out, `MATCH_RECORD_VERSION` 30 HELD) |
@@ -27828,6 +28053,265 @@ the next api deploy (D18).
 Legend: 📝 backlog · 📋 specced · 🔎 research · 🚧 in progress · ✅ done
 
 ## Session log
+
+### 2026-09-21 — build session #479 (P3-M5 — D539)
+
+**THE NAMED-BODY MULTIPLIER WITH A NAMED-BODY OWN-SIDE SPREAD BEHIND IT, AND THE ONE BODY THE SHIPPED
+MACHINERY COULD NOT REACH.** Built `censusAttackCorpus.ts` FILE LINE 595 (`legalAttackCorpus()` index 542,
+leading count column 2) — *"This attack does 50 damage for each of your Drifloon and Drifblim in play. This
+attack also does 30 damage to each of your Drifloon and Drifblim. (Don't apply Weakness and Resistance for
+Benched Pokémon.)"* — **1 sentence / 2 legal printings**, and it is the **LAST UNBUILT ROW OF TWO FAMILIES AT
+ONCE**, re-measured live at this head: `/This attack also does /` reads **17 sentences / 41 printings** and
+`/ damage to each of /` reads **11 / 20**, and :595 was the only unbuilt member of either. ⚠️ **No card id is
+resolved for this sentence on this checkout and that was MEASURED, not assumed**: a whole-repo `git grep -F`
+returns the corpus row, `bodiesInPlayScaling.test.ts`'s refusal rungs and one docs paragraph, and
+`catalogManifest.ts:197`'s `sv01-089 Drifloon` carries a DIFFERENT attack pair (`["Gust","Balloon Blast"]`),
+which is conventions.md:155's two-populations trap exactly — so the suite rides the file-local DECLARED
+demonstrators `d539-*` (D425), whose card NAMES are the printed nouns because the derived filter is `byName`.
+
+**ONE ANCHOR, TWO READERS, ONE `effect` STRING — D493/D494's ROUTE FOR THE THIRD TIME, AND `attack.ts` TAKES
+ZERO CODE BYTES.** `NAMED_BODIES_MULTIPLY_SPREAD` carries a **`\2` BACKREFERENCE**: the two printed nouns must
+be the SAME noun, which is the mechanism — the card multiplies by the bodies it then splashes on — and the
+slice's sharpest mutant. `deriveAttackDamageMultiplier` reads it for the × fold (shape UNCHANGED from the arm
+one line up) and `deriveAttackEffect` reads the SAME string for the own-side spread; `attack.ts:1708` binds
+`derivedHead` UNCONDITIONALLY while the `damageMultiplier` ternary at `:1761-1764` is GUARDED by
+`damageBonus !== null`, so a sentence both readers claim reaches both bindings with NO branch GIVEN
+`deriveAttackDamageBonus(PRINTED)` is null — which §3 DRIVES rather than narrates. The `(?!opponent)` lookahead is KEPT for D407's stated reason and the `['’]`
+class on *"Don't"* is required although the corpus prints U+0027 (D137); disjointness from
+`IN_PLAY_BODY_MULTIPLY` is **by `$` alone** — its `[^.]+` cannot cross the break — said out loud because
+"disjoint by construction" with no named construction is the claim D467/D468 refuse, and driven in BOTH
+directions.
+
+**THE COMPOSITION SEAM WAS RE-PRICED AT THIS HEAD BEFORE IT WAS DECLINED, WITH NUMBERS.** The narrowest
+widening that would reach this row — reglue a `(`-leading part before the head/tail cut, so the parenthetical
+stops being the tail — admits **0 sentences / 0 printings** over all 640 corpus rows and leaves ALL ELEVEN
+currently-split rows byte-identical in both `head` and `tail`. The simulation is IN THE SUITE (§1) rather than
+in a comment. So `effects.ts:15919`'s refusal paragraph is KEPT and rewritten as the record of a price that
+came true (D442/D466): all three of its rungs — `splitAttackTrailingClause`, `splitAttackGateClause` and
+`deriveAttackEffect` on the bare parenthetical — are STILL GREEN, and only its last sentence expired.
+
+🛑 **`damageChosen.target` GAINS A FOURTH MEMBER, `yourAny` — THE ATTACKER'S WHOLE OWN SIDE, ACTIVE INCLUDED
+— AND THAT ONE BODY IS THE WHOLE SLICE.** The printed noun carries no zone word and the attacking Drifblim is
+one of the bodies it names. A build aimed at `yourBench` TYPECHECKS (the member has shipped since D447),
+ships, logs a plausible board and SILENTLY SPARES THE ATTACKER; `count: "all"` never parks, so there is no
+caption to contradict it and **no census figure moves**. ⚠️ **And the MULTIPLIER ARM ALONE SATISFIES A GREEN
+CENSUS** — it flips `resolvedByAnyReader`, steps `BUILT.attack` by 2 and moves every figure with the own-side
+spread never happening. So §4 asserts **HP on a board** rather than op shape, and three of the eighteen rows
+(`D539-target-becomes-yourbench`, `D539-effect-arm-deleted`, `D539-placement-drops-the-own-active`) move NO
+census figure at all — each a different half of the card not happening (D421). **NO `ignoreWR`**, driven
+rather than argued: §8.5 scopes W/R to the DEFENDING Pokémon (D447's reading for `yourBench`, D425's for
+`spreadDamage.yourBench`), so a named own body carrying a Weakness ×2 takes exactly **30**, with the same
+Weakness in the DEFENDING spot as the control that keeps the rung a measurement (D424).
+
+🛑 **THE COMPILER NAMED TWO INTERPRETER SITES AND THERE WAS A THIRD IT COULD NOT SEE.** Widening the union and
+running `bunx tsc -b --force` as the slice's FIRST ACT stopped the compile at exactly
+`interpreter.ts(14159,22)` TS2366 (D447's total `switch`, which gains
+`case "yourAny": return ownInPlayRefs(state, seat);`) and `interpreter.ts(2129,13)` TS2345 (`snipeNote`'s
+parameter, widened together with its `zone` and `owner` ternaries) — TWO distinct sites, with ZERO in
+`redact.ts`, `packages/schema`, `cardplay.ts`, `attack.ts` or matchRecord, exactly as the brief priced. ⚠️
+**But `placeSnipe`'s ACTIVE arm was `opponent`-only**, under a comment reading *"no printing aims a chosen hit
+at the attacker's own Active, and `oppAnyRefs` is the only producer of an Active ref"* — **BOTH halves now
+false**. Without a third leg the own Active ref is filtered away and the attacker takes NOTHING while every
+other named body takes its 30: D447's own silent-no-op failure mode one spot over, with `tsc` green and no
+event to say so. `hitOwnActive` is that leg — FLAT on both arms, `damageSelf`'s stated reading verbatim
+(self-damage sits outside the §8.5 pipeline, and every §11 shield is printed *"by attacks from your opponent's
+Pokémon"*), filing `DAMAGE_DEALT` on the `deals` arm and `COUNTERS_PLACED` on the placement arm, with the
+stale comment CORRECTED IN PLACE (D442). **It was found by the §4b HP rung and not by the type system**, which
+is a carried-forward radius estimate failing exactly where a measurement caught it.
+
+**ONE new `IN_PLAY_BODY_NOUNS` ROW — THE NINTH EXACT KEY**, *"Drifloon and Drifblim"*, a PAIR in an `anyOf`
+(D492's idiom) of CARD NAMES (D467's idiom), third instance of both, with the vocabulary arithmetic RE-DERIVED
+at the new count — **31 nouns / 9 exact keys** — rather than incremented. 🛑 **AND RE-DERIVING IT FOUND A FALSE
+CLAIM IN SHIPPED SOURCE (D453/D455's class, a fourth instance).** `inPlayBodyFilter`'s doc block said the
+figure is *"derived from `IN_PLAY_BODY_NOUNS.size` in `benchNounScaling.test.ts` §5, so the next key to land
+reddens instead of lying"*. The map is **not exported**, §5 holds a HAND LIST and a hand sum, and the ninth key
+landed with nothing going red — both sites were moved by hand. The claim is WITHDRAWN in place rather than the
+figure quietly patched; what §5 DOES derive is the stronger half (every listed key is driven THROUGH the
+reader), so a key that stops RESOLVING still reddens. Closing it needs an export and was deliberately not done
+in the slice that found it.
+
+**ZERO new `EffectOp` members, zero new `count` kinds, zero new `CardFilter` members, zero new prompt kinds,
+zero new events or error codes, zero new readers** — `attackReaderSurface()` stays **13**, and `attack.ts`,
+`redact.ts`, `packages/schema`, `cardplay.ts`, `log.ts`, `events.ts`, `registry.ts`, `types.ts`, `turn.ts` and
+`continuous.ts` take no code bytes. **`MATCH_RECORD_VERSION` HELD AT 30, BOTH D450 DOORS DRIVEN OVER THE
+SERIALIZED BYTES (D427, never from the type's name)**: door 1, the CARRIER — `damageChosen` rides
+`phase.cont.pendingOp` ONLY when it PARKS and `count: "all"` resolves INLINE, asserted as
+`"cont" in state.phase === false` and as the ABSENCE of `yourAny` from the serialized state; door 2, the
+ALPHABET — a WIDENING at a persisted address, D125's free case, and D447 added `"yourBench"` to THIS EXACT
+UNION and held the version, driven in both directions plus a v30 `yourBench` op over THIS board, the rung that
+would have gone red had the member been spelled by RENAMING. **THE DESCRIBER OBLIGATION IS EMPTY AND IS TRACED
+THROUGH THE CALL SITE RATHER THAN ASSERTED** (D478/D489, `classedBoardSpread.test.ts:1065`'s prose shape):
+`snipeNote` has ONE caller and `count: "all"` takes the forced branch above it on every board, so **no caption
+rung is written at all** — a caption assertion that can never fail is the thing to avoid. What stands in its
+place is a DECLARED `unreachable-shape` survivor row that self-invalidates the day a numeric-`count` `yourAny`
+printing lands (D427).
+
+**CENSUS, MEASURED HEAD vs AFTER AND NEVER RETYPED**: reader arm **563/1611 → 564/1613**; residue **50/70 →
+49/68**; `640 = 590 + 50` → **`591 + 49`**; raw residue **77/121 → 76/119**; `BUILT.attack` **1662 → 1664**.
+Registry 10/16, gate 6/14, trailing 11/21, `SPLIT_ATTACK_UNITS` 14 and `COMPOUND_ATTACK_UNITS` 21 UNMOVED —
+the row is a RAW whole-sentence claim, not a split — and `attackReaderSurface()` 13 UNMOVED. ⚠️ **THE SENTENCE
+STEP IS 1 AND THE PRINTING STEP IS 2 — THE FIFTH CONSECUTIVE SLICE WHOSE TWO STEPS DISAGREE** (D535 1-vs-2,
+D536 1-vs-3, D537 1-vs-2, D538 1-vs-3), so sentence chains carried a `− 1` front term and printing chains a
+`− 2`, driven off `vitest --reporter=json` to a fixed point over FIVE rounds. ✅ **AND THE `OPAQUE` CLASS WAS
+MEASURED AT BOTH CAPS AT THE PRE-SLICE HEAD RATHER THAN PREDICTED, BECAUSE D538's BRIEF WAS WRONG ABOUT
+EXACTLY THIS**: :595 classified **`OPAQUE`** at `SUBMAX=4` AND at `SUBMAX=12`, so the pricing report was right
+this time — and right BY MEASUREMENT. `OPAQUE` moves **36/53 → 35/51** at 4 and **20/31 → 19/29** at 12.
+
+**THE PIN SWEEP, AND THE THING IT DID WRONG THIS TIME.** 🛑 **THE HELPER THAT MOVED A VALUE AND PREPENDED ITS
+ANNOTATION SILENTLY NO-OPPED ON SEVEN SITES.** It sliced each line at the statement terminator and ran the
+replace over the PREFIX, so a key spelled `).toBe(1611);` — with the `;` inside it — matched the whole line,
+passed the uniqueness assert, and matched nothing in the slice actually being edited. **Seven sites took their
+D539 annotation and kept their D538 value**, which is the worst possible state: the comment says the number
+moved and the number did not. Caught by the next round rather than by reading the diff; the helper now asserts
+the key is present IN THE SLICE IT EDITS. **The generalisation is D538's, one level down: a mechanical pass
+must be checked against what it EDITED, not against what it MATCHED.** ✅ **ELEVEN FROZEN ENDPOINTS WERE FOUND
+AND ALL ELEVEN TOOK FRONT TERMS (D426), NONE STEPPED** — the first slice in three that can say so, audited by
+the mechanical rule (look at what is on the LEFT of the `expect(`; an operand of the form `X - n - n - …` means
+the right-hand side is a historical constant). ✅ **NO CATALOG ROW WAS TOUCHED AND NO COMMENT WAS CORRUPTED** —
+D538's two sweep-damage classes, both checked by AUDIT rather than by a green run:
+`censusAttackCorpus.ts` is **absent from the diff entirely**, and the whole-diff count of REMOVED pure-comment
+lines is **THREE**, each deliberate. The pass's FILE SET was bounded before any replace was written
+(conventions.md:8088): it is driven off the FAILING `file:line` list, never off a value-keyed grep.
+
+**TWO `it()` BLOCKS INVERT IN `bodiesInPlayScaling.test.ts` AND NEITHER IS A `=== true` SWAP (D438).** The
+`[^.]+` rung is RE-POINTED ONTO `IN_PLAY_BODY_MULTIPLY` ITSELF — the pattern's refusal of this compound is what
+the rung was always about and is still true — with the compound's FIRST SENTENCE ALONE as its control and the
+greedy `(.+)` twin as the demonstrated defect; the COMPOSITION rung keeps ALL THREE of its refusals (they are
+exactly why the anchor route was chosen) and flips only `resolvedByAnyReader`. **FAMILY-CLOSURE VACUITY WAS
+PAID BEFORE IT COULD BITE** (D536/D538's lesson): both closing families are asserted on the POSITIVE
+(`family.every(([, t]) => resolvedByAnyReader(t))`) with their **17/41** and **11/20** counts asserted FIRST,
+and `scaledAnySnipe`'s `unbuilt` 3 → 2 is RE-POINTED rather than decremented — naming the row and pinning its
+op, `target` and `count`. The dual-reader populations in `energyInPlaySuppressed` (3 → 4) and
+`opponentHandScaling` (3 → 4) and the union enumeration in `ownBenchSnipe` §3 all gain this row by NAME.
+
+⚠️ **AND ONE BRIEF-PREDICTED PIN DID NOT MOVE, WHICH IS RECORDED RATHER THAN QUIETLY DROPPED (D538's own
+rule, applied to the slice's own brief).** D539's brief listed `clauseApostrophe.test.ts:799`'s
+`toHaveLength(192)` among the figures that MOVE. It stands still at **192**, and the reason is structural
+rather than an oversight: that rung sweeps **`FIXTURE_POOL`** for apostrophe-bearing printed effects that a
+reader resolves, and this slice's demonstrators are a FILE-LOCAL pool (`d539-*`, D425) that never enters
+`FIXTURE_POOL`. So the pin is correct where it is, and the prediction was about the wrong population — the
+same two-populations shape conventions.md:155 records, this time in a brief rather than in the tree.
+
+**GATES AND SCRIPTS.** `precheck` GREEN at **2,855** rows (2,835 → 2,855; **+20 rows, ALL TWENTY KILLABLE
+and ZERO declared** — the one `survives` declaration this slice wrote was WITHDRAWN when the harness killed
+it, and the twentieth row came from the review pass; 0 find===replace) — and it found the two predicted
+broken rows **AND A THIRD**:
+`D447-note-names-the-opponents-bench` was ROTTED BY THIS SLICE'S OWN EDIT (D539 widened the very `owner`
+ternary its `find` quotes), re-pointed with its CLAIM UNCHANGED (D498) the moment the replace was written.
+`splice-gate`, `partition-gate` and `residue-census-gate` GREEN — the last re-deriving `640 = 591 + 49` and
+`76 / 49 / 68` from the instrument. `opaque-anatomy-gate` GREEN at `SUBMAX=4` (35 OPAQUE sentences / 51
+printings, agreeing with the measurement to the digit). ⚠️ **IT STILL FAILS AT `SUBMAX=12` AND IT IS
+PRE-EXISTING** — disclosed out loud for the fourth slice running rather than reported as a `SUBMAX=4` pass,
+and the temptation was higher than usual here because this is an `OPAQUE`-classified row; its §E message now
+reads *"all 19 rows carry a hit"* where D538's head read *"all 20"*, which is the `OPAQUE` step and not a
+change of state. `scripts/**` is outside `tsc -b`'s references and outside vitest's globs, so
+`residue-census.ts`'s header was updated and its gate run EXPLICITLY.
+
+🛑 **THE PROBE FOUND TWO REAL THINGS ON ITS FIRST RUN AND BOTH ARE WORTH MORE THAN A GREEN ONE WOULD HAVE
+BEEN.** Round 1: `17 killed · 0 known survivor(s) · 1 GAP(S) · 1 stale · 0 skipped(dirty) · 0 clobber(s) ·
+0 error(s) · 364.5s total`. ⚠️ **(a) `D539-anchor-loses-its-caret` SURVIVED — a REAL SUITE GAP, checked as a
+suspected no-op FIRST** (the `find` and `replace` differ, `precheck` green) and then diagnosed: the §1 rung
+glued the sentence onto a prefix by LOWER-CASING its leading `T`, so the string refused for a DIFFERENT
+reason — the pattern demands a capital `This` wherever it starts — and the `^` was never exercised at all.
+The killer is a prefix that KEEPS the capital; with the `^` gone the pattern matches from the SECOND sentence
+on and the engine authors a program for a card whose leading clause it silently dropped. Both spellings are
+kept (they refuse for two different reasons and only one is about the anchor) plus the unprefixed control
+(D424). 🛑 **(b) `D539-snipe-note-calls-the-own-side-benched` WAS DECLARED `survives` AND THE HARNESS KILLED
+IT — D427's SELF-INVALIDATION WORKING, ON THE SAME SLICE THAT WROTE THE DECLARATION.** The declaration
+reasoned from the CALL PATH — `snipeNote` has ONE caller, every `yourAny` producer carries `count: "all"`,
+which takes the forced branch above the park, so no caption is ever built — and **every clause of that is
+still true**. What it missed is that §8 does not assert a CAPTION at all: it asserts the widened ternary **off
+the RAW SOURCE TEXT**, which is exactly the instrument D478/D489 prescribe for an obligation whose branch no
+board reaches. **The branch's unreachability and the row's killability are INDEPENDENT**, and the honest row
+is a killed one. The declaration is WITHDRAWN and the row re-pointed at its real killer, recorded rather than
+silently converted — a `survives` row that something kills is the one shape the harness reports as STALE and
+the one a reader must be able to find. ✅ **Round 2, after both fixes: `19 killed · 0 known survivor(s) ·
+0 GAP(S) · 0 stale · 0 skipped(dirty) · 0 clobber(s) · 0 error(s)`**, with `git status --porcelain`
+byte-identical before and after and no mutant left applied.
+
+🛑 **A REVIEW PASS THEN FOUND THREE IN-TREE CLAIMS THIS SLICE HAD AUTHORED THAT WERE FALSE OR CORRUPTED —
+TWO OF THEM THE EXACT CLASSES THIS ENTRY CLAIMS TO HAVE AVOIDED — AND ALL THREE ARE FIXED AND RECORDED.**
+**(i)** the NEW comment on the ninth `IN_PLAY_BODY_NOUNS` key ended with a FRESH COPY of the
+*"derived from `IN_PLAY_BODY_NOUNS.size`"* sentence that this same slice withdraws at three other sites —
+D453/D455's class, FIFTH instance, authored by the slice closing the fourth. **(ii)** the D539 section header
+in `scripts/mutation/mutants.ts` read *"Eighteen rows"* over NINETEEN `D539-*` rows while every other site
+said nineteen — D536's stale-count class in a header that carries no assertion. **(iii)** the D539 paragraph
+in `scripts/residue-census.ts` was SPLICED INTO THE MIDDLE OF AN EXISTING SENTENCE (the D464 closure sentence
+ended *"…a bun script that"* and resumed eighteen lines later), which REFUTES this entry's own
+*"no comment was corrupted"* audit: **that instrument counts REMOVED pure-comment lines, and an INSERTION
+removes nothing.** 🛑 **AND ONE MEASUREMENT GAP**: §4c was captioned *"a named body carrying a Weakness takes
+exactly 30 — the no-`ignoreWR` reading"* over a board whose ×2 sat on an own **BENCH** body, where the bench
+loop applies W/R in NO build — so the caption named a rule its board could not ask about. A new demonstrator
+`d539-drifblim-weak` puts the ×2 in the **ATTACKER'S OWN ACTIVE SPOT**, two rungs assert the printed 30 and
+the `weakness: null` row beside it, the bench board is re-labelled a CONTROL, and a TWENTIETH mutant
+`D539-own-active-leg-runs-weakness-on-itself` attacks the READING and nothing else — verified by hand to fail
+exactly that one `it()`. ⚠️ **AND ONE CARRIED RADIUS ITEM, RECORDED NOT SCOPED**: `yourAny` is the first op to
+reach BOTH zones of the attacker's own side from one printing, and the two zones read §11 and the §8.1 KO
+clamp DIFFERENTLY (`hitOwnActive` is flat; the own-side bench bodies go through `placeSnipe`'s full funnel).
+Neither side is a D539 regression — the bench half shipped with D447 — but D539 is what makes the
+disagreement showable on one board; priced as a slice of its own in the resume point's item (4b) and in
+`hitOwnActive`'s own doc block. ✅ **Round 3, after all of it: `20 killed · 0 known survivor(s) · 0 GAP(S) ·
+0 stale · 0 skipped(dirty) · 0 clobber(s) · 0 error(s) · 82.3s total`**, tree byte-identical before and
+after.
+
+🛑 **A SECOND REVIEW PASS THEN FOUND THREE MORE CLAIMS THIS SLICE AUTHORED THAT WERE FALSE OR
+UNREACHABLE — ALL THREE IN `namedBodiesSpread.test.ts` ITSELF, THE SUITE THAT EXISTS TO CATCH EXACTLY
+THESE, AND ALL THREE COMMENT-LEVEL (no engine byte, no mutant, no figure moved).** **(1)** §3's rung
+*"`attack.ts` binds BOTH readers unconditionally — the route, quoted from source"* held ONE assertion and
+it was `expect(raw("interpreter.ts")).toContain('case "yourAny":')` — a caption naming `attack.ts` over an
+`interpreter.ts` assertion, and one `attack.ts` could not even reach, because the suite's `import.meta.glob`
+was `./{effects,interpreter}.ts`. **It is §4c's own defect one section over**, and a DUPLICATE of §8's
+source rung besides. FIXED by making the caption true rather than by deleting it: the glob now carries
+`attack.ts`, and the rung quotes BOTH bindings from `attack.ts` itself — `derivedHead` at `:1708` and the
+four-line `damageMultiplier` ternary at `:1761-1764`. **And the honest word is not "unconditionally"**: only
+`derivedHead` is unconditional, the multiplier binding is GUARDED by `damageBonus !== null`, so the rung is
+retitled *"binds BOTH readers on the SAME string"* and DRIVES the premise
+(`expect(deriveAttackDamageBonus(PRINTED)).toBeNull()`) instead of narrating it. Verified able to go RED by
+hand: one byte changed in the quoted `attack.ts` line failed exactly that one `it()` (`1 failed | 66
+passed`). **(2)** §2 carried a **SIXTH** copy of the withdrawn `.size` claim — title *"… = 31, DERIVED not
+transcribed"* over a body asserting neither 9 nor 31, and a comment saying `benchNounScaling.test.ts` §5
+*"moved there by going RED"*, which this slice's own text at `benchNounScaling.test.ts:557-566`,
+`effects.ts:16268-16278` and `index.ts:20103` contradicts verbatim. **The first review pass fixed that class
+at `effects.ts` and missed this third site — inside the slice's own new suite.** Retitled to what the rung
+reaches (*"the ninth key RESOLVES and carries no apostrophe"*) and the comment replaced with the
+withdrawal's own wording. **(3)** the fixture deck comment read *"60 counted before the first run: 8 × 6 +
+12"* over SEVEN ids at 6 plus 18 Energy — the total is right and the decomposition is not, D425's class,
+introduced by the first review pass when `d539-drifblim-weak` was added. Now **7 × 6 + 18**. ⚠️ **AND ONE
+CITATION WAS OFF BY A BLOCK IN FIVE PLACES**: `effects.ts:15873` is the Ancient/vocabulary two-refusals
+comment; the composition-refusal paragraph this slice KEEPS is at **`effects.ts:15919`**. Re-pointed in
+`docs/decisions.md`, both `docs/progress.md` sites, `index.ts` and §2 of the suite. ✅ Re-verified after all
+of it: `check` GREEN **520 files / 12,169 tests**, `precheck` **2,855**, `D539 --decision` probe
+**`20 killed · 0 known survivor(s) · 0 GAP(S) · 0 stale · 0 skipped(dirty) · 0 clobber(s) · 0 error(s) ·
+83.0s`**, tree byte-identical before and after and no mutant left applied.
+
+🛑 **A THIRD REVIEW PASS THEN FOUND THE WITHDRAWN WORD STILL STANDING AT SIX SITES — THE SAME DIFF BOTH
+MAKING THE CLAIM AND RECORDING ITS WITHDRAWAL.** The second pass withdrew *"unconditionally"* in exactly
+ONE place — §3's rung title — and left the sentence live in six others, **TWO of them shipped engine
+source**: `effects.ts`'s `NAMED_BODIES_MULTIPLY_SPREAD` doc block, `effects.ts`'s
+`deriveAttackDamageMultiplier` arm, `index.ts`'s D539 changelog block (which contradicted itself three
+paragraphs later), `namedBodiesSpread.test.ts`'s own file header — the file the second pass reports as
+fixed — `docs/decisions.md`'s D539 row, and the sharpest one, a line of THIS session log reading *"`:1764`
+binds `damageMultiplier` unconditionally"*, **false twice over**: `attack.ts:1764` is the ELSE-ARM of the
+ternary, not a binding. Ground truth, read back live from `attack.ts:1760-1764` — `const damageBonus = …
+deriveAttackDamageBonus(effect);` then `const damageMultiplier = damageBonus !== null || effect === null
+|| effect === "" ? null : deriveAttackDamageMultiplier(effect);`. **This is D453/D455's class reproduced
+at a THIRD claim by the fix that was supposed to close it**, and neither a gate nor a suite can see it —
+the same reason the `.size` claim needed six passes. All six re-pointed to the withdrawal's own wording
+(`derivedHead` at `:1708` UNCONDITIONAL; the `damageMultiplier` ternary at `:1761-1764` GUARDED by
+`damageBonus !== null`; the route holding for this sentence GIVEN `deriveAttackDamageBonus(PRINTED)` is
+null, DRIVEN by §3's closing rung), and the `:1761`-vs-`:1764` spelling SETTLED to **`:1761-1764`**
+everywhere. ⚠️ And one stale cross-reference in the same rung: its premise was attributed to *"§2's"*
+`expect(deriveAttackDamageBonus(PRINTED)).toBeNull()` rung, which lives in **§1**, not §2 — and the
+comment no longer cites either, because the rung now DRIVES the premise itself in its own closing line. **The lesson, recorded for the next
+scout: a withdrawal is not done when the sentence it withdraws is fixed at ONE site — sweep the WORD
+across the whole diff, engine source first.**
+
+Engine **0.423.0 → 0.424.0**. NEW `namedBodiesSpread.test.ts` (**67 tests**). `bun run check` GREEN at **520
+files / 12,169 tests** (+1 file / +67 tests on D538's 519 / 12,102). 🛑 **THE WHOLE-CORPUS SWEEP IS PENDING
+AND IS THE RESUME POINT'S DEBT**, with the prediction written down before it runs (D440): **`2802 killed ·
+53 known survivor(s) · 0 GAP(S) · 0 stale · 0 skipped(dirty) · 0 clobber(s) · 0 error(s)`** over 2,855 rows —
+`+20 killed, +0 declared` on D538's `2782 · 53` — and **the arithmetic closes in BOTH directions before it
+was written down**: `2782 + 20 = 2802`, `2802 + 53 = 2855`, `2835 + 20 = 2855`.
 
 ### 2026-09-21 — build session #478 (P3-M5 — D538)
 

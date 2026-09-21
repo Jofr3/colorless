@@ -150,6 +150,25 @@
  * lines above, and so a THIRD level of the over-population the paragraph above complains
  * about. Subtracting from a remembered figure is how all three levels happened; the
  * instrument was there to be asked, and asking it costs one script.
+ *
+ * 🆕🛑 **D539 — LINE 595 HAS LEFT THE RESIDUE, AND ITS CLASS WAS MEASURED AT BOTH CAPS
+ * BEFORE THE BUILD RATHER THAN PREDICTED (D538's own lesson, one slice later).** *"This
+ * attack does 50 damage for each of your Drifloon and Drifblim in play. This attack also
+ * does 30 damage to each of your Drifloon and Drifblim. (Don't apply Weakness and Resistance
+ * for Benched Pokémon.)"* — 1 sentence / 2 printings — is claimed WHOLE by TWO readers off
+ * ONE `effect` string through `NAMED_BODIES_MULTIPLY_SPREAD`, a whole-compound anchor with a
+ * `\2` BACKREFERENCE: `deriveAttackDamageMultiplier` for the × fold and `deriveAttackEffect`
+ * for `damageChosen{target:"yourAny", count:"all"}`. ✅ **RUN AT THE PRE-SLICE HEAD AT BOTH
+ * `SUBMAX=4` AND `SUBMAX=12` IT CLASSIFIED `OPAQUE` AT BOTH** — so the pricing report was
+ * right this time, and it is right BY MEASUREMENT rather than by inheritance: D538's brief
+ * predicted `OPAQUE` for ITS row and was wrong at both caps, which is why this figure is now
+ * measured on both sides of every slice. After D539: `OPAQUE` **36/53 → 35/51** at
+ * `SUBMAX=4` and **20/31 → 19/29** at `SUBMAX=12`, with the residue total **50/70 → 49/68**
+ * at both caps. ⚠️ **AND THE `OPAQUE` READING IS UNCHANGED BY THAT**: this row cost ONE
+ * regex, ONE map row, TWO reader arms and ONE union value — `OPAQUE` is a statement about how
+ * far THIS INSTRUMENT can edit a sentence before reaching a built string, never about how
+ * much work the sentence is, exactly as the D463/D464 paragraph below says.
+ *
  * ✅ **D465 PAID IT, AND D464's TWO FIGURES BOTH REPRODUCED EXACTLY.** At D465's head the
  * tail-aware probe reaches **17 sentences / 22 printings** — D464 measured 18 / 24 with line
  * 264 still in the residue, and `18 − 1 = 17`, `24 − 2 = 22`. Of those 17, **12 are already
