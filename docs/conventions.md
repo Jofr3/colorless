@@ -8037,6 +8037,47 @@ another FILE — it only has to be in another SPELLING.** D467's remedy (correct
 and prefer to DELETE the figure and derive it) applies unchanged; what this adds is that you cannot even FIND
 the copies until the pattern stops caring about the comma.
 
+⚠️ **AND WATCH WHERE A FRESH COPY COMES FROM: AN *ARCHIVED* RESUME POINT (OR ANY FROZEN PRIOR BLOCK) IS A
+COPY SOURCE THAT IS CORRECT IN PLACE AND STALE THE MOMENT IT IS QUOTED FORWARD** — this class recurred ONE
+slice after the rule above was written, at D537, when a `SUBMAX=12` row count was carried verbatim out of the
+archived D536 resume point into the live D537 one, where it read as freshly measured because the sentence
+around it was freshly written. A sweep cannot help here: the figure was not MISSED, it was INTRODUCED, and the
+archived copy is frozen on purpose and must never be edited to match. **The remedy is to RE-MEASURE, and to
+measure BOTH ENDS when the sentence is a comparison** — D537 ran the gate in a detached worktree at
+`49d0d3a1` (*"all 21 rows carry a hit"*) and in the working tree (*"all 20"*), so the disclosure asserts a
+measurement rather than a memory.
+
+### A writer that removes by POSITIONAL INDEX is SINGLE-REF-ONLY, and a set-valued caller must gather first and splice STRICTLY DESCENDING (D537 close-out)
+
+`interpreter.ts`'s shipped `returnBenched` removes bodies by `ref.spot.index` and **never compares a uid**.
+That is correct for the ONE ref it is given and wrong for every set, because **removing from an array mutates
+the index space the remaining refs were measured in.** BOTH of D537's independent blast-radius scouts found
+it, separately, in code that has shipped for many slices — which is why it is written here rather than left as
+a comment at one call site.
+
+The two failures, on a bench of `[A, B, C, D]`:
+
+- removing `{1, 3}` — after index 1 goes, the bench COMPACTS to `[A, C, D]`, `bench[3]` is `undefined`, the
+  writer's own silent guard fires, and **one body survives the effect** that named it;
+- removing `{0, 1}` — after index 0 goes, index 1 now addresses **C, not B**, so the WRONG body leaves, under
+  a `POKEMON_RETURNED` event that looks entirely correct.
+
+**Both are SILENT.** Nothing throws, no event says which body it meant, and no assertion that counts events
+can tell the two boards apart. The deck arm has a second, quieter version of the same problem: it shuffles
+**per ref**, so a caller that loops it files N `SHUFFLE` rows and takes N RNG draws for one PRINTED shuffle.
+
+🛑 **THE SHIPPED ONE-REF WRITER IS NOT WRONG TODAY and must not be "fixed" on speculation** — one ref cannot
+collide with itself, and D537 moved no engine byte on its account. **THE RULE IS FOR THE NEXT CALLER: a
+set-valued op MUST NOT loop a by-index writer.** Gather every body first, resolve each to a uid or to a
+snapshot of the seat, and then apply — splicing **strictly descending by index** so that each removal is below
+every index not yet used. D537's `returnBenchedRest` does exactly that.
+
+⚠️ **AND STATE THE PRECONDITION AT THE SITE, BECAUSE IT IS THE PART THAT ROTS.** Descending-by-index is
+correct only while every candidate sits on **ONE seat's** bench; the day a candidate set spans two seats, two
+independent index spaces are being sorted as if they were one, and the failure is silent again. A
+descending splice without a written single-seat precondition is a correct program with no way to notice when
+it stops being one.
+
 ## Git / commits
 - Branch off `main` for non-trivial work; commit/push only when asked.
 - Commit trailer per global config: `Co-Authored-By: Claude ...`.
