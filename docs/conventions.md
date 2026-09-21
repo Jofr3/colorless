@@ -7999,6 +7999,44 @@ text, a type-position name, a global, a pre-existing unresolved name, a name the
 declares). The self-check names EVERY failing fixture, not the first, so each of the eleven D533
 rows was SEEN to fail the fixture built for it — not merely to exit 1.
 
+### A doc figure of four digits or more has TWO printed spellings, and a sweep for one is BLIND to the other (D536 close-out, sharpening D467)
+
+D536 exhausted all three of its review rounds on documentation and commentary — the code was green from the
+first build — and the LAST blocking defect was a single stale test-count stamp: `11,977` where the committed
+figure was **11,978**. The builder had already swept for that figure and come back clean. The sweep was not
+careless; it was **blind**, because the number exists in this repo in TWO spellings and the sweep searched one.
+
+A count of four digits or more is written here both COMMA-GROUPED (`11,978`) and BARE (`11978`), and **which
+form a given figure takes is not predictable** — it is not per-file, not per-section, and not per-kind-of-count.
+Measured over `docs/progress.md` **as committed at `dd9ec2b0`** (scoped to that revision on purpose — this
+very entry moves the counts, D423), with the D536 slice's own four figures, counted with lookarounds
+(`grep -oP '(?<![0-9,])1657(?![0-9])'`, because an alternation of the form `(^|[^0-9,])N` miscounts under
+this repo's `grep`, which is ugrep):
+
+- corpus **2801** — **0** bare, **9** comma-grouped
+- `BUILT.attack` **1657** — **5** bare, **0** comma-grouped
+- tests **11978** — **2** bare, **2** comma-grouped
+- files **517** — three digits, so grouping is a no-op and there is no second spelling (51 occurrences, one
+  form). **The hazard starts at four digits.**
+
+So `git grep -F 11977` and `git grep -F '11,977'` answer DIFFERENT questions, and either one alone can report a
+file clean while the stale copy sits three lines away in the other form.
+
+**THE RULE: when you sweep for a figure of four digits or more — a stale one you are hunting, or a fresh one
+you are stepping — match BOTH spellings in a single pattern, never one literal.** The cheap form is an
+optional separator:
+
+```
+git grep -nE '11,?977' -- docs/
+git grep -nE '2,?801'  -- docs/ packages/ scripts/
+```
+
+⚠️ This is D467's *"a doc figure can rot in TWO files at once, and fixing one copy makes it worse"* with a
+DIFFERENT mechanism, and the difference is what makes it its own rule: **the second copy does not have to be in
+another FILE — it only has to be in another SPELLING.** D467's remedy (correct the source in the same commit,
+and prefer to DELETE the figure and derive it) applies unchanged; what this adds is that you cannot even FIND
+the copies until the pattern stops caring about the comma.
+
 ## Git / commits
 - Branch off `main` for non-trivial work; commit/push only when asked.
 - Commit trailer per global config: `Co-Authored-By: Claude ...`.
