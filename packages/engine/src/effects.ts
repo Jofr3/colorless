@@ -7281,7 +7281,18 @@ export type EffectOp =
       (*"…can't be put into your opponent's hand"*), Scoop Up Cyclone
       `sv06-162`/`sv08.5-128` is a TRAINER naming *1 of your Pokémon* (a CHOICE
       over both spots), and Team Rocket's Grimer `sv10-123` / Moltres ex
-      `sv10-031`/`-208`/`-229` DISCARD the opponent's Active. */
+      `sv10-031`/`-208`/`-229` DISCARD the opponent's Active.
+
+      ✅ **D536 BUILT THE MOLTRES EX HALF OF THAT LAST PAIR, so the paragraph above is
+      HISTORY from here down rather than a work order** (D178 — provenance is
+      annotated, never overwritten). *"Discard a Team Rocket's Energy from this
+      Pokémon. If you do, discard your opponent's Active Pokémon and all attached
+      cards."* (`sv10-031`/`-208`/`-229`, 3 legal printings) ships as arm 44c over the
+      FIELD-FREE `discardDefender` below — and it is still NOT this op, which is the
+      point the paragraph was making and which survives being built: the subject is
+      the OPPONENT's ACTIVE, named by the print rather than chosen, so there is no
+      candidate board, no `whose`, no `dest` and no park. Team Rocket's Grimer
+      `sv10-123` remains unbuilt. */
   | { op: "returnBenched"; whose: "self" | "opponent"; dest: "deck" | "hand" }
   /** 🆕 **D311 — TAKE THE PROGRAM'S OWN BODY OFF THE BOARD WITH EVERY CARD
       ATTACHED TO IT AND SHUFFLE THE WHOLE PILE INTO ITS CONTROLLER'S DECK.**
@@ -7448,6 +7459,119 @@ export type EffectOp =
       value (D125's condition, D335's test: *does the old byte string still mean
       what it meant*). */
   | { op: "knockOutDefender" }
+  /** 🆕🆕🆕 **D536 — §8.6, THE BODY THAT LEAVES PLAY WITHOUT BEING KNOCKED OUT.**
+      *"Discard a Team Rocket's Energy from this Pokémon. If you do, discard your
+      opponent's Active Pokémon and all attached cards."* (Moltres ex `sv10-031`/
+      `-208`/`-229`) — **1 sentence / 3 legal printings**, `censusAttackCorpus.ts`
+      FILE LINE 100.
+
+      🛑 **NO PRIZE, NO `KNOCKED_OUT`, NO `koRecoilOf`, NO `byAttackFor` MARK — AND
+      NOT ONE LINE OF CODE BUYS THAT.** The question this op had to settle before it
+      could be priced is what happens when the attack's own printed damage leaves the
+      defender lethally damaged and the op then discards it. The answer is READ in
+      three independent places rather than argued:
+
+        1. `docs/reference/ptcg-rules.md:283-313` §8 orders a declared attack
+           *4. Resolve attack text … 6. Place damage counters … 7. Knock Out check*.
+           **The KO check is LAST**, and §8.1 (`:314-331`) opens *"A Pokémon is
+           Knocked Out when its damage ≥ its current HP"* — a body that is no longer
+           in play at step 7 is not Knocked Out and pays nothing.
+        2. **NO shipped op resolves a lethal defender mid-program.** All four
+           lethality producers MARK and let the sweep kill (`knockOutSelf`,
+           `knockOutDefender`, `knockOutChosen`, `devolveEach`); `flow.ts` says so in
+           terms.
+        3. Prizes are taken in `collectKnockOuts` → `planPrizes`, called by
+           `finishAttack` as the attack's EPILOGUE — so an op that removes the body
+           DURING the program is upstream of `lethalRefs` and the body is simply not
+           in the batch.
+
+      **D435 already shipped and DROVE exactly this verdict** for its delayed-discard
+      payload (`flow.ts`'s `case "discard"`, comment *"the DISCARD (corpus row 53). NO
+      Prize"*). This op is that payload pointed one seat over. 🛑 And FREE IN CODE IS
+      NOT FREE IN TESTS: the reading is DRIVEN in §6 of `discardDefender.test.ts` —
+      prizes unchanged, no `KNOCKED_OUT`, and a Vengeful Punch `sv03-197` on the
+      discarded defender paying NO recoil — because a reading disclosed only in prose
+      survives its own deletion in silence (D535's carried-forward lesson).
+
+      🛑 **FIELD-FREE, ON `knockOutDefender`'s OWN RECORDED RULE, QUOTED RATHER THAN
+      RE-DERIVED**: *"a REQUIRED field on an op is the one thing that costs a
+      `MATCH_RECORD_VERSION` bump if it is ever renamed or widened"* (see that op's
+      block; `damageChosen.source` 2 → 3 is the precedent). Nothing here varies.
+      *"your opponent's Active Pokémon"* is the SIDE and the SPOT at once, so there is
+      no `whose` to carry — the printed subject is named, never chosen, and a `whose`
+      field would be a persisted inhabitant with one value ever written. *"and all
+      attached cards"* is `discardFromStack(…, "all")` over `stackUids`, so there is no
+      `attachmentsTo`: `returnSelf`'s own block records that the ABSENCE of that field
+      is the positive statement *"the attachments followed the body"*. And the zone is
+      the op's own name, so there is no `dest`.
+
+      ⚠️ **THE EVENT IS THE EXISTING `POKEMON_RETURNED`** at `dest: "discard"` (D313)
+      with a cross-seat `actor` (D299), and `log.ts`'s arm renders the row with NO new
+      branch — it reads the zone off `dest`, files under `actor`, names the body and
+      counts the rest.
+
+      ⚠️ **NO `MATCH_RECORD_VERSION` BUMP** (still 30) — **AND IT IS CARRIED BY ONE
+      CONDITION, NOT THREE.** The slice first listed three; two of them were wrong and
+      are CORRECTED IN PLACE rather than deleted (D466 step 3):
+
+        (1) ✅ **THE ONE THAT CARRIES IT — D125's WIDENING.** Adding a member to
+            `EffectOp` widens the union: no v30 deploy could WRITE the byte
+            `{"op":"discardDefender"}`, because no v30 deploy had the member, and
+            every byte string a v30 deploy DID write still means exactly what it
+            meant. `discardStadium`'s block below records this argument verbatim and
+            `scheduleDiscard`'s repeats it.
+        (2) 🛑 **CORRECTED — *"the op NEVER PARKS, so nothing it produces reaches
+            `phase.cont`"* is FALSE OF THE PRINTED PROGRAM.** The op itself adds no
+            `PendingStage` inhabitant and no `EffectPrompt` value, and that much is
+            true — but the COST parks (see the block below), so this op rides
+            `EffectContinuation.rest` into `MatchRecord.state.phase.cont` as the
+            gate's `then` payload. **D450's SECOND DOOR**: *"an op that never parks is
+            still persisted if any shipped program places it behind one … the question
+            is 'can any producer put this op into a written continuation?'"* — and this
+            program IS that producer. MEASURED in §10 of `discardDefender.test.ts`, on
+            the very reprint board §9 drives, not argued. The serialized alphabet
+            GROWS; the version is unaffected because of (1), which is a statement about
+            what OLD records can hold and needs no reachability premise at all.
+        (3) 🛑 **SCOPED — *"FIELD-FREE, so no persisted union gains a member"* was
+            wrong in its own terms**, since `EffectOp` IS a persisted union and it just
+            gained this member, which is (1). What FIELD-FREE actually buys is
+            narrower: none of the op's OWN fields is a persisted union that could gain
+            a member, and there is no field name to rename or value domain to widen —
+            the thing `knockOutDefender`'s block names as the one that WOULD cost a
+            bump (`damageChosen.source` 2 → 3).
+
+      🛑 **THE COST HALF *DOES* PARK, AND THE PRICE THAT SAID OTHERWISE WAS WRONG
+      ABOUT THE CATALOG RATHER THAN ABOUT THE CODE — recorded here rather than quietly
+      fixed (D466 step 3).** The argument was: `interchangeableCandidates` keys on
+      `card:${id}` and `forcedDiscards`' `"total"` arm auto-resolves at
+      `discardable.length <= count`, so if `Team Rocket's Energy` had ONE printed id
+      there would be one class, cap 1, forced — `withConsequence` never reached and
+      `describeBranch` owed nothing. **The premise is false and this repo's own
+      `index.ts` says so in its own words: `sv10-182` is REPRINTED as `me2pt5-217`.**
+      TWO ids, ONE name — so a board holding one of each offers two classes and the
+      op parks. The ≈10-line contingency that was priced as a contingency is
+      therefore OWED and SHIPPED: ONE `describeBranch` case, and **zero**
+      `describeCondition` bytes, because that function's plain arm already returns
+      *"If you do"* for a gate with no `contains`, which is the wording this card
+      prints. Without it the caption degrades to the bare *"Discard a Team Rocket's
+      Energy from this Pokémon."* while the answer quietly decides whether the
+      opponent's Active leaves play — **D515's exact defect** — and §9 of the suite
+      parks on the reprint and pins the rendered note rather than describing it.
+      ⚠️ **THE PARK IS `discardEnergy`'s, NOT THIS OP'S** — the prompt that rides
+      `phase.cont` is one that already ships, and this op adds no `PendingStage`
+      inhabitant and no `EffectPrompt` value of its own. 🛑 **BUT THAT IS NOT WHY
+      `MATCH_RECORD_VERSION` IS UNAFFECTED, AND THE EARLIER WORDING HERE SAID IT WAS.**
+      Behind that park this op IS PERSISTED, inside the gate in
+      `EffectContinuation.rest` — D450's second door, condition (2) above. The version
+      holds on D125's WIDENING alone. **This finding and the no-park finding are the
+      SAME finding arriving twice: the cost parks, so the consequent is persisted.**
+
+      ⚠️ **A SILENT NO-OP ON AN EMPTY ACTIVE SPOT**, every sibling's contract, and it
+      asks §11 as a GUARD rather than as a filter: this op names ONE body and refuses
+      WHOLE (`knockOutDefender`'s rule), where `knockOutChosen` picks from a SET and
+      must merely not OFFER a shielded body. The printed Energy cost does NOT un-pay
+      when the consequent is refused. */
+  | { op: "discardDefender" }
   /** 🆕🆕 **D416 — §8.1, THE KNOCK OUT THAT IS A *CHOICE*.** The three sentences
       D414 priced and left behind all need the same thing — *"Knock Out **1 of**
       your opponent's …"* is a PICK over a filtered candidate set — and two of them
@@ -24667,6 +24791,27 @@ const HAND_COST_THEN_DRAW = /^Discard a card from your hand\. If you do, draw (\
 const HAND_COST_THEN_OPPONENT_DISCARD =
   /^Discard a card from your hand\. If you do, your opponent discards a card from their hand\.$/;
 
+/** 🆕🆕🆕 D536 — *"Discard a Team Rocket's Energy from this Pokémon. If you do,
+    discard your opponent's Active Pokémon and all attached cards."* — **1 sentence /
+    3 legal printings** (Moltres ex `sv10-031`/`-208`/`-229`, file line 100). The FOURTH
+    `Discard X. If you do, Y.` anchor in this file and the first whose COST is an
+    attached Energy rather than a card in hand.
+
+    🛑 **ZERO CAPTURES, SO THERE IS NO `>= 1` FLOOR AND NOTHING TO FLOOR** — arm 44b's
+    stated absence, verbatim. The sentence carries no numeral at all.
+
+    ⚠️ **`['’]` ON BOTH APOSTROPHE SLOTS** (D136/D137): this sentence prints TWO
+    possessives — *Rocket's* and *opponent's* — and a class on one slot only is an
+    anchor that reads half of a typographic printing. Both are driven with EQUALITY
+    against the straight form in §2 of the suite.
+
+    ⚠️ **THE NAMED COST IS NOT CAPTURED EITHER.** The column prints this skeleton at
+    exactly one noun; a `(.+)` head would derive a FILTERED printed cost as an
+    unfiltered one on any sentence it then over-claimed (D190b/D199) and would buy the
+    identical row count — D473's refusal, one anchor over. */
+const TR_ENERGY_COST_THEN_DISCARD_DEFENDER =
+  /^Discard a Team Rocket['’]s Energy from this Pokémon\. If you do, discard your opponent['’]s Active Pokémon and all attached cards\.$/;
+
 /** Parse printed attack text into executable ops, or null when the text is
     ANYTHING but one of the recognized whole sentences (leading/trailing
     whitespace excepted) — null keeps the attack on the skipped-effect path. */
@@ -29765,6 +29910,49 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
       { op: "payFromHand", count: 1, to: "discard", recordAs: "paid" },
       // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
       { op: "recordGate", slot: "paid", then: [{ op: "opponentDiscardsFromHand", count: 1 }] },
+    ];
+  }
+
+  // 44c. 🆕🆕🆕 D536 — "Discard a Team Rocket's Energy from this Pokémon. If you
+  //      do, discard your opponent's Active Pokémon and all attached cards." — 3 legal
+  //      printings, and the FOURTH member of the printed `Discard X. If you do, Y.`
+  //      family this function reads. See `TR_ENERGY_COST_THEN_DISCARD_DEFENDER` for
+  //      the two widenings measured and refused, and `discardDefender`'s union block
+  //      for the §8 ORDERING call (no Prize, no `KNOCKED_OUT`, no recoil) that had to
+  //      be settled before this arm could be priced.
+  //
+  //      🛑 THE GATE IS THE PRINTED "If you do", AND IT IS ALSO WHAT MAKES THE COST
+  //      SAFE AT THE ATTACK SEAM — arm 44a's argument with the cost one zone over.
+  //      `attack.ts` never calls `handCostUnmet`, and there is no `energyCostUnmet`
+  //      either, so a cost op in an attack program pays what it finds and refuses
+  //      nothing. This sentence prints NO cancel clause (§8.6), so the answer is the
+  //      §9.2 gate: no Team Rocket's Energy attached files an EMPTY slot,
+  //      `recordGateHolds` returns false, and the defender is untouched.
+  //
+  //      🛑 NO `count`, AND THE ABSENCE IS THE PRINTED ARTICLE RATHER THAN A DEFAULT
+  //      (D426, arm 44b's own rule). Absent = one; the shipped precedent is this
+  //      file's own *"Discard a {G} Energy from this Pokémon."* arm, which spells the
+  //      same article by omitting the same field. `count: 1` would be a second way to
+  //      say one thing.
+  //
+  //      ⚠️ THE FILTER IS `byName` AND ITS `name` CARRIES THE CATALOG'S STRAIGHT
+  //      APOSTROPHE, which is NOT the anchor's character class: `matchesFilter`'s
+  //      `byName` arm compares against `card.name`, so the byte that matters here is
+  //      the CARD's and not the PRINT's. ⚠️ AND THE NAME IS CARRIED BY TWO PRINTED IDS
+  //      — `Team Rocket's Energy` `sv10-182`, REPRINTED `me2pt5-217` — so the cost
+  //      PARKS on a board holding one of each, and `describeBranch` owes this arm a
+  //      phrase. See the `discardDefender` union block for the measurement that
+  //      corrected this slice's own price.
+  if (TR_ENERGY_COST_THEN_DISCARD_DEFENDER.test(effect)) {
+    return [
+      {
+        op: "discardEnergy",
+        from: "yourActive",
+        filter: { kind: "byName", name: "Team Rocket's Energy" },
+        recordAs: "discarded",
+      },
+      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
+      { op: "recordGate", slot: "discarded", then: [{ op: "discardDefender" }] },
     ];
   }
 

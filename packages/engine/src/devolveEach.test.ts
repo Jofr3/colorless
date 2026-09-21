@@ -1060,7 +1060,7 @@ describe("§11 — the version prediction is DRIVEN, not asserted", () => {
   });
 
   it("the engine version moved with the behaviour", () => {
-    expect(engineVersion).toBe("0.420.0");
+    expect(engineVersion).toBe("0.421.0");
   });
 });
 

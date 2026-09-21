@@ -183,8 +183,23 @@ const LANDED = [
 /** ⚠️ THE WORK ORDER — every owner-prefix sentence this filter does NOT finish,
     with THE EXACT SECOND PIECE it needs. Ranked by legal printings. Every id is
     asserted below to still have no program, so a later slice cannot half-build
-    one and leave this table lying. */
-const DROPPED = [
+    one and leave this table lying.
+
+    🆕🆕🆕 **D536 — `surface` IS ANNOTATED RATHER THAN INFERRED, AND THE ANNOTATION
+    IS LOAD-BEARING.** With D536's `attack` row retired the three survivors are two
+    `trainer` rows and one `stadium`, so an INFERRED `as const` type narrows `surface`
+    to `"trainer" | "stadium"` — and `tsc` then rejects the guard's
+    `surface === "attack"` branch as a comparison with no overlap. Widening the field's
+    TYPE keeps the second channel COMPILING while it is empty, which is the honest
+    shape: the channel is not wrong, it is UNPOPULATED, and §"the attack channel"
+    below measures that as ZERO so it can never be mistaken for coverage. */
+const DROPPED: readonly {
+  readonly sentence: string;
+  readonly ids: readonly string[];
+  readonly legal: number;
+  readonly surface: "attack" | "trainer" | "stadium";
+  readonly needs: string;
+}[] = [
   // ✅ D204 BUILT THIS ROW — the Iono's Bellibolt ex attach (svp-194,
   // sv09-053/-172/-183/-188, 5 legal). This row's own `needs` named the piece
   // exactly right ("an IN-PLAY TARGET filter"), and D204 landed it as one rider
@@ -242,16 +257,37 @@ const DROPPED = [
   // (registry-built, deriver-built, unbuilt) rather than two. Said out loud rather
   // than folded into a number, because "the gap between the census and the yield"
   // is what the rung below it asserts.
-  {
-    sentence: "Discard a Team Rocket's Energy from this Pokémon. If you do, discard your opponent's Active Pokémon and all attached cards.",
-    // ⚠️ CORRECTED BY D204 (shipped as Team Rocket's Nidoking ex / Team Rocket's
-    // Giovanni / Cynthia's Garchomp ex).
-    ids: ["sv10-031", "sv10-208", "sv10-229"],
-    legal: 3,
-    surface: "attack",
-    needs:
-      "TWO pieces, and the first is an owner-prefixed ENERGY predicate this member deliberately does not answer (`ownerPokemon` requires `category === 'Pokemon'` precisely so `Team Rocket's Energy` cannot match a Pokémon slot). The second is far larger: an effect that DISCARDS an in-play Pokémon and its attachments without a Knock Out — no op removes a body from the board outside the §8.1 KO sweep, and no Prize is taken.",
-  },
+  // ✅ D536 BUILT THIS ROW — Moltres ex sv10-031/-208/-229, 3 legal, *"Discard a
+  // Team Rocket's Energy from this Pokémon. If you do, discard your opponent's
+  // Active Pokémon and all attached cards."* Through the DERIVER (arm 44c), like
+  // D439's row above and unlike D204/D205/D206's, so `LANDED` is again left alone.
+  //
+  // ⚠️ **BOTH HALVES OF ITS `needs` CELL WERE WRONG BY THE TIME IT WAS BUILT, AND
+  // THEY WENT WRONG FOR DIFFERENT REASONS — recorded rather than deleted (D466
+  // step 3: a falsified reason is CORRECTED, never dropped).**
+  //
+  //   HALF 1 — *"an owner-prefixed ENERGY predicate this member deliberately does
+  //   not answer"* — was TRUE OF `ownerPokemon` AND IRRELEVANT TO THE SENTENCE. It
+  //   was written before D207, and D207 bought the answer: the printed cost names a
+  //   CARD, not an owner class, so it is `CardFilter.byName` — which `matchesAttached`
+  //   defers to unchanged and `attachedEnergies` walks. The engine has read this noun
+  //   as a NAME since D207, and the row went on advertising a blocker that had been
+  //   bought 329 decisions earlier. **A `needs` CELL IS A CLAIM ABOUT THE ENGINE AND
+  //   GOES STALE LIKE A COUNT.**
+  //
+  //   HALF 2 — *"no op removes a body from the board outside the §8.1 KO sweep, and
+  //   no Prize is taken"* — was the honest price at D200 and was PAID IN PIECES by
+  //   slices that had never heard of this row. D435 shipped the MOVE itself
+  //   (`discardFromStack(…, "all")` + `active: null` + one `POKEMON_RETURNED`, on the
+  //   ending player's own board) together with its NO-PRIZE verdict; D311/D312 shipped
+  //   the promotion seam (`orphanedPromotions`), whose own comment forecasts THIS OP
+  //   BY NAME. D536's whole interpreter cost was eleven lines: that payload pointed one
+  //   seat over, plus `knockOutDefender`'s two guards.
+  //
+  // 🛑 **AND THE PIN BELOW HALVES, 6 → 3, WHICH IS THE LARGEST SINGLE STEP THIS
+  // TABLE HAS TAKEN** — worth saying out loud, because the remaining 3 are now a
+  // SMALL enough population that the next build empties it, and an empty DROPPED
+  // table would make the UNBUILT guard below VACUOUS rather than green.
   // ✅ D224 BUILT THIS ROW — Team Rocket's Proton sv10-177/-227, 2 legal, and it
   // is this table's ONLY row to have been dropped for a piece that a LATER,
   // UNRELATED SLICE then bought: D223 built `trainerFirstTurnExempt` for Carmine,
@@ -299,7 +335,7 @@ const DROPPED = [
     needs:
       "a `BoardCondition` reading the ACTIVE's subgroup, plus an either/or heal. `conditionGate` gates a program on the board, but no `BoardCondition` member asks anything about a card IDENTITY, and the printed 'instead' is a REPLACEMENT rather than a second heal — two 30/70 heals would be observably different under a heal cap.",
   },
-] as const;
+];
 
 // ── The demonstrator pool. Synthetic `fix-*` bodies, declared HERE and not in
 //    `testFixtures.ts` — D190/D199's idiom and their reason: a fixture id naming
@@ -531,7 +567,7 @@ describe("D200 — the census, as data", () => {
     // built by D204; Team Rocket's Wobbuffet 2, built by D205; Team Rocket's
     // Orbeetle 2 and N's Zoroark ex 4, still flagged in `inPlayTarget.test.ts`).
     // This table is D200's scope; that one is the current work order.
-    expect(DROPPED.reduce((n, r) => n + r.legal, 0)).toBe(6); // 🆕🆕 D439 −2 printings — Team Rocket's Spidops sv10-020/-187 left through the DERIVER rather than through the registry, so `LANDED` stands still at 6 and the difference is now deriver-built. See the ✅ D439 block above `DROPPED`.
+    expect(DROPPED.reduce((n, r) => n + r.legal, 0)).toBe(3); // 🆕🆕🆕 D536 −3 printings — Moltres ex sv10-031/-208/-229 left through the DERIVER (arm 44c), so `LANDED` stands still at 6 for the second consecutive time and the difference is again deriver-built. See the ✅ D536 block above `DROPPED`. 🆕🆕 D439 −2 printings — Team Rocket's Spidops sv10-020/-187 left through the DERIVER rather than through the registry, so `LANDED` stands still at 6 and the difference is now deriver-built. See the ✅ D439 block above `DROPPED`.
   });
 });
 
@@ -611,6 +647,12 @@ describe("D200 — the registry map", () => {
   //    (*"Discard a Team Rocket's Energy from this Pokémon. …"*) is still refused
   //    by every reader — so the widening removes a live blind spot and moves no
   //    other row, which is what makes it a fix rather than a re-scoping.
+  //    ✅ **THAT LAST SENTENCE IS HISTORY AS OF D536, AND THE WIDENING IS WHAT MADE
+  //    IT SO** (D178 — provenance annotated, never overwritten). `resolvedByAnyReader`
+  //    flipped to `true` on that very sentence the moment arm 44c landed, and THIS
+  //    GUARD IS WHAT WENT RED AND DEMANDED THE ROW BE RETIRED — which is the whole
+  //    reason the second channel exists. The D439 rot it was built for did NOT repeat:
+  //    a deriver-built row could not leave this table quietly a second time.
   it("every DROPPED printing is still UNBUILT on its own SURFACE — the work order cannot rot", () => {
     for (const { sentence, ids, legal, surface } of DROPPED) {
       expect(ids, `${sentence.slice(0, 40)}…: id list disagrees with its legal count`).toHaveLength(legal);
@@ -629,6 +671,26 @@ describe("D200 — the registry map", () => {
         ).toBe(false);
       }
     }
+  });
+
+  // 🆕🆕🆕 D536 — THE SECOND CHANNEL IS NOW UNPOPULATED, AND THAT IS SAID WITH AN
+  // ASSERTION RATHER THAN WITH A COMMENT. D536 retired the LAST `attack` row in this
+  // table, so the `resolvedByAnyReader` branch above runs ZERO times: it is not wrong,
+  // it is empty, and an empty branch that nobody names reads exactly like coverage.
+  // 🛑 The rung is written to go RED IN BOTH DIRECTIONS — the day an `attack` row is
+  // added back the count stops being 0 and this line says so, which is the moment the
+  // branch above becomes live again and worth trusting.
+  it("🆕 the DERIVER channel currently covers ZERO rows — the vacuity measured, not described", () => {
+    expect(DROPPED.filter((r) => r.surface === "attack")).toHaveLength(0);
+    expect(DROPPED.map((r) => r.surface).sort()).toEqual(["stadium", "trainer", "trainer"]);
+    // …and the control that keeps THIS rung from being vacuous in its turn: the
+    // predicate it would run DOES discriminate, asked of the sentence D536 just built.
+    expect(
+      resolvedByAnyReader(
+        "Discard a Team Rocket's Energy from this Pokémon. If you do, discard your opponent's Active Pokémon and all attached cards.",
+      ),
+    ).toBe(true);
+    expect(resolvedByAnyReader("Not a printed sentence at all.")).toBe(false);
   });
 });
 

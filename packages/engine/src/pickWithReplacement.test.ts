@@ -134,7 +134,16 @@ const LOCAL_CARDS: Record<string, Card> = {
 
 const POOL: Record<string, Card> = { ...FIXTURE_POOL, ...LOCAL_CARDS };
 
-// 4 + 16 + 4 + 4 + 4 + 4 + 4×6 = 60.
+/** 🆕🆕🆕 **D536 RIDE-ALONG — Bouffalant `sv03-174`, the body that pays the debt D535
+    carried forward.** 120 HP, {C} cost, Fighting Weakness (INERT against a Psychic
+    attacker, which is the point — the only thing it can discriminate is the
+    reduction), and `registry.ts` gives it `passive: { damageReductionAfterWR: 20 }`.
+    Already in `FIXTURE_POOL`; nothing new is invented. */
+const BOUFFALANT = "sv03-174";
+
+// 4 + 16 + 4 + 4 + 4 + 4 + 4 + 4×5 = 60.
+// ⚠️ THE FILLERS DROPPED 6 → 5 TO MAKE ROOM FOR BOUFFALANT'S FOUR, and the
+// arithmetic comment is RE-SPELLED rather than left stale (D442).
 const DECK = deckOf({
   [SNIPER]: 4,
   [PSYCHIC_ENERGY]: 16,
@@ -142,7 +151,8 @@ const DECK = deckOf({
   [WEAK]: 4,
   [RESIST]: 4,
   [TINY]: 4,
-  ...Object.fromEntries(FILLERS.map((id) => [id, 6])),
+  [BOUFFALANT]: 4,
+  ...Object.fromEntries(FILLERS.map((id) => [id, 5])),
 });
 
 const ATTACK = { type: "attack", seat: "p1", index: 0 } as const;
@@ -695,6 +705,46 @@ describe("D535 §6 — `ignoreWR` and `deals` ON THE BOARD", () => {
     expect((spread?.[0] as { deals?: true }).deals).toBeUndefined();
   });
 
+  // ── 🆕🆕🆕 D536 RIDE-ALONG — THE DEBT D535 CARRIED FORWARD, PAID ─────────────
+  //
+  // 🛑 **`ignoreWR` ALSO NULLS `damageReductionAfterWR`, AND UNTIL NOW NO RUNG IN THIS
+  // SUITE DROVE IT.** The print does not spell it; the reading is inherited VERBATIM from
+  // the D400 sibling at corpus FILE LINE 620 and from D492's spread, and D535 DISCLOSED it
+  // in four places — but a reading disclosed only in prose survives its own deletion in
+  // silence (D465: an instrument that produces a COMMITTED figure needs a KILLER, not a
+  // doc block; D466: a REFUSAL IS NOT AN ASSERTION).
+  //
+  // ⚠️ **TWO RUNGS AND NOT ONE, BECAUSE THERE ARE TWO READ SITES** — `placeSnipe`'s
+  // benched loop and `snipeActive`. D535's own close-out priced this at +1 test; it is +2,
+  // and the correction is MEASURED rather than inherited.
+  //
+  // ⚠️ **TWO PICKS, NOT SIX.** 2 × 20 = 40 against Bouffalant's 120 HP keeps the KO and
+  // its prize epilogue out of the number, and 40-vs-0 is MAXIMAL DISCRIMINATION: Bouffer's
+  // −20 exactly cancels a 20 hit, so a build that stopped nulling the reduction reads a
+  // FLAT ZERO rather than a smaller number. Fighting Weakness is inert against a Psychic
+  // attacker, so the only thing this board can measure is the reduction.
+  //
+  // ⚠️ **`walk` IS FED `attack(board(…)).state` AND NOT `board(…)`** — it breaks at
+  // `phase.kind !== "effect:choose"` and would silently return `parks: 0` with the board
+  // untouched, reading 0 against 0: a vacuous green in the D200 class.
+  //
+  // ⚠️ **NO MUTANT ROW CAN BE UNIQUELY ATTRIBUTED TO THESE TWO** — a split-flag build
+  // already reddens FOUR rungs in THREE other files (`alwaysOnReduction.test.ts`,
+  // `anyTargetSnipe.test.ts` twice, `classedBoardSpread.test.ts`), which is MEASURED and
+  // is also why D535's *"NO RUNG DRIVES IT"* was false about the repo even while it was
+  // true about this suite. `D535-ignore-wr-keeps-the-target-reduction` names these rungs
+  // as a SECOND witness rather than as the only one.
+  it("🆕 RIDE-ALONG — the BENCH read site: `ignoreWR` nulls a benched Bouffalant's `damageReductionAfterWR`, so two picks land the full 40", () => {
+    const { state } = walk(attack(board(43, WALL, [BOUFFALANT])).state, [1, 1]);
+    // 40, not 0: Bouffer's −20 would cancel each 20 hit exactly.
+    expect(state.players.p2.bench[0]?.damage).toBe(40);
+  });
+
+  it("🆕 RIDE-ALONG — the ACTIVE read site: the same nulling one function over, on the opponent's Active", () => {
+    const { state } = walk(attack(board(47, BOUFFALANT, [FILLERS[1]])).state, [0, 0]);
+    expect(state.players.p2.active?.damage).toBe(40);
+  });
+
   it("the FLAT control: the same board WITHOUT the flag would differ — driven on the sibling the engine already ships", () => {
     // A constructed `deals` op with NO `ignoreWR`, run through the same attack path by
     // the sibling's own sentence, DOES double on the weak body. This is the LOSS
@@ -764,14 +814,14 @@ describe("D535 §8 — the POPULATION RUNG and the version", () => {
     const claimed = legalAttackCorpus().filter(([, s]) => deriveAttackEffect(s) !== null);
     expect(claimed.filter(([, s]) => s === PRINTED)).toEqual([[2, PRINTED]]);
     const reader = legalAttackCorpus().filter(([, s]) => resolvedByAnyReader(s));
-    expect([reader.length, reader.reduce((sum, [n]) => sum + n, 0)]).toEqual([560, 1603]);
+    expect([reader.length, reader.reduce((sum, [n]) => sum + n, 0)]).toEqual([561, 1606]);  // (🆕🆕🆕 **D536 +1 sentence / +3 printings — THE BODY THAT LEAVES PLAY WITHOUT BEING KNOCKED OUT — ONE NEW FIELD-FREE `EffectOp` MEMBER `discardDefender` AND ONE INTERPRETER WRITER** — `censusAttackCorpus.ts` **FILE LINE 100** (`legalAttackCorpus()` index 47), *"Discard a Team Rocket's Energy from this Pokémon. If you do, discard your opponent's Active Pokémon and all attached cards."*, **1 sentence / 3 legal printings** (Moltres ex `sv10-031`/`-208`/`-229` — the ids ARE resolved on this checkout and are used as ids; the printed BASE DAMAGE is NOT, so it is driven on the file-local declared demonstrator `d536-moltres`, D425), claimed by `deriveAttackEffect` through ONE new ZERO-capture anchor (`TR_ENERGY_COST_THEN_DISCARD_DEFENDER`, beside `HAND_COST_THEN_OPPONENT_DISCARD`) as `discardEnergy{from:"yourActive", filter:{byName "Team Rocket's Energy"}, recordAs:"discarded"}` gated through the FIRST shipped `recordGate{slot:"discarded"}` into the new `discardDefender` — a READER move: reader arm 560/1603 → 561/1606, raw residue 80/129 → 79/126, `BUILT.attack` 1654 → 1657; registry 10/16, gate 6/14, trailing 11/21 and `SPLIT_ATTACK_UNITS` 14 UNMOVED; engine 0.420.0 → 0.421.0, `MATCH_RECORD_VERSION` HELD at 30 (a new op MEMBER is D125's WIDENING; the op never parks and is FIELD-FREE). ⚠️ THE SENTENCE STEP AND THE PRINTING STEP DISAGREE AT 1 AND 3 — harder than D535's 1-and-2, so a pass that copied one number into the other kind of site would be wrong in half of them. THIS SITE: 560/1603 → 561/1606.)
     const residue = legalAttackCorpus().filter(([, s]) => !resolvedByAnyReader(s));
-    expect([residue.length, residue.reduce((sum, [n]) => sum + n, 0)]).toEqual([80, 129]);
+    expect([residue.length, residue.reduce((sum, [n]) => sum + n, 0)]).toEqual([79, 126]);  // (🆕🆕🆕 **D536 −1 sentence / −3 printings — THE BODY THAT LEAVES PLAY WITHOUT BEING KNOCKED OUT — ONE NEW FIELD-FREE `EffectOp` MEMBER `discardDefender` AND ONE INTERPRETER WRITER** — `censusAttackCorpus.ts` **FILE LINE 100** (`legalAttackCorpus()` index 47), *"Discard a Team Rocket's Energy from this Pokémon. If you do, discard your opponent's Active Pokémon and all attached cards."*, **1 sentence / 3 legal printings** (Moltres ex `sv10-031`/`-208`/`-229` — the ids ARE resolved on this checkout and are used as ids; the printed BASE DAMAGE is NOT, so it is driven on the file-local declared demonstrator `d536-moltres`, D425), claimed by `deriveAttackEffect` through ONE new ZERO-capture anchor (`TR_ENERGY_COST_THEN_DISCARD_DEFENDER`, beside `HAND_COST_THEN_OPPONENT_DISCARD`) as `discardEnergy{from:"yourActive", filter:{byName "Team Rocket's Energy"}, recordAs:"discarded"}` gated through the FIRST shipped `recordGate{slot:"discarded"}` into the new `discardDefender` — a READER move: reader arm 560/1603 → 561/1606, raw residue 80/129 → 79/126, `BUILT.attack` 1654 → 1657; registry 10/16, gate 6/14, trailing 11/21 and `SPLIT_ATTACK_UNITS` 14 UNMOVED; engine 0.420.0 → 0.421.0, `MATCH_RECORD_VERSION` HELD at 30 (a new op MEMBER is D125's WIDENING; the op never parks and is FIELD-FREE). ⚠️ THE SENTENCE STEP AND THE PRINTING STEP DISAGREE AT 1 AND 3 — harder than D535's 1-and-2, so a pass that copied one number into the other kind of site would be wrong in half of them. THIS SITE: 80/129 → 79/126.)
     expect(reader.length + residue.length).toBe(640);
   });
 
   it("engineVersion and `manifest.version` agree, and the bump is owed for BEHAVIOUR", () => {
-    expect(engineVersion).toBe("0.420.0");
+    expect(engineVersion).toBe("0.421.0");
     expect(manifest.version).toBe(engineVersion);
     expect(raw("/index.ts")).toContain("engineVersion 0.419.0 → **0.420.0** (D535");
   });

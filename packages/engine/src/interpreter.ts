@@ -117,6 +117,7 @@ import {
   DEFAULT_CONFUSION_DAMAGE,
   DEFAULT_POISON_DAMAGE,
   SEATS,
+  discardFromStack,
   drawToHand,
   evolveOnto,
   isFirstTurnOf,
@@ -1315,6 +1316,32 @@ function describeBranch(ops: readonly EffectOp[]): string | null {
         break;
       case "drawUntilHandSize":
         parts.push(`draw cards until you have ${op.size} cards in your hand`);
+        break;
+      // 🆕🆕🆕 D536 — THE CONTINGENCY THAT WAS PRICED AS A CONTINGENCY AND TURNED OUT
+      // TO BE OWED, WHICH IS WORTH RECORDING RATHER THAN QUIETLY SHIPPING.
+      //
+      // The slice's own price argued this case was DEAD: `discardEnergy` under a
+      // `byName` filter on ONE body cannot park, because `interchangeableCandidates`
+      // keys on `card:${id}` and `Team Rocket's Energy` was said to have ONE printed
+      // id — one class, cap 1, `forcedDiscards`' `"total"` arm auto-resolves, and
+      // `withConsequence` is never reached. 🛑 **THAT WAS FALSE, AND THIS FILE'S OWN
+      // SIBLING DOCUMENT SAID SO**: `index.ts` records `Team Rocket's Energy`
+      // `sv10-182` as REPRINTED under `me2pt5-217`. TWO ids, ONE name — so a real
+      // board holding one of each offers TWO interchangeability classes, the op
+      // PARKS, and without this case the caption degrades to the bare *"Discard a
+      // Team Rocket's Energy from this Pokémon."* while the answer quietly decides
+      // whether the opponent's Active leaves play. **D515's exact defect**, which is
+      // the row this engine already paid once for not catching.
+      //
+      // ⚠️ IT IS DRIVEN, NOT ASSERTED: §9 of `discardDefender.test.ts` boards the
+      // reprint, PARKS, and pins the rendered note byte for byte. A describer case
+      // with no board is D465's unkillable line; this one has one.
+      //
+      // The CONDITION half needs no code — `describeCondition`'s plain arm already
+      // returns *"If you do"* for a gate with no `contains`, which is the wording
+      // this card prints.
+      case "discardDefender":
+        parts.push("discard your opponent's Active Pokémon and all attached cards");
         break;
       case "switchActive":
         // D206 — Prime Catcher's consequent, in Switch `sv01-194`'s own printed
@@ -3654,6 +3681,14 @@ function stepOp(
       // "damaged by that attack" and this op is the first thing that can make
       // that false. See `koByEffectMarker` (flow.ts).
       return { done: knockOutDefender(state, ctx, events) };
+    case "discardDefender":
+      // 🆕🆕🆕 D536 — the same spot as `knockOutDefender` above, and the OPPOSITE
+      // seam. That op MARKS and lets §8.1's sweep take the Prize; this one removes
+      // the body DURING the program, which is upstream of `lethalRefs` — so there
+      // is no Prize, no `KNOCKED_OUT`, no recoil and no `byAttackFor` mark, and not
+      // a line of this file buys that. See the op's union block for the three
+      // independent readings that settle it.
+      return { done: discardDefender(state, ctx, events) };
     case "knockOutChosen":
       // 🆕🆕 D416 — THE SAME KNOCK OUT WITH A PICK IN IT, and the whole arm is
       // three shipped pieces with nothing between them:
@@ -11263,6 +11298,63 @@ function knockOutDefender(state: GameState, ctx: EffectContext, events: GameEven
   // announced form is the honest one either way: the effect WAS refused, and that
   // it would also have whiffed is not the player's business.
   return doomBodyAt(state, { seat, spot: { spot: "active" } }, koByEffectMarker(state.turn));
+}
+
+/** 🆕🆕🆕 **D536 — §8.6, THE DEFENDER'S ACTIVE TAKEN OFF THE BOARD WITHOUT A
+    KNOCK OUT.** *"… If you do, discard your opponent's Active Pokémon and all
+    attached cards."* (Moltres ex `sv10-031`/`-208`/`-229`, 3 legal printings), the
+    consequent of arm 44c's `recordGate`.
+
+    🛑 **IT IS `flow.ts`'s D435 DELAYED-DISCARD PAYLOAD POINTED ONE SEAT OVER**, byte
+    for byte — `discardFromStack(…, "all")`, `active: null`, one `POKEMON_RETURNED`
+    at `dest: "discard"` — plus `knockOutDefender`'s TWO guards. That is the whole
+    function, and it is why the §8 ordering call (no Prize, no `KNOCKED_OUT`, no
+    `koRecoilOf`) costs nothing: D435 already shipped and drove that verdict for the
+    identical move on the ENDING player's own board.
+
+    🛑 **§11 IS A GUARD HERE AND NOT `unshieldedRefs`, WHICH IS THE DISTINCTION
+    `knockOutDefender` RECORDS ONE FUNCTION UP.** That op names ONE body and refuses
+    the op WHOLE; `knockOutChosen` picks from a SET and must merely not OFFER a
+    shielded body. This op names one body, so it asks the ANNOUNCING wrapper and
+    returns — and the printed Energy cost stays paid, because the cost was the
+    `discardEnergy` op and the refusal is the consequent's.
+
+    ⚠️ **`discardFromStack`'s `"all"` OVERLOAD IS THE PRINTED "and all attached
+    cards"**, not a re-implementation of it: it walks `stackUids` — evolution stack
+    bottom→top, then energy, then tools — which is §2's pile order, and returns
+    `pokemon: null` because the entire stack left play. The cards land in the
+    DEFENDER's own discard pile (`side`), while the row is filed under `ctx.seat`, the
+    actor (D299).
+
+    ⚠️ **THE PROMOTION IS ALREADY OWED BY CONSTRUCTION.** `finishAttack` calls
+    `orphanedPromotions` with `[otherSeat(attackerSeat), attackerSeat]` and its own
+    comment forecasts THIS OP BY NAME — *"a future op that bounces the opponent's
+    Active is then correct by construction rather than by this comment"*. The
+    `promote` stage is spliced in FRONT of `turnTail`, and it is TOTAL over the three
+    boards: it pops on a refilled spot, auto-resolves a Bench of one, and falls into
+    the §14.2 loss on a Bench of none.
+
+    ⚠️ **A SILENT NO-OP ON AN EMPTY ACTIVE SPOT**, every sibling's contract: the
+    defender was Knocked Out or discarded earlier in the same program and there is
+    nothing to take. */
+function discardDefender(state: GameState, ctx: EffectContext, events: GameEvent[]): GameState {
+  const seat = otherSeat(ctx.seat);
+  const side = state.players[seat];
+  const active = side.active;
+  if (active === null) return state;
+  if (effectRefused(state, seat, ctx, events)) return state;
+  const uid = topUid(active);
+  if (uid === undefined) return state;
+  const cleanup = discardFromStack(side, active, "all");
+  events.push({
+    type: "POKEMON_RETURNED",
+    seat,
+    uid,
+    actor: ctx.seat,
+    dest: "discard",
+    uids: cleanup.discarded,
+  });
+  return withSide(state, seat, { ...cleanup.side, active: null });
 }
 
 /** 🆕🆕 D380 — §7.3's shared zone, emptied. The Stadium goes to **ITS OWNER's**

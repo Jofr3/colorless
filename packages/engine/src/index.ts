@@ -20025,6 +20025,98 @@ import type { GameState, Seat } from "./types";
     `expect(manifest.version)`, `it(…)` titles, the declaration and `package.json` —
     **not** as a value-keyed grep — because a value-keyed grep is precisely the mechanism
     that ate D500's heading.)
+    🆕🆕🆕 engineVersion 0.420.0 → **0.421.0** (D536 — THE BODY THAT LEAVES PLAY WITHOUT BEING
+    KNOCKED OUT. `censusAttackCorpus.ts` **FILE LINE 100** (`legalAttackCorpus()` index 47) —
+    *"Discard a Team Rocket's Energy from this Pokémon. If you do, discard your opponent's Active
+    Pokémon and all attached cards."*, **1 sentence / 3 legal printings** (Moltres ex `sv10-031` /
+    `sv10-208` / `sv10-229` — the ids ARE resolved on this checkout and are used as ids; the
+    printed BASE DAMAGE is not, so it is driven on the FILE-LOCAL DECLARED demonstrator
+    `d536-moltres`, D425). ONE new whole-sentence anchor `TR_ENERGY_COST_THEN_DISCARD_DEFENDER`
+    beside `HAND_COST_THEN_OPPONENT_DISCARD` — no /i, `^…$`, ZERO captures, `['’]` on BOTH
+    apostrophe slots (D136/D137: this sentence prints TWO possessives) — and ONE new arm **44c**,
+    the FOURTH member of the printed `Discard X. If you do, Y.` family and the first whose COST is
+    an attached Energy rather than a card in hand. THE PROGRAM IS TWO OPS:
+    `discardEnergy{from:"yourActive", filter:{kind:"byName", name:"Team Rocket's Energy"},
+    recordAs:"discarded"}` and `recordGate{slot:"discarded", then:[{op:"discardDefender"}]}`.
+    🛑 **NO `count`** — absent IS the printed article *"a"*, D426's rule read off the shipped
+    *"Discard a {G} Energy from this Pokémon."* arm, which spells the same article by omitting the
+    same field. ⚠️ **THE FILTER'S `name` CARRIES THE CATALOG'S STRAIGHT APOSTROPHE AND THE ANCHOR'S
+    CLASS IS THE PRINT'S** — two different bytes answering two different questions:
+    `matchesFilter`'s `byName` arm compares against `Card.name`. ⚠️ **THE FIRST SHIPPED
+    `recordGate` ON `slot: "discarded"`** (every other one reads `"paid"` or `"moved"`), which
+    type-checks with zero field bytes because `EffectSlot` already holds the member.
+    🛑 **ONE NEW `EffectOp` MEMBER, `discardDefender`, AND IT IS FIELD-FREE**, on
+    `knockOutDefender`'s own recorded rule quoted rather than re-derived: *"a REQUIRED field on an
+    op is the one thing that costs a `MATCH_RECORD_VERSION` bump if it is ever renamed or
+    widened"*. Nothing varies — *"your opponent's Active Pokémon"* is the SIDE and the SPOT at
+    once (no `whose`), *"and all attached cards"* is `discardFromStack(…, "all")` over `stackUids`
+    (no `attachmentsTo`; `returnSelf`'s block records that the ABSENCE of that field is the
+    positive statement *"the attachments followed the body"*), and the zone is the op's own name
+    (no `dest`). ONE new interpreter writer beside `knockOutDefender`, eleven lines, plus one
+    `case` in `stepOp`'s switch and `discardFromStack` added to this file's `./types` import.
+    🛑 **THE §8 ORDERING CALL, DECIDED AND DRIVEN: A DEFENDER LEFT LETHALLY DAMAGED BY THIS
+    ATTACK'S OWN PRINTED BASE IS DISCARDED, NOT KNOCKED OUT — NO PRIZE, NO `KNOCKED_OUT`, NO
+    `koRecoilOf`, NO `byAttackFor` MARK — AND NOT ONE LINE OF CODE BUYS IT.** Three independent
+    readings, all READ rather than argued: `docs/reference/ptcg-rules.md:283-313` §8 orders a
+    declared attack *4. Resolve attack text … 6. Place damage counters … 7. Knock Out check*, so
+    the KO check is LAST and §8.1's *"a Pokémon is Knocked Out when its damage ≥ its current HP"*
+    has no body to read; NO shipped op resolves a lethal defender mid-program (all four lethality
+    producers MARK and let the sweep kill); and prizes are taken in `collectKnockOuts` →
+    `planPrizes`, `finishAttack`'s EPILOGUE, so a body removed DURING the program is upstream of
+    `lethalRefs` and is simply not in the batch. D435 already shipped and DROVE this verdict for
+    the identical move on the ending player's own board (`flow.ts`'s `case "discard"`). 🛑 **FREE
+    IN CODE IS NOT FREE IN TESTS** — D535's carried-forward lesson, paid here rather than deferred:
+    §6 of `discardDefender.test.ts` drives the prizes, the absent events, the Vengeful Punch
+    `sv03-197` that pays NO recoil, and the ordinary damage Knock Out one attack index over that
+    pays 40. ⚠️ **ZERO BYTES, EACH CHECKED RATHER THAN ASSUMED**, in `flow.ts` (the promotion is
+    `orphanedPromotions`, already called with `[otherSeat(attackerSeat), attackerSeat]`, and its
+    own comment forecasts THIS OP BY NAME), `events.ts` (`POKEMON_RETURNED` already carries
+    `dest: "discard"` and a cross-seat `actor`), `log.ts` (the arm is fully general — the row
+    renders with NO new branch), `types.ts`, `attack.ts`, `cardplay.ts`, `registry.ts`, `redact.ts`,
+    `packages/schema`, `apps/` and both HUDs. ⚠️ `MATCH_RECORD_VERSION` **HELD at 30 — AND CARRIED BY
+    ONE CONDITION, NOT THREE.** The slice listed three; two were wrong and are corrected in place
+    rather than deleted (D466 step 3). **(1) THE ONE THAT CARRIES IT:** a new `EffectOp` MEMBER is
+    D125's WIDENING — no v30 deploy could WRITE the byte `{"op":"discardDefender"}`, because no v30
+    deploy had the member, and every byte string a v30 deploy DID write still means exactly what it
+    meant (`discardStadium`'s block in `effects.ts` records this argument verbatim, and
+    `scheduleDiscard`'s repeats it). **(2) CORRECTED:** *"the op NEVER PARKS, so nothing it
+    produces reaches `phase.cont`"* is FALSE OF THE PRINTED PROGRAM. The op adds no `PendingStage`
+    inhabitant and no `EffectPrompt` value of its OWN — but the COST parks (see immediately below),
+    so this op is REACHED into `MatchRecord.state.phase.cont.rest` as the gate's `then` payload.
+    **D450's SECOND DOOR**, MEASURED in §10 of `discardDefender.test.ts` on the very reprint board
+    §9 drives: the serialized alphabet GROWS, and the version is unaffected anyway because (1) is a
+    statement about what OLD records can hold and needs no reachability premise. **(3) SCOPED:**
+    *"FIELD-FREE, so no persisted union gains a member"* was wrong in its own terms — `EffectOp` IS
+    a persisted union and it just gained this member, which is (1). What FIELD-FREE buys is
+    narrower: none of the op's OWN fields is a persisted union that could gain a member, and there
+    is no field name to rename or value domain to widen. 🛑 **THE NO-PARK CLAIM THIS SLICE WAS PRICED ON IS FALSE,
+    AND THIS FILE ALREADY SAID SO.** The price argued the cost could never park because
+    `interchangeableCandidates` keys on `card:<id>` and `Team Rocket's Energy` has ONE printed id
+    (`sv10-182`) — one class, cap 1, `forcedDiscards`' `"total"` arm auto-resolves,
+    `withConsequence` never reached, `describeBranch` owed nothing. **D373's name-only block in
+    THIS FILE records `sv10-182` as REPRINTED under `me2pt5-217`**: TWO ids, ONE name, so a board
+    holding one of each offers two classes and the op PARKS. The ≈10-line contingency that was
+    priced AS a contingency is therefore OWED and SHIPPED — ONE `describeBranch` case, and **ZERO**
+    `describeCondition` bytes, because that function's plain arm already returns *"If you do"* for
+    a gate with no `contains`, which is the wording this card prints. Without it the caption
+    degrades to the bare *"Discard a Team Rocket's Energy from this Pokémon."* while the answer
+    quietly decides whether the opponent's Active leaves play — **D515's exact defect** — and §9
+    of the suite PARKS on the reprint and pins the rendered note byte for byte. ⚠️ The park is
+    `discardEnergy`'s and not this op's — but 🛑 **THAT IS NOT WHY `MATCH_RECORD_VERSION` IS
+    UNTOUCHED, AND AN EARLIER WORDING HERE SAID IT WAS.** Behind that park this op IS PERSISTED,
+    inside the gate in `EffectContinuation.rest`; the version holds on D125's WIDENING alone.
+    **The no-park finding and the reachability finding are the SAME finding arriving twice: the
+    cost parks, so the consequent is persisted.** ⚠️ **AND
+    THE LESSON IS THE GENERAL ONE: a reachability argument built on a CATALOG POPULATION is a claim
+    that goes stale like a count** — and this one was stale before it was written.
+    🛑 **VERSION-TAX EXCEPTION LIST FOR THIS BUMP (D506 (b)):** `0.420.0` legitimately survives at
+    THIS HEADING'S OWN SOURCE, one line down in the arrow; D535's heading target below;
+    `pickWithReplacement.test.ts`'s header arrow; the D534/D535 census annotations' own
+    `engine 0.419.0 → 0.420.0` arrows; `mutants.ts`'s D275 re-point ledger; and the `docs/`
+    history. The sweep was run as a WHITELIST over `expect(engineVersion)`,
+    `expect(manifest.version)`, `it(…)` titles, the declaration and `package.json` — **not** as a
+    value-keyed grep, because a value-keyed grep is precisely the mechanism that ate D500's
+    heading.)
     🆕🆕🆕 engineVersion 0.419.0 → **0.420.0** (D535 — THE PICK-WITH-REPLACEMENT SNIPE, AND IT
     COSTS **ZERO NEW VOCABULARY**. `censusAttackCorpus.ts` **FILE LINE 81** (`legalAttackCorpus()`
     index 28) — *"Choose 1 of your opponent's Pokémon 6 times. (You can choose the same Pokémon
@@ -22411,7 +22503,17 @@ import type { GameState, Seat } from "./types";
     print only the W/R half. The engine has made that same call on the BARE wording since
     D400 at corpus file line 620, so this follows a shipped sibling rather than deciding
     afresh — and no rung pins it, because a guard that reddens when somebody separates the
-    two flags would defend the gap.)
+    two flags would defend the gap.
+    🛑 **↑ CORRECTED BY D536, IN PLACE (D466 step 3 / D442): THE "no rung pins it" HALF IS
+    FALSE AND WAS FALSE WHEN IT WAS WRITTEN.** `classedBoardSpread.test.ts` §8 boards Rock
+    Chestplate `sv01-192` on a benched holder and asserts `[100, 100, 100, 0, 100]`; a build
+    that keeps the D151/D161 seat-aura half and stops nulling the catalog and installed
+    halves reads `[100, 70, 100, 0, 100]` and reddens THERE. Measured at D536, not argued:
+    the same build reddens FOUR rungs in THREE files (that one, `alwaysOnReduction.test.ts`
+    and `anyTargetSnipe.test.ts` twice), and D536's ride-along added TWO more in
+    `pickWithReplacement.test.ts` on purpose. The REASONING above stands — splitting the
+    flag is a RULES call about the bare wording and moves D400's, D492's and D535's boards
+    at once — only the claim about coverage was wrong.)
     🆕🆕🆕 engineVersion 0.385.0 → **0.386.0** (D491 — THE ONLY DRAW IN THE COLUMN
     WHOSE PRINTED SUBJECT IS NOT THE CONTROLLER. `censusAttackCorpus.ts` **FILE LINE 199** —
     *"Each player draws 3 cards."*, **1 sentence / 1 legal printing**, claimed WHOLE by
@@ -22688,7 +22790,7 @@ import type { GameState, Seat } from "./types";
     WITNESS** — the count was re-derived every slice and the word *"three"* was carried.
     A successor of this slice inherits **81 / 61 / 17** again, over **FIVE** history
     occurrences: those four plus `deckMillFilteredScale.test.ts`'s own header arrow.) */
-export const engineVersion = "0.420.0";
+export const engineVersion = "0.421.0";
 
 export type {
   ApplyResult,

@@ -5251,7 +5251,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D275",
     what: "🛑 THE DEBT THIS SLICE PAID FOR THE FIFTH TIME, RE-INSTALLED: `engineVersion` falls a minor behind `packages/engine/package.json`, which is EXACTLY the state the tree was in at the head of D275 (0.187.0 against 0.189.0) and had been for two slices with nothing comparing them. The tie is the guard; this row is the proof it is one",
     file: "packages/engine/src/index.ts",
-    // ⚠️ RE-POINTED AT D535 (0.419.0 → 0.420.0), at D534 (0.418.0 → 0.419.0), at D532 (0.417.0 → 0.418.0), at D531 (0.416.0 → 0.417.0), at D530 (0.415.0 → 0.416.0), at D528 (0.414.0 → 0.415.0), at D527 (0.413.0 → 0.414.0), at D526 (0.412.0 → 0.413.0), at D525 (0.411.0 → 0.412.0), at D524 (0.410.0 → 0.411.0), at D523 (0.409.0 → 0.410.0), at D522 (0.408.0 → 0.409.0), at D521 (0.407.0 → 0.408.0), at D520 (0.406.0 → 0.407.0), at D519 (0.405.0 → 0.406.0), at D518 (0.404.0 → 0.405.0), at D517 (0.403.0 → 0.404.0), at D516 (0.402.0 → 0.403.0), at D515 (0.401.0 → 0.402.0), at D514 (0.400.0 → 0.401.0), at D513 (0.399.0 → 0.400.0), at D512 (0.398.0 → 0.399.0), at D510 (0.397.0 → 0.398.0), at D508 (0.396.0 → 0.397.0), at D507 (0.395.0 → 0.396.0), at D505 (0.394.0 → 0.395.0), at D490 (0.384.0 → 0.385.0), at D489 (0.383.0 → 0.384.0), at D488 (0.382.0 → 0.383.0), at D487 (0.381.0 → 0.382.0), at D486 (0.380.0 → 0.381.0), at D485 (0.379.0 → 0.380.0), at D450 (0.351.0 → 0.352.0), at D449 (0.350.0 → 0.351.0), at D448 (0.349.0 → 0.350.0), at D447 (0.348.0 → 0.349.0), at D446 (0.347.0 → 0.348.0), at D445 (0.346.0 → 0.347.0), at D444 (0.345.0 → 0.346.0), at D443 (0.344.0 → 0.345.0), at D442 (0.343.0 → 0.344.0), at D441 (0.342.0 → 0.343.0), at D440 (0.341.0 → 0.342.0), at D439 (0.340.0 → 0.341.0), at D438 (0.339.0 → 0.340.0), at D437 (0.338.0 → 0.339.0), at D436 (0.337.0 → 0.338.0), at D435 (0.336.0 → 0.337.0), at D434 (0.335.0 → 0.336.0), at D433 (0.334.0 → 0.335.0), at D432 (0.333.0 → 0.334.0), at D431 (0.332.0 → 0.333.0), at D430 (0.331.0 → 0.332.0), at D429 (0.330.0 → 0.331.0), at D428 (0.329.0 → 0.330.0), at D427 (0.328.0 → 0.329.0), at D426 (0.327.0 → 0.328.0), at D425 (0.326.0 → 0.327.0), at D424 (0.325.0 → 0.326.0), at D423 (0.324.0 → 0.325.0), at D422 (0.323.0 → 0.324.0), at D421 (0.322.0 → 0.323.0), at D420 (0.321.0 → 0.322.0), at D417 (0.320.0 → 0.321.0), at D416 (0.319.0 → 0.320.0), at D415 (0.318.0 → 0.319.0), at D414 (0.317.0 → 0.318.0), at D413 (0.316.0 → 0.317.0), at D412 (0.315.0 → 0.316.0), at D410 (0.314.0 → 0.315.0), at D409 (0.313.0 → 0.314.0), at D408 (0.312.0 → 0.313.0), at D407 (0.311.0 → 0.312.0), at D402 (0.306.0 → 0.307.0), at D401 (0.305.0 → 0.306.0), at D400 (0.304.0 → 0.305.0), at D399 (0.303.0 → 0.304.0), at D398 (0.302.0 → 0.303.0), at D397 (0.301.0 → 0.302.0), at D396 (0.300.0 → 0.301.0), at D395 (0.299.0 → 0.300.0), at D394 (0.298.0 → 0.299.0), at D393 (0.297.0 → 0.298.0), at D392 (0.296.0 → 0.297.0), at D391 (0.295.0 → 0.296.0), at D390 (0.294.0 → 0.295.0), at D389 (0.293.0 → 0.294.0), at D388 (0.292.0 → 0.293.0), at D387 (0.291.0 → 0.292.0), at D386 (0.290.0 → 0.291.0),
+    // ⚠️ RE-POINTED AT D536 (0.420.0 → 0.421.0), at D535 (0.419.0 → 0.420.0), at D534 (0.418.0 → 0.419.0), at D532 (0.417.0 → 0.418.0), at D531 (0.416.0 → 0.417.0), at D530 (0.415.0 → 0.416.0), at D528 (0.414.0 → 0.415.0), at D527 (0.413.0 → 0.414.0), at D526 (0.412.0 → 0.413.0), at D525 (0.411.0 → 0.412.0), at D524 (0.410.0 → 0.411.0), at D523 (0.409.0 → 0.410.0), at D522 (0.408.0 → 0.409.0), at D521 (0.407.0 → 0.408.0), at D520 (0.406.0 → 0.407.0), at D519 (0.405.0 → 0.406.0), at D518 (0.404.0 → 0.405.0), at D517 (0.403.0 → 0.404.0), at D516 (0.402.0 → 0.403.0), at D515 (0.401.0 → 0.402.0), at D514 (0.400.0 → 0.401.0), at D513 (0.399.0 → 0.400.0), at D512 (0.398.0 → 0.399.0), at D510 (0.397.0 → 0.398.0), at D508 (0.396.0 → 0.397.0), at D507 (0.395.0 → 0.396.0), at D505 (0.394.0 → 0.395.0), at D490 (0.384.0 → 0.385.0), at D489 (0.383.0 → 0.384.0), at D488 (0.382.0 → 0.383.0), at D487 (0.381.0 → 0.382.0), at D486 (0.380.0 → 0.381.0), at D485 (0.379.0 → 0.380.0), at D450 (0.351.0 → 0.352.0), at D449 (0.350.0 → 0.351.0), at D448 (0.349.0 → 0.350.0), at D447 (0.348.0 → 0.349.0), at D446 (0.347.0 → 0.348.0), at D445 (0.346.0 → 0.347.0), at D444 (0.345.0 → 0.346.0), at D443 (0.344.0 → 0.345.0), at D442 (0.343.0 → 0.344.0), at D441 (0.342.0 → 0.343.0), at D440 (0.341.0 → 0.342.0), at D439 (0.340.0 → 0.341.0), at D438 (0.339.0 → 0.340.0), at D437 (0.338.0 → 0.339.0), at D436 (0.337.0 → 0.338.0), at D435 (0.336.0 → 0.337.0), at D434 (0.335.0 → 0.336.0), at D433 (0.334.0 → 0.335.0), at D432 (0.333.0 → 0.334.0), at D431 (0.332.0 → 0.333.0), at D430 (0.331.0 → 0.332.0), at D429 (0.330.0 → 0.331.0), at D428 (0.329.0 → 0.330.0), at D427 (0.328.0 → 0.329.0), at D426 (0.327.0 → 0.328.0), at D425 (0.326.0 → 0.327.0), at D424 (0.325.0 → 0.326.0), at D423 (0.324.0 → 0.325.0), at D422 (0.323.0 → 0.324.0), at D421 (0.322.0 → 0.323.0), at D420 (0.321.0 → 0.322.0), at D417 (0.320.0 → 0.321.0), at D416 (0.319.0 → 0.320.0), at D415 (0.318.0 → 0.319.0), at D414 (0.317.0 → 0.318.0), at D413 (0.316.0 → 0.317.0), at D412 (0.315.0 → 0.316.0), at D410 (0.314.0 → 0.315.0), at D409 (0.313.0 → 0.314.0), at D408 (0.312.0 → 0.313.0), at D407 (0.311.0 → 0.312.0), at D402 (0.306.0 → 0.307.0), at D401 (0.305.0 → 0.306.0), at D400 (0.304.0 → 0.305.0), at D399 (0.303.0 → 0.304.0), at D398 (0.302.0 → 0.303.0), at D397 (0.301.0 → 0.302.0), at D396 (0.300.0 → 0.301.0), at D395 (0.299.0 → 0.300.0), at D394 (0.298.0 → 0.299.0), at D393 (0.297.0 → 0.298.0), at D392 (0.296.0 → 0.297.0), at D391 (0.295.0 → 0.296.0), at D390 (0.294.0 → 0.295.0), at D389 (0.293.0 → 0.294.0), at D388 (0.292.0 → 0.293.0), at D387 (0.291.0 → 0.292.0), at D386 (0.290.0 → 0.291.0),
     //    each in the SAME COMMIT as the bump —
     // the TENTH slice running to do it that way, and the practice is now the one
     // thing about this row that has never cost an ERROR since it started.
@@ -5798,7 +5798,7 @@ export const MUTANTS: Mutant[] = [
     // CORPUS QUOTES** (D414/D415), so a value-keyed sweep over `toBe("0.391.0")` cannot
     // see it — this row's `find` spells the DECLARATION, not an assertion. Run
     // `precheck` after every version bump, not after the sweep tells you.
-    find: 'export const engineVersion = "0.420.0";',
+    find: 'export const engineVersion = "0.421.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -27893,6 +27893,11 @@ export const MUTANTS: Mutant[] = [
     decision: "D495",
     what: "⚠️ C10 — the census constant is put back to its pre-slice value while the arm stays. This is the row that proves the CENSUS moved for this build rather than the suite merely agreeing with itself: `BUILT.attack`'s live sum is derived from the readers over the committed corpus, so a stale constant is the one thing that cannot be true at both heads. 🆕 RE-TRANSCRIBED AT D499 (1612→1614 / 1611→1612): the row is about the CONSTANT being one slice stale, not about a particular digit, so it follows the constant. Its MEANING is byte-identical — a re-transcription that changes the claim is worth less than a broken row (D498), and this one does not: D499's own step is +2 printings, so the mutated value is exactly this file's value at D498's head",
     file: "packages/engine/src/censusAtHead.test.ts",
+    // 🆕🆕🆕 D536 - RE-TRANSCRIBED, 1654 -> 1657 (and the replace 1652 -> 1654), the same
+    //    two-step regression this row has always expressed. ⚠️ THE STEP IS **3** AND NOT 1,
+    //    because this column counts PRINTINGS and D536's row has THREE legal printings against
+    //    ONE sentence - the widest sentence/printing disagreement any slice has stepped it by.
+    //    Found by `precheck` in seconds, as every slice since D495 has found it.
     // 🆕🆕 D501 - RE-TRANSCRIBED, 1615 -> 1616 (and the replace 1613 -> 1614, keeping
     //    the same two-step regression this row has always expressed). The constant moved
     //    because D501 claimed corpus FILE LINE 685; `precheck` reported the `find` at 0x
@@ -28022,8 +28027,8 @@ export const MUTANTS: Mutant[] = [
     // 🆕🆕🆕 D534 — RE-TRANSCRIBED AGAIN, 1651 -> 1652 (replace 1649 -> 1650): the sentence and
     //    printing steps agree at 1 (corpus FILE LINE 401, Inkay's one-card look), the same
     //    two-step regression; `precheck` named the `find` at 0x the moment the pin moved.
-    find: "  attack: 1654,",
-    replace: "  attack: 1652,",
+    find: "  attack: 1657,",
+    replace: "  attack: 1654,",
     expectKilledBy: [
       "packages/engine/src/censusAtHead.test.ts",
     ],
@@ -29180,8 +29185,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D506",
     what: "🛑 C1 — THE DEFECT D502 AND D505 BOTH SHIPPED: a version goes out and NO HEADING CLAIMS IT. The edit un-bolds the NEWEST heading's target, so the parser stops seeing it and the chain's head falls back a release while `package.json` says otherwise — which is byte-for-byte the state of this file at D505's head, twice over. ⚠️ IT IS THE CHEAPEST WAY FOR THIS RECORD TO GO WRONG AND WAS INVISIBLE TO EVERY OTHER INSTRUMENT IN THE REPO: `tsc`, `biome`, every test, `precheck` and all five gates are green on both sides of it, because until D506 nothing read the headings at all. Killed by the HEAD case alone, which is the point — one tripwire, named (D453/D498). 🛑 RE-POINTED AT D507 ONTO THE 0.395.0 → 0.396.0 HEADING, AND THE RE-POINT WAS OWED RATHER THAN TIDY (D444): left on D505's heading it would have gone INERT ON THE VERDICT the moment a newer heading existed — un-bolding a heading that is no longer the head leaves NEWEST equal to HEAD, so the HEAD case stays green and the kill arrives, if at all, through the CHAIN case instead. The row's own stated reason (killed by the HEAD case alone) is exactly the sentence that would have quietly become false. THIS ROW IS PART OF THE VERSION TAX: every bump owes its re-point, in the same edit as the heading. \U0001f195 RE-POINTED AGAIN AT D508 ONTO THE 0.396.0 → 0.397.0 HEADING, and this one is UNLABELLED — the `find` quotes the heading's first prose words instead of a `(D<nnn> —`, which is strictly more durable: the label is the byte the close-out ritual inserts, and quoting it is exactly what broke this row at D507. \u26a0\ufe0f The heading is the CHAIN HEAD again, so the HEAD case is the killer again — the re-point is what keeps that sentence true rather than quietly false. \U0001f195 RE-POINTED AGAIN AT D510 ONTO THE 0.397.0 \u2192 0.398.0 HEADING, also UNLABELLED, and the `find` is kept in D508's TRIMMED form \u2014 it stops before the `(` where the close-out ritual inserts the label, which is the shape D508 proved survives that edit (precheck clean, label inserted, clean again). A `find` that spanned the paren would re-open the coupling that broke this row at D507. \U0001f195 RE-POINTED AGAIN AT D512 ONTO THE 0.398.0 \u2192 0.399.0 HEADING, also UNLABELLED and kept in the same TRIMMED form. \u26a0\ufe0f The re-point is what keeps this row's own stated reason (killed by the HEAD case ALONE) true rather than quietly false: left on D510's heading it would go INERT ON THE VERDICT the moment a newer heading exists, because un-bolding a heading that is no longer the head leaves NEWEST equal to HEAD and the kill arrives, if at all, through the CHAIN case instead. \U0001f195 RE-POINTED AGAIN AT D513 ONTO THE 0.399.0 \u2192 0.400.0 HEADING, also UNLABELLED and kept in the same TRIMMED form that stops before the `(`. \u26a0\ufe0f **AND THE TRIM WAS PROVEN AGAIN RATHER THAN ASSUMED**: `precheck` clean before the heading exists, the heading written, `precheck` clean after \u2014 the third consecutive slice to demonstrate that a `find` ending at `**<new>**` survives the close-out label insertion, and the fourth to state that a `find` spanning the paren re-opens the coupling that broke this row at D507. \U0001f195 RE-POINTED AGAIN AT D515 ONTO THE 0.401.0 \u2192 0.402.0 HEADING, also UNLABELLED and kept in the same TRIMMED form that stops before the `(`. \u26a0\ufe0f **THE RE-POINT IS THE PART OF THE VERSION TAX THAT HAS NO AUTOMATIC DETECTOR**: left on D514's heading this row would go INERT ON THE VERDICT the moment a newer heading exists \u2014 un-bolding a heading that is no longer the head leaves NEWEST equal to HEAD, the HEAD case stays green, and the kill arrives (if at all) through the CHAIN case instead, so the row would report KILLED while its own stated reason (killed by the HEAD case ALONE) had quietly become false. \u26a0\ufe0f **AND THE TRIM WAS PROVEN A FIFTH TIME RATHER THAN ASSUMED**: `precheck` clean before the heading exists, the heading written, `precheck` clean after. \U0001f195 RE-POINTED AGAIN AT D516 ONTO THE 0.402.0 \u2192 0.403.0 HEADING, also UNLABELLED and kept in the same TRIMMED form that stops before the `(`. \u26a0\ufe0f **THE TRIM WAS PROVEN A SIXTH TIME RATHER THAN ASSUMED**: `precheck` clean before the heading exists, the heading written, `precheck` clean after \u2014 and the re-point remains the part of the version tax with no automatic detector, because left on D515\u2019s heading this row would report KILLED while its own stated reason (killed by the HEAD case ALONE) had quietly become false. \U0001f195 RE-POINTED AGAIN AT D517 ONTO THE 0.403.0 \u2192 0.404.0 HEADING, also UNLABELLED and kept in the same TRIMMED form that stops before the `(`. \u26a0\ufe0f **THE TRIM WAS PROVEN A SEVENTH TIME RATHER THAN ASSUMED**: `precheck` clean before the heading exists, the heading written, `precheck` clean after \u2014 seven consecutive slices now, which is the evidence that the label a caller later adds cannot reach this `find`. 🆕 RE-POINTED AGAIN AT D518 ONTO THE 0.404.0 → 0.405.0 HEADING, also UNLABELLED and kept in the same TRIMMED form that stops before the `(`. ⚠️ **THE TRIM WAS PROVEN AN EIGHTH TIME RATHER THAN ASSUMED**: `precheck` clean before the heading exists, the heading written, `precheck` clean after — eight consecutive slices, and this one carried an extra hazard worth naming: the incoming literal `0.405.0` did NOT collide at 2× the way D517's did, because this slice's `find` quotes the heading ARROW (which is unique) rather than a source line the corpus already patches, so no FOURTH version-tax row was owed. 🆕 RE-POINTED AGAIN AT D521 ONTO THE 0.407.0 → 0.408.0 HEADING, also UNLABELLED and kept in the same TRIMMED form that stops before the `(` — the heading was written labelled in the same edit as the `docs/decisions.md` row (D507), and `precheck` was run clean with the row re-pointed. 🆕 RE-POINTED AGAIN AT D526 ONTO THE 0.412.0 → 0.413.0 HEADING, UNLABELLED and kept in the same TRIMMED form that stops before the `(` — re-transcribed in the same edit as the D275 ledger row and the census row (the version-tax trio), and `precheck` run clean with the row re-pointed.",
     file: "packages/engine/src/index.ts",
-    find: "engineVersion 0.419.0 → **0.420.0**",
-    replace: "engineVersion 0.419.0 → 0.420.0",
+    find: "engineVersion 0.420.0 → **0.421.0**",
+    replace: "engineVersion 0.420.0 → 0.421.0",
     expectKilledBy: ["packages/engine/src/engineVersionChangelog.test.ts"],
   },
   {
@@ -32189,5 +32194,163 @@ export const MUTANTS: Mutant[] = [
     find: "    if (count >= 1 && amount >= 1) {",
     replace: "    if (count >= 1 || amount >= 1) {",
     expectKilledBy: ["packages/engine/src/pickWithReplacement.test.ts"],
+  },
+  // ───────────────────────────────────────────────────────────────────────────
+  // 🆕🆕🆕 D536 — THE BODY THAT LEAVES PLAY WITHOUT BEING KNOCKED OUT (`censusAttackCorpus.ts`
+  // FILE LINE 100, 1 sentence / 3 legal printings). FIFTEEN rows: FIVE on the anchor's
+  // SHAPE (a)–(e) — the apostrophe class taking TWO of them, one per printed possessive,
+  // because this sentence prints two — FOUR on the DERIVED PROGRAM (f)–(i), FIVE on the
+  // new interpreter WRITER (j)–(n), the last of which is the §8 ORDERING row, and ONE on the
+  // DESCRIBER (o).
+  // ⚠️ (o) EXISTS BECAUSE A REACHABILITY ARGUMENT WAS FALSIFIED MID-SLICE. The price said
+  // the cost could never park and therefore owed `describeBranch` nothing; `index.ts` records
+  // `Team Rocket's Energy` `sv10-182` as REPRINTED under `me2pt5-217`, so TWO ids carry ONE
+  // name, the op PARKS, and the ≈10-line contingency priced AS a contingency was OWED.
+  // 🛑 (n) IS THE ONE THAT MATTERS MOST: the no-Prize verdict costs ZERO engine bytes, and a
+  // verdict that costs zero bytes is exactly the kind that survives its own deletion in
+  // silence unless a row names it. D535 carried such a reading forward; this batch does not.
+  // ⚠️ NO ROW IS DECLARED FOR `from: "yourActive"` → `from: "self"`: the two are
+  // OBSERVATIONALLY EQUIVALENT on EVERY attack board (the attacker IS the Active), so such a
+  // row would be a straw that reports SURVIVED forever — D222's distinction only bites when
+  // the host is BENCHED, which no attack surface can produce today.
+  // Every `replace` names only identifiers its target file already binds (D533's binding
+  // gate — `otherSeat`, `withSide`, `discardFromStack`, `topUid`, `effectRefused`,
+  // `doomBodyAt`, `koByEffectMarker`), every `find` occurs once, and every `replace` was
+  // built by DIFFING against its `find` — a `find === replace` is a silent no-op (D451).
+  // ───────────────────────────────────────────────────────────────────────────
+  {
+    id: "D536-anchor-loses-the-head",
+    decision: "D536",
+    what: "🛑 (a) THE `^` DROPPED, which makes the anchor a PREFIX-FREE SUBSTRING match: any sentence CONTAINING the printed one derives the two-op program, so a gated printing (*\"Flip a coin. If heads, discard a Team Rocket's Energy …\"*) would discard the opponent's Active UNCONDITIONALLY and silently drop its coin flip. Every sibling in this family is `^…$` for exactly this reason, and §2 drives the leading-clause spelling by name.",
+    file: "packages/engine/src/effects.ts",
+    find: "  /^Discard a Team Rocket['’]s Energy from this Pokémon\\. If you do, discard your opponent['’]s Active Pokémon and all attached cards\\.$/;",
+    replace: "  /Discard a Team Rocket['’]s Energy from this Pokémon\\. If you do, discard your opponent['’]s Active Pokémon and all attached cards\\.$/;",
+    expectKilledBy: ["packages/engine/src/discardDefender.test.ts"],
+  },
+  {
+    id: "D536-anchor-loses-the-tail",
+    decision: "D536",
+    what: "⚠️ (b) THE `$` DROPPED — a trailing printed clause is swallowed and silently dropped (`<row> Then, draw a card.` derives the row's program and never draws). The family's standing load-bearing `$` (D234). ⚠️ SILENT IN EVERY CENSUS: no legal print carries a tail. Killed by §2's trailing-clause rung.",
+    file: "packages/engine/src/effects.ts",
+    find: "  /^Discard a Team Rocket['’]s Energy from this Pokémon\\. If you do, discard your opponent['’]s Active Pokémon and all attached cards\\.$/;",
+    replace: "  /^Discard a Team Rocket['’]s Energy from this Pokémon\\. If you do, discard your opponent['’]s Active Pokémon and all attached cards\\./;",
+    expectKilledBy: ["packages/engine/src/discardDefender.test.ts"],
+  },
+  {
+    id: "D536-anchor-narrows-the-possessive-apostrophe",
+    decision: "D536",
+    what: "⚠️ (c) `['’]` NARROWS TO `'` ON THE **`opponent's`** SLOT — the typographic spelling of that one possessive derives null while the other slot still reads both. TWO ROWS, ONE PER SLOT, because this sentence prints TWO possessives and a class dropped on either is a different defect (D136/D137). ⚠️ SILENT IN EVERY CENSUS — the corpus row is U+0027 in both slots. Killed by §2's EQUALITY rung on the `opponent’s` form.",
+    file: "packages/engine/src/effects.ts",
+    find: "  /^Discard a Team Rocket['’]s Energy from this Pokémon\\. If you do, discard your opponent['’]s Active Pokémon and all attached cards\\.$/;",
+    replace: "  /^Discard a Team Rocket['’]s Energy from this Pokémon\\. If you do, discard your opponent's Active Pokémon and all attached cards\\.$/;",
+    expectKilledBy: ["packages/engine/src/discardDefender.test.ts"],
+  },
+  {
+    id: "D536-anchor-narrows-the-contraction-apostrophe",
+    decision: "D536",
+    what: "⚠️ (d) `['’]` NARROWS TO `'` ON THE **`Rocket's`** SLOT — (c)'s twin one possessive over, and the reason the class is spelled TWICE rather than once. ⚠️ SILENT IN EVERY CENSUS. Killed by §2's EQUALITY rung on the `Rocket’s` form.",
+    file: "packages/engine/src/effects.ts",
+    find: "  /^Discard a Team Rocket['’]s Energy from this Pokémon\\. If you do, discard your opponent['’]s Active Pokémon and all attached cards\\.$/;",
+    replace: "  /^Discard a Team Rocket's Energy from this Pokémon\\. If you do, discard your opponent['’]s Active Pokémon and all attached cards\\.$/;",
+    expectKilledBy: ["packages/engine/src/discardDefender.test.ts"],
+  },
+  {
+    id: "D536-anchor-goes-case-insensitive",
+    decision: "D536",
+    what: "⚠️ (e) THE ANCHOR GAINS `/i` — the printed capitalisation stops being part of the sentence, so a lower-cased or SHOUTED string derives the program. The loss is not in the catalog but at every seam that feeds this reader untrusted text. ⚠️ SILENT IN EVERY CENSUS. Killed by §2's case rung (both directions).",
+    file: "packages/engine/src/effects.ts",
+    find: "  /^Discard a Team Rocket['’]s Energy from this Pokémon\\. If you do, discard your opponent['’]s Active Pokémon and all attached cards\\.$/;",
+    replace: "  /^Discard a Team Rocket['’]s Energy from this Pokémon\\. If you do, discard your opponent['’]s Active Pokémon and all attached cards\\.$/i;",
+    expectKilledBy: ["packages/engine/src/discardDefender.test.ts"],
+  },
+  {
+    id: "D536-program-drops-the-record-gate",
+    decision: "D536",
+    what: "🛑 (f) **THE §9.2 GATE DROPPED, SO THE PRINTED *“If you do”* STOPS BEING READ** — the defender is discarded whether or not a Team Rocket's Energy was there to pay. This is the arm's load-bearing claim: `attack.ts` never calls `handCostUnmet` and there is no `energyCostUnmet`, so nothing else in the pipeline refuses an unpaid cost. Killed by §5's WHIFF rung on both seats.",
+    file: "packages/engine/src/effects.ts",
+    find: "    return [\n      {\n        op: \"discardEnergy\",\n        from: \"yourActive\",\n        filter: { kind: \"byName\", name: \"Team Rocket's Energy\" },\n        recordAs: \"discarded\",\n      },\n      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).\n      { op: \"recordGate\", slot: \"discarded\", then: [{ op: \"discardDefender\" }] },\n    ];",
+    replace: "    return [\n      {\n        op: \"discardEnergy\",\n        from: \"yourActive\",\n        filter: { kind: \"byName\", name: \"Team Rocket's Energy\" },\n        recordAs: \"discarded\",\n      },\n      { op: \"discardDefender\" },\n    ];",
+    expectKilledBy: ["packages/engine/src/discardDefender.test.ts"],
+  },
+  {
+    id: "D536-filter-widened-to-any-energy",
+    decision: "D536",
+    what: "🛑 (g) **THE NAMED COST WIDENED TO `anyEnergy`** — the printed *“a Team Rocket's Energy”* becomes *“an Energy”*, so the attack pays with whatever is attached and fires on a board that should whiff. The D190b/D199 direction, at the filter rather than at the anchor. Killed by §4's plain-Energy SURVIVES rung and by §5's whiff.",
+    file: "packages/engine/src/effects.ts",
+    find: "        filter: { kind: \"byName\", name: \"Team Rocket's Energy\" },",
+    replace: "        filter: { kind: \"anyEnergy\" },",
+    expectKilledBy: ["packages/engine/src/discardDefender.test.ts"],
+  },
+  {
+    id: "D536-cost-aimed-at-the-opponents-active",
+    decision: "D536",
+    what: "🛑 (h) **THE COST'S ZONE MIRRORED: `yourActive` → `opponentActive`** — the printed *“from this Pokémon”* becomes a strip off the DEFENDER, which is both a free cost and a second effect the print does not license. The seat slip this family's `from` union exists to make expressible. Killed by §4 (the attacker keeps its Energy) and by §5 (the gate now holds on a board that should whiff).",
+    file: "packages/engine/src/effects.ts",
+    find: "        from: \"yourActive\",\n        filter: { kind: \"byName\", name: \"Team Rocket's Energy\" },",
+    replace: "        from: \"opponentActive\",\n        filter: { kind: \"byName\", name: \"Team Rocket's Energy\" },",
+    expectKilledBy: ["packages/engine/src/discardDefender.test.ts"],
+  },
+  {
+    id: "D536-recordAs-dropped",
+    decision: "D536",
+    what: "⚠️ (i) **`recordAs: \"discarded\"` DROPPED** (a deletion row: the `replace` is the surviving remainder of the `find`, D484). The cost still pays, but nothing is FILED, so `recordGateHolds` reads an empty slot and the consequent NEVER runs — the attack becomes a pure Energy discard. The opposite loss direction from (f), on the same seam. Killed by §3's `toEqual` and by §4/§7's board rungs.",
+    file: "packages/engine/src/effects.ts",
+    find: "        filter: { kind: \"byName\", name: \"Team Rocket's Energy\" },\n        recordAs: \"discarded\",",
+    replace: "        filter: { kind: \"byName\", name: \"Team Rocket's Energy\" },",
+    expectKilledBy: ["packages/engine/src/discardDefender.test.ts"],
+  },
+  {
+    id: "D536-op-skips-the-section-11-guard",
+    decision: "D536",
+    what: "🛑 (j) **THE §11 GUARD DROPPED FROM THE WRITER** — a defender printing *“Prevent all effects of attacks done to this Pokémon”* is discarded anyway, and no `ATTACK_EFFECT_PREVENTED` row says why. `knockOutDefender` one function up asks for exactly this reason (an effect of an attack done TO the defending Pokémon is the thing §11 blocks refuse); refusing to ask would be a silent rules call made by the newer of two siblings. Killed by §8.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  if (effectRefused(state, seat, ctx, events)) return state;\n  const uid = topUid(active);",
+    replace: "  const uid = topUid(active);",
+    expectKilledBy: ["packages/engine/src/discardDefender.test.ts"],
+  },
+  {
+    id: "D536-op-leaves-the-active-spot-occupied",
+    decision: "D536",
+    what: "🛑 (k) **`active: null` DROPPED** — every attached card lands in the defender's discard pile while the BODY stays on the spot, so the same uids are in two zones at once and no `promote` stage is ever queued. The half of the move that is a BOARD change rather than a pile change. Killed by §7's empty-spot, auto-promote and §14.2 rungs.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  return withSide(state, seat, { ...cleanup.side, active: null });",
+    replace: "  return withSide(state, seat, cleanup.side);",
+    expectKilledBy: ["packages/engine/src/discardDefender.test.ts"],
+  },
+  {
+    id: "D536-op-discards-the-stack-only-not-the-attachments",
+    decision: "D536",
+    what: "🛑 (l) **`\"all\"` NARROWED TO THE EVOLUTION STACK, SO *“and all attached cards”* IS DROPPED** — the body leaves play and its Energy and Tools evaporate with it, in neither zone. `stackUids` IS the printed phrase (stack bottom→top, then energy, then tools, §2's pile order); narrowing it is how the print's second half stops being read. Killed by §7's pile-order rung.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  const cleanup = discardFromStack(side, active, \"all\");",
+    replace: "  const cleanup = discardFromStack(side, active, new Set(active.stack));",
+    expectKilledBy: ["packages/engine/src/discardDefender.test.ts"],
+  },
+  {
+    id: "D536-op-discards-into-the-actors-pile",
+    decision: "D536",
+    what: "🛑 (m) **THE PILE MIRRORED: the discarded body and its attachments land in the ATTACKER's discard instead of the defender's.** The seat slip `discardStadium`'s own block warns about one op over (*“the actor is the player whose card did it; the pile is the player whose card it IS”*), and the `actor` field on the event is what makes the two look interchangeable here. Killed by §7's two-pile rung.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  const cleanup = discardFromStack(side, active, \"all\");\n  events.push({\n    type: \"POKEMON_RETURNED\",\n    seat,\n    uid,\n    actor: ctx.seat,\n    dest: \"discard\",\n    uids: cleanup.discarded,\n  });\n  return withSide(state, seat, { ...cleanup.side, active: null });",
+    replace: "  const cleanup = discardFromStack(state.players[ctx.seat], active, \"all\");\n  events.push({\n    type: \"POKEMON_RETURNED\",\n    seat,\n    uid,\n    actor: ctx.seat,\n    dest: \"discard\",\n    uids: cleanup.discarded,\n  });\n  return withSide(withSide(state, ctx.seat, cleanup.side), seat, { ...side, active: null });",
+    expectKilledBy: ["packages/engine/src/discardDefender.test.ts"],
+  },
+  {
+    id: "D536-op-knocks-out-instead-of-discarding",
+    decision: "D536",
+    what: "🛑 (n) **THE ORDERING MUTANT, AND THE MOST VALUABLE ROW IN THIS SET: the op DOOMS the defender instead of DISCARDING it.** `doomBodyAt` marks the body lethal and lets §8.1's epilogue take the Prize — which is byte-for-byte what `knockOutDefender` does, so the mutated file still type-checks, still empties the spot, still discards the whole stack and still promotes. The ONLY observable difference is the PRIZE (and the `KNOCKED_OUT` row, and the recoil a Vengeful Punch would then pay). 🛑 **THIS IS THE ROW THAT PROVES THE §8 ORDERING CALL WAS MADE RATHER THAN ASSUMED**: the verdict costs zero code, and a verdict that costs zero code is exactly the kind that survives its own deletion in silence (D535's carried-forward lesson). Killed by §6 — the prizes, the absent events, and the Vengeful Punch that pays NO recoil.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  const cleanup = discardFromStack(side, active, \"all\");\n  events.push({\n    type: \"POKEMON_RETURNED\",\n    seat,\n    uid,\n    actor: ctx.seat,\n    dest: \"discard\",\n    uids: cleanup.discarded,\n  });\n  return withSide(state, seat, { ...cleanup.side, active: null });",
+    replace: "  return doomBodyAt(state, { seat, spot: { spot: \"active\" } }, koByEffectMarker(state.turn));",
+    expectKilledBy: ["packages/engine/src/discardDefender.test.ts"],
+  },
+  {
+    id: "D536-describer-phrase-dropped",
+    decision: "D536",
+    what: "🛑 (o) **THE DESCRIBER PHRASE DROPPED, SO THE PARKED CAPTION DEGRADES TO THE BARE COST** (a deletion row: the `replace` is the surviving remainder of the `find`, D484). `describeBranch` returns null the moment any op in the branch has no phrase, `withConsequence` then returns the prompt unchanged, and the player is asked *\"Discard a Team Rocket's Energy from this Pokémon.\"* — byte-identical to an UNGATED Energy discard — while their answer decides whether the opponent's Active Pokémon leaves play. **D515's exact defect, which is the row this engine already paid once for not catching.** ⚠️ THIS ROW ONLY EXISTS BECAUSE A REACHABILITY ARGUMENT WAS FALSIFIED MID-SLICE: the price said the cost could never park (`Team Rocket's Energy` was said to have ONE printed id), and `index.ts` records `sv10-182` as REPRINTED under `me2pt5-217` — two ids, one name, two interchangeability classes, a park. Killed by §9's caption rung, which boards the reprint and pins the rendered note.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      case \"discardDefender\":\n        parts.push(\"discard your opponent's Active Pokémon and all attached cards\");\n        break;",
+    replace: "      case \"discardDefender\":\n        break;",
+    expectKilledBy: ["packages/engine/src/discardDefender.test.ts"],
   },
 ];

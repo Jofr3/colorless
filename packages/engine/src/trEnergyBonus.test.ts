@@ -378,6 +378,23 @@ describe("§1 — the price, RE-DERIVED: a 1:2 step and the band down to three",
     // attached cards.", 3 printings) — a named-card COST on `discardEnergy`, not a
     // board condition, and deliberately left where it is. Re-run rather than
     // inherited, so a set that prints a third reddens HERE.
+    //
+    // ✅ **D536 BUILT THAT SECOND SENTENCE, AND THIS COMMENT PREDICTED ITS SHAPE
+    // EXACTLY** — which is worth recording, because a forecast that turns out right
+    // is evidence the axis was the correct one (D446: a predicted SHAPE is not the
+    // measurement that predicted it, so here is the measurement). Arm 44c ships it as
+    // `discardEnergy{from:"yourActive", filter:{kind:"byName", name:"Team Rocket's
+    // Energy"}, recordAs:"discarded"}` gated into `discardDefender` — a NAMED-CARD
+    // COST on `discardEnergy`, word for word, and NOT a `BoardCondition`. The
+    // "deliberately left where it is" half is now history: it was left, and then
+    // built, one member over.
+    //
+    // ⚠️ **THE ASSERTIONS BELOW DO NOT MOVE, AND THAT IS THE POINT.** They are
+    // CENSUS COUNTS over `corpus()` — `mentions` is 2 and the non-`TAKEN` units are
+    // 3 — and the corpus is unchanged by a build: D536 moved a sentence from the
+    // RESIDUE into BUILT, not into or out of the printed column. A rung that had
+    // silently meant "the other one is unbuilt" would have gone stale here without
+    // going red, which is the D535 finding one file over.
     const mentions = corpus().filter(([, s]) => s.includes(TR_ENERGY));
     expect(mentions).toHaveLength(2);
     expect(mentions.filter(([, s]) => s === TAKEN)).toHaveLength(1);
