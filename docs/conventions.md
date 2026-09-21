@@ -8085,6 +8085,46 @@ independent index spaces are being sorted as if they were one, and the failure i
 descending splice without a written single-seat precondition is a correct program with no way to notice when
 it stops being one.
 
+### A mechanical sweep may only touch the SITES ITS KEY NAMES, and a CATALOG row is never one of them (D538 close-out, extending D492 and D426)
+
+D492 already forbids a value-keyed pass over a short literal and says the over-patch is found only by reading
+`git diff -U0`. D426 already protects a chain's **frozen endpoint** from being stepped. **Neither bounds the
+pass's FILE SET**, and D538 is what that costs.
+
+A D538 census pin sweep — a `− 1` term on SENTENCE chains and a `− 3` on PRINTING chains, plus value-keyed
+re-transcriptions — did three kinds of damage in one slice, in increasing order of severity:
+
+1. it stepped **six FROZEN ENDPOINTS** (`benchNamedBonus`, `sameEnergyBonus`, `moreEnergyBonus`,
+   `opponentBenchCount`, `inPlayTypeBonus`, `retreatCostBonus`) as if they were flat pins — D426's class,
+   caught by auditing the SHAPE of each site (*look at what is on the LEFT of the `expect(`*);
+2. it corrupted **four COMMENTS** in `censusAtHead.test.ts` by replacing a quoted code fragment
+   (*"`expect(BUILT.attack - ` occurs TWICE"*) as though it were code — **a string replace over a file that
+   quotes its own code is a replace over PROSE as well**;
+3. 🛑 it rewrote bytes inside a **CORPUS ROW of `packages/engine/src/censusAttackCorpus.ts`** — the
+   catalog's own `<legal printings> <printed sentence>` data.
+
+**THE THIRD IS THE ONE WITH NO RED RUN BEHIND IT.** A comment corruption is inert. An endpoint corruption
+goes red. A catalog-row corruption does neither: the catalog is DATA every census figure is DERIVED FROM, so
+unless the edited bytes happen to flip whether some reader resolves that row, **no count moves, no `toBe(N)`
+fails, `precheck` is green, every gate is green, and the whole suite is green** — while the corpus now SAYS
+something no printed card does. The file's parse-time guards check a row's SHAPE (no leading digit in the
+sentence, no leading or trailing space), never its CONTENT, so they pass too.
+
+**THE RULE, IN TWO HALVES.**
+
+1. **Bound the FILE SET before writing the replace.** A mechanical pass may touch only the files that hold
+   the sites its key names — in practice the pin suites. **A catalog, corpus or fixture DATA file is outside
+   that set by construction**, because it holds no assertions and therefore no pins; if such a file appears
+   in the pass's diff at all, the pass is wrong regardless of what it wrote there.
+2. **Audit `git diff -U0` per FILE, not per value.** The first question is *which files did this touch?* —
+   answerable in one line and before any value is read. D492's per-value paired analysis is the SECOND
+   question, and it cannot ask the first.
+
+⚠️ **THIS IS WHY A REVIEWER ATTACKS THE DIFF RATHER THAN READING THE REPORT.** The report of a green sweep
+and a green `check` is exactly what a corrupted catalog row produces. ✅ **And verify a REVERT by absence,
+not by a green suite**: D538's revert is confirmed by `censusAttackCorpus.ts` not appearing in
+`git show --numstat a0102c18` at all — the committed catalog is byte-identical to the previous slice's.
+
 ## Git / commits
 - Branch off `main` for non-trivial work; commit/push only when asked.
 - Commit trailer per global config: `Co-Authored-By: Claude ...`.
