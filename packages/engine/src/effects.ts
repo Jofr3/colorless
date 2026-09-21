@@ -7294,6 +7294,50 @@ export type EffectOp =
       candidate board, no `whose`, no `dest` and no park. Team Rocket's Grimer
       `sv10-123` remains unbuilt. */
   | { op: "returnBenched"; whose: "self" | "opponent"; dest: "deck" | "hand" }
+  /** 🆕🆕🆕 **D537 — KEEP THREE, SHUFFLE THE REST: THE ONLY SENTENCE IN THIS
+      CORPUS WHOSE PICK NAMES THE BODIES THAT *STAY*.**
+      *"Choose 3 of your opponent's Benched Pokémon. If you do, shuffle all of
+      your opponent's Benched Pokémon that you didn't choose, and all cards
+      attached to those Pokémon, into their deck."* — `censusAttackCorpus.ts`
+      **file line 84**, **1 sentence / 2 legal printings**.
+
+      🛑 **A MEMBER AND NOT AN OPTIONAL `keep` RIDER ON `returnBenched`, AND THE
+      REASON IS D421's EXACT FAILURE MODE** (`conventions.md:506-517`, restated
+      at `:1193-1204`). A build that dropped an optional `keep` would NOT do
+      nothing: `returnBenched` shuffles the body the answer NAMES, so the
+      degraded program shuffles the CHOSEN THREE away and leaves the rest — an
+      INVERTED board that is entirely plausible, reads as a normal bench wipe in
+      every log row, and would be mis-read for a year. D421's rule is *choose the
+      REST of the record so that losing the key is detectable*, and here there is
+      no rest to choose from: the printed op is a complement, and a complement
+      with its complement-ness dropped is its own opposite. **So the widening
+      fails LOUD — a distinct member, refused by `stepOp`'s exhaustive switch.**
+
+      ⚠️ **`whose` AND `dest` ARE OMITTED, AND THE ABSENCE IS THE PRINTED ARTICLE
+      (D426).** The single printed sentence fixes both: the candidates are *"your
+      opponent's Benched Pokémon"* and the destination is *"their deck"*. A
+      `whose` or `dest` here would be a field no reader could ever vary — D193's
+      and D196's refusal — and a field with one inhabitant is a field that reads
+      like a choice.
+
+      ⚠️ **`keep` IS REQUIRED AND CAPTURED**, `(\d+)` off the printed quantifier
+      (D449's arity precedent, `COUNTER_PUT_ON_CHOSEN_OPPONENTS`'s group 1). The
+      only printing fixes it at 3; the arm floors it at `>= 1`, because a printed
+      *"Choose 0"* names no pick at all and the complement would then be the whole
+      Bench under a caption that asked for nothing.
+
+      🛑 **IT PARKS, AND THAT IS WHY THE PERSISTENCE ARGUMENT IS D450's SECOND
+      DOOR RATHER THAN "IT IS NEVER WRITTEN".** The op asks a
+      `choosePokemonMulti`, so `{"op":"returnBenchedRest","keep":3}` IS written
+      into `phase.cont.pendingOp` — and into `phase.cont.rest` for any program
+      that ever places it behind another park. **The serialized alphabet GROWS.**
+      `MATCH_RECORD_VERSION` stays **30** on D125's WIDENING and on nothing else:
+      no v30 deploy could author that byte, because no v30 deploy had the member,
+      and every byte a v30 deploy DID write still means exactly what it meant
+      (`discardStadium`'s and `discardDefender`'s recorded precedent). Do NOT
+      re-derive this as *"it never parks, so it is not persisted"* — that reading
+      was FALSE of D536's op and it is false of this one twice over. */
+  | { op: "returnBenchedRest"; keep: number }
   /** 🆕 **D311 — TAKE THE PROGRAM'S OWN BODY OFF THE BOARD WITH EVERY CARD
       ATTACHED TO IT AND SHUFFLE THE WHOLE PILE INTO ITS CONTROLLER'S DECK.**
       *"…shuffle **this Pokémon** and all attached cards into your deck."*
@@ -12442,6 +12486,17 @@ const COUNTER_PUT_ON_OPPONENT_ANY =
 // a row this anchor refuses because nothing can read it; it is a row ANOTHER arm claims,
 // and it is still a near miss for THIS anchor's tail (D449's rule: a row this anchor
 // must refuse does not stop being one when another anchor claims it).
+// 🆕🛑 **D537 — AND LINE 84 HAS NOW LEFT THIS LIST THE SAME WAY LINE 81 DID, twelve
+// lines up.** *"Choose 3 of your opponent's Benched Pokémon. If you do, shuffle all of
+// your opponent's Benched Pokémon that you didn't choose, and all cards attached to
+// those Pokémon, into their deck."* (2 printings) is claimed WHOLE by
+// `CHOOSE_KEEP_SHUFFLE_REST` / arm 42-bis as one `returnBenchedRest`. It is therefore
+// no longer a row nothing reads; it is **a row ANOTHER arm claims, which is a different
+// fact about the same row (D438)** — and it is STILL a near miss for THIS anchor's tail
+// (D449: a row this anchor must refuse does not stop being one when another anchor
+// claims it). The line list above is corrected in place rather than deleted (D178/D466
+// step 3): of the three neighbours named, 81 and 84 are now built elsewhere and 82
+// (Angelite) remains unbuilt.
 // All three are refused by this anchor's tail
 // rather than by its head, which is why it is a whole-sentence `^…$` like every
 // sibling. ONE apostrophe slot, classed `['’]`.
@@ -24463,6 +24518,40 @@ const RETURN_BENCHED = new RegExp(
     ")\\.$",
 );
 
+/** 🆕🆕🆕 **D537 — THE KEEP-THREE / SHUFFLE-THE-REST BENCH WIPE, AND THE ONLY
+    SENTENCE IN THIS CORPUS WHOSE PICK NAMES THE BODIES THAT *STAY*.**
+    *"Choose 3 of your opponent's Benched Pokémon. If you do, shuffle all of your
+    opponent's Benched Pokémon that you didn't choose, and all cards attached to
+    those Pokémon, into their deck."* — `censusAttackCorpus.ts` **file line 84**,
+    **1 sentence / 2 legal printings**, the `returnBenchedRest` op.
+
+    🛑 **THREE APOSTROPHE SLOTS, NOT TWO.** Two possessives (*"your opponent's"*
+    twice) AND the contraction in *"didn't"*, and all three are classed `['’]`
+    for the family's standing reason: a re-ingest could curl any of them. D536's
+    two-slot anchor is this one a notch simpler, which is exactly why the count is
+    stated here rather than left to be eyeballed — `benchKeepShuffleRest.test.ts`
+    §1 drives all three by EQUALITY against the straight form, one slot at a time
+    and all three together.
+
+    ⚠️ **ONE CAPTURE, AND IT IS THE NUMBER THAT IS *KEPT*** — not the number
+    removed. The complement is whatever the Bench has left, so the sentence's own
+    arithmetic is `bench.length - keep` and nothing in the print names it. D449's
+    arity precedent (`COUNTER_PUT_ON_CHOSEN_OPPONENTS`'s group 1) with the harder
+    reading: a build that read this as the count REMOVED passes every board where
+    the Bench holds exactly six.
+
+    ⚠️ **WHOLE-SENTENCE `^…$`, NO `/i`.** The tail is what refuses the two real
+    catalog near misses that share this opening —
+    `COUNTER_PUT_ON_CHOSEN_OPPONENTS` (*"Choose N of your opponent's Pokémon and
+    put M damage counters on each of them."*) and corpus line 82 (Angelite,
+    *"Choose 2 … Shuffle those Pokémon …"*, whose pick names the bodies that
+    LEAVE) — and both are driven in BOTH directions. */
+const CHOOSE_KEEP_SHUFFLE_REST = new RegExp(
+  `^Choose (\\d+) of your opponent['’]s Benched Pokémon\\. If you do, shuffle all of ` +
+    `your opponent['’]s Benched Pokémon that you didn['’]t choose, and all cards ` +
+    "attached to those Pokémon, into their deck\\.$",
+);
+
 
 /** 🆕🆕 D380 — THE TWO BARE SPELLINGS OF THE STADIUM DISCARD, as TWO anchors and
     not one optional prefix.
@@ -29622,6 +29711,43 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   //     either direction — `devolveEach.test.ts` §2 drives this sentence against
   //     `RETURN_BENCHED` and row 42's three sentences against this anchor.
   if (DEVOLVE_EACH_TO_DECK.test(effect)) return [{ op: "devolveEach" }];
+
+  // 42-bis. 🆕🆕🆕 D537 — "Choose 3 of your opponent's Benched Pokémon. If you do,
+  //     shuffle all of your opponent's Benched Pokémon that you didn't choose, and
+  //     all cards attached to those Pokémon, into their deck." **1 sentence / 2
+  //     legal printings**, corpus file line 84. THE PICK NAMES THE BODIES THAT STAY,
+  //     which is what makes it `returnBenchedRest` and not a `keep` rider on the op
+  //     below (the member's own block carries D421's argument).
+  //
+  //     ⚠️ PLACED IMMEDIATELY ABOVE ARM 42 AND THE ORDER IS FREE — arm 41-bis's
+  //     argument RE-MEASURED rather than copied: both anchors are `^…$` and the
+  //     first WORD differs ("Choose" vs "Shuffle"/"Put"/"Flip"), so neither can
+  //     claim a string the other matches in either direction, and
+  //     `benchKeepShuffleRest.test.ts` §1 drives this sentence against
+  //     `RETURN_BENCHED` and arm 42's four sentences against this anchor.
+  //
+  //     🛑 THE NEAR MISSES THAT DO SHARE THE FIRST WORD are refused by the TAIL and
+  //     not by the head: `COUNTER_PUT_ON_CHOSEN_OPPONENTS` ("Choose N of your
+  //     opponent's Pokémon and put M damage counters on each of them.") and corpus
+  //     line 82, Angelite ("Choose 2 of your opponent's Benched Pokémon. Shuffle
+  //     those Pokémon and all attached cards into your opponent's deck. …"), whose
+  //     pick names the bodies that LEAVE — the exact inversion of this one. BOTH are
+  //     driven in BOTH directions.
+  //
+  //     ZERO `recordGate` FOR THE PRINTED "If you do" — D314's rule, stated at the
+  //     `returnBenched` block: **A §9.2 SLOT IS EARNED BY A BOARD, NOT BY THE WORDS
+  //     "IF YOU DO".** The antecedent here is the pick itself, and the op's own gate
+  //     (no park below `keep + 1` candidates) already covers every board on which
+  //     the antecedent can fail. A slot would be D310's "a FILTER may be a
+  //     SUBSTITUTION" — green, dead and unkillable.
+  match = CHOOSE_KEEP_SHUFFLE_REST.exec(effect);
+  if (match !== null) {
+    const keep = Number(match[1]);
+    // The FLOOR, printed rather than defensive: "Choose 0" names no pick, and the
+    // complement of an empty pick is the whole Bench under a caption that asked for
+    // nothing. Unreadable sentences go to `ATTACK_EFFECT_SKIPPED`, loudly.
+    if (keep >= 1) return [{ op: "returnBenchedRest", keep }];
+  }
 
   // 42. "Shuffle 1 of your [opponent's] Benched Pokémon and all attached cards
   //     into (their|your) deck." / "Put 1 of your Benched Pokémon and all

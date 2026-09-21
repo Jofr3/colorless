@@ -466,21 +466,26 @@ describe("§2 — two arms, and the prefix that is the whole safety property", (
       ["a reworded join", "Choose 2 of your opponent's Pokémon, then put 3 damage counters on each of them."],
       // …and its TAIL re-worded: "on each of them" is what makes the arity a fan-out.
       ["a reworded tail", "Choose 2 of your opponent's Pokémon and put 3 damage counters on them."],
-      // THE REAL CATALOG NEIGHBOURS on the choose-first opening (corpus lines 82 and 84),
-      // every one a different mechanism and every one still unread by these arms.
+      // THE REAL CATALOG NEIGHBOUR on the choose-first opening (corpus line 82), still a
+      // different mechanism and still unread by these arms.
       // 🆕🛑 **D535 — CORPUS LINE 81 LEFT THIS TABLE BY BEING BUILT, AND IT IS RE-POINTED
       // RATHER THAN DELETED (D418).** The row here was *"Choose 1 of your opponent's Pokémon
       // 6 times. …"* and it is now claimed WHOLE by `ATTACK_PICK_WITH_REPLACEMENT_SNIPE` as six
       // `damageChosen` parks; a `toBeNull` on it would be a false refusal, so the POSITIVE
-      // derivation is asserted in its own rung below and the CONTROL moves onto corpus line 84
-      // — the third neighbour this comment has always named and the table never carried, a
-      // sentence NO suite in the tree names outside the corpus file. ⚠️ The line list above is
-      // corrected in place: 81 is no longer a neighbour that these arms refuse, it is a
-      // neighbour ANOTHER arm claims, which is a different fact about the same row (D438).
-      [
-        "a bench-shuffle-the-rest, the third neighbour",
-        "Choose 3 of your opponent's Benched Pokémon. If you do, shuffle all of your opponent's Benched Pokémon that you didn't choose, and all cards attached to those Pokémon, into their deck.",
-      ],
+      // derivation is asserted in its own rung below and the CONTROL moved onto corpus line 84.
+      // 🆕🛑 **D537 — AND NOW LINE 84 HAS LEFT THIS TABLE THE SAME WAY, for the same reason and
+      // by the same procedure (D418/D438).** *"Choose 3 of your opponent's Benched Pokémon. If
+      // you do, shuffle all of your opponent's Benched Pokémon that you didn't choose, …"* is
+      // claimed WHOLE by `CHOOSE_KEEP_SHUFFLE_REST` / arm 42-bis as one `returnBenchedRest`, so
+      // the `toBeNull` that stood here is now a FALSE REFUSAL and the POSITIVE derivation is
+      // asserted in its own rung below. ⚠️ **The line list in this comment is corrected IN
+      // PLACE**: of the three neighbours it has named since D449, 81 (D535) and 84 (D537) are
+      // rows ANOTHER arm claims — a different fact about the same row — and only 82 (Angelite)
+      // is still a row nothing reads. ✅ **AND THE TABLE IS NOT LEFT VACUOUS** (D536's
+      // `ownerPrefix.test.ts` finding): "a reworded join", "a reworded tail", the Angelite row
+      // and "empty" all remain, so this guard still has something to guard — MEASURED by the
+      // rung below rather than eyeballed, because a guard with nothing left to guard reads
+      // exactly like coverage.
       ["a bench shuffle", "Choose 2 of your opponent's Benched Pokémon. Shuffle those Pokémon and all attached cards into your opponent's deck. If 1 of your Pokémon used Angelite during your last turn, this attack can't be used."],
       ["empty", ""],
     ] as const) {
@@ -525,6 +530,43 @@ describe("§2 — two arms, and the prefix that is the whole safety property", (
     expect(legalAttackCorpus().filter(([, s]) => s === PICK_WITH_REPLACEMENT)).toEqual([
       [2, PICK_WITH_REPLACEMENT],
     ]);
+  });
+
+  it("🆕 D537 — corpus line 84 is BUILT, and it is THESE arms that must not claim it", () => {
+    // 🛑 THE INVERTED CLAIM (D418), a second time in this file: the row above asserted
+    // `deriveAttackEffect` is NULL on this sentence. It is not — D537 reads it whole — so the
+    // refusal is re-pointed onto the PROGRAM rather than deleted. What this suite still owns is
+    // the other half: these counter-put arms do not claim it.
+    const KEEP_THREE =
+      "Choose 3 of your opponent's Benched Pokémon. If you do, shuffle all of your opponent's Benched Pokémon that you didn't choose, and all cards attached to those Pokémon, into their deck.";
+    expect(deriveAttackEffect(KEEP_THREE)).toEqual([{ op: "returnBenchedRest", keep: 3 }]);
+    // ⚠️ AND THE DISCRIMINATOR IS THE OP, which is what makes the negative half executable:
+    // a widening that let a counter-put arm eat line 84 would ship a `damageChosen` here and
+    // redden this line by name.
+    expect((deriveAttackEffect(KEEP_THREE) ?? []).every((op) => op.op !== "damageChosen")).toBe(
+      true,
+    );
+    for (const text of [BARE, CHOSEN]) {
+      const mine = deriveAttackEffect(text) ?? [];
+      expect(mine.every((op) => op.op === "damageChosen"), text).toBe(true);
+    }
+    // …and the corpus row itself, read at its printed count rather than retyped.
+    expect(legalAttackCorpus().filter(([, s]) => s === KEEP_THREE)).toEqual([[2, KEEP_THREE]]);
+  });
+
+  it("🆕 D537 — the `toBeNull` table above is NOT VACUOUS: it still carries FOUR rows, MEASURED", () => {
+    // D536's `ownerPrefix.test.ts` lesson, applied before it could bite: retiring the last row
+    // of a guarded table turns the guard into coverage, silently. Two catalog rows have now
+    // left this table (81 at D535, 84 at D537), so what remains is counted rather than assumed
+    // — and each survivor is still genuinely refused.
+    const REMAINING: readonly string[] = [
+      "Choose 2 of your opponent's Pokémon, then put 3 damage counters on each of them.",
+      "Choose 2 of your opponent's Pokémon and put 3 damage counters on them.",
+      "Choose 2 of your opponent's Benched Pokémon. Shuffle those Pokémon and all attached cards into your opponent's deck. If 1 of your Pokémon used Angelite during your last turn, this attack can't be used.",
+      "",
+    ];
+    expect(REMAINING).toHaveLength(4);
+    for (const text of REMAINING) expect(deriveAttackEffect(text), text).toBeNull();
   });
 
   it("derives the CURLY apostrophe identically on both new arms", () => {
@@ -619,7 +661,7 @@ describe("§3 — a new PRODUCER of a shipped literal, and the record version do
   });
 
   it("the engine version moved", () => {
-    expect(engineVersion).toBe("0.421.0");
+    expect(engineVersion).toBe("0.422.0");
   });
 });
 

@@ -20025,6 +20025,124 @@ import type { GameState, Seat } from "./types";
     `expect(manifest.version)`, `it(…)` titles, the declaration and `package.json` —
     **not** as a value-keyed grep — because a value-keyed grep is precisely the mechanism
     that ate D500's heading.)
+    🆕🆕🆕 engineVersion 0.421.0 → **0.422.0** (D537 — KEEP THREE, SHUFFLE THE REST: THE ONLY
+    SENTENCE IN THIS CORPUS WHOSE PICK NAMES THE BODIES THAT **STAY**. `censusAttackCorpus.ts`
+    **FILE LINE 84** (`legalAttackCorpus()` index 31, leading count column `2`) — *"Choose 3 of
+    your opponent's Benched Pokémon. If you do, shuffle all of your opponent's Benched Pokémon
+    that you didn't choose, and all cards attached to those Pokémon, into their deck."*,
+    **1 sentence / 2 legal printings**. ⚠️ **NO CARD ID IS RESOLVED FOR THIS SENTENCE ON THIS
+    CHECKOUT AND THAT WAS MEASURED, NOT ASSUMED** — `git grep -F "Benched Pokémon that you didn"`
+    over the whole repo at HEAD returned the corpus row and ONE refusal row in
+    `counterPutChosen.test.ts`, and nothing anywhere (this file's D373 name-only block included)
+    claims an id or a name for it — so the suite rides the FILE-LOCAL DECLARED demonstrator
+    `d537-bencher` (D425). **That grep is the D536 procedure run as a procedure**: a reachability
+    argument built on a catalog population is a claim that goes stale like a count, and D536's
+    falsifier was sitting in this very file.
+    ONE new whole-sentence anchor `CHOOSE_KEEP_SHUFFLE_REST` beside `RETURN_BENCHED` — no /i,
+    `^…$`, ONE capture, and 🛑 **THREE `['’]` SLOTS, NOT TWO**: two possessives AND the
+    contraction in *"didn't"*, D536's two-slot trap one notch worse, all three driven by EQUALITY
+    against the straight form one slot at a time. ONE new arm **42-bis**, placed immediately above
+    arm 42 with arm 41-bis's ordering argument RE-MEASURED rather than copied (both anchors are
+    `^…$`, the first WORD differs, so neither can claim a string the other matches in either
+    direction — driven in both directions against all four of arm 42's sentences).
+    🛑 **ONE NEW `EffectOp` MEMBER, `returnBenchedRest`, AND IT IS A MEMBER RATHER THAN AN
+    OPTIONAL `keep` RIDER ON `returnBenched` FOR D421's EXACT REASON** (conventions.md:506-517,
+    restated at :1193-1204). A build that DROPPED an optional `keep` would not do nothing:
+    `returnBenched` shuffles the body the answer NAMES, so the degraded program shuffles the
+    CHOSEN THREE away and leaves the rest — an INVERTED but entirely plausible board, silent in
+    every log row, and mis-readable for a year. D421's mitigation (*choose the REST of the record
+    so that losing the key is detectable*) is unavailable here because the printed op IS a
+    complement and a complement with its complement-ness dropped is its own opposite. So the
+    widening fails LOUD: a distinct member, refused by `stepOp`'s exhaustive switch — which is the
+    ONLY switch `bunx tsc -b --force` reddened when the member landed. ⚠️ **`applyChoice` did NOT
+    redden**, because it carries a `default` arm; the brief predicted it would, and a claimed
+    binding is a claim about a file (D536). `packages/schema` has ZERO `EffectOp` mirrors, asked
+    the same way.
+    ⚠️ **`whose` AND `dest` ARE OMITTED AND THE ABSENCE IS THE PRINTED ARTICLE** (D426): the one
+    printed sentence fixes opponent/deck, and a field no reader can vary is D193's and D196's
+    refusal. `keep` is REQUIRED and CAPTURED (D449's arity precedent) under a `>= 1` floor, and
+    🛑 **THE CAPTURE IS THE NUMBER *KEPT*, NOT THE NUMBER REMOVED** — the complement is whatever
+    the Bench has left, so `bench.length - keep` is arithmetic the print never names and a build
+    that inverted the reading passes every board holding exactly six.
+    **ZERO `recordGate` FOR THE PRINTED *"If you do"*** — D314's rule, quoted from the
+    `returnBenched` block rather than re-derived: **A §9.2 SLOT IS EARNED BY A BOARD, NOT BY THE
+    WORDS "IF YOU DO".** The antecedent is the pick itself and the op's own gate covers every
+    board on which it can fail, so a slot would be D310's *"a FILTER may be a SUBSTITUTION"* —
+    green, dead and unkillable. ZERO `describeBranch` and ZERO `describeCondition` bytes follow,
+    asked of the compiler and of the arm rather than asserted.
+    THE INTERPRETER: one `stepOp` case (candidates `oppBenchRefs`, **UNFILTERED BY §11**; the gate
+    `candidates.length <= op.keep` returns done, because at bench ≤ keep the complement is EMPTY
+    and a prompt would be a question with one answer — `parkOrForce`'s M1 rule, correct at bench
+    0/1/2 as well), one `choosePokemonMulti` park at `min === max === op.keep` with
+    **ZERO NEW PROMPT VOCABULARY** (the kind, `validateChoice`'s arm and `redact.ts`'s arm all
+    RE-ASKED against `min === max === 3` rather than inherited from the brief), NO `decider` (the
+    CONTROLLER answers a pick on the other board — §9.4, `knockOutChosen`'s call), one
+    `applyChoice` case and one note function.
+    🛑 **THE WRITER IS NEW AND IT IS NOT A LOOP OVER `returnBenched`, BECAUSE THAT FUNCTION HAS A
+    DEFECT ONLY A SET-VALUED CALLER CAN SEE.** It removes by `ref.spot.index` and never compares a
+    uid, while a `pokemonMulti` answer is a SET captured against the PRE-APPLY bench: on
+    `[A,B,C,D]` removing `{1,3}` the bench COMPACTS, `bench[3]` is `undefined`, its own silent
+    guard fires and **one body survives**; removing `{0,1}` index 1 then takes **C, not B** —
+    the wrong body under a correct-looking `POKEMON_RETURNED`. Both silent. And its deck arm
+    shuffles PER REF, so a loop would file N `SHUFFLE` rows and take N RNG draws for ONE printed
+    shuffle: the right board with the wrong log, which is exactly D433's false-prevention row.
+    The new writer is `returnSelf`'s D313 **GATHER-BEFORE-APPLY** block generalised from two piles
+    to N bodies — every ref resolved to its index, `topUid` and `stackUids` before a single splice
+    — then spliced **STRICTLY DESCENDING BY INDEX**, one `POKEMON_RETURNED` per body in board
+    order (D299) and exactly **ONE** `SHUFFLE` plus **ONE** RNG draw naming the OWNER. ⚠️ **THE
+    SINGLE-SEAT PRECONDITION IS LOAD-BEARING AND IS STATED AT THE SITE**: descending-by-index is
+    correct only because every candidate sits on ONE seat's bench, refs are filtered to that owner
+    in the loop, and a later cross-seat candidate set would break it silently. §5 of the new suite
+    pins the ordering on a NON-ADJACENT complement, which is the board an ascending splice gets
+    wrong, and the RNG draw is pinned by COMPUTING the one shuffle's next state rather than
+    remembering it. No §8.1 promotion is owed — bench only.
+    🛑 **THE §11 SHIELD IS ASKED AFTER NARROWING** (D433, conventions.md:1274-1282). The park's
+    candidates are UNFILTERED because the pick is not an effect done to the kept bodies; the
+    refusal gate runs in `applyChoice` over the COMPLEMENT only. A shielded body among the chosen
+    three files NOTHING — the control that proves the order, since every board is identical under
+    both builds and the only casualty is a false `ATTACK_EFFECT_PREVENTED` row.
+    ⚠️ `MATCH_RECORD_VERSION` **HELD at 30, ON D125's WIDENING AND ON NOTHING ELSE**: no v30
+    deploy could author the byte `{"op":"returnBenchedRest","keep":3}`, because no v30 deploy had
+    the member, and every byte a v30 deploy DID write still means exactly what it meant
+    (`discardStadium`'s and D536's `discardDefender`'s recorded precedent). 🛑 **AND THIS OP
+    PARKS, SO THE BYTE REALLY IS PERSISTED — WHICH DOOR IT GOES THROUGH IS MEASURED RATHER THAN
+    ARGUED (D450).** `phase.cont.pendingOp` carries it on every parking board (§7 of the suite
+    pins the literal and the serialized string, with the NON-parking board as the other
+    direction); `cont.rest` is `[]` on THIS printed program, because the program is a single op,
+    and it is stated that narrowly (D423) rather than claimed. `rest` is typed `EffectOp[]` and
+    would carry the member the moment any program places it behind another park. **Do NOT
+    re-derive *"it never parks, so it is not persisted"*** — that reading was false of D536's op
+    and is false of this one twice over.
+    ⚠️ **ZERO BYTES, EACH CHECKED RATHER THAN ASSUMED**, in `types.ts`, `attack.ts`, `flow.ts`,
+    `events.ts`, `log.ts`, `redact.ts`, `cardplay.ts`, `registry.ts`, `continuous.ts`,
+    `triggers.ts`, `turn.ts`, `packages/schema/**`, `apps/**` and both HUDs.
+    RE-POINTED, NEVER DELETED (D418/D438): `counterPutChosen.test.ts`'s
+    *"a bench-shuffle-the-rest, the third neighbour"* `toBeNull` row — the ONLY refusal of this
+    sentence in the tree — is now a FALSE refusal and is replaced by a POSITIVE derivation rung
+    plus a kept negative claim (*"these counter-put arms do not claim it"*), with the comment's
+    line list corrected in place: of the three neighbours it has named since D449, 81 (D535) and
+    84 (D537) are rows ANOTHER arm claims and only 82 (Angelite) is still unread. ✅ **AND THE
+    REMAINING `toBeNull` TABLE IS MEASURED NOT VACUOUS** (D536's `ownerPrefix.test.ts` finding,
+    applied before it could bite): four rows survive and a new rung counts them.
+    ⚠️ **A STALE FIGURE IN D536's OWN ANNOTATION, CORRECTED IN PLACE**: the `unbuilt.length + 560
+    → + 561` sites carry a D536 annotation reading *"THIS SITE: 561 → 562"*, which is the step
+    AFTER D536's rather than D536's own. Corrected where D537 touched the line and flagged here.
+    CENSUS, MEASURED HEAD vs AFTER: reader arm 561/1606 → **562/1608**; residue 52/75 → **51/73**;
+    `640 = 588 + 52` → **`589 + 51`**; raw residue 79/126 → **78/124**; `BUILT.attack` 1657 →
+    **1659**; OPAQUE 37/55 → **36/53** at `SUBMAX=4`. Registry 10/16, gate 6/14, trailing 11/21
+    and `SPLIT_ATTACK_UNITS` 14 UNMOVED and RE-MEASURED. 🛑 **THE SENTENCE STEP IS 1 AND THE
+    PRINTING STEP IS 2 — they disagree for the THIRD slice running** (D535 1-vs-2, D536 1-vs-3),
+    so the D426 pin sweep carried a `− 1` term on SENTENCE chains and a `− 2` on PRINTING chains,
+    and the two tails a numeric reader cannot see — `unbuilt.length + 561` and
+    `RAW_UNBUILT_ATTACK_UNITS` — were stepped BY HAND.
+    🛑 **VERSION-TAX EXCEPTION LIST FOR THIS BUMP (D506 (b)):** `0.421.0` legitimately survives at
+    THIS HEADING'S OWN SOURCE, one line down in the arrow; D536's heading target below;
+    `discardDefender.test.ts`'s header arrow; the D535/D536 census annotations' own
+    `engine 0.420.0 → 0.421.0` arrows; `mutants.ts`'s D275 re-point ledger and the version-tax
+    trio's `find` strings; and the `docs/` history. The sweep was run as a WHITELIST over
+    `expect(engineVersion)`, `expect(manifest.version)`, `it(…)`/`describe(…)` titles, the
+    declaration and `package.json` — **not** as a value-keyed grep, because a value-keyed grep is
+    precisely the mechanism that ate D500's heading.)
     🆕🆕🆕 engineVersion 0.420.0 → **0.421.0** (D536 — THE BODY THAT LEAVES PLAY WITHOUT BEING
     KNOCKED OUT. `censusAttackCorpus.ts` **FILE LINE 100** (`legalAttackCorpus()` index 47) —
     *"Discard a Team Rocket's Energy from this Pokémon. If you do, discard your opponent's Active
@@ -22790,7 +22908,7 @@ import type { GameState, Seat } from "./types";
     WITNESS** — the count was re-derived every slice and the word *"three"* was carried.
     A successor of this slice inherits **81 / 61 / 17** again, over **FIVE** history
     occurrences: those four plus `deckMillFilteredScale.test.ts`'s own header arrow.) */
-export const engineVersion = "0.421.0";
+export const engineVersion = "0.422.0";
 
 export type {
   ApplyResult,

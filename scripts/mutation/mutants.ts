@@ -5251,7 +5251,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D275",
     what: "🛑 THE DEBT THIS SLICE PAID FOR THE FIFTH TIME, RE-INSTALLED: `engineVersion` falls a minor behind `packages/engine/package.json`, which is EXACTLY the state the tree was in at the head of D275 (0.187.0 against 0.189.0) and had been for two slices with nothing comparing them. The tie is the guard; this row is the proof it is one",
     file: "packages/engine/src/index.ts",
-    // ⚠️ RE-POINTED AT D536 (0.420.0 → 0.421.0), at D535 (0.419.0 → 0.420.0), at D534 (0.418.0 → 0.419.0), at D532 (0.417.0 → 0.418.0), at D531 (0.416.0 → 0.417.0), at D530 (0.415.0 → 0.416.0), at D528 (0.414.0 → 0.415.0), at D527 (0.413.0 → 0.414.0), at D526 (0.412.0 → 0.413.0), at D525 (0.411.0 → 0.412.0), at D524 (0.410.0 → 0.411.0), at D523 (0.409.0 → 0.410.0), at D522 (0.408.0 → 0.409.0), at D521 (0.407.0 → 0.408.0), at D520 (0.406.0 → 0.407.0), at D519 (0.405.0 → 0.406.0), at D518 (0.404.0 → 0.405.0), at D517 (0.403.0 → 0.404.0), at D516 (0.402.0 → 0.403.0), at D515 (0.401.0 → 0.402.0), at D514 (0.400.0 → 0.401.0), at D513 (0.399.0 → 0.400.0), at D512 (0.398.0 → 0.399.0), at D510 (0.397.0 → 0.398.0), at D508 (0.396.0 → 0.397.0), at D507 (0.395.0 → 0.396.0), at D505 (0.394.0 → 0.395.0), at D490 (0.384.0 → 0.385.0), at D489 (0.383.0 → 0.384.0), at D488 (0.382.0 → 0.383.0), at D487 (0.381.0 → 0.382.0), at D486 (0.380.0 → 0.381.0), at D485 (0.379.0 → 0.380.0), at D450 (0.351.0 → 0.352.0), at D449 (0.350.0 → 0.351.0), at D448 (0.349.0 → 0.350.0), at D447 (0.348.0 → 0.349.0), at D446 (0.347.0 → 0.348.0), at D445 (0.346.0 → 0.347.0), at D444 (0.345.0 → 0.346.0), at D443 (0.344.0 → 0.345.0), at D442 (0.343.0 → 0.344.0), at D441 (0.342.0 → 0.343.0), at D440 (0.341.0 → 0.342.0), at D439 (0.340.0 → 0.341.0), at D438 (0.339.0 → 0.340.0), at D437 (0.338.0 → 0.339.0), at D436 (0.337.0 → 0.338.0), at D435 (0.336.0 → 0.337.0), at D434 (0.335.0 → 0.336.0), at D433 (0.334.0 → 0.335.0), at D432 (0.333.0 → 0.334.0), at D431 (0.332.0 → 0.333.0), at D430 (0.331.0 → 0.332.0), at D429 (0.330.0 → 0.331.0), at D428 (0.329.0 → 0.330.0), at D427 (0.328.0 → 0.329.0), at D426 (0.327.0 → 0.328.0), at D425 (0.326.0 → 0.327.0), at D424 (0.325.0 → 0.326.0), at D423 (0.324.0 → 0.325.0), at D422 (0.323.0 → 0.324.0), at D421 (0.322.0 → 0.323.0), at D420 (0.321.0 → 0.322.0), at D417 (0.320.0 → 0.321.0), at D416 (0.319.0 → 0.320.0), at D415 (0.318.0 → 0.319.0), at D414 (0.317.0 → 0.318.0), at D413 (0.316.0 → 0.317.0), at D412 (0.315.0 → 0.316.0), at D410 (0.314.0 → 0.315.0), at D409 (0.313.0 → 0.314.0), at D408 (0.312.0 → 0.313.0), at D407 (0.311.0 → 0.312.0), at D402 (0.306.0 → 0.307.0), at D401 (0.305.0 → 0.306.0), at D400 (0.304.0 → 0.305.0), at D399 (0.303.0 → 0.304.0), at D398 (0.302.0 → 0.303.0), at D397 (0.301.0 → 0.302.0), at D396 (0.300.0 → 0.301.0), at D395 (0.299.0 → 0.300.0), at D394 (0.298.0 → 0.299.0), at D393 (0.297.0 → 0.298.0), at D392 (0.296.0 → 0.297.0), at D391 (0.295.0 → 0.296.0), at D390 (0.294.0 → 0.295.0), at D389 (0.293.0 → 0.294.0), at D388 (0.292.0 → 0.293.0), at D387 (0.291.0 → 0.292.0), at D386 (0.290.0 → 0.291.0),
+    // ⚠️ RE-POINTED AT D537 (0.421.0 → 0.422.0), at D536 (0.420.0 → 0.421.0), at D535 (0.419.0 → 0.420.0), at D534 (0.418.0 → 0.419.0), at D532 (0.417.0 → 0.418.0), at D531 (0.416.0 → 0.417.0), at D530 (0.415.0 → 0.416.0), at D528 (0.414.0 → 0.415.0), at D527 (0.413.0 → 0.414.0), at D526 (0.412.0 → 0.413.0), at D525 (0.411.0 → 0.412.0), at D524 (0.410.0 → 0.411.0), at D523 (0.409.0 → 0.410.0), at D522 (0.408.0 → 0.409.0), at D521 (0.407.0 → 0.408.0), at D520 (0.406.0 → 0.407.0), at D519 (0.405.0 → 0.406.0), at D518 (0.404.0 → 0.405.0), at D517 (0.403.0 → 0.404.0), at D516 (0.402.0 → 0.403.0), at D515 (0.401.0 → 0.402.0), at D514 (0.400.0 → 0.401.0), at D513 (0.399.0 → 0.400.0), at D512 (0.398.0 → 0.399.0), at D510 (0.397.0 → 0.398.0), at D508 (0.396.0 → 0.397.0), at D507 (0.395.0 → 0.396.0), at D505 (0.394.0 → 0.395.0), at D490 (0.384.0 → 0.385.0), at D489 (0.383.0 → 0.384.0), at D488 (0.382.0 → 0.383.0), at D487 (0.381.0 → 0.382.0), at D486 (0.380.0 → 0.381.0), at D485 (0.379.0 → 0.380.0), at D450 (0.351.0 → 0.352.0), at D449 (0.350.0 → 0.351.0), at D448 (0.349.0 → 0.350.0), at D447 (0.348.0 → 0.349.0), at D446 (0.347.0 → 0.348.0), at D445 (0.346.0 → 0.347.0), at D444 (0.345.0 → 0.346.0), at D443 (0.344.0 → 0.345.0), at D442 (0.343.0 → 0.344.0), at D441 (0.342.0 → 0.343.0), at D440 (0.341.0 → 0.342.0), at D439 (0.340.0 → 0.341.0), at D438 (0.339.0 → 0.340.0), at D437 (0.338.0 → 0.339.0), at D436 (0.337.0 → 0.338.0), at D435 (0.336.0 → 0.337.0), at D434 (0.335.0 → 0.336.0), at D433 (0.334.0 → 0.335.0), at D432 (0.333.0 → 0.334.0), at D431 (0.332.0 → 0.333.0), at D430 (0.331.0 → 0.332.0), at D429 (0.330.0 → 0.331.0), at D428 (0.329.0 → 0.330.0), at D427 (0.328.0 → 0.329.0), at D426 (0.327.0 → 0.328.0), at D425 (0.326.0 → 0.327.0), at D424 (0.325.0 → 0.326.0), at D423 (0.324.0 → 0.325.0), at D422 (0.323.0 → 0.324.0), at D421 (0.322.0 → 0.323.0), at D420 (0.321.0 → 0.322.0), at D417 (0.320.0 → 0.321.0), at D416 (0.319.0 → 0.320.0), at D415 (0.318.0 → 0.319.0), at D414 (0.317.0 → 0.318.0), at D413 (0.316.0 → 0.317.0), at D412 (0.315.0 → 0.316.0), at D410 (0.314.0 → 0.315.0), at D409 (0.313.0 → 0.314.0), at D408 (0.312.0 → 0.313.0), at D407 (0.311.0 → 0.312.0), at D402 (0.306.0 → 0.307.0), at D401 (0.305.0 → 0.306.0), at D400 (0.304.0 → 0.305.0), at D399 (0.303.0 → 0.304.0), at D398 (0.302.0 → 0.303.0), at D397 (0.301.0 → 0.302.0), at D396 (0.300.0 → 0.301.0), at D395 (0.299.0 → 0.300.0), at D394 (0.298.0 → 0.299.0), at D393 (0.297.0 → 0.298.0), at D392 (0.296.0 → 0.297.0), at D391 (0.295.0 → 0.296.0), at D390 (0.294.0 → 0.295.0), at D389 (0.293.0 → 0.294.0), at D388 (0.292.0 → 0.293.0), at D387 (0.291.0 → 0.292.0), at D386 (0.290.0 → 0.291.0),
     //    each in the SAME COMMIT as the bump —
     // the TENTH slice running to do it that way, and the practice is now the one
     // thing about this row that has never cost an ERROR since it started.
@@ -5798,7 +5798,7 @@ export const MUTANTS: Mutant[] = [
     // CORPUS QUOTES** (D414/D415), so a value-keyed sweep over `toBe("0.391.0")` cannot
     // see it — this row's `find` spells the DECLARATION, not an assertion. Run
     // `precheck` after every version bump, not after the sweep tells you.
-    find: 'export const engineVersion = "0.421.0";',
+    find: 'export const engineVersion = "0.422.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -7720,8 +7720,18 @@ export const MUTANTS: Mutant[] = [
     decision: "D299",
     what: "the cross-seat claim inverted: the pile is shuffled into the ACTOR's deck instead of the OWNER's, so Illumise's opponent loses a Pokémon and the Illumise player gains the cards. `withSide(state, owner, …)` against `ctx.seat` is the ONE line that makes this one op rather than two, and nothing else in the function would change if it were wrong. Moves 2 tests",
     file: "packages/engine/src/interpreter.ts",
-    find: "  return { ...withSide(state, owner, { ...side, bench, deck }), rngState };",
-    replace: "  return { ...withSide(state, ctx.seat, { ...side, bench, deck }), rngState };",
+    // 🆕🆕🆕 D537 — RE-TRANSCRIBED, AND THE REASON IS THE POINT: the one-line `find` went
+    //    2× the moment `returnBenchedRest`'s new writer landed with a byte-identical tail.
+    //    `precheck` reported it in seconds (a unique string rots LOUDLY — D211), and the
+    //    repair is to widen the `find` to the THREE-line tail only `returnBenched` has,
+    //    since its deck pile is `...uids` (one body) where the new writer's is `...moved`
+    //    (N bodies). The EXPERIMENT is unchanged: the pile still lands in the ACTOR's deck.
+    find: `  const [deck, rngState] = shuffle([...side.deck, ...uids], state.rngState);
+  events.push({ type: "SHUFFLE", seat: owner });
+  return { ...withSide(state, owner, { ...side, bench, deck }), rngState };`,
+    replace: `  const [deck, rngState] = shuffle([...side.deck, ...uids], state.rngState);
+  events.push({ type: "SHUFFLE", seat: owner });
+  return { ...withSide(state, ctx.seat, { ...side, bench, deck }), rngState };`,
     expectKilledBy: ["packages/engine/src/returnBenched.test.ts"],
   },
   {
@@ -27893,6 +27903,12 @@ export const MUTANTS: Mutant[] = [
     decision: "D495",
     what: "⚠️ C10 — the census constant is put back to its pre-slice value while the arm stays. This is the row that proves the CENSUS moved for this build rather than the suite merely agreeing with itself: `BUILT.attack`'s live sum is derived from the readers over the committed corpus, so a stale constant is the one thing that cannot be true at both heads. 🆕 RE-TRANSCRIBED AT D499 (1612→1614 / 1611→1612): the row is about the CONSTANT being one slice stale, not about a particular digit, so it follows the constant. Its MEANING is byte-identical — a re-transcription that changes the claim is worth less than a broken row (D498), and this one does not: D499's own step is +2 printings, so the mutated value is exactly this file's value at D498's head",
     file: "packages/engine/src/censusAtHead.test.ts",
+    // 🆕🆕🆕 D537 - RE-TRANSCRIBED AGAIN, 1657 -> 1659 (and the replace 1654 -> 1657), the same
+    //    two-step regression. ⚠️ THE STEP IS **2** AND NOT 1, because this column counts
+    //    PRINTINGS and D537's row has TWO legal printings against ONE sentence - the THIRD
+    //    consecutive slice whose sentence and printing steps disagree (D535 1-vs-2, D536
+    //    1-vs-3, D537 1-vs-2). `precheck` reported the `find` at 0x on the edit round that
+    //    moved the constant, as it has for every slice since D495.
     // 🆕🆕🆕 D536 - RE-TRANSCRIBED, 1654 -> 1657 (and the replace 1652 -> 1654), the same
     //    two-step regression this row has always expressed. ⚠️ THE STEP IS **3** AND NOT 1,
     //    because this column counts PRINTINGS and D536's row has THREE legal printings against
@@ -28027,8 +28043,8 @@ export const MUTANTS: Mutant[] = [
     // 🆕🆕🆕 D534 — RE-TRANSCRIBED AGAIN, 1651 -> 1652 (replace 1649 -> 1650): the sentence and
     //    printing steps agree at 1 (corpus FILE LINE 401, Inkay's one-card look), the same
     //    two-step regression; `precheck` named the `find` at 0x the moment the pin moved.
-    find: "  attack: 1657,",
-    replace: "  attack: 1654,",
+    find: "  attack: 1659,",
+    replace: "  attack: 1657,",
     expectKilledBy: [
       "packages/engine/src/censusAtHead.test.ts",
     ],
@@ -32352,5 +32368,169 @@ export const MUTANTS: Mutant[] = [
     find: "      case \"discardDefender\":\n        parts.push(\"discard your opponent's Active Pokémon and all attached cards\");\n        break;",
     replace: "      case \"discardDefender\":\n        break;",
     expectKilledBy: ["packages/engine/src/discardDefender.test.ts"],
+  },
+
+  // ── D537 — KEEP THREE, SHUFFLE THE REST. SEVENTEEN ROWS, SPLIT BY CLAIM: **one on the
+  //    INVERSION** (the pick names the bodies that STAY), **one on the gate**, **three on the
+  //    SET-VALUED WRITER** (ascending splice, raw answer order, per-ref shuffle), **two on §11**
+  //    (asked before narrowing, dropped), **three on the prompt's arity** (min, max, and the
+  //    capture read as the count REMOVED), **one on the `keep >= 1` floor**, **one on the
+  //    caption**, **one on the arm returning its neighbour's op**, and **four on the anchor**
+  //    (each of the THREE `['’]` slots collapsed separately, plus the tail `$`).
+  //    🛑 THE THREE WRITER ROWS ARE THE SET THIS SLICE EXISTS FOR: each one is a defect the
+  //    SHIPPED one-ref `returnBenched` actually has, and each is SILENT — the right number of
+  //    `POKEMON_RETURNED` rows naming plausible bodies, or the right board with the wrong log.
+  {
+    id: "D537-returns-the-chosen-not-the-rest",
+    decision: "D537",
+    what: "🛑 (a) **THE INVERSION, AND THE ROW THE WHOLE SLICE IS SHAPED AROUND: the op shuffles away the bodies the answer NAMED instead of the ones it did not.** This is EXACTLY what a build that dropped an optional `keep` rider on `returnBenched` would do (D421, conventions.md:506-517) — a plausible, silent, entirely normal-looking bench wipe with the wrong three bodies gone. Nothing in the log says otherwise: the same count of `POKEMON_RETURNED` rows, the same single `SHUFFLE`, the same owner. §4 of the suite is the only thing in the tree that can tell the two boards apart.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "        unshieldedRefs(state, complement, ctx, events),",
+    replace: "        unshieldedRefs(state, kept, ctx, events),",
+    expectKilledBy: ["packages/engine/src/benchKeepShuffleRest.test.ts"],
+  },
+  {
+    id: "D537-gate-parks-a-question-with-one-answer",
+    decision: "D537",
+    what: "🛑 (b) **THE GATE OFF BY ONE, `<=` → `<`: at bench exactly `keep` the complement is EMPTY and the op parks anyway**, asking the controller to choose 3 of 3 — a question with exactly one legal answer, which is precisely what `parkOrForce`'s M1 no-choice rule exists to refuse. The board after the (forced) answer is identical, so only the ABSENCE of the park catches it (D423).",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      if (candidates.length <= op.keep) return { done: state };",
+    replace: "      if (candidates.length < op.keep) return { done: state };",
+    expectKilledBy: ["packages/engine/src/benchKeepShuffleRest.test.ts"],
+  },
+  {
+    id: "D537-ascending-splice-drops-a-body",
+    decision: "D537",
+    what: "🛑 (c) **THE SPLICE RUN ASCENDING INSTEAD OF DESCENDING.** Every surviving index shifts under an earlier removal, so on a NON-ADJACENT complement the second splice takes the WRONG body — and on a tail complement it reads `undefined` and one body silently SURVIVES. This is the defect the shipped one-ref `returnBenched` has and the reason this writer is new rather than a loop over it.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  for (const { index } of [...gathered].sort((a, b) => b.index - a.index)) {",
+    replace: "  for (const { index } of [...gathered].sort((a, b) => a.index - b.index)) {",
+    expectKilledBy: ["packages/engine/src/benchKeepShuffleRest.test.ts"],
+  },
+  {
+    id: "D537-splice-in-raw-answer-order",
+    decision: "D537",
+    what: "🛑 (d) **THE SORT DROPPED ENTIRELY — the splice runs in the order the COMPLEMENT was built.** The row exists to prove the ordering decision was MADE rather than inherited from whatever order `oppBenchRefs` happens to return: that order is ascending by construction today, so this is (c) arriving through a different edit, and a successor who “simplifies” the sort away is making exactly this change.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  for (const { index } of [...gathered].sort((a, b) => b.index - a.index)) {",
+    replace: "  for (const { index } of gathered) {",
+    expectKilledBy: ["packages/engine/src/benchKeepShuffleRest.test.ts"],
+  },
+  {
+    id: "D537-shuffles-once-per-returned-body",
+    decision: "D537",
+    what: "🛑 (e) **ONE PRINTED SHUFFLE FILED AS N SHUFFLES, WITH N RNG DRAWS** — what a loop over the shipped `returnBenched` produces. The BOARD is very nearly right and the LOG is wrong, which is why it would survive review (D433's false-prevention row, same class). Killed twice: by the one-`SHUFFLE`-row rung and by the rung that COMPUTES the single shuffle's next `rngState`.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  const [deck, rngState] = shuffle([...side.deck, ...moved], state.rngState);\n  events.push({ type: \"SHUFFLE\", seat: owner });\n  return { ...withSide(state, owner, { ...side, bench, deck }), rngState };",
+    replace: "  let deck = side.deck;\n  let rngState = state.rngState;\n  for (const body of gathered) {\n    [deck, rngState] = shuffle([...deck, ...body.uids], rngState);\n    events.push({ type: \"SHUFFLE\", seat: owner });\n  }\n  return { ...withSide(state, owner, { ...side, bench, deck }), rngState };",
+    expectKilledBy: ["packages/engine/src/benchKeepShuffleRest.test.ts"],
+  },
+  {
+    id: "D537-shield-asked-before-narrowing",
+    decision: "D537",
+    what: "🛑 (f) **§11 ASKED OVER THE WHOLE CANDIDATE BOARD AND FILTERED AFTERWARDS** — conventions.md:1274-1282 (D433) by name. A shielded body among the KEPT three files an `ATTACK_EFFECT_PREVENTED` row for an effect it was never going to receive. **Every board is identical under both builds; the only casualty is a false log row**, which is exactly why it survives review and why §6 carries the shielded-CHOSEN control.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      const complement = oppBenchRefs(state, ctx.seat).filter(",
+    replace: "      const complement = unshieldedRefs(state, oppBenchRefs(state, ctx.seat), ctx, events).filter(",
+    expectKilledBy: ["packages/engine/src/benchKeepShuffleRest.test.ts"],
+  },
+  {
+    id: "D537-shield-dropped-entirely",
+    decision: "D537",
+    what: "🛑 (g) **THE §11 ASK DROPPED: a Curious Tea Party holder on the Bench is shuffled into the deck and no refusal is announced.** The complement goes to the writer raw. The board is wrong AND the log is silent, which is the pair §6's first rung asserts together.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "        unshieldedRefs(state, complement, ctx, events),",
+    replace: "        complement,",
+    expectKilledBy: ["packages/engine/src/benchKeepShuffleRest.test.ts"],
+  },
+  {
+    id: "D537-prompt-min-off-by-one",
+    decision: "D537",
+    what: "🛑 (h) **`min` OFF BY ONE, so a 2-pick answers a printed “choose 3”** and the complement is one body too large. The printed number is EXACT (§9.1) and `min === max` is this prompt's own all-or-nothing reading; loosening the floor legalises a frame the card does not print.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "          min: op.keep,",
+    replace: "          min: op.keep - 1,",
+    expectKilledBy: ["packages/engine/src/benchKeepShuffleRest.test.ts"],
+  },
+  {
+    id: "D537-prompt-max-off-by-one",
+    decision: "D537",
+    what: "🛑 (i) **`max` OFF BY ONE, so a 4-pick answers a printed “choose 3”** and the complement is one body too small — the mirror of (h), and the half a floor-only guard would miss.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "          max: op.keep,",
+    replace: "          max: op.keep + 1,",
+    expectKilledBy: ["packages/engine/src/benchKeepShuffleRest.test.ts"],
+  },
+  {
+    id: "D537-capture-read-as-the-count-removed",
+    decision: "D537",
+    what: "🛑 (j) **THE CAPTURE READ AS THE NUMBER *REMOVED* RATHER THAN THE NUMBER *KEPT*.** The printed sentence names the survivors; the complement's size is `bench.length - keep`, arithmetic the card never prints. This build asks for `bench.length - keep` bodies instead, which is the same prompt on a SIX-body Bench and a different one everywhere else — the reason the op's own block states which end of the subtraction the capture is.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "          min: op.keep,\n          max: op.keep,",
+    replace: "          min: candidates.length - op.keep,\n          max: candidates.length - op.keep,",
+    expectKilledBy: ["packages/engine/src/benchKeepShuffleRest.test.ts"],
+  },
+  {
+    id: "D537-keep-floor-dropped",
+    decision: "D537",
+    what: "🛑 (k) **THE `keep >= 1` FLOOR DROPPED**, so a synthetic “Choose 0 of your opponent's Benched Pokémon…” derives to a real program whose complement is the WHOLE Bench, under a caption that asked for nothing. An unreadable sentence belongs on the loud `ATTACK_EFFECT_SKIPPED` path, not on a plausible board (D190b: a wrong-but-plausible program is strictly worse than an unbuilt one).",
+    file: "packages/engine/src/effects.ts",
+    find: "    if (keep >= 1) return [{ op: \"returnBenchedRest\", keep }];",
+    replace: "    return [{ op: \"returnBenchedRest\", keep }];",
+    expectKilledBy: ["packages/engine/src/benchKeepShuffleRest.test.ts"],
+  },
+  {
+    id: "D537-note-degrades-to-the-neighbours-caption",
+    decision: "D537",
+    what: "🛑 (l) **THE CAPTION REPLACED BY THE SHIPPED NEIGHBOUR'S — D515's defect, and a REAL neighbour copy rather than a straw one.** `returnBenchedNote`'s opponent arm reads *“Shuffle which of your opponent's Benched Pokémon into their deck?”*, which describes the EXACT OPPOSITE decision: the answerer is told the bodies they name will LEAVE when naming them is what SAVES them. The board is unreachable from the caption and nothing else in the tree reads it.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "          note: returnBenchedRestNote(op),",
+    replace: "          note: returnBenchedNote({ op: \"returnBenched\", whose: \"opponent\", dest: \"deck\" }),",
+    expectKilledBy: ["packages/engine/src/benchKeepShuffleRest.test.ts"],
+  },
+  {
+    id: "D537-arm-42-bis-returns-arm-42s-op",
+    decision: "D537",
+    what: "🛑 (m) **ARM 42-bis EMITS ARM 42's OP — D190b's shape, the neighbouring arm's REAL code copied verbatim.** The sentence still derives to something, the census still counts it as read, and the program shuffles away ONE benched body of the controller's choosing instead of every body they did not choose. A wrong-but-plausible program behind a correct-looking census row.",
+    file: "packages/engine/src/effects.ts",
+    find: "    if (keep >= 1) return [{ op: \"returnBenchedRest\", keep }];",
+    replace: "    if (keep >= 1) return [{ op: \"returnBenched\", whose: \"opponent\", dest: \"deck\" }];",
+    expectKilledBy: ["packages/engine/src/benchKeepShuffleRest.test.ts"],
+  },
+  {
+    id: "D537-anchor-first-possessive-straight-only",
+    decision: "D537",
+    what: "🛑 (n) **APOSTROPHE SLOT 1 COLLAPSED TO THE STRAIGHT FORM.** This sentence carries THREE slots — two possessives AND the contraction in *“didn't”* — and a re-ingest can curl any one of them independently. Driven by EQUALITY against the straight form, one slot at a time, so a build that kept two of three still reddens.",
+    file: "packages/engine/src/effects.ts",
+    find: "  `^Choose (\\\\d+) of your opponent['’]s Benched Pokémon\\\\. If you do, shuffle all of ` +",
+    replace: "  `^Choose (\\\\d+) of your opponent's Benched Pokémon\\\\. If you do, shuffle all of ` +",
+    expectKilledBy: ["packages/engine/src/benchKeepShuffleRest.test.ts"],
+  },
+  {
+    id: "D537-anchor-second-possessive-straight-only",
+    decision: "D537",
+    what: "🛑 (o) **APOSTROPHE SLOT 2 COLLAPSED** — the second printed possessive, in the *“that you didn't choose”* clause. Its own row because the two possessives sit in different clauses and a partial repair is the realistic mistake.",
+    file: "packages/engine/src/effects.ts",
+    find: "    `your opponent['’]s Benched Pokémon that you didn['’]t choose, and all cards ` +",
+    replace: "    `your opponent's Benched Pokémon that you didn['’]t choose, and all cards ` +",
+    expectKilledBy: ["packages/engine/src/benchKeepShuffleRest.test.ts"],
+  },
+  {
+    id: "D537-anchor-contraction-straight-only",
+    decision: "D537",
+    what: "🛑 (p) **APOSTROPHE SLOT 3 COLLAPSED — THE CONTRACTION, WHICH IS THE ONE A POSSESSIVE-SHAPED SWEEP MISSES.** Every other anchor in this family has possessive slots only; *“didn't”* is the first contraction in the corpus's `['’]` vocabulary, and a sweep written for `opponent['’]s` would never look at it.",
+    file: "packages/engine/src/effects.ts",
+    find: "    `your opponent['’]s Benched Pokémon that you didn['’]t choose, and all cards ` +",
+    replace: "    `your opponent['’]s Benched Pokémon that you didn't choose, and all cards ` +",
+    expectKilledBy: ["packages/engine/src/benchKeepShuffleRest.test.ts"],
+  },
+  {
+    id: "D537-anchor-tail-unanchored",
+    decision: "D537",
+    what: "🛑 (q) **THE TAIL `$` DROPPED, so the anchor claims any sentence that STARTS with this one.** A printed *“… Then, shuffle your deck.”* tail would be swallowed and the program would silently drop the second clause — the exact reason every sibling in this family is a whole-sentence `^…$`.",
+    file: "packages/engine/src/effects.ts",
+    find: "    \"attached to those Pokémon, into their deck\\\\.$\",",
+    replace: "    \"attached to those Pokémon, into their deck\\\\.\",",
+    expectKilledBy: ["packages/engine/src/benchKeepShuffleRest.test.ts"],
   },
 ];

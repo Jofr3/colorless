@@ -3653,6 +3653,45 @@ function stepOp(
         (ref) => returnBenched(state, ref, op, ctx, events),
         returnBenchedNote(op),
       );
+    case "returnBenchedRest": {
+      // 🆕🆕🆕 D537 — THE ONLY PARK IN THIS FILE WHOSE ANSWER NAMES THE BODIES THAT
+      // STAY. The candidates are the whole opponent Bench; the effect lands on the
+      // COMPLEMENT of the answer, in `applyChoice`.
+      //
+      // 🛑 **UNFILTERED BY §11, AND THAT IS D433's RULE RATHER THAN AN OMISSION.**
+      // `returnBenched` one case up wraps its opponent arm in `unshieldedRefs`
+      // because there the pick IS the effect — the body named is the body shuffled.
+      // Here the pick is the body left ALONE, and nothing is done to a kept body at
+      // all, so asking the shield here would refuse a candidate on behalf of an
+      // effect it will never receive AND would file a false `ATTACK_EFFECT_PREVENTED`
+      // row for a body that was about to be spared anyway. The shield is asked in
+      // `applyChoice`, AFTER the complement narrows the set — conventions.md's
+      // *"Ask the shield after narrowing"* (D433), whose only casualty when got wrong
+      // is a log row, which is exactly why it survives review.
+      const candidates = oppBenchRefs(state, ctx.seat);
+      // §8.6 "do as much as you can" with the M1 no-choice rule on top: at
+      // `candidates.length <= keep` the complement is EMPTY, so there is no effect to
+      // ask about and a prompt here would be a question with one answer (`parkOrForce`
+      // states both halves). Correct at bench 0/1/2 as well as at exactly `keep`.
+      if (candidates.length <= op.keep) return { done: state };
+      return {
+        park: {
+          kind: "choosePokemonMulti",
+          candidates,
+          // The printed number is EXACT — `min === max`, the all-or-nothing reading
+          // this prompt's own doc block spells. `declinable` is the separate printed
+          // "you may", which this sentence does not print.
+          min: op.keep,
+          max: op.keep,
+          declinable: false,
+          note: returnBenchedRestNote(op),
+        },
+        // NO `decider`: the CONTROLLER answers a pick on the other board, the call
+        // `knockOutChosen` (D416) and `damageChosen`'s `opponentAny` arm already make
+        // — §9.4's "the target is theirs, the choice is yours". This sentence prints
+        // no chooser, so nothing inverts it.
+      };
+    }
     case "returnSelf":
       // 🆕 D311 — the same unmaking with NO pick in it: the printed subject is
       // "this Pokémon", so the ref comes from `sourceRef` and there is nothing to
@@ -6284,6 +6323,34 @@ export function applyChoice(
       // arms above trust theirs — `returnBenched` re-reads the bench slot and
       // no-ops on a wire answer whose body has since left play.
       return pickedPokemon(choice) ? returnBenched(state, choice.ref, op, ctx, events) : state;
+    case "returnBenchedRest": {
+      // 🆕🆕🆕 D537 — THE INVERSION, AND IT LIVES ENTIRELY IN THIS ARM: the answer
+      // names the bodies that STAY, so what the writer receives is the COMPLEMENT.
+      if (choice.kind !== "pokemonMulti") return state;
+      const kept = choice.refs;
+      // The LIVE bench, re-read here rather than carried from the park —
+      // `returnBenched`'s trust level one arm up, verbatim: a wire answer whose body
+      // has since left play simply matches nothing and narrows nothing, and the
+      // writer re-reads every slot it touches before it touches it.
+      // ⚠️ `refKeyOf` AND NOT `cardplay.ts`'s `refEquals` — a claimed binding is a
+      // claim about a file (D536): `refEquals` is module-private to `cardplay.ts` and
+      // `tsc -b --force` says so. `refKeyOf` is this file's own, and its doc block
+      // already names the split.
+      const keptKeys = new Set(kept.map(refKeyOf));
+      const complement = oppBenchRefs(state, ctx.seat).filter(
+        (ref) => !keptKeys.has(refKeyOf(ref)),
+      );
+      // 🛑 **THE SHIELD IS ASKED HERE AND NOT AT THE PARK — AFTER NARROWING** (D433,
+      // conventions.md). The §11 question is only ever asked about bodies this effect
+      // is actually about to reach; a shielded body among the KEPT three files nothing,
+      // because nothing was going to happen to it.
+      return returnBenchedRest(
+        state,
+        unshieldedRefs(state, complement, ctx, events),
+        ctx,
+        events,
+      );
+    }
     case "opponentSwitchOut":
       // D227 — the resumed half of the case above, and at D228 it is that case
       // VERBATIM: `ctx.seat` is still the CONTROLLER here (the program's owner;
@@ -10792,6 +10859,89 @@ function returnBenched(
   return { ...withSide(state, owner, { ...side, bench, deck }), rngState };
 }
 
+/** 🆕🆕🆕 **D537 — Take EVERY ref in `refs` (the COMPLEMENT of the printed pick)
+    off ONE seat's Bench with every card attached to each of them and shuffle the
+    whole lot into that seat's deck, as ONE shuffle.**
+
+    🛑 **THIS IS NOT A LOOP OVER `returnBenched`, AND THE REASON IS A DEFECT IN
+    THAT FUNCTION THAT ONLY A SET-VALUED CALLER CAN SEE.** `returnBenched` removes
+    by `ref.spot.index` and never compares a uid, which is correct for the one-ref
+    op it was written for and wrong twice over for a set captured against the
+    PRE-APPLY bench:
+      • Bench `[A,B,C,D]`, remove `{1,3}` → B leaves, the bench COMPACTS to
+        `[A,C,D]`, and `bench[3]` is now `undefined`, so that function's own silent
+        `if (body === undefined) return state` fires and **one body survives**.
+      • Remove `{0,1}` → A leaves, `[B,C,D]`, and index 1 then removes **C, not B**
+        — **the wrong body**, with a correct-looking `POKEMON_RETURNED` naming it.
+    Both are SILENT. And its deck arm shuffles PER REF, so a loop would emit N
+    `SHUFFLE` rows and take N RNG draws for ONE printed shuffle: the right board
+    with the wrong log, which is exactly D433's false-prevention row all over again.
+
+    ⚠️ **GATHER BEFORE APPLY** — `returnSelf`'s D313 block, generalised from two
+    piles to N bodies. Every ref is resolved to its index, its `topUid` and its
+    `stackUids` BEFORE a single splice happens, so nothing downstream reads a bench
+    the loop has already moved.
+
+    ⚠️ **THE SPLICE IS STRICTLY DESCENDING BY INDEX, AND THAT IS CORRECT ONLY
+    BECAUSE EVERY CANDIDATE SITS ON ONE SEAT'S BENCH.** Removing the highest index
+    first means no surviving index ever shifts under a later removal. **THE
+    SINGLE-SEAT PRECONDITION IS THE LOAD-BEARING PART**: refs are filtered to
+    `owner` below, and a future caller handing this function a CROSS-SEAT candidate
+    set would break it silently, because two seats' indices interleave and
+    descending order over the union is not descending order within either bench.
+    `benchKeepShuffleRest.test.ts` §5 pins the ordering on a NON-ADJACENT pair,
+    which is the board an ascending splice gets wrong.
+
+    ⚠️ **ONE `POKEMON_RETURNED` PER BODY (D299's "one event per thing"), in board
+    order, and exactly ONE `SHUFFLE` PLUS ONE RNG DRAW** naming the OWNER rather
+    than the actor — `returnBenched`'s own rule, applied once to the whole pile.
+    No §8.1 promotion is owed: this op only ever touches a Bench. */
+function returnBenchedRest(
+  state: GameState,
+  refs: readonly PokemonRef[],
+  ctx: EffectContext,
+  events: GameEvent[],
+): GameState {
+  const first = refs[0];
+  // An EMPTY complement is a silent no-op and not an empty shuffle: the printed
+  // sentence moved nothing, so the deck must not be re-ordered and no row filed.
+  if (first === undefined) return state;
+  // THE SINGLE-SEAT PRECONDITION, enforced rather than assumed (see the block above).
+  const owner = first.seat;
+  const side = state.players[owner];
+  // ── GATHER (no mutation past this point until every read is done) ────────────
+  const gathered: { index: number; uid: string; uids: string[] }[] = [];
+  for (const ref of refs) {
+    if (ref.seat !== owner || ref.spot.spot !== "bench") continue;
+    const body = side.bench[ref.spot.index];
+    if (body === undefined) continue; // the wire answer's body has since left play
+    const uid = topUid(body);
+    if (uid === undefined) continue;
+    gathered.push({ index: ref.spot.index, uid, uids: stackUids(body) });
+  }
+  if (gathered.length === 0) return state;
+  // ── APPLY: strictly DESCENDING, so no surviving index shifts under a removal ──
+  let bench = side.bench;
+  for (const { index } of [...gathered].sort((a, b) => b.index - a.index)) {
+    bench = [...bench.slice(0, index), ...bench.slice(index + 1)];
+  }
+  const moved: string[] = [];
+  for (const body of gathered) {
+    events.push({
+      type: "POKEMON_RETURNED",
+      seat: owner,
+      uid: body.uid,
+      actor: ctx.seat,
+      dest: "deck",
+      uids: body.uids,
+    });
+    moved.push(...body.uids);
+  }
+  const [deck, rngState] = shuffle([...side.deck, ...moved], state.rngState);
+  events.push({ type: "SHUFFLE", seat: owner });
+  return { ...withSide(state, owner, { ...side, bench, deck }), rngState };
+}
+
 /** 🆕 D311 — Take the PROGRAM'S OWN body (`ctx.sourceUid`, the printed "this
     Pokémon") off the board with every card attached to it and shuffle the whole
     pile into its controller's deck.
@@ -11485,6 +11635,19 @@ function returnBenchedNote(op: Extract<EffectOp, { op: "returnBenched" }>): stri
   return op.dest === "deck"
     ? "Shuffle which of your Benched Pokémon into your deck?"
     : "Put which of your Benched Pokémon into your hand?";
+}
+
+/** 🆕🆕🆕 D537 — the `returnBenchedRest` pick prompt, and it is the one note in
+    this file that has to say what the answer SPARES rather than what it takes.
+    `returnBenchedNote`'s rule — *the printed card's own words minus its anaphora*
+    — applied to a sentence whose printed words are "Choose 3 of your opponent's
+    Benched Pokémon": the anaphora is the whole second clause ("…that you didn't
+    choose…"), and what replaces it is the one fact the bare first clause hides,
+    that the named bodies are the ones that STAY. The number is the PRINTED one
+    (D205 — a caption that quoted a board-clamped count would contradict a prompt
+    whose `min`/`max` are `op.keep` exactly). */
+function returnBenchedRestNote(op: Extract<EffectOp, { op: "returnBenchedRest" }>): string {
+  return `Choose ${op.keep} of your opponent's Benched Pokémon to leave in play.`;
 }
 
 /** The pick prompt's printed sentence — the whole clause, since the op IS the
