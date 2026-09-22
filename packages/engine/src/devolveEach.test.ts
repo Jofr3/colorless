@@ -74,22 +74,42 @@ import { koByEffectMarker } from "./types";
 // the claim cannot rot). Row 87 varies from row 88 on TWO axes at once —
 // cardinality (a PARKED single choice vs a sweep) and destination (hand vs
 // deck-plus-shuffle) — so a parameterised op would carry a pool of ONE on both
-// fields, which is D121's warrant unmet twice over. Row 87 is left unbuilt and
-// used as this suite's loud-path witness (§10).
+// fields, which is D121's warrant unmet twice over.
+//
+// 🆕🆕🆕 **D540 — THE FIRST HALF OF THAT PARAGRAPH IS THE WARRANT FOR THE SLICE THAT
+// EXPIRED THE SECOND.** What it refused is a PARAMETERISED op, and that refusal stands
+// exactly as written. What it did NOT refuse is a SECOND FIELD-FREE op, which is the
+// door it left open and named (*"the two ops share … in interpreter.ts rather than one
+// widening into the other"*). 🛑 **The sentence that read *"Row 87 is left unbuilt and
+// used as this suite's loud-path witness (§10)"* HAS EXPIRED**: row 87 is BUILT as
+// `devolveChosen` (`devolveChosen.test.ts`), the `/[Dd]evolv/` family is CLOSED at 2
+// sentences / 4 printings with zero unresolved rows, and §10's loud-path witness is now
+// corpus row 346 — see `WITNESS` below for which row and why that one.
 
 const SENTENCE =
   "Devolve each of your opponent's evolved Pokémon by shuffling the highest Stage Evolution card on it into your opponent's deck.";
-/** Corpus row 87 — the family's OTHER member, 1 legal printing, deliberately
-    unbuilt. Not a refusal near-miss (it differs on two axes); the loud-path
-    witness (§10) and the literal-vs-template evidence (§1). */
+/** Corpus row 87 — the family's OTHER member, 1 legal printing. 🆕🆕🆕 **D540: BUILT,
+    as `devolveChosen`.** The two sentences that stood here — *"deliberately unbuilt"*
+    and *"the loud-path witness (§10)"* — have EXPIRED; what has NOT changed is that it
+    is not a refusal near-miss (it differs from row 88 on two axes) and that it is the
+    literal-vs-template evidence (§1). Its own suite is `devolveChosen.test.ts`. */
 const SIBLING =
   "Devolve 1 of your opponent's evolved Pokémon by putting the highest Stage Evolution card on it into your opponent's hand.";
+
+/** 🆕🆕🆕 D540 — the REPLACEMENT loud-path witness for §10, corpus row 346: **1 legal
+    printing**, classified `OPAQUE` at BOTH `SUBMAX=4` and `SUBMAX=12`, and a family of
+    ONE (`/win this game/` over the whole 640-sentence corpus returns exactly it). §10
+    asserts it is unresolved off the live census predicate, so the day it is built this
+    suite reddens instead of lying (D422's executable falsifier). */
+const WITNESS =
+  "If you use this attack when you have exactly 1 Prize card remaining, you win this game.";
 
 const CALL = 0; // {C}, NO damage, the sentence — the pure "maximum moved" board
 const BLOW = 1; // {C}, 130 damage, the sentence — the already-lethal board (§6)
 const PLAIN = 2; // {C}, NO damage, NO effect — the one-axis control
-const HAND = 3; // {C}, NO damage, corpus row 87 — the loud ATTACK_EFFECT_SKIPPED witness
+const HAND = 3; // {C}, NO damage, corpus row 87 — 🆕 D540: BUILT, so no longer a skip
 const TOLL = 4; // {C}, a PARKING sibling, so §11 has a persisted `cont.rest` to load
+const WIN = 5; // 🆕 D540 — {C}, corpus row 346, the replacement loud-path witness (§10)
 
 /** The chain this suite devolves down: 60 / 90 / 140 HP, three distinct numbers so
     no assertion can be satisfied by the wrong body. The ids are `fix-*` keys with
@@ -106,6 +126,7 @@ const LOCAL_CARDS: Record<string, Card> = {
       { cost: ["Colorless"], name: "Plain Call" },
       { cost: ["Colorless"], name: "Hand Regression", effect: SIBLING },
       { cost: ["Colorless"], name: "Ancestral Toll", effect: "Discard an Energy from this Pokémon." },
+      { cost: ["Colorless"], name: "Last Gambit", effect: WITNESS },
     ],
   }),
   "fix-dev-basic": battler("fix-dev-basic", { types: ["Colorless"], hp: 60, retreat: 1 }),
@@ -383,14 +404,26 @@ describe("§1 — the sentence derives to ONE field-free op", () => {
     // own falsifier).
     expect(rows).toHaveLength(2);
     expect(rows.map(([, text]) => text).sort()).toEqual([SENTENCE, SIBLING].sort());
-    // …and the printing counts that make row 88 worth an op and row 87 not.
+    // …and the printing counts, read off the corpus. 🆕🆕🆕 **D540 — the clause that
+    // read *"the printing counts that make row 88 worth an op and row 87 not"* HAS
+    // EXPIRED**: row 87 is built at ONE printing, and the argument for it was the
+    // FAMILY CLOSURE and the in-tree prescription, never the yield. The figures
+    // themselves are unchanged and are still read rather than recalled.
     expect(rows.find(([, text]) => text === SENTENCE)?.[0]).toBe(3);
     expect(rows.find(([, text]) => text === SIBLING)?.[0]).toBe(1);
   });
 
-  it("the sentence is claimed by a READER and the sibling by NOTHING", () => {
+  it("🆕 BOTH family members are claimed by a READER — the family is CLOSED", () => {
+    // 🆕🆕🆕 **D540 INVERTED THE SECOND LINE.** It read
+    // `expect(resolvedByAnyReader(SIBLING)).toBe(false)` from D433 until D540 built row
+    // 87 as `devolveChosen`. The rung is KEPT rather than deleted, because what it now
+    // measures is the CLOSURE this suite's own population claim is about: `/[Dd]evolv/`
+    // returns exactly two rows (above) and neither is unresolved.
     expect(resolvedByAnyReader(SENTENCE)).toBe(true);
-    expect(resolvedByAnyReader(SIBLING)).toBe(false);
+    expect(resolvedByAnyReader(SIBLING)).toBe(true);
+    // …and the loud-path witness §10 now uses is NOT resolved, which is what makes that
+    // section a witness at all rather than a rung that passes for the wrong reason.
+    expect(resolvedByAnyReader(WITNESS)).toBe(false);
   });
 
   it("the op reaches a real attack program through `programFor`'s fallback", () => {
@@ -978,12 +1011,31 @@ describe("§10 — `ATTACK_EFFECT_SKIPPED`, both directions", () => {
     expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
   });
 
-  it("🛑 corpus row 87 — the family's OTHER sentence — is still LOUD", () => {
-    // The witness that "built" means something. Same card, same board, same turn:
-    // only the index moves.
+  it("🆕 corpus row 87 — the family's OTHER sentence — is NO LONGER loud", () => {
+    // 🆕🆕🆕 **D540 INVERTED THIS RUNG.** It asserted that row 87 emitted
+    // `ATTACK_EFFECT_SKIPPED`; row 87 is now BUILT, so the same board on the same index
+    // emits a DEVOLUTION instead. Kept rather than deleted: the inversion is the
+    // evidence that the sentence moved off the loud path, and the replacement witness
+    // is the rung below.
     const { events } = strike(armed(20, { stages: 1 }), "p1", HAND);
+    expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
+    expect(find(events, "POKEMON_DEVOLVED")?.zone).toBe("hand");
+  });
+
+  it("🛑 THE REPLACEMENT LOUD-PATH WITNESS — corpus row 346 is still LOUD", () => {
+    // The witness that "built" means something. Same card, same board, same turn: only
+    // the index moves. ⚠️ **WHICH ROW, AND WHY THIS ONE.** `WITNESS` is corpus row 346,
+    // *"If you use this attack when you have exactly 1 Prize card remaining, you win
+    // this game."* — 1 legal printing, classified `OPAQUE` at BOTH `SUBMAX=4` and
+    // `SUBMAX=12`, and a family of ONE (`/win this game/` over the 640-sentence corpus
+    // returns exactly it). Corpus row 394 (*"Look at 1 of your opponent's face-down
+    // Prize cards."*) was the obvious alternative and was DECLINED: it sits in the
+    // 2-row `/face-down Prize/` family a live pricing report names as a candidate
+    // closure, and a witness inside a family under active pricing is a rung scheduled
+    // to expire — which is the exact rot this slice spent its time cleaning up.
+    const { events } = strike(armed(20, { stages: 1 }), "p1", WIN);
     const skipped = find(events, "ATTACK_EFFECT_SKIPPED");
-    expect(skipped?.effect).toBe(SIBLING);
+    expect(skipped?.effect).toBe(WITNESS);
   });
 
   it("the no-effect control emits no skip either — an absent sentence is not a gap", () => {
@@ -1060,7 +1112,7 @@ describe("§11 — the version prediction is DRIVEN, not asserted", () => {
   });
 
   it("the engine version moved with the behaviour", () => {
-    expect(engineVersion).toBe("0.424.0");
+    expect(engineVersion).toBe("0.425.0");
   });
 });
 

@@ -7858,10 +7858,19 @@ export type EffectOp =
       PARK) and DESTINATION (deck-plus-shuffle vs hand) — so a parameterised
       `{ whose, count, dest }` op would carry a pool of ONE on both fields and be a
       guess about the second, which is D121's warrant unmet twice over (its precondition
-      is two printings with ONE token varying). Row 87 is left on the loud
-      `ATTACK_EFFECT_SKIPPED` path and used as this suite's skip witness instead. The
-      day it is built, the two ops share `devolveBody` in interpreter.ts rather than one
-      widening into the other — the same call `returnSelf`/`returnBenched` made.
+      is two printings with ONE token varying). The refusal of the PARAMETER stands
+      exactly as written. 🆕🆕🆕 **RE-POINTED AT D540: the two sentences that
+      followed it here — *"Row 87 is left on the loud `ATTACK_EFFECT_SKIPPED` path and
+      used as this suite's skip witness instead"* — HAVE EXPIRED.** Row 87 is BUILT, as
+      the SIBLING FIELD-FREE op `devolveChosen` (its own block is immediately below
+      this one), which is the door this paragraph left open rather than a reversal of
+      it. The `/[Dd]evolv/` family is now CLOSED at 2 sentences / 4 printings with zero
+      unresolved rows. ✅ **AND THE PRESCRIPTION IN THE NEXT SENTENCE WAS HONOURED**:
+      *"the two ops share … in interpreter.ts rather than one widening into the other"*
+      — they share `devolveTargets` (the printed candidate set, D331/D416's ONE-funnel
+      rule) and `devolvedBodyOf` (the §10/§12 shed object), which is the drift hazard
+      the block below names, and NOTHING else was extracted. `devolveEach.test.ts`
+      §10's loud-path witness is now corpus row 346, not this sentence.
 
       🛑 **FIELD-FREE, BECAUSE EVERY TOKEN OF THE SENTENCE IS SPENT.** "each of
       your opponent's" is the side AND the quantifier, "evolved" is the filter,
@@ -7889,6 +7898,47 @@ export type EffectOp =
       inhabitant, and the op never parks — so nothing it produces reaches `phase.cont`.
       Driven in BOTH directions in `devolveEach.test.ts` §9. */
   | { op: "devolveEach" }
+  /** 🆕🆕🆕 **D540 — THE SAME DEVOLUTION WITH A PICK IN IT.**
+      *"Devolve 1 of your opponent's evolved Pokémon by putting the highest Stage
+      Evolution card on it into your opponent's hand."* — **1 sentence / 1 legal
+      printing**, `censusAttackCorpus.ts` row 87, and it CLOSES the `/[Dd]evolv/`
+      family at **2 sentences / 4 printings** with ZERO unresolved rows and no
+      Ancient/Future/Tera member in it. ⚠️ **ONE PRINTING IS ONE PRINTING**: the case
+      for this op is that closure, the prescription written into the block one row up
+      at D433 (*"the two ops share … in interpreter.ts rather than one widening into
+      the other"*), and the near-total reuse — NOT the yield.
+
+      🛑 **A SIBLING, NOT A PARAMETER, AND D433's REFUSAL IS THE WARRANT RATHER THAN
+      THE OBSTACLE.** The block above refused a `{ whose, count, dest }` op because
+      rows 87 and 88 vary on TWO axes at once, so each field would carry a pool of ONE
+      — D121's warrant unmet twice over. That refused a PARAMETERISED op; a SECOND
+      FIELD-FREE op is the door it left open, and the door it explicitly named.
+
+      🛑 **FIELD-FREE, BECAUSE EVERY TOKEN IS SPENT** — the sibling's read one row
+      over, re-run on this string rather than copied: *"1 of your opponent's"* is the
+      side AND the cardinality, *"evolved"* is the `stack.length >= 2` filter (§1.2's
+      identity rule), *"the highest Stage Evolution card"* is ONE card off the top of
+      `stack`, and *"into your opponent's hand"* is the destination. There is NO
+      shuffle and NO *"You may"*, so nothing is captured and nothing is optional.
+
+      🛑 **IT PARKS, AND THAT IS THE ONE PLACE THIS BLOCK MUST NOT COPY ITS SIBLING'S.**
+      `devolveEach`'s paragraph ends *"…and the op never parks — so nothing it produces
+      reaches `phase.cont`"*. That is TRUE of `devolveEach` and **FALSE of this op**:
+      *"1 of"* is a PICK, `parkOrForce` files a `choosePokemon` prompt at two or more
+      candidates, and `{op:"devolveChosen"}` therefore DOES reach
+      `phase.cont.pendingOp` and IS serialized into a `MatchRecord`'s `GameState`.
+
+      ⚠️ **AND `MATCH_RECORD_VERSION` STILL STAYS 30, WHICH IS D125's WIDENING AND NOT
+      A CONSEQUENCE OF NOT PARKING.** Adding a member to `EffectOp` is free at a
+      persisted address for the reason `takePrize` and `discardStadium` state: no v30
+      deploy could author the byte string `{"op":"devolveChosen"}`, and every byte
+      string a v30 deploy DID write still means exactly what it meant. No
+      `InPlayPokemon` field, no `GameState` field, no new `PendingStage` inhabitant and
+      no new prompt kind — `choosePokemon` and the `{kind:"pokemon"; ref?}` answer are
+      reused. Driven in BOTH D450 directions in `devolveChosen.test.ts` §10, over the
+      SERIALIZED BYTES and with `"cont" in phase === true`, which is the half the
+      sibling's suite could not reach. */
+  | { op: "devolveChosen" }
   /** 🆕🆕 **D380 — §7.3, THE STADIUM ZONE EMPTIED BY AN ATTACK.** *"Discard a
       Stadium in play."* — Hisuian Growlithe `sv06-099`/`sv06-181` "Blazing
       Destruction" (**no Energy cost**, no damage), Skarmory `sv06-119` "Big Storm"
@@ -24872,11 +24922,16 @@ export function searchTopOrderProgram(n: number): EffectOp[] {
 // 88. Row 87 (*"Devolve 1 of your opponent's evolved Pokémon by putting the highest
 // Stage Evolution card on it into your opponent's hand."*, 1 printing) varies from
 // this one on TWO axes at once — a PARKED single choice instead of a sweep, and the
-// hand instead of the deck — so it is NOT this anchor's single-axis near-miss and it
-// is deliberately left on the loud `ATTACK_EFFECT_SKIPPED` path; `^…$` is what keeps
-// it there. `devolveEach.test.ts` §2 uses CONSTRUCTED single-axis near-misses for the
-// refusal rungs (D427: a miss that differs on more than one axis tests nothing about
-// either) and drives row 87 as the skip witness instead.
+// hand instead of the deck — so it is NOT this anchor's single-axis near-miss, and
+// `^…$` is what keeps each anchor off the other's string in both directions.
+// `devolveEach.test.ts` §2 uses CONSTRUCTED single-axis near-misses for the refusal
+// rungs (D427: a miss that differs on more than one axis tests nothing about either).
+// 🆕🆕🆕 **RE-POINTED AT D540: the clause saying row 87 is *"deliberately left on the
+// loud `ATTACK_EFFECT_SKIPPED` path"*, and the one calling it *"the skip witness"*,
+// HAVE EXPIRED.** Row 87 is built by `DEVOLVE_CHOSEN_TO_HAND` and arm 41-ter, so the
+// two anchors are now NEIGHBOURS rather than a built one and a witness; what still
+// holds unchanged is that neither can claim the other's string, which
+// `devolveChosen.test.ts` §2 drives as a four-cell matrix.
 //
 // ⚠️ **BOTH APOSTROPHES ARE U+0027 AND THAT WAS MEASURED, NOT REMEMBERED** —
 // `hexdump -C` on corpus row 88 shows `0x27` at both possessive slots. The `['’]`
@@ -24889,6 +24944,46 @@ export function searchTopOrderProgram(n: number): EffectOp[] {
 const DEVOLVE_EACH_TO_DECK = new RegExp(
   `^Devolve each of your opponent['’]s evolved Pokémon by shuffling the highest ` +
     `Stage Evolution card on it into your opponent['’]s deck\\.$`,
+);
+// 🆕🆕🆕 **D540 — THE DEVOLUTION WITH A PICK IN IT.** *"Devolve 1 of your
+// opponent's evolved Pokémon by putting the highest Stage Evolution card on it into
+// your opponent's hand."* — **1 sentence / 1 legal printing**, `censusAttackCorpus.ts`
+// row 87, placed immediately beside `DEVOLVE_EACH_TO_DECK` because the two are the
+// WHOLE of the `/[Dd]evolv/` family and a reader who finds one must find the other.
+//
+// 🛑 **THE FAMILY IS NOW CLOSED, AND THAT — NOT THE PRINTING COUNT — IS THE CASE FOR
+// THE ROW.** `/[Dd]evolv/` over the whole 640-sentence `legal_standard = 1` corpus
+// returns exactly rows 87 and 88, **2 sentences / 4 printings**, and with this anchor
+// both RESOLVE: the family goes to ZERO unresolved rows with no Ancient/Future/Tera
+// member in it, so the closure is real rather than an artefact of what is off the
+// table. **ONE PRINTING IS ONE PRINTING** — the yield is the smallest this engine
+// buys, and the argument is the CLOSURE, the in-tree prescription one block up
+// (*"The day it is built, the two ops share … in interpreter.ts rather than one
+// widening into the other"*, written at D433 and honoured here as `devolveTargets` +
+// `devolvedBodyOf`), and the near-total reuse of shipped machinery.
+//
+// ⚠️ **A SECOND FIELD-FREE OP, NOT A PARAMETERISED ONE, AND D433's OWN REFUSAL IS THE
+// WARRANT.** That paragraph refused a `{ whose, count, dest }` op because rows 87 and
+// 88 vary on TWO axes at once and each field would carry a pool of ONE (D121's
+// precondition is two printings with ONE token varying). It refused a PARAMETER; it
+// did not refuse a SIBLING. Every token of THIS sentence is spent too — `1 of your
+// opponent's` is the side and the cardinality, `evolved` is the `stack.length >= 2`
+// filter, `the highest Stage Evolution card` is one card off the top, `into your
+// opponent's hand` is the destination — and there is NO shuffle and NO "You may".
+//
+// ⚠️ **BOTH APOSTROPHES ARE U+0027 AND THAT WAS MEASURED AT THIS HEAD, NOT REMEMBERED**
+// — sentence indices **26** and **113** (file-line indices 28 and 115; the corpus line
+// carries a two-character `"1 "` count prefix), read by a script off the committed
+// column. The `é` is a single real U+00E9 and is NOT decomposed, which is the other
+// half of the same measurement. Two `['’]` slots, kept for the family's standing
+// reason (a re-ingest could curl them, D137) although neither is curled today — D421
+// got exactly this wrong from memory and D425 checked it.
+//
+// ⚠️ **NO CAPTURE, SO ARM 41-ter IS A `test` AND NOT AN `exec`**, and no `/i`: the
+// standing policy of every deriver in this file.
+const DEVOLVE_CHOSEN_TO_HAND = new RegExp(
+  `^Devolve 1 of your opponent['’]s evolved Pokémon by putting the highest ` +
+    `Stage Evolution card on it into your opponent['’]s hand\\.$`,
 );
 const RETURN_BENCHED = new RegExp(
   "^(?:" +
@@ -30242,7 +30337,41 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   //     "Shuffle"/"Put"/"Flip"), so neither can claim a string the other matches in
   //     either direction — `devolveEach.test.ts` §2 drives this sentence against
   //     `RETURN_BENCHED` and row 42's three sentences against this anchor.
+  //
+  //     🛑 **RE-POINTED AT D540, BECAUSE THE FIRST-WORD HALF OF THAT ARGUMENT IS NOW
+  //     FALSE AS WRITTEN AND NOTHING COULD SEE IT.** Arm 41-ter directly below is
+  //     `DEVOLVE_CHOSEN_TO_HAND`, whose first word is ALSO "Devolve", so
+  //     *"the first WORD differs"* no longer distinguishes this arm from its nearest
+  //     neighbour. It still holds against ARM 42 exactly as written, which is the pair
+  //     the sentence names — the claim is KEPT rather than deleted (D178/D418) and
+  //     SCOPED to that pair. **Against 41-ter the order is free on TOKEN 2** (`each`
+  //     vs `1`) plus both anchors being fully `^…$`, so neither can match a string the
+  //     other matches in either direction. `devolveChosen.test.ts` §2 drives that as a
+  //     2×2 MATRIX — anchor × string, all four cells, off the live module — rather
+  //     than re-asserting it in prose here. ⚠️ This site is NOT found by a
+  //     `git grep -F` over the sentence: it is a withdrawn CLAIM, not a copied string,
+  //     which is D539's close-out lesson (a withdrawn claim still standing at six
+  //     sites). **Sweep a claim like a value.**
   if (DEVOLVE_EACH_TO_DECK.test(effect)) return [{ op: "devolveEach" }];
+
+  // 41-ter. 🆕🆕🆕 D540 — "Devolve 1 of your opponent's evolved Pokémon by
+  //     putting the highest Stage Evolution card on it into your opponent's hand."
+  //     **1 sentence / 1 legal printing**, corpus row 87, and it CLOSES the
+  //     `/[Dd]evolv/` family at 2 sentences / 4 printings with ZERO unresolved rows.
+  //     A `test` and not an `exec` for arm 41-bis's reason re-run on this string:
+  //     `DEVOLVE_CHOSEN_TO_HAND` has no capture group, because the side, the
+  //     cardinality, the "evolved" filter, the one-card reading and the destination
+  //     are all spent at the op.
+  //
+  //     UNGATED: no coin and no "You may" is printed on the one printing.
+  //
+  //     ⚠️ THE ORDER AGAINST 41-bis IS FREE ON TOKEN 2 AND NOT ON THE FIRST WORD —
+  //     both arms begin "Devolve", which is why 41-bis's claim was re-pointed above
+  //     rather than left to read as covering this pair. Both anchors are fully
+  //     `^…$` and differ at `each` vs `1`, so neither can claim a string the other
+  //     matches in either direction; `devolveChosen.test.ts` §2 drives all four cells
+  //     of the anchor × string matrix off the live module.
+  if (DEVOLVE_CHOSEN_TO_HAND.test(effect)) return [{ op: "devolveChosen" }];
 
   // 42-bis. 🆕🆕🆕 D537 — "Choose 3 of your opponent's Benched Pokémon. If you do,
   //     shuffle all of your opponent's Benched Pokémon that you didn't choose, and

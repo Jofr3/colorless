@@ -93,8 +93,33 @@ export type GameEvent =
       ⚠️ **ONE ROW PER BODY AND ONE `SHUFFLE` FOR THE WHOLE SWEEP.** The cards are
       gathered and the deck is touched at most once (`returnSelf`'s stated rule), so a
       sweep that devolves three bodies files three of these and ONE `SHUFFLE`, and a
-      sweep that devolves nothing files neither. */
-  | { type: "POKEMON_DEVOLVED"; seat: Seat; actor: Seat; from: string; to: string }
+      sweep that devolves nothing files neither. 🆕🆕🆕 **D540: that sentence is
+      scoped to `devolveEach` and stays true of it; `devolveChosen` files ONE row and
+      NO `SHUFFLE` at all**, which is what the `zone` rider below exists to say.
+
+      🆕🆕🆕 **D540 — `zone`, THE OPTIONAL DESTINATION RIDER, AND IT IS ADDED BECAUSE
+      WITHOUT IT THE HAND MOVE IS ANNOUNCED NOWHERE.** This row was authored
+      destination-AGNOSTIC: it names the two uids and the seats and no zone, and
+      log.ts's row renders *"devolved X → Y"* and names none either. That was complete
+      while the ONE producer always shuffled into the owner's DECK, and a reader could
+      infer the zone from the `SHUFFLE` beside it. Row 87 puts the card into the
+      owner's HAND with no `SHUFFLE` on the path, so the two producers would have
+      emitted INDISTINGUISHABLE rows for two different board changes.
+
+      ⚠️ **OPTIONAL AND NOT REQUIRED, WHICH IS D425's CALL AND D125's WIDENING.**
+      Absent means the DECK — exactly what every row written before this slice meant —
+      so `devolveEach` emits byte-identical rows and no shipped consumer changes.
+      `GameEvent` is NOT persisted at all (`MatchRecord` stores the RENDERED
+      `SeatLogEntry[]`), so no `MATCH_RECORD_VERSION` question arises either way; the
+      rider is optional because the DEFAULT is meaningful, not to duck a bump. */
+  | {
+      type: "POKEMON_DEVOLVED";
+      seat: Seat;
+      actor: Seat;
+      from: string;
+      to: string;
+      zone?: "hand";
+    }
   /** The compensation decision resolving (§3.5) — fires even when the owed
       player declines, because the phase advances either way and an
       event-only consumer must not be left waiting on the prompt. */

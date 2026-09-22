@@ -255,14 +255,26 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
     // be true today and true only BY CONSTRUCTION OF ONE OP — D425's `DAMAGE_DEALT`
     // defect verbatim — so the seat is read off the row rather than recomputed from it.
     //
-    // `from` is still resolvable: it went into the owner's DECK, and `cardName` reads
-    // the catalog index by uid rather than the board.
+    // `from` is still resolvable: it went into the owner's DECK — 🆕🆕🆕 **or, since
+    // D540, into the owner's HAND** — and `cardName` reads the catalog index by uid
+    // rather than the board, so either zone renders.
+    //
+    // 🆕🆕🆕 **D540 — THE ZONE IS NAMED WHEN IT IS THE HAND, AND ONLY THEN.** The row
+    // was authored destination-agnostic and the shipped producer always shuffled into
+    // the owner's DECK, with a `SHUFFLE` row beside it a reader could infer the zone
+    // from. `devolveChosen` files no `SHUFFLE`, so without this branch the hand move
+    // would be announced NOWHERE (see `events.ts` for the rider). An ABSENT `zone` is
+    // the deck and renders byte-identically to every row written before this slice —
+    // which is why the branch is on the RIDER and not on the op or the actor.
     case "POKEMON_DEVOLVED":
       return row(event.actor, [
         plain("devolved "),
         strong(`${names[event.seat]}'s ${cardName(state, event.from)}`),
         plain(" → "),
         strong(cardName(state, event.to)),
+        ...(event.zone === "hand"
+          ? [plain(` — to ${names[event.seat]}'s hand`)]
+          : []),
       ]);
     case "COMPENSATION_DECIDED":
       // A draw already logged its own CARDS_DRAWN row; only the decline is

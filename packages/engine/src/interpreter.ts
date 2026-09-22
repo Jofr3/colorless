@@ -3812,6 +3812,48 @@ function stepOp(
     // see `devolveEach` for D414's `koByEffect` stamp and the `wasLethal` conjunct.
     case "devolveEach":
       return { done: devolveEach(state, ctx, events) };
+    // 🆕🆕🆕 D540 — THE SAME DEVOLUTION WITH A PICK IN IT, corpus row 87, and the
+    // arm is three shipped pieces with nothing between them — `knockOutChosen`'s
+    // byte template one op over:
+    //   • `devolveTargets` — the ONE funnel, SHARED with `devolveEach`, so the offer
+    //     cannot come to mean something the card does not say (D331/D416);
+    //   • `unshieldedRefs` — §11 as a FILTER rather than a guard (D259/D416),
+    //     because a shielded body must not be OFFERED. ASKED SECOND, which is the
+    //     whole correctness of the refusal row: over the unnarrowed board it would
+    //     file an `ATTACK_EFFECT_PREVENTED` for a Mist-Energy'd BASIC this op was
+    //     never going to touch (see `devolveTargets`);
+    //   • `parkOrForce` — the M1 doctrine for free, and this is its TENTH caller
+    //     (MEASURED at this head: 9 CALL SITES at HEAD and 10 after — the brief
+    //     said "eighth" and the count was checked rather than copied. 🛑 A LITERAL
+    //     `grep -c 'return parkOrForce('` reads 9 at HEAD but ELEVEN here, because
+    //     THIS COMMENT LINE MATCHES ITS OWN PATTERN — the instrument is not what
+    //     measured it, which is the same shape this slice re-pointed for the
+    //     six-in-tree-sites sentence claim. The 10 is a count of CALL SITES,
+    //     read off the arms and not off that grep):
+    //     an opponent board with nothing evolved on it is a SILENT no-op, a lone
+    //     evolved body is FORCED with no prompt, and two or more park on the
+    //     existing `choosePokemon` prompt.
+    //
+    // 🛑 NO `decider` AND NO `upTo`, and both absences are the print. The sentence
+    // says neither "(Your opponent chooses …)" nor "You may", so the pick is the
+    // ATTACKER's and it is MANDATORY — `knockOutChosen`'s reading verbatim, and the
+    // only reading under which "Devolve 1 of your opponent's …" is a decision its
+    // controller gets to make. `upTo` would move the FORCED arm (see `parkOrForce`)
+    // and turn a lone candidate into a question the card does not ask.
+    //
+    // ⚠️ IT CHANGES A BODY'S MAXIMUM, so the §8.1 Knock Out it owes is
+    // `finishAttack`'s `collectKnockOuts` / `settleProgram`'s
+    // `resolveMidTurnKnockOuts`, never this line — `devolveEach`'s seam, and what
+    // the op DOES owe here is the CAUSE (D414's stamp, inside the writer).
+    case "devolveChosen": {
+      const offered = unshieldedRefs(state, devolveTargets(state, ctx.seat), ctx, events);
+      return parkOrForce(
+        state,
+        offered,
+        (ref) => devolveBodyToHand(state, ref, ctx, events),
+        devolveChosenNote(ctx.seat, offered),
+      );
+    }
     case "healChosen": {
       // `zone: "bench"` is the printed word "Benched" and nothing else (D135):
       // it drops the Active from the candidate set and changes NOTHING else —
@@ -6420,6 +6462,30 @@ export function applyChoice(
       return pickedPokemon(choice)
         ? moveCountersToDefender(state, choice.ref, ctx, events)
         : state;
+    // 🛑🛑 **🆕🆕🆕 D540 — THE RESUMED HALF, AND IT IS THE ONE SITE IN THIS SLICE THE
+    // COMPILER CANNOT SEE.** This `switch` ends in a `default:` that returns `state`
+    // unchanged — *"Synchronous ops never park, so never reach the choice path"* —
+    // so OMITTING this arm TYPECHECKS GREEN and then SILENTLY DISCARDS the player's
+    // answer: the op parks, the prompt is answered, the board comes back identical,
+    // and there is no event, no log row and no census figure to notice. `tsc -b
+    // --force` names the `stepOp` arm (`TS2366 Function lacks ending return
+    // statement`) and says NOTHING about this one. `devolveChosen.test.ts` §4 is the
+    // rung that can see it, and it must drive the PARKED ≥ 2 path through
+    // `resolveEffect` on a real board and assert the HOSTS' stacks and the victim's
+    // HAND — not the op's shape (D421, and D539's third-site lesson: price the sites
+    // the TYPE SYSTEM CANNOT CHECK separately from the ones it can).
+    //
+    // It is the SAME call the forced half makes, which is the whole point of routing
+    // both through one writer: a forced devolution and an answered one are
+    // byte-identical boards. `devolveBodyToHand` re-reads the named spot and no-ops on
+    // a wire answer whose body has since left play — `knockOutChosen`'s trust level,
+    // and the reason no re-validation is spelled here.
+    //
+    // ⚠️ NO §11 ASK ON THIS PATH EITHER. The shield filtered the CANDIDATES before the
+    // prompt was ever written, and `validateChoice` refuses any ref that is not among
+    // them, so a shielded body cannot reach this line.
+    case "devolveChosen":
+      return pickedPokemon(choice) ? devolveBodyToHand(state, choice.ref, ctx, events) : state;
     case "moveCountersChosen": {
       // D216 — the two parks of one sentence, told apart by the same field
       // `stepOp` branches on. The SOURCE answer moves nothing at all: what it
@@ -11241,6 +11307,90 @@ function returnSelf(
   return { ...withSide(state, seat, { ...placed, deck }), rngState };
 }
 
+/** 🆕🆕🆕 **D540 — THE ONE FUNNEL FOR THE PRINTED *"evolved"* CANDIDATE SET**, and it
+    exists because the `/[Dd]evolv/` family now has TWO ops in it: row 88's sweep
+    (`devolveEach`) and row 87's pick (`devolveChosen`). D433's own doc block wrote the
+    prescription in advance — *"the two ops share … in interpreter.ts rather than one
+    widening into the other"* — and this is one half of honouring it. `gustTargets`
+    (D331) and `knockOutChosenTargets` (D416) earned their funnels the same way: two
+    spellings of one printed set are two chances to disagree about what the card says.
+
+    §1.2's identity rule is what makes *"evolved"* `stack.length >= 2`: a body with one
+    card on it is what it was played as, and only a stack of two or more has an
+    evolution card to shed. The ORDER is `oppAnyRefs`' — the opponent's Active first,
+    then the Bench in index order, which is also `lethalRefs`' — so the log rows, the
+    prompt's candidate list and the KO sweep all read the board the same way round.
+
+    🛑 **THE SHIELD IS DELIBERATELY NOT IN HERE**, and for BOTH callers the ORDER is
+    the whole correctness of the refusal row: `unshieldedRefs` is asked of the set this
+    function returns, never of the whole board, or a Mist-Energy'd BASIC neither op was
+    ever going to touch would file an `ATTACK_EFFECT_PREVENTED` row — a refusal
+    announcing an effect that does not exist (D430: a log row is a claim with the same
+    standing as a predicate). `devolveEach`'s own block states that at length and both
+    call sites keep it: **`devolveTargets` first, `unshieldedRefs` second.** */
+function devolveTargets(state: GameState, seat: Seat): PokemonRef[] {
+  return oppAnyRefs(state, seat).filter((ref) => {
+    const side = state.players[ref.seat];
+    const spot = ref.spot;
+    const target = spot.spot === "active" ? side.active : side.bench[spot.index];
+    return target !== null && target !== undefined && target.stack.length >= 2;
+  });
+}
+
+/** 🆕🆕🆕 **D540 — THE §10/§12 SHED OBJECT, ONE SPELLING FOR TWO OPS**, and the
+    other half of D433's prescription. This is ~20 fields of carry-over decision, each
+    one argued in the comments below, and the hazard is named in D433's own text: *"the
+    four §10 literals AGREE about the durated set and disagree only about `markers`"*.
+    A second copy for `devolveChosen` would be a fifth literal free to drift from the
+    fourth on any of them, silently, with no assertion able to see it — so the object
+    is written ONCE and both writers call it.
+
+    ⚠️ **MOVED VERBATIM OUT OF `devolveEach`'s PUSH**: every field and every reason is
+    byte-for-byte what that literal held, so this extraction is a refactor and not a
+    decision. What it is NOT is a re-argument of the set; `devolveEach.test.ts` §7 pins
+    every field one by one and remains the authority, and `devolveChosen.test.ts` rides
+    it rather than re-pinning twenty fields on a second board. */
+function devolvedBodyOf(body: InPlayPokemon): InPlayPokemon {
+  return {
+    ...body,
+    // "the highest Stage Evolution card" — ONE card off the top, not the whole
+    // stack: a Stage 2 devolves to its Stage 1 (or, after a Rare Candy, to its
+    // Basic). `evolveOnto`'s APPEND read backwards.
+    stack: body.stack.slice(0, -1),
+    // §12 — devolving removes Special Conditions, named in the same clause as
+    // evolving and retreating.
+    conditions: noConditions(),
+    // …and §10's effects of attacks, the same TWELVE `switchInto` and
+    // `clearOnLeavingActive` shed (eleven until D434). Every one of them was
+    // installed on a body whose top card has just left play.
+    retreatBlocked: false,
+    retreatLockedTurn: null,
+    attackBlock: null,
+    attackLockedTurn: null,
+    damageReduction: null,
+    noWeaknessTurn: null,
+    // 🆕🆕 D434 — the SCHEDULED counter placement, and it is the ONE member of
+    // this set that NO legal sequence can reach at either literal, which is said
+    // rather than left to look like the others. Devolution arrives only as an
+    // opponent's attack effect, and inside the schedule's window the opponent
+    // is the seat that installed it — whose turn it is not. Written anyway,
+    // because §10 sheds the effects of ATTACKS and this is one, and because
+    // D433's own rule is that the §10 literals AGREE about the durated set
+    // and disagree only about `markers`. Following the set is the rule; a
+    // reachability argument is not a licence to leave a hole in it.
+    scheduledEffect: null,
+    attackDamageDebuff: null,
+    installedRecoil: null,
+    lockedAttacks: [],
+    boostedAttack: null,
+    // …and the evolution stamp, which belongs to the card that left. See
+    // `devolveEach`'s block for why this is `null` and why `turnPlayed` and `markers`
+    // are NOT touched (clearing `markers` would erase the `koByEffect` stamp for a
+    // body §8.1 is about to collect — the one copy that would be a live defect).
+    evolvedTurn: null,
+  };
+}
+
 /** 🆕🆕 **D433 — §10, THE FIRST DEVOLUTION IN THIS ENGINE.** *"Devolve each of
     your opponent's evolved Pokémon by shuffling the highest Stage Evolution card on it
     into your opponent's deck."* — **1 sentence / 3 legal printings**, corpus row 88.
@@ -11358,12 +11508,13 @@ function devolveEach(state: GameState, ctx: EffectContext, events: GameEvent[]):
   // Mist-Energy'd BASIC this op was never going to touch: a refusal announcing an
   // effect that does not exist, which is a false log row rather than a conservative
   // one (D430 — a log row is a claim with the same standing as a predicate).
-  const evolvedRefs = oppAnyRefs(state, ctx.seat).filter((ref) => {
-    const side = state.players[ref.seat];
-    const spot = ref.spot;
-    const target = spot.spot === "active" ? side.active : side.bench[spot.index];
-    return target !== null && target !== undefined && target.stack.length >= 2;
-  });
+  // 🆕🆕🆕 **D540 EXTRACTED THIS INTO `devolveTargets`** (immediately above this
+  // function) so row 87's PICK and row 88's SWEEP cannot come to disagree about the
+  // printed candidate set — D331/D416's ONE-funnel rule, and the prescription D433's
+  // own doc block wrote for the day the sibling landed. The BINDING keeps its name and
+  // the `unshieldedRefs` call below is byte-identical, so the ORDER this block is
+  // about is unchanged: **the set is narrowed BEFORE §11 is asked**.
+  const evolvedRefs = devolveTargets(state, ctx.seat);
   const refs = unshieldedRefs(state, evolvedRefs, ctx, events);
   const devolved: {
     ref: PokemonRef;
@@ -11390,43 +11541,12 @@ function devolveEach(state: GameState, ctx: EffectContext, events: GameEvent[]):
       from,
       cleared: presentStatuses(body.conditions),
       wasLethal: isLethallyDamaged(state, body),
-      body: {
-        ...body,
-        // "the highest Stage Evolution card" — ONE card off the top, not the whole
-        // stack: a Stage 2 devolves to its Stage 1 (or, after a Rare Candy, to its
-        // Basic). `evolveOnto`'s APPEND read backwards.
-        stack: body.stack.slice(0, -1),
-        // §12 — devolving removes Special Conditions, named in the same clause as
-        // evolving and retreating.
-        conditions: noConditions(),
-        // …and §10's effects of attacks, the same TWELVE `switchInto` and
-        // `clearOnLeavingActive` shed (eleven until D434). Every one of them was
-        // installed on a body whose top card is now in the deck.
-        retreatBlocked: false,
-        retreatLockedTurn: null,
-        attackBlock: null,
-        attackLockedTurn: null,
-        damageReduction: null,
-        noWeaknessTurn: null,
-        // 🆕🆕 D434 — the SCHEDULED counter placement, and it is the ONE member of
-        // this set that NO legal sequence can reach at this literal, which is said
-        // rather than left to look like the others. Devolution arrives only as an
-        // opponent's attack effect, and inside the schedule's window the opponent
-        // is the seat that installed it — whose turn it is not. Written anyway,
-        // because §10 sheds the effects of ATTACKS and this is one, and because
-        // D433's own rule is that the four §10 literals AGREE about the durated set
-        // and disagree only about `markers`. Following the set is the rule; a
-        // reachability argument is not a licence to leave a hole in it.
-        scheduledEffect: null,
-        attackDamageDebuff: null,
-        installedRecoil: null,
-        lockedAttacks: [],
-        boostedAttack: null,
-        // …and the evolution stamp, which belongs to the card that left. See the block
-        // above for why this is `null` and why `turnPlayed` and `markers` are NOT
-        // touched.
-        evolvedTurn: null,
-      },
+      // 🆕🆕🆕 **D540 EXTRACTED THIS §10/§12 SHED OBJECT INTO `devolvedBodyOf`**
+      // (immediately above this function) so row 87's writer and row 88's cannot drift
+      // apart on twenty fields — which is the hazard the extracted block's own text
+      // names ("the four §10 literals AGREE about the durated set"). The object is
+      // byte-for-byte what was written here, and every field's reason moved with it.
+      body: devolvedBodyOf(body),
     });
     returned.push(from);
   }
@@ -11499,6 +11619,144 @@ function devolveEach(state: GameState, ctx: EffectContext, events: GameEvent[]):
     );
   }
   return next;
+}
+
+/** 🆕🆕🆕 **D540 — ROW 87's WRITER: ONE CHOSEN BODY DEVOLVES AND THE CARD GOES TO ITS
+    OWNER'S HAND.** *"Devolve 1 of your opponent's evolved Pokémon by putting the
+    highest Stage Evolution card on it into your opponent's hand."* The §10/§12 shed is
+    `devolvedBodyOf`'s — ONE spelling for both ops (see that function) — so the ONLY
+    thing this writer decides is the DESTINATION and the announcement.
+
+    🛑 **NO `shuffle` AND NO `SHUFFLE` EVENT, WHICH IS THE PRINTED DIFFERENCE FROM THE
+    SWEEP AND NOT AN OMISSION.** Row 88 prints *"by shuffling … into your opponent's
+    deck"* and row 87 prints *"by putting … into your opponent's hand"*. A shuffle here
+    would advance `rngState` and desynchronise every later flip in the match —
+    `devolveEach`'s own RNG-draw-count contract, read in the other direction.
+
+    ⚠️ **THE HAND IS THE BODY'S OWNER'S, READ OFF `ref.seat` AND NOT RECOMPUTED FROM
+    `ctx.seat`.** `devolveEach`'s stated rule — *"every zone touched belongs to the
+    body, and `ctx.seat` reaches only the event's `actor`"* — and log.ts's
+    `POKEMON_DEVOLVED` row makes the same call in as many words: `otherSeat(event.seat)`
+    would be true today and true only BY CONSTRUCTION OF ONE OP, which is D425's
+    `DAMAGE_DEALT` defect verbatim. The two are equal on every board this op reaches
+    today, because `devolveTargets` only ever returns opponent refs; the seat is still
+    read off the ref, so widening that funnel cannot silently mis-address a hand.
+
+    ⚠️ **THE KO STRADDLE IS `devolveEach`'s, RE-RUN RATHER THAN ASSUMED** (D414/D428).
+    Devolving can Knock Out by lowering the MAXIMUM: `isLethallyDamaged` is a
+    `damage >= effectiveMaxHp` STATE check and `effectiveMaxHp` resolves the stack TOP
+    live, so a body carrying 100 damage that devolves to a 90 HP Stage 1 is lethal the
+    instant the stack shortens. 🛑 The "after" read is asked of the COMMITTED board and
+    never of the local body — `seatMaxHpBonus` scans the bodies IN PLAY, so a maximum
+    read before the write-back silently drops every seat-wide HP aura — and the
+    `wasLethal` conjunct is why an ALREADY-lethal body gets no stamp: the cause is then
+    the damage that was already on it, not the maximum moving. The Prize, the
+    whole-stack discard, `KNOCKED_OUT` and the §8.1 promotion are `finishAttack`'s
+    `collectKnockOuts` / `settleProgram`'s `resolveMidTurnKnockOuts`, never this line. */
+function devolveBodyToHand(
+  state: GameState,
+  ref: PokemonRef,
+  ctx: EffectContext,
+  events: GameEvent[],
+): GameState {
+  const side = state.players[ref.seat];
+  const spot = ref.spot;
+  const body = spot.spot === "active" ? side.active : side.bench[spot.index];
+  // Not in play, or nothing to shed — a silent no-op rather than a throw, for the
+  // reason every ref guard in this file is: the op validates refs, and a wire answer
+  // whose body has since left play moves nothing (`returnBenched`'s trust level).
+  if (body === null || body === undefined) return state;
+  const from = body.stack[body.stack.length - 1];
+  if (from === undefined) return state;
+  const cleared = presentStatuses(body.conditions);
+  const wasLethal = isLethallyDamaged(state, body);
+  const devolved = devolvedBodyOf(body);
+  let next = withSide(
+    state,
+    ref.seat,
+    spot.spot === "active"
+      ? { ...side, active: devolved }
+      : {
+          ...side,
+          bench: side.bench.map((pokemon, i) => (i === spot.index ? devolved : pokemon)),
+        },
+  );
+  // …and the card into the OWNER's hand. Re-read off `next`, because the line above
+  // just replaced that whole side.
+  const ownerSide = next.players[ref.seat];
+  next = withSide(next, ref.seat, { ...ownerSide, hand: [...ownerSide.hand, from] });
+  // The new stack top. `undefined` is unreachable — the slice left at least one card
+  // behind — and an empty string would be a uid no client can render, so the `??` is
+  // a total-function tail rather than a case (`devolveEach`'s line verbatim).
+  const to = devolved.stack[devolved.stack.length - 1] ?? from;
+  events.push({
+    type: "POKEMON_DEVOLVED",
+    seat: ref.seat,
+    actor: ctx.seat,
+    from,
+    to,
+    // 🆕🆕🆕 D540 — the DESTINATION rider. Without it the hand move would be announced
+    // NOWHERE: the event is destination-agnostic, its log row names no zone, and there
+    // is no `SHUFFLE` on this path for a reader to infer the deck's absence from. See
+    // `events.ts` for why it is an OPTIONAL rider and not a required field.
+    zone: "hand",
+  });
+  // §10/§12 — announced only when there was something to remove, `evolveOnto`'s rule
+  // verbatim; `uid` is the NEW top (events.ts).
+  if (cleared.length > 0) {
+    events.push({
+      type: "STATUS_CLEARED",
+      seat: ref.seat,
+      uid: to,
+      statuses: cleared,
+      reason: "devolved",
+    });
+  }
+  // 🛑 ASKED OF THE COMMITTED BOARD, NOT OF THE LOCAL BODY — see the block above.
+  if (wasLethal) return next;
+  const committed = next.players[ref.seat];
+  const live = spot.spot === "active" ? committed.active : committed.bench[spot.index];
+  if (live === null || live === undefined) return next;
+  if (!isLethallyDamaged(next, live)) return next;
+  const marker = koByEffectMarker(next.turn);
+  // Idempotent, `doomBodyAt`'s contract: a body already carrying this turn's stamp is
+  // left alone rather than given a duplicate.
+  if (live.markers.includes(marker)) return next;
+  const marked: InPlayPokemon = { ...live, markers: [...live.markers, marker] };
+  return withSide(
+    next,
+    ref.seat,
+    spot.spot === "active"
+      ? { ...committed, active: marked }
+      : { ...committed, bench: committed.bench.map((p, i) => (i === spot.index ? marked : p)) },
+  );
+}
+
+/** 🆕🆕🆕 **D540 — THE PRINTED NOUN FOR A `devolveChosen`'s CANDIDATES**, in the card's
+    own word order and byte-for-byte the printed sentence on the one printing that
+    exists. `gustTargetNoun`'s and `knockOutChosenNote`'s stated rule: the caption must
+    name exactly the set the funnel offers, or the dialog contradicts its own validator.
+
+    🛑 **THE POSSESSIVE IS DERIVED FROM THE OFFERED SET AND IS NOT HARD-CODED — D447's
+    CLASS, WHICH IS WHY THIS TAKES TWO ARGUMENTS AT ALL.** `snipeNote` had to grow an
+    `owner` ternary the day `yourBench` landed, because a heading reading *"1 of your
+    opponent's …"* over a list of the player's OWN bodies is a caption that lies. The op
+    is FIELD-FREE, so there is no `target` member to read; the candidate SET is the
+    thing that knows, and it is what the prompt is about. Today `devolveTargets` returns
+    opponent refs only and the string is the printed one on every board — which is what
+    `devolveChosen.test.ts` §4 asserts — but the derivation is what makes widening that
+    funnel a change the caption follows instead of a caption that silently goes false.
+
+    ⚠️ An EMPTY set reads as the printed possessive rather than "your": `parkOrForce`
+    never builds a note for one (the empty arm is a silent no-op), so the default is
+    chosen to be the printed sentence rather than the arm no board reaches. */
+function devolveChosenNote(seat: Seat, candidates: readonly PokemonRef[]): string {
+  const ownSide = candidates.length > 0 && candidates.every((ref) => ref.seat === seat);
+  const owner = ownSide ? "your" : "your opponent's";
+  return (
+    `Devolve 1 of ${owner} evolved Pokémon by putting the highest Stage Evolution ` +
+    `card on it into ${owner} hand.`
+  );
 }
 
 /** 🆕 D345 — *"If you use this Ability, this Pokémon is Knocked Out."* (Dusclops

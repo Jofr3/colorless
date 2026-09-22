@@ -18520,11 +18520,18 @@ import type { GameState, Seat } from "./types";
     opponent's hand."*, 1 printing) varies on TWO axes at once — a PARKED single
     choice instead of a sweep, and the hand instead of the deck — so a parameterised
     `{ whose, count, dest }` op would carry a pool of ONE on both fields and guess at
-    the second, which is D121's warrant unmet twice over. Row 87 stays unbuilt and is
-    the suite's `ATTACK_EFFECT_SKIPPED` witness. **The two-row claim is a RUNG, not a
-    sentence**: `devolveEach.test.ts` §1 runs the stem over the live corpus, so a
-    third devolve printing entering the legal column reddens the suite and re-opens
-    the template question by construction (D422's executable falsifier).
+    the second, which is D121's warrant unmet twice over. 🆕🆕🆕 **RE-POINTED AT D540
+    (D423's scoped claims, and D539's withdrawn-claim-at-six-sites lesson): the refusal
+    of the PARAMETER above stands exactly as written, and the sentence that followed it
+    — *"Row 87 stays unbuilt and is the suite's `ATTACK_EFFECT_SKIPPED` witness"* — has
+    EXPIRED.** Row 87 is BUILT at D540, as the SIBLING FIELD-FREE op `devolveChosen`,
+    which is the door a refusal of a PARAMETERISED op leaves open; the `/[Dd]evolv/`
+    family is CLOSED at 2 sentences / 4 printings with zero unresolved rows and no
+    Ancient/Future/Tera member. `devolveEach.test.ts` §10's loud-path witness is now
+    corpus row 346, not this sentence. **The two-row claim is a RUNG, not a sentence**:
+    `devolveEach.test.ts` §1 runs the stem over the live corpus, so a third devolve
+    printing entering the legal column reddens the suite and re-opens the template
+    question by construction (D422's executable falsifier).
 
     ⚠️ **D414's SEARCH WAS RUN AND CAME BACK CLEAN, WHICH IS A FINDING (D431).** The
     invariant this op breaks, in one sentence: *"an in-play Pokémon's evolution stack
@@ -20025,6 +20032,100 @@ import type { GameState, Seat } from "./types";
     `expect(manifest.version)`, `it(…)` titles, the declaration and `package.json` —
     **not** as a value-keyed grep — because a value-keyed grep is precisely the mechanism
     that ate D500's heading.)
+    🆕🆕🆕 engineVersion 0.424.0 → **0.425.0** (D540 — THE DEVOLUTION WITH A PICK IN IT,
+    AND THE `/[Dd]evolv/` FAMILY CLOSES. `censusAttackCorpus.ts` **row 87**
+    (`legalAttackCorpus()` index 34, leading count column `1`) — *"Devolve 1 of your
+    opponent's evolved Pokémon by putting the highest Stage Evolution card on it into your
+    opponent's hand."*, **1 sentence / 1 legal printing**.
+    🛑 **ONE PRINTING IS ONE PRINTING, AND THE YIELD IS NOT THE ARGUMENT** — said at the
+    top rather than left to be read out of the census delta. The case is (a) the FAMILY
+    CLOSURE: `/[Dd]evolv/` over the whole 640-sentence corpus returns exactly rows 87 and
+    88, **2 sentences / 4 printings**, and both now RESOLVE, with NO Ancient/Future/Tera
+    member, so the closure is real and not an artefact of what is off the table; (b) the
+    IN-TREE PRESCRIPTION at `effects.ts`'s `devolveEach` block, written at D433 — *"The day
+    it is built, the two ops share … in interpreter.ts rather than one widening into the
+    other"* — honoured here as EXACTLY TWO extractions, `devolveTargets` and
+    `devolvedBodyOf`, and nothing else; and (c) near-total reuse.
+    ⚠️ **NO CARD ID RESOLVES FOR THIS SENTENCE ON THIS CHECKOUT AND THAT WAS MEASURED** —
+    a whole-repo sweep over the printed bytes finds SIX in-tree sites at HEAD (the corpus
+    row, `devolveEach.test.ts`'s `SIBLING`, `bodiesInPlayScaling.test.ts`'s `Stage`
+    enumeration, `effects.ts` twice, `index.ts` once) and NO catalog row, so the suite rides
+    file-local DECLARED demonstrators `d540-*` (D425) in its own 60-card deck (D270).
+    ⚠️ **THE COUNT IS SIX AND THE ONE-LINE INSTRUMENT REACHES ONLY THREE OF THEM, said
+    rather than glossed** (D540's own lesson about method claims): a literal one-line
+    `git grep -F` over the sentence finds the corpus row, `devolveEach.test.ts:86` and
+    `bodiesInPlayScaling.test.ts:1798`; the other three — `effects.ts:7855`,
+    `effects.ts:24873` and `index.ts:18519` at HEAD — WRAP the sentence across lines and
+    are found by a wrap-tolerant fragment (`putting the highest Stage Evolution card`)
+    rather than by the whole sentence.
+
+    🛑 **THE SLICE EXISTS FOR ONE SITE THE COMPILER CANNOT SEE.** `applyChoice`'s `switch`
+    ends in `default: return state;` (*"Synchronous ops never park, so never reach the
+    choice path"*), so omitting `case "devolveChosen"` THERE typechecks GREEN and then
+    silently discards the player's answer: the op parks, the prompt is answered, the board
+    comes back unchanged, and no event, no log row and no census figure moves. **MEASURED
+    rather than argued**: at this head, deleting that arm and running `bunx tsc -b --force`
+    prints NOTHING, while deleting the `stepOp` arm prints
+    `interpreter.ts(1768,4): error TS2366 Function lacks ending return statement`.
+    `devolveChosen.test.ts` §4 is the rung that can see the invisible one and it drives the
+    PARKED ≥ 2 path THROUGH `resolveEffect`, asserting the HOSTS' stacks and the victim's
+    HAND on a real board rather than the op's shape (D421). `D540-apply-choice-arm-deleted`
+    is the mutant, and it must be killed by a PARKED resolution and not by a forced one.
+
+    ONE new anchor `DEVOLVE_CHOSEN_TO_HAND` (both apostrophes MEASURED U+0027 at sentence
+    indices **26** and **113**, the `é` a single real U+00E9 and not decomposed; two
+    `['’]` slots kept for D137's re-ingest reason), ONE new arm **41-ter**, ONE new
+    FIELD-FREE `EffectOp` member `devolveChosen`, ONE `stepOp` case, ONE `applyChoice` case,
+    ONE new writer `devolveBodyToHand`, ONE new note `devolveChosenNote`, TWO extractions,
+    and ONE optional `GameEvent` rider.
+    🛑 **A WITHDRAWN CLAIM THAT NO `git grep -F` OVER THE SENTENCE COULD FIND, RE-POINTED
+    RATHER THAN DELETED (D178/D418).** Arm 41-bis's own comment argued its order-freeness
+    from *"the first WORD differs ('Devolve' vs 'Shuffle'/'Put'/'Flip')"*. Arm 41-ter's
+    first word is ALSO "Devolve", so that sentence is FALSE AS WRITTEN for the nearest
+    neighbour pair — and it is a CLAIM, not a copied string, which is precisely D539's
+    close-out lesson. It is re-pointed in place, SCOPED to the pair it names, and the
+    order-free claim now rests on **TOKEN 2** (`each` vs `1`) plus both anchors being fully
+    `^…$`. `devolveChosen.test.ts` §2 drives that as a four-cell anchor × string matrix, and
+    says out loud which cell arm ORDER masks and how the composition of two other
+    measurements reaches it.
+    ⚠️ **THE `POKEMON_DEVOLVED` RIDER `zone?: "hand"`, DECIDED AT THE TOP OF THE SLICE AND
+    NOT MID-BUILD.** The event is destination-AGNOSTIC and its log row names no zone; there
+    is no `SHUFFLE` on this path, so without the rider the two producers would emit
+    INDISTINGUISHABLE rows for two different board changes and the hand move would be
+    announced NOWHERE. OPTIONAL, because ABSENT means the deck — exactly what every row
+    written before this slice meant — so `devolveEach` renders byte-identically (driven as a
+    PAIR in §11). `GameEvent` is not persisted, so no version question arises either way.
+
+    **`MATCH_RECORD_VERSION` HELD AT 30, AND THE REASON IS D125's WIDENING AND *NOT* A
+    CLAIM ABOUT PARKING.** 🛑 The sibling's block ends *"…and the op never parks — so
+    nothing it produces reaches `phase.cont`"*; that is TRUE of `devolveEach` and **FALSE of
+    this op**, which is the exact D536/D537 mis-derivation trap and is said in the new
+    member's block rather than copied past. `{op:"devolveChosen"}` DOES reach
+    `phase.cont.pendingOp` and IS serialized. The version holds anyway: no v30 deploy could
+    author that byte string, and every byte string a v30 deploy DID write still means what
+    it meant — §10 drives BOTH doors over the SERIALIZED BYTES with `"cont" in phase ===
+    true`, swapping D416's `knockOutChosen` in at the same address to show the old alphabet
+    unchanged, and pins the carrier door on the FORCED board where nothing is persisted.
+
+    **ZERO new prompt kinds, zero new answer inhabitants, zero new readers, zero new error
+    codes, zero registry rows** — `choosePokemon` (interpreter.ts:460) and
+    `{kind:"pokemon"; ref?}` (:846) are reused, `attackReaderSurface()` stays **13**, and
+    `redact.ts`, `packages/schema`, both HUDs, `attack.ts` and `cardplay.ts` take ZERO code
+    bytes (MEASURED, not assumed: the opponent's hand already projects as
+    `hiddenHand(side.hand.length)` at redact.ts:992, which §9 asserts rather than presumes).
+
+    Census, MEASURED head vs after: reader arm **564/1613 → 565/1614**; residue **49/68 →
+    48/67**; raw residue **76/119 → 75/118**; `BUILT.attack` **1664 → 1665**; `640 = 591 + 49`
+    → **`592 + 48`**. Registry 10/16, gate 6/14, trailing 11/21, `SPLIT_ATTACK_UNITS` 14 and
+    `COMPOUND_ATTACK_UNITS` 21 UNMOVED — the row is a RAW whole-sentence claim, not a split.
+    `OPAQUE` **35/51 → 34/50** at `SUBMAX=4` and **19/29 → 18/28** at `SUBMAX=12`, MEASURED at
+    BOTH caps before the build rather than predicted (D539's rule; D538's prediction was
+    wrong at both).
+    ⚠️ **THE SENTENCE STEP IS 1 AND THE PRINTING STEP IS 1 — THE FIRST SLICE IN SIX WHERE
+    THEY AGREE** (D535 1-2, D536 1-3, D537 1-2, D538 1-3, D539 1-2). D426's front-term
+    discipline still applies and ELEVEN frozen `X - n - n` endpoints still take FRONT terms;
+    this is simply the one slice in which a number copied from a sentence chain into a
+    printing chain would be right BY ACCIDENT, so every site was measured anyway.)
     🆕🆕🆕 engineVersion 0.423.0 → **0.424.0** (D539 — THE NAMED-BODY MULTIPLIER WITH A
     NAMED-BODY OWN-SIDE SPREAD BEHIND IT, AND THE ONE BODY THE SHIPPED MACHINERY COULD NOT
     REACH. `censusAttackCorpus.ts` **FILE LINE 595** (`legalAttackCorpus()` index 542, leading
@@ -23190,7 +23291,7 @@ import type { GameState, Seat } from "./types";
     WITNESS** — the count was re-derived every slice and the word *"three"* was carried.
     A successor of this slice inherits **81 / 61 / 17** again, over **FIVE** history
     occurrences: those four plus `deckMillFilteredScale.test.ts`'s own header arrow.) */
-export const engineVersion = "0.424.0";
+export const engineVersion = "0.425.0";
 
 export type {
   ApplyResult,

@@ -5246,6 +5246,212 @@ export const MUTANTS: Mutant[] = [
       "packages/engine/src/flipTheScript.test.ts",
     ],
   },
+  // ── D540 — THE DEVOLUTION WITH A PICK IN IT, AND THE `/[Dd]evolv/` FAMILY CLOSES.
+  //    TWENTY rows. 🛑 THE SHAPE OF THE SET IS THE FINDING: **ONE of the twenty is invisible to the
+  //    TYPE SYSTEM as well as to every census** — `D540-apply-choice-arm-deleted`. `applyChoice` ends in
+  //    `default: return state;`, so deleting the arm typechecks GREEN (MEASURED at this head) and then
+  //    silently discards the player's answer: the op parks, the prompt is answered, the board comes back
+  //    unchanged, and no event, no log row and no census figure moves. It is ALSO the one row in the set
+  //    that a FORCED-path rung cannot kill, because the forced path never reaches `applyChoice` at all —
+  //    which is why `devolveChosen.test.ts` §4 drives the PARKED ≥ 2 path through `resolveEffect` and
+  //    asserts the HOSTS' stacks and the victim's HAND rather than the op's shape (D421).
+  //    ⚠️ **THREE MORE MOVE NO CENSUS FIGURE EITHER** — `D540-arm-emits-the-neighbours-op`,
+  //    `D540-targets-read-the-own-side` and `D540-card-goes-to-the-actors-hand`. Each leaves
+  //    `resolvedByAnyReader` true, `BUILT.attack` at 1665 and the residue at 48/67, ships a well-formed
+  //    program and logs an internally consistent board; the interpreter-side rows move no figure by
+  //    construction (no reader runs), so what picks these out is that a READER STILL CLAIMS THE SENTENCE.
+  //    🛑 **THE TWO APOSTROPHE SLOTS ARE DECLARED SEPARATELY** (D424: one row covering both would be
+  //    killed by whichever half the suite happens to reach), and the `^`-losing row uses a prefix that
+  //    KEEPS the capital `D` — D539(1a)'s killer, because a lower-cased glue refuses for a different
+  //    reason and never exercises the caret.
+  //    🛑 **THE PROBE FOUND THREE REAL SUITE GAPS ON ITS FIRST RUN AND ALL THREE WERE IN THE ANCHOR**
+  //    (`17 killed · 3 GAP(S)` → `20 killed · 0 GAP(S)`), which is recorded here rather than smoothed
+  //    away: `D540-anchor-loses-its-terminator` survived because §2's trailing near-miss STRIPPED the
+  //    period the anchor's tail demands, so the string refused for a different reason and the `$` was
+  //    never exercised — D539(1a)'s caret lesson at the other end of the pattern; and BOTH `['’]`
+  //    rows survived because the corpus really does print U+0027, so nothing could see the class until
+  //    each slot got its own CURLED board. ⚠️ In all three the ROWS were right and the SUITE was the
+  //    gap, which is the distinction D427 asks a declaration to make — so none of them was declared.
+  {
+    id: "D540-anchor-loses-its-caret",
+    decision: "D540",
+    what: "⚠️ A1 — the `^` goes, so any sentence ENDING in this one is claimed and its leading matter is silently dropped. 🛑 **THE KILLER MUST KEEP THE CAPITAL `D`** (D539(1a)'s lesson, paid forward): §2's leading-clause near-miss that LOWER-CASES the sentence's first letter refuses for a DIFFERENT reason — the pattern demands a capital \"Devolve\" wherever it starts — and never exercises the `^` at all, so the suite carries BOTH spellings and the row is killed by the capital-keeping one",
+    file: "packages/engine/src/effects.ts",
+    find: "  `^Devolve 1 of your opponent['’]s evolved Pokémon by putting the highest ` +",
+    replace: "  `Devolve 1 of your opponent['’]s evolved Pokémon by putting the highest ` +",
+    expectKilledBy: ["packages/engine/src/devolveChosen.test.ts"],
+  },
+  {
+    id: "D540-anchor-loses-its-terminator",
+    decision: "D540",
+    what: "⚠️ A2 — the `$` goes, so a printed CONTINUATION rides along and the engine authors a program for half a sentence with no loud channel. It also destroys half the order-freeness argument against arm 41-bis, which rests on TOKEN 2 *and* on both anchors being fully `^…$`",
+    file: "packages/engine/src/effects.ts",
+    find: "    `Stage Evolution card on it into your opponent['’]s hand\\\\.$`,",
+    replace: "    `Stage Evolution card on it into your opponent['’]s hand\\\\.`,",
+    expectKilledBy: ["packages/engine/src/devolveChosen.test.ts"],
+  },
+  {
+    id: "D540-anchor-drops-the-first-apostrophe-class",
+    decision: "D540",
+    what: "⚠️ A3 — the `['’]` class collapses to the straight quote at SLOT 1 (*“1 of your opponent's evolved”*), sentence index 26. The corpus prints U+0027 at this head and that was MEASURED, so the sentence still reads and NO census figure moves — which is exactly why D137 made the class a rule about the SITE of a spelled apostrophe rather than about a measurement. Declared SEPARATELY from slot 2 because a single row could be killed by either half",
+    file: "packages/engine/src/effects.ts",
+    find: "  `^Devolve 1 of your opponent['’]s evolved Pokémon by putting the highest ` +",
+    replace: "  `^Devolve 1 of your opponent's evolved Pokémon by putting the highest ` +",
+    expectKilledBy: ["packages/engine/src/devolveChosen.test.ts"],
+  },
+  {
+    id: "D540-anchor-drops-the-second-apostrophe-class",
+    decision: "D540",
+    what: "⚠️ A4 — the same collapse at SLOT 2 (*“into your opponent's hand”*), sentence index 113, and it is a SEPARATE row from slot 1 for D424's reason: one row covering both would be killed by whichever half the suite happens to reach, and the two slots are two sites",
+    file: "packages/engine/src/effects.ts",
+    find: "    `Stage Evolution card on it into your opponent['’]s hand\\\\.$`,",
+    replace: "    `Stage Evolution card on it into your opponent's hand\\\\.$`,",
+    expectKilledBy: ["packages/engine/src/devolveChosen.test.ts"],
+  },
+  {
+    id: "D540-anchor-admits-the-sweep-cardinality",
+    decision: "D540",
+    what: "🛑 THE CARDINALITY — `1 of` becomes `each of`, which is the SIBLING's token 2 and therefore the exact axis the re-pointed order-freeness claim now rests on. Arm 41-bis is asked FIRST, so the mutated arm 41-ter never fires on row 88 and row 87 falls to the LOUD skip path: the family stops closing and §1's `resolvedByAnyReader` rung is the witness",
+    file: "packages/engine/src/effects.ts",
+    find: "  `^Devolve 1 of your opponent['’]s evolved Pokémon by putting the highest ` +",
+    replace: "  `^Devolve each of your opponent['’]s evolved Pokémon by putting the highest ` +",
+    expectKilledBy: ["packages/engine/src/devolveChosen.test.ts"],
+  },
+  {
+    id: "D540-anchor-takes-the-siblings-verb",
+    decision: "D540",
+    what: "⚠️ THE VERB — `by putting` becomes `by shuffling`, the sibling's word. A single-axis near-miss made live: the printed sentence is refused, the row goes loud, and §2's VERB near-miss now BUILDS — the second half is what makes this a wrong-CARD row rather than only a missing one",
+    file: "packages/engine/src/effects.ts",
+    find: "  `^Devolve 1 of your opponent['’]s evolved Pokémon by putting the highest ` +",
+    replace: "  `^Devolve 1 of your opponent['’]s evolved Pokémon by shuffling the highest ` +",
+    expectKilledBy: ["packages/engine/src/devolveChosen.test.ts"],
+  },
+  {
+    id: "D540-anchor-takes-the-siblings-destination",
+    decision: "D540",
+    what: "⚠️ THE DESTINATION — `hand` becomes `deck` in the anchor's tail. The printed sentence is refused and the DECK spelling is claimed instead, which is the one axis the whole slice is about: two sentences that differ only in where the card goes",
+    file: "packages/engine/src/effects.ts",
+    find: "    `Stage Evolution card on it into your opponent['’]s hand\\\\.$`,",
+    replace: "    `Stage Evolution card on it into your opponent['’]s deck\\\\.$`,",
+    expectKilledBy: ["packages/engine/src/devolveChosen.test.ts"],
+  },
+  {
+    id: "D540-arm-emits-the-neighbours-op",
+    decision: "D540",
+    what: "🛑 THE ARM RETURNS THE NEIGHBOUR'S OP — `devolveChosen` becomes `devolveEach`, and BOTH literals are bound in this file (D533's binding gate). `resolvedByAnyReader` stays TRUE, `BUILT.attack` still steps and every census figure still moves, so the whole census is green while the printed PICK becomes an unstoppable SWEEP that shuffles into the deck. Only a board rung can see it",
+    file: "packages/engine/src/effects.ts",
+    find: "  if (DEVOLVE_CHOSEN_TO_HAND.test(effect)) return [{ op: \"devolveChosen\" }];",
+    replace: "  if (DEVOLVE_CHOSEN_TO_HAND.test(effect)) return [{ op: \"devolveEach\" }];",
+    expectKilledBy: ["packages/engine/src/devolveChosen.test.ts"],
+  },
+  {
+    id: "D540-targets-read-the-own-side",
+    decision: "D540",
+    what: "🛑 THE FUNNEL READS THE ATTACKER'S OWN BOARD — `oppAnyRefs` becomes `ownInPlayRefs`, and BOTH are bound in this file. The card would devolve its CONTROLLER's Pokémon and fill the CONTROLLER's hand, with a well-formed program, a plausible log and no census figure moved. It is the shared funnel, so this row also says what the ONE-funnel rule buys: one edit here is the only place either op can be made to read the wrong side",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  return oppAnyRefs(state, seat).filter((ref) => {",
+    replace: "  return ownInPlayRefs(state, seat).filter((ref) => {",
+    expectKilledBy: ["packages/engine/src/devolveChosen.test.ts", "packages/engine/src/devolveEach.test.ts"],
+  },
+  {
+    id: "D540-evolved-filter-admits-a-basic",
+    decision: "D540",
+    what: "⚠️ THE PRINTED *“evolved”* FILTER — `>= 2` becomes `>= 1`, so an unevolved BASIC joins the candidate set. §1.2's identity rule says a body with one card on it is what it was played as and has no evolution card to shed; the offer would name bodies the sentence does not, the empty-board silent no-op would become a prompt, and the §11 ORDER rung would file a refusal for a body the op was never going to touch",
+    file: "packages/engine/src/interpreter.ts",
+    find: "    return target !== null && target !== undefined && target.stack.length >= 2;",
+    replace: "    return target !== null && target !== undefined && target.stack.length >= 1;",
+    expectKilledBy: ["packages/engine/src/devolveChosen.test.ts", "packages/engine/src/devolveEach.test.ts"],
+  },
+  {
+    id: "D540-offer-drops-the-shield",
+    decision: "D540",
+    what: "🛑 §11 IS DROPPED FROM THE OFFER — `unshieldedRefs` goes and the raw funnel is handed to `parkOrForce`. A Mist-Energy'd body would be OFFERED and, once picked, devolved anyway, with no `ATTACK_EFFECT_PREVENTED` row at all. D259/D416's already-settled rule, whose own comment reads *“a shielded body must not be OFFERED”*",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      const offered = unshieldedRefs(state, devolveTargets(state, ctx.seat), ctx, events);",
+    replace: "      const offered = devolveTargets(state, ctx.seat);",
+    expectKilledBy: ["packages/engine/src/devolveChosen.test.ts"],
+  },
+  {
+    id: "D540-shield-asked-before-the-filter",
+    decision: "D540",
+    what: "🛑 THE ORDER INVERTS — §11 is asked of the WHOLE opponent board and the printed *“evolved”* filter is applied afterwards. The candidate set is identical, every board devolves the same body, and the ONLY difference is a FALSE `ATTACK_EFFECT_PREVENTED` row announcing an effect that does not exist, for a shielded BASIC this op was never going to touch. D430 — a log row is a claim with the same standing as a predicate — and the reason `devolveTargets`' block spells the order out",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      const offered = unshieldedRefs(state, devolveTargets(state, ctx.seat), ctx, events);",
+    replace: "      const narrowed = devolveTargets(state, ctx.seat);\n      const keep = new Set(narrowed.map((ref) => JSON.stringify(ref)));\n      const offered = unshieldedRefs(state, oppAnyRefs(state, ctx.seat), ctx, events).filter(\n        (ref) => keep.has(JSON.stringify(ref)),\n      );",
+    expectKilledBy: ["packages/engine/src/devolveChosen.test.ts"],
+  },
+  {
+    id: "D540-card-goes-to-the-actors-hand",
+    decision: "D540",
+    what: "🛑 THE CARD LANDS IN THE ATTACKER'S HAND — the victim's seat becomes `otherSeat(ref.seat)`, so the devolved evolution card is handed to the player who used the attack. The printed sentence says *“into your opponent's hand”* and every zone this engine touches belongs to the BODY (`devolveEach`'s stated rule). `POKEMON_DEVOLVED` and the log row are unchanged, so only a zone rung sees it",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  const ownerSide = next.players[ref.seat];\n  next = withSide(next, ref.seat, { ...ownerSide, hand: [...ownerSide.hand, from] });",
+    replace: "  const ownerSide = next.players[otherSeat(ref.seat)];\n  next = withSide(next, otherSeat(ref.seat), { ...ownerSide, hand: [...ownerSide.hand, from] });",
+    expectKilledBy: ["packages/engine/src/devolveChosen.test.ts"],
+  },
+  {
+    id: "D540-hand-push-shuffles-the-deck",
+    decision: "D540",
+    what: "⚠️ A `SHUFFLE` IS ADDED AFTER THE HAND PUSH — the sibling's move, on the op that must not make it. The card still reaches the hand, so a rung that only asked *where did the card go* stays green; what changes is that `rngState` ADVANCES, which desynchronises every later coin flip in the match (`devolveEach`'s RNG-draw-count contract, read in the other direction) and files a `SHUFFLE` row for a deck nothing touched",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  const ownerSide = next.players[ref.seat];\n  next = withSide(next, ref.seat, { ...ownerSide, hand: [...ownerSide.hand, from] });",
+    replace: "  const ownerSide = next.players[ref.seat];\n  next = withSide(next, ref.seat, { ...ownerSide, hand: [...ownerSide.hand, from] });\n  const [shuffledDeck, shuffledRng] = shuffle([...next.players[ref.seat].deck], next.rngState);\n  next = {\n    ...withSide(next, ref.seat, { ...next.players[ref.seat], deck: shuffledDeck }),\n    rngState: shuffledRng,\n  };\n  events.push({ type: \"SHUFFLE\", seat: ref.seat });",
+    expectKilledBy: ["packages/engine/src/devolveChosen.test.ts"],
+  },
+  {
+    id: "D540-parkorforce-auto-picks-the-first",
+    decision: "D540",
+    what: "🛑 THE PARK IS REPLACED BY AN AUTO-PICK of `candidates[0]` — the Active, always, because that is `oppAnyRefs`' order. The printed *“1 of”* is a DECISION and the M1 doctrine is what says when it is one: empty is a silent no-op, lone is forced, and TWO OR MORE must ask. Every forced-path rung stays green and the whole board still looks right; what is gone is the player's choice",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      return parkOrForce(\n        state,\n        offered,\n        (ref) => devolveBodyToHand(state, ref, ctx, events),\n        devolveChosenNote(ctx.seat, offered),\n      );",
+    replace: "      return {\n        done:\n          offered.length === 0\n            ? state\n            : devolveBodyToHand(state, offered[0] as PokemonRef, ctx, events),\n      };",
+    expectKilledBy: ["packages/engine/src/devolveChosen.test.ts"],
+  },
+  {
+    id: "D540-apply-choice-arm-deleted",
+    decision: "D540",
+    what: "🛑🛑 **THE ROW THIS SLICE EXISTS TO GUARD, AND THE COMPILER CANNOT SEE IT.** `applyChoice`'s arm is DELETED and the op falls through to `default: return state;` — *“Synchronous ops never park, so never reach the choice path”*. `tsc -b --force` is GREEN (MEASURED at this head: deleting this arm prints nothing, while deleting the `stepOp` arm prints `interpreter.ts(1768,4) TS2366`), the op parks, the prompt is answered, the state comes back UNCHANGED, and there is no event, no log row and no census figure to notice. ⚠️ **IT MUST BE KILLED BY A PARKED RESOLUTION AND NOT BY A FORCED ONE**: every §3 rung stays green under it, because the forced path never reaches `applyChoice` at all",
+    file: "packages/engine/src/interpreter.ts",
+    find: "    case \"devolveChosen\":\n      return pickedPokemon(choice) ? devolveBodyToHand(state, choice.ref, ctx, events) : state;\n",
+    replace: "",
+    expectKilledBy: ["packages/engine/src/devolveChosen.test.ts"],
+  },
+  {
+    id: "D540-ko-cause-never-stamped",
+    decision: "D540",
+    what: "⚠️ D414's `koByEffect` STAMP IS NEVER WRITTEN — the whole straddle returns early. Devolving Knocks Out by lowering the MAXIMUM, and `collectKnockOuts`' own rule is that such a Knock Out is not *“by damage from an attack”*; without the stamp it reads as one, so `lastKoMarks.byAttack` flips and every printed *“Knocked Out by damage”* consequence (Vengeful Punch's recoil among them) fires where the card pays nothing",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  if (wasLethal) return next;",
+    replace: "  return next;",
+    expectKilledBy: ["packages/engine/src/devolveChosen.test.ts"],
+  },
+  {
+    id: "D540-ko-cause-always-stamped",
+    decision: "D540",
+    what: "⚠️ THE `wasLethal` CONJUNCT INVERTS — a body that was ALREADY lethal when the writer reached it gets the stamp and a body the devolution killed does not. Both halves of the cause are wrong at once, which is why the suite drives the PAIR (§7) rather than the positive alone: a row that only marked unconditionally would pass the first rung",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  if (wasLethal) return next;",
+    replace: "  if (!wasLethal) return next;",
+    expectKilledBy: ["packages/engine/src/devolveChosen.test.ts"],
+  },
+  {
+    id: "D540-note-possessive-hard-coded",
+    decision: "D540",
+    what: "🛑 D447's CLASS — the caption's possessive is hard-coded to *“your”*, so a prompt over the OPPONENT's bodies reads *“Devolve 1 of your evolved Pokémon … into your hand”* and contradicts its own validator (`gustTargetNoun`'s and `knockOutChosenNote`'s stated rule). The board is untouched and every zone rung stays green: a caption is only ever killed by a caption rung",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  const owner = ownSide ? \"your\" : \"your opponent's\";",
+    replace: "  const owner = \"your\";",
+    expectKilledBy: ["packages/engine/src/devolveChosen.test.ts"],
+  },
+  {
+    id: "D540-log-row-names-the-deck-for-a-hand-move",
+    decision: "D540",
+    what: "⚠️ THE LOG ROW NAMES THE DECK FOR A HAND MOVE — the one branch the `zone` rider exists to feed. `POKEMON_DEVOLVED` is destination-agnostic and there is NO `SHUFFLE` on this path, so this row is the ONLY place a reader learns where the card went; naming the wrong zone is a false claim with the same standing as a predicate (D430), and the board is correct underneath it",
+    file: "packages/engine/src/log.ts",
+    find: "          ? [plain(` — to ${names[event.seat]}'s hand`)]",
+    replace: "          ? [plain(` — to ${names[event.seat]}'s deck`)]",
+    expectKilledBy: ["packages/engine/src/devolveChosen.test.ts"],
+  },
   // ── D539 — THE NAMED-BODY MULTIPLIER WITH A NAMED-BODY OWN-SIDE SPREAD BEHIND IT.
   //    Twenty rows. 🛑 THE SHAPE OF THE SET IS THE FINDING: **THREE of the twenty move NO
   //    CENSUS FIGURE AT ALL** — `D539-target-becomes-yourbench`, `D539-effect-arm-deleted` and
@@ -5451,7 +5657,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D275",
     what: "🛑 THE DEBT THIS SLICE PAID FOR THE FIFTH TIME, RE-INSTALLED: `engineVersion` falls a minor behind `packages/engine/package.json`, which is EXACTLY the state the tree was in at the head of D275 (0.187.0 against 0.189.0) and had been for two slices with nothing comparing them. The tie is the guard; this row is the proof it is one",
     file: "packages/engine/src/index.ts",
-    // ⚠️ RE-POINTED AT D539 (0.423.0 → 0.424.0), at D538 (0.422.0 → 0.423.0), at D537 (0.421.0 → 0.422.0), at D536 (0.420.0 → 0.421.0), at D535 (0.419.0 → 0.420.0), at D534 (0.418.0 → 0.419.0), at D532 (0.417.0 → 0.418.0), at D531 (0.416.0 → 0.417.0), at D530 (0.415.0 → 0.416.0), at D528 (0.414.0 → 0.415.0), at D527 (0.413.0 → 0.414.0), at D526 (0.412.0 → 0.413.0), at D525 (0.411.0 → 0.412.0), at D524 (0.410.0 → 0.411.0), at D523 (0.409.0 → 0.410.0), at D522 (0.408.0 → 0.409.0), at D521 (0.407.0 → 0.408.0), at D520 (0.406.0 → 0.407.0), at D519 (0.405.0 → 0.406.0), at D518 (0.404.0 → 0.405.0), at D517 (0.403.0 → 0.404.0), at D516 (0.402.0 → 0.403.0), at D515 (0.401.0 → 0.402.0), at D514 (0.400.0 → 0.401.0), at D513 (0.399.0 → 0.400.0), at D512 (0.398.0 → 0.399.0), at D510 (0.397.0 → 0.398.0), at D508 (0.396.0 → 0.397.0), at D507 (0.395.0 → 0.396.0), at D505 (0.394.0 → 0.395.0), at D490 (0.384.0 → 0.385.0), at D489 (0.383.0 → 0.384.0), at D488 (0.382.0 → 0.383.0), at D487 (0.381.0 → 0.382.0), at D486 (0.380.0 → 0.381.0), at D485 (0.379.0 → 0.380.0), at D450 (0.351.0 → 0.352.0), at D449 (0.350.0 → 0.351.0), at D448 (0.349.0 → 0.350.0), at D447 (0.348.0 → 0.349.0), at D446 (0.347.0 → 0.348.0), at D445 (0.346.0 → 0.347.0), at D444 (0.345.0 → 0.346.0), at D443 (0.344.0 → 0.345.0), at D442 (0.343.0 → 0.344.0), at D441 (0.342.0 → 0.343.0), at D440 (0.341.0 → 0.342.0), at D439 (0.340.0 → 0.341.0), at D438 (0.339.0 → 0.340.0), at D437 (0.338.0 → 0.339.0), at D436 (0.337.0 → 0.338.0), at D435 (0.336.0 → 0.337.0), at D434 (0.335.0 → 0.336.0), at D433 (0.334.0 → 0.335.0), at D432 (0.333.0 → 0.334.0), at D431 (0.332.0 → 0.333.0), at D430 (0.331.0 → 0.332.0), at D429 (0.330.0 → 0.331.0), at D428 (0.329.0 → 0.330.0), at D427 (0.328.0 → 0.329.0), at D426 (0.327.0 → 0.328.0), at D425 (0.326.0 → 0.327.0), at D424 (0.325.0 → 0.326.0), at D423 (0.324.0 → 0.325.0), at D422 (0.323.0 → 0.324.0), at D421 (0.322.0 → 0.323.0), at D420 (0.321.0 → 0.322.0), at D417 (0.320.0 → 0.321.0), at D416 (0.319.0 → 0.320.0), at D415 (0.318.0 → 0.319.0), at D414 (0.317.0 → 0.318.0), at D413 (0.316.0 → 0.317.0), at D412 (0.315.0 → 0.316.0), at D410 (0.314.0 → 0.315.0), at D409 (0.313.0 → 0.314.0), at D408 (0.312.0 → 0.313.0), at D407 (0.311.0 → 0.312.0), at D402 (0.306.0 → 0.307.0), at D401 (0.305.0 → 0.306.0), at D400 (0.304.0 → 0.305.0), at D399 (0.303.0 → 0.304.0), at D398 (0.302.0 → 0.303.0), at D397 (0.301.0 → 0.302.0), at D396 (0.300.0 → 0.301.0), at D395 (0.299.0 → 0.300.0), at D394 (0.298.0 → 0.299.0), at D393 (0.297.0 → 0.298.0), at D392 (0.296.0 → 0.297.0), at D391 (0.295.0 → 0.296.0), at D390 (0.294.0 → 0.295.0), at D389 (0.293.0 → 0.294.0), at D388 (0.292.0 → 0.293.0), at D387 (0.291.0 → 0.292.0), at D386 (0.290.0 → 0.291.0),
+    // ⚠️ RE-POINTED AT D540 (0.424.0 → 0.425.0) — the `find` was stepped in the build edit and THIS ENUMERATION ENTRY WAS APPENDED IN A REVIEW ROUND, which is the same hole D428 names for a truncated list and which nothing but a reader can see (the row runs, its `find` is at 1x, and `precheck` is green either way) — at D539 (0.423.0 → 0.424.0), at D538 (0.422.0 → 0.423.0), at D537 (0.421.0 → 0.422.0), at D536 (0.420.0 → 0.421.0), at D535 (0.419.0 → 0.420.0), at D534 (0.418.0 → 0.419.0), at D532 (0.417.0 → 0.418.0), at D531 (0.416.0 → 0.417.0), at D530 (0.415.0 → 0.416.0), at D528 (0.414.0 → 0.415.0), at D527 (0.413.0 → 0.414.0), at D526 (0.412.0 → 0.413.0), at D525 (0.411.0 → 0.412.0), at D524 (0.410.0 → 0.411.0), at D523 (0.409.0 → 0.410.0), at D522 (0.408.0 → 0.409.0), at D521 (0.407.0 → 0.408.0), at D520 (0.406.0 → 0.407.0), at D519 (0.405.0 → 0.406.0), at D518 (0.404.0 → 0.405.0), at D517 (0.403.0 → 0.404.0), at D516 (0.402.0 → 0.403.0), at D515 (0.401.0 → 0.402.0), at D514 (0.400.0 → 0.401.0), at D513 (0.399.0 → 0.400.0), at D512 (0.398.0 → 0.399.0), at D510 (0.397.0 → 0.398.0), at D508 (0.396.0 → 0.397.0), at D507 (0.395.0 → 0.396.0), at D505 (0.394.0 → 0.395.0), at D490 (0.384.0 → 0.385.0), at D489 (0.383.0 → 0.384.0), at D488 (0.382.0 → 0.383.0), at D487 (0.381.0 → 0.382.0), at D486 (0.380.0 → 0.381.0), at D485 (0.379.0 → 0.380.0), at D450 (0.351.0 → 0.352.0), at D449 (0.350.0 → 0.351.0), at D448 (0.349.0 → 0.350.0), at D447 (0.348.0 → 0.349.0), at D446 (0.347.0 → 0.348.0), at D445 (0.346.0 → 0.347.0), at D444 (0.345.0 → 0.346.0), at D443 (0.344.0 → 0.345.0), at D442 (0.343.0 → 0.344.0), at D441 (0.342.0 → 0.343.0), at D440 (0.341.0 → 0.342.0), at D439 (0.340.0 → 0.341.0), at D438 (0.339.0 → 0.340.0), at D437 (0.338.0 → 0.339.0), at D436 (0.337.0 → 0.338.0), at D435 (0.336.0 → 0.337.0), at D434 (0.335.0 → 0.336.0), at D433 (0.334.0 → 0.335.0), at D432 (0.333.0 → 0.334.0), at D431 (0.332.0 → 0.333.0), at D430 (0.331.0 → 0.332.0), at D429 (0.330.0 → 0.331.0), at D428 (0.329.0 → 0.330.0), at D427 (0.328.0 → 0.329.0), at D426 (0.327.0 → 0.328.0), at D425 (0.326.0 → 0.327.0), at D424 (0.325.0 → 0.326.0), at D423 (0.324.0 → 0.325.0), at D422 (0.323.0 → 0.324.0), at D421 (0.322.0 → 0.323.0), at D420 (0.321.0 → 0.322.0), at D417 (0.320.0 → 0.321.0), at D416 (0.319.0 → 0.320.0), at D415 (0.318.0 → 0.319.0), at D414 (0.317.0 → 0.318.0), at D413 (0.316.0 → 0.317.0), at D412 (0.315.0 → 0.316.0), at D410 (0.314.0 → 0.315.0), at D409 (0.313.0 → 0.314.0), at D408 (0.312.0 → 0.313.0), at D407 (0.311.0 → 0.312.0), at D402 (0.306.0 → 0.307.0), at D401 (0.305.0 → 0.306.0), at D400 (0.304.0 → 0.305.0), at D399 (0.303.0 → 0.304.0), at D398 (0.302.0 → 0.303.0), at D397 (0.301.0 → 0.302.0), at D396 (0.300.0 → 0.301.0), at D395 (0.299.0 → 0.300.0), at D394 (0.298.0 → 0.299.0), at D393 (0.297.0 → 0.298.0), at D392 (0.296.0 → 0.297.0), at D391 (0.295.0 → 0.296.0), at D390 (0.294.0 → 0.295.0), at D389 (0.293.0 → 0.294.0), at D388 (0.292.0 → 0.293.0), at D387 (0.291.0 → 0.292.0), at D386 (0.290.0 → 0.291.0),
     //    each in the SAME COMMIT as the bump —
     // the TENTH slice running to do it that way, and the practice is now the one
     // thing about this row that has never cost an ERROR since it started.
@@ -5998,7 +6204,7 @@ export const MUTANTS: Mutant[] = [
     // CORPUS QUOTES** (D414/D415), so a value-keyed sweep over `toBe("0.391.0")` cannot
     // see it — this row's `find` spells the DECLARATION, not an assertion. Run
     // `precheck` after every version bump, not after the sweep tells you.
-    find: 'export const engineVersion = "0.424.0";',
+    find: 'export const engineVersion = "0.425.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -19939,8 +20145,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D433",
     what: "The op strips the WHOLE evolution stack instead of the single highest Stage card, leaving the Basic. It is the mistake the printed sentence invites — *\"devolve\"* reads like an undo of the whole chain, and `discardFromStack(..., \"all\")` sits one file over doing exactly this to a KO'd body. 🛑 NO CENSUS CAN SEE IT: the sentence still resolves, `BUILT.attack` is unmoved, `ATTACK_EFFECT_SKIPPED` still never fires, a `POKEMON_DEVOLVED` row is still filed, the deck still grows and the Stage 1 board is IDENTICAL under both builds. Only a Stage 2 board tells them apart, which is why §4 exists",
     file: "packages/engine/src/interpreter.ts",
-    find: "        stack: body.stack.slice(0, -1),",
-    replace: "        stack: body.stack.slice(0, 1),",
+    find: "    stack: body.stack.slice(0, -1),",
+    replace: "    stack: body.stack.slice(0, 1),",
     expectKilledBy: ["packages/engine/src/devolveEach.test.ts"],
   },
   {
@@ -19984,8 +20190,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D433",
     what: "The candidate set is the ACTOR's own in-play bodies rather than the opponent's — `ownInPlayRefs` is the real neighbouring funnel in the same file (D190b's rule: a neighbour's REAL code, not a straw). *\"each of YOUR OPPONENT'S evolved Pokémon\"* is the whole side reading, and the sentence still resolves under this build: the census does not move and the attack still emits `POKEMON_DEVOLVED` and `SHUFFLE`. It simply devolves the wrong player's board",
     file: "packages/engine/src/interpreter.ts",
-    find: "  const evolvedRefs = oppAnyRefs(state, ctx.seat).filter((ref) => {",
-    replace: "  const evolvedRefs = ownInPlayRefs(state, ctx.seat).filter((ref) => {",
+    find: "  return oppAnyRefs(state, seat).filter((ref) => {",
+    replace: "  return ownInPlayRefs(state, seat).filter((ref) => {",
     expectKilledBy: ["packages/engine/src/devolveEach.test.ts"],
   },
   {
@@ -20020,8 +20226,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D433",
     what: "🛑 THE COPY DEFECT D432 NAMED, ONE SLICE LATER: `markers: []` copied across from `evolveOnto`'s literal, which really does write it. The clear set here is `switchInto`'s ELEVEN and not `evolveOnto`'s fourteen, and this is the one of the three extra fields whose copy is actively wrong — the only marker in the engine is D414's `koByEffect:<turn>`, so clearing it restores the *\"by damage\"* reading for a body §8.1 is about to collect",
     file: "packages/engine/src/interpreter.ts",
-    find: "        evolvedTurn: null,\n      },\n    });",
-    replace: "        evolvedTurn: null,\n        markers: [],\n      },\n    });",
+    find: "    evolvedTurn: null,\n  };\n}",
+    replace: "    evolvedTurn: null,\n    markers: [],\n  };\n}",
     expectKilledBy: ["packages/engine/src/devolveEach.test.ts"],
   },
   {
@@ -20029,8 +20235,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D433",
     what: "`evolvedTurn` is left standing, so the body keeps a stamp that belongs to a card now sitting in the deck. It is the field that is neither one of the eleven nor a keep, so an author working from `switchInto`'s literal alone omits it exactly like this — and the value it leaves behind is the OVER-claiming direction, the one that pays Gholdengo `sv08-131` a +90 for an evolution that has been undone",
     file: "packages/engine/src/interpreter.ts",
-    find: "        // touched.\n        evolvedTurn: null,",
-    replace: "        // touched.",
+    find: "    // are NOT touched (clearing `markers` would erase the `koByEffect` stamp for a\n    // body §8.1 is about to collect — the one copy that would be a live defect).\n    evolvedTurn: null,",
+    replace: "    // are NOT touched (clearing `markers` would erase the `koByEffect` stamp for a\n    // body §8.1 is about to collect — the one copy that would be a live defect).",
     expectKilledBy: ["packages/engine/src/devolveEach.test.ts"],
   },
   {
@@ -20218,8 +20424,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D434",
     what: "The §10 clear at the devolve literal is dropped. There is no shared helper — five hand-written object literals in three files, and nothing makes them agree (D147 priced the unification and refused it) — so a forgotten field here is exactly the drift D432 found three of. Under this build the Defending Pokémon walks off the Active Spot and the appointment follows it, which is the opposite of the printed §10 rule and of the whole family's ruling",
     file: "packages/engine/src/interpreter.ts",
-    find: "        // reachability argument is not a licence to leave a hole in it.\n        scheduledEffect: null,",
-    replace: "        // reachability argument is not a licence to leave a hole in it.",
+    find: "    // reachability argument is not a licence to leave a hole in it.\n    scheduledEffect: null,",
+    replace: "    // reachability argument is not a licence to leave a hole in it.",
     expectKilledBy: ["packages/engine/src/delayedCounters.test.ts"],
   },
   {
@@ -28264,8 +28470,20 @@ export const MUTANTS: Mutant[] = [
     // 🆕🆕🆕 D534 — RE-TRANSCRIBED AGAIN, 1651 -> 1652 (replace 1649 -> 1650): the sentence and
     //    printing steps agree at 1 (corpus FILE LINE 401, Inkay's one-card look), the same
     //    two-step regression; `precheck` named the `find` at 0x the moment the pin moved.
-    find: "  attack: 1664,",
-    replace: "  attack: 1662,",
+    // 🆕🆕🆕 D540 — RE-TRANSCRIBED AGAIN, 1664 -> 1665 (and the replace 1662 -> 1664).
+    //    ⚠️ THE GAP IS **1** AND NOT 2, because this column counts PRINTINGS and D540's row
+    //    (corpus row 87) has ONE legal printing against ONE sentence — the FIRST slice in six
+    //    whose sentence and printing steps AGREE (D535 1-vs-2, D536 1-vs-3, D537 1-vs-2,
+    //    D538 1-vs-3, D539 1-vs-2), which is exactly the slice where a copied number would have
+    //    been right BY ACCIDENT. `replace` is the GENUINE pre-slice value read at HEAD
+    //    `c0c5b388`, which is this row's standing claim (“put back to its pre-slice value”) and
+    //    not a reflexive `find - 2`. ⚠️ THIS NOTE WAS APPENDED IN A REVIEW ROUND: the literal
+    //    and the `replace` were both stepped correctly in the build edit, but the enumeration
+    //    entry was omitted — an append-only record with a slice missing from it is the same
+    //    class of hole as a truncated one (D428), and no instrument can see it because the row
+    //    still runs, still has its `find` at 1x and is still KILLED.
+    find: "  attack: 1665,",
+    replace: "  attack: 1664,",
     expectKilledBy: [
       "packages/engine/src/censusAtHead.test.ts",
     ],
