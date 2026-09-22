@@ -8125,6 +8125,48 @@ and a green `check` is exactly what a corrupted catalog row produces. ✅ **And 
 not by a green suite**: D538's revert is confirmed by `censusAttackCorpus.ts` not appearing in
 `git show --numstat a0102c18` at all — the committed catalog is byte-identical to the previous slice's.
 
+### A WITHDRAWAL is a sweep, not a correction — and not every site holding the word is a site to change (D539 close-out, extending D467 and D460)
+
+D467 says that when you correct a transcribed FIGURE you correct the SOURCE in the same commit. D539 is the
+same shape one level up and it costs more, because what was wrong was not a number but a CLAIM the slice
+itself had decided was false.
+
+The claim was *"`attack.ts` binds both readers unconditionally."* Ground truth: `attack.ts:1708` binds
+`derivedHead` **unconditionally**, and `attack.ts:1761-1764` binds `damageMultiplier` **GUARDED** —
+`deriveAttackDamageMultiplier(effect)` is reached only when `damageBonus === null`. One of the six copies
+even cited `attack.ts:1764` as a binding, and that line is the ternary's **ELSE-ARM**, which binds nothing.
+
+**THE SECOND REVIEW PASS WITHDREW THE WORD IN EXACTLY ONE PLACE AND LEFT IT LIVE IN SIX OTHERS, TWO OF THEM
+SHIPPED ENGINE SOURCE** — an `effects.ts` anchor doc block, an `effects.ts` reader arm, an `index.ts`
+changelog block that then contradicted itself three paragraphs later, the new suite's own file header (the
+file that pass reported as fixed), a `docs/decisions.md` row, and a line of the session-log entry recording
+the withdrawal. **So one diff both made the claim and recorded its withdrawal**, and a third pass was needed
+to find the rest.
+
+🛑 **THE RULE: a withdrawal is not done when the sentence is fixed at ONE site.** The moment you decide a
+prose claim is false, `git grep` its load-bearing WORD across the whole diff and fix every hit in ONE pass,
+**engine source first**. There is no red run to wait for: a doc block, a rung title and a changelog
+paragraph carry no assertions, so `tsc`, `precheck`, every gate and the whole suite stay green with N−1
+false copies standing. **The site you are editing when you notice is the least likely to be the only one**,
+because a claim gets copied in the direction of the work — source → suite → changelog → docs — and the
+copy you are looking at is usually the last one written.
+
+⚠️ **AND THE OTHER HALF, WHICH THE SAME SLICE PAID FOR SEPARATELY: CLASSIFY THE SITE BEFORE THE PASS
+CHANGES IT.** D539 also skipped the version whitelist's `it()` TITLE class entirely — **27** titles naming
+`0.423.0` over bodies asserting `0.424.0`, caught on the fourth review round, although D460 already names
+that class and already says *"step the titles in the same pass, and count them."* That was a compliance
+failure against a written rule, and the cure is mechanical: **key a version pass on the version STRING, not
+on `expect(`**, and the titles come with it. But **one title had to be left alone**:
+`benchKeepShuffleRest.test.ts:883` reads *"… (D538 — 0.422.0 → 0.423.0; the title is de-valued so the
+version tax is one edit per site, not two)"* over a body asserting `0.424.0`. That `0.423.0` is a
+**PROVENANCE RECORD** — which decision made an EARLIER bump — and stepping it replaces a true historical
+fact with a false one.
+
+**So a mechanical pass over a word or a version asks TWO questions per site, in order: is this site in the
+pass's file set (D538), and is this occurrence a PIN or a RECORD OF A PAST STATE?** A pin must move with its
+assertion; a record must not be touched. Both halves are invisible to every gate, which is why the audit is
+the diff and the classification is per SITE rather than per value.
+
 ## Git / commits
 - Branch off `main` for non-trivial work; commit/push only when asked.
 - Commit trailer per global config: `Co-Authored-By: Claude ...`.
