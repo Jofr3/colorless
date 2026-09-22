@@ -5657,6 +5657,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D275",
     what: "🛑 THE DEBT THIS SLICE PAID FOR THE FIFTH TIME, RE-INSTALLED: `engineVersion` falls a minor behind `packages/engine/package.json`, which is EXACTLY the state the tree was in at the head of D275 (0.187.0 against 0.189.0) and had been for two slices with nothing comparing them. The tie is the guard; this row is the proof it is one",
     file: "packages/engine/src/index.ts",
+    // ⚠️ RE-POINTED AT D542 (0.426.0 → 0.427.0) — AND THE FROZEN LINE BELOW SURVIVED THIS SWEEP, WHICH WAS CHECKED BY `cmp` AND NOT BY A GREEN RUN. D542's version whitelist was built over SITES (`expect(` expressions, `it()`/`test()`/`describe()` titles, the declaration, `package.json` and this row's `find`) and it EXCLUDED, by construction, every line that also carries the OUTGOING-OUTGOING value `0.425.0` — which is exactly the shape of the line below. ⚠️ ~~151 lines across 103 files carried `0.426.0` at D542's head~~ — **THAT FIGURE WAS WITHDRAWN AND RE-MEASURED IN REVIEW, AND THIS ENTRY EXISTS TO MAKE EXACTLY THIS AUDITABLE, SO THE CORRECTION BELONGS HERE RATHER THAN ONLY IN THE CLOSE-OUT.** The published partition counted "D542's own new heading" as a NOT-STEPPED site — a line that did not exist at the head being measured and was therefore never a step CANDIDATE — and left the declaration and `package.json` outside both buckets, so its own buckets summed to 151 or 153 and never to the total. RE-MEASURED: `git grep -nF "0.426.0" 54e67649` = **152 lines across 104 files**. The DISJOINT partition, taken DOCS-FIRST so the docs bucket and the history-arrow bucket cannot double-count the **5** lines that are BOTH: **140 STEPPED** = **110** `expect(` lines + **27** `it()`/`test()`/`describe()` titles (D460's fifth site kind, stepped in the SAME pass) + `index.ts:23375` (the declaration) + `packages/engine/package.json:4` + this row's own `find` at `mutants.ts:6207`; **12 NOT STEPPED** = **8** docs lines (outside the sweep) + **3** non-docs HISTORY ARROWS, namely `angeliteChosenShuffle.test.ts:118`, `index.ts:20043` and the FROZEN HISTORICAL ENUMERATION immediately below (its HEAD address is `mutants.ts:5660`; it sits one line lower in the working tree now that this entry was prepended ahead of it) + `index.ts:13442` (a cross-reference to D541's OWN changelog entry). 140 + 12 = 152. 🛑 **A FIGURE DEFECT, NOT A COVERAGE ONE, AND THE DIFFERENCE WAS DRIVEN**: over the working tree, ZERO `expect(` ASSERTIONS and ZERO `it()`/`test()`/`describe()` titles still carry `0.426.0`. 🆕 TIGHTENED AT THE LANDING, BECAUSE THE LOOSE SPELLING WAS THE ROUND'S OWN CLASS: a line matching the SUBSTRING *"expect("* is not an `expect(` SITE, and EXACTLY ONE line carrying `0.426.0` matches that substring — THIS COMMENT, which is prose and never was a candidate. MEASURED at the landing, whole tree: `0.426.0` stands on 26 lines in 5 files, 0 of them titles and 0 of them assertions. The stepped side is `111` `expect(` assertions and `27` titles on `0.427.0` (the `110` + `27` above, plus the new suite's own pin), so the partition closes in both directions. The frozen line below was then verified BYTE-IDENTICAL to HEAD with `git show HEAD:scripts/mutation/mutants.ts | sed -n '5660p' | cmp -` (D540: a REVERT, and an INTEGRITY CHECK, is a `cmp` and never a retype). 🛑 **NOTHING BUT A READER CAN SEE DAMAGE HERE** — not `check`, not `precheck`, not the probe, not a gate — which is why the check is written down rather than performed and forgotten.
     // ⚠️ RE-POINTED AT D541 (0.425.0 → 0.426.0) — AND AT D541 THE ENUMERATION ITSELF WAS THE CASUALTY, WHICH IS THE HOLE THIS VERY ENTRY WARNS ABOUT ARRIVING FROM THE OTHER SIDE: the version whitelist stepped the OUTGOING LITERAL INSIDE THIS HISTORICAL ENTRY (the INCOMING half of D540's own arrow, "0.425.0", was overwritten with this slice's "0.426.0" — not re-spelled here as a whole arrow, because a false arrow printed in prose is the next audit's false positive), so the ledger asserted a bump that never happened WHILE D541's own re-point was missing from the list — false and truncated at once, and invisible to `check`, to `precheck`, to the probe and to every gate exactly as the parenthesis below says. A version WHITELIST IS OVER SITES, NEVER OVER THE OUTGOING VALUE (index.ts:20024-20035), and a FROZEN HISTORICAL ARROW IS A SITE THE WHITELIST DOES NOT NAME — D538's "a pin sweep that corrupted a real row in code" at an address where nothing but a reader can see it. Caught in review; the line was RESTORED BY `git show e4a367cd:scripts/mutation/mutants.ts | sed -n '5660p'` AND `cmp`, NEVER RETYPED (D540), and this entry PREPENDED ahead of it the way every entry below was built — AND RE-POINTED AT D540 (0.424.0 → 0.425.0) — the `find` was stepped in the build edit and THIS ENUMERATION ENTRY WAS APPENDED IN A REVIEW ROUND, which is the same hole D428 names for a truncated list and which nothing but a reader can see (the row runs, its `find` is at 1x, and `precheck` is green either way) — at D539 (0.423.0 → 0.424.0), at D538 (0.422.0 → 0.423.0), at D537 (0.421.0 → 0.422.0), at D536 (0.420.0 → 0.421.0), at D535 (0.419.0 → 0.420.0), at D534 (0.418.0 → 0.419.0), at D532 (0.417.0 → 0.418.0), at D531 (0.416.0 → 0.417.0), at D530 (0.415.0 → 0.416.0), at D528 (0.414.0 → 0.415.0), at D527 (0.413.0 → 0.414.0), at D526 (0.412.0 → 0.413.0), at D525 (0.411.0 → 0.412.0), at D524 (0.410.0 → 0.411.0), at D523 (0.409.0 → 0.410.0), at D522 (0.408.0 → 0.409.0), at D521 (0.407.0 → 0.408.0), at D520 (0.406.0 → 0.407.0), at D519 (0.405.0 → 0.406.0), at D518 (0.404.0 → 0.405.0), at D517 (0.403.0 → 0.404.0), at D516 (0.402.0 → 0.403.0), at D515 (0.401.0 → 0.402.0), at D514 (0.400.0 → 0.401.0), at D513 (0.399.0 → 0.400.0), at D512 (0.398.0 → 0.399.0), at D510 (0.397.0 → 0.398.0), at D508 (0.396.0 → 0.397.0), at D507 (0.395.0 → 0.396.0), at D505 (0.394.0 → 0.395.0), at D490 (0.384.0 → 0.385.0), at D489 (0.383.0 → 0.384.0), at D488 (0.382.0 → 0.383.0), at D487 (0.381.0 → 0.382.0), at D486 (0.380.0 → 0.381.0), at D485 (0.379.0 → 0.380.0), at D450 (0.351.0 → 0.352.0), at D449 (0.350.0 → 0.351.0), at D448 (0.349.0 → 0.350.0), at D447 (0.348.0 → 0.349.0), at D446 (0.347.0 → 0.348.0), at D445 (0.346.0 → 0.347.0), at D444 (0.345.0 → 0.346.0), at D443 (0.344.0 → 0.345.0), at D442 (0.343.0 → 0.344.0), at D441 (0.342.0 → 0.343.0), at D440 (0.341.0 → 0.342.0), at D439 (0.340.0 → 0.341.0), at D438 (0.339.0 → 0.340.0), at D437 (0.338.0 → 0.339.0), at D436 (0.337.0 → 0.338.0), at D435 (0.336.0 → 0.337.0), at D434 (0.335.0 → 0.336.0), at D433 (0.334.0 → 0.335.0), at D432 (0.333.0 → 0.334.0), at D431 (0.332.0 → 0.333.0), at D430 (0.331.0 → 0.332.0), at D429 (0.330.0 → 0.331.0), at D428 (0.329.0 → 0.330.0), at D427 (0.328.0 → 0.329.0), at D426 (0.327.0 → 0.328.0), at D425 (0.326.0 → 0.327.0), at D424 (0.325.0 → 0.326.0), at D423 (0.324.0 → 0.325.0), at D422 (0.323.0 → 0.324.0), at D421 (0.322.0 → 0.323.0), at D420 (0.321.0 → 0.322.0), at D417 (0.320.0 → 0.321.0), at D416 (0.319.0 → 0.320.0), at D415 (0.318.0 → 0.319.0), at D414 (0.317.0 → 0.318.0), at D413 (0.316.0 → 0.317.0), at D412 (0.315.0 → 0.316.0), at D410 (0.314.0 → 0.315.0), at D409 (0.313.0 → 0.314.0), at D408 (0.312.0 → 0.313.0), at D407 (0.311.0 → 0.312.0), at D402 (0.306.0 → 0.307.0), at D401 (0.305.0 → 0.306.0), at D400 (0.304.0 → 0.305.0), at D399 (0.303.0 → 0.304.0), at D398 (0.302.0 → 0.303.0), at D397 (0.301.0 → 0.302.0), at D396 (0.300.0 → 0.301.0), at D395 (0.299.0 → 0.300.0), at D394 (0.298.0 → 0.299.0), at D393 (0.297.0 → 0.298.0), at D392 (0.296.0 → 0.297.0), at D391 (0.295.0 → 0.296.0), at D390 (0.294.0 → 0.295.0), at D389 (0.293.0 → 0.294.0), at D388 (0.292.0 → 0.293.0), at D387 (0.291.0 → 0.292.0), at D386 (0.290.0 → 0.291.0),
     //    each in the SAME COMMIT as the bump —
     // the TENTH slice running to do it that way, and the practice is now the one
@@ -6204,7 +6205,7 @@ export const MUTANTS: Mutant[] = [
     // CORPUS QUOTES** (D414/D415), so a value-keyed sweep over `toBe("0.391.0")` cannot
     // see it — this row's `find` spells the DECLARATION, not an assertion. Run
     // `precheck` after every version bump, not after the sweep tells you.
-    find: 'export const engineVersion = "0.426.0";',
+    find: 'export const engineVersion = "0.427.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -19308,8 +19309,13 @@ export const MUTANTS: Mutant[] = [
     decision: "D426",
     what: "🛑 THE SAME SEAT CROSS ON THE **RESUMED** HALF ALONE, and it is a separate row because the two halves are separate code paths reached by separate boards — D416's rule (\"a guard that only ever runs on the forced path does not guard the parked one\") applied to its own inverse. The park is untouched, so the OPPONENT is still asked, still sees their own hand and still answers; `applyChoice` then hunts those uids in the CONTROLLER's hand, finds none, filters them all out and returns the state unchanged — **a card that asks a question and then does nothing with the answer**. No event, no error, no count moves",
     file: "packages/engine/src/interpreter.ts",
-    find: "        ? discardChosenFromHand(state, otherSeat(ctx.seat), choice.uids, events)",
-    replace: "        ? discardChosenFromHand(state, ctx.seat, choice.uids, events)",
+    // 🆕🆕🆕 D542 - RE-POINTED: the arm gained a DESTINATION branch (`op.to === "deck"`), so the
+    //    one-line ternary this row patched no longer exists. The row is unchanged in what it
+    //    tests - the seat cross on the RESUMED half - and now patches the DISCARD leg of the
+    //    branch, which is the same expression at a new address. `precheck` reported the `find`
+    //    at 0x on the edit round that moved it, which is how it was found.
+    find: "        : discardChosenFromHand(state, otherSeat(ctx.seat), choice.uids, events);",
+    replace: "        : discardChosenFromHand(state, ctx.seat, choice.uids, events);",
     expectKilledBy: ["packages/engine/src/opponentHandDiscard.test.ts"],
   },
   {
@@ -19326,8 +19332,11 @@ export const MUTANTS: Mutant[] = [
     decision: "D426",
     what: "the park's floor drops to 0 — `searchDeck`'s and `discardPileRetrieval`'s REAL SPELLING copied verbatim (both are printed \"up to\" picks and both park at `min: 0`), which is exactly the neighbour-copy this corpus is built out of. The sentence prints no \"may\" and no \"up to\": under the mutant the player being attacked can answer with an empty list and discard NOTHING, and both HUDs grow a \"Take none\" button off `prompt.min > 0`. The candidates, the `decider`, the answerer gate, the destination and every census figure are untouched",
     file: "packages/engine/src/interpreter.ts",
-    find: "          min: take,\n          max: take,\n          dest: \"discard\",",
-    replace: "          min: 0,\n          max: take,\n          dest: \"discard\",",
+    // 🆕🆕🆕 D542 - RE-POINTED: the park's `dest` became `op.to ?? "discard"`, so the three-line
+    //    `find` no longer matches. The row is unchanged in what it tests (the floor drops to 0)
+    //    and is re-anchored on the two lines D542 did not touch.
+    find: "          min: take,\n          max: take,\n          // 🆕🆕🆕 **D542",
+    replace: "          min: 0,\n          max: take,\n          // 🆕🆕🆕 **D542",
     expectKilledBy: ["packages/engine/src/opponentHandDiscard.test.ts"],
   },
   {
@@ -19344,8 +19353,13 @@ export const MUTANTS: Mutant[] = [
     decision: "D426",
     what: "🛑 **D425's DEFECT, ONE EVENT OVER, AS THE MISTAKE IT ACTUALLY IS.** The row files under `otherSeat(event.seat)` — the habit every OTHER cross-seat card move in `log.ts` follows correctly (`CARD_TO_BOTTOM_OF_DECK`, `RANDOM_CARD_TAKEN`, `POKEMON_RETURNED`, `DECK_TOP_DISCARDED` all file under the ACTOR), and true of this op too **BY CONSTRUCTION OF ONE OP** rather than because anything enforces it. Here the actor chose nothing, so the mutant credits the ATTACKER with discarding cards out of a hand they never touched. The board, the pile, the event and every count are byte-identical: only the rendered log moves, and a log row is a claim with the same standing as a predicate (D421)",
     file: "packages/engine/src/log.ts",
-    find: "      const n = event.uids.length;\n      return row(event.seat, [\n        plain(`discarded ${n} card${n === 1 ? \"\" : \"s\"} from their hand`),",
-    replace: "      const n = event.uids.length;\n      return row(otherSeat(event.seat), [\n        plain(`discarded ${n} card${n === 1 ? \"\" : \"s\"} from their hand`),",
+    // 🆕🆕🆕 D542 - RE-POINTED: the row now branches on `event.to`, so the rendering moved and
+    //    the `find` went to 0x. The row is unchanged in what it tests - the speaker DERIVED with
+    //    `otherSeat` - and is re-anchored on the `row(...)` call alone, which is the byte the
+    //    defect is in. The two-line form it replaces pinned the count line beside it; the count
+    //    is now pinned by `D542-log-row-says-discard` one file over.
+    find: "      return row(event.seat, [\n        plain(\n          event.to === \"deck\"",
+    replace: "      return row(otherSeat(event.seat), [\n        plain(\n          event.to === \"deck\"",
     expectKilledBy: ["packages/engine/src/opponentHandDiscard.test.ts"],
   },
   {
@@ -28326,6 +28340,15 @@ export const MUTANTS: Mutant[] = [
     decision: "D495",
     what: "⚠️ C10 — the census constant is put back to its pre-slice value while the arm stays. This is the row that proves the CENSUS moved for this build rather than the suite merely agreeing with itself: `BUILT.attack`'s live sum is derived from the readers over the committed corpus, so a stale constant is the one thing that cannot be true at both heads. 🆕 RE-TRANSCRIBED AT D499 (1612→1614 / 1611→1612): the row is about the CONSTANT being one slice stale, not about a particular digit, so it follows the constant. Its MEANING is byte-identical — a re-transcription that changes the claim is worth less than a broken row (D498), and this one does not: D499's own step is +2 printings, so the mutated value is exactly this file's value at D498's head",
     file: "packages/engine/src/censusAtHead.test.ts",
+    // 🆕🆕🆕 D542 - RE-TRANSCRIBED AGAIN, 1668 -> 1669 (and the replace 1665 -> 1668), the same
+    //    two-step regression, for the Nth consecutive slice. ⚠️ THE STEP IS **1** AND SO IS THE
+    //    SENTENCE STEP - D542's row (corpus FILE LINE 665) is 1 sentence / 1 legal printing, the
+    //    SECOND slice in eight where the two agree (D540 was the other). ⚠️ **That is exactly the
+    //    case where a copied number is right BY ACCIDENT**, so this constant was MEASURED off the
+    //    live census rather than inherited from its neighbour (D426/D451). ⚠️ **AND THIS SLICE'S
+    //    ROW LEAVES THROUGH THE READER SUMMAND**, unlike D541's, so `rawUnbuiltSentences` and the
+    //    reader arm move WITH this constant. `precheck` reported the `find` at 0x on the edit
+    //    round that moved the constant, exactly as it has since D495.
     // 🆕🆕🆕 D541 - RE-TRANSCRIBED AGAIN, 1665 -> 1668 (and the replace 1664 -> 1665), the same
     //    two-step regression, for the Nth consecutive slice. ⚠️ THE STEP IS **3** AND NOT 1,
     //    because this column counts PRINTINGS and D541's row (corpus FILE LINE 82, Sylveon ex)
@@ -28500,8 +28523,8 @@ export const MUTANTS: Mutant[] = [
     //    entry was omitted — an append-only record with a slice missing from it is the same
     //    class of hole as a truncated one (D428), and no instrument can see it because the row
     //    still runs, still has its `find` at 1x and is still KILLED.
-    find: "  attack: 1668,",
-    replace: "  attack: 1665,",
+    find: "  attack: 1669,",
+    replace: "  attack: 1668,",
     expectKilledBy: [
       "packages/engine/src/censusAtHead.test.ts",
     ],
@@ -33412,5 +33435,113 @@ export const MUTANTS: Mutant[] = [
     find: "    if (count >= 1) return [{ op: \"returnBenchedChosen\", count }];\n",
     replace: "    return [{ op: \"returnBenchedChosen\", count }];\n",
     expectKilledBy: ["packages/engine/src/angeliteChosenShuffle.test.ts"],
+  },
+  {
+    id: "D542-apply-choice-drops-deck-branch",
+    decision: "D542",
+    what: "\ud83d\uded1 **THE ROW THIS SLICE EXISTS FOR, AND THE TYPE SYSTEM CANNOT SEE IT.** `applyChoice`'s `switch` ends `default: return state;` (*\"Synchronous ops never park, so never reach the choice path\"*), and the deck route is not an ARM but a BRANCH INSIDE one \u2014 so collapsing it to the discard leg TYPECHECKS GREEN (MEASURED at this head: deleting the branch and running `bunx tsc -b --force` prints nothing and exits 0). The op still parks, still dialogs, still validates the answer, and then lands the three picked cards in the DISCARD PILE while the caption, the log row and the printed sentence all say deck. No event type changes, no census figure moves, no shape assertion notices. Only a rung that asserts the uids ON A BOARD with the DISCARD PINNED UNCHANGED can see it (D421), which is `opponentHandShuffle.test.ts` \u00a74. \u26a0\ufe0f A FORCED-path rung cannot kill this one either, because the forced path never reaches `applyChoice` \u2014 that half is `D542-forced-arm-still-discards`.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      return op.to === \"deck\"\n        ? deckChosenFromHand(state, otherSeat(ctx.seat), choice.uids, events)\n        : discardChosenFromHand(state, otherSeat(ctx.seat), choice.uids, events);",
+    replace: "      return discardChosenFromHand(state, otherSeat(ctx.seat), choice.uids, events);",
+    expectKilledBy: ["packages/engine/src/opponentHandShuffle.test.ts"],
+  },
+  {
+    id: "D542-forced-arm-still-discards",
+    decision: "D542",
+    what: "\ud83d\uded1 **THE \u00a78.6 SHORT-HAND ARM KEEPS THE DISCARD, AND IT IS THE HALF NO PARKED-PATH RUNG CAN REACH.** `hand.length <= take` is the *\"do as much as you can\"* path: it resolves inline and never touches `applyChoice` at all. A build that widened only the PARK passes every \u00a74 assertion and still sends a hand of three (or fewer) to the pile under a sentence that says deck \u2014 `tsc` silent, no event type changed. `opponentHandShuffle.test.ts` \u00a75 drives the exact-3 and the short-2 boards separately, because a SHORT hand and an EXACT hand are two decisions sharing one line.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "          done:\n            op.to === \"deck\"\n              ? deckChosenFromHand(state, owner, hand, events)\n              : discardChosenFromHand(state, owner, hand, events),",
+    replace: "          done: discardChosenFromHand(state, owner, hand, events),",
+    expectKilledBy: ["packages/engine/src/opponentHandShuffle.test.ts"],
+  },
+  {
+    id: "D542-park-dest-stays-discard",
+    decision: "D542",
+    what: "\u26a0\ufe0f **THE PARK'S `dest` IGNORES THE OP'S DESTINATION**, so the client is told *Discard* over a heading that promises a shuffle. `dest` is what both HUDs' Confirm-verb tables key on, so this is the defect the app tier SEES while the engine's own board stays correct \u2014 the cards still reach the deck. It is a caption/behaviour contradiction with no board consequence, which is precisely the class no engine assertion about zones can catch.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "          dest: op.to ?? \"discard\",",
+    replace: "          dest: \"discard\",",
+    expectKilledBy: ["packages/engine/src/opponentHandShuffle.test.ts"],
+  },
+  {
+    id: "D542-note-says-discard",
+    decision: "D542",
+    what: "\u26a0\ufe0f **THE ANSWERER'S CAPTION LIES.** `opponentDiscardNote` loses its destination branch, so the player being asked \u2014 who is the OPPONENT, in their own voice (D426's rule) \u2014 reads *\u201cDiscard 3 cards from your hand.\u201d* while the engine shuffles those cards into their deck. Nothing on the board moves, so only a rung that reads the NOTE can see it; `opponentHandShuffle.test.ts` \u00a73 keeps BOTH spellings (the sibling's discard caption is asserted on the same board) so a build that renamed the verb everywhere fails the other half.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  if (op.to === \"deck\") {\n    return op.count === 1\n      ? \"Shuffle a card from your hand into your deck.\"",
+    replace: "  if (op.to === \"discard\") {\n    return op.count === 1\n      ? \"Shuffle a card from your hand into your deck.\"",
+    expectKilledBy: ["packages/engine/src/opponentHandShuffle.test.ts"],
+  },
+  {
+    id: "D542-shuffle-tail-dropped",
+    decision: "D542",
+    what: "\u26a0\ufe0f **THE PRINTED SHUFFLE IS GONE AND THE DECK'S ORDER IS FULLY DETERMINED WHERE THE PRINT SAYS IT IS RANDOM.** Without the trailing `shuffleDeck` the three picked cards stay exactly where `deckChosenFromHand` appended them \u2014 at the **BOTTOM** of the opponent's deck, in pick order, drawn LAST. \ud83d\uded1 **THE FIRST PUBLISHED WORDING OF THIS ROW SAID *TOP* AND *\u201cthe opponent draws exactly what they chose to put back\u201d*, WHICH IS THE MIRROR OF WHAT THE CODE DOES \u2014 WITHDRAWN AT ALL THREE OF ITS ADDRESSES** (this row, `deckChosenFromHand`'s doc block, \u00a76's comment) rather than corrected in one place (D539): the helper writes `deck: [...side.deck, ...moved]`, and index 0 is the TOP in this engine (every draw, mill and look cuts `deck.slice(0, n)`; `drawCards`' `from: \"bottom\"` arm cuts at `deck.length \u2212 count` instead). The defect is real either way, and the three reasons that survive the correction do not depend on the end: `rngState` never moves, so the printed randomisation does not happen at all; three deck positions become KNOWN, which is the information the shuffle exists to destroy; and the cards the ANSWERER chose to shed are buried where they are least likely to return \u2014 a board that favours the answerer rather than the attacker. Every membership assertion in \u00a74 still passes (the cards ARE in the deck), which is why \u00a76 asserts the SHUFFLE row, the seat on it and that the deck's TAIL is not the pick \u2014 the tail being, as measured, exactly the landing site.",
+    file: "packages/engine/src/effects.ts",
+    find: "      { op: \"opponentDiscardsFromHand\", count: 3, to: \"deck\" },\n      { op: \"shuffleDeck\", whose: \"opponent\" },",
+    replace: "      { op: \"opponentDiscardsFromHand\", count: 3, to: \"deck\" },",
+    expectKilledBy: ["packages/engine/src/opponentHandShuffle.test.ts"],
+  },
+  {
+    id: "D542-shuffle-whose-dropped",
+    decision: "D542",
+    what: "\u26a0\ufe0f **THE ATTACKER'S OWN DECK IS SHUFFLED INSTEAD \u2014 D534's RECORDED LOSS DIRECTION, ONE OP OVER.** `shuffleDeck`'s `whose` is optional and absent means the controller's deck, so dropping it typechecks and still emits a SHUFFLE: the opponent's freshly-stacked deck keeps its order and the attacker's is randomised for free. It is not corruption (a shuffle of a hidden zone breaks no invariant) and it is NOT detectable from the board \u2014 the evidence is the `SHUFFLE` row's seat and the two decks' orders, which is exactly what \u00a76 asserts.",
+    file: "packages/engine/src/effects.ts",
+    find: "      { op: \"shuffleDeck\", whose: \"opponent\" },\n    ];",
+    replace: "      { op: \"shuffleDeck\" },\n    ];",
+    expectKilledBy: ["packages/engine/src/opponentHandShuffle.test.ts"],
+  },
+  {
+    id: "D542-anchor-loses-its-caret",
+    decision: "D542",
+    what: "\u26a0\ufe0f **`^` GONE.** The anchor then matches the sentence as a SUFFIX of anything, so a printing whose FIRST clause the engine has never read (*\u201cFlip a coin. Your opponent chooses 3 cards\u2026\u201d*) authors a program for a card whose head it silently dropped. \ud83d\uded1 **THE KILLER KEEPS THE CAPITAL** (D539(1a)): a prefix glued on with a lower-cased sentence would refuse for a reason that has nothing to do with `^`, and a `^`-less pattern would refuse it too.",
+    file: "packages/engine/src/effects.ts",
+    find: "  /^Your opponent chooses 3 cards from their hand and shuffles those cards into their deck\\.$/;",
+    replace: "  /Your opponent chooses 3 cards from their hand and shuffles those cards into their deck\\.$/;",
+    expectKilledBy: ["packages/engine/src/opponentHandShuffle.test.ts"],
+  },
+  {
+    id: "D542-anchor-loses-its-terminator",
+    decision: "D542",
+    what: "\u26a0\ufe0f **`$` GONE, AND IT IS A SEPARATE ROW FROM THE CARET FOR A SEPARATE REASON** (D540(1a)). The anchor then matches the sentence as a PREFIX, so a printing with a trailing clause the engine has never read authors a program for a card whose TAIL it silently dropped. \ud83d\uded1 **THE KILLER KEEPS THE PERIOD** (`${SENTENCE} Then, draw a card.`): a trailing near-miss glued on with `slice(0, -1)` STRIPS the period the anchor's tail demands, so it refuses for the wrong reason and a `$`-less pattern refuses it too.",
+    file: "packages/engine/src/effects.ts",
+    find: "  /^Your opponent chooses 3 cards from their hand and shuffles those cards into their deck\\.$/;\n",
+    replace: "  /^Your opponent chooses 3 cards from their hand and shuffles those cards into their deck\\./;\n",
+    expectKilledBy: ["packages/engine/src/opponentHandShuffle.test.ts"],
+  },
+  {
+    id: "D542-anchor-number-becomes-capture",
+    decision: "D542",
+    what: "\u26a0\ufe0f **THE LITERAL `3` BECOMES A CAPTURE, WHICH IS A TEMPLATE OVER A POPULATION OF ONE (D121/D231).** The arm's emitted count is hard-coded, so with a capture the anchor admits *\u201cchooses 7 cards\u201d* and authors a program that shuffles THREE \u2014 a reader that says yes to a sentence nobody prints and then disagrees with it. D121's warrant wants TWO printings with one token varying; this family's sweep (5 rows / 9 printings over all 640 corpus sentences) has exactly ONE row that says *chooses*.",
+    file: "packages/engine/src/effects.ts",
+    find: "  /^Your opponent chooses 3 cards from their hand and shuffles those cards into their deck\\.$/;",
+    replace: "  /^Your opponent chooses (\\d+) cards from their hand and shuffles those cards into their deck\\.$/;",
+    expectKilledBy: ["packages/engine/src/opponentHandShuffle.test.ts"],
+  },
+  {
+    id: "D542-describe-branch-phrase-unwidened",
+    decision: "D542",
+    what: "\u26a0\ufe0f **THE DESCRIBER QUIETLY SAYS LESS \u2014 D515's OWN RECORDED LESSON AT THIS EXACT ADDRESS, ONE FIELD OVER.** `describeBranch` loses its destination branch, so a \u00a79.2 gate whose consequent is this op captions the payment *\u201cyour opponent discards 3 cards from their hand\u201d* over a program that shuffles them back into the deck. A reader can be correct while its describer is wrong, and ONLY the describer is user-visible.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "        if (op.to === \"deck\") {\n          parts.push(\n            op.count === 1\n              ? \"your opponent shuffles a card from their hand into their deck\"",
+    replace: "        if (op.to === \"discard\") {\n          parts.push(\n            op.count === 1\n              ? \"your opponent shuffles a card from their hand into their deck\"",
+    expectKilledBy: ["packages/engine/src/opponentHandShuffle.test.ts"],
+  },
+  {
+    id: "D542-log-row-says-discard",
+    decision: "D542",
+    what: "\u26a0\ufe0f **THE LOG ROW CALLS A DECK MOVE A DISCARD.** A player reading it goes looking for three cards in a pile that never received them, and the row is the ONLY place a hidden-zone move is announced at all. \ud83d\uded1 The row must also not say *shuffled* \u2014 the real `SHUFFLE` row lands immediately after, and one word secretly meaning two events is the house rule `events.ts` states outright \u2014 so `opponentHandShuffle.test.ts` \u00a77 drives BOTH spellings (the discard arm on the same board) rather than one.",
+    file: "packages/engine/src/log.ts",
+    find: "            ? `put ${cards} from their hand into their deck`",
+    replace: "            ? `discarded ${cards} from their hand`",
+    expectKilledBy: ["packages/engine/src/opponentHandShuffle.test.ts"],
+  },
+  {
+    id: "D542-online-mandatory-verb-falls-through",
+    decision: "D542",
+    what: "\ud83d\uded1 **THE APP-TIER DEFECT THIS SLICE FIXED, RE-INSTALLED AS THE TERNARY IT WAS.** `OnlineHud`'s mandatory Confirm branch tested ONE union member and let every other fall out of the wrong side, so this build's FIRST mandatory `dest: \"deck\"` park (`min = max = 3`) rendered **\u201cDiscard 0/3\u201d** under a heading reading *\u201cShuffle 3 cards from your hand into your deck.\u201d* \u26a0\ufe0f `tsc` says NOTHING about a ternary and no engine suite can see a label \u2014 the only thing that can is a dom rung, which is why `OnlineHud.chooseCardsVerb.dom.test.tsx` exists. The local `GameHud` had already been repaired with exactly this record and documented why; the online client had not.",
+    file: "src/features/online/components/OnlineHud.tsx",
+    find: "            ? `${CHOOSE_CARDS_VERB[prompt.dest].mandatory} ${picked.length}/${prompt.min}`",
+    replace: "            ? `${prompt.dest === \"deckBottom\" ? \"Put under deck\" : \"Discard\"} ${picked.length}/${prompt.min}`",
+    expectKilledBy: ["src/features/online/components/OnlineHud.chooseCardsVerb.dom.test.tsx"],
   },
 ];

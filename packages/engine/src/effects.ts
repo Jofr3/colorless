@@ -11026,9 +11026,81 @@ export type EffectOp =
 
       **NO `filter`.** The printed noun is the bare *"cards"* — no Item, no
       Supporter, no Pokémon — and D135's rule is that an absent field means what
-      the sentence means. **NO `to`**: both printings say *discards*, and a
+      the sentence means. ~~**NO `to`**: both printings say *discards*, and a
       destination field with one reachable value is the unkillable mutant D231
-      refuses. **NO `recordAs`**: no printing pairs this with a §9.2 *"if you do"*.
+      refuses.~~ **NO `recordAs`**: no printing pairs this with a §9.2 *"if you do"*.
+
+      🆕🆕🆕 **D542 — THE `to` REFUSAL IS EXPIRED, AND IT NAMED ITS OWN EXPIRY.
+      EVERY CLAUSE OF IT IS STILL TRUE; IT IS SIMPLY NO LONGER A REFUSAL.** Unlike
+      D486's row one list over — where the refusal's INFERENCE was wrong while its
+      facts held — nothing here rotted. *"Both printings say discards"* was true of
+      the two printings the anchor above reads and is true of them still; *"a
+      destination field with one reachable value is the unkillable mutant D231
+      refuses"* is the standing rule and is unchanged. What changed is the
+      POPULATION the rule was quantified over: a THIRD printed sentence in this same
+      family — *"Your opponent chooses 3 cards from their hand and shuffles those
+      cards into their deck."* (`censusAttackCorpus.ts` file line 665, 1 legal
+      printing) — supplies the SECOND reachable value, so the field is falsifiable
+      and D231 stops reaching it. **This is the third time this pattern has run in
+      this one file** (D486, D515, and now here), which is why the reason is kept
+      verbatim above rather than deleted: what the old claim CAUGHT (D418) is that a
+      one-valued destination is not a field, and that catch is still live — it is
+      the reason `to` is spelled `to?: "deck"` and never `to?: "discard" | "deck"`.
+      A `"discard"` spelling would put the singleton straight back, one value over.
+
+      🆕 **AND THE PRECEDENT IS IN-FAMILY RATHER THAN BY ANALOGY — BUT IT IS
+      CITED FOR THE NAME AXIS, AND THE TWIN'S SPELLING IS DELIBERATELY NOT THE
+      MODEL.** ⚠️ The first published version of this paragraph quoted the twin as
+      ~~*"`randomFromOpponentHand` declares `to?: "hand" | "deck"`"*~~ and was wrong in
+      BOTH halves: `to?: "hand" | "deck"` is `discardEnergy`'s field, which the **NO
+      SHUFFLE IN THIS OP** paragraph further down this same block attributes
+      correctly — one signature standing under two owners in one file, which is the
+      two-spellings-of-one-figure class D540 named. The twin's own line reads
+      `| { op: "randomFromOpponentHand"; to: "discard" | "deck" }` — REQUIRED, and
+      two-valued with `"discard"` a member. Quoted correctly the twin is spelled the
+      way the paragraph above declares REFUSED, so the citation is SCOPED rather than
+      repaired at the string (D539: a wrong figure is re-argued, not re-typed).
+      Scoped, it says three things and each one is measured:
+        · **THE NAME AXIS, WHICH IS WHAT IT WAS CITED FOR, AND IT HOLDS AS STATED.**
+          The twin is EMITTED as `{ op: "randomFromOpponentHand", to: "deck" }` by an
+          arm two above this one's — an op whose identifier says *…OpponentHand*
+          putting a card into a DECK, shipped since D232. So the worry that a member
+          NAMED `…DiscardsFromHand` must not move cards to a deck is answered by the
+          op standing next to it, and by `bottomFromOpponentHand.dest` (D294) one
+          further over — a name fixes the ZONE THE CARDS COME FROM, which is the hand
+          in all three, and the destination is the field.
+        · **THE SAME D231 TEST, ALREADY WRITTEN DOWN IN THIS FAMILY.** The twin's own
+          block spells it: *"ONE FIELD, TWO VALUES, BOTH PRINTED — the falsifiability
+          test D231 wrote down: a `to` with only one reachable value would be an
+          unkillable mutant."* That is the test this row now passes and could not pass
+          before, which is the whole of the re-point above.
+        · **AND THE TWO SPELLINGS DIVERGE FOR A REASON THAT DOES NOT TRANSFER.** The
+          twin could take a REQUIRED two-valued field because BOTH its destinations
+          were printed when it was written (8 legal `discard` printings, 5 legal
+          `deck`), so neither is a default and each is killable. Here the discard arm
+          shipped FIRST and ALONE (D426, 6 legal printings on 2 sentences) and its
+          programs are already serialized into `MatchRecord`s with no `to` key at all,
+          so the absent key has to go on meaning the discard pile. Spell it
+          `to?: "discard" | "deck"` and that pile gets TWO encodings — absent and
+          `"discard"` — with no printing able to tell them apart: D231's unkillable
+          singleton arriving one value over, which is precisely what the expired
+          refusal CAUGHT. The twin is therefore evidence that this family prices a
+          destination by what is PRINTED rather than by a template, which is the same
+          rule read from the other end.
+
+      **ABSENT MEANS THE DISCARD PILE** — a POSITIVE statement about what every
+      pre-D542 program means, not a default that a reader has to know to apply
+      (D313's `attachmentsTo` rule, and the reason `MATCH_RECORD_VERSION` holds at
+      30: strip the key from a D542 record and the remaining object is byte-for-byte
+      a shipped pre-D542 one, which is D131's widen-don't-add test).
+
+      🛑 **NO SHUFFLE IN THIS OP.** The printed sentence says *"and shuffles those
+      cards into their deck"*, and this field says only WHERE the cards land: the
+      randomisation is the trailing `{ op: "shuffleDeck", whose: "opponent" }` the
+      arm emits beside it. That is `discardEnergy.to`'s own recorded decision
+      (D342's, restated at that field's `to?: "hand" | "deck"`) — folding the shuffle
+      into the destination buys the identical board and costs the day a card prints
+      a deck return with no shuffle.
 
       **NO COLLAPSE OF INTERCHANGEABLE COPIES**, unlike `payFromHand` and
       `bottomFromOpponentHand`, and the reason is that both of those collapse for
@@ -11045,7 +11117,25 @@ export type EffectOp =
       attack is already declared and paid for), and this op has no registry row.
       `randomFromOpponentHand` has no line there either, for the same reason. The
       condition that would reverse it: a Trainer or Ability printing this sentence. */
-  | { op: "opponentDiscardsFromHand"; count: number }
+  | {
+      op: "opponentDiscardsFromHand";
+      count: number;
+      /** 🆕🆕🆕 **D542 — WHERE THE PICKED CARDS LAND. ABSENT MEANS THE DISCARD
+          PILE**, which is a positive statement about every pre-D542 PROGRAM and not
+          a default. ⚠️ This sentence first said *“the three pre-D542 ~~printings~~”*
+          and the unit was wrong — THREE is the count of producing ARMS (this file's
+          `ATTACK_OPPONENT_DISCARDS_HAND` arm, D486's compound arm and
+          `HAND_COST_THEN_OPPONENT_DISCARD`'s `recordGate` arm), while the PRINTINGS
+          behind the bare anchor alone are **6 on 2 sentences** (D426, measured in the
+          block above). Corrected to the claim that is true under either unit: strip
+          the key from any pre-D542 program and it means the discard pile.
+          See the block above for why this field could not
+          exist until a second value was printed, and for why `"discard"` is
+          deliberately unspellable. `"deck"` appends them to the OWNER's deck; the
+          arm that emits it also emits the `shuffleDeck` that the sentence prints
+          right after, because one op means one thing that happened. */
+      to?: "deck";
+    }
   /** 🆕🆕 **D485 — THE MANDATORY FILTERED SWEEP OF THE OPPONENT'S HAND, AND
       IT IS THE FAMILY'S FIRST CROSS-SEAT HAND MOVE WITH NO DECISION IN IT AT ALL.**
       Every card in the OPPONENT's hand matching `filter` goes to the OPPONENT's
@@ -23308,7 +23398,32 @@ const ATTACK_REVEAL_AND_SWEEP =
 // rows carrying an opponent-side hand discard — these two, the Salandit compound
 // and the "If you do" compound — plus `Your opponent chooses 3 cards from their
 // hand and shuffles those cards into their deck.` (1 printing), which is this
-// mechanism with a DIFFERENT DESTINATION and is refused whole. What the pattern
+// mechanism with a DIFFERENT DESTINATION and ~~is refused whole~~ 🆕🆕🆕 **IS BUILT
+// AT D542**, by the anchor two blocks down and this op's own `to: "deck"`.
+//
+// 🛑 **A WHOLE-SENTENCE `git grep` DOES NOT REACH THIS WITHDRAWAL, AND THE
+// GENERALISATION D542 PAYS FOR IS ABOUT THE CHOICE OF KEY.** Measured at D542's
+// head (54e67649), `git grep -nF` over three spellings of the same claim:
+//   • the whole printed sentence, with OR without its period → **2 lines**
+//     (`censusAttackCorpus.ts:665`, `opponentHandDiscard.test.ts:143`) — and THIS
+//     FILE IS NOT AMONG THEM;
+//   • the sentence less its leading *"Your "* → **4 lines** — still not this file;
+//   • the tail fragment *"shuffles those cards into their deck"* → **7 lines**,
+//     and `effects.ts:23310` **IS** one of the seven.
+// ⚠️ **SO THE INSTRUMENT IS NOT BLIND — IT IS KEY-SENSITIVE, AND THE KEY IS A
+// READER'S CHOICE.** This comment wraps the sentence across two `//` lines, so no
+// grep keyed on the WHOLE sentence can match it, while a key short enough to
+// survive the wrap matches it at once.
+// ~~An earlier draft of this paragraph said the SEVEN-line sweep missed this site.~~
+// 🆕 **WITHDRAWN IN REVIEW, AND THE ERROR IS THE INSTRUCTIVE PART**: it conflated
+// two different greps — the whole-sentence one (2 lines) with the fragment one
+// (7 lines) — and the only spelling that returns SEVEN is the spelling that FINDS
+// this line. A claim about an instrument has to name the instrument's ARGUMENT.
+// What survives, and is narrower and checkable: **a claim inside a wrapped comment
+// is findable only by a key shorter than the wrap, so a whole-sentence sweep is a
+// LOWER BOUND and its misses are silent.** D539's *"sweep a CLAIM like a VALUE"*
+// and D540's *"read the NEIGHBOURS of what you changed"* both still hold, and it
+// was the second that actually found this site. What the enumeration pattern
 // cannot see: a printing that says "your opponent puts … into the discard pile"
 // or that names the discarder by anything but the word *opponent*. Zero such rows
 // exist in this column today; that is the edge, stated rather than assumed.
@@ -23368,6 +23483,48 @@ const ATTACK_OPPONENT_DISCARDS_HAND =
 // `Salandit`. `clauseApostrophe.test.ts`'s two censuses are predicted to stand still.
 const ATTACK_OPPONENT_DISCARDS_HAND_MORE =
   /^Your opponent discards a card from their hand\. If (.+), your opponent discards (\d+) more cards\.$/;
+
+// 🆕🆕🆕 **D542 — THE THIRD MEMBER OF THE OPPONENT-CHOOSES HAND FAMILY, AND THE
+// ONLY THING THAT SEPARATES IT FROM THE ANCHOR TWO ABOVE IS WHERE THE CARDS GO.**
+// *"Your opponent chooses 3 cards from their hand and shuffles those cards into
+// their deck."* — `censusAttackCorpus.ts` **file line 665**, `legalAttackCorpus()`
+// index **612**, leading count column **1**: 1 sentence / 1 legal printing, and it
+// occurs EXACTLY ONCE in the column (measured over all 640 rows, not assumed).
+//
+// 🛑 **A SEPARATE ANCHOR AND NOT AN ALTERNATION INSIDE THE ONE ABOVE**, on
+// D232's rule about this family for the fourth time: these sentences differ in the
+// VERB PHRASE (*chooses … and shuffles* against *discards*), and a verb selects the
+// reading. Welding them would need `(?:discards|chooses)` plus a destination
+// alternation plus a count alternation in ONE pattern, and the cross terms it would
+// admit — *"Your opponent discards 3 cards from their hand and shuffles those cards
+// into their deck."*, *"Your opponent chooses a card from their hand."* — are strings
+// no printing spells. An anchor that matches what the column does not print is the
+// hole `conventions.md` names; two anchors cost two literals and admit exactly the
+// two printed shapes.
+//
+// 🛑 **THE `3` IS A LITERAL AND NOT `(\d+)`, AND THE WARRANT IS D121's OWN TEST
+// RUN AGAINST THIS POPULATION RATHER THAN INHERITED.** That warrant wants TWO
+// printings with ONE token varying before a capture is justified. The anchor above
+// has them — *"a card"* at 2 printings and *"2 cards"* at 4 — which is why it
+// carries an alternation. This sweep varies NO number: the `/their hand|opponent's
+// hand/i` net over all 640 rows, narrowed to the opponent-side movers, returns five
+// sentences and exactly one of them says *chooses*. A capture here would be a
+// template over a population of one, which is the thing D231 refuses, and
+// `D542-anchor-number-becomes-capture` is the declared row that says so.
+//
+// **NO `/i`**, the file's rule: the printed capital is load-bearing and the caret is
+// what makes it so. **NO `['’]` CLASS OF EITHER KIND, AND NONE IS OWED** — D137 is
+// about the SITE of a spelled possessive, and this sentence prints none at all
+// (*their hand*, *their deck*, twice each rather than *your opponent's*). The two
+// anchors above record the same prediction for the same reason; a class over a slot
+// no byte can occupy is a rule nothing can see (D540(1b)'s lesson, in the direction
+// that says do not add one). **REQUIRED TRAILING PERIOD**, and `$` and `^` are
+// separately load-bearing: `D542-anchor-loses-its-caret` and
+// `D542-anchor-loses-its-terminator` are two declared rows because a prefix that
+// KEEPS the capital and a trailing clause that KEEPS the period refuse for two
+// different reasons (D539(1a) and D540(1a), one at each end).
+const ATTACK_OPPONENT_CHOOSES_SHUFFLE_HAND =
+  /^Your opponent chooses 3 cards from their hand and shuffles those cards into their deck\.$/;
 
 // ⚠️⚠️ D234 — ATTACH FROM THE DISCARD PILE (backlog row 9), AND THE ROW'S OWN
 // PREDICTION HELD: **ONE anchor, twelve printed sentences.** The row wrote the
@@ -29749,6 +29906,39 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   if (match !== null) {
     const count = match[1] === undefined ? 1 : Number(match[1]);
     if (count >= 1) return [{ op: "opponentDiscardsFromHand", count }];
+  }
+  // 🆕🆕🆕 **D542 — THE SAME PARK WITH A DIFFERENT DESTINATION, AS A COMPOSITION
+  // OF TWO SHIPPED OPS AND ONE OPTIONAL FIELD.** *"Your opponent chooses 3 cards from
+  // their hand and shuffles those cards into their deck."* — 1 sentence / 1 legal
+  // printing. D482's question, asked before the price was written: this arm buys
+  // **no** new `EffectOp` member, **no** new `EffectPrompt` kind, **no** new
+  // `EffectChoice` member, **no** new reader (`attackReaderSurface()` stays 13),
+  // **no** projection arm and **no** schema byte. It buys ONE optional op field,
+  // ONE anchor and ONE arm.
+  //
+  // 🛑 **TWO OPS IN PRINTED ORDER, NOT ONE OP THAT ALSO SHUFFLES**, and the
+  // argument is D342's, already written down at `discardEnergy.to` and at
+  // `randomFromOpponentHand.to`: the printed sentence names a LANDING ZONE and then
+  // names a SHUFFLE, and `shuffleDeck` is the op every deck-returning program in
+  // this file already emits for the second half. A destination that also shuffled
+  // could not spell the day a card prints a deck return without one, and it would
+  // advance `rngState` from inside a park where `searchDeck`'s tail does it in the
+  // open. `whose: "opponent"` is D534's key one op over — dropping it shuffles the
+  // ATTACKER's deck, which is not detectable from the board (only from the `SHUFFLE`
+  // row's seat), and `D542-shuffle-whose-dropped` is the declared row for it.
+  //
+  // ⚠️ **ARM ORDER IS LOAD-BEARING AND IT IS ASSERTED RATHER THAN ARGUED.** Both this
+  // anchor and the two around it are fully `^…$`, so on the printed column the three
+  // are disjoint and the order is free — but *"disjoint"* is a measurement, not a
+  // property of anchoring, and D540 spent a slice on a comment that argued
+  // order-freeness from a first WORD two arms shared. `opponentHandShuffle.test.ts`
+  // §1 drives all FIVE family sentences against all FIVE family anchors as a matrix
+  // rather than restating the claim here.
+  if (ATTACK_OPPONENT_CHOOSES_SHUFFLE_HAND.test(effect)) {
+    return [
+      { op: "opponentDiscardsFromHand", count: 3, to: "deck" },
+      { op: "shuffleDeck", whose: "opponent" },
+    ];
   }
   // 🆕🆕 **D486 — THE GATED INCREMENT, AND IT COSTS ZERO NEW MECHANISM.** See the
   // anchor's block for why this is a compound arm and not a tail one. Everything

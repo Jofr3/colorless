@@ -1083,9 +1083,79 @@ export type GameEvent =
 
       The LOG speaks in COUNTS (log.ts), like every card leaving the hidden hand —
       `HAND_COST_PAID`'s convention, and its `to: "discard"` arm is this exact
-      journey. The cards do land face up in the §2 public pile, so a curious player
-      reads them off the pile rather than off the row. */
-  | { type: "FORCED_HAND_DISCARD"; seat: Seat; uids: string[] }
+      journey. ~~The cards do land face up in the §2 public pile, so a curious player
+      reads them off the pile rather than off the row.~~
+
+      🆕🆕🆕 **D542 — `to` ARRIVES, AND THE SENTENCE STRUCK OUT ABOVE IS THE ONE
+      THING THIS BUILD FALSIFIES.** *"Your opponent chooses 3 cards from their hand
+      and shuffles those cards into their deck."* fills this row's second
+      destination: the owner still picks their own cards out of their own hand, but
+      they land in a HIDDEN, about-to-be-shuffled deck and **no player can read them
+      off any pile**. The struck sentence stays because of what it CAUGHT (D418) —
+      it is the reason the LOG ROW IS A COUNT, and that verdict is unchanged for
+      both arms. What it can no longer do is JUSTIFY `uids`.
+
+      🛑 **SO THE JUSTIFICATION FOR `uids` IS RE-POINTED RATHER THAN THE FIELD
+      DROPPED, AND THE NEW ONE IS A WIRE FACT RATHER THAN A BOARD FACT.** Raw
+      `GameEvent`s never cross the wire: `logFromEvents` runs SERVER-SIDE
+      (`lobbyDO.ts`, `match.ts`) and the LOG is what is broadcast, so `uids` here is
+      read by the log builder and by nothing a player holds. That is what keeps the
+      deck arm honest — **provided the log row stays a COUNT and names the deck**,
+      which `D542-log-row-says-discard` is the declared row for. A consumer that
+      ever renders these uids client-side on the `"deck"` arm is publishing a hidden
+      zone; that condition (D422) is stated here rather than left to be re-derived.
+
+      🛑 **WHY THIS IS A WIDENING AND NOT A SECOND ROW — THE REFUSAL BELOW IS
+      ABOUT A DIFFERENT AXIS AND WAS READ BEFORE IT WAS SET ASIDE.**
+      `CARD_DISCARDED_FROM_HAND`'s block (D445) refuses widening this row for the neighbouring
+      row on VOICE: *"The card is CHOSEN from across the table rather than picked by
+      its owner, so the active voice belongs to the actor … Widening
+      `FORCED_HAND_DISCARD` would have given one event two voices."* **This row's
+      voice is IDENTICAL to this event's**: the owner picks, out of their own hand,
+      into their own zone, with no `actor` to name — every clause of the block above
+      about seats and about the absent `actor` field is as true of the deck arm as
+      of the discard one. Only the DESTINATION differs, and destination is the axis
+      this file widens ON ONE ROW, twice: `RANDOM_CARD_TAKEN` carries
+      `to: "discard" | "deck"` on one voice, and `POKEMON_RETURNED` carries a
+      three-valued `dest`. `HAND_COST_PAID` carries a `to` on a hand event already.
+
+      ⚠️ **THE REAL COUNTER-ARGUMENT IS THE NAME, AND IT IS RECORDED RATHER THAN
+      WAVED OFF.** `FORCED_HAND_DISCARD` names a deck move *discard*. It is
+      accepted for the reason the OPS in this very family already accept it —
+      `randomFromOpponentHand` and `bottomFromOpponentHand` both name the zone the
+      cards LEAVE in the identifier and let a FIELD say where they land — because the
+      name fixes the zone the cards LEAVE, which is the hand on both arms, and because the
+      alternative is two rows that agree on seat, voice, shape and count and differ
+      in one prepositional phrase. `PRIZE_REDUCED`/`PRIZE_BONUS` were split for the
+      opposite reason (*"one row with a rider would leave the log unable to say
+      which of the two things happened"*); here the rider is exactly what lets the
+      log say.
+      🆕 **THAT CLAUSE IS A RE-SCOPE, AND THE SPELLING IT REPLACES IS WITHDRAWN
+      RATHER THAN SILENTLY RETYPED (D539).** It first read ~~*"`randomFromOpponentHand.to`
+      and `bottomFromOpponentHand.dest` both name one destination in the identifier and
+      carry others"*~~. MEASURED at the two addresses: TRUE of `bottomFromOpponentHand`,
+      whose identifier says *bottom* while `effects.ts:10809` declares
+      `dest?: "bench" | "discard"` — so it is the STRONGER case, carrying a destination
+      in the name and overriding it in the field — and FALSE of `randomFromOpponentHand`,
+      whose identifier names a SELECTION MODE over a SOURCE zone and no destination at
+      all (`effects.ts:10961`: `to: "discard" | "deck"`, REQUIRED — the very spelling
+      the paragraph in `effects.ts` declares refused for THIS op). The conclusion the
+      pair was cited for is UNCHANGED, because the axis they really share is the one
+      stated above and at `effects.ts:11064-11071`. ⚠️ **THIS ADDRESS IS THE ONE THE
+      WITHDRAWAL'S FIRST SWEEP MISSED** — the correction landed in `effects.ts`,
+      `index.ts` and `progress.md` and not here, which is exactly the failure D539's
+      rule exists to prevent: a withdrawn claim is SWEPT, never corrected only where it
+      was noticed.
+      **THE CONDITION THAT WOULD REVERSE IT** (D422): a third destination
+      that is neither owner-zone nor owner-picked — at that point the name is
+      carrying two axes and the row should split.
+
+      **ABSENT MEANS THE DISCARD PILE**, a positive statement about every pre-D542
+      row rather than a default, exactly as `POKEMON_RETURNED.attachmentsTo` reads.
+      🛑 **NO SHUFFLE EVENT IS IMPLIED BY `to: "deck"`** — the op emits a real
+      SHUFFLE row after this one, as `RANDOM_CARD_TAKEN`'s deck arm and
+      `POKEMON_RETURNED`'s already do. One event per thing that happened. */
+  | { type: "FORCED_HAND_DISCARD"; seat: Seat; uids: string[]; to?: "deck" }
   /** A deck search resolved: `uids` moved deck → `dest` (§15.E).
 
       `reveal` carries the printed *"reveal it/them"* clause off the `searchDeck`
@@ -1595,6 +1665,16 @@ export type GameEvent =
       the actor, and the row names the owner outright. Widening `FORCED_HAND_DISCARD`
       would have given one event two voices and left every existing reader deriving which
       one it was — D425's `DAMAGE_DEALT` defect, invited.
+
+      🆕🆕🆕 **D542 DID WIDEN `FORCED_HAND_DISCARD`, AND THIS PARAGRAPH IS WHY THAT IS
+      NOT A REVERSAL.** The refusal above is quantified over VOICE and says so in its own
+      words; D542's row (*"Your opponent chooses 3 cards from their hand and shuffles those
+      cards into their deck."*) has `FORCED_HAND_DISCARD`'s voice EXACTLY — the owner picks
+      from their own hand into their own zone, and there is no actor to name — and differs
+      only in DESTINATION, which is the axis `RANDOM_CARD_TAKEN` and `POKEMON_RETURNED`
+      each widen on one row. **THIS BLOCK IS UNCHANGED IN EVERY CLAUSE**: the row it
+      refuses to fold in is still a different voice and still gets its own event. Read
+      together, the two say the rule: fold a DESTINATION in, split a VOICE out.
 
       **NAMES THE UID**, and the reason is the same one `CARD_TO_BOTTOM_OF_DECK` gives
       one row up: the whole HAND was revealed a moment earlier and the pick was made in

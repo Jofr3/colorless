@@ -1601,12 +1601,29 @@ function MayDrawDialog({
     headings read *"put it onto your Bench"* / *"into your hand"* and D237 already
     records that those two share one printed verb, so nothing there contradicts.
 
-    ⚠️ TWO CELLS ARE UNREACHABLE TODAY AND ARE FILLED ANYWAY, which is what a total
-    map costs and buys: no op parks a mandatory `"hand"`, `"deck"` or `"evolve"`
-    pick (`payFromHand.to` is `"discard" | "deckBottom"`, and every other producer
-    parks at `min: 0`), and no registry row yet authors `lookAtTopN` with
-    `dest: "discard"`. Guessing a verb for a cell nobody can reach is cheap;
-    leaving it to a fallback is how `"evolve"` got *"Take"*. */
+    ⚠️ ~~TWO CELLS ARE UNREACHABLE TODAY AND ARE FILLED ANYWAY, which is what a
+    total map costs and buys: no op parks a mandatory `"hand"`, `"deck"` or
+    `"evolve"` pick (`payFromHand.to` is `"discard" | "deckBottom"`, and every other
+    producer parks at `min: 0`), and no registry row yet authors `lookAtTopN` with
+    `dest: "discard"`.~~ Guessing a verb for a cell nobody can reach is cheap;
+    leaving it to a fallback is how `"evolve"` got *"Take"*.
+
+    🆕🆕🆕 **D542 — THE MANDATORY `"deck"` CELL IS NOW LIVE, AND THE SENTENCE
+    ABOVE IS WITHDRAWN AT THE ONE CLAUSE THAT WENT FALSE.**
+    `opponentDiscardsFromHand { to: "deck" }` parks `min === max === 3` with
+    `dest: "deck"` (*"Your opponent chooses 3 cards from their hand and shuffles
+    those cards into their deck."*), so this table's `deck.mandatory` cell —
+    *"Shuffle"* — ships live for the first time. The struck sentence is KEPT for
+    what it caught (D418): it is the record of WHY these cells were filled rather
+    than left to a fallback, and that reasoning is exactly what made this slice's
+    local HUD correct with no byte changed here. ⚠️ **THE REST OF THE CLAUSE IS
+    STILL TRUE AND WAS RE-CHECKED RATHER THAN ASSUMED**: mandatory `"hand"` and
+    `"evolve"` are still unreachable, and no registry row authors `lookAtTopN` with
+    `dest: "discard"`. 🛑 **AND THE FILLED CELL NOW NEEDS A RUNG** — a guessed verb
+    that becomes reachable is D407's built-but-dead guard arriving from the other
+    side — so `opponentHandShuffle.test.ts` §8 drives it, here and on the ONLINE
+    twin, which until D542 was still a TERNARY and rendered *"Discard 0/3"* for this
+    very prompt. */
 const CHOOSE_CARDS_VERB: Record<
   Extract<EffectPrompt, { kind: "chooseCards" }>["dest"],
   { mandatory: string; upTo: string }

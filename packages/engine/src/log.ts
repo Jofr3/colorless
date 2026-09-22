@@ -1302,9 +1302,37 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
       // cards came FROM and not the zone they land in. They do land face up in the
       // §2 public pile, so a player who wants the identities reads the pile; the
       // log's job here is to say that a hidden hand got smaller and by how much.
+      //
+      // 🆕🆕🆕 **D542 — A THIRD PRODUCER AND THE FIRST ONE THAT IS NOT A DISCARD.**
+      // `opponentDiscardsFromHand { to: "deck" }` files this row for *"Your opponent
+      // chooses 3 cards from their hand and shuffles those cards into their deck."*
+      // 🛑 **THE COUNT SURVIVES THE WIDENING AND THE VERB DOES NOT.** The
+      // `HAND_COST_PAID` convention above is about the zone the cards came FROM, so
+      // it holds on both arms — but the sentence *"they do land face up in the §2
+      // public pile"* is FALSE here and the row must not say *discarded*, because a
+      // player reading it would look for three cards in a pile that never received
+      // them. This is `HAND_COST_PAID`'s own two-arm shape at log.ts TWO cases up
+      // (`:1242`; `HAND_DISCARDED` at `:1266` sits between the two): one row, two
+      // verbs, `const cards` hoisted, the destination chosen by the event's `to`.
+      // ⚠️ The first published spelling of that pointer read ~~*"one case up"*~~ and
+      // is WITHDRAWN — the SUBSTANCE of the citation was measured and is exactly right,
+      // and only the count of cases between them was written from memory of the file
+      // rather than off its bytes, which is the class this slice's landing review
+      // convened to close (a line address is a figure, D466/D541).
+      // 🛑 **AND THE ROW DOES NOT SAY *shuffled*** — no shuffle is implied by
+      // `to: "deck"` (events.ts states the house rule outright), and the real
+      // `SHUFFLE` row lands immediately after this one. A row that said *shuffled*
+      // would be one word secretly meaning two events. `D542-log-row-says-discard`
+      // is the declared row, and BOTH spellings are driven (D539/D540's two-reasons
+      // rule) so a build that collapsed them in either direction reddens.
       const n = event.uids.length;
+      const cards = `${n} card${n === 1 ? "" : "s"}`;
       return row(event.seat, [
-        plain(`discarded ${n} card${n === 1 ? "" : "s"} from their hand`),
+        plain(
+          event.to === "deck"
+            ? `put ${cards} from their hand into their deck`
+            : `discarded ${cards} from their hand`,
+        ),
       ]);
     }
     case "HAND_SHUFFLED_INTO_DECK": {

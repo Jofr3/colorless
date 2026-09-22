@@ -139,11 +139,22 @@ const DEFERRED: readonly (readonly [string, string, number])[] = [
   // guarded below, and the sentence itself is driven in
   // `evolvedDiscardCompound.test.ts`. The list is a TERM in the sums at the end of §1, so
   // both of them move with it.
-  [
-    "Your opponent chooses 3 cards from their hand and shuffles those cards into their deck.",
-    "this mechanism with a DIFFERENT DESTINATION (§15.E deck, plus a shuffle), and the op prints no `to` field — D231's unkillable-singleton rule is what kept it off",
-    1,
-  ],
+  // 🆕🆕🆕 **D542 REMOVED THIS LIST'S LAST ROW — THE DECK-DESTINATION SHUFFLE IS BUILT,
+  // AND THE LIST IS NOW EMPTY.** Its recorded reason was *"this mechanism with a DIFFERENT
+  // DESTINATION (§15.E deck, plus a shuffle), and the op prints no `to` field — D231's
+  // unkillable-singleton rule is what kept it off"*, and **every clause of that was TRUE
+  // on the day it was written and is true still**: the destination really is different,
+  // the op really printed no `to`, and a one-valued destination really is the unkillable
+  // mutant D231 refuses. ⚠️ **UNLIKE D486's ROW THE REASON DID NOT ROT — IT EXPIRED.**
+  // What changed is the POPULATION the rule was quantified over: this printing is the
+  // SECOND reachable value, so the field became falsifiable and D231 stopped reaching it.
+  // The reason is carried into `BUILT_ELSEWHERE` rather than deleted (D178/D438), which
+  // is the house form the two entries there already use.
+  // 🛑 **AN EMPTY `DEFERRED` IS THE WORST STATE A LIST CAN BE IN SILENTLY** (D438/D444/
+  // D475): every `for (const … of DEFERRED)` below goes VACUOUSLY GREEN over it. Both
+  // such loops are re-pointed at this slice rather than left standing — see §1's title,
+  // its sums, and the rung at the end of this file, which now carries an explicit
+  // REPLACEMENT WITNESS instead of `DEFERRED[0]`.
 ];
 
 /** 🆕🆕 **D486 — THE THIRD TERM THIS PARTITION NEEDED THE MOMENT A ROW LEFT `DEFERRED`
@@ -155,6 +166,11 @@ const DEFERRED: readonly (readonly [string, string, number])[] = [
     wrong for a subtle one — the family would silently have become four rows.
     `opponentHandFamily.test.ts`'s `builtElsewhere` term, at its second address. */
 const BUILT_ELSEWHERE: readonly (readonly [string, string, number])[] = [
+  [
+    "Your opponent chooses 3 cards from their hand and shuffles those cards into their deck.",
+    "D542 — this mechanism with a DIFFERENT DESTINATION (§15.E deck, plus a shuffle): the op's `to?: \"deck\"` plus a trailing `shuffleDeck { whose: \"opponent\" }`, as a COMPOSITION of two shipped ops. The reason it sat in `DEFERRED` — *the op prints no `to` field, and D231's unkillable-singleton rule is what kept it off* — was true in every clause and EXPIRED rather than rotted: this printing is the second reachable value. Driven in `opponentHandShuffle.test.ts`",
+    1,
+  ],
   [
     "Your opponent discards a card from their hand. If this Pokémon evolved from Salandit during this turn, your opponent discards 2 more cards.",
     "D486 — the gated increment: this file's own head op, then a `conditionGate` on `yourActiveEvolvedFromThisTurn { name: \"Salandit\" }` over a second `opponentDiscardsFromHand`. ZERO new mechanism; driven in `evolvedDiscardCompound.test.ts`",
@@ -277,9 +293,17 @@ describe("§1 — the census, measured over the corpus rather than quoted", () =
   });
 
   it("🛑 the WHOLE opponent-side hand-discard family is these two plus THREE, and no more", () => {
-    // ⚠️ **THE TITLE'S "THREE" IS STILL RIGHT AND ITS PARTITION IS NOT** (D486): the
+    // ⚠️ ~~**THE TITLE'S "THREE" IS STILL RIGHT AND ITS PARTITION IS NOT** (D486): the
     // three are now ONE built elsewhere and TWO still deferred, which is why the union
-    // below has three terms.
+    // below has three terms.~~
+    // ⚠️ **THAT SENTENCE WAS ALREADY STALE AT D542's HEAD AND NEITHER D515 NOR D541
+    // CAUGHT IT** — D515 moved the second row to `BUILT_ELSEWHERE` and left this comment
+    // saying ONE/TWO when the tree said TWO/ONE. It is a CLAIM about a partition, so it
+    // was swept like a value rather than corrected by inspection (D539).
+    // 🆕🆕🆕 **D542: THE TITLE'S "THREE" IS STILL RIGHT AND THE PARTITION IS NOW THREE
+    // BUILT ELSEWHERE AND ZERO DEFERRED.** The union below still has three terms, and
+    // `DEFERRED` contributes none of them — which is exactly why the two loops that
+    // iterate it had to be re-pointed in the same edit rather than left vacuously green.
     // ⚠️ THE PUBLISHED PATTERN, RE-RUN LOOSER THAN THE HANDOFF'S (D424/D425).
     // The brief enumerated with `/opponent discards|opponent chooses|discards?
     // [0-9a-z]+ cards?/i`. This sweeps `/their hand|opponent's hand/i` — every
@@ -321,10 +345,18 @@ describe("§1 — the census, measured over the corpus rather than quoted", () =
     expect(corpus.filter(([, s]) => /into (?:the|their) discard pile/i.test(s))).toEqual([]);
   });
 
-  it("this slice takes 2 of the 5, and ONE of the other 3 is still refused WHOLE", () => {
+  it("this slice takes 2 of the 5, and the other 3 are ALL built elsewhere now", () => {
     // D190b's exact-map-or-flag rule: every deferred row lands on the loud
     // ATTACK_EFFECT_SKIPPED path rather than deriving half of what it prints.
+    // 🆕🆕🆕 **D542 — `DEFERRED` IS EMPTY, SO THIS LOOP IS NOW VACUOUS AND SAYS SO
+    // RATHER THAN PASSING QUIETLY** (D438/D444/D475: silently green is the worst state).
+    // It is KEPT, because it is the guard that reddens the day a new refusal is added to
+    // the list — and the assertion beside it is what makes the emptiness a MEASUREMENT.
+    expect(DEFERRED).toHaveLength(0);
     for (const [sentence] of DEFERRED) expect(deriveAttackEffect(sentence)).toBeNull();
+    // …and the positive half the empty loop can no longer carry: every row this file
+    // knows about now DERIVES, which is the family closure stated as an assertion.
+    for (const [sentence] of BUILT_ELSEWHERE) expect(deriveAttackEffect(sentence)).not.toBeNull();
     // …and the remaining two sum to 2 printings, so the family is 7 + 2 = 9 and this
     // slice's share is named rather than implied.
     // 🆕🆕 **D486: THE DEFERRED SIDE LOST A ROW AND THE BUILT SIDE GAINED IT** — 3 → 2 and
@@ -335,8 +367,20 @@ describe("§1 — the census, measured over the corpus rather than quoted", () =
     // IT** — 2 → 1 and 7 → 8. The family TOTAL is unmoved at 9, which is the whole reason
     // both halves are written: a count of the deferred rows alone cannot tell *"a row was
     // built"* from *"a row left the corpus"*, and the closing sum can.
-    expect(DEFERRED.reduce((sum, [, , n]) => sum + n, 0)).toBe(1);
-    expect(DEFERRED.reduce((sum, [, , n]) => sum + n, 0) + 8).toBe(9);
+    // 🆕🆕🆕 **D542: THE DEFERRED SIDE LOST ITS LAST ROW AND `BUILT_ELSEWHERE` GAINED
+    // IT** — 1 → 0 and 8 → 9. The family TOTAL is unmoved at 9, which is the whole reason
+    // both halves are written: a count of the deferred rows alone cannot tell *"a row was
+    // built"* from *"a row left the corpus"*, and the closing sum can. With the deferred
+    // side at ZERO the second line is the only one of the two that still carries any
+    // information, which is said here rather than discovered later.
+    expect(DEFERRED.reduce((sum, [, , n]) => sum + n, 0)).toBe(0);
+    expect(DEFERRED.reduce((sum, [, , n]) => sum + n, 0) + 9).toBe(9);
+    // …and the 9 is ARITHMETIC over the rows rather than a written total (D230).
+    expect(
+      CLAUSES.reduce((sum, c) => sum + c.legalPrintings, 0) +
+        BUILT_ELSEWHERE.reduce((sum, [, , n]) => sum + n, 0) +
+        DEFERRED.reduce((sum, [, , n]) => sum + n, 0),
+    ).toBe(9);
   });
 
   it("🛑 NEITHER COMPOUND COMPOSES FOR FREE — measured AFTER the arm landed", () => {
@@ -370,10 +414,19 @@ describe("§1 — the census, measured over the corpus rather than quoted", () =
     // `DEFERRED` row, which is still unread by every reader, and the two built rows are
     // asserted at the first condition. A rung with nothing left on the second condition
     // would be a rung that had quietly stopped testing the splitter at all.
+    //
+    // 🆕🆕🆕 **D542 RE-POINTED IT A THIRD TIME, AND THIS TIME THE FAMILY RAN OUT OF
+    // SURVIVORS.** `DEFERRED` is now EMPTY, so the second condition had no carrier at all
+    // inside this family — `DEFERRED[0]?.[0] as string` would have been `undefined` and
+    // three assertions would have gone vacuous or thrown. ⚠️ **THE CONDITION IS KEPT AND
+    // THE WITNESS IS REPLACED FROM OUTSIDE THE FAMILY**, which is the only move left once
+    // a family closes: see `UNREAD` below for the row and for why that particular row.
+    // The alternative — deleting the three lines — would have retired the only thing in
+    // this file that still exercises the splitter's SECOND condition, which is D418's
+    // *"ask what the old claim caught"* answered in the direction that keeps it.
     const SALANDIT =
       "Your opponent discards a card from their hand. If this Pokémon evolved from Salandit during this turn, your opponent discards 2 more cards.";
-    const IF_YOU_DO = BUILT_ELSEWHERE[1]?.[0] as string;
-    const STILL_DEFERRED = DEFERRED[0]?.[0] as string;
+    const IF_YOU_DO = BUILT_ELSEWHERE[2]?.[0] as string;
     // The HEAD of the Salandit compound is claimed — this is the thing D426
     // actually changed, and it is asserted so the "no gain" verdict below cannot
     // be confused with "nothing moved at all".
@@ -394,11 +447,26 @@ describe("§1 — the census, measured over the corpus rather than quoted", () =
     // Driven through the splitters themselves rather than inferred from their
     // conditions, and through BOTH of the two that serve unresolved sentences
     // (D425: the requirement and cancel splitters serve zero).
-    // 🛑 THE SECOND CONDITION, still carried by the one row nobody reads. This is the
-    // claim D486 and D515 each took a sentence away from, kept alive on the survivor.
-    expect(resolvedByAnyReader(STILL_DEFERRED)).toBe(false);
-    expect(splitAttackTrailingClause(STILL_DEFERRED)).toBeNull();
-    expect(splitAttackGateClause(STILL_DEFERRED)).toBeNull();
+    // 🛑 THE SECOND CONDITION, still carried by a row nobody reads. This is the claim
+    // D486 and D515 each took a sentence away from, kept alive on the survivor.
+    // 🆕🆕🆕 **D542 TOOK THE LAST ONE, SO THE WITNESS IS REPLACED RATHER THAN THE
+    // CONDITION DROPPED.** `DEFERRED` is now EMPTY, and `DEFERRED[0]?.[0] as string` would
+    // have evaluated to `undefined` and sent three assertions vacuous-or-throwing — the
+    // exact rot D486 and D515 each re-pointed this rung to avoid, arriving a third time.
+    // ⚠️ **THE REPLACEMENT IS DELIBERATELY OUTSIDE THIS FAMILY AND OUTSIDE EVERY FAMILY
+    // UNDER ACTIVE PRICING** (D540's recorded rule: a witness inside a priced family is a
+    // rung scheduled to expire). `censusAttackCorpus.ts` **file line 649** — 1 legal
+    // printing, `OPAQUE` at BOTH census caps, and its `/move any number of damage
+    // counters/` family is 2 rows of which BOTH are unread, so nothing about it is one
+    // slice away from moving. It is on no pricing list in the tree.
+    const UNREAD =
+      "You may move any number of damage counters from your opponent's Benched Pokémon to their Active Pokémon.";
+    // The witness is asserted to BE in the corpus, so a re-ingest that retires the
+    // sentence reddens here instead of leaving the rung testing a string nothing prints.
+    expect(legalAttackCorpus().some(([, s]) => s === UNREAD)).toBe(true);
+    expect(resolvedByAnyReader(UNREAD)).toBe(false);
+    expect(splitAttackTrailingClause(UNREAD)).toBeNull();
+    expect(splitAttackGateClause(UNREAD)).toBeNull();
     // …and BOTH built compounds at the OTHER condition: RESOLVED, and therefore never
     // offered to a splitter at all.
     for (const built of [SALANDIT, IF_YOU_DO]) {
@@ -1088,6 +1156,6 @@ describe("§8 — the structural answers", () => {
   });
 
   it("the engine version moved and the two spellings agree", () => {
-    expect(engineVersion).toBe("0.426.0");
+    expect(engineVersion).toBe("0.427.0");
   });
 });

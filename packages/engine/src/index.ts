@@ -20040,6 +20040,144 @@ import type { GameState, Seat } from "./types";
     `expect(manifest.version)`, `it(…)` titles, the declaration and `package.json` —
     **not** as a value-keyed grep — because a value-keyed grep is precisely the mechanism
     that ate D500's heading.)
+    🆕🆕🆕 engineVersion 0.426.0 → **0.427.0** (D542 — THE OPPONENT-CHOSEN HAND SHUFFLE,
+    AN EXPIRED REFUSAL, AND A CLIENT DEFECT THAT ARRIVED WITH THE OP. `censusAttackCorpus.ts`
+    **file line 665** (`legalAttackCorpus()` index 612, leading count column `1`) — *"Your
+    opponent chooses 3 cards from their hand and shuffles those cards into their deck."*,
+    **1 sentence / 1 legal printing**, claimed by `deriveAttackEffect` through ONE new
+    whole-sentence anchor and ONE new arm returning a COMPOSITION OF TWO SHIPPED OPS:
+    `[{op:"opponentDiscardsFromHand", count:3, to:"deck"}, {op:"shuffleDeck", whose:"opponent"}]`.
+    ZERO new `EffectOp` members, ZERO new `EffectPrompt` kinds, ZERO new `EffectChoice`
+    members, ZERO new readers (`attackReaderSurface()` stays 13), ZERO `packages/schema`
+    bytes, ZERO projection arms. ONE optional op field (`to?: "deck"`), ONE optional EVENT
+    field, ONE app-tier record.
+    🛑 **THE BLOCKER WAS AN EXPIRED REFUSAL THAT NAMED ITS OWN EXPIRY, AND EVERY CLAUSE OF
+    IT IS STILL TRUE.** `effects.ts`'s *"NO `to`: both printings say discards, and a
+    destination field with one reachable value is the unkillable mutant D231 refuses"* did
+    not ROT — unlike D486's row, whose facts held while its inference was wrong. What moved
+    is the POPULATION the rule quantified over: this printing supplies the second reachable
+    value. Re-pointed in place with the reason kept verbatim (D178/D418), because what it
+    caught is still live — it is why the field is `to?: "deck"` and never
+    `to?: "discard" | "deck"`: that spelling would give the discard pile TWO encodings,
+    absent and `"discard"`, with no printing able to tell them apart.
+    ⚠️ **THE IN-FAMILY PRECEDENT IS CITED FOR THE NAME AXIS, AND THE FIRST PUBLISHED
+    SPELLING OF IT WAS WRONG IN BOTH HALVES — WITHDRAWN AND RE-ARGUED RATHER THAN RE-TYPED
+    (D539).** It read ~~*"`randomFromOpponentHand` already declares `to?: "hand" | "deck"`"*~~;
+    `to?: "hand" | "deck"` is `discardEnergy`'s field, and the twin's real line is
+    `| { op: "randomFromOpponentHand"; to: "discard" | "deck" }` — REQUIRED, two-valued,
+    with `"discard"` a member, i.e. spelled the way the clause before it declares refused.
+    Quoted correctly the twin still carries this row, on THREE scoped claims instead of one
+    borrowed shape: (i) it is EMITTED as `{ op: "randomFromOpponentHand", to: "deck" }` two
+    arms above the new one, so an identifier saying *…OpponentHand* already puts a card in a
+    DECK and the name-vs-destination worry is answered IN-FAMILY (with
+    `bottomFromOpponentHand.dest`, D294, one further over); (ii) its block is where D231's
+    falsifiability test was written down for this family (*"ONE FIELD, TWO VALUES, BOTH
+    PRINTED"*), which is the test this row newly passes; (iii) the spellings diverge for a
+    reason that does NOT transfer — the twin had both destinations printed at once (8 legal
+    `discard`, 5 legal `deck`), while the discard arm here shipped first and alone (D426, 6
+    legal printings on 2 sentences) and is already serialized with no `to` key, so the absent
+    key must go on meaning the discard pile. The correction is recorded because a figure in
+    two spellings is the class this slice's own review round exists to close.
+    🛑 **`MATCH_RECORD_VERSION` HOLDS AT 30**, on D131's widen-don't-add test driven over
+    SERIALIZED BYTES in both D450 directions — this op PARKS, so `"cont" in phase` is TRUE
+    and a record really does hold the new inhabitant; strip the optional key from those
+    bytes and the resumed program is byte-for-byte the shipped pre-D542 discard.
+    🛑 **THE SITE THE COMPILER CANNOT SEE IS A BRANCH INSIDE AN ARM, NOT A MISSING ARM.**
+    `applyChoice`'s `switch` ends `default: return state;`, and the deck route is a branch
+    within `case "opponentDiscardsFromHand"` — delete it and the op still parks, dialogs and
+    validates, then lands the three cards in the DISCARD with `tsc` silent. **MEASURED at
+    this head** (D540's method): deleting the branch and running `bunx tsc -b --force`
+    prints nothing and exits 0. `D542-apply-choice-drops-deck-branch` is the row, and
+    `opponentHandShuffle.test.ts` §4 is the only rung that can see it — it asserts the
+    picked uids ON A BOARD with the DISCARD PILE PINNED UNCHANGED (D421). ⚠️ **A SECOND
+    INVISIBLE HALF ARRIVES FROM THE OTHER SIDE**: the §8.6 forced short-hand arm never
+    reaches `applyChoice` at all, so a build that widened only the PARK passes §4 and still
+    discards. §5 drives it.
+    🛑 **THE APP TIER DID MOVE, AND IT BOUGHT A REAL CLIENT-SIDE DEFECT FIX.** This is the
+    engine's FIRST **MANDATORY** (`min === max === 3`) `chooseCards` park with
+    `dest: "deck"` — every other producer of a `"deck"` pick parks at `min: 0`, so the
+    "up to" cell of the HUDs' Confirm-verb tables shipped live and the MANDATORY cell did
+    not. `GameHud.tsx`'s `CHOOSE_CARDS_VERB` is a TOTAL RECORD and needed no byte;
+    `OnlineHud.tsx`'s mandatory branch was still a TERNARY and rendered **"Discard 0/3"**
+    under a heading promising a shuffle, with `tsc` silent and every suite green. Replaced
+    with the record, mirroring the local HUD so the next `dest` member reddens.
+    🛑 **SEVEN CLAIMS WITHDRAWN OR RE-POINTED IN PLACE, ENUMERATED SO THE TOTAL IS
+    AUDITABLE RATHER THAN ASSERTED.** (1) `effects.ts`'s D231 *"NO `to`"* refusal —
+    EXPIRED, every clause still true, re-pointed not deleted; (2) `effects.ts`'s
+    family-sweep paragraph, which said this sentence *"is refused whole"*; (3)
+    `events.ts`'s *"the cards do land face up in the §2 public pile"* — false for the deck
+    arm, so the justification for `uids` is re-pointed onto a WIRE fact (raw `GameEvent`s
+    never cross the wire); (4) `interpreter.ts`'s copy of that claim, SCOPED to the helper
+    it is still true of; (5) `GameHud.tsx`'s *"no op parks a mandatory `deck` pick"*; (6)
+    `opponentHandDiscard.test.ts`'s partition comment, ALREADY STALE at this head (ONE/TWO
+    where the tree said TWO/ONE since D515) and now THREE/ZERO; (7)
+    `angeliteChosenShuffle.test.ts`'s rung title *"the READER arm and the RAW residue are
+    UNMOVED"*, never a property of the census but a statement about D541's row.
+    ⚠️ **AND THE HEADLINE THIS ENTRY FIRST CARRIED WAS ITSELF WRONG.** It read *"the one
+    that matters was NOT FINDABLE BY `git grep` — a literal grep over the printed bytes
+    reaches SEVEN sites and not that one"*. ~~That is withdrawn.~~ Measured at this head,
+    the whole-sentence grep returns **2** lines (not seven) and does miss `effects.ts`; the
+    only spelling returning **7** is the tail fragment *"shuffles those cards into their
+    deck"*, and that one FINDS `effects.ts:23310`. The corrected, narrower rule is written
+    at the site: **a claim inside a wrapped comment is findable only by a key shorter than
+    the wrap, so a whole-sentence sweep is a LOWER BOUND and its misses are silent.** The
+    site was in fact found by reading the NEIGHBOURS of the anchor being edited (D540).
+    🛑 **THE EVENT WAS WIDENED RATHER THAN SPLIT, AND THE CITATION THAT LOOKED LIKE A
+    REFUSAL IS ABOUT A DIFFERENT AXIS.** `CARD_DISCARDED_FROM_HAND`'s block refuses widening
+    `FORCED_HAND_DISCARD` on **VOICE** (*"the card is CHOSEN from across the table"*); this
+    row's voice is IDENTICAL to `FORCED_HAND_DISCARD`'s — the owner picks from their own
+    hand into their own zone, with no `actor` to name — and only the DESTINATION differs,
+    which is the axis this file widens on one row twice (`RANDOM_CARD_TAKEN.to`,
+    `POKEMON_RETURNED.dest`). The counter-argument is the NAME and it is recorded rather
+    than waved off, with the condition that would reverse it. The log row stays a COUNT,
+    says *deck* and does not say *discard*; both spellings are driven.
+    ⚠️ **ONE MEASURED DIVERGENCE, DRIVEN RATHER THAN LEFT SILENT**: on an EMPTY hand the
+    op moves nothing and asks nothing, but the trailing `shuffleDeck` still runs, where the
+    RANDOM twin — which owns its shuffle inside one op — spends no RNG. D342's recorded
+    decision governs (*a destination that also shuffles cannot spell a deck return with no
+    shuffle, and would advance `rngState` from inside a park*), and the condition that
+    would reverse it is named in `opponentHandShuffle.test.ts` §5.
+    🛑 **THE LANDING REVIEW SENT THIS SLICE BACK FOR TWO PROSE-VS-CODE DEFECTS IT HAD
+    INTRODUCED ITSELF, EACH AT THREE SITES, EACH GREEN UNDER `check`, `precheck`, THE PROBE
+    AND ALL FOUR GATES.** (A) is the in-family precedent above, withdrawn and RE-SCOPED at
+    its three addresses. (B) is `D542-shuffle-tail-dropped`'s hazard, which was described
+    at three addresses (`deckChosenFromHand`'s doc block, the row's own `what`,
+    `opponentHandShuffle.test.ts` §6's comment) as the picks sitting ~~*"on TOP of the
+    opponent's deck in PICK ORDER — the opponent draws exactly what they chose to put
+    back"*~~. MEASURED: the helper writes `deck: [...side.deck, ...moved]`, an APPEND, and
+    index 0 is the TOP in this engine — every draw, mill and look cuts `deck.slice(0, n)`,
+    and `drawCards`' `from: "bottom"` arm cuts at `deck.length − count` instead — so the
+    picks land at the **BOTTOM** and are drawn LAST. ⚠️ It CONTRADICTED ITSELF inside this
+    slice's own bytes twice: the same doc block says *"APPENDED TO THE END OF THE DECK,
+    NEVER THE TOP"* in the very same block, and the killing rung directly under its own comment
+    already read `deck.slice(-3)`, the TAIL, which is the real landing site. The mutant
+    KILLS either way, which is exactly why no instrument reported it. Re-argued rather than
+    re-typed: the row stands on three reasons independent of the end — `rngState` never
+    moves, so the printed randomisation does not happen at all; three deck positions become
+    KNOWN, which is the information the shuffle exists to destroy; and the cards the
+    ANSWERER chose to shed are buried where they least return, a board favouring the
+    ANSWERER rather than the attacker, i.e. the OPPOSITE of the withdrawn severity.
+    **THE ONE LESSON BEHIND BOTH**: a citation written from memory of a shape rather than
+    off the bytes at the address, inside a comment that then reasons FROM the citation —
+    invisible to every instrument, because in both cases the CODE was right and only the
+    account of it was wrong.
+    🆕 **AND THE LANDING REVIEW FOUND THE SAME CLASS STILL OPEN AT THREE MORE SITES,
+    WHICH IS WHY “RE-SCOPED AT ITS THREE ADDRESSES” ABOVE IS A COUNT OF WHERE (A) WAS
+    NOTICED AND NOT OF WHERE IT STOOD.** ~~*“BOTH ARE FIXED AND SWEPT”*~~ is WITHDRAWN.
+    The clause (A) retired stood in FULL at `events.ts`'s `FORCED_HAND_DISCARD` block
+    (*“`randomFromOpponentHand.to` and `bottomFromOpponentHand.dest` both name one
+    destination in the identifier and carry others”* — MEASURED: true of
+    `bottomFromOpponentHand`, whose identifier says *bottom* against
+    `effects.ts:10809`'s `dest?: "bench" | "discard"`, and FALSE of
+    `randomFromOpponentHand`, whose identifier names a SELECTION MODE over a SOURCE zone
+    and no destination at all) and in COMPRESSED form in `progress.md`'s §(6); and
+    `log.ts`'s new comment cited `HAND_COST_PAID`'s two-arm shape as ~~*“one case up”*~~
+    when `HAND_COST_PAID` is at `log.ts:1242` with `HAND_DISCARDED` at `:1266` BETWEEN
+    them — TWO cases up. All three were re-scoped in place at the landing, with the
+    withdrawn spelling struck and the reason kept (D539/D178/D418), in the same commit as
+    the pick. 🛑 **THE CLASS IS THEREFORE A SWEEP AND NOT A CORRECTION, AND THE COUNT
+    IS THE PART THAT FAILED** — D539's rule quoted while being broken, green under
+    `check`, `precheck`, the probe and all four gates at every one of the three.)
     🆕🆕🆕 engineVersion 0.425.0 → **0.426.0** (D541 — THE CHOSEN BENCH SHUFFLE BEHIND A
     TRAILING GATE CLAUSE, AND THE FUNNEL THAT WAS ALREADY THERE. `censusAttackCorpus.ts`
     **file line 82** (`legalAttackCorpus()` index 29, leading count column `3`) — *"Choose
@@ -23372,7 +23510,7 @@ import type { GameState, Seat } from "./types";
     WITNESS** — the count was re-derived every slice and the word *"three"* was carried.
     A successor of this slice inherits **81 / 61 / 17** again, over **FIVE** history
     occurrences: those four plus `deckMillFilteredScale.test.ts`'s own header arrow.) */
-export const engineVersion = "0.426.0";
+export const engineVersion = "0.427.0";
 
 export type {
   ApplyResult,

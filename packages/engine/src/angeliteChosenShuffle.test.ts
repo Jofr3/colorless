@@ -728,18 +728,38 @@ describe("D541 §3 — the census arithmetic, and the two figures that must NOT 
     expect(gate.some(([, t]) => t === PRINTED)).toBe(true);
   });
 
-  it("🛑 the READER arm and the RAW residue are UNMOVED — the whole case for the split route", () => {
+  it("🛑 D541's ROW moved NEITHER the reader arm nor the raw residue — the case for the split route", () => {
     // 🛑 **THIS IS THE RUNG THAT PRICES THE REJECTED ALTERNATIVE.** Anchoring the
     // whole printed string in `deriveAttackEffect` would have moved BOTH of these,
-    // and with them the 25 files pinning `[565, 1614]` and the 7 pinning
-    // `toBe(1614)`. The split route leaves all 32 of them standing.
+    // ~~and with them the 25 files pinning `[565, 1614]` and the 7 pinning
+    // `toBe(1614)`. The split route leaves all 32 of them standing.~~
+    //
+    // 🆕🆕🆕 **D542 — THE FIGURES MOVED AND THE CLAIM DID NOT, AND THE TITLE NOW
+    // SAYS WHOSE ROW IT IS ABOUT.** The old title read *"the READER arm and the RAW
+    // residue are UNMOVED"* as if it were a standing property of the census. It was
+    // never that: it is a statement about **D541's row**, which leaves through the
+    // GATE-SPLIT summand. D542's row is a whole-sentence reader claim, so it moves
+    // the reader arm 565/1614 → 566/1615 and the raw residue 75/118 → 74/117 exactly
+    // as the rejected alternative would have — and that is not a reversal, it is a
+    // DIFFERENT ROW leaving by a different door. ⚠️ **The counts in the struck
+    // sentence went stale in the same breath** (the 25/7/32 file tallies), which is
+    // why they are struck rather than re-counted: a tally of pin sites is a
+    // measurement of a tree, not an argument, and the argument is the SUMMAND.
+    // What survives, and is what the rung actually measures: D541's row is credited
+    // to the gate-split summand, so the reader/raw figures move **only** by the
+    // amount LATER slices put through the reader door.
     const reader = corpus().filter(([, t]) => resolvedByAnyReader(t));
-    expect([reader.length, units(reader)]).toEqual([565, 1614]);
+    expect([reader.length, units(reader)]).toEqual([566, 1615]);
     const rawUnbuilt = corpus().filter(([, t]) => !resolvedByAnyReader(t));
-    expect([rawUnbuilt.length, units(rawUnbuilt)]).toEqual([75, 118]);
+    expect([rawUnbuilt.length, units(rawUnbuilt)]).toEqual([74, 117]);
+    // 🛑 **AND THE CLAIM ITSELF, DRIVEN RATHER THAN LEFT IN THE TITLE**: D541's own
+    // printed row is STILL not in the reader arm — it is claimed by the gate split,
+    // which is the whole of what this rung was ever for.
+    expect(resolvedByAnyReader(PRINTED)).toBe(false);
+    expect(splitAttackGateClause(PRINTED)).not.toBeNull();
   });
 
-  it("🛑 the RESIDUE steps 48/67 → 47/64, and `BUILT.attack` 1665 → 1668", () => {
+  it("🛑 the RESIDUE steps 48/67 → 47/64 → 🆕 46/63, and `BUILT.attack` 1665 → 1668 → 🆕 1669", () => {
     // The residue is the raw reader refusal MINUS the three summands that claim
     // printings another way. The REGISTRY summand is read off the same predicate
     // `censusAtHead.test.ts` uses, so this figure is derived and not recorded.
@@ -754,16 +774,24 @@ describe("D541 §3 — the census arithmetic, and the two figures that must NOT 
     // ⚠️ **THIS FILE DOES NOT REBUILD `REGISTRY_ATTACK_SENTENCES`** — that list lives
     // in `censusAtHead.test.ts` and rebuilding it here would be a second copy of the
     // thing D417/D418 spent two slices de-duplicating. So the figure asserted here is
-    // the residue BEFORE the registry subtraction (57/80), and the 47/64 that follows
-    // from it is pinned where the partition lives.
-    expect(residue).toHaveLength(57);
-    expect(units(residue)).toBe(80);
+    // the residue BEFORE the registry subtraction (~~57/80~~ 🆕 **56/79 at D542**), and
+    // the ~~47/64~~ 🆕 **46/63** that follows from it is pinned where the partition lives.
+    expect(residue).toHaveLength(56);
+    expect(units(residue)).toBe(79);
     // …and the registry summand, which is the difference, is the 10/16 this slice
-    // does not touch: 57 − 10 = 47 and 80 − 16 = 64.
-    expect(residue.length - 10).toBe(47);
-    expect(units(residue) - 16).toBe(64);
+    // does not touch: ~~57 − 10 = 47 and 80 − 16 = 64~~ 🆕 **56 − 10 = 46 and
+    // 79 − 16 = 63 at D542**.
+    // ⚠️ **THIS COMMENT WAS MISSED BY D542's OWN RE-POINT AND CAUGHT IN REVIEW.** The
+    // block three lines ABOVE struck the same arithmetic to 56/79 and 46/63 in this
+    // same slice; this SECOND spelling of it, sitting directly on top of the two
+    // assertions it describes, was stepped in neither pass. **TWO SPELLINGS OF ONE
+    // MEASUREMENT IS THE DEFECT** — D426's rule is that the figure travels with the
+    // EXPRESSION, and a prose copy of an assertion is a pin the runner never reports
+    // (D539's silently-no-opping helper, arriving as prose rather than as code).
+    expect(residue.length - 10).toBe(46);
+    expect(units(residue) - 16).toBe(63);
     // `BUILT.attack` is the complement of the residue's PRINTINGS over 1,732.
-    expect(1732 - (units(residue) - 16)).toBe(1668);
+    expect(1732 - (units(residue) - 16)).toBe(1669);
   });
 
   it("🛑 the TRAILING-COMPOUND summand is UNMOVED at 11/21", () => {
@@ -1281,8 +1309,8 @@ describe("D541 §8 — the parked op IS persisted, and `MATCH_RECORD_VERSION` HO
 
 describe("D541 §9 — the version tax and the byte pins", () => {
   it("🛑 the engine version is the CURRENT one in BOTH places (🆕 D541 — the TITLE is de-valued on purpose: D460's fifth site kind is the `it()` title, and a title carrying BOTH arrows is a site the next bump has to edit twice)", () => {
-    expect(engineVersion).toBe("0.426.0");
-    expect(manifest.version).toBe("0.426.0");
+    expect(engineVersion).toBe("0.427.0");
+    expect(manifest.version).toBe("0.427.0");
   });
 
   it("🛑 the OP NAME is untouched by the funnel RENAME — it is a persisted member", () => {

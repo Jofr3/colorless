@@ -1204,6 +1204,44 @@ function DiscardEnergyDialog({
 // been reading a sentence that describes a live hidden-information leak, and
 // might have "fixed" the gate to match it.
 
+/** 🆕🆕🆕 **D542 — THE CONFIRM VERB FOR EVERY `chooseCards` DESTINATION, IN BOTH
+    OF THE DIALOG'S BRANCHES, AS A TOTAL RECORD OVER THE UNION.** `GameHud.tsx`
+    carries the twin of this table and the whole argument for it (D222's rule on a
+    client-side reader): *"A record keyed on the union goes red at `tsc` when a
+    member is added; a ternary goes quiet."*
+
+    🛑 **THE ONLINE CLIENT STILL HAD THE TERNARY, AND D542 IS THE SLICE THAT
+    ARRIVED THROUGH THE HOLE.** The mandatory branch read
+    `prompt.dest === "deckBottom" ? "Put under deck" : "Discard"`, so every other
+    member fell out of the wrong side. Until this slice that was invisible on every
+    real board, because the ONLY producer of a `dest: "deck"` pick
+    (`discardPileRetrieval`) parks at `min: 0` — the "up to" cell shipped live and
+    the mandatory one did not. `opponentDiscardsFromHand { to: "deck" }` is the
+    first MANDATORY `"deck"` park in this engine (`min === max === 3`), and against
+    the old ternary it rendered **"Discard 0/3"** under a heading that reads
+    *"Shuffle 3 cards from your hand into your deck."* — the dialog contradicting
+    itself in its own words, with `tsc` silent and every suite green.
+    `D542-online-mandatory-verb-falls-through` is the declared row and
+    `OnlineHud.chooseCardsVerb.dom.test.tsx` is the dom rung that can see it.
+
+    ⚠️ **THE CELLS ARE COPIED FROM `GameHud.tsx`'s TABLE RATHER THAN RE-GUESSED**,
+    which is the point of there being a table at all: the two clients render the
+    same engine prompt and a divergence between them would be a defect no engine
+    test could name. The verbs follow each prompt's own heading, which is built
+    engine-side from the printed sentence. */
+const CHOOSE_CARDS_VERB: Record<
+  Extract<RedactedEffectPrompt, { kind: "chooseCards" }>["dest"],
+  { mandatory: string; upTo: string }
+> = {
+  bench: { mandatory: "Put on Bench", upTo: "Take" },
+  hand: { mandatory: "Take", upTo: "Take" },
+  deck: { mandatory: "Shuffle", upTo: "Shuffle" },
+  deckBottom: { mandatory: "Put under deck", upTo: "Put under deck" },
+  deckTop: { mandatory: "Put on top", upTo: "Put on top" },
+  discard: { mandatory: "Discard", upTo: "Discard" },
+  evolve: { mandatory: "Evolve", upTo: "Evolve" },
+};
+
 /** chooseCards (§15.E / §7.1 / §7.5) — pick min..max cards: a deck search, a
     discard retrieval, a look-at-top, or a §7.5 hand cost. `min > 0` is a
     MANDATORY exact cost (no decline, Confirm gated to the count); `min: 0` is the
@@ -1281,11 +1319,13 @@ function ChooseCardsDialog({
             onAction({ type: "resolveEffect", seat, choice: { kind: "cards", uids: picked } })
           }
         >
-          {/* The verb follows the ENGINE's `dest` — a cost is Discarded / Put
-              under deck; an "up to" retrieval into the deck is a Shuffle. */}
+          {/* 🆕🆕🆕 D542 — the verb follows the ENGINE's `dest` through the TOTAL
+              RECORD above, not through a chain of `dest === …` tests. See that
+              block: the two ternaries this replaces each named ONE member and let
+              every other member fall out of the wrong side. */}
           {mandatory
-            ? `${prompt.dest === "deckBottom" ? "Put under deck" : "Discard"} ${picked.length}/${prompt.min}`
-            : `${prompt.dest === "deck" ? "Shuffle" : "Take"} ${picked.length === 0 ? "none" : picked.length}`}
+            ? `${CHOOSE_CARDS_VERB[prompt.dest].mandatory} ${picked.length}/${prompt.min}`
+            : `${CHOOSE_CARDS_VERB[prompt.dest].upTo} ${picked.length === 0 ? "none" : picked.length}`}
         </button>
       </div>
     </Dialog>

@@ -1442,6 +1442,27 @@ function describeBranch(ops: readonly EffectOp[]): string | null {
         // hand-built program rather than left as an equivalent mutant, which is the
         // correction D455 made to three "recorded as an equivalent mutant" claims in
         // this very file.
+        //
+        // 🆕🆕🆕 **D542 — THE DESTINATION SPLITS THIS PHRASE, AND THE CLAIM ABOVE
+        // IS RE-READ RATHER THAN LEFT STANDING.** The op gained `to?: "deck"`, and
+        // *"your opponent discards 3 cards from their hand"* is FALSE of a program
+        // that shuffles them back in — D515's own recorded lesson at this exact
+        // address, one field over: *a reader can be correct while its describer
+        // quietly says less, and only the describer is user-visible*. ⚠️ **THE
+        // UNREACHABILITY CLAIM ABOVE IS UNMOVED AND THAT WAS CHECKED, NOT ASSUMED**:
+        // it is about a §9.2 gate over a PLURAL discard, and D542's sentence is a
+        // STANDALONE whole-sentence anchor that composes with no gate at all — so
+        // BOTH of the deck branch's arms are unreachable from print today, and both
+        // are written for the same stated reason and driven from hand-built programs.
+        // `D542-describe-branch-phrase-unwidened` is the declared row.
+        if (op.to === "deck") {
+          parts.push(
+            op.count === 1
+              ? "your opponent shuffles a card from their hand into their deck"
+              : `your opponent shuffles ${op.count} cards from their hand into their deck`,
+          );
+          break;
+        }
         parts.push(
           op.count === 1
             ? "your opponent discards a card from their hand"
@@ -3492,7 +3513,19 @@ function stepOp(
       const take = Math.min(op.count, hand.length);
       if (take === 0) return { done: state };
       if (hand.length <= take) {
-        return { done: discardChosenFromHand(state, owner, hand, events) };
+        // 🆕🆕🆕 **D542 — THE SHORT-HAND ARM BRANCHES TOO, AND IT IS THE HALF A
+        // PARKED-PATH RUNG CANNOT SEE.** This is the §8.6 *"do as much as you can"*
+        // path: it never reaches `applyChoice` at all, so a build that widened only
+        // the park below would send a three-card hand to the DISCARD under a
+        // sentence that says deck, with every parked-path assertion still green and
+        // `tsc` silent. `D542-forced-arm-still-discards` is the declared row, and
+        // `opponentHandShuffle.test.ts` §5 drives both short boards.
+        return {
+          done:
+            op.to === "deck"
+              ? deckChosenFromHand(state, owner, hand, events)
+              : discardChosenFromHand(state, owner, hand, events),
+        };
       }
       // 🛑 THE PARK, AND ITS FLOOR IS TRUE BY CONSTRUCTION. `min === max === take`
       // is a MANDATORY exact pick — the only decision is WHICH cards, never
@@ -3512,7 +3545,17 @@ function stepOp(
           candidates: [...hand],
           min: take,
           max: take,
-          dest: "discard",
+          // 🆕🆕🆕 **D542 — THE FIRST MANDATORY `dest: "deck"` PARK IN THIS ENGINE,
+          // AND THAT IS A CLIENT-SIDE FACT BEFORE IT IS AN ENGINE ONE.** Every other
+          // producer of a `"deck"` pick (`discardPileRetrieval`) parks at `min: 0`,
+          // so the "up to" cell of the HUDs' Confirm-verb tables shipped live and the
+          // MANDATORY cell did not. `GameHud`'s `CHOOSE_CARDS_VERB` is a total record
+          // and already reads *"Shuffle"* there; `OnlineHud`'s mandatory branch was a
+          // TERNARY that rendered *"Discard"* for everything but `"deckBottom"`, so
+          // this op would have printed *"Discard 0/3"* over a heading promising a
+          // shuffle. Fixed in the same slice (`D542-online-mandatory-verb-falls-
+          // through`), because the defect arrives with the op.
+          dest: op.to ?? "discard",
           note: opponentDiscardNote(op),
         },
         // 🛑 THE OPPONENT ANSWERS, AND THIS ONE FIELD IS THE WHOLE OF IT. The park's
@@ -6386,9 +6429,26 @@ export function applyChoice(
       // the controller's frame — so a uid reaching here is one of the offered
       // cards. The helper still re-reads the LIVE hand, which is the retrieval
       // rule this file applies everywhere: what MOVED is what the event names.
-      return choice.kind === "cards"
-        ? discardChosenFromHand(state, otherSeat(ctx.seat), choice.uids, events)
-        : state;
+      //
+      // 🆕🆕🆕 **D542 — THE DESTINATION BRANCH, AND IT IS THE SITE THIS SLICE
+      // EXISTS FOR BECAUSE THE COMPILER CANNOT SEE IT.** This `switch` ends
+      // `default: return state;` (*"Synchronous ops never park, so never reach the
+      // choice path"*), so an arm that goes missing typechecks green — and here the
+      // deck route is not even an arm, it is a BRANCH INSIDE an arm. Delete it and
+      // the op still parks, still dialogs, still validates the answer, and then
+      // lands the three picked cards in the DISCARD PILE while the log row, the
+      // caption and the printed sentence all say deck. Nothing reddens: not `tsc`
+      // (MEASURED at this head rather than asserted — `bunx tsc -b --force` prints
+      // nothing for the deleted branch), not a census, not a shape assertion.
+      // `D542-apply-choice-drops-deck-branch` is THE row of this slice, and
+      // `opponentHandShuffle.test.ts` §4 is the only thing that can kill it: it
+      // asserts the picked uids on the BOARD — out of the hand, IN the owner's deck,
+      // and **NOT** in the owner's discard (D421, and D539's rule about pricing the
+      // sites the type system cannot check separately).
+      if (choice.kind !== "cards") return state;
+      return op.to === "deck"
+        ? deckChosenFromHand(state, otherSeat(ctx.seat), choice.uids, events)
+        : discardChosenFromHand(state, otherSeat(ctx.seat), choice.uids, events);
     case "bottomFromOpponentHand": {
       if (choice.kind !== "cards") return state;
       const moved = bottomFromOpponentHandApply(state, choice.uids, ctx, events, op.dest);
@@ -12342,6 +12402,22 @@ function mayDrawNote(op: Extract<EffectOp, { op: "opponentMayDraw" }>): string {
     rather than writing "1 card": *"Discard a card from your hand."* is how the
     catalog spells the count of one everywhere in this column. */
 function opponentDiscardNote(op: Extract<EffectOp, { op: "opponentDiscardsFromHand" }>): string {
+  // 🆕🆕🆕 **D542 — THE CAPTION FOLLOWS THE DESTINATION, AND D426's OWN RULE
+  // IS WHY.** This note is in the ANSWERER's voice and the player reading it IS the
+  // opponent — so the printed *"Your opponent chooses 3 cards … and shuffles those
+  // cards into their deck."* becomes *"Shuffle 3 cards from your hand into your
+  // deck."*. A build that left the discard wording here would tell the answerer to
+  // discard while the engine shuffled, which no board and no type can catch:
+  // `D542-note-says-discard` is the declared row. ⚠️ **The singular branch is
+  // written for the deck arm too even though no printing spells it** — `drawCards`'
+  // stated reason and `describeBranch`'s one screen over: the op IS in this shape
+  // now, and a caption that said *"3 cards"* over a count of one is the failure the
+  // branch above exists to avoid, arriving from the other side.
+  if (op.to === "deck") {
+    return op.count === 1
+      ? "Shuffle a card from your hand into your deck."
+      : `Shuffle ${op.count} cards from your hand into your deck.`;
+  }
   return op.count === 1
     ? "Discard a card from your hand."
     : `Discard ${op.count} cards from your hand.`;
@@ -12372,7 +12448,18 @@ function opponentDiscardNote(op: Extract<EffectOp, { op: "opponentDiscardsFromHa
     **THE CARDS LAND FACE UP IN THE §2 PUBLIC PILE**, appended in pile order like
     every other discard in this file — so their identity becomes public by the
     board and not by the log, which is why the log row stays a COUNT (see
-    `FORCED_HAND_DISCARD` in log.ts). */
+    `FORCED_HAND_DISCARD` in log.ts).
+
+    🆕🆕🆕 **D542 — THAT LAST SENTENCE IS TRUE OF THIS FUNCTION AND IS NO LONGER
+    TRUE OF ITS EVENT.** `FORCED_HAND_DISCARD` now carries `to?: "deck"`, and the
+    deck arm's cards land in a hidden, about-to-be-shuffled zone where nobody reads
+    them off anything. **The claim is SCOPED rather than deleted** (D418/D453): it
+    still states why THIS helper's row is a count, and the second address — the
+    event's own doc block in events.ts — carries the re-pointed justification for
+    `uids` (a wire fact: raw events never cross the wire, `logFromEvents` is
+    server-side). The deck sibling is `deckChosenFromHand` directly below; the two
+    are separate functions rather than one with a zone parameter for the reason the
+    next block states. */
 function discardChosenFromHand(
   state: GameState,
   owner: Seat,
@@ -12394,6 +12481,79 @@ function discardChosenFromHand(
     ...side,
     hand: side.hand.filter((uid) => !gone.has(uid)),
     discard: [...side.discard, ...discarded],
+  });
+}
+
+/** 🆕🆕🆕 **D542 — THE DECK-LANDING SIBLING OF `discardChosenFromHand`**: move
+    `uids` from `owner`'s HAND to the END of `owner`'s own DECK, and announce what
+    actually moved. *"Your opponent chooses 3 cards from their hand and shuffles
+    those cards into their deck."*
+
+    🛑 **IT DOES NOT SHUFFLE, AND THAT IS THE HOUSE RULE RATHER THAN THIS
+    FUNCTION'S OPINION.** `events.ts` states it outright for `POKEMON_RETURNED`:
+    *"NO SHUFFLE EVENT IS IMPLIED BY `dest: \"deck\"`. The op emits a real SHUFFLE
+    row after this one … one event per thing that happened, so a log reader never
+    has to know that one of these words secretly means two."* The `shuffleDeck`
+    op the reader emits beside `opponentDiscardsFromHand` is that row, and it is
+    what advances `rngState` — in the open, where `searchDeck`'s tail does it, and
+    not from inside a park. `D542-shuffle-tail-dropped` is the declared row, and its
+    consequence took a review round to state correctly: ⚠️ the first published wording
+    said the picks would ~~*"sit on top of the opponent's deck IN PICK ORDER"*~~, which is
+    the MIRROR of what this function does — withdrawn here and at its two other
+    addresses (the row's own `what`, and §6's comment) rather than corrected in one
+    place (D539). This body APPENDS, and in this engine the appended end is the
+    **BOTTOM**: every draw, mill and look cuts `deck.slice(0, n)`, and `drawCards`'
+    `from: "bottom"` arm deliberately cuts at `deck.length − count` instead. So under
+    the mutant the three picks land at the BOTTOM, in pick order, and the opponent
+    draws them LAST. That is still a real defect and the row still earns its place,
+    for three reasons that do not depend on which end it is: `rngState` never moves,
+    so the printed randomisation simply does not happen; the deck's order becomes
+    FULLY DETERMINED at three known positions, which is the information the printed
+    shuffle exists to destroy; and the cards the answerer chose to shed are buried
+    where they are LEAST likely to come back — a board that favours the answerer, not
+    the attacker, which is the opposite of the severity the withdrawn wording claimed.
+    What the withdrawn wording CAUGHT (D418) is the half that survives: every
+    membership assertion still passes, because the cards ARE in the deck.
+
+    **APPENDED TO THE END OF THE DECK, NEVER THE TOP**, `discardEnergy.to`'s own
+    recorded reason one file over: the position is meaningless under the shuffle
+    that follows, and an append keeps this byte-identical in shape to the discard
+    sibling above (both append to their zone).
+
+    🛑 **A SEPARATE FUNCTION RATHER THAN A ZONE PARAMETER ON THE SIBLING**, and the
+    argument is the one D433 wrote for `devolveChosen` at D540: a parameterised
+    helper makes the destination a VALUE THREADED THROUGH ONE BODY, so the mutant
+    that flips it is a one-token edit in a place no caller can see, and every caller
+    reads identically at the call site. Two bodies put the decision at the CALL, in
+    `stepOp` and in `applyChoice`, which is exactly where the two declared rows
+    (`D542-forced-arm-still-discards`, `D542-apply-choice-drops-deck-branch`) have to
+    be able to bite. The shared part — the membership-and-duplicate filter — is nine
+    lines and is written twice rather than extracted, because extracting it would put
+    the fork back inside one body.
+
+    ⚠️ **WHAT MOVED, NOT WHAT WAS ASKED FOR**, and **AN EMPTY RESULT EMITS
+    NOTHING** — the sibling's two guards for the sibling's two reasons. */
+function deckChosenFromHand(
+  state: GameState,
+  owner: Seat,
+  uids: readonly string[],
+  events: GameEvent[],
+): GameState {
+  const side = state.players[owner];
+  const inHand = new Set(side.hand);
+  const moved: string[] = [];
+  const gone = new Set<string>();
+  for (const uid of uids) {
+    if (!inHand.has(uid) || gone.has(uid)) continue;
+    gone.add(uid);
+    moved.push(uid);
+  }
+  if (moved.length === 0) return state;
+  events.push({ type: "FORCED_HAND_DISCARD", seat: owner, uids: [...moved], to: "deck" });
+  return withSide(state, owner, {
+    ...side,
+    hand: side.hand.filter((uid) => !gone.has(uid)),
+    deck: [...side.deck, ...moved],
   });
 }
 
