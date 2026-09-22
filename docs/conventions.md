@@ -5225,6 +5225,12 @@ disown
 
 Verify it took: `ps -eo pid,ppid -p <pid>` must show **PPID 1**.
 
+⚠️ **RE-POINTED (D541 close-out): the recipe above is ONE FLAG SHORT and `PPID 1` is the wrong
+column to read.** Plain `setsid` does not fork when the backgrounded job is already a process-group leader,
+so it `exec`s in place and the sweep keeps the shell as its PPID; use `setsid --fork` and verify `SID ==
+PID`. See *"Plain `setsid` does not FORK"* below. The recipe is kept as written because it is what the last
+fifty-odd sweeps actually ran.
+
 ⚠️ **A detached run sends no completion notification**, so the loop must poll — and the poll reads
 the **summary line**, never a verdict tally (D474, D488).
 
@@ -8208,6 +8214,81 @@ code around the record is correct either way.
 undo of that edit is a byte restore.** No new rule is owed for the missing-entry half — D428 already covers
 a truncated enumeration, and a head with the current slice missing is a truncation at the head. What is new
 is that an edit which *looks like an undo* is one of the ways the truncation happens.
+
+### Plain `setsid` does not FORK, so it does not detach a job that is already a process-group leader (D541 close-out, correcting D489's recipe)
+
+D489 wrote the recipe that every sweep since has used:
+
+```
+setsid nohup bun scripts/mutation/run.ts > "$CLAUDE_JOB_DIR/tmp/sweep-DNNN.log" 2>&1 < /dev/null &
+disown
+```
+
+🛑 **It is one flag short, and the missing flag is why the `setsid` reuse counter stalled for eight
+close-outs.** `setsid(2)` FAILS with `EPERM` when the calling process is already a process-group leader —
+which is exactly what a shell puts a backgrounded job into. The `setsid(1)` wrapper then does not fork: it
+`exec`s the program **in place**, the new session is never created, and the sweep keeps the shell wrapper
+as its PPID. It runs, it finishes, and every property the detachment was for is absent.
+
+```
+setsid --fork nohup bun scripts/mutation/run.ts > tmp/sweep-DNNN.log 2>&1 < /dev/null &
+```
+
+**Verify it took with `ps -eo pid,ppid,sid -p <pid>`, and read BOTH columns.** `PPID 1` alone does not
+discriminate: an ORPHANED child of a dead shell also shows `PPID 1` — reparenting is not detachment — but
+it keeps its old session id. **`SID == PID` is the measurement**; `PPID 1` is a consequence.
+
+⚠️ **D541's first launch failed exactly this way** and was caught by reading the `ps` output rather than by
+anything going red. It was killed from a state classified all three ways (D446: tree clean, no journal, no
+surviving `mutation/run.ts`) and relaunched with `--fork`, which is the only reason `tmp/sweep-D541.ppid.txt`
+reads `PID 1580043 / PPID 1 / SID 1580043`.
+
+🛑 **And write the read INTO THE LOG, in the same command that starts the sweep.** A sidecar has to be tied
+to its log by arithmetic over mtimes afterwards; a line inside the artefact needs no arithmetic to tie it to
+the artefact. That one-line fix has now been deferred through eight close-outs, each of which paid the
+arithmetic instead.
+
+### Building a slice in a SECOND CHECKOUT: `realpath` the workspace package, and a clean merge is not a reconciliation (D541)
+
+A second worktree lets a slice be built while the main tree runs a three-hour sweep. It costs two things,
+and both are silent.
+
+🛑 **(i) THE WORKTREE CAN TEST THE MAIN TREE'S SOURCE.** Symlinking or copying `node_modules` from the main
+repo makes the checkout resolve `@luminous/engine` to the **MAIN TREE's** `packages/engine`. Every suite —
+`packages/engine`'s as much as `src/`'s — then reports green about code that is not in the checkout, and a
+whole slice can be built, probed and reviewed against source it never touched. **It is not made safe by a
+slice having no `src/` bytes.** Before trusting any green run, and again after anything that could touch
+`node_modules`:
+
+```
+node -e "console.log(require('fs').realpathSync('node_modules/@luminous/engine'))"
+```
+
+must print a path **inside the worktree**. D541 hit this and caught it here; `vite.config.ts` carries no
+alias, so `vitest` resolves the same way `node` does.
+
+🛑 **(ii) A CLEAN MERGE IS NOT A RECONCILIATION.** A slice built on `main` MINUS the previous close-out
+carries pre-close-out prose. When it is cherry-picked forward, git merges the docs sections cleanly —
+because the two sides touched different lines — and the stale half lands intact, contradicting the paid
+block a few hundred lines below it in the SAME FILE. Git resolved the TEXT; nobody resolved the CLAIMS.
+
+**So prove the facts survived, do not assert it.** After the pick, diff the docs against the close-out
+commit and read every deletion:
+
+```
+git diff --numstat <close-out> HEAD -- docs/
+git diff <close-out> HEAD -- docs/progress.md | grep '^-[^-]'
+```
+
+The deletions must be exactly the single-line records the new slice legitimately supersedes (the
+`Last updated` line, the status row) plus claims deliberately withdrawn — never a paragraph of the previous
+close-out. D541's pick deletes **3** lines in `progress.md` and **zero** in `decisions.md` and
+`conventions.md`, and that is a `cmp`-grade check rather than a sentence (D540's rule, one file wider).
+
+⚠️ **And re-point the LINE ADDRESSES the parked text carries.** D541's parked `(0)` block cited the previous
+close-out at `:955-985`; after the pick those lines held a different section entirely. **A line address is a
+figure** and rots like one (D466/D541).
+
 
 ## Git / commits
 - Branch off `main` for non-trivial work; commit/push only when asked.
