@@ -8167,6 +8167,48 @@ pass's file set (D538), and is this occurrence a PIN or a RECORD OF A PAST STATE
 assertion; a record must not be touched. Both halves are invisible to every gate, which is why the audit is
 the diff and the classification is per SITE rather than per value.
 
+### A revert of a LINE is a `cmp` against HEAD, not a retype (D540 close-out, extending D428 and D178/D418)
+
+D538 already says to **verify a revert by ABSENCE** — its catalog revert is confirmed by
+`censusAttackCorpus.ts` not appearing in `git show --numstat` at all. That instrument answers *"did this
+file move?"*. **It cannot answer *"did this LINE come back?"***, and D540 is what the gap costs.
+
+D540 stepped two FROZEN endpoints by mistake (`benchNamedBonus.test.ts:1096`, `sameEnergyBonus.test.ts:969`)
+and undid the step **by re-typing the line**. Both lines are a value followed by an **append-only STACK of
+trailing `// (…)` annotation blocks, one per slice that ever touched the chain**. Re-authoring from memory
+reproduced the value and the *shape*, and put back the version at `0eec3e13` — D537's head — so **D538's
+≈1.7 KB block went with it**. Measured: both sites came back `cmp`-identical to `0eec3e13` and **1,726 bytes
+short of HEAD**, and a per-file per-decision tag scan over all 110 changed test files read `D538` **7 → 6**
+in exactly those two files and nowhere else (`D536` 19 → 18 and `D537` 11 → 10 with it, because both were
+cited INSIDE the removed block).
+
+🛑 **NOTHING COULD SEE IT.** The asserted values never moved, so `check` was green, `precheck` was green, no
+mutant, gate or census figure shifted — and the removed-comment-line audit cannot see a **deletion INSIDE a
+line** any more than it can see an insertion inside one.
+
+**THE RULE: to undo an edit to a line, restore the line's BYTES and prove it.**
+
+```
+git show HEAD:<file> | sed -n '<n>p'     # the bytes
+cmp <(git show HEAD:<file>) <file>       # the proof
+```
+
+A retype is not a revert; it is a **new authorship of the line** that happens to agree with the old one
+about the part you were looking at. On a line whose payload is an append-only record, re-authoring it is a
+**truncation of an enumeration** (D428) and a **deletion where a re-point was owed** (D178/D418).
+
+⚠️ **AND THE SAME STACK BREAKS FROM THE OTHER SIDE, IN THE SAME SLICE.** D540 also stepped the `find`/
+`replace` of two standing mutant rows (the D275 engine-version row, the D495 census row) while **never
+appending this slice's entry to either row's re-transcription enumeration** — the rows ran, their `find`s
+were at 1x, `precheck` was green and both were KILLED in the sweep. So an append-only stack can lose an OLD
+entry to a retype or fail to gain the NEW one, and **neither failure has a runner behind it**, because the
+code around the record is correct either way.
+
+✅ **Both halves reduce to one habit: the record moves in the SAME EDIT as the thing it records, and any
+undo of that edit is a byte restore.** No new rule is owed for the missing-entry half — D428 already covers
+a truncated enumeration, and a head with the current slice missing is a truncation at the head. What is new
+is that an edit which *looks like an undo* is one of the ways the truncation happens.
+
 ## Git / commits
 - Branch off `main` for non-trivial work; commit/push only when asked.
 - Commit trailer per global config: `Co-Authored-By: Claude ...`.
