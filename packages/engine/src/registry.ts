@@ -2862,7 +2862,21 @@ export interface CardProgram {
       `sv08-086`/`sv08.5-041`/`sv08.5-156`, whose clause is printed at the END of its
       sentence and belongs to D409's TRAILING splitter. **The derivation reaches the
       LEADING family and nothing else** — a trailing gate stays registry-only, and
-      that refusal is named rather than implied. */
+      that refusal is named rather than implied.
+      🆕🆕🆕 **D541 — THE TWO NUMBERS HAVE CONVERGED AND THE REFUSAL IS WITHDRAWN.**
+      `splitAttackGateClause` claims **17** legal printings (**7** corpus sentences)
+      as of D541, because its fifth row is Sylveon ex's own clause and the splitter
+      now reads a TRAILING gate as well as a leading one. So the extra 3 are no
+      longer extra: this field is authored on 17 ids and the derivation reaches all
+      17. ⚠️ **"the derivation reaches the LEADING family and nothing else" and "a
+      trailing gate stays registry-only" are both FALSE from D541 on** — and the
+      reason the paragraph is kept rather than deleted (D178/D418) is that the
+      arithmetic it was making visible is exactly what changed. ⚠️ **What survives is
+      the reason BOTH numbers are still printed here**: they agree today by
+      coincidence of this catalog, not by construction — a future gate printing with
+      no registry row, or a registry row for a clause outside the closed list, parts
+      them again. Also note the clause list is scoped to `legal_standard = 1` while
+      the engine is not (D413), which is a second way they can part. */
   attackGate?: { readonly [attackIndex: number]: AttackTimingGate };
   /** Activated Abilities printed on this card. */
   abilities?: AbilityProgram[];
@@ -7108,7 +7122,8 @@ const MILTANK_MOOMOO_ROLLING: CardProgram = {
     Benched Pokémon. Shuffle those Pokémon and all attached cards into your
     opponent's deck."* and **every one of them refuses it**, so the split summand
     would gain nothing and `ATTACK_EFFECT_SKIPPED` would name the same printing
-    either way. ⚠️ **AND THE INHERITED REASON FOR THAT WAS STALE**: the handoff said
+    either way.
+    ⚠️ **AND THE INHERITED REASON FOR THAT WAS STALE**: the handoff said
     the body was Illumise `sv06-010`'s refusal verbatim (*"no `EffectOp` moves an
     OPPONENT'S benched Pokémon … into the OPPONENT'S deck"*), and **D299 built that
     op** — `returnBenched { whose: "opponent", dest: "deck" }`, which is exactly what
@@ -7118,6 +7133,38 @@ const MILTANK_MOOMOO_ROLLING: CardProgram = {
     `sv05-124`/`-180`'s refusal, one op over. Same conclusion, different reason; the
     conclusion was re-derived by running the readers rather than by quoting the
     comment.
+    🆕🆕🆕 **D541 — WITHDRAWN, AND WHAT IT CAUGHT IS WORTH MORE THAN WHAT IT SAID**
+    (D418's question, answered rather than skipped). The paragraph above was TRUE
+    when it was written and its premise was RE-CONFIRMED at D541's own head before
+    a byte moved: every one of the **13** live readers still refused that stripped
+    body TODAY. So it was never stale — it was a correct measurement of a tree in
+    which the arm did not exist, and it could only go false JOINTLY with the arm.
+    D541 landed both halves in one commit: `splitAttackGateClause` gained a TRAILING
+    branch keyed on the same closed literal list (this clause is its fifth row), and
+    `CHOOSE_SHUFFLE_CHOSEN` / `returnBenchedChosen` gained the body. The split summand
+    now buys **3** printings, not zero, and the body derives instead of being skipped.
+    ⚠️ **WHAT IT CAUGHT**: it is the sentence that kept a trailing stripper from being
+    added SPECULATIVELY for four slices, on a tree where it would have bought nothing
+    and widened a `^`-anchored policy for free. The policy widening was worth paying
+    for exactly once, with a body to spend it on.
+
+    🆕🆕🆕 **D541 — THIS PROGRAM IS *KEPT*, AND THE KEEP-OR-RETIRE DECISION IS PUT TO
+    THE READER HERE RATHER THAN TAKEN SILENTLY.** `attackGateOf` resolves
+    `registry ?? derived`, and as of D541 `timingGateFromAttackText` (effects.ts)
+    derives this exact gate from the printed clause — so this row is now
+    DEFENCE-IN-DEPTH rather than the only source (D444's precedent, one gate family
+    over), and
+    `angeliteChosenShuffle.test.ts` §7 asserts `registry === derived` for all three
+    ids so the two can never disagree silently.
+    ⚠️ **RETIRING IT IS THE STRONGER ANSWER TO `conventions.md:195` AND WAS NOT
+    TAKEN.** Deleting it would un-mask the derivation on the three REAL printings —
+    today the derived gate is only ever observable on a synthetic demonstrator,
+    because this object wins on `sv08-086`/`sv08.5-041`/`sv08.5-156`. The cost is
+    what kept it: `splitOrder.test.ts` §4's five pins (gated 17, `barredIf` 10,
+    `onlyIf` 4, `firstTurnExempt` 3, index `"1"` 4) all count THIS row, so retiring
+    it moves five constants plus the deletion, for a radius this slice already spends
+    elsewhere. **The smaller radius won; the argument is recorded so the next slice
+    can take the other half of it for free.**
 
     ⚠️ **ONE PROGRAM OBJECT FOR THREE IDS — D281's REPRINT IDIOM, WHICH IS TERAPAGOS'S
     TREATMENT AND NOT ILLUMISE / SCREAM TAIL's.** Those two print ONE clause on TWO

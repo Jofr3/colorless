@@ -1587,13 +1587,35 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
   //
   // 🆕🆕 D364 — **THE ORDER OF THESE TWO SPLITS IS A COMMITMENT, AND NOTHING
   // PRINTED CAN CURRENTLY REVEAL IT.** Re-measured over all 1,732 legal attack
-  // units: `splitAttackGateClause` claims 14 (13 until D395 added the clause-only
-  // Miltank `sv08.5-081` row), `splitAttackRequirementClause`
+  // units: `splitAttackGateClause` claims 17 (14 until D541 added the TRAILING
+  // branch; 13 until D395 added the clause-only Miltank `sv08.5-081` row),
+  // `splitAttackRequirementClause`
   // claims 2, and **0 units are claimed by both** — the two strippers are DISJOINT
   // on the catalog, so running them in either order answers every printed string
   // identically. That is exactly why a `splitHead` that loops over a sentence list
   // stays refused: it would be scaffolding for a population of zero (D282's
   // refusal, re-derived rather than inherited).
+  //
+  // 🆕🆕🆕 **D541 — THE NUMBER STEPS 14 → 17 AND THE DISJOINTNESS CONCLUSION IS
+  // RE-DERIVED FOR THE *TRAILING* CASE RATHER THAN COPIED FROM THE LEADING ONE.**
+  // It is a different claim and it had to be measured separately, because the
+  // leading case's argument does not transfer: there, disjointness followed from
+  // the two strippers looking at OPPOSITE ENDS of the string, which is precisely
+  // the property a trailing branch destroys. `splitAttackRequirementClause` reads
+  // a LEADING does-nothing sentence; `splitAttackGateClause`'s new branch reads a
+  // TRAILING gate clause; so for the first time the two CAN both fire on one
+  // printing without contradicting each other, and "they look at different ends"
+  // is an argument FOR a collision rather than against one.
+  // **MEASURED over all 640 corpus sentences / 1,732 legal units at D541's head:
+  // gate 7 sentences / 17 units, requirement 1 / 2, and the intersection is still
+  // EMPTY** — 0 units claimed by both, in the new configuration as in the old.
+  // ⚠️ The order below is therefore still free ON THE CATALOG and still a
+  // COMMITMENT, for the reason the paragraph below gives; what has changed is that
+  // the safety argument for a hypothetical both-clauses printing now has a THIRD
+  // shape to consider (leading requirement + trailing gate), and
+  // `splitAttackGateClause`'s own TRIPWIRE covers the one case a two-ended split
+  // newly creates — a string matching the gate list at BOTH ends is refused
+  // outright rather than half-split. `splitOrder.test.ts` §2/§3 drive all of it.
   //
   // ⚠️ The order below is still the RIGHT one and is asserted rather than assumed.
   // On a compound carrying both clauses the two orders DISAGREE: gate-then-

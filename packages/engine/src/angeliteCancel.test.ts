@@ -110,6 +110,26 @@ import {
 //    `^`-anchored; §5 asserts the gated body and its UNGATED twin report the
 //    *same* `ATTACK_EFFECT_SKIPPED` — which is D395's assertion inverted, and the
 //    honest answer, because all nine readers refuse the stripped body too (§1).
+//    🆕🆕🆕 **[D541 — WITHDRAWN. A split IS authored: `splitAttackGateClause` now
+//    keys `ATTACK_GATE_CLAUSES` at the TRAILING end too, this clause is its fifth
+//    row, and `CHOOSE_SHUFFLE_CHOSEN` / `returnBenchedChosen` claims the stripped
+//    body. §1's rung is INVERTED in place and §5's identity is re-pointed onto the
+//    half of it that survives.]**
+//
+// ── 🆕🆕🆕 D541 — THE DIVISION OF LABOUR WITH `angeliteChosenShuffle.test.ts` ──
+// This file is **the GATE half** and stays so: the `BoardCondition` member, the
+// index key, the §9 payability mirrors, the report, and `MATCH_RECORD_VERSION` 25.
+// `angeliteChosenShuffle.test.ts` is **the BODY half**: the anchor, the trailing
+// SPLIT branch and its tripwire, the `returnBenchedChosen` op on a real board, the
+// §11 shield at the park, and the census arithmetic. They meet at exactly two
+// seams and both are asserted on BOTH sides rather than in one place: §1's
+// inverted rung here and §2 there agree about what the splitter answers; §7 there
+// pins `registry === derived` for the three ids this file's §1 pins the registry
+// row on. ⚠️ **EXTENDING THIS FILE WAS THE ALTERNATIVE AND WAS DECLINED**: its 869
+// lines are all about a gate that ships alone, and the body half needs its own
+// 60-card demonstrator deck (D270) and its own board fixtures; folding them
+// together would have made the largest suite in this family harder to read for no
+// shared setup at all.
 // 4. **§9 DOES NOT REACH THIS FIELD**, and both payability projections agree per
 //    index. §4.
 
@@ -123,6 +143,15 @@ const ANGELITE =
     somebody read rather than about a substring an expression produced. */
 const ANGELITE_BODY =
   "Choose 2 of your opponent's Benched Pokémon. Shuffle those Pokémon and all attached cards into your opponent's deck.";
+
+/** 🆕🆕🆕 D541 — the TRAILING gate clause alone, byte for byte, spelled out for the
+    same reason `ANGELITE_BODY` is: §1's inverted rung asserts what the splitter
+    RETURNS, and a clause sliced off `ANGELITE` by an expression would make that an
+    assertion about the expression. `ANGELITE_CLAUSE + " " + ANGELITE_BODY` is
+    deliberately NOT how `ANGELITE` is built here — the concatenation is checked in
+    `angeliteChosenShuffle.test.ts` §2 against the LIVE corpus row instead. */
+const ANGELITE_CLAUSE =
+  "If 1 of your Pokémon used Angelite during your last turn, this attack can't be used.";
 
 /** Index 0's printed text, which DOES resolve (`weakenDefenderAttacks`) — the
     reason the card is played, and the row an index-blind gate takes away. */
@@ -363,11 +392,38 @@ function wirePlayable(state: GameState, seat: Seat, index: number): boolean | un
   return phase.attacks.find((a) => a.index === index)?.playable;
 }
 
+/** 🆕🆕🆕 **D541 — ANSWER ANGELITE'S PICK IF IT PARKED.** Until D541 built
+    `returnBenchedChosen`, `deriveAttackEffect` returned `null` for this row and a
+    declaration resolved to NOTHING, so every board here could wind straight on. The op
+    now asks a `choosePokemonMulti`, and §8.6 CLAMPS it to the one body `board()` puts on
+    the other Bench (`ptcg-rules.md:333` — *"with fewer legal targets than the number,
+    you choose as many as you can"*; the printed sentence carries no *"If you can't, this
+    attack does nothing"* rider, so a short Bench shuffles what there is rather than
+    cancelling the attack). The answer is READ OFF THE PROMPT rather than retyped, so
+    this file stays a GATE suite: what the body DOES is `angeliteChosenShuffle.test.ts`
+    §4's subject, and these boards only have to get past the park to reach the next
+    turn. */
+function settleAngelitePark(state: GameState, seat: Seat): GameState {
+  if (state.phase.kind !== "effect:choose") return state;
+  const prompt = state.phase.prompt;
+  if (prompt.kind !== "choosePokemonMulti") throw new Error(`unexpected prompt ${prompt.kind}`);
+  return must(
+    applyAction(state, {
+      type: "resolveEffect",
+      seat,
+      choice: { kind: "pokemonMulti", refs: [...prompt.candidates].slice(0, prompt.min) },
+    }),
+  );
+}
+
 /** Use "Angelite" (idx 1) on `seat`'s turn, then wind the board back round to
     `seat` — the board the cancel is printed for. */
 function afterAngelite(seed: number, first: Seat, seat: Seat, activeId: string): GameState {
   const start = untilTurnOf(board(seed, first, seat, activeId), seat);
-  const after = must(applyAction(start, { type: "attack", seat, index: 1 }));
+  const after = settleAngelitePark(
+    must(applyAction(start, { type: "attack", seat, index: 1 })),
+    seat,
+  );
   return untilTurnOf(after, seat, start.turn + 1);
 }
 
@@ -375,7 +431,7 @@ function afterAngelite(seed: number, first: Seat, seat: Seat, activeId: string):
 // 1. The census, the consequent, and the "no split" measurement.
 // ─────────────────────────────────────────────────────────────────────────────
 
-describe("D396 §1 — the corpus, the consequent it shares with Terapagos, and the split that buys zero", () => {
+describe("D396 §1 — the corpus, the consequent it shares with Terapagos, and the split that buys THREE (D541)", () => {
   it("🆕🆕 D419 — the hand-kept READERS list IS the module's reader surface", () => {
     // 🛑 THE GUARD THIS FILE NEVER HAD, IN D417's SHAPE AND D418's WORDING. This
     // copy was hand-kept and NOTHING compared it to what `effects.ts` exports, so
@@ -423,29 +479,55 @@ describe("D396 §1 — the corpus, the consequent it shares with Terapagos, and 
     expect(family.reduce((sum, [units]) => sum + units, 0)).toBe(7);
   });
 
-  it("🛑 NO SPLIT IS AUTHORED, and the reason is that a trailing one would buy ZERO", () => {
-    // ① The splitter does not claim this string, and must not: it is a LEADING
-    //    clause matcher anchored at `^` by deliberate policy, and Angelite's clause
-    //    is TRAILING.
-    expect(splitAttackGateClause(ANGELITE)).toBeNull();
-    // ② And a trailing stripper would hand the readers THIS, which every one of the
-    //    nine refuses — so the census split summand would gain nothing at all and
-    //    `ATTACK_EFFECT_SKIPPED` would name this printing either way.
-    expect(resolvedByAnyReader(ANGELITE_BODY)).toBe(false);
+  it("🆕🆕🆕 D541 — THE SPLIT IS AUTHORED AFTER ALL, and this rung is INVERTED rather than deleted", () => {
+    // 🛑 **THE WHOLE OF THIS RUNG USED TO ASSERT THE OPPOSITE, AND IT WAS RIGHT.**
+    // It read *"NO SPLIT IS AUTHORED, and the reason is that a trailing one would
+    // buy ZERO"*, and its premise was RE-CONFIRMED at D541's own head before a byte
+    // moved: every one of the 13 live readers still refused the stripped body. It
+    // went false JOINTLY with D541's arm — the stripper alone would still have
+    // bought nothing — which is why it is INVERTED in place (D178/D418) rather than
+    // deleted, and why the file it belongs to keeps its name. The BODY half of this
+    // printing is `angeliteChosenShuffle.test.ts`'s from here on; see this file's
+    // header for the division of labour.
+    //
+    // ① The splitter DOES claim this string now, at the TRAILING end. It is no
+    //    longer a leading-clause matcher: the same closed literal list is keyed at
+    //    both ends, and `ATTACK_GATE_CLAUSES` carries Angelite's clause as its
+    //    fifth row.
+    expect(splitAttackGateClause(ANGELITE)).toEqual({
+      clause: ANGELITE_CLAUSE,
+      body: ANGELITE_BODY,
+    });
+    // ② …and what it hands the readers is a body ONE of them now claims — the
+    //    reversal, stated as an equality rather than as a boolean so that a build
+    //    which resolved it to the WRONG op is not green here.
+    expect(resolvedByAnyReader(ANGELITE_BODY)).toBe(true);
+    expect(deriveAttackEffect(ANGELITE_BODY)).toEqual([
+      { op: "returnBenchedChosen", count: 2 },
+    ]);
+    // ③ THE BODY CARRIES NO CLAUSE OF ITS OWN — unmoved, and the one assertion in
+    //    this rung that did NOT invert. It is what says the split is idempotent:
+    //    splitting the body again answers `null`, so nothing can be stripped twice.
     expect(splitAttackGateClause(ANGELITE_BODY)).toBeNull();
-    // 🛑 THE ATTRIBUTION CONTROL. Without this line the two `false`s above are green
-    // on a build where every reader is broken, which is the exact shape D318's
-    // finding-one warns about: index 0's printed text on the SAME card DOES resolve.
+    // 🛑 THE ATTRIBUTION CONTROL, KEPT AND STILL LOAD-BEARING IN THE NEW DIRECTION.
+    // It used to guard two `false`s against a build where every reader is broken;
+    // it now guards the `true` above against a build where some reader claims
+    // EVERYTHING (`resolvedByAnyReader`'s own `undefined !== null` failure mode).
     expect(resolvedByAnyReader(MAGICAL_CHARM)).toBe(true);
     expect(deriveAttackEffect(MAGICAL_CHARM)).toEqual([
       { op: "weakenDefenderAttacks", amount: 100 },
     ]);
-    // ③ …and the gate corpus is UNMOVED at 6 sentences / 14 printings, which is what
-    //    says this slice added no `ATTACK_GATE_CLAUSES` row.
+    // ④ …and the gate corpus STEPS 6/14 → 7/17, which is what says this slice DID
+    //    add an `ATTACK_GATE_CLAUSES` row — the exact inversion of the sentence
+    //    that used to sit here. Driven off the module, never retyped.
     const gated = legalAttackCorpus().filter(([, t]) => splitAttackGateClause(t) !== null);
-    expect(gated.length).toBe(6);
-    expect(gated.reduce((sum, [units]) => sum + units, 0)).toBe(14);
-    expect(gated.some(([, t]) => t === ANGELITE)).toBe(false);
+    expect(gated.length).toBe(7);
+    expect(gated.reduce((sum, [units]) => sum + units, 0)).toBe(17);
+    expect(gated.some(([, t]) => t === ANGELITE)).toBe(true);
+    // ⑤ …and the RAW row is still claimed by NO reader whole, which is the half of
+    //    the old rung that survives untouched: the printing resolves through the
+    //    SPLIT summand, not the reader summand, and the two must not double-count.
+    expect(resolvedByAnyReader(ANGELITE)).toBe(false);
   });
 
   it("🛑 THREE ids, ONE program object, and the gate is at index 1 — D281's reprint idiom", () => {
@@ -495,8 +577,32 @@ describe("D396 §1 — the corpus, the consequent it shares with Terapagos, and 
     expect(attackGateOf(state, body, 0)).toBeUndefined();
     expect(attackGateOf(state, body, 99)).toBeUndefined();
     expect(attackGateOf(state, body, -1)).toBeUndefined();
+    // 🆕🆕🆕 **D541 — THE TWIN IS NO LONGER UNGATED, AND THIS RUNG IS INVERTED
+    // RATHER THAN DELETED.** It used to read `toBeUndefined()`. `attackGateOf` is
+    // `registry ?? timingGateFromAttackText` (D444), and D541 put Angelite's clause
+    // into `ATTACK_GATE_CLAUSES` — so a body printing these bytes with NO registry
+    // row now DERIVES the gate. That is the whole point of the slice and it is the
+    // only place in the repo where the derived gate is OBSERVABLE, because
+    // `SYLVEON`'s registry row wins on all three real ids.
     const twin = board(SEEDS[0], "p1", "p1", UNGATED_TWIN);
-    expect(attackGateOf(twin, activeOf(twin, "p1"), 1)).toBeUndefined();
+    expect(programFor(UNGATED_TWIN)).toBeUndefined();
+    expect(attackGateOf(twin, activeOf(twin, "p1"), 1)).toEqual({
+      kind: "barredIf",
+      condition: { kind: "yourPokemonUsedAttackLastTurn", attack: "Angelite" },
+    });
+    // 🛑 **THE ATTRIBUTION CONTROL THIS RUNG USED TO BE, REBUILT AT THE INDEX SEAM.**
+    // The old control said "only a registry row gates"; that is false from D541 on,
+    // so the replacement says the derivation is CLAUSE-keyed and not BODY-keyed: the
+    // same body at index 0 prints text with no clause in it and carries no gate.
+    // Without this line the assertion above is green on a build that gates every
+    // attack on every body.
+    expect(attackGateOf(twin, activeOf(twin, "p1"), 0)).toBeUndefined();
+    // …and the two producers AGREE, which is what makes keeping the registry row
+    // defence-in-depth rather than a second source of truth (see
+    // `angeliteChosenShuffle.test.ts` §7, which pins this for all three real ids).
+    expect(attackGateOf(twin, activeOf(twin, "p1"), 1)).toEqual(
+      programFor(SYLVEON)?.attackGate?.[1],
+    );
   });
 });
 
@@ -636,7 +742,10 @@ describe("D396 §3 — '1 of your Pokémon' is Active PLUS Bench, driven on the 
     for (const seat of ["p1", "p2"] as const) {
       const start = untilTurnOf(board(SEEDS[0], "p1", seat, SYLVEON), seat);
       const withBench = benchFromDeck(start, seat, SYLVEON);
-      const attacked = must(applyAction(withBench, { type: "attack", seat, index: 1 }));
+      const attacked = settleAngelitePark(
+        must(applyAction(withBench, { type: "attack", seat, index: 1 })),
+        seat,
+      );
       const back = untilTurnOf(attacked, seat, start.turn + 1);
       const paying = activeOf(back, seat).energy.slice(0, 2);
       expect(paying, seat).toHaveLength(2);
@@ -692,7 +801,10 @@ describe("D396 §3 — '1 of your Pokémon' is Active PLUS Bench, driven on the 
       state = benchFromDeck(state, seat, "fix-basic-1");
       state = payBoth(state, other);
       const theirTurn = untilTurnOf(state, other);
-      const afterTheirs = must(applyAction(theirTurn, { type: "attack", seat: other, index: 1 }));
+      const afterTheirs = settleAngelitePark(
+        must(applyAction(theirTurn, { type: "attack", seat: other, index: 1 })),
+        other,
+      );
       const mine = payBoth(untilTurnOf(afterTheirs, seat, theirTurn.turn), seat);
       expect(
         afterTheirs.players[other].active?.usedAttack?.name,
@@ -783,38 +895,58 @@ describe("D396 §4 — the §9 rule, and the payability mirrors", () => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("D396 §5 — the report, which is the SAME on the gated body and on the twin", () => {
-  it("🛑 the gated declaration reports the WHOLE printed sentence — and so does the twin", () => {
-    // 🛑 D395's ASSERTION INVERTED, AND ON PURPOSE. There the gated body reported
-    // NOTHING and the twin reported the sentence, because a split fired; here both
-    // report the same string, because no split is authored and the printed text
-    // reaches the readers whole on both bodies. That IDENTITY is the measurement
-    // that says "gate only" — a slice that quietly added a trailing stripper would
-    // break it in one direction, and a slice that broke the gate would leave it
-    // untouched, which is why §2/§3 carry the gate and this carries the accounting.
+  it("🆕🆕🆕 D541 — the declaration reports NOTHING now, and the IDENTITY between the two bodies SURVIVES", () => {
+    // 🛑 **THE SHAPE OF THIS RUNG IS UNTOUCHED AND ITS VALUE IS INVERTED — WHICH IS
+    // WHY IT IS THE RIGHT RUNG.** It used to assert that BOTH bodies filed exactly
+    // ONE `ATTACK_EFFECT_SKIPPED` naming the WHOLE printed sentence, because no
+    // split was authored and the printed text reached the readers whole. D541
+    // authored the split and the body: `splitAttackGateClause` takes the trailing
+    // clause off at the §8 seam and `deriveAttackEffect` claims what is left, so
+    // NEITHER body skips anything any more.
+    // ⚠️ **THE IDENTITY IS THE MEASUREMENT, NOT THE NUMBER**, and it still says
+    // exactly what it said: a slice that split on one body and not the other would
+    // break it, in either direction. It now says "gate AND body", where it used to
+    // say "gate only".
     const gated = untilTurnOf(board(SEEDS[0], "p1", "p1", SYLVEON), "p1");
     const gatedSkipped = declareEvents(gated, "p1", 1).filter(
       (e) => e.type === "ATTACK_EFFECT_SKIPPED",
     );
-    expect(gatedSkipped).toHaveLength(1);
-    expect(gatedSkipped[0]).toMatchObject({ effect: ANGELITE, damageModifier: null });
+    expect(gatedSkipped).toHaveLength(0);
 
     const twin = untilTurnOf(board(SEEDS[0], "p1", "p1", UNGATED_TWIN), "p1");
     const twinSkipped = declareEvents(twin, "p1", 1).filter(
       (e) => e.type === "ATTACK_EFFECT_SKIPPED",
     );
-    expect(twinSkipped).toHaveLength(1);
-    expect(twinSkipped[0]).toMatchObject({ effect: ANGELITE, damageModifier: null });
+    expect(twinSkipped).toHaveLength(0);
+    // 🛑 THE ATTRIBUTION CONTROL FOR TWO ZEROES (D318's finding-one): two empty
+    // filters are green on a build that files no events at all, so the accounting is
+    // asserted POSITIVELY as well — the body the split hands the readers derives,
+    // and it derives to the op this slice built.
+    expect(splitAttackGateClause(ANGELITE)?.body).toBe(ANGELITE_BODY);
+    expect(deriveAttackEffect(ANGELITE_BODY)).toEqual([
+      { op: "returnBenchedChosen", count: 2 },
+    ]);
   });
 
-  it("🛑 the twin is UNCANCELLED on the board where the real printing is barred", () => {
-    // The control on the DECLARATION seam: the printed TEXT gates nothing, and it
-    // must not — only a registry row does. Without this the whole file is green on a
-    // build that reads the sentence instead of the program.
+  it("🆕🆕🆕 D541 — the twin is CANCELLED TOO now, because the printed TEXT gates it (INVERTED)", () => {
+    // 🛑 **THIS RUNG USED TO SAY THE OPPOSITE AND IT WAS THE FILE'S ATTRIBUTION
+    // CONTROL.** *"the printed TEXT gates nothing, and it must not — only a registry
+    // row does"* was true when written, went false at **D444** for the LEADING
+    // clause family, and goes false HERE for this clause the moment D541 adds its
+    // row to `ATTACK_GATE_CLAUSES`. It is inverted in place rather than deleted
+    // (D178/D418) because the board it drives is the same board and the reading is
+    // the interesting half.
+    // ⚠️ **AND THE CONTROL IT PROVIDED IS REBUILT RATHER THAN LOST** — see §1, where
+    // the twin's index 0 is asserted UNGATED on the same body. The question this
+    // file answers is no longer "does the text gate?" (it does) but "is the gate
+    // CLAUSE-keyed and INDEX-keyed?", which is what §2 has always driven.
     for (const seat of ["p1", "p2"] as const) {
       const state = afterAngelite(SEEDS[0], "p1", seat, UNGATED_TWIN);
-      expect(declare(state, seat, 1), seat).toBe("OK");
-      expect(wirePlayable(state, seat, 1), seat).toBe(true);
-      expect(activeOf(state, seat).usedAttack?.name, seat).toBe("Angelite");
+      expect(declare(state, seat, 1), seat).toBe("ATTACK_PREVENTED");
+      expect(wirePlayable(state, seat, 1), seat).toBe(false);
+      // …and index 0 is STILL live on the very same board, so what moved is the
+      // clause→gate table and not the gate's reach.
+      expect(declare(state, seat, 0), seat).toBe("OK");
     }
   });
 

@@ -13431,7 +13431,15 @@ import type { GameState, Seat } from "./types";
     live readers were run at this head over the stripped body (*"Choose 2 of your
     opponent's Benched Pokémon. Shuffle those Pokémon and all attached cards into
     your opponent's deck."*) and **every one refuses it**, so a trailing stripper
-    would buy ZERO printings. ⚠️ **The inherited REASON for that was stale**: the
+    would buy ZERO printings.
+    🆕🆕🆕 **[D541 — ANNOTATED, NOT REWRITTEN (D178): this is a CHANGELOG entry and
+    its measurement was correct on the tree it was written about. Both halves of the
+    sentence above are now false — `splitAttackGateClause` reads a TRAILING clause as
+    its fifth row, `CHOOSE_SHUFFLE_CHOSEN` / `returnBenchedChosen` claims the stripped
+    body, and the split buys **3** printings rather than zero. ⚠️ The premise was
+    RE-CONFIRMED before it was withdrawn: all 13 live readers still refused that body
+    at D541's own head, so it went false JOINTLY with the arm and never sat stale.
+    See the 0.426.0 entry below.]** ⚠️ **The inherited REASON for that was stale**: the
     handoff said the body was Illumise `sv06-010`'s refusal verbatim, and D299 built
     that op — what refuses this body is the **COUNT** (*"Choose 2"* against a park of
     `min: 1, max: 1`) plus the two-sentence back-reference, which is Lickitung
@@ -20032,6 +20040,79 @@ import type { GameState, Seat } from "./types";
     `expect(manifest.version)`, `it(…)` titles, the declaration and `package.json` —
     **not** as a value-keyed grep — because a value-keyed grep is precisely the mechanism
     that ate D500's heading.)
+    🆕🆕🆕 engineVersion 0.425.0 → **0.426.0** (D541 — THE CHOSEN BENCH SHUFFLE BEHIND A
+    TRAILING GATE CLAUSE, AND THE FUNNEL THAT WAS ALREADY THERE. `censusAttackCorpus.ts`
+    **file line 82** (`legalAttackCorpus()` index 29, leading count column `3`) — *"Choose
+    2 of your opponent's Benched Pokémon. Shuffle those Pokémon and all attached cards
+    into your opponent's deck. If 1 of your Pokémon used Angelite during your last turn,
+    this attack can't be used."*, Sylveon ex `sv08-086`/`sv08.5-041`/`sv08.5-156` idx 1,
+    **1 sentence / 3 legal printings** — the largest single row left in the residue and
+    the only 3-printing one.
+    🛑 **THE DECISION IS AT THE TOP BECAUSE IT IS A POLICY A REVIEWER MAY REFUSE.** D282
+    anchored `splitAttackGateClause` at `^` and said so in as many words; this slice keys
+    the SAME closed literal list at the TRAILING end too, as its fifth row. **The
+    alternative — anchoring the whole printed string, gate clause and all, in
+    `deriveAttackEffect` and changing no splitter — was priced and REJECTED for reasons
+    that are measurable rather than stylistic**: it credits the row to the READER summand
+    (`reader` 565/1614 → 566/1617, `rawUnbuilt` 75/118 → 74/115, moving the **25** files
+    that pin `[565, 1614]` and the **7** that pin `toBe(1614)` — the split route leaves
+    all 32 standing, so it is the SMALLER pin radius as well as the semantically right
+    answer); it embeds gate text inside an effect anchor, which a reprint without the
+    clause would then refuse (`conventions.md:195`); and it leaves the gate half a
+    hand-authored registry row forever. ⚠️ **If the `^`-policy widening is refused, the
+    row falls back to the registry shape D540 already rejected** — that is the slice's
+    real contingency and it is recorded rather than assumed away.
+    🛑 **THE ONE SITE THE COMPILER CANNOT SEE IS `applyChoice`**, whose `switch` ends
+    `default: return state;` — omitting `case "returnBenchedChosen"` TYPECHECKS GREEN and
+    then silently discards the player's answer. MEASURED at this head rather than
+    inherited from D540. `angeliteChosenShuffle.test.ts` §4 drives the PARKED path
+    through `resolveEffect` and asserts the VICTIM'S BENCH and DECK, never the op's shape
+    (D421), and `D541-apply-choice-falls-to-default` is the row it exists to feed.
+    🛑 **THE SECOND INVISIBLE SITE IS THE GATE MAP'S WRONG TWIN.**
+    `yourActiveUsedAttackLastTurn` in place of `yourPokemonUsedAttackLastTurn` compiles
+    and is green on every board anyone writes naturally, **and it is MASKED on all three
+    real ids** because `attackGateOf` is `authored ?? derived` and `registry.ts` wins — so
+    §6's witness rides a file-local DECLARED demonstrator with NO registry row (D425), in
+    its own 60-card deck (D270), stated out loud rather than reported as a pass on
+    `sv08-086`.
+    Program: ONE `ATTACK_GATE_CLAUSES` row + ONE `ATTACK_GATE_CLAUSE_GATES` row (the
+    `Record<AttackGateClause, …>` is TOTAL, so one without the other does not COMPILE —
+    that is the guard, not a convention); ONE TRAILING branch on `splitAttackGateClause`
+    plus a leading-AND-trailing TRIPWIRE swept over the WHOLE closed list (so it also
+    catches the leading-A / trailing-B string a per-clause check would miss), refusing
+    with `null` onto the LOUD `ATTACK_EFFECT_SKIPPED` path because `effects.ts` carries
+    ZERO `throw` statements by policy; ONE new anchor `CHOOSE_SHUFFLE_CHOSEN` (two `['’]`
+    slots per D137, both corpus bytes MEASURED U+0027 at indices 25 and 108, the three `é`
+    single real U+00E9 at 39/62/133, whole-sentence `^…$`, no `/i`); ONE new `EffectOp`
+    member `returnBenchedChosen` — a SIBLING of `returnBenchedRest` and **not** a `count`
+    rider on `returnBenched`, whose in-tree refusal is that it removes by
+    `ref.spot.index` with no uid compare (a set-valued loop silently survives one body or
+    removes the wrong one, and shuffles PER REF); ONE new arm 42-ter between 42-bis and
+    42, with the order argument stated against BOTH neighbours and the one cell arm ORDER
+    masks named as COMPOSED; ONE `stepOp` arm, ONE `applyChoice` arm and ONE note.
+    ⚠️ **THE PRICING REPORT ASKED FOR AN EXTRACTION AND THERE WAS NOTHING TO EXTRACT.**
+    `returnBenchedRest`'s writer already took an arbitrary `readonly PokemonRef[]`,
+    consulted `op` nowhere, enforced the single-seat precondition, gathered before
+    splicing, spliced strictly descending and emitted exactly ONE `SHUFFLE` — it was
+    already the funnel D433 prescribed. So this slice paid a RENAME
+    (`shuffleBenchedRefsIntoDeck`, two code sites) rather than an extraction, and that is
+    a price REDUCTION published as one. **The OP NAME `"returnBenchedRest"` is untouched:
+    it is a persisted member that rides `phase.cont.pendingOp` into a record.**
+    🛑 **AND THE SECOND CALLER FOUND A LIVE DEFECT IN THAT FUNNEL.** Its event loop walked
+    `gathered` in the order the REFS arrived, which was board order by construction for
+    the only caller it had. `returnBenchedChosen` hands over the ANSWER, so the same two
+    picks clicked in a different order produced a DIFFERENT `rngState` and a different
+    deck — `moved` is the pile appended before `shuffle`. **A player's click order is not
+    a game fact.** `gathered` is now sorted into board order before anything is emitted;
+    the first caller is byte-identical.
+    ZERO bytes in `redact.ts`, `packages/schema`, `cardplay.ts` (`choosePokemonMulti`
+    already ships in `validateChoice` and its arm is op-agnostic — VERIFIED by probe, not
+    assumed), `src/` and `apps/`. No new prompt kind, choice kind, event, error code,
+    `CardFilter` member, registry row or catalog byte. `MATCH_RECORD_VERSION` **HOLDS at
+    30**, and the argument is D125's WIDENING and **not** *"it never parks"* — this op
+    PARKS, so `{"op":"returnBenchedChosen","count":2}` really is written into
+    `phase.cont.pendingOp` and the serialized alphabet GROWS; no v30 deploy could author
+    that byte and every byte a v30 deploy did write still means what it meant.)
     🆕🆕🆕 engineVersion 0.424.0 → **0.425.0** (D540 — THE DEVOLUTION WITH A PICK IN IT,
     AND THE `/[Dd]evolv/` FAMILY CLOSES. `censusAttackCorpus.ts` **row 87**
     (`legalAttackCorpus()` index 34, leading count column `1`) — *"Devolve 1 of your
@@ -23291,7 +23372,7 @@ import type { GameState, Seat } from "./types";
     WITNESS** — the count was re-derived every slice and the word *"three"* was carried.
     A successor of this slice inherits **81 / 61 / 17** again, over **FIVE** history
     occurrences: those four plus `deckMillFilteredScale.test.ts`'s own header arrow.) */
-export const engineVersion = "0.425.0";
+export const engineVersion = "0.426.0";
 
 export type {
   ApplyResult,

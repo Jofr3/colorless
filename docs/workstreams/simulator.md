@@ -24813,7 +24813,29 @@ TEXT side of that file **disagree for the first time**: 17 registry ids carry th
 carry a clause `splitAttackGateClause` claims. **The gap IS the measurement that no split was
 authored.**
 
+> ⚠️ **WITHDRAWN BY D541 (2026-09-22), BY THE SAME ARM AS THE SECTION BELOW.** D541 authored the
+> TRAILING branch on `splitAttackGateClause`: `ATTACK_GATE_CLAUSES` gained a FIFTH row (Angelite's
+> clause), the TEXT side of `splitOrder.test.ts` §2 asserts `[7, 17]`, and the two surfaces are
+> **17/17** — the gap is **0** and the split it measured as missing is what D541 built. ⚠️ The
+> measurement was TRUE when written and what it bought SURVIVES re-stated: the difference between the
+> registry side and the TEXT side is still the live detector of a gate nobody authored a split for,
+> pinned at zero by two assertions now rather than read off a gap of 3. 🛑 It was the SIXTH site of
+> D541's BLOCK-PROSE class — the code copy is `splitOrder.test.ts:217` — found at the THIRD
+> unfinished `git grep` of one slice and annotated in place with this one.
+
 ### ⚠️ NO SPLIT — AND THE INHERITED *REASON* FOR THAT WAS STALE
+
+> 🛑 **WITHDRAWN BY D541 (2026-09-22), AND KEPT HERE BECAUSE THE ROUTE IT RULED OUT IS THE
+> ROUTE D541 TOOK.** Everything below was TRUE when written and its premise was re-confirmed at
+> D540's head: every reader still refused the stripped body, so a trailing stripper bought ZERO
+> printings **on the readers that existed then**. D541 authored the missing reader
+> (`CHOOSE_SHUFFLE_CHOSEN` → `returnBenchedChosen`) and the TRAILING branch on
+> `splitAttackGateClause` in the SAME slice, and the claim goes false only JOINTLY with that arm:
+> a trailing stripper now buys **1 sentence / 3 printings** and the split summand steps 6/14 →
+> 7/17. ⚠️ **THE `^`-ANCHORED-BY-POLICY SENTENCE IS THE PART THAT MOVED** — D541 keys the same
+> closed literal list at the TRAILING end too, behind a leading-AND-trailing tripwire. The
+> diagnosis in the second bullet (the COUNT and the two-sentence back-reference are what refuse
+> the body) STANDS and is exactly what D541 built: a `count`-bearing sibling op.
 
 The gate clause is TRAILING; `splitAttackGateClause` is `^`-anchored by deliberate policy. The
 handoff's cheap answer was right and its reason was not.

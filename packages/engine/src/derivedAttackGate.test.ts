@@ -40,7 +40,13 @@ import {
 // them already carries a registry `attackGate`, and 13 of the 14 are already inside
 // `BUILT.attack`'s SPLIT summand (`censusAtHead.test.ts`, "the SPLIT half"). (🆕 D529:
 // 14 of the 14 — the 14th, D395's clause-only Rollout row, was outside the summand only
-// because the census asked a reader about an EMPTY body; comment only, no rung inverts.) The
+// because the census asked a reader about an EMPTY body; comment only, no rung inverts.)
+// (🆕🆕🆕 **D541: 6/14 → 7/17 and 17 of the 17** — `splitAttackGateClause` keys the SAME closed
+// literal list at the TRAILING end as well, and its fifth row is Sylveon ex's *"…this attack
+// can't be used."* (**1 sentence / 3 legal printings**), whose body D541 BUILT. All 17 still
+// carry a registry `attackGate` and all 17 sit in the SPLIT summand — `SPLIT_ATTACK_UNITS`
+// steps 14 → 17 (`censusAtHead.test.ts:8159`). D444's figures above are KEPT as D444 measured
+// them. ⚠️ **THE SENTENCE STEP IS 1 AND THE PRINTING STEP IS 3** (D451).) The
 // three sentences a residue ranking surfaces here —
 //
 //   7p  "If you go second, you can't use this attack during your first turn. This
@@ -106,6 +112,12 @@ import {
 //    because the natural board for each is the turn its own card is about. §3
 //    drives both directions on real boards, and §1 drives the four rows against
 //    each other by value.
+//    🆕🆕🆕 **D541 FINAL REVIEW (2026-09-22) — *"§1 drives the four rows against each other"*
+//    IS STILL LITERALLY TRUE AND NOW NAMES FOUR OF FIVE.** D541 added a fifth row to
+//    `ATTACK_GATE_CLAUSES` (Angelite's TRAILING clause). §1 is untouched and still drives the
+//    four it was written for; the fifth is tied by §2 by existence and by value-as-registry-
+//    literal, and its DERIVATION from the printed clause is driven in
+//    `angeliteChosenShuffle.test.ts`. See the dividers of §1 and §2 below.
 // 2. 🛑 **THE DERIVATION IS A CLOSED TABLE, NOT A TEMPLATE** (§1). D394/D395 refuse
 //    `^You can use this attack only if (.+)\.$` because a mis-parsed condition bars
 //    a legal attack FOREVER and silently. That refusal is untouched: a near-miss
@@ -362,6 +374,18 @@ const SECOND_PLAYERS_FIRST_TURN = {
 // ─────────────────────────────────────────────────────────────────────────────
 // 1. THE TABLE — the four rows, against each other, and the near-miss.
 // ─────────────────────────────────────────────────────────────────────────────
+// 🆕🆕🆕 **D541 FINAL REVIEW (2026-09-22) — *"the four rows"* IN THE DIVIDER ABOVE IS
+//    WITHDRAWN: THE TABLE HAS FIVE.** `ATTACK_GATE_CLAUSES` gained Angelite's TRAILING clause
+//    as its fifth row in this slice, and `ATTACK_GATE_CLAUSE_GATES` gained its gate in the
+//    same commit (the `Record` is TOTAL, so it could not be otherwise). ⚠️ **AND §1 BELOW
+//    DRIVES FOUR OF THE FIVE**: the fifth row's printed clause occurs ZERO times in this file
+//    (measured), so §2 ties it by EXISTENCE and pins its VALUE as a registry literal, while
+//    the DERIVATION of that value from the printed clause is driven in
+//    `angeliteChosenShuffle.test.ts:1164` and its §7 — a LOCALITY note, not a hole, recorded
+//    rather than fixed because a rung is a slice's work and this is a landing review.
+//    ⚠️ An ORDINAL is a figure, and a divider is outside every block: that is the pair of
+//    reasons four sweeps in this slice — keyed on the moved values, scoped first to titles and
+//    then to blocks — walked past this line. (D178/D418: annotated, never overwritten.)
 
 describe("D444 §1 — the clause→gate table, driven row against row", () => {
   it("🛑 the two `If you go …` rows are OPPOSITE, and one of them carries NO condition", () => {
@@ -412,6 +436,21 @@ describe("D444 §1 — the clause→gate table, driven row against row", () => {
     expect(timingGateFromAttackText(NEAR_MISS_TEXT)).toBeUndefined();
     // The clause anywhere but the FRONT is not a split and therefore not a gate —
     // `splitAttackGateClause`'s `^` anchor, inherited whole rather than re-derived.
+    // 🆕🆕🆕 **D541 FINAL REVIEW (2026-09-22) — THE TWO LINES ABOVE ARE WITHDRAWN AS THE
+    // REASON, AND THE ASSERTION BELOW IS GREEN FOR A NARROWER ONE, MEASURED.** *"The clause
+    // anywhere but the FRONT is not a split and therefore not a gate — `splitAttackGateClause`'s
+    // `^` anchor"*: this slice gave the splitter a TRAILING branch over the same closed literal
+    // list, so `^` is no longer the whole policy and a listed clause printed LAST **is** a
+    // split. MEASURED at this head on the very board this line names:
+    // `splitAttackGateClause("Draw a card. " + the BAN CLAUSE ALONE)` returns
+    // `{clause, body:"Draw a card."}` now, and so does the Angelite literal in that position.
+    // ⚠️ **THE RUNG BELOW IS NOT ONE OF THOSE AND IS GREEN ON ITS MERITS** — which is where the
+    // review that found this line had it backwards: `BAN_TEXT` carries its own damage body
+    // AFTER the clause, so `Draw a card. ${BAN_TEXT}` puts the clause in the MIDDLE, neither
+    // first sentence nor last, and mid-string is still not a split (measured: `null`). **WHAT
+    // IT PINS NOW**: a listed clause must sit at a SENTENCE BOUNDARY, either end; quoted
+    // mid-sentence it is not a split. The trailing direction is driven in `splitOrder.test.ts`
+    // and `benchBodySelfScaling.test.ts`; not re-driven here. (D178/D418.)
     expect(timingGateFromAttackText(`Draw a card. ${BAN_TEXT}`)).toBeUndefined();
     // …and a body with no clause at all, which is the overwhelmingly common case.
     expect(timingGateFromAttackText("Draw 2 cards.")).toBeUndefined();
@@ -433,18 +472,42 @@ describe("D444 §1 — the clause→gate table, driven row against row", () => {
 // ─────────────────────────────────────────────────────────────────────────────
 // 2. THE POPULATION — 14, all of it registry-authored, and 0 claimed here.
 // ─────────────────────────────────────────────────────────────────────────────
+// 🆕🆕🆕 **D541 FINAL REVIEW (2026-09-22) — *"THE POPULATION — 14"* IN THE DIVIDER ABOVE IS
+//    WITHDRAWN: IT IS 17.** The section's own rung asserts `gated.length` `.toBe(7)` and
+//    `gated.reduce(…)` `.toBe(17)` a few lines below — both written by this slice, stepping
+//    6/14 → 7/17 for Angelite's three printings — so the divider is falsified by the block it
+//    heads. ⚠️ **THE REST OF THE HEADING STANDS AND IS THE POINT OF THE SECTION**: all 17
+//    printings are registry-authored and D444 still claims ZERO of them, which is why the
+//    STEP changed nothing about the honest zero. ⚠️ **WHY FOUR SWEEPS MISSED IT**: a section
+//    DIVIDER sits outside every `it()` and `describe()`, so it falls through a BLOCK-scoped
+//    instrument exactly as block prose fell through a TITLE-scoped one — the same shape as
+//    the withdrawal at the `toBe(7)` a dozen lines below, inside this very section.
+//    **SCOPE A FIGURE SWEEP TO THE WHOLE FILE, NOT TO THE BLOCK AND NOT TO THE TITLE.**
+//    (D178/D418: annotated, never overwritten.)
 
 describe("D444 §2 — the population, and the honest zero", () => {
-  it("🛑 the gate family is 6 sentences / 14 printings, and this slice claims NONE of them", () => {
+  it("🛑 the gate family is 7 sentences / 17 printings (🆕 D541 6/14 → 7/17), and D444 still claims NONE of them", () => {
+    // 🆕🆕🆕 **D541 6/14 → 7/17** — the TRAILING gate clause (`censusAttackCorpus.ts` file line 82, Sylveon ex `sv08-086`/`sv08.5-041`/`sv08.5-156`, **1 sentence / 3 legal printings**). ⚠️ **THE SENTENCE STEP IS 1 AND THE PRINTING STEP IS 3 — THEY DISAGREE** (D451), so this site was MEASURED and not copied from its neighbour.
+    // ⚠️ **AND D444's OWN CONCLUSION IS UNCHANGED BY THE STEP**: all 17 are registry-authored
+    // (17 ids carry `attackGate`), so the DERIVER still buys ZERO additional legal printings.
+    // What D541 changed is that the three extras are now IN this table rather than an
+    // exception to it — see `effects.ts`'s D444 block, where that parenthesis is withdrawn.
     const gated = legalAttackCorpus().filter(([, text]) => splitAttackGateClause(text) !== null);
-    expect(gated.length).toBe(6);
-    expect(gated.reduce((sum, [units]) => sum + units, 0)).toBe(14);
-    // …and every one of the six derives, which is what makes the count above the
+    expect(gated.length).toBe(7);
+    expect(gated.reduce((sum, [units]) => sum + units, 0)).toBe(17);
+    // …and every one of the SEVEN derives, which is what makes the count above the
     // count of what a derivation could ever serve here.
+    // 🆕🆕🆕 **D541 LANDING REVIEW — this line read *"every one of the six"* and was FALSIFIED BY THE
+    // `toBe(7)` TWO LINES UP**, which the same commit stepped from 6, in a loop that walks all seven;
+    // the withdrawal note in the NEXT `it()` of this same `describe` already said **7**, so the file
+    // contradicted itself. ⚠️ **AND IT IS THE FIFTH SITE OF THE CLASS THIS ROUND EXISTED TO CLOSE, AT A
+    // SCOPE THE INSTRUMENT COULD NOT REACH**: the re-sweep was keyed on `it()`/`describe()` TITLES and on
+    // `A / B` PAIRS, and this is BLOCK PROSE carrying a bare spelled-out numeral. **THE CLASS IS PROSE IN
+    // A BLOCK, NOT TITLES** — key the audit on the LIVE ASSERTIONS of the block and read every line of it.
     for (const [, text] of gated) expect(timingGateFromAttackText(text), text).toBeDefined();
   });
 
-  it("🛑 17 registry ids carry `attackGate`, and every DISTINCT value is either derivable or the ONE trailing gate", () => {
+  it("🛑 17 registry ids carry `attackGate`, and the 5 DISTINCT values are the 4 leading-clause derivations plus the trailing gate (🆕 D541 — which DERIVES too now, so the old either/or in this title is withdrawn)", () => {
     // 🛑 **THE AGREEMENT RUNG, AND IT IS THE GAP THIS SLICE ACTUALLY CLOSES.** Until
     // D444 the clause LIST and the gate VALUES were two independent hand
     // transcriptions of the same four printed sentences with nothing tying them, and
@@ -459,9 +522,18 @@ describe("D444 §2 — the population, and the honest zero", () => {
     // The ONE registry gate that is NOT a leading-clause row: Sylveon ex
     // `sv08-086`/`sv08.5-041`/`sv08.5-156`, whose *"…this attack can't be used."*
     // is printed at the END of the sentence and belongs to D409's TRAILING splitter.
-    // ⚠️ NAMED rather than filtered out silently — it is the reason the two counts
-    // (17 registry ids, 14 splitter printings) differ, and a slice that folded it in
-    // would be claiming the trailing family too.
+    // ⚠️ NAMED rather than filtered out silently.
+    // 🆕🆕🆕 **D541 — THE REST OF THIS NOTE IS WITHDRAWN, AND WHAT FALSIFIES IT IS THE
+    // RUNG TEN LINES UP IN THIS SAME `describe`.** It used to read *"it is the reason the two
+    // counts (17 registry ids, 14 splitter printings) differ, and a slice that folded it in
+    // would be claiming the trailing family too"*. BOTH halves went false JOINTLY with D541's
+    // TRAILING branch on `splitAttackGateClause`: the two counts are **17 and 17** and no longer
+    // differ, and the `it()` above loops every one of the **7** gated sentences through
+    // `timingGateFromAttackText` and finds it DEFINED — so the trailing gate IS derivable and
+    // *"either derivable or the ONE trailing gate"* was a false dichotomy. ⚠️ **AND D541 DID
+    // fold it in and still claims ZERO printings**, because all 17 are registry-authored (see
+    // `effects.ts`'s D444 block, where the same parenthesis is withdrawn). The three lines above
+    // are KEPT as written: this value is still the one registry gate that is not a LEADING row.
     const trailing = JSON.stringify({
       kind: "barredIf",
       condition: { kind: "yourPokemonUsedAttackLastTurn", attack: "Angelite" },
@@ -774,6 +846,6 @@ describe("D444 §6 — `MATCH_RECORD_VERSION` stays 29, driven over bytes both w
     // D208's debt and D275's mutant: `engineVersion` and `packages/engine/package.json`
     // are one fact with two spellings, and the pin is authored HERE rather than
     // inherited (D427 — count your own suite's pin).
-    expect(engineVersion).toBe("0.425.0");
+    expect(engineVersion).toBe("0.426.0");
   });
 });

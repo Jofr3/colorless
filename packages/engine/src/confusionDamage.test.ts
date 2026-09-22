@@ -820,8 +820,8 @@ describe("§7 — the bump, and the corruption it refuses", () => {
   });
 
   it("the engine version moved with the behaviour, and the manifest agrees", () => {
-    expect(engineVersion).toBe("0.425.0");
-    expect(manifest.version).toBe("0.425.0");
+    expect(engineVersion).toBe("0.426.0");
+    expect(manifest.version).toBe("0.426.0");
   });
 });
 

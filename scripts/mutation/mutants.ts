@@ -5657,7 +5657,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D275",
     what: "🛑 THE DEBT THIS SLICE PAID FOR THE FIFTH TIME, RE-INSTALLED: `engineVersion` falls a minor behind `packages/engine/package.json`, which is EXACTLY the state the tree was in at the head of D275 (0.187.0 against 0.189.0) and had been for two slices with nothing comparing them. The tie is the guard; this row is the proof it is one",
     file: "packages/engine/src/index.ts",
-    // ⚠️ RE-POINTED AT D540 (0.424.0 → 0.425.0) — the `find` was stepped in the build edit and THIS ENUMERATION ENTRY WAS APPENDED IN A REVIEW ROUND, which is the same hole D428 names for a truncated list and which nothing but a reader can see (the row runs, its `find` is at 1x, and `precheck` is green either way) — at D539 (0.423.0 → 0.424.0), at D538 (0.422.0 → 0.423.0), at D537 (0.421.0 → 0.422.0), at D536 (0.420.0 → 0.421.0), at D535 (0.419.0 → 0.420.0), at D534 (0.418.0 → 0.419.0), at D532 (0.417.0 → 0.418.0), at D531 (0.416.0 → 0.417.0), at D530 (0.415.0 → 0.416.0), at D528 (0.414.0 → 0.415.0), at D527 (0.413.0 → 0.414.0), at D526 (0.412.0 → 0.413.0), at D525 (0.411.0 → 0.412.0), at D524 (0.410.0 → 0.411.0), at D523 (0.409.0 → 0.410.0), at D522 (0.408.0 → 0.409.0), at D521 (0.407.0 → 0.408.0), at D520 (0.406.0 → 0.407.0), at D519 (0.405.0 → 0.406.0), at D518 (0.404.0 → 0.405.0), at D517 (0.403.0 → 0.404.0), at D516 (0.402.0 → 0.403.0), at D515 (0.401.0 → 0.402.0), at D514 (0.400.0 → 0.401.0), at D513 (0.399.0 → 0.400.0), at D512 (0.398.0 → 0.399.0), at D510 (0.397.0 → 0.398.0), at D508 (0.396.0 → 0.397.0), at D507 (0.395.0 → 0.396.0), at D505 (0.394.0 → 0.395.0), at D490 (0.384.0 → 0.385.0), at D489 (0.383.0 → 0.384.0), at D488 (0.382.0 → 0.383.0), at D487 (0.381.0 → 0.382.0), at D486 (0.380.0 → 0.381.0), at D485 (0.379.0 → 0.380.0), at D450 (0.351.0 → 0.352.0), at D449 (0.350.0 → 0.351.0), at D448 (0.349.0 → 0.350.0), at D447 (0.348.0 → 0.349.0), at D446 (0.347.0 → 0.348.0), at D445 (0.346.0 → 0.347.0), at D444 (0.345.0 → 0.346.0), at D443 (0.344.0 → 0.345.0), at D442 (0.343.0 → 0.344.0), at D441 (0.342.0 → 0.343.0), at D440 (0.341.0 → 0.342.0), at D439 (0.340.0 → 0.341.0), at D438 (0.339.0 → 0.340.0), at D437 (0.338.0 → 0.339.0), at D436 (0.337.0 → 0.338.0), at D435 (0.336.0 → 0.337.0), at D434 (0.335.0 → 0.336.0), at D433 (0.334.0 → 0.335.0), at D432 (0.333.0 → 0.334.0), at D431 (0.332.0 → 0.333.0), at D430 (0.331.0 → 0.332.0), at D429 (0.330.0 → 0.331.0), at D428 (0.329.0 → 0.330.0), at D427 (0.328.0 → 0.329.0), at D426 (0.327.0 → 0.328.0), at D425 (0.326.0 → 0.327.0), at D424 (0.325.0 → 0.326.0), at D423 (0.324.0 → 0.325.0), at D422 (0.323.0 → 0.324.0), at D421 (0.322.0 → 0.323.0), at D420 (0.321.0 → 0.322.0), at D417 (0.320.0 → 0.321.0), at D416 (0.319.0 → 0.320.0), at D415 (0.318.0 → 0.319.0), at D414 (0.317.0 → 0.318.0), at D413 (0.316.0 → 0.317.0), at D412 (0.315.0 → 0.316.0), at D410 (0.314.0 → 0.315.0), at D409 (0.313.0 → 0.314.0), at D408 (0.312.0 → 0.313.0), at D407 (0.311.0 → 0.312.0), at D402 (0.306.0 → 0.307.0), at D401 (0.305.0 → 0.306.0), at D400 (0.304.0 → 0.305.0), at D399 (0.303.0 → 0.304.0), at D398 (0.302.0 → 0.303.0), at D397 (0.301.0 → 0.302.0), at D396 (0.300.0 → 0.301.0), at D395 (0.299.0 → 0.300.0), at D394 (0.298.0 → 0.299.0), at D393 (0.297.0 → 0.298.0), at D392 (0.296.0 → 0.297.0), at D391 (0.295.0 → 0.296.0), at D390 (0.294.0 → 0.295.0), at D389 (0.293.0 → 0.294.0), at D388 (0.292.0 → 0.293.0), at D387 (0.291.0 → 0.292.0), at D386 (0.290.0 → 0.291.0),
+    // ⚠️ RE-POINTED AT D541 (0.425.0 → 0.426.0) — AND AT D541 THE ENUMERATION ITSELF WAS THE CASUALTY, WHICH IS THE HOLE THIS VERY ENTRY WARNS ABOUT ARRIVING FROM THE OTHER SIDE: the version whitelist stepped the OUTGOING LITERAL INSIDE THIS HISTORICAL ENTRY (the INCOMING half of D540's own arrow, "0.425.0", was overwritten with this slice's "0.426.0" — not re-spelled here as a whole arrow, because a false arrow printed in prose is the next audit's false positive), so the ledger asserted a bump that never happened WHILE D541's own re-point was missing from the list — false and truncated at once, and invisible to `check`, to `precheck`, to the probe and to every gate exactly as the parenthesis below says. A version WHITELIST IS OVER SITES, NEVER OVER THE OUTGOING VALUE (index.ts:20024-20035), and a FROZEN HISTORICAL ARROW IS A SITE THE WHITELIST DOES NOT NAME — D538's "a pin sweep that corrupted a real row in code" at an address where nothing but a reader can see it. Caught in review; the line was RESTORED BY `git show e4a367cd:scripts/mutation/mutants.ts | sed -n '5660p'` AND `cmp`, NEVER RETYPED (D540), and this entry PREPENDED ahead of it the way every entry below was built — AND RE-POINTED AT D540 (0.424.0 → 0.425.0) — the `find` was stepped in the build edit and THIS ENUMERATION ENTRY WAS APPENDED IN A REVIEW ROUND, which is the same hole D428 names for a truncated list and which nothing but a reader can see (the row runs, its `find` is at 1x, and `precheck` is green either way) — at D539 (0.423.0 → 0.424.0), at D538 (0.422.0 → 0.423.0), at D537 (0.421.0 → 0.422.0), at D536 (0.420.0 → 0.421.0), at D535 (0.419.0 → 0.420.0), at D534 (0.418.0 → 0.419.0), at D532 (0.417.0 → 0.418.0), at D531 (0.416.0 → 0.417.0), at D530 (0.415.0 → 0.416.0), at D528 (0.414.0 → 0.415.0), at D527 (0.413.0 → 0.414.0), at D526 (0.412.0 → 0.413.0), at D525 (0.411.0 → 0.412.0), at D524 (0.410.0 → 0.411.0), at D523 (0.409.0 → 0.410.0), at D522 (0.408.0 → 0.409.0), at D521 (0.407.0 → 0.408.0), at D520 (0.406.0 → 0.407.0), at D519 (0.405.0 → 0.406.0), at D518 (0.404.0 → 0.405.0), at D517 (0.403.0 → 0.404.0), at D516 (0.402.0 → 0.403.0), at D515 (0.401.0 → 0.402.0), at D514 (0.400.0 → 0.401.0), at D513 (0.399.0 → 0.400.0), at D512 (0.398.0 → 0.399.0), at D510 (0.397.0 → 0.398.0), at D508 (0.396.0 → 0.397.0), at D507 (0.395.0 → 0.396.0), at D505 (0.394.0 → 0.395.0), at D490 (0.384.0 → 0.385.0), at D489 (0.383.0 → 0.384.0), at D488 (0.382.0 → 0.383.0), at D487 (0.381.0 → 0.382.0), at D486 (0.380.0 → 0.381.0), at D485 (0.379.0 → 0.380.0), at D450 (0.351.0 → 0.352.0), at D449 (0.350.0 → 0.351.0), at D448 (0.349.0 → 0.350.0), at D447 (0.348.0 → 0.349.0), at D446 (0.347.0 → 0.348.0), at D445 (0.346.0 → 0.347.0), at D444 (0.345.0 → 0.346.0), at D443 (0.344.0 → 0.345.0), at D442 (0.343.0 → 0.344.0), at D441 (0.342.0 → 0.343.0), at D440 (0.341.0 → 0.342.0), at D439 (0.340.0 → 0.341.0), at D438 (0.339.0 → 0.340.0), at D437 (0.338.0 → 0.339.0), at D436 (0.337.0 → 0.338.0), at D435 (0.336.0 → 0.337.0), at D434 (0.335.0 → 0.336.0), at D433 (0.334.0 → 0.335.0), at D432 (0.333.0 → 0.334.0), at D431 (0.332.0 → 0.333.0), at D430 (0.331.0 → 0.332.0), at D429 (0.330.0 → 0.331.0), at D428 (0.329.0 → 0.330.0), at D427 (0.328.0 → 0.329.0), at D426 (0.327.0 → 0.328.0), at D425 (0.326.0 → 0.327.0), at D424 (0.325.0 → 0.326.0), at D423 (0.324.0 → 0.325.0), at D422 (0.323.0 → 0.324.0), at D421 (0.322.0 → 0.323.0), at D420 (0.321.0 → 0.322.0), at D417 (0.320.0 → 0.321.0), at D416 (0.319.0 → 0.320.0), at D415 (0.318.0 → 0.319.0), at D414 (0.317.0 → 0.318.0), at D413 (0.316.0 → 0.317.0), at D412 (0.315.0 → 0.316.0), at D410 (0.314.0 → 0.315.0), at D409 (0.313.0 → 0.314.0), at D408 (0.312.0 → 0.313.0), at D407 (0.311.0 → 0.312.0), at D402 (0.306.0 → 0.307.0), at D401 (0.305.0 → 0.306.0), at D400 (0.304.0 → 0.305.0), at D399 (0.303.0 → 0.304.0), at D398 (0.302.0 → 0.303.0), at D397 (0.301.0 → 0.302.0), at D396 (0.300.0 → 0.301.0), at D395 (0.299.0 → 0.300.0), at D394 (0.298.0 → 0.299.0), at D393 (0.297.0 → 0.298.0), at D392 (0.296.0 → 0.297.0), at D391 (0.295.0 → 0.296.0), at D390 (0.294.0 → 0.295.0), at D389 (0.293.0 → 0.294.0), at D388 (0.292.0 → 0.293.0), at D387 (0.291.0 → 0.292.0), at D386 (0.290.0 → 0.291.0),
     //    each in the SAME COMMIT as the bump —
     // the TENTH slice running to do it that way, and the practice is now the one
     // thing about this row that has never cost an ERROR since it started.
@@ -6204,7 +6204,7 @@ export const MUTANTS: Mutant[] = [
     // CORPUS QUOTES** (D414/D415), so a value-keyed sweep over `toBe("0.391.0")` cannot
     // see it — this row's `find` spells the DECLARATION, not an assertion. Run
     // `precheck` after every version bump, not after the sweep tells you.
-    find: 'export const engineVersion = "0.425.0";',
+    find: 'export const engineVersion = "0.426.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -7180,8 +7180,16 @@ export const MUTANTS: Mutant[] = [
     decision: "D282",
     what: "the split's `^` anchor degrades to a substring search, so a gate clause printed anywhere in a compound is taken as its leading clause and the body is sliced from the wrong offset. The failure a search-style pattern always makes in this file, at the one place that is not a regex",
     file: "packages/engine/src/effects.ts",
-    find: "    if (!trimmed.startsWith(`${clause} `)) continue;",
-    replace: "    if (!trimmed.includes(`${clause} `)) continue;",
+    // 🆕🆕🆕 D541 — RE-TRANSCRIBED, NOT SKIPPED, and D414/D437's hazard exactly: this row's
+    //    `find` spelled the loop's EARLY-CONTINUE shape, and D541 turned the leading test into a
+    //    POSITIVE block so a TRAILING branch could sit beside it. `precheck` reported `find occurs
+    //    0×` in seconds, which is the whole reason it runs before the sweep rather than after it.
+    //    ⚠️ **THE CLAIM IS UNCHANGED AND SO IS THE KILLER**: the `^` anchor degrading to a
+    //    substring search. It is now, if anything, a stronger row — with a trailing branch in the
+    //    same loop, a `startsWith` that became `includes` can claim a clause the TRAILING branch
+    //    was about to account for and slice the body from the wrong offset.
+    find: "    if (trimmed.startsWith(`${clause} `)) {",
+    replace: "    if (trimmed.includes(`${clause} `)) {",
     expectKilledBy: ["packages/engine/src/benchBodySelfScaling.test.ts"],
   },
   {
@@ -28318,6 +28326,16 @@ export const MUTANTS: Mutant[] = [
     decision: "D495",
     what: "⚠️ C10 — the census constant is put back to its pre-slice value while the arm stays. This is the row that proves the CENSUS moved for this build rather than the suite merely agreeing with itself: `BUILT.attack`'s live sum is derived from the readers over the committed corpus, so a stale constant is the one thing that cannot be true at both heads. 🆕 RE-TRANSCRIBED AT D499 (1612→1614 / 1611→1612): the row is about the CONSTANT being one slice stale, not about a particular digit, so it follows the constant. Its MEANING is byte-identical — a re-transcription that changes the claim is worth less than a broken row (D498), and this one does not: D499's own step is +2 printings, so the mutated value is exactly this file's value at D498's head",
     file: "packages/engine/src/censusAtHead.test.ts",
+    // 🆕🆕🆕 D541 - RE-TRANSCRIBED AGAIN, 1665 -> 1668 (and the replace 1664 -> 1665), the same
+    //    two-step regression, for the Nth consecutive slice. ⚠️ THE STEP IS **3** AND NOT 1,
+    //    because this column counts PRINTINGS and D541's row (corpus FILE LINE 82, Sylveon ex)
+    //    has THREE legal printings against ONE sentence - the SIXTH slice in seven whose
+    //    sentence and printing steps disagree (D535 1-vs-2, D536 1-vs-3, D537 1-vs-2, D538
+    //    1-vs-3, D539 1-vs-2, D540 1-vs-1, D541 1-vs-3). ⚠️ **AND THIS SLICE'S ROW LEAVES
+    //    THROUGH THE GATE-SPLIT SUMMAND, NOT THE READER ONE**, which is why `rawUnbuiltSentences`
+    //    and the reader arm stand still while this constant moves - the FIRST time this row has
+    //    stepped for a non-reader reason. `precheck` reported the `find` at 0x on the edit round
+    //    that moved the constant, exactly as it has since D495.
     // 🆕🆕🆕 D539 - RE-TRANSCRIBED AGAIN, 1662 -> 1664 (and the replace 1659 -> 1662), the same
     //    two-step regression, for the Nth consecutive slice. ⚠️ THE STEP IS **2** AND NOT 1,
     //    because this column counts PRINTINGS and D539's row (corpus FILE LINE 595) has TWO legal
@@ -28482,8 +28500,8 @@ export const MUTANTS: Mutant[] = [
     //    entry was omitted — an append-only record with a slice missing from it is the same
     //    class of hole as a truncated one (D428), and no instrument can see it because the row
     //    still runs, still has its `find` at 1x and is still KILLED.
-    find: "  attack: 1665,",
-    replace: "  attack: 1664,",
+    find: "  attack: 1668,",
+    replace: "  attack: 1665,",
     expectKilledBy: [
       "packages/engine/src/censusAtHead.test.ts",
     ],
@@ -31944,8 +31962,14 @@ export const MUTANTS: Mutant[] = [
     decision: "D529",
     what: "⚠️ R5 — **THE CONSTANT LEFT AT ITS PRE-D529 VALUE WHILE THE LOOP IS WIDENED.** `SPLIT_ATTACK_UNITS` 13 against a live `splitUnits` of 14 and against the third-class rung's 13 + 1 — the D495 census-constant row's shape for the SPLIT summand: a stale constant is the one thing that cannot be true at both heads",
     file: "packages/engine/src/censusAtHead.test.ts",
-    find: "const SPLIT_ATTACK_UNITS = 14;",
-    replace: "const SPLIT_ATTACK_UNITS = 13;",
+    // 🆕🆕🆕 D541 - RE-POINTED, 14 -> 17 (and the replace 13 -> 14). The split summand gained a
+    //    second POSITION rather than a wider anchor: `splitAttackGateClause` now keys the same
+    //    closed literal list at the TRAILING end, and its fifth row carries THREE printings. The
+    //    row's CLAIM is unchanged - the constant left at its pre-slice value while the loop that
+    //    feeds it has moved - and its `replace` is deliberately the IMMEDIATELY PRECEDING value,
+    //    so the mutant is the plausible "forgot to step it" edit and not an arbitrary number.
+    find: "const SPLIT_ATTACK_UNITS = 17;",
+    replace: "const SPLIT_ATTACK_UNITS = 14;",
     expectKilledBy: ["packages/engine/src/censusAtHead.test.ts"],
   },
   // ── D530 — THE TARGET-COUNTER-SCALED BENCH SNIPE ("This attack does 20 damage to 1 of your opponent's
@@ -33137,5 +33161,256 @@ export const MUTANTS: Mutant[] = [
     find: "        const forced = retrieveMove(state, candidates, op.dest, ctx, events);",
     replace: "        const forced = retrieveMove(state, candidates.slice(0, 1), op.dest, ctx, events);",
     expectKilledBy: ["packages/engine/src/counterScaledPileShuffle.test.ts"],
+  },
+  // ── 🆕🆕🆕 D541 — THE CHOSEN BENCH SHUFFLE BEHIND A TRAILING GATE CLAUSE
+  //    ("Choose 2 of your opponent's Benched Pokémon. Shuffle those Pokémon and all attached cards
+  //    into your opponent's deck. If 1 of your Pokémon used Angelite during your last turn, this
+  //    attack can't be used.", `censusAttackCorpus.ts` FILE LINE 82, `legalAttackCorpus()` index 29,
+  //    Sylveon ex `sv08-086`/`sv08.5-041`/`sv08.5-156`, 1 sentence / **3 legal printings**).
+  //    TWENTY-ONE rows, ONE PER CLAIM, over the splitter (the trailing branch, its sentence-boundary
+  //    SPACE, the tripwire), the gate map (the wrong twin), the anchor (caret, terminator, capture,
+  //    two apostrophe slots), the arm (the op it emits, the floor), the park (the shield, the count,
+  //    and §8.6's clamp in BOTH of its directions), the funnel (the splice order, the board-order
+  //    sort, the one shuffle), `applyChoice` and the caption (in BOTH of ITS numbers).
+  //
+  //    🛑 **THE ROW THE SLICE EXISTS FOR IS `D541-apply-choice-falls-to-default`, AND IT IS INVISIBLE
+  //    TO THE TYPE SYSTEM AS WELL AS TO EVERY CENSUS.** `applyChoice` ends in `default: return state;`
+  //    — *"Synchronous ops never park, so never reach the choice path"* — so deleting the arm
+  //    typechecks GREEN (MEASURED at this head, not inherited from D540) and then silently discards
+  //    the player's answer. It is ALSO the one row in this set a FORCED-path rung could not kill,
+  //    because this op has no forced path at all: it parks on EVERY board with a candidate on it,
+  //    §8.6's clamp included, and returns `done` only at ZERO candidates.
+  //
+  //    ⚠️ **FIFTEEN OF THE TWENTY-ONE MOVE NO CENSUS FIGURE.** Only `D541-trailing-branch-deleted`
+  //    (gate 7/17 → 6/14, residue 47/64 → 48/67, `BUILT.attack` 1668 → 1665) and the two
+  //    apostrophe/caret/terminator rows that break the ANCHOR are census-visible at all; every
+  //    interpreter-side row leaves `resolvedByAnyReader` true, ships a well-formed program and
+  //    logs an internally consistent board. What picks those out is a BOARD, never a figure.
+  //
+  //    🛑 **`D541-gate-map-row-deleted` IS NOT DECLARED, AND THAT IS A MEASUREMENT RATHER THAN AN
+  //    OMISSION.** `ATTACK_GATE_CLAUSE_GATES` is `Record<AttackGateClause, AttackTimingGate>` and
+  //    `AttackGateClause` is the `as const` tuple's union, so removing the fifth gate row while the
+  //    fifth clause row stands **FAILS TO COMPILE** (`tsc` reports the missing property on the
+  //    object literal). A compile refusal is not a survivor and not a mutant: it is the guard the
+  //    type system already provides, and declaring it as a row would report an `error`, not a kill.
+  //
+  //    🛑 **THE TWO APOSTROPHE SLOTS ARE DECLARED SEPARATELY** (D424: one row covering both is
+  //    killed by whichever half the suite happens to reach, after which neither slot is guarded),
+  //    and ⚠️ **BOTH WERE EXPECTED TO SURVIVE ROUND 1** — the corpus prints U+0027 at both slots
+  //    (MEASURED at indices 25 and 108), so collapsing `['’]` leaves every board green and every
+  //    census figure still. D540 paid for exactly this one anchor over. Each slot therefore has its
+  //    OWN curled board, plus a both-curled rung and a CONTROL that reads the code point off the
+  //    LIVE corpus row rather than off the suite's constant, so a re-ingest reddens at the control.
+  //
+  //    🛑 **§8.6 IS DECLARED IN BOTH DIRECTIONS, AND THE FIRST OF THE PAIR IS A DEFECT THIS
+  //    SLICE SHIPPED AND A REVIEW SENT BACK.** `D541-short-bench-cancels-instead-of-clamping` is the
+  //    draft's own `< op.count` guard, which cancelled the attack on a bench shorter than the printed
+  //    number — §8.6 says *“as many as you can”* and requires a PRINTED *“If you can't”* before a
+  //    shortfall may cancel anything. `D541-count-is-not-clamped` is the opposite over-correction: drop
+  //    the clamp and the prompt demands more refs than the board can supply, wedging the match. One
+  //    row for each, because a single row would be killed by whichever board the suite reaches first.
+  //
+  //    🛑 **THE `^` ROW USES A PREFIX THAT KEEPS THE LEADING CAPITAL AND THE `$` ROW A SUFFIX THAT
+  //    KEEPS THE PERIOD** — D539(1a) and D540(1a), kept as two rows because they refuse for two
+  //    different reasons and only one of them is about `$`.
+  //
+  //    ⚠️ **`D541-events-follow-the-answer-order` GUARDS A DEFECT THIS SLICE FOUND RATHER THAN ONE
+  //    IT INTRODUCED.** The funnel emitted in the order its refs arrived, which was board order BY
+  //    CONSTRUCTION for its only caller; a caller that passes the ANSWER made the same two picks in
+  //    a different click order produce a different `rngState` and a different deck, because `moved`
+  //    is the pile appended before `shuffle`. A player's click order is not a game fact.
+  //
+  //    ⚠️ **EVERY `find`/`replace` PAIR WAS DIFFED BEFORE SHIPPING AND ASSERTED UNEQUAL BY THE
+  //    SCRIPT THAT WROTE THEM**, every `find` verified at exactly ONE occurrence and every
+  //    `replace` at ZERO against the committed source, and every `replace` names only identifiers
+  //    its TARGET FILE BINDS (binding-gate, D533).
+  {
+    id: "D541-apply-choice-falls-to-default",
+    decision: "D541",
+    what: "🛑🛑 **THE ROW THIS SLICE EXISTS TO GUARD, AND THE COMPILER CANNOT SEE IT.** `applyChoice`'s arm is DELETED and the op falls through to `default: return state;` — *“Synchronous ops never park, so never reach the choice path”*. MEASURED at this head rather than inherited from D540: `bunx tsc -b --force` is GREEN with this arm gone. The op parks, the prompt is shown, `validateChoice` ACCEPTS the two refs, and the board comes back BYTE-IDENTICAL — no `POKEMON_RETURNED`, no `SHUFFLE`, no log row, no census figure. ⚠️ **IT MUST BE KILLED BY A PARKED RESOLUTION AND NOT BY A FORCED ONE**: this op has no forced path at all — it parks on every board carrying a candidate, §8.6's clamped one included — and every §1/§2/§3 rung stays green under it, because none of them reaches `applyChoice`",
+    file: "packages/engine/src/interpreter.ts",
+    find: "    case \"returnBenchedChosen\": {\n      // 🛑🛑 **🆕🆕🆕 D541 — THE RESUMED HALF, AND IT IS THE ONE SITE IN THIS SLICE\n      // THE COMPILER CANNOT SEE.** This `switch` ends in a `default:` that returns\n      // `state` unchanged — *\"Synchronous ops never park, so never reach the choice\n      // path\"* — so OMITTING this arm TYPECHECKS GREEN and then SILENTLY DISCARDS\n      // the player's answer: the op parks, the prompt is shown, `validateChoice`\n      // accepts the two refs, and the board comes back BYTE-IDENTICAL with no event,\n      // no log row and no census figure moving. D540 measured this at the\n      // neighbouring op (`tsc -b --force` names the `stepOp` arm with TS2366 and says\n      // NOTHING about this one) and the measurement is re-run for this arm rather\n      // than inherited. `angeliteChosenShuffle.test.ts` §4 is the rung that can see\n      // it, and it must drive the PARKED path through `resolveEffect` on a real board\n      // and assert the VICTIM'S BENCH and DECK — never the op's shape (D421).\n      // ⚠️ **A FORCED-PATH RUNG CANNOT KILL IT**, because the forced path never\n      // reaches `applyChoice` at all — which is exactly why §4 parks.\n      if (choice.kind !== \"pokemonMulti\") return state;\n      // The ANSWER, not the complement — the whole difference between this arm and\n      // the one directly above. NO `unshieldedRefs` here: the shield filtered the\n      // CANDIDATES before the prompt was ever written (see this op's `stepOp` arm for\n      // why that is the right end for THIS op), and `validateChoice` refuses any ref\n      // that is not among them, so a shielded body cannot reach this line.\n      // NO `recordAs`: this op is on neither side of any printed \"If you do\".\n      // The funnel re-reads the LIVE bench inside itself, so a wire answer whose body\n      // has since left play simply matches nothing — `returnBenched`'s trust level,\n      // verbatim.\n      return shuffleBenchedRefsIntoDeck(state, choice.refs, ctx, events);\n    }\n",
+    replace: "",
+    expectKilledBy: ["packages/engine/src/angeliteChosenShuffle.test.ts"],
+  },
+  {
+    id: "D541-shield-not-asked-at-the-park",
+    decision: "D541",
+    what: "🛑 **THE §11 SHIELD MOVED OFF THE PARK, WHICH IS THE *OTHER* OP'S RULE APPLIED TO THIS ONE.** `returnBenchedRest` filters in `applyChoice` AFTER the complement narrows, because its pick names the bodies that are SPARED; here the pick IS the effect, so the candidates ARE the bodies the op will reach. With this filter gone the prompt OFFERS a shielded benched body, the player spends one of two picks on it, and the funnel then refuses to move it — a pick wasted under a correct-looking caption, and NO `ATTACK_EFFECT_PREVENTED` row is filed at all because nothing asks. ⚠️ Silent in every census and green on every board with no shield on it",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      const candidates = unshieldedRefs(state, oppBenchRefs(state, ctx.seat), ctx, events);\n      // §8.6 \"DO AS MUCH AS YOU CAN\", AND IT IS A CLAMP RATHER THAN A REFUSAL.\n",
+    replace: "      const candidates = oppBenchRefs(state, ctx.seat);\n      // §8.6 \"DO AS MUCH AS YOU CAN\", AND IT IS A CLAMP RATHER THAN A REFUSAL.\n",
+    expectKilledBy: ["packages/engine/src/angeliteChosenShuffle.test.ts"],
+  },
+  {
+    id: "D541-gate-condition-is-active-not-any",
+    decision: "D541",
+    what: "🛑 **THE WRONG TWIN, AND IT TYPECHECKS.** `yourActiveUsedAttackLastTurn` in place of `yourPokemonUsedAttackLastTurn` in the clause→gate table: same field shape, same polarity, compiles clean, and GREEN on every board anyone writes naturally. The two diverge ONLY when the body that used Angelite has since left the Active Spot — which is the board the card is printed for. ⚠️ **AND IT IS MASKED ON ALL THREE REAL IDS**, because `attackGateOf` is `authored ?? derived` and `registry.ts`'s `SYLVEON_EX_ANGELITE` wins, so a suite driving `sv08-086` is green under this mutant. It is killable ONLY on the file-local DECLARED demonstrator with no registry row (§6)",
+    file: "packages/engine/src/effects.ts",
+    find: "  \"If 1 of your Pokémon used Angelite during your last turn, this attack can't be used.\": {\n    kind: \"barredIf\",\n    condition: { kind: \"yourPokemonUsedAttackLastTurn\", attack: \"Angelite\" },\n  },\n",
+    replace: "  \"If 1 of your Pokémon used Angelite during your last turn, this attack can't be used.\": {\n    kind: \"barredIf\",\n    condition: { kind: \"yourActiveUsedAttackLastTurn\", attack: \"Angelite\" },\n  },\n",
+    expectKilledBy: ["packages/engine/src/angeliteChosenShuffle.test.ts"],
+  },
+  {
+    id: "D541-count-collapses-to-one",
+    decision: "D541",
+    what: "🛑 **THE “PLAUSIBLE BOARD, WRONG FOR A YEAR” ROW.** The park asks for ONE body where the print says two. Nothing crashes, the prompt is answerable, the log reads like an ordinary bench shuffle and the board is entirely believable — it is simply half the printed effect. This is D421's failure mode spelled as a mutant, and it is the exact degradation a dropped `count` rider on `returnBenched` would have produced, which is why the op is a SIBLING member and not a rider",
+    file: "packages/engine/src/interpreter.ts",
+    find: "          min: take,\n          max: take,\n          declinable: false,\n",
+    replace: "          min: 1,\n          max: 1,\n          declinable: false,\n",
+    expectKilledBy: ["packages/engine/src/angeliteChosenShuffle.test.ts"],
+  },
+  {
+    id: "D541-short-bench-cancels-instead-of-clamping",
+    decision: "D541",
+    what: "🛑🛑 **THE RULES DEFECT A REVIEW CAUGHT IN THIS SLICE'S OWN FIRST DRAFT, DECLARED SO IT CANNOT COME BACK.** The zero-candidate guard is widened to `< op.count`, so a bench SHORTER than the printed number cancels the attack outright: one opponent Benched Pokémon and a printed “Choose 2” resolves to nothing at all — no prompt, no `SHUFFLE`, no `POKEMON_RETURNED`, no figure. `ptcg-rules.md:333` (§8.6) and `:370-374` (§9.1) say the opposite without qualification — *“with fewer legal targets than the number, you choose as many as you can”* — and the shortfall may cancel an effect ONLY where the card PRINTS *“If you can't, this attack does nothing”*, which “Angelite” (idx 1, the attack this row is about — index 0 “Magical Charm” is the OTHER attack on the card) does not. ⚠️ **IT LOOKS LIKE `returnBenchedRest`'s `<= op.keep` AND IS NOT**: that guard is right THERE because its effect is the COMPLEMENT. The draft that shipped this comparator ALSO pinned it in the suite and filed an `ATTACK_EFFECT_PREVENTED` row on a board the op then never reached — `conventions.md:1008`'s defended defect, one mutant late",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      if (candidates.length === 0) return { done: state };\n      const take = Math.min(op.count, candidates.length);\n",
+    replace: "      if (candidates.length < op.count) return { done: state };\n      const take = Math.min(op.count, candidates.length);\n",
+    expectKilledBy: ["packages/engine/src/angeliteChosenShuffle.test.ts"],
+  },
+  {
+    id: "D541-count-is-not-clamped",
+    decision: "D541",
+    what: "🛑 **THE OTHER DIRECTION OF THE SAME LINE, AND IT IS THE ONE A “just delete the guard” FIX PRODUCES.** The §8.6 clamp is dropped and the prompt asks for `op.count` on a board that cannot answer it: with one unshielded opponent Benched Pokémon the park demands TWO refs, `validateChoice` refuses every answer a player can give, and the match is WEDGED in `effect:choose` with no legal move — a far worse ending than the cancel above and reachable from the same edit. The clamp is a CEILING and never a widening: a short board asks for FEWER, never for *“up to”*",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      const take = Math.min(op.count, candidates.length);\n",
+    replace: "      const take = op.count;\n",
+    expectKilledBy: ["packages/engine/src/angeliteChosenShuffle.test.ts"],
+  },
+  {
+    id: "D541-splice-ascends",
+    decision: "D541",
+    what: "🛑 **THE SPLICE ORDER REVERSED — the board an ASCENDING splice gets wrong, on BOTH of its two failure shapes.** Remove `{0,1}` ascending and body A leaves, the bench COMPACTS, and index 1 then removes C rather than B — the WRONG body, under a correct-looking `POKEMON_RETURNED`. Remove `{1,3}` and `bench[3]` reads `undefined` after the first splice, so one body SURVIVES the printed shuffle. Both are SILENT; only a NON-ADJACENT pair separates them from the right answer",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  for (const { index } of [...gathered].sort((a, b) => b.index - a.index)) {\n",
+    replace: "  for (const { index } of [...gathered].sort((a, b) => a.index - b.index)) {\n",
+    expectKilledBy: ["packages/engine/src/angeliteChosenShuffle.test.ts", "packages/engine/src/benchKeepShuffleRest.test.ts"],
+  },
+  {
+    id: "D541-events-follow-the-answer-order",
+    decision: "D541",
+    what: "🛑 **THE SORT THIS SLICE ADDED IS REMOVED, AND THE DEFECT IT FIXED COMES BACK.** Before D541 the funnel emitted `POKEMON_RETURNED` in the order the REFS arrived, which was board order BY CONSTRUCTION for its only caller (`returnBenchedRest`'s refs come from `oppBenchRefs(…).filter(…)`). `returnBenchedChosen` hands over the ANSWER, so without this line the rows come out in CLICK order — and, because `moved` is the pile appended to the deck BEFORE `shuffle`, **the same two picks answered in a different order produce a DIFFERENT `rngState` and a different deck**. A player's click order is not a game fact, and a replay that recorded the refs either way must reproduce one board",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  gathered.sort((a, b) => a.index - b.index);\n",
+    replace: "",
+    expectKilledBy: ["packages/engine/src/angeliteChosenShuffle.test.ts"],
+  },
+  {
+    id: "D541-shuffle-per-ref",
+    decision: "D541",
+    what: "🛑 **N SHUFFLES AND N RNG DRAWS FOR ONE PRINTED SHUFFLE** — the right board with the wrong log, which is `returnBenched`'s own deck arm applied set-wise and exactly what the shared funnel exists to prevent. Fisher–Yates consumes `n − 1` draws, so two shuffles of two smaller piles land on a DIFFERENT `rngState` than one shuffle of the whole pile: the rung that catches it computes the expected state rather than remembering it",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  const [deck, rngState] = shuffle([...side.deck, ...moved], state.rngState);\n  events.push({ type: \"SHUFFLE\", seat: owner });\n  return { ...withSide(state, owner, { ...side, bench, deck }), rngState };\n}\n",
+    replace: "  let deck = side.deck;\n  let rngState = state.rngState;\n  for (const one of gathered) {\n    const [nextDeck, nextRng] = shuffle([...deck, ...one.uids], rngState);\n    deck = nextDeck;\n    rngState = nextRng;\n    events.push({ type: \"SHUFFLE\", seat: owner });\n  }\n  return { ...withSide(state, owner, { ...side, bench, deck }), rngState };\n}\n",
+    expectKilledBy: ["packages/engine/src/angeliteChosenShuffle.test.ts"],
+  },
+  {
+    id: "D541-trailing-branch-deleted",
+    decision: "D541",
+    what: "🛑 **THE SPLITTER LOSES ITS TRAILING BRANCH AND THE WHOLE ROW GOES BACK TO BEING UNREADABLE.** `splitAttackGateClause` answers `null` on the printed string, `attack.ts` hands the readers the WHOLE text, every one refuses it and `ATTACK_EFFECT_SKIPPED` names the printing again. ⚠️ **IT IS CENSUS-VISIBLE IN THREE PLACES AT ONCE** (gate 7/17 → 6/14, residue 47/64 → 48/67, `BUILT.attack` 1668 → 1665), which is the difference between this row and the interpreter-side ones — and the reason it is declared anyway is that the census sites and the suite must BOTH be able to see it",
+    file: "packages/engine/src/effects.ts",
+    find: "    if (trimmed.endsWith(` ${clause}`)) {\n      const body = trimmed.slice(0, trimmed.length - clause.length - 1).trim();\n      return { clause, body };\n    }\n",
+    replace: "",
+    expectKilledBy: ["packages/engine/src/angeliteChosenShuffle.test.ts", "packages/engine/src/censusAtHead.test.ts"],
+  },
+  {
+    id: "D541-trailing-branch-loses-its-space",
+    decision: "D541",
+    what: "⚠️ **THE TRAILING BRANCH LOSES THE SPACE IN FRONT OF THE CLAUSE AND STOPS BEING A CLAUSE MATCHER.** ``endsWith(` ${clause}`)`` → `endsWith(clause)`: the closed literal list then matches a SUBSTRING at the end of the string rather than a whole trailing SENTENCE, so a printing whose last sentence merely ENDS with these bytes mid-word is split, and the `- 1` slice silently eats the character in front of it (the previous sentence's PERIOD) into the discarded span — the caller is handed a `body` with its terminator shaved off. 🛑 **IT IS INVISIBLE ON EVERY REAL PRINTING**: the three legal Sylveon ex units and all 640 corpus sentences carry the space, so every census figure and every board in §3-§8 stands still. Only a glued board reddens. It is the MIRROR of the leading branch's `. ` sentence break, which `D282-split-clause-floats` guards from the other end, and the anchor's own `^`/`$` rows are both declared — so this row exists because the property was argued in PROSE at `effects.ts:34490` (*“THE SPACE IS PART OF THE PATTERN, AT THIS END TOO”*) and was the one boundary claim in the slice with no row behind it. ⚠️ **ADDED IN THE REVIEW ROUND**, which is why the set is 21 and not 20.",
+    file: "packages/engine/src/effects.ts",
+    find: "    if (trimmed.endsWith(` ${clause}`)) {\n",
+    replace: "    if (trimmed.endsWith(clause)) {\n",
+    expectKilledBy: ["packages/engine/src/angeliteChosenShuffle.test.ts", "packages/engine/src/rolloutGate.test.ts"],
+  },
+  {
+    id: "D541-tripwire-removed",
+    decision: "D541",
+    what: "⚠️ **THE LEADING-AND-TRAILING TRIPWIRE IS DELETED AND THE LOOP RETURNS AT ITS FIRST HIT.** A string carrying one accounted-for clause in FRONT and another BEHIND is then half-split: the caller is handed a `body` that still contains a printed timing gate it has been told it does not carry, which is D278/D279's “too loose” direction. Nothing printed trips it today — measured over all 640 corpus sentences — so this row is guarded by CONSTRUCTED strings only, and that is stated rather than hidden",
+    file: "packages/engine/src/effects.ts",
+    find: "  if (leadingHits.length + trailingHits.length > 1) return null;\n",
+    replace: "",
+    expectKilledBy: ["packages/engine/src/angeliteChosenShuffle.test.ts"],
+  },
+  {
+    id: "D541-anchor-loses-its-caret",
+    decision: "D541",
+    what: "⚠️ **THE `^` GONE, WITH A PREFIX THAT KEEPS THE LEADING CAPITAL** (D539(1a)). A lower-cased or reworded glue refuses for a DIFFERENT reason and never exercises the caret at all; `“Draw a card. Choose 2 of your opponent's …”` keeps `Choose` capitalised and intact, so the ONLY thing refusing it is the anchor's own `^`. Without it the engine authors a program for a card whose LEADING sentence it silently dropped",
+    file: "packages/engine/src/effects.ts",
+    find: "  `^Choose (\\\\d+) of your opponent['’]s Benched Pokémon\\\\. Shuffle those Pokémon ` +\n",
+    replace: "  `Choose (\\\\d+) of your opponent['’]s Benched Pokémon\\\\. Shuffle those Pokémon ` +\n",
+    expectKilledBy: ["packages/engine/src/angeliteChosenShuffle.test.ts"],
+  },
+  {
+    id: "D541-anchor-loses-its-terminator",
+    decision: "D541",
+    what: "⚠️ **THE `$` GONE, WITH A SUFFIX THAT KEEPS THE PERIOD** (D540(1a), paid for once already at the sibling anchor). A killer glued on with `BODY.slice(0, -1)` STRIPS the period the tail demands, so the string refuses for a different reason and a `$`-less pattern refuses it too — proving nothing about `$`. `“… into your opponent's deck. Then, draw a card.”` keeps the period, so with `$` gone the anchor matches the PREFIX and the engine authors a program for a card whose TRAILING sentence it silently dropped",
+    file: "packages/engine/src/effects.ts",
+    find: "    `and all attached cards into your opponent['’]s deck\\\\.$`,\n",
+    replace: "    `and all attached cards into your opponent['’]s deck\\\\.`,\n",
+    expectKilledBy: ["packages/engine/src/angeliteChosenShuffle.test.ts"],
+  },
+  {
+    id: "D541-anchor-number-becomes-literal-2",
+    decision: "D541",
+    what: "⚠️ **THE CAPTURE FROZEN AT THE ONE PRINTED VALUE.** `(2)` still captures, so `Number(match[1])` still answers 2 and the floor still runs — the op is well-formed and the only printing in the catalog resolves identically. What is lost is that the number is the PRINTED quantifier: a reprint saying “Choose 3” falls to the loud path, and a suite that only drove the real sentence would never know",
+    file: "packages/engine/src/effects.ts",
+    find: "  `^Choose (\\\\d+) of your opponent['’]s Benched Pokémon\\\\. Shuffle those Pokémon ` +\n",
+    replace: "  `^Choose (2) of your opponent['’]s Benched Pokémon\\\\. Shuffle those Pokémon ` +\n",
+    expectKilledBy: ["packages/engine/src/angeliteChosenShuffle.test.ts"],
+  },
+  {
+    id: "D541-anchor-apostrophe-slot-1-collapses",
+    decision: "D541",
+    what: "⚠️ **SLOT 1 (`your opponent['’]s Benched`) COLLAPSED TO THE STRAIGHT QUOTE.** 🛑 **EXPECT THIS TO SURVIVE ON ROUND 1 UNLESS THE SUITE WAS BUILT FOR IT** — D540 paid for exactly this one anchor over. The corpus prints U+0027 at BOTH slots (MEASURED at indices 25 and 108 of the printed row), so collapsing the class leaves every board green and every census figure still. The killer is a CURLED board for THIS slot alone, plus a control that reads the code point off the LIVE corpus row rather than off the suite's own constant, so a re-ingest reddens at the control first",
+    file: "packages/engine/src/effects.ts",
+    find: "  `^Choose (\\\\d+) of your opponent['’]s Benched Pokémon\\\\. Shuffle those Pokémon ` +\n",
+    replace: "  `^Choose (\\\\d+) of your opponent's Benched Pokémon\\\\. Shuffle those Pokémon ` +\n",
+    expectKilledBy: ["packages/engine/src/angeliteChosenShuffle.test.ts"],
+  },
+  {
+    id: "D541-anchor-apostrophe-slot-2-collapses",
+    decision: "D541",
+    what: "⚠️ **SLOT 2 (`into your opponent['’]s deck`) COLLAPSED TO THE STRAIGHT QUOTE**, declared SEPARATELY from slot 1 (D424: one row covering both is killed by whichever half the suite happens to reach first, and then neither slot is really guarded). Same survival warning, same killer shape — its own curled board, plus the both-curled rung and the live-corpus control",
+    file: "packages/engine/src/effects.ts",
+    find: "    `and all attached cards into your opponent['’]s deck\\\\.$`,\n",
+    replace: "    `and all attached cards into your opponent's deck\\\\.$`,\n",
+    expectKilledBy: ["packages/engine/src/angeliteChosenShuffle.test.ts"],
+  },
+  {
+    id: "D541-caption-ignores-the-clamp",
+    decision: "D541",
+    what: "⚠️ **THE CAPTION NAMES THE PRINTED NUMBER WHERE §8.6 CLAMPED THE PROMPT.** `min`/`max` still accept ONE ref, but the heading reads *“Choose 2 of your opponent's Benched Pokémon”* — so on the one-candidate board the dialog contradicts its own validator and the player is told to pick a body that is not there. `snipeNote`'s stated rule (*“the caption must name exactly the set the funnel offers”*) and `damageChosen`'s own call, which passes its clamped `take`. Invisible to every census, to the compiler and to every board the clamp does not touch",
+    file: "packages/engine/src/interpreter.ts",
+    find: "          note: returnBenchedChosenNote(take),\n",
+    replace: "          note: returnBenchedChosenNote(op.count),\n",
+    expectKilledBy: ["packages/engine/src/angeliteChosenShuffle.test.ts"],
+  },
+  {
+    id: "D541-note-is-the-siblings-caption",
+    decision: "D541",
+    what: "⚠️ **THE CAPTION SWAPPED FOR ITS SIBLING'S, WHICH MEANS THE EXACT OPPOSITE.** *“to leave in play”* on a prompt whose answer names the bodies that LEAVE: the board is correct, every event is correct, the census does not move, and the player is told to pick the survivors and then watches them be shuffled away. Two prompts with the same shape and opposite meanings are the one place a shared caption is a genuine defect",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  return `Choose ${count} of your opponent's Benched Pokémon to shuffle into their deck.`;\n",
+    replace: "  return `Choose ${count} of your opponent's Benched Pokémon to leave in play.`;\n",
+    expectKilledBy: ["packages/engine/src/angeliteChosenShuffle.test.ts"],
+  },
+  {
+    id: "D541-arm-emits-the-neighbours-op",
+    decision: "D541",
+    what: "⚠️ **ARM 42-ter EMITS `returnBenchedRest` — the INVERSION, well-formed and census-silent.** `resolvedByAnyReader` stays true, `BUILT.attack` stays 1668 and the residue stays 47/64, because the sentence is still CLAIMED; what changes is that the printed pick's two bodies are the ones that STAY and the rest of the Bench is shuffled away. ⚠️ On a bench of exactly 3 that is ONE body instead of TWO — a plausible board — and on a bench of 6 it is FOUR. Nothing but a board rung can see it",
+    file: "packages/engine/src/effects.ts",
+    find: "    if (count >= 1) return [{ op: \"returnBenchedChosen\", count }];\n",
+    replace: "    if (count >= 1) return [{ op: \"returnBenchedRest\", keep: count }];\n",
+    expectKilledBy: ["packages/engine/src/angeliteChosenShuffle.test.ts"],
+  },
+  {
+    id: "D541-arm-loses-its-floor",
+    decision: "D541",
+    what: "⚠️ **THE PRINTED FLOOR GONE.** `“Choose 0”` names no pick at all, and a shuffle of nothing is a deck re-order the printed sentence never asked for. Without `count >= 1` the arm authors `{count: 0}`, whose park asks `min: 0, max: 0` — a question with exactly one answer, the empty one — and the funnel is then handed an empty ref list. Mirrors 42-bis's own floor, and is stepped here rather than inherited",
+    file: "packages/engine/src/effects.ts",
+    find: "    if (count >= 1) return [{ op: \"returnBenchedChosen\", count }];\n",
+    replace: "    return [{ op: \"returnBenchedChosen\", count }];\n",
+    expectKilledBy: ["packages/engine/src/angeliteChosenShuffle.test.ts"],
   },
 ];

@@ -406,8 +406,8 @@ function swing(state: GameState, seat: Seat, index: number) {
 // 1. THE CENSUS, against the committed corpus rather than against memory.
 // ─────────────────────────────────────────────────────────────────────────────
 
-describe("D282 §1 — the leading-clause census, re-derived at HEAD", () => {
-  it("🛑 the corpus holds exactly 6 gate sentences / 14 printings, and NO other leading clause", () => {
+describe("D282 §1 — the gate-clause census (LEADING, and since D541 TRAILING), re-derived at HEAD", () => {
+  it("🛑 the corpus holds exactly 7 gate sentences / 17 printings (🆕 D541 6/14 → 7/17), and NO other leading clause", () => {
     const corpus = legalAttackCorpus();
     const gated = corpus.filter(([, text]) => splitAttackGateClause(text) !== null);
     // 🆕🆕 D395 — 5/13 -> **6/14**: Miltank `sv08.5-081`'s *"You can use this attack
@@ -417,8 +417,9 @@ describe("D282 §1 — the leading-clause census, re-derived at HEAD", () => {
     // `leadingIf` ONE BELOW**, which is exactly the separation the comment there
     // predicted a fourth spelling would test: the sentence neither starts with
     // `If ` nor contains a `. `, so it is in NEITHER of that filter's two halves.
-    expect(gated.length).toBe(6);
-    expect(gated.reduce((sum, [units]) => sum + units, 0)).toBe(14);
+    // 🆕🆕🆕 **D541 6/14 → 7/17** — the TRAILING gate clause (`censusAttackCorpus.ts` file line 82, Sylveon ex `sv08-086`/`sv08.5-041`/`sv08.5-156`, **1 sentence / 3 legal printings**). ⚠️ **THE SENTENCE STEP IS 1 AND THE PRINTING STEP IS 3 — THEY DISAGREE** (D451), so this site was MEASURED and not copied from its neighbour.
+    expect(gated.length).toBe(7);
+    expect(gated.reduce((sum, [units]) => sum + units, 0)).toBe(17);
 
     // ⚠️ THE NEGATIVE HALF, AND IT IS THE ONE THAT DECIDED THE DESIGN. Every OTHER
     // multi-sentence corpus row that opens with "If " is a sentence whose `If`
@@ -528,6 +529,11 @@ describe("D282 §2 — `yourBenchCount` on both folds", () => {
 const ROLLOUT_GATE_TEXT =
   "You can use this attack only if this Pokémon used Rollout during your last turn.";
 
+/** 🆕🆕🆕 **D541** — the Terapagos ex clause on its OWN, so the boundary rungs below can put a
+    listed clause at EITHER end of a body. Lifted off the assertion above rather than retyped:
+    the apostrophe in *"can't"* is U+0027 and a curled one would silently miss the closed list. */
+const TERAPAGOS_GATE = "If you go second, you can't use this attack during your first turn.";
+
 describe("D282 §3 — splitAttackGateClause", () => {
   it("splits all three printed gate spellings and hands back BOTH halves", () => {
     expect(splitAttackGateClause(TERAPAGOS_TEXT)).toEqual({
@@ -544,8 +550,34 @@ describe("D282 §3 — splitAttackGateClause", () => {
     });
   });
 
-  it("🛑 IS ANCHORED AT `^` — a gate clause anywhere but the front is not a split", () => {
+  // 🆕🆕🆕 **D541 — THIS TITLE WAS A WITHDRAWN CLAIM LEFT STANDING, AND A REVIEW FOUND IT.**
+  // It read *"🛑 IS ANCHORED AT `^` — a gate clause anywhere but the front is not a split"*,
+  // which was true until D541 keyed the SAME closed literal list at the TRAILING end.
+  // 🛑 **AND THE LESSON IS THE OPPOSITE OF THE ONE THE SLICE FIRST WROTE DOWN.** The close-out
+  // claimed none of its withdrawn claims was reachable by `git grep -F` over the sentence. This
+  // one WAS: `git grep -n -F "anywhere but the front"` returns TWO lines, and the sweep that
+  // re-pointed `rolloutGate.test.ts:716` stopped at the first. The failure was not an ungreppable
+  // claim, it was an UNFINISHED GREP — D539's rule failing from the other end, and the count is
+  // SIX sites, not five.
+  // 🛑 **THE PROPERTY THAT SURVIVES IS RE-STATED RATHER THAN DROPPED** (D178/D418): the clause
+  // must sit at a SENTENCE BOUNDARY — `^` with `. ` behind it, or a SPACE with end-of-string in
+  // front of it. A clause quoted MID-string is still not a split. ⚠️ **AND THE OLD RUNGS WERE
+  // GREEN ONLY BECAUSE OF THE BOARDS THEY HAPPENED TO USE** — not one of them put a listed clause
+  // at the END — so the trailing direction is driven here rather than assumed.
+  it("🛑 SITS AT A SENTENCE BOUNDARY — mid-string is not a split, and EITHER end is", () => {
+    // ① MID-STRING, body on both sides: neither boundary is there, at either end.
     expect(splitAttackGateClause(`Draw a card. ${TERAPAGOS_TEXT}`)).toBeNull();
+    expect(splitAttackGateClause(`Draw a card. ${TERAPAGOS_GATE} Then, draw a card.`)).toBeNull();
+    // ② 🆕 THE TRAILING END IS NOW A SPLIT — the rung whose absence let the old title stand.
+    expect(splitAttackGateClause(`${TERAPAGOS_BODY} ${TERAPAGOS_GATE}`)).toEqual({
+      clause: TERAPAGOS_GATE,
+      body: TERAPAGOS_BODY,
+    });
+    // ③ …and the BOUNDARY is load-bearing at that end too: glued onto the previous
+    //    sentence's period with no space, it is a substring and not a clause.
+    expect(splitAttackGateClause(`${TERAPAGOS_BODY}${TERAPAGOS_GATE}`)).toBeNull();
+    // ④ THE ATTRIBUTION CONTROLS, unchanged: a body alone and the empty string are
+    //    not splits for reasons that have nothing to do with position.
     expect(splitAttackGateClause(TERAPAGOS_BODY)).toBeNull();
     expect(splitAttackGateClause(DIPPLIN_TEXT)).toBeNull();
     expect(splitAttackGateClause("")).toBeNull();

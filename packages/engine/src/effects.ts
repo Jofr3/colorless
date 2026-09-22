@@ -7266,6 +7266,20 @@ export type EffectOp =
           and `splitAttackGateClause` is `^`-anchored, and all nine readers were run
           over the stripped body at D396 — every one refuses it, so a trailing
           stripper would buy ZERO printings and the printing stays loud either way.
+          🆕🆕🆕 **D541 — BOTH HALVES OF THAT SENTENCE ARE WITHDRAWN, AND THEY GO
+          FALSE *JOINTLY* RATHER THAN ONE AT A TIME — WHICH IS WHY IT SURVIVED FOUR
+          SLICES OF REVIEW.** Its premise was re-confirmed at D541's own head before
+          a byte was written: all **13** live readers still refuse the stripped body
+          TODAY, so *"a trailing stripper would buy ZERO printings"* was TRUE as
+          written and was true right up to the commit that falsified it. What
+          falsifies it is not the stripper — it is the stripper AND the arm, landed
+          together: `CHOOSE_SHUFFLE_CHOSEN` now claims the stripped body and
+          `splitAttackGateClause` now takes the clause off the END, so the split buys
+          **3** printings instead of zero. ⚠️ **The COUNT half of the refusal above is
+          still exactly right and is what this slice paid**: *"Choose 2"* against a
+          `min: 1, max: 1` park is precisely why the answer is a SIBLING op
+          (`returnBenchedChosen`, below) and not a `count` rider on THIS one — see
+          that member's own block for the failure mode.
         • The SELF-removal family, which names **this Pokémon** rather than a
           chosen one and is therefore `returnSelf`'s population, not this op's —
           see the block below it.
@@ -7434,6 +7448,58 @@ export type EffectOp =
       re-derive this as *"it never parks, so it is not persisted"* — that reading
       was FALSE of D536's op and it is false of this one twice over. */
   | { op: "returnBenchedRest"; keep: number }
+  /** 🆕🆕🆕 **D541 — THE CHOSEN BENCH SHUFFLE: N OF THE OPPONENT'S BENCHED BODIES,
+      NAMED BY THE ANSWER, INTO THEIR OWN DECK AS ONE SHUFFLE.**
+      *"Choose 2 of your opponent's Benched Pokémon. Shuffle those Pokémon and all
+      attached cards into your opponent's deck."* — `censusAttackCorpus.ts` **file
+      line 82**, the STRIPPED body of Sylveon ex `sv08-086`/`sv08.5-041`/`sv08.5-156`
+      index **1** "Angelite" (NOT index 0 "Magical Charm" — the trailing clause names
+      Angelite and so bars ITSELF, registry.ts:7107), **1 sentence / 3 legal
+      printings**, reached through `splitAttackGateClause`'s new TRAILING branch.
+
+      🛑 **A MEMBER AND NOT A `count` RIDER ON `returnBenched`, AND THE REFUSAL IS
+      ALREADY IN THIS TREE RATHER THAN BEING ARGUED HERE FOR THE FIRST TIME**
+      (`returnBenched`'s own block two members up, and `interpreter.ts`'s
+      `returnBenched` / `returnBenchedRest` pair). That function removes by
+      `ref.spot.index` and **never compares a uid**, so a set-valued loop over it
+      fails two ways and both are SILENT:
+        • Bench `[A,B,C,D]`, remove `{1,3}` → B leaves, the bench COMPACTS to
+          `[A,C,D]`, `bench[3]` is now `undefined`, and that function's own guard
+          returns `state` — **one body survives the printed shuffle**;
+        • remove `{0,1}` → A leaves, `[B,C,D]`, and index 1 then removes **C, not
+          B** — the WRONG body, under a correct-looking `POKEMON_RETURNED`.
+      And its deck arm shuffles PER REF, so a loop emits **N** `SHUFFLE` rows and
+      takes **N** RNG draws for ONE printed shuffle.
+
+      🛑 **AND THE DROPPED-RIDER DIRECTION IS D421's EXACT FAILURE MODE.** A build
+      that widened `returnBenched` with an optional `count` and then lost it would
+      not do nothing: it would shuffle **ONE** body where the card prints two — a
+      completely plausible board, a normal-looking log, and wrong for a year. A
+      distinct member, refused by `stepOp`'s exhaustive `switch`, is the only shape
+      that fails LOUD.
+
+      ⚠️ **`whose` AND `dest` ARE OMITTED, AND THE ABSENCE IS THE PRINTED ARTICLE
+      (D426)** — `returnBenchedRest`'s rule one member up, verbatim. The single
+      printed sentence fixes both: the candidates are *"your opponent's Benched
+      Pokémon"* and the destination is *"your opponent's deck"*. A field with one
+      inhabitant reads like a choice.
+
+      ⚠️ **`count` IS REQUIRED AND CAPTURED**, `(\d+)` off the printed quantifier
+      (D449's arity precedent). It is the number REMOVED — the exact inversion of
+      `returnBenchedRest.keep`, which is the number that STAYS — and the two ops
+      sharing a shape while their one number means opposite things is the reason
+      they are siblings and not one parameterised op.
+
+      🛑 **IT PARKS, SO THE SERIALIZED ALPHABET GROWS, AND THE PERSISTENCE ARGUMENT
+      IS D450's SECOND DOOR RATHER THAN *"IT IS NEVER WRITTEN"*.** The op asks a
+      `choosePokemonMulti`, so `{"op":"returnBenchedChosen","count":2}` really IS
+      written into `phase.cont.pendingOp`. `MATCH_RECORD_VERSION` stays **30** on
+      D125's WIDENING and on nothing else: no v30 deploy could author that byte,
+      because no v30 deploy had the member, and every byte a v30 deploy DID write
+      still means exactly what it meant. **Do NOT re-derive this as "it never parks,
+      so it is not persisted"** — the member directly above says so in as many words,
+      and that reading was FALSE of D536's op and is false of this one twice over. */
+  | { op: "returnBenchedChosen"; count: number }
   /** 🆕 **D311 — TAKE THE PROGRAM'S OWN BODY OFF THE BOARD WITH EVERY CARD
       ATTACHED TO IT AND SHUFFLE THE WHOLE PILE INTO ITS CONTROLLER'S DECK.**
       *"…shuffle **this Pokémon** and all attached cards into your deck."*
@@ -25022,11 +25088,83 @@ const RETURN_BENCHED = new RegExp(
     `COUNTER_PUT_ON_CHOSEN_OPPONENTS` (*"Choose N of your opponent's Pokémon and
     put M damage counters on each of them."*) and corpus line 82 (Angelite,
     *"Choose 2 … Shuffle those Pokémon …"*, whose pick names the bodies that
-    LEAVE) — and both are driven in BOTH directions. */
+    LEAVE) — and both are driven in BOTH directions.
+    🆕🆕🆕 **D541 — CORPUS LINE 82 IS NO LONGER UNBUILT, AND THE RE-POINT IS THE
+    WHOLE OF THE CHANGE.** It ships one anchor down as `CHOOSE_SHUFFLE_CHOSEN`
+    (`returnBenchedChosen`, 3 legal printings) behind the trailing gate split. It
+    is still this anchor's NEAR MISS and still the exact INVERSION this paragraph
+    names — the pick that leaves versus the pick that stays — so the sentence above
+    keeps every word of its reasoning; what changed is that the near miss now has a
+    reader of its own, which makes the BOTH-directions drive stronger rather than
+    weaker. **The tail is untouched and still true: both are driven in BOTH
+    directions** (`benchKeepShuffleRest.test.ts` §1 and
+    `angeliteChosenShuffle.test.ts` §1). */
 const CHOOSE_KEEP_SHUFFLE_REST = new RegExp(
   `^Choose (\\d+) of your opponent['’]s Benched Pokémon\\. If you do, shuffle all of ` +
     `your opponent['’]s Benched Pokémon that you didn['’]t choose, and all cards ` +
     "attached to those Pokémon, into their deck\\.$",
+);
+
+/** 🆕🆕🆕 **D541 — THE CHOSEN BENCH SHUFFLE: THE INVERSION OF THE ANCHOR DIRECTLY
+    ABOVE, AND THE FIRST BODY IN THIS FILE REACHED THROUGH A *TRAILING* GATE SPLIT.**
+    *"Choose 2 of your opponent's Benched Pokémon. Shuffle those Pokémon and all
+    attached cards into your opponent's deck."* — the STRIPPED body of
+    `censusAttackCorpus.ts` **file line 82** (`legalAttackCorpus()` index 29,
+    leading count column **3**), Sylveon ex `sv08-086`/`sv08.5-041`/`sv08.5-156`
+    index **1** "Angelite", **1 sentence / 3 legal printings** — the largest single
+    remaining row in the residue and the only 3-printing one left. **THE INDEX IS
+    PART OF THE ATTRIBUTION**: index 0 on the same card is "Magical Charm"
+    ({P}{C}{C}, 160, `weakenDefenderAttacks`), whose gate behaviour is the OPPOSITE
+    of this one's — the clause below names *Angelite*, so it bars the attack it is
+    printed on (registry.ts:7107, "Angelite bars ITSELF").
+
+    🛑 **IT IS THE *STRIPPED* BODY AND NOT THE PRINTED ROW, AND THAT IS THE WHOLE
+    ARCHITECTURE OF THIS SLICE.** What the catalog prints is the two sentences above
+    PLUS a third, *"If 1 of your Pokémon used Angelite during your last turn, this
+    attack can't be used."*, which `splitAttackGateClause` now takes off the END
+    (its fifth row, D541) exactly as it has taken four other spellings off the FRONT
+    since D282. This anchor never sees that clause and must not: a gate clause
+    embedded in an EFFECT anchor is a reprint away from refusing its own card
+    (`conventions.md:195`, *"an arm transfers across sets"*).
+
+    ⚠️ **THE ROUTE THAT AVOIDS THE `^`-POLICY QUESTION WAS PRICED AND REJECTED, AND
+    THE REASON IS MEASURABLE RATHER THAN STYLISTIC.** Anchoring the WHOLE printed
+    string here — trailing clause and all, changing no splitter — works and is a
+    smaller diff. It was rejected on three counts: (i) it credits the row to the
+    READER summand instead of the SPLIT one, moving `reader` 565/1614 → 566/1617
+    and `raw residue` 75/118 → 74/115, and with them the **25** files that pin
+    `[565, 1614]` and the **7** that pin `toBe(1614)` — so the split route is the
+    SMALLER pin radius as well as the semantically right answer; (ii) it embeds gate
+    text inside an effect anchor, per the paragraph above; (iii) it leaves the gate
+    half a hand-authored `registry.ts` row forever, which is `conventions.md:195`'s
+    own complaint. **If a reviewer refuses the `^`-policy widening, the row falls
+    back to the registry shape D540 already rejected** — that is this slice's real
+    contingency and it is stated here rather than in a footnote.
+
+    ⚠️ **ONE CAPTURE, AND IT IS THE NUMBER *REMOVED*** — the exact inversion of
+    `CHOOSE_KEEP_SHUFFLE_REST`'s group 1, which is the number KEPT. The two anchors
+    differ in what their `(\d+)` MEANS and not merely in where it sits, which is why
+    `returnBenchedChosen` is a sibling op rather than a flag on `returnBenchedRest`.
+
+    🛑 **TWO `['’]` SLOTS, AND BOTH CORPUS BYTES ARE U+0027 TODAY — MEASURED AT THIS
+    HEAD AND NOT REMEMBERED.** Sentence indices **25** and **108** of the printed row
+    (`'` = U+0027 at both, plus a third at **190** inside the trailing clause's
+    *"can't"*, which this anchor never sees); the three `é` are single real U+00E9 at
+    **39**, **62** and **133** and are NOT decomposed. The slots are kept for D137's
+    SITE rule — a re-ingest could curl either — although neither is curled today.
+    ⚠️ **AND THE CONSEQUENCE IS A MUTANT THAT SURVIVES ON ROUND 1 UNLESS THE SUITE
+    IS BUILT FOR IT** (D540 paid for exactly this): collapsing `['’]` to `'` leaves
+    every board green and every census figure still, so each slot gets its OWN
+    curled board, a both-curled rung, and a CONTROL that reads the code point off
+    the LIVE corpus row rather than off the suite's own constant.
+
+    ⚠️ **WHOLE-SENTENCE `^…$`, NO `/i`** — the standing policy of every deriver in
+    this file. MEASURED: this anchor claims **0** of the 640 whole corpus sentences
+    (the printed row carries the gate clause, so the raw row is not a match), it
+    matches the STRIPPED body, and it shadows **0** already-claimed sentences. */
+const CHOOSE_SHUFFLE_CHOSEN = new RegExp(
+  `^Choose (\\d+) of your opponent['’]s Benched Pokémon\\. Shuffle those Pokémon ` +
+    `and all attached cards into your opponent['’]s deck\\.$`,
 );
 
 
@@ -30386,6 +30524,17 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   //     claim a string the other matches in either direction, and
   //     `benchKeepShuffleRest.test.ts` §1 drives this sentence against
   //     `RETURN_BENCHED` and arm 42's four sentences against this anchor.
+  //     🆕🆕🆕 **D541 — BOTH SENTENCES OF THAT PARAGRAPH ARE WITHDRAWN, AND NOTHING
+  //     IN THE REPO COULD SEE EITHER GO FALSE.** Arm **42-ter** now sits between
+  //     this arm and arm 42, so *"PLACED IMMEDIATELY ABOVE ARM 42"* is false; and
+  //     42-ter's first word is ALSO **"Choose"**, so *"the first WORD differs"* is
+  //     false for the NEAREST neighbour pair — which is D540's own finding one arm
+  //     family over, arriving a second time because a comment carries no assertion
+  //     and the repo's sweep instrument keys on the SENTENCE, never on the CLAIM.
+  //     The CONCLUSION (order-freeness) survives and is re-derived on a token that
+  //     actually differs — see arm 42-ter's own block, which argues it against BOTH
+  //     of its neighbours and names the cell arm order masks. This arm's argument
+  //     against arm **42** is untouched and still exact.
   //
   //     🛑 THE NEAR MISSES THAT DO SHARE THE FIRST WORD are refused by the TAIL and
   //     not by the head: `COUNTER_PUT_ON_CHOSEN_OPPONENTS` ("Choose N of your
@@ -30408,6 +30557,72 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
     // complement of an empty pick is the whole Bench under a caption that asked for
     // nothing. Unreadable sentences go to `ATTACK_EFFECT_SKIPPED`, loudly.
     if (keep >= 1) return [{ op: "returnBenchedRest", keep }];
+  }
+
+  // 42-ter. 🆕🆕🆕 **D541 — "Choose N of your opponent's Benched Pokémon. Shuffle
+  //     those Pokémon and all attached cards into your opponent's deck."** — the
+  //     STRIPPED body of `censusAttackCorpus.ts` file line 82 (Sylveon ex
+  //     `sv08-086`/`sv08.5-041`/`sv08.5-156` index **1** "Angelite" — not index 0
+  //     "Magical Charm" — **1 sentence / 3 legal printings**), reached through
+  //     `splitAttackGateClause`'s new TRAILING branch
+  //     and NOT off the raw printed row — the trailing gate clause is stripped at
+  //     the §8 declaration seam in `attack.ts` before this reader ever runs.
+  //
+  //     🛑 **THE ORDER ARGUMENT, STATED AGAINST BOTH NEIGHBOURS AND RE-MEASURED ON
+  //     A TOKEN THAT ACTUALLY DIFFERS** (D540's lesson, paid one arm family over):
+  //       • **against arm 42 below** — the first WORD differs ("Choose" vs
+  //         "Shuffle"/"Put"/"Flip") and both anchors are fully `^…$`. Free.
+  //       • **against arm 42-bis above** — the first word is IDENTICAL, and so are
+  //         the next eight: both anchors open `^Choose (\d+) of your opponent['’]s
+  //         Benched Pokémon\. `. **The head cannot separate them and the argument
+  //         must not be copied from the arm above, whose own version of it just went
+  //         false for this pair.** They separate at the FIRST TOKEN AFTER THE
+  //         SENTENCE BREAK — `If` (42-bis) versus `Shuffle` (42-ter) — and, because
+  //         both anchors are fully `^…$`, that one differing token is enough: neither
+  //         can claim a string the other matches, in either direction.
+  //
+  //     ⚠️ **AND THIS ARM SAYS OUT LOUD WHICH CELL ITS OWN PLACEMENT MASKS, RATHER
+  //     THAN REPORTING FOUR MEASUREMENTS WHERE IT HAS THREE.** Of the 2×2 matrix
+  //     (each anchor × each sentence), three cells are read DIRECTLY off
+  //     `deriveAttackEffect`:
+  //       (1) 42-bis's sentence → `returnBenchedRest` (42-bis claims it);
+  //       (2) THIS sentence → `returnBenchedChosen` — which also settles the cell
+  //           "does 42-bis claim THIS body?" in the negative, because 42-bis runs
+  //           FIRST and did not return;
+  //       (3) either sentence with its own tail removed → `null`.
+  //     The FOURTH cell — *"would `CHOOSE_SHUFFLE_CHOSEN` claim 42-bis's sentence?"*
+  //     — is MASKED by arm ORDER and cannot be read directly, because 42-bis returns
+  //     before this line is reached. It is reached by COMPOSITION over two
+  //     measurements the module DOES expose: the two HYBRID strings (each anchor's
+  //     head glued to the other's tail) both derive to `null`, so each anchor
+  //     REQUIRES its own tail, and an anchor that requires its own tail cannot match
+  //     a sentence carrying the other's. `angeliteChosenShuffle.test.ts` §1 drives
+  //     all four cells and labels the composed one as composed.
+  //
+  //     🛑 **THE NEAR MISSES THAT SHARE THIS OPENING are refused by the TAIL and not
+  //     by the head**, in BOTH directions: `CHOOSE_KEEP_SHUFFLE_REST` (the pick that
+  //     names the bodies that STAY — the exact inversion) and
+  //     `COUNTER_PUT_ON_CHOSEN_OPPONENTS` ("Choose N of your opponent's Pokémon and
+  //     put M damage counters on each of them.").
+  //
+  //     ZERO `recordGate` FOR THE TWO-SENTENCE SHAPE — D314's rule, stated at the
+  //     `returnBenched` block and re-derived here rather than inherited: **A §9.2
+  //     SLOT IS EARNED BY A BOARD, NOT BY THE WORDS "IF YOU DO"** — and this
+  //     sentence does not even print those words. The second sentence is a
+  //     back-reference ("those Pokémon"), not an antecedent, and the op's own §8.6
+  //     CLAMP already covers every board on which the printed number outruns the
+  //     Bench — a shortfall shuffles as many as there are, because this sentence
+  //     prints no *"If you can't, this attack does nothing"* (`ptcg-rules.md:333`).
+  //     A slot here would be D310's "a FILTER may be a SUBSTITUTION": green, dead
+  //     and unkillable.
+  match = CHOOSE_SHUFFLE_CHOSEN.exec(effect);
+  if (match !== null) {
+    const count = Number(match[1]);
+    // The FLOOR, printed rather than defensive, mirroring 42-bis's own: "Choose 0"
+    // names no pick at all, and a shuffle of nothing is a deck re-order the printed
+    // sentence never asked for. Unreadable sentences go to `ATTACK_EFFECT_SKIPPED`,
+    // loudly.
+    if (count >= 1) return [{ op: "returnBenchedChosen", count }];
   }
 
   // 42. "Shuffle 1 of your [opponent's] Benched Pokémon and all attached cards
@@ -33921,9 +34136,20 @@ export function discardScaledBoostProgram(
   }
 }
 
-/** D282 — THE PRINTED SPELLINGS OF THE D281 TIMING GATE, as a LEADING clause.
+/** D282 — THE PRINTED SPELLINGS OF THE D281 TIMING GATE.
+
+    🆕🆕🆕 **D541 — THE "as a LEADING clause" HALF OF THIS SENTENCE IS WITHDRAWN,
+    AND IT WAS TRUE FOR 259 SLICES.** It used to read *"as a LEADING clause.
     Anchored at `^` and at the sentence break (`. `), never floating: the clause is
-    the FIRST sentence or this is not a split.
+    the FIRST sentence or this is not a split."* That was a MEASUREMENT of the four
+    rows below, not a policy — every one of them prints FIRST — and the fifth row
+    prints LAST. `splitAttackGateClause` now keys the same closed list at BOTH
+    ends (leading `${clause} ` and trailing ` ${clause}`), which is why this list's
+    membership question and its POSITION question had to be separated: a row is in
+    this list because it is a printed timing gate, not because of where it sits.
+    **What is untouched is the ANCHORING**: each branch is still pinned to a
+    sentence boundary (`^` or the end of the string) and never floats, so a clause
+    quoted mid-sentence is still not a split. See the splitter's own block.
 
     ⚠️ THE LIST IS CLOSED AND IT IS THE CENSUS, NOT A GUESS. The FIRST-TURN family
     is 13 legal printings in exactly the first three shapes (7 BAN + 3 GATE + 3
@@ -33954,12 +34180,28 @@ const ATTACK_GATE_CLAUSES = [
   "If you go first, you can use this attack during your first turn.",
   "You can use this attack only if you go second, and only during your first turn.",
   "You can use this attack only if this Pokémon used Rollout during your last turn.",
+  "If 1 of your Pokémon used Angelite during your last turn, this attack can't be used.",
 ] as const;
 
 /** 🆕🆕 D444 — the four printed spellings, AS A TYPE. `as const` above turns the
     list into a tuple of string LITERALS, and this union is what makes
     `ATTACK_GATE_CLAUSE_GATES` below a total map the compiler enforces rather than
-    a lookup table that can quietly miss a row. */
+    a lookup table that can quietly miss a row.
+
+    🆕🆕🆕 **D541 FINAL REVIEW (2026-09-22) — *"the four printed spellings"* IS WITHDRAWN:
+    THE LIST ABOVE CARRIES FIVE.** This slice appended Angelite's TRAILING clause as the
+    FIFTH row of `ATTACK_GATE_CLAUSES`, so the tuple this union is `[number]` of has five
+    members and this heading was falsified BY THE HUNK THAT WROTE IT — the line sat in the
+    context of the `const ATTACK_GATE_CLAUSES = [` hunk, on screen while the row was added.
+    ⚠️ **WHAT SURVIVES IS THE WHOLE POINT OF THE BLOCK, AND IT IS NOT A FIGURE**: the union
+    is DERIVED from the tuple, so it steps with the list BY CONSTRUCTION and
+    `ATTACK_GATE_CLAUSE_GATES` stays a total map the compiler enforces — which is exactly
+    why this line could go stale with nothing going wrong. ⚠️ **AND IT IS A SITE OF THE
+    CLASS THIS SLICE FOUR TIMES DECLARED CLOSED, AT A KEY NO INSTRUMENT OF THE FOUR HAD**:
+    *"the four"* is an ORDINAL, not one of the values that moved (6, 14, 5/13), so a sweep
+    keyed on those values cannot see it however wide its SCOPE is set. **A FIGURE SWEEP IS
+    KEYED ON THE LIVE DECLARATION — the constant, the tuple's length, the assertion — AND
+    AN ORDINAL IS A FIGURE.** (D178/D418: annotated, never overwritten.) */
 export type AttackGateClause = (typeof ATTACK_GATE_CLAUSES)[number];
 
 /** The condition 10 of the 14 printings share, spelled once: the going-SECOND
@@ -33994,6 +34236,18 @@ const ATTACK_GATE_SECOND_PLAYERS_FIRST_TURN: BoardCondition = {
     permits, and each defect is invisible from the other's suite. `derivedAttackGate.test.ts`
     §1 drives the four rows against each other, and §3 drives both directions on a
     board (D278/D279's standing lesson: the too-strict half is the one nobody writes).
+    🆕🆕🆕 **D541 FINAL REVIEW (2026-09-22) — *"§1 drives the four rows against each other"*
+    IS STILL LITERALLY TRUE, AND IT NOW NAMES FOUR OF FIVE.** The table has FIVE rows as of
+    this slice, and §1 reads four of them against each other by value; the fifth row's
+    printed clause is never fed to `timingGateFromAttackText` in that file at all — MEASURED:
+    the clause literal occurs ZERO times in `derivedAttackGate.test.ts`, whose §2 ties the
+    fifth row by EXISTENCE over the corpus (`split === null ⟺ gate === undefined`) and pins
+    its VALUE as a registry literal rather than as a derivation. ⚠️ **THE VALUE IS DRIVEN,
+    JUST NOT THERE**: `angeliteChosenShuffle.test.ts:1164` asserts
+    `timingGateFromAttackText(PRINTED)` by value and its §7 pins `registry === derived` on
+    all three real ids. So this is a LOCALITY note and not a hole — recorded rather than
+    fixed, because a new rung is a slice's work and this is a landing review. ⚠️ No
+    value-keyed sweep could reach this line, because no figure in it moved.
 
     🛑 **THE ROLLOUT ROW IS DERIVED TOO, AND THAT IS NOT A TEMPLATE.** The block
     above refuses `^You can use this attack only if (.+)\.$` because the quoted
@@ -34002,6 +34256,19 @@ const ATTACK_GATE_SECOND_PLAYERS_FIRST_TURN: BoardCondition = {
     literal list, so the attack name is a constant inside a row someone transcribed
     from the catalog by hand — there is no parse to get wrong, and a fifth spelling
     does not silently become a gate, it fails to compile.
+    🆕🆕🆕 **D541 FINAL REVIEW (2026-09-22) — *"a fifth spelling does not silently become a
+    gate, it fails to compile"* IS WITHDRAWN AS PRINTED, AND THE INVARIANT UNDER IT IS
+    INTACT.** This slice ADDED the fifth spelling — Angelite's TRAILING clause — and it IS
+    a gate: the row went into `ATTACK_GATE_CLAUSES` and its gate into the map below in ONE
+    commit, because this `Record` is TOTAL and one without the other does not typecheck
+    (MEASURED at this head: deleting the map row prints `TS2741` at this object). So the
+    sentence is true of a SIXTH spelling and false of the fifth. ⚠️ **WHAT IT WAS REACHING
+    FOR IS UNTOUCHED**: nothing here is PARSED — the attack name is a constant inside a
+    hand-transcribed row — and D541's trailing branch keys the SAME closed literal list at
+    the other end of the sentence, so it widens WHERE a listed clause may sit and never
+    WHAT may be listed. ⚠️ **AN ORDINAL IS A FIGURE** (see the withdrawal on
+    `AttackGateClause` above): *"a fifth"* moved when nothing spelled 6, 14 or 5/13 did,
+    which is why four value-keyed sweeps in this slice walked past it.
 
     ⚠️ **`Record<AttackGateClause, …>` AND NOT A `Partial` OR AN ARRAY OF PAIRS**
     (D424's rule: prefer a refusal the type system re-derives). Adding a row to
@@ -34026,11 +34293,41 @@ const ATTACK_GATE_CLAUSE_GATES: Record<AttackGateClause, AttackTimingGate> = {
     kind: "onlyIf",
     condition: { kind: "yourActiveUsedAttackLastTurn", attack: "Rollout" },
   },
+  // 🆕🆕🆕 **D541 — THE FIFTH ROW, AND THE ONE ITS WRONG TWIN TYPECHECKS.**
+  // Sylveon ex `sv08-086`/`sv08.5-041`/`sv08.5-156` "Angelite", **3 legal
+  // printings**, `censusAttackCorpus.ts` file line 82 — the clause the registry
+  // has authored by hand at `registry.ts` since D396 and which is DERIVED here
+  // for the first time.
+  //
+  // 🛑 **`yourPokemonUsedAttackLastTurn` AND NOT `yourActiveUsedAttackLastTurn`,
+  // AND THE TWO ARE TYPE-COMPATIBLE.** The row one line up spells the OTHER
+  // member with the same `attack: string` field, so swapping them compiles, and
+  // it is GREEN on every board anyone writes naturally — the two conditions
+  // diverge ONLY when the body that used Angelite has since left the Active Spot,
+  // which is the exact board the card is printed for (D396's own paragraph at the
+  // member: *"Sylveon ex A uses Angelite and retreats; Sylveon ex B is promoted
+  // and declares Angelite on the next of your turns"*). ⚠️ **AND THE DIVERGENCE IS
+  // MASKED ON ALL THREE REAL IDS**, because `attackGateOf` is `registry ??
+  // derived` and `SYLVEON_EX_ANGELITE` wins — so the witness rides a file-local
+  // DECLARED demonstrator with no registry row (`angeliteChosenShuffle.test.ts`
+  // §6), never a pass on `sv08-086`.
+  //
+  // ⚠️ `barredIf` AND NOT `onlyIf`: the printed polarity is *"this attack can't be
+  // used"*, the BAN direction, where the two rows above it in this map that carry
+  // a `condition` are both LICENCES.
+  "If 1 of your Pokémon used Angelite during your last turn, this attack can't be used.": {
+    kind: "barredIf",
+    condition: { kind: "yourPokemonUsedAttackLastTurn", attack: "Angelite" },
+  },
 };
 
-/** 🛑 D282 — THE SPLIT ANCHOR: take a printed timing-gate clause off the FRONT of
-    an attack's effect text and hand back the body sentence behind it, or `null`
-    when the text does not open with one. 🆕🆕 **D395 — `body` IS `""` WHEN THE
+/** 🛑 D282 — THE SPLIT ANCHOR: take a printed timing-gate clause off an attack's
+    effect text and hand back the body sentence beside it, or `null` when the text
+    carries none. 🆕🆕🆕 **D541 — "off the FRONT" / "the body sentence BEHIND it" /
+    "does not OPEN with one" is what this sentence used to say, and all three are
+    withdrawn together**: the clause is taken off the FRONT or off the END, keyed on
+    the same closed literal list at both ends, and the tripwire below refuses any
+    string that would match at both. 🆕🆕 **D395 — `body` IS `""` WHEN THE
     CLAUSE IS THE WHOLE PRINTED TEXT**, which is a MATCH and not a miss: the two
     answers are "this string opens with an accounted-for clause" (an object, whose
     `body` may be empty) and "it does not" (`null`).
@@ -34042,6 +34339,17 @@ const ATTACK_GATE_CLAUSE_GATES: Record<AttackGateClause, AttackTimingGate> = {
     This function does not widen any anchor: it produces a DIFFERENT STRING and
     the readers run over that string whole, so a body they refuse is still refused
     loudly and the residue is still reported.
+    🆕🆕🆕 **D541 — THIS PARAGRAPH IS KEPT AND RE-SCOPED TO COVER BOTH POSITIONS,
+    BECAUSE IT IS THE SENTENCE THAT MAKES THE WIDENING LEGITIMATE.** It is now the
+    load-bearing one rather than a caveat: a TRAILING split is a split, so the
+    question a reviewer asks of it — *"has a `^…$` policy just been traded for a
+    substring search?"* — is answered here and only here. The answer is unchanged
+    and is stronger for being asked twice. Neither branch relaxes a reader's `^` or
+    its `$`; both branches remove a WHOLE printed sentence pinned to a sentence
+    boundary (`^` plus `. ` in front, ` ` plus end-of-string behind), and the
+    readers then run over the remaining string WHOLE, still `^…$`. ⚠️ **The one
+    thing a two-ended split adds is a string that could match at BOTH ends**, and
+    that is refused outright rather than resolved — see the tripwire in the body.
 
     🛑 **AND THE CALLER MUST HAVE ACCOUNTED FOR THE CLAUSE ALREADY.** Dropping a
     printed sentence is exactly the "too loose" failure D278/D279 cost two slices
@@ -34085,7 +34393,20 @@ const ATTACK_GATE_CLAUSE_GATES: Record<AttackGateClause, AttackTimingGate> = {
     So the leading-clause population a split can serve is **exactly the 14 gates
     and not one printing more** (13 until D395 added the clause-only row), and a
     generic composer would be scaffolding for a family of one. Build the narrow
-    thing. ⚠️ AND THE SECOND STRIPPER DID NOT
+    thing.
+    🆕🆕🆕 **D541 — THE SENTENCE ABOVE IS LITERALLY STILL TRUE OF THE *LEADING*
+    POPULATION AND IS KEPT UNCHANGED; WHAT IS RE-SCOPED IS THE ARGUMENT AROUND
+    IT.** The leading branch still claims **14** and not one printing more. The
+    TRAILING branch adds a second position with **3** printings on **1** sentence
+    (Sylveon ex `sv08-086`/`sv08.5-041`/`sv08.5-156`), so the split's whole
+    population is **17**, and *"a generic composer would be scaffolding for a
+    family of one"* is now an argument spanning TWO positions rather than one. It
+    still lands the same way, and the reason is the same arithmetic: two positions
+    × a CLOSED five-row list is a `for` loop over a tuple, not a composer, and a
+    sentence-list composer would still be answering a population of zero. ⚠️ The
+    number that steps is **14 → 17** at `attack.ts` and at `splitOrder.test.ts`;
+    the DISJOINTNESS conclusion is NOT inherited from the leading case and is
+    re-derived for the trailing one at `attack.ts`'s own block. ⚠️ AND THE SECOND STRIPPER DID NOT
     CHANGE THAT: D364 measured `splitAttackGateClause` and
     `splitAttackRequirementClause` **DISJOINT over all 1,732 legal units** — 0 are
     claimed by both — so a `splitHead` that loops would still answer no printed
@@ -34098,6 +34419,34 @@ export function splitAttackGateClause(
   text: string,
 ): { clause: AttackGateClause; body: string } | null {
   const trimmed = text.trim();
+  // 🆕🆕🆕 **D541 — THE TRIPWIRE, AND IT IS SWEPT OVER THE WHOLE CLOSED LIST BEFORE
+  // ANY BRANCH RETURNS.** With a split at BOTH ends, a string could carry one
+  // accounted-for clause in front and ANOTHER behind it, and a loop that returned
+  // at the first hit would hand the caller a `body` that still contains a printed
+  // timing gate the caller has been told it does not. Nothing in the catalog
+  // prints two — measured over all 640 corpus sentences / 1,732 legal units at
+  // this head, `leading.length + trailing.length <= 1` for every one — and **the
+  // day one does is not the day to guess which end the caller accounted for**.
+  //
+  // ⚠️ **THE REFUSAL IS `null` AND NOT A THROW, AND THAT IS THIS FILE'S OWN LOUD
+  // PATH RATHER THAN A SOFTENING.** `effects.ts` contains ZERO `throw` statements
+  // at this head (checked, not remembered — all 13 occurrences of the word are
+  // prose), because a deriver that throws turns an unreadable printing into a
+  // crashed match. `null` keeps the WHOLE printed string, every reader refuses it,
+  // and `ATTACK_EFFECT_SKIPPED` names the printing in the census — which is the
+  // loud path D395's own floor comment points at, and the one a residue figure can
+  // see. A silent half-split is the only outcome that would be quiet.
+  //
+  // ⚠️ It is deliberately BROADER than "the same clause at both ends": the cheap
+  // reading (per-clause, inside the loop) misses the leading-A / trailing-B string,
+  // which is the case a two-ended splitter actually creates.
+  const leadingHits = ATTACK_GATE_CLAUSES.filter(
+    (clause) => trimmed !== clause && trimmed.startsWith(`${clause} `),
+  );
+  const trailingHits = ATTACK_GATE_CLAUSES.filter(
+    (clause) => trimmed !== clause && trimmed.endsWith(` ${clause}`),
+  );
+  if (leadingHits.length + trailingHits.length > 1) return null;
   for (const clause of ATTACK_GATE_CLAUSES) {
     // 🆕🆕 D395 — THE CLAUSE-ONLY PRINTING, AND THIS BRANCH IS THE REVERSAL OF A
     // REFUSAL THAT NAMED ITS OWN TRIGGER. Until this slice the loop below read
@@ -34123,11 +34472,38 @@ export function splitAttackGateClause(
     // break is what makes this list a LEADING-clause matcher rather than a
     // substring search, and a clause-only string has no trailing space to match.
     if (trimmed === clause) return { clause, body: "" };
-    if (!trimmed.startsWith(`${clause} `)) continue;
-    const body = trimmed.slice(clause.length + 1).trim();
-    // Whitespace-only behind the clause is the same answer as nothing behind it,
-    // by the branch above — the trim is what makes the two one case.
-    return { clause, body };
+    if (trimmed.startsWith(`${clause} `)) {
+      const body = trimmed.slice(clause.length + 1).trim();
+      // Whitespace-only behind the clause is the same answer as nothing behind it,
+      // by the branch above — the trim is what makes the two one case.
+      return { clause, body };
+    }
+    // 🆕🆕🆕 **D541 — THE TRAILING BRANCH, KEYED ON THE SAME CLOSED LITERAL LIST.**
+    // Sylveon ex's *"… If 1 of your Pokémon used Angelite during your last turn,
+    // this attack can't be used."* — `censusAttackCorpus.ts` file line 82, **1
+    // sentence / 3 legal printings**, and the FIRST row of this family to print its
+    // gate LAST. MEASURED over all 640 corpus sentences / 1,732 legal units at this
+    // head: this branch claims exactly that one sentence and those three printings,
+    // with ZERO collisions against the leading branch, `splitAttackRequirementClause`
+    // and `splitAttackTrailingClause`.
+    //
+    // 🛑 **THE SPACE IS PART OF THE PATTERN, AT THIS END TOO.** `` ` ${clause}` ``
+    // and not `clause`: the leading branch's `. ` sentence break is what makes this
+    // list a CLAUSE matcher rather than a substring search, and its mirror here is
+    // the space that follows the previous sentence's period. A bare `endsWith`
+    // would claim a string whose last sentence merely ENDS with these bytes
+    // mid-word, and the whole point of the closed literal list (D395's refusal of a
+    // `^You can use this attack only if (.+)\.$` template) is that no parse can go
+    // wrong.
+    //
+    // ⚠️ **NO `body === "" ` CASE HERE.** A string that is the clause alone was
+    // already answered by the equality branch at the top of this loop, which is
+    // position-free by construction — so the only way to reach this line is with a
+    // non-empty body in front, and the `.trim()` is belt.
+    if (trimmed.endsWith(` ${clause}`)) {
+      const body = trimmed.slice(0, trimmed.length - clause.length - 1).trim();
+      return { clause, body };
+    }
   }
   return null;
 }
@@ -34153,10 +34529,23 @@ export function splitAttackGateClause(
     AND THE REVERSAL IS ARGUED RATHER THAN ASSUMED.** That refusal settled
     *"registry row"* on two grounds, and BOTH are re-measured here:
       ① *"a deriver buys ZERO additional legal printings"* — **STILL TRUE, re-measured
-        at this head**: `splitAttackGateClause` claims 6 corpus sentences / 14
-        printings, and all 14 are registry-authored today (17 registry ids carry
-        `attackGate`; the other 3 are Sylveon ex's TRAILING clause, which is not in
-        this table). **This slice claims 0 new printings and says so.** ⚠️ But the
+        at this head**: `splitAttackGateClause` claims 7 corpus sentences / 17
+        printings, and all 17 are registry-authored today (17 registry ids carry
+        `attackGate`). **This slice claims 0 new printings and says so.**
+        🆕🆕🆕 **D541 — THE FIGURES STEP 6/14 → 7/17 AND ONE PARENTHESIS IS
+        WITHDRAWN OUTRIGHT.** It used to read *"(17 registry ids carry `attackGate`;
+        the other 3 are Sylveon ex's TRAILING clause, **which is not in this
+        table**)"*. Sylveon ex's clause IS in this table now — it is its fifth row —
+        so the three printings that were the EXCEPTION to "all registry-authored"
+        have become part of the rule, and ① is true of a strictly larger set than it
+        was written about. ⚠️ **D444's own conclusion is UNCHANGED and that is the
+        point**: the deriver still buys ZERO additional legal printings, because the
+        registry row `SYLVEON_EX_ANGELITE` is KEPT as defence in depth (see
+        `registry.ts`, where the keep-or-retire decision is recorded). What D541 adds
+        is the DERIVATION of a gate the registry already authors — which is why the
+        witness for it has to ride a demonstrator with no registry row, and why
+        `angeliteChosenShuffle.test.ts` §7 pins `registry === derived` on all three
+        real ids. ⚠️ But the
         count is scoped to `legal_standard = 1`, and **the engine is not**: the
         builder ships an `expanded` format keyed on `legal_expanded`
         (`src/features/builder/cards.ts` `legalFlag`), and the block above this

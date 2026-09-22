@@ -188,11 +188,27 @@ describe("§1 — the census D282 priced its refusal against: counts reproduce, 
     // `You can use…`, so not in the 16). **THE PARTITION 10 + 3 IS UNMOVED AND THE
     // TOTAL IS NOT** — which is the arithmetic that says the new row joined from
     // outside both filters rather than from inside one of them.
+    // 🆕🆕🆕 **D541 14 → 17**, and the THREE new printings join from OUTSIDE both of this
+    // section's populations exactly as D395's one did: Sylveon ex's row is a SECOND family
+    // again (`during your LAST turn`, the `barredIf` polarity), it does not open with `If `
+    // (so it cannot be in the 16) and its clause prints LAST (so it is in neither half of
+    // the `leadingIf` filter). **The 10 + 3 partition below is UNMOVED and the TOTAL IS
+    // NOT** — the same arithmetic D395's note describes, a second time.
     const gateAll = corpus().filter(([, s]) => splitAttackGateClause(s) !== null);
-    expect(units(gateAll)).toBe(14);
-    const firstTurn = gateAll.filter(([, s]) => splitAttackGateClause(s)?.body !== "");
+    expect(units(gateAll)).toBe(17);
+    // 🛑 **THE FILTER HAD TO CHANGE AND THAT IS A FINDING, NOT A FIX.** It used to read
+    // `body !== ""`, which was a PROXY for "not the clause-only Miltank row" and worked only
+    // while the gate family had exactly one non-first-turn member. D541 adds a second, whose
+    // body is NOT empty, so the proxy silently admitted it and the 10 + 3 partition would have
+    // read 13 + 3. The family is now keyed on the printed words the three first-turn spellings
+    // SHARE and the two others do not.
+    const firstTurn = gateAll.filter(([, s]) =>
+      (splitAttackGateClause(s)?.clause ?? "").includes("during your first turn"),
+    );
     expect(units(firstTurn)).toBe(13);
     expect(units(firstTurn) - units(licence)).toBe(10);
+    // …and the two non-first-turn rows are exactly the 1 + 3 the total now carries above it.
+    expect(units(gateAll) - units(firstTurn)).toBe(4);
   });
 
   it("S2 — 17 of 713 registry ids carry an `attackGate`, in three kinds", () => {
@@ -203,6 +219,27 @@ describe("§1 — the census D282 priced its refusal against: counts reproduce, 
     // ZERO joined `ATTACK_GATE_CLAUSES`, because Angelite's clause is TRAILING and
     // ships GATE-ONLY. The two surfaces were 13/13 and then 14/14; they are 17/14
     // now, and the gap IS the measurement that no split was authored.
+    // 🆕🆕🆕 **D541 LANDING REVIEW — THE NOTE ABOVE IS WITHDRAWN, AND THIS COMMIT FALSIFIES ALL
+    // THREE OF ITS CLAUSES.** ① *"ZERO joined `ATTACK_GATE_CLAUSES`"* — that closed list carries FIVE
+    // rows now and the FIFTH is Angelite's trailing clause, so a row DID join. ② *"they are 17/14
+    // now"* — the TEXT side of the very "§2 below" this note points at asserts `[7, 17]`, so the two
+    // surfaces are **17/17** and AGREE again. ③ *"the gap IS the measurement that no split was
+    // authored"* — a split WAS authored: it is this slice's TRAILING branch on `splitAttackGateClause`.
+    // ⚠️ **IT WAS TRUE AT EVERY HEAD UP TO D540's AND WENT FALSE JOINTLY WITH THE ARM THAT REFUTES
+    // IT** — the same joint withdrawal the next `it()` records, so it never sat stale (D178/D418:
+    // annotate, never overwrite). **AND WHAT IT CAUGHT SURVIVES, RE-STATED**: the registry side and the
+    // TEXT side are two independent transcriptions of one fact, and their DIFFERENCE is the live
+    // detector of a gate nobody authored a split for — it is pinned at **0** now, by this block's own
+    // `toBe(17)` and §2's `[7, 17]`, rather than read off a gap of 3.
+    // 🛑 **AND THIS IS THE SIXTH SITE OF THE BLOCK-PROSE CLASS, AT THE THIRD UNFINISHED GREP OF ONE
+    // SLICE.** The NEXT `it()` in THIS FILE withdrew the SAME D396 note in place, and `registry.ts:2860`
+    // carried the same claim and WAS withdrawn — two of three code sites swept and the third missed,
+    // THREE LINES BELOW this commit's own `@@ -188,11 +188,27 @@` hunk: the identical "context line on
+    // screen" shape as the fourth site. `git grep -i -F "the gap IS the measurement"` RETURNED FIVE lines
+    // at that head — this one, `docs/workstreams/simulator.md` and `docs/progress.md`'s D396 narrative
+    // (both annotated with this one), and TWO frozen dated records (D396's own session-log entry and its
+    // struck status row) which say what D396 MEASURED and are kept as written. It returns more now,
+    // because each withdrawal QUOTES the sentence it withdraws.
     const ids = registryCardIds();
     // 🆕🆕 D396 — 710 -> **713**: THREE registry keys on ONE program object,
     // Sylveon ex `sv08-086`/`sv08.5-041`/`sv08.5-156` — a bare `attackGate` at index
@@ -246,7 +283,7 @@ describe("§1 — the census D282 priced its refusal against: counts reproduce, 
 });
 
 describe("§2 — the two splits are DISJOINT on the whole catalog", () => {
-  it("gate split claims 5 s / 13 u, requirement split 1 s / 2 u, and BOTH claim 0", () => {
+  it("gate split claims 7 s / 17 u (🆕 D541 6/14 → 7/17; the TITLE had been stale at 5/13 since D395), requirement split 1 s / 2 u, and BOTH claim 0", () => {
     const all = corpus();
     const gate = all.filter(([, s]) => splitAttackGateClause(s) !== null);
     const req = all.filter(([, s]) => splitAttackRequirementClause(s) !== null);
@@ -259,13 +296,26 @@ describe("§2 — the two splits are DISJOINT on the whole catalog", () => {
     // `splitAttackGateClause` is `^`-anchored by policy. All nine readers were run
     // over the stripped body at D396 and every one refuses it, so a trailing
     // stripper would have moved this pair and bought ZERO printings.
+    // 🆕🆕🆕 **D541 — WITHDRAWN, AND IT MOVED THIS PAIR EXACTLY AS IT PREDICTED: [6, 14] →
+    // [7, 17].** The prediction was right about the MECHANISM and wrong about the YIELD only
+    // because the yield was contingent on a body nobody had built. D541 built it
+    // (`returnBenchedChosen`), so the trailing stripper buys **3** printings rather than
+    // zero. ⚠️ The premise was RE-CONFIRMED before it was withdrawn — all 13 live readers
+    // still refused that stripped body at D541's head — so this note went false JOINTLY with
+    // the arm and never sat stale.
     // 🆕🆕 D395 — [5, 13] -> **[6, 14]**, and the disjointness below is UNMOVED:
     // the new row is a clause-only printing, and `splitAttackRequirementClause`'s
     // own list does not contain it.
-    expect([gate.length, units(gate)]).toEqual([6, 14]);
+    expect([gate.length, units(gate)]).toEqual([7, 17]);
     expect([req.length, units(req)]).toEqual([1, 2]);
     // 🛑 THE TRIPWIRE. The day a printing carries both, this reddens by name and
     // the composer question is live again — with a population above zero.
+    // 🆕🆕🆕 **D541 — MEASURED UNMOVED AT [0, 0], AND THE DISJOINTNESS HAD TO BE RE-DERIVED
+    // RATHER THAN INHERITED.** The old argument was *"the two strippers look at OPPOSITE ENDS
+    // of the string"*, which is exactly the property a TRAILING gate branch destroys:
+    // `splitAttackRequirementClause` reads a LEADING does-nothing sentence and the gate
+    // splitter now also reads a TRAILING clause, so for the first time the two COULD both fire
+    // on one printing. They still do not — on this catalog.
     expect([both.length, units(both)]).toEqual([0, 0]);
   });
 
@@ -285,7 +335,11 @@ describe("§2 — the two splits are DISJOINT on the whole catalog", () => {
     expect(siteOrder(`${GATE_BAN} ${SAWK_TAIL}`)).toBe(SAWK_TAIL);
     // 🆕🆕 D395 — 6 -> **7**: the clause-only printing is MOVED by the site (to
     // the empty string), which is the strongest form of "the reader really ran".
-    expect(corpus().filter(([, s]) => siteOrder(s) !== s).length).toBe(7);
+    // 🆕🆕🆕 **D541 7 -> 8** — MEASURED, not predicted. The SENTENCE step is 1 here (the site
+    // rewrites one more printed string) where the PRINTING step at the pins above is 3: this
+    // filter counts distinct corpus sentences, so a number copied from `units(gate)` would
+    // have been wrong by two (D451).
+    expect(corpus().filter(([, s]) => siteOrder(s) !== s).length).toBe(8);
   });
 });
 
@@ -527,8 +581,12 @@ describe("§5 — on a board: the requirement is read BEFORE the split, and that
 // ⚠️ AND EACH REFUSAL IS ATTRIBUTED, NOT COUNTED. A matrix of zeroes is what a
 // suite of four dead functions also produces, so the section below states WHY each
 // stripper refuses the cancel family before it states that it does:
-//   • `splitAttackGateClause` matches a fixed LEADING clause list, and neither
-//     anaphoric printing opens with one;
+//   • `splitAttackGateClause` matches a fixed CLOSED clause list at a SENTENCE
+//     BOUNDARY — LEADING, and since 🆕 **D541** TRAILING as well — and neither
+//     anaphoric printing opens with one OR ends with one. ⚠️ **THE REFUSAL DID NOT
+//     CHANGE WHEN THE POSITION SET DID**, which is why this is a RE-POINT and not a
+//     correction: the list is closed, so a clause that is not ON it cannot match at
+//     either end;
 //   • `splitAttackRequirementClause` is `^If`-anchored — that is the whole gap D380
 //     named and D417 closes, so its refusal here is the slice's own premise;
 //   • `splitAttackTrailingClause` requires its tail to be a sentence
@@ -545,7 +603,7 @@ describe("§6 — FOUR strippers at one seam, and all six pairs are DISJOINT", (
     ["trailing", splitAttackTrailingClause],
   ];
 
-  it("🛑 prices each stripper live off the corpus — 6/14, 1/2, 4/5, 9/18", () => {
+  it("🛑 prices each stripper live off the corpus — 🆕 D541 7/17, 1/2, 4/5, 11/21", () => {
     const priced = STRIPPERS.map(([name, split]) => {
       const rows = corpus().filter(([, s]) => split(s) !== null);
       return [name, rows.length, units(rows)] as const;
@@ -558,8 +616,13 @@ describe("§6 — FOUR strippers at one seam, and all six pairs are DISJOINT", (
     // one anchor plus three rows in one table, so the three older strippers see
     // exactly the strings they saw before. The hand-Energy cost family is 3 sentences
     // / 4 printings.
+    // 🆕🆕🆕 **D541 — the GATE row moves 6/14 → 7/17 and NO OTHER ROW MOVES**, which is the
+    // shape this table exists to show: the widening is a second POSITION on one closed
+    // five-row list, so the three other strippers see exactly the strings they saw before.
+    // ⚠️ The gate row is the one whose SENTENCE and PRINTING steps disagree (1 vs 3) — each
+    // was measured at this site rather than carried across.
     expect(priced).toEqual([
-      ["gate", 6, 14],
+      ["gate", 7, 17],
       ["requirement", 1, 2],
       ["cancel", 4, 5],
       ["trailing", 11, 21], // 🆕🆕 D435 10/19 → 11/21 — the delayed KNOCK-OUT anchor claims the TAIL of one more printed compound (corpus row 113, 2 printings); no stripper changed, and the other three rows stand still for a SECOND slice running. 🆕🆕 D424 9/18 → 10/19 — the two-status pair claims the HEAD of one more printed compound; no stripper changed, and the other three rows stand still.
@@ -635,8 +698,8 @@ describe("§6 — FOUR strippers at one seam, and all six pairs are DISJOINT", (
     // The other two parts are unmoved literals in the same breath, so a widening that
     // had leaked into the gate or the composition path reddens on the PART rather
     // than only on the sum.
-    expect(corpus().filter(([, s]) => fourSiteOrder(s) !== s).length).toBe(22); // 🆕🆕 D435 21 → 22: the four-stripper seam rewrites one more sentence, and the WHOLE step is the trailing term — 7 + 11 + 4 — so a widening that had leaked into the gate or the cancel path reddens on the PART below rather than only on this sum. 🆕🆕 D424 20 → 21: the four-stripper seam now rewrites one more sentence, because the trailing splitter admits one more.
-    expect(corpus().filter(([, s]) => siteOrder(s) !== s).length).toBe(7);
+    expect(corpus().filter(([, s]) => fourSiteOrder(s) !== s).length).toBe(23); // 🆕🆕🆕 D541 22 → 23 — MEASURED: the four-stripper seam rewrites ONE more SENTENCE (the trailing gate branch's only row), where the PRINTING pins above step by 3. The parts below are unmoved literals in the same breath, so a widening that leaked into another stripper reddens on the PART. // 🆕🆕 D435 21 → 22: the four-stripper seam rewrites one more sentence, and the WHOLE step is the trailing term — 7 + 11 + 4 — so a widening that had leaked into the gate or the cancel path reddens on the PART below rather than only on this sum. 🆕🆕 D424 20 → 21: the four-stripper seam now rewrites one more sentence, because the trailing splitter admits one more.
+    expect(corpus().filter(([, s]) => siteOrder(s) !== s).length).toBe(8); // 🆕🆕🆕 D541 7 → 8 — the SAME sentence, seen through the two-stripper pipeline; §2's own copy of this figure steps with it.
     expect(corpus().filter(([, s]) => splitAttackTrailingClause(s) !== null).length).toBe(11); // 🆕🆕 D435 10 → 11. 🆕🆕 D424 9 → 10 — an UNNAMED re-derivation of the trailing-split census; reachable by no grep of the constant.
     expect(corpus().filter(([, s]) => splitAttackCancelClause(s) !== null).length).toBe(4);
   });

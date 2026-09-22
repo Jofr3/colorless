@@ -3722,6 +3722,68 @@ function stepOp(
         // no chooser, so nothing inverts it.
       };
     }
+    case "returnBenchedChosen": {
+      // 🆕🆕🆕 **D541 — THE INVERSION OF THE PARK DIRECTLY ABOVE: the answer names
+      // the bodies that LEAVE.** *"Choose 2 of your opponent's Benched Pokémon.
+      // Shuffle those Pokémon and all attached cards into your opponent's deck."*
+      //
+      // 🛑 **THE SHIELD IS ASKED AT THE PARK, AND THE PRECEDENT IS `returnBenched`
+      // THREE CASES UP — *NOT* `returnBenchedRest` DIRECTLY ABOVE.** The two arms
+      // disagree on purpose and the rule that decides which is right is neither
+      // "always at the park" nor D433's "ask the shield after narrowing": it is
+      // **ASK ABOUT THE BODIES THE EFFECT WILL ACTUALLY REACH.** For
+      // `returnBenchedRest` the pick names the bodies that are SPARED, so the bodies
+      // reached are known only after `applyChoice` takes the complement — asking at
+      // its park would file a false `ATTACK_EFFECT_PREVENTED` for a body nothing was
+      // going to touch. Here the pick IS the effect: every candidate offered is a
+      // body this op will shuffle away, so the shield belongs on the CANDIDATES, on
+      // `returnBenched`'s own precedent (`unshieldedRefs(oppBenchRefs(…))` at park
+      // time).
+      // ⚠️ **GETTING IT WRONG IS SILENT IN BOTH DIRECTIONS AND BOTH ARE DRIVEN**
+      // (`angeliteChosenShuffle.test.ts` §5): too late and the prompt OFFERS a
+      // shielded body, so the player can spend one of their two picks on a body the
+      // writer will then refuse; too early on the other op and a `PREVENTED` row is
+      // filed about nothing.
+      const candidates = unshieldedRefs(state, oppBenchRefs(state, ctx.seat), ctx, events);
+      // §8.6 "DO AS MUCH AS YOU CAN", AND IT IS A CLAMP RATHER THAN A REFUSAL.
+      // 🛑 **NEITHER NEIGHBOUR'S COMPARATOR IS THIS OP'S, AND THE WRONG ONE IS A
+      // RULES DEFECT AND NOT A STYLE.** `returnBenchedRest` guards `<= op.keep`
+      // because its effect is the COMPLEMENT — at a bench of `keep` there is
+      // genuinely NOTHING to shuffle — which is why that guard is correct there and
+      // is NOT a precedent here. This op's effect IS the pick, so
+      // `ptcg-rules.md:333` (§8.6) and `:370-374` (§9.1) apply unsoftened: *"with
+      // fewer legal targets than the number, you choose as many as you can"*. The
+      // printed sentence carries NO *"If you can't, this attack does nothing"*, which
+      // §8.6 requires to be PRINTED before a shortfall may cancel the effect — so with
+      // ONE unshielded opponent Benched Pokémon this attack must shuffle that one.
+      // The precedent is `damageChosen`'s own `const take = Math.min(ceiling,
+      // candidates.length)` (this file, the `§8.6: with fewer candidates than the
+      // printed number, take them all` line) and `payFromHand`'s *"A SHORT hand …
+      // pays what there is … deliberately NOT an exception here"*.
+      // The ONLY early return is at ZERO candidates, where there is no effect to ask
+      // about at all. Driven at bench 0/1/2/3 and at a bench the §11 shield cuts below
+      // the printed number.
+      if (candidates.length === 0) return { done: state };
+      const take = Math.min(op.count, candidates.length);
+      return {
+        park: {
+          kind: "choosePokemonMulti",
+          candidates,
+          // The printed number is EXACT — `min === max` — and §8.6's clamp is the one
+          // thing that moves it, never a widening of the range: a short board asks for
+          // FEWER, never for *"up to"*. `declinable` is the separate printed "you may",
+          // which this sentence does not print.
+          min: take,
+          max: take,
+          declinable: false,
+          note: returnBenchedChosenNote(take),
+        },
+        // NO `decider`: the CONTROLLER answers a pick on the other board — §9.4's
+        // "the target is theirs, the choice is yours", the call `knockOutChosen`
+        // (D416), `damageChosen`'s `opponentAny` arm and `returnBenchedRest` directly
+        // above already make. This sentence prints no chooser, so nothing inverts it.
+      };
+    }
     case "returnSelf":
       // 🆕 D311 — the same unmaking with NO pick in it: the printed subject is
       // "this Pokémon", so the ref comes from `sourceRef` and there is nothing to
@@ -6416,12 +6478,39 @@ export function applyChoice(
       // conventions.md). The §11 question is only ever asked about bodies this effect
       // is actually about to reach; a shielded body among the KEPT three files nothing,
       // because nothing was going to happen to it.
-      return returnBenchedRest(
+      return shuffleBenchedRefsIntoDeck(
         state,
         unshieldedRefs(state, complement, ctx, events),
         ctx,
         events,
       );
+    }
+    case "returnBenchedChosen": {
+      // 🛑🛑 **🆕🆕🆕 D541 — THE RESUMED HALF, AND IT IS THE ONE SITE IN THIS SLICE
+      // THE COMPILER CANNOT SEE.** This `switch` ends in a `default:` that returns
+      // `state` unchanged — *"Synchronous ops never park, so never reach the choice
+      // path"* — so OMITTING this arm TYPECHECKS GREEN and then SILENTLY DISCARDS
+      // the player's answer: the op parks, the prompt is shown, `validateChoice`
+      // accepts the two refs, and the board comes back BYTE-IDENTICAL with no event,
+      // no log row and no census figure moving. D540 measured this at the
+      // neighbouring op (`tsc -b --force` names the `stepOp` arm with TS2366 and says
+      // NOTHING about this one) and the measurement is re-run for this arm rather
+      // than inherited. `angeliteChosenShuffle.test.ts` §4 is the rung that can see
+      // it, and it must drive the PARKED path through `resolveEffect` on a real board
+      // and assert the VICTIM'S BENCH and DECK — never the op's shape (D421).
+      // ⚠️ **A FORCED-PATH RUNG CANNOT KILL IT**, because the forced path never
+      // reaches `applyChoice` at all — which is exactly why §4 parks.
+      if (choice.kind !== "pokemonMulti") return state;
+      // The ANSWER, not the complement — the whole difference between this arm and
+      // the one directly above. NO `unshieldedRefs` here: the shield filtered the
+      // CANDIDATES before the prompt was ever written (see this op's `stepOp` arm for
+      // why that is the right end for THIS op), and `validateChoice` refuses any ref
+      // that is not among them, so a shielded body cannot reach this line.
+      // NO `recordAs`: this op is on neither side of any printed "If you do".
+      // The funnel re-reads the LIVE bench inside itself, so a wire answer whose body
+      // has since left play simply matches nothing — `returnBenched`'s trust level,
+      // verbatim.
+      return shuffleBenchedRefsIntoDeck(state, choice.refs, ctx, events);
     }
     case "opponentSwitchOut":
       // D227 — the resumed half of the case above, and at D228 it is that case
@@ -11125,9 +11214,32 @@ function returnBenched(
   return { ...withSide(state, owner, { ...side, bench, deck }), rngState };
 }
 
-/** 🆕🆕🆕 **D537 — Take EVERY ref in `refs` (the COMPLEMENT of the printed pick)
-    off ONE seat's Bench with every card attached to each of them and shuffle the
-    whole lot into that seat's deck, as ONE shuffle.**
+/** 🆕🆕🆕 **D537 — Take EVERY ref in `refs` off ONE seat's Bench with every card
+    attached to each of them and shuffle the whole lot into that seat's deck, as ONE
+    shuffle.**
+
+    🆕🆕🆕 **D541 — IT NOW SERVES TWO OPS POINTING IN OPPOSITE DIRECTIONS, AND THE
+    RENAME IS THE WHOLE OF WHAT THIS SLICE PAID FOR IT.** It was `returnBenchedRest`
+    and its first line used to read *"(the COMPLEMENT of the printed pick)"*. That
+    became a LIE the moment a second caller arrived: `returnBenchedChosen` hands it
+    the ANSWER, not the complement. 🛑 **THE PRICING REPORT ASKED FOR AN EXTRACTION
+    AND THERE WAS NOTHING TO EXTRACT** — this function already took an arbitrary
+    `readonly PokemonRef[]`, already consulted `op` NOWHERE, and already enforced the
+    single-seat precondition, gathered before splicing, spliced descending and emitted
+    exactly one `SHUFFLE`. **It was already the funnel D433 prescribed**, so D433's
+    prescription was satisfied STRUCTURALLY before this slice began and D541 paid a
+    RENAME instead of an extraction — a price REDUCTION, published as one.
+    ⚠️ **THE OP NAME `"returnBenchedRest"` IS UNTOUCHED, DELIBERATELY.** It is a
+    persisted `EffectOp` member that rides `phase.cont.pendingOp` into a serialized
+    record, and the 40+ test files that mention it mention the OP, not this function.
+    Renaming the op would have been a record-shape change wearing a refactor's
+    clothes. `returnBenchedRestNote` keeps its name for the same reason: it is that
+    op's caption and no other's.
+    ⚠️ **AND THE CALLERS DISAGREE ABOUT WHERE THE §11 SHIELD IS ASKED**, which is not
+    an inconsistency — see each `stepOp` arm's own comment. The rule is *ask about the
+    bodies the effect will actually reach*; for `returnBenchedRest` those are known
+    only AFTER the complement narrows, and for `returnBenchedChosen` they are the
+    candidates themselves.
 
     🛑 **THIS IS NOT A LOOP OVER `returnBenched`, AND THE REASON IS A DEFECT IN
     THAT FUNCTION THAT ONLY A SET-VALUED CALLER CAN SEE.** `returnBenched` removes
@@ -11159,10 +11271,11 @@ function returnBenched(
     which is the board an ascending splice gets wrong.
 
     ⚠️ **ONE `POKEMON_RETURNED` PER BODY (D299's "one event per thing"), in board
-    order, and exactly ONE `SHUFFLE` PLUS ONE RNG DRAW** naming the OWNER rather
+    order — SORTED rather than inherited from the caller's ref order since D541, see
+    the loop — and exactly ONE `SHUFFLE` PLUS ONE RNG DRAW** naming the OWNER rather
     than the actor — `returnBenched`'s own rule, applied once to the whole pile.
     No §8.1 promotion is owed: this op only ever touches a Bench. */
-function returnBenchedRest(
+function shuffleBenchedRefsIntoDeck(
   state: GameState,
   refs: readonly PokemonRef[],
   ctx: EffectContext,
@@ -11191,6 +11304,22 @@ function returnBenchedRest(
   for (const { index } of [...gathered].sort((a, b) => b.index - a.index)) {
     bench = [...bench.slice(0, index), ...bench.slice(index + 1)];
   }
+  // 🆕🆕🆕 **D541 — SORTED INTO BOARD ORDER BEFORE ANYTHING IS EMITTED, AND THE
+  // SECOND CALLER IS WHAT MADE THAT NECESSARY.** This loop used to walk `gathered`
+  // in the order the REFS arrived. For `returnBenchedRest` that was board order by
+  // construction (its refs are `oppBenchRefs(…).filter(…)`, already ascending), so
+  // the doc block's *"in board order"* was true and untestable. `returnBenchedChosen`
+  // hands over `choice.refs` — the ANSWER — whose order is whatever the player
+  // clicked in, and two consequences followed, one cosmetic and one not:
+  //   • the `POKEMON_RETURNED` rows came out in CLICK order, so one log could not be
+  //     compared with another for the same board; and
+  //   • 🛑 `moved` is the pile appended to the deck BEFORE `shuffle`, so the SAME two
+  //     picks answered in a different order produced a DIFFERENT `rngState` and a
+  //     different deck. A player's click order is not a game fact, and a replay that
+  //     recorded the refs in either order must reproduce one board.
+  // Sorting here fixes both at one site and changes NOTHING for the first caller.
+  // `angeliteChosenShuffle.test.ts` §4 answers `{2,0}` and reads back `{0,2}`.
+  gathered.sort((a, b) => a.index - b.index);
   const moved: string[] = [];
   for (const body of gathered) {
     events.push({
@@ -12106,6 +12235,29 @@ function returnBenchedNote(op: Extract<EffectOp, { op: "returnBenched" }>): stri
     whose `min`/`max` are `op.keep` exactly). */
 function returnBenchedRestNote(op: Extract<EffectOp, { op: "returnBenchedRest" }>): string {
   return `Choose ${op.keep} of your opponent's Benched Pokémon to leave in play.`;
+}
+
+/** 🆕🆕🆕 D541 — the `returnBenchedChosen` pick prompt. `returnBenchedNote`'s rule —
+    *the printed card's own words minus its anaphora* — applied to *"Choose 2 of your
+    opponent's Benched Pokémon. Shuffle those Pokémon and all attached cards into your
+    opponent's deck."*: the anaphora is the whole second sentence (*"those Pokémon"*),
+    and what replaces it is the one fact the bare first clause hides — where the named
+    bodies GO.
+    🛑 **THE NUMBER IS THE ONE THE PROMPT WILL ACTUALLY ACCEPT — `min`/`max`, NOT
+    `op.count` — AND THAT IS `snipeNote`'s RULE RATHER THAN A DEVIATION FROM D205.**
+    They are the same number on every board but one: §8.6 CLAMPS a Bench shorter than
+    the printed quantity (or one the §11 shield cuts below it), and a caption reading
+    *"Choose 2"* over a dialog that accepts exactly ONE ref would contradict its own
+    validator — *"the caption must name exactly the set the funnel offers"*, stated at
+    `snipeNote`'s `damagedOnly` parameter and obeyed by `damageChosen`, which passes its
+    own clamped `take`. The PRINTED number still reaches the player through the attack
+    text; the prompt describes the answer it will take.
+    ⚠️ It is the MIRROR of `returnBenchedRestNote` directly above, and the two captions
+    are deliberately unmistakable for each other: *"to leave in play"* versus *"to
+    shuffle into their deck"*. Two prompts with the same shape and opposite meanings
+    are the one place a shared caption would be a genuine defect. */
+function returnBenchedChosenNote(count: number): string {
+  return `Choose ${count} of your opponent's Benched Pokémon to shuffle into their deck.`;
 }
 
 /** The pick prompt's printed sentence — the whole clause, since the op IS the

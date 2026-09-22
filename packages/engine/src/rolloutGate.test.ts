@@ -87,6 +87,21 @@ import {
 // corpus sentences / 14 printings and all 14 are registry-authored (17 registry
 // ids carry `attackGate`; the other 3 are Sylveon ex's TRAILING clause). D444
 // claims **0 new printings** and says so in its own decision row.
+//   🆕🆕🆕 **D541 — THE FIGURES STEP 6/14 → 7/17 AND THE PARENTHESIS IS WITHDRAWN
+//   OUTRIGHT, AND THIS IS THE SECOND OF THE TWO HITS `git grep -F "the other 3 are
+//   Sylveon"` RETURNS** (the first, `effects.ts:34537`, was annotated in the same slice and
+//   this one was not — the SAME unfinished-grep shape D541 had already been caught by once,
+//   at `benchBodySelfScaling.test.ts`; a withdrawn claim is a VALUE, so sweep it to
+//   EXHAUSTION, D539). Sylveon ex's clause IS in the splitter's table now — it is its FIFTH
+//   row, keyed at the TRAILING end of the same closed literal list — so the three printings
+//   that were the EXCEPTION to *"all registry-authored"* are part of the rule, and the
+//   paragraph above is true of a strictly LARGER set than it was written about: the splitter
+//   claims **7 corpus sentences / 17 printings** and all **17** are registry-authored (17
+//   registry ids carry `attackGate`). ⚠️ **D444's CONCLUSION IS UNCHANGED, WHICH IS THE
+//   POINT**: a deriver still buys ZERO additional `legal_standard = 1` printings, because the
+//   registry row `SYLVEON_EX_ANGELITE` is KEPT as defence in depth and `attackGateOf` is
+//   `authored ?? derived`. The bytes above are KEPT as written (annotate provenance, never
+//   overwrite it) — only the parenthesis is withdrawn.
 //
 // **RIGHT, AND PAID RATHER THAN ARGUED AWAY.** The two-key check IS a tautology
 // now — the clause→gate map is TOTAL over `ATTACK_GATE_CLAUSES`, so a split that
@@ -712,9 +727,38 @@ describe("D395 §5 — the clause-only split and the report it silences", () => 
     // expiry date: *"No legal printing is clause-only today (all 13 carry a body),
     // so this is a guard against a future one."* This is that printing.
     expect(splitAttackGateClause(ROLLOUT_GATE)).toEqual({ clause: ROLLOUT_GATE, body: "" });
-    // …and the anchor did NOT loosen with it: the clause anywhere but the front is
-    // still not a split, which is the property the whole split rests on.
-    expect(splitAttackGateClause(`Draw a card. ${ROLLOUT_GATE}`)).toBeNull();
+    // 🆕🆕🆕 **D541 — INVERTED, AND THIS IS THE CLAIM THE SLICE HAD TO GO LOOKING FOR.**
+    // It used to read *"the anchor did NOT loosen with it: the clause anywhere but the front
+    // is still not a split, which is the property the whole split rests on"*, and it was true
+    // until D541 keyed the SAME closed literal list at the TRAILING end. ⚠️ **NOTHING IN THE
+    // REPO COULD FIND THIS BY GREPPING FOR A SENTENCE** — it is a CLAIM about a position, in
+    // a file about a different card, and it is the third such site this slice swept (D539's
+    // rule, D540's seventh-site lesson).
+    // 🛑 **AND THE PROPERTY THE SPLIT *DOES* REST ON IS RE-STATED RATHER THAN DROPPED**: the
+    // clause must sit at a SENTENCE BOUNDARY — `^` plus `. ` in front, or a space plus
+    // end-of-string behind. A clause quoted MID-sentence is still not a split, and that is
+    // what the two rungs below now drive.
+    expect(splitAttackGateClause(`Draw a card. ${ROLLOUT_GATE}`)).toEqual({
+      clause: ROLLOUT_GATE,
+      body: "Draw a card.",
+    });
+    // MID-SENTENCE, both ways: neither a leading nor a trailing match, because neither
+    // boundary is there.
+    expect(splitAttackGateClause(`Draw a card. ${ROLLOUT_GATE} Then, draw a card.`)).toBeNull();
+    expect(splitAttackGateClause(`Draw a card.${ROLLOUT_GATE}`)).toBeNull();
+    expect(splitAttackGateClause(`${ROLLOUT_GATE}x`)).toBeNull();
+    // 🛑 **AND THE HONEST LIMIT OF "SENTENCE BOUNDARY", STATED RATHER THAN HIDDEN.** The
+    // boundary the trailing branch tests for is a SPACE, exactly as the leading branch's is a
+    // space after the clause — so a string ending `"Draw " + clause` DOES split, with the body
+    // `"Draw"`. That is not new looseness: the leading branch has always answered
+    // `clause + " x"` with `body: "x"`. Both are tolerated for the same reason — the caller
+    // may only split when `attackGateOf` already CARRIES this gate at this index, so no
+    // printed string reaches the splitter that has not already been accounted for.
+    expect(splitAttackGateClause(`Draw ${ROLLOUT_GATE}`)).toEqual({
+      clause: ROLLOUT_GATE,
+      body: "Draw",
+    });
+    expect(splitAttackGateClause(`${ROLLOUT_GATE} x`)).toEqual({ clause: ROLLOUT_GATE, body: "x" });
     expect(splitAttackGateClause("")).toBeNull();
   });
 
