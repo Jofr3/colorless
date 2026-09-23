@@ -2146,13 +2146,15 @@ export function lockedAttackIndexes(state: GameState, pokemon: InPlayPokemon): n
 }
 
 /** §8.5/§11 (D155) — the HP an attack-installed PER-ATTACK BUFF adds to the
-    damage `pokemon`'s attack at `index` does right now, or 0. The ONE read of
-    `InPlayPokemon.boostedAttack`, and `lockedAttackIndex`'s twin one function up
-    on every axis but the RETURN and the arity:
+    damage `pokemon`'s attack at `index` does right now, or 0. ~~The ONE read of
+    `InPlayPokemon.boostedAttack`~~ — 🆕🆕 D544: the one read of the record's
+    ADDITIVE `amount`; its BASE-SET key is read by `boostedAttackBase` directly
+    below, the field's second reader — and `lockedAttackIndex`'s twin one function
+    up on every axis but the RETURN and the arity:
 
     | | `lockedAttackIndex` (D154) | this (D155) |
     |---|---|---|
-    | Record   | `{ turn, attackIndex }`   | `{ turn, attackIndex, amount }` |
+    | Record   | `{ turn, attackIndex }`   | `{ turn, attackIndex, amount, base? }` |
     | Window   | `state.turn + 2`          | `state.turn + 2`               |
     | Asks     | WHICH attack is barred    | HOW MUCH this attack gains     |
     | Read by  | the §8 gate + 2 projections | the §8.5 main hit, once      |
@@ -2162,20 +2164,36 @@ export function lockedAttackIndexes(state: GameState, pokemon: InPlayPokemon): n
     readers are two functions rather than one generic. That one returns an INDEX
     because two of its three callers build rows by mapping over the whole `attacks`
     array, so a per-index predicate would re-read one field N times. This one has
-    exactly ONE caller, which already holds the declared index and wants a number
+    exactly ONE caller (and so, since D544, does its base-set sibling below — the
+    SAME caller's `parseAttackDamage` line), which already holds the declared index and wants a number
     to add; returning `{ index, amount } | null` would make that caller compare an
     index the reader could have compared itself. Same field shape, opposite access
     pattern, opposite signature — decided by the call sites both times.
 
-    ⚠️ ONE READ SITE, AND THE BOUNDARY IS THE ADDRESS RATHER THAN A CHOICE. D149's
+    ⚠️ ONE READ SITE (per key: `attack.ts`'s main hit reads `amount` here and, since
+    D544, `base` through `boostedAttackBase` at its `parseAttackDamage` line), AND
+    THE BOUNDARY IS THE ADDRESS RATHER THAN A CHOICE. D149's
     debuff reaches all FOUR pre-W/R sites because it is a fact about a BODY; this
     is a fact about a DECLARATION, and only `attack.ts`'s main hit knows which
     attack was declared — `EffectContext` carries `seat`, `sourceUid` and
     `invokedBy` and no index, so the interpreter's three damage sites (`snipeActive`,
-    `spreadDamage`, `placeSnipe`'s `deals` arm) structurally cannot ask. Unreachable
+    `spreadDamage`, `placeSnipe`'s `deals` arm) structurally cannot ask. ~~Unreachable
     today rather than merely unbuilt: the one printing's boosted attack does its
     whole damage through the printed `damage` field and derives no damage-dealing
-    op at all. A printing that boosts an attack whose damage comes from an OP would
+    op at all.~~ 🆕🆕 D544 — FOUR legal sentences write this record, 8 printings
+    (measured by deriving `legalAttackCorpus()`): THREE ADDITIVE — Echoed Voice
+    "80 more" (`censusAttackCorpus.ts:165`, 3: Meloetta ex `sv10.5b-044`/`-159`/
+    `-167`, D277's registry rows), Meteor Mash (`:167`, 2), Tornado Rush (`:168`,
+    1) — and ONE BASE-SET, Hyper Fang (`:166`, 2). (D155's Seismitoad `sv03-052`
+    prints "100 more" and is a local-D1 printing, not a legal-corpus row.) The
+    argument is MEASURED for the three Meloetta ex printings — Echoed Voice is the
+    card's only attack, printed 30, and its one sentence derives `boostAttack` and
+    no damage-dealing op — and is UNMEASURED for the other five (Meteor Mash ×2,
+    Tornado Rush ×1, Hyper Fang ×2), whose names no registry, `catalogManifest`
+    or `testFixtures` id carries. Both readers are asked only at `attack.ts`'s main
+    hit, so an op-borne part of any of those attacks' damage, if there is one,
+    would see neither the buff nor the override. A printing that boosts an attack
+    whose damage comes from an OP would
     earn `EffectContext` an attack index — written down here so the next reader
     does not have to re-derive why the count differs from D149's.
 
@@ -2199,6 +2217,35 @@ export function boostedAttackDamage(
   return boost === null || boost.turn !== state.turn || boost.attackIndex !== index
     ? 0
     : boost.amount;
+}
+
+/** 🆕🆕 §8.5 (D544) — the printed BASE damage an attack-installed BASE-SET
+    override gives `pokemon`'s attack at `index` right now, or `null` when none is
+    live ("During your next turn, this Pokémon's Hyper Fang attack's base damage is
+    240.", `censusAttackCorpus.ts:166`, 2 legal printings). The SECOND reader of
+    `InPlayPokemon.boostedAttack`, and `boostedAttackDamage`'s sibling on every
+    axis but the key and the RETURN: the same turn test and the same index test,
+    written out again rather than shared so a mutant that drops either is killed
+    at THIS reader on its own (the window and the address are the rule).
+
+    `null` AND NOT 0 FOR "NO OVERRIDE", because 0 is a base a printing could in
+    principle name and the caller spells the fallback as `?? printedBase` — so
+    "absent" and "zero" must not be one value. A record without `base` (every
+    additive install, and every record a v30 deploy wrote) answers `null`.
+
+    ONE CALLER, `attack.ts`'s `parseAttackDamage` line — the ONLY caller of that
+    parser — so the override reaches `scaledBase`, every reading-borne program's
+    base and `DAMAGE_DEALT.base` at once, and Weakness/Resistance apply AFTER it
+    (§8.5). Like the additive reader it is immune to §9: it reads an attack
+    INSTALLATION, not `passivesOf`. */
+export function boostedAttackBase(
+  state: GameState,
+  pokemon: InPlayPokemon,
+  index: number,
+): number | null {
+  const boost = pokemon.boostedAttack;
+  if (boost === null || boost.turn !== state.turn || boost.attackIndex !== index) return null;
+  return boost.base ?? null;
 }
 
 /** §8.5 (D192) — does `pokemon` ATTACK through "any effects on your opponent's

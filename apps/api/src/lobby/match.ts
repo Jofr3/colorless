@@ -1174,6 +1174,65 @@ export interface MatchRecord {
     prompt kind, no choice kind, no `route` value, no error code, no `CardFilter` member,
     no registry row, no `packages/schema` byte and no `redact.ts` byte.
 
+    🆕🆕🆕 **STAYS 30 AT D544 — D456's ARGUMENT, RUN AGAIN AT A SECOND PERSISTED ADDRESS
+    AND WRITTEN BESIDE IT FOR THAT REASON.** (It sits here rather than after D501's block
+    below because it is D456's test applied, not D501's.)
+
+    🛑 **THE ADDRESS, NAMED FIRST (D456's rule).** `BoostedAttack` gains `base?: number`
+    (types.ts) — the printed *"During your next turn, this Pokémon's Hyper Fang attack's
+    base damage is 240."* (`censusAttackCorpus.ts` file line 166, 2 legal printings). The
+    record is `InPlayPokemon.boostedAttack`, inside `PlayerSide.{active, bench[]}`, inside
+    `GameState.players`, inside `MatchRecord.state` — **PERSISTED ON EVERY SAVE with no
+    park in front of it**, so the reachability and serialized-alphabet arguments are
+    inapplicable and are not used. The only discriminator is this block's own: *does the
+    OLD byte string still mean what it meant.*
+
+      · **D441 — the ABSENT key still means what a v30 writer meant.** Every v30
+        `boostedAttack` is ADDITIVE (`{turn, attackIndex, amount}`, D155's template —
+        three legal sentences, Echoed Voice, Meteor Mash and Tornado Rush, measured by
+        deriving `legalAttackCorpus()`), and absent `base` reads as "no override" — `boostedAttackBase` answers
+        `null` and `attack.ts` falls back to the printed base. Exactly the v30 meaning.
+      · **D434 — the rest is OLD.** `turn`, `attackIndex` and `amount` were all written
+        by the v30 deploy; the new key sits beside three old ones.
+      · **D456 — the LOSS is detectable in the bytes and inert on the board.** A base
+        install writes `{turn, attackIndex, amount: 0, base}`; a build that drops `base`
+        leaves `{turn, attackIndex, amount: 0}`, which pays `+0` on the printed base —
+        INERT, not D435's `NaN`. And that residue is **UNAUTHORABLE by the surviving
+        path**: arm 24b's `amount >= 1` guard (effects.ts, `SELF_ATTACK_BOOST`'s arm) is
+        the sole producer of an ADDITIVE `boostAttack`, and `registry.ts` has none, so no
+        additive install can write `amount: 0`. A reader who finds that byte string has
+        found the dropped key. Driven over SERIALIZED BYTES in three directions, with
+        every producer measured, in `attackBaseOverride.test.ts` §10.
+      · 🛑 **THE ONE EXCEPTION, NAMED RATHER THAN HIDDEN**: the CONSTRUCTED mixed-mode
+        composite `{amount > 0, base}` — a base and an additive install merged on one
+        address — does NOT have that property: stripped, it leaves an ordinary-looking
+        additive record and pays the printed base plus the bonus. It is unreachable off
+        any printing — the ground is the turn structure, not a count of the four legal
+        sentences that write this record (a declared attack ends the turn, and two
+        installs merge only when they name the same index for the same stamped turn) —
+        which is why it is priced here and pinned (§9 of the same suite)
+        rather than designed around.
+
+    ⚠️ **WHY D155's OWN REFUSAL (above, *"make the key OPTIONAL … or hang the amount off
+    D154's `lockedAttack`"*) DOES NOT TRANSFER.** It refused making the WHOLE field
+    optional — a sibling of six required durated fields read through `=== null` — and a
+    record SHARED with `lockedAttack`, whose §8 gate REFUSES the index this one pays.
+    Neither is what D544 does: `boostedAttack` stays REQUIRED and null-read (the null
+    reader is untouched), the new key is optional INSIDE a present record, and BOTH modes
+    PAY the named attack — the §8 gate never reads this record at all. The refusal's
+    grounds are about the field and the gate; this key touches neither.
+
+    🛑 **WHAT WOULD REVERSE THIS (D422).** A second base-set producer with no
+    `amount >= 1` guard on its additive side (so `{turn, attackIndex, amount: 0}` became
+    authorable and the loss stopped being detectable), or a PRINTING that reaches the
+    mixed-mode composite (so the exception above became a real board). Either one makes
+    this a 30 → 31 bump.
+
+    ⚠️ Nothing else persisted moved: `EffectOp.boostAttack` gains an optional
+    `base?: true` (D125/D334's widening — the op never parks, so it never reaches
+    `phase.cont`), and `GameEvent.ATTACK_BOOSTED` gains `base?: true` (a `GameEvent` is not
+    persisted; D141). No schema, redact, projection or client byte.
+
     🆕🆕🆕 **29 → 30 AT D501 — AND IT IS THE FIRST FIELD EVER ADDED TO
     `SpecialConditions`, WHICH IS A NESTED STRUCTURE AT D386's ADDRESS RATHER THAN
     D386's ADDRESS ITSELF.** D501 gave `InPlayPokemon.conditions` a required

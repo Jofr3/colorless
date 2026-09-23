@@ -6205,7 +6205,7 @@ export const MUTANTS: Mutant[] = [
     // CORPUS QUOTES** (D414/D415), so a value-keyed sweep over `toBe("0.391.0")` cannot
     // see it — this row's `find` spells the DECLARATION, not an assertion. Run
     // `precheck` after every version bump, not after the sweep tells you.
-    find: 'export const engineVersion = "0.428.0";',
+    find: 'export const engineVersion = "0.429.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -28538,8 +28538,15 @@ export const MUTANTS: Mutant[] = [
     //    ROW LEAVES THROUGH THE READER SUMMAND**, so `rawUnbuiltSentences` and the reader arm move
     //    WITH this constant. `precheck` reported the `find` at 0x on the edit round that moved the
     //    constant, exactly as it has since D495.
-    find: "  attack: 1671,",
-    replace: "  attack: 1669,",
+    // 🆕🆕🆕 D544 - RE-TRANSCRIBED AGAIN, 1671 -> 1673 (and the replace 1669 -> 1671), off the
+    //    bytes at `censusAtHead.test.ts:464` rather than reconstructed (D540/D542). ⚠️ **THE STEP
+    //    IS 2 AND THE SENTENCE STEP IS 1** - D544's row (corpus FILE LINE 166, Hyper Fang) is
+    //    1 sentence / **2** legal printings, the SAME shape as D543's, which is the case where a
+    //    number copied from the previous slice is right BY ACCIDENT, so it was MEASURED off the
+    //    live census (`SUBMAX=12 bun scripts/residue-census.ts`: reader 568/1619) all the same.
+    //    The row leaves through the READER summand. `replace` is the GENUINE pre-slice value.
+    find: "  attack: 1673,",
+    replace: "  attack: 1671,",
     expectKilledBy: [
       "packages/engine/src/censusAtHead.test.ts",
     ],
@@ -33810,5 +33817,164 @@ export const MUTANTS: Mutant[] = [
     find: "      const allDiscardable = discardableTools(state, ctx.seat);\n      const bodies: PokemonRef[] = [];\n      for (const entry of allDiscardable) {\n        if (!bodies.some((ref) => refKeyOf(ref) === refKeyOf(entry.from))) bodies.push(entry.from);\n      }\n      const allowed = new Set(unshieldedRefs(state, bodies, ctx, events).map(refKeyOf));",
     replace: "      const allDiscardable = discardableTools(state, ctx.seat);\n      const bodies: PokemonRef[] = [];\n      for (const entry of allDiscardable) {\n        if (!bodies.some((ref) => refKeyOf(ref) === refKeyOf(entry.from))) bodies.push(entry.from);\n      }\n      const keep = new Set(bodies.map(refKeyOf));\n      const allowed = new Set(\n        unshieldedRefs(state, oppAnyRefs(state, ctx.seat), ctx, events)\n          .map(refKeyOf)\n          .filter((key) => keep.has(key)),\n      );",
     expectKilledBy: ["packages/engine/src/toolDiscardChosen.test.ts"],
+  },
+  // ── D544 — THE NAMED ATTACK'S BASE DAMAGE, OVERRIDDEN FOR ONE WINDOW (SUBST-11 Hyper Fang).
+  //    Seventeen rows, one per claim: the anchor's two ends and two apostrophe slots, the
+  //    arm's guard and rider, `stepOp`'s pass-through (the site `tsc` cannot see, D421),
+  //    the installer's `amount: 0` and its key, the reader's window and address, the one
+  //    read site and the pre-program hit, the fieldwise merge and its early return, and
+  //    the row's rider and its wording. All probed UNDECLARED first (D525(3)).
+  {
+    id: "D544-anchor-loses-caret",
+    decision: "D544",
+    what: "🛑 **THE LEADING `^` GOES AND THE ANCHOR STARTS CLAIMING SUFFIXES.** *“Xyzzy. During your next turn, this Pokémon's Hyper Fang attack's base damage is 240.”* would derive a base-set install for a card whose LEADING clause the engine silently dropped — a program authored for half a sentence. §1's `Xyzzy. ${SENTENCE}` rung is the one board that sees it; no printing does, which is why it is constructed.",
+    file: "packages/engine/src/effects.ts",
+    find: "  /^During your next turn, this Pokémon['’]s (.+?) attack['’]s base damage is (\\d+)\\.$/;",
+    replace: "  /During your next turn, this Pokémon['’]s (.+?) attack['’]s base damage is (\\d+)\\.$/;",
+    expectKilledBy: ["packages/engine/src/attackBaseOverride.test.ts"],
+  },
+  {
+    id: "D544-anchor-loses-terminator",
+    decision: "D544",
+    what: "🛑 **THE TRAILING `$` GOES AND THE ANCHOR STARTS CLAIMING PREFIXES** — the D543 row's shape one anchor over. A trailing clause after *“…base damage is 240.”* would be read as nothing at all while the install still lands. Killed by §1's `${SENTENCE} Xyzzy.` rung.",
+    file: "packages/engine/src/effects.ts",
+    find: "  /^During your next turn, this Pokémon['’]s (.+?) attack['’]s base damage is (\\d+)\\.$/;",
+    replace: "  /^During your next turn, this Pokémon['’]s (.+?) attack['’]s base damage is (\\d+)\\./;",
+    expectKilledBy: ["packages/engine/src/attackBaseOverride.test.ts"],
+  },
+  {
+    id: "D544-possessive-slot-narrowed",
+    decision: "D544",
+    what: "⚠️ **THE FIRST APOSTROPHE SLOT (“Pokémon's”) LOSES ITS CURLY SPELLING.** A punctuation-normalising re-ingest that curls only the possessive would drop the sentence back to LOUD with every straight-quoted board still green (D136/D137). Killed by §1's per-slot rung, which curls each slot independently.",
+    file: "packages/engine/src/effects.ts",
+    find: "  /^During your next turn, this Pokémon['’]s (.+?) attack['’]s base damage is (\\d+)\\.$/;",
+    replace: "  /^During your next turn, this Pokémon[']s (.+?) attack['’]s base damage is (\\d+)\\.$/;",
+    expectKilledBy: ["packages/engine/src/attackBaseOverride.test.ts"],
+  },
+  {
+    id: "D544-attack-slot-narrowed",
+    decision: "D544",
+    what: "⚠️ **THE SECOND APOSTROPHE SLOT (“attack's”) LOSES ITS CURLY SPELLING** — the slot this anchor has and `SELF_ATTACK_BOOST` does not, so no inherited rung covers it. Killed by §1's per-slot rung.",
+    file: "packages/engine/src/effects.ts",
+    find: "  /^During your next turn, this Pokémon['’]s (.+?) attack['’]s base damage is (\\d+)\\.$/;",
+    replace: "  /^During your next turn, this Pokémon['’]s (.+?) attack[']s base damage is (\\d+)\\.$/;",
+    expectKilledBy: ["packages/engine/src/attackBaseOverride.test.ts"],
+  },
+  {
+    id: "D544-zero-guard-opened",
+    decision: "D544",
+    what: "⚠️ **A PRINTED “base damage is 0” STOPS BEING LOUD.** The arm would install a record whose whole effect is to ZERO the named attack and announce it — on a sentence no card prints. 24b's guard verbatim; killed by §1's zero rung.",
+    file: "packages/engine/src/effects.ts",
+    find: "  match = SELF_ATTACK_BASE_SET.exec(effect);\n  if (match !== null) {\n    const amount = Number(match[2]);\n    if (amount >= 1) {",
+    replace: "  match = SELF_ATTACK_BASE_SET.exec(effect);\n  if (match !== null) {\n    const amount = Number(match[2]);\n    if (amount >= 0) {",
+    expectKilledBy: ["packages/engine/src/attackBaseOverride.test.ts"],
+  },
+  {
+    id: "D544-arm-drops-the-rider",
+    decision: "D544",
+    what: "🛑 **THE ARM EMITS THE ADDITIVE OP.** The sentence derives `boostAttack { amount: 240 }` with no rider, so Hyper Fang does its printed base PLUS 240 (80 + 240 = 320 on the demonstrator) and the log says *“does 240 more damage”*. Killed by §1's `toStrictEqual` and by every §3 board.",
+    file: "packages/engine/src/effects.ts",
+    find: "        { op: \"boostAttack\", attack: foldApostrophes(match[1] ?? \"\"), amount, base: true },",
+    replace: "        { op: \"boostAttack\", attack: foldApostrophes(match[1] ?? \"\"), amount },",
+    expectKilledBy: ["packages/engine/src/attackBaseOverride.test.ts", "packages/engine/src/perAttackBuff.test.ts"],
+  },
+  {
+    id: "D544-step-drops-the-rider",
+    decision: "D544",
+    what: "🛑 **`stepOp` DROPS `op.base` — THE SITE `tsc` CANNOT SEE (D421).** The rider is optional on the op and the installer's parameter is `true | undefined`, so passing `undefined` TYPECHECKS; the derivation is right, the op is right, and the board pays 80 + 240. Killed by §2's record pin and §3's boards.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      return { done: boostAttack(state, op.attack, op.amount, op.base, ctx, events) };",
+    replace: "      return { done: boostAttack(state, op.attack, op.amount, undefined, ctx, events) };",
+    expectKilledBy: ["packages/engine/src/attackBaseOverride.test.ts"],
+  },
+  {
+    id: "D544-installer-writes-amount-beside-base",
+    decision: "D544",
+    what: "🛑 **THE BASE RECORD CARRIES THE NUMBER IN BOTH FIELDS.** The additive reader then pays +240 ON TOP of the 240 base — 480 on a board with no Weakness — which is exactly why the installer writes `amount: 0` beside `base`: the unedited additive reader pays +0 BY CONSTRUCTION. Killed by §2's record pin and §3.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "    base === true ? { turn, attackIndex, amount: 0, base: amount } : { turn, attackIndex, amount };",
+    replace: "    base === true ? { turn, attackIndex, amount, base: amount } : { turn, attackIndex, amount };",
+    expectKilledBy: ["packages/engine/src/attackBaseOverride.test.ts"],
+  },
+  {
+    id: "D544-installer-omits-base-key",
+    decision: "D544",
+    what: "🛑 **THE BASE RECORD LOSES ITS KEY AT THE WRITER** — the in-process twin of the §10 LOSS direction. The record reads `{turn, attackIndex, amount: 0}`, which is inert (+0 on the printed base), so the card silently does 80 where it printed 240. Killed by §2 and §3.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "    base === true ? { turn, attackIndex, amount: 0, base: amount } : { turn, attackIndex, amount };",
+    replace: "    base === true ? { turn, attackIndex, amount: 0 } : { turn, attackIndex, amount };",
+    expectKilledBy: ["packages/engine/src/attackBaseOverride.test.ts"],
+  },
+  {
+    id: "D544-reader-ignores-turn",
+    decision: "D544",
+    what: "🛑 **THE BASE READER FORGETS THE WINDOW.** The override is live on every turn the record survives — the opponent's turn in between (unobservable there, the holder cannot attack) and every turn AFTER the window, where Hyper Fang keeps doing 240 forever. Killed by §4's turn-after rung, which reads both the reader and the hit.",
+    file: "packages/engine/src/continuous.ts",
+    find: "  if (boost === null || boost.turn !== state.turn || boost.attackIndex !== index) return null;\n  return boost.base ?? null;",
+    replace: "  if (boost === null || boost.attackIndex !== index) return null;\n  return boost.base ?? null;",
+    expectKilledBy: ["packages/engine/src/attackBaseOverride.test.ts"],
+  },
+  {
+    id: "D544-reader-ignores-index",
+    decision: "D544",
+    what: "🛑 **THE BASE READER FORGETS THE ADDRESS.** Every attack on the body is overridden, so the 20-damage Nibble does 240 in the window. The sentence names ONE attack; the per-attack family's whole design (D154/D155) is that the record is addressed. Killed by §4's different-index rung.",
+    file: "packages/engine/src/continuous.ts",
+    find: "  if (boost === null || boost.turn !== state.turn || boost.attackIndex !== index) return null;\n  return boost.base ?? null;",
+    replace: "  if (boost === null || boost.turn !== state.turn) return null;\n  return boost.base ?? null;",
+    expectKilledBy: ["packages/engine/src/attackBaseOverride.test.ts"],
+  },
+  {
+    id: "D544-attack-ignores-override",
+    decision: "D544",
+    what: "🛑 **THE READ SITE IS NEVER ASKED.** The op derives, the record lands, the row renders — and Hyper Fang does its printed 80, because the ONE `parseAttackDamage` line never consults the record. Nothing but a board can see it. Killed by every §3 board.",
+    file: "packages/engine/src/attack.ts",
+    find: "  const base = boostedAttackBase(next, attackerBody, index) ?? printedBase;",
+    replace: "  const base = printedBase;",
+    expectKilledBy: ["packages/engine/src/attackBaseOverride.test.ts"],
+  },
+  {
+    id: "D544-override-misses-the-pre-program-hit",
+    decision: "D544",
+    what: "⚠️ **THE OVERRIDE REACHES THE READING-BORNE PROGRAMS BUT NOT THE §8.5 MAIN HIT.** `scaledBase` falls back to the printed number, so a plain Hyper Fang still does 80 while any program that takes `base` would see 240 — the two halves of one attack disagreeing about its base. The reason the override is applied at the `parseAttackDamage` line (the one site both read) and not at either consumer. Killed by §3.",
+    file: "packages/engine/src/attack.ts",
+    find: "    coinFlip?.kind === \"perHeadsThenThreshold\"\n      ? 0\n      : base;",
+    replace: "    coinFlip?.kind === \"perHeadsThenThreshold\"\n      ? 0\n      : printedBase;",
+    expectKilledBy: ["packages/engine/src/attackBaseOverride.test.ts"],
+  },
+  {
+    id: "D544-merge-overwrites",
+    decision: "D544",
+    what: "🛑 **THE SAME-ADDRESS MERGE OVERWRITES INSTEAD OF TAKING THE FIELDWISE MAX.** A later additive install silently DELETES a live base override, and a smaller base replaces a larger one — the \"less than one of them printed\" the installer's rule forbids. Unreachable off any printing; killed by §9's constructed merge rungs in both install orders.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "        amount: Math.max(existing.amount, installed.amount),\n        ...(mergedBase === undefined ? {} : { base: mergedBase }),",
+    replace: "        amount: installed.amount,\n        ...(installed.base === undefined ? {} : { base: installed.base }),",
+    expectKilledBy: ["packages/engine/src/attackBaseOverride.test.ts"],
+  },
+  {
+    id: "D544-early-return-ignores-base",
+    decision: "D544",
+    what: "🛑 **THE IDEMPOTENCE CHECK COMPARES ONE FIELD.** An additive record followed by a base install on the same address merges to a NEW record whose `amount` is unchanged — so the early return fires and the base is dropped with no row. Killed by §9's additive-then-base rung, which is why the early return compares BOTH fields.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  if (stacking && merged.amount === existing.amount && merged.base === existing.base) {",
+    replace: "  if (stacking && merged.amount === existing.amount) {",
+    expectKilledBy: ["packages/engine/src/attackBaseOverride.test.ts"],
+  },
+  {
+    id: "D544-event-drops-the-rider",
+    decision: "D544",
+    what: "⚠️ **THE ROW LOSES THE RIDER AND THE LOG LIES.** The board is identical; the row renders *“d544-fang's Hyper Fang does 240 more damage next turn”* — false by the whole printed base (D421). Killed by §2's row pin and §8's rendered text.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "    ...(base === true ? { amount: merged.base ?? amount, base: true as const } : { amount: merged.amount }),",
+    replace: "    ...(base === true ? { amount: merged.base ?? amount } : { amount: merged.amount }),",
+    expectKilledBy: ["packages/engine/src/attackBaseOverride.test.ts"],
+  },
+  {
+    id: "D544-log-branch-deleted",
+    decision: "D544",
+    what: "⚠️ **THE BASE-SET WORDING IS DELETED AND EVERY ROW FALLS TO THE ADDITIVE ONE.** The event carries the rider and `log.ts` ignores it, so a player reads *“does 240 more damage next turn”*. Killed by §8's rendered text under both seats.",
+    file: "packages/engine/src/log.ts",
+    find: "      if (event.base === true) {",
+    replace: "      if (false) {",
+    expectKilledBy: ["packages/engine/src/attackBaseOverride.test.ts"],
   },
 ];

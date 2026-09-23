@@ -307,6 +307,29 @@ describe("the printed datum — re-queried, not inherited", () => {
       ),
     ).toEqual([{ op: "reduceDamage", amount: 30 }]);
   });
+
+  it("🆕🆕 D544 — the BASE-SET sibling at the same address is disjoint in both directions", () => {
+    // `SELF_ATTACK_BASE_SET` (effects.ts) reads "…attack's base damage is N." into
+    // the SAME op with a `base: true` rider. The two anchors must never reach each
+    // other's sentence: this one's additive output carries NO `base` key at all
+    // (`toStrictEqual`, so a `base: undefined` fails too), and the base-set
+    // sentence never derives without the rider.
+    expect(deriveAttackEffect(ECHOED_VOICE)).toStrictEqual([
+      { op: "boostAttack", attack: "Echoed Voice", amount: 100 },
+    ]);
+    expect(
+      deriveAttackEffect(
+        "During your next turn, this Pokémon's Echoed Voice attack's base damage is 100.",
+      ),
+    ).toStrictEqual([{ op: "boostAttack", attack: "Echoed Voice", amount: 100, base: true }]);
+    // …and a printed ZERO on the additive sentence, which falls THROUGH arm 24b's
+    // guard to the arm beneath it, is still refused there rather than read as a set.
+    expect(
+      deriveAttackEffect(
+        "During your next turn, this Pokémon's Echoed Voice attack does 0 more damage (before applying Weakness and Resistance).",
+      ),
+    ).toBeNull();
+  });
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -350,8 +373,15 @@ describe("the install — the address is resolved once, by the helper D154 wrote
   });
 
   it("installs NOTHING when the printed name matches no attack on the holder", () => {
-    // Unreachable off the one printing — it names its own attack — so it is a
-    // CONSTRUCTED case and it is pinned as one. A bonus on an attack the card does
+    // ~~Unreachable off the one printing — it names its own attack~~ — 🆕🆕 D544:
+    // FOUR legal sentences write this record (measured by deriving
+    // `legalAttackCorpus()`: three ADDITIVE, Echoed Voice ×3, Meteor Mash ×2 and
+    // Tornado Rush ×1, and one BASE-SET, Hyper Fang ×2). Unreachable off the three
+    // Meloetta ex Echoed Voice printings (`sv10.5b-044`/`-159`/`-167`, D277), whose
+    // only attack IS the named one; UNMEASURED for the other five, since no
+    // registry, `catalogManifest` or `testFixtures` id carries Meteor Mash, Tornado
+    // Rush or Hyper Fang to say whether the card prints an attack of that name —
+    // so it is a CONSTRUCTED case and it is pinned as one. A bonus on an attack the card does
     // not have is inert, and the honest representation of inert is ABSENCE: no
     // record, and NO ROW, because a row would tell a player about a payoff that
     // cannot arrive (D140/D146).
@@ -377,7 +407,11 @@ describe("the install — the address is resolved once, by the helper D154 wrote
   });
 
   it("a re-install that says the SAME thing is silent; a larger amount wins", () => {
-    // Unreachable off the one printing (an attack ends the turn and the window is
+    // Unreachable off ~~the one printing~~ ANY printing (🆕🆕 D544: FOUR legal sentences
+    // write this record — three additive, one base-set, measured by deriving
+    // `legalAttackCorpus()` — and the ground is the turn structure, not the count;
+    // the base-set merge is pinned in `attackBaseOverride.test.ts` §9;
+    // an attack ends the turn and the window is
     // the holder's own next turn), so this is constructed — and it is the case
     // that separates this op's merge from `preventAttackUse`'s. That record has no
     // number, so a re-install is a bare early return; this one carries one, so the

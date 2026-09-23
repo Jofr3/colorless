@@ -868,7 +868,19 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
     // in front of them reads back the words on it — and the number is in the
     // wording because the number is the rule: the row it sets up on the next turn
     // reports the same figure in `DAMAGE_DEALT.bonus`.
+    //
+    // 🆕🆕 D544 — THE BASE-SET MODE HAS ITS OWN WORDING, AND THE BRANCH IS A
+    // CORRECTNESS FIX RATHER THAN A PREFERENCE: `amount` carries the BASE number on
+    // that row ("…Hyper Fang attack's base damage is 240."), so the additive wording
+    // would read "does 240 more damage next turn" — false by the whole printed base
+    // (D421). The verb again keeps the printed shape: "'s base damage is N".
     case "ATTACK_BOOSTED":
+      if (event.base === true) {
+        return row(event.seat, [
+          strong(cardName(state, event.uid)),
+          plain(`'s ${event.attack}'s base damage is ${event.amount} next turn`),
+        ]);
+      }
       return row(event.seat, [
         strong(cardName(state, event.uid)),
         plain(`'s ${event.attack} does ${event.amount} more damage next turn`),

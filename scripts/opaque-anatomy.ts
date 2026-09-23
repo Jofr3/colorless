@@ -330,12 +330,21 @@ export const MARKERS: readonly Marker[] = [
       //    sentence whose noun is split around the zone phrase), and D508 wrote that
       //    anchor. ⚠️ **THE LESSON IS THE ONE D413 NAMES**: a refusal that names its own
       //    falsifier must be RE-READ against today's tree, not inherited.
-      "a mechanism per row, and NOT the one this marker used to name: line 82's head " +
-      "and line 166's named-attack base-damage override — while line 630's named-attack " +
+      //    🛑🛑 D544 — THE THIRD CORRECTION, AND IT EMPTIES THE LIST: line 166's
+      //    named-attack BASE-DAMAGE override is BUILT (a `base: true` rider on
+      //    `boostAttack`, read by `boostedAttackBase`), and line 82's head was already
+      //    BUILT at D541. The old text is STRUCK below rather than overwritten (D178).
+      //    The marker stays a `co-marker` with a POSITIVE built side (4 / 7 at D544),
+      //    so § C of the gate stays green; its RESIDUE and OPAQUE columns are 0 / 0.
+      "no row left in the residue: line 82's head is BUILT (D541) and line 166's " +
+      "named-attack base-damage override is BUILT (D544, a `base` rider on `boostAttack`) " +
+      "— while line 630's named-attack " +
       "fact is SHIPPED " +
       "(`InPlayPokemon.usedAttack`, `BoardCondition.yourActiveUsedAttackLastTurn`, and " +
       "an `ATTACK_GATE_CLAUSE_GATES` row for that very sentence) and line 542 is BUILT " +
       "(D508, the anchor — its filter had been spellable since D446). " +
+      "[D544 corrected. WAS: \u201Ca mechanism per row, and NOT the one this marker used " +
+      "to name: line 82\u2019s head and line 166\u2019s named-attack base-damage override\u201D] " +
       "[D479 corrected. WAS: \u201Ca record of WHICH ATTACK a body used, keyed by the " +
       "attack\u2019s printed NAME \u2014 a fact no state field carries and no CardFilter " +
       "member spells\u201D]",

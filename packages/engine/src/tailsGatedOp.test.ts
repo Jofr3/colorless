@@ -289,11 +289,15 @@ describe("the tails gate — derived, not authored", () => {
       // pipeline because it retracts damage. The engine's other tails reading, and
       // the two are disjoint by consequent exactly as the heads pair is.
       "Flip a coin. If tails, this attack does nothing.",
-      // A DURATED gate that makes the OPPONENT flip on their own turn (4 printings
-      // — Dolliv sv01-022/-200 "Apply Oil", Quaxly sv02-049/-206 "Apply Gel"). The
-      // only tails-gated attack LOCK in the pool this op could not express even
-      // with the field.
-      "During your opponent's next turn, if the Defending Pokémon tries to attack, your opponent flips a coin. If tails, that attack doesn't happen.",
+      // A DURATED gate that makes the OPPONENT flip on their own turn (2 LEGAL
+      // printings, `censusAttackCorpus.ts:176`, spelled here off the corpus bytes
+      // since D544 — it was ~~"tries to attack" (4 printings …)~~, a spelling no
+      // corpus row prints, so this refusal refused a string nothing reads. The
+      // four ids Dolliv sv01-022/-200 "Apply Oil" and Quaxly sv02-049/-206 "Apply
+      // Gel" are the CATALOG/local population; which two are legal is unmeasured).
+      // The only tails-gated attack LOCK in the local-D1 pool this op could not
+      // express even with the field.
+      "During your opponent's next turn, if the Defending Pokémon tries to use an attack, your opponent flips a coin. If tails, that attack doesn't happen.",
       // TWO consequents on ONE flip — an `otherwise` this op deliberately does not
       // have (D142's Squawkabilly refusal, verbatim). Note the field brings none
       // of these closer: an `onTails` gate still runs exactly one branch.

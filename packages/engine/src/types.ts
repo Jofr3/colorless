@@ -803,10 +803,27 @@ export interface LockedAttack {
 
 /** §8.5/§11 (D155) — an attack-installed PER-ATTACK DAMAGE BUFF on one Pokémon,
     with the printed DURATION baked in as a turn STAMP exactly as the five records
-    above bake theirs. One printed sentence, ONE printing in the local D1:
+    above bake theirs. ~~One printed sentence, ONE printing in the local D1~~ —
+    🆕🆕 D544: FOUR legal sentences on one record, 8 printings (measured by deriving
+    `legalAttackCorpus()`) — THREE through the ADDITIVE template and ONE BASE-SET:
 
       "During your next turn, this Pokémon's {AttackName} attack does 100 more
        damage (before applying Weakness and Resistance)."                 (1)
+         legal: Echoed Voice 80 (`censusAttackCorpus.ts:165`, 3), Meteor Mash
+         60 (`:167`, 2), Tornado Rush 100 (`:168`, 1) — 3 sentences / 6 printings
+      "During your next turn, this Pokémon's Hyper Fang attack's base damage
+       is 240."                 (2 legal — `censusAttackCorpus.ts:166`, D544)
+
+    The `(1)` is D155's local-D1 census and is left as written — Seismitoad
+    `sv03-052`, below, which prints "100 more" and is NOT a legal-corpus row; the
+    rest is the LEGAL column's. Of its eight printings, the three Echoed Voice
+    ones are Meloetta ex `sv10.5b-044`/`-159`/`-167` (D277's registry rows), and no
+    registry, `catalogManifest` or `testFixtures` id carries Meteor Mash, Tornado
+    Rush or Hyper Fang (measured, `git grep -c`, zero).
+    The base-set sentence is the `base` key below, and the whole of why it is a key
+    on THIS record rather than a field of its own is the WRITER: one installer
+    (`interpreter.ts` `boostAttack`) stays the only writer of `boostedAttack`, where
+    D165 found two writers of `lockedAttack` deleting each other.
 
     — Seismitoad sv03-052 "Echoed Voice" ({W}{W}, printed 120, attack INDEX 0,
     its card's ONLY attack). The census is in effects.ts on the anchor; the
@@ -816,7 +833,9 @@ export interface LockedAttack {
     ⚠️ IT IS `LockedAttack`'s RECORD WITH AN AMOUNT BESIDE THE ADDRESS, AND THAT
     IS EXACTLY WHY IT IS A SECOND FIELD RATHER THAN A KEY ON THE FIRST. D154 built
     `{ turn, attackIndex }` on the same body with the same `state.turn + 2` stamp
-    and the same three §10 clears; this is `{ turn, attackIndex, amount }`. D131's
+    and the same three §10 clears; this is `{ turn, attackIndex, amount }` (plus, since
+    D544, an optional `base` that only a base-set install writes — the argument below is
+    about `amount` and does not move). D131's
     widen-don't-add test asks whether stripping the new key yields the previous
     record BYTE FOR BYTE, and here it does — which is why the refusal cannot rest
     on the SHAPE and has to rest on what the readers do with it:
@@ -833,7 +852,14 @@ export interface LockedAttack {
         +100, and a build that merged them fails on the refusal.
 
     They CANNOT be live together off any printing — the pool prints the bar on four
-    cards and the buff on one, and a body installs at most one per turn — so D154's
+    cards and the buff on ~~one~~ (D155's local-D1 count; measured at D544 the LEGAL
+    column puts FOUR sentences on this record — three ADDITIVE, Echoed Voice,
+    Meteor Mash and Tornado Rush, and one BASE-SET, Hyper Fang — each printed as a
+    self install on the holder's own named attack; whether any of their cards also
+    prints a bar is measured only for the three Meloetta ex printings, whose Echoed
+    Voice is the card's only attack, and is UNMEASURED for the other five), and a
+    body installs at most
+    one per turn — so D154's
     own reachability ground (two facts, one record, one write) is NOT available
     here. The ground is the READ, not the write, which is the axis this family had
     not yet been separated on.
@@ -844,8 +870,9 @@ export interface LockedAttack {
     after THAT is the holder's own.
 
     Everything else is INHERITED unchanged: the stamp convention, the
-    read-through-continuous.ts shape (`boostedAttackDamage`), the three §10 early
-    clears, and D124's no-defensive-`undefined` rule at the reader. */
+    read-through-continuous.ts shape (`boostedAttackDamage`, and since D544
+    `boostedAttackBase` for the base-set key), the three §10 early clears, and
+    D124's no-defensive-`undefined` rule at the reader. */
 export interface BoostedAttack {
   /** The single turn number this buff is live on (the installing turn + 2 — the
       HOLDER's own next turn, since declaring an attack ends the turn). */
@@ -875,8 +902,30 @@ export interface BoostedAttack {
 
       ONE amount is printed and it is still a capture rather than a literal, the
       varying token being a NUMBER and therefore closed by its type (D120's
-      precondition, met exactly as D147/D149/D152 met it). */
+      precondition, met exactly as D147/D149/D152 met it).
+
+      🆕🆕 D544 — ON A BASE-SET RECORD THE INSTALLER WRITES `0` HERE, so the
+      UNEDITED additive reader (`boostedAttackDamage`) pays `+0` by construction and
+      the base-set mode needs no branch in it. */
   amount: number;
+  /** 🆕🆕 D544 — the printed BASE damage that REPLACES the named attack's printed
+      base for the window ("…this Pokémon's Hyper Fang attack's base damage is
+      240."), read through `boostedAttackBase` (continuous.ts) at `attack.ts`'s one
+      `parseAttackDamage` site — so it reaches `scaledBase`, every reading-borne
+      program's base and `DAMAGE_DEALT.base`, and Weakness/Resistance still apply
+      AFTER it (§8.5).
+
+      OPTIONAL, and written ONLY on a base-set record — never `base: undefined`,
+      which a `toStrictEqual` pin would see. ABSENT means "no override", which is
+      exactly what every record a v30 deploy wrote means, so
+      `MATCH_RECORD_VERSION` STAYS 30 (apps/api `match.ts`, the D544 paragraph,
+      states the argument and the condition that would reverse it — D441/D434/D456).
+
+      A SECOND INSTALL ON THE SAME ADDRESS MERGES FIELDWISE BY MAX (`amount` and
+      `base` each keep the larger of what is present), which is the installer's
+      stated rule — a second installation may never leave the holder with less than
+      one of them printed. Unreachable off any printing; constructed and pinned. */
+  base?: number;
 }
 
 /** 🆕🆕 §8 (D394) — WHICH attack this Pokémon last USED, and on WHICH turn. Two
@@ -1361,8 +1410,8 @@ export interface InPlayPokemon {
   lockedAttacks: LockedAttack[];
   /** §8.5/§11 (D155) — the attack-installed PER-ATTACK DAMAGE BUFF on this
       Pokémon (see `BoostedAttack` above), or `null` when none has been installed.
-      Read through `boostedAttackDamage` (continuous.ts) rather than by touching
-      this field, so no read site can forget the turn comparison — the same
+      Read through `boostedAttackDamage` — and, since D544, `boostedAttackBase` for
+      the base-set key — (continuous.ts) rather than by touching this field, so no read site can forget the turn comparison — the same
       contract the six fields above are under.
 
       ⚠️ `state.turn + 2` AND AN ATTACK INDEX, WHICH IS `lockedAttack`'s PAIR OF
@@ -1380,6 +1429,12 @@ export interface InPlayPokemon {
       Practice Studio and Binding Mochi are all invisible there too). Showing this
       one alone would report a single source of a number the panel does not claim
       to compute. So unlike `lockedAttack` it owes neither projection.
+      🆕🆕 D544 — AND THE BASE-SET KEY IS THE SAME CASE, CHECKED RATHER THAN
+      INHERITED: the panel keeps printing the attack's catalog `damage` while the
+      window's hit deals the override, exactly as it keeps printing Echoed Voice's
+      120 under a +100 buff. The panel claims the PRINTED number, and a base-set
+      override is one more source it does not claim to compute; no projection byte
+      moves.
 
       THE THREE §10 EARLY CLEARS ARE THE SAME THREE, with `lockedAttack`'s
       reachability story verbatim because it is the same window on the same body:

@@ -9456,7 +9456,7 @@ Trainer (`effect`) and **0** on any Ability — **28 in all**.
 |---|---|---|
 | `Flip a coin. If tails, this attack does nothing.` | **11** | ✅ ALREADY SIMULATED, by the OTHER reader — `deriveAttackCoinFlip`'s `cancelOnTails` (D126), in front of §8.5 because it retracts damage |
 | `Flip a coin. If tails, during your next turn, this Pokémon can't attack.` | **5** | ✅ **`FLIP_TAILS_SELF_CANT_ATTACK` → `coinFlipGate { onTails } → preventAttack` (D144)** |
-| `During your opponent's next turn, if the Defending Pokémon tries to attack, your opponent flips a coin. If tails, that attack doesn't happen.` | 4 | ❌ a DURATED gate making the OPPONENT flip on their own turn — not a `coinFlipGate` at all (Dolliv `sv01-022`/`-200` "Apply Oil", Quaxly `sv02-049`/`-206` "Apply Gel") |
+| `During your opponent's next turn, if the Defending Pokémon tries to use an attack, your opponent flips a coin. If tails, that attack doesn't happen.` (D544: re-spelled off `censusAttackCorpus.ts:176`; it was quoted as ~~`tries to attack`~~) | 4 (this table's local-D1 count; **2** LEGAL) | ❌ a DURATED gate making the OPPONENT flip on their own turn — not a `coinFlipGate` at all (CATALOG/local population, NOT the legal pair — which two are legal is unmeasured: Dolliv `sv01-022`/`-200` "Apply Oil", Quaxly `sv02-049`/`-206` "Apply Gel") |
 | `Flip a coin. If tails, discard all Energy from this Pokémon.` | **2** | ❌ LOUD — **and its consequent op EXISTS** (`SELF_DISCARD_ALL` → `discardEnergy { from: "yourActive", count: "all" }`). Pikachu ex `sv02-063` "Dynamic Bolt" (idx 1, 220), Beartic `sv03-054` "Frost Purge" (idx 1, 170). **ONE regex and ONE arm** |
 | `Flip a coin. If tails, this Pokémon also does 60 damage to itself.` | **1** | ❌ LOUD — **consequent op EXISTS too** (`SELF_DAMAGE` → `damageSelf`). Oinkologne `sv03-183` "High-Impact Kick" (idx 1, 160) — a THIRD Oinkologne, a different card from `sv01-157`. **ONE regex and ONE arm** |
 | `Flip a coin. If heads, this attack does 140 more damage. If tails, during your next turn, this Pokémon can't attack.` | 1 | ❌ TWO consequents on ONE flip (Dragonite ex `sv03-159` "Mighty Meteor") |
@@ -10760,7 +10760,7 @@ census paid:
 | `Discard an Energy from this Pokémon. During your opponent's next turn, the Defending Pokémon can't attack.` | **3** | attack | ✅ `discardEnergy` + `preventAttack { target: "defender" }` — Eiscue ex `sv03-042`/`-210`/`-222` idx 0 |
 | `If the Defending Pokémon is a Basic Pokémon, it can't attack during your opponent's next turn.` | **1** | attack | ✅ `conditionGate` → the same op — Houndoom ex `sv03-134` idx 0 |
 | `Choose 1 of your opponent's Active Pokémon's attacks. During your opponent's next turn, that Pokémon can't use that attack.` | **2** | attack | ❌ **NEW — on no earlier list or census.** Medicham `sv01-111` "Acu-Punch-Ture" idx 0, Oranguru `sv02-094` "Plotter's Command" idx 0. The OPPONENT-side twin of the per-attack lock, and it needs a **PARK** (choosing which attack) on top of the attack address |
-| `During your opponent's next turn, if the Defending Pokémon tries to attack, your opponent flips a coin. If tails, that attack doesn't happen.` | 4 | attack | ❌ a durated gate making the OPPONENT flip on their OWN turn (Dolliv `sv01-022`/`-200`, Quaxly `sv02-049`/`-206`) — §D145 already refused these on the face question, and they are refused here on the DECIDER |
+| `During your opponent's next turn, if the Defending Pokémon tries to use an attack, your opponent flips a coin. If tails, that attack doesn't happen.` (D544: re-spelled off `censusAttackCorpus.ts:176`; it was quoted as ~~`tries to attack`~~) | 4 (this table's local-D1 count; **2** LEGAL) | attack | ❌ a durated gate making the OPPONENT flip on their OWN turn (CATALOG/local population, NOT the legal pair — which two are legal is unmeasured: Dolliv `sv01-022`/`-200`, Quaxly `sv02-049`/`-206`) — §D145 already refused these on the face question, and they are refused here on the DECIDER |
 | `…is now Paralyzed.` | 25 | attack | ✅ §12, simulated since 0.x — a Special Condition, not this mechanism (no stamp, a Checkup tick, a status chip) |
 | `During this turn, your Pokémon can't attack.` | 3 | **Trainer** | ❌ Geeta `sv03-188`/`-218`/`-226` — a different turn, the actor's OWN board, and not an attack effect |
 
@@ -12251,13 +12251,31 @@ attached: one row, `bonus: 110`, one `· boosted +110` crumb.
 
 ### ONE read site, and the boundary is the ADDRESS
 
+> 🆕🆕 **D544:** this heading is D155's and now holds **PER KEY**, not per record — ONE
+> read of the ADDITIVE `amount` (`boostedAttackDamage`, `attack.ts:2909`) and ONE read
+> of the BASE-SET key (`boostedAttackBase`, `attack.ts:1540`, the `parseAttackDamage`
+> line). The heading is kept as written (D178); the paragraph below is restated in place.
+
 D149's debuff reaches all FOUR pre-W/R sites because it is a fact about a **BODY**.
 This is a fact about a **DECLARATION**, and only `attack.ts`'s main hit knows the
 declared index: `EffectContext` carries `seat`, `sourceUid` and `invokedBy` and **no
 index**, so `snipeActive`, `spreadDamage` and `placeSnipe`'s `deals` arm
-structurally cannot ask. **Unreachable rather than merely unbuilt** — the one
+structurally cannot ask. ~~**Unreachable rather than merely unbuilt** — the one
 printing's boosted attack does its whole damage through the printed `damage` field
-and derives no damage-dealing op at all. A printing that boosts an attack whose
+and derives no damage-dealing op at all.~~ 🆕🆕 **D544:** **FOUR** legal sentences
+write this record, **8** printings (measured by deriving `legalAttackCorpus()`):
+THREE ADDITIVE — Echoed Voice *"80 more"* (`censusAttackCorpus.ts:165`, 3: Meloetta
+ex `sv10.5b-044`/`-159`/`-167`, D277's registry rows), Meteor Mash (`:167`, 2) and
+Tornado Rush (`:168`, 1) — and ONE BASE-SET, Hyper Fang (`:166`, 2). D155's
+Seismitoad `sv03-052` prints *"100 more"* and is a local-D1 printing, **not** a
+legal-corpus row. The argument is **measured for the three Meloetta ex printings**
+(Echoed Voice is the card's only attack, printed 30, and its one sentence derives no
+damage-dealing op) and **UNMEASURED for the other five** — no registry,
+`catalogManifest` or `testFixtures` id carries Meteor Mash, Tornado Rush or Hyper
+Fang. Both readers are asked only at `attack.ts`'s main hit, so an op-borne part of
+any of those attacks' damage would see neither the buff nor the override. The
+population is pinned exactly in `attackBaseOverride.test.ts` §1. A printing that
+boosts an attack whose
 damage comes from an OP would earn `EffectContext` an attack index; written down so
 the next reader does not re-derive why the count differs from D149's.
 

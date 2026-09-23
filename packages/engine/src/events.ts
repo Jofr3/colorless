@@ -750,8 +750,24 @@ export type GameEvent =
       "what the attacker's continuous effects added before the modifiers" since
       Vitality Band — which names the FACT and not the source, exactly as
       `reduction` and `debuff` do for the other two directions (D140/D146:
-      loudness is owed to UNREAD TEXT, not to a read rule doing its job). */
-  | { type: "ATTACK_BOOSTED"; seat: Seat; uid: string; attack: string; amount: number }
+      loudness is owed to UNREAD TEXT, not to a read rule doing its job).
+      🆕🆕 D544 — the BASE-SET mode lands the same way, in the field that already
+      names it: `DAMAGE_DEALT.base` reads the override (240), not the printed base.
+
+      🆕🆕 D544 — `base?: true`: the row announces a BASE-SET install ("…Hyper Fang
+      attack's base damage is 240."), and `amount` then carries the BASE number, not
+      a bonus. Without the key `log.ts` would render "does 240 more damage next
+      turn", which is FALSE (D421: a row whose wording is a claim owes the rider).
+      A WIDENING — a `GameEvent` is not persisted (`MatchRecord.log` holds the
+      RENDERED `SeatLogEntry[]`, D141) — and written only on base installs. */
+  | {
+      type: "ATTACK_BOOSTED";
+      seat: Seat;
+      uid: string;
+      attack: string;
+      amount: number;
+      base?: true;
+    }
   /** §11 — an attack's EFFECT was refused by the block above ("…prevent all
       damage FROM AND EFFECTS OF attacks…"), on the Pokémon the effect was aimed
       at. One row per refused op, so Poison Ring's two clauses produce two.

@@ -481,6 +481,9 @@ describe("readMatchRecord — the persisted-shape gate", () => {
     // time in this family and the two are STILL separate fields — refused on what
     // the readers do, not on what the record looks like: `lockedAttackIndexes`'s
     // consumer REFUSES the index it returns and this one PAYS it. See D155.
+    // (🆕🆕 D544 adds an OPTIONAL `base?` INSIDE that record — the base-set
+    // override — and holds 30: an absent key means what a v30 writer meant. The
+    // argument is at the address, in `match.ts`'s D544 paragraph beside D456's.)
     //
     // 10 → 11 is D165's `InPlayPokemon.lockedAttack: LockedAttack | null` becoming
     // `lockedAttacks: LockedAttack[]` — THE SAME CASE AN EIGHTH TIME, and the FIRST

@@ -4469,8 +4469,22 @@ export type EffectOp =
       FUTURE, so it cannot reach the very hit that installs it. Never parks,
       consumes no rng, and is idempotent (a re-install writing the same turn, index
       and amount is silent; a larger amount on the same address wins by `Math.max`
-      — the interpreter says why). */
-  | { op: "boostAttack"; attack: string; amount: number }
+      — the interpreter says why; since D544 the max is FIELDWISE over `amount` and
+      `base`).
+
+      🆕🆕 D544 — `base?: true`, THE SECOND PRINTED MODE ON THE SAME ADDRESS: a
+      next-turn override of the named attack's BASE damage rather than a term
+      added to it ("During your next turn, this Pokémon's Hyper Fang attack's base
+      damage is 240.", `censusAttackCorpus.ts:166`, 1 sentence / 2 legal printings
+      — the census is on `SELF_ATTACK_BASE_SET` below). With `base` present,
+      `amount` IS the printed base number and not a bonus. ABSENT means D155's
+      additive reading, which is what every op written before this slice meant
+      (D125's distinction, D421's `until?` rider at the same address two members
+      up). A RIDER and not a sibling op, and the reason is the WRITER: one
+      installer function stays the only writer of `boostedAttack`, which is the
+      property D165 found missing on `lockedAttack` when two ops wrote it. The op
+      never parks, so it never reaches `phase.cont` either (D334's widening). */
+  | { op: "boostAttack"; attack: string; amount: number; base?: true }
   /** §8/§11 (D157) — BAR ONE **CHOSEN** ATTACK on the OPPONENT's Active for that
       Pokémon's next turn ("Choose 1 of your opponent's Active Pokémon's attacks.
       During your opponent's next turn, that Pokémon can't use that attack.", 2
@@ -13253,12 +13267,16 @@ const COUNTER_PUT_ANY_THEN_SELF_LOCK =
 //     which runs in FRONT of the §8.5 pipeline because it retracts damage. That is
 //     the engine's OTHER tails reading, and the two are disjoint by consequent
 //     exactly as the heads pair is;
-//   • "During your opponent's next turn, if the Defending Pokémon tries to attack,
-//     your opponent flips a coin. If tails, that attack doesn't happen." (4 —
-//     Dolliv sv01-022/-200 "Apply Oil", Quaxly sv02-049/-206 "Apply Gel") — a
-//     DURATED gate that makes the OPPONENT flip on their OWN turn: not a
-//     `coinFlipGate` at all, and the only tails-gated attack LOCK in the pool that
-//     this op could not express even with the field;
+//   • "During your opponent's next turn, if the Defending Pokémon tries to use an
+//     attack, your opponent flips a coin. If tails, that attack doesn't happen."
+//     (2 LEGAL printings — `censusAttackCorpus.ts:176`. D544 re-spelled this bullet
+//     off the corpus bytes: it was quoted here as ~~"tries to attack" (4 —~~ …)
+//     from the local-D1 census above, and those FOUR ids — Dolliv sv01-022/-200
+//     "Apply Oil", Quaxly sv02-049/-206 "Apply Gel" — are the CATALOG/local
+//     population that census summed, NOT the legal pair; WHICH two are legal is
+//     unmeasured) — a DURATED gate that makes the OPPONENT flip on their OWN
+//     turn: not a `coinFlipGate` at all, and the only tails-gated attack LOCK in
+//     the local-D1 pool that this op could not express even with the field;
 //   • "Flip a coin. If heads, this attack does 140 more damage. If tails, during
 //     your next turn, this Pokémon can't attack." (1 — Dragonite ex sv03-159
 //     "Mighty Meteor") and "Flip a coin. If tails, this attack does nothing. If
@@ -13567,6 +13585,39 @@ const SELF_CANT_USE_NAMED_UNTIL_LEAVES_ACTIVE =
 // "During" plus `^…$` is the whole guard.
 const SELF_ATTACK_BOOST =
   /^During your next turn, this Pokémon['’]s (.+?) attack does (\d+) more damage \(before applying Weakness and Resistance\)\.$/;
+// ── 🆕🆕 D544: the same address, the same window — and the BASE, not a term ──
+//
+// "During your next turn, this Pokémon's Hyper Fang attack's base damage is 240."
+// — `censusAttackCorpus.ts` FILE LINE 166, leading count column **2**: **1 sentence
+// / 2 legal printings** (the census SUBSTITUTION class SUBST-11 at `SUBMAX=12`, and
+// `OPAQUE`/`UNEXPLAINED` at `SUBMAX=4` — measured at both caps before the build).
+// The population is RATICATE (`imperviousShell.test.ts`'s rung-2 census names it
+// as a false positive of `%damage is%`). ⚠️ **NO CATALOG ID RESOLVES ON THIS
+// CHECKOUT, AND THAT WAS MEASURED (D425)**: `git grep -c "Hyper Fang"` over
+// `registry.ts`, `catalogManifest.ts` and `testFixtures.ts` returns ZERO, so no row
+// in any of them prints this sentence, and its suite (`attackBaseOverride.test.ts`) rides file-local DECLARED `d544-*`
+// demonstrators in their own 60-card deck (D270). The attack's own PRINTED damage
+// is therefore UNMEASURED here too — which is why the "×"-marker case is named as
+// unreached rather than asserted.
+//
+// `SELF_ATTACK_BOOST`'s ADDRESS (holder "this Pokémon", printed noun, `state.turn +
+// 2`) with a different CONSEQUENT: the number REPLACES the printed base rather than
+// adding to it. It rides the SAME op as a `base?: true` rider and the SAME record as
+// `BoostedAttack.base` (types.ts), so ONE installer stays the only writer of
+// `boostedAttack` (D165's two-writers defect, found on `lockedAttack`).
+//
+// TWO `['’]` SLOTS — the possessive on "Pokémon" and the one on "attack" — and each
+// is its own mutant row, because a punctuation-normalising re-ingest can curl
+// either independently (D136/D137). The captured NAME is apostrophe-FOLDED at the
+// arm for D154's reason, as its neighbour's is. No /i, `^…$`, for the standing
+// reason (TYPED_SELF_DISCARD): the capital "During" plus the anchors is the guard.
+//
+// DISJOINT FROM `SELF_ATTACK_BOOST` IN BOTH DIRECTIONS BY CONSTRUCTION, and driven
+// rather than argued (`attackBaseOverride.test.ts` §1, `perAttackBuff.test.ts`):
+// this anchor needs "attack's base damage is", that one needs "attack does … more
+// damage (before applying …)", and neither literal occurs inside the other.
+const SELF_ATTACK_BASE_SET =
+  /^During your next turn, this Pokémon['’]s (.+?) attack['’]s base damage is (\d+)\.$/;
 // ── D157: the PER-ATTACK lock pointed ACROSS THE TABLE, with the address CHOSEN ──
 //
 // "Choose 1 of your opponent's Active Pokémon's attacks. During your opponent's
@@ -28813,6 +28864,34 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
     // assumed — `(.+?)` already cannot match an empty string.)
     if (amount >= 1) {
       return [{ op: "boostAttack", attack: foldApostrophes(match[1] ?? ""), amount }];
+    }
+  }
+
+  // 24b'. 🆕🆕 D544 — "During your next turn, this Pokémon's {AttackName} attack's
+  //       base damage is {N}." — the BASE-SET mode of arm 24b's address, 2 legal
+  //       printings (`censusAttackCorpus.ts:166`, Raticate "Hyper Fang" — no catalog
+  //       id on this checkout, measured). It sits directly beneath 24b because the
+  //       two share the capture, the holder, the window, the resolver, the OP and
+  //       the RECORD, and differ in the consequent alone: this number REPLACES the
+  //       printed base (`attack.ts` reads it through `boostedAttackBase` in place of
+  //       `parseAttackDamage`'s base) where 24b's is ADDED to it. The two anchors
+  //       are disjoint in both directions, so the order between them decides
+  //       nothing — asserted in `attackBaseOverride.test.ts` §1, not described.
+  //
+  //       `amount >= 1`, 24b's guard verbatim and for a SHARPER reason here: a
+  //       printed "base damage is 0" would install a record whose whole effect is to
+  //       ZERO the attack and a row announcing it, on a sentence no card prints.
+  //       Leave a zero LOUD. (The guard that makes a LOST `base` key inert is 24b's,
+  //       not this one: every ADDITIVE install carries `amount >= 1`, so the
+  //       residue `{turn, attackIndex, amount: 0}` a stripped base record leaves is
+  //       a byte string no surviving path writes — apps/api match.ts, D544.)
+  match = SELF_ATTACK_BASE_SET.exec(effect);
+  if (match !== null) {
+    const amount = Number(match[2]);
+    if (amount >= 1) {
+      return [
+        { op: "boostAttack", attack: foldApostrophes(match[1] ?? ""), amount, base: true },
+      ];
     }
   }
 

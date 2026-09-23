@@ -103,6 +103,7 @@ import { flipCoin, randomIndex, shuffle } from "./rng";
 import { damagedByAttackAbility, runActiveBenchedTriggers } from "./triggers";
 import type {
   AttackBlock,
+  BoostedAttack,
   GameState,
   InPlayPokemon,
   LockedAttack,
@@ -1859,7 +1860,7 @@ function stepOp(
     case "preventAttackUse":
       return { done: preventAttackUse(state, op.attack, op.until, ctx, events) };
     case "boostAttack":
-      return { done: boostAttack(state, op.attack, op.amount, ctx, events) };
+      return { done: boostAttack(state, op.attack, op.amount, op.base, ctx, events) };
     case "preventChosenAttack":
       return preventChosenAttack(state, ctx, events);
     case "reduceDamage":
@@ -7663,8 +7664,16 @@ function preventAttackUse(
     |---|---|---|
     | Holder | `ctx.seat`'s Active     | `ctx.seat`'s Active |
     | Stamp  | `state.turn + 2`        | `state.turn + 2`    |
-    | State  | `lockedAttack: { turn, attackIndex }` | `boostedAttack: { turn, attackIndex, amount }` |
-    | Read at| the §8 gate (REFUSES it)| §8.5's pre-W/R step (PAYS it) |
+    | State  | `lockedAttack: { turn, attackIndex }` | `boostedAttack: { turn, attackIndex, amount, base? }` |
+    | Read at| the §8 gate (REFUSES it)| §8.5's pre-W/R step (PAYS it); since D544 also the printed BASE (`base?`) |
+
+    🆕🆕 D544 — `base: true` on the op is the SECOND printed mode at this address
+    ("During your next turn, this Pokémon's Hyper Fang attack's base damage is
+    240.", `censusAttackCorpus.ts:166`, 2 legal printings): the installer writes
+    `{ turn, attackIndex, amount: 0, base: amount }`, so the unedited ADDITIVE reader
+    pays `+0` by construction and `boostedAttackBase` (continuous.ts) hands
+    `attack.ts` the number that REPLACES the printed base. ONE writer for both modes
+    is the point of the rider (D165's two-writers defect, found on `lockedAttack`).
 
     ⚠️ THE TWO RECORDS ARE A KEY APART AND ARE STILL TWO FIELDS, AND THIS TABLE'S
     LAST ROW IS THE WHOLE REASON. D131's widen-don't-add test passes on the SHAPE
@@ -7690,21 +7699,38 @@ function preventAttackUse(
     done to this Pokémon" could be protecting from it. The §11 classification table
     (preventBlock.test.ts) carries the verdict AND a board that drives it (D150).
 
-    IDEMPOTENT BY `Math.max` ON THE AMOUNT, WHICH IS `reduceDamage`'s RULE AND NOT
+    IDEMPOTENT BY `Math.max` ON THE AMOUNT — and since D544 ON EACH FIELD — WHICH IS
+    `reduceDamage`'s RULE AND NOT
     `preventAttackUse`'s EARLY RETURN — because this record carries a number and
     that one does not. The rule both are instances of is *a second installation may
     never leave the holder with less than one of them printed*: for an address that
     is "the later write wins", for a number that is MAX. The merge is per-ADDRESS,
     so a second install naming a DIFFERENT attack replaces the record outright
     rather than keeping the larger of two unrelated bonuses — the amount is a
-    property of the pair, not of the body. Unreachable off the one printing (an
-    attack ends the turn, and the window is the holder's own next turn), so it is
-    constructed and pinned; the row is suppressed when the merge says nothing new
-    (D142's idempotence answer). */
+    property of the pair, not of the body. ~~Unreachable off the one printing~~ —
+    🆕🆕 D544: unreachable off ANY printing, now that FOUR legal sentences write
+    this record (three additive, one base-set — measured by deriving
+    `legalAttackCorpus()`); the ground is the turn structure, not the count (an
+    attack ends the turn, and the window is the holder's own next turn),
+    so it is constructed and pinned; the row is suppressed when the merge says
+    nothing new (D142's idempotence answer).
+
+    🆕🆕 D544 — THE MERGE IS FIELDWISE, NOT AN OVERWRITE. On the SAME address a base
+    install and an additive install keep BOTH: `amount` is the max of the amounts and
+    `base` the max of the bases PRESENT (absent on both → absent). Overwriting would
+    let a later additive install silently delete a live base override — exactly the
+    "less than one of them printed" the rule above forbids. A DIFFERENT index still
+    replaces outright (the per-address rule is unchanged), and the early return
+    compares BOTH fields, so a base arriving on an additive record is not mistaken
+    for a no-op. Constructed and pinned in both install orders
+    (`attackBaseOverride.test.ts`). The row reports the mode being INSTALLED: a base
+    install files `{ amount: <merged base>, base: true }`, an additive one
+    `{ amount: <merged amount> }`. */
 function boostAttack(
   state: GameState,
   attack: string,
   amount: number,
+  base: true | undefined,
   ctx: EffectContext,
   events: GameEvent[],
 ): GameState {
@@ -7723,8 +7749,29 @@ function boostAttack(
   const existing = active.boostedAttack;
   const stacking =
     existing !== null && existing.turn === turn && existing.attackIndex === attackIndex;
-  const merged = stacking ? Math.max(existing.amount, amount) : amount;
-  if (stacking && merged === existing.amount) return state;
+  // D544 — the record THIS install writes before any merge. A base install puts the
+  // printed number in `base` and `0` in `amount`, so the additive reader pays +0; an
+  // additive install writes NO `base` key at all (never `base: undefined`).
+  const installed: BoostedAttack =
+    base === true ? { turn, attackIndex, amount: 0, base: amount } : { turn, attackIndex, amount };
+  const mergedBase = !stacking
+    ? installed.base
+    : existing.base === undefined
+      ? installed.base
+      : installed.base === undefined
+        ? existing.base
+        : Math.max(existing.base, installed.base);
+  const merged: BoostedAttack = stacking
+    ? {
+        turn,
+        attackIndex,
+        amount: Math.max(existing.amount, installed.amount),
+        ...(mergedBase === undefined ? {} : { base: mergedBase }),
+      }
+    : installed;
+  if (stacking && merged.amount === existing.amount && merged.base === existing.base) {
+    return state;
+  }
   // The RESOLVED row's own name and not the op's token (`preventAttackUse`'s
   // call): the two differ only in punctuation, and a log row is read by a player
   // holding the card, so it prints the card's spelling.
@@ -7733,12 +7780,9 @@ function boostAttack(
     seat: ctx.seat,
     uid,
     attack: printed[attackIndex]?.name ?? attack,
-    amount: merged,
+    ...(base === true ? { amount: merged.base ?? amount, base: true as const } : { amount: merged.amount }),
   });
-  return withActive(state, ctx.seat, {
-    ...active,
-    boostedAttack: { turn, attackIndex, amount: merged },
-  });
+  return withActive(state, ctx.seat, { ...active, boostedAttack: merged });
 }
 
 /** §8/§11 (D157) — BAR ONE CHOSEN ATTACK on the OPPONENT's Active ("Choose 1 of

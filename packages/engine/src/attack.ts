@@ -30,6 +30,7 @@ import {
   attackerHasSpecialEnergy,
   attackerSuppressesTargetEffects,
   benchShieldedFromDamage,
+  boostedAttackBase,
   boostedAttackDamage,
   coinFlipShieldPrevents,
   countAttachedEnergy,
@@ -1522,7 +1523,21 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
   // derives into executable steps for exactly the sentence shapes effects.ts
   // recognizes — anything else (and every damage marker like "60+", M4's
   // effect ops) is flagged loudly instead of guessed.
-  const { base, modifier } = parseAttackDamage(declared.damage);
+  //
+  // 🆕🆕 D544 — AND THE PRINTED BASE CAN BE OVERRIDDEN FOR ONE WINDOW, HERE AND
+  // NOWHERE ELSE. "During your next turn, this Pokémon's Hyper Fang attack's base
+  // damage is 240." (`censusAttackCorpus.ts:166`) installs `BoostedAttack.base` on
+  // the holder; `boostedAttackBase` answers it for THIS index on THIS turn, or
+  // `null`. This is the ONLY `parseAttackDamage` caller, so replacing `base` on this
+  // line reaches `scaledBase`, every reading-borne program that takes `base`, and
+  // `DAMAGE_DEALT.base` at once — and Weakness/Resistance still apply AFTER it, at
+  // §8.5's own step below. It sits AFTER the confusion block on purpose: a confused
+  // tails resolves nothing at all, so the override pays nothing on it. The printed
+  // MODIFIER is kept: a "×" base overridden this way is UNREACHED (Hyper Fang's
+  // printed damage is unmeasured on this checkout) and is named rather than
+  // asserted. `attackerBody` is `active` here (no pre-damage seam has run yet).
+  const { base: printedBase, modifier } = parseAttackDamage(declared.damage);
+  const base = boostedAttackBase(next, attackerBody, index) ?? printedBase;
   // 🛑 D282 — THE SPLIT ANCHOR, AND IT IS ONE REBIND RATHER THAN SEVEN WIDENINGS.
   // D281 built `CardProgram.attackGate` and enforced it at the §4/§8 declaration
   // seam above; from here down the gate clause is SPENT — it has already decided
@@ -2841,12 +2856,29 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
     // is why this half is reported in the same `bonus` field below where the
     // debuff needed one of its own (continuous.ts `boostedAttackDamage`).
     //
-    // ⚠️ THIS IS THE ONLY SITE THAT READS IT, and the boundary is the ADDRESS: the
+    // ⚠️ THIS IS THE ONLY SITE THAT READS ~~IT~~ THE ADDITIVE AMOUNT (🆕🆕 D544 — the
+    // record's BASE-SET key is read once too, at the `parseAttackDamage` line far
+    // above, through `boostedAttackBase`), and the boundary is the ADDRESS: the
     // record names an attack INDEX, and `index` is in scope here and nowhere else
     // (`EffectContext` carries no attack index, so the interpreter's three damage
-    // sites structurally cannot ask). Unreachable rather than merely unbuilt —
+    // sites structurally cannot ask). ~~Unreachable rather than merely unbuilt —
     // the one printing's boosted attack does its whole damage through the printed
-    // `damage` field and derives no damage-dealing op at all.
+    // `damage` field and derives no damage-dealing op at all.~~ 🆕🆕 D544 — FOUR
+    // legal sentences write this record, 8 printings (measured by deriving
+    // `legalAttackCorpus()`): THREE ADDITIVE — Echoed Voice "80 more"
+    // (`censusAttackCorpus.ts:165`, 3: Meloetta ex `sv10.5b-044`/`-159`/`-167`,
+    // D277's registry rows), Meteor Mash (`:167`, 2), Tornado Rush (`:168`, 1) —
+    // and ONE BASE-SET, Hyper Fang (`:166`, 2); D155's Seismitoad `sv03-052`
+    // ("100 more") is a local-D1 printing, not a legal-corpus row. The argument is
+    // MEASURED for the three Meloetta ex printings: Echoed Voice is that card's
+    // only attack, printed 30, and its one sentence derives no damage-dealing op.
+    // For the other five printings it is UNMEASURED — no registry,
+    // `catalogManifest` or `testFixtures` id carries Meteor Mash, Tornado Rush or
+    // Hyper Fang, so whether their damage is a plain printed number is not known.
+    // Were any of it op-borne, neither key would reach that part: `amount` is read
+    // only here and `base` only at the `parseAttackDamage` line, so the buff adds
+    // to, and the override replaces, the printed `damage` field and nothing an op
+    // deals.
     // ⚠️ D192 — THE ONE READ SITE THE ATTACK HALF AND THE ABILITY HALF SHARE, and
     // the ONLY place in this block where either is asked. "Any effects on your
     // opponent's Active Pokémon" is printed BOTH on attacks (15 legal printings,

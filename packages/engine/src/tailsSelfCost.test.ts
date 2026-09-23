@@ -921,10 +921,14 @@ describe("the tails-gated self-costs — the family, CLOSED", () => {
       // pipeline because it retracts damage. Null HERE is correct: the two tails
       // readings are disjoint by consequent, exactly as the heads pair is.
       "Flip a coin. If tails, this attack does nothing.",
-      // A DURATED gate that makes the OPPONENT flip on their own turn (4 —
-      // Dolliv sv01-022/-200 "Apply Oil", Quaxly sv02-049/-206 "Apply Gel"). Not
-      // a `coinFlipGate` at all, and the field brings it no closer.
-      "During your opponent's next turn, if the Defending Pokémon tries to attack, your opponent flips a coin. If tails, that attack doesn't happen.",
+      // A DURATED gate that makes the OPPONENT flip on their own turn (2 LEGAL
+      // printings, `censusAttackCorpus.ts:176`, spelled here off the corpus bytes
+      // since D544 — it was ~~"tries to attack" (4 — …)~~, a spelling no corpus row
+      // prints. The four ids Dolliv sv01-022/-200 "Apply Oil" and Quaxly
+      // sv02-049/-206 "Apply Gel" are the CATALOG/local population; which two are
+      // legal is unmeasured). Not a `coinFlipGate` at all, and the field brings it
+      // no closer.
+      "During your opponent's next turn, if the Defending Pokémon tries to use an attack, your opponent flips a coin. If tails, that attack doesn't happen.",
       // TWO consequents on ONE flip (5 printings across 4 sentences, one of them
       // a TRAINER) — an `otherwise` this op deliberately does not have (D142's
       // Squawkabilly refusal, verbatim). ⚠️ THESE ARE THE LIVE UNMAPPED WITNESSES

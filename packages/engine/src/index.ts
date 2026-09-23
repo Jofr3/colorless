@@ -3376,6 +3376,12 @@ import type { GameState, Seat } from "./types";
     `attack.ts`'s §8 gate the index of the attack the card just bought. **Driven on
     one board** (both records installed, the barred index refused and the boosted
     one resolving at +100), which is what a design answer owes here.
+    🆕🆕 **D544 — THE REFUSAL STILL STANDS, AND SAYS WHY RATHER THAN BY SILENCE.** The
+    record gained an optional `base?` key (the printed *"…Hyper Fang attack's base
+    damage is 240."*), read by a SECOND reader, `boostedAttackBase`, at `attack.ts`'s
+    `parseAttackDamage` line. That is a second PAYING mode on the same address, so the
+    READ-site ground above — one consumer refuses the index, this one pays it — is
+    untouched: the §8 gate still never reads `boostedAttack`, in either mode.
     `MATCH_RECORD_VERSION` **9 → 10** — a REQUIRED key on `InPlayPokemon`, D124's
     trigger for the EIGHTH time and the first on two consecutive slices.
 
@@ -3403,10 +3409,20 @@ import type { GameState, Seat } from "./types";
     four pre-W/R sites because it is a fact about a BODY; this is a fact about a
     DECLARATION, and only `attack.ts`'s main hit knows the declared index —
     `EffectContext` carries `seat`, `sourceUid` and `invokedBy` and no index.
-    Unreachable rather than unbuilt: the one printing's boosted attack does its
+    ~~Unreachable rather than unbuilt: the one printing's boosted attack does its
     whole damage through the printed `damage` field and derives no damage-dealing
-    op. A printing that boosts an attack whose damage comes from an OP would earn
-    `EffectContext` an attack index.
+    op.~~ (🆕🆕 D544: FOUR legal sentences write this record, 8 printings, measured
+    by deriving `legalAttackCorpus()` — THREE ADDITIVE, Echoed Voice ×3 (Meloetta
+    ex `sv10.5b-044`/`-159`/`-167`), Meteor Mash ×2 and Tornado Rush ×1, and ONE
+    BASE-SET, Hyper Fang ×2; D155's Seismitoad `sv03-052` is a local-D1 printing,
+    not a legal-corpus row. The argument is measured for the three Meloetta ex
+    printings, whose Echoed Voice is the card's only attack and whose whole damage
+    is the printed field; for the other five it is UNMEASURED — no registry,
+    `catalogManifest` or `testFixtures` id carries their names — and an op-borne
+    part of their damage would see neither the buff nor the override.) A printing that boosts an attack whose damage comes from an OP would earn
+    `EffectContext` an attack index. (🆕🆕 D544: now ONE read site PER KEY — the record's
+    optional `base` is read once too, at `attack.ts`'s `parseAttackDamage` line, through
+    `boostedAttackBase`; the boundary is still the ADDRESS, and it is the same line.)
 
     ⚠️ **IT GATES NO ACTION, CHECKED RATHER THAN ASSUMED** — the question D154 was
     the first durated field to owe. Both projections publish the attack's PRINTED
@@ -3418,7 +3434,8 @@ import type { GameState, Seat } from "./types";
 
     ⚠️ **THE §D147/§D152/§D154 `attackBlock` UNION IS RE-DERIVED AND STILL NO.** The
     earning condition D154 left is an ENUMERATING caller. There is still none: this
-    field's only reader asks for exactly one kind, and the slice adds a SEVENTH
+    field's only reader (🆕🆕 D544: two readers now, one per key, and each still asks
+    for exactly one thing about one index) asks for exactly one kind, and the slice adds a SEVENTH
     stamped field without adding a site that receives a rider whose kind it does
     not know. What it does add is the first pair of records in the family that are
     a key apart — the case a union looks most attractive for — and the separation
@@ -3530,7 +3547,9 @@ import type { GameState, Seat } from "./types";
     `MATCH_RECORD_VERSION` stays **10**. **D155 ran that same read-site test on
     `boostedAttack` and got the opposite answer**, because its consumer PAYS the
     index this one refuses — so the two decisions are consistent rather than in
-    tension, and both were decided by the read site. The OP is separate because
+    tension, and both were decided by the read site (🆕🆕 D544: still consistent —
+    `boostedAttack`'s new BASE-SET key is a second mode that also PAYS the index, so
+    the read-site test answers the same way). The OP is separate because
     D131's widen-don't-add test FAILS on it: `preventAttackUse` REQUIRES its
     printed noun, so `{ target: "defender" }` with no `attack` is not that op minus
     a key. **And the sharper half: this op returns a `park` from `stepOp` where
@@ -3962,7 +3981,9 @@ import type { GameState, Seat } from "./types";
     carry only ONE bar. **A collection is earned by a MULTIPLICITY the read site
     must ENUMERATE just as much as by a UNION it must DISPATCH on.** The
     `attackBlock` union stays DECLINED; D155's `boostedAttack` refusal is untouched
-    and sharpened — the list holds only addresses the gate REFUSES.
+    and sharpened — the list holds only addresses the gate REFUSES. (🆕🆕 D544: still
+    so — the `base?` key D544 added to `boostedAttack` is a mode that PAYS, never an
+    address the gate refuses, so nothing crosses between the two records.)
 
     `MATCH_RECORD_VERSION` **10 → 11**: the eighth time on D124's trigger and the
     FIRST that is a CHANGED TYPE rather than a new key, which is where *"can the
@@ -20047,6 +20068,50 @@ import type { GameState, Seat } from "./types";
     `expect(manifest.version)`, `it(…)` titles, the declaration and `package.json` —
     **not** as a value-keyed grep — because a value-keyed grep is precisely the mechanism
     that ate D500's heading.)
+    🆕🆕🆕 engineVersion 0.428.0 → **0.429.0** (D544 — THE NAMED ATTACK'S BASE DAMAGE,
+    OVERRIDDEN FOR ONE WINDOW, AS A RIDER ON THE OP THAT ALREADY OWNED THE ADDRESS.
+    `censusAttackCorpus.ts` **file line 166** (leading count column `2`) — *"During your next
+    turn, this Pokémon's Hyper Fang attack's base damage is 240."*, **1 sentence / 2 legal
+    printings** (SUBST-11 at `SUBMAX=12`), claimed WHOLE by `deriveAttackEffect` through ONE
+    new anchor (`SELF_ATTACK_BASE_SET`, TWO `['’]` slots, name and number CAPTURED) and ONE
+    new arm (24b') emitting the SHIPPED `boostAttack` op with a `base: true` RIDER. No catalog
+    or registry id carries the sentence on this checkout (MEASURED, D425), so the suite
+    (`attackBaseOverride.test.ts`) rides file-local declared `d544-*` demonstrators in their
+    own 60-card deck (D270).
+    🛑 **A RIDER, NOT A SIBLING OP AND NOT A NEW FIELD — AND THE REASON IS THE WRITER.** ONE
+    installer (`interpreter.ts` `boostAttack`) stays the ONLY writer of
+    `InPlayPokemon.boostedAttack`; D165 found the two-writers defect on `lockedAttack`. The
+    record gains an OPTIONAL `base?: number`; a base install writes
+    `{ turn, attackIndex, amount: 0, base }`, so the UNEDITED additive reader
+    (`boostedAttackDamage`) pays +0 by construction, and ONE new reader (`boostedAttackBase`,
+    continuous.ts, exported here) answers the base for THIS index on THIS turn or `null`.
+    `attack.ts` reads it at its ONE `parseAttackDamage` line, so the override reaches
+    `scaledBase`, every reading-borne program and `DAMAGE_DEALT.base` at once, AFTER the
+    confusion flip and BEFORE Weakness/Resistance (×2 → 480; with a +10 Tool, 500).
+    🛑 **THE SAME-ADDRESS MERGE IS FIELDWISE BY MAX, NOT AN OVERWRITE** — the pricing report
+    said overwrite, and that would let a later additive install delete a live base, which the
+    installer's own rule (*"a second installation may never leave the holder with less than
+    one of them printed"*) forbids; the early return compares BOTH fields. Unreachable off any
+    printing; constructed and pinned in both install orders.
+    ⚠️ **`stepOp`'s pass-through of `op.base` IS A SITE `tsc` CANNOT SEE (D421)** — the
+    installer's parameter is `true | undefined`, so dropping it typechecks — and it has its
+    own mutant row. `ATTACK_BOOSTED` gains `base?: true` and `log.ts` a branch rendering
+    *"<name>'s <attack>'s base damage is <N> next turn"*: without it the row reads
+    *"does 240 more damage"*, which is FALSE (D421).
+    🛑 **`MATCH_RECORD_VERSION` STAYS 30, ARGUED AT THE ADDRESS** (`apps/api/src/lobby/match.ts`,
+    the D544 paragraph beside D456's): the absent key means what a v30 writer meant (D441), the
+    rest is old (D434), and a lost `base` leaves `{turn, attackIndex, amount: 0}` — inert, and
+    UNAUTHORABLE by the surviving path because arm 24b's `amount >= 1` guard is the sole
+    additive producer and the registry has none (D456). The one exception (the constructed
+    mixed-mode composite) is named there with the condition that would reverse it (D422).
+    D155's refusal still stands and says why at its three changelog sites above.
+    Census: reader 567/1617 → 568/1619, residue 45/61 → 44/59, raw residue 73/115 → 72/113,
+    `BUILT.attack` 1671 → 1673; registry 10/16, gate 7/17, trailing 11/21 and
+    `attackReaderSurface()` 13 UNMOVED. `SUBST-11` 2/4 → 1/2 at `SUBMAX=12` with `OPAQUE`
+    UNMOVED at 16/24 there; `OPAQUE` 31/44 → 30/42 and `UNEXPLAINED` 14/17 → 13/15 at
+    `SUBMAX=4`. ⚠️ THE SENTENCE STEP IS 1 AND THE PRINTING STEP IS 2. PART 0 (separable):
+    the stale corpus `:176` quote *"tries to attack"* / 4 respelled to the corpus bytes at
+    its six carriers, so two refusal rungs now refuse a string the corpus prints.)
     🆕🆕🆕 engineVersion 0.427.0 → **0.428.0** (D543 — THE CHOSEN POKÉMON TOOL DISCARD AT
     THE PROGRAM TAIL, THE `upTo` SCOPE THAT NEVER HAD A WIRE SPELLING, AND THE EVENT THAT HAD
     TO SAY *WHEN* IT FIRED. `censusAttackCorpus.ts` **file line 136** (leading count column
@@ -23605,7 +23670,7 @@ import type { GameState, Seat } from "./types";
     WITNESS** — the count was re-derived every slice and the word *"three"* was carried.
     A successor of this slice inherits **81 / 61 / 17** again, over **FIVE** history
     occurrences: those four plus `deckMillFilteredScale.test.ts`'s own header arrow.) */
-export const engineVersion = "0.428.0";
+export const engineVersion = "0.429.0";
 
 export type {
   ApplyResult,
@@ -23670,6 +23735,7 @@ export {
   hasFreeRetreatAura,
   hasFreeRetreatSelf,
   attackerSuppressesTargetEffects,
+  boostedAttackBase,
   boostedAttackDamage,
   installedNoWeakness,
   installedReductionOf,
