@@ -8316,6 +8316,34 @@ artefact. D542 checked that both partial logs agreed with the finished run on ev
 (2,659 / 2,659 and 292 / 292, same order) — a check worth running, because it is what says an interruption
 cost wall-clock and nothing else.
 
+### A worktree's isolation check is EVERY `@luminous` link, not the root one (D543 close-out)
+
+D541's check above — one `realpath` of the root's `node_modules/@luminous/engine` — is NECESSARY and not
+SUFFICIENT. This repo carries **five** workspace links, and three of them live in NESTED `node_modules`:
+
+```
+node_modules/@luminous/engine                    # ABSOLUTE in the main tree — D541's case
+node_modules/@luminous/schema
+apps/api/node_modules/@luminous/engine           # RELATIVE: ../../../../packages/engine
+apps/api/node_modules/@luminous/schema
+packages/engine/node_modules/@luminous/schema    # RELATIVE: ../../../schema
+```
+
+🛑 **A relative link resolves against its REAL path.** Symlink `packages/engine/node_modules` WHOLE into the
+main tree and `../../../schema` resolves from inside the MAIN tree — so the engine's `@luminous/schema` is the
+main checkout's `packages/schema` while the root link reads perfectly. D543 hit it (the engine did not redden
+on a schema edit that `src/` already saw), and D544's builder hit it again; both rebuilt the nested
+directories as REAL directories whose links point inside the worktree. That is the second-checkout build
+running against the very tree a whole-corpus sweep is patching in place.
+
+**So the check is all of them, and every one must print a path inside the worktree:**
+
+```
+for l in node_modules/@luminous/* */*/node_modules/@luminous/*; do realpath "$l"; done
+```
+
+Build a worktree's nested `node_modules` as real directories, never as symlinks to the main checkout's.
+
 
 ## Git / commits
 - Branch off `main` for non-trivial work; commit/push only when asked.
