@@ -165,7 +165,9 @@ export const redactedAttackSchema = z.object({
       and deliberately still meaning exactly that. See `effectiveCost` below. */
   cost: z.array(z.string()),
   /** The cost the §8.2 gate ACTUALLY charges under every continuous cost effect in
-      play (engine `effectiveAttackCost`), present ONLY when it differs from the
+      play (engine `effectiveAttackCost` — 🆕🆕🆕 since D545 `attackCostAt`, which also
+      folds a printed COST CLAUSE on the attack: `["Fighting"]` for corpus `:316`'s
+      alternate, `[]` for `:324`'s waive), present ONLY when it differs from the
       printed `cost` above. Render this in preference to `cost` wherever the player
       sees energy dots: `effectiveCost ?? cost`.
 

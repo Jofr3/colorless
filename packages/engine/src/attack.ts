@@ -165,6 +165,69 @@ export function costMet(cost: readonly string[], provided: readonly string[]): b
   return provided.length - typedNeeds >= colorless;
 }
 
+/** 🆕🆕🆕 **D545 — §8.2 THE COST THIS ATTACK IS CHARGED RIGHT NOW: the printed cost
+    under every continuous cost effect in play (`effectiveAttackCost`, unchanged) AND
+    the printed COST CLAUSE on this one attack index, if any.** The ONE answer the
+    three payability sites share — `attack()`'s §8.2 check below, `redactedAttacksOf`
+    (redact.ts) and GameHud's TurnPanel — so a cost clause cannot light a button the
+    server refuses, or the reverse. Two clauses, read off `attackGateOf` (the same
+    §9-blind, `registry ?? derived`, index-keyed seam the timing gate rides):
+
+      • `alternateCostIf` — *"If this Pokémon has any damage counters on it, this
+        attack can be used for {F}."* (`censusAttackCorpus.ts` file line 316). While
+        the condition holds, the ALTERNATE (under the same continuous effects) is
+        charged IF it is payable, and the printed cost otherwise. **Never stricter
+        than printed** — an ALTERNATE, not a REPLACEMENT (UNRULED, `decisions.md`
+        D545): a damaged body that can pay the printed cost but not {F} may still
+        attack. Surcharges and discounts apply ON TOP of the alternate.
+      • `costWaivedIf` — *"If this Pokémon is affected by a Special Condition,
+        ignore all Energy in this attack's cost."* (file line 324). While the
+        condition holds, the charge is `[]`. **WAIVE-LAST** (UNRULED, D545): "ignore
+        ALL Energy" also ignores a League HQ or Quaking Zone surcharge, so the waive
+        is applied AFTER `effectiveAttackCost` rather than before it.
+
+    🛑 **WHEN THE CONDITION HOLDS AND NEITHER ARRAY IS PAYABLE, THE PRINTED
+    (EFFECTIVE) COST IS RETURNED** — so the §8.2 reject message and the wire's
+    `effectiveCost` both publish the printed charge (UNRULED, D545). One array, one
+    answer; which one to NAME when nothing pays is a presentation choice, and it is
+    pinned by `attackCostClause.test.ts` rather than left to fall out.
+
+    ⚠️ **IN attack.ts AND NOT interpreter.ts, WHERE THE GATE READERS LIVE**, because
+    the alternate's payability is `costMet`, which lives here — and interpreter.ts
+    cannot import this module without a cycle, while this module already imports
+    `conditionHolds` from there. `effectiveAttackCost` (continuous.ts) KEEPS its
+    signature, body and "THREE sources" doc: a cost CLAUSE is printed on the attack,
+    not a continuous effect in play, and folding it there would give that
+    seat-blind function a seat and a `provided` list it has no business holding.
+
+    ⚠️ THE RETURN IS THE CHARGED ARRAY, and `attack()` hands it on to
+    `scaledAttackDamage` for the extra-Energy readers (D436/D169) — so under a waive
+    every attached unit is "extra", which is what "ignore all Energy in this attack's
+    cost" leaves. Identity is preserved on the common board: with no clause (or a
+    false condition) this returns `effectiveAttackCost`'s own answer, which is the
+    printed array itself when no modifier is in play (`redactedAttacksOf` relies on
+    it). */
+export function attackCostAt(
+  state: GameState,
+  seat: Seat,
+  pokemon: InPlayPokemon,
+  index: number,
+  provided: readonly string[],
+): readonly string[] {
+  const top = topCardOf(state, pokemon);
+  const printed = (top === undefined ? undefined : attacksOf(top)[index]?.cost) ?? [];
+  const printedEff = effectiveAttackCost(state, pokemon, printed);
+  const gate = attackGateOf(state, pokemon, index);
+  if (gate?.kind === "alternateCostIf" && conditionHolds(state, seat, gate.condition)) {
+    const alt = effectiveAttackCost(state, pokemon, gate.cost);
+    return costMet(alt, provided) ? alt : printedEff;
+  }
+  if (gate?.kind === "costWaivedIf" && conditionHolds(state, seat, gate.condition)) {
+    return [];
+  }
+  return printedEff;
+}
+
 /** `per × count` — the scaled HP a count-scaling clause contributes, tallying its
     resource off the board as of attack declaration (§8.5 — counted when damage is
     calculated). Fold-agnostic: the caller adds this onto the printed base (the
@@ -191,8 +254,9 @@ export function costMet(cost: readonly string[], provided: readonly string[]): b
     IS NOT ON THE BOARD.** Every source above answers from `(state, seat, attacker)`;
     `extraEnergyUnitsBeyondCost` answers *"how much Energy is attached beyond what
     THIS attack charged"*, and the charge is a property of the DECLARATION. It is the
-    EFFECTIVE cost (`effectiveAttackCost`, D169) and it is PASSED rather than
-    recomputed — `attack()` already holds the identical array for the §8.2 check, and
+    EFFECTIVE cost (`effectiveAttackCost`, D169 — 🆕🆕🆕 since D545 `attackCostAt`, which
+    also folds the printed COST CLAUSE on the index; still the CHARGED array) and it is
+    PASSED rather than recomputed — `attack()` already holds the identical array for the §8.2 check, and
     a second call would be a second answer to a question the engine answers once
     (D159). ⚠️ A caller that hands the PRINTED cost here is a live defect on every
     board with a cost modifier in play and moves no other number; the mutant
@@ -1412,8 +1476,12 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
   // special-energy units incl. wildcards — continuous.ts providedEnergy),
   // under the in-play Stadium's continuous cost effects (League HQ's Basic
   // surcharge).
+  // 🆕🆕🆕 D545 — through `attackCostAt`, which folds the printed COST CLAUSE on this
+  // index (corpus `:316`'s alternate {F}, `:324`'s waive) over `effectiveAttackCost`.
+  // `cost` stays the CHARGED array: `scaledAttackDamage` below reads it for the
+  // extra-Energy family (D436), and the message names what the gate charged.
   const provided = providedEnergy(state, active);
-  const cost = effectiveAttackCost(state, active, declared.cost ?? []);
+  const cost = attackCostAt(state, action.seat, active, index, provided);
   if (!costMet(cost, provided)) {
     return err("ATTACK_COST_UNMET", `${declared.name} costs [${cost.join(", ")}]`);
   }
@@ -1638,6 +1706,14 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
   // `splitAttackGateClause`'s own TRIPWIRE covers the one case a two-ended split
   // newly creates — a string matching the gate list at BOTH ends is refused
   // outright rather than half-split. `splitOrder.test.ts` §2/§3 drive all of it.
+  //
+  // 🆕🆕🆕 **D545 — *"claims 17"* AND *"gate 7 sentences / 17 units"* ARE D541's
+  // FIGURES: AT D545's HEAD THE GATE SPLIT CLAIMS 9 SENTENCES / 19 UNITS**, the +2
+  // being `ATTACK_GATE_CLAUSES` rows 6 and 7 — the two COST clauses (corpus `:316`,
+  // `:324`), each a clause-only printing with `body: ""`. The requirement split is
+  // unmoved at 1 / 2 and the intersection is still EMPTY: an empty body reaches
+  // `splitAttackRequirementClause` as `""`, which the line below refuses to split.
+  // (D178: the figures above are kept as D541 measured them.)
   //
   // ⚠️ The order below is still the RIGHT one and is asserted rather than assumed.
   // On a compound carrying both clauses the two orders DISAGREE: gate-then-

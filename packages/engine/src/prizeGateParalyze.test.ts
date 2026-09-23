@@ -63,6 +63,13 @@ import {
 // therefore lands on the **READER** arm, which is also the arm all three of its BUILT
 // prize siblings land on: corpus `:343` and `:353` through `deriveAttackDamageBonus`,
 // `:350` through `deriveAttackRequirement`. Zero of the four are gate-arm builds.
+// 🆕🆕🆕 **D545 — *"a CLOSED FOUR-ENTRY list of printed TIMING clauses"* IS WITHDRAWN
+// as a present-tense claim.** The list was already five entries at D541, and D545 put two
+// leading `If …,` COST clauses on it (rows 6 and 7 of `ATTACK_GATE_CLAUSES`:
+// `alternateCostIf` for corpus `:316`, `costWaivedIf` for `:324`), so a leading `If …,`
+// clause of another kind CAN reach the splitter now, when its whole printed text is a row.
+// This row's verdict is unmoved: its leading clause is not a row, so §5's sixteen `null`s
+// still hold and it is still a READER build.
 //
 // 🛑 **A FIFTH NAME FOR A FOURTH READING OF ONE PILE, AND IT IS THE HOUSE IDIOM RATHER
 // THAN A SLIP.** `registry.ts`'s D207 block says outright *"TWO SPELLINGS EXIST AND
@@ -532,6 +539,11 @@ describe("D517 §5 — the lattice, computed on BOTH predicates", () => {
     // clauses, so a leading `If <board fact>,` can never be one. The pre-slice brief's
     // premise that "a leading `If …,` clause makes the gate splitter live" is FALSE, and
     // this is the rung that says so.
+    // 🆕🆕🆕 D545 LANDING — *"a closed list of four printed TIMING clauses, so a leading
+    // `If <board fact>,` can never be one"* is WITHDRAWN as a present-tense claim: the list
+    // has SEVEN rows (4 at D517, 5 at D541, 7 at D545), and rows 6 and 7 are leading
+    // `If <board fact>,` COST clauses (corpus `:316`, `:324`). What still makes this rung
+    // structural is that the list is CLOSED and matched WHOLE: no lattice cell below is a row.
     for (let i = 0; i < 16; i++) {
       expect(splitAttackGateClause(cell(i)), cell(i)).toBeNull();
       expect(splitAttackTrailingClause(cell(i)), cell(i)).toBeNull();
@@ -666,7 +678,7 @@ describe("D517 §7 — the price, and both version constants", () => {
   });
 
   it("🛑 the ENGINE version moved and `MATCH_RECORD_VERSION` did not, and both are argued", () => {
-    expect(engineVersion).toBe("0.429.0");
+    expect(engineVersion).toBe("0.430.0");
   });
 
   it("🛑 REACHABILITY IS EMPTY, MEASURED OVER EVERY PRODUCER RATHER THAN ASSERTED", () => {
@@ -815,7 +827,10 @@ describe("D517 §8 — corpus `:346` shares this GATE and is deliberately NOT bu
     // rather than a second slice of this size. (a) The GATE is this member at `[1]`,
     // built. (b) The WRAPPER — `If you use this attack when <clause>, …` — is a SECOND
     // printed spelling of a leading condition and is ONE anchor group; it is not in
-    // `ATTACK_GATE_CLAUSES` and cannot be, that list being TIMING clauses. (c) The
+    // `ATTACK_GATE_CLAUSES` and cannot be, that list being TIMING clauses (🆕 D545:
+    // ~~that list being TIMING clauses~~ — rows 6 and 7 are COST clauses now; the
+    // wrapper still is not in it, because the list holds WHOLE printed clauses and this
+    // is an open-ended prefix). (c) The
     // CONSEQUENT is the whole cost, and it is unpriced here on purpose.
     expect(conditionHolds(setPrizes(board(), "p1", 1), "p1", {
       kind: "yourPrizesRemaining",

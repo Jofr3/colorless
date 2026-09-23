@@ -194,8 +194,12 @@ describe("§1 — the census D282 priced its refusal against: counts reproduce, 
     // (so it cannot be in the 16) and its clause prints LAST (so it is in neither half of
     // the `leadingIf` filter). **The 10 + 3 partition below is UNMOVED and the TOTAL IS
     // NOT** — the same arithmetic D395's note describes, a second time.
+    // 🆕🆕🆕 **D545 17 → 19** — and the TWO new printings join from OUTSIDE both populations
+    // for D395's reason exactly: `:316` and `:324` are SINGLE clause-only sentences (not in the
+    // multi-sentence 271/613), and though both open with `If `, neither contains a `. `, so the
+    // `leadingIf` filter's multi-sentence half cannot see them. The 10 + 3 partition is UNMOVED.
     const gateAll = corpus().filter(([, s]) => splitAttackGateClause(s) !== null);
-    expect(units(gateAll)).toBe(17);
+    expect(units(gateAll)).toBe(19);
     // 🛑 **THE FILTER HAD TO CHANGE AND THAT IS A FINDING, NOT A FIX.** It used to read
     // `body !== ""`, which was a PROXY for "not the clause-only Miltank row" and worked only
     // while the gate family had exactly one non-first-turn member. D541 adds a second, whose
@@ -208,7 +212,10 @@ describe("§1 — the census D282 priced its refusal against: counts reproduce, 
     expect(units(firstTurn)).toBe(13);
     expect(units(firstTurn) - units(licence)).toBe(10);
     // …and the two non-first-turn rows are exactly the 1 + 3 the total now carries above it.
-    expect(units(gateAll) - units(firstTurn)).toBe(4);
+    // 🆕🆕🆕 **D545 4 → 6** — the non-first-turn rows are now FOUR (1 + 3 + 1 + 1): D545's two
+    // cost clauses print no *"during your first turn"*, so the first-turn filter is UNMOVED at 13
+    // and the whole +2 lands on this difference.
+    expect(units(gateAll) - units(firstTurn)).toBe(6);
   });
 
   it("S2 — 17 of 713 registry ids carry an `attackGate`, in three kinds", () => {
@@ -231,6 +238,9 @@ describe("§1 — the census D282 priced its refusal against: counts reproduce, 
     // TEXT side are two independent transcriptions of one fact, and their DIFFERENCE is the live
     // detector of a gate nobody authored a split for — it is pinned at **0** now, by this block's own
     // `toBe(17)` and §2's `[7, 17]`, rather than read off a gap of 3.
+    // 🆕🆕🆕 **D545 LANDING — *"that closed list carries FIVE rows now"* (① above) IS D541's
+    // FIGURE: IT CARRIES SEVEN.** Rows 6 and 7 are D545's COST clauses (`:316`, `:324`), not
+    // timing clauses, and they joined with no registry row — see the D545 note below.
     // 🛑 **AND THIS IS THE SIXTH SITE OF THE BLOCK-PROSE CLASS, AT THE THIRD UNFINISHED GREP OF ONE
     // SLICE.** The NEXT `it()` in THIS FILE withdrew the SAME D396 note in place, and `registry.ts:2860`
     // carried the same claim and WAS withdrawn — two of three code sites swept and the third missed,
@@ -240,6 +250,13 @@ describe("§1 — the census D282 priced its refusal against: counts reproduce, 
     // (both annotated with this one), and TWO frozen dated records (D396's own session-log entry and its
     // struck status row) which say what D396 MEASURED and are kept as written. It returns more now,
     // because each withdrawal QUOTES the sentence it withdraws.
+    // 🆕🆕🆕 **D545 — *"it is pinned at 0 now"* IS WITHDRAWN: THE DIFFERENCE IS 2, AND THIS TIME
+    // IT MEASURES THE OPPOSITE THING.** The TEXT side is [9, 19] (§2) and the REGISTRY side is
+    // unmoved at 17, because D545's two rows (`:316` / `:324`, the COST clauses) are split with
+    // NO registry row behind them — the first gate printings the derivation serves ALONE. So
+    // the gap is no longer "a gate nobody authored a split for" (registry > text, D396) but
+    // "a split nobody authored a row for" (text > registry), and both directions are now
+    // named. The registry figure here is the one that stays pinned.
     const ids = registryCardIds();
     // 🆕🆕 D396 — 710 -> **713**: THREE registry keys on ONE program object,
     // Sylveon ex `sv08-086`/`sv08.5-041`/`sv08.5-156` — a bare `attackGate` at index
@@ -283,7 +300,7 @@ describe("§1 — the census D282 priced its refusal against: counts reproduce, 
 });
 
 describe("§2 — the two splits are DISJOINT on the whole catalog", () => {
-  it("gate split claims 7 s / 17 u (🆕 D541 6/14 → 7/17; the TITLE had been stale at 5/13 since D395), requirement split 1 s / 2 u, and BOTH claim 0", () => {
+  it("gate split claims 7 s / 17 u (🆕 D541 6/14 → 7/17; the TITLE had been stale at 5/13 since D395; 🆕🆕 D545 → 9 s / 19 u), requirement split 1 s / 2 u, and BOTH claim 0", () => {
     const all = corpus();
     const gate = all.filter(([, s]) => splitAttackGateClause(s) !== null);
     const req = all.filter(([, s]) => splitAttackRequirementClause(s) !== null);
@@ -306,7 +323,9 @@ describe("§2 — the two splits are DISJOINT on the whole catalog", () => {
     // 🆕🆕 D395 — [5, 13] -> **[6, 14]**, and the disjointness below is UNMOVED:
     // the new row is a clause-only printing, and `splitAttackRequirementClause`'s
     // own list does not contain it.
-    expect([gate.length, units(gate)]).toEqual([7, 17]);
+    // 🆕🆕🆕 **D545 — [7, 17] → [9, 19]**: two clause-only COST clauses (`:316` / `:324`), and
+    // the disjointness below is UNMOVED — neither is in `splitAttackRequirementClause`'s list.
+    expect([gate.length, units(gate)]).toEqual([9, 19]);
     expect([req.length, units(req)]).toEqual([1, 2]);
     // 🛑 THE TRIPWIRE. The day a printing carries both, this reddens by name and
     // the composer question is live again — with a population above zero.
@@ -339,7 +358,10 @@ describe("§2 — the two splits are DISJOINT on the whole catalog", () => {
     // rewrites one more printed string) where the PRINTING step at the pins above is 3: this
     // filter counts distinct corpus sentences, so a number copied from `units(gate)` would
     // have been wrong by two (D451).
-    expect(corpus().filter(([, s]) => siteOrder(s) !== s).length).toBe(8);
+    // 🆕🆕🆕 **D545 8 -> 10** — MEASURED: the site rewrites each of the two new clause-only
+    // strings to the empty string, as it does Miltank's. Here the sentence step (2) EQUALS the
+    // printing step (2), which is the case where a copied number is right by accident (D451).
+    expect(corpus().filter(([, s]) => siteOrder(s) !== s).length).toBe(10);
   });
 });
 
@@ -603,7 +625,7 @@ describe("§6 — FOUR strippers at one seam, and all six pairs are DISJOINT", (
     ["trailing", splitAttackTrailingClause],
   ];
 
-  it("🛑 prices each stripper live off the corpus — 🆕 D541 7/17, 1/2, 4/5, 11/21", () => {
+  it("🛑 prices each stripper live off the corpus — 🆕 D541 7/17, 1/2, 4/5, 11/21 (🆕🆕 D545 gate → 9/19)", () => {
     const priced = STRIPPERS.map(([name, split]) => {
       const rows = corpus().filter(([, s]) => split(s) !== null);
       return [name, rows.length, units(rows)] as const;
@@ -621,8 +643,12 @@ describe("§6 — FOUR strippers at one seam, and all six pairs are DISJOINT", (
     // five-row list, so the three other strippers see exactly the strings they saw before.
     // ⚠️ The gate row is the one whose SENTENCE and PRINTING steps disagree (1 vs 3) — each
     // was measured at this site rather than carried across.
+    // 🆕🆕🆕 **D545 — the GATE row moves 7/17 → 9/19 and NO OTHER ROW MOVES**: two more rows
+    // on the same closed list (five → SEVEN rows; *"five-row"* above is D541's figure, and rows 6
+    // and 7 are COST clauses, not timing clauses), each a whole printed text, so the other three strippers see
+    // exactly the strings they saw before.
     expect(priced).toEqual([
-      ["gate", 7, 17],
+      ["gate", 9, 19],
       ["requirement", 1, 2],
       ["cancel", 4, 5],
       ["trailing", 11, 21], // 🆕🆕 D435 10/19 → 11/21 — the delayed KNOCK-OUT anchor claims the TAIL of one more printed compound (corpus row 113, 2 printings); no stripper changed, and the other three rows stand still for a SECOND slice running. 🆕🆕 D424 9/18 → 10/19 — the two-status pair claims the HEAD of one more printed compound; no stripper changed, and the other three rows stand still.
@@ -698,8 +724,8 @@ describe("§6 — FOUR strippers at one seam, and all six pairs are DISJOINT", (
     // The other two parts are unmoved literals in the same breath, so a widening that
     // had leaked into the gate or the composition path reddens on the PART rather
     // than only on the sum.
-    expect(corpus().filter(([, s]) => fourSiteOrder(s) !== s).length).toBe(23); // 🆕🆕🆕 D541 22 → 23 — MEASURED: the four-stripper seam rewrites ONE more SENTENCE (the trailing gate branch's only row), where the PRINTING pins above step by 3. The parts below are unmoved literals in the same breath, so a widening that leaked into another stripper reddens on the PART. // 🆕🆕 D435 21 → 22: the four-stripper seam rewrites one more sentence, and the WHOLE step is the trailing term — 7 + 11 + 4 — so a widening that had leaked into the gate or the cancel path reddens on the PART below rather than only on this sum. 🆕🆕 D424 20 → 21: the four-stripper seam now rewrites one more sentence, because the trailing splitter admits one more.
-    expect(corpus().filter(([, s]) => siteOrder(s) !== s).length).toBe(8); // 🆕🆕🆕 D541 7 → 8 — the SAME sentence, seen through the two-stripper pipeline; §2's own copy of this figure steps with it.
+    expect(corpus().filter(([, s]) => fourSiteOrder(s) !== s).length).toBe(25); // 🆕🆕🆕 D545 23 → 25 — MEASURED: the two clause-only COST clauses (`:316`/`:324`) are rewritten to the empty string by the gate stripper. 🆕🆕🆕 D541 22 → 23 — MEASURED: the four-stripper seam rewrites ONE more SENTENCE (the trailing gate branch's only row), where the PRINTING pins above step by 3. The parts below are unmoved literals in the same breath, so a widening that leaked into another stripper reddens on the PART. // 🆕🆕 D435 21 → 22: the four-stripper seam rewrites one more sentence, and the WHOLE step is the trailing term — 7 + 11 + 4 — so a widening that had leaked into the gate or the cancel path reddens on the PART below rather than only on this sum. 🆕🆕 D424 20 → 21: the four-stripper seam now rewrites one more sentence, because the trailing splitter admits one more.
+    expect(corpus().filter(([, s]) => siteOrder(s) !== s).length).toBe(10); // 🆕🆕🆕 D545 8 → 10 — the same two rows through the two-stripper pipeline. 🆕🆕🆕 D541 7 → 8 — the SAME sentence, seen through the two-stripper pipeline; §2's own copy of this figure steps with it.
     expect(corpus().filter(([, s]) => splitAttackTrailingClause(s) !== null).length).toBe(11); // 🆕🆕 D435 10 → 11. 🆕🆕 D424 9 → 10 — an UNNAMED re-derivation of the trailing-split census; reachable by no grep of the constant.
     expect(corpus().filter(([, s]) => splitAttackCancelClause(s) !== null).length).toBe(4);
   });

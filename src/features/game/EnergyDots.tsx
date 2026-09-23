@@ -7,7 +7,8 @@ import { ENERGY_COLORS } from "../../lib/energyPalette";
 //
 // ⚠️ THE COST HANDED IN IS THE EFFECTIVE ONE, NOT THE PRINTED ONE, and the two
 // callers reach it differently: GameHud has the full state and computes
-// `effectiveAttackCost` itself; the online panel has only the wire snapshot and
+// `effectiveAttackCost` itself (🆕🆕🆕 D545: `attackCostAt`, which wraps it and folds
+// the printed COST CLAUSE on the attack); the online panel has only the wire snapshot and
 // reads `attack.effectiveCost ?? attack.cost`. Both are the array the §8.2
 // payability gate charged, which is the point — the button's enabled/disabled
 // state is derived from exactly these symbols, and drawing the PRINTED cost beside

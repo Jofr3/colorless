@@ -46,7 +46,10 @@ import {
 // can't be used."* (**1 sentence / 3 legal printings**), whose body D541 BUILT. All 17 still
 // carry a registry `attackGate` and all 17 sit in the SPLIT summand — `SPLIT_ATTACK_UNITS`
 // steps 14 → 17 (`censusAtHead.test.ts:8159`). D444's figures above are KEPT as D444 measured
-// them. ⚠️ **THE SENTENCE STEP IS 1 AND THE PRINTING STEP IS 3** (D451).) The
+// them. ⚠️ **THE SENTENCE STEP IS 1 AND THE PRINTING STEP IS 3** (D451).) (🆕🆕🆕 **D545:
+// 7/17 → 9/19, and *"all 17 still carry a registry `attackGate`"* is now true of 17 of the
+// 19** — the two cost clauses at corpus `:316` / `:324` are clause-only rows with NO registry
+// row; `SPLIT_ATTACK_UNITS` steps 17 → 19.) The
 // three sentences a residue ranking surfaces here —
 //
 //   7p  "If you go second, you can't use this attack during your first turn. This
@@ -88,7 +91,8 @@ import {
 // it; never reverse a decision silently).
 //
 //   ① *"a deriver buys ZERO additional legal printings"* — **STILL TRUE**, and §2
-//      re-derives it live. ⚠️ But it is scoped to `legal_standard = 1` and **the
+//      re-derives it live. 🆕🆕🆕 **(D545: WITHDRAWN — the deriver buys 2, the two cost
+//      clauses `:316`/`:324`, which carry no registry row; see §2's divider.)** ⚠️ But it is scoped to `legal_standard = 1` and **the
 //      engine is not**: `src/features/builder/cards.ts` ships an `expanded` format
 //      keyed on `legal_expanded`, and `effects.ts`'s own clause-table block records
 //      that the pool-wide query returns **15** where the legal one returns 13 — the
@@ -118,6 +122,9 @@ import {
 //    four it was written for; the fifth is tied by §2 by existence and by value-as-registry-
 //    literal, and its DERIVATION from the printed clause is driven in
 //    `angeliteChosenShuffle.test.ts`. See the dividers of §1 and §2 below.
+//    🆕🆕🆕 **D545 LANDING — *"NOW NAMES FOUR OF FIVE"* IS D541's FIGURE: IT NAMES FOUR OF
+//    SEVEN.** D545 appended rows 6 and 7, the two COST clauses (corpus `:316`, `:324`), which are
+//    not timing clauses; their derivation is driven by value in `attackCostClause.test.ts` §1.
 // 2. 🛑 **THE DERIVATION IS A CLOSED TABLE, NOT A TEMPLATE** (§1). D394/D395 refuse
 //    `^You can use this attack only if (.+)\.$` because a mis-parsed condition bars
 //    a legal attack FOREVER and silently. That refusal is untouched: a near-miss
@@ -386,6 +393,12 @@ const SECOND_PLAYERS_FIRST_TURN = {
 //    ⚠️ An ORDINAL is a figure, and a divider is outside every block: that is the pair of
 //    reasons four sweeps in this slice — keyed on the moved values, scoped first to titles and
 //    then to blocks — walked past this line. (D178/D418: annotated, never overwritten.)
+// 🆕🆕🆕 **D545 LANDING — *"THE TABLE HAS FIVE"* AND *"§1 BELOW DRIVES FOUR OF THE FIVE"* ARE
+//    D541's FIGURES: THE TABLE HAS SEVEN AND §1 DRIVES FOUR OF THE SEVEN.** Measured off
+//    `git show` of `ATTACK_GATE_CLAUSES`: 4 rows at D517 (`53dde5bc`), 5 at D541 (`54e67649`), 5 at
+//    D544 (`0f4d7257`), 7 at D545. Rows 6 and 7 are COST clauses, not timing clauses
+//    (`alternateCostIf` / `costWaivedIf`, never blocking); their VALUES are driven by
+//    `timingGateFromAttackText` in `attackCostClause.test.ts` §1, not here.
 
 describe("D444 §1 — the clause→gate table, driven row against row", () => {
   it("🛑 the two `If you go …` rows are OPPOSITE, and one of them carries NO condition", () => {
@@ -472,6 +485,13 @@ describe("D444 §1 — the clause→gate table, driven row against row", () => {
 // ─────────────────────────────────────────────────────────────────────────────
 // 2. THE POPULATION — 14, all of it registry-authored, and 0 claimed here.
 // ─────────────────────────────────────────────────────────────────────────────
+// 🆕🆕🆕 **D545 — *"all of it registry-authored, and 0 claimed here"* IS WITHDRAWN.** The
+//    family is 9 sentences / 19 printings at D545, and the two it added — corpus `:316`
+//    and `:324`, the COST clauses (`alternateCostIf` / `costWaivedIf`) — carry NO registry
+//    row (no card id resolves for either on this checkout, D425). So the derivation claims
+//    EXACTLY 2 printings the registry does not author, the first it has ever claimed alone:
+//    17 registry ids still carry `attackGate` (the rung below is unmoved), and 19 − 17 = 2.
+//    (D178/D418: annotated, never overwritten.)
 // 🆕🆕🆕 **D541 FINAL REVIEW (2026-09-22) — *"THE POPULATION — 14"* IN THE DIVIDER ABOVE IS
 //    WITHDRAWN: IT IS 17.** The section's own rung asserts `gated.length` `.toBe(7)` and
 //    `gated.reduce(…)` `.toBe(17)` a few lines below — both written by this slice, stepping
@@ -486,15 +506,17 @@ describe("D444 §1 — the clause→gate table, driven row against row", () => {
 //    (D178/D418: annotated, never overwritten.)
 
 describe("D444 §2 — the population, and the honest zero", () => {
-  it("🛑 the gate family is 7 sentences / 17 printings (🆕 D541 6/14 → 7/17), and D444 still claims NONE of them", () => {
+  it("🛑 the gate family is 7 sentences / 17 printings (🆕 D541 6/14 → 7/17; 🆕🆕 D545 → 9/19, and the derivation now claims exactly the 2 D545 printings — the NONE is D444's and D541's, withdrawn at D545)", () => {
     // 🆕🆕🆕 **D541 6/14 → 7/17** — the TRAILING gate clause (`censusAttackCorpus.ts` file line 82, Sylveon ex `sv08-086`/`sv08.5-041`/`sv08.5-156`, **1 sentence / 3 legal printings**). ⚠️ **THE SENTENCE STEP IS 1 AND THE PRINTING STEP IS 3 — THEY DISAGREE** (D451), so this site was MEASURED and not copied from its neighbour.
     // ⚠️ **AND D444's OWN CONCLUSION IS UNCHANGED BY THE STEP**: all 17 are registry-authored
     // (17 ids carry `attackGate`), so the DERIVER still buys ZERO additional legal printings.
+    // 🆕🆕🆕 **D545 — WITHDRAWN AT D545: 19 printings, 17 registry-authored, and the DERIVER
+    // BUYS 2** (the two cost clauses, no registry row). D541's sentence is kept as history.
     // What D541 changed is that the three extras are now IN this table rather than an
     // exception to it — see `effects.ts`'s D444 block, where that parenthesis is withdrawn.
     const gated = legalAttackCorpus().filter(([, text]) => splitAttackGateClause(text) !== null);
-    expect(gated.length).toBe(7);
-    expect(gated.reduce((sum, [units]) => sum + units, 0)).toBe(17);
+    expect(gated.length).toBe(9);  // (🆕🆕🆕 **D545 +2 sentences / +2 printings — THE TWO PRINTED COST CLAUSES, BUILT AS A PAIR ON THE GATE ARM** — `censusAttackCorpus.ts` **file lines 316 and 324** (leading count column `1` each), *“If this Pokémon has any damage counters on it, this attack can be used for {F}.”* and *“If this Pokémon is affected by a Special Condition, ignore all Energy in this attack's cost.”*, **2 sentences / 2 legal printings** (card ids UNRESOLVED on this checkout — measured, never invented, D425 — so the suite rides the file-local declared demonstrators `d545-alt` / `d545-waive`), claimed WHOLE as clause-only rows six and seven of `ATTACK_GATE_CLAUSES` (`body: ""`, D395's path) mapped to TWO new NON-BLOCKING `AttackTimingGate` members `alternateCostIf` / `costWaivedIf`, read by `attackCostAt` — a GATE move: gate 7/17 → 9/19, residue 44/59 → 42/57, `BUILT.attack` 1673 → 1675, `SPLIT_ATTACK_UNITS` 17 → 19 (READ at `censusAtHead.test.ts:8169`); reader arm 568/1619, raw residue 72/113, registry 10/16, trailing 11/21 and `COMPOUND_ATTACK_UNITS` 21 UNMOVED; engine 0.429.0 → 0.430.0, `MATCH_RECORD_VERSION` HELD at 30. ⚠️ **THE SENTENCE STEP IS 2 AND THE PRINTING STEP IS 2 — THEY AGREE**, the one case where a number copied from one kind of site into another is right BY ACCIDENT, so every site was measured anyway (D426/D451). THIS SITE: the gate family's sentences, 7 → 9.)
+    expect(gated.reduce((sum, [units]) => sum + units, 0)).toBe(19);  // (🆕🆕🆕 **D545 +2 sentences / +2 printings — THE TWO PRINTED COST CLAUSES, BUILT AS A PAIR ON THE GATE ARM** — `censusAttackCorpus.ts` **file lines 316 and 324** (leading count column `1` each), *“If this Pokémon has any damage counters on it, this attack can be used for {F}.”* and *“If this Pokémon is affected by a Special Condition, ignore all Energy in this attack's cost.”*, **2 sentences / 2 legal printings** (card ids UNRESOLVED on this checkout — measured, never invented, D425 — so the suite rides the file-local declared demonstrators `d545-alt` / `d545-waive`), claimed WHOLE as clause-only rows six and seven of `ATTACK_GATE_CLAUSES` (`body: ""`, D395's path) mapped to TWO new NON-BLOCKING `AttackTimingGate` members `alternateCostIf` / `costWaivedIf`, read by `attackCostAt` — a GATE move: gate 7/17 → 9/19, residue 44/59 → 42/57, `BUILT.attack` 1673 → 1675, `SPLIT_ATTACK_UNITS` 17 → 19 (READ at `censusAtHead.test.ts:8169`); reader arm 568/1619, raw residue 72/113, registry 10/16, trailing 11/21 and `COMPOUND_ATTACK_UNITS` 21 UNMOVED; engine 0.429.0 → 0.430.0, `MATCH_RECORD_VERSION` HELD at 30. ⚠️ **THE SENTENCE STEP IS 2 AND THE PRINTING STEP IS 2 — THEY AGREE**, the one case where a number copied from one kind of site into another is right BY ACCIDENT, so every site was measured anyway (D426/D451). THIS SITE: the gate family's printings, 17 → 19 — and for the FIRST time they are not all registry-authored: the two D545 printings have NO registry row, so the derivation claims exactly 2.)
     // …and every one of the SEVEN derives, which is what makes the count above the
     // count of what a derivation could ever serve here.
     // 🆕🆕🆕 **D541 LANDING REVIEW — this line read *"every one of the six"* and was FALSIFIED BY THE
@@ -846,6 +868,6 @@ describe("D444 §6 — `MATCH_RECORD_VERSION` stays 29, driven over bytes both w
     // D208's debt and D275's mutant: `engineVersion` and `packages/engine/package.json`
     // are one fact with two spellings, and the pin is authored HERE rather than
     // inherited (D427 — count your own suite's pin).
-    expect(engineVersion).toBe("0.429.0");
+    expect(engineVersion).toBe("0.430.0");
   });
 });

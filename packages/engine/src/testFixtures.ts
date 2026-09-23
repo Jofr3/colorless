@@ -13925,6 +13925,16 @@ export const FIXTURE_POOL: Record<string, Card> = {
       property: unread, on the same body. It is no longer of the damage family, because that
       family has no unbuilt member left; `filteredBenchSnipe.test.ts` §1 says so.
 
+      🛑 **🆕🆕🆕 D545 — RE-HOMED A THIRD TIME, BECAUSE D545 BUILT FILE LINE 316.** That
+      sentence is now a GATE-arm cost clause (`alternateCostIf`, whole printed text,
+      `body: ""`), so it no longer fires `ATTACK_EFFECT_SKIPPED` and ~~*"a REAL printed
+      sentence that no reader of the thirteen claims (a COST MODIFIER; the blocker is
+      recorded at `damagedBodyScaling.test.ts` §1)"*~~ is withdrawn. Index 2 now prints
+      corpus **FILE LINE 78** — *"Choose 1 of your opponent's Active Pokémon's attacks and
+      use it as this attack."*, 3 legal printings, the copy-attack family (BLOCKED by
+      standing refusal, still residue; reader, gate and trailing all null, probed at D545).
+      Its printed `{C}` cost is kept, so no board's Energy moves.
+
       🛑 **NO ids ARE INVENTED.** This checkout has no D1 — no local sqlite, no
       remote credentials — so the three carriers of row 528 could not be resolved and
       are NOT guessed (D425). The SENTENCES are transcribed off `censusAttackCorpus.ts`
@@ -13960,7 +13970,7 @@ export const FIXTURE_POOL: Record<string, Card> = {
         cost: ["Colorless"],
         name: "Idle Barrage",
         damage: "30",
-        effect: "If this Pokémon has any damage counters on it, this attack can be used for {F}.",
+        effect: "Choose 1 of your opponent's Active Pokémon's attacks and use it as this attack.",
       },
     ],
   }),
@@ -16701,7 +16711,7 @@ export const CONDITIONAL_BENCH_SNIPE_DECK = deckOf({
     card to `CURIOUS_TEA_PARTY_DECK` to get a shield onto this board would have
     reddened boards belonging to slices that have nothing to do with this one. */
 export const FILTERED_BENCH_SNIPE_DECK = deckOf({
-  "fix-filteredsnipe": 4, // the attacker — narrowed at index 0, un-narrowed at index 1, unread at 2
+  "fix-filteredsnipe": 4, // the attacker — narrowed at index 0, un-narrowed at index 1, unread at 2 (corpus :78 since D545)
   "fix-titan": 24, // 340 HP, no attacks — the Defender, every ordinary bench body, the starter
   "fix-teaparty": 4, // 220 HP — the benched-only §11 damage shield, for the D433 pair
   "fix-drainwall": 4, // 300 HP, NO printed Weakness — the W/R control's null half (D427's pair)

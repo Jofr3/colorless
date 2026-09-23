@@ -109,8 +109,26 @@ const CLAUSE = " that has any damage counters on it";
     the wider `any damage counters` concept that NO reader of the thirteen claims (a COST
     MODIFIER; the blocker is recorded at `damagedBodyScaling.test.ts` §1 and the resume
     point (5)), which is exactly the property the `ATTACK_EFFECT_SKIPPED` control needs.
-    ⚠️ It is NOT of the `/that ha[sv]e? any damage counters/` family, and §1 says so. */
-const UNREAD_SIBLING = "If this Pokémon has any damage counters on it, this attack can be used for {F}.";
+    ⚠️ It is NOT of the `/that ha[sv]e? any damage counters/` family, and §1 says so.
+
+    🛑 **🆕🆕🆕 D545 — RE-POINTED A THIRD TIME, BECAUSE D545 BUILT FILE LINE 316.** That
+    sentence is now the sixth row of `ATTACK_GATE_CLAUSES` (`alternateCostIf`), a WHOLE
+    printed clause split with `body: ""` (D395's path), so an attack printing it no longer
+    fires `ATTACK_EFFECT_SKIPPED` — and §7's control would have gone green for the wrong
+    reason. ~~*"that NO reader of the thirteen claims (a COST MODIFIER; the blocker is
+    recorded at `damagedBodyScaling.test.ts` §1…)"*~~ is withdrawn with it. The constant
+    is re-homed onto corpus **FILE LINE 78** — *"Choose 1 of your opponent's Active
+    Pokémon's attacks and use it as this attack."*, **3 legal printings**, the copy-attack
+    family, BLOCKED by standing refusal (`conventions.md`, *"A mechanism that launders the
+    census"*) and still RESIDUE: `resolvedByAnyReader`, `splitAttackGateClause` and
+    `splitAttackTrailingClause` all answer null on it (probed at D545). So the control keeps
+    the property it exists for — a REAL printed sentence, unread, on the same body — and
+    this time it is one whose unread status is a POLICY rather than a missing reader. */
+const UNREAD_SIBLING = "Choose 1 of your opponent's Active Pokémon's attacks and use it as this attack.";
+/** 🆕🆕🆕 D545 — the row `UNREAD_SIBLING` vacated at D545 (corpus FILE LINE 316), kept LIVE
+    as the counter-example (D444/D447): it builds on the GATE arm now. */
+const BUILT_COST_CLAUSE =
+  "If this Pokémon has any damage counters on it, this attack can be used for {F}.";
 
 /** 🆕🆕🆕 D520 — the row `UNREAD_SIBLING` vacated at D520, kept LIVE as the counter-example
     (D444/D447) beside D519's. */
@@ -124,7 +142,7 @@ const BUILT_FORMER_SIBLING =
 
 const PICKY = 0; // {C}, 30 damage, corpus row 528 — the NARROWED rider
 const BLUNT = 1; // {C}, 30 damage — the same rider UN-narrowed: the one-axis control
-const IDLE = 2; // {C}, 30 damage, corpus row 316 (601 until D520, 596 until D519) — deliberately unread
+const IDLE = 2; // {C}, 30 damage, corpus row 78 (316 until D545, 601 until D520, 596 until D519) — deliberately unread
 
 const units = (rows: readonly (readonly [number, string])[]): number =>
   rows.reduce((sum, [n]) => sum + n, 0);
@@ -285,9 +303,17 @@ describe("§1 — the price and the family, re-derived off the corpus rather tha
     // family (a cost modifier, unread by every reader), so the `ATTACK_EFFECT_SKIPPED`
     // control in §7 is still a REAL printed sentence rather than an invented one — and this
     // rung still says which side of the family line it is on.
+    // 🆕🆕🆕 **D545 — RE-POINTED A THIRD TIME**: FILE LINE 316 was BUILT (gate arm,
+    // `alternateCostIf`), so the control is now corpus FILE LINE 78, the copy-attack row
+    // (3 legal printings, BLOCKED), which no arm of the four claims. Its old subject is
+    // asserted live beside it (D444/D447).
     expect(family.map(([, s]) => s)).not.toContain(UNREAD_SIBLING);
     expect(corpus().filter(([, s]) => s === UNREAD_SIBLING)).toHaveLength(1);
+    expect(corpus().find(([, s]) => s === UNREAD_SIBLING)?.[0]).toBe(3);
     expect(resolvedByAnyReader(UNREAD_SIBLING)).toBe(false);
+    expect(splitAttackGateClause(UNREAD_SIBLING)).toBeNull();
+    expect(splitAttackTrailingClause(UNREAD_SIBLING)).toBeNull();
+    expect(splitAttackGateClause(BUILT_COST_CLAUSE)).toEqual({ clause: BUILT_COST_CLAUSE, body: "" });
     expect(family.filter(([, s]) => !resolvedByAnyReader(s)).map(([, s]) => s)).toEqual([]);
   });
 
@@ -308,10 +334,21 @@ describe("§1 — the price and the family, re-derived off the corpus rather tha
     // on it, this attack can be used for {F}."* is a COST substitution, a shape no
     // reader in this engine claims. Named rather than swept under "the gates are
     // built", because a rung that says "all eight" would be false.
+    // 🆕🆕🆕 **D545 — "SEVEN OF THE EIGHT" STILL HOLDS ON THE READER ARM AND IS NOW FALSE
+    // AS "BUILT"**: the eighth is built on the GATE arm (`alternateCostIf`, `body: ""`),
+    // so on the census predicate ALL EIGHT build. Both are asserted, so neither reading
+    // can go stale silently.
     expect(gates.filter(([, s]) => resolvedByAnyReader(s))).toHaveLength(7);
     expect(gates.filter(([, s]) => !resolvedByAnyReader(s)).map(([, s]) => s)).toEqual([
-      "If this Pokémon has any damage counters on it, this attack can be used for {F}.",
+      BUILT_COST_CLAUSE,
     ]);
+    expect(
+      gates.filter(([, s]) => {
+        if (resolvedByAnyReader(s)) return false;
+        const g = splitAttackGateClause(s);
+        return !(g !== null && (g.body === "" || resolvedByAnyReader(g.body)));
+      }),
+    ).toEqual([]);
   });
 });
 
@@ -833,6 +870,6 @@ describe("§8 — the persisted question: `MATCH_RECORD_VERSION` STAYS 29", () =
   });
 
   it("🛑 the engine version moved with `package.json`", () => {
-    expect(engineVersion).toBe("0.429.0");
+    expect(engineVersion).toBe("0.430.0");
   });
 });

@@ -4447,6 +4447,13 @@ export function conditionHolds(state: GameState, seat: Seat, cond: BoardConditio
       const active = state.players[otherSeat(seat)].active;
       return active !== null && presentStatuses(active.conditions).length > 0;
     }
+    case "yourActiveHasSpecialCondition": {
+      // 🆕🆕🆕 D545 — the SELF twin of the arm directly above, the same projection
+      // read off `seat` rather than `otherSeat(seat)` ("If this Pokémon is affected
+      // by a Special Condition, ignore all Energy in this attack's cost.").
+      const active = state.players[seat].active;
+      return active !== null && presentStatuses(active.conditions).length > 0;
+    }
     case "yourActivePoisoned": {
       // "this Pokémon is Poisoned" as printed on Okidogi ex — resolved to YOUR
       // ACTIVE by the clause table, not here (D116's rule, D117's second use).
@@ -5608,14 +5615,35 @@ export function attackBarredByAbility(
     for all three arms would have to know about §4's ban to say that
     `firstTurnExempt` unblocks — and §4's ban already has one reader, which every
     projection already calls. Two arms of one field, two readers, one for each
-    rule they touch. */
+    rule they touch.
+
+    🆕🆕🆕 **D545 — *"for all three arms"* IS WITHDRAWN AS A COUNT: THE FIELD HAS
+    FIVE MEMBERS.** D545 added two COST clauses (`alternateCostIf`, `costWaivedIf`),
+    and this reader answers NEITHER — they never block, and they are read by
+    `attackCostAt` (attack.ts), the ONE cost reader. So the split above is now
+    three readers for five members: blocking here (`onlyIf`, `barredIf`), the §4
+    licence in `firstTurnAttackBanned`, the cost in `attackCostAt`. The early
+    return below names all three non-blocking kinds. */
 /** The two arms of `AttackTimingGate` that can BLOCK a declaration — the union
     minus `firstTurnExempt`, which only ever unblocks and is §4's business.
     Derived with `Exclude` rather than re-listed, so a fourth member of the parent
     union lands in this one by default and must be excluded on purpose: the
     failure of a re-listed copy is SILENT (a new blocking clause the §8 gate never
-    sees), and the failure of an over-wide one is a type error. */
-export type BlockingAttackGate = Exclude<AttackTimingGate, { kind: "firstTurnExempt" }>;
+    sees), and the failure of an over-wide one is a type error.
+
+    🆕🆕🆕 **D545 — AND THE FOURTH AND FIFTH MEMBERS WERE EXCLUDED ON PURPOSE, WHICH
+    IS THE TRAP THIS `Exclude` WAS BUILT TO SPRING.** `alternateCostIf` (corpus
+    `:316`) and `costWaivedIf` (`:324`) landed here by default, and by default they
+    were WRONG: `attackTimingBlocked` reads every non-`onlyIf` member as a
+    `barredIf`, so a printed *"this attack can be used for {F}"* would have been
+    REFUSED with `ATTACK_PREVENTED` on exactly the board where the card makes it
+    cheaper. Both are COST clauses read by `attackCostAt` (attack.ts); the
+    `Exclude` names them, and the reader returns `undefined` for them before it
+    asks the condition. Still "the two arms that can block". */
+export type BlockingAttackGate = Exclude<
+  AttackTimingGate,
+  { kind: "firstTurnExempt" } | { kind: "alternateCostIf" } | { kind: "costWaivedIf" }
+>;
 
 export function attackTimingBlocked(
   state: GameState,
@@ -5625,6 +5653,10 @@ export function attackTimingBlocked(
 ): BlockingAttackGate | undefined {
   const gate = attackGateOf(state, pokemon, index);
   if (gate === undefined || gate.kind === "firstTurnExempt") return undefined;
+  // 🆕🆕🆕 D545 — the two COST clauses never block (see `BlockingAttackGate`).
+  // Returned BEFORE the condition is asked: a cost clause whose condition holds
+  // makes the attack CHEAPER, and reaching the polarity line below would refuse it.
+  if (gate.kind === "alternateCostIf" || gate.kind === "costWaivedIf") return undefined;
   const holds = conditionHolds(state, seat, gate.condition);
   return (gate.kind === "onlyIf") === holds ? undefined : gate;
 }
@@ -5792,6 +5824,10 @@ export function conditionNote(cond: BoardCondition): string {
       return "your opponent's Active Pokémon is Poisoned";
     case "opponentActiveHasSpecialCondition":
       return "your opponent's Active Pokémon is affected by a Special Condition";
+    case "yourActiveHasSpecialCondition":
+      // 🆕🆕🆕 D545 — the printed pronoun is dropped exactly as `yourActiveDamaged`
+      // drops it (D116).
+      return "your Active Pokémon is affected by a Special Condition";
     case "yourActivePoisoned":
       // The printed pronoun is dropped exactly as `yourActiveDamaged` drops it —
       // a reject/tooltip fragment is read off the BOARD (D116).

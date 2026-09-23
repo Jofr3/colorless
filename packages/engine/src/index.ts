@@ -4145,7 +4145,12 @@ import type { GameState, Seat } from "./types";
 
     ⚠️ **THE ITEM'S TRUE COST WAS NOT ON THE COST SEAM AT ALL — IT WAS THE RENDER
     BYPASS.** `effectiveAttackCost` is the one *payability* seam and **not** the one
-    *cost* seam: the wire and both HUDs published the **PRINTED** cost while
+    *cost* seam (🆕🆕🆕 D545 — DATED HISTORY: true at D169's head. Since D545 the one
+    payability seam is `attackCostAt` (attack.ts), which WRAPS `effectiveAttackCost` and
+    folds the printed COST CLAUSE on the attack index — corpus `:316`'s alternate {F}
+    and `:324`'s waive. `effectiveAttackCost` keeps its signature and its "three
+    sources" doc; all three payability sites now ask the wrapper. Annotated, not
+    overwritten.): the wire and both HUDs published the **PRINTED** cost while
     `playable`/`disabled` beside it was computed from the **EFFECTIVE** one. A
     shipped divergence, invisible while the pool's only modifier was a SURCHARGE
     (the button greys and the dots do not say why) and **wrong in the worse
@@ -10068,7 +10073,9 @@ import type { GameState, Seat } from "./types";
 
     Cost, and it is exactly one thing:
       1. **ONE `CardProgram` field**, `attackGate`, whose value union
-         `AttackTimingGate` has THREE members — `onlyIf` and `barredIf`, which are
+         `AttackTimingGate` has THREE members (🆕🆕🆕 D545 — DATED HISTORY: FIVE since
+         D545, which added the non-blocking COST clauses `alternateCostIf` and
+         `costWaivedIf`) — `onlyIf` and `barredIf`, which are
          ONE clause at OPPOSITE SIGNS over the SAME condition, and
          `firstTurnExempt`, which carries no condition at all because *"If you go
          first"* is DESCRIPTIVE (D223/D277/D280, three independent derivations).
@@ -18913,7 +18920,10 @@ import type { GameState, Seat } from "./types";
     switch**: `opponentActiveRetreatCost` reads `effectiveRetreatCost` because *"a
     Stadium that changes what it costs to retreat changes what these attacks hit for"*.
     §8.2 charges `effectiveAttackCost`, so the cost the Energy is "in addition to" is
-    the one the player had to meet. Both live surcharge sources are driven — Pokémon
+    the one the player had to meet. (🆕🆕🆕 D545 — §8.2 now charges `attackCostAt`, a
+    wrapper that folds the printed COST CLAUSE on the index over `effectiveAttackCost`;
+    the fold still receives the CHARGED array, so under `:324`'s waive every attached
+    unit counts as extra.) Both live surcharge sources are driven — Pokémon
     League Headquarters `sv03-192` (Stadium, Basics only) and Seismitoad `sv03-052`
     "Quaking Zone" (stage-agnostic, which is the one that reaches the two REAL printings,
     a Stage 1 and a Stage 2). A build reading `declared.cost` answers 100 on both boards
@@ -20068,6 +20078,46 @@ import type { GameState, Seat } from "./types";
     `expect(manifest.version)`, `it(…)` titles, the declaration and `package.json` —
     **not** as a value-keyed grep — because a value-keyed grep is precisely the mechanism
     that ate D500's heading.)
+    🆕🆕🆕 engineVersion 0.429.0 → **0.430.0** (D545 — THE TWO PRINTED COST CLAUSES, BUILT
+    AS A PAIR ON THE GATE ARM, AND THE `Exclude` THAT WOULD HAVE REFUSED THEM.
+    `censusAttackCorpus.ts` **file lines 316 and 324** (leading count column `1` each) —
+    *"If this Pokémon has any damage counters on it, this attack can be used for {F}."* and
+    *"If this Pokémon is affected by a Special Condition, ignore all Energy in this attack's
+    cost."*, **2 sentences / 2 legal printings** (SUBST-20 and SUBST-19 at `SUBMAX=12`), each
+    the WHOLE printed effect text of its attack and so each a clause-only row of
+    `ATTACK_GATE_CLAUSES` (rows six and seven, `body: ""`, D395's Miltank path — no
+    `ATTACK_EFFECT_SKIPPED`). No catalog, registry or fixture id carries either sentence on this
+    checkout (MEASURED, D425), so the suite (`attackCostClause.test.ts`) rides file-local
+    declared `d545-*` demonstrators in their own 60-card deck (D270), each printing a cost that
+    differs from BOTH `{F}` and `[]`; the real printed costs are UNMEASURED.
+    🛑 **TWO NEW `AttackTimingGate` MEMBERS THAT NEVER BLOCK**: `alternateCostIf { condition,
+    cost }` (`:316`, `yourActiveDamaged`, `["Fighting"]`) and `costWaivedIf { condition }`
+    (`:324`, the NEW `BoardCondition` `yourActiveHasSpecialCondition`, the SELF twin of
+    `opponentActiveHasSpecialCondition`, with NO phrase-table row). Two members and not one
+    because a single `costIf` would need a magic value to say which ORDER it composes in.
+    🛑 **THE TRAP**: `BlockingAttackGate` is an `Exclude` over the union, so both members landed
+    in it by default, and `attackTimingBlocked` reads every non-`onlyIf` member as a
+    `barredIf` — the attack would have compiled and been REFUSED with `ATTACK_PREVENTED`
+    exactly when its condition holds. Both are excluded ON PURPOSE and the reader returns
+    early for them.
+    🛑 **ONE NEW READER, `attackCostAt` (attack.ts, exported here), AT THE THREE PAYABILITY
+    SITES** — the §8.2 check, `redactedAttacksOf` and GameHud's TurnPanel. It WRAPS
+    `effectiveAttackCost`, which keeps its signature, body and "THREE sources" doc; it lives in
+    attack.ts because the alternate's payability is `costMet` and interpreter.ts cannot import
+    that without a cycle. THREE UNRULED DECISIONS, each with a reversal condition in
+    `docs/decisions.md` D545: `:316` is an ALTERNATE (charged only if payable, never stricter
+    than printed; surcharges apply ON TOP of it); `:324` is WAIVE-LAST (a League HQ or Quaking
+    Zone {C} is ignored with the rest); and with the condition true and NEITHER array payable
+    the wire and the §8.2 message publish the printed (effective) cost. `RedactedAttack.
+    effectiveCost` (already optional) now carries `["Fighting"]` or `[]`; no schema code moved.
+    `MATCH_RECORD_VERSION` STAYS 30: `AttackTimingGate` is read, never persisted, and no record
+    shape changed. Census: gate 7/17 → 9/19, residue 44/59 → 42/57, `BUILT.attack` 1673 → 1675,
+    `SPLIT_ATTACK_UNITS` 17 → 19; reader 568/1619, raw residue 72/113, registry 10/16, trailing
+    11/21 and `attackReaderSurface()` 13 UNMOVED. `SUBST-19` and `SUBST-20` 2/2 → 1/1 at
+    `SUBMAX=12` (`OPAQUE` UNMOVED at 16/24 there); `OPAQUE` 30/42 → 28/40 and `UNEXPLAINED`
+    13/15 → 11/13 at `SUBMAX=4`. ⚠️ THE SENTENCE STEP AND THE PRINTING STEP ARE BOTH 2. The
+    `fix-filteredsnipe` index-2 control (which printed `:316`) is re-homed onto corpus `:78`,
+    the BLOCKED copy-attack row, so its `ATTACK_EFFECT_SKIPPED` rung keeps its property.)
     🆕🆕🆕 engineVersion 0.428.0 → **0.429.0** (D544 — THE NAMED ATTACK'S BASE DAMAGE,
     OVERRIDDEN FOR ONE WINDOW, AS A RIDER ON THE OP THAT ALREADY OWNED THE ADDRESS.
     `censusAttackCorpus.ts` **file line 166** (leading count column `2`) — *"During your next
@@ -22218,6 +22268,14 @@ import type { GameState, Seat } from "./types";
     prize siblings land on: corpus `:343` and `:353` through `deriveAttackDamageBonus`, `:350`
     through `deriveAttackRequirement`. **Zero of the four are gate-arm builds**, and the gate arm
     is re-measured unmoved at 5/13.
+    (🆕🆕🆕 **D545 annotation — the *"CLOSED FOUR-ENTRY list of printed TIMING clauses"*
+    above is WITHDRAWN as a present-tense claim.** It was already five entries at D541, and
+    D545 put two leading `If …,` COST clauses on the list (rows 6 and 7 of
+    `ATTACK_GATE_CLAUSES`: `alternateCostIf` for corpus `:316`, `costWaivedIf` for `:324`),
+    so a non-TIMING `If …,` clause DOES reach the gate splitter now when its whole printed
+    text is a row. What stays true is this row's verdict: its leading clause is not a row, so
+    the splitter still answers `null` on it and it is still a READER build. History: the
+    lines above are kept as written.)
     🛑 **A FIFTH NAME FOR A FOURTH READING OF ONE PILE, AND THE ROAD NOT TAKEN IS PRICED.**
     `registry.ts`'s D207 block says outright *"TWO SPELLINGS EXIST AND THEY ARE NOT THE SAME
     NUMBER"*, and four readings ship at this head: `BoardCondition.opponentPrizesRemaining` (the
@@ -23670,7 +23728,7 @@ import type { GameState, Seat } from "./types";
     WITNESS** — the count was re-derived every slice and the word *"three"* was carried.
     A successor of this slice inherits **81 / 61 / 17** again, over **FIVE** history
     occurrences: those four plus `deckMillFilteredScale.test.ts`'s own header arrow.) */
-export const engineVersion = "0.429.0";
+export const engineVersion = "0.430.0";
 
 export type {
   ApplyResult,
@@ -23913,6 +23971,10 @@ export type {
     runs first, and the M2 cost matcher. */
 export { turnGate } from "./turn";
 export { costMet } from "./attack";
+/** 🆕🆕🆕 D545 — the cost an attack is CHARGED right now (the printed cost under
+    every continuous cost effect, and the printed COST CLAUSE on that index): the ONE
+    payability seam GameHud, `redactedAttacksOf` and the §8.2 check share. */
+export { attackCostAt } from "./attack";
 
 /** The one reducer. Dispatches on action type; each handler validates the
     phase and acting seat itself and returns ok/err without ever throwing

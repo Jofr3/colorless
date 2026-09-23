@@ -102,6 +102,10 @@ import {
 //   registry row `SYLVEON_EX_ANGELITE` is KEPT as defence in depth and `attackGateOf` is
 //   `authored ?? derived`. The bytes above are KEPT as written (annotate provenance, never
 //   overwrite it) — only the parenthesis is withdrawn.
+//   🆕🆕🆕 **D545 — *"a deriver still buys ZERO additional … printings"* IS WITHDRAWN AT THIS
+//   HEAD**: the splitter claims 9 sentences / 19 printings, 17 registry-authored, and the two
+//   D545 cost clauses (`:316`/`:324`, no registry row) are served by the DERIVATION alone.
+//   D395's refusal is about the ROLLOUT row and is untouched: that row keeps its registry row.
 //
 // **RIGHT, AND PAID RATHER THAN ARGUED AWAY.** The two-key check IS a tautology
 // now — the clause→gate map is TOTAL over `ATTACK_GATE_CLAUSES`, so a split that

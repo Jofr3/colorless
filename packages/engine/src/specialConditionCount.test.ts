@@ -278,9 +278,23 @@ describe("D518 §1 — the printed data, measured live over the legal column", (
       [PRINTED, INDICATOR, RECOVER, COST_WAIVER, RAISED_CONFUSION].sort(),
     );
     expect(units(family)).toBe(14);
-    // 🛑 FOUR OF THE FIVE ARE NOW BUILT. The one that is not is the COST modifier, whose
+    // 🛑 ~~FOUR OF THE FIVE ARE NOW BUILT.~~ ~~The one that is not is the COST modifier, whose
     // blocker is `effectiveAttackCost` and not this union at all — named so a successor
-    // does not read this slice as having left a count unbuilt.
+    // does not read this slice as having left a count unbuilt.~~
+    // 🆕🆕🆕 **D545 — ALL FIVE ARE BUILT, AND THE STRUCK BLOCKER WAS THE WRONG SEAM.**
+    // `COST_WAIVER` (corpus `:324`) is built on the GATE arm as a WHOLE printed clause
+    // (`costWaivedIf`, `body: ""`), read by `attackCostAt` (attack.ts) — which WRAPS
+    // `effectiveAttackCost` rather than changing it. The rung is RE-KEYED from the READER
+    // predicate to the census's own four-arm predicate (reader → gate → trailing), so the
+    // next build of a family row reddens it rather than leaving a stale list green: the
+    // reader-only list is still `[COST_WAIVER]`, and that is pinned below as what it is.
+    const censusBuilt = (s: string): boolean => {
+      if (resolvedByAnyReader(s)) return true;
+      const g = splitAttackGateClause(s);
+      if (g !== null && (g.body === "" || resolvedByAnyReader(g.body))) return true;
+      return splitAttackTrailingClause(s) !== null;
+    };
+    expect(family.filter(([, s]) => !censusBuilt(s)).map(([, s]) => s)).toEqual([]);
     const unbuilt = family.filter(([, s]) => !resolvedByAnyReader(s));
     expect(unbuilt.map(([, s]) => s)).toEqual([COST_WAIVER]);
   });
@@ -374,10 +388,14 @@ describe("D518 §2 — the reading, the arm, and the indicator sibling it does N
     expect(deriveAttackEffect(RAISED_CONFUSION)).not.toBeNull();
   });
 
-  it("🛑 EVERY built row of this family lands on the READER arm — the four-way split, per sentence", () => {
-    // D514's rule: which ARM claims a sibling is what prices a row, and the gate arm is a
+  it("🛑 EVERY built row of this family lands on the READER arm (🆕 D545: four of the five — `COST_WAIVER` lands on the GATE arm) — the four-way split, per sentence", () => {
+    // D514's rule: which ARM claims a sibling is what prices a row, ~~and the gate arm is a
     // CLOSED four-entry TIMING list that no `If …,` clause of any other kind reaches
-    // (D517). Asked per sentence rather than off the totals.
+    // (D517)~~. Asked per sentence rather than off the totals.
+    // 🆕🆕🆕 D545 — the struck clause is FALSE: the list was already five entries at D541,
+    // and D545 added two leading `If …,` COST clauses to it (`alternateCostIf` for `:316`,
+    // `costWaivedIf` for `:324` = `COST_WAIVER`), so a non-TIMING `If …,` clause now reaches
+    // the gate arm when its whole printed text is a row.
     const armOf = (text: string): string => {
       if (resolvedByAnyReader(text)) return "reader";
       const g = splitAttackGateClause(text);
@@ -389,7 +407,11 @@ describe("D518 §2 — the reading, the arm, and the indicator sibling it does N
     expect(armOf(INDICATOR)).toBe("reader");
     expect(armOf(RECOVER)).toBe("reader");
     expect(armOf(RAISED_CONFUSION)).toBe("reader");
-    expect(armOf(COST_WAIVER)).toBe("none");
+    // 🆕🆕🆕 D545 — `"none"` → `"gate"`: the whole printed text is the seventh row of
+    // `ATTACK_GATE_CLAUSES` (`costWaivedIf`), split with `body: ""` (D395's path). So
+    // the heading's *"EVERY built row … lands on the READER arm"* is now true of FOUR of
+    // the five, and this one is the GATE arm's (the title says so in its D545 note).
+    expect(armOf(COST_WAIVER)).toBe("gate");
   });
 
   it("🛑 the INDICATOR's ceiling is `per`, which is why this row cost a MEMBER", () => {
@@ -762,7 +784,7 @@ describe("D518 §6 — `MATCH_RECORD_VERSION` HOLDS at 30: there is no carrier a
   });
 
   it("the engine version moved with the behaviour, and `manifest.version` agrees", () => {
-    expect(engineVersion).toBe("0.429.0");
-    expect(manifest.version).toBe("0.429.0");
+    expect(engineVersion).toBe("0.430.0");
+    expect(manifest.version).toBe("0.430.0");
   });
 });

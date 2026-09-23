@@ -52,7 +52,7 @@ import type {
   Viewer,
 } from "@luminous/schema";
 import { EMPTY_CARD_ID, EMPTY_CARD_NAME, HIDDEN_CARD_ID, HIDDEN_CARD_NAME } from "@luminous/schema";
-import { costMet } from "./attack";
+import { attackCostAt, costMet } from "./attack";
 import {
   abilityBodyGateMet,
   abilityUsedKey,
@@ -63,7 +63,6 @@ import { attacksOf, cardOfUid, topCardOf, topUid } from "./cards";
 import {
   attackLocked,
   disabledAbilityUids,
-  effectiveAttackCost,
   effectiveMaxHp,
   effectiveRetreatCost,
   firstTurnAttackBanned,
@@ -512,7 +511,9 @@ function redactedScopeOf(scope: DiscardScope): RedactedDiscardScope {
     owner may attack). Mirrors GameHud's TurnPanel `disabled` on the full state
     the wire deliberately withholds: §8.2 payability under every continuous cost
     effect in play (effectiveAttackCost + providedEnergy — the Stadium's Basic
-    surcharge, the opposing Ability aura and the holder's own discount), the §4
+    surcharge, the opposing Ability aura and the holder's own discount — 🆕🆕🆕 and
+    since D545 the printed COST CLAUSE on the attack too, through `attackCostAt`
+    (attack.ts), which is now the payability seam and wraps `effectiveAttackCost`), the §4
     first-turn ban, and the §12 immobilize gate — folded into one `playable`
     boolean so the client needs no engine logic. Own Active only (public), so no
     hidden information leaves the DO.
@@ -604,7 +605,14 @@ function redactedAttacksOf(
     // PRINTED (schema `redactedAttackSchema`); the effective number arrives beside
     // it, and ONLY when the two actually differ, so every board with no cost
     // modifier in play puts a byte-identical frame on the wire.
-    const effective = effectiveAttackCost(state, active, printed);
+    // 🆕🆕🆕 D545 — through `attackCostAt`, so the printed COST CLAUSE (corpus
+    // `:316`'s alternate {F}, `:324`'s waive) reaches the wire: `effectiveCost`
+    // publishes `["Fighting"]` or `[]` when the clause is what the gate charges.
+    // The identity check below is KEPT: with no clause in play `attackCostAt`
+    // returns `effectiveAttackCost`'s own answer, so the no-modifier frame is still
+    // byte-identical, and a waived `[]` against a non-empty printed cost is a
+    // length difference the check sees.
+    const effective = attackCostAt(state, viewerSeat, active, index, provided);
     const modified =
       effective.length !== printed.length || effective.some((s, i) => s !== printed[i]);
     return {

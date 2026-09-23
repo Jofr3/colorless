@@ -28,8 +28,8 @@ import {
   conditionNote,
   handCostAction,
   handCostUnmet,
+  attackCostAt,
   costMet,
-  effectiveAttackCost,
   attackBarredByAbility,
   attackTimingBlocked,
   effectiveRetreatCost,
@@ -788,7 +788,10 @@ function TurnPanel(props: GameHudProps) {
             // the printed one: a discount lights the button up, and dots still
             // showing the full cost would tell the player they cannot afford an
             // attack the engine will happily let them declare.
-            const effectiveCost = effectiveAttackCost(game, active, attack.cost ?? []);
+            // 🆕🆕🆕 D545 — through `attackCostAt`, the engine's ONE payability seam,
+            // which also folds the printed COST CLAUSE on this attack (corpus `:316`'s
+            // alternate {F}, `:324`'s waive) — so the dots show what the gate charges.
+            const effectiveCost = attackCostAt(game, viewerSeat, active, index, provided);
             const payable = costMet(effectiveCost, provided);
             const disabled =
               !payable ||

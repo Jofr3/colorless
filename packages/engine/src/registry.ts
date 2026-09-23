@@ -2742,7 +2742,16 @@ export interface EnergyProgram {
     would be green on the only board anyone writes for it (turn 1, going first)
     and would forbid "Quick Sign" on every other turn of the game — the D278/D279
     too-strict failure, which the whole suite you would naturally write cannot
-    see. The board where it is DENIED is asserted first in this slice's suite. */
+    see. The board where it is DENIED is asserted first in this slice's suite.
+
+    🆕🆕🆕 **D545 — *"THREE members"* IS WITHDRAWN AS PRINTED: THE UNION CARRIES
+    FIVE.** D545 added two COST clauses, `alternateCostIf` and `costWaivedIf`,
+    because they are printed attack text keyed to one attack index and read off the
+    same `attackGateOf` seam. Neither blocks and neither lifts a ban: both are read
+    by `attackCostAt` (attack.ts) and nowhere else, and `BlockingAttackGate`
+    (interpreter.ts) excludes both ON PURPOSE. What survives is the paragraph above:
+    of the FIVE, exactly two can block (`onlyIf`, `barredIf`) and one licenses
+    (`firstTurnExempt`). (D178: annotated, not overwritten.) */
 export type AttackTimingGate =
   /** *"You can use this attack only if <condition>."* — the index is barred
       unless the condition holds. Illumise / Scream Tail ex. */
@@ -2752,7 +2761,32 @@ export type AttackTimingGate =
   | { kind: "barredIf"; condition: BoardCondition }
   /** *"If you go first, you can use this attack during your first turn."* — §4's
       turn-1 attack ban is lifted for THIS index only. Volbeat / Exeggcute. */
-  | { kind: "firstTurnExempt" };
+  | { kind: "firstTurnExempt" }
+  /** 🆕🆕🆕 **D545** — *"If this Pokémon has any damage counters on it, this attack
+      can be used for {F}."* (`censusAttackCorpus.ts` file line 316, 1 legal
+      printing). While the condition holds, `cost` is an ALTERNATE cost the attack
+      may be paid with INSTEAD of its printed one — never stricter than printed
+      (UNRULED, `decisions.md` D545; read by `attackCostAt` in attack.ts and by
+      nothing else).
+
+      🛑 **A COST CLAUSE, NOT A TIMING CLAUSE, AND IT NEVER BLOCKS.** It lives in
+      this union because it is printed attack text keyed to ONE attack index and
+      read off the top card by the same `attackGateOf` (§9-blind, `registry ??
+      derived`) — but `BlockingAttackGate` (interpreter.ts) EXCLUDES it on
+      purpose. Without that exclusion `attackTimingBlocked` would read it as a
+      `barredIf` (it is not `onlyIf`) and REFUSE the attack exactly when its
+      condition holds — the opposite of the print. */
+  | { kind: "alternateCostIf"; condition: BoardCondition; cost: readonly string[] }
+  /** 🆕🆕🆕 **D545** — *"If this Pokémon is affected by a Special Condition, ignore
+      all Energy in this attack's cost."* (`censusAttackCorpus.ts` file line 324, 1
+      legal printing). While the condition holds, the attack costs NOTHING — the
+      waive is applied LAST, after every continuous surcharge (UNRULED,
+      `decisions.md` D545), so a League HQ or Quaking Zone {C} is ignored with the
+      rest. A second member rather than `alternateCostIf` with `cost: []` because
+      that encoding would make the ORDER (alternate-then-surcharge vs
+      surcharge-then-waive) a magic value of one field. Never blocks, for the
+      member above's reason. */
+  | { kind: "costWaivedIf"; condition: BoardCondition };
 
 export interface CardProgram {
   /** Registry-authored attack programs, keyed by ATTACK INDEX (the position in

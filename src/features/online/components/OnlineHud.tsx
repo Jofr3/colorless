@@ -1977,7 +1977,8 @@ function AttackPanel({
                   {/* The EFFECTIVE cost when the wire carries one (a Stadium
                       surcharge, an opposing cost aura, or the holder's own
                       discount is in play), else the printed cost — the local HUD
-                      renders `effectiveAttackCost` here and this is the same
+                      renders `effectiveAttackCost` (🆕🆕🆕 D545: `attackCostAt`,
+                      which also folds a printed cost clause) here and this is the same
                       number, server-computed. `playable` beside it is derived from
                       exactly this array, which is the divergence the sibling field
                       closes. */}

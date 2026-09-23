@@ -6205,7 +6205,7 @@ export const MUTANTS: Mutant[] = [
     // CORPUS QUOTES** (D414/D415), so a value-keyed sweep over `toBe("0.391.0")` cannot
     // see it — this row's `find` spells the DECLARATION, not an assertion. Run
     // `precheck` after every version bump, not after the sweep tells you.
-    find: 'export const engineVersion = "0.429.0";',
+    find: 'export const engineVersion = "0.430.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -28545,8 +28545,17 @@ export const MUTANTS: Mutant[] = [
     //    number copied from the previous slice is right BY ACCIDENT, so it was MEASURED off the
     //    live census (`SUBMAX=12 bun scripts/residue-census.ts`: reader 568/1619) all the same.
     //    The row leaves through the READER summand. `replace` is the GENUINE pre-slice value.
-    find: "  attack: 1673,",
-    replace: "  attack: 1671,",
+    // 🆕🆕🆕 D545 - RE-TRANSCRIBED AGAIN, 1673 -> 1675 (and the replace 1671 -> 1673), off the
+    //    bytes at `censusAtHead.test.ts:464` rather than reconstructed (D540/D542). ⚠️ **THE STEP
+    //    IS 2 AND THE SENTENCE STEP IS ALSO 2** - D545's rows (corpus FILE LINES 316 and 324, the
+    //    two cost clauses) are 2 sentences / 2 legal printings, so the two AGREE, which is the
+    //    case where a copied number is right BY ACCIDENT; MEASURED off the live census all the same
+    //    (`SUBMAX=12 bun scripts/residue-census.ts`: gate 9/19). ⚠️ **THIS SLICE'S ROWS LEAVE
+    //    THROUGH THE GATE-SPLIT SUMMAND** (`SPLIT_ATTACK_UNITS` 17 -> 19), NOT the reader one, so
+    //    the reader arm and `rawUnbuiltSentences` stand still while this constant moves.
+    //    `replace` is the GENUINE pre-slice value.
+    find: "  attack: 1675,",
+    replace: "  attack: 1673,",
     expectKilledBy: [
       "packages/engine/src/censusAtHead.test.ts",
     ],
@@ -32013,8 +32022,13 @@ export const MUTANTS: Mutant[] = [
     //    row's CLAIM is unchanged - the constant left at its pre-slice value while the loop that
     //    feeds it has moved - and its `replace` is deliberately the IMMEDIATELY PRECEDING value,
     //    so the mutant is the plausible "forgot to step it" edit and not an arbitrary number.
-    find: "const SPLIT_ATTACK_UNITS = 17;",
-    replace: "const SPLIT_ATTACK_UNITS = 14;",
+    // 🆕🆕🆕 D545 - RE-POINTED, 17 -> 19 (and the replace 14 -> 17, the IMMEDIATELY PRECEDING
+    //    value, for D541's reason). The split summand gained TWO clause-only rows - the cost clauses
+    //    at corpus FILE LINES 316 and 324, 1 printing each, `body: ""` - and the constant was READ
+    //    off the bytes at `censusAtHead.test.ts` after the step, not reconstructed (D540/D542).
+    //    `precheck` named this `find` at 0x the moment the constant moved, exactly as D541's did.
+    find: "const SPLIT_ATTACK_UNITS = 19;",
+    replace: "const SPLIT_ATTACK_UNITS = 17;",
     expectKilledBy: ["packages/engine/src/censusAtHead.test.ts"],
   },
   // ── D530 — THE TARGET-COUNTER-SCALED BENCH SNIPE ("This attack does 20 damage to 1 of your opponent's
@@ -33976,5 +33990,147 @@ export const MUTANTS: Mutant[] = [
     find: "      if (event.base === true) {",
     replace: "      if (false) {",
     expectKilledBy: ["packages/engine/src/attackBaseOverride.test.ts"],
+  },
+  // ── D545 — THE TWO PRINTED COST CLAUSES, BUILT AS A PAIR ON THE GATE ARM (corpus `:316` / `:324`).
+  //    Fifteen rows, one per claim: the three payability-site reverts, the `Exclude`'s run-time
+  //    half (the trap), each clause's condition (flipped / dropped), the three ORDER and READING
+  //    decisions (replacement, alternate-after-surcharge, waive-first), the new member's seat, the
+  //    two rows' gates swapped, the charged-array message, the wire's identity check and (added at
+  //    the landing review) the charged array's hand-off to the extra-Energy reader. All probed
+  //    UNDECLARED first (D525(3)); every `replace` names only identifiers its file binds (D533).
+  {
+    id: "D545-attack-site-reverts",
+    decision: "D545",
+    what: "🛑 **THE §8.2 CHECK STOPS ASKING `attackCostAt` AND CHARGES `effectiveAttackCost` AGAIN** — the swap at `attack.ts` reverted. The clause derives, the gate compiles, the wire and the HUD say the attack is payable, and the server REFUSES a damaged body with `{F}` attached and a Poisoned one with no Energy. Killed by §3/§5/§6's condition-true boards.",
+    file: "packages/engine/src/attack.ts",
+    find: "  const cost = attackCostAt(state, action.seat, active, index, provided);",
+    replace: "  const cost = effectiveAttackCost(state, active, declared.cost ?? []);",
+    expectKilledBy: ["packages/engine/src/attackCostClause.test.ts"],
+  },
+  {
+    id: "D545-redact-site-reverts",
+    decision: "D545",
+    what: "🛑 **`redactedAttacksOf` STOPS ASKING THE SEAM** — the swap at `redact.ts` reverted. ⚠️ Spelled `printed` and not `effectiveAttackCost(state, active, printed)` because that name is no longer BOUND in `redact.ts` (the binding gate, D533); on every §7 board but the League HQ one no continuous cost effect is in play, so the two spellings are the same function of the board, and on the League HQ board both differ from the waived `[]`. The online button greys an attack the server accepts. Killed by §7.",
+    file: "packages/engine/src/redact.ts",
+    find: "    const effective = attackCostAt(state, viewerSeat, active, index, provided);",
+    replace: "    const effective = printed;",
+    expectKilledBy: ["packages/engine/src/attackCostClause.test.ts"],
+  },
+  {
+    id: "D545-gamehud-reverts-to-effective-cost",
+    decision: "D545",
+    what: "🛑 **GameHud's TurnPanel STOPS ASKING THE SEAM** — the swap at `GameHud.tsx` reverted. ⚠️ Spelled `attack.cost ?? []` and not `effectiveAttackCost(game, active, attack.cost ?? [])` because that name is no longer BOUND in `GameHud.tsx` (D533); no board in the killing file puts a continuous cost effect in play, so the two spellings are the same function of those boards. The local button greys an attack the engine accepts and the dots draw a cost the player is not charged. Killed by the DOM file's two condition-true rungs.",
+    file: "src/features/game/GameHud.tsx",
+    find: "            const effectiveCost = attackCostAt(game, viewerSeat, active, index, provided);",
+    replace: "            const effectiveCost = attack.cost ?? [];",
+    expectKilledBy: ["src/features/game/GameHud.costClause.dom.test.tsx"],
+  },
+  {
+    id: "D545-blocking-exclusion-missing",
+    decision: "D545",
+    what: "🛑 **THE TRAP, SPRUNG: `attackTimingBlocked` NO LONGER RETURNS EARLY FOR THE COST CLAUSES**, so it reads each as a `barredIf` and REFUSES the attack with `ATTACK_PREVENTED` exactly when its condition holds — a printed *\"this attack can be used for {F}\"* makes the attack UNUSABLE on the board it makes it cheaper. (The `Exclude` is type-only; this is its run-time half.) Killed by §4.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  // makes the attack CHEAPER, and reaching the polarity line below would refuse it.\n  if (gate.kind === \"alternateCostIf\" || gate.kind === \"costWaivedIf\") return undefined;",
+    replace: "  // makes the attack CHEAPER, and reaching the polarity line below would refuse it.",
+    expectKilledBy: ["packages/engine/src/attackCostClause.test.ts"],
+  },
+  {
+    id: "D545-alternate-condition-flipped",
+    decision: "D545",
+    what: "⚠️ **`:316`'s CONDITION IS READ AT THE WRONG POLARITY** — the alternate `{F}` is offered to an UNDAMAGED body and withheld from a damaged one. Killed by §3's condition-false `{F}` board and its condition-true twin.",
+    file: "packages/engine/src/attack.ts",
+    find: "  if (gate?.kind === \"alternateCostIf\" && conditionHolds(state, seat, gate.condition)) {",
+    replace: "  if (gate?.kind === \"alternateCostIf\" && !conditionHolds(state, seat, gate.condition)) {",
+    expectKilledBy: ["packages/engine/src/attackCostClause.test.ts"],
+  },
+  {
+    id: "D545-alternate-unconditional",
+    decision: "D545",
+    what: "🛑 **THE ALTERNATE IS APPLIED UNCONDITIONALLY** — the clause's antecedent (*\"If this Pokémon has any damage counters on it\"*) is dropped, so every body printing `:316` attacks for `{F}` from full HP. Killed by §3's condition-false `{F}` board.",
+    file: "packages/engine/src/attack.ts",
+    find: "  if (gate?.kind === \"alternateCostIf\" && conditionHolds(state, seat, gate.condition)) {",
+    replace: "  if (gate?.kind === \"alternateCostIf\") {",
+    expectKilledBy: ["packages/engine/src/attackCostClause.test.ts"],
+  },
+  {
+    id: "D545-alternate-replaces-printed",
+    decision: "D545",
+    what: "🛑 **THE REPLACEMENT READING** (UNRULED, `decisions.md` D545): with the condition true the alternate is charged WHETHER OR NOT it is payable, so a damaged body that can pay its PRINTED cost but not `{F}` loses the attack it had undamaged — stricter than printed. Killed by §3's printed-payable-only rung.",
+    file: "packages/engine/src/attack.ts",
+    find: "    return costMet(alt, provided) ? alt : printedEff;",
+    replace: "    return alt;",
+    expectKilledBy: ["packages/engine/src/attackCostClause.test.ts"],
+  },
+  {
+    id: "D545-alternate-after-surcharge",
+    decision: "D545",
+    what: "⚠️ **THE ALTERNATE ESCAPES THE CONTINUOUS SURCHARGES** — `{F}` is charged bare under League HQ / Quaking Zone, where the decision (surcharges apply ON TOP of the alternate) charges `{F}{C}`. Killed by §6's League HQ and Quaking Zone `{F}`-alone rungs.",
+    file: "packages/engine/src/attack.ts",
+    find: "    const alt = effectiveAttackCost(state, pokemon, gate.cost);",
+    replace: "    const alt = gate.cost;",
+    expectKilledBy: ["packages/engine/src/attackCostClause.test.ts"],
+  },
+  {
+    id: "D545-waive-before-surcharge",
+    decision: "D545",
+    what: "🛑 **WAIVE-FIRST INSTEAD OF WAIVE-LAST** (UNRULED, D545): the waived `[]` is handed to `effectiveAttackCost`, so League HQ / Quaking Zone add back a `{C}` that *\"ignore ALL Energy in this attack's cost\"* ignores. Killed by §6's two waive rungs and §7's League HQ wire rung.",
+    file: "packages/engine/src/attack.ts",
+    find: "  if (gate?.kind === \"costWaivedIf\" && conditionHolds(state, seat, gate.condition)) {\n    return [];",
+    replace: "  if (gate?.kind === \"costWaivedIf\" && conditionHolds(state, seat, gate.condition)) {\n    return effectiveAttackCost(state, pokemon, []);",
+    expectKilledBy: ["packages/engine/src/attackCostClause.test.ts"],
+  },
+  {
+    id: "D545-waive-unconditional",
+    decision: "D545",
+    what: "🛑 **THE WAIVE IS APPLIED UNCONDITIONALLY** — every body printing `:324` attacks for free with no Special Condition. Killed by §5's condition-false rung.",
+    file: "packages/engine/src/attack.ts",
+    find: "  if (gate?.kind === \"costWaivedIf\" && conditionHolds(state, seat, gate.condition)) {",
+    replace: "  if (gate?.kind === \"costWaivedIf\") {",
+    expectKilledBy: ["packages/engine/src/attackCostClause.test.ts"],
+  },
+  {
+    id: "D545-self-condition-reads-other-seat",
+    decision: "D545",
+    what: "⚠️ **`yourActiveHasSpecialCondition` READS THE OPPONENT'S ACTIVE** — the self twin collapses onto `opponentActiveHasSpecialCondition`, so `:324` waives the cost when the DEFENDER is Poisoned and charges a Poisoned attacker in full. Killed by §2's seat rung and §5's opponent-Poisoned board.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      // by a Special Condition, ignore all Energy in this attack's cost.\").\n      const active = state.players[seat].active;",
+    replace: "      // by a Special Condition, ignore all Energy in this attack's cost.\").\n      const active = state.players[otherSeat(seat)].active;",
+    expectKilledBy: ["packages/engine/src/attackCostClause.test.ts"],
+  },
+  {
+    id: "D545-clause-gates-swapped",
+    decision: "D545",
+    what: "⚠️ **THE TWO CLAUSE ROWS' GATES ARE SWAPPED** — `:316` becomes a waive on a Special Condition and `:324` an `{F}` alternate on damage counters. Each row is TYPE-DISTINCT (`cost` exists on one member only), so the swap only typechecks when the field moves with it, which is this build. Killed by §1's by-value gate pins and by every §3/§5 board.",
+    file: "packages/engine/src/effects.ts",
+    find: "  \"If this Pokémon has any damage counters on it, this attack can be used for {F}.\": {\n    kind: \"alternateCostIf\",\n    condition: { kind: \"yourActiveDamaged\" },\n    cost: [\"Fighting\"],\n  },\n  \"If this Pokémon is affected by a Special Condition, ignore all Energy in this attack's cost.\": {\n    kind: \"costWaivedIf\",\n    condition: { kind: \"yourActiveHasSpecialCondition\" },\n  },",
+    replace: "  \"If this Pokémon has any damage counters on it, this attack can be used for {F}.\": {\n    kind: \"costWaivedIf\",\n    condition: { kind: \"yourActiveHasSpecialCondition\" },\n  },\n  \"If this Pokémon is affected by a Special Condition, ignore all Energy in this attack's cost.\": {\n    kind: \"alternateCostIf\",\n    condition: { kind: \"yourActiveDamaged\" },\n    cost: [\"Fighting\"],\n  },",
+    expectKilledBy: ["packages/engine/src/attackCostClause.test.ts"],
+  },
+  {
+    id: "D545-message-names-printed",
+    decision: "D545",
+    what: "⚠️ **THE §8.2 REJECT NAMES THE PRINTED COST INSTEAD OF THE CHARGED ONE** — under League HQ the gate charged `[Water, Water, Colorless, Colorless]` and the message says three symbols, so a player who attaches the three it names is refused again. The third UNRULED decision (D545) publishes the EFFECTIVE printed cost when nothing pays. Killed by §6's League HQ message pins.",
+    file: "packages/engine/src/attack.ts",
+    find: "    return err(\"ATTACK_COST_UNMET\", `${declared.name} costs [${cost.join(\", \")}]`);",
+    replace: "    return err(\"ATTACK_COST_UNMET\", `${declared.name} costs [${(declared.cost ?? []).join(\", \")}]`);",
+    expectKilledBy: ["packages/engine/src/attackCostClause.test.ts"],
+  },
+  {
+    id: "D545-redact-modified-check-dropped",
+    decision: "D545",
+    what: "⚠️ **`effectiveCost` IS EMITTED ON EVERY ROW** — the identity check that keeps the no-modifier frame byte-identical is dropped, so every attack on every board carries a sibling equal to its printed cost and the field stops MEANING \"this cost is modified\" (schema `redactedAttackSchema`). Killed by §7's condition-false rungs.",
+    file: "packages/engine/src/redact.ts",
+    find: "      ...(modified ? { effectiveCost: [...effective] } : {}),",
+    replace: "      ...{ effectiveCost: [...effective] },",
+    expectKilledBy: ["packages/engine/src/attackCostClause.test.ts"],
+  },
+  {
+    id: "D545-extra-energy-reads-printed-cost",
+    decision: "D545",
+    what: "⚠️ **THE WAIVE STOPS AT THE §8.2 CHECK AND THE EXTRA-ENERGY READER COUNTS AGAINST THE PRINT** — `scaledAttackDamage` is handed the printed effective cost instead of the CHARGED array, so under `:324`'s waive the attached units are not \"extra\" and a D436 bonus is withheld on the board where *\"ignore all Energy in this attack's cost\"* makes every unit extra. Added at the landing review, which found §5's `[]` rung could not go red for the hand-off its title claims. Killed by §5's extra-Energy board (90 vs 40).",
+    file: "packages/engine/src/attack.ts",
+    find: "      : scaledAttackDamage(active, scaling, next, defenderSeat, action.seat, cost);",
+    replace: "      : scaledAttackDamage(active, scaling, next, defenderSeat, action.seat, effectiveAttackCost(state, active, declared.cost ?? []));",
+    expectKilledBy: ["packages/engine/src/attackCostClause.test.ts"],
   },
 ];

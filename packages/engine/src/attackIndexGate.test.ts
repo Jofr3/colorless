@@ -26,6 +26,11 @@ import {
 // clause family — and **ZERO new `BoardCondition` members**, because D280 built
 // the condition that 10 of the 13 printings need and this slice authors it
 // unchanged at both signs.
+// 🆕🆕🆕 (D545 — DATED HISTORY: *"THREE arms"* was true at D281's head. The union
+// carries FIVE members since D545, which added two COST clauses — `alternateCostIf`
+// and `costWaivedIf` — that never block and are read by `attackCostAt` (attack.ts),
+// not by any gate below. Neither carries an op, so the reachability sweep further down
+// is unmoved. Annotated, not overwritten.)
 //
 // ── THE CENSUS, RE-DERIVED RATHER THAN CARRIED ───────────────────────────────
 //

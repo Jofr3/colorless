@@ -2062,7 +2062,17 @@ export function firstTurnAttackBanned(
 
     ⚠️ **AND IT IS STILL READ OFF `topCardOf` AND NOT THROUGH `passivesOf`** — the
     §9 argument above is unchanged by the new producer, and is in fact stronger for
-    it: the derivation reads printed ATTACK text, which no Ability-lock touches. */
+    it: the derivation reads printed ATTACK text, which no Ability-lock touches.
+
+    🆕🆕🆕 **D545 — *"the printed TIMING clause"* AND *"shared by"* TWO READERS ARE
+    WITHDRAWN AS COUNTS.** The field now also carries two printed COST clauses
+    (`alternateCostIf`, `costWaivedIf`), and this is read by a THIRD caller,
+    `attackCostAt` in attack.ts, which is the only reader of those two members.
+    `attackTimingBlocked` returns `undefined` for them BEFORE asking the condition,
+    and `firstTurnAttackBanned` compares only against `firstTurnExempt`, so neither
+    older reader's answer moved. Still the ONE read of `CardProgram.attackGate`, and
+    the §9 argument above applies to the cost clauses for the same reason: they are
+    printed ATTACK text. (D178: annotated, not overwritten.) */
 export function attackGateOf(
   state: GameState,
   pokemon: InPlayPokemon,

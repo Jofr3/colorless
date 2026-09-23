@@ -316,6 +316,21 @@ describe("D519 §1 — the printed data, measured live over the legal column", (
     // *"except for this Pokémon"* is structural. The reason recorded below at D519 was right
     // that it is *"not a count"* and wrong about the rest. The list is RE-POINTED to `:316`
     // alone (D444), and `:601` is asserted from the other side beneath it.
+    // 🆕🆕🆕 **D545 — TWELVE OF TWELVE ON THE CENSUS PREDICATE, AND THE BLOCKER NAMED BELOW
+    // IS STRUCK.** `:316` is built on the GATE arm (`alternateCostIf`, a whole printed
+    // clause, `body: ""`) and read by `attackCostAt` (attack.ts), a WRAPPER over
+    // `effectiveAttackCost` — the seam's scalar `net` was never widened, which is why (b)
+    // below was TRUE as a description of `effectiveAttackCost` and WRONG as a blocker:
+    // the alternate multiset is chosen BESIDE that function, not inside it. The rung is
+    // RE-KEYED to the census's four-arm predicate so the next family build reddens it; the
+    // READER-only list below is kept, and still names `:316`, because it is still true.
+    const censusBuilt = (s: string): boolean => {
+      if (resolvedByAnyReader(s)) return true;
+      const g = splitAttackGateClause(s);
+      if (g !== null && (g.body === "" || resolvedByAnyReader(g.body))) return true;
+      return splitAttackTrailingClause(s) !== null;
+    };
+    expect(family.filter(([, s]) => !censusBuilt(s))).toEqual([]);
     const unbuilt = family.filter(([, s]) => !resolvedByAnyReader(s)).map(([, s]) => s);
     expect(unbuilt).toEqual([
       // `:316` — a COST MODIFIER ("this attack can be used for {F}"). 🛑 **ITS BLOCKER IS
@@ -330,7 +345,12 @@ describe("D519 §1 — the printed data, measured live over the legal column", (
       // ("ignore ALL Energy in this attack's cost") waives TYPED symbols the discount loop
       // steps over, and `:316` ("can be used for {F}") is an ALTERNATE multiset rather
       // than a delta. **2 rows / 2 printings, and the gap is at the READER surface and in
-      // the seam's shape, not in its absence.** ⚠️ `:319` and `:320` (5 printings) merely
+      // the seam's shape, not in its absence.** 🆕🆕🆕 ~~(D545) *"the gap is … in the seam's
+      // shape"* and *"no reader … produces a cost modifier from an attack's own text"* are
+      // WITHDRAWN as blockers~~: both rows are built at D545 on the GATE arm, and the reader
+      // is `attackCostAt`, a wrapper that leaves `effectiveAttackCost`'s shape as it was.
+      // This entry stays because the list is now the READER-arm list, not the unbuilt one.
+      // ⚠️ `:319` and `:320` (5 printings) merely
       // READ the cost through the shipped `extraEnergyUnitsBeyondCost` and are built —
       // reading a cost is not modifying one.
       "If this Pokémon has any damage counters on it, this attack can be used for {F}.",
@@ -494,11 +514,16 @@ describe("D519 §2 — the reading, the arm, and the anchors it sits against", (
     expect(inPlay).not.toContain(PRINTED);
   });
 
-  it("🛑 EVERY built row of this family lands on the READER arm — the four-way split, per sentence", () => {
-    // D514's rule: which ARM claims a sibling is what prices a row. ⚠️ The GATE arm is a
+  it("🛑 EVERY built row of this family lands on the READER arm (🆕 D545: every row but `:316`, which lands on the GATE arm) — the four-way split, per sentence", () => {
+    // D514's rule: which ARM claims a sibling is what prices a row. ⚠️ ~~The GATE arm is a
     // CLOSED four-entry list of whole printed TIMING sentences (D517), so no `If …,` clause
-    // of any other kind reaches it — which is why `:358`'s leading gate clause is a READER
+    // of any other kind reaches it~~ — which is why `:358`'s leading gate clause is a READER
     // build and not a gate one. Asked per sentence rather than read off the totals.
+    // 🆕🆕🆕 D545 — the struck clause is FALSE twice over: the list was already five entries
+    // at D541, and D545 put two leading `If …,` COST clauses on it (rows 6 and 7 of
+    // `ATTACK_GATE_CLAUSES`: `alternateCostIf` for `:316`, `costWaivedIf` for `:324`). So a
+    // non-TIMING `If …,` clause DOES reach the gate arm now, when its whole printed text is a
+    // row. `:358` is still a READER build because its text is not one of those rows.
     const armOf = (text: string): string => {
       if (resolvedByAnyReader(text)) return "reader";
       const g = splitAttackGateClause(text);
@@ -511,8 +536,10 @@ describe("D519 §2 — the reading, the arm, and the anchors it sits against", (
     expect(armOf(EACH_ALL)).toBe("reader");
     expect(armOf(CHOSEN)).toBe("reader");
     expect(armOf(INDICATOR)).toBe("reader");
+    // 🆕🆕🆕 D545 — `"none"` → `"gate"`: `:316` is the sixth row of `ATTACK_GATE_CLAUSES`
+    // (`alternateCostIf`), a WHOLE printed clause split with `body: ""` (D395's path).
     expect(armOf("If this Pokémon has any damage counters on it, this attack can be used for {F}.")).toBe(
-      "none",
+      "gate",
     );
   });
 
@@ -1007,7 +1034,7 @@ describe("D519 §6 — `MATCH_RECORD_VERSION` HOLDS at 30: there is still no car
   });
 
   it("the engine version moved with the behaviour, and `manifest.version` agrees", () => {
-    expect(engineVersion).toBe("0.429.0");
-    expect(manifest.version).toBe("0.429.0");
+    expect(engineVersion).toBe("0.430.0");
+    expect(manifest.version).toBe("0.430.0");
   });
 });

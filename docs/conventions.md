@@ -1098,6 +1098,12 @@ hand-rolled figure for five slices and it was wrong every time — most recently
 - **A bare `splitAttackGateClause(text) !== null` over-subtracts.** The canonical
   also requires `gate.body !== "" && resolvedByAnyReader(gate.body)` — a gate whose
   body nothing claims is not served.
+  > 🆕 **D545 annotation — this spelling of the canonical is stale since D529** (`b3f5c4fb`, the Rollout
+  > census-instrument fix). The live predicate (`censusAtHead.test.ts`, the residue filter) is
+  > `gate !== null && (gate.body === "" || resolvedByAnyReader(gate.body))`: a CLAUSE-ONLY row (`body: ""`,
+  > D395's path) IS served. D545's two cost-clause rows (`:316`, `:324`) are served through exactly that
+  > branch; read with the line above, they would be mis-counted as residue. The over-subtraction warning
+  > itself stands for a gate whose NON-EMPTY body nothing claims.
 
 **Before measuring anything the repo already measures, grep the test suite for the
 figure.** If you need the list rather than the count, copy the predicate verbatim
@@ -7626,6 +7632,26 @@ names the thing they all depend on.
 
 
 ### The "gate arm" is a closed four-entry timing list, not a general `If …,` splitter (D517)
+
+> 🆕 **D545 — THE "FOUR-ENTRY" AND "TIMING-ONLY" HALVES OF THIS RULE ARE WITHDRAWN; THE "NOT A GENERAL
+> SPLITTER" HALF STANDS.** D517's bytes are kept below as written (dated). What changed:
+> - The list was already **five** rows at D541 (`54e67649`, the Angelite trailing-gate row) — measured off
+>   `git show`: 4 at D517 (`53dde5bc`), 5 at D541, 5 at D544 (`0f4d7257`).
+> - D545 added rows **six and seven**, and they are **COST** clauses, not timing clauses — two leading
+>   `If …,` sentences, `censusAttackCorpus.ts` `:316` (*"If this Pokémon has any damage counters on it,
+>   this attack can be used for {F}."*) and `:324` (*"If this Pokémon is affected by a Special Condition,
+>   ignore all Energy in this attack's cost."*), each claimed WHOLE (`body: ""`, D395's path) and mapped
+>   to the NON-BLOCKING `AttackTimingGate` members `alternateCostIf` / `costWaivedIf`, read by
+>   `attackCostAt` (`attack.ts`). So *"all about turn timing"* and *"a leading comma clause of any other
+>   kind never reaches it"* are false at D545's head for exactly those two strings.
+> - **What still holds, and is the rule to keep:** the list is **closed** and matched **whole** (or with a
+>   trailing space). A leading `If …,` clause reaches the gate arm **only if its exact whole sentence is a
+>   row**; any other conditional sentence still prices on the **reader** arm. Consequence 2's *"not a
+>   growth area"* is withdrawn with it — the arm stood at 7 sentences / 17 units at D544 and is 9 / 19 at
+>   D545 — but "expect the reader arm" stays the default: a new gate row is a deliberate design choice
+>   (a new `AttackTimingGate` member plus a total `ATTACK_GATE_CLAUSE_GATES` entry), never an accident.
+> - ⚠️ A new `AttackTimingGate` member that is NOT a block must be excluded from `BlockingAttackGate`
+>   (`interpreter.ts`) on purpose, or the attack is REFUSED exactly when its condition holds (D545's trap).
 
 `builds()`'s third arm is `splitAttackGateClause`, and its name invites a wrong model. D517's brief
 asserted that a sentence opening *"If you have exactly 1 Prize card remaining, …"* therefore "lands on

@@ -1418,6 +1418,20 @@ export type BoardCondition =
       from what the board shows. The rotation slot, Poison and Burn all count, and
       any ONE of them suffices. False with no Active. */
   | { kind: "opponentActiveHasSpecialCondition" }
+  /** 🆕🆕🆕 **D545** — §12, YOUR Active Pokémon is affected by ANY Special
+      Condition: *"If this Pokémon is affected by a Special Condition, ignore all
+      Energy in this attack's cost."* (`censusAttackCorpus.ts` file line 324, 1 legal
+      printing, read as `costWaivedIf`). The exact SELF twin of the member above —
+      the same `presentStatuses` projection, the other seat — and D116's pronoun
+      rule a fourth time: named for what it READS (your Active), the printed "this
+      Pokémon" resolved by the one caller that has a self (the clause table in
+      `ATTACK_GATE_CLAUSE_GATES`).
+
+      ⚠️ **NO ROW IN THE CONDITION PHRASE TABLE, DELIBERATELY.** A row there would
+      widen every reader that consults that table, and no other corpus sentence
+      prints the phrase — so the member is reachable ONLY through the gate clause
+      that names it. False with an empty Active Spot. */
+  | { kind: "yourActiveHasSpecialCondition" }
   /** §12 — YOUR Active Pokémon is Poisoned: Okidogi ex sv06.5-036/-082/-090
       "Chain-Crazed" (+130), whose printed clause is "If **this Pokémon** is
       Poisoned". D116's pronoun rule applied a second time — the member is named
@@ -17877,7 +17891,9 @@ const ATTACK_DISCARD_TOOLS_UP_TO =
 // 🛑 **THE COST IS THE EFFECTIVE ONE (D169), NOT THE PRINTED ONE**, and the precedent
 // is one arm over in the very same switch: `opponentActiveRetreatCost` reads
 // `effectiveRetreatCost` because *"a Stadium that changes what it costs to retreat
-// changes what these attacks hit for"*. §8.2 charges `effectiveAttackCost`, so the
+// changes what these attacks hit for"*. §8.2 charges `effectiveAttackCost` (🆕🆕🆕 D545:
+// through `attackCostAt`, which also folds a printed COST CLAUSE on the index — the
+// binding handed on is still the CHARGED array, so this reading is unchanged), so the
 // cost this sentence says the Energy is "in addition to" is the one the player
 // actually had to meet — under Pokémon League Headquarters a Basic owes one more
 // {C} and therefore has one fewer extra. The value is not recomputed: `attack()`
@@ -34588,13 +34604,28 @@ export function discardScaledBoostProgram(
     cost a damage BONUS that never pays; this one costs the DECLARATION — a
     mis-parsed condition is an attack the player can never use, which no board in
     the suite would look wrong on. A literal row lands on the loud unresolved path
-    instead. */
+    instead.
+
+    🆕🆕🆕 **D545 — *"THE PRINTED SPELLINGS OF THE D281 TIMING GATE"* AND *"a row
+    is in this list because it is a printed timing gate"* ARE WITHDRAWN: TWO ROWS
+    ARE COST CLAUSES.** Rows 6 and 7 (corpus `:316` *"… can be used for {F}."* and
+    `:324` *"… ignore all Energy in this attack's cost."*) gate an attack's COST, not
+    WHEN it may be declared; they map to `alternateCostIf` / `costWaivedIf`, which
+    never block (`BlockingAttackGate` excludes both) and are read only by
+    `attackCostAt` (attack.ts). What the list IS now: the closed set of WHOLE printed
+    attack clauses keyed to ONE attack index and read off the `attackGateOf` seam.
+    The LITERAL-not-template argument above holds for them unchanged, and so does the
+    anchoring. (D178/D418: annotated, never overwritten.) */
 const ATTACK_GATE_CLAUSES = [
   "If you go second, you can't use this attack during your first turn.",
   "If you go first, you can use this attack during your first turn.",
   "You can use this attack only if you go second, and only during your first turn.",
   "You can use this attack only if this Pokémon used Rollout during your last turn.",
   "If 1 of your Pokémon used Angelite during your last turn, this attack can't be used.",
+  // 🆕🆕🆕 D545 — the sixth and seventh rows: two COST clauses, each a WHOLE printed
+  // text (D395's clause-only path, `body === ""`). See `ATTACK_GATE_CLAUSE_GATES`.
+  "If this Pokémon has any damage counters on it, this attack can be used for {F}.",
+  "If this Pokémon is affected by a Special Condition, ignore all Energy in this attack's cost.",
 ] as const;
 
 /** 🆕🆕 D444 — the four printed spellings, AS A TYPE. `as const` above turns the
@@ -34615,7 +34646,13 @@ const ATTACK_GATE_CLAUSES = [
     *"the four"* is an ORDINAL, not one of the values that moved (6, 14, 5/13), so a sweep
     keyed on those values cannot see it however wide its SCOPE is set. **A FIGURE SWEEP IS
     KEYED ON THE LIVE DECLARATION — the constant, the tuple's length, the assertion — AND
-    AN ORDINAL IS A FIGURE.** (D178/D418: annotated, never overwritten.) */
+    AN ORDINAL IS A FIGURE.** (D178/D418: annotated, never overwritten.)
+    🆕🆕🆕 **D545 LANDING — *"THE LIST ABOVE CARRIES FIVE"* AND *"has five members"* ARE
+    D541's FIGURES: AT D545's HEAD THE LIST CARRIES SEVEN.** Measured off `git show` of the
+    tuple: 4 rows at D517 (`53dde5bc`), 5 at D541 (`54e67649`), 5 at D544 (`0f4d7257`), 7
+    here. Rows 6 and 7 are COST clauses, not timing clauses (see the D545 note on
+    `ATTACK_GATE_CLAUSES`). The block's point is unmoved and is why this line could rot
+    again: the union steps with the tuple BY CONSTRUCTION. */
 export type AttackGateClause = (typeof ATTACK_GATE_CLAUSES)[number];
 
 /** The condition 10 of the 14 printings share, spelled once: the going-SECOND
@@ -34662,6 +34699,12 @@ const ATTACK_GATE_SECOND_PLAYERS_FIRST_TURN: BoardCondition = {
     all three real ids. So this is a LOCALITY note and not a hole — recorded rather than
     fixed, because a new rung is a slice's work and this is a landing review. ⚠️ No
     value-keyed sweep could reach this line, because no figure in it moved.
+    🆕🆕🆕 **D545 LANDING — *"IT NOW NAMES FOUR OF FIVE"* / *"The table has FIVE rows"* ARE
+    D541's FIGURES: §1 NOW NAMES FOUR OF SEVEN.** D545 appended rows 6 and 7, the two COST
+    clauses (corpus `:316` → `alternateCostIf`, `:324` → `costWaivedIf`), and they are not
+    timing clauses. Their VALUES are driven by `timingGateFromAttackText` in
+    `attackCostClause.test.ts` §1 (and §1 there asserts all seven rows pairwise disjoint), so
+    the locality note above now covers the fifth row alone.
 
     🛑 **THE ROLLOUT ROW IS DERIVED TOO, AND THAT IS NOT A TEMPLATE.** The block
     above refuses `^You can use this attack only if (.+)\.$` because the quoted
@@ -34683,6 +34726,11 @@ const ATTACK_GATE_SECOND_PLAYERS_FIRST_TURN: BoardCondition = {
     WHAT may be listed. ⚠️ **AN ORDINAL IS A FIGURE** (see the withdrawal on
     `AttackGateClause` above): *"a fifth"* moved when nothing spelled 6, 14 or 5/13 did,
     which is why four value-keyed sweeps in this slice walked past it.
+    🆕🆕🆕 **D545 LANDING — *"true of a SIXTH spelling"* IS D541's FORECAST, AND D545 ADDED
+    THE SIXTH AND SEVENTH THE SAME WAY THE FIFTH WENT IN**: each row and its map entry in
+    ONE commit, because this `Record` is total. Both new entries are NON-BLOCKING members
+    (`alternateCostIf` / `costWaivedIf`, excluded from `BlockingAttackGate`), so *"gate"* in
+    this map no longer means *"may bar the declaration"*.
 
     ⚠️ **`Record<AttackGateClause, …>` AND NOT A `Partial` OR AN ARRAY OF PAIRS**
     (D424's rule: prefer a refusal the type system re-derives). Adding a row to
@@ -34733,11 +34781,39 @@ const ATTACK_GATE_CLAUSE_GATES: Record<AttackGateClause, AttackTimingGate> = {
     kind: "barredIf",
     condition: { kind: "yourPokemonUsedAttackLastTurn", attack: "Angelite" },
   },
+  // 🆕🆕🆕 **D545 — THE SIXTH AND SEVENTH ROWS, AND THE FIRST TWO THAT DO NOT GATE
+  // THE DECLARATION AT ALL.** Both are COST clauses, printed as the WHOLE effect text
+  // of their attack (`censusAttackCorpus.ts` file lines 316 and 324, 1 legal printing
+  // each), so `splitAttackGateClause` answers `{ clause, body: "" }` — D395's Miltank
+  // path — and there is no remainder to skip. They are read by `attackCostAt`
+  // (attack.ts) at the three payability sites, and `BlockingAttackGate`
+  // (interpreter.ts) excludes both ON PURPOSE: without that, `attackTimingBlocked`
+  // would read each as a `barredIf` and REFUSE the attack exactly when the card
+  // makes it cheaper.
+  //
+  // ⚠️ `:316` reuses the shipped `yourActiveDamaged` (the phrase table's own
+  // *"this Pokémon has any damage counters on it"* row names it); `:324` needs the
+  // new SELF twin `yourActiveHasSpecialCondition`. The two gates are
+  // TYPE-DISTINCT (`cost` exists on one member only), so swapping them does not
+  // compile unless the swap also moves the field — `D545-clause-gates-swapped` is
+  // that build.
+  "If this Pokémon has any damage counters on it, this attack can be used for {F}.": {
+    kind: "alternateCostIf",
+    condition: { kind: "yourActiveDamaged" },
+    cost: ["Fighting"],
+  },
+  "If this Pokémon is affected by a Special Condition, ignore all Energy in this attack's cost.": {
+    kind: "costWaivedIf",
+    condition: { kind: "yourActiveHasSpecialCondition" },
+  },
 };
 
 /** 🛑 D282 — THE SPLIT ANCHOR: take a printed timing-gate clause off an attack's
     effect text and hand back the body sentence beside it, or `null` when the text
-    carries none. 🆕🆕🆕 **D541 — "off the FRONT" / "the body sentence BEHIND it" /
+    carries none. 🆕🆕🆕 **D545 LANDING — *"timing-gate clause"* IS WITHDRAWN AS A
+    DESCRIPTION OF EVERY ROW**: the closed list has SEVEN rows and rows 6 and 7 are COST
+    clauses (corpus `:316`, `:324`), each claimed whole with `body: ""`; the splitter
+    treats them exactly as it treats the five timing rows. 🆕🆕🆕 **D541 — "off the FRONT" / "the body sentence BEHIND it" /
     "does not OPEN with one" is what this sentence used to say, and all three are
     withdrawn together**: the clause is taken off the FRONT or off the END, keyed on
     the same closed literal list at both ends, and the tripwire below refuses any
@@ -34820,7 +34896,15 @@ const ATTACK_GATE_CLAUSE_GATES: Record<AttackGateClause, AttackTimingGate> = {
     sentence-list composer would still be answering a population of zero. ⚠️ The
     number that steps is **14 → 17** at `attack.ts` and at `splitOrder.test.ts`;
     the DISJOINTNESS conclusion is NOT inherited from the leading case and is
-    re-derived for the trailing one at `attack.ts`'s own block. ⚠️ AND THE SECOND STRIPPER DID NOT
+    re-derived for the trailing one at `attack.ts`'s own block.
+    🆕🆕🆕 **D545 LANDING — *"a CLOSED five-row list"*, *"exactly the 14 gates"* and *"the
+    split's whole population is 17"* ARE D541's FIGURES.** At D545's head the list has SEVEN
+    rows, and rows 6 and 7 are clause-only COST printings (corpus `:316`, `:324`, 1 each)
+    served by the whole-text (`body: ""`) check, so the leading/whole population is **16**
+    (14 + 2), the trailing branch still **3**, and the whole split **19** —
+    `SPLIT_ATTACK_UNITS` in `censusAtHead.test.ts`, and 9 sentences / 19 printings in
+    `attackCostClause.test.ts` §1. The argument lands the same way: two positions × a closed
+    seven-row list is still a `for` loop over a tuple. ⚠️ AND THE SECOND STRIPPER DID NOT
     CHANGE THAT: D364 measured `splitAttackGateClause` and
     `splitAttackRequirementClause` **DISJOINT over all 1,732 legal units** — 0 are
     claimed by both — so a `splitHead` that loops would still answer no printed
@@ -34837,7 +34921,8 @@ export function splitAttackGateClause(
   // ANY BRANCH RETURNS.** With a split at BOTH ends, a string could carry one
   // accounted-for clause in front and ANOTHER behind it, and a loop that returned
   // at the first hit would hand the caller a `body` that still contains a printed
-  // timing gate the caller has been told it does not. Nothing in the catalog
+  // timing gate the caller has been told it does not (🆕🆕🆕 D545: or COST clause —
+  // rows 6 and 7 of the seven are cost clauses, and the tripwire covers them unchanged). Nothing in the catalog
   // prints two — measured over all 640 corpus sentences / 1,732 legal units at
   // this head, `leading.length + trailing.length <= 1` for every one — and **the
   // day one does is not the day to guess which end the caller accounted for**.
@@ -34924,6 +35009,10 @@ export function splitAttackGateClause(
 
 /** 🆕🆕 **D444 — THE FIRST DERIVED `attackGate`: the printed timing clause an
     attack opens with → the gate it means, or `undefined` when it opens with none.**
+    (🆕🆕🆕 D545: "timing clause" is no longer the whole of it — the function's NAME
+    is kept, but `ATTACK_GATE_CLAUSES` rows 6 and 7 are COST clauses and this returns
+    their `alternateCostIf` / `costWaivedIf` too; D541 already made "opens with" a
+    leading-OR-trailing read. See the D545 note on `ATTACK_GATE_CLAUSES`.)
     The `deriveAttackEffect` half of `attackGateOf` (continuous.ts), which resolves
     `registry ?? derived` with the registry ABOVE the derivation exactly as
     `attack.ts` does for `CardProgram.attack` (D8, `authored ?? derived`).
@@ -34959,7 +35048,16 @@ export function splitAttackGateClause(
         is the DERIVATION of a gate the registry already authors — which is why the
         witness for it has to ride a demonstrator with no registry row, and why
         `angeliteChosenShuffle.test.ts` §7 pins `registry === derived` on all three
-        real ids. ⚠️ But the
+        real ids.
+        🆕🆕🆕 **D545 — ① IS WITHDRAWN AT THIS HEAD: THE DERIVER NOW BUYS 2.** D545
+        added rows six and seven (the COST clauses `:316` / `:324`, 1 legal printing
+        each) and NEITHER has a registry row — no card id resolves for either on this
+        checkout (D425). So the split claims **9 sentences / 19 printings**, 17 are
+        registry-authored, and the derivation claims **exactly 2** alone — the first
+        printings this table has ever served that the registry does not. D444's and
+        D541's sentences above are kept as history (D178); the ② argument is untouched,
+        since both new kinds are excluded from `BlockingAttackGate` and never reach
+        `attack.ts`'s two-key check as a BLOCK. ⚠️ But the
         count is scoped to `legal_standard = 1`, and **the engine is not**: the
         builder ships an `expanded` format keyed on `legal_expanded`
         (`src/features/builder/cards.ts` `legalFlag`), and the block above this
