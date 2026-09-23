@@ -17862,7 +17862,14 @@ import type { GameState, Seat } from "./types";
     CONVENTION.** The corpus row that WOULD force one is
     *"Discard up to 2 Pokémon Tools from your opponent's Pokémon."* (2 printings): *"up
     to 2"* over a multi-body board is a real decision. It carries NO pre-damage head, so
-    it belongs at the program TAIL where parking is already solved, and it stays UNBUILT.
+    it belongs at the program TAIL where parking is already solved, and ~~it stays
+    UNBUILT~~ 🆕🆕🆕 **D543 BUILT IT THERE** — `deriveAttackEffect` claims the sentence
+    whole through `ATTACK_DISCARD_TOOLS_UP_TO` and the new `discardTools` op, which
+    parks on an `upTo` prompt at the program tail exactly as this paragraph predicted.
+    **THE REFUSAL ITSELF IS UNCHANGED AND IS NOT AN EXPIRY**: it says a PRE-DAMAGE op
+    cannot park, and it cited this row as the sentence that would force one IF it
+    carried the head. It does not, so nothing about the pre-damage return type moved;
+    what changed is only that the cited example is now built somewhere else.
     ⚠️ **THE REFUSAL IS PINNED ON THE POPULATION AND NOT ON A SPECIMEN** (D423): §7
     asserts that the set of corpus sentences this reader claims is exactly `[SENTENCE]`
     and that none of them spells `up to` / `you may` / `choose`, **with the neighbouring
@@ -20040,6 +20047,94 @@ import type { GameState, Seat } from "./types";
     `expect(manifest.version)`, `it(…)` titles, the declaration and `package.json` —
     **not** as a value-keyed grep — because a value-keyed grep is precisely the mechanism
     that ate D500's heading.)
+    🆕🆕🆕 engineVersion 0.427.0 → **0.428.0** (D543 — THE CHOSEN POKÉMON TOOL DISCARD AT
+    THE PROGRAM TAIL, THE `upTo` SCOPE THAT NEVER HAD A WIRE SPELLING, AND THE EVENT THAT HAD
+    TO SAY *WHEN* IT FIRED. `censusAttackCorpus.ts` **file line 136** (leading count column
+    `2`) — *"Discard up to 2 Pokémon Tools from your opponent's Pokémon."*,
+    **1 sentence / 2 legal printings**, claimed WHOLE by `deriveAttackEffect` through ONE new
+    anchor (`ATTACK_DISCARD_TOOLS_UP_TO`, one `['’]` slot at index 48, count CAPTURED) and ONE
+    new arm emitting ONE new `EffectOp` member `discardTools { count }`. It is the LAST
+    unresolved row of the `/Pokémon Tool/` sweep, named as unbuilt in five in-tree places
+    since D406.
+    🛑 **PART 0 IS A PREREQUISITE AND NOT A RIDER, AND IT IS A LIVE DEFECT THIS SLICE
+    FOUND RATHER THAN A CHORE IT INVENTED.** The new prompt's scope IS `{kind:"upTo", max}`,
+    and the WIRE had no such member: `redactedDiscardScopeSchema` carried TWO of the engine's
+    THREE `DiscardScope` members, and `redact.ts`'s `redactedScopeOf` was a two-arm TERNARY
+    that collapsed every `upTo` into `{kind:"each"}` on the way out while
+    `projection.ts`'s mirror ternary collapsed it again on the way back in. So every
+    Chien-Pao ex "Hail Blade" and Mewtwo VSTAR "Psy Purge" park — shipped since D359 —
+    reached an ONLINE client as a MANDATORY one-per-Pokémon pick, and the server then
+    refused whatever that dialog could send. **The `satisfies DiscardScope` on that ternary
+    was the camouflage**: it typed the OUTPUT of a two-arm expression against the ENGINE
+    union, which pins neither input exhaustiveness nor the wire shape. **A `satisfies`
+    against the SOURCE union is not an exhaustiveness check** — the guard that works is a
+    `switch` with a `const unhandled: never` floor, and all three sites now have one.
+    ⚠️ **AND `tsc` NAMED ONLY TWO OF THE SIX CLIENT SITES.** Adding the schema member
+    reddened exactly `OnlineHud.tsx:1109` and `:1110` (the two that read `scope.count`);
+    the `each` PRE-ANSWER, the `required` fall-through, the CAPTION and the ≥cap row marker
+    were GREEN AND WRONG. **A `tsc` pass is a LOWER BOUND on the sites a union member
+    touches.** All four are ported from `GameHud.tsx`, which has had them right since
+    0.47.0 — a PORT, not a design (D412's third-read-site rule).
+    🛑 **WHY THE CHEAP BUILD IS REFUSED, AND THE WORST OF THE THREE TYPECHECKS.**
+    `EffectOp` had no Tool-touching member (zero hits);
+    `discardEnergy { filter: { kind: "toolCard" } }` COMPILES and returns zero candidates on
+    every board that can exist, because `attachedEnergies` loops `pokemon.energy`
+    (`interpreter.ts:14526`) and Tools live in their own `tools: string[]`
+    (`types.ts:937`); and `chooseCards` cannot carry a per-host Tool pick at all (flat
+    `string[]`, no host, `interpreter.ts:333-337`). That settlement had been written twice
+    in briefs and zero times in the repo since D537; it is now at the sites that cite it.
+    🛑 **THE SITE NO EXHAUSTIVENESS CHECK CAN SEE IS A MISSING ARM, NOT A BRANCH.**
+    `applyChoice`'s `switch` ends `default: return state;` (*"Synchronous ops never park, so
+    never reach the choice path"*), so omitting `case "discardTools"` silently discards the
+    player's answer while NO EXHAUSTIVENESS CHECK IN THE TREE NAMES IT. ⚠️ The unqualified
+    *"TYPECHECKS GREEN"* spelling of that sentence is **WITHDRAWN**: on today's bytes `tsc`
+    exits **2**. **MEASURED at this head** (D429) — and the measurement has been wrong
+    TWICE, so both spellings are struck rather than overwritten: ~~*"prints NOTHING"*~~ (the
+    brief), then ~~*"prints exactly ONE line, `interpreter.ts(14393,10)`"*~~ (this slice's
+    own first correction, wrong in BOTH halves). Re-run on the shipped bytes it prints **FOUR
+    identical lines, one per project that compiles the file** —
+    `packages/engine/src/interpreter.ts(14404,10): error TS6133: 'toolDiscardApply' is declared but its value is never read.`
+    — and `14393` could not have matched any spelling of that arm, because the reported line
+    is `function toolDiscardApply`'s own line MINUS the arm's length and the two move
+    together. 🛑 **THAT IS NOT AN EXHAUSTIVENESS ERROR AND IT CANNOT SEE THE MISSING ARM** —
+    it is `noUnusedLocals` noticing that the arm is the op's only consumer today, which a
+    second caller would erase. The surviving claim is the CONTRAST: deleting `stepOp`'s own
+    `case "discardTools":` block prints, ×4, a real **TS2366** (*Function lacks ending return
+    statement and return type does not include 'undefined'*) at `interpreter.ts(1843,4)`, the
+    function itself — beside two more incidental TS6133 orphans (`toolDiscardNote`,
+    `discardableTools`), named so the quote is not mistaken for the whole output — while
+    nothing anywhere reports a parking op whose ANSWER is dropped.
+    `D543-apply-choice-arm-deleted` is the row, and **no forced-path rung
+    can kill it** — this op has no forced path, because 0 is always a legal answer — so
+    `toolDiscardChosen.test.ts` §4 drives the PARKED ≥2-offer path through `resolveEffect`
+    and asserts BOTH victims' `tools` arrays and the victim's discard pile (D421).
+    🛑 **THE EVENT WAS REUSED AND GAINED A REQUIRED FIELD.** `TOOLS_DISCARDED` takes
+    `when: "preDamage" | "effect"`, **REQUIRED** so `tsc` names the one pre-existing emit
+    site (`attack.ts`) instead of letting it default into the new meaning: `log.ts`
+    hard-coded *" before doing damage"* on this row, and a TAIL discard rendered with that
+    tail is a log that LIES while the board is identical
+    (`D543-event-when-flipped` moves no board at all). `host` is a single top-card uid, so a
+    multi-host answer emits ONE ROW PER HOST and the field needs no widening.
+    **NO `MATCH_RECORD_VERSION` BUMP IS OWED FOR THE EVENT AND THE TREE SAYS SO ITSELF** at
+    `events.ts` — *"`GameEvent` is not persisted at all (`MatchRecord` stores the RENDERED
+    `SeatLogEntry[]`)"* — quoted rather than re-argued.
+    🛑 **`MATCH_RECORD_VERSION` HOLDS AT 30**, driven over SERIALIZED BYTES in both
+    D450 directions: `EffectOp` and `EffectPrompt` gain new INHABITANTS, never renames, and
+    no byte a v30 deploy could have written now means something else.
+    **FIELD DECISIONS, each with its falsifier named (D422):** `count` is CAPTURED `(\d+)`
+    and not the literal `2`, because D231's rule is about a FIELD's reachable values and a
+    literal would make `D543-count-literalised` and `D543-count-off-by-one` unwritable;
+    there is **NO `from`** — one printed zone, so it would be the unfalsifiable rider — and
+    the condition that reverses that is a second printed Tool discard naming a different
+    zone; there is **NO `recordAs`**, and the op is deliberately absent from
+    `recordSlotOf`, an omission that is SILENT in D206's precise way and is therefore
+    written down at both addresses.
+    ZERO new readers (`attackReaderSurface()` stays **13**), ZERO registry rows, ZERO
+    `GameState`/`InPlayPokemon` fields, ZERO new error codes. ONE new `EffectChoice` member,
+    ONE new wire prompt member (the **ELEVENTH** — and `apps/api/src/lobby/match.ts` said
+    *"NINE"*, which was **ALREADY STALE AT TEN** before this slice touched it, measured off
+    `redactedEffectPromptSchema.options.length`; re-counted and stepped rather than
+    laundered), TWO new dialogs, ONE new projection arm.)
     🆕🆕🆕 engineVersion 0.426.0 → **0.427.0** (D542 — THE OPPONENT-CHOSEN HAND SHUFFLE,
     AN EXPIRED REFUSAL, AND A CLIENT DEFECT THAT ARRIVED WITH THE OP. `censusAttackCorpus.ts`
     **file line 665** (`legalAttackCorpus()` index 612, leading count column `1`) — *"Your
@@ -23510,7 +23605,7 @@ import type { GameState, Seat } from "./types";
     WITNESS** — the count was re-derived every slice and the word *"three"* was carried.
     A successor of this slice inherits **81 / 61 / 17** again, over **FIVE** history
     occurrences: those four plus `deckMillFilteredScale.test.ts`'s own header arrow.) */
-export const engineVersion = "0.427.0";
+export const engineVersion = "0.428.0";
 
 export type {
   ApplyResult,

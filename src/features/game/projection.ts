@@ -28,6 +28,7 @@
 // turn-parity fallback named the wrong seat exactly when ko:promote parked.
 
 import type {
+  DiscardScope,
   GameOutcome,
   GameOverReason,
   GameState,
@@ -40,6 +41,7 @@ import type {
 import { cardOfUid, effectiveMaxHp, inSetup, otherSeat, phaseViewOf, topUid } from "@luminous/engine";
 import type {
   CardCategory,
+  RedactedDiscardScope,
   RedactedGame,
   RedactedInPlay,
   RedactedPokemonRef,
@@ -477,7 +479,20 @@ function decisionFromPhase(phase: RedactedGame["phase"]): PendingDecision | null
     attachCards) carry a `RedactedCard` per candidate whose `id` IS the engine uid
     the engine prompt held — so `candidates.map((c) => c.id)` recovers the exact
     `string[]` and this rebuilds the full `EffectPrompt` field-for-field, keeping
-    the answerer's-view round-trip equal to the local projection. */
+    the answerer's-view round-trip equal to the local projection.
+
+    ⚠️ **D543 — *“field-for-field”* WAS A CLAIM ABOUT THE ARM COUNT AND IT DID NOT
+    REACH INSIDE A FIELD'S OWN UNION.** Re-pointed here rather than deleted
+    (D178/D418): the KIND-level exhaustiveness above is true and always was — every
+    prompt kind has an arm and a missing one is a compile error. What it did NOT
+    cover is a field whose own type is a union: `discardEnergy.scope` was rebuilt
+    by a two-arm ternary over a THREE-member `DiscardScope`, so a D359 `upTo` park
+    round-tripped as `{ kind: "each" }` and the reconstructed decision was NOT the
+    local one — silently, because a ternary's `else` branch is type-correct for
+    the member it forgot. **The exhaustiveness a switch buys is only as deep as the
+    discriminant it switches on.** Every such field now goes through its own named
+    rebuilder with its own `never` floor (`scopeFromWire` below); the rest of this
+    block still holds exactly as written. */
 function effectDecisionFromPrompt(
   prompt: NonNullable<Extract<RedactedGame["phase"], { kind: "effect:choose" }>["prompt"]>,
 ): PendingDecision {
@@ -562,10 +577,23 @@ function effectDecisionFromPrompt(
             uid: offer.uid,
             from: refFromWire(offer.from),
           })),
-          scope:
-            prompt.scope.kind === "total"
-              ? { kind: "total", count: prompt.scope.count }
-              : { kind: "each" },
+          scope: scopeFromWire(prompt.scope),
+          note: prompt.note,
+        },
+      };
+    case "discardTools":
+      // 🆕 D543 — the public-ref family's rebuild one attached-card array over:
+      // uid + host ref verbatim, the scope through the shared `scopeFromWire`, so
+      // the answerer's round-trip stays equal to the local projection.
+      return {
+        kind: "effectChoose",
+        prompt: {
+          kind: "discardTools",
+          discardable: prompt.discardable.map((offer) => ({
+            uid: offer.uid,
+            from: refFromWire(offer.from),
+          })),
+          scope: scopeFromWire(prompt.scope),
           note: prompt.note,
         },
       };
@@ -646,4 +674,33 @@ function refFromWire(ref: RedactedPokemonRef): PokemonRef {
     spot:
       ref.spot.spot === "active" ? { spot: "active" } : { spot: "bench", index: ref.spot.index },
   };
+}
+
+/** A wire `RedactedDiscardScope` → the engine `DiscardScope` it mirrors, for the
+    two discard prompts (`discardEnergy` and 🆕 D543's `discardTools`).
+
+    🛑 **D543 — THIS WAS A TWO-ARM TERNARY INLINE IN THE `discardEnergy` ARM, AND
+    IT IS THE HALF OF THE `upTo` WIRE HOLE NO COMPILER NAMES.** `redact.ts`'s
+    `redactedScopeOf` collapsed `upTo` → `each` on the way OUT; this expression
+    collapsed everything that was not `total` → `each` on the way BACK IN. The two
+    defects are independent and the second is the INVISIBLE one: fix only the
+    redactor and an `upTo` prompt still rebuilds here as a mandatory one-per-body
+    pick, with `tsc` silent both before and after, because an `else` branch of a
+    ternary is always type-correct for a union member it forgot. Extracted to a
+    named function with a `switch` and a `never` floor so a FOURTH member is a
+    compile error at this site too, and so the mutant
+    `D543-projection-rebuild-collapses-upto` has an address to sit at. */
+function scopeFromWire(scope: RedactedDiscardScope): DiscardScope {
+  switch (scope.kind) {
+    case "total":
+      return { kind: "total", count: scope.count };
+    case "each":
+      return { kind: "each" };
+    case "upTo":
+      return { kind: "upTo", max: scope.max };
+  }
+  const unhandled: never = scope;
+  throw new Error(
+    `projection: unhandled discard scope ${(unhandled as RedactedDiscardScope).kind}`,
+  );
 }

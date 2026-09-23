@@ -1069,7 +1069,14 @@ function stripPreDamage(
   // by — `ENERGY_DISCARDED`'s reason verbatim: this attack's own damage can Knock the
   // body Out in the same batch, so re-reading "the Active spot" afterwards finds an
   // empty slot, while a uid resolves through `cardIdByUid` forever.
-  if (tools.length > 0) events.push({ type: "TOOLS_DISCARDED", seat, actor, uids: tools, host });
+  // 🆕 D543 — `when` IS SPELLED HERE BY HAND rather than defaulted, which is what
+  // the field being REQUIRED bought: this hook is the §8 pre-damage seam, the row
+  // renders *"… before doing damage"*, and it is pushed in FRONT of the §8.5
+  // `DAMAGE_DEALT` it precedes — so the wording is a claim this path makes true. The
+  // tail-time producer (`discardTools`) says `"effect"` and gets a different row.
+  if (tools.length > 0) {
+    events.push({ type: "TOOLS_DISCARDED", seat, actor, uids: tools, host, when: "preDamage" });
+  }
   if (special.length > 0) {
     events.push({
       type: "ENERGY_DISCARDED",

@@ -357,6 +357,18 @@ function redactPrompt(state: GameState, prompt: EffectPrompt): RedactedEffectPro
         scope: redactedScopeOf(prompt.scope),
         note: prompt.note,
       };
+    case "discardTools":
+      // 🆕 D543 — the public-ref family's reading, one attached-card array over: a
+      // Tool sitting on an in-play Pokémon is face up on the table, so the wire
+      // carries the uid + host ref and the client resolves the display name off the
+      // board it already has. FRESH objects per offer (`redactedOfferOf`), like every
+      // branch here — the redactor's no-alias purity contract.
+      return {
+        kind: "discardTools",
+        discardable: prompt.discardable.map(redactedOfferOf),
+        scope: redactedScopeOf(prompt.scope),
+        note: prompt.note,
+      };
     case "chooseCards":
       return {
         kind: "chooseCards",
@@ -410,9 +422,30 @@ function redactPrompt(state: GameState, prompt: EffectPrompt): RedactedEffectPro
 
 /** A fresh copy of an engine `PokemonRef` for the wire — never an alias into
     game state (the redactor's no-alias purity contract). The `seat` is ABSOLUTE;
-    see `RedactedPokemonRef` for why that is not a leak. Rebuilding `spot`
+    see `RedactedPokemonRef` for why that is not a leak.
+
+    🛑 **D543 — THE LAST SENTENCE OF THIS BLOCK USED TO READ *“Rebuilding `spot`
     explicitly (rather than spreading) makes an added `PokemonTarget` field a
-    compile error here rather than a silent alias. */
+    compile error here rather than a silent alias”*, AND THE *“compile error
+    here”* HALF IS MEASURED FALSE.** Re-pointed in place with its reason kept
+    (D178/D418), because the reason is still the right one and only the
+    consequence was overstated. MEASURED at this head rather than argued (D429):
+    give both `PokemonTarget` arms a required `probeField: number` and run
+    `bunx tsc -b --force` — `redact.ts` reports exactly TWO errors, at `:767` and
+    `:768`, where a `PokemonTarget` LITERAL is passed as an ARGUMENT, and **not one
+    at this function**. An explicit rebuild in a RETURN position whose annotated
+    type is the WIRE shape cannot error on a field the wire shape does not have:
+    it drops it.
+    ⚠️ **WHAT THE EXPLICIT REBUILD ACTUALLY BUYS IS STILL WORTH ITS KEEP, AND IT
+    IS TWO THINGS, NEITHER OF THEM AN ERROR:** the returned object is a FRESH one,
+    so no wire frame aliases a live `GameState` ref (the contract this block
+    opens with); and a new engine field is dropped **by construction** rather than
+    carried across by a spread, so widening `PokemonTarget` can never silently
+    LEAK a field onto the wire. The failure mode a spread would have — a hidden
+    engine key riding out to both clients — is the one this shape is actually
+    proof against. The compile error that WOULD catch a needed field is the one on
+    the WIRE side: add it to `redactedPokemonRefSchema` and this return reddens at
+    once. */
 function redactedRefOf(ref: PokemonRef): RedactedPokemonRef {
   return {
     seat: ref.seat,
@@ -429,12 +462,49 @@ function redactedOfferOf(offer: { uid: string; from: PokemonRef }): {
   return { uid: offer.uid, from: redactedRefOf(offer.from) };
 }
 
-/** A fresh copy of a `DiscardScope` — a `satisfies` pins that a new arm is a
-    compile error rather than a silent drop. */
+/** A fresh copy of a `DiscardScope` for the wire — one arm per engine member,
+    with a `never` floor so a FOURTH member is a compile error here rather than a
+    silent drop.
+
+    🛑 **D543 — THE OLD BLOCK CLAIMED *“a `satisfies` pins that a new arm is a
+    compile error rather than a silent drop”* AND THAT CLAIM WAS FALSE AS
+    WRITTEN.** It is re-pointed in place rather than deleted (D178/D418), because
+    what it was REACHING FOR is exactly what the switch below now delivers, and
+    the way it failed is the reusable part:
+      · the old body was a two-arm TERNARY, so `upTo` — an engine member since
+        D359 — fell into the `else` and crossed the wire as `{ kind: "each" }`. A
+        DECLINABLE 0..max question arrived at the remote dialog as a MANDATORY
+        one-per-Pokémon one, and the server then refused the answer that dialog
+        could build. **The engine, the validator and the local HUD were all
+        correct; only the wire lied**, which is why no engine assertion saw it;
+      · and the `satisfies DiscardScope` typed the ternary's OUTPUT against the
+        ENGINE union, not the wire one. A `satisfies` on a RESULT can only say
+        "this value inhabits that type" — it cannot say "every input was
+        considered" (that is what a `never` floor says) and it cannot say
+        "this is the WIRE shape" (that is what the annotated return type says).
+        Both of the engine's mandatory members happen to be structurally legal
+        `RedactedDiscardScope`s too, so the assertion was green on a value that
+        had already lost the information the wire needed.
+    ⚠️ **A `satisfies` AGAINST THE SOURCE UNION IS NOT AN EXHAUSTIVENESS CHECK.**
+    That is the generalisation, and `D543-wire-scope-collapses-upto` is the
+    declared row that drives it: restoring the ternary leaves `bun run check`
+    GREEN on the engine and reddens only the wire round-trip. */
 function redactedScopeOf(scope: DiscardScope): RedactedDiscardScope {
-  return (
-    scope.kind === "total" ? { kind: "total", count: scope.count } : { kind: "each" }
-  ) satisfies DiscardScope;
+  switch (scope.kind) {
+    case "total":
+      return { kind: "total", count: scope.count };
+    case "each":
+      return { kind: "each" };
+    case "upTo":
+      // The CEILING crosses as a ceiling. Copied by value like every other branch
+      // in this file — the redactor's no-alias purity contract — which here also
+      // means the wire object and the engine prompt's own scope are never `===`.
+      return { kind: "upTo", max: scope.max };
+  }
+  const unhandled: never = scope;
+  throw new Error(
+    `redactedScopeOf: unhandled discard scope ${(unhandled as DiscardScope).kind}`,
+  );
 }
 
 /** The acting viewer's Active's attacks with server-computed payability, for the

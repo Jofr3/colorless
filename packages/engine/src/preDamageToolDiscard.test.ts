@@ -81,7 +81,13 @@ const LOUD_SENTENCE = "Heal 100 damage from 1 of your Benched Ancient Pokémon."
 // ③ **CAN A PRE-DAMAGE OP PARK? — NO, AND IT IS FORBIDDEN STRUCTURALLY.** See ① and
 // §7. The corpus row that WOULD park — *"Discard up to 2 Pokémon Tools from your
 // opponent's Pokémon."*, 2 printings — carries no pre-damage head and is REFUSED here
-// and left unbuilt, pinned on the POPULATION in §7 rather than on a specimen (D423).
+// ~~and left unbuilt~~, pinned on the POPULATION in §7 rather than on a specimen (D423).
+// 🆕 **D543 BUILT IT AT THE PROGRAM TAIL** (`deriveAttackEffect` → `discardTools`,
+// parking on an `upTo` prompt), which is where this paragraph always said it belonged.
+// **③'s REFUSAL IS UNCHANGED**: the pre-damage return type still holds no channel a
+// decision could travel down, and the row still carries no pre-damage head — only the
+// cited example's status moved, so §7's rung inverts `resolvedByAnyReader` and NOTHING
+// else.
 //
 // ─────────────────────────────────────────────────────────────────────────────
 // 🛑 THE OBSERVABILITY, WHICH IS WHY THE HOOK'S PLACEMENT IS THE WHOLE SLICE.
@@ -621,7 +627,8 @@ describe("§7 — a pre-damage act cannot park, and the row that would is refuse
     // whose "up to 2" over a multi-body board is a genuine decision — so it is exactly
     // the sentence that would force a parking pre-damage op. It carries no
     // *"Before doing damage,"* head, so it belongs at the program TAIL where parking is
-    // already solved, and it stays UNBUILT here.
+    // already solved, and ~~it stays UNBUILT here~~ — 🆕 **D543 built it THERE**, which
+    // leaves this rung's own claim (this reader refuses it) exactly where it was.
     const parkers = legalAttackCorpus().filter(([, s]) => /Pokémon Tools? from/.test(s));
     expect(parkers.length).toBeGreaterThan(0);
     // EVERY sentence this reader claims, over the whole column, is the ONE unconditional
@@ -640,11 +647,21 @@ describe("§7 — a pre-damage act cannot park, and the row that would is refuse
       expect(/up to|you may|choose/i.test(s), s).toBe(false);
       expect(s.startsWith(HEAD), s).toBe(true);
     }
-    // …and the parking row is refused by the pre-damage reader AND still unbuilt.
+    // …and the parking row is refused by the pre-damage reader AND ~~still unbuilt~~.
+    //
+    // 🆕🆕🆕 **D543 BUILT IT AT THE PROGRAM TAIL, AND THE PRE-DAMAGE REFUSAL THIS RUNG
+    // EXISTS FOR IS UNTOUCHED.** The identical pair one file over, given the identical
+    // treatment: `deriveAttackPreDamage` still returns null (the row carries no
+    // *"Before doing damage,"* head, asserted rather than restated), while
+    // `resolvedByAnyReader` — a claim about the WHOLE reader surface — flips to true
+    // with `deriveAttackEffect` named as the claimer. Asserting only the flip would
+    // lose the refusal; asserting only the refusal would leave a stale claim standing.
     const UP_TO_2 = "Discard up to 2 Pokémon Tools from your opponent's Pokémon.";
     expect(legalAttackCorpus().filter(([, s]) => s === UP_TO_2)).toHaveLength(1);
     expect(deriveAttackPreDamage(UP_TO_2)).toBeNull();
-    expect(resolvedByAnyReader(UP_TO_2)).toBe(false);
+    expect(UP_TO_2.startsWith(HEAD)).toBe(false);
+    expect(resolvedByAnyReader(UP_TO_2)).toBe(true);
+    expect(deriveAttackEffect(UP_TO_2)).toEqual([{ op: "discardTools", count: 2 }]);
   });
 });
 
@@ -740,6 +757,6 @@ describe("§9 — purity and the version", () => {
     // `packages/engine/package.json`, `index.ts`'s declaration and `D275`'s mutant
     // anchor. ⚠️ D427 named the mechanism: **every note counts the pins it INHERITED
     // and never the one it is about to AUTHOR.** This line is the one being authored.
-    expect(engineVersion).toBe("0.427.0");
+    expect(engineVersion).toBe("0.428.0");
   });
 });

@@ -1653,6 +1653,46 @@ function validateChoice(prompt: EffectPrompt, choice: EffectChoice): ApplyResult
       }
       return null;
     }
+    case "discardTools": {
+      // 🆕🆕🆕 **D543 — the printed *"Discard up to N Pokémon Tools from your
+      // opponent's Pokémon."*** DECLINABLE, so 0..`max` rather than an exact count:
+      // the `upTo` branch of the sibling arm above is the template, and it is a
+      // RESTATEMENT rather than a shared call because the two answers are different
+      // `EffectChoice` members over different offers — see the prompt's own block for
+      // why they must stay distinguishable on the wire.
+      //
+      // Two rules, the ones EVERY scope shares: every uid was OFFERED, and no uid
+      // twice. **NO per-source rule and no exact count**, both for the `upTo` reason:
+      // the print caps the answer from above and says nothing about distribution, so
+      // taking both Tools off one Pokémon is a legal answer and so is taking none.
+      // **`max` IS READ OFF THE PROMPT, NEVER OFF THE OP** — the prompt's ceiling is
+      // already clamped to what the board offered, and this validator never sees the
+      // op at all.
+      if (choice.kind !== "discardTools" || !Array.isArray(choice.uids)) {
+        return err("BAD_EFFECT_CHOICE", "expected a tool-discard choice");
+      }
+      const scope = prompt.scope;
+      // The prompt is authored `upTo`-only today. A future `total`/`each` Tool
+      // discard would arrive here as a scope this branch does not read, so the
+      // NON-`upTo` case is refused rather than waved through: an unrecognised scope
+      // must not become "anything goes".
+      if (scope.kind !== "upTo") {
+        return err("BAD_EFFECT_CHOICE", "unsupported tool-discard scope");
+      }
+      if (choice.uids.length > scope.max) {
+        return err("BAD_EFFECT_CHOICE", `discard at most ${scope.max} Pokémon Tools`);
+      }
+      const offered = new Set(prompt.discardable.map((d) => d.uid));
+      const picked = new Set<string>();
+      for (const uid of choice.uids) {
+        if (typeof uid !== "string" || !offered.has(uid)) {
+          return err("BAD_EFFECT_CHOICE", `${String(uid)} is not a discardable Pokémon Tool`);
+        }
+        if (picked.has(uid)) return err("BAD_EFFECT_CHOICE", `${uid} picked twice`);
+        picked.add(uid);
+      }
+      return null;
+    }
     case "attachCards": {
       // Electric Generator / Hydreigon / Charizard ex / Janine's Secret Art —
       // "attach … in any way you like", so each pick carries its OWN destination

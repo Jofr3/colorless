@@ -1020,6 +1020,52 @@ describe("redactGame — the public-ref effect prompts (answerer-only, 2b-iii-b)
     expect(promptFor(prompt, "p1")).toEqual(prompt);
   });
 
+  it("🆕 D543 — …and with the OTHER TWO scopes, which no rung crossed before", () => {
+    // 🛑 **THE RUNG ABOVE IS TRUE AND IS LEFT EXACTLY AS IT WAS.** It pins
+    // `{ kind: "total", count: 1 }`, and that case never broke. What it could not
+    // see — and what let D543's Part-0 defect ship — is that it was the ONLY scope
+    // any rung ever crossed: `redactedScopeOf` was a two-arm ternary whose `else`
+    // swallowed `upTo` into `{ kind: "each" }`, and a suite that only ever sends
+    // `total` cannot tell an `else` branch from an arm. So this is an ADDITION
+    // beside it, not an inversion of it.
+    // ⚠️ **AND `each` IS DRIVEN TOO, DELIBERATELY**, even though it was the value the
+    // broken ternary happened to return: without it, a fix that mapped everything to
+    // `upTo` would be just as green as the defect it replaced.
+    const offers = [
+      { uid: "e1", from: P2_ACTIVE },
+      { uid: "e2", from: P1_ACTIVE },
+    ];
+    const each: EffectPrompt = {
+      kind: "discardEnergy",
+      discardable: offers,
+      scope: { kind: "each" },
+      note: "Discard a Special Energy from each of your opponent's Pokémon.",
+    };
+    expect(promptFor(each, "p1")).toEqual(each);
+    const upTo: EffectPrompt = {
+      kind: "discardEnergy",
+      discardable: offers,
+      scope: { kind: "upTo", max: 2 },
+      note: "Discard any amount of Energy.",
+    };
+    expect(promptFor(upTo, "p1")).toEqual(upTo);
+  });
+
+  it("🆕 D543 — passes a discardTools prompt through with its `upTo` scope", () => {
+    const prompt: EffectPrompt = {
+      kind: "discardTools",
+      discardable: [
+        { uid: "t1", from: P2_ACTIVE },
+        { uid: "t2", from: P1_ACTIVE },
+      ],
+      scope: { kind: "upTo", max: 2 },
+      note: "Discard up to 2 Pokémon Tools from your opponent's Pokémon.",
+    };
+    expect(promptFor(prompt, "p1")).toEqual(prompt);
+    // Controller-answered like the rest of the public-ref family.
+    expect(promptFor(prompt, "p2")).toBeNull();
+  });
+
   it("withholds a controller-answered prompt from the opponent (null on the wire)", () => {
     const prompt: EffectPrompt = {
       kind: "choosePokemon",

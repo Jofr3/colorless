@@ -9,6 +9,7 @@
 import { useEffect, useRef, useState, type ReactElement, type ReactNode } from "react";
 import type { Attack, Card } from "@luminous/schema";
 import type {
+  DiscardScope,
   EffectPrompt,
   GameAction,
   GameState,
@@ -1387,6 +1388,10 @@ function EffectChooseDialog(props: GameHudProps): ReactElement | null {
       );
     case "discardEnergy":
       return <DiscardEnergyDialog {...props} prompt={prompt} />;
+    case "discardTools":
+      // 🆕 D543 — its own dialog, not a branch inside the Energy one: the two
+      // prompts dispatch different answers over different attached arrays.
+      return <DiscardToolsDialog {...props} prompt={prompt} />;
     case "attachCards":
       return <AttachCardsDialog {...props} prompt={prompt} />;
     case "mayDraw":
@@ -2841,6 +2846,130 @@ function DiscardEnergyDialog({
   );
 }
 
+/** 🆕🆕🆕 **D543 — discardTools: take up to N Pokémon Tools off the OPPONENT's
+    board** (an attack's printed *"Discard up to 2 Pokémon Tools from your
+    opponent's Pokémon."*). `DiscardEnergyDialog`'s shape one attached-card array
+    over, and DELIBERATELY a second component rather than a branch inside that one:
+    the two prompts dispatch different `EffectChoice` members, so a shared dialog
+    would have to carry the discriminant through every handler and could send a
+    Tool uid into the Energy answer (`AttachCardsDialog` / `MoveEnergySpreadDialog`'s
+    split, D442's rule — split on the SHAPE OF THE DECISION, not on a rider).
+
+    🛑 **DECLINABLE, WHICH IS THE WHOLE DIFFERENCE FROM ITS SIBLING.** The printed
+    *"up to"* makes 0 a legal answer, so: nothing is pre-answered, Confirm is
+    always enabled, and the button says what pressing it will DO ("Discard none")
+    rather than counting toward a total that does not exist. A row past the cap is
+    marked `aria-disabled` and stays focusable, the sibling's rule verbatim — the
+    rows are how you read the offer.
+
+    Mounted only while parked on the viewer, so the useState is the per-decision
+    reset. */
+function DiscardToolsDialog({
+  game,
+  viewerSeat,
+  dispatch,
+  prompt,
+}: GameHudProps & { prompt: Extract<EffectPrompt, { kind: "discardTools" }> }) {
+  // Hoisted so the pick handler's closure keeps the discriminant narrowed.
+  const scope = prompt.scope;
+  const keyOf = (ref: PokemonRef) =>
+    `${ref.seat}-${ref.spot.spot}-${ref.spot.spot === "bench" ? ref.spot.index : "active"}`;
+  // Grouped by host Pokémon in first-seen (board) order — the sibling's grouping,
+  // and for its reason: every row reads like a Trainer name, so without the host in
+  // the group's accessible name a screen reader never says which Pokémon loses it.
+  const groups: { key: string; ref: PokemonRef; uids: string[] }[] = [];
+  for (const { uid, from } of prompt.discardable) {
+    const key = keyOf(from);
+    const group = groups.find((g) => g.key === key);
+    if (group === undefined) groups.push({ key, ref: from, uids: [uid] });
+    else group.uids.push(uid);
+  }
+  // The ceiling and whether 0 is legal, read off the scope rather than assumed.
+  // The engine authors `upTo` alone today; the other two members are spelled here
+  // (rather than asserted away) so that a future printed "a Tool from EACH of your
+  // opponent's Pokémon" is a scope VALUE and not a new dialog — the same reason
+  // the prompt carries a whole `DiscardScope` instead of a bare `max`.
+  const cap =
+    scope.kind === "upTo" ? scope.max : scope.kind === "total" ? scope.count : groups.length;
+  const declinable = scope.kind === "upTo";
+  const [picked, setPicked] = useState<string[]>([]);
+  const pick = (uid: string) =>
+    setPicked((prev) =>
+      prev.includes(uid) ? prev.filter((u) => u !== uid) : prev.length < cap ? [...prev, uid] : prev,
+    );
+  const ready = declinable || picked.length === cap;
+
+  return (
+    <HudDialog label="Discard Pokémon Tools">
+      <h2 className="text-lg font-semibold text-white">{prompt.note}</h2>
+      {/* <output> — an implicit polite LIVE REGION, the house pattern: the running
+          total is otherwise unannounceable, since `aria-pressed` is only spoken for
+          the focused row and a click AT THE CAP is refused in silence. */}
+      <output className="mt-1.5 block text-sm text-white/55">
+        {declinable
+          ? `Pick up to ${cap} Pokémon Tool${cap === 1 ? "" : "s"} to discard (${picked.length} selected).`
+          : `Pick ${cap} Pokémon Tool${cap === 1 ? "" : "s"} to discard (${picked.length}/${cap}).`}
+      </output>
+      <div className="mt-3 flex max-h-64 flex-col gap-3 overflow-y-auto">
+        {groups.map((group) => (
+          <fieldset key={group.key} className="min-w-0">
+            <legend className="text-[10px] font-semibold uppercase tracking-wide text-white/40">
+              {refName(game, group.ref)} ·{" "}
+              {group.ref.spot.spot === "active" ? "Active" : `Bench ${group.ref.spot.index + 1}`}
+              {group.ref.seat !== viewerSeat && " · opponent"}
+            </legend>
+            <ul className="mt-1.5 flex flex-col gap-1.5">
+              {group.uids.map((uid) => {
+                const selected = picked.includes(uid);
+                const refused = !selected && picked.length >= cap;
+                return (
+                  <li key={uid}>
+                    <button
+                      type="button"
+                      aria-pressed={selected}
+                      aria-disabled={refused || undefined}
+                      onClick={() => pick(uid)}
+                      className={`${ROW_BUTTON_BASE} ${
+                        selected
+                          ? "bg-white/[0.12] text-white ring-white/40"
+                          : refused
+                            ? ROW_BUTTON_DISABLED
+                            : ROW_BUTTON_ENABLED
+                      }`}
+                    >
+                      <span className="truncate">{cardOfUid(game, uid)?.name ?? uid}</span>
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          </fieldset>
+        ))}
+      </div>
+      <div className="mt-5 flex justify-end">
+        <button
+          type="button"
+          className={ACCENT_BUTTON_CLASS}
+          disabled={!ready}
+          onClick={() =>
+            dispatch({
+              type: "resolveEffect",
+              seat: viewerSeat,
+              choice: { kind: "discardTools", uids: picked },
+            })
+          }
+        >
+          {declinable
+            ? picked.length === 0
+              ? "Discard none"
+              : `Discard ${picked.length}`
+            : `Discard ${picked.length}/${cap}`}
+        </button>
+      </div>
+    </HudDialog>
+  );
+}
+
 /** attachFromTop (§15.E + §6) — attach cards found on the deck TOP onto your own
     Pokémon, "in any way you like" (Electric Generator / Hydreigon "Tri Howl").
     The one dialog whose answer is a MAP: each card carries its own destination,
@@ -3150,6 +3279,24 @@ function GameOverOverlay({ projection, viewerSeat, names, onPlayAgain }: GameHud
   );
 }
 
+/** One `DiscardScope`'s contribution to a `promptKey` — the member's NAME plus
+    the quantity that member carries, so no two scopes can ever spell the same
+    key. A `switch` with a `never` floor rather than a ternary chain, because the
+    ternary chain is precisely what let D359's `upTo` print as `"each"` for
+    184 decisions (D543). Shared by the two discard prompts. */
+function scopeKey(scope: DiscardScope): string {
+  switch (scope.kind) {
+    case "total":
+      return `total:${scope.count}`;
+    case "each":
+      return "each";
+    case "upTo":
+      return `upTo:${scope.max}`;
+  }
+  const unhandled: never = scope;
+  return `unknown:${(unhandled as DiscardScope).kind}`;
+}
+
 /** A stable identity for one parked decision — the prompt kind plus whatever it
     offers. Two consecutive parks of the same kind differ here whenever their
     candidates do, which is what makes the dialog's local picks reset between
@@ -3173,7 +3320,17 @@ function promptKey(prompt: EffectPrompt): string {
       // different counts must not share one. (Unreachable today — resolving a
       // discard always removes Energy, so the offer changes — but the key's whole
       // job is "any change the state depends on is a new key".)
-      return `discard:${prompt.scope.kind === "total" ? prompt.scope.count : "each"}:${prompt.discardable
+      //
+      // 🆕🆕 **D543 — `upTo` USED TO COLLAPSE INTO THE `"each"` LITERAL HERE, AND
+      // THE COLLAPSE WAS A DEFECT OF EXACTLY THE KIND THIS FUNCTION EXISTS TO
+      // PREVENT.** The old expression was a two-arm ternary — `total` printed its
+      // `count`, everything else printed the word `each` — so a declinable
+      // 0..`max` park and a mandatory one-per-body park over the SAME uids shared
+      // one key, and the second inherited the first's picks. The scope is a
+      // three-member union (D359 added `upTo`), so the key spells all three, each
+      // with its own quantity: two `upTo` parks that differ only in `max` are
+      // different questions and now get different keys.
+      return `discard:${scopeKey(prompt.scope)}:${prompt.discardable
         .map((d) => d.uid)
         .join(",")}`;
     case "moveEnergy":

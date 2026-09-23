@@ -963,10 +963,45 @@ export type GameEvent =
       ⚠️ NEVER EMITTED FOR AN EMPTY `uids` — a defender with no Tool is a silent
       no-op, exactly as `HEALED` is never filed at 0.
 
+      🆕🆕🆕 **D543 RE-POINTED THE PARAGRAPH ABOVE RATHER THAN REWRITING IT, AND THE
+      PRE-DAMAGE REASON IS KEPT VERBATIM BECAUSE IT IS STILL TRUE OF ITS OWN ROW**
+      (D178/D418). Everything said above describes the `when: "preDamage"` row
+      exactly as it always did; what moved is that this event now has a SECOND
+      producer. D543's `discardTools` op fires the same row at the PROGRAM TAIL,
+      from an attack's printed *"Discard up to 2 Pokémon Tools from your
+      opponent's Pokémon."* — so `seat` is still the OWNER whose board lost the
+      cards, `actor` still the controller whose card caused it, `host` still a
+      single top-card uid (which is why a multi-host answer emits ONE ROW PER HOST
+      and the field needs no widening), and the empty-`uids` rule still holds.
+
+      🛑 **`when` IS REQUIRED, AND THAT IS THE WHOLE POINT OF ADDING IT.** An
+      optional field defaulting to the pre-damage meaning would have let the NEW
+      producer inherit the OLD row's wording in silence — `log.ts` hard-codes
+      *"before doing damage"* on this row, and a tail discard rendered with that
+      tail would be a log that LIES about when it happened while the board is
+      identical (`D543-event-when-flipped` is the declared row, and it moves no
+      board at all). REQUIRED makes `tsc` name the one pre-existing emit site
+      (`attack.ts`'s pre-damage hook) instead, so the old meaning is re-declared by
+      hand. D421's rule: a log row is a claim with the same standing as a predicate.
+
       ⚠️ WIDENING THIS UNION OWES NO `MATCH_RECORD_VERSION` BUMP: `GameEvent` is not
       persisted at all (`MatchRecord` stores the RENDERED `SeatLogEntry[]`), so this
-      is a row-wording seam for NEW rows only. */
-  | { type: "TOOLS_DISCARDED"; seat: Seat; actor: Seat; uids: string[]; host: string }
+      is a row-wording seam for NEW rows only — and that sentence is quoted rather
+      than re-argued at D543, since the tree already says it here. */
+  | {
+      type: "TOOLS_DISCARDED";
+      seat: Seat;
+      actor: Seat;
+      uids: string[];
+      host: string;
+      /** 🆕 D543 — WHEN in the attack this happened, because the row's own wording
+          depends on it: `"preDamage"` is D428's §8 hook (the row reads *"… before
+          doing damage"*, and it is pushed in FRONT of the §8.5 `DAMAGE_DEALT` it
+          precedes, so the claim is one this path makes true); `"effect"` is D543's
+          program-tail `discardTools`, after the damage, where that tail would be
+          false. */
+      when: "preDamage" | "effect";
+    }
   /** §7.3 — the Stadium `uid` left play for its OWNER `seat`'s discard pile,
       replaced by a different-named Stadium (whose own TRAINER_PLAYED rides in
       the same batch). */

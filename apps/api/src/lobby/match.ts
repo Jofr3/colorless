@@ -1438,9 +1438,25 @@ export const MATCH_ACTION_DISPOSITION = {
     soft-lock**, while this paragraph said it could not happen. ⚠️ **THE PROSE WAS
     THE CAMOUFLAGE**: an invariant asserted in a comment is checked by nothing, and
     reads exactly like one that is. The count was wrong too — the wire prompt union
-    is **NINE** kinds, not seven or eight: mayDraw, `confirm` (D186), choosePokemon,
+    is ~~**NINE** kinds, not seven or eight~~: mayDraw, `confirm` (D186), choosePokemon,
     choosePokemonMulti, moveEnergy, discardEnergy, chooseCards, attachCards,
     chooseAttack.
+
+    🛑 **D543 — AND THAT NINE WAS ITSELF ALREADY STALE BEFORE THIS SLICE TOUCHED
+    ANYTHING, WHICH IS SAID OUT LOUD RATHER THAN LAUNDERED INTO D543's DIFF.**
+    Measured at D543's base head (`4ab68194`) by reading
+    `redactedEffectPromptSchema.options.length` — not by counting the list above —
+    it was **TEN**: the nine enumerated plus `orderCards` (D341), which joined the
+    union and never reached this paragraph. **D543 steps it to ELEVEN** with
+    `discardTools`. The list, re-read off `.options` in schema order: mayDraw,
+    confirm, orderCards, choosePokemon, choosePokemonMulti, moveEnergy,
+    discardEnergy, 🆕 discardTools, chooseCards, attachCards, chooseAttack.
+    ⚠️ **A PROSE COUNT OF A UNION IS A PIN NO RUNNER REPORTS** — which is the
+    paragraph's own lesson ("an invariant asserted in a comment is checked by
+    nothing, and reads exactly like one that is") arriving a second time at the
+    very sentence that states it. The executable half already exists and is where
+    the real count lives: `OnlineHud.chooseAttack.dom.test.tsx` reads
+    `redactedEffectPromptSchema.options` LIVE and drives both directions.
 
     ✅ **THE GUARD LIVES WHERE THE DIALOGS ARE: `src/features/online/components/
     OnlineHud.tsx` (D201).** `EffectChooseDialog` is an exhaustive `switch` with a

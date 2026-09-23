@@ -381,12 +381,38 @@ export const redactedPokemonRefSchema = z.object({
 });
 export type RedactedPokemonRef = z.infer<typeof redactedPokemonRefSchema>;
 
-/** How many Energy a `discardEnergy` prompt asks for — the wire mirror of the
-    engine's `DiscardScope`: `total` = exactly `count` uids across the whole
-    offer, `each` = exactly one uid from every distinct host Pokémon offered. */
+/** How many cards a discard prompt asks for — the wire mirror of the engine's
+    `DiscardScope`: `total` = exactly `count` uids across the whole offer,
+    `each` = exactly one uid from every distinct host Pokémon offered, and
+    `upTo` = ANY count from 0 to `max`, the one DECLINABLE scope.
+
+    🆕🆕🆕 **D543 — `upTo` WAS MISSING HERE AND THE DOC BLOCK ABOVE USED TO SAY
+    SO IN ITS OWN VOICE**: it read *"the wire mirror of the engine's
+    `DiscardScope`"* and then enumerated TWO of that union's THREE members.
+    ⚠️ **THAT ENUMERATION IS A WITHDRAWN CLAIM AND NOT A TYPO**, because
+    `redact.ts`'s `redactedScopeOf` was written to match it — a two-arm ternary
+    that collapsed every `upTo` into `{ kind: "each" }` and then `satisfies`-d the
+    RESULT against the ENGINE type, which pins neither the input's exhaustiveness
+    nor the wire's shape. So an online Chien-Pao ex "Hail Blade" park crossed the
+    wire as a MANDATORY one-per-Pokémon pick: the remote dialog demanded an exact
+    answer to a declinable question and the server refused whatever it sent.
+    The engine member has existed since D359; nothing on the wire ever spelled it.
+
+    🛑 **`max` AND NOT `count`, DELIBERATELY** — the two mandatory scopes name an
+    EXACT quantity and this one names a CEILING, so a shared spelling would let a
+    client read "discard exactly `count`" off a prompt that means "0 up to `max`".
+    That is the same word the engine's own member uses (`interpreter.ts`'s
+    `{ kind: "upTo"; max: number }`), and the redactor copies it across unchanged.
+
+    ⚠️ **NO `MATCH_RECORD_VERSION` BUMP IS OWED FOR THIS MEMBER.** `RedactedBoard`
+    and every schema under it are the WIRE projection, rebuilt from `GameState` on
+    every send; `MatchRecord` persists the engine state and the RENDERED log, never
+    a redacted prompt. A new wire member is therefore new BYTES ON THE WIRE only,
+    which is D141's already-settled case. */
 export const redactedDiscardScopeSchema = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("total"), count: z.number() }),
   z.object({ kind: z.literal("each") }),
+  z.object({ kind: z.literal("upTo"), max: z.number() }),
 ]);
 export type RedactedDiscardScope = z.infer<typeof redactedDiscardScopeSchema>;
 
@@ -576,6 +602,27 @@ export const redactedEffectPromptSchema = z.discriminatedUnion("kind", [
       MANDATORY — no decline. Every candidate is Energy face-up on the table. */
   z.object({
     kind: z.literal("discardEnergy"),
+    discardable: z.array(redactedEnergyOfferSchema),
+    scope: redactedDiscardScopeSchema,
+    note: z.string(),
+  }),
+  /** 🆕🆕🆕 **D543 — the ELEVENTH member: discard Pokémon Tools off the
+      OPPONENT's board** (an attack's printed *"Discard up to 2 Pokémon Tools from
+      your opponent's Pokémon."*). `discardable` pairs each takeable TOOL uid with
+      the in-play Pokémon it is attached to; `scope` is always `upTo`, so the
+      answer may be EMPTY — this is the family's first declinable discard on the
+      wire, and the member Part 0 of that slice had to add to
+      `redactedDiscardScopeSchema` before this one could exist.
+
+      ⚠️ **THE OFFER SCHEMA IS REUSED AND THE NAME IS NOT A MISTAKE.**
+      `redactedEnergyOfferSchema` is *"uid + the Pokémon it sits on"* and nothing
+      more — the same wire shape a Tool offer needs — so a second identical schema
+      would be two spellings of one figure. The prompt KIND is what says which
+      attached array the uids came out of, which is also what keeps a Tool uid from
+      being answered into the Energy apply. Every candidate is face up on the
+      table. */
+  z.object({
+    kind: z.literal("discardTools"),
     discardable: z.array(redactedEnergyOfferSchema),
     scope: redactedDiscardScopeSchema,
     note: z.string(),

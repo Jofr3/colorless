@@ -6205,7 +6205,7 @@ export const MUTANTS: Mutant[] = [
     // CORPUS QUOTES** (D414/D415), so a value-keyed sweep over `toBe("0.391.0")` cannot
     // see it — this row's `find` spells the DECLARATION, not an assertion. Run
     // `precheck` after every version bump, not after the sweep tells you.
-    find: 'export const engineVersion = "0.427.0";',
+    find: 'export const engineVersion = "0.428.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -19605,8 +19605,13 @@ export const MUTANTS: Mutant[] = [
     // zone). Claim unchanged. ⚠️ It now also covers row 72's SELF-strip, where the two
     // seats are EQUAL — on that board the mutation is a no-op, which is why the killing
     // rungs are the opponent-side ones and why row 72 has its own seat row below.
-    find: '  if (tools.length > 0) events.push({ type: "TOOLS_DISCARDED", seat, actor, uids: tools, host });',
-    replace: '  if (tools.length > 0) events.push({ type: "TOOLS_DISCARDED", seat: actor, actor: seat, uids: tools, host });',
+    // 🆕🆕🆕 RE-ANCHORED AGAIN AT D543 and the CLAIM IS STILL UNCHANGED: the push gained
+    //    `when: "preDamage"` (REQUIRED, because a second producer now fires this same row at the
+    //    program TAIL) and grew onto three lines, so the single-line `find` went 0×. `precheck`
+    //    reported it, which is the instrument working — the row was RE-TRANSCRIBED off the bytes
+    //    at the address rather than reconstructed from memory of its shape (D542's own lesson).
+    find: '    events.push({ type: "TOOLS_DISCARDED", seat, actor, uids: tools, host, when: "preDamage" });',
+    replace: '    events.push({ type: "TOOLS_DISCARDED", seat: actor, actor: seat, uids: tools, host, when: "preDamage" });',
     expectKilledBy: ["packages/engine/src/preDamageToolDiscard.test.ts"],
   },
   {
@@ -19621,8 +19626,10 @@ export const MUTANTS: Mutant[] = [
     // the return guard. ⚠️ What the old anchor caught and this one does not: the
     // rebuilt-side half — `D429-second-zone-alone-is-a-no-op` and
     // `D429-strip-ignores-cancel-flag` between them own the return guard now.
-    find: '  if (tools.length > 0) events.push({',
-    replace: '  if (true) events.push({',
+    // 🆕🆕🆕 RE-ANCHORED AT D543 for the same reason as the row above — the guard now wraps a
+    //    BLOCK rather than a single expression, because the push grew a `when` field.
+    find: '  if (tools.length > 0) {\n    events.push({ type: "TOOLS_DISCARDED"',
+    replace: '  if (true) {\n    events.push({ type: "TOOLS_DISCARDED"',
     expectKilledBy: ["packages/engine/src/preDamageFamily.test.ts"],
   },
   {
@@ -28523,8 +28530,16 @@ export const MUTANTS: Mutant[] = [
     //    entry was omitted — an append-only record with a slice missing from it is the same
     //    class of hole as a truncated one (D428), and no instrument can see it because the row
     //    still runs, still has its `find` at 1x and is still KILLED.
-    find: "  attack: 1669,",
-    replace: "  attack: 1668,",
+    // 🆕🆕🆕 D543 - RE-TRANSCRIBED AGAIN, 1669 -> 1671 (and the replace 1668 -> 1669), the same
+    //    two-step regression, for the Nth consecutive slice. ⚠️ **THE STEP IS 2 AND THE SENTENCE
+    //    STEP IS 1** - D543's row (corpus FILE LINE 136) is 1 sentence / **2** legal printings, so
+    //    the two DISAGREE and a number copied from the sentence side would have been wrong here.
+    //    MEASURED off the live census rather than inherited (D426/D451). ⚠️ **AND THIS SLICE'S
+    //    ROW LEAVES THROUGH THE READER SUMMAND**, so `rawUnbuiltSentences` and the reader arm move
+    //    WITH this constant. `precheck` reported the `find` at 0x on the edit round that moved the
+    //    constant, exactly as it has since D495.
+    find: "  attack: 1671,",
+    replace: "  attack: 1669,",
     expectKilledBy: [
       "packages/engine/src/censusAtHead.test.ts",
     ],
@@ -33543,5 +33558,257 @@ export const MUTANTS: Mutant[] = [
     find: "            ? `${CHOOSE_CARDS_VERB[prompt.dest].mandatory} ${picked.length}/${prompt.min}`",
     replace: "            ? `${prompt.dest === \"deckBottom\" ? \"Put under deck\" : \"Discard\"} ${picked.length}/${prompt.min}`",
     expectKilledBy: ["src/features/online/components/OnlineHud.chooseCardsVerb.dom.test.tsx"],
+  },
+  {
+    id: "D543-anchor-loses-terminator",
+    decision: "D543",
+    what: "🛑 **THE REQUIRED TRAILING PERIOD GOES, AND THE ANCHOR STARTS CLAIMING PREFIXES.** With `$` gone the pattern matches *“Discard up to 2 Pokémon Tools from your opponent's Pokémon. Then, draw a card.”* and the engine authors a program for a card whose trailing clause it silently DROPPED — the half of the sentence nobody sees again. ⚠️ Only ONE of §1's two trailing near-misses can see this: the killer is the one that KEEPS the period and glues a clause on; the one that STRIPS it refuses a `$`-less pattern too, which is why both spellings are kept (D540(1a)).",
+    file: "packages/engine/src/effects.ts",
+    find: "  /^Discard up to (\\d+) Pokémon Tools from your opponent['’]s Pokémon\\.$/;",
+    replace: "  /^Discard up to (\\d+) Pokémon Tools from your opponent['’]s Pokémon\\./;",
+    expectKilledBy: ["packages/engine/src/toolDiscardChosen.test.ts"],
+  },
+  {
+    id: "D543-anchor-loses-caret",
+    decision: "D543",
+    what: "⚠️ **THE CARET GOES, AT THE OTHER END OF THE SAME PATTERN** (D539(1a)). Without `^` a compound whose SECOND sentence is this one — *“Flip a coin. Discard up to 2 Pokémon Tools…”* — derives to this op alone and the coin flip is gone. The printed capital `D` is what makes the caret load-bearing, and the two ends are separate rows because they refuse for separate reasons.",
+    file: "packages/engine/src/effects.ts",
+    find: "  /^Discard up to (\\d+) Pokémon Tools from your opponent['’]s Pokémon\\.$/;",
+    replace: "  /Discard up to (\\d+) Pokémon Tools from your opponent['’]s Pokémon\\.$/;",
+    expectKilledBy: ["packages/engine/src/toolDiscardChosen.test.ts"],
+  },
+  {
+    id: "D543-anchor-apostrophe-class-collapsed",
+    decision: "D543",
+    what: "⚠️ **THE ONE `['’]` SLOT COLLAPSES TO THE STRAIGHT QUOTE** (D137, at the sentence's only apostrophe — index 48, MEASURED). Today's corpus prints U+0027 there, so the board stays green and every census figure stands still: **a rule nothing can see is not a rule**, which is exactly why §2 drives a CURLED board of its own AND reads the live code points off `legalAttackCorpus()` rather than off the suite's constant (D540(1b)(1c)). A re-ingest that curls the row reddens the control first.",
+    file: "packages/engine/src/effects.ts",
+    find: "  /^Discard up to (\\d+) Pokémon Tools from your opponent['’]s Pokémon\\.$/;",
+    replace: "  /^Discard up to (\\d+) Pokémon Tools from your opponent's Pokémon\\.$/;",
+    expectKilledBy: ["packages/engine/src/toolDiscardChosen.test.ts"],
+  },
+  {
+    id: "D543-count-literalised",
+    decision: "D543",
+    what: "🛑 **THE CAPTURED CEILING BECOMES THE LITERAL 2, WHICH IS THE BUILD D231 REFUSES — INSTALLED SO THE REFUSAL HAS A FALSIFIER.** The column prints only *“up to 2”* today, so a literal is green on every real board; what it destroys is the FIELD, which stops meaning *“up to N”* and starts meaning *“up to 2, whatever the card says”*. §1 drives it on SYNTHETIC numbers and says out loud that they are synthetic — the rung is about the anchor's SHAPE, not about today's column.",
+    file: "packages/engine/src/effects.ts",
+    find: "      const count = Number(match[1]);\n      if (count >= 1) return [{ op: \"discardTools\", count }];",
+    replace: "      const count = 2;\n      if (count >= 1) return [{ op: \"discardTools\", count }];",
+    expectKilledBy: ["packages/engine/src/toolDiscardChosen.test.ts"],
+  },
+  {
+    id: "D543-count-off-by-one",
+    decision: "D543",
+    what: "⚠️ **THE CEILING IS ONE TOO HIGH**, so a two-Tool print offers three picks on a three-Tool board and the caption promises what the card does not. The row exists BECAUSE the count is a capture: against a literal it would be unwritable, which is the other half of D231's test and the reason `D543-count-literalised` sits beside it.",
+    file: "packages/engine/src/effects.ts",
+    find: "      const count = Number(match[1]);\n      if (count >= 1) return [{ op: \"discardTools\", count }];",
+    replace: "      const count = Number(match[1]) + 1;\n      if (count >= 1) return [{ op: \"discardTools\", count }];",
+    expectKilledBy: ["packages/engine/src/toolDiscardChosen.test.ts"],
+  },
+  {
+    id: "D543-apply-choice-arm-deleted",
+    decision: "D543",
+    what: "🛑🛑 **THE ROW THIS SLICE EXISTS FOR, AND NO TYPE AND NO CENSUS CAN SEE IT.** `applyChoice`'s `switch` ends `default: return state;` on the stated ground that *“synchronous ops never park”*, so dropping this arm's body leaves the op parking, the prompt answered, the board UNCHANGED, and no event, no log row and no figure moving. ⚠️ **MEASURED, AND THE MEASUREMENT WAS WRONG TWICE — both spellings are struck rather than overwritten**: not ~~*\"tsc prints NOTHING\"*~~ (the brief) and not ~~*\"exactly ONE line, `interpreter.ts(14393,10)`\"*~~ (this slice's own first correction). Re-run on the shipped bytes, deleting the arm outright exits **2** and prints **FOUR IDENTICAL LINES, one per project that compiles the file**: `packages/engine/src/interpreter.ts(14404,10): error TS6133: 'toolDiscardApply' is declared but its value is never read.` That is `noUnusedLocals` noticing the arm is the op's only consumer TODAY, and it would vanish the moment a second caller existed — it is **NOT** an exhaustiveness error, and the unqualified *\"typechecks GREEN\"* spelling is withdrawn with it. Deleting `stepOp`'s own `case \"discardTools\":` block prints a real TS2366 at `interpreter.ts(1843,4)` instead. 🛑 **A FORCED-PATH RUNG CANNOT KILL THIS ROW** — the op has no forced path, because 0 is always a legal answer — so §4 drives the PARKED ≥2-offer path through `resolveEffect` and asserts BOTH victims' `tools` arrays and the victim's discard pile, never the op's shape (D421).",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      return toolDiscardApply(state, choice.uids, ctx, events).state;",
+    replace: "      return state;",
+    expectKilledBy: ["packages/engine/src/toolDiscardChosen.test.ts"],
+  },
+  {
+    id: "D543-scope-upto-to-each",
+    decision: "D543",
+    what: "🛑 **THE PARK ASKS A MANDATORY QUESTION WHERE THE CARD PRINTS *“up to”*.** `{kind:\"each\"}` means ONE uid from EVERY offered host, so the decline stops being legal, the validator starts demanding a pick per body, and both dialogs pre-answer rows the player never pressed. This is D359's scope doing the whole work of the printed quantifier, and it is the engine-side twin of the WIRE collapse Part 0 fixed.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "          scope: { kind: \"upTo\", max: Math.min(op.count, discardable.length) },",
+    replace: "          scope: { kind: \"each\" },",
+    expectKilledBy: ["packages/engine/src/toolDiscardChosen.test.ts"],
+  },
+  {
+    id: "D543-max-not-clamped-to-offer",
+    decision: "D543",
+    what: "⚠️ **THE CEILING IS THE PRINTED NUMBER RATHER THAN WHAT THE BOARD ACTUALLY OFFERS**, so a two-Tool print over a ONE-Tool board captions itself *“up to 2”* and hands the dialog a cap above anything that exists. `discardEnergy`'s own `cap` line is the precedent, verbatim: the pick is `0..min(cap, matches)` and never `0..cap`.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "          scope: { kind: \"upTo\", max: Math.min(op.count, discardable.length) },",
+    replace: "          scope: { kind: \"upTo\", max: op.count },",
+    expectKilledBy: ["packages/engine/src/toolDiscardChosen.test.ts"],
+  },
+  {
+    id: "D543-zero-offer-parks-anyway",
+    decision: "D543",
+    what: "⚠️ **AN OPPONENT WEARING NO TOOL IS ASKED A QUESTION WITH ONE ANSWER.** The silent no-op guard goes, so an empty offer parks: the phase swallows Escape, the dialog renders no rows, and the only legal reply is the empty one. `parkOrForce`'s ceiling rule (D359) and `HEALED`'s never-filed-at-0 convention are what the guard implements, and §3 is where they are driven.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      if (discardable.length === 0) return { done: state };",
+    replace: "      if (discardable.length < 0) return { done: state };",
+    expectKilledBy: ["packages/engine/src/toolDiscardChosen.test.ts"],
+  },
+  {
+    id: "D543-tools-from-own-board",
+    decision: "D543",
+    what: "🛑 **THE OP STRIPS THE ATTACKER'S OWN POKÉMON.** One printed zone is exactly why the op carries no `from` field, so the victim seat is spelled ONCE, here — and a single word is the whole difference between *“your opponent's Pokémon”* and *“yours”*. §3's own-Tool rung (a Tool on the attacker's Active, opponent bare) and §4's two-victim board are the two halves that see it.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "function discardableTools(state: GameState, seat: Seat): { uid: string; from: PokemonRef }[] {\n  const victim = otherSeat(seat);",
+    replace: "function discardableTools(state: GameState, seat: Seat): { uid: string; from: PokemonRef }[] {\n  const victim = seat;",
+    expectKilledBy: ["packages/engine/src/toolDiscardChosen.test.ts"],
+  },
+  {
+    id: "D543-seat-actor-crossed",
+    decision: "D543",
+    what: "🛑 **SILENT IN EVERY CENSUS, AND D428's ROW ONE OP OVER.** `TOOLS_DISCARDED` is pushed with `seat` and `actor` crossed, so the row names the ATTACKER as the board that lost the cards and the DEFENDER as the cause. The BOARD is identical — only the log lies — which is why §4 asserts the two seat fields on the emitted rows rather than reading the rendered string alone.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      type: \"TOOLS_DISCARDED\",\n      seat: victim,\n      actor: ctx.seat,",
+    replace: "      type: \"TOOLS_DISCARDED\",\n      seat: ctx.seat,\n      actor: victim,",
+    expectKilledBy: ["packages/engine/src/toolDiscardChosen.test.ts"],
+  },
+  {
+    id: "D543-per-host-emission-collapsed-to-one-row",
+    decision: "D543",
+    what: "⚠️ **ONE ROW FOR A TWO-HOST ANSWER, SO THE SECOND POKÉMON LOSES ITS TOOL IN SILENCE.** `TOOLS_DISCARDED.host` is a SINGLE top-card uid — that is the whole reason a multi-host answer emits one row per host rather than widening the field — and the log is the only place a detach is announced at all. The board still changes, so nothing but the event assertions in §4 can see it.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  for (const entry of pulled) {\n    discarded.push(...entry.uids);\n    events.push({\n      type: \"TOOLS_DISCARDED\",",
+    replace: "  for (const entry of pulled) {\n    discarded.push(...entry.uids);\n    if (entry !== pulled[0]) continue;\n    events.push({\n      type: \"TOOLS_DISCARDED\",",
+    expectKilledBy: ["packages/engine/src/toolDiscardChosen.test.ts"],
+  },
+  {
+    id: "D543-event-when-flipped",
+    decision: "D543",
+    what: "🛑 **THE LOG ROW LIES ABOUT *WHEN*, AND THE BOARD IS BYTE-IDENTICAL.** `when: \"preDamage\"` on a TAIL discard makes `log.ts` append *“ before doing damage”* to a row that fired AFTER §8.5 — a claim the path does not make true (D421: a log row is a predicate). Nothing else moves: no zone, no event count, no census figure. §8's row-text rung is the only instrument in the repo that can see it, which is why the field is REQUIRED rather than defaulted.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      when: \"effect\",",
+    replace: "      when: \"preDamage\",",
+    expectKilledBy: ["packages/engine/src/toolDiscardChosen.test.ts"],
+  },
+  {
+    id: "D543-validate-cap-dropped",
+    decision: "D543",
+    what: "⚠️ **THE WIRE VALIDATOR STOPS ENFORCING THE CEILING**, so a crafted frame discards every Tool on the board against a print that says *“up to 2”*. The prompt's `max` is already clamped to the offer, so this is the LAST line between a hand-built `resolveEffect` and a board the card cannot produce.",
+    file: "packages/engine/src/cardplay.ts",
+    find: "      if (choice.uids.length > scope.max) {\n        return err(\"BAD_EFFECT_CHOICE\", `discard at most ${scope.max} Pokémon Tools`);",
+    replace: "      if (choice.uids.length > 99) {\n        return err(\"BAD_EFFECT_CHOICE\", `discard at most ${scope.max} Pokémon Tools`);",
+    expectKilledBy: ["packages/engine/src/toolDiscardChosen.test.ts"],
+  },
+  {
+    id: "D543-validate-accepts-unoffered",
+    decision: "D543",
+    what: "⚠️ **A UID THAT WAS NEVER OFFERED IS ACCEPTED.** “Was it offered” is one of the two rules EVERY discard scope shares, and here it is also the only thing standing between a Tool answer and an Energy uid: the two prompts are separate KINDS precisely so a crafted frame cannot cross them, and this check is where that separation is enforced at runtime.",
+    file: "packages/engine/src/cardplay.ts",
+    find: "        if (typeof uid !== \"string\" || !offered.has(uid)) {\n          return err(\"BAD_EFFECT_CHOICE\", `${String(uid)} is not a discardable Pokémon Tool`);",
+    replace: "        if (typeof uid !== \"string\") {\n          return err(\"BAD_EFFECT_CHOICE\", `${String(uid)} is not a discardable Pokémon Tool`);",
+    expectKilledBy: ["packages/engine/src/toolDiscardChosen.test.ts"],
+  },
+  {
+    id: "D543-validate-allows-duplicates",
+    decision: "D543",
+    what: "⚠️ **THE SAME TOOL PICKED TWICE PASSES**, so a 1-Tool board answers *“up to 2”* with two copies of one uid and the apply strips it once while the cap has been spent twice. “No uid twice” is the second of the two rules every scope shares.",
+    file: "packages/engine/src/cardplay.ts",
+    find: "        if (picked.has(uid)) return err(\"BAD_EFFECT_CHOICE\", `${uid} picked twice`);\n        picked.add(uid);",
+    replace: "        picked.add(uid);",
+    expectKilledBy: ["packages/engine/src/toolDiscardChosen.test.ts"],
+  },
+  {
+    id: "D543-log-tail-unconditional",
+    decision: "D543",
+    what: "🛑 **THE PRE-DAMAGE TAIL IS HARD-CODED AGAIN, WHICH IS THE STATE THIS SLICE FOUND THE FILE IN.** Every `TOOLS_DISCARDED` row then reads *“… before doing damage”*, including the ones D543's program-tail op files AFTER the damage. The row is the only announcement a detach gets, and the board is identical on both sides of the mutation — exactly the class a REQUIRED `when` exists to make `tsc` name at the emit site.",
+    file: "packages/engine/src/log.ts",
+    find: "        ...(event.when === \"preDamage\" ? [plain(\" before doing damage\")] : []),",
+    replace: "        plain(\" before doing damage\"),",
+    expectKilledBy: ["packages/engine/src/toolDiscardChosen.test.ts"],
+  },
+  {
+    id: "D543-wire-scope-collapses-upto",
+    decision: "D543",
+    what: "🛑 **THE ROW PART 0 EXISTS FOR: THE WIRE COLLAPSES `upTo` INTO `each`, WHICH IS WHAT THE TREE ACTUALLY SHIPPED FOR 184 DECISIONS.** `redactedScopeOf` was a two-arm ternary whose `else` swallowed D359's third `DiscardScope` member, so every Chien-Pao ex “Hail Blade” and Mewtwo VSTAR “Psy Purge” park reached an ONLINE client as a MANDATORY one-per-Pokémon pick and the server refused whatever that dialog sent. ⚠️ **The engine stays entirely green** — no board, event or census figure moves — and the `satisfies DiscardScope` that used to sit here was green on the collapsed value too, because a `satisfies` against the SOURCE union is not an exhaustiveness check.",
+    file: "packages/engine/src/redact.ts",
+    find: "      return { kind: \"upTo\", max: scope.max };",
+    replace: "      return { kind: \"each\" };",
+    expectKilledBy: ["packages/engine/src/redactDiscardScope.test.ts"],
+  },
+  {
+    id: "D543-schema-drops-upto-member",
+    decision: "D543",
+    what: "⚠️ **THE WIRE UNION GOES BACK TO TWO OF THE ENGINE'S THREE MEMBERS**, which is the hole Part 0 closed. With the member gone the schema REFUSES a legal `upTo` prompt, so a declinable discard cannot cross at all — the half no engine assertion can see, and the reason `redactDiscardScope.test.ts` drives `safeParse` directly rather than only comparing prompts.",
+    file: "packages/schema/src/match/redacted.ts",
+    find: "  z.object({ kind: z.literal(\"upTo\"), max: z.number() }),\n]);\nexport type RedactedDiscardScope",
+    replace: "]);\nexport type RedactedDiscardScope",
+    expectKilledBy: ["packages/engine/src/redactDiscardScope.test.ts"],
+  },
+  {
+    id: "D543-projection-rebuild-collapses-upto",
+    decision: "D543",
+    what: "🛑 **THE INVISIBLE HALF OF THE SAME DEFECT, ON THE WAY BACK IN.** Fixing only the redactor leaves this mirror rebuilding an `upTo` park as `{kind:\"each\"}`, with `tsc` silent before and after — an `else` branch is always type-correct for the member it forgot. The reconstructed decision then stops equalling the local one: the online dialog pre-answers rows, gates Confirm to one pick per host, and the decline becomes unreachable while the engine is still waiting for an answer it would have accepted.",
+    file: "src/features/game/projection.ts",
+    find: "      return { kind: \"upTo\", max: scope.max };",
+    replace: "      return { kind: \"each\" };",
+    expectKilledBy: ["src/features/game/GameHud.toolDiscard.dom.test.tsx"],
+  },
+  {
+    id: "D543-online-ready-demands-full-cap",
+    decision: "D543",
+    what: "⚠️ **CONFIRM DEMANDS THE FULL CEILING ON A DECLINABLE QUESTION.** `ready` falls back to the exact-count rule, so a *“you may discard any amount”* park cannot be answered with fewer than `max` picks — and cannot be DECLINED at all. `tsc` says nothing: this is one of the four sites the schema fix did NOT redden.",
+    file: "src/features/online/components/OnlineHud.tsx",
+    find: "  const ready = scope.kind === \"upTo\" || picked.length === required;",
+    replace: "  const ready = picked.length === required;",
+    expectKilledBy: ["src/features/online/components/OnlineHud.discardUpTo.dom.test.tsx"],
+  },
+  {
+    id: "D543-online-caption-says-each",
+    decision: "D543",
+    what: "⚠️ **THE CAPTION READS THE `each` STRING OVER AN `upTo` PROMPT** — *“Pick one Energy from each Pokémon (0/2).”* above a heading that says *any amount*. The dialog contradicting its own heading is D542's class one prompt over, and only a dom rung can see a label.",
+    file: "src/features/online/components/OnlineHud.tsx",
+    find: "        {scope.kind === \"each\"\n          ? `Pick one Energy from each Pokémon",
+    replace: "        {scope.kind !== \"total\"\n          ? `Pick one Energy from each Pokémon",
+    expectKilledBy: ["src/features/online/components/OnlineHud.discardUpTo.dom.test.tsx"],
+  },
+  {
+    id: "D543-online-cap-not-enforced",
+    decision: "D543",
+    what: "⚠️ **THE (max+1)th PICK IS ACCEPTED**, so the dialog builds an answer the server will refuse and the player is told nothing. The cap is also what makes the `aria-disabled` row marker true, so the mutation silently un-announces the closed rows as well.",
+    file: "src/features/online/components/OnlineHud.tsx",
+    find: "      if (scope.kind === \"upTo\") return prev.length < scope.max ? [...prev, uid] : prev;",
+    replace: "      if (scope.kind === \"upTo\") return [...prev, uid];",
+    expectKilledBy: ["src/features/online/components/OnlineHud.discardUpTo.dom.test.tsx"],
+  },
+  {
+    id: "D543-online-preanswers-a-declinable-park",
+    decision: "D543",
+    what: "⚠️ **A DECLINABLE PARK OPENS WITH ROWS ALREADY PRESSED.** The `each` pre-answer seeds every single-candidate group, so *“you may discard any amount”* arrives pre-answered *“discard one from each”* — words put in the player's mouth on a question they may want to decline. The fourth of the four sites `tsc` did not name.",
+    file: "src/features/online/components/OnlineHud.tsx",
+    find: "  const [picked, setPicked] = useState<string[]>(() =>\n    scope.kind === \"each\"",
+    replace: "  const [picked, setPicked] = useState<string[]>(() =>\n    scope.kind !== \"total\"",
+    expectKilledBy: ["src/features/online/components/OnlineHud.discardUpTo.dom.test.tsx"],
+  },
+  {
+    id: "D543-tools-dialog-not-declinable",
+    decision: "D543",
+    what: "⚠️ **THE LOCAL TOOL DIALOG STOPS BEING DECLINABLE.** Confirm gates on the full ceiling, so the printed *“up to 2”* becomes *“exactly 2”* on the one surface whose engine would have accepted an empty pick — a park the player can neither answer nor escape when the board offers two Tools they do not want to take.",
+    file: "src/features/game/GameHud.tsx",
+    find: "  const ready = declinable || picked.length === cap;",
+    replace: "  const ready = picked.length === cap;",
+    expectKilledBy: ["src/features/game/GameHud.toolDiscard.dom.test.tsx"],
+  },
+  {
+    id: "D543-online-tools-named-off-the-energy-array",
+    decision: "D543",
+    what: "⚠️ **THE TOOL ROWS RENDER RAW UIDS.** `toolName` reads `attached.energies` instead of `attached.tools`, finds nothing, and falls back to the uid — so the player picks between `t1` and `t2`. It is the mistake a shared name-resolver invites, and the reason `toolName` is its own function beside `energyName` rather than a zone argument on it.",
+    file: "src/features/online/components/OnlineHud.tsx",
+    find: "?.attached?.tools.find((t) => t.id === uid)?.name ?? uid;",
+    replace: "?.attached?.energies.find((t) => t.id === uid)?.name ?? uid;",
+    expectKilledBy: ["src/features/online/components/OnlineHud.toolDiscard.dom.test.tsx"],
+  },
+  {
+    id: "D543-offer-drops-the-shield",
+    decision: "D543",
+    what: "\uD83D\uDED1 **\u00a711 IS DROPPED FROM THE OFFER \u2014 `unshieldedRefs` goes and the raw Tool-host list is handed to the prompt.** A Mist-Energy'd body would be OFFERED, picked, and its Tool discarded anyway, with no `ATTACK_EFFECT_PREVENTED` row at all. D259/D416's already-settled rule, taken here on the SET side of D259's own split (a shielded body removes ITSELF and leaves the rest pickable), and the row this arm's \u00a711 block owes: MEASURED to leave every other suite in the slice GREEN, because no other board in it has a shielded body. `D540-offer-drops-the-shield` is the same experiment one op over.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      const allDiscardable = discardableTools(state, ctx.seat);\n      const bodies: PokemonRef[] = [];\n      for (const entry of allDiscardable) {\n        if (!bodies.some((ref) => refKeyOf(ref) === refKeyOf(entry.from))) bodies.push(entry.from);\n      }\n      const allowed = new Set(unshieldedRefs(state, bodies, ctx, events).map(refKeyOf));",
+    replace: "      const allDiscardable = discardableTools(state, ctx.seat);\n      const bodies: PokemonRef[] = [];\n      for (const entry of allDiscardable) {\n        if (!bodies.some((ref) => refKeyOf(ref) === refKeyOf(entry.from))) bodies.push(entry.from);\n      }\n      const allowed = new Set(bodies.map(refKeyOf));",
+    expectKilledBy: ["packages/engine/src/toolDiscardChosen.test.ts"],
+  },
+  {
+    id: "D543-shield-asked-before-the-filter",
+    decision: "D543",
+    what: "\uD83D\uDED1 **THE ORDER INVERTS \u2014 \u00a711 is asked of the WHOLE opponent board and the printed TOOL-HOST filter is applied afterwards.** The candidate set is identical, every board strips the same Tools, and the ONLY difference is a FALSE `ATTACK_EFFECT_PREVENTED` row announcing an effect that does not exist, for a shielded body wearing no Tool this op was never going to touch. D430 \u2014 a log row is a claim with the same standing as a predicate \u2014 and the reason the arm narrows to Tool hosts BEFORE it asks the funnel. `D540-shield-asked-before-the-filter` is the same experiment one op over.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      const allDiscardable = discardableTools(state, ctx.seat);\n      const bodies: PokemonRef[] = [];\n      for (const entry of allDiscardable) {\n        if (!bodies.some((ref) => refKeyOf(ref) === refKeyOf(entry.from))) bodies.push(entry.from);\n      }\n      const allowed = new Set(unshieldedRefs(state, bodies, ctx, events).map(refKeyOf));",
+    replace: "      const allDiscardable = discardableTools(state, ctx.seat);\n      const bodies: PokemonRef[] = [];\n      for (const entry of allDiscardable) {\n        if (!bodies.some((ref) => refKeyOf(ref) === refKeyOf(entry.from))) bodies.push(entry.from);\n      }\n      const keep = new Set(bodies.map(refKeyOf));\n      const allowed = new Set(\n        unshieldedRefs(state, oppAnyRefs(state, ctx.seat), ctx, events)\n          .map(refKeyOf)\n          .filter((key) => keep.has(key)),\n      );",
+    expectKilledBy: ["packages/engine/src/toolDiscardChosen.test.ts"],
   },
 ];

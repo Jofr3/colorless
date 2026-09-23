@@ -596,6 +596,42 @@ export type EffectPrompt =
       scope: DiscardScope;
       note: string;
     }
+  /** 🆕🆕🆕 **D543 — DISCARD POKÉMON TOOLS OFF THE OPPONENT'S BOARD, THE FIRST
+      PROMPT IN THIS UNION WHOSE CANDIDATES ARE TOOLS RATHER THAN ENERGY OR
+      CARDS.** Shape-identical to `discardEnergy`'s above — uid + host ref per
+      offer, one `DiscardScope` — and that is deliberate: the two questions have
+      the same GRAMMAR (which attached cards, off which bodies, how many), so the
+      wire shape, the validator's rules and both HUD dialogs are restatements
+      rather than inventions.
+
+      🛑 **A SEPARATE `kind` AND NOT A RIDER ON `discardEnergy`, ON D341's RULE:
+      a prompt kind is a claim about what an ANSWER MEANS.** An answer here names
+      TOOL uids out of `InPlayPokemon.tools`; an answer there names ENERGY uids out
+      of `InPlayPokemon.energy`. Collapsing them would make `applyChoice` guess
+      which array to strip from an op field, and a crafted frame could then send a
+      Tool uid to the Energy apply — the validator's *"was it offered"* check is
+      the only thing standing between the two, and it keys on the PROMPT. Two
+      kinds make the wire frame of each answer unambiguous by construction.
+
+      ⚠️ **`chooseCards` CANNOT CARRY THIS AND THE REASON IS STRUCTURAL, NOT
+      STYLISTIC**: its `candidates` are a FLAT `string[]` with no host
+      (`interpreter.ts:333-337`), so an answer to *"up to 2 Tools from your
+      opponent's Pokémon"* would arrive with no way to say which of six bodies
+      each pick came off — and the log row, which names the host, could not be
+      written at all.
+
+      `scope` is always `{ kind: "upTo", max }` today, with `max` CLAMPED to the
+      offer (`Math.min(op.count, discardable.length)`), which is why this prompt
+      could not ship before the wire learned that member (D543 Part 0). The field
+      is the whole `DiscardScope` rather than a bare `max` so a future printed
+      *"Discard a Pokémon Tool from each of your opponent's Pokémon"* needs a
+      scope VALUE here and not a second prompt kind. */
+  | {
+      kind: "discardTools";
+      discardable: { uid: string; from: PokemonRef }[];
+      scope: DiscardScope;
+      note: string;
+    }
   /** Attach cards out of the controller's DECK onto their own Pokémon — off the
       TOP (Electric Generator / Hydreigon "Tri Howl" — `attachFromTop`) or out of
       a SEARCH of the whole deck (Charizard ex "Infernal Reign", Janine's Secret
@@ -889,6 +925,13 @@ export type EffectChoice =
       MANDATORY scopes; the `{kind:"upTo"}` scope (Hail Blade's "any amount") is
       the one that MAY answer empty (a decline of the whole discard). */
   | { kind: "discardEnergy"; uids: string[] }
+  /** 🆕 **D543 — the `discardTools` answer: the Tool uids to discard.** EMPTY IS A
+      LEGAL ANSWER and it is the DECLINE, not a whiff: the printed *"up to 2"*
+      makes 0 one of the choices, so `validateChoice` accepts `[]` against an
+      `upTo` prompt and `applyChoice` files no `TOOLS_DISCARDED` for it. Its own
+      member rather than a reuse of `discardEnergy`'s — see that prompt's block
+      for why the two answers must stay distinguishable on the wire. */
+  | { kind: "discardTools"; uids: string[] }
   /** The attachCards answer: each card to attach paired with the Pokémon it goes
       on — "in any way you like", so the pairing IS the decision. Every uid was
       offered and appears once (one physical card cannot land on two Pokémon), and
@@ -1164,6 +1207,17 @@ function recordSlotOf(op: EffectOp): EffectSlot | undefined {
     ? op.recordAs
     : undefined;
 }
+
+// 🛑 **D543 — `discardTools` IS DELIBERATELY *NOT* IN THE LIST ABOVE, AND THE
+// OMISSION IS WRITTEN DOWN HERE BECAUSE IT IS SILENT (D206's rule, which this
+// function's own `switchActive` entry exists to honour).** The op carries no
+// `recordAs` field at all, because no printing pairs *"Discard up to 2 Pokémon
+// Tools from your opponent's Pokémon."* with a §9.2 *"If you do,"* consequent —
+// unlike row 74's pre-damage sibling, whose *"If you discarded a Pokémon Tool in
+// this way, …"* is read by a different seam entirely and never becomes an
+// `EffectOp`. **The condition that would put it in this list: a printed Tool
+// discard with a consequent clause.** Until then, enrolling it would add a field
+// nothing writes and a caption nothing varies.
 
 /** Does the record satisfy this gate? The base test is "did the earlier op file
     anything" — a whiffed op files an EMPTY array, which is why the length and not
@@ -3306,6 +3360,70 @@ function stepOp(
       }
       return {
         park: { kind: "discardEnergy", discardable: candidates, scope, note: discardNote(op) },
+      };
+    }
+    case "discardTools": {
+      // 🆕🆕🆕 **D543 — the printed *"Discard up to N Pokémon Tools from your
+      // opponent's Pokémon."*, at the program TAIL.** Tools attached anywhere on the
+      // OPPONENT's side (§6.3's "in play" — Active + Bench), 0..N of them, the player
+      // choosing HOW MANY as well as WHICH.
+      //
+      // §11 (D142) — THE SHIELD IS THE PER-BODY FILTER AND NOT THE WHOLE-OP REFUSAL,
+      // and the choice is D259's, made on the same axis it was made on for
+      // `discardEnergy` one arm up. That arm takes the whole-op `effectRefused` guard
+      // FIRST because its opponent-side printings name the ACTIVE ("discard an Energy
+      // from your opponent's Active Pokémon") — one body, so a refused body is a
+      // refused op. This sentence names a SET, so a single shielded Cetitan ex on the
+      // Bench must remove ITSELF from the offer and leave the rest pickable; refusing
+      // the op whole would let one protected benched body cancel a discard aimed at
+      // five others. Same rule, opposite side of D259's own split, and the distinct-body
+      // pass below keeps the log honest for the same reason it does there (one refusal
+      // per BODY, not per candidate Tool).
+      //
+      // 🛑 **AND THE DECISION IS FALSIFIED RATHER THAN ONLY ARGUED (D422).** The first
+      // spelling of this arm made the whole case above and bought NO rung and NO mutant
+      // row for it — MEASURED: with `unshieldedRefs` deleted from the line below, every
+      // suite this slice shipped came back GREEN, because at that point not one board in
+      // the slice wore a shield. A paragraph whose only reader is a person is prose, and
+      // a rung green because of its board default is worth the default. The two rows
+      // are `D543-offer-drops-the-shield` (the filter goes) and
+      // `D543-shield-asked-before-the-filter` (the ORDER inverts, so a shielded body
+      // wearing no Tool gets a refusal row for an effect that was never aimed at it —
+      // D430), and `toolDiscardChosen.test.ts` §9 is where both die.
+      const allDiscardable = discardableTools(state, ctx.seat);
+      const bodies: PokemonRef[] = [];
+      for (const entry of allDiscardable) {
+        if (!bodies.some((ref) => refKeyOf(ref) === refKeyOf(entry.from))) bodies.push(entry.from);
+      }
+      const allowed = new Set(unshieldedRefs(state, bodies, ctx, events).map(refKeyOf));
+      const discardable = allDiscardable.filter((entry) => allowed.has(refKeyOf(entry.from)));
+      // 🛑 **ZERO OFFERS IS A SILENT NO-OP — NO PARK, NO EVENT, NO LOG ROW.** An
+      // opponent wearing no Tools is not a question with one answer, it is no question:
+      // `parkOrForce`'s ceiling rule (D359) and `HEALED`'s never-filed-at-0 convention.
+      // Nothing is recorded either — this op has no `recordAs` (see its block).
+      if (discardable.length === 0) return { done: state };
+      // ⚠️ **ANY NON-EMPTY OFFER *ASKS*, INCLUDING AN OFFER OF ONE**, which is the
+      // one place this op parts company with the mandatory discards beside it. A
+      // one-Tool board still has TWO answers a player can care about — take it,
+      // decline — so `forcedDiscards` is never consulted here at all, exactly as the
+      // Hail Blade path above never consults it. A "forced" pick only exists when
+      // every legal answer is the same one, and 0 is always legal under "up to".
+      //
+      // **NO INTERCHANGEABLE COLLAPSE**, and for `count: "any"`'s own stated reason
+      // one arm up: the COUNT is part of the answer, so two identical Tools on one
+      // Pokémon must offer two pickable rows rather than one.
+      //
+      // The ceiling is the printed number CLAMPED TO THE OFFER — `discardEnergy`'s
+      // `cap` line verbatim. Unclamped, a two-Tool print over a one-Tool board would
+      // caption itself "up to 2" and let the dialog's cap sit above anything that
+      // exists; `D543-max-not-clamped-to-offer` is the declared row.
+      return {
+        park: {
+          kind: "discardTools",
+          discardable,
+          scope: { kind: "upTo", max: Math.min(op.count, discardable.length) },
+          note: toolDiscardNote(op),
+        },
       };
     }
     case "payFromHand": {
@@ -6746,6 +6864,56 @@ export function applyChoice(
       // damage counts 0. No-op for every other discard (recordAs absent).
       recordMoved(record, op.recordAs, done.discarded);
       return done.state;
+    }
+    case "discardTools": {
+      // 🛑🛑 **D543 — THE ROW THIS SLICE EXISTS FOR, AND THE TYPE SYSTEM CANNOT SEE
+      // IT.** This `switch` ends `default: return state;` on the stated ground that
+      // *"synchronous ops never park, so never reach the choice path"* — true of every
+      // op that has one, and silently FALSE for a parking op whose arm is missing.
+      //
+      // 🛑 **MEASURED AT THIS HEAD RATHER THAN ARGUED (D429) — AND THE MEASUREMENT HAS NOW
+      // BEEN WRONG TWICE, SO BOTH SPELLINGS ARE STRUCK HERE RATHER THAN OVERWRITTEN.**
+      // ~~*"deleting this case and running `bunx tsc -b --force` prints NOTHING"*~~ (the
+      // brief's prediction), and then ~~*"it prints exactly ONE line,
+      // `interpreter.ts(14393,10)`"*~~ (this slice's own first correction, wrong in BOTH
+      // halves). Re-run on the shipped bytes — delete this whole `case "discardTools":`
+      // block, `bunx tsc -b --force`, **exit 2** — it prints **FOUR IDENTICAL LINES, one per
+      // project that compiles this file**:
+      //   `packages/engine/src/interpreter.ts(14404,10): error TS6133: 'toolDiscardApply' is declared but its value is never read.`
+      // ⚠️ **`14393` COULD NOT HAVE MATCHED ANY SPELLING OF THIS ARM.** The reported line is
+      // `function toolDiscardApply`'s own line MINUS this arm's length, and the two move
+      // together whenever this comment grows — so the figure is INVARIANT to the prose, a
+      // wrong one is a wrong MEASUREMENT and never a merely stale address, and the
+      // repetition count is a fact about the PROJECT GRAPH that has to be counted.
+      //
+      // 🛑 **IT IS NOT AN EXHAUSTIVENESS ERROR AND IT CANNOT SEE THE MISSING ARM.** It is
+      // `noUnusedLocals` noticing that this arm is the ONLY caller of the apply helper — an
+      // accident of the op having one consumer today, which a second caller (a printed
+      // *"If you do,"* consequent, or a second producer) would remove, leaving the deletion
+      // completely silent. ⚠️ So the honest claim is that the deletion is green to every
+      // EXHAUSTIVENESS check this tree owns and `tsc` fails today only on an INCIDENTAL
+      // unused-local — it is **NOT** *"typechecks GREEN"*, and that unqualified phrasing is
+      // withdrawn wherever this slice wrote it.
+      //
+      // The load-bearing half is the CONTRAST, and it reproduces: deleting `stepOp`'s own
+      // `case "discardTools":` block instead prints, ×4 for the same four projects,
+      //   `packages/engine/src/interpreter.ts(1843,4): error TS2366: Function lacks ending return statement and return type does not include 'undefined'.`
+      // — a real exhaustiveness failure AT THE FUNCTION — beside two MORE incidental TS6133
+      // orphans (`toolDiscardNote`, `discardableTools`), named here so the quote above is not
+      // mistaken for the whole output. Nothing anywhere reports a parking op whose ANSWER is
+      // dropped.
+      //
+      // With the arm gone the op parks, the player answers, the board comes back unchanged
+      // and no event, no log row and no census figure moves —
+      // `D543-apply-choice-arm-deleted` is the declared row, and no FORCED-path rung can
+      // kill it, because the forced path never reaches `applyChoice` at all. That is why
+      // `toolDiscardChosen.test.ts` §4 drives the PARKED ≥ 2-offer path through
+      // `resolveEffect` and asserts both victims' `tools` arrays and the victim's discard
+      // pile rather than the op's shape (D421).
+      if (choice.kind !== "discardTools") return state;
+      // No `recordMoved`: this op is not enrolled in `recordSlotOf` and carries no
+      // `recordAs` — no printing pairs the sentence with a §9.2 "If you do,".
+      return toolDiscardApply(state, choice.uids, ctx, events).state;
     }
     default:
       // Synchronous ops never park, so never reach the choice path.
@@ -14261,6 +14429,83 @@ function discardEnergyApply(
   };
 }
 
+/** 🆕🆕🆕 **D543 — strip the picked Pokémon Tools off the OPPONENT's bodies and
+    put them in THAT player's own discard pile (§7.4 — a Tool goes to its own
+    controller's pile, never the attacker's).** `discardEnergyApply`'s shape one
+    array over, with the three decisions it made kept and re-argued rather than
+    re-derived:
+
+    • **`host` IS CAPTURED OFF THE PRE-STRIP STACK**, `ENERGY_DISCARDED`'s reason
+      verbatim and `TOOLS_DISCARDED`'s own documented rule: this attack's damage can
+      Knock the body Out in the SAME batch, so a consumer resolving "the Active
+      spot" against the post-state finds an empty slot while a uid resolves through
+      `cardIdByUid` forever.
+    • **ONE EVENT ROW PER HOST**, in board order, because `TOOLS_DISCARDED.host` is
+      a SINGLE top-card uid — so a multi-host answer emits several rows rather than
+      widening the field, which is what lets the log name each Pokémon that lost
+      something. `D543-per-host-emission-collapsed-to-one-row` is the declared row.
+    • **NEVER EMITTED FOR AN EMPTY `uids`**, the event's own standing rule: a body
+      that gave up nothing files nothing, and a whole-answer decline files nothing
+      at all.
+
+    Returns the discarded uids beside the state for symmetry with the Energy apply,
+    even though this op files no §9.2 record — the caller reads the board, and a
+    future *"If you discarded a Pokémon Tool in this way,"* would read this. */
+function toolDiscardApply(
+  state: GameState,
+  uids: readonly string[],
+  ctx: EffectContext,
+  events: GameEvent[],
+): { state: GameState; discarded: string[] } {
+  if (uids.length === 0) return { state, discarded: [] };
+  const victim = otherSeat(ctx.seat);
+  const side = state.players[victim];
+  const picks = new Set(uids);
+  const pulled: { host: string; uids: string[] }[] = [];
+  const strip = (pokemon: InPlayPokemon): InPlayPokemon => {
+    const taken: string[] = [];
+    const kept = pokemon.tools.filter((uid) => {
+      if (!picks.has(uid)) return true;
+      taken.push(uid);
+      return false;
+    });
+    if (taken.length === 0) return pokemon;
+    pulled.push({ host: topUid(pokemon) ?? "", uids: taken });
+    return { ...pokemon, tools: kept };
+  };
+  const active = side.active === null ? null : strip(side.active);
+  const bench = side.bench.map(strip);
+  if (pulled.length === 0) return { state, discarded: [] };
+  const discarded: string[] = [];
+  for (const entry of pulled) {
+    discarded.push(...entry.uids);
+    events.push({
+      type: "TOOLS_DISCARDED",
+      seat: victim,
+      actor: ctx.seat,
+      uids: [...entry.uids],
+      host: entry.host,
+      // 🆕 D543 — the EXECUTION POINT rides the row. This one happens at the program
+      // TAIL, after §8.5 damage, so the log must NOT say "before doing damage".
+      when: "effect",
+    });
+  }
+  return {
+    state: withSide(state, victim, { ...side, active, bench, discard: [...side.discard, ...discarded] }),
+    discarded,
+  };
+}
+
+/** 🆕 **D543 — the `discardTools` prompt string, the printed sentence reproduced.**
+    `discardNote`'s job one op over, and a separate function for that one's stated
+    reason: the caption IS the card's own instruction, and this card's instruction
+    is a different sentence. The number is the op's PRINTED ceiling and not the
+    board-clamped one — the player is reading what the card says; the clamp lives
+    on `scope.max`, which is what the dialog enforces. */
+function toolDiscardNote(op: Extract<EffectOp, { op: "discardTools" }>): string {
+  return `Discard up to ${op.count} Pokémon Tools from your opponent's Pokémon.`;
+}
+
 // ── Candidate builders + small shared helpers ──
 
 /** The in-play Energy on `seat`'s board that `filter` admits, each paired with
@@ -14451,6 +14696,41 @@ function interchangeableCandidates(
     kept.set(key, already + 1);
     out.push(candidate);
   }
+  return out;
+}
+
+/** 🆕🆕🆕 **D543 — EVERY POKÉMON TOOL ON THE OPPONENT'S BOARD, IN BOARD ORDER
+    (Active first, then the Bench by index), each paired with the body it is
+    attached to.** `discardableEnergies`' shape one array over, and it is a
+    SEPARATE function rather than a `scope` on that one because it reads a
+    different field: Tools live in `InPlayPokemon.tools`, Energy in
+    `InPlayPokemon.energy`, and `attachedEnergies` (which walks `energy`) is
+    exactly why the cheap `discardEnergy { filter: { kind: "toolCard" } }` build
+    returns zero candidates on every board — see the op's own block.
+
+    ⚠️ **NO `CardFilter` PARAMETER, AND THE FALSIFIER IS NAMED (D422).** The one
+    printed sentence says *"Pokémon Tools"* flat — no ACE SPEC, no name fragment,
+    no *"Item cards and Pokémon Tool cards"* — so a filter here would be a
+    parameter no caller could ever vary, D231's unkillable field one helper over.
+    **The condition that reverses it: a second printed Tool-discard sentence
+    carrying a narrowing noun.**
+
+    ⚠️ **NO SEAT PARAMETER EITHER**, for the same reason one level up: the op has
+    no `from` (one printed zone), so the victim is the controller's opponent by
+    construction, spelled once here. `otherSeat(seat)` rather than a
+    `discardVictimSeat`-style helper, because there is no second reading to
+    resolve between. */
+function discardableTools(state: GameState, seat: Seat): { uid: string; from: PokemonRef }[] {
+  const victim = otherSeat(seat);
+  const side = state.players[victim];
+  const out: { uid: string; from: PokemonRef }[] = [];
+  const collect = (pokemon: InPlayPokemon, from: PokemonRef) => {
+    for (const uid of pokemon.tools) out.push({ uid, from });
+  };
+  if (side.active !== null) collect(side.active, { seat: victim, spot: { spot: "active" } });
+  side.bench.forEach((pokemon, index) =>
+    collect(pokemon, { seat: victim, spot: { spot: "bench", index } }),
+  );
   return out;
 }
 

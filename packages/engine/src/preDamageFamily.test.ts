@@ -303,7 +303,7 @@ describe("§1 — the sentences, measured live over the legal column", () => {
     }
   });
 
-  it("⚠️ the `/Pokémon Tool/` sweep is TEN rows and this slice claims FOUR of them", () => {
+  it("⚠️ the `/Pokémon Tool/` sweep is TEN rows, this slice claims FOUR, and 🆕 ALL TEN are now claimed by SOME reader", () => {
     // D428 measured the ten and corrected a brief that listed eight. Re-run here rather
     // than inherited, and the new fact is the SPLIT: this slice takes the sweep's
     // unresolved remainder from FIVE to TWO (rows 71, 72 and 74 were three of the five
@@ -319,14 +319,30 @@ describe("§1 — the sentences, measured live over the legal column", () => {
     // which is why the two figures are asserted separately rather than as one total, and
     // the survivor is named by SENTENCE below so a future drop to zero cannot pass as an
     // instrument change.
+    //
+    // 🆕🆕🆕 **D543 — ONE → ZERO, AND THE RUNG IS RE-POINTED ONTO THE POSITIVE CLAIM
+    // RATHER THAN HAVING ITS ARRAY EMPTIED. THIS IS A TRAP AND IT IS WORTH NAMING.**
+    // The obvious edit was `expect(stillLoud).toHaveLength(0)` with the sentence list
+    // emptied — it compiles, it passes, and it DESTROYS the rung: the comment two
+    // paragraphs up says the survivor is named by sentence *"so a future drop to zero
+    // cannot pass as an instrument change"*, and an empty expectation is exactly the
+    // shape that lets a `/Pokémon Tool/` regex or a `resolvedByAnyReader` that stopped
+    // answering pass unnoticed. So the CLOSURE is asserted POSITIVELY instead: the sweep
+    // is still TEN rows, this reader still claims FOUR, and the tenth row — the one
+    // that was the last survivor — is NAMED BY SENTENCE and pinned to the reader that
+    // now claims it and the program it derives to. Nothing here can go green by
+    // measuring less.
     const tools = CORPUS.filter(([, s]) => /Pokémon Tool/.test(s));
     expect(tools).toHaveLength(10);
     expect(tools.filter(([, s]) => deriveAttackPreDamage(s) !== null)).toHaveLength(4);
-    const stillLoud = tools.filter(([, s]) => !resolvedByAnyReader(s));
-    expect(stillLoud).toHaveLength(1);
-    expect(stillLoud.map(([, s]) => s)).toEqual([
-      "Discard up to 2 Pokémon Tools from your opponent's Pokémon.",
-    ]);
+    // THE FAMILY IS CLOSED: every one of the ten is claimed by some reader.
+    expect(tools.filter(([, s]) => !resolvedByAnyReader(s))).toEqual([]);
+    // …and the tenth is named, present, and claimed by `deriveAttackEffect` — NOT by
+    // this file's pre-damage reader, which still refuses it (no pre-damage head).
+    const UP_TO_2 = "Discard up to 2 Pokémon Tools from your opponent's Pokémon.";
+    expect(tools.filter(([, s]) => s === UP_TO_2)).toHaveLength(1);
+    expect(deriveAttackEffect(UP_TO_2)).toEqual([{ op: "discardTools", count: 2 }]);
+    expect(deriveAttackPreDamage(UP_TO_2)).toBeNull();
   });
 });
 
@@ -865,19 +881,33 @@ describe("§8 — the result channel, and the property it did not cost", () => {
     }
   });
 
-  it("🛑 the PARKING sibling is still REFUSED, pinned on the POPULATION (D423)", () => {
+  it("🛑 the PARKING sibling is still REFUSED *HERE*, pinned on the POPULATION (D423)", () => {
     // *"Discard up to 2 Pokémon Tools from your opponent's Pokémon."* is the corpus row
     // whose "up to 2" over a multi-body board is a genuine decision — exactly the
     // sentence that would force a parking pre-damage member. It carries no
     // *"Before doing damage,"* head, so it belongs at the program TAIL, and it stays
     // unbuilt. Asserted over the whole column rather than on one string.
+    //
+    // 🆕🆕🆕 **D543 BUILT IT AT THE TAIL, AND EXACTLY ONE OF THE FOUR CLAIMS BELOW
+    // FLIPS.** The PRE-DAMAGE refusal SURVIVES untouched — the row still carries no
+    // *"Before doing damage,"* head, `deriveAttackPreDamage` still returns null for it,
+    // and the `/up to|you may|choose/i` population rung over the four claimed sentences
+    // is UNMOVED (D543 added no sentence to this reader). What flips is
+    // `resolvedByAnyReader`, which is a claim about the WHOLE reader surface and not
+    // about this file's reader: the row is now claimed by `deriveAttackEffect`. Both
+    // halves are asserted, because the pair is the finding — built somewhere else is
+    // not the same as built here.
     const claimed = CORPUS.filter(([, s]) => deriveAttackPreDamage(s) !== null).map(([, s]) => s);
     expect(claimed.sort()).toEqual([ROW71, ROW72, ROW73, ROW74].sort());
     for (const s of claimed) expect(/up to|you may|choose/i.test(s), s).toBe(false);
     const UP_TO_2 = "Discard up to 2 Pokémon Tools from your opponent's Pokémon.";
     expect(CORPUS.filter(([, s]) => s === UP_TO_2)).toHaveLength(1);
+    // The pre-damage refusal — UNCHANGED, and the reason is the missing head.
     expect(deriveAttackPreDamage(UP_TO_2)).toBeNull();
-    expect(resolvedByAnyReader(UP_TO_2)).toBe(false);
+    expect(UP_TO_2.startsWith("Before doing damage,")).toBe(false);
+    // 🆕 D543 — and the reader-surface claim, INVERTED, with the claimer named.
+    expect(resolvedByAnyReader(UP_TO_2)).toBe(true);
+    expect(deriveAttackEffect(UP_TO_2)).toEqual([{ op: "discardTools", count: 2 }]);
   });
 });
 
@@ -1009,6 +1039,6 @@ describe("§10 — purity and the version", () => {
     // anchor. ⚠️ D427 named the mechanism — **every note counts the pins it INHERITED
     // and never the one it is about to AUTHOR** — and D428 was the first note to get it
     // right. This line is the one being authored.
-    expect(engineVersion).toBe("0.427.0");
+    expect(engineVersion).toBe("0.428.0");
   });
 });

@@ -1151,13 +1151,24 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
       // of the §8.5 `DAMAGE_DEALT` it precedes, so a reader who sees the two in
       // order is reading the order they happened in (D421 — a log row is a claim
       // with the same standing as a predicate).
+      // 🆕🆕🆕 **D543 — THE TAIL SEGMENT IS NOW CONDITIONAL, AND THE PARAGRAPH
+      // ABOVE IS KEPT VERBATIM BECAUSE IT IS STILL EXACTLY RIGHT FOR THE ROW IT WAS
+      // WRITTEN ABOUT.** *"THE ROW SAYS 'before doing damage' BECAUSE THAT IS WHAT
+      // THIS EVENT MEANS"* was true when this event had ONE producer. It now has two,
+      // and `when` is the event's own answer to which one fired: `"preDamage"` keeps
+      // the segment and keeps the claim (the row really is pushed in front of the
+      // §8.5 `DAMAGE_DEALT`), while D543's program-tail `discardTools` fires AFTER the
+      // damage and must not say otherwise. A hard-coded tail on the new producer
+      // would be a log row that lies with the board identical — which no board
+      // assertion can catch, and which `D543-event-when-flipped` is the declared row
+      // for. D421: a log row is a claim with the same standing as a predicate.
       const cards = event.uids.map((uid) => cardName(state, uid));
       return row(event.actor, [
         plain("discarded "),
         { text: countedNames(cards), tone: "energy" },
         plain(" from "),
         strong(`${names[event.seat]}'s ${cardName(state, event.host)}`),
-        plain(" before doing damage"),
+        ...(event.when === "preDamage" ? [plain(" before doing damage")] : []),
       ]);
     }
     case "STADIUM_DISCARDED":

@@ -9845,6 +9845,73 @@ export type EffectOp =
       to?: never;
       recordAs?: never;
     }
+  /** 🆕🆕🆕 **D543 — DISCARD UP TO `count` POKÉMON TOOLS FROM THE OPPONENT'S
+      WHOLE BOARD, AND IT IS THE FIRST OP IN THIS UNION THAT TOUCHES A TOOL AT
+      ALL.** `censusAttackCorpus.ts` **file line 136** — *"Discard up to 2 Pokémon
+      Tools from your opponent's Pokémon."*, **1 sentence / 2 legal printings**,
+      claimed WHOLE by `deriveAttackEffect` through the anchor declared beside
+      `YOUR_TOOLS_MULTIPLY`.
+
+      🛑 **WHY THE CHEAP BUILD IS REFUSED, MEASURED AT THIS HEAD RATHER THAN
+      ARGUED (D429).** Three cheaper shapes were priced first and all three are
+      unreachable:
+        · **A SHIPPED `EffectOp` MEMBER.** There is none that touches a Tool:
+          `git grep` over this union's members for a Tool-moving one returns ZERO.
+          The only Tool DETACH this engine has is the pre-damage seam
+          (`attack.ts`'s `discardOpponentActiveTools…` family, D428/D429), which is
+          deliberately NOT an `EffectOp` and cannot park — see its own header.
+        · **`discardEnergy { filter: { kind: "toolCard" } }`.** It TYPECHECKS, which
+          is exactly what makes it dangerous, and it returns ZERO candidates on
+          every board that can ever exist: `attachedEnergies` loops
+          `pokemon.energy` (`interpreter.ts:14526`) and a Tool is not in that array
+          — Tools live in their own `tools: string[]` (`types.ts:937`). So the
+          cheap build is a SILENT NO-OP, the worst of the three, and it is written
+          down here so nobody re-derives it.
+        · **`chooseCards`.** Its candidates are a FLAT `string[]` with no host
+          (`interpreter.ts:333-337`), and *"from your opponent's Pokémon"* over a
+          six-body board is a per-host question: the answer has to say WHICH
+          Pokémon each picked Tool came off, or the apply cannot strip it and the
+          log cannot name it. D341's rule — a prompt kind is a claim about what an
+          answer MEANS — is what forbids reusing it.
+
+      **`count` IS CAPTURED `(\d+)` AND NOT THE LITERAL `2`, AND THAT IS THE D231
+      TEST RUN THE OTHER WAY ROUND.** The column prints this sentence at exactly
+      one number today, so a literal would have been defensible on D121's
+      two-printings warrant — but D231's rule is about the FIELD, not the anchor:
+      a field with one reachable value is the unkillable mutant, and a literal
+      here would make both `D543-count-literalised` and `D543-count-off-by-one`
+      unwritable. Captured, both are killable rows, and the op says what it means
+      (*"up to N"*) instead of what one printing happens to spell.
+
+      🛑 **NO `from` FIELD, AND THE FALSIFIER IS NAMED (D422).** One printed zone
+      exists — *"your opponent's Pokémon"*, §6.3's in-play, Active + Bench — so a
+      `from` would be a field no reader could ever vary: the unfalsifiable rider
+      D193 refused `OPPONENT_ENERGY_SCALE` and D196 refused `energyOnSelf`, one
+      noun over. **The condition that reverses this refusal: a second printed
+      Tool-discard sentence naming a DIFFERENT zone** (*"from your opponent's
+      Active Pokémon"* as a TAIL sentence, or *"from your Pokémon"*). The
+      pre-damage family's Active-only rows do NOT count — they are a different
+      reader with a different execution point and they carry no `EffectOp` at all.
+
+      **DECLINABLE, 0..`min(count, offers)`, AND IT PARKS ON ANY NON-EMPTY OFFER.**
+      The printed *"up to"* is D359's `DiscardScope { kind: "upTo" }` verbatim: the
+      player chooses HOW MANY as well as WHICH, so even a ONE-Tool board is a real
+      question (take it, or decline). Zero offered Tools is a SILENT no-op — no
+      park, no event, no log row — which is `parkOrForce`'s ceiling rule (D359) and
+      `HEALED`'s never-at-0 convention. `forcedDiscards` is never consulted: there
+      is no forced pick when 0 is always legal, exactly as the Hail Blade path at
+      `interpreter.ts:3326` never consults it either.
+
+      **NO `recordAs`.** No printing pairs this sentence with a §9.2 *"If you
+      do,"* consequent, so the op is NOT enrolled in `recordSlotOf` — and that
+      omission is SILENT in D206's precise way (`withConsequence` would drop the
+      clause and the dialog would describe half the card), which is why it is
+      written down here and at `recordSlotOf` itself rather than left out.
+
+      Never damages, so it never KOs. The discarded Tools go to their OWNER's
+      discard pile (§7.4), never the attacker's — the same seat split
+      `TOOLS_DISCARDED` carries. */
+  | { op: "discardTools"; count: number }
   /** Move up to `max` Energy from ONE in-play Pokémon to ANOTHER on the SAME
       board — the §6 manual Energy-movement family (Energy Switch: a Basic Energy;
       Poppy: up to 2 any Energy). 🆕 D443 — WHICH board is `side`'s question and
@@ -17625,12 +17692,22 @@ const SELF_ENERGY_BOTH_ACTIVES_SCALE =
 // count, so a zone would be a field no reader could ever vary (D193's refusal to
 // give OPPONENT_ENERGY_SCALE one, and D196's to give `energyOnSelf` one).
 //
-// The near misses in the same column, all refused by the anchors alone:
+// The near misses in the same column, all refused by the anchors alone — and the
+// REFUSAL is what this list records, not their buildness, so the entries are
+// re-pointed as each gets built rather than struck (D178/D418):
 //   • "Before doing damage, discard all Pokémon Tools from your opponent's Active
 //     Pokémon." (5) and its three siblings (1 + 1 + 1) — the same noun DISCARDED
-//     rather than counted, and blocked on a pre-damage execution point this engine
-//     has no seam for; "Discard up to 2 Pokémon Tools from your opponent's
-//     Pokémon." (2) is the same family one zone over.
+//     rather than counted. ⚠️ ~~and blocked on a pre-damage execution point this
+//     engine has no seam for~~ — **that clause EXPIRED at D428/D429**, which built the
+//     seam and claimed all four whole; the pattern still refuses them, and it
+//     refuses them for the REASON THAT DID NOT MOVE (this anchor COUNTS a noun that
+//     sentence DISCARDS). "Discard up to 2 Pokémon Tools from your opponent's
+//     Pokémon." (2) is the same family one zone over — 🆕🆕🆕 **BUILT AT D543** by
+//     `ATTACK_DISCARD_TOOLS_UP_TO` below and the `discardTools` op, at the program
+//     TAIL rather than in the pre-damage seam, because it prints no
+//     "Before doing damage," head. **THIS PATTERN'S REFUSAL OF IT IS UNCHANGED AND
+//     IS THE POINT OF THE ENTRY**: a sentence that discards Tools is not a sentence
+//     that counts them, whoever ends up claiming it.
 //   • "If this Pokémon has a Pokémon Tool attached, this attack does 40 more
 //     damage." (2) and "If your opponent's Active Pokémon has a Pokémon Tool
 //     attached, this attack does 80 more damage." (2) — EXISTENCE on ONE body,
@@ -17653,6 +17730,45 @@ const SELF_ENERGY_BOTH_ACTIVES_SCALE =
 // period and a capital `This`, for the family's stated reason.
 const YOUR_TOOLS_MULTIPLY =
   /^This attack does (\d+) damage for each Pokémon Tool attached to all of your Pokémon\.$/;
+// 🆕🆕🆕 **D543 — THE TOOL DISCARD AT THE PROGRAM TAIL, THE OTHER HALF OF THE
+// `/Pokémon Tool/` SWEEP THIS FILE HAS BEEN NAMING AS UNBUILT SINCE D406.**
+// *"Discard up to 2 Pokémon Tools from your opponent's Pokémon."* —
+// `censusAttackCorpus.ts` **file line 136**, leading count column **2**:
+// **1 sentence / 2 legal printings**, and it occurs EXACTLY ONCE in the column
+// (measured with `git grep -nF` over all 640 rows, not assumed).
+//
+// 🛑 **CLAIMED WHOLE, AND DELIBERATELY NOT THROUGH `splitAttackTrailingClause`.**
+// The sentence has no trailing clause to split — it is one imperative — but the
+// deeper reason is that a TAIL-ONLY arm would leave the FOUR pre-damage refusal
+// suites green while their subject changed underneath them: `preDamageFamily.test.ts`
+// and `preDamageToolDiscard.test.ts` both pin *"this row is claimed by NO reader"*
+// on the POPULATION (D423), and a split-claim would satisfy `resolvedByAnyReader`
+// without ever moving the sentence out of the raw residue. A whole-sentence anchor
+// moves BOTH instruments at once, which is what makes those four rungs invert
+// rather than quietly expire.
+//
+// **THE COUNT IS CAPTURED `(\d+)`** — see the `discardTools` op's own block for
+// why (D231 is a rule about a FIELD's reachable values, and the capture is what
+// makes `D543-count-literalised` and `D543-count-off-by-one` killable rows).
+//
+// **ONE `['’]` CLASS, AT INDEX 48, AND IT IS THE SENTENCE'S ONLY APOSTROPHE
+// SLOT** — *your opponent's* and nothing else (*Pokémon Tools*, *Pokémon* carry
+// none). MEASURED on the live corpus row: the printed byte there is U+0027, and
+// `é` is a literal U+00E9 at indices 19 and 54. D137 is about the SITE of a
+// spelled possessive rather than about today's bytes, so the class is owed at the
+// one slot and owed at NO other — a class over a slot no byte can occupy is a rule
+// nothing can see (D540(1b), read in the direction that says do not add one).
+// `toolDiscardChosen.test.ts` §2 drives the CURLED board and reads both code points
+// off the LIVE corpus row rather than off its own constant.
+//
+// **NO `/i`**, the file's rule: the printed capital `D` is load-bearing and the
+// caret is what makes it so. **REQUIRED TRAILING PERIOD**, and `$` is separately
+// load-bearing from `^`: `D543-anchor-loses-terminator` is a declared row because a
+// trailing clause that KEEPS the period refuses for a DIFFERENT reason than one
+// that strips it (D540(1a)), and §1 keeps BOTH near-miss spellings for exactly that
+// — only one of the two is about `$`.
+const ATTACK_DISCARD_TOOLS_UP_TO =
+  /^Discard up to (\d+) Pokémon Tools from your opponent['’]s Pokémon\.$/;
 // The CONDITIONAL flat bonus (D115) — "If <clause>, this attack does N more
 // damage.", the additive family's third arithmetic shape and the first one whose
 // count is not a count at all: the clause is a 0-or-1 INDICATOR, so `per × count`
@@ -30041,6 +30157,35 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
       },
     ];
   }
+  // 🆕🆕🆕 **D543 — THE TOOL DISCARD AT THE PROGRAM TAIL.** *"Discard up to 2
+  // Pokémon Tools from your opponent's Pokémon."* — 1 sentence / 2 legal printings,
+  // `censusAttackCorpus.ts` file line 136. Placed BESIDE the reveal-and-sweep arm
+  // above because those two are the column's only Tool MOVERS on this reader and a
+  // future third belongs between them, not because the anchors interact: both are
+  // fully `^…$` over disjoint heads (*Discard* against *Your opponent reveals*), so
+  // arm order here is free — and *"disjoint"* is a MEASUREMENT rather than a
+  // property of anchoring (D540's lesson), so `toolDiscardChosen.test.ts` §1 drives
+  // it as a matrix instead of restating it in this comment.
+  //
+  // 🛑 **ONE OP AND ONE PROMPT, AND THE THREE CHEAPER SHAPES ARE REFUSED IN
+  // WRITING AT THE OP'S OWN BLOCK** — including the one that TYPECHECKS
+  // (`discardEnergy { filter: { kind: "toolCard" } }`, which offers nothing on every
+  // board that can exist because `attachedEnergies` walks `pokemon.energy` at
+  // `interpreter.ts:14526` and a Tool lives in `tools: string[]` at `types.ts:937`).
+  //
+  // ⚠️ **THE CAPTURE IS THE CEILING, NOT THE COUNT.** The printed *"up to 2"*
+  // bounds the pick from above and the answer may be ANY size from 0 up; the
+  // interpreter clamps the ceiling to what the board actually offers
+  // (`Math.min(count, offers.length)`), which is `discardEnergy`'s own `cap` line one
+  // op over. A program authored with a count of 0 would ask a question with one
+  // legal answer, so the arm refuses it here rather than parking an empty decision.
+  {
+    const match = ATTACK_DISCARD_TOOLS_UP_TO.exec(effect);
+    if (match !== null) {
+      const count = Number(match[1]);
+      if (count >= 1) return [{ op: "discardTools", count }];
+    }
+  }
   // 🆕🆕 D445 — **THE REVEAL HALF OF A SENTENCE WHOSE OTHER HALF IS A DAMAGE FOLD,
   // AND THE FIRST STRING IN THE 640-ROW COLUMN CLAIMED BY TWO READERS.** *"Your
   // opponent reveals their hand. This attack does 50 damage for each Trainer card you
@@ -35041,6 +35186,18 @@ function defenderStatusOps(words: (string | undefined)[]): EffectOp[] | null {
 // is the right reader for it. **The condition that would reverse this refusal is a
 // printed pre-damage sentence that needs a DECISION**; on today's column there is
 // none, and `preDamageToolDiscard.test.ts` §7 asserts that on the POPULATION.
+//
+// 🆕🆕🆕 **D543 BUILT THAT ROW AND THE REFUSAL ABOVE STANDS — UNCHANGED IN EVERY
+// CLAUSE, WITH ONLY ITS EXAMPLE'S STATUS MOVING.** This is the D178/D418 shape and
+// not an expiry: the refusal is quantified over *"a printed PRE-DAMAGE sentence
+// that needs a DECISION"*, and the row it cites was never one — it was cited as
+// the sentence that WOULD force one **if** it carried the head, which it does not.
+// D543 put it exactly where this paragraph said it belonged: at the program tail,
+// through `deriveAttackEffect`, as the `discardTools` op parking on an `upTo`
+// prompt. **The stated reversal condition is still UNMET on today's column**, so
+// the pre-damage return type stays un-parkable and `preDamageToolDiscard.test.ts`
+// §7 still drives it on the population — with one rung inverted, because the row
+// is now claimed by a reader while remaining refused by THIS one.
 //
 // 🛑 **A PREFIX STRIPPER WAS PRICED AND REFUSED AT D428, AND D429 CLOSED THE FAMILY
 // WITHOUT ONE — SO THE REFUSAL IS NOW SETTLED RATHER THAN PENDING.** The family

@@ -278,6 +278,9 @@ function EffectChooseDialog({
       );
     case "discardEnergy":
       return <DiscardEnergyDialog prompt={prompt} board={board} seat={seat} onAction={onAction} />;
+    case "discardTools":
+      // 🆕 D543 — its own dialog, the local HUD's split mirrored (D412).
+      return <DiscardToolsDialog prompt={prompt} board={board} seat={seat} onAction={onAction} />;
     case "chooseCards":
       return <ChooseCardsDialog prompt={prompt} seat={seat} onAction={onAction} />;
     case "attachCards":
@@ -420,6 +423,21 @@ function energyName(
   return (
     pokemonAt(board, viewerSeat, from)?.attached?.energies.find((e) => e.id === uid)?.name ?? uid
   );
+}
+
+/** 🆕 D543 — an offered TOOL's display name, `energyName`'s twin one attached
+    array over: the `from` ref locates the host, then the uid the Tool on it.
+    A separate function rather than a zone argument on the one above, because the
+    two are read by two different dialogs answering two different prompts — and a
+    uid crossing between the arrays is exactly the mix-up the two prompt kinds
+    exist to prevent. */
+function toolName(
+  board: RedactedBoard,
+  viewerSeat: MatchSeat,
+  from: RedactedPokemonRef,
+  uid: string,
+): string {
+  return pokemonAt(board, viewerSeat, from)?.attached?.tools.find((t) => t.id === uid)?.name ?? uid;
 }
 
 /** A stable key for a ref — GameHud's dialog `keyOf`, over the wire shape. */
@@ -1064,10 +1082,32 @@ function MoveEnergySpreadDialog({
 }
 
 /** discardEnergy (§15 — Crushing Hammer / Giacomo, or a §8 self-discard cost):
-    take Energy off the board, grouped by the Pokémon each sits on. MANDATORY (no
-    decline). Two shapes off `scope`: "total" is a flat pick of exactly `count`;
-    "each" asks for one per group. Mirrors the local DiscardEnergyDialog over the
-    wire shape — every candidate is Energy public on the board. */
+    take Energy off the board, grouped by the Pokémon each sits on. THREE shapes
+    off `scope`: "total" is a flat pick of exactly `count`; "each" asks for one
+    per group; 🆕 D543's "upTo" is the DECLINABLE 0..`max` (Chien-Pao ex "Hail
+    Blade", Mewtwo VSTAR "Psy Purge"). Mirrors the local DiscardEnergyDialog over
+    the wire shape — every candidate is Energy public on the board.
+
+    🛑 **D543 — THIS DIALOG HAD NO `upTo` ARM AT ALL, AND ONLY TWO OF ITS SIX
+    `upTo`-BLIND SITES WERE VISIBLE TO `tsc`.** The wire could not carry the scope
+    (`redactedDiscardScopeSchema` had two of the engine's three members), so the
+    hole was invisible from here; the moment the schema gained the member, the
+    compiler named exactly TWO lines — the two that read `scope.count` — and left
+    the other four GREEN AND WRONG:
+      · the `"each"` PRE-ANSWER seeded `picked` for every single-candidate group,
+        so a declinable park opened with rows already pressed;
+      · `required` fell through to `groups.length`, so Confirm demanded one Energy
+        per host on a question whose legal answers start at ZERO;
+      · the CAPTION fell through to the `"each"` string — *"Pick one Energy from
+        each Pokémon"* over a prompt that asks for any amount;
+      · the per-row `refused` marker never fired, so the (`max`+1)th pick was
+        silently inert with no `aria-disabled` to announce it.
+    ⚠️ **THIS IS A PORT, NOT A DESIGN.** `GameHud.tsx`'s DiscardEnergyDialog has
+    implemented every one of the four correctly since 0.47.0; the two HUDs must
+    split the same way or the same prompt gets two different interactions on two
+    screens (D412's third-read-site rule, which D442 already paid at `moveEnergy`
+    one prompt over). Each site below therefore carries the local HUD's own
+    reasoning rather than a fresh argument. */
 function DiscardEnergyDialog({
   prompt,
   board,
@@ -1090,7 +1130,10 @@ function DiscardEnergyDialog({
     else group.uids.push(uid);
   }
   // "each" pre-answers every single-candidate group (not a question — the engine
-  // would have auto-resolved the whole op if all were); "total" starts empty.
+  // would have auto-resolved the whole op if all were); "total" and 🆕 "upTo"
+  // start EMPTY. For "upTo" that is not a default but the answer itself: 0 is a
+  // legal reply, so a pre-pressed row would put words in the player's mouth on a
+  // question they may want to decline.
   const [picked, setPicked] = useState<string[]>(() =>
     scope.kind === "each"
       ? groups.flatMap((group) => (group.uids.length === 1 ? [group.uids[0] as string] : []))
@@ -1106,11 +1149,19 @@ function DiscardEnergyDialog({
         return prev.includes(uid) ? others : [...others, uid];
       }
       if (prev.includes(uid)) return prev.filter((u) => u !== uid);
+      // 🆕 D543 — "upTo" is a flat multi-select like "total", but DECLINABLE and
+      // capped at `max`: never a replace-at-1, because 0 is a legal answer and
+      // there is no single mandatory pick to swap. The local HUD's line verbatim.
+      if (scope.kind === "upTo") return prev.length < scope.max ? [...prev, uid] : prev;
       if (prev.length < scope.count) return [...prev, uid];
       return scope.count === 1 ? [uid] : prev;
     });
-  const required = scope.kind === "total" ? scope.count : groups.length;
-  const ready = picked.length === required;
+  const required =
+    scope.kind === "total" ? scope.count : scope.kind === "upTo" ? scope.max : groups.length;
+  // 🆕 D543 — "upTo" is DECLINABLE, so Confirm is ALWAYS ready: every count in
+  // 0..`max` is a valid answer and the empty one is the decline. The mandatory
+  // scopes still need their exact count.
+  const ready = scope.kind === "upTo" || picked.length === required;
 
   return (
     <Dialog label="Discard Energy">
@@ -1118,9 +1169,11 @@ function DiscardEnergyDialog({
       <output className="mt-1.5 block text-sm text-white/55">
         {scope.kind === "each"
           ? `Pick one Energy from each Pokémon (${picked.length}/${required}).`
-          : required > 1
-            ? `Pick ${required} Energy to discard (${picked.length}/${required}).`
-            : "Pick the Energy to discard."}
+          : scope.kind === "upTo"
+            ? `Pick any amount of Energy to discard (${picked.length} selected).`
+            : required > 1
+              ? `Pick ${required} Energy to discard (${picked.length}/${required}).`
+              : "Pick the Energy to discard."}
       </output>
       <div className="mt-3 flex max-h-64 flex-col gap-3 overflow-y-auto">
         {/* fieldset/legend so a screen reader says WHICH Pokémon the Energy comes
@@ -1135,11 +1188,16 @@ function DiscardEnergyDialog({
             <ul className="mt-1.5 flex flex-col gap-1.5">
               {group.uids.map((uid) => {
                 const selected = picked.includes(uid);
+                // 🆕 D543 — the "upTo" cap closes rows off too, and it says so
+                // rather than going silently inert: `pick` REFUSES at `max`, and a
+                // row that does nothing when clicked is the one thing the <output>
+                // above cannot announce. The local HUD's disjunction verbatim.
                 const refused =
                   !selected &&
-                  scope.kind === "total" &&
-                  scope.count > 1 &&
-                  picked.length >= scope.count;
+                  ((scope.kind === "total" &&
+                    scope.count > 1 &&
+                    picked.length >= scope.count) ||
+                    (scope.kind === "upTo" && picked.length >= scope.max));
                 return (
                   <li key={uid}>
                     <button
@@ -1177,7 +1235,122 @@ function DiscardEnergyDialog({
             })
           }
         >
-          Discard {picked.length}/{required}
+          {/* 🆕 D543 — the DECLINE has to be sayable, so the "upTo" label names
+              what the button will actually do at zero picks rather than reading
+              "Discard 0/2" over a button that is legally pressable. */}
+          {scope.kind === "upTo"
+            ? picked.length === 0
+              ? "Discard none"
+              : `Discard ${picked.length}`
+            : `Discard ${picked.length}/${required}`}
+        </button>
+      </div>
+    </Dialog>
+  );
+}
+
+/** 🆕🆕🆕 **D543 — discardTools: take up to N Pokémon Tools off the OPPONENT's
+    board** (an attack's printed *"Discard up to 2 Pokémon Tools from your
+    opponent's Pokémon."*). The local `DiscardToolsDialog` restated over the wire
+    shape — every candidate is a Tool face up on the table, so it resolves off the
+    redacted board like the rest of the public-ref family.
+
+    🛑 **DECLINABLE**: the printed *"up to"* makes 0 a legal answer, so nothing is
+    pre-answered, Confirm is always enabled, and the button names what pressing it
+    will do. The two HUDs split the same way on purpose — D412's third-read-site
+    rule, and the defect D543 Part 0 had to fix on the sibling dialog is exactly
+    what happens when they do not. */
+function DiscardToolsDialog({
+  prompt,
+  board,
+  seat,
+  onAction,
+}: {
+  prompt: Extract<RedactedEffectPrompt, { kind: "discardTools" }>;
+  board: RedactedBoard;
+  seat: MatchSeat;
+  onAction: (action: GameAction) => void;
+}) {
+  // Hoisted so the pick handler's closure keeps the discriminant narrowed.
+  const scope = prompt.scope;
+  const groups: { key: string; ref: RedactedPokemonRef; uids: string[] }[] = [];
+  for (const { uid, from } of prompt.discardable) {
+    const key = refKey(from);
+    const group = groups.find((g) => g.key === key);
+    if (group === undefined) groups.push({ key, ref: from, uids: [uid] });
+    else group.uids.push(uid);
+  }
+  const cap =
+    scope.kind === "upTo" ? scope.max : scope.kind === "total" ? scope.count : groups.length;
+  const declinable = scope.kind === "upTo";
+  const [picked, setPicked] = useState<string[]>([]);
+  const pick = (uid: string) =>
+    setPicked((prev) =>
+      prev.includes(uid) ? prev.filter((u) => u !== uid) : prev.length < cap ? [...prev, uid] : prev,
+    );
+  const ready = declinable || picked.length === cap;
+
+  return (
+    <Dialog label="Discard Pokémon Tools">
+      <h2 className="text-lg font-semibold text-white">{prompt.note}</h2>
+      <output className="mt-1.5 block text-sm text-white/55">
+        {declinable
+          ? `Pick up to ${cap} Pokémon Tool${cap === 1 ? "" : "s"} to discard (${picked.length} selected).`
+          : `Pick ${cap} Pokémon Tool${cap === 1 ? "" : "s"} to discard (${picked.length}/${cap}).`}
+      </output>
+      <div className="mt-3 flex max-h-64 flex-col gap-3 overflow-y-auto">
+        {groups.map((group) => (
+          <fieldset key={group.key} className="min-w-0">
+            <legend className="text-[10px] font-semibold uppercase tracking-wide text-white/40">
+              {refName(board, seat, group.ref)} · {spotLabel(group.ref)}
+              {group.ref.seat !== seat && " · opponent"}
+            </legend>
+            <ul className="mt-1.5 flex flex-col gap-1.5">
+              {group.uids.map((uid) => {
+                const selected = picked.includes(uid);
+                const refused = !selected && picked.length >= cap;
+                return (
+                  <li key={uid}>
+                    <button
+                      type="button"
+                      aria-pressed={selected}
+                      aria-disabled={refused || undefined}
+                      onClick={() => pick(uid)}
+                      className={`${ROW_BUTTON_BASE} ${
+                        selected
+                          ? ROW_BUTTON_SELECTED
+                          : refused
+                            ? ROW_BUTTON_DISABLED
+                            : ROW_BUTTON_ENABLED
+                      }`}
+                    >
+                      <span className="truncate">{toolName(board, seat, group.ref, uid)}</span>
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          </fieldset>
+        ))}
+      </div>
+      <div className="mt-5 flex justify-end">
+        <button
+          type="button"
+          className={ACCENT_BUTTON}
+          disabled={!ready}
+          onClick={() =>
+            onAction({
+              type: "resolveEffect",
+              seat,
+              choice: { kind: "discardTools", uids: picked },
+            })
+          }
+        >
+          {declinable
+            ? picked.length === 0
+              ? "Discard none"
+              : `Discard ${picked.length}`
+            : `Discard ${picked.length}/${cap}`}
         </button>
       </div>
     </Dialog>

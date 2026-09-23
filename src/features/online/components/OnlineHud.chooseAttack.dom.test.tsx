@@ -191,6 +191,16 @@ const ONE_PER_KIND: Record<RedactedEffectPrompt["kind"], RedactedEffectPrompt> =
     scope: { kind: "total", count: 1 },
     note: "Discard an Energy.",
   },
+  // 🆕🆕🆕 D543 — the ELEVENTH kind. The scope is `upTo`, which is the only one
+  // the engine authors for this prompt AND the member D543 Part 0 had to add to
+  // `redactedDiscardScopeSchema` before this prompt could cross at all — so this
+  // entry is also the table's first `upTo` payload in either discard family.
+  discardTools: {
+    kind: "discardTools",
+    discardable: [{ uid: "t1", from: { seat: "p2", spot: { spot: "active" } } }],
+    scope: { kind: "upTo", max: 2 },
+    note: "Discard up to 2 Pokémon Tools from your opponent's Pokémon.",
+  },
   chooseCards: {
     kind: "chooseCards",
     candidates: [
