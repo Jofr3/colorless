@@ -3,7 +3,7 @@
 > Update this at the **end of every session**: bump the status table, append a
 > session-log entry, and rewrite the **Resume point** to the next concrete action.
 
-**Last updated:** 2026-09-22 — build session #482 (**P3-M5 — D542, *the opponent-chosen hand shuffle, an EXPIRED refusal that named its own expiry, and a client defect that arrived with the op.*** Built `censusAttackCorpus.ts` **file line 665** (`legalAttackCorpus()` index 612, leading count column **1**) — *“Your opponent chooses 3 cards from their hand and shuffles those cards into their deck.”* — **1 sentence / 1 legal printing**, claimed WHOLE by `deriveAttackEffect` through ONE new anchor and ONE new arm returning a COMPOSITION OF TWO SHIPPED OPS: `[{op:"opponentDiscardsFromHand", count:3, to:"deck"}, {op:"shuffleDeck", whose:"opponent"}]`. ZERO new `EffectOp` members, ZERO new `EffectPrompt` kinds, ZERO new `EffectChoice` members, ZERO new readers (`attackReaderSurface()` stays **13**), ZERO `packages/schema` bytes, ZERO projection arms; ONE optional op field `to?: "deck"`, ONE optional EVENT field, ONE app-tier record. 🛑 **THE BLOCKER WAS AN EXPIRED REFUSAL AND EVERY CLAUSE OF IT IS STILL TRUE** — `effects.ts`'s *“NO `to`”* paragraph did not ROT, the POPULATION it quantified over moved; re-pointed in place with the reason kept verbatim, and the in-family precedent is the RANDOM twin of the same op (`randomFromOpponentHand.to`). 🛑 **THE SITE THE COMPILER CANNOT SEE IS A BRANCH INSIDE AN ARM, NOT A MISSING ARM** — `applyChoice` ends `default: return state;`, so deleting the `to === "deck"` branch typechecks GREEN (MEASURED) and lands the three picked cards in the DISCARD. 🛑 **THE APP TIER MOVED AND BOUGHT A REAL DEFECT FIX** — the engine's FIRST MANDATORY (`min = max = 3`) `chooseCards` park with `dest: "deck"` made `OnlineHud.tsx`'s mandatory TERNARY render **“Discard 0/3”** under a heading promising a shuffle. `MATCH_RECORD_VERSION` **HOLDS at 30**; engine **0.426.0 → 0.427.0**.)
+**Last updated:** 2026-09-22 — build session #482 (**P3-M5 — D542, *the opponent-chosen hand shuffle, an EXPIRED refusal that named its own expiry, and a client defect that arrived with the op.*** Built `censusAttackCorpus.ts` **file line 665** (`legalAttackCorpus()` index 612, leading count column **1**) — *“Your opponent chooses 3 cards from their hand and shuffles those cards into their deck.”* — **1 sentence / 1 legal printing**, claimed WHOLE by `deriveAttackEffect` through ONE new anchor and ONE new arm returning a COMPOSITION OF TWO SHIPPED OPS: `[{op:"opponentDiscardsFromHand", count:3, to:"deck"}, {op:"shuffleDeck", whose:"opponent"}]`. ZERO new `EffectOp` members, ZERO new `EffectPrompt` kinds, ZERO new `EffectChoice` members, ZERO new readers (`attackReaderSurface()` stays **13**), ZERO `packages/schema` bytes, ZERO projection arms; ONE optional op field `to?: "deck"`, ONE optional EVENT field, ONE app-tier record. 🛑 **THE BLOCKER WAS AN EXPIRED REFUSAL AND EVERY CLAUSE OF IT IS STILL TRUE** — `effects.ts`'s *“NO `to`”* paragraph did not ROT, the POPULATION it quantified over moved; re-pointed in place with the reason kept verbatim, and the in-family precedent is the RANDOM twin of the same op (`randomFromOpponentHand.to`). 🛑 **THE SITE THE COMPILER CANNOT SEE IS A BRANCH INSIDE AN ARM, NOT A MISSING ARM** — `applyChoice` ends `default: return state;`, so deleting the `to === "deck"` branch typechecks GREEN (MEASURED) and lands the three picked cards in the DISCARD. 🛑 **THE APP TIER MOVED AND BOUGHT A REAL DEFECT FIX** — the engine's FIRST MANDATORY (`min = max = 3`) `chooseCards` park with `dest: "deck"` made `OnlineHud.tsx`'s mandatory TERNARY render **“Discard 0/3”** under a heading promising a shuffle. `MATCH_RECORD_VERSION` **HOLDS at 30**; engine **0.426.0 → 0.427.0**. ✅ **Committed `4ab68194`; WHOLE-CORPUS SWEEP GREEN AND EXACTLY AS PREDICTED — ON THE THIRD LAUNCH**, pasted out of the log rather than retyped (D504): `2855 killed · 53 known survivor(s) · 0 GAP(S) · 0 stale · 0 skipped(dirty) · 0 clobber(s) · 0 error(s) · 13186.7s total` — `+12 killed, +0 declared` on D541's `2843 · 53`, the **TENTH** consecutive exact prediction after the D532 reset (the count stands at **10**) and the **hundred-and-fourth** consecutive run with `0 error(s) · 0 stale · 0 clobber(s)`. Completeness structural: **2,908 unique progress-line ids / 2,908 rows / 0 unmatched**, set-compared against `MUTANTS.map(m => m.id)` both ways; all twelve `D542-*` rows KILLED (log :2900–:2911, contiguous). ⚠️ **Two earlier launches died without a summary line and are counted as neither**: run 1 when its launcher exited (2,659 verdicts), run 2 (`setsid --fork`) in a MACHINE SHUTDOWN at **08:04:01** by `journalctl --list-boots` (292 verdicts) — both logs end in the SAME `[SIGTERM] restoring 1 file(s) before exit…` line, both agree with the finished run on every verdict they carry. 🛑 **THE `setsid` REUSE COUNT STEPS TO THE FORTY-SEVENTH** on `tmp/sweep-D542.ppid.txt` — `PID 1434 / PPID 1 / SID 1434`, tied to THIS log by `13:53:22.474 − 13186.7 s = 10:13:35.774` against the sidecar's `10:13:40.465`, **4.69 s into the run**; the owed launcher fix went unpaid for a NINTH close-out (`1434` is nowhere in the log). 🆕 `conventions.md` gains ONE section: **a detached sweep survives its launcher but not a reboot, and its log cannot say which killed it — ask the machine.** D543 is BUILT AND PARKED on `d543-prep` at `3a2e71ac` and lands next.)
 
 **Last updated (was):** 2026-09-22 — build session #481 (**P3-M5 — D541, *the chosen bench shuffle behind a TRAILING gate clause, and the funnel that was already there.*** Built `censusAttackCorpus.ts` **file line 82** (`legalAttackCorpus()` index 29, leading count column **3**) — *“Choose 2 of your opponent's Benched Pokémon. Shuffle those Pokémon and all attached cards into your opponent's deck. If 1 of your Pokémon used Angelite during your last turn, this attack can't be used.”*, Sylveon ex `sv08-086`/`sv08.5-041`/`sv08.5-156` idx 1 — **1 sentence / 3 legal printings**, the largest single row left in the residue and the only 3-printing one. 🛑 **THE DECISION IS AT THE TOP BECAUSE IT IS A POLICY A REVIEWER MAY REFUSE**: D282 anchored `splitAttackGateClause` at `^` by deliberate policy and this slice keys the SAME closed literal list at the TRAILING end as its FIFTH row. **The route that avoids the question — anchoring the whole printed string in `deriveAttackEffect` — was priced and REJECTED on MEASUREMENTS**: it would credit the row to the READER summand (565/1614 → 566/1617, raw residue 75/118 → 74/115) and move the **25** files pinning `[565, 1614]` plus the **7** pinning `toBe(1614)`, where the split route leaves all 32 standing; it would embed gate text inside an effect anchor, which a reprint without the clause would refuse (`conventions.md:195`); and it would leave the gate half a registry row forever. ⚠️ **If the widening is refused, the row falls back to the registry shape D540 already rejected** — the real contingency, recorded rather than assumed away. 🛑 **THE SLICE EXISTS FOR ONE SITE `tsc` CANNOT NAME**: `applyChoice` ends `default: return state;`, so omitting `case “returnBenchedChosen”` THERE typechecks GREEN — **MEASURED at this head**, deleting it prints nothing while deleting the gate-map row prints `effects.ts(34280,7) TS2741` — and then silently discards the answer; no forced path can kill it, because this op has none. 🛑 **AND A SECOND, MASKED ON ALL THREE REAL IDS**: the gate map's wrong twin `yourActiveUsedAttackLastTurn` compiles and is green everywhere but the board where the body that used Angelite has left the Active Spot, and `attackGateOf` is `authored ?? derived`, so the witness rides a DECLARED demonstrator with NO registry row (D425) in its own 60-card deck (D270). ⚠️ **THE PRICING REPORT ASKED FOR AN EXTRACTION AND THERE WAS NOTHING TO EXTRACT** — `returnBenchedRest`'s writer was ALREADY the funnel D433 prescribed, so the slice paid a RENAME (`shuffleBenchedRefsIntoDeck`; the OP NAME untouched, it is persisted): a price REDUCTION, published as one. 🛑 **AND THE SECOND CALLER FOUND A LIVE DEFECT IN IT** — the funnel emitted in the order its refs arrived, board order BY CONSTRUCTION for its only caller, so the same two picks clicked in a different order produced a DIFFERENT `rngState` and a different deck. **A player's click order is not a game fact.** **EIGHT WITHDRAWN CLAIMS — and the first pass’s claim that NONE was findable by `git grep -F` was itself FALSE, caught by a review: `benchBodySelfScaling.test.ts:548` (now `:567`)’s `it()` title WAS greppable and the sweep stopped at the first of two hits (sweep a withdrawn claim like a VALUE, to EXHAUSTION); a later review found the SEVENTH and EIGHTH the same way — `derivedAttackGate.test.ts:497`’s either/or title and note, falsified by the rung ten lines above them in the same `describe`, and `rolloutGate.test.ts:88`, the SECOND hit of a two-hit grep whose FIRST this slice had annotated**; engine **0.425.0 → 0.426.0** as a WHITELIST over **139 sites / 101 files** (27 `it()` titles among them), with the other **49** raw occurrences left standing as ledger and changelog history; `MATCH_RECORD_VERSION` **HELD at 30** on D125's widening and NOT on *“it never parks”*. Census: gate 6/14 → **7/17**, residue 48/67 → **47/64**, `BUILT.attack` 1665 → **1668**, `SPLIT_ATTACK_UNITS` 14 → **17**, OPAQUE 34/50 → **33/47** at `SUBMAX=4` and 18/28 → **17/25** at `SUBMAX=12`; reader 565/1614, raw residue 75/118, registry 10/16, trailing 11/21, surface 13 and population 640/1732 all VERIFIED unmoved. **25 mutant rows probed UNDECLARED first and ALL 25 KILLED on ROUND 1** (21 new after the review round added `D541-trailing-branch-loses-its-space`, plus 4 re-points), both apostrophe rows included. `bun run check` GREEN at **522 files / 12,302 tests** (was 521 / 12,241). ✅ **Committed `54e67649`; WHOLE-CORPUS SWEEP GREEN AND EXACTLY AS PREDICTED**, pasted out of the log rather than retyped (D504): `2843 killed · 53 known survivor(s) · 0 GAP(S) · 0 stale · 0 skipped(dirty) · 0 clobber(s) · 0 error(s) · 13951.7s total` — `+21 killed, +0 declared` on D540's `2822 · 53`, the **NINTH** consecutive exact prediction after the D532 reset (the count stands at **9**) and the **hundred-and-third** consecutive run with `0 error(s) · 0 stale · 0 clobber(s)`. ⚠️ The **13,952 s** (against D540's 13,328 s and D539's 12,523 s idle) is CONTENTION and not a symptom — a SECOND CHECKOUT was pricing and building D542 on the same 4 cores. Completeness structural: **2,896 unique progress-line ids / 2,896 rows / 0 unmatched**, set-compared against `MUTANTS.map(m => m.id)` both ways; all twenty-one `D541-*` rows KILLED (log :2879–:2899, contiguous). 🛑 **THE `setsid` REUSE COUNT STEPS TO THE FORTY-SIXTH** on `tmp/sweep-D541.ppid.txt` — `PID 1580043 / PPID 1 / SID 1580043`, written while the process was alive and re-read here, tied to THIS log by `19:37:45.193 − 13951.7 s = 15:45:13.493` against the sidecar's `15:45:21.952`, **8.46 s into the run**. ⚠️ The owed launcher fix went unpaid for an EIGHTH close-out (`1580043` is nowhere in the log) — 🆕 **and the session found WHY the counter kept stalling: plain `setsid` DOES NOT FORK when the backgrounded job is already a process-group leader**, so D489's `setsid nohup … &` recipe leaves the shell wrapper as PPID; `setsid --fork` is what produced this artefact. 🛑 **THE STALE-NARRATIVE CLASS IS STATED AS A SCOPE AND NOT AS A COMPLETION** — four successive all-clears were published and falsified in turn, so what stands is the instrument, its key, its coverage (**112 files, 4,146 titles**) and the finding that the class is KNOWN TO BE WIDER than this slice closed. Built in a SECOND WORKTREE while D540 swept and cherry-picked onto main; the three docs conflicts were resolved so that every close-out fact survived, **proved by `cmp`/extraction rather than asserted** and re-verified here (`git diff c02b624f 54e67649 -- docs/` deletes **3** lines in `progress.md` — the header, the status row and one deliberately withdrawn claim — and **ZERO** in `decisions.md` and `conventions.md`). `conventions.md` gains TWO sections: `setsid --fork`, and the SECOND-CHECKOUT hazards.)
 
@@ -752,7 +752,60 @@
 > instrument when the CODE is right and only the account of it is wrong — so every backticked signature and
 > every hazard direction in an added comment is re-read against its own address before the close-out.
 >
-> 🛑 **(0) THE DEBT: THE WHOLE-CORPUS SWEEP IS STILL PENDING, AND THE PREDICTION IS WRITTEN BEFORE IT RUNS
+> ✅ **(0) THE DEBT IS PAID: D542's WHOLE-CORPUS SWEEP RAN GREEN AND LANDED EXACTLY ON THE FIGURE WRITTEN
+> DOWN BEFORE IT RAN (D504) — ON THE THIRD LAUNCH.** `bun scripts/mutation/run.ts` over the whole corpus;
+> pasted out of `tmp/sweep-D542.log` (`:5825`), never retyped:
+>
+> > 2855 killed · 53 known survivor(s) · 0 GAP(S) · 0 stale · 0 skipped(dirty) · 0 clobber(s) · 0 error(s) · 13186.7s total
+>
+> over **2,908** rows — **`+12 killed, +0 declared`** on D541's close-out figure `2843 · 53`, the **TENTH**
+> consecutive exact prediction after the streak reset at D532 (the count stands at **10**), on the
+> **hundred-and-fourth** consecutive run with `0 error(s) · 0 stale · 0 clobber(s)`. The two interrupted
+> launches below printed NO summary line, so they are not counted as runs in either direction.
+> 🛑 **THE ARITHMETIC WAS CLOSED IN BOTH DIRECTIONS BEFORE THE RUN** (D538's check) **AND AGAIN AGAINST THE
+> FINISHED LOG**: `2843 + 12 = 2855`; `2855 + 53 = 2908`, which is the live corpus size `precheck` reports AND
+> the log header's own *"2908 mutant(s)"*; `2896 + 12 = 2908`, the row delta. All twelve `D542-*` rows were
+> probed UNDECLARED first (D525(3)) and all twelve came back KILLED in the whole-corpus run as well (log
+> `:2900`–`:2911`, contiguous), so the declared-survivor count held at **53** — and the 53 `SURVIVES(known)`
+> ids are HEAD's 53 declared `survives` rows exactly, in both directions.
+> ⚠️ **THE SWEEP RAN THREE TIMES, AND ONLY THE THIRD PRINTED A SUMMARY LINE — EACH DEATH CLASSIFIED FROM ITS
+> ARTEFACTS, NOT FROM THE ACCOUNT OF IT.** **Run 1** (`tmp/sweep-D542-interrupted.log`, mtime `01:43:13`)
+> died when its LAUNCHING process exited: **2,659** verdicts, the 2,660th row
+> (`D519-evaluator-never-passes-the-rider`) in flight, last line *"[SIGTERM] restoring 1 file(s) before
+> exit…"*. **Run 2** (`tmp/sweep-D542-interrupted2.log`, `setsid --fork`, launched 07:40) died at **292**
+> verdicts with `D253-spread-unwired` in flight and **the SAME last line, byte for byte** — and this one was a
+> MACHINE SHUTDOWN, not a launcher exit. 🛑 **MEASURED, AND IT CORRECTS THE ACCOUNT THIS CLOSE-OUT WAS HANDED**:
+> the account said the machine rebooted *"around 10:10"*; `journalctl --list-boots` says the previous boot
+> ENDED at **08:04:01** and the current one BEGAN at **10:09:30** (`last -x reboot` agrees), and the log's
+> mtime is **08:03:59.335**, **1.9 s** before the old boot's last journal entry (`journalctl -b -1 -n 1 -o
+> short-precise`: **08:04:01.217**, *"systemd-journald: Journal stopped"* — not `--list-boots`' whole second).
+> The sweep died at 08:04; 10:09 is when the box came back. Both partial logs agree with the finished one on
+> EVERY verdict they carry (**2,659 / 2,659** and **292 / 292**, same order, zero disagreements), the
+> harness's SIGTERM handler restored its one mutated file both times, and after each death the tree read clean with no
+> `tmp/mutation-journal.json` and no surviving `mutation/run.ts` (D446's three-way classification).
+> **Run 3** (`setsid --fork`, launched 10:13) is the one pasted above.
+> ⚠️ **THE 13,187 s CARRIES NO STATE** — below D541's 13,952 s (contention) and D540's 13,328 s. D543 was
+> committed on `d543-prep` at 02:58, seven hours before run 3 launched, so no second-checkout BUILD overlapped
+> it by the commit record; the box's load over the run was not measured and is not claimed.
+> ✅ **THE `setsid` REUSE COUNT STEPS TO THE FORTY-SEVENTH, ON THE SAME ARTEFACT FORM D541's CLOSE-OUT
+> ACCEPTED.** `tmp/sweep-D542.ppid.txt` (106 bytes, mtime `10:13:40.465`) was written WHILE the process was
+> alive and re-read by this close-out: `PID 1434 / PPID 1 / SID 1434`, `CMD bun scripts/mutation/run.ts`,
+> plus its own ISO stamp `2026-09-23T10:13:40+02:00`. **`SID == PID`** — detachment, not reparenting. The
+> binding runs backwards as D541's did, over one artefact: log mtime `13:53:22.474 − 13186.7 s =
+> 10:13:35.774` against the sidecar's `10:13:40.465` — **4.69 s into the run**. The low PID is itself
+> consistent with a launch four minutes after boot. `pgrep -af 'scripts/mutation'` returns only the asking
+> shell.
+> ⚠️ **AND THE ONE-LINE LAUNCHER FIX WENT UNPAID FOR A NINTH CLOSE-OUT**: `1434` occurs **zero** times in
+> `tmp/sweep-D542.log`. **FOR D543: `setsid --fork`, AND `ps -eo pid,ppid,sid -p $!` WRITTEN INTO THE LOG IN
+> THE SAME COMMAND.**
+> 🆕 **THE LESSON THIS SWEEP PAID FOR: A DETACHED SWEEP SURVIVES ITS LAUNCHER BUT NOT A REBOOT, AND ITS LOG
+> CANNOT TELL YOU WHICH ONE KILLED IT.** Both deaths end in the identical SIGTERM line, so when a sweep log
+> stops without a summary line, ask the MACHINE before blaming the launcher: `uptime` /
+> `journalctl --list-boots`, reading the previous boot's END as the time of death. `conventions.md` gains the
+> section.
+>
+> 🛑 **(0-pre) THE PREDICTION, KEPT AS WRITTEN AND MET EXACTLY BY (0) ABOVE — ITS TENSE IS THE PRE-SWEEP ONE.
+> THE DEBT: THE WHOLE-CORPUS SWEEP IS STILL PENDING, AND THE PREDICTION IS WRITTEN BEFORE IT RUNS
 > (D504).** `bun scripts/mutation/run.ts` over the whole corpus, predicted:
 >
 > > 2855 killed · 53 known survivor(s) · 0 GAP(S) · 0 stale · 0 skipped(dirty) · 0 clobber(s) · 0 error(s)
@@ -984,7 +1037,8 @@
 > the opponent-side hand family CLOSES at 5 sentences / 9 printings with every row read); `:82` (D541),
 > `:87` (D540), `:595` (D539), `:412` (D538), `:84` (D537), `:100` (D536), `:81` (D535), `:401` (D534),
 > `:70` (D532), `:483` (D531), `:551` (D530), `:215` (D528), `:454` (D527) and `:219` (D525) are off it.
-> 🛑 **THE RECOMMENDATION IS `D543 = THE `upTo` WIRE HOLE**, and it is the strongest non-row finding of this
+> 🛑 **THE RECOMMENDATION IS `D543 = THE `upTo` WIRE HOLE** — 🆕 **SUPERSEDED (D542 close-out): built as
+> D543's PART 0, parked on `d543-prep`, see below** — and it is the strongest non-row finding of this
 > pricing round — carried in from the D542 brief, NOT re-verified by this slice, so it has the standing D429
 > gives a claim: **check it before acting on it.** `DiscardScope` has THREE members
 > (`interpreter.ts:793-801`); `redactedDiscardScopeSchema` has TWO (`packages/schema/src/match/redacted.ts:388-391`);
@@ -999,7 +1053,19 @@
 > TS2339 on `scope.count`**; the compiler-INVISIBLE half to budget for is `OnlineHud.tsx:1112` (`required`
 > ternary), `:1113` (`ready` equality) and `:1120` (the caption), plus a dom rung that DECLINES and expects
 > Confirm ENABLED. ⚠️ **It shares no file with D542's diff**, which is why it was not folded in.
-> **After that:** **(a)** `:136` (**2 printings**) — **M**, and the (4c) paragraph below is still owed in the
+> 🆕 **D542 CLOSE-OUT: D543 IS ALREADY BUILT AND PARKED, SO THIS SECTION SAYS SO RATHER THAN OFFERING
+> EITHER ROW AS AVAILABLE — AND IT TOOK BOTH.** Branch `d543-prep` at **`3a2e71ac`** (**136 files**), built in
+> the second checkout while this sweep's launches ran. Verified in-tree rather than taken on report (D429):
+> `git worktree list` shows `/home/jofre/projects/lum-wt-d543` at that commit, its tree reads clean, and
+> `realpathSync('node_modules/@luminous/engine')` there prints `/home/jofre/projects/lum-wt-d543/packages/engine`
+> — INSIDE the worktree (D541's rule). Its own commit title and body name it: **the chosen Tool discard at the
+> program tail** — `:136` below, *"Discard up to 2 Pokémon Tools from your opponent's Pokémon."*, a new
+> `discardTools` op — **with the `upTo` wire hole above as its PART 0**, because that row's prompt scope IS
+> `{kind:"upTo", max}`. It is NOT re-priced here; its figures are the parked slice's own. ⚠️ **It lands next,
+> by cherry-pick, and its parent is `4ab68194` — MAIN MINUS THIS CLOSE-OUT** (`git merge-base` confirms), so
+> its pre-close-out prose will say D542's sweep is PENDING: reconcile the CLAIMS, not just the conflicts
+> (`conventions.md`, D541).
+> **After that:** **(a)** `:136` (**2 printings**) — 🆕 **TAKEN BY THE PARKED D543 (above)**; was: **M**, and the (4c) paragraph below is still owed in the
 > TREE; **(b)** `:148` (**1**) — **M**, it WIDENS the persisted REQUIRED field `BoostedAttack.attackIndex`
 > with two reader sites `tsc` cannot check; **(c)** `:316` + `:324` (**1 each**) — **M**; **(d)** `:82`'s
 > family is closed; **(e)** `:176` (**2**) — **L**, and it owes `MATCH_RECORD_VERSION` 30 → 31 plus the (11)
@@ -1007,7 +1073,10 @@
 > 🛑 **BOTH SUBST ROWS RANK LAST BY CONSTRUCTION**: a SUBST row is a census SUBSTITUTION CLASS at
 > `SUBMAX=12`, not one corpus sentence, so it carries NO `<legal printings>` field and an unknown yield cannot
 > outrank a measured one. **(h)** the copy-attack family — BLOCKED.
-> The residue is now **46 sentences / 63 printings**.
+> The residue is now **46 sentences / 63 printings** at THIS head; D543 is the next step and has not landed.
+> ✅ **Recommendation, in order (D542 close-out): (i) land and close out D543 — built, parked, and the sweep
+> debt it inherits is ZERO because D542's is PAID at (0) above; (ii) then re-rank what remains from (b)
+> onwards, measured at the head D543 leaves rather than inherited from this list.**
 >
 > 🛑 **(11) STILL OWED, AND NOT PAID BY THIS SLICE — EACH CARRIED FORWARD WITH ITS STANDING STATED.**
 > ⚠️ **(a)** Corpus `:176` is quoted in-tree as *“tries to **attack**”* with **4** printings while the corpus
@@ -28988,7 +29057,7 @@ the next api deploy (D18).
 |---|---|---|
 | backend-data | P1 | ✅ M1–M9 + P2-M1 + task-17 api deployed (Worker `9b1ec1d1`, 2026-07-16); OAuth secrets pending (user) |
 | deck-builder | P2 | ✅ ALL 19 tasks closed (task 17 landed + e2e-verified locally); only follow-ups left |
-| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D542, *the opponent-chosen hand shuffle — a COMPOSITION of two shipped ops behind ONE optional field `to?: "deck"`, an EXPIRED refusal that named its own expiry, and a client defect that arrived with the op*** — `censusAttackCorpus.ts` **file line 665** (`legalAttackCorpus()` index 612, leading count column 1), *“Your opponent chooses 3 cards from their hand and shuffles those cards into their deck.”*, **1 sentence / 1 legal printing**. ZERO new `EffectOp` members / `EffectPrompt` kinds / `EffectChoice` members / readers (surface stays 13) / schema bytes / projection arms. 🛑 The site the compiler cannot see is a BRANCH inside an arm: `applyChoice` ends `default: return state;`, so collapsing the `to === "deck"` branch typechecks GREEN (MEASURED) and lands the picked cards in the DISCARD. 🛑 The app tier moved and bought a real defect fix — the engine's FIRST MANDATORY `dest: "deck"` park made `OnlineHud.tsx`'s mandatory TERNARY render “Discard 0/3” under a heading promising a shuffle; replaced with the total record `GameHud.tsx` already had. `FORCED_HAND_DISCARD` WIDENED on DESTINATION rather than split on VOICE. Reader 565/1614 → 566/1615, residue 47/64 → 46/63 at BOTH caps, `BUILT.attack` 1668 → 1669; registry/gate/trailing/splitter constants and the reader surface ALL UNMOVED. Engine **0.426.0 → 0.427.0**, `MATCH_RECORD_VERSION` **HELD at 30**.*)
+| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D542, *the opponent-chosen hand shuffle — a COMPOSITION of two shipped ops behind ONE optional field `to?: "deck"`, an EXPIRED refusal that named its own expiry, and a client defect that arrived with the op*** — `censusAttackCorpus.ts` **file line 665** (`legalAttackCorpus()` index 612, leading count column 1), *“Your opponent chooses 3 cards from their hand and shuffles those cards into their deck.”*, **1 sentence / 1 legal printing**. ZERO new `EffectOp` members / `EffectPrompt` kinds / `EffectChoice` members / readers (surface stays 13) / schema bytes / projection arms. 🛑 The site the compiler cannot see is a BRANCH inside an arm: `applyChoice` ends `default: return state;`, so collapsing the `to === "deck"` branch typechecks GREEN (MEASURED) and lands the picked cards in the DISCARD. 🛑 The app tier moved and bought a real defect fix — the engine's FIRST MANDATORY `dest: "deck"` park made `OnlineHud.tsx`'s mandatory TERNARY render “Discard 0/3” under a heading promising a shuffle; replaced with the total record `GameHud.tsx` already had. `FORCED_HAND_DISCARD` WIDENED on DESTINATION rather than split on VOICE. Reader 565/1614 → 566/1615, residue 47/64 → 46/63 at BOTH caps, `BUILT.attack` 1668 → 1669; registry/gate/trailing/splitter constants and the reader surface ALL UNMOVED. Engine **0.426.0 → 0.427.0**, `MATCH_RECORD_VERSION` **HELD at 30**.*; **whole-corpus sweep GREEN and exactly as predicted — `2855 killed · 53 known survivor(s) · 0 GAP(S) · 0 stale · 0 skipped(dirty) · 0 clobber(s) · 0 error(s) · 13186.7s total`** over 2,908 rows, the TENTH consecutive exact prediction and the hundred-and-fourth clean run, on the third launch) |
 | simulator (prior) | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D541, *the chosen bench shuffle behind a TRAILING gate clause — `splitAttackGateClause` keys its closed literal list at BOTH ends for the first time (its fifth row, with a leading-AND-trailing tripwire), ONE new anchor `CHOOSE_SHUFFLE_CHOSEN`, ONE new `EffectOp` member `returnBenchedChosen` (a SIBLING of `returnBenchedRest`, never a `count` rider on `returnBenched`), arm 42-ter, and the `applyChoice` arm the compiler cannot see. The shared funnel needed a RENAME rather than the extraction the pricing asked for — and the second caller exposed a live ordering defect in it, where a player's click order changed the `rngState`. corpus file line 82, 1 sentence / 3 legal printings; engine 0.425.0 → 0.426.0; `MATCH_RECORD_VERSION` held at 30*** — `bun run check` GREEN 522 files / 12,302 tests; **whole-corpus sweep GREEN and exactly as predicted — `2843 killed · 53 known survivor(s) · 0 GAP(S) · 0 stale · 0 skipped(dirty) · 0 clobber(s) · 0 error(s) · 13951.7s total`** over 2,896 rows, the NINTH consecutive exact prediction and the hundred-and-third clean run) |
 | simulator (prior) | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D540, *the devolution with a PICK in it — a SECOND field-free `EffectOp` member `devolveChosen` beside its sibling, TWO shared extractions (`devolveTargets`, `devolvedBodyOf`), `parkOrForce`'s TENTH caller, and the one site the compiler cannot see; corpus **row 87**, 1 sentence / 1 legal printing, CLOSING the `/[Dd]evolv/` family at 2 sentences / 4 printings with zero unresolved rows; engine 0.424.0 → 0.425.0, `MATCH_RECORD_VERSION` held at 30 although the op DOES park; reader arm 564/1613 → 565/1614, `BUILT.attack` 1664 → 1665, residue 49/68 → 48/67; **whole-corpus sweep GREEN and exactly as predicted — `2822 killed · 53 known survivor(s) · 0 GAP(S) · 0 stale · 0 skipped(dirty) · 0 clobber(s) · 0 error(s) · 13328.2s total`**, the EIGHTH consecutive exact prediction and the hundred-and-second clean run*) |
 | simulator (prior) | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D539, *the named-body multiplier with a named-body OWN-SIDE spread behind it, and the one body the shipped machinery could not reach*** — `censusAttackCorpus.ts` **file line 595** (`legalAttackCorpus()` index 542, **1 sentence / 2 legal printings**, leading count column 2; no card id resolved on this checkout and MEASURED so, D425 — `catalogManifest.ts:197`'s `sv01-089 Drifloon` carries a DIFFERENT attack pair — so it rides the declared demonstrators `d539-*`), the **LAST UNBUILT ROW OF TWO FAMILIES AT ONCE**: `/This attack also does /` (**17 sentences / 41 printings**) and `/ damage to each of /` (**11 / 20**) both CLOSE with it. ONE new whole-compound anchor `NAMED_BODIES_MULTIPLY_SPREAD` with a **`\2` BACKREFERENCE** read by TWO readers off ONE `effect` string — `deriveAttackDamageMultiplier` for the × fold and `deriveAttackEffect` for `damageChosen{target:“yourAny”, count:“all”}` — plus the NINTH `IN_PLAY_BODY_NOUNS` exact key and the FOURTH `damageChosen.target` member. 🛑 **THAT FOURTH MEMBER IS THE WHOLE SLICE**: `yourBench` typechecks, ships, logs a plausible board and SILENTLY SPARES THE ATTACKER, and `count:“all”` never parks so no caption contradicts it and NO CENSUS FIGURE MOVES — true also of deleting the effect arm outright — so §4 asserts HP on a board rather than op shape (D421). 🛑 **THE COMPILER NAMED TWO INTERPRETER SITES AND THERE WAS A THIRD IT COULD NOT SEE**: `placeSnipe`'s ACTIVE arm was `opponent`-only under a comment both of whose halves are now false, so the own Active ref was being SILENTLY DROPPED; `hitOwnActive` is the leg, FLAT on `damageSelf`'s stated reading, found by an HP rung and not by the type system. The COMPOSITION seam was RE-PRICED before it was declined (**0 sentences / 0 printings**, eleven split rows byte-identical) and `effects.ts:15919`'s refusal is KEPT as the record of a price that came true. **ZERO new `EffectOp` members, zero new readers** — `attackReaderSurface()` **13** and `attack.ts` takes ZERO code bytes (D493/D494's route, third instance). `MATCH_RECORD_VERSION` **30 HELD**, both D450 doors driven over the serialized bytes. Census: `BUILT.attack` 1662 → **1664**, reader arm 563/1611 → **564/1613**, residue 50/70 → **49/68**; `OPAQUE` 36/53 → **35/51** at `SUBMAX=4` and 20/31 → **19/29** at 12, MEASURED at both caps before the build. Engine **0.423.0 → 0.424.0**; `check` GREEN **520 files / 12,169 tests**; `precheck` GREEN at **2,855** rows with a THIRD broken row this slice rotted itself and re-pointed. ⚠️ **A REVIEW PASS THEN FIXED THREE FALSE-OR-CORRUPTED CLAIMS THIS SLICE AUTHORED** (a fresh copy of the withdrawn `.size` claim on the new map row, a stale *"Eighteen rows"* mutant header, and a D539 paragraph spliced INSIDE an existing sentence in `residue-census.ts` — the last of which refutes the slice's own *"no comment was corrupted"* audit, because that audit counts REMOVED lines and an insertion removes nothing), re-pointed §4c onto the ATTACKER'S OWN ACTIVE SPOT (the bench board could not ask the `ignoreWR` question at all) with a TWENTIETH mutant behind it, and RECORDED the own-side §11/KO-clamp asymmetry between `hitOwnActive` and the own-side bench loop as a carried radius item. 🛑 **A SECOND REVIEW PASS THEN FIXED THREE MORE FALSE-OR-UNREACHABLE CLAIMS, ALL IN `namedBodiesSpread.test.ts` ITSELF AND ALL COMMENT-LEVEL**: a §3 rung captioned for `attack.ts` that asserted `interpreter.ts` and could not read `attack.ts` at all (glob widened; both bindings now quoted from `attack.ts`, and *“unconditionally”* withdrawn for the `damageBonus` guard, whose premise is DRIVEN), a SIXTH copy of the withdrawn `.size` claim in §2, and a fixture deck decomposed as *“8 × 6 + 12”* instead of **7 × 6 + 18**; the kept refusal paragraph is re-cited at **`effects.ts:15919`** in five places. ✅ **COMMITTED `e7075aa0`; WHOLE-CORPUS SWEEP GREEN AND EXACTLY AS PREDICTED**: `2802 killed · 53 known survivor(s) · 0 GAP(S) · 0 stale · 0 skipped(dirty) · 0 clobber(s) · 0 error(s) · 12523.4s total` — `+20 killed, +0 declared` on D538's `2782 · 53`, the **SEVENTH** consecutive exact prediction after the D532 reset and the **hundred-and-first** consecutive clean run; **2,855 / 2,855 / 0 unmatched** set-compared against `MUTANTS` both ways, the 53 survivors exactly the 53 declared, all twenty `D539-*` rows KILLED (log :437–:456). ⚠️ The `setsid` reuse count HOLDS at the **forty-fourth** (D429 — pid `1062228` is nowhere in the log, under `tmp/`, or in the tree). ✅ **MILESTONE — TWO REFUSAL FAMILIES CLOSED BY ONE ROW**: `/This attack also does /` **17 sentences / 41 printings** and `/ damage to each of /` **11 / 20**, re-measured live with zero unresolved. 🛑 A claim the slice had WITHDRAWN AS FALSE stood at SIX sites, TWO in shipped engine source, and the version whitelist's `it()` TITLE class was skipped whole — 27 titles named 0.423.0 over bodies asserting 0.424.0 — 26 stepped and ONE deliberately kept at 0.423.0 (`benchKeepShuffleRest.test.ts:883`, which records WHICH decision made an earlier bump); `conventions.md` gains one section on sweeping a withdrawn CLAIM. Engine **0.424.0 HELD** at close-out, `MATCH_RECORD_VERSION` 30 HELD) |
@@ -29361,6 +29430,90 @@ lesson), and each figure below is the grep's own output rather than a recollecti
 > true when checked by hand (`discardPileRetrieval` parks at `min: 0`; the other mandatory parks carry
 > `dest: op.to` over a `“discard” | “deckBottom”` union and `op.dest ?? “deckBottom”`), and left as a claim
 > with its evidence written beside it.
+
+**THE CLOSE-OUT — THE WHOLE-CORPUS SWEEP, EXACTLY THE NUMBER COMMITTED BEFORE IT RAN, A TENTH TIME RUNNING;
+ON THE THIRD LAUNCH, AFTER ONE DEATH BY LAUNCHER EXIT AND ONE BY MACHINE SHUTDOWN.** Committed as
+`4ab68194`; pasted out of `tmp/sweep-D542.log` (`:5825`), not retyped (D504):
+
+```
+2855 killed · 53 known survivor(s) · 0 GAP(S) · 0 stale · 0 skipped(dirty) · 0 clobber(s) · 0 error(s) · 13186.7s total
+```
+
+Predicted `2855 killed · 53 known survivor(s) · 0 GAP(S)` over 2,908 rows (`+12 killed, +0 declared` on
+D541's `2843 · 53`); got exactly that. ✅ **The TENTH consecutive exact prediction after the streak reset at
+D532 — the count stands at 10**, and the run is the **hundred-and-fourth** consecutive with `0 error(s) · 0
+stale · 0 clobber(s)`. The arithmetic was closed in both directions BEFORE the run (D538's added check) and
+closed again against the finished log: `2843 + 12 = 2855`; `2855 + 53 = 2908` = the live corpus size
+`precheck` reports AND the log header's own *"2908 mutant(s)"*; `2896 + 12 = 2908` = the row delta.
+⚠️ **THE 13,187 s CARRIES NO STATE.** It is below D541's contended 13,952 s and D540's 13,328 s; D543 was
+committed at 02:58, seven hours before this run launched, so no second-checkout BUILD overlapped it by the
+commit record. The box's load over the run was not measured and is not claimed.
+
+✅ **D519 (9)'s instrument, used as written, a TWENTY-THIRD time — and D540's negative control applied with
+it.** The verdict enumeration anchored to the indented verdict lines (`^  <id> +… +<verdict>`, the token
+EXTRACTED rather than grepped for) returned `2855 KILLED` / `53 SURVIVES(known)` and **nothing else** over
+**2,908** such lines — checked against the ANCHORED LINE COUNT, not read as a total — and `2855 + 53 = 2908`
+= the log header's own mutant count. The unanchored tally of the same file reads `5732 KILLED · 30
+STALE-SURVIVOR · 4 GAP · 5 SURVIVED · 106 SURVIVES(known)`, because it also counts the trailing survivor
+report's prose. Completeness is structural: **2,908 unique progress-line ids / 2,908 rows / 0 unmatched**,
+set-compared against `MUTANTS.map(m => m.id)` in BOTH directions by a bun script importing the module
+(`MUTANTS.length` 2,908, distinct ids 2,908; in-log not-declared **0**, declared not-in-log **0**). The 53
+`SURVIVES(known)` ids are exactly HEAD's 53 `MUTANTS` rows carrying `survives`, both ways, and the report
+prints **53** `known survivor` paragraphs carrying those same ids, both ways. Liveness asked of the program
+(`pgrep -af 'scripts/mutation'` → only the asking shell) and of the log (`wc -c` 470,721). **All twelve
+`D542-*` rows read KILLED** (log `:2900`–`:2911`, contiguous). No ride-along row rode this sweep, which is
+why the delta is exactly the slice's twelve (D439).
+
+🛑 **THE SWEEP RAN THREE TIMES, AND EACH DEATH IS CLASSIFIED FROM ITS ARTEFACTS RATHER THAN FROM THE ACCOUNT
+OF IT.**
+**Run 1** — `tmp/sweep-D542-interrupted.log` (172,628 bytes, mtime `01:43:13`): **2,659** verdicts (`2608
+KILLED` / `51 SURVIVES(known)`), row 2,660 (`D519-evaluator-never-passes-the-rider`) in flight, last line
+*"[SIGTERM] restoring 1 file(s) before exit…"*. It died when the process that launched it exited.
+**Run 2** — `tmp/sweep-D542-interrupted2.log` (18,097 bytes, mtime `08:03:59.335`), launched with
+`setsid --fork` at 07:40: **292** verdicts (`286 KILLED` / `6 SURVIVES(known)`), `D253-spread-unwired` in
+flight, and **the identical last line**. ⚠️ **MEASURED, AND IT CORRECTS THE ACCOUNT THIS CLOSE-OUT WAS
+HANDED**: the account said the machine rebooted *"around 10:10"*. `journalctl --list-boots` reads the
+previous boot ENDING at **08:04:01** and the current one BEGINNING at **10:09:30**, and `last -x reboot`
+agrees. The log's last write (the SIGTERM line, `08:03:59.335`) is **1.9 s** before the old boot's journal
+stopped (`08:04:01.217`, read with `journalctl -b -1 -n 1 -o short-precise`, not `--list-boots`' whole
+second), so the sweep died at 08:04, and 10:09 is only when the box came back. The time of death is the OLD
+boot's end, never the new boot's start.
+Both partial logs agree with the finished one on **EVERY** verdict they carry — **2,659 / 2,659** and
+**292 / 292**, in the same order, zero disagreements, measured by a bun script over all three logs — so the
+interruptions cost wall-clock and nothing else. After each death the tree read clean, with no
+`tmp/mutation-journal.json` and no surviving `mutation/run.ts` (D446's three-way classification); the
+harness's SIGTERM handler had restored its one mutated file both times.
+**Run 3** — `setsid --fork`, launched 10:13, completed 13:53: the line pasted above.
+
+🛑 **THE `setsid` REUSE COUNT STEPS TO THE FORTY-SEVENTH, ON THE SAME ARTEFACT FORM D541's CLOSE-OUT
+ACCEPTED.** `tmp/sweep-D542.ppid.txt` (106 bytes, mtime **10:13:40.465**) was written WHILE the process was
+alive and re-read by this close-out: `PID 1434 / PPID 1 / SID 1434`, `CMD bun scripts/mutation/run.ts`, plus
+its own ISO stamp `2026-09-23T10:13:40+02:00`. `SID == PID` is the measurement and `PPID 1` the consequence
+(D541). The binding runs backwards, as D541's did, over ONE artefact: log mtime `13:53:22.474` minus the
+log's own `13186.7 s` lands at **10:13:35.774**, and the sidecar's mtime is **10:13:40.465** — **4.69 s into
+the run**. A four-digit PID four minutes after a boot is consistent with the same reading and is not offered
+as more than that. ⚠️ **AND THE OWED LAUNCHER FIX WENT UNPAID FOR A NINTH CLOSE-OUT**: `1434` occurs
+**zero** times in `tmp/sweep-D542.log`. The instruction for D543 stands at two clauses — `setsid --fork`,
+**and** `ps -eo pid,ppid,sid -p $!` written INTO the log in the same command.
+
+🛑 **ONE THING THIS SWEEP TEACHES, AND IT BECOMES A `conventions.md` SECTION: A DETACHED SWEEP SURVIVES ITS
+LAUNCHER BUT NOT A REBOOT — AND ITS LOG CANNOT TELL YOU WHICH ONE KILLED IT.** `setsid --fork` is exactly
+what makes run 2 different from run 1, and it bought nothing against a shutdown, which SIGTERMs every
+session on the box. The harness handles both identically — restore, print the same line, exit — so the log
+tail of a launcher death and a machine death are byte-for-byte the same, and a close-out reading only the
+log would have recorded the WRONG cause and, from the account alone, the wrong TIME. **When a sweep log
+stops without a summary line, ask the MACHINE before blaming the launcher**: `uptime` for the current boot,
+`journalctl --list-boots` for when the previous one ENDED. Then classify the tree (D446) and relaunch;
+nothing about the partial run needs to be kept except its log, and the verdict agreement above says why.
+
+**NOTHING IS CARRIED FORWARD AS A RISK FROM THE SWEEP ITSELF.** No engine byte moved at the close-out:
+engine **0.427.0 HELD** (the bump to 0.427.0 was the D542 slice's own, at `4ab68194`),
+`MATCH_RECORD_VERSION` **30 HELD**, and the whole-corpus sweep was NOT re-run. ✅ **D543 IS NEXT, AND IT IS
+ALREADY BUILT**: parked on `d543-prep` at `3a2e71ac` (136 files) in `/home/jofre/projects/lum-wt-d543`,
+`realpath` of its `@luminous/engine` inside that worktree — the chosen Tool discard at the program tail
+(`discardTools`, corpus `:136`) with the `upTo` wire scope as its Part 0. It lands by cherry-pick onto a
+parent that is MAIN MINUS THIS CLOSE-OUT, so its docs must be reconciled by claim, not by conflict (D541).
+`git status --porcelain` shows docs files only.
 
 
 ### 2026-09-22 — build session #481 (P3-M5 — D541)

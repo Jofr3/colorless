@@ -8289,6 +8289,33 @@ close-out. D541's pick deletes **3** lines in `progress.md` and **zero** in `dec
 close-out at `:955-985`; after the pick those lines held a different section entirely. **A line address is a
 figure** and rots like one (D466/D541).
 
+### A detached sweep survives its LAUNCHER but not a REBOOT, and its log cannot tell you which one killed it (D542 close-out)
+
+`setsid --fork` (above) makes a sweep outlive the process that started it. It does nothing against a machine
+shutdown, which SIGTERMs every session on the box — D542's second launch was properly detached and died
+anyway, 292 verdicts in.
+
+🛑 **The log tail is the SAME for both deaths.** The harness handles every SIGTERM identically: it restores
+the mutated file, prints `[SIGTERM] restoring 1 file(s) before exit…` and exits, with no summary line. D542's
+launcher-exit death (run 1) and its shutdown death (run 2) end in byte-identical lines, so a close-out that
+reads only the log records the wrong cause — and an account written after the fact can carry the wrong TIME
+as well: run 2's was handed over as *"rebooted around 10:10"*, when the machine went down at **08:04:01** and
+10:09:30 was only when it came back.
+
+**So when a sweep log stops without a summary line, ask the MACHINE before blaming the launcher:**
+
+```
+uptime                      # how long the current boot has been up
+journalctl --list-boots     # the PREVIOUS boot's END is the time of death, not the new boot's start
+```
+
+and compare the previous boot's end with the log's own mtime (D542: `08:04:01` against `08:03:59.335`). Then
+classify the tree all three ways (D446: clean, no `tmp/mutation-journal.json`, no surviving
+`mutation/run.ts`) and relaunch. ⚠️ **Keep the partial log, but do not stitch it**: the finished run is the
+artefact. D542 checked that both partial logs agreed with the finished run on every verdict they carried
+(2,659 / 2,659 and 292 / 292, same order) — a check worth running, because it is what says an interruption
+cost wall-clock and nothing else.
+
 
 ## Git / commits
 - Branch off `main` for non-trivial work; commit/push only when asked.
