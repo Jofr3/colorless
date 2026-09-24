@@ -939,11 +939,17 @@ describe("§9 — nothing persisted moves, and it is DRIVEN rather than argued",
     expect(Object.keys(after.players.p2.active ?? {}).sort()).toEqual([
       "attackBlock",
       "attackDamageDebuff",
+      // 🆕🆕🆕 D547 — the FLIP-TO-ATTACK lock's stamp and the NEXT-TURN VULNERABILITY
+      // record JOIN THE LIST (MATCH_RECORD_VERSION 30 -> 31). The pin is on the HEAD's
+      // key set, so it moves whenever anybody adds a key; what it asserts is that THIS
+      // suite's slice added none.
+      "attackFlipLockTurn",
       "attackLockedTurn",
       "boostedAttack",
       "conditions",
       "damage",
       "damageReduction",
+      "damageVulnerability", // 🆕🆕🆕 D547 (30 -> 31)
       "energy",
       "evolvedTurn",
       "healedTurn",
@@ -1039,6 +1045,6 @@ describe("§10 — purity and the version", () => {
     // anchor. ⚠️ D427 named the mechanism — **every note counts the pins it INHERITED
     // and never the one it is about to AUTHOR** — and D428 was the first note to get it
     // right. This line is the one being authored.
-    expect(engineVersion).toBe("0.431.0");
+    expect(engineVersion).toBe("0.432.0");
   });
 });

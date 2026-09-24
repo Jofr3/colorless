@@ -290,13 +290,22 @@ Order of operations for a declared attack:
    attack's cost** (typed symbols + Colorless). Attacking does **not** discard the
    energy unless the attack text says to. (Cost is only a *check*, not a payment,
    unless the attack states an energy discard.)
-3. **Confusion check** (if Confused): flip a coin; **tails ⇒ attack fails**, place
+3. **Effects that alter or cancel the attack, THEN the Confusion check** (the rulebook's
+   "Full details of attacking", steps B and C, in that order — D547):
+   - first any effect that might alter or cancel the declared attack — the rulebook's
+     own example is "If the Defending Pokémon tries to attack during your opponent's
+     next turn, your opponent flips a coin. If tails, that attack doesn't happen."
+     (tails ⇒ the attack doesn't happen and the turn ends; no Confusion flip follows);
+   - **Confusion check** (if Confused): flip a coin; **tails ⇒ attack fails**, place
    **30 damage (3 counters) on the attacker**, and the turn ends (§12).
 4. **Resolve attack text** in printed order — base damage, then any additional
    effects/conditions (coin flips, energy discards, status infliction, etc.).
 5. **Compute damage to the Defending (opponent's Active) Pokémon**:
    - Start with the attack's **base damage** (plus any "+X" modifiers from the
      attack/effects that add to base damage *before* Weakness).
+   - **Stop if that number is 0** (the rulebook's damage step 2: "Stop if the base damage
+     is 0 (or if the attack does not do any damage at all). Otherwise, keep going.") — no
+     Weakness, Resistance or final modifier applies to a stopped hit (D547).
    - **Weakness**: if the Defender has Weakness to the attacker's type, **multiply by
      the printed multiplier — currently ×2** (Defenders print `×2`; if only a symbol
      with no number, treat as ×2). **[current: ×2]**

@@ -269,6 +269,16 @@ export type GameEvent =
           Resistance (Bouffalant "Bouffer", a defending Tool — §15.B).
           Present only when it actually reduced. */
       reduction?: number;
+      /** 🆕🆕🆕 D547 — Flat HP ADDED to the hit AFTER Weakness/Resistance by an
+          attack-installed NEXT-TURN VULNERABILITY on the damaged Pokémon ("During
+          your next turn, the Defending Pokémon takes 50 more damage from attacks
+          (after applying Weakness and Resistance).", `censusAttackCorpus.ts:150`).
+          `reduction`'s MIRROR at the same step — a field of its own and NOT a
+          negative `reduction`, D149's rule (one field per step AND direction), so
+          the row still reconstructs §8.5 in printed order and a row may carry
+          BOTH. Present only when it applied. An optional field on a non-persisted
+          event: a widening (D141). */
+      vulnerability?: number;
       /** True when the defender fully PREVENTED this attack's damage (Mimikyu
           "Safeguard" — all damage from an opponent's Pokémon ex/V), so `dealt` is
           0 for that reason rather than because the attack does no damage. Present
@@ -553,8 +563,27 @@ export type GameEvent =
       ASSUMED: `seat` still owns the BARRED Pokémon, and the new phrasing carries
       no "next turn" and no player name at all, so it reads identically under
       either seat — rendered under both and READ (`untilLeavesActiveBar.test.ts`
-      §7), which is what this family does instead of citing itself. */
-  | { type: "ATTACK_LOCKED"; seat: Seat; uid: string; attack?: string; until?: "leavesActive" }
+      §7), which is what this family does instead of citing itself.
+
+      🆕🆕🆕 **D547 — A THIRD OPTIONAL RIDER, `flip?: true`, AND D421's TEST IS WHY IT
+      IS OWED.** *"During your opponent's next turn, if the Defending Pokémon tries
+      to use an attack, your opponent flips a coin. If tails, that attack doesn't
+      happen."* (`censusAttackCorpus.ts:176`, 2 legal printings) installs a lock that
+      leaves the declaration LEGAL. Without the rider the row renders *"<name> can't
+      attack next turn"* — FALSE, in the direction that costs a player a turn: they
+      would not press a button that works on heads. A RIDER and not a sibling event
+      for D113's reason (one fact — "this body's attacks are constrained next turn"
+      — with a presence branch); the seat rule is unchanged (`seat` owns the LOCKED
+      Pokémon). Written only by `flipLockAttack`'s installer; never beside
+      `attack`/`until`. A `GameEvent` is not persisted (D141). */
+  | {
+      type: "ATTACK_LOCKED";
+      seat: Seat;
+      uid: string;
+      attack?: string;
+      until?: "leavesActive";
+      flip?: true;
+    }
   /** §8.5/§11 (D147) — an attack INSTALLED a durated DAMAGE REDUCTION on its own
       Active ("During your opponent's next turn, this Pokémon takes {N} less
       damage from attacks (after applying Weakness and Resistance)."). `amount` is
@@ -641,6 +670,15 @@ export type GameEvent =
       own since Bouffalant "Bouffer" (D140/D146: loudness is owed to UNREAD TEXT,
       not to a read rule doing its job). */
   | { type: "ATTACK_DEBUFF_APPLIED"; seat: Seat; uid: string; amount: number }
+  /** 🆕🆕🆕 §8.5/§11 (D547) — an attack made the DEFENDING Pokémon VULNERABLE for the
+      installer's next turn ("During your next turn, the Defending Pokémon takes 50
+      more damage from attacks (after applying Weakness and Resistance).",
+      `censusAttackCorpus.ts:150`). ATTACK_DEBUFF_APPLIED's contract directly above:
+      `seat` OWNS the exposed Pokémon (the actor's opponent, D136's finding 1), and
+      `amount` is the MERGED number the record now holds, so the row describes the
+      state that exists. The hit that pays it reports the same figure in
+      `DAMAGE_DEALT.vulnerability`. Not persisted (D141). */
+  | { type: "DAMAGE_VULNERABILITY_APPLIED"; seat: Seat; uid: string; amount: number }
   /** 🆕🆕 §13 (D434 as `COUNTERS_SCHEDULED`, RENAMED AND GENERALISED AT D435) — an
       attack SCHEDULED a delayed effect onto `seat`'s Active for the END of
       `scheduled.turn`. Three payloads share the row because they share the clock:
@@ -888,6 +926,17 @@ export type GameEvent =
   /** The §8 step-3 confusion flip for the declared attack — tails is
       followed by ATTACK_FAILED, heads by the normal resolution. */
   | { type: "CONFUSION_CHECK"; seat: Seat; uid: string; result: CoinFace }
+  /** 🆕🆕🆕 §8 (D547) — the FLIP-TO-ATTACK lock's coin for the declared attack,
+      CONFUSION_CHECK's sibling at the same seam: tails is followed by
+      ATTACK_FAILED `"flipLock"`, heads by the normal resolution. `seat` is the
+      DECLARING seat — the printed "your opponent flips a coin" names the locked
+      Pokémon's controller, who is the attacker here. Filed only while the lock is
+      live (`attackFlipLocked`), so no rng is spent on an unlocked declaration; and
+      BEFORE any CONFUSION_CHECK — the official rulebook's "Full details of
+      attacking" applies "effects that might alter or cancel the attack" (step B)
+      before the Confusion check (step C), so a lock tails files no
+      CONFUSION_CHECK at all (docs/decisions.md D547 ruling 1). */
+  | { type: "ATTACK_FLIP_LOCK_CHECK"; seat: Seat; uid: string; result: CoinFace }
   /** The declared attack did NOT resolve: no damage to the defender, no
       effects — and the turn still ends either way. Three reasons, and they differ
       only in what follows:
@@ -925,7 +974,11 @@ export type GameEvent =
       type: "ATTACK_FAILED";
       seat: Seat;
       uid: string;
-      reason: "confusion" | "requirement" | "coinFlip" | "preDamage";
+      /** 🆕🆕🆕 D547 — `"flipLock"`: the FLIP-TO-ATTACK lock's coin came up tails
+          ("If tails, that attack doesn't happen."). PRECEDED by its own
+          ATTACK_FLIP_LOCK_CHECK row and followed by nothing — no counters, no
+          damage; the turn ends. A free widening of this enum (above). */
+      reason: "confusion" | "requirement" | "coinFlip" | "preDamage" | "flipLock";
     }
   /** Damage removed from one of `seat`'s IN-PLAY Pokémon by an effect; `amount`
       is what actually came off (clamped at the damage present — never 0), so a

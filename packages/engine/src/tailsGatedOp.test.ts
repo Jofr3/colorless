@@ -297,7 +297,12 @@ describe("the tails gate — derived, not authored", () => {
       // Gel" are the CATALOG/local population; which two are legal is unmeasured).
       // The only tails-gated attack LOCK in the local-D1 pool this op could not
       // express even with the field.
-      "During your opponent's next turn, if the Defending Pokémon tries to use an attack, your opponent flips a coin. If tails, that attack doesn't happen.",
+      // 🆕🆕🆕 D547 RE-POINTED (D438 — re-point, never delete): the comment above describes
+      // this row's FORMER string, `:176`, which D547 BUILDS (`flipLockAttack`, read at `attack.ts`'s
+      // §8 step-3 seam — still "not a `coinFlipGate`"). The row now names the corpus's
+      // other LIVE unmapped tails witness with the SAME OWNER — the OPPONENT flips —
+      // `censusAttackCorpus.ts:669` (1 legal printing, PHRASE-24, null on every reader):
+      "Your opponent flips a coin for each of their Benched Pokémon. This attack does 80 damage to your opponent's Active Pokémon for each tails. This attack's damage isn't affected by Weakness or Resistance.",
       // TWO consequents on ONE flip — an `otherwise` this op deliberately does not
       // have (D142's Squawkabilly refusal, verbatim). Note the field brings none
       // of these closer: an `onTails` gate still runs exactly one branch.

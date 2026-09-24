@@ -1294,6 +1294,48 @@ export interface MatchRecord {
     `GameEvent.ATTACK_BOOSTED.attack` widens to `string | null` (a `GameEvent` is not
     persisted; D141). No schema, redact, projection or client byte.
 
+    🆕🆕🆕 **THE FIFTH POSITION, WRITTEN AT D547 — A REST THAT IS OLD, AN OPTION THAT IS
+    GENUINELY AVAILABLE, AND A LOSS THAT IS DETECTABLE IN THE BYTES BUT NOT INERT ON THE
+    BOARD.** (It sits here, beside D456/D544/D546, because it is D456's test run and
+    FAILED; the bump it forces is written at D547's own block below.) The sequence D501
+    counted to four — D432 *no rest*, D434 *rest not old*, D435 *rest old and the
+    degradation is `NaN`*, D501 *rest old, option available, rest cannot witness the loss* —
+    gains a fifth at D547, and it is the one D456's test was written to answer.
+
+    🛑 **THE ADDRESS, NAMED FIRST (D456's rule).** Two new facts on `InPlayPokemon` —
+    `attackFlipLockTurn` (*"During your opponent's next turn, if the Defending Pokémon tries
+    to use an attack, your opponent flips a coin. If tails, that attack doesn't happen."*,
+    `censusAttackCorpus.ts:176`) and `damageVulnerability` (*"During your next turn, the
+    Defending Pokémon takes 50 more damage from attacks (after applying Weakness and
+    Resistance)."*, `:150`) — inside `PlayerSide.{active, bench[]}`, inside
+    `GameState.players`, inside `MatchRecord.state`: PERSISTED ON EVERY SAVE with no park in
+    front of them.
+
+    🛑 **THE OPTIONAL ROUTES, NAMED AND REFUSED.** Three spellings would have held 30:
+      · **`attackFlipLockTurn?: number`** — an optional key beside the required stamps;
+      · **`damageVulnerability?: DamageVulnerability`** — likewise, beside `damageReduction`;
+      · **the paired `attackLockFlips?: true`** — a rider on the OLD `attackLockedTurn`
+        stamp (the REST is then old: the stamp was written by the v30 deploy), which is the
+        `preventAttack`-rider build `effects.ts` refuses on D131's test and the one route
+        where D434's *rest must be OLD* is satisfied.
+    Each passes D441 (an ABSENT key reads as "no lock / no vulnerability", which is what a
+    v30 writer meant) and each is **DETECTABLE IN THE BYTES** (no v30 writer emits the key).
+    Each is refused because D456's second clause — *"inert on the board"* — FAILS: a ROLLBACK
+    deploy reading a v31 record SILENTLY DROPS a live gate and a live damage term. For
+    `attackLockFlips?` it is worse than a drop: the v30 reader sees the old `attackLockedTurn`
+    stamp WITHOUT the rider and REFUSES the declaration outright — a coin that would have been
+    heads half the time becomes a certain lock. D456 held because its residue was
+    `{turn, amount: 0}`, an inert trap; D544's because `{…, amount: 0}` pays +0. Here the
+    residue is a PLAYED effect missing from the board (a rollback's Defending Pokémon attacks
+    with no coin, or takes 50 less than the printed card promised) — **detectable in the
+    bytes, NOT inert on the board**, so the D456 shape does not apply and the fields are
+    REQUIRED (D432/D434's shape), which retires a v30 record rather than reading it.
+
+    🛑 **WHAT WOULD REVERSE THIS (D422).** A rollback-safety rule that accepts a silently
+    DROPPED effect as inert (i.e. D456's second clause re-worded to "never MIS-PAID" rather
+    than "inert"), or a deploy pipeline that forbids rollback across a record-shape change.
+    Either one would make the optional route available at the next address.
+
     🆕🆕🆕 **29 → 30 AT D501 — AND IT IS THE FIRST FIELD EVER ADDED TO
     `SpecialConditions`, WHICH IS A NESTED STRUCTURE AT D386's ADDRESS RATHER THAN
     D386's ADDRESS ITSELF.** D501 gave `InPlayPokemon.conditions` a required
@@ -1381,8 +1423,34 @@ export interface MatchRecord {
     row. `GameEvent.STATUS_APPLIED` gains an optional `confusionDamage?: number`,
     and a `GameEvent` is not persisted (`MatchRecord.log` holds the RENDERED
     `SeatLogEntry[]`), so that is new TEXT in NEW records only — D141's
-    already-settled case. */
-export const MATCH_RECORD_VERSION = 30;
+    already-settled case.
+
+    🆕🆕🆕 **30 → 31 AT D547 — TWO NEW REQUIRED FIELDS ON `InPlayPokemon`, AND THE REST IS
+    NOT OLD (D432/D434).** `attackFlipLockTurn: number | null` (the FLIP-TO-ATTACK lock,
+    `censusAttackCorpus.ts:176`, a bare stamp — D432's *no rest*) and `damageVulnerability:
+    DamageVulnerability | null` (the NEXT-TURN VULNERABILITY, `:150`, `{turn, amount}` —
+    D434's *both keys arrive together and cannot witness each other's loss*). The optional
+    routes are refused on D456's test in THE FIFTH POSITION above.
+
+    🛑 **AND A v30 RECORD IS NOT READ BENIGNLY — MEASURED, IN TWO DIFFERENT DEGRADATIONS.**
+    Every in-play body in a v30 record lacks both keys:
+      · `attackFlipLocked` computes `undefined === state.turn` → false, so a live lock's coin
+        is SILENTLY never flipped — D124's soft landing, a plausible-looking wrong board
+        (`attackFlipLock.test.ts` §12);
+      · `installedVulnerabilityOf` asks `=== null` and then dereferences `.turn` of
+        `undefined` → **`TypeError` on EVERY hit into ANY v30 body**, vulnerable or not —
+        D326's throw on the first read of a missing required key
+        (`damageVulnerability.test.ts` §11).
+    Either alone owes the bump; the second makes a v30 match unplayable past its next attack.
+
+    ⚠️ Also moved, and none is a second reason: two new `EffectOp` members
+    (`flipLockAttack`, `exposeDefender { amount }` — new INHABITANTS, D333's widening; neither
+    parks, so neither reaches `phase.cont`), and `GameEvent` gains `ATTACK_LOCKED.flip?`,
+    `ATTACK_FLIP_LOCK_CHECK`, `ATTACK_FAILED.reason: "flipLock"`, `DAMAGE_VULNERABILITY_APPLIED`
+    and `DAMAGE_DEALT.vulnerability?` (a `GameEvent` is not persisted, D141). No schema,
+    redact, projection or client byte: the flip lock leaves the declaration LEGAL, so
+    `redactedAttacksOf`'s `playable` and GameHud read `attackLocked` unchanged. */
+export const MATCH_RECORD_VERSION = 31;
 
 /** How a persisted match read back: absent, usable, or written by an
     incompatible deploy (`stale` — the caller decides whether to retire it). */

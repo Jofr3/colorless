@@ -25,6 +25,9 @@ import {
 } from "./cards";
 import {
   attackBlockOf,
+  // 🆕🆕🆕 D547 — the flip-to-attack lock, read at the §8 step-3 seam below; NOT
+  // folded into `attackLocked` (the declaration stays legal).
+  attackFlipLocked,
   attackGateOf,
   attackLocked,
   attackerHasSpecialEnergy,
@@ -44,6 +47,8 @@ import {
   installedNoWeakness,
   installedRecoilOf,
   installedReductionOf,
+  // 🆕🆕🆕 D547 — the next-turn vulnerability, added at the main hit's post-W/R step.
+  installedVulnerabilityOf,
   koSurvivalClamp,
   lockedAttackIndexes,
   opposingAttackDebuff,
@@ -1539,6 +1544,46 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
     { type: "ATTACK_DECLARED", seat: action.seat, uid: attackerUid, attack: declared.name, index },
   ];
   let next = state;
+
+  // 🆕🆕🆕 §8 (D547) — THE FLIP-TO-ATTACK LOCK: "During your opponent's next turn, if
+  // the Defending Pokémon tries to use an attack, your opponent flips a coin. If
+  // tails, that attack doesn't happen." (`censusAttackCorpus.ts:176`). The attack
+  // was DECLARED — the §8 gate above let it through, because this lock is NOT
+  // `attackLocked` (a hard lock still REJECTS the declaration there, first) — and
+  // now the locked player flips. Tails: ATTACK_FAILED `"flipLock"`, nothing
+  // resolves, no counters, and the turn ends (§5.3, `finishAttack`); heads: the
+  // attack resolves normally.
+  //
+  // ⚠️ THE RNG IS SPENT ONLY WHILE THE LOCK IS LIVE: the whole block is behind
+  // `attackFlipLocked`, so an unlocked declaration draws nothing and every
+  // pre-D547 rng sequence — a Confused attacker's included — is byte-identical.
+  //
+  // 🛑 BEFORE THE CONFUSION FLIP, AND THAT ORDER IS THE RULEBOOK'S (docs/decisions.md
+  // D547 ruling 1). The official rulebook's "Full details of attacking" (pokemon.com
+  // `par_rulebook_en.pdf`, p. 20) lists B) "Apply any effects that might alter or
+  // cancel the attack" — and the worked example it prints is THIS sentence family —
+  // before C) "If your Active Pokémon is Confused, check now to see if its attack
+  // doesn't happen." So a lock TAILS ends the attack with NO Confusion coin and NO
+  // Confusion counters, and only a lock HEADS reaches the Confusion block below.
+  //
+  // `active`, the declaration snapshot, is the right binding for the reason the
+  // Confusion block below gives: nothing before §8.5 has rebound the body. The seat
+  // is `action.seat` — "your opponent flips" names the LOCKED body's controller,
+  // who is the declaring player.
+  if (attackFlipLocked(state, active)) {
+    const [face, rngState] = flipCoin(next.rngState);
+    next = { ...next, rngState };
+    events.push({ type: "ATTACK_FLIP_LOCK_CHECK", seat: action.seat, uid: attackerUid, result: face });
+    if (face === "tails") {
+      events.push({
+        type: "ATTACK_FAILED",
+        seat: action.seat,
+        uid: attackerUid,
+        reason: "flipLock",
+      });
+      return finishAttack(next, events, action.seat, attackerUid, declared.name);
+    }
+  }
 
   // §8 step 3 — the confusion flip, AFTER every gate and the cost check
   // passed (§12): tails and the declared attack does not resolve at all —
@@ -3241,7 +3286,31 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
     // to be inline in `dealt` is hoisted ABOVE `prevented` and named. `dealt` is
     // then the same expression it always was, spelled once instead of twice, and
     // the whole reading is argued at continuous.ts `attackBlockOf`.
-    const wouldDeal = Math.max(0, afterWR - reduction);
+    //
+    // 🆕🆕🆕 D547 — AND THE INSTALLED VULNERABILITY IS ADDED AT THE SAME STEP, the
+    // reduction's sign flipped ("During your next turn, the Defending Pokémon takes
+    // 50 more damage from attacks (after applying Weakness and Resistance).",
+    // `censusAttackCorpus.ts:150`). Two decisions, each with a reversal condition in
+    // docs/decisions.md D547: (i) it lands on `afterWR` even when Resistance took
+    // that to 0 — the printed "after applying Weakness and Resistance" places it,
+    // it does not condition it; (ii) it is ON-TARGET — an effect on the damaged
+    // Active — so `suppressTargetEffects` drops it with the installed reduction.
+    // Reported in its own field (`DAMAGE_DEALT.vulnerability`), never as a negative
+    // `reduction` (D149). `defender`, the live binding (D428), like every §8.5 read.
+    //
+    // ⚠️ AND IT IS GATED ON `preWR > 0`, THE RULEBOOK'S DAMAGE STEP 2 ("Full details
+    // of attacking", pokemon.com `par_rulebook_en.pdf` p. 20): after the before-W/R
+    // modifiers, "Stop if the base damage is 0 (or if the attack does not do any
+    // damage at all). Otherwise, keep going." Steps 3-5 (Weakness, Resistance, the
+    // after-W/R effects) are never reached on a stopped hit, so a 30 attack under an
+    // installed 30 debuff into an exposed Defender deals 0, not 50. Before D547 the
+    // stop was INVISIBLE here — only subtraction followed a 0 `preWR` — and this term
+    // is the first thing that could make it observable. The stop is at step 2 ONLY,
+    // which is why decision (i) above still stands: Resistance taking `afterWR` to 0
+    // is step 4, past the stop, and step 5 still runs.
+    const vulnerability =
+      suppressTargetEffects || preWR === 0 ? 0 : installedVulnerabilityOf(next, defender);
+    const wouldDeal = Math.max(0, afterWR + vulnerability - reduction);
     // D258 — RENAMED, and the rename is the whole diff at this site. Everything the
     // seven pure preventions decide is `preventedBeforeFlip`; the coin-flip shield
     // is asked AFTER it, on the number that would still land, because a coin drawn
@@ -3384,6 +3453,8 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
       weakness,
       resistance,
       reduction: reduction > 0 ? reduction : undefined,
+      // 🆕🆕🆕 D547 — the post-W/R ADDITION beside it, its own field (D149).
+      vulnerability: vulnerability > 0 ? vulnerability : undefined,
       prevented: prevented ? true : undefined,
       survived: clamped === null ? undefined : true,
       dealt,

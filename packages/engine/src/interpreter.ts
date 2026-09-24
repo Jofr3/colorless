@@ -60,6 +60,9 @@ import {
   installedNoWeakness,
   installedRecoilOf,
   installedReductionOf,
+  // 🆕🆕🆕 D547 — the next-turn vulnerability, added beside the installed reduction
+  // at `spreadDamage`, `placeSnipe` and `snipeActive` (attack.ts is the fourth site).
+  installedVulnerabilityOf,
   koSurvivalClamp,
   opposingAttackDebuff,
   passivesOf,
@@ -1859,6 +1862,9 @@ function stepOp(
       };
     case "preventAttack":
       return { done: preventAttack(state, op, ctx, events) };
+    // 🆕🆕🆕 D547 — field-free, so no `op.` read (`installNoWeakness`'s shape).
+    case "flipLockAttack":
+      return { done: flipLockAttack(state, ctx, events) };
     case "preventAttackUse":
       return { done: preventAttackUse(state, op.attack, op.until, ctx, events) };
     case "boostAttack":
@@ -1872,6 +1878,9 @@ function stepOp(
       return { done: installNoWeakness(state, ctx, events) };
     case "weakenDefenderAttacks":
       return { done: weakenDefenderAttacks(state, op.amount, ctx, events) };
+    // 🆕🆕🆕 D547 — the next-turn vulnerability, `weakenDefenderAttacks`' holder.
+    case "exposeDefender":
+      return { done: exposeDefender(state, op.amount, ctx, events) };
     // 🆕🆕 D434 — the SCHEDULE half of the delayed placement. The other half is
     // flow.ts `runCheckup`; neither is a build on its own.
     case "scheduleCounters":
@@ -7464,6 +7473,35 @@ function preventAttack(
   return withActive(state, seat, { ...active, attackLockedTurn: turn });
 }
 
+/** 🆕🆕🆕 §8/§11 (D547) — INSTALL the printed FLIP-TO-ATTACK LOCK on the DEFENDING
+    Pokémon: "During your opponent's next turn, if the Defending Pokémon tries to
+    use an attack, your opponent flips a coin. If tails, that attack doesn't
+    happen." (`censusAttackCorpus.ts:176`, 2 legal printings). `preventAttack`'s
+    DEFENDER arm one function up, cloned line for line — same holder resolution
+    (`otherSeat(ctx.seat)`), same §11 refusal BEFORE the idempotence early return,
+    same `+ 1` stamp (the locked body's controller's next turn, §5.3), same silent
+    re-install — and writing a DIFFERENT FIELD, `attackFlipLockTurn`, because the
+    fact it installs is read at a different site with a different outcome (see
+    types.ts: the declaration stays LEGAL, and `attack.ts` flips at §8 step 3).
+
+    The row is ATTACK_LOCKED with `flip: true` — without the rider it would say
+    "can't attack next turn", which is false (D421). Never parks; NO rng here: the
+    coin belongs to the locked player's declaration, not to this install. */
+function flipLockAttack(state: GameState, ctx: EffectContext, events: GameEvent[]): GameState {
+  const seat = otherSeat(ctx.seat);
+  const active = state.players[seat].active;
+  if (active === null) return state;
+  const uid = topUid(active);
+  if (uid === undefined) return state;
+  // §11 (D142; 🆕🆕🆕 D547's clone) — checked BEFORE the idempotence early-return so a refusal is
+  // announced even on an already-locked body (`preventRetreat`'s ordering).
+  if (effectRefused(state, seat, ctx, events)) return state;
+  const turn = state.turn + 1;
+  if (active.attackFlipLockTurn === turn) return state;
+  events.push({ type: "ATTACK_LOCKED", seat, uid, flip: true });
+  return withActive(state, seat, { ...active, attackFlipLockTurn: turn });
+}
+
 /** §8/§8.5 (D154, shared D155) — the printed PROPER NOUN → the INDEX every read
     site in this engine speaks. `findIndex` over the holder's OWN printed attacks,
     so a sentence naming an attack the card does not have resolves to `-1` and its
@@ -8144,6 +8182,50 @@ function weakenDefenderAttacks(
   if (stacking && merged === existing.amount) return state;
   events.push({ type: "ATTACK_DEBUFF_APPLIED", seat, uid, amount: merged });
   return withActive(state, seat, { ...active, attackDamageDebuff: { turn, amount: merged } });
+}
+
+/** 🆕🆕🆕 §8.5/§11 (D547) — INSTALL the printed NEXT-TURN VULNERABILITY on the
+    DEFENDING Pokémon: "During your next turn, the Defending Pokémon takes 50 more
+    damage from attacks (after applying Weakness and Resistance)."
+    (`censusAttackCorpus.ts:150`, 2 legal printings). `weakenDefenderAttacks` one
+    function up, cloned for its HOLDER and its guards — the opponent's Active, the
+    §11 refusal BEFORE the idempotence early return, the `Math.max` merge, the
+    suppressed no-news row — with ONE number changed and it is the whole reading:
+
+    ⚠️ THE STAMP IS `state.turn + 2`, NOT `+ 1`. The printed window is "During YOUR
+    next turn" — the INSTALLER's — and declaring an attack ends the turn (§5.3), so
+    the turn after this one is the holder's and the one after THAT is the
+    installer's. D143/D155/D544/D546 wrote the same `+ 2` for the installer's next
+    turn; the difference here is only that the body written to is the opponent's.
+    A `+ 1` build is live on the holder's own turn, when nothing of the installer's
+    can hit it — the printed +50 would silently never land.
+
+    `Math.max` on a same-window re-install, `weakenDefenderAttacks`' and
+    `reduceDamage`'s rule (the field holds ONE installation with ONE window, so a
+    sum would depend on how many times the record was written). Unreachable off
+    any printing (two installs on one window need two attacks in one turn), so it
+    is constructed and pinned. */
+function exposeDefender(
+  state: GameState,
+  amount: number,
+  ctx: EffectContext,
+  events: GameEvent[],
+): GameState {
+  const seat = otherSeat(ctx.seat);
+  const active = state.players[seat].active;
+  if (active === null) return state;
+  const uid = topUid(active);
+  if (uid === undefined) return state;
+  // §11 (D142; 🆕🆕🆕 D547's clone) — checked BEFORE the idempotence early-return, `preventRetreat`'s
+  // ordering, so a refusal is announced even on an already-exposed body.
+  if (effectRefused(state, seat, ctx, events)) return state;
+  const turn = state.turn + 2;
+  const existing = active.damageVulnerability;
+  const exposedAlready = existing !== null && existing.turn === turn;
+  const worst = exposedAlready ? Math.max(existing.amount, amount) : amount;
+  if (exposedAlready && worst === existing.amount) return state;
+  events.push({ type: "DAMAGE_VULNERABILITY_APPLIED", seat, uid, amount: worst });
+  return withActive(state, seat, { ...active, damageVulnerability: { turn, amount: worst } });
 }
 
 /** 🆕🆕 §13 (D434) — SCHEDULE a counter placement onto the DEFENDING Pokémon for the
@@ -8887,7 +8969,15 @@ function spreadDamage(
       passives.damageReductionAfterWR +
       installedReductionOf(state, pokemon) +
       seatDamageReduction(state, pokemon, "all");
-    const wouldDeal = Math.max(0, spread - reduction);
+    // 🆕🆕🆕 D547 — …and the installed NEXT-TURN VULNERABILITY, ADDED at the same
+    // post-W/R step (attack.ts's main hit says why, and that it is ON-TARGET). 0 on
+    // the Bench by construction — the record is written on an ACTIVE and leaving
+    // the Active Spot sheds it (§10) — and read anyway, for this site's TOTALITY
+    // reason above. A spread carries no suppression, so nothing nulls it here.
+    // Gated on `spread > 0`: the rulebook's damage step 2 stop (attack.ts's main hit
+    // quotes it) — a splash the debuff took to 0 is not a hit the term can land on.
+    const vulnerability = spread === 0 ? 0 : installedVulnerabilityOf(state, pokemon);
+    const wouldDeal = Math.max(0, spread + vulnerability - reduction);
     // D258 — RENAMED for attack.ts's reason verbatim: the seven pure preventions
     // settle first, and the coin-flip shield is asked afterwards on what is left.
     const preventedBeforeFlip =
@@ -8963,6 +9053,9 @@ function spreadDamage(
     events.push({
       type: "DAMAGE_DEALT",
       seat: victim,
+      // 🆕🆕🆕 D547 — the post-W/R ADDITION, its own field (D149). Keyed ABOVE `by`
+      // so the D425 row's `find` (the run from `by:` down) stays byte-identical.
+      vulnerability: vulnerability > 0 ? vulnerability : undefined,
       // 🆕🆕 D425 — and THIS is the site where `by` stops equalling
       // `otherSeat(seat)`: on the `"yourBench"` arm the dealer and the damaged
       // body's owner are the SAME seat.
@@ -9214,7 +9307,16 @@ function placeSnipe(
     // above: the damage CAP is a condition on the damage that would actually be
     // placed (continuous.ts `attackBlockOf`). The arithmetic is unchanged byte for
     // byte; only the binding order and the name are new.
-    const wouldDeal = Math.max(0, Math.max(0, amount - attackerDebuff) - reduction);
+    // 🆕🆕🆕 D547 — the installed NEXT-TURN VULNERABILITY, ADDED at the reduction's
+    // step and nulled by `ignoreWR` WITH it: Feint Attack's "not affected by any
+    // effects on that Pokémon" reaches an installation on the target whichever way
+    // its number points (docs/decisions.md D547 (ii), ON-TARGET). 0 on a benched
+    // pick by construction (§10 sheds it off the Active Spot); read for totality.
+    // And the rulebook's damage step 2 stop (attack.ts's main hit quotes it): a pick
+    // the debuff took to 0 is not a hit, so the term does not land on it.
+    const exposedBy =
+      ignoreWR || amount - attackerDebuff <= 0 ? 0 : installedVulnerabilityOf(next, pokemon);
+    const wouldDeal = Math.max(0, Math.max(0, amount - attackerDebuff) + exposedBy - reduction);
     // D258 — RENAMED for attack.ts's reason verbatim.
     const preventedBeforeFlip =
       (!ignoreWR &&
@@ -9311,6 +9413,7 @@ function placeSnipe(
     events.push({
       type: "DAMAGE_DEALT",
       seat: benchVictim,
+      vulnerability: exposedBy > 0 ? exposedBy : undefined, // 🆕🆕🆕 D547 — its own field (D149).
       by: ctx.seat, // 🆕🆕🆕 D447 — the ATTACKER, which is `seat` too on the own-side arm.
       uid,
       base: amount,
@@ -9526,7 +9629,18 @@ function snipeActive(
   // the one interpreter site that runs Weakness, so it is also the one where the
   // difference between "post-W/R" and "post-reduction" is observable on a single
   // board; continuous.ts `attackBlockOf` argues which of the two D240 chose.
-  const wouldDeal = Math.max(0, afterWR - reduction);
+  // 🆕🆕🆕 D547 — the installed NEXT-TURN VULNERABILITY on the sniped Active, ADDED
+  // at the reduction's post-W/R step and nulled by `ignoreWR` with it (ON-TARGET,
+  // docs/decisions.md D547 (ii)). THIS is the interpreter site where it is LIVE off
+  // a printed board: the record sits on the opponent's Active, which is exactly
+  // what this arm hits — and it lands after Weakness here too. ⚠️ And NOT on a hit
+  // the rulebook's damage step 2 STOPPED (attack.ts's main hit quotes it): when the
+  // before-W/R sum `amount + bonus - debuff` is 0 or less, nothing past step 2 runs.
+  const activeExposure =
+    ignoreWR || amount + bonus - debuff <= 0
+      ? 0
+      : installedVulnerabilityOf(state, target.active);
+  const wouldDeal = Math.max(0, afterWR + activeExposure - reduction);
   // D258 — RENAMED for attack.ts's reason verbatim.
   const preventedBeforeFlip =
     (!ignoreWR &&
@@ -9600,6 +9714,7 @@ function snipeActive(
     weakness,
     resistance,
     reduction: reduction > 0 ? reduction : undefined,
+    vulnerability: activeExposure > 0 ? activeExposure : undefined, // 🆕🆕🆕 D547 (D149).
     prevented: prevented ? true : undefined,
     survived: clamped === null ? undefined : true,
     dealt,
@@ -11842,13 +11957,16 @@ function devolvedBodyOf(body: InPlayPokemon): InPlayPokemon {
     // §12 — devolving removes Special Conditions, named in the same clause as
     // evolving and retreating.
     conditions: noConditions(),
-    // …and §10's effects of attacks, the same TWELVE `switchInto` and
-    // `clearOnLeavingActive` shed (eleven until D434). Every one of them was
+    // …and §10's effects of attacks, the same ~~TWELVE~~ `switchInto` and
+    // `clearOnLeavingActive` shed (eleven until D434; 🆕🆕🆕 FOURTEEN since D547 —
+    // `attackFlipLockTurn` and `damageVulnerability` below, `devolveEach.test.ts` §7). Every one of them was
     // installed on a body whose top card has just left play.
     retreatBlocked: false,
     retreatLockedTurn: null,
     attackBlock: null,
     attackLockedTurn: null,
+    // 🆕🆕🆕 D547 — the flip-to-attack lock (devolve clear, D547).
+    attackFlipLockTurn: null,
     damageReduction: null,
     noWeaknessTurn: null,
     // 🆕🆕 D434 — the SCHEDULED counter placement, and it is the ONE member of
@@ -11862,6 +11980,8 @@ function devolvedBodyOf(body: InPlayPokemon): InPlayPokemon {
     // reachability argument is not a licence to leave a hole in it.
     scheduledEffect: null,
     attackDamageDebuff: null,
+    // 🆕🆕🆕 D547 — the next-turn vulnerability (devolve clear, D547).
+    damageVulnerability: null,
     installedRecoil: null,
     lockedAttacks: [],
     boostedAttack: null,
@@ -13433,6 +13553,9 @@ export function switchInto(
     retreatLockedTurn: null,
     attackBlock: null,
     attackLockedTurn: null,
+    // 🆕🆕🆕 D547 — the FLIP-TO-ATTACK lock goes with the body, D148's story: the
+    // victim Switches out of it and attacks with no coin (switch clear, D547).
+    attackFlipLockTurn: null,
     damageReduction: null,
     // 🆕🆕 D432 — and the NO-WEAKNESS bar's story here is the reduction's
     // above it verbatim: the window is the OPPONENT's turn, so the only player who
@@ -13456,6 +13579,10 @@ export function switchInto(
     // off the spot and the debuff with it, and so does the opponent dragging it up
     // from the Bench. FIVE durated effects, FIVE reachability stories, one clear.
     attackDamageDebuff: null,
+    // 🆕🆕🆕 D547 — and the NEXT-TURN VULNERABILITY's story here is the debuff's:
+    // the victim's own Switch on the turn in between walks the exposed body out
+    // from under the +50 (switch clear, D547).
+    damageVulnerability: null,
     // D152 — and the armed RECOIL's story here is D147's rather than D149's: the
     // window is the OPPONENT's turn, so the only player who can move the body
     // inside it is the opponent — a Boss's Orders played on that very turn drags

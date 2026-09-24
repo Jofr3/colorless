@@ -928,7 +928,12 @@ describe("the tails-gated self-costs — the family, CLOSED", () => {
       // sv02-049/-206 "Apply Gel" are the CATALOG/local population; which two are
       // legal is unmeasured). Not a `coinFlipGate` at all, and the field brings it
       // no closer.
-      "During your opponent's next turn, if the Defending Pokémon tries to use an attack, your opponent flips a coin. If tails, that attack doesn't happen.",
+      // 🆕🆕🆕 D547 RE-POINTED (D438 — re-point, never delete): the comment above describes
+      // this row's FORMER string, `:176`, which D547 BUILDS (`flipLockAttack`, read at `attack.ts`'s
+      // §8 step-3 seam — still "not a `coinFlipGate`"). The row now names the corpus's
+      // other LIVE unmapped tails witness with the SAME OWNER — the OPPONENT flips —
+      // `censusAttackCorpus.ts:669` (1 legal printing, PHRASE-24, null on every reader):
+      "Your opponent flips a coin for each of their Benched Pokémon. This attack does 80 damage to your opponent's Active Pokémon for each tails. This attack's damage isn't affected by Weakness or Resistance.",
       // TWO consequents on ONE flip (5 printings across 4 sentences, one of them
       // a TRAINER) — an `otherwise` this op deliberately does not have (D142's
       // Squawkabilly refusal, verbatim). ⚠️ THESE ARE THE LIVE UNMAPPED WITNESSES

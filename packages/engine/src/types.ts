@@ -547,6 +547,37 @@ export interface AttackDamageDebuff {
   amount: number;
 }
 
+/** 🆕🆕🆕 §8.5/§11 (D547) — an attack-installed NEXT-TURN VULNERABILITY on one
+    Pokémon, `AttackDamageDebuff`'s sibling record: "During your next turn, the
+    Defending Pokémon takes 50 more damage from attacks (after applying Weakness
+    and Resistance)." (`censusAttackCorpus.ts:150`, 2 legal printings; no card id
+    on this checkout, measured — `damageVulnerability.test.ts` rides declared
+    `d547-*` demonstrators). Written onto the OPPONENT's Active by
+    `exposeDefender`; read through `installedVulnerabilityOf` (continuous.ts).
+
+    ⚠️ `DamageReduction`'s NUMBER WITH THE SIGN FLIPPED, AT THE SAME §8.5 STEP —
+    added AFTER Weakness and Resistance, at every site that subtracts the
+    installed reduction (`attack.ts`'s main hit, `spreadDamage`, `placeSnipe`,
+    `snipeActive`) — but on the other body and in the other window: the stamp is
+    the INSTALLER's own next turn (`state.turn + 2`), so the holder's controller
+    plays the whole turn in between and may retreat, switch or evolve the body out
+    from under it (§10: all three are the VICTIM's counterplay and are PLAYED
+    lines, `attackDamageDebuff`'s story and not the reduction's).
+
+    `{ turn, amount }` like both siblings: one window, one number, merged by
+    `Math.max` on a same-window re-install (the interpreter says why). */
+export interface DamageVulnerability {
+  /** The single turn number this vulnerability is live on — the installing turn
+      + 2, the INSTALLER's own next turn (declaring an attack ends the turn, §5.3,
+      so the turn in between is the holder's). */
+  turn: number;
+  /** HP ADDED to every attack's damage to this Pokémon AFTER Weakness and
+      Resistance — the printed parenthetical. On a ×2 Weakness body the two
+      placements differ: a 60 hit plus 50 is `60 × 2 + 50 = 170` here and would
+      be `(60 + 50) × 2 = 220` pre-W/R (driven, `damageVulnerability.test.ts`). */
+  amount: number;
+}
+
 /** §9/§11 (D152, WIDENED D456) — an attack-installed REACTIVE RECOIL on one
     Pokémon, with the printed DURATION baked in as a turn STAMP exactly as
     `AttackBlock`, `DamageReduction` and `AttackDamageDebuff` above bake theirs.
@@ -1162,6 +1193,38 @@ export interface InPlayPokemon {
       all leave the window with nothing to bite. That is the printed reading and
       not a leniency: §10 sheds the effects of ATTACKS, and this is one. */
   attackLockedTurn: number | null;
+  /** 🆕🆕🆕 §8/§11 (D547) — the turn on which an attack-installed FLIP-TO-ATTACK
+      LOCK is live on this Pokémon (the installing turn + 1 — the Defending
+      Pokémon's controller's own next turn), or `null` when none has been
+      installed: "During your opponent's next turn, if the Defending Pokémon tries
+      to use an attack, your opponent flips a coin. If tails, that attack doesn't
+      happen." (`censusAttackCorpus.ts:176`, 2 legal printings). Read through
+      `attackFlipLocked` (continuous.ts), never by touching this field.
+
+      ⚠️ A SEPARATE FIELD FROM `attackLockedTurn` ONE LINE UP, THOUGH IT IS THE SAME
+      NUMBER ON THE SAME BODY, BECAUSE IT ANSWERS A DIFFERENT QUESTION AT A
+      DIFFERENT SITE. `attackLockedTurn` makes the declaration ILLEGAL and is read
+      by the §8 gate AND by two payability projections (`redactedAttacksOf`,
+      GameHud) — a greyed button. This lock leaves the declaration LEGAL: the
+      attack is declared, the locked player flips at `attack.ts`'s §8 step-3 seam,
+      and on tails "that attack doesn't happen" and the turn ends. Folded into
+      `attackLocked`, it would grey a button the player is entitled to press; so
+      NO projection reads this field and `redact.ts`/`packages/schema`/GameHud take
+      no byte (pinned: `attackFlipLock.test.ts`).
+
+      🛑 REQUIRED, NOT OPTIONAL, AND IT BUMPS `MATCH_RECORD_VERSION` 30 → 31 —
+      D432's case: a bare stamp has no REST, so a dropped `attackFlipLockTurn?`
+      degrades into the pre-D547 board, where the gate silently never flips. See
+      `MATCH_RECORD_VERSION` (apps/api/src/lobby/match.ts) for the bump and for the
+      optional route refused on D456's test.
+
+      THE §10 CLEARS ARE THE DEFENDER-LOCK's (D148): the window is the locked
+      body's controller's own turn, so RETREAT, a Switch and EVOLVING inside it are
+      all PLAYED lines — the victim's counterplay — and a forced switch or
+      devolution sheds it too. All five literals write it (makeInPlay, `evolveOnto`,
+      `clearOnLeavingActive`, `switchInto`'s benched body, `devolvedBodyOf`); only
+      `makeInPlay` is compiler-forced, and the other four are held by mutants. */
+  attackFlipLockTurn: number | null;
   /** §8.5/§11 (D147) — the attack-installed DAMAGE REDUCTION on this Pokémon
       (see `DamageReduction` above), or `null` when none has been installed. Read
       through `installedReductionOf` (continuous.ts) rather than by touching this
@@ -1325,6 +1388,24 @@ export interface InPlayPokemon {
       swept rather than listed. A Knocked Out holder takes it out of play with the
       rest of the stack, and the promoted body carries nothing. */
   attackDamageDebuff: AttackDamageDebuff | null;
+  /** 🆕🆕🆕 §8.5/§11 (D547) — the attack-installed NEXT-TURN VULNERABILITY on this
+      Pokémon (see `DamageVulnerability` above), or `null` when none has been
+      installed. Read through `installedVulnerabilityOf` (continuous.ts) rather than
+      by touching this field, so no read site can forget the turn comparison.
+
+      🛑 REQUIRED, NOT OPTIONAL — and `MATCH_RECORD_VERSION` 30 → 31 is shared with
+      `attackFlipLockTurn` above. D434's case: the record's two keys arrive
+      TOGETHER, so neither can witness the other's loss, and a dropped
+      `damageVulnerability?` degrades into a board where the printed +50 silently
+      never lands. The optional route is refused on D456's test at
+      `MATCH_RECORD_VERSION` (apps/api/src/lobby/match.ts).
+
+      ⚠️ `state.turn + 2`, THE INSTALLER's OWN NEXT TURN, written onto the
+      OPPONENT's body — so the body's controller plays the WHOLE turn in between,
+      and RETREAT, a Switch and EVOLVING inside it are all PLAYED lines, the
+      victim's counterplay (D148's agency); a forced switch or devolution sheds it
+      too. All five literals write it; only `makeInPlay` is compiler-forced. */
+  damageVulnerability: DamageVulnerability | null;
   /** §9/§11 (D152) — the attack-installed REACTIVE RECOIL on this Pokémon (see
       `InstalledRecoil` above), or `null` when none has been installed. Read
       through `installedRecoilOf` (continuous.ts) rather than by touching this
@@ -1665,6 +1746,9 @@ export function makeInPlay(uid: string, turnPlayed: number): InPlayPokemon {
     // …and no attack of its own has locked it either (D143). Same reading of
     // §10's carry-over rule from the other end as the line above.
     attackLockedTurn: null,
+    // 🆕🆕🆕 …nor armed a FLIP-TO-ATTACK lock on it (D547). The ONE site the
+    // compiler forces for that required field; the other four are held by mutants.
+    attackFlipLockTurn: null,
     // …nor has one locked its RETREAT for its own next turn (D412). This is the
     // ONE site the compiler forces for a new required field — the other three
     // constructors spread an existing body, so a missing §10 clear there is
@@ -1693,6 +1777,9 @@ export function makeInPlay(uid: string, turnPlayed: number): InPlayPokemon {
     // the line above, on the other side of the §8.5 pipeline. Same reading of
     // §10's carry-over rule from the other end as the three lines above.
     attackDamageDebuff: null,
+    // 🆕🆕🆕 …and no attack has made it VULNERABLE for a next turn either (D547).
+    // The compiler forces this line; the four spread literals are held by mutants.
+    damageVulnerability: null,
     // …and no attack has armed a durated recoil on it either (D152) — the
     // reduction's sibling on the §9 side of the pipeline. Same reading of §10's
     // carry-over rule from the other end as the four lines above.
@@ -2586,6 +2673,11 @@ export function evolveOnto(
     // sharpest of the three routes because it costs no Energy and no allowance.
     // Driven end to end on a printed line (Alomomola → fix-mola-stage1).
     attackLockedTurn: null,
+    // 🆕🆕🆕 …and, since D547, the FLIP-TO-ATTACK lock — D148's defender-lock story
+    // verbatim (the window is the locked body's controller's own turn), so evolving
+    // out of it is the victim's played line: the evolved card declares with no coin
+    // (evolve clear, D547).
+    attackFlipLockTurn: null,
     // …and D412's self-installed RETREAT lock, whose story here is the lock's
     // rather than the block's, for the same reason and by the same arithmetic:
     // the window is the HOLDER's own next turn, so evolving out of it is a line
@@ -2627,6 +2719,11 @@ export function evolveOnto(
     // counterplay against an effect they did not choose (D148's agency, on the
     // number instead of the lock).
     attackDamageDebuff: null,
+    // 🆕🆕🆕 …and, since D547, the NEXT-TURN VULNERABILITY — the debuff's story one
+    // line up and for its arithmetic: the window is the INSTALLER's next turn, so
+    // the holder's controller plays the whole turn in between, and evolving the
+    // exposed body on it is a PLAYED line that sheds the +50 (evolve clear, D547).
+    damageVulnerability: null,
     // …and, since D152, the attack-armed RECOIL — the reduction's story two lines
     // up rather than the debuff's, and for the same arithmetic: its window is the
     // OPPONENT's next turn, during which the holder's controller cannot evolve

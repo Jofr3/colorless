@@ -396,6 +396,13 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
         segments.push(plain(modifierText("resistance", event.resistance)));
       }
       if (event.reduction !== undefined) segments.push(plain(` · reduced ${event.reduction}`));
+      // 🆕🆕🆕 D547 — the installed NEXT-TURN VULNERABILITY, at the SAME post-W/R step
+      // as the reduction and printed beside it, in its own crumb and with its own
+      // sign (events.ts `DAMAGE_DEALT.vulnerability`, D149's one-field-per-direction
+      // rule). It names the FACT ("exposed"), not the card, for D438's reason.
+      if (event.vulnerability !== undefined) {
+        segments.push(plain(` · exposed +${event.vulnerability}`));
+      }
       // D159 — THE FLAG HAS EXISTED SINCE 0.58.0 AND NOTHING HAS EVER RENDERED IT.
       // A full prevention is the largest thing that can happen to a damage number
       // and the row said only "dealt 0 damage to <name>", which reads to a player
@@ -688,7 +695,22 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
     // says no "next turn", so unlike the two branches above it does not even have
     // to be checked against whose turn is whose. Rendered under BOTH seats and
     // read before it was chosen (`untilLeavesActiveBar.test.ts`), not assumed.
+    //
+    // 🆕🆕🆕 D547 — AND A FOURTH, `flip`, FOR THE LOCK THAT LEAVES THE DECLARATION
+    // LEGAL ("…if the Defending Pokémon tries to use an attack, your opponent flips a
+    // coin. If tails, that attack doesn't happen.", `censusAttackCorpus.ts:176`). The
+    // bare wording "can't attack next turn" would be FALSE of it (D421) — a player
+    // told that would not press a button that works on heads. Checked FIRST because
+    // the flip installer writes neither `attack` nor `until`. Same seat rule (`seat`
+    // owns the LOCKED body, whose own next turn it is), so "next turn" stays true
+    // under either seat; rendered under both (`attackFlipLock.test.ts`).
     case "ATTACK_LOCKED":
+      if (event.flip === true) {
+        return row(event.seat, [
+          strong(cardName(state, event.uid)),
+          plain(" must flip a coin to attack next turn — tails, the attack doesn't happen"),
+        ]);
+      }
       return row(event.seat, [
         strong(cardName(state, event.uid)),
         plain(
@@ -758,6 +780,19 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
       return row(event.seat, [
         strong(cardName(state, event.uid)),
         plain(`'s attacks do ${event.amount} less damage next turn`),
+      ]);
+    // 🆕🆕🆕 §8.5/§11 — the attack-installed NEXT-TURN VULNERABILITY (D547). VICTIM
+    // voice by construction, ATTACK_DEBUFF_APPLIED's contract one case up (`seat`
+    // owns the exposed Pokémon). ⚠️ AND THEREFORE NOT "next turn": the printed
+    // window is the INSTALLER's next turn, which from the victim's chair is "your
+    // opponent's next turn" — the victim's own next turn is the one it is NOT live
+    // on, so "next turn" here would be false in the direction that costs a player
+    // the retreat that sheds it (D421; D434's victim-voiced "your" read the same
+    // way). The verb keeps the printed shape minus its parenthetical.
+    case "DAMAGE_VULNERABILITY_APPLIED":
+      return row(event.seat, [
+        strong(cardName(state, event.uid)),
+        plain(` takes ${event.amount} more damage from attacks during your opponent's next turn`),
       ]);
     // 🆕🆕 §13 (D434) — the attack SCHEDULED a counter placement on the DEFENDING
     // Pokémon. PASSIVE/system-free but filed under `event.seat`, which owns the
@@ -1034,6 +1069,15 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
         plain(" is Confused — flip: "),
         strong(event.result),
       ]);
+    // 🆕🆕🆕 D547 — the FLIP-TO-ATTACK lock's coin, CONFUSION_CHECK's shape: the
+    // declaring seat's voice (they flip), the face in bold, the CONSEQUENCE left to
+    // the ATTACK_FAILED row that follows a tails.
+    case "ATTACK_FLIP_LOCK_CHECK":
+      return row(event.seat, [
+        strong(cardName(state, event.uid)),
+        plain(" is under a flip lock — flip: "),
+        strong(event.result),
+      ]);
     case "ATTACK_FAILED":
       // Four reasons: "confusion" is §12's tails (the self-damage follows as
       // its own row — 🆕🆕 D501: this comment said "the 30 self-damage" until the
@@ -1064,7 +1108,13 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
               ? "'s attack did nothing — the coin flip missed"
               : event.reason === "preDamage"
                 ? "'s attack did nothing — it had no Pokémon Tool to discard"
-                : "'s attack did nothing — its condition was not met",
+                : // 🆕🆕🆕 D547 — an EXPLICIT arm for "flipLock", D429's lesson: the
+                  // default below would claim a CONDITION that the printed sentence
+                  // does not have. The printed consequent is "that attack doesn't
+                  // happen", and it is PRECEDED by its own coin row.
+                  event.reason === "flipLock"
+                  ? "'s attack didn't happen — the flip lock's coin was tails"
+                  : "'s attack did nothing — its condition was not met",
         ),
       ]);
     case "HEALED":

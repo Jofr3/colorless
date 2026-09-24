@@ -26,7 +26,9 @@ import {
 //
 // `censusAttackCorpus.ts` **FILE LINE 401** — *"Look at the top card of your
 // opponent's deck. You may have your opponent shuffle their deck."* — **1 sentence
-// / 1 legal printing** (Inkay `sv06.5-033`, residue class SUBST-16 at SUBMAX=12).
+// / 1 legal printing** (Inkay `sv06.5-033`, residue class SUBST-16 at SUBMAX=12 BEFORE
+// D534 built it — 🆕🆕🆕 D547: a stale label now, not a live class membership; SUBST-16
+// holds `:149` and `:169` after D547 built `:150`).
 // No catalog id on this checkout, so the demonstrator is FILE-LOCAL and DECLARED
 // (D425): `d534-inkay` below carries the printed bytes and nothing else of the card.
 //
@@ -485,7 +487,7 @@ describe("D534 §3 — the degenerate boards and the constructed ops", () => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-describe("D534 §4 — the record: an optional widening, `MATCH_RECORD_VERSION` HELD at 30", () => {
+describe("D534 §4 — the record: an optional widening, `MATCH_RECORD_VERSION` HELD at 30 (🆕🆕🆕 held at THIS slice; 31 since D547)", () => {
   it("🛑 the parked state round-trips through JSON BYTE-EQUAL, keeps `whose` in `cont.pendingOp.otherwise`, and resumes from its bytes to the same result", () => {
     const { state: parked } = attack(board(59));
     const bytes = JSON.stringify(parked);
@@ -517,8 +519,9 @@ describe("D534 §4 — the record: an optional widening, `MATCH_RECORD_VERSION` 
     expect(run.state.players.p1.deck).not.toEqual(state.players.p1.deck);
   });
 
-  it("🛑 `MATCH_RECORD_VERSION` is 30 in `apps/api` — a widening, not a new shape", () => {
-    expect(raw("/lobby/match.ts")).toContain("export const MATCH_RECORD_VERSION = 30;");
+  it("🛑 `MATCH_RECORD_VERSION` is 31 (🆕🆕🆕 D547 stepped it 30 → 31; this slice held it) in `apps/api` — a widening, not a new shape", () => {
+    // 🆕🆕🆕 D547 — the constant this slice held is now 31: D547 added two REQUIRED `InPlayPokemon` fields (apps/api match.ts).
+    expect(raw("/lobby/match.ts")).toContain("export const MATCH_RECORD_VERSION = 31;");
   });
 });
 
@@ -537,7 +540,7 @@ describe("D534 §5 — §11 and the describer: a deck is not a body, and no bran
 // ─────────────────────────────────────────────────────────────────────────────
 describe("D534 §6 — the version steps and the bytes this suite drove are the bytes that shipped", () => {
   it("engineVersion and `manifest.version` agree, and the bump is owed for BEHAVIOUR", () => {
-    expect(engineVersion).toBe("0.431.0");
+    expect(engineVersion).toBe("0.432.0");
     expect(manifest.version).toBe(engineVersion);
     expect(raw("/index.ts")).toContain("engineVersion 0.418.0 → **0.419.0** (D534");
   });

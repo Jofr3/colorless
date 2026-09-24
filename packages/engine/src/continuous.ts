@@ -1716,6 +1716,29 @@ export function installedReductionOf(state: GameState, pokemon: InPlayPokemon): 
   return installed === null || installed.turn !== state.turn ? 0 : installed.amount;
 }
 
+/** 🆕🆕🆕 §8.5/§11 (D547) — the attack-installed NEXT-TURN VULNERABILITY live on
+    `pokemon` right now, or 0: "During your next turn, the Defending Pokémon takes
+    50 more damage from attacks (after applying Weakness and Resistance)."
+    (`censusAttackCorpus.ts:150`, 2 legal printings). `installedReductionOf`'s twin
+    one function up, with the sign flipped by the CALLER: the four damage sites
+    that subtract that number ADD this one at the same post-W/R step (`attack.ts`'s
+    main hit, `spreadDamage`, `placeSnipe`, `snipeActive`) and report it as
+    `DAMAGE_DEALT.vulnerability` — never as a negative `reduction` (D149's rule:
+    one field per step AND direction).
+
+    ⚠️ ON-TARGET, SO SUPPRESSIBLE: it is an effect ON the damaged Pokémon, so the
+    two suppression paths that drop the installed reduction drop this too (the main
+    hit's `suppressTargetEffects`, the snipe arms' `ignoreWR` "not affected by any
+    effects on that Pokémon") — docs/decisions.md D547, with its reversal condition.
+    Kept out of `passivesOf` for `installedReductionOf`'s two reasons (an
+    installation is not an Ability, and is immune to §9). */
+export function installedVulnerabilityOf(state: GameState, pokemon: InPlayPokemon): number {
+  // No defensive `=== undefined` arm (D124): the field is REQUIRED and a v30
+  // record is retired by MATCH_RECORD_VERSION 31 rather than read benignly here.
+  const installed = pokemon.damageVulnerability;
+  return installed === null || installed.turn !== state.turn ? 0 : installed.amount;
+}
+
 /** 🆕🆕 §8.5/§11 (D432) — does `pokemon` currently carry an attack-installed
     *"During your opponent's next turn, this Pokémon has no Weakness."* bar? The
     ONE read of `InPlayPokemon.noWeaknessTurn`, and `installedReductionOf`'s
@@ -1927,6 +1950,30 @@ export function attackLocked(state: GameState, pokemon: InPlayPokemon): boolean 
   // up: the field is REQUIRED and an older record is retired by
   // MATCH_RECORD_VERSION rather than read benignly here.
   return pokemon.attackLockedTurn === state.turn;
+}
+
+/** 🆕🆕🆕 §8/§11 (D547) — is `pokemon` under an attack-installed FLIP-TO-ATTACK
+    LOCK right now ("During your opponent's next turn, if the Defending Pokémon
+    tries to use an attack, your opponent flips a coin. If tails, that attack
+    doesn't happen.", `censusAttackCorpus.ts:176`, 2 legal printings)? The ONE read
+    of `InPlayPokemon.attackFlipLockTurn`, `attackLocked`'s shape one function up.
+
+    🛑 A SEPARATE READER, AND IT MUST NOT BE FOLDED INTO `attackLocked`. That
+    function answers "may this body DECLARE?", and three sites ask it: `attack.ts`'s
+    §8 gate (a REJECTION), `redactedAttacksOf` (redact.ts — every row's `playable`)
+    and GameHud (the greyed buttons). This lock answers a different question —
+    "must the declared attack survive a coin?" — and the answer to the first stays
+    YES under it: the attack is declared, the locked player flips at `attack.ts`'s
+    §8 step-3 seam, and only a tails stops it (and ends the turn). An `||` into
+    `attackLocked` would grey a button the player is entitled to press and turn a
+    coin into a certainty. So this has ONE caller, `attack.ts`, and redact.ts,
+    `packages/schema` and GameHud take no byte (`attackFlipLock.test.ts` pins
+    `playable` true while only this lock is live). Immune to §9 like its sibling: it
+    reads an attack INSTALLATION, not `passivesOf`. */
+export function attackFlipLocked(state: GameState, pokemon: InPlayPokemon): boolean {
+  // No defensive `=== undefined` arm (D124): the field is REQUIRED and a v30
+  // record is retired by MATCH_RECORD_VERSION 31 rather than read benignly here.
+  return pokemon.attackFlipLockTurn === state.turn;
 }
 
 /** §11 (D412) — is `pokemon` held in place right now by an ATTACK EFFECT, from

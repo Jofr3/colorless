@@ -277,6 +277,11 @@ describe("placement", () => {
       // way: `attackLocked` compares the stamp to `state.turn`, so `null` is
       // "never locked" rather than "locked on turn 0".
       attackLockedTurn: null,
+      // 🆕🆕🆕 …and no FLIP-TO-ATTACK lock (D547), read the same way: `attackFlipLocked`
+      // compares the stamp to `state.turn`, so `null` is "never locked". This exact
+      // `toEqual` is one of the places a v30 body (the key ABSENT) differs from a
+      // fresh v31 one — the distinction `MATCH_RECORD_VERSION` 30 -> 31 enforces.
+      attackFlipLockTurn: null,
       // …and no durated damage reduction (D147), read the same way again:
       // `installedReductionOf` compares the stamp to `state.turn` and returns 0
       // for a `null`, so a fresh body reduces nothing rather than reducing on
@@ -304,6 +309,10 @@ describe("placement", () => {
       // to enforce at the storage boundary.
       scheduledEffect: null,
       attackDamageDebuff: null,
+      // 🆕🆕🆕 …and no NEXT-TURN VULNERABILITY (D547): `installedVulnerabilityOf` asks
+      // `=== null` and then dereferences `.turn`, so a body reaching this line with the
+      // key ABSENT would THROW at the next hit — why it is `… | null` and required.
+      damageVulnerability: null,
       // …and no ARMED recoil (D152), read the same way a fifth time:
       // `installedRecoilOf` compares the stamp to `state.turn`, so a fresh body
       // retaliates for nothing rather than retaliating on turn 0.

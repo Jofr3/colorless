@@ -658,6 +658,9 @@ function clearOnLeavingActive(pokemon: InPlayPokemon): InPlayPokemon {
     retreatLockedTurn: null,
     attackBlock: null,
     attackLockedTurn: null,
+    // 🆕🆕🆕 D547 — the FLIP-TO-ATTACK lock, the defender lock's story one line up:
+    // the victim retreats out of it on the very turn it is live (retreat clear, D547).
+    attackFlipLockTurn: null,
     // D147 — the durated damage reduction, whose story here is D142's block's:
     // the RETREAT half of this path is unreachable inside the window (the window
     // is the opponent's turn, and the holder's controller cannot retreat on it),
@@ -685,6 +688,11 @@ function clearOnLeavingActive(pokemon: InPlayPokemon): InPlayPokemon {
     // one). FIVE durated effects on one clear, and this is the fifth distinct
     // reachability story — which is why the clear-set is SWEPT and not listed.
     attackDamageDebuff: null,
+    // 🆕🆕🆕 D547 — the NEXT-TURN VULNERABILITY, whose story here is the DEBUFF's
+    // one line up: its window is the INSTALLER's next turn, so the holder's own
+    // retreat on the turn in between is a PLAYED line that sheds the +50 (retreat
+    // clear, D547) — and so is the forced half (`switchInto`).
+    damageVulnerability: null,
     // D152 — the armed recoil, whose story here is the REDUCTION's: the window is
     // the opponent's turn, so the RETREAT half is unreachable inside it (the
     // holder's controller cannot retreat on someone else's turn) and the FORCED

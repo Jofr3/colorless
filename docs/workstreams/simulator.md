@@ -9456,7 +9456,7 @@ Trainer (`effect`) and **0** on any Ability — **28 in all**.
 |---|---|---|
 | `Flip a coin. If tails, this attack does nothing.` | **11** | ✅ ALREADY SIMULATED, by the OTHER reader — `deriveAttackCoinFlip`'s `cancelOnTails` (D126), in front of §8.5 because it retracts damage |
 | `Flip a coin. If tails, during your next turn, this Pokémon can't attack.` | **5** | ✅ **`FLIP_TAILS_SELF_CANT_ATTACK` → `coinFlipGate { onTails } → preventAttack` (D144)** |
-| `During your opponent's next turn, if the Defending Pokémon tries to use an attack, your opponent flips a coin. If tails, that attack doesn't happen.` (D544: re-spelled off `censusAttackCorpus.ts:176`; it was quoted as ~~`tries to attack`~~) | 4 (this table's local-D1 count; **2** LEGAL) | ❌ a DURATED gate making the OPPONENT flip on their own turn — not a `coinFlipGate` at all (CATALOG/local population, NOT the legal pair — which two are legal is unmeasured: Dolliv `sv01-022`/`-200` "Apply Oil", Quaxly `sv02-049`/`-206` "Apply Gel") |
+| `During your opponent's next turn, if the Defending Pokémon tries to use an attack, your opponent flips a coin. If tails, that attack doesn't happen.` (D544: re-spelled off `censusAttackCorpus.ts:176`; it was quoted as ~~`tries to attack`~~) | 4 (this table's local-D1 count; **2** LEGAL) | ✅ **BUILT, D547** — a NEW durated op (`flipLockAttack`), not this table's `coinFlipGate`; the refusal below stays true of THIS op: ❌ a DURATED gate making the OPPONENT flip on their own turn — not a `coinFlipGate` at all (CATALOG/local population, NOT the legal pair — which two are legal is unmeasured: Dolliv `sv01-022`/`-200` "Apply Oil", Quaxly `sv02-049`/`-206` "Apply Gel") |
 | `Flip a coin. If tails, discard all Energy from this Pokémon.` | **2** | ❌ LOUD — **and its consequent op EXISTS** (`SELF_DISCARD_ALL` → `discardEnergy { from: "yourActive", count: "all" }`). Pikachu ex `sv02-063` "Dynamic Bolt" (idx 1, 220), Beartic `sv03-054` "Frost Purge" (idx 1, 170). **ONE regex and ONE arm** |
 | `Flip a coin. If tails, this Pokémon also does 60 damage to itself.` | **1** | ❌ LOUD — **consequent op EXISTS too** (`SELF_DAMAGE` → `damageSelf`). Oinkologne `sv03-183` "High-Impact Kick" (idx 1, 160) — a THIRD Oinkologne, a different card from `sv01-157`. **ONE regex and ONE arm** |
 | `Flip a coin. If heads, this attack does 140 more damage. If tails, during your next turn, this Pokémon can't attack.` | 1 | ❌ TWO consequents on ONE flip (Dragonite ex `sv03-159` "Mighty Meteor") |
@@ -10760,7 +10760,7 @@ census paid:
 | `Discard an Energy from this Pokémon. During your opponent's next turn, the Defending Pokémon can't attack.` | **3** | attack | ✅ `discardEnergy` + `preventAttack { target: "defender" }` — Eiscue ex `sv03-042`/`-210`/`-222` idx 0 |
 | `If the Defending Pokémon is a Basic Pokémon, it can't attack during your opponent's next turn.` | **1** | attack | ✅ `conditionGate` → the same op — Houndoom ex `sv03-134` idx 0 |
 | `Choose 1 of your opponent's Active Pokémon's attacks. During your opponent's next turn, that Pokémon can't use that attack.` | **2** | attack | ❌ **NEW — on no earlier list or census.** Medicham `sv01-111` "Acu-Punch-Ture" idx 0, Oranguru `sv02-094` "Plotter's Command" idx 0. The OPPONENT-side twin of the per-attack lock, and it needs a **PARK** (choosing which attack) on top of the attack address |
-| `During your opponent's next turn, if the Defending Pokémon tries to use an attack, your opponent flips a coin. If tails, that attack doesn't happen.` (D544: re-spelled off `censusAttackCorpus.ts:176`; it was quoted as ~~`tries to attack`~~) | 4 (this table's local-D1 count; **2** LEGAL) | attack | ❌ a durated gate making the OPPONENT flip on their OWN turn (CATALOG/local population, NOT the legal pair — which two are legal is unmeasured: Dolliv `sv01-022`/`-200`, Quaxly `sv02-049`/`-206`) — §D145 already refused these on the face question, and they are refused here on the DECIDER |
+| `During your opponent's next turn, if the Defending Pokémon tries to use an attack, your opponent flips a coin. If tails, that attack doesn't happen.` (D544: re-spelled off `censusAttackCorpus.ts:176`; it was quoted as ~~`tries to attack`~~) | 4 (this table's local-D1 count; **2** LEGAL) | attack | ✅ **BUILT, D547** — a NEW durated op (`flipLockAttack`), not this table's `coinFlipGate`; the refusal below stays true of THIS op: ❌ a durated gate making the OPPONENT flip on their OWN turn (CATALOG/local population, NOT the legal pair — which two are legal is unmeasured: Dolliv `sv01-022`/`-200`, Quaxly `sv02-049`/`-206`) — §D145 already refused these on the face question, and they are refused here on the DECIDER |
 | `…is now Paralyzed.` | 25 | attack | ✅ §12, simulated since 0.x — a Special Condition, not this mechanism (no stamp, a Checkup tick, a status chip) |
 | `During this turn, your Pokémon can't attack.` | 3 | **Trainer** | ❌ Geeta `sv03-188`/`-218`/`-226` — a different turn, the actor's OWN board, and not an attack effect |
 
@@ -27808,3 +27808,50 @@ two hundred decisions. **D508's rule at its second address.** Both copies now ag
   stands still at 3/4 and is still a blocker**, so the D473-era pricing that put this row in *"the
   `BLOCKED-VARIABLE-MAX` neighbourhood"* was about proximity and not membership.
 - `OPAQUE` **57/82 → 56/80** at SUBMAX=4; `MULTI-2` **7/10 → 6/8**; **no verdict flipped**.
+
+## D547 — the flip-to-attack lock and the next-turn vulnerability: two new ops on two new required fields (engine 0.432.0, `MATCH_RECORD_VERSION` 31)
+
+### (a) What was built
+`censusAttackCorpus.ts` **file lines 176 and 150** (leading count column `2` each), **2 rows / 4 legal
+printings**, both null on every reader at HEAD. No catalog, registry or fixture id carries either
+sentence (measured); both suites ride file-local declared `d547-*` demonstrators, and the real cards
+are UNMEASURED.
+
+* *"During your opponent's next turn, if the Defending Pokémon tries to use an attack, your opponent
+  flips a coin. If tails, that attack doesn't happen."* (TWO sentences, one row) → `flipLockAttack`,
+  a NEW op (D131's widen-don't-add test, run as D154 ran it, refuses a `preventAttack` rider), writing
+  the required `InPlayPokemon.attackFlipLockTurn` (`turn + 1`) and read by a NEW `attackFlipLocked`
+  at `attack.ts`'s §8 step-3 seam. It is **not** folded into `attackLocked`: the declaration stays
+  LEGAL, so `redactedAttacksOf`'s `playable` and GameHud take no byte. The resume point's *"real radius
+  includes `redact.ts` and the HUD"* is WITHDRAWN.
+* *"During your next turn, the Defending Pokémon takes 50 more damage from attacks (after applying
+  Weakness and Resistance)."* → `exposeDefender { amount }`, writing the required
+  `InPlayPokemon.damageVulnerability: {turn: T+2, amount}` on the opponent's Active; a NEW
+  `installedVulnerabilityOf` is ADDED after W/R at all four sites that subtract the installed
+  reduction, reported as `DAMAGE_DEALT.vulnerability` (" · exposed +N").
+
+### (b) Three rulings, each with its reversal condition (docs/decisions.md D547)
+1. **The lock flips BEFORE Confusion — the official rulebook's order.** Its *"Full details of
+   attacking"* (pokemon.com `par_rulebook_en.pdf` p. 20) applies B) *"any effects that might alter
+   or cancel the attack"* — its printed example is this sentence family — before C) the Confusion
+   check. A lock tails ends the attack with no Confusion coin and no Confusion counters; only a
+   lock heads reaches the Confusion check. ~~Confusion flips first (UNRULED in-tree; `ptcg-rules.md`
+   §8 is silent)~~ — the draft's reading, WITHDRAWN at review before commit: the draft's own
+   reversal condition (*"an official rulebook step … that places effects that alter or cancel the
+   attack before the Confusion check"*) was MET by step B. `ptcg-rules.md` §8 step 3 now names both.
+2. **The +50 lands on any computed hit**, even one Resistance took to 0 — and there is no hit when
+   the rulebook's damage step 2 STOPS it (*"Stop if the base damage is 0"*, before Weakness): the
+   term is gated on the before-W/R number at all four sites.
+3. **It is ON-TARGET**: `suppressTargetEffects` and `ignoreWR` drop it with the reduction.
+The vulnerability is read per hit — D546's named DOUBLE-PAY shape ((6)⑽) applies to it too.
+
+### (c) The record
+`MATCH_RECORD_VERSION` 30 → 31: D432 (bare stamp, no rest) and D434 (keys that arrive together). The
+optional routes are refused on D456's test — detectable in the bytes but NOT inert on the board — the
+FIFTH position at `apps/api/src/lobby/match.ts`. A v30 body silently never flips and throws on every
+hit (driven in both suites).
+
+### (d) Carried debt
+`:664` (the `PlayerSide`/"PlayerState" stale prose at `effects.ts`/`index.ts` and three tests, and
+Cresselia's "90 more damage", which prints 80 — it now owes its OWN future bump, since this slice paid
+30 → 31 without it); SUBST-16's `:149` and `:169`; `:669` as the best unbumped fallback (1p/L).

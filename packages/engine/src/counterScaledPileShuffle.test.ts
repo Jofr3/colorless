@@ -942,7 +942,7 @@ describe("D538 §6 — a head noun the tail cannot be about falls to the LOUD sk
 // §7 — THE PERSISTED BYTES (D450's two doors), MEASURED IN THREE DIRECTIONS.
 // ─────────────────────────────────────────────────────────────────────────────
 
-describe("D538 §7 — two literals GROW the serialized alphabet and `MATCH_RECORD_VERSION` still holds at 30", () => {
+describe("D538 §7 — two literals GROW the serialized alphabet and `MATCH_RECORD_VERSION` still holds at 30 (🆕🆕🆕 held at THIS slice; 31 since D547)", () => {
   it("🛑 THE FIRST DOOR, MEASURED: the rider rides `phase.cont.pendingOp`", () => {
     // 🛑 **DO NOT RE-DERIVE *"the type is unpersisted"*.** `damageChosen` PARKS, so the
     // rider's bytes genuinely reach a stored match record.
@@ -1025,13 +1025,14 @@ describe("D538 §7 — two literals GROW the serialized alphabet and `MATCH_RECO
     expect(done.players.p1.discard).toHaveLength(5);
   });
 
-  it("🛑 `MATCH_RECORD_VERSION` is 30 and STAYS 30 — read off the raw source, not retyped", () => {
-    expect(raw("/match.ts")).toContain("MATCH_RECORD_VERSION = 30");
+  it("🛑 `MATCH_RECORD_VERSION` is 31 (🆕🆕🆕 D547 stepped it 30 → 31; this slice held it) — read off the raw source, not retyped", () => {
+    // 🆕🆕🆕 D547 — the constant this slice held is now 31: D547 added two REQUIRED `InPlayPokemon` fields (apps/api match.ts).
+    expect(raw("/match.ts")).toContain("MATCH_RECORD_VERSION = 31");
   });
 
-  it("🛑 the engine version stepped to 0.431.0 in BOTH places", () => {
-    expect(engineVersion).toBe("0.431.0");
-    expect(manifest.version).toBe("0.431.0");
+  it("🛑 the engine version stepped to 0.432.0 in BOTH places", () => {
+    expect(engineVersion).toBe("0.432.0");
+    expect(manifest.version).toBe("0.432.0");
   });
 });
 

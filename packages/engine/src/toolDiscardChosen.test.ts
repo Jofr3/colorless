@@ -734,7 +734,7 @@ describe("§6 — the wire carries the prompt, scope included", () => {
 // §7 — PERSISTENCE, over the SERIALIZED bytes, both D450 directions.
 // ─────────────────────────────────────────────────────────────────────────────
 
-describe("🛑 §7 — `MATCH_RECORD_VERSION` HOLDS AT 30, driven rather than argued", () => {
+describe("🛑 §7 — `MATCH_RECORD_VERSION` HOLDS AT 30 (🆕🆕🆕 held at THIS slice; 31 since D547), driven rather than argued", () => {
   it("🛑 `\"cont\" in phase` IS TRUE — a record really holds the new inhabitant", () => {
     const parked = attack(ready(), STRIP).state;
     expect("cont" in parked.phase).toBe(true);
@@ -770,8 +770,9 @@ describe("🛑 §7 — `MATCH_RECORD_VERSION` HOLDS AT 30, driven rather than ar
     expect(JSON.stringify(quiet)).not.toContain("discardTools");
   });
 
-  it("🛑 `MATCH_RECORD_VERSION` is 30 — read off the RAW source, not retyped", () => {
-    expect(raw("/match.ts")).toContain("export const MATCH_RECORD_VERSION = 30;");
+  it("🛑 `MATCH_RECORD_VERSION` is 31 (🆕🆕🆕 D547 stepped it 30 → 31; this slice held it) — read off the RAW source, not retyped", () => {
+    // 🆕🆕🆕 D547 — the constant this slice held is now 31: D547 added two REQUIRED `InPlayPokemon` fields (apps/api match.ts).
+    expect(raw("/match.ts")).toContain("export const MATCH_RECORD_VERSION = 31;");
   });
 
   it("the op is PURE — the parked board is not mutated by resolving it", () => {
@@ -822,7 +823,7 @@ describe("§8 — the population, the log row, and the version", () => {
   });
 
   it("engineVersion", () => {
-    expect(engineVersion).toBe("0.431.0");
+    expect(engineVersion).toBe("0.432.0");
   });
 
   it("the interpreter keeps the op OUT of `recordSlotOf`, and says so", () => {

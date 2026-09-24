@@ -752,7 +752,13 @@ function loaded(seed: number): { before: GameState; turn: number } {
           retreatLockedTurn: turn + 2,
           attackBlock: { turn: turn + 1, effects: true },
           attackLockedTurn: turn + 1,
+          // 🆕🆕🆕 D547 — the FLIP-TO-ATTACK lock's stamp, set LIVE by surgery like the
+          // hard lock one line up (a devolve arrives on the installer's turn, so no
+          // legal sequence reaches this literal with it live).
+          attackFlipLockTurn: turn + 1,
           damageReduction: { turn: turn + 1, amount: 30 },
+          // 🆕🆕🆕 D547 — …and the NEXT-TURN VULNERABILITY record, likewise by surgery.
+          damageVulnerability: { turn: turn + 2, amount: 50 },
           noWeaknessTurn: turn + 1,
           // 🆕🆕 D434 — the SCHEDULED counter placement, added when the field joined
           // the durated set. It is UNREACHABLE on this literal by any legal sequence
@@ -773,7 +779,10 @@ function loaded(seed: number): { before: GameState; turn: number } {
 }
 
 describe("🛑 §7 — the carry-over set, decided field by field", () => {
-  it("the TWELVE §10/§11 bars are all cleared — the set `switchInto` clears", () => {
+  // 🆕🆕🆕 D547 — TWELVE → FOURTEEN, MEASURED: both new fields are §10-cleared on this
+  // literal (`devolvedBodyOf`) exactly as on the other four, so both count — the
+  // conditions object plus thirteen durated fields below.
+  it("the FOURTEEN §10/§11 bars are all cleared — the set `switchInto` clears", () => {
     const { before } = loaded(13);
     const { state } = strike(before, "p1", CALL);
     const after = body(state.players.p2.active);
@@ -782,7 +791,9 @@ describe("🛑 §7 — the carry-over set, decided field by field", () => {
     expect(after.retreatLockedTurn).toBeNull();
     expect(after.attackBlock).toBeNull();
     expect(after.attackLockedTurn).toBeNull();
+    expect(after.attackFlipLockTurn).toBeNull(); // 🆕🆕🆕 D547 — twelve became thirteen…
     expect(after.damageReduction).toBeNull();
+    expect(after.damageVulnerability).toBeNull(); // 🆕🆕🆕 D547 — …and fourteen
     expect(after.noWeaknessTurn).toBeNull();
     expect(after.scheduledEffect).toBeNull(); // 🆕🆕 D434 — eleven bars became twelve
     expect(after.attackDamageDebuff).toBeNull();
@@ -1112,7 +1123,7 @@ describe("§11 — the version prediction is DRIVEN, not asserted", () => {
   });
 
   it("the engine version moved with the behaviour", () => {
-    expect(engineVersion).toBe("0.431.0");
+    expect(engineVersion).toBe("0.432.0");
   });
 });
 

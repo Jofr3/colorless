@@ -838,7 +838,7 @@ describe("D537 §6 — the shield is asked about the COMPLEMENT and about nothin
 // §7 — THE PERSISTED BYTES (D450's doors), MEASURED IN BOTH DIRECTIONS.
 // ─────────────────────────────────────────────────────────────────────────────
 
-describe("D537 §7 — the parked op IS persisted, and `MATCH_RECORD_VERSION` still holds at 30", () => {
+describe("D537 §7 — the parked op IS persisted, and `MATCH_RECORD_VERSION` still holds at 30 (🆕🆕🆕 held at THIS slice; 31 since D547)", () => {
   it("🛑 THE FIRST DOOR, MEASURED: `phase.cont.pendingOp` carries the op as a LITERAL", () => {
     // 🛑 **DO NOT RE-DERIVE *\"it never parks, so it is not persisted\"*.** This op parks,
     // so the serialized alphabet GROWS: `{\"op\":\"returnBenchedRest\",\"keep\":3}` is a byte
@@ -876,13 +876,14 @@ describe("D537 §7 — the parked op IS persisted, and `MATCH_RECORD_VERSION` st
     expect(benchIds(done, "p2")).toEqual([B1, B2, B3]);
   });
 
-  it("🛑 `MATCH_RECORD_VERSION` is 30 and STAYS 30 — read off the raw source, not retyped", () => {
-    expect(raw("/match.ts")).toContain("MATCH_RECORD_VERSION = 30");
+  it("🛑 `MATCH_RECORD_VERSION` is 31 (🆕🆕🆕 D547 stepped it 30 → 31; this slice held it) — read off the raw source, not retyped", () => {
+    // 🆕🆕🆕 D547 — the constant this slice held is now 31: D547 added two REQUIRED `InPlayPokemon` fields (apps/api match.ts).
+    expect(raw("/match.ts")).toContain("MATCH_RECORD_VERSION = 31");
   });
 
   it("🛑 the engine version is the CURRENT one in BOTH places (🆕 D538 — 0.422.0 → 0.423.0; the title is de-valued so the version tax is one edit per site, not two)", () => {
-    expect(engineVersion).toBe("0.431.0");
-    expect(manifest.version).toBe("0.431.0");
+    expect(engineVersion).toBe("0.432.0");
+    expect(manifest.version).toBe("0.432.0");
   });
 });
 

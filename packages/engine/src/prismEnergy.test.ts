@@ -398,11 +398,17 @@ describe("D300 §5 — the persisted shape does NOT move, and that is measured",
       [
         "attackBlock",
         "attackDamageDebuff",
+        // 🆕🆕🆕 D547 — the FLIP-TO-ATTACK lock's stamp and the NEXT-TURN VULNERABILITY
+        // record JOIN THE LIST (MATCH_RECORD_VERSION 30 -> 31). The pin is on the HEAD's
+        // key set, so it moves whenever anybody adds a key; what it asserts is that THIS
+        // suite's slice added none.
+        "attackFlipLockTurn",
         "attackLockedTurn",
         "boostedAttack",
         "conditions",
         "damage",
         "damageReduction",
+        "damageVulnerability", // 🆕🆕🆕 D547 (30 -> 31)
         "energy",
         // 🆕🆕 D386 — `healedTurn` JOINS THE LIST (a second per-turn stamp on this
         // structure, and `MATCH_RECORD_VERSION` 22 → 23 with it). THIS slice still wrote

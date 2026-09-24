@@ -3,7 +3,9 @@
 > Update this at the **end of every session**: bump the status table, append a
 > session-log entry, and rewrite the **Resume point** to the next concrete action.
 
-**Last updated:** 2026-09-24 — build session #486 (**P3-M5 — D546, *the ALL-ATTACKS next-turn buff — a NULL address on the op and the record that already owned the window, a fold at the one snipe site that honours the Active's pre-W/R bonus, and a value widening that holds the version.*** Built `censusAttackCorpus.ts` **file lines 148 and 76** (leading count column **1** each) — *“During your next turn, attacks used by this Pokémon do 120 more damage to your opponent's Active Pokémon (before applying Weakness and Resistance).”* and the same sentence at 100 behind *“Both Active Pokémon are now Asleep.”* — **2 sentences / 2 legal printings** (OPAQUE at `SUBMAX=12`; UNEXPLAINED + CONTINUOUS at `SUBMAX=4`), claimed WHOLE through ONE new anchor `SELF_EVERY_ATTACK_BOOST` and ONE new arm 24b'' emitting the SHIPPED `boostAttack` with `attack: null` (plus, for `:76`, two shipped `applyStatus` ops, defender then self). ONE op, ONE installer, ONE record: `BoostedAttack.attackIndex` widens its VALUE to `number | null`; ONE new reader `everyAttackBoostOf`, folded at `snipeActive` only (decision + reversal condition in `decisions.md` D546). `MATCH_RECORD_VERSION` **HOLDS at 30** (argued at `match.ts`). Engine **0.430.0 → 0.431.0**. Built in the `lum-wt-d546` worktree while a whole-corpus sweep ran in the main checkout; ~~NOT committed by the builder~~ committed there on `d546-prep` at `bba23024`, then LANDED on `main` by cherry-pick onto the D545 close-out `136e8134` as ONE commit. D545's whole-corpus sweep is PAID exactly at that close-out (`2915 killed · 53 known survivor(s) · 0 GAP(S) · 0 stale · 0 skipped(dirty) · 0 clobber(s) · 0 error(s) · 16666.1s total` over 2,968 rows), so this slice's prediction stands on a MEASURED base. `bun run check` 533 files / 12,541 tests / `CHECK_EXIT=0`; probe `--decision D546` **17 killed · 0 known · 0 GAP · 0 error**; ~~whole-corpus sweep PENDING~~, predicted `2932 killed · 53 known` over 2,985. ✅ **D546 CLOSE-OUT: WHOLE-CORPUS SWEEP GREEN AND EXACTLY AS PREDICTED — ON THE FIRST LAUNCH**, pasted out of the log rather than retyped (D504): `2932 killed · 53 known survivor(s) · 0 GAP(S) · 0 stale · 0 skipped(dirty) · 0 clobber(s) · 0 error(s) · 15386.5s total` — `+17 killed, +0 declared` on D545's `2915 · 53`, the **FOURTEENTH** consecutive exact prediction after the D532 reset (the count stands at **14**) and the **hundred-and-eighth** consecutive run with `0 error(s) · 0 stale · 0 clobber(s)`. Completeness structural: **2,985 unique progress-line ids / 2,985 rows / 0 unmatched**, set-compared against `MUTANTS.map(m => m.id)` both ways; all seventeen `D546-*` rows KILLED (log :2972–:2988, contiguous). The account's launch time (06:42) is right (log mtime `10:59:05.360 − 15386.5 s = 06:42:38.860`, sidecar `06:42:41.696`). 🛑 **THE `setsid` REUSE COUNT STEPS TO THE FIFTY-FIRST** on `tmp/sweep-D546.ppid.txt` — `PID 1500921 / PPID 1 / SID 1500921`, **2.84 s into the run**; the sidecar carries TWO rows again (a stray `bun run dev` row is back), and the `ps`-into-the-log half of the owed launcher fix went unpaid for a THIRTEENTH close-out (`1500921` is nowhere in the log). ⚠️ The 15,386 s is the second fastest of the last five, although D547 was built in the second checkout for roughly the run's first two hours and committed there at 08:32, INSIDE the run's window. No new `conventions.md` section. D547 is BUILT AND PARKED on `d547-prep` at `dcff2ffd` and lands next.)
+**Last updated:** 2026-09-24 — build session #487 (**P3-M5 — D547, *the FLIP-TO-ATTACK lock and the NEXT-TURN vulnerability — two new ops on two new REQUIRED `InPlayPokemon` fields, a coin that leaves the declaration legal, a +50 at every site that subtracts the reduction, and the first `MATCH_RECORD_VERSION` bump since D501.*** Built `censusAttackCorpus.ts` **file lines 176 and 150** (leading count column **2** each) — *“During your opponent's next turn, if the Defending Pokémon tries to use an attack, your opponent flips a coin. If tails, that attack doesn't happen.”* (TWO sentences in one row) and *“During your next turn, the Defending Pokémon takes 50 more damage from attacks (after applying Weakness and Resistance).”* — **2 rows / 4 legal printings**, claimed WHOLE through TWO new anchors and TWO new arms emitting TWO new ops, `flipLockAttack` and `exposeDefender`, writing TWO new REQUIRED fields `attackFlipLockTurn` and `damageVulnerability`. A NEW reader `attackFlipLocked` kept OUT of `attackLocked` (zero redact/schema/HUD bytes; `playable` stays true), flipped at `attack.ts`'s §8 step-3 seam BEFORE Confusion (the official rulebook's order — the draft's *“Confusion first, UNRULED”* was WITHDRAWN at review); a NEW reader `installedVulnerabilityOf` ADDED after W/R at all four reduction sites, and NOT on a hit the rulebook's damage step 2 stops. Three rulings with reversal conditions in `decisions.md` D547. Engine **0.431.0 → 0.432.0**; **`MATCH_RECORD_VERSION` 30 → 31** (the FIFTH position written at `match.ts`). Built in the `lum-wt-d547` worktree while a whole-corpus sweep ran in the main checkout; NOT committed by the builder (parked at `dcff2ffd`, then cherry-picked onto `main` over the D546 close-out and re-verified there). `bun run check` 535 files / 12,614 tests / `CHECK_EXIT=0`; probe 39 killed · 0 known survivor(s) · 0 GAP(S) · 0 stale · 0 skipped(dirty) · 0 clobber(s) · 0 error(s); mutants 2,985 → 3,024; whole-corpus sweep PENDING, predicted `2971 killed · 53 known survivor(s)` over 3,024 on D546's PAID `2932 · 53`, closed in both directions.)
+
+**Last updated (was):** 2026-09-24 — build session #486 (**P3-M5 — D546, *the ALL-ATTACKS next-turn buff — a NULL address on the op and the record that already owned the window, a fold at the one snipe site that honours the Active's pre-W/R bonus, and a value widening that holds the version.*** Built `censusAttackCorpus.ts` **file lines 148 and 76** (leading count column **1** each) — *“During your next turn, attacks used by this Pokémon do 120 more damage to your opponent's Active Pokémon (before applying Weakness and Resistance).”* and the same sentence at 100 behind *“Both Active Pokémon are now Asleep.”* — **2 sentences / 2 legal printings** (OPAQUE at `SUBMAX=12`; UNEXPLAINED + CONTINUOUS at `SUBMAX=4`), claimed WHOLE through ONE new anchor `SELF_EVERY_ATTACK_BOOST` and ONE new arm 24b'' emitting the SHIPPED `boostAttack` with `attack: null` (plus, for `:76`, two shipped `applyStatus` ops, defender then self). ONE op, ONE installer, ONE record: `BoostedAttack.attackIndex` widens its VALUE to `number | null`; ONE new reader `everyAttackBoostOf`, folded at `snipeActive` only (decision + reversal condition in `decisions.md` D546). `MATCH_RECORD_VERSION` **HOLDS at 30** (argued at `match.ts`). Engine **0.430.0 → 0.431.0**. Built in the `lum-wt-d546` worktree while a whole-corpus sweep ran in the main checkout; ~~NOT committed by the builder~~ committed there on `d546-prep` at `bba23024`, then LANDED on `main` by cherry-pick onto the D545 close-out `136e8134` as ONE commit. D545's whole-corpus sweep is PAID exactly at that close-out (`2915 killed · 53 known survivor(s) · 0 GAP(S) · 0 stale · 0 skipped(dirty) · 0 clobber(s) · 0 error(s) · 16666.1s total` over 2,968 rows), so this slice's prediction stands on a MEASURED base. `bun run check` 533 files / 12,541 tests / `CHECK_EXIT=0`; probe `--decision D546` **17 killed · 0 known · 0 GAP · 0 error**; ~~whole-corpus sweep PENDING~~, predicted `2932 killed · 53 known` over 2,985. ✅ **D546 CLOSE-OUT: WHOLE-CORPUS SWEEP GREEN AND EXACTLY AS PREDICTED — ON THE FIRST LAUNCH**, pasted out of the log rather than retyped (D504): `2932 killed · 53 known survivor(s) · 0 GAP(S) · 0 stale · 0 skipped(dirty) · 0 clobber(s) · 0 error(s) · 15386.5s total` — `+17 killed, +0 declared` on D545's `2915 · 53`, the **FOURTEENTH** consecutive exact prediction after the D532 reset (the count stands at **14**) and the **hundred-and-eighth** consecutive run with `0 error(s) · 0 stale · 0 clobber(s)`. Completeness structural: **2,985 unique progress-line ids / 2,985 rows / 0 unmatched**, set-compared against `MUTANTS.map(m => m.id)` both ways; all seventeen `D546-*` rows KILLED (log :2972–:2988, contiguous). The account's launch time (06:42) is right (log mtime `10:59:05.360 − 15386.5 s = 06:42:38.860`, sidecar `06:42:41.696`). 🛑 **THE `setsid` REUSE COUNT STEPS TO THE FIFTY-FIRST** on `tmp/sweep-D546.ppid.txt` — `PID 1500921 / PPID 1 / SID 1500921`, **2.84 s into the run**; the sidecar carries TWO rows again (a stray `bun run dev` row is back), and the `ps`-into-the-log half of the owed launcher fix went unpaid for a THIRTEENTH close-out (`1500921` is nowhere in the log). ⚠️ The 15,386 s is the second fastest of the last five, although D547 was built in the second checkout for roughly the run's first two hours and committed there at 08:32, INSIDE the run's window. No new `conventions.md` section. D547 is BUILT AND PARKED on `d547-prep` at `dcff2ffd` and lands next.)
 
 **Last updated (was):** 2026-09-23 — build session #485 (**P3-M5 — D545, *the two printed COST clauses, built as a pair on the GATE arm — an `Exclude` that would have refused them, a wrapper that left the cost seam alone, and three UNRULED readings written down with their reversal conditions.*** Built `censusAttackCorpus.ts` **file lines 316 and 324** (leading count column **1** each) — *“If this Pokémon has any damage counters on it, this attack can be used for {F}.”* and *“If this Pokémon is affected by a Special Condition, ignore all Energy in this attack's cost.”* — **2 sentences / 2 legal printings** (SUBST-20 / SUBST-19 at `SUBMAX=12`), each the WHOLE printed text and so a clause-only row of `ATTACK_GATE_CLAUSES` (rows six and seven, `body: ""`). TWO new `AttackTimingGate` members that never block — `alternateCostIf { condition, cost }` and `costWaivedIf { condition }` — and ONE new `BoardCondition` `yourActiveHasSpecialCondition` (the self twin, no phrase-table row). 🛑 **THE TRAP**: `BlockingAttackGate` is an `Exclude`, so both members landed in it by default and `attackTimingBlocked` would have REFUSED each attack exactly when its condition holds — excluded ON PURPOSE, with an early return. ONE new reader `attackCostAt` (attack.ts, exported) at the THREE payability sites (§8.2, `redactedAttacksOf`, GameHud), WRAPPING `effectiveAttackCost`, which is unchanged. Three UNRULED decisions (alternate-not-replacement, waive-last, printed-cost-published-when-nothing-pays), each with a reversal condition in `decisions.md` D545. `fix-filteredsnipe` index 2 re-homed onto corpus `:78` (its own key). `MATCH_RECORD_VERSION` **HOLDS at 30**. Engine **0.429.0 → 0.430.0**. Built in the `lum-wt-d545` worktree while a whole-corpus sweep ran in the main checkout; ~~NOT committed by the builder~~ committed there on `d545-prep` at `738fe320`, then LANDED on `main` by cherry-pick onto the D544 close-out `790bd8cc` as ONE commit. D544's whole-corpus sweep is PAID exactly at that close-out (`2900 killed · 53 known survivor(s) · 0 GAP(S) · 0 stale · 0 skipped(dirty) · 0 clobber(s) · 0 error(s) · 16796.4s total` over 2,953 rows), so this slice's prediction stands on a MEASURED base. Its own whole-corpus sweep ~~is PENDING~~, predicted `2915 killed · 53 known` over 2,968 — fifteen `D545-*` rows, the fifteenth added at the landing review. ✅ **D545 CLOSE-OUT: WHOLE-CORPUS SWEEP GREEN AND EXACTLY AS PREDICTED — ON THE FIRST LAUNCH**, pasted out of the log rather than retyped (D504): `2915 killed · 53 known survivor(s) · 0 GAP(S) · 0 stale · 0 skipped(dirty) · 0 clobber(s) · 0 error(s) · 16666.1s total` — `+15 killed, +0 declared` on D544's `2900 · 53`, the **THIRTEENTH** consecutive exact prediction after the D532 reset (the count stands at **13**) and the **hundred-and-seventh** consecutive run with `0 error(s) · 0 stale · 0 clobber(s)`. Completeness structural: **2,968 unique progress-line ids / 2,968 rows / 0 unmatched**, set-compared against `MUTANTS.map(m => m.id)` both ways; all fifteen `D545-*` rows KILLED (log :2957–:2971, contiguous). The account's launch time (01:26) is right (log mtime `06:04:15.030 − 16666.1 s = 01:26:28.930`, sidecar `01:26:31.802`). 🛑 **THE `setsid` REUSE COUNT STEPS TO THE FIFTIETH** on `tmp/sweep-D545.ppid.txt` — `PID 1088290 / PPID 1 / SID 1088290`, **2.87 s into the run**; the `ps`-into-the-log half of the owed launcher fix went unpaid for a TWELFTH close-out (`1088290` is nowhere in the log). ⚠️ The 16,666 s is the second slowest of the last five, and D546 was committed in the second checkout at 03:27, INSIDE the run's window. No new `conventions.md` section. D546 is BUILT AND PARKED on `d546-prep` at `bba23024` and lands next.)
 
@@ -717,6 +719,171 @@
 
 ## NEXT (resume point)
 
+> ### ▶ THE NEXT CONCRETE ACTION (written 2026-09-24, after D547)
+>
+> ✅ **`bun run check` IS GREEN — OBSERVED to completion in the `lum-wt-d547` worktree: `Test Files 535 passed (535) /
+> Tests 12614 passed (12614) / CHECK_EXIT=0`** (+2 files / +73 tests on D546's 533 / 12,541: the new engine suites
+> `attackFlipLock.test.ts` (33) and `damageVulnerability.test.ts` (40, five of them §4b's step-2 rungs added at review); every other edit re-pointed, stepped or
+> extended an existing rung and added none). D547 built `censusAttackCorpus.ts` **file lines 176 and 150** (leading
+> count column **2** each) — *"During your opponent's next turn, if the Defending Pokémon tries to use an attack,
+> your opponent flips a coin. If tails, that attack doesn't happen."* (TWO sentences in ONE row) and *"During your
+> next turn, the Defending Pokémon takes 50 more damage from attacks (after applying Weakness and Resistance)."* —
+> **2 rows / 4 legal printings**, claimed WHOLE by TWO new anchors (`DEFENDER_FLIP_ATTACK_LOCK`, two `['’]` slots;
+> `DEFENDER_VULNERABLE_NEXT_TURN`, one capture, zero slots) and TWO new arms (26e, 19f') emitting TWO new ops
+> (`flipLockAttack`, `exposeDefender { amount }`) on TWO new REQUIRED `InPlayPokemon` fields (`attackFlipLockTurn`,
+> `damageVulnerability`). Engine **0.431.0 → 0.432.0**; **`MATCH_RECORD_VERSION` 30 → 31** — the first bump since
+> D501.
+> ⚠️ **NO CARD ID RESOLVES FOR EITHER SENTENCE ON THIS CHECKOUT AND THAT WAS MEASURED** (`git grep` over
+> `registry.ts`, `catalogManifest.ts`, `testFixtures.ts`), so both suites ride file-local DECLARED `d547-*`
+> demonstrators (D425) in their own 60-card decks (D270). **The real cards are UNMEASURED.**
+> ⚠️ **BUILT IN THE `lum-wt-d547` WORKTREE WHILE A WHOLE-CORPUS SWEEP RAN IN THE MAIN CHECKOUT, AND THE BUILDER DID
+> NOT COMMIT.** The main checkout was never read or written; committed bytes were read with `git show`. Timings
+> were taken under that sweep's load and carry no weight. 🆕 **LANDED:** parked on `d547-prep` at `dcff2ffd` (built on
+> `78d8a5a3`), then CHERRY-PICKED onto `main` over the D546 close-out `6d23102e`; `docs/progress.md` and
+> `docs/decisions.md` conflicted only where both sides wrote the head of a list, resolved by keeping every close-out
+> fact and stacking D547's new line on top. `bun run check`, `precheck`, the D547 probe and the three gates were
+> RE-MEASURED in the main checkout after the pick (same figures).
+>
+> 🛑 **(0) THE DEBT: THE WHOLE-CORPUS SWEEP IS PENDING, AND THE PREDICTION IS WRITTEN BEFORE IT RUNS (D504).**
+> `bun scripts/mutation/run.ts` over the whole corpus, predicted:
+>
+> > 2971 killed · 53 known survivor(s) · 0 GAP(S) · 0 stale · 0 skipped(dirty) · 0 clobber(s) · 0 error(s)
+>
+> over **3,024** rows — **`+39 killed, +0 declared`** on D546's PAID figure `2932 · 53` (its close-out, `6d23102e`).
+> 🛑 **THE ARITHMETIC IS CLOSED IN BOTH DIRECTIONS BEFORE THE RUN** (D538's check): `2932 + 39 = 2971`;
+> `2971 + 53 = 3024`, which is the live corpus size `precheck` reports (*"checked 3024 mutants"*); and the ROW
+> delta closes the other way, `2985 + 39 = 3024`. All thirty-nine `D547-*` rows were probed UNDECLARED first
+> (D525(3)) and came back KILLED; the declared-survivor count is predicted to hold at **53** (counted by an
+> independent import of `MUTANTS`: 3,024 rows, 3,024 distinct ids, 53 `survives`, 0 find===replace, 39 `D547`).
+> ~~⚠️ **AND THE BASE IS ITSELF STILL A PREDICTION, SAID OUT LOUD**: D546's `2932 · 53` was written before D546's
+> sweep ran, and that sweep was the one LIVE in the main checkout for this whole slice. When it lands, reconcile
+> D546's (0) first; this figure adds to it and inherits its error in either direction.~~ ✅ **RECONCILED AT LANDING:
+> THE BASE IS PAID.** D546's sweep landed GREEN and EXACTLY as predicted on its first launch — `2932 killed · 53 known
+> survivor(s) · 0 GAP(S) · 0 stale · 0 skipped(dirty) · 0 clobber(s) · 0 error(s) · 15386.5s total` over 2,985 rows
+> (D546 close-out, archived (0) below) — so this prediction adds to a measured figure and inherits no error.
+> ⚠️ **FIVE EXISTING ROWS WERE RE-TRANSCRIBED, NOT ADDED** (they move neither count): `D326-`/`D501-record-version-
+> not-bumped` (find `= 31`, replace `= 30`), `D495-census-built-attack-not-stepped` (1677 → 1681, replace 1675 →
+> 1677), `D341-off-pool-sweep-source-is-emptied` (the off-pool set gained D547's two sentences), and
+> `D453-weaken-installs-on-the-actor` (its `find` went 3× because two installers were CLONED from it — fixed by
+> re-wording the clones' first comment line, not the row). ⚠️ **WHEN THIS SWEEP LAUNCHES**: `setsid --fork` AND
+> `ps -eo pid,ppid,sid -p $!` written into the log in the SAME command, and a log that stops without a summary
+> line is classified by asking the MACHINE first (`uptime`, `journalctl --list-boots`) — `conventions.md`, D542.
+>
+> 🛑 **(0-bis) THE WORKTREE WAS ISOLATION-CHECKED BEFORE ANY `tsc`, `bun`, `vitest` OR PROBE RUN.** At `78d8a5a3`:
+> `node_modules`, `packages/engine/node_modules`, `packages/schema/node_modules` and `apps/api/node_modules` are all
+> REAL directories, and `realpath` of all five `@luminous` links prints a `/home/jofre/projects/lum-wt-d547/…` path.
+> `bunx tsc -b --force` was GREEN (exit 0) BEFORE the first edit. The HEAD census was recorded at BOTH caps before the
+> build (D539): `SUBMAX=12` reader 570/1621 · registry 10/16 · gate 9/19 · trailing 11/21 · residue 40/55 · OPAQUE
+> 14/22 · SUBST-16 3/4; `SUBMAX=4` OPAQUE 26/38 · MULTI-3 1/2 · UNEXPLAINED 9/11 · CONTINUOUS 9/11 | 11/13 | 52/221
+> · targets 600.
+>
+> ✅ **(1) THE PROBE.** (+ the five re-transcribed rows under `--only`: **5 killed · 0 known survivor(s) · 0 GAP(S) · 0 error(s)**, tree identical after.)
+> **THE D547 PROBE:** `bun scripts/mutation/run.ts --decision D547 --allow-dirty`: **`39 killed · 0 known survivor(s) · 0 GAP(S) · 0 stale · 0 skipped(dirty) · 0 clobber(s) · 0 error(s)`** (re-run after
+> the review fixes, 275.2s) — the porcelain md5 (`5730366570bd`, 147 entries), the `git diff` md5 (`0b1410a5a778`) and
+> the md5 over every untracked file's bytes (`78d06ce49c32`) all identical before and after, and no `tmp/mutation-journal.json` left (the md5s date that moment —
+> the progress stamp came after). `precheck` GREEN at **3,024** rows (2,985 → 3,024), binding gate clean on **91**
+> name-introducing rows, 0 find===replace, **53** declared survivors. `splice-gate` and `partition-gate` OK.
+> 🛑 **THE ROWS `tsc` CANNOT SEE ARE THE EIGHT §10 CLEARS** — four literals per field that SPREAD an existing body
+> (`evolveOnto`, `clearOnLeavingActive`, `switchInto`'s benched body, `devolvedBodyOf`); only `makeInPlay` is
+> compiler-forced (D412 C5). Each is its own row (`D547-flip-*-clear-dropped`, `D547-vuln-*-clear-dropped`) and
+> each is killed by a PLAYED line (retreat, Switch, evolve) or a constructed one (gust, devolve).
+>
+> ✅ **(2) THE CENSUS, MEASURED HEAD vs AFTER, AT BOTH CAPS (D539).** `SUBMAX=12`: reader **570/1621 → 572/1625**,
+> residue **40/55 → 38/51**, raw reader residue **70/111 → 68/107**, `BUILT.attack` **1677 → 1681** (the PRINTINGS
+> step; the `:176` pricer's 1678 was wrong), OPAQUE **14/22 → 13/20** (A only), SUBST-16 **3/4 → 2/2** (B only);
+> gate 9/19, trailing 11/21, registry 10/16 UNMOVED — 572 + 10 + 9 + 11 + 38 = 640 and 1625 + 16 + 19 + 21 + 51 =
+> 1732. Default cap (`SUBMAX=4`): OPAQUE **26/38 → 24/34**, MULTI-3 **1/2 → 0/0**, UNEXPLAINED **9/11 → 8/9**,
+> REACHED 8/10 → 7/8, FAR 18/28 → 17/26, CONTINUOUS **9/11 | 11/13 | 52/221 → 7/7 | 9/9 | 54/225**, targets **600
+> → 602**. `residue-census-gate` OK (68 / 38 / 51, 640 = 602 + 38); `opaque-anatomy-gate` OK at its default cap
+> (24 / 34). 🛑 **THE SENTENCE STEP (2) AND THE PRINTING STEP (4) DIFFER**, so no copied number is right by accident.
+>
+> 🛑 **(3) THE PIN SWEEP, DRIVEN OFF D546's SITE LIST AND CHECKED AGAINST `vitest --reporter=json`.** Round 1
+> reported **69** failures (54 census pins, 13 `InPlayPokemon` key-set pins, 2 re-pointable refusals); round 2 **1**
+> (the changelog heading, owed by D506's rung); round 3 **0**. D546's **118** annotated sites were each classified
+> by the QUANTITY their D546 `THIS SITE:` note names (reader +2/+4, raw and gated residue −2/−4, partition and
+> `without` summands +2/+4, `BUILT.attack` +4, `built` 2082 → 2086, `units − built` 301 → 297, the rounded ratio
+> re-measured 19/55 = 35% → 19/51 = 37%) and stepped with a PREPENDED `// (🆕🆕🆕 **D547 …** THIS SITE: …)`
+> annotation; the **23** D546 front-term chains took a new FRONT term, `- 2` on a SENTENCE chain and `- 4` on a
+> PRINTINGS chain (the two differ for the first time in four slices). ⚠️ **THE ONE SITE ON NO LIST**, as at D546:
+> `compoundCompose.test.ts`'s multi-clause claimed-whole rung, **227/537 → 228/539** — **+1 / +2**, only `:176`
+> is two sentences. The prose copies in `angeliteChosenShuffle.test.ts` were stepped (50/71 → 48/67, 40/55 → 38/51).
+> The THIRTEEN key-set pins (`setup.test.ts`'s exact `toEqual` and twelve `Object.keys(...).sort()` rungs) each took
+> both new keys with an annotation that the pin is on the HEAD's key set.
+>
+> ✅ **(4) THE VERSION TAX, PARTITIONED DISJOINTLY AT THE BASE HEAD.** `git grep -nF "0.431.0" 78d8a5a3` = **268
+> lines across 120 files** (not D546's 176/112). **144 STEPPED** = **114** `expect(` lines (103 `engineVersion` + 11
+> `manifest.version`) + **27** `it()` TITLES (D460, keyed on the version STRING) + the declaration +
+> `packages/engine/package.json:4` + D275's `find`. **124 KEPT** = **4** `docs/` lines + **120** history lines (D546
+> census annotations, `everyAttackBoost.test.ts:29`'s header arrow, D546's changelog heading). 144 + 124 = **268**.
+> Stepped by line CONTENT with split/join (D462); each kept line re-verified present byte-for-byte; zero
+> `"0.431.0"` string literals remain. `MATCH_RECORD_VERSION`: the 12 engine `toContain("MATCH_RECORD_VERSION = 30")`
+> asserts and their `it()` titles stepped to 31; the seven `describe()` titles over those bodies annotated *"held at
+> THIS slice; 31 since D547"*; every other *"HOLDS/STAYS 30"* title was CLASSIFIED BY ITS BODY and left (history).
+>
+> 🛑 **(5) THE DESIGN.** A: a NEW op, not a `preventAttack` rider (D131's test as D154 ran it); a NEW reader
+> `attackFlipLocked`, NOT folded into `attackLocked` — `redact.ts`, `packages/schema` and GameHud take no byte and
+> `playable` stays true (§8). The coin is flipped at `attack.ts`'s §8 step-3 seam BEFORE Confusion (RULING 1, the
+> official rulebook's order — see (5-bis)), only while the lock is live; tails → `ATTACK_FAILED` `"flipLock"` (explicit log arm) and the turn
+> ends. B: `exposeDefender` stamps `turn + 2` on the opponent's Active; `installedVulnerabilityOf` is ADDED after
+> W/R at all four `installedReductionOf` sites and reported as `DAMAGE_DEALT.vulnerability` (D149). RULING 2: the
+> term lands on any computed hit, even one Resistance took to 0, and on NO hit the rulebook's damage step 2 stops; RULING 3: ON-TARGET, so `suppressTargetEffects` /
+> `ignoreWR` drop it. `MATCH_RECORD_VERSION` 30 → 31 with the FIFTH position written at `match.ts` (the optional
+> routes are detectable in the bytes but NOT inert on the board). Each ruling carries its reversal condition in
+> `decisions.md` D547.
+> **CLAIMS WITHDRAWN (D539), swept by the CLAIM, engine source first** — every hit edited or exempted by name:
+> *"not a `coinFlipGate`"* (`effects.ts`'s tails-family refusal bullet — ANNOTATED, still true of that op); the two
+> null refusals of `:176` (`tailsGatedOp.test.ts`, `tailsSelfCost.test.ts` — RE-POINTED by value and owner to
+> `:669`, D438); `index.ts`'s D544 note *"two refusal rungs now refuse a string the corpus prints"*;
+> `coverage-backlog.md`'s flip-lock row and its *"plus a park owned by the defender"* (WITHDRAWN: no park);
+> `simulator.md`'s two ❌ table rows; `devolveEach.test.ts`'s *"TWELVE §10/§11 bars"* → FOURTEEN (and
+> `devolvedBodyOf`'s *"the same TWELVE"*); the archived resume point's *"real radius includes `redact.ts` and the
+> HUD"*; `opponentTopLookShuffle.test.ts:29`'s stale SUBST-16 label. **Exempt by name**: `decisions.md` D544 and
+> earlier rows (frozen dated rows); this file's archived session-log paragraphs (frozen history).
+>
+> 🛑 **(5-bis) TWO REVIEW FINDINGS, BOTH FIXED BEFORE COMMIT — AND THE FIRST IS A WITHDRAWN RULING (D539).**
+> ⑴ **"Confusion first, UNRULED in-tree" WAS WRONG, AND THE DRAFT'S OWN REVERSAL CONDITION WAS MET.** The official
+> rulebook's *"Full details of attacking"* (pokemon.com `par_rulebook_en.pdf` p. 20, the Paradox Rift rulebook
+> `ptcg-rules.md` already cites; READ this session off the PDF's own text) lists B) *"Apply any effects that might
+> alter or cancel the attack"* — its printed example IS this sentence family — before C) *"If your Active Pokémon is
+> Confused, check now…"*. The draft had it the other way, and a Confused, flip-locked body whose Confusion coin came
+> up tails took 3 counters and never flipped for the lock; the rulebook flips the lock first, and a lock tails means
+> no Confusion flip and no counters. Reversed in `attack.ts` (the lock's block now sits ABOVE the Confusion block,
+> which is byte-identical to HEAD again), `attackFlipLock.test.ts` §6 (re-pinned in the rulebook's order — the old §6
+> made the wrong order green by construction), the mutant row (`D547-lock-flips-before-confusion` → `D547-confusion-
+> flips-before-lock`, which now swaps the blocks the OTHER way), `events.ts`'s `ATTACK_FLIP_LOCK_CHECK` doc,
+> `effects.ts`'s *"beside the Confusion flip"*, `index.ts`, `decisions.md` D547 ruling 1, `simulator.md`,
+> `coverage-backlog.md` and this file; `ptcg-rules.md` §8 step 3 now names both halves. Swept by the CLAIM
+> (`git grep -i "UNRULED\|confusion first\|after confusion\|beside the confusion"`), engine source first; the
+> remaining hits are this file's and `decisions.md`'s WITHDRAWN records of the draft (exempt by name) and older
+> slices' unrelated `UNRULED` rulings. No existing rng sequence moves under either order: the lock draws only while live.
+> ⑵ **THE RULEBOOK'S DAMAGE STEP 2 STOP WAS NOT HONOURED BY THE NEW TERM.** *"Stop if the base damage is 0 (or if
+> the attack does not do any damage at all)."* — before Weakness. `attack.ts`'s main hit enters only on
+> `scaledBase + scaledTotal > 0`, so `bonus − debuff` could still take `preWR` to 0 and the draft's +50 landed on
+> it (a 30 attack under a 30 installed debuff into an exposed Defender dealt 50; the rulebook deals 0). Invisible at
+> HEAD (only subtraction followed); D547's addition made it observable. Now gated at ALL FOUR sites on the before-W/R
+> number (`preWR`, `spread`, `amount − attackerDebuff`, `amount + bonus − debuff`), pinned by §4b of
+> `damageVulnerability.test.ts` (five rungs, including a PARTIAL debuff that still pays) and four new rows
+> `D547-vuln-{main-hit,snipeActive,placeSnipe,spread}-step2-stop-dropped`. RULING 2's Resistance-to-0 case STANDS:
+> the stop is at step 2 only, and steps 4-5 still run.
+>
+> 🛑 **(6) CARRIED DEBTS — NAMED, NOT SILENTLY ADOPTED.** ⑴ ~~BOTH whole-corpus sweeps are pending — D546's (running in
+> the main checkout throughout) and this one's (0).~~ ONLY this one's (0) is pending: D546's PAID `2932 · 53` exactly at
+> its close-out. ⑵ **`:664`** — the `PlayerSide`/*"PlayerState"* stale prose
+> (`effects.ts:33842`/`:33863`, `index.ts:14383` and three tests) and Cresselia's *"90 more damage"* at
+> `effects.ts:17905` and `index.ts:664`, which PRINTS 80 — **it now owes its OWN future bump**, since this slice
+> paid 30 → 31 without it. ⑶ SUBST-16's `:149` and `:169`. ⑷ `:669` as the best unbumped fallback (1p/L). ⑸ onward:
+> D546's (6) ⑵–⑽ below, unchanged (its `:664` item is superseded by ⑵ here), and ⑽ the DOUBLE PAY now also names the vulnerability: it is read PER
+> HIT, so an attack with a main hit AND an op-borne hit on the exposed Active adds +50 twice (named in the D547 row).
+>
+> 🛑 **(7) PICKING THE NEXT ROW.** `SUBMAX=12 bun scripts/residue-census.ts`; the criterion since D537 is
+> **PRINTINGS PER UNIT OF RADIUS**. The residue is now **38 sentences / 51 printings**. `:176` and `:150` leave the
+> list (BUILT here). Next: `:664` (its own bump now); SUBST-16's `:149`/`:169`; `:669` (1p/L); the copy-attack
+> family (BLOCKED). Re-rank at the head this slice leaves, not from this list.
+>
+> ---
+>
+> **ARCHIVED — the resume point D547 was built from, kept rather than overwritten:**
+>
 > ### ▶ THE NEXT CONCRETE ACTION (written 2026-09-24, after D546)
 >
 > ✅ **`bun run check` IS GREEN — OBSERVED to completion in the `lum-wt-d546` worktree: `Test Files 533 passed (533) /
@@ -2425,7 +2592,9 @@
 > reverse it (D422), with `:176`'s paired `attackLockFlips?` route named and refused so a successor does not
 > re-derive it, and with the note that `:176` is MIS-FRAMED: it belongs to the DECLARE-THEN-FLIP family
 > (`attack.ts:1467-1500`), not the payability-lock family it has been priced against (`attack.ts:1287`,
-> `redact.ts:499`), so its real radius includes `redact.ts` and the HUD. If the 30 → 31 bump is ever paid,
+> `redact.ts:499`), ~~so its real radius includes `redact.ts` and the HUD~~ (🆕🆕🆕 D547: WITHDRAWN — the lock
+> leaves the declaration LEGAL, so it was built on a NEW reader and `redact.ts`/the HUD took no byte;
+> `attackFlipLock.test.ts` §8 pins `playable` true). If the 30 → 31 bump is ever paid,
 > **BUNDLE `:664` + `:176` + SUBST-16** — the retirement is per-deploy, not per-field.
 > ⚠️ **AND BUDGET FOR WHERE D542 ACTUALLY SPENT ITS TIME**: not the arm, not the suite and not the docs — the
 > PIN SWEEP (seven rounds, seventeen front-term chains audited, one annotation written without its operand)
@@ -30379,7 +30548,8 @@ the next api deploy (D18).
 |---|---|---|
 | backend-data | P1 | ✅ M1–M9 + P2-M1 + task-17 api deployed (Worker `9b1ec1d1`, 2026-07-16); OAuth secrets pending (user) |
 | deck-builder | P2 | ✅ ALL 19 tasks closed (task 17 landed + e2e-verified locally); only follow-ups left |
-| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D546, *the ALL-ATTACKS next-turn buff — `attack: null` on the shipped `boostAttack` op, `BoostedAttack.attackIndex: number | null`, and ONE new reader `everyAttackBoostOf` folded at `snipeActive`*** — `censusAttackCorpus.ts` **file lines 148 and 76**, *“During your next turn, attacks used by this Pokémon do 120 more damage to your opponent's Active Pokémon (before applying Weakness and Resistance).”* (and at 100 behind *“Both Active Pokémon are now Asleep.”*), **2 sentences / 2 legal printings**; reader 568/1619 → 570/1621, residue 42/57 → 40/55, `BUILT.attack` 1675 → 1677; engine 0.430.0 → 0.431.0, `MATCH_RECORD_VERSION` HELD at 30; mutants 2,968 → 2,985 (+17, all killed); ~~whole-corpus sweep PENDING, predicted 2932 · 53 on D545's PAID 2915 · 53~~ **whole-corpus sweep GREEN and exactly as predicted — `2932 killed · 53 known survivor(s) · 0 GAP(S) · 0 stale · 0 skipped(dirty) · 0 clobber(s) · 0 error(s) · 15386.5s total`** over 2,985 rows, the FOURTEENTH consecutive exact prediction and the hundred-and-eighth clean run, on the first launch) |
+| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D547, *the FLIP-TO-ATTACK lock and the NEXT-TURN vulnerability — two new ops (`flipLockAttack`, `exposeDefender`) on two new REQUIRED `InPlayPokemon` fields, a NEW reader kept out of `attackLocked` so the declaration stays legal, a +50 added after W/R at all four reduction sites, and `MATCH_RECORD_VERSION` 30 → 31*** — `censusAttackCorpus.ts` **file lines 176 and 150**, **2 rows / 4 legal printings**; reader 570/1621 → 572/1625, residue 40/55 → 38/51, `BUILT.attack` 1677 → 1681; engine 0.431.0 → 0.432.0; three rulings with reversal conditions (the lock flips BEFORE Confusion — the official rulebook's order, the draft's "Confusion first, UNRULED" withdrawn at review; the +50 lands on any computed hit, never on one the rulebook's damage step 2 stops; ON-TARGET). `bun run check` 535 files / 12,614 tests green; mutants 2,985 → 3,024 (+39 `D547-*`, all KILLED undeclared); whole-corpus sweep PENDING, predicted `2971 killed · 53 known survivor(s)` on D546's PAID `2932 · 53`) |
+| simulator (prior) | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D546, *the ALL-ATTACKS next-turn buff — `attack: null` on the shipped `boostAttack` op, `BoostedAttack.attackIndex: number | null`, and ONE new reader `everyAttackBoostOf` folded at `snipeActive`*** — `censusAttackCorpus.ts` **file lines 148 and 76**, *“During your next turn, attacks used by this Pokémon do 120 more damage to your opponent's Active Pokémon (before applying Weakness and Resistance).”* (and at 100 behind *“Both Active Pokémon are now Asleep.”*), **2 sentences / 2 legal printings**; reader 568/1619 → 570/1621, residue 42/57 → 40/55, `BUILT.attack` 1675 → 1677; engine 0.430.0 → 0.431.0, `MATCH_RECORD_VERSION` HELD at 30; mutants 2,968 → 2,985 (+17, all killed); ~~whole-corpus sweep PENDING, predicted 2932 · 53 on D545's PAID 2915 · 53~~ **whole-corpus sweep GREEN and exactly as predicted — `2932 killed · 53 known survivor(s) · 0 GAP(S) · 0 stale · 0 skipped(dirty) · 0 clobber(s) · 0 error(s) · 15386.5s total`** over 2,985 rows, the FOURTEENTH consecutive exact prediction and the hundred-and-eighth clean run, on the first launch) |
 | simulator (prior) | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D545, *the two printed COST clauses as a pair on the GATE arm — two non-blocking `AttackTimingGate` members, ONE new `BoardCondition`, and ONE wrapper `attackCostAt` at the three payability sites*** — `censusAttackCorpus.ts` **file lines 316 and 324**, **2 sentences / 2 legal printings** (SUBST-20/19), clause-only rows six and seven of `ATTACK_GATE_CLAUSES`. 🛑 `BlockingAttackGate` excludes both ON PURPOSE (the default `Exclude` would have refused each attack exactly when its condition holds). Three UNRULED readings with reversal conditions (alternate-not-replacement, waive-last, printed-cost-published). Gate 7/17 → 9/19, residue 44/59 → 42/57, `BUILT.attack` 1673 → 1675. Engine 0.429.0 → 0.430.0, `MATCH_RECORD_VERSION` 30 held. `check` 532 / 12,503; probe 15 killed · 0 survivors; ~~whole-corpus sweep PENDING, predicted 2915 · 53 over 2,968~~ **whole-corpus sweep GREEN and exactly as predicted — `2915 killed · 53 known survivor(s) · 0 GAP(S) · 0 stale · 0 skipped(dirty) · 0 clobber(s) · 0 error(s) · 16666.1s total`** over 2,968 rows, the THIRTEENTH consecutive exact prediction and the hundred-and-seventh clean run, on the first launch) |
 | simulator (prior) | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D544, *the named attack's BASE damage overridden for one window — a `base: true` RIDER on the shipped `boostAttack` op, an OPTIONAL `BoostedAttack.base`, and ONE new reader*** — `censusAttackCorpus.ts` **file line 166**, *“During your next turn, this Pokémon's Hyper Fang attack's base damage is 240.”*, **1 sentence / 2 legal printings** (SUBST-11). ONE writer of `boostedAttack` kept (D165); the installer writes `amount: 0` beside `base` so the additive reader pays +0; `boostedAttackBase` is read at `attack.ts`'s one `parseAttackDamage` line (×2 Weakness → 480). 🛑 Same-address merge FIELDWISE max, not overwrite. Reader 567/1617 → 568/1619, residue 45/61 → 44/59, raw 73/115 → 72/113, `BUILT.attack` 1671 → 1673; registry 10/16, gate 7/17, trailing 11/21 and `attackReaderSurface()` 13 UNMOVED; SUBST-11 2/4 → 1/2 at `SUBMAX=12` (OPAQUE unmoved 16/24), OPAQUE 31/44 → 30/42 at `SUBMAX=4`. Mutants 2,936 → 2,953 (+17, all killed undeclared). Engine **0.428.0 → 0.429.0**, `MATCH_RECORD_VERSION` **HELD at 30**; **whole-corpus sweep GREEN and exactly as predicted — `2900 killed · 53 known survivor(s) · 0 GAP(S) · 0 stale · 0 skipped(dirty) · 0 clobber(s) · 0 error(s) · 16796.4s total`** over 2,953 rows, the TWELFTH consecutive exact prediction and the hundred-and-sixth clean run, on the first launch) |
 | simulator (prior) | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D543, *the chosen Pokémon Tool discard at the program tail — ONE new `EffectOp` member, ONE new `EffectPrompt` kind, ONE new wire prompt member (the ELEVENTH), and the `upTo` `DiscardScope` the wire never had*** — `censusAttackCorpus.ts` **file line 136**, *“Discard up to 2 Pokémon Tools from your opponent's Pokémon.”*, **1 sentence / 2 legal printings**, the LAST unresolved row of the `/Pokémon Tool/` sweep. 🛑 Part 0 was a PREREQUISITE and a live defect: `redactedDiscardScopeSchema` had 2 of `DiscardScope`'s 3 members and BOTH mirrors (out and back) collapsed `upTo` into `each`, so every declinable discard crossed the wire as a MANDATORY one — and `tsc` named only TWO of the SIX client sites. 🛑 The site the compiler cannot see is a MISSING `applyChoice` arm, killable by no forced-path rung because the op has no forced path. `TOOLS_DISCARDED` gained a REQUIRED `when`. Reader 566/1615 → 567/1617, residue 46/63 → 45/61, `BUILT.attack` 1669 → 1671; registry 10/16, gate 7/17, trailing 11/21, `SPLIT_ATTACK_UNITS` 14, `COMPOUND_ATTACK_UNITS` 21 and `attackReaderSurface()` 13 ALL UNMOVED. ⚠️ The row is **OPAQUE at SUBMAX=4** and **SUBST-12 at SUBMAX=12** — measured at BOTH caps before the build, so a single “steps at both caps” line would have been wrong. ⚠️ The landing review sent it back for a §11 decision with **no rung and no mutant row** — deleting `unshieldedRefs` from the arm left every suite GREEN because no board in the slice had a shielded body; paid with §9's five rungs and TWO rows. Engine **0.427.0 → 0.428.0**, `MATCH_RECORD_VERSION` **HELD at 30**; **whole-corpus sweep GREEN and exactly as predicted — `2883 killed · 53 known survivor(s) · 0 GAP(S) · 0 stale · 0 skipped(dirty) · 0 clobber(s) · 0 error(s) · 15784.7s total`** over 2,936 rows, the ELEVENTH consecutive exact prediction and the hundred-and-fifth clean run, on the first launch) |
@@ -30543,6 +30713,39 @@ the next api deploy (D18).
 Legend: 📝 backlog · 📋 specced · 🔎 research · 🚧 in progress · ✅ done
 
 ## Session log
+
+### 2026-09-24 — build session #487 (P3-M5 — D547)
+
+**THE FLIP-TO-ATTACK LOCK AND THE NEXT-TURN VULNERABILITY — TWO NEW OPS ON TWO NEW REQUIRED `InPlayPokemon` FIELDS,
+A COIN THAT LEAVES THE DECLARATION LEGAL, A +50 AT EVERY SITE THAT SUBTRACTS THE REDUCTION, AND THE FIRST RECORD
+BUMP SINCE D501.**
+
+Built `censusAttackCorpus.ts` file lines **176** (*"During your opponent's next turn, if the Defending Pokémon tries
+to use an attack, your opponent flips a coin. If tails, that attack doesn't happen."*, TWO sentences in one row) and
+**150** (*"During your next turn, the Defending Pokémon takes 50 more damage from attacks (after applying Weakness and
+Resistance)."*) — 2 rows / 4 legal printings, both null on every reader at HEAD. Built in the `lum-wt-d547`
+worktree while a whole-corpus sweep ran in the main checkout; NOT committed by the builder (parked at `dcff2ffd`, then cherry-picked onto `main` over the D546 close-out and re-verified there).
+
+- **A:** `flipLockAttack` (new op, D131's test) → `attackFlipLockTurn` (`turn + 1`) → `attackFlipLocked` (new reader,
+  NOT folded into `attackLocked`: `playable` stays true, zero redact/schema/HUD bytes) → a coin at `attack.ts`'s §8
+  step-3 seam BEFORE Confusion (the official rulebook's order, decisions.md D547 ruling 1), rng spent only while live; tails ends the turn
+  with `ATTACK_FAILED "flipLock"`. `ATTACK_LOCKED.flip?`, `ATTACK_FLIP_LOCK_CHECK`, explicit log arms.
+- **B:** `exposeDefender { amount }` → `damageVulnerability` (`{turn: T+2, amount}`, `Math.max`) →
+  `installedVulnerabilityOf`, added after W/R at the main hit, `spreadDamage`, `placeSnipe`, `snipeActive`;
+  `DAMAGE_DEALT.vulnerability` and " · exposed +N". On-target (suppressed with the reduction); lands on any computed
+  hit, and on none the rulebook's damage step 2 stops. The D546 double-pay shape applies (per hit), named.
+- **Review (before commit):** RULING 1 reversed — the draft flipped Confusion first as "UNRULED"; the official rulebook
+  ("Full details of attacking", step B before step C) flips the alter-or-cancel effect first, which met the draft's own
+  reversal condition; swept by the claim (D539). And the step-2 stop added at all four fold sites (§4b, four rows).
+- **Record:** `MATCH_RECORD_VERSION` 30 → 31 with a bump block and the FIFTH position (optional routes detectable in
+  the bytes but not inert on the board). A v30 body silently never flips and throws on every hit (driven).
+- **Census** (`SUBMAX=12`): reader 572/1625, residue 38/51, raw 68/107, `BUILT.attack` 1681, OPAQUE 13/20, SUBST-16
+  2/2; default cap OPAQUE 24/34, MULTI-3 0/0. 118 site annotations + 23 front terms stepped; `compoundCompose` +1/+2;
+  13 key-set pins; 2 refusals re-pointed to `:669`.
+- **Version tax:** 268 lines / 120 files partitioned 144 stepped / 124 kept; 12 record-version asserts stepped.
+- **Mutants:** 2,985 → 3,024 (+39 `D547-*`), probe 39 killed · 0 known survivor(s) · 0 GAP(S) · 0 stale · 0 skipped(dirty) · 0 clobber(s) · 0 error(s); five existing rows re-transcribed. Whole-corpus sweep
+  PENDING, predicted `2971 killed · 53 known survivor(s)` over 3,024 on D546's PAID `2932 · 53`, closed in both directions.
+- `bun run check`: 535 files / 12,614 tests, `CHECK_EXIT=0`.
 
 ### 2026-09-24 — build session #486 (P3-M5 — D546)
 

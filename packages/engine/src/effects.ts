@@ -4101,6 +4101,35 @@ export type EffectOp =
       (installing twice in one turn keeps the LARGER number — the interpreter says
       why MAX and not a sum, `reduceDamage`'s argument on the other seat). */
   | { op: "weakenDefenderAttacks"; amount: number }
+  /** 🆕🆕🆕 §8.5/§11 (D547) — THE NEXT-TURN VULNERABILITY on the DEFENDING Pokémon:
+      "During your next turn, the Defending Pokémon takes 50 more damage from
+      attacks (after applying Weakness and Resistance)." (`censusAttackCorpus.ts:150`,
+      leading count column 2 — 2 legal printings; the census and the anchor are at
+      `DEFENDER_VULNERABLE_NEXT_TURN` below). ⚠️ NO CATALOG, REGISTRY OR FIXTURE ID
+      PRINTS IT ON THIS CHECKOUT (measured, D425): the suite
+      (`damageVulnerability.test.ts`) rides file-local declared `d547-*`
+      demonstrators, and the real cards are UNMEASURED.
+
+      `reduceDamage`'s SIGN FLIPPED AT THE SAME §8.5 STEP (after Weakness and
+      Resistance) and moved to the OTHER body and the OTHER window: the holder is
+      the opponent's Active (the Defending Pokémon, D148's defender arm), and the
+      window is the INSTALLER's own next turn ("During YOUR next turn"), so the
+      stamp is `state.turn + 2` — the number D143/D155/D544/D546 wrote for the
+      installer's next turn. `weakenDefenderAttacks` one member up is the nearest
+      sibling on the HOLDER axis (the opponent's body, refusable by §11) and the
+      opposite one on every other: it is pre-W/R, `+ 1`, and read when the holder
+      ATTACKS; this is post-W/R, `+ 2`, and read when the holder is HIT.
+
+      A NEW OP, NOT A NEGATIVE `reduceDamage`: that op writes the actor's OWN
+      Active and stamps `+ 1`, so a signed amount would be a different holder, a
+      different window and a different record — D131's test fails on all three.
+      `amount` is HP, the printed number; the deriver's `>= 1` floor keeps a
+      "takes 0 more" LOUD.
+
+      ⚠️ AN EFFECT OF AN ATTACK DONE TO THE DEFENDING POKÉMON, so a live §11 block
+      refuses it (`weakenDefenderAttacks`' check verbatim). Never parks, consumes
+      no rng; idempotent by `Math.max` on one window. */
+  | { op: "exposeDefender"; amount: number }
   /** 🆕🆕 §13 (D434) — SCHEDULE a counter placement onto the DEFENDING Pokémon for
       the end of the opponent's next turn:
 
@@ -4372,6 +4401,45 @@ export type EffectOp =
       the lock's entire effect is in the FUTURE. Never parks, consumes no rng, and
       is idempotent (a re-install writing the same stamp is silent). */
   | { op: "preventAttack"; target?: "defender" }
+  /** 🆕🆕🆕 §8/§11 (D547) — THE FLIP-TO-ATTACK LOCK on the DEFENDING Pokémon for the
+      opponent's next turn: "During your opponent's next turn, if the Defending
+      Pokémon tries to use an attack, your opponent flips a coin. If tails, that
+      attack doesn't happen." (`censusAttackCorpus.ts:176`, leading count column 2 —
+      2 legal printings; the census and the anchor are at
+      `DEFENDER_FLIP_ATTACK_LOCK` below). ⚠️ NO CATALOG, REGISTRY OR FIXTURE ID
+      PRINTS IT ON THIS CHECKOUT (measured, D425): the suite
+      (`attackFlipLock.test.ts`) rides file-local declared `d547-*` demonstrators,
+      and WHICH two real printings are legal is UNMEASURED.
+
+      🛑 A NEW OP AND NOT A `preventAttack` RIDER — D154's text one member down runs
+      D131's widen-don't-add test, and it decides this the same way. Strip a
+      hypothetical `flip?: true` off `preventAttack { target: "defender", flip }`
+      and you get a DIFFERENT rule writing a DIFFERENT field: `preventAttack` makes
+      the declaration ILLEGAL (`attack.ts`'s §8 gate REJECTS it — nothing spent, the
+      turn goes on) and writes `attackLockedTurn`; this op leaves the declaration
+      LEGAL and gates its RESOLUTION on a coin (the attack is declared, the locked
+      player flips, and on tails the attack "doesn't happen" and the turn ENDS), so
+      it writes `attackFlipLockTurn` and is read at `attack.ts`'s §8 step-3 seam
+      just AHEAD of the Confusion flip (the rulebook's step B before step C,
+      docs/decisions.md D547 ruling 1), not at the gate. One op with an optional key would
+      admit `{ target: undefined, flip: true }` — a SELF flip-lock no card prints —
+      and would put a legal-to-declare lock through `attackLocked`, which
+      `redactedAttacksOf` and GameHud read as "may not declare".
+
+      FIELD-FREE, AND BARE MEANS THE DEFENDER — D412/D434's positive statement: both
+      printings say "the Defending Pokémon", and the pool prints no self twin of
+      this sentence (`censusAttackCorpus.ts`, measured over all 640 rows by the
+      anchor below). The stamp is `state.turn + 1` — the locked body's controller's
+      next turn, `preventAttack`'s defender arm verbatim (§5.3: declaring an attack
+      ends the turn).
+
+      ⚠️ IT IS AN EFFECT OF AN ATTACK DONE TO THE DEFENDING POKÉMON, so a live §11
+      "effects of attacks" block refuses it — `preventAttack`'s defender-arm check
+      verbatim, asked BEFORE the idempotence early return. Runs at `attack.ts`'s
+      TAIL like every other `EffectOp` (D125: its whole effect is in the future).
+      Never parks and consumes NO rng at the install: the coin is flipped by the
+      LOCKED player at the declaration it gates, and only while the lock is live. */
+  | { op: "flipLockAttack" }
   /** §8/§11 (D154) — BAR ONE NAMED ATTACK on the controller's own Active for the
       holder's next turn ("During your next turn, this Pokémon can't use
       {AttackName}.", 6 catalogued printings across 4 names plus 1 fielded
@@ -12464,6 +12532,33 @@ const DEFENDER_ATTACKS_WEAKENED =
   /^During your opponent['’]s next turn, the Defending Pokémon['’]s attacks do (\d+) less damage \(before applying Weakness and Resistance\)\.$/;
 const ATTACKS_BY_DEFENDER_WEAKENED =
   /^During your opponent['’]s next turn, attacks used by the Defending Pokémon do (\d+) less damage \(before applying Weakness and Resistance\)\.$/;
+// ── 🆕🆕🆕 D547: the DEFENDER made VULNERABLE for the installer's own next turn ──
+//
+// "During your next turn, the Defending Pokémon takes 50 more damage from attacks
+//  (after applying Weakness and Resistance)."
+// — `censusAttackCorpus.ts` FILE LINE 150, leading count column **2**: **1 sentence /
+// 2 legal printings**, census class SUBST-16 at `SUBMAX=12` (measured at both caps
+// before the build). ⚠️ NO CATALOG ID RESOLVES ON THIS CHECKOUT, AND THAT WAS
+// MEASURED (D425): no `registry.ts`, `catalogManifest.ts` or `testFixtures.ts` row
+// prints the sentence (`git grep`), so its suite (`damageVulnerability.test.ts`)
+// rides file-local DECLARED `d547-*` demonstrators in their own 60-card deck (D270).
+//
+// `SELF_DAMAGE_REDUCTION`'s skeleton with THREE axes turned at once — "your next
+// turn" for "your opponent's next turn", "the Defending Pokémon" for "this
+// Pokémon", "more" for "less" — so the op is new (`exposeDefender`, see its doc
+// block) and the anchor is its own. ONE capture, the amount, with the `>= 1` floor
+// every arm in this tail carries. ZERO apostrophe slots: the sentence prints none
+// (read off the corpus bytes, not assumed), so there is no `['’]` row to own.
+//
+// MEASURED OVER ALL 640 `legalAttackCorpus()` rows: this anchor claims EXACTLY the
+// one row above, and the loose probe `/more damage from attacks|takes \d+ more
+// damage/` finds no other row — no near-miss printing exists for a refusal rung to
+// borrow, so the suite's near-misses are single-axis CONSTRUCTED strings (D427).
+// DISJOINT FROM EVERY NEIGHBOUR BY A MANDATORY BYTE RUN: `SELF_DAMAGE_REDUCTION` and
+// the two debuff anchors above all begin "During your opponent", this one "During
+// your next turn, the Defending"; the self-lock/buff anchors say "this Pokémon".
+const DEFENDER_VULNERABLE_NEXT_TURN =
+  /^During your next turn, the Defending Pokémon takes (\d+) more damage from attacks \(after applying Weakness and Resistance\)\.$/;
 // The DURATED REACTIVE RECOIL (D152) — the §9 family's attack-INSTALLED member,
 // and `SELF_DAMAGE_REDUCTION`'s sibling on the other side of the damage step:
 //
@@ -13305,7 +13400,11 @@ const COUNTER_PUT_ANY_THEN_SELF_LOCK =
 //     population that census summed, NOT the legal pair; WHICH two are legal is
 //     unmeasured) — a DURATED gate that makes the OPPONENT flip on their OWN
 //     turn: not a `coinFlipGate` at all, and the only tails-gated attack LOCK in
-//     the local-D1 pool that this op could not express even with the field;
+//     the local-D1 pool that this op could not express even with the field
+//     (🆕🆕🆕 D547: STILL TRUE OF THIS OP AND ANNOTATED, NOT WITHDRAWN — the sentence
+//     is now BUILT, but by a NEW durated op, `flipLockAttack`, through its own
+//     anchor `DEFENDER_FLIP_ATTACK_LOCK`, read at `attack.ts`'s §8 step-3 seam; it
+//     is still "not a `coinFlipGate`", and this family stays closed as written);
 //   • "Flip a coin. If heads, this attack does 140 more damage. If tails, during
 //     your next turn, this Pokémon can't attack." (1 — Dragonite ex sv03-159
 //     "Mighty Meteor") and "Flip a coin. If tails, this attack does nothing. If
@@ -13975,6 +14074,43 @@ const DEFENDER_CANT_ATTACK_NEXT_TURN =
 // with `codePointAt` rather than by eye (D421/D440): U+0027 at indexes 43 and 82.
 const FLIP_HEADS_DEFENDER_CANT_ATTACK =
   /^Flip a coin\. If heads, during your opponent['’]s next turn, the Defending Pokémon can['’]t attack\.$/;
+// ── 🆕🆕🆕 D547: the lock that lets the Defending Pokémon DECLARE, and flips for it ──
+//
+// "During your opponent's next turn, if the Defending Pokémon tries to use an
+//  attack, your opponent flips a coin. If tails, that attack doesn't happen."
+// — `censusAttackCorpus.ts` FILE LINE 176, leading count column **2**: **1 row, TWO
+// sentences / 2 legal printings**, `OPAQUE` at `SUBMAX=12` (measured at both caps
+// before the build). ⚠️ NO CATALOG ID RESOLVES ON THIS CHECKOUT, AND THAT WAS
+// MEASURED (D425): no `registry.ts`, `catalogManifest.ts` or `testFixtures.ts` row
+// prints it (`git grep`); the suite (`attackFlipLock.test.ts`) rides file-local
+// DECLARED `d547-*` demonstrators in their own 60-card deck (D270). The local-D1
+// census two screens up (`FLIP_TAILS_SELF_CANT_ATTACK`'s block) names FOUR catalog
+// ids for a "tries to attack" spelling; WHICH two printings are the legal pair is
+// UNMEASURED, and this anchor is the LEGAL spelling ("tries to use an attack").
+//
+// ONE ANCHOR FOR BOTH SENTENCES, WHOLE, because neither half means anything alone:
+// the first names the WINDOW, the BODY and the FLIPPER, the second the CONSEQUENT,
+// and "that attack" is a pronoun whose antecedent is in the first. A prefix match
+// would ship a coin with no consequence. The arm below claims the WHOLE row
+// (`compoundCompose.test.ts`'s multi-clause claimed-whole rung, +1).
+//
+// NO CAPTURE: nothing varies. TWO `['’]` slots, both classed (D136/D137) — the
+// possessive "opponent's" and the contraction "doesn't" — and the corpus bytes
+// were read with `codePointAt`, not by eye (D421/D440): U+0027 at sentence indexes
+// 20 and 138. No /i, `^…$`.
+//
+// MEASURED OVER ALL 640 `legalAttackCorpus()` rows: this anchor claims EXACTLY the
+// one row above, and the loose probe `/tries to use an attack/` finds no other. It
+// is DISJOINT from the three defender-lock anchors above by a mandatory byte run
+// (they say "the Defending Pokémon can['’]t …" / "Flip a coin."; this one "if the
+// Defending Pokémon tries to use an attack") — no string matches two of them.
+//
+// ⚠️ NOT A `coinFlipGate` — `FLIP_TAILS_SELF_CANT_ATTACK`'s refusal bullet for this
+// sentence stays TRUE and is annotated, not withdrawn: the coin is flipped by the
+// OPPONENT, on THEIR turn, at a DECLARATION, which no gate in `EffectOp` can hold.
+// It is a durated install (`flipLockAttack`) read at `attack.ts`'s §8 step-3 seam.
+const DEFENDER_FLIP_ATTACK_LOCK =
+  /^During your opponent['’]s next turn, if the Defending Pokémon tries to use an attack, your opponent flips a coin\. If tails, that attack doesn['’]t happen\.$/;
 // …and the LAST TWO members of that shape (D145), which CLOSE the bare
 // tails-gated family: the same gate over the two consequents whose ops this
 // engine has owned since 0.x, so each is ONE regex and ONE arm with no
@@ -28187,6 +28323,26 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
     // a row announcing a drawback that does not exist. Leave it LOUD.
     if (amount >= 1) return [{ op: "weakenDefenderAttacks", amount }];
   }
+  // 19f'. 🆕🆕🆕 D547 — "During your next turn, the Defending Pokémon takes {N} more
+  //      damage from attacks (after applying Weakness and Resistance)." —
+  //      `censusAttackCorpus.ts:150`, 2 legal printings at 50 (no card id on this
+  //      checkout, measured). ONE capture, the amount, with this tail's `>= 1`
+  //      floor for its reason: a printed "takes 0 more damage" would install a
+  //      record that moves no number and announce it.
+  //
+  //      ⚠️ THE ARM-ORDERING ARGUMENT WAS RE-MEASURED, NOT COPIED FROM 19d/19f. The
+  //      target string derived `null` at HEAD (every arm above and below refused
+  //      it), and the anchor claims exactly one of the 640 legal corpus rows, so no
+  //      other row can reach this arm first or be taken by it. It sits beside 19f
+  //      because the two share the HOLDER (the opponent's Active, §11-refusable),
+  //      not because an order is load-bearing — the anchors differ at a mandatory
+  //      byte run ("During your next turn, the Defending" vs "During your
+  //      opponent's next turn"), before their bodies are compared.
+  match = DEFENDER_VULNERABLE_NEXT_TURN.exec(effect);
+  if (match !== null) {
+    const amount = Number(match[1]);
+    if (amount >= 1) return [{ op: "exposeDefender", amount }];
+  }
   // 19g. The DURATED REACTIVE RECOIL (D152) — 2 printings on ONE anchor at ONE
   //      amount, and the §9 family's first attack-INSTALLED member. An `exec`
   //      rather than a `test`, and the ONLY capture is the counter count: the
@@ -29213,6 +29369,21 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
       },
     ];
   }
+  // 26e. 🆕🆕🆕 D547 — "During your opponent's next turn, if the Defending Pokémon
+  //      tries to use an attack, your opponent flips a coin. If tails, that attack
+  //      doesn't happen." — `censusAttackCorpus.ts:176`, 2 legal printings, TWO
+  //      sentences claimed WHOLE (no card id on this checkout, measured). A `test`,
+  //      not an `exec`: nothing varies, so the program is the bare field-free op.
+  //
+  //      NOT a `coinFlipGate` like 26d one arm up, and the difference is WHO flips
+  //      and WHEN: 26d's coin is the installer's, flipped now, deciding whether a
+  //      hard lock lands; this coin is the LOCKED player's, flipped next turn at
+  //      each declaration the lock gates. So the op installs a stamp now
+  //      (`attackFlipLockTurn = turn + 1`) and `attack.ts` flips later. Placed in
+  //      the defender-lock block for legibility only: the anchor is disjoint from
+  //      26a–26d by a mandatory byte run (measured over all 640 corpus rows, and
+  //      the target string derived `null` at HEAD, so no arm above claimed it).
+  if (DEFENDER_FLIP_ATTACK_LOCK.test(effect)) return [{ op: "flipLockAttack" }];
 
   // 27/28. "Flip a coin. If tails, discard all Energy from this Pokémon." (2) and
   //        "Flip a coin. If tails, this Pokémon also does {N} damage to itself."

@@ -880,6 +880,13 @@ describe("the gated PREVENT clause — the guard is SWEPT, not listed", () => {
     // pool-keyed sources above and this table would have gone green with it
     // unclassified. Real printed bytes off `censusAttackCorpus.ts` row 54.
     "At the end of your opponent's next turn, put 9 damage counters on the Defending Pokémon.",
+    // 🆕🆕🆕 D547 — THE FOURTH AND FIFTH SENTENCES, for D414's reason verbatim: both
+    // demonstrators live in FILE-LOCAL `cardPool`s (`attackFlipLock.test.ts`,
+    // `damageVulnerability.test.ts`), so `flipLockAttack` and `exposeDefender` would be
+    // invisible to the pool-keyed sources above. Real printed bytes off
+    // `censusAttackCorpus.ts` rows 176 and 150.
+    "During your opponent's next turn, if the Defending Pokémon tries to use an attack, your opponent flips a coin. If tails, that attack doesn't happen.",
+    "During your next turn, the Defending Pokémon takes 50 more damage from attacks (after applying Weakness and Resistance).",
   ];
 
   /** The classification the §11 block owes every one of them. `blocked` = a live
@@ -1020,6 +1027,13 @@ describe("the gated PREVENT clause — the guard is SWEPT, not listed", () => {
     // describes is pinned somewhere, which is the most the table can offer until
     // it is hardened.
     weakenDefenderAttacks: "blocked",
+    // 🆕🆕🆕 D547 — BOTH new ops are effects of an attack done TO the Defending
+    // Pokémon (a lock on its declarations; a number added to the damage it takes), so
+    // both are BLOCKED — asked on the defender's seat before the idempotence return,
+    // `weakenDefenderAttacks`' check verbatim, and DRIVEN below and in each suite
+    // (`attackFlipLock.test.ts` §10, `damageVulnerability.test.ts` §6).
+    flipLockAttack: "blocked",
+    exposeDefender: "blocked",
     // 🆕🆕 D434 — the DELAYED counter placement. BLOCKED, for the line above's reason
     // verbatim and with the live-block case DRIVEN rather than merely classified
     // (`delayedCounters.test.ts` §9, under Mist Energy `sv05-161`'s effects-only
@@ -1831,6 +1845,16 @@ describe("the gated PREVENT clause — the guard is SWEPT, not listed", () => {
     weakenDefenderAttacks: {
       op: { op: "weakenDefenderAttacks", amount: 20 },
       landed: (r) => p1Active(r.after)?.attackDamageDebuff != null,
+    },
+    // 🆕🆕🆕 D547 — the evidence is the RECORD, as for the two rows above: neither op
+    // moves a number on the install turn.
+    flipLockAttack: {
+      op: { op: "flipLockAttack" },
+      landed: (r) => p1Active(r.after)?.attackFlipLockTurn != null,
+    },
+    exposeDefender: {
+      op: { op: "exposeDefender", amount: 50 },
+      landed: (r) => p1Active(r.after)?.damageVulnerability != null,
     },
     // 🆕🆕 D434 — the DELAYED counter placement. Classified `blocked` for the three
     // rows above it verbatim: it is an effect of an attack done TO the Defending

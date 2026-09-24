@@ -20098,6 +20098,58 @@ import type { GameState, Seat } from "./types";
     `expect(manifest.version)`, `it(…)` titles, the declaration and `package.json` —
     **not** as a value-keyed grep — because a value-keyed grep is precisely the mechanism
     that ate D500's heading.)
+    🆕🆕🆕 engineVersion 0.431.0 → **0.432.0** (D547 — THE FLIP-TO-ATTACK LOCK AND THE NEXT-TURN
+    VULNERABILITY, TWO NEW OPS ON TWO NEW REQUIRED `InPlayPokemon` FIELDS, AND THE FIRST
+    `MATCH_RECORD_VERSION` BUMP SINCE D501. `censusAttackCorpus.ts` **file lines 176 and 150**
+    (leading count column `2` each) — *"During your opponent's next turn, if the Defending
+    Pokémon tries to use an attack, your opponent flips a coin. If tails, that attack doesn't
+    happen."* (TWO sentences in one row, `OPAQUE` at `SUBMAX=12`) and *"During your next turn,
+    the Defending Pokémon takes 50 more damage from attacks (after applying Weakness and
+    Resistance)."* (SUBST-16 at `SUBMAX=12`) — **2 rows / 4 legal printings**, each claimed
+    WHOLE by ONE new anchor (`DEFENDER_FLIP_ATTACK_LOCK`, two `['’]` slots, no capture;
+    `DEFENDER_VULNERABLE_NEXT_TURN`, one capture, zero slots) and ONE new arm (26e, 19f')
+    emitting ONE new op each (`flipLockAttack`, `exposeDefender { amount }`). No catalog,
+    registry or fixture id carries either sentence (MEASURED, D425): both suites
+    (`attackFlipLock.test.ts`, `damageVulnerability.test.ts`) ride file-local declared `d547-*`
+    demonstrators in their own 60-card decks (D270); the real cards are UNMEASURED.
+    🛑 **A — A NEW OP, NOT A `preventAttack` RIDER** (D131's widen-don't-add test as D154 ran
+    it: the rider would write a different field under a different rule). The installer is
+    `preventAttack`'s defender arm cloned (§11 refusal before the idempotent return, `+ 1`,
+    silent re-install) writing `attackFlipLockTurn`; a NEW reader `attackFlipLocked`
+    (continuous.ts), deliberately NOT folded into `attackLocked`, so `redact.ts`,
+    `packages/schema` and GameHud take no byte and the declaration stays LEGAL. `attack.ts`
+    flips at the §8 step-3 seam BEFORE the Confusion flip — the official rulebook's order
+    ("Full details of attacking": B, "effects that might alter or cancel the attack", whose
+    printed example is this sentence family, before C, the Confusion check; `docs/decisions.md`
+    D547 ruling 1, which WITHDRAWS the draft's "Confusion first, UNRULED in-tree" before
+    commit) — only while the lock is live; tails files ATTACK_FAILED
+    `"flipLock"` (an explicit `log.ts` arm) and ends the turn. `ATTACK_LOCKED` gains
+    `flip?: true` (the bare row would say "can't attack", false — D421) and
+    `ATTACK_FLIP_LOCK_CHECK` is CONFUSION_CHECK's sibling.
+    🛑 **B — `reduceDamage`'s SIGN FLIPPED ONTO THE DEFENDER, IN THE INSTALLER'S WINDOW.**
+    `exposeDefender` clones `weakenDefenderAttacks`' holder and guards with a `state.turn + 2`
+    stamp and a `Math.max` merge into `damageVulnerability: {turn, amount}`; a NEW reader
+    `installedVulnerabilityOf` is ADDED after W/R at every site that subtracts the installed
+    reduction (`attack.ts`'s main hit, `spreadDamage`, `placeSnipe`, `snipeActive`) and reported
+    as `DAMAGE_DEALT.vulnerability` (never a negative `reduction`, D149), rendered " · exposed
+    +N". DECISIONS (i) the term lands on any computed hit, even one Resistance took to 0;
+    (ii) it is ON-TARGET, so `suppressTargetEffects` and `ignoreWR` drop it with the reduction;
+    and — the rulebook's damage step 2, "Stop if the base damage is 0" — NO hit is computed
+    when the before-W/R number is 0, so the term is gated on it at all four sites (a 60 under a
+    60 debuff into an exposed Defender deals 0, not 50).
+    🛑 **`MATCH_RECORD_VERSION` 30 → 31** (apps/api `match.ts`): both fields REQUIRED — the
+    optional routes are detectable in the bytes but NOT inert on the board (a rollback drops a
+    gate and a damage term), the FIFTH position written beside D456/D544/D546. A v30 body
+    silently never flips and THROWS on every hit.
+    Census (`SUBMAX=12`): reader 570/1621 → 572/1625, residue 40/55 → 38/51, raw residue
+    70/111 → 68/107, `BUILT.attack` 1677 → 1681 (the PRINTINGS step), OPAQUE 14/22 → 13/20,
+    SUBST-16 3/4 → 2/2; registry, gate and trailing UNMOVED. Default cap: OPAQUE 26/38 →
+    24/34, MULTI-3 1/2 → 0/0, UNEXPLAINED 9/11 → 8/9, CONTINUOUS 9/11 | 11/13 | 52/221 → 7/7
+    | 9/9 | 54/225, targets 600 → 602. ⚠️ THE SENTENCE STEP (2) AND THE PRINTING STEP (4)
+    DIFFER, and `compoundCompose`'s multi-clause claimed-whole rung moves +1 (only `:176` is
+    two sentences). Claims withdrawn (D539): *"not a `coinFlipGate`"* ANNOTATED, still true;
+    the two null refusals of `:176` RE-POINTED to `:669`; `devolveEach`'s TWELVE bars →
+    FOURTEEN.)
     🆕🆕🆕 engineVersion 0.430.0 → **0.431.0** (D546 — THE ALL-ATTACKS NEXT-TURN BUFF, A NULL
     ADDRESS ON THE OP AND THE RECORD THAT ALREADY OWNED THE WINDOW, AND A FOLD AT THE ONE
     SNIPE SITE THAT HONOURS THE ACTIVE'S PRE-W/R BONUS. `censusAttackCorpus.ts` **file lines
@@ -20236,7 +20288,9 @@ import type { GameState, Seat } from "./types";
     UNMOVED at 16/24 there; `OPAQUE` 31/44 → 30/42 and `UNEXPLAINED` 14/17 → 13/15 at
     `SUBMAX=4`. ⚠️ THE SENTENCE STEP IS 1 AND THE PRINTING STEP IS 2. PART 0 (separable):
     the stale corpus `:176` quote *"tries to attack"* / 4 respelled to the corpus bytes at
-    its six carriers, so two refusal rungs now refuse a string the corpus prints.)
+    its six carriers, so two refusal rungs now refuse a string the corpus prints — 🆕🆕🆕 D547:
+    that string is now BUILT (`flipLockAttack`), so both rungs were RE-POINTED (D438) to the
+    corpus's other live unmapped tails witness with the same owner, `:669`.)
     🆕🆕🆕 engineVersion 0.427.0 → **0.428.0** (D543 — THE CHOSEN POKÉMON TOOL DISCARD AT
     THE PROGRAM TAIL, THE `upTo` SCOPE THAT NEVER HAD A WIRE SPELLING, AND THE EVENT THAT HAD
     TO SAY *WHEN* IT FIRED. `censusAttackCorpus.ts` **file line 136** (leading count column
@@ -23803,7 +23857,7 @@ import type { GameState, Seat } from "./types";
     WITNESS** — the count was re-derived every slice and the word *"three"* was carried.
     A successor of this slice inherits **81 / 61 / 17** again, over **FIVE** history
     occurrences: those four plus `deckMillFilteredScale.test.ts`'s own header arrow.) */
-export const engineVersion = "0.431.0";
+export const engineVersion = "0.432.0";
 
 export type {
   ApplyResult,
