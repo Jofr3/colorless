@@ -578,6 +578,58 @@ export interface DamageVulnerability {
   amount: number;
 }
 
+/** 🆕🆕🆕 §8.1/§11 (D549) — an attack-installed KNOCK OUT BOUNTY on one Pokémon:
+    "During your next turn, if the Defending Pokémon is Knocked Out, take 2 more Prize
+    cards." (`censusAttackCorpus.ts:149`, 1 legal printing; no card id on this checkout,
+    measured — `koBounty.test.ts` rides declared `d549-*` demonstrators). Written onto the
+    OPPONENT's Active by `bountyDefender`; read in ONE place, flow.ts `koPrizeBonus`.
+
+    `DamageVulnerability`'s SHAPE AND WINDOW, on the §8.1 prize step instead of the §8.5
+    damage step: the stamp is the INSTALLER's own next turn (`state.turn + 2`), so the
+    holder's controller plays the whole turn in between and may retreat, switch or evolve
+    the marked body out from under it (§10 — docs/decisions.md D549 R2).
+
+    `{ turn, amount }`: one window, one number, merged by `Math.max` on a same-window
+    re-install (the interpreter says why). */
+export interface KoBounty {
+  /** The single turn this bounty is live on — the installing turn + 2, the INSTALLER's
+      own next turn. A Knock Out of the holder at ANY point of that turn pays it (R1:
+      any cause), EXCEPT in the Checkup that ends it (flow.ts's `checkup` flag). */
+  turn: number;
+  /** Prize cards ADDED to the holder's face value when it is Knocked Out in the window —
+      the printed "2 more". */
+  amount: number;
+}
+
+/** 🆕🆕🆕 §8/§11 (D549) — an attack-installed SIDE-WIDE ATTACK LOCK on one player's
+    whole side, for one turn. TWO printings write it (`censusAttackCorpus.ts:169` and
+    `:170`, 1 legal printing each; no card id on this checkout, measured):
+      · "During your next turn, your Pokémon can't attack. (This includes new Pokémon
+        that come into play.)" — the INSTALLER's side, `turn: state.turn + 2`,
+        `maxEnergy: null` (every body);
+      · "During your opponent's next turn, Pokémon that have 2 or less Energy attached
+        can't attack. (This includes new Pokémon that come into play.)" — the OPPONENT's
+        side, `turn: state.turn + 1`, `maxEnergy: 2`.
+    Read through `attackLocked` (continuous.ts), which answers "may this body DECLARE?"
+    — so the §8 gate, `redactedAttacksOf`'s `playable` and GameHud's greyed buttons all
+    see it with ZERO bytes at those three sites.
+
+    ⚠️ A RECORD ON THE SIDE, NOT A STAMP ON A BODY, AND THE PRINTED REMINDER IS WHY:
+    "(This includes new Pokémon that come into play.)" — a body benched, promoted or
+    evolved AFTER the install is locked too, which a per-body stamp written at install
+    time cannot express. A side record covers it BY CONSTRUCTION: the reader asks about
+    whichever body is asked about, at the moment it is asked. */
+export interface SideAttackLock {
+  /** The single turn this lock is live on — `+ 2` for the self form (the installer's
+      own next turn), `+ 1` for the opponent form (the opponent's next turn). */
+  turn: number;
+  /** `null` — EVERY Pokémon on the side is locked (`:169`). A number — only a body
+      with AT MOST that many Energy CARDS attached is locked (`:170`, "2 or less"),
+      counted LIVE at each declaration through `countAttachedEnergy(…, null)` (R4):
+      attaching a third Energy unlocks the body on the same turn. */
+  maxEnergy: number | null;
+}
+
 /** §9/§11 (D152, WIDENED D456) — an attack-installed REACTIVE RECOIL on one
     Pokémon, with the printed DURATION baked in as a turn STAMP exactly as
     `AttackBlock`, `DamageReduction` and `AttackDamageDebuff` above bake theirs.
@@ -1406,6 +1458,46 @@ export interface InPlayPokemon {
       victim's counterplay (D148's agency); a forced switch or devolution sheds it
       too. All five literals write it; only `makeInPlay` is compiler-forced. */
   damageVulnerability: DamageVulnerability | null;
+  /** 🆕🆕🆕 §8.2/§11 (D549) — the turn on which an attack-installed COST TAX is live on
+      this Pokémon (the installing turn + 1 — the Defending Pokémon's controller's own
+      next turn), or `null` when none has been installed: "During your opponent's next
+      turn, attacks used by the Defending Pokémon cost {C} more, and its Retreat Cost is
+      {C} more." (`censusAttackCorpus.ts:171`, 1 legal printing). Read through
+      `installedCostTaxOf` (continuous.ts), never by touching this field — ONE reader,
+      folded at BOTH cost seams: `effectiveAttackCost`'s `added` and
+      `effectiveRetreatCost`'s sum (after the free-retreat tier, R3).
+
+      A BARE STAMP AND NOT `{ turn, amount }`: both halves of the sentence print the
+      same single {C}, and the pool prints no other amount (measured over all 640
+      corpus rows), so the number is the reader's constant 1. A second amount would
+      widen this to a record — a `MATCH_RECORD_VERSION` question at that time.
+
+      🛑 REQUIRED, NOT OPTIONAL, AND IT BUMPS `MATCH_RECORD_VERSION` 32 → 33 (with
+      `koBounty` below and `PlayerSide.sideAttackLock`) — D432's case: a bare stamp has
+      no REST, so a dropped `costTaxTurn?` degrades into the pre-D549 board where the
+      printed surcharge silently never lands (the SIXTH position at match.ts).
+
+      THE §10 CLEARS ARE THE FLIP LOCK's (D547): the window is the holder's controller's
+      own turn, so RETREAT (paying the TAXED cost), a Switch and EVOLVING inside it are
+      PLAYED lines, and a forced switch or devolution sheds it too (R2). All five
+      literals write it; only `makeInPlay` is compiler-forced. */
+  costTaxTurn: number | null;
+  /** 🆕🆕🆕 §8.1/§11 (D549) — the attack-installed KNOCK OUT BOUNTY on this Pokémon (see
+      `KoBounty` above), or `null` when none has been installed. Read in ONE place,
+      flow.ts `koPrizeBonus`, on the PRE-KO board, only when this body was the Active
+      and the batch is not a Checkup.
+
+      🛑 REQUIRED, NOT OPTIONAL — `MATCH_RECORD_VERSION` 32 → 33 is shared with
+      `costTaxTurn` above. D434's case: the record's two keys arrive TOGETHER and cannot
+      witness each other's loss, and a dropped `koBounty?` degrades into a board where
+      the printed "take 2 more Prize cards" silently never pays.
+
+      ⚠️ `state.turn + 2`, THE INSTALLER's OWN NEXT TURN, written onto the OPPONENT's
+      body — `damageVulnerability`'s window and holder exactly, so its §10 story is that
+      field's (R2): the victim's retreat, Switch or evolution on the turn in between are
+      PLAYED lines that shed it, and a gust or devolution sheds it too. All five
+      literals write it; only `makeInPlay` is compiler-forced. */
+  koBounty: KoBounty | null;
   /** §9/§11 (D152) — the attack-installed REACTIVE RECOIL on this Pokémon (see
       `InstalledRecoil` above), or `null` when none has been installed. Read
       through `installedRecoilOf` (continuous.ts) rather than by touching this
@@ -1780,6 +1872,10 @@ export function makeInPlay(uid: string, turnPlayed: number): InPlayPokemon {
     // 🆕🆕🆕 …and no attack has made it VULNERABLE for a next turn either (D547).
     // The compiler forces this line; the four spread literals are held by mutants.
     damageVulnerability: null,
+    // 🆕🆕🆕 …nor TAXED its costs, nor put a KNOCK OUT BOUNTY on it (D549). The
+    // compiler forces these two lines; the four spread literals are held by mutants.
+    costTaxTurn: null,
+    koBounty: null,
     // …and no attack has armed a durated recoil on it either (D152) — the
     // reduction's sibling on the §9 side of the pipeline. Same reading of §10's
     // carry-over rule from the other end as the four lines above.
@@ -1847,6 +1943,42 @@ export interface PlayerSide {
       REQUIRED (not `?`), which is why `MATCH_RECORD_VERSION` went 31 → 32 (the D548 block
       at `apps/api/src/lobby/match.ts`). */
   faceUpPrizes: string[];
+  /** 🆕🆕🆕 §8/§11 (D549) — the SIDE-WIDE ATTACK LOCK on this seat's Pokémon (see
+      `SideAttackLock` above), or `null` when none has been installed. Read through
+      `attackLocked` (continuous.ts); written by `lockSideAttacks` (interpreter.ts).
+
+      🛑 **PLACEMENT: HERE, ON `PlayerSide`, AND NOT ON `GameState` BESIDE
+      `handPlayLockedTurn` — MEASURED, NOT PREFERRED.** Both homes were built and
+      type-checked at this slice's head: each forces EXACTLY ONE non-test literal under
+      `tsc -b` (`setup.ts`'s `emptySide` here, `createGame`'s `GameState` literal there)
+      and ZERO test literals; but `GameState`'s key set is pinned at RUNTIME by **16**
+      test files (`Object.keys(state).sort()` rungs and key lists naming
+      `"handPlayLockedTurn"`/`"oncePerGameSpent"`) and `PlayerSide`'s by **ZERO**. The
+      fact is about ONE side's Pokémon ("your Pokémon" / the opponent's), and the side is
+      the record every read site already holds.
+
+      ⚠️ **`handPlayLockedTurn` IS NOT WIDENED, AND D285's ARGUMENT DOES NOT TRANSFER.**
+      D285 refused a second record because it *"would duplicate the window, the writer,
+      the arithmetic and this §10 non-clear invariant so that a reader could tell apart
+      two things no reader asks about"* — true there, because Evolution Jammer's bar is a
+      BARE STAMP of the same shape answering a question of the same kind (may this card be
+      PLAYED from hand?). Here the VALUE SHAPE DIFFERS (`{ turn, maxEnergy }` cannot live
+      in a `number | null` slot — `:170` carries its "2 or less"), the QUESTION DIFFERS
+      (may this BODY DECLARE an attack?, read by `attackLocked`, not by
+      `handPlayBarred`/`pokemonPlayBarred`), and the self form's window is `+ 2`, which
+      no `handPlayLockedTurn` writer has ever stamped. Widening it would put a record into
+      a stamp map and an attack question behind a hand-play name.
+
+      NOT cleared by §10 (`handPlayLockedTurn`'s invariant): it is not an effect on a
+      Pokémon, so no body leaving the Active Spot — and not the INSTALLER leaving play
+      (R7) — sheds it. It expires by arithmetic like every stamp on this engine.
+
+      PUBLIC — installed by an attack both players watched — but it rides NO wire field:
+      the only thing a client needs is each attack row's `playable`, which `redact.ts`
+      already computes through `attackLocked` (zero bytes there).
+
+      REQUIRED (not `?`): `MATCH_RECORD_VERSION` 32 → 33 (the SIXTH position at match.ts). */
+  sideAttackLock: SideAttackLock | null;
   active: InPlayPokemon | null;
   /** Dense (no empty slots), capped at BENCH_MAX. */
   bench: InPlayPokemon[];
@@ -2756,6 +2888,14 @@ export function evolveOnto(
     // the holder's controller plays the whole turn in between, and evolving the
     // exposed body on it is a PLAYED line that sheds the +50 (evolve clear, D547).
     damageVulnerability: null,
+    // 🆕🆕🆕 …and, since D549, the COST TAX — the flip lock's story (the window is the
+    // taxed body's controller's own turn), so evolving is the victim's played line and
+    // the evolved card attacks and retreats at its printed cost (evolve clear, D549 tax).
+    costTaxTurn: null,
+    // 🆕🆕🆕 …and the KNOCK OUT BOUNTY — the vulnerability's story two lines up: the
+    // window is the INSTALLER's next turn, so evolving on the turn in between sheds the
+    // "2 more Prize cards" (evolve clear, D549 bounty).
+    koBounty: null,
     // …and, since D152, the attack-armed RECOIL — the reduction's story two lines
     // up rather than the debuff's, and for the same arithmetic: its window is the
     // OPPONENT's next turn, during which the holder's controller cannot evolve

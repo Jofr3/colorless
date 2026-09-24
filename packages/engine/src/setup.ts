@@ -145,7 +145,18 @@ export function createGame(options: CreateGameOptions): CreateGameResult {
 }
 
 function emptySide(deck: string[]): PlayerSide {
-  return { deck, hand: [], discard: [], prizes: [], faceUpPrizes: [], active: null, bench: [], mulligans: 0 };
+  return {
+    deck,
+    hand: [],
+    discard: [],
+    prizes: [],
+    faceUpPrizes: [],
+    // 🆕🆕🆕 D549 — no attack has locked a side that has not been dealt yet.
+    sideAttackLock: null,
+    active: null,
+    bench: [],
+    mulligans: 0,
+  };
 }
 
 function handHasBasic(state: GameState, seat: Seat): boolean {

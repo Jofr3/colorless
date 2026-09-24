@@ -463,6 +463,7 @@ Attack text is derived, so every one of these is a regex + a `return` in
 | **Multi-status + both-Actives** — "is now X **and** Y", "is now X, Y, **and** Z", "**Both** Active Pokémon are now X" | **7** | 6 | `sv03-010` Amoonguss "Dangerous Spores" + `swsh10.5-007` Ariados "Poison String-Up" (Paralyzed **and** Poisoned) · `sv06.5-058` **Dangerous Laser** (Item — Burned and Confused) · `swsh10.5-004` Radiant Venusaur "Pollen Hazard" (Burned, Confused, **and** Poisoned) · `swsh10.5-003` Venusaur "Loopy Lasso" (ability) · `sv03-129` Paldean Clodsire "Splattering Poison" + `swsh10.5-020` Slowbro "Tumbling Tackle" (**both** Actives) |
 | ~~**The flip-to-attack lock**~~ ✅ **BUILT, D547** (`flipLockAttack` + `InPlayPokemon.attackFlipLockTurn`, flipped at `attack.ts`'s §8 step-3 seam BEFORE Confusion — the official rulebook's order, D547 ruling 1; `MATCH_RECORD_VERSION` 30 → 31) — "During your opponent's next turn, if the Defending Pokémon tries to use an attack, your opponent flips a coin. If tails, that attack doesn't happen." (D544: re-spelled off `censusAttackCorpus.ts:176`; it was quoted as ~~"tries to attack"~~) | **2** legal (~~**4**~~ was the catalog/local count) | 1 | CATALOG/local population, NOT the legal pair (which two are legal is unmeasured): `sv01-022`/`sv01-200` Dolliv "Apply Oil" idx 1 · `sv02-049`/`sv02-206` Quaxly "Apply Gel" idx 0 |
 | ~~**The face-up Prize cost**~~ ✅ **BUILT, D548** — "You may turn 1 of your face-down Prize cards face up. If you do, this attack does 80 more damage. (That Prize card remains face up for the rest of the game.)" (`censusAttackCorpus.ts:664`) | **2** | 1 | Cresselia `sv06.5-021` "Crescent Purge" (and its reprint) — `optionalCostOps`' FIFTH row (`turnPrizeFaceUp` behind `yourFaceDownPrizeRemains`, the OWNER picks which prize — D548's ruling) on a REQUIRED `PlayerSide.faceUpPrizes`; `MATCH_RECORD_VERSION` 31 → 32; the wire and both HUDs show face-up prizes. The Playmat PrizeGrid is OWED. |
+| ~~**The defender's next-turn marks and the side-wide attack lock**~~ ✅ **BUILT, D549** — the COST TAX (`:171`, `taxDefender` → `InPlayPokemon.costTaxTurn`, read at both cost seams), the KNOCK OUT BOUNTY (`:149`, `bountyDefender` → `InPlayPokemon.koBounty`, paid in flow.ts `koPrizeBonus` outside the Checkup — a new REQUIRED `checkup` flag), and the SIDE-WIDE lock (`:169`/`:170`, `lockSideAttacks` → `PlayerSide.sideAttackLock`, read inside `attackLocked`); `MATCH_RECORD_VERSION` 32 → 33. No card id resolves for any of the four on this checkout (measured) | **4** | 4 | declared `d549-*` demonstrators (`costTax.test.ts`, `koBounty.test.ts`, `sideAttackLock.test.ts`) |
 
 ## The five to build next
 | # | Family | Price | Why |
@@ -491,6 +492,10 @@ somewhere else:
   defender"* half is WITHDRAWN: the coin is an automatic flip, not a decision, so there
   is no park and no answerer (`attackFlipLock.test.ts`). The same slice built SUBST-16's
   `:150` (*"…the Defending Pokémon takes 50 more damage…"*, `exposeDefender`).
+  🆕🆕🆕 **D549 built SUBST-16's other two rows** (`:149`, the Knock Out bounty; `:169`, the
+  side-wide lock) with `:171` and `:170` — the cost was NOT the parse there either: a SIDE record
+  (the printed reminder names bodies that do not exist at install), and a Checkup/mid-turn
+  discriminant the Knock Out sweep did not have (`checkup: boolean`).
 * **The card-type play lock (7)** — needs a per-seat next-turn restriction channel,
   a gate in `cardplay.ts` for each card class, **and** the HUD greying, or the
   player is offered a card that will be refused. Three read sites for one sentence.

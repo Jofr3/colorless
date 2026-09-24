@@ -1930,12 +1930,18 @@ export function installedRecoilOf(
     it. This one is read from `attack.ts`'s §8 gate and from the HUD's payability
     projection — both of which are, by construction, about declaring an ATTACK —
     so there is exactly one kind of thing it can refuse and nothing to disambiguate.
+    (🆕🆕🆕 D549: STILL one kind of THING — a declaration — but no longer one SOURCE of
+    the refusal: a SIDE-WIDE lock on `PlayerSide.sideAttackLock` now answers the same
+    question for every body on a side, below. It still needs no provenance channel,
+    because both sources are ATTACK installations read at a declaration.)
 
     Returns a plain boolean rather than the stamp: there is one fact here and no
     `effects`-shaped rider to carry, so a record would be a field-of-one (D104's
     minimal shape).
 
     ⚠️ AND THE SECOND READING LANDED WITHOUT MOVING THIS FUNCTION AT ALL (D148).
+    (🆕🆕🆕 D549: the THIRD reading — the side-wide lock — DID move this function's BODY,
+    by one early-return line; its SIGNATURE and every caller did not move.)
     D143 forecast it here: "a second reading — the pool prints an opponent-side
     'the Defending Pokémon can't attack' on 4 printings — would earn the OP a
     `target` field, not this reader a return type". That is exactly what happened.
@@ -1944,12 +1950,79 @@ export function installedRecoilOf(
     `redactedAttacksOf` and GameHud — is byte-identical to what it was at 0.92.0,
     because the QUESTION ("may this body attack on this turn?") never depended on
     who wrote the answer. A reader that had carried the direction would have had to
-    ask a second one here, on both sides of the table, forever. */
+    ask a second one here, on both sides of the table, forever.
+
+    🆕🆕🆕 **D549 — A SECOND SOURCE, THE SIDE-WIDE LOCK, AND IT BELONGS HERE.** *"During
+    your next turn, your Pokémon can't attack. (This includes new Pokémon that come into
+    play.)"* (`censusAttackCorpus.ts:169`) and *"During your opponent's next turn, Pokémon
+    that have 2 or less Energy attached can't attack. (This includes new Pokémon that come
+    into play.)"* (`:170`) answer exactly this function's question — "may this body
+    DECLARE?" — so they are read HERE, and the three askers (`attack.ts`'s §8 gate,
+    `redactedAttacksOf`, GameHud) take ZERO bytes: the SIGNATURE `(state, pokemon)` is
+    kept on purpose, and the seat is DERIVED (`seatOfPokemon`, whose `undefined` answers
+    "not locked"). D547's warning one function down (*"MUST NOT BE FOLDED INTO
+    `attackLocked`"*) is about the FLIP lock, whose declaration stays LEGAL, and it stays
+    true; this lock makes the declaration ILLEGAL, which is this function's meaning.
+    (🆕🆕🆕 D549: *"the ONE read of `InPlayPokemon.attackLockedTurn`"* above stays TRUE —
+    the side lock is a different field — and *"every read of the fact … byte-identical"*
+    stays true of the three askers; what is WITHDRAWN is only the implication that this
+    body reads one field.) The side lock is read FIRST as an early return so the line
+    below stays byte-identical to its D143 form. */
 export function attackLocked(state: GameState, pokemon: InPlayPokemon): boolean {
+  // 🆕🆕🆕 D549 — the SIDE-WIDE lock, asked of whichever body is asked about at the
+  // moment it is asked: a body benched, promoted or evolved after the install is
+  // covered by construction (the printed reminder), and `:170`'s Energy count is LIVE.
+  if (sideAttackLockHolds(state, seatOfPokemon(state, pokemon), pokemon)) return true;
   // No defensive `=== undefined` arm, for `attackBlockOf`'s reason one function
   // up: the field is REQUIRED and an older record is retired by
   // MATCH_RECORD_VERSION rather than read benignly here.
   return pokemon.attackLockedTurn === state.turn;
+}
+
+/** 🆕🆕🆕 §8/§11 (D549) — does `seat`'s live SIDE-WIDE ATTACK LOCK (`PlayerSide.
+    sideAttackLock`) hold `pokemon` right now? `attackLocked`'s second source, one
+    function up, and asked ONLY from there.
+
+    LIVE iff the record's `turn` is the turn now being played (a stamp, like every
+    installed window in this file: no clear, no reset). A `maxEnergy` of `null` locks
+    every body (`:169`); a number locks only a body with AT MOST that many Energy
+    CARDS attached (`:170`, "2 or less") — counted by `countAttachedEnergy(…, null)`,
+    §6.3's CARD count, and NOT by provided units (docs/decisions.md D549 R4): a
+    Special Energy providing two units is one Energy here. READ LIVE, at each ask, so
+    attaching a third Energy on the locked turn unlocks the body on that same turn.
+
+    `seat === undefined` (an unreadable stack, a body already gone) answers FALSE —
+    `seatOfPokemon`'s missing answer, never a guess at a side. No defensive `===
+    undefined` arm on the record (D124): the field is REQUIRED and a v32 record is
+    retired by MATCH_RECORD_VERSION 33 rather than read benignly here. */
+function sideAttackLockHolds(
+  state: GameState,
+  seat: Seat | undefined,
+  pokemon: InPlayPokemon,
+): boolean {
+  if (seat === undefined) return false;
+  const lock = state.players[seat].sideAttackLock;
+  if (lock === null || lock.turn !== state.turn) return false;
+  return lock.maxEnergy === null || countAttachedEnergy(state, pokemon, null) <= lock.maxEnergy;
+}
+
+/** 🆕🆕🆕 §8.2/§11 (D549) — the attack-installed COST TAX live on `pokemon` right now,
+    in {C} symbols, or 0: "During your opponent's next turn, attacks used by the
+    Defending Pokémon cost {C} more, and its Retreat Cost is {C} more."
+    (`censusAttackCorpus.ts:171`). The ONE read of `InPlayPokemon.costTaxTurn`, folded
+    at BOTH cost seams — `effectiveAttackCost`'s `added` and `effectiveRetreatCost`'s
+    sum — so the two halves of the sentence cannot come apart.
+
+    The number is the constant 1 because the pool prints only "{C} more" (types.ts
+    says why the field is a bare stamp). Every reader of the two cost functions
+    inherits it with no byte of its own: the §8.2 payability gate and both HUDs through
+    `attackCostAt`, the retreat gate and `redactedRetreatOf`, and the two
+    retreat-COUNTING reads (`attack.ts`'s `opponentActiveRetreatCost`,
+    `interpreter.ts`'s retreat-cost condition) — docs/decisions.md D549 R3. No
+    defensive arm (D124): a v32 body's absent key reads `undefined === turn` → 0, the
+    soft landing the SIXTH position at match.ts names. */
+export function installedCostTaxOf(state: GameState, pokemon: InPlayPokemon): number {
+  return pokemon.costTaxTurn === state.turn ? 1 : 0;
 }
 
 /** 🆕🆕🆕 §8/§11 (D547) — is `pokemon` under an attack-installed FLIP-TO-ATTACK
@@ -4364,9 +4437,14 @@ export function effectiveRetreatCost(state: GameState, pokemon: InPlayPokemon): 
   if (top === undefined) return 0;
   if (hasFreeRetreatAura(state, pokemon) || hasFreeRetreatSelf(state, pokemon)) return 0;
   const printed = retreatCostOf(top);
+  // 🆕🆕🆕 D549 — the attack-installed COST TAX is a FIFTH term in the ONE floored sum
+  // (R3): below the free-retreat tier above, which still zeroes the cost outright, and
+  // summed rather than added after the floor, so a discount that overshoots is not
+  // charged the tax back out of a negative (D322's rule for the opposing surcharge).
   return Math.max(
     0,
     printed +
+      installedCostTaxOf(state, pokemon) +
       stadiumRetreatDelta(state, top) +
       opposingRetreatSurcharge(state, pokemon) -
       alliedRetreatDiscount(state, pokemon),
@@ -4569,7 +4647,11 @@ export function effectiveAttackCost(
   const stadium = isBasicPokemon(top)
     ? (stadiumEffectsOf(state)?.basicAttackCostSurcharge ?? 0)
     : 0;
-  const added = stadium + opposingAttackCostSurcharge(state, pokemon);
+  // 🆕🆕🆕 D549 — …and the attack-installed COST TAX on the Defending Pokémon's own
+  // attacks ("attacks used by the Defending Pokémon cost {C} more"), a third ADDED
+  // source netted against the discount like the other two.
+  const added =
+    stadium + opposingAttackCostSurcharge(state, pokemon) + installedCostTaxOf(state, pokemon);
   const net = added - selfAttackCostDiscount(state, pokemon);
   if (net === 0) return cost;
   if (net > 0) return [...cost, ...Array.from({ length: net }, () => "Colorless")];

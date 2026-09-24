@@ -313,6 +313,11 @@ describe("placement", () => {
       // `=== null` and then dereferences `.turn`, so a body reaching this line with the
       // key ABSENT would THROW at the next hit — why it is `… | null` and required.
       damageVulnerability: null,
+      // 🆕🆕🆕 …and no COST TAX and no KNOCK OUT BOUNTY (D549). `koPrizeBonus` asks
+      // `!== null` and then dereferences `.turn`, so a body reaching an Active Knock Out
+      // with `koBounty` ABSENT would THROW; `installedCostTaxOf` would silently read 0.
+      costTaxTurn: null,
+      koBounty: null,
       // …and no ARMED recoil (D152), read the same way a fifth time:
       // `installedRecoilOf` compares the stamp to `state.turn`, so a fresh body
       // retaliates for nothing rather than retaliating on turn 0.

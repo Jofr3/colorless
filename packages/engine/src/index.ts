@@ -12503,6 +12503,9 @@ import type { GameState, Seat } from "./types";
     against a seed sweep and a fourth fixture. The side-wide ones are out on the MECHANISM:
     `preventAttack` locks ONE body and both of those lock a SIDE, *"including new Pokémon that
     come into play"*, which is a zone this op has no member for and not a wider `target`.
+    (🆕🆕🆕 D549: *"a zone this op has no member for"* is WITHDRAWN as a refusal — both side-wide
+    spellings are BUILT by their OWN op, `lockSideAttacks`, on `PlayerSide.sideAttackLock`; the
+    mechanism argument above stays TRUE of `preventAttack`, and is exactly why the op is new.)
 
     `MATCH_RECORD_VERSION` **STAYS 25**, argued from whether any field changes rather than from
     whether the op is new (`preventAttack` CAN be parked behind a pick — D148's compound proves
@@ -20111,6 +20114,78 @@ import type { GameState, Seat } from "./types";
     `expect(manifest.version)`, `it(…)` titles, the declaration and `package.json` —
     **not** as a value-keyed grep — because a value-keyed grep is precisely the mechanism
     that ate D500's heading.)
+    🆕🆕🆕 engineVersion 0.433.0 → **0.434.0** (D549 — THE DEFENDER'S NEXT-TURN MARKS AND THE
+    SIDE-WIDE ATTACK LOCK: THREE NEW OPS, TWO REQUIRED `InPlayPokemon` FIELDS, ONE REQUIRED
+    `PlayerSide` FIELD, A `checkup` FLAG THREADED THROUGH THE KNOCK OUT SWEEP, AND
+    `MATCH_RECORD_VERSION` 32 → 33. `censusAttackCorpus.ts` **file lines 171, 149, 169 and 170**
+    (leading count column `1` each) — **4 sentences / 4 legal printings**, each claimed WHOLE by
+    `deriveAttackEffect` alone (checked against all 13 readers) through FOUR new anchors:
+    `DEFENDER_COSTS_TAXED` (`:171`, `{C}` escaped, one `['’]` slot), `DEFENDER_KO_BOUNTY_NEXT_TURN`
+    (`:149`, one capture, no slot), `SIDE_CANT_ATTACK_NEXT_TURN` (`:169`) and
+    `OPPONENT_LOW_ENERGY_CANT_ATTACK` (`:170`, the Energy cap captured) — the printed reminder
+    *"(This includes new Pokémon that come into play.)"* REQUIRED on both. No catalog, registry
+    or fixture id carries any of the four (MEASURED, D425): the suites `costTax.test.ts`,
+    `koBounty.test.ts` and `sideAttackLock.test.ts` ride file-local declared `d549-*`
+    demonstrators in their own 60-card decks (D270); the real cards are UNMEASURED.
+    🛑 **A — THE COST TAX** (`taxDefender`, nullary): `flipLockAttack`'s holder and window (the
+    opponent's Active, `turn + 1`), the §11 refusal FIRST, then the idempotent return, then
+    `InPlayPokemon.costTaxTurn`. ONE reader `installedCostTaxOf` folded at BOTH cost seams —
+    `effectiveAttackCost`'s `added` and `effectiveRetreatCost`'s floored sum, BELOW the
+    free-retreat tier (R3) — so the §8.2 gate, `attackCostAt`, both HUDs, the retreat gate,
+    `redactedRetreatOf` and the two retreat-COUNTING reads inherit it with no byte of their own.
+    A NEW event `COST_TAX_APPLIED` (not an `ATTACK_LOCKED` rider: the body is not locked, D421).
+    🛑 **B — THE KNOCK OUT BOUNTY** (`bountyDefender { amount }`): `exposeDefender`'s holder and
+    window (`turn + 2`), `Math.max` on one window, `InPlayPokemon.koBounty`, read ONCE in flow.ts
+    `koPrizeBonus` AFTER the seat bonuses — one PRIZE_BONUS, no ABILITY_TRIGGERED — when the dying
+    body WAS the Active, the record is live, and the batch is NOT the Checkup. **THE CHECKUP IS
+    NAMED BY A NEW REQUIRED FLAG**, `checkup: boolean`, threaded `collectKnockOuts` →
+    `collectKnockOutPass` → `planPrizes` → `koPrizeBonus` and `true` ONLY at `runCheckup`:
+    `attackerSeat` is omitted by both the Checkup and the mid-turn sweep, and `state.turn` is
+    still the ended turn during the Checkup, so nothing else could tell a Poison Knock Out after
+    "your next turn" from one during it (R1). A Glimmora-DENIED Knock Out never reaches the read.
+    🛑 **C — THE SIDE-WIDE LOCK** (`lockSideAttacks { whose, maxEnergy }`): ONE record per seat,
+    `PlayerSide.sideAttackLock` — placed on `PlayerSide` and NOT on `GameState` beside
+    `handPlayLockedTurn` by MEASUREMENT (each forces one non-test literal under `tsc`, but
+    `GameState`'s keys are pinned by 16 test files and `PlayerSide`'s by none; D285's
+    duplicate-window argument does not transfer — the value shape and the question differ).
+    Read INSIDE `attackLocked` as an early return (its signature, its three askers and D547's
+    fold row's `find` all byte-unchanged), with `countAttachedEnergy(…, null)` counted LIVE
+    (R4) and `seatOfPokemon`'s `undefined` answering false. No §11 refusal (R5 — a side is not a
+    Pokémon); the same-window merge is `null`-dominates-else-max (R6); the record outlives its
+    installer (R7). A NEW event `SIDE_ATTACKS_LOCKED`, no uid.
+    🛑 **THE §10 CLEARS** — both body fields at all five literals (`makeInPlay`, `evolveOnto`,
+    `clearOnLeavingActive`, `switchInto`, `devolvedBodyOf`); only `makeInPlay` is
+    compiler-forced (R2). The side lock is NOT cleared by §10, by construction.
+    🛑 **`MATCH_RECORD_VERSION` 32 → 33** (apps/api `match.ts`, THE SIXTH POSITION): a v32 state
+    THROWS on every declaration and the turn player's every projection (`attackLocked` reads
+    `.turn` of the absent side record) and on an Active's Knock Out (`koBounty`); the optional
+    routes are refused because a rollback drops a live tax, bounty or lock.
+    Claims withdrawn (D539), swept by the CLAIM, engine source first, each annotated in place
+    (D178): `bareAttackLock.test.ts`'s *"preventAttack locks ONE body … a zone this op has no
+    member for"* (the refusal rung, now TWO positive programs; still true of `preventAttack`)
+    and `simulator.md`'s D408 *"OUT on the MECHANISM"*; the *"still unbuilt"* Knock Out rider
+    (`effects.ts`' `takePrize` doc, `takePrizeAttack.test.ts`' partition prose and its null
+    rung, now positive); `attackLocked` as having ONE SOURCE of its refusal (continuous.ts: a
+    side-wide `sideAttackLock` now answers it too — its *"exactly one kind of thing it can
+    refuse"* is NOT withdrawn, the thing is still a declaration, so that sentence and its D143
+    copies in this changelog and `simulator.md` stand unannotated) and *"the second reading
+    landed without moving this function at all"* (continuous.ts — the ONE read of
+    `attackLockedTurn` and the byte-identical askers stay TRUE); PRIZE_BONUS as *"a seat-wide
+    Ability … the ABILITY_TRIGGERED row above already named"* (log.ts, events.ts) and
+    `koPrizeBonus`'s *"printed on a body belonging to the taker"* (flow.ts); and the Checkup and
+    the mid-turn sweep as INDISTINGUISHABLE inside `collectKnockOuts` (flow.ts ×2); and
+    `opponentTopLookShuffle.test.ts`' *"SUBST-16 holds `:149` and `:169`"* (found by the review:
+    no prose key reached it — a census-class claim is keyed on the class name and row numbers).
+    The review also found R4 and R1's mid-turn half with NO rung that could go red; each now has
+    a PLAYED rung (`fix-grassdouble`, 2 cards / 3 units, still locked; Dusknoir's Cursed Blast
+    Knocking the marked Active Out on turn 5, the bounty paid) and a row
+    (`D549-side-lock-counts-units`, `D549-midturn-flag-forced-true`). Census
+    (`SUBMAX=12`): reader 573/1627 → 577/1631, residue 37/49 → 33/45, raw residue 67/105 →
+    63/101, `BUILT.attack` 1683 → 1687, SUBST-16 2/2 → 0/0, SUBST-19 1/1 → 0/0, OPAQUE 12/18 →
+    11/17; registry, gate and trailing UNMOVED. Default cap: OPAQUE 23/32 → 19/28, UNEXPLAINED
+    7/7 → 3/3, CONTINUOUS co-marker 7/7·9/9·54/225 → 3/3·5/5·58/229, PRIZE-ZONE co-marker
+    3/3·3/3·10/27 → 2/2·2/2·11/28, targets 603 → 607. THE SENTENCE STEP (4) AND THE PRINTING STEP
+    (4) AGREE this slice — every site was measured anyway.)
     🆕🆕🆕 engineVersion 0.432.0 → **0.433.0** (D548 — CRESCENT PURGE, THE FACE-UP PRIZE: A
     REQUIRED `PlayerSide.faceUpPrizes`, A FIFTH COST ROW ON THE TENTH READER, AND THE OWNER
     PICKS WHICH PRIZE. `censusAttackCorpus.ts` **file line 664** (leading count column `2`) —
@@ -23928,7 +24003,7 @@ import type { GameState, Seat } from "./types";
     WITNESS** — the count was re-derived every slice and the word *"three"* was carried.
     A successor of this slice inherits **81 / 61 / 17** again, over **FIVE** history
     occurrences: those four plus `deckMillFilteredScale.test.ts`'s own header arrow.) */
-export const engineVersion = "0.433.0";
+export const engineVersion = "0.434.0";
 
 export type {
   ApplyResult,

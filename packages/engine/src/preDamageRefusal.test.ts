@@ -600,6 +600,7 @@ describe("§6 — persistence, purity, and the property the export did not cost"
       "attackLockedTurn",
       "boostedAttack",
       "conditions",
+      "costTaxTurn", // 🆕🆕🆕 D549 (32 -> 33) — the cost tax's stamp; the pin is on the HEAD's key set
       "damage",
       "damageReduction",
       "damageVulnerability", // 🆕🆕🆕 D547 (30 -> 31)
@@ -607,6 +608,7 @@ describe("§6 — persistence, purity, and the property the export did not cost"
       "evolvedTurn",
       "healedTurn",
       "installedRecoil",
+      "koBounty", // 🆕🆕🆕 D549 (32 -> 33) — the Knock Out bounty; the pin is on the HEAD's key set
       "lockedAttacks",
       "markers",
       // 🆕🆕 D432 — the attack-installed §8.5 NO-WEAKNESS bar's stamp (MATCH_RECORD_VERSION 26 -> 27).
@@ -682,6 +684,6 @@ describe("§7 — the version", () => {
     // `manifest.version`) plus `package.json`, the declaration and the mutant `find`.
     // The increment is this line — the pin being AUTHORED, which is the one D427 named
     // as the thing every note forgets.
-    expect(engineVersion).toBe("0.433.0");
+    expect(engineVersion).toBe("0.434.0");
   });
 });

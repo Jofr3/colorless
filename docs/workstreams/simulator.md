@@ -26675,6 +26675,10 @@ from `ctx` and the op, never from the compound around it. **Read, not inherited*
   the **MECHANISM**: `preventAttack` locks ONE body (`state.players[seat].active`) and both of these
   lock a SIDE, *including bodies that arrive later*. That is a zone this op has no member for, and
   mapping it here would be exactly the wrong-but-plausible program this slice is a repair of.
+  (🆕🆕🆕 **D549 — PAID.** The OUT stood on the MECHANISM and the mechanism was bought: both spellings
+  are built by a NEW op, `lockSideAttacks`, writing a SIDE record (`PlayerSide.sideAttackLock`) that
+  `attackLocked` reads at each declaration — *"a zone this op has no member for"* is withdrawn as a
+  refusal and stays true of `preventAttack`. See the D549 section.)
 
 ### THE CENSUS
 
@@ -27877,6 +27881,8 @@ Cresselia's "90 more damage", which prints 80 — it now owes its OWN future bum
 30 → 31 without it); SUBST-16's `:149` and `:169`; `:669` as the best unbumped fallback (1p/L).
 (🆕🆕🆕 D548: `:664` PAID, with its own bump 31 → 32. ⚠️ The *"90 more damage"* was at `effects.ts` only —
 `index.ts:664` reads *"If you do, …"* with no number, so that half of this carried line was itself wrong.)
+(🆕🆕🆕 D549: SUBST-16's `:149` and `:169` PAID — built with `:170` and `:171` under the 32 → 33 bump; SUBST-16
+is 0/0 at SUBMAX=12, measured.)
 
 ## D548 — Crescent Purge, the face-up Prize: a required `PlayerSide.faceUpPrizes`, a fifth cost row on the tenth reader, and the owner picks (engine 0.433.0, `MATCH_RECORD_VERSION` 32)
 
@@ -27926,6 +27932,8 @@ throw on it (D326's class). The optional `faceUpPrizes?` route is refused under 
 The Playmat PrizeGrid (`PlayerSide.tsx:90`, `AnimatedCardsLayer.tsx:304`, `playmat/types.ts:52`) and the
 local playmat projection's face-up slot; `:171` plus SUBST-16's `:149`/`:169` (and possibly `:170`) as a
 bundle for the NEXT record bump; `:669` as the no-bump fallback.
+(🆕🆕🆕 D549: the `:171`/`:149`/`:169`/`:170` bundle PAID, with the bump 32 → 33. The Playmat face-up slot
+is still owed, and `:669` is still the no-bump fallback.)
 
 ### (f) A withdrawn claim about the GATE (found by the second review)
 *"The Prize gate's false arm needs the attack used six times"* (D385's measurement, D383's
@@ -27933,3 +27941,71 @@ bundle for the NEXT record bump; `:669` as the no-bump fallback.
 lacks"*, are FALSE on the rules: a face-up prize stays in the row while the others are taken, so ONE Purge
 at 1 prize left reaches the false arm — the ordinary board `crescentPurge.test.ts` §5 drives. Every copy is
 annotated in place (D178) and listed in D548's decisions row.
+
+## D549 — the defender's next-turn marks and the side-wide attack lock: three new ops, two required `InPlayPokemon` fields, one required `PlayerSide` field, and a `checkup` flag (engine 0.434.0, `MATCH_RECORD_VERSION` 33)
+
+### (a) What was built
+`censusAttackCorpus.ts` **file lines 171, 149, 169 and 170** (leading count column `1` each), **4 sentences / 4 legal
+printings**, each claimed WHOLE by `deriveAttackEffect` and by no other of the 13 readers. ⚠️ No card id resolves
+for any of the four on this checkout (measured), so the suites ride file-local declared `d549-*` demonstrators;
+the real cards are UNMEASURED.
+
+* **`:171`, the COST TAX** — *"During your opponent's next turn, attacks used by the Defending Pokémon cost {C}
+  more, and its Retreat Cost is {C} more."* → `taxDefender` (nullary) → `InPlayPokemon.costTaxTurn = turn + 1`
+  on the opponent's Active; ONE reader `installedCostTaxOf` folded at `effectiveAttackCost`'s `added` and inside
+  `effectiveRetreatCost`'s floored sum (below the free-retreat tier). Event `COST_TAX_APPLIED`.
+* **`:149`, the KNOCK OUT BOUNTY** — *"During your next turn, if the Defending Pokémon is Knocked Out, take 2
+  more Prize cards."* → `bountyDefender { amount }` → `InPlayPokemon.koBounty = { turn: turn + 2, amount }`;
+  paid in flow.ts `koPrizeBonus` after the seat bonuses when the dying body was the Active, the record is live,
+  and the batch is NOT the Checkup. Event `KO_BOUNTY_APPLIED`; the paying Knock Out files one `PRIZE_BONUS`.
+* **`:169` / `:170`, the SIDE-WIDE LOCK** — *"During your next turn, your Pokémon can't attack. (This includes
+  new Pokémon that come into play.)"* and *"During your opponent's next turn, Pokémon that have 2 or less Energy
+  attached can't attack. (…)"* → `lockSideAttacks { whose, maxEnergy }` → `PlayerSide.sideAttackLock`, read
+  INSIDE `attackLocked` as an early return (the three askers take zero bytes). Event `SIDE_ATTACKS_LOCKED`.
+* **The `checkup` flag** — a REQUIRED `boolean` threaded `collectKnockOuts` → `collectKnockOutPass` →
+  `planPrizes` → `koPrizeBonus`, `true` only at `runCheckup`: `attackerSeat` cannot tell the Checkup from the
+  mid-turn sweep, and `state.turn` is still the ended turn during the Checkup.
+
+### (b) The placement (measured)
+`PlayerSide.sideAttackLock`, not a `GameState` field beside `handPlayLockedTurn`: both were built and type-checked
+at the head and each forces exactly one non-test literal, but `GameState`'s key set is pinned by 16 test files
+at runtime and `PlayerSide`'s by none. `handPlayLockedTurn` is not widened (a stamp map cannot carry `:170`'s
+cap, and its question is hand play); D285's duplicate-window argument does not transfer.
+
+### (c) The rulings (docs/decisions.md D549, each with a reversal condition)
+R1 any-cause Knock Out during the turn pays, a Checkup Knock Out does not · R2 both marks end on leaving the
+Active Spot or on evolve/devolve · R3 the tax adds after the free-retreat zero tier, and the retreat-counting
+attacks see it · R4 Energy CARDS, read live · R5 no §11 refusal of the side lock · R6 same-window merge: `null`
+dominates, else `max`; a different window overwrites (an install needs an attack, which ends the turn) · R7 the
+lock survives its installer leaving play.
+
+### (d) The record
+`MATCH_RECORD_VERSION` 32 → 33 — THE SIXTH POSITION at `apps/api/src/lobby/match.ts`. A v32 state THROWS on every
+declaration and the turn player's every projection (the absent side record) and on an Active's Knock Out (the
+absent bounty); a v32 body's absent tax reads 0 silently. Every optional spelling is refused: detectable in the
+bytes, not inert on the board.
+
+### (e) Census (measured head and after)
+`SUBMAX=12`: reader 573/1627 → 577/1631, residue 37/49 → 33/45, raw residue 67/105 → 63/101, `BUILT.attack`
+1683 → 1687, SUBST-16 2/2 → 0/0, SUBST-19 1/1 → 0/0, OPAQUE 12/18 → 11/17. Default cap: OPAQUE 23/32 → 19/28,
+UNEXPLAINED 7/7 → 3/3, CONTINUOUS 7/7·9/9·54/225 → 3/3·5/5·58/229, PRIZE-ZONE 3/3·3/3·10/27 → 2/2·2/2·11/28,
+targets 603 → 607. The sentence step (4) and the printing step (4) AGREE.
+
+### (e-bis) What the review found (fixed before close)
+Two rulings had no rung that could go red, each measured by patching and re-running: **R4** (`sideAttackLock.test.ts`
+§5's CARDS rung used two basic Energy, where cards equal units, so a `providedEnergy(…).length` read stayed green)
+and **R1's mid-turn half** (`koBounty.test.ts` §4 called `collectKnockOuts(…, false)` by hand, so flipping
+`resolveMidTurnKnockOuts`' own argument stayed green). Each now has a PLAYED rung — one basic plus one
+`fix-grassdouble` (2 cards, 3 units: still locked), and the real Dusknoir's Cursed Blast Knocking the marked Active
+Out on turn 5 (the bounty pays) — and a row, `D549-side-lock-counts-units` and `D549-midturn-flag-forced-true`,
+each probed undeclared and red first. One withdrawn claim was missed by the prose-keyed sweep:
+`opponentTopLookShuffle.test.ts`' *"SUBST-16 holds `:149` and `:169`"* — annotated in place, with D547's and D548's
+carried-debt lines above. A census-class claim is keyed on the class name and the row numbers.
+A second review found one claim filed WITHDRAWN in the changelog and D549's row but STILL TRUE in place:
+`attackLocked`'s *"exactly one kind of thing it can refuse"* (continuous.ts said, correctly, that the thing is
+still a declaration). What moved is its ONE SOURCE; both lists now withdraw that reading, and the D143 copies
+(`index.ts` changelog, this file's D143 section) stand unannotated because they remain true.
+
+### (f) Owed
+`:629` (*"Until the end of your next turn, the Defending Pokémon's Weakness is now {C}. (…)"*) as the rider for
+the NEXT record bump; `:669` as the no-bump fallback; the Playmat PrizeGrid face-up slot (D548's client debt).

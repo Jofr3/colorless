@@ -751,6 +751,7 @@ describe("the structural answers", () => {
         "attackLockedTurn",
         "boostedAttack",
         "conditions",
+        "costTaxTurn", // 🆕🆕🆕 D549 (32 -> 33) — the cost tax's stamp; the pin is on the HEAD's key set
         "damage",
         "damageReduction",
         "damageVulnerability", // 🆕🆕🆕 D547 (30 -> 31)
@@ -762,6 +763,7 @@ describe("the structural answers", () => {
         "evolvedTurn",
         "healedTurn",
         "installedRecoil",
+        "koBounty", // 🆕🆕🆕 D549 (32 -> 33) — the Knock Out bounty; the pin is on the HEAD's key set
         "lockedAttacks",
         "markers",
         // 🆕🆕 D432 — the attack-installed §8.5 NO-WEAKNESS bar's stamp (MATCH_RECORD_VERSION 26 -> 27).

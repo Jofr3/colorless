@@ -535,13 +535,29 @@ export function collectKnockOuts(
   state: GameState,
   seats: readonly Seat[],
   events: GameEvent[],
+  /** 🆕🆕🆕 D549 — IS THIS THE POKÉMON CHECKUP's sweep? `true` at `runCheckup`'s ONE
+      call, `false` at the other two (`finishAttack`, `resolveMidTurnKnockOuts`).
+      REQUIRED, so a fourth caller is a compile error rather than a silent default.
+
+      🛑 IT EXISTS BECAUSE `attackerSeat` CANNOT ANSWER IT. Both the Checkup and the
+      mid-turn sweep omit `attackerSeat`, so "no attacker" names two different
+      batches — and `state.turn` cannot split them either: the Checkup runs with
+      `state.turn` still the ENDED turn (`runCheckup` reads D434's `turn + 1` stamps
+      off it), so a Poison Knock Out in the Checkup after "your next turn" would look
+      exactly like a Knock Out during that turn. The attack-installed KNOCK OUT BOUNTY
+      pays for a Knock Out DURING the installer's next turn from any cause
+      (docs/decisions.md D549 R1) and NOT for one in the Checkup that ends it; this
+      flag is the only witness to the difference (`koPrizeBonus`). */
+  checkup: boolean,
   attackerSeat?: Seat,
   /** 🆕 D323 — the ATTACKING BODY's uid, passed only by `finishAttack` and only
       alongside `attackerSeat`. `attackerSeat` answers "by an attack from your
       opponent's Pokémon" (Munkidori ex, D164, a SEAT question); this answers "by
       an attack used by THIS Pokémon" (Hydreigon ex "Greedy Eater"), which names a
       BODY and which no seat can decide. Omitted by the Checkup and mid-turn
-      sweeps exactly as `attackerSeat` is, and the clause is refused there. */
+      sweeps exactly as `attackerSeat` is, and the clause is refused there.
+      (🆕🆕🆕 D549: omitting both no longer leaves the Checkup and the mid-turn sweep
+      INDISTINGUISHABLE here — the required `checkup` flag above tells them apart.) */
   attackerUid?: string,
 ): KnockOutBatch {
   let next = state;
@@ -608,6 +624,9 @@ export function collectKnockOuts(
       next,
       seats,
       events,
+      // 🆕🆕🆕 D549 — EVERY pass, not only the first: a cascade Knock Out inside a
+      // Checkup is still in the Checkup, and one inside a turn is still in the turn.
+      checkup,
       pass === 0 ? attackerSeat : undefined,
       pass === 0 ? attackerUid : undefined,
     );
@@ -677,6 +696,7 @@ function collectKnockOutPass(
   state: GameState,
   seats: readonly Seat[],
   events: GameEvent[],
+  checkup: boolean,
   attackerSeat?: Seat,
   attackerUid?: string,
 ): KnockOutPass {
@@ -689,7 +709,8 @@ function collectKnockOutPass(
   // events fire in the real KO loop, after that KO's KNOCKED_OUT.
   // 🆕 D326 — the CAUSE the co-stamped marks record. `attackerSeat` is passed by
   // `finishAttack` ALONE and deliberately omitted by the Checkup and the mid-turn
-  // sweep, so it is already exactly "this batch is an attack's epilogue" — the
+  // sweep (🆕🆕🆕 D549: which it therefore cannot tell APART — `checkup` does), so it
+  // is already exactly "this batch is an attack's epilogue" — the
   // same discriminant D164 reads for Munkidori ex's "by an attack from your
   // opponent's Pokémon", inherited rather than re-derived.
   // 🆕🆕 D414 — PER-BODY, NOT PER-BATCH, AND THE OLD LINE WAS RIGHT ONLY BY
@@ -709,7 +730,7 @@ function collectKnockOutPass(
     // rather than silently withholding a mark they are owed.
     return body === null || body === undefined ? true : !lethalByEffect(body, state.turn);
   };
-  const plan = planPrizes(state, refs, attackerSeat, attackerUid);
+  const plan = planPrizes(state, refs, checkup, attackerSeat, attackerUid);
   const startState = plan.state;
 
   // Apply each KO for real, grouping the stages PRIZES-first, then on-KO
@@ -779,6 +800,9 @@ interface KoPrizePlan {
     reduction, D298's attached reductions and Glimmora's guard are all read off the
     DYING body — its own Ability, its own attachments. These two are printed on a
     body belonging to `otherSeat(ref.seat)`, the side about to TAKE the prize, so
+    (🆕🆕🆕 D549: *"printed on a body belonging to the taker"* is WITHDRAWN as a
+    description of EVERY bonus this function pays — see the KNOCK OUT BOUNTY below,
+    which is installed ON the dying body by an attack)
     the board question is delegated to `seatKoPrizeBonuses` (continuous.ts, the
     aura-scan family) and this function owns only the parts that need a state: the
     coin flip and the events.
@@ -787,12 +811,30 @@ interface KoPrizePlan {
     PINNED ONE FUNCTION UP AND FOR THE SAME REASON.** `planPrizes` runs before any
     body in the batch has left play, so the batch is a single instant: an Active
     that dies alongside a benched teammate is still the Active when its own bonus
-    is decided. */
+    is decided.
+
+    🆕🆕🆕 **D549 — A THIRD SOURCE, READ OFF THE DYING BODY: the attack-installed KNOCK
+    OUT BOUNTY** (*"During your next turn, if the Defending Pokémon is Knocked Out,
+    take 2 more Prize cards."*, `censusAttackCorpus.ts:149`; `InPlayPokemon.koBounty`).
+    Paid AFTER the seat bonuses, in this loop's order, when THREE things hold on the
+    PRE-KO board: the body WAS the Active (`koWasActive` — "the Defending Pokémon"),
+    its record is LIVE (`turn === state.turn`, the installer's next turn), and the
+    batch is NOT the Checkup (`checkup` — R1: any cause DURING the turn, but the
+    Checkup is between turns even though `state.turn` has not moved yet). No coin, no
+    ABILITY_TRIGGERED row (it is not an Ability): one PRIZE_BONUS with the same seat
+    rule. A Glimmora-DENIED Knock Out never reaches this function (`planPrizes`'s
+    `denied` bypass), so a prohibition beats the bounty as it beats Wonder Kiss.
+
+    The `koWasActive` term is UNREACHABLE off a played line and kept anyway: every
+    route off the Active Spot sheds the record (the five §10 literals, R2), so a
+    benched body never carries a live bounty. It is the printed subject, read where
+    the reading is cheapest, and a constructed board pins it (`koBounty.test.ts`). */
 function koPrizeBonus(
   state: GameState,
   ref: { seat: Seat; uid: string },
   baseCount: number,
   attackerUid: string | undefined,
+  checkup: boolean,
 ): { state: GameState; count: number; events: GameEvent[] } {
   const takerSeat = otherSeat(ref.seat);
   const side = state.players[ref.seat];
@@ -842,12 +884,23 @@ function koPrizeBonus(
       count,
     });
   }
+  // 🆕🆕🆕 D549 — the KNOCK OUT BOUNTY, off the dying body itself, after the seat
+  // bonuses. No defensive `=== undefined` arm (D124): the field is REQUIRED, and a v32
+  // body throws here on the first Knock Out of an Active outside a Checkup rather than
+  // silently paying nothing.
+  const dying = koWasActive ? side.active : null;
+  const bounty = dying === null ? null : dying.koBounty;
+  if (!checkup && bounty !== null && bounty.turn === state.turn) {
+    count += bounty.amount;
+    events.push({ type: "PRIZE_BONUS", seat: ref.seat, uid: ref.uid, by: bounty.amount, count });
+  }
   return { state: next, count, events };
 }
 
 function planPrizes(
   state: GameState,
   refs: readonly { seat: Seat; uid: string }[],
+  checkup: boolean,
   attackerSeat?: Seat,
   attackerUid?: string,
 ): { state: GameState; entries: KoPrizePlan[] } {
@@ -882,7 +935,7 @@ function planPrizes(
       next = attached.state;
       const bonus = denied
         ? { state: next, count: attached.count, events: [] as GameEvent[] }
-        : koPrizeBonus(next, ref, attached.count, attackerUid);
+        : koPrizeBonus(next, ref, attached.count, attackerUid, checkup);
       next = bonus.state;
       entries.push({
         ref,
@@ -1001,7 +1054,8 @@ export function resolveMidTurnKnockOuts(
   seats: readonly Seat[],
   events: GameEvent[],
 ): ApplyResult {
-  const batch = collectKnockOuts(state, seats, events);
+  // 🆕🆕🆕 D549 — `false`: a mid-turn Knock Out is DURING a turn (the bounty pays).
+  const batch = collectKnockOuts(state, seats, events, false);
   if (batch.done !== null) return finishGame(batch.state, batch.done, events);
   // 🆕🆕 D435 — the filter itself is `orphanedPromotions` now, shared with
   // `finishAttack` below and with `runCheckup`'s third site. Nothing about this
@@ -1217,6 +1271,7 @@ export function finishAttack(
     next,
     [otherSeat(attackerSeat), attackerSeat],
     events,
+    false, // 🆕🆕🆕 D549 — an attack's epilogue is DURING the turn: not the Checkup.
     attackerSeat,
     attackerUid,
   );
@@ -1883,7 +1938,9 @@ function runCheckup(state: GameState, endedSeat: Seat, events: GameEvent[]): App
   // the instant they occur), so scanning it is a harmless superset that also
   // keeps the §14 double-KO tie guard single-sourced with the attack and
   // mid-turn paths.
-  const batch = collectKnockOuts(next, order, events);
+  // 🆕🆕🆕 D549 — `true`, and ONLY here: the Checkup is BETWEEN turns, though
+  // `state.turn` is still the one that ended — the bounty must not pay (R1).
+  const batch = collectKnockOuts(next, order, events, true);
   if (batch.done !== null) return finishGame(batch.state, batch.done, events);
   // 🆕🆕 **D435 — THE §8.1 PROMOTION SEAM AT ITS *THIRD* SITE, WHICH D312 PREDICTED
   // AND NAMED.** Until this slice, an Active Spot could only be empty at this line

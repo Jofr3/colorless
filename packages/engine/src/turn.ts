@@ -693,6 +693,15 @@ function clearOnLeavingActive(pokemon: InPlayPokemon): InPlayPokemon {
     // retreat on the turn in between is a PLAYED line that sheds the +50 (retreat
     // clear, D547) — and so is the forced half (`switchInto`).
     damageVulnerability: null,
+    // 🆕🆕🆕 D549 — the COST TAX, the flip lock's story: its window is the holder's own
+    // turn, so the victim RETREATS out of it — paying the TAXED cost for this one
+    // retreat, the surcharge being live as the cost is read — and the benched body
+    // carries nothing (retreat clear, D549 tax).
+    costTaxTurn: null,
+    // 🆕🆕🆕 D549 — the KNOCK OUT BOUNTY, the vulnerability's story one field up: the
+    // holder's retreat on the turn in between walks the marked body out from under
+    // the "2 more Prize cards" (retreat clear, D549 bounty).
+    koBounty: null,
     // D152 — the armed recoil, whose story here is the REDUCTION's: the window is
     // the opponent's turn, so the RETREAT half is unreachable inside it (the
     // holder's controller cannot retreat on someone else's turn) and the FORCED

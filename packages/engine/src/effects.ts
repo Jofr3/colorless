@@ -4152,6 +4152,44 @@ export type EffectOp =
       refuses it (`weakenDefenderAttacks`' check verbatim). Never parks, consumes
       no rng; idempotent by `Math.max` on one window. */
   | { op: "exposeDefender"; amount: number }
+  /** 🆕🆕🆕 §8.2/§11 (D549) — THE COST TAX on the DEFENDING Pokémon for the opponent's
+      next turn: "During your opponent's next turn, attacks used by the Defending Pokémon
+      cost {C} more, and its Retreat Cost is {C} more." (`censusAttackCorpus.ts:171`,
+      leading count column 1 — 1 legal printing; the anchor is `DEFENDER_COSTS_TAXED`
+      below). ⚠️ NO CATALOG, REGISTRY OR FIXTURE ID PRINTS IT ON THIS CHECKOUT (measured,
+      D425): the suite (`costTax.test.ts`) rides file-local declared `d549-*`
+      demonstrators, and the real card is UNMEASURED.
+
+      NULLARY: the printed surcharge is the single {C} on BOTH halves, and the pool
+      prints no other amount (measured over all 640 corpus rows), so the stamp is a bare
+      turn and the reader's number is the constant 1 (types.ts `costTaxTurn`). The holder
+      and window are `flipLockAttack`'s — the opponent's Active, `state.turn + 1`, the
+      locked body's controller's next turn — so the installer is `preventAttack`'s
+      defender arm cloned (interpreter.ts). ONE op for BOTH halves because the printed
+      subject and window are one: a pair of ops would let a deriver write one half.
+
+      ⚠️ AN EFFECT OF AN ATTACK DONE TO THE DEFENDING POKÉMON, so a live §11 block
+      refuses it, asked BEFORE the idempotence early return. Never parks, consumes no
+      rng; a re-install on the same window is silent. */
+  | { op: "taxDefender" }
+  /** 🆕🆕🆕 §8.1/§11 (D549) — THE KNOCK OUT BOUNTY on the DEFENDING Pokémon for the
+      installer's next turn: "During your next turn, if the Defending Pokémon is Knocked
+      Out, take 2 more Prize cards." (`censusAttackCorpus.ts:149`, leading count column
+      1 — 1 legal printing; the anchor is `DEFENDER_KO_BOUNTY_NEXT_TURN` below). ⚠️ NO
+      CATALOG, REGISTRY OR FIXTURE ID PRINTS IT (measured, D425): `koBounty.test.ts`
+      rides declared `d549-*` demonstrators.
+
+      `exposeDefender`'s HOLDER AND WINDOW EXACTLY — the opponent's Active, `state.turn +
+      2` — on the §8.1 PRIZE step instead of the §8.5 damage step: the record is read
+      in ONE place, flow.ts `koPrizeBonus`, which ADDS `amount` to the dying body's
+      prize count when it Knocks Out in the window from ANY cause (docs/decisions.md
+      D549 R1), EXCEPT in the Checkup that ends the turn. `amount` is the printed "2";
+      the deriver's `>= 1` floor keeps a "take 0 more" LOUD.
+
+      ⚠️ AN EFFECT OF AN ATTACK DONE TO THE DEFENDING POKÉMON, so a live §11 block
+      refuses it (`exposeDefender`'s check verbatim). Never parks, consumes no rng;
+      idempotent by `Math.max` on one window. */
+  | { op: "bountyDefender"; amount: number }
   /** 🆕🆕 §13 (D434) — SCHEDULE a counter placement onto the DEFENDING Pokémon for
       the end of the opponent's next turn:
 
@@ -4462,6 +4500,42 @@ export type EffectOp =
       Never parks and consumes NO rng at the install: the coin is flipped by the
       LOCKED player at the declaration it gates, and only while the lock is live. */
   | { op: "flipLockAttack" }
+  /** 🆕🆕🆕 §8/§11 (D549) — THE SIDE-WIDE ATTACK LOCK, on a whole side for one turn. TWO
+      printings (`censusAttackCorpus.ts:169` and `:170`, 1 legal printing each; the
+      anchors are `SIDE_CANT_ATTACK_NEXT_TURN` and `OPPONENT_LOW_ENERGY_CANT_ATTACK`
+      below; NO card id resolves for either on this checkout, measured — the suite
+      `sideAttackLock.test.ts` rides declared `d549-*` demonstrators):
+        · "During your next turn, your Pokémon can't attack. (This includes new Pokémon
+          that come into play.)" → `{ whose: "self", maxEnergy: null }`, stamped
+          `state.turn + 2` on the INSTALLER's side;
+        · "During your opponent's next turn, Pokémon that have 2 or less Energy attached
+          can't attack. (This includes new Pokémon that come into play.)" → `{ whose:
+          "opponent", maxEnergy: 2 }`, stamped `state.turn + 1` on the OPPONENT's side.
+      Writes `PlayerSide.sideAttackLock` (types.ts, with the placement measured) and is
+      read by `attackLocked` (continuous.ts) — the DECLARATION is illegal, so every
+      `playable` projection greys with zero bytes.
+
+      🛑 A NEW OP AND NOT A `preventAttack` RIDER, on D131's test: `preventAttack` writes
+      ONE BODY's stamp at install time, and the printed reminder "(This includes new
+      Pokémon that come into play.)" names bodies that do not EXIST at install time. A
+      `preventAttack { target: "side" }` would have to write a DIFFERENT field on a
+      DIFFERENT record and be read by a DIFFERENT predicate — three differences, D131's
+      threshold for a new member. (Withdrawn claim, D539: `bareAttackLock.test.ts`'s
+      *"preventAttack locks ONE body … a zone this op has no member for"* stays true of
+      THAT op and is annotated; this is the member.)
+
+      `whose` NAMES THE SIDE AND DERIVES THE WINDOW — `preventAttack`'s one-rule argument:
+      the window is the locked side's controller's NEXT turn, `+ 2` on the installer's
+      own side and `+ 1` on the opponent's (§5.3). `maxEnergy: null` locks every body; a
+      number locks a body with at most that many Energy CARDS attached, counted LIVE at
+      each declaration (R4).
+
+      ⚠️ NOT AN EFFECT DONE TO A POKÉMON, SO §11 SHIELDS DO NOT REFUSE IT (R5): it is a
+      rule on a SIDE, installed with no Pokémon as its object, and it survives its
+      installer leaving play (R7). Never parks, consumes no rng. SAME-WINDOW MERGE (R6):
+      `null` dominates, else `max(maxEnergy)`; a record for a DIFFERENT window is
+      overwritten (the interpreter argues why that is safe). */
+  | { op: "lockSideAttacks"; whose: "self" | "opponent"; maxEnergy: number | null }
   /** §8/§11 (D154) — BAR ONE NAMED ATTACK on the controller's own Active for the
       holder's next turn ("During your next turn, this Pokémon can't use
       {AttackName}.", 6 catalogued printings across 4 names plus 1 fielded
@@ -8019,7 +8093,9 @@ export type EffectOp =
       measurement rather than an impression: the LOOSEST plausible family grep — `/prize/i`
       over all 640 corpus sentences — returns **14 rows and every one was read**. ONE
       takes prizes as an attack effect (this sentence); ONE takes *"2 more Prize cards"*
-      as a next-turn rider on a Knock Out (a different mechanism, still unbuilt); the
+      as a next-turn rider on a Knock Out (a different mechanism, ~~still unbuilt~~
+      🆕🆕🆕 BUILT at D549 as `bountyDefender`, read in flow.ts `koPrizeBonus` — still a
+      different mechanism, so this op's field-free argument stands); the
       other twelve READ the prize count as a condition or a scaler, or LOOK AT / TURN
       OVER a face-down prize. So D416's warrant for shipping two members at once — both
       inhabitants live from the first commit — is UNMET here. The day a second count is
@@ -12608,6 +12684,27 @@ const ATTACKS_BY_DEFENDER_WEAKENED =
 // your next turn, the Defending"; the self-lock/buff anchors say "this Pokémon".
 const DEFENDER_VULNERABLE_NEXT_TURN =
   /^During your next turn, the Defending Pokémon takes (\d+) more damage from attacks \(after applying Weakness and Resistance\)\.$/;
+// ── 🆕🆕🆕 D549: the DEFENDER marked with a KNOCK OUT BOUNTY for the installer's next turn ──
+//
+// "During your next turn, if the Defending Pokémon is Knocked Out, take 2 more Prize
+//  cards."
+// — `censusAttackCorpus.ts` FILE LINE 149, leading count column **1**: **1 sentence / 1
+// legal printing**, census class SUBST-16 at `SUBMAX=12` (measured at both caps before
+// the build). ⚠️ NO CATALOG ID RESOLVES ON THIS CHECKOUT, AND THAT WAS MEASURED (D425):
+// no `registry.ts`, `catalogManifest.ts` or `testFixtures.ts` row prints it (`git grep`),
+// so its suite (`koBounty.test.ts`) rides file-local DECLARED `d549-*` demonstrators.
+//
+// `DEFENDER_VULNERABLE_NEXT_TURN`'s window and holder one anchor up ("During your next
+// turn, … the Defending Pokémon"), with the §8.1 consequent in place of the §8.5 one.
+// ONE capture, the prize count, with the `>= 1` floor. ZERO apostrophe slots: the
+// sentence prints none (read off the corpus bytes with `codePointAt`, not assumed).
+//
+// MEASURED OVER ALL 640 `legalAttackCorpus()` rows: this anchor claims EXACTLY the one
+// row above, and the loose probe `/more Prize card/` finds no other attack row that is
+// a Knock Out rider. DISJOINT from its neighbour by a mandatory byte run ("if the
+// Defending Pokémon is Knocked Out" vs "the Defending Pokémon takes").
+const DEFENDER_KO_BOUNTY_NEXT_TURN =
+  /^During your next turn, if the Defending Pokémon is Knocked Out, take (\d+) more Prize cards\.$/;
 // The DURATED REACTIVE RECOIL (D152) — the §9 family's attack-INSTALLED member,
 // and `SELF_DAMAGE_REDUCTION`'s sibling on the other side of the damage step:
 //
@@ -13354,6 +13451,38 @@ const COUNTER_UNTIL_REMAINING_HP_BENCH =
 // is the whole guard, and it is what keeps the five gated printings — whose
 // "during" is lowercase and mid-sentence — off this path.
 const SELF_CANT_ATTACK_NEXT_TURN = /^During your next turn, this Pokémon can['’]t attack\.$/;
+// ── 🆕🆕🆕 D549: the SIDE-WIDE locks — "your Pokémon", not "this Pokémon" ──
+//
+// "During your next turn, your Pokémon can't attack. (This includes new Pokémon that
+//  come into play.)" — `censusAttackCorpus.ts` FILE LINE 169, leading count column **1**
+// (SUBST-16 at `SUBMAX=12`), and
+// "During your opponent's next turn, Pokémon that have 2 or less Energy attached can't
+//  attack. (This includes new Pokémon that come into play.)" — FILE LINE 170, leading
+// count column **1** (OPAQUE at `SUBMAX=12`; UNEXPLAINED + CONTINUOUS at `SUBMAX=4`).
+// **2 sentences / 2 legal printings**, measured at both caps before the build. ⚠️ NO
+// CATALOG ID RESOLVES FOR EITHER ON THIS CHECKOUT (`git grep` over `registry.ts`,
+// `catalogManifest.ts`, `testFixtures.ts`), so `sideAttackLock.test.ts` rides DECLARED
+// `d549-*` demonstrators (D425) in its own 60-card deck (D270).
+//
+// 🛑 THE PARENTHETICAL REMINDER IS REQUIRED, NOT OPTIONAL, and it is the mechanism: it
+// is WHY the op writes a SIDE record rather than a stamp on each body (types.ts
+// `SideAttackLock`). An anchor that tolerated its absence would claim a hypothetical
+// "your Pokémon can't attack." whose reach over later bodies is unprinted. Both rows
+// print it, so no printing is lost.
+//
+// Apostrophe slots read off the corpus bytes with `codePointAt` (D421/D440): `:169`
+// U+0027 at index 39 ("can't"); `:170` U+0027 at 20 ("opponent's") and 81 ("can't").
+// Every slot is the `['’]` class (D136/D137/D143). No /i, `^…$`.
+//
+// DISJOINT from `SELF_CANT_ATTACK_NEXT_TURN` one line up by a mandatory byte run ("your
+// Pokémon" vs "this Pokémon", and the required reminder), and from every defender-lock
+// anchor ("the Defending Pokémon"). MEASURED OVER ALL 640 corpus rows: each anchor
+// claims EXACTLY its one row. `:170`'s count is CAPTURED (`>= 0` is meaningful: "0 or
+// less" would lock the unpowered bodies) — the pool prints only 2.
+const SIDE_CANT_ATTACK_NEXT_TURN =
+  /^During your next turn, your Pokémon can['’]t attack\. \(This includes new Pokémon that come into play\.\)$/;
+const OPPONENT_LOW_ENERGY_CANT_ATTACK =
+  /^During your opponent['’]s next turn, Pokémon that have (\d+) or less Energy attached can['’]t attack\. \(This includes new Pokémon that come into play\.\)$/;
 // …and the COMPOUND (D143) — Ninetales sv03-029/-199 "Nine-Tailed Dance"
 // ({R}{R}, attack INDEX 1, 9 counters, NO printed `damage`), 2 printings of one
 // card in two rarities. TWO SENTENCES IN ONE ANCHOR, which is D125's two-consequent
@@ -14160,6 +14289,26 @@ const FLIP_HEADS_DEFENDER_CANT_ATTACK =
 // It is a durated install (`flipLockAttack`) read at `attack.ts`'s §8 step-3 seam.
 const DEFENDER_FLIP_ATTACK_LOCK =
   /^During your opponent['’]s next turn, if the Defending Pokémon tries to use an attack, your opponent flips a coin\. If tails, that attack doesn['’]t happen\.$/;
+// ── 🆕🆕🆕 D549: the DEFENDER's costs TAXED for the opponent's next turn ──
+//
+// "During your opponent's next turn, attacks used by the Defending Pokémon cost {C}
+//  more, and its Retreat Cost is {C} more."
+// — `censusAttackCorpus.ts` FILE LINE 171, leading count column **1**: **1 sentence / 1
+// legal printing**, census class SUBST-19 at `SUBMAX=12` (measured at both caps before
+// the build). ⚠️ NO CATALOG ID RESOLVES ON THIS CHECKOUT (D425, `git grep`): the suite
+// (`costTax.test.ts`) rides DECLARED `d549-*` demonstrators in its own 60-card deck.
+//
+// NO CAPTURE: both surcharges print the single `{C}` — escaped here, `\{C\}`, so the
+// braces are literal — and the pool prints no other amount, so the op is nullary. ONE
+// `['’]` slot, the possessive "opponent's", U+0027 at index 20 (read with
+// `codePointAt`). No /i, `^…$`.
+//
+// MEASURED OVER ALL 640 `legalAttackCorpus()` rows: this anchor claims EXACTLY the one
+// row above, and the loose probe `/cost \{C\} more/` finds no other attack row. DISJOINT
+// from `DEFENDER_FLIP_ATTACK_LOCK` one line up and from the defender-lock anchors by a
+// mandatory byte run ("attacks used by the Defending Pokémon cost").
+const DEFENDER_COSTS_TAXED =
+  /^During your opponent['’]s next turn, attacks used by the Defending Pokémon cost \{C\} more, and its Retreat Cost is \{C\} more\.$/;
 // …and the LAST TWO members of that shape (D145), which CLOSE the bare
 // tails-gated family: the same gate over the two consequents whose ops this
 // engine has owned since 0.x, so each is ONE regex and ONE arm with no
@@ -28404,6 +28553,17 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
     const amount = Number(match[1]);
     if (amount >= 1) return [{ op: "exposeDefender", amount }];
   }
+  // 19f''. 🆕🆕🆕 D549 — "During your next turn, if the Defending Pokémon is Knocked
+  //      Out, take {N} more Prize cards." — `censusAttackCorpus.ts:149`, 1 legal
+  //      printing at 2 (no card id on this checkout, measured). 19f''s holder and
+  //      window on the §8.1 prize step; ONE capture with the tail's `>= 1` floor. The
+  //      target string derived `null` at HEAD and the anchor claims exactly one of the
+  //      640 rows, so the placement beside 19f' is for legibility, not order.
+  match = DEFENDER_KO_BOUNTY_NEXT_TURN.exec(effect);
+  if (match !== null) {
+    const amount = Number(match[1]);
+    if (amount >= 1) return [{ op: "bountyDefender", amount }];
+  }
   // 19g. The DURATED REACTIVE RECOIL (D152) — 2 printings on ONE anchor at ONE
   //      amount, and the §9 family's first attack-INSTALLED member. An `exec`
   //      rather than a `test`, and the ONLY capture is the counter count: the
@@ -29039,6 +29199,21 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   if (SELF_CANT_ATTACK_NEXT_TURN.test(effect)) {
     return [{ op: "preventAttack" }];
   }
+  // 24'. 🆕🆕🆕 D549 — the SIDE-WIDE locks, arm 24's sentence with "your Pokémon" for
+  //      "this Pokémon" and the printed reminder "(This includes new Pokémon that come
+  //      into play.)" REQUIRED — `censusAttackCorpus.ts:169` (self, every body) and
+  //      `:170` (the opponent's side, bodies with at most N Energy attached), 1 legal
+  //      printing each, no card id on this checkout (measured). A NEW op, not a
+  //      `preventAttack` rider: the reminder names bodies that do not exist at install
+  //      time, so the fact is a SIDE record read at each declaration (types.ts). Both
+  //      target strings derived `null` at HEAD; each anchor claims exactly its row.
+  if (SIDE_CANT_ATTACK_NEXT_TURN.test(effect)) {
+    return [{ op: "lockSideAttacks", whose: "self", maxEnergy: null }];
+  }
+  match = OPPONENT_LOW_ENERGY_CANT_ATTACK.exec(effect);
+  if (match !== null) {
+    return [{ op: "lockSideAttacks", whose: "opponent", maxEnergy: Number(match[1]) }];
+  }
 
   // 24a. "During your next turn, this Pokémon can't use {AttackName}." — D154's
   //      PER-ATTACK lock, 6 catalogued printings across 4 names (plus Radiant
@@ -29445,6 +29620,15 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   //      26a–26d by a mandatory byte run (measured over all 640 corpus rows, and
   //      the target string derived `null` at HEAD, so no arm above claimed it).
   if (DEFENDER_FLIP_ATTACK_LOCK.test(effect)) return [{ op: "flipLockAttack" }];
+  // 26f. 🆕🆕🆕 D549 — "During your opponent's next turn, attacks used by the Defending
+  //      Pokémon cost {C} more, and its Retreat Cost is {C} more." —
+  //      `censusAttackCorpus.ts:171`, 1 legal printing (no card id on this checkout,
+  //      measured). A `test`: nothing varies, so the program is the bare nullary op,
+  //      whose installer clones 26e's holder and window (`state.turn + 1` on the
+  //      opponent's Active). The target string derived `null` at HEAD, and the anchor
+  //      is disjoint from 26a–26e by a mandatory byte run, so the placement is for
+  //      legibility only.
+  if (DEFENDER_COSTS_TAXED.test(effect)) return [{ op: "taxDefender" }];
 
   // 27/28. "Flip a coin. If tails, discard all Energy from this Pokémon." (2) and
   //        "Flip a coin. If tails, this Pokémon also does {N} damage to itself."

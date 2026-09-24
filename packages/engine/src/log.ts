@@ -794,6 +794,43 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
         strong(cardName(state, event.uid)),
         plain(` takes ${event.amount} more damage from attacks during your opponent's next turn`),
       ]);
+    // 🆕🆕🆕 §8.2/§11 — the attack-installed COST TAX (D549). VICTIM voice (`seat` owns
+    // the taxed body), and "next turn" IS true here, unlike the vulnerability one case
+    // up: the tax's window is the HOLDER's own next turn (`state.turn + 1`). It names
+    // BOTH costs because the printed sentence does — a player told only about attacks
+    // would retreat into a surcharge they were not warned of.
+    case "COST_TAX_APPLIED":
+      return row(event.seat, [
+        strong(cardName(state, event.uid)),
+        // D239's caption rule: no printed brace code reaches a player's eyes.
+        plain("'s attacks and Retreat Cost each need 1 more Colorless Energy next turn"),
+      ]);
+    // 🆕🆕🆕 §8.1/§11 — the attack-installed KNOCK OUT BOUNTY (D549). VICTIM voice and
+    // therefore NOT "next turn", for DAMAGE_VULNERABILITY_APPLIED's reason verbatim:
+    // the window is the INSTALLER's next turn, which from the victim's chair is "your
+    // opponent's next turn" (D421).
+    case "KO_BOUNTY_APPLIED":
+      return row(event.seat, [
+        strong(cardName(state, event.uid)),
+        plain(
+          ` — if it is Knocked Out during your opponent's next turn, your opponent takes ${event.amount} more Prize card${event.amount === 1 ? "" : "s"}`,
+        ),
+      ]);
+    // 🆕🆕🆕 §8/§11 — the attack-installed SIDE-WIDE lock (D549). HAND_PLAY_BLOCKED's
+    // shape: `seat` owns the LOCKED side, no body is named (the lock is on the side and
+    // outlives every body, R7), and "next turn" is that side's controller's own next
+    // turn on BOTH printings (`+ 2` on the installer's side, `+ 1` on the opponent's).
+    // The printed reminder is rendered because it is the part a player would get wrong:
+    // promoting or benching a fresh body does NOT escape it.
+    case "SIDE_ATTACKS_LOCKED":
+      return row(event.seat, [
+        plain(
+          event.maxEnergy === null
+            ? "Pokémon can't attack next turn"
+            : `Pokémon with ${event.maxEnergy} or less Energy attached can't attack next turn`,
+        ),
+        plain(" — including Pokémon that come into play"),
+      ]);
     // 🆕🆕 §13 (D434) — the attack SCHEDULED a counter placement on the DEFENDING
     // Pokémon. PASSIVE/system-free but filed under `event.seat`, which owns the
     // scheduled body — ATTACK_DEBUFF_APPLIED's contract directly above verbatim, and
@@ -1314,7 +1351,10 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
       // this row's `seat` owns the DYING Pokémon while the party the sentence acts
       // for is that seat's OPPONENT, so an active voice under `seat` credits the
       // wrong player. The ABILITY_TRIGGERED row above already named the Ability and
-      // its owner.
+      // its owner. (🆕🆕🆕 D549: WITHDRAWN as a claim about EVERY row — the attack-
+      // installed KNOCK OUT BOUNTY files this row with NO Ability row above it; its
+      // source was named at install by KO_BOUNTY_APPLIED. The wording below names no
+      // source, so it stays true of both; the system voice's reason is unchanged.)
       //
       // Both numbers, for PRIZE_REDUCED's reason exactly: an increment is only
       // readable against the face value, and a player who does not know the dead

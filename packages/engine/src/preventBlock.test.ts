@@ -908,6 +908,16 @@ describe("the gated PREVENT clause — the guard is SWEPT, not listed", () => {
     // `censusAttackCorpus.ts` rows 176 and 150.
     "During your opponent's next turn, if the Defending Pokémon tries to use an attack, your opponent flips a coin. If tails, that attack doesn't happen.",
     "During your next turn, the Defending Pokémon takes 50 more damage from attacks (after applying Weakness and Resistance).",
+    // 🆕🆕🆕 D549 — THE SIXTH, SEVENTH AND EIGHTH SENTENCES, ONE PER NEW OP KIND, for D414's
+    // reason verbatim: `taxDefender`, `bountyDefender` and `lockSideAttacks` are driven on
+    // FILE-LOCAL pools (`costTax.test.ts`, `koBounty.test.ts`, `sideAttackLock.test.ts`),
+    // so each would be invisible to the pool-keyed sources above. Real printed bytes off
+    // `censusAttackCorpus.ts` rows 171, 149 and 170 (`:169` emits the SAME op kind, so the
+    // one sentence `lockSideAttacks` owes is the opponent-side arm, the one a §11 block
+    // might be expected to refuse).
+    "During your opponent's next turn, attacks used by the Defending Pokémon cost {C} more, and its Retreat Cost is {C} more.",
+    "During your next turn, if the Defending Pokémon is Knocked Out, take 2 more Prize cards.",
+    "During your opponent's next turn, Pokémon that have 2 or less Energy attached can't attack. (This includes new Pokémon that come into play.)",
   ];
 
   /** The classification the §11 block owes every one of them. `blocked` = a live
@@ -1055,6 +1065,15 @@ describe("the gated PREVENT clause — the guard is SWEPT, not listed", () => {
     // (`attackFlipLock.test.ts` §10, `damageVulnerability.test.ts` §6).
     flipLockAttack: "blocked",
     exposeDefender: "blocked",
+    // 🆕🆕🆕 D549 — the COST TAX and the KNOCK OUT BOUNTY are effects of an attack done TO
+    // the Defending Pokémon, so both are BLOCKED (asked FIRST, before each installer's
+    // early return — `costTax.test.ts` §7, `koBounty.test.ts` §8). The SIDE-WIDE lock is
+    // UNTOUCHED (docs/decisions.md D549 R5): its object is a SIDE, not a Pokémon, and no
+    // block printed on a body shields a side — `preventHandPlay`'s argument, driven below
+    // and in `sideAttackLock.test.ts` §7.
+    taxDefender: "blocked",
+    bountyDefender: "blocked",
+    lockSideAttacks: "untouched",
     // 🆕🆕 D434 — the DELAYED counter placement. BLOCKED, for the line above's reason
     // verbatim and with the live-block case DRIVEN rather than merely classified
     // (`delayedCounters.test.ts` §9, under Mist Energy `sv05-161`'s effects-only
@@ -1880,6 +1899,19 @@ describe("the gated PREVENT clause — the guard is SWEPT, not listed", () => {
     flipLockAttack: {
       op: { op: "flipLockAttack" },
       landed: (r) => p1Active(r.after)?.attackFlipLockTurn != null,
+    },
+    // 🆕🆕🆕 D549 — the two defender marks and the side lock.
+    taxDefender: {
+      op: { op: "taxDefender" },
+      landed: (r) => p1Active(r.after)?.costTaxTurn != null,
+    },
+    bountyDefender: {
+      op: { op: "bountyDefender", amount: 2 },
+      landed: (r) => p1Active(r.after)?.koBounty != null,
+    },
+    lockSideAttacks: {
+      op: { op: "lockSideAttacks", whose: "opponent", maxEnergy: 2 },
+      landed: (r) => r.after.players.p1.sideAttackLock != null,
     },
     exposeDefender: {
       op: { op: "exposeDefender", amount: 50 },

@@ -3,7 +3,9 @@
 > Update this at the **end of every session**: bump the status table, append a
 > session-log entry, and rewrite the **Resume point** to the next concrete action.
 
-**Last updated:** 2026-09-24 — build session #488 (**P3-M5 — D548, *CRESCENT PURGE, the FACE-UP PRIZE — a REQUIRED `PlayerSide.faceUpPrizes`, a FIFTH cost row on the TENTH reader, and the OWNER picks which prize.*** Built `censusAttackCorpus.ts` **file line 664** (leading count column **2**) — *“You may turn 1 of your face-down Prize cards face up. If you do, this attack does 80 more damage. (That Prize card remains face up for the rest of the game.)”* — **1 sentence / 2 legal printings**, on the REAL card Cresselia `sv06.5-021` (attack index 1), claimed WHOLE by `deriveAttackOptionalCostBoost`'s fifth cost row (`turnPrizeFaceUp` behind the nullary `yourFaceDownPrizeRemains`), the printed reminder an optional exact suffix behind that row only; `optionalCostBoostProgram` and `attack.ts` take ZERO code bytes. The owner picks (≥2 face-down → a NEW `choosePrize { indices }` park; 1 → inline; 0 → silent no-op) — the RULING, the REFUSED auto-pick and the REFUSED pick-or-decline prompt each carry a reversal condition in `decisions.md` D548. `PRIZE_TURNED_FACE_UP` names the card in the log; the wire carries `RedactedSide.faceUpPrizes {index, card}[]` for both seats and spectators; both HUDs paint face-up tiles and gain a choose-a-prize dialog; the Playmat PrizeGrid is OWED. Engine **0.432.0 → 0.433.0**; **`MATCH_RECORD_VERSION` 31 → 32** (a v31 state THROWS on every projection and every take — measured). Built in the `lum-wt-d548` worktree while D547's whole-corpus sweep ran in the main checkout; ~~NOT committed by the builder~~ committed there on `d548-prep` at `0e658522`, then LANDED on `main` by cherry-pick onto the D547 close-out `93000d54` as ONE commit and re-verified there. D547's whole-corpus sweep is PAID exactly at that close-out (`2971 killed · 53 known survivor(s) · 0 GAP(S) · 0 stale · 0 skipped(dirty) · 0 clobber(s) · 0 error(s) · 15317.3s total` over 3,024 rows), so this slice's prediction stands on a MEASURED base. `bun run check` 538 files / 12,652 tests / `CHECK_EXIT=0`; probe 18 killed · 0 known survivor(s) · 0 GAP(S) · 0 stale · 0 skipped(dirty) · 0 clobber(s) · 0 error(s); mutants 3,024 → 3,042; ~~whole-corpus sweep PENDING~~, predicted `2989 killed · 53 known survivor(s)` over 3,042 on D547's PAID `2971 · 53`, closed in both directions. ✅ **D548 CLOSE-OUT: WHOLE-CORPUS SWEEP GREEN AND EXACTLY AS PREDICTED, ON THE FIRST LAUNCH**, pasted out of the log rather than retyped (D504): `2989 killed · 53 known survivor(s) · 0 GAP(S) · 0 stale · 0 skipped(dirty) · 0 clobber(s) · 0 error(s) · 16762.4s total`. That is `+18 killed, +0 declared` on D547's `2971 · 53`, the **SIXTEENTH** consecutive exact prediction after the D532 reset (the count stands at **16**) and the **hundred-and-tenth** consecutive run with `0 error(s) · 0 stale · 0 clobber(s)`. Completeness is structural: **3,042 unique progress-line ids / 3,042 rows / 0 unmatched**, set-compared against `MUTANTS.map(m => m.id)` both ways, and all eighteen `D548-*` rows are KILLED (log :3031–:3048, contiguous). The log opens with the sweep's own `ps` row (`PID 2020406 / PPID 1 / SID 2020406`) and its launch stamp `2026-09-24T16:40:05+02:00`, taken with D547's `$$` + `exec` recipe unchanged; `setsid` reuse steps to the **fifty-third**, and the pid-keyed sidecar carries ONE row. The 16,762 s is the second slowest of the last six (D544's 16,796 s is slower); D549 was built in the second checkout during the run and committed there at 19:22. No new `conventions.md` section. D549 is BUILT AND PARKED on `d549-prep` at `b7621c08` and lands next.)
+**Last updated:** 2026-09-24 — build session #489 (**P3-M5 — D549, *THE DEFENDER'S NEXT-TURN MARKS AND THE SIDE-WIDE ATTACK LOCK — three new ops, two REQUIRED `InPlayPokemon` fields, one REQUIRED `PlayerSide` field, a `checkup` flag threaded through the Knock Out sweep, and `MATCH_RECORD_VERSION` 32 → 33.*** Built `censusAttackCorpus.ts` **file lines 171, 149, 169 and 170** (leading count column **1** each) — the COST TAX (*“…attacks used by the Defending Pokémon cost {C} more, and its Retreat Cost is {C} more.”*), the KNOCK OUT BOUNTY (*“During your next turn, if the Defending Pokémon is Knocked Out, take 2 more Prize cards.”*) and the two SIDE-WIDE locks (*“During your next turn, your Pokémon can't attack. (This includes new Pokémon that come into play.)”* and the opponent's *“…Pokémon that have 2 or less Energy attached can't attack. (…)”*) — **4 sentences / 4 legal printings**, each claimed WHOLE by `deriveAttackEffect` alone (checked against all 13 readers), through FOUR new anchors and THREE new ops (`taxDefender`, `bountyDefender`, `lockSideAttacks`). No card id resolves for any of the four (MEASURED) — the three new suites ride declared `d549-*` demonstrators; the real cards are UNMEASURED. `InPlayPokemon.costTaxTurn` (read at both cost seams, below the free-retreat tier), `InPlayPokemon.koBounty` (paid in `koPrizeBonus` only outside the Checkup — the new REQUIRED `checkup` flag, `true` only at `runCheckup`), `PlayerSide.sideAttackLock` (placed on `PlayerSide` by MEASUREMENT, read inside `attackLocked` so the three askers take zero bytes). Seven rulings R1–R7 with reversal conditions in `decisions.md` D549. Engine **0.433.0 → 0.434.0**; **`MATCH_RECORD_VERSION` 32 → 33** (the SIXTH position; a v32 state THROWS on every declaration and the turn player's every projection — measured). Built in the `lum-wt-d549` worktree while D548's whole-corpus sweep ran in the main checkout; ~~NOT committed by the builder~~ committed there on `d549-prep` at `b7621c08`, then LANDED on `main` by cherry-pick onto the D548 close-out `2bc3c35d` as ONE commit and re-verified there. D548's whole-corpus sweep is PAID exactly at that close-out (`2989 killed · 53 known survivor(s) · 0 GAP(S) · 0 stale · 0 skipped(dirty) · 0 clobber(s) · 0 error(s) · 16762.4s total` over 3,042 rows), so this slice's prediction stands on a MEASURED base. `bun run check` 541 files / 12746 tests / `CHECK_EXIT=0`; probe **53 killed · 0 known survivor(s) · 0 GAP(S) · 0 stale · 0 skipped(dirty) · 0 clobber(s) · 0 error(s)**; mutants 3,042 → 3,095; whole-corpus sweep PENDING, predicted `3042 killed · 53 known survivor(s)` over 3,095 on D548's PAID `2989 · 53`, closed in both directions. A review found R4 and R1's mid-turn half UNPINNED and one missed withdrawal; each fixed before close — two PLAYED rungs and two rows.)
+
+**Last updated (was):** 2026-09-24 — build session #488 (**P3-M5 — D548, *CRESCENT PURGE, the FACE-UP PRIZE — a REQUIRED `PlayerSide.faceUpPrizes`, a FIFTH cost row on the TENTH reader, and the OWNER picks which prize.*** Built `censusAttackCorpus.ts` **file line 664** (leading count column **2**) — *“You may turn 1 of your face-down Prize cards face up. If you do, this attack does 80 more damage. (That Prize card remains face up for the rest of the game.)”* — **1 sentence / 2 legal printings**, on the REAL card Cresselia `sv06.5-021` (attack index 1), claimed WHOLE by `deriveAttackOptionalCostBoost`'s fifth cost row (`turnPrizeFaceUp` behind the nullary `yourFaceDownPrizeRemains`), the printed reminder an optional exact suffix behind that row only; `optionalCostBoostProgram` and `attack.ts` take ZERO code bytes. The owner picks (≥2 face-down → a NEW `choosePrize { indices }` park; 1 → inline; 0 → silent no-op) — the RULING, the REFUSED auto-pick and the REFUSED pick-or-decline prompt each carry a reversal condition in `decisions.md` D548. `PRIZE_TURNED_FACE_UP` names the card in the log; the wire carries `RedactedSide.faceUpPrizes {index, card}[]` for both seats and spectators; both HUDs paint face-up tiles and gain a choose-a-prize dialog; the Playmat PrizeGrid is OWED. Engine **0.432.0 → 0.433.0**; **`MATCH_RECORD_VERSION` 31 → 32** (a v31 state THROWS on every projection and every take — measured). Built in the `lum-wt-d548` worktree while D547's whole-corpus sweep ran in the main checkout; ~~NOT committed by the builder~~ committed there on `d548-prep` at `0e658522`, then LANDED on `main` by cherry-pick onto the D547 close-out `93000d54` as ONE commit and re-verified there. D547's whole-corpus sweep is PAID exactly at that close-out (`2971 killed · 53 known survivor(s) · 0 GAP(S) · 0 stale · 0 skipped(dirty) · 0 clobber(s) · 0 error(s) · 15317.3s total` over 3,024 rows), so this slice's prediction stands on a MEASURED base. `bun run check` 538 files / 12,652 tests / `CHECK_EXIT=0`; probe 18 killed · 0 known survivor(s) · 0 GAP(S) · 0 stale · 0 skipped(dirty) · 0 clobber(s) · 0 error(s); mutants 3,024 → 3,042; ~~whole-corpus sweep PENDING~~, predicted `2989 killed · 53 known survivor(s)` over 3,042 on D547's PAID `2971 · 53`, closed in both directions. ✅ **D548 CLOSE-OUT: WHOLE-CORPUS SWEEP GREEN AND EXACTLY AS PREDICTED, ON THE FIRST LAUNCH**, pasted out of the log rather than retyped (D504): `2989 killed · 53 known survivor(s) · 0 GAP(S) · 0 stale · 0 skipped(dirty) · 0 clobber(s) · 0 error(s) · 16762.4s total`. That is `+18 killed, +0 declared` on D547's `2971 · 53`, the **SIXTEENTH** consecutive exact prediction after the D532 reset (the count stands at **16**) and the **hundred-and-tenth** consecutive run with `0 error(s) · 0 stale · 0 clobber(s)`. Completeness is structural: **3,042 unique progress-line ids / 3,042 rows / 0 unmatched**, set-compared against `MUTANTS.map(m => m.id)` both ways, and all eighteen `D548-*` rows are KILLED (log :3031–:3048, contiguous). The log opens with the sweep's own `ps` row (`PID 2020406 / PPID 1 / SID 2020406`) and its launch stamp `2026-09-24T16:40:05+02:00`, taken with D547's `$$` + `exec` recipe unchanged; `setsid` reuse steps to the **fifty-third**, and the pid-keyed sidecar carries ONE row. The 16,762 s is the second slowest of the last six (D544's 16,796 s is slower); D549 was built in the second checkout during the run and committed there at 19:22. No new `conventions.md` section. D549 is BUILT AND PARKED on `d549-prep` at `b7621c08` and lands next.)
 
 **Last updated (was):** 2026-09-24 — build session #487 (**P3-M5 — D547, *the FLIP-TO-ATTACK lock and the NEXT-TURN vulnerability — two new ops on two new REQUIRED `InPlayPokemon` fields, a coin that leaves the declaration legal, a +50 at every site that subtracts the reduction, and the first `MATCH_RECORD_VERSION` bump since D501.*** Built `censusAttackCorpus.ts` **file lines 176 and 150** (leading count column **2** each) — *“During your opponent's next turn, if the Defending Pokémon tries to use an attack, your opponent flips a coin. If tails, that attack doesn't happen.”* (TWO sentences in one row) and *“During your next turn, the Defending Pokémon takes 50 more damage from attacks (after applying Weakness and Resistance).”* — **2 rows / 4 legal printings**, claimed WHOLE through TWO new anchors and TWO new arms emitting TWO new ops, `flipLockAttack` and `exposeDefender`, writing TWO new REQUIRED fields `attackFlipLockTurn` and `damageVulnerability`. A NEW reader `attackFlipLocked` kept OUT of `attackLocked` (zero redact/schema/HUD bytes; `playable` stays true), flipped at `attack.ts`'s §8 step-3 seam BEFORE Confusion (the official rulebook's order — the draft's *“Confusion first, UNRULED”* was WITHDRAWN at review); a NEW reader `installedVulnerabilityOf` ADDED after W/R at all four reduction sites, and NOT on a hit the rulebook's damage step 2 stops. Three rulings with reversal conditions in `decisions.md` D547. Engine **0.431.0 → 0.432.0**; **`MATCH_RECORD_VERSION` 30 → 31** (the FIFTH position written at `match.ts`). Built in the `lum-wt-d547` worktree while a whole-corpus sweep ran in the main checkout; NOT committed by the builder (parked at `dcff2ffd`, then cherry-picked onto `main` over the D546 close-out and re-verified there). `bun run check` 535 files / 12,614 tests / `CHECK_EXIT=0`; probe 39 killed · 0 known survivor(s) · 0 GAP(S) · 0 stale · 0 skipped(dirty) · 0 clobber(s) · 0 error(s); mutants 2,985 → 3,024; ~~whole-corpus sweep PENDING~~, predicted `2971 killed · 53 known survivor(s)` over 3,024 on D546's PAID `2932 · 53`, closed in both directions. ✅ **D547 CLOSE-OUT: WHOLE-CORPUS SWEEP GREEN AND EXACTLY AS PREDICTED, ON THE FIRST LAUNCH**, pasted out of the log rather than retyped (D504): `2971 killed · 53 known survivor(s) · 0 GAP(S) · 0 stale · 0 skipped(dirty) · 0 clobber(s) · 0 error(s) · 15317.3s total`. That is `+39 killed, +0 declared` on D546's `2932 · 53`, the **FIFTEENTH** consecutive exact prediction after the D532 reset (the count stands at **15**) and the **hundred-and-ninth** consecutive run with `0 error(s) · 0 stale · 0 clobber(s)`. Completeness is structural: **3,024 unique progress-line ids / 3,024 rows / 0 unmatched**, set-compared against `MUTANTS.map(m => m.id)` both ways, and all thirty-nine `D547-*` rows are KILLED (log :2992–:3030, contiguous). ✅ **THE LAUNCHER'S LOG HALF, OWED THROUGH THIRTEEN CLOSE-OUTS, IS PAID**: the log opens with the sweep's own `ps` row (`PID 1776886 / PPID 1 / SID 1776886`) and its launch stamp `2026-09-24T11:40:57+02:00`. Both were taken with `$$` + `exec` inside `setsid --fork`, NOT with the `$!` form every deferral wrote down, which reads a wrapper that has already exited (measured). `setsid` reuse steps to the **fifty-second**, and the pid-keyed sidecar carries ONE row. The 15,317 s is the fastest of the last five, although D548 was built in the second checkout during the run and committed there at 14:22. One new `conventions.md` section (the `$$`/`exec` launcher). D548 is BUILT AND PARKED on `d548-prep` at `0e658522` and lands next.)
 
@@ -721,6 +723,157 @@
 
 ## NEXT (resume point)
 
+> ### ▶ THE NEXT CONCRETE ACTION (written 2026-09-24, after D549)
+>
+> ✅ **`bun run check` IS GREEN — OBSERVED to completion in the `lum-wt-d549` worktree: `Test Files 541 passed
+> (541) / Tests 12746 passed (12746) / CHECK_EXIT=0`** (on D548's 538 / 12652: the three new engine suites
+> `costTax.test.ts`, `koBounty.test.ts` and `sideAttackLock.test.ts`; every other edit re-pointed, stepped or extended an
+> existing rung; typecheck-coverage OK (790), lint-coverage OK (792), biome *"Checked 828 files"*). D549 built `censusAttackCorpus.ts` **file lines 171, 149, 169 and 170** (leading count column **1**
+> each) — **4 sentences / 4 legal printings**, each claimed WHOLE by `deriveAttackEffect` alone. Engine **0.433.0 →
+> 0.434.0**; **`MATCH_RECORD_VERSION` 32 → 33**.
+> ⚠️ **NO CARD ID RESOLVES FOR ANY OF THE FOUR ON THIS CHECKOUT AND THAT WAS MEASURED** (`git grep` over `registry.ts`,
+> `catalogManifest.ts`, `testFixtures.ts`), so all three suites ride file-local DECLARED `d549-*` demonstrators (D425)
+> in their own 60-card decks (D270). **The real cards are UNMEASURED.**
+> ⚠️ **BUILT IN THE `lum-wt-d549` WORKTREE WHILE D548's WHOLE-CORPUS SWEEP RAN IN THE MAIN CHECKOUT, AND THE BUILDER
+> DID NOT COMMIT.** The main checkout was never read or written; committed bytes were read with `git show`. Timings
+> were taken under that sweep's load and carry no weight. 🆕 **LANDED:** committed on `d549-prep` at `b7621c08`
+> (built on `fa09499e`, main MINUS the D548 close-out), then CHERRY-PICKED onto `main` over the D548 close-out
+> `2bc3c35d` as ONE commit; `docs/progress.md` conflicted at the head of the header and the status table, and
+> `docs/decisions.md` at the D548 row, all three resolved by keeping every close-out fact and stacking D549's new line
+> on top. Reconciled by CLAIM, not only by conflict (D541): D548's base is marked PAID below, (6) ⑴ struck, and the two
+> line addresses (3)'s `:819` and (5)'s D408 copy re-pointed. `bun run check`, `precheck`, the D549 probe and the gates
+> were RE-MEASURED in the main checkout after the pick (session entry).
+>
+> 🛑 **(0) THE DEBT: THE WHOLE-CORPUS SWEEP IS PENDING, AND THE PREDICTION IS WRITTEN BEFORE IT RUNS (D504).**
+> `bun scripts/mutation/run.ts` over the whole corpus, predicted:
+>
+> > 3042 killed · 53 known survivor(s) · 0 GAP(S) · 0 stale · 0 skipped(dirty) · 0 clobber(s) · 0 error(s)
+>
+> over **3,095** rows — **`+53 killed, +0 declared`** on D548's figure `2989 · 53` over 3,042 — 🆕 PAID EXACTLY at the D548 close-out `2bc3c35d` (see (0) of the archived block below).
+> 🛑 **THE ARITHMETIC IS CLOSED IN BOTH DIRECTIONS BEFORE THE RUN** (D538's check): `2989 + 53 = 3042`;
+> `3042 + 53 = 3095`, which is the live corpus size `precheck` reports (*"checked 3095 mutants"*); and the ROW delta
+> closes the other way, `3042 + 53 = 3095` (an independent import of `MUTANTS`: 3,095 rows, 3,095 distinct ids, 53
+> `survives`, 0 find===replace, 53 `D549`). ⚠️ The two `53`s are a coincidence of this slice — 53 NEW `D549-*` rows
+> and 53 DECLARED survivors (unchanged from D548) — and are two different quantities. All fifty-three `D549-*` rows
+> were probed UNDECLARED first (D525(3)) and came back KILLED; the declared-survivor count is predicted to hold at **53**.
+> ⚠️ ~~**AND THE BASE IS ITSELF STILL A PREDICTION, SAID OUT LOUD — IT IS UNPAID**: D548's `2989 · 53` was written
+> before D548's sweep ran, and that sweep was the one LIVE in the main checkout for this whole slice. When it lands,
+> reconcile D548's (0) first; this figure adds to it and inherits its error in either direction.~~
+> ✅ 🆕 **(landing) THE BASE IS PAID**: D548's sweep landed EXACTLY on `2989 killed · 53 known survivor(s) · 0 GAP(S) ·
+> 0 stale · 0 skipped(dirty) · 0 clobber(s) · 0 error(s) · 16762.4s total` over 3,042 rows (D548 close-out `2bc3c35d`),
+> so this prediction now stands on a MEASURED base: `2989 + 53 = 3042`, `3042 + 53 = 3095` — re-closed in the main
+> checkout against `precheck`'s *"checked 3095 mutants"* after the pick.
+> ⚠️ **TEN EXISTING ROWS WERE RE-TRANSCRIBED OR RE-VERIFIED, NOT ADDED** (they move neither count), each re-probed
+> under `--only` and KILLED (**10 killed · 0 known · 0 GAP · 0 error**, tree identical after): `D326-`/`D501-record-
+> version-not-bumped` (find `= 33`, replace `= 32`); `D547-`/`D548-record-version-not-bumped` (RE-ANCHORED onto D549's
+> doc tail, replace `= 30` / `= 31`); `D495-census-built-attack-not-stepped` (1683 → 1687, replace 1681 → 1683);
+> `D275-engine-version-drifts-again` (its `find` stepped by the version tax to `0.434.0`); `D341-off-pool-sweep-source-
+> is-emptied` (the off-pool set gained THREE sentences, one per new op kind — the new ops DO enter `preventBlock.test.ts`'s
+> sweep that way, classified `taxDefender`/`bountyDefender` BLOCKED and `lockSideAttacks` UNTOUCHED, each with a driven
+> probe); `D322-allied-discount-floored-per-term` (the retreat sum gained the tax term); `D323-denied-prize-still-takes-
+> the-bonus` and `D323-attacker-uid-not-threaded` (the `checkup` flag in both call lines). `precheck` found exactly these
+> eight broken finds (plus D275/D341 checked by hand) and no duplicated `find` from the cloned installers.
+> ⚠️ **WHEN THIS SWEEP LAUNCHES**: `setsid --fork` with the `ps` read taken with `$$` and `exec` INSIDE it, written
+> into the log in the SAME command (`conventions.md`, D547 close-out), and a log that stops without a summary line is
+> classified by asking the MACHINE first (`uptime`, `journalctl --list-boots`) — D542.
+>
+> 🛑 **(0-bis) THE WORKTREE WAS ISOLATION-CHECKED BEFORE ANY `tsc`, `bun`, `vitest` OR PROBE RUN.** At `fa09499e`:
+> `realpath` of all five `@luminous` links (`node_modules/@luminous/{engine,schema}`,
+> `packages/engine/node_modules/@luminous/schema`, `apps/api/node_modules/@luminous/{engine,schema}`) prints a
+> `/home/jofre/projects/lum-wt-d549/…` path; `bunx tsc -b --force` was GREEN (exit 0) BEFORE the first edit. HEAD census
+> at BOTH caps: `SUBMAX=12` reader 573/1627 · registry 10/16 · gate 9/19 · trailing 11/21 · RESIDUE 37/49 · OPAQUE 12/18
+> · SUBST-16 2/2 · SUBST-19 1/1 · `BUILT.attack` 1683; default cap OPAQUE 23/32 · UNEXPLAINED 7/7 · CONTINUOUS 7/7·9/9·
+> 54/225 · PRIZE-ZONE 3/3·3/3·10/27 · targets 603. Name sweep `sideAttackLock`, `lockSideAttacks`, `costTaxTurn`,
+> `taxDefender`, `koBounty`, `bountyDefender` — ZERO hits each.
+>
+> ✅ **(1) THE PROBE.** `bun scripts/mutation/run.ts --decision D549 --allow-dirty`: **`53 killed · 0 known survivor(s) ·
+> 0 GAP(S) · 0 stale · 0 skipped(dirty) · 0 clobber(s) · 0 error(s) · 363.7s total`** (the re-run after the review's
+> fixes; the first run was `51 killed · … · 277.8s`) — every row KILLED, with the porcelain md5 (`172d1c6fe5cb`, 149
+> entries), the `git diff` md5 (`2c462f992c7b`) and the md5 over every untracked file's bytes (`ae60c98b3470`) identical
+> before and after, and no `tmp/mutation-journal.json` left (the md5s date that moment — the final docs stamp came
+> after). The ten re-transcribed rows re-probed under `--only` after the fixes: `10 killed · 0 known · 0 GAP · 0 error`,
+> tree identical after. An independent import of `MUTANTS`: 3,095 rows, 3,095 distinct ids, 0 find===replace, 53
+> `survives`, 53 `D549`. `precheck` GREEN at **3,095** rows, binding gate clean on **95**
+> name-introducing rows, every `find` exactly once, **53** declared survivors. `splice-gate` and `partition-gate` OK.
+> 🛑 **THE ROWS `tsc` CANNOT SEE ARE THE EIGHT §10 CLEARS** (`D549-{tax,bounty}-{evolve,retreat,switch,devolve}-clear-
+> dropped`), each killed by a PLAYED line (retreat, Switch, evolve) or a constructed one (gust, devolve);
+> `D549-checkup-flag-forced-false` is killed by `koBounty.test.ts` §5's PLAYED Checkup-Poison Knock Out;
+> `D549-side-merge-overwrites` (R6) by `sideAttackLock.test.ts` §6's PLAYED `:169`-then-`:170` board;
+> `D549-bounty-paid-on-a-benched-body` is UNREACHABLE off a played line (the §10 clears shed the record off the Active
+> Spot) and is killed by a CONSTRUCTED bench board, said so in its `what`.
+>
+> 🛑 **(1-bis) THE REVIEW FOUND THREE THINGS, AND ALL THREE WERE FIXED BEFORE CLOSE.** ⑴ **R4 HAD NO RUNG THAT COULD GO
+> RED.** `sideAttackLock.test.ts` §5's *"the count is CARDS"* rung sliced two basic `fix-energy`, where cards and units
+> are both 2; the reviewer patched `sideAttackLockHolds` to `providedEnergy(state, pokemon).length` and 97/97 stayed
+> green. Re-pointed (D438) onto a PLAYED board: one basic, then one `fix-grassdouble` ({G}{G}) attached from hand on the
+> locked turn — 2 cards / 3 units, still `ATTACK_PREVENTED`. The patch is now `D549-side-lock-counts-units`. ⑵ **R1's
+> MID-TURN HALF HAD NO RUNG THAT COULD GO RED.** `koBounty.test.ts` §4 called `collectKnockOuts(…, false)` by hand, so
+> flipping `resolveMidTurnKnockOuts`' own `false` to `true` left 93/93 green. Added a PLAYED rung: the real Dusknoir
+> `sv06.5-020` (LOCAL pool, `cursedBlast.test.ts`'s idiom) uses Cursed Blast from P1's Bench on turn 5 and Knocks the
+> marked Active Out — ONE `PRIZE_BONUS` `{ by: 2, count: 3 }`, P1 owed 3, `state.turn` still 5. The patch is now
+> `D549-midturn-flag-forced-true`. Both new rows were probed UNDECLARED first (a hand patch, the three D549 suites run,
+> each went red on exactly its rung, the file restored and `cmp`-verified) and then declared. ⑶ **ONE WITHDRAWN CLAIM
+> WAS MISSED (D539)**: `opponentTopLookShuffle.test.ts:30-31`'s *"SUBST-16 holds `:149` and `:169`"* — annotated in
+> place (D178), with the two matching carried-debt lines in `simulator.md` (D547 (d), D548 (e)). The prose keys could
+> not reach it: a census-CLASS claim is keyed on the class name and the row numbers too.
+>
+> ✅ **(2) THE CENSUS, MEASURED HEAD vs AFTER, AT BOTH CAPS (D539).** `SUBMAX=12`: reader **573/1627 → 577/1631**,
+> RESIDUE **37/49 → 33/45**, raw reader residue **67/105 → 63/101**, `BUILT.attack` **1683 → 1687**, SUBST-16 **2/2 →
+> 0/0**, SUBST-19 **1/1 → 0/0**, OPAQUE **12/18 → 11/17**; gate 9/19, trailing 11/21, registry 10/16 UNMOVED — 577 + 10
+> + 9 + 11 + 33 = 640 and 1631 + 16 + 19 + 21 + 45 = 1732. Default cap: OPAQUE **23/32 → 19/28**, UNEXPLAINED **7/7 →
+> 3/3**, FAR 16/24 → 12/20, CONTINUOUS co-marker **7/7 · 9/9 · 54/225 → 3/3 · 5/5 · 58/229**, PRIZE-ZONE co-marker
+> **3/3 · 3/3 · 10/27 → 2/2 · 2/2 · 11/28**, targets **603 → 607**. `residue-census-gate` OK (63 / 33 / 45, 640 = 607 +
+> 33); `opaque-anatomy-gate` OK (19 / 28). `compoundCompose`'s multi-clause claimed-whole rung **229/541 → 231/543**
+> (+2/+2, MEASURED: `:169`/`:170` split at their reminder, `:171`/`:149` are single clauses); `confusionDamage.test.ts`'s
+> *"claimed sentences ending in a period"* **526 → 528** (+2: `:171`/`:149` end in `.`; `:169`/`:170` end in `.)` and are not counted). 🛑 **THE SENTENCE STEP (4)
+> AND THE PRINTING STEP (4) AGREE** — the case where a copied number is right by accident, so every site was measured.
+>
+> 🛑 **(3) THE PIN SWEEP, DRIVEN OFF D548's SITE LIST AND CHECKED AGAINST `vitest --reporter=json`.** D548's annotation
+> `D548 +1 sentence / +2 printings` sits on **119** physical lines in **39** files, of which **118** in **38** code files
+> are census sites (the 119th is this file's own `:819` prose, measured at `fa09499e`; 🆕 `:1033` since the landing, in the archived D548 block). Each was classified by the QUANTITY its D548 `THIS
+> SITE:` note names (29 distinct quantities) and stepped with a PREPENDED `// (🆕🆕🆕 **D549 +4 sentences / +4 printings
+> …** THIS SITE: …)` annotation: reader/partition/`without`/resolved +4/+4, raw and gated residue −4/−4, `BUILT.attack`
+> and `built` +4, `units − built` 295 → 291, the eight-row share RE-MEASURED 19/49 = 39% → 19/45 = 42%, the multi-clause
+> pair +2/+2 and the ending-in-a-period count +2 (MEASURED, not the step). The **23** D548 front terms on **20** lines
+> each took a new FRONT term `- 4` (sentence AND printings chains alike this slice). Round 1 (engine only) reported
+> **69** failures in 54 files; after the version tax, the census sweep, the 13 key-set pins (`setup.test.ts`'s exact
+> `toEqual` and twelve `Object.keys(...).sort()` rungs — the brief's *"13 files"* grep counts `damageVulnerability.test.ts`,
+> which is not a pin) and the two inversions, round 2 over the same 54 files: **1,675 tests, 0 failures**.
+>
+> ✅ **(4) THE VERSION TAX, PARTITIONED DISJOINTLY AT THE BASE HEAD.** `git grep -nF "0.433.0" fa09499e` = **280 lines
+> across 124 files**. **153 STEPPED** = **120** `expect(` lines (106 `engineVersion` + 14 `manifest.version`) + **30**
+> `it()` TITLES (D460, keyed on the version STRING) + the declaration + `packages/engine/package.json:4` + D275's `find`.
+> **127 KEPT** = **8** `docs/` lines + **118** D548 census annotations + D548's changelog heading. 153 + 127 = **280**.
+> Stepped by line CONTENT with split/join (D462); every kept line re-verified byte-for-byte; zero `"0.433.0"` string
+> literals remain. `MATCH_RECORD_VERSION`: the **14** engine raw `toContain("…= 32")` asserts and their **14** `it()` titles
+> stepped to 33; the **7** `describe()` titles annotated *"32 since D548; 33 since D549"*; D547's two and D548's one
+> own-bump describes annotated as history; `match.test.ts`'s `toBe(32)` → `toBe(33)`; the 4 `mutants.ts` finds
+> re-transcribed at (0).
+>
+> 🛑 **(5) THE DESIGN.** See `docs/decisions.md` D549 (R1–R7, each with a reversal condition, and the PLACEMENT argument)
+> and THE SIXTH POSITION at `match.ts`. Claims withdrawn (D539), swept by the CLAIM with `git grep -niE "side-wide|still
+> unbuilt|seat-wide Ability|ONE read of|byte-identical|no member for|Checkup and the mid-turn"` (every hit read; the
+> `byte-identical` key returns 858 unrelated hits and was narrowed to `attackLocked`'s block), engine source first: the
+> list is in D549's row and the `index.ts` 0.434.0 changelog. Exempt by name: dated decisions rows and this file's
+> archived history (the D408 copy at `progress.md:45631` at `fa09499e`, 🆕 `:45983` since the landing, in particular).
+>
+> 🛑 **(6) CARRIED DEBTS — NAMED, NOT SILENTLY ADOPTED.** ⑴ ~~BOTH whole-corpus sweeps are pending — D548's (running in the
+> main checkout throughout) and this one's (0).~~ 🆕 **D548's is PAID, EXACTLY (D548 close-out `2bc3c35d`); ONLY this one's (0) is pending.** ⑵ **The Playmat PrizeGrid** face-up slot (`PlayerSide.tsx:90`,
+> `AnimatedCardsLayer.tsx:304`, `playmat/types.ts:52`) — D548's client debt, still OWED. ⑶ **`:629`** (*"Until the end of
+> your next turn, the Defending Pokémon's Weakness is now {C}. (The amount of Weakness doesn't change.)"*, OPAQUE) as the
+> rider for the NEXT record bump. ⑷ **`:669`** as the no-bump fallback (1p/L). ⑸ The real cards behind `:171`/`:149`/
+> `:169`/`:170` are UNMEASURED (no catalog id on this checkout). ⑹ onward: D548's (6) ⑸, unchanged.
+>
+> 🛑 **(7) PICKING THE NEXT ROW.** `SUBMAX=12 bun scripts/residue-census.ts`; the criterion since D537 is **PRINTINGS PER
+> UNIT OF RADIUS**. The residue is now **33 sentences / 45 printings**, and SUBST-16 / SUBST-19 are EMPTY. Next: `:629`
+> (it owes a bump — bundle it with the next record change); `:669` (1p/L); the copy-attack family (BLOCKED). Re-rank at
+> the head this slice leaves, not from this list.
+
+>
+> ---
+>
+> **ARCHIVED — the resume point D549 was built from, kept rather than overwritten:**
+>
 > ### ▶ THE NEXT CONCRETE ACTION (written 2026-09-24, after D548)
 >
 > ✅ **`bun run check` IS GREEN — OBSERVED to completion in the `lum-wt-d548` worktree: `Test Files 538 passed (538) /
@@ -30901,7 +31054,8 @@ the next api deploy (D18).
 |---|---|---|
 | backend-data | P1 | ✅ M1–M9 + P2-M1 + task-17 api deployed (Worker `9b1ec1d1`, 2026-07-16); OAuth secrets pending (user) |
 | deck-builder | P2 | ✅ ALL 19 tasks closed (task 17 landed + e2e-verified locally); only follow-ups left |
-| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D548, *CRESCENT PURGE, the face-up Prize — a REQUIRED `PlayerSide.faceUpPrizes`, a fifth cost row on the tenth reader (`turnPrizeFaceUp` behind `yourFaceDownPrizeRemains`), the OWNER picks which prize (a new `choosePrize` park), and `MATCH_RECORD_VERSION` 31 → 32*** — `censusAttackCorpus.ts` **file line 664**, **1 sentence / 2 legal printings** on the real Cresselia `sv06.5-021`; reader 572/1625 → 573/1627, residue 38/51 → 37/49, `BUILT.attack` 1681 → 1683; engine 0.432.0 → 0.433.0; `bun run check` 538 files / 12,652 tests green; mutants 3,024 → 3,042 (+18 `D548-*`, all KILLED undeclared); ~~whole-corpus sweep PENDING~~, predicted `2989 killed · 53 known survivor(s)` on D547's PAID `2971 · 53`. ✅ **WHOLE-CORPUS SWEEP GREEN AND EXACTLY AS PREDICTED (close-out)**: `2989 killed · 53 known survivor(s) · 0 GAP(S) · 0 stale · 0 skipped(dirty) · 0 clobber(s) · 0 error(s) · 16762.4s total` over 3,042 rows, the **SIXTEENTH** consecutive exact prediction, on the first launch; the log opens with its own `ps` row; D549 is parked and lands next; the Playmat face-up Prize slot is still owed. (prior: D547 — the flip-to-attack lock and the next-turn vulnerability, `MATCH_RECORD_VERSION` 30 → 31.)) |
+| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D549, *the defender's next-turn marks and the side-wide attack lock — the COST TAX (`taxDefender` → `InPlayPokemon.costTaxTurn`), the KNOCK OUT BOUNTY (`bountyDefender` → `InPlayPokemon.koBounty`, paid outside the Checkup via a new REQUIRED `checkup` flag) and the SIDE-WIDE LOCK (`lockSideAttacks` → `PlayerSide.sideAttackLock`, read inside `attackLocked`); corpus :171/:149/:169/:170, 4 sentences / 4 printings; engine 0.434.0; `MATCH_RECORD_VERSION` 33*** — built in `lum-wt-d549`, LANDED on `main` by cherry-pick onto the D548 close-out `2bc3c35d`; whole-corpus sweep PENDING, predicted `3042 · 53` over 3,095 on D548's PAID `2989 · 53`) |
+| simulator (prior) | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D548, *CRESCENT PURGE, the face-up Prize — a REQUIRED `PlayerSide.faceUpPrizes`, a fifth cost row on the tenth reader (`turnPrizeFaceUp` behind `yourFaceDownPrizeRemains`), the OWNER picks which prize (a new `choosePrize` park), and `MATCH_RECORD_VERSION` 31 → 32*** — `censusAttackCorpus.ts` **file line 664**, **1 sentence / 2 legal printings** on the real Cresselia `sv06.5-021`; reader 572/1625 → 573/1627, residue 38/51 → 37/49, `BUILT.attack` 1681 → 1683; engine 0.432.0 → 0.433.0; `bun run check` 538 files / 12,652 tests green; mutants 3,024 → 3,042 (+18 `D548-*`, all KILLED undeclared); ~~whole-corpus sweep PENDING~~, predicted `2989 killed · 53 known survivor(s)` on D547's PAID `2971 · 53`. ✅ **WHOLE-CORPUS SWEEP GREEN AND EXACTLY AS PREDICTED (close-out)**: `2989 killed · 53 known survivor(s) · 0 GAP(S) · 0 stale · 0 skipped(dirty) · 0 clobber(s) · 0 error(s) · 16762.4s total` over 3,042 rows, the **SIXTEENTH** consecutive exact prediction, on the first launch; the log opens with its own `ps` row; D549 is parked and lands next; the Playmat face-up Prize slot is still owed. (prior: D547 — the flip-to-attack lock and the next-turn vulnerability, `MATCH_RECORD_VERSION` 30 → 31.)) |
 | simulator (prior) | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D547, *the FLIP-TO-ATTACK lock and the NEXT-TURN vulnerability — two new ops (`flipLockAttack`, `exposeDefender`) on two new REQUIRED `InPlayPokemon` fields, a NEW reader kept out of `attackLocked` so the declaration stays legal, a +50 added after W/R at all four reduction sites, and `MATCH_RECORD_VERSION` 30 → 31*** — `censusAttackCorpus.ts` **file lines 176 and 150**, **2 rows / 4 legal printings**; reader 570/1621 → 572/1625, residue 40/55 → 38/51, `BUILT.attack` 1677 → 1681; engine 0.431.0 → 0.432.0; three rulings with reversal conditions (the lock flips BEFORE Confusion — the official rulebook's order, the draft's "Confusion first, UNRULED" withdrawn at review; the +50 lands on any computed hit, never on one the rulebook's damage step 2 stops; ON-TARGET). `bun run check` 535 files / 12,614 tests green; mutants 2,985 → 3,024 (+39 `D547-*`, all KILLED undeclared); ~~whole-corpus sweep PENDING~~, predicted `2971 killed · 53 known survivor(s)` on D546's PAID `2932 · 53`. ✅ **WHOLE-CORPUS SWEEP GREEN AND EXACTLY AS PREDICTED (close-out)**: `2971 killed · 53 known survivor(s) · 0 GAP(S) · 0 stale · 0 skipped(dirty) · 0 clobber(s) · 0 error(s) · 15317.3s total` over 3,024 rows, the **FIFTEENTH** consecutive exact prediction, on the first launch; the log opens with its own `ps` row (the launcher debt, owed through thirteen close-outs, is paid); D548 is parked and lands next) |
 | simulator (prior) | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D546, *the ALL-ATTACKS next-turn buff — `attack: null` on the shipped `boostAttack` op, `BoostedAttack.attackIndex: number | null`, and ONE new reader `everyAttackBoostOf` folded at `snipeActive`*** — `censusAttackCorpus.ts` **file lines 148 and 76**, *“During your next turn, attacks used by this Pokémon do 120 more damage to your opponent's Active Pokémon (before applying Weakness and Resistance).”* (and at 100 behind *“Both Active Pokémon are now Asleep.”*), **2 sentences / 2 legal printings**; reader 568/1619 → 570/1621, residue 42/57 → 40/55, `BUILT.attack` 1675 → 1677; engine 0.430.0 → 0.431.0, `MATCH_RECORD_VERSION` HELD at 30; mutants 2,968 → 2,985 (+17, all killed); ~~whole-corpus sweep PENDING, predicted 2932 · 53 on D545's PAID 2915 · 53~~ **whole-corpus sweep GREEN and exactly as predicted — `2932 killed · 53 known survivor(s) · 0 GAP(S) · 0 stale · 0 skipped(dirty) · 0 clobber(s) · 0 error(s) · 15386.5s total`** over 2,985 rows, the FOURTEENTH consecutive exact prediction and the hundred-and-eighth clean run, on the first launch) |
 | simulator (prior) | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D545, *the two printed COST clauses as a pair on the GATE arm — two non-blocking `AttackTimingGate` members, ONE new `BoardCondition`, and ONE wrapper `attackCostAt` at the three payability sites*** — `censusAttackCorpus.ts` **file lines 316 and 324**, **2 sentences / 2 legal printings** (SUBST-20/19), clause-only rows six and seven of `ATTACK_GATE_CLAUSES`. 🛑 `BlockingAttackGate` excludes both ON PURPOSE (the default `Exclude` would have refused each attack exactly when its condition holds). Three UNRULED readings with reversal conditions (alternate-not-replacement, waive-last, printed-cost-published). Gate 7/17 → 9/19, residue 44/59 → 42/57, `BUILT.attack` 1673 → 1675. Engine 0.429.0 → 0.430.0, `MATCH_RECORD_VERSION` 30 held. `check` 532 / 12,503; probe 15 killed · 0 survivors; ~~whole-corpus sweep PENDING, predicted 2915 · 53 over 2,968~~ **whole-corpus sweep GREEN and exactly as predicted — `2915 killed · 53 known survivor(s) · 0 GAP(S) · 0 stale · 0 skipped(dirty) · 0 clobber(s) · 0 error(s) · 16666.1s total`** over 2,968 rows, the THIRTEENTH consecutive exact prediction and the hundred-and-seventh clean run, on the first launch) |
@@ -31067,6 +31221,53 @@ the next api deploy (D18).
 Legend: 📝 backlog · 📋 specced · 🔎 research · 🚧 in progress · ✅ done
 
 ## Session log
+
+### 2026-09-24 — build session #489 (P3-M5 — D549)
+
+**THE DEFENDER'S NEXT-TURN MARKS AND THE SIDE-WIDE ATTACK LOCK — THREE NEW OPS, TWO REQUIRED `InPlayPokemon` FIELDS,
+ONE REQUIRED `PlayerSide` FIELD, A `checkup` FLAG, AND `MATCH_RECORD_VERSION` 32 → 33.**
+
+Built `censusAttackCorpus.ts` file lines **171, 149, 169 and 170** (4 sentences / 4 legal printings, no card id on this
+checkout — measured) in the `lum-wt-d549` worktree while D548's whole-corpus sweep ran in the main checkout. The
+isolation check (all five `@luminous` links) and `bunx tsc -b --force` (green) came first; the HEAD census was recorded
+at both caps. `taxDefender` → `InPlayPokemon.costTaxTurn` (read at both cost seams below the free-retreat tier);
+`bountyDefender` → `InPlayPokemon.koBounty` (paid in `koPrizeBonus` after the seat bonuses, only for the Active and only
+outside the Checkup — a new REQUIRED `checkup` flag threaded through the sweep, `true` only at `runCheckup`);
+`lockSideAttacks` → `PlayerSide.sideAttackLock` (read inside `attackLocked` as an early return, so the D547 fold row's
+`find` and the three askers are byte-unchanged). The placement was MEASURED by building both homes under `tsc` (one
+literal each) and counting runtime key pins (16 on `GameState`, 0 on `PlayerSide`). Three new suites (all green on the
+first run, then every rung confirmed by the probe), two inversions re-pointed (D438), 13 key-set pins, 118 census sites +
+23 front terms, the version tax (153 stepped / 127 kept of 280), `MATCH_RECORD_VERSION` 32 → 33 with the SIXTH position.
+`preventBlock.test.ts`'s op sweep would NOT have seen the three new ops (file-local pools) — three off-pool sentences
+added, the ops classified and probed. Mutants 3,042 → 3,095 (+53, all killed undeclared; ten existing rows
+re-transcribed or re-verified, all killed). A review then measured two rulings with no rung that could go red — R4 (the
+CARDS rung ran on basic Energy only, where cards equal units) and R1's mid-turn half (§4 called `collectKnockOuts` by
+hand) — and one withdrawn claim the prose keys missed (`opponentTopLookShuffle.test.ts:30-31`, SUBST-16). Fixed: a
+PLAYED `fix-grassdouble` rung (2 cards / 3 units, still locked), a PLAYED Cursed Blast mid-turn Knock Out (the bounty
+pays), rows `D549-side-lock-counts-units` and `D549-midturn-flag-forced-true` (each red undeclared first), and the claim
+annotated in place. A second review found `attackLocked`'s *"exactly one kind of thing it can refuse"* listed as
+WITHDRAWN while `continuous.ts` (rightly) kept it TRUE: both lists now withdraw only its ONE SOURCE reading, and the
+D143 copies stand. `bun run check` 541 files / 12746 tests / `CHECK_EXIT=0`. Whole-corpus sweep PENDING, predicted
+`3042 killed · 53 known survivor(s)` over 3,095 on D548's ~~still-UNPAID~~ `2989 · 53` 🆕 PAID EXACTLY at the D548
+close-out `2bc3c35d`. ~~Not committed.~~ 🆕 Committed on `d549-prep` at `b7621c08`, then LANDED on `main`.
+
+🆕 **LANDING (cherry-pick onto the D548 close-out `2bc3c35d`).** `docs/progress.md` conflicted at two hunks, the
+header's first line and the simulator status row, and `docs/decisions.md` at one, the D548 row; all three resolved by
+keeping the close-out's text whole (demoted to *"(was)"* / *"(prior)"* in `progress.md`, the D548 row kept as the
+close-out wrote it under D549's) and stacking D549's line on top; D549's own pre-close-out copies of the D548 header
+line, status row and decisions row were dropped in favour of the close-out's fuller ones. `simulator.md` and
+`coverage-backlog.md` merged clean; `git diff --numstat 2bc3c35d HEAD -- docs/` was read deletion by deletion: the
+only deleted lines are the close-out's header line and status row, each re-added byte-for-byte beneath D549's as
+*"(was)"* / *"(prior)"*, none a close-out fact lost. Reconciled by claim (D541): D548's base marked PAID in the header, the status row, (0), (6) ⑴, the D549
+decisions row and this entry; (3)'s `:819` and (5)'s `progress.md:45631` re-pointed onto the lines they name now.
+Re-verified in the main checkout after the pick: `bun run check` **541 files / 12,746 tests / `CHECK_EXIT=0`**
+(biome *"Checked 828 files"*, typecheck-coverage 790, lint-coverage 792); `precheck` *"checked 3095 mutants"*, binding
+gate clean on 95, 53 declared; residue-census (63 / 33 / 45, 640 = 607 + 33), splice and partition gates OK; probe
+`--decision D549 --allow-dirty` **`53 killed · 0 known survivor(s) · 0 GAP(S) · 0 stale · 0 skipped(dirty) · 0
+clobber(s) · 0 error(s) · 221.4s total`**, porcelain / diff / untracked md5s identical before and after, no journal
+left. A bun script diffing `MUTANTS` at `2bc3c35d` against HEAD by id: 3,042 → 3,095, **53 added (all `D549-*`), 0
+removed, and exactly the ten re-transcribed rows (0) names changed**; 3,095 distinct ids, 53 `survives`, 0
+find===replace. The (0) prediction closes both ways on the PAID base: `2989 + 53 = 3042`, `3042 + 53 = 3095`.
 
 ### 2026-09-24 — build session #488 (P3-M5 — D548)
 

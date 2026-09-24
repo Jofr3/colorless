@@ -1884,6 +1884,9 @@ function stepOp(
     // 🆕🆕🆕 D547 — field-free, so no `op.` read (`installNoWeakness`'s shape).
     case "flipLockAttack":
       return { done: flipLockAttack(state, ctx, events) };
+    // 🆕🆕🆕 D549 — the SIDE-WIDE lock: one record per seat, `whose` names the seat.
+    case "lockSideAttacks":
+      return { done: lockSideAttacks(state, op, ctx, events) };
     case "preventAttackUse":
       return { done: preventAttackUse(state, op.attack, op.until, ctx, events) };
     case "boostAttack":
@@ -1900,6 +1903,12 @@ function stepOp(
     // 🆕🆕🆕 D547 — the next-turn vulnerability, `weakenDefenderAttacks`' holder.
     case "exposeDefender":
       return { done: exposeDefender(state, op.amount, ctx, events) };
+    // 🆕🆕🆕 D549 — the COST TAX (nullary, `flipLockAttack`'s holder and window) and the
+    // KNOCK OUT BOUNTY (`exposeDefender`'s holder and window, on the prize step).
+    case "taxDefender":
+      return { done: taxDefender(state, ctx, events) };
+    case "bountyDefender":
+      return { done: bountyDefender(state, op.amount, ctx, events) };
     // 🆕🆕 D434 — the SCHEDULE half of the delayed placement. The other half is
     // flow.ts `runCheckup`; neither is a build on its own.
     case "scheduleCounters":
@@ -7549,6 +7558,59 @@ function flipLockAttack(state: GameState, ctx: EffectContext, events: GameEvent[
   return withActive(state, seat, { ...active, attackFlipLockTurn: turn });
 }
 
+/** 🆕🆕🆕 §8/§11 (D549) — INSTALL the printed SIDE-WIDE ATTACK LOCK on a whole side
+    (`censusAttackCorpus.ts:169`, `whose: "self"`, every body; `:170`, `whose:
+    "opponent"`, bodies with at most `maxEnergy` Energy attached). The ONE writer of
+    `PlayerSide.sideAttackLock`; read by `attackLocked` (continuous.ts).
+
+    THE WINDOW IS DERIVED FROM THE SIDE, `preventAttack`'s one rule: the locked side's
+    controller's NEXT turn — `+ 2` on the installer's own side, `+ 1` on the opponent's
+    (§5.3: declaring an attack ends the turn).
+
+    🛑 NO `effectRefused` GATE (docs/decisions.md D549 R5) — `preventHandPlay`'s rules
+    argument: the object of this effect is a SIDE, not a Pokémon, so no "prevent all
+    effects of attacks done to this Pokémon" block printed on a body shields it; asking
+    would let one shielded Active exempt its whole side. NO ACTIVE-SPOT PRECONDITION
+    either (it writes to the seat), and the record SURVIVES its installer leaving play
+    (R7): nothing here names the installing body, and no §10 clear touches a side.
+
+    🛑 THE SAME-WINDOW MERGE (R6). `:169` (A's own side, T+2) and an opponent's `:170`
+    played on T+1 (A's side, (T+1)+1 = T+2) land on the SAME seat and window. `null`
+    (unconditional) DOMINATES, else `Math.max(maxEnergy)` — the WIDER lock wins,
+    because each printing locks every body it names and the union of "every body" and
+    "bodies with ≤ 2" is every body. A naive overwrite would let `:170`'s `2` WEAKEN a
+    `:169` lock and free A's 3-Energy attacker (mutant `D549-side-merge-overwrites`). A
+    re-install that says nothing new is silent (`preventAttack`'s answer).
+
+    A record for a DIFFERENT window is OVERWRITTEN, and that is SAFE rather than
+    convenient: an install happens only by ATTACKING, and an attack ENDS the turn it is
+    declared on (§5.3). A live record's window is the CURRENT turn at most, so any
+    install that overwrites it is on the turn that consumed it; and a record for a
+    future window other than the new one cannot exist, because the only future windows
+    are `+ 1` and `+ 2` from the last attack, and a same-seat pair of those is the
+    same-window case above. Never parks; no rng. */
+function lockSideAttacks(
+  state: GameState,
+  op: Extract<EffectOp, { op: "lockSideAttacks" }>,
+  ctx: EffectContext,
+  events: GameEvent[],
+): GameState {
+  const lockedSeat = op.whose === "self" ? ctx.seat : otherSeat(ctx.seat);
+  const lockTurn = state.turn + (op.whose === "self" ? 2 : 1);
+  const side = state.players[lockedSeat];
+  const standing = side.sideAttackLock;
+  let maxEnergy = op.maxEnergy;
+  if (standing !== null && standing.turn === lockTurn) {
+    maxEnergy =
+      standing.maxEnergy === null || op.maxEnergy === null
+        ? null
+        : Math.max(standing.maxEnergy, op.maxEnergy);
+    if (maxEnergy === standing.maxEnergy) return state;
+  }
+  events.push({ type: "SIDE_ATTACKS_LOCKED", seat: lockedSeat, maxEnergy });
+  return withSide(state, lockedSeat, { ...side, sideAttackLock: { turn: lockTurn, maxEnergy } });
+}
+
 /** §8/§8.5 (D154, shared D155) — the printed PROPER NOUN → the INDEX every read
     site in this engine speaks. `findIndex` over the holder's OWN printed attacks,
     so a sentence naming an attack the card does not have resolves to `-1` and its
@@ -8273,6 +8335,72 @@ function exposeDefender(
   if (exposedAlready && worst === existing.amount) return state;
   events.push({ type: "DAMAGE_VULNERABILITY_APPLIED", seat, uid, amount: worst });
   return withActive(state, seat, { ...active, damageVulnerability: { turn, amount: worst } });
+}
+
+/** 🆕🆕🆕 §8.2/§11 (D549) — INSTALL the printed COST TAX on the DEFENDING Pokémon:
+    "During your opponent's next turn, attacks used by the Defending Pokémon cost {C}
+    more, and its Retreat Cost is {C} more." (`censusAttackCorpus.ts:171`, 1 legal
+    printing). `flipLockAttack`'s holder and window — the opponent's Active, `state.turn
+    + 1`, the taxed body's controller's own next turn — with its guards in its order:
+    the §11 refusal FIRST (so a shielded body announces the refusal even when already
+    taxed), then the idempotence early return (a same-window re-install is silent),
+    then the stamp. Writes `costTaxTurn`; read by `installedCostTaxOf` (continuous.ts)
+    at both cost seams.
+
+    Its OWN event, `COST_TAX_APPLIED`, and not an `ATTACK_LOCKED` rider (D421): the
+    body is NOT locked — it may still attack and retreat, at a higher price — and a
+    row saying "can't attack" would be false in the direction that costs a turn. Never
+    parks; no rng. */
+function taxDefender(state: GameState, ctx: EffectContext, events: GameEvent[]): GameState {
+  const taxedSeat = otherSeat(ctx.seat);
+  const taxed = state.players[taxedSeat].active;
+  if (taxed === null) return state;
+  const taxedUid = topUid(taxed);
+  if (taxedUid === undefined) return state;
+  // §11 (D142) — D549's tax asks the shield FIRST, before the same-window early return,
+  // so a refusal is announced even on a body that is already taxed.
+  if (effectRefused(state, taxedSeat, ctx, events)) return state;
+  const taxTurn = state.turn + 1;
+  if (taxed.costTaxTurn === taxTurn) return state;
+  events.push({ type: "COST_TAX_APPLIED", seat: taxedSeat, uid: taxedUid });
+  return withActive(state, taxedSeat, { ...taxed, costTaxTurn: taxTurn });
+}
+
+/** 🆕🆕🆕 §8.1/§11 (D549) — INSTALL the printed KNOCK OUT BOUNTY on the DEFENDING
+    Pokémon: "During your next turn, if the Defending Pokémon is Knocked Out, take 2
+    more Prize cards." (`censusAttackCorpus.ts:149`, 1 legal printing). `exposeDefender`
+    one function up, cloned for its HOLDER, its WINDOW (`state.turn + 2`, the
+    INSTALLER's own next turn — "During YOUR next turn") and its guards: the §11
+    refusal FIRST, then the `Math.max` same-window merge with its silent no-news early
+    return, then the stamp. Writes `koBounty`; read ONCE, in flow.ts `koPrizeBonus`.
+
+    A `+ 1` build would put the bounty on the HOLDER's own turn, when only a Checkup
+    Poison or the holder's own recoil could Knock it Out — the printed +2 would pay on
+    the wrong player's turn and never on the installer's. Driven across turn
+    boundaries in `koBounty.test.ts`, not asserted as arithmetic. */
+function bountyDefender(
+  state: GameState,
+  amount: number,
+  ctx: EffectContext,
+  events: GameEvent[],
+): GameState {
+  const markedSeat = otherSeat(ctx.seat);
+  const marked = state.players[markedSeat].active;
+  if (marked === null) return state;
+  const markedUid = topUid(marked);
+  if (markedUid === undefined) return state;
+  // §11 (D142) — D549's bounty asks the shield FIRST, before the merge's early return.
+  if (effectRefused(state, markedSeat, ctx, events)) return state;
+  const bountyTurn = state.turn + 2;
+  const prior = marked.koBounty;
+  const sameWindow = prior !== null && prior.turn === bountyTurn;
+  const payout = sameWindow ? Math.max(prior.amount, amount) : amount;
+  if (sameWindow && payout === prior.amount) return state;
+  events.push({ type: "KO_BOUNTY_APPLIED", seat: markedSeat, uid: markedUid, amount: payout });
+  return withActive(state, markedSeat, {
+    ...marked,
+    koBounty: { turn: bountyTurn, amount: payout },
+  });
 }
 
 /** 🆕🆕 §13 (D434) — SCHEDULE a counter placement onto the DEFENDING Pokémon for the
@@ -12029,6 +12157,10 @@ function devolvedBodyOf(body: InPlayPokemon): InPlayPokemon {
     attackDamageDebuff: null,
     // 🆕🆕🆕 D547 — the next-turn vulnerability (devolve clear, D547).
     damageVulnerability: null,
+    // 🆕🆕🆕 D549 — the cost tax (devolve clear, D549 tax).
+    costTaxTurn: null,
+    // 🆕🆕🆕 D549 — the knock out bounty (devolve clear, D549 bounty).
+    koBounty: null,
     installedRecoil: null,
     lockedAttacks: [],
     boostedAttack: null,
@@ -13706,6 +13838,13 @@ export function switchInto(
     // the victim's own Switch on the turn in between walks the exposed body out
     // from under the +50 (switch clear, D547).
     damageVulnerability: null,
+    // 🆕🆕🆕 D549 — the COST TAX goes with the body (the flip lock's story): the victim
+    // Switches out of it and the promoted body pays printed costs (switch clear, D549 tax).
+    costTaxTurn: null,
+    // 🆕🆕🆕 D549 — and the KNOCK OUT BOUNTY (the vulnerability's story): the victim's
+    // Switch, or the installer's own gust, moves the marked body off the Active Spot and
+    // the bounty with it (switch clear, D549 bounty).
+    koBounty: null,
     // D152 — and the armed RECOIL's story here is D147's rather than D149's: the
     // window is the OPPONENT's turn, so the only player who can move the body
     // inside it is the opponent — a Boss's Orders played on that very turn drags

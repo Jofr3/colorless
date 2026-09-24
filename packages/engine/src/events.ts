@@ -679,6 +679,29 @@ export type GameEvent =
       state that exists. The hit that pays it reports the same figure in
       `DAMAGE_DEALT.vulnerability`. Not persisted (D141). */
   | { type: "DAMAGE_VULNERABILITY_APPLIED"; seat: Seat; uid: string; amount: number }
+  /** 🆕🆕🆕 §8.2/§11 (D549) — an attack TAXED the Defending Pokémon's costs for its
+      controller's next turn ("During your opponent's next turn, attacks used by the
+      Defending Pokémon cost {C} more, and its Retreat Cost is {C} more.",
+      `censusAttackCorpus.ts:171`). `seat` OWNS the taxed Pokémon (D136's finding 1).
+      A NEW event and NOT an `ATTACK_LOCKED` rider (D421): the body is not locked, and
+      that row's every rendering says it cannot attack. No amount: the tax is the
+      printed single {C} on both costs (types.ts `costTaxTurn`). Not persisted (D141). */
+  | { type: "COST_TAX_APPLIED"; seat: Seat; uid: string }
+  /** 🆕🆕🆕 §8.1/§11 (D549) — an attack put a KNOCK OUT BOUNTY on the Defending
+      Pokémon for the installer's next turn ("During your next turn, if the Defending
+      Pokémon is Knocked Out, take 2 more Prize cards.", `censusAttackCorpus.ts:149`).
+      DAMAGE_VULNERABILITY_APPLIED's contract: `seat` OWNS the marked Pokémon and
+      `amount` is the MERGED number the record now holds. The Knock Out that pays it
+      files PRIZE_BONUS (with no ABILITY_TRIGGERED in front). Not persisted (D141). */
+  | { type: "KO_BOUNTY_APPLIED"; seat: Seat; uid: string; amount: number }
+  /** 🆕🆕🆕 §8/§11 (D549) — an attack LOCKED a whole SIDE's attacks for that side's
+      controller's next turn (`censusAttackCorpus.ts:169`, `maxEnergy: null`; `:170`,
+      `maxEnergy: 2`). `seat` owns the LOCKED side — HAND_PLAY_BLOCKED's rule, and for
+      its reason: NO `uid`, because the lock is on the SIDE and survives every body
+      leaving play, including the installer (a `uid` would read as though switching
+      that body out escaped it). `maxEnergy` is the MERGED value the record holds.
+      Not persisted (D141). */
+  | { type: "SIDE_ATTACKS_LOCKED"; seat: Seat; maxEnergy: number | null }
   /** 🆕🆕 §13 (D434 as `COUNTERS_SCHEDULED`, RENAMED AND GENERALISED AT D435) — an
       attack SCHEDULED a delayed effect onto `seat`'s Active for the END of
       `scheduled.turn`. Three payloads share the row because they share the clock:
@@ -1156,7 +1179,18 @@ export type GameEvent =
       Ability pressing its advantage — and one row with a sign would leave the log
       unable to say which of them acted. Follows the ABILITY_TRIGGERED row (and,
       for Wonder Kiss, the ABILITY_COIN_FLIP row) that names the Ability and the
-      body carrying it. */
+      body carrying it.
+
+      🆕🆕🆕 **D549 — AND NOT ONLY AN ABILITY ANY MORE (the *"SEAT-WIDE Ability"* and
+      *"Follows the ABILITY_TRIGGERED row"* above are WITHDRAWN as a description of
+      EVERY row, D539; true of the two Ability sources still).** The attack-installed
+      KNOCK OUT BOUNTY (*"During your next turn, if the Defending Pokémon is Knocked
+      Out, take 2 more Prize cards."*, `censusAttackCorpus.ts:149`) files this row
+      with NO ABILITY_TRIGGERED in front of it: the source was named when it was
+      INSTALLED (`KO_BOUNTY_APPLIED`), and the bonus is paid by the rules, not by a
+      body acting now. Same shape, same seat rule (`seat` lost the Pokémon), same
+      `by`/`count` — the bounty's row follows the seat bonuses' rows, in the order
+      `koPrizeBonus` adds them. */
   | { type: "PRIZE_BONUS"; seat: Seat; uid: string; by: number; count: number }
   /** The controller's whole hand went to the discard (Professor's Research). */
   | { type: "HAND_DISCARDED"; seat: Seat; uids: string[] }

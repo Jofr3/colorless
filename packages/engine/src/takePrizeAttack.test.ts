@@ -130,6 +130,10 @@ describe("§1 — one sentence, three printings, and one printed count in the wh
     // Knock Out — a different mechanism, still unbuilt, and the reason the op is not
     // parameterised by a count. The other twelve READ the prize row (a condition or a
     // damage scaler) or LOOK AT / TURN OVER a face-down prize; none takes one.
+    // (🆕🆕🆕 D549: *"still unbuilt"* is WITHDRAWN — the rider is BUILT as its own op,
+    // `bountyDefender { amount }`, read in flow.ts `koPrizeBonus` (`koBounty.test.ts`). It
+    // is STILL "a different mechanism", so this op's field-free argument and the 14-row
+    // partition stand unchanged.)
     const takes = hits.filter(([, text]) => /take \d+ more Prize|and take a Prize card/.test(text));
     expect(takes.map(([, text]) => text).sort()).toEqual([
       SENTENCE,
@@ -138,11 +142,16 @@ describe("§1 — one sentence, three printings, and one printed count in the wh
     // …and the KO rider is NOT claimed, which is what keeps this slice's refusal to
     // carry a `count` honest rather than convenient: the ONLY prize-taking sentence
     // this engine reads spells the count as "a".
-    expect(
-      deriveAttackEffect(
-        "During your next turn, if the Defending Pokémon is Knocked Out, take 2 more Prize cards.",
-      ),
-    ).toBeNull();
+    // (🆕🆕🆕 D549: RE-POINTED, not deleted (D438). The KO rider IS claimed now — by a
+    // DIFFERENT op, `bountyDefender`, whose `amount` is the printed "2" — and the
+    // argument above survives on that fact: the count lives on the rider's op, so the
+    // ONLY sentence that takes a prize AS AN ATTACK EFFECT still spells it "a", and
+    // `takePrize` stays field-free.)
+    const rider = deriveAttackEffect(
+      "During your next turn, if the Defending Pokémon is Knocked Out, take 2 more Prize cards.",
+    );
+    expect(rider).toEqual([{ op: "bountyDefender", amount: 2 }]);
+    expect((rider ?? []).some((op) => op.op === "takePrize")).toBe(false);
   });
 
   it("the fixture prints the sentence VERBATIM at three indices and AUTHORS nothing", () => {
@@ -358,7 +367,7 @@ describe("§3 — `MATCH_RECORD_VERSION` stays 26, and the prediction is DRIVEN"
   });
 
   it("the engine version moved and the two spellings agree", () => {
-    expect(engineVersion).toBe("0.433.0");
+    expect(engineVersion).toBe("0.434.0");
   });
 });
 

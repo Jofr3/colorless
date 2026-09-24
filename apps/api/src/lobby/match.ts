@@ -1493,8 +1493,57 @@ export interface MatchRecord {
     inside it), but a new INHABITANT of a persisted union is a widening a v31 writer never
     produced, which D333 settled. `GameEvent` gains `PRIZE_TURNED_FACE_UP` (not persisted,
     D141). The wire (`RedactedSide.faceUpPrizes`, the `choosePrize` prompt arm) is not a
-    persisted shape at all. */
-export const MATCH_RECORD_VERSION = 32;
+    persisted shape at all.
+
+    🆕🆕🆕 **32 → 33 AT D549 — THE SIXTH POSITION: THREE REQUIRED FIELDS AT TWO ADDRESSES, AND
+    THE FIFTH POSITION'S ROLLBACK ARGUMENT APPLIED TO EACH.** The addresses, named first
+    (D456's rule), all persisted on every save with no park in front of them:
+      · `InPlayPokemon.costTaxTurn: number | null` — the COST TAX (*"During your opponent's
+        next turn, attacks used by the Defending Pokémon cost {C} more, and its Retreat Cost
+        is {C} more."*, `censusAttackCorpus.ts:171`), a BARE STAMP: D432's *no rest*;
+      · `InPlayPokemon.koBounty: KoBounty | null` — the KNOCK OUT BOUNTY (*"During your next
+        turn, if the Defending Pokémon is Knocked Out, take 2 more Prize cards."*, `:149`),
+        `{turn, amount}`: D434's *both keys arrive together*;
+      · `PlayerSide.sideAttackLock: SideAttackLock | null` — the SIDE-WIDE ATTACK LOCK
+        (`:169`, *"During your next turn, your Pokémon can't attack. (This includes new
+        Pokémon that come into play.)"*, and `:170`, the opponent's bodies with *"2 or less
+        Energy attached"*), `{turn, maxEnergy}`: D434's case again, on a SIDE.
+
+    🛑 **WHY NONE MAY BE OPTIONAL — THE FIFTH POSITION'S TEST, RUN THREE TIMES AND FAILED
+    THREE TIMES.** Each optional spelling (`costTaxTurn?`, `koBounty?`, `sideAttackLock?`)
+    passes D441 (an ABSENT key reads as "no tax / no bounty / no lock", which is what a v32
+    writer meant) and is DETECTABLE IN THE BYTES (no v32 writer emits the key). Each fails
+    D456's second clause, *"inert on the board"*: a ROLLBACK deploy reading a v33 record
+    silently DROPS a live effect — the taxed Defending Pokémon attacks and retreats at its
+    printed cost, the marked body pays its face value, and a locked side ATTACKS on the turn
+    the printed card forbids it. A dropped lock is the worst of the three: it turns a
+    forbidden action into a legal one. The residue is a PLAYED effect missing from the board,
+    exactly the fifth position's finding, so the fields are REQUIRED and a v32 record is
+    RETIRED rather than read. Reversal condition: the fifth position's (a rollback-safety rule
+    that accepts a silently dropped effect as inert, or a pipeline that forbids rollback
+    across a record-shape change).
+
+    🛑 **AND A v32 RECORD IS NOT READ BENIGNLY — MEASURED: THREE ABSENT FIELDS, TWO CLASSES**
+    **OF DEGRADATION** (two D326 `TypeError`s and one D124 silent soft landing).
+      · `PlayerSide.sideAttackLock` absent: `attackLocked` asks `=== null` and dereferences
+        `.turn` of `undefined` → **`TypeError` on EVERY attack declaration AND on the turn
+        player's EVERY projection** (`redactedAttacksOf` asks `attackLocked` for the viewer's
+        Active) — a v32 match could not even be broadcast once loaded
+        (`sideAttackLock.test.ts` §12, `costTax.test.ts` §11);
+      · `InPlayPokemon.koBounty` absent: `koPrizeBonus` dereferences `.turn` of `undefined`
+        on the Knock Out of ANY Active outside a Checkup → `TypeError` (`koBounty.test.ts`
+        §11) — D326's class;
+      · `InPlayPokemon.costTaxTurn` absent: `undefined === state.turn` → the surcharge is 0,
+        SILENTLY — D124's soft landing, a plausible wrong board (`costTax.test.ts` §11).
+    Any one owes the bump; the first makes a v32 match unplayable.
+
+    ⚠️ Also moved, and none is a second reason: three new `EffectOp` members (`taxDefender`,
+    `bountyDefender { amount }`, `lockSideAttacks { whose, maxEnergy }` — D333 widenings;
+    none parks, so none reaches `phase.cont`), and `GameEvent` gains `COST_TAX_APPLIED`,
+    `KO_BOUNTY_APPLIED` and `SIDE_ATTACKS_LOCKED` (not persisted, D141). No schema, redact,
+    projection or client byte: the side lock reaches every `playable` through
+    `attackLocked`, and the tax reaches every cost through the two cost functions. */
+export const MATCH_RECORD_VERSION = 33;
 
 /** How a persisted match read back: absent, usable, or written by an
     incompatible deploy (`stale` — the caller decides whether to retire it). */
