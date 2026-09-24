@@ -18820,6 +18820,9 @@ not a looser regex — and 4 of the 5 are blocked on their own leading clause an
 search-style pattern would silently claim the whole compound. Refusal asserted on the
 printed text; `FIXTURE_POOL` already carries a sixth (Pachirisu `sv01-068`/`-208`,
 3 catalog / **0 legal**) and it stays loud.
+(🆕🆕🆕 D550: history now — all five are BUILT, none by a sentence-splitting seam except
+D363's, and the last, the coin row, by a whole-sentence anchor read by two readers; the
+`DAMAGE_SUPPRESSION` pattern still refuses all five whole. See the D550 section below.)
 
 ### Mutation pass — 13 mutants, **3 first-round survivors**, all three then killed
 
@@ -27879,6 +27882,7 @@ hit (driven in both suites).
 `:664` (the `PlayerSide`/"PlayerState" stale prose at `effects.ts`/`index.ts` and three tests, and
 Cresselia's "90 more damage", which prints 80 — it now owes its OWN future bump, since this slice paid
 30 → 31 without it); SUBST-16's `:149` and `:169`; `:669` as the best unbumped fallback (1p/L).
+(🆕🆕🆕 D550: `:669` BUILT, with no bump — see the D550 section below.)
 (🆕🆕🆕 D548: `:664` PAID, with its own bump 31 → 32. ⚠️ The *"90 more damage"* was at `effects.ts` only —
 `index.ts:664` reads *"If you do, …"* with no number, so that half of this carried line was itself wrong.)
 (🆕🆕🆕 D549: SUBST-16's `:149` and `:169` PAID — built with `:170` and `:171` under the 32 → 33 bump; SUBST-16
@@ -27933,7 +27937,7 @@ The Playmat PrizeGrid (`PlayerSide.tsx:90`, `AnimatedCardsLayer.tsx:304`, `playm
 local playmat projection's face-up slot; `:171` plus SUBST-16's `:149`/`:169` (and possibly `:170`) as a
 bundle for the NEXT record bump; `:669` as the no-bump fallback.
 (🆕🆕🆕 D549: the `:171`/`:149`/`:169`/`:170` bundle PAID, with the bump 32 → 33. The Playmat face-up slot
-is still owed, and `:669` is still the no-bump fallback.)
+is still owed, and `:669` is still the no-bump fallback. 🆕🆕🆕 D550: `:669` BUILT, no bump.)
 
 ### (f) A withdrawn claim about the GATE (found by the second review)
 *"The Prize gate's false arm needs the attack used six times"* (D385's measurement, D383's
@@ -28009,3 +28013,52 @@ still a declaration). What moved is its ONE SOURCE; both lists now withdraw that
 ### (f) Owed
 `:629` (*"Until the end of your next turn, the Defending Pokémon's Weakness is now {C}. (…)"*) as the rider for
 the NEXT record bump; `:669` as the no-bump fallback; the Playmat PrizeGrid face-up slot (D548's client debt).
+(🆕🆕🆕 D550: `:669` BUILT with no bump; `:629` and the Playmat slot still owed.)
+
+## D550 — the opponent-flipped per-tails snipe on the opponent's Bench count: a ninth coin member over a sixth, nullary flip count, a third compound suppression arm, and coin rows filed under the seat that flips (engine 0.435.0, `MATCH_RECORD_VERSION` 33 HELD)
+
+### (a) What was built
+`censusAttackCorpus.ts` **file line 669** (leading count column `1`) — *"Your opponent flips a coin for each of their
+Benched Pokémon. This attack does 80 damage to your opponent's Active Pokémon for each tails. This attack's damage
+isn't affected by Weakness or Resistance."* — **1 sentence / 1 legal printing**, claimed WHOLE by TWO readers off
+ONE anchor, `ATTACK_OPPONENT_BENCH_TAILS` (the column's FIFTH dual-claimed sentence, and the FOURTH use of D493's
+one-anchor-two-readers route: D493, D494, D539, D550):
+
+* **`deriveAttackCoinFlip`** → `{ kind: "opponentPerTails", flips: { kind: "opponentBench" }, per: 80 }` — a NINTH
+  `AttackCoinFlip` member over a SIXTH, NULLARY `AttackFlipCount` member (`per >= 1` guarded).
+* **`deriveAttackDamageSuppression`** → `{ weakness: true, resistance: true }`, its THIRD compound arm, GATED on the
+  coin reader (D445), so a printed 0 refuses in both.
+* **`attack.ts`** — `takeFlips` counts `benchBodies(state, otherSeat(attackerSeat))` (the opponent's BENCH, Active
+  not counted; TS2454 forced the case); `printedFlips` carries the member (TS2366); `scaledBase` drops the printed
+  base; every coin row is filed under the FLIPPER; a DEDICATED fold branch counts the printed face "tails" over the
+  faces (D476). `tsc` does not force the fold branch (the member's `per` fits the `heads × per` `else`) — a mutant
+  row pins it. `coinExplainsModifier` is a negative list and takes no edit.
+
+⚠️ No card id resolves for the sentence on this checkout (measured), so `opponentBenchTailsSnipe.test.ts` rides a
+file-local declared `d550-sniper` ("80×"); the real card is UNMEASURED.
+
+### (b) Why a member and not a `face` field on `perHeads`
+`perTailsSelfDiscard.test.ts` §1's falsifier (D446) owes the face field on the fold members for *"a per-tails DAMAGE
+fold whose other axes this family already reads"*. This fold's FLIPPER axis is new, so the condition is not met;
+face and flipper CO-VARY in the column, and a field pair would admit two crossings no card prints (D451).
+
+### (c) The rulings (docs/decisions.md D550, each with a reversal condition)
+R1 the coin rows' seat is the FLIPPER (D547's `ATTACK_FLIP_LOCK_CHECK` precedent; `events.ts`/`log.ts` amended) ·
+R2 the count is read at the flip site, after the §8 checks, and cannot differ from a declaration-time count · R3
+the marker is read "80×", base dropped (the real card UNMEASURED) · R4 only W/R is suppressed (D547's vulnerability
+still lands) · R5 zero Benched = zero flips and no rng step; all heads = no `DAMAGE_DEALT`; never a 0-damage row.
+
+### (d) The record
+`MATCH_RECORD_VERSION` HOLDS at 33: both members are derived at the attack site and spent into a NUMBER at the
+fold; the attack never parks, and the post-attack board round-trips byte-equal (driven).
+
+### (e) Census (measured head and after)
+`SUBMAX=12`: reader 577/1631 → 578/1632, residue 33/45 → 32/44, raw residue 63/101 → 62/100, `BUILT.attack`
+1687 → 1688, PHRASE-24 1/1 → 0/0; registry, gate, trailing and OPAQUE 11/17 UNMOVED. Default cap: PHRASE-24 1/1 →
+0/0, OPAQUE 19/28, UNEXPLAINED 3/3, FAR 12/20, CONTINUOUS 3/3·5/5·58/229 and PRIZE-ZONE 2/2·2/2·11/28 UNMOVED;
+targets 607 → 608. The sentence step (1) and the printing step (1) AGREE.
+
+### (f) Owed
+`:629` as the rider for the NEXT record bump; the Playmat PrizeGrid face-up slot (D548's client debt, priced in
+`progress.md`'s resume point); the copy-attack family is still BLOCKED; `:669`'s real card is UNMEASURED.
+(🆕 D550 landing: the D549 close-out, `1e24318f`, already scheduled the Playmat slot as D551, ahead of `:629`.)

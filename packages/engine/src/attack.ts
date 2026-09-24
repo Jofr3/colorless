@@ -949,6 +949,19 @@ function takeFlips(
         (foeActive === null ? 0 : countAttachedEnergy(state, foeActive, null));
       break;
     }
+    // 🆕🆕🆕 D550 — the OPPONENT's Benched bodies: *"Your opponent flips a coin for each of
+    // their Benched Pokémon."* `benchBodies` and NOT `countPokemonInPlay`: the printed noun is
+    // the Bench, so the defending Active is NOT counted (the `pokemonInPlay` arm above would
+    // answer one higher on every board, which is why this is a member and not a seat on it).
+    // `otherSeat(attackerSeat)` is the whole of the reading — the uncrossed seat would count
+    // the ATTACKER's Bench, the D447/D454 crossing, pinned by its own row. Read HERE, at the
+    // flip site, like every count in this switch (D128): it runs after the §8 flip-lock and
+    // Confusion checks, and nothing between declaration and this line can move a Bench, so it
+    // cannot differ from a declaration-time count on any reachable board (D550 R2). TS2454
+    // until written.
+    case "opponentBench":
+      flips = benchBodies(state, otherSeat(attackerSeat));
+      break;
   }
   const faces: CoinFace[] = [];
   let rng = state.rngState;
@@ -991,6 +1004,9 @@ function printedFlips(coinFlip: AttackCoinFlip): AttackFlipCount {
     case "bonusOnHeads":
     case "perHeads":
     case "programPerHeads":
+    // 🆕🆕🆕 D550 — the opponent-flipped per-tails fold carries its count like the members
+    // around it (always `opponentBench` on the one printing); TS2366 until written.
+    case "opponentPerTails":
     // 🆕🆕🆕 D526 — the three-tier ladder carries its printed count (always 3, pinned by
     // the anchor's "all of them") like the five members around it; TS2366 until written.
     case "bonusLadder":
@@ -2047,6 +2063,17 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
   // The absence is measured, asserted in damageSuppression.test.ts, and is also
   // the reason `weakness` below is its OWN boolean: two of those five print
   // "…isn't affected by Weakness." with no Resistance beside it.
+  //
+  // 🆕🆕🆕 **D550 — "THE ONE STILL DEFERRED IS THE COIN ROW" IS WITHDRAWN (D539): THE COIN
+  // ROW IS BUILT, AND AGAIN NOT BY A COMPOSITION SEAM.** Its leading half STILL refuses on
+  // its own — the head above, without the tail, derives to `null` under every reader at
+  // D550's head too, which is kept as the measurement it was — and the row is claimed WHOLE
+  // by ONE new anchor, `ATTACK_OPPONENT_BENCH_TAILS` (effects.ts), read by
+  // `deriveAttackCoinFlip` for the flip and the per-tails fold and by
+  // `deriveAttackDamageSuppression`'s THIRD compound arm for the §8.5 step, both off THIS
+  // line's `effect` string — D493/D494's route, the fourth time. So NONE of the five
+  // rider-on-compound printings above is deferred any more; `DAMAGE_SUPPRESSION` itself is
+  // still byte-unchanged and still refuses every compound whole (`damageSuppression.test.ts`).
   const damageSuppression =
     effect === null || effect === "" ? null : deriveAttackDamageSuppression(effect);
   const scaling = damageBonus ?? damageMultiplier;
@@ -2206,6 +2233,15 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
   // what knows the printed number has been re-homed. Leaving it out would deal the
   // base pre-program AND again inside the op that folds it, which is precisely the
   // double hit `damageDefender.base` exists to avoid.
+  // 🆕🆕🆕 D550 — `opponentPerTails` DROPS the printed base exactly as `perHeads` does: the
+  // printed marker is read as "80×" (D550 R3), so the digits ARE the per-tails amount and
+  // leaving the base in would deal them once more on every board with a tail. ⚠️ The real
+  // card is UNMEASURED; if it prints a blank marker this term is harmless (there is no base
+  // to drop), and if it prints "+" or a flat base the ruling reverses and so does this term.
+  // Spliced BETWEEN the two coin terms rather than at either end: the chain's other
+  // multi-line mutant `find`s end on `"perHeads"` and begin on `"perHeadsThenThreshold"`, so
+  // this placement re-transcribes ONE row (`D460-threshold-base-is-not-dropped`) instead of
+  // four or two.
   const scaledBase =
     damageMultiplier !== null ||
     programDamage ||
@@ -2214,6 +2250,7 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
     costBoostOwnsTheBase ||
     discardScaledBoost !== null ||
     coinFlip?.kind === "perHeads" ||
+    coinFlip?.kind === "opponentPerTails" ||
     coinFlip?.kind === "perHeadsThenThreshold"
       ? 0
       : base;
@@ -2370,6 +2407,9 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
   // claiming the modifier for it would SUPPRESS a loud row the engine has not earned.
   // Neither printing carries a marker on this checkout (D425: unresolved, not the
   // reason) — the term is written from the rule, exactly as D499's was.
+  // 🆕🆕🆕 D550 — NO EDIT HERE, AND THAT IS THE LIST WORKING: it is a NEGATIVE list, so
+  // `opponentPerTails` — a fold over the printed "80×" marker (D550 R3) — already counts as
+  // explaining its `×` by default, which is right: the member spends exactly that number.
   const coinExplainsModifier =
     coinFlip !== null &&
     coinFlip.kind !== "cancelOnTails" &&
@@ -2578,9 +2618,17 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
   if (coinFlip !== null) {
     const [faces, rngState] = takeFlips(next, action.seat, active, printedFlips(coinFlip));
     next = { ...next, rngState };
+    // 🆕🆕🆕 D550 R1 — EVERY coin row is filed under the seat that FLIPS. For every member but
+    // one that is the attacker; `opponentPerTails` prints *"Your opponent flips a coin"*, so
+    // its rows go under the OPPONENT and the log reads "P2 flipped tails for the effect".
+    // D547's precedent: `ATTACK_FLIP_LOCK_CHECK` files its "your opponent flips" coin under
+    // the seat that flips (events.ts). The seat of every OTHER row this attack files is
+    // unchanged (`action.seat`), and the rng is the one shared stream either way.
+    // Reversal: an official ruling, or a client need, that files coin rows under the attacker.
+    const flipper = coinFlip.kind === "opponentPerTails" ? otherSeat(action.seat) : action.seat;
     let heads = 0;
     for (const face of faces) {
-      events.push({ type: "ATTACK_EFFECT_COIN_FLIP", seat: action.seat, result: face });
+      events.push({ type: "ATTACK_EFFECT_COIN_FLIP", seat: flipper, result: face });
       if (face === "heads") heads += 1;
     }
     if (coinFlip.kind === "cancelOnTails" || coinFlip.kind === "cancelOnTailsElseProgram") {
@@ -2683,6 +2731,18 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
       // an out-of-range head instead of being the total function this chain is.
       const [onOneHead, onTwoHeads, onAllThree] = coinFlip.ladder;
       coinBonus = heads === 0 ? 0 : heads === 1 ? onOneHead : heads === 2 ? onTwoHeads : onAllThree;
+    } else if (coinFlip.kind === "opponentPerTails") {
+      // 🆕🆕🆕 D550 — THE PER-TAILS FOLD, IN ITS OWN BRANCH, AND `tsc` DOES NOT FORCE IT. The
+      // member carries a `per`, so deleting this branch still compiles and the member rides
+      // the `else` below as `heads × per` — the OPPOSITE face, a plausible-looking wrong
+      // number on every board where heads ≠ tails (`D550-fold-rides-the-else` pins it). The
+      // count is over the PRINTED face, "tails", across `faces` — D476's rule, never
+      // `faces.length - heads`, which would make the face a flag on a heads-shaped count.
+      // Zero tails folds 0, and the `scaledBase + scaledTotal > 0` gate below then files no
+      // `DAMAGE_DEALT` at all, the same ending a zero-heads `perHeads` takes (D550 R5).
+      let tails = 0;
+      for (const drawn of faces) if (drawn === "tails") tails += 1;
+      coinBonus = tails * coinFlip.per;
     } else {
       coinBonus = heads * coinFlip.per;
     }

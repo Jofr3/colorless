@@ -283,6 +283,21 @@ describe("the tails gate — derived, not authored", () => {
     // FIVE, four of them unmapped by any reader; the bare tails-gated family is
     // CLOSED at 3 sentences / 8 printings, so this list can only shrink again
     // once a MECHANISM arrives (an `otherwise`, or an opponent-side durated flip).
+    // 🆕🆕🆕 **D550 — "four of them unmapped by any reader" IS WITHDRAWN (D539), annotated in
+    // place (D178); it was already stale before this slice.** MEASURED at D550 with
+    // `resolvedByAnyReader` over the five strings below: THREE resolve and TWO do not. The
+    // three are the `cancelOnTails` row (mapped since D126 — the one the original count
+    // already excluded), the "If tails, this attack does nothing. If heads, … prevent …" row
+    // (`deriveAttackCoinFlip`'s `cancelOnTailsElseProgram`, D499 — which took the count to
+    // three without touching this line), and `:669` (`opponentPerTails` +
+    // `deriveAttackDamageSuppression`, D550 — which takes it to two). The two still
+    // unmapped by ANY reader are the Squawkabilly "140 more damage / can't attack" row and
+    // the search-or-discard row, and NEITHER is a line of `censusAttackCorpus.ts` (MEASURED:
+    // all 20 corpus lines carrying "tails" resolve at D550), which is why the `:669` row's
+    // note below can call the LIVE-unmapped tails set empty while these two stay unmapped.
+    // The list stays FIVE long and the assertion is unchanged,
+    // because it pins `deriveAttackEffect` BY OWNER (D438), and that reader is null on all
+    // five.
     for (const text of [
       // ALREADY SIMULATED, by a DIFFERENT reader: `deriveAttackCoinFlip`'s
       // `cancelOnTails` (D126, 11 printings), which runs in FRONT of the §8.5
@@ -302,6 +317,14 @@ describe("the tails gate — derived, not authored", () => {
       // §8 step-3 seam — still "not a `coinFlipGate`"). The row now names the corpus's
       // other LIVE unmapped tails witness with the SAME OWNER — the OPPONENT flips —
       // `censusAttackCorpus.ts:669` (1 legal printing, PHRASE-24, null on every reader):
+      // 🆕🆕🆕 **D550 — `:669` IS BUILT; THE ROW IS KEPT, BY OWNER (D438), AND ANNOTATED IN PLACE
+      // (D178).** Its owners are now `deriveAttackCoinFlip` (`opponentPerTails` over
+      // `opponentBench`) + `deriveAttackDamageSuppression` (its third compound arm), so "null on
+      // every reader" is WITHDRAWN (D539) — but `deriveAttackEffect` is still null on it, and
+      // THAT is the claim this rung asserts, so it stays green and stays: a tails consequent
+      // taken by the OPPONENT is still not a `coinFlipGate`. ⚠️ The live-unmapped tails witness
+      // set is now EMPTY (MEASURED at D550: `:669` was its only member), so there is no row left
+      // to re-point this one at.
       "Your opponent flips a coin for each of their Benched Pokémon. This attack does 80 damage to your opponent's Active Pokémon for each tails. This attack's damage isn't affected by Weakness or Resistance.",
       // TWO consequents on ONE flip — an `otherwise` this op deliberately does not
       // have (D142's Squawkabilly refusal, verbatim). Note the field brings none

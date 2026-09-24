@@ -334,8 +334,24 @@ describe("§1 — one sentence, one printing, and the FACE axis enumerated", () 
     // opponent-side BODY flip count, and a composing W/R suppression tail. **The day the
     // column prints a per-tails DAMAGE fold whose other axes this family already reads,
     // the field is owed on the fold members too** — and today it is owed on neither.
-    expect(resolvedByAnyReader(fold[0]?.[1] ?? "")).toBe(false);
-    expect(deriveAttackCoinFlip(fold[0]?.[1] ?? "")).toBeNull();
+    // 🆕🆕🆕 **D550 — LINE 669 IS BUILT, AND THE FALSIFIER ABOVE DID NOT TRIP; ANNOTATED IN
+    // PLACE (D178), NOT REWRITTEN.** *"it is unbuilt because it needs THREE further
+    // mechanisms"* is WITHDRAWN (D539): all three were paid — the opponent-taken flip (every
+    // coin row is now filed under the FLIPPER, `attack.ts`, D550 R1), the opponent-side body
+    // count (`AttackFlipCount.opponentBench`) and the composing W/R tail
+    // (`deriveAttackDamageSuppression`'s third compound arm). The condition is still the one
+    // written: this fold's FLIPPER axis is NEW to the family (every other member's coin is the
+    // attacker's), so it is NOT *"a per-tails DAMAGE fold whose other axes this family already
+    // reads"*, and the face field is STILL owed on neither — the row is a NINTH member,
+    // `opponentPerTails`, which spells the one printed (flipper × face) combination rather than
+    // a `face` field that would admit the two crossings no card prints (D451). The inverted
+    // rung names the owner by VALUE (D438), not as a bare `true`.
+    expect(resolvedByAnyReader(fold[0]?.[1] ?? "")).toBe(true);
+    expect(deriveAttackCoinFlip(fold[0]?.[1] ?? "")).toEqual({
+      kind: "opponentPerTails",
+      flips: { kind: "opponentBench" },
+      per: 80,
+    });
   });
 });
 
@@ -803,10 +819,10 @@ describe("§7 — purity and the structural answers", () => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("§8 — the version", () => {
-  it("engineVersion is 0.434.0 and the bump is owed for BEHAVIOUR", () => {
+  it("engineVersion is 0.435.0 and the bump is owed for BEHAVIOUR", () => {
     // A sentence that fell to the loud `ATTACK_EFFECT_SKIPPED` path now flips three coins
     // and queues one park per tails, and a shipped union member gained a REQUIRED field —
     // so `packages/engine` behaviour moved and the minor is owed (D275).
-    expect(engineVersion).toBe("0.434.0");
+    expect(engineVersion).toBe("0.435.0");
   });
 });

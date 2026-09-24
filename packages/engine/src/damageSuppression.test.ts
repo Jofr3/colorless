@@ -113,6 +113,11 @@ import {
 // compound and simulate a card whose leading clause the engine cannot read at all;
 // four of the five are blocked on that leading clause independently. Their
 // refusal is asserted below, verbatim.
+// 🆕🆕🆕 **D550 — NONE OF THE FIVE IS DEFERRED ANY MORE (annotated in place, D178).** The
+// coin row (the fourth above) is BUILT by a whole-sentence anchor read by
+// `deriveAttackCoinFlip` and by `deriveAttackDamageSuppression`'s THIRD compound arm — not
+// by a sentence-splitting seam and not by loosening `DAMAGE_SUPPRESSION`, which is
+// byte-unchanged and still refuses all five compounds whole. "Deferred" above is history.
 //
 // ⚠️ **NOT `damageChosen.ignoreWR`, AND ITS WRITER AND READERS WERE VERIFIED BEFORE
 // THE CONCLUSION.** That field has ONE writer (`CHOSEN_ANY_TARGET`'s optional
@@ -176,6 +181,11 @@ const DEFERRED_RIDERS = [
   "This attack does 10 damage for each damage counter on all of your Benched Cynthia's Pokémon. This attack's damage isn't affected by Weakness.",
   // STILL DEFERRED, and its blocker is also its LEADING half — here a TWO-clause head
   // (a per-Bench coin count and a per-tails snipe) that no reader claims.
+  // 🆕🆕🆕 **D550 — BUILT, AND NOT BY THIS READER'S PATTERN EITHER; the two lines above are
+  // history (D178).** "STILL DEFERRED" is WITHDRAWN (D539). The head STILL refuses on its own;
+  // the row is claimed WHOLE by one anchor, read by `deriveAttackCoinFlip` for the flip and the
+  // fold and by `deriveAttackDamageSuppression`'s THIRD compound arm for the §8.5 step.
+  // `DAMAGE_SUPPRESSION` is byte-unchanged, which is why this row stays in the list.
   "Your opponent flips a coin for each of their Benched Pokémon. This attack does 80 damage to your opponent's Active Pokémon for each tails. This attack's damage isn't affected by Weakness or Resistance.",
 ] as const;
 /** The ZERO-LEGAL rider `FIXTURE_POOL` already carries (Pachirisu sv01-068/-208
@@ -405,7 +415,9 @@ describe("deriveAttackDamageSuppression — four sentences, three booleans", () 
     // says so.
     // (a) THE PATTERN ITSELF still refuses three of the four whole — every rider whose
     // build did not come from this reader — and the POOL rider besides.
-    for (const rider of [DEFERRED_RIDERS[0], DEFERRED_RIDERS[3], POOL_RIDER]) {
+    // 🆕🆕🆕 **D550 — [3] LEFT THIS LOOP, BECAUSE THE READER (not the pattern) NOW CLAIMS IT;
+    // it is pinned by value and by owner below (D438).**
+    for (const rider of [DEFERRED_RIDERS[0], POOL_RIDER]) {
       expect(deriveAttackDamageSuppression(rider), rider).toBeNull();
     }
     // …and the two that are BUILT are built by something else, asserted by NAME so a
@@ -442,11 +454,30 @@ describe("deriveAttackDamageSuppression — four sentences, three booleans", () 
       const read = (effectsModule as unknown as Record<string, (t: string) => unknown>)[name];
       expect(read?.(DEFERRED_RIDERS[1]) ?? null, name).toBeNull();
     }
-    // …and the two that are NOT built are still refused by every one of the thirteen,
-    // which is the half that would go quiet if a later slice widened something.
-    for (const rider of [DEFERRED_RIDERS[3]]) {
-      expect(resolvedByAnyReader(rider), rider).toBe(false);
+    // 🆕🆕🆕 **D550 — RIDER [3] IS BUILT, AND NOT BY THIS PATTERN.** ONE whole-sentence anchor,
+    // `ATTACK_OPPONENT_BENCH_TAILS`, read by `deriveAttackCoinFlip` for the opponent-flipped
+    // per-tails fold and by `deriveAttackDamageSuppression`'s THIRD compound arm (gated on the
+    // coin reader, D445) for the §8.5 step. NAMED BY VALUE AND BY OWNER, with the other eleven
+    // refusals kept (D438): a `.not.toBeNull()` would be true under a mistaken widening of
+    // `DAMAGE_SUPPRESSION` too.
+    expect(deriveAttackDamageSuppression(DEFERRED_RIDERS[3])).toEqual({ weakness: true, resistance: true });
+    expect(deriveAttackCoinFlip(DEFERRED_RIDERS[3])).toEqual({
+      kind: "opponentPerTails",
+      flips: { kind: "opponentBench" },
+      per: 80,
+    });
+    for (const name of attackReaderSurface()) {
+      if (name === "deriveAttackCoinFlip" || name === "deriveAttackDamageSuppression") continue;
+      const read = (effectsModule as unknown as Record<string, (t: string) => unknown>)[name];
+      expect(read?.(DEFERRED_RIDERS[3]) ?? null, name).toBeNull();
     }
+    // …and the not-built set. 🛑 **RE-POINTED (D438), NOT DELETED: THIS LOOP HAD ONE MEMBER
+    // WHILE ITS PROSE SAID "the two that are NOT built" — a miscount carried since D494 — and
+    // D550 BUILT that one.** The claim that survives is that the set is EMPTY, asserted
+    // explicitly, so a future rider that lands unbuilt has to be ADDED here rather than
+    // silently passing an empty loop.
+    const notBuilt = DEFERRED_RIDERS.filter((rider) => !resolvedByAnyReader(rider));
+    expect(notBuilt).toEqual([]);
   });
 
   it("is DISJOINT from all TWELVE sibling readers on all four sentences", () => {

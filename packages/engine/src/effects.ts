@@ -21187,6 +21187,31 @@ const ATTACK_COIN_ENERGY_PRINTED =
 const ATTACK_COIN_ENERGY_UNTIL_TAILS =
   /^Flip a coin until you get tails\. For each heads, discard an Energy from your opponent['’]s Active Pokémon\.$/;
 
+// 🆕🆕🆕 D550 — THE OPPONENT-FLIPPED PER-TAILS SNIPE ON THE OPPONENT'S BENCH COUNT,
+// corpus FILE LINE 669 (1 legal printing): "Your opponent flips a coin for each of their
+// Benched Pokémon. This attack does 80 damage to your opponent's Active Pokémon for each
+// tails. This attack's damage isn't affected by Weakness or Resistance." ONE whole-sentence
+// anchor read by TWO readers off the SAME `effect` string — the FOURTH use of D493's
+// one-anchor-two-readers route (D493, D494, D539, D550), and the column's FIFTH
+// dual-claimed sentence (`opponentHandScaling.test.ts` §2 pins all five by name):
+//   · `deriveAttackCoinFlip` — the flip and the fold: `opponentPerTails` over the NULLARY
+//     `AttackFlipCount.opponentBench`, `per` the captured amount;
+//   · `deriveAttackDamageSuppression` — the §8.5 step, `{ weakness: true, resistance: true }`,
+//     GATED on the coin reader (D445: a bare `.test()` beside an `.exec()` on one regex is
+//     the tell), so a printed 0 refuses in BOTH readers rather than in one.
+// ⚠️ **THE WHOLE THREE-SENTENCE PRINT IS THE ANCHOR, NOT ITS HEAD.** A head-only anchor plus
+// a trailing-clause split would need `splitAttackTrailingClause` to take a suppression tail,
+// which D493 priced at 0 sentences freed on its own; the whole-sentence anchor frees this row
+// for less, as it did for `:529` and `:337`. Disjoint from every anchor in this family by its
+// leading "Your opponent flips" (every other one opens "Flip"), so the order among them is
+// free. `['’]` on all three apostrophe slots ("opponent's", "attack's", "isn't") for the
+// family's standing reason (D136/D137), `^…$`, and no /i. The amount is CAPTURED (D413) and
+// guarded `>= 1` at the arm, the family's `per` guard. The REAL card is UNMEASURED: no id on
+// this checkout resolves to the sentence (`registry.ts`, `catalogManifest.ts`,
+// `testFixtures.ts`), so its printed damage marker is read as "80×" by ruling (D550 R3).
+const ATTACK_OPPONENT_BENCH_TAILS =
+  /^Your opponent flips a coin for each of their Benched Pokémon\. This attack does (\d+) damage to your opponent['’]s Active Pokémon for each tails\. This attack['’]s damage isn['’]t affected by Weakness or Resistance\.$/;
+
 // 🆕🆕 D476 — THE FACE AXIS, AND THE LAST OPEN AXIS OF THE PRINTED
 // `For each ⟨face⟩, ⟨op⟩` FAMILY. "Flip 3 coins. For each tails, discard an Energy
 // from this Pokémon." — corpus FILE LINE 217, **1 sentence / 1 Standard-legal
@@ -21201,6 +21226,12 @@ const ATTACK_COIN_ENERGY_UNTIL_TAILS =
 //   · /for each tails/ anywhere — **1 / 1**, and it is a DIFFERENT row (line 669),
 //     a per-tails DAMAGE FOLD. See `AttackCoinFlip`'s block for why that one is not
 //     owed this field and what would make it owed.
+//     🆕🆕🆕 D550 — LINE 669 IS BUILT, and still NOT through this member's `face` field:
+//     it is the NINTH `AttackCoinFlip` member, `opponentPerTails`, whose flipper axis
+//     (the OPPONENT flips) is new to the family, so D446's falsifier — which named a
+//     fold whose OTHER axes the family already reads — did not trip (see that
+//     member's block and `perTailsSelfDiscard.test.ts` §1). The measurement above is
+//     unchanged: /for each tails/ is still that one row.
 //
 // 🛑 THREE GENERALISATIONS WERE MEASURED BEFORE THE NARROW ANCHOR WAS WRITTEN
 // (D472: a wider anchor that claims the same rows is pure risk), and all three are
@@ -21337,8 +21368,8 @@ const ATTACK_COIN_BONUS_LADDER =
 const MAX_PRINTED_FLIPS = 10;
 
 /** HOW MANY times an attack's printed sentence calls for the coin to be flipped
-    (D128). 🆕🆕 **FIVE members as of D475**, because the pool prints the count five
-    ways and only one of them is a number the deriver can read:
+    (D128). 🆕🆕 **FIVE members as of D475** (🆕🆕🆕 **SIX as of D550**, `opponentBench`), because the pool prints the count five
+    ways (🆕🆕🆕 D550: SIX ways — the sixth is the opponent's Benched count) and only one of them is a number the deriver can read:
       • `printed` — the literal N of "Flip N coins." (D127), known at derivation.
       • `attachedEnergy` — "for each [{X}] Energy attached to this Pokémon", a
         BOARD fact resolved at the flip site. `energy` is the printed type filter,
@@ -21392,6 +21423,25 @@ const MAX_PRINTED_FLIPS = 10;
         prints an opponent-side body flip count whose OTHER axes this family already
         reads.** D474's measurement — that the column spells THIS count once,
         own-side, as *"you have in play"* — is still exactly true.
+
+        🆕🆕🆕 **D550 — LINE 669 IS BUILT, AND THE FIELD IS STILL NOT OWED.** The
+        paragraph above is true as a measurement at D475's head and is kept as the
+        record (D178). Two of its three mechanisms were paid by a NEW MEMBER each
+        (`opponentBench` below, and `AttackCoinFlip.opponentPerTails`, which files its
+        coin rows under the flipping seat — `attack.ts`'s emit no longer uses
+        `action.seat` for every row), and the third by `deriveAttackDamageSuppression`'s
+        third compound arm. `pokemonInPlay` still has ONE inhabitant per seat — the
+        own side, Active + Bench — so no `seat` field is owed on it: line 669 counts the
+        OPPONENT's BENCH only, which is a different population, not the same one on the
+        other side (D441/D474).
+      • 🆕🆕🆕 `opponentBench` (D550) — "for each of their Benched Pokémon", said by
+        the OPPONENT of their own Bench: every body on the defending seat's Bench, the
+        Active NOT counted, resolved at the flip site through `attack.ts`'s shipped
+        `benchBodies` with no filter. NULLARY by D440's rule — the print carries no
+        noun narrowing and names its side by its subject — and a MEMBER rather than a
+        `seat` on `pokemonInPlay`, because that member counts Active + Bench and
+        D441/D474 give it exactly one inhabitant per seat; crossing its seat would
+        count the opponent's Active too, one flip too many on every board.
       • 🆕🆕 `bothActivesEnergy` (D475) — "for each Energy attached to both Active
         Pokémon", the LAST board fact the column counts coins by and the only one
         BOTH SEATS contribute to: the Energy CARDS on the attacker's Active plus the
@@ -21459,6 +21509,8 @@ export type AttackFlipCount =
     }
   | { kind: "pokemonInPlay"; filter: CardFilter }
   | { kind: "bothActivesEnergy" }
+  // 🆕🆕🆕 D550 — the OPPONENT's Benched bodies (see the list above). NULLARY.
+  | { kind: "opponentBench" }
   | { kind: "untilTails" };
 
 /** 🆕🆕 **D460 — A PREDICATE OVER THE FACES, PARAMETERISED IN BOTH OF ITS AXES.**
@@ -21667,6 +21719,33 @@ export type AttackCoinFlip =
   // fold, so `MATCH_RECORD_VERSION` holds (driven in the suite by a byte-equal JSON
   // round-trip of the post-attack board).
   | { kind: "bonusLadder"; flips: AttackFlipCount; ladder: readonly [number, number, number] }
+  // 🆕🆕🆕 D550 — THE OPPONENT-FLIPPED PER-TAILS FOLD, corpus FILE LINE 669 (*"Your opponent
+  // flips a coin for each of their Benched Pokémon. This attack does 80 damage to your
+  // opponent's Active Pokémon for each tails. This attack's damage isn't affected by Weakness
+  // or Resistance."*, 1 legal printing). The NINTH member: `flips` flips, TAKEN BY THE
+  // OPPONENT, and the damage is `per` × the number of TAILS with the printed base DROPPED
+  // (read as a "D×" print by ruling, D550 R3 — the real card is UNMEASURED). `flips` is
+  // always `{ kind: "opponentBench" }` on the one printing; it is typed `AttackFlipCount`
+  // because count and consequent are independent axes (D128's block above), and
+  // `printedFlips` reads it like the six count-carrying members around it.
+  //
+  // 🛑 **A MEMBER AND NOT A `face` FIELD ON `perHeads`, AND THAT DOES NOT TRIP D446's
+  // FALSIFIER.** `perTailsSelfDiscard.test.ts` §1 names the condition under which a face
+  // field is owed on the FOLD members: *"a per-tails DAMAGE fold whose other axes this family
+  // already reads"*. This fold's FLIPPER axis is NEW — every other member's coin is taken by
+  // the attacker — so the condition is not met, and the column still prints the face and the
+  // flipper CO-VARYING (the one per-tails fold is opponent-flipped; an attacker-flipped
+  // per-tails fold and an opponent-flipped per-heads fold are printed by ZERO rows). A `face`
+  // field on `perHeads` plus a flipper field would admit the two crossings nobody prints and
+  // author cards (D451's co-variance rule, the one D476's block applies to the face and the
+  // victim); one member spells the one printed combination. The fold counts the PRINTED face
+  // over the faces array (D476: never `faces.length - heads`) in its OWN branch of
+  // `attack.ts`'s chain, and a mutant pins that branch because `tsc` cannot: the member
+  // carries a `per`, so deleting the branch compiles and rides the `heads × per` `else`.
+  // Never serialized — derived from text at the attack site and spent into a NUMBER at the
+  // fold — so `MATCH_RECORD_VERSION` holds (a byte-equal JSON round-trip in
+  // `opponentBenchTailsSnipe.test.ts`).
+  | { kind: "opponentPerTails"; flips: AttackFlipCount; per: number }
   | {
       kind: "perHeadsThenThreshold";
       flips: AttackFlipCount;
@@ -21676,13 +21755,19 @@ export type AttackCoinFlip =
     };
 
 /** The coin flip an attack's printed text calls for, or null when the text is not
-    one of the eight recognised whole sentences (D526) — null keeps the attack on the loud
+    one of the nine recognised whole sentences (D526, D550) — null keeps the attack on the loud
     ATTACK_EFFECT_SKIPPED path, never on a silent unflipped resolution.
 
     Pure in its string, like its three sibling derivers, and disjoint from all of
     them by the leading "Flip a coin." sentence (which denies the leading-`If`
     families their `^` anchor) and by the consequent (which keeps the Paralysis
-    flip on `deriveAttackEffect`'s `coinFlipGate` path and off this one). */
+    flip on `deriveAttackEffect`'s `coinFlipGate` path and off this one).
+
+    🆕🆕🆕 D550 — ONE arm opens "Your opponent flips" rather than "Flip", and it is
+    NOT disjoint from every sibling: `deriveAttackDamageSuppression` claims the same
+    whole sentence for its §8.5 step, deliberately and gated on THIS reader (the
+    FIFTH dual claim, `opponentHandScaling.test.ts` §2, and the FOURTH use of D493's
+    one-anchor-two-readers route). */
 export function deriveAttackCoinFlip(text: string): AttackCoinFlip | null {
   const effect = text.trim();
   const bonus = ATTACK_COIN_BONUS.exec(effect);
@@ -22014,6 +22099,17 @@ export function deriveAttackCoinFlip(text: string): AttackCoinFlip | null {
       ops: [{ op: "discardEnergy", from: "opponentActive", filter: { kind: "anyEnergy" } }],
       face: "heads",
     };
+  }
+  // 🆕🆕🆕 D550 — the OPPONENT-flipped per-tails fold over the opponent's Bench count. The
+  // same `per >= 1` guard every damage arm of this family carries: a printed 0 would spend
+  // the opponent's flips (and rngState steps) to add nothing. No flip ceiling, D128's rule —
+  // the count is read off the board at the flip site, and a Bench is bounded by its five
+  // slots. `deriveAttackDamageSuppression`'s third compound arm is GATED on this return, so
+  // the guard refuses the §8.5 half too.
+  const opponentBenchTails = ATTACK_OPPONENT_BENCH_TAILS.exec(effect);
+  if (opponentBenchTails !== null) {
+    const per = Number(opponentBenchTails[1]);
+    return per >= 1 ? { kind: "opponentPerTails", flips: { kind: "opponentBench" }, per } : null;
   }
   // 🆕🆕 D476 — THE FACE AXIS, corpus FILE LINE 217. The flip guards are the
   // family's, verbatim and for the family's reasons: `flips >= 2` because the regex's
@@ -33650,7 +33746,12 @@ export interface AttackDamageSuppression {
     lowercased "this", a missing trailing period, and ANY leading or trailing text
     — the +5 legal rider-on-compound printings stay on the loud
     ATTACK_EFFECT_SKIPPED path, exactly as every other fully-anchored deriver in
-    this file leaves them. */
+    this file leaves them.
+    🆕🆕🆕 D550 — the pattern STILL refuses all five whole (byte-unchanged), but none of
+    the five is on the loud path any more: each is built by another route (a split,
+    D363; or a whole-sentence anchor read by two readers, D493/D494 and D550's coin
+    row, whose §8.5 half is `deriveAttackDamageSuppression`'s compound arms in the
+    function below, ahead of this pattern's `exec`, never this pattern). */
 const DAMAGE_SUPPRESSION = new RegExp(
   `^This attack['’]s damage isn['’]t affected by ` +
     `(?:(Weakness or Resistance, or by any effects on your opponent['’]s Active Pokémon)` +
@@ -33670,6 +33771,24 @@ const DAMAGE_SUPPRESSION = new RegExp(
     never after damage — and attack.ts owns the read site. */
 export function deriveAttackDamageSuppression(text: string): AttackDamageSuppression | null {
   const trimmed = text.trim();
+  // 🆕🆕🆕 D550 — THE THIRD COMPOUND ARM, D493/D494's SHAPE WITH THE GATE POINTED AT THE COIN
+  // READER. `censusAttackCorpus.ts` file line 669 prints an OPPONENT-flipped per-tails fold
+  // AND this suppression (Weakness AND Resistance) in one effect text; the fold lands at the
+  // flip site in front of §8.5 and the suppression inside it, so the sentence needs two
+  // readers, and `attack.ts` already hands the identical `effect` string to both.
+  // 🛑 **THE GATE IS `deriveAttackCoinFlip`, NOT A SECOND COPY OF ITS GUARD** — the anchor's
+  // amount is a `(\d+)` capture and the coin arm refuses a printed 0 (`per >= 1`). A bare
+  // `.test()` here would claim *"… does 0 damage … for each tails. …"* WHOLE —
+  // `resolvedByAnyReader` TRUE, `BUILT.attack` stepped, and `ATTACK_EFFECT_SKIPPED` never
+  // fired for a sentence whose fold nothing reads (D445). No cycle: the coin reader never
+  // consults this one. ⚠️ **AHEAD OF D494's ARM, AND THE ORDER IS LEGIBILITY**: the three
+  // anchors open `^Your opponent `, `^If ` and `^This attack does `, structurally disjoint.
+  // ⚠️ `DAMAGE_SUPPRESSION` below stays BYTE-UNCHANGED and still refuses this compound whole
+  // (`damageSuppression.test.ts`); only W/R is suppressed — the defender's own effects, D547's
+  // vulnerability among them, still apply (D550 R4).
+  if (ATTACK_OPPONENT_BENCH_TAILS.test(trimmed) && deriveAttackCoinFlip(trimmed) !== null) {
+    return { weakness: true, resistance: true };
+  }
   // 🆕🆕🆕 D494 — THE SECOND COMPOUND ARM, AND IT IS D493's SHAPE WITH THE
   // GATE POINTED AT A DIFFERENT READER. `censusAttackCorpus.ts` file line 337 prints a
   // CONDITIONAL `+N` bonus AND this suppression in one attack's effect text; the two

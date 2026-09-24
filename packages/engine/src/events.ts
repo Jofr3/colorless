@@ -1011,7 +1011,12 @@ export type GameEvent =
       was printed — the half a log-only implementation gets wrong. */
   | { type: "HEALED"; seat: Seat; uid: string; amount: number }
   /** An attack effect's own "Flip a coin. If heads, …" gate (effects.ts):
-      heads runs the gated steps, tails skips them. `seat` is the attacker. */
+      heads runs the gated steps, tails skips them. `seat` is the seat that
+      flipped: the attacker, except that `opponentPerTails` files under the
+      opponent (D550). ~~`seat` is the attacker.~~ — withdrawn at D550 (D539):
+      *"Your opponent flips a coin for each of their Benched Pokémon."* is
+      flipped by the defending seat, and its rows say so, after D547's
+      `ATTACK_FLIP_LOCK_CHECK` precedent above. */
   | { type: "ATTACK_EFFECT_COIN_FLIP"; seat: Seat; result: CoinFace }
   /** §8.1 — `seat`'s `uid` was Knocked Out: the whole stack (evolution
       cards, energy, tools) left play for `seat`'s discard; `discarded` lists

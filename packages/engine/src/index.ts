@@ -20114,6 +20114,45 @@ import type { GameState, Seat } from "./types";
     `expect(manifest.version)`, `it(…)` titles, the declaration and `package.json` —
     **not** as a value-keyed grep — because a value-keyed grep is precisely the mechanism
     that ate D500's heading.)
+    🆕🆕🆕 engineVersion 0.434.0 → **0.435.0** (D550 — THE OPPONENT-FLIPPED PER-TAILS SNIPE ON
+    THE OPPONENT'S BENCH COUNT, WITH WEAKNESS AND RESISTANCE SUPPRESSED. `censusAttackCorpus.ts`
+    **file line 669** (leading count column `1`) — *"Your opponent flips a coin for each of their
+    Benched Pokémon. This attack does 80 damage to your opponent's Active Pokémon for each
+    tails. This attack's damage isn't affected by Weakness or Resistance."* — **1 sentence / 1
+    legal printing**, claimed WHOLE by TWO readers off ONE new anchor
+    `ATTACK_OPPONENT_BENCH_TAILS` (the FOURTH use of D493's one-anchor-two-readers route —
+    D493, D494, D539, D550 — and the column's FIFTH dual-claimed sentence):
+    `deriveAttackCoinFlip` → a NINTH `AttackCoinFlip` member `opponentPerTails { flips, per }`
+    over a SIXTH, NULLARY `AttackFlipCount` member `opponentBench` (`per >= 1` guarded), and
+    `deriveAttackDamageSuppression`'s THIRD compound arm → `{ weakness: true, resistance: true }`,
+    GATED on the coin reader (D445). `attack.ts`: `takeFlips` counts `benchBodies` on
+    `otherSeat(attackerSeat)` (TS2454 forced the case), `printedFlips` carries the member (TS2366),
+    `scaledBase` drops the printed base, EVERY coin row is filed under the FLIPPER (the opponent,
+    for this member only), and a DEDICATED fold branch counts the printed face "tails" over the
+    faces (D476) — the one edit `tsc` does not force (the member's `per` fits the `heads × per`
+    `else`), pinned by `D550-fold-rides-the-else`. `coinExplainsModifier` is a NEGATIVE list and
+    takes no edit. No catalog, registry or fixture id carries the sentence (MEASURED, D425): the
+    new suite `opponentBenchTailsSnipe.test.ts` rides a file-local declared `d550-*`
+    demonstrator ("80×") in its own 60-card deck (D270); the real card is UNMEASURED.
+    Rulings R1–R5 in `docs/decisions.md` D550, each with its reversal condition: R1 the coin rows'
+    seat is the FLIPPER (D547's `ATTACK_FLIP_LOCK_CHECK` precedent; `events.ts` and `log.ts`
+    *"`seat` is the attacker / actor"* WITHDRAWN and amended); R2 the count is read at the flip
+    site, after the §8 checks, and cannot differ from a declaration-time count; R3 the marker is
+    read "80×", base dropped; R4 ONLY W/R is suppressed (D547's vulnerability still lands);
+    R5 zero Benched = zero flips and no rng step, all heads = no `DAMAGE_DEALT`.
+    `MATCH_RECORD_VERSION` STAYS 33 — the member is derived at the attack site and spent into a
+    NUMBER at the fold, never serialized (a byte-equal round-trip is driven). Claims withdrawn
+    (D539), swept by the CLAIM, engine source first, annotated in place (D178): the D475/D476
+    falsifier blocks in `effects.ts` (line 669 "unread", "owed on neither" still TRUE and said
+    so), `attack.ts`' "THE ONE STILL DEFERRED IS THE COIN ROW", `events.ts`/`log.ts`' coin-row
+    seat, the `:669` history lines of this changelog, `perTailsSelfDiscard.test.ts` §1,
+    `damageSuppression.test.ts`' STILL DEFERRED riders, and the two re-pointed `:669` witnesses in
+    `tailsGatedOp.test.ts` / `tailsSelfCost.test.ts` (kept, by owner — the live unmapped tails
+    witness set is now EMPTY). Census (`SUBMAX=12`): reader 577/1631 → 578/1632, residue 33/45 →
+    32/44, raw residue 63/101 → 62/100, `BUILT.attack` 1687 → 1688, PHRASE-24 1/1 → 0/0; registry,
+    gate, trailing and OPAQUE UNMOVED. Default cap: PHRASE-24 1/1 → 0/0, targets 607 → 608, OPAQUE,
+    UNEXPLAINED, CONTINUOUS and PRIZE-ZONE UNMOVED. THE SENTENCE STEP (1) AND THE PRINTING STEP (1)
+    AGREE — every site was measured anyway. Mutants 3,095 → 3,114, all nineteen `D550-*` KILLED.)
     🆕🆕🆕 engineVersion 0.433.0 → **0.434.0** (D549 — THE DEFENDER'S NEXT-TURN MARKS AND THE
     SIDE-WIDE ATTACK LOCK: THREE NEW OPS, TWO REQUIRED `InPlayPokemon` FIELDS, ONE REQUIRED
     `PlayerSide` FIELD, A `checkup` FLAG THREADED THROUGH THE KNOCK OUT SWEEP, AND
@@ -20295,7 +20334,8 @@ import type { GameState, Seat } from "./types";
     DIFFER, and `compoundCompose`'s multi-clause claimed-whole rung moves +1 (only `:176` is
     two sentences). Claims withdrawn (D539): *"not a `coinFlipGate`"* ANNOTATED, still true;
     the two null refusals of `:176` RE-POINTED to `:669`; `devolveEach`'s TWELVE bars →
-    FOURTEEN.)
+    FOURTEEN. 🆕🆕🆕 D550 — history now: `:669` is BUILT, and both re-pointed rungs are KEPT
+    and annotated in place — their `deriveAttackEffect` refusal stands by owner, D438.)
     🆕🆕🆕 engineVersion 0.430.0 → **0.431.0** (D546 — THE ALL-ATTACKS NEXT-TURN BUFF, A NULL
     ADDRESS ON THE OP AND THE RECORD THAT ALREADY OWNED THE WINDOW, AND A FOLD AT THE ONE
     SNIPE SITE THAT HONOURS THE ACTIVE'S PRE-W/R BONUS. `censusAttackCorpus.ts` **file lines
@@ -20436,7 +20476,9 @@ import type { GameState, Seat } from "./types";
     the stale corpus `:176` quote *"tries to attack"* / 4 respelled to the corpus bytes at
     its six carriers, so two refusal rungs now refuse a string the corpus prints — 🆕🆕🆕 D547:
     that string is now BUILT (`flipLockAttack`), so both rungs were RE-POINTED (D438) to the
-    corpus's other live unmapped tails witness with the same owner, `:669`.)
+    corpus's other live unmapped tails witness with the same owner, `:669`. 🆕🆕🆕 D550 —
+    history now: `:669` is BUILT (`deriveAttackCoinFlip` + `deriveAttackDamageSuppression`),
+    the live unmapped tails witness set is EMPTY, and both rungs stand by owner, D438.)
     🆕🆕🆕 engineVersion 0.427.0 → **0.428.0** (D543 — THE CHOSEN POKÉMON TOOL DISCARD AT
     THE PROGRAM TAIL, THE `upTo` SCOPE THAT NEVER HAD A WIRE SPELLING, AND THE EVENT THAT HAD
     TO SAY *WHEN* IT FIRED. `censusAttackCorpus.ts` **file line 136** (leading count column
@@ -24003,7 +24045,7 @@ import type { GameState, Seat } from "./types";
     WITNESS** — the count was re-derived every slice and the word *"three"* was carried.
     A successor of this slice inherits **81 / 61 / 17** again, over **FIVE** history
     occurrences: those four plus `deckMillFilteredScale.test.ts`'s own header arrow.) */
-export const engineVersion = "0.434.0";
+export const engineVersion = "0.435.0";
 
 export type {
   ApplyResult,

@@ -431,16 +431,27 @@ describe("§2 — two anchors, one noun map, and the first two-reader sentence",
     // the third instance of D493's one-anchor-two-readers route. The list is sorted, so
     // it lands second. The rung's stated blindness to CORRECTNESS is unchanged and is
     // covered behaviourally in `namedBodiesSpread.test.ts` §3 and §4.
+    // 🆕🆕🆕 **D550 — THE FIFTH MEMBER, AND IT ARRIVED ON PURPOSE TOO.** `censusAttackCorpus.ts`
+    // FILE LINE 669 — the OPPONENT-flipped per-tails snipe on the opponent's Bench count — is
+    // `deriveAttackCoinFlip` (the flip and the per-tails fold, at the flip site in front of
+    // §8.5) plus `deriveAttackDamageSuppression` (the W/R step inside §8.5, its THIRD compound
+    // arm, gated on the coin reader): the FOURTH instance of D493's one-anchor-two-readers
+    // route, and the first whose fold owner is the COIN reader. Two seams, two readers, one
+    // string the caller already broadcasts — the sentence above, again. Sorted by sentence, so
+    // it lands fourth, before the reveal row ("Your opponent f…" < "Your opponent r…"). The
+    // rung's blindness to CORRECTNESS is unchanged and is covered behaviourally in
+    // `opponentBenchTailsSnipe.test.ts` §2 and §3.
     expect(dual.map(([, s]) => s)).toEqual([
       "If you have 3 or more Energy in play, this attack does 70 more damage. This attack's damage isn't affected by Weakness.",
       "This attack does 10 damage for each damage counter on all of your Benched Cynthia's Pokémon. This attack's damage isn't affected by Weakness.",
       "This attack does 50 damage for each of your Drifloon and Drifblim in play. This attack also does 30 damage to each of your Drifloon and Drifblim. (Don't apply Weakness and Resistance for Benched Pokémon.)",
+      "Your opponent flips a coin for each of their Benched Pokémon. This attack does 80 damage to your opponent's Active Pokémon for each tails. This attack's damage isn't affected by Weakness or Resistance.",
       REVEAL_TRAINER_SCALE,
     ]);
     // The COUNT beside the list, for the reason `censusAtHead.test.ts` pins both a
     // diff and a count: a list assertion alone stays green if a member is dropped
     // from the corpus and from the expectation in one commit.
-    expect(dual).toHaveLength(4);
+    expect(dual).toHaveLength(5);
   });
 
   it("the bare-reveal and bare-count sentences keep exactly ONE owner each", () => {

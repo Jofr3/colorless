@@ -933,12 +933,28 @@ describe("the tails-gated self-costs — the family, CLOSED", () => {
       // §8 step-3 seam — still "not a `coinFlipGate`"). The row now names the corpus's
       // other LIVE unmapped tails witness with the SAME OWNER — the OPPONENT flips —
       // `censusAttackCorpus.ts:669` (1 legal printing, PHRASE-24, null on every reader):
+      // 🆕🆕🆕 **D550 — `:669` IS BUILT; THE ROW IS KEPT, BY OWNER (D438), AND ANNOTATED IN PLACE
+      // (D178).** Its owners are now `deriveAttackCoinFlip` (`opponentPerTails` over
+      // `opponentBench`) + `deriveAttackDamageSuppression` (its third compound arm), so "null on
+      // every reader" is WITHDRAWN (D539) — but `deriveAttackEffect` is still null on it, and
+      // THAT is the claim this rung asserts, so it stays green and stays: a tails consequent
+      // taken by the OPPONENT is still not a `coinFlipGate`. ⚠️ The live-unmapped tails witness
+      // set is now EMPTY (MEASURED at D550: `:669` was its only member), so there is no row left
+      // to re-point this one at.
       "Your opponent flips a coin for each of their Benched Pokémon. This attack does 80 damage to your opponent's Active Pokémon for each tails. This attack's damage isn't affected by Weakness or Resistance.",
       // TWO consequents on ONE flip (5 printings across 4 sentences, one of them
       // a TRAINER) — an `otherwise` this op deliberately does not have (D142's
       // Squawkabilly refusal, verbatim). ⚠️ THESE ARE THE LIVE UNMAPPED WITNESSES
       // this family leaves behind: when a later slice maps one, RE-POINT the row
       // at another rather than deleting it.
+      // 🆕🆕🆕 **D550 — "LIVE UNMAPPED" IS WITHDRAWN for these three (D539), annotated in place
+      // (D178), because the `:669` note above calls the live-unmapped tails set EMPTY and both
+      // cannot stand.** MEASURED at D550: the middle row ("If tails, … nothing. If heads, …
+      // prevent …", `censusAttackCorpus.ts:268`) is MAPPED — `deriveAttackCoinFlip`'s
+      // `cancelOnTailsElseProgram`, D499 — and the other two are unmapped by any reader but are
+      // NOT lines of the legal corpus (all 20 corpus lines carrying "tails" resolve). The rows
+      // stay, because the assertion below pins `deriveAttackEffect` BY OWNER (D438), and it is
+      // null on all three.
       "Flip a coin. If heads, this attack does 140 more damage. If tails, during your next turn, this Pokémon can't attack.",
       "Flip a coin. If tails, this attack does nothing. If heads, during your opponent's next turn, prevent all damage from and effects of attacks done to this Pokémon.",
       "Flip a coin. If heads, search your deck for a card and put it into your hand. Then, shuffle your deck. If tails, discard a card from your hand.",

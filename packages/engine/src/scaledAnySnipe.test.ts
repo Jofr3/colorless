@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
+import { deriveAttackCoinFlip, deriveAttackDamageSuppression } from "./effects";
 import { applyAction, deriveAttackEffect, engineVersion } from "./index";
 import type { EffectOp, GameEvent, GameState, PokemonRef } from "./index";
 import {
@@ -192,7 +193,30 @@ describe("§1 — the two printed sentences, and what they cost the residue", ()
     // anchor"* from *"a reader widened past the count clause and ate a chosen-target row"*.
     // The pair below names the row and pins the op AND the `target` member it derives to,
     // which is the fact that makes it this family's newest member rather than a stray.
-    expect(unbuilt).toHaveLength(2);
+    // 🆕🛑 **D550 — TWO → ONE, AND THE ROW THAT LEFT IS THE OPPONENT-FLIPPED PER-TAILS SNIPE,
+    // WHICH THIS GREP SEES BY ITS FOLD ("for each tails") AND ITS VICTIM ("damage to your
+    // opponent's Active").** Re-pointed rather than decremented, for the SEVENTH time in this
+    // rung and on the same reasoning: a count that steps 2 → 1 cannot tell *"D550 built corpus
+    // FILE LINE 669 through a coin member"* from *"a reader widened past the count clause and ate
+    // a chosen-target row"*. Bullet (h) names the row and pins the TWO owners by value — and
+    // neither is `deriveAttackEffect`, so no `damageChosen` op is involved: the hit is the main
+    // hit, folded at the flip site. The one row left is not a chosen-target hit either (a
+    // Prize-count `+` bonus with a self-recoil tail).
+    expect(unbuilt).toHaveLength(1);
+    // (h) THE OPPONENT-FLIPPED PER-TAILS SNIPE — corpus FILE LINE 669, 1 printing, BUILT at
+    //     D550 by `deriveAttackCoinFlip` (`opponentPerTails` over `opponentBench`) and
+    //     `deriveAttackDamageSuppression`'s third compound arm, off ONE anchor.
+    const OPPONENT_BENCH_TAILS =
+      "Your opponent flips a coin for each of their Benched Pokémon. This attack does 80 damage to your opponent's Active Pokémon for each tails. This attack's damage isn't affected by Weakness or Resistance.";
+    expect(family.map(([, t]) => t)).toContain(OPPONENT_BENCH_TAILS);
+    expect(unbuilt).not.toContain(OPPONENT_BENCH_TAILS);
+    expect(deriveAttackCoinFlip(OPPONENT_BENCH_TAILS)).toEqual({
+      kind: "opponentPerTails",
+      flips: { kind: "opponentBench" },
+      per: 80,
+    });
+    expect(deriveAttackDamageSuppression(OPPONENT_BENCH_TAILS)).toEqual({ weakness: true, resistance: true });
+    expect(deriveAttackEffect(OPPONENT_BENCH_TAILS)).toBeNull();
     // (g) THE NAMED-BODY MULTIPLIER + OWN-SIDE SPREAD — corpus FILE LINE 595, 2 printings,
     //     BUILT at D539. It is a real member of this family: a chosen-target hit whose
     //     amount comes off a `for each` fold — and the FIRST one aimed at the ATTACKER's
@@ -671,7 +695,7 @@ describe("§3 — a new optional rider on a PERSISTED op, and the record version
   });
 
   it("the engine version moved and the two spellings agree", () => {
-    expect(engineVersion).toBe("0.434.0");
+    expect(engineVersion).toBe("0.435.0");
   });
 });
 

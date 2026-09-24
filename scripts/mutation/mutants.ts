@@ -6205,7 +6205,7 @@ export const MUTANTS: Mutant[] = [
     // CORPUS QUOTES** (D414/D415), so a value-keyed sweep over `toBe("0.391.0")` cannot
     // see it — this row's `find` spells the DECLARATION, not an assertion. Run
     // `precheck` after every version bump, not after the sweep tells you.
-    find: 'export const engineVersion = "0.434.0";',
+    find: 'export const engineVersion = "0.435.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -23836,8 +23836,13 @@ export const MUTANTS: Mutant[] = [
     decision: "D460",
     what: "\ud83d\uded1 C4 \u2014 **THE `scaledBase` CLAIMANT IS DELETED, SO THE PRINTED BASE IS DEALT TWICE.** The head of every sentence in this family is `ATTACK_COIN_MULTI`'s own, so the printed `90\u00d7` digits ARE the per-heads amount; without this term `attack.ts` also lands them in the pre-program pipeline and one head deals `90 + 90 = 180` where the card says 90. \u26a0\ufe0f **IT OVERLAPS THE CORRECT ANSWER AT TWO OF THREE OUTCOMES** (90/180/270 against 0/90/180), so only the ZERO-HEADS board settles it \u2014 and that board cannot be faked by a seed, which is why \u00a75 sweeps and asserts it saw 0",
     file: "packages/engine/src/attack.ts",
-    find: "    coinFlip?.kind === \"perHeads\" ||\n    coinFlip?.kind === \"perHeadsThenThreshold\"",
-    replace: "    coinFlip?.kind === \"perHeads\"",
+    // 🆕🆕🆕 D550 - RE-TRANSCRIBED, NOT RE-MEANT (D414): D550 spliced its own `scaledBase` term
+    //    (`coinFlip?.kind === "opponentPerTails" ||`) BETWEEN the two coin terms this row spans -
+    //    the placement that breaks ONE row rather than four (the `…"perHeads"`-ending finds) or two
+    //    (the `"perHeadsThenThreshold"\n      ? 0` finds). The patch still deletes exactly the
+    //    `perHeadsThenThreshold` claimant and leaves every other term standing, D550's included.
+    find: "    coinFlip?.kind === \"perHeads\" ||\n    coinFlip?.kind === \"opponentPerTails\" ||\n    coinFlip?.kind === \"perHeadsThenThreshold\"",
+    replace: "    coinFlip?.kind === \"perHeads\" ||\n    coinFlip?.kind === \"opponentPerTails\"",
     expectKilledBy: ["packages/engine/src/coinThreshold.test.ts"],
   },
   {
@@ -28600,8 +28605,13 @@ export const MUTANTS: Mutant[] = [
     //    STEP IS **4** AND SO IS THE SENTENCE STEP - four rows of one printing each, the case
     //    where a copied number is right BY ACCIDENT, so the constant was MEASURED off the live
     //    census (`SUBMAX=12 bun scripts/residue-census.ts`, reader 577/1631) rather than inherited.
-    find: "  attack: 1687,",
-    replace: "  attack: 1683,",
+    // 🆕🆕🆕 D550 - RE-TRANSCRIBED AGAIN, 1687 -> 1688 (and the replace 1683 -> 1687). ⚠️ THE STEP
+    //    IS **1** AND SO IS THE SENTENCE STEP - D550's row (corpus FILE LINE 669) is 1 sentence / 1
+    //    legal printing, the case where a copied number is right BY ACCIDENT, so the constant was
+    //    MEASURED off the live census (`SUBMAX=12`: reader 578/1632). The row leaves through the
+    //    READER summand. `replace` is the GENUINE pre-slice value (D549's 1687).
+    find: "  attack: 1688,",
+    replace: "  attack: 1687,",
     expectKilledBy: [
       "packages/engine/src/censusAtHead.test.ts",
     ],
@@ -35359,5 +35369,182 @@ export const MUTANTS: Mutant[] = [
     find: "    lockSideAttacks: \"untouched\",",
     replace: "    lockSideAttacks: \"blocked\",",
     expectKilledBy: ["packages/engine/src/preventBlock.test.ts"],
+  },
+  // ── 🆕🆕🆕 D550 — THE OPPONENT-FLIPPED PER-TAILS SNIPE ON THE OPPONENT'S BENCH COUNT
+  //    (`censusAttackCorpus.ts` :669). Every row was probed UNDECLARED first (D525(3)).
+  //    `D550-fold-rides-the-else` is the row `tsc` cannot see; `D550-suppression-bare-test` is
+  //    D445's; `D550-flipper-is-the-attacker` is R1 undone; `D550-base-kept` is R3 undone. The
+  //    brief's `faces.length - heads` row is EQUIVALENT by construction (every face is heads or
+  //    tails) and is NOT declared: `D550-fold-counts-every-flip` takes its place. ──
+  {
+    id: "D550-anchor-loses-its-caret",
+    decision: "D550",
+    what: "🛑 C1 — **THE `^` DROPPED FROM `ATTACK_OPPONENT_BENCH_TAILS`.** Without it the pattern matches anywhere in a longer sentence, so a print that merely ENDS in `:669` is claimed whole by both readers and its leading clause is silently dropped. Killed by §1's prefixed near-miss.",
+    file: "packages/engine/src/effects.ts",
+    find: "const ATTACK_OPPONENT_BENCH_TAILS =\n  /^Your opponent flips a coin for each of their Benched Pokémon\\. This attack does (\\d+) damage to your opponent['’]s Active Pokémon for each tails\\. This attack['’]s damage isn['’]t affected by Weakness or Resistance\\.$/;",
+    replace: "const ATTACK_OPPONENT_BENCH_TAILS =\n  /Your opponent flips a coin for each of their Benched Pokémon\\. This attack does (\\d+) damage to your opponent['’]s Active Pokémon for each tails\\. This attack['’]s damage isn['’]t affected by Weakness or Resistance\\.$/;",
+    expectKilledBy: ["packages/engine/src/opponentBenchTailsSnipe.test.ts"],
+  },
+  {
+    id: "D550-anchor-loses-its-terminator",
+    decision: "D550",
+    what: "🛑 C2 — **THE `$` DROPPED, THE OTHER END OF C1 AND A DIFFERENT DEFECT (D497's pair rule).** With no terminator the anchor swallows a trailing clause: `<row> Then, discard a card.` derives as though the discard were not printed. Killed by §1's suffixed near-miss.",
+    file: "packages/engine/src/effects.ts",
+    find: "const ATTACK_OPPONENT_BENCH_TAILS =\n  /^Your opponent flips a coin for each of their Benched Pokémon\\. This attack does (\\d+) damage to your opponent['’]s Active Pokémon for each tails\\. This attack['’]s damage isn['’]t affected by Weakness or Resistance\\.$/;",
+    replace: "const ATTACK_OPPONENT_BENCH_TAILS =\n  /^Your opponent flips a coin for each of their Benched Pokémon\\. This attack does (\\d+) damage to your opponent['’]s Active Pokémon for each tails\\. This attack['’]s damage isn['’]t affected by Weakness or Resistance\\./;",
+    expectKilledBy: ["packages/engine/src/opponentBenchTailsSnipe.test.ts"],
+  },
+  {
+    id: "D550-coin-arm-removed",
+    decision: "D550",
+    what: "the `deriveAttackCoinFlip` arm is deleted: the coin reader refuses `:669`, the GATED suppression arm refuses with it, and the attack falls back to a flat printed 80 on the loud path. Killed by §1's by-value owners and §2's played rungs.",
+    file: "packages/engine/src/effects.ts",
+    find: "  const opponentBenchTails = ATTACK_OPPONENT_BENCH_TAILS.exec(effect);\n  if (opponentBenchTails !== null) {\n    const per = Number(opponentBenchTails[1]);\n    return per >= 1 ? { kind: \"opponentPerTails\", flips: { kind: \"opponentBench\" }, per } : null;\n  }\n",
+    replace: "",
+    expectKilledBy: ["packages/engine/src/opponentBenchTailsSnipe.test.ts", "packages/engine/src/perTailsSelfDiscard.test.ts", "packages/engine/src/damageSuppression.test.ts"],
+  },
+  {
+    id: "D550-per-guard-admits-zero",
+    decision: "D550",
+    what: "the arm's `per >= 1` guard becomes `>= 0`: a printed 0 is claimed, spends the opponent's flips to add nothing, and — through the gate — is W/R-suppressed whole. Killed by §1's printed-0 rung.",
+    file: "packages/engine/src/effects.ts",
+    find: "    return per >= 1 ? { kind: \"opponentPerTails\", flips: { kind: \"opponentBench\" }, per } : null;",
+    replace: "    return per >= 0 ? { kind: \"opponentPerTails\", flips: { kind: \"opponentBench\" }, per } : null;",
+    expectKilledBy: ["packages/engine/src/opponentBenchTailsSnipe.test.ts"],
+  },
+  {
+    id: "D550-amount-pinned",
+    decision: "D550",
+    what: "the captured amount is replaced by the literal 80, so any other printed amount derives the one this printing carries. Killed by §1's `30 derives 30` rung (and the printed-0 rung).",
+    file: "packages/engine/src/effects.ts",
+    find: "    const per = Number(opponentBenchTails[1]);",
+    replace: "    const per = 80;",
+    expectKilledBy: ["packages/engine/src/opponentBenchTailsSnipe.test.ts"],
+  },
+  {
+    id: "D550-flips-a-constant",
+    decision: "D550",
+    what: "the member's count becomes a PRINTED 3 — right on a three-body Bench and wrong on every other. Killed by §1's by-value owner and §2's 0-, 2- and 3-body boards.",
+    file: "packages/engine/src/effects.ts",
+    find: "    return per >= 1 ? { kind: \"opponentPerTails\", flips: { kind: \"opponentBench\" }, per } : null;",
+    replace: "    return per >= 1 ? { kind: \"opponentPerTails\", flips: { kind: \"printed\", count: 3 }, per } : null;",
+    expectKilledBy: ["packages/engine/src/opponentBenchTailsSnipe.test.ts"],
+  },
+  {
+    id: "D550-suppression-bare-test",
+    decision: "D550",
+    what: "🛑 D445 — **THE GATE ON THE COIN READER IS DROPPED**, a bare `.test()` beside the coin arm's `.exec()`: a printed-0 print is W/R-suppressed whole while its fold is refused, so `resolvedByAnyReader` goes true on a sentence nothing folds. Killed by §1's printed-0 rung.",
+    file: "packages/engine/src/effects.ts",
+    find: "  if (ATTACK_OPPONENT_BENCH_TAILS.test(trimmed) && deriveAttackCoinFlip(trimmed) !== null) {\n    return { weakness: true, resistance: true };\n  }\n",
+    replace: "  if (ATTACK_OPPONENT_BENCH_TAILS.test(trimmed)) {\n    return { weakness: true, resistance: true };\n  }\n",
+    expectKilledBy: ["packages/engine/src/opponentBenchTailsSnipe.test.ts"],
+  },
+  {
+    id: "D550-suppression-weakness-only",
+    decision: "D550",
+    what: "the third compound arm suppresses Weakness only, so Resistance still lands: `80t − 30` on the Weak-and-Resistant body. Killed by §1's by-value owner and §3's W/R board.",
+    file: "packages/engine/src/effects.ts",
+    find: "  if (ATTACK_OPPONENT_BENCH_TAILS.test(trimmed) && deriveAttackCoinFlip(trimmed) !== null) {\n    return { weakness: true, resistance: true };\n  }\n",
+    replace: "  if (ATTACK_OPPONENT_BENCH_TAILS.test(trimmed) && deriveAttackCoinFlip(trimmed) !== null) {\n    return { weakness: true };\n  }\n",
+    expectKilledBy: ["packages/engine/src/opponentBenchTailsSnipe.test.ts"],
+  },
+  {
+    id: "D550-suppression-resistance-only",
+    decision: "D550",
+    what: "the third compound arm suppresses Resistance only, so Weakness still lands: `160t` on the Weak-and-Resistant body. Killed by §1's by-value owner and §3's W/R board.",
+    file: "packages/engine/src/effects.ts",
+    find: "  if (ATTACK_OPPONENT_BENCH_TAILS.test(trimmed) && deriveAttackCoinFlip(trimmed) !== null) {\n    return { weakness: true, resistance: true };\n  }\n",
+    replace: "  if (ATTACK_OPPONENT_BENCH_TAILS.test(trimmed) && deriveAttackCoinFlip(trimmed) !== null) {\n    return { resistance: true };\n  }\n",
+    expectKilledBy: ["packages/engine/src/opponentBenchTailsSnipe.test.ts"],
+  },
+  {
+    id: "D550-suppression-arm-removed",
+    decision: "D550",
+    what: "the third compound arm is deleted: the fold still reads, but `DAMAGE_SUPPRESSION` refuses the compound whole, so BOTH Weakness and Resistance land (`160t − 30`). Killed by §1's by-value owner and §3's W/R board.",
+    file: "packages/engine/src/effects.ts",
+    find: "  if (ATTACK_OPPONENT_BENCH_TAILS.test(trimmed) && deriveAttackCoinFlip(trimmed) !== null) {\n    return { weakness: true, resistance: true };\n  }\n",
+    replace: "",
+    expectKilledBy: ["packages/engine/src/opponentBenchTailsSnipe.test.ts", "packages/engine/src/damageSuppression.test.ts"],
+  },
+  {
+    id: "D550-count-seat-crossed",
+    decision: "D550",
+    what: "🛑 the flip count reads the ATTACKER's Bench — the D447/D454 seat crossing. Killed by §2's asymmetric benches (1/3 and 4/2) and the full-own-Bench zero board.",
+    file: "packages/engine/src/attack.ts",
+    find: "      flips = benchBodies(state, otherSeat(attackerSeat));",
+    replace: "      flips = benchBodies(state, attackerSeat);",
+    expectKilledBy: ["packages/engine/src/opponentBenchTailsSnipe.test.ts"],
+  },
+  {
+    id: "D550-count-reads-in-play",
+    decision: "D550",
+    what: "the flip count reads the opponent's bodies IN PLAY (Active + Bench, `countPokemonInPlay`) — the seat-on-`pokemonInPlay` reading the member exists to refuse: one flip too many on every board. Killed by §2's count rung and the zero board.",
+    file: "packages/engine/src/attack.ts",
+    find: "      flips = benchBodies(state, otherSeat(attackerSeat));",
+    replace: "      flips = countPokemonInPlay(state, otherSeat(attackerSeat), { kind: \"anyPokemon\" });",
+    expectKilledBy: ["packages/engine/src/opponentBenchTailsSnipe.test.ts"],
+  },
+  {
+    id: "D550-printed-flips-one",
+    decision: "D550",
+    what: "`printedFlips` answers `ONE_FLIP` for the member (a case label duplicated into the cancel group, which JS matches first): one coin whatever the Bench. Killed by §2's count rung.",
+    file: "packages/engine/src/attack.ts",
+    find: "    case \"cancelOnTailsElseProgram\":\n      return ONE_FLIP;",
+    replace: "    case \"cancelOnTailsElseProgram\":\n    case \"opponentPerTails\":\n      return ONE_FLIP;",
+    expectKilledBy: ["packages/engine/src/opponentBenchTailsSnipe.test.ts"],
+  },
+  {
+    id: "D550-base-kept",
+    decision: "D550",
+    what: "R3 undone: `scaledBase` no longer drops the printed base for the member, so the printed 80 lands on top of the fold (and on an all-heads board). Killed by §2's damage and all-heads rungs.",
+    file: "packages/engine/src/attack.ts",
+    find: "    coinFlip?.kind === \"opponentPerTails\" ||\n",
+    replace: "",
+    expectKilledBy: ["packages/engine/src/opponentBenchTailsSnipe.test.ts"],
+  },
+  {
+    id: "D550-flipper-is-the-attacker",
+    decision: "D550",
+    what: "🛑 R1 undone: the member's coin rows are filed under the ATTACKER, so the log reads \"P1 flipped …\" for a coin the opponent flipped. Killed by §2's seat and log rungs.",
+    file: "packages/engine/src/attack.ts",
+    find: "    const flipper = coinFlip.kind === \"opponentPerTails\" ? otherSeat(action.seat) : action.seat;",
+    replace: "    const flipper = action.seat;",
+    expectKilledBy: ["packages/engine/src/opponentBenchTailsSnipe.test.ts"],
+  },
+  {
+    id: "D550-flipper-crossed-for-every-member",
+    decision: "D550",
+    what: "the flipper crossing is applied to EVERY coin member, so an attacker's own flips are filed under the opponent. Not this slice's suite: killed by `inPlayFlipCount.test.ts`, whose rows are the ATTACKER's.",
+    file: "packages/engine/src/attack.ts",
+    find: "    const flipper = coinFlip.kind === \"opponentPerTails\" ? otherSeat(action.seat) : action.seat;",
+    replace: "    const flipper = otherSeat(action.seat);",
+    expectKilledBy: ["packages/engine/src/inPlayFlipCount.test.ts"],
+  },
+  {
+    id: "D550-fold-counts-heads",
+    decision: "D550",
+    what: "the fold counts HEADS, the opposite face: with three flips heads ≠ tails on every outcome. Killed by §2's damage rung.",
+    file: "packages/engine/src/attack.ts",
+    find: "      for (const drawn of faces) if (drawn === \"tails\") tails += 1;",
+    replace: "      for (const drawn of faces) if (drawn === \"heads\") tails += 1;",
+    expectKilledBy: ["packages/engine/src/opponentBenchTailsSnipe.test.ts"],
+  },
+  {
+    id: "D550-fold-counts-every-flip",
+    decision: "D550",
+    what: "the fold counts EVERY flip rather than the printed face — `faces.length`, the counting error in the other direction (the brief's `faces.length − heads` row is EQUIVALENT by construction, a face being heads or tails, so it is not a row: D467). Killed by §2's damage rung.",
+    file: "packages/engine/src/attack.ts",
+    find: "      for (const drawn of faces) if (drawn === \"tails\") tails += 1;",
+    replace: "      tails = faces.length;",
+    expectKilledBy: ["packages/engine/src/opponentBenchTailsSnipe.test.ts"],
+  },
+  {
+    id: "D550-fold-rides-the-else",
+    decision: "D550",
+    what: "🛑 THE BRANCH `tsc` DOES NOT FORCE: the member folds `heads × per` as the final `else` would (its `per` fits that arm), the opposite face on every board. Killed by §2's damage rung.",
+    file: "packages/engine/src/attack.ts",
+    find: "      let tails = 0;\n      for (const drawn of faces) if (drawn === \"tails\") tails += 1;\n      coinBonus = tails * coinFlip.per;\n    } else {\n      coinBonus = heads * coinFlip.per;\n    }",
+    replace: "      coinBonus = heads * coinFlip.per;\n    } else {\n      coinBonus = heads * coinFlip.per;\n    }",
+    expectKilledBy: ["packages/engine/src/opponentBenchTailsSnipe.test.ts"],
   },
 ];

@@ -1161,7 +1161,10 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
       ]);
     case "ATTACK_EFFECT_COIN_FLIP":
       // A coinFlipGate flip — an attack's effect OR a Trainer's (Poké Ball /
-      // Pokémon Catcher, M5); `seat` is the actor. The event id keeps "ATTACK_"
+      // Pokémon Catcher, M5); `seat` is the seat that flipped: the actor, except
+      // that `opponentPerTails` files under the opponent (D550), so its rows read
+      // "P2 flipped tails for the effect" on P1's attack. ~~`seat` is the actor.~~
+      // (withdrawn at D550, D539). The event id keeps "ATTACK_"
       // for back-compat, but the copy stays neutral so a Trainer flip reads right.
       return row(event.seat, [plain("flipped "), strong(event.result), plain(" for the effect")]);
     case "KNOCKED_OUT":

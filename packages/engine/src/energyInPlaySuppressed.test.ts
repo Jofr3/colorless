@@ -347,7 +347,7 @@ describe("§2 — TWO readers own it, and the other eleven still refuse", () => 
     expect(deriveAttackDamageBonus(PRINTED)).toEqual(deriveAttackDamageBonus(HEAD));
   });
 
-  it("🛑 this is a dual-claimed sentence, and the population is FOUR — all on purpose", () => {
+  it("🛑 this is a dual-claimed sentence, and the population is FIVE (🆕🆕🆕 D550; FOUR since D539) — all on purpose", () => {
     // D445 pinned "at most one reader per sentence" as a POPULATION so a second could
     // not arrive by accident; D493 made it two. ⚠️ **AND THE RUNG IS BLIND TO
     // CORRECTNESS** (D493's own finding): it asserts HOW MANY readers claim, never WHAT
@@ -364,7 +364,13 @@ describe("§2 — TWO readers own it, and the other eleven still refuse", () => 
     // the first instance whose two readers are a FOLD and a PROGRAM rather than a fold
     // and a §8.5 step. The count moves; the rung's blindness to CORRECTNESS is unchanged
     // and is still covered behaviourally, now in `namedBodiesSpread.test.ts` §3 and §4.
-    expect(dual).toHaveLength(4);
+    // 🆕🆕🆕 **D550 — FOUR → FIVE, ON PURPOSE.** Corpus FILE LINE 669 is claimed by
+    // `deriveAttackCoinFlip` (the opponent-flipped per-tails fold) AND by
+    // `deriveAttackDamageSuppression`'s THIRD compound arm (the W/R step), off ONE `effect`
+    // string through ONE whole-sentence anchor — D493's route for the fourth time. The
+    // population is named member by member in `opponentHandScaling.test.ts` §2; this count
+    // moves with it, and is covered behaviourally in `opponentBenchTailsSnipe.test.ts`.
+    expect(dual).toHaveLength(5);
   });
 });
 
@@ -749,9 +755,9 @@ describe("§10 — `MATCH_RECORD_VERSION` stays 29, and the slice has TWO addres
 });
 
 describe("§11 — the version", () => {
-  it("engineVersion is 0.434.0 and the bump is owed for BEHAVIOUR", () => {
+  it("engineVersion is 0.435.0 and the bump is owed for BEHAVIOUR", () => {
     // A card can reach this: file line 337's printing scores a number it did not score
     // at 0.388.0, and skips a §8.5 step it did not skip.
-    expect(engineVersion).toBe("0.434.0");
+    expect(engineVersion).toBe("0.435.0");
   });
 });
