@@ -874,7 +874,18 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
     // that row ("…Hyper Fang attack's base damage is 240."), so the additive wording
     // would read "does 240 more damage next turn" — false by the whole printed base
     // (D421). The verb again keeps the printed shape: "'s base damage is N".
+    // 🆕🆕🆕 D546 — AND THE ALL-ATTACKS MODE NAMES NO ATTACK (`attack: null`): "During
+    // your next turn, attacks used by this Pokémon do N more damage to your opponent's
+    // Active Pokémon …" (`censusAttackCorpus.ts:148`/`:76`). The named wording would
+    // promise the bonus on ONE attack and the template would print "null" — both
+    // false (D421), and invisible to `tsc`. The verb keeps the printed plural.
     case "ATTACK_BOOSTED":
+      if (event.attack === null) {
+        return row(event.seat, [
+          strong(cardName(state, event.uid)),
+          plain(`'s attacks do ${event.amount} more damage next turn`),
+        ]);
+      }
       if (event.base === true) {
         return row(event.seat, [
           strong(cardName(state, event.uid)),

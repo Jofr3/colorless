@@ -52,6 +52,8 @@ import {
   // attack.ts has resolved that same phrase through this fold since 0.61.0 — so the
   // import is what keeps one noun phrase meaning one thing (D159).
   effectiveRetreatCost,
+  // 🆕🆕🆕 D546 — the ALL-ATTACKS buff, folded at `snipeActive` only (see there).
+  everyAttackBoostOf,
   groupShieldedFromAttackEffects,
   hasAttachedEnergy,
   installedAttackDebuffOf,
@@ -7744,8 +7746,9 @@ function preventAttackUse(
     so a second install naming a DIFFERENT attack replaces the record outright
     rather than keeping the larger of two unrelated bonuses — the amount is a
     property of the pair, not of the body. ~~Unreachable off the one printing~~ —
-    🆕🆕 D544: unreachable off ANY printing, now that FOUR legal sentences write
-    this record (three additive, one base-set — measured by deriving
+    🆕🆕 D544: unreachable off ANY printing, now that ~~FOUR~~ legal sentences write
+    this record (~~three additive, one base-set~~ 🆕🆕🆕 D546: SIX — five additive, two
+    of them ALL-ATTACKS, and one base-set — measured by deriving
     `legalAttackCorpus()`); the ground is the turn structure, not the count (an
     attack ends the turn, and the window is the holder's own next turn),
     so it is constructed and pinned; the row is suppressed when the merge says
@@ -7761,23 +7764,47 @@ function preventAttackUse(
     for a no-op. Constructed and pinned in both install orders
     (`attackBaseOverride.test.ts`). The row reports the mode being INSTALLED: a base
     install files `{ amount: <merged base>, base: true }`, an additive one
-    `{ amount: <merged amount> }`. */
+    `{ amount: <merged amount> }`.
+
+    🆕🆕🆕 D546 — `attack: null` is the THIRD printed mode at this address, the
+    ALL-ATTACKS buff ("During your next turn, attacks used by this Pokémon do 120
+    more damage to your opponent's Active Pokémon (before applying Weakness and
+    Resistance).", `censusAttackCorpus.ts:148` and `:76`, 2 legal printings): the
+    installer writes `{ turn, attackIndex: null, amount }` and the additive reader
+    pays it on EVERY index. The merge needs no new rule, because `null` is an ADDRESS
+    like any index: `existing.attackIndex === attackIndex` makes null+null a
+    same-address merge (max), and null-vs-named a DIFFERENT address that replaces the
+    record outright in either install order — the per-address rule unchanged
+    (constructed and pinned, `everyAttackBoost.test.ts` §7). The stamp and the
+    stacking line are D453's finds and stay byte-identical. `{ attack: null, base:
+    true }` is REFUSED at the top (see there). */
 function boostAttack(
   state: GameState,
-  attack: string,
+  attack: string | null,
   amount: number,
   base: true | undefined,
   ctx: EffectContext,
   events: GameEvent[],
 ): GameState {
+  // 🆕🆕🆕 D546 — `{ attack: null, base: true }` is REFUSED whole: no card prints an
+  // all-attacks BASE override, and the record it would write
+  // (`{ attackIndex: null, amount: 0, base }`) carries a base `boostedAttackBase`
+  // never pays (its `attackIndex !== index` compare answers `null` for a null
+  // index) — a record plus a row announcing a payoff that cannot arrive (D140/D146).
+  // Constructed and pinned (`everyAttackBoost.test.ts` §7).
+  if (attack === null && base === true) return state;
   const active = state.players[ctx.seat].active;
   if (active === null) return state;
   const uid = topUid(active);
   const card = topCardOf(state, active);
   if (uid === undefined || card === undefined) return state;
   const printed = attacksOf(card);
-  const attackIndex = printedAttackIndex(printed, attack);
-  if (attackIndex < 0) return state;
+  // 🆕🆕🆕 D546 — `null` is the ALL-ATTACKS address ("attacks used by this
+  // Pokémon"): no name to resolve, so nothing to refuse; the `< 0` refusal is the
+  // NAMED path's alone. The record carries `attackIndex: null` and the additive
+  // reader pays it on every index.
+  const attackIndex = attack === null ? null : printedAttackIndex(printed, attack);
+  if (attackIndex !== null && attackIndex < 0) return state;
   // The one rule, D143's and D154's: the window is the holder's own next turn, and
   // declaring an attack ENDS the turn (§5.3), so the turn after this one is the
   // opponent's and the one after THAT is the holder's.
@@ -7811,11 +7838,13 @@ function boostAttack(
   // The RESOLVED row's own name and not the op's token (`preventAttackUse`'s
   // call): the two differ only in punctuation, and a log row is read by a player
   // holding the card, so it prints the card's spelling.
+  // 🆕🆕🆕 D546 — …and an all-attacks install names NO attack: `attack: null`, which
+  // `log.ts` renders as "'s attacks do N more damage next turn".
   events.push({
     type: "ATTACK_BOOSTED",
     seat: ctx.seat,
     uid,
-    attack: printed[attackIndex]?.name ?? attack,
+    attack: attackIndex === null ? null : (printed[attackIndex]?.name ?? attack),
     ...(base === true ? { amount: merged.base ?? amount, base: true as const } : { amount: merged.amount }),
   });
   return withActive(state, ctx.seat, { ...active, boostedAttack: merged });
@@ -9394,8 +9423,24 @@ function snipeActive(
   const target = activeTop(state, opponent);
   if (target === null) return state;
   const attacker = activeTop(state, ctx.seat);
+  // 🆕🆕🆕 D546 — the ALL-ATTACKS buff ("During your next turn, attacks used by this
+  // Pokémon do N more damage to your opponent's Active Pokémon (before applying
+  // Weakness and Resistance).", `censusAttackCorpus.ts:148`/`:76`) is FOLDED here,
+  // beside `attackerPreWRBonus`, and reported in the same `bonus` field: its printed
+  // scope "to your opponent's Active Pokémon" is exactly Vitality Band's, which this
+  // site already honours, and "attacks used by this Pokémon" names no attack, so an
+  // op-borne hit that lands on the Active is inside it. `EffectContext` carries no
+  // attack index, so only a NULL-index record is read (`everyAttackBoostOf`); the
+  // NAMED boost is still NOT folded here — pre-existing (D155), and for that reason.
+  // NOT at `spreadDamage` or `placeSnipe`, which omit every pre-W/R BONUS by design
+  // (D149) and aim at the Bench. Immune to §9 and untouched by `ignoreWR` (an effect
+  // on the ATTACKER). Whether either real card prints a snipe attack is UNMEASURED.
+  // Decision and reversal condition: docs/decisions.md D546.
   const bonus =
-    attacker === null ? 0 : attackerPreWRBonus(state, attacker.active, ctx.seat, target.card);
+    attacker === null
+      ? 0
+      : attackerPreWRBonus(state, attacker.active, ctx.seat, target.card) +
+        everyAttackBoostOf(state, attacker.active);
   // D149 — the pre-W/R DEBUFF on the attacker, subtracted beside its bonus. NOT
   // bypassed by `ignoreWR`: Feint Attack's "not affected by … any effects on that
   // Pokémon" scopes the TARGET, and this is an effect on the ATTACKER — the same

@@ -65,7 +65,9 @@ const PROGRAM: readonly EffectOp[] = [
 ];
 /** The LEGAL additive sentence at `censusAttackCorpus.ts:165` (Meloetta ex's Echoed
     Voice, "80 more" — NOT D155's Seismitoad `sv03-052`, which prints "100 more" and
-    is a local-D1 printing), one of THREE additive neighbours at the same address. */
+    is a local-D1 printing), one of THREE additive neighbours at the same address
+    (🆕🆕🆕 D546: three NAMED ones — five additive in all, with the two ALL-ATTACKS
+    sentences at `:76`/`:148`, `everyAttackBoost.test.ts`). */
 const ECHOED_VOICE =
   "During your next turn, this Pokémon's Echoed Voice attack does 80 more damage (before applying Weakness and Resistance).";
 
@@ -353,36 +355,49 @@ describe("§1 — the anchor claims the sentence WHOLE, and only it", () => {
       ),
     ).toBeNull();
     // Every additive corpus row derives with NO `base` key at all.
+    // 🆕🆕🆕 D546 — RE-POINTED: this loop used to FILTER on the text
+    // "more damage (before applying", which the two ALL-ATTACKS sentences
+    // (`censusAttackCorpus.ts:148`/`:76`, "…more damage to your opponent's Active
+    // Pokémon (before applying …") do not contain — so the `toBe(3)` below stayed
+    // green only because the filter excluded them, a NARROWED claim. It now counts
+    // every `boostAttack` a corpus row derives that is not a base-set install, by
+    // the OP rather than by a substring.
     let additive = 0;
     for (const [, text] of legalAttackCorpus()) {
-      if (!text.includes("more damage (before applying")) continue;
       for (const op of boostOps(deriveAttackEffect(text))) {
+        if (op.base === true) continue;
         additive += 1;
         expect(Object.keys(op), text).not.toContain("base");
       }
     }
     // EXACT, not `> 0`: the prose that argues from this population (continuous.ts,
-    // attack.ts, index.ts, types.ts, match.ts) counts THREE additive sentences.
-    expect(additive).toBe(3);
+    // attack.ts, index.ts, types.ts, match.ts) counts ~~THREE~~ additive sentences —
+    // 🆕🆕🆕 D546: FIVE, three NAMED (Echoed Voice, Meteor Mash, Tornado Rush) and two
+    // ALL-ATTACKS (`:76`, `:148`).
+    expect(additive).toBe(5);
   });
 
-  it("the record's WHOLE legal population: FOUR sentences / 8 printings — three ADDITIVE, one BASE-SET", () => {
+  it("the record's WHOLE legal population: FOUR sentences / 8 printings — three ADDITIVE, one BASE-SET (🆕🆕🆕 D546: SIX sentences / 10 printings — FIVE ADDITIVE, two of them ALL-ATTACKS, one BASE-SET)", () => {
     // The measured census every "N sentences write this record" claim in the
     // engine's prose rests on (D539: a count is measured, never copied). Leading
-    // count column, attack name, amount, and the rider.
-    const rows: [number, string, number, boolean][] = [];
+    // count column, attack name (🆕🆕🆕 D546: `null` for the ALL-ATTACKS address),
+    // amount, and the rider. Corpus order: `:76`, `:148`, `:165`–`:168`.
+    const rows: [number, string | null, number, boolean][] = [];
     for (const [count, text] of legalAttackCorpus()) {
       for (const op of boostOps(deriveAttackEffect(text))) {
         rows.push([count, op.attack, op.amount, op.base === true]);
       }
     }
     expect(rows).toEqual([
+      [1, null, 100, false],
+      [1, null, 120, false],
       [3, "Echoed Voice", 80, false],
       [2, "Hyper Fang", 240, true],
       [2, "Meteor Mash", 60, false],
       [1, "Tornado Rush", 100, false],
     ]);
-    expect(rows.reduce((sum, [count]) => sum + count, 0)).toBe(8);
+    // 🆕🆕🆕 D546 — 8 → 10: the two ALL-ATTACKS printings (`:76`, `:148`).
+    expect(rows.reduce((sum, [count]) => sum + count, 0)).toBe(10);
   });
 });
 
@@ -798,7 +813,8 @@ describe("§10 — `MATCH_RECORD_VERSION` STAYS 30, in three directions, LOSS in
 
   it("🛑 …and that residue is UNAUTHORABLE by the surviving path — every producer measured", () => {
     // `amount: 0` with no `base` is written by NO additive install: every corpus
-    // row's additive `boostAttack` carries amount >= 1 (arm 24b's guard), and the
+    // row's additive `boostAttack` carries amount >= 1 (arm 24b's guard — 🆕🆕🆕 D546: arm
+    // 24b'' carries the same guard verbatim on the ALL-ATTACKS producer), and the
     // registry holds no `boostAttack` at all — walked DEEP, so a gate cannot hide one.
     const additive: number[] = [];
     for (const [, text] of legalAttackCorpus()) {
@@ -806,7 +822,10 @@ describe("§10 — `MATCH_RECORD_VERSION` STAYS 30, in three directions, LOSS in
         if (op.base !== true) additive.push(op.amount);
       }
     }
-    expect(additive).toEqual([80, 60, 100]);
+    // 🆕🆕🆕 D546 — `[80, 60, 100]` → five: the two ALL-ATTACKS producers (`:76`'s
+    // 100 and `:148`'s 120) come first in corpus order. Every one is still >= 1 (arm
+    // 24b'' carries 24b's guard verbatim), so the argument holds unchanged.
+    expect(additive).toEqual([100, 120, 80, 60, 100]);
     expect(additive.every((n) => n >= 1)).toBe(true);
     for (const id of registryCardIds()) {
       expect(boostOps(programFor(id)), id).toEqual([]);

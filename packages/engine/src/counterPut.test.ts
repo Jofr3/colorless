@@ -409,6 +409,16 @@ describe("the anchor — 2 printings, 2 clauses, one regex with one (\\d+) captu
     const abilities = NEAR_MISSES.filter((t) => t.startsWith("Once during your turn"));
     expect(abilities).toHaveLength(2);
     for (const ability of abilities) expect(deriveAttackEffect(ability), ability).toBeNull();
+    // 🆕🆕🆕 D546 — ONE of these two carries, as its TAIL, the sentence D546 built as an
+    // attack: "…during this turn, attacks used by this Pokémon do 120 more damage to your
+    // opponent's Active Pokémon (before applying Weakness and Resistance)." The new
+    // anchor `SELF_EVERY_ATTACK_BOOST` is `^…$` with a capital "During your next turn",
+    // so the Ability's "Once during your turn, …" head and its "during THIS turn" keep it
+    // out — asserted on the witness BY CONTENT, so a widened anchor reddens here rather
+    // than turning an Ability into an attack install.
+    const tailWitness = abilities.filter((t) => t.includes("attacks used by this Pokémon do"));
+    expect(tailWitness).toHaveLength(1);
+    expect(deriveAttackEffect(tailWitness[0] ?? "")).toBeNull();
     // 🆕🆕🆕 **D450 — THE TWO ROWS THAT LEFT THIS LIST, AND THE CLAIM THEY WERE REALLY
     // MAKING.** Corpus lines 415 and 414 were `toBeNull` here until D450 built them as
     // arms 23e and 23f. A `toBeNull` on a sentence the catalog PRINTS is a liability

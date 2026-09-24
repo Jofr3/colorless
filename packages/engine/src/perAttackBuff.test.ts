@@ -374,9 +374,11 @@ describe("the install — the address is resolved once, by the helper D154 wrote
 
   it("installs NOTHING when the printed name matches no attack on the holder", () => {
     // ~~Unreachable off the one printing — it names its own attack~~ — 🆕🆕 D544:
-    // FOUR legal sentences write this record (measured by deriving
+    // ~~FOUR~~ legal sentences write this record (measured by deriving
     // `legalAttackCorpus()`: three ADDITIVE, Echoed Voice ×3, Meteor Mash ×2 and
-    // Tornado Rush ×1, and one BASE-SET, Hyper Fang ×2). Unreachable off the three
+    // Tornado Rush ×1, and one BASE-SET, Hyper Fang ×2 — 🆕🆕🆕 D546: SIX, the two
+    // ALL-ATTACKS sentences `:76`/`:148` ×1 each naming NO attack, so they cannot miss
+    // one and this case stays about the NAMED path). Unreachable off the three
     // Meloetta ex Echoed Voice printings (`sv10.5b-044`/`-159`/`-167`, D277), whose
     // only attack IS the named one; UNMEASURED for the other five, since no
     // registry, `catalogManifest` or `testFixtures` id carries Meteor Mash, Tornado
@@ -407,8 +409,10 @@ describe("the install — the address is resolved once, by the helper D154 wrote
   });
 
   it("a re-install that says the SAME thing is silent; a larger amount wins", () => {
-    // Unreachable off ~~the one printing~~ ANY printing (🆕🆕 D544: FOUR legal sentences
-    // write this record — three additive, one base-set, measured by deriving
+    // Unreachable off ~~the one printing~~ ANY printing (🆕🆕 D544: ~~FOUR~~ legal sentences
+    // write this record — three additive, one base-set (🆕🆕🆕 D546: SIX — five additive,
+    // two of them ALL-ATTACKS, whose null+null merge is pinned in
+    // `everyAttackBoost.test.ts` §7), measured by deriving
     // `legalAttackCorpus()` — and the ground is the turn structure, not the count;
     // the base-set merge is pinned in `attackBaseOverride.test.ts` §9;
     // an attack ends the turn and the window is

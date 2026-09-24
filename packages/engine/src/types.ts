@@ -804,8 +804,10 @@ export interface LockedAttack {
 /** §8.5/§11 (D155) — an attack-installed PER-ATTACK DAMAGE BUFF on one Pokémon,
     with the printed DURATION baked in as a turn STAMP exactly as the five records
     above bake theirs. ~~One printed sentence, ONE printing in the local D1~~ —
-    🆕🆕 D544: FOUR legal sentences on one record, 8 printings (measured by deriving
-    `legalAttackCorpus()`) — THREE through the ADDITIVE template and ONE BASE-SET:
+    🆕🆕 D544: ~~FOUR legal sentences on one record, 8 printings~~ — 🆕🆕🆕 D546: SIX
+    sentences / 10 printings (measured by deriving `legalAttackCorpus()`,
+    `attackBaseOverride.test.ts` §1) — FIVE ADDITIVE (three NAMED through the template
+    below, two ALL-ATTACKS) and ONE BASE-SET:
 
       "During your next turn, this Pokémon's {AttackName} attack does 100 more
        damage (before applying Weakness and Resistance)."                 (1)
@@ -813,6 +815,10 @@ export interface LockedAttack {
          60 (`:167`, 2), Tornado Rush 100 (`:168`, 1) — 3 sentences / 6 printings
       "During your next turn, this Pokémon's Hyper Fang attack's base damage
        is 240."                 (2 legal — `censusAttackCorpus.ts:166`, D544)
+      "[Both Active Pokémon are now Asleep. ]During your next turn, attacks used by
+       this Pokémon do 120 more damage to your opponent's Active Pokémon (before
+       applying Weakness and Resistance)."   (🆕🆕🆕 D546 — `:148` at 120 and `:76` at
+       100 behind the Sleep prefix, 1 legal printing each; `attackIndex: null`)
 
     The `(1)` is D155's local-D1 census and is left as written — Seismitoad
     `sv03-052`, below, which prints "100 more" and is NOT a legal-corpus row; the
@@ -855,13 +861,21 @@ export interface LockedAttack {
     cards and the buff on ~~one~~ (D155's local-D1 count; measured at D544 the LEGAL
     column puts FOUR sentences on this record — three ADDITIVE, Echoed Voice,
     Meteor Mash and Tornado Rush, and one BASE-SET, Hyper Fang — each printed as a
-    self install on the holder's own named attack; whether any of their cards also
+    self install on the holder's own named attack (🆕🆕🆕 D546: SIX now — the two
+    ALL-ATTACKS sentences are self installs too, but on NO named attack: they pay
+    every index); whether any of their cards also
     prints a bar is measured only for the three Meloetta ex printings, whose Echoed
     Voice is the card's only attack, and is UNMEASURED for the other five), and a
     body installs at most
     one per turn — so D154's
     own reachability ground (two facts, one record, one write) is NOT available
-    here. The ground is the READ, not the write, which is the axis this family had
+    here. 🆕🆕🆕 D546 RE-READ: "cannot be live together" is true of the SELF-installed
+    bar only. D157's OPPONENT-chosen bar (`preventChosenAttack`, stamped `turn + 1` on
+    the opponent's turn) lands in the holder's `turn + 2` window beside any buff — a
+    named one before this slice, and now an ALL-ATTACKS one, where the barred index is
+    necessarily a buffed index. The READ ground below decides it unchanged: the §8
+    gate refuses the barred attack and the buff pays the others (driven,
+    `everyAttackBoost.test.ts` §7). The ground is the READ, not the write, which is the axis this family had
     not yet been separated on.
 
     THE WINDOW IS `state.turn + 2`, `LockedAttack`'s number and D143's: the
@@ -880,8 +894,22 @@ export interface BoostedAttack {
   /** WHICH attack is boosted, as an index into the stack-top card's `attacks` —
       `LockedAttack.attackIndex`'s twin, resolved from the printed proper noun at
       the install by the SAME helper (interpreter.ts `printedAttackIndex`), so the
-      apostrophe fold D137 requires is written once for both ops. */
-  attackIndex: number;
+      apostrophe fold D137 requires is written once for both ops.
+
+      🆕🆕🆕 D546 — OR `null`, meaning EVERY attack index: the all-attacks buff
+      ("During your next turn, attacks used by this Pokémon do 120 more damage to
+      your opponent's Active Pokémon (before applying Weakness and Resistance).",
+      `censusAttackCorpus.ts:148` and `:76`, 2 legal printings), installed by
+      `boostAttack { attack: null }`. The KEY stays REQUIRED; only the VALUE widens.
+      `boostedAttackDamage` pays a `null` record on every index, and
+      `boostedAttackBase` — whose `attackIndex !== index` compare is left
+      byte-identical — answers `null` for it on every index, which is right because
+      the installer REFUSES an all-attacks base (no such record is written).
+      `null` is written by NO v30 writer, so it is detectable in the bytes; a
+      rollback deploy computes `null !== index` and pays 0 — inert on the board.
+      `MATCH_RECORD_VERSION` STAYS 30 (apps/api `match.ts`, the D546 paragraph,
+      states the argument and its reversal condition). */
+  attackIndex: number | null;
   /** HP added to that attack's damage BEFORE Weakness and Resistance — the
       printed parenthetical, and the whole of why the number is stored rather than
       applied.

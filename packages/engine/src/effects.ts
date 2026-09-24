@@ -4497,8 +4497,23 @@ export type EffectOp =
       up). A RIDER and not a sibling op, and the reason is the WRITER: one
       installer function stays the only writer of `boostedAttack`, which is the
       property D165 found missing on `lockedAttack` when two ops wrote it. The op
-      never parks, so it never reaches `phase.cont` either (D334's widening). */
-  | { op: "boostAttack"; attack: string; amount: number; base?: true }
+      never parks, so it never reaches `phase.cont` either (D334's widening).
+
+      🆕🆕🆕 D546 — `attack: string | null`, THE ALL-ATTACKS ADDRESS: `null` means
+      "attacks used by this Pokémon" — EVERY attack the holder declares in the
+      window, not one named attack ("During your next turn, attacks used by this
+      Pokémon do 120 more damage to your opponent's Active Pokémon (before applying
+      Weakness and Resistance).", `censusAttackCorpus.ts:148`, and the same sentence
+      behind "Both Active Pokémon are now Asleep." at `:76` — 2 sentences / 2 legal
+      printings; the census is on `SELF_EVERY_ATTACK_BOOST` below). The installer
+      writes `attackIndex: null` for it, and the additive reader pays it on every
+      index. A VALUE widening of a field that was already required, not a new key or
+      member: the op never parks, so it is never persisted (D334) and no stored
+      continuation can carry a `null` a v30 reader would meet. `null` WITH
+      `base: true` is REFUSED by the installer (state unchanged, no row): an
+      all-attacks base override is a sentence no card prints, and the record it
+      would write carries a base `boostedAttackBase` never pays. */
+  | { op: "boostAttack"; attack: string | null; amount: number; base?: true }
   /** §8/§11 (D157) — BAR ONE **CHOSEN** ATTACK on the OPPONENT's Active for that
       Pokémon's next turn ("Choose 1 of your opponent's Active Pokémon's attacks.
       During your opponent's next turn, that Pokémon can't use that attack.", 2
@@ -13632,6 +13647,43 @@ const SELF_ATTACK_BOOST =
 // damage (before applying …)", and neither literal occurs inside the other.
 const SELF_ATTACK_BASE_SET =
   /^During your next turn, this Pokémon['’]s (.+?) attack['’]s base damage is (\d+)\.$/;
+// ── 🆕🆕🆕 D546: the same holder, the same window — and EVERY attack, not one ──
+//
+// "During your next turn, attacks used by this Pokémon do 120 more damage to your
+// opponent's Active Pokémon (before applying Weakness and Resistance)."
+// — `censusAttackCorpus.ts` FILE LINE 148, leading count column **1**, and the SAME
+// sentence behind a printed "Both Active Pokémon are now Asleep. " at FILE LINE 76
+// (count **1**, amount 100): **2 sentences / 2 legal printings**, both `OPAQUE` at
+// `SUBMAX=12` and `UNEXPLAINED` + `CONTINUOUS` at `SUBMAX=4` (measured at both caps
+// before the build). ⚠️ **NO CATALOG ID RESOLVES ON THIS CHECKOUT, AND THAT WAS
+// MEASURED (D425)**: no `registry.ts`, `catalogManifest.ts` or `testFixtures.ts` row
+// prints either sentence (`git grep`), so its suite (`everyAttackBoost.test.ts`)
+// rides file-local DECLARED `d546-*` demonstrators in their own 60-card deck (D270),
+// and the real cards' attack lists, costs and damage are UNMEASURED.
+//
+// `SELF_ATTACK_BOOST`'s holder, window, amount and pre-W/R step with NO NAME: the
+// address is "attacks used by this Pokémon", every index. It rides the SAME op
+// (`attack: null`) and the SAME record (`BoostedAttack.attackIndex: null`), so ONE
+// installer stays the only writer of `boostedAttack` (D165).
+//
+// THE OPTIONAL PREFIX IS THE `:76` PRINTING'S LEADING SENTENCE, captured as group 1
+// and emitted as two shipped `applyStatus` ops in PRINTED order, DEFENDER FIRST
+// (D414's `BOTH_ACTIVES_KO` precedent: "Both Active Pokémon" → defender, then self).
+// "Both Active Pokémon are now Asleep." ON ITS OWN derives nothing (no anchor owns
+// it), and this anchor does not claim it: the body after the prefix is REQUIRED.
+//
+// ONE `['’]` SLOT — "opponent's" — and it is its own mutant row (D136/D137). The
+// sentence carries no possessive on "Pokémon" and no captured name, so there is no
+// fold. No /i, `^…$`, for the standing reason (TYPED_SELF_DISCARD).
+//
+// DISJOINT IN BOTH DIRECTIONS from `SELF_ATTACK_BOOST` / `SELF_ATTACK_BASE_SET` (they
+// need "this Pokémon's … attack", this one "attacks used by this Pokémon do") and
+// from the counter-put ABILITY witness (`counterPut.test.ts`, "Once during your turn,
+// … during this turn, attacks used by this Pokémon do 120 more damage …"), which
+// the `^` and the capital "During your next turn" keep out — driven in
+// `everyAttackBoost.test.ts` §1, not argued.
+const SELF_EVERY_ATTACK_BOOST =
+  /^(Both Active Pokémon are now Asleep\. )?During your next turn, attacks used by this Pokémon do (\d+) more damage to your opponent['’]s Active Pokémon \(before applying Weakness and Resistance\)\.$/;
 // ── D157: the PER-ATTACK lock pointed ACROSS THE TABLE, with the address CHOSEN ──
 //
 // "Choose 1 of your opponent's Active Pokémon's attacks. During your opponent's
@@ -28908,6 +28960,41 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
       return [
         { op: "boostAttack", attack: foldApostrophes(match[1] ?? ""), amount, base: true },
       ];
+    }
+  }
+
+  // 24b''. 🆕🆕🆕 D546 — "[Both Active Pokémon are now Asleep. ]During your next turn,
+  //        attacks used by this Pokémon do {N} more damage to your opponent's Active
+  //        Pokémon (before applying Weakness and Resistance)." — the ALL-ATTACKS mode of
+  //        arm 24b's address, 2 legal printings (`censusAttackCorpus.ts:148`, and `:76`
+  //        with the Sleep prefix — no catalog id on this checkout, measured). It sits
+  //        beneath 24b/24b' because the three share the holder, the window, the op and
+  //        the RECORD; this one has no NAME, so it emits `attack: null` and the installer
+  //        writes `attackIndex: null`, which the additive reader pays on EVERY index.
+  //        The anchors are disjoint in both directions, so the order between the three
+  //        decides nothing (`everyAttackBoost.test.ts` §1).
+  //
+  //        `amount >= 1`, 24b's guard verbatim, and here it is ALSO load-bearing for
+  //        D544's D456 argument: every additive producer carries `amount >= 1`, so the
+  //        `{turn, attackIndex, amount: 0}` a stripped base record leaves stays a byte
+  //        string no surviving path writes (apps/api match.ts, D544/D546).
+  //
+  //        With the prefix: two shipped `applyStatus` ops in PRINTED order, DEFENDER
+  //        FIRST (D414's `BOTH_ACTIVES_KO`: "Both Active Pokémon" → defender, then
+  //        self), then the boost. Each is its own op, so a §11 shield on the defender
+  //        refuses only the defender half and the holder still falls Asleep.
+  match = SELF_EVERY_ATTACK_BOOST.exec(effect);
+  if (match !== null) {
+    const amount = Number(match[2]);
+    if (amount >= 1) {
+      const boost: EffectOp = { op: "boostAttack", attack: null, amount };
+      return match[1] === undefined
+        ? [boost]
+        : [
+            { op: "applyStatus", target: "defender", status: "asleep" },
+            { op: "applyStatus", target: "self", status: "asleep" },
+            boost,
+          ];
     }
   }
 

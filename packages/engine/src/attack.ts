@@ -2937,11 +2937,18 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
     // above, through `boostedAttackBase`), and the boundary is the ADDRESS: the
     // record names an attack INDEX, and `index` is in scope here and nowhere else
     // (`EffectContext` carries no attack index, so the interpreter's three damage
-    // sites structurally cannot ask). ~~Unreachable rather than merely unbuilt —
+    // sites structurally cannot ask — 🆕🆕🆕 D546: they cannot ask for a NAMED index,
+    // but `snipeActive` now reads the ALL-ATTACKS record, `attackIndex: null`, which
+    // needs no index, through `everyAttackBoostOf`; so the additive amount has TWO read
+    // sites, this one for every record and that one for null-index records only).
+    // ~~Unreachable rather than merely unbuilt —
     // the one printing's boosted attack does its whole damage through the printed
-    // `damage` field and derives no damage-dealing op at all.~~ 🆕🆕 D544 — FOUR
-    // legal sentences write this record, 8 printings (measured by deriving
-    // `legalAttackCorpus()`): THREE ADDITIVE — Echoed Voice "80 more"
+    // `damage` field and derives no damage-dealing op at all.~~ 🆕🆕 D544 — ~~FOUR
+    // legal sentences write this record, 8 printings~~ (🆕🆕🆕 D546: SIX sentences /
+    // 10 printings — FIVE ADDITIVE, the two new ones ALL-ATTACKS (`:76`, `:148`, 1
+    // each, `attack: null`, whose real attacks are UNMEASURED), plus the one
+    // BASE-SET; the list that follows is D544's) (measured by deriving
+    // `legalAttackCorpus()`): ~~THREE ADDITIVE~~ THREE NAMED ADDITIVE — Echoed Voice "80 more"
     // (`censusAttackCorpus.ts:165`, 3: Meloetta ex `sv10.5b-044`/`-159`/`-167`,
     // D277's registry rows), Meteor Mash (`:167`, 2), Tornado Rush (`:168`, 1) —
     // and ONE BASE-SET, Hyper Fang (`:166`, 2); D155's Seismitoad `sv03-052`

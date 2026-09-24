@@ -2169,6 +2169,10 @@ export function lockedAttackIndexes(state: GameState, pokemon: InPlayPokemon): n
     | Asks     | WHICH attack is barred    | HOW MUCH this attack gains     |
     | Read by  | the §8 gate + 2 projections | the §8.5 main hit, once      |
 
+    (🆕🆕🆕 D546: and a NULL-index — all-attacks — record is read a second time, at
+    `snipeActive`, through `everyAttackBoostOf` below; this reader now pays a null
+    index on EVERY index.)
+
     ⚠️ IT TAKES THE INDEX AND RETURNS THE NUMBER, WHICH IS D154's SHAPE ARGUMENT
     RUN AND ANSWERED THE OTHER WAY — and that inversion is the reason the two
     readers are two functions rather than one generic. That one returns an INDEX
@@ -2181,17 +2185,22 @@ export function lockedAttackIndexes(state: GameState, pokemon: InPlayPokemon): n
     pattern, opposite signature — decided by the call sites both times.
 
     ⚠️ ONE READ SITE (per key: `attack.ts`'s main hit reads `amount` here and, since
-    D544, `base` through `boostedAttackBase` at its `parseAttackDamage` line), AND
+    D544, `base` through `boostedAttackBase` at its `parseAttackDamage` line; 🆕🆕🆕 D546:
+    plus `snipeActive`'s read of a NULL-index `amount` through `everyAttackBoostOf`), AND
     THE BOUNDARY IS THE ADDRESS RATHER THAN A CHOICE. D149's
     debuff reaches all FOUR pre-W/R sites because it is a fact about a BODY; this
     is a fact about a DECLARATION, and only `attack.ts`'s main hit knows which
     attack was declared — `EffectContext` carries `seat`, `sourceUid` and
     `invokedBy` and no index, so the interpreter's three damage sites (`snipeActive`,
-    `spreadDamage`, `placeSnipe`'s `deals` arm) structurally cannot ask. ~~Unreachable
+    `spreadDamage`, `placeSnipe`'s `deals` arm) structurally cannot ask (🆕🆕🆕 D546: for
+    a NAMED index; the all-attacks record needs none, and `snipeActive` asks for it). ~~Unreachable
     today rather than merely unbuilt: the one printing's boosted attack does its
     whole damage through the printed `damage` field and derives no damage-dealing
-    op at all.~~ 🆕🆕 D544 — FOUR legal sentences write this record, 8 printings
-    (measured by deriving `legalAttackCorpus()`): THREE ADDITIVE — Echoed Voice
+    op at all.~~ 🆕🆕 D544 — ~~FOUR legal sentences write this record, 8 printings~~
+    (🆕🆕🆕 D546: SIX sentences / 10 printings — FIVE ADDITIVE, the two new ones
+    ALL-ATTACKS, `:76` and `:148`, 1 each, whose real attacks are UNMEASURED — plus
+    the one BASE-SET; the list below is D544's)
+    (measured by deriving `legalAttackCorpus()`): THREE NAMED ADDITIVE — Echoed Voice
     "80 more" (`censusAttackCorpus.ts:165`, 3: Meloetta ex `sv10.5b-044`/`-159`/
     `-167`, D277's registry rows), Meteor Mash (`:167`, 2), Tornado Rush (`:168`,
     1) — and ONE BASE-SET, Hyper Fang (`:166`, 2). (D155's Seismitoad `sv03-052`
@@ -2224,7 +2233,38 @@ export function boostedAttackDamage(
   // field is REQUIRED and a record written before it existed is retired by
   // MATCH_RECORD_VERSION rather than read benignly here (D124's rule).
   const boost = pokemon.boostedAttack;
-  return boost === null || boost.turn !== state.turn || boost.attackIndex !== index
+  // 🆕🆕🆕 D546 — a `null` index is the ALL-ATTACKS buff ("attacks used by this
+  // Pokémon", `censusAttackCorpus.ts:148`/`:76`) and pays on EVERY index. ⚠️ `tsc`
+  // CANNOT SEE THIS LINE: the D155 spelling `boost.attackIndex !== index` still
+  // compiles against `number | null` and silently pays 0 on every all-attacks
+  // record — only a board kills it (`D546-reader-pays-null-nowhere`).
+  return boost === null ||
+    boost.turn !== state.turn ||
+    (boost.attackIndex !== null && boost.attackIndex !== index)
+    ? 0
+    : boost.amount;
+}
+
+/** 🆕🆕🆕 §8.5 (D546) — the ALL-ATTACKS buff live on `pokemon` right now, or 0 —
+    the amount of a `boostedAttack` record whose `attackIndex` is `null` ("During
+    your next turn, attacks used by this Pokémon do 120 more damage to your
+    opponent's Active Pokémon (before applying Weakness and Resistance).",
+    `censusAttackCorpus.ts:148` and `:76`, 2 legal printings). A NAMED record answers
+    0 here, whatever its index.
+
+    WHY A SECOND READER AND NOT `boostedAttackDamage` WITH A SENTINEL INDEX: its one
+    caller is `interpreter.ts`'s `snipeActive`, whose `EffectContext` carries NO
+    attack index — so it cannot ask "this attack's buff", only "the buff every attack
+    carries". The printed scope "to your opponent's Active Pokémon" is exactly
+    Vitality Band's, which that site already honours, so an all-attacks record is
+    folded there beside `attackerPreWRBonus`; the NAMED boost still is not (no index
+    in ctx — pre-existing, D155), and `spreadDamage` / `placeSnipe` omit every pre-W/R
+    BONUS by design (D149), so they do not read this. Immune to §9 like its siblings:
+    it reads an attack INSTALLATION, not `passivesOf`. docs/decisions.md D546 records
+    the fold and its reversal condition. */
+export function everyAttackBoostOf(state: GameState, pokemon: InPlayPokemon): number {
+  const boost = pokemon.boostedAttack;
+  return boost === null || boost.turn !== state.turn || boost.attackIndex !== null
     ? 0
     : boost.amount;
 }
@@ -2242,6 +2282,10 @@ export function boostedAttackDamage(
     principle name and the caller spells the fallback as `?? printedBase` — so
     "absent" and "zero" must not be one value. A record without `base` (every
     additive install, and every record a v30 deploy wrote) answers `null`.
+    🆕🆕🆕 D546 — so does an ALL-ATTACKS record (`attackIndex: null`), on every
+    index, through the UNCHANGED `attackIndex !== index` compare below — and that is
+    right, not an oversight, because such a record never carries `base`: the
+    installer refuses `{ attack: null, base: true }` whole.
 
     ONE CALLER, `attack.ts`'s `parseAttackDamage` line — the ONLY caller of that
     parser — so the override reaches `scaledBase`, every reading-borne program's

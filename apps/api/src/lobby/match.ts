@@ -1190,7 +1190,9 @@ export interface MatchRecord {
       · **D441 — the ABSENT key still means what a v30 writer meant.** Every v30
         `boostedAttack` is ADDITIVE (`{turn, attackIndex, amount}`, D155's template —
         three legal sentences, Echoed Voice, Meteor Mash and Tornado Rush, measured by
-        deriving `legalAttackCorpus()`), and absent `base` reads as "no override" — `boostedAttackBase` answers
+        deriving `legalAttackCorpus()` — 🆕🆕🆕 D546: FIVE additive sentences now, the
+        two ALL-ATTACKS ones (`:76`, `:148`) writing `attackIndex: null`, see the D546
+        paragraph below; a v30 record still carries a NUMBER there), and absent `base` reads as "no override" — `boostedAttackBase` answers
         `null` and `attack.ts` falls back to the printed base. Exactly the v30 meaning.
       · **D434 — the rest is OLD.** `turn`, `attackIndex` and `amount` were all written
         by the v30 deploy; the new key sits beside three old ones.
@@ -1207,8 +1209,9 @@ export interface MatchRecord {
         composite `{amount > 0, base}` — a base and an additive install merged on one
         address — does NOT have that property: stripped, it leaves an ordinary-looking
         additive record and pays the printed base plus the bonus. It is unreachable off
-        any printing — the ground is the turn structure, not a count of the four legal
-        sentences that write this record (a declared attack ends the turn, and two
+        any printing — the ground is the turn structure, not a count of the ~~four~~ legal
+        sentences that write this record (🆕🆕🆕 D546: SIX now, measured —
+        `attackBaseOverride.test.ts` §1) (a declared attack ends the turn, and two
         installs merge only when they name the same index for the same stamped turn) —
         which is why it is priced here and pinned (§9 of the same suite)
         rather than designed around.
@@ -1218,8 +1221,10 @@ export interface MatchRecord {
     optional — a sibling of six required durated fields read through `=== null` — and a
     record SHARED with `lockedAttack`, whose §8 gate REFUSES the index this one pays.
     Neither is what D544 does: `boostedAttack` stays REQUIRED and null-read (the null
-    reader is untouched), the new key is optional INSIDE a present record, and BOTH modes
-    PAY the named attack — the §8 gate never reads this record at all. The refusal's
+    reader is untouched), the new key is optional INSIDE a present record, and ~~BOTH modes
+    PAY the named attack~~ 🆕🆕🆕 (D546: all THREE modes PAY — the named additive, the
+    named base-set, and the all-attacks buff, which names no attack and pays every one)
+    — the §8 gate never reads this record at all. The refusal's
     grounds are about the field and the gate; this key touches neither.
 
     🛑 **WHAT WOULD REVERSE THIS (D422).** A second base-set producer with no
@@ -1231,6 +1236,62 @@ export interface MatchRecord {
     ⚠️ Nothing else persisted moved: `EffectOp.boostAttack` gains an optional
     `base?: true` (D125/D334's widening — the op never parks, so it never reaches
     `phase.cont`), and `GameEvent.ATTACK_BOOSTED` gains `base?: true` (a `GameEvent` is not
+    persisted; D141). No schema, redact, projection or client byte.
+
+    🆕🆕🆕 **STAYS 30 AT D546 — THE SAME ADDRESS AGAIN, AND THIS TIME AN OLD KEY'S VALUE
+    WIDENS.** Written out in full rather than inherited from D544's block, because the
+    sentence prints a DURATION ("During your next turn"), which is exactly the class
+    `conventions.md` (*"does the sentence print a duration or a schedule?"*) says can force
+    a bump — so the argument is owed, not assumed.
+
+    🛑 **THE ADDRESS, NAMED FIRST (D456's rule).** `BoostedAttack.attackIndex: number` →
+    `number | null` (types.ts) — the printed *"During your next turn, attacks used by this
+    Pokémon do 120 more damage to your opponent's Active Pokémon (before applying Weakness
+    and Resistance)."* (`censusAttackCorpus.ts` file line 148) and the same sentence behind
+    *"Both Active Pokémon are now Asleep."* (file line 76), 2 sentences / 2 legal printings.
+    `null` means EVERY attack index. The record is `InPlayPokemon.boostedAttack`, inside
+    `PlayerSide.{active, bench[]}`, inside `GameState.players`, inside `MatchRecord.state` —
+    PERSISTED ON EVERY SAVE with no park in front of it. The KEY stays REQUIRED; only its
+    VALUE set widens.
+
+      · **D441 — every v30 value keeps its meaning.** Every v30 `attackIndex` is a NUMBER
+        (the v30 installer resolved a printed name or wrote nothing), and a number still
+        means "that one attack" to every reader: `boostedAttackDamage` pays it on that
+        index only, `boostedAttackBase` answers for that index only. Nothing a v30 deploy
+        wrote reads differently here.
+      · **D434 — the rest is OLD.** `turn` and `amount` are written exactly as before
+        (`state.turn + 2`, the printed number); no key was added or renamed.
+      · **D456 — the NEW value is detectable in the bytes and inert under a rollback.**
+        `"attackIndex":null` is written by NO v30 writer, so a record carrying it is
+        identifiably this deploy's. A ROLLBACK deploy reading it computes
+        `boost.attackIndex !== index` → `null !== index` → true and pays **0** on every
+        index — the buff is lost, never mis-paid onto one attack — its installer
+        overwrites the record on the holder's next install, and the turn stamp retires it
+        after its one window anyway, so it is inert on the board.
+        Its `boostedAttackBase` answers `null` for the same reason, and no all-attacks
+        record carries `base` (this deploy's installer REFUSES `{attack: null, base:
+        true}`). The FORWARD half is driven over SERIALIZED BYTES in
+        `everyAttackBoost.test.ts` §9 (this deploy's null record round-trips and pays
+        every index; a numbered v30 record still pays one). The ROLLBACK half is driven
+        by the mutant `D546-reader-pays-null-nowhere`, whose replace is 8e2cdfe7's
+        `boostedAttackDamage` line byte for byte: with the v30 expression inside the
+        engine, the null record pays 0 on every index and the boards of §3 and §9 go
+        red. §9's own rollback test re-computes that expression locally and is an
+        ILLUSTRATION only — no engine change can turn it red.
+      · **D544's D456 argument is UNMOVED**: arm 24b'' carries 24b's `amount >= 1` guard
+        verbatim, so every additive producer — named or all-attacks — still writes
+        `amount >= 1`, and `{turn, attackIndex, amount: 0}` stays unauthorable
+        (`attackBaseOverride.test.ts` §10 now enumerates FIVE additive amounts, all >= 1).
+
+    🛑 **WHAT WOULD REVERSE THIS (D422).** A reader that must distinguish "every attack"
+    from a NAMED index at a GATE (§8 declaration or §11 refusal — a rollback deploy would
+    then answer that gate wrongly rather than inertly), or ANY second meaning given to a
+    `null` index (a v31 reader could not tell which a stored `null` meant). Either one
+    makes this a 30 → 31 bump.
+
+    ⚠️ Nothing else persisted moved: `EffectOp.boostAttack.attack` widens to `string |
+    null` (the op never parks, so it never reaches `phase.cont`, D334), and
+    `GameEvent.ATTACK_BOOSTED.attack` widens to `string | null` (a `GameEvent` is not
     persisted; D141). No schema, redact, projection or client byte.
 
     🆕🆕🆕 **29 → 30 AT D501 — AND IT IS THE FIRST FIELD EVER ADDED TO

@@ -12184,7 +12184,13 @@ stamped field, read through `boostedAttackDamage(state, pokemon, index)`.
 the shape.** Strip `amount` and you have `LockedAttack` byte for byte. And D154's
 own separation ground is *unavailable*: the bar and the buff are printed on
 different cards, and a body installs at most one rider per turn, so the two
-**cannot be live together off any printing**. D154 separated `lockedAttack` from
+**cannot be live together off any printing** (🆕🆕🆕 **D546 re-read:** true of the
+SELF-installed bar only. D157's OPPONENT-chosen bar (`preventChosenAttack`, stamped
+`turn + 1` on the opponent's turn) always could land in the holder's `turn + 2` window
+beside a buff, and beside an ALL-ATTACKS buff the barred index is necessarily a buffed
+one. The READ ground below decides it unchanged: the §8 gate refuses the barred attack
+and the buff pays the others — driven, `everyAttackBoost.test.ts` §7; docs/decisions.md
+D546). D154 separated `lockedAttack` from
 `attackLockedTurn` on exactly that reachability.
 
 So the refusal is made on the **READ**, which is the axis this family had not been
@@ -12255,16 +12261,28 @@ attached: one row, `bonus: 110`, one `· boosted +110` crumb.
 > read of the ADDITIVE `amount` (`boostedAttackDamage`, `attack.ts:2909`) and ONE read
 > of the BASE-SET key (`boostedAttackBase`, `attack.ts:1540`, the `parseAttackDamage`
 > line). The heading is kept as written (D178); the paragraph below is restated in place.
+>
+> 🆕🆕🆕 **D546:** and a SECOND read of the additive `amount` now exists for the
+> ALL-ATTACKS record (`attackIndex: null`, *"During your next turn, attacks used by this
+> Pokémon do 120 more damage to your opponent's Active Pokémon (before applying
+> Weakness and Resistance)."*, `censusAttackCorpus.ts:148` and `:76`): `snipeActive`
+> folds it beside `attackerPreWRBonus` through `everyAttackBoostOf`, because a null
+> index needs no index from `EffectContext` and the printed scope is the Active.
+> `spreadDamage` and `placeSnipe` still read nothing (D149's no-bonus rule). The named
+> boost is still NOT folded at `snipeActive` (no index in ctx). docs/decisions.md D546.
 
 D149's debuff reaches all FOUR pre-W/R sites because it is a fact about a **BODY**.
 This is a fact about a **DECLARATION**, and only `attack.ts`'s main hit knows the
 declared index: `EffectContext` carries `seat`, `sourceUid` and `invokedBy` and **no
 index**, so `snipeActive`, `spreadDamage` and `placeSnipe`'s `deals` arm
-structurally cannot ask. ~~**Unreachable rather than merely unbuilt** — the one
+structurally cannot ask (🆕🆕🆕 D546: for a NAMED index; see the note above). ~~**Unreachable rather than merely unbuilt** — the one
 printing's boosted attack does its whole damage through the printed `damage` field
-and derives no damage-dealing op at all.~~ 🆕🆕 **D544:** **FOUR** legal sentences
-write this record, **8** printings (measured by deriving `legalAttackCorpus()`):
-THREE ADDITIVE — Echoed Voice *"80 more"* (`censusAttackCorpus.ts:165`, 3: Meloetta
+and derives no damage-dealing op at all.~~ 🆕🆕 **D544:** ~~**FOUR** legal sentences
+write this record, **8** printings~~ (🆕🆕🆕 **D546: SIX sentences / 10 printings** —
+FIVE ADDITIVE, the two new ones ALL-ATTACKS, `:76` and `:148`, 1 each, whose real
+attacks are UNMEASURED — plus the one BASE-SET; the list that follows is D544's)
+(measured by deriving `legalAttackCorpus()`):
+THREE NAMED ADDITIVE — Echoed Voice *"80 more"* (`censusAttackCorpus.ts:165`, 3: Meloetta
 ex `sv10.5b-044`/`-159`/`-167`, D277's registry rows), Meteor Mash (`:167`, 2) and
 Tornado Rush (`:168`, 1) — and ONE BASE-SET, Hyper Fang (`:166`, 2). D155's
 Seismitoad `sv03-052` prints *"100 more"* and is a local-D1 printing, **not** a

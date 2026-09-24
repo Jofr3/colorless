@@ -3370,7 +3370,11 @@ import type { GameState, Seat } from "./types";
     strip `amount` and you have `LockedAttack` byte for byte — and D154's own
     ground (two facts, one record, one write) is unavailable, because the bar and
     the buff are printed on different cards and CANNOT be live together off any
-    printing. So the refusal is made on the **READ**, which is the axis this family
+    printing (🆕🆕🆕 D546 re-read: true of the SELF-installed bar only — D157's
+    OPPONENT-chosen bar, stamped `turn + 1` from the opponent's turn, lands in the
+    holder's `turn + 2` window beside any buff, and beside an ALL-ATTACKS buff the barred
+    index is necessarily a buffed one; the READ ground is what decides it either way,
+    driven in `everyAttackBoost.test.ts` §7). So the refusal is made on the **READ**, which is the axis this family
     had not been separated on: `lockedAttackIndex`'s consumer REFUSES the index it
     returns and `boostedAttackDamage`'s PAYS it, so one field would hand
     `attack.ts`'s §8 gate the index of the attack the card just bought. **Driven on
@@ -3382,6 +3386,10 @@ import type { GameState, Seat } from "./types";
     `parseAttackDamage` line. That is a second PAYING mode on the same address, so the
     READ-site ground above — one consumer refuses the index, this one pays it — is
     untouched: the §8 gate still never reads `boostedAttack`, in either mode.
+    🆕🆕🆕 **D546 — AND A THIRD PAYING MODE, SAME ANSWER.** `attackIndex: null` (the
+    printed *"During your next turn, attacks used by this Pokémon do 120 more damage to
+    your opponent's Active Pokémon …"*) PAYS every index; it still refuses none, and the
+    §8 gate still never reads this record.
     `MATCH_RECORD_VERSION` **9 → 10** — a REQUIRED key on `InPlayPokemon`, D124's
     trigger for the EIGHTH time and the first on two consecutive slices.
 
@@ -3405,13 +3413,18 @@ import type { GameState, Seat } from "./types";
     second field is justified by the opposite DIRECTION rather than by provenance.
     Driven with Vitality Band attached: one row, `bonus: 110`, one crumb.
 
-    ⚠️ **ONE READ SITE, AND THE BOUNDARY IS THE ADDRESS.** D149's debuff reaches all
+    ⚠️ **ONE READ SITE, AND THE BOUNDARY IS THE ADDRESS** (🆕🆕🆕 D546: for a NAMED index —
+    the ALL-ATTACKS record, `attackIndex: null`, needs no index and is read a second time
+    at `snipeActive` through `everyAttackBoostOf`, beside Vitality Band). D149's debuff reaches all
     four pre-W/R sites because it is a fact about a BODY; this is a fact about a
     DECLARATION, and only `attack.ts`'s main hit knows the declared index —
     `EffectContext` carries `seat`, `sourceUid` and `invokedBy` and no index.
     ~~Unreachable rather than unbuilt: the one printing's boosted attack does its
     whole damage through the printed `damage` field and derives no damage-dealing
-    op.~~ (🆕🆕 D544: FOUR legal sentences write this record, 8 printings, measured
+    op.~~ (🆕🆕 D544: ~~FOUR legal sentences write this record, 8 printings~~ — 🆕🆕🆕 D546:
+    SIX sentences / 10 printings, the two new ones ALL-ATTACKS (`:76`, `:148`, 1 each) and
+    folded at `snipeActive` too, see `everyAttackBoostOf`; the rest of this note is D544's
+    population, measured
     by deriving `legalAttackCorpus()` — THREE ADDITIVE, Echoed Voice ×3 (Meloetta
     ex `sv10.5b-044`/`-159`/`-167`), Meteor Mash ×2 and Tornado Rush ×1, and ONE
     BASE-SET, Hyper Fang ×2; D155's Seismitoad `sv03-052` is a local-D1 printing,
@@ -3420,9 +3433,12 @@ import type { GameState, Seat } from "./types";
     is the printed field; for the other five it is UNMEASURED — no registry,
     `catalogManifest` or `testFixtures` id carries their names — and an op-borne
     part of their damage would see neither the buff nor the override.) A printing that boosts an attack whose damage comes from an OP would earn
-    `EffectContext` an attack index. (🆕🆕 D544: now ONE read site PER KEY — the record's
+    `EffectContext` an attack index. (🆕🆕 D544: ~~now ONE read site PER KEY~~ — the record's
     optional `base` is read once too, at `attack.ts`'s `parseAttackDamage` line, through
-    `boostedAttackBase`; the boundary is still the ADDRESS, and it is the same line.)
+    `boostedAttackBase`; the boundary is still the ADDRESS, and it is the same line.
+    🆕🆕🆕 D546: `base` keeps its ONE read site, but the additive `amount` now has TWO —
+    `attack.ts`'s main hit, and `snipeActive` for a NULL-index record through
+    `everyAttackBoostOf`.)
 
     ⚠️ **IT GATES NO ACTION, CHECKED RATHER THAN ASSUMED** — the question D154 was
     the first durated field to owe. Both projections publish the attack's PRINTED
@@ -3435,7 +3451,9 @@ import type { GameState, Seat } from "./types";
     ⚠️ **THE §D147/§D152/§D154 `attackBlock` UNION IS RE-DERIVED AND STILL NO.** The
     earning condition D154 left is an ENUMERATING caller. There is still none: this
     field's only reader (🆕🆕 D544: two readers now, one per key, and each still asks
-    for exactly one thing about one index) asks for exactly one kind, and the slice adds a SEVENTH
+    for exactly one thing about one index; 🆕🆕🆕 D546: three, the third,
+    `everyAttackBoostOf`, asking only whether an ALL-ATTACKS record is live — still one
+    kind, still no enumerating caller) asks for exactly one kind, and the slice adds a SEVENTH
     stamped field without adding a site that receives a rider whose kind it does
     not know. What it does add is the first pair of records in the family that are
     a key apart — the case a union looks most attractive for — and the separation
@@ -3549,7 +3567,8 @@ import type { GameState, Seat } from "./types";
     index this one refuses — so the two decisions are consistent rather than in
     tension, and both were decided by the read site (🆕🆕 D544: still consistent —
     `boostedAttack`'s new BASE-SET key is a second mode that also PAYS the index, so
-    the read-site test answers the same way). The OP is separate because
+    the read-site test answers the same way; 🆕🆕🆕 D546: and so does the ALL-ATTACKS
+    mode, `attackIndex: null`, which pays every index and refuses none). The OP is separate because
     D131's widen-don't-add test FAILS on it: `preventAttackUse` REQUIRES its
     printed noun, so `{ target: "defender" }` with no `attack` is not that op minus
     a key. **And the sharper half: this op returns a `park` from `stepOp` where
@@ -3983,7 +4002,8 @@ import type { GameState, Seat } from "./types";
     `attackBlock` union stays DECLINED; D155's `boostedAttack` refusal is untouched
     and sharpened — the list holds only addresses the gate REFUSES. (🆕🆕 D544: still
     so — the `base?` key D544 added to `boostedAttack` is a mode that PAYS, never an
-    address the gate refuses, so nothing crosses between the two records.)
+    address the gate refuses, so nothing crosses between the two records. 🆕🆕🆕 D546:
+    likewise the all-attacks `attackIndex: null`, a paying address over every index.)
 
     `MATCH_RECORD_VERSION` **10 → 11**: the eighth time on D124's trigger and the
     FIRST that is a CHANGED TYPE rather than a new key, which is where *"can the
@@ -20078,6 +20098,61 @@ import type { GameState, Seat } from "./types";
     `expect(manifest.version)`, `it(…)` titles, the declaration and `package.json` —
     **not** as a value-keyed grep — because a value-keyed grep is precisely the mechanism
     that ate D500's heading.)
+    🆕🆕🆕 engineVersion 0.430.0 → **0.431.0** (D546 — THE ALL-ATTACKS NEXT-TURN BUFF, A NULL
+    ADDRESS ON THE OP AND THE RECORD THAT ALREADY OWNED THE WINDOW, AND A FOLD AT THE ONE
+    SNIPE SITE THAT HONOURS THE ACTIVE'S PRE-W/R BONUS. `censusAttackCorpus.ts` **file lines
+    148 and 76** (leading count column `1` each) — *"During your next turn, attacks used by
+    this Pokémon do 120 more damage to your opponent's Active Pokémon (before applying
+    Weakness and Resistance)."* and the same sentence at 100 behind *"Both Active Pokémon are
+    now Asleep."*, **2 sentences / 2 legal printings**, both `OPAQUE` at `SUBMAX=12` and
+    `UNEXPLAINED` + `CONTINUOUS` at `SUBMAX=4`. Claimed WHOLE by `deriveAttackEffect` through
+    ONE new anchor (`SELF_EVERY_ATTACK_BOOST`, ONE `['’]` slot, the Sleep sentence an
+    OPTIONAL prefix group) and ONE new arm (24b'') emitting the SHIPPED `boostAttack` op with
+    `attack: null` — and, with the prefix, two shipped `applyStatus` ops first, DEFENDER then
+    SELF (D414's printed order). No catalog, registry or fixture id carries either sentence
+    on this checkout (MEASURED, D425), so the suite (`everyAttackBoost.test.ts`) rides
+    file-local declared `d546-*` demonstrators in their own 60-card deck (D270); the real
+    cards' attacks, costs and damage are UNMEASURED.
+    🛑 **ONE OP, ONE INSTALLER, ONE RECORD (D165)** — no new `EffectOp` member, event type,
+    prompt or persisted key. `boostAttack.attack` and `BoostedAttack.attackIndex` each widen
+    their VALUE by `null` (the key stays required); `null` means EVERY attack index. The
+    installer writes `{ turn: T+2, attackIndex: null, amount }`; the same-address merge needs
+    no new rule (null+null → max; null vs a named index → a different address, replaced
+    outright in either order); a CONSTRUCTED `{ attack: null, base: true }` is REFUSED whole.
+    The D453 finds (the stamp and the stacking line) are byte-identical.
+    ⚠️ **TWO SITES `tsc` CANNOT SEE**: `boostedAttackDamage`'s D155 compare
+    `boost.attackIndex !== index` still compiles against `number | null` and silently pays 0
+    on every all-attacks record (now `attackIndex !== null && attackIndex !== index`), and
+    `log.ts`'s template would print the word "null" — a null branch renders "'s attacks do N
+    more damage next turn". `boostedAttackBase`'s compare is left BYTE-IDENTICAL on purpose:
+    `null !== index` answers `null`, which is right because no all-attacks record carries
+    `base`.
+    🛑 **THE `snipeActive` FOLD — A DECISION, RECORDED WITH ITS REVERSAL CONDITION
+    (`docs/decisions.md` D546).** A new exported reader `everyAttackBoostOf` (continuous.ts)
+    answers the NULL-index amount, and `snipeActive` adds it to its pre-W/R `bonus` beside
+    `attackerPreWRBonus`: the printed scope *"to your opponent's Active Pokémon"* is exactly
+    Vitality Band's, which that site already honours. NOT at `spreadDamage` or `placeSnipe`
+    (D149's no-bonus rule; the Bench). The NAMED boost is still not folded there (no index in
+    `EffectContext` — pre-existing). Whether either real card prints a snipe is UNMEASURED.
+    `attack.ts` needs no code: the index fold pays every index, and the `scaledBase +
+    scaledTotal > 0` block gives "no boost on a no-damage attack" — reachable for the first
+    time here, and pinned.
+    🛑 **`MATCH_RECORD_VERSION` STAYS 30, ARGUED AT THE ADDRESS** (`apps/api/src/lobby/match.ts`,
+    the D546 paragraph beside D544's): every v30 `attackIndex` is a number and keeps its
+    meaning (D441); `turn` and `amount` are old (D434); `"attackIndex":null` is written by no
+    v30 writer, so it is detectable in the bytes, and a ROLLBACK deploy computes `null !==
+    index` and pays 0 — inert (D456). Reversal condition (D422): a reader that must tell
+    "every" from a named index at a GATE, or any second meaning for a null index.
+    Census: reader 568/1619 → 570/1621, residue 42/57 → 40/55, raw residue 72/113 → 70/111,
+    `BUILT.attack` 1675 → 1677; registry 10/16, gate 9/19, trailing 11/21, `SPLIT_ATTACK_UNITS`
+    19 and `attackReaderSurface()` 13 UNMOVED. `OPAQUE` 16/24 → 14/22 at `SUBMAX=12`; `OPAQUE`
+    28/40 → 26/38, `UNEXPLAINED` 11/13 → 9/11 and the `CONTINUOUS` co-marker 11/13 | 13/15 |
+    50/219 → 9/11 | 11/13 | 52/221 at `SUBMAX=4`. ⚠️ THE SENTENCE STEP AND THE PRINTING STEP
+    ARE BOTH 2 — the shape where a copied number is right by accident — so every site was
+    measured. Claims withdrawn (D539), swept by the claim: *"FOUR sentences / 8 printings"*,
+    *"three ADDITIVE"*, *"BOTH modes PAY the named attack"*, *"ONE READ SITE"* /
+    *"structurally cannot ask"* (true for a NAMED index only), and *"CANNOT be live
+    together"* (true for the SELF bar only — D157's opponent-chosen bar was always able to).)
     🆕🆕🆕 engineVersion 0.429.0 → **0.430.0** (D545 — THE TWO PRINTED COST CLAUSES, BUILT
     AS A PAIR ON THE GATE ARM, AND THE `Exclude` THAT WOULD HAVE REFUSED THEM.
     `censusAttackCorpus.ts` **file lines 316 and 324** (leading count column `1` each) —
@@ -23728,7 +23803,7 @@ import type { GameState, Seat } from "./types";
     WITNESS** — the count was re-derived every slice and the word *"three"* was carried.
     A successor of this slice inherits **81 / 61 / 17** again, over **FIVE** history
     occurrences: those four plus `deckMillFilteredScale.test.ts`'s own header arrow.) */
-export const engineVersion = "0.430.0";
+export const engineVersion = "0.431.0";
 
 export type {
   ApplyResult,

@@ -6205,7 +6205,7 @@ export const MUTANTS: Mutant[] = [
     // CORPUS QUOTES** (D414/D415), so a value-keyed sweep over `toBe("0.391.0")` cannot
     // see it — this row's `find` spells the DECLARATION, not an assertion. Run
     // `precheck` after every version bump, not after the sweep tells you.
-    find: 'export const engineVersion = "0.430.0";',
+    find: 'export const engineVersion = "0.431.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -28554,8 +28554,16 @@ export const MUTANTS: Mutant[] = [
     //    THROUGH THE GATE-SPLIT SUMMAND** (`SPLIT_ATTACK_UNITS` 17 -> 19), NOT the reader one, so
     //    the reader arm and `rawUnbuiltSentences` stand still while this constant moves.
     //    `replace` is the GENUINE pre-slice value.
-    find: "  attack: 1675,",
-    replace: "  attack: 1673,",
+    // 🆕🆕🆕 D546 - RE-TRANSCRIBED AGAIN, 1675 -> 1677 (and the replace 1673 -> 1675), off the
+    //    bytes at `censusAtHead.test.ts:464` rather than reconstructed (D540/D542). ⚠️ **THE STEP
+    //    IS 2 AND THE SENTENCE STEP IS ALSO 2** - D546's rows (corpus FILE LINES 148 and 76, the
+    //    all-attacks buff) are 2 sentences / 2 legal printings, the case where a copied number is
+    //    right BY ACCIDENT; MEASURED off the live census all the same (`SUBMAX=12 bun
+    //    scripts/residue-census.ts`: reader 570/1621). ⚠️ **THIS SLICE'S ROWS LEAVE THROUGH THE
+    //    READER SUMMAND**, unlike D545's, so the reader arm and `rawUnbuiltSentences` move WITH
+    //    this constant. `replace` is the GENUINE pre-slice value.
+    find: "  attack: 1677,",
+    replace: "  attack: 1675,",
     expectKilledBy: [
       "packages/engine/src/censusAtHead.test.ts",
     ],
@@ -34132,5 +34140,164 @@ export const MUTANTS: Mutant[] = [
     find: "      : scaledAttackDamage(active, scaling, next, defenderSeat, action.seat, cost);",
     replace: "      : scaledAttackDamage(active, scaling, next, defenderSeat, action.seat, effectiveAttackCost(state, active, declared.cost ?? []));",
     expectKilledBy: ["packages/engine/src/attackCostClause.test.ts"],
+  },
+  // ── D546 — THE ALL-ATTACKS NEXT-TURN BUFF (corpus `:148` / `:76`), a NULL address on the shipped op and record.
+  //    17 rows, one per claim: the reader `tsc` cannot see (reverted to HEAD's bytes), the log's null wording,
+  //    the zero guard, the optional prefix (required / unmatched), the printed Sleep order and its self half, the
+  //    null path's stamp, the snipe fold (dropped / leaked into the spread), the null+base refusal, the one `['’]`
+  //    slot, the caret, the installer's resolver and row, and the new reader's window and address. All probed
+  //    UNDECLARED first (D525(3)); every `replace` names only identifiers its file binds (D533).
+  {
+    id: "D546-reader-pays-null-nowhere",
+    decision: "D546",
+    what: "🛑 **`boostedAttackDamage` IS REVERTED TO ITS D155 COMPARE — THE SITE `tsc` CANNOT SEE.** `boost.attackIndex !== index` still compiles against `number | null`, and `null !== index` is true on every index, so every all-attacks record pays **0**: the op derives, the record lands, the row renders, and no hit is ever boosted. The `replace` is HEAD's bytes, checked by `cmp` (D540). Only a board kills it (§3/§9 of the suite).",
+    file: "packages/engine/src/continuous.ts",
+    find: "  return boost === null ||\n    boost.turn !== state.turn ||\n    (boost.attackIndex !== null && boost.attackIndex !== index)\n    ? 0\n    : boost.amount;",
+    replace: "  return boost === null || boost.turn !== state.turn || boost.attackIndex !== index\n    ? 0\n    : boost.amount;",
+    expectKilledBy: ["packages/engine/src/everyAttackBoost.test.ts"],
+  },
+  {
+    id: "D546-log-null-branch-dropped",
+    decision: "D546",
+    what: "⚠️ **THE NULL WORDING IS DELETED AND THE ROW FALLS TO THE NAMED TEMPLATE**, which interpolates `null` into *\"d546-buffer's null does 120 more damage next turn\"* — false twice over and invisible to `tsc` (a template literal takes any value). D421: a row whose wording is a claim owes its rider. Killed by §8.",
+    file: "packages/engine/src/log.ts",
+    find: "      if (event.attack === null) {",
+    replace: "      if (false) {",
+    expectKilledBy: ["packages/engine/src/everyAttackBoost.test.ts"],
+  },
+  {
+    id: "D546-zero-guard-opened",
+    decision: "D546",
+    what: "⚠️ **A PRINTED \"do 0 more damage\" STOPS BEING LOUD** — and it is load-bearing beyond this arm: every additive producer carrying `amount >= 1` is what keeps D544's D456 argument true (`{turn, attackIndex, amount: 0}` unauthorable). Killed by §1's zero rungs.",
+    file: "packages/engine/src/effects.ts",
+    find: "  match = SELF_EVERY_ATTACK_BOOST.exec(effect);\n  if (match !== null) {\n    const amount = Number(match[2]);\n    if (amount >= 1) {",
+    replace: "  match = SELF_EVERY_ATTACK_BOOST.exec(effect);\n  if (match !== null) {\n    const amount = Number(match[2]);\n    if (amount >= 0) {",
+    expectKilledBy: ["packages/engine/src/everyAttackBoost.test.ts"],
+  },
+  {
+    id: "D546-prefix-made-required",
+    decision: "D546",
+    what: "🛑 **THE SLEEP PREFIX BECOMES REQUIRED** — `:76` still derives and `:148`, the bare sentence and the larger buff, goes back to LOUD. Killed by §1's `:148` rung and the corpus rung.",
+    file: "packages/engine/src/effects.ts",
+    find: "  /^(Both Active Pokémon are now Asleep\\. )?During your next turn, attacks used by this Pokémon do (\\d+) more damage to your opponent['’]s Active Pokémon \\(before applying Weakness and Resistance\\)\\.$/;",
+    replace: "  /^(Both Active Pokémon are now Asleep\\. )During your next turn, attacks used by this Pokémon do (\\d+) more damage to your opponent['’]s Active Pokémon \\(before applying Weakness and Resistance\\)\\.$/;",
+    expectKilledBy: ["packages/engine/src/everyAttackBoost.test.ts"],
+  },
+  {
+    id: "D546-prefix-stops-matching",
+    decision: "D546",
+    what: "🛑 **THE PREFIX GROUP STOPS MATCHING THE PRINTED SLEEP SENTENCE** — `:148` still derives and `:76` goes back to LOUD, both Sleeps and its buff unread. Killed by §1's `:76` rung and the corpus rung.",
+    file: "packages/engine/src/effects.ts",
+    find: "  /^(Both Active Pokémon are now Asleep\\. )?During your next turn, attacks used by this Pokémon do (\\d+) more damage to your opponent['’]s Active Pokémon \\(before applying Weakness and Resistance\\)\\.$/;",
+    replace: "  /^(Xyzzy\\. )?During your next turn, attacks used by this Pokémon do (\\d+) more damage to your opponent['’]s Active Pokémon \\(before applying Weakness and Resistance\\)\\.$/;",
+    expectKilledBy: ["packages/engine/src/everyAttackBoost.test.ts"],
+  },
+  {
+    id: "D546-sleep-order-swapped",
+    decision: "D546",
+    what: "⚠️ **THE TWO SLEEPS ARE EMITTED SELF FIRST** — the board is identical and the ROWS are not: the printed \"Both Active Pokémon\" is D414's defender-then-self order (`BOTH_ACTIVES_KO`), and the log reads the holder falling asleep before the target. Killed by §1's `toStrictEqual` and §5's row order.",
+    file: "packages/engine/src/effects.ts",
+    find: "            { op: \"applyStatus\", target: \"defender\", status: \"asleep\" },\n            { op: \"applyStatus\", target: \"self\", status: \"asleep\" },\n            boost,",
+    replace: "            { op: \"applyStatus\", target: \"self\", status: \"asleep\" },\n            { op: \"applyStatus\", target: \"defender\", status: \"asleep\" },\n            boost,",
+    expectKilledBy: ["packages/engine/src/everyAttackBoost.test.ts"],
+  },
+  {
+    id: "D546-self-sleep-dropped",
+    decision: "D546",
+    what: "🛑 **THE HOLDER NEVER FALLS ASLEEP** — the half of \"Both Active Pokémon are now Asleep\" that is the card's own PRICE. The buff then always lands on an awake body and the printed trade-off disappears. Killed by §1 and §5.",
+    file: "packages/engine/src/effects.ts",
+    find: "            { op: \"applyStatus\", target: \"defender\", status: \"asleep\" },\n            { op: \"applyStatus\", target: \"self\", status: \"asleep\" },\n            boost,",
+    replace: "            { op: \"applyStatus\", target: \"defender\", status: \"asleep\" },\n            boost,",
+    expectKilledBy: ["packages/engine/src/everyAttackBoost.test.ts"],
+  },
+  {
+    id: "D546-null-path-stamps-plus-one",
+    decision: "D546",
+    what: "⚠️ **THE ALL-ATTACKS RECORD IS STAMPED `turn + 1`** — the opponent's turn, when the holder cannot attack — while the named path keeps `+ 2`. D453's window row one address over, on the null path only, so it proves the null path shares the stamp rather than having one of its own. Killed by §2's record pin and §3's window.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  const turn = state.turn + 2;\n  const existing = active.boostedAttack;",
+    replace: "  const turn = attackIndex === null ? state.turn + 1 : state.turn + 2;\n  const existing = active.boostedAttack;",
+    expectKilledBy: ["packages/engine/src/everyAttackBoost.test.ts"],
+  },
+  {
+    id: "D546-snipe-fold-dropped",
+    decision: "D546",
+    what: "🛑 **`snipeActive` STOPS FOLDING THE ALL-ATTACKS BUFF** — a chosen hit that lands on the opponent's ACTIVE pays 30 where the printed *\"to your opponent's Active Pokémon\"* says 150. The decision recorded in `docs/decisions.md` D546 with its reversal condition. Killed by §4's Active-snipe board.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      : attackerPreWRBonus(state, attacker.active, ctx.seat, target.card) +\n        everyAttackBoostOf(state, attacker.active);",
+    replace: "      : attackerPreWRBonus(state, attacker.active, ctx.seat, target.card);",
+    expectKilledBy: ["packages/engine/src/everyAttackBoost.test.ts"],
+  },
+  {
+    id: "D546-fold-leaks-into-spread",
+    decision: "D546",
+    what: "⚠️ **THE FOLD LEAKS INTO `spreadDamage`** — every benched body takes 20 + 120, the Bench a sentence scoped *\"to your opponent's Active Pokémon\"* never names, and exactly what D149's no-pre-W/R-BONUS-on-the-Bench rule refuses for Vitality Band. Killed by §4's spread board.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  const spread = Math.max(0, amount - attackerDebuff);",
+    replace: "  const spread =\n    Math.max(0, amount - attackerDebuff) +\n    (attackerTop === null ? 0 : everyAttackBoostOf(state, attackerTop.active));",
+    expectKilledBy: ["packages/engine/src/everyAttackBoost.test.ts"],
+  },
+  {
+    id: "D546-null-base-not-refused",
+    decision: "D546",
+    what: "🛑 **A CONSTRUCTED `{ attack: null, base: true }` IS INSTALLED** — the record `{ attackIndex: null, amount: 0, base }` carries a base `boostedAttackBase` never pays, and the row announces a base-damage payoff that cannot arrive (D140/D146). Killed by §7's refusal rung.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  if (attack === null && base === true) return state;\n",
+    replace: "",
+    expectKilledBy: ["packages/engine/src/everyAttackBoost.test.ts"],
+  },
+  {
+    id: "D546-opponent-slot-narrowed",
+    decision: "D546",
+    what: "⚠️ **THE ONE APOSTROPHE SLOT (\"opponent's\") LOSES ITS CURLY SPELLING** — a punctuation-normalising re-ingest drops both rows back to LOUD with every straight-quoted board still green (D136/D137). Killed by §1's per-slot rung.",
+    file: "packages/engine/src/effects.ts",
+    find: "  /^(Both Active Pokémon are now Asleep\\. )?During your next turn, attacks used by this Pokémon do (\\d+) more damage to your opponent['’]s Active Pokémon \\(before applying Weakness and Resistance\\)\\.$/;",
+    replace: "  /^(Both Active Pokémon are now Asleep\\. )?During your next turn, attacks used by this Pokémon do (\\d+) more damage to your opponent[']s Active Pokémon \\(before applying Weakness and Resistance\\)\\.$/;",
+    expectKilledBy: ["packages/engine/src/everyAttackBoost.test.ts"],
+  },
+  {
+    id: "D546-anchor-loses-caret",
+    decision: "D546",
+    what: "🛑 **THE LEADING `^` GOES AND THE ANCHOR CLAIMS SUFFIXES** — *\"Xyzzy. During your next turn, attacks used by …\"* derives a buff for a card whose leading clause the engine silently drops. Killed by §1's `Xyzzy.` rung.",
+    file: "packages/engine/src/effects.ts",
+    find: "  /^(Both Active Pokémon are now Asleep\\. )?During your next turn, attacks used by this Pokémon do (\\d+) more damage to your opponent['’]s Active Pokémon \\(before applying Weakness and Resistance\\)\\.$/;",
+    replace: "  /(Both Active Pokémon are now Asleep\\. )?During your next turn, attacks used by this Pokémon do (\\d+) more damage to your opponent['’]s Active Pokémon \\(before applying Weakness and Resistance\\)\\.$/;",
+    expectKilledBy: ["packages/engine/src/everyAttackBoost.test.ts"],
+  },
+  {
+    id: "D546-installer-resolves-null",
+    decision: "D546",
+    what: "🛑 **THE INSTALLER SENDS `null` THROUGH THE NAME RESOLVER** — no printed attack is named `\"\"`, the named path's `< 0` refusal fires, and the all-attacks install writes nothing and files no row. The sentence derives and the card does nothing. Killed by §2.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  const attackIndex = attack === null ? null : printedAttackIndex(printed, attack);",
+    replace: "  const attackIndex = printedAttackIndex(printed, attack ?? \"\");",
+    expectKilledBy: ["packages/engine/src/everyAttackBoost.test.ts"],
+  },
+  {
+    id: "D546-row-names-the-first-attack",
+    decision: "D546",
+    what: "⚠️ **THE ROW NAMES AN ATTACK FOR AN ALL-ATTACKS INSTALL** — index 0's name (\"Rev Up\"), so the log promises the bonus on ONE attack while the board pays every one: false in the direction that makes a player declare the wrong thing. Killed by §2's row pin and §8.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "    attack: attackIndex === null ? null : (printed[attackIndex]?.name ?? attack),",
+    replace: "    attack: printed[attackIndex ?? 0]?.name ?? attack,",
+    expectKilledBy: ["packages/engine/src/everyAttackBoost.test.ts"],
+  },
+  {
+    id: "D546-every-reader-ignores-turn",
+    decision: "D546",
+    what: "🛑 **`everyAttackBoostOf` FORGETS THE WINDOW** — the snipe fold pays the buff on the turn in between and on every turn after, forever. Killed by §3's T+1 rung (the reader asked directly).",
+    file: "packages/engine/src/continuous.ts",
+    find: "  return boost === null || boost.turn !== state.turn || boost.attackIndex !== null\n    ? 0\n    : boost.amount;",
+    replace: "  return boost === null || boost.attackIndex !== null\n    ? 0\n    : boost.amount;",
+    expectKilledBy: ["packages/engine/src/everyAttackBoost.test.ts"],
+  },
+  {
+    id: "D546-every-reader-pays-named",
+    decision: "D546",
+    what: "🛑 **`everyAttackBoostOf` PAYS A NAMED RECORD** — `snipeActive` then folds a boost printed on ONE attack into a hit from ANOTHER (`EffectContext` has no index to check it against), the very reason the named boost is not folded there. Killed by §4's named-not-folded board and §9's v30 record.",
+    file: "packages/engine/src/continuous.ts",
+    find: "  return boost === null || boost.turn !== state.turn || boost.attackIndex !== null\n    ? 0\n    : boost.amount;",
+    replace: "  return boost === null || boost.turn !== state.turn\n    ? 0\n    : boost.amount;",
+    expectKilledBy: ["packages/engine/src/everyAttackBoost.test.ts"],
   },
 ];

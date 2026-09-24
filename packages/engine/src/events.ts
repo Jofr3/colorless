@@ -759,12 +759,20 @@ export type GameEvent =
       a bonus. Without the key `log.ts` would render "does 240 more damage next
       turn", which is FALSE (D421: a row whose wording is a claim owes the rider).
       A WIDENING — a `GameEvent` is not persisted (`MatchRecord.log` holds the
-      RENDERED `SeatLogEntry[]`, D141) — and written only on base installs. */
+      RENDERED `SeatLogEntry[]`, D141) — and written only on base installs.
+
+      🆕🆕🆕 D546 — `attack: string | null`: `null` announces an ALL-ATTACKS install
+      ("During your next turn, attacks used by this Pokémon do 120 more damage to
+      your opponent's Active Pokémon …", `censusAttackCorpus.ts:148`/`:76`), which
+      names no attack. `log.ts` renders it "'s attacks do N more damage next turn";
+      the named wording would be FALSE of it (D421), and a template literal would
+      print the word "null" — a site `tsc` cannot see, pinned by a log rung and a
+      mutant. A widening of a non-persisted event (D141). */
   | {
       type: "ATTACK_BOOSTED";
       seat: Seat;
       uid: string;
-      attack: string;
+      attack: string | null;
       amount: number;
       base?: true;
     }
