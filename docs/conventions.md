@@ -8272,7 +8272,9 @@ reads `PID 1580043 / PPID 1 / SID 1580043`.
 🛑 **And write the read INTO THE LOG, in the same command that starts the sweep.** A sidecar has to be tied
 to its log by arithmetic over mtimes afterwards; a line inside the artefact needs no arithmetic to tie it to
 the artefact. That one-line fix has now been deferred through eight close-outs, each of which paid the
-arithmetic instead.
+arithmetic instead. 🆕 (D547 close-out) **PAID at D547, after thirteen deferrals, and NOT in the `$!` form
+every deferral wrote down**: that form reads a wrapper which has already exited. See *"Put the `ps` read
+INTO the log"* below for the recipe that works.
 
 ### Building a slice in a SECOND CHECKOUT: `realpath` the workspace package, and a clean merge is not a reconciliation (D541)
 
@@ -8369,6 +8371,39 @@ for l in node_modules/@luminous/* */*/node_modules/@luminous/*; do realpath "$l"
 ```
 
 Build a worktree's nested `node_modules` as real directories, never as symlinks to the main checkout's.
+
+### Put the `ps` read INTO the log with `$$` and `exec` inside the `setsid --fork`, never with `$!` (D547 close-out, completing D541's recipe)
+
+D541's section above says to write the detachment read INTO the log in the same command that starts the
+sweep. Thirteen close-outs deferred it, and every one of them wrote the owed form down as
+`ps -eo pid,ppid,sid -p $!`. 🛑 **That form cannot work under `setsid --fork`, which D541 made mandatory.**
+`$!` is the pid of the `setsid(1)` WRAPPER. With `--fork` the wrapper forks, the CHILD calls `setsid(2)` and
+`exec`s the program, and the wrapper exits at once. By the time `ps -p $!` runs there is no such process,
+so it prints a header and no row. Measured at the D547 close-out with a dummy:
+`setsid --fork sleep 7 &` gave `$!` = 1987953, `ps -p 1987953` returned no row, and the sleep was
+1987955 (`PPID 1`, `SID 1987955`). If the thirteenth deferral had been paid in the form it was written,
+it would have written an empty table into the log.
+
+**Take the read from INSIDE the new session, then `exec` so the pid is kept:**
+
+```
+setsid --fork sh -c 'ps -o pid,ppid,sid,cmd -p $$; date -Is; exec bun scripts/mutation/run.ts' > tmp/sweep-DNNN.log 2>&1 < /dev/null
+```
+
+(the single quotes matter: `$$` must be expanded by the inner `sh`, not the launching shell). `$$` is the
+inner shell, which already IS the detached session leader, and `exec` replaces it with `bun` under the same
+pid. So the log opens with three lines: `ps`'s own header (`PID PPID SID CMD`, since `ps -o` prints one),
+then the row naming the sweep's own pid, with `CMD sh -c …` because it was read before the `exec`, then on
+line 3 the `date -Is` stamp, the launch time to the second. No mtime arithmetic is needed to tie the row
+to the log. D547's log reads `PID PPID SID CMD` on :1, `1776886 / 1 / 1776886` on :2 and
+`2026-09-24T11:40:57+02:00` on :3. A sidecar taken
+afterwards with `ps -o pid,ppid,sid,cmd -p 1776886` reads the SAME pid with `CMD bun scripts/mutation/run.ts`.
+That is the `exec` observed, not assumed.
+
+⚠️ **Key any sidecar on the pid (`-p <pid>`), never on the command name (`-C bun`).** A name match picks up
+every other `bun` on the box. That is where the stray rows in earlier sidecars came from: `bun run check` in
+D543's, `bun run dev` in D544's, `bun run dev --port 5173 --strictPort` in D546's. D547's sidecar, keyed with
+`-p`, carries exactly one row.
 
 
 ## Git / commits

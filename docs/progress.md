@@ -3,7 +3,7 @@
 > Update this at the **end of every session**: bump the status table, append a
 > session-log entry, and rewrite the **Resume point** to the next concrete action.
 
-**Last updated:** 2026-09-24 — build session #487 (**P3-M5 — D547, *the FLIP-TO-ATTACK lock and the NEXT-TURN vulnerability — two new ops on two new REQUIRED `InPlayPokemon` fields, a coin that leaves the declaration legal, a +50 at every site that subtracts the reduction, and the first `MATCH_RECORD_VERSION` bump since D501.*** Built `censusAttackCorpus.ts` **file lines 176 and 150** (leading count column **2** each) — *“During your opponent's next turn, if the Defending Pokémon tries to use an attack, your opponent flips a coin. If tails, that attack doesn't happen.”* (TWO sentences in one row) and *“During your next turn, the Defending Pokémon takes 50 more damage from attacks (after applying Weakness and Resistance).”* — **2 rows / 4 legal printings**, claimed WHOLE through TWO new anchors and TWO new arms emitting TWO new ops, `flipLockAttack` and `exposeDefender`, writing TWO new REQUIRED fields `attackFlipLockTurn` and `damageVulnerability`. A NEW reader `attackFlipLocked` kept OUT of `attackLocked` (zero redact/schema/HUD bytes; `playable` stays true), flipped at `attack.ts`'s §8 step-3 seam BEFORE Confusion (the official rulebook's order — the draft's *“Confusion first, UNRULED”* was WITHDRAWN at review); a NEW reader `installedVulnerabilityOf` ADDED after W/R at all four reduction sites, and NOT on a hit the rulebook's damage step 2 stops. Three rulings with reversal conditions in `decisions.md` D547. Engine **0.431.0 → 0.432.0**; **`MATCH_RECORD_VERSION` 30 → 31** (the FIFTH position written at `match.ts`). Built in the `lum-wt-d547` worktree while a whole-corpus sweep ran in the main checkout; NOT committed by the builder (parked at `dcff2ffd`, then cherry-picked onto `main` over the D546 close-out and re-verified there). `bun run check` 535 files / 12,614 tests / `CHECK_EXIT=0`; probe 39 killed · 0 known survivor(s) · 0 GAP(S) · 0 stale · 0 skipped(dirty) · 0 clobber(s) · 0 error(s); mutants 2,985 → 3,024; whole-corpus sweep PENDING, predicted `2971 killed · 53 known survivor(s)` over 3,024 on D546's PAID `2932 · 53`, closed in both directions.)
+**Last updated:** 2026-09-24 — build session #487 (**P3-M5 — D547, *the FLIP-TO-ATTACK lock and the NEXT-TURN vulnerability — two new ops on two new REQUIRED `InPlayPokemon` fields, a coin that leaves the declaration legal, a +50 at every site that subtracts the reduction, and the first `MATCH_RECORD_VERSION` bump since D501.*** Built `censusAttackCorpus.ts` **file lines 176 and 150** (leading count column **2** each) — *“During your opponent's next turn, if the Defending Pokémon tries to use an attack, your opponent flips a coin. If tails, that attack doesn't happen.”* (TWO sentences in one row) and *“During your next turn, the Defending Pokémon takes 50 more damage from attacks (after applying Weakness and Resistance).”* — **2 rows / 4 legal printings**, claimed WHOLE through TWO new anchors and TWO new arms emitting TWO new ops, `flipLockAttack` and `exposeDefender`, writing TWO new REQUIRED fields `attackFlipLockTurn` and `damageVulnerability`. A NEW reader `attackFlipLocked` kept OUT of `attackLocked` (zero redact/schema/HUD bytes; `playable` stays true), flipped at `attack.ts`'s §8 step-3 seam BEFORE Confusion (the official rulebook's order — the draft's *“Confusion first, UNRULED”* was WITHDRAWN at review); a NEW reader `installedVulnerabilityOf` ADDED after W/R at all four reduction sites, and NOT on a hit the rulebook's damage step 2 stops. Three rulings with reversal conditions in `decisions.md` D547. Engine **0.431.0 → 0.432.0**; **`MATCH_RECORD_VERSION` 30 → 31** (the FIFTH position written at `match.ts`). Built in the `lum-wt-d547` worktree while a whole-corpus sweep ran in the main checkout; NOT committed by the builder (parked at `dcff2ffd`, then cherry-picked onto `main` over the D546 close-out and re-verified there). `bun run check` 535 files / 12,614 tests / `CHECK_EXIT=0`; probe 39 killed · 0 known survivor(s) · 0 GAP(S) · 0 stale · 0 skipped(dirty) · 0 clobber(s) · 0 error(s); mutants 2,985 → 3,024; ~~whole-corpus sweep PENDING~~, predicted `2971 killed · 53 known survivor(s)` over 3,024 on D546's PAID `2932 · 53`, closed in both directions. ✅ **D547 CLOSE-OUT: WHOLE-CORPUS SWEEP GREEN AND EXACTLY AS PREDICTED, ON THE FIRST LAUNCH**, pasted out of the log rather than retyped (D504): `2971 killed · 53 known survivor(s) · 0 GAP(S) · 0 stale · 0 skipped(dirty) · 0 clobber(s) · 0 error(s) · 15317.3s total`. That is `+39 killed, +0 declared` on D546's `2932 · 53`, the **FIFTEENTH** consecutive exact prediction after the D532 reset (the count stands at **15**) and the **hundred-and-ninth** consecutive run with `0 error(s) · 0 stale · 0 clobber(s)`. Completeness is structural: **3,024 unique progress-line ids / 3,024 rows / 0 unmatched**, set-compared against `MUTANTS.map(m => m.id)` both ways, and all thirty-nine `D547-*` rows are KILLED (log :2992–:3030, contiguous). ✅ **THE LAUNCHER'S LOG HALF, OWED THROUGH THIRTEEN CLOSE-OUTS, IS PAID**: the log opens with the sweep's own `ps` row (`PID 1776886 / PPID 1 / SID 1776886`) and its launch stamp `2026-09-24T11:40:57+02:00`. Both were taken with `$$` + `exec` inside `setsid --fork`, NOT with the `$!` form every deferral wrote down, which reads a wrapper that has already exited (measured). `setsid` reuse steps to the **fifty-second**, and the pid-keyed sidecar carries ONE row. The 15,317 s is the fastest of the last five, although D548 was built in the second checkout during the run and committed there at 14:22. One new `conventions.md` section (the `$$`/`exec` launcher). D548 is BUILT AND PARKED on `d548-prep` at `0e658522` and lands next.)
 
 **Last updated (was):** 2026-09-24 — build session #486 (**P3-M5 — D546, *the ALL-ATTACKS next-turn buff — a NULL address on the op and the record that already owned the window, a fold at the one snipe site that honours the Active's pre-W/R bonus, and a value widening that holds the version.*** Built `censusAttackCorpus.ts` **file lines 148 and 76** (leading count column **1** each) — *“During your next turn, attacks used by this Pokémon do 120 more damage to your opponent's Active Pokémon (before applying Weakness and Resistance).”* and the same sentence at 100 behind *“Both Active Pokémon are now Asleep.”* — **2 sentences / 2 legal printings** (OPAQUE at `SUBMAX=12`; UNEXPLAINED + CONTINUOUS at `SUBMAX=4`), claimed WHOLE through ONE new anchor `SELF_EVERY_ATTACK_BOOST` and ONE new arm 24b'' emitting the SHIPPED `boostAttack` with `attack: null` (plus, for `:76`, two shipped `applyStatus` ops, defender then self). ONE op, ONE installer, ONE record: `BoostedAttack.attackIndex` widens its VALUE to `number | null`; ONE new reader `everyAttackBoostOf`, folded at `snipeActive` only (decision + reversal condition in `decisions.md` D546). `MATCH_RECORD_VERSION` **HOLDS at 30** (argued at `match.ts`). Engine **0.430.0 → 0.431.0**. Built in the `lum-wt-d546` worktree while a whole-corpus sweep ran in the main checkout; ~~NOT committed by the builder~~ committed there on `d546-prep` at `bba23024`, then LANDED on `main` by cherry-pick onto the D545 close-out `136e8134` as ONE commit. D545's whole-corpus sweep is PAID exactly at that close-out (`2915 killed · 53 known survivor(s) · 0 GAP(S) · 0 stale · 0 skipped(dirty) · 0 clobber(s) · 0 error(s) · 16666.1s total` over 2,968 rows), so this slice's prediction stands on a MEASURED base. `bun run check` 533 files / 12,541 tests / `CHECK_EXIT=0`; probe `--decision D546` **17 killed · 0 known · 0 GAP · 0 error**; ~~whole-corpus sweep PENDING~~, predicted `2932 killed · 53 known` over 2,985. ✅ **D546 CLOSE-OUT: WHOLE-CORPUS SWEEP GREEN AND EXACTLY AS PREDICTED — ON THE FIRST LAUNCH**, pasted out of the log rather than retyped (D504): `2932 killed · 53 known survivor(s) · 0 GAP(S) · 0 stale · 0 skipped(dirty) · 0 clobber(s) · 0 error(s) · 15386.5s total` — `+17 killed, +0 declared` on D545's `2915 · 53`, the **FOURTEENTH** consecutive exact prediction after the D532 reset (the count stands at **14**) and the **hundred-and-eighth** consecutive run with `0 error(s) · 0 stale · 0 clobber(s)`. Completeness structural: **2,985 unique progress-line ids / 2,985 rows / 0 unmatched**, set-compared against `MUTANTS.map(m => m.id)` both ways; all seventeen `D546-*` rows KILLED (log :2972–:2988, contiguous). The account's launch time (06:42) is right (log mtime `10:59:05.360 − 15386.5 s = 06:42:38.860`, sidecar `06:42:41.696`). 🛑 **THE `setsid` REUSE COUNT STEPS TO THE FIFTY-FIRST** on `tmp/sweep-D546.ppid.txt` — `PID 1500921 / PPID 1 / SID 1500921`, **2.84 s into the run**; the sidecar carries TWO rows again (a stray `bun run dev` row is back), and the `ps`-into-the-log half of the owed launcher fix went unpaid for a THIRTEENTH close-out (`1500921` is nowhere in the log). ⚠️ The 15,386 s is the second fastest of the last five, although D547 was built in the second checkout for roughly the run's first two hours and committed there at 08:32, INSIDE the run's window. No new `conventions.md` section. D547 is BUILT AND PARKED on `d547-prep` at `dcff2ffd` and lands next.)
 
@@ -744,7 +744,78 @@
 > fact and stacking D547's new line on top. `bun run check`, `precheck`, the D547 probe and the three gates were
 > RE-MEASURED in the main checkout after the pick (same figures).
 >
-> 🛑 **(0) THE DEBT: THE WHOLE-CORPUS SWEEP IS PENDING, AND THE PREDICTION IS WRITTEN BEFORE IT RUNS (D504).**
+> ✅ **(0) THE DEBT IS PAID: D547's WHOLE-CORPUS SWEEP RAN GREEN AND LANDED EXACTLY ON THE FIGURE WRITTEN
+> DOWN BEFORE IT RAN (D504) — ON THE FIRST LAUNCH.** `bun scripts/mutation/run.ts` over the whole corpus;
+> pasted out of `tmp/sweep-D547.log` (`:6060`), never retyped:
+>
+> > 2971 killed · 53 known survivor(s) · 0 GAP(S) · 0 stale · 0 skipped(dirty) · 0 clobber(s) · 0 error(s) · 15317.3s total
+>
+> over **3,024** rows — **`+39 killed, +0 declared`** on D546's close-out figure `2932 · 53`, the **FIFTEENTH**
+> consecutive exact prediction after the streak reset at D532 (the count stands at **15**), on the
+> **hundred-and-ninth** consecutive run with `0 error(s) · 0 stale · 0 clobber(s)`. One launch, one summary
+> line: the current boot began at 10:09:30 on 2026-09-23 (`journalctl --list-boots`; `uptime` at 15:57:44 read
+> `up 1 day 5:48`), well before the launch, and it was still the running boot when the log closed, so no
+> reboot sits inside the run (D542 close-out).
+> 🛑 **THE ARITHMETIC WAS CLOSED IN BOTH DIRECTIONS BEFORE THE RUN** (D538's check) **AND AGAIN AGAINST THE
+> FINISHED LOG**: `2932 + 39 = 2971`; `2971 + 53 = 3024`, which is the live corpus size `precheck` reports AND
+> the log header's own *"3024 mutant(s)"*; `2985 + 39 = 3024`, the row delta. All thirty-nine `D547-*` rows
+> were probed UNDECLARED first (D525(3)) and all thirty-nine came back KILLED in the whole-corpus run as well
+> (log `:2992`–`:3030`, contiguous), so the declared-survivor count held at **53** — and the 53
+> `SURVIVES(known)` ids are HEAD's 53 declared `survives` rows exactly, in both directions. The five existing
+> rows the slice re-transcribed were already KILLED and move neither count, which is why the delta is exactly
+> the slice's thirty-nine (D439). ⚠️ **THE FIVE ARE MEASURED HERE, NOT TAKEN FROM (0-pre)'s LIST, AND THE LIST
+> NAMES ONE ROW WRONG.** A bun script diffing `MUTANTS` at `6d23102e` against HEAD by id finds exactly
+> `D275-engine-version-drifts-again` (log `:480`), `D326-record-version-not-bumped` (`:911`),
+> `D341-off-pool-sweep-source-is-emptied` (`:1058`), `D495-census-built-attack-not-stepped` (`:2447`) and
+> `D501-record-version-not-bumped` (`:2510`). (0-pre) names `D453-weaken-installs-on-the-actor` in `D275`'s
+> place, but its own text says the D453 collision was fixed by re-wording the clones "not the row". `f7837bd5`
+> carries no D453 hunk in `mutants.ts`, and D453 reads KILLED at `:1932` untouched. `D275`'s `find` stepped
+> with the engine version, which is the change the list left out. The count of five was right, and so was
+> the prediction.
+> ✅ **D519 (9)'s instrument, used as written, a TWENTY-EIGHTH time, with D540's negative control.** The
+> enumeration anchored to the indented verdict lines (`^  <id> +… +<verdict>`, the token EXTRACTED rather than
+> grepped for) reads `2971 KILLED` / `53 SURVIVES(known)` and **nothing else** over **3,024** such lines; the
+> unanchored tally of the same file reads `5964 KILLED · 30 STALE-SURVIVOR · 4 GAP · 5 SURVIVED · 106
+> SURVIVES(known)`, off the trailing survivor report's prose. Completeness is structural: **3,024 unique
+> progress-line ids / 3,024 rows / 0 unmatched**, set-compared against `MUTANTS.map(m => m.id)` in BOTH
+> directions by a bun script importing the module (`MUTANTS.length` 3,024, distinct ids 3,024; in-log
+> not-declared **0**, declared not-in-log **0**; the same compare fed one dropped log id and one bogus log id
+> reports both, 1 / 1), and the report prints **53** `known survivor` paragraphs carrying exactly the declared
+> ids, both ways. Liveness asked of the program (`pgrep -af 'scripts/mutation'` → only the asking shell;
+> `ps -p 1776886` → no row) and of the log (`wc -c` 486,581).
+> ✅ **THE LAUNCH TIME IS NOW IN THE LOG ITSELF, AND THE ACCOUNT'S AGREES WITH IT (D543 close-out)**: the log's
+> own third line, after `ps`'s header and row, is `2026-09-24T11:40:57+02:00` (`date -Is`, run inside the
+> launch command). Log mtime
+> `15:56:14.940` minus the log's own `15317.3 s` lands at **11:40:57.640**, the same second. `f7837bd5` was
+> committed at 11:40:42, and the sidecar's mtime is **11:41:03.344**, 5.70 s into the run. The finish (15:56)
+> is right.
+> ✅ **THE 15,317 s IS THE FASTEST OF THE LAST FIVE** (D546 15,386 s, D545 16,666 s, D544 16,796 s, D543
+> 15,785 s; D542's 13,187 s, six back, is still faster). A second-checkout BUILD overlapped it all the same:
+> D548 was built in `lum-wt-d548`, whose `node_modules` directories date from 11:42, and it was committed on
+> `d548-prep` at **14:22:30**. That is inside the run's 11:40–15:56 window, on the same four cores. The box's load
+> over the run was not measured and is not claimed beyond that.
+> ✅ **THE LAUNCHER'S LOG HALF, OWED THROUGH THIRTEEN CLOSE-OUTS, IS PAID — AND NOT IN THE FORM EVERY
+> DEFERRAL WROTE DOWN.** The sweep was launched as
+> `setsid --fork sh -c 'ps -o pid,ppid,sid,cmd -p $$; date -Is; exec bun scripts/mutation/run.ts' > tmp/sweep-D547.log`,
+> so `tmp/sweep-D547.log` OPENS with the sweep's own row: `PID 1776886 / PPID 1 / SID 1776886`,
+> `CMD sh -c ps -o pid,ppid,sid,cmd -p $$; date -Is; exec bun scripts/mutation/run.ts`. **`SID == PID`**, read
+> inside the artefact, with no mtime arithmetic to bind it (D541). `exec` keeps the pid: that was checked
+> beforehand with a dummy, and the log confirms it. The sidecar `tmp/sweep-D547.ppid.txt` (106 bytes, mtime
+> `11:41:03.344`, stamp `2026-09-24T11:41:03+02:00`) reads the SAME `1776886 / 1 / 1776886` with
+> `CMD bun scripts/mutation/run.ts`, so the `exec` is observed, not assumed. That is the `setsid` reuse count's
+> **FIFTY-SECOND** step. The sidecar is keyed on the pid with `-p`, not on `-C bun`, and carries **ONE** row:
+> no stray `bun run dev`. 🛑 **The `ps -eo pid,ppid,sid -p $!` form written down at every deferral (including
+> (0-pre) below) would NOT have worked**: under `setsid --fork`, `$!` is the wrapper, which forks and exits at
+> once. Measured at this close-out with a dummy: `$!` = 1987953 gave no row, and the sleep itself was
+> 1987955 (`PPID 1 / SID 1987955`).
+> ✅ **ONE NEW CONVENTION, RECORDED BEFORE `## Git / commits`**: *"Put the `ps` read INTO the log with `$$` and
+> `exec` inside the `setsid --fork`, never with `$!`"* (`conventions.md`, D547 close-out, completing D541's
+> recipe). D541's section gets one 🆕 line pointing to it. The session also re-applied the all-five-links
+> isolation check: at this close-out, all five `@luminous` links in `/home/jofre/projects/lum-wt-d548` `realpath`
+> inside it, and its four `node_modules` directories are REAL (`ls -ld`).
+>
+> 🛑 **(0-pre) THE PREDICTION, KEPT AS WRITTEN AND MET EXACTLY BY (0) ABOVE — ITS TENSE IS THE PRE-SWEEP ONE.
+> THE DEBT: THE WHOLE-CORPUS SWEEP IS PENDING, AND THE PREDICTION IS WRITTEN BEFORE IT RUNS (D504).**
 > `bun scripts/mutation/run.ts` over the whole corpus, predicted:
 >
 > > 2971 killed · 53 known survivor(s) · 0 GAP(S) · 0 stale · 0 skipped(dirty) · 0 clobber(s) · 0 error(s)
@@ -867,18 +938,38 @@
 > the stop is at step 2 only, and steps 4-5 still run.
 >
 > 🛑 **(6) CARRIED DEBTS — NAMED, NOT SILENTLY ADOPTED.** ⑴ ~~BOTH whole-corpus sweeps are pending — D546's (running in
-> the main checkout throughout) and this one's (0).~~ ONLY this one's (0) is pending: D546's PAID `2932 · 53` exactly at
+> the main checkout throughout) and this one's (0).~~ ~~ONLY this one's (0) is pending:~~ 🆕 **PAID, EXACTLY (D547 close-out), at (0) above** — with the written prediction in (0-pre); D546's PAID `2932 · 53` exactly at
 > its close-out. ⑵ **`:664`** — the `PlayerSide`/*"PlayerState"* stale prose
 > (`effects.ts:33842`/`:33863`, `index.ts:14383` and three tests) and Cresselia's *"90 more damage"* at
 > `effects.ts:17905` and `index.ts:664`, which PRINTS 80 — **it now owes its OWN future bump**, since this slice
-> paid 30 → 31 without it. ⑶ SUBST-16's `:149` and `:169`. ⑷ `:669` as the best unbumped fallback (1p/L). ⑸ onward:
-> D546's (6) ⑵–⑽ below, unchanged (its `:664` item is superseded by ⑵ here), and ⑽ the DOUBLE PAY now also names the vulnerability: it is read PER
+> paid 30 → 31 without it. (🆕 D547 close-out: **TAKEN BY THE PARKED D548 (see (7))**, which pays that bump, 31 → 32.) ⑶ SUBST-16's `:149` and `:169`. ⑷ `:669` as the best unbumped fallback (1p/L). ⑸ onward:
+> D546's (6) ⑵–⑽ below, unchanged (its `:664` item is superseded by ⑵ here; 🆕 and its `setsid` launcher one-liner is PAID at the D547 close-out, in the `$$` + `exec` form rather than `$!`, at (0) above), and ⑽ the DOUBLE PAY now also names the vulnerability: it is read PER
 > HIT, so an attack with a main hit AND an op-borne hit on the exposed Active adds +50 twice (named in the D547 row).
 >
 > 🛑 **(7) PICKING THE NEXT ROW.** `SUBMAX=12 bun scripts/residue-census.ts`; the criterion since D537 is
 > **PRINTINGS PER UNIT OF RADIUS**. The residue is now **38 sentences / 51 printings**. `:176` and `:150` leave the
-> list (BUILT here). Next: `:664` (its own bump now); SUBST-16's `:149`/`:169`; `:669` (1p/L); the copy-attack
+> list (BUILT here). Next: `:664` (its own bump now) — 🆕 **TAKEN BY THE PARKED D548 (below)**; SUBST-16's `:149`/`:169`; `:669` (1p/L); the copy-attack
 > family (BLOCKED). Re-rank at the head this slice leaves, not from this list.
+>
+> 🆕 **D547 CLOSE-OUT: THE SWEEP IS PAID AND THE NEXT SLICE IS ALREADY BUILT AND PARKED, SO THIS SECTION SAYS
+> SO RATHER THAN OFFERING A ROW AS AVAILABLE.** The sweep is PAID at (0) above. The next slice is on branch
+> `d548-prep` at **`0e658522`** (**172 files** against `f7837bd5`), built in the second checkout while this sweep ran.
+> Verified in-tree rather than taken on report (D429): `git worktree list` shows
+> `/home/jofre/projects/lum-wt-d548` at that commit, its tree reads clean, and ALL FIVE `@luminous` links there
+> `realpath` inside the worktree (`conventions.md`, D543 close-out). Its own commit title and body name it:
+> **Cresselia's *"Crescent Purge"* `:664`**, a REQUIRED `PlayerSide.faceUpPrizes`, a park where the OWNER picks
+> (`choosePrize`), and `MATCH_RECORD_VERSION` **31 → 32** (engine 0.432.0 → 0.433.0). Its prep review PASSED on its
+> third round. It is NOT re-priced here; its figures are the parked slice's own. Its (0) predicts
+> `2989 killed · 53 known survivor(s)` over 3,042, which adds to the `2971 · 53` PAID at (0) above, +18, and the
+> base its (0) calls *"UNPAID"* is now paid.
+> ⚠️ **It lands next, by cherry-pick, and its parent is `f7837bd5`: MAIN MINUS THIS CLOSE-OUT**
+> (`git merge-base` confirms). So its pre-close-out prose will say D547's sweep is PENDING. Reconcile the
+> CLAIMS, not just the conflicts (`conventions.md`, D541).
+> The residue is **38 sentences / 51 printings** at THIS head. D548 is the next step and has not landed.
+> ✅ **Recommendation, in order (D547 close-out): (i) land D548 and close it out. It is built and parked, its review
+> passed, and the sweep debt it inherits is ZERO because D547's is PAID at (0) above. (ii) Then re-rank what remains
+> (SUBST-16's `:149`/`:169`, `:669`, the copy-attack family), measured at the head D548 leaves rather than
+> inherited from this list.**
 >
 > ---
 >
@@ -30548,7 +30639,7 @@ the next api deploy (D18).
 |---|---|---|
 | backend-data | P1 | ✅ M1–M9 + P2-M1 + task-17 api deployed (Worker `9b1ec1d1`, 2026-07-16); OAuth secrets pending (user) |
 | deck-builder | P2 | ✅ ALL 19 tasks closed (task 17 landed + e2e-verified locally); only follow-ups left |
-| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D547, *the FLIP-TO-ATTACK lock and the NEXT-TURN vulnerability — two new ops (`flipLockAttack`, `exposeDefender`) on two new REQUIRED `InPlayPokemon` fields, a NEW reader kept out of `attackLocked` so the declaration stays legal, a +50 added after W/R at all four reduction sites, and `MATCH_RECORD_VERSION` 30 → 31*** — `censusAttackCorpus.ts` **file lines 176 and 150**, **2 rows / 4 legal printings**; reader 570/1621 → 572/1625, residue 40/55 → 38/51, `BUILT.attack` 1677 → 1681; engine 0.431.0 → 0.432.0; three rulings with reversal conditions (the lock flips BEFORE Confusion — the official rulebook's order, the draft's "Confusion first, UNRULED" withdrawn at review; the +50 lands on any computed hit, never on one the rulebook's damage step 2 stops; ON-TARGET). `bun run check` 535 files / 12,614 tests green; mutants 2,985 → 3,024 (+39 `D547-*`, all KILLED undeclared); whole-corpus sweep PENDING, predicted `2971 killed · 53 known survivor(s)` on D546's PAID `2932 · 53`) |
+| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D547, *the FLIP-TO-ATTACK lock and the NEXT-TURN vulnerability — two new ops (`flipLockAttack`, `exposeDefender`) on two new REQUIRED `InPlayPokemon` fields, a NEW reader kept out of `attackLocked` so the declaration stays legal, a +50 added after W/R at all four reduction sites, and `MATCH_RECORD_VERSION` 30 → 31*** — `censusAttackCorpus.ts` **file lines 176 and 150**, **2 rows / 4 legal printings**; reader 570/1621 → 572/1625, residue 40/55 → 38/51, `BUILT.attack` 1677 → 1681; engine 0.431.0 → 0.432.0; three rulings with reversal conditions (the lock flips BEFORE Confusion — the official rulebook's order, the draft's "Confusion first, UNRULED" withdrawn at review; the +50 lands on any computed hit, never on one the rulebook's damage step 2 stops; ON-TARGET). `bun run check` 535 files / 12,614 tests green; mutants 2,985 → 3,024 (+39 `D547-*`, all KILLED undeclared); ~~whole-corpus sweep PENDING~~, predicted `2971 killed · 53 known survivor(s)` on D546's PAID `2932 · 53`. ✅ **WHOLE-CORPUS SWEEP GREEN AND EXACTLY AS PREDICTED (close-out)**: `2971 killed · 53 known survivor(s) · 0 GAP(S) · 0 stale · 0 skipped(dirty) · 0 clobber(s) · 0 error(s) · 15317.3s total` over 3,024 rows, the **FIFTEENTH** consecutive exact prediction, on the first launch; the log opens with its own `ps` row (the launcher debt, owed through thirteen close-outs, is paid); D548 is parked and lands next) |
 | simulator (prior) | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D546, *the ALL-ATTACKS next-turn buff — `attack: null` on the shipped `boostAttack` op, `BoostedAttack.attackIndex: number | null`, and ONE new reader `everyAttackBoostOf` folded at `snipeActive`*** — `censusAttackCorpus.ts` **file lines 148 and 76**, *“During your next turn, attacks used by this Pokémon do 120 more damage to your opponent's Active Pokémon (before applying Weakness and Resistance).”* (and at 100 behind *“Both Active Pokémon are now Asleep.”*), **2 sentences / 2 legal printings**; reader 568/1619 → 570/1621, residue 42/57 → 40/55, `BUILT.attack` 1675 → 1677; engine 0.430.0 → 0.431.0, `MATCH_RECORD_VERSION` HELD at 30; mutants 2,968 → 2,985 (+17, all killed); ~~whole-corpus sweep PENDING, predicted 2932 · 53 on D545's PAID 2915 · 53~~ **whole-corpus sweep GREEN and exactly as predicted — `2932 killed · 53 known survivor(s) · 0 GAP(S) · 0 stale · 0 skipped(dirty) · 0 clobber(s) · 0 error(s) · 15386.5s total`** over 2,985 rows, the FOURTEENTH consecutive exact prediction and the hundred-and-eighth clean run, on the first launch) |
 | simulator (prior) | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D545, *the two printed COST clauses as a pair on the GATE arm — two non-blocking `AttackTimingGate` members, ONE new `BoardCondition`, and ONE wrapper `attackCostAt` at the three payability sites*** — `censusAttackCorpus.ts` **file lines 316 and 324**, **2 sentences / 2 legal printings** (SUBST-20/19), clause-only rows six and seven of `ATTACK_GATE_CLAUSES`. 🛑 `BlockingAttackGate` excludes both ON PURPOSE (the default `Exclude` would have refused each attack exactly when its condition holds). Three UNRULED readings with reversal conditions (alternate-not-replacement, waive-last, printed-cost-published). Gate 7/17 → 9/19, residue 44/59 → 42/57, `BUILT.attack` 1673 → 1675. Engine 0.429.0 → 0.430.0, `MATCH_RECORD_VERSION` 30 held. `check` 532 / 12,503; probe 15 killed · 0 survivors; ~~whole-corpus sweep PENDING, predicted 2915 · 53 over 2,968~~ **whole-corpus sweep GREEN and exactly as predicted — `2915 killed · 53 known survivor(s) · 0 GAP(S) · 0 stale · 0 skipped(dirty) · 0 clobber(s) · 0 error(s) · 16666.1s total`** over 2,968 rows, the THIRTEENTH consecutive exact prediction and the hundred-and-seventh clean run, on the first launch) |
 | simulator (prior) | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D544, *the named attack's BASE damage overridden for one window — a `base: true` RIDER on the shipped `boostAttack` op, an OPTIONAL `BoostedAttack.base`, and ONE new reader*** — `censusAttackCorpus.ts` **file line 166**, *“During your next turn, this Pokémon's Hyper Fang attack's base damage is 240.”*, **1 sentence / 2 legal printings** (SUBST-11). ONE writer of `boostedAttack` kept (D165); the installer writes `amount: 0` beside `base` so the additive reader pays +0; `boostedAttackBase` is read at `attack.ts`'s one `parseAttackDamage` line (×2 Weakness → 480). 🛑 Same-address merge FIELDWISE max, not overwrite. Reader 567/1617 → 568/1619, residue 45/61 → 44/59, raw 73/115 → 72/113, `BUILT.attack` 1671 → 1673; registry 10/16, gate 7/17, trailing 11/21 and `attackReaderSurface()` 13 UNMOVED; SUBST-11 2/4 → 1/2 at `SUBMAX=12` (OPAQUE unmoved 16/24), OPAQUE 31/44 → 30/42 at `SUBMAX=4`. Mutants 2,936 → 2,953 (+17, all killed undeclared). Engine **0.428.0 → 0.429.0**, `MATCH_RECORD_VERSION` **HELD at 30**; **whole-corpus sweep GREEN and exactly as predicted — `2900 killed · 53 known survivor(s) · 0 GAP(S) · 0 stale · 0 skipped(dirty) · 0 clobber(s) · 0 error(s) · 16796.4s total`** over 2,953 rows, the TWELFTH consecutive exact prediction and the hundred-and-sixth clean run, on the first launch) |
@@ -30744,8 +30835,78 @@ worktree while a whole-corpus sweep ran in the main checkout; NOT committed by t
   13 key-set pins; 2 refusals re-pointed to `:669`.
 - **Version tax:** 268 lines / 120 files partitioned 144 stepped / 124 kept; 12 record-version asserts stepped.
 - **Mutants:** 2,985 → 3,024 (+39 `D547-*`), probe 39 killed · 0 known survivor(s) · 0 GAP(S) · 0 stale · 0 skipped(dirty) · 0 clobber(s) · 0 error(s); five existing rows re-transcribed. Whole-corpus sweep
-  PENDING, predicted `2971 killed · 53 known survivor(s)` over 3,024 on D546's PAID `2932 · 53`, closed in both directions.
+  ~~PENDING~~, predicted `2971 killed · 53 known survivor(s)` over 3,024 on D546's PAID `2932 · 53`, closed in both directions.
 - `bun run check`: 535 files / 12,614 tests, `CHECK_EXIT=0`.
+
+**THE CLOSE-OUT: THE WHOLE-CORPUS SWEEP LANDED EXACTLY ON THE NUMBER COMMITTED BEFORE IT RAN, A FIFTEENTH TIME
+RUNNING, ON THE FIRST LAUNCH, AND THE LOG CARRIES ITS OWN `ps` ROW AT LAST.** Committed as `f7837bd5` (cherry-picked
+from the parked `d547-prep`); pasted out of `tmp/sweep-D547.log` (`:6060`), not retyped (D504):
+
+```
+2971 killed · 53 known survivor(s) · 0 GAP(S) · 0 stale · 0 skipped(dirty) · 0 clobber(s) · 0 error(s) · 15317.3s total
+```
+
+Predicted `2971 killed · 53 known survivor(s) · 0 GAP(S)` over 3,024 rows (`+39 killed, +0 declared` on
+D546's `2932 · 53`); got exactly that. ✅ **The FIFTEENTH consecutive exact prediction after the streak reset
+at D532 — the count stands at 15**, and the run is the **hundred-and-ninth** consecutive with `0 error(s) · 0
+stale · 0 clobber(s)`. The arithmetic was closed in both directions BEFORE the run (D538's added check) and
+closed again against the finished log: `2932 + 39 = 2971`; `2971 + 53 = 3024` = the live corpus size
+`precheck` reports AND the log header's own *"3024 mutant(s)"*; `2985 + 39 = 3024` = the row delta.
+✅ **THE 15,317 s IS THE FASTEST OF THE LAST FIVE** (D546 15,386 s, D545 16,666 s, D544 16,796 s, D543 15,785 s;
+D542's 13,187 s, six back, is still faster). A second-checkout build overlapped it all the same: D548 was built
+in `lum-wt-d548` and committed on `d548-prep` at 14:22:30, inside this run's 11:40–15:56 window, on the same
+four cores. The box's load over the run was not measured and is not claimed beyond that.
+
+✅ **D519 (9)'s instrument, used as written, a TWENTY-EIGHTH time, with D540's negative control applied with
+it.** The verdict enumeration anchored to the indented verdict lines (`^  <id> +… +<verdict>`, the token
+EXTRACTED rather than grepped for) returned `2971 KILLED` / `53 SURVIVES(known)` and **nothing else** over
+**3,024** such lines. That was checked against the ANCHORED LINE COUNT, not read as a total, and
+`2971 + 53 = 3024` = the log header's own mutant count. The unanchored tally of the same file reads `5964 KILLED ·
+30 STALE-SURVIVOR · 4 GAP · 5 SURVIVED · 106 SURVIVES(known)`, because it also counts the trailing survivor
+report's prose. Completeness is structural: **3,024 unique progress-line ids / 3,024 rows / 0 unmatched**,
+set-compared against `MUTANTS.map(m => m.id)` in BOTH directions by a bun script importing the module
+(`MUTANTS.length` 3,024, distinct ids 3,024; in-log not-declared **0**, declared not-in-log **0**; one dropped
+and one bogus log id fed to the same compare are both reported). The 53 `SURVIVES(known)` ids are exactly
+HEAD's 53 `MUTANTS` rows carrying `survives`, both ways, and the report prints **53** `known survivor`
+paragraphs carrying those same ids, both ways. Liveness was asked of the program (`pgrep -af 'scripts/mutation'`
+→ only the asking shell) and of the log (`wc -c` 486,581). **All thirty-nine `D547-*` rows read KILLED** (log
+`:2992`–`:3030`, contiguous). The five existing rows the slice re-transcribed were already KILLED, which is why
+the delta is exactly the slice's thirty-nine (D439). They were measured by diffing `MUTANTS` by id against
+`6d23102e`: `D275-engine-version-drifts-again`, `D326-`/`D501-record-version-not-bumped`,
+`D341-off-pool-sweep-source-is-emptied` and `D495-census-built-attack-not-stepped`. ⚠️ The resume point's
+list named `D453-weaken-installs-on-the-actor` in place of `D275`, but D453's row was not touched: its
+collision was fixed in the clones.
+
+✅ **ONE LAUNCH, AND THE LAUNCH TIME IS IN THE LOG.** The log's own third line, after `ps`'s header and row, is `2026-09-24T11:40:57+02:00`.
+Its mtime `15:56:14.940` minus its own `15317.3 s` lands at **11:40:57.640**, the same second, and `f7837bd5` was
+committed at 11:40:42. The current boot began at 10:09:30 on 2026-09-23 (`journalctl --list-boots`) and was
+still running when the log closed, so no reboot sits inside the run and D542's reboot check has nothing to
+classify.
+
+✅ **THE LAUNCHER'S LOG HALF, OWED THROUGH THIRTEEN CLOSE-OUTS, IS PAID, AND THE `setsid` REUSE COUNT STEPS TO
+THE FIFTY-SECOND.** The launch was `setsid --fork sh -c 'ps -o pid,ppid,sid,cmd -p $$; date -Is; exec bun
+scripts/mutation/run.ts' > tmp/sweep-D547.log`, so the log OPENS with `PID 1776886 / PPID 1 / SID 1776886`.
+`SID == PID` is the measurement and `PPID 1` the consequence (D541), and it sits inside the artefact with no mtime
+arithmetic. The sidecar `tmp/sweep-D547.ppid.txt` (106 bytes, mtime 11:41:03.344, 5.70 s into the run) reads the
+SAME pid with `CMD bun scripts/mutation/run.ts`, so the `exec` kept the pid, as a dummy had shown beforehand.
+Keyed with `-p` rather than `-C bun`, it carries ONE row. 🛑 **The `ps -eo pid,ppid,sid -p $!` form written down
+at every deferral would have printed an empty table**: under `setsid --fork`, `$!` is the wrapper, which exits
+at once. That was measured at this close-out with a dummy: `ps -p $!` gave no row, and the forked child had a pid of its own (`PPID 1`, `SID == PID`).
+
+✅ **ONE NEW CONVENTION**, recorded before `## Git / commits` in `conventions.md`: *"Put the `ps` read INTO the log
+with `$$` and `exec` inside the `setsid --fork`, never with `$!`"* (D547 close-out, completing D541's recipe,
+whose own section gets a one-line pointer). The session also APPLIED the all-five-links isolation check to
+`lum-wt-d548`: its four `node_modules` directories are real, and all five `@luminous` links `realpath` inside it,
+measured at this close-out.
+
+**NOTHING IS CARRIED FORWARD AS A RISK FROM THE SWEEP ITSELF.** No engine byte moved at the close-out:
+engine **0.432.0 HELD** (the bump to 0.432.0 was the D547 slice's own, at `f7837bd5`),
+`MATCH_RECORD_VERSION` **31 HELD**, and the whole-corpus sweep was NOT re-run. ✅ **D548 IS NEXT, AND IT IS
+ALREADY BUILT**: parked on `d548-prep` at `0e658522` (172 files) in `/home/jofre/projects/lum-wt-d548`, with all
+five `@luminous` links inside that worktree and its prep review passed on the third round. It is Cresselia's
+*"Crescent Purge"* `:664`: a REQUIRED `PlayerSide.faceUpPrizes`, an owner-picked park, and `MATCH_RECORD_VERSION`
+31 → 32. It is not re-priced here. It lands by cherry-pick onto a parent that is MAIN MINUS THIS CLOSE-OUT, so
+its docs must be reconciled by claim, not by conflict (D541). `git status --porcelain` shows docs files only.
 
 ### 2026-09-24 — build session #486 (P3-M5 — D546)
 
