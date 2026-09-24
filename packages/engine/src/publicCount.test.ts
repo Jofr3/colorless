@@ -185,7 +185,9 @@ function setHandSize(state: GameState, seat: Seat, size: number): GameState {
   };
 }
 
-/** TEST SURGERY: shrink `seat`'s face-down Prize row to `count`, parking the rest
+/** (🆕🆕🆕 D548: *"face-down"* below is PARTLY false in general — a row may hold face-UP
+    slots — and exact on every board in this file, where no Purge runs.)
+    TEST SURGERY: shrink `seat`'s face-down Prize row to `count`, parking the rest
     in the discard. Shrink only — the Prize row is dealt at 6 and never grows, and
     the one case that needs Prizes MOVED rather than set uses a real knockout. */
 function setPrizesRemaining(state: GameState, seat: Seat, count: number): GameState {
@@ -765,6 +767,8 @@ describe("Houndstone 'Two Four-ocious' — their Prizes, exactly 2 or 4", () => 
     expect(state.phase).toMatchObject({ kind: "ko:takePrizes", seat: "p2", count: 2 });
     // The KOing player picks exactly `count` of THEIR OWN face-down prizes in one
     // action (§8.1) — two of them here, because the body was an "… ex".
+    // (🆕🆕🆕 D548: *"face-down"* is PARTLY false in general — a face-UP slot is pickable
+    // too — and exact on this board, where no Purge ran.)
     state = mustApply(state, { type: "takePrizes", seat: "p2", prizeIndices: [0, 1] }).state;
     expect(state.players.p2.prizes.length).toBe(4);
     // P1 promotes the benched Houndstone into the empty Active Spot.

@@ -139,7 +139,9 @@ const READERS: readonly ((text: string) => unknown)[] = [
 /** THE SENTENCE THIS SLICE BUYS, byte-for-byte from the committed corpus. */
 const TORRENTIAL =
   "You may shuffle 3 Energy attached to this Pokémon into your deck. If you do, this attack also does 120 damage to 1 of your opponent's Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)";
-/** …and the ONE the family still owes, refused for a `PlayerState` field. */
+/** …and the ONE the family still owes, refused for a `PlayerState` field.
+    (🆕🆕🆕 D548: owed NO LONGER — built on a `PlayerSide` field, `faceUpPrizes`; `PlayerState`
+    is the lobby's type. The name is kept, D178.) */
 const PRIZE_FLIP =
   "You may turn 1 of your face-down Prize cards face up. If you do, this attack does 80 more damage. (That Prize card remains face up for the rest of the game.)";
 /** D381's own sentence — the OTHER payoff, and this file's control at every seam
@@ -335,12 +337,19 @@ describe("§1 — the price, MEASURED IN REFUSED SENTENCES, before and after", (
     expect([family.length, units(family)]).toEqual([7, 14]);
     const refused = family.filter(([, s]) => !resolvedByAnyReader(s));
     // AFTER: the face-up Prize alone, and its refusal is a `PlayerState` field.
-    expect([refused.length, units(refused)]).toEqual([1, 2]);
-    expect(refused.map(([, s]) => s)).toEqual([PRIZE_FLIP]);
+    // 🆕🆕🆕 D548 — 1 / 2 → **0 / 0**, the prose above WITHDRAWN (D539, kept verbatim): the
+    // face-up Prize is built (a `PlayerSide` field, the fifth cost row), so the refused half
+    // is EMPTY — and the positive rung names the row that left it (D383).
+    expect([refused.length, units(refused)]).toEqual([0, 0]);
+    expect(refused.map(([, s]) => s)).toEqual([]);
+    expect(resolvedByAnyReader(PRIZE_FLIP)).toBe(true);
     // BEFORE, re-derived rather than quoted: the payoff table's SECOND row is the
     // only thing this slice adds to the reader, so removing the sentence it claims
-    // from the resolved set reproduces D382's head exactly.
-    const before = family.filter(([, s]) => s === TORRENTIAL || !resolvedByAnyReader(s));
+    // from the resolved set reproduces D382's head exactly. (🆕🆕🆕 D548: the Prize is
+    // put back BY NAME, since D548's row now resolves it too.)
+    const before = family.filter(
+      ([, s]) => s === TORRENTIAL || s === PRIZE_FLIP || !resolvedByAnyReader(s),
+    );
     expect([before.length, units(before)]).toEqual([2, 7]);
   });
 

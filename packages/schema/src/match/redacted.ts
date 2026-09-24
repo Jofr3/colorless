@@ -8,7 +8,8 @@
 //
 //   - the viewer's own hand face-up; the opponent's hand as a COUNT of
 //     anonymous backs (no uid, no card id — a positional id only);
-//   - BOTH prize sets as counts (§3.8 — face-down for both players);
+//   - BOTH prize sets as counts (§3.8 — face-down for both players); 🆕🆕🆕 D548: plus
+//     the FACE-UP ones (Crescent Purge) as `{index, card}` — public for every viewer;
 //   - decks as counts; discard piles fully public (§2 — ordered and public);
 //   - in-play Pokémon public once setup is over, with their battle row (damage /
 //     max HP / §12 conditions) and attached energy/tools; DURING setup the
@@ -124,14 +125,27 @@ export const redactedInPlaySchema = redactedCardSchema.extend({
 });
 export type RedactedInPlay = z.infer<typeof redactedInPlaySchema>;
 
+/** 🆕🆕🆕 D548 — a prize turned FACE UP (Cresselia `sv06.5-021` "Crescent Purge"): its slot
+    in the live prize row and the card, which is public from the moment it was turned. */
+export const redactedFaceUpPrizeSchema = z.object({
+  index: z.number(),
+  card: redactedCardSchema,
+});
+export type RedactedFaceUpPrize = z.infer<typeof redactedFaceUpPrizeSchema>;
+
 /** One player's redacted side. Own side: hand face-up. Opponent: hand a count
     of backs, in-play redacted during setup. Prizes/deck are counts for both;
-    discard is public for both. */
+    discard is public for both. 🆕🆕🆕 D548: plus the face-up prizes, for both. */
 export const redactedSideSchema = z.object({
   hand: z.array(redactedCardSchema),
   active: redactedInPlaySchema.nullable(),
   bench: z.array(redactedInPlaySchema),
   prizesRemaining: z.number(),
+  /** 🆕🆕🆕 D548 — REQUIRED, not optional (D159: the same fact on every surface). The
+      FACE-UP slots of this side's prize row, index-stable, in row order; `[]` on every
+      board without a Crescent Purge. Every other slot is face down and crosses as the
+      count above only — no uid and no card id of a face-down prize is on the wire. */
+  faceUpPrizes: z.array(redactedFaceUpPrizeSchema),
   deckCount: z.number(),
   discard: z.array(redactedCardSchema),
 });
@@ -718,6 +732,18 @@ export const redactedEffectPromptSchema = z.discriminatedUnion("kind", [
   z.object({
     kind: z.literal("chooseAttack"),
     candidates: z.array(z.object({ index: z.number(), name: z.string() })),
+    note: z.string(),
+  }),
+  /** 🆕🆕🆕 D548 — pick exactly ONE of your own FACE-DOWN prize slots to turn face up
+      (Cresselia `sv06.5-021` "Crescent Purge"). PUBLIC-REF by construction: `indices`
+      address the answerer's own prize row, whose shape both players already hold
+      (`prizesRemaining` + `faceUpPrizes`), and they are the ONLY content — no uid and no
+      card id, because every offered slot is face down. Mandatory (the decline was the
+      confirm in front of it); never empty and never a singleton. The answer is
+      `{kind: "prize", index}`, checked against this offer by `validateChoice`. */
+  z.object({
+    kind: z.literal("choosePrize"),
+    indices: z.array(z.number()),
     note: z.string(),
   }),
 ]);

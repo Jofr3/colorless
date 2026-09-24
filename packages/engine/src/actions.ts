@@ -111,7 +111,9 @@ export interface TakePrizesAction {
   seat: Seat;
   /** Exactly `count` (from the ko:takePrizes phase) distinct indices into
       the actor's own face-down prize row — the KOing player picks which of
-      THEIR prizes to reveal into hand (§8.1). */
+      THEIR prizes to reveal into hand (§8.1). 🆕🆕🆕 D548: the row is no longer
+      all face-down — an index may name a slot `faceUpPrizes` holds, and it is as
+      legal a pick as any other (a face-up prize is still a prize). */
   prizeIndices: number[];
 }
 

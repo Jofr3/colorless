@@ -738,6 +738,20 @@ export type EffectPrompt =
       degenerate boards inline (no attacks → silent no-op, one attack → forced),
       the M1 doctrine every parking op in this file follows. */
   | { kind: "chooseAttack"; candidates: { index: number; name: string }[]; note: string }
+  /** 🆕🆕🆕 **D548 — pick exactly ONE of your OWN face-down Prize cards to turn face up**
+      (Cresselia `sv06.5-021` "Crescent Purge", the `turnPrizeFaceUp` op). `indices` are the
+      FACE-DOWN slots of the controller's prize row (0-based into `PlayerSide.prizes`) and
+      NOTHING ELSE: no uid and no card id, because every offered card is face down — a uid
+      would let a client track a hidden card across zones (redact.ts' rule for hidden
+      cards). The slot is the whole answer; the apply maps it to a uid on the live row.
+
+      MANDATORY — the decline was the confirm in front of it (`optionalCostBoostProgram`'s
+      `optional`), so this prompt is reached only after a "yes" and has no decline of its
+      own. Never empty and never a singleton: the op resolves 1 face-down prize inline and
+      0 as a silent no-op, the M1 doctrine every parking op in this file follows. A single
+      "pick-or-decline" prompt replacing the confirm was REFUSED (`decisions.md` D548): it
+      would re-shape `optionalCostBoostProgram`, which the D381 mutant rows anchor on. */
+  | { kind: "choosePrize"; indices: number[]; note: string }
   /** The printed "**You may** …" — a bare yes/no whose ANSWER SPLICES OPS. The
       engine's second pure binary prompt and its opposite in every other respect:
       `mayDraw` is answered by the NON-controller and its answer moves cards
@@ -957,6 +971,11 @@ export type EffectChoice =
       one of the OFFERED indices (validateChoice), which is also what keeps a
       crafted frame off an index the defender does not have. */
   | { kind: "attack"; index: number }
+  /** 🆕🆕🆕 D548 — the `choosePrize` answer: ONE face-down slot index of the controller's
+      own prize row. Wire-checked (validateChoice) to be an integer the prompt OFFERED — so
+      an out-of-range index, a FACE-UP index and a non-integer (an array of two, a string)
+      are all refused before the apply runs. */
+  | { kind: "prize"; index: number }
   /** The `confirm` answer — `yes: true` splices the `optional` op's `then` ahead
       of the rest of the program, `false` runs nothing. A plain boolean, and
       wire-checked to be one for `mayDraw`'s exact reason: a P4 client's truthy
@@ -3438,6 +3457,9 @@ function stepOp(
         },
       };
     }
+    // 🆕🆕🆕 D548 — field-free (`installNoWeakness`'s shape): the owner picks WHICH prize.
+    case "turnPrizeFaceUp":
+      return turnPrizeFaceUp(state, ctx, events);
     case "payFromHand": {
       // Pay the printed hand cost — to the DISCARD (Ultra Ball / Earthen Vessel /
       // Tinkaton / Revavroom / Meowscarada ex / Radiant Blastoise) or to the
@@ -4587,6 +4609,8 @@ export function conditionHolds(state: GameState, seat: Seat, cond: BoardConditio
       // `morePrizesThanOpponent` makes and the complement of `takenPrizes`. The
       // printed "exactly" makes this set MEMBERSHIP: on `[2, 4]` a 3-Prize board
       // is FALSE, sitting between two true values.
+      // 🆕🆕🆕 D548: *"still face down"* is WITHDRAWN — `prizes.length` is the whole ROW;
+      // a slot Crescent Purge turned FACE UP (`PlayerSide.faceUpPrizes`) is still in `prizes` and still counted (§14's reading).
       return cond.counts.includes(state.players[otherSeat(seat)].prizes.length);
     case "yourPrizesRemaining":
       // 🆕🆕 D517 — the arm directly above with `otherSeat(seat)` replaced by `seat`,
@@ -4596,6 +4620,8 @@ export function conditionHolds(state: GameState, seat: Seat, cond: BoardConditio
       // the checkable claim the pair makes — `prizeGateParalyze.test.ts` §3 drives
       // both on one board at every one of the seven reachable counts and asserts
       // they disagree wherever the two seats disagree.
+      // 🆕🆕🆕 D548: *"§3.8's face-down count"* is WITHDRAWN, as in the arm above — the
+      // ROW's count; a slot Crescent Purge turned FACE UP (`PlayerSide.faceUpPrizes`) is still in `prizes` and still counted.
       return cond.counts.includes(state.players[seat].prizes.length);
     case "opponentHandAtMost":
       // The SIZE of their hand, never its contents — the line the union's
@@ -4635,6 +4661,16 @@ export function conditionHolds(state: GameState, seat: Seat, cond: BoardConditio
       // hand is empty and moves every card when it is not, so this predicate and
       // "you discarded any cards in this way" have the same extension on every board.
       return state.players[seat].hand.length > 0;
+    case "yourFaceDownPrizeRemains": {
+      // 🆕🆕🆕 D548 — the payability of Crescent Purge's printed cost, on the ATTACKER's
+      // own row (the cost table resolves "your", D116's rule). `some`, not `length > 0`:
+      // a row whose every remaining prize is ALREADY face up is an ordinary board after an
+      // earlier Purge, and `length > 0` would put a "yes" that turns nothing in front of
+      // the player and pay the printed +80 for it. Exactly the `turnPrizeFaceUp` op's
+      // payability — it turns one prize whenever one is face down (D385's obligation).
+      const side = state.players[seat];
+      return side.prizes.some((uid) => !side.faceUpPrizes.includes(uid));
+    }
     case "yourDeckAtMost":
       // 🆕🆕 D398 — the SIZE of your own deck, never its contents and never its
       // ORDER, which is the line the union's public-state invariant draws and the
@@ -5944,6 +5980,11 @@ export function conditionNote(cond: BoardCondition): string {
       // because a pill is read by a player and the sibling above spells its threshold
       // out too.
       return "you have at least 1 card in your hand";
+    case "yourFaceDownPrizeRemains":
+      // 🆕🆕🆕 D548 — NULLARY, a literal for `yourHandNotEmpty`'s reason one arm up; the
+      // printed cost states the fact as an ACTION ("turn 1 of your face-down Prize cards
+      // face up"), so the pill says what the board must hold before the offer.
+      return "you have at least 1 face-down Prize card";
     case "yourDeckAtMost":
       // 🆕🆕 D398 — built from the parameter, and the PRINTED CLAUSE IS NOT REUSED
       // even though it would type-check: the card says *"there are 3 or fewer cards
@@ -6896,6 +6937,12 @@ export function applyChoice(
       return choice.kind === "moveEnergy"
         ? moveEnergyApply(state, choice.picks, op, ctx, events)
         : state;
+    case "turnPrizeFaceUp":
+      // 🆕🆕🆕 D548 — the PARKED half of Crescent Purge's cost. `applyChoice` ends in
+      // `default: return state;`, so this arm is the site `tsc` cannot see (D540/D541/D543):
+      // without it a validated answer is silently dropped, the prize stays face down and the
+      // +80 is still paid. `crescentPurge.test.ts` drives the ≥2 park through `resolveEffect`.
+      return choice.kind === "prize" ? turnPrizeFaceUpAt(state, choice.index, ctx, events) : state;
     case "preventChosenAttack":
       // D157 — the parked half of the opponent-side per-attack lock. Same shape as
       // `healChosen`'s single-pick arm and for the same reason: `validateChoice`
@@ -12639,6 +12686,9 @@ function discardStadium(state: GameState, events: GameEvent[]): GameState {
     had ended. The position is not a preference: **every other op in this file finishes
     its work synchronously — i.e. before ANY of those three stages runs — and this one
     is a stage only because WHICH face-down prize is a decision a player must make.**
+    (🆕🆕🆕 D548: the take's pick is over the WHOLE row now, a face-UP slot included; the
+    sentence is kept because D548's `turnPrizeFaceUp` cites it as its precedent, and for
+    THAT op every offered slot is face down.)
     So it goes where the work would have happened had it needed no answer: in front of
     the whole tail. (`reactToAttackDamage` splices for a different reason — its stage
     must precede a Knock Out it is printed to survive — and in front of a two-member
@@ -12681,6 +12731,79 @@ function queueTakePrize(state: GameState, ctx: EffectContext): GameState {
       tail === -1
         ? [...state.pending, prize]
         : [...state.pending.slice(0, tail), prize, ...state.pending.slice(tail)],
+  };
+}
+
+/** 🆕🆕🆕 **D548 — `turnPrizeFaceUp`: turn 1 of the controller's OWN face-down Prize cards
+    face up** (Cresselia `sv06.5-021` "Crescent Purge", `optionalCostOps`' fifth row).
+
+    🛑 **THE OWNER PICKS (the D548 ruling).** The governing precedent is `queueTakePrize`'s
+    block directly above: *"WHICH face-down prize is a decision a player must make"* (D431).
+    The rules text says "turn 1 of your face-down Prize cards" and names no random process,
+    so the engine may not pick for the player. The REFUSED alternative — a blind auto-pick
+    of a uniformly random slot — is argued in `decisions.md` D548: it has the right
+    DISTRIBUTION (the owner cannot see the cards either, so any strategy they have is
+    uniform over identities), but it takes a decision the printed "you" owns, it would
+    need an rng draw no printing asks for, and it does not transfer to a card that lets the
+    owner LOOK first. Reversal: an official ruling that the choice may be made randomly or
+    by the engine.
+
+    THE THREE ENDINGS, `preventChosenAttack`'s shape on a candidate set that is not a list
+    of Pokémon: ZERO face-down prizes — unreachable behind `yourFaceDownPrizeRemains`, and an
+    honest SILENT no-op anyway (no park, no event); EXACTLY ONE — forced, applied inline
+    with no prompt (types.ts' ko:takePrizes forced-pick rule, the no-choice doctrine); TWO
+    OR MORE — park on `choosePrize` over the face-down INDICES. The pick parks INSIDE the
+    confirm's `then`, `costSnipeProgram`'s precedent, so the +80 hit queued behind it runs
+    only once the answer lands. */
+function turnPrizeFaceUp(
+  state: GameState,
+  ctx: EffectContext,
+  events: GameEvent[],
+): { done: GameState } | { park: EffectPrompt } {
+  const indices = faceDownPrizeIndices(state, ctx.seat);
+  if (indices.length === 0) return { done: state };
+  if (indices.length === 1) return { done: turnPrizeFaceUpAt(state, indices[0] ?? -1, ctx, events) };
+  return {
+    park: {
+      kind: "choosePrize",
+      indices,
+      note: "Choose 1 of your face-down Prize cards to turn face up.",
+    },
+  };
+}
+
+/** The face-down slots of `seat`'s prize row, in row order. */
+function faceDownPrizeIndices(state: GameState, seat: Seat): number[] {
+  const side = state.players[seat];
+  const indices: number[] = [];
+  side.prizes.forEach((uid, index) => {
+    if (!side.faceUpPrizes.includes(uid)) indices.push(index);
+  });
+  return indices;
+}
+
+/** Apply the chosen (or forced) slot: its uid joins `faceUpPrizes` (appended — the list is
+    ordered by when each prize was turned) and `PRIZE_TURNED_FACE_UP` is emitted. Shared by
+    the inline one-prize path and the answered park, so a forced pick and an answered one
+    are byte-identical. ⚠️ RE-VALIDATED AGAINST THE LIVE ROW, `lockDefenderAttack`'s rule for
+    an index answer: an index that is out of range or already face up turns nothing and
+    emits nothing (validateChoice refuses both on the wire first; this is the belt). */
+function turnPrizeFaceUpAt(
+  state: GameState,
+  index: number,
+  ctx: EffectContext,
+  events: GameEvent[],
+): GameState {
+  const side = state.players[ctx.seat];
+  const uid = side.prizes[index];
+  if (uid === undefined || side.faceUpPrizes.includes(uid)) return state;
+  events.push({ type: "PRIZE_TURNED_FACE_UP", seat: ctx.seat, index, uid });
+  return {
+    ...state,
+    players: {
+      ...state.players,
+      [ctx.seat]: { ...side, faceUpPrizes: [...side.faceUpPrizes, uid] },
+    },
   };
 }
 

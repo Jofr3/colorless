@@ -61,6 +61,7 @@ import {
   PICK_ROW_BASE,
   PICK_ROW_SPLIT_BASE,
   PRIZE_CARD_BASE,
+  PRIZE_CARD_FACE_UP,
   PRIZE_CARD_IDLE,
   PRIZE_CARD_PICKED,
   PROMOTE_ROW,
@@ -1245,12 +1246,43 @@ function RetreatDialog({
   );
 }
 
+/** 🆕🆕🆕 D548 — ONE prize tile, shared by both prize pickers in this HUD (the ko:takePrizes
+    grid and Crescent Purge's `choosePrize`). A FACE-DOWN tile is the card back
+    (`PRIZE_CARD_BASE`); a FACE-UP one lays the card's name over it (`PRIZE_CARD_FACE_UP`)
+    and says so in its accessible name. `faceUp` is the card NAME or null — the tile never
+    sees a uid. */
+function PrizeTile({
+  index,
+  faceUp,
+  selected,
+  onPick,
+}: {
+  index: number;
+  faceUp: string | null;
+  selected: boolean;
+  onPick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      aria-pressed={selected}
+      aria-label={faceUp === null ? `Prize ${index + 1}` : `Prize ${index + 1} — ${faceUp} (face up)`}
+      onClick={onPick}
+      className={`${PRIZE_CARD_BASE} ${selected ? PRIZE_CARD_PICKED : PRIZE_CARD_IDLE}`}
+    >
+      {faceUp === null ? null : <span className={PRIZE_CARD_FACE_UP}>{faceUp}</span>}
+    </button>
+  );
+}
+
 /** ko:takePrizes — pick exactly `count` of the REMAINING face-down slots.
     Legal indices are 0..prizes.length-1 (the engine's row compacts as prizes
     leave, takePrizes validation), so the grid is built from the live count.
     Mounted only while the decision is parked on the viewer (the phase
     switch), so the useState initializer is the fresh-picks-per-decision
-    reset. */
+    reset. (🆕🆕🆕 D548: *"face-down"* is partly false now — a slot Crescent Purge
+    turned face up is painted with its card and is JUST AS PICKABLE: a face-up prize is
+    still a prize. The caption says so.) */
 function PrizeDialog({ game, projection, viewerSeat, dispatch }: GameHudProps) {
   const [picked, setPicked] = useState<number[]>([]);
   const pending = projection.pendingDecision;
@@ -1258,7 +1290,14 @@ function PrizeDialog({ game, projection, viewerSeat, dispatch }: GameHudProps) {
   // takePrizes decision is parked.
   if (pending?.kind !== "takePrizes") return null;
   const count = pending.count;
-  const remaining = game.players[viewerSeat].prizes.length;
+  const side = game.players[viewerSeat];
+  const remaining = side.prizes.length;
+  const faceUpName = (index: number): string | null => {
+    const uid = side.prizes[index];
+    return uid !== undefined && side.faceUpPrizes.includes(uid)
+      ? (cardOfUid(game, uid)?.name ?? uid)
+      : null;
+  };
 
   const toggle = (index: number) => {
     setPicked((prev) =>
@@ -1276,22 +1315,19 @@ function PrizeDialog({ game, projection, viewerSeat, dispatch }: GameHudProps) {
         Take {count} prize card{count === 1 ? "" : "s"}
       </h2>
       <p className="mt-1.5 text-sm text-white/55">
-        Pick {count} of your face-down prize card{count === 1 ? "" : "s"} to add to your hand.
+        Pick {count} of your prize card{count === 1 ? "" : "s"} to add to your hand
+        {side.faceUpPrizes.length > 0 ? " — face-up ones included" : ""}.
       </p>
       <div className="mt-3 flex flex-wrap gap-2">
-        {Array.from({ length: remaining }, (_, index) => {
-          const selected = picked.includes(index);
-          return (
-            <button
-              key={index}
-              type="button"
-              aria-pressed={selected}
-              aria-label={`Prize ${index + 1}`}
-              onClick={() => toggle(index)}
-              className={`${PRIZE_CARD_BASE} ${selected ? PRIZE_CARD_PICKED : PRIZE_CARD_IDLE}`}
-            />
-          );
-        })}
+        {Array.from({ length: remaining }, (_, index) => (
+          <PrizeTile
+            key={index}
+            index={index}
+            faceUp={faceUpName(index)}
+            selected={picked.includes(index)}
+            onPick={() => toggle(index)}
+          />
+        ))}
       </div>
       <div className="mt-5 flex justify-end">
         <button
@@ -1407,7 +1443,42 @@ function EffectChooseDialog(props: GameHudProps): ReactElement | null {
       return <ChoosePokemonDialog {...props} prompt={prompt} />;
     case "orderCards":
       return <OrderCardsDialog {...props} prompt={prompt} />;
+    case "choosePrize":
+      // 🆕🆕🆕 D548 — Crescent Purge's pick.
+      return <ChoosePrizeDialog {...props} prompt={prompt} />;
   }
+}
+
+/** 🆕🆕🆕 D548 — Crescent Purge's cost: pick ONE of your own face-down prizes to turn face
+    up. Offers ONLY the face-down slots the prompt names (a face-up one is not a legal
+    answer — `validateChoice` refuses it), on the same `PrizeTile` the take picker uses.
+    `ChooseAttackDialog`'s shape: no local state and no Confirm, because picking IS the
+    whole decision (the engine never parks this below two face-down prizes, and the
+    decline was the confirm in front of it). Escape is swallowed: the program is parked on
+    this answer. */
+function ChoosePrizeDialog({
+  viewerSeat,
+  dispatch,
+  prompt,
+}: GameHudProps & { prompt: Extract<EffectPrompt, { kind: "choosePrize" }> }) {
+  return (
+    <HudDialog label="Choose a prize">
+      <h2 className="text-lg font-semibold text-white">{prompt.note}</h2>
+      <div className="mt-3 flex flex-wrap gap-2">
+        {prompt.indices.map((index) => (
+          <PrizeTile
+            key={index}
+            index={index}
+            faceUp={null}
+            selected={false}
+            onPick={() =>
+              dispatch({ type: "resolveEffect", seat: viewerSeat, choice: { kind: "prize", index } })
+            }
+          />
+        ))}
+      </div>
+    </HudDialog>
+  );
 }
 
 /** The printed "**You may** …" answered by the CONTROLLER — the engine's

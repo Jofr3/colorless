@@ -7,6 +7,9 @@
 //   - their own hand face-up; the opponent's hand as anonymous face-down
 //     backs (count only — no card identity anywhere, not even in ids);
 //   - BOTH prize sets as counts only (prizes are face-down in the real game);
+//     (🆕🆕🆕 D548: *"face-down"* is PARTLY false — Crescent Purge turns one face up, and
+//     it is public; the wire carries it, THIS projection does not yet: the Playmat
+//     PrizeGrid is NAMED AS OWED. See the `prizesRemaining` site below.)
 //   - decks as counts; discard piles fully public (§2 — ordered and public);
 //   - in-play Pokémon (active/bench) public once setup is over, with their
 //     attached cards and their battle state (`CardModel.battle` — damage/max
@@ -186,6 +189,11 @@ function playerBoardOf(state: GameState, seat: Seat, visibility: SideVisibility)
       : side.bench.map((_, index) => hiddenInPlayModel(`opponent-bench-${index}-hidden`)),
     // Count only — prizes are face-down for BOTH players (§3.8), so no uid or
     // catalog id of a prize card may appear anywhere in the projection.
+    // 🆕🆕🆕 D548 — RE-SCOPED: true of FACE-DOWN prizes only. A prize Crescent Purge turned
+    // face up is public, and the wire carries it (`RedactedSide.faceUpPrizes`); THIS
+    // playmat projection does not, because the Playmat's PrizeGrid (`PlayerSide.tsx`,
+    // `AnimatedCardsLayer.tsx`, `playmat/types.ts`'s `PlayerBoard`) has no face-up slot
+    // to paint it in — NAMED AS OWED, not built. Both HUDs' prize pickers DO paint it.
     prizesRemaining: side.prizes.length,
   };
 }
@@ -661,6 +669,13 @@ function effectDecisionFromPrompt(
           candidates: prompt.candidates.map((c) => ({ index: c.index, name: c.name })),
           note: prompt.note,
         },
+      };
+    // 🆕🆕🆕 D548 — Crescent Purge's pick. Indices only on BOTH sides (every offered slot
+    // is face down), so the round trip is a fresh copy, `chooseAttack`'s shape.
+    case "choosePrize":
+      return {
+        kind: "effectChoose",
+        prompt: { kind: "choosePrize", indices: [...prompt.indices], note: prompt.note },
       };
   }
 }

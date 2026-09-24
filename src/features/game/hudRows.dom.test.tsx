@@ -148,6 +148,7 @@ function wireGame(phase: RedactedPhase, you: Partial<RedactedGame["board"]["you"
     active: null,
     bench: [],
     prizesRemaining: 6,
+    faceUpPrizes: [], // 🆕🆕🆕 D548 — REQUIRED on the wire side (D159); no prize is face up on this board
     deckCount: 53,
     discard: [],
   };
@@ -233,7 +234,9 @@ describe("hudRows keeps D90's constant-level placement", () => {
       (entry) => (typeof entry[1] === "string" ? [[entry[0], entry[1]] as const] : []),
     );
     // ANTI-VACUITY: RED if an export is renamed away or the module is emptied.
-    expect(strings.length).toBe(12);
+    // 🆕🆕🆕 D548 — 12 → 13: `PRIZE_CARD_FACE_UP` (the face of a turned prize). It carries
+    // NO transition, so the animating list below is unchanged — measured, not assumed.
+    expect(strings.length).toBe(13);
     const animating = strings.filter(([, value]) => TRANSITION.test(` ${value}`));
     expect(animating.map(([name]) => name).sort()).toEqual([
       "ATTACK_ROW_BASE",

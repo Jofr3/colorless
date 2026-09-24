@@ -296,7 +296,15 @@ describe("§1 — the SHAPE question, settled from the catalog before the price 
     const prizeSentence =
       "You may turn 1 of your face-down Prize cards face up. If you do, this attack does 80 more damage. (That Prize card remains face up for the rest of the game.)";
     expect(units(corpus().filter(([, s]) => s === prizeSentence))).toBe(prizeRow.printings);
-    expect(resolvedByAnyReader(prizeSentence)).toBe(false);
+    // 🆕🆕🆕 D548 — THE PRIZE ROW WAS BUILT (Crescent Purge, `crescentPurge.test.ts`), so the
+    // refusal control is RE-POINTED BY VALUE AND OWNER (D438) rather than flipped in place:
+    // the "still unread" half now names the nearest still-unread row at the SAME printing
+    // count, 2 — `censusAttackCorpus.ts`'s Ancient discard-pile bonus (the schema-banner
+    // blocker, an ingest column away) — and the Prize row gets a POSITIVE rung (D383).
+    const stillUnread = "This attack does 10 more damage for each Ancient card in your discard pile.";
+    expect(units(corpus().filter(([, s]) => s === stillUnread))).toBe(prizeRow.printings);
+    expect(resolvedByAnyReader(stillUnread)).toBe(false);
+    expect(resolvedByAnyReader(prizeSentence)).toBe(true);
   });
 });
 

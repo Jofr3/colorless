@@ -145,7 +145,7 @@ export function createGame(options: CreateGameOptions): CreateGameResult {
 }
 
 function emptySide(deck: string[]): PlayerSide {
-  return { deck, hand: [], discard: [], prizes: [], active: null, bench: [], mulligans: 0 };
+  return { deck, hand: [], discard: [], prizes: [], faceUpPrizes: [], active: null, bench: [], mulligans: 0 };
 }
 
 function handHasBasic(state: GameState, seat: Seat): boolean {

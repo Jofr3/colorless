@@ -62,8 +62,17 @@ export const PROMOTE_ROW = `${PICK_ROW_SPLIT_BASE} ${ROW_BUTTON_ENABLED}`;
 
 /** The face-down prize tiles in the ko:takePrizes picker. Not a row — the one
     member of this family that isn't — but the same byte-identical duplication
-    across both HUDs, and the same unguarded transition. */
+    across both HUDs, and the same unguarded transition. (🆕🆕🆕 D548: *"face-down"* is
+    now partly false — a tile may be a FACE-UP prize, painted by `PRIZE_CARD_FACE_UP`
+    below; it stays pickable for a take, a face-up prize being still a prize.) */
 export const PRIZE_CARD_BASE =
   "h-16 w-11 cursor-pointer rounded-md bg-gradient-to-br from-sky-800 to-indigo-950 ring-2 transition-all motion-reduce:transition-none";
 export const PRIZE_CARD_PICKED = "ring-white/80 shadow-[0_0_14px_rgba(255,255,255,0.35)]";
 export const PRIZE_CARD_IDLE = "ring-white/15 hover:ring-white/40";
+/** 🆕🆕🆕 D548 — the FACE of a prize turned face up (Cresselia "Crescent Purge"), laid as an
+    inner layer OVER `PRIZE_CARD_BASE`'s back rather than merged into it: two background
+    utilities on one element resolve by stylesheet order, not by class order, so an
+    override on the same element would be a coin flip. It carries no transition (the tile
+    underneath owns the one transition, and its guard), so D90's pairing is untouched. */
+export const PRIZE_CARD_FACE_UP =
+  "flex h-full w-full items-center justify-center overflow-hidden rounded-md bg-slate-100 p-0.5 text-center text-[8px] font-semibold leading-tight text-slate-900";

@@ -44,6 +44,7 @@ const EMPTY_SIDE: RedactedGame["board"]["you"] = {
   active: null,
   bench: [],
   prizesRemaining: 6,
+  faceUpPrizes: [], // 🆕🆕🆕 D548 — REQUIRED on the wire side (D159); no prize is face up on this board
   deckCount: 53,
   discard: [],
 };
@@ -235,6 +236,15 @@ const ONE_PER_KIND: Record<RedactedEffectPrompt["kind"], RedactedEffectPrompt> =
     note: "Attach an Energy.",
   },
   chooseAttack: MEDICHAM,
+  // 🆕🆕🆕 D548 — the TWELFTH kind (`redactedEffectPromptSchema.options.length` re-read:
+  // 11 → 12). TWO face-down slots, not one, for `orderCards`' reason above: the engine
+  // never parks this prompt below two (one face-down prize is turned inline), so a
+  // one-slot entry would render a dialog the engine cannot produce.
+  choosePrize: {
+    kind: "choosePrize",
+    indices: [1, 3],
+    note: "Choose 1 of your face-down Prize cards to turn face up.",
+  },
 };
 
 describe("OnlineHud — EffectChooseDialog covers EVERY wire prompt kind", () => {

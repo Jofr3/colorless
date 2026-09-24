@@ -244,6 +244,7 @@ describe("projectGameState — hidden information", () => {
           expect(sweepContains(json, uid)).toBe(false);
         }
         // Prizes are face-down for BOTH players — the viewer's own included.
+        // (🆕🆕🆕 D548: FACE-DOWN prizes only — no Purge runs here, so every prize is.)
         for (const seat of ["p1", "p2"] as const) {
           for (const uid of state.players[seat].prizes) {
             expect(sweepContains(json, uid)).toBe(false);

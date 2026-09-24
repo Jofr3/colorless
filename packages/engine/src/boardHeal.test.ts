@@ -636,6 +636,11 @@ describe("end to end — Cresselia 'Healing Pirouette' (heal 20 each, NO printed
     // not payable out of BOARD_HEAL_DECK in one turn, so the control is stated at the
     // deriver — which is all it claims: a neighbouring sentence on the same card
     // derives no op, and no card-keyed lookup can hand it index 0's sentence.
+    // 🆕🆕🆕 D548 — *"unmapped"* IS WITHDRAWN (D539), and the rung STAYS GREEN for a reason
+    // it never needed: Crescent Purge is now claimed WHOLE by the TENTH reader,
+    // `deriveAttackOptionalCostBoost` (its fifth cost row, `crescentPurge.test.ts`), not by
+    // `deriveAttackEffect` — so this control still derives NOTHING at THIS deriver, which is
+    // all it ever claimed. What it no longer is: an unmapped sentence.
     const purge = FIXTURE_POOL["sv06.5-021"]?.attacks?.[CRESCENT_PURGE_INDEX];
     expect(purge?.name).toBe("Crescent Purge");
     expect(deriveAttackEffect(purge?.effect ?? "")).toBeNull();

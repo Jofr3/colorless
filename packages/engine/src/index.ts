@@ -14225,6 +14225,11 @@ import type { GameState, Seat } from "./types";
     false arm needs the attack used six times (D385's measurement, D383's
     `unreachable-population` shape), while both arms of this one are the ordinary
     board — a Basic defender and an evolved one.
+    (🆕🆕🆕 D548 — WITHDRAWN, annotated rather than retyped (D178): the Prize gate's false
+    arm does NOT need the attack used six times, and it is NOT D383's
+    `unreachable-population` shape. A face-up prize STAYS in the row while the others are
+    taken, so the Purges needed equal the prizes REMAINING — ONE Purge at 1 prize left —
+    and the false arm is an ORDINARY board; `crescentPurge.test.ts` §5 drives it.)
 
     ⚠️ **THE CENSUS STEP IS 1 SENTENCE / 1 PRINTING**, the 1:1 shape D382 and D384
     took. raw 1,265 → **1,266**, `BUILT.attack` 1,294 → **1,295**, resolving sentences
@@ -14268,6 +14273,10 @@ import type { GameState, Seat } from "./types";
     one does not — not on the bump they share.** ⚠️ And on reachability, which the
     arithmetic does not show: D385 measured the Prize gate's false arm as needing the
     attack used six times, while both arms of this one are ordinary play.
+    (🆕🆕🆕 D548 — WITHDRAWN, annotated rather than retyped (D178): the six-times figure is
+    false on the rules. A face-up prize stays in the row while the others are taken, so
+    ONE Purge at 1 prize left reaches the false arm — an ORDINARY board, which
+    `crescentPurge.test.ts` §5 drives.)
 
     🛑 **THE SHAPE QUESTION WAS ORDERED FIRST AND THE COMPILER REFUSED TO ANSWER IT.**
     All THREE spellings were applied to `types.ts` and `bunx tsc -b --force` was read:
@@ -14381,6 +14390,8 @@ import type { GameState, Seat } from "./types";
     the reader's domain and is a FLOOR on it. The reading is **8 sentences / 15
     printings with 1 / 2 refused** — the face-up Prize alone, still behind a
     `PlayerState` field.
+    (🆕🆕🆕 D548: read `PlayerSide` — `PlayerState` is the lobby's seat type — and the field
+    is now BUILT, `PlayerSide.faceUpPrizes`; dated history, annotated rather than retyped.)
 
     ⚠️ **THE CENSUS STEP IS 1 SENTENCE / 1 PRINTING**, the family's second 1:1 step.
     raw 1,262 → **1,263**, `BUILT.attack` 1,291 → **1,292**, resolving sentences
@@ -15101,7 +15112,8 @@ import type { GameState, Seat } from "./types";
     CANNOT GIVE A LEGAL-PRINTING COUNT** — that is `legalAttackCorpus()`'s alone.
 
     ✅ **D207's SUPPLY QUESTION WAS ASKED FIRST AND WAS NEVER CLOSE, ON BOTH HALVES.**
-    `PlayerState.discard` is a uid list the model has carried since M1 with a dozen
+    `PlayerState.discard` (🆕🆕🆕 D548: read `PlayerSide.discard`; `PlayerState` is the lobby's
+    type) is a uid list the model has carried since M1 with a dozen
     readers, and `CardFilter` ALREADY SPELLS THE PRINTED NOUN — `{ kind: "basicEnergy",
     energyType }`, authored for the *"Basic {L} Energy card"* search sentences. Neither
     the zone nor the filter is new. **THE WHOLE PRICE WAS THE SHAPE**, for the second
@@ -18355,7 +18367,8 @@ import type { GameState, Seat } from "./types";
     program runs, so appending would take this prize AFTER the Knock Out sweep and
     after the turn ended. Every other interpreter op finishes synchronously — i.e.
     ahead of all three — and this one is a stage only because WHICH face-down prize is a
-    player's decision, so it belongs where the work would have happened. An attack that
+    player's decision, so it belongs where the work would have happened. (🆕🆕🆕 D548:
+    the take now offers the whole row, a face-UP slot included.) An attack that
     also Knocks the Defender out therefore queues **two** `takePrizes` stages, in that
     order, and they are correctly not one batch: this prize is step 4 of the attack,
     which precedes the Knock Out check.
@@ -20098,6 +20111,64 @@ import type { GameState, Seat } from "./types";
     `expect(manifest.version)`, `it(…)` titles, the declaration and `package.json` —
     **not** as a value-keyed grep — because a value-keyed grep is precisely the mechanism
     that ate D500's heading.)
+    🆕🆕🆕 engineVersion 0.432.0 → **0.433.0** (D548 — CRESCENT PURGE, THE FACE-UP PRIZE: A
+    REQUIRED `PlayerSide.faceUpPrizes`, A FIFTH COST ROW ON THE TENTH READER, AND THE OWNER
+    PICKS WHICH PRIZE. `censusAttackCorpus.ts` **file line 664** (leading count column `2`) —
+    *"You may turn 1 of your face-down Prize cards face up. If you do, this attack does 80 more
+    damage. (That Prize card remains face up for the rest of the game.)"* — **1 sentence / 2
+    legal printings**, on the REAL card Cresselia `sv06.5-021` (attack index 1, `80+`,
+    {P}{P}{P}; `testFixtures.ts`' row), claimed WHOLE by `deriveAttackOptionalCostBoost`
+    through its FIFTH cost row (`OPTIONAL_COST_TURN_PRIZE_FACE_UP` → `{cond:
+    yourFaceDownPrizeRemains, ops: [turnPrizeFaceUp]}`), the printed reminder stripped as an
+    OPTIONAL EXACT SUFFIX only behind that row (`OPTIONAL_COST_PAYOFF_MORE_DAMAGE`'s `$`, D381's
+    C5 guard, NOT widened). `optionalCostBoostProgram` and `attack.ts` take ZERO code bytes: the
+    program is `conditionGate{cond, then: [optional{note, then: [turnPrizeFaceUp, hit 160]}],
+    otherwise: hit 80}`, and the pick parks INSIDE the confirm's `then` (`costSnipeProgram`'s
+    precedent). Suite: `crescentPurge.test.ts`, on the real card in a file-local 60-card deck
+    (D270).
+    🛑 **THE OWNER PICKS** (`decisions.md` D548's RULING, reversal: an official ruling that the
+    choice may be made randomly or by the engine; governing precedent D431, interpreter.ts'
+    `queueTakePrize` block — *"WHICH face-down prize is a decision a player must make"*): TWO
+    OR MORE face-down prizes park on a NEW `EffectPrompt` `choosePrize { indices }` (face-down
+    slot INDICES only, never a uid), answered by a NEW `EffectChoice` `{kind: "prize", index}`;
+    EXACTLY ONE resolves inline (the forced-pick rule); ZERO is unreachable behind the gate and
+    an honest silent no-op. The blind auto-pick and a single pick-or-decline prompt replacing
+    the confirm are both REFUSED in D548's row. `validateChoice` refuses an out-of-range, a
+    face-up and a non-integer (multi-index) answer; the apply re-validates on the live row.
+    🛑 **`PlayerSide.faceUpPrizes: string[]`** — UIDS (the row compacts on every take, flow.ts,
+    so an index is not stable), always a SUBSET of `prizes` (`resolveTakePrizes` prunes a
+    taken uid in the same `withSide`; `tiedOverTheBatch`'s speculative line is byte-identical,
+    it reads only the length), ordered by when each prize was turned. A face-up prize is
+    STILL a prize: §14, `prizesRemaining` and every prizes-remaining condition read
+    `prizes.length`. A NEW nullary `BoardCondition` `yourFaceDownPrizeRemains` (`some`, not
+    `length > 0`: an all-face-up row is ordinary after an earlier Purge) and a NEW `GameEvent`
+    `PRIZE_TURNED_FACE_UP {seat, index, uid}` whose `log.ts` arm NAMES the card (public now);
+    `PRIZES_TAKEN` stays count-only for every take.
+    🛑 **THE WIRE**: `RedactedSide.faceUpPrizes: {index, card}[]`, REQUIRED (D159), index-stable,
+    for both seats and spectators; no uid or card id of a FACE-DOWN prize crosses. The
+    `choosePrize` arm is the wire union's TWELFTH kind. Both HUDs paint face-up tiles in the
+    ko:takePrizes picker (still pickable) and gain a choose-a-prize dialog offering only the
+    face-down tiles. The Playmat PrizeGrid is NAMED AS OWED.
+    🛑 **`MATCH_RECORD_VERSION` 31 → 32** (apps/api `match.ts`): a v31 state has no key and
+    `redactedSideOf` / `resolveTakePrizes` THROW on it (measured, D326's class); the optional
+    `faceUpPrizes?` route is refused under the FIFTH POSITION (a rollback turns a public card
+    face down again and re-arms the gate on it).
+    Claims withdrawn (D539): Cresselia's *"90 more damage"* (it prints 80) and *"Both stay on
+    the loud ATTACK_EFFECT_SKIPPED path"* (effects.ts); *"a `PlayerState` field"* (the type is
+    `PlayerSide`, and the field is built); the prize row as ALL face-down (types ×3, flow,
+    attack, actions, events ×2, effects ×2, interpreter + this changelog's D431 entry, redact,
+    projection ×2, hudRows, both HUDs, four test comments) AND `prizes.length` as *"what is
+    still face down"* (interpreter ×2, effects ×4, registry, opponentPrizeGate.test) — the
+    second claim missed by the first stamp and found in review; *"unmapped"*
+    (`boardHeal.test.ts`, `testFixtures.ts`); and the Prize gate's false arm as UNREACHABLE —
+    *"needs the attack used six times"* (this changelog's D386 and D387 entries,
+    `healedThisTurn.test.ts`, `simulator.md` ×3, decisions D387) and *"VACUOUS"* / *"what
+    the Prize row's gate lacks"* (decisions D382, D384, D385), false because a face-up prize
+    stays in the row while the others are taken, so ONE Purge at 1 prize left reaches it —
+    found by the SECOND review, every copy annotated in place (D178). Census (`SUBMAX=12`): reader 572/1625 → 573/1627,
+    residue 38/51 → 37/49, raw residue 68/107 → 67/105, `BUILT.attack` 1681 → 1683, OPAQUE
+    13/20 → 12/18; registry, gate and trailing UNMOVED. Default cap: OPAQUE 24/34 → 23/32,
+    targets 602 → 603. THE SENTENCE STEP (1) AND THE PRINTING STEP (2) DIFFER.)
     🆕🆕🆕 engineVersion 0.431.0 → **0.432.0** (D547 — THE FLIP-TO-ATTACK LOCK AND THE NEXT-TURN
     VULNERABILITY, TWO NEW OPS ON TWO NEW REQUIRED `InPlayPokemon` FIELDS, AND THE FIRST
     `MATCH_RECORD_VERSION` BUMP SINCE D501. `censusAttackCorpus.ts` **file lines 176 and 150**
@@ -23857,7 +23928,7 @@ import type { GameState, Seat } from "./types";
     WITNESS** — the count was re-derived every slice and the word *"three"* was carried.
     A successor of this slice inherits **81 / 61 / 17** again, over **FIVE** history
     occurrences: those four plus `deckMillFilteredScale.test.ts`'s own header arrow.) */
-export const engineVersion = "0.432.0";
+export const engineVersion = "0.433.0";
 
 export type {
   ApplyResult,

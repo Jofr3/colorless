@@ -8034,7 +8034,10 @@ export const FIXTURE_POOL: Record<string, Card> = {
       Its index-1 "Crescent Purge" ({P}{P}{P}, 80+) is a face-up-Prize clause from a
       family nothing has mapped — unpayable out of this deck, and left faithful
       rather than trimmed so the index-keyed control has real text to be a control
-      of.
+      of. (🆕🆕🆕 D548: *"a family nothing has mapped"* is WITHDRAWN — the sentence is
+      claimed by `deriveAttackOptionalCostBoost`'s fifth cost row, and
+      `crescentPurge.test.ts` drives it on THIS row. It is still not `deriveAttackEffect`'s,
+      so `boardHeal.test.ts`'s index-keyed control is unmoved.)
 
       Verbatim off the local D1 (2026-08-01): 120 HP, Psychic, Basic, retreat 1, ×2
       Darkness, −30 Fighting Resistance, no Ability. */

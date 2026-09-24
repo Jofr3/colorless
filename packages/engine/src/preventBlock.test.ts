@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { deriveAttackCoinFlip, deriveAttackEffect } from "./effects";
+import {
+  deriveAttackCoinFlip,
+  deriveAttackEffect,
+  deriveAttackOptionalCostBoost,
+  optionalCostBoostProgram,
+} from "./effects";
 import type { EffectOp } from "./effects";
 import { applyAction, programFor } from "./index";
 import type { GameEvent, GameState } from "./index";
@@ -21,6 +26,7 @@ import {
   setActiveFromDeck,
   setConditions,
   setDamage,
+  setPrizes,
   types,
   walkProgram,
 } from "./testFixtures";
@@ -848,6 +854,21 @@ describe("the gated PREVENT clause — the guard is SWEPT, not listed", () => {
       expect(derived, `off-pool sentence stopped deriving: ${effect}`).not.toBeNull();
       if (derived !== null) walkKinds(derived, kinds);
     }
+    // 🆕🆕🆕 D548 — THE FOURTH SOURCE, AND IT IS D318's FINDING AT THIS SITE: the reversed
+    // optional-cost READING hands `attack.ts` a program `deriveAttackEffect` never sees
+    // (`optionalCostBoostProgram`, assembled with the printed base), so an op that ONLY a
+    // cost row emits was invisible here — `discardStadium`/`discardHand`/the Energy shuffle
+    // reached this table through OTHER producers by luck, and D548's `turnPrizeFaceUp` has
+    // no other producer. The sweep now walks every pool attack's reading too (Cresselia
+    // `sv06.5-021` is a `FIXTURE_POOL` row, so its fifth-row program is in the domain). The
+    // base is irrelevant to which op KINDS appear, so 0 is passed.
+    for (const card of Object.values(FIXTURE_POOL)) {
+      for (const attack of card.attacks ?? []) {
+        const reading =
+          attack.effect === undefined ? null : deriveAttackOptionalCostBoost(attack.effect);
+        if (reading !== null) walkKinds(optionalCostBoostProgram(reading, 0, attack.effect ?? ""), kinds);
+      }
+    }
     return kinds;
   }
 
@@ -1145,6 +1166,14 @@ describe("the gated PREVENT clause — the guard is SWEPT, not listed", () => {
     // stopped it would let the Defending Pokémon veto what its opponent does with
     // their own hand.
     discardHand: "untouched",
+    // 🆕🆕🆕 **D548 — `turnPrizeFaceUp`, and it is `takePrize`'s verdict for `takePrize`'s
+    // reason.** UNTOUCHED: the op turns one of the ACTOR's OWN face-down prizes face up —
+    // an own-side zone, no opponent-side body anywhere in it — so a §11 block on the
+    // Defending Pokémon has nothing to protect from it, and the implementation does not
+    // call `effectRefused` (interpreter.ts `turnPrizeFaceUp`). It reached this table through
+    // the FOURTH source above (a cost row of the reversed optional reading), not through
+    // `deriveAttackEffect`.
+    turnPrizeFaceUp: "untouched",
     // ⚠️⚠️ D237 — backlog row 13's op, arriving in this table because the sweep
     // above is TOTAL over what the deriver can emit and an attack now emits it.
     // UNTOUCHED, and for `drawCards`' reason with one more zone on the list: the
@@ -2063,6 +2092,18 @@ describe("the gated PREVENT clause — the guard is SWEPT, not listed", () => {
     // non-empty first, because the op is SILENT on an empty one — a probe that read
     // "untouched" off nothing to discard would be the vacuous guard this file exists
     // to refuse (D205).
+    // 🆕🆕🆕 D548 — a ONE-prize row, so the op resolves INLINE (≥2 face-down parks on
+    // `choosePrize`, and a parked probe would read "did not land" off a pending question).
+    // P2 is the actor; its single prize must end up face up, and nothing is refused.
+    turnPrizeFaceUp: {
+      op: { op: "turnPrizeFaceUp" },
+      board: () => setPrizes(probeBoard(), "p2", 1),
+      landed: (r) =>
+        !r.parked &&
+        r.before.players.p2.faceUpPrizes.length === 0 &&
+        r.after.players.p2.faceUpPrizes.length === 1 &&
+        r.after.players.p2.faceUpPrizes[0] === r.before.players.p2.prizes[0],
+    },
     discardHand: {
       op: { op: "discardHand" },
       landed: (r) =>

@@ -86,6 +86,8 @@ import {
 // author it is to have added the Tera datum first.
 //
 // ── ⚠️ TWO SPELLINGS EXIST AND THEY ARE NOT THE SAME NUMBER ──────────────────
+// (🆕🆕🆕 D548: *"what is still face down"* on the next line is WITHDRAWN — `prizes.length`
+// is the whole ROW; a slot Crescent Purge turned FACE UP (`PlayerSide.faceUpPrizes`) is still in `prizes` and still counted.)
 // `prizes.length` is REMAINING — what is still face down. `opponentPrizesTaken`
 // (a `DamageCountSource`, folded at attack.ts:148) is `6 − remaining`. Both read
 // the same array on the same seat and mean opposite ends of it, and both printed

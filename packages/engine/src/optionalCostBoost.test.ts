@@ -144,12 +144,14 @@ const CETITAN = "You may discard a Stadium in play. If you do, this attack does 
     BEING DELETED** (D178: provenance is annotated, never overwritten). It read *"an
     Energy→OWN-DECK op AND a Bench-snipe consequent"* — and BOTH halves of that price
     were the wrong size. See `TAKEN_SINCE`. */
-const STILL_OWED = {
-  /** A FACE-UP PRIZE on `PlayerState` — a persisted-shape change, so
-      `MATCH_RECORD_VERSION` on top of the engine bump. */
-  prize:
-    "You may turn 1 of your face-down Prize cards face up. If you do, this attack does 80 more damage. (That Prize card remains face up for the rest of the game.)",
-} as const;
+/*  🆕🆕🆕 **D548 EMPTIED IT, AND THE ENTRY MOVED TO `TAKEN_SINCE` RATHER THAN BEING DELETED**
+    (D178). It read, verbatim: *"A FACE-UP PRIZE on `PlayerState` — a persisted-shape
+    change, so `MATCH_RECORD_VERSION` on top of the engine bump."* The persisted-shape half
+    was RIGHT (`MATCH_RECORD_VERSION` 31 → 32) and the type was WRONG: the engine's is
+    `PlayerSide` (`faceUpPrizes`); `PlayerState` is the lobby's seat type. See
+    `TAKEN_SINCE.prize`. The object stays (typed wide, so the loops below still compile and
+    each carries a `toHaveLength(0)` guard rather than going silently vacuous — D542 (9)). */
+const STILL_OWED: Readonly<Record<string, string>> = {};
 
 /** 🆕🆕 D383 — THE ROW THAT LEFT `STILL_OWED`, ASSERTED RESOLVED rather than merely
     removed. `stadiumPresence.test.ts` grew the same list at D382 for the same reason:
@@ -167,6 +169,10 @@ const STILL_OWED = {
 const TAKEN_SINCE = {
   energy:
     "You may shuffle 3 Energy attached to this Pokémon into your deck. If you do, this attack also does 120 damage to 1 of your opponent's Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)",
+  /** 🆕🆕🆕 D548 — Cresselia `sv06.5-021` "Crescent Purge", **2 legal printings**, the fifth
+      cost row (`crescentPurge.test.ts`). The LAST member of `STILL_OWED`. */
+  prize:
+    "You may turn 1 of your face-down Prize cards face up. If you do, this attack does 80 more damage. (That Prize card remains face up for the rest of the game.)",
 } as const;
 
 const FAMILY = /^You may .*If you do,/;
@@ -261,7 +267,10 @@ describe("§1 — the price, MEASURED IN REFUSED SENTENCES, before and after", (
     // became a table. The reader is unchanged and so is its anchor: what moved is that
     // `optionalCostPayoff` now has a second row.
     const reversed = family.filter(([, s]) => deriveAttackOptionalCostBoost(s) !== null);
-    expect([reversed.length, units(reversed)]).toEqual([2, 7]);
+    // 🆕🆕🆕 D548 — **2 / 7 → 3 / 9**: the face-up Prize (2 printings) joins the reversed
+    // half through the COST table's fifth row; the family (7 / 14) and the forward half
+    // (4 / 5) are unmoved, and 4 + 3 = 7, 5 + 9 = 14 — the whole family now reads.
+    expect([reversed.length, units(reversed)]).toEqual([3, 9]);
     // 🛑 THE TWO READERS ARE MUTUALLY EXCLUSIVE ON EVERY PRINTED MEMBER, which is the
     // property that lets attack.ts SUM its terms instead of choosing between them.
     for (const [, s] of family) {
@@ -278,8 +287,13 @@ describe("§1 — the price, MEASURED IN REFUSED SENTENCES, before and after", (
     const family = corpus().filter(([, s]) => FAMILY.test(s));
     const refused = family.filter(([, s]) => !resolvedByAnyReader(s));
     // AFTER. 🆕🆕 D383 — the sole survivor is the one `STILL_OWED` row and nothing else.
-    expect([refused.length, units(refused)]).toEqual([1, 2]);
-    expect(refused.map(([, s]) => s)).toEqual([STILL_OWED.prize]);
+    // 🆕🆕🆕 D548 — **1 / 2 → 0 / 0**: `STILL_OWED` is empty and so is the refused half —
+    // and the positive rung below (the departed row RESOLVES) is what stops this going
+    // green by shortening (D383).
+    expect([refused.length, units(refused)]).toEqual([0, 0]);
+    expect(refused.map(([, s]) => s)).toEqual([]);
+    expect(Object.values(STILL_OWED)).toHaveLength(0);
+    expect(resolvedByAnyReader(TAKEN_SINCE.prize)).toBe(true);
     // BEFORE, re-derived rather than quoted: drop this reader from the set and the
     // refused half is the head D380 handed over — 3 sentences / 9 printings.
     const withoutThisReader = (text: string): boolean =>
@@ -297,7 +311,7 @@ describe("§1 — the price, MEASURED IN REFUSED SENTENCES, before and after", (
         .filter(([, s]) => !refused.some(([, r]) => r === s))
         .map(([, s]) => s)
         .sort(),
-    ).toEqual([CETITAN, TAKEN_SINCE.energy].sort());
+    ).toEqual([CETITAN, TAKEN_SINCE.energy, TAKEN_SINCE.prize].sort()); // 🆕🆕🆕 D548 — the third: 3 -> 0 across three commits.
   });
 
   it("the sentence carries TWO printings, and no near spelling hides behind it", () => {
@@ -358,9 +372,19 @@ describe("§1 — the price, MEASURED IN REFUSED SENTENCES, before and after", (
         "You may discard your hand. If you do, this attack does 120 more damage.",
       ),
     ).toEqual(deriveAttackOptionalCostBoost(HAND_DISCARD));
+    // 🆕🆕🆕 D548 — THE UNKNOWN-COST CONTROL IS RE-POINTED BY VALUE (D438): the face-up
+    // Prize cost is a TABLE ROW now, so under BOTH connectives it READS (they are one
+    // reading — the fifth row's gate is exactly its payability, D385's obligation), and the
+    // "unknown cost under the second connective" control moves to the nearest miss that is
+    // still unknown — an OPPONENT's Prize, the one-axis side swap.
     expect(
       deriveAttackOptionalCostBoost(
         "You may turn 1 of your face-down Prize cards face up. If you discarded any cards in this way, this attack does 80 more damage.",
+      ),
+    ).toEqual(deriveAttackOptionalCostBoost(TAKEN_SINCE.prize));
+    expect(
+      deriveAttackOptionalCostBoost(
+        "You may turn 1 of your opponent's face-down Prize cards face up. If you discarded any cards in this way, this attack does 80 more damage.",
       ),
     ).toBeNull();
   });
@@ -400,9 +424,28 @@ describe("§2 — BOTH halves dispatched, and each refusal driven from OUTSIDE t
     // half this reader DOES read, and the sentences below are SYNTHETIC on purpose —
     // no card prints them, which is the whole point of driving a refusal from outside
     // the population.
+    // 🆕🆕🆕 D548 — THE SYNTHETIC BARE PRIZE SENTENCE NOW DERIVES (the reminder is an
+    // OPTIONAL suffix behind the fifth cost row), so this refusal is replaced by its
+    // NEAREST MISSES rather than flipped: the wrong ZONE (an opponent's Prize), the wrong
+    // COUNT (2), and the reminder behind a NON-prize cost — plus the positive rung.
     expect(
       deriveAttackOptionalCostBoost(
         "You may turn 1 of your face-down Prize cards face up. If you do, this attack does 80 more damage.",
+      ),
+    ).toEqual(deriveAttackOptionalCostBoost(TAKEN_SINCE.prize));
+    expect(
+      deriveAttackOptionalCostBoost(
+        "You may turn 1 of your opponent's face-down Prize cards face up. If you do, this attack does 80 more damage.",
+      ),
+    ).toBeNull();
+    expect(
+      deriveAttackOptionalCostBoost(
+        "You may turn 2 of your face-down Prize cards face up. If you do, this attack does 80 more damage.",
+      ),
+    ).toBeNull();
+    expect(
+      deriveAttackOptionalCostBoost(
+        "You may discard a Stadium in play. If you do, this attack does 80 more damage. (That Prize card remains face up for the rest of the game.)",
       ),
     ).toBeNull();
     // 🆕🆕 D383 — THE ENERGY COST IS NO LONGER A REFUSAL AND THE ROW WAS REPLACED
@@ -482,12 +525,19 @@ describe("§2 — BOTH halves dispatched, and each refusal driven from OUTSIDE t
   });
 
   it("🛑 the anchor is WHOLE-SENTENCE at BOTH ends, so a compound printing is refused", () => {
+    // 🆕🆕🆕 D548 — the loop is EMPTY now, and says so rather than going vacuous (D542 (9)).
+    expect(Object.values(STILL_OWED)).toHaveLength(0);
     for (const sentence of Object.values(STILL_OWED)) {
       expect(deriveAttackOptionalCostBoost(sentence), sentence).toBeNull();
     }
     // 🆕🆕 D383 — and the ATTRIBUTION CONTROL that stops this rung passing because the
     // list got shorter: the row that LEFT it is asserted to resolve.
     expect(deriveAttackOptionalCostBoost(TAKEN_SINCE.energy)).not.toBeNull();
+    // 🆕🆕🆕 D548 — …and the second row that left it. Its trailing REMINDER is the one
+    // trailing sentence the anchor does accept, as an exact suffix behind its own cost row;
+    // any OTHER trailing sentence still denies it.
+    expect(deriveAttackOptionalCostBoost(TAKEN_SINCE.prize)).not.toBeNull();
+    expect(deriveAttackOptionalCostBoost(`${TAKEN_SINCE.prize} Draw a card.`)).toBeNull();
     // A leading or trailing sentence denies it, exactly as it denies D316's reader.
     expect(deriveAttackOptionalCostBoost(`Draw a card. ${CETITAN}`)).toBeNull();
     expect(deriveAttackOptionalCostBoost(`${CETITAN} Draw a card.`)).toBeNull();
@@ -680,16 +730,21 @@ describe("§5 — the confirm: a decline still deals the base, and an empty zone
 });
 
 describe("§6 — what this slice did NOT buy", () => {
-  it("🛑 the ONE remaining printing stays LOUD, waiting on a named mechanism", () => {
+  it("🛑 the ONE remaining printing stays LOUD, waiting on a named mechanism (🆕🆕🆕 D548: NONE remains — the mechanism was built)", () => {
+    // 🆕🆕🆕 D548 — the loop is EMPTY, and the guard says so (D542 (9)).
+    expect(Object.values(STILL_OWED)).toHaveLength(0);
     for (const sentence of Object.values(STILL_OWED)) {
       expect(resolvedByAnyReader(sentence), sentence).toBe(false);
     }
     const left = corpus().filter(([, s]) =>
       (Object.values(STILL_OWED) as readonly string[]).includes(s),
     );
-    // 🆕🆕 D383 — 2 / 7 -> 1 / 2.
-    expect([left.length, units(left)]).toEqual([1, 2]);
-    expect(corpus().filter(([, s]) => s === STILL_OWED.prize).map(([n]) => n)).toEqual([2]);
+    // 🆕🆕 D383 — 2 / 7 -> 1 / 2. 🆕🆕🆕 D548 — 1 / 2 -> 0 / 0.
+    expect([left.length, units(left)]).toEqual([0, 0]);
+    // 🆕🆕🆕 D548 — RE-POINTED BY OWNER (D438): the row left `STILL_OWED` for `TAKEN_SINCE`,
+    // and its printing count is asserted there, beside a POSITIVE resolution rung.
+    expect(corpus().filter(([, s]) => s === TAKEN_SINCE.prize).map(([n]) => n)).toEqual([2]);
+    expect(resolvedByAnyReader(TAKEN_SINCE.prize)).toBe(true);
     // 🛑 AND THE DEPARTED ROW IS ASSERTED RESOLVED, WHICH IS WHAT KEEPS THE RUNG ABOVE
     // FROM GOING GREEN BY BEING SHORTENED (D382's repair, one file over).
     expect(resolvedByAnyReader(TAKEN_SINCE.energy)).toBe(true);

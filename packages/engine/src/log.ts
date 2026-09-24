@@ -1187,6 +1187,15 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
         plain(`took ${n} prize card${n === 1 ? "" : "s"} — ${event.remaining} left`),
       ]);
     }
+    case "PRIZE_TURNED_FACE_UP":
+      // 🆕🆕🆕 D548 — NAMES the card: a face-up prize is public (both seats and spectators
+      // see it on the wire), so withholding the name here would hide nothing. The count-only
+      // rule above is for a card entering a HAND, and it is kept for every take.
+      return row(event.seat, [
+        plain("turned "),
+        strong(cardName(state, event.uid)),
+        plain(` face up (Prize ${event.index + 1})`),
+      ]);
     case "PROMOTION_REQUIRED":
       return row(event.seat, [plain("must promote a benched Pokémon")]);
     case "POKEMON_PROMOTED":

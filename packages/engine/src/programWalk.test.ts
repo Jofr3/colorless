@@ -409,6 +409,17 @@ describe("the pool sweep, structurally", () => {
       "sv05-213 trigger :: moveEnergy",
       "sv05-213 trigger :: recordGate",
       "sv05-213 trigger :: switchActive",
+      // 🆕🆕🆕 **D548 — THREE ROWS FROM A REAL POOL CARD, AND THEY ARE `fix-crushpress`'s
+      // `moreDamage` ARM A FOURTH TIME.** Cresselia `sv06.5-021` "Crescent Purge" (index 1)
+      // assembles through `optionalCostBoostProgram` UNCHANGED (zero bytes there): the new
+      // op `turnPrizeFaceUp` sits inside an `optional.then` NESTED IN a `conditionGate.then`,
+      // the branch the enumerated walk cannot descend, beside the boosted hit and the
+      // decline arm. MEASURED, not predicted: the runner's `missed` grew 52 → 55. It is the
+      // first row here whose op PARKS on a prompt of its own inside that nested `then`
+      // (`choosePrize`) — `costSnipeProgram`'s snipe is the precedent for parking there.
+      "sv06.5-021 attack 1 optionalCostBoost :: damageDefender",
+      "sv06.5-021 attack 1 optionalCostBoost :: damageDefender",
+      "sv06.5-021 attack 1 optionalCostBoost :: turnPrizeFaceUp",
       "sv08-131 authored attack 1 :: returnSelf",
       // 🆕🛑 **D344 — THE FIRST ROW ON THIS LIST WHOSE CARRIER IS NOT A GATE.**
       // Deduction Kit's `reorderTop { otherwise: [bottomDeckTop] }` is a printed

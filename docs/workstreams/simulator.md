@@ -5083,6 +5083,8 @@ table's own keys.
    **minus the 26-printing coin-flip family minus one anaphoric `you do`** (Cresselia `sv06.5-021`/
    `-071`, "You may turn 1 of your face-down Prize cards face up. If you do, …"). Both numbers are
    right; 43/32/26 is the backlog, 71/45/32 is what the regex sees. Say which one you mean.
+   (🆕🆕🆕 D548: Cresselia's sentence is still off THIS regex — it leads with `You may`, not `If` —
+   and is now claimed by the TENTH reader's fifth cost row; it prints **80**, see D548 below.)
 2. **One attack can carry three skeleton sentences.** Bisharp `sv03-149` "Fury Cutter" prints the
    shape three times (20/60/120) in a single `effect`, which is why printings (71) exceed distinct
    ids (69). A per-card census undercounts.
@@ -6978,7 +6980,8 @@ side-wide slice should reach for it first.**
 - **`sv06.5-021` Cresselia** — 120 HP Basic, Psychic, retreat 1, −30 Fighting Resistance.
   The NO-DAMAGE half and the second clause, on a different N so a hardcoded 30 downstream
   cannot satisfy both. Index-1 "Crescent Purge" ({P}{P}{P}) is the unmapped-neighbour
-  control, unpayable from the deck.
+  control, unpayable from the deck. (🆕🆕🆕 D548: *"unmapped"* is WITHDRAWN — `deriveAttackOptionalCostBoost`
+  claims it now; it is still not `deriveAttackEffect`'s, so the control holds as a control of THAT deriver.)
 - **`BOARD_HEAL_DECK`** — 4 Skeledirge ex / 4 Cresselia / 6 `fix-fire-energy` /
   6 `fix-psychic-energy` / 40 `fix-titan`, both seats. **Two TYPED Energy lines**, because
   both attacks print a typed single cost and Colorless pays neither. `fix-titan` does
@@ -21978,7 +21981,7 @@ Engine **0.280.0 → 0.281.0**; `MATCH_RECORD_VERSION` **22 unchanged**.
 
 ### D207's supply question, asked first — and it was never close on either half
 
-`PlayerState.discard` is a `string[]` of uids the model has carried since M1 with a dozen
+`PlayerState.discard` (🆕🆕🆕 D548: read `PlayerSide.discard` — `PlayerState` is the lobby's type) is a `string[]` of uids the model has carried since M1 with a dozen
 readers, and **`CardFilter` already spells the printed noun**: `{ kind: "basicEnergy",
 energyType }`, authored for the *"Basic {L} Energy card"* SEARCH sentences. Neither the
 zone nor the filter is new. **So the whole price was the SHAPE — the second slice running
@@ -22296,6 +22299,10 @@ is taken, a THIRD payoff anchor for the trailing reminder parenthetical, and a W
 record bump is a differentiator again. On reachability, which the arithmetic does not show: the Prize
 gate's false arm needs the attack used six times (D383's `unreachable-population` shape), while all
 five rungs of this ladder are the ordinary board.
+(🆕🆕🆕 D548 — WITHDRAWN, annotated rather than retyped (D178): the six-times figure is false on the
+rules and the shape is not D383's. A face-up prize STAYS in the row while the others are taken, so the
+Purges needed equal the prizes REMAINING — ONE Purge at 1 prize left — and the false arm is an ORDINARY
+board; `crescentPurge.test.ts` §5 drives it.)
 
 🛑 **BUT RE-MEASURED OVER THE WHOLE RESIDUE, NEITHER WAS THE CHEAPEST.** *"If the Retreat Cost of your
 opponent's Active Pokémon is {C}{C} or more, this attack does 110 more damage."* prices at **1 / 2 =
@@ -22364,6 +22371,9 @@ anchor for the trailing reminder parenthetical, and a WIRE shape plus a UI.
 ⚠️ **AND ON REACHABILITY, WHICH THE ARITHMETIC DOES NOT SHOW.** D385 measured the Prize gate's false
 arm as needing the attack used six times. Both arms of this one are ordinary play: heal with a
 Potion and attack (true), or just attack (false).
+(🆕🆕🆕 D548 — WITHDRAWN, annotated rather than retyped (D178): the six-times figure is false on the
+rules. ONE Purge at 1 prize left reaches the Prize gate's false arm, because a face-up prize stays in
+the row while the others are taken — an ORDINARY board, which `crescentPurge.test.ts` §5 drives.)
 
 ### 🛑 D385's compiler method has a DOMAIN, and this is its edge
 
@@ -22576,6 +22586,11 @@ That is ordinary play, not a corner case, so §6 drives the refusal from the **R
 also exactly the property the face-up Prize row's gate does **not** have: *"you have a face-down
 Prize"* is true on every board a player can legally attack from unless all remaining Prizes are
 already face up, which needs the attack used six times.
+(🆕🆕🆕 D548 — WITHDRAWN, annotated rather than retyped (D178): the Prize row's gate DOES have this
+property. *"All remaining Prizes already face up"* does not need the attack used six times — a face-up
+prize stays in the row while the others are taken, so ONE Purge at 1 prize left reaches it, by legal
+play alone, and `crescentPurge.test.ts` §5 drives that ORDINARY board from the REAL card. D385 is
+still the FIRST gate in this family with the property; D548's is the second.)
 
 ### 🛑 A GUARD CAN ROT THE WAY A MUTANT CAN — AND THE SUITE HAS NO `ERROR` VERDICT FOR IT
 
@@ -22768,10 +22783,13 @@ SOMEBODY FINALLY RE-READS THE ENUMERATION**, and the enumeration is what rots, n
 
 The face-up Prize row (**2 printings**) is the last member of the `You may … If you do,` family and
 the only slice on the page that moves `MATCH_RECORD_VERSION`. It needs FOUR mechanisms: a persisted
-face-up notion on `PlayerState`, the 22 → 23 bump, a `RedactedBoard` member (`redact.ts` emits
+face-up notion on `PlayerState` (🆕🆕🆕 D548: the type is `PlayerSide`; built as `faceUpPrizes`, 31 → 32), the 22 → 23 bump, a `RedactedBoard` member (`redact.ts` emits
 `prizesRemaining: side.prizes.length` and nothing else), and a UI surface. **And its gate would be
 VACUOUS** — *"you have a face-down Prize"* is true on essentially every board a player can attack
 from, and D383's unreachable-FALSE precedent does not transfer to a gate true on EVERY board.
+(🆕🆕🆕 D548 — WITHDRAWN: the gate is NOT vacuous. After an earlier Purge, a row whose every remaining
+prize is face up is an ordinary board, and without `yourFaceDownPrizeRemains` the “yes” would turn
+nothing and pay +80 — `crescentPurge.test.ts` §5 drives it.)
 
 ⚠️ **ONE TERM D382 NEVER MEASURED, ADDED HERE**: `prizes` is *named* in 113 files, but the files that
 would have to CHANGE are the ones that CONSTRUCT a side — `flow.ts`'s §14 speculation
@@ -22979,7 +22997,7 @@ easily as it understates).
 
 | candidate | printings | verdict |
 |---|---|---|
-| the face-up Prize | 2 | **LOST.** Its payoff half already reads, and everything else about it is expensive: `PlayerState.prizes` is `string[]` with **no face-up notion at all**, so a new persisted field plus `MATCH_RECORD_VERSION` 22 → 23, plus the redaction question — `redact.ts` emits `prizesRemaining: side.prizes.length` and **nothing else**, so a PUBLIC Prize needs a member on `RedactedBoard` and a UI that renders it. **Three surfaces D381 did not touch.** 🛑 And its `cond` (*"you have a face-down Prize"*) is TRUE on essentially every board a player can attack from, so the precondition gate D381 bought would be **VACUOUS** there. Two printings for a persisted-shape bump and a dead gate is the worst ratio on the page |
+| the face-up Prize | 2 | **LOST.** (🆕🆕🆕 **BUILT AT D548** — the type is `PlayerSide`; see the D548 section.) Its payoff half already reads, and everything else about it is expensive: `PlayerState.prizes` is `string[]` with **no face-up notion at all**, so a new persisted field plus `MATCH_RECORD_VERSION` 22 → 23, plus the redaction question — `redact.ts` emits `prizesRemaining: side.prizes.length` and **nothing else**, so a PUBLIC Prize needs a member on `RedactedBoard` and a UI that renders it. **Three surfaces D381 did not touch.** 🛑 And its `cond` (*"you have a face-down Prize"*) is TRUE on essentially every board a player can attack from, so the precondition gate D381 bought would be **VACUOUS** there. Two printings for a persisted-shape bump and a dead gate is the worst ratio on the page |
 | the 5-printing Energy row | 5 | **LOST, and it got BIGGER on inspection.** It needs **THREE** mechanisms, not the two the handoff priced: a `to: "deck"` destination on `discardEnergy` (whose own doc block says the destination is the VICTIM's zone — here the victim IS the actor) carrying the SHUFFLE the sentence prints; a **NEW `BoardCondition`** for *"this Pokémon has ≥ 3 Energy attached"*, because **no member counts UNTYPED Energy on ONE body** (`yourEnergyInPlayAtLeast` is whole-board AND typed); and a payoff-union decision on a reader ONE SLICE OLD. **Three mechanisms in one slice is what D193 reverted for** |
 | Chi-Yu `sv06-039` "Ground Melter" | 1 | **TAKEN.** Every mechanism it needs already ships |
 
@@ -23161,6 +23179,8 @@ about the mechanism, which is D379's saturation trap with the polarity flipped. 
 
 * `You may turn 1 of your face-down Prize cards face up. If you do, this attack does 140 more damage.`
   → null, so the refusal is the COST's (there is no face-up-Prize state on `PlayerState`);
+  (🆕🆕🆕 D548: that synthetic sentence now DERIVES — the state is `PlayerSide.faceUpPrizes` and the
+  cost is the fifth row; the refusal is re-pointed to an OPPONENT's Prize in `optionalCostBoost.test.ts`)
 * `You may discard a Stadium in play. If you do, this attack also does 120 damage to 1 of your
   opponent's Benched Pokémon.` → null, so the refusal is the PAYOFF's;
 * …with a control that resolves, so a broken import cannot fake either.
@@ -27855,3 +27875,61 @@ hit (driven in both suites).
 `:664` (the `PlayerSide`/"PlayerState" stale prose at `effects.ts`/`index.ts` and three tests, and
 Cresselia's "90 more damage", which prints 80 — it now owes its OWN future bump, since this slice paid
 30 → 31 without it); SUBST-16's `:149` and `:169`; `:669` as the best unbumped fallback (1p/L).
+(🆕🆕🆕 D548: `:664` PAID, with its own bump 31 → 32. ⚠️ The *"90 more damage"* was at `effects.ts` only —
+`index.ts:664` reads *"If you do, …"* with no number, so that half of this carried line was itself wrong.)
+
+## D548 — Crescent Purge, the face-up Prize: a required `PlayerSide.faceUpPrizes`, a fifth cost row on the tenth reader, and the owner picks (engine 0.433.0, `MATCH_RECORD_VERSION` 32)
+
+### (a) What was built
+`censusAttackCorpus.ts` **file line 664** (leading count column `2`), **1 sentence / 2 legal printings**, on
+the REAL card Cresselia `sv06.5-021` (attack index 1, `80+`, {P}{P}{P}) — *"You may turn 1 of your
+face-down Prize cards face up. If you do, this attack does 80 more damage. (That Prize card remains face
+up for the rest of the game.)"* — the last refused member of D381's reversed optional-cost family.
+
+* `optionalCostOps` gains a FIFTH row, `/^turn 1 of your face-down Prize cards face up$/` →
+  `{cond: yourFaceDownPrizeRemains, ops: [turnPrizeFaceUp]}`, written on ONE line (the D524 note).
+* The reminder is an OPTIONAL EXACT SUFFIX stripped only behind that row, before `optionalCostPayoff`;
+  behind any other cost it refuses. `OPTIONAL_COST_PAYOFF_MORE_DAMAGE`'s `$` (D381's C5 guard) is not
+  widened. The printed and the bare spellings derive the same reading.
+* `optionalCostBoostProgram` and `attack.ts` take ZERO code bytes: `conditionGate{cond, then:
+  [optional{note, then: [turnPrizeFaceUp, hit 160]}], otherwise: hit 80}`; the pick parks inside the
+  confirm's `then` (`costSnipeProgram`'s precedent).
+* `PlayerSide.faceUpPrizes: string[]` — UIDS (the row compacts on every take, so an index is not
+  stable), a SUBSET of `prizes` (the take prunes in the same `withSide`), ordered by when each was turned.
+  A face-up prize is still a prize for §14, `prizesRemaining` and every prizes-remaining condition.
+* `yourFaceDownPrizeRemains` (nullary, `some`, not `length > 0`); `turnPrizeFaceUp` (field-free);
+  `choosePrize { indices }` / `{kind: "prize", index}`; `PRIZE_TURNED_FACE_UP {seat, index, uid}`, whose
+  log row NAMES the card. `PRIZES_TAKEN` stays count-only for every take.
+* The wire: `RedactedSide.faceUpPrizes: {index, card}[]` (REQUIRED, index-stable, both seats and
+  spectators); the `choosePrize` arm is the union's TWELFTH kind. Both HUDs paint face-up tiles in the
+  take picker (still pickable) and offer only face-down tiles in the new choose dialog.
+
+### (b) The ruling (docs/decisions.md D548)
+**The owner picks WHICH prize** — D431's precedent (*"WHICH face-down prize is a decision a player must
+make"*). ≥2 face-down → park; exactly 1 → inline; 0 → unreachable behind the gate, a silent no-op.
+Reversal: an official ruling that the choice may be made randomly or by the engine. REFUSED: the blind
+auto-pick (sound in distribution, but it takes the printed "you"'s decision, spends an rng draw nobody
+prints, and stops being equivalent the day a prize-peek exists) and a single pick-or-decline prompt
+replacing the confirm (it would re-shape `optionalCostBoostProgram`, which the D381 rows anchor on).
+
+### (c) The record
+`MATCH_RECORD_VERSION` 31 → 32, MEASURED: a v31 state has no key and `redactedSideOf` / `resolveTakePrizes`
+throw on it (D326's class). The optional `faceUpPrizes?` route is refused under the FIFTH POSITION at
+`apps/api/src/lobby/match.ts`: a rollback turns a public card face down again and re-arms the gate on it.
+
+### (d) Census (measured head and after)
+`SUBMAX=12`: reader 572/1625 → 573/1627, residue 38/51 → 37/49, raw residue 68/107 → 67/105, OPAQUE
+13/20 → 12/18, `BUILT.attack` 1681 → 1683; registry, gate, trailing unmoved. Default cap: OPAQUE 24/34 →
+23/32, UNEXPLAINED 8/9 → 7/7, PRIZE-ZONE co-marker 4/5 · 4/5 · 9/25 → 3/3 · 3/3 · 10/27, targets 602 → 603.
+
+### (e) Owed
+The Playmat PrizeGrid (`PlayerSide.tsx:90`, `AnimatedCardsLayer.tsx:304`, `playmat/types.ts:52`) and the
+local playmat projection's face-up slot; `:171` plus SUBST-16's `:149`/`:169` (and possibly `:170`) as a
+bundle for the NEXT record bump; `:669` as the no-bump fallback.
+
+### (f) A withdrawn claim about the GATE (found by the second review)
+*"The Prize gate's false arm needs the attack used six times"* (D385's measurement, D383's
+`unreachable-population` shape), and its older forms *"VACUOUS"* / *"exactly what the Prize row's gate
+lacks"*, are FALSE on the rules: a face-up prize stays in the row while the others are taken, so ONE Purge
+at 1 prize left reaches the false arm — the ordinary board `crescentPurge.test.ts` §5 drives. Every copy is
+annotated in place (D178) and listed in D548's decisions row.

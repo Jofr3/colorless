@@ -1714,7 +1714,9 @@ export type BoardCondition =
       Remaining, not taken: `prizes.length` is what is still face down, exactly as
       `morePrizesThanOpponent` reads it and the opposite of `takenPrizes`. Prize
       COUNTS are public and survive redaction as counts, so — unlike
-      `yourStadiumInPlay` — this member does not widen the P4 gap. */
+      `yourStadiumInPlay` — this member does not widen the P4 gap.
+      (🆕🆕🆕 D548: *"what is still face down"* is WITHDRAWN — `prizes.length` is what is
+      still in the prize ROW; a slot Crescent Purge turned FACE UP (`PlayerSide.faceUpPrizes`) is still in `prizes` and still counted here. Remaining means in the row, not face down.) */
   | { kind: "opponentPrizesRemaining"; counts: readonly number[] }
   /** 🆕🆕 D517 — §3.8 — **YOUR OWN** REMAINING Prize count is one of `counts`:
       `censusAttackCorpus.ts` **FILE LINE 342**, *"If you have exactly 1 Prize card
@@ -1761,7 +1763,9 @@ export type BoardCondition =
 
       Remaining, not taken: `prizes.length` is what is still face down — the reading
       `morePrizesThanOpponent` and the member above both make. Prize COUNTS are public
-      and survive redaction as counts, so this member does not widen the P4 gap. */
+      and survive redaction as counts, so this member does not widen the P4 gap.
+      (🆕🆕🆕 D548: *"what is still face down"* is WITHDRAWN, as on the member above —
+      a slot Crescent Purge turned FACE UP (`PlayerSide.faceUpPrizes`) is still in `prizes` and still counted here.) */
   | { kind: "yourPrizesRemaining"; counts: readonly number[] }
   /** Your opponent is holding AT MOST `count` cards — Absol ex sv03-135/-214
       "Cursed Slug" (+120, `3`).
@@ -1901,6 +1905,24 @@ export type BoardCondition =
       this gate from a vacuous one, and `purgingStrike.test.ts` §6 drives it from the
       REAL printing rather than from a synthetic one. */
   | { kind: "yourHandNotEmpty" }
+  /** 🆕🆕🆕 **D548 — AT LEAST ONE OF YOUR PRIZES IS STILL FACE DOWN**:
+      `prizes.some(uid => !faceUpPrizes.includes(uid))`. The payability of Cresselia
+      `sv06.5-021` "Crescent Purge"'s printed cost (*"turn 1 of your face-down Prize cards
+      face up"*), resolved to the ATTACKER's own row by the cost table, exactly as
+      `yourHandNotEmpty` resolves *"discard your hand"* (D385's obligation: the gate must
+      be NECESSARY AND SUFFICIENT for the cost).
+
+      🛑 **NOT VACUOUS, AND NOT `prizes.length > 0`.** After an EARLIER Purge, a row whose
+      every remaining prize is already face up is an ORDINARY board — one Purge turned a
+      prize, and the opponent's KOs took the rest down to that one. `prizes.length > 0`
+      is true there, and a confirm without this gate would offer a "yes" that turns
+      NOTHING and still pays the printed +80. `crescentPurge.test.ts` drives that board.
+
+      NULLARY for `yourHandNotEmpty`'s reason: nothing is printed to parameterise. ✅ IT
+      DOES NOT WIDEN THE P4 GAP: which prizes are face up is PUBLIC (the wire carries
+      `faceUpPrizes` for both seats, D548) and the row's length always was, so this member
+      answers the same on the redacted board as on the real one. */
+  | { kind: "yourFaceDownPrizeRemains" }
   /** 🆕🆕 **D398 — YOUR OWN DECK holds AT MOST `count` cards.** Rabsca `sv08-014`
       (Surging Sparks) "Counterturn" ({G}, `40+`, **+200**, index **1** of TWO — its
       own index 0 is "Triple Draw", {C}, *"Draw 3 cards."*): *"If there are 3 or
@@ -8004,6 +8026,8 @@ export type EffectOp =
       printed, this op gains a `count?: number` whose ABSENCE means 1, which is still a
       widening and still not a bump.
 
+      (🆕🆕🆕 D548: *"face-down slot"* below is PARTLY false — the queued `takePrizes` stage
+      offers the WHOLE row, and a slot Crescent Purge turned FACE UP is pickable like any other.)
       ⚠️ **THE OP QUEUES A STAGE; IT DOES NOT TAKE THE PRIZE.** WHICH face-down slot is a
       real decision, so the taking must be able to PARK — and `advance` (flow.ts) already
       owns the whole of that: the clamp to what is left, the forced auto-resolve at a
@@ -10023,6 +10047,31 @@ export type EffectOp =
       discard pile (§7.4), never the attacker's — the same seat split
       `TOOLS_DISCARDED` carries. */
   | { op: "discardTools"; count: number }
+  /** 🆕🆕🆕 **D548 — TURN 1 OF THE ACTOR'S OWN FACE-DOWN PRIZE CARDS FACE UP.** Cresselia
+      `sv06.5-021` "Crescent Purge" (`censusAttackCorpus.ts:664`, **2 legal printings**),
+      the COST half of *"You may turn 1 of your face-down Prize cards face up. If you do,
+      this attack does 80 more damage. (That Prize card remains face up for the rest of
+      the game.)"* — `optionalCostOps`' FIFTH row, reached only inside the confirm's `then`
+      behind the `yourFaceDownPrizeRemains` gate.
+
+      FIELD-FREE: *"1"* is the only printed count, *"your"* the only printed side, and
+      *"face-down"* the only printed candidate set — a field would be a value no printing
+      varies (D231/D412's positive statement). Own-side (`ctx.seat`), so no §11 shield
+      question: nothing is done to an opposing body.
+
+      🛑 **THE OWNER PICKS — WHICH PRIZE IS A PLAYER'S DECISION (the D548 ruling, with its
+      reversal condition in `decisions.md`).** D431's `queueTakePrize` block
+      (interpreter.ts) is the governing precedent: *"WHICH face-down prize is a decision a
+      player must make"*. So: TWO OR MORE face-down prizes PARK on the `choosePrize`
+      prompt, which offers the face-down slot INDICES and nothing else (a uid would name
+      a hidden card); EXACTLY ONE resolves inline with no park (types.ts' forced-pick rule
+      for ko:takePrizes, and the no-choice doctrine — a choice with one answer is not a
+      choice); ZERO is unreachable behind the gate and is written as an honest SILENT
+      no-op anyway (`crescentPurge.test.ts` pins it).
+
+      Appends the uid to `PlayerSide.faceUpPrizes` and emits `PRIZE_TURNED_FACE_UP`. The
+      prize STAYS in `prizes`: a face-up prize is still a prize (types.ts). */
+  | { op: "turnPrizeFaceUp" }
   /** Move up to `max` Energy from ONE in-play Pokémon to ANOTHER on the SAME
       board — the §6 manual Energy-movement family (Energy Switch: a Basic Energy;
       Poppy: up to 2 any Energy). 🆕 D443 — WHICH board is `side`'s question and
@@ -18042,6 +18091,14 @@ const ATTACK_DISCARD_TOOLS_UP_TO =
 //     do, this attack does 90 more damage." — a leading OPTIONAL action whose
 //     "if you do" reads a choice, not the board.
 // Both stay on the loud ATTACK_EFFECT_SKIPPED path, which is where they belong.
+// 🆕🆕🆕 **D548 — TWO CLAIMS ABOVE ARE WITHDRAWN (D539), KEPT VERBATIM (D178).** ⑴ Cresselia
+// `sv06.5-021` "Crescent Purge" PRINTS **80**, not 90 (`censusAttackCorpus.ts:664`,
+// `testFixtures.ts`' row): *"… If you do, this attack does 80 more damage. (That Prize card
+// remains face up for the rest of the game.)"*. ⑵ *"Both stay on the loud
+// ATTACK_EFFECT_SKIPPED path"* is now true of the FLIP family only: Cresselia is claimed by
+// the TENTH reader, `deriveAttackOptionalCostBoost` (its FIFTH cost row, D548). What stays
+// true is the point of this bullet — the sentence never reaches THIS anchor, because it
+// leads with `You may` and not `If`.
 // 🆕🆕 **D436 — THE "EXTRA ENERGY" CLAUSE, AND IT IS A WHOLE-SENTENCE ANCHOR
 // RATHER THAN A CLAUSE ROW BECAUSE THE PREDICATE READS THE DECLARATION.**
 //
@@ -18495,6 +18552,8 @@ const CONDITIONAL_DAMAGE_CLAUSES = new Map<string, BoardCondition>([
   // ⚠️ AND "remaining" IS §3.8's FACE-DOWN COUNT, NOT PRIZES TAKEN — the same
   // reading `morePrizesThanOpponent` makes. The complement is a different number
   // on every board where the two seats are not level.
+  // (🆕🆕🆕 D548: *"FACE-DOWN COUNT"* is WITHDRAWN — "remaining" is the ROW's count;
+  // a slot Crescent Purge turned FACE UP (`PlayerSide.faceUpPrizes`) is still in `prizes` and still counted.)
   //
   // ⚠️ THE NEAR MISS IS ON ANOTHER COLUMN AND ANOTHER CONSEQUENT: the catalog
   // prints *"If your opponent has 3 or fewer Prize cards remaining, draw …"* on
@@ -19834,6 +19893,7 @@ const ATTACK_REQUIREMENT_CLAUSES = new Map<string, BoardCondition>([
   // NOT prizes TAKEN. The complement is a different number on every board where
   // the two players are not level, and `opponentPrizesRemaining` reads the count
   // the sentence names.
+  // (🆕🆕🆕 D548: *"face-down count"* is WITHDRAWN — it is the ROW's count; a slot Crescent Purge turned FACE UP (`PlayerSide.faceUpPrizes`) is still in `prizes` and still counted.)
   [
     "your opponent doesn't have exactly 3 or 4 Prize cards remaining",
     { kind: "opponentPrizesRemaining", counts: [3, 4] },
@@ -27667,7 +27727,8 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   //     round would ask which face-down prize to reveal and only THEN throw the Energy
   //     away. That is visible to a player and it is wrong about what the card says you
   //     pay first. Arm 9b's rule ("the cost, first, because that is the printed order")
-  //     inherited rather than restated.
+  //     inherited rather than restated. (🆕🆕🆕 D548: *"face-down prize"* is PARTLY false
+  //     now — the take offers the whole row, a face-UP slot included.)
   //
   //     ⚠️ NO POSITIVITY GUARD, BECAUSE THERE IS NO CAPTURED NUMBER. Every arm above
   //     that captures an amount carries D145's printed-0 guard; this anchor captures
@@ -34016,6 +34077,12 @@ export function bonusConsequentProgram(reading: AttackBonusConsequent, base: num
     DOES read — because a reader that claims everything looks exactly like a reader
     that works (D379's saturation trap).
 
+    🆕🆕🆕 **D548 — THE FACE-UP PRIZE HALF OF THE PARAGRAPH ABOVE IS NOW FALSE, KEPT VERBATIM
+    (D178/D539).** ⑴ The type is `PlayerSide` (types.ts), not *"`PlayerState`"* — that is the
+    LOBBY's seat type (packages/schema/src/lobby). ⑵ The field was PAID: `PlayerSide.faceUpPrizes`
+    (a REQUIRED uid list, `MATCH_RECORD_VERSION` 31 → 32), and the face-up Prize is the FIFTH
+    cost row of `optionalCostOps` below — the family has NO refused member left.
+
     ⚠️ **ONE ROW IS A TABLE, AND IT IS THE `retrieveNoun` RULE**: the cost list is
     written as a dispatch over closed anchors from the first printing, so the next
     cost is a row rather than a rewrite.
@@ -34032,6 +34099,8 @@ export function bonusConsequentProgram(reading: AttackBonusConsequent, base: num
     overstates as easily as it understates, so it is re-derived and not inherited.
     The reading is now **7 sentences / 14 printings with 1 / 2 refused** — the
     face-up Prize alone, and its refusal is still the `PlayerState` field.
+    (🆕🆕🆕 D548: that field is `PlayerSide.faceUpPrizes` and it is BUILT — the refusal is
+    retired, and the name was the lobby's type, not the engine's; kept verbatim, D178.)
 
     ✅ 🆕🆕 **D385 WIDENED THE CONNECTIVE AND THE PARAGRAPH ABOVE IS KEPT VERBATIM WITH
     ITS DENOMINATOR NOW A FLOOR** (D178 again). `/^You may .*If you do,/` is still 7
@@ -34041,7 +34110,8 @@ export function bonusConsequentProgram(reading: AttackBonusConsequent, base: num
     conditioned on the cost's own effect (*"If you discarded any cards in this way,"*),
     which `optionalCostBoost.test.ts` §1 has named and refused since D381 — so the
     reading is **8 sentences / 15 printings with 1 / 2 refused**, and the refusal is
-    the face-up Prize and nothing else. **THE COST'S THIRD ROW BOUGHT NO OP**:
+    the face-up Prize and nothing else. (🆕🆕🆕 D548: **0 / 0 refused** now — the face-up
+    Prize is the fifth cost row; kept verbatim, D178.) **THE COST'S THIRD ROW BOUGHT NO OP**:
     `discardHand` shipped with Professor's Research and this is simply the first
     ATTACK program to reach it. See `OPTIONAL_COST_CONNECTIVE` for why two
     connectives are one reading here and what that obliges every future cost row to.
@@ -34218,6 +34288,22 @@ const OPTIONAL_COST_SHUFFLE_SELF_ENERGY =
     `optionalCostEnergyToHand.test.ts` §1 drives the single-axis controls (`an` for `all`,
     `discard` for `put`, `deck` for `hand`, the opponent's Active for `this Pokémon`). */
 const OPTIONAL_COST_PUT_ALL_SELF_ENERGY_TO_HAND = /^put all Energy attached to this Pokémon into your hand$/;
+/** 🆕🆕🆕 D548 — the FIFTH cost row: Cresselia `sv06.5-021` "Crescent Purge"
+    (`censusAttackCorpus.ts:664`, **2 legal printings**). Whole-string `^…$`, lower-case verb
+    at its own anchor (D246/D316). *"1"* is fixed, not captured: it is the only printed count,
+    and the op it pays is field-free (D385's rule read from the other side — an arity no
+    printing varies is not a capture). */
+const OPTIONAL_COST_TURN_PRIZE_FACE_UP = /^turn 1 of your face-down Prize cards face up$/;
+/** 🆕🆕🆕 D548 — the printed REMINDER behind Crescent Purge's payoff, an OPTIONAL EXACT
+    SUFFIX (leading space included) stripped in `deriveAttackOptionalCostBoost` ONLY when the
+    cost is the face-up row above, and BEFORE `optionalCostPayoff` sees the payoff. It
+    changes no field: the persistence it states is what `faceUpPrizes` IS (nothing ever
+    removes a uid except the take). Behind ANY other cost row the same bytes stay in the
+    payoff and the table refuses them — a reminder about a Prize under a Stadium discard is
+    not this sentence. ⚠️ `OPTIONAL_COST_PAYOFF_MORE_DAMAGE`'s `$` is NOT widened for it:
+    that `$` is D381's C5 guard, and a payoff-side widening would admit the reminder behind
+    every cost row at once. */
+const OPTIONAL_COST_FACE_UP_REMINDER = " (That Prize card remains face up for the rest of the game.)";
 const OPTIONAL_COST_PAYOFF_MORE_DAMAGE = /^this attack does (\d+) more damage\.$/;
 /** 🆕🆕 D383 — the SECOND payoff row. Lower-case `this`, sharing its body with
     `ALSO_BENCHED_SNIPE` so the two spellings of one printed clause cannot drift. */
@@ -34284,6 +34370,11 @@ function optionalCostOps(cost: string): { cond: BoardCondition; ops: EffectOp[] 
   // `D383-the-printed-verb-loses-its-shuffle` quotes that block's tail through `return null;`;
   // the anchors are disjoint on their verbs, so the order is not observable on any input.
   if (OPTIONAL_COST_PUT_ALL_SELF_ENERGY_TO_HAND.test(cost)) return { cond: { kind: "yourActiveEnergyAtLeast", count: 1 }, ops: [{ op: "discardEnergy", from: "yourActive", filter: { kind: "anyEnergy" }, count: "all", to: "hand" }] };
+  // 🆕🆕🆕 D548 — THE FIFTH ROW: a NEW op (`turnPrizeFaceUp`, field-free, the owner picks
+  // WHICH prize) behind a NEW nullary gate (`yourFaceDownPrizeRemains`, D385's
+  // necessary-and-sufficient obligation: the op turns exactly one prize whenever one is face
+  // down, and nothing otherwise). ONE LINE for the D524 note's reason, directly above.
+  if (OPTIONAL_COST_TURN_PRIZE_FACE_UP.test(cost)) return { cond: { kind: "yourFaceDownPrizeRemains" }, ops: [{ op: "turnPrizeFaceUp" }] };
   const shuffle = OPTIONAL_COST_SHUFFLE_SELF_ENERGY.exec(cost);
   if (shuffle !== null) {
     const count = Number(shuffle[1]);
@@ -34412,7 +34503,12 @@ export function deriveAttackOptionalCostBoost(text: string): AttackOptionalCostB
   // unrecognised COST and an unrecognised PAYOFF each return null from their own
   // dispatcher, so the whole sentence stays on the loud `ATTACK_EFFECT_SKIPPED`
   // path and neither refusal can be mistaken for the other's.
-  const payoff = optionalCostPayoff(match[2] ?? "");
+  // 🆕🆕🆕 D548 — Crescent Purge's printed reminder is stripped HERE, only behind the
+  // face-up row and only as the exact suffix, so the printed and the bare spellings derive
+  // the SAME reading and the reminder behind any other cost still refuses (see the anchor).
+  const printedPayoff = match[2] ?? "";
+  const faceUpReminder = OPTIONAL_COST_TURN_PRIZE_FACE_UP.test(match[1] ?? "") && printedPayoff.endsWith(OPTIONAL_COST_FACE_UP_REMINDER);
+  const payoff = optionalCostPayoff(faceUpReminder ? printedPayoff.slice(0, -OPTIONAL_COST_FACE_UP_REMINDER.length) : printedPayoff);
   return payoff === null ? null : { cond: cost.cond, ops: cost.ops, payoff };
 }
 

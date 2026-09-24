@@ -164,6 +164,9 @@ describe("redactGame — the opponent's side is redacted", () => {
     expect(game.board.you.deckCount).toBe(state.players.p1.deck.length);
     expect(game.board.opponent.deckCount).toBe(state.players.p2.deck.length);
     // Nowhere in the snapshot is a prize/deck uid or card id exposed.
+    // (🆕🆕🆕 D548: *"counts only"* in this title holds for FACE-DOWN prizes only — a prize
+    // Crescent Purge turned face up rides `faceUpPrizes` with its card. No Purge runs here,
+    // so both lists are empty and the claim is exact on this board.)
     const ids = new Set(allIds(game));
     for (const uid of [...state.players.p2.prizes, ...state.players.p2.deck]) {
       expect(ids.has(uid)).toBe(false);

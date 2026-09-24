@@ -1336,6 +1336,23 @@ export interface MatchRecord {
     than "inert"), or a deploy pipeline that forbids rollback across a record-shape change.
     Either one would make the optional route available at the next address.
 
+    🆕🆕🆕 **D548 — THE FIFTH POSITION, APPLIED A SECOND TIME, TO A `PlayerSide` FIELD.** The
+    address: `PlayerSide.faceUpPrizes` (the prizes Crescent Purge turned face up,
+    `censusAttackCorpus.ts:664`), inside `GameState.players`, inside `MatchRecord.state` —
+    persisted on every save. The optional route is **`faceUpPrizes?: string[]`**: it passes
+    D441 (an absent key reads as "nothing face up", which is exactly what a v31 writer
+    meant) and it is DETECTABLE IN THE BYTES (no v31 writer emits the key). It is REFUSED on
+    D456's second clause, the D547 test above: a ROLLBACK deploy reading a v32 record drops
+    the key, so a card BOTH players have seen goes silently FACE DOWN again, and — worse than
+    a dropped display fact — the rollback's cost gate (none: the v31 engine cannot read the
+    sentence at all) and any future `yourFaceDownPrizeRemains` reader would re-count it as
+    face down and RE-ARM the gate on it: a second Purge could turn the same card "up" again
+    and pay +80 for a cost already paid. Detectable in the bytes, NOT inert on the board. So
+    the field is REQUIRED. **Reversal (D422)**: the D547 reversal above verbatim (a
+    rollback-safety rule that accepts a silently dropped effect as inert, or a deploy that
+    forbids rollback across a record-shape change), OR a rules ruling that a face-up Prize
+    may be turned face down again — then the loss would be a legal board, and inert.
+
     🆕🆕🆕 **29 → 30 AT D501 — AND IT IS THE FIRST FIELD EVER ADDED TO
     `SpecialConditions`, WHICH IS A NESTED STRUCTURE AT D386's ADDRESS RATHER THAN
     D386's ADDRESS ITSELF.** D501 gave `InPlayPokemon.conditions` a required
@@ -1345,7 +1362,8 @@ export interface MatchRecord {
     1 sentence / 1 legal printing).
 
     🛑 **THE ADDRESS, NAMED FIRST (D456's rule).** `SpecialConditions` sits inside
-    `InPlayPokemon.conditions`, inside `PlayerState.{active, bench[]}`, inside
+    `InPlayPokemon.conditions`, inside `PlayerState.{active, bench[]}` (🆕🆕🆕 D548: read
+    `PlayerSide` — the lobby's `PlayerState` is a different type), inside
     `GameState.players`, inside `MatchRecord.state`. **PERSISTED ON EVERY SAVE**,
     with no park anywhere in front of it — so the REACHABILITY argument (D450/D461)
     and the SERIALIZED-ALPHABET argument (D462/D473) are both INAPPLICABLE here and
@@ -1449,8 +1467,34 @@ export interface MatchRecord {
     `ATTACK_FLIP_LOCK_CHECK`, `ATTACK_FAILED.reason: "flipLock"`, `DAMAGE_VULNERABILITY_APPLIED`
     and `DAMAGE_DEALT.vulnerability?` (a `GameEvent` is not persisted, D141). No schema,
     redact, projection or client byte: the flip lock leaves the declaration LEGAL, so
-    `redactedAttacksOf`'s `playable` and GameHud read `attackLocked` unchanged. */
-export const MATCH_RECORD_VERSION = 31;
+    `redactedAttacksOf`'s `playable` and GameHud read `attackLocked` unchanged.
+
+    🆕🆕🆕 **31 → 32 AT D548 — ONE NEW REQUIRED FIELD ON `PlayerSide`, `faceUpPrizes:
+    string[]`** (Cresselia `sv06.5-021` "Crescent Purge", `censusAttackCorpus.ts:664`: *"You
+    may turn 1 of your face-down Prize cards face up. If you do, this attack does 80 more
+    damage. (That Prize card remains face up for the rest of the game.)"*). UIDS, a subset of
+    `prizes`, ordered by when each was turned (types.ts). The optional route
+    (`faceUpPrizes?`) is refused under THE FIFTH POSITION above, with its reversal condition.
+
+    🛑 **THE REASON IS MEASURED, NOT ARGUED: A v31 RECORD THROWS.** A reconstructed v31
+    `GameState` has no `faceUpPrizes` key on either side, and the field is read
+    UNCONDITIONALLY on two paths every match walks: `redactedSideOf` (redact.ts) asks
+    `side.faceUpPrizes.includes(uid)` for every prize on EVERY projection of EVERY viewer,
+    and `resolveTakePrizes` (flow.ts) filters it on EVERY prize take. Both are
+    `TypeError: undefined is not an object` — D326's class, the throw on the first read of a
+    missing required key — so a v31 match could not even be BROADCAST once loaded
+    (`crescentPurge.test.ts` §11 drives both throws on a v31-shaped state).
+
+    ⚠️ Also moved, and none is a second reason: a new `EffectOp` member (`turnPrizeFaceUp`,
+    field-free), a new `BoardCondition` member (`yourFaceDownPrizeRemains`, nullary), a new
+    `EffectPrompt` kind (`choosePrize { indices }`) and a new `EffectChoice` member
+    (`{kind: "prize", index}`) — all D333 widenings: the op PARKS, so the prompt and the op
+    reach a persisted `phase.cont` (and the condition rides the program's `conditionGate`
+    inside it), but a new INHABITANT of a persisted union is a widening a v31 writer never
+    produced, which D333 settled. `GameEvent` gains `PRIZE_TURNED_FACE_UP` (not persisted,
+    D141). The wire (`RedactedSide.faceUpPrizes`, the `choosePrize` prompt arm) is not a
+    persisted shape at all. */
+export const MATCH_RECORD_VERSION = 32;
 
 /** How a persisted match read back: absent, usable, or written by an
     incompatible deploy (`stale` — the caller decides whether to retire it). */
@@ -1639,6 +1683,9 @@ export const MATCH_ACTION_DISPOSITION = {
     `discardTools`. The list, re-read off `.options` in schema order: mayDraw,
     confirm, orderCards, choosePokemon, choosePokemonMulti, moveEnergy,
     discardEnergy, 🆕 discardTools, chooseCards, attachCards, chooseAttack.
+    🆕🆕🆕 **D548 steps it to TWELVE** with `choosePrize` — MEASURED, not counted:
+    `redactedEffectPromptSchema.options.length` read at D548's head is **12**, and the
+    list off `.options` ends `…, chooseAttack, choosePrize`.
     ⚠️ **A PROSE COUNT OF A UNION IS A PIN NO RUNNER REPORTS** — which is the
     paragraph's own lesson ("an invariant asserted in a comment is checked by
     nothing, and reads exactly like one that is") arriving a second time at the

@@ -50,6 +50,7 @@ const GAME: RedactedGame = {
       active: active("Sneasel"),
       bench: [],
       prizesRemaining: 6,
+      faceUpPrizes: [], // 🆕🆕🆕 D548 — REQUIRED on the wire side (D159); no prize is face up on this board
       deckCount: 53,
       discard: [],
     },
@@ -58,6 +59,7 @@ const GAME: RedactedGame = {
       active: active("Mareep"),
       bench: [],
       prizesRemaining: 6,
+      faceUpPrizes: [], // 🆕🆕🆕 D548 — REQUIRED on the wire side (D159); no prize is face up on this board
       deckCount: 53,
       discard: [],
     },

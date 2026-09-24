@@ -1817,8 +1817,36 @@ export interface PlayerSide {
   hand: string[];
   /** Order preserved (§2 — the discard pile is ordered and public). */
   discard: string[];
-  /** Face-down prize uids, 6 at setup (§3.8). Taken on KOs from M2 on. */
+  /** Face-down prize uids, 6 at setup (§3.8). Taken on KOs from M2 on.
+      (🆕🆕🆕 D548: *"face-down"* is now PARTLY false — the row may hold prizes a card
+      turned FACE UP, listed in `faceUpPrizes` below. They are still prizes, in this
+      array, at their own index.) */
   prizes: string[];
+  /** 🆕🆕🆕 **D548 — the prizes this seat has turned FACE UP**, as UIDS, ordered by WHEN
+      each one was turned (oldest first). Cresselia `sv06.5-021` "Crescent Purge"
+      (`censusAttackCorpus.ts:664`): *"You may turn 1 of your face-down Prize cards face up.
+      If you do, this attack does 80 more damage. (That Prize card remains face up for the
+      rest of the game.)"* — the only writer is the `turnPrizeFaceUp` op (interpreter.ts).
+
+      🛑 **UIDS, NOT INDICES, BECAUSE THE ROW COMPACTS.** `resolveTakePrizes` (flow.ts)
+      rebuilds `prizes` by FILTERING out the picked indices, so every slot behind a taken
+      one shifts down: an index recorded before a take names a DIFFERENT card after it. A
+      uid is stable across every compaction; the index a client needs is derived from it
+      at projection time (redact.ts), never stored.
+
+      🛑 **INVARIANT: always a SUBSET of `prizes`.** The take prunes a taken uid out of this
+      list in the same `withSide` that removes it from `prizes` (flow.ts), so a face-up
+      prize that leaves the row leaves this list too.
+
+      🛑 **A FACE-UP PRIZE IS STILL A PRIZE.** §14's prizes-taken condition,
+      `prizesRemaining`, every prizes-remaining `BoardCondition` and the ko:takePrizes
+      picker count `prizes.length` — the WHOLE row, face-up slots included — and none of
+      them reads this list. Only the face-down/face-up distinction reads it: the
+      `yourFaceDownPrizeRemains` gate, the `choosePrize` offer, and the wire.
+
+      REQUIRED (not `?`), which is why `MATCH_RECORD_VERSION` went 31 → 32 (the D548 block
+      at `apps/api/src/lobby/match.ts`). */
+  faceUpPrizes: string[];
   active: InPlayPokemon | null;
   /** Dense (no empty slots), capped at BENCH_MAX. */
   bench: InPlayPokemon[];
@@ -1913,7 +1941,9 @@ export function freshAllowances(): TurnAllowances {
     game to wait. */
 export type PendingStage =
   /** §8.1 — the KOing seat picks `count` face-down prizes (clamped to what
-      is left when processed; forced picks auto-resolve). */
+      is left when processed; forced picks auto-resolve). 🆕🆕🆕 D548: the row may
+      hold FACE-UP prizes (`PlayerSide.faceUpPrizes`), which are picked like any
+      other — the clamp and the forced rule count the WHOLE row. */
   | { kind: "takePrizes"; seat: Seat; count: number }
   /** §8.1 — the KO'd seat promotes from the bench; an empty bench at this
       point is the §14.2 loss. */
@@ -2044,7 +2074,9 @@ export type Phase =
   // interrupts below can replace the phase mid-turn without destroying them.
   | { kind: "turn:action"; seat: Seat }
   /** KO resolution interrupt (§8.1): the KOing player picks `count` of their
-      own face-down prizes. Forced picks (count = prizes left) never park. */
+      own face-down prizes. Forced picks (count = prizes left) never park.
+      🆕🆕🆕 D548: *"face-down"* is PARTLY false — the pick is over the WHOLE row, and a slot
+      in `PlayerSide.faceUpPrizes` is pickable like any other (the PendingStage above). */
   | { kind: "ko:takePrizes"; seat: Seat; count: number }
   /** KO resolution interrupt (§8.1): the KO'd player promotes a benched
       Pokémon. A lone benched Pokémon auto-promotes; an empty bench is the

@@ -5,6 +5,7 @@ import type {
   RedactedAttack,
   RedactedBoard,
   RedactedEffectPrompt,
+  RedactedFaceUpPrize,
   RedactedGame,
   RedactedInPlay,
   RedactedPokemonRef,
@@ -21,6 +22,7 @@ import {
   PICK_ROW_BASE,
   PICK_ROW_SPLIT_BASE,
   PRIZE_CARD_BASE,
+  PRIZE_CARD_FACE_UP,
   PRIZE_CARD_IDLE,
   PRIZE_CARD_PICKED,
   PROMOTE_ROW,
@@ -176,6 +178,7 @@ export function OnlineHud({
         <TakePrizesDialog
           count={game.phase.count}
           prizesRemaining={game.board.you.prizesRemaining}
+          faceUpPrizes={game.board.you.faceUpPrizes}
           seat={seat}
           onAction={onAction}
         />
@@ -289,6 +292,9 @@ function EffectChooseDialog({
       return <ChooseAttackDialog prompt={prompt} onAction={onAction} seat={seat} />;
     case "orderCards":
       return <OrderCardsDialog prompt={prompt} seat={seat} onAction={onAction} />;
+    case "choosePrize":
+      // 🆕🆕🆕 D548 — Crescent Purge's pick; the local HUD's dialog mirrored (D412).
+      return <ChoosePrizeDialog prompt={prompt} seat={seat} onAction={onAction} />;
   }
   // Every arm above returns, so `prompt` narrows to `never` here — until a kind
   // is added without one, when this assignment is the compile error.
@@ -2400,18 +2406,82 @@ function RetreatDialog({
   );
 }
 
+/** 🆕🆕🆕 D548 — ONE prize tile, shared by both prize pickers in this HUD (ko:takePrizes and
+    Crescent Purge's `choosePrize`) — the local HUD's `PrizeTile` mirrored (D412). `faceUp`
+    is the public card's NAME off `RedactedSide.faceUpPrizes`, or null for a back. */
+function PrizeTile({
+  index,
+  faceUp,
+  selected,
+  onPick,
+}: {
+  index: number;
+  faceUp: string | null;
+  selected: boolean;
+  onPick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      aria-pressed={selected}
+      aria-label={faceUp === null ? `Prize ${index + 1}` : `Prize ${index + 1} — ${faceUp} (face up)`}
+      onClick={onPick}
+      className={`${PRIZE_CARD_BASE} ${selected ? PRIZE_CARD_PICKED : PRIZE_CARD_IDLE}`}
+    >
+      {faceUp === null ? null : <span className={PRIZE_CARD_FACE_UP}>{faceUp}</span>}
+    </button>
+  );
+}
+
+/** 🆕🆕🆕 D548 — Crescent Purge's cost: pick ONE of your own FACE-DOWN prizes to turn face
+    up. Offers ONLY the slots the prompt names (all face down — the wire carries indices
+    and nothing else); picking dispatches `{kind: "prize", index}` directly, the
+    `ChooseAttackDialog` shape (no Confirm: the decline was the confirm before it). */
+function ChoosePrizeDialog({
+  prompt,
+  seat,
+  onAction,
+}: {
+  prompt: Extract<RedactedEffectPrompt, { kind: "choosePrize" }>;
+  seat: MatchSeat;
+  onAction: (action: GameAction) => void;
+}) {
+  return (
+    <Dialog label="Choose a prize">
+      <h2 className="text-lg font-semibold text-white">{prompt.note}</h2>
+      <div className="mt-3 flex flex-wrap gap-2">
+        {prompt.indices.map((index) => (
+          <PrizeTile
+            key={index}
+            index={index}
+            faceUp={null}
+            selected={false}
+            onPick={() =>
+              onAction({ type: "resolveEffect", seat, choice: { kind: "prize", index } })
+            }
+          />
+        ))}
+      </div>
+    </Dialog>
+  );
+}
+
 /** ko:takePrizes — the KOing player picks `count` of their face-down prizes.
     The wire carries only the counts (prizes are face-down for both players, §3.8),
     so the picker is `prizesRemaining` anonymous backs, exactly like the local
-    PrizeDialog. */
+    PrizeDialog. 🆕🆕🆕 D548 — RE-SCOPED: that is true of the FACE-DOWN slots only. A slot
+    Crescent Purge turned face up arrives in `faceUpPrizes` with its card and is painted
+    face up — and stays PICKABLE (a face-up prize is still a prize). */
 function TakePrizesDialog({
   count,
   prizesRemaining,
+  faceUpPrizes,
   seat,
   onAction,
 }: {
   count: number;
   prizesRemaining: number;
+  faceUpPrizes: readonly RedactedFaceUpPrize[];
   seat: MatchSeat;
   onAction: (action: GameAction) => void;
 }) {
@@ -2431,22 +2501,19 @@ function TakePrizesDialog({
         Take {count} prize card{count === 1 ? "" : "s"}
       </h2>
       <p className="mt-1.5 text-sm text-white/55">
-        Pick {count} of your face-down prize card{count === 1 ? "" : "s"} to add to your hand.
+        Pick {count} of your prize card{count === 1 ? "" : "s"} to add to your hand
+        {faceUpPrizes.length > 0 ? " — face-up ones included" : ""}.
       </p>
       <div className="mt-3 flex flex-wrap gap-2">
-        {Array.from({ length: prizesRemaining }, (_, index) => {
-          const selected = picked.includes(index);
-          return (
-            <button
-              key={index}
-              type="button"
-              aria-pressed={selected}
-              aria-label={`Prize ${index + 1}`}
-              onClick={() => toggle(index)}
-              className={`${PRIZE_CARD_BASE} ${selected ? PRIZE_CARD_PICKED : PRIZE_CARD_IDLE}`}
-            />
-          );
-        })}
+        {Array.from({ length: prizesRemaining }, (_, index) => (
+          <PrizeTile
+            key={index}
+            index={index}
+            faceUp={faceUpPrizes.find((prize) => prize.index === index)?.card.name ?? null}
+            selected={picked.includes(index)}
+            onPick={() => toggle(index)}
+          />
+        ))}
       </div>
       <div className="mt-5 flex justify-end">
         <button

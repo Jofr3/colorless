@@ -3664,7 +3664,10 @@ function interruptGate<K extends KoPhase["kind"]>(
 // the two encodings into one.
 
 /** The ko:takePrizes decision (§8.1): the KOing player names which of their
-    own face-down prize slots to reveal into hand. */
+    own face-down prize slots to reveal into hand. (🆕🆕🆕 D548: *"face-down"* is now
+    PARTLY false — a slot turned face up by Crescent Purge (`PlayerSide.faceUpPrizes`) is
+    still a prize and still pickable here; the indices address the WHOLE row, face-up
+    slots included, and the take prunes the uid out of `faceUpPrizes` in flow.ts.) */
 export function takePrizes(state: GameState, action: TakePrizesAction): ApplyResult {
   const gate = interruptGate(state, action, "ko:takePrizes");
   if (gate.reject) return gate.reject;

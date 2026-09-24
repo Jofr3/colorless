@@ -10061,6 +10061,8 @@ const ETHANS_HO_OH_EX: CardProgram = {
 // `trainerPlayableIf`). Seven Standard-legal printings sat behind a flag that
 // said "new union member" and meant "two registry rows".
 //
+// (🆕🆕🆕 D548: *"what is still face down"* below is WITHDRAWN — `prizes.length` is the
+// whole ROW; a slot Crescent Purge turned FACE UP (`PlayerSide.faceUpPrizes`) is still in `prizes` and still counted.)
 // ⚠️ TWO SPELLINGS EXIST AND THEY ARE NOT THE SAME NUMBER. `prizes.length` is
 // REMAINING (what is still face down); `opponentPrizesTaken` (a
 // `DamageCountSource`, attack.ts:148) is `6 − remaining`. Both read the same

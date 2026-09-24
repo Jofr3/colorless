@@ -59,6 +59,10 @@ import {
 // parenthetical, and no WIRE shape plus UI. ⚠️ And on the axis the arithmetic does not
 // show, D385 measured the Prize gate's false arm as needing the attack used six times;
 // both arms of this one are ordinary play, and §3–§6 reach them from the printed card.
+// (🆕🆕🆕 D548 — WITHDRAWN, annotated rather than retyped (D178): the six-times figure is
+// false on the rules. A face-up prize stays in the row while the others are taken, so ONE
+// Purge at 1 prize left reaches the Prize gate's false arm — an ORDINARY board, which
+// `crescentPurge.test.ts` §5 drives.)
 //
 // 🛑 THE SHAPE QUESTION WAS ORDERED FIRST AND THE COMPILER REFUSED TO ANSWER IT — a
 // finding about the METHOD, not about this card. All three spellings were applied to

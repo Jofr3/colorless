@@ -1870,6 +1870,20 @@ function validateChoice(prompt: EffectPrompt, choice: EffectChoice): ApplyResult
       }
       return null;
     }
+    case "choosePrize": {
+      // 🆕🆕🆕 D548 — exactly ONE of the OFFERED face-down slots. `chooseAttack`'s check
+      // one case up, verbatim in shape: `Number.isInteger` (an index is used as an INDEX,
+      // so "0", 1.5 and an ARRAY of two slots must not sail through), then membership in
+      // the offer — which refuses an out-of-range slot AND a face-up one, because the
+      // prompt offered only the face-down ones. Mandatory: the decline was the confirm.
+      if (choice.kind !== "prize" || !Number.isInteger(choice.index)) {
+        return err("BAD_EFFECT_CHOICE", "expected exactly one prize choice");
+      }
+      if (!prompt.indices.includes(choice.index)) {
+        return err("BAD_EFFECT_CHOICE", `${String(choice.index)} is not a face-down Prize you can turn`);
+      }
+      return null;
+    }
   }
 }
 

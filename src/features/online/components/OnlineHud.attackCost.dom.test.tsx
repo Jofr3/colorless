@@ -35,6 +35,7 @@ function game(attacks: RedactedAttack[]): RedactedGame {
     active: null,
     bench: [],
     prizesRemaining: 6,
+    faceUpPrizes: [], // 🆕🆕🆕 D548 — REQUIRED on the wire side (D159); no prize is face up on this board
     deckCount: 53,
     discard: [],
   };

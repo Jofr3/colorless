@@ -44,7 +44,8 @@ import {
 // wrong, each one killed on a board at the SAME nine-card base.
 //
 // ✅ **THE SUPPLY QUESTION WAS NEVER CLOSE, WHICH IS WHY §1 IS SHORT AND §3 IS LONG.**
-// `PlayerState.discard` is a uid list the model has carried since M1 and `CardFilter`
+// `PlayerState.discard` (🆕🆕🆕 D548: read `PlayerSide.discard` — `PlayerState` is the lobby's
+// seat type) is a uid list the model has carried since M1 and `CardFilter`
 // ALREADY SPELLS THE PRINTED NOUN — `{ kind: "basicEnergy", energyType }`, authored
 // for the *"Basic {L} Energy card"* SEARCH sentences. Neither the zone nor the filter
 // is new; the member is one `for` loop over the two of them.

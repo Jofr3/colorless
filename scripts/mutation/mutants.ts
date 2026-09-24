@@ -6205,7 +6205,7 @@ export const MUTANTS: Mutant[] = [
     // CORPUS QUOTES** (D414/D415), so a value-keyed sweep over `toBe("0.391.0")` cannot
     // see it — this row's `find` spells the DECLARATION, not an assertion. Run
     // `precheck` after every version bump, not after the sweep tells you.
-    find: 'export const engineVersion = "0.432.0";',
+    find: 'export const engineVersion = "0.433.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -11352,8 +11352,10 @@ export const MUTANTS: Mutant[] = [
     // 🆕🆕🆕 D547 - RE-TRANSCRIBED, 30 -> 31, off the new bytes (the constant line
     //    moved with D547's two required `InPlayPokemon` fields). Eighth consecutive bump
     //    to rot this row, and predicted before `precheck`, as D501's was.
-    find: "export const MATCH_RECORD_VERSION = 31;",
-    replace: "export const MATCH_RECORD_VERSION = 30;",
+    // 🆕🆕🆕 D548 - RE-TRANSCRIBED, 31 -> 32, off the new bytes (`PlayerSide.faceUpPrizes`,
+    //    REQUIRED). Ninth consecutive bump to rot this row, predicted before `precheck`.
+    find: "export const MATCH_RECORD_VERSION = 32;",
+    replace: "export const MATCH_RECORD_VERSION = 31;",
     expectKilledBy: ["apps/api/src/lobby/match.test.ts"],
   },
   // == D327 - THE COST SEAM'S SECOND AND THIRD COUNT SOURCES. Every row below is a
@@ -28574,8 +28576,13 @@ export const MUTANTS: Mutant[] = [
     //    MEASURED off the live census (`SUBMAX=12 bun scripts/residue-census.ts`: reader
     //    572/1625). The rows leave through the READER summand. `replace` is the GENUINE
     //    pre-slice value.
-    find: "  attack: 1681,",
-    replace: "  attack: 1677,",
+    // 🆕🆕🆕 D548 - RE-TRANSCRIBED AGAIN, 1681 -> 1683 (and the replace 1677 -> 1681), off the
+    //    bytes at `censusAtHead.test.ts:464`. ⚠️ **THE STEP IS 2 AND THE SENTENCE STEP IS 1** -
+    //    D548's row (corpus FILE LINE 664, Crescent Purge) is 1 sentence / 2 legal printings;
+    //    MEASURED off the live census (`SUBMAX=12`: reader 573/1627). The row leaves through the
+    //    READER summand. `replace` is the GENUINE pre-slice value (D547's 1681).
+    find: "  attack: 1683,",
+    replace: "  attack: 1681,",
     expectKilledBy: [
       "packages/engine/src/censusAtHead.test.ts",
     ],
@@ -29328,8 +29335,9 @@ export const MUTANTS: Mutant[] = [
     // 🆕🆕🆕 D547 - RE-TRANSCRIBED off the new bytes (30 -> 31). This row now steps the
     //    head DOWN by one like `D326-record-version-not-bumped`; the D547-specific row
     //    is `D547-record-version-not-bumped`, killed by the engine suites' raw pins.
-    find: "export const MATCH_RECORD_VERSION = 31;\n",
-    replace: "export const MATCH_RECORD_VERSION = 30;\n",
+    // 🆕🆕🆕 D548 - RE-TRANSCRIBED off the new bytes (31 -> 32), the same step down by one.
+    find: "export const MATCH_RECORD_VERSION = 32;\n",
+    replace: "export const MATCH_RECORD_VERSION = 31;\n",
     expectKilledBy: ["apps/api/src/lobby/match.test.ts"],
   },
   // ────────────────────────────────────────────────────────────────────────────
@@ -34669,8 +34677,178 @@ export const MUTANTS: Mutant[] = [
     decision: "D547",
     what: "🛑 **`MATCH_RECORD_VERSION` STAYS 30 WHILE TWO REQUIRED `InPlayPokemon` FIELDS LAND** — this deploy accepts a v30 record whose bodies lack both keys: a live flip lock silently never flips, and EVERY hit into ANY body THROWS (`installedVulnerabilityOf` dereferences `.turn` of `undefined`). A different experiment from `D326-`/`D501-record-version-not-bumped` (D484): this one asserts D547 is why the head moved, and is killed by the engine suites' raw pins.",
     file: "apps/api/src/lobby/match.ts",
-    find: "    redact, projection or client byte: the flip lock leaves the declaration LEGAL, so\n    `redactedAttacksOf`'s `playable` and GameHud read `attackLocked` unchanged. */\nexport const MATCH_RECORD_VERSION = 31;",
-    replace: "    redact, projection or client byte: the flip lock leaves the declaration LEGAL, so\n    `redactedAttacksOf`'s `playable` and GameHud read `attackLocked` unchanged. */\nexport const MATCH_RECORD_VERSION = 30;",
+    // 🆕🆕🆕 D548 - RE-TRANSCRIBED off the bytes (D540: read from match.ts, never retyped).
+    //    D548's block now sits between D547's doc tail and the constant, so the anchor is
+    //    the doc tail that is ABOVE the constant today (D548's last two lines) and the patch
+    //    drops the constant TWO steps, to D547's pre-bump 30 — a different patch from
+    //    `D548-record-version-not-bumped` (one step, same anchor).
+    find: "    D141). The wire (`RedactedSide.faceUpPrizes`, the `choosePrize` prompt arm) is not a\n    persisted shape at all. */\nexport const MATCH_RECORD_VERSION = 32;",
+    replace: "    D141). The wire (`RedactedSide.faceUpPrizes`, the `choosePrize` prompt arm) is not a\n    persisted shape at all. */\nexport const MATCH_RECORD_VERSION = 30;",
     expectKilledBy: ["packages/engine/src/attackFlipLock.test.ts"],
+  },
+  // ── D548 — CRESCENT PURGE, THE FACE-UP PRIZE. 18 rows, all probed UNDECLARED first
+  //    (D525(3)). Every `find` was read off the bytes and asserted to occur exactly once
+  //    before it was written here (D540).
+  {
+    id: "D548-gate-reads-row-length",
+    decision: "D548",
+    what: "🛑 **THE GATE BECOMES `prizes.length > 0`** — true on a row whose every prize is already face up, so after an earlier Purge the confirm is offered, “yes” turns NOTHING and the printed +80 is paid anyway (the free +80 D385's obligation forbids). Killed by §5 (no confirm on an all-face-up row).",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      return side.prizes.some((uid) => !side.faceUpPrizes.includes(uid));",
+    replace: "      return side.prizes.length > 0;",
+    expectKilledBy: ["packages/engine/src/crescentPurge.test.ts"],
+  },
+  {
+    id: "D548-gate-reads-the-opponent-row",
+    decision: "D548",
+    what: "⚠️ **THE GATE READS THE OPPONENT'S ROW** — green on every symmetric board, wrong exactly when the attacker's row is all face up and the opponent's is not. Killed by §5.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      const side = state.players[seat];\n      return side.prizes.some((uid) => !side.faceUpPrizes.includes(uid));",
+    replace: "      const side = state.players[otherSeat(seat)];\n      return side.prizes.some((uid) => !side.faceUpPrizes.includes(uid));",
+    expectKilledBy: ["packages/engine/src/crescentPurge.test.ts"],
+  },
+  {
+    id: "D548-offer-reads-the-opponent-row",
+    decision: "D548",
+    what: "⚠️ **THE OFFER IS BUILT OFF THE OPPONENT'S ROW** — identical on a fresh board, so a first Purge looks right; the SECOND offers the attacker's already-turned slot again. Killed by §6 (and §12's face-up refusal).",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  const indices = faceDownPrizeIndices(state, ctx.seat);",
+    replace: "  const indices = faceDownPrizeIndices(state, otherSeat(ctx.seat));",
+    expectKilledBy: ["packages/engine/src/crescentPurge.test.ts"],
+  },
+  {
+    id: "D548-one-left-parks",
+    decision: "D548",
+    what: "🛑 **THE FORCED PICK IS COLLAPSED INTO A PARK** — one face-down prize parks a singleton `choosePrize`, a choice with no choice in it (the no-choice doctrine, types.ts' forced-pick rule). Killed by §4 (no second park) and §9 (the Purge that KOs wins at once).",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  if (indices.length === 1) return { done: turnPrizeFaceUpAt(state, indices[0] ?? -1, ctx, events) };\n",
+    replace: "",
+    expectKilledBy: ["packages/engine/src/crescentPurge.test.ts"],
+  },
+  {
+    id: "D548-park-collapsed-into-auto-pick",
+    decision: "D548",
+    what: "🛑 **THE OWNER NO LONGER PICKS — THE REFUSED AUTO-PICK, REINSTALLED** (D548's ruling): every row resolves inline on its first face-down slot. Killed by §2 (the park, and the non-first pick).",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  if (indices.length === 1) return { done: turnPrizeFaceUpAt(state, indices[0] ?? -1, ctx, events) };",
+    replace: "  if (indices.length >= 1) return { done: turnPrizeFaceUpAt(state, indices[0] ?? -1, ctx, events) };",
+    expectKilledBy: ["packages/engine/src/crescentPurge.test.ts"],
+  },
+  {
+    id: "D548-pick-ignores-the-choice",
+    decision: "D548",
+    what: "🛑 **THE ANSWER IS IGNORED AND SLOT 0 IS TURNED** — a first-slot auto-pick behind a real prompt. Killed by §2 (the pick is slot 3, not 0).",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      return choice.kind === \"prize\" ? turnPrizeFaceUpAt(state, choice.index, ctx, events) : state;",
+    replace: "      return choice.kind === \"prize\" ? turnPrizeFaceUpAt(state, 0, ctx, events) : state;",
+    expectKilledBy: ["packages/engine/src/crescentPurge.test.ts"],
+  },
+  {
+    id: "D548-apply-choice-arm-dropped",
+    decision: "D548",
+    what: "🛑 **THE SITE `tsc` CANNOT SEE** — `applyChoice` ends `default: return state;`, so a missing apply typechecks and a validated answer is silently dropped: no prize turns and the +80 is still paid. Killed by §2 (driven through `resolveEffect`).",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      return choice.kind === \"prize\" ? turnPrizeFaceUpAt(state, choice.index, ctx, events) : state;",
+    replace: "      return state;",
+    expectKilledBy: ["packages/engine/src/crescentPurge.test.ts"],
+  },
+  {
+    id: "D548-flip-not-recorded",
+    decision: "D548",
+    what: "🛑 **THE FLIP IS NOT RECORDED** — the event fires and the log names the card, but `faceUpPrizes` never grows, so the card stays face down on the wire and the gate re-arms on it. Killed by §2/§4.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      [ctx.seat]: { ...side, faceUpPrizes: [...side.faceUpPrizes, uid] },",
+    replace: "      [ctx.seat]: { ...side, faceUpPrizes: side.faceUpPrizes },",
+    expectKilledBy: ["packages/engine/src/crescentPurge.test.ts"],
+  },
+  {
+    id: "D548-take-prune-dropped",
+    decision: "D548",
+    what: "🛑 **A TAKEN FACE-UP PRIZE STAYS IN `faceUpPrizes`** — the list stops being a subset of `prizes` (types.ts' invariant): a card in the HAND is still listed face up. Killed by §7 and §9.",
+    file: "packages/engine/src/flow.ts",
+    find: "  const faceUpPrizes = side.faceUpPrizes.filter((uid) => !uids.includes(uid));",
+    replace: "  const faceUpPrizes = side.faceUpPrizes;",
+    expectKilledBy: ["packages/engine/src/crescentPurge.test.ts"],
+  },
+  {
+    id: "D548-redact-leaks-face-down-prizes",
+    decision: "D548",
+    what: "🛑 **EVERY PRIZE CROSSES THE WIRE FACE UP** — the hidden-information defect: each face-down prize's uid and card id reach both seats and a spectator. Killed by §8 (the JSON sweep and the one-entry pin).",
+    file: "packages/engine/src/redact.ts",
+    find: "      side.faceUpPrizes.includes(uid) ? [{ index, card: redactedCardOf(state, uid) }] : [],",
+    replace: "      [{ index, card: redactedCardOf(state, uid) }],",
+    expectKilledBy: ["packages/engine/src/crescentPurge.test.ts"],
+  },
+  {
+    id: "D548-redact-index-is-turn-order",
+    decision: "D548",
+    what: "⚠️ **THE WIRE INDEX IS THE TURN ORDER, NOT THE SLOT** — right only when the first turned prize sits at slot 0; the client paints the card on the wrong tile. Killed by §7/§8 (slot 4, then slot 1 after a take).",
+    file: "packages/engine/src/redact.ts",
+    find: "      side.faceUpPrizes.includes(uid) ? [{ index, card: redactedCardOf(state, uid) }] : [],",
+    replace: "      side.faceUpPrizes.includes(uid) ? [{ index: side.faceUpPrizes.indexOf(uid), card: redactedCardOf(state, uid) }] : [],",
+    expectKilledBy: ["packages/engine/src/crescentPurge.test.ts"],
+  },
+  {
+    id: "D548-reminder-accepted-behind-any-cost",
+    decision: "D548",
+    what: "⚠️ **THE REMINDER IS STRIPPED BEHIND ANY COST** — a Prize reminder behind a Stadium discard (a sentence no card prints) derives. Killed by §1 and `optionalCostBoost.test.ts`'s nearest-miss rung.",
+    file: "packages/engine/src/effects.ts",
+    find: "  const faceUpReminder = OPTIONAL_COST_TURN_PRIZE_FACE_UP.test(match[1] ?? \"\") && printedPayoff.endsWith(OPTIONAL_COST_FACE_UP_REMINDER);",
+    replace: "  const faceUpReminder = printedPayoff.endsWith(OPTIONAL_COST_FACE_UP_REMINDER);",
+    expectKilledBy: ["packages/engine/src/crescentPurge.test.ts", "packages/engine/src/optionalCostBoost.test.ts"],
+  },
+  {
+    id: "D548-reminder-required",
+    decision: "D548",
+    what: "⚠️ **THE REMINDER BECOMES MANDATORY** — the bare spelling (a reprint without the parenthetical) refuses, so the printed and the bare readings disagree. Killed by §1.",
+    file: "packages/engine/src/effects.ts",
+    find: "  const payoff = optionalCostPayoff(faceUpReminder ? printedPayoff.slice(0, -OPTIONAL_COST_FACE_UP_REMINDER.length) : printedPayoff);",
+    replace: "  const payoff = faceUpReminder ? optionalCostPayoff(printedPayoff.slice(0, -OPTIONAL_COST_FACE_UP_REMINDER.length)) : OPTIONAL_COST_TURN_PRIZE_FACE_UP.test(match[1] ?? \"\") ? null : optionalCostPayoff(printedPayoff);",
+    expectKilledBy: ["packages/engine/src/crescentPurge.test.ts", "packages/engine/src/optionalCostBoost.test.ts"],
+  },
+  {
+    id: "D548-validator-accepts-face-up-index",
+    decision: "D548",
+    what: "🛑 **THE VALIDATOR STOPS CHECKING THE OFFER** — a face-up slot and an out-of-range slot pass the wire (the apply's live-row belt then turns nothing and the +80 is still paid). Killed by §12.",
+    file: "packages/engine/src/cardplay.ts",
+    find: "      if (!prompt.indices.includes(choice.index)) {",
+    replace: "      if (choice.index < 0) {",
+    expectKilledBy: ["packages/engine/src/crescentPurge.test.ts"],
+  },
+  {
+    id: "D548-log-drops-the-card",
+    decision: "D548",
+    what: "⚠️ **THE LOG ROW STOPS NAMING THE CARD** — a public card rendered as if hidden. Killed by §10.",
+    file: "packages/engine/src/log.ts",
+    find: "        plain(\"turned \"),\n        strong(cardName(state, event.uid)),",
+    replace: "        plain(\"turned \"),\n        strong(\"a Prize card\"),",
+    expectKilledBy: ["packages/engine/src/crescentPurge.test.ts"],
+  },
+  {
+    id: "D548-online-take-tile-face-down",
+    decision: "D548",
+    what: "⚠️ **THE ONLINE TAKE PICKER PAINTS EVERY TILE FACE DOWN** — the wire carries the face-up card and the HUD drops it. Killed by `OnlineHud.crescentPurge.dom.test.tsx`.",
+    file: "src/features/online/components/OnlineHud.tsx",
+    find: "            faceUp={faceUpPrizes.find((prize) => prize.index === index)?.card.name ?? null}",
+    replace: "            faceUp={null}",
+    expectKilledBy: ["src/features/online/components/OnlineHud.crescentPurge.dom.test.tsx"],
+  },
+  {
+    id: "D548-local-take-tile-face-down",
+    decision: "D548",
+    what: "⚠️ **THE LOCAL TAKE PICKER PAINTS EVERY TILE FACE DOWN** — the D412 third read site. Killed by `GameHud.crescentPurge.dom.test.tsx`.",
+    file: "src/features/game/GameHud.tsx",
+    find: "            faceUp={faceUpName(index)}",
+    replace: "            faceUp={null}",
+    expectKilledBy: ["src/features/game/GameHud.crescentPurge.dom.test.tsx"],
+  },
+  {
+    id: "D548-record-version-not-bumped",
+    decision: "D548",
+    what: "🛑 **`MATCH_RECORD_VERSION` STAYS 31 WHILE `PlayerSide.faceUpPrizes` LANDS REQUIRED** — this deploy accepts a v31 record with no key, and every projection (`redactedSideOf`) and every prize take (`resolveTakePrizes`) THROWS on it (D326's class). A different experiment from `D326-`/`D501-`/`D547-record-version-not-bumped` (D484): it asserts D548 itself, anchored on D548's own doc tail. Killed by `crescentPurge.test.ts` §11's raw pin (and `match.test.ts`).",
+    file: "apps/api/src/lobby/match.ts",
+    find: "    D141). The wire (`RedactedSide.faceUpPrizes`, the `choosePrize` prompt arm) is not a\n    persisted shape at all. */\nexport const MATCH_RECORD_VERSION = 32;",
+    replace: "    D141). The wire (`RedactedSide.faceUpPrizes`, the `choosePrize` prompt arm) is not a\n    persisted shape at all. */\nexport const MATCH_RECORD_VERSION = 31;",
+    expectKilledBy: ["packages/engine/src/crescentPurge.test.ts", "apps/api/src/lobby/match.test.ts"],
   },
 ];

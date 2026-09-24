@@ -150,7 +150,9 @@ const CRUSHING_PRESS =
 /** D383's — the third cost row, and the one whose `cond` carries a captured digit. */
 const TORRENTIAL =
   "You may shuffle 3 Energy attached to this Pokémon into your deck. If you do, this attack also does 120 damage to 1 of your opponent's Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)";
-/** …and the ONE the reading still owes, refused for a `PlayerState` field. */
+/** …and the ONE the reading still owes, refused for a `PlayerState` field.
+    (🆕🆕🆕 D548: owed NO LONGER — built as `optionalCostOps`' fifth row on a `PlayerSide`
+    field, `faceUpPrizes`; `PlayerState` is the lobby's type. The name is kept, D178.) */
 const PRIZE_FLIP =
   "You may turn 1 of your face-down Prize cards face up. If you do, this attack does 80 more damage. (That Prize card remains face up for the rest of the game.)";
 
@@ -263,20 +265,28 @@ describe("§1 — the price, MEASURED IN REFUSED SENTENCES, before and after", (
     const wide = corpus().filter(([, s]) => WIDE.test(s));
     expect([wide.length, units(wide)]).toEqual([8, 15]);
     // The reader's ACTUAL domain, re-derived: eight sentences, fifteen printings, with
-    // the face-up Prize the only refusal left.
+    // the face-up Prize the only refusal left. (🆕🆕🆕 D548: none left — see the rungs below.)
     const read = wide.filter(([, s]) => deriveAttackOptionalCostBoost(s) !== null);
     const forward = wide.filter(([, s]) => deriveAttackOptionalBoost(s) !== null);
     const refused = wide.filter(([, s]) => !resolvedByAnyReader(s));
-    expect([read.length, units(read)]).toEqual([3, 8]);
+    // 🆕🆕🆕 D548 — read 3 / 8 → **4 / 10** and refused 1 / 2 → **0 / 0**: the face-up Prize
+    // moved from the refused part to the read part; the partition still sums (4 + 4 + 0 =
+    // 8, 10 + 5 + 0 = 15), and the positive rung names the row that moved (D383).
+    expect([read.length, units(read)]).toEqual([4, 10]);
     expect([forward.length, units(forward)]).toEqual([4, 5]);
-    expect([refused.length, units(refused)]).toEqual([1, 2]);
-    expect(refused.map(([, s]) => s)).toEqual([PRIZE_FLIP]);
+    expect([refused.length, units(refused)]).toEqual([0, 0]);
+    expect(refused.map(([, s]) => s)).toEqual([]);
+    expect(read.map(([, s]) => s)).toContain(PRIZE_FLIP);
     // …and the parts sum, which is what makes a partition a partition.
     expect(read.length + forward.length + refused.length).toBe(wide.length);
     expect(units(read) + units(forward) + units(refused)).toBe(units(wide));
     // BEFORE, re-derived rather than quoted: this slice adds exactly one cost row and
     // one connective, so removing the sentence they claim reproduces D384's head.
-    const before = wide.filter(([, s]) => s === PURGING || !resolvedByAnyReader(s));
+    // 🆕🆕🆕 D548 — and the face-up Prize is put back by NAME, since D548's own row now
+    // resolves it too: D384's head was PURGING plus the Prize, 2 / 3, and still is.
+    const before = wide.filter(
+      ([, s]) => s === PURGING || s === PRIZE_FLIP || !resolvedByAnyReader(s),
+    );
     expect([before.length, units(before)]).toEqual([2, 3]);
     // 🛑 THE TWO READERS ARE STILL MUTUALLY EXCLUSIVE ON EVERY PRINTED MEMBER of the
     // WIDENED family, which is the property that lets attack.ts SUM its terms instead
@@ -412,9 +422,20 @@ describe("§2 — the CONNECTIVE is a closed alternation, and every refusal is d
     // …and the face-up Prize is STILL refused under BOTH connectives, so the widening
     // claimed nothing it cannot pay: its refusal is the PAYOFF's trailing reminder and
     // the `PlayerState` field behind the cost, neither of which this slice touches.
-    expect(deriveAttackOptionalCostBoost(PRIZE_FLIP)).toBeNull();
-    expect(deriveAttackOptionalCostBoost(swapped(PRIZE_FLIP))).toBeNull();
-    expect(resolvedByAnyReader(PRIZE_FLIP)).toBe(false);
+    // 🆕🆕🆕 D548 — WITHDRAWN (D539), kept verbatim above: the field (`PlayerSide.
+    // faceUpPrizes`, not `PlayerState`) and the reminder (an optional exact suffix behind
+    // the fifth cost row) are both BUILT, so the face-up Prize now reads under BOTH
+    // connectives exactly as the other rows do — which is this rung's own claim (one
+    // reading), now true of FOUR rows. The refusal is re-pointed BY VALUE (D438) to the
+    // nearest still-unread miss, the OPPONENT's Prize, under both connectives.
+    expect(deriveAttackOptionalCostBoost(swapped(PRIZE_FLIP))).toEqual(
+      deriveAttackOptionalCostBoost(PRIZE_FLIP),
+    );
+    expect(deriveAttackOptionalCostBoost(PRIZE_FLIP)).not.toBeNull();
+    expect(resolvedByAnyReader(PRIZE_FLIP)).toBe(true);
+    const theirs = PRIZE_FLIP.replace("of your face-down", "of your opponent's face-down");
+    expect(deriveAttackOptionalCostBoost(theirs)).toBeNull();
+    expect(deriveAttackOptionalCostBoost(swapped(theirs))).toBeNull();
   });
 
   it("🛑 the OTHER NINE readers refuse it, which is what makes ten readers one answer", () => {

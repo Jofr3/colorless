@@ -996,12 +996,24 @@ export type GameEvent =
   | { type: "KNOCKED_OUT"; seat: Seat; uid: string; discarded: string[] }
   /** `seat` owes a prize pick (which face-down cards, §8.1) — announced when
       the game parks on ko:takePrizes so an event-only client never hangs on
-      an unseen prompt. Forced picks resolve straight to PRIZES_TAKEN. */
+      an unseen prompt. Forced picks resolve straight to PRIZES_TAKEN.
+      🆕🆕🆕 D548: *"face-down cards"* is PARTLY false — the pick is over the WHOLE row, and a
+      slot in `PlayerSide.faceUpPrizes` is pickable too (see `PRIZES_TAKEN` below). */
   | { type: "PRIZES_OWED"; seat: Seat; count: number }
   /** `seat` took face-down prizes into hand. `indices` are the slots picked
       (the prize row compacts like the bench); full-information like every M1
-      event — hiding the uids from the opponent is P4's filter. */
+      event — hiding the uids from the opponent is P4's filter. 🆕🆕🆕 D548: a picked
+      slot may be a FACE-UP one (`PlayerSide.faceUpPrizes`); the event is unchanged and
+      the LOG stays count-only for every take — see `PRIZE_TURNED_FACE_UP`. */
   | { type: "PRIZES_TAKEN"; seat: Seat; uids: string[]; indices: number[]; remaining: number }
+  /** 🆕🆕🆕 D548 — `seat` turned the prize at slot `index` (uid `uid`) FACE UP, the cost of
+      Cresselia `sv06.5-021` "Crescent Purge" (`turnPrizeFaceUp`). The card is PUBLIC from
+      this moment (it rides `RedactedSide.faceUpPrizes` for both seats and spectators), so
+      the log NAMES it. `PRIZES_TAKEN` stays COUNT-ONLY on purpose, even for a face-up take:
+      the log row describes the move to a hand the other player must not read, and one
+      wording for every take keeps it from telling a face-up take from a face-down one by
+      its shape. Not persisted (D141). */
+  | { type: "PRIZE_TURNED_FACE_UP"; seat: Seat; index: number; uid: string }
   /** `seat` must promote a benched Pokémon into the empty Active spot
       (§8.1) — the ko:promote prompt twin of PRIZES_OWED. */
   | { type: "PROMOTION_REQUIRED"; seat: Seat }

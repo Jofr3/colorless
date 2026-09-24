@@ -416,6 +416,11 @@ function redactPrompt(state: GameState, prompt: EffectPrompt): RedactedEffectPro
         candidates: prompt.candidates.map((c) => ({ index: c.index, name: c.name })),
         note: prompt.note,
       };
+    case "choosePrize":
+      // 🆕🆕🆕 D548 — INDICES ONLY, copied fresh. Every offered slot is FACE DOWN, so no
+      // uid and no card id crosses (a uid would let a client track a hidden card across
+      // zones); the client paints the offer from `prizesRemaining` + `faceUpPrizes`.
+      return { kind: "choosePrize", indices: [...prompt.indices], note: prompt.note };
   }
 }
 
@@ -1086,7 +1091,18 @@ function redactedSideOf(state: GameState, seat: Seat, visibility: SideVisibility
       : side.bench.map((_, index) => hiddenInPlay(`opponent-bench-${index}-hidden`)),
     // Counts only — prizes are face-down for BOTH players (§3.8), so no uid or
     // catalog id of a prize or deck card may appear anywhere.
+    // 🆕🆕🆕 D548 — RE-SCOPED: that holds for FACE-DOWN prizes (and every deck card) only.
+    // A prize turned face up by Crescent Purge is PUBLIC, and rides `faceUpPrizes` below
+    // for BOTH seats and for a spectator (the same function builds all three views).
     prizesRemaining: side.prizes.length,
+    // 🆕🆕🆕 D548 — index-STABLE: `index` is the slot's position in the live row (the one
+    // `takePrizes` and `choosePrize` address), derived here from the stored UID because the
+    // row compacts on every take (types.ts). Row order, not turn order, so a client can
+    // lay tiles out without sorting. Only face-up slots appear; a face-down one contributes
+    // nothing but the count above.
+    faceUpPrizes: side.prizes.flatMap((uid, index) =>
+      side.faceUpPrizes.includes(uid) ? [{ index, card: redactedCardOf(state, uid) }] : [],
+    ),
     deckCount: side.deck.length,
     // §2 — the discard pile is ordered and public.
     discard: side.discard.map((uid) => redactedCardOf(state, uid)),

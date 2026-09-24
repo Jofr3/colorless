@@ -75,6 +75,7 @@ function game(phase: RedactedPhase, waitingOn: RedactedGame["waitingOn"] = "you"
     active: inPlay("a1", "Mareep"),
     bench: [],
     prizesRemaining: 6,
+    faceUpPrizes: [], // 🆕🆕🆕 D548 — REQUIRED on the wire side (D159); no prize is face up on this board
     deckCount: 53,
     discard: [],
   };
