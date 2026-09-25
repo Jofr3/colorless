@@ -24,6 +24,7 @@ const player: PlayerBoard = {
     card("bench-2", { damage: 0, hp: 60, conditions: NO_CONDITIONS }),
   ],
   prizesRemaining: 6,
+  faceUpPrizes: [], // 🆕🆕🆕 D551 — REQUIRED on PlayerBoard; no prize is face up on this board
 };
 
 /** The mock-shaped board: plain models, no battle anywhere. */
@@ -32,6 +33,7 @@ const barePlayer: PlayerBoard = {
   active: card("active-1"),
   bench: [card("bench-1"), card("bench-2")],
   prizesRemaining: 6,
+  faceUpPrizes: [], // 🆕🆕🆕 D551 — REQUIRED on PlayerBoard; no prize is face up on this board
 };
 
 const renderSide = (board: PlayerBoard) =>
@@ -103,6 +105,7 @@ const conditioned = (conditions: BattleConditions): PlayerBoard => ({
   active: card("active-1", { damage: 0, hp: 120, conditions }),
   bench: [],
   prizesRemaining: 6,
+  faceUpPrizes: [], // 🆕🆕🆕 D551 — REQUIRED on PlayerBoard; no prize is face up on this board
 });
 
 describe("status markers", () => {
@@ -148,6 +151,7 @@ describe("status markers", () => {
         card("bench-1", { damage: 0, hp: 60, conditions: { ...NO_CONDITIONS, burned: true } }),
       ],
       prizesRemaining: 6,
+      faceUpPrizes: [], // 🆕🆕🆕 D551 — REQUIRED on PlayerBoard; no prize is face up on this board
     };
     expect(statusChipsOf(renderSide(board)).map((chip) => chip.textContent)).toEqual(["BRN"]);
   });

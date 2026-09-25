@@ -1,5 +1,12 @@
 import { CARD_SIZE_STYLE } from "../constants";
-import type { CardModel, PileState, PlayerBoard, PlayerId, SidePosition } from "../types";
+import type {
+  CardModel,
+  FaceUpPrize,
+  PileState,
+  PlayerBoard,
+  PlayerId,
+  SidePosition,
+} from "../types";
 import { cardBackToneFor } from "../utils/players";
 import { Bench } from "./Bench";
 import { CardSlot, DamageChip, PlaymatCard, StatusChips } from "./Card";
@@ -44,11 +51,14 @@ function ActiveCardSlot({
 function SidePiles({
   owner,
   prizesRemaining,
+  faceUpPrizes,
   side,
   pile,
 }: {
   owner: PlayerId;
   prizesRemaining: number;
+  /** 🆕🆕🆕 D551 — the side's face-up prizes, straight through to PrizeGrid. */
+  faceUpPrizes: readonly FaceUpPrize[];
   side: SidePosition;
   pile?: PileState;
 }) {
@@ -87,7 +97,13 @@ function SidePiles({
             : { bottom: 0, right: "100%", marginRight: SIDE_PILES_BENCH_GAP }
         }
       >
-        <PrizeGrid owner={owner} remaining={prizesRemaining} tone={cardBackTone} flipped={isTop} />
+        <PrizeGrid
+          owner={owner}
+          remaining={prizesRemaining}
+          tone={cardBackTone}
+          flipped={isTop}
+          faceUp={faceUpPrizes}
+        />
       </div>
     </>
   );
@@ -109,7 +125,13 @@ function BenchArea({
   return (
     <div className="relative">
       <Bench cards={player.bench} owner={owner} side={side} benchLimit={benchLimit} />
-      <SidePiles owner={owner} prizesRemaining={player.prizesRemaining} side={side} pile={pile} />
+      <SidePiles
+        owner={owner}
+        prizesRemaining={player.prizesRemaining}
+        faceUpPrizes={player.faceUpPrizes}
+        side={side}
+        pile={pile}
+      />
     </div>
   );
 }

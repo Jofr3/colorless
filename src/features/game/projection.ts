@@ -10,6 +10,12 @@
 //     (🆕🆕🆕 D548: *"face-down"* is PARTLY false — Crescent Purge turns one face up, and
 //     it is public; the wire carries it, THIS projection does not yet: the Playmat
 //     PrizeGrid is NAMED AS OWED. See the `prizesRemaining` site below.)
+//     (🆕🆕🆕 D551 — WITHDRAWN, PAID: *"THIS projection does not yet"* and *"NAMED AS OWED"*
+//     are no longer true. Both projections now carry the face-up prizes as
+//     `PlayerBoard.faceUpPrizes` — this one from the engine row, `projectionFromRedacted`
+//     from the wire's `RedactedSide.faceUpPrizes` — and the Playmat PrizeGrid paints them
+//     through `prizeSlotFaces`, the one row-index -> grid-slot mapping. Face-DOWN prizes
+//     are still counts only, for both viewers.)
 //   - decks as counts; discard piles fully public (§2 — ordered and public);
 //   - in-play Pokémon (active/bench) public once setup is over, with their
 //     attached cards and their battle state (`CardModel.battle` — damage/max
@@ -194,7 +200,17 @@ function playerBoardOf(state: GameState, seat: Seat, visibility: SideVisibility)
     // playmat projection does not, because the Playmat's PrizeGrid (`PlayerSide.tsx`,
     // `AnimatedCardsLayer.tsx`, `playmat/types.ts`'s `PlayerBoard`) has no face-up slot
     // to paint it in — NAMED AS OWED, not built. Both HUDs' prize pickers DO paint it.
+    // 🆕🆕🆕 D551 — WITHDRAWN, PAID: *"THIS playmat projection does not"* and *"NAMED AS OWED,
+    // not built"* no longer hold. The face-up prizes ride `faceUpPrizes` below, and the
+    // Playmat PrizeGrid + the Pixi prize descriptors paint them (`prizeSlotFaces`).
     prizesRemaining: side.prizes.length,
+    // 🆕🆕🆕 D551 — the SAME shape `redact.ts`'s `redactedSideOf` builds for the wire: `index` is
+    // the slot's position in the LIVE row (it compacts on every take), row order, and ONLY
+    // the face-up slots — a face-down prize contributes nothing but the count above, so no
+    // uid or catalog id of one appears anywhere in this projection. Public to BOTH viewers.
+    faceUpPrizes: side.prizes.flatMap((uid, index) =>
+      side.faceUpPrizes.includes(uid) ? [{ index, card: cardModelOf(state, uid) }] : [],
+    ),
   };
 }
 
@@ -416,6 +432,9 @@ function playerBoardFromRedacted(side: RedactedSide): PlayerBoard {
     active: side.active === null ? null : cardModelFromRedacted(side.active),
     bench: side.bench.map(cardModelFromRedacted),
     prizesRemaining: side.prizesRemaining,
+    // 🆕🆕🆕 D551 — the wire already carries the face-up slots (D548); rebuilt card by card so
+    // the round trip equals the local projection's `faceUpPrizes` exactly.
+    faceUpPrizes: side.faceUpPrizes.map((p) => ({ index: p.index, card: cardModelFromRedacted(p.card) })),
   };
 }
 

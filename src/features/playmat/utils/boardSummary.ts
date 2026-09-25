@@ -20,6 +20,9 @@ export interface PlayerBoardSummary {
   /** Hand size, always known even when the cards themselves are hidden. */
   handCount: number;
   prizesRemaining: number;
+  /** 🆕🆕🆕 D551 — the names of this side's FACE-UP prizes (Crescent Purge), in row order;
+      public to every viewer. Empty on every board without one. */
+  faceUpPrizes: string[];
   /** Deck/discard sizes (game page); null when pile data is absent (mock). */
   piles: { deckCount: number; discardCount: number } | null;
 }
@@ -65,6 +68,7 @@ export function describeBoard(
         hand: isYou ? side.hand.map((card) => card.name) : null,
         handCount: side.hand.length,
         prizesRemaining: side.prizesRemaining,
+        faceUpPrizes: side.faceUpPrizes.map((prize) => prize.card.name),
         piles: pile ? { deckCount: pile.deckCount, discardCount: pile.discard.length } : null,
       };
     }),

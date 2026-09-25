@@ -20263,6 +20263,10 @@ import type { GameState, Seat } from "./types";
     `choosePrize` arm is the wire union's TWELFTH kind. Both HUDs paint face-up tiles in the
     ko:takePrizes picker (still pickable) and gain a choose-a-prize dialog offering only the
     face-down tiles. The Playmat PrizeGrid is NAMED AS OWED.
+    (🆕🆕🆕 D551 — PAID, client-only: the Playmat PrizeGrid and the Pixi prize descriptors paint
+    the face-up slot through ONE mapping, `prizeSlotFaces` (src/features/playmat/utils/piles.ts),
+    off a REQUIRED `PlayerBoard.faceUpPrizes` both client projections fill. This note is the
+    only engine byte D551 touches; no behaviour moved and no version step.)
     🛑 **`MATCH_RECORD_VERSION` 31 → 32** (apps/api `match.ts`): a v31 state has no key and
     `redactedSideOf` / `resolveTakePrizes` THROW on it (measured, D326's class); the optional
     `faceUpPrizes?` route is refused under the FIFTH POSITION (a rollback turns a public card

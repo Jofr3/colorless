@@ -10,7 +10,8 @@ import type {
   PokemonRef,
   Seat,
 } from "@luminous/engine";
-import { redactGame, topUid } from "@luminous/engine";
+import { applyAction, createGame, redactGame, topUid } from "@luminous/engine";
+import type { Card } from "@luminous/schema";
 import {
   ABILITY_DECK,
   ALL_BASIC_DECK,
@@ -23,11 +24,15 @@ import {
   SNIPE_DECK,
   STADIUM_TOOL_DECK,
   attachFromDeck,
+  battler,
   benchFromDeck,
+  clearBench,
   deckOf,
   driveSetup,
+  firstBasicInHand,
   handFromDeck,
   handUid,
+  must,
   mustApply,
   mustCreate,
   setActiveFromDeck,
@@ -134,6 +139,93 @@ function wonGame(): GameState {
   return mustApply(state, { type: "attack", seat: "p1", index: 0 }).state;
 }
 
+// 🆕🆕🆕 D551 — CRESCENT PURGE, DRIVEN (not constructed): the real Cresselia `sv06.5-021` turns
+// one of p1's face-down prizes face up. Copied from `GameHud.crescentPurge.dom.test.tsx`
+// (its helpers are file-local; D270's file-local 60-card deck, D425's declared battlers).
+const CRESSELIA = "sv06.5-021";
+const PURGE = 1;
+const PURGE_POOL: Record<string, Card> = {
+  ...FIXTURE_POOL,
+  "d548-wall": battler("d548-wall", { types: ["Colorless"], hp: 400, retreat: 1 }),
+  "d548-frail": battler("d548-frail", { types: ["Colorless"], hp: 150, retreat: 1 }),
+};
+const PURGE_DECK = deckOf({
+  [CRESSELIA]: 4,
+  "d548-wall": 4,
+  "d548-frail": 4,
+  "fix-psychic-energy": 20,
+  "fix-basic-1": 8,
+  "fix-energy": 20,
+});
+
+function purgeSetup(): GameState {
+  const created = createGame({
+    seed: 20260924,
+    decks: { p1: PURGE_DECK, p2: PURGE_DECK },
+    cardPool: PURGE_POOL,
+  });
+  if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
+  let state = created.state;
+  if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
+  state = must(
+    applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p1" }),
+  );
+  while (state.phase.kind === "setup:drawExtra") {
+    const phase = state.phase;
+    const seat = (["p1", "p2"] as const).find((s) => !phase.decided[s]);
+    if (seat === undefined) throw new Error("setup:drawExtra with every seat decided");
+    state = must(applyAction(state, { type: "setupDrawExtra", seat, count: phase.owed[seat] }));
+  }
+  for (const seat of ["p1", "p2"] as const) {
+    state = must(
+      applyAction(state, { type: "setupPlaceActive", seat, uid: firstBasicInHand(state, seat) }),
+    );
+  }
+  for (const seat of ["p1", "p2"] as const) {
+    state = must(applyAction(state, { type: "setupReady", seat }));
+  }
+  return state;
+}
+
+function purgeReady(defender: string): GameState {
+  let state = purgeSetup();
+  state = mustApply(state, { type: "endTurn", seat: "p1" }).state;
+  state = mustApply(state, { type: "endTurn", seat: "p2" }).state;
+  state = setActiveFromDeck(state, "p1", CRESSELIA);
+  state = attachFromDeck(state, "p1", "fix-psychic-energy", 3);
+  state = clearBench(state, "p1");
+  state = setActiveFromDeck(state, "p2", defender);
+  state = clearBench(state, "p2");
+  return benchFromDeck(state, "p2", "d548-wall");
+}
+
+const purgeYes = (state: GameState) =>
+  mustApply(mustApply(state, { type: "attack", seat: "p1", index: PURGE }).state, {
+    type: "resolveEffect",
+    seat: "p1",
+    choice: { kind: "confirm", yes: true },
+  }).state;
+const purgePick = (state: GameState, index: number) =>
+  mustApply(state, { type: "resolveEffect", seat: "p1", choice: { kind: "prize", index } }).state;
+
+/** A paid Purge on the 400-HP wall turns p1's prize row index 2 face up; nothing is Knocked
+    Out, so p2 is left in turn:action — a park whose prompt round-trips. Six prizes remain. */
+function purgedWall(): GameState {
+  return purgePick(purgeYes(purgeReady("d548-wall")), 2);
+}
+
+/** 🛑 THE FLIP-VISIBLE BOARD (remaining < 6 on the face-up side). A paid Purge (160) turns row
+    index 3 face up and Knocks Out the 150-HP frail; p1 then takes the FACE-DOWN prize at row
+    index 0, the row compacts, and the face-up card sits at row index 2 of FIVE. p2's wall is
+    promoted and p2 is left in turn:action. */
+function purgedTaken(): GameState {
+  const parked = purgePick(purgeYes(purgeReady("d548-frail")), 3);
+  if (parked.phase.kind !== "ko:takePrizes") throw new Error("expected ko:takePrizes");
+  const taken = mustApply(parked, { type: "takePrizes", seat: "p1", prizeIndices: [0] }).state;
+  if (taken.phase.kind !== "turn:action") throw new Error("expected p2's turn:action");
+  return taken;
+}
+
 /** The fixture pool ships image: null; this swaps in the canonical base path
     (`/assets/cards/{id}`) so URL construction is exercised. GameState is a
     plain value and the projection is pure, so the swap is legitimate. */
@@ -236,21 +328,62 @@ describe("projectGameState — hidden information", () => {
     // setup (face-down placements), plain turn play, a parked KO interrupt
     // (pendingDecision) and a finished game (outcome) — pendingDecision/
     // outcome/battle must stay as clean as the board.
-    for (const state of [placedNotRevealed(), turnOneState(), parkedOnPrizes(1), wonGame()]) {
+    //
+    // 🆕🆕🆕 D551 — plus two PURGED boards (`purgedWall`, `purgedTaken`): one prize of p1's is
+    // FACE UP and public, so it must appear — and ONLY inside `board.<side>.faceUpPrizes`.
+    const purged = [purgedWall(), purgedTaken()];
+    for (const state of purged) expect(state.players.p1.faceUpPrizes).toHaveLength(1);
+    for (const state of [
+      placedNotRevealed(),
+      turnOneState(),
+      parkedOnPrizes(1),
+      wonGame(),
+      ...purged,
+    ]) {
       for (const viewer of ["p1", "p2"] as const) {
-        const json = JSON.stringify(projectGameState(state, viewer));
+        const projection = projectGameState(state, viewer);
+        const json = JSON.stringify(projection);
         const opponent = viewer === "p1" ? "p2" : "p1";
         for (const uid of state.players[opponent].hand) {
           expect(sweepContains(json, uid)).toBe(false);
         }
         // Prizes are face-down for BOTH players — the viewer's own included.
         // (🆕🆕🆕 D548: FACE-DOWN prizes only — no Purge runs here, so every prize is.)
+        // (🆕🆕🆕 D551 — RE-SCOPED: *"no Purge runs here"* is WITHDRAWN; the two purged boards
+        // above run one. The rule is now split: every FACE-DOWN prize uid stays absent for
+        // both viewers; a FACE-UP one is present, and only in `faceUpPrizes`.)
+        for (const seat of ["p1", "p2"] as const) {
+          const side = state.players[seat];
+          for (const uid of side.prizes) {
+            expect(sweepContains(json, uid)).toBe(side.faceUpPrizes.includes(uid));
+          }
+        }
+        // Strip both `faceUpPrizes` lists (an `undefined` field is dropped by JSON.stringify,
+        // exactly as a deleted one): no prize uid of either seat may be left anywhere.
+        const stripped = structuredClone(projection) as unknown as {
+          board: Record<"you" | "opponent", { faceUpPrizes?: unknown }>;
+        };
+        stripped.board.you.faceUpPrizes = undefined;
+        stripped.board.opponent.faceUpPrizes = undefined;
+        const strippedJson = JSON.stringify(stripped);
         for (const seat of ["p1", "p2"] as const) {
           for (const uid of state.players[seat].prizes) {
-            expect(sweepContains(json, uid)).toBe(false);
+            expect(sweepContains(strippedJson, uid)).toBe(false);
           }
         }
       }
+    }
+    // ...and the face-up card is in the list, by LIVE row index, for BOTH viewers.
+    for (const state of purged) {
+      const [uid] = state.players.p1.faceUpPrizes;
+      const index = state.players.p1.prizes.indexOf(uid as string);
+      expect(
+        projectGameState(state, "p1").board.you.faceUpPrizes.map((p) => [p.index, p.card.id]),
+      ).toEqual([[index, uid]]);
+      expect(
+        projectGameState(state, "p2").board.opponent.faceUpPrizes.map((p) => [p.index, p.card.id]),
+      ).toEqual([[index, uid]]);
+      expect(projectGameState(state, "p1").board.opponent.faceUpPrizes).toEqual([]);
     }
   });
 
@@ -870,6 +1003,33 @@ describe("projectGameState — the persistent zones (M4 slice 3)", () => {
 // local projection keeps the full prompt) — this block stays scoped to states
 // whose prompt round-trips.
 describe("projectionFromRedacted — the wire round-trip equals the local projection", () => {
+  it("🛑 (D551) reconstructs a PURGED board identically — the face-up prize crosses the wire intact", () => {
+    // Two parks that round-trip: the Purge on the wall (six remaining, row index 2 face up)
+    // and the Purge-KO-take board (five remaining, the face-up card compacted to index 2).
+    // Both leave p2 in turn:action.
+    for (const state of [purgedWall(), purgedTaken()]) {
+      expect(state.phase.kind).toBe("turn:action");
+      expect(state.players.p1.faceUpPrizes).toHaveLength(1);
+      for (const seat of ["p1", "p2"] as const) {
+        const local = projectGameState(state, seat);
+        expect(projectionFromRedacted(redactGame(state, seat))).toEqual(local);
+        const side = seat === "p1" ? local.board.you : local.board.opponent;
+        expect(side.faceUpPrizes).toHaveLength(1); // else the equality proves nothing
+      }
+    }
+  });
+
+  it("🛑 (D551) a SPECTATOR's board carries the same face-up prizes as the seated p1 projection, both sides", () => {
+    for (const state of [purgedWall(), purgedTaken()]) {
+      const seated = projectGameState(state, "p1").board;
+      const watching = projectionFromRedacted(redactGame(state, "p1", true)).board;
+      expect(watching.you.faceUpPrizes).toEqual(seated.you.faceUpPrizes);
+      expect(watching.opponent.faceUpPrizes).toEqual(seated.opponent.faceUpPrizes);
+      expect(watching.you.faceUpPrizes).toHaveLength(1);
+      expect(watching.you.prizesRemaining).toBe(seated.you.prizesRemaining);
+    }
+  });
+
   it("reconstructs a turn:action board identically, for both viewers", () => {
     const state = turnOneState();
     for (const seat of ["p1", "p2"] as const) {

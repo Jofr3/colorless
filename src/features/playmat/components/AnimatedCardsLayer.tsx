@@ -23,7 +23,8 @@ import {
 } from "../pixi/CardView";
 import { canPlace, type PlacementPredicate } from "../utils/cardMovement";
 import { shouldCollapseBenchAttachments } from "../utils/benchLayout";
-import { PRIZE_COUNT, deckBackId, prizeBackId, prizeSlots } from "../utils/piles";
+import { deckBackId } from "../utils/piles";
+import { type CardDescriptor, prizeCardDescriptors } from "../utils/cardDescriptors";
 import {
   ATTACHED_CARD_SCALE,
   benchLimitFor,
@@ -50,18 +51,6 @@ interface AnimatedCardsLayerProps {
       supplies its own so affordance, preview and dispatch never promise a
       drop the page's engine cannot express. */
   placementPredicate?: PlacementPredicate;
-}
-
-interface CardDescriptor {
-  card: CardModel;
-  placement: CardPlacement;
-  draggable: boolean;
-  zoneSize: number;
-  attachedTo?: string;
-  attachedHostPlacement?: CardPlacement;
-  attachedPresentation?: "side" | "behind";
-  attachedSide?: SidePosition;
-  attachedCollapsed?: boolean;
 }
 
 interface DropZoneSnapshot {
@@ -301,22 +290,11 @@ function collectCardDescriptors(
       zoneSize: 1,
     });
 
-    const slots = prizeSlots(player.prizesRemaining, owner !== perspectivePlayer);
-    for (let i = 0; i < PRIZE_COUNT; i += 1) {
-      if (!slots[i]) continue;
-      descriptors.push({
-        card: {
-          id: prizeBackId(owner, i),
-          cardId: `back-${tone}`,
-          name: `${owner} prize ${i}`,
-          type: "trainer",
-          imageUrl: backImageUrl,
-        },
-        placement: { owner, zone: "stadium" },
-        draggable: false,
-        zoneSize: 1,
-      });
-    }
+    // 🆕🆕🆕 D551 — the prize slots, face-up ones included, off the one mapping
+    // (`prizeSlotFaces`); pure and unit-tested in utils/cardDescriptors.ts.
+    descriptors.push(
+      ...prizeCardDescriptors(player, owner, owner !== perspectivePlayer, tone, backImageUrl),
+    );
   }
 
   if (board.stadium) {

@@ -37,7 +37,8 @@ const stadiumCard = (id: string, cardId = id): CardModel => ({
 });
 
 function player(overrides: Partial<PlayerBoard> = {}): PlayerBoard {
-  return { hand: [], active: null, bench: [], prizesRemaining: 6, ...overrides };
+  // 🆕🆕🆕 D551 — `faceUpPrizes` is REQUIRED on PlayerBoard; none is face up here.
+  return { hand: [], active: null, bench: [], prizesRemaining: 6, faceUpPrizes: [], ...overrides };
 }
 
 function makeBoard(

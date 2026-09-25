@@ -42,7 +42,9 @@ export function BoardSummary({
             <p>Opponent's hand: {side.handCount} cards.</p>
           )}
           <p>
-            {side.possessive} prizes remaining: {side.prizesRemaining}.
+            {side.possessive} prizes remaining: {side.prizesRemaining}
+            {/* 🆕🆕🆕 D551 — the face-up prizes by name; the sentence is unchanged without one. */}
+            {side.faceUpPrizes.length > 0 && ` (face up: ${side.faceUpPrizes.join("; ")})`}.
           </p>
           {side.piles && (
             <>

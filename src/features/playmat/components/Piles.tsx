@@ -1,8 +1,8 @@
 import type { ReactNode } from "react";
 import { CardImage } from "../../../components/CardImage";
 import { CARD_SIZE_STYLE, CARD_SLOT_STYLE, FRAME_CLASS, PRIZE_GRID_STYLE } from "../constants";
-import type { CardBackSize, CardBackTone, CardModel, PlayerId } from "../types";
-import { PRIZE_COLUMNS, PRIZE_ROWS, deckBackId, prizeBackId, prizeSlots } from "../utils/piles";
+import type { CardBackSize, CardBackTone, CardModel, FaceUpPrize, PlayerId } from "../types";
+import { PRIZE_COLUMNS, PRIZE_ROWS, deckBackId, prizeBackId, prizeSlotFaces } from "../utils/piles";
 
 /** Card-count badge on a pile frame. Purely visual (aria-hidden): as an
     <output> it was an implicit polite live region, announcing four bare
@@ -24,10 +24,15 @@ function CardBack({
   tone,
   size = "card",
   anchorId,
+  faceUpName,
 }: {
   tone: CardBackTone;
   size?: CardBackSize;
   anchorId: string;
+  /** 🆕🆕🆕 D551 — a prize slot turned FACE UP (Crescent Purge): the SAME anchor (the id the
+      Pixi view is keyed by stays `prizeBackId(owner, slot)`, so the view flips in place),
+      marked `data-prize-face="up"` and named. Absent on every back. */
+  faceUpName?: string;
 }) {
   return (
     <div
@@ -35,6 +40,9 @@ function CardBack({
       data-card-anchor="true"
       data-card-id={anchorId}
       data-card-back-tone={tone}
+      {...(faceUpName === undefined
+        ? {}
+        : { "data-prize-face": "up", "data-card-name": faceUpName })}
       aria-hidden="true"
       style={{
         width: size === "prize" ? "var(--prize-w)" : "var(--card-w)",
@@ -109,13 +117,17 @@ export function PrizeGrid({
   remaining,
   tone,
   flipped = false,
+  faceUp,
 }: {
   owner: PlayerId;
   remaining: number;
   tone: CardBackTone;
   flipped?: boolean;
+  /** 🆕🆕🆕 D551 — this side's face-up prizes (`PlayerBoard.faceUpPrizes`), by LIVE row index.
+      Placed ONLY through `prizeSlotFaces`, the one row-index -> grid-slot mapping. */
+  faceUp: readonly FaceUpPrize[];
 }) {
-  const slots = prizeSlots(remaining, flipped);
+  const slots = prizeSlotFaces(remaining, faceUp, flipped);
 
   return (
     <div className={FRAME_CLASS} style={PRIZE_GRID_STYLE}>
@@ -128,7 +140,7 @@ export function PrizeGrid({
           >
             {slots
               .slice(rowIndex * PRIZE_COLUMNS, rowIndex * PRIZE_COLUMNS + PRIZE_COLUMNS)
-              .map((present, columnIndex) => {
+              .map((face, columnIndex) => {
                 const slotIndex = rowIndex * PRIZE_COLUMNS + columnIndex;
                 return (
                   <div
@@ -140,8 +152,13 @@ export function PrizeGrid({
                       height: "var(--prize-h)",
                     }}
                   >
-                    {present && (
-                      <CardBack tone={tone} size="prize" anchorId={prizeBackId(owner, slotIndex)} />
+                    {face !== null && (
+                      <CardBack
+                        tone={tone}
+                        size="prize"
+                        anchorId={prizeBackId(owner, slotIndex)}
+                        faceUpName={face === "back" ? undefined : face.card.name}
+                      />
                     )}
                   </div>
                 );

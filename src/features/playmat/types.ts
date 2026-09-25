@@ -45,11 +45,25 @@ export interface CardModel {
   battle?: BattleState;
 }
 
+/** 🆕🆕🆕 D551 — a prize turned FACE UP (Crescent Purge, D548): public to every viewer.
+    `index` is the slot's position in the LIVE prize row (the one `takePrizes` addresses,
+    which compacts on every take — the same field the wire's `RedactedFaceUpPrize` carries,
+    `redact.ts`'s `redactedSideOf`). The grid slot it paints is `prizeSlotFaces`' business. */
+export interface FaceUpPrize {
+  index: number;
+  card: CardModel;
+}
+
 export interface PlayerBoard {
   hand: CardModel[];
   active: CardModel | null;
   bench: CardModel[];
   prizesRemaining: number;
+  /** 🆕🆕🆕 D551 — REQUIRED, not optional (D159: the same fact on every surface, as the
+      wire's `RedactedSide.faceUpPrizes`). The face-up slots of this side's prize row, in
+      row order; `[]` on every board without a Crescent Purge. Every other prize is face
+      down and is the count above only. */
+  faceUpPrizes: FaceUpPrize[];
 }
 
 export interface BoardState {

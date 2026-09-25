@@ -27938,6 +27938,8 @@ local playmat projection's face-up slot; `:171` plus SUBST-16's `:149`/`:169` (a
 bundle for the NEXT record bump; `:669` as the no-bump fallback.
 (🆕🆕🆕 D549: the `:171`/`:149`/`:169`/`:170` bundle PAID, with the bump 32 → 33. The Playmat face-up slot
 is still owed, and `:669` is still the no-bump fallback. 🆕🆕🆕 D550: `:669` BUILT, no bump.)
+(🆕🆕🆕 D551 — PAID: the Playmat PrizeGrid face-up slot and the local projection's face-up slot are BUILT — see the D551
+section below.)
 
 ### (f) A withdrawn claim about the GATE (found by the second review)
 *"The Prize gate's false arm needs the attack used six times"* (D385's measurement, D383's
@@ -28014,6 +28016,7 @@ still a declaration). What moved is its ONE SOURCE; both lists now withdraw that
 `:629` (*"Until the end of your next turn, the Defending Pokémon's Weakness is now {C}. (…)"*) as the rider for
 the NEXT record bump; `:669` as the no-bump fallback; the Playmat PrizeGrid face-up slot (D548's client debt).
 (🆕🆕🆕 D550: `:669` BUILT with no bump; `:629` and the Playmat slot still owed.)
+(🆕🆕🆕 D551 — PAID: the Playmat slot BUILT; `:629` still owed.)
 
 ## D550 — the opponent-flipped per-tails snipe on the opponent's Bench count: a ninth coin member over a sixth, nullary flip count, a third compound suppression arm, and coin rows filed under the seat that flips (engine 0.435.0, `MATCH_RECORD_VERSION` 33 HELD)
 
@@ -28062,3 +28065,44 @@ targets 607 → 608. The sentence step (1) and the printing step (1) AGREE.
 `:629` as the rider for the NEXT record bump; the Playmat PrizeGrid face-up slot (D548's client debt, priced in
 `progress.md`'s resume point); the copy-attack family is still BLOCKED; `:669`'s real card is UNMEASURED.
 (🆕 D550 landing: the D549 close-out, `1e24318f`, already scheduled the Playmat slot as D551, ahead of `:629`.)
+(🆕🆕🆕 D551 — PAID: the Playmat slot BUILT by D551; `:629` is still the rider for the next record bump.)
+
+## D551 — the Playmat's face-up Prize slot: one row-index → grid-slot mapping, id-stable slots that flip in place, a required `PlayerBoard.faceUpPrizes`, and the Pixi prize descriptors extracted pure (client only; engine 0.435.0 and `MATCH_RECORD_VERSION` 33 unchanged)
+
+**Status:** ✅ BUILT (client only, 0 printings, census unmoved). Pays D548's client debt: a prize Crescent Purge
+turned face up is now painted on the Playmat — local and online, seated and spectating — not only in the two HUDs'
+prize pickers.
+
+### (a) What was built
+* **`prizeSlotFaces(remaining, faceUp, flipped)`** (`playmat/utils/piles.ts`) — the SINGLE mapping from an engine
+  prize-row index (the LIVE row, which compacts on every take) to a grid slot: `taken = clamp(6 − remaining)`; bottom
+  side i → slot i; top side i → slot `taken + i`. Slots are `null` (taken), `"back"` or `{ card }`. `prizeSlots` is
+  now its presence projection.
+* **`PlayerBoard.faceUpPrizes: FaceUpPrize[]`**, REQUIRED (`FaceUpPrize { index, card }`, the index as `redact.ts`
+  computes it). `projectGameState` fills it with the same `flatMap` shape as the wire's `redactedSideOf`;
+  `projectionFromRedacted` maps `RedactedSide.faceUpPrizes` across.
+* **`PrizeGrid`** takes `faceUp` and branches on `prizeSlotFaces` only: a face-up slot's anchor keeps
+  `data-card-id = prizeBackId(owner, slot)` and adds `data-prize-face="up"` and `data-card-name`.
+* **`prizeCardDescriptors`** (`playmat/utils/cardDescriptors.ts`, no Pixi import) — the layer's prize loop, extracted
+  pure: a face-up slot keeps the slot id and takes the card's `cardId`/`name`/`type`/`imageUrl` (no back fallback);
+  the existing `setTextureUrl` sync flips the view in place.
+* **`BoardSummary`** — *"prizes remaining: N (face up: Cresselia)."*; unchanged when none is face up.
+
+### (b) The rulings (`docs/decisions.md` D551)
+R1 one mapping, no file keeps its own · R2 id-stable slots, in-place texture swap — when a lower face-down prize is
+taken the face-up card moves one slot and two views swap textures (accepted; reversible if it flickers badly) · R3
+`faceUpPrizes` required on `PlayerBoard` (D159) · R4 the descriptor extraction.
+
+### (c) Tests and mutants
+The flip is invisible at six prizes remaining (`taken + i = i`), so every DOM and descriptor rung runs on a driven
+board where the face-up side has taken a face-down prize (remaining 5) and asserts it. New: `PrizeGrid.faceUp.dom.test.tsx`
+(OnlineMatch as p1 / p2 / spectating, PlaymatView over the local projection for both seats, and a descriptor rung),
+`cardDescriptors.test.ts`; extended: `piles.test.ts`, `projection.test.ts` (the leak rung over purged boards and
+the round-trip + spectator rungs). Six mutant rows (3,114 → 3,120), all killed undeclared; sweep predicted
+`3067 killed · 53 known survivor(s)` over 3,120, on D550's ~~still-unpaid~~ `3061 · 53` — PAID exactly at the D550 close-out
+`2412ac0c` (`3061 killed · 53 known survivor(s)` over 3,114), so it closes both ways: `3061 + 6 = 3067`, `3067 + 53 = 3120`.
+LANDED on `main` by cherry-pick of `d551-prep`'s `3d7f7472` onto that close-out as one commit.
+
+### (d) Owed
+`:629` stays the rider for the NEXT record bump; the copy-attack family is still BLOCKED (6/13); `:669`'s real card is
+UNMEASURED. The canvas face was not observed in a running browser — the descriptor is unit-tested, the paint is not.

@@ -122,12 +122,14 @@ export const initialBoard: BoardState = {
     active: playerCards.active,
     bench: playerCards.bench,
     prizesRemaining: 4,
+    faceUpPrizes: [], // 🆕🆕🆕 D551 — REQUIRED on PlayerBoard; the mock turns no prize face up
   },
   opponent: {
     hand: opponentCards.hand,
     active: opponentCards.active,
     bench: opponentCards.bench,
     prizesRemaining: 5,
+    faceUpPrizes: [], // 🆕🆕🆕 D551 — REQUIRED on PlayerBoard; the mock turns no prize face up
   },
 };
 

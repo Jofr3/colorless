@@ -22,6 +22,7 @@ const player = (overrides: Partial<PlayerBoard> = {}): PlayerBoard => ({
   active: null,
   bench: [],
   prizesRemaining: 6,
+  faceUpPrizes: [], // 🆕🆕🆕 D551 — REQUIRED on PlayerBoard; overridden where a rung needs one
   ...overrides,
 });
 const makeBoard = (
