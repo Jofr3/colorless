@@ -318,6 +318,10 @@ describe("placement", () => {
       // with `koBounty` ABSENT would THROW; `installedCostTaxOf` would silently read 0.
       costTaxTurn: null,
       koBounty: null,
+      // 🆕🆕🆕 …and no WEAKNESS RETYPE (D552): `installedWeaknessRetypeOf` asks `=== null` and
+      // then dereferences `.turn`, so a body reaching a Weakness step with the key ABSENT would
+      // THROW — why it is `… | null` and required (MATCH_RECORD_VERSION 33 -> 34).
+      weaknessRetype: null,
       // …and no ARMED recoil (D152), read the same way a fifth time:
       // `installedRecoilOf` compares the stamp to `state.turn`, so a fresh body
       // retaliates for nothing rather than retaliating on turn 0.

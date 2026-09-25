@@ -4152,6 +4152,28 @@ export type EffectOp =
       refuses it (`weakenDefenderAttacks`' check verbatim). Never parks, consumes
       no rng; idempotent by `Math.max` on one window. */
   | { op: "exposeDefender"; amount: number }
+  /** 🆕🆕🆕 §8.5/§11 (D552) — THE WEAKNESS RETYPE on the DEFENDING Pokémon: "Until the end
+      of your next turn, the Defending Pokémon's Weakness is now {C}. (The amount of
+      Weakness doesn't change.)" (`censusAttackCorpus.ts:629`, leading count column 1 — 1
+      legal printing; the anchor is `DEFENDER_WEAKNESS_RETYPED` below). ⚠️ NO REAL CARD ID
+      RESOLVES FOR IT ON THIS CHECKOUT (measured, D425: no `registry.ts` or
+      `catalogManifest.ts` row prints it); its only `FIXTURE_POOL` carrier is the DECLARED
+      sweep fixture `fix-tideattach` (index 1, added by this slice). The suite
+      (`weaknessRetype.test.ts`) rides file-local declared `d552-*` demonstrators, and the
+      real card is UNMEASURED.
+
+      `exposeDefender`'s HOLDER AND STAMP EXACTLY — the opponent's Active, `state.turn + 2`,
+      the §11 refusal first — at the §8.5 WEAKNESS step instead of the post-W/R one: the
+      record `{turn, type}` is read by `installedWeaknessRetypeOf` and handed to cards.ts
+      `weaknessOf`, which keeps the printed AMOUNT and swaps the TYPE (docs/decisions.md
+      D552 R1–R5). `type` is the printed `{C}` resolved to its Pokémon type
+      (`"Colorless"`), the only value any printing writes.
+
+      A NEW OP, NOT AN `installNoWeakness` RIDER: that op writes the ACTOR's own body for
+      the opponent's turn and removes Weakness; this one writes the OPPONENT's body for the
+      installer's turn and keeps it — D131's test fails on holder, window and effect. Never
+      parks, consumes no rng; a same-window re-install of the same type is silent. */
+  | { op: "retypeDefenderWeakness"; type: string }
   /** 🆕🆕🆕 §8.2/§11 (D549) — THE COST TAX on the DEFENDING Pokémon for the opponent's
       next turn: "During your opponent's next turn, attacks used by the Defending Pokémon
       cost {C} more, and its Retreat Cost is {C} more." (`censusAttackCorpus.ts:171`,
@@ -9805,10 +9827,41 @@ export type EffectOp =
       first card in the family to earn one.
 
       Never damages, so it never KOs; and it is not the §6.3 manual attach, so no
-      allowance is touched. */
+      allowance is touched.
+
+      🆕🆕🆕 **D552 — "NO TARGET RIDER IS DECLARED, AND THAT IS THE PRINT" ABOVE, AND
+      THE EXEC/APPLY ARMS' "no `recordAs`" IN interpreter.ts, ARE WITHDRAWN (D539) —
+      annotated rather than deleted (D178).** Both were true of every printing this
+      op read until `censusAttackCorpus.ts:569` — *"This attack does 30 damage for
+      each {W} Energy attached to this Pokémon. Before doing damage, you may attach
+      any number of Basic {W} Energy cards from your hand to this Pokémon."* (1
+      sentence / 1 legal printing) — which prints BOTH halves D503's pincer said no
+      op carried: the unbounded hand batch AND the printed *"to this Pokémon"*. The
+      op gains the two keys `attachFromDeck` already spells for the same two facts
+      (its `toSelf` / `recordAs` above), with the SAME meanings, so "this Pokémon"
+      and "in this way" cannot come to mean two things on two sibling ops. The zone
+      axis is unmoved, and the D247 four-printing programs are byte-identical (both
+      keys are ABSENT there, D104). See the two keys' own docs. */
   | {
       op: "attachFromHand";
       filter: CardFilter;
+      /** 🆕🆕🆕 D552 — the printed *"to **this Pokémon**"*: the sole target is the
+          Pokémon whose effect this is (`ctx.sourceUid`, through `sourceRef` —
+          `attachFromDeck.toSelf`'s reader, so the phrase has ONE reading on the
+          attach family; its doc is the one cited, "Authoring it alone is the rule;
+          this doc is the enforcement"). ABSENT = D247's bare *"to your Pokémon in
+          any way you like"*. With no source in the context, or the host no longer a
+          board top, the target set is empty and the op dead-ends, filing an empty
+          answer when it records. */
+      toSelf?: true;
+      /** 🆕🆕🆕 D552 — files the uids ACTUALLY attached (§9.2) — `attachFromDeck`'s
+          `recordAs`, meaning unchanged: what MOVED, never what was offered or
+          picked, and an EMPTY answer on every dead end so a stale slot cannot
+          survive. Its one consumer is `discardScaledBoostProgram`'s
+          `selfHandAttach` member, whose `damageDefender { count: "moved" }` reads
+          it as the Energy the printed attach added to the declaration-time count.
+          Enrolled in interpreter.ts `recordSlotOf` (D206: the omission is silent). */
+      recordAs?: EffectSlot;
     }
   /** Discard Energy attached to an in-play Pokémon — the §15 energy-removal
       ("hammer") family on the opponent's side (Crushing Hammer, Giacomo, Mawile
@@ -12607,6 +12660,10 @@ const SELF_DAMAGE_REDUCTION =
 // RETYPE, not a removal). It stays on the loud `ATTACK_EFFECT_SKIPPED` path and
 // `^…$` keeps it there. The refusal rung in `noWeaknessBar.test.ts` uses single-axis
 // near-misses instead (D427's rule), because a three-axis miss tests nothing.
+// 🆕🆕🆕 D552 — "It stays on the loud `ATTACK_EFFECT_SKIPPED` path" IS WITHDRAWN (D539):
+// row 629 is BUILT, by its OWN anchor (`DEFENDER_WEAKNESS_RETYPED`, beside D547's
+// `DEFENDER_VULNERABLE_NEXT_TURN`) and its own op (`retypeDefenderWeakness`). THIS anchor
+// still refuses it, and `^…$` is still what does that — the near-miss analysis stands.
 //
 // The apostrophe alternation is the family idiom (D143): the catalog prints U+0027
 // here — verified by `cat -A` on corpus row 192, not remembered — and the curly
@@ -12684,6 +12741,28 @@ const ATTACKS_BY_DEFENDER_WEAKENED =
 // your next turn, the Defending"; the self-lock/buff anchors say "this Pokémon".
 const DEFENDER_VULNERABLE_NEXT_TURN =
   /^During your next turn, the Defending Pokémon takes (\d+) more damage from attacks \(after applying Weakness and Resistance\)\.$/;
+// ── 🆕🆕🆕 D552: the DEFENDER's Weakness RETYPED until the end of the installer's next turn ──
+//
+// "Until the end of your next turn, the Defending Pokémon's Weakness is now {C}. (The
+//  amount of Weakness doesn't change.)"
+// — `censusAttackCorpus.ts` FILE LINE 629, leading count column **1**: **1 sentence / 1
+// legal printing** (OPAQUE at `SUBMAX=12` before the build). ⚠️ NO REAL CARD ID RESOLVES ON
+// THIS CHECKOUT, AND THAT WAS MEASURED (D425): no `registry.ts` or `catalogManifest.ts` row
+// prints it (`git grep`). The one `testFixtures.ts` carrier is DELIBERATE — the declared
+// sweep fixture `fix-tideattach` (index 1), added by this slice so the `FIXTURE_POOL`
+// sweeps walk the program — and its suite (`weaknessRetype.test.ts`) rides file-local
+// DECLARED `d552-*` demonstrators.
+//
+// A LITERAL WHOLE SENTENCE, ZERO captures (D121: one printing; the `{C}` and the reminder
+// vary in no printed row, so capturing either would author sentences nobody prints). TWO
+// `['’]` slots — "Pokémon's" and "doesn't" — read off the corpus bytes (U+0027 at both),
+// the family idiom (D143). The reminder parenthetical is REQUIRED, not optional: it is the
+// printed text and the only statement of the "amount unchanged" rule the op implements.
+// MEASURED OVER ALL 640 rows: the anchor claims exactly row 629. DISJOINT from its
+// neighbours by the first word ("Until" — no other `deriveAttackEffect` anchor in this tail
+// begins with it).
+const DEFENDER_WEAKNESS_RETYPED =
+  /^Until the end of your next turn, the Defending Pokémon['’]s Weakness is now \{C\}\. \(The amount of Weakness doesn['’]t change\.\)$/;
 // ── 🆕🆕🆕 D549: the DEFENDER marked with a KNOCK OUT BOUNTY for the installer's next turn ──
 //
 // "During your next turn, if the Defending Pokémon is Knocked Out, take 2 more Prize
@@ -17912,7 +17991,11 @@ const OPPONENT_ENERGY_MULTIPLY =
 // anchor bytes — the anchor's `(?:(.+) )?` group always admitted the token, and
 // `attachedEnergyFilter` one step later is what refused it. So of the TWO rows
 // named below, ONE remains unbuildable: the two-sentence `{W}` printing, whose
-// blocker is the whole-sentence anchor and is untouched. The sentence-sweep
+// blocker is the whole-sentence anchor and is untouched.
+// 🆕🆕🆕 D552 — "ONE remains unbuildable" IS WITHDRAWN (D539): the two-sentence `{W}` row
+// (`censusAttackCorpus.ts:569`) is BUILT by `deriveAttackDiscardScaledBoost`'s `selfHandAttach`
+// member. THIS anchor still refuses it, and that refusal is still load-bearing: the head here
+// is read at declaration, so claiming the whole would drop the attached Energy. The sentence-sweep
 // figure is right and the BUILDABLE figure is 22 rather than 21.
 // ⚠️ TWO LEGAL ROWS ARE COUNTED BY THE RAW SENTENCE SWEEP AND ARE NOT BUILDABLE,
 // which is the whole difference between the 23 an earlier recon reported and the
@@ -24903,6 +24986,17 @@ const HAND_ATTACH = attachFromZoneAnchor(
     anchor reaches it. D466's rule: a measurement and a conclusion are two claims and
     each needs its own check; here the conclusion held and the measurement rotted.
 
+    🆕🆕🆕 **D552 — *"`attachFromHand` carries no `toSelf` rider"* IS WITHDRAWN (D539):
+    it carries `toSelf` and `recordAs` now (see the op), and `:569` is BUILT — but NOT
+    through this anchor, whose refusal of an `anyWay: false` destination STANDS
+    (`derivedAnyNumberAttach.test.ts` still drives `to this Pokémon` to null here).
+    The row is claimed WHOLE by `deriveAttackDiscardScaledBoost`'s third member
+    (`selfHandAttach`, `SELF_HAND_ATTACH_SCALED` below), and the SEAM clause above is
+    answered by ORDER rather than by a park at the pre-damage hook: the attach runs
+    at the program tail FIRST and the hit is dealt from INSIDE the program after it
+    (`damageDefender { base: the declaration-time head, per, count: "moved" }`), so
+    the Energy the attach added IS counted — decisions.md D552 A1.
+
     ⚠️ THE `$` IS LOAD-BEARING AND THE `[^.]` CLASS IS WHAT MAKES IT OBSERVABLE
     (D234's dropped-`$` mutant, inherited a third time): with the class narrowed
     to the sentence, a build with no `$` MATCHES a trailing printed clause and
@@ -28649,6 +28743,13 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
     const amount = Number(match[1]);
     if (amount >= 1) return [{ op: "exposeDefender", amount }];
   }
+  // 19f'''. 🆕🆕🆕 D552 — "Until the end of your next turn, the Defending Pokémon's
+  //      Weakness is now {C}. (The amount of Weakness doesn't change.)" —
+  //      `censusAttackCorpus.ts:629`, 1 legal printing (no real card id on this checkout,
+  //      measured). ZERO captures, so no guard: the printed `{C}` IS the op's `type`. The
+  //      target string derived `null` at HEAD under every arm, and the anchor claims exactly
+  //      one of the 640 rows, so the placement beside 19f' (the shared holder) is legibility.
+  if (DEFENDER_WEAKNESS_RETYPED.test(effect)) return [{ op: "retypeDefenderWeakness", type: "Colorless" }];
   // 19f''. 🆕🆕🆕 D549 — "During your next turn, if the Defending Pokémon is Knocked
   //      Out, take {N} more Prize cards." — `censusAttackCorpus.ts:149`, 1 legal
   //      printing at 2 (no card id on this checkout, measured). 19f''s holder and
@@ -31038,6 +31139,12 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
     // that really refuses it — and `attachEnergyFrom.count` could not express either, since
     // that field is a number. Refused to the loud ATTACK_EFFECT_SKIPPED path
     // (1 printing today, blocked on a SEAM), never reinterpreted.
+    // 🆕🆕🆕 D552 — "blocked on a SEAM" IS WITHDRAWN (D539): `:569` is BUILT, by
+    // `deriveAttackDiscardScaledBoost`'s `selfHandAttach` member (attach-then-damage
+    // inside the program), and the op now carries `toSelf`. THIS ARM'S REFUSAL STANDS
+    // and is still driven (`derivedAnyNumberAttach.test.ts`): a bare "You may attach
+    // any number … to this Pokémon." prints NO multiplier head, and no printing of it
+    // exists, so admitting it here would author a program nobody prints.
     // 🛑 AND THE SECOND CONDITION IS THE ONE A BUILD THAT ONLY READ `anyWay`
     // WOULD GET SILENTLY WRONG. "your **Benched** Pokémon in any way you like" is
     // an `anyWay` row too, and its riders carry `benchOnly` — a field
@@ -35091,7 +35198,52 @@ export interface AttackEachDeckMillScaledBoost {
     union rule and NOT the "one member, discriminator as a field" branch of it. */
 export type AttackDiscardScaledBoost =
   | AttackBenchDiscardScaledBoost
-  | AttackEachDeckMillScaledBoost;
+  | AttackEachDeckMillScaledBoost
+  | AttackSelfHandAttachScaledBoost;
+
+/** 🆕🆕🆕 D552 — THE THIRD MEMBER, AND THE FIRST WHOSE §9.2 COST IS AN **ATTACH**
+    RATHER THAN A DISCARD: the printed multiplier whose count the attack itself may
+    raise before it is counted.
+
+    *"This attack does 30 damage for each {W} Energy attached to this Pokémon. Before
+    doing damage, you may attach any number of Basic {W} Energy cards from your hand
+    to this Pokémon."* — `censusAttackCorpus.ts` **FILE LINE 569**, leading count
+    column **1**: **1 sentence / 1 legal printing** (no real card id resolves on this
+    checkout, measured — D425; its suite `selfHandAttachBoost.test.ts` rides a
+    file-local DECLARED `d552-*` demonstrator whose marker is ASSUMED "30×").
+
+    🛑 **THE PROGRAM IS ATTACH-THEN-DAMAGE AND THE ORDER IS THE WHOLE READING.** D503
+    refused the row because the shipped pre-damage hook runs AFTER the §8.5 scaling
+    fold is fixed (the Energy an attach there adds is never counted) and cannot
+    park. This member moves the hit INTO the program instead, D402/D403's shape: the
+    attach parks at the program tail (`attachFromHand { toSelf, recordAs: "moved" }`)
+    and the hit is `damageDefender { base, per, count: "moved" }` AFTER it, where
+    `base` is the head multiplier evaluated at DECLARATION (attack.ts) and `per ×
+    moved` is exactly what the attach added. So the dealt number is the head
+    multiplier on the POST-attach board, as ONE §8.5 pass (Weakness once, on the sum).
+    ⚠️ ASSUMES nothing between declaration and the tail changes the Energy on this
+    Pokémon; pinned by the suite's equals-the-head-multiplier rung.
+
+    ⚠️ **THE NAMING DEBT, SAID OUT LOUD: an ATTACH member on a reader called
+    `DiscardScaledBoost`.** The alternative was a FOURTEENTH `deriveAttack*` reader,
+    and that is refused on D428's / D490's cost (`attackReaderSurface()` enrols a new
+    export by NAME and every `toHaveLength(13)` rung and hand-listed `READERS` array
+    moves). The reader's real contract is "a §9.2 slot folded into the attack's own
+    hit, assembled at attack.ts with a number only attack.ts owns" — true of all
+    three members. A rename is a separate slice.
+
+    ⚠️ **THE PRINTED BASE IS UNUSED FOR THIS MEMBER** — the head is a multiplier, so
+    attack.ts passes the declaration-time `per × W` as `base` rather than the printed
+    digits. Only a "+" marker on the real card would change that ruling (D552 A2). */
+export interface AttackSelfHandAttachScaledBoost {
+  kind: "selfHandAttach";
+  /** The printed per-Energy damage — the head's `30` and the only capture, guarded
+      `>= 1` (D145). */
+  per: number;
+  /** The printed `{W}` — LITERAL in the anchor (one printing, D121), carried as a
+      value so the attach filter and the declaration-time count read ONE type. */
+  energyType: BasicEnergyType;
+}
 
 // No /i, on this file's standing reason for every whole-sentence attack anchor: the
 // capital first word is half of what keeps a whole-sentence reader off a mid-sentence
@@ -35106,6 +35258,18 @@ const BENCH_DISCARD_SCALED_BOOST =
 // and `clauseApostrophe.test.ts`'s re-ingest sweep is what keeps it honest.
 const EACH_DECK_MILL_SCALED_BOOST =
   /^Discard the top card of each player['’]s deck\. This attack does (\d+) more damage for each Energy card discarded in this way\.$/;
+// 🆕🆕🆕 D552 — the pre-damage self attach behind a multiplier head, `censusAttackCorpus.ts`
+// FILE LINE 569 (1 sentence / 1 legal printing), transcribed off the corpus and asserted
+// against `legalAttackCorpus()` by its suite, never retyped. A LITERAL WHOLE SENTENCE with
+// ONE capture (the per-Energy amount, guarded `>= 1`): the `{W}` on BOTH halves, the
+// quantifier, the zone and the destination vary in ZERO printed rows, so capturing any of
+// them would author sentences nobody prints (D121/D361). NO `['’]` slot: the sentence
+// prints no apostrophe (measured, 0 U+0027 and 0 U+2019). No /i, on this file's standing
+// reason. Disjoint from both siblings by its first word (`^This attack does` against `^You
+// may discard up to` / `^Discard the top card`), and from `SELF_ENERGY_MULTIPLY` (the
+// multiplier's own anchor) by that anchor's `\.$`, which refuses the second sentence.
+const SELF_HAND_ATTACH_SCALED =
+  /^This attack does (\d+) damage for each \{W\} Energy attached to this Pokémon\. Before doing damage, you may attach any number of Basic \{W\} Energy cards from your hand to this Pokémon\.$/;
 
 /** Parse the Bench-discard additive boost into its ceiling, its filter and its
     per-card damage, or null for anything else.
@@ -35120,7 +35284,14 @@ const EACH_DECK_MILL_SCALED_BOOST =
     which share `^You may ` with it** — the three are separated by the WORD AFTER IT
     (`OPTIONAL_DAMAGE_BOOST` reads `^You may do`, `OPTIONAL_COST_BOOST` reads a cost
     clause followed by a printed `If you do,` which this sentence does not carry) and
-    by their payoffs. attack.ts owns the read site, beside its three siblings'. */
+    by their payoffs. attack.ts owns the read site, beside its three siblings'.
+
+    🆕🆕🆕 **D552 — "Its leading words deny it … both scaling readers' `^This attack
+    does`" IS WITHDRAWN FOR THE THIRD MEMBER (D539).** `SELF_HAND_ATTACH_SCALED`
+    begins `^This attack does`, exactly as the multiplier's anchors do; the two are
+    separated by the SECOND sentence, which every scaling anchor's `\.$` refuses
+    (`claimants` over the whole `:569` string is this reader alone —
+    `selfHandAttachBoost.test.ts`). The head ALONE is still the multiplier's. */
 export function deriveAttackDiscardScaledBoost(text: string): AttackDiscardScaledBoost | null {
   // 🆕🆕 D490 — the two-deck mill, asked FIRST purely for legibility: the two anchors
   // are structurally disjoint (`^You may discard up to` against `^Discard the top card of
@@ -35132,6 +35303,16 @@ export function deriveAttackDiscardScaledBoost(text: string): AttackDiscardScale
     // card is a clause that buys nothing however many Energy come off, which is a SILENT
     // no-op where the loud `ATTACK_EFFECT_SKIPPED` path is the whole point.
     return perMilled < 1 ? null : { kind: "eachDeckMill", per: perMilled };
+  }
+  // 🆕🆕🆕 D552 — the pre-damage self attach (`:569`). Structurally disjoint from both
+  // anchors around it by the first word, so its place here is legibility, not order.
+  const selfAttach = SELF_HAND_ATTACH_SCALED.exec(text.trim());
+  if (selfAttach !== null) {
+    const perEnergy = Number(selfAttach[1]);
+    // ONE printed number, ONE positivity guard — D145. A printed "0 damage for each"
+    // would park an attach that buys nothing: a SILENT no-op where the loud
+    // `ATTACK_EFFECT_SKIPPED` path is the point.
+    return perEnergy < 1 ? null : { kind: "selfHandAttach", per: perEnergy, energyType: "Water" };
   }
   const match = BENCH_DISCARD_SCALED_BOOST.exec(text.trim());
   if (match === null) return null;
@@ -35172,7 +35353,12 @@ export function deriveAttackDiscardScaledBoost(text: string): AttackDiscardScale
     ⚠️ **THE PRINTED ORDER IS DISCARD-THEN-DAMAGE AND IT IS LOAD-BEARING**, not
     cosmetic: the damage READS what the discard filed (`recordAs: "discarded"` is the
     printed *"in this way"*, an op→op §9.2 record and not a re-scan of the board), so
-    a swapped order counts an empty slot and deals the bare base forever. */
+    a swapped order counts an empty slot and deals the bare base forever.
+
+    🆕🆕🆕 **D552 — "given the attack's PRINTED BASE" IS TRUE OF TWO MEMBERS OF
+    THREE.** For `selfHandAttach` attack.ts passes the DECLARATION-TIME head
+    multiplier as `base` (the printed digits are the per-Energy amount, "30×"), and
+    the program's ORDER is attach-then-damage for the same record-reading reason. */
 export function discardScaledBoostProgram(
   reading: AttackDiscardScaledBoost,
   base: number,
@@ -35219,6 +35405,24 @@ export function discardScaledBoostProgram(
           count: "discarded",
           countFilter: { kind: "anyEnergy" },
         },
+      ];
+    case "selfHandAttach":
+      // 🆕🆕🆕 D552 — ATTACH, THEN DAMAGE, AND THE ORDER IS LOAD-BEARING: the damage
+      // reads what the attach filed (`recordAs: "moved"` is the §9.2 record of the Energy
+      // ACTUALLY attached), so a swapped order counts an empty slot and deals only the
+      // declaration-time head. ⚠️ `base` HERE IS NOT THE PRINTED NUMBER: attack.ts passes
+      // the head multiplier evaluated at DECLARATION (`per × W on this Pokémon`), so
+      // `base + per × moved` is the head on the post-attach board, dealt as one §8.5 pass.
+      // The decline and the empty hand are `moved = 0` → the declaration-time head, by the
+      // same expression (D403's arithmetic-is-the-decline-arm).
+      return [
+        {
+          op: "attachFromHand",
+          filter: { kind: "basicEnergy", energyType: reading.energyType },
+          toSelf: true,
+          recordAs: "moved",
+        },
+        { op: "damageDefender", base, per: reading.per, count: "moved" },
       ];
   }
 }

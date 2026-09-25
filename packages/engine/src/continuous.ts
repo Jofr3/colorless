@@ -1739,6 +1739,26 @@ export function installedVulnerabilityOf(state: GameState, pokemon: InPlayPokemo
   return installed === null || installed.turn !== state.turn ? 0 : installed.amount;
 }
 
+/** 🆕🆕🆕 §8.5/§11 (D552) — the type an attack-installed WEAKNESS RETYPE makes
+    `pokemon`'s printed Weakness name right now, or `null`: "Until the end of your next
+    turn, the Defending Pokémon's Weakness is now {C}. (The amount of Weakness doesn't
+    change.)" (`censusAttackCorpus.ts:629`, 1 legal printing). The ONE read of
+    `InPlayPokemon.weaknessRetype`, `installedVulnerabilityOf`'s shape one function up.
+
+    Handed to cards.ts `weaknessOf` at BOTH Weakness sites (`attack.ts`'s main hit,
+    interpreter.ts `snipeActive`) AFTER their three null paths (D192's suppression, the
+    Blooming Garden aura, D432's installed bar), so a nulled Weakness stays null whatever
+    this says (docs/decisions.md D552 R3). ⚠️ ON-TARGET, SO SUPPRESSIBLE: the main hit's
+    `suppressTargetEffects` ("not affected by any effects on your opponent's Active
+    Pokémon") drops it and the PRINTED type applies (R4); the snipe's `ignoreWR` nulls
+    Weakness outright. Kept out of `passivesOf` for `installedReductionOf`'s reasons. */
+export function installedWeaknessRetypeOf(state: GameState, pokemon: InPlayPokemon): string | null {
+  // No defensive `=== undefined` arm (D124): the field is REQUIRED and a v33 record
+  // is retired by MATCH_RECORD_VERSION 34 rather than read benignly here.
+  const installed = pokemon.weaknessRetype;
+  return installed === null || installed.turn !== state.turn ? null : installed.type;
+}
+
 /** 🆕🆕 §8.5/§11 (D432) — does `pokemon` currently carry an attack-installed
     *"During your opponent's next turn, this Pokémon has no Weakness."* bar? The
     ONE read of `InPlayPokemon.noWeaknessTurn`, and `installedReductionOf`'s

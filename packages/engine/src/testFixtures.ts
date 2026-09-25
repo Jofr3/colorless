@@ -15332,7 +15332,18 @@ export const FIXTURE_POOL: Record<string, Card> = {
           actually means. It is not the refusal rung's near-miss: it differs from
           index 0 on three axes at once (duration, body, verb), and D427's rule
           wants one. The single-axis near-misses are constructed strings in
-          `noWeaknessBar.test.ts` §2. */
+          `noWeaknessBar.test.ts` §2.
+
+      🆕🆕🆕 **D552 — INDEX 2 IS RE-POINTED, AND "A REAL UNBUILT LEGAL SENTENCE" ABOVE IS
+      WITHDRAWN FOR ROW 629 (D539): row 629 is BUILT (`retypeDefenderWeakness`,
+      `weaknessRetype.test.ts`).** Moved BEFORE the loud-path rung was inverted, so the
+      control never went dark: index 2 ("Copy Veil") now prints `censusAttackCorpus.ts`
+      row 78, *"Choose 1 of your opponent's Active Pokémon's attacks and use it as this
+      attack."* (3 legal printings) — the copy-attack family, BLOCKED while `attack()` §8.5
+      is not callable (BLOCKED-COPY-ATTACK), so it is a STABLE loud witness rather than
+      the next row a slice will build. It is no longer from the Weakness family; the
+      suite's "the skip fires for index 2 and NOT for index 0" is unchanged. Touched by
+      hand (fixture data, D538). */
   "fix-nowk": battler("fix-nowk", {
     types: ["Water"],
     hp: 220,
@@ -15348,7 +15359,37 @@ export const FIXTURE_POOL: Record<string, Card> = {
       { cost: ["Colorless"], name: "Plain Veil", damage: 10 },
       {
         cost: ["Colorless"],
-        name: "Retype Veil",
+        name: "Copy Veil",
+        damage: 10,
+        effect: "Choose 1 of your opponent's Active Pokémon's attacks and use it as this attack.",
+      },
+    ],
+  }),
+  /** 🆕🆕🆕 **D552 FIXTURE — the POOL CARRIER of both D552 sentences**, so the sweeps that
+      read `FIXTURE_POOL` (`programWalk.test.ts`'s reader feeds, `clauseApostrophe.test.ts`'s
+      re-ingest) walk the two new programs. Neither REAL card id resolves on this checkout
+      (measured, D425), so this is a `fix-*` key — the one deliberate `testFixtures.ts`
+      carrier of both sentences; the BOARD suites ride their own file-local
+      declared demonstrators (`selfHandAttachBoost.test.ts`, `weaknessRetype.test.ts`).
+        · 0 "Tide Surge" — `censusAttackCorpus.ts:569`, "30×" (the ASSUMED marker, D552 A2).
+        · 1 "Tide Mark" — `censusAttackCorpus.ts:629`, 10 damage (TWO `['’]` slots, so it
+          enters the apostrophe re-ingest sweep).
+      Touched by hand (fixture data, D538). */
+  "fix-tideattach": battler("fix-tideattach", {
+    types: ["Water"],
+    hp: 200,
+    retreat: 1,
+    attacks: [
+      {
+        cost: ["Colorless"],
+        name: "Tide Surge",
+        damage: "30×",
+        effect:
+          "This attack does 30 damage for each {W} Energy attached to this Pokémon. Before doing damage, you may attach any number of Basic {W} Energy cards from your hand to this Pokémon.",
+      },
+      {
+        cost: ["Colorless"],
+        name: "Tide Mark",
         damage: 10,
         effect:
           "Until the end of your next turn, the Defending Pokémon's Weakness is now {C}. (The amount of Weakness doesn't change.)",

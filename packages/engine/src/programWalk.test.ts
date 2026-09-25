@@ -157,6 +157,11 @@ function poolPrograms(): { where: string; ops: readonly EffectOp[] }[] {
       // assembler is exported on its first line for the reason the four feeds above
       // record. `fix-benchboost` and `fix-benchbasicboost` are the pool cards it is
       // called on — the other half, without which the export changes no answer here.
+      // 🆕🆕🆕 D552 — AND `fix-tideattach` index 0 (`censusAttackCorpus.ts:569`) feeds the THIRD
+      // member, `selfHandAttach`, so the new attach-then-damage program is walked here too.
+      // ⚠️ The `base` passed below is the PRINTED digits; at runtime attack.ts passes the
+      // DECLARATION-TIME head for that member instead. The walk audits STRUCTURE (op kinds,
+      // branch shapes), which the base does not change.
       const discardBoost =
         attack.effect === undefined ? null : deriveAttackDiscardScaledBoost(attack.effect);
       if (discardBoost !== null) {

@@ -578,6 +578,28 @@ export interface DamageVulnerability {
   amount: number;
 }
 
+/** 🆕🆕🆕 §8.5/§11 (D552) — an attack-installed WEAKNESS RETYPE on one Pokémon:
+    "Until the end of your next turn, the Defending Pokémon's Weakness is now {C}. (The
+    amount of Weakness doesn't change.)" (`censusAttackCorpus.ts:629`, 1 legal printing;
+    no real card id on this checkout, measured — `weaknessRetype.test.ts` rides declared
+    `d552-*` demonstrators). Written onto the OPPONENT's Active by
+    `retypeDefenderWeakness`; read through `installedWeaknessRetypeOf` (continuous.ts)
+    and handed to cards.ts `weaknessOf`, which keeps the printed AMOUNT and swaps only
+    the TYPE it matches the attacker against.
+
+    `DamageVulnerability`'s holder and stamp (`state.turn + 2`, the installer's next
+    turn) with a TYPE where that one has a number. The printed window begins NOW
+    ("Until the end of"), but the rest of the installing turn and the holder's own turn
+    carry no Weakness step that could reach the body (docs/decisions.md D552 R1), so the
+    stamp is the only turn the reader answers on. */
+export interface WeaknessRetype {
+  /** The single turn number the retype is live on — the installing turn + 2. */
+  turn: number;
+  /** The Pokémon type the body's printed Weakness now names — the printed `{C}` is
+      `"Colorless"`, the only value any printing writes. */
+  type: string;
+}
+
 /** 🆕🆕🆕 §8.1/§11 (D549) — an attack-installed KNOCK OUT BOUNTY on one Pokémon:
     "During your next turn, if the Defending Pokémon is Knocked Out, take 2 more Prize
     cards." (`censusAttackCorpus.ts:149`, 1 legal printing; no card id on this checkout,
@@ -1458,6 +1480,22 @@ export interface InPlayPokemon {
       victim's counterplay (D148's agency); a forced switch or devolution sheds it
       too. All five literals write it; only `makeInPlay` is compiler-forced. */
   damageVulnerability: DamageVulnerability | null;
+  /** 🆕🆕🆕 §8.5/§11 (D552) — the attack-installed WEAKNESS RETYPE on this Pokémon (see
+      `WeaknessRetype` above), or `null` when none has been installed. Read through
+      `installedWeaknessRetypeOf` (continuous.ts), never by touching this field.
+
+      🛑 REQUIRED, NOT OPTIONAL, AND IT RIDES `MATCH_RECORD_VERSION` 33 → 34 with
+      `:569`'s parked `attachFromHand.recordAs` (THE SEVENTH POSITION at
+      apps/api/src/lobby/match.ts). An optional `weaknessRetype?` passes D441 (absent
+      reads as "no retype", which a v33 writer meant) and is detectable in the bytes, and
+      fails D456's second clause: a ROLLBACK reading a v34 record drops a live effect —
+      the Defending Pokémon is hit at its PRINTED Weakness type, so a Colorless attacker
+      the printed card makes super-effective deals half. D434's case: `{turn, type}`
+      arrive together and neither can witness the other's loss.
+
+      The same five literals as `damageVulnerability` write it, with that field's §10
+      story (docs/decisions.md D552 R5); only `makeInPlay` is compiler-forced. */
+  weaknessRetype: WeaknessRetype | null;
   /** 🆕🆕🆕 §8.2/§11 (D549) — the turn on which an attack-installed COST TAX is live on
       this Pokémon (the installing turn + 1 — the Defending Pokémon's controller's own
       next turn), or `null` when none has been installed: "During your opponent's next
@@ -1872,6 +1910,9 @@ export function makeInPlay(uid: string, turnPlayed: number): InPlayPokemon {
     // 🆕🆕🆕 …and no attack has made it VULNERABLE for a next turn either (D547).
     // The compiler forces this line; the four spread literals are held by mutants.
     damageVulnerability: null,
+    // 🆕🆕🆕 …and no attack has RETYPED its Weakness either (D552). The compiler forces
+    // this line; the four spread literals are held by mutants.
+    weaknessRetype: null,
     // 🆕🆕🆕 …nor TAXED its costs, nor put a KNOCK OUT BOUNTY on it (D549). The
     // compiler forces these two lines; the four spread literals are held by mutants.
     costTaxTurn: null,
@@ -2888,6 +2929,11 @@ export function evolveOnto(
     // the holder's controller plays the whole turn in between, and evolving the
     // exposed body on it is a PLAYED line that sheds the +50 (evolve clear, D547).
     damageVulnerability: null,
+    // 🆕🆕🆕 …and, since D552, the WEAKNESS RETYPE — the vulnerability's story one line up
+    // (the window runs to the INSTALLER's next turn, so evolving the marked body on the
+    // turn in between is the victim's PLAYED line and the evolved card keeps its printed
+    // Weakness type — evolve clear, D552 R5).
+    weaknessRetype: null,
     // 🆕🆕🆕 …and, since D549, the COST TAX — the flip lock's story (the window is the
     // taxed body's controller's own turn), so evolving is the victim's played line and
     // the evolved card attacks and retreats at its printed cost (evolve clear, D549 tax).

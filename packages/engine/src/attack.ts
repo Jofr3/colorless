@@ -49,6 +49,7 @@ import {
   installedReductionOf,
   // 🆕🆕🆕 D547 — the next-turn vulnerability, added at the main hit's post-W/R step.
   installedVulnerabilityOf,
+  installedWeaknessRetypeOf,
   koSurvivalClamp,
   lockedAttackIndexes,
   opposingAttackDebuff,
@@ -2148,6 +2149,30 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
   // assembled at the coin block's site further down, where `base` is in scope.
   const discardScaledBoost =
     effect === null || effect === "" ? null : deriveAttackDiscardScaledBoost(effect);
+  // 🆕🆕🆕 D552 — THE `base` THE `selfHandAttach` MEMBER's `damageDefender` CARRIES, AND
+  // IT IS NOT THE PRINTED NUMBER. `:569`'s head is a MULTIPLIER ("30 damage for each {W}
+  // Energy attached to this Pokémon"), so its printed digits are the per-Energy amount and
+  // the base the hit keeps is the head evaluated at DECLARATION — `per × W on this body`,
+  // off the SAME evaluator `scaled` uses one line up (D159) and on the SAME board, the
+  // attack's own `cost` included. The program then adds `per × moved` (the Energy the
+  // printed attach filed), so the hit is the head on the POST-attach board. ⚠️ ASSUMES
+  // nothing between here and the program tail changes the Energy on this Pokémon — pinned
+  // by `selfHandAttachBoost.test.ts`'s equals-the-head-multiplier rung. Every other member
+  // keeps the printed `base` (the additive "+" families, D403/D490).
+  const discardScaledBase =
+    discardScaledBoost?.kind === "selfHandAttach"
+      ? scaledAttackDamage(
+          active,
+          {
+            per: discardScaledBoost.per,
+            count: { kind: "energyOnSelf", energyType: discardScaledBoost.energyType },
+          },
+          next,
+          defenderSeat,
+          action.seat,
+          cost,
+        )
+      : base;
   // A program that DEALS the main damage itself owns the printed number the same
   // way the multiply family does — Chien-Pao ex "Hail Blade" is "60×" (base 60,
   // modifier "×"), but its 60-per-discarded-card is dealt from INSIDE the program
@@ -2893,8 +2918,18 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
   // and no registry row names any id that prints either sentence — the ids are
   // unknown to this container at all, D369), which makes the append
   // behaviour-identical today and honest tomorrow.
+  // 🆕🆕🆕 D552 — "these eight printings" is now ELEVEN on THREE heads (D490's mill added
+  // two, D552's `selfHandAttach` one: `censusAttackCorpus.ts:569`); the null-`program`
+  // argument holds for all three — measured: `deriveAttackEffect(:569)` is null and no
+  // registry row names an id that prints it.
+  // 🆕🆕🆕 D552 — `discardScaledBase`, not `base`: for `selfHandAttach` it is the
+  // declaration-time head (see its binding beside `discardScaledBoost`); for the two
+  // additive members it IS `base`, so their programs are byte-identical.
   if (discardScaledBoost !== null) {
-    program = [...(program ?? []), ...discardScaledBoostProgram(discardScaledBoost, base)];
+    program = [
+      ...(program ?? []),
+      ...discardScaledBoostProgram(discardScaledBoost, discardScaledBase),
+    ];
   }
   // The flip's heads bonus is the attack's OWN printed extra damage, exactly like
   // a count-scaling clause's `scaled` — so it folds at the same step, PRE-Weakness
@@ -2934,6 +2969,16 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
   // attack's effect text cannot be two sentences unless a splitter composes it, and
   // no splitter composes these — so the order is UNOBSERVABLE on today's column and
   // is chosen because it is the order the rules read in.
+  //
+  // 🆕🆕🆕 **D552 — WHAT THIS PARAGRAPH WAS MADE TO CARRY IS WITHDRAWN (D539), THE PARAGRAPH
+  // ITSELF STANDS.** D503 cited "the hook runs after `scaled` is fixed" as the reason
+  // `censusAttackCorpus.ts:569` (*"…for each {W} Energy attached to this Pokémon. Before
+  // doing damage, you may attach …"*) could not be built — a circular claim: the order was
+  // only unobservable because that row was unbuilt. `:569` is BUILT at D552 WITHOUT this
+  // hook: `deriveAttackDiscardScaledBoost`'s `selfHandAttach` attaches at the program TAIL
+  // and deals the hit from INSIDE the program with a DECLARATION-TIME `base`
+  // (`discardScaledBase`), so the attached Energy is counted as `per × moved`. This hook
+  // still has no printing that makes its order observable, and it still cannot park.
   if (preDamage !== null) {
     const stripped = applyAttackPreDamage(next, preDamage, action.seat, attackerUid, events);
     next = stripped.state;
@@ -3229,12 +3274,21 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
     // today, which makes the two spellings equal RIGHT NOW; the live binding is
     // used anyway, because "equal today" is how the stale-local defect gets
     // written, and the seam is one op away from being able to move a body.
+    //
+    // 🆕🆕🆕 **D552 — THE WEAKNESS RETYPE** (*"Until the end of your next turn, the Defending
+    // Pokémon's Weakness is now {C}. (The amount of Weakness doesn't change.)"*,
+    // `censusAttackCorpus.ts:629`). NOT a fourth null path: it changes which TYPE the
+    // printed Weakness matches, so it is handed to `weaknessOf` AFTER the three null paths
+    // above have had their say — a nulled Weakness stays null (docs/decisions.md D552 R3).
+    // On-target, so `suppressTargetEffects` drops it and the PRINTED type applies (R4).
+    // Read off `defender`, the live binding, for the D428/D429 reason above.
+    const weaknessRetype = suppressTargetEffects ? null : installedWeaknessRetypeOf(next, defender);
     const weakness =
       damageSuppression?.weakness === true ||
       seatRemovesWeakness(next, defenderSeat) ||
       installedNoWeakness(next, defender)
         ? null
-        : weaknessOf(attacker, defenderCard);
+        : weaknessOf(attacker, defenderCard, weaknessRetype);
     // D192 — Resistance has no defender-side null path (nothing in the pool prints
     // "your Pokémon have no Resistance"), so this is its FIRST, and it is its own
     // boolean because 9 legal printings suppress Resistance ALONE ("This attack's

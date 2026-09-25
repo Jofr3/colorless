@@ -651,13 +651,13 @@ describe("§12 — the v33 bytes round-trip, and a v32-shaped state THROWS (D549
     expect(() => redactGame(revived, "p1")).toThrow(TypeError);
   });
 
-  it("🛑 `MATCH_RECORD_VERSION` is 33 (this slice's bump, 32 → 33) — read off the raw source, not retyped", () => {
-    expect(raw("/match.ts")).toContain("export const MATCH_RECORD_VERSION = 33;");
+  it("🛑 `MATCH_RECORD_VERSION` is 34 (🆕🆕🆕 D552 stepped it 33 → 34; this slice's bump was 32 → 33) — read off the raw source, not retyped", () => {
+    expect(raw("/match.ts")).toContain("export const MATCH_RECORD_VERSION = 34;");
     expect(raw("/match.ts")).toContain("32 → 33 AT D549 — THE SIXTH POSITION");
   });
 
-  it("the engine version stepped to 0.435.0 in BOTH places", () => {
-    expect(engineVersion).toBe("0.435.0");
-    expect(manifest.version).toBe("0.435.0");
+  it("the engine version stepped to 0.436.0 in BOTH places", () => {
+    expect(engineVersion).toBe("0.436.0");
+    expect(manifest.version).toBe("0.436.0");
   });
 });

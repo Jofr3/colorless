@@ -942,7 +942,7 @@ describe("D538 §6 — a head noun the tail cannot be about falls to the LOUD sk
 // §7 — THE PERSISTED BYTES (D450's two doors), MEASURED IN THREE DIRECTIONS.
 // ─────────────────────────────────────────────────────────────────────────────
 
-describe("D538 §7 — two literals GROW the serialized alphabet and `MATCH_RECORD_VERSION` still holds at 30 (🆕🆕🆕 held at THIS slice; 31 since D547; 32 since D548; 33 since D549)", () => {
+describe("D538 §7 — two literals GROW the serialized alphabet and `MATCH_RECORD_VERSION` still holds at 30 (🆕🆕🆕 held at THIS slice; 31 since D547; 32 since D548; 33 since D549; 34 since D552)", () => {
   it("🛑 THE FIRST DOOR, MEASURED: the rider rides `phase.cont.pendingOp`", () => {
     // 🛑 **DO NOT RE-DERIVE *"the type is unpersisted"*.** `damageChosen` PARKS, so the
     // rider's bytes genuinely reach a stored match record.
@@ -1025,14 +1025,14 @@ describe("D538 §7 — two literals GROW the serialized alphabet and `MATCH_RECO
     expect(done.players.p1.discard).toHaveLength(5);
   });
 
-  it("🛑 `MATCH_RECORD_VERSION` is 33 (🆕🆕🆕 D549 stepped it 32 → 33; D548 stepped it 31 → 32; D547 stepped it 30 → 31; this slice held it) — read off the raw source, not retyped", () => {
+  it("🛑 `MATCH_RECORD_VERSION` is 34 (🆕🆕🆕 D552 stepped it 33 → 34; D549 stepped it 32 → 33; D548 stepped it 31 → 32; D547 stepped it 30 → 31; this slice held it) — read off the raw source, not retyped", () => {
     // 🆕🆕🆕 D547 — the constant this slice held is now 31: D547 added two REQUIRED `InPlayPokemon` fields (apps/api match.ts).
-    expect(raw("/match.ts")).toContain("MATCH_RECORD_VERSION = 33");
+    expect(raw("/match.ts")).toContain("MATCH_RECORD_VERSION = 34");
   });
 
-  it("🛑 the engine version stepped to 0.435.0 in BOTH places", () => {
-    expect(engineVersion).toBe("0.435.0");
-    expect(manifest.version).toBe("0.435.0");
+  it("🛑 the engine version stepped to 0.436.0 in BOTH places", () => {
+    expect(engineVersion).toBe("0.436.0");
+    expect(manifest.version).toBe("0.436.0");
   });
 });
 

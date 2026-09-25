@@ -679,6 +679,14 @@ export type GameEvent =
       state that exists. The hit that pays it reports the same figure in
       `DAMAGE_DEALT.vulnerability`. Not persisted (D141). */
   | { type: "DAMAGE_VULNERABILITY_APPLIED"; seat: Seat; uid: string; amount: number }
+  /** 🆕🆕🆕 §8.5/§11 (D552) — an attack RETYPED the Defending Pokémon's Weakness until the
+      end of the installer's next turn ("Until the end of your next turn, the Defending
+      Pokémon's Weakness is now {C}. (The amount of Weakness doesn't change.)",
+      `censusAttackCorpus.ts:629`). DAMAGE_VULNERABILITY_APPLIED's contract: `seat` OWNS the
+      marked Pokémon (D136's finding 1). `weaknessType` is the type the printed Weakness now
+      names (`"Colorless"`), named so rather than `type`, which is the event discriminator.
+      Not persisted (D141). */
+  | { type: "WEAKNESS_RETYPED"; seat: Seat; uid: string; weaknessType: string }
   /** 🆕🆕🆕 §8.2/§11 (D549) — an attack TAXED the Defending Pokémon's costs for its
       controller's next turn ("During your opponent's next turn, attacks used by the
       Defending Pokémon cost {C} more, and its Retreat Cost is {C} more.",

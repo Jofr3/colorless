@@ -784,6 +784,7 @@ describe("§7 — the structural answers", () => {
         "tools",
         "turnPlayed",
         "usedAttack",
+        "weaknessRetype", // 🆕🆕🆕 D552 (33 -> 34) — the Weakness retype record; the pin is on the HEAD's key set
       ].sort(),
     );
   });
@@ -821,7 +822,7 @@ describe("§7 — the structural answers", () => {
   });
 
   it("the engine version moved with the behaviour", () => {
-    expect(engineVersion).toBe("0.435.0");
+    expect(engineVersion).toBe("0.436.0");
   });
 });
 

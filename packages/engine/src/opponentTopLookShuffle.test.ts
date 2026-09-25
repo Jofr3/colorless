@@ -489,7 +489,7 @@ describe("D534 §3 — the degenerate boards and the constructed ops", () => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-describe("D534 §4 — the record: an optional widening, `MATCH_RECORD_VERSION` HELD at 30 (🆕🆕🆕 held at THIS slice; 31 since D547; 32 since D548; 33 since D549)", () => {
+describe("D534 §4 — the record: an optional widening, `MATCH_RECORD_VERSION` HELD at 30 (🆕🆕🆕 held at THIS slice; 31 since D547; 32 since D548; 33 since D549; 34 since D552)", () => {
   it("🛑 the parked state round-trips through JSON BYTE-EQUAL, keeps `whose` in `cont.pendingOp.otherwise`, and resumes from its bytes to the same result", () => {
     const { state: parked } = attack(board(59));
     const bytes = JSON.stringify(parked);
@@ -521,9 +521,9 @@ describe("D534 §4 — the record: an optional widening, `MATCH_RECORD_VERSION` 
     expect(run.state.players.p1.deck).not.toEqual(state.players.p1.deck);
   });
 
-  it("🛑 `MATCH_RECORD_VERSION` is 33 (🆕🆕🆕 D549 stepped it 32 → 33; D548 stepped it 31 → 32; D547 stepped it 30 → 31; this slice held it) in `apps/api` — a widening, not a new shape", () => {
+  it("🛑 `MATCH_RECORD_VERSION` is 34 (🆕🆕🆕 D552 stepped it 33 → 34; D549 stepped it 32 → 33; D548 stepped it 31 → 32; D547 stepped it 30 → 31; this slice held it) in `apps/api` — a widening, not a new shape", () => {
     // 🆕🆕🆕 D547 — the constant this slice held is now 31: D547 added two REQUIRED `InPlayPokemon` fields (apps/api match.ts).
-    expect(raw("/lobby/match.ts")).toContain("export const MATCH_RECORD_VERSION = 33;");
+    expect(raw("/lobby/match.ts")).toContain("export const MATCH_RECORD_VERSION = 34;");
   });
 });
 
@@ -542,7 +542,7 @@ describe("D534 §5 — §11 and the describer: a deck is not a body, and no bran
 // ─────────────────────────────────────────────────────────────────────────────
 describe("D534 §6 — the version steps and the bytes this suite drove are the bytes that shipped", () => {
   it("engineVersion and `manifest.version` agree, and the bump is owed for BEHAVIOUR", () => {
-    expect(engineVersion).toBe("0.435.0");
+    expect(engineVersion).toBe("0.436.0");
     expect(manifest.version).toBe(engineVersion);
     expect(raw("/index.ts")).toContain("engineVersion 0.418.0 → **0.419.0** (D534");
   });

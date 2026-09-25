@@ -105,6 +105,11 @@ const TYPED_FRENZY_PROGRAM: EffectOp[] = [
 const UNREAD: readonly (readonly [string, string])[] = [
   [
     "You may attach any number of Basic Energy cards from your hand to this Pokémon.",
+    // 🆕🆕🆕 D552 — "which no card prints" was already false at D479 (`censusAttackCorpus.ts:569`
+    // prints it behind a multiplier head), and "could not express either" is WITHDRAWN
+    // (D539): `attachFromHand` carries `toSelf` now. The REFUSAL of this BARE sentence
+    // STANDS — no printing spells it without the head, so this anchor must not author it;
+    // `:569` is built whole by `deriveAttackDiscardScaledBoost` (`selfHandAttachBoost.test.ts`).
     "names ONE body — an unbounded batch pinned to a single target, which no card prints and `attachEnergyFrom.count` (a number) could not express either",
   ],
   [

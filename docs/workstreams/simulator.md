@@ -18985,7 +18985,9 @@ A raw sentence sweep is not a build estimate, and both rows prove it:
   any number of Basic {W} Energy cards from your hand to this Pokémon."* (1 legal) is a
   two-sentence printing. It is also **the one printing in the family that could make
   "read at DECLARATION" observable**, so the anchor's refusal is load-bearing rather than
-  incidental.
+  incidental. (🆕🆕🆕 D552: BUILT — not by this anchor, which still refuses it, but by
+  `deriveAttackDiscardScaledBoost`'s `selfHandAttach` member, attach-then-damage inside the
+  program with the declaration-time head as `base`. See the D552 section.)
 
 ### `bothActivesEnergyCount` — ADD-only by LEGALITY, which is the opposite of its neighbour
 
@@ -28017,6 +28019,7 @@ still a declaration). What moved is its ONE SOURCE; both lists now withdraw that
 the NEXT record bump; `:669` as the no-bump fallback; the Playmat PrizeGrid face-up slot (D548's client debt).
 (🆕🆕🆕 D550: `:669` BUILT with no bump; `:629` and the Playmat slot still owed.)
 (🆕🆕🆕 D551 — PAID: the Playmat slot BUILT; `:629` still owed.)
+(🆕🆕🆕 D552 — PAID: `:629` BUILT as the rider on the 33 → 34 bump, with `:569`. See the D552 section.)
 
 ## D550 — the opponent-flipped per-tails snipe on the opponent's Bench count: a ninth coin member over a sixth, nullary flip count, a third compound suppression arm, and coin rows filed under the seat that flips (engine 0.435.0, `MATCH_RECORD_VERSION` 33 HELD)
 
@@ -28066,6 +28069,7 @@ targets 607 → 608. The sentence step (1) and the printing step (1) AGREE.
 `progress.md`'s resume point); the copy-attack family is still BLOCKED; `:669`'s real card is UNMEASURED.
 (🆕 D550 landing: the D549 close-out, `1e24318f`, already scheduled the Playmat slot as D551, ahead of `:629`.)
 (🆕🆕🆕 D551 — PAID: the Playmat slot BUILT by D551; `:629` is still the rider for the next record bump.)
+(🆕🆕🆕 D552 — PAID: `:629` BUILT on the 33 → 34 bump.)
 
 ## D551 — the Playmat's face-up Prize slot: one row-index → grid-slot mapping, id-stable slots that flip in place, a required `PlayerBoard.faceUpPrizes`, and the Pixi prize descriptors extracted pure (client only; engine 0.435.0 and `MATCH_RECORD_VERSION` 33 unchanged)
 
@@ -28104,5 +28108,56 @@ the round-trip + spectator rungs). Six mutant rows (3,114 → 3,120), all killed
 LANDED on `main` by cherry-pick of `d551-prep`'s `3d7f7472` onto that close-out as one commit.
 
 ### (d) Owed
-`:629` stays the rider for the NEXT record bump; the copy-attack family is still BLOCKED (6/13); `:669`'s real card is
+`:629` stays the rider for the NEXT record bump (🆕🆕🆕 D552 — PAID: built with the 33 → 34 bump); the copy-attack family is still BLOCKED (6/13); `:669`'s real card is
 UNMEASURED. The canvas face was not observed in a running browser — the descriptor is unit-tested, the paint is not.
+
+## D552 — the pre-damage self attach behind a multiplier head, built by ORDER inside the program, and the Weakness retype as the rider on the record bump (engine 0.436.0, `MATCH_RECORD_VERSION` 33 → 34)
+
+**Status:** ✅ BUILT — `censusAttackCorpus.ts` **:569** (*"This attack does 30 damage for each {W} Energy attached to
+this Pokémon. Before doing damage, you may attach any number of Basic {W} Energy cards from your hand to this
+Pokémon."*) and **:629** (*"Until the end of your next turn, the Defending Pokémon's Weakness is now {C}. (The amount
+of Weakness doesn't change.)"*), **2 sentences / 2 legal printings**. No real card id resolves for either (measured); both
+suites ride declared `d552-*` demonstrators (the declared sweep fixture `fix-tideattach` is the one `FIXTURE_POOL` carrier).
+
+### (a) `:569` — D503's refusal measured ONE route
+The pre-damage hook runs after the §8.5 fold is fixed and cannot park, and it is untouched. The row is claimed WHOLE by
+`deriveAttackDiscardScaledBoost`'s THIRD member `selfHandAttach { per, energyType }` (literal anchor
+`SELF_HAND_ATTACH_SCALED`, one capture), assembled `[attachFromHand { toSelf, recordAs: "moved" }, damageDefender {
+base, per, count: "moved" }]` with `base` = the head evaluated at DECLARATION (attack.ts `discardScaledBase`): the hit
+is `30 × (W at declaration + W attached)` as ONE §8.5 pass — 2 {W} + 5 attached → **210**, D503's own figure.
+`attachFromHand` gained `toSelf?`/`recordAs?` (`attachFromDeck`'s meanings); the offer resolves `toSelf` through
+`sourceRef`, the dead end files an empty answer, the apply arm files what was attached, `recordSlotOf` enrols the op,
+the caption reads *"… from your hand to this Pokémon."*. ⚠️ Naming debt: an ATTACH member on a reader called
+`DiscardScaledBoost` (a fourteenth reader refused on D428's cost).
+
+### (b) `:629` — the rider
+`DEFENDER_WEAKNESS_RETYPED` → `retypeDefenderWeakness { type: "Colorless" }` (`exposeDefender`'s holder, T+2 stamp,
+§11 first) → REQUIRED `InPlayPokemon.weaknessRetype: {turn, type} | null`; `installedWeaknessRetypeOf` hands the type
+to cards.ts `weaknessOf` (amount kept, type swapped) at BOTH Weakness sites AFTER the three null paths;
+`WEAKNESS_RETYPED` + log row.
+
+### (c) The rulings (`docs/decisions.md` D552)
+A1 attach-then-damage with a declaration-time base · A2 the "30×" marker is ASSUMED (only a "+" would change it) · A3
+the hit rides `snipeActive`, so the NAMED boost (D155) is not folded — pre-existing · R1 the window is the T+2 stamp ·
+R2 ⚠️ UNRULED: no printed Weakness stays not-weak · R3 the null paths win · R4 on-target: `suppressTargetEffects` drops
+it · R5 §10 clears, same-type re-install silent, first entry only.
+
+### (d) THE SEVENTH POSITION (`apps/api/src/lobby/match.ts`)
+A v33 rollback resuming a v34 record parked at `phase.cont.pendingOp`/`rest` in `:569`'s attach runs HEAD's apply arm
+(no `recordMoved`) and deals 60 where the card deals 210 — DRIVEN; a dropped live damage term, not inert. The retype
+field fails the fifth position's test on its own; a v33 body throws on its next main hit that reads target effects. `MATCH_RECORD_VERSION` 33 → 34.
+
+### (e) Tests, census and mutants
+New: `selfHandAttachBoost.test.ts` (26), `weaknessRetype.test.ts` (31); inverted or re-pointed:
+`preDamageAttachSeam.test.ts` §2/§6 (§4's tripwire and §5 stand, §5b annotated), `noWeaknessBar.test.ts` (loud witness
+moved to the BLOCKED copy-attack row 78 FIRST), `benchDiscardBoost`, `derivedHandAttach`, `selfEnergyScaling`,
+`censusAtHead`'s backlog row 12 (attack half CLOSED), the census pins (114 annotated sites + 4 measured, 23 front
+terms), 12 key-set pins, `preventBlock`'s op table. `fix-tideattach` carries both sentences in `FIXTURE_POOL`. Census
+`SUBMAX=12`: reader 578/1632 → 580/1634, residue 32/44 → 30/42, COMPOUND-head 5/6 → 4/5, OPAQUE 11/17 → 10/16; default
+cap OPAQUE 19/28 → 18/27. Mutants 3,120 → 3,155 (+35 `D552-*`, all killed undeclared); sweep predicted `3102 killed ·
+53 known survivor(s)` over 3,155 on D551's ~~UNPAID~~ `3067 · 53` — PAID exactly at the D551 close-out `5e1a41b2`.
+
+### (f) Owed
+Both real cards UNMEASURED (the `:569` marker is assumed "30×"); the HUD does not display a retyped Weakness (the wire
+carries no Weakness); the attach dialog does not say what the attach buys (D402/D403 captioning); the copy-attack family
+is still BLOCKED (6/13).

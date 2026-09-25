@@ -780,6 +780,7 @@ describe("the structural answers", () => {
         // structure, and `MATCH_RECORD_VERSION` 24 → 25 with it). THIS slice still
         // wrote nothing; the pin is on the HEAD's key set.
         "usedAttack",
+        "weaknessRetype", // 🆕🆕🆕 D552 (33 -> 34) — the Weakness retype record; the pin is on the HEAD's key set
       ].sort(),
     );
   });

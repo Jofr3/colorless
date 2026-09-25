@@ -63,6 +63,7 @@ import {
   // 🆕🆕🆕 D547 — the next-turn vulnerability, added beside the installed reduction
   // at `spreadDamage`, `placeSnipe` and `snipeActive` (attack.ts is the fourth site).
   installedVulnerabilityOf,
+  installedWeaknessRetypeOf,
   koSurvivalClamp,
   opposingAttackDebuff,
   passivesOf,
@@ -1228,7 +1229,14 @@ function recordSlotOf(op: EffectOp): EffectSlot | undefined {
     // moves. ⚠️ AND IT IS ALSO THE FIELD'S ONLY READER BESIDES THE ARM THAT WRITES
     // IT — an optional `recordAs` that nothing enrols here files a record and gets
     // no caption, which is the half of this slice no board can see.
-    op.op === "searchDeck"
+    op.op === "searchDeck" ||
+    // 🆕🆕🆕 D552 — `attachFromHand` is the NINTH recorder (`:569`'s `selfHandAttach`
+    // program files `moved` for its `damageDefender`). Listed for D206's reason: the
+    // omission is SILENT. No `recordGate` reads `moved` in that program today, so
+    // `withConsequence` appends nothing either way — the payoff is the attack's own hit,
+    // D402/D403's captioning — but a future "If you do," consequent must not lose its
+    // clause to a missing enrolment.
+    op.op === "attachFromHand"
     ? op.recordAs
     : undefined;
 }
@@ -1903,6 +1911,9 @@ function stepOp(
     // 🆕🆕🆕 D547 — the next-turn vulnerability, `weakenDefenderAttacks`' holder.
     case "exposeDefender":
       return { done: exposeDefender(state, op.amount, ctx, events) };
+    // 🆕🆕🆕 D552 — the WEAKNESS RETYPE, `exposeDefender`'s holder and stamp.
+    case "retypeDefenderWeakness":
+      return { done: retypeDefenderWeakness(state, op.type, ctx, events) };
     // 🆕🆕🆕 D549 — the COST TAX (nullary, `flipLockAttack`'s holder and window) and the
     // KNOCK OUT BOUNTY (`exposeDefender`'s holder and window, on the prize step).
     case "taxDefender":
@@ -3123,8 +3134,19 @@ function stepOp(
       // of a pile, so there is nothing to put back or discard), and no `recordAs`
       // to overwrite either — no printing in this family carries a §9.2 tail, so
       // there is no slot a stale value could survive in.
-      const { candidates, targets, max } = attachFromHandOffer(state, ctx.seat, op);
-      if (candidates.length === 0 || targets.length === 0 || max <= 0) return { done: state };
+      //
+      // 🆕🆕🆕 D552 — "no `recordAs` to overwrite either — no printing in this family
+      // carries a §9.2 tail" IS WITHDRAWN (D539): `:569`'s `selfHandAttach` program
+      // files `recordAs: "moved"` for the `damageDefender` behind it. So the dead end
+      // now FILES AN EMPTY ANSWER, `attachFromDeck`'s rule verbatim (an op that ran and
+      // moved nothing must overwrite its slot); it still returns `state` — no
+      // leftovers clause to charge. An empty hand, or a host no longer a board top,
+      // is `moved = 0` and the hit is the declaration-time head, with no park.
+      const { candidates, targets, max } = attachFromHandOffer(state, ctx, op);
+      if (candidates.length === 0 || targets.length === 0 || max <= 0) {
+        recordMoved(record, op.recordAs, []);
+        return { done: state };
+      }
       return {
         park: { kind: "attachCards", candidates, targets, max, note: attachFromHandNote(op) },
       };
@@ -6921,13 +6943,23 @@ export function applyChoice(
       return choice.kind === "attachCards"
         ? attachFromTopApply(state, choice.assignments, op, ctx, events)
         : state;
-    case "attachFromHand":
+    case "attachFromHand": {
       // D247 — no `recordAs` on this op, so unlike its deck-searching twin below
       // there is nothing to file: the attached uids are the return value nobody
       // asks for. The zone is the ONLY argument that differs.
-      return choice.kind === "attachCards"
-        ? attachFromZoneApply(state, choice.assignments, "hand", ctx, events).state
-        : state;
+      //
+      // 🆕🆕🆕 D552 — "no `recordAs` on this op … nothing to file" IS WITHDRAWN (D539):
+      // the op records now, and this arm files what was ATTACHED exactly as the deck
+      // twin below does (§9.2 — never what was offered or picked; a decline files []).
+      // 🛑 `tsc` CANNOT SEE THIS LINE: dropping it compiles, and `:569`'s hit then
+      // counts an empty slot and deals only the declaration-time head while the Energy
+      // stays attached — which is also exactly what a v33 ROLLBACK deploy computes on a
+      // v34 record parked here (apps/api match.ts, THE SEVENTH POSITION).
+      if (choice.kind !== "attachCards") return state;
+      const attached = attachFromZoneApply(state, choice.assignments, "hand", ctx, events);
+      recordMoved(record, op.recordAs, attached.attached);
+      return attached.state;
+    }
     case "attachFromDeck": {
       if (choice.kind !== "attachCards") return state;
       const attached = attachFromZoneApply(state, choice.assignments, "deck", ctx, events);
@@ -8335,6 +8367,40 @@ function exposeDefender(
   if (exposedAlready && worst === existing.amount) return state;
   events.push({ type: "DAMAGE_VULNERABILITY_APPLIED", seat, uid, amount: worst });
   return withActive(state, seat, { ...active, damageVulnerability: { turn, amount: worst } });
+}
+
+/** 🆕🆕🆕 §8.5/§11 (D552) — INSTALL the printed WEAKNESS RETYPE on the DEFENDING Pokémon:
+    "Until the end of your next turn, the Defending Pokémon's Weakness is now {C}. (The
+    amount of Weakness doesn't change.)" (`censusAttackCorpus.ts:629`, 1 legal printing).
+    `exposeDefender` one function up, cloned for its HOLDER, its STAMP and its guards — the
+    opponent's Active, `state.turn + 2` (the installer's next turn, the end of the printed
+    window), the §11 refusal BEFORE the idempotence early return — with a TYPE where that
+    one has a number.
+
+    ⚠️ THE MERGE IS A REPLACE, NOT `Math.max`: a type has no order. A same-window
+    re-install of the SAME type is silent (no news); a different type would overwrite (the
+    latest printed effect wins). Both are unreachable off any printing (two installs on one
+    window need two attacks in one turn, and one type is printed), so they are constructed
+    and pinned. docs/decisions.md D552 R1–R5. */
+function retypeDefenderWeakness(
+  state: GameState,
+  type: string,
+  ctx: EffectContext,
+  events: GameEvent[],
+): GameState {
+  const seat = otherSeat(ctx.seat);
+  const active = state.players[seat].active;
+  if (active === null) return state;
+  const uid = topUid(active);
+  if (uid === undefined) return state;
+  // §11 — checked BEFORE the idempotence early-return, `exposeDefender`'s ordering, so a
+  // refusal is announced even on an already-retyped body.
+  if (effectRefused(state, seat, ctx, events)) return state;
+  const turn = state.turn + 2;
+  const existing = active.weaknessRetype;
+  if (existing !== null && existing.turn === turn && existing.type === type) return state;
+  events.push({ type: "WEAKNESS_RETYPED", seat, uid, weaknessType: type });
+  return withActive(state, seat, { ...active, weaknessRetype: { turn, type } });
 }
 
 /** 🆕🆕🆕 §8.2/§11 (D549) — INSTALL the printed COST TAX on the DEFENDING Pokémon:
@@ -9762,7 +9828,15 @@ function snipeActive(
     attacker === null ||
     seatRemovesWeakness(state, opponent) ||
     installedNoWeakness(state, target.active);
-  const weakness = noWeakness ? null : weaknessOf(attacker.card, target.card);
+  // 🆕🆕🆕 D552 — the WEAKNESS RETYPE (`:629`), handed to `weaknessOf` AFTER the null paths
+  // above, exactly as at the main hit (docs/decisions.md D552 R3). `ignoreWR` already nulls
+  // Weakness outright, so the snipe needs no suppression term of its own. THIS SITE IS
+  // DRIVEN ON ITS OWN BOARD (`weaknessRetype.test.ts`), D432's reason: two expressions in
+  // two files, and a build that widened one and not the other is invisible to a suite that
+  // only swings the main hit.
+  const weakness = noWeakness
+    ? null
+    : weaknessOf(attacker.card, target.card, installedWeaknessRetypeOf(state, target.active));
   const resistance =
     ignoreWR || attacker === null ? null : resistanceOf(attacker.card, target.card);
   // The pre-W/R clamp is attack.ts's, for its reason verbatim: an attack does not
@@ -12157,6 +12231,9 @@ function devolvedBodyOf(body: InPlayPokemon): InPlayPokemon {
     attackDamageDebuff: null,
     // 🆕🆕🆕 D547 — the next-turn vulnerability (devolve clear, D547).
     damageVulnerability: null,
+    // 🆕🆕🆕 D552 — the WEAKNESS RETYPE is shed with the devolved card, the vulnerability's
+    // story one line up (§10: a devolved body is a new Pokémon — D552 R5).
+    weaknessRetype: null,
     // 🆕🆕🆕 D549 — the cost tax (devolve clear, D549 tax).
     costTaxTurn: null,
     // 🆕🆕🆕 D549 — the knock out bounty (devolve clear, D549 bounty).
@@ -13838,6 +13915,9 @@ export function switchInto(
     // the victim's own Switch on the turn in between walks the exposed body out
     // from under the +50 (switch clear, D547).
     damageVulnerability: null,
+    // 🆕🆕🆕 D552 — the WEAKNESS RETYPE goes with the body, the vulnerability's story one
+    // line up (a Switch on the turn in between is the victim's played line — D552 R5).
+    weaknessRetype: null,
     // 🆕🆕🆕 D549 — the COST TAX goes with the body (the flip lock's story): the victim
     // Switches out of it and the promoted body pays printed costs (switch clear, D549 tax).
     costTaxTurn: null,
@@ -14353,12 +14433,23 @@ function attachFromDeckOffer(
     printing of this op is a Trainer or an Ability; see the op's doc. */
 function attachFromHandOffer(
   state: GameState,
-  seat: Seat,
+  ctx: EffectContext,
   op: Extract<EffectOp, { op: "attachFromHand" }>,
 ): { candidates: string[]; targets: PokemonRef[]; max: number } {
+  // 🆕🆕🆕 D552 — the context rather than the bare seat, `attachFromDeckOffer`'s
+  // signature, because the printed "to THIS Pokémon" needs `ctx.sourceUid`.
+  const seat = ctx.seat;
   const candidates = state.players[seat].hand.filter((uid) =>
     matchesFilter(cardOf(state, uid), op.filter),
   );
+  // 🆕🆕🆕 D552 — "THE RIDERS ARGUMENT IS THE EMPTY OBJECT, AND THAT IS THE PRINT
+  // SPEAKING" above is WITHDRAWN for `toSelf` (D539): `:569` prints "to this Pokémon",
+  // so the sole target is `sourceRef` — `attachFromDeckOffer`'s `toSelf` reader, ONE
+  // reading of the phrase on the family. An EARLY RETURN so D247's own return line
+  // below stays byte-identical. Bench bodies and the rest of the board are NOT offered.
+  if (op.toSelf === true) {
+    return { candidates, targets: sourceRef(state, ctx), max: candidates.length };
+  }
   return { candidates, targets: attachEnergyTargets(state, seat, {}), max: candidates.length };
 }
 
@@ -16375,6 +16466,17 @@ function attachFromDeckNote(op: Extract<EffectOp, { op: "attachFromDeck" }>): st
     turn, you may" is dropped one prompt over — a prompt that has appeared IS the
     offer, so restating the option is the dialog talking about itself. */
 function attachFromHandNote(op: Extract<EffectOp, { op: "attachFromHand" }>): string {
+  // 🆕🆕🆕 D552 — the printed "to **this Pokémon**" (`:569`), `attachFromDeckNote`'s
+  // `toSelf` branch one function up and for its reason: the one offered target row
+  // cannot say that the destination is not a choice, and "in any way you like" over a
+  // single body would be the dialog describing a split the validator cannot produce.
+  // An EARLY RETURN so D247's caption line below stays byte-identical. ⚠️ It does not
+  // say what the attach BUYS (30 more per card): `withConsequence` reads a `recordGate`
+  // and this program has none — the payoff is the attack's own hit, the D402/D403
+  // captioning, named as a carried debt in decisions.md D552.
+  if (op.toSelf === true) {
+    return `Attach any number of ${retrieveNoun(op.filter).plural} from your hand to this Pokémon.`;
+  }
   return `Attach any number of ${retrieveNoun(op.filter).plural} from your hand to your ${attachTargetNoun({})} in any way you like.`;
 }
 

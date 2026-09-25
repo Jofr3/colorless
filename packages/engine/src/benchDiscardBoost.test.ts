@@ -109,6 +109,10 @@ const BASIC = TAKEN[1]?.[1] as string;
     D489. Asserted to be a corpus row below rather than trusted as typed (D452/D456). */
 const MILL =
   "Discard the top card of each player's deck. This attack does 140 more damage for each Energy card discarded in this way.";
+/** 🆕🆕🆕 D552 — the reader's THIRD member's one printing (`censusAttackCorpus.ts:569`),
+    asserted a corpus row by `selfHandAttachBoost.test.ts` §1. */
+const SELF_ATTACH =
+  "This attack does 30 damage for each {W} Energy attached to this Pokémon. Before doing damage, you may attach any number of Basic {W} Energy cards from your hand to this Pokémon.";
 
 /** The reading, THROWN rather than asserted non-null: a `!` would be a lint error and,
     worse, would turn a reader that stopped reading into a `null` handed to a builder
@@ -154,15 +158,21 @@ describe("D403 §1 — the family this reader takes, measured live over the colu
     // some *other* third sentence, so the partition is asserted by `kind` — the two
     // bench-discard heads and the one two-deck mill — which reddens the day either arm
     // eats the other's printing.
+    // 🆕🆕🆕 **D552 — 3 / 10 → 4 / 11, AND THE FOURTH IS AN ATTACH, NOT A DISCARD.**
+    // `censusAttackCorpus.ts:569` (the pre-damage self attach behind a multiplier head, 1
+    // printing) is the reader's THIRD MEMBER, `selfHandAttach` — the naming debt is written
+    // at the member (an attach on a reader called `DiscardScaledBoost`; a fourteenth reader
+    // was refused on D428's cost). Re-pointed by MEMBER again, for this rung's own reason.
+    // The title's "THREE" is the D490 count, kept as the record (D178).
     const claimed = legalAttackCorpus().filter(
       ([, s]) => deriveAttackDiscardScaledBoost(s) !== null,
     );
-    expect(claimed).toHaveLength(3);
-    expect(units(claimed)).toBe(10);
-    expect([...claimed].sort()).toEqual([...TAKEN, [2, MILL] as const].sort());
+    expect(claimed).toHaveLength(4);
+    expect(units(claimed)).toBe(11);
+    expect([...claimed].sort()).toEqual([...TAKEN, [2, MILL] as const, [1, SELF_ATTACH] as const].sort());
     expect(
       claimed.map(([, s]) => reading(s).kind).sort(),
-    ).toEqual(["benchDiscard", "benchDiscard", "eachDeckMill"]);
+    ).toEqual(["benchDiscard", "benchDiscard", "eachDeckMill", "selfHandAttach"]);
     // …and the other ELEVEN refuse both, which is what makes "at most one reader fires
     // per attack" a structural property rather than a rule attack.ts has to keep.
     for (const [, s] of TAKEN) {

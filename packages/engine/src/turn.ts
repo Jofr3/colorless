@@ -693,6 +693,10 @@ function clearOnLeavingActive(pokemon: InPlayPokemon): InPlayPokemon {
     // retreat on the turn in between is a PLAYED line that sheds the +50 (retreat
     // clear, D547) — and so is the forced half (`switchInto`).
     damageVulnerability: null,
+    // 🆕🆕🆕 D552 — the WEAKNESS RETYPE, the vulnerability's story one line up: the holder's
+    // own retreat on the turn in between is a PLAYED line that restores its printed
+    // Weakness type (retreat clear, D552 R5), and so is the forced half (`switchInto`).
+    weaknessRetype: null,
     // 🆕🆕🆕 D549 — the COST TAX, the flip lock's story: its window is the holder's own
     // turn, so the victim RETREATS out of it — paying the TAXED cost for this one
     // retreat, the surcharge being live as the cost is read — and the benched body

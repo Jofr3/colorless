@@ -1542,8 +1542,68 @@ export interface MatchRecord {
     none parks, so none reaches `phase.cont`), and `GameEvent` gains `COST_TAX_APPLIED`,
     `KO_BOUNTY_APPLIED` and `SIDE_ATTACKS_LOCKED` (not persisted, D141). No schema, redact,
     projection or client byte: the side lock reaches every `playable` through
-    `attackLocked`, and the tax reaches every cost through the two cost functions. */
-export const MATCH_RECORD_VERSION = 33;
+    `attackLocked`, and the tax reaches every cost through the two cost functions.
+
+    🆕🆕🆕 **33 → 34 AT D552 — THE SEVENTH POSITION: A PARKED CONTINUATION WHOSE REST IS OLD
+    AND WHOSE ROLLBACK DROPS A LIVE DAMAGE TERM, AND A REQUIRED FIELD THAT RIDES WITH IT.**
+    The addresses, named first (D456's rule):
+      · **`phase.cont.pendingOp` and `phase.cont.rest`** — `censusAttackCorpus.ts:569`
+        (*"This attack does 30 damage for each {W} Energy attached to this Pokémon. Before
+        doing damage, you may attach any number of Basic {W} Energy cards from your hand to
+        this Pokémon."*) PARKS its attack program on `attachCards`, so a `MatchRecord`
+        saved mid-attack persists `pendingOp: { op: "attachFromHand", filter, toSelf: true,
+        recordAs: "moved" }` with `rest: [{ op: "damageDefender", base, per: 30, count:
+        "moved" }]` behind it. Both keys on the op are OPTIONAL widenings of a shipped op
+        (D333/D334), and the `damageDefender` in `rest` is a SHIPPED shape (D403's `base`
+        rider). So this is the FIRST position whose REST IS OLD AT A PARK: every byte a v33
+        reader meets is one it already knows how to read.
+      · **`InPlayPokemon.weaknessRetype: WeaknessRetype | null`** — the rider,
+        `censusAttackCorpus.ts:629` (*"Until the end of your next turn, the Defending
+        Pokémon's Weakness is now {C}. (The amount of Weakness doesn't change.)"*),
+        `{turn, type}` on the opponent's Active, persisted on every save with no park in
+        front of it (D434's case: both keys arrive together).
+
+    🛑 **THE D456 TEST AT THE PARK, DRIVEN — AND IT FAILS.** D456 holds a version only
+    when the old reader's residue is INERT on the board. A v33 (rollback) deploy resuming a
+    v34 record parked here runs HEAD's `attachFromHand` apply arm,
+    `attachFromZoneApply(state, choice.assignments, "hand", ctx, events).state`, which
+    never files `recordAs`: the chosen Basic {W} Energy ARE attached, the `moved` slot is
+    never written, and the `damageDefender` in `rest` counts an empty slot — it deals only
+    the declaration-time head. On D503's own board (2 {W} on the attacker, 5 attached)
+    that is **60 where the printed card deals 210**, with the five Energy on the body
+    (`selfHandAttachBoost.test.ts` §5, driven through this engine by removing the one key
+    the v33 arm ignores; the red-capable engine row is `D552-hand-apply-drops-the-record`).
+    Detectable in the bytes (no v33 writer emits `recordAs` on this op), and **NOT inert
+    on the board**: a live damage term silently dropped — THE FIFTH POSITION's finding, now
+    at a park rather than at a field. So the version is owed.
+    🛑 **AND THE RIDER'S FIELD FAILS THE SAME TEST ON ITS OWN.** An optional
+    `weaknessRetype?` passes D441 and is detectable in the bytes, and a rollback reading a
+    v34 record hits the retyped Defending Pokémon at its PRINTED Weakness type — the
+    printed card's ×2 from a {C} attacker silently gone (`weaknessRetype.test.ts` §8). So
+    the field is REQUIRED, and it rides this bump rather than owing its own (it had been
+    carried as "the rider for the NEXT record bump" since D548).
+
+    🛑 **AND A v33 RECORD IS NOT READ BENIGNLY — MEASURED.** Every in-play body in a v33
+    record lacks `weaknessRetype`; `installedWeaknessRetypeOf` asks `=== null` and
+    dereferences `.turn` of `undefined` → **`TypeError` on every main hit that reads target
+    effects into ANY v33 body** (attack.ts reads it before the null paths,
+    `weaknessRetype.test.ts` §8; a `suppressTargetEffects` hit — the *"isn't affected by any
+    effects on your opponent's Active Pokémon"* family — skips the reader and does not
+    throw) — D326's class. A v33 match is unplayable past its next such attack, so the
+    record is RETIRED.
+
+    🛑 **WHAT WOULD REVERSE THIS (D422).** The fifth position's reversal (a rollback-safety
+    rule that accepts a silently dropped effect as inert, or a pipeline that forbids
+    rollback across a record-shape change); OR, for the park half alone, a v33 apply arm
+    that already filed `recordAs` (it did not — 9f4ec316).
+
+    ⚠️ Also moved, and none is a second reason: a new `AttackDiscardScaledBoost` member
+    (`selfHandAttach` — a reading, derived from text at the attack site and never
+    persisted), a new `EffectOp` member (`retypeDefenderWeakness { type }` — a D333
+    widening; it never parks), and `GameEvent.WEAKNESS_RETYPED` (not persisted, D141). No
+    schema, redact, projection or client byte: the wire does not carry a body's Weakness,
+    so the HUD does not show a retype (a carried display debt, decisions.md D552). */
+export const MATCH_RECORD_VERSION = 34;
 
 /** How a persisted match read back: absent, usable, or written by an
     incompatible deploy (`stale` — the caller decides whether to retire it). */

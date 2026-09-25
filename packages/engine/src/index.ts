@@ -20114,6 +20114,43 @@ import type { GameState, Seat } from "./types";
     `expect(manifest.version)`, `it(…)` titles, the declaration and `package.json` —
     **not** as a value-keyed grep — because a value-keyed grep is precisely the mechanism
     that ate D500's heading.)
+    🆕🆕🆕 engineVersion 0.435.0 → **0.436.0** (D552 — THE PRE-DAMAGE SELF ATTACH BEHIND A MULTIPLIER
+    HEAD, AND THE WEAKNESS RETYPE AS THE RIDER ON THE RECORD BUMP. `censusAttackCorpus.ts` **file line
+    569** (leading count column `1`) — *"This attack does 30 damage for each {W} Energy attached to this
+    Pokémon. Before doing damage, you may attach any number of Basic {W} Energy cards from your hand to
+    this Pokémon."* — and **file line 629** (`1`) — *"Until the end of your next turn, the Defending
+    Pokémon's Weakness is now {C}. (The amount of Weakness doesn't change.)"* — **2 sentences / 2 legal
+    printings**. `:569` (D503's refusal) is claimed WHOLE by `deriveAttackDiscardScaledBoost`'s THIRD
+    member `selfHandAttach { per, energyType }` (literal anchor `SELF_HAND_ATTACH_SCALED`, one capture,
+    `>= 1` guarded; the naming debt — an ATTACH on a reader called `DiscardScaledBoost` — is written at
+    the member, a fourteenth reader refused on D428's cost), assembled ATTACH-THEN-DAMAGE: `attachFromHand
+    { toSelf, recordAs: "moved" }` (two new optional keys, `attachFromDeck`'s meanings) then
+    `damageDefender { base, per, count: "moved" }`, where attack.ts passes the head evaluated at
+    DECLARATION as `base` (`discardScaledBase`), so the hit is the head on the POST-attach board as ONE
+    §8.5 pass (2 {W} + 5 attached → 210, D503's figure). The pre-damage hook is untouched. Interpreter:
+    the offer takes `ctx` and resolves `toSelf` through `sourceRef` (an early return), the exec arm's
+    dead end FILES an empty answer, the apply arm files what was ATTACHED (the line `tsc` cannot see),
+    `recordSlotOf` enrols the op (D206), the caption has a *"to this Pokémon"* branch. `:629` is claimed
+    by `deriveAttackEffect` through `DEFENDER_WEAKNESS_RETYPED` (zero captures, two `['’]` slots) as ONE
+    new op `retypeDefenderWeakness { type }` (`exposeDefender`'s holder, `state.turn + 2` stamp and §11
+    guard) on ONE new REQUIRED `InPlayPokemon.weaknessRetype: {turn, type} | null`, read through
+    `installedWeaknessRetypeOf` and handed to cards.ts `weaknessOf` (amount kept, type swapped) at BOTH
+    Weakness sites AFTER their three null paths; `WEAKNESS_RETYPED` + its log row. Rulings R1–R5 (R2
+    UNRULED) in `docs/decisions.md` D552. **`MATCH_RECORD_VERSION` 33 → 34 — THE SEVENTH POSITION**
+    (apps/api match.ts): a v33 rollback resuming a v34 record parked in `:569`'s attach runs HEAD's apply
+    arm, which never files `recordAs`, and deals 60 where the card deals 210 (DRIVEN) — a dropped live
+    damage term, not inert; the retype field fails the fifth position's test on its own. No REAL card id
+    resolves for either sentence (MEASURED, D425): the new suites `selfHandAttachBoost.test.ts` and
+    `weaknessRetype.test.ts` ride declared `d552-*` demonstrators, and `fix-tideattach` carries both
+    sentences in `FIXTURE_POOL` for the sweeps; `fix-nowk` index 2 was moved to a BLOCKED copy-attack
+    sentence first. Claims withdrawn (D539), annotated in place: `attachFromHand`'s *"no target rider"*
+    and *"no recordAs"*, the D479/D503 blocks at `ATTACK_HAND_ANY_NUMBER_ATTACH`, the D432 near-miss
+    note, attack.ts' *"UNOBSERVABLE on today's column"* as D503's reason, effects.ts' *"ONE remains
+    unbuildable"*, and the D503 mutant rows' prose. Census (`SUBMAX=12`): reader 578/1632 → 580/1634,
+    residue 32/44 → 30/42, raw residue 62/100 → 60/98, `BUILT.attack` 1688 → 1690, COMPOUND-head 5/6 →
+    4/5, OPAQUE 11/17 → 10/16; default cap OPAQUE 19/28 → 18/27, UNEXPLAINED 3/3 → 2/2, targets 608 →
+    610. THE SENTENCE STEP (2) AND THE PRINTING STEP (2) AGREE — every site was measured anyway.
+    Mutants 3,120 → 3,155, all thirty-five `D552-*` KILLED.)
     🆕🆕🆕 engineVersion 0.434.0 → **0.435.0** (D550 — THE OPPONENT-FLIPPED PER-TAILS SNIPE ON
     THE OPPONENT'S BENCH COUNT, WITH WEAKNESS AND RESISTANCE SUPPRESSED. `censusAttackCorpus.ts`
     **file line 669** (leading count column `1`) — *"Your opponent flips a coin for each of their
@@ -24049,7 +24086,7 @@ import type { GameState, Seat } from "./types";
     WITNESS** — the count was re-derived every slice and the word *"three"* was carried.
     A successor of this slice inherits **81 / 61 / 17** again, over **FIVE** history
     occurrences: those four plus `deckMillFilteredScale.test.ts`'s own header arrow.) */
-export const engineVersion = "0.435.0";
+export const engineVersion = "0.436.0";
 
 export type {
   ApplyResult,

@@ -968,6 +968,7 @@ describe("§9 — nothing persisted moves, and it is DRIVEN rather than argued",
       "tools",
       "turnPlayed",
       "usedAttack",
+      "weaknessRetype", // 🆕🆕🆕 D552 (33 -> 34) — the Weakness retype record; the pin is on the HEAD's key set
     ]);
     // …and the Paralysis lands in the `rotation` slot that has held it since M2, not
     // in a new one.
@@ -1047,6 +1048,6 @@ describe("§10 — purity and the version", () => {
     // anchor. ⚠️ D427 named the mechanism — **every note counts the pins it INHERITED
     // and never the one it is about to AUTHOR** — and D428 was the first note to get it
     // right. This line is the one being authored.
-    expect(engineVersion).toBe("0.435.0");
+    expect(engineVersion).toBe("0.436.0");
   });
 });

@@ -719,6 +719,7 @@ describe("§8 — nothing persisted moves, and it is DRIVEN rather than argued",
       "tools",
       "turnPlayed",
       "usedAttack",
+      "weaknessRetype", // 🆕🆕🆕 D552 (33 -> 34) — the Weakness retype record; the pin is on the HEAD's key set
     ]);
   });
 
@@ -765,6 +766,6 @@ describe("§9 — purity and the version", () => {
     // `packages/engine/package.json`, `index.ts`'s declaration and `D275`'s mutant
     // anchor. ⚠️ D427 named the mechanism: **every note counts the pins it INHERITED
     // and never the one it is about to AUTHOR.** This line is the one being authored.
-    expect(engineVersion).toBe("0.435.0");
+    expect(engineVersion).toBe("0.436.0");
   });
 });

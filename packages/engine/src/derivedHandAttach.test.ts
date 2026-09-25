@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { programPlayable } from "./cardplay";
-import { deriveAttackEffect } from "./effects";
+import { deriveAttackDiscardScaledBoost, deriveAttackEffect } from "./effects";
 import type { EffectOp, GameEvent, GameState, PokemonRef } from "./index";
 import {
   FIXTURE_POOL,
@@ -178,6 +178,10 @@ const UNREAD: readonly (readonly [string, number, string])[] = [
     //     pre-damage hook runs ~780 lines AFTER the fold is computed, and the printed
     //     clause additionally PARKS, which `applyAttackPreDamage`'s return type forbids
     //     by construction. `preDamageAttachSeam.test.ts` owns the measurement.
+    // 🆕🆕🆕 D552 — BOTH HALVES ANSWERED, AND THE "no reader in this engine can honour"
+    // BELOW IS WITHDRAWN (D539): the pincer by `attachFromHand.toSelf`/`recordAs`, the
+    // ordering by ATTACH-THEN-DAMAGE inside the program (`deriveAttackDiscardScaledBoost`'s
+    // `selfHandAttach`) rather than by the pre-damage hook. Kept as the record (D178).
     "two sentences, an unbounded count AND an ORDERING clause ('Before doing damage') that no reader in this engine can honour — the multiply fold reads the board at declaration",
   ],
 ] as const;
@@ -310,6 +314,19 @@ describe("the anchor — four printed sentences, ONE arm, ONE word from the disc
     expect(UNREAD).toHaveLength(1);
     expect(UNREAD.reduce((sum, [, legal]) => sum + legal, 0)).toBe(1);
     for (const [text] of UNREAD) expect(deriveAttackEffect(text), text).toBeNull();
+    // 🆕🆕🆕 D552 — RE-POINTED (D516): "the deferral" is PAID. The one `UNREAD` row is
+    // still unread by THIS file's anchor (the null above stands — `deriveAttackEffect`
+    // must never claim it, D503's tripwire), and it is BUILT one reader over:
+    // `deriveAttackDiscardScaledBoost`'s `selfHandAttach` (`selfHandAttachBoost.test.ts`).
+    // Kept in `UNREAD` because the table is this ANCHOR's residue, and the row's 16 still
+    // adds up from this file below.
+    for (const [text] of UNREAD) {
+      expect(deriveAttackDiscardScaledBoost(text), text).toEqual({
+        kind: "selfHandAttach",
+        per: 30,
+        energyType: "Water",
+      });
+    }
     // 10 + 1 + 4 + 1 = 16 on 5 + 1 + 1 + 1 = 8 sentences, which is exactly what
     // the backlog row measured. FOUR rows running whose count survived
     // re-derivation unchanged, and the total is unchanged by this slice moving

@@ -3179,8 +3179,11 @@ export const MUTANTS: Mutant[] = [
     decision: "D247",
     what: "the dead-end guard drops its TARGET half, so an op with candidates and nowhere to put them parks on a prompt with an empty `targets` list — a dialog the player cannot answer. Unreachable in a real match today (the controller always has an Active), which is exactly why it is a guard rather than a branch",
     file: "packages/engine/src/interpreter.ts",
-    find: "      if (candidates.length === 0 || targets.length === 0 || max <= 0) return { done: state };",
-    replace: "      if (candidates.length === 0) return { done: state };",
+    // 🆕🆕🆕 D552 - RE-TRANSCRIBED off the bytes (D540), NOT RE-MEANT: the hand exec arm's dead end
+    //    became a block that FILES an empty answer (`recordMoved`), so the one-line `find` is
+    //    gone; the row is anchored on the offer call above it and still drops the same two terms.
+    find: "      const { candidates, targets, max } = attachFromHandOffer(state, ctx, op);\n      if (candidates.length === 0 || targets.length === 0 || max <= 0) {",
+    replace: "      const { candidates, targets, max } = attachFromHandOffer(state, ctx, op);\n      if (candidates.length === 0) {",
     expectKilledBy: ["packages/engine/src/derivedAnyNumberAttach.test.ts"],
   },
   {
@@ -6205,7 +6208,7 @@ export const MUTANTS: Mutant[] = [
     // CORPUS QUOTES** (D414/D415), so a value-keyed sweep over `toBe("0.391.0")` cannot
     // see it — this row's `find` spells the DECLARATION, not an assertion. Run
     // `precheck` after every version bump, not after the sweep tells you.
-    find: 'export const engineVersion = "0.435.0";',
+    find: 'export const engineVersion = "0.436.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -11366,8 +11369,11 @@ export const MUTANTS: Mutant[] = [
     // 🆕🆕🆕 D549 - RE-TRANSCRIBED, 32 -> 33, off the new bytes (`InPlayPokemon.costTaxTurn`,
     //    `InPlayPokemon.koBounty` and `PlayerSide.sideAttackLock`, all REQUIRED). Tenth
     //    consecutive bump to rot this row, predicted before `precheck`.
-    find: "export const MATCH_RECORD_VERSION = 33;",
-    replace: "export const MATCH_RECORD_VERSION = 32;",
+    // 🆕🆕🆕 D552 - RE-TRANSCRIBED, 33 -> 34, off the new bytes (THE SEVENTH POSITION: `:569`'s
+    //    parked `attachFromHand.recordAs` and the REQUIRED `InPlayPokemon.weaknessRetype`).
+    //    Eleventh consecutive bump to rot this row, predicted before `precheck`.
+    find: "export const MATCH_RECORD_VERSION = 34;",
+    replace: "export const MATCH_RECORD_VERSION = 33;",
     expectKilledBy: ["apps/api/src/lobby/match.test.ts"],
   },
   // == D327 - THE COST SEAM'S SECOND AND THIRD COUNT SOURCES. Every row below is a
@@ -20071,8 +20077,10 @@ export const MUTANTS: Mutant[] = [
     decision: "D432",
     what: "\u{1f6d1} THE PRE-SLICE TERNARY, RESTORED. `attack.ts`'s §8.5 Weakness step ignores the installed bar and only consults D192's parse and Blooming Garden's aura, so the record is written, the row is logged, the field survives every §10 clear — and the number does not move. D428's built-but-dead defect at the read end instead of the write end: everything observable except the damage is correct",
     file: "packages/engine/src/attack.ts",
-    find: "    const weakness =\n      damageSuppression?.weakness === true ||\n      seatRemovesWeakness(next, defenderSeat) ||\n      installedNoWeakness(next, defender)\n        ? null\n        : weaknessOf(attacker, defenderCard);",
-    replace: "    const weakness =\n      damageSuppression?.weakness === true || seatRemovesWeakness(next, defenderSeat)\n        ? null\n        : weaknessOf(attacker, defenderCard);",
+    // 🆕🆕🆕 D552 - RE-TRANSCRIBED off the bytes (D540): the ternary's last line gained the
+    //    retype argument; find AND replace carry it, so the patch still deletes exactly the bar.
+    find: "    const weakness =\n      damageSuppression?.weakness === true ||\n      seatRemovesWeakness(next, defenderSeat) ||\n      installedNoWeakness(next, defender)\n        ? null\n        : weaknessOf(attacker, defenderCard, weaknessRetype);",
+    replace: "    const weakness =\n      damageSuppression?.weakness === true || seatRemovesWeakness(next, defenderSeat)\n        ? null\n        : weaknessOf(attacker, defenderCard, weaknessRetype);",
     expectKilledBy: ["packages/engine/src/noWeaknessBar.test.ts"],
   },
   {
@@ -27677,8 +27685,11 @@ export const MUTANTS: Mutant[] = [
     decision: "D490",
     what: "⚠️ **THE PRINTED NOUN DROPPED FROM THE COUNT, so every milled card scores rather than the Energy among them.** `countFilter` is D488's field and an ABSENT one is deliberately *every uid in the slot* — which is what makes the omission SILENT rather than a type error, and the reason this row exists at all. Board A then deals 330 where the sentence deals 190. The two decks are milled correctly and only the number is wrong, so no zone assertion anywhere can see it.",
     file: "packages/engine/src/effects.ts",
-    find: "          count: \"discarded\",\n          countFilter: { kind: \"anyEnergy\" },\n        },\n      ];\n  }",
-    replace: "          count: \"discarded\",\n        },\n      ];\n  }",
+    // 🆕🆕🆕 D552 - RE-TRANSCRIBED off the bytes (D540): the `switch` gained a THIRD case after
+    //    this one, so the closing `  }` no longer follows the mill case; anchored on the new
+    //    case label instead. Same patch: the mill case drops its `countFilter`.
+    find: "          count: \"discarded\",\n          countFilter: { kind: \"anyEnergy\" },\n        },\n      ];\n    case \"selfHandAttach\":",
+    replace: "          count: \"discarded\",\n        },\n      ];\n    case \"selfHandAttach\":",
     expectKilledBy: [
       "packages/engine/src/eachDeckMillBoost.test.ts",
     ],
@@ -28610,8 +28621,11 @@ export const MUTANTS: Mutant[] = [
     //    legal printing, the case where a copied number is right BY ACCIDENT, so the constant was
     //    MEASURED off the live census (`SUBMAX=12`: reader 578/1632). The row leaves through the
     //    READER summand. `replace` is the GENUINE pre-slice value (D549's 1687).
-    find: "  attack: 1688,",
-    replace: "  attack: 1687,",
+    // 🆕🆕🆕 D552 - RE-TRANSCRIBED AGAIN, 1688 -> 1690 (and the replace 1687 -> 1688). ⚠️ THE STEP
+    //    IS **2** AND SO IS THE SENTENCE STEP - `:569` and `:629` are 1 printing each, so the two
+    //    agree a third slice running; MEASURED off the live census anyway (D426/D451).
+    find: "  attack: 1690,",
+    replace: "  attack: 1688,",
     expectKilledBy: [
       "packages/engine/src/censusAtHead.test.ts",
     ],
@@ -29366,8 +29380,9 @@ export const MUTANTS: Mutant[] = [
     //    is `D547-record-version-not-bumped`, killed by the engine suites' raw pins.
     // 🆕🆕🆕 D548 - RE-TRANSCRIBED off the new bytes (31 -> 32), the same step down by one.
     // 🆕🆕🆕 D549 - RE-TRANSCRIBED off the new bytes (32 -> 33), the same step down by one.
-    find: "export const MATCH_RECORD_VERSION = 33;\n",
-    replace: "export const MATCH_RECORD_VERSION = 32;\n",
+    // 🆕🆕🆕 D552 - RE-TRANSCRIBED off the new bytes (33 -> 34), the same step down by one.
+    find: "export const MATCH_RECORD_VERSION = 34;\n",
+    replace: "export const MATCH_RECORD_VERSION = 33;\n",
     expectKilledBy: ["apps/api/src/lobby/match.test.ts"],
   },
   // ────────────────────────────────────────────────────────────────────────────
@@ -29535,8 +29550,11 @@ export const MUTANTS: Mutant[] = [
     decision: "D502",
     what: "🛑 C16 — `recordSlotOf` NAMES `drawCards` WHERE IT MEANT `searchDeck`, which is the slip an author makes reaching for the wrong recording op (`drawCards` carries a `recordAs` and is NOT in this list — checked). The omission is SILENT in exactly the way D206 named when it added `switchActive` as the sixth recorder: `withConsequence` simply drops the clause and the dialog describes half the card. 🛑 AND THE REGION HAD **ZERO MUTANT ROWS** BEFORE THIS ONE — a shipped seven-op list, span-audited against all 2,464 pre-existing rows, intersected by none (D452/D495: a family with no rows is indistinguishable from a family that passes).",
     file: "packages/engine/src/interpreter.ts",
-    find: "    op.op === \"searchDeck\"\n    ? op.recordAs",
-    replace: "    op.op === \"drawCards\"\n    ? op.recordAs",
+    // 🆕🆕🆕 D552 - RE-TRANSCRIBED off the bytes (D540): `searchDeck` is no longer the LAST
+    //    disjunct (D552 enrolled `attachFromHand` after it), so the anchor is its own line with
+    //    the `||` that now follows it. Same patch: the search is swapped for a non-recorder.
+    find: "    op.op === \"searchDeck\" ||\n",
+    replace: "    op.op === \"drawCards\" ||\n",
     expectKilledBy: ["packages/engine/src/derivedBenchSearchMove.test.ts"],
   },
   {
@@ -29604,7 +29622,7 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D503-effect-reader-claims-the-pre-damage-tail",
     decision: "D503",
-    what: "🛑🛑 C1 — **THE CHEAP ROAD, PLANTED.** `deriveAttackEffect` is taught the printed TAIL of `censusAttackCorpus.ts` file line 569 with `attachFromHand` — the neighbouring arm's REAL op, copied verbatim off the shipped 4-printing sibling (D211's shape). One arm, and `splitAttackTrailingClause` composes the WHOLE printed sentence for free, because D445's admission predicate (head claimed by any reader + tail claimed by `deriveAttackEffect`) is SATISFIED by this compound. `BUILT.attack` steps, the residue falls by one and every census in the repo reports SUCCESS. 🛑 THE PROGRAM IT SHIPS WAS DRIVEN ON A REAL BOARD AT D503's HEAD AND IT IS WRONG: `ATTACK_DECLARED → DAMAGE_DEALT { scaled: 60 } → EFFECT_PENDING` — the damage is dealt off the PRE-attach board and the attach parks afterwards, so the printed *'Before doing damage'* is inverted and the attachment contributes nothing to the number it exists to raise (correct answer on that board: 210). D485's rule at a TIMING clause rather than at an anaphor, and D190b/D199 at the instrument layer. ⚠️ `censusAtHead.test.ts` CATCHES IT TOO and is deliberately NOT named, so a kill proves the TRIPWIRE discriminates rather than the census (D453/D498).",
+    what: "🛑🛑 C1 — **THE CHEAP ROAD, PLANTED.** `deriveAttackEffect` is taught the printed TAIL of `censusAttackCorpus.ts` file line 569 with `attachFromHand` — the neighbouring arm's REAL op, copied verbatim off the shipped 4-printing sibling (D211's shape). One arm, and `splitAttackTrailingClause` composes the WHOLE printed sentence for free, because D445's admission predicate (head claimed by any reader + tail claimed by `deriveAttackEffect`) is SATISFIED by this compound. `BUILT.attack` steps, the residue falls by one and every census in the repo reports SUCCESS. 🛑 THE PROGRAM IT SHIPS WAS DRIVEN ON A REAL BOARD AT D503's HEAD AND IT IS WRONG: `ATTACK_DECLARED → DAMAGE_DEALT { scaled: 60 } → EFFECT_PENDING` — the damage is dealt off the PRE-attach board and the attach parks afterwards, so the printed *'Before doing damage'* is inverted and the attachment contributes nothing to the number it exists to raise (correct answer on that board: 210). D485's rule at a TIMING clause rather than at an anaphor, and D190b/D199 at the instrument layer. ⚠️ `censusAtHead.test.ts` CATCHES IT TOO and is deliberately NOT named, so a kill proves the TRIPWIRE discriminates rather than the census (D453/D498). 🆕🆕🆕 D552 — `:569` IS BUILT, by `deriveAttackDiscardScaledBoost`'s `selfHandAttach` (attach-then-damage INSIDE the program), and this row's claim STANDS unchanged: `deriveAttackEffect` must still never claim the printed tail, or the splitter composes a SECOND, wrong program for the same sentence.",
     file: "packages/engine/src/effects.ts",
     find: "export function deriveAttackEffect(text: string): EffectOp[] | null {",
     replace: "export function deriveAttackEffect(text: string): EffectOp[] | null {\n  if (\n    text.trim() ===\n    \"Before doing damage, you may attach any number of Basic {W} Energy cards from your hand to this Pokémon.\"\n  ) {\n    return [{ op: \"attachFromHand\", filter: { kind: \"basicEnergy\", energyType: \"Water\" } }];\n  }",
@@ -29613,7 +29631,7 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D503-pre-damage-reader-claims-the-compound",
     decision: "D503",
-    what: "🛑 C2 — **THE OTHER CHEAP ROAD: the pre-damage reader claims the printed COMPOUND and answers with the nearest shipped member.** `discardOpponentActiveTools` is row 73's REAL return value, three lines down (D211: a neighbouring arm's real code). Under it the printed sentence resolves a TOOL DISCARD on the opponent's Active, `effectSimulated` goes true, `ATTACK_EFFECT_SKIPPED` stops firing, and a card that should attach Energy to its own body strips a Tool across the table instead — the sentence marked BUILT while doing something else entirely. ⚠️ It is killed by the POPULATION rung rather than by a board (D423): `deriveAttackPreDamage` claims exactly 4 corpus sentences / 8 printings and none of them scales, which is the fact the whole refusal rests on and the fact a successor who builds this row must move on purpose.",
+    what: "🛑 C2 — **THE OTHER CHEAP ROAD: the pre-damage reader claims the printed COMPOUND and answers with the nearest shipped member.** `discardOpponentActiveTools` is row 73's REAL return value, three lines down (D211: a neighbouring arm's real code). Under it the printed sentence resolves a TOOL DISCARD on the opponent's Active, `effectSimulated` goes true, `ATTACK_EFFECT_SKIPPED` stops firing, and a card that should attach Energy to its own body strips a Tool across the table instead — the sentence marked BUILT while doing something else entirely. ⚠️ It is killed by the POPULATION rung rather than by a board (D423): `deriveAttackPreDamage` claims exactly 4 corpus sentences / 8 printings and none of them scales, which is the fact the whole refusal rests on and the fact a successor who builds this row must move on purpose. 🆕🆕🆕 D552 — `:569` is BUILT one reader over (`selfHandAttach`); the pre-damage reader must still refuse it, and §5's population rung still kills this.",
     file: "packages/engine/src/effects.ts",
     find: "export function deriveAttackPreDamage(text: string): AttackPreDamage | null {",
     replace: "export function deriveAttackPreDamage(text: string): AttackPreDamage | null {\n  if (\n    text.trim() ===\n    \"This attack does 30 damage for each {W} Energy attached to this Pokémon. Before doing damage, you may attach any number of Basic {W} Energy cards from your hand to this Pokémon.\"\n  ) {\n    return { kind: \"discardOpponentActiveTools\" };\n  }",
@@ -29622,7 +29640,7 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D503-hand-attach-note-promises-the-printed-narrowing",
     decision: "D503",
-    what: "⚠️ C3 — **THE CAPTION PROMISES THE NARROWING THE OP CANNOT HONOUR.** `attachFromHandNote`'s destination phrase becomes the printed *'to this Pokémon'* of `censusAttackCorpus.ts` file line 569 — which is exactly what a D503 builder reaching for the destination axis writes FIRST, because the caption is the one place the phrase can be spelled without an op field. Every board stays byte-identical: the prompt still offers the controller's WHOLE board and the answer still spreads across it, so nothing but the dialog is wrong, and it is wrong in the direction that costs a player a decision (D421/D456: the test is not whether the row is stilted but whether it asserts something this path makes untrue). 🛑 `attachFromHandNote` HAD ZERO MUTANT ROWS INTERSECTING IT BY SPAN before this one (measured over all 2,486 rows at D503's head) while being driven since D247 — D474's DRIVEN-BUT-UNPINNED, so the killer is the suite that already discriminates rather than a new one.",
+    what: "⚠️ C3 — **THE CAPTION PROMISES THE NARROWING THE OP CANNOT HONOUR.** `attachFromHandNote`'s destination phrase becomes the printed *'to this Pokémon'* of `censusAttackCorpus.ts` file line 569 — which is exactly what a D503 builder reaching for the destination axis writes FIRST, because the caption is the one place the phrase can be spelled without an op field. Every board stays byte-identical: the prompt still offers the controller's WHOLE board and the answer still spreads across it, so nothing but the dialog is wrong, and it is wrong in the direction that costs a player a decision (D421/D456: the test is not whether the row is stilted but whether it asserts something this path makes untrue). 🛑 `attachFromHandNote` HAD ZERO MUTANT ROWS INTERSECTING IT BY SPAN before this one (measured over all 2,486 rows at D503's head) while being driven since D247 — D474's DRIVEN-BUT-UNPINNED, so the killer is the suite that already discriminates rather than a new one. 🆕🆕🆕 D552 — *'the narrowing the op cannot honour'* IS WITHDRAWN (D539): `attachFromHand` carries `toSelf` now and `attachFromHandNote` has a `toSelf` branch that says exactly *'to this Pokémon'*. The row still pins D247's BARE caption, whose board still offers the whole side, so the patch is still a lie on that board and is still killed there — byte-stable find and replace.",
     file: "packages/engine/src/interpreter.ts",
     find: "  return `Attach any number of ${retrieveNoun(op.filter).plural} from your hand to your ${attachTargetNoun({})} in any way you like.`;",
     replace: "  return `Attach any number of ${retrieveNoun(op.filter).plural} from your hand to this Pokémon.`;",
@@ -29631,7 +29649,7 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D503-hand-offer-narrows-the-destination",
     decision: "D503",
-    what: "🛑 C4 — **THE OFFER'S UN-NARROWED RIDERS, WHICH NOTHING PINNED.** `attachFromHandOffer` hands `attachEnergyTargets` an EMPTY rider object, and that empty object is the whole reason the printed *'to this Pokémon'* is unbuildable on this op — `AttachTargetRiders` carries `targetType`/`basicOnly`/`ownerPokemon`/`benchOnly`/`bonusCounters`/`notIfKO` and NO self flag, so the only spatial narrowing available is the one that points the wrong way. This row installs it: `benchOnly: true` is D263's Dynamotor rider, real shipped code, and under it the controller's ACTIVE falls out of the offer entirely. ⚠️ THE ROW IS HONEST ABOUT ITS DIRECTION — D503's print names the Active and this narrows to the Bench; what it pins is that the offer is UN-NARROWED AT ALL, which is the fact the refusal's destination branch rests on. The two shipped rows in this function's span (`D247-hand-offer-caps-at-one`, `D247-hand-offer-reads-the-deck`) are about the cap and the zone and neither can see the riders.",
+    what: "🛑 C4 — **THE OFFER'S UN-NARROWED RIDERS, WHICH NOTHING PINNED.** `attachFromHandOffer` hands `attachEnergyTargets` an EMPTY rider object, and that empty object is the whole reason the printed *'to this Pokémon'* is unbuildable on this op — `AttachTargetRiders` carries `targetType`/`basicOnly`/`ownerPokemon`/`benchOnly`/`bonusCounters`/`notIfKO` and NO self flag, so the only spatial narrowing available is the one that points the wrong way. This row installs it: `benchOnly: true` is D263's Dynamotor rider, real shipped code, and under it the controller's ACTIVE falls out of the offer entirely. ⚠️ THE ROW IS HONEST ABOUT ITS DIRECTION — D503's print names the Active and this narrows to the Bench; what it pins is that the offer is UN-NARROWED AT ALL, which is the fact the refusal's destination branch rests on. The two shipped rows in this function's span (`D247-hand-offer-caps-at-one`, `D247-hand-offer-reads-the-deck`) are about the cap and the zone and neither can see the riders. 🆕🆕🆕 D552 — *'that empty object is the whole reason the printed to this Pokémon is unbuildable on this op'* IS WITHDRAWN (D539): the op carries `toSelf` and the offer resolves it through `sourceRef` in an EARLY RETURN above this line, which is why this row's find (D247's un-narrowed return) is byte-stable. It still pins that D247's offer is UN-NARROWED.",
     file: "packages/engine/src/interpreter.ts",
     find: "  return { candidates, targets: attachEnergyTargets(state, seat, {}), max: candidates.length };",
     replace: "  return { candidates, targets: attachEnergyTargets(state, seat, { benchOnly: true }), max: candidates.length };",
@@ -34712,11 +34730,14 @@ export const MUTANTS: Mutant[] = [
     //    the doc tail that is ABOVE the constant today (D548's last two lines) and the patch
     //    drops the constant TWO steps, to D547's pre-bump 30 — a different patch from
     //    `D548-record-version-not-bumped` (one step, same anchor).
-    find: "    projection or client byte: the side lock reaches every `playable` through\n    `attackLocked`, and the tax reaches every cost through the two cost functions. */\nexport const MATCH_RECORD_VERSION = 33;",
+    // 🆕🆕🆕 D552 - RE-ANCHORED AGAIN off the bytes (D540): D552's SEVENTH POSITION now sits
+    //    between D549's doc tail and the constant, so the anchor is D552's last two lines and the
+    //    patch drops the constant FOUR steps, to D547's pre-bump 30.
+    find: "    schema, redact, projection or client byte: the wire does not carry a body's Weakness,\n    so the HUD does not show a retype (a carried display debt, decisions.md D552). */\nexport const MATCH_RECORD_VERSION = 34;",
     // 🆕🆕🆕 D549 - RE-ANCHORED AGAIN off the bytes (D540): D549's block now sits between
     //    D548's doc tail and the constant, so the anchor is D549's last two lines and the
     //    patch drops the constant THREE steps, to D547's pre-bump 30.
-    replace: "    projection or client byte: the side lock reaches every `playable` through\n    `attackLocked`, and the tax reaches every cost through the two cost functions. */\nexport const MATCH_RECORD_VERSION = 30;",
+    replace: "    schema, redact, projection or client byte: the wire does not carry a body's Weakness,\n    so the HUD does not show a retype (a carried display debt, decisions.md D552). */\nexport const MATCH_RECORD_VERSION = 30;",
     expectKilledBy: ["packages/engine/src/attackFlipLock.test.ts"],
   },
   // ── D548 — CRESCENT PURGE, THE FACE-UP PRIZE. 18 rows, all probed UNDECLARED first
@@ -34880,11 +34901,13 @@ export const MUTANTS: Mutant[] = [
     decision: "D548",
     what: "🛑 **`MATCH_RECORD_VERSION` STAYS 31 WHILE `PlayerSide.faceUpPrizes` LANDS REQUIRED** — this deploy accepts a v31 record with no key, and every projection (`redactedSideOf`) and every prize take (`resolveTakePrizes`) THROWS on it (D326's class). A different experiment from `D326-`/`D501-`/`D547-record-version-not-bumped` (D484): it asserts D548 itself, anchored on D548's own doc tail. Killed by `crescentPurge.test.ts` §11's raw pin (and `match.test.ts`).",
     file: "apps/api/src/lobby/match.ts",
-    find: "    projection or client byte: the side lock reaches every `playable` through\n    `attackLocked`, and the tax reaches every cost through the two cost functions. */\nexport const MATCH_RECORD_VERSION = 33;",
+    // 🆕🆕🆕 D552 - RE-ANCHORED off the bytes onto D552's doc tail; the patch drops the
+    //    constant THREE steps, to D548's pre-bump 31.
+    find: "    schema, redact, projection or client byte: the wire does not carry a body's Weakness,\n    so the HUD does not show a retype (a carried display debt, decisions.md D552). */\nexport const MATCH_RECORD_VERSION = 34;",
     // 🆕🆕🆕 D549 - RE-ANCHORED off the bytes onto D549's doc tail; the patch drops the
     //    constant TWO steps, to D548's pre-bump 31 (a different patch from
     //    `D549-record-version-not-bumped`, one step, same anchor).
-    replace: "    projection or client byte: the side lock reaches every `playable` through\n    `attackLocked`, and the tax reaches every cost through the two cost functions. */\nexport const MATCH_RECORD_VERSION = 31;",
+    replace: "    schema, redact, projection or client byte: the wire does not carry a body's Weakness,\n    so the HUD does not show a retype (a carried display debt, decisions.md D552). */\nexport const MATCH_RECORD_VERSION = 31;",
     expectKilledBy: ["packages/engine/src/crescentPurge.test.ts", "apps/api/src/lobby/match.test.ts"],
   },
   // ── 🆕🆕🆕 D549 — THE DEFENDER'S NEXT-TURN MARKS AND THE SIDE-WIDE ATTACK LOCK (`censusAttackCorpus.ts`
@@ -35357,8 +35380,11 @@ export const MUTANTS: Mutant[] = [
     decision: "D549",
     what: "🛑 **`MATCH_RECORD_VERSION` STAYS 32 WHILE THREE REQUIRED FIELDS LAND** (`costTaxTurn`, `koBounty`, `sideAttackLock`) — this deploy accepts a v32 record, and every declaration and the turn player's every projection THROW on its missing side record (D326's class). Killed by the engine suites' raw pins and match.test.",
     file: "apps/api/src/lobby/match.ts",
-    find: "    projection or client byte: the side lock reaches every `playable` through\n    `attackLocked`, and the tax reaches every cost through the two cost functions. */\nexport const MATCH_RECORD_VERSION = 33;",
-    replace: "    projection or client byte: the side lock reaches every `playable` through\n    `attackLocked`, and the tax reaches every cost through the two cost functions. */\nexport const MATCH_RECORD_VERSION = 32;",
+    // 🆕🆕🆕 D552 - RE-ANCHORED off the bytes onto D552's doc tail; the patch drops the
+    //    constant TWO steps, to D549's pre-bump 32 (a different patch from
+    //    `D552-record-version-not-bumped`, one step, same anchor).
+    find: "    schema, redact, projection or client byte: the wire does not carry a body's Weakness,\n    so the HUD does not show a retype (a carried display debt, decisions.md D552). */\nexport const MATCH_RECORD_VERSION = 34;",
+    replace: "    schema, redact, projection or client byte: the wire does not carry a body's Weakness,\n    so the HUD does not show a retype (a carried display debt, decisions.md D552). */\nexport const MATCH_RECORD_VERSION = 32;",
     expectKilledBy: ["packages/engine/src/sideAttackLock.test.ts", "apps/api/src/lobby/match.test.ts"],
   },
   {
@@ -35600,5 +35626,328 @@ export const MUTANTS: Mutant[] = [
     find: "            imageUrl: face.card.imageUrl,",
     replace: "            imageUrl: backImageUrl,",
     expectKilledBy: ["src/features/playmat/utils/cardDescriptors.test.ts", "src/features/playmat/PrizeGrid.faceUp.dom.test.tsx"],
+  },
+  // ── 🆕🆕🆕 D552 — THE PRE-DAMAGE SELF ATTACH BEHIND A MULTIPLIER HEAD (`censusAttackCorpus.ts` :569)
+  //    AND THE WEAKNESS RETYPE (:629, the rider on the record bump). Every row was probed
+  //    UNDECLARED first (D525(3)). `D552-hand-apply-drops-the-record` is the row `tsc` cannot see
+  //    AND the rollback THE SEVENTH POSITION drives; `D552-main-hit-retype-not-read` is the
+  //    retype's rollback. `D552-recordslot-drops-the-hand-attach` and `D552-dead-end-files-nothing`
+  //    are killed by CONSTRUCTED rungs, said so in their `what`. The brief's `slice(0, 1)`-dropped
+  //    row (retype EVERY printed entry) is EQUIVALENT by construction (the first entry still
+  //    matches first) and is NOT declared (D467). ──
+  {
+    id: "D552-hand-apply-drops-the-record",
+    decision: "D552",
+    what: "🛑 C1 — **THE ROW `tsc` CANNOT SEE, AND THE ROLLBACK ITSELF.** The hand attach's apply arm stops filing `recordAs`: the chosen Basic {W} Energy ARE attached, the `moved` slot is never written, and `:569`'s `damageDefender` counts an empty slot — 60 where the printed card deals 210, with the five Energy on the body. This is byte for byte what a v33 deploy computes on a v34 record parked here (HEAD's arm had no `recordMoved`), which is why it is THE SEVENTH POSITION's red-capable proof. Killed by `selfHandAttachBoost.test.ts` §4/§5.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      const attached = attachFromZoneApply(state, choice.assignments, \"hand\", ctx, events);\n      recordMoved(record, op.recordAs, attached.attached);\n",
+    replace: "      const attached = attachFromZoneApply(state, choice.assignments, \"hand\", ctx, events);\n",
+    expectKilledBy: ["packages/engine/src/selfHandAttachBoost.test.ts"],
+  },
+  {
+    id: "D552-recordslot-drops-the-hand-attach",
+    decision: "D552",
+    what: "C2 — **D206's SILENT OMISSION, AT THE NINTH RECORDER.** `recordSlotOf` forgets `attachFromHand` (its disjunct swapped for `drawCards`, which carries `recordAs` but never parks), so a `recordGate` on `moved` behind the attach gets no caption — the dialog describes the attach and says nothing about what it buys. No printing pairs the two today, so it is killed by the CONSTRUCTED caption rung (`selfHandAttachBoost.test.ts` §5), labelled so.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "    op.op === \"attachFromHand\"\n    ? op.recordAs",
+    replace: "    op.op === \"drawCards\"\n    ? op.recordAs",
+    expectKilledBy: ["packages/engine/src/selfHandAttachBoost.test.ts"],
+  },
+  {
+    id: "D552-program-damages-before-the-attach",
+    decision: "D552",
+    what: "🛑 C3 — **THE ORDER SWAPPED: damage, THEN attach.** The hit reads an empty `moved` slot and deals the declaration-time head; the attach parks AFTER the damage — D503's refusal (*'the attachment contributes nothing to the number it exists to raise'*) rebuilt inside the new member. Killed by the program pin, the 210 board and the ENERGY_ATTACHED-before-DAMAGE_DEALT rung.",
+    file: "packages/engine/src/effects.ts",
+    find: "      return [\n        {\n          op: \"attachFromHand\",\n          filter: { kind: \"basicEnergy\", energyType: reading.energyType },\n          toSelf: true,\n          recordAs: \"moved\",\n        },\n        { op: \"damageDefender\", base, per: reading.per, count: \"moved\" },\n      ];",
+    replace: "      return [\n        { op: \"damageDefender\", base, per: reading.per, count: \"moved\" },\n        {\n          op: \"attachFromHand\",\n          filter: { kind: \"basicEnergy\", energyType: reading.energyType },\n          toSelf: true,\n          recordAs: \"moved\",\n        },\n      ];",
+    expectKilledBy: ["packages/engine/src/selfHandAttachBoost.test.ts"],
+  },
+  {
+    id: "D552-printed-base-not-the-declaration-head",
+    decision: "D552",
+    what: "🛑 C4 — **THE PRINTED DIGITS AS `base`.** attack.ts hands `discardScaledBoostProgram` the printed `base` (30) instead of the head evaluated at declaration (30 × W on self): 2 {W} + 5 attached deals 30 + 150 = 180, not 210 — the multiplier's own count silently replaced by the per-unit. Killed by the 210 and equals-the-head rungs.",
+    file: "packages/engine/src/attack.ts",
+    find: "      ...discardScaledBoostProgram(discardScaledBoost, discardScaledBase),",
+    replace: "      ...discardScaledBoostProgram(discardScaledBoost, base),",
+    expectKilledBy: ["packages/engine/src/selfHandAttachBoost.test.ts"],
+  },
+  {
+    id: "D552-head-counts-every-energy",
+    decision: "D552",
+    what: "C5 — **THE DECLARATION-TIME HEAD COUNTS EVERY ENERGY ON SELF, NOT THE PRINTED {W}.** `energyType: null` in the head's count source; on a board whose attacker carries only {W} it is invisible, so the suite fields a {R} on the attacker: 2 {W} + 1 {R}, attach 1 deals 120, not 90. Killed by the {R}-on-self rung.",
+    file: "packages/engine/src/attack.ts",
+    find: "            count: { kind: \"energyOnSelf\", energyType: discardScaledBoost.energyType },",
+    replace: "            count: { kind: \"energyOnSelf\", energyType: null },",
+    expectKilledBy: ["packages/engine/src/selfHandAttachBoost.test.ts"],
+  },
+  {
+    id: "D552-offer-ignores-toSelf",
+    decision: "D552",
+    what: "🛑 C6 — **THE OFFER DROPS ITS `toSelf` BRANCH** and falls through to D247's un-narrowed `attachEnergyTargets(state, seat, {})`: the prompt offers the Bench, and a player can put the {W} on a Benched body where it adds nothing to the printed count (and the validator accepts it). Killed by §3's sole-target rung.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  if (op.toSelf === true) {\n    return { candidates, targets: sourceRef(state, ctx), max: candidates.length };\n  }\n",
+    replace: "",
+    expectKilledBy: ["packages/engine/src/selfHandAttachBoost.test.ts"],
+  },
+  {
+    id: "D552-note-ignores-toSelf",
+    decision: "D552",
+    what: "C7 — **THE CAPTION DROPS ITS `toSelf` BRANCH**, so the dialog says *'to your Pokémon in any way you like'* over a prompt whose only target is the attacker — the dialog contradicting the validator (D421). Killed by §3's caption rung.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  if (op.toSelf === true) {\n    return `Attach any number of ${retrieveNoun(op.filter).plural} from your hand to this Pokémon.`;\n  }\n",
+    replace: "",
+    expectKilledBy: ["packages/engine/src/selfHandAttachBoost.test.ts"],
+  },
+  {
+    id: "D552-dead-end-files-nothing",
+    decision: "D552",
+    what: "C8 — **THE DEAD END STOPS FILING AN EMPTY ANSWER**, `attachFromDeck`'s rule dropped at the hand arm: a stale `moved` from an earlier writer survives into the count. Unreachable off `:569`'s program (nothing writes `moved` before it), so it is killed by the CONSTRUCTED dead-end rung (`runProgram` with a stale slot and no source body).",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      if (candidates.length === 0 || targets.length === 0 || max <= 0) {\n        recordMoved(record, op.recordAs, []);\n        return { done: state };\n      }\n      return {\n        park: { kind: \"attachCards\", candidates, targets, max, note: attachFromHandNote(op) },",
+    replace: "      if (candidates.length === 0 || targets.length === 0 || max <= 0) {\n        return { done: state };\n      }\n      return {\n        park: { kind: \"attachCards\", candidates, targets, max, note: attachFromHandNote(op) },",
+    expectKilledBy: ["packages/engine/src/selfHandAttachBoost.test.ts"],
+  },
+  {
+    id: "D552-reader-drops-the-guard",
+    decision: "D552",
+    what: "C9 — **D145's `>= 1` GUARD DROPPED.** A printed *'0 damage for each'* derives a member whose program parks an attach that buys nothing — a silent no-op where the loud `ATTACK_EFFECT_SKIPPED` path is the point. Killed by §1's printed-0 rung.",
+    file: "packages/engine/src/effects.ts",
+    find: "    return perEnergy < 1 ? null : { kind: \"selfHandAttach\", per: perEnergy, energyType: \"Water\" };",
+    replace: "    return { kind: \"selfHandAttach\", per: perEnergy, energyType: \"Water\" };",
+    expectKilledBy: ["packages/engine/src/selfHandAttachBoost.test.ts"],
+  },
+  {
+    id: "D552-anchor-reads-any-type",
+    decision: "D552",
+    what: "C10 — **THE LITERAL {W} WIDENED TO ANY BRACE CODE ON BOTH HALVES** (D121: one printing, so the type is a literal) while the member still reports Water — a {R} sentence nobody prints would derive a Water attach. Killed by §1's {R} rung.",
+    file: "packages/engine/src/effects.ts",
+    find: "  /^This attack does (\\d+) damage for each \\{W\\} Energy attached to this Pokémon\\. Before doing damage, you may attach any number of Basic \\{W\\} Energy cards from your hand to this Pokémon\\.$/;",
+    replace: "  /^This attack does (\\d+) damage for each \\{[A-Z]\\} Energy attached to this Pokémon\\. Before doing damage, you may attach any number of Basic \\{[A-Z]\\} Energy cards from your hand to this Pokémon\\.$/;",
+    expectKilledBy: ["packages/engine/src/selfHandAttachBoost.test.ts"],
+  },
+  {
+    id: "D552-member-reads-the-wrong-type",
+    decision: "D552",
+    what: "C11 — **THE MEMBER CARRIES THE WRONG TYPE** (`energyType: \"Fire\"`): the attach offers the hand's Basic {R} and the head counts {R} on self, so on a {W} board the offer is the decoy and the count is 0. Killed by §1's by-value rung and §3's candidate rung.",
+    file: "packages/engine/src/effects.ts",
+    find: "    return perEnergy < 1 ? null : { kind: \"selfHandAttach\", per: perEnergy, energyType: \"Water\" };",
+    replace: "    return perEnergy < 1 ? null : { kind: \"selfHandAttach\", per: perEnergy, energyType: \"Fire\" };",
+    expectKilledBy: ["packages/engine/src/selfHandAttachBoost.test.ts"],
+  },
+  {
+    id: "D552-program-attach-not-toSelf",
+    decision: "D552",
+    what: "🛑 C12 — **THE PROGRAM DROPS `toSelf`**: the op is D247's bare attach, so the park offers every own body *'in any way you like'* and Energy put on the Bench is filed in `moved` and PAID for by the hit although it is not *'attached to this Pokémon'*. Killed by the program pin and §3's sole-target rung.",
+    file: "packages/engine/src/effects.ts",
+    find: "          filter: { kind: \"basicEnergy\", energyType: reading.energyType },\n          toSelf: true,\n          recordAs: \"moved\",",
+    replace: "          filter: { kind: \"basicEnergy\", energyType: reading.energyType },\n          recordAs: \"moved\",",
+    expectKilledBy: ["packages/engine/src/selfHandAttachBoost.test.ts"],
+  },
+  {
+    id: "D552-retype-anchor-drops-the-reminder",
+    decision: "D552",
+    what: "C13 — **THE PRINTED REMINDER MADE OPTIONAL.** *'(The amount of Weakness doesn't change.)'* is the printed statement of the rule the op implements; an anchor that admits the bare first sentence derives a retype nobody prints. Killed by `weaknessRetype.test.ts` §1's whole-sentence rung.",
+    file: "packages/engine/src/effects.ts",
+    find: "is now \\{C\\}\\. \\(The amount of Weakness doesn['’]t change\\.\\)$/;",
+    replace: "is now \\{C\\}\\.(?: \\(The amount of Weakness doesn['’]t change\\.\\))?$/;",
+    expectKilledBy: ["packages/engine/src/weaknessRetype.test.ts"],
+  },
+  {
+    id: "D552-retype-arm-emits-the-wrong-type",
+    decision: "D552",
+    what: "C14 — **THE ARM WRITES `Water` FOR THE PRINTED {C}.** The record re-points Weakness at the wrong type: a {C} attacker is no longer super-effective and a {W} one is. Killed by §1's by-value rung and §3's numbers.",
+    file: "packages/engine/src/effects.ts",
+    find: "return [{ op: \"retypeDefenderWeakness\", type: \"Colorless\" }];",
+    replace: "return [{ op: \"retypeDefenderWeakness\", type: \"Water\" }];",
+    expectKilledBy: ["packages/engine/src/weaknessRetype.test.ts"],
+  },
+  {
+    id: "D552-retype-stamped-plus-one",
+    decision: "D552",
+    what: "🛑 C15 — **THE STAMP IS `state.turn + 1`** — live on the HOLDER's own turn, when nothing of the installer's can hit it: the printed ×2 silently never lands. Killed by §2's stamp rung and §3's T+2 numbers.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  const turn = state.turn + 2;\n  const existing = active.weaknessRetype;",
+    replace: "  const turn = state.turn + 1;\n  const existing = active.weaknessRetype;",
+    expectKilledBy: ["packages/engine/src/weaknessRetype.test.ts"],
+  },
+  {
+    id: "D552-retype-written-on-the-attacker",
+    decision: "D552",
+    what: "C16 — **THE WRITER RETYPES THE ACTOR's OWN ACTIVE** (`seat = ctx.seat`): the Defending Pokémon is untouched and the attacker's Weakness is re-pointed instead. Killed by §2's holder rung.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  const seat = otherSeat(ctx.seat);\n  const active = state.players[seat].active;\n  if (active === null) return state;\n  const uid = topUid(active);\n  if (uid === undefined) return state;\n  // §11 — checked BEFORE the idempotence early-return, `exposeDefender`'s ordering, so a\n  // refusal is announced even on an already-retyped body.",
+    replace: "  const seat = ctx.seat;\n  const active = state.players[seat].active;\n  if (active === null) return state;\n  const uid = topUid(active);\n  if (uid === undefined) return state;\n  // §11 — checked BEFORE the idempotence early-return, `exposeDefender`'s ordering, so a\n  // refusal is announced even on an already-retyped body.",
+    expectKilledBy: ["packages/engine/src/weaknessRetype.test.ts"],
+  },
+  {
+    id: "D552-retype-skips-the-refusal",
+    decision: "D552",
+    what: "C17 — **THE §11 REFUSAL DROPPED**: a Mist Energy on the Defending Pokémon no longer shields it from the retype. Killed by §6.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  // refusal is announced even on an already-retyped body.\n  if (effectRefused(state, seat, ctx, events)) return state;\n",
+    replace: "  // refusal is announced even on an already-retyped body.\n",
+    expectKilledBy: ["packages/engine/src/weaknessRetype.test.ts"],
+  },
+  {
+    id: "D552-retype-row-silent",
+    decision: "D552",
+    what: "C18 — **WEAKNESS_RETYPED NEVER FILED**: the record lands and nobody is told — the log says nothing while the next hit doubles. Killed by §2's row rung.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  events.push({ type: \"WEAKNESS_RETYPED\", seat, uid, weaknessType: type });\n",
+    replace: "",
+    expectKilledBy: ["packages/engine/src/weaknessRetype.test.ts"],
+  },
+  {
+    id: "D552-retype-reinstall-not-silent",
+    decision: "D552",
+    what: "C19 — **THE IDEMPOTENCE RETURN DROPPED**: a same-window re-install of the same type files a second row announcing a change that did not happen. Killed by §7 (constructed).",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  if (existing !== null && existing.turn === turn && existing.type === type) return state;\n",
+    replace: "",
+    expectKilledBy: ["packages/engine/src/weaknessRetype.test.ts"],
+  },
+  {
+    id: "D552-retype-keeps-the-old-type",
+    decision: "D552",
+    what: "C20 — **THE MERGE KEEPS THE OLD TYPE** (the early return ignores `type`): a different type on the same window is silently dropped. Killed by §7's replace rung (constructed).",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  if (existing !== null && existing.turn === turn && existing.type === type) return state;",
+    replace: "  if (existing !== null && existing.turn === turn) return state;",
+    expectKilledBy: ["packages/engine/src/weaknessRetype.test.ts"],
+  },
+  {
+    id: "D552-retype-reader-ignores-the-turn",
+    decision: "D552",
+    what: "🛑 C21 — **THE READER DROPS THE TURN COMPARE**: the retype is live forever — on T+4 the {C} hit is still ×2 and the {R} hit still not weak. Killed by §3's T+4 and reader rungs.",
+    file: "packages/engine/src/continuous.ts",
+    find: "  return installed === null || installed.turn !== state.turn ? null : installed.type;",
+    replace: "  return installed === null ? null : installed.type;",
+    expectKilledBy: ["packages/engine/src/weaknessRetype.test.ts"],
+  },
+  {
+    id: "D552-main-hit-retype-not-read",
+    decision: "D552",
+    what: "🛑 C22 — **THE MAIN HIT NEVER HANDS THE RETYPE TO `weaknessOf`** — the record is written, the row is logged, and the number does not move (D428's built-but-dead defect at the read end). Also exactly what a v33 ROLLBACK computes on a v34 record (THE SEVENTH POSITION). Killed by §3's T+2 numbers.",
+    file: "packages/engine/src/attack.ts",
+    find: "        : weaknessOf(attacker, defenderCard, weaknessRetype);",
+    replace: "        : weaknessOf(attacker, defenderCard);",
+    expectKilledBy: ["packages/engine/src/weaknessRetype.test.ts"],
+  },
+  {
+    id: "D552-snipe-retype-not-read",
+    decision: "D552",
+    what: "🛑 C23 — **THE SNIPE SITE NEVER READS THE RETYPE** (D432's one-sided build, at the retype): the main hit honours it and an op-borne hit on the Active (`snipeActive`) does not. Killed by §4's snipe rung, driven on its own board.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "    : weaknessOf(attacker.card, target.card, installedWeaknessRetypeOf(state, target.active));",
+    replace: "    : weaknessOf(attacker.card, target.card);",
+    expectKilledBy: ["packages/engine/src/weaknessRetype.test.ts"],
+  },
+  {
+    id: "D552-snipe-retype-reads-the-attacker",
+    decision: "D552",
+    what: "C24 — **THE SNIPE SITE READS THE ATTACKER's RECORD** instead of the target's — the attacker carries none, so the retype never lands there. Killed by §4's snipe rung.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "    : weaknessOf(attacker.card, target.card, installedWeaknessRetypeOf(state, target.active));",
+    replace: "    : weaknessOf(attacker.card, target.card, installedWeaknessRetypeOf(state, attacker.active));",
+    expectKilledBy: ["packages/engine/src/weaknessRetype.test.ts"],
+  },
+  {
+    id: "D552-retype-ignores-target-suppression",
+    decision: "D552",
+    what: "🛑 C25 — **R4 UNDONE**: the main hit reads the retype even when the attack 'isn't affected by any effects on your opponent's Active Pokémon', so the effect ON the defender still re-points its Weakness. Killed by §4's Shred rung (50 → 100).",
+    file: "packages/engine/src/attack.ts",
+    find: "    const weaknessRetype = suppressTargetEffects ? null : installedWeaknessRetypeOf(next, defender);",
+    replace: "    const weaknessRetype = installedWeaknessRetypeOf(next, defender);",
+    expectKilledBy: ["packages/engine/src/weaknessRetype.test.ts"],
+  },
+  {
+    id: "D552-retype-beats-the-null-paths",
+    decision: "D552",
+    what: "🛑 C26 — **R3 UNDONE**: a live retype is applied even when a null path says there is no Weakness step (the attack's own 'isn't affected by Weakness', Blooming Garden, D432's bar). Killed by §4's Clean Strike and bar rungs.",
+    file: "packages/engine/src/attack.ts",
+    find: "    const weakness =\n      damageSuppression?.weakness === true ||\n      seatRemovesWeakness(next, defenderSeat) ||\n      installedNoWeakness(next, defender)\n        ? null\n        : weaknessOf(attacker, defenderCard, weaknessRetype);",
+    replace: "    const weakness =\n      weaknessRetype !== null\n        ? weaknessOf(attacker, defenderCard, weaknessRetype)\n        : damageSuppression?.weakness === true ||\n            seatRemovesWeakness(next, defenderSeat) ||\n            installedNoWeakness(next, defender)\n          ? null\n          : weaknessOf(attacker, defenderCard, weaknessRetype);",
+    expectKilledBy: ["packages/engine/src/weaknessRetype.test.ts"],
+  },
+  {
+    id: "D552-cards-retype-keeps-the-printed-type",
+    decision: "D552",
+    what: "C27 — **`weaknessOf` TAKES THE RETYPE AND IGNORES IT** (the entry's type is kept): every site hands it the retype and every number stays printed. Killed by §3 and the unit rung.",
+    file: "packages/engine/src/cards.ts",
+    find: "    retype === null ? printed : printed.slice(0, 1).map((entry) => ({ ...entry, type: retype }));",
+    replace: "    retype === null ? printed : printed.slice(0, 1).map((entry) => ({ ...entry }));",
+    expectKilledBy: ["packages/engine/src/weaknessRetype.test.ts"],
+  },
+  {
+    id: "D552-cards-retype-changes-the-amount",
+    decision: "D552",
+    what: "🛑 C28 — **'The amount of Weakness doesn't change' IGNORED**: the retyped entry is always ×2, so a printed +20 becomes ×2. Killed by §3's +20 rung (70 → 100).",
+    file: "packages/engine/src/cards.ts",
+    find: "    retype === null ? printed : printed.slice(0, 1).map((entry) => ({ ...entry, type: retype }));",
+    replace: "    retype === null ? printed : printed.slice(0, 1).map((entry) => ({ ...entry, type: retype, value: \"×2\" }));",
+    expectKilledBy: ["packages/engine/src/weaknessRetype.test.ts"],
+  },
+  {
+    id: "D552-cards-retype-gives-a-weakness",
+    decision: "D552",
+    what: "⚠️ C29 — **R2 (UNRULED) READ THE OTHER WAY**: a defender that prints NO Weakness gains ×2 {C}. This is the reading R2 declines, installed so the rung that pins the choice goes red. Killed by §3's R2 rung.",
+    file: "packages/engine/src/cards.ts",
+    find: "    retype === null ? printed : printed.slice(0, 1).map((entry) => ({ ...entry, type: retype }));",
+    replace: "    retype === null\n      ? printed\n      : printed.length === 0\n        ? [{ type: retype, value: \"×2\" }]\n        : printed.slice(0, 1).map((entry) => ({ ...entry, type: retype }));",
+    expectKilledBy: ["packages/engine/src/weaknessRetype.test.ts"],
+  },
+  {
+    id: "D552-retreat-clear-dropped",
+    decision: "D552",
+    what: "C30 — **THE RETREAT CLEAR DROPPED** (`clearOnLeavingActive`): the retyped body retreats and keeps the record. Killed by §5's retreat rung.",
+    file: "packages/engine/src/turn.ts",
+    find: "    // Weakness type (retreat clear, D552 R5), and so is the forced half (`switchInto`).\n    weaknessRetype: null,\n",
+    replace: "    // Weakness type (retreat clear, D552 R5), and so is the forced half (`switchInto`).\n",
+    expectKilledBy: ["packages/engine/src/weaknessRetype.test.ts"],
+  },
+  {
+    id: "D552-evolve-clear-dropped",
+    decision: "D552",
+    what: "C31 — **THE EVOLVE CLEAR DROPPED** (`evolveOnto`): the evolved card inherits the retype, and at T+2 a {C} hit doubles on a body the victim evolved to escape it. Killed by §5's evolve rung (number and field).",
+    file: "packages/engine/src/types.ts",
+    find: "    // Weakness type — evolve clear, D552 R5).\n    weaknessRetype: null,\n",
+    replace: "    // Weakness type — evolve clear, D552 R5).\n",
+    expectKilledBy: ["packages/engine/src/weaknessRetype.test.ts"],
+  },
+  {
+    id: "D552-switch-clear-dropped",
+    decision: "D552",
+    what: "C32 — **THE FORCED-SWITCH CLEAR DROPPED** (`switchInto`): a gusted-out retyped body keeps the record on the Bench. Killed by §5's forced-switch rung.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "    // line up (a Switch on the turn in between is the victim's played line — D552 R5).\n    weaknessRetype: null,\n",
+    replace: "    // line up (a Switch on the turn in between is the victim's played line — D552 R5).\n",
+    expectKilledBy: ["packages/engine/src/weaknessRetype.test.ts"],
+  },
+  {
+    id: "D552-devolve-clear-dropped",
+    decision: "D552",
+    what: "C33 — **THE DEVOLVE CLEAR DROPPED** (`devolvedBodyOf`): the devolved card keeps the retype. Killed by §5's devolve rung (constructed).",
+    file: "packages/engine/src/interpreter.ts",
+    find: "    // story one line up (§10: a devolved body is a new Pokémon — D552 R5).\n    weaknessRetype: null,\n",
+    replace: "    // story one line up (§10: a devolved body is a new Pokémon — D552 R5).\n",
+    expectKilledBy: ["packages/engine/src/weaknessRetype.test.ts"],
+  },
+  {
+    id: "D552-retype-log-row-says-next-turn",
+    decision: "D552",
+    what: "C34 — **THE ROW SAYS 'next turn' IN THE VICTIM's VOICE** — false in the direction that costs the retreat that sheds it (D421; DAMAGE_VULNERABILITY_APPLIED's reason). Killed by §2's rendered-row rung.",
+    file: "packages/engine/src/log.ts",
+    find: "until the end of your opponent's next turn (the amount doesn't change)`,",
+    replace: "until the end of your next turn (the amount doesn't change)`,",
+    expectKilledBy: ["packages/engine/src/weaknessRetype.test.ts"],
+  },
+  {
+    id: "D552-record-version-not-bumped",
+    decision: "D552",
+    what: "🛑 C35 — **`MATCH_RECORD_VERSION` STAYS 33 WHILE THE SEVENTH POSITION LANDS** — this deploy accepts a v33 record, whose bodies lack `weaknessRetype` (every main hit that reads target effects THROWS, D326) and whose parks this deploy would resume correctly while a rollback would not. Anchored on D552's own doc tail, one step. Killed by the sixteen engine raw pins and `match.test.ts`.",
+    file: "apps/api/src/lobby/match.ts",
+    find: "    schema, redact, projection or client byte: the wire does not carry a body's Weakness,\n    so the HUD does not show a retype (a carried display debt, decisions.md D552). */\nexport const MATCH_RECORD_VERSION = 34;",
+    replace: "    schema, redact, projection or client byte: the wire does not carry a body's Weakness,\n    so the HUD does not show a retype (a carried display debt, decisions.md D552). */\nexport const MATCH_RECORD_VERSION = 33;",
+    expectKilledBy: ["apps/api/src/lobby/match.test.ts"],
   },
 ];

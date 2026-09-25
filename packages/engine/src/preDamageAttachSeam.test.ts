@@ -25,6 +25,17 @@ import {
 // D468's (*when a refusal survives its third re-litigation, stop writing the paragraph
 // better and spend the same effort on the assertion*).
 //
+// 🆕🆕🆕 **D552 — THE ROW IS BUILT, AND NOT THROUGH ANY OF THE THREE BRANCHES THIS FILE PRICED.**
+// `deriveAttackDiscardScaledBoost`'s third member `selfHandAttach` claims the compound WHOLE
+// and assembles ATTACH-THEN-DAMAGE INSIDE the program (`attachFromHand { toSelf, recordAs:
+// "moved" }` → `damageDefender { base: the head at DECLARATION, per: 30, count: "moved" }`),
+// D402/D403's shape: the hit is dealt AFTER the attach, so the Energy it adds IS counted
+// (`selfHandAttachBoost.test.ts`: 210 on D503's own board). The pre-damage hook is untouched
+// and still cannot park; the SEAM paragraph (3) below stays true of THAT route, and
+// "the whole refusal" is WITHDRAWN (D539) as a claim about the row. §2 and §6 are INVERTED
+// (D516), §4's tripwire and §5's population rungs STAND unchanged, §5b is annotated. The
+// "NOTHING HERE BUILDS ANYTHING" paragraph below is kept as D503's record (D178).
+//
 // 🛑 **NOTHING HERE BUILDS ANYTHING.** No reader, no anchor, no op, no op field, no
 // `FIXTURE_POOL` id, no `packages/schema` byte, no engine source at all. So (D496): the
 // residue does not move, `BUILT.attack` does not move, the census stands still, there is
@@ -187,10 +198,12 @@ describe("§1 the specimens come off the corpus", () => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("§2 build state, re-derived off the module surface", () => {
-  it("🛑 the printed compound is refused by ALL THIRTEEN readers and ALL FOUR splitters", () => {
+  // 🆕🆕🆕 D552 — INVERTED (D516): the compound is claimed by EXACTLY ONE reader now, the
+  // additive-fold reader's third member, and still by no splitter.
+  it("🛑 the printed compound is refused by ALL FOUR splitters — 🆕 D552: INVERTED, and claimed by exactly ONE reader of the thirteen", () => {
     expect(attackReaderSurface()).toHaveLength(13);
-    expect(claimants(PRINTED)).toEqual([]);
-    expect(resolvedByAnyReader(PRINTED)).toBe(false);
+    expect(claimants(PRINTED)).toEqual(["deriveAttackDiscardScaledBoost"]);
+    expect(resolvedByAnyReader(PRINTED)).toBe(true);
     expect(splitVerdicts(PRINTED)).toEqual({
       splitAttackRequirementClause: null,
       splitAttackCancelClause: null,
@@ -247,7 +260,7 @@ describe("§3 the axis lattice — the {W} filter is free, the PREFIX and the DE
     expect(claimants(narrowed)).toEqual([]);
   });
 
-  it("🛑 BUILT-BY-WEIGHT over the whole-sentence 2³: 0/1 · 0/3 · 0/3 · 0/1", () => {
+  it("🛑 BUILT-BY-WEIGHT over the whole-sentence 2³: 🆕 D552 1/1 · 0/3 · 0/3 · 0/1 (was 0/1 · 0/3 · 0/3 · 0/1)", () => {
     // D502's SIXTH lattice shape — empty at every weight, which is a claim about the
     // SEAM rather than about the axes. ⚠️ A Set, not an array (D502): a degenerate axis
     // would make the point set smaller than the bit set, and this table's is not.
@@ -268,7 +281,10 @@ describe("§3 the axis lattice — the {W} filter is free, the PREFIX and the DE
     }
     expect(points.size).toBe(8);
     expect(pointsByWeight).toEqual([1, 3, 3, 1]);
-    expect(builtByWeight).toEqual([0, 0, 0, 0]);
+    // 🆕🆕🆕 D552 — `1/1 · 0/3 · 0/3 · 0/1`: the PRINTED point (weight 0) is built, by a
+    // literal whole-sentence anchor (D121), and no neighbour is — which is the shape of a
+    // one-printing literal, not of an axis.
+    expect(builtByWeight).toEqual([1, 0, 0, 0]);
     // 🛑 AND THE TAIL'S OWN 2³ IS THE INFORMATIVE ONE: `0/1 · 0/3 · 1/3 · 1/1`. The one
     // built point at weight 2 keeps the printed `{W}`, which is what makes the FILTER
     // axis inert and the other two load-bearing.
@@ -360,6 +376,11 @@ describe("§5 the seam: no printed sentence needs a pre-damage reader AND a scal
   });
 });
 
+// 🆕🆕🆕 D552 — §5b's PINCER IS PAID, ANNOTATED RATHER THAN INVERTED: `attachFromHand` gained
+// `toSelf` (and `recordAs`), so it now CAN carry both halves — an unbounded batch aimed at one
+// named body. The two rungs below still hold as written because they pin the D247 and
+// Snorlax PROGRAMS, whose bytes are unchanged (neither new key is spelled there, D104); the
+// `toSelf` spelling is driven in `selfHandAttachBoost.test.ts` §2/§3.
 describe("§5b the destination pincer: two attach ops, neither with both halves of the print", () => {
   it("🛑 `attachFromHand` takes the unbounded count and carries NO destination", () => {
     const program = deriveAttackEffect(BARE_SIBLING);
@@ -390,7 +411,7 @@ describe("§5b the destination pincer: two attach ops, neither with both halves 
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("§6 every branch frees the SAME single row, so the fork was never a fork", () => {
-  it("🛑 all three branches have a SOLO payoff of 1 sentence / 1 printing — this one", () => {
+  it("🛑 🆕 D552: all three branches have a SOLO payoff of ZERO now — the row left the residue by a fourth route (was: 1 sentence / 1 printing each, this one)", () => {
     // The canonical residue predicate, copied VERBATIM from `censusAtHead.test.ts`
     // minus the registry summand, which none of these rows is in (D430: do not roll
     // your own instrument; where the list is not importable, copy the predicate).
@@ -411,14 +432,19 @@ describe("§6 every branch frees the SAME single row, so the fork was never a fo
     // (C) the scaling fold recomputed after the pre-damage hook.
     const branchC = residue.filter(([, t]) => /[Bb]efore doing damage/.test(t) && /for each/i.test(t));
 
+    // 🆕🆕🆕 D552 — INVERTED (D516): the row is BUILT, so it has LEFT the residue and every
+    // branch's solo payoff is now EMPTY — none of the three was the route taken (the
+    // attach-then-damage program, not a pre-damage park). A branch pattern that finds a
+    // residue row again reddens here, which is the point of keeping the rung.
     for (const [label, branch] of [
       ["A", branchA],
       ["B", branchB],
       ["C", branchC],
     ] as const) {
-      expect(branch.map(([, t]) => t), `branch ${label}`).toEqual([PRINTED]);
-      expect(branch.reduce((sum, [n]) => sum + n, 0), `branch ${label}`).toBe(1);
+      expect(branch.map(([, t]) => t), `branch ${label}`).toEqual([]);
+      expect(branch.reduce((sum, [n]) => sum + n, 0), `branch ${label}`).toBe(0);
     }
+    expect(residue.some(([, t]) => t === PRINTED)).toBe(false);
   });
 
   it("⚠️ and branch C moves ZERO shipped printings, which is what bounds its risk", () => {

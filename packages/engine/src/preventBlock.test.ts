@@ -1065,6 +1065,11 @@ describe("the gated PREVENT clause — the guard is SWEPT, not listed", () => {
     // (`attackFlipLock.test.ts` §10, `damageVulnerability.test.ts` §6).
     flipLockAttack: "blocked",
     exposeDefender: "blocked",
+    // 🆕🆕🆕 D552 — the WEAKNESS RETYPE is an effect of an attack done TO the Defending
+    // Pokémon (its Weakness is changed), so it is BLOCKED — asked on the defender's seat
+    // before the idempotence return, `exposeDefender`'s check verbatim, and DRIVEN below and
+    // in `weaknessRetype.test.ts`.
+    retypeDefenderWeakness: "blocked",
     // 🆕🆕🆕 D549 — the COST TAX and the KNOCK OUT BOUNTY are effects of an attack done TO
     // the Defending Pokémon, so both are BLOCKED (asked FIRST, before each installer's
     // early return — `costTax.test.ts` §7, `koBounty.test.ts` §8). The SIDE-WIDE lock is
@@ -1916,6 +1921,11 @@ describe("the gated PREVENT clause — the guard is SWEPT, not listed", () => {
     exposeDefender: {
       op: { op: "exposeDefender", amount: 50 },
       landed: (r) => p1Active(r.after)?.damageVulnerability != null,
+    },
+    // 🆕🆕🆕 D552 — the Weakness retype, `exposeDefender`'s holder: the evidence is the record.
+    retypeDefenderWeakness: {
+      op: { op: "retypeDefenderWeakness", type: "Colorless" },
+      landed: (r) => p1Active(r.after)?.weaknessRetype != null,
     },
     // 🆕🆕 D434 — the DELAYED counter placement. Classified `blocked` for the three
     // rows above it verbatim: it is an effect of an attack done TO the Defending

@@ -794,6 +794,17 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
         strong(cardName(state, event.uid)),
         plain(` takes ${event.amount} more damage from attacks during your opponent's next turn`),
       ]);
+    // 🆕🆕🆕 §8.5/§11 — the attack-installed WEAKNESS RETYPE (D552). VICTIM voice (`seat`
+    // owns the marked body), and therefore "your opponent's next turn", for
+    // DAMAGE_VULNERABILITY_APPLIED's reason one case up: the window ends with the
+    // INSTALLER's next turn (D421). The type is spelled as a word, never a brace code (D239).
+    case "WEAKNESS_RETYPED":
+      return row(event.seat, [
+        strong(cardName(state, event.uid)),
+        plain(
+          `'s Weakness is now ${event.weaknessType} until the end of your opponent's next turn (the amount doesn't change)`,
+        ),
+      ]);
     // 🆕🆕🆕 §8.2/§11 — the attack-installed COST TAX (D549). VICTIM voice (`seat` owns
     // the taxed body), and "next turn" IS true here, unlike the vulnerability one case
     // up: the tax's window is the HOLDER's own next turn (`state.turn + 1`). It names

@@ -354,6 +354,10 @@ describe("§1 — one sentence, three printings, and the family read to its edge
     // "Until the end of your NEXT turn" — a window on a continuous fact, with no
     // moment at which anything fires — so it belongs to the `noWeaknessTurn` family
     // and not to this one.
+    // 🆕🆕🆕 D552 — the row is BUILT, and "the `noWeaknessTurn` family" is WITHDRAWN as its
+    // home (D539): it is its OWN op and field (`retypeDefenderWeakness` →
+    // `InPlayPokemon.weaknessRetype`, `weaknessRetype.test.ts`), a RETYPE rather than a
+    // removal. The measurement this rung pins — a DURATION, not a schedule — is unchanged.
     const wider = legalAttackCorpus().filter(([, text]) => /end of/i.test(text));
     const extra = wider.map(([, text]) => text).filter((t) => !/at the end of/i.test(t));
     expect(extra).toEqual([
@@ -1119,7 +1123,7 @@ describe("§8 — the bump, and the soft landing it refuses", () => {
   });
 
   it("the engine version moved with the behaviour", () => {
-    expect(engineVersion).toBe("0.435.0");
+    expect(engineVersion).toBe("0.436.0");
   });
 });
 

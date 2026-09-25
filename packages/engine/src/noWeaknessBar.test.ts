@@ -72,7 +72,10 @@ import {
 const SENTENCE = "During your opponent's next turn, this Pokémon has no Weakness.";
 const VEIL = 0; // fix-nowk index 0 — the sentence
 const PLAIN = 1; // fix-nowk index 1 — the ONE-AXIS control: same cost, same damage, no effect
-const RETYPE = 2; // fix-nowk index 2 — a REAL unbuilt corpus sentence, the loud-path control
+// 🆕🆕🆕 D552 — index 2 was row 629 (the Weakness RETYPE), and row 629 is BUILT now, so the
+// loud-path witness was MOVED FIRST to a stable BLOCKED sentence (row 78, the copy-attack
+// family) and this constant renamed with it; see `fix-nowk`'s doc (testFixtures.ts).
+const LOUD = 2; // fix-nowk index 2 — a REAL BLOCKED corpus sentence, the loud-path control
 
 function find<T extends GameEvent["type"]>(
   events: GameEvent[],
@@ -188,14 +191,23 @@ describe("§1 — one sentence, three printings, and the family read to its edge
       // 🛑 THE ONE PRINTED NEAR-MISS IN THE WHOLE COLUMN, and it is a RETYPE rather
       // than a removal — a different duration, a different body AND a different verb.
       // It is what `fix-nowk` index 2 prints, so this suite's loud-path control is a
-      // real legal sentence rather than an invented one; and it is NOT the refusal
+      // real legal sentence rather than an invented one (🆕🆕🆕 D552: PRINTED — index 2
+      // now prints row 78, a BLOCKED copy-attack sentence, because this one is BUILT); and it is NOT the refusal
       // rung's near-miss, because a three-axis miss tests nothing about any of them
       // (D427). §2's near-misses vary one token each.
       "Until the end of your next turn, the Defending Pokémon's Weakness is now {C}. (The amount of Weakness doesn't change.)",
     ]);
     // …and the retype stays REFUSED, which is what keeps `fix-nowk` index 2 a
     // control rather than a second built sentence.
-    expect(resolvedByAnyReader(rest.map(([, t]) => t).sort()[1] as string)).toBe(false);
+    // 🆕🆕🆕 D552 — INVERTED (D516): the retype is BUILT now — by its OWN anchor and op
+    // (`DEFENDER_WEAKNESS_RETYPED` → `retypeDefenderWeakness`, `weaknessRetype.test.ts`),
+    // never by this suite's `SELF_NO_WEAKNESS` — so `fix-nowk` index 2 was re-pointed to a
+    // BLOCKED copy-attack sentence BEFORE this rung flipped. The two-row remainder above is
+    // unchanged: it is a fact about the printed WORDS, not about what is built.
+    expect(resolvedByAnyReader(rest.map(([, t]) => t).sort()[1] as string)).toBe(true);
+    expect(deriveAttackEffect(rest.map(([, t]) => t).sort()[1] as string)).toEqual([
+      { op: "retypeDefenderWeakness", type: "Colorless" },
+    ]);
   });
 
   it("the apostrophe is U+0027 — MEASURED off the corpus row, not remembered", () => {
@@ -345,7 +357,9 @@ describe("§3 — what the install writes, and what it announces", () => {
     // reddens; if the new arm had not landed, the rung above does.
     const built = mustApply(armed("p1", "fix-bolt"), { type: "attack", seat: "p1", index: VEIL });
     expect(count(built.events, "ATTACK_EFFECT_SKIPPED")).toBe(0);
-    const loud = mustApply(armed("p1", "fix-bolt"), { type: "attack", seat: "p1", index: RETYPE });
+    // 🆕🆕🆕 D552 — `LOUD` (row 78, BLOCKED copy-attack) where this read `RETYPE` (row 629,
+    // now BUILT); the rung's claim is unchanged.
+    const loud = mustApply(armed("p1", "fix-bolt"), { type: "attack", seat: "p1", index: LOUD });
     expect(count(loud.events, "ATTACK_EFFECT_SKIPPED")).toBe(1);
     // …and the one-axis control emits neither, because it prints no sentence at all.
     const plain = mustApply(armed("p1", "fix-bolt"), { type: "attack", seat: "p1", index: PLAIN });
@@ -681,7 +695,7 @@ describe("§8 — the bump, and the soft landing it refuses", () => {
   });
 
   it("the engine version moved with the behaviour", () => {
-    expect(engineVersion).toBe("0.435.0");
+    expect(engineVersion).toBe("0.436.0");
   });
 });
 

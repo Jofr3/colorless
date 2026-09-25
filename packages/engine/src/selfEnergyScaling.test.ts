@@ -167,7 +167,15 @@ const SPECIAL_DRAW =
   "This attack does 70 damage for each Special Energy card attached to this Pokémon.";
 /** ⚠️ THE TWO-SENTENCE ROW — 1 LEGAL printing, and NOT buildable. Its second
     sentence ATTACHES Energy before damage, which is the one thing in this family
-    that could make "read at DECLARATION" observable; the anchor refuses it. */
+    that could make "read at DECLARATION" observable; the anchor refuses it.
+
+    🆕🆕🆕 **D552 — "NOT buildable" IS WITHDRAWN (D539): it is BUILT, and NOT by this
+    family's anchor**, which still refuses it (the rungs below stand). The WHOLE row is
+    claimed by `deriveAttackDiscardScaledBoost`'s third member `selfHandAttach`, which
+    passes the head evaluated at DECLARATION as the hit's `base` and adds `per × moved`
+    for what the printed attach filed — so the declaration-time read this file pins is
+    kept, and the mid-attack Energy is counted separately, inside the program
+    (`selfHandAttachBoost.test.ts`). */
 const ATTACH_THEN_DRAW =
   "This attack does 30 damage for each {W} Energy attached to this Pokémon. Before doing damage, you may attach any number of Basic {W} Energy cards from your hand to this Pokémon.";
 /** Entei sv03-030 "Blaze Ball" — the real card that used to be the unsimulated-"+"
@@ -293,7 +301,11 @@ describe("the fixture pool — swept first, and this time it was NOT empty", () 
       ([id, card]) =>
         !mine.has(id) && (card.attacks ?? []).some((a) => sentences.includes(a.effect ?? "")),
     );
-    expect(carriers.map(([id]) => id)).toEqual(["sv03-030"]);
+    // 🆕🆕🆕 D552 — A SECOND carrier, and it is DELIBERATE: `fix-tideattach` (index 0) prints
+    // `ATTACH_THEN_DRAW` (`censusAttackCorpus.ts:569`) so `programWalk.test.ts` sweeps the new
+    // `selfHandAttach` program. No double answer: the whole sentence is claimed by ONE reader
+    // (`deriveAttackDiscardScaledBoost`), which is what this sweep exists to protect.
+    expect(carriers.map(([id]) => id)).toEqual(["sv03-030", "fix-tideattach"]);
     // …and it is BLAZE_BALL specifically, at index 0 — named so a later slice that
     // changes which sentence Entei carries cannot satisfy this by accident.
     expect(FIXTURE_POOL["sv03-030"]?.attacks?.[0]?.effect).toBe(BLAZE_BALL);
@@ -600,6 +612,13 @@ describe("deriveAttackDamageBonus / …Multiplier — the two new members", () =
     expect(deriveAttackDamageMultiplier(ATTACH_THEN_DRAW)).toBeNull();
     expect(deriveAttackDamageBonus(ATTACH_THEN_DRAW)).toBeNull();
     expect(ATTACH_THEN_DRAW.split(". ").length).toBe(2);
+    // 🆕🆕🆕 D552 — RE-POINTED (D516): the refusal above is still THIS family's, and the
+    // row is claimed WHOLE one reader over.
+    expect(deriveAttackDiscardScaledBoost(ATTACH_THEN_DRAW)).toEqual({
+      kind: "selfHandAttach",
+      per: 30,
+      energyType: "Water",
+    });
   });
 });
 
@@ -888,6 +907,11 @@ describe("the FOLD's position in §8.5 — pre-W/R, witnessed and pinned", () =>
     // declaration-time and damage-time counts really would differ. The
     // whole-sentence anchor refuses it, so the engine never has to answer, and the
     // refusal is therefore load-bearing rather than incidental.
+    // 🆕🆕🆕 D552 — "the engine never has to answer" IS WITHDRAWN (D539): the row is BUILT
+    // by `deriveAttackDiscardScaledBoost`'s `selfHandAttach`, which ANSWERS BOTH COUNTS —
+    // the declaration-time head as `base`, the mid-attack attach as `per × moved`. THIS
+    // anchor's refusal still stands and still matters: were the multiplier to claim the
+    // whole, the attached Energy would be dropped (the head is read at declaration).
     expect(deriveAttackDamageMultiplier(ATTACH_THEN_DRAW)).toBeNull();
     expect(ATTACH_THEN_DRAW).toContain("Before doing damage, you may attach");
   });
@@ -1232,7 +1256,7 @@ describe("the record-shape derivation, made rather than inherited", () => {
     ).toEqual({ per: 30, count: { kind: "energyOnSelf", zone: "board", energyType: "special" } });
   });
 
-  it("engineVersion is 0.435.0 and `manifest.version` agrees", () => {
+  it("engineVersion is 0.436.0 and `manifest.version` agrees", () => {
     // 🆕🆕 D459 — 0.357.0 → **0.358.0**, and the bump is owed for BEHAVIOUR and for
     // nothing else, which is the same shape D458's was: no op, no field, no prompt
     // key, no wire byte and no vocabulary diff moved, so a reader looking for one
@@ -1246,6 +1270,6 @@ describe("the record-shape derivation, made rather than inherited", () => {
     // forecast of "36 / 40" reproduced TO THE DIGIT — the first inherited figure in
     // this series to be checked and found right. This rung is the 37th assertion,
     // so a successor inherits 37 / 41 (D427's mechanism as arithmetic).
-    expect(engineVersion).toBe("0.435.0");
+    expect(engineVersion).toBe("0.436.0");
   });
 });

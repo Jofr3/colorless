@@ -621,6 +621,7 @@ describe("§6 — persistence, purity, and the property the export did not cost"
       "tools",
       "turnPlayed",
       "usedAttack",
+      "weaknessRetype", // 🆕🆕🆕 D552 (33 -> 34) — the Weakness retype record; the pin is on the HEAD's key set
     ]);
     // …and the refusal event's own key set, for the same reason.
     const prevented = find(refused.events, "ATTACK_EFFECT_PREVENTED");
@@ -684,6 +685,6 @@ describe("§7 — the version", () => {
     // `manifest.version`) plus `package.json`, the declaration and the mutant `find`.
     // The increment is this line — the pin being AUTHORED, which is the one D427 named
     // as the thing every note forgets.
-    expect(engineVersion).toBe("0.435.0");
+    expect(engineVersion).toBe("0.436.0");
   });
 });

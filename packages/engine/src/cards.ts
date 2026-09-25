@@ -732,9 +732,23 @@ function weakResModifier(
 }
 
 /** §8.5 Weakness: how the Defender's printed weakness modifies the damage
-    when it names any of the attacker's types. Null = not weak. */
-export function weaknessOf(attacker: Card, defender: Card): DamageModifier | null {
-  return weakResModifier(attacker, defender.weaknesses, { op: "multiply", amount: 2 });
+    when it names any of the attacker's types. Null = not weak.
+
+    🆕🆕🆕 D552 — `retype`, the type an attack-installed WEAKNESS RETYPE makes the
+    printed Weakness name (continuous.ts `installedWeaknessRetypeOf`; `null`/absent = the
+    printed card, which every caller before D552 means). "(The amount of Weakness
+    doesn't change.)": the FIRST printed entry keeps its VALUE and only its TYPE is
+    replaced, so a ×2 {R} Weakness becomes ×2 {C}. A defender that prints NO Weakness has
+    no amount to keep and stays not-weak (docs/decisions.md D552 R2, UNRULED). */
+export function weaknessOf(
+  attacker: Card,
+  defender: Card,
+  retype: string | null = null,
+): DamageModifier | null {
+  const printed = defender.weaknesses ?? [];
+  const entries =
+    retype === null ? printed : printed.slice(0, 1).map((entry) => ({ ...entry, type: retype }));
+  return weakResModifier(attacker, entries, { op: "multiply", amount: 2 });
 }
 
 /** §8.5 Resistance: how the Defender's printed resistance modifies the
