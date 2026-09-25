@@ -8405,6 +8405,27 @@ every other `bun` on the box. That is where the stray rows in earlier sidecars c
 D543's, `bun run dev` in D544's, `bun run dev --port 5173 --strictPort` in D546's. D547's sidecar, keyed with
 `-p`, carries exactly one row.
 
+### `git commit --amend` is refused in auto mode, so a landing writes its final message at the pick (D552 close-out)
+
+The D552 land workflow cherry-picked the parked `002e3e51` onto `main` as `b21418b9` and then planned to rewrite
+that commit's message in its ship step with `git commit --amend`. 🛑 **The auto-mode permission classifier refuses
+`git commit --amend`**, so the step stopped with the commit made, unpushed, and the sweep not launched. The commit
+already carried a correct message (byte-identical to the parked commit's, shorter than the one the step meant to
+write, with exactly one `Co-Authored-By` line), so the orchestrator pushed it as-is and launched the sweep by hand
+with D547's recipe above. Nothing was lost, but a stop between commit and launch is a stop in the loop.
+
+**The rules:**
+
+1. **Do not plan a landing around amend.** If the landed commit's message must differ from the parked one, write
+   it at the pick: `git cherry-pick --no-commit <sha>`, resolve and re-verify, then ONE plain `git commit -F <file>`
+   with the final message. The parked commit's own message is the default and is usually right.
+2. **When the stop comes after the commit exists, read the message before trying to rewrite it.** A title that
+   names the slice truthfully and exactly ONE `Co-Authored-By` trailer is a correct commit. A shorter message is not
+   a reason to rewrite history; ship it as it stands and put the fuller account in the close-out.
+3. **Rule 4 of *"Stage by listing what changed…"* (D512, above: *"then amend, re-verify, relaunch"*) assumes amend
+   is available.** Under auto mode it is not: kill the sweep as that rule says, then either ask the user to
+   approve the amend or land the fix as a second commit, and re-predict from the tree that commit leaves.
+
 
 ## Git / commits
 - Branch off `main` for non-trivial work; commit/push only when asked.
