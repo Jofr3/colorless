@@ -764,7 +764,13 @@ describe("D359 §6 — the ids this file rests on are real and locally seated", 
     // FIXTURE Special providing `{G}{G}` — the first `provides` row to spell one type
     // TWICE, and the only board on which a CARD count and a UNIT count disagree under a
     // typed filter. A `fix-*` key, so no catalog printing moved with it.
-    expect(registryCardIds()).toHaveLength(725);
+    // 🆕🆕🆕 D554 — 725 -> **740**: FIFTEEN registry keys on NINE program objects —
+    // the deck-search Trainers (Hilda, Colress's Tenacity, Cyrano, Hyper Aroma, Team
+    // Rocket's Transceiver, Energy Search Pro, Precious Trolley, Boxed Order,
+    // Cassiopeia). Real catalog ids and NOT `fix-*` keys (`deckSearchTrainers.test.ts`
+    // drives a LOCAL `cardPool`, D275's idiom), inserted MID-MAP, and no row authors
+    // an `attack` program, so the ATTACK summand cannot move with them.
+    expect(registryCardIds()).toHaveLength(740);
     for (const id of Object.values(QUANTITY_IDS).flat()) {
       if (programFor(id) === undefined) continue;
       // Every id that DOES have a program had one before this slice: the eight

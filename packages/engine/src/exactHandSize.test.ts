@@ -704,8 +704,15 @@ describe("§2 — the key, the printed BYTES, and the tables that must not meet"
     // ⚠️ THE PLURAL IS UNCONDITIONAL AND THAT IS DELIBERATE (D205): the pool prints
     // this clause at ONE value, 3, so a singular branch would be a shape no printing
     // can reach — an unreachable arm is removed, not tested around.
+    // 🆕🆕🆕 D554 (2026-09-25) — ⚠️ WITHDRAWN (D539), and this expectation INVERTED: the
+    // claim above was true of the ATTACK clause and false of the member. Cassiopeia
+    // `sv06.5-056`/`-086`/`-094` prints *"only when it is the last card in your hand"*,
+    // authored as `trainerPlayableIf: { kind: "yourHandExactly", count: 1 }`, so the
+    // singular is a printed shape and `conditionNote` has its branch (the reject pill
+    // reads "…if you have exactly 1 card in your hand", driven in
+    // `deckSearchTrainers.test.ts`). The plural for every other count is unchanged.
     expect(conditionNote({ kind: "yourHandExactly", count: 1 })).toBe(
-      "you have exactly 1 cards in your hand",
+      "you have exactly 1 card in your hand",
     );
     // The three hand members answer differently, which is the whole point of there
     // being three.

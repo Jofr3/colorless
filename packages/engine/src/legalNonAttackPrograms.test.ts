@@ -773,6 +773,10 @@ const DROPPED = [
   // refinement's neighbours" — Hyper Aroma is a Trainer whose filter is a plain
   // `basicPokemon`, and no neighbour of it was ever waiting on a type. `DROPPED`
   // is now 14.
+  // 🆕🆕🆕 D554 (2026-09-25) — ⚠️ WITHDRAWN (D539): "a plain `basicPokemon`" is FALSE.
+  // Hyper Aroma `sv06-152` prints *"Search your deck for up to 3 **Stage 1** Pokémon"*,
+  // and D554 built it on D466's `stagePokemon { stage: "Stage1" }` — a Basic is exactly
+  // what it refuses. The half that stands: no neighbour of it was waiting on a TYPE.
   // ✅ D255 BUILT THIS ROW — "Prevent all damage done to this Pokémon by attacks
   // from your opponent's Pokémon ex." (Sylveon sv08.5-040, Crustle sv10-012/-186,
   // 3 legal printings). REMOVED rather than annotated in place, D245's precedent

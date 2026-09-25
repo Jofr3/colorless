@@ -6001,6 +6001,15 @@ export function conditionNote(cond: BoardCondition): string {
       // has to say what the board must look like. The plural is unconditional — the
       // pool prints this clause at ONE value, 3, so a singular branch would be a
       // shape no printing can reach (D205's rule about never-spelled counts).
+      // 🆕🆕🆕 D554 (2026-09-25) — ⚠️ WITHDRAWN (D539): "the plural is unconditional" and
+      // "a singular branch would be a shape no printing can reach" were true of the
+      // ATTACK clause this member was built for and false of the member. Cassiopeia
+      // `sv06.5-056`/`-086`/`-094` prints *"only when it is the last card in your
+      // hand"*, authored as `trainerPlayableIf: { kind: "yourHandExactly", count: 1 }`
+      // (D554 reading: a hand of exactly 1, checked while the card is still in it), and
+      // its reject pill reads through here — so the singular is now a printed shape and
+      // has its branch. The plural line below is kept byte-identical.
+      if (cond.count === 1) return "you have exactly 1 card in your hand";
       return `you have exactly ${cond.count} cards in your hand`;
     case "yourHandNotEmpty":
       // 🆕🆕 D385 — NULLARY, so there is no parameter to build from and the string is

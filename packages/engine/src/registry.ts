@@ -5117,6 +5117,214 @@ const SECRET_BOX: CardProgram = {
   ],
 };
 
+// ── 🆕🆕🆕 D554 — NINE DECK-SEARCH TRAINERS, 15 PRINTINGS, ZERO VOCABULARY. The
+//    2026-09-25 coverage audit's "deck-search variants" cluster (its report 2, the
+//    Trainer column), the part of it every op, filter, rider and gate of which
+//    already ships: `searchDeck` with `also` (D336), `distinctEnergyTypes` (D513),
+//    `max: "any"` (D514), the `evolutionPokemon` / `stagePokemon` (D466) /
+//    `suffixPokemon` / `supporterNameContaining` (D510) / `anyEnergy` / `item` /
+//    `stadium` / `anyCard` filters, `trainerEndsTurn` (Katy) and `trainerPlayableIf`
+//    over `yourHandExactly` (D379). Each program ends in the printed *"Then,
+//    shuffle your deck."* as Nest Ball's trailing `{ op: "shuffleDeck" }`. Texts,
+//    subtypes and legality off tcgdex (the ingest's own upstream), 2026-09-25; one
+//    object per printed TEXT (D199), reprints share it. Keyed MID-MAP after
+//    `sv10-033` (D395/D396), so the map's LAST key does not move. ──
+
+/** 🆕🆕🆕 **D554 — Hilda `sv10.5w-084`/`-164`/`-171` (Supporter, 3 legal)** —
+    *"Search your deck for an Evolution Pokémon and an Energy card, reveal them, and
+    put them into your hand. Then, shuffle your deck."*
+
+    **LARRY'S SKILL's `also` SHAPE AT TWO NOUNS** — one cap PER printed noun, so the
+    flat total of 2 cannot be answered with two Energy (or two Evolutions); the order
+    is the print's, and `searchNote` walks it. ⚠️ **DECLINABLE, ON LARRY'S SKILL's
+    PRECEDENT (D554 READING)**: the print says *"an"*, not *"up to 1"*, and the op
+    parks at `min: 0` exactly as D336's row does — the player may take one noun, both
+    or neither; nothing here is new doctrine. ⚠️ **"AN ENERGY CARD" IS `anyEnergy`,
+    SPECIAL ENERGY INCLUDED (D554 READING)** — the print does not say "Basic", and
+    `anyEnergy` is the vocabulary's Basic-OR-Special member (Poppy's reading), where
+    Larry's Skill's printed *"a Basic Energy card"* is `basicEnergy`. `evolutionPokemon`
+    is `evolveFromOf(card) !== null`: a Stage 1 and a Stage 2 alike, never a Basic. */
+const HILDA: CardProgram = {
+  trainer: [
+    {
+      op: "searchDeck",
+      filter: { kind: "evolutionPokemon" },
+      dest: "hand",
+      max: 1,
+      reveal: true,
+      also: [{ filter: { kind: "anyEnergy" }, max: 1 }],
+    },
+    { op: "shuffleDeck" },
+  ],
+};
+
+/** 🆕🆕🆕 **D554 — Colress's Tenacity `sv06.5-057`/`-087` (Supporter, 2 legal)** —
+    *"Search your deck for a Stadium card and an Energy card, reveal them, and put
+    them into your hand. Then, shuffle your deck."*
+
+    `HILDA`'s shape with the first noun a Stadium (D231's `stadium`, the catalog's
+    `trainerType: "Stadium"` — disjoint from `item` and `toolCard`, so a Pokémon Tool
+    is never offered). Same two readings: declinable, and *"an Energy card"* is
+    `anyEnergy`, Special included. */
+const COLRESSS_TENACITY: CardProgram = {
+  trainer: [
+    {
+      op: "searchDeck",
+      filter: { kind: "stadium" },
+      dest: "hand",
+      max: 1,
+      reveal: true,
+      also: [{ filter: { kind: "anyEnergy" }, max: 1 }],
+    },
+    { op: "shuffleDeck" },
+  ],
+};
+
+/** 🆕🆕🆕 **D554 — Cyrano `sv08-170`/`-230` (Supporter, 2 legal)** — *"Search your
+    deck for up to 3 Pokémon ex, reveal them, and put them into your hand. Then,
+    shuffle your deck."*
+
+    `suffixPokemon { suffix: "ex" }` — the EQUALITY on `pokemonSuffixOf`, never
+    `isExOrV` (the member's own block), so a Pokémon V is not an ex and a plain
+    Pokémon is refused. */
+const CYRANO: CardProgram = {
+  trainer: [
+    {
+      op: "searchDeck",
+      filter: { kind: "suffixPokemon", suffix: "ex" },
+      dest: "hand",
+      max: 3,
+      reveal: true,
+    },
+    { op: "shuffleDeck" },
+  ],
+};
+
+/** 🆕🆕🆕 **D554 — Hyper Aroma `sv06-152` (Item, ACE SPEC, 1 legal)** — *"Search your
+    deck for up to 3 Stage 1 Pokémon, reveal them, and put them into your hand. Then,
+    shuffle your deck."*
+
+    D466's `stagePokemon { stage: "Stage1" }` (`cards.ts isStage1Pokemon`), so a
+    Basic and a Stage 2 are both refused. 🛑 **`legalNonAttackPrograms.test.ts`
+    said this card's filter was "a plain `basicPokemon`" — FALSE, annotated there
+    (D539): the print is Stage 1.** ACE SPEC is untouched here: the one-per-deck
+    rule reads card DATA (the rarity), never this program. */
+const HYPER_AROMA: CardProgram = {
+  trainer: [
+    {
+      op: "searchDeck",
+      filter: { kind: "stagePokemon", stage: "Stage1" },
+      dest: "hand",
+      max: 3,
+      reveal: true,
+    },
+    { op: "shuffleDeck" },
+  ],
+};
+
+/** 🆕🆕🆕 **D554 — Team Rocket's Transceiver `sv10-178` (Item, 1 legal)** —
+    *"Search your deck for a Supporter card that has "Team Rocket" in its name, reveal
+    it, and put it into your hand. Then, shuffle your deck."*
+
+    D510's `supporterNameContaining { fragment: "Team Rocket" }` — the HEAD NOUN
+    (Supporter) AND the case-sensitive substring, so "Grunt of Team Rocket" is a hit
+    and a Team Rocket's ITEM (this very card, or `fix-trtransceiver`, the program-free
+    fixture that shares its name) is not. The fragment is the printed quote, without
+    the possessive. */
+const TEAM_ROCKETS_TRANSCEIVER: CardProgram = {
+  trainer: [
+    {
+      op: "searchDeck",
+      filter: { kind: "supporterNameContaining", fragment: "Team Rocket" },
+      dest: "hand",
+      max: 1,
+      reveal: true,
+    },
+    { op: "shuffleDeck" },
+  ],
+};
+
+/** 🆕🆕🆕 **D554 — Energy Search Pro `sv08-176` (Item, ACE SPEC, 1 legal)** —
+    *"Search your deck for any number of Basic Energy cards of different types, reveal
+    them, and put them into your hand. Then, shuffle your deck."*
+
+    D513's `distinctEnergyTypes` (one cap of 1 per type cell) under D514's `max:
+    "any"` — the first program to spell both. ⚠️ **`prompt.max` IS THE DECK's BASIC
+    ENERGY COUNT, NOT ITS TYPE COUNT (D554 READING, MEASURED AND PINNED)**: the park
+    resolves `"any"` against the group's own matches (D514's standing shape), and the
+    per-type caps are what bound a legal answer to one per type. The dialog's ceiling
+    can therefore read higher than any legal answer; the validator refuses a repeated
+    type. Not changed here. */
+const ENERGY_SEARCH_PRO: CardProgram = {
+  trainer: [
+    {
+      op: "searchDeck",
+      filter: { kind: "basicEnergy" },
+      dest: "hand",
+      max: "any",
+      reveal: true,
+      distinctEnergyTypes: true,
+    },
+    { op: "shuffleDeck" },
+  ],
+};
+
+/** 🆕🆕🆕 **D554 — Precious Trolley `sv08-185` (Item, ACE SPEC, 1 legal)** — *"Search
+    your deck for any number of Basic Pokémon and put them onto your Bench. Then,
+    shuffle your deck."*
+
+    `NEST_BALL` with D514's `max: "any"`: the park resolves it to the deck's Basic
+    count and then clamps the TOTAL to `benchSpace`, so the answer never overfills the
+    Bench. No `reveal` — none is printed, and a bench move is public anyway (the card
+    enters play face up). ⚠️ **ON A FULL BENCH IT STILL PLAYS AND WHIFFS (D554
+    READING)**: `programPlayable` treats a deck search as always playable enough
+    (cardplay.ts, Nest Ball's doctrine), the clamped `max` is 0, nothing parks, and the
+    trailing shuffle still runs. Pinned, not changed. */
+const PRECIOUS_TROLLEY: CardProgram = {
+  trainer: [
+    { op: "searchDeck", filter: { kind: "basicPokemon" }, dest: "bench", max: "any" },
+    { op: "shuffleDeck" },
+  ],
+};
+
+/** 🆕🆕🆕 **D554 — Boxed Order `sv05-143` (Item, 1 legal)** — *"Search your deck for up
+    to 2 Item cards, reveal them, and put them into your hand. Then, shuffle your deck.
+    Your turn ends."*
+
+    🛑 **THE FIRST `trainerEndsTurn` PROGRAM THAT PARKS.** Katy's flag, until now only
+    ever set on programs that never park; `settleProgram` carries it across the park
+    as `phase.endsTurn` (flow.ts) and folds it when the answer finishes the program —
+    the Koraidon "Dino Cry" path on the Trainer side. The turn ends on an answer, on a
+    decline, and on a deck with no Item (no park at all). `item` is D231's, disjoint
+    from `toolCard`. */
+const BOXED_ORDER: CardProgram = {
+  trainer: [
+    { op: "searchDeck", filter: { kind: "item" }, dest: "hand", max: 2, reveal: true },
+    { op: "shuffleDeck" },
+  ],
+  trainerEndsTurn: true,
+};
+
+/** 🆕🆕🆕 **D554 — Cassiopeia `sv06.5-056`/`-086`/`-094` (Supporter, 3 legal)** — *"You
+    can use this card only when it is the last card in your hand. / Search your deck
+    for up to 2 cards and put them into your hand. Then, shuffle your deck."*
+
+    ⚠️ **"THE LAST CARD IN YOUR HAND" IS A HAND OF EXACTLY 1, CHECKED WHILE THE CARD IS
+    STILL IN IT (D554 READING, UNRULED)** — `trainerPlayableIf` runs in `playTrainer`
+    before the card leaves the hand (cardplay.ts), so `yourHandExactly { count: 1 }`
+    (D379's member) is the printed clause: Cassiopeia itself is the one card. That
+    member needed its singular caption for this row (interpreter.ts `conditionNote`,
+    D554). 🛑 **NO `reveal`** — the print carries none, and the found cards are
+    uncategorised *"cards"*: the `DECK_SEARCHED` row stays a COUNT (events.ts /
+    log.ts, D225's "Cassiopeia ending", now spoken by the card itself). */
+const CASSIOPEIA: CardProgram = {
+  trainerPlayableIf: { kind: "yourHandExactly", count: 1 },
+  trainer: [
+    { op: "searchDeck", filter: { kind: "anyCard" }, dest: "hand", max: 2 },
+    { op: "shuffleDeck" },
+  ],
+};
+
 /** 🆕 **D337 — Ethan's Adventure `sv10-165`/`-221`/`-236` (Supporter, 3 legal)** —
     *"Search your deck for up to 3 **in any combination of** Ethan's Pokémon and
     Basic {R} Energy cards, reveal them, and put them into your hand. Then, shuffle
@@ -12870,6 +13078,23 @@ const REGISTRY: Record<string, CardProgram> = {
   "sv05-017": CHANGING_SEASONS, // Sawsbuck — Changing Seasons (deck → hand, a Stadium card)
   "sv05-166": CHANGING_SEASONS, // Sawsbuck (reprint)
   "sv10-033": BONDED_BY_THE_JOURNEY, // Ethan's Quilava — Bonded by the Journey (deck → hand, an Ethan's Adventure card)
+  // ── 🆕🆕🆕 D554 — nine deck-search Trainers, 15 printings, MID-MAP (D395/D396), so the
+  //    batons that read the map's LAST key do not move. ──
+  "sv10.5w-084": HILDA, // Hilda — an Evolution Pokémon and an Energy card → hand
+  "sv10.5w-164": HILDA, // Hilda (reprint)
+  "sv10.5w-171": HILDA, // Hilda (reprint)
+  "sv06.5-057": COLRESSS_TENACITY, // Colress's Tenacity — a Stadium card and an Energy card → hand
+  "sv06.5-087": COLRESSS_TENACITY, // Colress's Tenacity (reprint)
+  "sv08-170": CYRANO, // Cyrano — up to 3 Pokémon ex → hand
+  "sv08-230": CYRANO, // Cyrano (reprint)
+  "sv06-152": HYPER_AROMA, // Hyper Aroma (ACE SPEC) — up to 3 Stage 1 Pokémon → hand
+  "sv10-178": TEAM_ROCKETS_TRANSCEIVER, // Team Rocket's Transceiver — a "Team Rocket" Supporter → hand
+  "sv08-176": ENERGY_SEARCH_PRO, // Energy Search Pro (ACE SPEC) — Basic Energy of different types → hand
+  "sv08-185": PRECIOUS_TROLLEY, // Precious Trolley (ACE SPEC) — any number of Basic Pokémon → Bench
+  "sv05-143": BOXED_ORDER, // Boxed Order — up to 2 Item cards → hand, your turn ends
+  "sv06.5-056": CASSIOPEIA, // Cassiopeia — only as the last card in hand; up to 2 cards → hand
+  "sv06.5-086": CASSIOPEIA, // Cassiopeia (reprint)
+  "sv06.5-094": CASSIOPEIA, // Cassiopeia (reprint)
   // ── D190 — THE **STANDARD-LEGAL** REPRINT-ALIAS MAP (Tier 0 of
   //    `docs/reference/coverage-backlog-legal.md`). 22 printings, 9 map targets,
   //    ZERO new code: every row below prints a sentence that is already authored

@@ -28207,3 +28207,45 @@ The rest of the audit's cluster 1 — Samurott *"Torrential Whirlpool"* (the opp
 the ability path), Thwackey *"Boom Boom Groove"* (a `yourActiveHasAbilityNamed` gate and the Klefki-lock ruling), and
 the separately-priced Crobat (record bump) and Cradily (new prompt kind); the census re-scope (R4) and the 380/376
 reconciliation.
+
+## D554 — nine deck-search Trainers: 15 printings / 9 texts / 9 objects, zero vocabulary, and the singular hand-size note (engine 0.438.0, `MATCH_RECORD_VERSION` 34 HELD)
+
+**Status:** ✅ BUILT — the coverage audit's *"deck-search variants"* cluster (report 2, Trainers), the part whose every
+op, filter, rider and gate already ships. Each program ends in Nest Ball's trailing `shuffleDeck`.
+
+### (a) The nine rows (registry.ts, beside the D336 searches; keyed MID-MAP after `sv10-033`, D395/D396)
+| Card | Ids | Subtype | Program |
+|---|---|---|---|
+| Hilda | `sv10.5w-084`/`-164`/`-171` | Supporter | `searchDeck evolutionPokemon max 1, also [anyEnergy max 1] → hand, reveal` |
+| Colress's Tenacity | `sv06.5-057`/`-087` | Supporter | the same over `stadium` + `anyEnergy` |
+| Cyrano | `sv08-170`/`-230` | Supporter | `suffixPokemon ex`, max 3, reveal |
+| Hyper Aroma | `sv06-152` | Item (ACE SPEC) | `stagePokemon Stage1`, max 3, reveal |
+| Team Rocket's Transceiver | `sv10-178` | Item | `supporterNameContaining "Team Rocket"`, max 1, reveal |
+| Energy Search Pro | `sv08-176` | Item (ACE SPEC) | `basicEnergy`, `max: "any"`, reveal, `distinctEnergyTypes` |
+| Precious Trolley | `sv08-185` | Item (ACE SPEC) | `basicPokemon` → Bench, `max: "any"` (clamped to `benchSpace`), no reveal |
+| Boxed Order | `sv05-143` | Item | `item`, max 2, reveal, **`trainerEndsTurn`** |
+| Cassiopeia | `sv06.5-056`/`-086`/`-094` | Supporter | **`trainerPlayableIf: yourHandExactly 1`**, `anyCard` max 2, no reveal |
+
+### (b) The one behaviour line outside the registry
+`conditionNote`'s `yourHandExactly` arm gains its singular (*"you have exactly 1 card in your hand"*) above D379's plural
+return (kept byte-identical). D379's *"the plural is unconditional … a singular branch would be a shape no printing can
+reach"* is WITHDRAWN (D539) and annotated in place; `exactHandSize.test.ts`'s count-1 rung inverts. Also annotated:
+`legalNonAttackPrograms.test.ts`'s *"Hyper Aroma … a plain `basicPokemon`"* (the card prints Stage 1).
+
+### (c) Readings (`docs/decisions.md` D554)
+R1 Hilda/Colress are declinable (Larry's Skill's precedent, `min: 0`) · R2 *"an Energy card"* is `anyEnergy`, Special
+included · R3 ⚠️ UNRULED: Cassiopeia's *"last card in your hand"* is a hand of exactly 1 at the gate, the card still in
+hand · R4 Precious Trolley on a full Bench plays and whiffs (Nest Ball's doctrine), pinned · R5 Energy Search Pro's
+`prompt.max` is the Basic Energy COUNT (D514's `"any"`), the per-type caps bound the answer, pinned.
+
+### (d) Tests, census and mutants
+New `deckSearchTrainers.test.ts` (48), REAL ids on a LOCAL `cardPool` (D275); Boxed Order — the first
+`trainerEndsTurn` program that PARKS — ends the turn on an answer, a decline and a no-Item deck, and its park
+round-trips with `endsTurn`. Census: `BUILT.trainer` 113 → 128 (Item 29 → 34, Supporter 70 → 80), `TRAINER_TERMS` 69,
+`byObject` 68, `built` 2107 → 2122, registry keys 725 → 740; `revealClause` REVEALING 39 / NOT_REVEALING 18 / classified
+57 / swept 124; `derivedBenchSearchMove`'s walk 95. Mutants 3,176 → 3,199 (+23 `D554-*`, all killed undeclared).
+
+### (e) Owed
+The audit's other deck searches need vocabulary: Team Rocket's Great Ball, TM Machine, Brilliant Blender, Tera Orb,
+Brock's Scouting, Love Ball, Dusk Ball, Crispin, Perrin, Salvatore. Next queue: the conditional-draw Trainers (Iris,
+Ariana, Billy — 6 printings, 2 `BoardCondition` members), then Samurott and Snow Sink.

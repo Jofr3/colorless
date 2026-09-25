@@ -1256,7 +1256,13 @@ describe("§7 — the census moves in exactly ONE summand, and the other three a
     // FIXTURE Special providing `{G}{G}` — the first `provides` row to spell one type
     // TWICE, and the only board on which a CARD count and a UNIT count disagree under a
     // typed filter. A `fix-*` key, so no catalog printing moved with it.
-    expect(ids.size).toBe(725);
+    // 🆕🆕🆕 D554 — 725 -> **740**: FIFTEEN registry keys on NINE program objects —
+    // the deck-search Trainers (Hilda, Colress's Tenacity, Cyrano, Hyper Aroma, Team
+    // Rocket's Transceiver, Energy Search Pro, Precious Trolley, Boxed Order,
+    // Cassiopeia). Real catalog ids and NOT `fix-*` keys (`deckSearchTrainers.test.ts`
+    // drives a LOCAL `cardPool`, D275's idiom), inserted MID-MAP, and no row authors
+    // an `attack` program, so the ATTACK summand cannot move with them.
+    expect(ids.size).toBe(740);
     // ⚠️ ONE of the thirteen IS in the registry — Volbeat `sv06-009` — and it is
     // there on an ABILITY program, which is exactly the count a slice does not
     // think it is checking. Named, rather than glossed by an "all absent" claim

@@ -20114,6 +20114,31 @@ import type { GameState, Seat } from "./types";
     `expect(manifest.version)`, `it(…)` titles, the declaration and `package.json` —
     **not** as a value-keyed grep — because a value-keyed grep is precisely the mechanism
     that ate D500's heading.)
+    🆕🆕🆕 engineVersion 0.437.0 → **0.438.0** (D554 — NINE DECK-SEARCH TRAINERS, 15 PRINTINGS / 9 TEXTS /
+    9 OBJECTS, ZERO VOCABULARY — the coverage audit's "deck-search variants" cluster, the part every op,
+    filter, rider and gate of which already ships. Nine registry `CardProgram`s keyed on fifteen REAL
+    ids inserted MID-MAP after `sv10-033` (D395/D396), each ending in the printed shuffle: Hilda
+    `sv10.5w-084`/`-164`/`-171` and Colress's Tenacity `sv06.5-057`/`-087` (Larry's Skill's `also` at two
+    nouns — Evolution / Stadium + `anyEnergy`, Special included, declinable), Cyrano `sv08-170`/`-230`
+    (`suffixPokemon ex`, max 3), Hyper Aroma `sv06-152` (`stagePokemon Stage1`, max 3), Team Rocket's
+    Transceiver `sv10-178` (`supporterNameContaining "Team Rocket"`), Energy Search Pro `sv08-176`
+    (`basicEnergy`, `max: "any"`, `distinctEnergyTypes` — the first program to spell both; `prompt.max`
+    is the Basic Energy COUNT, D514's standing shape, pinned), Precious Trolley `sv08-185` (`basicPokemon`
+    to the Bench, `max: "any"`, clamped to `benchSpace`; a full Bench still plays and whiffs), Boxed Order
+    `sv05-143` (`item`, max 2, `trainerEndsTurn` — the FIRST `trainerEndsTurn` program that PARKS: the
+    flag rides `phase.endsTurn` across the park, and the turn ends on an answer, a decline, or no Item)
+    and Cassiopeia `sv06.5-056`/`-086`/`-094` (`trainerPlayableIf: yourHandExactly 1` — "the last card in
+    your hand" read as a hand of exactly 1 at the gate, UNRULED — over `anyCard` max 2, NO reveal, so the
+    log row stays a count). THE ONE BEHAVIOUR LINE OUTSIDE THE REGISTRY: `conditionNote`'s
+    `yourHandExactly` arm gains its singular ("you have exactly 1 card in your hand"); D379's "the plural
+    is unconditional … a singular branch would be a shape no printing can reach" is WITHDRAWN (D539),
+    annotated in place in `interpreter.ts` and `exactHandSize.test.ts` (whose count-1 rung INVERTS).
+    Also annotated (D539): `legalNonAttackPrograms.test.ts`'s "Hyper Aroma … a plain `basicPokemon`".
+    **`MATCH_RECORD_VERSION` STAYS 34**: no op, field or member is new — `searchDeck` already parks with
+    every key these programs use, and `phase.endsTurn` already persists. New suite
+    `deckSearchTrainers.test.ts` on a LOCAL `cardPool` with the REAL ids (D275). Census: `BUILT.trainer`
+    113 → 128 (Item 29 → 34, Supporter 70 → 80), registry keys 725 → 740. Mutants 3,176 → 3,199, all
+    twenty-three `D554-*` KILLED.)
     🆕🆕🆕 engineVersion 0.436.0 → **0.437.0** (D553 — THE SIMPLE ONCE-PER-TURN ABILITIES, 12 PRINTINGS /
     7 TEXTS / 7 OBJECTS, ZERO VOCABULARY — the loop's first slice after the redirect from attacks to
     abilities/trainers (the 2026-09-25 coverage audit's cluster 1). Seven registry `CardProgram`s, each
@@ -24110,7 +24135,7 @@ import type { GameState, Seat } from "./types";
     WITNESS** — the count was re-derived every slice and the word *"three"* was carried.
     A successor of this slice inherits **81 / 61 / 17** again, over **FIVE** history
     occurrences: those four plus `deckMillFilteredScale.test.ts`'s own header arrow.) */
-export const engineVersion = "0.437.0";
+export const engineVersion = "0.438.0";
 
 export type {
   ApplyResult,

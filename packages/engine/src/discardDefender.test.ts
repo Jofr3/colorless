@@ -852,9 +852,9 @@ describe("D536 §10 — the PERSISTED bytes, both directions", () => {
     expect(raw("/match.ts")).toContain("MATCH_RECORD_VERSION = 34");
   });
 
-  it("🛑 the engine version stepped to 0.437.0 in BOTH places", () => {
-    expect(engineVersion).toBe("0.437.0");
-    expect(manifest.version).toBe("0.437.0");
+  it("🛑 the engine version stepped to 0.438.0 in BOTH places", () => {
+    expect(engineVersion).toBe("0.438.0");
+    expect(manifest.version).toBe("0.438.0");
   });
 
   it("🛑 the op ITSELF never parks — no new `PendingStage` inhabitant, no new `EffectPrompt` value, and on a NON-PARKING board nothing new reaches `phase.cont`", () => {
