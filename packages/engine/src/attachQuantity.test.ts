@@ -744,6 +744,11 @@ describe("D359 §6 — the ids this file rests on are real and locally seated", 
   });
 
   it("🛑 ZERO registry keys were added — this slice moves no census figure", () => {
+    // 🆕🆕🆕 D553 — 713 -> **725**: TWELVE registry keys on SEVEN program objects —
+    // the simple once-per-turn Abilities (Rapidash, Chandelure, Blissey ex, Swadloon,
+    // Mamoswine ex, Sawsbuck, Ethan's Quilava). Real catalog ids and NOT `fix-*` keys
+    // (both suites drive a LOCAL `cardPool`, D275's idiom), inserted MID-MAP, and no
+    // row authors an `attack` program, so the ATTACK summand cannot move with them.
     // 🆕🆕 D396 — 710 -> **713**: THREE registry keys on ONE program object,
     // Sylveon ex `sv08-086`/`sv08.5-041`/`sv08.5-156` — a bare `attackGate` at index
     // **1** carrying `barredIf`, the SECOND gate in that field at a NON-ZERO index
@@ -759,7 +764,7 @@ describe("D359 §6 — the ids this file rests on are real and locally seated", 
     // FIXTURE Special providing `{G}{G}` — the first `provides` row to spell one type
     // TWICE, and the only board on which a CARD count and a UNIT count disagree under a
     // typed filter. A `fix-*` key, so no catalog printing moved with it.
-    expect(registryCardIds()).toHaveLength(713);
+    expect(registryCardIds()).toHaveLength(725);
     for (const id of Object.values(QUANTITY_IDS).flat()) {
       if (programFor(id) === undefined) continue;
       // Every id that DOES have a program had one before this slice: the eight

@@ -4793,6 +4793,15 @@ export type EffectOp =
       behind it. A FOURTH reader produces this op, and it is the first one whose
       program cannot be read off the sentence alone.
 
+      🆕🆕🆕 **D553 — AND THE FIRST REGISTRY PRODUCER, ON AN ABILITY.** Every producer
+      above is an attack READER ("THREE readers … A FOURTH reader"); Swadloon
+      `sv10.5w-002`/`-088` "Healing Leaves" (*"Once during your turn, you may heal 20
+      damage from your Active Pokémon."*, `registry.ts` `HEALING_LEAVES`) authors this
+      op by hand at `amount: 20`. "The controller's Active" above is then the printed
+      *"your Active Pokémon"* of an Ability that may be used from the BENCH: the
+      Benched Swadloon is not healed, the Active is, and the clamp and the silent
+      whiff are this op's own (driven in `onceAbilities.test.ts`).
+
       🛑 **WIDENING THE FIELD RATHER THAN ADDING A `healDealt` OP, AND THE REASON IS
       THE CLAMP.** `healSelf` already does `Math.min(amount, active.damage)` — *"you
       cannot heal more damage than is on the healer"* — and already whiffs SILENTLY at
@@ -6388,6 +6397,14 @@ export type EffectOp =
       not the controller. Every other printed draw is a bare imperative addressed to
       the player resolving it, so the ABSENT key is the twelve-printing reading and
       D135's absent-key rule writes itself.
+
+      🆕🆕🆕 **D553 — THE FIRST REGISTRY PRODUCER OF `"eachPlayer"`.** FILE LINE 199
+      was this key's only producer until Chandelure `sv06-038` "Alluring Light"
+      (*"Once during your turn, you may have each player draw a card."*,
+      `registry.ts` `ALLURING_LIGHT`), an ABILITY authored by hand at `count: 1`. The
+      printed *"you may have"* is the Ability's own optionality, not
+      `opponentMayDraw` — the opponent decides nothing — so the key's MANDATORY,
+      no-park reading below carries over unchanged, controller first.
 
       🛑 **THIS IS A NARROWING OF `opponentMayDraw`'s REFUSAL BELOW, NOT A REVERSAL OF
       IT, AND THAT BLOCK IS CORRECTED IN PLACE RATHER THAN LEFT (D442/D466).** That
@@ -11590,7 +11607,10 @@ export type EffectOp =
       and it is OPTIONAL, so every producer written before it is byte-unchanged
       and still draws for the controller alone. Measured, not argued:
       `grep -c '"drawCards"' packages/engine/src/registry.ts` and the deriver's
-      three arms all omit the key. */
+      three arms all omit the key. 🆕🆕🆕 **D553 — NO LONGER TRUE OF `registry.ts`**:
+      Chandelure `sv06-038` "Alluring Light" (`ALLURING_LIGHT`) authors
+      `who: "eachPlayer"` there, the key's first registry producer — still
+      mandatory and still unparked, so the half this block refuses stands. */
   | { op: "opponentMayDraw"; count: number }
   /** A BOARD-CONDITION branch: run `then` when `cond` holds for the controller,
       else `otherwise` (nothing, if absent). The deterministic sibling of

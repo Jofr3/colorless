@@ -10980,7 +10980,10 @@ function damageSelf(
   return withActive(state, ctx.seat, { ...active, damage: active.damage + amount });
 }
 
-/** Heal the controller's own Active (attack "heal from it" op). */
+/** Heal the controller's own Active (attack "heal from it" op — 🆕🆕🆕 D553: and,
+    since Swadloon "Healing Leaves", an ABILITY's printed "your Active Pokémon",
+    used from the Bench as readily as from the Active; the Benched user is never
+    the one healed). */
 function healSelf(
   state: GameState,
   amount: number,
@@ -16808,17 +16811,30 @@ function retrieveNoun(filter: CardFilter): { singular: string; plural: string } 
       return { singular: "an Energy card", plural: "Energy cards" };
     case "specialEnergy":
       return { singular: "a Special Energy card", plural: "Special Energy cards" };
-    case "byName":
+    case "byName": {
       // D264 — `cardNoun` is the printed "cards" a NON-Pokémon name carries
       // ("up to 2 Arven's Sandwich cards"); a Pokémon name prints bare and stays
-      // invariant in both numbers ("up to 3 Flamigo"). The article is a literal
-      // "a" for the same reason `typedPokemon`'s is: the singular branch is only
-      // reachable for a `max: 1` retrieval, and every printed card name in this
-      // seam is consonant-initial — an "an" branch would be a line no card can
-      // reach, which this repo removes rather than words.
+      // invariant in both numbers ("up to 3 Flamigo").
+      // ~~The article is a literal "a" for the same reason `typedPokemon`'s is: the
+      // singular branch is only reachable for a `max: 1` retrieval, and every printed
+      // card name in this seam is consonant-initial — an "an" branch would be a line
+      // no card can reach, which this repo removes rather than words.~~
+      // 🆕🆕🆕 **D553 WITHDREW THAT CLAIM (D539).** Ethan's Quilava `sv10-033`
+      // "Bonded by the Journey" prints *"search your deck for **an Ethan's Adventure
+      // card**"* — a VOWEL-INITIAL name reaching this seam's singular branch at
+      // `max: 1` — so the article is now COMPUTED off the name the way the
+      // `ownerPokemon` arm below computes it off its noun ("an Ethan's Pokémon").
+      // The bare Pokémon-name branch keeps no article at all, as it always has.
+      // ⚠️ The withdrawn claim was never true of the NAMES: this seam's first
+      // producer, "Arven's Sandwich" (Arven's Greedent), is vowel-initial too — it
+      // prints "up to 2 … cards" and so reaches only the PLURAL. What held was that no
+      // SINGULAR any card reached began with a vowel, and Bonded by the Journey is the
+      // first that does.
+      const article = /^[AEIOU]/.test(filter.name) ? "an" : "a";
       return filter.cardNoun === true
-        ? { singular: `a ${filter.name} card`, plural: `${filter.name} cards` }
+        ? { singular: `${article} ${filter.name} card`, plural: `${filter.name} cards` }
         : { singular: filter.name, plural: filter.name };
+    }
     case "basicPokemon":
       // D265 — the printed HP threshold ("a Basic Pokémon with 70 HP or less").
       // The noun is INVARIANT in number, like the bare "Basic Pokémon" it extends,

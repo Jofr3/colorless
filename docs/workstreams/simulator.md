@@ -28161,3 +28161,49 @@ cap OPAQUE 19/28 → 18/27. Mutants 3,120 → 3,155 (+35 `D552-*`, all killed un
 Both real cards UNMEASURED (the `:569` marker is assumed "30×"); the HUD does not display a retyped Weakness (the wire
 carries no Weakness); the attach dialog does not say what the attach buys (D402/D403 captioning); the copy-attack family
 is still BLOCKED (6/13).
+
+## D553 — the simple once-per-turn Abilities: 12 printings / 7 texts / 7 objects, zero vocabulary, and one caption article (engine 0.437.0, `MATCH_RECORD_VERSION` 34 HELD)
+
+**Status:** ✅ BUILT — the loop's first slice after the redirect from attacks to abilities/trainers (the 2026-09-25
+coverage audit's cluster 1: *"simple once-per-turn abilities, whose operations already exist"*). Every text opens
+*"Once during your turn, you may …"* with no Active-Spot clause, so every row is `oncePerTurn: true, activeOnly: false`
+(usable from the Bench), and none authors an `attack` key — each card's attack still derives.
+
+### (a) The seven rows (registry.ts, keyed MID-MAP after `sv10.5b-169`, D395/D396)
+| Card | Ids | Ability | Program |
+|---|---|---|---|
+| Rapidash | `sv10-030`/`-189` | Hurried Gait | `drawCards 1` |
+| Chandelure | `sv06-038` | Alluring Light | `drawCards 1, who: "eachPlayer"` — the key's first REGISTRY producer; "you may have" is the Ability's optionality, NOT `opponentMayDraw` |
+| Blissey ex | `sv06-134`/`-201` | Happy Switch | `moveEnergy basicEnergy max 1` — `ENERGY_SWITCH`'s body on its own object |
+| Swadloon | `sv10.5w-002`/`-088` | Healing Leaves | `heal self 20` — `heal`'s first REGISTRY/ABILITY producer; the CONTROLLER's Active is healed, never the Benched user |
+| Mamoswine ex | `sv09-079`/`-174` | Mammoth Hauler | `searchDeck anyPokemon max 1 → hand, reveal` + `shuffleDeck` |
+| Sawsbuck | `sv05-017`/`-166` | Changing Seasons | the same over `stadium` |
+| Ethan's Quilava | `sv10-033` | Bonded by the Journey | the same over `byName "Ethan's Adventure", cardNoun` (ASCII apostrophe) |
+
+### (b) The one behaviour line outside the registry
+`retrieveNoun`'s byName cardNoun arm computes its article (`/^[AEIOU]/` → "an", the `ownerPokemon` arm's rule): the
+dialog reads *"Search your deck for an Ethan's Adventure card into your hand."* The *"every printed card name in this
+seam is consonant-initial"* claim is WITHDRAWN (D539) — it was never true of the names ("Arven's Sandwich" is
+vowel-initial and reaches only the plural), only of the singulars any card reached.
+
+### (c) The rulings (`docs/decisions.md` D553)
+R1 ⚠️ UNRULED: an Ability that would do nothing is still usable and spends the use (Healing Leaves on an undamaged
+Active, Hurried Gait on an empty deck) — `programPlayable`'s shipped doctrine; reverses on an official ruling that such an
+Ability cannot be used · R2 ⚠️ UNRULED: Alluring Light draws controller first (log order only) · R3 the "an" article · R4
+the census label is kept: `BUILT.ability` counts legal Pokémon ids with a non-attack registry surface; true Ability
+printings built = 296 − 17 = **279**; the audit's live 380 against the census's 376 is UNRECONCILED. Measured and pinned,
+not changed: a DECLINED park (Happy Switch, a deck search) still spends the once-per-turn (`useAbility` writes the lock
+before the program runs).
+
+### (d) Tests, census and mutants
+New: `onceAbilities.test.ts` (39) and `onceAbilitySearch.test.ts` (30), REAL ids on a LOCAL `cardPool` (D275), no
+`fix-*` demonstrator, Stage 1/2 bodies seated by surgery as a Basic would be (D243). Census: `BUILT.ability` 284 → 296,
+`built` 2095 → 2107, registry keys 713 → 725 (five suites + `splitOrder`'s title), `ABILITY_D1_SHAPE` 296/136,
+`ABILITY_D1_COLUMNS` 279/296, groups 125, pairs 138; `revealClause` +3 REVEALING rows, classified 48, swept 109
+(measured). `BUILT.attack` unmoved. Mutants 3,155 → 3,176 (+21 `D553-*`, all killed undeclared).
+
+### (e) Owed
+The rest of the audit's cluster 1 — Samurott *"Torrential Whirlpool"* (the opponent-answered `choosePokemon` park on
+the ability path), Thwackey *"Boom Boom Groove"* (a `yourActiveHasAbilityNamed` gate and the Klefki-lock ruling), and
+the separately-priced Crobat (record bump) and Cradily (new prompt kind); the census re-scope (R4) and the 380/376
+reconciliation.

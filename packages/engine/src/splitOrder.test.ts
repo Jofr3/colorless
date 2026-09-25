@@ -218,7 +218,7 @@ describe("§1 — the census D282 priced its refusal against: counts reproduce, 
     expect(units(gateAll) - units(firstTurn)).toBe(6);
   });
 
-  it("S2 — 17 of 713 registry ids carry an `attackGate`, in three kinds", () => {
+  it("S2 — 17 of 725 registry ids carry an `attackGate`, in three kinds", () => {
     // The registry side of the same 13, walked independently of the text side:
     // a count that agrees across two surfaces is a count, not a transcription.
     // 🆕🆕 D396 — 14 -> **17**, and this is the FIRST slice on which the registry
@@ -258,6 +258,11 @@ describe("§1 — the census D282 priced its refusal against: counts reproduce, 
     // "a split nobody authored a row for" (text > registry), and both directions are now
     // named. The registry figure here is the one that stays pinned.
     const ids = registryCardIds();
+    // 🆕🆕🆕 D553 — 713 -> **725**: TWELVE registry keys on SEVEN program objects —
+    // the simple once-per-turn Abilities (Rapidash, Chandelure, Blissey ex, Swadloon,
+    // Mamoswine ex, Sawsbuck, Ethan's Quilava). Real catalog ids and NOT `fix-*` keys
+    // (both suites drive a LOCAL `cardPool`, D275's idiom), inserted MID-MAP, and no
+    // row authors an `attack` program, so the ATTACK summand cannot move with them.
     // 🆕🆕 D396 — 710 -> **713**: THREE registry keys on ONE program object,
     // Sylveon ex `sv08-086`/`sv08.5-041`/`sv08.5-156` — a bare `attackGate` at index
     // **1** carrying `barredIf`, the SECOND gate in that field at a NON-ZERO index
@@ -273,7 +278,7 @@ describe("§1 — the census D282 priced its refusal against: counts reproduce, 
     // FIXTURE Special providing `{G}{G}` — the first `provides` row to spell one type
     // TWICE, and the only board on which a CARD count and a UNIT count disagree under a
     // typed filter. A `fix-*` key, so no catalog printing moved with it.
-    expect(ids.length).toBe(713);
+    expect(ids.length).toBe(725);
     const gated = ids.filter((id) => programFor(id)?.attackGate !== undefined);
     expect(gated.length).toBe(17);
     const kinds = gated.flatMap((id) =>

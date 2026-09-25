@@ -12198,6 +12198,191 @@ const ENERGY_COIN: CardProgram = {
   ],
 };
 
+// ── 🆕🆕🆕 D553 — THE SIMPLE ONCE-PER-TURN ABILITIES: 12 printings / 7 texts / 7
+//    objects, ZERO vocabulary. The first ABILITY slice since D396, and the loop's
+//    first after the redirect from attacks to abilities/trainers (the 2026-09-25
+//    coverage audit's cluster 1, "simple once-per-turn abilities, whose operations
+//    already exist"). Every printed sentence below opens "Once during your turn, you
+//    may …" and carries NO Active-Spot clause, so every row is `oncePerTurn: true,
+//    activeOnly: false`: the ability is usable from the Bench, and the printed
+//    "you may" is the ability's own optionality (the player simply does not use it).
+//    One object per printed TEXT (D199's near-twin rule), reprints share it. Texts
+//    and legality off tcgdex (the ingest's own upstream), 2026-09-25; every one of
+//    the 12 printings also carries an attack, and NONE of these rows authors an
+//    `attack` key — each card's attack text still reaches the deriver untouched. ──
+
+/** Rapidash sv10-030 / sv10-189 — "Hurried Gait": *"Once during your turn, you may
+    draw a card."* (Ability, 2 legal printings.)
+
+    The bare `drawCards` at the printed 1. ⚠️ **AN EMPTY DECK STILL LETS IT BE USED
+    AND DRAWS NOTHING, SILENTLY** — `programPlayable`'s shipped doctrine (cardplay.ts,
+    *"Search/draw/heal are always 'playable enough'"*) and §8.6's "do as much as you
+    can"; §14.3's deck-out is a turn-START rule, never a draw-time one. UNRULED
+    (D553 R1): no official ruling says an Ability that would draw from an empty deck
+    cannot be used. */
+const HURRIED_GAIT: CardProgram = {
+  abilities: [
+    {
+      name: "Hurried Gait",
+      oncePerTurn: true,
+      activeOnly: false,
+      program: [{ op: "drawCards", count: 1 }],
+    },
+  ],
+};
+
+/** Chandelure sv06-038 — "Alluring Light": *"Once during your turn, you may have
+    each player draw a card."* (Ability, 1 legal printing.)
+
+    🛑 **THE FIRST REGISTRY PRODUCER OF `drawCards.who: "eachPlayer"`** — D491 built
+    the key for `censusAttackCorpus.ts` FILE LINE 199 (*"Each player draws 3
+    cards."*) and it had no other producer. The printed *"you may have"* is the
+    ABILITY's optionality — the controller decides whether to use it at all — and
+    ⚠️ **NOT `opponentMayDraw`**: nobody but the controller decides anything, the
+    opponent's draw is mandatory once the Ability is used, so nothing parks. Seat
+    order is D491's CONTROLLER-FIRST (one `CARDS_DRAWN` per seat, the `handRefresh`
+    precedent); the card prints no order, so that is a log-order choice and not a
+    printed fact (D553 R2, UNRULED). A seat with an empty deck short-draws alone. */
+const ALLURING_LIGHT: CardProgram = {
+  abilities: [
+    {
+      name: "Alluring Light",
+      oncePerTurn: true,
+      activeOnly: false,
+      program: [{ op: "drawCards", count: 1, who: "eachPlayer" }],
+    },
+  ],
+};
+
+/** Blissey ex sv06-134 / sv06-201 — "Happy Switch": *"Once during your turn, you
+    may move a Basic Energy from 1 of your Pokémon to another of your Pokémon."*
+    (Ability, 2 legal printings.)
+
+    `ENERGY_SWITCH`'s body verbatim — the Item prints the identical clause after
+    "Move" — in its OWN object, because the surface differs (an Ability, not a
+    `trainer` list) and D199's rule is one object per printed text. It parks on the
+    compound `moveEnergy` prompt and is refused (`moveEnergyPlayable`) on a board
+    with one Pokémon or with no Basic Energy in play, exactly as the Item is. The
+    once-per-turn lock is written by `useAbility` BEFORE the program runs, so a
+    DECLINED park still spends it (measured and pinned in `onceAbilities.test.ts`,
+    not changed). The card's attack "Return" still derives (`optionalDraw`). */
+const HAPPY_SWITCH: CardProgram = {
+  abilities: [
+    {
+      name: "Happy Switch",
+      oncePerTurn: true,
+      activeOnly: false,
+      program: [{ op: "moveEnergy", filter: { kind: "basicEnergy" }, max: 1 }],
+    },
+  ],
+};
+
+/** Swadloon sv10.5w-002 / sv10.5w-088 — "Healing Leaves": *"Once during your
+    turn, you may heal 20 damage from your Active Pokémon."* (Ability, 2 legal
+    printings.)
+
+    🛑 **THE FIRST REGISTRY / ABILITY PRODUCER OF `heal { target: "self" }`.**
+    `healSelf` reads the CONTROLLER's Active (`state.players[ctx.seat].active`), and
+    on an Ability used from the Bench that is exactly the printed *"your Active
+    Pokémon"* — the Benched Swadloon itself is NOT healed, even when damaged. The
+    clamp is the op's own (20 on 10 damage heals 10). ⚠️ **AN UNDAMAGED ACTIVE STILL
+    LETS IT BE USED** and files no `HEALED` row — `programPlayable`'s heal doctrine,
+    kept as a design call (D553 R1, UNRULED; reverses on an official ruling that an
+    Ability which would do nothing cannot be used). */
+const HEALING_LEAVES: CardProgram = {
+  abilities: [
+    {
+      name: "Healing Leaves",
+      oncePerTurn: true,
+      activeOnly: false,
+      program: [{ op: "heal", target: "self", amount: 20 }],
+    },
+  ],
+};
+
+/** Mamoswine ex sv09-079 / sv09-174 — "Mammoth Hauler": *"Once during your turn,
+    you may search your deck for a Pokémon, reveal it, and put it into your hand.
+    Then, shuffle your deck."* (Ability, 2 legal printings.)
+
+    `CHAMPIONS_CALL`'s template with the owner stripped off the noun: `max: 1` the
+    printed singular, `reveal: true` the printed "reveal it" (D225), `dest: "hand"`,
+    and the trailing `shuffleDeck` that runs on a whiff and on a decline alike. */
+const MAMMOTH_HAULER: CardProgram = {
+  abilities: [
+    {
+      name: "Mammoth Hauler",
+      oncePerTurn: true,
+      activeOnly: false,
+      program: [
+        {
+          op: "searchDeck",
+          filter: { kind: "anyPokemon" },
+          dest: "hand",
+          max: 1,
+          reveal: true,
+        },
+        { op: "shuffleDeck" },
+      ],
+    },
+  ],
+};
+
+/** Sawsbuck sv05-017 / sv05-166 — "Changing Seasons": *"Once during your turn,
+    you may search your deck for a Stadium card, reveal it, and put it into your
+    hand. Then, shuffle your deck."* (Ability, 2 legal printings.)
+
+    `MAMMOTH_HAULER` with the noun moved to the `stadium` filter; the caption is
+    `retrieveNoun`'s "a Stadium card". */
+const CHANGING_SEASONS: CardProgram = {
+  abilities: [
+    {
+      name: "Changing Seasons",
+      oncePerTurn: true,
+      activeOnly: false,
+      program: [
+        {
+          op: "searchDeck",
+          filter: { kind: "stadium" },
+          dest: "hand",
+          max: 1,
+          reveal: true,
+        },
+        { op: "shuffleDeck" },
+      ],
+    },
+  ],
+};
+
+/** Ethan's Quilava sv10-033 — "Bonded by the Journey": *"Once during your turn,
+    you may search your deck for an Ethan's Adventure card, reveal it, and put it
+    into your hand. Then, shuffle your deck."* (Ability, 1 legal printing.)
+
+    The same template on a `byName` noun with `cardNoun: true` (the printed "card"
+    after a Trainer's name, D264). The name is spelled with the ASCII apostrophe
+    U+0027, matching tcgdex `sv10-165` byte for byte. 🛑 **THE FIRST VOWEL-INITIAL
+    NAME IN `byName`'s cardNoun seam**, so `retrieveNoun` now computes the article
+    ("an Ethan's Adventure card") the way its `ownerPokemon` arm does — D553
+    withdrew the "every printed card name in this seam is consonant-initial" claim. */
+const BONDED_BY_THE_JOURNEY: CardProgram = {
+  abilities: [
+    {
+      name: "Bonded by the Journey",
+      oncePerTurn: true,
+      activeOnly: false,
+      program: [
+        {
+          op: "searchDeck",
+          filter: { kind: "byName", name: "Ethan's Adventure", cardNoun: true },
+          dest: "hand",
+          max: 1,
+          reveal: true,
+        },
+        { op: "shuffleDeck" },
+      ],
+    },
+  ],
+};
+
 const REGISTRY: Record<string, CardProgram> = {
   // Professor's Research (SV base prints)
   "sv01-189": PROFESSORS_RESEARCH,
@@ -12670,6 +12855,21 @@ const REGISTRY: Record<string, CardProgram> = {
   "sv10.5b-067": METALLIC_SIGNAL, // Genesect ex — Metallic Signal (deck → hand, 2 Evolution {M})
   "sv10.5b-161": METALLIC_SIGNAL, // Genesect ex (reprint)
   "sv10.5b-169": METALLIC_SIGNAL, // Genesect ex (reprint)
+  // ── 🆕🆕🆕 D553 — the simple once-per-turn Abilities, 12 printings / 7 texts /
+  //    7 objects. Inserted MID-MAP (D395/D396's precedent) so the insertion-order
+  //    batons that read the map's LAST key do not move. ──
+  "sv10-030": HURRIED_GAIT, // Rapidash — Hurried Gait (draw a card)
+  "sv10-189": HURRIED_GAIT, // Rapidash (reprint)
+  "sv06-038": ALLURING_LIGHT, // Chandelure — Alluring Light (each player draws a card)
+  "sv06-134": HAPPY_SWITCH, // Blissey ex — Happy Switch (move a Basic Energy, own → own)
+  "sv06-201": HAPPY_SWITCH, // Blissey ex (reprint)
+  "sv10.5w-002": HEALING_LEAVES, // Swadloon — Healing Leaves (heal 20 from your Active)
+  "sv10.5w-088": HEALING_LEAVES, // Swadloon (reprint)
+  "sv09-079": MAMMOTH_HAULER, // Mamoswine ex — Mammoth Hauler (deck → hand, a Pokémon)
+  "sv09-174": MAMMOTH_HAULER, // Mamoswine ex (reprint)
+  "sv05-017": CHANGING_SEASONS, // Sawsbuck — Changing Seasons (deck → hand, a Stadium card)
+  "sv05-166": CHANGING_SEASONS, // Sawsbuck (reprint)
+  "sv10-033": BONDED_BY_THE_JOURNEY, // Ethan's Quilava — Bonded by the Journey (deck → hand, an Ethan's Adventure card)
   // ── D190 — THE **STANDARD-LEGAL** REPRINT-ALIAS MAP (Tier 0 of
   //    `docs/reference/coverage-backlog-legal.md`). 22 printings, 9 map targets,
   //    ZERO new code: every row below prints a sentence that is already authored

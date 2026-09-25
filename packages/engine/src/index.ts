@@ -20114,6 +20114,30 @@ import type { GameState, Seat } from "./types";
     `expect(manifest.version)`, `it(…)` titles, the declaration and `package.json` —
     **not** as a value-keyed grep — because a value-keyed grep is precisely the mechanism
     that ate D500's heading.)
+    🆕🆕🆕 engineVersion 0.436.0 → **0.437.0** (D553 — THE SIMPLE ONCE-PER-TURN ABILITIES, 12 PRINTINGS /
+    7 TEXTS / 7 OBJECTS, ZERO VOCABULARY — the loop's first slice after the redirect from attacks to
+    abilities/trainers (the 2026-09-25 coverage audit's cluster 1). Seven registry `CardProgram`s, each
+    `abilities: [{ name, oncePerTurn: true, activeOnly: false, program }]` with NO `attack` key, keyed on
+    twelve REAL ids inserted MID-MAP after `sv10.5b-169` (D395/D396): Rapidash `sv10-030`/`-189` "Hurried
+    Gait" (`drawCards 1`), Chandelure `sv06-038` "Alluring Light" (`drawCards 1, who: "eachPlayer"` — the
+    key's first REGISTRY producer; the printed "you may have" is the Ability's optionality, NOT
+    `opponentMayDraw`), Blissey ex `sv06-134`/`-201` "Happy Switch" (`ENERGY_SWITCH`'s body on its own
+    object), Swadloon `sv10.5w-002`/`-088` "Healing Leaves" (`heal self 20` — `heal`'s first REGISTRY /
+    ABILITY producer; `healSelf` reads the CONTROLLER's Active, so the Benched Swadloon is not the one
+    healed), Mamoswine ex `sv09-079`/`-174` "Mammoth Hauler", Sawsbuck `sv05-017`/`-166` "Changing
+    Seasons" and Ethan's Quilava `sv10-033` "Bonded by the Journey" (`CHAMPIONS_CALL`'s `searchDeck max 1
+    reveal` + `shuffleDeck` over `anyPokemon` / `stadium` / `byName "Ethan's Adventure" cardNoun`). THE ONE
+    BEHAVIOUR LINE OUTSIDE THE REGISTRY: `retrieveNoun`'s byName cardNoun arm computes its article
+    (`/^[AEIOU]/` → "an"), the `ownerPokemon` arm's rule, so the dialog reads "an Ethan's Adventure card";
+    the claim "every printed card name in this seam is consonant-initial" is WITHDRAWN (D539). Rulings R1–R4
+    in `docs/decisions.md` D553 (R1 an Ability that would do nothing — Healing Leaves on an undamaged Active,
+    Hurried Gait on an empty deck — is still usable, UNRULED; R2 Alluring Light draws controller first,
+    order only, UNRULED). **`MATCH_RECORD_VERSION` STAYS 34**: no op, field or member is new, and every
+    op these programs park (`moveEnergy`, `searchDeck`) already rides `phase.cont` under its shipped shape.
+    New suites `onceAbilities.test.ts` and `onceAbilitySearch.test.ts` on a LOCAL `cardPool` with the REAL
+    ids (D275), no `fix-*` demonstrator. Census: `BUILT.ability` 284 → 296 (true Ability printings 296 − 17
+    = 279; the audit's live 380 against `POPULATION.abilityUnits` 376 is UNRECONCILED), registry keys 713 →
+    725. Mutants 3,155 → 3,176, all twenty-one `D553-*` KILLED.)
     🆕🆕🆕 engineVersion 0.435.0 → **0.436.0** (D552 — THE PRE-DAMAGE SELF ATTACH BEHIND A MULTIPLIER
     HEAD, AND THE WEAKNESS RETYPE AS THE RIDER ON THE RECORD BUMP. `censusAttackCorpus.ts` **file line
     569** (leading count column `1`) — *"This attack does 30 damage for each {W} Energy attached to this
@@ -24086,7 +24110,7 @@ import type { GameState, Seat } from "./types";
     WITNESS** — the count was re-derived every slice and the word *"three"* was carried.
     A successor of this slice inherits **81 / 61 / 17** again, over **FIVE** history
     occurrences: those four plus `deckMillFilteredScale.test.ts`'s own header arrow.) */
-export const engineVersion = "0.436.0";
+export const engineVersion = "0.437.0";
 
 export type {
   ApplyResult,
