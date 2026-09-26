@@ -59,6 +59,8 @@ import {
   providedEnergy,
   seatDamageReduction,
   seatRemovesWeakness,
+  // 🆕🆕🆕 D556 — the this-turn side-wide pre-W/R bonus (Black Belt's Training).
+  sideAttackBonusThisTurn,
   stadiumPreventsDamage,
 } from "./continuous";
 import {
@@ -3137,9 +3139,19 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
     // is the third, reached the same way and named for the same reason.
     const suppressTargetEffects =
       damageSuppression?.targetEffects === true || attackerSuppressesTargetEffects(next, attackerBody);
+    // 🆕🆕🆕 D556 — AND THE THIS-TURN SIDE-WIDE BONUS a Trainer installed (Black Belt's
+    // Training, *"During this turn, attacks used by your Pokémon do 40 more damage to
+    // your opponent's Active Pokémon ex (before applying Weakness and Resistance)."*),
+    // summed HERE beside `boostedAttackDamage` for that term's reason: an INSTALLATION,
+    // not a `passivesOf` fold, so a §9 lock cannot reach it. Matched on the DEFENDER's
+    // card, seat-guarded to the turn's owner (continuous.ts `sideAttackBonusThisTurn`),
+    // and — like every bonus here — only inside this `scaledBase + scaledTotal > 0`
+    // branch, Vitality Band's rule. Untouched by `suppressTargetEffects`: it lands on the
+    // ATTACKER's number (docs/decisions.md D556).
     const bonus =
       attackerPreWRBonus(next, attackerBody, action.seat, defenderCard) +
-      boostedAttackDamage(next, attackerBody, index);
+      boostedAttackDamage(next, attackerBody, index) +
+      sideAttackBonusThisTurn(next, action.seat, defenderCard);
     // §8.5 step 5, the OTHER pre-W/R term (D149) — the printed "attacks used by
     // the Defending Pokémon do {N} less damage (before applying Weakness and
     // Resistance)", installed onto THIS attacker's body by the opponent's

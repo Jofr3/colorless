@@ -450,7 +450,12 @@ describe("§5 — the census terms, MEASURED rather than assumed", () => {
     // Torrential Whirlpool, Sand Stream, Snow Sink, Wicked Tail). Real catalog ids, no
     // `fix-*` key (`simpleTrainersD555.test.ts` / `simpleAbilitiesD555.test.ts` drive a
     // LOCAL `cardPool`), inserted MID-MAP, and no row authors an `attack` program.
-    expect(ids).toHaveLength(760);
+    // 🆕🆕🆕 D556 — 760 -> **779**: NINETEEN registry keys on SEVEN program objects —
+    // Black Belt's Training, Team Rocket's Ariana, Billy & O'Nare, Dragon Elixir, Team
+    // Rocket's Great Ball, Caretaker and Pecharunt "Toxic Subjugation". Real catalog ids,
+    // no `fix-*` key (`sideAttackBonusThisTurn.test.ts` / `conditionalTrainersD556.test.ts`
+    // drive a LOCAL `cardPool`), inserted MID-MAP, and no row authors an `attack` program.
+    expect(ids).toHaveLength(779);
     for (const id of VICTINI_IDS) {
       expect(ids, id).not.toContain(id);
       expect(programFor(id), id).toBeUndefined();

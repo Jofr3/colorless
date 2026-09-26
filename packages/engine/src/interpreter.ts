@@ -73,6 +73,8 @@ import {
   remainingHpWithin,
   seatDamageReduction,
   seatPreWRDamageBonus,
+  // 🆕🆕🆕 D556 — the this-turn side-wide pre-W/R bonus, folded at `snipeActive`.
+  sideAttackBonusThisTurn,
   seatRemovesWeakness,
   seatShieldedFromSupporterEffects,
   stadiumPreventsDamage,
@@ -1899,6 +1901,9 @@ function stepOp(
       return { done: preventAttackUse(state, op.attack, op.until, ctx, events) };
     case "boostAttack":
       return { done: boostAttack(state, op.attack, op.amount, op.base, ctx, events) };
+    // 🆕🆕🆕 D556 — the THIS-TURN side-wide bonus (Black Belt's Training), on the bag.
+    case "boostSideAttacksThisTurn":
+      return { done: boostSideAttacksThisTurn(state, op, ctx, events) };
     case "preventChosenAttack":
       return preventChosenAttack(state, ctx, events);
     case "reduceDamage":
@@ -4673,6 +4678,12 @@ export function conditionHolds(state: GameState, seat: Seat, cond: BoardConditio
       // 3-card hand and wrong one card away — `exactHandSize.test.ts` drives 2, 3
       // and 4 rather than describing them. Sizes only, contents never.
       return state.players[seat].hand.length === cond.count;
+    case "yourHandAtLeast":
+      // 🆕🆕🆕 D556 — Billy & O'Nare's *"if you have 10 or more cards in your hand"*. The
+      // ATTACKER's-own-seat half `yourHandExactly` one arm up gets right, with the
+      // comparator a FLOOR (`>=`, the printed *"or more"*). Read at the gate, after the
+      // program's first draw and after the Supporter left the hand (D556 R2). Sizes only.
+      return state.players[seat].hand.length >= cond.count;
     case "yourHandNotEmpty":
       // 🆕🆕 D385 — the payability of Veluza ex `sv09-043` "Purging Strike"'s printed
       // cost ("You may discard your hand"), resolved to the ATTACKER's own hand by
@@ -4822,6 +4833,13 @@ export function conditionHolds(state: GameState, seat: Seat, cond: BoardConditio
       // null on Trainers and Energy, hence the `?? []`. Empty Active Spot is
       // FALSE, as with the two other card-reading members.
       const spot = activeTop(state, otherSeat(seat));
+      return spot !== null && (spot.card.types ?? []).includes(cond.type);
+    }
+    case "yourActiveHasType": {
+      // 🆕🆕🆕 D556 — Dragon Elixir's *"your Active {N} Pokémon"*: the arm directly above
+      // with `otherSeat(seat)` replaced by `seat` and NOTHING else — the same `activeTop`,
+      // the same `Card.types` column §8.5's Weakness reads, the same empty-Spot FALSE.
+      const spot = activeTop(state, seat);
       return spot !== null && (spot.card.types ?? []).includes(cond.type);
     }
     case "opponentActiveHasResistance": {
@@ -5343,6 +5361,17 @@ export function conditionHolds(state: GameState, seat: Seat, cond: BoardConditio
       // `yourBenchHasNamed` arm's own hazard, sixteen lines up), so the guard is
       // explicit rather than a non-null assertion.
       return countOwnerPokemonInPlay(state, seat, cond.owner) >= cond.count;
+    case "yourPokemonAllOwner": {
+      // 🆕🆕🆕 D556 — Team Rocket's Ariana's *"If all of your Pokémon in play are Team
+      // Rocket's Pokémon"*. The arm above's walk with the quantifier changed: ONE count
+      // through the SAME `countPokemonInPlay` (Active + Bench, stack TOPS, the
+      // `ownerPokemon` prefix rule in `matchesFilter`), compared against the number of
+      // Pokémon in play (D556 R4). 🛑 `inPlay > 0` IS THE EMPTY-BOARD GUARD — "all" of
+      // none is vacuously true, and a side with no Pokémon has no Team Rocket's Pokémon.
+      const side = state.players[seat];
+      const inPlay = side.bench.length + (side.active === null ? 0 : 1);
+      return inPlay > 0 && countOwnerPokemonInPlay(state, seat, cond.owner) === inPlay;
+    }
     case "yourPokemonKoedOnOpponentsLastTurn":
       // D271 — "any of your Pokémon were Knocked Out during your opponent's last
       // turn" (Unfair Stamp sv06-165, Hassel sv06-151/-205). The whole predicate
@@ -5994,6 +6023,11 @@ export function conditionNote(cond: BoardCondition): string {
       return `your opponent has ${cond.count} or fewer cards in their hand`;
     case "handSizesEqual":
       return "you have the same number of cards in your hand as your opponent";
+    case "yourHandAtLeast":
+      // 🆕🆕🆕 D556 — the printed clause verbatim (Billy & O'Nare: "if you have 10 or
+      // more cards in your hand"), built from the parameter. The pool prints it at ONE
+      // value, 10, so no singular branch (D205's rule about never-spelled counts).
+      return `you have ${String(cond.count)} or more cards in your hand`;
     case "yourHandExactly":
       // 🆕 D379 — built from the parameter. It does NOT round-trip to the printed
       // bytes and cannot: the catalog prints the NEGATIVE ("you don't have exactly
@@ -6101,6 +6135,11 @@ export function conditionNote(cond: BoardCondition): string {
       // TOUCH**, which is why the surviving claim is the one about the member and
       // not the one about the bytes.
       return `your opponent's Active Pokémon is a ${cond.type} Pokémon`;
+    case "yourActiveHasType":
+      // 🆕🆕🆕 D556 — the arm above with the possessive flipped; the type reads as the
+      // printed NAME, never the brace code (D118/D239: the card prints `{N}`, a player
+      // reads "Dragon").
+      return `your Active Pokémon is a ${cond.type} Pokémon`;
     case "opponentActiveHasResistance":
       // 🆕 D371 — built from the parameter, and the type reads as the printed NAME
       // rather than the brace code (D118, the rule the arm above now states in the
@@ -6341,6 +6380,11 @@ export function conditionNote(cond: BoardCondition): string {
       // `${owner}'s ` to test the card name. Storing "Team Rocket's" instead would
       // mean two spellings of one subgroup across two files.
       return `you have ${String(cond.count)} or more ${cond.owner}'s Pokémon in play`;
+    case "yourPokemonAllOwner":
+      // 🆕🆕🆕 D556 — the printed clause verbatim, prefix and all (Ariana: "all of your
+      // Pokémon in play are Team Rocket's Pokémon"); the possessive is added here, the
+      // arm above's convention.
+      return `all of your Pokémon in play are ${cond.owner}'s Pokémon`;
     case "yourPokemonKoedOnOpponentsLastTurn":
       // The printed clause verbatim — the family's THIRD full round-trip, and it
       // keeps the possessive "your opponent's last turn" that the predicate turns
@@ -7650,6 +7694,38 @@ function lockSideAttacks(
   }
   events.push({ type: "SIDE_ATTACKS_LOCKED", seat: lockedSeat, maxEnergy });
   return withSide(state, lockedSeat, { ...side, sideAttackLock: { turn: lockTurn, maxEnergy } });
+}
+
+/** 🆕🆕🆕 §8.5 (D556) — INSTALL a this-turn side-wide pre-W/R bonus: append
+    `{ amount, target }` to `TurnAllowances.sideAttackBonuses` and file
+    `SIDE_ATTACKS_BOOSTED`. The ONE writer of that key; read by continuous.ts
+    `sideAttackBonusThisTurn` at both pre-W/R sites.
+
+    APPENDED, NEVER MERGED — sources are summed (types.ts). The bag belongs to the turn's
+    owner, and the only producer is a Supporter, which only the turn's owner can play
+    (cardplay.ts `playTrainer`'s gate), so `ctx.seat` IS that owner here; the READ is
+    seat-guarded because it is the side that meets other seats (types.ts). NO
+    `effectRefused` gate — `lockSideAttacks`'s argument (D549 R5): the object is a SIDE,
+    not a Pokémon, so no body's *"prevent all effects"* shield can reach it. It is
+    emitted and written even when no ex is Active (D556 R1): the play installs and the
+    bonus simply never matches. Never parks; no rng. */
+function boostSideAttacksThisTurn(
+  state: GameState,
+  op: Extract<EffectOp, { op: "boostSideAttacksThisTurn" }>,
+  ctx: EffectContext,
+  events: GameEvent[],
+): GameState {
+  events.push({ type: "SIDE_ATTACKS_BOOSTED", seat: ctx.seat, amount: op.amount, target: op.target });
+  return {
+    ...state,
+    allowances: {
+      ...state.allowances,
+      sideAttackBonuses: [
+        ...state.allowances.sideAttackBonuses,
+        { amount: op.amount, target: op.target },
+      ],
+    },
+  };
 }
 
 /** §8/§8.5 (D154, shared D155) — the printed PROPER NOUN → the INDEX every read
@@ -9789,11 +9865,18 @@ function snipeActive(
   // (D149) and aim at the Bench. Immune to §9 and untouched by `ignoreWR` (an effect
   // on the ATTACKER). Whether either real card prints a snipe attack is UNMEASURED.
   // Decision and reversal condition: docs/decisions.md D546.
+  // 🆕🆕🆕 D556 — AND THE THIS-TURN SIDE-WIDE BONUS (Black Belt's Training), the same
+  // helper attack.ts's main hit calls, so the two pre-W/R sites cannot disagree. Its
+  // printed scope *"to your opponent's Active Pokémon ex"* is this arm's target, matched
+  // on `target.card`; `ignoreWR` does not touch it (an effect on the ATTACKING side,
+  // the reading that keeps `attackerPreWRBonus` above). Seat-guarded to the turn's
+  // owner (`ctx.seat` must own the turn). docs/decisions.md D556.
   const bonus =
     attacker === null
       ? 0
       : attackerPreWRBonus(state, attacker.active, ctx.seat, target.card) +
-        everyAttackBoostOf(state, attacker.active);
+        everyAttackBoostOf(state, attacker.active) +
+        sideAttackBonusThisTurn(state, ctx.seat, target.card);
   // D149 — the pre-W/R DEBUFF on the attacker, subtracted beside its bonus. NOT
   // bypassed by `ignoreWR`: Feint Attack's "not affected by … any effects on that
   // Pokémon" scopes the TARGET, and this is an effect on the ATTACKER — the same
@@ -16759,8 +16842,12 @@ function discardNote(op: Extract<EffectOp, { op: "discardEnergy" }>): string {
   }
 }
 
-/** The noun phrase (singular / plural) each filter reads as in a retrieval note. */
-function retrieveNoun(filter: CardFilter): { singular: string; plural: string } {
+/** The noun phrase (singular / plural) each filter reads as in a retrieval note.
+
+    🆕🆕🆕 D556 — MODULE-EXPORTED (not re-exported from `index.ts`, D135) so log.ts renders
+    `SIDE_ATTACKS_BOOSTED`'s printed defender noun ("Pokémon ex") through THIS switch
+    rather than a second spelling of the same noun (D159). */
+export function retrieveNoun(filter: CardFilter): { singular: string; plural: string } {
   switch (filter.kind) {
     case "anyPokemon":
       // D264 — the printed "Pokémon that don't have a Rule Box" (Lana's Aid).

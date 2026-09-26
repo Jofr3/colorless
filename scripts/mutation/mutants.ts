@@ -899,8 +899,12 @@ export const MUTANTS: Mutant[] = [
     decision: "D224",
     what: "the owner string is Hop's — the REAL value of the neighbouring search row, and the failure mode D200 designed the bare `string` around: a wrong owner matches the empty set, so the card becomes a loud no-op rather than a wrong grab",
     file: "packages/engine/src/registry.ts",
-    find: '      filter: { kind: "ownerPokemon", owner: "Team Rocket", stage: "basic" },',
-    replace: '      filter: { kind: "ownerPokemon", owner: "Hop", stage: "basic" },',
+    // 🆕🆕🆕 D556 - RE-ANCHORED off the bytes (D540): Team Rocket's Great Ball's TAILS arm prints the
+    //    same filter line, ten spaces deep, so the six-space `find` occurred TWICE (`precheck`'s
+    //    2×). The anchor now carries Proton's `op` line above and its `max: 3` below; the patch is
+    //    unchanged (the owner on Proton's filter alone).
+    find: '      op: "searchDeck",\n      filter: { kind: "ownerPokemon", owner: "Team Rocket", stage: "basic" },\n      dest: "hand",\n      max: 3,',
+    replace: '      op: "searchDeck",\n      filter: { kind: "ownerPokemon", owner: "Hop", stage: "basic" },\n      dest: "hand",\n      max: 3,',
     expectKilledBy: ["packages/engine/src/proton.test.ts"],
   },
   {
@@ -6208,7 +6212,7 @@ export const MUTANTS: Mutant[] = [
     // CORPUS QUOTES** (D414/D415), so a value-keyed sweep over `toBe("0.391.0")` cannot
     // see it — this row's `find` spells the DECLARATION, not an assertion. Run
     // `precheck` after every version bump, not after the sweep tells you.
-    find: 'export const engineVersion = "0.439.0";',
+    find: 'export const engineVersion = "0.440.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -11372,8 +11376,11 @@ export const MUTANTS: Mutant[] = [
     // 🆕🆕🆕 D552 - RE-TRANSCRIBED, 33 -> 34, off the new bytes (THE SEVENTH POSITION: `:569`'s
     //    parked `attachFromHand.recordAs` and the REQUIRED `InPlayPokemon.weaknessRetype`).
     //    Eleventh consecutive bump to rot this row, predicted before `precheck`.
-    find: "export const MATCH_RECORD_VERSION = 34;",
-    replace: "export const MATCH_RECORD_VERSION = 33;",
+    // 🆕🆕🆕 D556 - RE-TRANSCRIBED, 34 -> 35, off the new bytes (THE EIGHTH POSITION: the REQUIRED
+    //    `TurnAllowances.sideAttackBonuses`). Twelfth consecutive bump to rot this row, predicted
+    //    before `precheck`.
+    find: "export const MATCH_RECORD_VERSION = 35;",
+    replace: "export const MATCH_RECORD_VERSION = 34;",
     expectKilledBy: ["apps/api/src/lobby/match.test.ts"],
   },
   // == D327 - THE COST SEAM'S SECOND AND THIRD COUNT SOURCES. Every row below is a
@@ -29381,8 +29388,9 @@ export const MUTANTS: Mutant[] = [
     // 🆕🆕🆕 D548 - RE-TRANSCRIBED off the new bytes (31 -> 32), the same step down by one.
     // 🆕🆕🆕 D549 - RE-TRANSCRIBED off the new bytes (32 -> 33), the same step down by one.
     // 🆕🆕🆕 D552 - RE-TRANSCRIBED off the new bytes (33 -> 34), the same step down by one.
-    find: "export const MATCH_RECORD_VERSION = 34;\n",
-    replace: "export const MATCH_RECORD_VERSION = 33;\n",
+    // 🆕🆕🆕 D556 - RE-TRANSCRIBED off the new bytes (34 -> 35), the same step down by one.
+    find: "export const MATCH_RECORD_VERSION = 35;\n",
+    replace: "export const MATCH_RECORD_VERSION = 34;\n",
     expectKilledBy: ["apps/api/src/lobby/match.test.ts"],
   },
   // ────────────────────────────────────────────────────────────────────────────
@@ -34295,8 +34303,10 @@ export const MUTANTS: Mutant[] = [
     decision: "D546",
     what: "🛑 **`snipeActive` STOPS FOLDING THE ALL-ATTACKS BUFF** — a chosen hit that lands on the opponent's ACTIVE pays 30 where the printed *\"to your opponent's Active Pokémon\"* says 150. The decision recorded in `docs/decisions.md` D546 with its reversal condition. Killed by §4's Active-snipe board.",
     file: "packages/engine/src/interpreter.ts",
-    find: "      : attackerPreWRBonus(state, attacker.active, ctx.seat, target.card) +\n        everyAttackBoostOf(state, attacker.active);",
-    replace: "      : attackerPreWRBonus(state, attacker.active, ctx.seat, target.card);",
+    // 🆕🆕🆕 D556 - RE-TRANSCRIBED off the bytes (D540): D556's side-wide term now follows the fold
+    //    on the same expression, so the anchor carries it and the patch drops ONLY the D546 fold.
+    find: "      : attackerPreWRBonus(state, attacker.active, ctx.seat, target.card) +\n        everyAttackBoostOf(state, attacker.active) +\n        sideAttackBonusThisTurn(state, ctx.seat, target.card);",
+    replace: "      : attackerPreWRBonus(state, attacker.active, ctx.seat, target.card) +\n        sideAttackBonusThisTurn(state, ctx.seat, target.card);",
     expectKilledBy: ["packages/engine/src/everyAttackBoost.test.ts"],
   },
   {
@@ -34733,11 +34743,14 @@ export const MUTANTS: Mutant[] = [
     // 🆕🆕🆕 D552 - RE-ANCHORED AGAIN off the bytes (D540): D552's SEVENTH POSITION now sits
     //    between D549's doc tail and the constant, so the anchor is D552's last two lines and the
     //    patch drops the constant FOUR steps, to D547's pre-bump 30.
-    find: "    schema, redact, projection or client byte: the wire does not carry a body's Weakness,\n    so the HUD does not show a retype (a carried display debt, decisions.md D552). */\nexport const MATCH_RECORD_VERSION = 34;",
+    // 🆕🆕🆕 D556 - RE-ANCHORED AGAIN off the bytes (D540): D556's EIGHTH POSITION now sits between
+    //    D552's doc tail and the constant, so the anchor is D556's last two lines and the patch
+    //    drops the constant FIVE steps, to D547's pre-bump 30.
+    find: "    or client byte: the redacted view does not carry `allowances`, so the HUD does not\n    show the side bonus (a carried display debt, decisions.md D556). */\nexport const MATCH_RECORD_VERSION = 35;",
     // 🆕🆕🆕 D549 - RE-ANCHORED AGAIN off the bytes (D540): D549's block now sits between
     //    D548's doc tail and the constant, so the anchor is D549's last two lines and the
     //    patch drops the constant THREE steps, to D547's pre-bump 30.
-    replace: "    schema, redact, projection or client byte: the wire does not carry a body's Weakness,\n    so the HUD does not show a retype (a carried display debt, decisions.md D552). */\nexport const MATCH_RECORD_VERSION = 30;",
+    replace: "    or client byte: the redacted view does not carry `allowances`, so the HUD does not\n    show the side bonus (a carried display debt, decisions.md D556). */\nexport const MATCH_RECORD_VERSION = 30;",
     expectKilledBy: ["packages/engine/src/attackFlipLock.test.ts"],
   },
   // ── D548 — CRESCENT PURGE, THE FACE-UP PRIZE. 18 rows, all probed UNDECLARED first
@@ -34903,11 +34916,13 @@ export const MUTANTS: Mutant[] = [
     file: "apps/api/src/lobby/match.ts",
     // 🆕🆕🆕 D552 - RE-ANCHORED off the bytes onto D552's doc tail; the patch drops the
     //    constant THREE steps, to D548's pre-bump 31.
-    find: "    schema, redact, projection or client byte: the wire does not carry a body's Weakness,\n    so the HUD does not show a retype (a carried display debt, decisions.md D552). */\nexport const MATCH_RECORD_VERSION = 34;",
+    // 🆕🆕🆕 D556 - RE-ANCHORED off the bytes onto D556's doc tail; the patch drops the constant
+    //    FOUR steps, to D548's pre-bump 31.
+    find: "    or client byte: the redacted view does not carry `allowances`, so the HUD does not\n    show the side bonus (a carried display debt, decisions.md D556). */\nexport const MATCH_RECORD_VERSION = 35;",
     // 🆕🆕🆕 D549 - RE-ANCHORED off the bytes onto D549's doc tail; the patch drops the
     //    constant TWO steps, to D548's pre-bump 31 (a different patch from
     //    `D549-record-version-not-bumped`, one step, same anchor).
-    replace: "    schema, redact, projection or client byte: the wire does not carry a body's Weakness,\n    so the HUD does not show a retype (a carried display debt, decisions.md D552). */\nexport const MATCH_RECORD_VERSION = 31;",
+    replace: "    or client byte: the redacted view does not carry `allowances`, so the HUD does not\n    show the side bonus (a carried display debt, decisions.md D556). */\nexport const MATCH_RECORD_VERSION = 31;",
     expectKilledBy: ["packages/engine/src/crescentPurge.test.ts", "apps/api/src/lobby/match.test.ts"],
   },
   // ── 🆕🆕🆕 D549 — THE DEFENDER'S NEXT-TURN MARKS AND THE SIDE-WIDE ATTACK LOCK (`censusAttackCorpus.ts`
@@ -35383,8 +35398,10 @@ export const MUTANTS: Mutant[] = [
     // 🆕🆕🆕 D552 - RE-ANCHORED off the bytes onto D552's doc tail; the patch drops the
     //    constant TWO steps, to D549's pre-bump 32 (a different patch from
     //    `D552-record-version-not-bumped`, one step, same anchor).
-    find: "    schema, redact, projection or client byte: the wire does not carry a body's Weakness,\n    so the HUD does not show a retype (a carried display debt, decisions.md D552). */\nexport const MATCH_RECORD_VERSION = 34;",
-    replace: "    schema, redact, projection or client byte: the wire does not carry a body's Weakness,\n    so the HUD does not show a retype (a carried display debt, decisions.md D552). */\nexport const MATCH_RECORD_VERSION = 32;",
+    // 🆕🆕🆕 D556 - RE-ANCHORED off the bytes onto D556's doc tail; the patch drops the constant
+    //    THREE steps, to D549's pre-bump 32.
+    find: "    or client byte: the redacted view does not carry `allowances`, so the HUD does not\n    show the side bonus (a carried display debt, decisions.md D556). */\nexport const MATCH_RECORD_VERSION = 35;",
+    replace: "    or client byte: the redacted view does not carry `allowances`, so the HUD does not\n    show the side bonus (a carried display debt, decisions.md D556). */\nexport const MATCH_RECORD_VERSION = 32;",
     expectKilledBy: ["packages/engine/src/sideAttackLock.test.ts", "apps/api/src/lobby/match.test.ts"],
   },
   {
@@ -35944,10 +35961,13 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D552-record-version-not-bumped",
     decision: "D552",
-    what: "🛑 C35 — **`MATCH_RECORD_VERSION` STAYS 33 WHILE THE SEVENTH POSITION LANDS** — this deploy accepts a v33 record, whose bodies lack `weaknessRetype` (every main hit that reads target effects THROWS, D326) and whose parks this deploy would resume correctly while a rollback would not. Anchored on D552's own doc tail, one step. Killed by the sixteen engine raw pins and `match.test.ts`.",
+    what: "🛑 C35 — **`MATCH_RECORD_VERSION` STAYS 33 WHILE THE SEVENTH POSITION LANDS** — this deploy accepts a v33 record, whose bodies lack `weaknessRetype` (every main hit that reads target effects THROWS, D326) and whose parks this deploy would resume correctly while a rollback would not. Anchored on D552's own doc tail, one step. Killed by the sixteen engine raw pins and `match.test.ts`. 🆕🆕🆕 D556: RE-ANCHORED onto D556's doc tail (the eighth position now sits between), so the patch is now TWO steps, 35 → 33 — the experiment is unchanged (a deploy that accepts a v33 record), the anchor moved.",
     file: "apps/api/src/lobby/match.ts",
-    find: "    schema, redact, projection or client byte: the wire does not carry a body's Weakness,\n    so the HUD does not show a retype (a carried display debt, decisions.md D552). */\nexport const MATCH_RECORD_VERSION = 34;",
-    replace: "    schema, redact, projection or client byte: the wire does not carry a body's Weakness,\n    so the HUD does not show a retype (a carried display debt, decisions.md D552). */\nexport const MATCH_RECORD_VERSION = 33;",
+    // 🆕🆕🆕 D556 - RE-ANCHORED off the bytes onto D556's doc tail; the patch drops the constant
+    //    TWO steps, to D552's pre-bump 33 (a different patch from `D556-record-version-not-bumped`,
+    //    one step, same anchor).
+    find: "    or client byte: the redacted view does not carry `allowances`, so the HUD does not\n    show the side bonus (a carried display debt, decisions.md D556). */\nexport const MATCH_RECORD_VERSION = 35;",
+    replace: "    or client byte: the redacted view does not carry `allowances`, so the HUD does not\n    show the side bonus (a carried display debt, decisions.md D556). */\nexport const MATCH_RECORD_VERSION = 33;",
     expectKilledBy: ["apps/api/src/lobby/match.test.ts"],
   },
   // ── 🆕🆕🆕 D553 — THE SIMPLE ONCE-PER-TURN ABILITIES, 12 printings / 7 texts / 7 objects,
@@ -36585,5 +36605,284 @@ export const MUTANTS: Mutant[] = [
     find: "      name: \"Wicked Tail\",\n      trigger: \"onEvolve\",\n      optional: true,\n      program: [\n        {\n          op: \"coinFlipGate\",\n          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.\n          then: [{ op: \"randomFromOpponentHand\", to: \"deck\" }],\n        },\n        {\n          op: \"coinFlipGate\",\n          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.\n          then: [{ op: \"randomFromOpponentHand\", to: \"deck\" }],\n        },\n",
     replace: "      name: \"Wicked Tail\",\n      trigger: \"onEvolve\",\n      optional: true,\n      program: [\n        {\n          op: \"coinFlipGate\",\n          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.\n          then: [{ op: \"randomFromOpponentHand\", to: \"discard\" }],\n        },\n        {\n          op: \"coinFlipGate\",\n          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.\n          then: [{ op: \"randomFromOpponentHand\", to: \"deck\" }],\n        },\n",
     expectKilledBy: ["packages/engine/src/simpleAbilitiesD555.test.ts"],
+  },
+  // ── 🆕🆕🆕 D556 — THE THIS-TURN SIDE-WIDE BONUS, THREE CONDITIONAL TRAINERS ON THREE NEW
+  //    `BoardCondition` MEMBERS, AND THREE ZERO-VOCABULARY RIDERS (19 printings / 7 texts / 7
+  //    objects). Every row was probed UNDECLARED first (D525(3)). Four replaces name an
+  //    identifier the original line did not — `topCardOf` (attack.ts), `disabledAbilityUids`
+  //    (continuous.ts), `otherSeat` ×2 (interpreter.ts) — and each is bound by its file (D533);
+  //    the gate, which works per TOP-LEVEL statement, counts ONE of them as new to its
+  //    statement (`disabledAbilityUids`, 94 → 95 name-introducing rows). No row touches a
+  //    catalog, corpus or fixture data file (D538). `D556-record-version-not-bumped` is the
+  //    eighth position's own row. ──
+  {
+    id: "D556-main-hit-drops-the-side-bonus",
+    decision: "D556",
+    what: "attack.ts's main hit stops summing the this-turn side-wide bonus: Black Belt's Training installs and Strike still does 50 into an Active ex. Killed by §3's 90 / 180 / 60 rungs and §5/§7.",
+    file: "packages/engine/src/attack.ts",
+    find: "      boostedAttackDamage(next, attackerBody, index) +\n      sideAttackBonusThisTurn(next, action.seat, defenderCard);",
+    replace: "      boostedAttackDamage(next, attackerBody, index);",
+    expectKilledBy: ["packages/engine/src/sideAttackBonusThisTurn.test.ts"],
+  },
+  {
+    id: "D556-side-bonus-read-off-the-attacker",
+    decision: "D556",
+    what: "the main hit matches the bonus's `target` against the ATTACKING card instead of the defender (D245's rider read at the wrong end): a non-ex attacker into an Active ex gets 0. Killed by §3.",
+    file: "packages/engine/src/attack.ts",
+    find: "      sideAttackBonusThisTurn(next, action.seat, defenderCard);",
+    replace: "      sideAttackBonusThisTurn(next, action.seat, topCardOf(next, attackerBody));",
+    expectKilledBy: ["packages/engine/src/sideAttackBonusThisTurn.test.ts"],
+  },
+  {
+    id: "D556-snipe-drops-the-side-bonus",
+    decision: "D556",
+    what: "`snipeActive` stops folding the side-wide bonus: a chosen 30 landing on the Active ex stays 30 where the card says 70. Killed by §4's Active-snipe rung — the second read site is driven on its own board (D432's reason).",
+    file: "packages/engine/src/interpreter.ts",
+    find: "        everyAttackBoostOf(state, attacker.active) +\n        sideAttackBonusThisTurn(state, ctx.seat, target.card);",
+    replace: "        everyAttackBoostOf(state, attacker.active);",
+    expectKilledBy: ["packages/engine/src/sideAttackBonusThisTurn.test.ts"],
+  },
+  {
+    id: "D556-bag-survives-the-turn",
+    decision: "D556",
+    what: "`startTurn` keeps the side-bonus bag across the boundary instead of wiping it with `freshAllowances()`: \"during this turn\" becomes forever. Killed by §6 (the bag is empty on the next two turns, and the next turn's Strike does 50).",
+    file: "packages/engine/src/flow.ts",
+    find: "    allowances: freshAllowances(),\n    phase: { kind: \"turn:action\", seat },",
+    replace: "    allowances: { ...freshAllowances(), sideAttackBonuses: state.allowances.sideAttackBonuses },\n    phase: { kind: \"turn:action\", seat },",
+    expectKilledBy: ["packages/engine/src/sideAttackBonusThisTurn.test.ts"],
+  },
+  {
+    id: "D556-seat-guard-dropped",
+    decision: "D556",
+    what: "🛑 the reader loses its seat guard: the bag describes the TURN'S OWNER, and a hit run for the other seat mid-turn is paid the owner's +40 (types.ts's named SEAT hazard). Killed by §8's helper rung and its board rung (P2's 30 onto P1's Active ex reads 70).",
+    file: "packages/engine/src/continuous.ts",
+    find: "  if (phaseViewOf(state, seat).activeSeat !== seat) return 0;\n  let total = 0;\n  for (const bonus of state.allowances.sideAttackBonuses) {",
+    replace: "  let total = 0;\n  for (const bonus of state.allowances.sideAttackBonuses) {",
+    expectKilledBy: ["packages/engine/src/sideAttackBonusThisTurn.test.ts"],
+  },
+  {
+    id: "D556-side-bonus-suppressed-by-ability-lock",
+    decision: "D556",
+    what: "the reader is routed through §9: any Ability lock in play (`disabledAbilityUids`) cancels the bonus, as it would a `passivesOf` aura. A Trainer's installation is not an Ability. Killed by §7 (Ting-Lu ex's Cursed Land on the attacker, Strike still 90).",
+    file: "packages/engine/src/continuous.ts",
+    find: "  if (phaseViewOf(state, seat).activeSeat !== seat) return 0;\n  let total = 0;\n  for (const bonus of state.allowances.sideAttackBonuses) {",
+    replace: "  if (phaseViewOf(state, seat).activeSeat !== seat || disabledAbilityUids(state).size > 0) return 0;\n  let total = 0;\n  for (const bonus of state.allowances.sideAttackBonuses) {",
+    expectKilledBy: ["packages/engine/src/sideAttackBonusThisTurn.test.ts"],
+  },
+  {
+    id: "D556-installer-overwrites",
+    decision: "D556",
+    what: "the installer REPLACES the bag instead of appending: sources stop being summed (`seatPreWRDamageBonus`'s rule). Killed by §8's two-installs rung (130, and three entries on the bag).",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      sideAttackBonuses: [\n        ...state.allowances.sideAttackBonuses,\n        { amount: op.amount, target: op.target },\n      ],",
+    replace: "      sideAttackBonuses: [{ amount: op.amount, target: op.target }],",
+    expectKilledBy: ["packages/engine/src/sideAttackBonusThisTurn.test.ts"],
+  },
+  {
+    id: "D556-black-belt-reads-v",
+    decision: "D556",
+    what: "Black Belt's Training targets Pokémon V instead of the printed Pokémon ex. Killed by the program pin, §3's ex/V rungs and the log row's noun.",
+    file: "packages/engine/src/registry.ts",
+    find: "    { op: \"boostSideAttacksThisTurn\", amount: 40, target: { kind: \"suffixPokemon\", suffix: \"ex\" } },",
+    replace: "    { op: \"boostSideAttacksThisTurn\", amount: 40, target: { kind: \"suffixPokemon\", suffix: \"V\" } },",
+    expectKilledBy: ["packages/engine/src/sideAttackBonusThisTurn.test.ts"],
+  },
+  {
+    id: "D556-black-belt-30",
+    decision: "D556",
+    what: "Black Belt's Training adds 30 instead of the printed 40. Killed by the program pin and every §3/§4 number.",
+    file: "packages/engine/src/registry.ts",
+    find: "    { op: \"boostSideAttacksThisTurn\", amount: 40, target: { kind: \"suffixPokemon\", suffix: \"ex\" } },",
+    replace: "    { op: \"boostSideAttacksThisTurn\", amount: 30, target: { kind: \"suffixPokemon\", suffix: \"ex\" } },",
+    expectKilledBy: ["packages/engine/src/sideAttackBonusThisTurn.test.ts"],
+  },
+  {
+    id: "D556-hand-floor-strict",
+    decision: "D556",
+    what: "`yourHandAtLeast` reads `>` for the printed \"10 or more\": exactly 10 fails. Killed by §2's 9/10/11 rung and §4's 12-card rung.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      // program's first draw and after the Supporter left the hand (D556 R2). Sizes only.\n      return state.players[seat].hand.length >= cond.count;",
+    replace: "      // program's first draw and after the Supporter left the hand (D556 R2). Sizes only.\n      return state.players[seat].hand.length > cond.count;",
+    expectKilledBy: ["packages/engine/src/conditionalTrainersD556.test.ts"],
+  },
+  {
+    id: "D556-hand-floor-reads-opponent",
+    decision: "D556",
+    what: "`yourHandAtLeast` counts the OPPONENT's hand. Killed by §2's \"the opponent's 10 is not yours\" rung and §4.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      // program's first draw and after the Supporter left the hand (D556 R2). Sizes only.\n      return state.players[seat].hand.length >= cond.count;",
+    replace: "      // program's first draw and after the Supporter left the hand (D556 R2). Sizes only.\n      return state.players[otherSeat(seat)].hand.length >= cond.count;",
+    expectKilledBy: ["packages/engine/src/conditionalTrainersD556.test.ts"],
+  },
+  {
+    id: "D556-all-owner-reads-some",
+    decision: "D556",
+    what: "`yourPokemonAllOwner` asks \"any\" instead of the printed \"all\": one Team Rocket's Pokémon among others is enough. Killed by §2's mixed boards and §3's Bench rung (R4).",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      return inPlay > 0 && countOwnerPokemonInPlay(state, seat, cond.owner) === inPlay;",
+    replace: "      return inPlay > 0 && countOwnerPokemonInPlay(state, seat, cond.owner) > 0;",
+    expectKilledBy: ["packages/engine/src/conditionalTrainersD556.test.ts"],
+  },
+  {
+    id: "D556-all-owner-vacuous",
+    decision: "D556",
+    what: "`yourPokemonAllOwner` drops its empty-board guard: \"all\" of no Pokémon reads TRUE. Killed by §2's empty-side rung.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      return inPlay > 0 && countOwnerPokemonInPlay(state, seat, cond.owner) === inPlay;",
+    replace: "      return countOwnerPokemonInPlay(state, seat, cond.owner) === inPlay;",
+    expectKilledBy: ["packages/engine/src/conditionalTrainersD556.test.ts"],
+  },
+  {
+    id: "D556-active-type-reads-opponent",
+    decision: "D556",
+    what: "`yourActiveHasType` reads the OPPONENT's Active (`opponentActiveHasType`'s seat): a Dragon across the table heals a non-Dragon. Killed by §2's mirror rung and §5.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      // the same `Card.types` column §8.5's Weakness reads, the same empty-Spot FALSE.\n      const spot = activeTop(state, seat);",
+    replace: "      // the same `Card.types` column §8.5's Weakness reads, the same empty-Spot FALSE.\n      const spot = activeTop(state, otherSeat(seat));",
+    expectKilledBy: ["packages/engine/src/conditionalTrainersD556.test.ts"],
+  },
+  {
+    id: "D556-note-all-owner-reads-any",
+    decision: "D556",
+    what: "`conditionNote`'s new arm prints \"any of your Pokémon\" for the printed \"all of your Pokémon\". Killed by §2's note rung.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      return `all of your Pokémon in play are ${cond.owner}'s Pokémon`;",
+    replace: "      return `any of your Pokémon in play are ${cond.owner}'s Pokémon`;",
+    expectKilledBy: ["packages/engine/src/conditionalTrainersD556.test.ts"],
+  },
+  {
+    id: "D556-ariana-sizes-swapped",
+    decision: "D556",
+    what: "Team Rocket's Ariana's two sizes swap: an all-Rocket board draws to 5 and a mixed one to 8. Killed by the program pin and §3.",
+    file: "packages/engine/src/registry.ts",
+    find: "      then: [{ op: \"drawUntilHandSize\", size: 8 }],\n      otherwise: [{ op: \"drawUntilHandSize\", size: 5 }],",
+    replace: "      then: [{ op: \"drawUntilHandSize\", size: 5 }],\n      otherwise: [{ op: \"drawUntilHandSize\", size: 8 }],",
+    expectKilledBy: ["packages/engine/src/conditionalTrainersD556.test.ts"],
+  },
+  {
+    id: "D556-billy-floor-9",
+    decision: "D556",
+    what: "Billy & O'Nare's floor is 9 instead of the printed 10 — the reading that counts Billy itself. Killed by §4's R2 rung (7 others + 2 = 9 must stop) and the pin.",
+    file: "packages/engine/src/registry.ts",
+    find: "      cond: { kind: \"yourHandAtLeast\", count: 10 },",
+    replace: "      cond: { kind: \"yourHandAtLeast\", count: 9 },",
+    expectKilledBy: ["packages/engine/src/conditionalTrainersD556.test.ts"],
+  },
+  {
+    id: "D556-billy-drops-the-second-draw",
+    decision: "D556",
+    what: "Billy & O'Nare's gated \"draw 2 more\" draws nothing. Killed by §4's 8-others rung (12 and two draw rows) and the pin.",
+    file: "packages/engine/src/registry.ts",
+    find: "      cond: { kind: \"yourHandAtLeast\", count: 10 },\n      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.\n      then: [{ op: \"drawCards\", count: 2 }],",
+    replace: "      cond: { kind: \"yourHandAtLeast\", count: 10 },\n      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.\n      then: [],",
+    expectKilledBy: ["packages/engine/src/conditionalTrainersD556.test.ts"],
+  },
+  {
+    id: "D556-elixir-reads-fire",
+    decision: "D556",
+    what: "Dragon Elixir gates on a Fire Active instead of the printed {N}. Killed by the pin and §5's Dragon heal.",
+    file: "packages/engine/src/registry.ts",
+    find: "      cond: { kind: \"yourActiveHasType\", type: \"Dragon\" },",
+    replace: "      cond: { kind: \"yourActiveHasType\", type: \"Fire\" },",
+    expectKilledBy: ["packages/engine/src/conditionalTrainersD556.test.ts"],
+  },
+  {
+    id: "D556-elixir-heals-30",
+    decision: "D556",
+    what: "Dragon Elixir heals 30 instead of the printed 60. Killed by the pin and §5 (100 must end at 40).",
+    file: "packages/engine/src/registry.ts",
+    find: "      then: [{ op: \"heal\", target: \"self\", amount: 60 }],",
+    replace: "      then: [{ op: \"heal\", target: \"self\", amount: 30 }],",
+    expectKilledBy: ["packages/engine/src/conditionalTrainersD556.test.ts"],
+  },
+  {
+    id: "D556-great-ball-heads-reads-basic",
+    decision: "D556",
+    what: "Team Rocket's Great Ball's HEADS face searches for a Basic instead of the printed Evolution. Killed by the pin and §6's heads rung (the candidates are the Evolution Team Rocket's Pokémon only).",
+    file: "packages/engine/src/registry.ts",
+    find: "          filter: { kind: \"ownerPokemon\", owner: \"Team Rocket\", stage: \"evolution\" },",
+    replace: "          filter: { kind: \"ownerPokemon\", owner: \"Team Rocket\", stage: \"basic\" },",
+    expectKilledBy: ["packages/engine/src/conditionalTrainersD556.test.ts"],
+  },
+  {
+    id: "D556-great-ball-drops-tails",
+    decision: "D556",
+    what: "Team Rocket's Great Ball loses its `otherwise`: tails searches nothing (the pre-D269 meaning of a one-armed gate). Killed by the pin and §6's tails rungs.",
+    file: "packages/engine/src/registry.ts",
+    find: "      otherwise: [\n        {\n          op: \"searchDeck\",\n          filter: { kind: \"ownerPokemon\", owner: \"Team Rocket\", stage: \"basic\" },\n          dest: \"hand\",\n          max: 1,\n          reveal: true,\n        },\n      ],\n    },\n    { op: \"shuffleDeck\" },",
+    replace: "    },\n    { op: \"shuffleDeck\" },",
+    expectKilledBy: ["packages/engine/src/conditionalTrainersD556.test.ts"],
+  },
+  {
+    id: "D556-great-ball-heads-hides",
+    decision: "D556",
+    what: "Team Rocket's Great Ball's heads search stops revealing (the printed \"reveal it\"). Killed by the pin, §6's DECK_SEARCHED `reveal` rung and revealClause's table.",
+    file: "packages/engine/src/registry.ts",
+    find: "          filter: { kind: \"ownerPokemon\", owner: \"Team Rocket\", stage: \"evolution\" },\n          dest: \"hand\",\n          max: 1,\n          reveal: true,",
+    replace: "          filter: { kind: \"ownerPokemon\", owner: \"Team Rocket\", stage: \"evolution\" },\n          dest: \"hand\",\n          max: 1,",
+    expectKilledBy: ["packages/engine/src/conditionalTrainersD556.test.ts", "packages/engine/src/revealClause.test.ts"],
+  },
+  {
+    id: "D556-great-ball-no-shuffle",
+    decision: "D556",
+    what: "Team Rocket's Great Ball never shuffles (\"Then, shuffle your deck.\" dropped). Killed by the pin and §6's resume rung (exactly one SHUFFLE after the search).",
+    file: "packages/engine/src/registry.ts",
+    find: "      ],\n    },\n    { op: \"shuffleDeck\" },\n  ],\n};\n\n/** 🆕🆕🆕 **D556 — Caretaker",
+    replace: "      ],\n    },\n  ],\n};\n\n/** 🆕🆕🆕 **D556 — Caretaker",
+    expectKilledBy: ["packages/engine/src/conditionalTrainersD556.test.ts"],
+  },
+  {
+    id: "D556-caretaker-draws-3",
+    decision: "D556",
+    what: "Caretaker draws 3 instead of the printed 2. Killed by the pin and §7.",
+    file: "packages/engine/src/registry.ts",
+    find: "const CARETAKER: CardProgram = {\n  trainer: [{ op: \"drawCards\", count: 2 }],",
+    replace: "const CARETAKER: CardProgram = {\n  trainer: [{ op: \"drawCards\", count: 3 }],",
+    expectKilledBy: ["packages/engine/src/conditionalTrainersD556.test.ts"],
+  },
+  {
+    id: "D556-pecharunt-40",
+    decision: "D556",
+    what: "Toxic Subjugation places 40 (4 counters) instead of the printed 5 counters (50). Killed by the pin and §8's 60 / 120 / Knock Out rungs.",
+    file: "packages/engine/src/registry.ts",
+    find: "          then: [{ op: \"damageActive\", amount: 50, source: \"ability\" }],",
+    replace: "          then: [{ op: \"damageActive\", amount: 40, source: \"ability\" }],",
+    expectKilledBy: ["packages/engine/src/conditionalTrainersD556.test.ts"],
+  },
+  {
+    id: "D556-pecharunt-reads-burned",
+    decision: "D556",
+    what: "Toxic Subjugation gates on Burned instead of the printed Poisoned. Killed by the pin, §8's Poisoned rungs and its Burned control.",
+    file: "packages/engine/src/registry.ts",
+    find: "          cond: { kind: \"opponentActivePoisoned\" },\n          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.\n          then: [{ op: \"damageActive\", amount: 50, source: \"ability\" }],",
+    replace: "          cond: { kind: \"opponentActiveBurned\" },\n          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.\n          then: [{ op: \"damageActive\", amount: 50, source: \"ability\" }],",
+    expectKilledBy: ["packages/engine/src/conditionalTrainersD556.test.ts"],
+  },
+  {
+    id: "D556-pecharunt-from-the-bench",
+    decision: "D556",
+    what: "Toxic Subjugation loses `activeOnly`: a BENCHED Pecharunt fires (\"As long as this Pokémon is in the Active Spot\" dropped). Killed by the pin and §8's Bench rung.",
+    file: "packages/engine/src/registry.ts",
+    find: "      name: \"Toxic Subjugation\",\n      trigger: \"betweenTurns\",\n      activeOnly: true,",
+    replace: "      name: \"Toxic Subjugation\",\n      trigger: \"betweenTurns\",",
+    expectKilledBy: ["packages/engine/src/conditionalTrainersD556.test.ts"],
+  },
+  {
+    id: "D556-pecharunt-ungated",
+    decision: "D556",
+    what: "Toxic Subjugation loses its gate: 50 lands on EVERY opposing Active at every Checkup, Poisoned or not. Killed by the pin and §8's R6 rung (no counters on an unpoisoned Active).",
+    file: "packages/engine/src/registry.ts",
+    find: "      program: [\n        {\n          op: \"conditionGate\",\n          cond: { kind: \"opponentActivePoisoned\" },\n          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.\n          then: [{ op: \"damageActive\", amount: 50, source: \"ability\" }],\n        },\n      ],",
+    replace: "      program: [{ op: \"damageActive\", amount: 50, source: \"ability\" }],",
+    expectKilledBy: ["packages/engine/src/conditionalTrainersD556.test.ts"],
+  },
+  {
+    id: "D556-record-version-not-bumped",
+    decision: "D556",
+    what: "🛑 **`MATCH_RECORD_VERSION` STAYS 34 WHILE THE EIGHTH POSITION LANDS** — this deploy accepts a v34 record, whose allowance bag lacks `sideAttackBonuses` (the turn owner's first damaging attack THROWS, D326), and a rollback would drop a played +40 (`sideAttackBonusThisTurn.test.ts` §9). Anchored on D556's own doc tail, one step. Killed by the sixteen engine raw pins and `match.test.ts`.",
+    file: "apps/api/src/lobby/match.ts",
+    find: "    or client byte: the redacted view does not carry `allowances`, so the HUD does not\n    show the side bonus (a carried display debt, decisions.md D556). */\nexport const MATCH_RECORD_VERSION = 35;",
+    replace: "    or client byte: the redacted view does not carry `allowances`, so the HUD does not\n    show the side bonus (a carried display debt, decisions.md D556). */\nexport const MATCH_RECORD_VERSION = 34;",
+    expectKilledBy: ["apps/api/src/lobby/match.test.ts"],
   },
 ];

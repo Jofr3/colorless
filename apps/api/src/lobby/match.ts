@@ -1602,8 +1602,53 @@ export interface MatchRecord {
     persisted), a new `EffectOp` member (`retypeDefenderWeakness { type }` — a D333
     widening; it never parks), and `GameEvent.WEAKNESS_RETYPED` (not persisted, D141). No
     schema, redact, projection or client byte: the wire does not carry a body's Weakness,
-    so the HUD does not show a retype (a carried display debt, decisions.md D552). */
-export const MATCH_RECORD_VERSION = 34;
+    so the HUD does not show a retype (a carried display debt, decisions.md D552).
+
+    🆕🆕🆕 **34 → 35 AT D556 — THE EIGHTH POSITION: A REQUIRED KEY ON THE ALLOWANCE BAG,
+    AND A BAG THAT LIVES ONE TURN.** The address, named first (D456's rule):
+      · **`GameState.allowances.sideAttackBonuses: SideAttackBonus[]`** — Black Belt's
+        Training (*"During this turn, attacks used by your Pokémon do 40 more damage to
+        your opponent's Active Pokémon ex (before applying Weakness and Resistance)."*,
+        9 legal printings), `{amount, target}` entries appended by the new
+        `boostSideAttacksThisTurn` op and summed at both pre-W/R sites. Persisted on
+        every save with no park in front of it; it LIVES ONE TURN (`freshAllowances()`
+        wipes it at every `startTurn`), which is the one thing no earlier position had.
+
+    🛑 **THE FIFTH POSITION'S TEST, RUN ON A ONE-TURN BAG — AND IT FAILS (driven).** An
+    optional `sideAttackBonuses?` passes D441 (an ABSENT key reads as "no bonus", which is
+    what a v34 writer meant) and is detectable in the bytes. It fails D456's *"inert on
+    the board"*: a v34 ROLLBACK deploy resuming a v35 record saved MID-TURN, after the
+    Supporter was played and before the attack, ignores the key and hits the Active ex
+    for 40 LESS than the printed card — the Supporter is spent and its effect is silently
+    gone (`sideAttackBonusThisTurn.test.ts` §9, driven by clearing the one key a v34
+    engine never reads). THE ONE-TURN LIFETIME SHRINKS THE WINDOW AND DOES NOT CLOSE IT:
+    the residue is a PLAYED effect missing from the board for the rest of that turn, the
+    fifth position's finding. So the key is REQUIRED and the version is owed.
+
+    🛑 **AND A v34 RECORD IS NOT READ BENIGNLY — MEASURED.** A v34 bag has no
+    `sideAttackBonuses` key. `sideAttackBonusThisTurn` passes its seat guard for the turn
+    owner and iterates `undefined` → **`TypeError` on the turn owner's first DAMAGING
+    attack** (main hit or `snipeActive`) and on any Black Belt's Training played (the
+    installer spreads the absent array) — D326's class (§9 of the same suite). The next
+    `startTurn` would write a fresh bag and heal the match, so the damage is ONE turn
+    wide; it is retired anyway, by `readMatchRecord`'s version gate, on D124's rule (a key
+    the writer never wrote is not a key with a default).
+
+    🛑 **WHAT WOULD REVERSE THIS (D422).** The fifth position's reversal (a rollback-safety
+    rule that accepts a silently dropped effect as inert, or a pipeline that forbids
+    rollback across a record-shape change); OR a rule that saves are only taken between
+    turns (the bag is empty at every `startTurn`, so such a record would carry `[]` and
+    lose nothing) — neither holds today.
+
+    ⚠️ Also moved, and none is a second reason: a new `EffectOp` member
+    (`boostSideAttacksThisTurn { amount, target }` — a D333 widening; it never parks),
+    three new `BoardCondition` members (`yourPokemonAllOwner`, `yourHandAtLeast`,
+    `yourActiveHasType` — D333 widenings; a `conditionGate` holding one can ride a parked
+    `rest` only as a new inhabitant a v34 writer never produced), and
+    `GameEvent.SIDE_ATTACKS_BOOSTED` (not persisted, D141). No schema, redact, projection
+    or client byte: the redacted view does not carry `allowances`, so the HUD does not
+    show the side bonus (a carried display debt, decisions.md D556). */
+export const MATCH_RECORD_VERSION = 35;
 
 /** How a persisted match read back: absent, usable, or written by an
     incompatible deploy (`stale` — the caller decides whether to retire it). */

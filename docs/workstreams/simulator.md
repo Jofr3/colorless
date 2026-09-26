@@ -19554,7 +19554,7 @@ Every id asserted **unbuilt** in `ownerPrefix.test.ts`.
 | *"Discard a Team Rocket's Energy … discard your opponent's Active Pokémon and all attached cards."* | 3 | an owner-prefixed **ENERGY** predicate, **plus** an effect that removes a body from the board outside the §8.1 KO sweep |
 | *"…30 damage for each of your Team Rocket's Pokémon in play."* | 2 | a `DamageCountSource` counting **filtered** own bodies (D193 measured a new source at 4–7 edits) |
 | Team Rocket's Proton (the search half is now expressible) | 2 | ✅ **ITS BLOCKER IS BUILT** — `CardProgram.trainerFirstTurnExempt` landed at D223 with Carmine. What is left is this card's OWN registry row plus the `searchDeck` half: **zero new engine code**, which makes it the cheapest row on this table. *(An engine piece transfers across cards; a registry row does not.)* |
-| Team Rocket's Great Ball | 1 | `coinFlipGate`'s missing **`otherwise`** branch (D142's Squawkabilly refusal, verbatim) |
+| Team Rocket's Great Ball | 1 | `coinFlipGate`'s missing **`otherwise`** branch (D142's Squawkabilly refusal, verbatim) — 🆕🆕🆕 2026-09-26 D556: that branch was PAID at D269; the card is BUILT at D556 with zero vocabulary (`TEAM_ROCKETS_GREAT_BALL`) and its `ownerPrefix.test.ts` DROPPED row removed |
 | *"N's Pokémon in play (both yours and your opponent's) have no Retreat Cost."* | 1 | a **subgroup scope** on `noRetreatCostAura`; same shape as the Steven's / Hop's Stadiums |
 | Arven's Pokéblock | 1 | a `BoardCondition` on card **identity** + a replacement ("instead") heal |
 | **Spikemuth Gym `sv10-169`** | 1 | ⚠️ **NOTHING NEW** — Champion's Call verbatim on `StadiumAbility.program`. Held back for scope only. **Take it first.** |
@@ -28246,7 +28246,7 @@ round-trips with `endsTurn`. Census: `BUILT.trainer` 113 → 128 (Item 29 → 34
 57 / swept 124; `derivedBenchSearchMove`'s walk 95. Mutants 3,176 → 3,199 (+23 `D554-*`, all killed undeclared).
 
 ### (e) Owed
-The audit's other deck searches need vocabulary: Team Rocket's Great Ball, TM Machine, Brilliant Blender, Tera Orb,
+The audit's other deck searches need vocabulary: Team Rocket's Great Ball (🆕🆕🆕 2026-09-26 D556 CORRECTION (D539): it needed none — BUILT at D556), TM Machine, Brilliant Blender, Tera Orb,
 Brock's Scouting, Love Ball, Dusk Ball, Crispin, Perrin, Salvatore. Next queue: the conditional-draw Trainers (Iris,
 Ariana, Billy — 6 printings, 2 `BoardCondition` members), then Samurott and Snow Sink.
 
@@ -28293,7 +28293,53 @@ Census: `BUILT.trainer` 128 → 137 (Item 36, Supporter 87), `BUILT.ability` 296
 
 ### (e) Owed
 The whole-corpus sweep (~~D552 → D553 → D554 → D555, all pending~~ D552, D553 and D554 PAID, each exact on its first launch —
-close-outs `b7336c51`, `52f44920`, `ffaa63dc`; D555's pending, predicted `3171 · 53` over 3,224). R1 and R4 UNRULED. Next queue: the conditional-draw
+close-outs `b7336c51`, `52f44920`, `ffaa63dc`; ~~D555's pending, predicted `3171 · 53` over 3,224~~ D555's PAID exactly at
+its close-out `66dbfab3`, `3171 · 53` over 3,224 on the first launch). R1 and R4 UNRULED. Next queue: the conditional-draw
 Trainers (Team Rocket's Ariana, Billy — 2 `BoardCondition` members), Thwackey / Crobat / Cradily, and the deck searches
 that need vocabulary. (D555 landing: Ariana, Billy & O'Nare and Team Rocket's Great Ball are BUILT by the parked D556,
 `d556-prep` at `aaba3087`, which lands after D555's sweep; the queue's live head is Thwackey / Crobat / Cradily.)
+
+## D556 — the this-turn side-wide bonus, three conditional Trainers on three new `BoardCondition` members, and three riders: 19 printings / 7 texts / 7 objects (engine 0.440.0, `MATCH_RECORD_VERSION` 34 → 35)
+
+**Status:** ✅ BUILT — keyed MID-MAP after `sv06-138`. Built in the `lum-wt-d556` worktree stacked on the parked D555;
+committed on `d556-prep` at `aaba3087` and LANDED on `main` by cherry-pick onto the D555 close-out `66dbfab3`.
+
+### (a) The seven rows (registry.ts, one block before `const REGISTRY`)
+| Card | Ids | Surface | Program |
+|---|---|---|---|
+| Black Belt's Training | `sv08.5-096`/`-097`/`-098`/`-099`, `sv09-143`/`-144`/`-145`, `svp-219`/`-220` | Supporter | `boostSideAttacksThisTurn { 40, suffixPokemon ex }` (NEW op) |
+| Team Rocket's Ariana | `sv10-171`/`-224`/`-237` | Supporter | `conditionGate yourPokemonAllOwner "Team Rocket"` → `drawUntilHandSize` 8 / else 5 |
+| Billy & O'Nare | `sv09-142` | Supporter | `drawCards 2` → `conditionGate yourHandAtLeast 10` → `drawCards 2` |
+| Dragon Elixir | `sv08-172` | Item | `conditionGate yourActiveHasType Dragon` → `heal self 60` |
+| Team Rocket's Great Ball | `sv10-175` | Item | `coinFlipGate` → `searchDeck ownerPokemon` Evolution / else Basic, `reveal` → `shuffleDeck` |
+| Caretaker | `sv06-144`/`-203` | Supporter | `drawCards 2` (the Community Center clause unreachable, R5) |
+| Pecharunt "Toxic Subjugation" | `svp-129`/`-149` | Triggered | `betweenTurns`, `activeOnly`, `conditionGate opponentActivePoisoned` → `damageActive 50` |
+
+### (b) The mechanism
+`TurnAllowances.sideAttackBonuses: { amount, target }[]` (REQUIRED, `[]` in `freshAllowances()` — "during this turn" is
+the bag's lifetime), appended by the op and summed by ONE helper, continuous.ts `sideAttackBonusThisTurn`, at attack.ts's
+main hit and at `snipeActive`: matched on the DEFENDING card, seat-guarded to the turn's owner, not routed through
+`passivesOf` (§9 cannot reach it), untouched by `ignoreWR`/`suppressTargetEffects` (the attacker's number), reported in
+`DAMAGE_DEALT.bonus`. New event `SIDE_ATTACKS_BOOSTED` and its log row. `MATCH_RECORD_VERSION` 34 → 35, the EIGHTH
+POSITION: a v34 rollback drops a played +40 mid-turn; a v34 bag throws on the turn owner's first damaging attack.
+
+### (c) Readings (`docs/decisions.md` D556)
+R1 Black Belt plays and whiffs with no ex Active · R2 Billy's count excludes Billy · R3 ⚠️ UNRULED: Dragon Elixir on a
+non-Dragon Active plays and whiffs · R4 Ariana's "all" is Active + Bench, stack tops · R5 Caretaker's Community Center
+clause is a named, unreachable gap (guarded) · R6 Pecharunt's `ABILITY_TRIGGERED` row is filed even when the gate is false
+· R7 Pecharunt's counters land after the poison tick and before the KO sweep. Excluded: Kieran ×5 (labelled confirm —
+next), Feraligatr "Torrential Heart" ×2, Indeedee.
+
+### (d) Tests, census and mutants
+New `sideAttackBonusThisTurn.test.ts` (27) and `conditionalTrainersD556.test.ts` (35), plus one `revealClause` rung.
+Great Ball's DROPPED row removed from `ownerPrefix.test.ts` (3 → 2). Walkers: `programWalk` `missed` 57 → 58,
+`derivedBenchSearchMove` searches 95 → 97, `revealClause` 39/57/124 → 40/58/125. Census: `BUILT.trainer` 137 → 154 (Item
+38, Supporter 102), `BUILT.ability` 307 → 309, `built` 2142 → 2161, registry keys 760 → 779. Mutants 3,224 → 3,254 (+30
+`D556-*`, all killed undeclared; 9 existing rows re-transcribed and re-probed).
+
+### (e) Owed
+The whole-corpus sweep (~~D552 → D553 → D554 → D555 → D556, all pending~~ D552–D555 PAID, each exact on its first
+launch — D555's `3171 · 53` at close-out `66dbfab3`; D556's pending, predicted `3201 · 53` over 3,254). The HUD does not show the side bonus (display
+debt). R3 UNRULED. Pecharunt's log noise (R6). Next: Kieran ×5 on this op with a labelled confirm; Torrential Heart ×2;
+the remaining audit rows.
+

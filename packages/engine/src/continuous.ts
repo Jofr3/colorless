@@ -31,6 +31,9 @@ import type {
 // this file, and its only edge back to `registry.ts` is type-only.
 import { timingGateFromAttackText } from "./effects";
 import type { GameEvent, StatusName } from "./events";
+// 🆕🆕🆕 D556 — the turn OWNER for `sideAttackBonusThisTurn`'s seat guard (THE one
+// exhaustive switch over `Phase`; phaseView.ts takes only types from here, so no cycle).
+import { phaseViewOf } from "./phaseView";
 import { flipCoin } from "./rng";
 import type {
   AttackTimingGate,
@@ -2407,6 +2410,48 @@ export function everyAttackBoostOf(state: GameState, pokemon: InPlayPokemon): nu
   return boost === null || boost.turn !== state.turn || boost.attackIndex !== null
     ? 0
     : boost.amount;
+}
+
+/** 🆕🆕🆕 §8.5 (D556) — the THIS-TURN SIDE-WIDE pre-W/R bonus `seat`'s attack gets
+    against `defenderCard`, or 0: the sum of every `TurnAllowances.sideAttackBonuses`
+    entry whose `target` matches the DEFENDING card (Black Belt's Training: *"During
+    this turn, attacks used by your Pokémon do 40 more damage to your opponent's Active
+    Pokémon ex (before applying Weakness and Resistance)."*, 9 legal printings).
+
+    ONE HELPER, TWO CALLERS — attack.ts's main hit (beside `boostedAttackDamage`) and
+    interpreter.ts `snipeActive` (beside `everyAttackBoostOf`) — so the two pre-W/R
+    sites cannot disagree; both report it inside `DAMAGE_DEALT.bonus`. `spreadDamage`
+    and `placeSnipe` omit every pre-W/R BONUS by design (D149) and aim at the Bench,
+    which the printed *"Active Pokémon"* excludes.
+
+    🛑 **NOT A `passivesOf` FOLD, AND THAT IS THE §9 RULE, NOT A SHORTCUT.** A Trainer's
+    installation is not an Ability: a §9 Ability-lock aura (`disabledAbilityUids`)
+    must not reach it — attack.ts's D149/D155 paragraph, the reason
+    `boostedAttackDamage` is summed at the site. Read straight off the state.
+
+    🛑 **THE SEAT GUARD IS THE FIRST LINE (types.ts `sideAttackBonuses`).** The bag
+    describes the TURN'S OWNER only; a hit whose attacking `seat` does not own the turn
+    (a program run for the other seat mid-turn, or any read between turns) is paid 0
+    rather than the turn owner's bonus. The owner comes from `phaseViewOf`, never from
+    turn parity — `youPlayedSupporterThisTurn`'s guard, verbatim.
+
+    THE TARGET IS MATCHED ON THE DEFENDER (D245's `target` rider on
+    `seatPreWRDamageBonus`, one file over): `undefined` fails every filter
+    (`matchesFilter`'s conservative direction). Sources are SUMMED — no `noStack` is
+    printed on this sentence. Immune to `ignoreWR` / `suppressTargetEffects` for
+    `attackerPreWRBonus`'s stated reason: the bonus lands on the ATTACKER's number, an
+    effect on the attacking side and not on "that Pokémon" (docs/decisions.md D556). */
+export function sideAttackBonusThisTurn(
+  state: GameState,
+  seat: Seat,
+  defenderCard: Card | undefined,
+): number {
+  if (phaseViewOf(state, seat).activeSeat !== seat) return 0;
+  let total = 0;
+  for (const bonus of state.allowances.sideAttackBonuses) {
+    if (matchesFilter(defenderCard, bonus.target)) total += bonus.amount;
+  }
+  return total;
 }
 
 /** 🆕🆕 §8.5 (D544) — the printed BASE damage an attack-installed BASE-SET

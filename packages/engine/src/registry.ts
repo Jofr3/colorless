@@ -12927,6 +12927,187 @@ const WICKED_TAIL: CardProgram = {
   ],
 };
 
+// ── 🆕🆕🆕 D556 — THE THIS-TURN SIDE-WIDE BONUS, THREE CONDITIONAL TRAINERS AND THREE
+//    ZERO-VOCABULARY RIDERS, 19 PRINTINGS / 7 TEXTS / 7 OBJECTS. One new op
+//    (`boostSideAttacksThisTurn`, on `TurnAllowances.sideAttackBonuses` — Black Belt's
+//    Training), three new `BoardCondition` members (`yourPokemonAllOwner`,
+//    `yourHandAtLeast`, `yourActiveHasType` — Ariana, Billy & O'Nare, Dragon Elixir),
+//    and three rows whose every op, filter and gate already ships (Team Rocket's Great
+//    Ball, Caretaker, Pecharunt "Toxic Subjugation"). Texts, subtypes and legality off
+//    tcgdex (the ingest's own upstream), 2026-09-25 — all nineteen `legal.standard:
+//    true`; one object per printed TEXT (D199), reprints share it. Keyed MID-MAP after
+//    `sv06-138` (D395/D396), so the map's LAST key does not move. ──
+
+/** 🆕🆕🆕 **D556 — Black Belt's Training `sv08.5-096`/`-097`/`-098`/`-099`,
+    `sv09-143`/`-144`/`-145`, `svp-219`/`-220` (Supporter, 9 legal)** — *"During this
+    turn, attacks used by your Pokémon do 40 more damage to your opponent's Active
+    Pokémon ex (before applying Weakness and Resistance)."*
+
+    The ONE new op. It appends `{ 40, suffixPokemon ex }` to the turn's allowance bag;
+    both pre-W/R sites (attack.ts's main hit, `snipeActive`) sum every matching entry
+    against the DEFENDING card, seat-guarded to the turn's owner, immune to a §9 lock,
+    reported inside `DAMAGE_DEALT.bonus`, and wiped by the next `startTurn`. *"Your
+    Pokémon"* is the SIDE: a Pokémon switched or promoted in after the play gets it.
+    ⚠️ **IT PLAYS AND WHIFFS WITH NO ex ACTIVE (D556 R1)** — the bonus installs and the
+    `SIDE_ATTACKS_BOOSTED` row is filed; it simply never matches a non-ex defender.
+    `MATCH_RECORD_VERSION` 34 → 35 (the EIGHTH POSITION, apps/api match.ts). */
+const BLACK_BELTS_TRAINING: CardProgram = {
+  trainer: [
+    { op: "boostSideAttacksThisTurn", amount: 40, target: { kind: "suffixPokemon", suffix: "ex" } },
+  ],
+};
+
+/** 🆕🆕🆕 **D556 — Team Rocket's Ariana `sv10-171`/`-224`/`-237` (Supporter, 3 legal)** —
+    *"Draw cards until you have 5 cards in your hand. If all of your Pokémon in play are
+    Team Rocket's Pokémon, draw cards until you have 8 cards in your hand instead."*
+
+    `LACEY`'s shape: the printed *"instead"* is a genuine if/ELSE, so the default 5 is
+    the gate's `otherwise` and exactly one `drawUntilHandSize` ever runs. The gate is the
+    new `yourPokemonAllOwner { owner: "Team Rocket" }` — Active + Bench, stack TOPS, the
+    `ownerPokemon` prefix rule (D556 R4). A hand already at or above the size draws 0. */
+const TEAM_ROCKETS_ARIANA: CardProgram = {
+  trainer: [
+    {
+      op: "conditionGate",
+      cond: { kind: "yourPokemonAllOwner", owner: "Team Rocket" },
+      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
+      then: [{ op: "drawUntilHandSize", size: 8 }],
+      otherwise: [{ op: "drawUntilHandSize", size: 5 }],
+    },
+  ],
+};
+
+/** 🆕🆕🆕 **D556 — Billy & O'Nare `sv09-142` (Supporter, 1 legal)** — *"Draw 2 cards.
+    Then, if you have 10 or more cards in your hand, draw 2 more cards."*
+
+    Two ops IN PRINTED ORDER: the first draw, then a `conditionGate` on the new
+    `yourHandAtLeast { count: 10 }` read AFTER it (*"Then, if you have…"*). The played
+    Supporter left the hand before the program ran (cardplay.ts), so it is never
+    counted (D556 R2): a hand of 8 others draws to 10 and draws 2 more; a hand of 7
+    others draws to 9 and stops — the board where counting Billy would say 10. The
+    second draw is printed *"more"*, so both `CARDS_DRAWN` rows fire (Emcee's Hype's
+    reading, not Picnicker's either/or). */
+const BILLY_AND_ONARE: CardProgram = {
+  trainer: [
+    { op: "drawCards", count: 2 },
+    {
+      op: "conditionGate",
+      cond: { kind: "yourHandAtLeast", count: 10 },
+      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
+      then: [{ op: "drawCards", count: 2 }],
+    },
+  ],
+};
+
+/** 🆕🆕🆕 **D556 — Dragon Elixir `sv08-172` (Item, 1 legal)** — *"Heal 60 damage from
+    your Active {N} Pokémon."*
+
+    `COOK`'s `heal { target: "self" }` (the controller's Active — D555's Trainer
+    precedent) behind the new `yourActiveHasType { type: "Dragon" }`: the printed `{N}`
+    narrows WHICH Active the heal reaches. ⚠️ **A NON-DRAGON ACTIVE: THE CARD PLAYS AND
+    WHIFFS (D556 R3, UNRULED — the D553 R1 family)**: no `programPlayable` arm reads a
+    `conditionGate`, so the Item is spent and nothing is healed, exactly as Cook on an
+    undamaged Active. Reverses on an official ruling that the play is illegal. */
+const DRAGON_ELIXIR: CardProgram = {
+  trainer: [
+    {
+      op: "conditionGate",
+      cond: { kind: "yourActiveHasType", type: "Dragon" },
+      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
+      then: [{ op: "heal", target: "self", amount: 60 }],
+    },
+  ],
+};
+
+/** 🆕🆕🆕 **D556 — Team Rocket's Great Ball `sv10-175` (Item, 1 legal)** — *"Flip a coin.
+    If heads, search your deck for an Evolution Team Rocket's Pokémon, reveal it, and put
+    it into your hand. If tails, search your deck for a Basic Team Rocket's Pokémon,
+    reveal it, and put it into your hand. Then, shuffle your deck."*
+
+    ZERO vocabulary, and the two pieces it was once refused for both shipped long ago:
+    `coinFlipGate.otherwise` (D269, the printed *"If tails"*) and the `ownerPokemon`
+    filter's `stage` rider (D200 — its own doc names THIS card as the `"evolution"`
+    printing). ~~"needs an owner-prefixed Evolution/Basic CardFilter pair"~~ is WITHDRAWN
+    (D539, D556). The shuffle closes BOTH faces (*"Then, shuffle your deck."*), so it is
+    ONE `shuffleDeck` AFTER the gate, not one per arm (Poké Ball's is inside its `then`
+    because tails does nothing there). The search PARKS inside the spliced arm and
+    resumes with the shuffle still queued — Poké Ball's shipped precedent (a parking
+    `searchDeck` inside `coinFlipGate.then`), and driven here on both faces. */
+const TEAM_ROCKETS_GREAT_BALL: CardProgram = {
+  trainer: [
+    {
+      op: "coinFlipGate",
+      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
+      then: [
+        {
+          op: "searchDeck",
+          filter: { kind: "ownerPokemon", owner: "Team Rocket", stage: "evolution" },
+          dest: "hand",
+          max: 1,
+          reveal: true,
+        },
+      ],
+      otherwise: [
+        {
+          op: "searchDeck",
+          filter: { kind: "ownerPokemon", owner: "Team Rocket", stage: "basic" },
+          dest: "hand",
+          max: 1,
+          reveal: true,
+        },
+      ],
+    },
+    { op: "shuffleDeck" },
+  ],
+};
+
+/** 🆕🆕🆕 **D556 — Caretaker `sv06-144`/`-203` (Supporter, 2 legal)** — *"Draw 2 cards.
+    If you drew any cards in this way and if Community Center is in play, shuffle this
+    Caretaker into your deck instead of discarding it."*
+
+    `drawCards 2`. 🛑 **THE SECOND SENTENCE IS A NAMED FIDELITY GAP THAT IS UNREACHABLE
+    TODAY (D556 R5)**: it reads only when Community Center `sv06-146` is in play, and
+    Community Center is UNBUILT (no `stadium` program — `playStadium` refuses it with
+    `TRAINER_NOT_SIMULATED`, D222), so no board this engine can reach puts it in the
+    zone. A guard rung pins both facts, so building Community Center turns it red and
+    owes this clause. `NEUTRALIZATION_ZONE`'s precedent for a printed clause with no
+    reader. */
+const CARETAKER: CardProgram = {
+  trainer: [{ op: "drawCards", count: 2 }],
+};
+
+/** 🆕🆕🆕 **D556 — Pecharunt `svp-129`/`-149` "Toxic Subjugation" (Ability, 2 legal)** —
+    *"As long as this Pokémon is in the Active Spot, put 5 more damage counters on your
+    opponent's Poisoned Pokémon during Pokémon Checkup."*
+
+    `TREVENANT`'s timing and spot clause (`betweenTurns`, `activeOnly`) over its op
+    (`damageActive`, 5 counters = 50 HP converted at the producer, §12), behind a
+    `conditionGate` on the shipped `opponentActivePoisoned` — the registry's FIRST gated
+    `betweenTurns` trigger (Snow Sink, D555 R2, is the gated-trigger precedent on another
+    timing). ⚠️ **THE `ABILITY_TRIGGERED` ROW IS FILED AT EVERY CHECKUP WHILE ACTIVE,
+    EVEN WHEN THE GATE IS FALSE (D556 R6)** — `runCheckupTriggers` (triggers.ts) files it
+    before the program runs; a carried log-noise debt, pinned by count. The extra
+    counters land AFTER the poison tick and BEFORE the KO sweep (flow.ts's Checkup order,
+    D556 R7), so a lethal total is swept that Checkup. The card's attack ("Poison Chain")
+    reaches the deriver exactly as before: no `attack` key. */
+const TOXIC_SUBJUGATION: CardProgram = {
+  triggered: [
+    {
+      name: "Toxic Subjugation",
+      trigger: "betweenTurns",
+      activeOnly: true,
+      program: [
+        {
+          op: "conditionGate",
+          cond: { kind: "opponentActivePoisoned" },
+          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
+          then: [{ op: "damageActive", amount: 50, source: "ability" }],
+        },
+      ],
+    },
+  ],
+};
+
 const REGISTRY: Record<string, CardProgram> = {
   // Professor's Research (SV base prints)
   "sv01-189": PROFESSORS_RESEARCH,
@@ -13454,6 +13635,27 @@ const REGISTRY: Record<string, CardProgram> = {
   "sv08-056": SNOW_SINK, // Chien-Pao — Snow Sink (bench from hand: may discard a Stadium)
   "svp-152": SNOW_SINK, // Chien-Pao (reprint)
   "sv06-138": WICKED_TAIL, // Ambipom — Wicked Tail (on evolve: 2 coins, random hand card per heads → deck)
+  // ── 🆕🆕🆕 D556 — the this-turn side-wide bonus, three conditional Trainers and three
+  //    zero-vocabulary riders, 19 printings / 7 texts / 7 objects, MID-MAP (D395/D396). ──
+  "sv08.5-096": BLACK_BELTS_TRAINING, // Black Belt's Training — +40 to the opponent's Active Pokémon ex this turn
+  "sv08.5-097": BLACK_BELTS_TRAINING, // Black Belt's Training (reprint)
+  "sv08.5-098": BLACK_BELTS_TRAINING, // Black Belt's Training (reprint)
+  "sv08.5-099": BLACK_BELTS_TRAINING, // Black Belt's Training (reprint)
+  "sv09-143": BLACK_BELTS_TRAINING, // Black Belt's Training (reprint)
+  "sv09-144": BLACK_BELTS_TRAINING, // Black Belt's Training (reprint)
+  "sv09-145": BLACK_BELTS_TRAINING, // Black Belt's Training (reprint)
+  "svp-219": BLACK_BELTS_TRAINING, // Black Belt's Training (reprint)
+  "svp-220": BLACK_BELTS_TRAINING, // Black Belt's Training (reprint)
+  "sv10-171": TEAM_ROCKETS_ARIANA, // Team Rocket's Ariana — draw to 5, or to 8 if all your Pokémon are Team Rocket's
+  "sv10-224": TEAM_ROCKETS_ARIANA, // Team Rocket's Ariana (reprint)
+  "sv10-237": TEAM_ROCKETS_ARIANA, // Team Rocket's Ariana (reprint)
+  "sv09-142": BILLY_AND_ONARE, // Billy & O'Nare — draw 2; then at 10+ cards in hand, draw 2 more
+  "sv08-172": DRAGON_ELIXIR, // Dragon Elixir — heal 60 from your Active {N} Pokémon
+  "sv10-175": TEAM_ROCKETS_GREAT_BALL, // Team Rocket's Great Ball — coin: Evolution / Basic Team Rocket's Pokémon → hand
+  "sv06-144": CARETAKER, // Caretaker — draw 2 (the Community Center clause is unreachable, R5)
+  "sv06-203": CARETAKER, // Caretaker (reprint)
+  "svp-129": TOXIC_SUBJUGATION, // Pecharunt — Toxic Subjugation (Checkup, Active: +50 on the opponent's Poisoned Active)
+  "svp-149": TOXIC_SUBJUGATION, // Pecharunt (reprint)
   // ── D190 — THE **STANDARD-LEGAL** REPRINT-ALIAS MAP (Tier 0 of
   //    `docs/reference/coverage-backlog-legal.md`). 22 printings, 9 map targets,
   //    ZERO new code: every row below prints a sentence that is already authored

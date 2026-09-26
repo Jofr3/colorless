@@ -821,7 +821,7 @@ describe("D528 §2 — H heads park H sequential `choosePokemon { upTo 1 }` over
 // §3 — the persisted address: `MATCH_RECORD_VERSION` HOLDS at 30 — what parks is D358's op bytes.
 // ─────────────────────────────────────────────────────────────────────────────
 
-describe("D528 §3 — `MATCH_RECORD_VERSION` HOLDS at 30 (🆕🆕🆕 held at THIS slice; 31 since D547; 32 since D548; 33 since D549; 34 since D552): the continuation's alphabet is D358's shipped op, and the member reaches no record", () => {
+describe("D528 §3 — `MATCH_RECORD_VERSION` HOLDS at 30 (🆕🆕🆕 held at THIS slice; 31 since D547; 32 since D548; 33 since D549; 34 since D552; 35 since D556): the continuation's alphabet is D358's shipped op, and the member reaches no record", () => {
   it("🛑 the parked `pendingOp`'s key set, sorted, is EXACTLY the shipped sibling's — `benchOnly`, `declinable`, `energyType`, `op`, `source` — and its JSON is the sibling's op byte for byte", () => {
     const parked = swing({ faces: HHH }).after;
     const cont = continuation(parked);
@@ -843,10 +843,10 @@ describe("D528 §3 — `MATCH_RECORD_VERSION` HOLDS at 30 (🆕🆕🆕 held at 
     expect(JSON.parse(JSON.stringify(READING))).toEqual(READING);
   });
 
-  it("🛑 `MATCH_RECORD_VERSION` is 34 (🆕🆕🆕 D552 stepped it 33 → 34; D549 stepped it 32 → 33; D548 stepped it 31 → 32; D547 stepped it 30 → 31; this slice held it) in `apps/api` — nothing at a persisted address changed shape", () => {
+  it("🛑 `MATCH_RECORD_VERSION` is 35 (🆕🆕🆕 D556 stepped it 34 → 35; D552 stepped it 33 → 34; D549 stepped it 32 → 33; D548 stepped it 31 → 32; D547 stepped it 30 → 31; this slice held it) in `apps/api` — nothing at a persisted address changed shape", () => {
     const match = Object.entries(RAW).find(([k]) => k.endsWith("/lobby/match.ts"))?.[1] ?? "";
     // 🆕🆕🆕 D547 — the constant this slice held is now 31: D547 added two REQUIRED `InPlayPokemon` fields (apps/api match.ts).
-    expect(match).toContain("export const MATCH_RECORD_VERSION = 34;");
+    expect(match).toContain("export const MATCH_RECORD_VERSION = 35;");
   });
 });
 
@@ -904,7 +904,7 @@ describe("D528 §4 — the census moved in exactly ONE summand, by 1 sentence / 
 
   it("engineVersion and `manifest.version` agree, and the bump is owed for BEHAVIOUR", () => {
     // ⚠️ The version is NOT spelled in this `it(…)` title (D460's fourth class).
-    expect(engineVersion).toBe("0.439.0");
+    expect(engineVersion).toBe("0.440.0");
     expect(manifest.version).toBe(engineVersion);
   });
 

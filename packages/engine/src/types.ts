@@ -1,6 +1,7 @@
 import type { Card } from "@luminous/schema";
 import type {
   AttackerClass,
+  CardFilter,
   HandPlayClass,
   PokemonPlayAct,
   StampedPlayLockKey,
@@ -2092,6 +2093,44 @@ export interface TurnAllowances {
       only the turn's own player may use an Ability, and `freshAllowances()`
       re-arms the bag at every `startTurn`. */
   abilitiesUsed: string[];
+  /** 🆕🆕🆕 §8.5 (D556) — the THIS-TURN SIDE-WIDE pre-W/R bonuses the turn's own player
+      has installed: Black Belt's Training (*"During this turn, attacks used by your
+      Pokémon do 40 more damage to your opponent's Active Pokémon ex (before applying
+      Weakness and Resistance)."*, 9 legal printings), written by the
+      `boostSideAttacksThisTurn` op and read by continuous.ts
+      `sideAttackBonusThisTurn` at BOTH pre-W/R sites (attack.ts's main hit and
+      `snipeActive`).
+
+      🛑 **HERE, AND NOT A TURN-STAMPED `PlayerSide` RECORD (`sideAttackLock`'s shape,
+      D549) — docs/decisions.md D556 (2).** *"During this turn"* IS this bag's own
+      lifetime: `freshAllowances()` wipes it at every `startTurn`, so there is no
+      stamp to compare and no clear to forget (`supporterPlayed`'s argument, D123).
+      A stamp on a side answers a question this sentence never asks — WHICH seat's
+      future turn — because the bonus is spent on the very turn it is played; D549
+      needed a stamp because its window is a LATER turn and outlives this bag.
+
+      🛑 **AN ARRAY, BECAUSE SOURCES ARE SUMMED** (`seatPreWRDamageBonus`'s rule): two
+      installs are two printed effects. ⚠️ Today one Supporter per turn (§7.2) means
+      Black Belt's Training can write at most ONE entry, so the sum has one term on
+      every legal board — the array is for the NEXT producer (an Item or a second
+      printing), not for this one; the summing is still driven with two entries.
+
+      ⚠️ **THE SEAT HAZARD, NAMED (`abilitiesUsed`'s paragraph above, and effects.ts
+      `youPlayedSupporterThisTurn`)**: this bag describes the TURN'S OWNER only, so
+      the reader pays an entry only when the attacking seat IS the turn's seat
+      (`phaseViewOf(...).activeSeat === seat`) — pinned in
+      `sideAttackBonusThisTurn.test.ts`. REQUIRED, and a v34 record lacks it:
+      `MATCH_RECORD_VERSION` 34 → 35, THE EIGHTH POSITION (apps/api match.ts). */
+  sideAttackBonuses: SideAttackBonus[];
+}
+
+/** 🆕🆕🆕 §8.5 (D556) — one installed this-turn side-wide bonus: `amount` HP added
+    before Weakness and Resistance to an attack by ANY of the turn player's Pokémon
+    whose DEFENDER matches `target` (the printed *"your opponent's Active Pokémon
+    ex"* — matched on the defending card, the only place that knows it, D245). */
+export interface SideAttackBonus {
+  amount: number;
+  target: CardFilter;
 }
 
 export function freshAllowances(): TurnAllowances {
@@ -2102,6 +2141,7 @@ export function freshAllowances(): TurnAllowances {
     stadiumPlayed: false,
     stadiumAbilityUsed: false,
     abilitiesUsed: [],
+    sideAttackBonuses: [],
   };
 }
 

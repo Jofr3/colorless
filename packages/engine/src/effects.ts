@@ -1885,7 +1885,12 @@ export type BoardCondition =
       own-hand THRESHOLD printed anywhere in the legal attack column, at any value.
       **WHAT WOULD FLIP IT is a printed own-hand floor** (*"if you have 3 or more
       cards in your hand"*); a second sentence discarding the whole hand flips
-      nothing, because that is not an axis anything varies on.
+      nothing, because that is not an axis anything varies on. (🆕🆕🆕 2026-09-25 D556
+      CORRECTION (D539): the floor IS now printed — in the TRAINER column, Billy &
+      O'Nare's *"if you have 10 or more cards in your hand"* — and it flipped NOTHING
+      here: it is built as its own member, `yourHandAtLeast { count }`, one member
+      down, because it carries the printed digit this member does not. The
+      attack-column measurement above stays true.)
 
       ⚠️ **NOT `yourHandExactly` NEGATED, AND THERE IS NOWHERE TO PUT THE NEGATION.**
       *"Not exactly 0"* is the truth condition, but this union has no `not`
@@ -1906,6 +1911,22 @@ export type BoardCondition =
       this gate from a vacuous one, and `purgingStrike.test.ts` §6 drives it from the
       REAL printing rather than from a synthetic one. */
   | { kind: "yourHandNotEmpty" }
+  /** 🆕🆕🆕 **D556 — YOUR OWN hand holds AT LEAST `count` cards.** Billy & O'Nare
+      `sv09-142` (Supporter, 1 legal) — *"Draw 2 cards. Then, if you have 10 or more
+      cards in your hand, draw 2 more cards."* — the printed own-hand FLOOR that
+      `yourHandNotEmpty`'s block named as *"WHAT WOULD FLIP IT"* (its measurement was
+      over the ATTACK column and stays true there; the floor arrived in the TRAINER
+      column). It flips nothing on that member — it stays nullary, because it names
+      the whole hand — and it is a SEPARATE member rather than a `count` on it, for
+      `yourHandExactly`'s reason one member up: the axis is the printed number.
+
+      `>=` because the printed word is *"or more"* — a FLOOR, `yourEnergyInPlayAtLeast`'s
+      reading. Read at the gate, AFTER the program's first draw and AFTER the played
+      Supporter left the hand (cardplay.ts moves it to the discard before the program
+      runs), so Billy itself is never counted (D556 R2). Sizes only, contents never —
+      the union's public-state invariant, unchanged (redact.ts ships a far hand's
+      LENGTH). */
+  | { kind: "yourHandAtLeast"; count: number }
   /** 🆕🆕🆕 **D548 — AT LEAST ONE OF YOUR PRIZES IS STILL FACE DOWN**:
       `prizes.some(uid => !faceUpPrizes.includes(uid))`. The payability of Cresselia
       `sv06.5-021` "Crescent Purge"'s printed cost (*"turn 1 of your face-down Prize cards
@@ -2247,6 +2268,20 @@ export type BoardCondition =
       same, since the field is an array and dual types are a real printing. False
       with an empty Active Spot. */
   | { kind: "opponentActiveHasType"; type: PokemonType }
+  /** 🆕🆕🆕 **D556 — YOUR Active Pokémon is of `type`.** Dragon Elixir `sv08-172` (Item,
+      1 legal) — *"Heal 60 damage from your Active {N} Pokémon."* — authored as a
+      `conditionGate` over `heal { target: "self" }`: the printed `{N}` narrows WHICH
+      Active the heal reaches, and an Active of another type is not healed (D556 R3,
+      UNRULED — the card plays and whiffs, Cook's and D553 R1's reading).
+
+      `opponentActiveHasType`'s arm with the seat flipped and NOTHING else: the same
+      `activeTop`, the same `Card.types` (the column Weakness and Resistance read, so a
+      printed type cannot mean one thing to this gate and another to the multiplier),
+      the same `PokemonType` vocabulary (`POKEMON_TYPES`). A SEPARATE member rather than
+      a `seat` on that one, for D370's reason (`yourBenchHasType`'s block below): a seat
+      field on a shipped member with live consumers is a RENAME, not a widening. FALSE
+      with an empty Active Spot. Public: the Active is face up. */
+  | { kind: "yourActiveHasType"; type: PokemonType }
   /** 🆕 **D371 — YOUR OPPONENT'S ACTIVE Pokémon PRINTS A RESISTANCE TO `type`.**
       *"If your opponent's Active Pokémon has {F} Resistance, this attack does 50
       more damage."*, **2 legal printings** — measured off `legalAttackCorpus()`,
@@ -3280,6 +3315,20 @@ export type BoardCondition =
       Public: every in-play Pokémon is face-up on the table, so the union's
       public-state invariant holds. */
   | { kind: "yourOwnerPokemonInPlayAtLeast"; owner: string; count: number }
+  /** 🆕🆕🆕 **D556 — ALL of your Pokémon in play are `owner`'s Pokémon.** Team Rocket's
+      Ariana `sv10-171`/`-224`/`-237` (Supporter, 3 legal) — *"Draw cards until you have
+      5 cards in your hand. If all of your Pokémon in play are Team Rocket's Pokémon,
+      draw cards until you have 8 cards in your hand instead."* — LACEY's shape, a
+      `conditionGate` whose `otherwise` is the printed default.
+
+      `yourOwnerPokemonInPlayAtLeast`'s reading with the quantifier changed: Active +
+      Bench, stack TOPS only (§4 — an evolved stack is ONE Pokémon in play), through
+      `matchesFilter`'s `ownerPokemon` arm so the prefix rule lives in one place
+      (D556 R4). 🛑 **`every`, AND AN EMPTY BOARD IS FALSE** — `[].every` is vacuously
+      true, and a side with no Pokémon in play has none that ARE Team Rocket's; the turn
+      player always has an Active, so the guard is for totality, not for a legal board.
+      Public: every in-play Pokémon is face up. */
+  | { kind: "yourPokemonAllOwner"; owner: string }
   /** §8.1 — ANY of YOUR Pokémon were Knocked Out during your opponent's LAST
       turn: Unfair Stamp `sv06-165` (Item) and Hassel `sv06-151`/`-205`
       (Supporter), both opening *"You can use this card only if any of your
@@ -4661,7 +4710,12 @@ export type EffectOp =
 
       ⚠️ NO `target` FIELD, AND NO PRINTING TO EARN ONE. The sentence names "this
       Pokémon" on its only printing, and the pool prints no opponent-side buff at
-      all (censused on the anchor). A field with one reachable value is a second
+      all (censused on the anchor). (🆕🆕🆕 2026-09-25 D556 NOTE (D539): still true of
+      THIS op's attack anchor. A TRAINER now prints a defender-TARGETED, side-wide,
+      THIS-turn buff — Black Belt's Training, *"…do 40 more damage to your opponent's
+      Active Pokémon ex…"* — and it is NOT a `target` on this op: it names no body and
+      no next turn, so it is its own op, `boostSideAttacksThisTurn`, on the allowance
+      bag.) A field with one reachable value is a second
       way to say what the op's name already says — `weakenDefenderAttacks`'s
       refusal, on the other seat.
 
@@ -4701,6 +4755,30 @@ export type EffectOp =
       all-attacks base override is a sentence no card prints, and the record it
       would write carries a base `boostedAttackBase` never pays. */
   | { op: "boostAttack"; attack: string | null; amount: number; base?: true }
+  /** 🆕🆕🆕 §8.5 (D556) — the THIS-TURN, SIDE-WIDE pre-W/R bonus a Trainer installs:
+      Black Belt's Training `sv08.5-096`/`-097`/`-098`/`-099`, `sv09-143`/`-144`/`-145`,
+      `svp-219`/`-220` (Supporter, 9 legal) — *"During this turn, attacks used by your
+      Pokémon do 40 more damage to your opponent's Active Pokémon ex (before applying
+      Weakness and Resistance)."* `amount` is HP; `target` is the printed DEFENDER noun,
+      a `CardFilter` matched against the defending card (Black Belt:
+      `{ kind: "suffixPokemon", suffix: "ex" }`).
+
+      🛑 **NOT `boostAttack` WITH A WIDER ADDRESS, and not a `passive`.** `boostAttack`
+      writes ONE BODY's record for its controller's NEXT turn and is read off that body;
+      this sentence names no body (*"your Pokémon"* — the SIDE, including a Pokémon
+      promoted or benched after the play) and its window is the CURRENT turn. It writes
+      `TurnAllowances.sideAttackBonuses` (types.ts), whose lifetime IS *"during this
+      turn"*. And it is NOT a `seatDamageBonusBeforeWR` aura: that is a CATALOG fact read
+      through `passivesOf`, which a §9 Ability-lock SUPPRESSES — a Trainer's installation
+      is not an Ability and must not be (attack.ts's D149/D155 immunity paragraph).
+
+      Read at BOTH pre-W/R sites (attack.ts's main hit and `snipeActive`) through ONE
+      helper, continuous.ts `sideAttackBonusThisTurn`, and reported inside
+      `DAMAGE_DEALT.bonus` (D155's one-field-per-step rule). Only a hit that already
+      does damage gets it (Vitality Band's rule); a Bench hit never does (the printed
+      *"Active Pokémon"*). Never parks, consumes no rng, emits `SIDE_ATTACKS_BOOSTED`
+      (not persisted, D141). docs/decisions.md D556. */
+  | { op: "boostSideAttacksThisTurn"; amount: number; target: CardFilter }
   /** §8/§11 (D157) — BAR ONE **CHOSEN** ATTACK on the OPPONENT's Active for that
       Pokémon's next turn ("Choose 1 of your opponent's Active Pokémon's attacks.
       During your opponent's next turn, that Pokémon can't use that attack.", 2
@@ -6266,7 +6344,10 @@ export type EffectOp =
       on this field's census is now 5 on 3 rather than 6 on 4, and this gate is what
       unblocked it: the two draw pairs are its two arms**); Team Rocket's Great Ball
       `sv10-175` needs an owner-prefixed
-      Evolution/Basic `CardFilter` pair; and Team Rocket's Venture Bomb
+      Evolution/Basic `CardFilter` pair (🆕🆕🆕 2026-09-25 D556 CORRECTION (D539):
+      WITHDRAWN — the pair was never missing: `ownerPokemon`'s `stage` rider (D200) spells
+      both halves, so THIS field was the card's only missing piece, and D556 built it with
+      zero vocabulary, `TEAM_ROCKETS_GREAT_BALL`); and Team Rocket's Venture Bomb
       `sv10-179` needs a damage-counter op aimed at *"1 of your opponent's
       Pokémon"*, which the seven damage ops in this union do not include
       (`damageActive` names the Active, not a CHOSEN body). */

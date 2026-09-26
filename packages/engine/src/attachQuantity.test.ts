@@ -776,7 +776,12 @@ describe("D359 §6 — the ids this file rests on are real and locally seated", 
     // Torrential Whirlpool, Sand Stream, Snow Sink, Wicked Tail). Real catalog ids, no
     // `fix-*` key (`simpleTrainersD555.test.ts` / `simpleAbilitiesD555.test.ts` drive a
     // LOCAL `cardPool`), inserted MID-MAP, and no row authors an `attack` program.
-    expect(registryCardIds()).toHaveLength(760);
+    // 🆕🆕🆕 D556 — 760 -> **779**: NINETEEN registry keys on SEVEN program objects —
+    // Black Belt's Training, Team Rocket's Ariana, Billy & O'Nare, Dragon Elixir, Team
+    // Rocket's Great Ball, Caretaker and Pecharunt "Toxic Subjugation". Real catalog ids,
+    // no `fix-*` key (`sideAttackBonusThisTurn.test.ts` / `conditionalTrainersD556.test.ts`
+    // drive a LOCAL `cardPool`), inserted MID-MAP, and no row authors an `attack` program.
+    expect(registryCardIds()).toHaveLength(779);
     for (const id of Object.values(QUANTITY_IDS).flat()) {
       if (programFor(id) === undefined) continue;
       // Every id that DOES have a program had one before this slice: the eight

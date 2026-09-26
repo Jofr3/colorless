@@ -449,6 +449,11 @@ describe("the pool sweep, structurally", () => {
       "sv08.5-176 trigger :: recordGate",
       "sv08.5-176 trigger :: switchActive",
       "sv10-122 authored attack 0 :: returnSelf",
+      // 🆕🆕🆕 D556 — Team Rocket's Great Ball `sv10-175`: `coinFlipGate { then: [searchDeck
+      // evolution], otherwise: [searchDeck basic] }` → `shuffleDeck`. The enumerated walk
+      // descends `coinFlipGate.then` ALONE (D317's gap), so it sees the heads search and
+      // misses the TAILS one. ONE row (the heads arm is seen): MEASURED, `missed` 57 → 58.
+      "sv10-175 trainer :: searchDeck",
       "sv10-217 authored attack 0 :: returnSelf",
       "sv10-234 authored attack 0 :: returnSelf",
       "sv10-242 authored attack 0 :: returnSelf",

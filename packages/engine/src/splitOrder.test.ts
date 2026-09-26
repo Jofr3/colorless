@@ -218,7 +218,7 @@ describe("§1 — the census D282 priced its refusal against: counts reproduce, 
     expect(units(gateAll) - units(firstTurn)).toBe(6);
   });
 
-  it("S2 — 17 of 760 registry ids carry an `attackGate`, in three kinds", () => {
+  it("S2 — 17 of 779 registry ids carry an `attackGate`, in three kinds", () => {
     // The registry side of the same 13, walked independently of the text side:
     // a count that agrees across two surfaces is a count, not a transcription.
     // 🆕🆕 D396 — 14 -> **17**, and this is the FIRST slice on which the registry
@@ -290,7 +290,12 @@ describe("§1 — the census D282 priced its refusal against: counts reproduce, 
     // Torrential Whirlpool, Sand Stream, Snow Sink, Wicked Tail). Real catalog ids, no
     // `fix-*` key (`simpleTrainersD555.test.ts` / `simpleAbilitiesD555.test.ts` drive a
     // LOCAL `cardPool`), inserted MID-MAP, and no row authors an `attack` program.
-    expect(ids.length).toBe(760);
+    // 🆕🆕🆕 D556 — 760 -> **779**: NINETEEN registry keys on SEVEN program objects —
+    // Black Belt's Training, Team Rocket's Ariana, Billy & O'Nare, Dragon Elixir, Team
+    // Rocket's Great Ball, Caretaker and Pecharunt "Toxic Subjugation". Real catalog ids,
+    // no `fix-*` key (`sideAttackBonusThisTurn.test.ts` / `conditionalTrainersD556.test.ts`
+    // drive a LOCAL `cardPool`), inserted MID-MAP, and no row authors an `attack` program.
+    expect(ids.length).toBe(779);
     const gated = ids.filter((id) => programFor(id)?.attackGate !== undefined);
     expect(gated.length).toBe(17);
     const kinds = gated.flatMap((id) =>

@@ -1238,7 +1238,7 @@ describe("D541 §7 — `SYLVEON_EX_ANGELITE` is KEPT as defence in depth, and th
 // §8 — THE PERSISTED BYTES (D450's two doors), over SERIALIZED BYTES.
 // ─────────────────────────────────────────────────────────────────────────────
 
-describe("D541 §8 — the parked op IS persisted, and `MATCH_RECORD_VERSION` HOLDS at 30 (🆕🆕🆕 held at THIS slice; 31 since D547; 32 since D548; 33 since D549; 34 since D552)", () => {
+describe("D541 §8 — the parked op IS persisted, and `MATCH_RECORD_VERSION` HOLDS at 30 (🆕🆕🆕 held at THIS slice; 31 since D547; 32 since D548; 33 since D549; 34 since D552; 35 since D556)", () => {
   it("🛑 THE FIRST DOOR: `phase.cont.pendingOp` carries the op as a LITERAL byte string", () => {
     // 🛑 **DO NOT RE-DERIVE THIS AS *"it never parks"*.** This op PARKS, so the
     // serialized alphabet GROWS: `{"op":"returnBenchedChosen","count":2}` is a byte
@@ -1303,9 +1303,9 @@ describe("D541 §8 — the parked op IS persisted, and `MATCH_RECORD_VERSION` HO
     expect(JSON.stringify(state)).not.toContain("returnBenchedChosen");
   });
 
-  it("🛑 `MATCH_RECORD_VERSION` is 34 (🆕🆕🆕 D552 stepped it 33 → 34; D549 stepped it 32 → 33; D548 stepped it 31 → 32; D547 stepped it 30 → 31; this slice held it) — read off the raw source, not retyped", () => {
+  it("🛑 `MATCH_RECORD_VERSION` is 35 (🆕🆕🆕 D556 stepped it 34 → 35; D552 stepped it 33 → 34; D549 stepped it 32 → 33; D548 stepped it 31 → 32; D547 stepped it 30 → 31; this slice held it) — read off the raw source, not retyped", () => {
     // 🆕🆕🆕 D547 — the constant this slice held is now 31: D547 added two REQUIRED `InPlayPokemon` fields (apps/api match.ts).
-    expect(raw("/match.ts")).toContain("MATCH_RECORD_VERSION = 34");
+    expect(raw("/match.ts")).toContain("MATCH_RECORD_VERSION = 35");
   });
 });
 
@@ -1315,8 +1315,8 @@ describe("D541 §8 — the parked op IS persisted, and `MATCH_RECORD_VERSION` HO
 
 describe("D541 §9 — the version tax and the byte pins", () => {
   it("🛑 the engine version is the CURRENT one in BOTH places (🆕 D541 — the TITLE is de-valued on purpose: D460's fifth site kind is the `it()` title, and a title carrying BOTH arrows is a site the next bump has to edit twice)", () => {
-    expect(engineVersion).toBe("0.439.0");
-    expect(manifest.version).toBe("0.439.0");
+    expect(engineVersion).toBe("0.440.0");
+    expect(manifest.version).toBe("0.440.0");
   });
 
   it("🛑 the OP NAME is untouched by the funnel RENAME — it is a persisted member", () => {

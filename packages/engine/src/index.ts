@@ -20114,6 +20114,39 @@ import type { GameState, Seat } from "./types";
     `expect(manifest.version)`, `it(…)` titles, the declaration and `package.json` —
     **not** as a value-keyed grep — because a value-keyed grep is precisely the mechanism
     that ate D500's heading.)
+    🆕🆕🆕 engineVersion 0.439.0 → **0.440.0** (D556 — THE THIS-TURN SIDE-WIDE PRE-W/R BONUS, THREE
+    CONDITIONAL TRAINERS ON THREE NEW `BoardCondition` MEMBERS, AND THREE ZERO-VOCABULARY RIDERS, 19
+    PRINTINGS / 7 TEXTS / 7 OBJECTS. Seven registry `CardProgram`s keyed on nineteen REAL ids inserted
+    MID-MAP after `sv06-138` (D395/D396, so `raw[last]` stays `sv09-107`). ONE NEW OP: Black Belt's
+    Training `sv08.5-096`/`-097`/`-098`/`-099`, `sv09-143`/`-144`/`-145`, `svp-219`/`-220`
+    (`boostSideAttacksThisTurn { amount: 40, target: suffixPokemon ex }`), appending to a REQUIRED
+    `TurnAllowances.sideAttackBonuses` — "during this turn" is the bag's own lifetime (`freshAllowances`)
+    — read by ONE helper, continuous.ts `sideAttackBonusThisTurn`, at BOTH pre-W/R sites (attack.ts's
+    main hit beside `boostedAttackDamage`, `snipeActive` beside `everyAttackBoostOf`): summed, matched
+    on the DEFENDING card, seat-guarded to the turn's owner, NOT routed through `passivesOf` (a §9 lock
+    cannot reach a Trainer's installation), reported inside `DAMAGE_DEALT.bonus`; a new
+    `SIDE_ATTACKS_BOOSTED` event and log row (the noun through `retrieveNoun`, now module-exported).
+    THREE NEW `BoardCondition` MEMBERS, each with its `conditionHolds` and `conditionNote` arm: Team
+    Rocket's Ariana `sv10-171`/`-224`/`-237` (`yourPokemonAllOwner { owner: "Team Rocket" }`, LACEY's
+    if/else over `drawUntilHandSize` 8 / 5), Billy & O'Nare `sv09-142` (`drawCards 2` → `yourHandAtLeast
+    { count: 10 }` → `drawCards 2`; the Supporter is not counted, R2) and Dragon Elixir `sv08-172`
+    (`yourActiveHasType { type: "Dragon" }` → `heal self 60`; a non-Dragon Active plays and whiffs, R3
+    UNRULED). THREE ZERO-VOCABULARY ROWS: Team Rocket's Great Ball `sv10-175` (`coinFlipGate` over two
+    `searchDeck`s on `ownerPokemon` Evolution / Basic, `reveal`, then ONE `shuffleDeck` — the parked
+    search resumes into the queued shuffle, Poké Ball's precedent, driven), Caretaker `sv06-144`/`-203`
+    (`drawCards 2`; the Community Center clause is a named, UNREACHABLE gap, R5, guarded) and Pecharunt
+    `svp-129`/`-149` "Toxic Subjugation" (`betweenTurns`, `activeOnly`, `conditionGate
+    opponentActivePoisoned` → `damageActive 50` — the registry's first gated Checkup trigger; its
+    `ABILITY_TRIGGERED` row is filed even when the gate is false, R6). Withdrawn and annotated in place
+    (D539): effects.ts's and `censusAtHead.test.ts`'s "Great Ball needs an owner-prefixed Evolution/Basic
+    `CardFilter` pair"; `ownerPrefix.test.ts`'s Great Ball DROPPED row REMOVED (3 → 2); effects.ts's
+    `yourHandNotEmpty` "WHAT WOULD FLIP IT" and `boostAttack`'s "no opponent-side buff" annotated.
+    **`MATCH_RECORD_VERSION` 34 → 35, THE EIGHTH POSITION** (apps/api match.ts): a v34 rollback drops a
+    played +40 mid-turn (not inert), and a v34 bag throws on the turn owner's first damaging attack.
+    New suites `sideAttackBonusThisTurn.test.ts` (27) and `conditionalTrainersD556.test.ts` (35) on LOCAL
+    `cardPool`s with the REAL ids (D275). Census: `BUILT.trainer` 137 → 154 (Item 36 → 38, Supporter 87
+    → 102), `BUILT.ability` 307 → 309, registry keys 760 → 779. Mutants 3,224 → 3,254, all thirty
+    `D556-*` KILLED.)
     🆕🆕🆕 engineVersion 0.438.0 → **0.439.0** (D555 — THE ZERO-VOCABULARY TRAINERS AND ABILITIES, 20
     PRINTINGS / 12 TEXTS / 12 OBJECTS — the coverage audit's abilities/trainers rows whose every op,
     filter, timing and flag already ships. Twelve registry `CardProgram`s keyed on twenty REAL ids
@@ -24169,7 +24202,7 @@ import type { GameState, Seat } from "./types";
     WITNESS** — the count was re-derived every slice and the word *"three"* was carried.
     A successor of this slice inherits **81 / 61 / 17** again, over **FIVE** history
     occurrences: those four plus `deckMillFilteredScale.test.ts`'s own header arrow.) */
-export const engineVersion = "0.439.0";
+export const engineVersion = "0.440.0";
 
 export type {
   ApplyResult,

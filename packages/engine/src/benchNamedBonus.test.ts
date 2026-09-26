@@ -1268,7 +1268,12 @@ describe("§7 — the census moves in exactly ONE summand, and the other three a
     // Torrential Whirlpool, Sand Stream, Snow Sink, Wicked Tail). Real catalog ids, no
     // `fix-*` key (`simpleTrainersD555.test.ts` / `simpleAbilitiesD555.test.ts` drive a
     // LOCAL `cardPool`), inserted MID-MAP, and no row authors an `attack` program.
-    expect(ids.size).toBe(760);
+    // 🆕🆕🆕 D556 — 760 -> **779**: NINETEEN registry keys on SEVEN program objects —
+    // Black Belt's Training, Team Rocket's Ariana, Billy & O'Nare, Dragon Elixir, Team
+    // Rocket's Great Ball, Caretaker and Pecharunt "Toxic Subjugation". Real catalog ids,
+    // no `fix-*` key (`sideAttackBonusThisTurn.test.ts` / `conditionalTrainersD556.test.ts`
+    // drive a LOCAL `cardPool`), inserted MID-MAP, and no row authors an `attack` program.
+    expect(ids.size).toBe(779);
     // ⚠️ ONE of the thirteen IS in the registry — Volbeat `sv06-009` — and it is
     // there on an ABILITY program, which is exactly the count a slice does not
     // think it is checking. Named, rather than glossed by an "all absent" claim

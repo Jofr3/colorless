@@ -20,6 +20,9 @@ import type { LogSegment, SeatLogEntry } from "@luminous/schema";
 import { type DamageModifier, cardOfUid, topCardOf } from "./cards";
 import type { AttackerClass } from "./effects";
 import type { GameEvent, StatusName } from "./events";
+// 🆕🆕🆕 D556 — the ONE noun reader, for `SIDE_ATTACKS_BOOSTED`'s printed defender noun.
+// interpreter.ts takes nothing from this file, so no cycle.
+import { retrieveNoun } from "./interpreter";
 import {
   DEFAULT_CONFUSION_DAMAGE,
   DEFAULT_POISON_DAMAGE,
@@ -841,6 +844,20 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
             : `Pokémon with ${event.maxEnergy} or less Energy attached can't attack next turn`,
         ),
         plain(" — including Pokémon that come into play"),
+      ]);
+    // 🆕🆕🆕 §8.5 — the Trainer-installed THIS-TURN side-wide bonus (D556, Black Belt's
+    // Training). INSTALLER voice: `seat` owns the attacking side, so the row reads under
+    // the badge of the player whose attacks get it, with `SIDE_ATTACKS_LOCKED`'s subject
+    // ("Pokémon …", the side's). No body is named (the bonus is on the SIDE: a Pokémon
+    // promoted after the play gets it too), and "this turn" is literal — the
+    // bag is wiped at the next `startTurn`. The defender noun is the rule's own filter
+    // read through `retrieveNoun` (plural: "Pokémon ex"), never a second spelling, and
+    // the printed parenthetical is kept because it is the part that decides the number.
+    case "SIDE_ATTACKS_BOOSTED":
+      return row(event.seat, [
+        plain(`Pokémon's attacks do ${event.amount} more damage to the opponent's Active `),
+        strong(retrieveNoun(event.target).plural),
+        plain(" this turn (before Weakness and Resistance)"),
       ]);
     // 🆕🆕 §13 (D434) — the attack SCHEDULED a counter placement on the DEFENDING
     // Pokémon. PASSIVE/system-free but filed under `event.seat`, which owns the

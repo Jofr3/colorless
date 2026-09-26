@@ -648,7 +648,7 @@ describe("§11 — the rows say what this path keeps true (D421)", () => {
 // §12 — `MATCH_RECORD_VERSION` 30 → 31.
 // ─────────────────────────────────────────────────────────────────────────────
 
-describe("§12 — the v31 bytes round-trip, and a v30-shaped body is why the version moved (🆕🆕🆕 D547's bump; the record is v32 since D548 and v33 since D549; 34 since D552, and still carries the field)", () => {
+describe("§12 — the v31 bytes round-trip, and a v30-shaped body is why the version moved (🆕🆕🆕 D547's bump; the record is v32 since D548 and v33 since D549; 34 since D552; 35 since D556, and still carries the field)", () => {
   const RAW: Record<string, string> = (
     import.meta as unknown as {
       glob(
@@ -681,12 +681,12 @@ describe("§12 — the v31 bytes round-trip, and a v30-shaped body is why the ve
     expect(find(events, "DAMAGE_DEALT")?.dealt).toBe(30);
   });
 
-  it("🛑 `MATCH_RECORD_VERSION` is 34 (🆕🆕🆕 D552 stepped it 33 → 34; D549 stepped it 32 → 33; D548 stepped it 31 → 32; this slice's own bump was 30 → 31) — read off the raw source, not retyped", () => {
-    expect(matchTs).toContain("export const MATCH_RECORD_VERSION = 34;");
+  it("🛑 `MATCH_RECORD_VERSION` is 35 (🆕🆕🆕 D556 stepped it 34 → 35; D552 stepped it 33 → 34; D549 stepped it 32 → 33; D548 stepped it 31 → 32; this slice's own bump was 30 → 31) — read off the raw source, not retyped", () => {
+    expect(matchTs).toContain("export const MATCH_RECORD_VERSION = 35;");
   });
 
-  it("the engine version stepped to 0.439.0 in BOTH places", () => {
-    expect(engineVersion).toBe("0.439.0");
-    expect(manifest.version).toBe("0.439.0");
+  it("the engine version stepped to 0.440.0 in BOTH places", () => {
+    expect(engineVersion).toBe("0.440.0");
+    expect(manifest.version).toBe("0.440.0");
   });
 });

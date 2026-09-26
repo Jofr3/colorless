@@ -607,7 +607,7 @@ describe("allowances across interrupts", () => {
       seat: "p1",
       prizeIndices: [0],
     });
-    expect(done.allowances).toEqual({ energyAttached: false, retreated: false, supporterPlayed: false, stadiumPlayed: false, stadiumAbilityUsed: false, abilitiesUsed: [] });
+    expect(done.allowances).toEqual({ energyAttached: false, retreated: false, supporterPlayed: false, stadiumPlayed: false, stadiumAbilityUsed: false, abilitiesUsed: [], sideAttackBonuses: [] }); // 🆕🆕🆕 D556 — the this-turn side-wide bonus bag, wiped with the rest
   });
 });
 

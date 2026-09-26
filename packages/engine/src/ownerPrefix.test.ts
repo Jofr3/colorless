@@ -288,6 +288,7 @@ const DROPPED: readonly {
   // TABLE HAS TAKEN** — worth saying out loud, because the remaining 3 are now a
   // SMALL enough population that the next build empties it, and an empty DROPPED
   // table would make the UNBUILT guard below VACUOUS rather than green.
+  // 🆕🆕🆕 D556 — 3 → **2** printings / 2 rows (Great Ball built); still not empty.
   // ✅ D224 BUILT THIS ROW — Team Rocket's Proton sv10-177/-227, 2 legal, and it
   // is this table's ONLY row to have been dropped for a piece that a LATER,
   // UNRELATED SLICE then bought: D223 built `trainerFirstTurnExempt` for Carmine,
@@ -305,14 +306,14 @@ const DROPPED: readonly {
   // `proton.test.ts` rather than left as prose. Removed rather than annotated —
   // the UNBUILT assertion below is what keeps this work order from rotting, and
   // it fails on a built row.
-  {
-    sentence: "Flip a coin. If heads, search your deck for an Evolution Team Rocket's Pokémon, reveal it, and put it into your hand. If tails, search your deck for a Basic Team Rocket's Pokémon, reveal it, and put it into your hand. Then, shuffle your deck.",
-    ids: ["sv10-175"],
-    legal: 1,
-    surface: "trainer",
-    needs:
-      "`coinFlipGate`'s `otherwise` BRANCH. Both consequents are now spellable — this is the only printing in the catalog that would write `stage: 'evolution'` — and the op has `then` and `onTails` (which flips WHICH face runs the one branch) but no second branch. D142's Squawkabilly refusal, verbatim, on a card whose two branches differ by one field.",
-  },
+  // ✅ 🆕🆕🆕 D556 BUILT THIS ROW — Team Rocket's Great Ball `sv10-175`, 1 legal, and it
+  // is REMOVED rather than annotated (D204/D224's precedent: the UNBUILT guard below
+  // fails on a built row). Its `needs` — *"`coinFlipGate`'s `otherwise` BRANCH"* — had
+  // been PAID since D269 (Picnicker, the printed "If tails"), 287 decisions before this
+  // row was retired: the `stage: 'evolution'` rider was D200's own and the second
+  // branch was D269's, so the card cost ZERO vocabulary when it was finally built
+  // (`TEAM_ROCKETS_GREAT_BALL`, registry.ts; `conditionalTrainersD556.test.ts`). The
+  // table's own warning above is honoured: TWO rows remain, so the guard is not vacuous.
   {
     sentence: "N's Pokémon in play (both yours and your opponent's) have no Retreat Cost.",
     // ⚠️ CORRECTED BY D204 (shipped as `sv10-165`, which is Ethan's Adventure).
@@ -567,7 +568,7 @@ describe("D200 — the census, as data", () => {
     // built by D204; Team Rocket's Wobbuffet 2, built by D205; Team Rocket's
     // Orbeetle 2 and N's Zoroark ex 4, still flagged in `inPlayTarget.test.ts`).
     // This table is D200's scope; that one is the current work order.
-    expect(DROPPED.reduce((n, r) => n + r.legal, 0)).toBe(3); // 🆕🆕🆕 D536 −3 printings — Moltres ex sv10-031/-208/-229 left through the DERIVER (arm 44c), so `LANDED` stands still at 6 for the second consecutive time and the difference is again deriver-built. See the ✅ D536 block above `DROPPED`. 🆕🆕 D439 −2 printings — Team Rocket's Spidops sv10-020/-187 left through the DERIVER rather than through the registry, so `LANDED` stands still at 6 and the difference is now deriver-built. See the ✅ D439 block above `DROPPED`.
+    expect(DROPPED.reduce((n, r) => n + r.legal, 0)).toBe(2); // 🆕🆕🆕 D556 −1 printing — Team Rocket's Great Ball sv10-175 left through the REGISTRY (`TEAM_ROCKETS_GREAT_BALL`), and `LANDED` stands still at 6 because that table is D200's own landing (D224's Proton precedent); the CENSUS (80 / 25 / 13) is unmoved — it counts text units, not builds. See the ✅ D556 block where the row stood. 🆕🆕🆕 D536 −3 printings — Moltres ex sv10-031/-208/-229 left through the DERIVER (arm 44c), so `LANDED` stands still at 6 for the second consecutive time and the difference is again deriver-built. See the ✅ D536 block above `DROPPED`. 🆕🆕 D439 −2 printings — Team Rocket's Spidops sv10-020/-187 left through the DERIVER rather than through the registry, so `LANDED` stands still at 6 and the difference is now deriver-built. See the ✅ D439 block above `DROPPED`.
   });
 });
 
@@ -682,7 +683,8 @@ describe("D200 — the registry map", () => {
   // branch above becomes live again and worth trusting.
   it("🆕 the DERIVER channel currently covers ZERO rows — the vacuity measured, not described", () => {
     expect(DROPPED.filter((r) => r.surface === "attack")).toHaveLength(0);
-    expect(DROPPED.map((r) => r.surface).sort()).toEqual(["stadium", "trainer", "trainer"]);
+    // 🆕🆕🆕 D556 — ["stadium", "trainer", "trainer"] → two rows: Great Ball (trainer) was built.
+    expect(DROPPED.map((r) => r.surface).sort()).toEqual(["stadium", "trainer"]);
     // …and the control that keeps THIS rung from being vacuous in its turn: the
     // predicate it would run DOES discriminate, asked of the sentence D536 just built.
     expect(

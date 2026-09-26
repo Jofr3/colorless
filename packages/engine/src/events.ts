@@ -1,5 +1,5 @@
 import type { DamageModifier } from "./cards";
-import type { AttackerClass, StampedPlayLockKey } from "./effects";
+import type { AttackerClass, CardFilter, StampedPlayLockKey } from "./effects";
 import type { CoinFace } from "./rng";
 import type { GameOutcome, PokemonTarget, ScheduledEffect, Seat } from "./types";
 
@@ -710,6 +710,16 @@ export type GameEvent =
       that body out escaped it). `maxEnergy` is the MERGED value the record holds.
       Not persisted (D141). */
   | { type: "SIDE_ATTACKS_LOCKED"; seat: Seat; maxEnergy: number | null }
+  /** 🆕🆕🆕 §8.5 (D556) — a Trainer installed a THIS-TURN side-wide pre-W/R bonus
+      (Black Belt's Training: *"During this turn, attacks used by your Pokémon do 40
+      more damage to your opponent's Active Pokémon ex (before applying Weakness and
+      Resistance)."*). `seat` is the INSTALLER — the side whose attacks get it (the
+      turn's own player). NO `uid`, `SIDE_ATTACKS_LOCKED`'s reason: the bonus is on the
+      SIDE, and a Pokémon promoted after the play gets it too. `target` is the printed
+      defender noun, carried as the rule's own `CardFilter` (log.ts renders it through
+      `retrieveNoun`, the one noun reader). Emitted even when no ex is Active (R1: the
+      play whiffs visibly). Not persisted (D141). */
+  | { type: "SIDE_ATTACKS_BOOSTED"; seat: Seat; amount: number; target: CardFilter }
   /** 🆕🆕 §13 (D434 as `COUNTERS_SCHEDULED`, RENAMED AND GENERALISED AT D435) — an
       attack SCHEDULED a delayed effect onto `seat`'s Active for the END of
       `scheduled.turn`. Three payloads share the row because they share the clock:

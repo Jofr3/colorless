@@ -513,6 +513,7 @@ describe("finishing setup", () => {
       stadiumPlayed: false,
       stadiumAbilityUsed: false,
       abilitiesUsed: [],
+      sideAttackBonuses: [], // 🆕🆕🆕 D556 — the this-turn side-wide bonus bag starts empty
     });
   });
 });
