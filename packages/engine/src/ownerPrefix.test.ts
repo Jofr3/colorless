@@ -289,6 +289,7 @@ const DROPPED: readonly {
   // SMALL enough population that the next build empties it, and an empty DROPPED
   // table would make the UNBUILT guard below VACUOUS rather than green.
   // 🆕🆕🆕 D556 — 3 → **2** printings / 2 rows (Great Ball built); still not empty.
+  // 🆕🆕🆕 D557 — 2 → **1** printing / 1 row (Arven's Sandwich built); still not empty.
   // ✅ D224 BUILT THIS ROW — Team Rocket's Proton sv10-177/-227, 2 legal, and it
   // is this table's ONLY row to have been dropped for a piece that a LATER,
   // UNRELATED SLICE then bought: D223 built `trainerFirstTurnExempt` for Carmine,
@@ -327,15 +328,15 @@ const DROPPED: readonly {
   // FREE and told the next slice to take first. It was: Champion's Call's two ops
   // verbatim on `StadiumAbility.program`, using only the CARD filter D200 shipped
   // and none of D204's target rider. The prediction held exactly.
-  {
-    sentence: "Heal 30 damage from your Active Pokémon. If that Pokémon is an Arven's Pokémon, heal 100 damage from it instead.",
-    // ⚠️ CORRECTED BY D204 (shipped as `sv09-166`, which is Lycanroc).
-    ids: ["sv10-161"],
-    legal: 1,
-    surface: "trainer",
-    needs:
-      "a `BoardCondition` reading the ACTIVE's subgroup, plus an either/or heal. `conditionGate` gates a program on the board, but no `BoardCondition` member asks anything about a card IDENTITY, and the printed 'instead' is a REPLACEMENT rather than a second heal — two 30/70 heals would be observably different under a heal cap.",
-  },
+  // ✅ 🆕🆕🆕 D557 BUILT THIS ROW — Arven's Sandwich `sv10-161`, 1 legal, REMOVED rather
+  // than annotated (D204/D224/D556's precedent: the UNBUILT guard below fails on a built
+  // row). Its `needs` was RIGHT in both halves and both were bought exactly as priced: a
+  // `BoardCondition` reading the ACTIVE's subgroup (`yourActiveOwner { owner: "Arven" }`,
+  // through `ownerPokemon`'s prefix rule) and the either/or heal as `conditionGate`'s
+  // `otherwise` — so an Arven's Active heals 100 and never 30 + 70
+  // (`ARVENS_SANDWICH`, registry.ts; `riderTrainersD557.test.ts`). ⚠️ THE TABLE'S OWN
+  // WARNING IS NOW ONE ROW FROM FIRING: ONE row remains (N's Stadium), so the UNBUILT
+  // guard is still not vacuous — and the next build of this table empties it.
 ];
 
 // ── The demonstrator pool. Synthetic `fix-*` bodies, declared HERE and not in
@@ -568,7 +569,7 @@ describe("D200 — the census, as data", () => {
     // built by D204; Team Rocket's Wobbuffet 2, built by D205; Team Rocket's
     // Orbeetle 2 and N's Zoroark ex 4, still flagged in `inPlayTarget.test.ts`).
     // This table is D200's scope; that one is the current work order.
-    expect(DROPPED.reduce((n, r) => n + r.legal, 0)).toBe(2); // 🆕🆕🆕 D556 −1 printing — Team Rocket's Great Ball sv10-175 left through the REGISTRY (`TEAM_ROCKETS_GREAT_BALL`), and `LANDED` stands still at 6 because that table is D200's own landing (D224's Proton precedent); the CENSUS (80 / 25 / 13) is unmoved — it counts text units, not builds. See the ✅ D556 block where the row stood. 🆕🆕🆕 D536 −3 printings — Moltres ex sv10-031/-208/-229 left through the DERIVER (arm 44c), so `LANDED` stands still at 6 for the second consecutive time and the difference is again deriver-built. See the ✅ D536 block above `DROPPED`. 🆕🆕 D439 −2 printings — Team Rocket's Spidops sv10-020/-187 left through the DERIVER rather than through the registry, so `LANDED` stands still at 6 and the difference is now deriver-built. See the ✅ D439 block above `DROPPED`.
+    expect(DROPPED.reduce((n, r) => n + r.legal, 0)).toBe(1); // 🆕🆕🆕 D557 −1 printing — Arven's Sandwich sv10-161 left through the REGISTRY (`ARVENS_SANDWICH`), and `LANDED` stands still at 6 (D200's own landing, D224/D556's precedent); the CENSUS (80 / 25 / 13) is unmoved — it counts text units, not builds. See the ✅ D557 block where the row stood. // 🆕🆕🆕 D556 −1 printing — Team Rocket's Great Ball sv10-175 left through the REGISTRY (`TEAM_ROCKETS_GREAT_BALL`), and `LANDED` stands still at 6 because that table is D200's own landing (D224's Proton precedent); the CENSUS (80 / 25 / 13) is unmoved — it counts text units, not builds. See the ✅ D556 block where the row stood. 🆕🆕🆕 D536 −3 printings — Moltres ex sv10-031/-208/-229 left through the DERIVER (arm 44c), so `LANDED` stands still at 6 for the second consecutive time and the difference is again deriver-built. See the ✅ D536 block above `DROPPED`. 🆕🆕 D439 −2 printings — Team Rocket's Spidops sv10-020/-187 left through the DERIVER rather than through the registry, so `LANDED` stands still at 6 and the difference is now deriver-built. See the ✅ D439 block above `DROPPED`.
   });
 });
 
@@ -684,7 +685,8 @@ describe("D200 — the registry map", () => {
   it("🆕 the DERIVER channel currently covers ZERO rows — the vacuity measured, not described", () => {
     expect(DROPPED.filter((r) => r.surface === "attack")).toHaveLength(0);
     // 🆕🆕🆕 D556 — ["stadium", "trainer", "trainer"] → two rows: Great Ball (trainer) was built.
-    expect(DROPPED.map((r) => r.surface).sort()).toEqual(["stadium", "trainer"]);
+    // 🆕🆕🆕 D557 — ["stadium", "trainer"] → ONE row: Arven's Sandwich (trainer) was built.
+    expect(DROPPED.map((r) => r.surface).sort()).toEqual(["stadium"]);
     // …and the control that keeps THIS rung from being vacuous in its turn: the
     // predicate it would run DOES discriminate, asked of the sentence D536 just built.
     expect(

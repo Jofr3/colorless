@@ -1273,7 +1273,13 @@ describe("§7 — the census moves in exactly ONE summand, and the other three a
     // Rocket's Great Ball, Caretaker and Pecharunt "Toxic Subjugation". Real catalog ids,
     // no `fix-*` key (`sideAttackBonusThisTurn.test.ts` / `conditionalTrainersD556.test.ts`
     // drive a LOCAL `cardPool`), inserted MID-MAP, and no row authors an `attack` program.
-    expect(ids.size).toBe(779);
+    // 🆕🆕🆕 D557 — 779 -> **798**: NINETEEN registry keys on ELEVEN program objects —
+    // Kieran, Team Rocket's Venture Bomb, Morty's Conviction, Xerosic's Machinations,
+    // Lucian, Arven's Sandwich, Megaton Blower, Brilliant Blender, TM Machine, Dusk Ball
+    // and Tool Scrapper. Real catalog ids, no `fix-*` key (`chooseOneTrainersD557.test.ts`
+    // / `riderTrainersD557.test.ts` drive a LOCAL `cardPool`), inserted MID-MAP after
+    // `svp-149`, and no row authors an `attack` program.
+    expect(ids.size).toBe(798);
     // ⚠️ ONE of the thirteen IS in the registry — Volbeat `sv06-009` — and it is
     // there on an ABILITY program, which is exactly the count a slice does not
     // think it is checking. Named, rather than glossed by an "all absent" claim

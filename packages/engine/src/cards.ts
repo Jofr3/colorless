@@ -594,6 +594,12 @@ export function matchesFilter(card: Card | undefined, filter: CardFilter): boole
       return card.name === filter.name;
     case "supporter":
       return card.category === "Trainer" && card.trainerType === "Supporter";
+    case "toolNameContaining":
+      // 🆕🆕🆕 D557 — TM Machine's *"Pokémon Tool cards that have "Technical Machine" in
+      // their name"*: `supporterNameContaining`'s two conjuncts (below) with the HEAD
+      // NOUN delegated to the `toolCard` arm through THIS function (D159), and the same
+      // UNANCHORED, case-sensitive `.includes` on the printed name.
+      return matchesFilter(card, { kind: "toolCard" }) && card.name.includes(filter.fragment);
     case "supporterNameContaining":
       // 🆕🆕🆕 D510 — the printed *"Supporter card that has "Team Rocket" in its
       // name"* (`censusAttackCorpus.ts` FILE LINE 543, 2 legal printings). TWO

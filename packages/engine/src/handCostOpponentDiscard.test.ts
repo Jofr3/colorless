@@ -823,9 +823,9 @@ describe("D515 §6 — `MATCH_RECORD_VERSION` stays 30, and the argument is DRIV
     expect(hands(lost)).toEqual([2, 4]);
   });
 
-  it("engineVersion is 0.440.0 and the bump is owed for BEHAVIOUR", () => {
+  it("engineVersion is 0.441.0 and the bump is owed for BEHAVIOUR", () => {
     // D471's rule: the bump is owed because `packages/engine` changed behaviour — an
     // anchor, an arm and a `describeBranch` case — and not because a slice happened.
-    expect(engineVersion).toBe("0.440.0");
+    expect(engineVersion).toBe("0.441.0");
   });
 });

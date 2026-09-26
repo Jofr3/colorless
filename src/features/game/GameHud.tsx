@@ -1499,7 +1499,13 @@ function ChoosePrizeDialog({
     is also why `promptKey` needs no arm for this kind: there are no gathered
     picks that could go stale, exactly as its `default` block already argues for
     `mayDraw`. Escape is swallowed (no `onDismiss`): the program is parked on this
-    answer and declining is a real answer, not a dismissal — it must be SAID. */
+    answer and declining is a real answer, not a dismissal — it must be SAID.
+
+    🆕🆕🆕 D557 — A LABELLED PROMPT IS A PRINTED *"Choose 1:"* (Kieran), NOT A "you
+    may": the dialog is named "Choose 1" and the two buttons read the prompt's
+    `labels.yes` / `labels.no` — both are printed effects, so neither is "Yes" and
+    neither is "No". Same DOM order (the `yes` arm first), same no-dismiss contract.
+    An unlabeled prompt renders exactly as before. */
 function ConfirmPromptDialog({
   viewerSeat,
   dispatch,
@@ -1507,8 +1513,9 @@ function ConfirmPromptDialog({
 }: GameHudProps & { prompt: Extract<EffectPrompt, { kind: "confirm" }> }) {
   const answer = (yes: boolean) =>
     dispatch({ type: "resolveEffect", seat: viewerSeat, choice: { kind: "confirm", yes } });
+  const labels = prompt.labels;
   return (
-    <HudDialog label="You may">
+    <HudDialog label={labels === undefined ? "You may" : "Choose 1"}>
       <h2 className="text-lg font-semibold text-white">{prompt.note}</h2>
       <div className="mt-5 flex justify-end gap-2">
         {/* Yes FIRST in DOM order — where showModal() lands the initial focus —
@@ -1519,10 +1526,10 @@ function ConfirmPromptDialog({
             both are printed, and declining is not a lesser action. */}
         <div className="flex flex-row-reverse gap-2">
           <button type="button" className={ACCENT_BUTTON_CLASS} onClick={() => answer(true)}>
-            Yes
+            {labels === undefined ? "Yes" : labels.yes}
           </button>
           <button type="button" className={NEUTRAL_BUTTON_CLASS} onClick={() => answer(false)}>
-            No
+            {labels === undefined ? "No" : labels.no}
           </button>
         </div>
       </div>

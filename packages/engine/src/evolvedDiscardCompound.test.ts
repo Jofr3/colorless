@@ -1022,13 +1022,13 @@ describe("§9 — every describer this program reaches, asked on the load-bearin
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("§10 — the version, and what it is owed for", () => {
-  it("engineVersion is 0.440.0 and the bump is owed for BEHAVIOUR", () => {
+  it("engineVersion is 0.441.0 and the bump is owed for BEHAVIOUR", () => {
     // A sentence that derived to `null` derives to a two-op program. No new op, no new
     // field and no new interpreter byte — but `deriveAttackEffect` answers differently on
     // a printed string, which is behaviour, so the bump is owed. ⚠️ **A slice that adds
     // ZERO mechanism still owes it**: the tax is on what the engine DOES, not on how much
     // of it is new.
-    expect(engineVersion).toBe("0.440.0");
+    expect(engineVersion).toBe("0.441.0");
     expect(manifest.version).toBe(engineVersion);
   });
 });

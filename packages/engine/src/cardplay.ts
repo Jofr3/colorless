@@ -21,6 +21,8 @@ import {
   conditionHolds,
   conditionNote,
   discardEnergyPlayable,
+  // 🆕🆕🆕 D557 — the Tool offer's own funnel, so the grey-out and the offer agree.
+  discardableTools,
   firstAttachableEnergy,
   gustTargets,
   healChosenTargets,
@@ -1041,6 +1043,41 @@ function attachAlternativesAllWhiff(
   );
 }
 
+/** 🆕🆕🆕 **D557 — THE SWEEP ALTERNATIVES, `attachAlternativesAllWhiff`'s RULE ONE FAMILY
+    OVER.** Megaton Blower `sv08-182` prints THREE discards in one sentence — *"Discard all
+    Pokémon Tools and Special Energy from all of your opponent's Pokémon, and discard a
+    Stadium in play."* — and ruling/284 (a card is unplayable only when the game state
+    prevents ANY effect) makes that an `or`: the card is refused only when the Tool sweep,
+    the Special Energy sweep AND the Stadium discard would ALL find nothing. The per-op
+    `discardEnergy` line in the loop below is an AND, which on this card would refuse a
+    board holding a Tool but no Special Energy — so `count: "all"` sweeps are answered
+    HERE and skipped there. RETURNS FALSE WHEN THE PROGRAM HOLDS NO `"all"` SWEEP (the
+    arity guard `attachAlternativesAllWhiff` names): no shipped Trainer or Ability program
+    carries one, so every other card is byte-identical through this line. Unshielded
+    offers are not consulted, the `discardEnergy` gate's own convention (a shielded board
+    plays and files its refusal rows). */
+function sweepAlternativesAllWhiff(
+  state: GameState,
+  program: readonly EffectOp[],
+  seat: Seat,
+  sourceUid?: string,
+): boolean {
+  let sweeps = 0;
+  let anyActs = false;
+  for (const op of program) {
+    if (op.op === "discardTools" && op.count === "all") {
+      sweeps += 1;
+      if (discardableTools(state, seat, op.sides).length > 0) anyActs = true;
+    } else if (op.op === "discardEnergy" && op.count === "all") {
+      sweeps += 1;
+      if (discardEnergyPlayable(state, seat, op, sourceUid)) anyActs = true;
+    } else if (op.op === "discardStadium" && state.stadium !== null) {
+      anyActs = true;
+    }
+  }
+  return sweeps > 0 && !anyActs;
+}
+
 export function programPlayable(
   state: GameState,
   program: readonly EffectOp[],
@@ -1052,6 +1089,9 @@ export function programPlayable(
   // the program spells can only whiff, the card can only whiff. See the function's
   // own doc for why this is an `or` over the ops and why it sits outside the loop.
   if (attachAlternativesAllWhiff(state, program, seat)) return false;
+  // 🆕🆕🆕 D557 — the discard SWEEPS are alternatives too (Megaton Blower), answered
+  // once over the whole program; see `sweepAlternativesAllWhiff`.
+  if (sweepAlternativesAllWhiff(state, program, seat, sourceUid)) return false;
   for (const op of program) {
     if (op.op === "coinFlipGate") {
       // DESCEND INTO THE BRANCHES THAT COULD RUN. On a ONE-ARMED gate that is
@@ -1272,7 +1312,23 @@ export function programPlayable(
       // only be reached from a Pokémon's own sentence is refused inside one.
       return false;
     }
-    if (op.op === "discardEnergy" && !discardEnergyPlayable(state, seat, op, sourceUid)) {
+    // 🆕🆕🆕 D557 — a CHOSEN Tool discard with nothing to choose can only whiff (Tool
+    // Scrapper into a board with no Tool on either side): refused on the op's OWN offer
+    // funnel, `gust`/`healChosen`'s rule. `"all"` is answered by the sweep alternatives.
+    if (
+      op.op === "discardTools" &&
+      op.count !== "all" &&
+      discardableTools(state, seat, op.sides).length === 0
+    ) {
+      return false;
+    }
+    // 🆕🆕🆕 D557 — and a `count: "all"` SWEEP is not asked here: it is one of the
+    // program's alternatives (`sweepAlternativesAllWhiff`, above the loop).
+    if (
+      op.op === "discardEnergy" &&
+      op.count !== "all" &&
+      !discardEnergyPlayable(state, seat, op, sourceUid)
+    ) {
       // Nothing matching on the opponent's board → the discard can only whiff
       // (Giacomo into a board with no Special Energy — rejected rather than
       // spending the turn's one Supporter, §7.2).
@@ -1668,6 +1724,13 @@ function validateChoice(prompt: EffectPrompt, choice: EffectChoice): ApplyResult
       // **`max` IS READ OFF THE PROMPT, NEVER OFF THE OP** — the prompt's ceiling is
       // already clamped to what the board offered, and this validator never sees the
       // op at all.
+      //
+      // 🆕🆕🆕 D557 — AND IT NEEDS NO SEAT RULE FOR TOOL SCRAPPER'S *"yours or your
+      // opponent's"*, which is why nothing below changed. Membership is checked against
+      // `prompt.discardable`, which already pairs every offered Tool with its OWN seat's
+      // body (`discardableTools(…, "both")`), so an own-side uid is legal exactly when it
+      // was offered and a uid off neither board is refused as before. A pick spanning
+      // BOTH boards in one answer is legal (the print caps the COUNT, not the side).
       if (choice.kind !== "discardTools" || !Array.isArray(choice.uids)) {
         return err("BAD_EFFECT_CHOICE", "expected a tool-discard choice");
       }

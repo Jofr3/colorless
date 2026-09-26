@@ -373,16 +373,21 @@ function ConfirmPromptDialog({
 }) {
   const answer = (yes: boolean) =>
     onAction({ type: "resolveEffect", seat, choice: { kind: "confirm", yes } });
+  // 🆕🆕🆕 D557 — a labelled prompt is a printed "Choose 1:" (Kieran): the dialog is
+  // named for it and the buttons read the two labels, `yes` first — GameHud's
+  // restatement, over the wire shape (the schema declares `labels`, so it survives
+  // the parse). Unlabeled, the dialog is the byte-identical "You may" / Yes / No.
+  const labels = prompt.labels;
   return (
-    <Dialog label="You may">
+    <Dialog label={labels === undefined ? "You may" : "Choose 1"}>
       <h2 className="text-lg font-semibold text-white">{prompt.note}</h2>
       <div className="mt-5 flex justify-end gap-2">
         <div className="flex flex-row-reverse gap-2">
           <button type="button" className={ACCENT_BUTTON} onClick={() => answer(true)}>
-            Yes
+            {labels === undefined ? "Yes" : labels.yes}
           </button>
           <button type="button" className={NEUTRAL_BUTTON} onClick={() => answer(false)}>
-            No
+            {labels === undefined ? "No" : labels.no}
           </button>
         </div>
       </div>

@@ -110,3 +110,52 @@ describe("OnlineHud — effect:choose confirm (the printed 'you may')", () => {
     expect(redactedEffectPromptSchema.safeParse({ kind: "confirm" }).success).toBe(false);
   });
 });
+
+// 🆕🆕🆕 D557 — Kieran's printed "Choose 1:" — the same prompt with `labels`, parsed
+// THROUGH the redacted schema first (zod strips undeclared keys, so an undeclared
+// `labels` would silently render Yes / No online).
+const CHOICE = "Choose 1: • Switch your Active Pokémon with 1 of your Benched Pokémon. • During this turn, …";
+const LABELS = { yes: "Switch your Active Pokémon", no: "+30 damage to ex and V this turn" } as const;
+
+function labelledGame(): RedactedGame {
+  const prompt = redactedEffectPromptSchema.parse({ kind: "confirm", note: CHOICE, labels: LABELS });
+  return { ...confirmGame(), phase: { kind: "effect:choose", prompt } };
+}
+
+describe("🆕🆕🆕 D557 — OnlineHud: the LABELLED confirm (a printed \"Choose 1:\")", () => {
+  it("the schema KEEPS the labels, and REFUSES a malformed labels object", () => {
+    expect(redactedEffectPromptSchema.parse({ kind: "confirm", note: CHOICE, labels: LABELS })).toEqual({
+      kind: "confirm",
+      note: CHOICE,
+      labels: LABELS,
+    });
+    expect(redactedEffectPromptSchema.safeParse({ kind: "confirm", note: CHOICE, labels: { yes: "a" } }).success).toBe(
+      false,
+    );
+    expect(redactedEffectPromptSchema.safeParse({ kind: "confirm", note: CHOICE, labels: "a/b" }).success).toBe(false);
+  });
+
+  it("names the dialog \"Choose 1\" and renders the labels, yes-arm first", () => {
+    render(<OnlineHud game={labelledGame()} waitingOn="you" activePlaced={false} onAction={vi.fn()} />);
+    const labels = [...document.querySelectorAll("dialog button")].map((b) => b.textContent);
+    expect(labels).toEqual([LABELS.yes, LABELS.no]);
+    expect(document.querySelector("dialog")?.getAttribute("aria-label")).toBe("Choose 1");
+    expect(screen.queryByRole("button", { name: "Yes" })).toBeNull();
+  });
+
+  it("the YES label dispatches yes:true and the NO label yes:false", () => {
+    const onAction = vi.fn();
+    render(<OnlineHud game={labelledGame()} waitingOn="you" activePlaced={false} onAction={onAction} />);
+    fireEvent.click(screen.getByRole("button", { name: LABELS.yes }));
+    fireEvent.click(screen.getByRole("button", { name: LABELS.no }));
+    expect(onAction.mock.calls).toEqual([
+      [{ type: "resolveEffect", seat: "p1", choice: { kind: "confirm", yes: true } }],
+      [{ type: "resolveEffect", seat: "p1", choice: { kind: "confirm", yes: false } }],
+    ]);
+  });
+
+  it("an UNLABELED prompt is still \"You may\" with Yes / No", () => {
+    render(<OnlineHud game={confirmGame()} waitingOn="you" activePlaced={false} onAction={vi.fn()} />);
+    expect(document.querySelector("dialog")?.getAttribute("aria-label")).toBe("You may");
+  });
+});

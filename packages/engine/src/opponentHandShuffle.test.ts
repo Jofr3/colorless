@@ -931,7 +931,7 @@ describe("🛑 §9 — the persisted op, over the serialized bytes", () => {
 
 describe("§10 — the version moved with the behaviour", () => {
   it("engineVersion", () => {
-    expect(engineVersion).toBe("0.440.0");
+    expect(engineVersion).toBe("0.441.0");
   });
 
   it("the op is PURE — the parked board is not mutated by resolving it", () => {

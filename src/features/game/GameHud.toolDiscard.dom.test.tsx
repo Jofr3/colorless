@@ -243,3 +243,133 @@ describe("🛑 the WIRE round trip — `projectionFromRedacted` rebuilds the sam
     expect(projectionFromRedacted(redactGame(state, "p2")).pendingDecision).toBeNull();
   });
 });
+
+// ── 🆕🆕🆕 D557 — TOOL SCRAPPER `sv10.5w-085`: *"Choose up to 2 Pokémon Tools attached to
+//    Pokémon (yours or your opponent's) and discard them."* The same dialog, and the HUD
+//    ALREADY groups by seat, so no dialog byte moved: this rung pins that an OWN-side
+//    Tool renders in its own (un-suffixed) group and that picking it dispatches its uid —
+//    on the local surface AND off the wire. The park is DRIVEN off the real registry row.
+const SCRAPPER = "sv10.5w-085";
+const SCRAPPER_TEXT =
+  "Choose up to 2 Pokémon Tools attached to Pokémon (yours or your opponent's) and discard them.";
+const SCRAPPER_POOL: Record<string, Card> = {
+  ...POOL,
+  [SCRAPPER]: {
+    ...(FIXTURE_POOL["fix-tool"] as Card),
+    id: SCRAPPER,
+    name: "Tool Scrapper",
+    trainerType: "Item",
+    effect: SCRAPPER_TEXT,
+  },
+};
+const SCRAPPER_DECK = deckOf({
+  [SCRAPPER]: 4,
+  "d543-wall": 4,
+  "d543-bench": 4,
+  "d543-chestplate": 4,
+  "d543-charm": 4,
+  "fix-basic-1": 8,
+  "fix-energy": 32,
+});
+
+/** TEST SURGERY — one copy of `id` into `seat`'s deck (from the hand, or swapped out of
+    the Prizes for the deck's bottom card); every uid stays in exactly one zone. */
+function ensureInDeck(state: GameState, seat: Seat, id: string): GameState {
+  const side = state.players[seat];
+  if (side.deck.some((u) => state.cardIdByUid[u] === id)) return state;
+  const held = side.hand.find((u) => state.cardIdByUid[u] === id);
+  if (held !== undefined) {
+    const next = { ...side, hand: side.hand.filter((u) => u !== held), deck: [...side.deck, held] };
+    return { ...state, players: { ...state.players, [seat]: next } };
+  }
+  const prized = side.prizes.find((u) => state.cardIdByUid[u] === id) as string;
+  const swap = side.deck[side.deck.length - 1] as string;
+  const next = {
+    ...side,
+    prizes: side.prizes.map((u) => (u === prized ? swap : u)),
+    deck: [...side.deck.slice(0, -1), prized],
+  };
+  return { ...state, players: { ...state.players, [seat]: next } };
+}
+
+function scrapperParked(): GameState {
+  const created = createGame({
+    seed: 20260926,
+    decks: { p1: SCRAPPER_DECK, p2: SCRAPPER_DECK },
+    cardPool: SCRAPPER_POOL,
+  });
+  if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
+  let state = created.state;
+  if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
+  state = must(applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p1" }));
+  while (state.phase.kind === "setup:drawExtra") {
+    const phase = state.phase;
+    const seat = (["p1", "p2"] as const).find((s) => !phase.decided[s]);
+    if (seat === undefined) throw new Error("setup:drawExtra with every seat decided");
+    state = must(applyAction(state, { type: "setupDrawExtra", seat, count: phase.owed[seat] }));
+  }
+  for (const seat of ["p1", "p2"] as const) {
+    state = must(applyAction(state, { type: "setupPlaceActive", seat, uid: firstBasicInHand(state, seat) }));
+  }
+  for (const seat of ["p1", "p2"] as const) state = must(applyAction(state, { type: "setupReady", seat }));
+  state = mustApply(state, { type: "endTurn", seat: "p1" }).state;
+  state = mustApply(state, { type: "endTurn", seat: "p2" }).state;
+  state = setActiveFromDeck(ensureInDeck(state, "p1", "d543-wall"), "p1", "d543-wall");
+  state = clearBench(state, "p1");
+  state = setActiveFromDeck(ensureInDeck(state, "p2", "d543-bench"), "p2", "d543-bench");
+  state = clearBench(state, "p2");
+  state = attachToolFromDeck(ensureInDeck(state, "p1", "d543-charm"), "p1", "active", "d543-charm");
+  state = attachToolFromDeck(ensureInDeck(state, "p2", "d543-chestplate"), "p2", "active", "d543-chestplate");
+  state = ensureInDeck(state, "p1", SCRAPPER);
+  const uid = state.players.p1.hand.find((u) => state.cardIdByUid[u] === SCRAPPER);
+  const held =
+    uid ??
+    (() => {
+      const fromDeck = state.players.p1.deck.find((u) => state.cardIdByUid[u] === SCRAPPER) as string;
+      state = {
+        ...state,
+        players: {
+          ...state.players,
+          p1: {
+            ...state.players.p1,
+            deck: state.players.p1.deck.filter((u) => u !== fromDeck),
+            hand: [...state.players.p1.hand, fromDeck],
+          },
+        },
+      };
+      return fromDeck;
+    })();
+  const after = mustApply(state, { type: "playTrainer", seat: "p1", uid: held }).state;
+  if (after.phase.kind !== "effect:choose") throw new Error(`expected the park, got ${after.phase.kind}`);
+  return after;
+}
+
+describe("🆕🆕🆕 D557 — Tool Scrapper: an OWN-side Tool in the same dialog", () => {
+  it("renders the print, the OWN group without the opponent suffix, and the opponent's with it", () => {
+    renderHud(scrapperParked(), "p1", vi.fn());
+    expect(screen.getByText(SCRAPPER_TEXT)).toBeTruthy();
+    expect(screen.getByText(/d543-wall · Active$/)).toBeTruthy();
+    expect(screen.getByText(/d543-bench · Active · opponent/)).toBeTruthy();
+  });
+
+  it("🛑 picking YOUR OWN Tool dispatches its uid — locally and off the wire", () => {
+    const state = scrapperParked();
+    if (state.phase.kind !== "effect:choose" || state.phase.prompt.kind !== "discardTools") {
+      throw new Error("expected the discardTools park");
+    }
+    const own = state.phase.prompt.discardable.find((d) => d.from.seat === "p1")?.uid;
+    expect(own).toBeDefined();
+    for (const draw of [renderHud, renderFromWire]) {
+      const dispatch = vi.fn();
+      draw(state, "p1", dispatch);
+      fireEvent.click(screen.getByRole("button", { name: "Bravery Charm" }));
+      fireEvent.click(screen.getByRole("button", { name: "Discard 1" }));
+      expect(dispatch).toHaveBeenCalledWith({
+        type: "resolveEffect",
+        seat: "p1",
+        choice: { kind: "discardTools", uids: [own] },
+      });
+      cleanup();
+    }
+  });
+});

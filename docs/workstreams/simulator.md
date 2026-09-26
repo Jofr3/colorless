@@ -28247,7 +28247,9 @@ round-trips with `endsTurn`. Census: `BUILT.trainer` 113 → 128 (Item 29 → 34
 
 ### (e) Owed
 The audit's other deck searches need vocabulary: Team Rocket's Great Ball (🆕🆕🆕 2026-09-26 D556 CORRECTION (D539): it needed none — BUILT at D556), TM Machine, Brilliant Blender, Tera Orb,
-Brock's Scouting, Love Ball, Dusk Ball, Crispin, Perrin, Salvatore. Next queue: the conditional-draw Trainers (Iris,
+Brock's Scouting, Love Ball, Dusk Ball, Crispin, Perrin, Salvatore. (🆕🆕🆕 2026-09-26 D557: TM Machine, Brilliant Blender and
+Dusk Ball are BUILT — one small rider each: `CardFilter.toolNameContaining`, `searchDeck.dest: "discard"`, `lookAtTopN.from:
+"bottom"`. Brock's Scouting stays deferred: its either-scope cap is new wire validation, and optional-first is refused by D344.) Next queue: the conditional-draw Trainers (Iris,
 Ariana, Billy — 6 printings, 2 `BoardCondition` members), then Samurott and Snow Sink.
 
 ## D555 — the zero-vocabulary Trainers and Abilities: 20 printings / 12 texts / 12 objects, one caption branch, and the Samurott refusal retired (engine 0.439.0, `MATCH_RECORD_VERSION` 34 HELD)
@@ -28339,7 +28341,54 @@ Great Ball's DROPPED row removed from `ownerPrefix.test.ts` (3 → 2). Walkers: 
 
 ### (e) Owed
 The whole-corpus sweep (~~D552 → D553 → D554 → D555 → D556, all pending~~ D552–D555 PAID, each exact on its first
-launch — D555's `3171 · 53` at close-out `66dbfab3`; D556's pending, predicted `3201 · 53` over 3,254). The HUD does not show the side bonus (display
+launch — D555's `3171 · 53` at close-out `66dbfab3`; ~~D556's pending, predicted `3201 · 53` over 3,254~~ 🆕 D557 landing: D556's PAID, exact on its first launch, `3201 · 53` over 3,254 at close-out `0a9db1be`). The HUD does not show the side bonus (display
 debt). R3 UNRULED. Pecharunt's log noise (R6). Next: Kieran ×5 on this op with a labelled confirm; Torrential Heart ×2;
 the remaining audit rows.
 
+## D557 — eleven Trainers: Kieran's labelled confirm, Venture Bomb's Item counter source, and one rider each for nine more: 19 printings / 11 texts / 11 objects (engine 0.441.0, `MATCH_RECORD_VERSION` stays 35)
+
+**Status:** ✅ BUILT — keyed MID-MAP after `svp-149`. Built in the `lum-wt-d557` worktree stacked on the parked D556, committed there on `d557-prep` at `8ecbe83c`, and LANDED on `main` by cherry-pick onto the D556 close-out `0a9db1be`.
+
+### (a) The eleven rows (registry.ts, one block before `const REGISTRY`)
+| Card | Ids | Surface | Program |
+|---|---|---|---|
+| Kieran | `sv06-154`/`-206`/`-218`, `sv08.5-113`/`-174` | Supporter | `optional { labels }` → `switchActive` / else `boostSideAttacksThisTurn 30 anyOf[ex, V]` |
+| Team Rocket's Venture Bomb | `sv10-179` | Item | `coinFlipGate` → `damageChosen opponentAny 20 "trainer"` / else `damageSelf 20 "trainer"` |
+| Morty's Conviction | `sv05-155`/`-201`/`-211` | Supporter | `payFromHand 1` → `drawCards { 1, per: opponentBenchCount }` |
+| Xerosic's Machinations | `sv06.5-064`/`-089` | Supporter | `opponentDiscardsFromHand { untilHandSize: 3 }` (the owner decides) |
+| Lucian | `sv06-157`/`-208` | Supporter | `handRefresh { both, toBottom, onlyIfAnyMoved, coinFlip 6 / 3 }` |
+| Arven's Sandwich | `sv10-161` | Item | `conditionGate yourActiveOwner "Arven"` → `heal self 100` / else 30 |
+| Megaton Blower | `sv08-182` | Item | `discardTools "all"` → `discardEnergy opponentEach special "all"` → `discardStadium` |
+| Brilliant Blender | `sv08-164` | Item | `searchDeck anyCard max 5 dest "discard"` → `shuffleDeck` |
+| TM Machine | `sv10-181` | Item | `searchDeck toolNameContaining "Technical Machine" max 3 reveal` → `shuffleDeck` |
+| Dusk Ball | `sv08-175` | Item | `lookAtTopN 7 from "bottom" anyPokemon max 1 reveal` → `shuffleDeck` |
+| Tool Scrapper | `sv10.5w-085` | Item | `discardTools { 2, sides: "both" }` |
+
+### (b) The vocabulary (every piece an optional key or a union member — MRV holds, driven)
+`optional.labels` (on the op, the prompt, redact.ts, the zod arm, projection.ts and both HUDs — "Choose 1" with the two
+labels); `damageChosen.source` / `COUNTERS_PLACED.source` `"trainer"` and `damageSelf.source`; the Item channel filters a
+snipe offer by §11; `drawCards.per`; a second `opponentDiscardsFromHand` arm `untilHandSize`; `HandRefreshDraw.coinFlip`;
+`BoardCondition.yourActiveOwner`; `discardTools.count "all"` and `sides "both"`; `searchDeck.dest "discard"`;
+`CardFilter.toolNameContaining`; `lookAtTopN.from "bottom"`. cardplay.ts gains the sweep alternatives (Megaton Blower)
+and a `discardTools` play gate (Tool Scrapper).
+
+### (c) Readings (`docs/decisions.md` D557)
+R-K1 ⚠️ UNRULED: Kieran's Switch with an empty Bench whiffs silently · R-K2 ⚠️ DEVIATION (debt): VMAX/VSTAR
+get no +30, but the rules count them as Pokémon V (none is Standard-legal)
+· R-L1 ⚠️ UNRULED: Lucian flips controller first · R-VB Venture Bomb's heads is a flat placement; a self-KO pays the
+opponent · R-X Xerosic is never refused · R-M1 Megaton Blower discards either player's Stadium. `D259-trainer-channel-ignores-owner`
+RETIRED from the declared survivors (Tool Scrapper reaches the own-seat guard).
+
+### (d) Tests, census and mutants
+New `chooseOneTrainersD557.test.ts` (32) and `riderTrainersD557.test.ts` (46, one of them the review's parked-Morty `per` rung); +4 rungs in each HUD confirm suite, +1
+projection rung, +2 Tool Scrapper DOM rungs. Arven's DROPPED row removed from `ownerPrefix.test.ts` (2 → 1). Walkers:
+`programWalk` `missed` 58 → 69, `derivedBenchSearchMove` 97 → 99, `revealClause` 40/18/58/125 → 42/19/61/128,
+`handRefreshOpponentHand` producers 31 → 33. Census: `BUILT.trainer` 154 → 173 (Item 45, Supporter 114), `built` 2161 →
+2180, registry keys 779 → 798. Mutants 3,254 → 3,278 (+24 `D557-*`, all killed undeclared; 23 rows re-anchored or
+re-declared and re-probed); declared survivors 53 → 52.
+
+### (e) Owed
+The whole-corpus sweep (~~D552 → … → D557, all pending~~ D552–D556 PAID, each exact on its first launch — D556's `3201 · 53` at
+close-out `0a9db1be`; D557's pending, predicted `3226 · 52` over 3,278). Brock's Scouting deferred. R-K1, R-L1 UNRULED; R-K2's deviation (a debt).
+The HUD does not show a side bonus (D556's debt). Next: the ability bundle (16 printings / 10 items) (🆕 D557 landing: after
+D558 — the first Tools and Stadiums plus Salvatore, parked on `d558-prep` at `28518c81`, stacked on D557 — which lands first).

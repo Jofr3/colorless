@@ -168,7 +168,7 @@ describe("§1 — the sentence, the corpus row, and D230's refusal paid", () => 
   });
 
   it("engineVersion stepped for a behaviour a card can reach, and `manifest.version` agrees", () => {
-    expect(engineVersion).toBe("0.440.0");
+    expect(engineVersion).toBe("0.441.0");
     expect(manifest.version).toBe(engineVersion);
   });
 });
@@ -1011,7 +1011,7 @@ describe("§6 — the describer and the log rows, RENDERED", () => {
     }
     const searches = all.filter((o) => o.op === "searchDeck");
     const recording = searches.filter((o) => o.recordAs !== undefined);
-    expect(searches.length).toBe(97); // 🆕🆕🆕 D556 — +2: Team Rocket's Great Ball `sv10-175` authors TWO `searchDeck` literals, one per `coinFlipGate` face (`then` Evolution / `otherwise` Basic — this walk descends both keys), on ONE registry key, neither with a `recordAs`, so `recording` below stays 1. // 🆕🆕🆕 D554 — +15: the nine deck-search Trainers' `trainer` programs each open with ONE `searchDeck` literal and are walked ONCE PER KEY (fifteen ids, nine objects), none with a `recordAs`, so `recording` below stays 1. (D553's Ability searches sit inside `abilities[].program`, a key this walk does not descend — which is why D553 did not move this line.) // 🆕🆕🆕 D531 — +1: the BOARD-TYPED arm (corpus FILE LINE 483, `ATTACK_HAND_SEARCH_TYPED_AS_ATTACHED`) emits one more `searchDeck` literal, the THIRD producer beside the noun-table arm and D527's — THE BOARD-TYPED HAND SEARCH — `censusAttackCorpus.ts` **FILE LINE 483**, *"Search your deck for up to 5 Pokémon that are the same type as any Basic Energy attached to this Pokémon, reveal them, and put them into your hand. Then, shuffle your deck."*, 1 sentence / 1 legal printing, claimed WHOLE by `deriveAttackEffect` on its own zero-capture anchor — stepped OFF THE RED RUN, outside the census-pin sweep's shape (D419: a sweep is as narrow as the shape it greps for; D527 hit the same two producer counts).) // 🆕🆕🆕 D527 — +1: the DYNAMIC-max arm (corpus FILE LINE 454, `ATTACK_HAND_SEARCH_BENCH_COUNT`) emits one more `searchDeck` literal, and it is the SECOND producer whose `max` is not a number (`"yourBenchCount"`, resolved at the park against the attacker's Bench). Outside the whitelist sweep's shape — stepped by hand after `check` named it (D419). // 🆕🆕🆕 D514 — +1: the new NAMED / UNBOUNDED arm emits one more `searchDeck` literal (corpus FILE LINE 657), and it is the FIRST producer in this sweep whose `max` is not a number. 🆕 D513 — `searchDeck` producer sites over the corpus + registry. +1: the new `of different types` arm emits one more `searchDeck` literal (corpus FILE LINE 473). The `recording` figure below is UNMOVED at 1 — the new op carries no `recordAs` — which is what keeps the declared survivor's population claim about `recordAs` and not about searches.
+    expect(searches.length).toBe(99); // 🆕🆕🆕 D557 — +2: Brilliant Blender `sv08-164` (`dest: "discard"`) and TM Machine `sv10-181` (`toolNameContaining`) each author ONE `searchDeck` literal on ONE key, neither with a `recordAs`, so `recording` below stays 1. Dusk Ball is a `lookAtTopN`, not counted here. // 🆕🆕🆕 D556 — +2: Team Rocket's Great Ball `sv10-175` authors TWO `searchDeck` literals, one per `coinFlipGate` face (`then` Evolution / `otherwise` Basic — this walk descends both keys), on ONE registry key, neither with a `recordAs`, so `recording` below stays 1. // 🆕🆕🆕 D554 — +15: the nine deck-search Trainers' `trainer` programs each open with ONE `searchDeck` literal and are walked ONCE PER KEY (fifteen ids, nine objects), none with a `recordAs`, so `recording` below stays 1. (D553's Ability searches sit inside `abilities[].program`, a key this walk does not descend — which is why D553 did not move this line.) // 🆕🆕🆕 D531 — +1: the BOARD-TYPED arm (corpus FILE LINE 483, `ATTACK_HAND_SEARCH_TYPED_AS_ATTACHED`) emits one more `searchDeck` literal, the THIRD producer beside the noun-table arm and D527's — THE BOARD-TYPED HAND SEARCH — `censusAttackCorpus.ts` **FILE LINE 483**, *"Search your deck for up to 5 Pokémon that are the same type as any Basic Energy attached to this Pokémon, reveal them, and put them into your hand. Then, shuffle your deck."*, 1 sentence / 1 legal printing, claimed WHOLE by `deriveAttackEffect` on its own zero-capture anchor — stepped OFF THE RED RUN, outside the census-pin sweep's shape (D419: a sweep is as narrow as the shape it greps for; D527 hit the same two producer counts).) // 🆕🆕🆕 D527 — +1: the DYNAMIC-max arm (corpus FILE LINE 454, `ATTACK_HAND_SEARCH_BENCH_COUNT`) emits one more `searchDeck` literal, and it is the SECOND producer whose `max` is not a number (`"yourBenchCount"`, resolved at the park against the attacker's Bench). Outside the whitelist sweep's shape — stepped by hand after `check` named it (D419). // 🆕🆕🆕 D514 — +1: the new NAMED / UNBOUNDED arm emits one more `searchDeck` literal (corpus FILE LINE 657), and it is the FIRST producer in this sweep whose `max` is not a number. 🆕 D513 — `searchDeck` producer sites over the corpus + registry. +1: the new `of different types` arm emits one more `searchDeck` literal (corpus FILE LINE 473). The `recording` figure below is UNMOVED at 1 — the new op carries no `recordAs` — which is what keeps the declared survivor's population claim about `recordAs` and not about searches.
     expect(recording).toHaveLength(1);
     expect(recording[0]?.dest).toBe("bench");
     // …and the OTHER two destinations really are printed, so the guard's refused arms
@@ -1019,9 +1019,13 @@ describe("§6 — the describer and the log rows, RENDERED", () => {
     // records. That is what makes the declaration a measurement rather than a shape
     // claim — and what makes the row go KILLED (and the run STALE-SURVIVOR) the day a
     // hand or deck-top search gains a `recordAs`.
+    // 🆕🆕🆕 D557 — a FOURTH printed destination, Brilliant Blender's `"discard"` (no
+    // `recordAs` either), so the population this declaration speaks for grew by one zone
+    // and still records nowhere but the Bench.
     expect([...new Set(searches.map((o) => o.dest))].sort()).toEqual([
       "bench",
       "deckTop",
+      "discard",
       "hand",
     ]);
   });

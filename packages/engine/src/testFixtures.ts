@@ -11050,6 +11050,9 @@ export const FIXTURE_POOL: Record<string, Card> = {
       D317's HEAD. So `programWalk.test.ts`'s carrier pin read `["optional",
       ["then"]]` for two slices while the op carried two arms — not because nothing
       produced an `otherwise`, but because nothing the SHARED sweep could reach did.
+      (🆕🆕🆕 D557 NOTE (D539): this demonstrator is no longer the only thing the sweep
+      reaches that carries `optional.otherwise` — Kieran ×5 is a REGISTRY producer since
+      D557. It is still the only ATTACK-shaped one, and it stays for that.)
       Exporting the assembler (D318's `optionalBoostProgram`) is the necessary half;
       this card is the sufficient one, and each alone is green and dead.
 

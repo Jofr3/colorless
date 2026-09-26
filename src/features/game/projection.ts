@@ -533,7 +533,19 @@ function effectDecisionFromPrompt(
       // The printed "you may" — the whole prompt is its sentence, so the
       // round-trip is the identity and the engine prompt rebuilds field for
       // field, like every arm here.
-      return { kind: "effectChoose", prompt: { kind: "confirm", note: prompt.note } };
+      // 🆕🆕🆕 D557 — including Kieran's `labels`, by a CONDITIONAL SPREAD like every
+      // optional field in this file: dropped here, the rebuilt local decision would
+      // render Yes / No over a printed "Choose 1:".
+      return {
+        kind: "effectChoose",
+        prompt: {
+          kind: "confirm",
+          note: prompt.note,
+          ...(prompt.labels === undefined
+            ? {}
+            : { labels: { yes: prompt.labels.yes, no: prompt.labels.no } }),
+        },
+      };
     case "choosePokemon":
       return {
         kind: "effectChoose",

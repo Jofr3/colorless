@@ -149,3 +149,68 @@ describe("the wire round-trip", () => {
     expect(phase.prompt).toEqual({ kind: "confirm", note: SENTENCE });
   });
 });
+
+// 🆕🆕🆕 D557 — Kieran's printed "Choose 1:" rides the same prompt as `labels`, the two
+// button captions. Constructed off the real registry program's shape (the engine suite
+// drives the real card, `chooseOneTrainersD557.test.ts`); here the dialog is the subject.
+const CHOICE = "Choose 1: • Switch your Active Pokémon with 1 of your Benched Pokémon. • During this turn, …";
+const LABELS = { yes: "Switch your Active Pokémon", no: "+30 damage to ex and V this turn" } as const;
+
+function labelled(): GameState {
+  const base = parked();
+  if (base.phase.kind !== "effect:choose") throw new Error("expected the park");
+  return {
+    ...base,
+    phase: {
+      ...base.phase,
+      prompt: { kind: "confirm", note: CHOICE, labels: LABELS },
+      cont: {
+        ...base.phase.cont,
+        pendingOp: {
+          op: "optional",
+          note: CHOICE,
+          labels: LABELS,
+          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-op list, not a thenable.
+          then: [{ op: "switchActive" }],
+          otherwise: [{ op: "drawCards", count: 1 }],
+        },
+      },
+    },
+  };
+}
+
+describe("🆕🆕🆕 D557 — the LABELLED confirm: a printed \"Choose 1:\"", () => {
+  it("names the dialog \"Choose 1\" and the buttons read the labels, yes-arm FIRST in DOM order", () => {
+    renderHud(labelled(), "p1", () => {});
+    expect(screen.getByText(CHOICE)).toBeTruthy();
+    const labels = [...document.querySelectorAll("dialog button")].map((b) => b.textContent);
+    expect(labels).toEqual([LABELS.yes, LABELS.no]);
+    expect(screen.queryByRole("button", { name: "Yes" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "No" })).toBeNull();
+    expect(document.querySelector("dialog")?.getAttribute("aria-label")).toBe("Choose 1");
+  });
+
+  it("the YES label dispatches yes:true and the NO label dispatches yes:false", () => {
+    const dispatch = vi.fn();
+    renderHud(labelled(), "p1", dispatch);
+    fireEvent.click(screen.getByRole("button", { name: LABELS.yes }));
+    fireEvent.click(screen.getByRole("button", { name: LABELS.no }));
+    expect(dispatch.mock.calls).toEqual([
+      [{ type: "resolveEffect", seat: "p1", choice: { kind: "confirm", yes: true } }],
+      [{ type: "resolveEffect", seat: "p1", choice: { kind: "confirm", yes: false } }],
+    ]);
+  });
+
+  it("an UNLABELED park is still the \"You may\" dialog with Yes / No", () => {
+    renderHud(parked(), "p1", () => {});
+    expect(document.querySelector("dialog")?.getAttribute("aria-label")).toBe("You may");
+  });
+
+  it("the labels cross the wire and the answerer's projection round-trips identically", () => {
+    const state = labelled();
+    const phase = redactGame(state, "p1").phase;
+    if (phase.kind !== "effect:choose") throw new Error("expected the park");
+    expect(phase.prompt).toEqual({ kind: "confirm", note: CHOICE, labels: LABELS });
+    expect(projectionFromRedacted(redactGame(state, "p1"))).toEqual(projectGameState(state, "p1"));
+  });
+});

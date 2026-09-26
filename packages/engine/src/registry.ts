@@ -13108,6 +13108,247 @@ const TOXIC_SUBJUGATION: CardProgram = {
   ],
 };
 
+// ── 🆕🆕🆕 D557 — ELEVEN TRAINERS, 19 PRINTINGS / 11 TEXTS / 11 OBJECTS. A: Kieran's
+//    printed "Choose 1:" (a `labels` rider on the `optional` op over D556's side-wide
+//    bonus) and Team Rocket's Venture Bomb (a `"trainer"` counter source); B: one rider
+//    each for Morty's Conviction (`drawCards.per`), Xerosic's Machinations
+//    (`opponentDiscardsFromHand.untilHandSize`), Lucian (`HandRefreshDraw.coinFlip`) and
+//    Arven's Sandwich (`BoardCondition.yourActiveOwner`); C: the Tool discards and deck
+//    windows — Megaton Blower (`discardTools.count: "all"`), Brilliant Blender
+//    (`searchDeck.dest: "discard"`), TM Machine (`CardFilter.toolNameContaining`), Dusk
+//    Ball (`lookAtTopN.from: "bottom"`) and Tool Scrapper (`discardTools.sides: "both"`).
+//    Texts, subtypes and legality off tcgdex (the ingest's own upstream), 2026-09-26 —
+//    all nineteen `legal.standard: true`; one object per printed TEXT (D199), reprints
+//    share it. Keyed MID-MAP after `svp-149` (D395/D396), so the map's LAST key does not
+//    move. Every addition is an optional key or a union member: `MATCH_RECORD_VERSION`
+//    HOLDS at 35 (D125/D344). docs/decisions.md D557. ──
+
+/** 🆕🆕🆕 **D557 — Kieran `sv06-154`/`-206`/`-218`, `sv08.5-113`/`-174` (Supporter, 5
+    legal)** — *"Choose 1: • Switch your Active Pokémon with 1 of your Benched Pokémon. •
+    During this turn, attacks used by your Pokémon do 30 more damage to your opponent's
+    Active Pokémon ex and Active Pokémon V (before applying Weakness and Resistance)."*
+
+    The `optional` gate as a two-bullet CHOICE: `then` is the switch (SWITCH's own op),
+    `otherwise` is D556's `boostSideAttacksThisTurn` at 30 over `anyOf[ex, V]` — the
+    printed *"ex and … V"* is a UNION of defenders (a Pokémon is never both), so the
+    filter is D245's `anyOf` and the log row joins it with "or" by design. `labels` are
+    the two button captions; `note` is the whole print. ⚠️ **R-K2 — A STANDING ENGINE
+    DEVIATION, NOT THE PRINTED READING (a named debt)**: `suffixPokemon` reads the name
+    suffix EXACTLY (`pokemonSuffixOf`, D92/D446), so a VMAX or VSTAR is not matched by
+    `"V"` and takes no +30 here — but the Sword & Shield-era rules count Pokémon VMAX and
+    Pokémon VSTAR AS Pokémon V (the reason Choice Belt was played into them; recalled,
+    the rulebook text not re-read in this slice). No V-family Pokémon is Standard-legal,
+    so the deviation cannot arise in Standard play; the rung that drives it pins the
+    engine's CURRENT behaviour so a future fix is a visible step, not a silent one. ⚠️ **R-K1
+    (UNRULED): CHOOSING THE SWITCH WITH AN EMPTY BENCH WHIFFS SILENTLY** — `switchActive`
+    finds no candidate and does nothing; the Supporter is still spent. `programPlayable`
+    never descends an `optional` (both answers are printed outcomes — its own note), so
+    the card stays playable for its bonus bullet. */
+const KIERAN: CardProgram = {
+  trainer: [
+    {
+      op: "optional",
+      note: "Choose 1: • Switch your Active Pokémon with 1 of your Benched Pokémon. • During this turn, attacks used by your Pokémon do 30 more damage to your opponent's Active Pokémon ex and Active Pokémon V (before applying Weakness and Resistance).",
+      labels: { yes: "Switch your Active Pokémon", no: "+30 damage to ex and V this turn" },
+      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
+      then: [{ op: "switchActive" }],
+      otherwise: [
+        {
+          op: "boostSideAttacksThisTurn",
+          amount: 30,
+          target: {
+            kind: "anyOf",
+            filters: [
+              { kind: "suffixPokemon", suffix: "ex" },
+              { kind: "suffixPokemon", suffix: "V" },
+            ],
+          },
+        },
+      ],
+    },
+  ],
+};
+
+/** 🆕🆕🆕 **D557 — Team Rocket's Venture Bomb `sv10-179` (Item, 1 legal)** — *"Flip a
+    coin. If heads, put 2 damage counters on 1 of your opponent's Pokémon. If tails, put
+    2 damage counters on your Active Pokémon."*
+
+    `coinFlipGate` with both arms: heads is `damageChosen { opponentAny, 20, count 1 }` —
+    a PLACEMENT (no `deals`), so an Active target with a Weakness still takes a flat 20
+    (`placeSnipe` → `damageActive`, no W/R) — and tails is `damageSelf 20` on the
+    player's own Active. Both carry the new `"trainer"` provenance so neither row reads
+    "Ability:" nor "did 20 damage to itself". On the Item channel the heads offer is
+    filtered by the §11 shield (a `preventTrainerEffects` body is not offered); the tails
+    arm is never shielded (your own card). A lethal total on either face is swept by
+    `resolveMidTurnKnockOuts`; a self-KO pays the OPPONENT a Prize. */
+const TEAM_ROCKETS_VENTURE_BOMB: CardProgram = {
+  trainer: [
+    {
+      op: "coinFlipGate",
+      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
+      then: [{ op: "damageChosen", target: "opponentAny", amount: 20, count: 1, source: "trainer" }],
+      otherwise: [{ op: "damageSelf", amount: 20, source: "trainer" }],
+    },
+  ],
+};
+
+/** 🆕🆕🆕 **D557 — Morty's Conviction `sv05-155`/`-201`/`-211` (Supporter, 3 legal)** —
+    *"You can use this card only if you discard another card from your hand. / Draw a
+    card for each of your opponent's Benched Pokémon."*
+
+    IRIS'S FIGHTING SPIRIT's precondition shape (D555): the `payFromHand 1` cost FIRST,
+    gated by `handCostUnmet` with the played uid excluded (*"another card"*), then the
+    draw with the new `per` rider — the printed rate 1 times the opponent's Bench, read
+    at RESOLVE. An empty opponent Bench draws 0 (the Supporter is still spent, the cost
+    still paid — the card plays and whiffs, D553 R1's family). */
+const MORTYS_CONVICTION: CardProgram = {
+  trainer: [
+    { op: "payFromHand", count: 1, to: "discard" },
+    { op: "drawCards", count: 1, per: { kind: "opponentBenchCount" } },
+  ],
+};
+
+/** 🆕🆕🆕 **D557 — Xerosic's Machinations `sv06.5-064`/`-089` (Supporter, 2 legal)** —
+    *"Your opponent discards cards from their hand until they have 3 cards in their
+    hand."*
+
+    `opponentDiscardsFromHand`'s new `untilHandSize` arm: the OWNER decides which cards
+    (`decider: owner`, D426), the take is the excess over 3, and a hand of 3 or fewer is
+    a silent no-op that never parks. ⚠️ Never refused: the op has no `programPlayable`
+    line (its own block's standing answer), so into a small hand the Supporter plays and
+    whiffs. */
+const XEROSICS_MACHINATIONS: CardProgram = {
+  trainer: [{ op: "opponentDiscardsFromHand", untilHandSize: 3 }],
+};
+
+/** 🆕🆕🆕 **D557 — Lucian `sv06-157`/`-208` (Supporter, 2 legal)** — *"Each player
+    shuffles their hand and puts it on the bottom of their deck. If either player put any
+    cards on the bottom of their deck in this way, each player flips a coin. If heads,
+    that player draws 6 cards. If tails, they draw 3 cards."*
+
+    IONO's `who: "both"` + `toBottom`, the `onlyIfAnyMoved` gate (*"If either player put
+    any cards…"*), and the new `coinFlip` draw: each seat flips its OWN coin, controller
+    first (R-L1, UNRULED), heads 6 / tails 3. Two empty hands: nothing moved, no flips,
+    no draws. */
+const LUCIAN: CardProgram = {
+  trainer: [
+    {
+      op: "handRefresh",
+      who: "both",
+      toBottom: true,
+      onlyIfAnyMoved: true,
+      draw: { kind: "coinFlip", heads: 6, tails: 3 },
+    },
+  ],
+};
+
+/** 🆕🆕🆕 **D557 — Arven's Sandwich `sv10-161` (Item, 1 legal)** — *"Heal 30 damage from
+    your Active Pokémon. If that Pokémon is an Arven's Pokémon, heal 100 damage from it
+    instead."*
+
+    ARIANA's shape (D556): the printed *"instead"* is a REPLACEMENT, so the default 30 is
+    the gate's `otherwise` and exactly ONE `heal` runs — an Arven's Active heals 100,
+    never 30 + 70. The gate is the new `yourActiveOwner { owner: "Arven" }` (the
+    `ownerPokemon` prefix rule on the Active's top card). COOK's `heal self` (D555):
+    an undamaged Active plays and heals 0. The `ownerPrefix.test.ts` DROPPED row this
+    card sat in is retired. */
+const ARVENS_SANDWICH: CardProgram = {
+  trainer: [
+    {
+      op: "conditionGate",
+      cond: { kind: "yourActiveOwner", owner: "Arven" },
+      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
+      then: [{ op: "heal", target: "self", amount: 100 }],
+      otherwise: [{ op: "heal", target: "self", amount: 30 }],
+    },
+  ],
+};
+
+/** 🆕🆕🆕 **D557 — Megaton Blower `sv08-182` (Item, ACE SPEC, 1 legal)** — *"Discard all
+    Pokémon Tools and Special Energy from all of your opponent's Pokémon, and discard a
+    Stadium in play."*
+
+    Three sweeps in printed order, none of which asks anything: `discardTools { "all" }`
+    (inline, through the §11 filter), CERULEDGE's `discardEnergy { opponentEach,
+    specialEnergy, "all" }` (D361's arm, on a Trainer for the first time) and
+    `discardStadium` (any Stadium — yours too, the printed *"a Stadium in play"*).
+    Refused only when all three would find nothing (`sweepAlternativesAllWhiff`,
+    cardplay.ts — ruling/284's `or`). */
+const MEGATON_BLOWER: CardProgram = {
+  trainer: [
+    { op: "discardTools", count: "all" },
+    { op: "discardEnergy", from: "opponentEach", filter: { kind: "specialEnergy" }, count: "all" },
+    { op: "discardStadium" },
+  ],
+};
+
+/** 🆕🆕🆕 **D557 — Brilliant Blender `sv08-164` (Item, ACE SPEC, 1 legal)** — *"Search
+    your deck for up to 5 cards and discard them. Then, shuffle your deck."*
+
+    The unfiltered `anyCard` search with the new `dest: "discard"`: up to 5, declinable
+    (`min: 0`), the picks to the controller's own discard pile (named in the log — the
+    pile is public), then the printed shuffle on every path. */
+const BRILLIANT_BLENDER: CardProgram = {
+  trainer: [
+    { op: "searchDeck", filter: { kind: "anyCard" }, dest: "discard", max: 5 },
+    { op: "shuffleDeck" },
+  ],
+};
+
+/** 🆕🆕🆕 **D557 — TM Machine `sv10-181` (Item, 1 legal)** — *"Search your deck for up
+    to 3 Pokémon Tool cards that have "Technical Machine" in their name, reveal them, and
+    put them into your hand. Then, shuffle your deck."*
+
+    The new `toolNameContaining { fragment: "Technical Machine" }` filter under a
+    revealing hand search, then the shuffle. ⚠️ **THE SEARCH IS FAITHFUL; MOST OF WHAT
+    IT FINDS IS UNBUILT** — few Technical Machine Tools carry a registry program, so a
+    found TM can be refused at `attachTool` (`TRAINER_NOT_SIMULATED`). That is the
+    Tools' debt, named, not this card's. */
+const TM_MACHINE: CardProgram = {
+  trainer: [
+    {
+      op: "searchDeck",
+      filter: { kind: "toolNameContaining", fragment: "Technical Machine" },
+      dest: "hand",
+      max: 3,
+      reveal: true,
+    },
+    { op: "shuffleDeck" },
+  ],
+};
+
+/** 🆕🆕🆕 **D557 — Dusk Ball `sv08-175` (Item, 1 legal)** — *"Look at the bottom 7 cards
+    of your deck. You may reveal a Pokémon you find there and put it into your hand.
+    Shuffle the other cards back into your deck."*
+
+    GREAT_BALL's program with the new `from: "bottom"`: the window is the LAST 7 cards,
+    the look is announced with its end, and the trailing `shuffleDeck` scrambles the
+    whole deck on every path (the leftovers never left it). */
+const DUSK_BALL: CardProgram = {
+  trainer: [
+    {
+      op: "lookAtTopN",
+      n: 7,
+      from: "bottom",
+      filter: { kind: "anyPokemon" },
+      max: 1,
+      reveal: true,
+    },
+    { op: "shuffleDeck" },
+  ],
+};
+
+/** 🆕🆕🆕 **D557 — Tool Scrapper `sv10.5w-085` (Item, 1 legal)** — *"Choose up to 2
+    Pokémon Tools attached to Pokémon (yours or your opponent's) and discard them."*
+
+    D543's `discardTools { count: 2 }` with the new `sides: "both"`: the offer walks
+    BOTH boards (yours first), a pick may span them, each Tool goes to its own owner's
+    discard pile, and your own Tools are never shielded (D259's owner rule). A board with
+    no Tool anywhere refuses the play (`programPlayable`'s new `discardTools` line). */
+const TOOL_SCRAPPER: CardProgram = {
+  trainer: [{ op: "discardTools", count: 2, sides: "both" }],
+};
+
 const REGISTRY: Record<string, CardProgram> = {
   // Professor's Research (SV base prints)
   "sv01-189": PROFESSORS_RESEARCH,
@@ -13656,6 +13897,27 @@ const REGISTRY: Record<string, CardProgram> = {
   "sv06-203": CARETAKER, // Caretaker (reprint)
   "svp-129": TOXIC_SUBJUGATION, // Pecharunt — Toxic Subjugation (Checkup, Active: +50 on the opponent's Poisoned Active)
   "svp-149": TOXIC_SUBJUGATION, // Pecharunt (reprint)
+  // ── 🆕🆕🆕 D557 — eleven Trainers, 19 printings / 11 texts / 11 objects, MID-MAP
+  //    (D395/D396). ──
+  "sv06-154": KIERAN, // Kieran — Choose 1: switch your Active, or +30 to ex / V this turn
+  "sv06-206": KIERAN, // Kieran (reprint)
+  "sv06-218": KIERAN, // Kieran (reprint)
+  "sv08.5-113": KIERAN, // Kieran (reprint)
+  "sv08.5-174": KIERAN, // Kieran (reprint)
+  "sv10-179": TEAM_ROCKETS_VENTURE_BOMB, // Team Rocket's Venture Bomb — coin: 2 counters on 1 of theirs / on your Active
+  "sv05-155": MORTYS_CONVICTION, // Morty's Conviction — discard 1: draw per opponent's Benched Pokémon
+  "sv05-201": MORTYS_CONVICTION, // Morty's Conviction (reprint)
+  "sv05-211": MORTYS_CONVICTION, // Morty's Conviction (reprint)
+  "sv06.5-064": XEROSICS_MACHINATIONS, // Xerosic's Machinations — opponent discards down to 3
+  "sv06.5-089": XEROSICS_MACHINATIONS, // Xerosic's Machinations (reprint)
+  "sv06-157": LUCIAN, // Lucian — both hands under the decks; each player flips: 6 or 3
+  "sv06-208": LUCIAN, // Lucian (reprint)
+  "sv10-161": ARVENS_SANDWICH, // Arven's Sandwich — heal 30, or 100 on an Arven's Active
+  "sv08-182": MEGATON_BLOWER, // Megaton Blower — all opponent Tools + Special Energy, and a Stadium
+  "sv08-164": BRILLIANT_BLENDER, // Brilliant Blender — up to 5 deck cards to the discard pile
+  "sv10-181": TM_MACHINE, // TM Machine — up to 3 "Technical Machine" Tools to hand
+  "sv08-175": DUSK_BALL, // Dusk Ball — a Pokémon from the bottom 7
+  "sv10.5w-085": TOOL_SCRAPPER, // Tool Scrapper — up to 2 Tools off either side
   // ── D190 — THE **STANDARD-LEGAL** REPRINT-ALIAS MAP (Tier 0 of
   //    `docs/reference/coverage-backlog-legal.md`). 22 printings, 9 map targets,
   //    ZERO new code: every row below prints a sentence that is already authored

@@ -958,7 +958,17 @@ export type GameEvent =
         // sentence that armed it) and the EFFECT_SCHEDULED row a turn back names
         // it. It is NOT `"attack"`, because that member's log row renders inside the
         // attack's own resolution and this one lands between turns, next to Poison.
-        | "delayed";
+        | "delayed"
+        // 🆕🆕🆕 D557 — counters an ITEM put on a body: Team Rocket's Venture Bomb
+        // `sv10-179`, heads (`damageChosen`, on 1 of the opponent's Pokémon) and tails
+        // (`damageSelf`, on the player's own Active). A PROVENANCE label like `"attack"`
+        // and `"delayed"`, and the no-bump reading is D434's for `"delayed"` (the member
+        // landed beside a `MATCH_RECORD_VERSION` bump that paid for the REQUIRED
+        // `InPlayPokemon.scheduledCounters` field, never for the member) together with
+        // this block's own rule above: a member is a WIDENING of the enum, and events are
+        // rendered into `record.log` rows rather than persisted (DECK_TOP_REVEALED's
+        // note). `seat` owns the damaged body, as for every member.
+        | "trainer";
     }
   /** A §13 Checkup recovery flip for `seat`'s Active: burn's cure flip
       (§13.2) or asleep's wake flip (§13.3). Heads is followed by the
@@ -1361,7 +1371,9 @@ export type GameEvent =
   | {
       type: "DECK_SEARCHED";
       seat: Seat;
-      dest: "bench" | "hand" | "deckTop";
+      // 🆕🆕🆕 D557 — `"discard"` (Brilliant Blender): the cards went to the searcher's
+      // own discard pile, public, so the log names them. Not persisted — no bump.
+      dest: "bench" | "hand" | "deckTop" | "discard";
       uids: string[];
       reveal?: true;
     }
@@ -1449,6 +1461,9 @@ export type GameEvent =
       dest?: "bench" | "discard";
       uids: string[];
       reveal?: true;
+      /** 🆕🆕🆕 D557 — Dusk Ball: the window was the BOTTOM of the deck. ABSENT means
+          the top, mirroring `lookAtTopN.from` (D135). Not persisted — no bump. */
+      from?: "bottom";
     }
   /** `uids` went from the top of `seat`'s DECK to `seat`'s DISCARD PILE, in deck
       order, top first — which is the order the pile gained them (§2). That is the

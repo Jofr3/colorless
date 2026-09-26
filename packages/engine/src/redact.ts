@@ -264,7 +264,16 @@ function redactPrompt(state: GameState, prompt: EffectPrompt): RedactedEffectPro
       // carry, because the whole decision is the sentence. Nothing is resolved
       // out of a private zone and nothing aliases the input — the two-field
       // object below is fresh, like every branch here.
-      return { kind: "confirm", note: prompt.note };
+      // 🆕🆕🆕 D557 — Kieran's two button captions, copied FRESH (not aliased) and
+      // spread only when present (D135): an unlabeled park redacts to the byte-
+      // identical two-field object it always did. Public — they paraphrase the print.
+      return {
+        kind: "confirm",
+        note: prompt.note,
+        ...(prompt.labels === undefined
+          ? {}
+          : { labels: { yes: prompt.labels.yes, no: prompt.labels.no } }),
+      };
     case "orderCards":
       // 🆕 D341 — THE ORDERED WINDOW, RESOLVED TO THE ANSWERER ALONE. Identical in
       // shape to `chooseCards`'s candidate resolution and load-bearing in a way it

@@ -20114,6 +20114,50 @@ import type { GameState, Seat } from "./types";
     `expect(manifest.version)`, `it(…)` titles, the declaration and `package.json` —
     **not** as a value-keyed grep — because a value-keyed grep is precisely the mechanism
     that ate D500's heading.)
+    🆕🆕🆕 engineVersion 0.440.0 → **0.441.0** (D557 — ELEVEN TRAINERS, 19 PRINTINGS / 11 TEXTS / 11
+    OBJECTS: KIERAN'S PRINTED "Choose 1:" AS A LABELLED CONFIRM, VENTURE BOMB'S ITEM COUNTER SOURCE,
+    AND ONE RIDER EACH FOR NINE MORE. Eleven registry `CardProgram`s keyed on nineteen REAL ids inserted
+    MID-MAP after `svp-149` (D395/D396, so `raw[last]` stays `sv09-107`). **A — Kieran**
+    `sv06-154`/`-206`/`-218`, `sv08.5-113`/`-174`: `optional { note, labels: { yes, no }, then:
+    [switchActive], otherwise: [boostSideAttacksThisTurn 30, anyOf[suffixPokemon ex, suffixPokemon V]] }`
+    — ONE new optional key, `labels`, on the op, the `confirm` EffectPrompt and its park, redact.ts, the
+    redacted zod arm (it must be DECLARED there, optional: `z.object` strips unknown keys), `projection.ts` and both HUDs
+    (a labelled dialog is named "Choose 1" and its buttons read the labels, yes first), every site a
+    conditional spread so an unlabeled park is byte-identical (D135); **Team Rocket's Venture Bomb**
+    `sv10-179`: `coinFlipGate { then: [damageChosen opponentAny 20 count 1 source "trainer"], otherwise:
+    [damageSelf 20 source "trainer"] }` — ONE new member `"trainer"` on `damageChosen.source` and
+    `COUNTERS_PLACED.source` (a log arm, *"Trainer: 20 damage to …"*), ONE optional `damageSelf.source`,
+    and the Item channel FILTERS the snipe offer by §11 (`unshieldedRefs`, D259). **B** — Morty's
+    Conviction `sv05-155`/`-201`/`-211` (`payFromHand 1` → `drawCards { count 1, per: {kind:
+    "opponentBenchCount"} }`, DamageCountSource's noun by `Extract`), Xerosic's Machinations
+    `sv06.5-064`/`-089` (a second `opponentDiscardsFromHand` arm, `untilHandSize: 3`, the OWNER
+    decides, a hand of 3 or fewer never parks), Lucian `sv06-157`/`-208` (`HandRefreshDraw.coinFlip
+    { heads 6, tails 3 }` — one flip per seat, controller first, R-L1 UNRULED; `handRefreshDrawCount`
+    now returns the state beside the count), Arven's Sandwich `sv10-161` (`BoardCondition.yourActiveOwner
+    { owner: "Arven" }`, `conditionGate` then 100 / otherwise 30 — a REPLACEMENT). **C** — Megaton Blower
+    `sv08-182` (`discardTools.count: "all"`, inline, + CERULEDGE's `discardEnergy opponentEach
+    specialEnergy "all"` + `discardStadium`; refused only when all three whiff — cardplay.ts's new
+    `sweepAlternativesAllWhiff`), Brilliant Blender `sv08-164` (`searchDeck.dest: "discard"`, the log
+    names the picks), TM Machine `sv10-181` (`CardFilter.toolNameContaining`), Dusk Ball `sv08-175`
+    (`lookAtTopN.from: "bottom"`, the window read by ONE helper `lookWindow`, the look announced with
+    its end) and Tool Scrapper `sv10.5w-085` (`discardTools.sides: "both"`; `discardableTools` and
+    `toolDiscardApply` stop hard-coding `otherSeat`, each TOOLS_DISCARDED row names its own victim;
+    own Tools are never shielded; a board with no Tool is refused). **`MATCH_RECORD_VERSION` STAYS 35**:
+    every addition is an optional key or a union member (D125/D344), and a parked Kieran with its labels
+    STRIPPED still resolves yes = switch / no = +30 (driven). Withdrawn and annotated in place (D539):
+    `optionalDamageBoost.test.ts` §7's "`optional.otherwise` has EXACTLY ONE producer … not the
+    registry" (the rung INVERTED to Kieran's five ids; also effects.ts, `programWalk.test.ts`,
+    `testFixtures.ts`), effects.ts's and `censusAtHead.test.ts`'s Venture Bomb "none of the seven damage
+    ops takes a pick" (this index's dated copies are history and untouched), `precociousEvolution`'s
+    `searchDeck.dest` inhabitants, `discardableTools`' "NO SEAT PARAMETER", and interpreter.ts
+    `effectRefusedOn`'s "UNREACHABLE TODAY" own-seat guard — `D259-trainer-channel-ignores-owner` is
+    RETIRED from the declared survivors (53 → 52) and killed by Tool Scrapper's own-side rung.
+    `ownerPrefix.test.ts`'s Arven's Sandwich DROPPED row REMOVED (2 → 1). New suites
+    `chooseOneTrainersD557.test.ts` (32) and `riderTrainersD557.test.ts` (46) on LOCAL `cardPool`s with
+    the REAL ids (D275), plus labelled-confirm rungs in both HUD confirm suites, a projection rung and an
+    own-side Tool Scrapper rung in `GameHud.toolDiscard.dom.test.tsx`. Census: `BUILT.trainer` 154 → 173
+    (Item 38 → 45, Supporter 102 → 114), registry keys 779 → 798. Mutants 3,254 → 3,278, all twenty-four
+    `D557-*` KILLED.)
     🆕🆕🆕 engineVersion 0.439.0 → **0.440.0** (D556 — THE THIS-TURN SIDE-WIDE PRE-W/R BONUS, THREE
     CONDITIONAL TRAINERS ON THREE NEW `BoardCondition` MEMBERS, AND THREE ZERO-VOCABULARY RIDERS, 19
     PRINTINGS / 7 TEXTS / 7 OBJECTS. Seven registry `CardProgram`s keyed on nineteen REAL ids inserted
@@ -24202,7 +24246,7 @@ import type { GameState, Seat } from "./types";
     WITNESS** — the count was re-derived every slice and the word *"three"* was carried.
     A successor of this slice inherits **81 / 61 / 17** again, over **FIVE** history
     occurrences: those four plus `deckMillFilteredScale.test.ts`'s own header arrow.) */
-export const engineVersion = "0.440.0";
+export const engineVersion = "0.441.0";
 
 export type {
   ApplyResult,

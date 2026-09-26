@@ -844,7 +844,13 @@ describe("D306 §3 — the blocker, DRIVEN: placeEvolution's two tails are phase
     // same class of miss as `raw[raw.length - 1]`'s insertion order, one file over.
     // **A NEW UNION MEMBER IS A CENSUS EVENT, NOT ONLY A TYPE CHANGE**: grep for
     // the auditors that ENUMERATE a union, not only for the ones that COUNT rows.
-    expect([...dests].sort()).toEqual(["bench", "deckTop", "hand"]);
+    // 🆕🆕🆕 D557 — **`"discard"` IS THE FOURTH**, Brilliant Blender `sv08-164`'s *"Search
+    // your deck for up to 5 cards and discard them."* — a ZONE again, the controller's own
+    // discard pile, so the refusal this rung guards (a BODY destination is its own op,
+    // `evolveFromDeck`) is untouched. D342's lesson paid forward: this rung was on D557's
+    // predicted red list BECAUSE it enumerates the union's inhabitants. (The it() title's
+    // "bench|hand" has been stale since D342's `deckTop` and is kept as dated.)
+    expect([...dests].sort()).toEqual(["bench", "deckTop", "discard", "hand"]);
   });
 });
 

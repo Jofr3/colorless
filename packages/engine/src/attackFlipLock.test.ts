@@ -685,8 +685,8 @@ describe("§12 — the v31 bytes round-trip, and a v30-shaped body is why the ve
     expect(matchTs).toContain("export const MATCH_RECORD_VERSION = 35;");
   });
 
-  it("the engine version stepped to 0.440.0 in BOTH places", () => {
-    expect(engineVersion).toBe("0.440.0");
-    expect(manifest.version).toBe("0.440.0");
+  it("the engine version stepped to 0.441.0 in BOTH places", () => {
+    expect(engineVersion).toBe("0.441.0");
+    expect(manifest.version).toBe("0.441.0");
   });
 });

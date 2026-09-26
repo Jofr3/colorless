@@ -605,6 +605,21 @@ export type CardFilter =
       match every Supporter, and the producer cannot emit one — `PILE_SUPPORTER_NAME_FRAGMENT`
       spells `([^"]+)`, which requires at least one byte between the printed quotes. */
   | { kind: "supporterNameContaining"; fragment: string }
+  /** 🆕🆕🆕 **D557 — A POKÉMON TOOL CARD WHOSE PRINTED NAME CONTAINS `fragment`.** TM
+      Machine `sv10-181` (Item, 1 legal) — *"Search your deck for up to 3 Pokémon Tool
+      cards that have "Technical Machine" in their name, reveal them, and put them into
+      your hand. Then, shuffle your deck."* `supporterNameContaining`'s two conjuncts
+      with the head noun swapped: the HEAD NOUN delegated to the `toolCard` arm through
+      `matchesFilter` itself (D159 — *"is this a Tool"* has one implementation), and
+      `.includes` UNANCHORED, case-sensitive and un-normalised (the catalog `name` IS the
+      printed name; the Technical Machines print the fragment at the START, and an
+      anchored read would still be the wrong reading of *"in their name"*). The caption
+      keeps the printed quotation marks (the D510 note: without them the phrase reads as
+      a whole card name). ⚠️ **THE FOUND CARDS ARE MOSTLY UNBUILT** — most Technical
+      Machine Tools have no registry program, so the search is FAITHFUL (it finds and
+      reveals exactly the printed class) while attaching one may still refuse with
+      `TRAINER_NOT_SIMULATED`. That is the Tools' debt, not this filter's. */
+  | { kind: "toolNameContaining"; fragment: string }
   /** An ITEM Trainer card — the catalog's `trainerType: "Item"`, read exactly as
       `supporter` and `toolCard` read theirs one field over (D231).
 
@@ -851,7 +866,24 @@ export type HandRefreshDraw =
   | { kind: "handPlus"; delta: number }
   | { kind: "prizeCount" }
   | { kind: "perSeat"; you: number; opponent: number }
-  | { kind: "opponentHandSize" };
+  | { kind: "opponentHandSize" }
+  /** 🆕🆕🆕 **D557 — EACH AFFECTED PLAYER FLIPS THEIR OWN COIN: `heads` cards on heads,
+      `tails` on tails.** Lucian `sv06-157`/`-208` (Supporter, 2 legal) — *"Each player
+      shuffles their hand and puts it on the bottom of their deck. If either player put
+      any cards on the bottom of their deck in this way, each player flips a coin. If
+      heads, that player draws 6 cards. If tails, they draw 3 cards."* — `who: "both"`,
+      `toBottom`, `onlyIfAnyMoved` (the printed *"If either player put any cards…"*),
+      and this draw. The SECOND member (after `perSeat`) that is not one answer for
+      every seat, and the FIRST that spends `rngState`: `handRefreshDrawCount` takes one
+      flip PER SEAT, files one `ATTACK_EFFECT_COIN_FLIP` under the FLIPPING seat (D550's
+      rule for a coin the other player flips), and the flips are taken in the op's seat
+      order — the controller first (D557 R-L1, UNRULED: the print says only "each
+      player", and D490/D491's controller-first order is the house's for a per-seat
+      row). Nobody moved a card → no flips and no draws (the `onlyIfAnyMoved` return
+      runs first). Lucian's refusal at `coinFlipGate.otherwise`'s census (*"flips PER
+      SEAT inside one sentence"*) was a true statement of the missing piece, and this
+      member PAYS it — annotated there, 2026-09-26. */
+  | { kind: "coinFlip"; heads: number; tails: number };
 
 /** §6.1's full type wheel, exactly as the CATALOG spells it in `Card.types` —
     the nine Basic-Energy types plus the two that have no Basic Energy of their
@@ -3329,6 +3361,20 @@ export type BoardCondition =
       player always has an Active, so the guard is for totality, not for a legal board.
       Public: every in-play Pokémon is face up. */
   | { kind: "yourPokemonAllOwner"; owner: string }
+  /** 🆕🆕🆕 **D557 — YOUR ACTIVE Pokémon is an `owner`'s Pokémon.** Arven's Sandwich
+      `sv10-161` (Item, 1 legal) — *"Heal 30 damage from your Active Pokémon. If that
+      Pokémon is an Arven's Pokémon, heal 100 damage from it instead."* — authored as
+      `conditionGate { then: [heal 100], otherwise: [heal 30] }`: the printed *"instead"*
+      is a REPLACEMENT, so an Arven's Active heals 100 and never 30 + 70 (the two are
+      observably different under a heal clamp — `ownerPrefix.test.ts`'s retired DROPPED
+      row said so, and the suite drives it).
+
+      `yourPokemonAllOwner`'s reading narrowed to ONE body: the Active's TOP card,
+      through `matchesFilter`'s `ownerPokemon` arm, so the prefix rule ("Arven's " at the
+      start of the printed name) lives in one place (D556 R4, D159). `owner` is stored
+      WITHOUT the possessive, the `ownerPokemon` convention. FALSE with an empty Active
+      Spot. Public: the Active is face up. */
+  | { kind: "yourActiveOwner"; owner: string }
   /** §8.1 — ANY of YOUR Pokémon were Knocked Out during your opponent's LAST
       turn: Unfair Stamp `sv06-165` (Item) and Hassel `sv06-151`/`-205`
       (Supporter), both opening *"You can use this card only if any of your
@@ -5608,7 +5654,22 @@ export type EffectOp =
       only producer of this rider returns a program of LENGTH ONE, so the op can
       never sit in `phase.cont.rest` behind an earlier park — D461's REACHABILITY
       shape, not D462/D463's alphabet shape. `MATCH_RECORD_VERSION` stays 29. */
-  | { op: "damageSelf"; amount: number; perDamageCounterOnSelf?: true }
+  | {
+      op: "damageSelf";
+      amount: number;
+      perDamageCounterOnSelf?: true;
+      /** 🆕🆕🆕 **D557 — WHO PUT THE COUNTERS ON YOUR OWN ACTIVE.** Absent is the
+          shipped reading, `"self"` — an attack's own recoil, whose log row reads
+          *"X did N damage to itself"*. Team Rocket's Venture Bomb's TAILS arm (*"put
+          2 damage counters on your Active Pokémon"*) is the same placement made by an
+          ITEM, and the recoil row would credit the Active with hitting itself: so
+          the provenance rides the op as an OPTIONAL key (D135 — every shipped
+          producer omits it and is byte-identical) and lands on `COUNTERS_PLACED` as
+          `"trainer"`. Placement, not damage: no Weakness, no shield (your own card
+          on your own body — D259's owner rule), and a lethal total is swept by
+          `resolveMidTurnKnockOuts` with the Prize going to the OPPONENT. */
+      source?: "trainer";
+    }
   /** Put `amount` HP of damage counters on `count` CHOSEN Benched Pokémon of
       the opponent (Hawlucha "Flying Entry" — 2 × 1 counter; Meowscarada ex
       "Bouquet Magic" — 1 × 3 counters; Ting-Lu ex sv02-127 "Land Scoop" — 1 × 2
@@ -5782,8 +5843,21 @@ export type EffectOp =
           row may honestly print (see the block above). `"ability"` for the three
           registry rows (Hawlucha, Meowscarada ex, Radiant Blastoise), `"attack"`
           for every derived arm. Read only on the placement path; on the `deals`
-          arm it is unread and still true. */
-      source: "ability" | "attack";
+          arm it is unread and still true.
+
+          🆕🆕🆕 **D557 — `"trainer"`, THE FIRST ITEM THAT PUTS COUNTERS ON A CHOSEN
+          BODY.** Team Rocket's Venture Bomb `sv10-179` (Item, 1 legal) — *"Flip a
+          coin. If heads, put 2 damage counters on 1 of your opponent's Pokémon. If
+          tails, put 2 damage counters on your Active Pokémon."* Its heads arm is this
+          op at `{ opponentAny, 20, count 1 }`, and neither shipped label is true of
+          its row: `"ability"` would print *"Ability:"* and `"attack"` *"Put:"* under
+          an ATTACK_DECLARED that never happened. A UNION WIDENING (D125, D140's rule
+          for this very field): no producer before this one moves, and a v35 record
+          simply never carries it, so `MATCH_RECORD_VERSION` holds. On the TRAINER
+          channel the offer is FILTERED by the §11 shield (`unshieldedRefs`, D259's
+          filter-not-refuse rule, `discardTools`' precedent), so a Fraxure-shielded
+          body is never offered and never takes the counters. */
+      source: "ability" | "attack" | "trainer";
       /** The printed "you may" of an auto-fired trigger: taking NONE is a legal
           answer, but a partial pick still is not (Hawlucha). */
       optional?: true;
@@ -6339,7 +6413,9 @@ export type EffectOp =
       columns) FALL 3 / 6 ACROSS THIS FIELD. This field ALONE lands Picnicker
       `svp-114` and Drasna `sv08-173`/`-231`. The other 6 each want a SECOND
       piece and are refused here: Lucian `sv06-157`/`-208` flips PER SEAT inside
-      one sentence; Harlequin `sv10.5w-083`/`-163` needs a per-seat DRAW on
+      one sentence (🆕🆕🆕 2026-09-26 D557: PAID — `HandRefreshDraw.coinFlip`, one flip per
+      seat inside `handRefresh`, `LUCIAN`; the refusal was of THIS field, which still
+      does not carry it); Harlequin `sv10.5w-083`/`-163` needs a per-seat DRAW on
       `handRefresh` (🆕 **BUILT AT D270 — `HandRefreshDraw.perSeat`, so the residue
       on this field's census is now 5 on 3 rather than 6 on 4, and this gate is what
       unblocked it: the two draw pairs are its two arms**); Team Rocket's Great Ball
@@ -6350,7 +6426,12 @@ export type EffectOp =
       zero vocabulary, `TEAM_ROCKETS_GREAT_BALL`); and Team Rocket's Venture Bomb
       `sv10-179` needs a damage-counter op aimed at *"1 of your opponent's
       Pokémon"*, which the seven damage ops in this union do not include
-      (`damageActive` names the Active, not a CHOSEN body). */
+      (`damageActive` names the Active, not a CHOSEN body). (🆕🆕🆕 2026-09-26 D557
+      CORRECTION (D539): ~~"which the seven damage ops in this union do not include"~~ is
+      WITHDRAWN — `damageChosen { target: "opponentAny" }` IS that op and shipped long
+      before this note (Fezandipiti ex, D143's Ninetales placement arm); what the card
+      lacked was a TRUE provenance, `source: "trainer"`, plus `damageSelf.source` for its
+      tails face. D557 built it on THIS field's two arms, `TEAM_ROCKETS_VENTURE_BOMB`.) */
   /** 🆕 D355 — `coins` IS HOW MANY COINS THE SENTENCE PRINTS, and the branch runs
       when they come up UNANIMOUS on the winning face. *"**Flip 2 coins. If both
       of them are heads,** search your deck for a Basic Energy card and attach it
@@ -6538,8 +6619,38 @@ export type EffectOp =
       leave only the SECOND seat's uids in the slot and a downstream *"for each card
       drawn in this way"* would score half the sentence. Nothing prints that
       combination today; the accumulate-then-assign shape is chosen so that the day
-      one does, the slot is right rather than plausibly wrong. */
-  | { op: "drawCards"; count: number; recordAs?: EffectSlot; from?: "bottom"; who?: "eachPlayer" }
+      one does, the slot is right rather than plausibly wrong.
+
+      🆕🆕🆕 **D557 — `per`, THE PRINTED *"Draw a card for each of your opponent's
+      Benched Pokémon."*** Morty's Conviction `sv05-155`/`-201`/`-211` (Supporter, 3
+      legal). `count` stays the printed RATE (1) and `per` names what it is multiplied
+      by, so the drawn number is `count × <the noun>` read AT RESOLVE (the Bench after
+      the hand cost is paid, and an empty opponent Bench draws 0 with no row —
+      `drawToHand`'s `count <= 0` return). The noun is `DamageCountSource`'s OWN member
+      `{ kind: "opponentBenchCount" }`, reused by `Extract` rather than re-spelled
+      (D159: one printed noun, one name) — but NOT the whole union: this op's evaluator
+      is one line in `stepOp` and cannot answer the attack-declaration members
+      (`HandRefreshDraw`'s D516 argument, which is why the rider admits exactly the one
+      member a Trainer prints). OPTIONAL (D135): every shipped producer omits it and
+      draws the byte-identical `count`. `drawCards` never parks ITSELF, but it RIDES a
+      parked op's `rest`: Morty's own `payFromHand 1` parks whenever the hand holds two
+      or more non-interchangeable cost candidates, and the stored continuation is
+      `{ pendingOp: payFromHand, rest: [drawCards { count: 1, per }] }` — so `per` DOES
+      reach `phase.cont.rest` and is persisted. `MATCH_RECORD_VERSION` still holds: it is
+      an optional key (D125), every earlier state omits it and draws `count`, and the
+      parked-then-resumed round trip through JSON is DRIVEN (riderTrainersD557.test.ts
+      §2). (First written as *"`drawCards` never parks, so the key never reaches
+      `phase.cont` either"* — WITHDRAWN at review, D539: the op's own site is right, the
+      program it rides in is not; deckBottomDraw.test.ts and eachPlayerDraw.test.ts
+      already said so.) */
+  | {
+      op: "drawCards";
+      count: number;
+      recordAs?: EffectSlot;
+      from?: "bottom";
+      who?: "eachPlayer";
+      per?: Extract<DamageCountSource, { kind: "opponentBenchCount" }>;
+    }
   /** "Draw cards until you have `size` cards in your hand" (Grusha) — draw
       `size − hand.length`, i.e. nothing at all when the hand already holds
       `size` or more (a bigger hand is never trimmed). Fully automatic like
@@ -6652,8 +6763,18 @@ export type EffectOp =
           construction. Nothing has to be carried across the park, so this row
           needs no `continuationOps` member and no new prompt.
 
-          🛑 **AND IT IS WHY `exact` BELOW IS A CORRECTNESS FIELD.** See there. */
-      dest: "bench" | "hand" | "deckTop";
+          🛑 **AND IT IS WHY `exact` BELOW IS A CORRECTNESS FIELD.** See there.
+
+          🆕🆕🆕 **D557 — `"discard"`, Brilliant Blender `sv08-164` (Item, ACE SPEC, 1
+          legal): *"Search your deck for up to 5 cards and discard them. Then, shuffle
+          your deck."*** The picked cards go to the controller's OWN discard pile — a
+          PUBLIC zone, so `DECK_SEARCHED` names them (the log's `reveal`-free branch
+          would otherwise hide cards everyone can see a moment later). The chooseCards
+          prompt's `dest` already spells `"discard"` (lookAtTopN's D241 value), so no
+          wire or HUD shape moves; the caption is the print (*"…and discard them."*).
+          A UNION WIDENING (D125): no shipped producer moves and `MATCH_RECORD_VERSION`
+          holds. ~~Brilliant Blender "needs vocabulary"~~ (D556 (7)(iii)) — PAID here. */
+      dest: "bench" | "hand" | "deckTop" | "discard";
       /** 🆕🆕🆕 **D514 — `"any"` IS THE PRINTED *"any number of"*, AND IT IS
           `lookAtTopN.max`'s MEMBER (D333) AT A THIRD OP RATHER THAN A NEW IDEA.**
           *"You may search your deck for **any number of** Fennel cards, reveal them,
@@ -9252,6 +9373,20 @@ export type EffectOp =
           rule transferred rather than re-invented, and the reason the empty branch
           of the park is routed through the one apply instead of returning early. */
       restTo?: "discard" | "bottom" | "shuffledBottom";
+      /** 🆕🆕🆕 **D557 — WHICH END OF THE DECK IS LOOKED AT.** Dusk Ball `sv08-175`
+          (Item, 1 legal) — *"Look at the **bottom** 7 cards of your deck. You may
+          reveal a Pokémon you find there and put it into your hand. Shuffle the other
+          cards back into your deck."* — Great Ball's program byte for byte with the
+          window taken off the other end. `reorderTop.from`'s D343 spelling and rule:
+          absent is the TOP (`slice(0, n)`, unchanged), `"bottom"` is the LAST `n` in
+          deck order (index 0 of the window still the card nearest the top), read by the
+          park AND by the apply's leftovers through the same arithmetic. The look is
+          announced with the end it took (`DECK_TOP_REVEALED.from`), because *"looked at
+          the top of their deck"* would be a false row. OPTIONAL (D135) — every shipped
+          producer is byte-identical — and a WIDENING of a persisted op (D125): a v35
+          record cannot hold it, so `MATCH_RECORD_VERSION` holds. ~~Dusk Ball "needs
+          vocabulary"~~ (D556 (7)(iii)) — PAID. */
+      from?: "bottom";
     }
   /** 🆕🆕 **D341 — LOOK AT THE TOP `n` AND PUT THEM BACK **IN ANY ORDER**.** The
       first op in this engine whose whole content is an ORDER: no card changes
@@ -10273,8 +10408,33 @@ export type EffectOp =
 
       Never damages, so it never KOs. The discarded Tools go to their OWNER's
       discard pile (§7.4), never the attacker's — the same seat split
-      `TOOLS_DISCARDED` carries. */
-  | { op: "discardTools"; count: number }
+      `TOOLS_DISCARDED` carries.
+
+      🆕🆕🆕 **D557 — TWO TRAINERS WIDEN IT, AND THE `from` REFUSAL ABOVE IS ANSWERED BY
+      THE FALSIFIER IT NAMED.** *"The condition that reverses this refusal: a second
+      printed Tool-discard sentence naming a DIFFERENT zone"* — and two arrived:
+
+        · **`count: "all"` — Megaton Blower `sv08-182` (Item, ACE SPEC, 1 legal)**,
+          *"Discard all Pokémon Tools and Special Energy from all of your opponent's
+          Pokémon, and discard a Stadium in play."* The printed *"all"* opens no
+          choice: every offered Tool comes off INLINE (no park, no prompt), through
+          the same `unshieldedRefs` filter, so a shielded body keeps its Tool and files
+          one refusal. `discardEnergy.count`'s D361 word, and the same *"a widening is
+          free"* argument: a number keeps its `upTo` park byte for byte.
+        · **`sides: "both"` — Tool Scrapper `sv10.5w-085` (Item, 1 legal)**, *"Choose
+          up to 2 Pokémon Tools attached to Pokémon (yours or your opponent's) and
+          discard them."* The offer walks BOTH boards, the controller's first, each
+          Tool paired with its own seat's body, and each victim's Tools go to THAT
+          player's discard pile (`TOOLS_DISCARDED.seat` per host). 🛑 **YOUR OWN TOOLS
+          ARE NEVER SHIELDED**: `effectRefusedOn`'s trainer channel returns `false` for
+          `seat === ctx.seat` (D259's owner rule — the printed shields say *"your
+          opponent"*), which is the first board that reaches that line. ABSENT means
+          the opponent's side alone, byte for byte the D543 op.
+
+      Both keys are OPTIONAL or WIDENINGS (D125): every shipped producer is
+      byte-identical and a v35 record cannot hold either, so `MATCH_RECORD_VERSION`
+      holds. */
+  | { op: "discardTools"; count: number | "all"; sides?: "both" }
   /** 🆕🆕🆕 **D548 — TURN 1 OF THE ACTOR'S OWN FACE-DOWN PRIZE CARDS FACE UP.** Cresselia
       `sv06.5-021` "Crescent Purge" (`censusAttackCorpus.ts:664`, **2 legal printings**),
       the COST half of *"You may turn 1 of your face-down Prize cards face up. If you do,
@@ -11601,6 +11761,32 @@ export type EffectOp =
           arm that emits it also emits the `shuffleDeck` that the sentence prints
           right after, because one op means one thing that happened. */
       to?: "deck";
+      /** 🆕🆕🆕 D557 — unrepresentable on this arm: the printed COUNT and the printed
+          HAND SIZE are two different sentences (see the arm below). */
+      untilHandSize?: never;
+    }
+  /** 🆕🆕🆕 **D557 — THE SAME OP WITH THE COUNT READ OFF THE HAND: *"Your opponent
+      discards cards from their hand until they have 3 cards in their hand."*** Xerosic's
+      Machinations `sv06.5-064`/`-089` (Supporter, 2 legal). A SECOND ARM rather than a
+      rider beside `count`, for `payFromHand`'s two-arm reason: the printed sentence has
+      no count, and a `count` beside `untilHandSize` would be a field with no printed
+      value that a reader must know to ignore (D231). `count?: never` / `to?: never` make
+      the mixtures unrepresentable.
+
+      The take is `max(0, hand − untilHandSize)`, read at resolve, and everything
+      downstream is the arm above's: the OWNER is the decider (`decider: owner`, D426 —
+      the printed *"Your opponent discards"* is theirs to choose), the whole hand is the
+      offer, the cards go to THEIR discard pile. 🛑 **A HAND OF `untilHandSize` OR FEWER
+      TAKES ZERO AND IS A SILENT NO-OP — NO PARK**, the arm above's `take === 0` line;
+      and a hand bigger than that always PARKS (the forced short-hand arm needs `hand <=
+      take`, which `hand − 3 < hand` never meets). The caption is in the ANSWERER's
+      voice (`opponentDiscardNote`). Absent the key nothing moves: this arm is new, and
+      a v35 record cannot hold it (D125). */
+  | {
+      op: "opponentDiscardsFromHand";
+      untilHandSize: number;
+      count?: never;
+      to?: never;
     }
   /** 🆕🆕 **D485 — THE MANDATORY FILTERED SWEEP OF THE OPPONENT'S HAND, AND
       IT IS THE FAMILY'S FIRST CROSS-SEAT HAND MOVE WITH NO DECISION IN IT AT ALL.**
@@ -11835,7 +12021,11 @@ export type EffectOp =
       that spliced nothing would deal ZERO where the card prints its base — the
       first sentence in the pool for which "nothing runs" is not a legal reading
       of the printed no. Every earlier producer's decline is still the absence of
-      a splice, and still correct: `then` alone remains the shape.
+      a splice, and still correct: `then` alone remains the shape. (🆕🆕🆕 D557 NOTE
+      (D539): that attack-assembled producer was the ONLY `otherwise` producer, and never
+      the registry, through D556 — `optionalDamageBoost.test.ts` §7 pinned it so. The
+      claim is WITHDRAWN: Kieran ×5 is a REGISTRY producer whose two answers are two
+      printed bullets, see `labels` below; the rung now pins that set by id.)
 
       ⚠️ **NO PRODUCER AT D186, BY DESIGN — AND TWO SINCE D202.** The mechanism and
       both dialogs landed first and alone, because a park of a prompt kind one
@@ -11844,8 +12034,35 @@ export type EffectOp =
       anchors 33–34 read "You may draw (N) cards." and "You may draw cards until
       you have (N) cards in your hand." — 12 legal printings — and wrap the two
       draw ops the bare anchors above them already produce. `optionalConfirm.test.ts`'s
-      pinned absences were RE-POINTED to name those readers, not deleted. */
-  | { op: "optional"; note: string; then: EffectOp[]; otherwise?: EffectOp[] };
+      pinned absences were RE-POINTED to name those readers, not deleted.
+
+      🆕🆕🆕 **D557 — `labels`, THE PRINTED *"Choose 1:"*, AND THE FIRST PRODUCER WHOSE
+      TWO ANSWERS ARE BOTH PRINTED EFFECTS RATHER THAN AN EFFECT AND ITS ABSENCE.**
+      Kieran `sv06-154`/`-206`/`-218`, `sv08.5-113`/`-174` (Supporter, 5 legal) —
+      *"Choose 1: • Switch your Active Pokémon with 1 of your Benched Pokémon. • During
+      this turn, attacks used by your Pokémon do 30 more damage to your opponent's
+      Active Pokémon ex and Active Pokémon V (before applying Weakness and
+      Resistance)."* — is this gate with `then` the first bullet and `otherwise` the
+      second (D316's arm, which is exactly why no second op was needed). What it owed
+      was the DIALOG: a `confirm` reads *"You may"* over Yes / No, and neither word
+      names either bullet. `labels` are the two BUTTON captions — short paraphrases of
+      the two bullets, `yes` for `then` and `no` for `otherwise` — while `note` still
+      carries the whole print, so the heading is the card and the buttons are the
+      choice. OPTIONAL and spread only when present (D135), on the op, the engine
+      prompt, the redacted wire arm, the client projection and both HUDs under the SAME
+      key and spelling (D421), so every unlabeled park — every `optional` before this
+      one — is byte-identical. 🛑 **`MATCH_RECORD_VERSION` HOLDS AT 35**: an optional
+      key on a persisted op is a WIDENING (D125/D344), and the resolution reads
+      `then`/`otherwise`, never the labels — a parked Kieran with its labels stripped
+      still resolves yes = switch and no = +30 (`chooseOneTrainersD557.test.ts` drives
+      the stripped revival). docs/decisions.md D557. */
+  | {
+      op: "optional";
+      note: string;
+      then: EffectOp[];
+      otherwise?: EffectOp[];
+      labels?: { yes: string; no: string };
+    };
 
 type StatusWord = "Asleep" | "Burned" | "Confused" | "Paralyzed" | "Poisoned";
 

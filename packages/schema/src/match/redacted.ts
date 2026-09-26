@@ -495,8 +495,18 @@ export const redactedEffectPromptSchema = z.discriminatedUnion("kind", [
       the printed sentence and the answer is the whole content, so there is
       nothing for the server to resolve and nothing that could leak. A sibling of
       `mayDraw` rather than a widening of it — that arm's `count` is a printed
-      number its dialog renders, and this prompt has none. */
-  z.object({ kind: z.literal("confirm"), note: z.string() }),
+      number its dialog renders, and this prompt has none.
+
+      🆕🆕🆕 D557 — `labels`, the two BUTTON captions of a printed *"Choose 1:"*
+      (Kieran): `yes` names the spliced branch, `no` the `otherwise`. OPTIONAL, and it
+      MUST be declared here: `z.object` STRIPS unknown keys, so an undeclared field
+      would be dropped at the parse and the online dialog would silently fall back to
+      Yes / No over a two-bullet card. Absent on every unlabeled park. */
+  z.object({
+    kind: z.literal("confirm"),
+    note: z.string(),
+    labels: z.object({ yes: z.string(), no: z.string() }).optional(),
+  }),
   /** 🆕 D341 — PUT THE LOOKED-AT CARDS BACK IN ANY ORDER (Iron Valiant `sv05-080`
       "Calculation"; Team Rocket's Dottler `sv10-088` and Gothorita `sv10.5w-042`/
       `-125` "Fortunate Eye", which order the OPPONENT's deck). The ninth prompt

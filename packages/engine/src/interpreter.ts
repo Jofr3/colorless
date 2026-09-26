@@ -776,8 +776,14 @@ export type EffectPrompt =
       inhabitant does not.
 
       NO CANDIDATES — the decision IS the whole content, so `redactPrompt` has
-      nothing to resolve and the wire arm is `{kind, note}`. */
-  | { kind: "confirm"; note: string }
+      nothing to resolve and the wire arm is `{kind, note}`.
+
+      🆕🆕🆕 D557 — `labels`: the `optional` op's two button captions (Kieran's printed
+      *"Choose 1:"*), `yes` for the spliced `then` and `no` for `otherwise`. ABSENT on
+      every unlabeled park (D135), so the two-field arm above is still what every
+      shipped `optional` persists; the resolution never reads it (continuationOps reads
+      the pending op's arms), which is why a v35 record without it resolves the same. */
+  | { kind: "confirm"; note: string; labels?: { yes: string; no: string } }
   /** 🆕🆕 **D341 — THE FIRST PROMPT IN THIS ENGINE WHOSE ANSWER IS AN ORDER.**
       `candidates` are the looked-at cards in their CURRENT deck order, index 0 =
       the top; a legal answer is a PERMUTATION of exactly those uids, and the
@@ -1397,6 +1403,12 @@ function describeBranch(ops: readonly EffectOp[]): string | null {
         // would otherwise say "draw 3 cards" over a sentence that says where from.
         // That is D473's finding exactly: a reader can be correct while its
         // describer quietly says less, and only the describer is user-visible.
+        // 🆕🆕🆕 D557 — the `per` rider says its noun (Morty's Conviction's printed
+        // words), so a gated per-Bench draw is never captioned as a flat one.
+        if (op.per !== undefined) {
+          parts.push("draw a card for each of your opponent's Benched Pokémon");
+          break;
+        }
         parts.push(
           `${op.count === 1 ? "draw a card" : `draw ${op.count} cards`}${
             op.from === "bottom" ? " from the bottom of your deck" : ""
@@ -1544,6 +1556,14 @@ function describeBranch(ops: readonly EffectOp[]): string | null {
         // BOTH of the deck branch's arms are unreachable from print today, and both
         // are written for the same stated reason and driven from hand-built programs.
         // `D542-describe-branch-phrase-unwidened` is the declared row.
+        // 🆕🆕🆕 D557 — Xerosic's Machinations' arm, in the printed words minus the
+        // capital (no printing gates it today; written for this switch's stated reason).
+        if (op.untilHandSize !== undefined) {
+          parts.push(
+            `your opponent discards cards from their hand until they have ${op.untilHandSize} cards in their hand`,
+          );
+          break;
+        }
         if (op.to === "deck") {
           parts.push(
             op.count === 1
@@ -2098,7 +2118,9 @@ function stepOp(
       // scaling rider is visible at the dispatch. `recoilAmount` is
       // `snipeAmount`'s shape (`(op, state, ctx) => number`), which is the fold
       // this file has already chosen twice for a rider on an op's own amount.
-      return { done: damageSelf(state, recoilAmount(op, state, ctx), ctx, events) };
+      // 🆕🆕🆕 D557 — `op.source` (absent = the attack recoil's `"self"`) rides through,
+      // so Team Rocket's Venture Bomb's tails row reads as an Item's placement.
+      return { done: damageSelf(state, recoilAmount(op, state, ctx), ctx, events, op.source) };
     case "damageDefender": {
       // Chien-Pao ex "Hail Blade": `per` (60) HP per card an earlier op filed
       // under `count` — its own leading discardEnergy's `discarded` slot. This is
@@ -2200,7 +2222,16 @@ function stepOp(
       // `optional` keeps meaning what it means for a spelling nothing prints — see the
       // field's own block in `effects.ts` for why the lie in the op's NAME is cheaper
       // than renaming a persisted byte (D443).
-      const candidates = snipeTargets(state, ctx.seat, op);
+      // 🆕🆕🆕 D557 — ON THE TRAINER CHANNEL THE OFFER IS FILTERED BY THE §11 SHIELD
+      // (D259's filter-not-refuse rule; `discardTools`' and `discardEnergy`'s
+      // `unshieldedRefs` pass): Team Rocket's Venture Bomb's heads pick must not OFFER a
+      // body whose "prevent all effects of Item and Supporter cards your opponent plays"
+      // covers it, or a benched Fraxure would take the counters (the Bench leg of
+      // `placeSnipe` asks no shield). Asked only for an Item/Supporter invocation, so
+      // every Ability and attack producer takes the byte-identical unfiltered set.
+      const trainerInvoked = ctx.invokedBy === "item" || ctx.invokedBy === "supporter";
+      const offered = snipeTargets(state, ctx.seat, op);
+      const candidates = trainerInvoked ? unshieldedRefs(state, offered, ctx, events) : offered;
       if (candidates.length === 0) return { done: state };
       // Wo-Chien "Covetous Ivy" scales the amount by the opponent's TAKEN Prizes;
       // 0 taken → 0 damage, so there is nothing to place OR to ask about.
@@ -2306,15 +2337,21 @@ function stepOp(
       // (D458 measured the overwrite, D490 measured a damage number that turned on it).
       const drawn: string[] = [];
       let done = state;
+      // 🆕🆕🆕 D557 — Morty's Conviction's *"a card for each of your opponent's Benched
+      // Pokémon"*: the printed rate times the CONTROLLER's opponent's Bench, read HERE
+      // (after the hand cost the program paid first), so an empty Bench draws 0.
+      // Absent `per` is the printed `count`, byte for byte.
+      const count =
+        op.per === undefined ? op.count : op.count * state.players[otherSeat(ctx.seat)].bench.length;
       for (const drawSeat of drawSeats) {
         const deck = done.players[drawSeat].deck;
-        const wanted = Math.max(op.count, 0);
+        const wanted = Math.max(count, 0);
         drawn.push(
           ...(op.from === "bottom"
             ? deck.slice(Math.max(0, deck.length - wanted))
             : deck.slice(0, wanted)),
         );
-        done = drawToHand(done, drawSeat, op.count, "effect", events, op.from ?? "top");
+        done = drawToHand(done, drawSeat, count, "effect", events, op.from ?? "top");
       }
       recordMoved(record, op.recordAs, drawn);
       return { done };
@@ -2791,7 +2828,10 @@ function stepOp(
       // permits). The union is taken in DECK ORDER off `top` — one pass, so a uid
       // matching both filters appears once — and the per-group caps ride the
       // prompt, where the wire validator can see them.
-      const top = state.players[ctx.seat].deck.slice(0, Math.max(0, op.n));
+      // 🆕🆕🆕 D557 — `from: "bottom"` (Dusk Ball) takes the window off the other end,
+      // through the ONE helper the apply reads too (`lookWindow`), so the offer and the
+      // leftovers cannot disagree about which cards were looked at.
+      const top = lookWindow(state.players[ctx.seat].deck, op);
       const matches = (uid: string, filter: CardFilter) =>
         matchesFilter(cardOf(state, uid), filter);
       const also = op.also;
@@ -2866,7 +2906,7 @@ function stepOp(
                   { uids: groupMatches(also.filter), max: also.max },
                 ],
               }),
-          note: lookNote(op.filter, op.n, op.max, op.dest, also, op.exact === true),
+          note: lookNote(op.filter, op.n, op.max, op.dest, also, op.exact === true, op.from),
         },
       };
     }
@@ -3457,7 +3497,11 @@ function stepOp(
       // `D543-shield-asked-before-the-filter` (the ORDER inverts, so a shielded body
       // wearing no Tool gets a refusal row for an effect that was never aimed at it —
       // D430), and `toolDiscardChosen.test.ts` §9 is where both die.
-      const allDiscardable = discardableTools(state, ctx.seat);
+      // 🆕🆕🆕 D557 — `op.sides` picks the boards (Tool Scrapper's "yours or your
+      // opponent's"); absent is D543's opponent side alone. The shield pass below is
+      // unchanged and is what makes an OWN Tool always offerable: `effectRefusedOn`'s
+      // trainer channel answers `false` for the controller's own seat (D259).
+      const allDiscardable = discardableTools(state, ctx.seat, op.sides);
       const bodies: PokemonRef[] = [];
       for (const entry of allDiscardable) {
         if (!bodies.some((ref) => refKeyOf(ref) === refKeyOf(entry.from))) bodies.push(entry.from);
@@ -3469,6 +3513,19 @@ function stepOp(
       // `parkOrForce`'s ceiling rule (D359) and `HEALED`'s never-filed-at-0 convention.
       // Nothing is recorded either — this op has no `recordAs` (see its block).
       if (discardable.length === 0) return { done: state };
+      // 🆕🆕🆕 D557 — Megaton Blower's printed *"all"*: NO question, so no park — every
+      // unshielded Tool comes off here, through the ONE apply (one row per host, each
+      // Tool to its own owner's pile). The `upTo` park below is untouched for a number.
+      if (op.count === "all") {
+        return {
+          done: toolDiscardApply(
+            state,
+            discardable.map((entry) => entry.uid),
+            ctx,
+            events,
+          ).state,
+        };
+      }
       // ⚠️ **ANY NON-EMPTY OFFER *ASKS*, INCLUDING AN OFFER OF ONE**, which is the
       // one place this op parts company with the mandatory discards beside it. A
       // one-Tool board still has TWO answers a player can care about — take it,
@@ -3698,7 +3755,13 @@ function stepOp(
       //     `M < count` the printed count CANNOT be met and the card does what it
       //     can. Both are driven (`opponentHandDiscard.test.ts` §4), because a
       //     decision that is not pinned is indistinguishable from an oversight.
-      const take = Math.min(op.count, hand.length);
+      // 🆕🆕🆕 D557 — Xerosic's Machinations' *"until they have 3 cards in their hand"*:
+      // the take is the EXCESS over the printed size, read off the live hand, and a hand
+      // at or under it takes 0 (the silent no-op below — no park). The decider is still
+      // `owner` (the park's `decider` line), which is the printed "Your opponent discards".
+      const wanted =
+        op.untilHandSize === undefined ? op.count : Math.max(0, hand.length - op.untilHandSize);
+      const take = Math.min(wanted, hand.length);
       if (take === 0) return { done: state };
       if (hand.length <= take) {
         // 🆕🆕🆕 **D542 — THE SHORT-HAND ARM BRANCHES TOO, AND IT IS THE HALF A
@@ -3808,7 +3871,17 @@ function stepOp(
       // deriver arm or a registry row builds one, and neither can write an empty
       // branch by accident.) NO `decider`: the printed "you" is the controller,
       // unlike `opponentMayDraw` above.
-      return { park: { kind: "confirm", note: op.note } };
+      //
+      // 🆕🆕🆕 D557 — Kieran's printed *"Choose 1:"* rides the park as `labels` (the two
+      // button captions), spread ONLY when the op carries them (D135): every unlabeled
+      // `optional` parks the byte-identical `{ kind, note }` it always has.
+      return {
+        park: {
+          kind: "confirm",
+          note: op.note,
+          ...(op.labels === undefined ? {} : { labels: { yes: op.labels.yes, no: op.labels.no } }),
+        },
+      };
     case "handRefresh":
       // Put the affected player(s)' hand back into their deck — shuffled in
       // (Youngster / Judge / Brassius / Katy) or under it (Iono) — then draw.
@@ -5372,6 +5445,13 @@ export function conditionHolds(state: GameState, seat: Seat, cond: BoardConditio
       const inPlay = side.bench.length + (side.active === null ? 0 : 1);
       return inPlay > 0 && countOwnerPokemonInPlay(state, seat, cond.owner) === inPlay;
     }
+    case "yourActiveOwner": {
+      // 🆕🆕🆕 D557 — Arven's Sandwich's *"If that Pokémon is an Arven's Pokémon"*. ONE
+      // body — the Active's TOP card — through the SAME `ownerPokemon` matcher the arm
+      // above counts with, so the prefix rule has one implementation. Empty Spot: FALSE.
+      const spot = activeTop(state, seat);
+      return spot !== null && matchesFilter(spot.card, { kind: "ownerPokemon", owner: cond.owner });
+    }
     case "yourPokemonKoedOnOpponentsLastTurn":
       // D271 — "any of your Pokémon were Knocked Out during your opponent's last
       // turn" (Unfair Stamp sv06-165, Hassel sv06-151/-205). The whole predicate
@@ -6385,6 +6465,10 @@ export function conditionNote(cond: BoardCondition): string {
       // Pokémon in play are Team Rocket's Pokémon"); the possessive is added here, the
       // arm above's convention.
       return `all of your Pokémon in play are ${cond.owner}'s Pokémon`;
+    case "yourActiveOwner":
+      // 🆕🆕🆕 D557 — the arm above narrowed to the Active; the printed article is the
+      // `ownerPokemon` noun's own rule ("an Arven's Pokémon": vowel-initial owner).
+      return `your Active Pokémon is ${/^[AEIOU]/.test(cond.owner) ? "an" : "a"} ${cond.owner}'s Pokémon`;
     case "yourPokemonKoedOnOpponentsLastTurn":
       // The printed clause verbatim — the family's THIRD full round-trip, and it
       // keeps the possessive "your opponent's last turn" that the predicate turns
@@ -6737,6 +6821,10 @@ export function applyChoice(
       // and **NOT** in the owner's discard (D421, and D539's rule about pricing the
       // sites the type system cannot check separately).
       if (choice.kind !== "cards") return state;
+      // 🆕🆕🆕 D557 — Xerosic's Machinations' `untilHandSize` arm lands here too and
+      // takes the DISCARD branch (that arm makes `to` unrepresentable, so it is always
+      // `undefined` there): the take was fixed at the park (`min === max`, the excess
+      // over 3), and the answer is validated against it, so the owner ends at 3.
       return op.to === "deck"
         ? deckChosenFromHand(state, otherSeat(ctx.seat), choice.uids, events)
         : discardChosenFromHand(state, otherSeat(ctx.seat), choice.uids, events);
@@ -8914,6 +9002,13 @@ function effectRefusedOn(
     // opponent's here. Kept because THIS SLICE is the argument for keeping such a
     // guard — D253's and D254's arms were "structurally dead" until an op aimed
     // where no op had aimed before, and then they were simply correct.
+    // 🆕🆕🆕 **D557 CORRECTION (D539): ~~"UNREACHABLE TODAY"~~ / ~~"`seat` is always the
+    // opponent's here"~~ are WITHDRAWN — the prediction two lines up came true.** Tool
+    // Scrapper `sv10.5w-085` (*"yours or your opponent's"*) sends the controller's OWN
+    // bodies through `unshieldedRefs`, so an own Fraxure-shielded body reaches this line
+    // with `seat === ctx.seat`, and this `return false` is what keeps its Tool OFFERED
+    // (your own shield names "your opponent"). `D259-trainer-channel-ignores-owner` is
+    // retired from the declared survivors and killed by `riderTrainersD557.test.ts` §10.
     if (seat === ctx.seat) return false;
     // Fraxure / Cetitan ex: the HOLDER rule, and the fold answers it whole — no
     // zone clause, no source clause, and BOTH trainer types refused.
@@ -8955,6 +9050,13 @@ function effectRefusedOn(
   // reason — a row that dies for the wrong reason is worth less than one that
   // survives — and would leave the next channel inheriting a rule instead of
   // deriving it from what its own cards print.
+  // 🆕🆕🆕 **D557 CORRECTION (D539): ~~"a DECLARED SURVIVOR"~~ is WITHDRAWN.** Tool
+  // Scrapper `sv10.5w-085` reaches the trainer channel's guard with `seat === ctx.seat`
+  // (see the D557 note ~40 lines up), so `D259-trainer-channel-ignores-owner` is no
+  // longer a survivor: its `survives` is removed and `riderTrainersD557.test.ts` §10
+  // KILLS it — for the TRAINER channel's own reason, which is the reason not to hoist
+  // still standing: a hoisted guard would let an attack-channel rung kill the row
+  // instead of the Trainer that names it.
   //
   // ⚠️ **AND IT REMOVES A HAND-SPELLED COPY RATHER THAN ADDING A RULE.**
   // `discardEnergy` has carried `discardVictimSeat(ctx.seat, op) !== ctx.seat` at
@@ -9434,7 +9536,7 @@ function placeSnipe(
   amount: number,
   deals: boolean,
   ignoreWR: boolean,
-  source: "ability" | "attack",
+  source: "ability" | "attack" | "trainer", // 🆕🆕🆕 D557 — Venture Bomb's Item placement
   ctx: EffectContext,
   events: GameEvent[],
 ): GameState {
@@ -9801,7 +9903,7 @@ function hitOwnActive(
   state: GameState,
   amount: number,
   deals: boolean,
-  source: "ability" | "attack",
+  source: "ability" | "attack" | "trainer", // 🆕🆕🆕 D557 — Venture Bomb's Item placement
   ctx: EffectContext,
   events: GameEvent[],
 ): GameState {
@@ -10770,7 +10872,7 @@ function counterUntilRemainingHp(
 function damageActive(
   state: GameState,
   amount: number,
-  source: "ability" | "attack",
+  source: "ability" | "attack" | "trainer", // 🆕🆕🆕 D557 — Venture Bomb's Item placement
   ctx: EffectContext,
   events: GameEvent[],
 ): GameState {
@@ -11062,13 +11164,15 @@ function damageSelf(
   amount: number,
   ctx: EffectContext,
   events: GameEvent[],
+  // 🆕🆕🆕 D557 — the op's optional provenance; absent is the shipped `"self"` recoil.
+  source?: "trainer",
 ): GameState {
   if (amount <= 0) return state;
   const active = state.players[ctx.seat].active;
   if (active === null) return state;
   const uid = topUid(active);
   if (uid === undefined) return state;
-  events.push({ type: "COUNTERS_PLACED", seat: ctx.seat, uid, amount, source: "self" });
+  events.push({ type: "COUNTERS_PLACED", seat: ctx.seat, uid, amount, source: source ?? "self" });
   return withActive(state, ctx.seat, { ...active, damage: active.damage + amount });
 }
 
@@ -11215,8 +11319,11 @@ function handRefresh(
   }
   if (op.onlyIfAnyMoved && !moved.some((m) => m.handCount > 0)) return next;
   for (const { seat, handCount } of moved) {
-    const count = handRefreshDrawCount(next, seat, ctx.seat, op.draw, handCount);
-    next = drawToHand(next, seat, count, "effect", events);
+    // 🆕🆕🆕 D557 — the helper now returns the STATE beside the count, because Lucian's
+    // `coinFlip` member spends `rngState` (one flip per seat, in this loop's seat order,
+    // controller first — R-L1). Every other member returns `next` unchanged.
+    const dealt = handRefreshDrawCount(next, seat, ctx.seat, op.draw, handCount, events);
+    next = drawToHand(dealt.state, seat, dealt.count, "effect", events);
   }
   return next;
 }
@@ -11239,16 +11346,27 @@ function handRefreshDrawCount(
   controller: Seat,
   draw: HandRefreshDraw,
   handCount: number,
-): number {
+  events: GameEvent[],
+): { count: number; state: GameState } {
   switch (draw.kind) {
     case "fixed":
-      return draw.count;
+      return { count: draw.count, state };
     case "handPlus":
-      return handCount + draw.delta;
+      return { count: handCount + draw.delta, state };
     case "prizeCount":
-      return state.players[seat].prizes.length;
+      return { count: state.players[seat].prizes.length, state };
     case "perSeat":
-      return seat === controller ? draw.you : draw.opponent;
+      return { count: seat === controller ? draw.you : draw.opponent, state };
+    // 🆕🆕🆕 D557 — Lucian: THIS seat flips ITS OWN coin ("each player flips a coin. If
+    // heads, that player draws 6 cards. If tails, they draw 3 cards."). One `flipCoin` per
+    // call, so a two-seat refresh spends two steps of `rngState` and files two rows, each
+    // under the seat that flipped (D550). Replay-deterministic: the face is a pure
+    // function of the cursor, and the cursor is written back.
+    case "coinFlip": {
+      const [face, rngState] = flipCoin(state.rngState);
+      events.push({ type: "ATTACK_EFFECT_COIN_FLIP", seat, result: face });
+      return { count: face === "heads" ? draw.heads : draw.tails, state: { ...state, rngState } };
+    }
     // 🆕 D516 — the CONTROLLER's opponent, and never `otherSeat(seat)`. `who:
     // "opponent"` one field up already reads the word that way, so a second reading here
     // would make one word name two seats inside one op; and this arm is ONE ANSWER FOR
@@ -11259,7 +11377,7 @@ function handRefreshDrawCount(
     // filter, the SIZE of a hand is public, and this is `handPlus`'s own reading of the
     // same question one arm up.
     case "opponentHandSize":
-      return state.players[otherSeat(controller)].hand.length;
+      return { count: state.players[otherSeat(controller)].hand.length, state };
   }
 }
 
@@ -11285,7 +11403,7 @@ function handRefreshDrawCount(
 function searchMove(
   state: GameState,
   uids: readonly string[],
-  dest: "bench" | "hand" | "deckTop",
+  dest: "bench" | "hand" | "deckTop" | "discard",
   reveal: true | undefined,
   ctx: EffectContext,
   events: GameEvent[],
@@ -11329,7 +11447,11 @@ function searchMove(
         // on top.
         dest === "deckTop"
         ? { ...side, deck: [...moved, ...deck] }
-        : { ...side, deck, hand: [...side.hand, ...moved] };
+        : // 🆕🆕🆕 D557 — Brilliant Blender's *"…and discard them"*: the controller's
+          // OWN pile, in pick order (the trailing `shuffleDeck` is its own op).
+          dest === "discard"
+          ? { ...side, deck, discard: [...side.discard, ...moved] }
+          : { ...side, deck, hand: [...side.hand, ...moved] };
   // Spelled as two whole objects rather than a conditional spread: the flag is
   // ABSENT when the print carries no reveal (D135), and `reveal: undefined`
   // is not the same wire value as no key at all.
@@ -11555,8 +11677,22 @@ function pushDeckTopLook(
     // value in the suite (D135's rule, `searchMove`'s spelling one op over).
     ...(op.dest === undefined ? {} : { dest: op.dest }),
     ...(op.reveal === true ? { reveal: true as const } : {}),
+    // 🆕🆕🆕 D557 — Dusk Ball's end rides the row by the same spread (absent = top).
+    ...(op.from === undefined ? {} : { from: op.from }),
   };
   events.push(event);
+}
+
+/** 🆕🆕🆕 **D557 — THE LOOKED-AT WINDOW, READ ONCE FOR THE PARK AND THE APPLY.** Absent
+    `from` is the top `n` (`slice(0, n)`, the shipped read byte for byte); `"bottom"` is
+    the last `n` in deck order — `reorderWindow`'s D343 arithmetic for the same printed
+    word, one op over. A deck shorter than `n` yields the whole deck at either end. */
+function lookWindow(
+  deck: readonly string[],
+  op: Extract<EffectOp, { op: "lookAtTopN" }>,
+): string[] {
+  const n = Math.max(0, op.n);
+  return op.from === "bottom" ? deck.slice(Math.max(0, deck.length - n)) : deck.slice(0, n);
 }
 
 /** Move the chosen looked-at cards deck → `op.dest` (lookAtTopN — Great Ball /
@@ -11647,7 +11783,7 @@ function revealFromTop(
   const rest =
     op.restTo === undefined
       ? []
-      : side.deck.slice(0, Math.max(0, op.n)).filter((uid) => !picked.has(uid));
+      : lookWindow(side.deck, op).filter((uid) => !picked.has(uid));
   if (moved.length === 0 && rest.length === 0) return state;
   const removed = new Set([...picked, ...rest]);
   const kept = side.deck.filter((uid) => !removed.has(uid));
@@ -13252,6 +13388,12 @@ function mayDrawNote(op: Extract<EffectOp, { op: "opponentMayDraw" }>): string {
     rather than writing "1 card": *"Discard a card from your hand."* is how the
     catalog spells the count of one everywhere in this column. */
 function opponentDiscardNote(op: Extract<EffectOp, { op: "opponentDiscardsFromHand" }>): string {
+  // 🆕🆕🆕 D557 — Xerosic's Machinations, in the ANSWERER's voice (D426's rule): the
+  // printed *"Your opponent discards cards from their hand until they have 3 cards in
+  // their hand."* becomes the instruction to the player who is holding that hand.
+  if (op.untilHandSize !== undefined) {
+    return `Discard cards from your hand until you have ${op.untilHandSize} cards in your hand.`;
+  }
   // 🆕🆕🆕 **D542 — THE CAPTION FOLLOWS THE DESTINATION, AND D426's OWN RULE
   // IS WHY.** This note is in the ANSWERER's voice and the player reading it IS the
   // opponent — so the printed *"Your opponent chooses 3 cards … and shuffles those
@@ -15168,42 +15310,57 @@ function toolDiscardApply(
   events: GameEvent[],
 ): { state: GameState; discarded: string[] } {
   if (uids.length === 0) return { state, discarded: [] };
-  const victim = otherSeat(ctx.seat);
-  const side = state.players[victim];
+  // 🆕🆕🆕 D557 — THE VICTIM IS NO LONGER HARD-CODED `otherSeat(ctx.seat)`: Tool
+  // Scrapper's *"yours or your opponent's"* can pick Tools off BOTH boards in one answer,
+  // so each seat is stripped in turn (the controller's first, the offer's order) and each
+  // stripped Tool lands in ITS OWN owner's pile (§7.4). A pick naming only the opponent's
+  // Tools (every D543 answer, Megaton Blower's sweep) strips nothing on the controller's
+  // side, pushes no row there and returns that side untouched — byte for byte the old path.
   const picks = new Set(uids);
-  const pulled: { host: string; uids: string[] }[] = [];
-  const strip = (pokemon: InPlayPokemon): InPlayPokemon => {
-    const taken: string[] = [];
-    const kept = pokemon.tools.filter((uid) => {
-      if (!picks.has(uid)) return true;
-      taken.push(uid);
-      return false;
-    });
-    if (taken.length === 0) return pokemon;
-    pulled.push({ host: topUid(pokemon) ?? "", uids: taken });
-    return { ...pokemon, tools: kept };
-  };
-  const active = side.active === null ? null : strip(side.active);
-  const bench = side.bench.map(strip);
-  if (pulled.length === 0) return { state, discarded: [] };
+  let next = state;
   const discarded: string[] = [];
-  for (const entry of pulled) {
-    discarded.push(...entry.uids);
-    events.push({
-      type: "TOOLS_DISCARDED",
-      seat: victim,
-      actor: ctx.seat,
-      uids: [...entry.uids],
-      host: entry.host,
-      // 🆕 D543 — the EXECUTION POINT rides the row. This one happens at the program
-      // TAIL, after §8.5 damage, so the log must NOT say "before doing damage".
-      when: "effect",
+  for (const victim of [ctx.seat, otherSeat(ctx.seat)] as const) {
+    const side = next.players[victim];
+    const pulled: { host: string; uids: string[] }[] = [];
+    const strip = (pokemon: InPlayPokemon): InPlayPokemon => {
+      const taken: string[] = [];
+      const kept = pokemon.tools.filter((uid) => {
+        if (!picks.has(uid)) return true;
+        taken.push(uid);
+        return false;
+      });
+      if (taken.length === 0) return pokemon;
+      pulled.push({ host: topUid(pokemon) ?? "", uids: taken });
+      return { ...pokemon, tools: kept };
+    };
+    const active = side.active === null ? null : strip(side.active);
+    const bench = side.bench.map(strip);
+    if (pulled.length === 0) continue;
+    const fromThisSide: string[] = [];
+    for (const entry of pulled) {
+      fromThisSide.push(...entry.uids);
+      events.push({
+        type: "TOOLS_DISCARDED",
+        // 🆕🆕🆕 D557 — EACH row names ITS victim's seat (the host's owner), so an
+        // own-side Tool reads under its own owner and the opponent's under theirs.
+        seat: victim,
+        actor: ctx.seat,
+        uids: [...entry.uids],
+        host: entry.host,
+        // 🆕 D543 — the EXECUTION POINT rides the row. This one happens at the program
+        // TAIL, after §8.5 damage, so the log must NOT say "before doing damage".
+        when: "effect",
+      });
+    }
+    discarded.push(...fromThisSide);
+    next = withSide(next, victim, {
+      ...side,
+      active,
+      bench,
+      discard: [...side.discard, ...fromThisSide],
     });
   }
-  return {
-    state: withSide(state, victim, { ...side, active, bench, discard: [...side.discard, ...discarded] }),
-    discarded,
-  };
+  return { state: discarded.length === 0 ? state : next, discarded };
 }
 
 /** 🆕 **D543 — the `discardTools` prompt string, the printed sentence reproduced.**
@@ -15213,7 +15370,15 @@ function toolDiscardApply(
     board-clamped one — the player is reading what the card says; the clamp lives
     on `scope.max`, which is what the dialog enforces. */
 function toolDiscardNote(op: Extract<EffectOp, { op: "discardTools" }>): string {
-  return `Discard up to ${op.count} Pokémon Tools from your opponent's Pokémon.`;
+  // 🆕🆕🆕 D557 — Tool Scrapper's printed sentence, character for character, when the
+  // offer spans both boards (the caption must not say "your opponent's" over a dialog
+  // that offers the player's own Tools). `"all"` never parks, so it is never captioned;
+  // the branch is written for totality and reads as the print would.
+  const count = op.count === "all" ? "all" : `up to ${op.count}`;
+  if (op.sides === "both") {
+    return `Choose ${count} Pokémon Tools attached to Pokémon (yours or your opponent's) and discard them.`;
+  }
+  return `Discard ${count} Pokémon Tools from your opponent's Pokémon.`;
 }
 
 // ── Candidate builders + small shared helpers ──
@@ -15430,17 +15595,27 @@ function interchangeableCandidates(
     construction, spelled once here. `otherSeat(seat)` rather than a
     `discardVictimSeat`-style helper, because there is no second reading to
     resolve between. */
-function discardableTools(state: GameState, seat: Seat): { uid: string; from: PokemonRef }[] {
-  const victim = otherSeat(seat);
-  const side = state.players[victim];
+export function discardableTools(
+  state: GameState,
+  seat: Seat,
+  // 🆕🆕🆕 D557 — Tool Scrapper's "yours or your opponent's". ~~"NO SEAT PARAMETER
+  // EITHER … the victim is the controller's opponent by construction"~~ — WITHDRAWN
+  // (D539): the falsifier the block above named (a second printed Tool-discard zone)
+  // fired. Absent is the opponent's side alone, byte for byte.
+  sides?: "both",
+): { uid: string; from: PokemonRef }[] {
   const out: { uid: string; from: PokemonRef }[] = [];
-  const collect = (pokemon: InPlayPokemon, from: PokemonRef) => {
-    for (const uid of pokemon.tools) out.push({ uid, from });
-  };
-  if (side.active !== null) collect(side.active, { seat: victim, spot: { spot: "active" } });
-  side.bench.forEach((pokemon, index) =>
-    collect(pokemon, { seat: victim, spot: { spot: "bench", index } }),
-  );
+  const victims: readonly Seat[] = sides === "both" ? [seat, otherSeat(seat)] : [otherSeat(seat)];
+  for (const victim of victims) {
+    const side = state.players[victim];
+    const collect = (pokemon: InPlayPokemon, from: PokemonRef) => {
+      for (const uid of pokemon.tools) out.push({ uid, from });
+    };
+    if (side.active !== null) collect(side.active, { seat: victim, spot: { spot: "active" } });
+    side.bench.forEach((pokemon, index) =>
+      collect(pokemon, { seat: victim, spot: { spot: "bench", index } }),
+    );
+  }
   return out;
 }
 
@@ -15979,7 +16154,7 @@ function searchNote(
       number reaches the HUD through `prompt.max` regardless, so nothing is hidden and
       nothing leaks. Pinned byte-for-byte in `benchCountedHandSearch.test.ts` §2. */
   groups: readonly { filter: CardFilter; max: SearchDeckMax }[],
-  dest: "bench" | "hand" | "deckTop",
+  dest: "bench" | "hand" | "deckTop" | "discard",
   max: number,
   /** 🆕 D342 — the op's `exact`. The heading has to say WHICH pick it is, because
       the dialog's Confirm is disabled until the floor is met and a caption that
@@ -16016,7 +16191,10 @@ function searchNote(
         // pronoun to (D116's rule about dropped pronouns, applied forwards).
         dest === "deckTop"
         ? "on top of your deck"
-        : "into your hand";
+        : // 🆕🆕🆕 D557 — Brilliant Blender's print: "…for up to 5 cards and discard them."
+          dest === "discard"
+          ? "and discard them"
+          : "into your hand";
   // 🆕 D336 — THE SINGLE-GROUP ARM IS THE OLD FUNCTION, BYTE FOR BYTE, and it
   // reads the CLAMPED `max` rather than the group's own: a bench search whose
   // printed 3 is cut to 2 by `benchSpace` must caption the 2 the dialog will
@@ -16278,6 +16456,8 @@ function lookNote(
   dest?: "bench" | "discard",
   also?: { filter: CardFilter; max: number },
   exact = false,
+  /** 🆕🆕🆕 D557 — Dusk Ball's *"Look at the bottom 7 cards"*; absent is the top. */
+  from?: "bottom",
 ): string {
   const { singular, plural } = retrieveNoun(filter);
   // D241 — the destination is the prompt's, not a fixed phrase. A dialog that
@@ -16316,7 +16496,7 @@ function lookNote(
     also === undefined
       ? first
       : `${first} and ${phrase(also.max, retrieveNoun(also.filter), false)}`;
-  return `Look at the top ${n} cards of your deck and put ${what} ${where}.`;
+  return `Look at the ${from === "bottom" ? "bottom" : "top"} ${n} cards of your deck and put ${what} ${where}.`;
 }
 
 /** The attachCards prompt string (Electric Generator / Hydreigon "Tri Howl") —
@@ -16889,6 +17069,15 @@ export function retrieveNoun(filter: CardFilter): { singular: string; plural: st
       return {
         singular: `a Supporter card that has "${filter.fragment}" in its name`,
         plural: `Supporter cards that have "${filter.fragment}" in their names`,
+      };
+    case "toolNameContaining":
+      // 🆕🆕🆕 D557 — TM Machine's printed noun, the arm above with the head noun
+      // swapped for `toolCard`'s. ⚠️ THE PLURAL IS THE PRINT'S *"in their name"* (TM
+      // Machine prints the singular noun), not the arm above's "in their names" — the
+      // caption reproduces the card rather than regularising it.
+      return {
+        singular: `a Pokémon Tool card that has "${filter.fragment}" in its name`,
+        plural: `Pokémon Tool cards that have "${filter.fragment}" in their name`,
       };
     case "item":
       // D231 — the printed "an Item card" / "Item cards". The ARTICLE is "an",

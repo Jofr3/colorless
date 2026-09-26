@@ -1399,6 +1399,8 @@ describe("§6 — `MATCH_RECORD_VERSION` STAYS 29, driven at all THREE addresses
       byName: { kind: "byName", name: "Fixmon ex" },
       supporter: { kind: "supporter" },
       supporterNameContaining: { kind: "supporterNameContaining", fragment: "Team Rocket" },
+      // 🆕🆕🆕 D557 — TM Machine's filter; the alphabet gate fired a FOURTH time (below).
+      toolNameContaining: { kind: "toolNameContaining", fragment: "Technical Machine" },
       item: { kind: "item" },
       stadium: { kind: "stadium" },
       trainerCard: { kind: "trainerCard" },
@@ -1428,7 +1430,14 @@ describe("§6 — `MATCH_RECORD_VERSION` STAYS 29, driven at all THREE addresses
     // missing`, before any test ran — and nothing else in `packages/**`, `src/**` or
     // `apps/**` complained, which is the measurement that says this union's other
     // consumers are exhaustive `switch`es rather than hand-kept lists (D222).
-    expect(Object.keys(EVERY_KIND)).toHaveLength(24);
+    // 🆕🆕🆕 **D557 — A FOURTH TIME, 24 → 25**: adding `toolNameContaining` made `tsc -b`
+    // fail HERE with `TS2741: Property 'toolNameContaining' is missing` and nowhere else
+    // in `packages/**` — the two `switch`es (`matchesFilter`, `retrieveNoun`) had been
+    // written first. ⚠️ Its ANTI-VACUITY is carried by `riderTrainersD557.test.ts`
+    // (a Technical Machine Tool, a same-fragment non-Tool and a plain Tool, driven both
+    // ways), not by the CAST below, which holds no Technical Machine — adding one to
+    // `FIXTURE_POOL` was priced and declined (it moves pool-size pins for no reader).
+    expect(Object.keys(EVERY_KIND)).toHaveLength(25);
     // 🛑 **THE BYTES.** Each filter is written out and read back the way
     // `MatchRecord.state` is, and `matchesFilter` must give the IDENTICAL answer over
     // a cast that spans every category the catalog has — a Pokémon with a rule box
@@ -1614,7 +1623,7 @@ describe("§6 — `MATCH_RECORD_VERSION` STAYS 29, driven at all THREE addresses
   });
 
   it("the engine version moved with the behaviour", () => {
-    expect(engineVersion).toBe("0.440.0");
+    expect(engineVersion).toBe("0.441.0");
   });
 });
 

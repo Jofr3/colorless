@@ -1115,6 +1115,15 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
             plain(" damage to "),
             strong(name),
           ]);
+        // 🆕🆕🆕 D557 — counters an ITEM placed (Team Rocket's Venture Bomb, either face).
+        // A SYSTEM row for the `"attack"` arm's reason: `seat` owns the DAMAGED body,
+        // which on heads is the player's OPPONENT, so an active-voice row under it would
+        // credit the victim — and on tails the recoil wording ("did N damage to
+        // itself") would credit the Active with a hit it never made. The TRAINER_PLAYED
+        // row directly above names the card; the label names the mechanism class, the
+        // way "Ability:" and "Put:" do, never "Ability:" or "…to itself".
+        case "trainer":
+          return row("system", [plain("Trainer: "), amount, plain(" damage to "), strong(name)]);
         default:
           return row(seat, [amount, plain(" damage to "), strong(name)]);
       }
@@ -1635,6 +1644,16 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
       if (event.dest === "bench") {
         return row(event.seat, [plain(`searched their deck — benched ${n} Pokémon`)]);
       }
+      // 🆕🆕🆕 D557 — the FIFTH ending (Brilliant Blender): the cards went to the
+      // searcher's own DISCARD PILE, which is public, so they are NAMED with or without a
+      // printed reveal — the pile shows them to everyone a moment later, and a count here
+      // would hide nothing but make the row say less than the board.
+      if (event.dest === "discard") {
+        return row(event.seat, [
+          plain("searched their deck — discarded "),
+          strong(countedNames(event.uids.map((uid) => cardName(state, uid)))),
+        ]);
+      }
       if (event.dest === "deckTop") {
         return row(event.seat, [
           plain(`searched their deck — put ${n} card${n === 1 ? "" : "s"} on top`),
@@ -1711,19 +1730,23 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
           : event.dest === "discard"
             ? "in the discard pile"
             : "in hand";
+      // 🆕🆕🆕 D557 — WHICH END (Dusk Ball looks at the BOTTOM 7): the row says the end
+      // the look actually took, because "looked at the top" over a bottom look is a
+      // false claim about which cards the looker now knows (D421).
+      const end = event.from === "bottom" ? "bottom" : "top";
       if (n === 0) {
         // No `reveal` branch: a printed "you may reveal a … you find there" that
         // took nothing revealed nothing, so the rider has no cards to name and
         // the two renders would be the same sentence.
-        return row(event.seat, [plain("looked at the top of their deck — took nothing")]);
+        return row(event.seat, [plain(`looked at the ${end} of their deck — took nothing`)]);
       }
       if (event.reveal !== true) {
         return row(event.seat, [
-          plain(`looked at the top of their deck — put ${n} card${n === 1 ? "" : "s"} ${where}`),
+          plain(`looked at the ${end} of their deck — put ${n} card${n === 1 ? "" : "s"} ${where}`),
         ]);
       }
       return row(event.seat, [
-        plain("looked at the top of their deck — revealed "),
+        plain(`looked at the ${end} of their deck — revealed `),
         strong(countedNames(event.uids.map((uid) => cardName(state, uid)))),
         plain(` and put ${n === 1 ? "it" : "them"} ${where}`),
       ]);

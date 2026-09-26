@@ -589,7 +589,7 @@ describe("D516 §7 — what this slice did NOT buy, measured", () => {
     // write. The claim therefore rests on REACHABILITY (D450) ALONE, and reachability is
     // a measurement over the PRODUCERS rather than a property of the op — which is what
     // the rung below drives.
-    expect(engineVersion).toBe("0.440.0");
+    expect(engineVersion).toBe("0.441.0");
   });
 
   it("🛑 REACHABILITY IS EMPTY, MEASURED OVER EVERY PRODUCER RATHER THAN ASSERTED", () => {
@@ -643,7 +643,7 @@ describe("D516 §7 — what this slice did NOT buy, measured", () => {
     expect(derived).toBeGreaterThan(100);
     expect(registryCardIds().length).toBeGreaterThan(100);
     const producers = registryCardIds().filter((id) => holdsRefresh(programFor(id)));
-    expect(producers).toHaveLength(31); // 🆕🆕🆕 D555 — 30 -> 31, Meddling Memo `sv08-181` (index 0 of a one-op `trainer` list, so `offenders` stays empty)
+    expect(producers).toHaveLength(33); // 🆕🆕🆕 D557 — 31 -> 33, Lucian `sv06-157`/`-208` (index 0 of a one-op `trainer` list, so `offenders` stays empty). // 🆕🆕🆕 D555 — 30 -> 31, Meddling Memo `sv08-181` (index 0 of a one-op `trainer` list, so `offenders` stays empty)
     // 🛑 …AND THE INVARIANT IS NOT TRIVIALLY TRUE, WHICH IS THE PART A GREEN `offenders`
     // CANNOT SAY (D200). Of the op lists this walk visits, **337 hold more than one op**
     // (🆕🆕🆕 D555, MEASURED rather than carried: **376 of 1,013** at this head, **368 of

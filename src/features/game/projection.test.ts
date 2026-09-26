@@ -1390,4 +1390,37 @@ describe("projectionFromRedacted — the wire round-trip equals the local projec
     const wire = JSON.stringify(redactGame(state, "p1"));
     for (const uid of oppHand) expect(wire, uid).not.toContain(`"${uid}"`);
   });
+
+  it("🆕🆕🆕 (D557) reconstructs a LABELLED confirm — Kieran's two button captions survive the round-trip", () => {
+    // `effectDecisionFromPrompt`'s confirm arm now spreads `labels`; dropped there, the
+    // rebuilt local decision would render Yes / No over a printed "Choose 1:" while the
+    // local projection carried the labels, and this equality would say so.
+    const base = mustApply(driveSetup(20260926, undefined, { first: "p1" }), {
+      type: "endTurn",
+      seat: "p1",
+    }).state;
+    const p1Turn = mustApply(base, { type: "endTurn", seat: "p2" }).state;
+    const labels = { yes: "Switch your Active Pokémon", no: "+30 damage to ex and V this turn" };
+    const cont: EffectContinuation = {
+      pendingOp: {
+        op: "optional",
+        note: "Choose 1: …",
+        labels,
+        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-op list, not a thenable.
+        then: [{ op: "switchActive" }],
+        otherwise: [{ op: "drawCards", count: 1 }],
+      },
+      rest: [],
+      ctx: { seat: "p1" },
+    };
+    const state: GameState = {
+      ...p1Turn,
+      phase: { kind: "effect:choose", seat: "p1", prompt: { kind: "confirm", note: "Choose 1: …", labels }, cont },
+    };
+    const local = projectGameState(state, "p1");
+    expect(projectionFromRedacted(redactGame(state, "p1"))).toEqual(local);
+    const decision = local.pendingDecision;
+    if (decision?.kind !== "effectChoose" || decision.prompt.kind !== "confirm") throw new Error("expected confirm");
+    expect(decision.prompt.labels).toEqual(labels);
+  });
 });

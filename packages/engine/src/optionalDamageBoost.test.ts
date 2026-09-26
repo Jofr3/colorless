@@ -800,7 +800,17 @@ describe("D316 §6 — the other two consequents, on their own real boards", () 
 
 // ────────────────────────────────────────────────────────────────────────────
 describe("D316 §7 — 🛑 THE WIDENING, DRIVEN AT ITS PREMISE RATHER THAN ASSERTED", () => {
-  it("`optional.otherwise` has EXACTLY ONE producer in the whole build, and it is not the registry", () => {
+  // 🆕🆕🆕 **D557 — THE RUNG IS INVERTED, AND ITS OLD TITLE IS WITHDRAWN (D539).** It read
+  // ~~"`optional.otherwise` has EXACTLY ONE producer in the whole build, and it is not the
+  // registry"~~ from D316 to D556, and both halves stopped being true when Kieran's
+  // printed "Choose 1:" was authored as `optional { then: [switch], otherwise: [+30] }`
+  // on FIVE registry keys. The measurement below is the same walk; what it now pins is the
+  // registry producer set BY ID. The version claim it served is UNCHANGED and is re-argued
+  // rather than inherited: `otherwise` is an OPTIONAL key every reader since v18 knows
+  // (D316's widening), so a v35 record holding one is a record every v35 deploy reads —
+  // `MATCH_RECORD_VERSION` stays 35 (Kieran's `labels` are the same kind of key; the
+  // stripped-revival rung is `chooseOneTrainersD557.test.ts` §5).
+  it("`optional.otherwise` — the attack assembler AND, since D557, the registry (Kieran ×5, by id)", () => {
     // `MATCH_RECORD_VERSION` stays 18 because a v18 deploy cannot AUTHOR this
     // field, so no v18 record can hold one. That is a claim about the producers,
     // and this is the producer set: every registry program, walked structurally.
@@ -828,8 +838,9 @@ describe("D316 §7 — 🛑 THE WIDENING, DRIVEN AT ITS PREMISE RATHER THAN ASSE
     // empty population.
     expect(programsWalked).toBeGreaterThan(50);
     expect(optionalsSeen).toBeGreaterThan(0);
-    expect(authored).toEqual([]);
-    // …and the ONE producer is this reader's assembly site — `optionalBoostProgram`,
+    // 🆕🆕🆕 D557 — WAS `toEqual([])`. Kieran's five printings, in registry order.
+    expect(authored).toEqual(["sv06-154", "sv06-206", "sv06-218", "sv08.5-113", "sv08.5-174"]);
+    // …and the ATTACK producer is this reader's assembly site — `optionalBoostProgram`,
     // which lived inside attack.ts until D318 MOVED it into effects.ts so a sweep
     // could build it (see §8). It is still reached from a board only through
     // attack.ts, and the park below is that producer, observed.
@@ -871,6 +882,9 @@ describe("D316 §7 — 🛑 THE WIDENING, DRIVEN AT ITS PREMISE RATHER THAN ASSE
 //
 // §7 above proves `optional.otherwise` has exactly one producer and that it is
 // reachable only through a board. That was true and it was also the DEFECT:
+// (🆕🆕🆕 D557 NOTE (D539): "exactly one producer" was true through D556 and is
+// WITHDRAWN at D557 — Kieran ×5 is a REGISTRY producer; §7 now pins that set by id.
+// The rest of this paragraph is about the ATTACK producer's reachability and stands.)
 // `programWalk.test.ts` builds its corpus from `deriveAttackEffect` over
 // `FIXTURE_POOL` + the registry + the readings fed to it, so a program assembled
 // INSIDE `attack.ts` is invisible to it — and its carrier pin read

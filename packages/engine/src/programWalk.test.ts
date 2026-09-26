@@ -414,6 +414,16 @@ describe("the pool sweep, structurally", () => {
       "sv05-213 trigger :: moveEnergy",
       "sv05-213 trigger :: recordGate",
       "sv05-213 trigger :: switchActive",
+      // 🆕🆕🆕 D557 — Kieran ×5: `optional { then: [switchActive], otherwise:
+      // [boostSideAttacksThisTurn] }`. The enumerated walk NEVER descends `optional`, so
+      // BOTH arms are missed on every printing — TWO rows per id, TEN in all. MEASURED,
+      // with Venture Bomb's tails arm below: `missed` 58 → 69 (+11).
+      "sv06-154 trainer :: boostSideAttacksThisTurn",
+      "sv06-154 trainer :: switchActive",
+      "sv06-206 trainer :: boostSideAttacksThisTurn",
+      "sv06-206 trainer :: switchActive",
+      "sv06-218 trainer :: boostSideAttacksThisTurn",
+      "sv06-218 trainer :: switchActive",
       // 🆕🆕🆕 **D548 — THREE ROWS FROM A REAL POOL CARD, AND THEY ARE `fix-crushpress`'s
       // `moreDamage` ARM A FOURTH TIME.** Cresselia `sv06.5-021` "Crescent Purge" (index 1)
       // assembles through `optionalCostBoostProgram` UNCHANGED (zero bytes there): the new
@@ -445,6 +455,10 @@ describe("the pool sweep, structurally", () => {
       "sv08-171 trainer :: bottomDeckTop",
       "sv08-173 trainer :: handRefresh",
       "sv08-231 trainer :: handRefresh",
+      "sv08.5-113 trainer :: boostSideAttacksThisTurn", // 🆕🆕🆕 D557 — Kieran (reprint)
+      "sv08.5-113 trainer :: switchActive", // 🆕🆕🆕 D557 — Kieran (reprint)
+      "sv08.5-174 trainer :: boostSideAttacksThisTurn", // 🆕🆕🆕 D557 — Kieran (reprint)
+      "sv08.5-174 trainer :: switchActive", // 🆕🆕🆕 D557 — Kieran (reprint)
       "sv08.5-176 trigger :: moveEnergy",
       "sv08.5-176 trigger :: recordGate",
       "sv08.5-176 trigger :: switchActive",
@@ -454,6 +468,11 @@ describe("the pool sweep, structurally", () => {
       // descends `coinFlipGate.then` ALONE (D317's gap), so it sees the heads search and
       // misses the TAILS one. ONE row (the heads arm is seen): MEASURED, `missed` 57 → 58.
       "sv10-175 trainer :: searchDeck",
+      // 🆕🆕🆕 D557 — Team Rocket's Venture Bomb `sv10-179`: the TAILS arm's `damageSelf`
+      // (the heads `damageChosen` is seen). Arven's Sandwich's `conditionGate.otherwise`
+      // is NOT missed — the enumerated walk descends `conditionGate`'s both arms — so the
+      // brief's open question on it is answered: MEASURED, zero rows.
+      "sv10-179 trainer :: damageSelf",
       "sv10-217 authored attack 0 :: returnSelf",
       "sv10-234 authored attack 0 :: returnSelf",
       "sv10-242 authored attack 0 :: returnSelf",
@@ -506,6 +525,9 @@ describe("the pool sweep, structurally", () => {
       // This row read `["then"]` from D276 to D317 — including for the two slices
       // in which `optional.otherwise` was real, shipped and running on five printed
       // cards — because the ONE producer was assembled INLINE inside `attack.ts`
+      // (🆕🆕🆕 D557 NOTE (D539): "the ONE producer" is WITHDRAWN — Kieran ×5 is a
+      // REGISTRY producer of `optional.otherwise` since D557, and this pool sweep
+      // reaches it without any export; the carrier pin below did not move)
       // and no sweep could build it. **A CARRIER PIN MEASURES WHAT THE SWEEP CAN
       // REACH, NOT WHAT THE UNION HAS**, and the repair was never a better test:
       // D318 moved the assembly into `effects.ts` (`optionalBoostProgram`) and put
