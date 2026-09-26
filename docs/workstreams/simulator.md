@@ -28295,4 +28295,5 @@ Census: `BUILT.trainer` 128 → 137 (Item 36, Supporter 87), `BUILT.ability` 296
 The whole-corpus sweep (~~D552 → D553 → D554 → D555, all pending~~ D552, D553 and D554 PAID, each exact on its first launch —
 close-outs `b7336c51`, `52f44920`, `ffaa63dc`; D555's pending, predicted `3171 · 53` over 3,224). R1 and R4 UNRULED. Next queue: the conditional-draw
 Trainers (Team Rocket's Ariana, Billy — 2 `BoardCondition` members), Thwackey / Crobat / Cradily, and the deck searches
-that need vocabulary.
+that need vocabulary. (D555 landing: Ariana, Billy & O'Nare and Team Rocket's Great Ball are BUILT by the parked D556,
+`d556-prep` at `aaba3087`, which lands after D555's sweep; the queue's live head is Thwackey / Crobat / Cradily.)

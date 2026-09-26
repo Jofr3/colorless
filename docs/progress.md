@@ -782,9 +782,9 @@
 > 🛑 **(6) CARRIED DEBTS — NAMED, NOT SILENTLY ADOPTED.** ⑴ ~~D553's whole-corpus sweep (running in the main checkout), D554's (0) and this one's (0) are ALL pending, on D552's unpaid (0); they land in that order.~~ D552's, D553's and D554's sweeps are PAID (close-outs `b7336c51`, `52f44920`, `ffaa63dc`, each exact on its first launch); only this one's (0) is pending. D556 is parked on `d556-prep` at `aaba3087`, stacked on the parked `1216de44`, and lands after this sweep. ⑵ R1 and R4 are UNRULED. ⑶ Poké Vital A's retrieval clause (R3). ⑷ From D554: Cassiopeia's R3 UNRULED; ESP's caption/ceiling mismatch. ⑸ From D553: the census re-scope (R4) and the 380/376 reconciliation. ⑹ From D552: both real cards UNMEASURED, the retyped Weakness not in the HUD, the copy-attack family BLOCKED (6/13).
 >
 > 🛑 **(7) PICKING THE NEXT ROW — THE LOOP IS ON ABILITIES/TRAINERS, AND BUNDLES ARE PREFERRED.**
-> - **(i)** The conditional-draw Trainers left after Iris: Team Rocket's Ariana, Billy — **2 new `BoardCondition` members** (the audit's "Draw with a condition or cost").
+> - **(i)** (🆕 D555 landing: TAKEN — Team Rocket's Ariana and Billy & O'Nare are BUILT by the parked D556 (`d556-prep` at `aaba3087`, with Dragon Elixir, on three new `BoardCondition` members); not available.) The conditional-draw Trainers left after Iris: Team Rocket's Ariana, Billy — **2 new `BoardCondition` members** (the audit's "Draw with a condition or cost").
 > - **(ii)** The rest of cluster 1: Thwackey "Boom Boom Groove", Crobat, Cradily — each re-priced from source before it is bundled.
-> - **(iii)** The deck searches left out of D554, each needing vocabulary: Team Rocket's Great Ball, TM Machine, Brilliant Blender, Tera Orb, Brock's Scouting, Love Ball, Dusk Ball, Crispin, Perrin, Salvatore.
+> - **(iii)** (🆕 D555 landing: Team Rocket's Great Ball is BUILT by the parked D556 as a zero-vocabulary rider; not available.) The deck searches left out of D554, each needing vocabulary: Team Rocket's Great Ball, TM Machine, Brilliant Blender, Tera Orb, Brock's Scouting, Love Ball, Dusk Ball, Crispin, Perrin, Salvatore.
 >
 > ---
 >
