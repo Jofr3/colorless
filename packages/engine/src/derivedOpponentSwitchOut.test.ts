@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { deriveAttackCoinFlip, deriveAttackEffect } from "./effects";
 import type { EffectOp, GameEvent, GameState } from "./index";
 import { applyAction, phaseViewOf, programFor } from "./index";
+import { registryCardIds } from "./registry";
 import { programPlayable } from "./cardplay";
 import {
   FIXTURE_POOL,
@@ -15,6 +16,7 @@ import {
   mustApply,
   setActiveFromDeck,
   types,
+  walkProgram,
 } from "./testFixtures";
 
 // 0.143.0 → 0.144.0 — D227, THE OPPONENT-CHOSEN SWITCH-OUT: row 4 of
@@ -61,6 +63,14 @@ import {
 // for their own slice — an activated Ability is a card PLAY and goes through
 // `programPlayable`, which has no arm for this op and must not get a speculative
 // one. Recorded in `coverage-backlog-legal.md`.
+// 🆕🆕🆕 D555 — **"DELIBERATELY LEFT FOR THEIR OWN SLICE" IS WITHDRAWN (D539): D555 IS
+// THAT SLICE.** `TORRENTIAL_WHIRLPOOL` (registry.ts) keys both ids on Interjet's
+// program byte for byte, so a card PLAY now reaches this op — behind `recordGate`,
+// after `switchActive`, whose own `programPlayable` arm gates the use. The second
+// half STAYS TRUE: `programPlayable` gets no `opponentSwitchOut` arm (an empty
+// opponent Bench leaves the self-switch playable; the opponent is never asked).
+// §5's seam rung is RE-POINTED (D418) from `FIXTURE_POOL`'s top-level ops to a deep
+// walk over `registryCardIds()`, which is what can actually see the new producer.
 
 /** The three sentences this slice reads, with the program each derives to and the
     LEGAL printing count measured for it. Census re-derived (not inherited) on
@@ -768,7 +778,7 @@ describe("end to end — Iron Bundle's compound, and the gate that is not decora
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("the seam — the gates and surfaces this op deliberately does not touch", () => {
-  it("`programPlayable` gets NO arm, because no card PLAY can reach the op", () => {
+  it("`programPlayable` gets NO arm — the one card PLAY that reaches the op (D555) reaches it behind `switchActive`'s gate", () => {
     // `gust` has one (an empty opponent Bench makes Boss's Orders unplayable), and
     // copying it here would have been the vacuous guard conventions.md forbids:
     // this op is derived from ATTACK text only, and §8 declares an attack against
@@ -784,13 +794,30 @@ describe("the seam — the gates and surfaces this op deliberately does not touc
     expect(all(events, "ATTACK_EFFECT_SKIPPED")).toHaveLength(0);
     // No registry row prints this op today, which is what keeps the arm's absence
     // honest rather than lucky.
-    const authored = Object.keys(FIXTURE_POOL).filter((id) =>
-      [
-        ...(programFor(id)?.trainer ?? []),
-        ...(programFor(id)?.abilities ?? []).flatMap((a) => a.program),
-      ].some((op) => op.op === "opponentSwitchOut"),
-    );
-    expect(authored).toEqual([]);
+    // 🆕🆕🆕 D555 — **FALSE AT THIS HEAD, AND THE CHECK THAT STOOD HERE COULD NOT SAY
+    // SO** (kept above verbatim, D539). It walked `FIXTURE_POOL`'s TOP-LEVEL `trainer`
+    // and `abilities` ops, so Samurott's op — a REAL id outside the pool, nested in a
+    // `recordGate.then` — was invisible to it twice over and the rung stayed vacuously
+    // green. RE-POINTED (D418): a DEEP walk (`walkProgram`) over EVERY registry key and
+    // every program-bearing surface, pinned to the exact producer set. The arm's absence
+    // is still honest: both producers put the op behind `recordGate` on `switchActive`'s
+    // `"moved"`, and `switchActiveTargets` is what `programPlayable` asks.
+    const authored = registryCardIds().filter((id) => {
+      const card = programFor(id);
+      const programs: EffectOp[][] = [
+        ...(card?.trainer === undefined ? [] : [card.trainer]),
+        ...(card?.abilities ?? []).map((a) => a.program),
+        ...(card?.triggered ?? []).map((t) => t.program),
+        ...Object.values(card?.attack ?? {}),
+      ];
+      return programs.some((ops) => walkProgram(ops).some((op) => op.op === "opponentSwitchOut"));
+    });
+    expect(authored).toEqual(["sv10.5w-023", "sv10.5w-107"]);
+    for (const id of authored) {
+      const program = programFor(id)?.abilities?.[0]?.program ?? [];
+      // Never at the top level: behind the gate, after the gated switch.
+      expect(program.map((op) => op.op)).toEqual(["switchActive", "recordGate"]);
+    }
   });
 
   it("carries NO `recordAs`, and the absence is a fact about the catalog", () => {

@@ -1262,7 +1262,13 @@ describe("§7 — the census moves in exactly ONE summand, and the other three a
     // Cassiopeia). Real catalog ids and NOT `fix-*` keys (`deckSearchTrainers.test.ts`
     // drives a LOCAL `cardPool`, D275's idiom), inserted MID-MAP, and no row authors
     // an `attack` program, so the ATTACK summand cannot move with them.
-    expect(ids.size).toBe(740);
+    // 🆕🆕🆕 D555 — 740 -> **760**: TWENTY registry keys on TWELVE program objects —
+    // the zero-vocabulary Trainers (Cook, Poké Vital A, Iris's Fighting Spirit, Eri,
+    // Meddling Memo) and Abilities (Torrid Scales, Ancient Wing, Beckoning Tail,
+    // Torrential Whirlpool, Sand Stream, Snow Sink, Wicked Tail). Real catalog ids, no
+    // `fix-*` key (`simpleTrainersD555.test.ts` / `simpleAbilitiesD555.test.ts` drive a
+    // LOCAL `cardPool`), inserted MID-MAP, and no row authors an `attack` program.
+    expect(ids.size).toBe(760);
     // ⚠️ ONE of the thirteen IS in the registry — Volbeat `sv06-009` — and it is
     // there on an ABILITY program, which is exactly the count a slice does not
     // think it is checking. Named, rather than glossed by an "all absent" claim

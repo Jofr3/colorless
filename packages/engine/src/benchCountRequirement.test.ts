@@ -444,7 +444,13 @@ describe("§5 — the census terms, MEASURED rather than assumed", () => {
     // Cassiopeia). Real catalog ids and NOT `fix-*` keys (`deckSearchTrainers.test.ts`
     // drives a LOCAL `cardPool`, D275's idiom), inserted MID-MAP, and no row authors
     // an `attack` program, so the ATTACK summand cannot move with them.
-    expect(ids).toHaveLength(740);
+    // 🆕🆕🆕 D555 — 740 -> **760**: TWENTY registry keys on TWELVE program objects —
+    // the zero-vocabulary Trainers (Cook, Poké Vital A, Iris's Fighting Spirit, Eri,
+    // Meddling Memo) and Abilities (Torrid Scales, Ancient Wing, Beckoning Tail,
+    // Torrential Whirlpool, Sand Stream, Snow Sink, Wicked Tail). Real catalog ids, no
+    // `fix-*` key (`simpleTrainersD555.test.ts` / `simpleAbilitiesD555.test.ts` drive a
+    // LOCAL `cardPool`), inserted MID-MAP, and no row authors an `attack` program.
+    expect(ids).toHaveLength(760);
     for (const id of VICTINI_IDS) {
       expect(ids, id).not.toContain(id);
       expect(programFor(id), id).toBeUndefined();

@@ -425,6 +425,13 @@ describe("the pool sweep, structurally", () => {
       "sv06.5-021 attack 1 optionalCostBoost :: damageDefender",
       "sv06.5-021 attack 1 optionalCostBoost :: damageDefender",
       "sv06.5-021 attack 1 optionalCostBoost :: turnPrizeFaceUp",
+      // 🆕🆕🆕 D555 — Chien-Pao `sv08-056` / `svp-152` "Snow Sink": `conditionGate
+      // { stadiumInPlay } → optional → discardStadium`. The enumerated walk descends the
+      // gate's `then` and SEES the `optional`, but never an `optional.then` — so the
+      // `discardStadium` two levels down is exactly the op it cannot reach. Two rows,
+      // one per registry id (the reprint shares the object and is walked per key):
+      // MEASURED, `missed` grew 55 → 57 — a walker the D555 brief did not predict.
+      "sv08-056 trigger :: discardStadium",
       "sv08-131 authored attack 1 :: returnSelf",
       // 🆕🛑 **D344 — THE FIRST ROW ON THIS LIST WHOSE CARRIER IS NOT A GATE.**
       // Deduction Kit's `reorderTop { otherwise: [bottomDeckTop] }` is a printed
@@ -451,6 +458,7 @@ describe("the pool sweep, structurally", () => {
       "svp-128 trigger :: moveEnergy",
       "svp-128 trigger :: recordGate",
       "svp-128 trigger :: switchActive",
+      "svp-152 trigger :: discardStadium", // 🆕🆕🆕 D555 — Snow Sink's reprint, above
     ]);
     expect(structuralTotal - enumeratedTotal).toBe(missed.length);
     // 🆕 D342 — raised 300 -> 900 with the population repair, and the gap between

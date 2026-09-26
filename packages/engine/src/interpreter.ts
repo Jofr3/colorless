@@ -13119,6 +13119,16 @@ function bottomFromOpponentHandNote(
   // is about to not make. Grown one printed form per card (the `retrieveNoun` rule),
   // and it round-trips to the catalog text character for character — the check this
   // file can run and effects.ts cannot.
+  // 🆕🆕🆕 D555 — the discard destination's "up to" form, Eri `sv05-146` (4 legal):
+  // *"Your opponent reveals their hand, and you discard up to 2 Item cards you find
+  // there."* ONE PRINTED FORM PER CARD (D297's rule, and D350's for the bench arm's
+  // third form): a SEPARATE branch rather than a rewording of the D445 sentence below,
+  // which stays byte-identical because its own card prints it. Ordered first because
+  // it is the narrower test. It round-trips to the catalog text character for
+  // character — the check this file can run and effects.ts cannot.
+  if (op.dest === "discard" && typeof op.upTo === "number") {
+    return `Your opponent reveals their hand, and you discard up to ${op.upTo} ${retrieveNoun(op.filter ?? { kind: "anyCard" }).plural} you find there.`;
+  }
   if (op.dest === "discard") {
     return "Your opponent reveals their hand. Discard a card you find there.";
   }

@@ -317,12 +317,14 @@ describe("the citations", () => {
       expect(excerptNamesId(row.cite.excerpt, "sv99-999"), row.id).toBe(false);
     }
     // And the SUFFIX half is load-bearing rather than decorative: THREE of the nine
-    // rows are cited by prose that never spells the id whole, so a build that reduced
+    // rows are cited by prose that never spells the id whole (🆕🆕🆕 D555: TWO of the
+    // SEVEN — D555 built Samurott `sv10.5w-023`/`-107` and deleted both rows, the
+    // suffix-cited `-107` among them; Briar's pair remains), so a build that reduced
     // this to `excerpt.includes(id)` would fail them. Driven, not claimed — and the
     // number is MEASURED here rather than asserted in the module's prose, because a
     // count nothing recomputes is the defect this whole file exists about.
     const suffixOnly = REFUSED_PRINTINGS.filter((r) => !r.cite.excerpt.includes(r.id));
-    expect(suffixOnly.map((r) => r.id)).toEqual(["sv07-163", "sv07-171", "sv10.5w-107"]);
+    expect(suffixOnly.map((r) => r.id)).toEqual(["sv07-163", "sv07-171"]); // 🆕🆕🆕 D555 — `sv10.5w-107` left with its build
     // …and each of those IS matched by the split reading.
     for (const row of suffixOnly) expect(excerptNamesId(row.cite.excerpt, row.id), row.id).toBe(true);
   });
@@ -350,7 +352,7 @@ describe("the guard cannot pass by being empty or by being unwired", () => {
     // (4) in the header. §2 is trivially green on an empty table and §3 is trivially
     // green on an empty one; the two guard each other only if neither can be emptied
     // without a red line.
-    expect(REFUSED_PRINTINGS.length).toBeGreaterThanOrEqual(9);
+    expect(REFUSED_PRINTINGS.length).toBeGreaterThanOrEqual(7); // 🆕🆕🆕 D555 — 9 -> 7, the Samurott pair built and deleted
     expect(RESOLVED_REFUSALS.length).toBe(3);
     const refusedIds = REFUSED_PRINTINGS.map((r) => r.id);
     const resolvedIds = RESOLVED_REFUSALS.map((r) => r.id);

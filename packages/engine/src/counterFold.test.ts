@@ -517,7 +517,11 @@ describe("§3 — TWO REQUIRED fields on a shipped op, and the record version do
       if (card.trainer !== undefined) authored.push(card.trainer);
     }
     const producers = authored.filter((ops) => ops.some((o) => o.op === "counterEachAll"));
-    expect(producers).toHaveLength(3); // the three Froslass printings, ONE object each
+    // 🆕🆕🆕 D555 — 3 -> **4**: Team Rocket's Tyranitar `sv10-096` "Sand Stream" is the
+    // op's SECOND registry producer (`side: "opponent"`, `basicPokemon`, 20), and it is a
+    // single-op `betweenTurns` program too — so the length-1 and never-parks halves of
+    // this rung hold unchanged. The "ONE producer" above is the v29 fact it names.
+    expect(producers).toHaveLength(4); // the three Froslass printings + Sand Stream, ONE registry id each
     for (const ops of producers) {
       expect(ops).toHaveLength(1);
       expect(ops[0]?.op).toBe("counterEachAll");
@@ -552,7 +556,7 @@ describe("§3 — TWO REQUIRED fields on a shipped op, and the record version do
   });
 
   it("the engine version moved and the record version did not", () => {
-    expect(engineVersion).toBe("0.438.0");
+    expect(engineVersion).toBe("0.439.0");
   });
 });
 

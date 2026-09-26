@@ -300,6 +300,8 @@ estimate, and flagged as such.
 > COMPOSITION seam (D192's deferral) and a *"which Supporter did you play this
 > turn"* fact `allowances` does not keep. ⚠️ **AND THE FOLLOW-UP BELOW IS NOW THE
 > WHOLE REMAINDER OF THE FAMILY**: the ABILITY twin `sv10.5w-023`/`-107` (2 legal).
+> 🆕🆕🆕 **D555 — BUILT**: `TORRENTIAL_WHIRLPOOL` (registry.ts) keys both ids on Interjet's
+> program byte for byte; no `programPlayable` arm was added (`switchActive` gates the use).
 >
 > 🛑 **AND ITS PRICE WAS MEASURED AT D229 AND IS *ZERO ENGINE CODE*, WHICH IS WHY
 > THAT SLICE WENT ELSEWHERE.** The follow-up below says the twin *"still wants the

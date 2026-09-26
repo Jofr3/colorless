@@ -808,7 +808,8 @@ export type EffectSlot = "paid" | "moved" | "discarded";
     exist on the Trainer and Ability paths where `registry.ts` authors every other
     `handRefresh` (Youngster, Judge, Brassius, Katy, Iono, Skwovet, Gothitelle, Lacey,
     Drasna, Harlequin, Unfair Stamp and Team Rocket's Archer — **30 registry card ids**,
-    counted off `registryCardIds()`). Embedding that union here would
+    counted off `registryCardIds()`; 🆕🆕🆕 D555: **31**, Meddling Memo `sv08-181` joins
+    them — the "30" is D516's count, kept). Embedding that union here would
     therefore buy a SECOND evaluator for it — D159's own failure mode, one noun with two
     answers — or an `InPlayPokemon` and an effective cost plumbed through a Supporter.
     ⚠️ **THE HOUSE HAS MADE THIS CALL TWICE AND WROTE THE REASON DOWN BOTH TIMES**:
@@ -10765,7 +10766,12 @@ export type EffectOp =
       AUTHORING NOTE: the two riders are independent optionals, so combinations no
       printed card uses are representable (`onlyIfAnyMoved` without `toBottom` would
       reshuffle both decks and then draw nothing; `toBottom` with `handPlus` matches
-      no card). The registry is the only author, so this is a caution, not a hole. */
+      no card). The registry is the only author, so this is a caution, not a hole.
+      🆕🆕🆕 D555 — **"`toBottom` with `handPlus` matches no card" IS WITHDRAWN (D539)**:
+      Meddling Memo `sv08-181` (registry.ts `MEDDLING_MEMO`) prints exactly that pair —
+      *"…puts them on the bottom of their deck. If they do, they draw that many cards."*
+      — as `who: "opponent"`, `toBottom`, `handPlus { delta: 0 }`, and deliberately NO
+      `onlyIfAnyMoved` (an empty hand draws 0 either way, D555 R6). */
   | {
       op: "handRefresh";
       /** Which seats' hands go back. `"you"` is the controller alone (Youngster,
@@ -11187,6 +11193,12 @@ export type EffectOp =
           `sv05-124`/`-180` "Tongue Pull" (**2 legal printings**, the whole
           population of the phrase): *"Your opponent reveals their hand. Put up to
           **2** Basic Pokémon you find there onto your opponent's Bench."*
+          🆕🆕🆕 D555 — **"the whole population of the phrase" IS WITHDRAWN (D539)** —
+          it was the whole population of the BENCH arm's phrase only: Eri
+          `sv05-146`/`-199`/`-210`, `sv08.5-136` (**4 legal**) prints *"…and you discard
+          **up to 2** Item cards you find there"* on D445's `dest: "discard"`. Same field,
+          same park (`min: 0, max: 2`), same per-class `cap` and the same asked-even-alone
+          guard; its caption is `bottomFromOpponentHandNote`'s D555 branch.
 
           🛑 **ONE FIELD AND NOT TWO, BECAUSE "UP TO" IS ONE PRINTED PHRASE.** It
           carries the COUNT *and* the DECLINE together: the park reads
@@ -23030,6 +23042,12 @@ const ATTACK_SELF_SWITCH_TYPED =
 // PLAY, so it goes through `programPlayable` — which has no arm for this op and
 // must not get a speculative one (a gate no printing reaches is the vacuous guard
 // conventions.md forbids). Recorded in `coverage-backlog-legal.md`.
+// 🆕🆕🆕 D555 — **"deliberately left for their own slice" IS WITHDRAWN (D539): D555 IS
+// THAT SLICE.** registry.ts `TORRENTIAL_WHIRLPOOL` keys both ids on this arm's program
+// byte for byte (the Ability surface), and `refusedPrintings.ts`'s two rows are deleted.
+// The rest of the paragraph STAYS TRUE: `programPlayable` has no arm for this op and
+// gets none — the play is gated by `switchActive`'s own arm, and with an empty opponent
+// Bench the self-switch still happens and the opponent is never asked.
 //
 // ⚠️⚠️ BOTH APOSTROPHES ON ALL THREE, LIKE THE TWO GUST ANCHORS 40 LINES UP AND
 // UNLIKE THE TWO SELF-SWITCH ANCHORS DIRECTLY ABOVE — AND THE FIRST DRAFT GOT

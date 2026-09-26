@@ -57,7 +57,8 @@ import {
 // author every OTHER `handRefresh` in the engine (Youngster, Judge, Brassius, Katy, Iono,
 // Skwovet, Gothitelle, Lacey, Drasna, Harlequin, Unfair Stamp and Team Rocket's Archer —
 // **30 registry card ids**, counted off `registryCardIds()` in §7 rather than listed from
-// memory). Embedding that
+// memory — 🆕🆕🆕 D555: **31**, Meddling Memo `sv08-181` joins them, a Trainer with
+// `who: "opponent"` + `toBottom` + `handPlus 0`; the "30" is the D516 count, kept). Embedding that
 // union here would therefore buy a SECOND evaluator for it — D159's own failure mode —
 // or plumb an `InPlayPokemon` through a Supporter. ⚠️ **THE HOUSE HAS MADE THIS CALL
 // TWICE IN WRITING**: `AttackFlipCount` re-spells three of that union's concepts under
@@ -588,7 +589,7 @@ describe("D516 §7 — what this slice did NOT buy, measured", () => {
     // write. The claim therefore rests on REACHABILITY (D450) ALONE, and reachability is
     // a measurement over the PRODUCERS rather than a property of the op — which is what
     // the rung below drives.
-    expect(engineVersion).toBe("0.438.0");
+    expect(engineVersion).toBe("0.439.0");
   });
 
   it("🛑 REACHABILITY IS EMPTY, MEASURED OVER EVERY PRODUCER RATHER THAN ASSERTED", () => {
@@ -642,10 +643,12 @@ describe("D516 §7 — what this slice did NOT buy, measured", () => {
     expect(derived).toBeGreaterThan(100);
     expect(registryCardIds().length).toBeGreaterThan(100);
     const producers = registryCardIds().filter((id) => holdsRefresh(programFor(id)));
-    expect(producers).toHaveLength(30);
+    expect(producers).toHaveLength(31); // 🆕🆕🆕 D555 — 30 -> 31, Meddling Memo `sv08-181` (index 0 of a one-op `trainer` list, so `offenders` stays empty)
     // 🛑 …AND THE INVARIANT IS NOT TRIVIALLY TRUE, WHICH IS THE PART A GREEN `offenders`
     // CANNOT SAY (D200). Of the op lists this walk visits, **337 hold more than one op**
-    // and the longest holds six — so index > 0 is somewhere a `handRefresh` genuinely
+    // (🆕🆕🆕 D555, MEASURED rather than carried: **376 of 1,013** at this head, **368 of
+    // 985** at the D554 base — the 337 is an older head's count, kept, and both floors
+    // below still hold) and the longest holds six — so index > 0 is somewhere a `handRefresh` genuinely
     // COULD be placed, and the emptiness is a fact about the authors rather than about
     // the shape of the data. A slice that made every program a singleton would turn this
     // rung vacuous, and these two numbers are what would notice.

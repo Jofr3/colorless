@@ -20114,6 +20114,40 @@ import type { GameState, Seat } from "./types";
     `expect(manifest.version)`, `it(…)` titles, the declaration and `package.json` —
     **not** as a value-keyed grep — because a value-keyed grep is precisely the mechanism
     that ate D500's heading.)
+    🆕🆕🆕 engineVersion 0.438.0 → **0.439.0** (D555 — THE ZERO-VOCABULARY TRAINERS AND ABILITIES, 20
+    PRINTINGS / 12 TEXTS / 12 OBJECTS — the coverage audit's abilities/trainers rows whose every op,
+    filter, timing and flag already ships. Twelve registry `CardProgram`s keyed on twenty REAL ids
+    inserted MID-MAP after `sv06.5-094` (D395/D396, so `raw[last]` stays `sv09-107`). FIVE TRAINERS:
+    Cook `sv06-147` (`heal self 70` — `heal`'s first TRAINER producer), Poké Vital A `sv06.5-062`
+    (`healChosen 150`; its "can't be put into your hand or deck from the discard pile" has no reader,
+    R3), Iris's Fighting Spirit `sv09-149`/`-180` (REVAVROOM's `payFromHand 1` → `drawUntilHandSize 6`,
+    unfiltered), Eri `sv05-146`/`-199`/`-210`, `sv08.5-136` (`bottomFromOpponentHand { item, dest:
+    "discard", upTo: 2 }` — D445's destination with D297's "up to", first spelled together) and Meddling
+    Memo `sv08-181` (`handRefresh { who: "opponent", toBottom, handPlus 0 }`, deliberately NO
+    `onlyIfAnyMoved`, R6). SEVEN ABILITIES: Volcarona `sv10.5b-016`/`-100` "Torrid Scales" (Basic {R}
+    hand cost → Burn, usable from the Bench), Archeops `sv10.5w-051`/`-132` "Ancient Wing"
+    (`activeOnly`, `devolveChosen`), Meowstic `sv08-085` "Beckoning Tail" (Chill Teaser Toy hand cost →
+    `gust`), Samurott `sv10.5w-023`/`-107` "Torrential Whirlpool" (Interjet's program byte for byte —
+    the REFUSED pair in `refusedPrintings.ts`, both rows deleted), Team Rocket's Tyranitar `sv10-096`
+    "Sand Stream" (`betweenTurns`, `activeOnly`, `counterEachAll 20 basicPokemon opponent`), Chien-Pao
+    `sv08-056`/`svp-152` "Snow Sink" (`onPlayToBench`, `conditionGate stadiumInPlay` → `optional` →
+    `discardStadium` — the "you may" is the INNER confirm, R2, and either player's Stadium goes) and
+    Ambipom `sv06-138` "Wicked Tail" (`onEvolve`, TWO independent `coinFlipGate`s over
+    `randomFromOpponentHand { to: "deck" }`, R1 UNRULED). THE ONE BEHAVIOUR LINE OUTSIDE THE REGISTRY:
+    `bottomFromOpponentHandNote` gains the discard arm's "up to" form (*"Your opponent reveals their
+    hand, and you discard up to 2 Item cards you find there."*), a separate branch above D445's
+    byte-identical sentence. Withdrawn and annotated in place (D539): effects.ts's "`toBottom` with
+    `handPlus` matches no card", the "30 registry card ids" (now 31), D297's "the whole population of
+    the phrase", D312's Samurott "deliberately left for their own slice" (effects.ts and
+    `derivedOpponentSwitchOut.test.ts`, whose §5 seam rung is RE-POINTED to a deep registry walk,
+    D418) and `captivatingInvitation.test.ts`'s unbuilt Meowstic. MEASURED against the brief:
+    `healChosenTargets` does NOT refuse an undamaged board (Potion's no-whiff doctrine, pinned — R4);
+    `programWalk.test.ts`'s enumerated walk misses Snow Sink's `optional.then` (55 → 57, two rows).
+    **`MATCH_RECORD_VERSION` STAYS 34**: no op, field or member is new. New suites
+    `simpleTrainersD555.test.ts` (31) and `simpleAbilitiesD555.test.ts` (39) on LOCAL `cardPool`s with
+    the REAL ids (D275). Census: `BUILT.trainer` 128 → 137 (Item 34 → 36, Supporter 80 → 87),
+    `BUILT.ability` 296 → 307, registry keys 740 → 760. Mutants 3,199 → 3,224, all twenty-five `D555-*`
+    KILLED.)
     🆕🆕🆕 engineVersion 0.437.0 → **0.438.0** (D554 — NINE DECK-SEARCH TRAINERS, 15 PRINTINGS / 9 TEXTS /
     9 OBJECTS, ZERO VOCABULARY — the coverage audit's "deck-search variants" cluster, the part every op,
     filter, rider and gate of which already ships. Nine registry `CardProgram`s keyed on fifteen REAL
@@ -24135,7 +24169,7 @@ import type { GameState, Seat } from "./types";
     WITNESS** — the count was re-derived every slice and the word *"three"* was carried.
     A successor of this slice inherits **81 / 61 / 17** again, over **FIVE** history
     occurrences: those four plus `deckMillFilteredScale.test.ts`'s own header arrow.) */
-export const engineVersion = "0.438.0";
+export const engineVersion = "0.439.0";
 
 export type {
   ApplyResult,

@@ -28249,3 +28249,50 @@ round-trips with `endsTurn`. Census: `BUILT.trainer` 113 → 128 (Item 29 → 34
 The audit's other deck searches need vocabulary: Team Rocket's Great Ball, TM Machine, Brilliant Blender, Tera Orb,
 Brock's Scouting, Love Ball, Dusk Ball, Crispin, Perrin, Salvatore. Next queue: the conditional-draw Trainers (Iris,
 Ariana, Billy — 6 printings, 2 `BoardCondition` members), then Samurott and Snow Sink.
+
+## D555 — the zero-vocabulary Trainers and Abilities: 20 printings / 12 texts / 12 objects, one caption branch, and the Samurott refusal retired (engine 0.439.0, `MATCH_RECORD_VERSION` 34 HELD)
+
+**Status:** ✅ BUILT — the coverage audit's heal / hand-cost / opponent-hand / once-per-turn rows whose every op, filter,
+timing and flag already ships, bundled by mechanism (the orchestrator's throughput note). Keyed MID-MAP after `sv06.5-094`.
+
+### (a) The twelve rows (registry.ts — Trainers beside `CASSIOPEIA`, Abilities beside `BONDED_BY_THE_JOURNEY`)
+| Card | Ids | Surface | Program |
+|---|---|---|---|
+| Cook | `sv06-147` | Supporter | `heal self 70` (heal's first Trainer producer) |
+| Poké Vital A | `sv06.5-062` | Item | `healChosen 150` (discard-pile clause unread — R3) |
+| Iris's Fighting Spirit | `sv09-149`/`-180` | Supporter | `payFromHand 1` → `drawUntilHandSize 6` |
+| Eri | `sv05-146`/`-199`/`-210`, `sv08.5-136` | Supporter | `bottomFromOpponentHand { item, dest: "discard", upTo: 2 }` |
+| Meddling Memo | `sv08-181` | Item | `handRefresh { opponent, toBottom, handPlus 0 }` (no `onlyIfAnyMoved` — R6) |
+| Volcarona "Torrid Scales" | `sv10.5b-016`/`-100` | Ability | Basic {R} hand cost → Burn the opponent's Active; Bench-usable |
+| Archeops "Ancient Wing" | `sv10.5w-051`/`-132` | Ability | `activeOnly`, `devolveChosen` |
+| Meowstic "Beckoning Tail" | `sv08-085` | Ability | Chill Teaser Toy hand cost → `gust` |
+| Samurott "Torrential Whirlpool" | `sv10.5w-023`/`-107` | Ability | Interjet's `switchActive` → `recordGate [opponentSwitchOut]` |
+| Team Rocket's Tyranitar "Sand Stream" | `sv10-096` | Triggered | `betweenTurns`, `activeOnly`, `counterEachAll 20 basicPokemon opponent` |
+| Chien-Pao "Snow Sink" | `sv08-056`, `svp-152` | Triggered | `onPlayToBench`: `conditionGate stadiumInPlay` → `optional` → `discardStadium` |
+| Ambipom "Wicked Tail" | `sv06-138` | Triggered | `onEvolve`: two `coinFlipGate`s → `randomFromOpponentHand deck` |
+
+### (b) The one behaviour line outside the registry
+`bottomFromOpponentHandNote` gains the discard arm's "up to" form — *"Your opponent reveals their hand, and you discard up
+to 2 Item cards you find there."* — as a separate branch above D445's byte-identical sentence (one printed form per card).
+
+### (c) Readings (`docs/decisions.md` D555)
+R1 ⚠️ UNRULED: Wicked Tail is two independent coin gates (two single flips in the log, not one grouped flip) · R2 Snow
+Sink's "you may" is the inner `optional` (the trigger flag auto-fires); either player's Stadium goes · R3 Poké Vital A's
+retrieval clause is a named fidelity gap · R4 ⚠️ UNRULED (D553 R1): Cook / Poké Vital A on an undamaged board and Ancient
+Wing with no evolved target play and whiff — the brief's predicted Potion refusal does NOT exist (measured) · R5 Sand
+Stream fires at every Checkup (TREVENANT) · R6 Meddling Memo's "If they do" is `handPlus 0`. Excluded: Community Center
+(no Stadium-Ability usable-if gate, D222) and Smog Signals (a mid-attack search answered by the non-turn seat).
+
+### (d) Tests, census and mutants
+New `simpleTrainersD555.test.ts` (31, the 31st a review-round rung on Meddling Memo's shuffle) and `simpleAbilitiesD555.test.ts` (39), REAL ids on LOCAL `cardPool`s (D275).
+Samurott's two `REFUSED_PRINTINGS` rows deleted (seven remain; suffix-only pair is Briar's);
+`derivedOpponentSwitchOut.test.ts`'s seam rung re-pointed to a deep registry walk (D418); `programWalk.test.ts` +2
+`missed` rows (Snow Sink's `optional.then`); `counterFold` producers 3 → 4; `handRefreshOpponentHand` producers 30 → 31.
+Census: `BUILT.trainer` 128 → 137 (Item 36, Supporter 87), `BUILT.ability` 296 → 307, `built` 2122 → 2142, registry keys
+740 → 760. Mutants 3,199 → 3,224 (+25 `D555-*`, all killed undeclared).
+
+### (e) Owed
+The whole-corpus sweep (~~D552 → D553 → D554 → D555, all pending~~ D552, D553 and D554 PAID, each exact on its first launch —
+close-outs `b7336c51`, `52f44920`, `ffaa63dc`; D555's pending, predicted `3171 · 53` over 3,224). R1 and R4 UNRULED. Next queue: the conditional-draw
+Trainers (Team Rocket's Ariana, Billy — 2 `BoardCondition` members), Thwackey / Crobat / Cradily, and the deck searches
+that need vocabulary.

@@ -824,6 +824,9 @@ describe("programPlayable — the gate and the op read the SAME endpoints", () =
     // does not descend into (only `coinFlipGate.then` is scanned) and its
     // ANTECEDENT is a `switchActive` the gate already refuses. Asserted here so
     // the finding is a red-able fact rather than a paragraph in a doc.
+    // 🆕🆕🆕 D555 — and Samurott is now BUILT (registry.ts `TORRENTIAL_WHIRLPOOL`, this
+    // exact program), so the "supposed to make it reachable" printing is a live row
+    // rather than a hypothetical; the finding holds unchanged — no arm was added.
     const samurott: EffectOp[] = [
       { op: "switchActive", recordAs: "moved" },
       // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable.

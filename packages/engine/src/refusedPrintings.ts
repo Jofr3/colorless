@@ -115,7 +115,9 @@ export type RefusedPrinting = {
     takes the window count from 27 to 44 and every one of the extra 17 is history.
     ⚠️ **THIS IS A RATCHET, NOT A CENSUS.** Nothing asserts the list is COMPLETE,
     and a completeness claim would be false the moment the next refusal is written
-    in prose. What it asserts is that these fourteen printings are still refused. */
+    in prose. What it asserts is that these fourteen printings are still refused.
+    (🆕🆕🆕 D555: SEVEN rows at this head, counted — the Samurott pair left when D555 built
+    it; "fourteen" is an older head's figure, kept.) */
 export const REFUSED_PRINTINGS: readonly RefusedPrinting[] = [
   {
     id: "sv01-127",
@@ -194,28 +196,6 @@ export const REFUSED_PRINTINGS: readonly RefusedPrinting[] = [
       excerpt: '      remaining" (Briar sv07-132/-163/-171, sv08.5-100 — unbuilt, see registry.ts)',
     },
   },
-  {
-    id: "sv10.5w-023",
-    card: "the ABILITY twin of Iron Bundle's compound switch",
-    surface: "ability",
-    why: 'Found by a sweep the backlog row missed BECAUSE THE ROW CENSUSED ATTACK TEXT ONLY. It prints the compound switch as an activated Ability — "Once during your turn, you may switch your Active Pokémon with 1 of your Benched Pokémon. If you do, switch out your opponent\'s Active Pokémon to the Bench." — so it is a REGISTRY row and not an arm, and is deliberately left for its own slice. ⚠️ It is exactly the shape D204 flagged per-surface: the card is not "unbuilt", its ABILITY is.',
-    since: "D312",
-    cite: {
-      file: "packages/engine/src/effects.ts",
-      excerpt: "// BECAUSE THE ROW CENSUSED ATTACK TEXT ONLY: `sv10.5w-023`/`-107` print the",
-    },
-  },
-  {
-    id: "sv10.5w-107",
-    card: "the ABILITY twin of Iron Bundle's compound switch (alternate art)",
-    surface: "ability",
-    why: 'The pair of `sv10.5w-023`, and the reason it gets a row of its own is that the doc block spells it `/`-107`` — a SUFFIX, which no id scan can see. A refusal written in suffix shorthand is invisible to every `git grep <id>` D321 prescribes, and that is the second way a build-state claim goes unchecked.',
-    since: "D312",
-    cite: {
-      file: "packages/engine/src/effects.ts",
-      excerpt: "// BECAUSE THE ROW CENSUSED ATTACK TEXT ONLY: `sv10.5w-023`/`-107` print the",
-    },
-  },
 ];
 
 /** Does `excerpt` actually name `id`? — the anti-typo rung of limit 2, and the
@@ -224,7 +204,12 @@ export const REFUSED_PRINTINGS: readonly RefusedPrinting[] = [
     🛑 **IT IS NOT `excerpt.includes(id)`, AND THE REASON IS A FINDING RATHER THAN A
     CONVENIENCE.** The repo writes a reprint's id as a SUFFIX — ``sv10.5w-023`/`-107``,
     `Briar sv07-132/-163/-171` — so five of the nine rows below are cited by prose
-    that never spells their id in full. **A refusal written in suffix shorthand is
+    that never spells their id in full. 🆕🆕🆕 **D555 — MEASURED, NOT CARRIED: TWO of the
+    SEVEN rows** (`sv07-163`, `sv07-171` — `refusedPrintings.test.ts` §4's `suffixOnly`
+    recomputes it). The "five of the nine" was never the measured figure (THREE at the
+    D554 head, the Samurott `-107` the third), and D555 BUILT Samurott `sv10.5w-023`/`-107`
+    ("Torrential Whirlpool", registry.ts `TORRENTIAL_WHIRLPOOL`) and deleted both of its
+    rows, so the table is seven rows and the suffix pair is Briar's alone. **A refusal written in suffix shorthand is
     invisible to the `git grep <id>` D321 prescribes**, which is the second way a
     build-state claim goes unchecked and the reason those printings get their own
     rows here. So a citation counts if it spells the id whole, OR if it names the SET
@@ -269,7 +254,20 @@ export type ResolvedRefusal = {
     `TRAINER_TERMS`, inside `BUILT.trainer`, and driven end-to-end on real boards
     — including all three of the boards the work order asked for by name (both
     sides of the gate driven separately, the wrong-SEAT board, and the wrong-WINDOW
-    board) — by `lastTurnKo.test.ts` §3 and `lastKoOwnerMark.test.ts` §7. */
+    board) — by `lastTurnKo.test.ts` §3 and `lastKoOwnerMark.test.ts` §7.
+
+    🆕🆕🆕 **D555 — A RETIREMENT GUARDED IN ONE DIRECTION ONLY, SAID OUT LOUD.** D555
+    BUILT Samurott `sv10.5w-023`/`-107` (registry.ts `TORRENTIAL_WHIRLPOOL`) and
+    DELETED both of its `REFUSED_PRINTINGS` rows, as §2's red line instructs
+    ("correct the cited doc block, then delete the row"). It added NO row here, so
+    this table stays at THREE: its scope is D480's retro-finds, printings built
+    BEHIND a refusal nobody corrected, and Samurott's refusal was corrected in the
+    slice that built it. ⚠️ The cost is named, not hidden: the dated D555 correction
+    in effects.ts (under *"AND THE SWEEP FOUND TWO LEGAL PRINTINGS"*, stamped
+    *"deliberately left for their own slice" IS WITHDRAWN*) is guarded by NOTHING here — deleting or
+    reverting it reddens no test. A later slice that wants the header's "total in
+    both directions" to cover same-slice retirements adds two rows (builtBy D555,
+    refusedBy D312, citing that annotation) and moves this count 3 -> 5. */
 export const RESOLVED_REFUSALS: readonly ResolvedRefusal[] = [
   {
     id: "sv06-165",

@@ -2520,7 +2520,9 @@ export interface StadiumEffects {
       hand or deck from the discard pile." is a DISCARD-PILE RETRIEVAL restriction
       with one sibling in the pool (Poké Vital A sv06.5-062) and no reader anywhere
       in the engine: no op, no filter and no search path consults a card's own
-      retrievability. Naming it here would be inventing a mechanism. */
+      retrievability. Naming it here would be inventing a mechanism. (🆕🆕🆕 D555:
+      Poké Vital A's HEAL is built, `POKE_VITAL_A`; its retrieval clause is still
+      unread — D555 R3, the same named gap.) */
   preventDamageToNoRuleBoxFromExV?: true;
   /** §7.3/§8.1 (D324) — the in-play Stadium's ± to the max HP of every Pokémon of
       ONE STAGE, on BOTH sides: *"Each Basic Pokémon in play (both yours and your
@@ -4132,7 +4134,8 @@ const CALAMITOUS_WASTELAND: CardProgram = {
     PILE RETRIEVAL — one sibling in the pool (Poké Vital A sv06.5-062) and no
     reader anywhere: no search filter, no op and no zone rule consults a card's own
     retrievability, so authoring it would be inventing a mechanism rather than
-    reading one. */
+    reading one. (🆕🆕🆕 D555: the sibling's HEAL is built, `POKE_VITAL_A`; its
+    retrieval clause is still unread — D555 R3.) */
 const NEUTRALIZATION_ZONE: CardProgram = {
   stadium: { preventDamageToNoRuleBoxFromExV: true },
 };
@@ -5322,6 +5325,117 @@ const CASSIOPEIA: CardProgram = {
   trainer: [
     { op: "searchDeck", filter: { kind: "anyCard" }, dest: "hand", max: 2 },
     { op: "shuffleDeck" },
+  ],
+};
+
+// ── 🆕🆕🆕 D555 — THE ZERO-VOCABULARY TRAINERS, 9 PRINTINGS / 5 TEXTS / 5 OBJECTS. The
+//    2026-09-25 coverage audit's heal / hand-cost draw / opponent-hand rows, the part
+//    of them every op, filter and rider of which already ships: `heal { target:
+//    "self" }` (D553's Ability producer), `healChosen` (Potion), REVAVROOM's
+//    `payFromHand` → `drawUntilHandSize`, `bottomFromOpponentHand { dest: "discard",
+//    upTo }` (D445 + D297) and `handRefresh { who: "opponent", toBottom, handPlus }`.
+//    Texts, subtypes and legality off tcgdex (the ingest's own upstream), 2026-09-25;
+//    one object per printed TEXT (D199), reprints share it. Keyed MID-MAP after
+//    `sv06.5-094` (D395/D396), so the map's LAST key does not move. ──
+
+/** 🆕🆕🆕 **D555 — Cook `sv06-147` (Supporter, 1 legal)** — *"Heal 70 damage from your
+    Active Pokémon."*
+
+    🛑 **THE FIRST TRAINER PRODUCER OF `heal { target: "self" }`** — `HEALING_LEAVES`
+    (D553) is the first REGISTRY/ABILITY one, and that claim stays true. `healSelf`
+    reads the CONTROLLER's Active (`state.players[ctx.seat].active`), which on a
+    Trainer is exactly the printed *"your Active Pokémon"*; a damaged Benched body is
+    not touched. The clamp is the op's own (70 on 30 damage heals 30). ⚠️ **AN
+    UNDAMAGED ACTIVE STILL LETS IT BE PLAYED** and files no `HEALED` row — the heal
+    doctrine `programPlayable` has always had (*"Search/draw/heal are always
+    'playable enough'"*, cardplay.ts), inherited from D553 R1 (UNRULED). ⚠️ The D555
+    brief predicted Potion's `healChosen` REFUSES an undamaged board; MEASURED, it
+    does not (`healChosenTargets` narrows only on `remainingHpAtMost`, so the
+    unnarrowed offer is every own body) — every heal op in the pool agrees (D555 R4). */
+const COOK: CardProgram = {
+  trainer: [{ op: "heal", target: "self", amount: 70 }],
+};
+
+/** 🆕🆕🆕 **D555 — Poké Vital A `sv06.5-062` (Item, 1 legal)** — *"Heal 150 damage from
+    1 of your Pokémon. / This card can't be put into your hand or deck from the
+    discard pile."*
+
+    Potion's `healChosen` at 150: one Pokémon in play is forced, two or more park on
+    the chosen-Pokémon prompt, and the clamp is the op's own. ⚠️ **NOT REFUSED ON AN
+    UNDAMAGED BOARD** — the D555 brief predicted `healChosenTargets` would refuse it;
+    MEASURED, that funnel narrows only on `remainingHpAtMost` (D349), so the offer is
+    every own body and an undamaged pick heals 0 and files no `HEALED`: Potion's
+    no-whiff doctrine (`picnicBasket.test.ts`), pinned, not changed (D555 R4). 🛑 **THE
+    SECOND SENTENCE IS NOT ENFORCED (D555 R3, a NAMED FIDELITY GAP)**: it is a rule
+    about the card's OWN movement out of the discard pile, and no reader exists for
+    a per-card pile lock — `NEUTRALIZATION_ZONE`'s precedent for a printed clause
+    with no reader. The heal is BUILT; the retrieval clause is still unread. */
+const POKE_VITAL_A: CardProgram = {
+  trainer: [{ op: "healChosen", amount: 150 }],
+};
+
+/** 🆕🆕🆕 **D555 — Iris's Fighting Spirit `sv09-149`/`-180` (Supporter, 2 legal)** —
+    *"You can use this card only if you discard another card from your hand. / Draw
+    cards until you have 6 cards in your hand."*
+
+    `REVAVROOM`'s program on the Trainer surface with the filter dropped (the print
+    says *"another card"*, any card): the cost is the FIRST op, so the draw counts
+    the hand AFTER the payment — a hand of 4 others pays 1 and draws to 6 (+3). The
+    gate is `handCostUnmet` with the played uid excluded, so a hand holding Iris
+    alone is refused, and the refusal reads *"another card"* through
+    `handCostPhrase(op, true)`. A hand of 6 or more after paying draws 0. */
+const IRISS_FIGHTING_SPIRIT: CardProgram = {
+  trainer: [
+    { op: "payFromHand", count: 1, to: "discard" },
+    { op: "drawUntilHandSize", size: 6 },
+  ],
+};
+
+/** 🆕🆕🆕 **D555 — Eri `sv05-146`/`-199`/`-210`, `sv08.5-136` (Supporter, 4 legal)** —
+    *"Your opponent reveals their hand, and you discard up to 2 Item cards you find
+    there."*
+
+    D445's `dest: "discard"` with D297's `upTo` — the two riders were each built for
+    one sentence and this is the first to spell both. The whole hand goes public
+    FIRST (`revealHand`), then a `chooseCards` park at `min: 0, max: 2` over the
+    Items, keeping TWO representatives per interchangeable class (so two copies of
+    one Item are both offered) and ASKING even on a lone Item (the declinable
+    branch of D297's auto-resolve guard). An EMPTY opponent hand is refused
+    (cardplay.ts, the public count); a hand with no Item still PLAYS — the reveal
+    happens and the discard whiffs, which is the card working as printed
+    (ruling/284's line). The caption is the printed sentence, character for
+    character (`bottomFromOpponentHandNote`'s D555 branch). */
+const ERI: CardProgram = {
+  trainer: [
+    {
+      op: "bottomFromOpponentHand",
+      filter: { kind: "item" },
+      dest: "discard",
+      upTo: 2,
+    },
+  ],
+};
+
+/** 🆕🆕🆕 **D555 — Meddling Memo `sv08-181` (Item, 1 legal)** — *"Your opponent counts
+    the cards in their hand, shuffles those cards, and puts them on the bottom of
+    their deck. If they do, they draw that many cards."*
+
+    Gothitelle's `who: "opponent"` with Iono's `toBottom` (the hand goes UNDER the
+    deck, the deck's own order kept) and Brassius's `handPlus` at `delta: 0` —
+    *"that many"* is the counted hand, measured BEFORE it moves. The controller's
+    hand is untouched. ⚠️ **NO `onlyIfAnyMoved`, AND THAT IS DELIBERATE (D555 R6)**:
+    *"If they do"* is carried by `handPlus 0` itself — an EMPTY hand moves nothing
+    and draws 0 (`drawToHand` returns early at `count <= 0`), so the rider would be
+    vacuous here and any mutant of it equivalent. Never refused (the op has no
+    `programPlayable` gate, D39). */
+const MEDDLING_MEMO: CardProgram = {
+  trainer: [
+    {
+      op: "handRefresh",
+      who: "opponent",
+      toBottom: true,
+      draw: { kind: "handPlus", delta: 0 },
+    },
   ],
 };
 
@@ -12591,6 +12705,228 @@ const BONDED_BY_THE_JOURNEY: CardProgram = {
   ],
 };
 
+// ── 🆕🆕🆕 D555 — THE ZERO-VOCABULARY ABILITIES, 11 PRINTINGS / 7 TEXTS / 7 OBJECTS.
+//    Four activated (`abilities`) and three triggered (`triggered`), every op, filter,
+//    timing and flag already shipped: MEOWSCARADA's hand cost, SCALDING_STEAM's
+//    Burn, D540's `devolveChosen`, Boss's Orders' `gust`, Interjet's compound switch,
+//    FREEZING_SHROUD's `counterEachAll` under TREVENANT's `activeOnly`, D380's
+//    `discardStadium` behind D378's `stadiumInPlay`, and D232's
+//    `randomFromOpponentHand` behind two coins. None authors an `attack` key: each
+//    card's printed attack reaches the deriver exactly as before. ──
+
+/** 🆕🆕🆕 **D555 — Volcarona `sv10.5b-016`/`-100` "Torrid Scales" (Ability, 2 legal)**
+    — *"You must discard a Basic {R} Energy card from your hand in order to use this
+    Ability. Once during your turn, you may make your opponent's Active Pokémon
+    Burned."*
+
+    `MEOWSCARADA`'s cost at {R} (fungible, so it asks nothing) over the Burn
+    `SCALDING_STEAM` applies — but usable from the BENCH (the print carries no
+    Active-Spot clause). `handCostUnmet` refuses it without a Basic {R} Energy card
+    in hand, before anything is committed. */
+const TORRID_SCALES: CardProgram = {
+  abilities: [
+    {
+      name: "Torrid Scales",
+      oncePerTurn: true,
+      activeOnly: false,
+      program: [
+        {
+          op: "payFromHand",
+          count: 1,
+          to: "discard",
+          filter: { kind: "basicEnergy", energyType: "Fire" },
+        },
+        { op: "applyStatus", target: "defender", status: "burned" },
+      ],
+    },
+  ],
+};
+
+/** 🆕🆕🆕 **D555 — Archeops `sv10.5w-051`/`-132` "Ancient Wing" (Ability, 2 legal)** —
+    *"Once during your turn, if this Pokémon is in the Active Spot, you may devolve 1
+    of your opponent's evolved Pokémon by putting the highest Stage Evolution card on
+    it into your opponent's hand."*
+
+    D540's `devolveChosen` — the attack sentence verbatim after *"you may"* — on the
+    Ability surface, `activeOnly` for the printed Active-Spot clause. One evolved
+    target is forced, two or more park on `choosePokemon`. ⚠️ **NO `programPlayable`
+    ARM FOR THIS OP**, so with no evolved Pokémon on the opponent's side the Ability
+    is USED, whiffs and spends the once-per-turn — D553 R1's reading (UNRULED),
+    named in D555 R4 beside Cook and Poké Vital A, which also play and whiff —
+    Potion's `healChosen` is NOT refused on an undamaged board either (MEASURED:
+    `healChosenTargets` narrows only on `remainingHpAtMost`). */
+const ANCIENT_WING: CardProgram = {
+  abilities: [
+    {
+      name: "Ancient Wing",
+      oncePerTurn: true,
+      activeOnly: true,
+      program: [{ op: "devolveChosen" }],
+    },
+  ],
+};
+
+/** 🆕🆕🆕 **D555 — Meowstic `sv08-085` "Beckoning Tail" (Ability, 1 legal)** — *"You
+    must discard a Chill Teaser Toy card from your hand in order to use this
+    Ability. Once during your turn, you may switch in 1 of your opponent's Benched
+    Pokémon to the Active Spot."*
+
+    The hand cost on a `byName` noun with `cardNoun: true` (the printed "card" after
+    a Trainer's name, D264), then Boss's Orders' `gust`. Refused by `handCostUnmet`
+    without a Chill Teaser Toy in hand (caption *"Discard a Chill Teaser Toy card
+    from your hand."*) and by `gustTargets` into an empty opponent Bench. */
+const BECKONING_TAIL: CardProgram = {
+  abilities: [
+    {
+      name: "Beckoning Tail",
+      oncePerTurn: true,
+      activeOnly: false,
+      program: [
+        {
+          op: "payFromHand",
+          count: 1,
+          to: "discard",
+          filter: { kind: "byName", name: "Chill Teaser Toy", cardNoun: true },
+        },
+        { op: "gust" },
+      ],
+    },
+  ],
+};
+
+/** 🆕🆕🆕 **D555 — Samurott `sv10.5w-023`/`-107` "Torrential Whirlpool" (Ability, 2
+    legal)** — *"Once during your turn, you may switch your Active Pokémon with 1 of
+    your Benched Pokémon. If you do, switch out your opponent's Active Pokémon to the
+    Bench. (Your opponent chooses the new Active Pokémon.)"*
+
+    🛑 **INTERJET's PROGRAM, BYTE FOR BYTE (effects.ts,
+    `ATTACK_SELF_SWITCH_THEN_OPPONENT_SWITCH_OUT`)**, on the Ability surface — the
+    printing D312 named as *"deliberately left for their own slice"* and
+    `refusedPrintings.ts` carried as REFUSED; both rows are deleted and the claim
+    annotated (D555). `switchActive` gates the use (`switchActiveTargets`, an empty
+    own Bench is refused); `opponentSwitchOut` has NO `programPlayable` arm and gets
+    none — with the opponent's Bench empty the self-switch still happens and the
+    opponent is never asked (`parkOrForce`'s zero-candidate ending), otherwise it
+    parks with the OPPONENT as answerer. */
+const TORRENTIAL_WHIRLPOOL: CardProgram = {
+  abilities: [
+    {
+      name: "Torrential Whirlpool",
+      oncePerTurn: true,
+      activeOnly: false,
+      program: [
+        { op: "switchActive", recordAs: "moved" },
+        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
+        { op: "recordGate", slot: "moved", then: [{ op: "opponentSwitchOut" }] },
+      ],
+    },
+  ],
+};
+
+/** 🆕🆕🆕 **D555 — Team Rocket's Tyranitar `sv10-096` "Sand Stream" (Ability, 1
+    legal)** — *"During Pokémon Checkup, if this Pokémon is in the Active Spot, put 2
+    damage counters on each of your opponent's Basic Pokémon."*
+
+    `TREVENANT`'s timing and spot clause over `FREEZING_SHROUD`'s op: `counterEachAll`
+    with `side: "opponent"` (D450), `basicPokemon` read off each body's TOP card (a
+    Stage 1 is not a Basic Pokémon), `amount: 20` the printed 2 counters converted to
+    HP at the registry (§12). Fires at EVERY Checkup while Active (D555 R5, on
+    TREVENANT's reading) and the Checkup's own KO sweep resolves a lethal placement.
+    ⚠️ **THE KEY ORDER IS TREVENANT's — `trigger`, `activeOnly`, `program`** — so the
+    D340 mutant anchored on `trigger: "betweenTurns",\n      program:` still finds
+    exactly one site. */
+const SAND_STREAM: CardProgram = {
+  triggered: [
+    {
+      name: "Sand Stream",
+      trigger: "betweenTurns",
+      activeOnly: true,
+      program: [
+        {
+          op: "counterEachAll",
+          amount: 20,
+          filter: { kind: "basicPokemon" },
+          side: "opponent",
+          source: "ability",
+        },
+      ],
+    },
+  ],
+};
+
+/** 🆕🆕🆕 **D555 — Chien-Pao `sv08-056`, `svp-152` "Snow Sink" (Ability, 2 legal)** —
+    *"When you play this Pokémon from your hand onto your Bench during your turn, you
+    may discard a Stadium in play."*
+
+    `FLAMIGO`'s `onPlayToBench` timing (turn.ts `playBasicToBench` only — a Bench
+    placement by a search or by setup is not the printed play). 🛑 **THE "YOU MAY" IS
+    THE INNER `optional` OP, NOT `TriggeredAbility.optional` (D555 R2)** — the flag
+    AUTO-FIRES (its own doc), and discarding a Stadium is not pure upside, so the
+    confirm has to be a real park. The `conditionGate` on D378's `stadiumInPlay`
+    keeps a Stadium-less board from asking a question with one possible answer.
+    *"A Stadium in play"* is EITHER player's — `stadiumInPlay` is presence, not
+    `yourStadiumInPlay`'s ownership — and `discardStadium` sends it to its OWNER's
+    pile (D380). */
+const SNOW_SINK: CardProgram = {
+  triggered: [
+    {
+      name: "Snow Sink",
+      trigger: "onPlayToBench",
+      optional: true,
+      program: [
+        {
+          op: "conditionGate",
+          cond: { kind: "stadiumInPlay" },
+          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
+          then: [
+            {
+              op: "optional",
+              note: "You may discard a Stadium in play.",
+              // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
+              then: [{ op: "discardStadium" }],
+            },
+          ],
+        },
+      ],
+    },
+  ],
+};
+
+/** 🆕🆕🆕 **D555 — Ambipom `sv06-138` "Wicked Tail" (Ability, 1 legal)** — *"When you
+    play this Pokémon from your hand to evolve 1 of your Pokémon during your turn, you
+    may flip 2 coins. For each heads, choose a random card from your opponent's hand.
+    Your opponent reveals those cards and shuffles them into their deck."*
+
+    🛑 **TWO INDEPENDENT `coinFlipGate`s (D555 R1, UNRULED)**, each over D232's
+    `randomFromOpponentHand { to: "deck" }` (the card is named in
+    `RANDOM_CARD_TAKEN`, appended and the owner's deck shuffled). The distribution is
+    the printed one, and each random pick reads the LIVE hand, so no card can be
+    picked twice; what differs is the LOG — two single flips rather than one grouped
+    *"flip 2 coins"* (`programPerHeads` is attack-only). Reverses if the log or the
+    HUD needs the grouped flip. `onEvolve` (turn.ts `evolve`), auto-fired (the flag's
+    doc; the flips are pure upside). An empty opponent hand whiffs silently. */
+const WICKED_TAIL: CardProgram = {
+  triggered: [
+    {
+      name: "Wicked Tail",
+      trigger: "onEvolve",
+      optional: true,
+      program: [
+        {
+          op: "coinFlipGate",
+          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
+          then: [{ op: "randomFromOpponentHand", to: "deck" }],
+        },
+        {
+          op: "coinFlipGate",
+          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
+          then: [{ op: "randomFromOpponentHand", to: "deck" }],
+        },
+      ],
+    },
+  ],
+};
+
 const REGISTRY: Record<string, CardProgram> = {
   // Professor's Research (SV base prints)
   "sv01-189": PROFESSORS_RESEARCH,
@@ -13095,6 +13431,29 @@ const REGISTRY: Record<string, CardProgram> = {
   "sv06.5-056": CASSIOPEIA, // Cassiopeia — only as the last card in hand; up to 2 cards → hand
   "sv06.5-086": CASSIOPEIA, // Cassiopeia (reprint)
   "sv06.5-094": CASSIOPEIA, // Cassiopeia (reprint)
+  // ── 🆕🆕🆕 D555 — the zero-vocabulary Trainers and Abilities, 20 printings / 12
+  //    texts / 12 objects, MID-MAP (D395/D396), so the batons that read the map's
+  //    LAST key do not move. ──
+  "sv06-147": COOK, // Cook — heal 70 from your Active
+  "sv06.5-062": POKE_VITAL_A, // Poké Vital A — heal 150 from 1 of your Pokémon
+  "sv09-149": IRISS_FIGHTING_SPIRIT, // Iris's Fighting Spirit — discard another card, draw to 6
+  "sv09-180": IRISS_FIGHTING_SPIRIT, // Iris's Fighting Spirit (reprint)
+  "sv05-146": ERI, // Eri — reveal the opponent's hand, discard up to 2 Item cards
+  "sv05-199": ERI, // Eri (reprint)
+  "sv05-210": ERI, // Eri (reprint)
+  "sv08.5-136": ERI, // Eri (reprint)
+  "sv08-181": MEDDLING_MEMO, // Meddling Memo — the opponent's hand under their deck, draw that many
+  "sv10.5b-016": TORRID_SCALES, // Volcarona — Torrid Scales (discard a Basic {R}: Burn)
+  "sv10.5b-100": TORRID_SCALES, // Volcarona (reprint)
+  "sv10.5w-051": ANCIENT_WING, // Archeops — Ancient Wing (Active only: devolve 1 to hand)
+  "sv10.5w-132": ANCIENT_WING, // Archeops (reprint)
+  "sv08-085": BECKONING_TAIL, // Meowstic — Beckoning Tail (discard a Chill Teaser Toy: gust)
+  "sv10.5w-023": TORRENTIAL_WHIRLPOOL, // Samurott — Torrential Whirlpool (switch; if you do, switch out)
+  "sv10.5w-107": TORRENTIAL_WHIRLPOOL, // Samurott (reprint)
+  "sv10-096": SAND_STREAM, // Team Rocket's Tyranitar — Sand Stream (Checkup, Active: 2 counters on each opposing Basic)
+  "sv08-056": SNOW_SINK, // Chien-Pao — Snow Sink (bench from hand: may discard a Stadium)
+  "svp-152": SNOW_SINK, // Chien-Pao (reprint)
+  "sv06-138": WICKED_TAIL, // Ambipom — Wicked Tail (on evolve: 2 coins, random hand card per heads → deck)
   // ── D190 — THE **STANDARD-LEGAL** REPRINT-ALIAS MAP (Tier 0 of
   //    `docs/reference/coverage-backlog-legal.md`). 22 printings, 9 map targets,
   //    ZERO new code: every row below prints a sentence that is already authored

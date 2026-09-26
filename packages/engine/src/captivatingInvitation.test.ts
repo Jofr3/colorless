@@ -80,7 +80,10 @@ const PETREL_IDS = ["sv10-176", "sv10-226"] as const;
 //       `BUILT.attack` cannot move), Prime Catcher ×2 and Team Rocket's
 //       Giovanni ×3 (Trainers, built), and THREE Abilities — Meowstic
 //       `sv08-085`, Hop's Dubwool `sv09-136` (BUILT as `DEFIANT_HORN`) and
-//       Florges. ⚠️ **A SPLIT THAT DOES NOT SUM TO ITS TOTAL IS THE CHEAPEST
+//       Florges. (🆕🆕🆕 D555: the line tagged Dubwool alone as BUILT, leaving
+//       Meowstic read as unbuilt — WITHDRAWN (D539): Meowstic `sv08-085` is BUILT as
+//       `BECKONING_TAIL`, a Chill Teaser Toy hand cost over an unnarrowed gust.)
+//       ⚠️ **A SPLIT THAT DOES NOT SUM TO ITS TOTAL IS THE CHEAPEST
 //       CENSUS CHECK THERE IS, AND IT ONLY WORKS IF THE SPLIT IS WRITTEN DOWN.**
 //
 // 🛑 **THE PRINTED NOUN IS "Benched Pokémon" WITH NO BASIC CLAUSE**, which is the
