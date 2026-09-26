@@ -442,13 +442,13 @@ describe("seatDamageReduction — the aura-scan family's NINTH member", () => {
     state = benchFromDeck(state, "p2", "sv02-113");
     const active = state.players.p2.active;
     if (active === null) throw new Error("no Active");
-    expect(seatDamageReduction(state, active, "all")).toBe(10);
+    expect(seatDamageReduction(state, active, "all", "p1")).toBe(10);
 
     let other = board("fix-attacker", "sv02-113");
     other = benchFromDeck(other, "p2", "fix-bigbody");
     const benched = other.players.p2.bench[benchedIndex(other, "p2", "fix-bigbody")];
     if (benched === undefined) throw new Error("no benched body");
-    expect(seatDamageReduction(other, benched, "all")).toBe(10);
+    expect(seatDamageReduction(other, benched, "all", "p1")).toBe(10);
   });
 
   it("is SELF-INCLUSIVE — the source shields itself", () => {
@@ -458,7 +458,7 @@ describe("seatDamageReduction — the aura-scan family's NINTH member", () => {
     const state = board("fix-attacker", "sv02-113");
     const active = state.players.p2.active;
     if (active === null) throw new Error("no Active");
-    expect(seatDamageReduction(state, active, "all")).toBe(10);
+    expect(seatDamageReduction(state, active, "all", "p1")).toBe(10);
   });
 
   it("SUMS over sources — `opposingRetreatSurcharge`'s answer, not `opposingAttackDebuff`'s", () => {
@@ -469,7 +469,7 @@ describe("seatDamageReduction — the aura-scan family's NINTH member", () => {
     state = benchFromDeck(state, "p2", "sv02-113");
     const active = state.players.p2.active;
     if (active === null) throw new Error("no Active");
-    expect(seatDamageReduction(state, active, "all")).toBe(20);
+    expect(seatDamageReduction(state, active, "all", "p1")).toBe(20);
     const { events } = swing(state, "fix-attacker");
     expect(find(events, "DAMAGE_DEALT")?.reduction).toBe(20);
     expect(find(events, "DAMAGE_DEALT")?.dealt).toBe(40);
@@ -483,7 +483,7 @@ describe("seatDamageReduction — the aura-scan family's NINTH member", () => {
     state = benchFromDeck(state, "p1", "sv02-113");
     const active = state.players.p2.active;
     if (active === null) throw new Error("no Active");
-    expect(seatDamageReduction(state, active, "all")).toBe(0);
+    expect(seatDamageReduction(state, active, "all", "p1")).toBe(0);
     expect(find(swing(state, "fix-attacker").events, "DAMAGE_DEALT")?.dealt).toBe(60);
   });
 
@@ -516,8 +516,8 @@ describe("seatDamageReduction — the aura-scan family's NINTH member", () => {
     const attacker = state.players.p1.active;
     if (defender === null || attacker === null) throw new Error("board not built");
     // p2 has ONE source (itself); p1 has TWO. Neither total leaks across.
-    expect(seatDamageReduction(state, defender, "all")).toBe(10);
-    expect(seatDamageReduction(state, attacker, "all")).toBe(20);
+    expect(seatDamageReduction(state, defender, "all", "p1")).toBe(10);
+    expect(seatDamageReduction(state, attacker, "all", "p2")).toBe(20);
   });
 
   it("is LIVE-READ — nothing is stamped, so losing the source ends it immediately", () => {
@@ -529,11 +529,11 @@ describe("seatDamageReduction — the aura-scan family's NINTH member", () => {
     state = benchFromDeck(state, "p2", "sv02-113");
     const active = state.players.p2.active;
     if (active === null) throw new Error("no Active");
-    expect(seatDamageReduction(state, active, "all")).toBe(10);
+    expect(seatDamageReduction(state, active, "all", "p1")).toBe(10);
     const stripped = clearBench(state, "p2");
     const strippedActive = stripped.players.p2.active;
     if (strippedActive === null) throw new Error("no Active");
-    expect(seatDamageReduction(stripped, strippedActive, "all")).toBe(0);
+    expect(seatDamageReduction(stripped, strippedActive, "all", "p1")).toBe(0);
   });
 });
 

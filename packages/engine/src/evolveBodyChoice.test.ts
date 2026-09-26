@@ -75,7 +75,9 @@ import {
 //
 // ── WHAT THE ROW COSTS ──────────────────────────────────────────────────────
 //
-// ONE new `EffectOp` with **no fields** (`evolveFromDeckChosen`), ONE WIDENED
+// ONE new `EffectOp` with **no fields** (`evolveFromDeckChosen` — 🆕🆕🆕 D558 CORRECTION
+// (D539): "no fields" is WITHDRAWN at HEAD; Salvatore added ONE optional rider,
+// `noAbilities`, and this op still holds no answer), ONE WIDENED
 // field on an existing one, ONE anchored regex with **no captures**, ONE deriver
 // arm, ONE `continuationOps` member. **NO new prompt kind, NO new choice kind, NO
 // new event, NO new error code, NO new `GameState` field, NO new `CardFilter`

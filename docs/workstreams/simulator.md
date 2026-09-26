@@ -19792,7 +19792,7 @@ failure mode the table exists to prevent. Verified id-by-id against the catalog:
 | TR Giovanni switch | `sv10-176 -186 -231` | TR Petrel, Crustle, TR Mewtwo ex | `sv10-174 -225 -238` |
 | TR Spidops damage-count | `sv10-118 -224` | TR Nidorino, TR Ariana | `sv10-020 -187` |
 | TR Energy discard | `sv10-119 -225 -241` | TR Nidoking ex, TR Giovanni, Cynthia's Garchomp ex | `sv10-031 -208 -229` |
-| N's Castle retreat aura | `sv09-...`/`sv10-165` | Ethan's Adventure | `sv09-152` |
+| N's Castle retreat aura | `sv09-...`/`sv10-165` | Ethan's Adventure | `sv09-152` (🆕🆕🆕 2026-09-26: ✅ BUILT, D558 — `NS_CASTLE`, `StadiumEffects.retreat.free`) |
 | Arven's Sandwich heal | `sv09-166` | Lycanroc | `sv10-161` |
 
 The four rows that were right: the Iono's attach, TR Great Ball `sv10-175`,
@@ -28249,7 +28249,9 @@ round-trips with `endsTurn`. Census: `BUILT.trainer` 113 → 128 (Item 29 → 34
 The audit's other deck searches need vocabulary: Team Rocket's Great Ball (🆕🆕🆕 2026-09-26 D556 CORRECTION (D539): it needed none — BUILT at D556), TM Machine, Brilliant Blender, Tera Orb,
 Brock's Scouting, Love Ball, Dusk Ball, Crispin, Perrin, Salvatore. (🆕🆕🆕 2026-09-26 D557: TM Machine, Brilliant Blender and
 Dusk Ball are BUILT — one small rider each: `CardFilter.toolNameContaining`, `searchDeck.dest: "discard"`, `lookAtTopN.from:
-"bottom"`. Brock's Scouting stays deferred: its either-scope cap is new wire validation, and optional-first is refused by D344.) Next queue: the conditional-draw Trainers (Iris,
+"bottom"`. Brock's Scouting stays deferred: its either-scope cap is new wire validation, and optional-first is refused by D344.)
+(🆕🆕🆕 2026-09-26 D558: Salvatore is BUILT — one optional key, `noAbilities` on `evolveFromDeckChosen` / `evolveFromDeck`,
+threaded through the body narrowing, the answer, the offer and the move.) Next queue: the conditional-draw Trainers (Iris,
 Ariana, Billy — 6 printings, 2 `BoardCondition` members), then Samurott and Snow Sink.
 
 ## D555 — the zero-vocabulary Trainers and Abilities: 20 printings / 12 texts / 12 objects, one caption branch, and the Samurott refusal retired (engine 0.439.0, `MATCH_RECORD_VERSION` 34 HELD)
@@ -28389,6 +28391,58 @@ re-declared and re-probed); declared survivors 53 → 52.
 
 ### (e) Owed
 The whole-corpus sweep (~~D552 → … → D557, all pending~~ D552–D556 PAID, each exact on its first launch — D556's `3201 · 53` at
-close-out `0a9db1be`; D557's pending, predicted `3226 · 52` over 3,278). Brock's Scouting deferred. R-K1, R-L1 UNRULED; R-K2's deviation (a debt).
+close-out `0a9db1be`; D557's ~~pending, predicted `3226 · 52` over 3,278~~ PAID `3226 · 52` over 3,278 at close-out `01c6d987`, exact on its first launch — 🆕 D558 landing). Brock's Scouting deferred. R-K1, R-L1 UNRULED; R-K2's deviation (a debt).
 The HUD does not show a side bonus (D556's debt). Next: the ability bundle (16 printings / 10 items) (🆕 D557 landing: after
 D558 — the first Tools and Stadiums plus Salvatore, parked on `d558-prep` at `28518c81`, stacked on D557 — which lands first).
+
+## D558 — the first Tools and Stadiums on the four existing modifier seams, plus Salvatore: 18 printings / 12 texts / 12 objects (engine 0.442.0, `MATCH_RECORD_VERSION` stays 35)
+
+**Status:** ✅ BUILT — keyed MID-MAP after `sv10.5w-085`. Built in the `lum-wt-d558` worktree stacked on the parked D557; committed there on `d558-prep` at `28518c81` and LANDED on `main` by cherry-pick onto the D557 close-out `01c6d987`.
+
+### (a) The twelve rows (registry.ts, one block before `const REGISTRY`)
+| Card | Ids | Surface | Program |
+|---|---|---|---|
+| Counter Gain | `sv08-169`/`-249` | Tool | `attackCostDiscount { 1, ifMorePrizesRemaining }` |
+| Hop's Choice Band | `sv09-148` | Tool | `attackCostDiscount { 1, holder: ownerPokemon "Hop" }` + `damageBonusBeforeWRIf { 30, yourActiveOwner "Hop" }` |
+| Brave Bangle | `sv10.5w-080` | Tool | `damageBonusBeforeWRIfTarget { 30, ex, holder: anyPokemon { noRuleBox } }` |
+| Air Balloon | `sv10.5b-079` | Tool | `retreatCostDiscount { 2 }` |
+| Rescue Board | `sv05-159`/`sv06-225`/`sv08.5-126` | Tool | `retreatCostDiscount { 1, freeAtRemainingHpAtMost: 30 }` |
+| Gravity Gemstone | `sv07-137` | Tool | `activeRetreatSurchargeBoth: 1` |
+| Full Metal Lab | `sv05-148` | Stadium | `damageReductionAfterWR { 30, beneficiary: typedPokemon Metal }` |
+| Granite Cave | `sv10-166` | Stadium | `damageReductionAfterWR { 30, beneficiary: ownerPokemon "Steven" }` |
+| Postwick | `sv09-154` | Stadium | `damageBonusBeforeWR { 30, attacker: ownerPokemon "Hop" }` |
+| N's Castle | `sv09-152` | Stadium | `retreat { ownerPokemon "N", free }` |
+| Paradise Resort | `svp-150`/`svp-224` | Stadium | `retreat { byName "Psyduck", discount 1 }` (`svp-045` is not Standard-legal) |
+| Salvatore | `sv05-160`/`-202`/`-212` | Supporter | `evolveFromDeckChosen { noAbilities }` → `shuffleDeck` |
+
+### (b) The vocabulary (eight optional keys on catalog-side types — MRV holds, driven)
+`PassiveEffects.attackCostDiscount` (summed by `toolAttackCostDiscount` ahead of `selfAttackCostDiscount`'s §9 gate);
+`damageBonusBeforeWRIfTarget.holder` (resolved in `passivesOf`'s fold); `PassiveEffects.retreatCostDiscount` (a term in
+`effectiveRetreatCost`'s floored sum + the `toolFreesRetreat` free tier); `activeRetreatSurchargeBoth`
+(`activeRetreatSurcharge`); `StadiumEffects.damageReductionAfterWR` (inside `seatDamageReduction`, both scopes, and only for an attack from the
+damaged body's opponent — the REQUIRED `attackerSeat`, R-ST3);
+`StadiumEffects.damageBonusBeforeWR` (inside `seatPreWRDamageBonus`, on the attacker); `StadiumEffects.retreat` (the
+`stadiumFreesRetreat` free tier + a filtered term in `stadiumRetreatDelta`, whose Basic gate is now per term);
+`noAbilities` on `evolveFromDeckChosen` / `evolveFromDeck` (body narrowing → answer → offer → move).
+
+### (c) Readings (`docs/decisions.md` D558)
+R-T1 Tool terms survive a §9 lock · R-T2 Counter Gain's "you" is the holder's controller · R-T3 the Band's cost half on
+the holder, its damage half on your Active · R-RB Rescue Board's free tier beats the −1, live · R-GG Gemstone taxes both
+Actives, per Gemstone, never from the Bench · R-ST ⚠️ INHERITED: a Stadium's reduction survives `othersOnly` · R-ST3 (the landing review's fix): an own-side spread
+or snipe is paid nothing — "from the opponent's Pokémon" is gated on `attackerSeat`, not satisfied by construction · R-ST2 no §9
+gate, both sides · R-NC N's Castle frees Stage 1/2 · R-SV1 ⚠️ UNRULED: the going-second first turn evolves · R-SV2 "no
+Abilities" = `abilities` empty or absent. The sweep found one more claim to withdraw: Full Metal Lab makes Ting-Lu
+`sv06-110`'s spread-then-discard order OBSERVABLE (driven both ways).
+
+### (d) Tests, census and mutants
+New `continuousToolsStadiumsD558.test.ts` (54) and `salvatoreD558.test.ts` (17). N's Castle's DROPPED row removed from
+`ownerPrefix.test.ts` (1 → 0; the guard inverted to assert the empty table). Census: `BUILT.trainer` 173 → 191 (Supporter
+117, Tool 16, Stadium 13 — the Tool and Stadium columns' first move), `built` 2180 → 2198, registry keys 798 → 816.
+Mutants 3,278 → 3,315 (+37 `D558-*`, all killed undeclared; 17 rows re-anchored or annotated and re-probed); declared
+survivors 52 unmoved.
+
+### (e) Owed
+The whole-corpus sweep (~~D552 → … → D558, all pending~~ D552–D557 PAID, each exact on its first launch — D557's `3226 · 52` at close-out `01c6d987`; D558's pending, predicted `3263 · 52` over 3,315). Jasmine's Gaze deferred (a new op, a `PlayerSide` key with an
+expiry, an MRV decision). R-SV1 UNRULED. The HUD shows no damage modifier from a Tool or a Stadium (D552's precedent;
+retreat and attack cost do show). The Ability auras Stone Palace / Curly Wall still pay an own-side hit under D425's
+reading (named debt, pinned); Neutralization Zone's own-side exposure is unreachable today. Next: the ability bundle (15 printings / 8 items).

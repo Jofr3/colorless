@@ -86,6 +86,10 @@ import {
 // whole program. It is pinned in the ASSEMBLED PROGRAM by §1's `toEqual` (D382's route), which is
 // the ONE rung the swapped-order mutant (`D522-gated-spread-then-order-swapped`) is declared
 // killed by; §2 deliberately does NOT assert the spread rows' position against the discard row.
+// (🆕🆕🆕 D558 CORRECTION (D539): "UNOBSERVABLE ON EVERY LEGAL BOARD" is WITHDRAWN — Full Metal
+// Lab / Granite Cave reduce a spread onto a benched {M} / Steven's Pokémon by 30 through
+// `seatDamageReduction`, so discarding the Stadium FIRST would pay that body the full 30.
+// `continuousToolsStadiumsD558.test.ts` §8 drives the printed order and its swap on that board.)
 //
 // ⚠️ **TING-LU `sv06-110`'s PRINTED BASE AND COST CANNOT BE READ ON THIS CHECKOUT** — it is not in
 // `FIXTURE_POOL` (asserted in §4) and there is no D1 and no sqlite here (D425/D521 (5)). The
@@ -731,7 +735,7 @@ const RAW: Record<string, string> = (
 describe("D522 §4 — the version steps, the heading is written, the prose is corrected, and what stands still", () => {
   it("engineVersion and `manifest.version` agree, and the bump is owed for BEHAVIOUR", () => {
     // ⚠️ The version is NOT spelled in this `it(…)` title (D460's fourth class).
-    expect(engineVersion).toBe("0.441.0");
+    expect(engineVersion).toBe("0.442.0");
     expect(manifest.version).toBe(engineVersion);
   });
 

@@ -731,7 +731,7 @@ describe("D500 §7 — the version stays 29, and the address is named before the
     });
     expect(produced).toEqual([]);
     // …and the engine version DID move, because a card can reach the behaviour change.
-    expect(engineVersion).toBe("0.441.0");
+    expect(engineVersion).toBe("0.442.0");
   });
 });
 

@@ -723,6 +723,11 @@ export function passivesOf(
   //                                to a BoardCondition.
   //   damageBonusBeforeWRIfTarget  reachable ✔ correct — likewise, gated on the
   //                                DEFENDER's suffix at the read sites.
+  //                                (🆕🆕🆕 D558 — AND NOW ON THE HOLDER TOO, in this
+  //                                fold: Brave Bangle's `holder` rider is matched
+  //                                against `top` before the entry is pushed. An
+  //                                Energy writer would gate on the body it is
+  //                                attached to, which is what the print means.)
   //   basicHpBonus (→ hpBonus)     reachable ⚠️ AND THE ONE TO SAY OUT LOUD: it is
   //                                gated on `isBasic`, a fact about the HOLDER, so an
   //                                Energy-borne +HP would end on evolution exactly as
@@ -868,6 +873,17 @@ export function passivesOf(
   // play at all. They join the twelve unfolded fields listed at the top of this
   // block and are read by their own scans, which is the same boundary
   // `seatDamageReductionAfterWR` sits on and not a new one.
+  //
+  // 🆕🆕🆕 D558 — THREE MORE UNFOLDED `PassiveEffects` FIELDS, all TOOL fields read by
+  // their own scans straight off `pokemon.tools` (never off `sources`, so the §9 drop
+  // on `sources[0]` cannot reach them and an Energy writer could not either):
+  // `attackCostDiscount` (`toolAttackCostDiscount`, summed into
+  // `selfAttackCostDiscount`), `retreatCostDiscount` (`toolRetreatDiscount` and
+  // `toolFreesRetreat`) and `activeRetreatSurchargeBoth` (`activeRetreatSurcharge`,
+  // which also reads the OTHER Active's Tools). And three `StadiumEffects` fields
+  // beside `hpDelta` — `damageReductionAfterWR`, `damageBonusBeforeWR`, `retreat` —
+  // on no card in play at all. None of the six is a key this fold returns, so its
+  // `passivesOf` key set does not move.
   const sources: (PassiveEffects | undefined)[] = [
     disabled || top === undefined ? undefined : programFor(top.id)?.passive,
     ...pokemon.tools.map((uid) => {
@@ -940,8 +956,15 @@ export function passivesOf(
     damageBonusBeforeWR += passive.damageBonusBeforeWR ?? 0;
     if (passive.damageBonusBeforeWRIf !== undefined)
       conditionalDamageBonusBeforeWR.push(passive.damageBonusBeforeWRIf);
-    if (passive.damageBonusBeforeWRIfTarget !== undefined)
-      targetConditionalDamageBonusBeforeWR.push(passive.damageBonusBeforeWRIfTarget);
+    // 🆕🆕🆕 D558 — Brave Bangle's HOLDER clause (*"If the Pokémon this card is
+    // attached to doesn't have a Rule Box"*), resolved HERE against `top` because
+    // the fold holds the holder and the read sites hold only the defender.
+    const targeted = passive.damageBonusBeforeWRIfTarget;
+    if (
+      targeted !== undefined &&
+      (targeted.holder === undefined || matchesFilter(top, targeted.holder))
+    )
+      targetConditionalDamageBonusBeforeWR.push(targeted);
     if (isBasic) hpBonus += passive.basicHpBonus ?? 0;
     // D324 — the STAGE-FREE twin of the line above, summed into the SAME
     // accumulator and gated separately. Hero's Cape prints "the Pokémon this card
@@ -4124,11 +4147,19 @@ export function groupShieldedFromAttackEffects(state: GameState, pokemon: InPlay
     🛑 **AND THE TWO BOUFFALANT RIDERS ARE EACH OTHER'S CONTROL ON THE ONLY BOARD
     THE CARD IS PLAYED ON.** A second Bouffalant makes the antecedent true for
     BOTH bodies at once, so summing pays 120 and the cap pays 60 — neither rider
-    is observable without the other, and one Bouffalant pays nothing at all. */
+    is observable without the other, and one Bouffalant pays nothing at all.
+
+    🆕🆕🆕 **D558 — `attackerSeat` IS REQUIRED, `scope`'s reason (D146): a new read site
+    must SAY whose attack this is.** Its one reader is the Stadium term (R-ST3): Full
+    Metal Lab / Granite Cave print *"take 30 less damage from attacks from the
+    opponent's Pokémon"*, and an own-side hit (`spreadDamage`'s `"yourBench"`,
+    `placeSnipe`'s own bench) is no such attack. Every caller passes the ATTACKING
+    seat (`action.seat` / `ctx.seat`). */
 export function seatDamageReduction(
   state: GameState,
   pokemon: InPlayPokemon,
   scope: "all" | "othersOnly",
+  attackerSeat: Seat,
 ): number {
   const uid = topUid(pokemon);
   if (uid === undefined) return 0;
@@ -4193,9 +4224,34 @@ export function seatDamageReduction(
       capped.set(aura.noStack, Math.max(capped.get(aura.noStack) ?? 0, aura.amount));
     }
     for (const amount of capped.values()) taken += amount;
-    return taken; // this is the Pokémon's own side — no other side can shield it
+    // 🆕🆕🆕 D558 — the in-play STADIUM's reduction (Full Metal Lab, Granite Cave),
+    // added ONCE here, and under BOTH scopes: a Stadium is no effect on the damaged
+    // Pokémon, so Feint Attack's `"othersOnly"` keeps it (R-ST, inherited from
+    // `stadiumPreventsDamage`). No §9.
+    // 🛑 R-ST3 — *"from attacks from THE OPPONENT'S Pokémon"*: the Stadium pays only
+    // when the attacker sits across the table from the damaged body. An own-side hit
+    // (D425's `spreadDamage` `"yourBench"` arm, D447's `placeSnipe` own-bench arm)
+    // reaches this function with `seat === attackerSeat`, and the print gives it
+    // nothing. ⚠️ The Ability auras summed above are NOT gated here — D425's reading
+    // (every protection read off the damaged body) still governs them; that is a
+    // named debt (docs/decisions.md D558), not an oversight.
+    if (seat === attackerSeat) return taken; // an own-side hit: the Stadium's "the opponent's" fails
+    return taken + stadiumDamageReduction(state, damagedCard); // this is the Pokémon's own side — no other side can shield it
   }
   return 0;
+}
+
+/** 🆕🆕🆕 §8.5 (D558) — the in-play Stadium's post-W/R `damageReductionAfterWR` for a
+    hit on `damagedCard`: its `amount` when the card matches `beneficiary` (Full Metal
+    Lab's `typedPokemon Metal`, Granite Cave's `ownerPokemon "Steven"`), else 0. Both
+    sides ("both yours and your opponent's"), so no beneficiary seat — the attacker-seat
+    gate (R-ST3) is the caller's, `seatDamageReduction`'s; `undefined` fails every
+    filter (`matchesFilter`'s conservative direction). */
+function stadiumDamageReduction(state: GameState, damagedCard: Card | undefined): number {
+  const reduction = stadiumEffectsOf(state)?.damageReductionAfterWR;
+  return reduction !== undefined && matchesFilter(damagedCard, reduction.beneficiary)
+    ? reduction.amount
+    : 0;
 }
 
 /** §8.5 (D243) — the total pre-W/R damage bonus `seat`'s own SEAT-WIDE aura
@@ -4285,7 +4341,19 @@ export function seatPreWRDamageBonus(
     capped.set(aura.noStack, Math.max(capped.get(aura.noStack) ?? 0, aura.amount));
   }
   for (const amount of capped.values()) total += amount;
-  return total;
+  // 🆕🆕🆕 D558 — the in-play STADIUM's pre-W/R bonus (Postwick), matched on the
+  // ATTACKER's card for whichever seat attacks. Outside the `capped` ledger: Extra
+  // Helpings' `noStack` keys a printed Ability name, and a Stadium is no Ability.
+  return total + stadiumPreWRBonus(state, attackerCard);
+}
+
+/** 🆕🆕🆕 §8.5 (D558) — the in-play Stadium's `damageBonusBeforeWR` for an attack used
+    by `attackerCard`: Postwick's *"Attacks used by Hop's Pokémon (both yours and your
+    opponent's) do 30 more damage to the opponent's Active Pokémon"*. Matched on the
+    ATTACKER and never the defender; no seat, no §9 gate (R-ST2). */
+function stadiumPreWRBonus(state: GameState, attackerCard: Card | undefined): number {
+  const bonus = stadiumEffectsOf(state)?.damageBonusBeforeWR;
+  return bonus !== undefined && matchesFilter(attackerCard, bonus.attacker) ? bonus.amount : 0;
 }
 
 /** 🆕 §8.1 (D323) — the SEAT-WIDE **PRIZE BONUS** auras on `seat` that fire for
@@ -4405,6 +4473,17 @@ export function seatKoPrizeBonuses(
     are attack-damage sites aimed at the DEFENDING side, so the attacker is always
     the protected Pokémon's opponent by construction. A `damageSelf` recoil, the one
     way a Pokémon damages its own side, routes through none of them.
+    🆕🛑 **D558 CORRECTION (D539) — BOTH SENTENCES ABOVE ARE FALSE, AND ARE KEPT AS
+    WRITTEN BECAUSE THEY WERE TRUE WHEN WRITTEN.** Since D425 `spreadDamage`'s
+    `"yourBench"` arm, and since D447 `placeSnipe`'s own-bench arm, call this with the
+    ATTACKER's own benched body, so an own-side hit is not aimed at the defending side
+    and `damageSelf` is no longer the only way a Pokémon damages its own side. The
+    defect is UNREACHABLE on a legal board today — no Standard-legal Pokémon ex or V
+    prints an attack that damages its own Bench (the coverage audit's card JSON,
+    checked at D558) — so no seat gate is added here; it is a NAMED DEBT (docs/
+    decisions.md D558), and D558's own Stadium reduction, which IS reachable (Sandslash
+    `sv06-098` spreading onto a benched {M} Pokémon under Full Metal Lab), is gated on
+    `attackerSeat` in `seatDamageReduction` instead of leaning on this argument.
 
     `undefined` (no resolvable attacking card) is FALSE, `preventsAttackerType`'s
     conservative direction verbatim. */
@@ -4446,7 +4525,14 @@ export function stadiumPreventsDamage(
     source and the beneficiary are the same card). Deliberately reads only the TOP
     CARD's passive and not attached Tools, unlike `passivesOf`: no Tool in the
     ingested pool grants free retreat, and a future one (Air Balloon) would fold
-    the tool list in HERE — un-§9-gated, a Tool being no Ability. */
+    the tool list in HERE — un-§9-gated, a Tool being no Ability.
+    (🆕🆕🆕 D558 — WITHDRAWN (D539), both halves: a Tool DOES grant free retreat now
+    (Rescue Board's *"If that Pokémon's remaining HP is 30 or less, it has no Retreat
+    Cost"*), and it does NOT fold in here — this function returns early when the top
+    card prints no passive and is §9-gated, and neither fact is about a Tool. It is
+    `toolFreesRetreat`, its own top-level predicate beside this one in
+    `effectiveRetreatCost`'s free tier. Air Balloon is a DISCOUNT ({C}{C} less), not a
+    free retreat: `toolRetreatDiscount`, a term in the floored sum.) */
 export function hasFreeRetreatSelf(state: GameState, pokemon: InPlayPokemon): boolean {
   const top = topCardOf(state, pokemon);
   const uid = topUid(pokemon);
@@ -4481,7 +4567,17 @@ export function hasFreeRetreatSelf(state: GameState, pokemon: InPlayPokemon): bo
     ones are Basic-only. That tier now has TWO members, an own-board AURA (Lunar
     Zone, which frees every teammate satisfying its clause) and a SELF-only
     conditional (Punk Out, which frees nobody but its holder); either one alone
-    zeroes the cost. Otherwise the printed cost is summed with every delta and
+    zeroes the cost.
+    (🆕🆕🆕 D558 — WITHDRAWN (D539): "the Stadium ones are Basic-only" and "That tier
+    now has TWO members". N's Castle's `retreat.free` is a stage-agnostic STADIUM
+    member of the tier (a Stage 1/2 N's Pokémon is freed, R-NC) and Rescue Board's
+    `freeAtRemainingHpAtMost` is a TOOL member — FOUR members now. Beach Court and
+    Calamitous Wasteland stay Basic-only, as per-term gates in `stadiumRetreatDelta`;
+    Paradise Resort's filtered discount is stage-agnostic beside them. And the floored
+    sum gains three D558 terms: the Tools' discount (`toolRetreatDiscount`), Gravity
+    Gemstone's both-Actives surcharge (`activeRetreatSurcharge`) and the Stadium's
+    filtered discount inside `stadiumRetreatDelta`. None of them is §9-gated.)
+    Otherwise the printed cost is summed with every delta and
     floored ONCE at a free retreat: the in-play Stadium's ±
     Basic deltas (Beach Court's discount subtracts, Calamitous Wasteland's
     surcharge adds, skipping the type its print exempts) plus the opposing side's
@@ -4501,6 +4597,10 @@ export function effectiveRetreatCost(state: GameState, pokemon: InPlayPokemon): 
   const top = topCardOf(state, pokemon);
   if (top === undefined) return 0;
   if (hasFreeRetreatAura(state, pokemon) || hasFreeRetreatSelf(state, pokemon)) return 0;
+  // 🆕🆕🆕 D558 — the free tier's TOOL and STADIUM members, each its own top-level
+  // predicate: Rescue Board at 30 remaining HP or less (R-RB, live-read), N's Castle
+  // over its filter at any stage (R-NC). Neither is an Ability, so neither is gated.
+  if (toolFreesRetreat(state, pokemon) || stadiumFreesRetreat(state, top)) return 0;
   const printed = retreatCostOf(top);
   // 🆕🆕🆕 D549 — the attack-installed COST TAX is a FIFTH term in the ONE floored sum
   // (R3): below the free-retreat tier above, which still zeroes the cost outright, and
@@ -4511,25 +4611,98 @@ export function effectiveRetreatCost(state: GameState, pokemon: InPlayPokemon): 
     printed +
       installedCostTaxOf(state, pokemon) +
       stadiumRetreatDelta(state, top) +
-      opposingRetreatSurcharge(state, pokemon) -
-      alliedRetreatDiscount(state, pokemon),
+      opposingRetreatSurcharge(state, pokemon) +
+      activeRetreatSurcharge(state, pokemon) -
+      alliedRetreatDiscount(state, pokemon) -
+      toolRetreatDiscount(state, pokemon),
   );
+}
+
+/** 🆕🆕🆕 §11 (D558) — the {C} SUBTRACTED from `pokemon`'s Retreat Cost by its ATTACHED
+    TOOLS' `retreatCostDiscount.amount` (Air Balloon {C}{C}, Rescue Board {C}), summed
+    per Tool and subtracted inside `effectiveRetreatCost`'s ONE floored sum, so it can
+    offset a surcharge and never goes negative on its own. NOT §9-gated (R-T1). */
+export function toolRetreatDiscount(state: GameState, pokemon: InPlayPokemon): number {
+  let discount = 0;
+  for (const toolUid of pokemon.tools) {
+    const id = state.cardIdByUid[toolUid];
+    discount += (id === undefined ? undefined : programFor(id)?.passive?.retreatCostDiscount)?.amount ?? 0;
+  }
+  return discount;
+}
+
+/** 🆕🆕🆕 §11 (D558) — does an ATTACHED TOOL zero `pokemon`'s Retreat Cost outright?
+    Rescue Board's *"If that Pokémon's remaining HP is 30 or less, it has no Retreat
+    Cost."* — `remainingHpWithin` (D349's one predicate, effective max HP − damage),
+    live-read, so a heal out of the window restores the cost (R-RB). A free-tier
+    member beside `hasFreeRetreatAura`/`hasFreeRetreatSelf`, and deliberately NOT the
+    latter: that one returns early on a top card with no passive and is §9-gated. */
+export function toolFreesRetreat(state: GameState, pokemon: InPlayPokemon): boolean {
+  return pokemon.tools.some((toolUid) => {
+    const id = state.cardIdByUid[toolUid];
+    const atMost =
+      id === undefined ? undefined : programFor(id)?.passive?.retreatCostDiscount?.freeAtRemainingHpAtMost;
+    return atMost !== undefined && remainingHpWithin(state, pokemon, atMost);
+  });
+}
+
+/** 🆕🆕🆕 §11 (D558) — Gravity Gemstone's *"As long as the Pokémon this card is attached
+    to is in the Active Spot, the Retreat Cost of both Active Pokémon is {C} more."*
+    The TARGET must be an Active of EITHER seat (a Benched body is never taxed); the
+    SOURCES are the Gemstones attached to EITHER Active, the target's own included
+    (*"both"*), so a Benched holder taxes nothing. Summed per Gemstone (R-GG). NOT
+    §9-gated (a Tool). */
+export function activeRetreatSurcharge(state: GameState, pokemon: InPlayPokemon): number {
+  const uid = topUid(pokemon);
+  if (uid === undefined) return 0;
+  const actives = SEATS.flatMap((seat) => {
+    const active = state.players[seat].active;
+    return active === null ? [] : [active];
+  });
+  if (!actives.some((active) => topUid(active) === uid)) return 0;
+  let added = 0;
+  for (const active of actives) {
+    for (const toolUid of active.tools) {
+      const id = state.cardIdByUid[toolUid];
+      added += (id === undefined ? undefined : programFor(id)?.passive?.activeRetreatSurchargeBoth) ?? 0;
+    }
+  }
+  return added;
+}
+
+/** 🆕🆕🆕 §11 (D558) — does the in-play Stadium zero `top`'s Retreat Cost? N's Castle's
+    *"N's Pokémon in play (both yours and your opponent's) have no Retreat Cost."* —
+    `retreat.free` over `retreat.filter`, matched on the body's TOP card at ANY stage
+    (R-NC). No seat and no §9 gate: a Stadium is neither side's and no Ability. */
+function stadiumFreesRetreat(state: GameState, top: Card): boolean {
+  const retreat = stadiumEffectsOf(state)?.retreat;
+  return retreat?.free === true && matchesFilter(top, retreat.filter);
 }
 
 /** The in-play Stadium's ± contribution to one Pokémon's Retreat Cost. Both
     prints on this seam are Basic-only, so a non-Basic (and a board with no
     Stadium) contributes nothing — note that this is a zero TERM, not the early
     return it used to be: the cross-board auras are stage-agnostic and must still
-    reach a Stage 1/2 Active. */
+    reach a Stage 1/2 Active.
+    (🆕🆕🆕 D558 — "Both prints on this seam are Basic-only" is WITHDRAWN (D539):
+    Paradise Resort's `retreat.discount` is a THIRD print and names Psyduck at any
+    stage, so the non-Basic early return is now a PER-TERM gate — Beach Court's
+    discount and Calamitous Wasteland's surcharge keep `isBasicPokemon`, the filtered
+    discount takes `matchesFilter` instead. N's Castle's `retreat.free` is not a delta
+    and lives in the free tier, `stadiumFreesRetreat`.) */
 function stadiumRetreatDelta(state: GameState, top: Card): number {
-  if (!isBasicPokemon(top)) return 0;
   const stadium = stadiumEffectsOf(state);
-  const discount = stadium?.basicRetreatDiscount ?? 0;
-  const surcharge = stadium?.basicRetreatSurcharge;
+  const basic = isBasicPokemon(top);
+  const discount = basic ? (stadium?.basicRetreatDiscount ?? 0) : 0;
+  const surcharge = basic ? stadium?.basicRetreatSurcharge : undefined;
   const exempt =
     surcharge?.excludesType !== undefined && (top.types ?? []).includes(surcharge.excludesType);
   const added = surcharge === undefined || exempt ? 0 : surcharge.amount;
-  return added - discount;
+  // 🆕🆕🆕 D558 — the FILTERED discount (Paradise Resort), stage-agnostic.
+  const retreat = stadium?.retreat;
+  const filtered =
+    retreat !== undefined && matchesFilter(top, retreat.filter) ? (retreat.discount ?? 0) : 0;
+  return added - discount - filtered;
 }
 
 /** §8.2 — the {C} ADDED to every attack `pokemon` uses by an OPPOSING continuous
@@ -4617,29 +4790,69 @@ export function opposingAttackCostSurcharge(state: GameState, pokemon: InPlayPok
     printed {R}{C}{C}{C}{C} snaps back — the family's third assertable §9 positive
     after D113's Snorlax and D114's Wimpod. Reads only the TOP CARD's passive and
     not attached Tools, `hasFreeRetreatSelf`'s reading: no Tool in the pool discounts
-    an attack cost, and a future one would fold in HERE, un-§9-gated. */
+    an attack cost, and a future one would fold in HERE, un-§9-gated.
+    (🆕🆕🆕 D558 — "no Tool in the pool discounts an attack cost" is WITHDRAWN (D539):
+    Counter Gain and Hop's Choice Band do, and they fold in HERE exactly as this block
+    predicted — `toolAttackCostDiscount`, summed AHEAD of both early returns, so only
+    the top card's own three terms take the §9 gate and a lock over the holder leaves
+    the Tool's {C} standing, R-T1.) */
 export function selfAttackCostDiscount(state: GameState, pokemon: InPlayPokemon): number {
   const top = topCardOf(state, pokemon);
   const uid = topUid(pokemon);
   if (top === undefined || uid === undefined) return 0;
+  // 🆕🆕🆕 D558 — the attached Tools' term, computed FIRST: both returns below that
+  // used to answer 0 (no printed term; a §9 lock) now answer the Tools' sum, because
+  // a Tool is not an Ability and neither of those facts is about it.
+  const tools = toolAttackCostDiscount(state, pokemon);
   const passive = programFor(top.id)?.passive;
   const perPrize = passive?.attackCostDiscountPerOpponentPrize;
   const perNamed = passive?.attackCostDiscountPerNamedInDiscard;
   const perBenched = passive?.attackCostDiscountPerOpponentBenched;
-  if (perPrize === undefined && perNamed === undefined && perBenched === undefined) return 0;
-  if (disabledAbilityUids(state).has(uid)) return 0; // §9
+  if (perPrize === undefined && perNamed === undefined && perBenched === undefined) return tools;
+  if (disabledAbilityUids(state).has(uid)) return tools; // §9 — the top card's terms only
   for (const seat of SEATS) {
     const side = state.players[seat];
     const holders = side.active === null ? side.bench : [side.active, ...side.bench];
     if (!holders.some((holder) => topUid(holder) === uid)) continue;
-    let discount = 0;
+    let discount = tools;
     if (perPrize !== undefined) discount += perPrize * takenPrizes(state, otherSeat(seat));
     if (perNamed !== undefined) discount += perNamed.amount * namedInDiscard(state, seat, perNamed.name);
     if (perBenched !== undefined) discount += perBenched * state.players[otherSeat(seat)].bench.length;
     return discount;
   }
-  return 0;
+  return tools;
 }
+
+/** 🆕🆕🆕 §8.2 (D558) — the {C} SUBTRACTED from `pokemon`'s attacks by its ATTACHED
+    TOOLS' `attackCostDiscount` (Counter Gain `sv08-169`/`-249`, the cost half of
+    Hop's Choice Band `sv09-148`). Summed over `pokemon.tools`, one term per Tool, and
+    NEVER §9-gated: a Tool is not an Ability (R-T1). Top-level, so a mutant row may
+    name it (the binding gate).
+      • `holder` is matched on the HOLDER's TOP card (R-T3) — the Tool's own printed
+        noun, live-read, so an evolution out of "Hop's Pokémon" ends the discount.
+      • `ifMorePrizesRemaining` asks the HOLDER's controller (R-T2) through
+        `holderSideLeadsOnPrizesRemaining` — the ONE existing reader of this printed
+        clause in this file (Reversal Energy's promotion), `conditionHolds`'
+        `morePrizesThanOpponent` arm byte for byte on a seat DERIVED from the body —
+        reused rather than re-spelled (D131/D222), so `effectiveAttackCost`'s three
+        readers keep a zero signature diff. */
+export function toolAttackCostDiscount(state: GameState, pokemon: InPlayPokemon): number {
+  const top = topCardOf(state, pokemon);
+  const uid = topUid(pokemon);
+  if (top === undefined || uid === undefined) return 0;
+  let discount = 0;
+  for (const toolUid of pokemon.tools) {
+    const id = state.cardIdByUid[toolUid];
+    const term = id === undefined ? undefined : programFor(id)?.passive?.attackCostDiscount;
+    if (term === undefined) continue;
+    if (term.holder !== undefined && !matchesFilter(top, term.holder)) continue;
+    if (term.ifMorePrizesRemaining === true && !holderSideLeadsOnPrizesRemaining(state, pokemon))
+      continue;
+    discount += term.amount;
+  }
+  return discount;
+}
+
 
 /** 🆕 **D327** — how many cards named `name` sit in `seat`'s discard pile, for
     `selfAttackCostDiscount`'s Food Prep summand (*"for each Kofu card in your
@@ -4670,6 +4883,8 @@ function namedInDiscard(state: GameState, seat: Seat, name: string): number {
         Zone"), which adds {C} to the attacks of the Active it faces, at any stage;
       • the holder's OWN `selfAttackCostDiscount` (Radiant Charizard "Excited
         Heart"), which SUBTRACTS {C} per Prize its opponent has taken.
+        (🆕🆕🆕 D558 — and its ATTACHED TOOLS' {C}, Counter Gain / Hop's Choice Band,
+        summed inside that function ahead of its §9 gate; still one subtrahend.)
     Every symbol moved is a COLORLESS slot — any energy pays it, §6.4 — which is
     what lets one array carry both signs: `costMet` (attack.ts) buckets the literal
     string "Colorless" separately from every typed symbol, so appending one adds a

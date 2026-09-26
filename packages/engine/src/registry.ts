@@ -728,8 +728,20 @@ export interface PassiveEffects {
       (`pokemonSuffixOf`), so it is a distinct field rather than the D40
       vocabulary. Aggregated seat-free by continuous.ts; the defender is known
       only at the two pre-W/R read sites, which fold it via `attackerPreWRBonus`
-      (interpreter.ts) exactly like the board-condition one. */
-  damageBonusBeforeWRIfTarget?: { amount: number; targetSuffix: PokemonSuffix };
+      (interpreter.ts) exactly like the board-condition one.
+
+      🆕🆕🆕 D558 — `holder`, the printed HOLDER clause: Brave Bangle `sv10.5w-080`
+      (*"If the Pokémon this card is attached to doesn't have a Rule Box, the attacks
+      it uses do 30 more damage to your opponent's Active Pokémon ex …"*) — `{ kind:
+      "anyPokemon", noRuleBox: true }`. Resolved in `passivesOf`'s fold against the
+      holder's TOP card (the fold has `top`; the read sites do not need it), so an
+      entry whose holder fails is never pushed. Absent = ungated (Choice Belt,
+      Maximum Belt), byte-identical. */
+  damageBonusBeforeWRIfTarget?: {
+    amount: number;
+    targetSuffix: PokemonSuffix;
+    holder?: CardFilter;
+  };
   /** Max-HP added while the holder's TOP card is a Basic Pokémon (Bravery
       Charm — "The Basic Pokémon this card is attached to gets +50 HP");
       evolving the holder ends it, the Tool staying attached notwithstanding.
@@ -2134,6 +2146,36 @@ export interface PassiveEffects {
     requiresOpponentSuffixInPlay?: PokemonSuffix;
     requiresNoEnergyAttached?: true;
   };
+  /** 🆕🆕🆕 §11 (D558) — the ATTACHED TOOL's discount on its holder's Retreat Cost:
+      Air Balloon `sv10.5b-079` (*"The Retreat Cost of the Pokémon this card is
+      attached to is {C}{C} less."*) and Rescue Board `sv05-159`/`sv06-225`/
+      `sv08.5-126` (*"… is {C} less. If that Pokémon's remaining HP is 30 or less, it
+      has no Retreat Cost."*). The first Tool on the retreat seam.
+
+      🛑 **A TOOL FIELD, READ BY ITS OWN SCANS AND NOT FOLDED BY `passivesOf`.**
+      `amount` is a term inside `effectiveRetreatCost`'s ONE floored sum
+      (`toolRetreatDiscount`); `freeAtRemainingHpAtMost` joins that function's
+      free tier (`toolFreesRetreat`), beside Lunar Zone and Punk Out, so a body at
+      or under the threshold retreats for nothing however large its printed cost —
+      the set-to-zero beats the −1, which is the print's own order. The HP is
+      `remainingHpWithin` (D349's one predicate: effective max HP − damage),
+      live-read, so a heal out of the window restores the cost.
+
+      ⚠️ **NOT §9-GATED.** A Tool is not an Ability; a Klefki or Ting-Lu lock over
+      the holder leaves both halves standing (R-T1). Read only off `pokemon.tools`,
+      never off the holder's own printed passive — no Pokémon prints this. */
+  retreatCostDiscount?: { amount: number; freeAtRemainingHpAtMost?: number };
+  /** 🆕🆕🆕 §11 (D558) — Gravity Gemstone `sv07-137` (Tool): *"As long as the Pokémon
+      this card is attached to is in the Active Spot, the Retreat Cost of both Active
+      Pokémon is {C} more."* A BARE NUMBER (D104): the print has no rider.
+
+      Read by `activeRetreatSurcharge` (continuous.ts): the body asked about must be
+      an ACTIVE of either seat, and the surcharge is the sum over the Gemstones
+      attached to EITHER Active — the holder's own included (*"both"*). A BENCHED
+      holder taxes nothing (the source clause), and a Benched body is never taxed
+      (the target clause). Stacks per Gemstone (R-GG). Summed inside the one floored
+      sum; the free tier still zeroes it. NOT §9-gated (a Tool). */
+  activeRetreatSurchargeBoth?: number;
   /** §8.5 continuous OPPONENT-side aura: while BOTH this Pokémon and the attacker
       are in the Active Spot, every damage the OPPOSING side's Active Pokémon's
       attacks do is reduced by this much, BEFORE Weakness and Resistance (Entei
@@ -2269,6 +2311,28 @@ export interface PassiveEffects {
       Bench discounts nothing, which is the arm that separates this field from a
       count of "Pokémon in play". */
   attackCostDiscountPerOpponentBenched?: number;
+  /** 🆕🆕🆕 §8.2 (D558) — the ATTACHED TOOL's {C} discount on its holder's attacks:
+      Counter Gain `sv08-169`/`-249` (*"If you have more Prize cards remaining than
+      your opponent, attacks used by the Pokémon this card is attached to cost {C}
+      less."*) and the cost half of Hop's Choice Band `sv09-148` (*"Attacks used by
+      the Hop's Pokémon this card is attached to cost {C} less …"*). The first Tool
+      on the attack-cost seam.
+
+      Read by `toolAttackCostDiscount` (continuous.ts), which `selfAttackCostDiscount`
+      sums AHEAD of its own §9 gate — a Tool is not an Ability, so a lock over the
+      holder leaves this standing (R-T1) while silencing the holder's printed
+      discount beside it. NOT folded by `passivesOf`.
+        • `holder` — the printed owner noun (*"the Hop's Pokémon this card is
+          attached to"*), matched on the HOLDER's TOP card, live: an evolution out of
+          the noun ends the discount with the Tool still attached (R-T3).
+        • `ifMorePrizesRemaining` — Counter Gain's *"If you have more Prize cards
+          remaining than your opponent"*, where "you" is the HOLDER's controller
+          (R-T2): the seat is DERIVED from the body by the existing
+          `holderSideLeadsOnPrizesRemaining` (Reversal Energy's reader of the same
+          clause, `conditionHolds`' `morePrizesThanOpponent` arm verbatim —
+          continuous.ts cannot call `conditionHolds`). Strict: a tie discounts
+          nothing. */
+  attackCostDiscount?: { amount: number; holder?: CardFilter; ifMorePrizesRemaining?: true };
 
   /** §8/§9 continuous SELF-only ATTACK GATE (D242): the holder **can't attack**
       unless this board condition holds ("This Pokémon can't attack unless you
@@ -2482,7 +2546,9 @@ export interface StadiumEffects {
       Box (both yours and your opponent's) by attacks from the opponent's Pokémon
       ex and Pokémon V."). The pool's only Stadium on the damage pipeline, and the
       first `StadiumEffects` field read by anything other than the retreat/attack
-      COST seam.
+      COST seam. (🆕🆕🆕 D558 — "only" WITHDRAWN (D539): Full Metal Lab and Granite Cave
+      (`damageReductionAfterWR`) and Postwick (`damageBonusBeforeWR`) join it on the
+      damage pipeline; "first" stands.)
 
       A BARE FLAG per D104's minimal-shape rule: both filters are printed
       constants of the one printing, so there is nothing left to parameterise. The
@@ -2509,6 +2575,18 @@ export interface StadiumEffects {
       the protected Pokémon's opponent. A Pokémon's own `damageSelf` recoil never
       routes through them, which is what keeps the possessive honest without a seat
       argument.
+      🆕🛑 D558 CORRECTION (D539) — BOTH SENTENCES ABOVE ARE FALSE, AND ARE KEPT AS
+      WRITTEN BECAUSE THEY WERE TRUE WHEN WRITTEN. Since D425 `spreadDamage`'s
+      `"yourBench"` arm, and since D447 `placeSnipe`'s own-bench arm, the attack-damage
+      sites also hit the ATTACKER's own benched bodies, so the attacker is NOT always
+      the protected Pokémon's opponent and `damageSelf` is no longer the only way a
+      Pokémon damages its own side. UNREACHABLE on a legal board today — no
+      Standard-legal Pokémon ex or V prints an attack that damages its own Bench (the
+      coverage audit's card JSON, checked at D558) — so no seat gate is added; it is a
+      NAMED DEBT (docs/decisions.md D558), the same one the copy of this argument in
+      continuous.ts `stadiumPreventsDamage`'s doc carries. D558's own reduction
+      (`damageReductionAfterWR`), which IS reachable, is gated on `attackerSeat`
+      instead of leaning on this argument.
 
       NOT §9-suppressible (a Stadium is not an Ability, so `disabledAbilityUids`
       has nothing to say about it) and NOT nulled by Feint Attack's `ignoreWR`,
@@ -2559,6 +2637,50 @@ export interface StadiumEffects {
       the MINIMUM printed HP over all **169** Standard-legal Stage 2 Pokémon is
       **120**, so the only sentence that subtracts bottoms out at 90. */
   hpDelta?: { amount: number; stage: "basic" | "stage2" };
+  /** 🆕🆕🆕 §8.5 (D558) — the in-play Stadium's POST-W/R reduction on attack damage to
+      every Pokémon its `beneficiary` names, on BOTH sides: Full Metal Lab `sv05-148`
+      (*"{M} Pokémon (both yours and your opponent's) take 30 less damage from attacks
+      from the opponent's Pokémon (after applying Weakness and Resistance)."* —
+      `typedPokemon Metal`) and Granite Cave `sv10-166` (*"Steven's Pokémon …"* —
+      `ownerPokemon "Steven"`).
+
+      Summed ONCE inside `seatDamageReduction` (continuous.ts), against the DAMAGED
+      body's card.
+      🛑 **R-ST3 — "FROM THE OPPONENT'S POKÉMON" IS GATED, NOT SATISFIED BY
+      CONSTRUCTION.** (The first build said it was, citing `stadiumPreventsDamage`'s
+      argument that every such site damages the defending side; the landing review
+      REFUTED that: `spreadDamage`'s `"yourBench"` arm (D425) and `placeSnipe`'s own-bench
+      arm (D447) damage the ATTACKER's own side through `seatDamageReduction`, and Full
+      Metal Lab paid p1's own benched {M} Pokémon 30 off p1's own spread.) So
+      `seatDamageReduction` takes a REQUIRED `attackerSeat` and the Stadium term pays
+      nothing when it equals the damaged body's seat — the four read sites (seven call
+      expressions: two in attack.ts's `attack`, five in interpreter.ts) each pass their
+      attacking seat (`continuousToolsStadiumsD558.test.ts` §8/§9, both ways).
+      🛑 **UNDER BOTH SCOPES** — R-ST, INHERITED from `stadiumPreventsDamage`'s
+      placement: a Stadium is an effect on the shared zone, not "an effect on that
+      Pokémon", so Feint Attack's `"othersOnly"` keeps it. Reversal: a ruling that a
+      Stadium's reduction IS an effect on the damaged Pokémon. NOT §9-gated (R-ST2). */
+  damageReductionAfterWR?: { amount: number; beneficiary: CardFilter };
+  /** 🆕🆕🆕 §8.5 (D558) — the in-play Stadium's PRE-W/R bonus on attacks used by every
+      Pokémon its `attacker` filter names, on BOTH sides: Postwick `sv09-154`
+      (*"Attacks used by Hop's Pokémon (both yours and your opponent's) do 30 more damage
+      to the opponent's Active Pokémon (before applying Weakness and Resistance)."*).
+      Summed in `seatPreWRDamageBonus` (continuous.ts), matched on the ATTACKER's card
+      and never the defender's, for either attacking seat. It stacks with Hop's Snorlax
+      "Extra Helpings" — that `noStack` keys by Ability name, and this is no Ability.
+      NOT §9-gated (R-ST2). */
+  damageBonusBeforeWR?: { amount: number; attacker: CardFilter };
+  /** 🆕🆕🆕 §11 (D558) — the in-play Stadium's Retreat Cost clause for the Pokémon its
+      `filter` names, on BOTH sides, at ANY stage: N's Castle `sv09-152` (*"N's Pokémon
+      in play (both yours and your opponent's) have no Retreat Cost."* — `free`) and
+      Paradise Resort `svp-150`/`svp-224` (*"The Retreat Cost of each Psyduck in play
+      (both yours and your opponent's) is {C} less."* — `discount 1`).
+      `free` joins `effectiveRetreatCost`'s free tier (stage-agnostic — a Stage 1/2 N's
+      Pokémon is freed, R-NC); `discount` is a filter-gated term in
+      `stadiumRetreatDelta`, beside Beach Court's and Calamitous Wasteland's Basic-only
+      terms, which KEEP their Basic gate (now per term, no longer the function's early
+      return). */
+  retreat?: { filter: CardFilter; discount?: number; free?: true };
   /** The "once during each player's turn" activated ability (Artazon / Mesagoza
       / Town Store). A Stadium WITH this can be activated; the continuous-only
       Stadiums (Beach Court / League HQ) leave it undefined. */
@@ -13349,6 +13471,168 @@ const TOOL_SCRAPPER: CardProgram = {
   trainer: [{ op: "discardTools", count: 2, sides: "both" }],
 };
 
+// ── 🆕🆕🆕 D558 — THE FIRST TOOLS AND STADIUMS ON THE FOUR EXISTING MODIFIER SEAMS, PLUS
+//    SALVATORE: 18 PRINTINGS / 12 TEXTS / 12 OBJECTS. Tools: Counter Gain and Hop's
+//    Choice Band (`PassiveEffects.attackCostDiscount`, the attack-cost seam), Brave
+//    Bangle (a `holder` rider on `damageBonusBeforeWRIfTarget`), Air Balloon and Rescue
+//    Board (`retreatCostDiscount`) and Gravity Gemstone (`activeRetreatSurchargeBoth`)
+//    — all read off `pokemon.tools`, none §9-gated (R-T1). Stadiums: Full Metal Lab and
+//    Granite Cave (`StadiumEffects.damageReductionAfterWR`), Postwick
+//    (`damageBonusBeforeWR`), N's Castle and Paradise Resort (`retreat`). Supporter:
+//    Salvatore (`noAbilities` on the evolve-from-deck ops). Texts, subtypes and
+//    legality off tcgdex (the ingest's own upstream), 2026-09-26 — all eighteen
+//    `legal.standard: true`; Paradise Resort `svp-045` (mark G) is NOT and is not keyed.
+//    One object per printed TEXT (D199), reprints share it. Keyed MID-MAP after D557's
+//    last row (D395/D396). Every addition is an optional key: `MATCH_RECORD_VERSION`
+//    HOLDS at 35 (D125/D344). docs/decisions.md D558. ──
+
+/** 🆕🆕🆕 **D558 — Counter Gain `sv08-169`/`-249` (Tool, 2 legal)** — *"If you have more
+    Prize cards remaining than your opponent, attacks used by the Pokémon this card is
+    attached to cost {C} less."*
+
+    `attackCostDiscount { 1, ifMorePrizesRemaining }`, read by `toolAttackCostDiscount`.
+    "You" is the HOLDER's controller (R-T2); strict (a tie discounts nothing); a {C}
+    discount removes only a Colorless symbol (`effectiveAttackCost`). */
+const COUNTER_GAIN: CardProgram = {
+  passive: { attackCostDiscount: { amount: 1, ifMorePrizesRemaining: true } },
+};
+
+/** 🆕🆕🆕 **D558 — Hop's Choice Band `sv09-148` (Tool, 1 legal)** — *"Attacks used by the
+    Hop's Pokémon this card is attached to cost {C} less and do 30 more damage to your
+    opponent's Active Pokémon (before applying Weakness and Resistance)."*
+
+    Two halves on two seams. The COST half is `attackCostDiscount { 1, holder:
+    ownerPokemon "Hop" }`, matched on the HOLDER's top card. The DAMAGE half is Binding
+    Mochi's shape with zero vocabulary — `damageBonusBeforeWRIf { 30, yourActiveOwner
+    "Hop" }` — and it reads the attacking seat's ACTIVE rather than the holder. ⚠️ R-T3:
+    the two agree whenever the holder attacks, because `damageBonusBeforeWRIf` is folded
+    out of `passivesOf(attacker)` and an attacker IS its seat's Active (BINDING_MOCHI's
+    argument verbatim); a Band on a benched body contributes no damage because it never
+    reaches the fold. */
+const HOPS_CHOICE_BAND: CardProgram = {
+  passive: {
+    attackCostDiscount: { amount: 1, holder: { kind: "ownerPokemon", owner: "Hop" } },
+    damageBonusBeforeWRIf: { amount: 30, cond: { kind: "yourActiveOwner", owner: "Hop" } },
+  },
+};
+
+/** 🆕🆕🆕 **D558 — Brave Bangle `sv10.5w-080` (Tool, 1 legal)** — *"If the Pokémon this
+    card is attached to doesn't have a Rule Box, the attacks it uses do 30 more damage
+    to your opponent's Active Pokémon ex (before applying Weakness and Resistance).
+    (Pokémon ex, Pokémon V, etc. have Rule Boxes.)"*
+
+    MAXIMUM_BELT's `damageBonusBeforeWRIfTarget` at 30 with the new `holder` rider —
+    `anyPokemon { noRuleBox }` (Lana's Aid's filter, `hasRuleBox` negated), resolved in
+    `passivesOf`'s fold against the holder's TOP card, live: evolving into an ex ends it. */
+const BRAVE_BANGLE: CardProgram = {
+  passive: {
+    damageBonusBeforeWRIfTarget: {
+      amount: 30,
+      targetSuffix: "ex",
+      holder: { kind: "anyPokemon", noRuleBox: true },
+    },
+  },
+};
+
+/** 🆕🆕🆕 **D558 — Air Balloon `sv10.5b-079` (Tool, 1 legal)** — *"The Retreat Cost of the
+    Pokémon this card is attached to is {C}{C} less."* `retreatCostDiscount { 2 }`, a
+    term in `effectiveRetreatCost`'s one floored sum (`toolRetreatDiscount`). */
+const AIR_BALLOON: CardProgram = { passive: { retreatCostDiscount: { amount: 2 } } };
+
+/** 🆕🆕🆕 **D558 — Rescue Board `sv05-159`, `sv06-225`, `sv08.5-126` (Tool, 3 legal)** —
+    *"The Retreat Cost of the Pokémon this card is attached to is {C} less. If that
+    Pokémon's remaining HP is 30 or less, it has no Retreat Cost."*
+
+    Air Balloon's field at 1 with `freeAtRemainingHpAtMost: 30`: the second sentence is
+    a FREE-TIER member (`toolFreesRetreat`), so at 30 remaining HP or less it beats the
+    −1 outright, live-read off `remainingHpWithin` (R-RB). */
+const RESCUE_BOARD: CardProgram = {
+  passive: { retreatCostDiscount: { amount: 1, freeAtRemainingHpAtMost: 30 } },
+};
+
+/** 🆕🆕🆕 **D558 — Gravity Gemstone `sv07-137` (Tool, 1 legal)** — *"As long as the Pokémon
+    this card is attached to is in the Active Spot, the Retreat Cost of both Active
+    Pokémon is {C} more."* `activeRetreatSurchargeBoth: 1`, read by
+    `activeRetreatSurcharge`: both Actives taxed, per Gemstone, the holder's own
+    included; a benched holder taxes nothing (R-GG). */
+const GRAVITY_GEMSTONE: CardProgram = { passive: { activeRetreatSurchargeBoth: 1 } };
+
+/** 🆕🆕🆕 **D558 — Full Metal Lab `sv05-148` (Stadium, 1 legal)** — *"{M} Pokémon (both
+    yours and your opponent's) take 30 less damage from attacks from the opponent's
+    Pokémon (after applying Weakness and Resistance)."*
+
+    `damageReductionAfterWR { 30, beneficiary: typedPokemon Metal }`, summed once inside
+    `seatDamageReduction` against the DAMAGED body, both sides, both scopes (R-ST),
+    no §9 gate (R-ST2). */
+const FULL_METAL_LAB: CardProgram = {
+  stadium: {
+    damageReductionAfterWR: {
+      amount: 30,
+      beneficiary: { kind: "typedPokemon", pokemonType: "Metal" },
+    },
+  },
+};
+
+/** 🆕🆕🆕 **D558 — Granite Cave `sv10-166` (Stadium, 1 legal)** — *"Steven's Pokémon (both
+    yours and your opponent's) take 30 less damage from attacks from the opponent's
+    Pokémon (after applying Weakness and Resistance)."* Full Metal Lab's field with
+    `ownerPokemon "Steven"` — the owner noun Steven's Carbink's `beneficiary` reads. */
+const GRANITE_CAVE: CardProgram = {
+  stadium: {
+    damageReductionAfterWR: {
+      amount: 30,
+      beneficiary: { kind: "ownerPokemon", owner: "Steven" },
+    },
+  },
+};
+
+/** 🆕🆕🆕 **D558 — Postwick `sv09-154` (Stadium, 1 legal)** — *"Attacks used by Hop's
+    Pokémon (both yours and your opponent's) do 30 more damage to the opponent's Active
+    Pokémon (before applying Weakness and Resistance)."*
+
+    `damageBonusBeforeWR { 30, attacker: ownerPokemon "Hop" }`, summed in
+    `seatPreWRDamageBonus` on the ATTACKER's card for either seat; it stacks with Hop's
+    Snorlax "Extra Helpings" (whose `noStack` keys an Ability name). */
+const POSTWICK: CardProgram = {
+  stadium: {
+    damageBonusBeforeWR: { amount: 30, attacker: { kind: "ownerPokemon", owner: "Hop" } },
+  },
+};
+
+/** 🆕🆕🆕 **D558 — N's Castle `sv09-152` (Stadium, 1 legal)** — *"N's Pokémon in play (both
+    yours and your opponent's) have no Retreat Cost."* `retreat { ownerPokemon "N",
+    free }` — a free-tier member at ANY stage (R-NC), so a Stage 1/2 N's Pokémon is freed.
+    (D204's correction stands: `sv10-165` is Ethan's Adventure, not this card.) */
+const NS_CASTLE: CardProgram = {
+  stadium: { retreat: { filter: { kind: "ownerPokemon", owner: "N" }, free: true } },
+};
+
+/** 🆕🆕🆕 **D558 — Paradise Resort `svp-150`/`svp-224` (Stadium, 2 legal)** — *"The Retreat
+    Cost of each Psyduck in play (both yours and your opponent's) is {C} less."*
+    `retreat { byName "Psyduck", discount 1 }` — a filtered term in `stadiumRetreatDelta`.
+    `svp-045` prints the same text but is mark G, NOT Standard-legal, and is not keyed. */
+const PARADISE_RESORT: CardProgram = {
+  stadium: { retreat: { filter: { kind: "byName", name: "Psyduck" }, discount: 1 } },
+};
+
+/** 🆕🆕🆕 **D558 — Salvatore `sv05-160`/`-202`/`-212` (Supporter, 3 legal)** — *"Search your
+    deck for a card that has no Abilities and evolves from 1 of your Pokémon, and put it
+    onto that Pokémon to evolve it. Then, shuffle your deck. You can use this card on a
+    Pokémon you put down when you were setting up to play or on a Pokémon that was put
+    into play this turn."*
+
+    Duosion's D309 program (`evolveFromDeckChosen` → `shuffleDeck`) with the new
+    `noAbilities`: it narrows the BODY candidates and rides onto the card question, where
+    the offer keeps only cards whose `abilities` is empty or absent (R-SV2). The third
+    sentence is the D307 reading already: a deck-sourced placement takes neither §10
+    timing ban (the doc block above `evolveFromDeckOffer`). ⚠️ **R-SV1 (UNRULED)** —
+    Salvatore on the going-second player's first turn is ALLOWED, inherited from D307's
+    reading that §4/§10 ban playing a Pokémon FROM THE HAND; reversal: a first-turn
+    refusal. */
+const SALVATORE: CardProgram = {
+  trainer: [{ op: "evolveFromDeckChosen", noAbilities: true }, { op: "shuffleDeck" }],
+};
+
 const REGISTRY: Record<string, CardProgram> = {
   // Professor's Research (SV base prints)
   "sv01-189": PROFESSORS_RESEARCH,
@@ -13410,7 +13694,7 @@ const REGISTRY: Record<string, CardProgram> = {
   // Calamitous Wasteland (Stadium) — D109, verified vs local D1 2026-07-31
   "sv02-175": CALAMITOUS_WASTELAND,
   // — Stadium activated abilities (D102, verified vs local D1 2026-07-28). —
-  "sv06.5-060": NEUTRALIZATION_ZONE, // Neutralization Zone — the only Stadium on the §8.5 DAMAGE seam (ACE SPEC)
+  "sv06.5-060": NEUTRALIZATION_ZONE, // Neutralization Zone — the first Stadium on the §8.5 DAMAGE seam (ACE SPEC; "the only" until D558 — Full Metal Lab, Granite Cave, Postwick)
   // D324 — the §8.1 MAX-HP seam's Stadium half: one signed field, two prints,
   // opposite signs and different stages, both sides of the board, no §9 gate.
   "sv08-180": LIVELY_STADIUM, // Lively Stadium — each BASIC in play gets +30 HP
@@ -13918,6 +14202,26 @@ const REGISTRY: Record<string, CardProgram> = {
   "sv10-181": TM_MACHINE, // TM Machine — up to 3 "Technical Machine" Tools to hand
   "sv08-175": DUSK_BALL, // Dusk Ball — a Pokémon from the bottom 7
   "sv10.5w-085": TOOL_SCRAPPER, // Tool Scrapper — up to 2 Tools off either side
+  // ── 🆕🆕🆕 D558 — the first Tools and Stadiums on the four modifier seams, plus
+  //    Salvatore: 18 printings / 12 texts / 12 objects, MID-MAP (D395/D396). ──
+  "sv08-169": COUNTER_GAIN, // Counter Gain — {C} less while you have more Prizes remaining
+  "sv08-249": COUNTER_GAIN, // Counter Gain (reprint)
+  "sv09-148": HOPS_CHOICE_BAND, // Hop's Choice Band — Hop's Pokémon: {C} less and +30
+  "sv10.5w-080": BRAVE_BANGLE, // Brave Bangle — no Rule Box holder: +30 to an ex
+  "sv10.5b-079": AIR_BALLOON, // Air Balloon — Retreat Cost {C}{C} less
+  "sv05-159": RESCUE_BOARD, // Rescue Board — {C} less; free at 30 HP or less remaining
+  "sv06-225": RESCUE_BOARD, // Rescue Board (reprint)
+  "sv08.5-126": RESCUE_BOARD, // Rescue Board (reprint)
+  "sv07-137": GRAVITY_GEMSTONE, // Gravity Gemstone — both Actives' Retreat Cost {C} more
+  "sv05-148": FULL_METAL_LAB, // Full Metal Lab — {M} Pokémon take 30 less (after W/R)
+  "sv10-166": GRANITE_CAVE, // Granite Cave — Steven's Pokémon take 30 less (after W/R)
+  "sv09-154": POSTWICK, // Postwick — Hop's Pokémon do 30 more (before W/R)
+  "sv09-152": NS_CASTLE, // N's Castle — N's Pokémon have no Retreat Cost
+  "svp-150": PARADISE_RESORT, // Paradise Resort — each Psyduck's Retreat Cost {C} less
+  "svp-224": PARADISE_RESORT, // Paradise Resort (reprint)
+  "sv05-160": SALVATORE, // Salvatore — evolve 1 of your Pokémon from the deck, no Abilities
+  "sv05-202": SALVATORE, // Salvatore (reprint)
+  "sv05-212": SALVATORE, // Salvatore (reprint)
   // ── D190 — THE **STANDARD-LEGAL** REPRINT-ALIAS MAP (Tier 0 of
   //    `docs/reference/coverage-backlog-legal.md`). 22 printings, 9 map targets,
   //    ZERO new code: every row below prints a sentence that is already authored

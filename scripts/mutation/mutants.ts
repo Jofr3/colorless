@@ -121,8 +121,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D192 (inheriting D161)",
     what: "under suppression the seat-wide reduction aura drops to zero instead of othersOnly",
     file: "packages/engine/src/attack.ts",
-    find: '? seatDamageReduction(next, defender, "othersOnly")',
-    replace: '? seatDamageReduction(next, defender, "all")',
+    find: '? seatDamageReduction(next, defender, "othersOnly", action.seat)',
+    replace: '? seatDamageReduction(next, defender, "all", action.seat)',
     expectKilledBy: ["packages/engine/src/damageSuppression.test.ts"],
   },
   {
@@ -6206,7 +6206,7 @@ export const MUTANTS: Mutant[] = [
     // CORPUS QUOTES** (D414/D415), so a value-keyed sweep over `toBe("0.391.0")` cannot
     // see it — this row's `find` spells the DECLARATION, not an assertion. Run
     // `precheck` after every version bump, not after the sweep tells you.
-    find: 'export const engineVersion = "0.441.0";',
+    find: 'export const engineVersion = "0.442.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -8578,8 +8578,9 @@ export const MUTANTS: Mutant[] = [
     // 🆕 RE-POINTED AT D310: the call gained `op.names`, so the row now drops the
     // slot ALONE (passing `undefined` for `onto` and keeping the names), which is
     // the same defect it has always described rather than a new one.
-    find: "        ? evolveFromDeckMove(state, choice.uids, ctx, events, op.onto, op.names)",
-    replace: "        ? evolveFromDeckMove(state, choice.uids, ctx, events, undefined, op.names)",
+    // 🆕🆕🆕 D558 - RE-ANCHORED onto the moved bytes (D540): the resolve call gained Salvatore's `op.noAbilities` as a seventh argument. The patch keeps its own claim.
+    find: "        ? evolveFromDeckMove(state, choice.uids, ctx, events, op.onto, op.names, op.noAbilities)",
+    replace: "        ? evolveFromDeckMove(state, choice.uids, ctx, events, undefined, op.names, op.noAbilities)",
     expectKilledBy: ["packages/engine/src/evolveEachBenched.test.ts"],
   },
   {
@@ -8645,7 +8646,8 @@ export const MUTANTS: Mutant[] = [
     // the MULTI-body op. The mutant is the SAME defect at the shared site, so it
     // now kills BOTH suites and the row says so — which is the honest reading of a
     // factored rule: one line, two printed sentences.
-    find: "    return (evolveFromDeckOffer(state, ctx, ref.spot)?.candidates.length ?? 0) > 0;",
+    // 🆕🆕🆕 D558 - RE-ANCHORED onto the moved bytes (D540): the deck test now passes Salvatore's `noAbilities` and wraps over three lines. The patch keeps its own claim.
+    find: "    return (\n      (evolveFromDeckOffer(state, ctx, ref.spot, undefined, noAbilities)?.candidates.length ??\n        0) > 0\n    );",
     replace: "    return true;",
     expectKilledBy: [
       "packages/engine/src/evolveBodyChoice.test.ts",
@@ -8673,8 +8675,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D309",
     what: "🛑 THE ANSWER IS DISCARDED: the op the first question buys carries no `onto`, so the second park asks about the ATTACKER whatever the player picked. The exact failure the rename exists to prevent, written as the one-field-short neighbour — and the SAME shape D308's `D308-scheduler-drops-the-slot` has one op over, which is why both are in this corpus",
     file: "packages/engine/src/interpreter.ts",
-    find: '  return [{ op: "evolveFromDeck", onto: ref.spot }];',
-    replace: '  return [{ op: "evolveFromDeck" }];',
+    // 🆕🆕🆕 D558 - RE-ANCHORED onto the moved bytes (D540): `evolveBodyAnswered` now builds its op as a conditional spread over `noAbilities`; BOTH arms lose `onto`. The patch keeps its own claim.
+    find: "      ? { op: \"evolveFromDeck\", onto: ref.spot, noAbilities: true }\n      : { op: \"evolveFromDeck\", onto: ref.spot },",
+    replace: "      ? { op: \"evolveFromDeck\", noAbilities: true }\n      : { op: \"evolveFromDeck\" },",
     expectKilledBy: ["packages/engine/src/evolveBodyChoice.test.ts"],
   },
   {
@@ -8682,9 +8685,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D309",
     what: "the forcing is removed, so a board with exactly ONE eligible body raises a choice with one candidate in it. M1's no-choice doctrine broken at its second site — and the mutant is invisible to any test that only ever runs the many-candidate board, which is why §4 builds the one-body board by deck surgery",
     file: "packages/engine/src/interpreter.ts",
-    find: "      const forced = eligible.length === 1 ? eligible[0] : undefined;\n      if (forced !== undefined) return { done: state, schedule: evolveBodyAnswered(forced) };",
-    replace:
-      "      const forced = undefined;\n      if (forced !== undefined) return { done: state };",
+    // 🆕🆕🆕 D558 - RE-ANCHORED onto the moved bytes (D540): the forced return now threads `op.noAbilities` and wraps. The patch keeps its own claim.
+    find: "      const forced = eligible.length === 1 ? eligible[0] : undefined;\n      if (forced !== undefined)\n        return { done: state, schedule: evolveBodyAnswered(forced, op.noAbilities) };",
+    replace: "      const forced = undefined;\n      if (forced !== undefined) return { done: state };",
     expectKilledBy: ["packages/engine/src/evolveBodyChoice.test.ts"],
   },
   {
@@ -8692,8 +8695,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D309",
     what: "🛑 `continuationOps` no longer recognises the asker, so the body answer buys NOTHING: the park resolves, `applyChoice` returns the state untouched (correctly — it moves nothing by design), the program falls through to the shuffle and the printed evolution never happens. THE CHANNEL BETWEEN THE TWO QUESTIONS, cut — and the reason `applyChoice`'s do-nothing arm is not on its own a defect",
     file: "packages/engine/src/interpreter.ts",
-    find: '  if (op.op === "evolveFromDeckChosen") {\n    return pickedPokemon(choice) ? evolveBodyAnswered(choice.ref) : [];\n  }',
-    replace: '  if (op.op === "evolveFromDeckChosen") {\n    return [];\n  }',
+    // 🆕🆕🆕 D558 - RE-ANCHORED onto the moved bytes (D540): the answer now threads `op.noAbilities`. The patch keeps its own claim.
+    find: "  if (op.op === \"evolveFromDeckChosen\") {\n    return pickedPokemon(choice) ? evolveBodyAnswered(choice.ref, op.noAbilities) : [];\n  }",
+    replace: "  if (op.op === \"evolveFromDeckChosen\") {\n    return [];\n  }",
     expectKilledBy: ["packages/engine/src/evolveBodyChoice.test.ts"],
   },
   // ── D315 · THE MULTI-BODY EVOLVE-FROM-DECK SENTENCE — the FOURTH
@@ -8792,8 +8796,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D315",
     what: "🛑 `continuationOps` no longer recognises the MULTI asker, so the body answer buys NOTHING: the park resolves, `applyChoice` returns the state untouched (correctly — it moves nothing by design), the program falls through to the shuffle and no Pokémon evolves. THE CHANNEL BETWEEN THE TWO QUESTIONS, cut — D309's row one op over, and the reason `applyChoice`'s do-nothing arm is not on its own a defect",
     file: "packages/engine/src/interpreter.ts",
-    find: '  if (op.op === "evolveFromDeckEachChosen") {\n    return choice.kind === "pokemonMulti" ? choice.refs.flatMap(evolveBodyAnswered) : [];\n  }',
-    replace: '  if (op.op === "evolveFromDeckEachChosen") {\n    return [];\n  }',
+    // 🆕🆕🆕 D558 - RE-ANCHORED onto the moved bytes (D540): the `flatMap` now wraps its callback (`evolveBodyAnswered` gained a second parameter a bare reference would feed the index into). The patch keeps its own claim.
+    find: "  if (op.op === \"evolveFromDeckEachChosen\") {\n    return choice.kind === \"pokemonMulti\"\n      ? choice.refs.flatMap((ref) => evolveBodyAnswered(ref))\n      : [];\n  }",
+    replace: "  if (op.op === \"evolveFromDeckEachChosen\") {\n    return [];\n  }",
     expectKilledBy: ["packages/engine/src/evolveEachChosen.test.ts"],
   },
   {
@@ -8801,9 +8806,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D315",
     what: "🛑 THE MEMBER THAT MAKES THIS THE FIRST ANSWER TO BUY *N* OPS, HALVED: only the first picked body's `evolveFromDeck` is scheduled, so *\"for each of THOSE Pokémon\"* evolves one of the two. The exact shape an author copying D309's single-ref member writes, and it is invisible to any test that only ever picks one body — which is why §3 picks two and asserts the SECOND park by its own body's name",
     file: "packages/engine/src/interpreter.ts",
-    find: '    return choice.kind === "pokemonMulti" ? choice.refs.flatMap(evolveBodyAnswered) : [];',
-    replace:
-      '    const first = choice.kind === "pokemonMulti" ? choice.refs[0] : undefined;\n    return first === undefined ? [] : evolveBodyAnswered(first);',
+    // 🆕🆕🆕 D558 - RE-ANCHORED onto the moved bytes (D540): the `flatMap` now wraps its callback over three lines. The patch keeps its own claim.
+    find: "    return choice.kind === \"pokemonMulti\"\n      ? choice.refs.flatMap((ref) => evolveBodyAnswered(ref))\n      : [];",
+    replace: "    const first = choice.kind === \"pokemonMulti\" ? choice.refs[0] : undefined;\n    return first === undefined ? [] : evolveBodyAnswered(first);",
     expectKilledBy: ["packages/engine/src/evolveEachChosen.test.ts"],
   },
   {
@@ -8866,8 +8871,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D310",
     what: "the RESOLUTION re-derives its offer WITHOUT the printed names while the PARK still uses them, so the two disagree: the prompt offers an Unfezant, the player picks it, and `evolveFromDeckMove` re-derives the chain set, does not find the uid in it, and returns the state untouched. A pick that is accepted and does nothing -- the exact failure the re-derivation exists to prevent, arriving through the parameter it forgot",
     file: "packages/engine/src/interpreter.ts",
-    find: "        ? evolveFromDeckMove(state, choice.uids, ctx, events, op.onto, op.names)",
-    replace: "        ? evolveFromDeckMove(state, choice.uids, ctx, events, op.onto)",
+    // 🆕🆕🆕 D558 - RE-ANCHORED onto the moved bytes (D540): the resolve call gained a seventh argument, so `names` is dropped as `undefined` in its slot. The patch keeps its own claim.
+    find: "        ? evolveFromDeckMove(state, choice.uids, ctx, events, op.onto, op.names, op.noAbilities)",
+    replace: "        ? evolveFromDeckMove(state, choice.uids, ctx, events, op.onto, undefined, op.noAbilities)",
     expectKilledBy: ["packages/engine/src/emergencyEvolution.test.ts"],
   },
   {
@@ -8875,9 +8881,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D310",
     what: 'the dialog tells the player "a card that evolves from Pidove" while offering cards that do not evolve from Pidove. Nothing about the RESOLUTION changes, so this is a pure lie on the wire -- D307\'s `dest` mutant one field over, and the shape an author reaches for because the chain phrasing is the one already written on the line above',
     file: "packages/engine/src/interpreter.ts",
-    find: '            op.names === undefined\n              ? `Search your deck for a card that evolves from ${offer.name} and put it onto ${offer.name} to evolve it.`\n              : `Search your deck for ${op.names.join(" or ")} and put it onto ${offer.name} to evolve it.`,',
-    replace:
-      "            `Search your deck for a card that evolves from ${offer.name} and put it onto ${offer.name} to evolve it.`,",
+    // 🆕🆕🆕 D558 - RE-ANCHORED onto the moved bytes (D540): the chain note gained Salvatore's optional "has no Abilities and " fragment. The patch keeps its own claim.
+    find: "            op.names === undefined\n              ? `Search your deck for a card that ${op.noAbilities === true ? \"has no Abilities and \" : \"\"}evolves from ${offer.name} and put it onto ${offer.name} to evolve it.`\n              : `Search your deck for ${op.names.join(\" or \")} and put it onto ${offer.name} to evolve it.`,",
+    replace: "            `Search your deck for a card that ${op.noAbilities === true ? \"has no Abilities and \" : \"\"}evolves from ${offer.name} and put it onto ${offer.name} to evolve it.`,",
     expectKilledBy: ["packages/engine/src/emergencyEvolution.test.ts"],
   },
   {
@@ -10199,8 +10205,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D321",
     what: "the ledger is built and never summed in, so every aura that prints the stacking clause reduces NOTHING. The loudest row in the set and the cheapest to get wrong: a `capped` map that is written but not read is what a copy of `seatPreWRDamageBonus` looks like with its last two lines missing",
     file: "packages/engine/src/continuous.ts",
-    find: "    for (const amount of capped.values()) taken += amount;\n    return taken; // this is the Pokémon's own side",
-    replace: "    return taken; // this is the Pokémon's own side",
+    // 🆕🆕🆕 D558 - RE-ANCHORED onto the moved bytes (D540): the side's return gained the Stadium term and its comment now sits between the ledger sum and the `return`. The patch keeps its own claim.
+    find: "    for (const amount of capped.values()) taken += amount;\n    // 🆕🆕🆕 D558 — the in-play STADIUM's reduction (Full Metal Lab, Granite Cave),",
+    replace: "    // 🆕🆕🆕 D558 — the in-play STADIUM's reduction (Full Metal Lab, Granite Cave),",
     expectKilledBy: ["packages/engine/src/seatReductionAura.test.ts"],
   },
   {
@@ -10277,9 +10284,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D322",
     what: "the fourth term is dropped from the fold, so Toedscruel's Ability is authored, scanned and then thrown away. The whole slice is DEAD and every other row about it stays green - D310/D314/D318's \"a gate may be green and dead\", here as a whole scan",
     file: "packages/engine/src/continuous.ts",
-    find: "      opposingRetreatSurcharge(state, pokemon) -\n      alliedRetreatDiscount(state, pokemon),",
-    replace:
-      "      opposingRetreatSurcharge(state, pokemon) -\n      0 * alliedRetreatDiscount(state, pokemon),",
+    // 🆕🆕🆕 D558 - RE-ANCHORED onto the moved bytes (D540): the floored sum gained Gravity Gemstone's surcharge before the allied discount and the Tools' discount after it. The patch keeps its own claim.
+    find: "      activeRetreatSurcharge(state, pokemon) -\n      alliedRetreatDiscount(state, pokemon) -",
+    replace: "      activeRetreatSurcharge(state, pokemon) -\n      0 * alliedRetreatDiscount(state, pokemon) -",
     expectKilledBy: ["packages/engine/src/retreatDelta.test.ts"],
   },
   {
@@ -10287,9 +10294,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D322",
     what: "the discount is ADDED rather than subtracted - the sign error a mirror-image scan invites, and the one that is invisible on any board where the cost floors at zero anyway. Only a printed cost STRICTLY GREATER than the discount separates them, which is why the suite's body is printed at {C}{C}{C}",
     file: "packages/engine/src/continuous.ts",
-    find: "      opposingRetreatSurcharge(state, pokemon) -\n      alliedRetreatDiscount(state, pokemon),",
-    replace:
-      "      opposingRetreatSurcharge(state, pokemon) +\n      alliedRetreatDiscount(state, pokemon),",
+    // 🆕🆕🆕 D558 - RE-ANCHORED onto the moved bytes (D540): the floored sum gained Gravity Gemstone's surcharge before the allied discount and the Tools' discount after it. The patch keeps its own claim.
+    find: "      activeRetreatSurcharge(state, pokemon) -\n      alliedRetreatDiscount(state, pokemon) -",
+    replace: "      activeRetreatSurcharge(state, pokemon) +\n      alliedRetreatDiscount(state, pokemon) -",
     expectKilledBy: ["packages/engine/src/retreatDelta.test.ts"],
   },
   {
@@ -10301,9 +10308,9 @@ export const MUTANTS: Mutant[] = [
     //    attack-installed cost tax (`installedCostTaxOf`), as the line after `printed +`.
     //    The patch keeps its own claim - the floor moves off the sum and onto the term -
     //    with the tax riding INSIDE the per-term floor beside `printed`.
-    find: "  return Math.max(\n    0,\n    printed +\n      installedCostTaxOf(state, pokemon) +\n      stadiumRetreatDelta(state, top) +\n      opposingRetreatSurcharge(state, pokemon) -\n      alliedRetreatDiscount(state, pokemon),\n  );",
-    replace:
-      "  return (\n    Math.max(0, printed + installedCostTaxOf(state, pokemon) + stadiumRetreatDelta(state, top) - alliedRetreatDiscount(state, pokemon)) +\n    opposingRetreatSurcharge(state, pokemon)\n  );",
+    // 🆕🆕🆕 D558 - RE-ANCHORED onto the moved bytes (D540): the sum gained two D558 terms; the DISCOUNTS ride inside the per-term floor beside `printed` (the Tools' with the allied one) and the SURCHARGES outside it (Gemstone's with the opposing one). The patch keeps its own claim.
+    find: "  return Math.max(\n    0,\n    printed +\n      installedCostTaxOf(state, pokemon) +\n      stadiumRetreatDelta(state, top) +\n      opposingRetreatSurcharge(state, pokemon) +\n      activeRetreatSurcharge(state, pokemon) -\n      alliedRetreatDiscount(state, pokemon) -\n      toolRetreatDiscount(state, pokemon),\n  );",
+    replace: "  return (\n    Math.max(0, printed + installedCostTaxOf(state, pokemon) + stadiumRetreatDelta(state, top) - alliedRetreatDiscount(state, pokemon) - toolRetreatDiscount(state, pokemon)) +\n    opposingRetreatSurcharge(state, pokemon) +\n    activeRetreatSurcharge(state, pokemon)\n  );",
     expectKilledBy: ["packages/engine/src/retreatDelta.test.ts"],
   },
   {
@@ -11454,9 +11461,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D327",
     what: "the §9 suppression check goes, so an Active Klefki no longer silences a BASIC holder's Food Prep. D113's rule says reachability follows the SOURCE's stage, and this slice is the first on this seam that can show the rule failing in the direction it holds AND the direction it does not",
     file: "packages/engine/src/continuous.ts",
-    find: "  if (perPrize === undefined && perNamed === undefined && perBenched === undefined) return 0;\n  if (disabledAbilityUids(state).has(uid)) return 0; // §9",
-    replace:
-      "  if (perPrize === undefined && perNamed === undefined && perBenched === undefined) return 0;",
+    // 🆕🆕🆕 D558 - RE-ANCHORED onto the moved bytes (D540): both early returns now answer the Tools' sum (`tools`) rather than 0, and the gate's comment names the top card's terms. The patch keeps its own claim.
+    find: "  if (perPrize === undefined && perNamed === undefined && perBenched === undefined) return tools;\n  if (disabledAbilityUids(state).has(uid)) return tools; // §9 — the top card's terms only",
+    replace: "  if (perPrize === undefined && perNamed === undefined && perBenched === undefined) return tools;",
     expectKilledBy: ["packages/engine/src/foodPrep.test.ts"],
   },
   {
@@ -31269,7 +31276,7 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D522-gated-spread-then-order-swapped",
     decision: "D522",
-    what: "⚠️ C5 — **THE `then` ORDER SWAPPED: discard first, spread second** — the printed order is spread, THEN discard (*\", and discard that Stadium\"*). 🛑 **DECLARED KILLED BY §1's `toEqual` ON THE ASSEMBLED PROGRAM ALONE, AND THE REASON IS WRITTEN HERE RATHER THAN GLOSSED (D382's route).** The order is UNOBSERVABLE on every legal board: the spread is FLAT bench HP (no W/R — the clarifier says so and `spreadDamage` files `weakness: null`), the only Stadium in the pool whose presence moves a damage number is Neutralization Zone `sv06.5-060` and only for an attacking Pokémon **ex** (Ting-Lu is a Basic with no Rule Box), and a vacated `hpDelta` Stadium (Lively Stadium `sv02-196`) lowers a MAXIMUM that `finishAttack`'s `collectKnockOuts` checks AFTER the whole program on BOTH seats — so KO-by-maximum is the same in both orders. §2 deliberately does NOT assert the spread rows' position against the discard row; the suite's ONE killer of this row is the program `toEqual`, which is exactly what D130/D228/D382 pinned an unobservable order with. A row killed by a rung that reads the PROGRAM rather than a board is still a row that goes RED, which is the whole of what D211 asks.",
+    what: "⚠️ C5 — **THE `then` ORDER SWAPPED: discard first, spread second** — the printed order is spread, THEN discard (*\", and discard that Stadium\"*). 🛑 **DECLARED KILLED BY §1's `toEqual` ON THE ASSEMBLED PROGRAM ALONE, AND THE REASON IS WRITTEN HERE RATHER THAN GLOSSED (D382's route).** The order is UNOBSERVABLE on every legal board: the spread is FLAT bench HP (no W/R — the clarifier says so and `spreadDamage` files `weakness: null`), the only Stadium in the pool whose presence moves a damage number is Neutralization Zone `sv06.5-060` and only for an attacking Pokémon **ex** (Ting-Lu is a Basic with no Rule Box), and a vacated `hpDelta` Stadium (Lively Stadium `sv02-196`) lowers a MAXIMUM that `finishAttack`'s `collectKnockOuts` checks AFTER the whole program on BOTH seats — so KO-by-maximum is the same in both orders. §2 deliberately does NOT assert the spread rows' position against the discard row; the suite's ONE killer of this row is the program `toEqual`, which is exactly what D130/D228/D382 pinned an unobservable order with. A row killed by a rung that reads the PROGRAM rather than a board is still a row that goes RED, which is the whole of what D211 asks. (🆕🆕🆕 D558 CORRECTION (D539): \"UNOBSERVABLE on every legal board\" is WITHDRAWN, and so is \"the only Stadium in the pool whose presence moves a damage number is Neutralization Zone\" — Full Metal Lab `sv05-148` and Granite Cave `sv10-166` move one too: they reduce a spread onto a benched {M} / Steven's Pokémon through `seatDamageReduction`, so the swapped order pays that body the full 30; `continuousToolsStadiumsD558.test.ts` §8 drives it. The declared killer is unchanged.)",
     file: "packages/engine/src/effects.ts",
     find: "            { op: \"spreadDamage\", target: \"opponentBench\", amount },\n            { op: \"discardStadium\" },",
     replace: "            { op: \"discardStadium\" },\n            { op: \"spreadDamage\", target: \"opponentBench\", amount },",
@@ -37098,5 +37105,346 @@ export const MUTANTS: Mutant[] = [
     find: "      filter: { kind: \"toolNameContaining\", fragment: \"Technical Machine\" },",
     replace: "      filter: { kind: \"toolNameContaining\", fragment: \"TM\" },",
     expectKilledBy: ["packages/engine/src/riderTrainersD557.test.ts"],
+  },
+  // ── 🆕🆕🆕 D558 — THE FIRST TOOLS AND STADIUMS ON THE FOUR MODIFIER SEAMS, PLUS SALVATORE:
+  //    18 PRINTINGS / 12 TEXTS / 12 OBJECTS. The Tool terms and their §9 immunity (R-T1), Counter
+  //    Gain's comparison and seat (R-T2), Hop's Choice Band's two halves (R-T3), Brave Bangle's
+  //    holder clause, the retreat seam's Tool / Gemstone / Stadium terms and the per-term Basic
+  //    gate, the two Stadium damage terms (R-ST, R-ST2), and Salvatore's `noAbilities` at all five
+  //    of its sites. Every row was probed UNDECLARED first (D525(3)); every replace names only
+  //    identifiers its target file binds (D533); no row touches a catalog, corpus or fixture data
+  //    file (D538). ──
+  {
+    id: "D558-tool-cost-term-ability-gated",
+    decision: "D558",
+    what: "R-T1 reversed at the HELPER: `toolAttackCostDiscount` takes the §9 gate, so a Klefki / Ting-Lu lock over the holder erases Counter Gain's and Hop's Choice Band's {C}. Killed by §2's and §3's lock rungs.",
+    file: "packages/engine/src/continuous.ts",
+    find: "  let discount = 0;\n  for (const toolUid of pokemon.tools) {\n    const id = state.cardIdByUid[toolUid];\n    const term = id === undefined ? undefined : programFor(id)?.passive?.attackCostDiscount;",
+    replace: "  if (disabledAbilityUids(state).has(uid)) return 0;\n  let discount = 0;\n  for (const toolUid of pokemon.tools) {\n    const id = state.cardIdByUid[toolUid];\n    const term = id === undefined ? undefined : programFor(id)?.passive?.attackCostDiscount;",
+    expectKilledBy: ["packages/engine/src/continuousToolsStadiumsD558.test.ts"],
+  },
+  {
+    id: "D558-tool-cost-term-lost-under-the-holders-lock",
+    decision: "D558",
+    what: "R-T1 reversed at the SUM: `selfAttackCostDiscount`'s §9 return answers 0 instead of the Tools' sum, so a locked holder that ALSO prints a discount (Radiant Charizard) loses Counter Gain's {C} with its own. Killed by §2's Radiant Charizard rung.",
+    file: "packages/engine/src/continuous.ts",
+    find: "  if (disabledAbilityUids(state).has(uid)) return tools; // §9 — the top card's terms only",
+    replace: "  if (disabledAbilityUids(state).has(uid)) return 0; // §9 — the top card's terms only",
+    expectKilledBy: ["packages/engine/src/continuousToolsStadiumsD558.test.ts"],
+  },
+  {
+    id: "D558-counter-gain-read-inverted",
+    decision: "D558",
+    what: "Counter Gain's gate is read inverted at the Tool term: the {C} applies when the holder's side is NOT ahead (a tie or behind) and not when it is. Killed by §2's more / tie / fewer rungs.",
+    file: "packages/engine/src/continuous.ts",
+    find: "    if (term.ifMorePrizesRemaining === true && !holderSideLeadsOnPrizesRemaining(state, pokemon))",
+    replace: "    if (term.ifMorePrizesRemaining === true && holderSideLeadsOnPrizesRemaining(state, pokemon))",
+    expectKilledBy: ["packages/engine/src/continuousToolsStadiumsD558.test.ts"],
+  },
+  {
+    id: "D558-counter-gain-you-is-p1",
+    decision: "D558",
+    what: "R-T2 reversed: \"you\" is hard-wired to p1 instead of the HOLDER's controller, so p2's Counter Gain reads p1's lead. Killed by §2's p2-holder rung.",
+    file: "packages/engine/src/continuous.ts",
+    find: "    if (term.ifMorePrizesRemaining === true && !holderSideLeadsOnPrizesRemaining(state, pokemon))",
+    replace: "    if (term.ifMorePrizesRemaining === true && state.players.p1.prizes.length <= state.players.p2.prizes.length)",
+    expectKilledBy: ["packages/engine/src/continuousToolsStadiumsD558.test.ts"],
+  },
+  {
+    id: "D558-counter-gain-condition-dropped",
+    decision: "D558",
+    what: "Counter Gain's row loses `ifMorePrizesRemaining`: the {C} is unconditional. Killed by §1's toEqual and §2's tie / fewer rungs.",
+    file: "packages/engine/src/registry.ts",
+    find: "  passive: { attackCostDiscount: { amount: 1, ifMorePrizesRemaining: true } },",
+    replace: "  passive: { attackCostDiscount: { amount: 1 } },",
+    expectKilledBy: ["packages/engine/src/continuousToolsStadiumsD558.test.ts"],
+  },
+  {
+    id: "D558-band-holder-filter-dropped",
+    decision: "D558",
+    what: "the Tool's `holder` noun stops being read: Hop's Choice Band discounts ANY holder's attacks. Killed by §3's non-Hop's rung and the live-evolution rung.",
+    file: "packages/engine/src/continuous.ts",
+    find: "    if (term.holder !== undefined && !matchesFilter(top, term.holder)) continue;\n",
+    replace: "",
+    expectKilledBy: ["packages/engine/src/continuousToolsStadiumsD558.test.ts"],
+  },
+  {
+    id: "D558-band-damage-owner-wrong",
+    decision: "D558",
+    what: "Hop's Choice Band's damage half asks for an ARVEN'S Active: the Hop's attacker loses its +30. Killed by §3's +30 rung and §1's toEqual.",
+    file: "packages/engine/src/registry.ts",
+    find: "    damageBonusBeforeWRIf: { amount: 30, cond: { kind: \"yourActiveOwner\", owner: \"Hop\" } },",
+    replace: "    damageBonusBeforeWRIf: { amount: 30, cond: { kind: \"yourActiveOwner\", owner: \"Arven\" } },",
+    expectKilledBy: ["packages/engine/src/continuousToolsStadiumsD558.test.ts"],
+  },
+  {
+    id: "D558-bangle-holder-clause-ignored-by-the-fold",
+    decision: "D558",
+    what: "`passivesOf` pushes a `damageBonusBeforeWRIfTarget` entry without asking its `holder`: an ex holding Brave Bangle hits an ex for +30. Killed by §4's ex-holder rung.",
+    file: "packages/engine/src/continuous.ts",
+    find: "      targeted !== undefined &&\n      (targeted.holder === undefined || matchesFilter(top, targeted.holder))\n",
+    replace: "      targeted !== undefined\n",
+    expectKilledBy: ["packages/engine/src/continuousToolsStadiumsD558.test.ts"],
+  },
+  {
+    id: "D558-bangle-no-rule-box-dropped",
+    decision: "D558",
+    what: "Brave Bangle's holder filter loses `noRuleBox`: every Pokémon qualifies. Killed by §1's toEqual and §4's ex-holder rung.",
+    file: "packages/engine/src/registry.ts",
+    find: "      holder: { kind: \"anyPokemon\", noRuleBox: true },",
+    replace: "      holder: { kind: \"anyPokemon\" },",
+    expectKilledBy: ["packages/engine/src/continuousToolsStadiumsD558.test.ts"],
+  },
+  {
+    id: "D558-bangle-ex-to-v",
+    decision: "D558",
+    what: "Brave Bangle's printed \"Active Pokémon ex\" becomes \"V\": the +30 lands on a V and not on an ex. Killed by §4's ex / V rungs.",
+    file: "packages/engine/src/registry.ts",
+    find: "      amount: 30,\n      targetSuffix: \"ex\",\n      holder: { kind: \"anyPokemon\", noRuleBox: true },",
+    replace: "      amount: 30,\n      targetSuffix: \"V\",\n      holder: { kind: \"anyPokemon\", noRuleBox: true },",
+    expectKilledBy: ["packages/engine/src/continuousToolsStadiumsD558.test.ts"],
+  },
+  {
+    id: "D558-balloon-2-to-1",
+    decision: "D558",
+    what: "Air Balloon's printed {C}{C} becomes {C}. Killed by §5's 3 → 1 rung and §1's toEqual.",
+    file: "packages/engine/src/registry.ts",
+    find: "const AIR_BALLOON: CardProgram = { passive: { retreatCostDiscount: { amount: 2 } } };",
+    replace: "const AIR_BALLOON: CardProgram = { passive: { retreatCostDiscount: { amount: 1 } } };",
+    expectKilledBy: ["packages/engine/src/continuousToolsStadiumsD558.test.ts"],
+  },
+  {
+    id: "D558-tool-retreat-term-ability-gated",
+    decision: "D558",
+    what: "R-T1 reversed on the retreat seam: `toolRetreatDiscount` takes the §9 gate, so a locked holder loses Air Balloon's {C}{C}. Killed by §5's lock rung.",
+    file: "packages/engine/src/continuous.ts",
+    find: "export function toolRetreatDiscount(state: GameState, pokemon: InPlayPokemon): number {\n  let discount = 0;",
+    replace: "export function toolRetreatDiscount(state: GameState, pokemon: InPlayPokemon): number {\n  const uid = topUid(pokemon);\n  if (uid !== undefined && disabledAbilityUids(state).has(uid)) return 0;\n  let discount = 0;",
+    expectKilledBy: ["packages/engine/src/continuousToolsStadiumsD558.test.ts"],
+  },
+  {
+    id: "D558-rescue-30-to-20",
+    decision: "D558",
+    what: "Rescue Board's printed \"30 or less\" becomes 20: a body at exactly 30 remaining pays {C}{C}. Killed by §6's 30-remaining rung and §1's toEqual.",
+    file: "packages/engine/src/registry.ts",
+    find: "  passive: { retreatCostDiscount: { amount: 1, freeAtRemainingHpAtMost: 30 } },",
+    replace: "  passive: { retreatCostDiscount: { amount: 1, freeAtRemainingHpAtMost: 20 } },",
+    expectKilledBy: ["packages/engine/src/continuousToolsStadiumsD558.test.ts"],
+  },
+  {
+    id: "D558-rescue-free-tier-dropped",
+    decision: "D558",
+    what: "Rescue Board's free tier is never asked: the damaged body pays its −1 cost instead of nothing. Killed by §6's free rungs.",
+    file: "packages/engine/src/continuous.ts",
+    find: "  if (toolFreesRetreat(state, pokemon) || stadiumFreesRetreat(state, top)) return 0;",
+    replace: "  if (stadiumFreesRetreat(state, top)) return 0;",
+    expectKilledBy: ["packages/engine/src/continuousToolsStadiumsD558.test.ts"],
+  },
+  {
+    id: "D558-rescue-free-reads-full-hp",
+    decision: "D558",
+    what: "Rescue Board's threshold is read against the body's DAMAGE instead of its remaining HP (`damage <= 30`): an undamaged body retreats free and a nearly-dead one pays. Killed by §6's full-HP and 30-remaining rungs.",
+    file: "packages/engine/src/continuous.ts",
+    find: "    return atMost !== undefined && remainingHpWithin(state, pokemon, atMost);",
+    replace: "    return atMost !== undefined && pokemon.damage <= atMost;",
+    expectKilledBy: ["packages/engine/src/continuousToolsStadiumsD558.test.ts"],
+  },
+  {
+    id: "D558-gemstone-holder-only",
+    decision: "D558",
+    what: "Gravity Gemstone taxes only its OWN holder, not \"both Active Pokémon\". Killed by §7's p2-Active rung.",
+    file: "packages/engine/src/continuous.ts",
+    find: "  for (const active of actives) {\n    for (const toolUid of active.tools) {",
+    replace: "  for (const active of actives.filter((a) => topUid(a) === uid)) {\n    for (const toolUid of active.tools) {",
+    expectKilledBy: ["packages/engine/src/continuousToolsStadiumsD558.test.ts"],
+  },
+  {
+    id: "D558-gemstone-taxes-the-bench",
+    decision: "D558",
+    what: "Gravity Gemstone's TARGET clause dropped: a Benched body is taxed too. Killed by §7's Bench rung.",
+    file: "packages/engine/src/continuous.ts",
+    find: "  if (!actives.some((active) => topUid(active) === uid)) return 0;\n",
+    replace: "",
+    expectKilledBy: ["packages/engine/src/continuousToolsStadiumsD558.test.ts"],
+  },
+  {
+    id: "D558-gemstone-from-the-bench",
+    decision: "D558",
+    what: "Gravity Gemstone's SOURCE clause dropped (\"As long as … is in the Active Spot\"): a Benched holder taxes both Actives. Killed by §7's benched-holder rung.",
+    file: "packages/engine/src/continuous.ts",
+    find: "  for (const active of actives) {\n    for (const toolUid of active.tools) {",
+    replace: "  for (const active of SEATS.flatMap((seat) => [...actives.filter((a) => a === state.players[seat].active), ...state.players[seat].bench])) {\n    for (const toolUid of active.tools) {",
+    expectKilledBy: ["packages/engine/src/continuousToolsStadiumsD558.test.ts"],
+  },
+  {
+    id: "D558-ns-castle-basic-only",
+    decision: "D558",
+    what: "R-NC reversed: N's Castle frees only a BASIC N's Pokémon, as if it sat beside Beach Court's Basic gate. Killed by §11's Stage 1 rungs.",
+    file: "packages/engine/src/continuous.ts",
+    find: "  return retreat?.free === true && matchesFilter(top, retreat.filter);",
+    replace: "  return retreat?.free === true && matchesFilter(top, retreat.filter) && isBasicPokemon(top);",
+    expectKilledBy: ["packages/engine/src/continuousToolsStadiumsD558.test.ts"],
+  },
+  {
+    id: "D558-paradise-wrong-name",
+    decision: "D558",
+    what: "Paradise Resort names Golduck instead of the printed Psyduck. Killed by §12 and §1's toEqual.",
+    file: "packages/engine/src/registry.ts",
+    find: "  stadium: { retreat: { filter: { kind: \"byName\", name: \"Psyduck\" }, discount: 1 } },",
+    replace: "  stadium: { retreat: { filter: { kind: \"byName\", name: \"Golduck\" }, discount: 1 } },",
+    expectKilledBy: ["packages/engine/src/continuousToolsStadiumsD558.test.ts"],
+  },
+  {
+    id: "D558-beach-court-leaks-onto-a-stage-1",
+    decision: "D558",
+    what: "the per-term gate that replaced the Basic early return drops Beach Court's `isBasicPokemon`: a Stage 1 retreats for {C} less. Killed by §13's Stage 1 rung.",
+    file: "packages/engine/src/continuous.ts",
+    find: "  const discount = basic ? (stadium?.basicRetreatDiscount ?? 0) : 0;",
+    replace: "  const discount = stadium?.basicRetreatDiscount ?? 0;",
+    expectKilledBy: ["packages/engine/src/continuousToolsStadiumsD558.test.ts"],
+  },
+  {
+    id: "D558-wasteland-leaks-onto-a-stage-1",
+    decision: "D558",
+    what: "the per-term gate drops Calamitous Wasteland's `isBasicPokemon`: a Stage 1 pays {C} more. Killed by §13's Stage 1 rung and `calamitousWasteland.test.ts`'s Basic-only rung.",
+    file: "packages/engine/src/continuous.ts",
+    find: "  const surcharge = basic ? stadium?.basicRetreatSurcharge : undefined;",
+    replace: "  const surcharge = stadium?.basicRetreatSurcharge;",
+    expectKilledBy: ["packages/engine/src/continuousToolsStadiumsD558.test.ts", "packages/engine/src/calamitousWasteland.test.ts"],
+  },
+  {
+    id: "D558-fml-metal-to-fire",
+    decision: "D558",
+    what: "Full Metal Lab's printed {M} becomes {R}: a Metal Active takes the full 50. Killed by §8 and §1's toEqual.",
+    file: "packages/engine/src/registry.ts",
+    find: "      beneficiary: { kind: \"typedPokemon\", pokemonType: \"Metal\" },\n    },\n  },\n};",
+    replace: "      beneficiary: { kind: \"typedPokemon\", pokemonType: \"Fire\" },\n    },\n  },\n};",
+    expectKilledBy: ["packages/engine/src/continuousToolsStadiumsD558.test.ts"],
+  },
+  {
+    id: "D558-granite-cave-owner-changed",
+    decision: "D558",
+    what: "Granite Cave names Cynthia's Pokémon instead of the printed Steven's. Killed by §9 and §1's toEqual.",
+    file: "packages/engine/src/registry.ts",
+    find: "      amount: 30,\n      beneficiary: { kind: \"ownerPokemon\", owner: \"Steven\" },\n    },\n  },\n};",
+    replace: "      amount: 30,\n      beneficiary: { kind: \"ownerPokemon\", owner: \"Cynthia\" },\n    },\n  },\n};",
+    expectKilledBy: ["packages/engine/src/continuousToolsStadiumsD558.test.ts"],
+  },
+  {
+    id: "D558-stadium-reduction-dropped-under-others-only",
+    decision: "D558",
+    what: "R-ST reversed: Feint Attack's `othersOnly` scope nulls the Stadium's reduction, as if a Stadium were an effect on the damaged Pokémon. Killed by §8's R-ST rung and §9's locked `othersOnly` rung.",
+    file: "packages/engine/src/continuous.ts",
+    find: "    return taken + stadiumDamageReduction(state, damagedCard); // this is the Pokémon's own side — no other side can shield it",
+    replace: "    return taken + (scope === \"all\" ? stadiumDamageReduction(state, damagedCard) : 0); // this is the Pokémon's own side — no other side can shield it",
+    expectKilledBy: ["packages/engine/src/continuousToolsStadiumsD558.test.ts"],
+  },
+  {
+    id: "D558-stadium-reduction-beneficiary-ignored",
+    decision: "D558",
+    what: "the Stadium's `beneficiary` stops being read: every Pokémon takes 30 less under Full Metal Lab. Killed by §8's / §9's non-beneficiary rungs.",
+    file: "packages/engine/src/continuous.ts",
+    find: "  return reduction !== undefined && matchesFilter(damagedCard, reduction.beneficiary)\n    ? reduction.amount\n    : 0;",
+    replace: "  return reduction !== undefined\n    ? reduction.amount\n    : 0;",
+    expectKilledBy: ["packages/engine/src/continuousToolsStadiumsD558.test.ts"],
+  },
+  {
+    id: "D558-stadium-reduction-pays-an-own-side-hit",
+    decision: "D558",
+    what: "R-ST3 reversed (the landing review's REFUTED finding): the attacker-seat gate is dropped, so Full Metal Lab / Granite Cave reduce the attacker's OWN spread or snipe onto its own benched {M} / Steven's Pokémon, against the printed \"from attacks from the opponent's Pokémon\". Killed by §8's own-bench spread and own-bench snipe rungs, §8's both-sides own-seat rung and §9's own-spread rung.",
+    file: "packages/engine/src/continuous.ts",
+    find: "    if (seat === attackerSeat) return taken; // an own-side hit: the Stadium's \"the opponent's\" fails",
+    replace: "    void attackerSeat; // an own-side hit: the Stadium's \"the opponent's\" fails",
+    expectKilledBy: ["packages/engine/src/continuousToolsStadiumsD558.test.ts"],
+  },
+  {
+    id: "D558-own-bench-spread-passes-the-wrong-attacker-seat",
+    decision: "D558",
+    what: "`spreadDamage` hands `seatDamageReduction` the VICTIM's opponent instead of the attacking seat: identical on the opponent-side arm, but D425's own-bench arm then reads as an attack from across the table and Full Metal Lab pays p1's own benched {M} Pokémon. Killed ONLY by §8's / §9's own-bench spread rungs — the reason those rungs exist.",
+    file: "packages/engine/src/interpreter.ts",
+    find: '      seatDamageReduction(state, pokemon, "all", ctx.seat);',
+    replace: '      seatDamageReduction(state, pokemon, "all", otherSeat(victim));',
+    expectKilledBy: ["packages/engine/src/continuousToolsStadiumsD558.test.ts"],
+  },
+  {
+    id: "D558-own-bench-snipe-passes-the-wrong-attacker-seat",
+    decision: "D558",
+    what: "`placeSnipe`'s bench arm hands `seatDamageReduction` the bench victim's opponent instead of the attacking seat: identical on the opponent-side arm, but D447's own-bench arm then reads as an attack from across the table and Full Metal Lab pays p1's own benched {M} Pokémon. Killed ONLY by §8's own-bench snipe rung.",
+    file: "packages/engine/src/interpreter.ts",
+    find: '        seatDamageReduction(next, pokemon, "all", ctx.seat);',
+    replace: '        seatDamageReduction(next, pokemon, "all", otherSeat(benchVictim));',
+    expectKilledBy: ["packages/engine/src/continuousToolsStadiumsD558.test.ts"],
+  },
+  {
+    id: "D558-postwick-matched-on-the-defender",
+    decision: "D558",
+    what: "Postwick's filter is matched on the DEFENDER's card instead of the attacker's: a Hop's attacker hitting a plain wall gets nothing and a plain attacker hitting a Hop's body gets +30. Killed by §10.",
+    file: "packages/engine/src/continuous.ts",
+    find: "  return total + stadiumPreWRBonus(state, attackerCard);",
+    replace: "  return total + stadiumPreWRBonus(state, defenderCard);",
+    expectKilledBy: ["packages/engine/src/continuousToolsStadiumsD558.test.ts"],
+  },
+  {
+    id: "D558-postwick-owner-seat-only",
+    decision: "D558",
+    what: "R-ST2's \"both yours and your opponent's\" dropped: Postwick pays only its OWNER's attacks. Killed by §10's p2 rung.",
+    file: "packages/engine/src/continuous.ts",
+    find: "  return total + stadiumPreWRBonus(state, attackerCard);",
+    replace: "  return total + (state.stadium?.owner === seat ? stadiumPreWRBonus(state, attackerCard) : 0);",
+    expectKilledBy: ["packages/engine/src/continuousToolsStadiumsD558.test.ts"],
+  },
+  {
+    id: "D558-salvatore-key-dropped",
+    decision: "D558",
+    what: "Salvatore's row loses `noAbilities`: it is Duosion's D309 program and offers Ability-bearing evolutions. Killed by §1's toEqual and §2.",
+    file: "packages/engine/src/registry.ts",
+    find: "  trainer: [{ op: \"evolveFromDeckChosen\", noAbilities: true }, { op: \"shuffleDeck\" }],",
+    replace: "  trainer: [{ op: \"evolveFromDeckChosen\" }, { op: \"shuffleDeck\" }],",
+    expectKilledBy: ["packages/engine/src/salvatoreD558.test.ts"],
+  },
+  {
+    id: "D558-no-abilities-dropped-at-the-offer",
+    decision: "D558",
+    what: "`evolveFromDeckOffer` ignores `noAbilities`: the card question offers the Ability-bearing evolution. Killed by §2's offer rung and §5's revived parks.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      if (noAbilities === true && (card.abilities ?? []).length > 0) return false;\n",
+    replace: "",
+    expectKilledBy: ["packages/engine/src/salvatoreD558.test.ts"],
+  },
+  {
+    id: "D558-no-abilities-dropped-at-the-body-narrowing",
+    decision: "D558",
+    what: "`evolvableOwnRefs` asks the deck WITHOUT the noun: a body whose only evolutions print an Ability is offered, so the forced board asks a body question. Killed by §3's forced rung.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      (evolveFromDeckOffer(state, ctx, ref.spot, undefined, noAbilities)?.candidates.length ??",
+    replace: "      (evolveFromDeckOffer(state, ctx, ref.spot, undefined)?.candidates.length ??",
+    expectKilledBy: ["packages/engine/src/salvatoreD558.test.ts"],
+  },
+  {
+    id: "D558-no-abilities-not-carried-by-the-answer",
+    decision: "D558",
+    what: "the parked body question's ANSWER drops the key: the card question after a two-body park is unfiltered. Killed by §3's asked-body rung and §5's revived body park.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "    return pickedPokemon(choice) ? evolveBodyAnswered(choice.ref, op.noAbilities) : [];",
+    replace: "    return pickedPokemon(choice) ? evolveBodyAnswered(choice.ref) : [];",
+    expectKilledBy: ["packages/engine/src/salvatoreD558.test.ts"],
+  },
+  {
+    id: "D558-no-abilities-not-carried-when-forced",
+    decision: "D558",
+    what: "the FORCED single-body path drops the key: a one-body Salvatore offers the Ability card. Killed by §2's offer rung.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "        return { done: state, schedule: evolveBodyAnswered(forced, op.noAbilities) };",
+    replace: "        return { done: state, schedule: evolveBodyAnswered(forced) };",
+    expectKilledBy: ["packages/engine/src/salvatoreD558.test.ts"],
+  },
+  {
+    id: "D558-no-abilities-dropped-at-the-move",
+    decision: "D558",
+    what: "`evolveFromDeckMove` re-derives the offer WITHOUT the key: a crafted frame that widens the prompt puts the Ability card onto the body. Killed by §4's crafted-frame rung.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  const offer = evolveFromDeckOffer(state, ctx, onto, names, noAbilities);",
+    replace: "  const offer = evolveFromDeckOffer(state, ctx, onto, names);",
+    expectKilledBy: ["packages/engine/src/salvatoreD558.test.ts"],
   },
 ];

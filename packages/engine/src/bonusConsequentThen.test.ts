@@ -104,6 +104,15 @@ import {
 // what a test would notice — D130/D228's precedent, named so a printing that CAN
 // reach it is a known cost rather than a surprise. §4 pins the order in the
 // ASSEMBLED program, which is the strongest claim available on this board.
+// (🆕🆕🆕 D558 CORRECTION (D539): the claim above is still literally true of
+// `FIXTURE_POOL`, which carries none of the new Stadiums, but it no longer holds for
+// the LEGAL pool, and it is WITHDRAWN as a statement about the printing. Full Metal Lab
+// `sv05-148` and Granite Cave `sv10-166` reduce attack damage to {M} / Steven's Pokémon
+// by 30 through `seatDamageReduction`, which the gated `damageDefender` reads, so on
+// either Stadium's board the printed hit-then-discard order deals 30 less than the swap
+// would. That is the "printing that CAN reach it" named above: NAMED here, NOT driven for
+// Chi-Yu; Ting-Lu's twin order is driven in `continuousToolsStadiumsD558.test.ts` §8, and
+// §4's `toEqual` still pins this one in the assembled program.)
 //
 // ── WHAT THE ROW COSTS ──────────────────────────────────────────────────────
 //
@@ -617,6 +626,12 @@ describe("D382 §4 — the ASSEMBLER: both arms, and the PRINTED ORDER inside th
   it("🛑 THE DAMAGE COMES FIRST AND THE DISCARD SECOND — the PRINTED order", () => {
     // Unobservable on this printing (see the header), so it is pinned in the
     // program rather than on a board: reversing the two steps here goes red.
+    // (🆕🆕🆕 2026-09-26 D558 CORRECTION (D539): "unobservable" is true of
+    // `FIXTURE_POOL` only, and is WITHDRAWN as a statement about the printing — on
+    // a Full Metal Lab `sv05-148` or Granite Cave `sv10-166` board the printed
+    // hit-then-discard order deals 30 less than the swap would, so the order IS
+    // observable in the legal pool (see the header's D558 note). It is still pinned
+    // here in the program, which is where this suite drives it.)
     const gate = program()[0] as { then: EffectOp[] };
     expect(gate.then.map((op) => op.op)).toEqual(["damageDefender", "discardStadium"]);
   });

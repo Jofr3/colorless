@@ -787,7 +787,14 @@ describe("D359 §6 — the ids this file rests on are real and locally seated", 
     // and Tool Scrapper. Real catalog ids, no `fix-*` key (`chooseOneTrainersD557.test.ts`
     // / `riderTrainersD557.test.ts` drive a LOCAL `cardPool`), inserted MID-MAP after
     // `svp-149`, and no row authors an `attack` program.
-    expect(registryCardIds()).toHaveLength(798);
+    // 🆕🆕🆕 D558 — 798 -> **816**: EIGHTEEN registry keys on TWELVE program objects —
+    // Counter Gain, Hop's Choice Band, Brave Bangle, Air Balloon, Rescue Board, Gravity
+    // Gemstone (Tools), Full Metal Lab, Granite Cave, Postwick, N's Castle, Paradise Resort
+    // (Stadiums) and Salvatore. Real catalog ids, no `fix-*` key
+    // (`continuousToolsStadiumsD558.test.ts` / `salvatoreD558.test.ts` drive a LOCAL
+    // `cardPool`), inserted MID-MAP after `sv10.5w-085`, and no row authors an `attack`
+    // program.
+    expect(registryCardIds()).toHaveLength(816);
     for (const id of Object.values(QUANTITY_IDS).flat()) {
       if (programFor(id) === undefined) continue;
       // Every id that DOES have a program had one before this slice: the eight

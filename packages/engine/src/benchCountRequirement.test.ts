@@ -461,7 +461,14 @@ describe("§5 — the census terms, MEASURED rather than assumed", () => {
     // and Tool Scrapper. Real catalog ids, no `fix-*` key (`chooseOneTrainersD557.test.ts`
     // / `riderTrainersD557.test.ts` drive a LOCAL `cardPool`), inserted MID-MAP after
     // `svp-149`, and no row authors an `attack` program.
-    expect(ids).toHaveLength(798);
+    // 🆕🆕🆕 D558 — 798 -> **816**: EIGHTEEN registry keys on TWELVE program objects —
+    // Counter Gain, Hop's Choice Band, Brave Bangle, Air Balloon, Rescue Board, Gravity
+    // Gemstone (Tools), Full Metal Lab, Granite Cave, Postwick, N's Castle, Paradise Resort
+    // (Stadiums) and Salvatore. Real catalog ids, no `fix-*` key
+    // (`continuousToolsStadiumsD558.test.ts` / `salvatoreD558.test.ts` drive a LOCAL
+    // `cardPool`), inserted MID-MAP after `sv10.5w-085`, and no row authors an `attack`
+    // program.
+    expect(ids).toHaveLength(816);
     for (const id of VICTINI_IDS) {
       expect(ids, id).not.toContain(id);
       expect(programFor(id), id).toBeUndefined();

@@ -3352,10 +3352,10 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
     // standing in the Active Spot loses its own 10 to a Koraidon "Shred"; a
     // Hariyama on the Bench keeps shielding its Active teammate through it.
     const reduction = suppressTargetEffects
-      ? seatDamageReduction(next, defender, "othersOnly")
+      ? seatDamageReduction(next, defender, "othersOnly", action.seat)
       : defenderPassives.damageReductionAfterWR +
         installedReductionOf(next, defender) +
-        seatDamageReduction(next, defender, "all");
+        seatDamageReduction(next, defender, "all", action.seat);
     // §8.5 Mimikyu "Safeguard": prevent ALL damage from an opponent's Pokémon
     // ex/V. A full null (not a flat reduction), gated on the ATTACKER's rule-box
     // class, so it supersedes any Bouffer-style reduction.

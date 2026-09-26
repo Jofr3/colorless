@@ -456,12 +456,12 @@ describe("D321 §2 — Stone Palace", () => {
     const benchedSource = board(seed, STEVEN_ALLY, [CARBINK]);
     const shielded = benchedSource.players.p1.active;
     if (shielded === null) throw new Error("expected a p1 Active");
-    expect(seatDamageReduction(benchedSource, shielded, "all")).toBe(30);
+    expect(seatDamageReduction(benchedSource, shielded, "all", "p2")).toBe(30);
 
     const activeSource = board(seed, STEVEN_ALLY, [STEVEN_ALLY], HITTER, CARBINK);
     const ally = activeSource.players.p1.bench[0];
     if (ally === undefined) throw new Error("expected a benched Steven's ally");
-    expect(seatDamageReduction(activeSource, ally, "all")).toBe(0);
+    expect(seatDamageReduction(activeSource, ally, "all", "p2")).toBe(0);
   });
 
   it.each(SEEDS)("a NON-Steven's ally is not shielded — the beneficiary clause (seed %i)", (seed) => {
@@ -486,16 +486,16 @@ describe("D321 §2 — Stone Palace", () => {
     const state = board(SEEDS[0], STEVEN_ALLY, [CARBINK]);
     const benched = state.players.p1.bench[0];
     if (benched === undefined) throw new Error("expected a benched Carbink");
-    expect(seatDamageReduction(state, benched, "all")).toBe(30);
+    expect(seatDamageReduction(state, benched, "all", "p2")).toBe(30);
     // Feint Attack's reading (D151): the damaged body's OWN contribution is an
     // effect on that Pokémon and is nulled; there is no second source, so 0.
-    expect(seatDamageReduction(state, benched, "othersOnly")).toBe(0);
+    expect(seatDamageReduction(state, benched, "othersOnly", "p2")).toBe(0);
     // …and a TEAMMATE keeps the shield under the same `ignoreWR` declaration,
     // which is the half that makes `scope` a per-BOARD answer and not a per-site
     // one.
     const active = state.players.p1.active;
     if (active === null) throw new Error("expected a p1 Active");
-    expect(seatDamageReduction(state, active, "othersOnly")).toBe(30);
+    expect(seatDamageReduction(state, active, "othersOnly", "p2")).toBe(30);
   });
 });
 
@@ -542,8 +542,8 @@ describe("D321 §3 — Curly Wall", () => {
     const state = board(SEEDS[0], C_BASIC, [BOUFFALANT, BOUFFALANT_REPRINT]);
     const first = state.players.p1.bench[0];
     if (first === undefined) throw new Error("expected a benched Bouffalant");
-    expect(seatDamageReduction(state, first, "all")).toBe(60);
-    expect(seatDamageReduction(state, first, "othersOnly")).toBe(60);
+    expect(seatDamageReduction(state, first, "all", "p2")).toBe(60);
+    expect(seatDamageReduction(state, first, "othersOnly", "p2")).toBe(60);
   });
 });
 
@@ -599,11 +599,24 @@ describe("D321 §4 — the field", () => {
     const state = board(seed, STEVEN_ALLY, [CARBINK]);
     const shielded = state.players.p1.active;
     if (shielded === null) throw new Error("expected a p1 Active");
-    expect(seatDamageReduction(state, shielded, "all")).toBe(30);
+    expect(seatDamageReduction(state, shielded, "all", "p2")).toBe(30);
     const locked = setActiveFromDeck(state, "p2", KLEFKI);
     const stillShielded = locked.players.p1.active;
     if (stillShielded === null) throw new Error("expected a p1 Active");
-    expect(seatDamageReduction(locked, stillShielded, "all")).toBe(0);
+    expect(seatDamageReduction(locked, stillShielded, "all", "p2")).toBe(0);
+  });
+
+  it("⚠️ DEBT (D558) — the ABILITY aura still ignores `attackerSeat`: an OWN-side hit is shielded", () => {
+    // D558 gated only the STADIUM term on *"from attacks from the opponent's Pokémon"*
+    // (R-ST3). Stone Palace prints the same clause ("…from your opponent's Pokémon"), but
+    // D425's reading — every protection is read off the DAMAGED body — still governs this
+    // scan, so a p1 own-bench spread/snipe onto a Steven's body is still paid 30. A NAMED
+    // debt (docs/decisions.md D558), pinned so its reversal is a visible red rung and not
+    // a silent drift: flip this to 0 in the slice that re-rules D425 for the aura family.
+    const state = board(SEEDS[0], STEVEN_ALLY, [CARBINK]);
+    const shielded = state.players.p1.active;
+    if (shielded === null) throw new Error("expected a p1 Active");
+    expect(seatDamageReduction(state, shielded, "all", "p1")).toBe(30);
   });
 
   it.each(SEEDS)("the damage EVENT reports the reduced number, not the printed one (seed %i)", (seed) => {

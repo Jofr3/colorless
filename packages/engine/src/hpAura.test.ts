@@ -76,7 +76,10 @@ import {
 //     other half of the proof: `Resolute Heart`/`Sturdy` (7) and Survival Brace
 //     read *"full HP"* as a KO REFUSAL (D208, built); Pidove/Ledian/Fan Rotom/
 //     Alomomola/Mandibuzz/Bianca's Devotion/Buddy-Buddy Poffin/Rescue Board read
-//     *"N HP or less"* as a THRESHOLD (D265/D275, built); Antique Fossils print a
+//     *"N HP or less"* as a THRESHOLD (D265/D275, built — 🆕🆕🆕 D558 CORRECTION
+//     (D539): Rescue Board was NOT built when this line said so; it is now,
+//     `RESCUE_BOARD`, whose free tier reads `remainingHpWithin` — D349's predicate);
+//     Antique Fossils print a
 //     60-HP body; Tyme asks the opponent to GUESS one; and all five
 //     `attacks_json` hits are *"put damage counters until its remaining HP is
 //     N"*, which is a DAMAGE op and not a maximum. **`BUILT.attack` cannot move

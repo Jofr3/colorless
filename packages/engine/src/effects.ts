@@ -7227,7 +7227,18 @@ export type EffectOp =
       **exactly what that record meant**. The inversion that forced D309's bump —
       an older record holding an older SPELLING — has no instance here. **18
       stays 18**, and the skip is a classification rather than a copied formula. */
-  | { op: "evolveFromDeck"; onto?: PokemonTarget; names?: readonly string[] }
+  | {
+      op: "evolveFromDeck";
+      onto?: PokemonTarget;
+      names?: readonly string[];
+      /** 🆕🆕🆕 D558 — Salvatore's printed *"a card that has no Abilities"*: the
+          offer keeps only deck cards whose `abilities` is empty or absent (R-SV2).
+          Written only by `evolveBodyAnswered` from `evolveFromDeckChosen.noAbilities`,
+          never by a deriver. OPTIONAL, so a record without it is unfiltered and
+          `MATCH_RECORD_VERSION` holds (D125/D344) — a parked op carries it in
+          `phase.cont.pendingOp`, DRIVEN by `salvatoreD558.test.ts`. */
+      noAbilities?: true;
+    }
   /** 🆕 **D308 — "For each of your Benched Pokémon, search your deck for a card
       that evolves from that Pokémon and put it onto that Pokémon to evolve it.
       Then, shuffle your deck."** **4 legal printings on 2 cards and ONE effect
@@ -7294,6 +7305,10 @@ export type EffectOp =
       carried on THAT op's `onto`, and this one is a pure asker: it holds nothing,
       files nothing and moves nothing. `applyChoice`'s arm for it returns the state
       untouched, which is the honest spelling of *"the answer buys an op"*.
+      (🆕🆕🆕 D558 — "NO FIELDS" is WITHDRAWN (D539): Salvatore adds ONE optional
+      rider, `noAbilities`, a NOUN rider on the card question the op hands on — the
+      op still holds no ANSWER and files nothing, which is the part of this paragraph
+      that stands.)
 
       ⚠️ **THE CANDIDATE SET IS NARROWED TO BODIES WITH A MATCHING DECK CARD, AND
       THAT IS THE SLICE'S REAL WORK.** *"1 of your Pokémon"* is the whole own board
@@ -7314,7 +7329,16 @@ export type EffectOp =
       identically. It is deliberately NOT `parkOrForce`: that helper's forced arm
       applies a `(ref) => GameState`, which is exactly the shape that cannot ask a
       second question. */
-  | { op: "evolveFromDeckChosen" }
+  | {
+      op: "evolveFromDeckChosen";
+      /** 🆕🆕🆕 D558 — Salvatore `sv05-160`/`-202`/`-212`: *"Search your deck for a
+          card that has no Abilities and evolves from 1 of your Pokémon …"*. Narrows
+          the BODY candidates (`evolvableOwnRefs`) to bodies the deck can evolve with
+          an Ability-free card, and rides onto the `evolveFromDeck` the answer buys
+          (`evolveBodyAnswered`), where the offer applies it again. Optional (no MRV
+          move); absent, the D309 op is byte-identical. */
+      noAbilities?: true;
+    }
   /** 🆕 **D315 — "Choose up to 2 of your {D} Pokémon. For each of those Pokémon,
       search your deck for a card that evolves from that Pokémon and put it onto
       that Pokémon to evolve it. Then, shuffle your deck."** **ONE legal printing
@@ -26534,6 +26558,13 @@ const MAY_DISCARD_STADIUM = /^You may discard a Stadium in play\.$/;
     KO-by-maximum is the same in both orders. The order is therefore pinned in the
     ASSEMBLED PROGRAM by §1's `toEqual` (D382's route), and the swapped-order mutant is
     DECLARED killed by that rung alone.
+    (🆕🆕🆕 D558 CORRECTION (D539): "UNOBSERVABLE ON EVERY LEGAL BOARD" and "the only
+    Stadium in the pool whose presence moves a damage number is Neutralization Zone" are
+    WITHDRAWN. Full Metal Lab `sv05-148` and Granite Cave `sv10-166` reduce attack damage
+    to {M} / Steven's Pokémon through `seatDamageReduction`, which `spreadDamage` reads —
+    so with Full Metal Lab in play a benched {M} Pokémon takes 30 − 30 = 0 from this
+    spread, and would take 30 if the Stadium were discarded FIRST. The printed order is
+    now OBSERVABLE, and `continuousToolsStadiumsD558.test.ts` §8 drives it both ways.)
 
     🛑 **THE BASE RULE.** The top-level op is a `conditionGate`, not `damageDefender`, so
     `attack.ts`'s `programDamage` (a top-level `some`) stays false and the printed base
@@ -32176,6 +32207,9 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   //     derivations in printed order. See the anchor's block for the stale refusal (right
   //     about the op, wrong about the reader — the middle clause is a SECOND HIT, never a
   //     bonus), the join disjointness, the required clarifier and the unobservable order.
+  //     (🆕🆕🆕 2026-09-26 D558 CORRECTION (D539): "unobservable" is WITHDRAWN — on a Full
+  //     Metal Lab `sv05-148` / Granite Cave `sv10-166` board the order moves a benched
+  //     body's damage; see the anchor's D558 note.)
   //
   //     🛑 `cond` is SPELLED here (arm 43's precedent), NOT reached through
   //     `boardConditionForClause` (D472's shape): the anchor captures no clause, so the

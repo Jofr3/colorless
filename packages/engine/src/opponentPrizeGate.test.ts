@@ -55,7 +55,10 @@ import {
 // surfaces) returns 38 rows and confirms the family's edges: the OTHER legal
 // readers of the opponent's remaining Prize count are Briar ×4 (below), Reversal
 // Energy `sv04-266`, Counter Gain `sv08-169`/`-249`, and five ATTACK printings —
-// none of which this slice touches.
+// none of which this slice touches. (🆕🆕🆕 D558: Counter Gain is BUILT —
+// `COUNTER_GAIN`, `PassiveEffects.attackCostDiscount.ifMorePrizesRemaining`, which
+// compares BOTH seats' remaining counts off the holder's controller rather than
+// reading the opponent's alone; this suite's gate is untouched.)
 //
 // ── ⏹️ THE THIRD SENTENCE, REFUSED, AND WHY THE FLAG NEEDED NARROWING ────────
 // Briar `sv07-132`/`-163`/`-171`, `sv08.5-100` (4 legal) prints "You can use this

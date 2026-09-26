@@ -290,6 +290,10 @@ const DROPPED: readonly {
   // table would make the UNBUILT guard below VACUOUS rather than green.
   // 🆕🆕🆕 D556 — 3 → **2** printings / 2 rows (Great Ball built); still not empty.
   // 🆕🆕🆕 D557 — 2 → **1** printing / 1 row (Arven's Sandwich built); still not empty.
+  // 🆕🆕🆕 D558 — 1 → **0** printings / 0 rows (N's Castle built). 🛑 **THE TABLE IS NOW
+  // EMPTY, AND THE WARNING ABOVE FIRED EXACTLY AS WRITTEN**: the UNBUILT guard below would
+  // be VACUOUS rather than green, so it is INVERTED — it now asserts the empty table and
+  // keeps its loop, which goes live again the day a row is added back.
   // ✅ D224 BUILT THIS ROW — Team Rocket's Proton sv10-177/-227, 2 legal, and it
   // is this table's ONLY row to have been dropped for a piece that a LATER,
   // UNRELATED SLICE then bought: D223 built `trainerFirstTurnExempt` for Carmine,
@@ -315,15 +319,17 @@ const DROPPED: readonly {
   // branch was D269's, so the card cost ZERO vocabulary when it was finally built
   // (`TEAM_ROCKETS_GREAT_BALL`, registry.ts; `conditionalTrainersD556.test.ts`). The
   // table's own warning above is honoured: TWO rows remain, so the guard is not vacuous.
-  {
-    sentence: "N's Pokémon in play (both yours and your opponent's) have no Retreat Cost.",
-    // ⚠️ CORRECTED BY D204 (shipped as `sv10-165`, which is Ethan's Adventure).
-    ids: ["sv09-152"],
-    legal: 1,
-    surface: "stadium",
-    needs:
-      "a subgroup scope on the retreat aura. `noRetreatCostAura` (Clefable ex, Archaludon) narrows by `requiresEnergyType` and applies to its OWN side; this Stadium names a name-prefixed subgroup on BOTH sides. Same shape as the Steven's / Hop's Stadiums beside it (`take 30 less damage` / `do 30 more damage`, 1 legal printing each), which want the same scope on the damage seams.",
-  },
+  // ✅ 🆕🆕🆕 D558 BUILT THIS ROW — N's Castle `sv09-152`, 1 legal (D204's correction held:
+  // `sv10-165` is Ethan's Adventure), REMOVED rather than annotated (D204/D224/D556/D557's
+  // precedent: the UNBUILT guard fails on a built row). Its `needs` — *"a subgroup scope
+  // on the retreat aura … on BOTH sides"* — was RIGHT, and was bought as a STADIUM field
+  // rather than a widening of `noRetreatCostAura` (an Ability, §9-gated, own side only):
+  // `StadiumEffects.retreat { filter: ownerPokemon "N", free }`, a stage-agnostic member of
+  // `effectiveRetreatCost`'s free tier (`NS_CASTLE`, registry.ts;
+  // `continuousToolsStadiumsD558.test.ts` §11). And the two Stadiums its `needs` named
+  // "beside it" were built by the SAME slice on the damage seams it predicted — Granite
+  // Cave (`StadiumEffects.damageReductionAfterWR`, Steven's) and Postwick
+  // (`StadiumEffects.damageBonusBeforeWR`, Hop's).
   // ✅ D204 BUILT THIS ROW — Spikemuth Gym sv10-169, the row this list called
   // FREE and told the next slice to take first. It was: Champion's Call's two ops
   // verbatim on `StadiumAbility.program`, using only the CARD filter D200 shipped
@@ -337,6 +343,8 @@ const DROPPED: readonly {
   // (`ARVENS_SANDWICH`, registry.ts; `riderTrainersD557.test.ts`). ⚠️ THE TABLE'S OWN
   // WARNING IS NOW ONE ROW FROM FIRING: ONE row remains (N's Stadium), so the UNBUILT
   // guard is still not vacuous — and the next build of this table empties it.
+  // (🆕🆕🆕 D558 — it did: N's Castle was built, the table is EMPTY, and the guard is
+  // inverted rather than left vacuous. See the ✅ D558 block above.)
 ];
 
 // ── The demonstrator pool. Synthetic `fix-*` bodies, declared HERE and not in
@@ -569,7 +577,7 @@ describe("D200 — the census, as data", () => {
     // built by D204; Team Rocket's Wobbuffet 2, built by D205; Team Rocket's
     // Orbeetle 2 and N's Zoroark ex 4, still flagged in `inPlayTarget.test.ts`).
     // This table is D200's scope; that one is the current work order.
-    expect(DROPPED.reduce((n, r) => n + r.legal, 0)).toBe(1); // 🆕🆕🆕 D557 −1 printing — Arven's Sandwich sv10-161 left through the REGISTRY (`ARVENS_SANDWICH`), and `LANDED` stands still at 6 (D200's own landing, D224/D556's precedent); the CENSUS (80 / 25 / 13) is unmoved — it counts text units, not builds. See the ✅ D557 block where the row stood. // 🆕🆕🆕 D556 −1 printing — Team Rocket's Great Ball sv10-175 left through the REGISTRY (`TEAM_ROCKETS_GREAT_BALL`), and `LANDED` stands still at 6 because that table is D200's own landing (D224's Proton precedent); the CENSUS (80 / 25 / 13) is unmoved — it counts text units, not builds. See the ✅ D556 block where the row stood. 🆕🆕🆕 D536 −3 printings — Moltres ex sv10-031/-208/-229 left through the DERIVER (arm 44c), so `LANDED` stands still at 6 for the second consecutive time and the difference is again deriver-built. See the ✅ D536 block above `DROPPED`. 🆕🆕 D439 −2 printings — Team Rocket's Spidops sv10-020/-187 left through the DERIVER rather than through the registry, so `LANDED` stands still at 6 and the difference is now deriver-built. See the ✅ D439 block above `DROPPED`.
+    expect(DROPPED.reduce((n, r) => n + r.legal, 0)).toBe(0); // 🆕🆕🆕 D558 −1 printing — N's Castle sv09-152 left through the REGISTRY (`NS_CASTLE`), and `LANDED` stands still at 6 (D200's own landing, D224/D556/D557's precedent); the CENSUS (80 / 25 / 13) is unmoved — it counts text units, not builds. THE TABLE IS EMPTY: see the ✅ D558 block where the row stood and the INVERTED guard below. // 🆕🆕🆕 D557 −1 printing — Arven's Sandwich sv10-161 left through the REGISTRY (`ARVENS_SANDWICH`), and `LANDED` stands still at 6 (D200's own landing, D224/D556's precedent); the CENSUS (80 / 25 / 13) is unmoved — it counts text units, not builds. See the ✅ D557 block where the row stood. // 🆕🆕🆕 D556 −1 printing — Team Rocket's Great Ball sv10-175 left through the REGISTRY (`TEAM_ROCKETS_GREAT_BALL`), and `LANDED` stands still at 6 because that table is D200's own landing (D224's Proton precedent); the CENSUS (80 / 25 / 13) is unmoved — it counts text units, not builds. See the ✅ D556 block where the row stood. 🆕🆕🆕 D536 −3 printings — Moltres ex sv10-031/-208/-229 left through the DERIVER (arm 44c), so `LANDED` stands still at 6 for the second consecutive time and the difference is again deriver-built. See the ✅ D536 block above `DROPPED`. 🆕🆕 D439 −2 printings — Team Rocket's Spidops sv10-020/-187 left through the DERIVER rather than through the registry, so `LANDED` stands still at 6 and the difference is now deriver-built. See the ✅ D439 block above `DROPPED`.
   });
 });
 
@@ -655,7 +663,12 @@ describe("D200 — the registry map", () => {
   //    GUARD IS WHAT WENT RED AND DEMANDED THE ROW BE RETIRED — which is the whole
   //    reason the second channel exists. The D439 rot it was built for did NOT repeat:
   //    a deriver-built row could not leave this table quietly a second time.
-  it("every DROPPED printing is still UNBUILT on its own SURFACE — the work order cannot rot", () => {
+  // 🆕🆕🆕 D558 — INVERTED, NOT DELETED. N's Castle emptied the table, so the loop below runs
+  // ZERO times and this rung would be vacuous-green; it now ASSERTS the empty table first,
+  // and keeps the loop for the day a row is added back (at which point the length pin goes
+  // red and must be stepped consciously, putting the loop back to work).
+  it("🆕 DROPPED is EMPTY — and every row added back must still be UNBUILT on its own SURFACE", () => {
+    expect(DROPPED).toHaveLength(0);
     for (const { sentence, ids, legal, surface } of DROPPED) {
       expect(ids, `${sentence.slice(0, 40)}…: id list disagrees with its legal count`).toHaveLength(legal);
       for (const id of ids) {
@@ -686,7 +699,8 @@ describe("D200 — the registry map", () => {
     expect(DROPPED.filter((r) => r.surface === "attack")).toHaveLength(0);
     // 🆕🆕🆕 D556 — ["stadium", "trainer", "trainer"] → two rows: Great Ball (trainer) was built.
     // 🆕🆕🆕 D557 — ["stadium", "trainer"] → ONE row: Arven's Sandwich (trainer) was built.
-    expect(DROPPED.map((r) => r.surface).sort()).toEqual(["stadium"]);
+    // 🆕🆕🆕 D558 — ["stadium"] → NO rows: N's Castle (stadium) was built; the table is empty.
+    expect(DROPPED.map((r) => r.surface).sort()).toEqual([]);
     // …and the control that keeps THIS rung from being vacuous in its turn: the
     // predicate it would run DOES discriminate, asked of the sentence D536 just built.
     expect(

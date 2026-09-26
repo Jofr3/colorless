@@ -14623,6 +14623,17 @@ import type { GameState, Seat } from "./types";
     printing, so `isExOrV` cannot be talked into it by a fixture NAME. The order is
     therefore claimed from the PRINT and pinned in the ASSEMBLED program (D130/D228's
     precedent), not from a board.
+    🆕🆕🆕 **[D558 CORRECTION (D539; annotated in place, the record above left standing):
+    "UNOBSERVABLE ON THIS PRINTING" and "the only Stadium in the pool whose presence
+    moves a damage number is Neutralization Zone" are WITHDRAWN.** Full Metal Lab
+    `sv05-148` and Granite Cave `sv10-166` reduce attack damage to {M} / Steven's
+    Pokémon by 30 through `seatDamageReduction`, which the program's `damageDefender`
+    reads, so with either Stadium in play a {M} / Steven's defender takes 30 less from
+    Ground Melter's boosted hit than it would if the Stadium were discarded FIRST. The
+    order is now OBSERVABLE on the legal pool; it is NAMED here and NOT driven for
+    Chi-Yu (Ting-Lu's twin order IS driven, `continuousToolsStadiumsD558.test.ts` §8),
+    and it stays pinned in the ASSEMBLED program by `bonusConsequentThen.test.ts` §4.
+    `bonusConsequentThen.test.ts`'s header carries the same annotation.]
 
     ⚠️ **AND THE `conditionGate` ARM OF `bonusConsequentProgram` HAD NEVER BEEN
     REACHABLE FROM `FIXTURE_POOL`.** `grep -c 'more damage, and ' testFixtures.ts`
@@ -20114,6 +20125,61 @@ import type { GameState, Seat } from "./types";
     `expect(manifest.version)`, `it(…)` titles, the declaration and `package.json` —
     **not** as a value-keyed grep — because a value-keyed grep is precisely the mechanism
     that ate D500's heading.)
+    🆕🆕🆕 engineVersion 0.441.0 → **0.442.0** (D558 — THE FIRST TOOLS AND STADIUMS ON THE FOUR EXISTING
+    MODIFIER SEAMS, PLUS SALVATORE: 18 PRINTINGS / 12 TEXTS / 12 OBJECTS. Twelve registry `CardProgram`s
+    keyed on eighteen REAL ids inserted MID-MAP after `sv10.5w-085` (D395/D396, so `raw[last]` stays
+    `sv09-107`). **TOOLS** (read off `pokemon.tools` by their own scans, NOT folded by `passivesOf`, NOT
+    §9-gated — R-T1): Counter Gain `sv08-169`/`-249` and the cost half of Hop's Choice Band `sv09-148` on
+    the NEW `PassiveEffects.attackCostDiscount { amount, holder?, ifMorePrizesRemaining? }`, summed by
+    `toolAttackCostDiscount` AHEAD of `selfAttackCostDiscount`'s two early returns so only the top card's
+    own terms take the §9 gate ("you" is the HOLDER's controller through the existing
+    `holderSideLeadsOnPrizesRemaining`, R-T2; `holder` is matched on the holder's top card, R-T3); the
+    Band's damage half is Binding Mochi's shape, `damageBonusBeforeWRIf { 30, yourActiveOwner "Hop" }`,
+    zero vocabulary; Brave Bangle `sv10.5w-080` on a NEW `holder?: CardFilter` rider on
+    `damageBonusBeforeWRIfTarget` (`anyPokemon { noRuleBox }`), resolved in `passivesOf`'s fold against
+    `top`; Air Balloon `sv10.5b-079` and Rescue Board `sv05-159`/`sv06-225`/`sv08.5-126` on the NEW
+    `PassiveEffects.retreatCostDiscount { amount, freeAtRemainingHpAtMost? }` — a term in
+    `effectiveRetreatCost`'s ONE floored sum (`toolRetreatDiscount`) and a NEW free-tier member
+    (`toolFreesRetreat`, `remainingHpWithin`, live, R-RB); Gravity Gemstone `sv07-137` on the NEW
+    `activeRetreatSurchargeBoth` (`activeRetreatSurcharge`: an Active of either seat is taxed per Gemstone
+    on EITHER Active, a benched holder taxes nothing, R-GG). **STADIUMS** (both sides, no §9 gate —
+    R-ST2): Full Metal Lab `sv05-148` and Granite Cave `sv10-166` on the NEW
+    `StadiumEffects.damageReductionAfterWR { amount, beneficiary }`, summed ONCE inside
+    `seatDamageReduction` against the damaged card under BOTH scopes (R-ST, inherited from
+    `stadiumPreventsDamage`: Feint Attack's `othersOnly` keeps it) and ONLY for an attack from the
+    damaged body's OPPONENT (R-ST3: `seatDamageReduction` gained a REQUIRED `attackerSeat`, so an
+    own-side spread or snipe — D425/D447 — is paid nothing; the seven call expressions, two in
+    attack.ts and five in interpreter.ts, each pass the attacking seat; the older "by construction"
+    argument this leaned on is annotated false in BOTH its copies, `stadiumPreventsDamage` and
+    Neutralization Zone's registry.ts doc); Postwick `sv09-154` on the NEW
+    `damageBonusBeforeWR { amount, attacker }` in
+    `seatPreWRDamageBonus`, matched on the ATTACKER for either seat (it stacks with Extra Helpings);
+    N's Castle `sv09-152` and Paradise Resort `svp-150`/`svp-224` on the NEW `retreat { filter, discount?,
+    free? }` — `free` a stage-agnostic free-tier member (R-NC), `discount` a filter-gated term in
+    `stadiumRetreatDelta`, whose non-Basic early return became a PER-TERM gate so Beach Court and
+    Calamitous Wasteland stay Basic-only. **SUPPORTER**: Salvatore `sv05-160`/`-202`/`-212` =
+    `[evolveFromDeckChosen { noAbilities }, shuffleDeck]` — the NEW optional `noAbilities` on
+    `evolveFromDeckChosen` and `evolveFromDeck`, threaded body narrowing (`evolvableOwnRefs`) → answer
+    (`evolveBodyAnswered`, a conditional spread) → offer (`evolveFromDeckOffer`: `abilities` empty or
+    absent, R-SV2) → move (`evolveFromDeckMove`); R-SV1 (UNRULED) the going-second first turn evolves,
+    inherited from D307. **`MATCH_RECORD_VERSION` STAYS 35** (optional keys only, D125/D344), DRIVEN: a
+    parked Salvatore revived from JSON still refuses an Ability-bearing card, and an old record with no
+    key stays unfiltered. Withdrawn and annotated in place (D539): continuous.ts's "no Tool grants free
+    retreat / a future one (Air Balloon) would fold in HERE", "no Tool in the pool discounts an attack
+    cost", `effectiveRetreatCost`'s "the Stadium ones are Basic-only" / "TWO members",
+    `stadiumRetreatDelta`'s "Both prints … are Basic-only"; effects.ts's D309 "NO FIELDS" and the
+    Ting-Lu spread-then-discard "UNOBSERVABLE" (Full Metal Lab makes it observable — driven; also
+    `stadiumGatedSpread.test.ts`, the D522 row's `what` and this file's D522 heading) and its
+    Chi-Yu `sv06-039` twin (this file's D382 heading and `bonusConsequentThen.test.ts`'s header:
+    the hit-then-discard order is observable on a Full Metal Lab / Granite Cave board — named,
+    not driven); registry.ts's Neutralization Zone "only
+    Stadium on the damage pipeline"; `evolveBodyChoice.test.ts`'s "no fields", `censusAtHead.test.ts`'s
+    N's Castle / Rescue Board residue, `hpAura.test.ts`'s Rescue Board, `opponentPrizeGate.test.ts`'s
+    Counter Gain; `ownerPrefix.test.ts`'s N's Castle DROPPED row REMOVED (1 → 0) and its UNBUILT guard
+    INVERTED to assert the empty table. New suites `continuousToolsStadiumsD558.test.ts` and
+    `salvatoreD558.test.ts` on LOCAL `cardPool`s with the REAL ids (D275). Census: `BUILT.trainer`
+    173 → 191 (Supporter 114 → 117, Tool 7 → 16, Stadium 7 → 13 — the first move of the Tool and Stadium
+    columns), registry keys 798 → 816. Mutants 3,278 → 3,315, all thirty-seven `D558-*` KILLED.)
     🆕🆕🆕 engineVersion 0.440.0 → **0.441.0** (D557 — ELEVEN TRAINERS, 19 PRINTINGS / 11 TEXTS / 11
     OBJECTS: KIERAN'S PRINTED "Choose 1:" AS A LABELLED CONFIRM, VENTURE BOMB'S ITEM COUNTER SOURCE,
     AND ONE RIDER EACH FOR NINE MORE. Eleven registry `CardProgram`s keyed on nineteen REAL ids inserted
@@ -22299,6 +22365,16 @@ import type { GameState, Seat } from "./types";
     Stadium lowers a maximum that `finishAttack`'s `collectKnockOuts` checks AFTER the
     whole program on both seats. The order is pinned in the ASSEMBLED PROGRAM by §1's
     `toEqual` (D382's route) and the swapped-order mutant is DECLARED killed by that rung.
+    🆕🆕🆕 **[D558 CORRECTION (D539; annotated in place, the record above left standing):
+    "UNOBSERVABLE ON EVERY LEGAL BOARD" and "the only Stadium whose presence moves a
+    damage number is Neutralization Zone" are WITHDRAWN.** Full Metal Lab `sv05-148` and
+    Granite Cave `sv10-166` reduce attack damage to {M} / Steven's Pokémon by 30 through
+    `seatDamageReduction`, which `spreadDamage` reads, so on a Full Metal Lab board a
+    benched {M} Pokémon takes 30 − 30 = 0 from this spread and would take 30 if the
+    Stadium were discarded FIRST. The printed order is now OBSERVABLE, and
+    `continuousToolsStadiumsD558.test.ts` §8 drives it and its swap on that board; the
+    effects.ts anchor block, `stadiumGatedSpread.test.ts`'s header and the C5 mutant
+    row's `what` carry the same annotation.]
     🛑 **THE BASE RULE — D521's "also" path.** The top level is a `conditionGate`, not
     `damageDefender`, so `attack.ts`'s top-level `programDamage` stays false and the
     printed base lands in §8.5 BEFORE the program; the spread and the discard run at the
@@ -24246,7 +24322,7 @@ import type { GameState, Seat } from "./types";
     WITNESS** — the count was re-derived every slice and the word *"three"* was carried.
     A successor of this slice inherits **81 / 61 / 17** again, over **FIVE** history
     occurrences: those four plus `deckMillFilteredScale.test.ts`'s own header arrow.) */
-export const engineVersion = "0.441.0";
+export const engineVersion = "0.442.0";
 
 export type {
   ApplyResult,

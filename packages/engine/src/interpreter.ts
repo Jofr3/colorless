@@ -1725,8 +1725,14 @@ function counterSourceAnswered(
     `evolveFromDeckOffer` reads `state.players[ctx.seat]`, so a target is
     seat-relative by construction — carrying the seat would create a second place
     for the two to disagree. */
-function evolveBodyAnswered(ref: PokemonRef): EffectOp[] {
-  return [{ op: "evolveFromDeck", onto: ref.spot }];
+function evolveBodyAnswered(ref: PokemonRef, noAbilities?: true): EffectOp[] {
+  // 🆕🆕🆕 D558 — Salvatore's *"a card that has no Abilities"* rides onto the card
+  // question as a CONDITIONAL SPREAD, so every D309/D315 answer stays byte-identical.
+  return [
+    noAbilities === true
+      ? { op: "evolveFromDeck", onto: ref.spot, noAbilities: true }
+      : { op: "evolveFromDeck", onto: ref.spot },
+  ];
 }
 
 /** 🆕 D315 — the own-board bodies an evolve-from-deck CHOICE may be spent on:
@@ -1757,6 +1763,10 @@ function evolvableOwnRefs(
   state: GameState,
   ctx: EffectContext,
   pokemonType?: PokemonType,
+  /** 🆕🆕🆕 D558 — Salvatore's *"a card that has no Abilities"*: the deck test asks
+      the SAME offer the card question will, under the same noun, so a body whose
+      only evolutions print an Ability is not offered (the D309 whiff argument). */
+  noAbilities?: true,
 ): PokemonRef[] {
   return ownInPlayRefs(state, ctx.seat).filter((ref) => {
     if (pokemonType !== undefined) {
@@ -1764,7 +1774,10 @@ function evolvableOwnRefs(
       if (card === undefined) return false;
       if (!matchesFilter(card, { kind: "typedPokemon", pokemonType })) return false;
     }
-    return (evolveFromDeckOffer(state, ctx, ref.spot)?.candidates.length ?? 0) > 0;
+    return (
+      (evolveFromDeckOffer(state, ctx, ref.spot, undefined, noAbilities)?.candidates.length ??
+        0) > 0
+    );
   });
 }
 
@@ -1823,7 +1836,7 @@ function continuationOps(cont: EffectContinuation, choice: EffectChoice): Effect
   // so there is no `=== undefined` guard to write: the op exists only to ask, and
   // reaching this line at all means it has been answered.
   if (op.op === "evolveFromDeckChosen") {
-    return pickedPokemon(choice) ? evolveBodyAnswered(choice.ref) : [];
+    return pickedPokemon(choice) ? evolveBodyAnswered(choice.ref, op.noAbilities) : [];
   }
   // 🆕 D315 — THE FOURTH MEMBER, and the FIRST whose answer buys **N** ops rather
   // than one: *"Choose up to 2 … For each of those Pokémon, …"* is D308's
@@ -1835,7 +1848,9 @@ function continuationOps(cont: EffectContinuation, choice: EffectChoice): Effect
   // list, which is the same "an answer that buys nothing splices nothing" the
   // `optional` decline takes.
   if (op.op === "evolveFromDeckEachChosen") {
-    return choice.kind === "pokemonMulti" ? choice.refs.flatMap(evolveBodyAnswered) : [];
+    return choice.kind === "pokemonMulti"
+      ? choice.refs.flatMap((ref) => evolveBodyAnswered(ref))
+      : [];
   }
   return [];
 }
@@ -2602,7 +2617,7 @@ function stepOp(
       // 🆕 D310 — `op.names`, when the printed sentence names its targets instead
       // of describing them. Threaded into the offer, where it REPLACES the chain
       // predicate rather than narrowing it (the doc block in `effects.ts`).
-      const offer = evolveFromDeckOffer(state, ctx, op.onto, op.names);
+      const offer = evolveFromDeckOffer(state, ctx, op.onto, op.names, op.noAbilities);
       if (offer === undefined || offer.candidates.length === 0) return { done: state };
       return {
         park: {
@@ -2618,9 +2633,11 @@ function stepOp(
           // its own words is the defect `dest`'s own split exists to prevent
           // (D307). The names are joined rather than articled: "an" belongs to the
           // card's printed sentence, not to a list this code builds.
+          // 🆕🆕🆕 D558 — and Salvatore's noun rides the note too, for the same reason:
+          // the dialog names its own candidates in the card's words.
           note:
             op.names === undefined
-              ? `Search your deck for a card that evolves from ${offer.name} and put it onto ${offer.name} to evolve it.`
+              ? `Search your deck for a card that ${op.noAbilities === true ? "has no Abilities and " : ""}evolves from ${offer.name} and put it onto ${offer.name} to evolve it.`
               : `Search your deck for ${op.names.join(" or ")} and put it onto ${offer.name} to evolve it.`,
         },
       };
@@ -2673,7 +2690,9 @@ function stepOp(
       // MULTI-body op below. NO TYPE is passed: this sentence prints no noun, and
       // the builder's `pokemonType` is optional precisely so the untyped reading
       // stays byte-for-byte what it was.
-      const eligible = evolvableOwnRefs(state, ctx);
+      // 🆕🆕🆕 D558 — Salvatore's `noAbilities` narrows the bodies HERE and rides the
+      // answer (`evolveBodyAnswered`), so the park and the card question agree.
+      const eligible = evolvableOwnRefs(state, ctx, undefined, op.noAbilities);
       if (eligible.length === 0) return { done: state };
       // `parkOrForce`'s own ordering — nothing / one / many — but NOT that helper:
       // its forced arm applies a `(ref) => GameState`, the one shape that cannot
@@ -2682,7 +2701,8 @@ function stepOp(
       // board of two resolve this sentence down one code path (`moveCountersChosen`
       // §QUESTION 1's argument, verbatim, at its second site).
       const forced = eligible.length === 1 ? eligible[0] : undefined;
-      if (forced !== undefined) return { done: state, schedule: evolveBodyAnswered(forced) };
+      if (forced !== undefined)
+        return { done: state, schedule: evolveBodyAnswered(forced, op.noAbilities) };
       return {
         park: {
           kind: "choosePokemon",
@@ -6719,7 +6739,7 @@ export function applyChoice(
     }
     case "evolveFromDeck":
       return choice.kind === "cards"
-        ? evolveFromDeckMove(state, choice.uids, ctx, events, op.onto, op.names)
+        ? evolveFromDeckMove(state, choice.uids, ctx, events, op.onto, op.names, op.noAbilities)
         : state;
     case "evolveFromDeckChosen":
       // 🆕 D309 — the BODY answer moves nothing at all: what it buys is the op that
@@ -9396,7 +9416,7 @@ function spreadDamage(
     const reduction =
       passives.damageReductionAfterWR +
       installedReductionOf(state, pokemon) +
-      seatDamageReduction(state, pokemon, "all");
+      seatDamageReduction(state, pokemon, "all", ctx.seat);
     // 🆕🆕🆕 D547 — …and the installed NEXT-TURN VULNERABILITY, ADDED at the same
     // post-W/R step (attack.ts's main hit says why, and that it is ON-TARGET). 0 on
     // the Bench by construction — the record is written on an ACTIVE and leaving
@@ -9722,10 +9742,10 @@ function placeSnipe(
     // earlier answers in this family were constant per SITE (D151/D159) only
     // because no aura before this one could be its own target.
     const reduction = ignoreWR
-      ? seatDamageReduction(next, pokemon, "othersOnly")
+      ? seatDamageReduction(next, pokemon, "othersOnly", ctx.seat)
       : targetPassives.damageReductionAfterWR +
         installedReductionOf(next, pokemon) +
-        seatDamageReduction(next, pokemon, "all");
+        seatDamageReduction(next, pokemon, "all", ctx.seat);
     // D149 — and the DEBUFF is NOT nulled by `ignoreWR`, unlike the reduction one
     // line up: it is an effect on the ATTACKER, and Feint Attack's clause scopes
     // "that Pokémon" (the target). Same reading that keeps the attacker's pre-W/R
@@ -10063,10 +10083,10 @@ function snipeActive(
   // Feint Attack into an ACTIVE Hariyama nulls its own 10 while a benched second
   // Hariyama keeps shielding it.
   const reduction = ignoreWR
-    ? seatDamageReduction(state, target.active, "othersOnly")
+    ? seatDamageReduction(state, target.active, "othersOnly", ctx.seat)
     : targetPassives.damageReductionAfterWR +
       installedReductionOf(state, target.active) +
-      seatDamageReduction(state, target.active, "all");
+      seatDamageReduction(state, target.active, "all", ctx.seat);
   // ⚠️ D240 — the damage CAP is read against the number that would actually be
   // placed, so `prevented` moved BELOW the reduction it now depends on. This is
   // the one interpreter site that runs Weakness, so it is also the one where the
@@ -11488,6 +11508,12 @@ function searchMove(
     sentence is not doing. Exeggcute's own registry gate (`firstTurnExempt`,
     D281/D282) exists because the *attack* needed licensing on turn one, and it
     licenses the attack rather than the placement.
+    🆕🆕🆕 D558 — Salvatore `sv05-160`/`-202`/`-212` PRINTS the "put into play this
+    turn" half of this reading (*"You can use this card on a Pokémon you put down when
+    you were setting up to play or on a Pokémon that was put into play this turn."*), so
+    that half is now the card's text and not only D307's. The FIRST-TURN half stays a
+    reading: **R-SV1 (UNRULED)** — a going-second player's first-turn Salvatore evolves
+    (§4's ban is on playing from the hand); reversal: a ruling that refuses it.
 
     `undefined` when the source has left the board — a "this Pokémon" op's
     standing answer, and the shape `switchActive.fromSource` already takes. */
@@ -11511,6 +11537,10 @@ function evolveFromDeckOffer(
       it names a card the chain excludes: see `evolveFromDeck`'s doc block in
       `effects.ts` for why the two are alternatives and never conjuncts. */
   names?: readonly string[],
+  /** 🆕🆕🆕 D558 — the op's `noAbilities` (Salvatore): a CONJUNCT on whichever
+      predicate is in force, keeping only cards whose `abilities` is empty or absent
+      (R-SV2). Absent on every pre-D558 op and record, which reads as unfiltered. */
+  noAbilities?: true,
 ):
   | {
       target: PokemonTarget;
@@ -11547,6 +11577,10 @@ function evolveFromDeckOffer(
       // empty on every board forever. `?? false` is not needed: `names` is
       // non-empty wherever it is authored, and an empty array would honestly
       // offer nothing.
+      // 🆕🆕🆕 D558 — Salvatore's *"a card that has no Abilities"*, ANDed ahead of
+      // either predicate: `abilities` is `null` on an Ability-free catalog row and
+      // `[]` on a hand-built one, and both are "no Abilities".
+      if (noAbilities === true && (card.abilities ?? []).length > 0) return false;
       if (names !== undefined) return names.includes(card.name);
       return evolveFromOf(card) === top.name;
     }),
@@ -11587,8 +11621,12 @@ function evolveFromDeckMove(
       here would re-admit the chain set at resolve time and let a wire frame trade
       the printed Unfezant for a Tranquill the park never offered. */
   names?: readonly string[],
+  /** 🆕🆕🆕 D558 — the op's `noAbilities`, threaded for `names`' reason: the
+      resolution re-derives the offer under the park's own predicate, so a wire frame
+      cannot trade the printed Ability-free card for one the park never offered. */
+  noAbilities?: true,
 ): GameState {
-  const offer = evolveFromDeckOffer(state, ctx, onto, names);
+  const offer = evolveFromDeckOffer(state, ctx, onto, names, noAbilities);
   if (offer === undefined) return state;
   const uid = uids[0];
   if (uid === undefined || !offer.candidates.includes(uid)) return state;
