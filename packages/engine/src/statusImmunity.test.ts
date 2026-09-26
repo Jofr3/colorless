@@ -497,7 +497,10 @@ describe("⚠️ §9 — the Ability lock, and an immunity that survived it woul
   it("SUPPRESSES Dachsbun's immunity under Ting-Lu ex, which reaches a Stage 1", () => {
     // Cursed Land: the opponent's DAMAGED Pokémon, ex exempt, Active-only. It is
     // the only lock in the registry that reaches a Stage 1 at all, which is why it
-    // is in this deck.
+    // is in this deck. (🆕🆕🆕 D559 CORRECTION (D539): "the only lock … that reaches a Stage 1" is
+    // WITHDRAWN — Flutter Mane `sv05-078` "Midnight Fluttering" reaches the opposing
+    // ACTIVE at any stage, and Gastrodon `sv08-107` "Sticky Bind" a BENCHED Stage 2.
+    // This board stays Ting-Lu's; the Flutter Mane boards are `abilityBundleD559.test.ts`'s.)
     let state = board("landScoop", "sv01-099", { energyId: "fix-fighting-energy" });
     const side = state.players.p2;
     const active = side.active;
@@ -522,22 +525,53 @@ describe("⚠️ §9 — the Ability lock, and an immunity that survived it woul
     //     source is one of the two Active Pokémon;
     //   • every §9 lock in the registry is `requiresActive` EXCEPT Spiritomb's,
     //     which narrows to Basic Pokémon V — a suffix neither immune printing has;
+    //     (🆕🆕🆕 D559 CORRECTION (D539): and EXCEPT Gastrodon's `sourceOnBench`, which
+    //     narrows to BENCHED Stage 2 bodies — never the Active target this argument
+    //     needs, so the count below stands; and Flutter Mane `sv05-078` IS
+    //     `requiresActive`, so its holder must be the attacker, whose only printed
+    //     attack "Hex Hurl" applies no condition — Klefki's answer, below;)
     //   • the immune body must itself be an Active, because `applyStatus` only
     //     ever resolves to `players[seat].active`.
     //
     // Three Actives wanted, two available. So the gate is asserted on a real,
     // legal board with the lock live (the three cases above) and the impossibility
     // is written down rather than worked around.
-    const locks = ["sv01-096", "sv02-127", "sv02-089"] as const;
+    // (🆕🆕🆕 D559 CORRECTION (D539): the population below is the REGISTRY's whole lock population again —
+    // D559's four new lock ids are in it, so a fifth lock shape turns this red.)
+    const locks = [
+      "sv01-096",
+      "sv02-127",
+      "sv02-089",
+      "sv05-078",
+      "sv08.5-043",
+      "svp-097",
+      "sv08-107",
+    ] as const;
     const activeOnly = locks.filter(
       (id) => programFor(id)?.passive?.disableAbilities?.requiresActive === true,
     );
-    expect(activeOnly).toEqual(["sv01-096", "sv02-127"]);
-    // The one lock that works from the Bench narrows to a suffix this family never
-    // prints, which is what closes the gap rather than leaving it to luck.
+    expect(activeOnly).toEqual(["sv01-096", "sv02-127", "sv05-078", "sv08.5-043", "svp-097"]);
+    // Flutter Mane's lock reaches only the OPPOSING Active, so its holder is the
+    // attacker, whose only printed attack "Hex Hurl" PLACES counters and applies no
+    // condition — Klefki's answer.
+    for (const id of ["sv05-078", "sv08.5-043", "svp-097"] as const) {
+      expect(programFor(id)?.passive?.disableAbilities).toMatchObject({
+        side: "opponent",
+        targetZone: "active",
+      });
+    }
+    // The Bench-sourced locks. (🆕🆕🆕 D559 CORRECTION (D539): "The one lock that works from the Bench"
+    // is WITHDRAWN — there are TWO.) Spiritomb's narrows to a suffix this family never
+    // prints, which is what closes the gap rather than leaving it to luck; Gastrodon's
+    // narrows to BENCHED Stage 2 bodies, never the Active this argument needs.
     expect(programFor("sv02-089")?.passive?.disableAbilities).toMatchObject({
       stage: "Basic",
       suffix: "V",
+    });
+    expect(programFor("sv08-107")?.passive?.disableAbilities).toMatchObject({
+      stage: "Stage2",
+      sourceOnBench: true,
+      targetZone: "bench",
     });
     for (const id of ["sv01-068", "sv01-099", "sv01-208"] as const) {
       expect(FIXTURE_POOL[id]?.name).not.toContain(" V");

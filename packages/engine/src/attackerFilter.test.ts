@@ -799,6 +799,12 @@ describe("⚠️ THE §9 PAIR — a lock silences the ABILITIES and leaves the S
   // reason this board exists at all: every Ability-lock in the registry is
   // Active-gated on its SOURCE, so the locking body has to be the attacking body,
   // and Ting-Lu is the one lock whose own attack can trigger a prevention.
+  // (🆕🆕🆕 D559 CORRECTION (D539): "every Ability-lock … is Active-gated" is WITHDRAWN —
+  // Gastrodon "Sticky Bind" is BENCH-sourced; it reaches only BENCHED Stage 2 bodies, so
+  // this board's reading is unaffected. "the locking body has to be the attacking body"
+  // is WITHDRAWN too — a DEFENDING Active Flutter Mane `sv05-078` locks the attacker —
+  // and Ting-Lu stays the one lock whose own attack can trigger this Stadium's
+  // prevention: Flutter Mane is not an ex, so the Stadium never sees its "Hex Hurl".)
 
   it("the lock switches Dachsbun's own aura off — and the Stadium prevents anyway", () => {
     const armed = withStadium(board("sv02-127", "sv01-099"));
@@ -832,7 +838,9 @@ describe("⚠️ THE §9 PAIR — a lock silences the ABILITIES and leaves the S
     // ⚠️ AND THIS ONE CANNOT BE DRIVEN END TO END BY ANY BOARD THIS POOL PRINTS,
     // which is worth writing down rather than working around. The shield only
     // shows on BENCH damage; every §9 lock source must occupy its own side's
-    // ACTIVE spot; and no locking body in the registry has an attack that deals
+    // ACTIVE spot (🆕🆕🆕 D559 CORRECTION (D539): WITHDRAWN — Gastrodon is BENCH-sourced,
+    // but it reaches only benched Stage 2 bodies and Thundurus's shield source is an
+    // Active Basic; Flutter Mane's "Hex Hurl" PLACES counters) and no locking body in the registry has an attack that deals
     // DAMAGE to the opposing Bench (Ting-Lu's "Land Scoop" places COUNTERS, which
     // no prevention touches — D138/D139). So the gate is asserted on a real,
     // legal board with the lock live, and the end-to-end drive waits for a

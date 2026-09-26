@@ -745,13 +745,22 @@ function weakResModifier(
     printed card, which every caller before D552 means). "(The amount of Weakness
     doesn't change.)": the FIRST printed entry keeps its VALUE and only its TYPE is
     replaced, so a ×2 {R} Weakness becomes ×2 {C}. A defender that prints NO Weakness has
-    no amount to keep and stays not-weak (docs/decisions.md D552 R2, UNRULED). */
+    no amount to keep and stays not-weak (docs/decisions.md D552 R2, UNRULED).
+
+    🆕🆕🆕 D559 — `rewrite`, the type an opponent-side Weakness REWRITE makes the
+    defender's Weakness (continuous.ts `seatWeaknessRewrite`, Lillie's Clefairy ex "Fairy
+    Zone": *"…is now {P}. (Apply Weakness as ×2.)"*; `null`/absent = none). Applied FIRST:
+    the printed entries are REPLACED by ONE `{ type: rewrite, value: "×2" }` — so a
+    defender that prints NO Weakness GAINS one (R-FZ4) — and the retype is applied on top
+    of THAT entry (R-FZ1 ⚠️ UNRULED: a Fairy-Zoned Dragon under the retype is {C}×2). */
 export function weaknessOf(
   attacker: Card,
   defender: Card,
   retype: string | null = null,
+  rewrite: string | null = null,
 ): DamageModifier | null {
-  const printed = defender.weaknesses ?? [];
+  const printed =
+    rewrite === null ? (defender.weaknesses ?? []) : [{ type: rewrite, value: "×2" }];
   const entries =
     retype === null ? printed : printed.slice(0, 1).map((entry) => ({ ...entry, type: retype }));
   return weakResModifier(attacker, entries, { op: "multiply", amount: 2 });

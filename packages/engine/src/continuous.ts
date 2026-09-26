@@ -91,7 +91,26 @@ export function stadiumEffectsOf(state: GameState): StadiumEffects | undefined {
     Ting-Lu ex opposite a damaged Klefki, which by the rules should switch
     Mischievous Lock off) resolves as if both auras stay on. The three cards in
     scope never mute a NON-lock ability of another lock's source, so this only
-    bites lock-vs-lock, which needs a fixpoint pass rather than one ungated read. */
+    bites lock-vs-lock, which needs a fixpoint pass rather than one ungated read.
+
+    🆕🆕🆕 **D559 CORRECTION (D539) — FIVE CARDS ARE IN SCOPE, NOT THREE, AND THE
+    LIMITATION IS ARGUED UNREACHABLE AMONG THE LOCKS THIS REGISTRY BUILDS — NOT IN
+    STANDARD AT LARGE (D559 R-LK1).** Flutter Mane "Midnight Fluttering" and Gastrodon
+    "Sticky Bind" joined, and Klefki, Spiritomb and Ting-Lu ex have ROTATED. Among the two
+    legal locks the registry BUILDS no lock can switch off another lock's source: Flutter
+    Mane reaches only the OPPOSING Active and exempts itself by name (a mirror Flutter
+    Mane keeps its lock); Gastrodon reaches only BENCHED Stage 2 bodies, an Active
+    Gastrodon's lock is already off (`sourceOnBench`), and neither built source is a
+    Stage 2. ⚠️ Standard prints two more locks this registry does NOT build: Iron Thorns
+    ex `sv06-077`/`-196`/`sv08.5-032` "Initialization" (Active-sourced, Rule Box bodies,
+    except Future Pokémon) and the Stadium Team Rocket's Watchtower `sv10-180` ({C}
+    bodies). The first re-opens the gap: an Active Flutter Mane silences an opposing
+    Active Iron Thorns ex, whose lock the rules then switch off and this ungated pass
+    would keep on. So R-LK1 holds only while Initialization is UNBUILT, and the fixpoint
+    pass is OWED in the slice that builds it (a tripwire in `abilityBundleD559.test.ts`
+    §7 fails first). So the ungated pass stays; the rotated three still show the
+    fixpoint gap on fixtures (Klefki vs Flutter Mane: both locks stay on, pinned in
+    `abilityBundleD559.test.ts`). */
 export function disabledAbilityUids(state: GameState): Set<string> {
   const disabled = new Set<string>();
   // Collect the live auras first (ungated), each tagged with its source's seat.
@@ -105,6 +124,9 @@ export function disabledAbilityUids(state: GameState): Set<string> {
       const aura = programFor(top.id)?.passive?.disableAbilities;
       if (aura === undefined) continue;
       if (aura.requiresActive === true && holder !== side.active) continue;
+      // 🆕🆕🆕 D559 — Gastrodon's *"As long as this Pokémon is on your Bench"*, the
+      // mirror of the line above and spelled with the same test.
+      if (aura.sourceOnBench === true && holder === side.active) continue;
       auras.push({ aura, sourceSeat: seat });
     }
   }
@@ -117,9 +139,12 @@ export function disabledAbilityUids(state: GameState): Set<string> {
       const top = topCardOf(state, target);
       const uid = topUid(target);
       if (top === undefined || uid === undefined) continue;
+      // 🆕🆕🆕 D559 — the TARGET's zone, for `targetZone` (Flutter Mane's "Active
+      // Pokémon", Gastrodon's "Benched Stage 2 Pokémon").
+      const isActive = target === side.active;
       if (
         auras.some(({ aura, sourceSeat }) =>
-          auraSuppresses(aura, sourceSeat, targetSeat, target, top),
+          auraSuppresses(aura, sourceSeat, targetSeat, target, top, isActive),
         )
       )
         disabled.add(uid);
@@ -138,9 +163,14 @@ function auraSuppresses(
   targetSeat: Seat,
   target: InPlayPokemon,
   top: Card,
+  /** 🆕🆕🆕 D559 — is `target` its side's ACTIVE Pokémon (else Benched)? */
+  isActive: boolean,
 ): boolean {
   if (aura.side === "opponent" && targetSeat === sourceSeat) return false;
   if (aura.stage === "Basic" && !isBasicPokemon(top)) return false;
+  if (aura.stage === "Stage2" && !isStage2Pokemon(top)) return false;
+  if (aura.targetZone === "active" && !isActive) return false;
+  if (aura.targetZone === "bench" && isActive) return false;
   if (aura.suffix !== undefined && pokemonSuffixOf(top) !== aura.suffix) return false;
   if (aura.requiresDamage === true && target.damage <= 0) return false;
   if (aura.exemptSuffix !== undefined && pokemonSuffixOf(top) === aura.exemptSuffix) return false;
@@ -175,6 +205,39 @@ export function seatRemovesWeakness(state: GameState, seat: Seat): boolean {
     return true;
   }
   return false;
+}
+
+/** 🆕🆕🆕 §8.5 (D559) — the type an OPPONENT-SIDE Weakness REWRITE makes
+    `defenderCard`'s Weakness right now, or `null` for none: Lillie's Clefairy ex "Fairy
+    Zone" — *"The Weakness of each of your opponent's {N} Pokémon in play is now {P}.
+    (Apply Weakness as ×2.)"*. `seatRemovesWeakness`'s scan one function up, turned to
+    face the other way: the SOURCES are the top cards on the defender's OPPONENT's board
+    (`otherSeat(defenderSeat)`), Active and Bench (no zone clause), each §9-gated through
+    `disabledAbilityUids`; the source matches when `defenderCard.types` includes its
+    `targetType`. Handed to cards.ts `weaknessOf` as its `rewrite` at BOTH Weakness sites
+    (attack.ts main hit, interpreter.ts `snipeActive`), AFTER the three null paths.
+    `undefined` (an unreadable defender) is `null` — no rewrite, the conservative
+    direction. The first matching source answers: every legal source prints the same
+    `{P}`, so two Clefairy agree. Cheap on the common path: the lock scan runs only once a
+    source is found. */
+export function seatWeaknessRewrite(
+  state: GameState,
+  defenderSeat: Seat,
+  defenderCard: Card | undefined,
+): PokemonType | null {
+  if (defenderCard === undefined) return null;
+  const side = state.players[otherSeat(defenderSeat)];
+  const holders = side.active === null ? side.bench : [side.active, ...side.bench];
+  for (const holder of holders) {
+    const top = topCardOf(state, holder);
+    const rewrite =
+      top === undefined ? undefined : programFor(top.id)?.passive?.opponentWeaknessRewrite;
+    if (rewrite === undefined) continue;
+    const uid = topUid(holder);
+    if (uid !== undefined && disabledAbilityUids(state).has(uid)) continue; // §9
+    if ((defenderCard.types ?? []).includes(rewrite.targetType)) return rewrite.weaknessType;
+  }
+  return null;
 }
 
 /** Every continuous modifier affecting one in-play Pokémon, aggregated from
@@ -884,6 +947,28 @@ export function passivesOf(
   // beside `hpDelta` — `damageReductionAfterWR`, `damageBonusBeforeWR`, `retreat` —
   // on no card in play at all. None of the six is a key this fold returns, so its
   // `passivesOf` key set does not move.
+  //
+  // 🆕🆕🆕 D559 — ONE NEW FOLDED FIELD AND TWO NEW RIDERS ON FOLDED FIELDS, AUDITED ON
+  // ARRIVAL, plus one new UNFOLDED field:
+  //
+  //   damageReductionAfterWRIfEnergy reachable ✔ correct — summed into
+  //                                `damageReductionAfterWR` (Regirock "Rock Armor"),
+  //                                gated on `pokemon.energy.length > 0`, a fact about
+  //                                the HOLDER. An Energy writer would satisfy its own
+  //                                gate (it IS attached) — coherent. The one writer is
+  //                                an Ability, so the §9 drop on `sources[0]` applies.
+  //   damageAttacker.perAttachedEnergy reachable ✔ correct — a multiplier on the
+  //                                summed amount, counted by provision (Orthworm ex).
+  //                                An Energy writer would count itself — coherent.
+  //   damageAttackerOnKo.activeOnly reachable ✔ correct — gated on `onBench` (Maractus);
+  //                                the WITHDRAWN "one printing IS a Tool" is annotated
+  //                                at the fold line below.
+  //
+  // UNFOLDED: `opponentWeaknessRewrite` (Fairy Zone, `seatWeaknessRewrite`, the
+  // opponent's board) joins `removeWeakness` among the fields read by their own scans;
+  // `disableAbilities`' `stage "Stage2"` / `sourceOnBench` / `targetZone` and
+  // `seatDamageReductionAfterWR.beneficiaryHasEnergy` ride fields this loop never
+  // reads. No key this fold returns is new, so its `passivesOf` key set does not move.
   const sources: (PassiveEffects | undefined)[] = [
     disabled || top === undefined ? undefined : programFor(top.id)?.passive,
     ...pokemon.tools.map((uid) => {
@@ -953,6 +1038,11 @@ export function passivesOf(
     if (typed !== undefined && holderTypes.includes(typed.type)) {
       damageReductionAfterWR += typed.amount;
     }
+    // 🆕🆕🆕 D559 — Regirock "Rock Armor": the same number gated on the holder having ANY
+    // Energy attached (a card count — "any Energy" names no type), summed here for the
+    // line above's reason (D131).
+    if (passive.damageReductionAfterWRIfEnergy !== undefined && pokemon.energy.length > 0)
+      damageReductionAfterWR += passive.damageReductionAfterWRIfEnergy;
     damageBonusBeforeWR += passive.damageBonusBeforeWR ?? 0;
     if (passive.damageBonusBeforeWRIf !== undefined)
       conditionalDamageBonusBeforeWR.push(passive.damageBonusBeforeWRIf);
@@ -995,16 +1085,28 @@ export function passivesOf(
     // Mountain stays the engine's only subtrahend.
     const scaled = passive.hpBonusPer;
     if (scaled !== undefined) hpBonus += scaled.amount * maxHpScaleCount(state, pokemon, scaled.scale);
-    if (
-      passive.damageAttacker !== undefined &&
-      (passive.damageAttacker.requiresTool !== true || hasTool)
-    )
-      damageAttacker += passive.damageAttacker.amount;
+    // 🆕🆕🆕 D559 — Orthworm ex's *"for each {M} Energy attached to this Pokémon"*: the
+    // amount MULTIPLIED by the holder's count of that type (provision, D118), here, so
+    // both read sites take a zero diff. 0 {M} Energy pays 0.
+    const recoil = passive.damageAttacker;
+    if (recoil !== undefined && (recoil.requiresTool !== true || hasTool))
+      damageAttacker +=
+        recoil.perAttachedEnergy === undefined
+          ? recoil.amount
+          : recoil.amount * countAttachedEnergy(state, pokemon, recoil.perAttachedEnergy);
     // No `requiresTool` twin: the one printing IS a Tool, and an unread gate is
     // the D156 defect. It rides the SAME Ability-lock rule as its sibling by
     // sitting in this loop — a §9 lock suppresses a holder's own printed passive
     // and never an attached Tool's, so Vengeful Punch keeps working under Klefki.
-    damageAttackerOnKo += passive.damageAttackerOnKo?.amount ?? 0;
+    // 🆕🆕🆕 D559 CORRECTION (D539): "the one printing IS a Tool" is WITHDRAWN — Maractus
+    // "Exploding Needles" is an ABILITY printing of this field (so the §9 drop on
+    // `sources[0]` silences it) and brings the one gate it does need, `activeOnly`
+    // (*"If this Pokémon is in the Active Spot and is Knocked Out"*), answered here off
+    // `onBench`. `koRecoilOf` reads this fold BEFORE `knockOut` unseats the body, so the
+    // zone is still the one it was Knocked Out in. Still no `requiresTool` arm.
+    const onKo = passive.damageAttackerOnKo;
+    if (onKo !== undefined && (onKo.activeOnly !== true || !onBench))
+      damageAttackerOnKo += onKo.amount;
     if (passive.preventDamageFromExV === true) preventDamageFromExV = true;
     if (passive.preventDamageFromType !== undefined)
       preventDamageFromTypes.push(passive.preventDamageFromType);
@@ -4197,6 +4299,13 @@ export function seatDamageReduction(
       // build that asked this of `top` instead would be green on every board this
       // pool can build and would still encode the wrong sentence.
       if (aura.beneficiary !== undefined && !matchesFilter(damagedCard, aura.beneficiary)) continue;
+      // 🆕🆕🆕 D559 — Klinklang "Gear Coating"'s *"that have any {M} Energy attached"*, a
+      // second BENEFICIARY clause on the DAMAGED body (its attachments, by provision).
+      if (
+        aura.beneficiaryHasEnergy !== undefined &&
+        !hasAttachedEnergy(state, pokemon, aura.beneficiaryHasEnergy)
+      )
+        continue;
       // The SOURCE-ZONE clause — Steven's Carbink's "As long as this Pokémon is on
       // your Bench". It gates where the SOURCE stands and says nothing about the
       // target, so a benched Carbink shields the Active and stops shielding

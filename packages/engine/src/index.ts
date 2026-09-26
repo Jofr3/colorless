@@ -20125,6 +20125,56 @@ import type { GameState, Seat } from "./types";
     `expect(manifest.version)`, `it(…)` titles, the declaration and `package.json` —
     **not** as a value-keyed grep — because a value-keyed grep is precisely the mechanism
     that ate D500's heading.)
+    🆕🆕🆕 engineVersion 0.442.0 → **0.443.0** (D559 — THE ABILITY BUNDLE: 15 PRINTINGS / 7 TEXTS / 7
+    OBJECTS, SEVEN NEW OPTIONAL CATALOG-SIDE KEYS PLUS ONE WIDENED UNION (`disableAbilities.stage`), ONE
+    SCAN, ONE PARAMETER. Seven registry `CardProgram`s,
+    each a printed Pokémon ABILITY (`passive` only — no `attack` key, every printed attack keeps
+    deriving), keyed on fifteen REAL ids inserted MID-MAP after `sv05-212` (D395/D396, so `raw[last]`
+    stays `sv09-107`). **Lillie's Clefairy ex** `sv09-056`/`-173`/`-184`/`svp-195` "Fairy Zone" on the
+    NEW `PassiveEffects.opponentWeaknessRewrite { targetType "Dragon", weaknessType "Psychic" }`, read by
+    the NEW continuous.ts `seatWeaknessRewrite` (the defender's OPPONENT's board, Active and Bench, §9-gated)
+    and handed to cards.ts `weaknessOf`'s NEW 4th parameter `rewrite` at BOTH Weakness sites (attack.ts
+    main hit, interpreter.ts `snipeActive`): the printed entries are REPLACED by one `{P}×2`, so a Dragon
+    printing none GAINS one (R-FZ4), the three null paths still win (R-FZ2 — ⚠️ UNRULED only for Blooming
+    Garden and D432's bar, both unreachable in Standard; the attack's own "isn't affected by Weakness" is
+    printed text and reachable: Team Rocket's Hypno sv10-080, Sigilyph sv10.5w-038/-121), D552's retype
+    re-points the rewritten entry (R-FZ1 ⚠️ UNRULED, reachable), and `suppressTargetEffects` drops it at
+    the main hit (R-FZ3). **Flutter Mane** `sv05-078`/`sv08.5-043`/`svp-097` "Midnight Fluttering" and
+    **Gastrodon** `sv08-107` "Sticky Bind" on `disableAbilities`, widened by `stage "Stage2"`
+    (`isStage2Pokemon`), the NEW `sourceOnBench` (gated at collection beside `requiresActive`) and the NEW
+    `targetZone "active" | "bench"` (`auraSuppresses` takes the target's `isActive`); lock-vs-lock stays
+    UNGATED and is now ARGUED unreachable among the two legal locks the registry BUILDS (D559 R-LK1 —
+    not Standard at large: Iron Thorns ex "Initialization" and Team Rocket's Watchtower are legal and
+    unbuilt, and an Active Flutter Mane silencing an opposing Active Iron Thorns ex re-opens the gap, so
+    the fixpoint pass is owed when Initialization is built; tripwired by id), pinned on a rotated Klefki vs
+    Flutter Mane board. **Orthworm ex** `sv07-110`/`-162` "Pummeling Payback" on the NEW
+    `damageAttacker.perAttachedEnergy` (the fold multiplies by `countAttachedEnergy`, provision — both read
+    sites a zero diff; ⚠️ R-O1, a reachable DEVIATION: a benched Orthworm hit by a spread or snipe does not
+    retaliate). **Maractus** `sv09-008`/`-160` "Exploding Needles" on the NEW
+    `damageAttackerOnKo.activeOnly` (gated in the fold on `onBench`; flow.ts `koRecoilOf` a zero diff, the
+    body still seated when it reads). **Klinklang** `sv10.5b-063`/`-141` "Gear Coating" on the NEW
+    `seatDamageReductionAfterWR.beneficiaryHasEnergy` (`hasAttachedEnergy` on the DAMAGED body in
+    `seatDamageReduction`; no `noStack`, two pay 40; own-side hits pay, D558 ⑶-bis inherited). **Regirock**
+    `sv09-082` "Rock Armor" on the NEW `damageReductionAfterWRIfEnergy`, summed into
+    `damageReductionAfterWR` (the four §8.5 sites a zero diff; "from attacks" pays own-side hits, R-RA).
+    **`MATCH_RECORD_VERSION` STAYS 35** — every addition is an optional CATALOG-side key and nothing is
+    persisted on the record. Withdrawn and annotated in place (D539): registry.ts's `damageAttacker` "no
+    `activeOnly` flag is needed", `damageAttackerOnKo`'s "The one printing is Vengeful Punch" / "all four
+    of `damageAttacker`'s printings", the `disableAbilities` three-card list; continuous.ts's
+    `disabledAbilityUids` "three cards in scope" and the fold's "the one printing IS a Tool";
+    interpreter.ts's "Both printed sentences scope the ACTIVE SPOT … already right" (now R-O1); the lock
+    lists in actions.ts / cardplay.ts; the census prose "consequents this engine does not have
+    (Gastrodon…)"; and the "every lock is Active-gated" population claims in registry.ts,
+    testFixtures.ts, `alwaysOnReduction` / `attackerFilter` / `statusImmunity` / `therapeuticEnergy` —
+    and, on a second pass keyed on Flutter Mane's cross-board reach (a DEFENDING Active Flutter Mane
+    locks the attacker, at any stage), the "only lock" / "one lock" / "sole row" copies in
+    `statusImmunity` (its hand-written `locks` population now lists all seven lock ids),
+    `damageSuppression`, testFixtures.ts, `abilityLock`, `activeHandLock`, `stadiumBar`,
+    `cornerstoneStance` and `lavaZone`. ⛔ D559 LANDING: `lavaZone`'s own §9 "NO §9 LOCK IN THIS CATALOG
+    CAN BE LIVE AT THE MOMENT THIS TRIGGER FIRES", re-checked above as still true, was FALSE — a Flutter
+    Mane PROMOTED into the actor's Active is live on the post-move board `triggersOf` gates on, and locks
+    an Active Magcargo — WITHDRAWN at both sites (D539) and driven by one new §9 rung.
+    Display debt (D552 ⑽'s precedent): the HUD does not show the rewritten Weakness.)
     🆕🆕🆕 engineVersion 0.441.0 → **0.442.0** (D558 — THE FIRST TOOLS AND STADIUMS ON THE FOUR EXISTING
     MODIFIER SEAMS, PLUS SALVATORE: 18 PRINTINGS / 12 TEXTS / 12 OBJECTS. Twelve registry `CardProgram`s
     keyed on eighteen REAL ids inserted MID-MAP after `sv10.5w-085` (D395/D396, so `raw[last]` stays
@@ -24322,7 +24372,7 @@ import type { GameState, Seat } from "./types";
     WITNESS** — the count was re-derived every slice and the word *"three"* was carried.
     A successor of this slice inherits **81 / 61 / 17** again, over **FIVE** history
     occurrences: those four plus `deckMillFilteredScale.test.ts`'s own header arrow.) */
-export const engineVersion = "0.442.0";
+export const engineVersion = "0.443.0";
 
 export type {
   ApplyResult,

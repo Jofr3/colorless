@@ -76,6 +76,8 @@ import {
   // 🆕🆕🆕 D556 — the this-turn side-wide pre-W/R bonus, folded at `snipeActive`.
   sideAttackBonusThisTurn,
   seatRemovesWeakness,
+  // 🆕🆕🆕 D559 — the opponent-side Weakness rewrite (Fairy Zone), at `snipeActive`.
+  seatWeaknessRewrite,
   seatShieldedFromSupporterEffects,
   stadiumPreventsDamage,
 } from "./continuous";
@@ -10048,9 +10050,18 @@ function snipeActive(
   // DRIVEN ON ITS OWN BOARD (`weaknessRetype.test.ts`), D432's reason: two expressions in
   // two files, and a build that widened one and not the other is invisible to a suite that
   // only swings the main hit.
+  // 🆕🆕🆕 D559 — and the opponent-side Weakness REWRITE (Fairy Zone, on `ctx.seat`'s side
+  // of the table), beneath the retype exactly as at the main hit. `ignoreWR` already nulls
+  // it with the rest of Weakness. Driven on its OWN board (`abilityBundleD559.test.ts`),
+  // D432's reason.
   const weakness = noWeakness
     ? null
-    : weaknessOf(attacker.card, target.card, installedWeaknessRetypeOf(state, target.active));
+    : weaknessOf(
+        attacker.card,
+        target.card,
+        installedWeaknessRetypeOf(state, target.active),
+        seatWeaknessRewrite(state, opponent, target.card),
+      );
   const resistance =
     ignoreWR || attacker === null ? null : resistanceOf(attacker.card, target.card);
   // The pre-W/R clamp is attack.ts's, for its reason verbatim: an attack does not
@@ -10203,6 +10214,13 @@ function snipeActive(
   // one Active-target §8.5 site is also the complete one; a benched holder finished
   // off by a spread still gets nothing, which is the behaviour that was already
   // right and is left alone.
+  // 🆕🆕🆕 D559 CORRECTION (D539): "Both printed sentences scope the ACTIVE SPOT" and
+  // "already right" are WITHDRAWN for the recoil half. Orthworm ex "Pummeling Payback"
+  // (`damageAttacker.perAttachedEnergy`) prints NO Active clause, so a benched Orthworm
+  // ex hit by a spread or a snipe SHOULD retaliate and does not — R-O1, a reachable
+  // DEVIATION named in docs/decisions.md D559 (reversal: a bench recoil read built at
+  // `spreadDamage` / `placeSnipe`). Still right for Rocky Helmet, Counterattack Quills,
+  // Custom Trap and the `onDamagedByAttack` stage.
   //
   // ⚠️ GATED ON `invokedBy === "attack"` because the printed clause is, and because
   // the stage it queues only makes sense inside an attack's epilogue queue. An

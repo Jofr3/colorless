@@ -28442,7 +28442,54 @@ Mutants 3,278 → 3,315 (+37 `D558-*`, all killed undeclared; 17 rows re-anchore
 survivors 52 unmoved.
 
 ### (e) Owed
-The whole-corpus sweep (~~D552 → … → D558, all pending~~ D552–D557 PAID, each exact on its first launch — D557's `3226 · 52` at close-out `01c6d987`; D558's pending, predicted `3263 · 52` over 3,315). Jasmine's Gaze deferred (a new op, a `PlayerSide` key with an
+The whole-corpus sweep (~~D552 → … → D558, all pending~~ D552–D557 PAID, each exact on its first launch — D557's `3226 · 52` at close-out `01c6d987`; ~~D558's pending, predicted `3263 · 52` over 3,315~~ D558's PAID exactly on its first launch at close-out `ff618ad6`: `3263 killed · 52 known survivor(s)` over 3,315, as predicted — reconciled at the D559 landing). Jasmine's Gaze deferred (a new op, a `PlayerSide` key with an
 expiry, an MRV decision). R-SV1 UNRULED. The HUD shows no damage modifier from a Tool or a Stadium (D552's precedent;
 retreat and attack cost do show). The Ability auras Stone Palace / Curly Wall still pay an own-side hit under D425's
 reading (named debt, pinned); Neutralization Zone's own-side exposure is unreachable today. Next: the ability bundle (15 printings / 8 items).
+
+## D559 — the ability bundle: 15 printings / 7 texts / 7 objects (engine 0.443.0, `MATCH_RECORD_VERSION` stays 35)
+
+**Status:** ✅ BUILT — keyed MID-MAP after `sv05-212`. Built in the `lum-wt-d559` worktree stacked on the parked D558; committed there on `d559-prep` at `51a86c06`, then LANDED on `main` by cherry-pick onto the D558 close-out `ff618ad6` as ONE commit, with the last review's three prose findings fixed at the landing (the `lavaZone.test.ts` §9 claim withdrawn and driven by one new rung, this file's (e), registry.ts's "no BUILT lock").
+
+### (a) The seven rows (registry.ts, one block before `const REGISTRY`; `passive` only — every printed attack keeps deriving)
+| Card | Ids | Ability | Program |
+|---|---|---|---|
+| Lillie's Clefairy ex | `sv09-056`/`-173`/`-184`/`svp-195` | Fairy Zone | `opponentWeaknessRewrite { targetType "Dragon", weaknessType "Psychic" }` |
+| Flutter Mane | `sv05-078`/`sv08.5-043`/`svp-097` | Midnight Fluttering | `disableAbilities { side "opponent", requiresActive, targetZone "active", exemptAbilityNamed }` |
+| Gastrodon | `sv08-107` | Sticky Bind | `disableAbilities { side "both", stage "Stage2", sourceOnBench, targetZone "bench" }` |
+| Orthworm ex | `sv07-110`/`-162` | Pummeling Payback | `damageAttacker { 20, perAttachedEnergy "Metal" }` |
+| Maractus | `sv09-008`/`-160` | Exploding Needles | `damageAttackerOnKo { 60, activeOnly }` |
+| Klinklang | `sv10.5b-063`/`-141` | Gear Coating | `seatDamageReductionAfterWR { 20, beneficiaryHasEnergy "Metal" }` |
+| Regirock | `sv09-082` | Rock Armor | `damageReductionAfterWRIfEnergy: 30` |
+
+Not keyed: `sv08-096` Flutter Mane, `sv10.5b-008`/`-093` Maractus, `sv07-101` Klinklang (different cards); the Antique Root
+Fossil (no play-as-Pokémon route).
+
+### (b) The vocabulary (seven new optional catalog-side keys plus one widened union, one scan, one parameter)
+`PassiveEffects.opponentWeaknessRewrite` + continuous.ts `seatWeaknessRewrite` (the defender's opponent's board, §9-gated)
++ cards.ts `weaknessOf`'s 4th parameter `rewrite` (replaces the printed entries with one `{P}×2`; the retype applies on
+top), read at BOTH Weakness sites; `disableAbilities.stage "Stage2"`, `sourceOnBench`, `targetZone`;
+`damageAttacker.perAttachedEnergy` and `damageAttackerOnKo.activeOnly` (both in `passivesOf`'s fold — the read sites
+and flow.ts `koRecoilOf` take a zero diff); `damageReductionAfterWRIfEnergy` (summed into `damageReductionAfterWR`);
+`seatDamageReductionAfterWR.beneficiaryHasEnergy` (in `seatDamageReduction`, on the damaged body).
+
+### (c) Readings (`docs/decisions.md` D559)
+R-FZ1 ⚠️ UNRULED, reachable: rewrite then retype → {C}×2 · R-FZ2: the null paths win (⚠️ UNRULED for Blooming Garden and D432's bar, unreachable in Standard; "isn't affected by Weakness" is printed and reachable — TR Hypno sv10-080, Sigilyph sv10.5w-038/-121) · R-FZ3 suppression
+drops the rewrite · R-FZ4 a Dragon with no printed Weakness takes ×2 from {P} · R-LK1 (not D557's R-L1) lock-vs-lock stays ungated,
+argued unreachable among the two legal locks the registry builds — only while Iron Thorns ex "Initialization" stays
+unbuilt (an Active Flutter Mane silencing an opposing Active Iron Thorns ex re-opens it; the fixpoint pass is owed then;
+tripwired by id), pinned on Klefki vs Flutter Mane · R-O1 ⚠️ a reachable DEVIATION: a benched Orthworm ex
+does not retaliate · R-M1 only an Active Maractus KO pays · R-GC Gear Coating stacks and pays own-side hits (D558 ⑶-bis
+inherited) · R-RA Rock Armor pays own-side hits ("from attacks").
+
+### (d) Tests, census and mutants
+New `abilityBundleD559.test.ts` and `abilityRecoilArmorD559.test.ts`. `seatReductionAura.test.ts:401` inverted (D322's
+precedent); `abilityLock.test.ts`'s "(and nobody else)" measured; `lavaZone.test.ts`'s lock list five (⛔ its "no §9 lock can be live when Lava Zone fires" claim WITHDRAWN at the landing — a Flutter Mane PROMOTED into the actor's Active locks an Active Magcargo; one new driven rung, 21 → 22). Census:
+`BUILT.ability` 309 → 324, `built` 2198 → 2213, registry keys 816 → 831. Mutants 3,315 → 3,346 (+31 `D559-*`, all
+killed undeclared; five rows re-anchored onto the Weakness bytes and re-probed); declared survivors 52 unmoved.
+
+### (e) Owed
+The whole-corpus sweep (~~D556 → D559, all pending~~ D556, D557 and D558 PAID, each exact on its first launch — D558's `3263 · 52` over 3,315 at close-out `ff618ad6`; only D559's own is owed, predicted `3294 killed · 52 known survivor(s)` over 3,346). R-FZ1 UNRULED; R-FZ2 UNRULED for Blooming Garden and D432's bar only. R-O1 (bench recoil read). The HUD does not show
+the rewritten Weakness (display debt, D552 ⑽'s precedent). Next: Feraligatr "Torrential Heart", then (iii)'s non-overlapping
+remainder (Watchtower, Slaking ex, Thwackey, Drilbur, Festival Grounds, Scoop Up Cyclone, Love Ball), re-priced now that
+Gastrodon and Flutter Mane have landed.

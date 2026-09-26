@@ -84,6 +84,8 @@ import {
 // this slice takes the fifth, and TWO are consequents this engine does not have —
 // Gastrodon `sv08-107` (*"Benched Stage 2 Pokémon … have no Abilities"*) and
 // Toedscruel `sv09-089` (*"your Active Pokémon's Retreat Cost is {C}{C} less"*).
+// (🆕🆕🆕 D559 CORRECTION (D539): "consequents this engine does not have" is WITHDRAWN —
+// Toedscruel was built at D322 and Gastrodon at D559, `disableAbilities.sourceOnBench`.)
 // **Same printed antecedent, five different consequents, five rows.**
 //
 // ── WHAT THE WIDENING COST, MEASURED BY GREPPING THE READ SITES ─────────────
@@ -398,7 +400,19 @@ describe("D321 §1 — the three registry rows", () => {
     // slice built exactly the one sentence of the five whose consequent exists
     // (conventions: a bare "these ids are unbuilt" is nearly always true).
     // Gastrodon's is a benched-Stage-2 Ability LOCK and has no field at all.
-    expect(programFor("sv08-107")).toBeUndefined();
+    // 🆕🆕🆕 D559 — **AND GASTRODON `sv08-107` STOPPED BEING UNBUILT**, D322's Toedscruel
+    // precedent verbatim: the line read `programFor("sv08-107")` is `undefined`, and D559
+    // built "Sticky Bind" on `disableAbilities` (`sourceOnBench` — the SAME rider name,
+    // on a THIRD field). The repair is a NARROWING, not a deletion: the claim this file
+    // owns is that the lock carries no `seatDamageReductionAfterWR`, and it now also pins
+    // the field it DID get.
+    expect(programFor("sv08-107")?.passive?.seatDamageReductionAfterWR).toBeUndefined();
+    expect(programFor("sv08-107")?.passive?.disableAbilities).toEqual({
+      side: "both",
+      stage: "Stage2",
+      sourceOnBench: true,
+      targetZone: "bench",
+    });
     // 🆕 D322 — **AND TOEDSCRUEL `sv09-089` STOPPED BEING UNBUILT.** This line
     // read `programFor("sv09-089")` is `undefined` for exactly one session, and
     // D322 built its retreat reduction on `ownActiveRetreatDiscount`. The repair

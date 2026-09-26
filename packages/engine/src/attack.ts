@@ -59,6 +59,8 @@ import {
   providedEnergy,
   seatDamageReduction,
   seatRemovesWeakness,
+  // 🆕🆕🆕 D559 — the opponent-side Weakness rewrite (Fairy Zone).
+  seatWeaknessRewrite,
   // 🆕🆕🆕 D556 — the this-turn side-wide pre-W/R bonus (Black Belt's Training).
   sideAttackBonusThisTurn,
   stadiumPreventsDamage,
@@ -3295,12 +3297,24 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
     // On-target, so `suppressTargetEffects` drops it and the PRINTED type applies (R4).
     // Read off `defender`, the live binding, for the D428/D429 reason above.
     const weaknessRetype = suppressTargetEffects ? null : installedWeaknessRetypeOf(next, defender);
+    // 🆕🆕🆕 D559 — THE OPPONENT-SIDE WEAKNESS REWRITE (Lillie's Clefairy ex "Fairy Zone",
+    // on the ATTACKER's side of the table). Handed to `weaknessOf` beside the retype, so
+    // the three null paths still win (R-FZ2: ⚠️ UNRULED only for Blooming Garden and D432's
+    // bar, both unreachable in Standard; the attack's own "isn't affected by Weakness" is
+    // printed text, not a ruling, and IS reachable — Team Rocket's Hypno sv10-080 here,
+    // Sigilyph sv10.5w-038/-121 at the snipe) and the retype re-points the rewritten
+    // entry (R-FZ1 ⚠️ UNRULED). An effect on the DEFENDER, so
+    // `suppressTargetEffects` drops it and the printed Weakness applies (R-FZ3, D552 R4's
+    // mirror). docs/decisions.md D559.
+    const weaknessRewrite = suppressTargetEffects
+      ? null
+      : seatWeaknessRewrite(next, defenderSeat, defenderCard);
     const weakness =
       damageSuppression?.weakness === true ||
       seatRemovesWeakness(next, defenderSeat) ||
       installedNoWeakness(next, defender)
         ? null
-        : weaknessOf(attacker, defenderCard, weaknessRetype);
+        : weaknessOf(attacker, defenderCard, weaknessRetype, weaknessRewrite);
     // D192 — Resistance has no defender-side null path (nothing in the pool prints
     // "your Pokémon have no Resistance"), so this is its FIRST, and it is its own
     // boolean because 9 legal printings suppress Resistance ALONE ("This attack's

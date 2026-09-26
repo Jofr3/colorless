@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { applyAction, disabledAbilityUids, programFor } from "./index";
+import { registryCardIds } from "./registry";
 import type { GameEvent, GameState } from "./index";
 import { redactGame } from "./redact";
 import {
@@ -97,6 +98,30 @@ describe("disableAbilities — the registry row", () => {
     // Two Spiritomb exist in the pool: sv01-129 (Taunt / Doom Decree) has no
     // Ability at all and must NOT carry the lock.
     expect(programFor("sv01-129")?.passive?.disableAbilities).toBeUndefined();
+    // 🆕🆕🆕 D559 — "(and nobody else)" was a TITLE until now: nothing asserted it. The two
+    // new rows (the only legal locks the registry builds — the six above have rotated;
+    // Iron Thorns ex "Initialization" and Team Rocket's Watchtower are legal and unbuilt,
+    // tripwired by id in `abilityBundleD559.test.ts` §7) are pinned in
+    // `abilityBundleD559.test.ts` §1, and the title's claim is now measured over the
+    // WHOLE registry: exactly these ten keys carry a lock.
+    expect(
+      registryCardIds()
+        .filter((id) => programFor(id)?.passive?.disableAbilities !== undefined)
+        .sort(),
+    ).toEqual(
+      [
+        "sv01-096",
+        "sv02-089",
+        "sv02-127",
+        "sv02-243",
+        "sv02-263",
+        "sv02-275",
+        "sv05-078", // 🆕🆕🆕 D559 — Flutter Mane "Midnight Fluttering"
+        "sv08.5-043",
+        "svp-097",
+        "sv08-107", // 🆕🆕🆕 D559 — Gastrodon "Sticky Bind"
+      ].sort(),
+    );
   });
 });
 
@@ -251,6 +276,10 @@ describe("the ACTIVATED read site (§9 useAbility)", () => {
   it("Cursed Land locks the opponent's Ability the instant it takes a counter", () => {
     // Tinkaton is a STAGE 2, so this pair is Cursed Land's alone — neither
     // Basic-only lock can reach it, and the only variable is the damage counter.
+    // (🆕🆕🆕 D559 CORRECTION (D539): "Cursed Land's alone" is WITHDRAWN as a population claim —
+    // an opposing Active Flutter Mane `sv05-078` silences an Active Tinkaton, and a
+    // benched Gastrodon `sv08-107` a benched one; both are driven in
+    // `abilityBundleD559.test.ts`. Among THIS board's three locks it still holds.)
     let state = setActiveFromDeck(board(51), "p1", "sv02-105"); // P1's Active Tinkaton
     state = setActiveFromDeck(state, "p2", "sv02-127"); // Ting-Lu ex across the table
     const use = {

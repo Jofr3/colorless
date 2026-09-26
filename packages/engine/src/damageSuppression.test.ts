@@ -827,7 +827,11 @@ describe("the ability half and the attack half SHARE the read site", () => {
     // Spiritomb sv02-089 "Fettered in Misfortune" ("Basic Pokémon V in play … have
     // no Abilities") is the pool's only `disableAbilities` row with no Active-Spot
     // clause on its SOURCE, so it locks from the Bench — which is what lets it
-    // reach a body that must be Active to attack. ONE board, both signs:
+    // reach a body that must be Active to attack. (🆕🆕🆕 D559 CORRECTION (D539): "the pool's only
+    // … row with no Active-Spot clause on its SOURCE" is WITHDRAWN — Gastrodon `sv08-107`
+    // is `sourceOnBench`, but it reaches only BENCHED Stage 2 bodies, never an attacker;
+    // and a DEFENDING Active Flutter Mane `sv05-078` silences the attacking Active, a
+    // second route to this board's lock that this board does not use.) ONE board, both signs:
     //
     //   `fix-azureseas` (a Basic V) loses Azure Seas → 90, the control's number;
     //   `fix-suppressor`'s printed SENTENCE is attack text, which no Ability-lock

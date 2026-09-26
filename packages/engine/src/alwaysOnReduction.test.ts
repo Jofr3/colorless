@@ -753,6 +753,10 @@ describe("§9 — the lock silences the ABILITY and cannot reach the TOOL", () =
     // body has to be the attacking one too, and its target predicate ("your
     // opponent's Pokémon in play that have any damage counters on them, except for
     // Pokémon ex") reaches a Stage 1 where Klefki/Spiritomb reach Basics only.
+    // (🆕🆕🆕 D559 CORRECTION (D539): "the only lock" and "every lock is Active-gated" are
+    // WITHDRAWN — Gastrodon "Sticky Bind" is BENCH-sourced, and Flutter Mane "Midnight
+    // Fluttering", an attacking Active, reaches the defending Active at any stage. This
+    // board stays Ting-Lu's; the pair is `abilityBundleD559.test.ts`'s.)
     //
     // Land Scoop is 150 and Hariyama is 140 HP, so the board carries 10 damage —
     // which is ALSO the switch that arms the lock. One state, one field.

@@ -822,7 +822,7 @@ describe("D535 §8 — the POPULATION RUNG and the version", () => {
   });
 
   it("engineVersion and `manifest.version` agree, and the bump is owed for BEHAVIOUR", () => {
-    expect(engineVersion).toBe("0.442.0");
+    expect(engineVersion).toBe("0.443.0");
     expect(manifest.version).toBe(engineVersion);
     expect(raw("/index.ts")).toContain("engineVersion 0.419.0 → **0.420.0** (D535");
   });

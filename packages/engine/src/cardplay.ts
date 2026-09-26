@@ -744,7 +744,9 @@ export function useAbility(state: GameState, action: UseAbilityAction): ApplyRes
   if (ability === undefined) {
     return err("NO_SUCH_ABILITY", `${card.name} has no usable Ability "${action.abilityName}"`);
   }
-  // §9 — a continuous Ability-lock aura (Klefki / Spiritomb / Ting-Lu ex) turns
+  // §9 — a continuous Ability-lock aura (Klefki / Spiritomb / Ting-Lu ex — 🆕🆕🆕 D559:
+  // and Flutter Mane / Gastrodon, the two legal locks the registry builds — Iron
+  // Thorns ex "Initialization" and Team Rocket's Watchtower are legal and unbuilt; D539) turns
   // this Pokémon's Abilities off. Checked before activeOnly/oncePerTurn/cost so a
   // locked Pokémon reports the lock, not an incidental cost failure.
   if (disabledAbilityUids(state).has(uid)) {

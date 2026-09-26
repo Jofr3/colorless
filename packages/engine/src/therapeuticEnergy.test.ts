@@ -834,6 +834,10 @@ describe("⚠️ §9 — an ENERGY IS NOT AN ABILITY, so the lock must NOT reach
     //     an Active Spot;
     //   • every §9 lock in the registry is `requiresActive` except Spiritomb's,
     //     which narrows to Basic Pokémon V — a suffix no body in this deck has;
+    //     (🆕🆕🆕 D559 CORRECTION (D539): and except Gastrodon's `sourceOnBench`, over
+    //     BENCHED Stage 2 bodies — never an Active target, so the count stands; Flutter
+    //     Mane's IS `requiresActive` and reaches only the OPPOSING Active, so its holder
+    //     is the attacker, whose "Hex Hurl" applies no condition — Klefki's answer;)
     //   • the target must itself be an Active, because `applyStatus` only ever
     //     resolves to `players[seat].active`.
     //
@@ -844,6 +848,14 @@ describe("⚠️ §9 — an ENERGY IS NOT AN ABILITY, so the lock must NOT reach
     // attack applies no condition at all.
     expect(programFor("sv01-096")?.passive?.disableAbilities?.requiresActive).toBe(true);
     expect(programFor("sv02-127")?.passive?.disableAbilities?.requiresActive).toBe(true);
+    expect(programFor("sv05-078")?.passive?.disableAbilities).toMatchObject({
+      requiresActive: true,
+      targetZone: "active",
+    });
+    expect(programFor("sv08-107")?.passive?.disableAbilities).toMatchObject({
+      sourceOnBench: true,
+      targetZone: "bench",
+    });
     expect(programFor("sv02-089")?.passive?.disableAbilities).toMatchObject({
       stage: "Basic",
       suffix: "V",

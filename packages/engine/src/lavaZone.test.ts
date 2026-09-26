@@ -110,7 +110,10 @@ const DACHSBUN = "sv01-099";
 /** Ting-Lu ex "Cursed Land" — the §9 Ability-lock aura that can reach a Stage 1:
     *"…your opponent's Pokémon in play that have any damage counters on them have
     no Abilities, except for Pokémon ex."* Klefki's lock is Basic-only and
-    Magcargo is a Stage 1, so it could not have been the control. */
+    Magcargo is a Stage 1, so it could not have been the control.
+    (🆕🆕🆕 D559 CORRECTION (D539): "the … aura that can reach a Stage 1" is no longer
+    unique — an opposing Active Flutter Mane `sv05-078` reaches an Active Stage 1 too.
+    Ting-Lu stays this suite's control.) */
 const TING_LU = "sv02-127";
 const SWITCH = "sv01-194"; // Item — "Switch your Active Pokémon with 1 of your Benched Pokémon."
 const BOSS = "sv02-172"; // Supporter — the gust
@@ -121,6 +124,12 @@ const BASIC = "fix-basic-1";
 /** A body with NO Ability at all: every "the trigger fired" line below passes
     just as happily on a build that Burns on every bench move. */
 const PLAIN = "fix-lava-plain";
+/** 🆕 D559 landing — Flutter Mane "Midnight Fluttering", a Basic: *"As long as this
+    Pokémon is in the Active Spot, your opponent's Active Pokémon has no Abilities,
+    except for Midnight Fluttering."* The §9 rung's PROMOTED lock source (§9 below). */
+const FLUTTER_MANE = "sv05-078";
+const FLUTTERING_TEXT =
+  "As long as this Pokémon is in the Active Spot, your opponent's Active Pokémon has no Abilities, except for Midnight Fluttering.";
 
 function magcargo(id: string): Card {
   return battler(id, {
@@ -143,6 +152,13 @@ const LOCAL_CARDS: Record<string, Card> = {
     types: ["Fire"],
     attacks: [{ name: "Nothing At All", cost: ["Fire"], damage: "30" }],
   }),
+  [FLUTTER_MANE]: battler(FLUTTER_MANE, {
+    name: "Flutter Mane",
+    hp: 90,
+    retreat: 1,
+    types: ["Psychic"],
+    abilities: [{ type: "Ability", name: "Midnight Fluttering", effect: FLUTTERING_TEXT }],
+  }),
 };
 
 const POOL: Record<string, Card> = { ...FIXTURE_POOL, ...LOCAL_CARDS };
@@ -156,6 +172,21 @@ const LAVA_DECK = deckOf({
   [SWITCH]: 4,
   [BOSS]: 4,
   [FREE]: 16,
+  [BASIC]: 12,
+  "fix-fire-energy": 8,
+});
+
+/** 🆕 D559 landing — LAVA_DECK with four FREE swapped for four Flutter Mane, used by
+    §9's promoted-lock rung ONLY, so every other rung's shuffle is untouched. */
+const FLUTTER_DECK = deckOf({
+  [MAGCARGO]: 4,
+  [PLAIN]: 4,
+  [DACHSBUN]: 4,
+  [TING_LU]: 4,
+  [SWITCH]: 4,
+  [BOSS]: 4,
+  [FREE]: 12,
+  [FLUTTER_MANE]: 4,
   [BASIC]: 12,
   "fix-fire-energy": 8,
 });
@@ -177,8 +208,8 @@ function firstBasicInHand(state: GameState, seat: Seat): string {
   return uid;
 }
 
-function localSetup(seed: number, first: Seat): GameState {
-  const created = createGame({ seed, decks: { p1: LAVA_DECK, p2: LAVA_DECK }, cardPool: POOL });
+function localSetup(seed: number, first: Seat, deck: string[] = LAVA_DECK): GameState {
+  const created = createGame({ seed, decks: { p1: deck, p2: deck }, cardPool: POOL });
   if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
   let state = created.state;
   if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
@@ -215,8 +246,9 @@ function board(
   watcher: Seat,
   watcherIds: readonly string[],
   actorBenched: string = BASIC,
+  deck: string[] = LAVA_DECK,
 ): GameState {
-  let state = localSetup(seed, first);
+  let state = localSetup(seed, first, deck);
   const actor = watcher === "p1" ? "p2" : "p1";
   state = setActiveFromDeck(state, watcher, watcherIds[0] ?? PLAIN);
   state = clearBench(state, watcher);
@@ -522,7 +554,22 @@ describe("§9 — THE ABILITY-LOCK CASE IS REFUSED, AND THE REFUSAL IS THE RESUL
   // 🛑 NO §9 LOCK IN THIS CATALOG CAN BE LIVE AT THE MOMENT THIS TRIGGER FIRES,
   // AND A FIXTURE THAT FAKED ONE WOULD BE THE NEXT VACUOUS GUARD (D203's
   // refusal, conventions.md). The engine has THREE `disableAbilities` printings
-  // and each one is out for its own printed reason:
+  // and each one is out for its own printed reason (🆕🆕🆕 D559: FIVE — the two new ones
+  // are the last two bullets, and each is out too, so the claim HOLDS, re-checked):
+  //
+  // ⛔ WITHDRAWN AT THE D559 LANDING (D539 — the original kept above, not deleted):
+  // the claim is FALSE, and so is D559's "re-checked, still true". The argument
+  // below only rules out the lock source being the body the antecedent moves to
+  // the Bench; it never considers the body the move PROMOTES. `retreat` /
+  // `switchInto` hand the POST-move board to `runActiveBenchedTriggers`, and
+  // `triggersOf` gates on `disabledAbilityUids` of that board — so a Flutter Mane
+  // `sv05-078` retreated or switched INTO the actor's Active Spot is live, as the
+  // opponent's Active, at the very moment Lava Zone would fire, and an Active
+  // Magcargo `sv05-029` (Standard-legal) is locked. Driven by the last rung of this
+  // block: promote `fix-basic-1` → Lava Zone fires and Burns; promote Flutter Mane →
+  // no trigger. The SAME hole is in the Ting-Lu bullet's "Ting-Lu's argument": a
+  // SECOND Ting-Lu ex promoted into the actor's Active re-lights "Cursed Land" on a
+  // damaged Magcargo. The bullets below stay as the record of the withdrawn reading.
   //
   //   • Klefki `sv01-096` "Mischievous Lock" — `stage: "Basic"`. Magcargo is a
   //     STAGE 1, so the aura never names it.
@@ -537,15 +584,60 @@ describe("§9 — THE ABILITY-LOCK CASE IS REFUSED, AND THE REFUSAL IS THE RESUL
   //     "as long as this Pokémon is in the Active Spot" really has stopped
   //     holding.
   //
+  //   • 🆕🆕🆕 D559 — Flutter Mane `sv05-078` "Midnight Fluttering" — `requiresActive`
+  //     and `targetZone "active"` on the OPPONENT's side: to reach Magcargo the
+  //     Flutter Mane must be the ACTOR's Active, which is the very body the trigger's
+  //     antecedent moves to the Bench — Ting-Lu's argument verbatim, and by the time
+  //     the trigger runs the lock is already off.
+  //     ⛔ WITHDRAWN (D559 landing): the Flutter Mane can be the NEW Active the move
+  //     promotes — the rung below drives it. Same hole in Ting-Lu's argument.
+  //   • 🆕🆕🆕 D559 — Gastrodon `sv08-107` "Sticky Bind" — `stage: "Stage2"`. Magcargo
+  //     is a STAGE 1, so the aura never names it.
+  //
   // The gate itself is NOT untested — `triggersOf` is the single §9 choke for
   // every timing and both scan directions, and D319's `opponentActionTrigger`
   // suite drives it on the `"opponent"` direction this row also uses. Writing a
   // second one here would need a board no deck can build.
-  it("the three lock printings are all narrower than this row, checked against the registry", () => {
+  // (⛔ WITHDRAWN at the D559 landing: a Standard deck builds it — Flutter Mane
+  // promoted into the actor's Active. The last rung of this block drives it.)
+  it("the five lock printings are all narrower than this row, checked against the registry", () => {
     expect(programFor("sv01-096")?.passive?.disableAbilities?.stage).toBe("Basic");
     expect(programFor("sv02-089")?.passive?.disableAbilities?.stage).toBe("Basic");
     expect(programFor("sv02-127")?.passive?.disableAbilities?.requiresActive).toBe(true);
+    // 🆕🆕🆕 D559 — the two legal locks the registry builds: Flutter Mane is Active-sourced on the OPPONENT's
+    // Active (Ting-Lu's argument), Gastrodon names Stage 2 only.
+    // ⛔ WITHDRAWN (D559 landing): this `it`'s title and "(Ting-Lu's argument)" —
+    // Flutter Mane is NOT narrower than this row: promoted into the actor's Active
+    // it locks an Active Magcargo at the trigger moment (next rung). These pins
+    // stay as the registry facts they are; they no longer prove unreachability.
+    expect(programFor("sv05-078")?.passive?.disableAbilities?.requiresActive).toBe(true);
+    expect(programFor("sv05-078")?.passive?.disableAbilities?.side).toBe("opponent");
+    expect(programFor("sv08-107")?.passive?.disableAbilities?.stage).toBe("Stage2");
     // …and Magcargo is the Stage 1 the first two cannot name.
     expect(POOL[MAGCARGO]?.stage).toBe("Stage1");
+  });
+
+  it("🆕 D559 landing — a Flutter Mane PROMOTED into the actor's Active locks an Active Magcargo, so Lava Zone does NOT fire", () => {
+    for (const seed of SEEDS) {
+      // The control, on the SAME deck and seed: the actor retreats into a plain
+      // Basic and Lava Zone fires and Burns — so the refusal below is the lock.
+      const control = turnOf(board(seed, "p1", "p1", [MAGCARGO], BASIC, FLUTTER_DECK), "p2");
+      const fired = retreat(control, "p2");
+      expect(activeId(must(fired), "p2")).toBe(BASIC);
+      expect(burned(must(fired), "p2")).toBe(true);
+      expect(triggerEvents(fired)).toEqual([{ seat: "p1", ability: "Lava Zone" }]);
+
+      // The lock: the actor retreats INTO Flutter Mane. The post-move board is
+      // the one `triggersOf` gates on, and on it Flutter Mane is the opponent's
+      // Active, so the watcher's Active Magcargo has no Abilities.
+      const start = turnOf(board(seed, "p1", "p1", [MAGCARGO], FLUTTER_MANE, FLUTTER_DECK), "p2");
+      expect(activeId(start, "p1")).toBe(MAGCARGO);
+      const result = retreat(start, "p2");
+      expect(result.ok).toBe(true);
+      const next = must(result);
+      expect(activeId(next, "p2")).toBe(FLUTTER_MANE);
+      expect(burned(next, "p2")).toBe(false);
+      expect(triggerEvents(result)).toEqual([]);
+    }
   });
 });

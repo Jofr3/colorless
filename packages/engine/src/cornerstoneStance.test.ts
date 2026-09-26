@@ -310,7 +310,9 @@ describe("Cornerstone Stance — §9, in both directions on one gate", () => {
   // the ATTACKER suppresses its Ability's EFFECT; it does not take the Ability off
   // the card, and a Pokémon whose Ability is switched off still HAS one. Spiritomb
   // locks Basic Pokémon V from the Bench, which is the only board in the registry
-  // where a locked body can still be the one attacking.
+  // where a locked body can still be the one attacking. (🆕🆕🆕 D559 CORRECTION (D539): WITHDRAWN —
+  // a DEFENDING Active Flutter Mane `sv05-078` silences the attacking Active of any
+  // stage, a second such board; Gastrodon `sv08-107` reaches only BENCHED bodies.)
   it("a lock over the ATTACKER does not stop it counting as an Ability-haver", () => {
     let state = driveSetup(1, { p1: CORNERSTONE_DECK, p2: CORNERSTONE_DECK }, { first: "p2" });
     state = setActiveFromDeck(state, "p2", "fix-cornerstone");

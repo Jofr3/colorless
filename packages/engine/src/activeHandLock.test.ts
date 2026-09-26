@@ -157,6 +157,9 @@ const TOOL_2 = "sv02-173";
 /** Ting-Lu ex "Cursed Land" — the §9 lock, and the ONE in the pool that can
     reach these bodies. Klefki/Spiritomb silence BASICS only; Tyranitar is a
     Stage 2 and Jellicent ex a Stage 1, so neither is reachable from them.
+    (🆕🆕🆕 D559 CORRECTION (D539): "the ONE in the pool" is WITHDRAWN — an opposing Active Flutter
+    Mane `sv05-078` silences an Active barring body of any stage, ex or not, and a
+    benched Gastrodon `sv08-107` a benched Stage 2. Ting-Lu stays this suite's lock.)
     ⚠️ IT EXEMPTS POKÉMON ex, which makes §7 a PAIR rather than a single claim. */
 const TING_LU = "sv02-127";
 /** The CONTROL body: same board, same hands, NO Ability. Every "the bar bites"
@@ -664,6 +667,8 @@ describe("D284 §6 — the wire mirror agrees with the engine", () => {
 
 // ─────────────────────────────────────────────────────────────────────────────
 // 7. §9 SUPPRESSION — and it is a PAIR, because the lock in the pool exempts ex.
+//    (🆕🆕🆕 D559 CORRECTION (D539): "the lock in the pool" is WITHDRAWN — Flutter Mane `sv05-078`
+//    exempts no ex; the pair is Ting-Lu's, which is the lock this section fields.)
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("D284 §7 — Klefki's family takes the bar down", () => {

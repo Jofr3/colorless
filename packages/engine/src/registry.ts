@@ -442,6 +442,19 @@ export interface PassiveEffects {
       only the holder's own printed passive) — the third value on the axis D159's
       table has "SUPPRESSES / SUPPRESSES / cannot reach (a Stadium)" in. */
   damageReductionAfterWRIfType?: { amount: number; type: PokemonType };
+  /** 🆕🆕🆕 §8.5 (D559) — `damageReductionAfterWR` GATED on the HOLDER having ANY
+      Energy attached: Regirock `sv09-082` "Rock Armor" — *"If this Pokémon has any
+      Energy attached, it takes 30 less damage from attacks (after applying Weakness
+      and Resistance)."* 1 legal printing.
+
+      The line above's placement exactly: the gate names the HOLDER, so it is resolved
+      INSIDE `passivesOf` (`pokemon.energy.length > 0` — "any Energy", a card count,
+      so no type and no provision question) and SUMMED into `damageReductionAfterWR`;
+      the four §8.5 read sites take a ZERO diff. A bare number rather than a record
+      because the print names no type. An Ability, so the §9 drop on `sources[0]`
+      silences it. ⚠️ *"from attacks"* — NOT *"from your opponent's Pokémon"* — so it
+      pays on an own-side spread or snipe too (R-RA), which is what the print says. */
+  damageReductionAfterWRIfEnergy?: number;
   /** §8.5 continuous OWN-SIDE seat-wide AURA: while this Pokémon is in play,
       EVERY one of its controller's in-play Pokémon takes this many HP less attack
       damage, after Weakness and Resistance (Hariyama sv02-113 "Arm Thrust
@@ -461,7 +474,8 @@ export interface PassiveEffects {
       §9-SUPPRESSIBLE through `disabledAbilityUids` like every non-lock Ability
       surface, and only a TOP card grants it (this is a printed Pokémon Ability, not
       a Tool). Hariyama is a STAGE 1, which is what decides WHICH lock can drive
-      that gate: Klefki/Spiritomb reach Basics only, so the assertable lock is
+      that gate (🆕🆕🆕 D559: and Flutter Mane "Midnight Fluttering" reaches an Active
+      Hariyama of any stage — "the assertable lock" is no longer the only one): Klefki/Spiritomb reach Basics only, so the assertable lock is
       Ting-Lu ex "Cursed Land" ("your opponent's Pokémon in play that have any
       damage counters on them", any stage, except ex).
 
@@ -555,6 +569,16 @@ export interface PassiveEffects {
   seatDamageReductionAfterWR?: {
     amount: number;
     beneficiary?: CardFilter;
+    /** 🆕🆕🆕 D559 — Klinklang `sv10.5b-063`/`-141` "Gear Coating": *"All of your
+        Pokémon that have any {M} Energy attached take 20 less damage from attacks
+        from your opponent's Pokémon (after applying Weakness and Resistance)."* A
+        second BENEFICIARY clause, on the DAMAGED body like `beneficiary` and answered
+        beside it in `seatDamageReduction` through `hasAttachedEnergy` (provision,
+        D118). Not a `CardFilter` member: a filter reads a CARD, and this reads the
+        body's ATTACHMENTS. No `noStack` — the print has none — so two Klinklang pay
+        40. ⚠️ Like every Ability aura on this seam it pays on an OWN-side hit too
+        (D558's ⑶-bis, inherited, not re-ruled here). */
+    beneficiaryHasEnergy?: BasicEnergyType;
     sourceOnBench?: true;
     otherNamedInPlay?: string;
     noStack?: string;
@@ -882,12 +906,30 @@ export interface PassiveEffects {
       Active is damaged; Custom Trap (Stunfisk, `amount: 50` + `requiresTool`)
       fires only while the holder has a Pokémon Tool attached. The "in the Active
       Spot" clause is enforced by the READ SITE — only the main-hit Active
-      defender retaliates (a benched holder damaged by spread does not) — so no
-      `activeOnly` flag is needed. Aggregated seat-free by continuous.ts, which
+      defender retaliates (a benched holder damaged by spread does not) — so this
+      field carries no Active-only rider. Aggregated seat-free by continuous.ts, which
       evaluates `requiresTool` against the holder's board so the read site stays
       a plain summed number. (Snipe/spread hits on the Active are a follow-up: the
-      recoil is folded only at the §8.5 main hit for now.) */
-  damageAttacker?: { amount: number; requiresTool?: boolean };
+      recoil is folded only at the §8.5 main hit for now.)
+
+      🆕🆕🆕 **D559 CORRECTION (D539) — "NO `activeOnly` FLAG IS NEEDED" WAS TRUE OF THIS
+      FIELD AND IS NOW NOT TRUE OF ITS FAMILY.** The KO sibling below carries one
+      (`damageAttackerOnKo.activeOnly`, Maractus "Exploding Needles"), because ITS read
+      site scans the whole board. And the Active-only read here is no longer the print's
+      clause on every holder: Orthworm ex `sv07-110`/`-162` "Pummeling Payback" prints
+      NO Active clause (*"If this Pokémon is damaged by an attack from your opponent's
+      Pokémon (even if this Pokémon is Knocked Out), put 2 damage counters on the
+      Attacking Pokémon for each {M} Energy attached to this Pokémon."*), so a BENCHED
+      Orthworm hit by a spread or a snipe SHOULD retaliate and does not — **R-O1, a
+      reachable DEVIATION, named in docs/decisions.md D559**; reversal: a bench recoil
+      read built at `spreadDamage` / `placeSnipe`.
+
+      • `perAttachedEnergy` (🆕🆕🆕 D559, Orthworm ex) — the printed *"for each {M}
+        Energy attached to this Pokémon"*: the amount is MULTIPLIED by
+        `countAttachedEnergy(holder, type)` inside the fold (provision, D118 — a
+        Special Energy providing {M} counts), so both read sites (attack.ts main hit,
+        interpreter.ts `reactToAttackDamage`) take a ZERO diff. 0 {M} Energy pays 0. */
+  damageAttacker?: { amount: number; requiresTool?: boolean; perAttachedEnergy?: BasicEnergyType };
   /** §8.1 KO-conditioned recoil — the SIBLING of `damageAttacker` above, and a
       sibling rather than an arm of it because the two consumers MUTUALLY REFUSE
       each other's payment (D155's rule, grounded in the READ sites):
@@ -908,6 +950,13 @@ export interface PassiveEffects {
       in HP like all four of `damageAttacker`'s printings (4 printed counters =
       `amount: 40`), so the two numbers stay summable in the units the read sites
       already speak.
+      🆕🆕🆕 **D559 CORRECTION (D539) — "THE ONE PRINTING" AND "ALL FOUR OF
+      `damageAttacker`'s PRINTINGS" ARE WITHDRAWN.** This field now has a SECOND
+      printing, Maractus `sv09-008`/`-160` "Exploding Needles" (an Ability: *"If this
+      Pokémon is in the Active Spot and is Knocked Out by damage from an attack from
+      your opponent's Pokémon, put 6 damage counters on the Attacking Pokémon."*,
+      `amount: 60, activeOnly: true`), and `damageAttacker` gained Orthworm ex's two
+      (`perAttachedEnergy`). The unit argument stands: every printing is stored in HP.
 
       ⚠️ AND NOTE THE CLAUSE THAT IS NOT PRINTED HERE. Rocky Helmet says "is in
       the Active Spot"; this card does not. So a BENCHED holder finished off by a
@@ -919,8 +968,17 @@ export interface PassiveEffects {
 
       No `requiresTool` arm: the Tool IS the source (the Rocky Helmet precedent),
       and no printing gates this shape on a second Tool. A field nothing reads is
-      the D156 defect, so it is not speculatively added. */
-  damageAttackerOnKo?: { amount: number };
+      the D156 defect, so it is not speculatively added.
+
+      • `activeOnly` (🆕🆕🆕 D559, Maractus "Exploding Needles") — the printed *"If this
+        Pokémon is in the Active Spot and is Knocked Out"*: the clause Vengeful Punch
+        does NOT print, and so the one thing the whole-board scan above cannot supply.
+        Gated INSIDE the fold on the holder's zone (`onBench`, D253's predicate), so
+        flow.ts `koRecoilOf` takes a ZERO diff. ⚠️ It is answerable there because
+        `koRecoilOf` runs BEFORE `knockOut` removes the body — the doomed body is still
+        seated in its zone when the fold reads it. A benched Maractus finished by a
+        spread pays 0; an Active one merely damaged pays 0 (the KO is the antecedent). */
+  damageAttackerOnKo?: { amount: number; activeOnly?: true };
   /** 🆕 §8.1 (D298) — the CAUSE-CONDITIONED PRIZE REDUCTION borne by an ATTACHED
       CARD. See `KoPrizeReduction` for the vocabulary; the two printings that reach
       this field are
@@ -1005,11 +1063,36 @@ export interface PassiveEffects {
       sides), Ting-Lu ex "Cursed Land" (the opponent's DAMAGED Pokémon, except ex).
       The aura is collected UNGATED (a lock never turns itself — or another lock —
       off): the aura-disables-aura fixpoint (e.g. Ting-Lu ex vs a damaged Klefki) is
-      a documented follow-up, not this slice. */
+      a documented follow-up, not this slice.
+      🆕🆕🆕 **D559 CORRECTION (D539) — THE THREE-CARD LIST ABOVE IS NOW FIVE.** Flutter
+      Mane `sv05-078`/`sv08.5-043`/`svp-097` "Midnight Fluttering" (*"As long as this
+      Pokémon is in the Active Spot, your opponent's Active Pokémon has no Abilities,
+      except for Midnight Fluttering."* — `side "opponent"`, `requiresActive`,
+      `targetZone "active"`, `exemptAbilityNamed`) and Gastrodon `sv08-107` "Sticky
+      Bind" (*"As long as this Pokémon is on your Bench, Benched Stage 2 Pokémon (both
+      yours and your opponent's) have no Abilities."* — `stage "Stage2"`,
+      `sourceOnBench`, `targetZone "bench"`). And Klefki, Spiritomb and Ting-Lu ex have
+      ROTATED, so the two new rows are the only legal locks the registry BUILDS — Standard
+      also prints Iron Thorns ex `sv06-077`/`-196`/`sv08.5-032` "Initialization" and the
+      Stadium Team Rocket's Watchtower `sv10-180`, neither built. The ungated collection
+      stays and is now argued rather than deferred (D559 R-LK1, docs/decisions.md D559):
+      no BUILT lock can switch off another lock's source — Flutter Mane reaches only the
+      opposing Active and exempts itself by name, an Active Gastrodon's lock is already
+      off (`sourceOnBench`), and no built lock source is a Stage 2.
+      ⛔ CORRECTED AT THE D559 LANDING (D539; the original kept above): "no BUILT lock"
+      is FALSE as written — the rotated-out Klefki, Spiritomb and Ting-Lu ex are still
+      built, and `abilityBundleD559.test.ts` §7's fixture shows Flutter Mane and Klefki
+      silencing each other. The claim is: no LEGAL built lock can switch off another
+      lock's source, as continuous.ts's `disabledAbilityUids` doc and decisions.md D559
+      already say. ⚠️ That holds only
+      while Initialization is unbuilt: an Active Flutter Mane silences an opposing Active
+      Iron Thorns ex, whose lock the rules then switch off, so the fixpoint pass is owed
+      in the slice that builds Initialization. */
   disableAbilities?: {
-    /** Target must be this stage (Klefki/Spiritomb: "Basic"); omitted = any stage
-        (Ting-Lu, whose "Pokémon in play" carries no stage restriction). */
-    stage?: "Basic";
+    /** Target must be this stage (Klefki/Spiritomb: "Basic"; 🆕🆕🆕 D559 Gastrodon:
+        "Stage2", read through `isStage2Pokemon`); omitted = any stage (Ting-Lu,
+        whose "Pokémon in play" carries no stage restriction). */
+    stage?: "Basic" | "Stage2";
     /** Target must carry this printed rule-box suffix (Spiritomb: "V"). */
     suffix?: PokemonSuffix;
     /** Which side the lock reaches: "both" (Klefki/Spiritomb — "both yours and
@@ -1022,6 +1105,16 @@ export interface PassiveEffects {
     /** The aura is live only while the SOURCE is in the Active Spot ("As long as
         this Pokémon is in the Active Spot" — Klefki/Ting-Lu). Spiritomb omits it. */
     requiresActive?: boolean;
+    /** 🆕🆕🆕 D559 — the mirror SOURCE-ZONE gate: the aura is live only while the
+        SOURCE is on its Bench (Gastrodon "Sticky Bind": *"As long as this Pokémon is
+        on your Bench"*). Checked at collection beside `requiresActive`. */
+    sourceOnBench?: true;
+    /** 🆕🆕🆕 D559 — the TARGET's zone: `"active"` reaches only an Active Pokémon
+        (Flutter Mane: *"your opponent's Active Pokémon"*), `"bench"` only a Benched
+        one (Gastrodon: *"Benched Stage 2 Pokémon"*). Omitted = "in play", both zones.
+        Live-read: a promoted Stage 2 regains its Abilities the moment it leaves the
+        Bench, and a Flutter Mane's target changes with every switch. */
+    targetZone?: "active" | "bench";
     /** A target with this rule-box suffix keeps its Abilities (Ting-Lu: "ex" —
         "except for Pokémon ex"). */
     exemptSuffix?: PokemonSuffix;
@@ -1045,6 +1138,29 @@ export interface PassiveEffects {
       the first place (§8.5 applies only to the Active/Defending Pokémon), so the
       only observable effect is on the seat's Active while it defends. */
   removeWeakness?: true;
+  /** 🆕🆕🆕 §8.5 (D559) — the OPPONENT-SIDE Weakness REWRITE: Lillie's Clefairy ex
+      `sv09-056`/`-173`/`-184`/`svp-195` "Fairy Zone" — *"The Weakness of each of your
+      opponent's {N} Pokémon in play is now {P}. (Apply Weakness as ×2.)"* 4 legal
+      printings, one text.
+
+      `removeWeakness`'s placement (a dedicated scan, `seatWeaknessRewrite`,
+      continuous.ts — it reaches OTHER Pokémon) on the OTHER seat: the sources are the
+      TOP cards on the DEFENDER's OPPONENT's board, Active and Bench (no zone clause),
+      §9-gated through `disabledAbilityUids`. It matches a defender whose printed
+      `types` include `targetType`, and it REPLACES the printed entries with ONE
+      `{ type: weaknessType, value: "×2" }` — the "×2" is the print's own
+      parenthetical, so it is not a field. ⚠️ **IT GRANTS A WEAKNESS**: most SV
+      Dragons print none, and "is now {P}" is a Weakness either way (R-FZ4). Read at
+      BOTH Weakness sites through cards.ts `weaknessOf`'s `rewrite` argument, AFTER
+      the three null paths, which still win (R-FZ2: Blooming Garden and D432's bar
+      are ⚠️ UNRULED and unreachable in Standard; the attack's own "isn't affected
+      by Weakness" is printed text, not a ruling, and reachable — Team Rocket's
+      Hypno sv10-080 at the main hit, Sigilyph sv10.5w-038/-121 at the snipe) and
+      BENEATH D552's retype, which re-points the
+      rewritten entry (R-FZ1 ⚠️ UNRULED, reachable). Dropped under the main hit's
+      `suppressTargetEffects` (R-FZ3, D552 R4's mirror). The HUD does not show it
+      (display debt, D552 ⑽'s precedent). */
+  opponentWeaknessRewrite?: { targetType: PokemonType; weaknessType: PokemonType };
   /** §8.5 continuous ATTACKER-side suppression (D192): "Damage from attacks used
       by this Pokémon isn't affected by any effects on your opponent's Active
       Pokémon." — Walking Wake ex "Azure Seas" (sv05-050/-189/-205/-215,
@@ -1450,7 +1566,10 @@ export interface PassiveEffects {
       live when the status lands and dead by the Checkup, and it is UNREACHABLE in
       this pool for a reason worth writing down: every status source and every
       §9 lock source must occupy an ACTIVE SPOT, and there are only two of those
-      (statusImmunity.test.ts drives the argument). A Checkup gate would therefore
+      (statusImmunity.test.ts drives the argument). (🆕🆕🆕 D559 CORRECTION (D539):
+      "every §9 lock source must occupy an ACTIVE SPOT" is WITHDRAWN — Gastrodon "Sticky
+      Bind" is BENCH-sourced; it reaches only BENCHED Stage 2 bodies, and a status lands
+      only on an Active, so the conclusion stands.) A Checkup gate would therefore
       be a second reading of the same rule that no board could ever disagree with —
       D131's drift, bought for nothing.
 
@@ -13633,6 +13752,80 @@ const SALVATORE: CardProgram = {
   trainer: [{ op: "evolveFromDeckChosen", noAbilities: true }, { op: "shuffleDeck" }],
 };
 
+// ── 🆕🆕🆕 D559 — THE ABILITY BUNDLE: 15 legal printings / 7 texts / 7 objects, each a
+//    printed Pokémon ABILITY on an existing seam plus one optional key. None carries an
+//    `attack` key: every printed attack keeps deriving from its text (attack.ts). ──
+
+/** 🆕🆕🆕 **D559 — Lillie's Clefairy ex `sv09-056`/`-173`/`-184`/`svp-195` (4 legal)**
+    "Fairy Zone" — *"The Weakness of each of your opponent's {N} Pokémon in play is now
+    {P}. (Apply Weakness as ×2.)"* `opponentWeaknessRewrite` (NEW field), read by
+    continuous.ts `seatWeaknessRewrite` at both Weakness sites. R-FZ1..R-FZ4:
+    docs/decisions.md D559. */
+const FAIRY_ZONE: CardProgram = {
+  passive: { opponentWeaknessRewrite: { targetType: "Dragon", weaknessType: "Psychic" } },
+};
+
+/** 🆕🆕🆕 **D559 — Flutter Mane `sv05-078`/`sv08.5-043`/`svp-097` (3 legal)** "Midnight
+    Fluttering" — *"As long as this Pokémon is in the Active Spot, your opponent's Active
+    Pokémon has no Abilities, except for Midnight Fluttering."* `disableAbilities` with
+    the NEW `targetZone "active"`; the exemption keeps a mirror Flutter Mane's lock on.
+    (`sv08-096` is a different Flutter Mane — no Ability — and is not keyed.) */
+const MIDNIGHT_FLUTTERING: CardProgram = {
+  passive: {
+    disableAbilities: {
+      side: "opponent",
+      requiresActive: true,
+      targetZone: "active",
+      exemptAbilityNamed: "Midnight Fluttering",
+    },
+  },
+};
+
+/** 🆕🆕🆕 **D559 — Gastrodon `sv08-107` (1 legal)** "Sticky Bind" — *"As long as this
+    Pokémon is on your Bench, Benched Stage 2 Pokémon (both yours and your opponent's)
+    have no Abilities."* `disableAbilities` with the NEW `stage "Stage2"`,
+    `sourceOnBench` and `targetZone "bench"`. */
+const STICKY_BIND: CardProgram = {
+  passive: {
+    disableAbilities: { side: "both", stage: "Stage2", sourceOnBench: true, targetZone: "bench" },
+  },
+};
+
+/** 🆕🆕🆕 **D559 — Orthworm ex `sv07-110`/`-162` (2 legal)** "Pummeling Payback" — *"If
+    this Pokémon is damaged by an attack from your opponent's Pokémon (even if this
+    Pokémon is Knocked Out), put 2 damage counters on the Attacking Pokémon for each {M}
+    Energy attached to this Pokémon."* `damageAttacker` with the NEW `perAttachedEnergy`.
+    ⚠️ **R-O1, a reachable DEVIATION**: the recoil is read at the Active main hit only,
+    and this print has NO Active clause — a benched Orthworm ex hit by a spread or snipe
+    does not retaliate (docs/decisions.md D559). */
+const PUMMELING_PAYBACK: CardProgram = {
+  passive: { damageAttacker: { amount: 20, perAttachedEnergy: "Metal" } },
+};
+
+/** 🆕🆕🆕 **D559 — Maractus `sv09-008`/`-160` (2 legal)** "Exploding Needles" — *"If this
+    Pokémon is in the Active Spot and is Knocked Out by damage from an attack from your
+    opponent's Pokémon, put 6 damage counters on the Attacking Pokémon."*
+    `damageAttackerOnKo` with the NEW `activeOnly`. (`sv10.5b-008`/`-093` are a different
+    Maractus and are not keyed.) */
+const EXPLODING_NEEDLES: CardProgram = {
+  passive: { damageAttackerOnKo: { amount: 60, activeOnly: true } },
+};
+
+/** 🆕🆕🆕 **D559 — Klinklang `sv10.5b-063`/`-141` (2 legal)** "Gear Coating" — *"All of
+    your Pokémon that have any {M} Energy attached take 20 less damage from attacks from
+    your opponent's Pokémon (after applying Weakness and Resistance)."*
+    `seatDamageReductionAfterWR` with the NEW `beneficiaryHasEnergy`. No `noStack` (none
+    printed): two Klinklang pay 40. (`sv07-101` is a different Klinklang, not keyed.) */
+const GEAR_COATING: CardProgram = {
+  passive: { seatDamageReductionAfterWR: { amount: 20, beneficiaryHasEnergy: "Metal" } },
+};
+
+/** 🆕🆕🆕 **D559 — Regirock `sv09-082` (1 legal)** "Rock Armor" — *"If this Pokémon has any
+    Energy attached, it takes 30 less damage from attacks (after applying Weakness and
+    Resistance)."* The NEW `damageReductionAfterWRIfEnergy`, summed into
+    `damageReductionAfterWR` by `passivesOf`. */
+const ROCK_ARMOR: CardProgram = { passive: { damageReductionAfterWRIfEnergy: 30 } };
+
 const REGISTRY: Record<string, CardProgram> = {
   // Professor's Research (SV base prints)
   "sv01-189": PROFESSORS_RESEARCH,
@@ -14222,6 +14415,23 @@ const REGISTRY: Record<string, CardProgram> = {
   "sv05-160": SALVATORE, // Salvatore — evolve 1 of your Pokémon from the deck, no Abilities
   "sv05-202": SALVATORE, // Salvatore (reprint)
   "sv05-212": SALVATORE, // Salvatore (reprint)
+  // ── 🆕🆕🆕 D559 — the ability bundle: 15 printings / 7 texts / 7 objects, MID-MAP
+  //    (D395/D396), so `raw[last]` does not move. ──
+  "sv09-056": FAIRY_ZONE, // Lillie's Clefairy ex — Fairy Zone: the opponent's {N} Pokémon are {P}-weak
+  "sv09-173": FAIRY_ZONE, // Lillie's Clefairy ex (reprint)
+  "sv09-184": FAIRY_ZONE, // Lillie's Clefairy ex (reprint)
+  "svp-195": FAIRY_ZONE, // Lillie's Clefairy ex (reprint)
+  "sv05-078": MIDNIGHT_FLUTTERING, // Flutter Mane — Midnight Fluttering: the opposing Active has no Abilities
+  "sv08.5-043": MIDNIGHT_FLUTTERING, // Flutter Mane (reprint)
+  "svp-097": MIDNIGHT_FLUTTERING, // Flutter Mane (reprint)
+  "sv08-107": STICKY_BIND, // Gastrodon — Sticky Bind: from the Bench, Benched Stage 2 have no Abilities
+  "sv07-110": PUMMELING_PAYBACK, // Orthworm ex — Pummeling Payback: 2 counters per {M} Energy
+  "sv07-162": PUMMELING_PAYBACK, // Orthworm ex (reprint)
+  "sv09-008": EXPLODING_NEEDLES, // Maractus — Exploding Needles: 6 counters when KO'd in the Active Spot
+  "sv09-160": EXPLODING_NEEDLES, // Maractus (reprint)
+  "sv10.5b-063": GEAR_COATING, // Klinklang — Gear Coating: {M}-Energy bodies take 20 less
+  "sv10.5b-141": GEAR_COATING, // Klinklang (reprint)
+  "sv09-082": ROCK_ARMOR, // Regirock — Rock Armor: 30 less with any Energy attached
   // ── D190 — THE **STANDARD-LEGAL** REPRINT-ALIAS MAP (Tier 0 of
   //    `docs/reference/coverage-backlog-legal.md`). 22 printings, 9 map targets,
   //    ZERO new code: every row below prints a sentence that is already authored

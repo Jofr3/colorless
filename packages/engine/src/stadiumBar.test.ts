@@ -140,7 +140,10 @@ const TYRANITAR = "sv09-095";
 /** The STAMPED `"Item"` source (an attack rider) — §5's other half. */
 const GALVANTULA = "sv07-051";
 /** Ting-Lu ex "Cursed Land" — the §9 ability lock, and the one body in this pool
-    that can reach a Stage 2. ⚠️ IT EXEMPTS POKÉMON ex; Copperajah is not one. */
+    that can reach a Stage 2. ⚠️ IT EXEMPTS POKÉMON ex; Copperajah is not one.
+    (🆕🆕🆕 D559 CORRECTION (D539): "the one body … that can reach a Stage 2" is WITHDRAWN for
+    the registry — Flutter Mane `sv05-078` reaches an opposing Active Stage 2 and
+    Gastrodon `sv08-107` a benched one; neither is in this suite's deck.) */
 const TING_LU = "sv02-127";
 
 /** Beach Court — an AUTHORED Stadium, so a refusal at its row can only ever be a

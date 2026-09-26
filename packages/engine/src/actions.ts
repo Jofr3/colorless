@@ -278,8 +278,12 @@ export type ErrorCode =
   | "NO_SUCH_ABILITY"
   /** §9 — the Ability may only be used from the Active Spot. */
   | "ABILITY_ACTIVE_ONLY"
-  /** §9 — a continuous Ability-lock aura (Klefki / Spiritomb / Ting-Lu ex) has
-      turned this Pokémon's Abilities off. */
+  /** §9 — a continuous Ability-lock aura (Klefki / Spiritomb / Ting-Lu ex — 🆕🆕🆕
+      D559: and Flutter Mane "Midnight Fluttering" / Gastrodon "Sticky Bind", the two
+      legal locks the registry builds; Iron Thorns ex "Initialization" and Team Rocket's
+      Watchtower are legal and unbuilt; the list of three is withdrawn, D539) has turned
+      this Pokémon's
+      Abilities off. */
   | "ABILITY_DISABLED"
   /** §9/§15.J — this Pokémon already used a once-per-turn Ability this turn. */
   | "ABILITY_ALREADY_USED"

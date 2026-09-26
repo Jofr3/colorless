@@ -1623,7 +1623,7 @@ describe("§6 — `MATCH_RECORD_VERSION` STAYS 29, driven at all THREE addresses
   });
 
   it("the engine version moved with the behaviour", () => {
-    expect(engineVersion).toBe("0.442.0");
+    expect(engineVersion).toBe("0.443.0");
   });
 });
 

@@ -9084,7 +9084,10 @@ export const FIXTURE_POOL: Record<string, Card> = {
       target predicate the SOURCE satisfies, and Klefki/Spiritomb reach Basics
       only — so Ting-Lu ex "Cursed Land" (any stage, damaged, non-ex) is the one
       lock in the registry that can silence it, and it is an ex, so the same body
-      is also a legal attacker.
+      is also a legal attacker. (🆕🆕🆕 D559 CORRECTION (D539): "the one lock in the registry that can
+      silence it" is WITHDRAWN — an opposing Active Flutter Mane `sv05-078` silences
+      an Active Hariyama; Gastrodon `sv08-107` names Stage 2 and cannot. Ting-Lu stays
+      the lock these suites field.)
 
       A {F} (Fighting) body, which is the OTHER thing that makes it the right
       fixture: it is the only card in this suite that can legally WEAR Rock
@@ -9570,7 +9573,11 @@ export const FIXTURE_POOL: Record<string, Card> = {
       "Fettered in Misfortune" ("Basic Pokémon V in play … have no Abilities") is
       the sole `disableAbilities` row with no "in the Active Spot" clause on its
       SOURCE, so it locks from the Bench. Klefki's Basic lock is Active-only and
-      this body must be Active to attack, and Ting-Lu ex's EXEMPTS `ex`. The suffix
+      this body must be Active to attack, and Ting-Lu ex's EXEMPTS `ex`. (🆕🆕🆕 D559 CORRECTION (D539):
+      both "only ONE lock" and "the sole … row" are WITHDRAWN — a DEFENDING Active
+      Flutter Mane `sv05-078` silences the attacking Active, and Gastrodon `sv08-107` is
+      a second Bench-sourced row, over BENCHED Stage 2 bodies only. The fixture's V
+      suffix still serves Spiritomb, the lock these boards field.) The suffix
       changes nothing else this suite touches — no Choice Belt, no Safeguard on any
       board here — and it is stated rather than quietly relied on. */
   "fix-azureseas": battler("fix-azureseas", {
@@ -10159,7 +10166,12 @@ export const FIXTURE_POOL: Record<string, Card> = {
       attacker can swing with its own Ability switched off — which is how the suite
       shows `hasPrintedAbility` reads the printed CARD and not the board. Every
       other lock in the registry is Active-gated on its source and would have to BE
-      the attacker. Its rule box is incidental and is never read here: the holder
+      the attacker. (🆕🆕🆕 D559 CORRECTION (D539): WITHDRAWN as a population claim —
+      Gastrodon "Sticky Bind" is BENCH-sourced, but it locks only BENCHED Stage 2 bodies,
+      so it cannot lock an attacker either; and Flutter Mane "Midnight Fluttering" is
+      Active-gated but locks the OPPOSING Active, so a DEFENDING Flutter Mane puts the
+      attacker under a live §9 lock too — "the ONE body" holds only for the Spiritomb
+      boards this fixture serves.) Its rule box is incidental and is never read here: the holder
       carries no `preventDamageFromExV`. */
   "fix-abilityv": battler("fix-abilityv", {
     name: "Fixmon V",
@@ -18074,7 +18086,9 @@ export const COUNTERATTACK_DECK = deckOf({
       • fix-attacker — neither an Ability nor a rule box: the flat control;
       • fix-abilityv — a Basic Pokémon V with an Ability, for the §9 board below;
       • sv02-089 Spiritomb — "Fettered in Misfortune", the only lock in the registry
-        that works from the BENCH, so the ATTACKER can be locked while it attacks;
+        that works from the BENCH, so the ATTACKER can be locked while it attacks
+        (🆕🆕🆕 D559 CORRECTION (D539): "the only lock … from the BENCH" is WITHDRAWN — Gastrodon
+        `sv08-107` also is, over BENCHED Stage 2 bodies, so it never locks an attacker);
       • sv01-096 Klefki — "Mischievous Lock", Active-gated, so it locks as the
         ATTACKER: it has an Ability (would be prevented) and silences the Basic
         holder's aura in the same breath. Both §9 directions on two cards.
@@ -20094,6 +20108,9 @@ export const COUNTERATTACKING_PINCER_DECK = deckOf({
         copy must report the lock, not the Active-only gate).
       • Tinkaton — a STAGE 2 activated Ability: only Ting-Lu (no stage clause) can
         reach it, so it separates Cursed Land from the two Basic-only locks.
+        (🆕🆕🆕 D559 CORRECTION (D539): "only Ting-Lu" is WITHDRAWN for the registry — Flutter Mane
+        `sv05-078` reaches an opposing Active Tinkaton and Gastrodon `sv08-107` a benched
+        one; neither is in this deck, so among its three locks the claim holds.)
       • Armarouge — a triggered Ability (Scorching Armor), the `triggersOf` site.
       • Fixmon V / Fixmon VMAX — Spiritomb's `suffix` membership and its near-miss.
       • fix-stage1 — a non-Basic the two Basic-only locks must skip.
@@ -21569,7 +21586,12 @@ export const LEGACY_PRIZE_DECK = deckOf({
       • sv02-127 Ting-Lu ex ("Land Scoop" {F}{F}{F}, 150) — the §9 lock AND an ex,
         which is the only way this pool can put an Ability-lock and a prevention
         live at once: every lock in the registry is Active-gated on its SOURCE, so
-        the locking body has to be the attacking body too.
+        the locking body has to be the attacking body too. (🆕🆕🆕 D559 CORRECTION
+        (D539): WITHDRAWN — Gastrodon is BENCH-sourced, over benched Stage 2 bodies, and a
+        DEFENDING Active Flutter Mane locks the attacker; so "the only way" is withdrawn too:
+        an ex swinging into a defending Flutter Mane (no Rule Box) would have a lock and the
+        prevention live at once — but that lock is over the ATTACKER, not over a protecting
+        Ability, so for THIS deck's §9 pair Ting-Lu stays the only way. Named, not fielded.)
     fix-titan (340 HP, NO attacks) and fix-bigbody (200 HP) are the mulligan-free
     bench filler / no-Rule-Box targets. NO {L} ENERGY ON PURPOSE: every attack the
     suite declares is Colorless-costed except Land Scoop, so the deck carries {F}
@@ -21604,7 +21626,8 @@ export const ATTACKER_FILTER_DECK = deckOf({
 
     ⚠️ THE TWO PRINTINGS, AND THE ONE BODY THAT CARRIES BOTH:
       • sv02-113 Hariyama — "Arm Thrust Practice" (10, SEAT-WIDE). A STAGE 1, so
-        Ting-Lu ex is the only registry lock that can reach it; {F}, so it is also
+        Ting-Lu ex is the only registry lock that can reach it (🆕🆕🆕 D559 CORRECTION (D539):
+        WITHDRAWN — an opposing Active Flutter Mane `sv05-078` reaches it too); {F}, so it is also
         the only body in the deck that satisfies Rock Chestplate's printed gate;
         ×2 Psychic, so it is not accidentally doubled by the Fire attackers below;
       • sv01-192 Rock Chestplate — the {F}-gated Tool (30). Four copies, because
@@ -21634,7 +21657,9 @@ export const ATTACKER_FILTER_DECK = deckOf({
     rather than on a synthetic one. sv02-127 Ting-Lu ex is the §9 lock AND an ex AND
     a {F} attacker (Land Scoop, idx 0, 150): the only way this pool can put an
     Ability-lock and a live aura on one board, since every lock in the registry is
-    Active-gated on its source. fix-titan (340 HP, NO attacks) and fix-bigbody
+    Active-gated on its source (🆕🆕🆕 D559 CORRECTION (D539): WITHDRAWN — Gastrodon is
+    BENCH-sourced, over benched Stage 2 bodies, and Flutter Mane, Active-gated, reaches the
+    OPPOSING Active, so the locking body need not be the attacker). fix-titan (340 HP, NO attacks) and fix-bigbody
     (200 HP) are the mulligan-free bench filler and the Colorless bodies the seat
     aura protects without any card of their own. */
 export const ALWAYS_ON_REDUCTION_DECK = deckOf({
@@ -21938,7 +21963,10 @@ export const BENCH_COUNTER_DECK = deckOf({
       • sv02-127 Ting-Lu ex — "Cursed Land" (§9, the opponent's DAMAGED Pokémon,
         requires the Active Spot, ex exempt). The only lock that reaches a Stage 1
         Dachsbun, and the card that proves the §9 half of this family cannot be
-        driven end to end: it needs the Active Spot the status source needs;
+        driven end to end: it needs the Active Spot the status source needs
+        (🆕🆕🆕 D559 CORRECTION (D539): "The only lock that reaches a Stage 1" is WITHDRAWN —
+        an opposing Active Flutter Mane `sv05-078` reaches it too, and needs the same
+        Active Spot, so the "cannot be driven" argument stands);
       • fix-bigbody (200 HP) — the NON-IMMUNE CONTROL under every declaration, so
         "the status did not land" is never confusable with "the attack did nothing",
         and the mulligan-free dominant Basic;
