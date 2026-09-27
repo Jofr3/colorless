@@ -8335,6 +8335,8 @@ as well: run 2's was handed over as *"rebooted around 10:10"*, when the machine 
 ```
 uptime                      # how long the current boot has been up
 journalctl --list-boots     # the PREVIOUS boot's END is the time of death, not the new boot's start
+                            # (🆕 D560 close-out: refined — the time of death is the shutdown's FIRST line
+                            #  in `journalctl -b -1`; see "A shutdown's time of death is where it STARTS…" below)
 ```
 
 and compare the previous boot's end with the log's own mtime (D542: `08:04:01` against `08:03:59.335`). Then
@@ -8425,6 +8427,31 @@ with D547's recipe above. Nothing was lost, but a stop between commit and launch
 3. **Rule 4 of *"Stage by listing what changed…"* (D512, above: *"then amend, re-verify, relaunch"*) assumes amend
    is available.** Under auto mode it is not: kill the sweep as that rule says, then either ask the user to
    approve the amend or land the fix as a second commit, and re-predict from the tree that commit leaves.
+
+### A shutdown's time of death is where it STARTS in the old boot's journal, not where that journal ENDS (D560 close-out, refining D542)
+
+D542's check above compares the previous boot's END (`journalctl --list-boots`) with the partial log's mtime; at
+D542 they sat 1.9 s apart. At D560 they sat **75 s** apart: the partial log's mtime is `09:34:32.260` and the old
+boot's journal stops at `09:35:47.554`. The gap is the shutdown itself, which ran for 75 s after it had SIGTERMed the
+sweep. The journal names the shutdown's first moment, and that line is the time of death:
+
+```
+journalctl -b -1 -o short-precise --grep 'Power key|Powering off|powering down|Rebooting'
+```
+
+D560's reads `09:34:32.111 … Power key pressed short.`, then `Powering off...` and `System is powering down.`,
+**0.15 s** before the log's mtime. It also names the CAUSE (here the power key), which `--list-boots` cannot. So a
+gap of a minute between the log's mtime and the old boot's end is not, by itself, a sign that something other than
+the shutdown killed the sweep; find the shutdown's first line before concluding anything.
+
+⚠️ **The hand-off's times were wrong again, in D542's way.** It said the sweep launched *"~06:15"* and died when the
+machine *"rebooted around 13:04"*. The partial log's own `date -Is` line says 05:56:18, and 13:04:18 is when the NEW
+boot began, three and a half hours after the death. Both corrections came from artefacts, which is why they are read
+rather than copied.
+
+⚠️ **A relaunch into the same paths overwrites the first launch's sidecar** (`tmp/sweep-<D>.ppid.txt`). Rename the
+partial log (`-interrupted.log`) before relaunching; the first launch's pid then survives in that log's own first
+rows, because D547's recipe put it there. Do not rely on a sidecar for any launch but the last.
 
 
 ## Git / commits
