@@ -486,7 +486,13 @@ describe("§5 — the census terms, MEASURED rather than assumed", () => {
     // `fix-*` key (`trainersD561.test.ts` / `stadiumsD561.test.ts` drive a LOCAL
     // `cardPool`), inserted MID-MAP after `sv07-006`, and no row authors an `attack`
     // program.
-    expect(ids).toHaveLength(863);
+    // 🆕🆕🆕 D562 — 863 -> **877**: FOURTEEN registry keys on TWELVE program objects —
+    // consumable Tools, Jamming Tower and Festival Grounds (six type Berries, Survival Brace,
+    // Deluxe Bomb, Lucky Helmet, Handheld Fan, Jamming Tower ×2, Festival Grounds ×2). Real
+    // catalog ids, no `fix-*` key (`toolsD562.test.ts` / `stadiumsD562.test.ts` drive a LOCAL
+    // `cardPool`), inserted MID-MAP after `sv05-156`, and no row authors an `attack`
+    // program.
+    expect(ids).toHaveLength(877);
     for (const id of VICTINI_IDS) {
       expect(ids, id).not.toContain(id);
       expect(programFor(id), id).toBeUndefined();

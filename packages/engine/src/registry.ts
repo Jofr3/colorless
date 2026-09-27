@@ -175,7 +175,13 @@ export interface AbilityProgram {
       Pokémon. It ran INLINE at D99, when it was non-parking by construction (a
       Special Condition on the attacker); since Klawf ex's parking discard it goes
       through flow.ts `runDamagedTrigger` → settleProgram like the rest, which
-      leaves `betweenTurns` as the ENGINE'S ONLY inline program runner (D176);
+      leaves `betweenTurns` as the ENGINE'S ONLY inline program runner (D176).
+      🆕🆕🆕 D562: a POKÉMON TOOL may carry this timing too, and then "this Pokémon"
+      is the Tool's HOLDER and the program need not touch the attacker — Lucky
+      Helmet draws 2 for the holder's side, Handheld Fan moves an Energy off the
+      attacker. Read by triggers.ts `damagedToolTriggersOf` (the Active's in-effect
+      Tools, no §9 gate), one `damagedTrigger` stage per Tool behind the Ability's
+      (R-LH);
     - `onAllyActiveKnockOut` (D171) — **the controller's ACTIVE Pokémon is about
       to be Knocked Out by damage from an opponent's attack**, read on a card
       carried by a DIFFERENT, SURVIVING body (Exp. Share sv01-174, a Pokémon
@@ -472,6 +478,42 @@ export interface PassiveEffects {
       silences it. ⚠️ *"from attacks"* — NOT *"from your opponent's Pokémon"* — so it
       pays on an own-side spread or snipe too (R-RA), which is what the print says. */
   damageReductionAfterWRIfEnergy?: number;
+  /** 🆕🆕🆕 §8.5 (D562) — THE BERRY: a CONSUMABLE post-W/R reduction, the six type
+      Berries (Haban {N} `sv08.5-111`, Occa {R} `sv07-140`, Payapa {P} `sv07-141`, Babiri
+      {M} `sv08-163`, Colbur {D} `sv08-168`, Passho {W} `sv08-184`): *"If the Pokémon this
+      card is attached to is damaged by an attack from your opponent's {X} Pokémon, it
+      takes 60 less damage (after applying Weakness and Resistance), and discard this
+      card."* A TOOL field, read by its own scan (continuous.ts `berryReductionOf`) and
+      NOT folded by `passivesOf`: the print discards the Tool that paid, and a fold that
+      sums into numbers cannot say which one that was. The gate names the ATTACKER (an
+      opposing seat, `type` among the attacking card's `types`), so it can only be
+      answered at the four §8.5 sites, which sum `amount` into their `reduction` and
+      discard the Berry when the hit is not prevented (R-BE, docs/decisions.md D562). No
+      Active clause, so it pays on the Bench. Not §9-gated (a Tool); Jamming Tower
+      silences it (`toolsInEffect`). */
+  damageReductionAfterWRFromTypeThenDiscard?: { amount: number; type: PokemonType };
+  /** 🆕🆕🆕 §8.1 (D562) — Survival Brace `sv06-164`: *"If the Pokémon this card is
+      attached to has full HP and would be Knocked Out by damage from an attack from your
+      opponent's Pokémon, it is not Knocked Out, and its remaining HP becomes 10. Then,
+      discard this card."* `survivesKoAtFullHp`'s TOOL twin, and a field of its own for
+      that field's two refusals: "from your opponent's Pokémon" narrows the attacker, and
+      "Then, discard this card." needs the paying Tool's uid, which the fold destroys.
+      Read by `survivalBraceOf` inside `koSurvivalClamp`, whose result names the uid so
+      the four damage writes discard it (R-BR, and R-BF: Feint does not null it,
+      docs/decisions.md D562). An ACE SPEC, like Deluxe Bomb — the card's rarity, not
+      this key. */
+  survivesKoAtFullHpFromOpponentThenDiscard?: true;
+  /** 🆕🆕🆕 §9 (D562) — Deluxe Bomb `sv07-134` (ACE SPEC): *"If the Pokémon this card is
+      attached to is in the Active Spot and is damaged by an attack from your opponent's
+      Pokémon (even if this Pokémon is Knocked Out), put 12 damage counters on the
+      Attacking Pokémon. If you placed any damage counters in this way, discard this
+      card."* HP (12 counters = 120, converted at the row like Rocky Helmet's). A
+      CONSUMABLE twin of `damageAttacker`: placed BESIDE that recoil at the SAME two sites
+      (attack.ts's main hit, interpreter.ts `reactToAttackDamage`) — on its OWN
+      `"counterattack"` row, not summed into it — by its own scan (`deluxeBombOf`) and
+      interpreter.ts `detonateDeluxeBomb`, and discarded only when its counters were
+      actually placed (R-DB). */
+  damageAttackerActiveThenDiscard?: number;
   /** §8.5 continuous OWN-SIDE seat-wide AURA: while this Pokémon is in play,
       EVERY one of its controller's in-play Pokémon takes this many HP less attack
       damage, after Weakness and Resistance (Hariyama sv02-113 "Arm Thrust
@@ -1064,7 +1106,16 @@ export interface PassiveEffects {
       discard this card." — that this field cannot express: a passive fold has no
       way to consume its own source, and the discard is a STATE WRITE that would
       have to happen at the clamp site with the Tool's uid in hand. It needs a
-      self-discard rider; flagged, priced, not taken. */
+      self-discard rider; flagged, priced, not taken.
+
+      🆕🆕🆕 **D562 CORRECTION (D539): ~~"THE TOOL TWIN IS A SEPARATE SLICE AND IS
+      DELIBERATELY NOT BUILT"~~ / ~~"flagged, priced, not taken"~~ are WITHDRAWN — D562
+      BUILT Survival Brace.** The analysis above held and decided the shape: the Brace does
+      NOT write this field. It writes `survivesKoAtFullHpFromOpponentThenDiscard`, read by
+      continuous.ts `survivalBraceOf` inside `koSurvivalClamp`, whose result now NAMES the
+      answering Tool's uid so the four damage writes discard it — the "self-discard" the
+      paragraph asked for, at the clamp site, with the uid in hand. This field is still
+      Ability-only (Resolute Heart / Sturdy). */
   survivesKoAtFullHp?: true;
   /** §9 continuous Ability-lock AURA: while this Pokémon is in play (and, when
       `requiresActive`, in the Active Spot), every in-play Pokémon matching the
@@ -2317,7 +2368,9 @@ export interface PassiveEffects {
       live-read, so a heal out of the window restores the cost.
 
       ⚠️ **NOT §9-GATED.** A Tool is not an Ability; a Klefki or Ting-Lu lock over
-      the holder leaves both halves standing (R-T1). Read only off `pokemon.tools`,
+      the holder leaves both halves standing (R-T1). Read only off `pokemon.tools`
+      (🆕🆕🆕 D562: through `toolsInEffect`, so Jamming Tower — a Stadium, not a §9
+      lock — silences both halves),
       never off the holder's own printed passive — no Pokémon prints this. */
   retreatCostDiscount?: { amount: number; freeAtRemainingHpAtMost?: number };
   /** 🆕🆕🆕 §11 (D558) — Gravity Gemstone `sv07-137` (Tool): *"As long as the Pokémon
@@ -2857,6 +2910,20 @@ export interface StadiumEffects {
       (R-PJ; reversal: attribute the Stadium's share on its own row when a reader needs
       it). NOT §9-gated — a Stadium is not an Ability (R-ST2's reason). */
   poisonExtraCounters?: { amount: number; excludesType?: BasicEnergyType };
+  /** 🆕🆕🆕 §7.4 (D562) — Jamming Tower `sv06-153`/`sv10-243`: *"Pokémon Tools attached
+      to each Pokémon (both yours and your opponent's) have no effect."* Read by ONE
+      function, continuous.ts `toolsInEffect`, which every Tool EFFECT walk goes through;
+      every Tool COUNT read stays on the raw `tools` list (R-JT). Not §9-gated. Playing
+      it can Knock Out a body a Tool was holding up (Hero's Cape) — `playStadium`'s
+      mid-turn sweep already runs on every Stadium play. */
+  toolsHaveNoEffect?: true;
+  /** 🆕🆕🆕 §12 (D562) — Festival Grounds `sv06-149`/`sv08.5-108`: *"Each Pokémon that has
+      any Energy attached (both yours and your opponent's) recovers from all Special
+      Conditions and can't be affected by any Special Conditions."* Read by
+      continuous.ts `stadiumShieldsStatus` at `applyStatus` (the refusal, one
+      `STATUS_PREVENTED`) and at flow.ts `recoverStatuses` (the recovery, every present
+      condition), which `playStadium` now also calls — the fifth recovery moment (R-FG). */
+  statusShieldIfEnergyAttached?: true;
 }
 
 /** A Special Energy's on-attach effect (§6.1) — runs the moment it is attached
@@ -4161,7 +4228,10 @@ const PREVENT_FROM_BASIC_EX: CardProgram = {
         carry a flip, and authoring it here would make a 50% effect unconditional.
       • Survival Brace sv06-164 — the TOOL twin, 1 Standard-legal, which adds
         "Then, discard this card." See `survivesKoAtFullHp`'s doc block: it needs
-        a self-discard rider this field does not have. Flagged, not built. */
+        a self-discard rider this field does not have. Flagged, not built.
+        (🆕🆕🆕 D562 CORRECTION (D539): ~~"Flagged, not built"~~ is WITHDRAWN — BUILT at
+        D562 as its own program, `SURVIVAL_BRACE`, on its own key; still a refusal of
+        THIS program, whose flag cannot discard. Its `REFUSED_PRINTINGS` row is deleted.) */
 const KO_SURVIVAL: CardProgram = { passive: { survivesKoAtFullHp: true } };
 
 /** Clefable ex (sv03-082) — "Lunar Zone": "All of your Pokémon that have {P}
@@ -4730,6 +4800,10 @@ const VENGEFUL_PUNCH: CardProgram = { passive: { damageAttackerOnKo: { amount: 4
       • Vengeful Punch's consequent is a NUMBER put on a body that survives, so
         `passivesOf` — the one existing site that walks `pokemon.tools` — folds it
         and flow.ts `koRecoilOf` reads it synchronously. No decision, no park.
+        (🆕🆕🆕 D562 CORRECTION (D539): ~~"the one existing site that walks
+        `pokemon.tools`"~~ is WITHDRAWN — D558's retreat/cost scans, D562's consumable
+        scans and both Tool trigger scans walk them too, every EFFECT walk now through
+        continuous.ts `toolsInEffect`.)
       • This consequent MOVES A CARD off the dying body, and the player CHOOSES
         which. So it needs the interpreter, a park, and a controller — and its
         holder is a body the sweep has no reason to look at.
@@ -13677,7 +13751,8 @@ const TOOL_SCRAPPER: CardProgram = {
 //    Choice Band (`PassiveEffects.attackCostDiscount`, the attack-cost seam), Brave
 //    Bangle (a `holder` rider on `damageBonusBeforeWRIfTarget`), Air Balloon and Rescue
 //    Board (`retreatCostDiscount`) and Gravity Gemstone (`activeRetreatSurchargeBoth`)
-//    — all read off `pokemon.tools`, none §9-gated (R-T1). Stadiums: Full Metal Lab and
+//    — all read off `pokemon.tools` (🆕🆕🆕 D562: through `toolsInEffect`, which Jamming
+//    Tower empties), none §9-gated (R-T1). Stadiums: Full Metal Lab and
 //    Granite Cave (`StadiumEffects.damageReductionAfterWR`), Postwick
 //    (`damageBonusBeforeWR`), N's Castle and Paradise Resort (`retreat`). Supporter:
 //    Salvatore (`noAbilities` on the evolve-from-deck ops). Texts, subtypes and
@@ -14387,6 +14462,105 @@ const PERILOUS_JUNGLE: CardProgram = {
   stadium: { poisonExtraCounters: { amount: 20, excludesType: "Darkness" } },
 };
 
+/** 🆕🆕🆕 **D562 — THE SIX TYPE BERRIES (Tools, 1 legal printing each)** — *"If the Pokémon
+    this card is attached to is damaged by an attack from your opponent's {X} Pokémon, it
+    takes 60 less damage (after applying Weakness and Resistance), and discard this card."*
+    `damageReductionAfterWRFromTypeThenDiscard` (NEW key), read by continuous.ts
+    `berryReductionOf` at the four §8.5 sites, which discard the Berry after a hit it
+    reduced (R-BE, docs/decisions.md D562). One object per printed TYPE (six texts). */
+const HABAN_BERRY: CardProgram = {
+  passive: { damageReductionAfterWRFromTypeThenDiscard: { amount: 60, type: "Dragon" } },
+};
+const OCCA_BERRY: CardProgram = {
+  passive: { damageReductionAfterWRFromTypeThenDiscard: { amount: 60, type: "Fire" } },
+};
+const PAYAPA_BERRY: CardProgram = {
+  passive: { damageReductionAfterWRFromTypeThenDiscard: { amount: 60, type: "Psychic" } },
+};
+const BABIRI_BERRY: CardProgram = {
+  passive: { damageReductionAfterWRFromTypeThenDiscard: { amount: 60, type: "Metal" } },
+};
+const COLBUR_BERRY: CardProgram = {
+  passive: { damageReductionAfterWRFromTypeThenDiscard: { amount: 60, type: "Darkness" } },
+};
+const PASSHO_BERRY: CardProgram = {
+  passive: { damageReductionAfterWRFromTypeThenDiscard: { amount: 60, type: "Water" } },
+};
+
+/** 🆕🆕🆕 **D562 — Survival Brace `sv06-164` (Tool, ACE SPEC, 1 legal)** — *"If the Pokémon this card
+    is attached to has full HP and would be Knocked Out by damage from an attack from your
+    opponent's Pokémon, it is not Knocked Out, and its remaining HP becomes 10. Then,
+    discard this card."* `survivesKoAtFullHpFromOpponentThenDiscard` (NEW key), read by
+    `survivalBraceOf` inside continuous.ts `koSurvivalClamp`, whose result names the Brace
+    so the four damage writes discard it (R-BR; under Feint it still answers, R-BF).
+    Retired from `REFUSED_PRINTINGS` (the D555 deletion precedent). The ACE SPEC
+    classification is catalog data (the card's rarity, as for Deluxe Bomb), not this row. */
+const SURVIVAL_BRACE: CardProgram = {
+  passive: { survivesKoAtFullHpFromOpponentThenDiscard: true },
+};
+
+/** 🆕🆕🆕 **D562 — Deluxe Bomb `sv07-134` (Tool, ACE SPEC, 1 legal)** — *"If the Pokémon this
+    card is attached to is in the Active Spot and is damaged by an attack from your
+    opponent's Pokémon (even if this Pokémon is Knocked Out), put 12 damage counters on the
+    Attacking Pokémon. If you placed any damage counters in this way, discard this card."*
+    `damageAttackerActiveThenDiscard: 120` (NEW key, 12 counters in HP), read by
+    `deluxeBombOf` wherever the `damageAttacker` recoil is placed (R-DB). The ACE SPEC
+    classification is catalog data (the card's rarity), not this row. */
+const DELUXE_BOMB: CardProgram = { passive: { damageAttackerActiveThenDiscard: 120 } };
+
+/** 🆕🆕🆕 **D562 — Lucky Helmet `sv06-158` (Tool, 1 legal)** — *"If the Pokémon this card is
+    attached to is in the Active Spot and is damaged by an attack from your opponent's
+    Pokémon (even if this Pokémon is Knocked Out), draw 2 cards."* A Tool-borne
+    `onDamagedByAttack` trigger (triggers.ts `damagedToolTriggersOf`), run as its own
+    `damagedTrigger` stage behind any Ability stage (R-LH). */
+const LUCKY_HELMET: CardProgram = {
+  triggered: [
+    { name: "Lucky Helmet", trigger: "onDamagedByAttack", program: [{ op: "drawCards", count: 2 }] },
+  ],
+};
+
+/** 🆕🆕🆕 **D562 — Handheld Fan `sv06-150` (Tool, 1 legal)** — *"If the Pokémon this card is
+    attached to is in the Active Spot and is damaged by an attack from your opponent's
+    Pokémon (even if this Pokémon is Knocked Out), move an Energy from the Attacking
+    Pokémon to 1 of your opponent's Benched Pokémon."* The D443 opponent-side
+    `selfToBench` move (the attacker's board, Active → Bench), run under the damaged
+    seat. ⚠️ R-HF: the print's "move" is mandatory; the family's `max: 1` park carries
+    its standing decline (D229/D443's named approximation), so the holder may take none.
+    Whiffs on an attacker with no Energy or no Bench. ⚠️ And, inherited from Klawf ex (D101):
+    the stage runs after the attack's own program, so `side: "opponent"` reads the
+    opponent's CURRENT Active, not "the Attacking Pokémon" if that attack switched it out. */
+const HANDHELD_FAN: CardProgram = {
+  triggered: [
+    {
+      name: "Handheld Fan",
+      trigger: "onDamagedByAttack",
+      program: [
+        {
+          op: "moveEnergy",
+          filter: { kind: "anyEnergy" },
+          max: 1,
+          route: "selfToBench",
+          side: "opponent",
+        },
+      ],
+    },
+  ],
+};
+
+/** 🆕🆕🆕 **D562 — Jamming Tower `sv06-153`/`sv10-243` (Stadium, 2 legal)** — *"Pokémon Tools
+    attached to each Pokémon (both yours and your opponent's) have no effect."*
+    `StadiumEffects.toolsHaveNoEffect` (NEW key), read by continuous.ts `toolsInEffect`
+    (R-JT). */
+const JAMMING_TOWER: CardProgram = { stadium: { toolsHaveNoEffect: true } };
+
+/** 🆕🆕🆕 **D562 — Festival Grounds `sv06-149`/`sv08.5-108` (Stadium, 2 legal)** — *"Each
+    Pokémon that has any Energy attached (both yours and your opponent's) recovers from
+    all Special Conditions and can't be affected by any Special Conditions."*
+    `StadiumEffects.statusShieldIfEnergyAttached` (NEW key), read by continuous.ts
+    `stadiumShieldsStatus` (R-FG). The Festival Lead Ability that names this Stadium stays
+    UNBUILT (an attack always ends the turn). */
+const FESTIVAL_GROUNDS: CardProgram = { stadium: { statusShieldIfEnergyAttached: true } };
+
 const REGISTRY: Record<string, CardProgram> = {
   // Professor's Research (SV base prints)
   "sv01-189": PROFESSORS_RESEARCH,
@@ -15029,6 +15203,22 @@ const REGISTRY: Record<string, CardProgram> = {
   "sv08-186": SCRAMBLE_SWITCH, // Scramble Switch — switch, then move any Energy to the new Active
   "sv06.5-054": ACADEMY_AT_NIGHT, // Academy at Night — a hand card on top of the deck, once a turn
   "sv05-156": PERILOUS_JUNGLE, // Perilous Jungle — 2 more Poison counters on each non-{D}
+  // ── 🆕🆕🆕 D562 — consumable Tools, Jamming Tower and Festival Grounds: 14 printings /
+  //    12 texts / 12 objects, MID-MAP (D395/D396), so `raw[last]` does not move. ──
+  "sv08.5-111": HABAN_BERRY, // Haban Berry — 60 less from an opposing {N} attacker, then discard
+  "sv07-140": OCCA_BERRY, // Occa Berry — 60 less from an opposing {R} attacker, then discard
+  "sv07-141": PAYAPA_BERRY, // Payapa Berry — 60 less from an opposing {P} attacker, then discard
+  "sv08-163": BABIRI_BERRY, // Babiri Berry — 60 less from an opposing {M} attacker, then discard
+  "sv08-168": COLBUR_BERRY, // Colbur Berry — 60 less from an opposing {D} attacker, then discard
+  "sv08-184": PASSHO_BERRY, // Passho Berry — 60 less from an opposing {W} attacker, then discard
+  "sv06-164": SURVIVAL_BRACE, // Survival Brace — full HP survives an opposing KO at 10, then discard
+  "sv07-134": DELUXE_BOMB, // Deluxe Bomb — 12 counters on the attacker, then discard
+  "sv06-158": LUCKY_HELMET, // Lucky Helmet — damaged in the Active Spot: draw 2
+  "sv06-150": HANDHELD_FAN, // Handheld Fan — damaged in the Active Spot: attacker's Energy to its Bench
+  "sv06-153": JAMMING_TOWER, // Jamming Tower — Tools have no effect
+  "sv10-243": JAMMING_TOWER, // Jamming Tower (reprint)
+  "sv06-149": FESTIVAL_GROUNDS, // Festival Grounds — Energy-carrying Pokémon: no Special Conditions
+  "sv08.5-108": FESTIVAL_GROUNDS, // Festival Grounds (reprint)
   // ── D190 — THE **STANDARD-LEGAL** REPRINT-ALIAS MAP (Tier 0 of
   //    `docs/reference/coverage-backlog-legal.md`). 22 printings, 9 map targets,
   //    ZERO new code: every row below prints a sentence that is already authored

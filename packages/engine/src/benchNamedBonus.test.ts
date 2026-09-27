@@ -1304,7 +1304,13 @@ describe("§7 — the census moves in exactly ONE summand, and the other three a
     // `fix-*` key (`trainersD561.test.ts` / `stadiumsD561.test.ts` drive a LOCAL
     // `cardPool`), inserted MID-MAP after `sv07-006`, and no row authors an `attack`
     // program.
-    expect(ids.size).toBe(863);
+    // 🆕🆕🆕 D562 — 863 -> **877**: FOURTEEN registry keys on TWELVE program objects —
+    // consumable Tools, Jamming Tower and Festival Grounds (six type Berries, Survival Brace,
+    // Deluxe Bomb, Lucky Helmet, Handheld Fan, Jamming Tower ×2, Festival Grounds ×2). Real
+    // catalog ids, no `fix-*` key (`toolsD562.test.ts` / `stadiumsD562.test.ts` drive a LOCAL
+    // `cardPool`), inserted MID-MAP after `sv05-156`, and no row authors an `attack`
+    // program.
+    expect(ids.size).toBe(877);
     // ⚠️ ONE of the thirteen IS in the registry — Volbeat `sv06-009` — and it is
     // there on an ABILITY program, which is exactly the count a slice does not
     // think it is checking. Named, rather than glossed by an "all absent" claim

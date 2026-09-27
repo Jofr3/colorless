@@ -187,8 +187,16 @@ describe("the printed datum — the registry rows", () => {
     // adds "Then, discard this card.", which this flag cannot express: a passive
     // fold has no way to consume its own source. Both are UNAUTHORED, deliberately.
     // RED the moment someone folds either into `KO_SURVIVAL` for the printing count.
+    // 🆕🆕🆕 D562 CORRECTION (D539): ~~"Both are UNAUTHORED"~~ is WITHDRAWN for the
+    // Brace — D562 BUILT it, and NOT into `KO_SURVIVAL`: its own program carries its own
+    // key (`survivesKoAtFullHpFromOpponentThenDiscard`), because this flag still cannot
+    // discard. So the rung is INVERTED and keeps its point: the Brace is authored, and
+    // it is still refused by THIS program — it never carries `survivesKoAtFullHp`.
     expect(programFor("sv03.5-068")).toBeUndefined();
-    expect(programFor("sv06-164")).toBeUndefined();
+    expect(programFor("sv06-164")?.passive).toEqual({
+      survivesKoAtFullHpFromOpponentThenDiscard: true,
+    });
+    expect(programFor("sv06-164")?.passive?.survivesKoAtFullHp).toBeUndefined();
   });
 });
 
@@ -215,8 +223,8 @@ describe("⚠️ the placement — why this is a WRITE-SITE clamp and not a KO-s
 
     // The clamp, given the PRE-damage body, tells them apart — which is the whole
     // argument for its placement.
-    expect(koSurvivalClamp(state, { ...pokemon, damage: 0 }, STURDY_HP)).toBe(STURDY_SURVIVES_AT);
-    expect(koSurvivalClamp(state, { ...pokemon, damage: 10 }, STURDY_HP - 10)).toBeNull();
+    expect(koSurvivalClamp(state, { ...pokemon, damage: 0 }, STURDY_HP, "p1")?.damage).toBe(STURDY_SURVIVES_AT);
+    expect(koSurvivalClamp(state, { ...pokemon, damage: 10 }, STURDY_HP - 10, "p1")).toBeNull();
   });
 
   it("the clamp's lethality test AGREES with isLethallyDamaged, boundary for boundary", () => {
@@ -230,13 +238,13 @@ describe("⚠️ the placement — why this is a WRITE-SITE clamp and not a KO-s
 
     for (const dealt of [STURDY_HP - 10, STURDY_HP - 1, STURDY_HP, STURDY_HP + 1, 300]) {
       const wouldDie = isLethallyDamaged(state, { ...pokemon, damage: dealt });
-      const clamped = koSurvivalClamp(state, { ...pokemon, damage: 0 }, dealt);
+      const clamped = koSurvivalClamp(state, { ...pokemon, damage: 0 }, dealt, "p1");
       expect(clamped !== null, `dealt ${dealt}`).toBe(wouldDie);
     }
     // …and the boundary really is where it is claimed to be, spelled out so the
     // loop above cannot pass vacuously on an all-false or all-true run.
-    expect(koSurvivalClamp(state, { ...pokemon, damage: 0 }, STURDY_HP - 1)).toBeNull();
-    expect(koSurvivalClamp(state, { ...pokemon, damage: 0 }, STURDY_HP)).toBe(STURDY_SURVIVES_AT);
+    expect(koSurvivalClamp(state, { ...pokemon, damage: 0 }, STURDY_HP - 1, "p1")).toBeNull();
+    expect(koSurvivalClamp(state, { ...pokemon, damage: 0 }, STURDY_HP, "p1")?.damage).toBe(STURDY_SURVIVES_AT);
   });
 
   it("refuses a ZERO or PREVENTED hit — there is no Knock Out to refuse", () => {
@@ -251,8 +259,8 @@ describe("⚠️ the placement — why this is a WRITE-SITE clamp and not a KO-s
     const state = board(3);
     const pokemon = state.players.p2.active;
     if (pokemon === undefined || pokemon === null) throw new Error("no active");
-    expect(koSurvivalClamp(state, { ...pokemon, damage: 0 }, 0)).toBeNull();
-    expect(koSurvivalClamp(state, { ...pokemon, damage: 0 }, -10)).toBeNull();
+    expect(koSurvivalClamp(state, { ...pokemon, damage: 0 }, 0, "p1")).toBeNull();
+    expect(koSurvivalClamp(state, { ...pokemon, damage: 0 }, -10, "p1")).toBeNull();
   });
 
   it("a body WITHOUT the passive is never clamped, at any damage", () => {
@@ -262,7 +270,7 @@ describe("⚠️ the placement — why this is a WRITE-SITE clamp and not a KO-s
     const pokemon = state.players.p2.active;
     if (pokemon === undefined || pokemon === null) throw new Error("no active");
     expect(passivesOf(state, pokemon).survivesKoAtFullHp).toBe(false);
-    expect(koSurvivalClamp(state, { ...pokemon, damage: 0 }, 999)).toBeNull();
+    expect(koSurvivalClamp(state, { ...pokemon, damage: 0 }, 999, "p1")).toBeNull();
   });
 });
 

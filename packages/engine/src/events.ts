@@ -1112,7 +1112,10 @@ export type GameEvent =
       PRE-DAMAGE REASON IS KEPT VERBATIM BECAUSE IT IS STILL TRUE OF ITS OWN ROW**
       (D178/D418). Everything said above describes the `when: "preDamage"` row
       exactly as it always did; what moved is that this event now has a SECOND
-      producer. D543's `discardTools` op fires the same row at the PROGRAM TAIL,
+      producer (🆕 D562, annotated in place per D539: and now a THIRD, the
+      `when: "consumed"` self-discard of a consumable Tool — see `when` below;
+      the `seat`/`actor`/`host`/empty-`uids` rules hold of it too, with
+      `seat === actor`). D543's `discardTools` op fires the same row at the PROGRAM TAIL,
       from an attack's printed *"Discard up to 2 Pokémon Tools from your
       opponent's Pokémon."* — so `seat` is still the OWNER whose board lost the
       cards, `actor` still the controller whose card caused it, `host` still a
@@ -1144,8 +1147,19 @@ export type GameEvent =
           doing damage"*, and it is pushed in FRONT of the §8.5 `DAMAGE_DEALT` it
           precedes, so the claim is one this path makes true); `"effect"` is D543's
           program-tail `discardTools`, after the damage, where that tail would be
-          false. */
-      when: "preDamage" | "effect";
+          false.
+
+          🆕🆕🆕 **D562 — `"consumed"`, A THIRD PRODUCER.** A consumable Tool discarding
+          ITSELF because its own printed effect just paid (a type Berry after the hit it
+          reduced, a Survival Brace after the clamp, a Deluxe Bomb after its counters —
+          *"… and discard this card."*). `seat === actor` (the card's owner discards it),
+          and the row is pushed AFTER the `DAMAGE_DEALT` / `COUNTERS_PLACED` it follows,
+          so neither of the other two wordings would be true of it: it is not "before
+          doing damage", and it is not the attack's effect. A NEW member rather than a
+          reuse, for the field's own D543 reason (a reused member inherits a tail that
+          lies). A union widening on an unpersisted event (`GameEvent` is not in
+          `MatchRecord`), so `MATCH_RECORD_VERSION` stays 35. */
+      when: "preDamage" | "effect" | "consumed";
     }
   /** §7.3 — the Stadium `uid` left play for its OWNER `seat`'s discard pile,
       replaced by a different-named Stadium (whose own TRAINER_PLAYED rides in

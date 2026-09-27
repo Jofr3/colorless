@@ -80,7 +80,14 @@ import {
   seatWeaknessRewrite,
   seatShieldedFromSupporterEffects,
   stadiumPreventsDamage,
+  // 🆕🆕🆕 D562 — the consumable Tools (Berries at the three §8.5 sites here, Deluxe
+  // Bomb at `reactToAttackDamage`) and Festival Grounds' refusal at `applyStatus`.
+  NO_CONSUMABLE,
+  berryReductionOf,
+  deluxeBombOf,
+  stadiumShieldsStatus,
 } from "./continuous";
+import type { KoSurvival } from "./continuous";
 import { POKEMON_TYPES, STATUS_WORD_OF, foldApostrophes } from "./effects";
 // TYPE-ONLY — interpreter.ts must not gain a runtime edge to registry.ts (the
 // registry imports effects.ts for its op vocabulary and this file evaluates it);
@@ -110,7 +117,7 @@ import { flipCoin, randomIndex, shuffle } from "./rng";
 // shape flow.ts ↔ triggers.ts has carried since M4: both ends are hoisted
 // function DECLARATIONS called only at run time, so neither module reads the
 // other's binding while it is still initialising.
-import { damagedByAttackAbility, runActiveBenchedTriggers } from "./triggers";
+import { damagedByAttackAbility, damagedToolTriggersOf, runActiveBenchedTriggers } from "./triggers";
 import type {
   AttackBlock,
   BoostedAttack,
@@ -7584,6 +7591,16 @@ export function applyStatus(
     events.push({ type: "STATUS_PREVENTED", seat, uid, status: op.status });
     return state;
   }
+  // 🆕🆕🆕 §12 (D562) — Festival Grounds' *"can't be affected by any Special Conditions"*:
+  // while it is in play an Active with ANY Energy refuses EVERY condition, on both boards
+  // (continuous.ts `stadiumShieldsStatus`). Its own `if` beneath the printed immunity,
+  // with the same one row: this is the engine's ONE condition writer, so one gate here
+  // is the whole refusal half; the recovery half is flow.ts `recoverStatuses` (R-FG).
+  // A Stadium, so no §9 gate; after the §11 funnel above, for the immunity's reason.
+  if (stadiumShieldsStatus(state, active)) {
+    events.push({ type: "STATUS_PREVENTED", seat, uid, status: op.status });
+    return state;
+  }
   if (op.status === "poisoned") {
     const poisonDamage = op.poisonDamage ?? DEFAULT_POISON_DAMAGE;
     events.push({ type: "STATUS_APPLIED", seat, uid, status: "poisoned", poisonDamage });
@@ -9603,6 +9620,10 @@ function unshieldedRefs(
         target — so it comes off the own-side splash too, unchanged.
       • `koSurvivalClamp` is asked of the damaged body, so a full-HP own benched
         holder survives its controller's own attack exactly as an opponent's does.
+        (🆕🆕🆕 D562: true of the ABILITY holders — Resolute Heart / Sturdy print no
+        attacker — and NOT of Survival Brace, which prints "from your opponent's
+        Pokémon": the clamp now takes the attacker's seat and the Brace refuses an
+        own-side hit, driven in toolsD562.test.ts on this own-Bench spread.)
 
     🛑 **AND THE THING THIS FUNCTION STILL DOES NOT DO IS THE THING THAT MATTERS
     MOST.** It does not Knock Out, and it did not before. `finishAttack` sweeps
@@ -9670,6 +9691,9 @@ function spreadDamage(
   // the loop, because the only part of it that moves is the `rngState` this fold owns
   // and no passive read consults that.
   const bench: InPlayPokemon[] = [];
+  // 🆕🆕🆕 D562 — the Tools this spread CONSUMED (Berries, Survival Braces), bound for
+  // the victim's discard pile in the one write-back below.
+  const consumed: string[] = [];
   let rng = state.rngState;
   for (const pokemon of side.bench) {
     const uid = topUid(pokemon);
@@ -9712,7 +9736,14 @@ function spreadDamage(
     // than a tidy-up: the damage CAP is read against the number that would
     // actually be placed, so the reduction has to be known before the prevention
     // is asked (continuous.ts `attackBlockOf` argues which number and why).
+    // 🆕🆕🆕 D562 — THE BERRY, a fourth summand (continuous.ts `berryReductionOf`: an
+    // opposing attacker of the printed type). No suppression reaches a spread, but the
+    // rulebook's damage step 2 stop does (attack.ts's main hit quotes it): a splash the
+    // debuff took to 0 never reaches the after-W/R step, so no Berry applies or is spent.
+    const berry =
+      spread === 0 ? NO_CONSUMABLE : berryReductionOf(state, pokemon, attackerCard, ctx.seat);
     const reduction =
+      berry.amount +
       passives.damageReductionAfterWR +
       installedReductionOf(state, pokemon) +
       seatDamageReduction(state, pokemon, "all", ctx.seat);
@@ -9795,8 +9826,10 @@ function spreadDamage(
     // printings live in practice, since neither sentence carries an "Active Spot"
     // clause. `pokemon` is still the pre-hit body, which is the only reason the
     // "has full HP" antecedent is answerable at all.
-    const clamped = koSurvivalClamp(state, pokemon, dealt);
-    const damage = clamped ?? pokemon.damage + dealt;
+    // 🆕🆕🆕 D562 — `ctx.seat` is the attacker's seat: a Survival Brace answers only an
+    // OPPONENT's attack, so the `"yourBench"` arm reaches Resolute Heart and never a Brace.
+    const clamped = koSurvivalClamp(state, pokemon, dealt, ctx.seat);
+    const damage = clamped?.damage ?? pokemon.damage + dealt;
     events.push({
       type: "DAMAGE_DEALT",
       seat: victim,
@@ -9818,9 +9851,18 @@ function spreadDamage(
       dealt,
       damage,
     });
-    bench.push({ ...pokemon, damage });
+    // 🆕🆕🆕 D562 — the consumed Tools leave AFTER the row that shows what they did
+    // (R-BE: a Berry is spent on any unprevented hit it reduced, 0 included; the Brace
+    // only when the clamp answered with it).
+    const spent = consumedTools(prevented ? [] : berry.toolUids, clamped);
+    consumed.push(...spent);
+    bench.push({ ...consumeTools(pokemon, spent, victim, events), damage });
   }
-  return withSide({ ...state, rngState: rng }, victim, { ...side, bench });
+  return withSide({ ...state, rngState: rng }, victim, {
+    ...side,
+    bench,
+    discard: [...side.discard, ...consumed],
+  });
 }
 
 /** Snipe: put `amount` HP of damage counters on the opponent's Benched Pokémon
@@ -9990,6 +10032,8 @@ function placeSnipe(
   // (the standing `damageActive` reading this whole function is built on), so a
   // Kecleon under Hawlucha's snipe never flips.
   const bench: InPlayPokemon[] = [];
+  // 🆕🆕🆕 D562 — the Tools the `deals` arm CONSUMED (Berries, Survival Braces).
+  const consumed: string[] = [];
   let rng = next.rngState;
   for (const [index, pokemon] of side.bench.entries()) {
     if (!targeted.has(index)) {
@@ -10040,9 +10084,17 @@ function placeSnipe(
     // TEAMMATE keeps it, off one declaration of one printed attack. The two
     // earlier answers in this family were constant per SITE (D151/D159) only
     // because no aura before this one could be its own target.
+    // 🆕🆕🆕 D562 — THE BERRY, in the ON-TARGET arm: it is an effect on the sniped body
+    // (a Tool on it), so `ignoreWR` (Feint Attack) nulls it with the catalog half — and a
+    // nulled Berry is NOT spent (R-BE). The step-2 stop gates it as it gates `exposedBy`.
+    const berry =
+      ignoreWR || amount - attackerDebuff <= 0
+        ? NO_CONSUMABLE
+        : berryReductionOf(next, pokemon, attackerCard, ctx.seat);
     const reduction = ignoreWR
       ? seatDamageReduction(next, pokemon, "othersOnly", ctx.seat)
-      : targetPassives.damageReductionAfterWR +
+      : berry.amount +
+        targetPassives.damageReductionAfterWR +
         installedReductionOf(next, pokemon) +
         seatDamageReduction(next, pokemon, "all", ctx.seat);
     // D149 — and the DEBUFF is NOT nulled by `ignoreWR`, unlike the reduction one
@@ -10143,8 +10195,8 @@ function placeSnipe(
     // engine's own long-standing reading (D138/D139/D142), the same line that
     // already denies that arm Weakness, Resistance and every reduction passive.
     // So the clamp goes exactly where the pipeline goes and no further.
-    const clamped = koSurvivalClamp(next, pokemon, dealt);
-    const damage = clamped ?? pokemon.damage + dealt;
+    const clamped = koSurvivalClamp(next, pokemon, dealt, ctx.seat);
+    const damage = clamped?.damage ?? pokemon.damage + dealt;
     // 🆕🆕 D425 said of the row below: *"placeSnipe's `deals` arm aims across the
     // table."* 🆕🆕🆕 **D447 CORRECTS THAT SENTENCE IN PLACE (D442): IT NO LONGER
     // ALWAYS DOES.** `by` is the ATTACKER on every board — unchanged, and what makes the
@@ -10173,9 +10225,16 @@ function placeSnipe(
       dealt,
       damage,
     });
-    bench.push({ ...pokemon, damage });
+    // 🆕🆕🆕 D562 — `spreadDamage`'s consumption, verbatim (R-BE, R-BR).
+    const spent = consumedTools(prevented ? [] : berry.toolUids, clamped);
+    consumed.push(...spent);
+    bench.push({ ...consumeTools(pokemon, spent, benchVictim, events), damage });
   }
-  return withSide({ ...next, rngState: rng }, benchVictim, { ...side, bench });
+  return withSide({ ...next, rngState: rng }, benchVictim, {
+    ...side,
+    bench,
+    discard: [...side.discard, ...consumed],
+  });
 }
 
 /** 🆕🆕🆕 **D539 — THE OWN-SIDE ACTIVE ARM of a `yourAny` snipe** (corpus FILE
@@ -10390,9 +10449,16 @@ function snipeActive(
   // is reached differently here: this arm's target is the opponent's ACTIVE, so a
   // Feint Attack into an ACTIVE Hariyama nulls its own 10 while a benched second
   // Hariyama keeps shielding it.
+  // 🆕🆕🆕 D562 — THE BERRY, ON-TARGET like the catalog half (`ignoreWR` nulls it, and a
+  // nulled Berry is not spent — R-BE), gated on the step-2 stop like `activeExposure`.
+  const berry =
+    ignoreWR || amount + bonus <= debuff
+      ? NO_CONSUMABLE
+      : berryReductionOf(state, target.active, attacker?.card, ctx.seat);
   const reduction = ignoreWR
     ? seatDamageReduction(state, target.active, "othersOnly", ctx.seat)
-    : targetPassives.damageReductionAfterWR +
+    : berry.amount +
+      targetPassives.damageReductionAfterWR +
       installedReductionOf(state, target.active) +
       seatDamageReduction(state, target.active, "all", ctx.seat);
   // ⚠️ D240 — the damage CAP is read against the number that would actually be
@@ -10472,8 +10538,8 @@ function snipeActive(
   // §8.1 (D208) — the KO-survival clamp, at the fourth and last of its write
   // sites. `target.active` is the pre-hit body; this arm runs the FULL §8.5
   // pipeline, so it is unambiguously "damage from an attack".
-  const clamped = koSurvivalClamp(state, target.active, dealt);
-  const damage = clamped ?? target.active.damage + dealt;
+  const clamped = koSurvivalClamp(state, target.active, dealt, ctx.seat);
+  const damage = clamped?.damage ?? target.active.damage + dealt;
   events.push({
     type: "DAMAGE_DEALT",
     seat: opponent,
@@ -10491,7 +10557,14 @@ function snipeActive(
     dealt,
     damage,
   });
-  const hit = withActive({ ...state, rngState }, opponent, { ...target.active, damage });
+  // 🆕🆕🆕 D562 — the consumed Tools leave the sniped Active for its owner's pile, after
+  // the row (`spreadDamage`'s consumption, verbatim).
+  const spent = consumedTools(prevented ? [] : berry.toolUids, clamped);
+  const struck = withActive({ ...state, rngState }, opponent, {
+    ...consumeTools(target.active, spent, opponent, events),
+    damage,
+  });
+  const hit = discardToPile(struck, opponent, spent);
   // 🆕 §9 — THE TWO REACTIONS THE DAMAGED ACTIVE OWES, SEEDED AT THE DAMAGE AND
   // NOT AT ONE CODE PATH. `attack.ts` seeds the `damageAttacker` recoil (Rocky
   // Helmet, Counterattack Quills, Custom Trap + D152's installed half) and the
@@ -10537,7 +10610,9 @@ function snipeActive(
     to discard).
 
     ⚠️ THE STAGE IS SPLICED IN FRONT OF THE EPILOGUE, NOT APPENDED. `attack.ts` has
-    already queued `[damagedTrigger?, koToolTrigger?, attackEpilogue]` before running
+    already queued `[damagedTrigger?, koToolTrigger?, attackEpilogue]` (🆕🆕🆕 D562: the
+    `damagedTrigger?` slot may now be the Ability's stage followed by one stage per
+    damaged-reacting Tool) before running
     the program, and `attackEpilogue` is the §8.1 sweep — so appending would run the
     reaction AFTER the Knock Out it is printed to survive ("even if this Pokémon is
     Knocked Out"), and after the `koToolTrigger` whose own doc block argues that
@@ -10553,6 +10628,39 @@ function snipeActive(
     scan rather than a flag because `pending` is the only thing that outlives this
     call. */
 function reactToAttackDamage(
+  state: GameState,
+  damagedSeat: Seat,
+  damagedUid: string,
+  attackerSeat: Seat,
+  damagedBody: InPlayPokemon,
+  damageTaken: number,
+  events: GameEvent[],
+): GameState {
+  // 🆕🆕🆕 D562 — THE TWO TOOL REACTIONS, AFTER THE PRE-D562 PAIR AND IN THE SAME ORDER AS
+  // attack.ts's main hit: the recoil and the Ability stage first (unchanged, below),
+  // then Deluxe Bomb's counters (synchronous, `detonateDeluxeBomb`), then one
+  // `damagedTrigger` stage PER in-effect Tool with an `onDamagedByAttack` program (Lucky
+  // Helmet, Handheld Fan), spliced where the Ability's goes, so they land BEHIND it (R-LH).
+  const reacted = reactWithRecoilAndAbility(
+    state,
+    damagedSeat,
+    damagedUid,
+    attackerSeat,
+    damagedBody,
+    damageTaken,
+    events,
+  );
+  return queueDamagedToolStages(
+    detonateDeluxeBomb(reacted, damagedSeat, damagedBody, attackerSeat, events),
+    damagedSeat,
+    damagedUid,
+  );
+}
+
+/** The pre-D562 half of `reactToAttackDamage`, byte for byte: the `damageAttacker`
+    recoil and the Ability's `damagedTrigger` stage. Split out (D562) only so the
+    Ability's early return cannot skip the Tool reactions queued after it. */
+function reactWithRecoilAndAbility(
   state: GameState,
   damagedSeat: Seat,
   damagedUid: string,
@@ -10602,6 +10710,114 @@ function reactToAttackDamage(
         ? [...next.pending, stage]
         : [...next.pending.slice(0, ahead), stage, ...next.pending.slice(ahead)],
   };
+}
+
+/** 🆕🆕🆕 §9 (D562) — queue one `damagedTrigger` stage per in-effect Tool on the damaged
+    Active that carries an `onDamagedByAttack` program (triggers.ts
+    `damagedToolTriggersOf`), `uid` = the TOOL's uid, each spliced in front of the
+    attack's `koToolTrigger`/`attackEpilogue` — so behind an Ability stage already there
+    (R-LH) — and each at most once per Tool (the Ability stage's `pending` scan, per
+    source rather than per body). flow.ts `runDamagedTrigger` dispatches on the uid. */
+function queueDamagedToolStages(
+  state: GameState,
+  damagedSeat: Seat,
+  damagedUid: string,
+): GameState {
+  let queued = state;
+  for (const { toolUid } of damagedToolTriggersOf(state, damagedSeat, damagedUid)) {
+    const already = queued.pending.some(
+      (stage) => stage.kind === "damagedTrigger" && stage.uid === toolUid,
+    );
+    if (already) continue;
+    const toolStage: PendingStage = { kind: "damagedTrigger", seat: damagedSeat, uid: toolUid };
+    const tail = queued.pending.findIndex(
+      (stage) => stage.kind === "koToolTrigger" || stage.kind === "attackEpilogue",
+    );
+    const pending = [...queued.pending];
+    pending.splice(tail === -1 ? pending.length : tail, 0, toolStage);
+    queued = { ...queued, pending };
+  }
+  return queued;
+}
+
+/** 🆕🆕🆕 §9 (D562) — DELUXE BOMB: put its counters on `attackerSeat`'s Active and discard
+    every Bomb that paid (*"If you placed any damage counters in this way, discard this
+    card."*). A SEPARATE `COUNTERS_PLACED { source: "counterattack" }` row from the
+    `damageAttacker` recoil — the mechanism label D141 chose, and its own row so the
+    discard that follows names the card whose counters it just placed. No attacker in
+    the Active Spot means no counters were placed, so nothing is discarded. Called only
+    where the recoil is — attack.ts's main hit (under `dealt > 0`) and
+    `reactToAttackDamage` (whose caller gates on `dealt > 0`) — both of which damage an
+    ACTIVE, which is the printed "in the Active Spot" (R-DB). */
+export function detonateDeluxeBomb(
+  state: GameState,
+  damagedSeat: Seat,
+  damagedBody: InPlayPokemon,
+  attackerSeat: Seat,
+  events: GameEvent[],
+): GameState {
+  const bomb = deluxeBombOf(state, damagedBody, attackerSeat);
+  const attacker = activeTop(state, attackerSeat);
+  if (bomb.amount === 0 || attacker === null) return state;
+  const bombed = withActive(state, attackerSeat, {
+    ...attacker.active,
+    damage: attacker.active.damage + bomb.amount,
+  });
+  events.push({
+    type: "COUNTERS_PLACED",
+    seat: attackerSeat,
+    uid: attacker.uid,
+    amount: bomb.amount,
+    source: "counterattack",
+  });
+  // The damaged Active is still in its spot: both callers run before any §8.1 sweep.
+  const holder = bombed.players[damagedSeat].active as InPlayPokemon;
+  return discardToPile(
+    withActive(bombed, damagedSeat, consumeTools(holder, bomb.toolUids, damagedSeat, events)),
+    damagedSeat,
+    bomb.toolUids,
+  );
+}
+
+/** 🆕🆕🆕 D562 — the Tools one §8.5 hit CONSUMED: the Berries that reduced it (the
+    caller passes `[]` for a prevented hit — R-BE) and the Survival Brace the clamp
+    answered with, if any (R-BR). */
+export function consumedTools(
+  berryUids: readonly string[],
+  clamped: KoSurvival | null,
+): string[] {
+  return clamped?.toolUid === undefined ? [...berryUids] : [...berryUids, clamped.toolUid];
+}
+
+/** 🆕🆕🆕 D562 — strip the `spent` Tools off `pokemon` and file ONE `TOOLS_DISCARDED
+    { when: "consumed" }` row for them, under the holder's OWNER (`seat` is both the
+    owner and the actor: the card discards itself). The caller appends the uids to that
+    owner's discard pile (`discardToPile`, or its own write-back). Nothing spent, nothing
+    filed, the body returned `===`. */
+export function consumeTools(
+  pokemon: InPlayPokemon,
+  spent: readonly string[],
+  seat: Seat,
+  events: GameEvent[],
+): InPlayPokemon {
+  if (spent.length === 0) return pokemon;
+  events.push({
+    type: "TOOLS_DISCARDED",
+    seat,
+    actor: seat,
+    uids: [...spent],
+    host: topUid(pokemon) ?? "",
+    when: "consumed",
+  });
+  return { ...pokemon, tools: pokemon.tools.filter((uid) => !spent.includes(uid)) };
+}
+
+/** 🆕🆕🆕 D562 — append `uids` to `seat`'s discard pile (§7.4: a discarded Tool goes to its
+    OWNER's pile). No early return for an empty list: appending nothing is already the
+    identity on every field, so such a guard would be a branch no board could tell apart. */
+export function discardToPile(state: GameState, seat: Seat, uids: readonly string[]): GameState {
+  const side = state.players[seat];
+  return withSide(state, seat, { ...side, discard: [...side.discard, ...uids] });
 }
 
 /** The effective snipe amount — `amount`, or `amount × <a board count>` when the op
@@ -13558,7 +13774,9 @@ function discardStadium(state: GameState, events: GameEvent[]): GameState {
     `takePrizeAttack.test.ts` §7.
 
     🛑 **SPLICED AHEAD OF THE ATTACK'S QUEUED TAIL, NOT APPENDED.** `attack.ts` queues
-    `[damagedTrigger?, koToolTrigger?, attackEpilogue]` BEFORE it runs the program, so
+    `[damagedTrigger?, koToolTrigger?, attackEpilogue]` (🆕🆕🆕 D562: the first slot may
+    now hold several `damagedTrigger` stages, an Ability's and one per Tool — all of kind
+    `damagedTrigger`, so the `findIndex` below still lands ahead of every one) BEFORE it runs the program, so
     an append would take this prize AFTER the §8.1 Knock Out sweep and after the turn
     had ended. The position is not a preference: **every other op in this file finishes
     its work synchronously — i.e. before ANY of those three stages runs — and this one

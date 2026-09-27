@@ -812,7 +812,13 @@ describe("D359 §6 — the ids this file rests on are real and locally seated", 
     // `fix-*` key (`trainersD561.test.ts` / `stadiumsD561.test.ts` drive a LOCAL
     // `cardPool`), inserted MID-MAP after `sv07-006`, and no row authors an `attack`
     // program.
-    expect(registryCardIds()).toHaveLength(863);
+    // 🆕🆕🆕 D562 — 863 -> **877**: FOURTEEN registry keys on TWELVE program objects —
+    // consumable Tools, Jamming Tower and Festival Grounds (six type Berries, Survival Brace,
+    // Deluxe Bomb, Lucky Helmet, Handheld Fan, Jamming Tower ×2, Festival Grounds ×2). Real
+    // catalog ids, no `fix-*` key (`toolsD562.test.ts` / `stadiumsD562.test.ts` drive a LOCAL
+    // `cardPool`), inserted MID-MAP after `sv05-156`, and no row authors an `attack`
+    // program.
+    expect(registryCardIds()).toHaveLength(877);
     for (const id of Object.values(QUANTITY_IDS).flat()) {
       if (programFor(id) === undefined) continue;
       // Every id that DOES have a program had one before this slice: the eight

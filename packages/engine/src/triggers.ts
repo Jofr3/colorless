@@ -1,7 +1,7 @@
 import type { ApplyResult } from "./actions";
 import { ok } from "./actions";
 import { topCardOf, topUid } from "./cards";
-import { disabledAbilityUids } from "./continuous";
+import { disabledAbilityUids, toolsInEffect } from "./continuous";
 import type { GameEvent } from "./events";
 import { recoverStatuses, settleProgram } from "./flow";
 import { runProgram } from "./interpreter";
@@ -470,6 +470,10 @@ export function damagedByAttackAbility(
         `pokemon.tools`, and that is exactly why Vengeful Punch was a data row and
         this is not: it folds `programFor(id)?.passive` into NUMBERS, one seat-free
         sum per field. It has no way to express a program, a park or a controller.
+        (🆕🆕🆕 D562 CORRECTION (D539): ~~"the only existing site that walks
+        `pokemon.tools`"~~ is WITHDRAWN — D558's retreat/cost scans, D562's consumable
+        scans and `damagedToolTriggersOf` below walk them too, and every EFFECT walk now
+        goes through continuous.ts `toolsInEffect`. The fold-into-numbers point stands.)
 
     Two deliberate refusals, each a line of the printed sentence:
 
@@ -482,7 +486,10 @@ export function damagedByAttackAbility(
         `passivesOf` states the same rule for the same reason ("a locked Pokémon's
         own printed passive is suppressed; its Tools are not Abilities and keep
         contributing"). A Klefki aura over the holder leaves Exp. Share working,
-        and that negative is driven.
+        and that negative is driven. 🆕🆕🆕 D562: still no §9 gate, but no longer
+        ungated — the Tools are read through `toolsInEffect`, so Jamming Tower (a
+        Stadium, not an Ability-lock) silences Exp. Share; driven in
+        `stadiumsD562.test.ts`.
 
     Read by flow.ts (`runKoToolTrigger`, which fires the first match) and by
     attack.ts (presence alone, to decide whether to seed the stage at all — so an
@@ -498,13 +505,47 @@ export function koToolTriggersOf(
   for (const body of bodies) {
     const holderUid = topUid(body);
     if (holderUid === undefined || holderUid === koedUid) continue;
-    for (const toolUid of body.tools) {
+    for (const toolUid of toolsInEffect(state, body)) {
       const id = state.cardIdByUid[toolUid];
       if (id === undefined) continue;
       for (const ability of programFor(id)?.triggered ?? []) {
         if (ability.trigger !== "onAllyActiveKnockOut") continue;
         out.push({ toolUid, holderUid, ability });
       }
+    }
+  }
+  return out;
+}
+
+/** 🆕🆕🆕 §9 (D562) — THE TOOL-BORNE ON-DAMAGED SCAN. Every `onDamagedByAttack` program a
+    POKÉMON TOOL attached to `seat`'s ACTIVE carries, when that Active is `defenderUid`
+    (Lucky Helmet `sv06-158`: *"If the Pokémon this card is attached to is in the Active
+    Spot and is damaged by an attack from your opponent's Pokémon (even if this Pokémon is
+    Knocked Out), draw 2 cards."*; Handheld Fan `sv06-150`: *"… move an Energy from the
+    Attacking Pokémon to 1 of your opponent's Benched Pokémon."*). Returns each Tool's uid
+    and its program, in attachment order.
+
+    `damagedByAttackAbility`'s TOOL twin one screen up, and `koToolTriggersOf`'s on the
+    other axis: `triggersOf` reads the TOP card and cannot see a Tool, so the holder's
+    Tools are walked here. THE ACTIVE ONLY — both printings say "in the Active Spot", and
+    the two seeding sites (attack.ts's main hit, interpreter.ts `reactToAttackDamage`)
+    damage an Active by construction; the runner re-asks it (flow.ts
+    `runDamagedTrigger`), because the attack's own effect program may switch the holder
+    out before the stage runs. NO §9 GATE (a Tool is not an Ability, `koToolTriggersOf`'s
+    rule); through `toolsInEffect`, so Jamming Tower silences both. */
+export function damagedToolTriggersOf(
+  state: GameState,
+  seat: Seat,
+  defenderUid: string,
+): { toolUid: string; ability: TriggeredAbility }[] {
+  const active = state.players[seat].active;
+  if (active === null || topUid(active) !== defenderUid) return [];
+  const out: { toolUid: string; ability: TriggeredAbility }[] = [];
+  for (const toolUid of toolsInEffect(state, active)) {
+    const id = state.cardIdByUid[toolUid];
+    if (id === undefined) continue;
+    for (const ability of programFor(id)?.triggered ?? []) {
+      if (ability.trigger === "onDamagedByAttack") out.push({ toolUid, ability });
     }
   }
   return out;

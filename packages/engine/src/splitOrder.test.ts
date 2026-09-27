@@ -218,7 +218,7 @@ describe("§1 — the census D282 priced its refusal against: counts reproduce, 
     expect(units(gateAll) - units(firstTurn)).toBe(6);
   });
 
-  it("S2 — 17 of 863 registry ids carry an `attackGate`, in three kinds", () => {
+  it("S2 — 17 of 877 registry ids carry an `attackGate`, in three kinds", () => {
     // The registry side of the same 13, walked independently of the text side:
     // a count that agrees across two surfaces is a count, not a transcription.
     // 🆕🆕 D396 — 14 -> **17**, and this is the FIRST slice on which the registry
@@ -326,7 +326,13 @@ describe("§1 — the census D282 priced its refusal against: counts reproduce, 
     // `fix-*` key (`trainersD561.test.ts` / `stadiumsD561.test.ts` drive a LOCAL
     // `cardPool`), inserted MID-MAP after `sv07-006`, and no row authors an `attack`
     // program.
-    expect(ids.length).toBe(863);
+    // 🆕🆕🆕 D562 — 863 -> **877**: FOURTEEN registry keys on TWELVE program objects —
+    // consumable Tools, Jamming Tower and Festival Grounds (six type Berries, Survival Brace,
+    // Deluxe Bomb, Lucky Helmet, Handheld Fan, Jamming Tower ×2, Festival Grounds ×2). Real
+    // catalog ids, no `fix-*` key (`toolsD562.test.ts` / `stadiumsD562.test.ts` drive a LOCAL
+    // `cardPool`), inserted MID-MAP after `sv05-156`, and no row authors an `attack`
+    // program.
+    expect(ids.length).toBe(877);
     const gated = ids.filter((id) => programFor(id)?.attackGate !== undefined);
     expect(gated.length).toBe(17);
     const kinds = gated.flatMap((id) =>

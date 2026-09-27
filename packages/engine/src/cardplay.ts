@@ -300,6 +300,15 @@ function playStadium(state: GameState, action: PlayTrainerAction, card: Card): A
   // zone itself are already written into `next`, so the interrupt resumes onto a
   // board where the Stadium is genuinely in play — a sweep run before the zone
   // update would read the OLD maximum and find nothing.
+  //
+  // 🆕🆕🆕 §12 (D562) — AND THE FIFTH RECOVERY MOMENT, JUST BEFORE THE SWEEP. Festival
+  // Grounds' *"recovers from all Special Conditions"* covers every Energy-carrying Active
+  // the instant it enters the zone, on BOTH boards (flow.ts `recoverStatuses`, which would
+  // also cover a Tool-borne recovery source re-enabled by a Jamming Tower leaving — latent:
+  // no Tool writes `statusRecovery` today). Before the sweep so
+  // the sweep reads the recovered board — which moves no damage, so the order is free for
+  // the KO and fixed only for the event sequence (STATUS_CLEARED, then any KO).
+  next = recoverStatuses(next, events);
   return resolveMidTurnKnockOuts(next, action.seat, SEATS, events);
 }
 
@@ -419,7 +428,8 @@ export function attachTool(state: GameState, action: AttachToolAction): ApplyRes
   // not-a-Tool, not-simulated, the target/slot checks) belong to the ATTACH term
   // alone, and a Tool that does not attach covers nothing new.
   //
-  // Placed AFTER `withSide` because the fold reads `pokemon.tools`: the Tool must
+  // Placed AFTER `withSide` because the fold reads `pokemon.tools` (🆕🆕🆕 D562: through
+  // `toolsInEffect`, which is `pokemon.tools` unless Jamming Tower is in play): the Tool must
   // already be on the body for its own clause to be one of the sources. A BENCH
   // target sweeps nothing (the sweep is Active-only, §12) — correct rather than
   // incomplete, since a benched body carries no conditions to recover from.

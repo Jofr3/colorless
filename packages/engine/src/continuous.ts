@@ -75,6 +75,137 @@ export function stadiumEffectsOf(state: GameState): StadiumEffects | undefined {
   return id === undefined ? undefined : programFor(id)?.stadium;
 }
 
+/** 🆕🆕🆕 §7.4 (D562) — THE TOOLS ON `pokemon` WHOSE PRINTED EFFECTS ARE LIVE: every
+    attached Tool uid, or NONE while the in-play Stadium prints `toolsHaveNoEffect`
+    (Jamming Tower `sv06-153`/`sv10-243`, *"Pokémon Tools attached to each Pokémon (both
+    yours and your opponent's) have no effect."*). No seat and no §9 gate — a Stadium is
+    neither side's and no Ability (R-ST2's reason).
+
+    🛑 **EVERY EFFECT WALK OVER `pokemon.tools` GOES THROUGH HERE, AND NO COUNT READ
+    DOES (R-JT).** The effect walks: `passivesOf`'s `sources`, `toolRetreatDiscount`,
+    `toolFreesRetreat`, `activeRetreatSurcharge`'s Gemstone term, `toolAttackCostDiscount`,
+    triggers.ts `koToolTriggersOf` and `damagedToolTriggersOf`, and the D562 consumable
+    scans below. The COUNT reads stay on the raw list, because "no effect" is about what a
+    Tool DOES and not about whether it is attached: `passivesOf`'s `hasTool`,
+    `countToolsInPlay`, the ACE SPEC Tool window, interpreter.ts's two Active-has-Tool
+    conditions and cardplay.ts's §7.4 one-Tool cap. A Tool under Jamming Tower is still a
+    card on the body — it still fills the slot, still counts, and still leaves with the
+    body. Reversal: a ruling that a Jamming-Tower Tool is not "attached" for a count. */
+export function toolsInEffect(state: GameState, pokemon: InPlayPokemon): readonly string[] {
+  return stadiumEffectsOf(state)?.toolsHaveNoEffect === true ? [] : pokemon.tools;
+}
+
+/** 🆕🆕🆕 D562 — the in-effect Tools on `holder` whose printed sentence is keyed to an
+    attack FROM YOUR OPPONENT'S Pokémon, each with its passive. The seat half of every
+    consumable's antecedent, asked in ONE place: `holder`'s seat is derived off the live
+    board (`seatOfPokemon`) and must differ from `attackerSeat`, so an own-side spread or
+    snipe (D425/D447) reaches none of them. An unplaceable holder answers none — the
+    conservative direction (a consumable pays LESS, never more). Through `toolsInEffect`,
+    so Jamming Tower silences every consumable. */
+function opposedToolPassives(
+  state: GameState,
+  holder: InPlayPokemon,
+  attackerSeat: Seat,
+): { uid: string; passive: PassiveEffects }[] {
+  const holderSeat = seatOfPokemon(state, holder);
+  if (holderSeat === undefined || holderSeat === attackerSeat) return [];
+  const out: { uid: string; passive: PassiveEffects }[] = [];
+  for (const uid of toolsInEffect(state, holder)) {
+    const id = state.cardIdByUid[uid];
+    const passive = id === undefined ? undefined : programFor(id)?.passive;
+    if (passive !== undefined) out.push({ uid, passive });
+  }
+  return out;
+}
+
+/** 🆕🆕🆕 D562 — the answer a consumable scan gives when it is not asked: nothing to add,
+    nothing to discard. What a §8.5 site holds in place of `berryReductionOf` on a hit
+    the Berry cannot reach (a suppressed target, a hit stopped at damage step 2). */
+export const NO_CONSUMABLE: { amount: number; toolUids: readonly string[] } = {
+  amount: 0,
+  toolUids: [],
+};
+
+/** 🆕🆕🆕 §8.5 (D562) — THE BERRY: the post-W/R reduction the six type Berries grant
+    `holder` against THIS `attacker` (*"If the Pokémon this card is attached to is damaged
+    by an attack from your opponent's {X} Pokémon, it takes 60 less damage (after applying
+    Weakness and Resistance), and discard this card."*), and the Tools that pay it. The
+    ATTACKER gate lives here: an opposing seat (`opposedToolPassives`) and the printed type
+    among the attacking card's `types` (`preventsAttackerType`'s reading of §8.5's type
+    word). NOT folded by `passivesOf`, which sums into numbers and cannot say which Tool
+    paid. Read at the four §8.5 sites and summed into their `reduction`; the caller
+    discards `toolUids` when the hit is not prevented (R-BE). No Active clause, so it
+    pays on the Bench too. */
+export function berryReductionOf(
+  state: GameState,
+  holder: InPlayPokemon,
+  attacker: Card | undefined,
+  attackerSeat: Seat,
+): { amount: number; toolUids: readonly string[] } {
+  let amount = 0;
+  const toolUids: string[] = [];
+  for (const { uid, passive } of opposedToolPassives(state, holder, attackerSeat)) {
+    const berry = passive.damageReductionAfterWRFromTypeThenDiscard;
+    if (berry === undefined || !(attacker?.types ?? []).includes(berry.type)) continue;
+    amount += berry.amount;
+    toolUids.push(uid);
+  }
+  return { amount, toolUids };
+}
+
+/** 🆕🆕🆕 §8.1 (D562) — THE SURVIVAL BRACE on `holder` that would answer an attack from
+    `attackerSeat` (*"If the Pokémon this card is attached to has full HP and would be
+    Knocked Out by damage from an attack from your opponent's Pokémon, it is not Knocked
+    Out, and its remaining HP becomes 10. Then, discard this card."*), or `undefined`.
+    Only the SOURCE half: the full-HP and lethality halves are `koSurvivalClamp`'s, which
+    calls this and names the uid in its result so the damage write can discard it. The
+    first in-effect Brace (§7.4 allows one Tool per body). */
+export function survivalBraceOf(
+  state: GameState,
+  holder: InPlayPokemon,
+  attackerSeat: Seat,
+): string | undefined {
+  return opposedToolPassives(state, holder, attackerSeat).find(
+    ({ passive }) => passive.survivesKoAtFullHpFromOpponentThenDiscard === true,
+  )?.uid;
+}
+
+/** 🆕🆕🆕 §9 (D562) — THE DELUXE BOMB recoil on `holder`: the HP of damage counters its
+    in-effect Bombs put on the Attacking Pokémon (*"If the Pokémon this card is attached
+    to is in the Active Spot and is damaged by an attack from your opponent's Pokémon
+    (even if this Pokémon is Knocked Out), put 12 damage counters on the Attacking
+    Pokémon. If you placed any damage counters in this way, discard this card."*), and the
+    Tools that pay it. Asked ONLY where the `damageAttacker` recoil is — attack.ts's main
+    hit and interpreter.ts `reactToAttackDamage` — and both damage an ACTIVE, so the
+    printed "in the Active Spot" is discharged by placement, not re-asked here (R-DB). */
+export function deluxeBombOf(
+  state: GameState,
+  holder: InPlayPokemon,
+  attackerSeat: Seat,
+): { amount: number; toolUids: readonly string[] } {
+  let amount = 0;
+  const toolUids: string[] = [];
+  for (const { uid, passive } of opposedToolPassives(state, holder, attackerSeat)) {
+    const bomb = passive.damageAttackerActiveThenDiscard;
+    if (bomb === undefined) continue;
+    amount += bomb;
+    toolUids.push(uid);
+  }
+  return { amount, toolUids };
+}
+
+/** 🆕🆕🆕 §12 (D562) — does the in-play Stadium shield `pokemon` from every Special
+    Condition? Festival Grounds `sv06-149`/`sv08.5-108`: *"Each Pokémon that has any
+    Energy attached (both yours and your opponent's) recovers from all Special Conditions
+    and can't be affected by any Special Conditions."* "Any Energy" is a card count, so
+    `energy.length > 0` (Regirock "Rock Armor"'s reading, D559). Live-read, no seat, no §9
+    gate (a Stadium). Asked by interpreter.ts `applyStatus` (the refusal half) and flow.ts
+    `recoverStatuses` (the recovery half) — the same two-clause split Therapeutic Energy's
+    `statusImmunities`/`statusRecovery` pair makes (R-FG). */
+export function stadiumShieldsStatus(state: GameState, pokemon: InPlayPokemon): boolean {
+  return stadiumEffectsOf(state)?.statusShieldIfEnergyAttached === true && pokemon.energy.length > 0;
+}
+
 /** §9 — the top uids of every in-play Pokémon whose Abilities are currently
     suppressed by a continuous Ability-lock AURA (Klefki "Mischievous Lock" /
     Spiritomb "Fettered in Misfortune" / Ting-Lu ex "Cursed Land"). A single
@@ -291,7 +422,9 @@ export function stadiumPoisonExtraCounters(state: GameState, top: Card | undefin
     Pokémon under an Ability-lock aura (§9 disableAbilities) contributes nothing
     from its own printed passive — that passive IS an Ability — but its attached
     Tools (not Abilities) and its attached Energy (not Abilities either) keep
-    working. */
+    working. 🆕🆕🆕 D562 — the Tools keep working under a §9 lock, and stop under
+    Jamming Tower: the Tool entries come through `toolsInEffect`, a non-§9 gate (a
+    Stadium, not an Ability-lock). */
 export function passivesOf(
   state: GameState,
   pokemon: InPlayPokemon,
@@ -787,7 +920,9 @@ export function passivesOf(
 } {
   const top = topCardOf(state, pokemon);
   // A locked Pokémon's own printed passive (an Ability) is suppressed; its Tools
-  // are not Abilities and keep contributing. The lock aura itself is read by
+  // are not Abilities and keep contributing (🆕🆕🆕 D562: under a §9 LOCK — still true;
+  // Jamming Tower is a separate, non-§9 gate that empties the Tool sources through
+  // `toolsInEffect`, R-JT). The lock aura itself is read by
   // disabledAbilityUids straight off the passive, never here, so this never
   // recurses (disableAbilities carries no field this aggregation consumes).
   const holderUid = topUid(pokemon);
@@ -980,7 +1115,8 @@ export function passivesOf(
   // `seatDamageReductionAfterWR` sits on and not a new one.
   //
   // 🆕🆕🆕 D558 — THREE MORE UNFOLDED `PassiveEffects` FIELDS, all TOOL fields read by
-  // their own scans straight off `pokemon.tools` (never off `sources`, so the §9 drop
+  // their own scans straight off `pokemon.tools` (🆕🆕🆕 D562: off `toolsInEffect(state,
+  // pokemon)` now, so Jamming Tower empties them; still never off `sources`, so the §9 drop
   // on `sources[0]` cannot reach them and an Energy writer could not either):
   // `attackCostDiscount` (`toolAttackCostDiscount`, summed into
   // `selfAttackCostDiscount`), `retreatCostDiscount` (`toolRetreatDiscount` and
@@ -1011,9 +1147,21 @@ export function passivesOf(
   // `disableAbilities`' `stage "Stage2"` / `sourceOnBench` / `targetZone` and
   // `seatDamageReductionAfterWR.beneficiaryHasEnergy` ride fields this loop never
   // reads. No key this fold returns is new, so its `passivesOf` key set does not move.
+  //
+  // 🆕🆕🆕 D562 — THREE NEW UNFOLDED TOOL FIELDS AND ONE NEW GATE ON THE TOOL SOURCES.
+  // `damageReductionAfterWRFromTypeThenDiscard` (the six Berries),
+  // `survivesKoAtFullHpFromOpponentThenDiscard` (Survival Brace) and
+  // `damageAttackerActiveThenDiscard` (Deluxe Bomb) are CONSUMABLES: each discards the
+  // Tool that paid, and a fold that sums into numbers cannot say which Tool that was, so
+  // all three are read by their own per-Tool scans (`berryReductionOf`,
+  // `survivalBraceOf`, `deluxeBombOf`) and NONE is summed here — deliberately, so this
+  // fold's key set and every pin on it stay where they are. The Tool entries of
+  // `sources` now come through `toolsInEffect`, so Jamming Tower empties them (and the
+  // holder's printed passive and its Energy stay, since neither is a Tool).
   const sources: (PassiveEffects | undefined)[] = [
     disabled || top === undefined ? undefined : programFor(top.id)?.passive,
-    ...pokemon.tools.map((uid) => {
+    // 🆕🆕🆕 D562 — through `toolsInEffect`: under Jamming Tower no Tool reaches the fold.
+    ...toolsInEffect(state, pokemon).map((uid) => {
       const id = state.cardIdByUid[uid];
       return id === undefined ? undefined : programFor(id)?.passive;
     }),
@@ -1283,6 +1431,12 @@ export function passivesOf(
     // TOOL — so the field is already shaped for the twin. What stops that card
     // being authored today is its SECOND sentence ("Then, discard this card."),
     // not this fold. No Tool or Energy writer in the registry today.
+    // 🆕🆕🆕 D562 CORRECTION (D539): ~~"What stops that card being authored today"~~ and
+    // ~~"No Tool or Energy writer in the registry today"~~ are WITHDRAWN — Survival Brace
+    // is BUILT, and NOT through this field: its "from your opponent's Pokémon" and its
+    // "Then, discard this card." need the paying Tool's uid, which this fold destroys, so
+    // it writes `survivesKoAtFullHpFromOpponentThenDiscard`, read by `survivalBraceOf`
+    // inside `koSurvivalClamp`. This field still has no Tool or Energy writer.
     if (passive.survivesKoAtFullHp === true) survivesKoAtFullHp = true;
     // D242 — the §8 attack GATE, collected RAW exactly like the two conditional
     // damage-bonus lists above it, and IN THIS LOOP for `survivesKoAtFullHp`'s
@@ -1371,10 +1525,35 @@ export function passivesOf(
     reason): "its remaining HP becomes 10". */
 const KO_SURVIVAL_REMAINING_HP = 10;
 
+/** 🆕🆕🆕 §8.1 (D562) — what `koSurvivalClamp` returns when it fires: the new `damage`
+    total and, when a Survival Brace answered, the Brace's uid for the damage write to
+    discard (*"Then, discard this card."*). `toolUid` is `undefined` for an Ability-only
+    survival (Resolute Heart / Sturdy). */
+export type KoSurvival = { damage: number; toolUid: string | undefined };
+
 /** §8.1 THE KO-SURVIVAL CLAMP — the new `damage` total for `pokemon` when it has
     FULL HP, carries the survival passive, and `dealt` HP of ATTACK DAMAGE would
     Knock it Out; `null` when the clamp does not fire and the caller must write its
     ordinary `pokemon.damage + dealt`.
+
+    🆕🆕🆕 **D562 — THE RESULT IS NO LONGER ONLY A NUMBER, AND THE SOURCE IS NO LONGER ONLY
+    THE FOLD.** It returns a `KoSurvival` — the damage total above PLUS the uid of the
+    Survival Brace `sv06-164` that answered, if one did — because the Tool twin prints
+    *"Then, discard this card."* and the four damage writes that call this are the only
+    places the discard can happen. `attackerSeat` is the Brace's *"from your opponent's
+    Pokémon"* (`survivalBraceOf`): an own-side spread or snipe reaches Resolute Heart /
+    Sturdy (whose sentence says only "from an attack") and never a Brace. The second
+    refusal below now reads "no survival passive AND no Brace". ⚠️ R-BR (UNRULED): a body
+    carrying BOTH clamps ONCE (the damage total is the same number either way) and the
+    Brace IS discarded — the Brace's antecedent held, so its consequent runs whole.
+    Reversal: a ruling that the Ability's survival pre-empts the Tool (keep the Brace).
+    ⚠️ R-BF (UNRULED): NO CALLER GATES THIS ON `suppressTargetEffects` / `ignoreWR`, so
+    under Feint (*"this attack's damage isn't affected by … any effects on your opponent's
+    Active Pokémon"*) the Berry is dropped but the Brace still answers — the clamp does not
+    change the DAMAGE (`dealt` is written in full), it answers the KO that damage would
+    cause, which is how Resolute Heart / Sturdy have read under Feint since D208. Driven
+    at the main hit and both snipe arms (toolsD562 §4). Reversal: a ruling that Feint's
+    clause reaches a KO-survival effect — then each caller passes `null` under the flag.
 
     "If this Pokémon has full HP and would be Knocked Out by damage from an attack,
     it is not Knocked Out, and its remaining HP becomes 10." — Pikachu ex "Resolute
@@ -1418,7 +1597,9 @@ const KO_SURVIVAL_REMAINING_HP = 10;
       • `pokemon.damage !== 0` — THE PRINTED ANTECEDENT. Full HP means no damage
         counters at all; one counter and the body dies normally.
       • no `survivesKoAtFullHp` — read through `passivesOf`, so a §9 Ability-lock
-        over the holder switches it off (both printings are Abilities).
+        over the holder switches it off (both printings are Abilities). 🆕🆕🆕 D562:
+        AND no in-effect Survival Brace against `attackerSeat` (`survivalBraceOf`) —
+        a Tool, so a §9 lock leaves it and Jamming Tower silences it.
       • `hp === null` — the catalog data gap, which `effectiveMaxHp` owns and which
         NEVER KOs (flow.ts `isLethallyDamaged` says the same), so again there is no
         KO to refuse.
@@ -1448,9 +1629,11 @@ export function koSurvivalClamp(
   state: GameState,
   pokemon: InPlayPokemon,
   dealt: number,
-): number | null {
+  attackerSeat: Seat,
+): KoSurvival | null {
   if (pokemon.damage !== 0) return null;
-  if (!passivesOf(state, pokemon).survivesKoAtFullHp) return null;
+  const toolUid = survivalBraceOf(state, pokemon, attackerSeat);
+  if (toolUid === undefined && !passivesOf(state, pokemon).survivesKoAtFullHp) return null;
   const hp = effectiveMaxHp(state, pokemon);
   if (hp === null) return null;
   if (pokemon.damage + dealt < hp) return null;
@@ -1458,7 +1641,7 @@ export function koSurvivalClamp(
   // standing. Floored, so a printing with 10 HP or less lands at 0 rather than
   // negative damage; no such body exists in the pool and the floor is not load-
   // bearing, it is `Math.max(0, …)` for the reason every other write site has one.
-  return Math.max(0, hp - KO_SURVIVAL_REMAINING_HP);
+  return { damage: Math.max(0, hp - KO_SURVIVAL_REMAINING_HP), toolUid };
 }
 
 /** §8.5 (D159) — does `attacker` belong to one of the printed TYPES a holder's
@@ -4775,7 +4958,7 @@ export function effectiveRetreatCost(state: GameState, pokemon: InPlayPokemon): 
     offset a surcharge and never goes negative on its own. NOT §9-gated (R-T1). */
 export function toolRetreatDiscount(state: GameState, pokemon: InPlayPokemon): number {
   let discount = 0;
-  for (const toolUid of pokemon.tools) {
+  for (const toolUid of toolsInEffect(state, pokemon)) {
     const id = state.cardIdByUid[toolUid];
     discount += (id === undefined ? undefined : programFor(id)?.passive?.retreatCostDiscount)?.amount ?? 0;
   }
@@ -4789,7 +4972,7 @@ export function toolRetreatDiscount(state: GameState, pokemon: InPlayPokemon): n
     member beside `hasFreeRetreatAura`/`hasFreeRetreatSelf`, and deliberately NOT the
     latter: that one returns early on a top card with no passive and is §9-gated. */
 export function toolFreesRetreat(state: GameState, pokemon: InPlayPokemon): boolean {
-  return pokemon.tools.some((toolUid) => {
+  return toolsInEffect(state, pokemon).some((toolUid) => {
     const id = state.cardIdByUid[toolUid];
     const atMost =
       id === undefined ? undefined : programFor(id)?.passive?.retreatCostDiscount?.freeAtRemainingHpAtMost;
@@ -4813,7 +4996,7 @@ export function activeRetreatSurcharge(state: GameState, pokemon: InPlayPokemon)
   if (!actives.some((active) => topUid(active) === uid)) return 0;
   let added = 0;
   for (const active of actives) {
-    for (const toolUid of active.tools) {
+    for (const toolUid of toolsInEffect(state, active)) {
       const id = state.cardIdByUid[toolUid];
       added += (id === undefined ? undefined : programFor(id)?.passive?.activeRetreatSurchargeBoth) ?? 0;
     }
@@ -4976,7 +5159,8 @@ export function selfAttackCostDiscount(state: GameState, pokemon: InPlayPokemon)
 
 /** 🆕🆕🆕 §8.2 (D558) — the {C} SUBTRACTED from `pokemon`'s attacks by its ATTACHED
     TOOLS' `attackCostDiscount` (Counter Gain `sv08-169`/`-249`, the cost half of
-    Hop's Choice Band `sv09-148`). Summed over `pokemon.tools`, one term per Tool, and
+    Hop's Choice Band `sv09-148`). Summed over `pokemon.tools` (🆕🆕🆕 D562: over
+    `toolsInEffect`, so none under Jamming Tower, R-JT), one term per Tool, and
     NEVER §9-gated: a Tool is not an Ability (R-T1). Top-level, so a mutant row may
     name it (the binding gate).
       • `holder` is matched on the HOLDER's TOP card (R-T3) — the Tool's own printed
@@ -4992,7 +5176,7 @@ export function toolAttackCostDiscount(state: GameState, pokemon: InPlayPokemon)
   const uid = topUid(pokemon);
   if (top === undefined || uid === undefined) return 0;
   let discount = 0;
-  for (const toolUid of pokemon.tools) {
+  for (const toolUid of toolsInEffect(state, pokemon)) {
     const id = state.cardIdByUid[toolUid];
     const term = id === undefined ? undefined : programFor(id)?.passive?.attackCostDiscount;
     if (term === undefined) continue;

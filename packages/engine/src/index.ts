@@ -439,7 +439,12 @@ import type { GameState, Seat } from "./types";
     Klawf ex prizes 2). triggers.ts `runDamagedByAttackTriggers` (the D99 inline
     runner) became the `damagedByAttackAbility` gated lookup. Armarouge's Burn
     (non-parking) rides the same staged path, byte-identical. No web/API/DB/schema
-    change (the discard surfaces via the existing ENERGY_DISCARDED event). */
+    change (the discard surfaces via the existing ENERGY_DISCARDED event).
+    (🆕🆕🆕 D562 CORRECTION (D539), this dated block kept as written: ~~"only when the
+    damaged Active carries such an Ability"~~ no longer describes HEAD — attack.ts now
+    also seeds one `damagedTrigger` stage per in-effect damaged-reacting TOOL on that
+    Active (Lucky Helmet, Handheld Fan; `uid` = the Tool), behind the Ability's (R-LH).
+    A board with neither still keeps its exact queue.) */
 
 /* 0.53.0 — STADIUM ACTIVATED ABILITIES: the "once during each player's turn"
     Stadium row (P3-M5, D102) — Artazon (sv02-171/-229), Mesagoza (sv01-178),
@@ -4305,7 +4310,8 @@ import type { GameState, Seat } from "./types";
     PROGRAM, AND IT NEEDED A FOURTH DETECTION SITE.** All three existing ones fail
     structurally: `onKnockOutTrigger` reads the KO'd body's TOP CARD (wrong body, and
     never tools); `triggersOf` reads `topCardOf` (a Tool is not a stack top, for ANY
-    timing); `passivesOf` is the only site that walks `pokemon.tools` and folds
+    timing); `passivesOf` is the only site that walks `pokemon.tools` (🆕🆕🆕 D562: true of
+    this dated head only — no longer, see triggers.ts's D562 correction) and folds
     `passive` into **numbers** — which is exactly why Vengeful Punch was a data row
     and this is not. So `triggers.ts koToolTriggersOf` is new: *for each of my
     in-play Pokémon, for each attached Tool, is there an `onAllyActiveKnockOut`
@@ -6101,7 +6107,11 @@ import type { GameState, Seat } from "./types";
     opponent's Pokémon" **and a second sentence — "Then, discard this card."** A
     passive fold has no way to consume its own source, and the discard is a STATE
     WRITE that would have to happen at the clamp site with the Tool's uid in hand.
-    It needs a self-discard rider; flagged, not built. The census also surfaced
+    It needs a self-discard rider; flagged, not built. (🆕🆕🆕 D562 CORRECTION (D539),
+    this dated block kept as written: ~~"PRICED AND REFUSED"~~ / ~~"flagged, not built"~~
+    no longer describe HEAD — D562 BUILT Survival Brace on its own key,
+    `survivesKoAtFullHpFromOpponentThenDiscard`, with `koSurvivalClamp` naming the Tool it
+    discards.) The census also surfaced
     Machamp sv03.5-068 "Guts" — the same consequent with NO full-HP antecedent and
     a COIN FLIP in front of it, mark G and `legal_standard = 0` — and both refusals
     are asserted, so folding either in for a bigger printing count fails.
@@ -6120,7 +6130,7 @@ import type { GameState, Seat } from "./types";
     `passivesOf` fold census 12 → **13 keys**, with the Energy-reachability audit
     re-read field by field (**reachable ✔ correct**: an attached source is not an
     Ability, so it would rightly survive a §9 lock — which is exactly the shape the
-    unbuilt Survival Brace would need). `clauseApostrophe` 78 → **82**, attributed
+    unbuilt Survival Brace would need — 🆕🆕🆕 D562: built, on its OWN key, not this one). `clauseApostrophe` 78 → **82**, attributed
     to the exact four apostrophe-bearing attack effects `fix-koblast` fields, and
     the Ability itself contributes **nothing** — twice over, since the sweep reads
     `card.attacks` only AND the sentence carries no apostrophe at all.
@@ -18399,7 +18409,11 @@ import type { GameState, Seat } from "./types";
     after the turn ended. Every other interpreter op finishes synchronously — i.e.
     ahead of all three — and this one is a stage only because WHICH face-down prize is a
     player's decision, so it belongs where the work would have happened. (🆕🆕🆕 D548:
-    the take now offers the whole row, a face-UP slot included.) An attack that
+    the take now offers the whole row, a face-UP slot included.) (🆕🆕🆕 D562 CORRECTION
+    (D539), this dated block kept as written: the `damagedTrigger?` slot of that bracket
+    may now be SEVERAL `damagedTrigger` stages — an Ability's and one per damaged-reacting
+    Tool — all of kind `damagedTrigger`, so the splice still lands ahead of every one.)
+    An attack that
     also Knocks the Defender out therefore queues **two** `takePrizes` stages, in that
     order, and they are correctly not one batch: this prize is step 4 of the attack,
     which precedes the Knock Out check.
@@ -20142,6 +20156,42 @@ import type { GameState, Seat } from "./types";
     `expect(manifest.version)`, `it(…)` titles, the declaration and `package.json` —
     **not** as a value-keyed grep — because a value-keyed grep is precisely the mechanism
     that ate D500's heading.)
+    🆕🆕🆕 engineVersion 0.445.0 → **0.446.0** (D562 — CONSUMABLE TOOLS, JAMMING TOWER AND FESTIVAL
+    GROUNDS: 14 PRINTINGS / 12 TEXTS / 12 OBJECTS. Twelve registry `CardProgram`s — ten Tools and two
+    Stadiums — keyed on fourteen REAL ids inserted MID-MAP after `sv05-156` (D395/D396, so `raw[last]`
+    stays `sv09-107`). **Jamming Tower** `sv06-153`/`sv10-243` on the NEW `StadiumEffects.toolsHaveNoEffect`,
+    read by ONE NEW continuous.ts function, `toolsInEffect`, that every Tool EFFECT walk now goes through
+    (`passivesOf`'s Tool sources, `toolRetreatDiscount`, `toolFreesRetreat`, `activeRetreatSurcharge`'s
+    Gemstone term, `toolAttackCostDiscount`, triggers.ts `koToolTriggersOf` and the new scans below) while
+    every Tool COUNT read stays on the raw list (R-JT). **The six type Berries** (Haban `sv08.5-111`, Occa
+    `sv07-140`, Payapa `sv07-141`, Babiri `sv08-163`, Colbur `sv08-168`, Passho `sv08-184`) on the NEW
+    `PassiveEffects.damageReductionAfterWRFromTypeThenDiscard`, read by the NEW `berryReductionOf` (an
+    opposing attacker whose types include the Berry's) and summed into `reduction` at all four §8.5 sites;
+    the Berry is discarded after any unprevented hit it reduced, 0 included, and not when a prevention,
+    `suppressTargetEffects`/`ignoreWR` or the damage-step-2 stop kept it from applying (R-BE ⚠️ UNRULED).
+    **Survival Brace** `sv06-164` (ACE SPEC) on the NEW `survivesKoAtFullHpFromOpponentThenDiscard`, read by the NEW
+    `survivalBraceOf` inside `koSurvivalClamp`, which now takes the attacker's seat and returns a
+    `KoSurvival { damage, toolUid }` so the four damage writes discard the Brace (R-BR ⚠️ UNRULED: with
+    Resolute Heart / Sturdy too, the clamp fires once and the Brace is still spent; R-BF ⚠️ UNRULED: under
+    Feint's suppression the Berry is dropped but the Brace still answers, as Sturdy always has); its
+    `REFUSED_PRINTINGS` row is deleted. **Deluxe Bomb** `sv07-134` (ACE SPEC) on the NEW
+    `damageAttackerActiveThenDiscard: 120`, read by the NEW `deluxeBombOf` and placed by the NEW
+    interpreter.ts `detonateDeluxeBomb` wherever the `damageAttacker` recoil is — attack.ts's main hit and
+    `reactToAttackDamage` — on its OWN `"counterattack"` row, then discarded (R-DB). **Lucky Helmet**
+    `sv06-158` (`drawCards 2`) and **Handheld Fan** `sv06-150` (D443's opponent-side `selfToBench`
+    `moveEnergy`, max 1 — R-HF: the family's standing decline, and Klawf ex's D101 read of the opponent's
+    CURRENT Active, inherited) as Tool-borne `onDamagedByAttack`
+    triggers: the NEW triggers.ts `damagedToolTriggersOf` seeds ONE `damagedTrigger` stage PER TOOL, `uid`
+    = the Tool, behind the Ability's stage (R-LH), at both seeding sites, and flow.ts `runDamagedTrigger`
+    dispatches on the uid (no `ABILITY_TRIGGERED` row for a Tool). **Festival Grounds** `sv06-149`/
+    `sv08.5-108` on the NEW `StadiumEffects.statusShieldIfEnergyAttached` and the NEW
+    `stadiumShieldsStatus`: refused at `applyStatus` (one `STATUS_PREVENTED`), every present condition
+    cleared by `recoverStatuses`, which `playStadium` now calls as a FIFTH recovery moment (R-FG). The
+    consumables leave through ONE `TOOLS_DISCARDED` per host with the NEW `when: "consumed"` member and
+    its log tail. **`MATCH_RECORD_VERSION` STAYS 35**: every new key is catalog data, the event union
+    widening is unpersisted, and the `damagedTrigger` SHAPE is unchanged (a 0.445 reader drains a Tool-uid
+    stage as a silent whiff) — see docs/decisions.md D562 (d). Withdrawn and annotated in place (D539):
+    docs/decisions.md D562 (f). Ruffian `sv09-157`/`-181` is CUT (a body-first pick, D562 (g)).)
     🆕🆕🆕 engineVersion 0.444.0 → **0.445.0** (D561 — THE TRAINER BUNDLE: 15 PRINTINGS / 9 TEXTS / 9
     OBJECTS, EVERY ADDITION AN OPTIONAL KEY, A UNION MEMBER OR ONE SCAN. Nine registry `CardProgram`s —
     seven `trainer` and two `stadium` — keyed on fifteen REAL ids inserted MID-MAP after `sv07-006`
@@ -20266,7 +20316,8 @@ import type { GameState, Seat } from "./types";
     🆕🆕🆕 engineVersion 0.441.0 → **0.442.0** (D558 — THE FIRST TOOLS AND STADIUMS ON THE FOUR EXISTING
     MODIFIER SEAMS, PLUS SALVATORE: 18 PRINTINGS / 12 TEXTS / 12 OBJECTS. Twelve registry `CardProgram`s
     keyed on eighteen REAL ids inserted MID-MAP after `sv10.5w-085` (D395/D396, so `raw[last]` stays
-    `sv09-107`). **TOOLS** (read off `pokemon.tools` by their own scans, NOT folded by `passivesOf`, NOT
+    `sv09-107`). **TOOLS** (read off `pokemon.tools` by their own scans — 🆕🆕🆕 D562: off
+    `toolsInEffect(state, pokemon)` now, so Jamming Tower empties them — NOT folded by `passivesOf`, NOT
     §9-gated — R-T1): Counter Gain `sv08-169`/`-249` and the cost half of Hop's Choice Band `sv09-148` on
     the NEW `PassiveEffects.attackCostDiscount { amount, holder?, ifMorePrizesRemaining? }`, summed by
     `toolAttackCostDiscount` AHEAD of `selfAttackCostDiscount`'s two early returns so only the top card's
@@ -24460,7 +24511,7 @@ import type { GameState, Seat } from "./types";
     WITNESS** — the count was re-derived every slice and the word *"three"* was carried.
     A successor of this slice inherits **81 / 61 / 17** again, over **FIVE** history
     occurrences: those four plus `deckMillFilteredScale.test.ts`'s own header arrow.) */
-export const engineVersion = "0.445.0";
+export const engineVersion = "0.446.0";
 
 export type {
   ApplyResult,

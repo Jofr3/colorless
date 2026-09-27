@@ -46,7 +46,8 @@ import {
 // same shape, and both SHIPPED. §7 below drives what the audit found.
 //
 // 🛑 THE STAGE IS SPLICED AHEAD OF THE ATTACK'S QUEUED TAIL. `attack.ts` queues
-// [damagedTrigger?, koToolTrigger?, attackEpilogue] BEFORE the program runs, so an
+// [damagedTrigger?, koToolTrigger?, attackEpilogue] (🆕🆕🆕 D562: the first slot may now
+// hold an Ability's stage AND one per damaged-reacting Tool, all `damagedTrigger`) BEFORE the program runs, so an
 // APPEND would take this prize after the §8.1 Knock Out sweep and after the turn had
 // ended. §5 drives the order, including the case where the same attack also Knocks
 // the Defender Out and TWO `takePrizes` stages are owed.
@@ -367,7 +368,7 @@ describe("§3 — `MATCH_RECORD_VERSION` stays 26, and the prediction is DRIVEN"
   });
 
   it("the engine version moved and the two spellings agree", () => {
-    expect(engineVersion).toBe("0.445.0");
+    expect(engineVersion).toBe("0.446.0");
   });
 });
 

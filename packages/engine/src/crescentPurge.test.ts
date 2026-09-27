@@ -582,10 +582,10 @@ describe("§11 — MATCH_RECORD_VERSION 31 → 32: a v31 state without the key t
     );
   });
 
-  it("the constant is 35 (🆕🆕🆕 D556 stepped it 34 → 35; D552 stepped it 33 → 34; D549 stepped it 32 → 33; this slice's own bump was 31 → 32) and the engine is 0.445.0", () => {
+  it("the constant is 35 (🆕🆕🆕 D556 stepped it 34 → 35; D552 stepped it 33 → 34; D549 stepped it 32 → 33; this slice's own bump was 31 → 32) and the engine is 0.446.0", () => {
     expect(raw("/match.ts")).toContain("export const MATCH_RECORD_VERSION = 35;");
-    expect(engineVersion).toBe("0.445.0");
-    expect(manifest.version).toBe("0.445.0");
+    expect(engineVersion).toBe("0.446.0");
+    expect(manifest.version).toBe("0.446.0");
   });
 });
 

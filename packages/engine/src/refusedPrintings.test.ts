@@ -352,7 +352,7 @@ describe("the guard cannot pass by being empty or by being unwired", () => {
     // (4) in the header. §2 is trivially green on an empty table and §3 is trivially
     // green on an empty one; the two guard each other only if neither can be emptied
     // without a red line.
-    expect(REFUSED_PRINTINGS.length).toBeGreaterThanOrEqual(7); // 🆕🆕🆕 D555 — 9 -> 7, the Samurott pair built and deleted
+    expect(REFUSED_PRINTINGS.length).toBeGreaterThanOrEqual(6); // 🆕🆕🆕 D555 — 9 -> 7, the Samurott pair built and deleted; 🆕🆕🆕 D562 — 7 -> 6, Survival Brace built and deleted
     expect(RESOLVED_REFUSALS.length).toBe(3);
     const refusedIds = REFUSED_PRINTINGS.map((r) => r.id);
     const resolvedIds = RESOLVED_REFUSALS.map((r) => r.id);
@@ -367,13 +367,20 @@ describe("the guard cannot pass by being empty or by being unwired", () => {
     // broken `programFor` import that returned `undefined` for everything, and it
     // would be green for exactly the wrong reason. So the same call is driven to a
     // DEFINED answer on the same run, on the ids this slice is about.
-    expect(programFor("sv06-165")).toBeDefined();
-    expect(programFor("sv06-164")).toBeUndefined();
+    //
+    // 🆕🆕🆕 D562 — RE-POINTED from Unfair Stamp `sv06-165` (built) / Survival Brace
+    // `sv06-164` (refused): D562 BUILT the Brace and deleted its row, so that pair is now
+    // built/built and could not tell a working oracle from one answering "defined" for
+    // everything. The new pair keeps the rung's whole shape — neighbouring printings in
+    // ONE set, one built and one refused, MEASURED at this head: Crispin `sv07-133` is
+    // BUILT (D561) and Briar `sv07-132` is REFUSED (a `REFUSED_PRINTINGS` row).
+    expect(programFor("sv07-133")).toBeDefined();
+    expect(programFor("sv07-132")).toBeUndefined();
     // Sharper still: the two are neighbouring printings in the SAME set, one built
     // and one refused, so a `programFor` keyed on anything coarser than the id fails
     // here rather than passing quietly.
-    expect(REFUSED_PRINTINGS.some((r) => r.id === "sv06-164")).toBe(true);
-    expect(REFUSED_PRINTINGS.some((r) => r.id === "sv06-165")).toBe(false);
+    expect(REFUSED_PRINTINGS.some((r) => r.id === "sv07-132")).toBe(true);
+    expect(REFUSED_PRINTINGS.some((r) => r.id === "sv07-133")).toBe(false);
   });
 
   it("the refused set really is drawn from live doc blocks, not invented", () => {

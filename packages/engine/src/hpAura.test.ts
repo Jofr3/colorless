@@ -74,7 +74,8 @@ import {
 //
 //     **AND THE REST OF THE 24/21/5 IS NOT AN HP GRANT AT ALL**, which is the
 //     other half of the proof: `Resolute Heart`/`Sturdy` (7) and Survival Brace
-//     read *"full HP"* as a KO REFUSAL (D208, built); Pidove/Ledian/Fan Rotom/
+//     read *"full HP"* as a KO REFUSAL (D208, built — 🆕🆕🆕 D562 CORRECTION (D539):
+//     Survival Brace was NOT built when this line said so; it is now, at D562); Pidove/Ledian/Fan Rotom/
 //     Alomomola/Mandibuzz/Bianca's Devotion/Buddy-Buddy Poffin/Rescue Board read
 //     *"N HP or less"* as a THRESHOLD (D265/D275, built — 🆕🆕🆕 D558 CORRECTION
 //     (D539): Rescue Board was NOT built when this line said so; it is now,

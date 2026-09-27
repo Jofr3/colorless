@@ -555,6 +555,10 @@ describe("⚠️ passivesOf's THIRD SOURCE CLASS — an attached ENERGY", () => 
     // non-Ability printing of this sentence is a TOOL — Survival Brace sv06-164 —
     // which is unauthored for a reason that has nothing to do with this fold: its
     // second sentence, "Then, discard this card.", needs a self-discard rider.
+    // 🆕🆕🆕 D562 CORRECTION (D539): ~~"which is unauthored"~~ is WITHDRAWN — D562 BUILT
+    // it on its OWN key (`survivesKoAtFullHpFromOpponentThenDiscard`, read by
+    // `survivalBraceOf` inside `koSurvivalClamp`), so this fold's key and census are
+    // unmoved and "There is no Energy writer today" still holds.
     //
     // ⚠️ AND IT IS THE FIRST KEY OF THIS FOLD READ AT A DAMAGE **WRITE** RATHER
     // THAN INSIDE THE §8.5 PIPELINE. Every other number here changes `dealt`
@@ -1160,10 +1164,12 @@ describe("⚠️ THE RECOVERY — a condition already present, cleared by a cont
 // THE FOUR NAMED MOMENTS — where the invariant is restored, and why those four.
 // D174 shipped two and CLAIMED the other two were covered; D176 found they were
 // not and wired them, so every route by which a recovery source can newly cover a
-// body is a call site with a case underneath it.
+// body is a call site with a case underneath it. (🆕🆕🆕 D562 CORRECTION (D539): ~~"those
+// four"~~ — a FIFTH call site, `playStadium` (a Stadium entering the zone newly covers a
+// body under Festival Grounds), is driven in `stadiumsD562.test.ts` §3, not here.)
 // ─────────────────────────────────────────────────────────────────────────────
 
-describe("⚠️ the recovery's FOUR CALL SITES, all driven off printed cards", () => {
+describe("⚠️ the recovery's FOUR pre-D562 CALL SITES (the FIFTH, `playStadium`, is stadiumsD562 §3), all driven off printed cards", () => {
   it("MOMENT 1 — the §6.2 manual attach (turn.ts)", () => {
     // Driven exhaustively above; asserted here as the seam rather than the rule, so
     // a build that moved the call out of `attachEnergy` fails in a case that names

@@ -1314,6 +1314,9 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
       // ABOVE IS KEPT VERBATIM BECAUSE IT IS STILL EXACTLY RIGHT FOR THE ROW IT WAS
       // WRITTEN ABOUT.** *"THE ROW SAYS 'before doing damage' BECAUSE THAT IS WHAT
       // THIS EVENT MEANS"* was true when this event had ONE producer. It now has two,
+      // (🆕 D562, annotated in place per D539: ~~two~~ THREE — `"consumed"`, a
+      // consumable Tool discarding itself after its own effect paid, carries its own
+      // tail just below and never the pre-damage one)
       // and `when` is the event's own answer to which one fired: `"preDamage"` keeps
       // the segment and keeps the claim (the row really is pushed in front of the
       // §8.5 `DAMAGE_DEALT`), while D543's program-tail `discardTools` fires AFTER the
@@ -1328,6 +1331,9 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
         plain(" from "),
         strong(`${names[event.seat]}'s ${cardName(state, event.host)}`),
         ...(event.when === "preDamage" ? [plain(" before doing damage")] : []),
+        // 🆕🆕🆕 D562 — the consumable's tail: the card discarded ITSELF after its own
+        // effect paid, so the row says so (it is filed under its owner, `actor === seat`).
+        ...(event.when === "consumed" ? [plain(" after it took effect")] : []),
       ]);
     }
     case "STADIUM_DISCARDED":

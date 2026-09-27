@@ -2191,7 +2191,14 @@ export type PendingStage =
       Active carries such an Ability, AFTER the attack's own effect program and
       BEFORE finishAttack's §8.1 sweep, so "even if this Pokémon is Knocked Out" is
       free. `uid`'s card is re-looked-up (it is still the Active unless the effect
-      program moved it), so the "in the Active Spot" clause holds at run time. */
+      program moved it), so the "in the Active Spot" clause holds at run time.
+
+      🆕🆕🆕 **D562 CORRECTION (D539): ~~"Seeded by attack.ts only when the damaged Active
+      carries such an Ability"~~ is WITHDRAWN as the whole story — `uid` may now name a
+      POKÉMON TOOL attached to that Active (Lucky Helmet, Handheld Fan), one stage per
+      Tool, queued behind the Ability's (R-LH); flow.ts `runDamagedTrigger` dispatches on
+      it. The SHAPE is unchanged (`seat` + `uid`), so `MATCH_RECORD_VERSION` stays 35 and a
+      0.445 reader drains a Tool-uid stage as a silent whiff. */
   | { kind: "damagedTrigger"; seat: Seat; uid: string }
   /** §8.1 (D171) — run the `onAllyActiveKnockOut` program of a POKÉMON TOOL
       attached to one of `seat`'s SURVIVING Pokémon, because `seat`'s Active is

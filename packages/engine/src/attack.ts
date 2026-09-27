@@ -52,6 +52,9 @@ import {
   installedWeaknessRetypeOf,
   koSurvivalClamp,
   lockedAttackIndexes,
+  // 🆕🆕🆕 D562 — the Berry's §8.5 summand and its "not asked" answer.
+  NO_CONSUMABLE,
+  berryReductionOf,
   opposingAttackDebuff,
   passivesOf,
   preventedByDamageThreshold,
@@ -115,6 +118,12 @@ import {
   countCardsInDiscardPile,
   countCardsInHand,
   countPokemonInPlay,
+  // 🆕🆕🆕 D562 — the consumed-Tool discard and Deluxe Bomb, shared with the
+  // interpreter's three §8.5 sites and `reactToAttackDamage`.
+  consumeTools,
+  consumedTools,
+  detonateDeluxeBomb,
+  discardToPile,
   effectRefused,
   runProgram,
 } from "./interpreter";
@@ -122,7 +131,7 @@ import type { EffectContext } from "./interpreter";
 import { programFor } from "./registry";
 import { flipCoin, flipUntilTails, MAX_UNTIL_TAILS_FLIPS } from "./rng";
 import type { CoinFace } from "./rng";
-import { damagedByAttackAbility, koToolTriggersOf } from "./triggers";
+import { damagedByAttackAbility, damagedToolTriggersOf, koToolTriggersOf } from "./triggers";
 import { isBenchIndex, turnGate } from "./turn";
 import type { GameState, InPlayPokemon, PendingStage, Phase, Seat } from "./types";
 import {
@@ -3031,6 +3040,11 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
   // §9 — the damaged Active's reactive onDamagedByAttack Ability, recorded at
   // damage time but run as a staged epilogue below (so a PARKING discard survives).
   let damagedTriggerStage: PendingStage | null = null;
+  // 🆕🆕🆕 §9 (D562) — and ONE stage PER damaged-reacting TOOL on it (Lucky Helmet,
+  // Handheld Fan), queued BEHIND the Ability's (R-LH). A list and not a second slot in
+  // one stage: a parking Ability program (Klawf ex) would strand a program chained
+  // behind it inside the same stage.
+  let damagedToolStages: PendingStage[] = [];
   // 🆕🆕 **D427 — WHAT § 8.5 ACTUALLY DEALT TO THE DEFENDING ACTIVE, HOISTED TO
   // FUNCTION SCOPE SO THE EFFECT PROGRAM CAN READ IT.** The printed *"Heal from this
   // Pokémon the same amount of damage you did to your opponent's Active Pokémon."*
@@ -3365,9 +3379,21 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
     // exactly the part of it the defending body is granting ITSELF. A Hariyama
     // standing in the Active Spot loses its own 10 to a Koraidon "Shred"; a
     // Hariyama on the Bench keeps shielding its Active teammate through it.
+    //
+    // 🆕🆕🆕 D562 — AND A FOURTH SUMMAND ON THE ON-TARGET ARM: THE BERRY (continuous.ts
+    // `berryReductionOf` — an opposing attacker whose printed types include the Berry's).
+    // A Tool on the damaged Active, so `suppressTargetEffects` drops it with the catalog
+    // half; and it is asked only past the rulebook's damage step 2 stop (`preWR > 0`,
+    // D547's gate below), because a stopped hit never reaches the after-W/R step. A
+    // dropped or unasked Berry is NOT spent (R-BE).
+    const berry =
+      suppressTargetEffects || preWR === 0
+        ? NO_CONSUMABLE
+        : berryReductionOf(next, defender, attacker, action.seat);
     const reduction = suppressTargetEffects
       ? seatDamageReduction(next, defender, "othersOnly", action.seat)
-      : defenderPassives.damageReductionAfterWR +
+      : berry.amount +
+        defenderPassives.damageReductionAfterWR +
         installedReductionOf(next, defender) +
         seatDamageReduction(next, defender, "all", action.seat);
     // §8.5 Mimikyu "Safeguard": prevent ALL damage from an opponent's Pokémon
@@ -3570,8 +3596,11 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
     // it. `dealt` is deliberately NOT clamped — the attack really did deal it, and
     // the `dealt > 0` gates below (Rocky Helmet's `damageAttacker`, the
     // `onDamagedByAttack` trigger) must still see the damage that happened.
-    const clamped = koSurvivalClamp(next, defender, dealt);
-    defended = { ...defender, damage: clamped ?? defender.damage + dealt };
+    //
+    // 🆕🆕🆕 D562 — `action.seat` rides in for Survival Brace's "from your opponent's
+    // Pokémon"; the result names the Brace that answered, if one did.
+    const clamped = koSurvivalClamp(next, defender, dealt, action.seat);
+    defended = { ...defender, damage: clamped?.damage ?? defender.damage + dealt };
     next = withSide(next, defenderSeat, { ...next.players[defenderSeat], active: defended });
     events.push({
       type: "DAMAGE_DEALT",
@@ -3600,6 +3629,17 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
       dealt,
       damage: defended.damage,
     });
+    // 🆕🆕🆕 D562 — the Tools this hit CONSUMED leave AFTER the row that shows what they
+    // did: every Berry that reduced an unprevented hit (0 included — R-BE) and the
+    // Survival Brace the clamp answered with (R-BR). `defended` is re-bound so the Deluxe
+    // Bomb scan below reads the body without them.
+    const spent = consumedTools(prevented ? [] : berry.toolUids, clamped);
+    defended = consumeTools(defended, spent, defenderSeat, events);
+    next = discardToPile(
+      withSide(next, defenderSeat, { ...next.players[defenderSeat], active: defended }),
+      defenderSeat,
+      spent,
+    );
 
     // §9 reactive recoil — a defender with Counterattack Quills / Custom Trap
     // (the `damageAttacker` passive) puts damage counters on the Attacking
@@ -3664,9 +3704,23 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
     // sweep, so "even if Knocked Out" stays free AND Klawf's opponent-side discard
     // decision can PARK (the stage carries a resumeTail into the epilogue). Seeded
     // only when such an Ability is actually present (and not §9-locked), so every
-    // other damaging attack keeps its exact pre-slice queue.
+    // other damaging attack keeps its exact pre-slice queue. (🆕🆕🆕 D562: this is the
+    // ABILITY's stage; a damaged-reacting TOOL gets its own stage just below, one per
+    // Tool, seeded only when such a Tool is present — so the no-reaction queue is still
+    // exactly the pre-slice one.)
     if (dealt > 0 && damagedByAttackAbility(next, defenderSeat, defenderUid) !== undefined) {
       damagedTriggerStage = { kind: "damagedTrigger", seat: defenderSeat, uid: defenderUid };
+    }
+    // 🆕🆕🆕 D562 — DELUXE BOMB, beside the recoil above and under its `dealt > 0` gate
+    // (interpreter.ts `detonateDeluxeBomb`: its own `"counterattack"` row, then the
+    // Bomb's discard). Then the damaged-reacting TOOLS: one stage each, `uid` = the Tool
+    // (triggers.ts `damagedToolTriggersOf`), BEHIND the Ability's stage (R-LH). Seeded
+    // only when such a Tool is present, so every other board keeps its exact queue.
+    if (dealt > 0) {
+      next = detonateDeluxeBomb(next, defenderSeat, defended, action.seat, events);
+      damagedToolStages = damagedToolTriggersOf(next, defenderSeat, defenderUid).map(
+        ({ toolUid }): PendingStage => ({ kind: "damagedTrigger", seat: defenderSeat, uid: toolUid }),
+      );
     }
   }
 
@@ -3712,6 +3766,7 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
       : null;
   const epilogue: PendingStage[] = [
     ...(damagedTriggerStage === null ? [] : [damagedTriggerStage]),
+    ...damagedToolStages,
     ...(koToolStage === null ? [] : [koToolStage]),
     // ⚠️ `uid` IS THE ATTACKER AS OF DECLARATION (D189), and this is the only
     // place in the engine that knows it for certain. `attackerUid` was captured
@@ -3753,13 +3808,14 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
     );
   }
 
-  // No effect program. When the defender reacts — a §9 onDamagedByAttack Ability or
+  // No effect program. When the defender reacts — a §9 onDamagedByAttack Ability, a
+  // 🆕🆕🆕 D562 damaged-reacting Tool (Lucky Helmet / Handheld Fan), or
   // a D171 on-KO Tool — drain [trigger…, epilogue] through advance (either may park;
   // the epilogue behind them resumes on resolve). Otherwise the epilogue alone is
   // exactly finishAttack — its advance case pops itself and calls it — so keep the
   // direct call for the common no-reaction path (byte-identical to the pre-slice
   // tail).
-  if (damagedTriggerStage !== null || koToolStage !== null) {
+  if (damagedTriggerStage !== null || damagedToolStages.length > 0 || koToolStage !== null) {
     return advance({ ...next, pending: [...next.pending, ...epilogue] }, events);
   }
 

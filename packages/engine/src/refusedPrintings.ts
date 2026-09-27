@@ -117,7 +117,9 @@ export type RefusedPrinting = {
     and a completeness claim would be false the moment the next refusal is written
     in prose. What it asserts is that these fourteen printings are still refused.
     (🆕🆕🆕 D555: SEVEN rows at this head, counted — the Samurott pair left when D555 built
-    it; "fourteen" is an older head's figure, kept.) */
+    it; "fourteen" is an older head's figure, kept.) (🆕🆕🆕 D562: SIX — D562 built
+    Survival Brace `sv06-164` (registry.ts `SURVIVAL_BRACE`) and deleted its row, D555's
+    precedent; its cited doc block in registry.ts carries the dated correction.) */
 export const REFUSED_PRINTINGS: readonly RefusedPrinting[] = [
   {
     id: "sv01-127",
@@ -139,17 +141,6 @@ export const REFUSED_PRINTINGS: readonly RefusedPrinting[] = [
     cite: {
       file: "packages/engine/src/registry.ts",
       excerpt: "  // more Prizes remaining). 2 printings, 1 legal — `sv02-192` is not Standard.",
-    },
-  },
-  {
-    id: "sv06-164",
-    card: "Survival Brace",
-    surface: "tool",
-    why: 'The TOOL twin of `survivesKoAtFullHp`. It prints the shipped sentence narrowed to "from your opponent\'s Pokémon" AND a second sentence — "Then, discard this card." — that the field cannot express: a passive fold has no way to consume its own source, and the discard is a STATE WRITE that would have to happen at the clamp site with the Tool\'s uid in hand. It needs a self-discard rider; flagged, priced, not taken.',
-    since: "D243",
-    cite: {
-      file: "packages/engine/src/registry.ts",
-      excerpt: "      • Survival Brace sv06-164 — the TOOL twin, 1 Standard-legal, which adds",
     },
   },
   {
@@ -209,7 +200,9 @@ export const REFUSED_PRINTINGS: readonly RefusedPrinting[] = [
     recomputes it). The "five of the nine" was never the measured figure (THREE at the
     D554 head, the Samurott `-107` the third), and D555 BUILT Samurott `sv10.5w-023`/`-107`
     ("Torrential Whirlpool", registry.ts `TORRENTIAL_WHIRLPOOL`) and deleted both of its
-    rows, so the table is seven rows and the suffix pair is Briar's alone. **A refusal written in suffix shorthand is
+    rows, so the table is seven rows and the suffix pair is Briar's alone. (🆕🆕🆕 D562:
+    six rows — Survival Brace `sv06-164`, cited by its whole id, was built and deleted;
+    the suffix pair is unchanged.) **A refusal written in suffix shorthand is
     invisible to the `git grep <id>` D321 prescribes**, which is the second way a
     build-state claim goes unchecked and the reason those printings get their own
     rows here. So a citation counts if it spells the id whole, OR if it names the SET
@@ -267,7 +260,9 @@ export type ResolvedRefusal = {
     *"deliberately left for their own slice" IS WITHDRAWN*) is guarded by NOTHING here — deleting or
     reverting it reddens no test. A later slice that wants the header's "total in
     both directions" to cover same-slice retirements adds two rows (builtBy D555,
-    refusedBy D312, citing that annotation) and moves this count 3 -> 5. */
+    refusedBy D312, citing that annotation) and moves this count 3 -> 5. (🆕🆕🆕 D562 did
+    the same for Survival Brace `sv06-164` — built, its row deleted, no row added here, its
+    dated correction in registry.ts guarded by nothing in this file — so the count stays 3.) */
 export const RESOLVED_REFUSALS: readonly ResolvedRefusal[] = [
   {
     id: "sv06-165",

@@ -792,7 +792,7 @@ describe("D527 §4 — the census moved in exactly ONE summand, by 1 sentence / 
 
   it("engineVersion and `manifest.version` agree, and the bump is owed for BEHAVIOUR", () => {
     // ⚠️ The version is NOT spelled in this `it(…)` title (D460's fourth class).
-    expect(engineVersion).toBe("0.445.0");
+    expect(engineVersion).toBe("0.446.0");
     expect(manifest.version).toBe(engineVersion);
   });
 

@@ -16152,6 +16152,11 @@ attack.ts:  [ damagedTrigger? , koToolTrigger? , attackEpilogue ]
            settleProgram(..., { resumeTail: true })
 ```
 
+(🆕 D562 CORRECTION (D539): the `damagedTrigger?` slot may now be SEVERAL
+`damagedTrigger` stages — the damaged Active's Ability's, then one per in-effect
+damaged-reacting Tool (Lucky Helmet, Handheld Fan; `uid` = the Tool, R-LH) — all ahead
+of `koToolTrigger?`.)
+
 It sits **BEHIND** `damagedTrigger` because *"damaged"* precedes *"Knocked Out"* in the
 same instant, and because a reaction that heals or switches the defender should be able to
 **unmake the KO this stage is conditioned on**. It sits **AHEAD** of `attackEpilogue`
@@ -28513,7 +28518,8 @@ The whole-corpus sweep (~~D556 → D559, all pending~~ D556, D557 and D558 PAID,
 the rewritten Weakness (display debt, D552 ⑽'s precedent). Next: Feraligatr "Torrential Heart", then (iii)'s non-overlapping
 remainder (Watchtower, Slaking ex, Thwackey, Drilbur, Festival Grounds, Scoop Up Cyclone, Love Ball), re-priced now that
 Gastrodon and Flutter Mane have landed. (🆕🆕🆕 D560: Slaking ex, Thwackey and Drilbur BUILT — see D560 below.) (🆕🆕🆕 D561:
-Scoop Up Cyclone and Love Ball BUILT — see D561 below.)
+Scoop Up Cyclone and Love Ball BUILT — see D561 below.) (🆕🆕🆕 D562: Festival Grounds BUILT — see D562 below; Festival
+Lead, the Ability that names it, stays blocked.)
 
 ## D560 — the ability bundle, part two: 17 printings / 11 texts / 11 objects (engine 0.444.0, `MATCH_RECORD_VERSION` stays 35)
 
@@ -28610,3 +28616,49 @@ Night lit a row the engine refuses) — now in `redact.ts` and GameHud, each dri
 ### (e) Owed
 The whole-corpus sweep (~~D559 → D561 pending~~ D559 and D560 PAID, each exact — D560's `3333 · 52` over 3,385 at close-out `a4e0cd5e`, on its second launch; only D561's own is owed, predicted `3384 killed · 52 known survivor(s)` over 3,436). R-CR1 UNRULED. The 0.444 rollback readings (named, not bumped). Tera Orb and
 Brock's Scouting (deferred); Farfetch'd `sv06-132`; Festival Grounds / Festival Lead; Team Rocket's Watchtower; Crobat.
+(🆕🆕🆕 D562: Festival Grounds BUILT — see D562 below; Festival Lead stays blocked.)
+
+## D562 — consumable Tools, Jamming Tower and Festival Grounds: 14 printings / 12 texts / 12 objects (engine 0.446.0, `MATCH_RECORD_VERSION` stays 35)
+
+**Status:** ✅ BUILT — keyed MID-MAP after `sv05-156`. Built in the `lum-wt-d562` worktree stacked on the parked D561 (🆕 committed
+there on `d562-prep` at `0203be21`, then LANDED on `main` by cherry-pick onto the D561 close-out `f310fd9b`).
+
+### (a) The twelve rows (registry.ts, one block before `const REGISTRY`)
+| Card | Ids | Subtype | Program |
+|---|---|---|---|
+| Haban / Occa / Payapa / Babiri / Colbur / Passho Berry | `sv08.5-111` / `sv07-140` / `sv07-141` / `sv08-163` / `sv08-168` / `sv08-184` | Tool | `passive.damageReductionAfterWRFromTypeThenDiscard { 60, <type> }` |
+| Survival Brace | `sv06-164` | Tool (ACE SPEC) | `passive.survivesKoAtFullHpFromOpponentThenDiscard` |
+| Deluxe Bomb | `sv07-134` | Tool (ACE SPEC) | `passive.damageAttackerActiveThenDiscard: 120` |
+| Lucky Helmet | `sv06-158` | Tool | `triggered [onDamagedByAttack → drawCards 2]` |
+| Handheld Fan | `sv06-150` | Tool | `triggered [onDamagedByAttack → moveEnergy { anyEnergy, max 1, selfToBench, side "opponent" }]` |
+| Jamming Tower | `sv06-153`/`sv10-243` | Stadium | `stadium.toolsHaveNoEffect` |
+| Festival Grounds | `sv06-149`/`sv08.5-108` | Stadium | `stadium.statusShieldIfEnergyAttached` |
+
+### (b) The mechanism
+continuous.ts `toolsInEffect` — every Tool EFFECT walk goes through it, no COUNT read does (R-JT); three consumable scans
+(`berryReductionOf`, `survivalBraceOf`, `deluxeBombOf`) over one seat-gated walk, none folded by `passivesOf`; the Berry a fourth
+`reduction` summand at the four §8.5 sites; `koSurvivalClamp(…, attackerSeat)` → `KoSurvival { damage, toolUid }`; consumed Tools
+leave through `consumeTools` with ONE `TOOLS_DISCARDED { when: "consumed" }` per host; `detonateDeluxeBomb` at both
+`damageAttacker` sites on its own `"counterattack"` row; triggers.ts `damagedToolTriggersOf` and ONE `damagedTrigger` stage PER
+Tool (`uid` = the Tool) behind the Ability's, flow.ts `runDamagedTrigger` dispatching on the uid; `stadiumShieldsStatus` at
+`applyStatus` and `recoverStatuses`, and `playStadium` as the fifth recovery moment. Survival Brace's refusal row deleted.
+
+### (c) Readings (`docs/decisions.md` D562)
+R-BE ⚠️ UNRULED (a Berry is spent on any unprevented hit it reduced, 0 included; not when prevented, suppressed, nulled by
+`ignoreWR` or stopped at damage step 2); R-BR ⚠️ UNRULED (Sturdy + Brace: one clamp, the Brace spent); R-BF ⚠️ UNRULED (under Feint's suppression / `ignoreWR` the
+Berry is dropped but the Brace still answers, as Sturdy always has); R-DB (both recoil sites,
+its own row); R-JT; R-FG; R-HF (the family's standing decline — a named deviation; the §11 shield does not refuse a Tool's move; and, inherited from Klawf ex since D101, the stage reads the opponent's CURRENT Active, not the Attacking Pokémon an attack switched out);
+R-LH (Ability first, then Tools, one stage per source).
+
+### (d) Tests and mutants
+`toolsD562.test.ts` ~~(61)~~ (62 — 🆕 landing, D539: the second review's R-HF current-Active rung made it 62; 61 was the
+count after the first review) and `stadiumsD562.test.ts` (18). Mutants 3,436 → 3,505 (+69 `D562-*`, all killed undeclared: one per
+new branch plus three R-BF reversal pins); twelve
+existing rows re-anchored by script and checked against HEAD (the seven D208 clamp rows, D425's two spread rows, D558's three
+Tool-walk rows), two D480 rows re-pointed (the Brace is built); declared survivors 52 unmoved.
+
+### (e) Owed
+The whole-corpus sweep ~~(D560 → D562 pending)~~ (🆕 landing: D560's and D561's are PAID, each exact — close-outs `a4e0cd5e`
+and `f310fd9b`; only D562's is pending, predicted `3453 · 52` over 3,505). R-BE, R-BR and R-BF UNRULED. The 0.445 rollback readings (named, not bumped). Ruffian
+(CUT: a body-first pick needs its own op); Team Rocket's Factory + Crobat; Community Center; Torrential Heart; C2's ability
+residue (Rocket Brain, Flustered Leap, Tuning Echo, Plasma Bane, Impromptu Carrier).

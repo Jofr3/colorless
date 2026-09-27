@@ -8,6 +8,7 @@ import {
   seatBurnExtraCounters,
   seatKoPrizeBonuses,
   stadiumPoisonExtraCounters,
+  stadiumShieldsStatus,
 } from "./continuous";
 import type { GameEvent } from "./events";
 import type { RunResult } from "./interpreter";
@@ -16,6 +17,7 @@ import type { KoPrizeReduction } from "./registry";
 import { flipCoin } from "./rng";
 import {
   damagedByAttackAbility,
+  damagedToolTriggersOf,
   koToolTriggersOf,
   onKnockOutTrigger,
   runCheckupTriggers,
@@ -1484,13 +1486,44 @@ function runKoTrigger(
     as runKoTrigger routes a KO'd player's on-KO decision; the projection reads the
     real turn owner off the attackEpilogue in `pending` (koParkActiveSeat). A stage
     whose Ability no longer resolves — the effect program switched the defender out,
-    or a lock came down — just keeps draining. */
+    or a lock came down — just keeps draining.
+
+    🆕🆕🆕 **D562 CORRECTION (D539) — THE STAGE IS NO LONGER ALWAYS AN ABILITY'S.**
+    ~~"Run the `onDamagedByAttack` reactive Ability of the Active `uid`"~~ now reads:
+    run the reaction of ONE SOURCE on the damaged Active, where `uid` names either the
+    Active's top card (its Ability, as above) or a POKÉMON TOOL attached to it (Lucky
+    Helmet `sv06-158`, Handheld Fan `sv06-150`). The seed queues ONE stage PER SOURCE —
+    the Ability's first, then one per Tool in attachment order (R-LH) — never several
+    programs in one stage, because a PARKING program (Klawf ex) would strand the ones
+    chained behind it. This runner DISPATCHES on `uid`: if it is an in-effect Tool with an
+    `onDamagedByAttack` program on `damagedSeat`'s Active (triggers.ts
+    `damagedToolTriggersOf`, which re-asks "in the Active Spot" and Jamming Tower), the
+    Tool's program runs with `sourceUid` = the Tool and NO `ABILITY_TRIGGERED` row (a
+    Tool has no Ability — `runKoToolTrigger`'s rule); otherwise the Ability path below
+    runs unchanged. The `PendingStage` SHAPE is unchanged — only what `uid` may name
+    widened — so a 0.445 reader drains a Tool-uid stage as a silent whiff
+    (`damagedByAttackAbility` finds no top card with that uid), which is D562's named
+    rollback reading. */
 function runDamagedTrigger(
   state: GameState,
   damagedSeat: Seat,
   uid: string,
   events: GameEvent[],
 ): ApplyResult {
+  const holder = state.players[damagedSeat].active;
+  const holderUid = holder === null ? undefined : topUid(holder);
+  const tool =
+    holderUid === undefined
+      ? undefined
+      : damagedToolTriggersOf(state, damagedSeat, holderUid).find((entry) => entry.toolUid === uid);
+  if (tool !== undefined) {
+    return settleProgram(
+      runProgram(state, tool.ability.program, { seat: damagedSeat, sourceUid: uid }, events),
+      damagedSeat,
+      events,
+      { resumeTail: true },
+    );
+  }
   const ability = damagedByAttackAbility(state, damagedSeat, uid);
   if (ability === undefined || ability.program.length === 0) return advance(state, events);
   events.push({ type: "ABILITY_TRIGGERED", seat: damagedSeat, uid, ability: ability.name });
@@ -1612,7 +1645,8 @@ function runKoToolTrigger(state: GameState, koedSeat: Seat, events: GameEvent[])
     no test could witness (D154). Asserted over the board in
     therapeuticEnergy.test.ts rather than trusted.
 
-    Called at the FOUR moments a recovery source can NEWLY cover a body:
+    Called at the ~~FOUR~~ (🆕🆕🆕 D562: FIVE) moments a recovery source can NEWLY cover
+    a body:
       • the §6.2 manual Energy attach (turn.ts `attachEnergy`);
       • the §7.4 TOOL attach (cardplay.ts `attachTool`, D176) — no program runs, so
         it cannot arrive by either seam below;
@@ -1620,7 +1654,12 @@ function runKoToolTrigger(state: GameState, koedSeat: Seat, events: GameEvent[])
         covers `attachEnergyFrom`, `attachFromDeck`, `attachFromTop`, `moveEnergy`);
       • the completion of a betweenTurns program (triggers.ts `runCheckupTriggers`,
         D176) — the one program runner that cannot fold through `settleProgram`,
-        because a Checkup trigger may not park.
+        because a Checkup trigger may not park;
+      • 🆕🆕🆕 D562 — a Stadium PLAY (cardplay.ts `playStadium`): Festival Grounds
+        newly covers every Energy-carrying Active the instant it enters the zone; and
+        replacing a Jamming Tower would newly re-enable a Tool-borne recovery source,
+        which is LATENT — no Tool writes `statusRecovery` today (its one writer is
+        Therapeutic Energy, an Energy, which Jamming Tower never silences).
     Naming the moments is §8.1's own arrangement — `collectKnockOuts` is called at
     three named moments and not globally — and idempotent, so a moment named twice
     costs nothing but a scan. */
@@ -1630,9 +1669,13 @@ export function recoverStatuses(state: GameState, events: GameEvent[]): GameStat
     const active = next.players[seat].active;
     if (active === null) continue;
     const recovers = passivesOf(next, active).statusRecovery;
-    if (recovers.length === 0) continue;
-    const cleared = presentStatuses(active.conditions).filter((status) =>
-      recovers.includes(status),
+    // 🆕🆕🆕 §12 (D562) — Festival Grounds' *"recovers from all Special Conditions"*: while
+    // it is in play an Active with ANY Energy recovers from EVERY present condition, not
+    // only the named ones (continuous.ts `stadiumShieldsStatus`, R-FG).
+    const festival = stadiumShieldsStatus(next, active);
+    if (recovers.length === 0 && !festival) continue;
+    const cleared = presentStatuses(active.conditions).filter(
+      (status) => festival || recovers.includes(status),
     );
     if (cleared.length === 0) continue;
     const uid = topUid(active);

@@ -3972,7 +3972,8 @@ export type EffectOp =
       `clearStatus`, because that is where the alternative would have been spent).
       Short form: that field is CONTINUOUS — a catalog value read live by
       `passivesOf`, swept by flow.ts `recoverStatuses` at the four moments a source
-      newly covers a body. This is DISCRETE: it fires once, at a moment the printed
+      newly covers a body (🆕🆕🆕 D562: FIVE — a Stadium play is the fifth, for Festival
+      Grounds). This is DISCRETE: it fires once, at a moment the printed
       text names, and there is no source to be live afterwards. A discrete effect
       expressed as a continuous field would have to be written onto the board and
       then taken off again, which is a durated buff pretending to be an instant.

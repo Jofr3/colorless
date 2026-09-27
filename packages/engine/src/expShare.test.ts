@@ -78,7 +78,10 @@ import {
 // three existing detection sites miss it — `onKnockOutTrigger` reads the KO'd
 // body's top card, `triggersOf` reads any body's top card (a Tool is never a
 // stack top), and `passivesOf` is the only site that walks `pokemon.tools` but
-// folds `passive` into NUMBERS. Hence `koToolTriggersOf`, a FOURTH site, and the
+// folds `passive` into NUMBERS (🆕🆕🆕 D562 CORRECTION (D539): ~~"the only site that
+// walks `pokemon.tools`"~~ was true at D171 and is WITHDRAWN at HEAD — D558's retreat/cost
+// scans, D562's consumable scans and `damagedToolTriggersOf` walk them too, every EFFECT
+// walk through continuous.ts `toolsInEffect`). Hence `koToolTriggersOf`, a FOURTH site, and the
 // group of cases below that drives its two deliberate refusals.
 
 /** The printed sentence, byte-for-byte off the local D1 row (2026-08-03). */
