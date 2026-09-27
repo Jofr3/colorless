@@ -2,6 +2,7 @@ import type { Card } from "@luminous/schema";
 import { describe, expect, it } from "vitest";
 import { matchesFilter } from "./cards";
 import { applyAction, createGame, deriveAttackEffect, programFor, topCardOf } from "./index";
+import { resumeProgram, runProgram } from "./interpreter";
 import type { GameEvent, GameState, PokemonRef, Seat } from "./index";
 import {
   FIXTURE_POOL,
@@ -79,6 +80,10 @@ import {
 //     ⏹️ "…If you do, you may move any amount of Energy from **the Pokémon you
 //        moved to your Bench** to the new Active Pokémon."  Scramble Switch
 //        sv08-186 — 1 legal. REFUSED, and §6 DRIVES why.
+//        ✅ 🆕🆕🆕 D561 — "REFUSED" IS HISTORY (D539, annotated rather than
+//        overwritten): BUILT as `SCRAMBLE_SWITCH` on `switchActive.recordDemoted` (the
+//        filing names the DEMOTED end) + `moveEnergy.sourceRecorded`. The FLAGGED
+//        block below is INVERTED to drive the build.
 //     ⏹️ THE ATTACK SURFACE — 4 legal printings, 4 sentences, ALL REFUSED:
 //        Kilowattrel ex sv08-068 ("…attach up to 2 Basic {L} Energy … to **this
 //        Pokémon**" — no self-target on `attachEnergyFrom`); Iron Bundle sv06-062
@@ -124,7 +129,8 @@ const PRIME_CATCHER =
 /** ⏹️ Lisia's Appeal `sv08-179/-234/-246` — the gust-antecedent row REFUSED. */
 const LISIAS_APPEAL =
   "Switch in 1 of your opponent's Benched Basic Pokémon to the Active Spot. If you do, the new Active Pokémon is now Confused.";
-/** ⏹️ Scramble Switch `sv08-186` — the third own-switch Trainer, refused. */
+/** ⏹️ Scramble Switch `sv08-186` — the third own-switch Trainer, refused. (🆕🆕🆕 D561:
+    ~~refused~~ — BUILT, `SCRAMBLE_SWITCH`; the inverted block below drives it.) */
 const SCRAMBLE_SWITCH =
   "Switch your Active Pokémon with 1 of your Benched Pokémon. If you do, you may move any amount of Energy from the Pokémon you moved to your Bench to the new Active Pokémon.";
 /** D189's attack self-switch — the anchor that must keep deriving unchanged. */
@@ -901,11 +907,18 @@ describe("⏹️ FLAGGED — the CHOSEN DESTINATION counter move (D216: 2 of 8 l
   });
 });
 
-describe("⏹️ FLAGGED — Scramble Switch sv08-186 (1 legal), the seam's third Trainer", () => {
-  it("⚠️ §9.2 files the PROMOTED body, and this card names the DEMOTED one — driven", () => {
+// 🆕🆕🆕 D561 — INVERTED. The block's old titles, struck and kept (D539):
+//   ~~describe("⏹️ FLAGGED — Scramble Switch sv08-186 (1 legal), the seam's third Trainer")~~
+//   ~~it("⚠️ §9.2 files the PROMOTED body, and this card names the DEMOTED one — driven")~~
+// Its FLAG ("today the consequent cannot be authored", `programFor("sv08-186")` undefined)
+// is paid: `switchActive.recordDemoted` files the other end. What the old rung drove about
+// the DEFAULT filing is still true and still driven below; "`recordAs` files exactly one of
+// them" now reads "files exactly one of them, and `recordDemoted` picks which".
+describe("✅ D561 BUILT — Scramble Switch sv08-186 (1 legal), the seam's third Trainer", () => {
+  it("§9.2 still files the PROMOTED body by default, and Scramble Switch's `recordDemoted` files the DEMOTED one — driven", () => {
     // "If you do, you may move any amount of Energy from **the Pokémon you moved
     // to your Bench** to the new Active Pokémon." Both ends of one switch, and
-    // `recordAs` files exactly one of them. Driven by playing the seam this slice
+    // `recordAs` files exactly one of them (🆕🆕🆕 D561: `recordDemoted` picks which). Driven by playing the seam this slice
     // SHIPPED and reading the slot: the uid in `moved` is the body now Active, and
     // the body that went to the Bench is not in the record at all — so the gate
     // could fire but the consequent has no way to name its source.
@@ -930,13 +943,34 @@ describe("⏹️ FLAGGED — Scramble Switch sv08-186 (1 legal), the seam's thir
     const { state: gustParked } = mustApply(trParked, pick("p1", P1_BENCH(0)));
     const filed = parkedRecord(gustParked).moved ?? [];
     expect(filed).toEqual([gustParked.players.p1.active?.stack[0]]);
-    // ⚠️ THE FLAG: the demoted body — Scramble Switch's printed source — is on the
-    // Bench and NOT in the record. A `recordAs` that filed both, or a second slot
-    // for the other end, is the piece; today the consequent cannot be authored.
+    // ⚠️ THE (OLD) FLAG: the demoted body — Scramble Switch's printed source — is on
+    // the Bench and NOT in the DEFAULT record. Still true of every unmarked switch.
     expect(filed).not.toContain(demoted);
     expect(gustParked.players.p1.bench.some((b) => b.stack[0] === demoted)).toBe(true);
     expect(gustLess.phase.kind).toBe("turn:action");
-    expect(programFor("sv08-186")).toBeUndefined();
+    // 🆕🆕🆕 D561 — ~~`expect(programFor("sv08-186")).toBeUndefined()`~~: BUILT. The piece
+    // the flag named ("a second slot for the other end") landed as a RIDER on the one
+    // slot, and it is DRIVEN here through the registry's own program: the switch parks
+    // on a two-body Bench, the answer files the body that went to the BENCH, and the
+    // move parks with that body as its only source and the new Active as its only
+    // destination.
+    const program = programFor("sv08-186")?.trainer;
+    expect(program?.[0]).toEqual({ op: "switchActive", recordAs: "moved", recordDemoted: true });
+    let scramble = stage(53, "fix-plain", ["fix-tr-nidorino", "fix-tr-meowth"]);
+    scramble = attachFromDeck(scramble, "p1", "fix-psychic-energy", 2);
+    const before = scramble.players.p1.active?.stack[0];
+    const energy = scramble.players.p1.active?.energy ?? [];
+    expect(energy).toHaveLength(2);
+    const events: GameEvent[] = [];
+    const first = runProgram(scramble, program ?? [], { seat: "p1" }, events);
+    if (first.kind !== "parked") throw new Error("expected the switch to park");
+    const second = resumeProgram(first.state, first.cont, { kind: "pokemon", ref: P1_BENCH(0) }, events);
+    if (second.kind !== "parked" || second.prompt.kind !== "moveEnergy") {
+      throw new Error("expected the Energy move to park");
+    }
+    expect(second.cont.record?.moved).toEqual([before]);
+    expect(second.prompt.movable.map((m) => m.uid).sort()).toEqual([...energy].sort());
+    expect(second.prompt.destinations).toEqual([{ seat: "p1", spot: { spot: "active" } }]);
     expect(SCRAMBLE_SWITCH).toContain("the Pokémon you moved to your Bench");
   });
 });

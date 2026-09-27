@@ -1420,6 +1420,16 @@ function describeBranch(ops: readonly EffectOp[]): string | null {
       case "drawUntilHandSize":
         parts.push(`draw cards until you have ${op.size} cards in your hand`);
         break;
+      // 🆕🆕🆕 D561 — Perrin's consequent, in the card's printed words minus its capital:
+      // its declinable payment PARKS, and without this case the caption would name the
+      // price and say nothing of what it buys (D473 / D515). Only the `maxRecorded`
+      // hand search has words; every other search inside a gate is refused (silence).
+      case "searchDeck":
+        if (op.maxRecorded === undefined || op.dest !== "hand") return null;
+        parts.push(
+          "search your deck for up to that many Pokémon, reveal them, and put them into your hand",
+        );
+        break;
       // 🆕🆕🆕 D536 — THE CONTINGENCY THAT WAS PRICED AS A CONTINGENCY AND TURNED OUT
       // TO BE OWED, WHICH IS WORTH RECORDING RATHER THAN QUIETLY SHIPPING.
       //
@@ -1644,6 +1654,15 @@ function describeBranch(ops: readonly EffectOp[]): string | null {
         // own prompt is not offering. The pinned destination is the one that is not a
         // question, which is why it can be stated flat — and it is also the only
         // combination a printed §9.2 gate reaches today.
+        // 🆕🆕🆕 D561 (V8) — Scramble Switch's consequent: both endpoints are printed
+        // and pinned (the demoted body, the new Active), so neither is a second
+        // question and the clause is stated flat, taken ahead of D502's line.
+        if (op.sourceRecorded !== undefined && op.route === "benchToActive") {
+          parts.push(
+            "you may move any amount of Energy from the Pokémon you moved to your Bench to the new Active Pokémon",
+          );
+          break;
+        }
         if (op.destRecorded === undefined || op.route !== "selfToBench") return null;
         parts.push("move an Energy from this Pokémon to the new Benched Pokémon");
         break;
@@ -1737,6 +1756,69 @@ function evolveBodyAnswered(ref: PokemonRef, noAbilities?: true): EffectOp[] {
   ];
 }
 
+/** 🆕🆕🆕 D561 (V5) — Super Potion's healed body, answered: ONE helper for both
+    endings of the pick (the forced one via `stepOp`'s `schedule`, the parked one via
+    `continuationOps`), D216/D309's shape. `state` is the board BEFORE the heal, so
+    *"If you healed any damage in this way"* is the picked body's damage there: the
+    printed 60 heals more than 0 exactly when that damage is above 0. Returns the one
+    body-addressed discard (`discardEnergy { from: "self", bodyUid }`, count 1 — *"an
+    Energy"*), or nothing when the pick healed nothing (R-SP) or the ref names no body.
+    A body with no Energy still gets the op, which whiffs silently (the whiff every
+    `discardEnergy` takes). */
+function healedDiscardAnswered(state: GameState, ref: PokemonRef): EffectOp[] {
+  const body = refPokemon(state, ref);
+  if (body === undefined || body.damage <= 0) return [];
+  const uid = topUid(body);
+  if (uid === undefined) return [];
+  return [
+    { op: "discardEnergy", from: "self", filter: { kind: "anyEnergy" }, count: 1, bodyUid: uid },
+  ];
+}
+
+/** 🆕🆕🆕 D561 (V4) — Crispin's split, expanded at STEP time off the slot's filing: the
+    de-duplicated Basic Energy TYPES of the filed cards (in filing order), then 0 → nothing,
+    1 → *"Attach A"* / *"Keep it in your hand"* (R-CR1, UNRULED), 2 → *"Attach A"* /
+    *"Attach B"* (R-CR2). Each branch is THIS op with the rider dropped and `energyType`
+    set, so the attach itself is `attachEnergyFrom`'s mandatory arm, byte for byte. A
+    filed card that is not a Basic Energy is skipped (unreachable: the search's own filter
+    is `basicEnergy`). The distinct-types search caps the filing at one card per type, so
+    a third type cannot arise from the printed program; `slice(0, 2)` is the print's "2". */
+function oneOfRecordedChoice(
+  state: GameState,
+  op: Extract<EffectOp, { op: "attachEnergyFrom" }>,
+  record: EffectRecord,
+): EffectOp[] {
+  const slot = op.oneOfRecorded;
+  if (slot === undefined) return [];
+  const types: string[] = [];
+  for (const uid of recorded(record, slot)) {
+    const found = cardOf(state, uid);
+    if (found !== undefined && matchesFilter(found, { kind: "basicEnergy" })) {
+      const type = energyProvidesOf(found);
+      if (!types.includes(type)) types.push(type);
+    }
+  }
+  const [first, second] = types.slice(0, 2);
+  if (first === undefined) return [];
+  const { oneOfRecorded: _dropped, ...plain } = op;
+  const attach = (energyType: string): EffectOp[] => [{ ...plain, energyType }];
+  const note =
+    "Put 1 of them into your hand. Attach the other to 1 of your Pokémon. Which Energy do you attach?";
+  return [
+    {
+      op: "optional",
+      note,
+      labels: {
+        yes: `Attach ${first} Energy`,
+        no: second === undefined ? "Keep it in your hand" : `Attach ${second} Energy`,
+      },
+      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
+      then: attach(first),
+      ...(second === undefined ? {} : { otherwise: attach(second) }),
+    },
+  ];
+}
+
 /** 🆕 D315 — the own-board bodies an evolve-from-deck CHOICE may be spent on:
     every in-play Pokémon of `seat`'s whose TOP card matches `pokemonType` (when
     the sentence prints one) AND for which the deck actually holds a card that
@@ -1800,8 +1882,20 @@ function evolvableOwnRefs(
     an op in `rest` needs a decision. What is true is narrower and is about ONE
     op: a single op gets one park, so a two-question sentence needs a SECOND op,
     and the only thing missing was a channel from the first answer to it. */
-function continuationOps(cont: EffectContinuation, choice: EffectChoice): EffectOp[] {
+function continuationOps(
+  cont: EffectContinuation,
+  choice: EffectChoice,
+  /** 🆕🆕🆕 D561 — the board BEFORE the answer was applied, read by exactly one member
+      (Super Potion's heal: "if you healed any damage" is the picked body's damage
+      before the heal). Every older member ignores it. */
+  before: GameState,
+): EffectOp[] {
   const op = cont.pendingOp;
+  // 🆕🆕🆕 D561 (V5) — THE SIXTH MEMBER: Super Potion's parked pick buys the discard
+  // from THAT body, through the helper the forced ending uses.
+  if (op.op === "healChosen" && op.discardEnergyFromHealed === true) {
+    return pickedPokemon(choice) ? healedDiscardAnswered(before, choice.ref) : [];
+  }
   // 🆕 D316 — THE DECLINE NOW BUYS OPS TOO, and this line is the whole of it.
   // `otherwise` is the arm `coinFlipGate`, `conditionGate` and `recordGate` have
   // always had; absent (every producer before D316) it is the empty list, so the
@@ -1883,7 +1977,7 @@ export function resumeProgram(
   // signature or its return type. A "no" splices nothing, which is the whole of
   // the decline. D216 gave that reasoning a second member and a name of its own
   // (`continuationOps`); an answer that buys nothing splices nothing, as before.
-  const rest = [...continuationOps(cont, choice), ...cont.rest];
+  const rest = [...continuationOps(cont, choice, state), ...cont.rest];
   return runProgram(applied, rest, cont.ctx, events, record);
 }
 
@@ -2480,12 +2574,26 @@ function stepOp(
       // over the printed noun rather than an `anyOf` join of whatever the board held.
       // Without the rider the two are the SAME array and every line below is D336's.
       const printedGroups = [{ filter: op.filter, max: op.max }, ...(op.also ?? [])];
-      const groups =
+      const typedGroups =
         op.typedAsAttachedBasicEnergy === true
           ? printedGroups.map((g, i) =>
               i === 0 ? { ...g, filter: attachedBasicEnergyTypedFilter(state, ctx) } : g,
             )
           : printedGroups;
+      // 🆕🆕🆕 D561 — TWO MORE STEP-TIME RESOLUTIONS, TAKEN ON THE WAY INTO `groups` SO
+      // EVERY LINE BELOW IS D336/D514/D527/D531's, BYTE FOR BYTE. (V3) Love Ball's *"a
+      // Pokémon with the same name as 1 of your opponent's Pokémon in play"* narrows
+      // group 0's filter (`opponentInPlayNameFilter`, D531's placement on a second board
+      // fact); (V2) Perrin's *"up to that many"* (`maxRecorded`) replaces group 0's
+      // ceiling with the LENGTH of that slot's filing (`recorded` — an unfiled slot reads
+      // as nothing moved). The printed list still feeds the caption alone.
+      const groups = typedGroups.map((g, i) => ({
+        filter:
+          i === 0 && op.sameNameAsOpponentInPlay === true
+            ? opponentInPlayNameFilter(state, ctx)
+            : g.filter,
+        max: i === 0 && op.maxRecorded !== undefined ? recorded(record, op.maxRecorded).length : g.max,
+      }));
       const groupMatches = (filter: CardFilter) =>
         state.players[ctx.seat].deck.filter((uid) => matchesFilter(cardOf(state, uid), filter));
       // The union is taken in DECK ORDER off the deck itself, one pass, so a uid
@@ -2647,6 +2755,21 @@ function stepOp(
             op.distinctEnergyTypes === true,
             op.typedAsAttachedBasicEnergy === true,
           ),
+          // 🆕🆕🆕 D561 (V3) — Love Ball's caption carries its printed rule; spelled as an
+          // override spread so the call above stays D531's bytes.
+          ...(op.sameNameAsOpponentInPlay === true
+            ? {
+                note: searchNote(
+                  printedGroups,
+                  op.dest,
+                  max,
+                  op.exact === true,
+                  op.distinctEnergyTypes === true,
+                  op.typedAsAttachedBasicEnergy === true,
+                  true,
+                ),
+              }
+            : {}),
         },
       };
     }
@@ -3320,6 +3443,14 @@ function stepOp(
           (refPokemon(state, ref)?.stack ?? []).some((uid) => filed.has(uid)),
         );
       }
+      // 🆕🆕🆕 D561 (V8) — the SOURCE pin, `destRecorded`'s mirror: Scramble Switch's
+      // *"from the Pokémon you moved to your Bench"* is the body its own switch filed.
+      if (op.sourceRecorded !== undefined) {
+        const filedSource = new Set(recorded(record, op.sourceRecorded));
+        movable = movable.filter((entry) =>
+          (refPokemon(state, entry.from)?.stack ?? []).some((uid) => filedSource.has(uid)),
+        );
+      }
       // 🛑 §11 (D142/D259) — THE REFUSAL GATE, ASKED BY THIS OP FOR THE FIRST TIME,
       // BECAUSE UNTIL D443 IT COULD NOT NAME A BODY ITS CONTROLLER DOES NOT OWN.
       // Moving Energy off a Pokémon and moving Energy onto one are both effects of
@@ -3477,7 +3608,14 @@ function stepOp(
       // refusal; asking the funnel per candidate would print the same row three
       // times. Board order is preserved by building the body list in candidate
       // order rather than from a Set.
-      const allDiscardable = discardableEnergies(state, ctx.seat, op, ctx.sourceUid);
+      // 🆕🆕🆕 D561 (V5) — `bodyUid` (engine-written by Super Potion's heal) names the
+      // `"self"` body in place of the program's own card.
+      const allDiscardable = discardableEnergies(
+        state,
+        ctx.seat,
+        op,
+        op.from === "self" && op.bodyUid !== undefined ? op.bodyUid : ctx.sourceUid,
+      );
       const bodies: PokemonRef[] = [];
       for (const entry of allDiscardable) {
         if (!bodies.some((ref) => refKeyOf(ref) === refKeyOf(entry.from))) bodies.push(entry.from);
@@ -3815,6 +3953,11 @@ function stepOp(
       // player's turn. `owner` is the hand, the chooser, the discard pile AND the
       // answerer — four roles that every other cross-seat op in this file splits
       // between two seats, which is exactly why `decider` is set here.
+      // 🆕🆕🆕 D561 (V6) — Hand Trimmer's second op (`whose: "self"`) points all four
+      // roles at the CONTROLLER, so it takes its own short path (`selfDiscardDownTo`):
+      // no `decider` (the controller answers), and the apply re-derives the same owner
+      // (`discardHandOwner`).
+      if (op.whose === "self") return selfDiscardDownTo(state, op, ctx.seat, events);
       const owner = otherSeat(ctx.seat);
       const hand = state.players[owner].hand;
       // 🛑 §8.6 — DO AS MUCH AS YOU CAN, and that ONE rule answers both short
@@ -4051,6 +4194,16 @@ function stepOp(
         otherSeat(ctx.seat),
       );
     case "returnBenched":
+      // 🆕🆕🆕 D561 (V7) — Scoop Up Cyclone's *"1 of your Pokémon"*: the controller's
+      // whole board, the Active leading (`ownInPlayRefs`), through the same writer.
+      if (op.includeActive === true && op.whose === "self") {
+        return parkOrForce(
+          state,
+          ownInPlayRefs(state, ctx.seat),
+          (ref) => returnBenched(state, ref, op, ctx, events),
+          returnBenchedNote(op),
+        );
+      }
       // 🆕 D299 — the third `parkOrForce` on a BENCH in this switch, and the
       // first whose candidate board is chosen by a printed possessive rather
       // than fixed by the op. `unshieldedRefs` wraps the OPPONENT arm only, on
@@ -4332,6 +4485,17 @@ function stepOp(
           },
         };
       }
+      // 🆕🆕🆕 D561 (V5) — Super Potion's consequent: a FORCED pick is answered here and
+      // its discard handed on through `schedule`, by the SAME helper the parked ending
+      // uses (`continuationOps`), so a board of one and a board of six resolve the
+      // printed sentence down one path (D216/D309). `parkOrForce`'s own ordering.
+      if (op.discardEnergyFromHealed === true && candidates.length === 1) {
+        const forced = candidates[0] as PokemonRef;
+        return {
+          done: healChosen(state, forced, op.amount, ctx, events),
+          schedule: healedDiscardAnswered(state, forced),
+        };
+      }
       return parkOrForce(
         state,
         candidates,
@@ -4340,6 +4504,11 @@ function stepOp(
       );
     }
     case "attachEnergyFrom": {
+      // 🆕🆕🆕 D561 (V4) — Crispin's *"put 1 of them into your hand. Attach the other"*:
+      // the rider rewrites this op into the player's type choice (`oneOfRecordedChoice`).
+      if (op.oneOfRecorded !== undefined) {
+        return { done: state, schedule: oneOfRecordedChoice(state, op, record) };
+      }
       // Same-type Basic Energy is fungible, so the ONLY decision is the target;
       // a source with no matching Energy is a no-op (nothing to attach). The
       // candidates are the eligible targets (targetType + notIfKO riders).
@@ -6949,6 +7118,12 @@ export function applyChoice(
       // takes the DISCARD branch (that arm makes `to` unrepresentable, so it is always
       // `undefined` there): the take was fixed at the park (`min === max`, the excess
       // over 3), and the answer is validated against it, so the owner ends at 3.
+      // 🆕🆕🆕 D561 (V6) — `whose: "self"` (Hand Trimmer's controller arm) only ever
+      // takes the discard branch (that arm makes `to` unrepresentable), and its owner is
+      // re-derived by the step's own helper.
+      if (op.whose === "self") {
+        return discardChosenFromHand(state, discardHandOwner(op, ctx.seat), choice.uids, events);
+      }
       return op.to === "deck"
         ? deckChosenFromHand(state, otherSeat(ctx.seat), choice.uids, events)
         : discardChosenFromHand(state, otherSeat(ctx.seat), choice.uids, events);
@@ -12086,6 +12261,12 @@ function payFromHandApply(
   if (paid.length === 0) return { state, paid };
   events.push({ type: "HAND_COST_PAID", seat: ctx.seat, uids: [...paid], to: op.to });
   const hand = side.hand.filter((uid) => !spent.has(uid));
+  // 🆕🆕🆕 D561 (V1) — Academy at Night's *"on top of their deck"*: the paid card(s) go
+  // IN FRONT of the deck, in the order picked. Taken ahead of the two-arm spread below
+  // so its bytes are D455's, unchanged.
+  if (op.to === "deckTop") {
+    return { state: withSide(state, ctx.seat, { ...side, hand, deck: [...paid, ...side.deck] }), paid };
+  }
   return {
     state: withSide(
       state,
@@ -12360,9 +12541,19 @@ function returnBenched(
   ctx: EffectContext,
   events: GameEvent[],
 ): GameState {
+  // 🆕🆕🆕 D561 (V7) — the ACTIVE, reachable only under `includeActive` (Scoop Up
+  // Cyclone) and only on the controller's own board. The spot is left EMPTY: the §8.1
+  // promotion (or, with no Bench, the §14.2 loss) is the mid-turn sweep's, never this
+  // function's (R-SC).
+  if (ref.spot.spot === "active" && op.includeActive === true && ref.seat === ctx.seat) {
+    return returnOwnActive(state, ref.seat, op, ctx, events);
+  }
   // Not a bench ref — unreachable from either candidate set (both are built by
   // mapping over a `bench` array), and a silent no-op rather than a throw for
   // the reason every ref guard in this file is: the op validates refs.
+  // (🆕🆕🆕 D561: a THIRD candidate set, `includeActive`'s `ownInPlayRefs`, does offer
+  // the Active — and it is taken by the branch above; an Active ref WITHOUT the rider
+  // still falls here.)
   if (ref.spot.spot !== "bench") return state;
   const owner = ref.seat;
   const side = state.players[owner];
@@ -12380,6 +12571,32 @@ function returnBenched(
   const [deck, rngState] = shuffle([...side.deck, ...uids], state.rngState);
   events.push({ type: "SHUFFLE", seat: owner });
   return { ...withSide(state, owner, { ...side, bench, deck }), rngState };
+}
+
+/** 🆕🆕🆕 D561 (V7) — `returnBenched`'s Active arm: take `owner`'s Active with every card
+    attached to it into `op.dest` and leave the spot EMPTY for the §8.1 promotion. The
+    same `POKEMON_RETURNED` row and the same two destinations as the Bench arm (a deck
+    return shuffles and files its own `SHUFFLE`), so the only difference is the spot. */
+function returnOwnActive(
+  state: GameState,
+  owner: Seat,
+  op: Extract<EffectOp, { op: "returnBenched" }>,
+  ctx: EffectContext,
+  events: GameEvent[],
+): GameState {
+  const side = state.players[owner];
+  const body = side.active;
+  if (body === null) return state;
+  const uid = topUid(body);
+  if (uid === undefined) return state;
+  const pile = stackUids(body);
+  events.push({ type: "POKEMON_RETURNED", seat: owner, uid, actor: ctx.seat, dest: op.dest, uids: pile });
+  if (op.dest === "hand") {
+    return withSide(state, owner, { ...side, active: null, hand: [...side.hand, ...pile] });
+  }
+  const [deck, shuffled] = shuffle([...side.deck, ...pile], state.rngState);
+  events.push({ type: "SHUFFLE", seat: owner });
+  return { ...withSide(state, owner, { ...side, active: null, deck }), rngState: shuffled };
 }
 
 /** 🆕🆕🆕 **D537 — Take EVERY ref in `refs` off ONE seat's Bench with every card
@@ -13475,6 +13692,8 @@ function returnBenchedNote(op: Extract<EffectOp, { op: "returnBenched" }>): stri
   if (op.whose === "opponent") {
     return "Shuffle which of your opponent's Benched Pokémon into their deck?";
   }
+  // 🆕🆕🆕 D561 (V7) — Scoop Up Cyclone's *"1 of your Pokémon"*, Active included.
+  if (op.includeActive === true) return "Put which of your Pokémon and all attached cards into your hand?";
   return op.dest === "deck"
     ? "Shuffle which of your Benched Pokémon into your deck?"
     : "Put which of your Benched Pokémon into your hand?";
@@ -13607,6 +13826,44 @@ function mayDrawNote(op: Extract<EffectOp, { op: "opponentMayDraw" }>): string {
     ⚠️ **THE SINGULAR IS THE PRINTED ARTICLE**, matching the anchor's alternation
     rather than writing "1 card": *"Discard a card from your hand."* is how the
     catalog spells the count of one everywhere in this column. */
+/** 🆕🆕🆕 D561 (V6) — whose hand an `opponentDiscardsFromHand` empties: the
+    CONTROLLER's under Hand Trimmer's `whose: "self"`, the opponent's otherwise (every
+    pre-D561 program). One resolver for the step and the apply, so the park and the
+    resume cannot name two different hands. */
+function discardHandOwner(
+  op: Extract<EffectOp, { op: "opponentDiscardsFromHand" }>,
+  seat: Seat,
+): Seat {
+  return op.whose === "self" ? seat : otherSeat(seat);
+}
+
+/** 🆕🆕🆕 D561 (V6) — Hand Trimmer's controller arm: `seat` discards down to
+    `untilHandSize`, choosing which. The opponent arm's rules one seat over — the take is
+    the excess, 0 is a silent no-op, a hand no bigger than the take is forced (the M1
+    rule; unreachable at a positive size) — with NO `decider`, because the hand's owner IS
+    the controller. */
+function selfDiscardDownTo(
+  state: GameState,
+  op: Extract<EffectOp, { op: "opponentDiscardsFromHand" }>,
+  seat: Seat,
+  events: GameEvent[],
+): { done: GameState } | { park: EffectPrompt } {
+  const own = state.players[seat].hand;
+  const excess = Math.max(0, own.length - (op.untilHandSize ?? own.length));
+  if (excess === 0) return { done: state };
+  if (own.length <= excess) return { done: discardChosenFromHand(state, seat, own, events) };
+  return {
+    park: {
+      kind: "chooseCards",
+      candidates: [...own],
+      min: excess,
+      max: excess,
+      dest: "discard",
+      note: opponentDiscardNote(op),
+    },
+  };
+}
+
 function opponentDiscardNote(op: Extract<EffectOp, { op: "opponentDiscardsFromHand" }>): string {
   // 🆕🆕🆕 D557 — Xerosic's Machinations, in the ANSWERER's voice (D426's rule): the
   // printed *"Your opponent discards cards from their hand until they have 3 cards in
@@ -13819,6 +14076,8 @@ function handCostCandidates(
     cannot pay, or null when every one of them can be. The printed "you can use
     this card only if …" / "you must discard … in order to use this Ability"
     gate, checked by BOTH action paths before anything is committed (cardplay.ts)
+    (🆕🆕🆕 D561: by all THREE since R-AN — `useStadiumAbility` too, for Academy at
+    Night's printed hand cost; `redact.ts` and GameHud mirror it on the Stadium row)
     — a card whose cost cannot be paid is not played, so the effect it buys never
     resolves for free.
 
@@ -13852,7 +14111,9 @@ export function handCostUnmet(
     // fall under. Unreachable from either play path today (no Trainer and no
     // Ability prints a declinable cost — the arm's only producer is an attack), and
     // written anyway, because the alternative is a gate that refuses every play of
-    // a card whose printed floor is zero.
+    // a card whose printed floor is zero. (🆕🆕🆕 D561 CORRECTION (D539): ~~"Unreachable
+    // from either play path"~~ — Perrin, a Trainer, prints the declinable cost, so
+    // `playTrainer` now reaches this line; driven in `trainersD561.test.ts` §2.)
     if (op.count === "any") continue;
     if (handCostCandidates(state, seat, op, excludeUid).length < op.count) return op;
   }
@@ -13898,6 +14159,15 @@ export function handCostAction(
   other: boolean,
 ): string {
   const phrase = handCostPhrase(op, other);
+  // 🆕🆕🆕 D561 (V1) — the two new destinations speak their own printed verbs, ahead of
+  // the older two so those stay byte-identical: Academy at Night's *"put a card from
+  // their hand on top of their deck"*, and Perrin's declinable *"Reveal up to 2 Pokémon
+  // in your hand and put them into your deck."* (the deck is shuffled on every path, so
+  // the print names no end and neither does the caption).
+  if (op.to === "deckTop") return `put ${phrase} from your hand on top of your deck`;
+  if (op.count === "any" && op.to === "deckBottom") {
+    return `reveal ${phrase} in your hand and put them into your deck`;
+  }
   return op.to === "deckBottom"
     ? `put ${phrase} from your hand on the bottom of your deck`
     : `discard ${phrase} from your hand`;
@@ -13944,7 +14214,7 @@ function switchOwn(
     and the record and the event log can never disagree about whether a switch
     occurred. */
 function switchRecording(
-  op: { recordAs?: EffectSlot },
+  op: { recordAs?: EffectSlot; recordDemoted?: true },
   move: (into: GameEvent[]) => GameState,
   events: GameEvent[],
   record: EffectRecord,
@@ -13957,6 +14227,15 @@ function switchRecording(
     op.recordAs,
     emitted.flatMap((event) => (event.type === "POKEMON_SWITCHED" ? [event.nowActive] : [])),
   );
+  // 🆕🆕🆕 D561 (V8) — Scramble Switch files the DEMOTED end instead: `recordMoved`
+  // ASSIGNS, so this filing REPLACES the promoted one above (a whiff files `[]` either way).
+  if (op.recordDemoted === true) {
+    recordMoved(
+      record,
+      op.recordAs,
+      emitted.flatMap((event) => (event.type === "POKEMON_SWITCHED" ? [event.wasActive] : [])),
+    );
+  }
   return next;
 }
 
@@ -14753,6 +15032,24 @@ function attachedBasicEnergyTypedFilter(state: GameState, ctx: EffectContext): C
     if (!types.includes(pokemonType)) types.push(pokemonType);
   }
   return { kind: "anyOf", filters: types.map((pokemonType) => ({ kind: "typedPokemon", pokemonType })) };
+}
+
+/** 🆕🆕🆕 D561 (V3) — the filter Love Ball's printed *"a Pokémon with the same name as 1
+    of your opponent's Pokémon in play"* resolves to at STEP time: `anyOf(byName × N)`,
+    N the de-duplicated names on the TOP cards of the opponent's Active and Bench.
+    `attachedBasicEnergyTypedFilter`'s placement one function up (D531) — the board is
+    read once, here, and `matchesFilter` stays board-free (D231). `byName` is an EXACT
+    match (R-LB). An empty opposing board resolves to `anyOf([])`, which matches nothing
+    (the whiff). */
+function opponentInPlayNameFilter(state: GameState, ctx: EffectContext): CardFilter {
+  const side = state.players[otherSeat(ctx.seat)];
+  const bodies = side.active === null ? side.bench : [side.active, ...side.bench];
+  const names: string[] = [];
+  for (const body of bodies) {
+    const name = topCardOf(state, body)?.name;
+    if (name !== undefined && !names.includes(name)) names.push(name);
+  }
+  return { kind: "anyOf", filters: names.map((name) => ({ kind: "byName", name })) };
 }
 
 function sourceRef(state: GameState, ctx: Pick<EffectContext, "seat" | "sourceUid">): PokemonRef[] {
@@ -16401,6 +16698,11 @@ function searchNote(
       Rides the PLURAL noun only (D513's shape): the printed count is 5. Absent on
       every producer before this row, where the caption is byte-identical. */
   typedAsAttachedBasicEnergy = false,
+  /** 🆕🆕🆕 D561 (V3) — the op's `sameNameAsOpponentInPlay`: Love Ball's printed *"a
+      Pokémon with the same name as 1 of your opponent's Pokémon in play"*, on the
+      SINGULAR noun (the printed take is one), D531's rule one parameter up — the
+      caption quotes the rule, the offer shows the resolved names. */
+  sameNameAsOpponentInPlay = false,
 ): string {
   const where =
     dest === "bench"
@@ -16424,7 +16726,10 @@ function searchNote(
   const first = groups[0];
   if (first === undefined) return `Search your deck ${where}.`;
   if (groups.length === 1) {
-    const { singular, plural: printedPlural } = retrieveNoun(first.filter);
+    const { singular: printedSingular, plural: printedPlural } = retrieveNoun(first.filter);
+    const singular = sameNameAsOpponentInPlay
+      ? `${printedSingular} with the same name as 1 of your opponent's Pokémon in play`
+      : printedSingular;
     // 🆕🆕🆕 D531 — THE PRINTED *"that are the same type as any Basic Energy attached to
     // this Pokémon"*, on the plural noun and only the plural noun (D513's shape, one
     // rider over). The noun is the PRINTED group's (`anyPokemon` → "Pokémon"), never
@@ -17087,6 +17392,10 @@ function moveNote(op: Extract<EffectOp, { op: "moveEnergy" }>): string {
   // `side: "opponent"` the narrowing empties `destinations`, the op is a silent no-op
   // and no park is ever built for this caption to head.
   if (op.destRecorded !== undefined) where = "from this Pokémon to the new Benched Pokémon";
+  // 🆕🆕🆕 D561 (V8) — Scramble Switch's printed endpoints, verbatim.
+  if (op.sourceRecorded !== undefined) {
+    where = "from the Pokémon you moved to your Bench to the new Active Pokémon";
+  }
   // "an Energy", "a Basic Energy", "a Fire Energy" — the article follows the noun,
   // the same rule discardNote applies. Unreachable at max 1 today (the only
   // `anyEnergy` mover is Poppy at max 2, which takes the "up to" branch), which is
@@ -17227,6 +17536,9 @@ function discardNote(op: Extract<EffectOp, { op: "discardEnergy" }>): string {
       // with `count: "any"` or a wider filter parks here. The arm exists because
       // this switch is exhaustive over `from`, which is also what makes a new
       // member impossible to add without answering this question.
+      // 🆕🆕🆕 D561 (V5) — Super Potion's *"discard an Energy from THAT Pokémon"*: the
+      // engine-written `bodyUid` is the healed body, never the card running.
+      if (op.bodyUid !== undefined) return `Discard ${what} from that Pokémon.`;
       return `Discard ${what} from this Pokémon.`;
     case "yours":
       // The printed "from your Pokémon" — the whole own board (Hail Blade).

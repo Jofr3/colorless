@@ -1025,6 +1025,14 @@ function redactedRareCandyOf(
     the would-only-whiff `programPlayable` gate. The `turnGate` half needs no term
     here — this is a `turn:action` arm and the offer already goes to `phase.seat`
     alone, which is the same seat the gate admits.
+    🆕🆕🆕 D561 (R-AN) — the gate grew a FIFTH term and this fold follows it: Academy at
+    Night `sv06.5-054`'s program is a `payFromHand { count: 1, to: "deckTop" }`, and
+    `useStadiumAbility` now refuses an unpayable hand cost (`handCostUnmet`,
+    PLAY_CONDITION_NOT_MET) after `programPlayable`. Without the term here an EMPTY
+    hand would light a row the engine answers with a refusal — the D46/D47
+    afford-then-reject. Unlike the `programPlayable` term below it is REACHABLE and
+    driven (`stadiumsD561.test.ts` §3); its `reason` sits under "No legal target" in
+    the chain, matching the engine's reject order.
 
     ⚠️ `allowances` IS NOT PER-SEAT and must not be read as if it were.
     `TurnAllowances` is ONE object on the state that RESETS at every turn
@@ -1037,7 +1045,9 @@ function redactedRareCandyOf(
     ⚠️ THE `programPlayable` TERM IS CORRECT AND, TODAY, UNREACHABLE. No printed
     Stadium ability program contains a whiff-gated op (Levincia retrieves from a
     discard pile, Spikemuth Gym / Artazon / Mesagoza / Town Store search a deck —
-    `programPlayable` gates none of those), so it cannot currently return false
+    `programPlayable` gates none of those; 🆕🆕🆕 D561: Academy at Night pays a hand
+    card to the deck top, and `programPlayable` gates `payFromHand` neither — its
+    hand cost is the separate `costUnmet` term, which IS reachable), so it cannot currently return false
     here and no test over the real pool can discriminate it. It is kept because
     the engine gate has it and a projection that dropped it would offer a button
     `useStadiumAbility` answers with NO_LEGAL_TARGET the day a gated Stadium
@@ -1061,12 +1071,19 @@ function redactedStadiumAbilityOf(
   const ability = card === undefined ? undefined : programFor(card.id)?.stadium?.ability;
   if (ability === undefined) return null;
   const noTarget = !programPlayable(state, ability.program, viewerSeat);
+  // 🆕🆕🆕 D561 (R-AN) — the printed hand cost; no `excludeUid` (the Stadium is in the
+  // shared zone, not the hand), exactly as `useStadiumAbility` asks it.
+  const costUnmet = handCostUnmet(state, viewerSeat, ability.program);
   return {
     label: ability.label,
-    disabled: state.allowances.stadiumAbilityUsed || noTarget,
+    disabled: state.allowances.stadiumAbilityUsed || noTarget || costUnmet !== null,
     // The printed clause a greyed row shows; null when enabled or the disable is
     // self-evident (already used this turn), matching the Ability/Trainer rows.
-    reason: noTarget ? "No legal target" : null,
+    reason: noTarget
+      ? "No legal target"
+      : costUnmet !== null
+        ? `Only if you ${handCostAction(costUnmet, false)}`
+        : null,
   };
 }
 

@@ -480,7 +480,13 @@ describe("§5 — the census terms, MEASURED rather than assumed", () => {
     // Cradily). Real catalog ids, no `fix-*` key (`abilityTriggersD560.test.ts` /
     // `abilityPassivesD560.test.ts` drive a LOCAL `cardPool`), inserted MID-MAP after
     // `sv09-082`, and no row authors an `attack` program.
-    expect(ids).toHaveLength(848);
+    // 🆕🆕🆕 D561 — 848 -> **863**: FIFTEEN registry keys on NINE program objects — the
+    // trainer bundle (Perrin ×3, Crispin ×4, Super Potion, Love Ball, Hand Trimmer, Scoop Up
+    // Cyclone ×2, Scramble Switch, Academy at Night, Perilous Jungle). Real catalog ids, no
+    // `fix-*` key (`trainersD561.test.ts` / `stadiumsD561.test.ts` drive a LOCAL
+    // `cardPool`), inserted MID-MAP after `sv07-006`, and no row authors an `attack`
+    // program.
+    expect(ids).toHaveLength(863);
     for (const id of VICTINI_IDS) {
       expect(ids, id).not.toContain(id);
       expect(programFor(id), id).toBeUndefined();

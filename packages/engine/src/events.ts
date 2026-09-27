@@ -1172,8 +1172,18 @@ export type GameEvent =
       zone → hidden zone). The LOG speaks in counts either way, since they came
       out of a hidden hand (the HAND_DISCARDED precedent), but the verb it prints
       differs — and a P4 per-seat filter keys on `to` rather than re-deriving the
-      destination from the op. */
-  | { type: "HAND_COST_PAID"; seat: Seat; uids: string[]; to: "discard" | "deckBottom" }
+      destination from the op.
+      🆕🆕🆕 D561 — `"deckTop"` (Academy at Night) puts them ON TOP of the deck,
+      hidden → hidden like `"deckBottom"`; and `"deckBottom"` is now also Perrin's
+      declinable reveal-and-return, whose printed "Reveal" is NOT rendered per card —
+      the log still counts (R-PR; reversal: a per-seat event filter, P4, that shows
+      the revealed uids to both seats). */
+  | {
+      type: "HAND_COST_PAID";
+      seat: Seat;
+      uids: string[];
+      to: "discard" | "deckBottom" | "deckTop";
+    }
   /** A TRIGGERED Ability fired automatically (§9): `seat`'s in-play `uid`
       reached its trigger condition — played to the Bench / evolved (during
       that seat's turn), the Pokémon Checkup (between turns), or being Knocked

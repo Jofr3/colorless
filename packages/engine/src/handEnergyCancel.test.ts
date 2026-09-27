@@ -48,7 +48,7 @@ import {
 // 🛑 **THE HAZARD THAT ORDERS THE SLICE.** `payFromHand` inside an ATTACK program
 // **pays what it can and refuses nothing** — interpreter.ts's own words at the op,
 // *"A SHORT hand … pays what there is"* — and `handCostUnmet` has **no caller in
-// attack.ts** (it is the two PLAY paths' gate and only theirs). So the COST WITHOUT
+// attack.ts** (it is the two PLAY paths' gate and only theirs; 🆕🆕🆕 D561: and, since R-AN, `useStadiumAbility`'s — a THIRD action path (Academy at Night's printed hand cost); still no caller in attack.ts). So the COST WITHOUT
 // THE CANCEL is a **FREE KNOCK OUT**: a hand of two Grass discards two and Knocks
 // the opponent's Active out anyway, and it passes every "was the cost paid"
 // assertion that could be written about it, because the cost WAS paid — just not in

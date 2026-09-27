@@ -393,7 +393,10 @@ function usableAbilities(game: GameState, seat: Seat): AbilityOption[] {
     the live `GameState`, so it folds the SAME THREE TERMS here — a Stadium in
     play, that Stadium's program carrying an `ability`, and
     `allowances.stadiumAbilityUsed || !programPlayable(...)`. Term for term with
-    `cardplay.ts`'s gate, so the button and the engine cannot disagree. It lives
+    `cardplay.ts`'s gate, so the button and the engine cannot disagree.
+    (🆕🆕🆕 D561 — "the SAME THREE TERMS" undercounts since R-AN: the gate also asks
+    `handCostUnmet` (Academy at Night's printed hand cost), and so does this fold —
+    a FOURTH term, reachable on an empty hand.) It lives
     HERE beside its two siblings rather than inside TurnPanel for the reason they
     do: the fold is testable without a DOM, and a component-local derivation is
     how the two halves drift.
@@ -413,7 +416,9 @@ function usableAbilities(game: GameState, seat: Seat): AbilityOption[] {
 
     ⚠️ THE `programPlayable` TERM IS CORRECT AND, TODAY, UNREACHABLE: no printed
     Stadium ability program contains a whiff-gated op (they search decks or
-    retrieve from a discard, and `programPlayable` gates neither), so it cannot
+    retrieve from a discard, and `programPlayable` gates neither; 🆕🆕🆕 D561: or,
+    Academy at Night, pay a hand card to the deck top — `payFromHand`, ungated there
+    too, whose hand cost is the separate, REACHABLE `costUnmet` term), so it cannot
     currently return false and no board over the real pool can discriminate it. It
     is kept because the engine gate has it, and the vacuity is PINNED rather than
     papered over — `packages/engine/src/redactStadiumAbility.test.ts` fails the day
@@ -438,10 +443,19 @@ function stadiumAbilityOption(game: GameState, seat: Seat): StadiumAbilityOption
   if (ability === undefined) return null;
   // D222 — the Stadium's uid, term for term with `useStadiumAbility`.
   const noTarget = !programPlayable(game, ability.program, seat, stadium.uid);
+  // 🆕🆕🆕 D561 (R-AN) — `useStadiumAbility` now refuses an unpayable printed hand cost
+  // (Academy at Night's "put a card from their hand on top of their deck"), so the
+  // row greys on it too, term for term with the engine and with `redact.ts`'s fold.
+  // No `excludeUid`: the Stadium is in the shared zone, not the hand.
+  const costUnmet = handCostUnmet(game, seat, ability.program);
   return {
     label: ability.label,
-    disabled: game.allowances.stadiumAbilityUsed || noTarget,
-    reason: noTarget ? "No legal target" : undefined,
+    disabled: game.allowances.stadiumAbilityUsed || noTarget || costUnmet !== null,
+    reason: noTarget
+      ? "No legal target"
+      : costUnmet !== null
+        ? `Only if you ${handCostAction(costUnmet, false)}`
+        : undefined,
   };
 }
 

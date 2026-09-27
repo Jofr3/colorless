@@ -940,9 +940,11 @@ until 1c broadcasts the redacted view.
     now says so and names the action in backticks only.
     ⚠️ **HONEST SURVIVOR**: the `programPlayable` term in the fold is correct and, against the printed
     pool, **UNREACHABLE** — every implemented Stadium ability searches a deck or retrieves from a discard
+    (🆕🆕🆕 D561: or, Academy at Night, pays a hand card to the deck top — `payFromHand`, ungated by
+    `programPlayable` too; its hand cost is a separate, REACHABLE `handCostUnmet` term both folds now carry)
     and `programPlayable` gates neither, so no test can kill a mutant that drops it. Rather than ship a
     fourth guard that cannot fail (D200/D204/D205), the vacuity is PINNED:
-    `redactStadiumAbility.test.ts` asserts all 7 printings stay playable under the most adverse board
+    `redactStadiumAbility.test.ts` asserts all 7 (🆕🆕🆕 D561: 8) printings stay playable under the most adverse board
     `programPlayable` has gates for, beside a control op that DOES gate — so the day a Stadium ability
     carries a whiff-gated op, the pin goes red and the greying is re-verified.
     `MATCH_RECORD_VERSION` **stays 12** and the derivation is the rule's own: a redaction/projection is a

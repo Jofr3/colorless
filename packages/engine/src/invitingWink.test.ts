@@ -63,6 +63,10 @@ import {
 //   Dachsbun ex ×3 folds the per-healed-body discard into `healEach`
 //   (`discardEnergyFromHealed`, `evolutionOnly`, `amount "all"`). Super Potion
 //   stays unbuilt. index.ts's D350 note carries the same correction.)
+//   (🆕🆕🆕 D561 CORRECTION (D539): ~~"Super Potion stays unbuilt"~~ — BUILT,
+//   `SUPER_POTION`: `healChosen.discardEnergyFromHealed` schedules a body-addressed
+//   `discardEnergy { from: "self", bodyUid }`, the "body this program just healed" this
+//   note found missing. The whole family is built; index.ts's D350 note says so too.)
 //
 // ── THE MECHANISM CLOSES ────────────────────────────────────────────────────
 //   `reveal…hand` AND (`onto their Bench` OR `onto your opponent's Bench`), all

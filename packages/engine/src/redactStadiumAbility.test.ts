@@ -343,6 +343,12 @@ describe("the `programPlayable` term in the fold is correct and, today, UNREACHA
     "sv09-150", // Levincia
     "sv10-244", // Levincia (reprint)
     "sv10-169", // Spikemuth Gym
+    // 🆕🆕🆕 D561 — the EIGHTH, and the first that is neither a deck search nor a discard
+    // retrieval: Academy at Night's program is a `payFromHand { count: 1, to: "deckTop" }`.
+    // Measured, not assumed: `programFor(id)?.stadium?.ability` over every audited id
+    // returns exactly these eight. `programPlayable` gates `payFromHand` NEITHER (its hand
+    // cost is `handCostUnmet`'s, a separate term), so the loop below still holds for it.
+    "sv06.5-054", // Academy at Night
   ];
 
   it("the census is real — every id above carries an ability, and the fixture pool holds no OTHERS", () => {
@@ -351,6 +357,8 @@ describe("the `programPlayable` term in the fold is correct and, today, UNREACHA
     }
     // RED the day an eighth printing lands in FIXTURE_POOL without joining the
     // list above — which is how this block stops silently under-scanning.
+    // 🆕🆕🆕 D561: the eighth (Academy at Night) is in the list now, so read "a ninth" —
+    // or, without the ordinal, ANY Stadium-ability printing in the pool the list lacks.
     const inPool = Object.keys(FIXTURE_POOL).filter(
       (id) => programFor(id)?.stadium?.ability !== undefined,
     );
@@ -360,7 +368,7 @@ describe("the `programPlayable` term in the fold is correct and, today, UNREACHA
   it("NO printed Stadium program can whiff-gate — so no test over the pool can kill this term", () => {
     // The most adverse board `programPlayable` has gates for: nothing in either
     // deck, discard or hand, no opponent Bench, no Energy anywhere. If ANY of the
-    // seven programs contained a `gust` / `switchActive` / `moveEnergy` /
+    // seven (🆕🆕🆕 D561: eight) programs contained a `gust` / `switchActive` / `moveEnergy` /
     // `discardEnergy` / `attachEnergyFrom` / `bottomFromOpponentHand` /
     // `damageChosen` op, this state would make it false.
     const base = p1Turn2(1);
@@ -375,7 +383,10 @@ describe("the `programPlayable` term in the fold is correct and, today, UNREACHA
       const ability = programFor(id)?.stadium?.ability;
       if (ability === undefined) throw new Error(`${id} has no stadium ability`);
       // ⚠️ THIS IS THE ADMISSION, PINNED. Every printed Stadium ability searches a
-      // deck or retrieves from a discard, and `programPlayable` gates NEITHER (see
+      // deck or retrieves from a discard (🆕🆕🆕 D561: or, Academy at Night, pays a hand
+      // card to the deck top — `payFromHand`, which `programPlayable` does not gate
+      // either; its hand cost is the fold's separate `handCostUnmet` term, REACHABLE and
+      // driven in `stadiumsD561.test.ts` §3), and `programPlayable` gates NEITHER (see
       // cardplay.ts — "a deck search is always playable enough"). So the term
       // `!programPlayable(...)` in `redactedStadiumAbilityOf` cannot currently
       // return true, mutant (c) SURVIVES against the real pool, and no assertion

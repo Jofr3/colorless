@@ -12,7 +12,8 @@
 // `RedactedStadiumAbility` the SERVER already folded; `GameHud` has the live
 // `GameState` and folds the same three terms itself in `stadiumAbilityOption`
 // (a Stadium in play, that Stadium's program carrying an `ability`,
-// `allowances.stadiumAbilityUsed || !programPlayable(...)`). So the online DOM
+// `allowances.stadiumAbilityUsed || !programPlayable(...)`). (🆕🆕🆕 D561: plus a
+// FOURTH, `handCostUnmet`, since R-AN — see the Academy at Night block below.) So the online DOM
 // suite can drive its cases by writing wire literals, and this one CANNOT: every
 // case below is a real engine board, reached by real actions, because the fold
 // under test is exactly the claim that the button and `cardplay.ts` agree.
@@ -42,6 +43,7 @@ import {
   handUid,
   must,
   mustApply,
+  trainerCard,
 } from "../../../packages/engine/src/testFixtures";
 import { installDomShims } from "../../test/domShims";
 import { GameHud } from "./GameHud";
@@ -271,6 +273,74 @@ describe("the `chooseCards` park the row causes is dialoged on this surface", ()
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
+// 🆕🆕🆕 D561 (R-AN) — THE HAND-COST TERM, THE FIRST STADIUM TERM A PRINTED CARD CAN REACH.
+//
+// Academy at Night `sv06.5-054` (*"Once during each player's turn, that player may put a
+// card from their hand on top of their deck."*) is a Stadium ability whose whole program
+// is a `payFromHand { count: 1, to: "deckTop" }`, and `useStadiumAbility` refuses it on
+// an EMPTY hand (PLAY_CONDITION_NOT_MET). The fold follows the gate, so the row greys
+// with the printed clause — the D46/D47 afford-then-reject the first D561 draft left
+// open on this surface. The card is not in FIXTURE_POOL, so it is GRAFTED into the pool
+// and the hand, then put into play by the real `playTrainer`, and the empty hand is the
+// one piece of surgery (the hand goes back into the deck).
+
+const ACADEMY = "sv06.5-054";
+function withAcademy(state: GameState): GameState {
+  const uid = "d561-academy-0";
+  const grafted: GameState = {
+    ...state,
+    cardPool: {
+      ...state.cardPool,
+      [ACADEMY]: {
+        ...trainerCard(
+          ACADEMY,
+          "Stadium",
+          "Once during each player's turn, that player may put a card from their hand on top of their deck.",
+        ),
+        name: "Academy at Night",
+      },
+    },
+    cardIdByUid: { ...state.cardIdByUid, [uid]: ACADEMY },
+    players: { ...state.players, p1: { ...state.players.p1, hand: [...state.players.p1.hand, uid] } },
+  };
+  return must(applyAction(grafted, { type: "playTrainer", seat: "p1", uid }));
+}
+
+describe("GameHud — the Stadium row's printed HAND COST (D561, R-AN)", () => {
+  it("greys on an EMPTY hand with the printed clause, refuses to dispatch, and the engine agrees", () => {
+    const played = withAcademy(p1Turn2(1));
+    const side = played.players.p1;
+    const empty: GameState = {
+      ...played,
+      players: { ...played.players, p1: { ...side, hand: [], deck: [...side.hand, ...side.deck] } },
+    };
+    const dispatch = vi.fn<(action: GameAction) => void>();
+    renderHud(empty, "p1", dispatch);
+    // RED IF the fold drops the `handCostUnmet` term: the row would light for a click
+    // `useStadiumAbility` answers PLAY_CONDITION_NOT_MET.
+    expect(stadiumRow()?.textContent).toBe("Academy at Night");
+    expect(stadiumRow()?.disabled).toBe(true);
+    expect((stadiumSection() as HTMLElement).querySelector("li")?.getAttribute("title")).toBe(
+      "Only if you put a card from your hand on top of your deck",
+    );
+    fireEvent.click(stadiumRow() as HTMLButtonElement);
+    expect(dispatch).not.toHaveBeenCalled();
+    expect(applyAction(empty, { type: "useStadiumAbility", seat: "p1" }).ok).toBe(false);
+  });
+
+  it("lights with a card in hand, and the click's own payload is accepted by the engine", () => {
+    const played = withAcademy(p1Turn2(1));
+    expect(played.players.p1.hand.length).toBeGreaterThan(0);
+    const dispatch = vi.fn<(action: GameAction) => void>();
+    renderHud(played, "p1", dispatch);
+    expect(stadiumRow()?.disabled).toBe(false);
+    expect((stadiumSection() as HTMLElement).querySelector("li[title]")).toBeNull();
+    fireEvent.click(stadiumRow() as HTMLButtonElement);
+    mustApply(played, dispatch.mock.calls[0]?.[0] as GameAction);
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
 // THE `programPlayable` TERM, AND THE HONEST ADMISSION ABOUT IT.
 
 describe("the `programPlayable` term in the LOCAL fold is correct and, today, UNREACHABLE", () => {
@@ -286,6 +356,12 @@ describe("the `programPlayable` term in the LOCAL fold is correct and, today, UN
     "sv09-150", // Levincia
     "sv10-244", // Levincia (reprint)
     "sv10-169", // Spikemuth Gym
+    // 🆕🆕🆕 D561 — the EIGHTH, and the first that is neither a deck search nor a discard
+    // retrieval: Academy at Night's program is a `payFromHand { count: 1, to: "deckTop" }`.
+    // Measured, not assumed: `programFor(id)?.stadium?.ability` over every audited id
+    // returns exactly these eight. `programPlayable` gates `payFromHand` NEITHER (its hand
+    // cost is `handCostUnmet`'s, a separate term), so the loop below still holds for it.
+    "sv06.5-054", // Academy at Night
   ];
 
   it("NO printed Stadium program can whiff-gate — so no DOM case above can grey the row that way", () => {
@@ -303,7 +379,9 @@ describe("the `programPlayable` term in the LOCAL fold is correct and, today, UN
       const ability = programFor(id)?.stadium?.ability;
       if (ability === undefined) throw new Error(`${id} has no stadium ability`);
       // ⚠️ THE ADMISSION, PINNED. Every printed Stadium ability searches a deck or
-      // retrieves from a discard, and `programPlayable` gates NEITHER ("a deck
+      // retrieves from a discard (🆕🆕🆕 D561: or, Academy at Night, pays a hand card to the
+      // deck top — `payFromHand`, which `programPlayable` does not gate either), and
+      // `programPlayable` gates NEITHER ("a deck
       // search is always playable enough", cardplay.ts). So the `!programPlayable`
       // term in `stadiumAbilityOption` cannot currently return true, the "No legal
       // target" tooltip is UNREACHABLE from any authored card, and mutant (e)
@@ -315,7 +393,7 @@ describe("the `programPlayable` term in the LOCAL fold is correct and, today, UN
     // The control that makes the loop mean something: this state DOES make
     // `programPlayable` false for a gated op, so "true" above is a fact about
     // these programs and not about this board. RED the day a gated op joins one
-    // of the seven — at which point the local case becomes writable.
+    // of the seven (🆕🆕🆕 D561: eight) — at which point the local case becomes writable.
     expect(programPlayable(stripped, [{ op: "gust" }], "p1")).toBe(false);
   });
 });

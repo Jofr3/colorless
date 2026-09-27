@@ -3047,7 +3047,8 @@ collapsing at cap `count` cannot cross the threshold: either one class alone has
 
 ### The gate VETOES — the opposite call from D45, one slice later
 `handCostUnmet` (interpreter.ts) is checked by **both** action paths before
-anything is committed, beside `trainerPlayableIf`. It is deliberately **not** in
+anything is committed (🆕🆕🆕 D561: by all **three** since R-AN — `useStadiumAbility`
+asks it for Academy at Night's printed hand cost, and both HUD folds mirror it), beside `trainerPlayableIf`. It is deliberately **not** in
 `programPlayable`, and the contrast with the previous slice is the point:
 
 - `attachFromTop` is **ungated** because a per-op veto inside `programPlayable`'s
@@ -4445,6 +4446,9 @@ A Stadium is no longer continuous-only. `StadiumEffects.ability?: {label, progra
 driven by a new **`useStadiumAbility {seat}`** action (cardplay.ts — the
 `useAbility` twin, minus the ability-lock/`activeOnly`/hand-cost paths a Stadium
 never has; there is no `target` because there is exactly one shared Stadium).
+(🆕🆕🆕 D561 CORRECTION (D539): ~~"hand-cost paths a Stadium never has"~~ — Academy at
+Night `sv06.5-054` is a Stadium ability whose whole program is a hand cost, so
+`useStadiumAbility` now asks `handCostUnmet` too — R-AN, docs/decisions.md D561.)
 Artazon / Mesagoza / Town Store landed on it with **no new op** (Nest Ball /
 Poké Ball search shapes) plus two `CardFilter` refinements — `basicPokemon.noRuleBox`
 (the new `cards.ts hasRuleBox` = the ex/V/…/GX suffixes ∪ the "Radiant " NAME PREFIX)
@@ -20216,7 +20220,7 @@ reproduces at **exactly 8 printings / 5 clauses**.
 | "Switch your Active Pokémon with 1 of your Benched Pokémon. If you do, draw cards until you have 5 cards in your hand." (Surfer) | `sv08-187/-235` — **2 legal** | ✅ **TAKEN** — prices `recordAs` ALONE |
 | "Switch in 1 of your opponent's Benched Pokémon to the Active Spot. If you do, switch your Active Pokémon with 1 of your Benched Pokémon." (Prime Catcher) | `sv05-157`, `sv08.5-119` — **2 legal** | ✅ **TAKEN** — the same two ops, the other way round |
 | "Switch in 1 of your opponent's Benched **Basic** Pokémon to the Active Spot. If you do, the new Active Pokémon is now Confused." (Lisia's Appeal) | `sv08-179/-234/-246` — 3 legal | ⏹️ REFUSED — a stage filter AND a status on the promoted body |
-| "…If you do, you may move any amount of Energy from **the Pokémon you moved to your Bench** to the new Active Pokémon." (Scramble Switch) | `sv08-186` — 1 legal | ⏹️ REFUSED — the OTHER end of the switch |
+| "…If you do, you may move any amount of Energy from **the Pokémon you moved to your Bench** to the new Active Pokémon." (Scramble Switch) | `sv08-186` — 1 legal | ⏹️ REFUSED — the OTHER end of the switch (🆕🆕🆕 D561: ✅ BUILT — `switchActive.recordDemoted` files that end, `moveEnergy.sourceRecorded` reads it) |
 | the four ATTACK-surface rows — Kilowattrel ex `sv08-068`, Iron Bundle `sv06-062`, Grimmsnarl `sv07-096`, Malamar `sv06.5-034` | **4 legal** | ⏹️ REFUSED — a self-target on `attachEnergyFrom`; an OPPONENT-DECIDED promotion (`gust` is the controller choosing); a cards-played-this-turn history no board keeps |
 | "Switch this Pokémon with 1 of your Benched **{L}** Pokémon." (Vikavolt) | `sv07-053` — 1 legal | ✅ **TAKEN AT D468** — `censusAttackCorpus.ts` **FILE LINE 499**. ⚠️ **THE REFUSAL BELOW IS CORRECTED RATHER THAN DELETED (D442), AND IT WAS RIGHT ABOUT ITS OWN SUBJECT**: `ownerPokemon` genuinely cannot say `{L}` and still must not try — `switchSeam.test.ts` §4 keeps that claim, re-pointed onto the derived VALUE (D449/D438) instead of onto a `toBeNull` the build falsified. What the note never said is that a DIFFERENT field already could: `switchActive.targetType?: PokemonType` shipped at **D273** for the ABILITY surface (Pecharunt ex, 5 legal), `switchBenchNarrowing` already narrows the Bench end through `matchesFilter`'s `typedPokemon`, and `switchTargetNoun` already spells the type into the caption — so the ATTACK-surface READER was the only missing piece, and it cost ONE anchor (`ATTACK_SELF_SWITCH_TYPED`) and ONE arm. **A refusal names a CARRIER, and the carrier can be wrong** (D457): this one priced the row against the field that refused it rather than against the field that would serve it, and the correct field was named in this very op's doc block, three slices earlier. |
 | "Switch your Active Pokémon with 1 of your Benched Pokémon." (bare) | `sv01-194`, `sv03.5-206`, `mfb-34` | `legal_standard = 0` |
@@ -20362,7 +20366,8 @@ seam on, and the row that will make the false arm reachable.
   SHIPPED: the filed uid is asserted to be the PROMOTED body, and the demoted one
   — the card's printed source — is asserted to be on the Bench and **absent from
   the record**. The flag doubles as the mutant-killer for a `recordAs` that filed
-  the wrong end.
+  the wrong end. (🆕🆕🆕 D561: the flag is INVERTED — Scramble Switch is BUILT on
+  `recordDemoted`; the default-filing half is still driven, the old titles struck.)
 * **The ATTACK-surface seam (2 legal)** — both sentences refused by D189's fully
   anchored regex, asserted in BOTH directions so a broken anchor cannot pass as a
   refusal, with each missing piece driven off a real op (`attachEnergyFrom` has
@@ -28262,7 +28267,9 @@ Brock's Scouting, Love Ball, Dusk Ball, Crispin, Perrin, Salvatore. (🆕🆕�
 Dusk Ball are BUILT — one small rider each: `CardFilter.toolNameContaining`, `searchDeck.dest: "discard"`, `lookAtTopN.from:
 "bottom"`. Brock's Scouting stays deferred: its either-scope cap is new wire validation, and optional-first is refused by D344.)
 (🆕🆕🆕 2026-09-26 D558: Salvatore is BUILT — one optional key, `noAbilities` on `evolveFromDeckChosen` / `evolveFromDeck`,
-threaded through the body narrowing, the answer, the offer and the move.) Next queue: the conditional-draw Trainers (Iris,
+threaded through the body narrowing, the answer, the offer and the move.) (🆕🆕🆕 D561: Love Ball, Crispin and Perrin are
+BUILT — `searchDeck.sameNameAsOpponentInPlay`, `attachEnergyFrom.oneOfRecorded`, `searchDeck.maxRecorded` + the declinable
+`payFromHand`'s `"deckBottom"`; Tera Orb and Brock's Scouting remain.) Next queue: the conditional-draw Trainers (Iris,
 Ariana, Billy — 6 printings, 2 `BoardCondition` members), then Samurott and Snow Sink.
 
 ## D555 — the zero-vocabulary Trainers and Abilities: 20 printings / 12 texts / 12 objects, one caption branch, and the Samurott refusal retired (engine 0.439.0, `MATCH_RECORD_VERSION` 34 HELD)
@@ -28505,7 +28512,8 @@ killed undeclared; five rows re-anchored onto the Weakness bytes and re-probed);
 The whole-corpus sweep (~~D556 → D559, all pending~~ D556, D557 and D558 PAID, each exact on its first launch — D558's `3263 · 52` over 3,315 at close-out `ff618ad6`; only D559's own is owed, predicted `3294 killed · 52 known survivor(s)` over 3,346). R-FZ1 UNRULED; R-FZ2 UNRULED for Blooming Garden and D432's bar only. R-O1 (bench recoil read). The HUD does not show
 the rewritten Weakness (display debt, D552 ⑽'s precedent). Next: Feraligatr "Torrential Heart", then (iii)'s non-overlapping
 remainder (Watchtower, Slaking ex, Thwackey, Drilbur, Festival Grounds, Scoop Up Cyclone, Love Ball), re-priced now that
-Gastrodon and Flutter Mane have landed. (🆕🆕🆕 D560: Slaking ex, Thwackey and Drilbur BUILT — see D560 below.)
+Gastrodon and Flutter Mane have landed. (🆕🆕🆕 D560: Slaking ex, Thwackey and Drilbur BUILT — see D560 below.) (🆕🆕🆕 D561:
+Scoop Up Cyclone and Love Ball BUILT — see D561 below.)
 
 ## D560 — the ability bundle, part two: 17 printings / 11 texts / 11 objects (engine 0.444.0, `MATCH_RECORD_VERSION` stays 35)
 
@@ -28555,3 +28563,50 @@ the new code, none re-anchored); declared survivors 52 unmoved.
 ### (e) Owed
 The whole-corpus sweep (~~D558 → D560 pending~~ D558 and D559 PAID, each exact on its first launch — D559's `3294 · 52` over 3,346 at close-out `ea7f8433`; only D560's own is owed, predicted `3333 killed · 52 known survivor(s)` over 3,385). R-TW UNRULED. The 0.443 rollback reading of a parked `"all"` / `only`
 (named, not bumped). Super Potion (the Trainer third of the heal-then-discard family), Farfetch'd `sv06-132`.
+(🆕🆕🆕 D561: Super Potion BUILT — see D561 below.)
+
+## D561 — the trainer bundle: 15 printings / 9 texts / 9 objects (engine 0.445.0, `MATCH_RECORD_VERSION` stays 35)
+
+**Status:** ✅ BUILT — keyed MID-MAP after `sv07-006`. Built in the `lum-wt-d561` worktree stacked on the parked D560; committed there on `d561-prep` at `b063a5be`, then LANDED on `main` by cherry-pick onto the D560 close-out `a4e0cd5e` as ONE commit carrying its last review's three prose fixes (D539).
+
+### (a) The nine rows (registry.ts, one block before `const REGISTRY`)
+| Card | Ids | Subtype | Program |
+|---|---|---|---|
+| Perrin | `sv06-160`/`-209`/`-220` | Supporter | `payFromHand { "any", cap 2, anyPokemon, "deckBottom", paid }` → `recordGate paid` → `searchDeck { max 2, maxRecorded paid, reveal }` → `shuffleDeck` |
+| Crispin | `sv07-133`/`-164`, `sv08.5-105`/`-171` | Supporter | `searchDeck { basicEnergy, max 2, distinctEnergyTypes, reveal, moved }` → `attachEnergyFrom { hand, oneOfRecorded moved }` → `shuffleDeck` |
+| Super Potion | `sv09-158` | Item | `healChosen { 60, discardEnergyFromHealed }` |
+| Love Ball | `sv06-156` | Item | `searchDeck { anyPokemon, max 1, reveal, sameNameAsOpponentInPlay }` → `shuffleDeck` |
+| Hand Trimmer | `sv05-150` | Item | `opponentDiscardsFromHand { untilHandSize 5 }` → `{ untilHandSize 5, whose "self" }` |
+| Scoop Up Cyclone | `sv06-162`, `sv08.5-128` | Item (ACE SPEC) | `returnBenched { self, hand, includeActive }` |
+| Scramble Switch | `sv08-186` | Item (ACE SPEC) | `switchActive { moved, recordDemoted }` → `recordGate moved` → `moveEnergy { "any", benchToActive, sourceRecorded moved }` |
+| Academy at Night | `sv06.5-054` | Stadium | `stadium.ability [payFromHand { 1, "deckTop" }]` |
+| Perilous Jungle | `sv05-156` | Stadium | `stadium.poisonExtraCounters { 20, excludesType Darkness }` |
+
+### (b) The vocabulary
+V1 `payFromHand.to` (`"deckTop"` on the exact arm, `"deckBottom"` on the declinable arm; `HAND_COST_PAID.to`, captions and the
+log follow); V2 `searchDeck.maxRecorded` (a rider, not a `max` member — the rollback reading and a byte pin decided it); V3
+`searchDeck.sameNameAsOpponentInPlay` (D531's step-time narrowing); V4 `attachEnergyFrom.oneOfRecorded` (a rider that rewrites
+its op into a labelled `optional` between the found types — not a new op, because a 0.444 reader would THROW on an unknown
+member riding `rest`); V5 `healChosen.discardEnergyFromHealed` + the engine-written `discardEnergy.bodyUid` (one helper for the
+forced and parked entrances; `continuationOps` now takes the pre-answer board); V6 `opponentDiscardsFromHand.whose "self"`
+(its own short path, no `decider`); V7 `returnBenched.includeActive`; V8 `switchActive.recordDemoted` (a rider, not an
+`EffectSlot` member) + `moveEnergy.sourceRecorded`; V9 `StadiumEffects.poisonExtraCounters` + continuous.ts
+`stadiumPoisonExtraCounters`, summed into flow.ts's §13.1 Poison row. `useStadiumAbility` now asks `handCostUnmet` (R-AN), and both HUD folds (`redact.ts`, GameHud) mirror it.
+
+### (c) Readings (`docs/decisions.md` D561)
+R-PR (a count, not a per-card reveal, for the returned cards; they can be found again) · R-CR1 ⚠️ UNRULED (one card found:
+attach or keep) · R-CR2 (two types; fungible Basic Energy; a Special is never attached) · R-SP (heal 0 → no discard) · R-LB
+(exact names) · R-HT (opponent first; the played Item is out of hand) · R-SC (an empty Bench → the §14.2 loss) · R-SS (0 moved
+is legal; an empty Bench refuses the play) · R-AN (an empty hand refuses Academy at Night) · R-PJ (one summed Poison row, before
+Pecharunt's).
+
+### (d) Tests and mutants
+`trainersD561.test.ts` and `stadiumsD561.test.ts`; switchSeam.test.ts's Scramble Switch FLAG inverted. Mutants 3,385 → 3,436
+(+51 `D561-*`, all killed undeclared); FIVE existing rows re-anchored by script and checked against HEAD
+(`D434-fires-after-the-condition-steps`, and after the second review D210/D213's four Stadium-fold rows); declared survivors
+52 unmoved. The second review also found R-AN's `handCostUnmet` term mirrored on neither HUD fold (an empty-hand Academy at
+Night lit a row the engine refuses) — now in `redact.ts` and GameHud, each driven against `applyAction`.
+
+### (e) Owed
+The whole-corpus sweep (~~D559 → D561 pending~~ D559 and D560 PAID, each exact — D560's `3333 · 52` over 3,385 at close-out `a4e0cd5e`, on its second launch; only D561's own is owed, predicted `3384 killed · 52 known survivor(s)` over 3,436). R-CR1 UNRULED. The 0.444 rollback readings (named, not bumped). Tera Orb and
+Brock's Scouting (deferred); Farfetch'd `sv06-132`; Festival Grounds / Festival Lead; Team Rocket's Watchtower; Crobat.

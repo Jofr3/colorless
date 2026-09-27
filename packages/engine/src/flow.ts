@@ -7,6 +7,7 @@ import {
   passivesOf,
   seatBurnExtraCounters,
   seatKoPrizeBonuses,
+  stadiumPoisonExtraCounters,
 } from "./continuous";
 import type { GameEvent } from "./events";
 import type { RunResult } from "./interpreter";
@@ -1844,11 +1845,19 @@ function runCheckup(state: GameState, endedSeat: Seat, events: GameEvent[]): App
   }
 
   // §13.1 Poison — the condition's own counter amount (10 unless raised).
+  // 🆕🆕🆕 D561 — "(10 unless raised)" is the CONDITION's amount and no longer always the
+  // whole tick: Perilous Jungle (*"During Pokémon Checkup, put 2 more damage counters on
+  // each Poisoned non-{D} Pokémon (both yours and your opponent's)."*) adds 20 on either
+  // seat while it is the Stadium in play (`stadiumPoisonExtraCounters`, the top card's
+  // types decide the {D} exemption), SUMMED into this one `COUNTERS_PLACED { source:
+  // "poison" }` row, which therefore still lands BEFORE Pecharunt's Checkup trigger row
+  // (R-PJ; reversal: split the Stadium's share onto its own row when a reader needs it).
   for (const seat of order) {
     const spot = activeTop(next, seat);
     if (spot === null || spot.active.conditions.poisonDamage <= 0) continue;
     const { active, uid } = spot;
-    const amount = active.conditions.poisonDamage;
+    const amount =
+      active.conditions.poisonDamage + stadiumPoisonExtraCounters(next, topCardOf(next, active));
     next = withActive(next, seat, { ...active, damage: active.damage + amount });
     events.push({ type: "COUNTERS_PLACED", seat, uid, amount, source: "poison" });
   }

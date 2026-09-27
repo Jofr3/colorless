@@ -534,8 +534,10 @@ export const MUTANTS: Mutant[] = [
     decision: "D210",
     what: "the per-turn `allowances.stadiumAbilityUsed` flag is dropped from the wire's `disabled` — a second activation is offered (D210: 3 red)",
     file: "packages/engine/src/redact.ts",
-    find: "    disabled: state.allowances.stadiumAbilityUsed || noTarget,",
-    replace: "    disabled: noTarget,",
+    // 🆕🆕🆕 RE-TRANSCRIBED AT D561: R-AN added a `costUnmet` term to the same line; the
+    // mutation is unchanged (the used flag alone is dropped, every other term kept).
+    find: "    disabled: state.allowances.stadiumAbilityUsed || noTarget || costUnmet !== null,",
+    replace: "    disabled: noTarget || costUnmet !== null,",
     expectKilledBy: ["packages/engine/src/redactStadiumAbility.test.ts"],
   },
   {
@@ -547,19 +549,21 @@ export const MUTANTS: Mutant[] = [
     // `const noTarget = !programPlayable(state, ability.program, viewerSeat);`
     // 216 lines up at a deeper indent — D207's exact trap, and the reason this
     // `find` carries the three lines that follow it.
+    // 🆕🆕🆕 RE-TRANSCRIBED AT D561: R-AN put the `costUnmet` term between this line and
+    // the `return`, so the anchor now carries the D561 comment line that follows it
+    // (the deeper-indent twin is followed by a `// D272` line, not this one). The
+    // mutation is unchanged: `noTarget` becomes `false`, nothing else moves.
     find:
       "  const noTarget = !programPlayable(state, ability.program, viewerSeat);\n" +
-      "  return {\n    label: ability.label,\n" +
-      "    disabled: state.allowances.stadiumAbilityUsed || noTarget,",
+      "  // 🆕🆕🆕 D561 (R-AN) — the printed hand cost; no `excludeUid` (the Stadium is in the\n",
     replace:
       "  const noTarget = false;\n" +
-      "  return {\n    label: ability.label,\n" +
-      "    disabled: state.allowances.stadiumAbilityUsed || noTarget,",
+      "  // 🆕🆕🆕 D561 (R-AN) — the printed hand cost; no `excludeUid` (the Stadium is in the\n",
     expectKilledBy: ["packages/engine/src/redactStadiumAbility.test.ts"],
     survives: {
       kind: "unreachable-population",
       reason:
-        '⚠️ THIS ROW IS THE PIN, AND DECLARING IT IS THE POINT. Every implemented Stadium ability searches a deck or retrieves from a discard, and `programPlayable` gates neither — so no printed Stadium ability whiff-gates and `"No legal target"` is unreachable from any authored card. D210 kept the term anyway because the engine gate has it. THE DAY A WHIFF-GATED STADIUM PROGRAM LANDS, this row reports STALE-SURVIVOR and someone re-reads the pin. Omitting it would silently lose that.',
+        '⚠️ THIS ROW IS THE PIN, AND DECLARING IT IS THE POINT. Every implemented Stadium ability searches a deck or retrieves from a discard (🆕🆕🆕 D561: or, Academy at Night, pays a hand card to the deck top — `payFromHand`, which `programPlayable` does not gate; its hand cost is the separate, REACHABLE `costUnmet` term of the fold), and `programPlayable` gates neither — so no printed Stadium ability whiff-gates and `"No legal target"` is unreachable from any authored card. D210 kept the term anyway because the engine gate has it. THE DAY A WHIFF-GATED STADIUM PROGRAM LANDS, this row reports STALE-SURVIVOR and someone re-reads the pin. Omitting it would silently lose that.',
     },
   },
 
@@ -599,8 +603,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D213",
     what: "the local HUD's Stadium row drops the per-turn used flag — `disabled={false}` on a second activation, D210's mutant at the other surface",
     file: "src/features/game/GameHud.tsx",
-    find: "    disabled: game.allowances.stadiumAbilityUsed || noTarget,",
-    replace: "    disabled: noTarget,",
+    // 🆕🆕🆕 RE-TRANSCRIBED AT D561 for D210-used-flag's reason, one surface over.
+    find: "    disabled: game.allowances.stadiumAbilityUsed || noTarget || costUnmet !== null,",
+    replace: "    disabled: noTarget || costUnmet !== null,",
     expectKilledBy: ["src/features/game/GameHud.stadiumAbility.dom.test.tsx"],
   },
   {
@@ -614,19 +619,19 @@ export const MUTANTS: Mutant[] = [
     // gained a fourth argument (`stadium.uid`), the `find` stopped matching, and
     // the harness reported ERROR rather than skipping. *A line number rots
     // silently, a unique string rots loudly* — this is what that sentence buys.
+    // 🆕🆕🆕 RE-TRANSCRIBED AT D561 (R-AN's `costUnmet` term), exactly as D222 did: the
+    // anchor now carries the D561 comment line that follows it; the mutation is unchanged.
     find:
       "  const noTarget = !programPlayable(game, ability.program, seat, stadium.uid);\n" +
-      "  return {\n    label: ability.label,\n" +
-      "    disabled: game.allowances.stadiumAbilityUsed || noTarget,",
+      "  // 🆕🆕🆕 D561 (R-AN) — `useStadiumAbility` now refuses an unpayable printed hand cost\n",
     replace:
       "  const noTarget = false;\n" +
-      "  return {\n    label: ability.label,\n" +
-      "    disabled: game.allowances.stadiumAbilityUsed || noTarget,",
+      "  // 🆕🆕🆕 D561 (R-AN) — `useStadiumAbility` now refuses an unpayable printed hand cost\n",
     expectKilledBy: ["src/features/game/GameHud.stadiumAbility.dom.test.tsx"],
     survives: {
       kind: "unreachable-population",
       reason:
-        '⚠️ THE SECOND PIN, and the same fact as D210-programPlayable one surface over: no printed Stadium ability whiff-gates, so "No legal target" is unreachable from any authored card and D213 asserted all seven printings playable under the most adverse board, beside a `gust` control that IS false there. Kept because the engine gate has it. If this is ever KILLED, a whiff-gated Stadium program has landed and BOTH pins need re-reading.',
+        '⚠️ THE SECOND PIN, and the same fact as D210-programPlayable one surface over: no printed Stadium ability whiff-gates, so "No legal target" is unreachable from any authored card and D213 asserted all seven (🆕🆕🆕 D561: eight — Academy at Night joins the list, and stays playable there — 🆕🆕🆕 D561 landing fix: playable as far as `programPlayable` goes; its hand cost is the separate, REACHABLE `costUnmet` term, and on that empty-hand board `useStadiumAbility` refuses it) printings playable under the most adverse board, beside a `gust` control that IS false there. Kept because the engine gate has it. If this is ever KILLED, a whiff-gated Stadium program has landed and BOTH pins need re-reading.',
     },
   },
 
@@ -6206,7 +6211,7 @@ export const MUTANTS: Mutant[] = [
     // CORPUS QUOTES** (D414/D415), so a value-keyed sweep over `toBe("0.391.0")` cannot
     // see it — this row's `find` spells the DECLARATION, not an assertion. Run
     // `precheck` after every version bump, not after the sweep tells you.
-    find: 'export const engineVersion = "0.444.0";',
+    find: 'export const engineVersion = "0.445.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -20446,8 +20451,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D434",
     what: "THE ORDERING DECISION, INVERTED — the placement moves BEHIND §13.1 Poison, which is the plausible wrong choice because the engine's existing home for non-condition between-turns work (`runCheckupTriggers`) sits after the four condition steps. 🛑 THE BOARD IS IDENTICAL UNDER BOTH BUILDS: damage is additive and the KO sweep runs once for the whole batch, so only the EVENT SEQUENCE moves — D430's rule read from the other side, and the reason §5's rung asserts the sequence rather than a total",
     file: "packages/engine/src/flow.ts",
-    find: "  {\n    const spot = activeTop(next, endedSeat);\n    const due = spot === null ? null : scheduledEffectDue(spot.active, next.turn);\n    if (spot !== null && due !== null) {\n      const { active, uid } = spot;\n      switch (due.kind) {\n        // D434 \u2014 counters. \u00a712's one-counter-is-10 conversion happened at the ARM.\n        case \"counters\": {\n          next = withActive(next, endedSeat, { ...active, damage: active.damage + due.amount });\n          events.push({\n            type: \"COUNTERS_PLACED\",\n            seat: endedSeat,\n            uid,\n            amount: due.amount,\n            source: \"delayed\",\n          });\n          break;\n        }\n        // \ud83c\udd95\ud83c\udd95 D435 \u2014 the DISCARD (corpus row 53). NO Prize; see (a) above.\n        case \"discard\": {\n          const cleanup = discardFromStack(next.players[endedSeat], active, \"all\");\n          next = withSide(next, endedSeat, { ...cleanup.side, active: null });\n          events.push({\n            type: \"POKEMON_RETURNED\",\n            seat: endedSeat,\n            uid,\n            actor: otherSeat(endedSeat),\n            dest: \"discard\",\n            uids: cleanup.discarded,\n          });\n          break;\n        }\n        // \ud83c\udd95\ud83c\udd95 D435 \u2014 the KNOCK OUT (corpus row 113's tail). \u00a78.1 IN FULL, Prize\n        // included, and not one line of it written here; see (b) and (c) above.\n        case \"knockOut\": {\n          const marker = isLethallyDamaged(next, active) ? undefined : koByEffectMarker(next.turn);\n          next = doomBodyAt(next, { seat: endedSeat, spot: { spot: \"active\" } }, marker);\n          break;\n        }\n      }\n    }\n  }\n\n  // \u00a713.1 Poison \u2014 the condition's own counter amount (10 unless raised).\n  for (const seat of order) {\n    const spot = activeTop(next, seat);\n    if (spot === null || spot.active.conditions.poisonDamage <= 0) continue;\n    const { active, uid } = spot;\n    const amount = active.conditions.poisonDamage;\n    next = withActive(next, seat, { ...active, damage: active.damage + amount });\n    events.push({ type: \"COUNTERS_PLACED\", seat, uid, amount, source: \"poison\" });\n  }\n",
-    replace: "  // \u00a713.1 Poison \u2014 the condition's own counter amount (10 unless raised).\n  for (const seat of order) {\n    const spot = activeTop(next, seat);\n    if (spot === null || spot.active.conditions.poisonDamage <= 0) continue;\n    const { active, uid } = spot;\n    const amount = active.conditions.poisonDamage;\n    next = withActive(next, seat, { ...active, damage: active.damage + amount });\n    events.push({ type: \"COUNTERS_PLACED\", seat, uid, amount, source: \"poison\" });\n  }\n\n  {\n    const spot = activeTop(next, endedSeat);\n    const due = spot === null ? null : scheduledEffectDue(spot.active, next.turn);\n    if (spot !== null && due !== null) {\n      const { active, uid } = spot;\n      switch (due.kind) {\n        // D434 \u2014 counters. \u00a712's one-counter-is-10 conversion happened at the ARM.\n        case \"counters\": {\n          next = withActive(next, endedSeat, { ...active, damage: active.damage + due.amount });\n          events.push({\n            type: \"COUNTERS_PLACED\",\n            seat: endedSeat,\n            uid,\n            amount: due.amount,\n            source: \"delayed\",\n          });\n          break;\n        }\n        // \ud83c\udd95\ud83c\udd95 D435 \u2014 the DISCARD (corpus row 53). NO Prize; see (a) above.\n        case \"discard\": {\n          const cleanup = discardFromStack(next.players[endedSeat], active, \"all\");\n          next = withSide(next, endedSeat, { ...cleanup.side, active: null });\n          events.push({\n            type: \"POKEMON_RETURNED\",\n            seat: endedSeat,\n            uid,\n            actor: otherSeat(endedSeat),\n            dest: \"discard\",\n            uids: cleanup.discarded,\n          });\n          break;\n        }\n        // \ud83c\udd95\ud83c\udd95 D435 \u2014 the KNOCK OUT (corpus row 113's tail). \u00a78.1 IN FULL, Prize\n        // included, and not one line of it written here; see (b) and (c) above.\n        case \"knockOut\": {\n          const marker = isLethallyDamaged(next, active) ? undefined : koByEffectMarker(next.turn);\n          next = doomBodyAt(next, { seat: endedSeat, spot: { spot: \"active\" } }, marker);\n          break;\n        }\n      }\n    }\n  }\n",
+    find: "  {\n    const spot = activeTop(next, endedSeat);\n    const due = spot === null ? null : scheduledEffectDue(spot.active, next.turn);\n    if (spot !== null && due !== null) {\n      const { active, uid } = spot;\n      switch (due.kind) {\n        // D434 \u2014 counters. \u00a712's one-counter-is-10 conversion happened at the ARM.\n        case \"counters\": {\n          next = withActive(next, endedSeat, { ...active, damage: active.damage + due.amount });\n          events.push({\n            type: \"COUNTERS_PLACED\",\n            seat: endedSeat,\n            uid,\n            amount: due.amount,\n            source: \"delayed\",\n          });\n          break;\n        }\n        // \ud83c\udd95\ud83c\udd95 D435 \u2014 the DISCARD (corpus row 53). NO Prize; see (a) above.\n        case \"discard\": {\n          const cleanup = discardFromStack(next.players[endedSeat], active, \"all\");\n          next = withSide(next, endedSeat, { ...cleanup.side, active: null });\n          events.push({\n            type: \"POKEMON_RETURNED\",\n            seat: endedSeat,\n            uid,\n            actor: otherSeat(endedSeat),\n            dest: \"discard\",\n            uids: cleanup.discarded,\n          });\n          break;\n        }\n        // \ud83c\udd95\ud83c\udd95 D435 \u2014 the KNOCK OUT (corpus row 113's tail). \u00a78.1 IN FULL, Prize\n        // included, and not one line of it written here; see (b) and (c) above.\n        case \"knockOut\": {\n          const marker = isLethallyDamaged(next, active) ? undefined : koByEffectMarker(next.turn);\n          next = doomBodyAt(next, { seat: endedSeat, spot: { spot: \"active\" } }, marker);\n          break;\n        }\n      }\n    }\n  }\n\n  // \u00a713.1 Poison \u2014 the condition's own counter amount (10 unless raised).\n  // \ud83c\udd95\ud83c\udd95\ud83c\udd95 D561 \u2014 \"(10 unless raised)\" is the CONDITION's amount and no longer always the\n  // whole tick: Perilous Jungle (*\"During Pok\u00e9mon Checkup, put 2 more damage counters on\n  // each Poisoned non-{D} Pok\u00e9mon (both yours and your opponent's).\"*) adds 20 on either\n  // seat while it is the Stadium in play (`stadiumPoisonExtraCounters`, the top card's\n  // types decide the {D} exemption), SUMMED into this one `COUNTERS_PLACED { source:\n  // \"poison\" }` row, which therefore still lands BEFORE Pecharunt's Checkup trigger row\n  // (R-PJ; reversal: split the Stadium's share onto its own row when a reader needs it).\n  for (const seat of order) {\n    const spot = activeTop(next, seat);\n    if (spot === null || spot.active.conditions.poisonDamage <= 0) continue;\n    const { active, uid } = spot;\n    const amount =\n      active.conditions.poisonDamage + stadiumPoisonExtraCounters(next, topCardOf(next, active));\n    next = withActive(next, seat, { ...active, damage: active.damage + amount });\n    events.push({ type: \"COUNTERS_PLACED\", seat, uid, amount, source: \"poison\" });\n  }\n",
+    replace: "  // \u00a713.1 Poison \u2014 the condition's own counter amount (10 unless raised).\n  // \ud83c\udd95\ud83c\udd95\ud83c\udd95 D561 \u2014 \"(10 unless raised)\" is the CONDITION's amount and no longer always the\n  // whole tick: Perilous Jungle (*\"During Pok\u00e9mon Checkup, put 2 more damage counters on\n  // each Poisoned non-{D} Pok\u00e9mon (both yours and your opponent's).\"*) adds 20 on either\n  // seat while it is the Stadium in play (`stadiumPoisonExtraCounters`, the top card's\n  // types decide the {D} exemption), SUMMED into this one `COUNTERS_PLACED { source:\n  // \"poison\" }` row, which therefore still lands BEFORE Pecharunt's Checkup trigger row\n  // (R-PJ; reversal: split the Stadium's share onto its own row when a reader needs it).\n  for (const seat of order) {\n    const spot = activeTop(next, seat);\n    if (spot === null || spot.active.conditions.poisonDamage <= 0) continue;\n    const { active, uid } = spot;\n    const amount =\n      active.conditions.poisonDamage + stadiumPoisonExtraCounters(next, topCardOf(next, active));\n    next = withActive(next, seat, { ...active, damage: active.damage + amount });\n    events.push({ type: \"COUNTERS_PLACED\", seat, uid, amount, source: \"poison\" });\n  }\n\n  {\n    const spot = activeTop(next, endedSeat);\n    const due = spot === null ? null : scheduledEffectDue(spot.active, next.turn);\n    if (spot !== null && due !== null) {\n      const { active, uid } = spot;\n      switch (due.kind) {\n        // D434 \u2014 counters. \u00a712's one-counter-is-10 conversion happened at the ARM.\n        case \"counters\": {\n          next = withActive(next, endedSeat, { ...active, damage: active.damage + due.amount });\n          events.push({\n            type: \"COUNTERS_PLACED\",\n            seat: endedSeat,\n            uid,\n            amount: due.amount,\n            source: \"delayed\",\n          });\n          break;\n        }\n        // \ud83c\udd95\ud83c\udd95 D435 \u2014 the DISCARD (corpus row 53). NO Prize; see (a) above.\n        case \"discard\": {\n          const cleanup = discardFromStack(next.players[endedSeat], active, \"all\");\n          next = withSide(next, endedSeat, { ...cleanup.side, active: null });\n          events.push({\n            type: \"POKEMON_RETURNED\",\n            seat: endedSeat,\n            uid,\n            actor: otherSeat(endedSeat),\n            dest: \"discard\",\n            uids: cleanup.discarded,\n          });\n          break;\n        }\n        // \ud83c\udd95\ud83c\udd95 D435 \u2014 the KNOCK OUT (corpus row 113's tail). \u00a78.1 IN FULL, Prize\n        // included, and not one line of it written here; see (b) and (c) above.\n        case \"knockOut\": {\n          const marker = isLethallyDamaged(next, active) ? undefined : koByEffectMarker(next.turn);\n          next = doomBodyAt(next, { seat: endedSeat, spot: { spot: \"active\" } }, marker);\n          break;\n        }\n      }\n    }\n  }\n",
     expectKilledBy: ["packages/engine/src/delayedCounters.test.ts"],
   },
   {
@@ -27536,7 +27541,7 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D489-declinable-cost-gates-the-wrong-arm",
     decision: "D489",
-    what: "\ud83d\uded1 B4 \u2014 **THE `handCostUnmet` SKIP IS INVERTED**, so the DECLINABLE arm is gated and every EXACT one is not. This is the row that measures what the new arm did to a shipped safety gate on the two PLAY paths: Ultra Ball, Earthen Vessel, Tinkaton, Revavroom and Dendra stop being refused on a hand that cannot pay them, and each then pays what it finds and buys its effect anyway \u2014 D420's original hazard, re-opened at the Trainer seam this slice never touches. \u26a0\ufe0f **The killers are the SHIPPED suites, not this slice's**, which is the point: a widening's cost is measured where the old behaviour lives.",
+    what: "\ud83d\uded1 B4 \u2014 **THE `handCostUnmet` SKIP IS INVERTED**, so the DECLINABLE arm is gated and every EXACT one is not. This is the row that measures what the new arm did to a shipped safety gate on the two PLAY paths (D561: three since R-AN, `useStadiumAbility` asks it for Academy at Night): Ultra Ball, Earthen Vessel, Tinkaton, Revavroom and Dendra stop being refused on a hand that cannot pay them, and each then pays what it finds and buys its effect anyway \u2014 D420's original hazard, re-opened at the Trainer seam this slice never touches. \u26a0\ufe0f **The killers are the SHIPPED suites, not this slice's**, which is the point: a widening's cost is measured where the old behaviour lives.",
     file: "packages/engine/src/interpreter.ts",
     find: "    if (op.count === \"any\") continue;\n    if (handCostCandidates(state, seat, op, excludeUid).length < op.count) return op;",
     replace: "    if (op.count !== \"any\") continue;\n    if (handCostCandidates(state, seat, op, excludeUid).length < 1) return op;",
@@ -29585,7 +29590,7 @@ export const MUTANTS: Mutant[] = [
     expectKilledBy: ["packages/engine/src/derivedBenchSearchMove.test.ts"],
     survives: {
       kind: "unreachable-population",
-      reason: "No printed corpus sentence and no registry row pairs a `searchDeck` carrying a `recordAs` with a `recordGate`, except this decision's own — and that one is `dest: \"bench\"`, so the dropped conjunct is true on every board the engine can reach. Measured over all 640 rows of `legalAttackCorpus()` and every `programFor(id)`: exactly ONE `searchDeck` carries a `recordAs`, and its `dest` is `\"bench\"`. The row is KILLED — and reports STALE-SURVIVOR — the day a hand or deck-top search gains one.",
+      reason: "No printed corpus sentence and no registry row pairs a `searchDeck` carrying a `recordAs` with a `recordGate`, except this decision's own — and that one is `dest: \"bench\"`, so the dropped conjunct is true on every board the engine can reach. Measured over all 640 rows of `legalAttackCorpus()` and every `programFor(id)`: exactly ONE `searchDeck` carries a `recordAs`, and its `dest` is `\"bench\"`. ~~The row is KILLED — and reports STALE-SURVIVOR — the day a hand or deck-top search gains one.~~ (🆕🆕🆕 D561 CORRECTION (D539): ~~\"exactly ONE `searchDeck` carries a `recordAs`\"~~ — Crispin's four HAND searches now carry one too, read by `attachEnergyFrom.oneOfRecorded` and by NO `recordGate`, so the GATED pairing this row speaks for is still D502's Bench search alone and the survivor holds (re-probed a known survivor at D561); `derivedBenchSearchMove.test.ts` §6 asserts the narrower claim. The struck prediction was FALSIFIED by the same fact — a hand search gained a `recordAs` and the row did NOT go KILLED — and now reads: the row is KILLED, and reports STALE-SURVIVOR, the day a hand or deck-top search gains a `recordAs` AND a `recordGate` reading it.)",
     },
   },
   {
@@ -38100,5 +38105,488 @@ export const MUTANTS: Mutant[] = [
     find: "          op: \"coinFlipGate\",\n          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.\n          then: [\n            {\n              op: \"optional\",\n              note: \"Selective Slime:",
     replace: "          op: \"coinFlipGate\",\n          onTails: true,\n          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.\n          then: [\n            {\n              op: \"optional\",\n              note: \"Selective Slime:",
     expectKilledBy: ["packages/engine/src/abilityPassivesD560.test.ts"],
+  },
+  // ── 🆕🆕🆕 D561 — THE TRAINER BUNDLE: 15 printings / 9 texts / 9 objects. One row per new
+  //    branch: V9's scan and its one read site, V1's deck-top apply / captions / log, V2's
+  //    step-time ceiling and Perrin's describer arm, V3's step-time narrowing and caption, V4's
+  //    step expansion and its play-gate exclusion, V5's two entrances / the healed test / the
+  //    engine-written `bodyUid`, V6's controller arm and owner resolver, V7's candidate set and
+  //    writer, V8's filing / source pin / captions, R-AN's Stadium cost gate, the nine rows,
+  //    and (added at review, commented at the end of this block) the four `D561-academy-*`
+  //    rows mirroring R-AN's cost term and reason on the wire and local HUD folds.
+  //    FIVE existing rows were RE-ANCHORED, each checked by cmp against HEAD (D540), each with
+  //    its `what` / `expectKilledBy` untouched and its mutation unchanged (the two
+  //    programPlayable pins' `survives` reasons also gain an in-place D561 annotation naming
+  //    Academy at Night; the old text is kept, not overwritten):
+  //    `D434-fires-after-the-condition-steps` spans the §13.1 Poison loop V9 had to edit, so its
+  //    `find`/`replace` now carry the D561 lines; normalising those lines away, the mutated
+  //    flow.ts is byte-identical to HEAD's mutated flow.ts. And, at review, when R-AN's
+  //    `costUnmet` term was mirrored onto both HUD folds, `D210-used-flag`,
+  //    `D210-programPlayable`, `D213-used-flag` and `D213-programPlayable` (each carrying its
+  //    own "RE-TRANSCRIBED AT D561" comment): the used-flag rows still drop exactly the
+  //    `stadiumAbilityUsed ||` token, the programPlayable rows still make HEAD's edit. Every
+  //    other existing anchor was kept intact by reshaping the new code (plus D275's find,
+  //    stepped by the version tax — 🆕🆕🆕 D561 landing fix: `D275-engine-version-drifts-again`'s
+  //    `find` is the one other existing row whose bytes moved, 0.444.0 → 0.445.0). ──
+  {
+    id: "D561-jungle-scan-ignores-the-exempt-type",
+    decision: "D561",
+    what: "🛑 V9's {D} exemption is lost: `excludesType` is never read, so a Poisoned {D} Active takes the extra 20 too. Killed by §2's {D} and dual-type rungs and the direct scan rung.",
+    file: "packages/engine/src/continuous.ts",
+    find: "  if (jungle.excludesType !== undefined && (top?.types ?? []).includes(jungle.excludesType)) {",
+    replace: "  if (false) {",
+    expectKilledBy: ["packages/engine/src/stadiumsD561.test.ts"],
+  },
+  {
+    id: "D561-jungle-scan-pays-nothing",
+    decision: "D561",
+    what: "V9's scan answers 0 on every board: Perilous Jungle is inert. Killed by §2's +20 rungs (both seats) and R-PJ's summed 30.",
+    file: "packages/engine/src/continuous.ts",
+    find: "  return jungle.amount;",
+    replace: "  return 0;",
+    expectKilledBy: ["packages/engine/src/stadiumsD561.test.ts"],
+  },
+  {
+    id: "D561-poison-tick-drops-the-stadium",
+    decision: "D561",
+    what: "🛑 The §13.1 read site forgets the Stadium: the tick is the condition's own 10 again (the D560 Burn shape unrepeated). Killed by §2's 30-rungs and R-PJ.",
+    file: "packages/engine/src/flow.ts",
+    find: "      active.conditions.poisonDamage + stadiumPoisonExtraCounters(next, topCardOf(next, active));",
+    replace: "      active.conditions.poisonDamage;",
+    expectKilledBy: ["packages/engine/src/stadiumsD561.test.ts"],
+  },
+  {
+    id: "D561-poison-tick-reads-no-body",
+    decision: "D561",
+    what: "The read site hands the scan NO top card, so the {D} exemption can never fire from the Checkup. Killed by §2's {D} rung (30, not 10).",
+    file: "packages/engine/src/flow.ts",
+    find: "stadiumPoisonExtraCounters(next, topCardOf(next, active))",
+    replace: "stadiumPoisonExtraCounters(next, undefined)",
+    expectKilledBy: ["packages/engine/src/stadiumsD561.test.ts"],
+  },
+  {
+    id: "D561-jungle-row-no-exemption",
+    decision: "D561",
+    what: "Perilous Jungle's row loses its printed non-{D}. Killed by §1's shape pin and §2's {D} rung.",
+    file: "packages/engine/src/registry.ts",
+    find: "  stadium: { poisonExtraCounters: { amount: 20, excludesType: \"Darkness\" } },",
+    replace: "  stadium: { poisonExtraCounters: { amount: 20 } },",
+    expectKilledBy: ["packages/engine/src/stadiumsD561.test.ts"],
+  },
+  {
+    id: "D561-academy-row-to-the-bottom",
+    decision: "D561",
+    what: "Academy at Night puts the card UNDER the deck — the printed \"on top\" read as Dendra's end. Killed by §1 and §3's deck[0] rungs.",
+    file: "packages/engine/src/registry.ts",
+    find: "      program: [{ op: \"payFromHand\", count: 1, to: \"deckTop\" }],",
+    replace: "      program: [{ op: \"payFromHand\", count: 1, to: \"deckBottom\" }],",
+    expectKilledBy: ["packages/engine/src/stadiumsD561.test.ts"],
+  },
+  {
+    id: "D561-perrin-row-drops-that-many",
+    decision: "D561",
+    what: "🛑 R-PR / V2 reversed at the row: Perrin's search keeps its printed bound 2 whatever was returned. Killed by §2's ONE-returned rung (max 1, not 2).",
+    file: "packages/engine/src/registry.ts",
+    find: "          maxRecorded: \"paid\",\n",
+    replace: "",
+    expectKilledBy: ["packages/engine/src/trainersD561.test.ts"],
+  },
+  {
+    id: "D561-perrin-row-discards",
+    decision: "D561",
+    what: "Perrin's returned Pokémon go to the DISCARD rather than into the deck. Killed by §1 and §2's HAND_COST_PAID / found-again rungs.",
+    file: "packages/engine/src/registry.ts",
+    find: "      to: \"deckBottom\",\n      recordAs: \"paid\",",
+    replace: "      to: \"discard\",\n      recordAs: \"paid\",",
+    expectKilledBy: ["packages/engine/src/trainersD561.test.ts"],
+  },
+  {
+    id: "D561-crispin-row-types-may-repeat",
+    decision: "D561",
+    what: "Crispin's \"of different types\" is lost (no `distinctEnergyTypes`): two Fire may be taken. Killed by §1 and §3's caps rung.",
+    file: "packages/engine/src/registry.ts",
+    find: "      distinctEnergyTypes: true,\n      reveal: true,\n      recordAs: \"moved\",",
+    replace: "      reveal: true,\n      recordAs: \"moved\",",
+    expectKilledBy: ["packages/engine/src/trainersD561.test.ts"],
+  },
+  {
+    id: "D561-crispin-row-attach-unasked",
+    decision: "D561",
+    what: "Crispin's split is lost: a plain hand attach takes the first Basic Energy with no choice (the 0.444 rollback reading as a build). Killed by §1 and §3's labelled-choice rungs.",
+    file: "packages/engine/src/registry.ts",
+    find: "    { op: \"attachEnergyFrom\", source: \"hand\", oneOfRecorded: \"moved\" },",
+    replace: "    { op: \"attachEnergyFrom\", source: \"hand\" },",
+    expectKilledBy: ["packages/engine/src/trainersD561.test.ts"],
+  },
+  {
+    id: "D561-super-potion-row-no-discard",
+    decision: "D561",
+    what: "Super Potion's consequent is dropped: it is Potion at 60. Killed by §1 and §4's discard rungs.",
+    file: "packages/engine/src/registry.ts",
+    find: "  trainer: [{ op: \"healChosen\", amount: 60, discardEnergyFromHealed: true }],",
+    replace: "  trainer: [{ op: \"healChosen\", amount: 60 }],",
+    expectKilledBy: ["packages/engine/src/trainersD561.test.ts"],
+  },
+  {
+    id: "D561-love-ball-row-unnarrowed",
+    decision: "D561",
+    what: "Love Ball finds ANY Pokémon — the printed name clause dropped. Killed by §1 and §5's narrowed-offer and R-LB rungs.",
+    file: "packages/engine/src/registry.ts",
+    find: "      sameNameAsOpponentInPlay: true,\n",
+    replace: "",
+    expectKilledBy: ["packages/engine/src/trainersD561.test.ts"],
+  },
+  {
+    id: "D561-hand-trimmer-row-opponent-twice",
+    decision: "D561",
+    what: "🛑 R-HT's second player is lost: Hand Trimmer trims the OPPONENT twice and the controller never. Killed by §1 and §6's controller-park rungs.",
+    file: "packages/engine/src/registry.ts",
+    find: "    { op: \"opponentDiscardsFromHand\", untilHandSize: 5, whose: \"self\" },",
+    replace: "    { op: \"opponentDiscardsFromHand\", untilHandSize: 5 },",
+    expectKilledBy: ["packages/engine/src/trainersD561.test.ts"],
+  },
+  {
+    id: "D561-hand-trimmer-row-controller-first",
+    decision: "D561",
+    what: "🛑 \"Your opponent discards first\" reversed: the controller's park comes first. Killed by §1 and §6's order rung (the first park's answerer is p2).",
+    file: "packages/engine/src/registry.ts",
+    find: "    { op: \"opponentDiscardsFromHand\", untilHandSize: 5 },\n    { op: \"opponentDiscardsFromHand\", untilHandSize: 5, whose: \"self\" },",
+    replace: "    { op: \"opponentDiscardsFromHand\", untilHandSize: 5, whose: \"self\" },\n    { op: \"opponentDiscardsFromHand\", untilHandSize: 5 },",
+    expectKilledBy: ["packages/engine/src/trainersD561.test.ts"],
+  },
+  {
+    id: "D561-scoop-row-bench-only",
+    decision: "D561",
+    what: "Scoop Up Cyclone's \"1 of your Pokémon\" read as \"Benched\" (D299's own sentence). Killed by §1 and §7's Active rungs.",
+    file: "packages/engine/src/registry.ts",
+    find: "  trainer: [{ op: \"returnBenched\", whose: \"self\", dest: \"hand\", includeActive: true }],",
+    replace: "  trainer: [{ op: \"returnBenched\", whose: \"self\", dest: \"hand\" }],",
+    expectKilledBy: ["packages/engine/src/trainersD561.test.ts"],
+  },
+  {
+    id: "D561-scramble-row-files-promoted",
+    decision: "D561",
+    what: "Scramble Switch files the PROMOTED body (D206's default), so the move's source is the new Active and it whiffs. Killed by §1, §8 and switchSeam's inverted rung.",
+    file: "packages/engine/src/registry.ts",
+    find: "    { op: \"switchActive\", recordAs: \"moved\", recordDemoted: true },",
+    replace: "    { op: \"switchActive\", recordAs: \"moved\" },",
+    expectKilledBy: ["packages/engine/src/trainersD561.test.ts", "packages/engine/src/switchSeam.test.ts"],
+  },
+  {
+    id: "D561-scramble-row-source-unpinned",
+    decision: "D561",
+    what: "Scramble Switch's source is ANY Benched body, not \"the Pokémon you moved to your Bench\". Killed by §1, §8's note and other-Bench rungs (the latter rebuilt at review over TWO Benched bodies) and §9's Scramble rollback rung.",
+    file: "packages/engine/src/registry.ts",
+    find: "          sourceRecorded: \"moved\",\n",
+    replace: "",
+    expectKilledBy: ["packages/engine/src/trainersD561.test.ts"],
+  },
+  {
+    id: "D561-love-ball-reads-own-board",
+    decision: "D561",
+    what: "V3 reads the CONTROLLER's board: Love Ball matches your own Pokémon's names. Killed by §5's narrowed-offer rung.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  const side = state.players[otherSeat(ctx.seat)];\n  const bodies = side.active === null ? side.bench : [side.active, ...side.bench];\n  const names: string[] = [];",
+    replace: "  const side = state.players[ctx.seat];\n  const bodies = side.active === null ? side.bench : [side.active, ...side.bench];\n  const names: string[] = [];",
+    expectKilledBy: ["packages/engine/src/trainersD561.test.ts"],
+  },
+  {
+    id: "D561-love-ball-active-only",
+    decision: "D561",
+    what: "V3's \"in play\" read as the Active alone — a Benched name is not matched. Killed by §5's Bench rung.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  const bodies = side.active === null ? side.bench : [side.active, ...side.bench];\n  const names: string[] = [];",
+    replace: "  const bodies = side.active === null ? [] : [side.active];\n  const names: string[] = [];",
+    expectKilledBy: ["packages/engine/src/trainersD561.test.ts"],
+  },
+  {
+    id: "D561-love-ball-group-not-narrowed",
+    decision: "D561",
+    what: "The step never narrows group 0: the rider is declared, captioned and never READ. Killed by §5's narrowed-offer and R-LB rungs.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "          i === 0 && op.sameNameAsOpponentInPlay === true\n",
+    replace: "          false\n",
+    expectKilledBy: ["packages/engine/src/trainersD561.test.ts"],
+  },
+  {
+    id: "D561-perrin-ceiling-ignores-the-record",
+    decision: "D561",
+    what: "🛑 V2 declared and never read: the search's ceiling is the printed 2 whatever was paid. Killed by §2's ONE-returned rung.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "        max: i === 0 && op.maxRecorded !== undefined ? recorded(record, op.maxRecorded).length : g.max,",
+    replace: "        max: g.max,",
+    expectKilledBy: ["packages/engine/src/trainersD561.test.ts"],
+  },
+  {
+    id: "D561-love-ball-caption-plain",
+    decision: "D561",
+    what: "Love Ball's caption loses its printed rule (the override spread never fires). Killed by §5's note rung.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "          ...(op.sameNameAsOpponentInPlay === true\n",
+    replace: "          ...(false\n",
+    expectKilledBy: ["packages/engine/src/trainersD561.test.ts"],
+  },
+  {
+    id: "D561-deck-top-lands-on-the-bottom",
+    decision: "D561",
+    what: "🛑 V1's `\"deckTop\"` apply appends: Academy at Night's card goes UNDER the deck while the row and caption say on top. Killed by stadiums §3's deck[0] rungs.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "    return { state: withSide(state, ctx.seat, { ...side, hand, deck: [...paid, ...side.deck] }), paid };",
+    replace: "    return { state: withSide(state, ctx.seat, { ...side, hand, deck: [...side.deck, ...paid] }), paid };",
+    expectKilledBy: ["packages/engine/src/stadiumsD561.test.ts"],
+  },
+  {
+    id: "D561-deck-top-caption-says-discard",
+    decision: "D561",
+    what: "V1's caption arm is lost: Academy at Night's park and its R-AN refusal both read \"discard\". Killed by stadiums §3's note and message rungs.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  if (op.to === \"deckTop\") return `put ${phrase} from your hand on top of your deck`;\n",
+    replace: "",
+    expectKilledBy: ["packages/engine/src/stadiumsD561.test.ts"],
+  },
+  {
+    id: "D561-perrin-caption-says-bottom",
+    decision: "D561",
+    what: "Perrin's printed \"Reveal up to 2 Pokémon in your hand and put them into your deck\" is captioned as Dendra's bottom-of-deck cost. Killed by §2's note rung.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  if (op.count === \"any\" && op.to === \"deckBottom\") {",
+    replace: "  if (false) {",
+    expectKilledBy: ["packages/engine/src/trainersD561.test.ts"],
+  },
+  {
+    id: "D561-describe-branch-drops-perrin",
+    decision: "D561",
+    what: "🛑 D473/D515's defect at Perrin: the parked payment names its price and not what it buys. Killed by §2's note rung (the \"If you do, search…\" clause).",
+    file: "packages/engine/src/interpreter.ts",
+    find: "        if (op.maxRecorded === undefined || op.dest !== \"hand\") return null;",
+    replace: "        return null;",
+    expectKilledBy: ["packages/engine/src/trainersD561.test.ts"],
+  },
+  {
+    id: "D561-hand-trimmer-self-reads-opponent",
+    decision: "D561",
+    what: "V6's controller arm trims the OPPONENT's hand again. Killed by §6's controller-park rungs.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      if (op.whose === \"self\") return selfDiscardDownTo(state, op, ctx.seat, events);",
+    replace: "      if (op.whose === \"self\") return selfDiscardDownTo(state, op, otherSeat(ctx.seat), events);",
+    expectKilledBy: ["packages/engine/src/trainersD561.test.ts"],
+  },
+  {
+    id: "D561-self-discard-off-by-one",
+    decision: "D561",
+    what: "The controller's take is miscounted (one short): the hand ends at 6. Killed by §6's min/max and final-size rungs.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  const excess = Math.max(0, own.length - (op.untilHandSize ?? own.length));",
+    replace: "  const excess = Math.max(0, own.length - (op.untilHandSize ?? own.length) - 1);",
+    expectKilledBy: ["packages/engine/src/trainersD561.test.ts"],
+  },
+  {
+    id: "D561-self-discard-apply-to-opponent",
+    decision: "D561",
+    what: "The resumed controller discard is applied to the OPPONENT's hand (the owner resolver lost), so the picked uids match nothing. Killed by §6's resolve rung.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  return op.whose === \"self\" ? seat : otherSeat(seat);",
+    replace: "  return otherSeat(seat);",
+    expectKilledBy: ["packages/engine/src/trainersD561.test.ts"],
+  },
+  {
+    id: "D561-scoop-offers-no-active",
+    decision: "D561",
+    what: "V7's candidate set is the Bench alone (the early branch never taken). Killed by §7's candidates rung and R-SC.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      if (op.includeActive === true && op.whose === \"self\") {",
+    replace: "      if (false) {",
+    expectKilledBy: ["packages/engine/src/trainersD561.test.ts"],
+  },
+  {
+    id: "D561-scoop-active-pick-does-nothing",
+    decision: "D561",
+    what: "V7's writer branch is lost: an Active pick falls into the non-bench guard and nothing moves. Killed by §7's Active rungs.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  if (ref.spot.spot === \"active\" && op.includeActive === true && ref.seat === ctx.seat) {",
+    replace: "  if (false) {",
+    expectKilledBy: ["packages/engine/src/trainersD561.test.ts"],
+  },
+  {
+    id: "D561-scoop-active-left-in-place",
+    decision: "D561",
+    what: "The returned Active's cards reach the hand but the spot is not emptied — a body in two zones. Killed by §7's promotion rungs and R-SC.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "    return withSide(state, owner, { ...side, active: null, hand: [...side.hand, ...pile] });",
+    replace: "    return withSide(state, owner, { ...side, hand: [...side.hand, ...pile] });",
+    expectKilledBy: ["packages/engine/src/trainersD561.test.ts"],
+  },
+  {
+    id: "D561-super-potion-forced-skips-discard",
+    decision: "D561",
+    what: "🛑 V5's FORCED entrance drops the discard (the parked one keeps it) — the two endings of one sentence disagree. Killed by §4's one-body rungs.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "          schedule: healedDiscardAnswered(state, forced),",
+    replace: "          schedule: [],",
+    expectKilledBy: ["packages/engine/src/trainersD561.test.ts"],
+  },
+  {
+    id: "D561-super-potion-parked-skips-discard",
+    decision: "D561",
+    what: "🛑 V5's PARKED entrance drops the discard (`continuationOps`' sixth member lost). Killed by §4's Benched-pick rung.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "    return pickedPokemon(choice) ? healedDiscardAnswered(before, choice.ref) : [];",
+    replace: "    return [];",
+    expectKilledBy: ["packages/engine/src/trainersD561.test.ts"],
+  },
+  {
+    id: "D561-healed-test-ignores-damage",
+    decision: "D561",
+    what: "🛑 R-SP reversed: \"if you healed any damage\" is dropped, so an undamaged pick loses an Energy. Killed by §4's R-SP rungs (both entrances).",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  if (body === undefined || body.damage <= 0) return [];",
+    replace: "  if (body === undefined) return [];",
+    expectKilledBy: ["packages/engine/src/trainersD561.test.ts"],
+  },
+  {
+    id: "D561-body-uid-ignored",
+    decision: "D561",
+    what: "V5's `bodyUid` is written and never READ: the discard resolves `\"self\"` off the Trainer and whiffs. Killed by §4's discard rungs.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "        op.from === \"self\" && op.bodyUid !== undefined ? op.bodyUid : ctx.sourceUid,",
+    replace: "        ctx.sourceUid,",
+    expectKilledBy: ["packages/engine/src/trainersD561.test.ts"],
+  },
+  {
+    id: "D561-discard-caption-this-pokemon",
+    decision: "D561",
+    what: "Super Potion's discard is captioned \"this Pokémon\" — the card running, not the body healed. Killed by §4's note rung.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      if (op.bodyUid !== undefined) return `Discard ${what} from that Pokémon.`;\n",
+    replace: "",
+    expectKilledBy: ["packages/engine/src/trainersD561.test.ts"],
+  },
+  {
+    id: "D561-crispin-rider-ignored",
+    decision: "D561",
+    what: "🛑 V4 declared and never read: Crispin attaches the first Basic Energy in hand with no choice. Killed by §3's labelled-choice rungs.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      if (op.oneOfRecorded !== undefined) {",
+    replace: "      if (false) {",
+    expectKilledBy: ["packages/engine/src/trainersD561.test.ts"],
+  },
+  {
+    id: "D561-crispin-lone-card-forced",
+    decision: "D561",
+    what: "⚠️ R-CR1 reversed in one direction: with ONE card the decline is labelled as a second type that does not exist. Killed by §3's R-CR1 rung.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "        no: second === undefined ? \"Keep it in your hand\" : `Attach ${second} Energy`,",
+    replace: "        no: `Attach ${second} Energy`,",
+    expectKilledBy: ["packages/engine/src/trainersD561.test.ts"],
+  },
+  {
+    id: "D561-crispin-otherwise-dropped",
+    decision: "D561",
+    what: "🛑 R-CR2 half-lost: the \"Attach B\" answer attaches nothing. Killed by §3's R-CR2 no-rung.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      ...(second === undefined ? {} : { otherwise: attach(second) }),\n",
+    replace: "",
+    expectKilledBy: ["packages/engine/src/trainersD561.test.ts"],
+  },
+  {
+    id: "D561-crispin-gate-reads-the-hand",
+    decision: "D561",
+    what: "The play gate asks the HAND about Crispin's attach, so Crispin with no Energy in hand is refused. Killed by §3's play-gate rung.",
+    file: "packages/engine/src/cardplay.ts",
+    find: "      op.op === \"attachEnergyFrom\" && op.oneOfRecorded === undefined,",
+    replace: "      op.op === \"attachEnergyFrom\",",
+    expectKilledBy: ["packages/engine/src/trainersD561.test.ts"],
+  },
+  {
+    id: "D561-scramble-filing-not-demoted",
+    decision: "D561",
+    what: "🛑 V8 declared and never read: the switch files the PROMOTED body and the move whiffs. Killed by §8's record and move rungs and switchSeam's inverted rung.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  if (op.recordDemoted === true) {",
+    replace: "  if (false) {",
+    expectKilledBy: ["packages/engine/src/trainersD561.test.ts", "packages/engine/src/switchSeam.test.ts"],
+  },
+  {
+    id: "D561-scramble-source-unpinned",
+    decision: "D561",
+    what: "V8's source pin is never taken: every Benched body's Energy is offered. Killed by §8's other-Bench rung (rebuilt at review over TWO Benched bodies — the one-body draft stayed green) and §9's Scramble rollback rung.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      if (op.sourceRecorded !== undefined) {",
+    replace: "      if (false) {",
+    expectKilledBy: ["packages/engine/src/trainersD561.test.ts"],
+  },
+  {
+    id: "D561-scramble-move-caption",
+    decision: "D561",
+    what: "The move's caption loses the printed endpoints (\"from the Pokémon you moved to your Bench\"). Killed by §8's note rung.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  if (op.sourceRecorded !== undefined) {\n    where = ",
+    replace: "  if (false) {\n    where = ",
+    expectKilledBy: ["packages/engine/src/trainersD561.test.ts"],
+  },
+  {
+    id: "D561-scramble-switch-caption",
+    decision: "D561",
+    what: "D473's defect at Scramble Switch: the switch's park says nothing of the Energy its answer buys. Killed by §8's switch-caption rung.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "        if (op.sourceRecorded !== undefined && op.route === \"benchToActive\") {",
+    replace: "        if (false) {",
+    expectKilledBy: ["packages/engine/src/trainersD561.test.ts"],
+  },
+  {
+    id: "D561-stadium-cost-gate-dropped",
+    decision: "D561",
+    what: "🛑 R-AN reversed: an empty-hand Academy at Night activates, pays nothing and spends the turn's use. Killed by stadiums §3's R-AN rung.",
+    file: "packages/engine/src/cardplay.ts",
+    find: "  const unpayable = handCostUnmet(state, action.seat, ability.program);\n  if (unpayable !== null) {\n    return err(\n      \"PLAY_CONDITION_NOT_MET\",",
+    replace: "  const unpayable = handCostUnmet(state, action.seat, []);\n  if (unpayable !== null) {\n    return err(\n      \"PLAY_CONDITION_NOT_MET\",",
+    expectKilledBy: ["packages/engine/src/stadiumsD561.test.ts"],
+  },
+  {
+    id: "D561-log-deck-top-says-discard",
+    decision: "D561",
+    what: "The log's `\"deckTop\"` arm is lost: Academy at Night reads \"discarded 1 card … to pay a cost\". Killed by stadiums §3's log rung.",
+    file: "packages/engine/src/log.ts",
+    find: "      if (event.to === \"deckTop\") {",
+    replace: "      if (false) {",
+    expectKilledBy: ["packages/engine/src/stadiumsD561.test.ts"],
+  },
+  // 🆕🆕🆕 D561 review — R-AN's gate term MIRRORED on both HUD folds (the first draft left the wire and
+  // the local Stadium row lighting an empty-hand Academy at Night the engine refuses). One row per branch.
+  {
+    id: "D561-academy-wire-cost-term",
+    decision: "D561",
+    what: "The wire fold drops R-AN's `costUnmet` term from `disabled`: an EMPTY hand lights Academy at Night's row and the click is refused (D46/D47 afford-then-reject). Killed by stadiums §3's wire rung.",
+    file: "packages/engine/src/redact.ts",
+    find: "    disabled: state.allowances.stadiumAbilityUsed || noTarget || costUnmet !== null,",
+    replace: "    disabled: state.allowances.stadiumAbilityUsed || noTarget,",
+    expectKilledBy: ["packages/engine/src/stadiumsD561.test.ts"],
+  },
+  {
+    id: "D561-academy-wire-cost-reason",
+    decision: "D561",
+    what: "The wire fold greys the empty-hand row but names no clause (`reason: null`). Killed by stadiums §3's wire rung (whole-offer `toEqual`).",
+    file: "packages/engine/src/redact.ts",
+    find: "      : costUnmet !== null\n        ? `Only if you ${handCostAction(costUnmet, false)}`\n        : null,",
+    replace: "      : null,",
+    expectKilledBy: ["packages/engine/src/stadiumsD561.test.ts"],
+  },
+  {
+    id: "D561-academy-local-cost-term",
+    decision: "D561",
+    what: "The LOCAL fold drops R-AN's `costUnmet` term from `disabled`: the hot-seat Stadium row lights on an EMPTY hand and dispatches an action the engine refuses. Killed by the GameHud Stadium DOM suite's D561 block.",
+    file: "src/features/game/GameHud.tsx",
+    find: "    disabled: game.allowances.stadiumAbilityUsed || noTarget || costUnmet !== null,",
+    replace: "    disabled: game.allowances.stadiumAbilityUsed || noTarget,",
+    expectKilledBy: ["src/features/game/GameHud.stadiumAbility.dom.test.tsx"],
+  },
+  {
+    id: "D561-academy-local-cost-reason",
+    decision: "D561",
+    what: "The LOCAL fold greys the empty-hand row but leaves its `title` empty — the printed clause is unreachable to the player. Killed by the GameHud Stadium DOM suite's D561 block.",
+    file: "src/features/game/GameHud.tsx",
+    find: "      : costUnmet !== null\n        ? `Only if you ${handCostAction(costUnmet, false)}`\n        : undefined,",
+    replace: "      : undefined,",
+    expectKilledBy: ["src/features/game/GameHud.stadiumAbility.dom.test.tsx"],
   },
 ];

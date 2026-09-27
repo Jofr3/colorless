@@ -265,6 +265,23 @@ export function seatBurnExtraCounters(state: GameState, burnedSeat: Seat): numbe
   return extra;
 }
 
+/** 🆕🆕🆕 §13.1 (D561) — the EXTRA Poison damage the in-play Stadium owes a Poisoned
+    body whose top card is `top`: Perilous Jungle `sv05-156` (*"…put 2 more damage
+    counters on each Poisoned non-{D} Pokémon (both yours and your opponent's)."*).
+    `seatBurnExtraCounters`' sibling one function up, with NO seat (the print says both
+    sides) and NO §9 gate (a Stadium is not an Ability). The exempt type reads the top
+    card's `types` array, so a dual-type body carrying {D} is exempt. 0 with no Stadium,
+    with a Stadium that prints no such clause, or on an exempt body. Read ONCE, flow.ts's
+    §13.1 loop, summed into that loop's one `COUNTERS_PLACED` row (R-PJ). */
+export function stadiumPoisonExtraCounters(state: GameState, top: Card | undefined): number {
+  const jungle = stadiumEffectsOf(state)?.poisonExtraCounters;
+  if (jungle === undefined) return 0;
+  if (jungle.excludesType !== undefined && (top?.types ?? []).includes(jungle.excludesType)) {
+    return 0;
+  }
+  return jungle.amount;
+}
+
 /** Every continuous modifier affecting one in-play Pokémon, aggregated from
     its TOP card's printed passive (Bouffalant "Bouffer"), every attached
     Tool (§7.4) and — since D174 — every attached ENERGY (§6.1, Therapeutic

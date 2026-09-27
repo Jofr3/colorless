@@ -16920,6 +16920,10 @@ import type { GameState, Seat } from "./types";
     per-healed-body discard INTO `healEach` (`discardEnergyFromHealed`, beside
     `evolutionOnly` and `amount "all"`). Four vocabulary items for 5 printings. Super
     Potion stays unbuilt. The refusal was right about the shape it priced.)
+    (🆕🆕🆕 D561 CORRECTION (D539) — ~~"Super Potion stays unbuilt"~~: BUILT, `SUPER_POTION`,
+    on `healChosen.discardEnergyFromHealed` plus the engine-written
+    `discardEnergy.bodyUid` — "the body this program just healed" became a UID the heal's
+    ONE answer helper writes, so the whole family is now built.)
 
     `MATCH_RECORD_VERSION` **STAYS 20.** A parked `bottomFromOpponentHand` DOES ride
     `phase.cont`, which is persisted — so this is the shape that has to be argued
@@ -20138,6 +20142,39 @@ import type { GameState, Seat } from "./types";
     `expect(manifest.version)`, `it(…)` titles, the declaration and `package.json` —
     **not** as a value-keyed grep — because a value-keyed grep is precisely the mechanism
     that ate D500's heading.)
+    🆕🆕🆕 engineVersion 0.444.0 → **0.445.0** (D561 — THE TRAINER BUNDLE: 15 PRINTINGS / 9 TEXTS / 9
+    OBJECTS, EVERY ADDITION AN OPTIONAL KEY, A UNION MEMBER OR ONE SCAN. Nine registry `CardProgram`s —
+    seven `trainer` and two `stadium` — keyed on fifteen REAL ids inserted MID-MAP after `sv07-006`
+    (D395/D396, so `raw[last]` stays `sv09-107`). **Perrin** `sv06-160`/`-209`/`-220` on `payFromHand`'s
+    declinable arm with its NEW `"deckBottom"` destination (V1) → `recordGate paid` → a revealing
+    `searchDeck` whose ceiling is the NEW `maxRecorded: "paid"` rider (V2 — *"up to that many"*) →
+    `shuffleDeck` (R-PR: the returned cards are logged as a count, the searched ones revealed; the
+    returned cards can be found again). **Crispin** `sv07-133`/`-164`/`sv08.5-105`/`-171`: ONE search
+    (`distinctEnergyTypes`, max 2, to hand, revealed, `recordAs "moved"`) then `attachEnergyFrom`'s NEW
+    `oneOfRecorded` rider (V4), which expands at its step into a labelled `optional` between the found
+    TYPES — each arm a mandatory hand attach (R-CR2; with one card found *"Attach A"* / *"Keep it in
+    your hand"*, R-CR1 ⚠️ UNRULED); the play gate no longer asks the hand about such an attach. **Super
+    Potion** `sv09-158` on `healChosen`'s NEW `discardEnergyFromHealed` (V5): ONE helper
+    (`healedDiscardAnswered`) for the forced (`schedule`) and parked (`continuationOps`, which now takes
+    the pre-answer board) entrances schedules a body-addressed `discardEnergy { from: "self", bodyUid,
+    count: 1 }` — the NEW engine-written `bodyUid` — only when the pick healed more than 0 (R-SP).
+    **Love Ball** `sv06-156` on `searchDeck`'s NEW `sameNameAsOpponentInPlay` (V3): group 0 narrowed at
+    the step to `anyOf(byName × the opponent's in-play names)`, D531's placement (R-LB: exact names).
+    **Hand Trimmer** `sv05-150`: `opponentDiscardsFromHand { untilHandSize 5 }` then the NEW
+    controller-side `whose: "self"` (V6, no `decider` — R-HT). **Scoop Up Cyclone** `sv06-162`/
+    `sv08.5-128` on `returnBenched`'s NEW `includeActive` (V7; an empty Bench is the existing §14.2 loss —
+    R-SC). **Scramble Switch** `sv08-186` on `switchActive`'s NEW `recordDemoted` (V8, a rider rather than
+    a fourth `EffectSlot`) → `recordGate` → `moveEnergy { benchToActive, "any" }` with the NEW
+    `sourceRecorded` pin (R-SS). **Academy at Night** `sv06.5-054`: a Stadium ability of
+    `payFromHand { count: 1, to: "deckTop" }` (V1's EXACT-arm widening; `HAND_COST_PAID.to` and the log
+    gain it) — and `useStadiumAbility` now asks `handCostUnmet`, so an empty hand is refused (R-AN).
+    **Perilous Jungle** `sv05-156` on the NEW `StadiumEffects.poisonExtraCounters` read by the NEW
+    continuous.ts `stadiumPoisonExtraCounters`, SUMMED into flow.ts's §13.1 Poison row, ahead of
+    Pecharunt's Checkup row (R-PJ). **`MATCH_RECORD_VERSION` STAYS 35** (D557/D560's precedent: optional
+    keys whose absence is every v35 writer's meaning), DRIVEN by JSON revivals of a parked Perrin,
+    Crispin's scheduled optional, a parked Super Potion and a parked Scramble Switch; every 0.444 ROLLBACK
+    reading is NAMED — see docs/decisions.md D561 (d). Withdrawn and annotated in place (D539): see
+    docs/decisions.md D561 (f).)
     🆕🆕🆕 engineVersion 0.443.0 → **0.444.0** (D560 — THE ABILITY BUNDLE: 17 PRINTINGS / 11 TEXTS / 11
     OBJECTS, FOUR NEW `BoardCondition` MEMBERS, ONE PASSIVE KEY AND ONE SCAN, TWO HEAL WIDENINGS AND ONE
     FIELD-FREE OP. Eleven registry `CardProgram`s, each a printed Pokémon ABILITY (no `attack` key, every
@@ -24423,7 +24460,7 @@ import type { GameState, Seat } from "./types";
     WITNESS** — the count was re-derived every slice and the word *"three"* was carried.
     A successor of this slice inherits **81 / 61 / 17** again, over **FIVE** history
     occurrences: those four plus `deckMillFilteredScale.test.ts`'s own header arrow.) */
-export const engineVersion = "0.444.0";
+export const engineVersion = "0.445.0";
 
 export type {
   ApplyResult,
@@ -24572,7 +24609,9 @@ export { attackTimingBlocked, attackTimingNote } from "./interpreter";
     viewer's OWN hand, where the condition evaluator reads Prize counts and the
     Stadium's owner (see the P4 caveat above). Pass the played uid for a Trainer
     (the printed "OTHER cards"); omit it for an Ability, whose card is on the
-    board. */
+    board. (🆕🆕🆕 D561: and omit it for a Stadium ability, whose card is in the
+    shared zone — `useStadiumAbility` asks it since R-AN, and the HUD's Stadium row
+    mirrors it.) */
 export { handCostAction, handCostUnmet } from "./interpreter";
 /** The would-only-whiff playability gate (gust needs an opponent Bench, Ortega
     an opponent hand…). Exported for the two gates' reason exactly: playTrainer

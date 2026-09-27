@@ -861,7 +861,16 @@ export function useAbility(state: GameState, action: UseAbilityAction): ApplyRes
     their own fresh allowance. Not affected by the D100 ability-lock aura (that
     targets Pokémon, and a Stadium is neither). No hand-cost path: no printed
     Stadium ability pays one. The program runs under the activating seat, so it
-    searches THAT player's deck and benches onto THEIR board. */
+    searches THAT player's deck and benches onto THEIR board.
+    🆕🆕🆕 D561 — "No hand-cost path: no printed Stadium ability pays one" is
+    WITHDRAWN (D539), kept above as written: Academy at Night `sv06.5-054` (*"Once
+    during each player's turn, that player may put a card from their hand on top of
+    their deck."*) is a Stadium ability whose whole program is a `payFromHand { count:
+    1, to: "deckTop" }`, so this path now asks `handCostUnmet` beside
+    `programPlayable`, exactly as the Trainer and Ability paths do — an EMPTY hand is
+    refused (`PLAY_CONDITION_NOT_MET`) rather than spending the turn's one use on
+    nothing (R-AN; reversal: a ruling that the once-per-turn use may be declared into
+    an empty hand). No `excludeUid`: the Stadium is in the shared zone, not the hand. */
 export function useStadiumAbility(state: GameState, action: UseStadiumAbilityAction): ApplyResult {
   const rejected = turnGate(state, action);
   if (rejected !== null) return rejected;
@@ -893,6 +902,14 @@ export function useStadiumAbility(state: GameState, action: UseStadiumAbilityAct
   // and is refused, instead of quietly stripping the activating seat's Active.
   if (!programPlayable(state, ability.program, action.seat, stadium.uid)) {
     return err("NO_LEGAL_TARGET", `${ability.label} has no legal target`);
+  }
+  // 🆕🆕🆕 D561 — the printed hand cost, refused before anything is committed (R-AN).
+  const unpayable = handCostUnmet(state, action.seat, ability.program);
+  if (unpayable !== null) {
+    return err(
+      "PLAY_CONDITION_NOT_MET",
+      `${ability.label} can only be used if you ${handCostAction(unpayable, false)} (§7.3)`,
+    );
   }
   const events: GameEvent[] = [
     {
@@ -1028,7 +1045,13 @@ function attachAlternativesAllWhiff(
   program: readonly EffectOp[],
   seat: Seat,
 ): boolean {
-  const attaches = program.filter((op) => op.op === "attachEnergyFrom");
+  // 🆕🆕🆕 D561 — Crispin's `oneOfRecorded` attach is NOT an alternative the play gate can
+  // ask about: its Energy is what the program's own search puts into the hand, so the
+  // hand at play time says nothing about it (the search is always playable enough).
+  const attaches = program.filter(
+    (op): op is Extract<EffectOp, { op: "attachEnergyFrom" }> =>
+      op.op === "attachEnergyFrom" && op.oneOfRecorded === undefined,
+  );
   if (attaches.length === 0) return false;
   return attaches.every(
     (op) =>
@@ -1303,7 +1326,8 @@ export function programPlayable(
     // ("You can use this card only if…") rather than this function's judgement
     // about ops that would whiff — and the Trainer form needs the played uid
     // excluded, which this function cannot see. Both action paths call
-    // `handCostUnmet` themselves, beside `trainerPlayableIf`.
+    // `handCostUnmet` themselves, beside `trainerPlayableIf`. (🆕🆕🆕 D561: all THREE
+    // since R-AN — `useStadiumAbility` asks it too, after this function.)
     if (op.op === "moveEnergy" && !moveEnergyPlayable(state, seat, op, sourceUid)) {
       // No movable Energy, or fewer than two of your Pokémon in play (no distinct
       // destination) → the move can only whiff (Energy Switch / Poppy).

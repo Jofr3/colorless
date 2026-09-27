@@ -7177,6 +7177,40 @@ export type EffectOp =
           `undefined` is what v30's writers meant (D125's test) — no v30 program could
           have parked this row. Driven over v30 bytes in three directions in §3. */
       typedAsAttachedBasicEnergy?: true;
+      /** 🆕🆕🆕 **D561 (V3) — `sameNameAsOpponentInPlay`, THE SECOND BOARD-READ SEARCH
+          RIDER, PLACED EXACTLY LIKE D531's ONE FIELD UP.** Love Ball `sv06-156` (Item):
+          *"Search your deck for a Pokémon with the same name as 1 of your opponent's
+          Pokémon in play, reveal it, and put it into your hand. Then, shuffle your
+          deck."* When the op STEPS, group 0's printed `anyPokemon` is NARROWED to
+          `anyOf(byName × N)` where N is the de-duplicated set of names on the TOP cards
+          of the opponent's Active and Bench (`otherSeat(ctx.seat)`). The printed groups
+          still feed the caption alone (D531's two-list rule) and `matchesFilter` stays
+          board-free (D231's premise, still true). `byName` is an EXACT match (cards.ts)
+          — **R-LB**: "Pikachu ex" is not "Pikachu"; reversal: a ruling that "the same
+          name" ignores a suffix. No match (or an empty opposing board) is `anyOf([])`:
+          the whiff — no park, no `DECK_SEARCHED`, the trailing `shuffleDeck` still runs.
+          Absent = the unconstrained search. `MATCH_RECORD_VERSION` holds at 35: a v35
+          record carries no such key and absent is what it meant. */
+      sameNameAsOpponentInPlay?: true;
+      /** 🆕🆕🆕 **D561 (V2) — THE PRINTED *"search your deck for up to THAT MANY
+          Pokémon"*: THE CEILING IS THE LENGTH OF WHAT AN EARLIER OP FILED UNDER THIS
+          SLOT.** Perrin `sv06-160`/`-209`/`-220` (Supporter): *"Reveal up to 2 Pokémon in
+          your hand and put them into your deck. If you do, search your deck for up to
+          that many Pokémon, reveal them, and put them into your hand. Then, shuffle your
+          deck."* — the slot is Perrin's `payFromHand { recordAs: "paid" }`. When the op
+          STEPS, group 0's ceiling is REPLACED by `recorded(record, slot).length`, at the
+          same site `"yourBenchCount"` resolves (the step's `groups`), so `prompt.max`
+          stays a number and no wire shape moves. `max` still carries the printed bound
+          the count can reach (Perrin's 2), which the caption's number branches read
+          only through the resolved `max`. Zero paid never reaches it (the program puts
+          the search behind a `recordGate` on the same slot).
+          🛑 **A RIDER AND NOT A FOURTH `max` MEMBER**, and the reason is the rollback
+          (D125): a 0.444 reader handed a parked Perrin search ignores an unknown key and
+          reads `max: 2` — the NAMED rollback misreading is *"a player who returned ONE
+          Pokémon may take up to TWO"*, where an unknown `max` member would have fallen
+          to the `sized` map's last arm and read the BENCH length. `MATCH_RECORD_VERSION`
+          holds at 35 (an optional key whose absence is every v35 writer's meaning). */
+      maxRecorded?: EffectSlot;
       /** 🆕🆕 **D502 — THE §9.2 FILING, AT THE TWELFTH OP AND THE FIRST SEARCH.**
           File the uids this search ACTUALLY MOVED under `slot`, so a following
           `recordGate` can read the printed *"If you put any Pokémon onto your Bench
@@ -7663,6 +7697,28 @@ export type EffectOp =
           pick. Absent = the free switch every other printing spells. */
       fromSource?: true;
       recordAs?: EffectSlot;
+      /** 🆕🆕🆕 **D561 (V8) — WHICH END `recordAs` FILES: THE *DEMOTED* BODY.** Scramble
+          Switch `sv08-186` (Item, ACE SPEC): *"Switch your Active Pokémon with 1 of your
+          Benched Pokémon. If you do, you may move any amount of Energy from the
+          Pokémon you moved to your Bench to the new Active Pokémon."* Absent, the
+          filing is the PROMOTED body (`nowActive`, D206 — Surfer / Giovanni's gates
+          read only that the switch happened); `true` files `wasActive` instead, the one
+          body the consequent names. 🛑 **A RIDER AND NOT A FOURTH `EffectSlot`
+          MEMBER**: the union names WHAT KIND of thing a program files (paid / moved /
+          discarded), and both ends of a switch are "moved" — a `"demoted"` slot would
+          put the END into the ADDRESS, so a second switch-reading op could file the
+          other end under the same name. Read by `moveEnergy.sourceRecorded`.
+          `MATCH_RECORD_VERSION` holds at 35 (optional, absent = D206's filing); the
+          0.444 ROLLBACK reading is NAMED: a 0.444 reader ignores this key AND
+          `moveEnergy.sourceRecorded` alike — it files the PROMOTED body (which only
+          opens the gate) and offers the route's own sources, so a parked Scramble
+          Switch resumed on a rolled-back deploy offers EVERY Benched body's Energy to
+          the new Active: OVER-PERMISSIVE, not a whiff (driven in `trainersD561.test.ts`
+          §9 by stripping both keys). (🆕🆕🆕 D561 review: the first draft named the
+          reading ~~"offers the new Active's own Energy as the source and nothing on the
+          Bench, and the move whiffs (the source and destination coincide)"~~ — a mixed
+          reader that stripped this key alone; WITHDRAWN.) */
+      recordDemoted?: true;
     }
   /** Gust: switch one of the OPPONENT's Benched Pokémon into their Active spot
       (Boss's Orders). PARKS on the opponent-bench choice unless forced.
@@ -8002,8 +8058,33 @@ export type EffectOp =
       point the paragraph was making and which survives being built: the subject is
       the OPPONENT's ACTIVE, named by the print rather than chosen, so there is no
       candidate board, no `whose`, no `dest` and no park. Team Rocket's Grimer
-      `sv10-123` remains unbuilt. */
-  | { op: "returnBenched"; whose: "self" | "opponent"; dest: "deck" | "hand" }
+      `sv10-123` remains unbuilt.
+
+      ✅ 🆕🆕🆕 **D561 BUILT SCOOP UP CYCLONE** (`sv06-162`/`sv08.5-128`, Item, ACE SPEC:
+      *"Put 1 of your Pokémon and all attached cards into your hand."*), named above as
+      one of the four mechanisms that share the string without sharing the sentence —
+      so that line is HISTORY from here (D178, annotated, not overwritten). It is THIS
+      op after all, with one rider: `includeActive` (below). */
+  | {
+      op: "returnBenched";
+      whose: "self" | "opponent";
+      dest: "deck" | "hand";
+      /** 🆕🆕🆕 **D561 (V7) — THE PRINTED *"1 of your Pokémon"*: THE ACTIVE JOINS THE
+          CANDIDATES.** Scoop Up Cyclone. Absent = the Bench only, every pre-D561
+          program. The returned Active leaves its spot EMPTY and the existing §8.1
+          promotion path fills it (flow.ts `orphanedPromotions`, the D312/D435 hoist
+          that `settleProgram`'s mid-turn sweep already calls); with an EMPTY Bench the
+          lone Active is the only candidate, is forced (the M1 rule), and the empty spot
+          with no promotion available is the existing §14.2 loss — **R-SC**: the card
+          does not refuse itself on that board (reversal: a ruling that a player may not
+          play a card whose only legal resolution loses them the game). Spelled for the
+          `"self"` side only; no printing reaches the opponent's Active through this op
+          (`discardDefender`'s sentence is the one that does). `MATCH_RECORD_VERSION`
+          holds at 35; the 0.444 ROLLBACK reading is NAMED: a 0.444 reader's
+          `returnBenched` refuses a non-bench ref, so a parked Scoop Up Cyclone answered
+          with the Active resumes as a silent no-op on a rolled-back deploy. */
+      includeActive?: true;
+    }
   /** 🆕🆕🆕 **D537 — KEEP THREE, SHUFFLE THE REST: THE ONLY SENTENCE IN THIS
       CORPUS WHOSE PICK NAMES THE BODIES THAT *STAY*.**
       *"Choose 3 of your opponent's Benched Pokémon. If you do, shuffle all of
@@ -8115,7 +8196,10 @@ export type EffectOp =
       whole `parkOrForce` body is dead code.
 
       🛑 **AND IT REACHES THE ACTIVE SPOT, WHICH `returnBenched` REFUSES BY REF
-      GUARD.** That refusal was never about the zone — it was about the §8.1
+      GUARD.** (🆕🆕🆕 D561 CORRECTION (D539): no longer unconditionally — under the new
+      `includeActive` rider (Scoop Up Cyclone) `returnBenched` takes the controller's
+      ACTIVE too, and leans on this very §8.1 seam for the promotion; absent the rider
+      the guard still refuses.) That refusal was never about the zone — it was about the §8.1
       PROMOTION the board owes once the Active spot goes empty, and the block above
       recorded it as *"missing CODE"*. **D311 supplies the code, and it is a
       QUEUEING SEAM rather than a stage**: `PendingStage {kind:"promote"}` already
@@ -8734,6 +8818,23 @@ export type EffectOp =
       zone?: "bench";
       upTo?: number;
       remainingHpAtMost?: number;
+      /** 🆕🆕🆕 **D561 (V5) — D560's `healEach` spelling on the SINGLE-PICK arm: the
+          printed *"If you healed any damage in this way, discard an Energy from that
+          Pokémon."*** Super Potion `sv09-158` (Item: *"Heal 60 damage from 1 of your
+          Pokémon. If you healed any damage in this way, discard an Energy from that
+          Pokémon."*). The healed body arrives through TWO entrances — the forced one
+          (one candidate, `stepOp`'s `schedule`) and the parked one (`continuationOps`)
+          — and both hand it to ONE helper (`healedDiscardAnswered`, the D216 / D309
+          shape), which schedules a body-addressed `discardEnergy { from: "self",
+          bodyUid, count: 1 }` ONLY when the pick heals more than 0. So **R-SP**: an
+          undamaged pick heals 0 and discards nothing; a damaged body with no Energy is
+          healed and the discard whiffs; two different Energy park a pick, same-type
+          Basic Energy is fungible and forced. Unrepresentable beside `upTo` (no printing
+          pairs a multi-pick heal with this consequent). `MATCH_RECORD_VERSION` holds at
+          35; the 0.444 ROLLBACK reading is NAMED: a 0.444 reader ignores the key, so a
+          parked Super Potion resumed on a rolled-back deploy heals 60 and discards
+          NOTHING. */
+      discardEnergyFromHealed?: true;
     }
   /** Attach Basic Energy from a SOURCE zone (the controller's hand or discard
       pile) to a CHOSEN own in-play Pokémon — the §6 energy-acceleration Ability
@@ -9024,6 +9125,42 @@ export type EffectOp =
           `count ?? 1` per body — so a registry program may spell it deliberately
           the day a card prints one. */
       toEach?: true;
+      /** 🆕🆕🆕 **D561 (V4) — THE PRINTED *"put 1 of them into your hand. Attach the
+          other to 1 of your Pokémon."*: THE ENERGY TO ATTACH IS ONE OF THE BASIC ENERGY
+          AN EARLIER OP FILED UNDER THIS SLOT, AND THE PLAYER CHOOSES WHICH.** Crispin
+          `sv07-133`/`-164`, `sv08.5-105`/`-171` (Supporter): *"Search your deck for up to 2
+          Basic Energy cards of different types, reveal them, and put 1 of them into your
+          hand. Attach the other to 1 of your Pokémon. Then, shuffle your deck."* The
+          program is `searchDeck { basicEnergy, max 2, distinctEnergyTypes, dest "hand",
+          reveal, recordAs "moved" }` → this op → `shuffleDeck`: ONE printed decision
+          stays ONE search (D336 refuses two sequential searches for it).
+
+          A RIDER THAT REWRITES ITS OWN OP AT STEP TIME (`recoverOneStatus`'s shape,
+          D560; D216's self-rewrite): `stepOp` reads the de-duplicated Basic Energy TYPES
+          of the filed cards and
+            • 0 — nothing was found: a silent no-op;
+            • 2 (A, B) — SCHEDULES one D557 labelled `optional`, `yes` *"Attach A"* /
+              `no` *"Attach B"*, each branch THIS op with the rider dropped and
+              `energyType` set — a MANDATORY attach (no `declinable`, so the target pick
+              is mandatory and forced at one body). The other card stays in the hand.
+              **R-CR2**: a choice between two cards of different types is a choice
+              between two TYPES, because same-type Basic Energy is fungible
+              (`attachableEnergies`, whose Basic-card test also keeps a Special Energy
+              that provides the type OUT of the attach). Reversal: a Basic Energy card
+              whose identity matters beyond its type.
+            • 1 (A) — **R-CR1 ⚠️ UNRULED**: with one card found the print's "Attach the
+              other" has no other. Read as the player's CHOICE: a labelled `optional`
+              *"Attach A"* / *"Keep it in your hand"*. Reversal: a ruling that the lone
+              card must go to the hand (drop the `yes` arm) or must be attached (drop
+              the decline).
+          A RIDER AND NOT A NEW `EffectOp` MEMBER, and the reason is the rollback: this
+          op rides `EffectContinuation.rest` behind the PARKING search, where a 0.444
+          reader meeting an unknown member would reach `stepOp`'s missing arm and throw
+          on resume; meeting an unknown KEY on a known op it ignores it. The 0.444
+          ROLLBACK reading, NAMED: a rolled-back Crispin runs a plain mandatory
+          `attachEnergyFrom { source: "hand" }` — the first Basic Energy in hand, no type
+          choice. `MATCH_RECORD_VERSION` holds at 35. */
+      oneOfRecorded?: EffectSlot;
       /** File the Energy uids ACTUALLY attached (§9.2), for a following
           `recordGate` to read — Teal Dance's *"If you attached Energy to a
           Pokémon in this way, draw a card."* A whiff (no matching Energy in the
@@ -10358,6 +10495,20 @@ export type EffectOp =
           member was added rather than after. */
       from: "opponentActive" | "opponentChosen" | "yourActive" | "yours" | "yourBench" | "self";
       filter: CardFilter;
+      /** 🆕🆕🆕 **D561 (V5) — THE BODY `"self"` NAMES, WHEN IT IS NOT THE PROGRAM'S OWN
+          CARD.** Engine-written only (never authored): Super Potion's *"discard an
+          Energy from THAT Pokémon"* is the body its `healChosen` just healed, and a
+          Trainer's `ctx.sourceUid` is no Pokémon at all. `healedDiscardAnswered`
+          (interpreter.ts) writes the healed body's TOP uid here and `discardableEnergies`
+          reads it in place of `ctx.sourceUid`; the caption says "that Pokémon". The
+          single narrowest key — a uid rather than a spot for `from: "self"`'s own
+          reason (the uid survives a Bench compaction; nothing inside one program moves
+          it today). Meaningful only with `from: "self"`; absent = `ctx.sourceUid`,
+          every pre-D561 program. It rides `EffectContinuation.pendingOp` when the pick
+          parks; `MATCH_RECORD_VERSION` holds at 35 and the 0.444 ROLLBACK reading is
+          NAMED: a 0.444 reader resolves `"self"` off the Trainer's uid, finds no body,
+          and the resumed discard whiffs. */
+      bodyUid?: string;
       /** 🆕 **D295 — WHERE THE ENERGY LANDS, AS ONE OPTIONAL FIELD ON THE OP THAT
           ALREADY TAKES IT OFF.** ABSENT = the DISCARD PILE, which is what this
           op's NAME says and what every printing before this slice does. `"hand"`
@@ -10974,7 +11125,9 @@ export type EffectOp =
 
           🛑 **IT IS NOT `discardPileRetrieval.exclude` INVERTED, AND THAT WAS
           CHECKED RATHER THAN ASSUMED (D159: one noun, one answer).** `exclude` is
-          the only shipped op field that reads a slot to shape a CANDIDATE SET, and
+          the only shipped op field that reads a slot to shape a CANDIDATE SET (at
+          D502; 🆕🆕🆕 D561: this field is itself one now, and `sourceRecorded` below, its
+          mirror, is another), and
           it is the complement of this one, so reuse is the first thing to price. It
           cannot be had, on three counts:
           · **the polarity has no supply.** An inverted `exclude` needs the slot to
@@ -11040,6 +11193,20 @@ export type EffectOp =
           answer against the PROMPT's `destinations`, and that list is already the
           narrowed one. */
       destRecorded?: EffectSlot;
+      /** 🆕🆕🆕 **D561 (V8) — THE SOURCE PINNED TO A §9.2 RECORD, `destRecorded`'s MIRROR
+          ONE END OVER.** Scramble Switch's *"from the Pokémon you moved to your Bench to
+          the new Active Pokémon"*: under `route: "benchToActive"` the offered SOURCES
+          are narrowed to the in-play bodies whose `stack` carries a uid filed under
+          `slot` — the switch's `recordDemoted` filing — and the destination is the
+          route's own (the new Active). Taken at the `stepOp` caller for
+          `destRecorded`'s measured reason (the play gate has no record). *"You may move
+          any amount"* is `max: "any"` (the standing declinable floor): **R-SS** — 0
+          moved is a legal answer, and a demoted body with no Energy whiffs. Rides
+          `EffectContinuation.rest` behind the parking switch and `pendingOp` when it
+          parks; `MATCH_RECORD_VERSION` holds at 35 — absent = every source the route
+          offers, which is what every v35 writer meant; the 0.444 ROLLBACK reading is
+          the switch's (above, both keys ignored together): the whole Bench is offered. */
+      sourceRecorded?: EffectSlot;
     }
   /** Put the affected player(s)' whole hand back into their deck, then draw — the
       Iono/Judge hand-refresh Supporter family. `who: "you"` affects the controller
@@ -11309,8 +11476,9 @@ export type EffectOp =
       uid is excluded there, and that exclusion is the printed word "other".
 
       AUTHORING NOTE — the gate lives on the two PLAY paths (`playTrainer`,
-      `useAbility`), which is where the printed sentence lives too: a cost is the
-      price of *making a play*. `runProgram` has two other callers that gate
+      `useAbility`) (🆕🆕🆕 D561: THREE since R-AN — `useStadiumAbility` asks it too,
+      for Academy at Night `sv06.5-054`'s printed hand cost), which is where the printed
+      sentence lives too: a cost is the price of *making a play*. `runProgram` has two other callers that gate
       nothing — attack.ts and the triggered-Ability scan (triggers.ts / flow.ts's
       on-KO stage) — so this op authored into an `attack` or a `triggered` program
       would be SKIPPED when it could not be paid rather than refusing anything,
@@ -11326,7 +11494,7 @@ export type EffectOp =
       re-stating as the hazard rather than as a note: this op inside an ATTACK program
       **pays what it can and refuses nothing** (interpreter.ts, the short-hand branch —
       *"A SHORT hand … pays what there is"*), and `handCostUnmet` has **no caller in
-      attack.ts** — it is the two PLAY paths' gate and only theirs. So the first
+      attack.ts** — it is the two PLAY paths' gate and only theirs (🆕🆕🆕 D561: and, since R-AN, `useStadiumAbility`'s — a THIRD action path (Academy at Night's printed hand cost); still no caller in attack.ts). So the first
       hand-cost ATTACK sentence to be derived without an answer to this question ships
       an attack that takes whatever it finds and resolves anyway. On D420's compound
       (*"Discard 6 Basic {G} Energy cards from your hand, and Knock Out your
@@ -11380,8 +11548,17 @@ export type EffectOp =
       /** Where the paid cards go — the printed verb. `"discard"` is the whole
           discard family; `"deckBottom"` puts them UNDER the deck, in the order
           picked (Dendra). Required rather than optional so every author states
-          it, the rule `chooseCards.min` set one slice earlier. */
-      to: "discard" | "deckBottom";
+          it, the rule `chooseCards.min` set one slice earlier.
+          🆕🆕🆕 D561 (V1) — `"deckTop"` puts the paid card ON TOP of the deck:
+          Academy at Night `sv06.5-054`'s Stadium ability (*"Once during each
+          player's turn, that player may put a card from their hand on top of their
+          deck."*). `HAND_COST_PAID.to` carries it, the log speaks it, and the park's
+          `dest` union has held `"deckTop"` since D342. ⚠️ `MATCH_RECORD_VERSION`
+          holds at 35 (a widening); the 0.444 ROLLBACK reading is NAMED: a 0.444
+          reader's `payFromHandApply` sends any `to` that is not `"deckBottom"` to
+          the DISCARD, so a parked Academy at Night payment resumed by a rolled-back
+          deploy would discard the card instead of topping the deck. */
+      to: "discard" | "deckBottom" | "deckTop";
       /** 🆕 D489 — UNREPRESENTABLE ON THE EXACT ARM, `discardEnergy`'s idiom: a
           ceiling on a count that is already exact would be silently ignored. */
       cap?: never;
@@ -11413,7 +11590,11 @@ export type EffectOp =
       IS A SECOND ARM RATHER THAN TWO OPTIONAL FIELDS.** An uncapped declinable hand
       discard is *"Discard your hand"*, which `discardHand` already spells and no
       printing spells this way; a declinable payment UNDER THE DECK is printed nowhere
-      at all. Admitting either would be authoring a card (D190b), and a flat widening
+      at all. (🆕🆕🆕 D561 CORRECTION (D539): ~~"a declinable payment UNDER THE DECK is
+      printed nowhere at all"~~ is WITHDRAWN outside the attack column this paragraph
+      measured — Perrin, a SUPPORTER, prints *"Reveal up to 2 Pokémon in your hand and
+      put them into your deck"*, so `to` below gains `"deckBottom"`. The arm stays
+      separate for the uncapped half of the argument, which stands.) Admitting either would be authoring a card (D190b), and a flat widening
       would admit both silently. Measured over `legalAttackCorpus()`'s 640 sentences
       (the `legal_standard = 1` attack column, and NOT the ability or trainer columns —
       D310's limit, stated): the only printed declinable hand discard in it is this one,
@@ -11431,8 +11612,14 @@ export type EffectOp =
       than as a relaxation.
 
       ⚠️ **`handCostUnmet` CAN NEVER FIRE FOR THIS ARM AND THE TWO PLAY PATHS ARE
-      UNMOVED.** No Trainer and no Ability prints a declinable cost, so the gate's
-      `continue` is reached by the attack channel alone today; it is written anyway,
+      UNMOVED.** (🆕🆕🆕 D561: "can never fire for this arm" still holds — the gate
+      `continue`s past a declinable arm on every caller; "THE TWO PLAY PATHS" undercounts
+      since R-AN made `useStadiumAbility` a THIRD caller of `handCostUnmet`, for Academy
+      at Night's EXACT `deckTop` arm, which this block does not describe.) No Trainer and no Ability prints a declinable cost, so the gate's
+      `continue` is reached by the attack channel alone today (🆕🆕🆕 D561 CORRECTION
+      (D539): ~~"No Trainer and no Ability prints a declinable cost"~~ — Perrin is a
+      Trainer that does, so `playTrainer` now reaches the `continue`, and Perrin plays
+      into a hand with no Pokémon, paying nothing); it is written anyway,
       because the alternative is a gate that would refuse every play of a card whose
       printed floor is zero.
 
@@ -11454,8 +11641,15 @@ export type EffectOp =
       /** The printed *"up to N"* ceiling. REQUIRED on this arm (see the block above);
           the pick is 0..min(cap, matches) and always declinable. */
       cap: number;
-      /** Narrowed to the discard: no printed declinable payment goes under a deck. */
-      to: "discard";
+      /** Narrowed to the discard: no printed declinable payment goes under a deck.
+          🆕🆕🆕 D561 (V1) — WITHDRAWN (D539): Perrin `sv06-160`/`-209`/`-220` prints
+          one — *"Reveal up to 2 Pokémon in your hand and put them into your deck."*
+          — so the arm gains `"deckBottom"` (the deck is shuffled by the program's
+          trailing `shuffleDeck` on every path, so the end is invisible). The 0.444
+          rollback reading is `"deckTop"`'s one field up: a non-`"deckBottom"` `to`
+          discards, and this one IS `"deckBottom"`, so a rolled-back reader places it
+          correctly. */
+      to: "discard" | "deckBottom";
       filter?: CardFilter;
       recordAs?: EffectSlot;
     }
@@ -11915,6 +12109,9 @@ export type EffectOp =
       /** 🆕🆕🆕 D557 — unrepresentable on this arm: the printed COUNT and the printed
           HAND SIZE are two different sentences (see the arm below). */
       untilHandSize?: never;
+      /** 🆕🆕🆕 D561 — unrepresentable here: only the hand-size arm has a controller-side
+          printing (Hand Trimmer). */
+      whose?: never;
     }
   /** 🆕🆕🆕 **D557 — THE SAME OP WITH THE COUNT READ OFF THE HAND: *"Your opponent
       discards cards from their hand until they have 3 cards in their hand."*** Xerosic's
@@ -11938,6 +12135,26 @@ export type EffectOp =
       untilHandSize: number;
       count?: never;
       to?: never;
+      /** 🆕🆕🆕 **D561 (V6) — `"self"`: THE CONTROLLER'S OWN HAND, AND THE OP'S NAME IS
+          NOW WIDER THAN THE OP** (the D294 `bottomFromOpponentHand` precedent: a
+          persisted op name is not renamed for a better noun). Hand Trimmer `sv05-150`
+          (Item): *"Each player discards cards from their hand until they have 5 cards in
+          their hand. Your opponent discards first. (If a player has 5 or fewer cards in
+          their hand, they do not discard.)"* — authored as TWO ops in printed order, the
+          opponent's arm (absent) FIRST, then this one. With `"self"` the hand, the
+          chooser, the answerer and the discard pile are all `ctx.seat`'s: the park
+          ~~`decider` equals the controller~~ carries no `decider` (🆕🆕🆕 D561 landing
+          fix: `selfDiscardDownTo` returns `{ park }` only, and flow.ts files an
+          `answerer` only for a `decider` that is set AND differs from the controller),
+          so `settleProgram` files no `answerer` and the controller answers their own
+          discard (R-HT). The played Trainer has already
+          left the hand (playTrainer moves it first), so it is never counted. Absent =
+          the opponent, every pre-D561 program's meaning. `MATCH_RECORD_VERSION` holds at
+          35; the 0.444 ROLLBACK reading is NAMED: a 0.444 reader ignores the key and
+          resumes a parked self-discard against the OPPONENT's hand (`applyChoice`
+          re-derives `otherSeat(ctx.seat)`), so the controller's picked uids match
+          nothing there and nothing is discarded. */
+      whose?: "self";
     }
   /** 🆕🆕 **D485 — THE MANDATORY FILTERED SWEEP OF THE OPPONENT'S HAND, AND
       IT IS THE FAMILY'S FIRST CROSS-SEAT HAND MOVE WITH NO DECISION IN IT AT ALL.**
@@ -20837,7 +21054,7 @@ export function splitAttackRequirementClause(
 // RATHER THAN A PREFERENCE.** `payFromHand` inside an ATTACK program PAYS WHAT IT CAN
 // AND REFUSES NOTHING — interpreter.ts's own words at the op, *"A SHORT hand … pays
 // what there is"* — and `handCostUnmet` has NO caller in `attack.ts` (it is the two
-// PLAY paths' gate and only theirs). So the cost WITHOUT the cancel is a **FREE KNOCK
+// PLAY paths' gate and only theirs; 🆕🆕🆕 D561: and, since R-AN, `useStadiumAbility`'s — a THIRD action path (Academy at Night's printed hand cost); still no caller in attack.ts). So the cost WITHOUT the cancel is a **FREE KNOCK
 // OUT**: a hand holding two Grass discards both and Knocks the opponent's Active out
 // anyway, passing every "was the cost paid" assertion that could be written about it.
 // The decision that closes it is recorded at `payFromHand`'s doc block, and the
@@ -32492,7 +32709,8 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   //      and for why the `recordGate` is the sentence rather than a flourish.
   //
   //      🛑 THE GATE IS WHAT MAKES THE HAND COST SAFE AT THE ATTACK SEAM. `attack.ts`
-  //      never calls `handCostUnmet` — that gate belongs to the two PLAY paths — so a
+  //      never calls `handCostUnmet` — that gate belongs to the two PLAY paths
+  //      (🆕🆕🆕 D561: and, since R-AN, `useStadiumAbility`'s — a THIRD action path (Academy at Night's printed hand cost); still no caller in attack.ts) — so a
   //      `payFromHand` in an attack program pays what it finds and refuses nothing.
   //      D420 answered that for the four printings that print a CANCEL; this sentence
   //      prints none, and the answer here is the §9.2 gate instead: an empty hand

@@ -1425,9 +1425,15 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
       // read the pile itself. Cards paid to the DECK BOTTOM are hidden at both
       // ends, so the count is all there is to say; the verb is what tells the two
       // apart, and it matters — a discard is readable afterwards and a card under
-      // the deck never is.
+      // the deck never is. (🆕🆕🆕 D561: THREE now — `"deckTop"`, Academy at Night, is
+      // hidden at both ends like the bottom, and speaks its own verb just below.)
       const n = event.uids.length;
       const cards = `${n} card${n === 1 ? "" : "s"}`;
+      // 🆕🆕🆕 D561 — Academy at Night's *"on top of their deck"*: hidden → hidden like
+      // the deck bottom, so the count and the verb are all there is to say.
+      if (event.to === "deckTop") {
+        return row(event.seat, [plain(`put ${cards} from their hand on top of their deck`)]);
+      }
       return row(event.seat, [
         plain(
           event.to === "deckBottom"

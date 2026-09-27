@@ -769,11 +769,11 @@ describe("§7 — purity and the structural answers", () => {
     expect(activeEnergy(truncated.state, "p2")).toHaveLength(2);
   });
 
-  it("engineVersion is 0.444.0 and the bump is owed for BEHAVIOUR", () => {
+  it("engineVersion is 0.445.0 and the bump is owed for BEHAVIOUR", () => {
     // 🆕🆕 D463 — 0.361.0 → **0.362.0**. Two printed sentences that derived to `null` now
     // derive to a program, and a fielded card (Krookodile sv01-117) that took no flip at
     // all now takes an unbounded sequence of them: an OBSERVABLE change to what the engine
     // does with real catalog rows, which is the bump's whole trigger.
-    expect(engineVersion).toBe("0.444.0");
+    expect(engineVersion).toBe("0.445.0");
   });
 });

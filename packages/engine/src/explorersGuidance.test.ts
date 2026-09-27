@@ -48,7 +48,9 @@ import {
 //       TOTAL 14 rows / 11 legal. 12 + 0 + 2 = 14 ✅  9 + 0 + 2 = 11 ✅
 //       Of those, Hassel `sv06-151`/`-205` print *"put **up to** 3 of them"* (2
 //       legal, already BUILT) and Crispin `sv07-133`/`-164`/`sv08.5-105`/`-171`
-//       print it on `searchDeck` (4 legal, a different op). **The residue is the
+//       print it on `searchDeck` (4 legal, a different op — 🆕🆕🆕 D561: BUILT, `CRISPIN`,
+//       one `searchDeck` plus `attachEnergyFrom.oneOfRecorded`; still a different op,
+//       so the classification stands). **The residue is the
 //       `exact` family**: these 3, Drakloak "Recon Directive" `sv06-129`/
 //       `sv08.5-072` (2 legal, on `abilities_json`) and Rika `sv04-172`/`-241`/
 //       `-258` (3 printings, all `legal_standard = 0`).

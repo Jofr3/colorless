@@ -2846,6 +2846,17 @@ export interface StadiumEffects {
       / Town Store). A Stadium WITH this can be activated; the continuous-only
       Stadiums (Beach Court / League HQ) leave it undefined. */
   ability?: StadiumAbility;
+  /** 🆕🆕🆕 §13.1 (D561) — the in-play Stadium's EXTRA Poison damage at every Pokémon
+      Checkup, on BOTH sides: Perilous Jungle `sv05-156` (*"During Pokémon Checkup, put 2
+      more damage counters on each Poisoned non-{D} Pokémon (both yours and your
+      opponent's)."*). `amount` is in HP (the printed 2 counters = 20, §12's conversion at
+      the row); `excludesType` is `basicRetreatSurcharge`'s rider verbatim, matched
+      against the Poisoned Active's TOP card `types`, so a dual-type {D} body is exempt.
+      Read ONCE by `stadiumPoisonExtraCounters` (continuous.ts) inside flow.ts's §13.1
+      Poison loop and SUMMED into that one `COUNTERS_PLACED { source: "poison" }` row
+      (R-PJ; reversal: attribute the Stadium's share on its own row when a reader needs
+      it). NOT §9-gated — a Stadium is not an Ability (R-ST2's reason). */
+  poisonExtraCounters?: { amount: number; excludesType?: BasicEnergyType };
 }
 
 /** A Special Energy's on-attach effect (§6.1) — runs the moment it is attached
@@ -11917,7 +11928,8 @@ const BUG_CATCHING_SET: CardProgram = {
     ⚠️ **AND THE ARM REACHES FURTHER THAN THE ROW.** `instr(effect,'of them into
     your hand') > 0` returns 12 rows / 9 legal and `instr(abilities_json, …)` 2
     rows / 2 legal (remote D1, 2026-08-14); stripping the *"up to"* prints
-    (Hassel ×2) and the `searchDeck` sentence (Crispin ×4) leaves the mandatory
+    (Hassel ×2) and the `searchDeck` sentence (Crispin ×4 — 🆕🆕🆕 D561: BUILT, `CRISPIN`,
+    still on `searchDeck`, so the classification stands) leaves the mandatory
     family: these 3, Drakloak *"Recon Directive"* `sv06-129`/`sv08.5-072` (2 legal,
     leftovers to the deck BOTTOM) and Rika `sv04-172`/`-241`/`-258` (3 printings,
     out of Standard, leftovers shuffled to the bottom). **8 printings / 5 legal for
@@ -14171,6 +14183,210 @@ const SELECTIVE_SLIME: CardProgram = {
   ],
 };
 
+// ── 🆕🆕🆕 D561 — THE TRAINER BUNDLE, 15 PRINTINGS / 9 TEXTS / 9 OBJECTS: Perrin, Crispin,
+//    Super Potion, Love Ball, Hand Trimmer, Scoop Up Cyclone, Scramble Switch, Academy at
+//    Night and Perilous Jungle. Texts, subtypes and legality off tcgdex (the audit's card
+//    JSON), 2026-09-27 — all fifteen `legal.standard: true`; one object per printed TEXT
+//    (D199), reprints share it. Keyed MID-MAP after the D560 block (D395/D396), so the
+//    map's LAST key does not move. Every addition is an optional key or a union member:
+//    `MATCH_RECORD_VERSION` HOLDS at 35. Readings R-PR, R-CR1/R-CR2, R-SP, R-LB, R-HT,
+//    R-SC, R-SS, R-AN, R-PJ: docs/decisions.md D561. ──
+
+/** 🆕🆕🆕 **D561 — Perrin `sv06-160`/`-209`/`-220` (Supporter, 3 legal)** — *"Reveal up to
+    2 Pokémon in your hand and put them into your deck. If you do, search your deck for up
+    to that many Pokémon, reveal them, and put them into your hand. Then, shuffle your
+    deck."*
+
+    The declinable `payFromHand` arm (`count: "any"`, `cap: 2`) with its new
+    `"deckBottom"` destination (V1) files what it returned under `paid`; the §9.2
+    `recordGate` on that slot is the printed *"If you do"*, and the search's ceiling is the
+    new `maxRecorded: "paid"` rider (V2) — *"up to that many"* (`max: 2` is the printed
+    bound it can reach). The returned Pokémon are IN
+    the deck when the search runs, so they can be found again (the print does not exclude
+    them). The shuffle runs on every path. **R-PR**: the paid cards' printed "Reveal" is
+    not rendered per card (`HAND_COST_PAID` is logged as a count, hidden → hidden), the
+    searched cards are revealed (`DECK_SEARCHED.reveal`); reversal: a P4 per-seat event
+    filter. The LOG row names the engine's placement (*"on the bottom of their deck"*, the
+    shipped `"deckBottom"` verb) where the caption says *"into your deck"* — the cards ARE
+    under the deck when the search runs, and the end is immaterial because the deck is
+    searched and then shuffled (🆕🆕🆕 D561 review, named; reversal: `HAND_COST_PAID` gains an
+    "into the deck" member when a reader needs the print's wording). Never refused: a declinable cost cannot be unmet (`handCostUnmet`), so into a
+    hand with no Pokémon the Supporter plays, pays nothing and shuffles. */
+const PERRIN: CardProgram = {
+  trainer: [
+    {
+      op: "payFromHand",
+      count: "any",
+      cap: 2,
+      filter: { kind: "anyPokemon" },
+      to: "deckBottom",
+      recordAs: "paid",
+    },
+    {
+      op: "recordGate",
+      slot: "paid",
+      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
+      then: [
+        {
+          op: "searchDeck",
+          filter: { kind: "anyPokemon" },
+          dest: "hand",
+          max: 2,
+          maxRecorded: "paid",
+          reveal: true,
+        },
+      ],
+    },
+    { op: "shuffleDeck" },
+  ],
+};
+
+/** 🆕🆕🆕 **D561 — Crispin `sv07-133`/`-164`, `sv08.5-105`/`-171` (Supporter, 4 legal)** —
+    *"Search your deck for up to 2 Basic Energy cards of different types, reveal them, and
+    put 1 of them into your hand. Attach the other to 1 of your Pokémon. Then, shuffle your
+    deck."*
+
+    ONE search (D336) — D513's `distinctEnergyTypes` over `basicEnergy`, up to 2, revealed,
+    into the HAND, filed under `moved` — then `attachEnergyFrom`'s new `oneOfRecorded`
+    rider (V4), which expands at its step into a labelled `optional` between the found
+    types (*"Attach A"* / *"Attach B"*, R-CR2; with one card *"Attach A"* / *"Keep it in
+    your hand"*, R-CR1 ⚠️ UNRULED), each arm a mandatory hand attach of that type. Then the
+    shuffle. The play gate does not read the hand for this attach (its Energy comes from the
+    search). */
+const CRISPIN: CardProgram = {
+  trainer: [
+    {
+      op: "searchDeck",
+      filter: { kind: "basicEnergy" },
+      dest: "hand",
+      max: 2,
+      distinctEnergyTypes: true,
+      reveal: true,
+      recordAs: "moved",
+    },
+    { op: "attachEnergyFrom", source: "hand", oneOfRecorded: "moved" },
+    { op: "shuffleDeck" },
+  ],
+};
+
+/** 🆕🆕🆕 **D561 — Super Potion `sv09-158` (Item, 1 legal)** — *"Heal 60 damage from 1 of
+    your Pokémon. If you healed any damage in this way, discard an Energy from that
+    Pokémon."*
+
+    POTION's `healChosen` at 60 with the new `discardEnergyFromHealed` (V5, D560's
+    `healEach` spelling): the healed body — forced or picked — schedules one body-addressed
+    `discardEnergy { from: "self", bodyUid, count: 1 }` ONLY if the pick healed more than 0
+    (**R-SP**: an undamaged pick heals 0 and discards nothing; a body with no Energy is only
+    healed; two different Energy ask which). */
+const SUPER_POTION: CardProgram = {
+  trainer: [{ op: "healChosen", amount: 60, discardEnergyFromHealed: true }],
+};
+
+/** 🆕🆕🆕 **D561 — Love Ball `sv06-156` (Item, 1 legal)** — *"Search your deck for a
+    Pokémon with the same name as 1 of your opponent's Pokémon in play, reveal it, and put
+    it into your hand. Then, shuffle your deck."*
+
+    A revealing one-card hand search whose `anyPokemon` is narrowed at STEP time by the new
+    `sameNameAsOpponentInPlay` rider (V3) to `anyOf(byName × the opponent's in-play top-card
+    names)` — D531's placement. **R-LB**: `byName` is an exact match, so "Pikachu ex" is not
+    "Pikachu"; no match is the whiff and the shuffle still runs. */
+const LOVE_BALL: CardProgram = {
+  trainer: [
+    {
+      op: "searchDeck",
+      filter: { kind: "anyPokemon" },
+      dest: "hand",
+      max: 1,
+      reveal: true,
+      sameNameAsOpponentInPlay: true,
+    },
+    { op: "shuffleDeck" },
+  ],
+};
+
+/** 🆕🆕🆕 **D561 — Hand Trimmer `sv05-150` (Item, 1 legal)** — *"Each player discards cards
+    from their hand until they have 5 cards in their hand. Your opponent discards first. (If
+    a player has 5 or fewer cards in their hand, they do not discard.)"*
+
+    XEROSIC'S MACHINATIONS' `untilHandSize` arm twice, in printed order: the OPPONENT first
+    (the owner decides, D426), then the new controller-side `whose: "self"` (V6), which the
+    controller answers. **R-HT**: the played Item has already left the hand, so it never
+    counts toward the 5; a hand of 5 or fewer is a silent no-op on either side. Never
+    refused (the op has no play-gate line — its own standing answer). */
+const HAND_TRIMMER: CardProgram = {
+  trainer: [
+    { op: "opponentDiscardsFromHand", untilHandSize: 5 },
+    { op: "opponentDiscardsFromHand", untilHandSize: 5, whose: "self" },
+  ],
+};
+
+/** 🆕🆕🆕 **D561 — Scoop Up Cyclone `sv06-162`, `sv08.5-128` (Item, ACE SPEC, 2 legal)** —
+    *"Put 1 of your Pokémon and all attached cards into your hand."*
+
+    D299's `returnBenched { self, hand }` with the new `includeActive` (V7): the Active
+    leads the candidates. A returned Active leaves the spot empty for the existing §8.1
+    promotion; **R-SC**: with an empty Bench the lone Active is forced and the empty spot is
+    the existing §14.2 loss — the card does not refuse itself. */
+const SCOOP_UP_CYCLONE: CardProgram = {
+  trainer: [{ op: "returnBenched", whose: "self", dest: "hand", includeActive: true }],
+};
+
+/** 🆕🆕🆕 **D561 — Scramble Switch `sv08-186` (Item, ACE SPEC, 1 legal)** — *"Switch your
+    Active Pokémon with 1 of your Benched Pokémon. If you do, you may move any amount of
+    Energy from the Pokémon you moved to your Bench to the new Active Pokémon."*
+
+    SWITCH's `switchActive` with the new `recordDemoted` (V8) filing the body sent to the
+    Bench under `moved`; the §9.2 `recordGate` is *"If you do"*, and the declinable
+    `moveEnergy { benchToActive, max "any" }` has its SOURCE pinned to that body by the new
+    `sourceRecorded`. **R-SS**: moving 0 is a legal answer; an empty Bench refuses the play
+    (`programPlayable`'s `switchActive` line — §7, no legal target), so the "If you do"
+    never reads an empty slot from a play. */
+const SCRAMBLE_SWITCH: CardProgram = {
+  trainer: [
+    { op: "switchActive", recordAs: "moved", recordDemoted: true },
+    {
+      op: "recordGate",
+      slot: "moved",
+      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
+      then: [
+        {
+          op: "moveEnergy",
+          filter: { kind: "anyEnergy" },
+          max: "any",
+          route: "benchToActive",
+          sourceRecorded: "moved",
+        },
+      ],
+    },
+  ],
+};
+
+/** 🆕🆕🆕 **D561 — Academy at Night `sv06.5-054` (Stadium, 1 legal)** — *"Once during each
+    player's turn, that player may put a card from their hand on top of their deck."*
+
+    A Stadium ability (§7.3, Artazon's shape) whose whole program is `payFromHand { count:
+    1, to: "deckTop" }` (V1's new destination). The printed *"may"* is the activation
+    itself. **R-AN**: `useStadiumAbility` now asks `handCostUnmet`, so an EMPTY hand refuses
+    the activation rather than spending the turn's one use. */
+const ACADEMY_AT_NIGHT: CardProgram = {
+  stadium: {
+    ability: {
+      label: "Academy at Night",
+      program: [{ op: "payFromHand", count: 1, to: "deckTop" }],
+    },
+  },
+};
+
+/** 🆕🆕🆕 **D561 — Perilous Jungle `sv05-156` (Stadium, 1 legal)** — *"During Pokémon
+    Checkup, put 2 more damage counters on each Poisoned non-{D} Pokémon (both yours and
+    your opponent's)."*
+
+    The new `StadiumEffects.poisonExtraCounters` (V9): 20 more on each Poisoned Active whose
+    top card is not {D}, both seats, summed into the §13.1 Poison row (R-PJ). */
+const PERILOUS_JUNGLE: CardProgram = {
+  stadium: { poisonExtraCounters: { amount: 20, excludesType: "Darkness" } },
+};
+
 const REGISTRY: Record<string, CardProgram> = {
   // Professor's Research (SV base prints)
   "sv01-189": PROFESSORS_RESEARCH,
@@ -14796,6 +15012,23 @@ const REGISTRY: Record<string, CardProgram> = {
   "sv08-093": OBLIGING_HEAL, // Indeedee — Obliging Heal: heal 30 and recover from a condition
   "svp-154": OBLIGING_HEAL, // Indeedee (reprint)
   "sv07-006": SELECTIVE_SLIME, // Cradily — Selective Slime: heads, Burned / Confused / Poisoned
+  // ── 🆕🆕🆕 D561 — the trainer bundle: 15 printings / 9 texts / 9 objects, MID-MAP
+  //    (D395/D396), so `raw[last]` does not move. ──
+  "sv06-160": PERRIN, // Perrin — return up to 2 Pokémon, search that many
+  "sv06-209": PERRIN, // Perrin (reprint)
+  "sv06-220": PERRIN, // Perrin (reprint)
+  "sv07-133": CRISPIN, // Crispin — 2 Basic Energy of different types: 1 to hand, 1 attached
+  "sv07-164": CRISPIN, // Crispin (reprint)
+  "sv08.5-105": CRISPIN, // Crispin (reprint)
+  "sv08.5-171": CRISPIN, // Crispin (reprint)
+  "sv09-158": SUPER_POTION, // Super Potion — heal 60; if healed, discard an Energy from it
+  "sv06-156": LOVE_BALL, // Love Ball — a Pokémon named like one of the opponent's in play
+  "sv05-150": HAND_TRIMMER, // Hand Trimmer — each player discards down to 5, opponent first
+  "sv06-162": SCOOP_UP_CYCLONE, // Scoop Up Cyclone — 1 of your Pokémon and its cards to hand
+  "sv08.5-128": SCOOP_UP_CYCLONE, // Scoop Up Cyclone (reprint)
+  "sv08-186": SCRAMBLE_SWITCH, // Scramble Switch — switch, then move any Energy to the new Active
+  "sv06.5-054": ACADEMY_AT_NIGHT, // Academy at Night — a hand card on top of the deck, once a turn
+  "sv05-156": PERILOUS_JUNGLE, // Perilous Jungle — 2 more Poison counters on each non-{D}
   // ── D190 — THE **STANDARD-LEGAL** REPRINT-ALIAS MAP (Tier 0 of
   //    `docs/reference/coverage-backlog-legal.md`). 22 printings, 9 map targets,
   //    ZERO new code: every row below prints a sentence that is already authored

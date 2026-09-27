@@ -1298,7 +1298,13 @@ describe("§7 — the census moves in exactly ONE summand, and the other three a
     // Cradily). Real catalog ids, no `fix-*` key (`abilityTriggersD560.test.ts` /
     // `abilityPassivesD560.test.ts` drive a LOCAL `cardPool`), inserted MID-MAP after
     // `sv09-082`, and no row authors an `attack` program.
-    expect(ids.size).toBe(848);
+    // 🆕🆕🆕 D561 — 848 -> **863**: FIFTEEN registry keys on NINE program objects — the
+    // trainer bundle (Perrin ×3, Crispin ×4, Super Potion, Love Ball, Hand Trimmer, Scoop Up
+    // Cyclone ×2, Scramble Switch, Academy at Night, Perilous Jungle). Real catalog ids, no
+    // `fix-*` key (`trainersD561.test.ts` / `stadiumsD561.test.ts` drive a LOCAL
+    // `cardPool`), inserted MID-MAP after `sv07-006`, and no row authors an `attack`
+    // program.
+    expect(ids.size).toBe(863);
     // ⚠️ ONE of the thirteen IS in the registry — Volbeat `sv06-009` — and it is
     // there on an ABILITY program, which is exactly the count a slice does not
     // think it is checking. Named, rather than glossed by an "all absent" claim
