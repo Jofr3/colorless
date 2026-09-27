@@ -42,6 +42,10 @@ import {
 //     deck-top discard (BUILT, M4/D130), a 2-printing heal-and-recover
 //     (`svp-154`/`sv08-093`), a 2-printing Stadium discard (`svp-152`/`sv08-056`),
 //     `sv05-085`'s search-and-DISCARD-your-own-{F}, and `sv06-132` again.
+//     (🆕🆕🆕 D560 CORRECTION (D539) — a dated measurement whose "unbuilt" status has
+//     moved: the Stadium discard was built at D555 (Chien-Pao "Snow Sink"), and the
+//     heal-and-recover (Indeedee "Obliging Heal") and `sv05-085` (Drilbur "Dig Dig Dig")
+//     at D560. Only `sv06-132` (Farfetch'd, a Tool attach from the deck) stays unbuilt.)
 // 🆕 **SO "WIDEN THE QUERY" IS NOT ONE MOVE, IT IS A LADDER, AND WHICH RUNG YOU
 // STOP ON DECIDES THE ANSWER.** A widening that keeps the row's VERB is still
 // scoped to the row's mechanism; only dropping to the bare printed OPENING

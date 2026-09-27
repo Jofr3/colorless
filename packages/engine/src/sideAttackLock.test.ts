@@ -656,8 +656,8 @@ describe("§12 — the v33 bytes round-trip, and a v32-shaped state THROWS (D549
     expect(raw("/match.ts")).toContain("32 → 33 AT D549 — THE SIXTH POSITION");
   });
 
-  it("the engine version stepped to 0.443.0 in BOTH places", () => {
-    expect(engineVersion).toBe("0.443.0");
-    expect(manifest.version).toBe("0.443.0");
+  it("the engine version stepped to 0.444.0 in BOTH places", () => {
+    expect(engineVersion).toBe("0.444.0");
+    expect(manifest.version).toBe("0.444.0");
   });
 });

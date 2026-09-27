@@ -625,7 +625,7 @@ describe("the blast radius — what this slice did NOT change", () => {
     ]);
   });
 
-  it("`playableIf` is authored on exactly EIGHT ids, and nowhere else", () => {
+  it("`playableIf` is authored on exactly TEN ids, and nowhere else", () => {
     // The gate's own population. Of the 29 legal printings on `%Once during your
     // turn, if %`, 15 are the Active-Spot clause `activeOnly` already covers; of
     // the 14 that remain, NINE name THIS POKÉMON (Munkidori ×3, Meowscarada,
@@ -634,6 +634,10 @@ describe("the blast radius — what this slice did NOT change", () => {
     // "if you played Janine's Secret Art from your hand this turn" and Thwackey's
     // "if your Active Pokémon has the Festival Lead Ability" are two more
     // conditions this union does not hold. That leaves 3.
+    // (🆕🆕🆕 D560 CORRECTION (D539): Thwackey's clause is WITHDRAWN from "conditions this
+    // union does not hold" — `yourActiveHasAbility` (V1) holds it, and Thwackey
+    // `sv06-015`/`svp-115` joins the population below. It is a board read of the ACTIVE,
+    // not a per-body one, so the NINE above are unaffected. Crobat's stays unheld.)
     const gated: string[] = [];
     for (const id of registryCardIds()) {
       for (const ability of programFor(id)?.abilities ?? []) {
@@ -675,7 +679,11 @@ describe("the blast radius — what this slice did NOT change", () => {
     // both proposed and neither built. It was ALSO this slice's own biggest
     // prediction miss: the prediction grepped `playableIf` in non-test files and
     // named the doc block, and did not grep the TEST tree for the same identifier.
+    // 🆕🆕🆕 **D560 — AND THEN IT WAS 10**: Thwackey `sv06-015`/`svp-115` "Boom Boom
+    // Groove" on the NEW `yourActiveHasAbility` (the printed Festival Lead name on the
+    // Active's top card; a lock does not falsify it, R-TW ⚠️ UNRULED).
     expect(gated.sort()).toEqual([
+      "sv06-015",
       "sv06.5-038",
       "sv06.5-084",
       "sv06.5-092",
@@ -684,6 +692,7 @@ describe("the blast radius — what this slice did NOT change", () => {
       "sv10-003",
       "sv10-206",
       "sv10-228",
+      "svp-115",
     ]);
   });
 });

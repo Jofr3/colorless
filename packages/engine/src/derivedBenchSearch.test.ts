@@ -68,7 +68,9 @@ import {
 
     ⚠️ SWEPT OVER ALL THREE TEXT COLUMNS, and the negative result is part of the
     census: `abilities_json` returns exactly ONE legal row for this shape (Koffing
-    `sv10-125`, a §9 TRIGGER over a noun no filter spells) and the `effect` column
+    `sv10-125`, a §9 TRIGGER over a noun no filter spells — 🆕🆕🆕 D560 CORRECTION (D539):
+    D512's `pokemonNameContaining` spells it and D560 builds the trigger, which is still
+    not a played Ability) and the `effect` column
     returns five TRAINER rows, none of them attack text. So no printing of this
     family is a played Ability, and `programPlayable` — the read site the backlog
     row wanted priced — is reached by none of it. Driven below rather than argued.

@@ -6240,13 +6240,15 @@ export const FIXTURE_POOL: Record<string, Card> = {
       Scovillain), and the cast's cheapest attack — {G}{C} — so the clause Energy
       is unambiguously a rider on the cost rather than part of it.
 
-      Its Ability "Compound Eyes" is kept VERBATIM and is INERT: it carries no
-      registry row, and no deriver reads ability text at all, so nothing in the
-      engine sees it. It is here because the printed card has it and because a
-      body with an Ability is worth having in a pool where several auras and
-      clauses ask "does this Pokémon have an Ability" — but the +50 it promises
-      is NOT simulated, and the ZERO-registry-rows case in energyClause.test.ts is
-      what pins that. A Stage 1 from Joltik. */
+      Its Ability "Compound Eyes" is kept VERBATIM. (🆕🆕🆕 D560 CORRECTION (D539): "is
+      INERT", "carries no registry row", "nothing in the engine sees it" and "the +50
+      it promises is NOT simulated" are WITHDRAWN — `sv06.5-002` has a `passive` row
+      since D560, +50 before W/R into an opposing Active that HAS an Ability. No
+      deriver reads ability text, which stays true, and energyClause.test.ts now pins
+      the row's shape and that its defenders print no Ability.) It is here because
+      the printed card has it and because a body with an Ability is worth having in a
+      pool where several auras and clauses ask "does this Pokémon have an Ability". A
+      Stage 1 from Joltik. */
   "sv06.5-002": battler("sv06.5-002", {
     name: "Galvantula",
     types: ["Grass"],

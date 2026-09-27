@@ -92,7 +92,15 @@ export interface AbilityProgram {
       up this turn"*. A per-body gate whose subject is NECESSARILY the Active is a
       board read once the spot clause is spent — which is why the nine printings
       counted above still do not belong here (none of them names the Active Spot,
-      and `activeOnly` is what would have to be true, not what happens to be). */
+      and `activeOnly` is what would have to be true, not what happens to be).
+
+      🆕🆕🆕 **D560 CORRECTION (D539) — "6 PRINTINGS ON 2 CARDS AND 2 `BoardCondition`
+      MEMBERS" IS WITHDRAWN.** It already omitted Fan Rotom `sv07-118`/`sv08.5-085`
+      (`yourFirstTurn`, D275 — `flipTheScript.test.ts` pins the population by id), and D560
+      adds Thwackey `sv06-015`/`svp-115` "Boom Boom Groove" on the NEW
+      `yourActiveHasAbility { name: "Festival Lead" }`: **10 printings on 4 cards and 4
+      members**. Thwackey's clause names "your Active Pokémon", a board read — the per-body
+      rule above is untouched. */
   playableIf?: BoardCondition;
   /** 🆕 **D310 — §9's PER-BODY printed gate, and the field the block above asked
       for by name.** *"Once during your turn, if this Pokémon's remaining HP is 30
@@ -230,7 +238,16 @@ export interface TriggeredAbility {
       optional triggers (every representative is pure upside — search / heal /
       snipe — so declining is never strategically needed); where the underlying
       op is "up to" (searchDeck), the player can still take none. A yes/no
-      confirm for a trigger with a downside is the follow-up. */
+      confirm for a trigger with a downside is the follow-up.
+
+      🆕🆕🆕 **D560 CORRECTION (D539) — "EVERY REPRESENTATIVE IS PURE UPSIDE" IS
+      WITHDRAWN, AND "THE FOLLOW-UP" IS LONG SINCE BUILT.** The flag still auto-fires, but
+      a trigger whose consequent has a DOWNSIDE carries the real confirm as an INNER
+      `optional` op (D186) — Iron Leaves ex "Rapid Vernier" (D244), Chien-Pao "Snow Sink"
+      (D555) and, at D560, Whimsicott "Wafting Heal" and Dachsbun ex "Time to Chow Down"
+      (both DISCARD Energy). The flag stays `true` on those rows as the printed "you may";
+      the op is where the answer lives. Auto-fire is still right for the pure-upside rows
+      (Indeedee "Obliging Heal") and for the "up to" searches (Drilbur "Dig Dig Dig"). */
   optional?: boolean;
   /** Fires only while this Pokémon is in the Active Spot (Trevenant's "if this
       Pokémon is in the Active Spot"). Not consulted for `onKnockOut` — a
@@ -1161,6 +1178,25 @@ export interface PassiveEffects {
       `suppressTargetEffects` (R-FZ3, D552 R4's mirror). The HUD does not show it
       (display debt, D552 ⑽'s precedent). */
   opponentWeaknessRewrite?: { targetType: PokemonType; weaknessType: PokemonType };
+  /** 🆕🆕🆕 §13.2 (D560) — EXTRA Burn damage on the OPPONENT's Burned Pokémon at every
+      Pokémon Checkup: Magmortar `sv09-021` "Magma Surge" — *"During Pokémon Checkup,
+      put 3 more damage counters on your opponent's Burned Pokémon."* 1 legal printing.
+      The key names the printed noun (*"damage counters"*) and holds HP (30 — the §12
+      conversion is done here, at authoring, as `damageAttacker`'s *"put 2 damage
+      counters"* is stored as 20 and `TREVENANT`'s as `amount: 10`).
+
+      `opponentWeaknessRewrite`'s placement one field up: a dedicated scan
+      (continuous.ts `seatBurnExtraCounters`) over the BURNED body's OPPONENT's board,
+      Active and Bench (no zone clause), each source §9-gated through
+      `disabledAbilityUids`, SUMMED (no *"doesn't stack"* is printed, so two Magmortar
+      add 60 — D560 R-MG). Read in ONE place, flow.ts `runCheckup`'s §13.2 block,
+      ADDED to the rulebook's 20 BEFORE the cure flip, so a Burn that heals on heads
+      still took the 3 extra counters that Checkup; the whole amount is ONE
+      `COUNTERS_PLACED { source: "burn" }` row (reversal: attribute Magmortar's share
+      on its own row the day a reader or the log needs it). ⚠️ NOT the `betweenTurns`
+      trigger shape: `runCheckupTriggers` runs AFTER the flip, so a healed Burn would
+      no longer be "Burned" when it asked. */
+  opponentBurnExtraCounters?: number;
   /** §8.5 continuous ATTACKER-side suppression (D192): "Damage from attacks used
       by this Pokémon isn't affected by any effects on your opponent's Active
       Pokémon." — Walking Wake ex "Azure Seas" (sv05-050/-189/-205/-215,
@@ -2489,7 +2525,13 @@ export interface PassiveEffects {
       ⚠️ **NO `MATCH_RECORD_VERSION` BUMP IS OWED.** Nothing here is persisted:
       the gate is a CATALOG fact re-derived from the board on every read, unlike
       the two attack-installed locks it sits beside (`attackLockedTurn`,
-      `lockedAttacks`), which are `InPlayPokemon` fields. */
+      `lockedAttacks`), which are `InPlayPokemon` fields.
+
+      🆕🆕🆕 **D560 CORRECTION (D539) — "THE ONE PRINTED SENTENCE" AND "ITS SIX PRINTINGS"
+      ARE WITHDRAWN.** Slaking ex `sv08-147`/`-227` "Born to Slack" (*"If your opponent has
+      no Pokémon ex or Pokémon V in play, this Pokémon can't attack."*) is the field's SECOND
+      sentence, on the NEW `opponentHasExOrVInPlay` — the vocabulary choice above paid for
+      itself exactly as argued: 8 printings on 2 sentences, zero read-site bytes. */
   cantAttackUnless?: BoardCondition;
 
   /** §4 continuous SELF-only ATTACK **LICENCE** (D277): the holder MAY attack on
@@ -4960,7 +5002,13 @@ const COUNTERATTACKING_PINCER: CardProgram = {
     auto-fires past (every representative is pure upside), so the op's `optional`
     is where the decline actually survives — take 2, or take none. It is the only
     consumer of `damageChosen` that carries the word; the Ability-activated
-    snipes below spend their "may" on choosing to use the Ability. */
+    snipes below spend their "may" on choosing to use the Ability.
+
+    🆕🆕🆕 D560 CORRECTION (D539): the parenthetical "every representative is pure
+    upside" is WITHDRAWN (see `TriggeredAbility.optional`'s doc) — Whimsicott "Wafting
+    Heal" and Dachsbun ex "Time to Chow Down" discard Energy, and like this row they
+    carry the real decline on an inner `optional` op. The argument above (the flag
+    auto-fires, so the op is where the decline survives) is unchanged. */
 const HAWLUCHA: CardProgram = {
   triggered: [
     {
@@ -8515,7 +8563,18 @@ const DEFIANT_HORN: CardProgram = {
     trigger in this file the consequent is a DOWNSIDE for the seat being asked.
     The auto-fire note on `TriggeredAbility.optional` reasons from "every
     representative is pure upside"; this one is not, and it does not need to be,
-    because it is not optional at all. */
+    because it is not optional at all.
+
+    🆕🆕🆕 D560 CORRECTION (D539): "unlike every other trigger in this file the
+    consequent is a DOWNSIDE" and the quoted "every representative is pure upside" are
+    both WITHDRAWN. The flag doc's population sentence is withdrawn at D560 (see
+    `TriggeredAbility.optional`), and this file already holds other triggers with a
+    downside for the seat being asked: Iron Leaves ex "Rapid Vernier" (D244), Chien-Pao
+    "Snow Sink" (D555), and at D560 Whimsicott "Wafting Heal" and Dachsbun ex "Time to
+    Chow Down", which discard Energy. What stays true is narrower: this is a downside
+    trigger with NO "you may" (as is Magcargo "Lava Zone" below), while those four carry
+    their decline on an inner `optional` op. This row has no decline to carry, so the
+    argument for leaving it un-`optional` is unchanged. */
 const DARKEST_IMPULSE: CardProgram = {
   triggered: [
     {
@@ -8683,6 +8742,13 @@ const LAVA_ZONE: CardProgram = {
     the Bench — so auto-firing would take a decision away from the player rather
     than hand them upside. The flag stays `true` beside it because it is still the
     printed "you may"; the OP is where the answer lives.
+
+    🆕🆕🆕 D560 CORRECTION (D539): the quoted flag doc is no longer that doc's text.
+    Its "every representative is pure upside … the follow-up" is WITHDRAWN at D560, and
+    this row is cited there as the follow-up, built. "THE FIRST TRIGGER IN THIS
+    REGISTRY TO NEED ONE" stays true as history, but it is no longer the only one:
+    Chien-Pao "Snow Sink" (D555), Whimsicott "Wafting Heal" and Dachsbun ex "Time to Chow
+    Down" (D560) carry the same inner `optional` op.
 
     ⚠️ **AND THE SECOND "you may" NEEDS NO WRAPPER**, which is the `optional` op's
     own rule read off the card: `moveEnergy` PARKS WITH A LEGAL EMPTY ANSWER, so
@@ -11112,7 +11178,11 @@ const RIPENING_CHARGE: CardProgram = {
     ⚠️ `optional: true` IS THE PRINTED "you may" AND IT AUTO-FIRES, which is the
     same reading `Sudden Shearing` takes on the same timing: the flag's own doc
     says every representative is pure upside, and attaching your own Energy to
-    your own body is upside with no downside to decline. It is NOT the `optional`
+    your own body is upside with no downside to decline. (🆕🆕🆕 D560 CORRECTION
+    (D539): that population sentence in the flag's doc is WITHDRAWN — Whimsicott and
+    Dachsbun ex discard Energy and carry an inner `optional` op — so this row now rests
+    on its OWN consequent alone: attaching your own Energy is pure upside, and the
+    auto-fire reading stands.) It is NOT the `optional`
     OP (`Rapid Vernier`'s), which exists because SWITCHING a fresh body into the
     Active Spot is a real cost. There is nothing to decline here, and a whiffing
     attach (an empty hand) already returns before anything happens.
@@ -13826,6 +13896,281 @@ const GEAR_COATING: CardProgram = {
     `damageReductionAfterWR` by `passivesOf`. */
 const ROCK_ARMOR: CardProgram = { passive: { damageReductionAfterWRIfEnergy: 30 } };
 
+// ── 🆕🆕🆕 D560 — THE ABILITY BUNDLE: 17 legal printings / 11 texts / 11 objects, each a
+//    printed Pokémon ABILITY (three triggered searches, two activated Abilities, three
+//    passives, three triggered heals). None carries an `attack` key: every printed attack
+//    keeps deriving from its text (attack.ts). Readings: docs/decisions.md D560. ──
+
+/** 🆕🆕🆕 **D560 — Drilbur `sv05-085` (1 legal)** "Dig Dig Dig" — *"When you play this
+    Pokémon from your hand onto your Bench during your turn, you may search your deck for up
+    to 3 Basic {F} Energy cards and discard them. Then, shuffle your deck."* ZERO vocabulary:
+    `onPlayToBench` + D557's `searchDeck dest "discard"` (Brilliant Blender's) + the Nest
+    Ball shuffle. (`sv08-108`, `sv10.5b-045`/`-124` are Drilbur with no Ability — not keyed.) The *"you may"* is the search's own `min: 0` (an up-to search is its own
+    decline — the `optional` flag is the printed word, auto-fired, Sudden Shearing's reading). */
+const DIG_DIG_DIG: CardProgram = {
+  triggered: [
+    {
+      name: "Dig Dig Dig",
+      trigger: "onPlayToBench",
+      optional: true,
+      program: [
+        {
+          op: "searchDeck",
+          filter: { kind: "basicEnergy", energyType: "Fighting" },
+          dest: "discard",
+          max: 3,
+        },
+        { op: "shuffleDeck" },
+      ],
+    },
+  ],
+};
+
+/** 🆕🆕🆕 **D560 — Team Rocket's Koffing `sv10-125` (1 legal)** "Smog Signals" — *"If this
+    Pokémon is in the Active Spot and is damaged by an attack from your opponent's Pokémon
+    (even if this Pokémon is Knocked Out), search your deck for up to 2 Pokémon that have
+    "Koffing" in their name and put them onto your Bench. Then, shuffle your deck."* ZERO
+    vocabulary: `onDamagedByAttack` + `activeOnly` (Armarouge / Klawf ex's timing) over
+    D512's `pokemonNameContaining` noun (~~"a noun no filter spells"~~ — D560 CORRECTION)
+    and a bench-bound `searchDeck` (clamped to `benchSpace`).
+
+    🛑 **THE FIRST BENCH SEARCH THAT PARKS INSIDE `runDamagedTrigger`, ON THE OPPONENT'S
+    TURN.** The searcher is the DAMAGED, non-turn seat — the program's controller — and
+    the park resumes the attack's tail through `resumeTail`, ahead of the §8.1 sweep, so
+    *"even if this Pokémon is Knocked Out"* holds and a benched Koffing is there to be
+    promoted. ⚠️ **It fires only where a damagedTrigger stage is SEEDED** (D560 R-KF,
+    inherited from Klawf ex and Armarouge): attack.ts's main hit and interpreter.ts
+    `reactToAttackDamage` (a re-homed main hit / an Active snipe through `snipeActive`,
+    both `invokedBy "attack"`). Every legal card with "Koffing" in its name is a Basic
+    (Koffing `sv09-091`, this card), so the bench destination is honest without a stage
+    rider. */
+const SMOG_SIGNALS: CardProgram = {
+  triggered: [
+    {
+      name: "Smog Signals",
+      trigger: "onDamagedByAttack",
+      activeOnly: true,
+      program: [
+        {
+          op: "searchDeck",
+          filter: { kind: "pokemonNameContaining", fragment: "Koffing" },
+          dest: "bench",
+          max: 2,
+        },
+        { op: "shuffleDeck" },
+      ],
+    },
+  ],
+};
+
+/** 🆕🆕🆕 **D560 — Thwackey `sv06-015`/`svp-115` (2 legal)** "Boom Boom Groove" — *"Once
+    during your turn, if your Active Pokémon has the Festival Lead Ability, you may search
+    your deck for a card and put it into your hand. Then, shuffle your deck."* `playableIf`
+    on the NEW `BoardCondition.yourActiveHasAbility` (V1) — the printed ability NAME on the
+    Active's top card; a lock does not falsify it (R-TW, ⚠️ UNRULED). Not `activeOnly`: the
+    print puts Thwackey nowhere in particular (its own Festival Lead partner is the Active). */
+const BOOM_BOOM_GROOVE: CardProgram = {
+  abilities: [
+    {
+      name: "Boom Boom Groove",
+      oncePerTurn: true,
+      activeOnly: false,
+      playableIf: { kind: "yourActiveHasAbility", name: "Festival Lead" },
+      program: [
+        { op: "searchDeck", filter: { kind: "anyCard" }, dest: "hand", max: 1 },
+        { op: "shuffleDeck" },
+      ],
+    },
+  ],
+};
+
+/** 🆕🆕🆕 **D560 — Slaking ex `sv08-147`/`-227` (2 legal)** "Born to Slack" — *"If your
+    opponent has no Pokémon ex or Pokémon V in play, this Pokémon can't attack."*
+    `cantAttackUnless` (Power Saver's field, its permission polarity) on the NEW
+    `opponentHasExOrVInPlay` (V2): the opposing Active AND Bench (R-SL). */
+const BORN_TO_SLACK: CardProgram = {
+  passive: { cantAttackUnless: { kind: "opponentHasExOrVInPlay" } },
+};
+
+/** 🆕🆕🆕 **D560 — Annihilape `sv10-092` (1 legal)** "Lose Cool" — *"If this Pokémon has 2
+    or more damage counters on it, attacks used by this Pokémon do 120 more damage to your
+    opponent's Active Pokémon (before applying Weakness and Resistance)."*
+    `damageBonusBeforeWRIf` on the NEW `yourActiveDamageCountersAtLeast { count: 2 }` (V3,
+    in the printed unit). "This Pokémon" is the Active at both pre-W/R sites (D347, R-AN).
+    (`sv08-100` is a different Annihilape — no Ability — and is not keyed.) */
+const LOSE_COOL: CardProgram = {
+  passive: {
+    damageBonusBeforeWRIf: {
+      amount: 120,
+      cond: { kind: "yourActiveDamageCountersAtLeast", count: 2 },
+    },
+  },
+};
+
+/** 🆕🆕🆕 **D560 — Galvantula `sv06.5-002` (1 legal)** "Compound Eyes" — *"Attacks used by
+    this Pokémon do 50 more damage to your opponent's Active Pokémon that has an Ability
+    (before applying Weakness and Resistance)."* `damageBonusBeforeWRIf` on the NEW
+    `opponentActiveHasAbility` (V4, D251's printed-card `hasPrintedAbility`: a LOCKED
+    Ability still counts — R-GV). The printed attack "Shocking Web" keeps deriving.
+    (`sv10.5w-034`/`-117` are Galvantula with no Ability — not keyed.) */
+const COMPOUND_EYES: CardProgram = {
+  passive: { damageBonusBeforeWRIf: { amount: 50, cond: { kind: "opponentActiveHasAbility" } } },
+};
+
+/** 🆕🆕🆕 **D560 — Magmortar `sv09-021` (1 legal)** "Magma Surge" — *"During Pokémon
+    Checkup, put 3 more damage counters on your opponent's Burned Pokémon."* The NEW
+    `opponentBurnExtraCounters` (30 HP), read by continuous.ts `seatBurnExtraCounters` in
+    flow.ts's §13.2 Burn block, BEFORE the cure flip; per Magmortar; silenced by a §9 lock
+    (R-MG). */
+const MAGMA_SURGE: CardProgram = { passive: { opponentBurnExtraCounters: 30 } };
+
+const WAFTING_HEAL_TEXT =
+  "When you play this Pokémon from your hand to evolve 1 of your Pokémon during your turn, you may heal all damage from your Active {G} Pokémon. If you healed any damage in this way, discard all Energy from that Pokémon.";
+
+/** 🆕🆕🆕 **D560 — Whimsicott `sv05-015`/`sv08.5-008` (2 legal)** "Wafting Heal" — the
+    text above. `onEvolve`, and the printed *"you may"* is a real CONFIRM here (the
+    consequent DISCARDS Energy — a downside — so the auto-fire note on
+    `TriggeredAbility.optional` does not cover it; Rapid Vernier's reading). The two
+    `conditionGate`s are the printed noun (*"your Active {G} Pokémon"*) and the
+    antecedent (*"If you healed any damage"*): behind them the heal is of a DAMAGED
+    Active, so "healed any" is exactly true whenever the confirm is offered, and a
+    non-{G} or undamaged Active is never asked (R-DB). The heal is V5's `amount "all"`. */
+const WAFTING_HEAL: CardProgram = {
+  triggered: [
+    {
+      name: "Wafting Heal",
+      trigger: "onEvolve",
+      optional: true,
+      program: [
+        {
+          op: "conditionGate",
+          cond: { kind: "yourActiveHasType", type: "Grass" },
+          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
+          then: [
+            {
+              op: "conditionGate",
+              cond: { kind: "yourActiveDamaged" },
+              // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
+              then: [
+                {
+                  op: "optional",
+                  note: WAFTING_HEAL_TEXT,
+                  // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
+                  then: [
+                    { op: "heal", target: "self", amount: "all" },
+                    {
+                      op: "discardEnergy",
+                      from: "yourActive",
+                      filter: { kind: "anyEnergy" },
+                      count: "all",
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    },
+  ],
+};
+
+/** 🆕🆕🆕 **D560 — Dachsbun ex `sv07-067`/`-160`/`-169` (3 legal)** "Time to Chow Down" —
+    *"When you play this Pokémon from your hand to evolve 1 of your Pokémon during your
+    turn, you may heal all damage from each of your Evolution Pokémon. If you healed any
+    damage in this way, discard all Energy from those Pokémon."* `onEvolve` + a real
+    confirm (the discard is a downside) over `healEach` with V6's three widenings:
+    `amount "all"`, `evolutionOnly`, `discardEnergyFromHealed`. 🛑 **THE CONFIRM IS
+    UNGATED (R-DB)**: the print's subject is EVERY Evolution Pokémon, not the Active, so
+    `yourActiveDamaged` would be the wrong gate — and none is needed, because the rider is
+    per HEALED body: accepting on a board where nothing is damaged heals nothing and
+    discards nothing. Dachsbun ex is itself an Evolution Pokémon and keeps any damage
+    Fidough carried, so it heals too. */
+const TIME_TO_CHOW_DOWN: CardProgram = {
+  triggered: [
+    {
+      name: "Time to Chow Down",
+      trigger: "onEvolve",
+      optional: true,
+      program: [
+        {
+          op: "optional",
+          note: "When you play this Pokémon from your hand to evolve 1 of your Pokémon during your turn, you may heal all damage from each of your Evolution Pokémon. If you healed any damage in this way, discard all Energy from those Pokémon.",
+          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
+          then: [
+            {
+              op: "healEach",
+              amount: "all",
+              evolutionOnly: true,
+              discardEnergyFromHealed: true,
+            },
+          ],
+        },
+      ],
+    },
+  ],
+};
+
+/** 🆕🆕🆕 **D560 — Indeedee `sv08-093`/`svp-154` (2 legal)** "Obliging Heal" — *"When you
+    play this Pokémon from your hand onto your Bench during your turn, you may heal 30
+    damage from your Active Pokémon and have it recover from a Special Condition."*
+    `onPlayToBench`, pure upside (auto-fired — `TriggeredAbility.optional`), `heal self 30` (the controller's
+    Active — Healing Leaves' reading, D553) then the NEW field-free `recoverOneStatus`
+    (V7): 0 or 1 conditions resolve directly, 2 or 3 become a labelled binary chain. */
+const OBLIGING_HEAL: CardProgram = {
+  triggered: [
+    {
+      name: "Obliging Heal",
+      trigger: "onPlayToBench",
+      optional: true,
+      program: [{ op: "heal", target: "self", amount: 30 }, { op: "recoverOneStatus" }],
+    },
+  ],
+};
+
+/** 🆕🆕🆕 **D560 — Cradily `sv07-006` (1 legal)** "Selective Slime" — *"Once during your
+    turn, you may flip a coin. If heads, choose Burned, Confused, or Poisoned. Your
+    opponent's Active Pokémon is now affected by that Special Condition."* ZERO vocabulary:
+    `coinFlipGate` over D557's labelled `optional`, twice — Volcanion ex `SCALDING_STEAM`'s
+    `applyStatus defender` (the controller-relative defender) on each leaf.
+    🛑 **THE THREE-WAY PICK AS TWO BINARY DIALOGS IS A UI READING (R-CR)** — the same one
+    as Indeedee's: every path lands exactly one of the three, and all three are reachable.
+    The *"you may"* is the decision to use the Ability at all (FAN_CALL's reading). */
+const SELECTIVE_SLIME: CardProgram = {
+  abilities: [
+    {
+      name: "Selective Slime",
+      oncePerTurn: true,
+      activeOnly: false,
+      program: [
+        {
+          op: "coinFlipGate",
+          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
+          then: [
+            {
+              op: "optional",
+              note: "Selective Slime: choose Burned, Confused, or Poisoned. Your opponent's Active Pokémon is now affected by that Special Condition.",
+              labels: { yes: "Burned", no: "Confused or Poisoned" },
+              // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
+              then: [{ op: "applyStatus", target: "defender", status: "burned" }],
+              otherwise: [
+                {
+                  op: "optional",
+                  note: "Selective Slime: choose Confused or Poisoned. Your opponent's Active Pokémon is now affected by that Special Condition.",
+                  labels: { yes: "Confused", no: "Poisoned" },
+                  // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
+                  then: [{ op: "applyStatus", target: "defender", status: "confused" }],
+                  otherwise: [{ op: "applyStatus", target: "defender", status: "poisoned" }],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    },
+  ],
+};
+
 const REGISTRY: Record<string, CardProgram> = {
   // Professor's Research (SV base prints)
   "sv01-189": PROFESSORS_RESEARCH,
@@ -14432,6 +14777,25 @@ const REGISTRY: Record<string, CardProgram> = {
   "sv10.5b-063": GEAR_COATING, // Klinklang — Gear Coating: {M}-Energy bodies take 20 less
   "sv10.5b-141": GEAR_COATING, // Klinklang (reprint)
   "sv09-082": ROCK_ARMOR, // Regirock — Rock Armor: 30 less with any Energy attached
+  // ── 🆕🆕🆕 D560 — the ability bundle: 17 printings / 11 texts / 11 objects, MID-MAP
+  //    (D395/D396), so `raw[last]` does not move. ──
+  "sv05-085": DIG_DIG_DIG, // Drilbur — Dig Dig Dig: up to 3 Basic {F} Energy to the discard
+  "sv10-125": SMOG_SIGNALS, // Team Rocket's Koffing — Smog Signals: 2 "Koffing" to the Bench when hit
+  "sv06-015": BOOM_BOOM_GROOVE, // Thwackey — Boom Boom Groove: a card, if the Active has Festival Lead
+  "svp-115": BOOM_BOOM_GROOVE, // Thwackey (reprint)
+  "sv08-147": BORN_TO_SLACK, // Slaking ex — Born to Slack: can't attack with no ex / V opposite
+  "sv08-227": BORN_TO_SLACK, // Slaking ex (reprint)
+  "sv10-092": LOSE_COOL, // Annihilape — Lose Cool: +120 with 2 or more damage counters
+  "sv06.5-002": COMPOUND_EYES, // Galvantula — Compound Eyes: +50 into an Active with an Ability
+  "sv09-021": MAGMA_SURGE, // Magmortar — Magma Surge: 3 more counters on the opposing Burn
+  "sv05-015": WAFTING_HEAL, // Whimsicott — Wafting Heal: heal the Active {G}, discard its Energy
+  "sv08.5-008": WAFTING_HEAL, // Whimsicott (reprint)
+  "sv07-067": TIME_TO_CHOW_DOWN, // Dachsbun ex — Time to Chow Down: heal every Evolution Pokémon
+  "sv07-160": TIME_TO_CHOW_DOWN, // Dachsbun ex (reprint)
+  "sv07-169": TIME_TO_CHOW_DOWN, // Dachsbun ex (reprint)
+  "sv08-093": OBLIGING_HEAL, // Indeedee — Obliging Heal: heal 30 and recover from a condition
+  "svp-154": OBLIGING_HEAL, // Indeedee (reprint)
+  "sv07-006": SELECTIVE_SLIME, // Cradily — Selective Slime: heads, Burned / Confused / Poisoned
   // ── D190 — THE **STANDARD-LEGAL** REPRINT-ALIAS MAP (Tier 0 of
   //    `docs/reference/coverage-backlog-legal.md`). 22 printings, 9 map targets,
   //    ZERO new code: every row below prints a sentence that is already authored

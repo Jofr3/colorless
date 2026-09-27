@@ -3661,6 +3661,58 @@ export type BoardCondition =
       Public: every Benched Pokémon is face-up on the table, on BOTH sides, so the
       union's public-state invariant holds and redact.ts needs no byte. */
   | { kind: "opponentBenchAtLeast"; count: number }
+  /** 🆕🆕🆕 **D560 (V1) — YOUR ACTIVE POKÉMON'S TOP CARD PRINTS AN ABILITY NAMED
+      `name`.** Thwackey `sv06-015`/`svp-115` "Boom Boom Groove" — *"Once during your
+      turn, if your Active Pokémon has the Festival Lead Ability, you may search your
+      deck for a card and put it into your hand. Then, shuffle your deck."* — the
+      `AbilityProgram.playableIf` gate, 2 legal printings.
+
+      🛑 **A PRINTED-CARD READ, AND A §9 LOCK DOES NOT FALSIFY IT (D560 R-TW, ⚠️
+      UNRULED).** The arm reads `Card.abilities[].name` on the Active's TOP card —
+      `hasPrintedAbility`'s column (D251/D285: a locked Ability is SUPPRESSED, not
+      removed; the card still *has* it) with the name compared. So an Active Festival
+      Lead body under Flutter Mane "Midnight Fluttering" still satisfies it. Reversal:
+      a ruling that a body whose Abilities are switched off does not "have" them for a
+      third card's gate would re-point this through `disabledAbilityUids`. Exact-case
+      equality on the printed name, `exemptAbilityNamed`'s comparison. An empty Active
+      Spot is FALSE. Public: the Active's card is face up. */
+  | { kind: "yourActiveHasAbility"; name: string }
+  /** 🆕🆕🆕 **D560 (V2) — YOUR OPPONENT HAS A POKÉMON ex OR POKÉMON V IN PLAY** —
+      Active OR Bench. Slaking ex `sv08-147`/`-227` "Born to Slack" — *"If your
+      opponent has no Pokémon ex or Pokémon V in play, this Pokémon can't attack."* —
+      stored as the PERMISSION on `cantAttackUnless` (that field's polarity: "can't
+      attack if there are NONE" is "can't attack unless there is ONE"). Each top card
+      through `isExOrV` (D107 — ex and V, NOT VMAX / VSTAR / GX, the printed pair), the
+      same predicate `opponentActiveIsExOrV` reads of one body. ⚠️ **"In play" is the
+      Active AND the Bench** (§1.1, D560 R-SL): one benched ex on the other side is
+      enough. Public: both boards are face up. */
+  | { kind: "opponentHasExOrVInPlay" }
+  /** 🆕🆕🆕 **D560 (V3) — YOUR ACTIVE POKÉMON HAS `count` OR MORE DAMAGE COUNTERS ON
+      IT.** Annihilape `sv10-092` "Lose Cool" — *"If this Pokémon has 2 or more damage
+      counters on it, attacks used by this Pokémon do 120 more damage to your
+      opponent's Active Pokémon (before applying Weakness and Resistance)."* — the
+      `damageBonusBeforeWRIf` gate, 1 legal printing.
+
+      ⚠️ **SPELLED IN COUNTERS, THE PRINTED UNIT** (`count: 2`), and converted at the
+      ARM (`damage >= count * 10`, §12's one-counter-is-10) — the field holds the
+      printed number, as `yourHandAtLeast`'s does; an HP spelling (`amount: 20`) would
+      make the registry row carry a number the card does not print. `>=`, a FLOOR:
+      "or more". ⚠️ **"This Pokémon" resolves to YOUR ACTIVE by D347's argument**: at
+      both pre-W/R read sites (attack.ts main hit, interpreter.ts `snipeActive`) the
+      passive is folded out of `passivesOf(attacker)`, and the attacker IS the seat's
+      Active, so the two readings cannot disagree where the number is read (Binding
+      Mochi's `yourActivePoisoned` block, verbatim; D560 R-AN). An empty Active Spot is
+      FALSE. */
+  | { kind: "yourActiveDamageCountersAtLeast"; count: number }
+  /** 🆕🆕🆕 **D560 (V4) — YOUR OPPONENT'S ACTIVE POKÉMON'S TOP CARD PRINTS AN
+      ABILITY.** Galvantula `sv06.5-002` "Compound Eyes" — *"Attacks used by this
+      Pokémon do 50 more damage to your opponent's Active Pokémon that has an Ability
+      (before applying Weakness and Resistance)."* — the `damageBonusBeforeWRIf` gate,
+      1 legal printing. Read through cards.ts `hasPrintedAbility` (D251/D285's
+      PRINTED-card reading — a locked Ability still counts, D560 R-GV), so it adds no
+      predicate. "Your opponent's Active Pokémon" is the defender at both pre-W/R
+      sites (both hit `otherSeat(seat)`'s Active). An empty Active Spot is FALSE. */
+  | { kind: "opponentActiveHasAbility" }
   /** D280 — every one of `conditions` holds for the reading seat. The
       vocabulary's FIRST COMBINATOR and its first RECURSIVE member, bought by
       Call Bell `sv08-165`'s *"You can use this card only if you go second, and
@@ -3932,8 +3984,49 @@ export type EffectOp =
       chose and the universe. Runs at `attack.ts`'s TAIL like every other
       `EffectOp` (D125's rule: the recovery's whole effect is on the ATTACKER, so
       nothing in the §8.5 pipeline reads it), never parks, consumes no rng, and is
-      idempotent — a body with nothing to recover from resolves silently. */
-  | { op: "clearStatus" }
+      idempotent — a body with nothing to recover from resolves silently.
+
+      🆕🆕🆕 **D560 CORRECTION (D539) — "ALL FIVE CONDITIONS, NOT A LIST" STAYS TRUE OF
+      EVERY AUTHORED `clearStatus`, AND THE OP IS NO LONGER ONLY THAT.** Indeedee
+      `sv08-093`/`svp-154` "Obliging Heal" prints *"…and have it recover from **a**
+      Special Condition"* — ONE condition, the player's pick. That sentence is
+      authored as `recoverOneStatus` (below), which never names a condition itself;
+      at RUNTIME it resolves to this op with `only` set to the condition picked (or the
+      single one present). So `only` is WRITTEN BY THE ENGINE, never by a registry row
+      or a deriver arm: absent is still the printed *"all Special Conditions"* over the
+      closed `StatusName` union, and every producer above is byte-identical. Present,
+      exactly that one condition comes off (flow.ts `recoverStatuses`' per-condition
+      clear, verbatim), and a body not carrying it resolves silently. */
+  | {
+      op: "clearStatus";
+      /** 🆕🆕🆕 D560 — ONE named condition, set only by `recoverOneStatus`'s expansion. */
+      only?: StatusName;
+    }
+  /** 🆕🆕🆕 **D560 (V7) — THE PRINTED *"have it recover from a Special Condition"*:
+      the CONTROLLER's Active recovers from ONE Special Condition of the player's
+      choosing.** Indeedee `sv08-093`/`svp-154` "Obliging Heal" — *"When you play this
+      Pokémon from your hand onto your Bench during your turn, you may heal 30 damage
+      from your Active Pokémon and have it recover from a Special Condition."* 2 legal
+      printings. FIELD-FREE, like `installNoWeakness`: the print names no condition, so
+      the op carries none, and the choice is made against the board at the step.
+
+      Resolved in `stepOp` off `presentStatuses` (rotation, then Poison, then Burn — at
+      most 3, since Asleep / Confused / Paralyzed share one slot):
+        • 0 — nothing to recover from: a silent no-op;
+        • 1 — no choice to make (the M1 rule): that one clears DIRECTLY;
+        • 2 — it SCHEDULES one D557 labelled `optional` whose `yes` / `no` are the two
+          conditions, each branch a `clearStatus { only }`;
+        • 3 — it SCHEDULES that `optional` with `yes` the first condition and `no`
+          "<second> or <third>", whose `otherwise` is a SECOND labelled `optional`
+          between the remaining two.
+      🛑 **A THREE-WAY PICK AS A CHAIN OF BINARY DIALOGS IS A UI READING, AND IT IS THE
+      SAME READING AS CRADILY's (D560).** Every answer path clears exactly one condition
+      and every condition is reachable, so the board outcome is the print's; only the
+      number of dialogs differs from a single three-button pick. Nothing new is PARKED:
+      the chain is two shipped ops (`optional`, `clearStatus`), which is why
+      `MATCH_RECORD_VERSION` holds (a parked link revived with its labels STRIPPED still
+      resolves yes = `then`, no = `otherwise` — driven). */
+  | { op: "recoverOneStatus" }
   /** §11 — hold a Pokémon in place for one turn. Bare, it is the DEFENDER for the
       opponent's next turn ("During your opponent's next turn, the Defending
       Pokémon can't retreat." — 35 printings); with `target: "self"` it is the
@@ -4945,8 +5038,23 @@ export type EffectOp =
       to the point, a v26 record holding `amount: 30` still parses and still means 30.
       A new UNION INHABITANT on an existing field is D125's WIDENING, exactly as D426
       argued for a new op and D358 for an absent flag; a RENAME (D352, D359) is what
-      bumps. Driven both directions in `selfHealDealt.test.ts`. */
-  | { op: "heal"; target: "self"; amount: number | "dealt" }
+      bumps. Driven both directions in `selfHealDealt.test.ts`.
+
+      🆕🆕🆕 **D560 (V5) — `"all"`, THE PRINTED *"heal ALL damage"*.** Whimsicott
+      `sv05-015`/`sv08.5-008` "Wafting Heal" (*"…you may heal all damage from your
+      Active {G} Pokémon. If you healed any damage in this way, discard all Energy
+      from that Pokémon."*). A third SOURCE on the same field and for D427's reason:
+      the figure is the body's own damage at the moment the op steps, which no literal
+      can spell. The one read site (`interpreter.ts`'s `case "heal"`) passes it straight
+      through to `healSelf`, which resolves it against the body it heals
+      (`active.damage`) — so the whiff on an undamaged Active is still `healSelf`'s
+      silent one.
+      `MATCH_RECORD_VERSION` **STAYS 35** (a union inhabitant, D125; D557's
+      `drawCards.per` precedent: it rides a parked `optional` continuation, driven by
+      a revival from JSON). ⚠️ The 0.443 ROLLBACK reading is named, not hidden: a
+      0.443 reader resolving a parked `"all"` passes the string to `Math.min` and heals
+      `NaN` — no schema validates parked ops (docs/decisions.md D560). */
+  | { op: "heal"; target: "self"; amount: number | "dealt" | "all" }
   /** Heal `amount` HP from EACH of the controller's own in-play Pokémon — the
       ACTIVE and the whole Bench, which is what the printed "each of your
       Pokémon" means (the Active is one of your Pokémon; only the printed word
@@ -5021,7 +5129,10 @@ export type EffectOp =
       exactly as it did. */
   | {
       op: "healEach";
-      amount: number;
+      /** 🆕🆕🆕 D560 (V6) — `"all"`, the printed *"heal ALL damage from each of …"*
+          (Dachsbun ex "Time to Chow Down"): each body in scope heals its OWN damage,
+          `heal`'s `"all"` one op over. Absent a string it is the D133 literal. */
+      amount: number | "all";
       pokemonType?: PokemonType;
       /** 🆕🆕 D461 — *"each of your **Basic** Pokémon"*. Only bodies whose TOP card is
           a Basic Pokémon, asked through `matchesFilter(card, { kind: "basicPokemon" })`
@@ -5038,6 +5149,22 @@ export type EffectOp =
           printed word "Benched" is the only thing that removes. It is a BOARD fact and
           therefore a rider rather than a filter; see the block above. */
       benchOnly?: true;
+      /** 🆕🆕🆕 D560 (V6) — *"each of your **Evolution** Pokémon"* (Dachsbun ex `sv07-067`/
+          `-160`/`-169` "Time to Chow Down": *"When you play this Pokémon from your hand to
+          evolve 1 of your Pokémon during your turn, you may heal all damage from each of
+          your Evolution Pokémon. If you healed any damage in this way, discard all Energy
+          from those Pokémon."*). `basicOnly`'s twin: a CARD fact on the TOP card, asked
+          through `matchesFilter`'s `evolutionPokemon` arm (D159's one noun one answer).
+          Active AND Bench — the print says "each of your", not "Benched". */
+      evolutionOnly?: true;
+      /** 🆕🆕🆕 D560 (V6) — the printed consequent *"If you healed any damage in this way,
+          discard all Energy from those Pokémon."* PER HEALED BODY: a body that healed 0 is
+          not one of "those Pokémon", so it keeps its Energy, and a board with nothing
+          damaged discards nothing at all (D560 R-DB — which is why Dachsbun's confirm is
+          UNGATED: accepting on an undamaged board is a no-op, never a loss). The strip is
+          `discardEnergyApply`'s own (one `ENERGY_DISCARDED` per body, after every
+          `HEALED`). */
+      discardEnergyFromHealed?: true;
     }
   /** Heal `amount` HP from EVERY in-play Pokémon on BOTH boards (Picnic Basket
       "Heal 30 damage from each Pokémon (both yours and your opponent's)"). The
@@ -23707,7 +23834,10 @@ const ATTACK_MAY_DRAW_UNTIL = /^You may draw cards until you have (\d+) cards in
 // `programPlayable`" IS **NO**. `abilities_json` returns exactly one legal row —
 // Koffing `sv10-125`, whose sentence is a §9 TRIGGER ("If this Pokémon is in the
 // Active Spot and is damaged by an attack…") over a noun no `CardFilter` spells
-// (*Pokémon that have "Koffing" in their name*). A triggered program is not played,
+// (*Pokémon that have "Koffing" in their name*). (🆕🆕🆕 D560 CORRECTION (D539): "a noun
+// no `CardFilter` spells" is WITHDRAWN — D512's `pokemonNameContaining` spells it, and D560
+// builds the row on it (`registry.ts` `SMOG_SIGNALS`) — still a TRIGGER, so the conclusion
+// below stands.) A triggered program is not played,
 // so it never reaches that gate; and `searchDeck` carries NO `programPlayable` arm
 // at all today, deliberately — a deck search is "playable enough" because the deck
 // is not public knowledge (ruling/284), and the BENCH-SPACE question the backlog

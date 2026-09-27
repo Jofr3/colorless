@@ -7214,7 +7214,9 @@ import type { GameState, Seat } from "./types";
     down, where `Math.min(op.max, benchSpace(...))` clamps before anything leaves
     the deck. Nothing in this family is a played Ability either — the three-column
     sweep returns ONE ability row (Koffing `sv10-125`, a §9 trigger over a noun no
-    filter spells) and five TRAINER rows — so the gate is not on the path at all.
+    filter spells — 🆕🆕🆕 D560 CORRECTION (D539): D512's `pokemonNameContaining` spells it,
+    and D560 builds that trigger; it is still not a PLAYED Ability) and five TRAINER rows —
+    so the gate is not on the path at all.
     Both facts are pinned as assertions that can go red, including the POSITIVE
     control a speculative arm would have broken. `preventBlock.test.ts`'s §11 table
     DID go red, exactly as the row predicted, and is answered with two
@@ -8404,7 +8406,10 @@ import type { GameState, Seat } from "./types";
     The handoff predicted the `onPlayToBench` widening would be NOISY. At the
     width it prescribed — the opening AND the verb *"attach"* — it returns exactly
     ONE other sentence (`sv06-132`, a Pokémon-Tool deck search). Dropped to the
-    bare printed opening it returns SIX others, two already BUILT. **Which rung
+    bare printed opening it returns SIX others, two already BUILT (🆕🆕🆕 D560
+    CORRECTION (D539): a D250 measurement — five of the six are now built, Chien-Pao's
+    Stadium discard at D555 and Indeedee's heal-and-recover and Drilbur's `sv05-085` at
+    D560; only `sv06-132` stays unbuilt). **Which rung
     you stop on decides whether you are measuring the MECHANISM or the IDIOM**,
     and a prediction of "noisy" is gradeable against one and not the other. Both
     widths are recorded rather than the flattering one.
@@ -16907,6 +16912,14 @@ import type { GameState, Seat } from "./types";
     narrowings. **≈6 new vocabulary items for 6 printings, or ≈3 for its cheapest
     single printing, against ONE for these three. A BLOCK NAMED "LARGEST" IS NOT A
     BLOCK PRICED**, and the method's step 4 is the step that asks.
+    (🆕🆕🆕 D560 CORRECTION (D539) — THE TWO ABILITY SENTENCES OF THAT FAMILY ARE NOW
+    BUILT, and at a price this note did not foresee: Whimsicott ×2 needs no "body this
+    program just healed" — the heal's subject IS the Active, so `discardEnergy from
+    "yourActive"` names it, and two `conditionGate`s (`yourActiveHasType Grass`,
+    `yourActiveDamaged`) make *"if you healed any"* exact; Dachsbun ex ×3 folds the
+    per-healed-body discard INTO `healEach` (`discardEnergyFromHealed`, beside
+    `evolutionOnly` and `amount "all"`). Four vocabulary items for 5 printings. Super
+    Potion stays unbuilt. The refusal was right about the shape it priced.)
 
     `MATCH_RECORD_VERSION` **STAYS 20.** A parked `bottomFromOpponentHand` DOES ride
     `phase.cont`, which is persisted — so this is the shape that has to be argued
@@ -20125,6 +20138,44 @@ import type { GameState, Seat } from "./types";
     `expect(manifest.version)`, `it(…)` titles, the declaration and `package.json` —
     **not** as a value-keyed grep — because a value-keyed grep is precisely the mechanism
     that ate D500's heading.)
+    🆕🆕🆕 engineVersion 0.443.0 → **0.444.0** (D560 — THE ABILITY BUNDLE: 17 PRINTINGS / 11 TEXTS / 11
+    OBJECTS, FOUR NEW `BoardCondition` MEMBERS, ONE PASSIVE KEY AND ONE SCAN, TWO HEAL WIDENINGS AND ONE
+    FIELD-FREE OP. Eleven registry `CardProgram`s, each a printed Pokémon ABILITY (no `attack` key, every
+    printed attack keeps deriving), keyed on seventeen REAL ids inserted MID-MAP after `sv09-082`
+    (D395/D396, so `raw[last]` stays `sv09-107`). **Drilbur** `sv05-085` "Dig Dig Dig" (`onPlayToBench`
+    → `searchDeck basicEnergy Fighting` to the DISCARD, max 3 → `shuffleDeck`) and **Team Rocket's Koffing**
+    `sv10-125` "Smog Signals" (`onDamagedByAttack` + `activeOnly` → `searchDeck pokemonNameContaining
+    "Koffing"` onto the Bench, max 2 → `shuffleDeck`: the first bench search to PARK inside
+    `runDamagedTrigger` on the OPPONENT's turn, resumed through `resumeTail` ahead of the §8.1 sweep; it
+    fires only where a damagedTrigger is seeded — attack.ts's main hit and interpreter.ts
+    `reactToAttackDamage`, R-KF) are ZERO vocabulary. **Thwackey** `sv06-015`/`svp-115` "Boom Boom Groove"
+    on `playableIf` over the NEW `BoardCondition.yourActiveHasAbility { name }` (the PRINTED name on the
+    Active's top card; a lock does not falsify it — R-TW ⚠️ UNRULED). **Slaking ex** `sv08-147`/`-227`
+    "Born to Slack" on `cantAttackUnless` over the NEW `opponentHasExOrVInPlay` (Active AND Bench, `isExOrV`
+    — R-SL). **Annihilape** `sv10-092` "Lose Cool" on `damageBonusBeforeWRIf { 120 }` over the NEW
+    `yourActiveDamageCountersAtLeast { count: 2 }` (the printed COUNTER unit, converted at the arm; the
+    attacker IS the Active at both pre-W/R sites, D347 — R-AN). **Galvantula** `sv06.5-002` "Compound
+    Eyes" on `damageBonusBeforeWRIf { 50 }` over the NEW `opponentActiveHasAbility` (`hasPrintedAbility`:
+    a locked Ability still counts — R-GV). **Magmortar** `sv09-021` "Magma Surge" on the NEW
+    `PassiveEffects.opponentBurnExtraCounters` (30), summed by the NEW continuous.ts
+    `seatBurnExtraCounters` (the burned body's OPPONENT's board, §9-gated) into flow.ts's §13.2 Burn
+    tick BEFORE the cure flip, one summed `COUNTERS_PLACED { source: "burn" }` row (R-MG). **Whimsicott**
+    `sv05-015`/`sv08.5-008` "Wafting Heal" (`onEvolve` → `conditionGate yourActiveHasType Grass` →
+    `conditionGate yourActiveDamaged` → `optional` → `heal "all"` + `discardEnergy yourActive "all"`) on
+    `heal.amount`'s NEW `"all"`. **Dachsbun ex** `sv07-067`/`-160`/`-169` "Time to Chow Down" (`onEvolve` →
+    an UNGATED `optional` → `healEach`) on three NEW `healEach` widenings: `amount "all"`, `evolutionOnly`,
+    `discardEnergyFromHealed` (per HEALED body — R-DB). **Indeedee** `sv08-093`/`svp-154` "Obliging Heal"
+    (`onPlayToBench` → `heal self 30` → the NEW field-free `recoverOneStatus`: 0 or 1 conditions resolve
+    directly, 2 or 3 SCHEDULE a chain of D557 labelled `optional`s over `clearStatus`'s NEW engine-written
+    `only`). **Cradily** `sv07-006` "Selective Slime" (`coinFlipGate` → two nested labelled `optional`s
+    over `applyStatus defender`) is ZERO vocabulary; the three-way picks as binary dialogs are a UI reading
+    (R-CR). **`MATCH_RECORD_VERSION` STAYS 35** — the four op-payload widenings (`heal "all"`, the three
+    `healEach` keys, `clearStatus.only`, and `recoverOneStatus`, which never parks) ride parked `optional`
+    continuations exactly as D557's `drawCards.per` did, driven by revivals from JSON (labels stripped for
+    the Indeedee chain); the 0.443 ROLLBACK reading is named, not hidden: a 0.443 reader resolves a parked
+    `"all"` as `Math.min("all", n)` = NaN and a parked `clearStatus { only }` as a clear of ALL
+    conditions — no schema validates parked ops. Withdrawn and annotated in place (D539): see
+    docs/decisions.md D560.)
     🆕🆕🆕 engineVersion 0.442.0 → **0.443.0** (D559 — THE ABILITY BUNDLE: 15 PRINTINGS / 7 TEXTS / 7
     OBJECTS, SEVEN NEW OPTIONAL CATALOG-SIDE KEYS PLUS ONE WIDENED UNION (`disableAbilities.stage`), ONE
     SCAN, ONE PARAMETER. Seven registry `CardProgram`s,
@@ -24372,7 +24423,7 @@ import type { GameState, Seat } from "./types";
     WITNESS** — the count was re-derived every slice and the word *"three"* was carried.
     A successor of this slice inherits **81 / 61 / 17** again, over **FIVE** history
     occurrences: those four plus `deckMillFilteredScale.test.ts`'s own header arrow.) */
-export const engineVersion = "0.443.0";
+export const engineVersion = "0.444.0";
 
 export type {
   ApplyResult,

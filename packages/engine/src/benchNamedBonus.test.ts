@@ -1292,7 +1292,13 @@ describe("§7 — the census moves in exactly ONE summand, and the other three a
     // (`abilityBundleD559.test.ts` / `abilityRecoilArmorD559.test.ts` drive a LOCAL
     // `cardPool`), inserted MID-MAP after `sv05-212`, and no row authors an `attack`
     // program.
-    expect(ids.size).toBe(831);
+    // 🆕🆕🆕 D560 — 831 -> **848**: SEVENTEEN registry keys on ELEVEN program objects — the
+    // second ability bundle (Drilbur, Team Rocket's Koffing, Thwackey ×2, Slaking ex ×2,
+    // Annihilape, Galvantula, Magmortar, Whimsicott ×2, Dachsbun ex ×3, Indeedee ×2,
+    // Cradily). Real catalog ids, no `fix-*` key (`abilityTriggersD560.test.ts` /
+    // `abilityPassivesD560.test.ts` drive a LOCAL `cardPool`), inserted MID-MAP after
+    // `sv09-082`, and no row authors an `attack` program.
+    expect(ids.size).toBe(848);
     // ⚠️ ONE of the thirteen IS in the registry — Volbeat `sv06-009` — and it is
     // there on an ABILITY program, which is exactly the count a slice does not
     // think it is checking. Named, rather than glossed by an "all absent" claim

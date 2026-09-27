@@ -1107,7 +1107,11 @@ triggers on one card is a follow-up).
 **Optional ("you may") triggers AUTO-FIRE** — every representative is pure upside
 (search / heal / counter), and where the underlying op is "up to" (Insta-Flock's
 search) the player can still take none. A yes/no confirm for a *downside* trigger
-is the follow-up.
+is the follow-up. (🆕🆕🆕 D560 CORRECTION (D539): "every representative is pure upside"
+is WITHDRAWN and the follow-up is long since built — a downside trigger carries its
+confirm as an inner `optional` op (D186): Rapid Vernier (D244), Snow Sink (D555), and at
+D560 Whimsicott "Wafting Heal" and Dachsbun ex "Time to Chow Down", which discard Energy.
+The flag itself still auto-fires. See `TriggeredAbility.optional`'s doc.)
 
 **New ops (effects.ts/interpreter.ts).** `healEach` (heal N from EACH of the
 controller's own in-play Pokémon, one HEALED each, clamped); `damageActive` (PUT
@@ -2356,7 +2360,11 @@ one is unambiguously so — no member of the decision space is worse for the
 controller than another (there is no sv01–03 Special Energy whose loss helps its
 owner), so being "trapped" costs nothing but a click. The real fix is the
 trigger-level yes/no confirm the doctrine already contemplates, which is a
-framework change, not a card one.
+framework change, not a card one. (🆕🆕🆕 D560 CORRECTION (D539): the doctrine's
+"every optional trigger in scope is pure upside" is WITHDRAWN — Whimsicott and
+Dachsbun ex discard Energy — and the confirm was built one level down instead, as an
+inner `optional` op (D186; Rapid Vernier D244, Snow Sink D555, both D560 heals). Mawile
+itself is unchanged.)
 
 ### The blocker this slice found — attack effect programs cannot PARK
 > **RESOLVED by the next slice** (engine 0.22.0) — see "M5 op-slice: attack
@@ -21196,6 +21204,9 @@ out at zero engine code, and both are pinned as assertions rather than prose:
 * **Nothing in this family is a played Ability.** The three-column sweep returns
   exactly ONE ability row — Koffing `sv10-125`, a §9 TRIGGER over
   *"Pokémon that have \"Koffing\" in their name"*, a noun no `CardFilter` spells
+  (🆕🆕🆕 D560 CORRECTION (D539): WITHDRAWN — `pokemonNameContaining` spells it, and
+  Koffing `sv10-125` "Smog Signals" is BUILT on it at D560; it is still a TRIGGER, so
+  the conclusion below is unchanged)
   — and five TRAINER rows. A triggered program is never played, so the gate is not
   on the path at all. Pinned as a `FIXTURE_POOL` sweep that would go red the day a
   fixture prints the sentence as an Ability.
@@ -28204,8 +28215,8 @@ New: `onceAbilities.test.ts` (39) and `onceAbilitySearch.test.ts` (30), REAL ids
 
 ### (e) Owed
 The rest of the audit's cluster 1 — Samurott *"Torrential Whirlpool"* (the opponent-answered `choosePokemon` park on
-the ability path), Thwackey *"Boom Boom Groove"* (a `yourActiveHasAbilityNamed` gate and the Klefki-lock ruling), and
-the separately-priced Crobat (record bump) and Cradily (new prompt kind); the census re-scope (R4) and the 380/376
+the ability path), Thwackey *"Boom Boom Groove"* (a `yourActiveHasAbilityNamed` gate and the Klefki-lock ruling — 🆕🆕🆕 BUILT at D560 as `yourActiveHasAbility`, the lock question left UNRULED as R-TW), and
+the separately-priced Crobat (record bump) and Cradily (new prompt kind — 🆕🆕🆕 BUILT at D560 with NO new prompt kind: the three-way pick is two labelled `optional`s, the UI reading R-CR); the census re-scope (R4) and the 380/376
 reconciliation.
 
 ## D554 — nine deck-search Trainers: 15 printings / 9 texts / 9 objects, zero vocabulary, and the singular hand-size note (engine 0.438.0, `MATCH_RECORD_VERSION` 34 HELD)
@@ -28302,6 +28313,8 @@ its close-out `66dbfab3`, `3171 · 53` over 3,224 on the first launch). R1 and R
 Trainers (Team Rocket's Ariana, Billy — 2 `BoardCondition` members), Thwackey / Crobat / Cradily, and the deck searches
 that need vocabulary. (D555 landing: Ariana, Billy & O'Nare and Team Rocket's Great Ball are BUILT by the parked D556,
 `d556-prep` at `aaba3087`, which lands after D555's sweep; the queue's live head is Thwackey / Crobat / Cradily.)
+(🆕🆕🆕 Ariana and Billy BUILT at D556; Thwackey and Cradily BUILT at D560, Cradily with no new
+prompt kind; Crobat still owed.)
 
 ## D556 — the this-turn side-wide bonus, three conditional Trainers on three new `BoardCondition` members, and three riders: 19 printings / 7 texts / 7 objects (engine 0.440.0, `MATCH_RECORD_VERSION` 34 → 35)
 
@@ -28492,4 +28505,53 @@ killed undeclared; five rows re-anchored onto the Weakness bytes and re-probed);
 The whole-corpus sweep (~~D556 → D559, all pending~~ D556, D557 and D558 PAID, each exact on its first launch — D558's `3263 · 52` over 3,315 at close-out `ff618ad6`; only D559's own is owed, predicted `3294 killed · 52 known survivor(s)` over 3,346). R-FZ1 UNRULED; R-FZ2 UNRULED for Blooming Garden and D432's bar only. R-O1 (bench recoil read). The HUD does not show
 the rewritten Weakness (display debt, D552 ⑽'s precedent). Next: Feraligatr "Torrential Heart", then (iii)'s non-overlapping
 remainder (Watchtower, Slaking ex, Thwackey, Drilbur, Festival Grounds, Scoop Up Cyclone, Love Ball), re-priced now that
-Gastrodon and Flutter Mane have landed.
+Gastrodon and Flutter Mane have landed. (🆕🆕🆕 D560: Slaking ex, Thwackey and Drilbur BUILT — see D560 below.)
+
+## D560 — the ability bundle, part two: 17 printings / 11 texts / 11 objects (engine 0.444.0, `MATCH_RECORD_VERSION` stays 35)
+
+**Status:** ✅ BUILT — keyed MID-MAP after `sv09-082`. Built in the `lum-wt-d560` worktree stacked on the parked D559; committed there on `d560-prep` at `18a94293`, then LANDED on `main` by cherry-pick onto the D559 close-out `ea7f8433` as ONE commit.
+
+### (a) The eleven rows (registry.ts, one block before `const REGISTRY`; no `attack` key — every printed attack keeps deriving)
+| Card | Ids | Ability | Program |
+|---|---|---|---|
+| Drilbur | `sv05-085` | Dig Dig Dig | `onPlayToBench` → `searchDeck basicEnergy {F} → discard, max 3` → `shuffleDeck` |
+| Team Rocket's Koffing | `sv10-125` | Smog Signals | `onDamagedByAttack, activeOnly` → `searchDeck pokemonNameContaining "Koffing" → bench, max 2` → `shuffleDeck` |
+| Thwackey | `sv06-015`/`svp-115` | Boom Boom Groove | `playableIf yourActiveHasAbility "Festival Lead"` → `searchDeck anyCard → hand, max 1` → `shuffleDeck` |
+| Slaking ex | `sv08-147`/`-227` | Born to Slack | `cantAttackUnless opponentHasExOrVInPlay` |
+| Annihilape | `sv10-092` | Lose Cool | `damageBonusBeforeWRIf { 120, yourActiveDamageCountersAtLeast 2 }` |
+| Galvantula | `sv06.5-002` | Compound Eyes | `damageBonusBeforeWRIf { 50, opponentActiveHasAbility }` |
+| Magmortar | `sv09-021` | Magma Surge | `opponentBurnExtraCounters: 30` |
+| Whimsicott | `sv05-015`/`sv08.5-008` | Wafting Heal | `onEvolve` → gate {G} → gate damaged → `optional` → `heal "all"` + `discardEnergy yourActive "all"` |
+| Dachsbun ex | `sv07-067`/`-160`/`-169` | Time to Chow Down | `onEvolve` → `optional` (ungated) → `healEach { "all", evolutionOnly, discardEnergyFromHealed }` |
+| Indeedee | `sv08-093`/`svp-154` | Obliging Heal | `onPlayToBench` → `heal self 30` → `recoverOneStatus` |
+| Cradily | `sv07-006` | Selective Slime | `coinFlipGate` → `optional { Burned / Confused or Poisoned }` → `optional { Confused / Poisoned }` |
+
+Not keyed: `sv08-108`, `sv10.5b-045`/`-124` Drilbur, `sv08-100` Annihilape, `sv10.5w-034`/`-117` Galvantula (no Ability).
+Out: the Antique Root Fossil (no play-as-Pokémon route), Farfetch'd `sv06-132` (a new search destination for 1 printing).
+
+### (b) The vocabulary
+Four `BoardCondition` members (`yourActiveHasAbility`, `opponentHasExOrVInPlay`, `yourActiveDamageCountersAtLeast` in
+the printed counter unit, `opponentActiveHasAbility`), each one `conditionHolds` arm and one `conditionNote` arm;
+`PassiveEffects.opponentBurnExtraCounters` + continuous.ts `seatBurnExtraCounters` (summed, §9-gated), read once in
+flow.ts's §13.2 Burn block before the cure flip (one summed `COUNTERS_PLACED { source: "burn" }` row); `heal.amount "all"`
+(resolved in `healSelf`); `healEach`'s `amount "all"`, `evolutionOnly`, `discardEnergyFromHealed` (the discard runs after
+the walk, per body whose damage fell); the field-free `recoverOneStatus` over `clearStatus`'s engine-written `only`.
+
+### (c) Readings (`docs/decisions.md` D560)
+R-TW ⚠️ UNRULED: Thwackey reads the PRINTED Festival Lead name; a lock does not falsify it · R-SL: the Bench is "in play";
+a VMAX is not "ex or V" · R-AN: "this Pokémon" is the Active at both pre-W/R sites (driven at both) · R-GV: a LOCKED Ability
+still counts for Galvantula (Spiritomb board); an opposing Flutter Mane silences Compound Eyes itself · R-MG: before the
+flip, per Magmortar, silenced by a lock · R-KF: Smog Signals fires only where a damagedTrigger is seeded (attack.ts main hit,
+interpreter.ts `reactToAttackDamage`) — the first bench search to park on the opponent's turn · R-DB: Whimsicott's gates
+make "if you healed any" exact; Dachsbun ex's confirm is ungated and a no-damage accept is a no-op · R-CR: three-way picks
+as two binary dialogs (Cradily, Indeedee) are a UI reading.
+
+### (d) Tests, census and mutants
+New `abilityTriggersD560.test.ts` and `abilityPassivesD560.test.ts`. `energyClause.test.ts` re-pointed (Galvantula has a
+`passive` row; its defenders print no Ability). Census: `BUILT.ability` 324 → 341, `built` 2213 → 2230, registry keys
+831 → 848. Mutants 3,346 → 3,385 (+39 `D560-*`, all killed undeclared; seven existing anchors kept intact by reshaping
+the new code, none re-anchored); declared survivors 52 unmoved.
+
+### (e) Owed
+The whole-corpus sweep (~~D558 → D560 pending~~ D558 and D559 PAID, each exact on its first launch — D559's `3294 · 52` over 3,346 at close-out `ea7f8433`; only D560's own is owed, predicted `3333 killed · 52 known survivor(s)` over 3,385). R-TW UNRULED. The 0.443 rollback reading of a parked `"all"` / `only`
+(named, not bumped). Super Potion (the Trainer third of the heal-then-discard family), Farfetch'd `sv06-132`.

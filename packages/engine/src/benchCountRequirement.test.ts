@@ -474,7 +474,13 @@ describe("§5 — the census terms, MEASURED rather than assumed", () => {
     // (`abilityBundleD559.test.ts` / `abilityRecoilArmorD559.test.ts` drive a LOCAL
     // `cardPool`), inserted MID-MAP after `sv05-212`, and no row authors an `attack`
     // program.
-    expect(ids).toHaveLength(831);
+    // 🆕🆕🆕 D560 — 831 -> **848**: SEVENTEEN registry keys on ELEVEN program objects — the
+    // second ability bundle (Drilbur, Team Rocket's Koffing, Thwackey ×2, Slaking ex ×2,
+    // Annihilape, Galvantula, Magmortar, Whimsicott ×2, Dachsbun ex ×3, Indeedee ×2,
+    // Cradily). Real catalog ids, no `fix-*` key (`abilityTriggersD560.test.ts` /
+    // `abilityPassivesD560.test.ts` drive a LOCAL `cardPool`), inserted MID-MAP after
+    // `sv09-082`, and no row authors an `attack` program.
+    expect(ids).toHaveLength(848);
     for (const id of VICTINI_IDS) {
       expect(ids, id).not.toContain(id);
       expect(programFor(id), id).toBeUndefined();

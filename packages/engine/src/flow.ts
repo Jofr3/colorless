@@ -2,7 +2,12 @@ import type { Card } from "@luminous/schema";
 import type { ApplyResult, ConcedeAction } from "./actions";
 import { err, ok } from "./actions";
 import { activeTop, cardOfUid, prizeValueOf, topCardOf, topUid } from "./cards";
-import { isLethallyDamaged, passivesOf, seatKoPrizeBonuses } from "./continuous";
+import {
+  isLethallyDamaged,
+  passivesOf,
+  seatBurnExtraCounters,
+  seatKoPrizeBonuses,
+} from "./continuous";
 import type { GameEvent } from "./events";
 import type { RunResult } from "./interpreter";
 import { doomBodyAt, runProgram } from "./interpreter";
@@ -1849,12 +1854,19 @@ function runCheckup(state: GameState, endedSeat: Seat, events: GameEvent[]): App
   }
 
   // §13.2 Burn — 20 damage, then the cure flip (heads removes it).
+  // 🆕🆕🆕 D560 — "20 damage" is the RULEBOOK's amount and no longer always the whole
+  // tick: Magmortar "Magma Surge" (*"During Pokémon Checkup, put 3 more damage counters
+  // on your opponent's Burned Pokémon."*) adds 30 per unsilenced Magmortar on the OTHER
+  // seat (`seatBurnExtraCounters`, §9-gated, summed — R-MG), BEFORE the flip, so a Burn
+  // cured on heads still took them. ONE summed `COUNTERS_PLACED { source: "burn" }` row
+  // (reversal: split Magmortar's share onto its own row when a reader needs it).
   for (const seat of order) {
     const spot = activeTop(next, seat);
     if (spot === null || !spot.active.conditions.burned) continue;
     const { active, uid } = spot;
-    let updated = { ...active, damage: active.damage + 20 };
-    events.push({ type: "COUNTERS_PLACED", seat, uid, amount: 20, source: "burn" });
+    const burn = 20 + seatBurnExtraCounters(next, seat);
+    let updated = { ...active, damage: active.damage + burn };
+    events.push({ type: "COUNTERS_PLACED", seat, uid, amount: burn, source: "burn" });
     const [face, rngState] = flipCoin(next.rngState);
     events.push({ type: "CHECKUP_COIN_FLIP", seat, status: "burned", result: face });
     if (face === "heads") {

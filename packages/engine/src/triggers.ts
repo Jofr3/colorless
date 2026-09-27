@@ -131,6 +131,10 @@ export function runBoardTrigger(
   // Optional triggers auto-fire (see TriggeredAbility.optional) — the "up to"
   // search still lets the player take none, and the other representatives are
   // pure upside. A yes/no confirm for a downside trigger is the follow-up.
+  // 🆕🆕🆕 D560 CORRECTION (D539): "the other representatives are pure upside" and "the
+  // follow-up" are WITHDRAWN — a downside trigger carries its confirm as an INNER
+  // `optional` op (Rapid Vernier, Snow Sink, D560's Wafting Heal and Time to Chow Down);
+  // see `TriggeredAbility.optional`.
   events.push({ type: "ABILITY_TRIGGERED", seat, uid, ability: ability.name });
   return settleProgram(
     runProgram(state, ability.program, { seat, sourceUid: uid }, events),

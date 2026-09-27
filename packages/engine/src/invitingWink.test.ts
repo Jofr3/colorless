@@ -56,6 +56,13 @@ import {
 //   **≈6 new vocabulary items for 6 printings, or ≈3 for its cheapest single
 //   printing.** This row is 3 printings for ONE union member on ONE existing
 //   optional field, so the method sent the slice here and not there.
+//   (🆕🆕🆕 D560 CORRECTION (D539): the family's two ABILITY sentences are now BUILT,
+//   cheaper than priced here — Whimsicott ×2 needs no "body this program just
+//   healed" (its heal subject IS the Active, so `discardEnergy from "yourActive"`
+//   names it, behind `yourActiveHasType Grass` / `yourActiveDamaged` gates), and
+//   Dachsbun ex ×3 folds the per-healed-body discard into `healEach`
+//   (`discardEnergyFromHealed`, `evolutionOnly`, `amount "all"`). Super Potion
+//   stays unbuilt. index.ts's D350 note carries the same correction.)
 //
 // ── THE MECHANISM CLOSES ────────────────────────────────────────────────────
 //   `reveal…hand` AND (`onto their Bench` OR `onto your opponent's Bench`), all

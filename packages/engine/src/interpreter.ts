@@ -1917,7 +1917,50 @@ function stepOp(
     case "applyStatus":
       return { done: applyStatus(state, op, ctx, events) };
     case "clearStatus":
-      return { done: clearStatus(state, ctx, events) };
+      return { done: clearStatus(state, ctx, events, op.only) };
+    // 🆕🆕🆕 D560 — Indeedee's *"recover from a Special Condition"*: 0 conditions is a
+    // no-op, 1 clears directly, 2 or 3 SCHEDULE the labelled binary chain (effects.ts
+    // `recoverOneStatus`). The chain is built from the board AT THIS STEP, so it names
+    // only conditions the Active really carries.
+    case "recoverOneStatus": {
+      const active = state.players[ctx.seat].active;
+      const present = active === null ? [] : presentStatuses(active.conditions);
+      const [first, second, third] = present;
+      if (first === undefined) return { done: state };
+      if (second === undefined) return { done: clearStatus(state, ctx, events, first) };
+      const word = (status: StatusName) => STATUS_WORD_OF[status];
+      const clear = (status: StatusName): EffectOp[] => [{ op: "clearStatus", only: status }];
+      const note = "Your Active Pokémon recovers from a Special Condition. Which one?";
+      const tail: EffectOp[] =
+        third === undefined
+          ? clear(second)
+          : [
+              {
+                op: "optional",
+                note,
+                labels: { yes: word(second), no: word(third) },
+                // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
+                then: clear(second),
+                otherwise: clear(third),
+              },
+            ];
+      return {
+        done: state,
+        schedule: [
+          {
+            op: "optional",
+            note,
+            labels: {
+              yes: word(first),
+              no: third === undefined ? word(second) : `${word(second)} or ${word(third)}`,
+            },
+            // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
+            then: clear(first),
+            otherwise: tail,
+          },
+        ],
+      };
+    }
     case "preventRetreat":
       return { done: preventRetreat(state, op, ctx, events) };
     case "preventHandPlay":
@@ -1995,11 +2038,23 @@ function stepOp(
       // which cannot hold this op because no deploy could author it. Zero then flows
       // into `healSelf`'s `healed <= 0` early return and whiffs SILENTLY, which is
       // what `heal` has done for an unusable amount since 0.x.
+      //
+      // 🆕🆕🆕 D560 — `"all"` (Whimsicott "Wafting Heal") passes STRAIGHT THROUGH to
+      // `healSelf`, which resolves it against the very body it heals (one read of the
+      // Active, not two); its clamp and silent whiff are unchanged.
       return {
         done: healSelf(state, op.amount === "dealt" ? (ctx.dealt ?? 0) : op.amount, ctx, events),
       };
-    case "healEach":
-      return { done: healEach(state, op, ctx, events) };
+    case "healEach": {
+      // 🆕🆕🆕 D560 — Dachsbun ex's per-healed-body discard rides AFTER the walk.
+      const healed = healEach(state, op, ctx, events);
+      return {
+        done:
+          op.discardEnergyFromHealed === true
+            ? discardEnergyFromHealed(state, healed, ctx, events)
+            : healed,
+      };
+    }
     case "healEachAll":
       return { done: healEachAll(state, op.amount, events) };
     case "counterEachAll":
@@ -5474,6 +5529,39 @@ export function conditionHolds(state: GameState, seat: Seat, cond: BoardConditio
       const spot = activeTop(state, seat);
       return spot !== null && matchesFilter(spot.card, { kind: "ownerPokemon", owner: cond.owner });
     }
+    case "yourActiveHasAbility": {
+      // 🆕🆕🆕 D560 (V1) — Thwackey's *"if your Active Pokémon has the Festival Lead
+      // Ability"*. The PRINTED name on the Active's TOP card (`hasPrintedAbility`'s
+      // column, D251/D285): a §9 lock suppresses an Ability, it does not remove it, so
+      // `disabledAbilityUids` is deliberately NOT consulted (R-TW, ⚠️ UNRULED).
+      const spot = activeTop(state, seat);
+      return spot !== null && (spot.card.abilities ?? []).some((a) => a.name === cond.name);
+    }
+    case "opponentHasExOrVInPlay": {
+      // 🆕🆕🆕 D560 (V2) — Slaking ex's *"your opponent has … Pokémon ex or Pokémon V in
+      // play"*: the Active AND the Bench (§1.1, R-SL), each TOP card through D107's
+      // `isExOrV` — `opponentActiveIsExOrV`'s predicate over the whole side.
+      const side = state.players[otherSeat(seat)];
+      const bodies = side.active === null ? side.bench : [side.active, ...side.bench];
+      return bodies.some((pokemon) => {
+        const card = topCardOf(state, pokemon);
+        return card !== undefined && isExOrV(card);
+      });
+    }
+    case "yourActiveDamageCountersAtLeast": {
+      // 🆕🆕🆕 D560 (V3) — Annihilape's *"2 or more damage counters on it"*. The field is
+      // the printed COUNTER count; §12's one-counter-is-10 is applied HERE, once. "This
+      // Pokémon" is the Active at both pre-W/R sites (D347, R-AN). Empty Spot: FALSE.
+      const active = state.players[seat].active;
+      return active !== null && active.damage >= cond.count * 10;
+    }
+    case "opponentActiveHasAbility": {
+      // 🆕🆕🆕 D560 (V4) — Galvantula's *"your opponent's Active Pokémon that has an
+      // Ability"*: D251's `hasPrintedAbility` on the defender's TOP card — a locked
+      // Ability still counts (R-GV). Empty Spot: FALSE.
+      const spot = activeTop(state, otherSeat(seat));
+      return spot !== null && hasPrintedAbility(spot.card);
+    }
     case "yourPokemonKoedOnOpponentsLastTurn":
       // D271 — "any of your Pokémon were Knocked Out during your opponent's last
       // turn" (Unfair Stamp sv06-165, Hassel sv06-151/-205). The whole predicate
@@ -6491,6 +6579,20 @@ export function conditionNote(cond: BoardCondition): string {
       // 🆕🆕🆕 D557 — the arm above narrowed to the Active; the printed article is the
       // `ownerPokemon` noun's own rule ("an Arven's Pokémon": vowel-initial owner).
       return `your Active Pokémon is ${/^[AEIOU]/.test(cond.owner) ? "an" : "a"} ${cond.owner}'s Pokémon`;
+    case "yourActiveHasAbility":
+      // 🆕🆕🆕 D560 — the printed clause verbatim (Thwackey's reject pill / tooltip).
+      return `your Active Pokémon has the ${cond.name} Ability`;
+    case "opponentHasExOrVInPlay":
+      // 🆕🆕🆕 D560 — the PERMISSION `cantAttackUnless` stores, in the positive voice the
+      // §8 reject reads it in ("can't attack unless <this>").
+      return "your opponent has a Pokémon ex or Pokémon V in play";
+    case "yourActiveDamageCountersAtLeast":
+      // 🆕🆕🆕 D560 — the printed pronoun is dropped exactly as `yourActiveDamaged`'s note
+      // drops it (D116); the unit is the printed one.
+      return `your Active Pokémon has ${cond.count} or more damage counters on it`;
+    case "opponentActiveHasAbility":
+      // 🆕🆕🆕 D560 — "your opponent's Active Pokémon that has an Ability" as a clause.
+      return "your opponent's Active Pokémon has an Ability";
     case "yourPokemonKoedOnOpponentsLastTurn":
       // The printed clause verbatim — the family's THIRD full round-trip, and it
       // keeps the possessive "your opponent's last turn" that the predicate turns
@@ -7401,13 +7503,33 @@ export function applyStatus(
     SILENT WHEN THERE IS NOTHING TO RECOVER FROM — no event, no board change, and
     NOT an `ATTACK_EFFECT_SKIPPED` (the sentence was read; it found nothing). That
     also makes it idempotent, so a program running it twice costs one scan. */
-function clearStatus(state: GameState, ctx: EffectContext, events: GameEvent[]): GameState {
+function clearStatus(
+  state: GameState,
+  ctx: EffectContext,
+  events: GameEvent[],
+  // 🆕🆕🆕 D560 — ONE named condition (`recoverOneStatus`'s expansion); absent = all.
+  only?: StatusName,
+): GameState {
   const active = state.players[ctx.seat].active;
   if (active === null) return state;
   const uid = topUid(active);
   if (uid === undefined) return state;
   const cleared = presentStatuses(active.conditions);
   if (cleared.length === 0) return state;
+  // 🆕🆕🆕 D560 — ONE named condition (`recoverOneStatus`'s expansion): a body not
+  // carrying it resolves silently; otherwise exactly that slot comes off, flow.ts
+  // `recoverStatuses`' per-condition clear verbatim.
+  if (only !== undefined) {
+    if (!cleared.includes(only)) return state;
+    events.push({ type: "STATUS_CLEARED", seat: ctx.seat, uid, statuses: [only], reason: "recovered" });
+    const conditions =
+      only === "burned"
+        ? { ...active.conditions, burned: false }
+        : only === "poisoned"
+          ? { ...active.conditions, poisonDamage: 0 }
+          : { ...active.conditions, rotation: "none" as const };
+    return withActive(state, ctx.seat, { ...active, conditions });
+  }
   events.push({
     type: "STATUS_CLEARED",
     seat: ctx.seat,
@@ -10628,8 +10750,15 @@ function healEach(
       const card = topCardOf(state, pokemon);
       if (!(card?.types ?? []).includes(pokemonType)) return pokemon;
     }
+    // 🆕🆕🆕 D560 — the printed *"Evolution"*, `basicOnly`'s twin through the same
+    // `matchesFilter` (an unresolvable top card is skipped, never healed).
+    if (op.evolutionOnly === true) {
+      const card = topCardOf(state, pokemon);
+      if (!matchesFilter(card, { kind: "evolutionPokemon" })) return pokemon;
+    }
     const uid = topUid(pokemon);
-    const healed = Math.min(amount, pokemon.damage);
+    // 🆕🆕🆕 D560 — `"all"` is this body's OWN damage; the clamp is then a no-op.
+    const healed = Math.min(amount === "all" ? pokemon.damage : amount, pokemon.damage);
     if (uid === undefined || healed <= 0) return pokemon;
     events.push({ type: "HEALED", seat: ctx.seat, uid, amount: healed });
     return healedBody(pokemon, healed, state.turn);
@@ -10644,6 +10773,40 @@ function healEach(
   const active = side.active !== null && healsActive ? healOne(side.active) : side.active;
   const bench = side.bench.map(healOne);
   return withSide(state, ctx.seat, { ...side, active, bench });
+}
+
+/** 🆕🆕🆕 D560 — Dachsbun ex's *"If you healed any damage in this way, discard all Energy
+    from those Pokémon."* — `healEach`'s `discardEnergyFromHealed` rider, run AFTER the
+    walk so `healEach` itself is untouched. "Those Pokémon" are exactly the bodies whose
+    damage FELL across the walk (spot by spot — `healEach` never moves a body), so a body
+    that healed 0 keeps its Energy and an all-undamaged board discards nothing (R-DB).
+    Stripped through `discardEnergyApply` so the rows are its own: one
+    `ENERGY_DISCARDED` per body, after every `HEALED`, in board order. */
+function discardEnergyFromHealed(
+  before: GameState,
+  after: GameState,
+  ctx: EffectContext,
+  events: GameEvent[],
+): GameState {
+  const was = before.players[ctx.seat];
+  const now = after.players[ctx.seat];
+  const pairs: [InPlayPokemon | null | undefined, InPlayPokemon | null | undefined][] = [
+    [was.active, now.active],
+    ...was.bench.map((body, i): [InPlayPokemon, InPlayPokemon | undefined] => [body, now.bench[i]]),
+  ];
+  const energy = pairs.flatMap(([b, a]) =>
+    b !== null && b !== undefined && a !== null && a !== undefined && a.damage < b.damage
+      ? a.energy
+      : [],
+  );
+  if (energy.length === 0) return after;
+  return discardEnergyApply(
+    after,
+    energy,
+    { op: "discardEnergy", from: "yours", filter: { kind: "anyEnergy" }, count: "all" },
+    ctx,
+    events,
+  ).state;
 }
 
 /** Heal `amount` HP from EVERY in-play Pokémon on BOTH boards (Picnic Basket).
@@ -11220,7 +11383,8 @@ function damageSelf(
     the one healed). */
 function healSelf(
   state: GameState,
-  amount: number,
+  // 🆕🆕🆕 D560 — `"all"` is the printed *"heal all damage"*: this body's OWN damage.
+  amount: number | "all",
   ctx: EffectContext,
   events: GameEvent[],
 ): GameState {
@@ -11228,7 +11392,7 @@ function healSelf(
   if (active === null) return state;
   const uid = topUid(active);
   if (uid === undefined) return state;
-  const healed = Math.min(amount, active.damage);
+  const healed = amount === "all" ? active.damage : Math.min(amount, active.damage);
   if (healed <= 0) return state;
   events.push({ type: "HEALED", seat: ctx.seat, uid, amount: healed });
   return withActive(state, ctx.seat, healedBody(active, healed, state.turn));

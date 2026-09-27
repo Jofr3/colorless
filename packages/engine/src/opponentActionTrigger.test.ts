@@ -348,6 +348,12 @@ describe("D319 — the opponent-action trigger", () => {
     // one trigger in the registry whose consequent is a DOWNSIDE for the seat
     // being asked, so the auto-fire note's "every representative is pure upside"
     // must not be read as covering it.
+    // 🆕🆕🆕 D560 CORRECTION (D539): "the one trigger in the registry whose consequent
+    // is a DOWNSIDE" and the quoted auto-fire note are WITHDRAWN (see
+    // `TriggeredAbility.optional`'s doc). Rapid Vernier, Snow Sink, Wafting Heal and
+    // Time to Chow Down are downside triggers too, and they carry their decline on an
+    // inner `optional` op. This row stays a downside trigger with NO "you may" (as
+    // Lava Zone is), so this expect is unchanged.
     expect(impulse?.optional).toBeUndefined();
 
     const curse = programFor(GENGAR)?.triggered?.[0];

@@ -800,7 +800,13 @@ describe("D359 §6 — the ids this file rests on are real and locally seated", 
     // (`abilityBundleD559.test.ts` / `abilityRecoilArmorD559.test.ts` drive a LOCAL
     // `cardPool`), inserted MID-MAP after `sv05-212`, and no row authors an `attack`
     // program.
-    expect(registryCardIds()).toHaveLength(831);
+    // 🆕🆕🆕 D560 — 831 -> **848**: SEVENTEEN registry keys on ELEVEN program objects — the
+    // second ability bundle (Drilbur, Team Rocket's Koffing, Thwackey ×2, Slaking ex ×2,
+    // Annihilape, Galvantula, Magmortar, Whimsicott ×2, Dachsbun ex ×3, Indeedee ×2,
+    // Cradily). Real catalog ids, no `fix-*` key (`abilityTriggersD560.test.ts` /
+    // `abilityPassivesD560.test.ts` drive a LOCAL `cardPool`), inserted MID-MAP after
+    // `sv09-082`, and no row authors an `attack` program.
+    expect(registryCardIds()).toHaveLength(848);
     for (const id of Object.values(QUANTITY_IDS).flat()) {
       if (programFor(id) === undefined) continue;
       // Every id that DOES have a program had one before this slice: the eight

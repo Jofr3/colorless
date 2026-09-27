@@ -810,7 +810,7 @@ describe("D316 §7 — 🛑 THE WIDENING, DRIVEN AT ITS PREMISE RATHER THAN ASSE
   // (D316's widening), so a v35 record holding one is a record every v35 deploy reads —
   // `MATCH_RECORD_VERSION` stays 35 (Kieran's `labels` are the same kind of key; the
   // stripped-revival rung is `chooseOneTrainersD557.test.ts` §5).
-  it("`optional.otherwise` — the attack assembler AND, since D557, the registry (Kieran ×5, by id)", () => {
+  it("`optional.otherwise` — the attack assembler AND, since D557, the registry (Kieran ×5, and since D560 Cradily's two nested picks, by id)", () => {
     // `MATCH_RECORD_VERSION` stays 18 because a v18 deploy cannot AUTHOR this
     // field, so no v18 record can hold one. That is a claim about the producers,
     // and this is the producer set: every registry program, walked structurally.
@@ -839,7 +839,20 @@ describe("D316 §7 — 🛑 THE WIDENING, DRIVEN AT ITS PREMISE RATHER THAN ASSE
     expect(programsWalked).toBeGreaterThan(50);
     expect(optionalsSeen).toBeGreaterThan(0);
     // 🆕🆕🆕 D557 — WAS `toEqual([])`. Kieran's five printings, in registry order.
-    expect(authored).toEqual(["sv06-154", "sv06-206", "sv06-218", "sv08.5-113", "sv08.5-174"]);
+    // 🆕🆕🆕 D560 — AND CRADILY `sv07-006` "Selective Slime", TWICE: its three-way pick is two
+    // nested labelled `optional`s (R-CR), each carrying an `otherwise`. (Indeedee's
+    // `recoverOneStatus` writes the same shape at RUNTIME, never in the registry, so this
+    // authored-producer walk does not see it — the stripped-revival rung for that chain is
+    // `abilityTriggersD560.test.ts`.) `MATCH_RECORD_VERSION` stays 35 for D557's reason.
+    expect(authored).toEqual([
+      "sv06-154",
+      "sv06-206",
+      "sv06-218",
+      "sv08.5-113",
+      "sv08.5-174",
+      "sv07-006",
+      "sv07-006",
+    ]);
     // …and the ATTACK producer is this reader's assembly site — `optionalBoostProgram`,
     // which lived inside attack.ts until D318 MOVED it into effects.ts so a sweep
     // could build it (see §8). It is still reached from a board only through

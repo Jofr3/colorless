@@ -240,6 +240,31 @@ export function seatWeaknessRewrite(
   return null;
 }
 
+/** 🆕🆕🆕 §13.2 (D560) — the EXTRA Burn damage owed to `burnedSeat`'s Burned Active at
+    this Checkup: Magmortar "Magma Surge" — *"During Pokémon Checkup, put 3 more damage
+    counters on your opponent's Burned Pokémon."* `seatWeaknessRewrite`'s scan one
+    function up, SUMMED rather than first-match: the sources are the top cards on the
+    burned body's OPPONENT's board (`otherSeat(burnedSeat)`), Active and Bench (no zone
+    clause), each §9-gated through `disabledAbilityUids`; no *"doesn't stack"* is
+    printed, so two Magmortar pay twice (R-MG). Read ONCE, flow.ts `runCheckup`'s §13.2
+    block, before the cure flip. 0 on a board with no Magmortar — and the lock scan
+    runs only once a source is found. */
+export function seatBurnExtraCounters(state: GameState, burnedSeat: Seat): number {
+  const side = state.players[otherSeat(burnedSeat)];
+  const holders = side.active === null ? side.bench : [side.active, ...side.bench];
+  let extra = 0;
+  for (const holder of holders) {
+    const top = topCardOf(state, holder);
+    const amount =
+      top === undefined ? undefined : programFor(top.id)?.passive?.opponentBurnExtraCounters;
+    if (amount === undefined) continue;
+    const uid = topUid(holder);
+    if (uid !== undefined && disabledAbilityUids(state).has(uid)) continue; // §9
+    extra += amount;
+  }
+  return extra;
+}
+
 /** Every continuous modifier affecting one in-play Pokémon, aggregated from
     its TOP card's printed passive (Bouffalant "Bouffer"), every attached
     Tool (§7.4) and — since D174 — every attached ENERGY (§6.1, Therapeutic

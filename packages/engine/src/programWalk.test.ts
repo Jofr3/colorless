@@ -402,6 +402,12 @@ describe("the pool sweep, structurally", () => {
       // one with no change to the pool — so a sweep keyed on "which fixtures exist" would
       // have seen nothing, and only a sweep keyed on what the READERS return catches it.
       "fix-trainerops attack 7 :: switchActive",
+      // 🆕🆕🆕 D560 — Whimsicott `sv05-015` / `sv08.5-008` "Wafting Heal": `conditionGate →
+      // conditionGate → optional { then: [heal "all", discardEnergy "all"] }`. The walk
+      // descends both gates and SEES the `optional`, never its `then`: two rows per id.
+      // With Dachsbun ex ×3 and Cradily below: MEASURED, `missed` 69 → 80 (+11).
+      "sv05-015 trigger :: discardEnergy",
+      "sv05-015 trigger :: heal",
       "sv05-025 trigger :: moveEnergy",
       "sv05-025 trigger :: recordGate",
       "sv05-025 trigger :: switchActive",
@@ -435,6 +441,19 @@ describe("the pool sweep, structurally", () => {
       "sv06.5-021 attack 1 optionalCostBoost :: damageDefender",
       "sv06.5-021 attack 1 optionalCostBoost :: damageDefender",
       "sv06.5-021 attack 1 optionalCostBoost :: turnPrizeFaceUp",
+      // 🆕🆕🆕 D560 — Cradily `sv07-006` "Selective Slime": `coinFlipGate → optional { then:
+      // [Burned], otherwise: [optional { then: [Confused], otherwise: [Poisoned] }] }`. The
+      // walk sees the OUTER `optional` (through `coinFlipGate.then`) and none of what hangs
+      // off it: three `applyStatus` rows and the inner `optional` — four.
+      "sv07-006 Selective Slime :: applyStatus",
+      "sv07-006 Selective Slime :: applyStatus",
+      "sv07-006 Selective Slime :: applyStatus",
+      "sv07-006 Selective Slime :: optional",
+      // 🆕🆕🆕 D560 — Dachsbun ex ×3 "Time to Chow Down": `optional { then: [healEach] }`, one
+      // row per id.
+      "sv07-067 trigger :: healEach",
+      "sv07-160 trigger :: healEach",
+      "sv07-169 trigger :: healEach",
       // 🆕🆕🆕 D555 — Chien-Pao `sv08-056` / `svp-152` "Snow Sink": `conditionGate
       // { stadiumInPlay } → optional → discardStadium`. The enumerated walk descends the
       // gate's `then` and SEES the `optional`, but never an `optional.then` — so the
@@ -455,6 +474,8 @@ describe("the pool sweep, structurally", () => {
       "sv08-171 trainer :: bottomDeckTop",
       "sv08-173 trainer :: handRefresh",
       "sv08-231 trainer :: handRefresh",
+      "sv08.5-008 trigger :: discardEnergy", // 🆕🆕🆕 D560 — Whimsicott (reprint)
+      "sv08.5-008 trigger :: heal", // 🆕🆕🆕 D560 — Whimsicott (reprint)
       "sv08.5-113 trainer :: boostSideAttacksThisTurn", // 🆕🆕🆕 D557 — Kieran (reprint)
       "sv08.5-113 trainer :: switchActive", // 🆕🆕🆕 D557 — Kieran (reprint)
       "sv08.5-174 trainer :: boostSideAttacksThisTurn", // 🆕🆕🆕 D557 — Kieran (reprint)

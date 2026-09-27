@@ -188,8 +188,11 @@ function scovillain(state: GameState, seat: Seat): GameState {
 }
 
 /** Galvantula — {G}{C} buys Shocking Web, its only attack (index 0). A Stage 1
-    from Joltik; its "Compound Eyes" Ability is INERT (no registry row, and no
-    deriver reads ability text), which the ZERO-rows block asserts. */
+    from Joltik. (🆕🆕🆕 D560 CORRECTION (D539): its "Compound Eyes" Ability is NO LONGER
+    INERT — `sv06.5-002` has a `passive` registry row since D560, +50 before W/R into an
+    Active that HAS an Ability. Every board in this file aims it at `fix-bigbody` (and
+    none at `fix-psychic-weak`), and both print no Ability, so every number below is
+    still the clause alone; no deriver reads ability text, which stays true.) */
 function galvantula(state: GameState, seat: Seat): GameState {
   return pay(setActiveFromDeck(state, seat, "sv06.5-002"), seat, [
     ["fix-grass-energy", 1],
@@ -765,28 +768,43 @@ describe("ZERO registry ATTACK rows — every damage number below is text", () =
     for (const id of CARD_IDS) {
       expect(programFor(id)?.attack).toBeUndefined();
     }
-    // Four of the five carry no row at ALL. Tinkaton is the exception and it is
+    // Three of the five carry no row at ALL. Tinkaton is an exception and it is
     // worth being precise about: it holds an ABILITIES-only row (Gather Materials,
     // authored back in the payFromHand slice), which is a different key on the same
     // program and never consulted by the attack path. Asserted both ways so the
     // exception is documented rather than merely tolerated.
-    for (const id of ["sv01-029", "sv01-202", "sv06.5-002", "sv02-055"] as const) {
+    // 🆕🆕🆕 D560 CORRECTION (D539) — "FOUR OF THE FIVE" IS WITHDRAWN: Galvantula
+    // `sv06.5-002` is the SECOND exception, a `passive`-only row ("Compound Eyes",
+    // `damageBonusBeforeWRIf` on `opponentActiveHasAbility`). Like Tinkaton's it is a
+    // different key, never consulted by the attack path — the `.attack` pin above still
+    // holds — and its gate is false against every defender this file fields.
+    for (const id of ["sv01-029", "sv01-202", "sv02-055"] as const) {
       expect(programFor(id)).toBeUndefined();
     }
     expect(programFor("sv02-105")?.abilities).toHaveLength(1);
+    expect(Object.keys(programFor("sv06.5-002") ?? {})).toEqual(["passive"]);
+    expect(programFor("sv06.5-002")?.passive?.damageBonusBeforeWRIf).toEqual({
+      amount: 50,
+      cond: { kind: "opponentActiveHasAbility" },
+    });
     // sv01-202 is Scovillain's second printing — byte-identical rules text, no
     // fixture of its own, equally rowless. Named in CARD_IDS so the pair stays
     // visible; the fixture the board layer runs is sv01-029.
     expect(CARD_IDS).toContain("sv01-202");
   });
 
-  it("leaves Galvantula's 'Compound Eyes' Ability INERT — printed, not simulated", () => {
+  it("no DERIVER reads Galvantula's 'Compound Eyes' — the text is not an attack clause (the Ability is a registry `passive` since D560)", () => {
     // The fixture keeps the Ability verbatim because the printed card has it, and
-    // this is the assertion that nothing acts on it: no registry row (above), and
     // no deriver reads ability text at ALL — only attack `effect` strings reach
-    // `deriveAttackEffect`/`deriveAttackDamageBonus`. So Shocking Web's 50 is 50,
-    // not 100, into an Active with an Ability, and the board layer below is
-    // measuring the CLAUSE rather than the clause plus a silent aura.
+    // `deriveAttackEffect`/`deriveAttackDamageBonus`. (🆕🆕🆕 D560 CORRECTION (D539):
+    // "nothing acts on it", "no registry row" and "Shocking Web's 50 is 50, not 100, into
+    // an Active with an Ability" are WITHDRAWN — the Ability is a registry `passive` since
+    // D560 and DOES add 50 into an Active that has an Ability (driven in
+    // `abilityPassivesD560.test.ts` §4). The board layer below still measures the CLAUSE
+    // alone because every defender it fields — `fix-bigbody` — has NO Ability, asserted
+    // just below, so the passive's gate is false there.)
+    expect(FIXTURE_POOL["fix-bigbody"]?.abilities ?? []).toEqual([]);
+    expect(FIXTURE_POOL["fix-psychic-weak"]?.abilities ?? []).toEqual([]);
     const compoundEyes = FIXTURE_POOL["sv06.5-002"]?.abilities?.[0];
     expect(compoundEyes?.name).toBe("Compound Eyes");
     expect(compoundEyes?.effect).toContain("do 50 more damage");
