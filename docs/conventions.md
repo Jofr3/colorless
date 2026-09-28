@@ -8453,6 +8453,30 @@ rather than copied.
 partial log (`-interrupted.log`) before relaunching; the first launch's pid then survives in that log's own first
 rows, because D547's recipe put it there. Do not rely on a sidecar for any launch but the last.
 
+### This repo's `grep` can silently UNDER-COUNT an ERE, so a `grep` count needs a second engine (D565 close-out, extending D504, D536 and the :4101 grep-count rule)
+
+`grep` in this environment is ugrep 7.8.4 behind a shell function (`type grep` shows it). Its faults are already
+on record: D504 recorded that it returns nothing for an untracked file, and the D536 close-out (*"A doc figure of
+four digits or more has TWO printed spellings"*) recorded that an ERE alternation of the form `(^|[^0-9,])N`
+miscounts under it. D565's close-out measured one more, at least the third known: it drops every other match of an
+ERE inside a file it does read.
+
+`grep -cE '^ +[A-Za-z0-9][^ ]* +…'` over the verdict lines of `tmp/sweep-D565.log` read **1,836**. GNU
+`command grep -cE`, `grep -cP` and a bun script all read **3,673**, and D564's log reads **1,805** against
+**3,611** the same way: every other matching line is dropped, with no error and no warning. On an eight-line
+cut of the log, `[^ ]* +…` matches **0** lines under ugrep and **8** under GNU `grep`. The anchored
+`^  [A-Za-z0-9][^ ]* +… +` form happened to count right under both, so which patterns are affected is not
+predictable from their shape.
+
+That an enumeration's number comes from the module and not from a text search is already the rule of *"A count
+taken from a grep is a claim about the grep"* (:4101, D476), and D519 (9)'s set-compare already follows it; a
+count that comes out at about half, or at zero, is already suspect under D504's *"a silent empty result from a
+search tool is not evidence of absence"*. What this section adds is one rule:
+
+**Any `grep` count that goes into a doc is cross-checked against a second engine first**: `command grep` (GNU),
+`grep -P`, or the script. If two engines disagree, treat it as a tool fault until shown otherwise, and write down
+the figure the script gives.
+
 
 ## Git / commits
 - Branch off `main` for non-trivial work; commit/push only when asked.
