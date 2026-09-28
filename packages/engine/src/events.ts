@@ -1603,6 +1603,14 @@ export type GameEvent =
       of its own — those cards never left the deck, and the trailing SHUFFLE row is
       the whole story. */
   | { type: "DECK_TOP_DISCARDED"; seat: Seat; actor: Seat; uids: string[] }
+  /** 🆕🆕🆕 D565 — `seat` discarded `uids` off the BOTTOM of their OWN deck
+      (`discardDeckBottom`, Misty's Psyduck "Flustered Leap"). A sibling of
+      `DECK_TOP_DISCARDED` rather than a reuse, because that event's caption says
+      *"from the top of their deck"* and a reused row would say the wrong end. No
+      `actor`: the one producer mills the actor's own deck, so the voice is fixed
+      (ACTIVE — the player did it). Naming the uids leaks nothing (the pile is public);
+      fires only with ≥1 card. A new union member (D125). */
+  | { type: "DECK_BOTTOM_DISCARDED"; seat: Seat; uids: string[] }
   /** An effect moved `uids` (Energy cards) between two of `seat`'s in-play Pokémon
       (`from` → `to`) — the §6 manual Energy movement (Energy Switch: a Basic
       Energy; Poppy: up to 2 any Energy). All moved Energy shares the one source;
@@ -1973,12 +1981,21 @@ export type GameEvent =
       together and one field cannot let them disagree. **ABSENT MEANS THE
       ATTACHMENTS FOLLOWED THE BODY** — a positive statement, not a default, and it
       is what every pre-D313 row means. `uids` stays the WHOLE pile either way. */
+  /** 🆕🆕🆕 D565 — Palafin "Zero to Hero": `seat`'s body whose top card was `fromUid` now
+      has `toUid` (a Palafin ex from the deck) on top instead, IN PLACE — attachments,
+      damage, conditions and turns in play stayed on the body — and `fromUid` went into
+      the deck (a `SHUFFLE` row follows). Not an evolution, so not `POKEMON_EVOLVED`: no
+      evolve moment is announced and none fires. Both cards are named (the new one is
+      face up in play; the old one was face up a moment ago). A new union member (D125). */
+  | { type: "POKEMON_SWAPPED_FROM_DECK"; seat: Seat; fromUid: string; toUid: string }
   | {
       type: "POKEMON_RETURNED";
       seat: Seat;
       uid: string;
       actor: Seat;
-      dest: "deck" | "hand" | "discard";
+      /** 🆕🆕🆕 D565 — `"deckTop"` (Flustered Leap's "put this Pokémon on top of your
+          deck"), placed with no shuffle. A union widening (D125). */
+      dest: "deck" | "deckTop" | "hand" | "discard";
       uids: string[];
       attachmentsTo?: { dest: "discard"; uids: string[] };
     }

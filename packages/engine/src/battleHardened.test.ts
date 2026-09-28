@@ -45,7 +45,9 @@ import {
 //     (🆕🆕🆕 D560 CORRECTION (D539) — a dated measurement whose "unbuilt" status has
 //     moved: the Stadium discard was built at D555 (Chien-Pao "Snow Sink"), and the
 //     heal-and-recover (Indeedee "Obliging Heal") and `sv05-085` (Drilbur "Dig Dig Dig")
-//     at D560. Only `sv06-132` (Farfetch'd, a Tool attach from the deck) stays unbuilt.)
+//     at D560. ~~Only `sv06-132` (Farfetch'd, a Tool attach from the deck) stays unbuilt.~~
+//     🆕🆕🆕 D565 (D539): `sv06-132` "Impromptu Carrier" is BUILT (`searchDeck { dest:
+//     "attachToSelf" }`), so all six are.)
 // 🆕 **SO "WIDEN THE QUERY" IS NOT ONE MOVE, IT IS A LADDER, AND WHICH RUNG YOU
 // STOP ON DECIDES THE ANSWER.** A widening that keeps the row's VERB is still
 // scoped to the row's mechanism; only dropping to the bare printed OPENING

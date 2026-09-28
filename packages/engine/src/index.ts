@@ -6230,6 +6230,10 @@ import type { GameState, Seat } from "./types";
       • ⏹️ Team Rocket's Orbeetle `sv10-089`/`-198` "Rocket Brain" (2) — *"**as
         often as you like** during your turn"*, an unbounded repeat the phase model
         has no shape for; its destination is the controller's OWN board.
+        (🆕🆕🆕 D565 (D539): ~~"an unbounded repeat the phase model has no shape for"~~ is
+        WITHDRAWN and was already false — an Ability with `oncePerTurn: false` repeats one
+        activation at a time (Baxcalibur, Emboar, Iono's Bellibolt). ✅ BUILT at D565 on the
+        SIBLING op `moveCounterOwnChosen`.)
       • ⏹️ **Alakazam `sv06-082` "Strange Hacking" (1) — NEITHER EARLIER SWEEP
         NAMED IT.** *"any number … **in any way you like**"*, both ends on the
         opponent's board: `attachCards`' many-to-many assignment shape, not this
@@ -6237,7 +6241,10 @@ import type { GameState, Seat } from "./types";
     ⚠️ And the anchor carries **NO owner capture**, where D205's sibling does: no
     chosen-destination printing prints a possessive in either scope, so a capture
     would derive a reading no card has — D138's own rule (take the width the
-    printing measures), pointing the other way for once.
+    printing measures), pointing the other way for once. (🆕🆕🆕 D565 (D539): ~~"no
+    chosen-destination printing prints a possessive"~~ — Rocket Brain's SOURCE prints
+    *"Team Rocket's"*; it is built on its own op, whose `ownerPokemon` is required, and this
+    ATTACK anchor still needs no capture.)
 
     ⚠️ **THE §11 GATE IS CONDITIONAL HERE AND THAT IS A CORRECTION, NOT A
     SOFTENING.** `attackEffectRefused` asks one question — *is a wide
@@ -8422,7 +8429,8 @@ import type { GameState, Seat } from "./types";
     bare printed opening it returns SIX others, two already BUILT (🆕🆕🆕 D560
     CORRECTION (D539): a D250 measurement — five of the six are now built, Chien-Pao's
     Stadium discard at D555 and Indeedee's heal-and-recover and Drilbur's `sv05-085` at
-    D560; only `sv06-132` stays unbuilt). **Which rung
+    D560; ~~only `sv06-132` stays unbuilt~~ — 🆕🆕🆕 D565 (D539): `sv06-132` "Impromptu
+    Carrier" is BUILT, so all six are). **Which rung
     you stop on decides whether you are measuring the MECHANISM or the IDIOM**,
     and a prediction of "noisy" is gradeable against one and not the other. Both
     widths are recorded rather than the flattering one.
@@ -20159,6 +20167,34 @@ import type { GameState, Seat } from "./types";
     `expect(manifest.version)`, `it(…)` titles, the declaration and `package.json` —
     **not** as a value-keyed grep — because a value-keyed grep is precisely the mechanism
     that ate D500's heading.)
+    🆕🆕🆕 engineVersion 0.448.0 → **0.449.0** (D565 — FOUR ABILITIES AND A SUPPORTER: 8 PRINTINGS / 5
+    TEXTS / 5 OBJECTS, AND PALAFIN ex ×4 MADE REACHABLE. Five registry `CardProgram`s keyed on eight REAL
+    ids inserted MID-MAP after `sv06.5-029` (D395/D396, so `raw[last]` stays `sv09-107`); no row authors an
+    `attack` key. **Misty's Psyduck** `sv10-045`/`-193` "Flustered Leap" on the NEW `AbilityProgram.benchOnly`
+    (`activeOnly`'s mirror, read at its three readers — `useAbility` with the NEW `ABILITY_BENCH_ONLY`,
+    `redactedAbilitiesOf`, `GameHud`), the NEW `discardDeckBottom` op (a sibling, not a rider: the persisted
+    name `discardDeckTop` cannot be renamed and a `from: "bottom"` rider would make it lie) with the NEW
+    `DECK_BOTTOM_DISCARDED` event, and `returnSelf`'s NEW `"deckTop"` zone (prepended, no shuffle;
+    `POKEMON_RETURNED.dest` widened) — R-FL. **Team Rocket's Orbeetle** `sv10-089`/`-198` "Rocket Brain" on
+    the NEW `moveCounterOwnChosen` (a sibling of `moveCountersChosen`: ONE counter, a damaged own
+    `"Team Rocket"` body — Active included — to ANOTHER own body, D216's two parks with the engine-written
+    `from`), `oncePerTurn: false`, refused by `programPlayable` on the op's own funnels. **Ruffian**
+    `sv09-157`/`-181` on the NEW body-first `discardToolAndSpecialEnergyChosen` (a shield-filtered pick over
+    the opponent's bodies carrying a Tool or a Special Energy; its answer buys `discardTools { count 1,
+    bodyUid }` — the NEW engine-written key, mandatory inline — and `discardEnergy { from "opponentChosen",
+    bodyUid }`, D561's key widened, D131) — R-RU1. **Farfetch'd** `sv06-132` "Impromptu Carrier" on
+    `searchDeck`'s NEW `dest: "attachToSelf"` (the prompt's NEW `"attach"`, schema and both HUDs), offering
+    SIMULATED Tools only through the NEW continuous.ts `toolCardSimulated` EXTRACTED from `attachTool`
+    (R-IC1), §7.4 enforced, `TOOL_ATTACHED` emitted, the hand-play bar not applying (R-IC2). **Palafin**
+    `sv06-060` "Zero to Hero" on the NEW SELF direction of `runActiveBenchedTriggers` (restricted to the moved
+    body, behind the "during your turn" gate), the NEW `TriggeredAbility.oncePerTurn` (keyed through the
+    WIDENED `abilityUsedKey` on the existing `abilitiesUsed`) and the NEW non-parking `switchWithDeckNamed`
+    (the in-place top swap, the NEW `POKEMON_SWAPPED_FROM_DECK` event; no `onEvolve`, no stamp; bypasses
+    `intoPlayOnlyVia` because it IS the route) — R-PF CLOSED; R-ZH1 ⚠️ UNRULED; R-ZH2. The uid census found
+    ONE holder the swap would orphan — `switchActive.recordDemoted`'s filing (Scramble Switch) — re-keyed by
+    ONE helper (`swappedUid`). **`MATCH_RECORD_VERSION` STAYS 36**: every persisted change is a D125
+    widening (three new `EffectOp` members that park, optional keys, a prompt-dest member) — see
+    docs/decisions.md D565 (d) and apps/api match.ts.)
     🆕🆕🆕 engineVersion 0.447.0 → **0.448.0** (D564 — THE MRV 35 → 36 TRAINER BUNDLE: 9 PRINTINGS / 5
     TEXTS / 5 OBJECTS, PLUS THE CARETAKER RIDER. Five registry `CardProgram`s keyed on nine REAL ids
     inserted MID-MAP after `sv08.5-151` (D395/D396, so `raw[last]` stays `sv09-107`); no row authors an
@@ -20206,7 +20242,7 @@ import type { GameState, Seat } from "./types";
     `sv06-193`/`sv08.5-151` "Hero's Spirit" on the NEW `CardProgram.intoPlayOnlyVia` (NOT a passive —
     read off the card through the NEW continuous.ts `intoPlayOnlyViaOf`): refused at `evolve` with the
     NEW `EVOLVE_ONLY_VIA_ABILITY` and filtered out of `evolveFromDeckOffer` (R-PF: unplayable until Zero
-    to Hero ships). **`MATCH_RECORD_VERSION` STAYS 35**: no new op parks, every new key is catalog data,
+    to Hero ships — 🆕🆕🆕 CLOSED at D565: Zero to Hero is built, its in-place swap the one route in). **`MATCH_RECORD_VERSION` STAYS 35**: no new op parks, every new key is catalog data,
     and the event widening is unpersisted — see docs/decisions.md D563 (d).)
     🆕🆕🆕 engineVersion 0.445.0 → **0.446.0** (D562 — CONSUMABLE TOOLS, JAMMING TOWER AND FESTIVAL
     GROUNDS: 14 PRINTINGS / 12 TEXTS / 12 OBJECTS. Twelve registry `CardProgram`s — ten Tools and two
@@ -20243,7 +20279,8 @@ import type { GameState, Seat } from "./types";
     its log tail. **`MATCH_RECORD_VERSION` STAYS 35**: every new key is catalog data, the event union
     widening is unpersisted, and the `damagedTrigger` SHAPE is unchanged (a 0.445 reader drains a Tool-uid
     stage as a silent whiff) — see docs/decisions.md D562 (d). Withdrawn and annotated in place (D539):
-    docs/decisions.md D562 (f). Ruffian `sv09-157`/`-181` is CUT (a body-first pick, D562 (g)).)
+    docs/decisions.md D562 (f). Ruffian `sv09-157`/`-181` is CUT (a body-first pick, D562 (g)).
+    🆕🆕🆕 D565: Ruffian is BUILT on the NEW body-first `discardToolAndSpecialEnergyChosen`.)
     🆕🆕🆕 engineVersion 0.444.0 → **0.445.0** (D561 — THE TRAINER BUNDLE: 15 PRINTINGS / 9 TEXTS / 9
     OBJECTS, EVERY ADDITION AN OPTIONAL KEY, A UNION MEMBER OR ONE SCAN. Nine registry `CardProgram`s —
     seven `trainer` and two `stadium` — keyed on fifteen REAL ids inserted MID-MAP after `sv07-006`
@@ -24565,7 +24602,7 @@ import type { GameState, Seat } from "./types";
     WITNESS** — the count was re-derived every slice and the word *"three"* was carried.
     A successor of this slice inherits **81 / 61 / 17** again, over **FIVE** history
     occurrences: those four plus `deckMillFilteredScale.test.ts`'s own header arrow.) */
-export const engineVersion = "0.448.0";
+export const engineVersion = "0.449.0";
 
 export type {
   ApplyResult,

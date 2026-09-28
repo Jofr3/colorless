@@ -450,8 +450,10 @@ export function evolve(state: GameState, action: EvolveAction): ApplyResult {
   }
   // 🆕🆕🆕 D563 — Palafin ex "Hero's Spirit": *"Put this Pokémon into play only with the
   // effect of Palafin's Zero to Hero Ability."* Off the card's program and NOT through
-  // `passivesOf` — the card is in the HAND and a §9 lock must not lift it (R-PF: Zero to
-  // Hero is unbuilt, so Palafin ex has no legal route in today).
+  // `passivesOf` — the card is in the HAND and a §9 lock must not lift it. (🆕🆕🆕 D565:
+  // ~~"Zero to Hero is unbuilt, so Palafin ex has no legal route in today"~~ — WITHDRAWN,
+  // D539: Zero to Hero is BUILT and its in-place swap is the one route in; a hand evolve
+  // is still not that Ability, so this refusal stands unchanged.)
   const onlyVia = intoPlayOnlyViaOf(card);
   if (onlyVia !== undefined) {
     return err(

@@ -10,7 +10,12 @@ import type {
 } from "./actions";
 import { err, ok } from "./actions";
 import { cardOfUid, isBasicPokemon, topUid } from "./cards";
-import { disabledAbilityUids, handPlayBarred, remainingHpWithin } from "./continuous";
+import {
+  disabledAbilityUids,
+  handPlayBarred,
+  remainingHpWithin,
+  toolCardSimulated,
+} from "./continuous";
 import type { EffectOp } from "./effects";
 import type { GameEvent } from "./events";
 import { recoverStatuses, resolveMidTurnKnockOuts, settleProgram } from "./flow";
@@ -20,6 +25,9 @@ import {
   attachSeat,
   conditionHolds,
   conditionNote,
+  // 🆕🆕🆕 D565 — Rocket Brain's two candidate funnels, so the grey-out and the offer agree.
+  counterOwnDestinations,
+  counterOwnSources,
   discardEnergyPlayable,
   // 🆕🆕🆕 D557 — the Tool offer's own funnel, so the grey-out and the offer agree.
   discardableTools,
@@ -30,6 +38,8 @@ import {
   handCostUnmet,
   moveEnergyPlayable,
   resumeProgram,
+  // 🆕🆕🆕 D565 — Ruffian's candidate funnel.
+  ruffianBodies,
   runProgram,
   snipeTargets,
   switchActiveTargets,
@@ -366,8 +376,9 @@ export function attachTool(state: GameState, action: AttachToolAction): ApplyRes
       "your opponent prevents you from playing Pokémon Tool cards from your hand",
     );
   }
-  const toolProgram = programFor(card.id);
-  if (toolProgram?.passive === undefined && (toolProgram?.triggered ?? []).length === 0) {
+  // 🆕🆕🆕 D565 — the predicate is EXTRACTED to `toolCardSimulated` (continuous.ts) and
+  // shared with Impromptu Carrier's deck-search attach, so the two cannot disagree.
+  if (!toolCardSimulated(card)) {
     // Coverage strategy: an unauthored Tool would occupy the one Tool slot
     // while doing nothing — reject loudly instead.
     //
@@ -707,7 +718,13 @@ const SHARED_ABILITY_UID = "*";
     Ability each turn") drops the uid; every other Ability keeps it. Callers pass
     the whole `AbilityProgram` rather than a scope argument so there is no way to
     ask about one ability's name under another's scope. */
-export function abilityUsedKey(uid: string, ability: AbilityProgram): string {
+export function abilityUsedKey(
+  uid: string,
+  // 🆕🆕🆕 D565 — WIDENED from `AbilityProgram` to the two fields the key reads, so a
+  // TRIGGERED row's `oncePerTurn` (Zero to Hero, triggers.ts) keys through this same
+  // funnel instead of re-spelling `${uid}:${name}`.
+  ability: Pick<AbilityProgram, "name"> & { oncePerTurn?: AbilityProgram["oncePerTurn"] },
+): string {
   const keyUid = ability.oncePerTurn === "sharedByName" ? SHARED_ABILITY_UID : uid;
   return `${keyUid}:${ability.name}`;
 }
@@ -774,6 +791,11 @@ export function useAbility(state: GameState, action: UseAbilityAction): ApplyRes
   }
   if (ability.activeOnly && action.target.spot !== "active") {
     return err("ABILITY_ACTIVE_ONLY", `${ability.name} can only be used from the Active Spot (§9)`);
+  }
+  // 🆕🆕🆕 D565 — the mirror spot (Flustered Leap: "if this Pokémon is on your Bench"),
+  // beside `activeOnly` and for its reasons: a SPOT, read off the action's target.
+  if (ability.benchOnly === true && action.target.spot !== "bench") {
+    return err("ABILITY_BENCH_ONLY", `${ability.name} can only be used from the Bench (§9)`);
   }
   const usedKey = abilityUsedKey(uid, ability);
   if (ability.oncePerTurn && state.allowances.abilitiesUsed.includes(usedKey)) {
@@ -1381,6 +1403,22 @@ export function programPlayable(
       op.op === "discardTools" &&
       op.count !== "all" &&
       discardableTools(state, seat, op.sides).length === 0
+    ) {
+      return false;
+    }
+    // 🆕🆕🆕 D565 — Ruffian into a board where no opponent body carries a Tool or a
+    // Special Energy can only whiff: refused on the op's OWN candidate funnel
+    // (`ruffianBodies`), the D557 `discardTools` line's rule one op over.
+    if (op.op === "discardToolAndSpecialEnergyChosen" && ruffianBodies(state, seat).length === 0) {
+      return false;
+    }
+    // 🆕🆕🆕 D565 — Rocket Brain with no damaged own Team Rocket's body, or no OTHER own body
+    // to move a counter onto, can only whiff. Both halves are the op's own funnels.
+    if (
+      op.op === "moveCounterOwnChosen" &&
+      !counterOwnSources(state, seat, op.ownerPokemon).some(
+        (ref) => counterOwnDestinations(state, seat, ref.spot).length > 0,
+      )
     ) {
       return false;
     }

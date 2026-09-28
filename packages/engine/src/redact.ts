@@ -747,6 +747,8 @@ function redactedAbilitiesOf(
         lockedUids.has(uid) ||
         (ability.activeOnly && target.spot !== "active") ||
         bodyGateUnmet ||
+        // 🆕🆕🆕 D565 — `benchOnly`, `activeOnly`'s mirror (Flustered Leap).
+        (ability.benchOnly === true && target.spot !== "bench") ||
         // The KEY comes from `abilityUsedKey`, never spelled here: a
         // "sharedByName" Ability (Fezandipiti ex) keys on its name alone, and a
         // mirror that kept building `${uid}:` would leave the second copy's row

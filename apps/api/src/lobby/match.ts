@@ -1668,6 +1668,34 @@ export interface MatchRecord {
     or client byte: the redacted view does not carry `allowances`, so the HUD does not
     show the side bonus (a carried display debt, decisions.md D556).
 
+    🆕🆕🆕 **STAYS 36 AT D565 — EVERY PERSISTED CHANGE IS A D125 WIDENING, AND THE 0.448 ROLLBACK
+    READINGS ARE NAMED.** (Placed ABOVE the D564 block, out of date order, so the declaration's
+    anchor lines stay byte-identical — D563's placement, one block down.) The addresses, named
+    first (D456's rule): `MatchRecord.state.phase.cont.pendingOp` / `.rest` and `phase.prompt`,
+    written only on a PARK. Three NEW `EffectOp` inhabitants can reach them: Rocket Brain's
+    `moveCounterOwnChosen` (with its engine-written `from` on the second park), Ruffian's
+    `discardToolAndSpecialEnergyChosen`, and `searchDeck`'s new `dest: "attachToSelf"` VALUE
+    (Impromptu Carrier), whose prompt carries the new chooseCards `dest: "attach"`; Ruffian's
+    answer can also park a `discardEnergy { from: "opponentChosen", bodyUid }` — D561's optional
+    key under an existing `from`. D441: no key is renamed or removed, every added key is
+    OPTIONAL, and a v36 record written by 0.448 cannot hold any of them, so every older record
+    means exactly what it meant — the union widening D557's `discardTools` rows and D561's
+    `bodyUid` took without a bump (driven: both D565 suites round-trip a parked continuation
+    through JSON and resume it). The 0.448 ROLLBACK readings (D456), named rather than implied:
+    a parked Rocket Brain or Ruffian pick resumes as a WHIFF (0.448's `applyChoice` default and
+    `continuationOps` buy nothing — the Ability use, or the played Supporter, is spent for no
+    effect); a parked Impromptu Carrier search resumes through 0.448's `searchMove`, whose
+    fall-through arm puts the picked Tool into the HAND rather than attaching it, and 0.448's
+    wire schema has no `"attach"` member for the prompt dest; a parked body-narrowed Special Energy pick
+    applies identically (the prompt already offered only that body's Energy). Nothing else
+    persists: `discardDeckBottom`, `returnSelf`'s `"deckTop"` and `switchWithDeckNamed` never
+    park and never ride a `rest`; `benchOnly`, `TriggeredAbility.oncePerTurn` and the registry
+    rows are CATALOG data; the Zero to Hero lock is a `${uid}:${name}` string on the EXISTING
+    `abilitiesUsed`; the three event changes (`DECK_BOTTOM_DISCARDED`, `POKEMON_SWAPPED_FROM_DECK`,
+    `POKEMON_RETURNED.dest` `"deckTop"`) are not persisted (D141) and the `ABILITY_BENCH_ONLY` code
+    is not either. A client byte moves (the chooseCards verb record gains `"attach"` in both HUDs;
+    `GameHud` folds `benchOnly`) and is not a reason: no persisted shape changes with it.
+
     🆕🆕🆕 **35 → 36 AT D564 — THE NINTH POSITION: THREE REQUIRED KEYS, EACH A PLAYED EFFECT.**
     The addresses, named first (D456's rule):
       · **`GameState.allowances.supporterPlayedUid: string | null`** — the Supporter the turn's

@@ -850,7 +850,13 @@ describe("D306 §3 — the blocker, DRIVEN: placeEvolution's two tails are phase
     // `evolveFromDeck`) is untouched. D342's lesson paid forward: this rung was on D557's
     // predicted red list BECAUSE it enumerates the union's inhabitants. (The it() title's
     // "bench|hand" has been stale since D342's `deckTop` and is kept as dated.)
-    expect([...dests].sort()).toEqual(["bench", "deckTop", "discard", "hand"]);
+    // 🆕🆕🆕 D565 — **`"attachToSelf"` IS THE FIFTH**, Farfetch'd "Impromptu Carrier"'s *"search
+    // your deck for a Pokémon Tool card and attach it to this Pokémon"*. ⚠️ **IT IS A BODY
+    // DESTINATION**, which this rung's refusal was about — but the refusal is about EVOLUTION
+    // ("the evolve dest is its own op", `evolveFromDeck`), and an ATTACH is not an evolve:
+    // the Tool goes onto the program's own body as an attachment and no stack moves. So the
+    // refusal stands; the union's inhabitant list moves, which is this rung's job to say.
+    expect([...dests].sort()).toEqual(["attachToSelf", "bench", "deckTop", "discard", "hand"]);
   });
 });
 

@@ -675,7 +675,9 @@ export const redactedEffectPromptSchema = z.discriminatedUnion("kind", [
     candidates: z.array(redactedCardSchema),
     min: z.number(),
     max: z.number(),
-    dest: z.enum(["bench", "hand", "deck", "deckBottom", "deckTop", "discard", "evolve"]),
+    // 🆕🆕🆕 D565 — "attach" (Impromptu Carrier: a deck-searched Tool attached to the
+    // Pokémon whose Ability searched). A widening; no older member moves.
+    dest: z.enum(["bench", "hand", "deck", "deckBottom", "deckTop", "discard", "evolve", "attach"]),
     /** 🆕 D332 — PER-KIND CAPS over the same candidate list, the printed "a
         Pokémon **and** a Trainer card" (Drayton). `max` above stays the TOTAL;
         each entry caps how many picks may come out of ITS `uids`, which are the

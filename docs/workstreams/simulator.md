@@ -20612,7 +20612,7 @@ the card id), Standard first / Expanded second:
 | --- | --- | --- | --- | --- |
 | attack **Extended Damagriiigus** (Cofagrigus) | `sv10.5w-040`, `-123` | 2 | 2 | ✅ **BUILT** |
 | ability **Adrena-Brain** (Munkidori) | `sv06-095`, `sv06.5-072`, `sv08.5-044` | 3 | 3 | ⏹️ *"up to 3"* — a THIRD decision, and **no `EffectPrompt` kind can ask "how many"**. A WIRE change. |
-| ability **Rocket Brain** (Team Rocket's Orbeetle) | `sv10-089`, `-198` | 2 | 2 | ⏹️ *"as often as you like"* — an unbounded repeat the phase model has no shape for; destination is the controller's OWN board. |
+| ability **Rocket Brain** (Team Rocket's Orbeetle) | `sv10-089`, `-198` | 2 | 2 | ⏹️ *"as often as you like"* — an unbounded repeat the phase model has no shape for; destination is the controller's OWN board. (🆕🆕🆕 D565 (D539): ~~"an unbounded repeat the phase model has no shape for"~~ — withdrawn, already false (`oncePerTurn: false`, Baxcalibur / Emboar / Iono's Bellibolt); ✅ **BUILT at D565** on the sibling op `moveCounterOwnChosen`.) |
 | attack **Strange Hacking** (Alakazam) | `sv06-082` | 1 | 1 | ⏹️ *"any number … in any way you like"* — `attachCards`' many-to-many assignment, both ends on the opponent's board. |
 
 **8, not D205's 2 and not D206's 7.** Both are floors: D205 read `attacks_json`
@@ -28549,7 +28549,7 @@ Lead, the Ability that names it, stays blocked.)
 | Cradily | `sv07-006` | Selective Slime | `coinFlipGate` → `optional { Burned / Confused or Poisoned }` → `optional { Confused / Poisoned }` |
 
 Not keyed: `sv08-108`, `sv10.5b-045`/`-124` Drilbur, `sv08-100` Annihilape, `sv10.5w-034`/`-117` Galvantula (no Ability).
-Out: the Antique Root Fossil (no play-as-Pokémon route), Farfetch'd `sv06-132` (a new search destination for 1 printing).
+Out: the Antique Root Fossil (no play-as-Pokémon route), Farfetch'd `sv06-132` (a new search destination for 1 printing — 🆕🆕🆕 D565: BUILT, `searchDeck { dest: "attachToSelf" }`).
 
 ### (b) The vocabulary
 Four `BoardCondition` members (`yourActiveHasAbility`, `opponentHasExOrVInPlay`, `yourActiveDamageCountersAtLeast` in
@@ -28576,7 +28576,7 @@ the new code, none re-anchored); declared survivors 52 unmoved.
 
 ### (e) Owed
 The whole-corpus sweep (~~D558 → D560 pending~~ D558 and D559 PAID, each exact on its first launch — D559's `3294 · 52` over 3,346 at close-out `ea7f8433`; only D560's own is owed, predicted `3333 killed · 52 known survivor(s)` over 3,385). R-TW UNRULED. The 0.443 rollback reading of a parked `"all"` / `only`
-(named, not bumped). Super Potion (the Trainer third of the heal-then-discard family), Farfetch'd `sv06-132`.
+(named, not bumped). Super Potion (the Trainer third of the heal-then-discard family), Farfetch'd `sv06-132` (🆕🆕🆕 D565: BUILT).
 (🆕🆕🆕 D561: Super Potion BUILT — see D561 below.)
 
 ## D561 — the trainer bundle: 15 printings / 9 texts / 9 objects (engine 0.445.0, `MATCH_RECORD_VERSION` stays 35)
@@ -28623,7 +28623,7 @@ Night lit a row the engine refuses) — now in `redact.ts` and GameHud, each dri
 
 ### (e) Owed
 The whole-corpus sweep (~~D559 → D561 pending~~ D559 and D560 PAID, each exact — D560's `3333 · 52` over 3,385 at close-out `a4e0cd5e`, on its second launch; only D561's own is owed, predicted `3384 killed · 52 known survivor(s)` over 3,436). R-CR1 UNRULED. The 0.444 rollback readings (named, not bumped). Tera Orb and
-Brock's Scouting (deferred); Farfetch'd `sv06-132`; Festival Grounds / Festival Lead; Team Rocket's Watchtower; Crobat (🆕🆕🆕 D564: BUILT).
+Brock's Scouting (deferred); Farfetch'd `sv06-132` (🆕🆕🆕 D565: BUILT); Festival Grounds / Festival Lead; Team Rocket's Watchtower; Crobat (🆕🆕🆕 D564: BUILT).
 (🆕🆕🆕 D562: Festival Grounds BUILT — see D562 below; Festival Lead stays blocked.)
 
 ## D562 — consumable Tools, Jamming Tower and Festival Grounds: 14 printings / 12 texts / 12 objects (engine 0.446.0, `MATCH_RECORD_VERSION` stays 35)
@@ -28671,6 +28671,8 @@ and `f310fd9b`; only D562's is pending, predicted `3453 · 52` over 3,505). R-BE
 (CUT: a body-first pick needs its own op); Team Rocket's Factory + Crobat; Community Center (🆕🆕🆕 D564: BUILT); Torrential Heart; C2's ability
 residue (Rocket Brain, Flustered Leap, Tuning Echo, Plasma Bane, Impromptu Carrier). (🆕🆕🆕 D563 (D539): Torrential Heart,
 Tuning Echo and Plasma Bane are BUILT — see D563 below; Rocket Brain, Flustered Leap and Impromptu Carrier stay owed.)
+(🆕🆕🆕 D565 (D539): Ruffian ("CUT: a body-first pick needs its own op" — the op is BUILT), Rocket Brain, Flustered Leap and
+Impromptu Carrier are BUILT — see D565 below.)
 
 ## D563 — five Ability texts: 11 printings / 5 texts / 5 objects (engine 0.447.0, `MATCH_RECORD_VERSION` stays 35)
 
@@ -28702,7 +28704,8 @@ at the HAND only. continuous.ts `intoPlayOnlyViaOf` reads the card's program: `e
 R-PB (the OPPONENT's pile only, case-sensitive, any card kind); R-RD (the alias is scoped to the hand — no deck evolve); R-TH ⚠️
 UNRULED (§10's shed applies to an Ability's this-turn record: switched to the Bench, it is gone; promoted from the Bench, it is
 kept); the shared slot (a live named next-turn record would be replaced — unreachable on Feraligatr); R-PF (Palafin ex is
-unplayable until Zero to Hero ships — print-correct).
+unplayable until Zero to Hero ships — print-correct). (🆕🆕🆕 D565: R-PF CLOSED — Zero to Hero is BUILT, its in-place swap the one
+route in.)
 
 ### (d) Tests and mutants
 `abilityCostEvolveD563.test.ts` (44) and `torrentialHeartD563.test.ts` (32). Mutants 3,505 → 3,558 (+53 `D563-*`, all killed
@@ -28713,6 +28716,7 @@ D454's `damageSelf` row); declared survivors 52 unmoved.
 The whole-corpus sweep: ~~D562's (running in the main checkout, predicted `3453 · 52` over 3,505) and~~ this one's (predicted
 `3506 · 52` over 3,558) (🆕 D564 landing: PAID, exactly — `3506 killed · 52 known survivor(s)` over 3,558, D563 close-out `78823284`) (🆕 landing: D562's is PAID, exactly — `3453 · 52` over 3,505, close-out `3b68a3c1`). R-TH UNRULED. Zero to Hero (Palafin `sv06-060`, an in-place swap op) — until it ships Palafin ex has no
 route into play. Rocket Brain, Flustered Leap, Impromptu Carrier; Team Rocket's Factory + Crobat; Community Center (🆕🆕🆕 D564: BUILT).
+(🆕🆕🆕 D565: Zero to Hero, Rocket Brain, Flustered Leap and Impromptu Carrier BUILT — see D565 below.)
 
 ## D564 — the MRV 35 → 36 trainer bundle: 9 printings / 5 texts / 5 objects plus the Caretaker rider (engine 0.448.0, `MATCH_RECORD_VERSION` 35 → 36)
 
@@ -28756,7 +28760,49 @@ D275's version step; declared survivors 52 unmoved.
 
 ### (e) Owed
 The whole-corpus sweep: ~~D562's (running in the main checkout, predicted `3453 · 52` over 3,505), D563's (predicted `3506 · 52` over
-3,558) and~~ this one's (predicted `3559 · 52` over 3,611) (🆕 landing: D562's and D563's are PAID, each exactly — `3453 · 52`
+3,558) and this one's (predicted `3559 · 52` over 3,611)~~ (🆕 D565 landing: this one's is PAID, exactly — `3559 · 52` over 3,611, close-out `97ef099b`. 🆕 landing: D562's and D563's are PAID, each exactly — `3453 · 52`
 over 3,505, close-out `3b68a3c1`, and `3506 · 52` over 3,558, close-out `78823284` — so this one rests on a measured base). The HUD debt above. Zero to Hero (Palafin ex's only route);
 Rocket Brain, Flustered Leap, Impromptu Carrier; Team Rocket's Watchtower; Brock's Scouting (deferred); Tera Orb; Ruffian (CUT, D562). (🆕 landing: Zero to Hero, Rocket Brain, Flustered Leap,
 Impromptu Carrier and Ruffian are all in D565, parked on `d565-prep` at `47eba40f`, stacked on this slice.)
+(🆕🆕🆕 D565: Zero to Hero, Rocket Brain, Flustered Leap, Impromptu Carrier and Ruffian BUILT — see D565 below.)
+
+## D565 — four Abilities and a Supporter: 8 printings / 5 texts / 5 objects, and Palafin ex ×4 made reachable (engine 0.449.0, `MATCH_RECORD_VERSION` stays 36)
+
+**Status:** ✅ BUILT — keyed MID-MAP after `sv06.5-029`. Built in the `lum-wt-d565` worktree STACKED ON THE PARKED, UNLANDED
+D564 commit `d6729892` while D563's whole-corpus sweep ran in the main checkout; ~~NOT committed by the builder~~ committed there on
+`d565-prep` at `47eba40f`, then LANDED on `main` by cherry-pick onto the D564 close-out `97ef099b`.
+
+### (a) The rows (registry.ts, one block before `const REGISTRY`; no row authors an `attack` key)
+| Card | Ids | Surface | Program |
+|---|---|---|---|
+| Misty's Psyduck | `sv10-045`/`sv10-193` | Ability "Flustered Leap" | `benchOnly`; `discardDeckBottom { 1, recordAs moved }` → `recordGate` → `returnSelf { dest "deckTop", attachmentsTo "discard" }` (NEW key, op, zone) |
+| Team Rocket's Orbeetle | `sv10-089`/`sv10-198` | Ability "Rocket Brain" | `oncePerTurn: false`; `moveCounterOwnChosen { ownerPokemon "Team Rocket" }` (NEW op) |
+| Ruffian | `sv09-157`/`sv09-181` | Supporter | `discardToolAndSpecialEnergyChosen` (NEW op) → `discardTools { 1, bodyUid }` + `discardEnergy { opponentChosen, specialEnergy, 1, bodyUid }` |
+| Farfetch'd | `sv06-132` | Ability "Impromptu Carrier" | `onPlayToBench`; `searchDeck { toolCard, dest "attachToSelf", max 1 }`, `shuffleDeck` (NEW dest; prompt dest `"attach"`) |
+| Palafin | `sv06-060` | Ability "Zero to Hero" | `onActiveMovedToBench` (the NEW self direction), `oncePerTurn: true` (NEW trigger key); `switchWithDeckNamed { "Palafin ex" }` (NEW op) |
+
+### (b) The mechanism
+`benchOnly` is `activeOnly`'s mirror at its three readers (`ABILITY_BENCH_ONLY`, `redactedAbilitiesOf`, `GameHud`). The bottom mill
+is a sibling op (the persisted `discardDeckTop` name cannot be renamed, and a rider would make it lie) with its own event;
+`returnSelf`'s `"deckTop"` prepends with no shuffle. The counter move is D216's two parks over own bodies, one counter
+(`healChosen` + `COUNTERS_PLACED moved`). Ruffian's body-first pick buys two body-narrowed discards (`discardTools.bodyUid` new and
+mandatory inline; `discardEnergy.bodyUid` widened to `"opponentChosen"`). The Tool search attaches to its own body, offering only
+simulated Tools through `toolCardSimulated`, extracted from `attachTool`. `runActiveBenchedTriggers` gains the self sweep restricted
+to the moved body; `abilityUsedKey` is widened for the trigger lock. The swap replaces the stack's top in place and shuffles; the uid
+census found one orphan (`switchActive.recordDemoted`, Scramble Switch), re-keyed by `swappedUid`.
+
+### (c) Readings (`docs/decisions.md` D565)
+R-FL (empty deck: nothing happens; UNRULED half: a replayed uid stays locked) · R-RU1 (a body with only one of the two is a legal pick) · R-IC1
+(unsimulated Tools not offered) · R-IC2 (the hand-play Tool bar does not apply) · R-ZH1 ⚠️ UNRULED ("you may" auto-resolves yes — the
+watched runner cannot park) · R-ZH2 (a failed search still shuffles and spends the lock) · R-PF CLOSED.
+
+### (d) Tests and mutants
+`abilityBundleD565.test.ts`, `ruffianD565.test.ts` and `GameHud.benchOnly.dom.test.tsx`. Mutants 3,611 → 3,673 (+62 `D565-*`, all
+killed undeclared); the two `D543` offer rows re-anchored by script (the offer line gained `op.bodyUid`); declared survivors 52 unmoved.
+
+### (e) Owed
+The whole-corpus sweeps: ~~D563's (running in the main checkout), D564's (predicted `3559 · 52` over 3,611) and~~ this one's (predicted
+`3621 · 52` over 3,673) (🆕 landing: D563's and D564's are PAID, each exactly — `3506 · 52` over 3,558, close-out `78823284`, and
+`3559 · 52` over 3,611, close-out `97ef099b` — so this one rests on a measured base). R-ZH1 UNRULED. The 0.448 rollback readings (named, not bumped). Next candidate: Scovillain ex
+"Double Type" ×2 with Team Rocket's Watchtower — an effective-types slice. Brock's Scouting; Amulet of Hope / Heavy Baton; Huntail;
+Powerglass.

@@ -354,7 +354,7 @@ function laterTurn(state: GameState): GameState {
 
 describe("§1 — five objects on eleven ids, no `attack` key, and the right SEAM for each", () => {
   it("Noivern and Kyurem carry ONE `passive.attackCostClause` each, D545's two shapes", () => {
-    expect(engineVersion).toBe("0.448.0");
+    expect(engineVersion).toBe("0.449.0");
     expect(programFor(NOIVERN)).toEqual({
       passive: {
         attackCostClause: {
@@ -390,7 +390,9 @@ describe("§1 — five objects on eleven ids, no `attack` key, and the right SEA
     expect(row?.passive).toBeUndefined();
     for (const id of PALAFIN_EX) expect(intoPlayOnlyViaOf(POOL[id] as Card)).toBe("Zero to Hero");
     expect(intoPlayOnlyViaOf(POOL[PALAFIN] as Card)).toBeUndefined();
-    expect(programFor(PALAFIN)).toBeUndefined();
+    // 🆕🆕🆕 D565 — ~~`programFor(PALAFIN)` is undefined~~ (D539): Zero to Hero is BUILT, a
+    // TRIGGERED row on plain Palafin — and still no `intoPlayOnlyVia` on it.
+    expect(programFor(PALAFIN)?.triggered?.map((t) => t.name)).toEqual(["Zero to Hero"]);
   });
 
   it("no row authors an `attack` or `attackGate` key — every printed attack keeps deriving", () => {
@@ -653,7 +655,7 @@ describe("§4 — Eevee ex: any Pokémon ex that evolves from Eevee, played from
 // §5 — Palafin ex "Hero's Spirit".
 // ─────────────────────────────────────────────────────────────────────────────
 
-describe("§5 — Palafin ex: into play ONLY via Zero to Hero, which is unbuilt (R-PF)", () => {
+describe("§5 — Palafin ex: into play ONLY via Zero to Hero, which D565 built (R-PF closed)", () => {
   it("🛑 the HAND evolve onto Finizen is refused EVOLVE_ONLY_VIA_ABILITY, naming the Ability", () => {
     for (const id of PALAFIN_EX) {
       const { state, uids } = evolveTable(FINIZEN, [id]);
@@ -708,6 +710,26 @@ describe("§5 — Palafin ex: into play ONLY via Zero to Hero, which is unbuilt 
     }
     const offered = new Set(phase.prompt.candidates.map((uid) => parked.cardIdByUid[uid]));
     expect([...offered]).toEqual([PALAFIN]);
+  });
+
+  it("🆕🆕🆕 D565 — R-PF CLOSED: a RETREATING Palafin swaps in a Palafin ex from the deck, in place", () => {
+    const { state: evolved0, uids } = evolveTable(FINIZEN, [PALAFIN]);
+    let state = run(evolved0, evolveActive(uids[0] ?? "")).state;
+    state = benchFromDeck(ensureInDeck(state, "p1", GROWER), "p1", GROWER);
+    state = ensureInDeck(energize(state, "p1", 1), "p1", PALAFIN_EX[0]);
+    const finizen = activeOf(state, "p1").stack[0];
+    const { state: after, events } = run(state, {
+      type: "retreat",
+      seat: "p1",
+      discardEnergy: [...activeOf(state, "p1").energy],
+      promoteBenchIndex: 0,
+    });
+    const swapped = after.players.p1.bench[0];
+    expect(swapped?.stack[0]).toBe(finizen);
+    expect((PALAFIN_EX as readonly string[]).includes(after.cardIdByUid[swapped?.stack.at(-1) ?? ""] ?? "")).toBe(true);
+    expect(after.players.p1.deck).toContain(uids[0]);
+    expect(events.some((e) => e.type === "POKEMON_SWAPPED_FROM_DECK")).toBe(true);
+    expect(events.some((e) => e.type === "POKEMON_EVOLVED")).toBe(false);
   });
 
   it("`passivesOf` never sees it: a Palafin ex body folds no key for it (a lock cannot lift it)", () => {

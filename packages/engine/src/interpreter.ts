@@ -86,8 +86,11 @@ import {
   berryReductionOf,
   deluxeBombOf,
   stadiumShieldsStatus,
-  // 🆕🆕🆕 D563 — Palafin ex's card-borne "only via Zero to Hero", at the deck-evolve filter.
+  // 🆕🆕🆕 D563 — Palafin ex's card-borne "only via Zero to Hero", at the deck-evolve filter
+  // (🆕🆕🆕 D565: a refusal still — the licensed route, `switchWithDeckNamed`, is built).
   intoPlayOnlyViaOf,
+  // 🆕🆕🆕 D565 — the ONE "is this Tool simulated" predicate, shared with `attachTool`.
+  toolCardSimulated,
 } from "./continuous";
 import type { KoSurvival } from "./continuous";
 import { POKEMON_TYPES, STATUS_WORD_OF, foldApostrophes } from "./effects";
@@ -398,8 +401,15 @@ export type EffectPrompt =
           state, and a client told `"deck"` about Ciphermaniac's Codebreaking
           would render *"Shuffle"* over a heading that says *on top of your
           deck*. Every zone member of this union is now one of the three PLACES
-          a card can re-enter a deck, spelled apart. */
-      dest: "bench" | "hand" | "deck" | "deckBottom" | "deckTop" | "discard" | "evolve";
+          a card can re-enter a deck, spelled apart.
+
+          🆕🆕🆕 **D565 — `"attach"` IS THE EIGHTH MEMBER** (Farfetch'd "Impromptu Carrier":
+          *"search your deck for a Pokémon Tool card and attach it to this Pokémon"*,
+          `searchDeck { dest: "attachToSelf" }`). A member for `"evolve"`'s reason: the
+          card goes ONTO a Pokémon, and a client told `"hand"` would name the wrong place in
+          its own words. The body is not carried (the note names it; the op re-derives it
+          from `ctx.sourceUid` on the way back in). A union widening (D125). */
+      dest: "bench" | "hand" | "deck" | "deckBottom" | "deckTop" | "discard" | "evolve" | "attach";
       /** 🆕 **D332 — PER-KIND CAPS OVER THE SAME CANDIDATE LIST**, the printed
           *"you may reveal **a Pokémon and a Trainer card**"* (Drayton, the sole
           consumer today through `lookAtTopN.also`). Each entry caps how many of
@@ -1800,6 +1810,43 @@ function healedDiscardAnswered(state: GameState, ref: PokemonRef): EffectOp[] {
   ];
 }
 
+/** 🆕🆕🆕 D565 — Rocket Brain's FIRST answer: the same op, re-emitted with the source it
+    now knows (`counterSourceAnswered`'s shape, one op over). ONE helper for both endings
+    of question 1 — the forced one via `stepOp`'s `schedule`, the parked one via
+    `continuationOps` — so a board of one source and a board of three resolve the printed
+    sentence down one path. The seat is dropped (the source is the controller's by
+    construction: the prompt was built from `ownInPlayRefs`, and `validateChoice` matches
+    the wire answer against the prompt). */
+function counterOwnSourceAnswered(
+  op: Extract<EffectOp, { op: "moveCounterOwnChosen" }>,
+  ref: PokemonRef,
+): EffectOp[] {
+  return [{ ...op, from: ref.spot }];
+}
+
+/** 🆕🆕🆕 D565 — Ruffian's answer: the picked opponent body, as the two discards the card
+    prints, each narrowed to that body by its TOP uid (`discardEnergy.bodyUid`'s D561 key,
+    widened to `"opponentChosen"`; `discardTools.bodyUid`, new). Tool first, then the
+    Special Energy — the print's order. A body carrying only one of the two still gets
+    both ops, and the half with nothing to take whiffs silently (R-RU1: a legal pick, and
+    the card does what it can). No body at the ref — nothing (the ref was offered, so this
+    is the wire belt). */
+function ruffianBodyAnswered(state: GameState, ref: PokemonRef): EffectOp[] {
+  const body = refPokemon(state, ref);
+  const uid = body === undefined ? undefined : topUid(body);
+  if (uid === undefined) return [];
+  return [
+    { op: "discardTools", count: 1, bodyUid: uid },
+    {
+      op: "discardEnergy",
+      from: "opponentChosen",
+      filter: { kind: "specialEnergy" },
+      count: 1,
+      bodyUid: uid,
+    },
+  ];
+}
+
 /** 🆕🆕🆕 D561 (V4) — Crispin's split, expanded at STEP time off the slot's filing: the
     de-duplicated Basic Energy TYPES of the filed cards (in filing order), then 0 → nothing,
     1 → *"Attach A"* / *"Keep it in your hand"* (R-CR1, UNRULED), 2 → *"Attach A"* /
@@ -1951,6 +1998,14 @@ function continuationOps(
   }
   if (op.op === "moveCountersChosen" && op.fromBench === undefined) {
     return pickedPokemon(choice) ? counterSourceAnswered(op, choice.ref) : [];
+  }
+  // 🆕🆕🆕 D565 — Rocket Brain's SOURCE answer buys question two (D216's member, again).
+  if (op.op === "moveCounterOwnChosen" && op.from === undefined) {
+    return pickedPokemon(choice) ? counterOwnSourceAnswered(op, choice.ref) : [];
+  }
+  // 🆕🆕🆕 D565 — Ruffian's body answer buys the two body-narrowed discards.
+  if (op.op === "discardToolAndSpecialEnergyChosen") {
+    return pickedPokemon(choice) ? ruffianBodyAnswered(before, choice.ref) : [];
   }
   // 🆕 D309 — THE THIRD MEMBER, and the first whose answer buys an op of a
   // DIFFERENT KIND. `evolveFromDeckChosen` carries no field to be "still unknown",
@@ -2234,7 +2289,9 @@ function stepOp(
         // own candidate helper, unchanged, so the two sentences cannot come to
         // offer different Benches. It is NOT wrapped in `subgroupRefs`: that
         // narrowing is the one D205's printing bought, and no chosen-destination
-        // printing carries a possessive (the anchor's census).
+        // printing carries a possessive (the anchor's census). (🆕🆕🆕 D565 (D539): Rocket
+        // Brain's source prints "Team Rocket's" — built on the SIBLING `moveCounterOwnChosen`,
+        // so this op's no-narrowing stands for its own printings.)
         const sources = ownBenchRefs(state, ctx.seat);
         if (sources.length === 0) return { done: state };
         // `parkOrForce`'s own ordering, deliberately — nothing / one / many, in
@@ -2284,6 +2341,59 @@ function stepOp(
         "Move the damage counters onto which of your opponent's Pokémon?",
       );
     }
+    case "moveCounterOwnChosen": {
+      // 🆕🆕🆕 D565 — Team Rocket's Orbeetle "Rocket Brain": ONE counter between two OWN
+      // bodies. D216's two questions, one park each, `op.from` telling them apart.
+      const from = op.from;
+      if (from === undefined) {
+        // QUESTION 1 — the SOURCE: a damaged own body in the printed subgroup.
+        const sources = counterOwnSources(state, ctx.seat, op.ownerPokemon);
+        if (sources.length === 0) return { done: state };
+        // `parkOrForce`'s ordering (nothing / one / many), with the one ANSWERED and handed
+        // on through the helper the parked ending uses (`moveCountersChosen`'s `then`).
+        const onlySource = sources.length === 1 ? sources[0] : undefined;
+        if (onlySource !== undefined)
+          return { done: state, schedule: counterOwnSourceAnswered(op, onlySource) };
+        return {
+          park: {
+            kind: "choosePokemon",
+            candidates: sources,
+            note: `Move 1 damage counter off which of your ${ownerNoun(op.ownerPokemon)}Pokémon? You will then choose where it goes.`,
+          },
+        };
+      }
+      // QUESTION 2 — the DESTINATION: ANOTHER own body. A source that no longer carries
+      // damage is the silent whiff (no question about nothing).
+      const movable = refPokemon(state, { seat: ctx.seat, spot: from })?.damage ?? 0;
+      if (movable <= 0) return { done: state };
+      return parkOrForce(
+        state,
+        counterOwnDestinations(state, ctx.seat, from),
+        (ref) => moveOneOwnCounter(state, from, ref, ctx, events),
+        "Move the damage counter onto which of your Pokémon?",
+      );
+    }
+    case "discardToolAndSpecialEnergyChosen": {
+      // 🆕🆕🆕 D565 — Ruffian: ONE question (which opponent body), whose answer buys the two
+      // body-narrowed discards through `ruffianBodyAnswered` — forced inline on one
+      // candidate, parked on several (D216/D309/D561's shape). The shield filters the
+      // candidates BEFORE the prompt, so a shielded body files its refusal and leaves.
+      const bodies = unshieldedRefs(state, ruffianBodies(state, ctx.seat), ctx, events);
+      if (bodies.length === 0) return { done: state };
+      const forced = bodies.length === 1 ? bodies[0] : undefined;
+      if (forced !== undefined) return { done: state, schedule: ruffianBodyAnswered(state, forced) };
+      return {
+        park: {
+          kind: "choosePokemon",
+          candidates: bodies,
+          note: "Discard a Pokémon Tool and a Special Energy from which of your opponent's Pokémon?",
+        },
+      };
+    }
+    case "switchWithDeckNamed":
+      // 🆕🆕🆕 D565 — Palafin "Zero to Hero": the in-place swap from the deck. NON-PARKING
+      // (the watched runner keeps `.state`), so the forced pick is the whole answer.
+      return { done: switchWithDeckNamed(state, op.name, ctx, events) };
     case "spreadDamage":
       // 🆕🆕 D425 — `op.target` IS READ HERE FOR THE FIRST TIME. It has been on the op
       // since the op existed and was a SINGLETON, so this arm passed `op.amount`
@@ -2641,9 +2751,19 @@ function stepOp(
       // The union is taken in DECK ORDER off the deck itself, one pass, so a uid
       // matching two filters appears exactly once in the offer — the caps below
       // are what make it count against both (effects.ts states the rule).
-      const candidates = state.players[ctx.seat].deck.filter((uid) =>
+      const candidates = state.players[ctx.seat].deck
+        .filter((uid) =>
         groups.some((g) => matchesFilter(cardOf(state, uid), g.filter)),
-      );
+        )
+        // 🆕🆕🆕 D565 — Impromptu Carrier's attach offers SIMULATED Tools only (R-IC1),
+        // through the ONE predicate `attachTool` asks (`toolCardSimulated`), and only while
+        // the program's own body has a free Tool slot (§7.4: an occupied slot offers
+        // nothing, so nothing parks — `benchSpace`'s clamp, spelled on the offer).
+        .filter(
+          (uid) =>
+            op.dest !== "attachToSelf" ||
+            (freeToolSlotsOfSource(state, ctx) > 0 && attachableToolCard(state, uid)),
+        );
       // 🆕🆕🆕 D514 — THE PRINTED *"any number of"*, RESOLVED AGAINST THE GROUP'S OWN
       // CANDIDATE COUNT AND NOT AGAINST THE UNION. `attachFromTop`'s line (D333),
       // re-read rather than re-invented: the resolution happens HERE so `prompt.max`
@@ -2778,7 +2898,9 @@ function stepOp(
           // the bench-clamped total and a `"deckTop"` search is never benched.
           min: op.exact === true ? Math.min(max, candidates.length) : 0,
           max,
-          dest: op.dest,
+          // 🆕🆕🆕 D565 — the op's `"attachToSelf"` is the prompt's `"attach"` (the prompt
+          // names the PLACE; the body is the program's own, re-derived on the way back in).
+          dest: op.dest === "attachToSelf" ? "attach" : op.dest,
           // Spelled as two whole literals rather than a conditional spread, this
           // file's rule for an ABSENT key (D135): `caps: undefined` is not the
           // same wire value as no key at all, and these prompts are compared by
@@ -3364,6 +3486,27 @@ function stepOp(
       recordMoved(record, op.recordAs, filed);
       return { done: milledState };
     }
+    case "discardDeckBottom": {
+      // 🆕🆕🆕 D565 — the mill from the OTHER end (Flustered Leap: "discard the bottom
+      // card of your deck"). The controller's own deck only — the op has no `whose`.
+      // The last `count` cards (clamped by the deck, as the top mill's `slice` is) go to
+      // the discard pile, filed under `recordAs` BEFORE the zero-card return, so an
+      // empty deck overwrites its slot with `[]` and the "If you do" gate closes
+      // (`discardDeckTop`'s filing rule). Zero cards emit nothing.
+      const side = state.players[ctx.seat];
+      const kept = Math.max(0, side.deck.length - Math.max(0, op.count));
+      const milled = side.deck.slice(kept);
+      recordMoved(record, op.recordAs, milled);
+      if (milled.length === 0) return { done: state };
+      events.push({ type: "DECK_BOTTOM_DISCARDED", seat: ctx.seat, uids: milled });
+      return {
+        done: withSide(state, ctx.seat, {
+          ...side,
+          deck: side.deck.slice(0, kept),
+          discard: [...side.discard, ...milled],
+        }),
+      };
+    }
     case "attachFromDeck": {
       // SEARCH the deck for Energy and attach it onto your own Pokémon (Charizard
       // ex "Infernal Reign" / Janine's Secret Art). The same compound decision
@@ -3758,7 +3901,7 @@ function stepOp(
       // opponent's"); absent is D543's opponent side alone. The shield pass below is
       // unchanged and is what makes an OWN Tool always offerable: `effectRefusedOn`'s
       // trainer channel answers `false` for the controller's own seat (D259).
-      const allDiscardable = discardableTools(state, ctx.seat, op.sides);
+      const allDiscardable = discardableTools(state, ctx.seat, op.sides, op.bodyUid);
       const bodies: PokemonRef[] = [];
       for (const entry of allDiscardable) {
         if (!bodies.some((ref) => refKeyOf(ref) === refKeyOf(entry.from))) bodies.push(entry.from);
@@ -3770,6 +3913,20 @@ function stepOp(
       // `parkOrForce`'s ceiling rule (D359) and `HEALED`'s never-filed-at-0 convention.
       // Nothing is recorded either — this op has no `recordAs` (see its block).
       if (discardable.length === 0) return { done: state };
+      // 🆕🆕🆕 D565 — Ruffian's body-narrowed half is MANDATORY ("Discard a Pokémon Tool",
+      // no "up to"): an offer no bigger than the count comes off INLINE (the M1 rule), and
+      // §7.4's one Tool per Pokémon makes that every reachable board. A number over a
+      // larger offer (unreachable) keeps the `upTo` park below.
+      if (op.bodyUid !== undefined && op.count !== "all" && discardable.length <= op.count) {
+        return {
+          done: toolDiscardApply(
+            state,
+            discardable.map((entry) => entry.uid),
+            ctx,
+            events,
+          ).state,
+        };
+      }
       // 🆕🆕🆕 D557 — Megaton Blower's printed *"all"*: NO question, so no park — every
       // unshielded Tool comes off here, through the ONE apply (one row per host, each
       // Tool to its own owner's pile). The `upTo` park below is untouched for a number.
@@ -7118,6 +7275,12 @@ export function applyChoice(
         recordMoved(record, op.recordAs, []);
         return state;
       }
+      // 🆕🆕🆕 D565 — Impromptu Carrier: the pick is ATTACHED to the program's own body.
+      if (op.dest === "attachToSelf") {
+        const attached = searchAttachToSelf(state, choice.uids, ctx, events);
+        recordMoved(record, op.recordAs, attached.moved);
+        return attached.state;
+      }
       const searched = searchMove(state, choice.uids, op.dest, op.reveal, ctx, events);
       recordMoved(record, op.recordAs, searched.moved);
       return searched.state;
@@ -7435,6 +7598,18 @@ export function applyChoice(
       if (!pickedPokemon(choice) || chosen === undefined) return state;
       return moveCountersFromBench(state, chosen, choice.ref, ctx, events);
     }
+    case "moveCounterOwnChosen": {
+      // 🆕🆕🆕 D565 — Rocket Brain's two parks, told apart by `op.from` as `stepOp` does.
+      // The SOURCE answer moves nothing (`continuationOps` buys question two); the
+      // DESTINATION answer is the whole move.
+      const from = op.from;
+      if (!pickedPokemon(choice) || from === undefined) return state;
+      return moveOneOwnCounter(state, from, choice.ref, ctx, events);
+    }
+    case "discardToolAndSpecialEnergyChosen":
+      // 🆕🆕🆕 D565 — Ruffian's pick moves nothing here: what it buys is the two discards,
+      // spliced by `continuationOps` (the `evolveFromDeckChosen` shape).
+      return state;
     case "damageChosen":
       // 🆕🆕🆕 D530 — the per-TARGET fold on the RESUMED side: the multiplier is the
       // chosen body's own counters, so the pick is walked ref by ref with the
@@ -11897,6 +12072,161 @@ function moveCountersFromBench(
   });
 }
 
+/** 🆕🆕🆕 D565 — Rocket Brain's SOURCE candidates: every own in-play body (Active first,
+    then the Bench) whose TOP card is in the printed owner subgroup (`subgroupRefs`, the
+    ONE `ownerPokemon` predicate) and that carries damage — a body with no counter has
+    nothing to move. Exported for `programPlayable`, which must refuse on exactly this set
+    (`gustTargets`' rule). */
+export function counterOwnSources(state: GameState, seat: Seat, owner: string): PokemonRef[] {
+  return subgroupRefs(state, ownInPlayRefs(state, seat), owner).filter(
+    (ref) => (refPokemon(state, ref)?.damage ?? 0) > 0,
+  );
+}
+
+/** 🆕🆕🆕 D565 — Rocket Brain's DESTINATION candidates: *"another of your Pokémon"* —
+    every own in-play body except the source spot. Exported for `programPlayable`. */
+export function counterOwnDestinations(
+  state: GameState,
+  seat: Seat,
+  from: PokemonTarget,
+): PokemonRef[] {
+  return ownInPlayRefs(state, seat).filter((ref) =>
+    from.spot === "active"
+      ? ref.spot.spot !== "active"
+      : !(ref.spot.spot === "bench" && ref.spot.index === from.index),
+  );
+}
+
+/** 🆕🆕🆕 D565 — MOVE ONE DAMAGE COUNTER from the controller's own `from` body to their own
+    `dest` body (Rocket Brain). The heal half is `healChosen` (10 HP — one counter — clamped
+    to the source's damage; it files `HEALED` and the D386 stamp through `healedBody`), and
+    the placement is `COUNTERS_PLACED { source: "moved" }` on the destination, re-read off
+    the healed board. Silent endings, all wire belts: a destination off the controller's
+    board, the same spot as the source, an empty spot, a source with no damage. The op
+    never Knocks Out — a lethal placement is swept by `settleProgram` →
+    `resolveMidTurnKnockOuts`, with the Prize to the OPPONENT (§8.1). */
+function moveOneOwnCounter(
+  state: GameState,
+  from: PokemonTarget,
+  dest: PokemonRef,
+  ctx: EffectContext,
+  events: GameEvent[],
+): GameState {
+  if (dest.seat !== ctx.seat) return state;
+  const sameSpot =
+    from.spot === "active"
+      ? dest.spot.spot === "active"
+      : dest.spot.spot === "bench" && dest.spot.index === from.index;
+  if (sameSpot) return state;
+  const sourceRef: PokemonRef = { seat: ctx.seat, spot: from };
+  const source = refPokemon(state, sourceRef);
+  const target = refPokemon(state, dest);
+  if (source === undefined || target === undefined) return state;
+  const targetUid = topUid(target);
+  const moved = Math.min(10, source.damage);
+  if (targetUid === undefined || moved <= 0) return state;
+  const healed = healChosen(state, sourceRef, moved, ctx, events);
+  events.push({
+    type: "COUNTERS_PLACED",
+    seat: ctx.seat,
+    uid: targetUid,
+    amount: moved,
+    source: "moved",
+  });
+  const written = refPokemon(healed, dest) ?? target;
+  const damaged: InPlayPokemon = { ...written, damage: written.damage + moved };
+  const side = healed.players[ctx.seat];
+  const spot = dest.spot;
+  return withSide(
+    healed,
+    ctx.seat,
+    spot.spot === "active"
+      ? { ...side, active: damaged }
+      : { ...side, bench: side.bench.map((pokemon, i) => (i === spot.index ? damaged : pokemon)) },
+  );
+}
+
+/** 🆕🆕🆕 D565 — Ruffian's candidates: every opponent body (Active first, then the Bench)
+    carrying a Pokémon Tool OR a Special Energy — either half of the print is something to
+    discard (R-RU1). The shield is NOT asked here (the `devolveTargets` order: the set
+    first, `unshieldedRefs` second at the call site), so `programPlayable` can refuse on
+    this set exactly as the D557 `discardTools` line refuses on `discardableTools`. */
+export function ruffianBodies(state: GameState, seat: Seat): PokemonRef[] {
+  const opposing = oppAnyRefs(state, seat);
+  return opposing.filter((ref) => {
+    const body = refPokemon(state, ref);
+    if (body === undefined) return false;
+    return (
+      body.tools.length > 0 ||
+      body.energy.some((uid) => matchesAttached(state, body, uid, { kind: "specialEnergy" }))
+    );
+  });
+}
+
+/** 🆕🆕🆕 D565 — Palafin "Zero to Hero": search the controller's deck for a card named
+    `name`, and SWITCH it with the program's own body IN PLACE — the replaced TOP card goes
+    into the deck and every other `InPlayPokemon` field rides along (attachments, damage,
+    conditions, `turnPlayed`, `evolvedTurn`, `markers`, every durated effect): the print's
+    *"Any attached cards, damage counters, Special Conditions, turns in play, and any other
+    effects remain on the new Pokémon."* The interchangeable printings collapse to ONE
+    forced pick (D42): the FIRST match in deck order. Then the deck is shuffled — ALWAYS,
+    including on a failed search (R-ZH2).
+
+    🛑 NOT AN EVOLUTION: no `onEvolve` scan, no `evolvedTurn`/`turnPlayed` write, no
+    `EVOLVED` row — the event is `POKEMON_SWAPPED_FROM_DECK`. And it does not read
+    `intoPlayOnlyVia`: it IS the licensed route Palafin ex's "Hero's Spirit" names.
+    ⚠️ The body is resolved off `ctx.sourceUid` (`sourceRef`); no body (it left play) swaps
+    nothing and still shuffles. */
+function switchWithDeckNamed(
+  state: GameState,
+  name: string,
+  ctx: EffectContext,
+  events: GameEvent[],
+): GameState {
+  const seat = ctx.seat;
+  const side = state.players[seat];
+  const [ref] = sourceRef(state, ctx);
+  const body = ref === undefined ? undefined : refPokemon(state, ref);
+  const oldTop = body === undefined ? undefined : topUid(body);
+  const found = side.deck.find((uid) => cardOf(state, uid)?.name === name);
+  if (ref === undefined || body === undefined || oldTop === undefined || found === undefined) {
+    const [deck, rngState] = shuffle([...side.deck], state.rngState);
+    events.push({ type: "SHUFFLE", seat });
+    const searched = withSide(state, seat, { ...side, deck });
+    return { ...searched, rngState };
+  }
+  const swapped: InPlayPokemon = { ...body, stack: [...body.stack.slice(0, -1), found] };
+  const [deck, rngState] = shuffle(
+    [...side.deck.filter((uid) => uid !== found), oldTop],
+    state.rngState,
+  );
+  events.push({ type: "POKEMON_SWAPPED_FROM_DECK", seat, fromUid: oldTop, toUid: found });
+  events.push({ type: "SHUFFLE", seat });
+  const spot = ref.spot;
+  const placed: PlayerSide =
+    spot.spot === "active"
+      ? { ...side, deck, active: swapped }
+      : { ...side, deck, bench: side.bench.map((p, i) => (i === spot.index ? swapped : p)) };
+  return { ...withSide(state, seat, placed), rngState };
+}
+
+/** 🆕🆕🆕 D565 — the uid a body carries AFTER any in-place swap in `emitted`
+    (`POKEMON_SWAPPED_FROM_DECK`, Zero to Hero), or `uid` itself. The ONE re-key for the
+    only holder the D565 census found that the swap would otherwise orphan: a program
+    that switched its own Active and FILED the demoted body (`switchActive.recordDemoted`,
+    Scramble Switch) reads that filing AFTER `switchInto` returned — and by then Zero to
+    Hero has put the filed uid into the deck. Re-keyed at the filing, so "the Pokémon you
+    moved to your Bench" is the body that is on the Bench. */
+function swappedUid(uid: string, emitted: readonly GameEvent[]): string {
+  let current = uid;
+  for (const event of emitted) {
+    if (event.type === "POKEMON_SWAPPED_FROM_DECK" && event.fromUid === current) {
+      current = event.toUid;
+    }
+  }
+  return current;
+}
+
 /** PLACE `amount` HP of SELF-damage on the controller's OWN Active — the attack
     recoil "This Pokémon also does N damage to itself" (Skeledirge sv01-038
     "Blazing Shout"). Self-damage sits OUTSIDE the §8.5 pipeline: no Weakness/
@@ -12284,6 +12614,63 @@ function searchMove(
   return { state: withSide(state, ctx.seat, updated), moved }; // searchMove
 }
 
+/** 🆕🆕🆕 D565 — is the deck card `uid` a Pokémon Tool the engine SIMULATES? R-IC1's offer
+    filter for `searchDeck { dest: "attachToSelf" }`, through `toolCardSimulated`
+    (continuous.ts) — the ONE predicate `attachTool` asks — so the deck attach can never
+    offer a Tool the hand attach would refuse. */
+function attachableToolCard(state: GameState, uid: string): boolean {
+  const card = cardOf(state, uid);
+  return card !== undefined && toolCardSimulated(card);
+}
+
+/** 🆕🆕🆕 D565 — §7.4's free Tool slots on the program's own body: 1 when it carries no
+    Tool, 0 when it carries one or has left play. Gates `searchDeck { dest: "attachToSelf" }`'s
+    OFFER (no free slot, no candidate, no park) the way `benchSpace` clamps a Bench-bound
+    search's ceiling. */
+function freeToolSlotsOfSource(state: GameState, ctx: EffectContext): number {
+  const [ref] = sourceRef(state, ctx);
+  if (ref === undefined) return 0;
+  const body = refPokemon(state, ref);
+  return body !== undefined && body.tools.length === 0 ? 1 : 0;
+}
+
+/** 🆕🆕🆕 D565 — Farfetch'd "Impromptu Carrier": attach the picked Tool from the deck to
+    the program's OWN body (`ctx.sourceUid`). §7.4 is re-asked on the way in (the offer was
+    clamped to the free slot, but a wire answer is only as good as the board it lands on):
+    at most ONE card, only while the slot is empty, only a card still in the deck and still
+    a simulated Tool. `TOOL_ATTACHED` is emitted exactly as `attachTool` (cardplay.ts)
+    emits it, and nothing else — the Tool is face up in play, so the log names it there.
+    Returns what moved, for a `recordAs` (none today). */
+function searchAttachToSelf(
+  state: GameState,
+  uids: readonly string[],
+  ctx: EffectContext,
+  events: GameEvent[],
+): { state: GameState; moved: readonly string[] } {
+  const side = state.players[ctx.seat];
+  const [ref] = sourceRef(state, ctx);
+  const uid = uids.find((u) => side.deck.includes(u) && attachableToolCard(state, u));
+  if (ref === undefined || uid === undefined) return { state, moved: [] };
+  const body = refPokemon(state, ref);
+  if (body === undefined || body.tools.length > 0) return { state, moved: [] };
+  const withTool: InPlayPokemon = { ...body, tools: [...body.tools, uid] };
+  const deck = side.deck.filter((u) => u !== uid);
+  const updated: PlayerSide =
+    ref.spot.spot === "active"
+      ? { ...side, deck, active: withTool }
+      : {
+          ...side,
+          deck,
+          bench: side.bench.map((pokemon, i) =>
+            ref.spot.spot === "bench" && i === ref.spot.index ? withTool : pokemon,
+          ),
+        };
+  const target: PokemonTarget =
+    ref.spot.spot === "active" ? { spot: "active" } : { spot: "bench", index: ref.spot.index };
+  events.push({ type: "TOOL_ATTACHED", seat: ctx.seat, uid, target });
+  return { state: withSide(state, ctx.seat, updated), moved: [uid] };
+}
+
 /** 🆕 D307 — what an `evolveFromDeck` op is offering: the body the pronoun *"this
     Pokémon"* names, where it sits, and the cards in the controller's deck that
     would legally go on top of it.
@@ -12376,7 +12763,9 @@ function evolveFromDeckOffer(
       // 🆕🆕🆕 D563 — Palafin ex "Hero's Spirit" (*"Put this Pokémon into play only with
       // the effect of Palafin's Zero to Hero Ability."*) is never a deck-evolve candidate,
       // under either predicate below — read off the CARD's program, not `passivesOf`
-      // (a card in the deck has no fold, and a §9 lock must not lift it).
+      // (a card in the deck has no fold, and a §9 lock must not lift it). 🆕🆕🆕 D565: its
+      // one route in is Zero to Hero's `switchWithDeckNamed`, which is BUILT and is not an
+      // evolve — so this filter stays a refusal.
       if (intoPlayOnlyViaOf(card) !== undefined) return false;
       // 🆕 D310 — the printed NAME SET, when the sentence prints one, INSTEAD of
       // §10's chain match and never alongside it. Pidove `sv05-133` names
@@ -13244,7 +13633,12 @@ function returnSelf(
   const attached = [...body.energy, ...body.tools];
   const split = op.attachmentsTo !== undefined && op.attachmentsTo !== dest;
   const bodyPile = split ? [...body.stack] : uids;
-  const zones: Record<"deck" | "hand" | "discard", string[]> = { deck: [], hand: [], discard: [] };
+  const zones: Record<"deck" | "deckTop" | "hand" | "discard", string[]> = {
+    deck: [],
+    deckTop: [],
+    hand: [],
+    discard: [],
+  };
   zones[dest].push(...bodyPile);
   if (split) zones[op.attachmentsTo as "discard"].push(...attached);
   events.push(
@@ -13260,8 +13654,11 @@ function returnSelf(
         }
       : { type: "POKEMON_RETURNED", seat, uid, actor: seat, dest, uids },
   );
+  // 🆕🆕🆕 D565 — `"deckTop"` PREPENDS and never shuffles (Flustered Leap's *"put this
+  // Pokémon on top of your deck"*): a position, not a shuffle-in, so no SHUFFLE row.
   const placed = {
     ...emptied,
+    deck: [...zones.deckTop, ...emptied.deck],
     hand: [...emptied.hand, ...zones.hand],
     discard: [...emptied.discard, ...zones.discard],
   };
@@ -14685,7 +15082,11 @@ function switchRecording(
     recordMoved(
       record,
       op.recordAs,
-      emitted.flatMap((event) => (event.type === "POKEMON_SWITCHED" ? [event.wasActive] : [])),
+      // 🆕🆕🆕 D565 — re-keyed through `swappedUid`: Zero to Hero may have swapped the
+      // demoted body's top card in place, inside `switchInto`, before this filing.
+      emitted.flatMap((event) =>
+        event.type === "POKEMON_SWITCHED" ? [swappedUid(event.wasActive, emitted)] : [],
+      ),
     );
   }
   return next;
@@ -16462,12 +16863,20 @@ export function discardableEnergies(
   // reading it as `"all"` would offer the very Energy that paid for the attack.
   const activeOnly = op.from === "opponentActive" || op.from === "yourActive";
   const benchOnly = op.from === "yourBench";
-  return attachedEnergies(
+  const offered = attachedEnergies(
     state,
     discardVictimSeat(seat, op),
     op.filter,
     activeOnly ? "active" : benchOnly ? "bench" : "all",
   );
+  // 🆕🆕🆕 D565 — Ruffian's picked body: `bodyUid` (D561's engine-written key, widened to
+  // `"opponentChosen"`, D131) keeps only the Energy on the body whose TOP uid it names.
+  const narrowTo = op.from === "opponentChosen" ? op.bodyUid : undefined;
+  if (narrowTo === undefined) return offered;
+  return offered.filter((entry) => {
+    const host = refPokemon(state, entry.from);
+    return host !== undefined && topUid(host) === narrowTo;
+  });
 }
 
 /** What a card IS, for the purpose of "would taking this one rather than that
@@ -16572,12 +16981,16 @@ export function discardableTools(
   // (D539): the falsifier the block above named (a second printed Tool-discard zone)
   // fired. Absent is the opponent's side alone, byte for byte.
   sides?: "both",
+  /** 🆕🆕🆕 D565 — Ruffian's picked body (`discardTools.bodyUid`): only the Tools on the
+      body whose TOP uid this is. Absent = every body on the named sides, byte for byte. */
+  bodyUid?: string,
 ): { uid: string; from: PokemonRef }[] {
   const out: { uid: string; from: PokemonRef }[] = [];
   const victims: readonly Seat[] = sides === "both" ? [seat, otherSeat(seat)] : [otherSeat(seat)];
   for (const victim of victims) {
     const side = state.players[victim];
     const collect = (pokemon: InPlayPokemon, from: PokemonRef) => {
+      if (bodyUid !== undefined && topUid(pokemon) !== bodyUid) return;
       for (const uid of pokemon.tools) out.push({ uid, from });
     };
     if (side.active !== null) collect(side.active, { seat: victim, spot: { spot: "active" } });
@@ -17123,7 +17536,7 @@ function searchNote(
       number reaches the HUD through `prompt.max` regardless, so nothing is hidden and
       nothing leaks. Pinned byte-for-byte in `benchCountedHandSearch.test.ts` §2. */
   groups: readonly { filter: CardFilter; max: SearchDeckMax }[],
-  dest: "bench" | "hand" | "deckTop" | "discard",
+  dest: "bench" | "hand" | "deckTop" | "discard" | "attachToSelf",
   max: number,
   /** 🆕 D342 — the op's `exact`. The heading has to say WHICH pick it is, because
       the dialog's Confirm is disabled until the floor is met and a caption that
@@ -17168,7 +17581,10 @@ function searchNote(
         : // 🆕🆕🆕 D557 — Brilliant Blender's print: "…for up to 5 cards and discard them."
           dest === "discard"
           ? "and discard them"
-          : "into your hand";
+          : // 🆕🆕🆕 D565 — Impromptu Carrier's print: "…and attach it to this Pokémon."
+            dest === "attachToSelf"
+            ? "and attach it to this Pokémon"
+            : "into your hand";
   // 🆕 D336 — THE SINGLE-GROUP ARM IS THE OLD FUNCTION, BYTE FOR BYTE, and it
   // reads the CLAMPED `max` rather than the group's own: a bench search whose
   // printed 3 is cut to 2 by `benchSpace` must caption the 2 the dialog will

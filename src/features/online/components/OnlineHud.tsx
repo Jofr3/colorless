@@ -1424,6 +1424,8 @@ const CHOOSE_CARDS_VERB: Record<
   deckTop: { mandatory: "Put on top", upTo: "Put on top" },
   discard: { mandatory: "Discard", upTo: "Discard" },
   evolve: { mandatory: "Evolve", upTo: "Evolve" },
+  // 🆕🆕🆕 D565 — Impromptu Carrier's "…and attach it to this Pokémon" (an up-to search).
+  attach: { mandatory: "Attach", upTo: "Attach" },
 };
 
 /** chooseCards (§15.E / §7.1 / §7.5) — pick min..max cards: a deck search, a

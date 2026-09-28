@@ -159,7 +159,8 @@ const NIGHT_JOKER = "Choose 1 of your Benched N's Pokémon's attacks and use it 
 /** Team Rocket's Giovanni — flagged, the parameterised switch + "If you do". */
 const GIOVANNI =
   "Switch your Active Team Rocket's Pokémon with 1 of your Benched Team Rocket's Pokémon. If you do, switch in 1 of your opponent's Benched Pokémon to the Active Spot.";
-/** Team Rocket's Orbeetle "Rocket Brain" — flagged, the own→own counter move. */
+/** Team Rocket's Orbeetle "Rocket Brain" — the own→own counter move (flagged until 🆕🆕🆕 D565,
+    which built it on the sibling `moveCounterOwnChosen`). */
 const ROCKET_BRAIN =
   "As often as you like during your turn, you may move 1 damage counter from 1 of your Team Rocket's Pokémon to another of your Pokémon.";
 
@@ -929,7 +930,7 @@ describe("✅ LANDED BY D206 — Team Rocket's Giovanni sv10-174/-225/-238 (3 le
   });
 });
 
-describe("FLAGGED — Team Rocket's Orbeetle sv10-089/-198 (2 legal)", () => {
+describe("🆕🆕🆕 LANDED at D565 (was FLAGGED) — Team Rocket's Orbeetle sv10-089/-198 (2 legal)", () => {
   const IDS = ["sv10-089", "sv10-198"] as const;
 
   it("⚠️ every counter-move route ends on the OPPONENT's Active — driven", () => {
@@ -948,22 +949,32 @@ describe("FLAGGED — Team Rocket's Orbeetle sv10-089/-198 (2 legal)", () => {
     const settled = done.phase.kind === "effect:choose" ? mustApply(done, pick(BENCH_0)).state : done;
     expect(settled.players.p1.bench[0]?.damage).toBe(0);
     // ⚠️ THE FLAG: the counters went to the OPPONENT. Orbeetle needs them on the
-    // controller's other body, and no op in the union can put them there.
+    // controller's other body — 🆕🆕🆕 D565: ~~"and no op in the union can put them
+    // there"~~ (D539) — the sibling `moveCounterOwnChosen` does; THIS op still cannot.
     expect(settled.players.p1.bench[1]?.damage).toBe(0);
     expect(settled.players.p2.active?.damage).toBe(80);
   });
 
-  it("⚠️ and the amount is the printed word 'all', where Orbeetle prints 1", () => {
+  it("⚠️ and the amount is the printed word 'all', where Orbeetle prints 1 — so D565 built a SIBLING", () => {
     // A second missing piece on the same op: this row wants a BOUNDED amount and
     // a repeatable "as often as you like", where the anchor's only amount is the
-    // whole pile. Two axes, so the row is flagged rather than forced.
+    // whole pile. Two axes, so the row was flagged rather than forced — and 🆕🆕🆕
+    // D565 built it on its OWN op rather than widening this one (INVERTED from
+    // "was half-built"): one counter, own → own, `oncePerTurn: false`.
     expect(deriveAttackEffect(TAIL_SWAP)).toEqual([{ op: "moveCountersToDefender" }]);
     expect(ROCKET_BRAIN).toContain("move 1 damage counter");
     expect(ROCKET_BRAIN).toContain("to another of your Pokémon");
     for (const id of IDS) {
       const program = programFor(id);
-      expect(program?.abilities, `${id} was half-built`).toBeUndefined();
-      expect(program?.triggered, `${id} was half-built as a trigger`).toBeUndefined();
+      expect(program?.abilities, `${id} is built`).toEqual([
+        {
+          name: "Rocket Brain",
+          oncePerTurn: false,
+          activeOnly: false,
+          program: [{ op: "moveCounterOwnChosen", ownerPokemon: "Team Rocket" }],
+        },
+      ]);
+      expect(program?.triggered, `${id} is not a trigger`).toBeUndefined();
     }
   });
 });

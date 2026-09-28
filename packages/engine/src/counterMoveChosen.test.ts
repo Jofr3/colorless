@@ -87,7 +87,8 @@ const CHOSEN_OP = { op: "moveCountersChosen" } as const;
 const FAMILY = [
   { surface: "attack:Extended Damagriiigus", ids: ["sv10.5w-040", "sv10.5w-123"], built: true },
   { surface: "ability:Adrena-Brain", ids: ["sv06-095", "sv06.5-072", "sv08.5-044"], built: false },
-  { surface: "ability:Rocket Brain", ids: ["sv10-089", "sv10-198"], built: false },
+  // 🆕🆕🆕 D565 — `built: true` (was false): on the SIBLING op `moveCounterOwnChosen`, not this one.
+  { surface: "ability:Rocket Brain", ids: ["sv10-089", "sv10-198"], built: true },
   { surface: "attack:Strange Hacking", ids: ["sv06-082"], built: false },
 ] as const;
 
@@ -179,13 +180,19 @@ describe("the census — re-derived, per surface, both scopes", () => {
     // nothing else), and D206 added the two ABILITY surfaces but not Alakazam's
     // attack, whose destination is chosen on the OPPONENT's own board.
     const built = FAMILY.filter((row) => row.built);
-    expect(built).toHaveLength(1);
-    expect(built.flatMap((row) => row.ids)).toEqual(["sv10.5w-040", "sv10.5w-123"]);
-    // …and the other three are refused on a MECHANISM each, not on a predicate:
-    // an amount prompt (`up to 3`), an unbounded repeat (`as often as you like`),
-    // and a many-to-many assignment (`in any way you like`). Each is a wire or a
-    // phase change; none is a rider this op could grow.
-    expect(FAMILY.filter((row) => !row.built).flatMap((row) => row.ids)).toHaveLength(6);
+    // 🆕🆕🆕 D565 — 1 → 2 surfaces built: Rocket Brain, on the SIBLING `moveCounterOwnChosen`.
+    expect(built).toHaveLength(2);
+    expect(built.flatMap((row) => row.ids)).toEqual(["sv10.5w-040", "sv10.5w-123", "sv10-089", "sv10-198"]);
+    expect(programFor("sv10-089")?.abilities?.[0]?.program).toEqual([
+      { op: "moveCounterOwnChosen", ownerPokemon: "Team Rocket" },
+    ]);
+    // …and the other two are refused on a MECHANISM each, not on a predicate:
+    // an amount prompt (`up to 3`) and a many-to-many assignment (`in any way you
+    // like`). Each is a wire or a phase change; none is a rider this op could grow.
+    // 🆕🆕🆕 D565 — ~~"an unbounded repeat (`as often as you like`)"~~ (D539): WITHDRAWN,
+    // and already false — an Ability with `oncePerTurn: false` repeats one activation at a
+    // time (Baxcalibur, Emboar, Iono's Bellibolt); Rocket Brain is built. Six → four.
+    expect(FAMILY.filter((row) => !row.built).flatMap((row) => row.ids)).toHaveLength(4);
   });
 });
 
@@ -227,6 +234,12 @@ describe("the anchor — one clause, one regex, NO capture", () => {
       // because the census says no chosen-destination printing prints one, and a
       // capture here would derive a reading no card has. The day such a card is
       // printed this line moves to the "derives" list, loudly.
+      // 🆕🆕🆕 D565 (D539) — ~~"the census says no chosen-destination printing prints
+      // one"~~ is WITHDRAWN: Rocket Brain (sv10-089/-198) prints "1 of your Team
+      // Rocket's Pokémon to another of your Pokémon". This line STILL refuses and does
+      // not move: that printing is an Ability built on the sibling `moveCounterOwnChosen`
+      // (one counter, any own source, an own destination), not THIS sentence, which no
+      // card prints with a possessive.
       "Move all damage counters from 1 of your Benched Team Rocket's Pokémon to 1 of your opponent's Pokémon.",
       // THE AMOUNT — Munkidori's shape, and this op has no field to bound it with.
       "Move up to 3 damage counters from 1 of your Benched Pokémon to 1 of your opponent's Pokémon.",

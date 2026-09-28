@@ -5614,7 +5614,13 @@ export type EffectOp =
         • ⏹️ Team Rocket's Orbeetle sv10-089/-198 "Rocket Brain" (ability, 2) —
           *"**As often as you like** during your turn"* is an unbounded repeat the
           phase model has no shape for, and its destination is the controller's
-          OWN board.
+          OWN board. 🆕🆕🆕 **D565 (D539) — "AN UNBOUNDED REPEAT THE PHASE MODEL HAS
+          NO SHAPE FOR" IS WITHDRAWN, AND IT WAS ALREADY FALSE:** an Ability with
+          `oncePerTurn: false` is used as often as the player likes, one activation at
+          a time (Baxcalibur, Emboar, Iono's Bellibolt). ✅ BUILT at D565 on the
+          SIBLING op `moveCounterOwnChosen` (below), not on this one: its source is
+          ANY own body, its destination is the controller's OWN board and it moves ONE
+          counter.
         • ⏹️ Alakazam sv06-082 "Strange Hacking" (attack, 1) — *"any number …
           **in any way you like**"* is a many-to-many assignment, `attachCards`'
           shape rather than this one, and both ends sit on the opponent's board.
@@ -5631,11 +5637,54 @@ export type EffectOp =
           it; the sweep above says NO chosen-destination printing carries a
           possessive, in either scope, so a rider here would be a reading nothing
           prints — D138's own rule (take the width the printing measures), which
-          this op's whole family is built on. The two ops still share the SOURCE
+          this op's whole family is built on. 🆕🆕🆕 **D565 (D539) — "NO
+          chosen-destination printing carries a possessive" IS WITHDRAWN**: Rocket
+          Brain's SOURCE prints *"1 of your **Team Rocket's** Pokémon"*. The rider
+          still does not belong HERE — that printing is built on the sibling
+          `moveCounterOwnChosen`, whose `ownerPokemon` is required — so this op's
+          no-rider conclusion stands for its own two printings (Cofagrigus). The two ops still share the SOURCE
           candidate helper (`ownBenchRefs`), which is the part that could drift;
           `subgroupRefs` is the narrowing D205's printing bought and this one did
           not. */
       fromBench?: number;
+    }
+  /** 🆕🆕🆕 **D565 — MOVE ONE DAMAGE COUNTER BETWEEN TWO OF THE CONTROLLER'S OWN BODIES,
+      THE SOURCE IN A PRINTED OWNER SUBGROUP.** Team Rocket's Orbeetle `sv10-089`/`-198`
+      "Rocket Brain" (Ability, **2 legal**): *"As often as you like during your turn, you
+      may move 1 damage counter from 1 of your Team Rocket's Pokémon to another of your
+      Pokémon."*
+
+      🛑 **A SIBLING OF `moveCountersChosen` AND NOT A WIDENING OF IT.** That op moves ALL
+      counters from an own BENCHED body to an OPPONENT body; this one moves ONE counter from
+      ANY own body (the Active included) to ANOTHER own body. Source zone, destination seat,
+      the amount and the §11 question all differ — D131's widen-don't-add rule licenses a
+      field only when everything downstream of the shared part is identical, and nothing is.
+
+      TWO QUESTIONS, ONE PARK EACH, D216's shape verbatim: **question 1** is the SOURCE — an
+      own body carrying damage whose TOP card passes the `ownerPokemon` predicate (the bare
+      owner string `"Team Rocket"`, through `subgroupRefs`, the one predicate
+      `moveCountersToDefender` and the deck searches share); **question 2** is the
+      DESTINATION — any OTHER own body. Each question is FORCED when it has one answer (the
+      M1 rule). `from` is the first answer, ENGINE-WRITTEN (never authored) — inline when the
+      source is forced, spliced by `continuationOps` when it parks — exactly
+      `moveCountersChosen.fromBench`, widened to a `PokemonTarget` because the source may be
+      the Active.
+
+      ⚠️ **A SELF-KNOCK-OUT IS REACHABLE AND IS THE ENGINE'S, NOT THIS OP'S.** Moving a
+      counter onto an own body can reach its HP; the op only places, and `settleProgram` →
+      `resolveMidTurnKnockOuts` sweeps it with the Prize to the OPPONENT (§8.1). The Ability
+      is `oncePerTurn: false` — the printed *"as often as you like"* (Baxcalibur, Emboar,
+      Iono's Bellibolt). `programPlayable` refuses it when no damaged own Team Rocket's body
+      or no OTHER own body exists (a use that could only whiff). No §11 question: the
+      Ability is not an attack. A new `EffectOp` member (D125) — it parks, so it rides
+      `EffectContinuation.pendingOp`; `MATCH_RECORD_VERSION` holds (decisions.md D565). */
+  | {
+      op: "moveCounterOwnChosen";
+      /** The printed owner subgroup of the SOURCE, the bare owner name. Required: the one
+          printing names one. */
+      ownerPokemon: string;
+      /** The SOURCE, once question 1 is answered. Engine-written only. */
+      from?: PokemonTarget;
     }
   /** Spread damage (§8.5): place `amount` HP of damage on EACH Benched Pokémon of
       the side `target` names. Weakness/Resistance NEVER apply to Benched Pokémon,
@@ -7003,8 +7052,19 @@ export type EffectOp =
           prompt's `dest` already spells `"discard"` (lookAtTopN's D241 value), so no
           wire or HUD shape moves; the caption is the print (*"…and discard them."*).
           A UNION WIDENING (D125): no shipped producer moves and `MATCH_RECORD_VERSION`
-          holds. ~~Brilliant Blender "needs vocabulary"~~ (D556 (7)(iii)) — PAID here. */
-      dest: "bench" | "hand" | "deckTop" | "discard";
+          holds. ~~Brilliant Blender "needs vocabulary"~~ (D556 (7)(iii)) — PAID here.
+          🆕🆕🆕 **D565 — `"attachToSelf"`, Farfetch'd `sv06-132` "Impromptu Carrier" (1
+          legal): *"…you may search your deck for a Pokémon Tool card and attach it to this
+          Pokémon. Then, shuffle your deck."*** The search park, prompt, reveal rule and the
+          trailing shuffle are shared; only the PLACEMENT differs — the pick is attached as a
+          Tool to the program's own body (`ctx.sourceUid`), §7.4's one-Tool rule enforced
+          (an occupied slot attaches nothing and the card stays in the deck), with
+          `TOOL_ATTACHED` as `attachTool` emits it. ⚠️ **THE CANDIDATES ARE SIMULATED TOOLS
+          ONLY** (R-IC1): `toolCardSimulated` (continuous.ts) is the ONE predicate `attachTool`
+          and this offer share — an unsimulated Tool would occupy the slot doing nothing. The
+          handPlayBarred Tool bar does NOT apply (R-IC2: this is not a play from hand). The
+          chooseCards prompt's `dest` gains `"attach"`. A union WIDENING (D125). */
+      dest: "bench" | "hand" | "deckTop" | "discard" | "attachToSelf";
       /** 🆕🆕🆕 **D514 — `"any"` IS THE PRINTED *"any number of"*, AND IT IS
           `lookAtTopN.max`'s MEMBER (D333) AT A THIRD OP RATHER THAN A NEW IDEA.**
           *"You may search your deck for **any number of** Fennel cards, reveal them,
@@ -8370,8 +8430,44 @@ export type EffectOp =
       ⚠️ **A SILENT NO-OP WHEN `sourceRef` IS EMPTY**, `sourceRef`'s own contract:
       the body was evolved over, bounced or Knocked Out earlier in the same program,
       and "this Pokémon" then points at nothing. Every other source-reading op in
-      this file whiffs the same way rather than throwing. */
-  | { op: "returnSelf"; dest?: "deck" | "hand" | "discard"; attachmentsTo?: "discard" }
+      this file whiffs the same way rather than throwing.
+
+      🆕🆕🆕 **D565 — `"deckTop"` IS THE FOURTH ZONE, AND IT IS THE FIRST THAT DOES NOT
+      SHUFFLE.** Misty's Psyduck `sv10-045`/`-193` "Flustered Leap": *"…discard all cards
+      from this Pokémon and put this Pokémon on top of your deck."* — body → deckTop ·
+      attachments → DISCARD (`attachmentsTo: "discard"`, Crobat ex's split). The pile is
+      PREPENDED to the deck, with NO shuffle and NO `SHUFFLE` event: *"on top of"* is a
+      position and *"into your deck"* is a shuffle, the same pair `searchDeck.dest`'s
+      `"deckTop"` (D342) and the chooseCards prompt spell apart. `POKEMON_RETURNED.dest`
+      widens by the same member. The printing is a BASIC, so its body pile is ONE card;
+      an evolved body's "all cards from this Pokémon" is unreachable (a note, not a
+      reading — no Basic evolves in place). A union WIDENING (D125): every shipped row is
+      byte-identical and `MATCH_RECORD_VERSION` holds. */
+  | { op: "returnSelf"; dest?: "deck" | "deckTop" | "hand" | "discard"; attachmentsTo?: "discard" }
+  /** 🆕🆕🆕 **D565 — THE IN-PLACE SWAP FROM THE DECK: ZERO TO HERO.** Palafin `sv06-060`
+      (**1 legal**): *"Once during your turn, when this Pokémon moves from the Active Spot to
+      the Bench, you may search your deck for a Palafin ex and switch it with this Pokémon.
+      Any attached cards, damage counters, Special Conditions, turns in play, and any other
+      effects remain on the new Pokémon. If you switched a Pokémon in this way, put this card
+      into your deck. Then, shuffle your deck."* — and with it Palafin ex ×4's ONLY legal
+      route into play (`CardProgram.intoPlayOnlyVia`, D563's R-PF).
+
+      Searches the controller's deck for a card NAMED `name` (the interchangeable printings
+      collapse to ONE forced pick, D42 — the first in deck order), REPLACES THE TOP of the
+      program's own body's stack IN PLACE (`ctx.sourceUid`), so every other `InPlayPokemon`
+      field — attachments, damage, conditions, `turnPlayed`, `evolvedTurn`, every body
+      effect — rides along untouched; puts the replaced card into the deck, shuffles, and
+      emits `POKEMON_SWAPPED_FROM_DECK` then `SHUFFLE`. A failed search (no match) still
+      shuffles (R-ZH2: the print's *"Then, shuffle your deck"* is unconditional).
+
+      🛑 **NON-PARKING BY CONSTRUCTION, AND IT HAS TO BE**: the watched-trigger runner drops
+      parks (triggers.ts `sweepTriggers` keeps `.state`), so the *"you may"* auto-resolves
+      YES (R-ZH1, UNRULED — Palafin ex gives up 2 Prizes, so declining has real value; the
+      reversal condition is a parkable watched runner). ⚠️ It does NOT run `onEvolve` and
+      does not touch `turnPlayed`/`evolvedTurn` (it is not an evolution — the print says the
+      turns in play REMAIN), and it BYPASSES `intoPlayOnlyVia`, because it IS the licensed
+      route. A new `EffectOp` member (D125) that never parks, so no continuation can hold it. */
+  | { op: "switchWithDeckNamed"; name: string }
   /** 🆕 D345 — THE PRINTED SELF-KNOCK-OUT COST. *"**If you use this Ability, this
       Pokémon is Knocked Out.**"* — Dusclops `sv06.5-019`/`-069`/`sv08.5-036` and
       Dusknoir `sv06.5-020`/`-070`/`sv08.5-037` "Cursed Blast", plus Magneton
@@ -10211,6 +10307,38 @@ export type EffectOp =
       count: number;
       recordAs?: EffectSlot;
     }
+  /** 🆕🆕🆕 **D565 — THE MILL FROM THE OTHER END: discard the BOTTOM `count` cards of the
+      controller's OWN deck.** Misty's Psyduck `sv10-045`/`-193` "Flustered Leap" — *"you
+      may discard the bottom card of your deck. If you do, discard all cards from this
+      Pokémon and put this Pokémon on top of your deck."* — **2 legal printings**, its
+      first half. Files the milled uids under `recordAs` so the §9.2 *"If you do"*
+      (`recordGate`) can read that the discard happened: an EMPTY deck mills nothing, files
+      the empty list (the overwrite rule `discardDeckTop` states) and the gate closes —
+      nothing happens (R-FL's first half).
+
+      🛑 **A SIBLING OP AND NOT A `from?: "bottom"` RIDER ON `discardDeckTop`, AND THE
+      NAMING RULE IS WHAT DECIDES IT.** `discardDeckTop` is a PERSISTED literal (it rides
+      `EffectContinuation.rest` behind any park), so it cannot be renamed to something
+      end-neutral without a `MATCH_RECORD_VERSION` bump; a rider would therefore make
+      `{ op: "discardDeckTop", from: "bottom" }` a value whose name says the opposite of
+      what it does — a name that lies, which is the one thing a rider may not buy.
+      Everything the two share is three lines (a slice, a filing, a `withSide`); what
+      differs is the END and the EVENT, and the event is its own too
+      (`DECK_BOTTOM_DISCARDED` — `DECK_TOP_DISCARDED`'s caption says *"from the top of
+      their deck"*, and reusing it would make the log lie in the same way).
+
+      ⚠️ **NO `whose`, ON PURPOSE** (D231/D412's positive statement): the one printing
+      says *"your deck"*, so the controller's deck is the only reachable value and a field
+      would be a rider no printing varies. The count is a number for the same reason
+      `discardDeckTop.count` is. A short deck gives up what it has (`slice` clamps, as the
+      top mill does); milling to zero does not end the game (§14.3 is checked at the
+      draw). A new `EffectOp` member (D125): no shipped producer moves, and a 0.448
+      reader never sees it outside a D565 program. */
+  | {
+      op: "discardDeckBottom";
+      count: number;
+      recordAs?: EffectSlot;
+    }
   /** SEARCH the controller's whole deck for up to `max` Energy cards matching
       `filter` and ATTACH them straight onto the controller's own in-play Pokémon
       — the deck-SEARCH sibling of `attachFromTop`, which reaches only a window on
@@ -10610,8 +10738,12 @@ export type EffectOp =
           reads it in place of `ctx.sourceUid`; the caption says "that Pokémon". The
           single narrowest key — a uid rather than a spot for `from: "self"`'s own
           reason (the uid survives a Bench compaction; nothing inside one program moves
-          it today). Meaningful only with `from: "self"`; absent = `ctx.sourceUid`,
-          every pre-D561 program. It rides `EffectContinuation.pendingOp` when the pick
+          it today). ~~Meaningful only with `from: "self"`~~ (WITHDRAWN at D565, D539);
+          absent = `ctx.sourceUid`, every pre-D561 program. 🆕🆕🆕 **D565 — AND WITH `from:
+          "opponentChosen"`**
+          (Ruffian): the one opponent body `discardToolAndSpecialEnergyChosen`'s answer
+          named — `discardableEnergies` keeps only that body's Energy. A WIDENING of an
+          existing engine-written key (D131), not a new `from` member. It rides `EffectContinuation.pendingOp` when the pick
           parks; `MATCH_RECORD_VERSION` holds at 35 and the 0.444 ROLLBACK reading is
           NAMED: a 0.444 reader resolves `"self"` off the Trainer's uid, finds no body,
           and the resumed discard whiffs. */
@@ -10842,8 +10974,37 @@ export type EffectOp =
 
       Both keys are OPTIONAL or WIDENINGS (D125): every shipped producer is
       byte-identical and a v35 record cannot hold either, so `MATCH_RECORD_VERSION`
-      holds. */
-  | { op: "discardTools"; count: number | "all"; sides?: "both" }
+      holds.
+
+      🆕🆕🆕 **D565 — THE `from` REFUSAL GAINS A BODY NARROWING, AND IT IS STILL NOT A
+      `from`.** Ruffian `sv09-157`/`-181` (Supporter, 2 legal): *"Discard a Pokémon Tool and
+      a Special Energy from **1 of your opponent's Pokémon**."* The zone is unchanged (the
+      opponent's in-play bodies); what is new is that ONE body, picked first, narrows the
+      offer — `bodyUid`, ENGINE-WRITTEN by `discardToolAndSpecialEnergyChosen`'s answer (never
+      authored), read by `discardableTools`. ⚠️ **WITH `bodyUid` THE DISCARD IS MANDATORY**:
+      the print says *"Discard a Pokémon Tool"*, no *"up to"*, so an offer no bigger than
+      `count` comes off INLINE (the M1 rule) rather than parking the `upTo` decline; §7.4's one
+      Tool per Pokémon makes that every reachable board. An OPTIONAL key (D125): absent, every
+      shipped producer is byte-identical. */
+  | { op: "discardTools"; count: number | "all"; sides?: "both"; bodyUid?: string }
+  /** 🆕🆕🆕 **D565 — THE BODY-FIRST PICK: RUFFIAN.** `sv09-157`/`-181` (Supporter, **2
+      legal**): *"Discard a Pokémon Tool and a Special Energy from 1 of your opponent's
+      Pokémon."* ONE question — WHICH opponent body — and its answer buys the two discards,
+      each narrowed to that body: `discardTools { count: 1, bodyUid }` and `discardEnergy {
+      from: "opponentChosen", filter: specialEnergy, count: 1, bodyUid }` (D131: the existing
+      engine-written `discardEnergy.bodyUid` WIDENS to `"opponentChosen"`, so no new `from`
+      member). Both halves through one answer helper (`ruffianBodyAnswered`, interpreter.ts),
+      forced inline when one body qualifies and spliced by `continuationOps` when the pick
+      parks — D216/D309/D561's shape.
+
+      The candidates are the opponent's bodies carrying a Tool OR a Special Energy, filtered
+      through `unshieldedRefs` (the trainer channel — a shielded body leaves the offer and
+      files its refusal). **R-RU1: a body carrying only ONE of the two is a legal pick, and the
+      card does what it can** (the half with nothing to take whiffs silently). Field-free: the
+      one printing names one Tool, one Special Energy, one opponent body. `programPlayable`
+      refuses the play when no body qualifies (D557's `discardTools` precedent). A new
+      `EffectOp` member (D125) that parks; `MATCH_RECORD_VERSION` holds (decisions.md D565). */
+  | { op: "discardToolAndSpecialEnergyChosen" }
   /** 🆕🆕🆕 **D548 — TURN 1 OF THE ACTOR'S OWN FACE-DOWN PRIZE CARDS FACE UP.** Cresselia
       `sv06.5-021` "Crescent Purge" (`censusAttackCorpus.ts:664`, **2 legal printings**),
       the COST half of *"You may turn 1 of your face-down Prize cards face up. If you do,
@@ -13786,6 +13947,20 @@ const COUNTER_MOVE_TO_DEFENDER =
 // damage counter" and D131 made about "the top 1 cards", one field over. The day
 // such a printing exists, this anchor gains the group and the op gains the
 // rider, together, and the census line above is what says so.
+//
+// 🆕🆕🆕 D565 (D539) — ~~"found no chosen-destination printing with a
+// possessive"~~ and ~~"the day such a printing exists, this anchor gains the
+// group and the op gains the rider"~~ are WITHDRAWN: Team Rocket's Orbeetle
+// `sv10-089`/`-198` "Rocket Brain" prints *"move 1 damage counter from 1 of
+// your **Team Rocket's** Pokémon to another of your Pokémon"* — a possessive
+// source with a chosen destination. It did NOT land here: it is an Ability
+// (programs are hand-written, never derived through this anchor), it moves ONE
+// counter rather than "all", its source is any own body rather than a Benched
+// one, and its destination is the controller's own board — so it is built on
+// the sibling op `moveCounterOwnChosen`, whose `ownerPokemon` is REQUIRED. This
+// anchor and `moveCountersChosen` keep no group and no rider, because the ONLY
+// printing of THIS tail (Cofagrigus) still prints none; the no-capture
+// conclusion stands for this anchor, and no longer for the whole family.
 const COUNTER_MOVE_TO_CHOSEN =
   /^Move all damage counters from 1 of your Benched Pokémon to 1 of your opponent['’]s Pokémon\.$/;
 // The PUT on the defender (D139) — "Put {N} damage counters on your opponent's

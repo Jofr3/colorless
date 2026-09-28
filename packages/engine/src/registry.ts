@@ -136,6 +136,19 @@ export interface AbilityProgram {
       Bench", "is in your hand") are still the population a generalising slice
       would have to serve.
 
+      🆕🆕🆕 **D565 ASKED A SECOND TIME AND THE ANSWER IS STILL NO — THE THIRD
+      PREDICATE IS A SPOT.** Misty's Psyduck `sv10-045`/`-193` "Flustered Leap" prints
+      *"if this Pokémon **is on your Bench**"*, one of the three predicates named above,
+      and it looks like the second per-body printing. It is not one: "is on your Bench"
+      names WHERE the body stands, which is exactly the question `activeOnly` answers
+      for the other spot, so it is served by `benchOnly` below (`activeOnly`'s mirror,
+      read at `activeOnly`'s three readers) and NOT by widening this field or by folding
+      a spot into `abilityBodyGateMet`. A spot is a property of the TARGET the action
+      names, not of the body's contents. So this field STILL serves exactly one
+      printing, and the per-body population a generalising slice would have to serve is
+      now the other two: Munkidori's *"has any {D} Energy attached"* and Klinklang's
+      *"is in your hand"*.
+
       ⚠️ **REMAINING HP IS `effectiveMaxHp − damage`, NOT `hpOf − damage`.** The
       printed word is *"remaining"*, and a Bravery Charm on the holder moves the
       maximum — so a body at 30 damage under a Charm has 40 remaining, not 30, and
@@ -151,6 +164,26 @@ export interface AbilityProgram {
   /** The Ability may only be used while this Pokémon is the Active (Chien-Pao's
       "if this Pokémon is in the Active Spot"). */
   activeOnly: boolean;
+  /** 🆕🆕🆕 **D565 — `activeOnly`'s MIRROR: the Ability may only be used while this
+      Pokémon is on the BENCH** (Misty's Psyduck `sv10-045`/`-193` "Flustered Leap":
+      *"Once during your turn, if this Pokémon is on your Bench, …"*). A SPOT gate, and
+      read at EXACTLY `activeOnly`'s three readers — `useAbility` (the reject,
+      `ABILITY_BENCH_ONLY`), `redactedAbilitiesOf` (the online HUD) and `GameHud` (the
+      local one) — for `playableIf`'s afford-then-reject reason (D190/D222). NOT folded
+      into `abilityBodyGateMet`: that funnel asks about the BODY (its remaining HP), and a
+      spot is a fact about the action's TARGET, which is how `activeOnly` has always been
+      read. Optional and absent-means-false, so every existing Ability row is
+      byte-identical.
+
+      🛑 **`activeOnly: true` TOGETHER WITH `benchOnly: true` IS UNSATISFIABLE** — no
+      spot is both — and such a row could never be used. No row carries both;
+      `abilityBundleD565.test.ts` walks the registry and pins it.
+
+      ⚠️ **MEOWSCARADA "SHOWTIME" `sv09-018` PRINTS THE SAME CLAUSE AND IS DELIBERATELY
+      NOT RETROFITTED**: its doc block makes `programPlayable` (`switchActive
+      fromSource`'s candidate set) the enforcing gate on purpose, because that is what
+      makes the `sourceUid` read site drivable by a real card. See its block. */
+  benchOnly?: true;
   /** The Ability ENDS the controller's turn once its program completes
       (Koraidon "Dino Cry": "If you use this Ability, your turn ends."). Folded by
       flow.ts settleProgram — instead of returning to turn:action, it seeds the
@@ -280,6 +313,16 @@ export interface TriggeredAbility {
       filtering after the fact — one choke, two disjoint populations, and the
       §9 ability-lock still applies to both. */
   opponentAction?: true;
+  /** 🆕🆕🆕 **D565 — THE PRINTED *"Once during your turn"* ON A TRIGGERED ABILITY.** Palafin
+      `sv06-060` "Zero to Hero": *"Once during your turn, when this Pokémon moves from the
+      Active Spot to the Bench, …"*. Keyed through `abilityUsedKey` (cardplay.ts — the ONE
+      funnel for the key; its parameter WIDENED to take a trigger row) on the EXISTING
+      `TurnAllowances.abilitiesUsed`: no new state key. Read by triggers.ts `sweepTriggers`
+      only — the one runner that serves this timing's self direction — which skips a spent
+      row and WRITES the key before the program runs. The lock matters beyond the rules
+      text because a failed search still shuffles (R-ZH2), and RNG is state. Absent on every
+      other triggered row, which is byte-identical. */
+  oncePerTurn?: true;
   /** 🆕 D319 — *"The effect of {name} doesn't stack."* — the printed clause that
       makes a SECOND copy of the same Ability contribute nothing. For a trigger
       that means the board sweep fires the ability NAME at most once, however
@@ -3427,11 +3470,15 @@ export interface CardProgram {
       Basic-only, so neither can reach a Stage 1 (the route enumeration is in
       `decisions.md` D563).
 
-      ⚠️ **R-PF: PALAFIN ex IS UNPLAYABLE UNTIL ZERO TO HERO SHIPS.** Palafin `sv06-060`
+      ~~⚠️ **R-PF: PALAFIN ex IS UNPLAYABLE UNTIL ZERO TO HERO SHIPS.** Palafin `sv06-060`
       "Zero to Hero" (an in-place swap from the deck) is NOT built, so no route licenses
-      Palafin ex today. That is print-correct: before D563 the engine let Palafin ex
-      evolve from Finizen out of the hand, which the card forbids. Nothing is persisted;
-      no `MATCH_RECORD_VERSION` bump. */
+      Palafin ex today.~~ 🆕🆕🆕 **D565 — R-PF IS CLOSED: ZERO TO HERO IS BUILT** (`ZERO_TO_HERO`,
+      the non-parking `switchWithDeckNamed`), and it is now Palafin ex's ONE route into
+      play — it does not read this key, because it IS the licence the key names. The two
+      refusals below stay exactly as they were (a hand evolve and a deck evolve are still
+      not the named Ability). The print-correctness note stands: before D563 the engine let
+      Palafin ex evolve from Finizen out of the hand, which the card forbids. Nothing is
+      persisted; no `MATCH_RECORD_VERSION` bump. */
   intoPlayOnlyVia?: "Zero to Hero";
   /** The `trainer` play ENDS the controller's turn once its program completes
       (Katy: "Shuffle your hand into your deck. Then, draw 8 cards. Your turn
@@ -9013,7 +9060,14 @@ const RAPID_VERNIER: CardProgram = {
 
     ⚠️ **NO ENERGY TAIL** — this is the bare pronoun switch, which is exactly the
     contrast worth keeping: the `fromSource` rider is one field and it is not
-    welded to Iron Leaves' second clause. */
+    welded to Iron Leaves' second clause.
+
+    🆕🆕🆕 **D565 — NOT RETROFITTED ONTO `benchOnly`, ON PURPOSE.** Flustered Leap
+    (D565) prints the same *"if this Pokémon is on your Bench"* and is gated by the new
+    `AbilityProgram.benchOnly`; this row keeps `programPlayable` as its enforcing gate
+    for the reason above (an Active Meowscarada has no bench ref to switch with, and
+    that refusal is what drives the `sourceUid` read site). Adding the flag here would
+    make the flag answer first and leave that read site undriven. */
 const SHOWTIME: CardProgram = {
   abilities: [
     {
@@ -14876,10 +14930,119 @@ const TORRENTIAL_HEART: CardProgram = {
 /** 🆕🆕🆕 D563 — Palafin ex `svp-126` / `sv06-061` / `sv06-193` / `sv08.5-151` "Hero's
     Spirit" — *"Put this Pokémon into play only with the effect of Palafin's Zero to Hero
     Ability."* The card-borne `intoPlayOnlyVia` (NOT a passive — a lock must not lift it):
-    refused at `evolve` and filtered out of `evolveFromDeckOffer`. **R-PF**: Zero to Hero
-    (Palafin `sv06-060`) is unbuilt, so Palafin ex has no legal route into play today. Its
-    attack "Giga Impact" derives exactly as before (no `attack` key). */
+    refused at `evolve` and filtered out of `evolveFromDeckOffer`. ~~**R-PF**: Zero to Hero
+    (Palafin `sv06-060`) is unbuilt, so Palafin ex has no legal route into play today.~~
+    🆕🆕🆕 **D565 — R-PF CLOSED:** Zero to Hero is built (`ZERO_TO_HERO` below), and its
+    in-place swap is Palafin ex's one legal route into play. Its attack "Giga Impact" derives
+    exactly as before (no `attack` key). */
 const HEROS_SPIRIT: CardProgram = { intoPlayOnlyVia: "Zero to Hero" };
+
+// ── 🆕🆕🆕 D565 — FOUR ABILITIES AND A SUPPORTER: 8 legal printings / 5 texts / 5 objects,
+//    plus Palafin ex ×4 made reachable. No Pokémon row carries an `attack` key: Sprinkle
+//    Water, Psychic, Mach Cut and Wave Splash keep deriving from their text (attack.ts).
+//    Readings: docs/decisions.md D565 (R-FL, R-RU1, R-IC1, R-IC2, R-ZH1, R-ZH2). ──
+
+/** 🆕🆕🆕 **D565 — Misty's Psyduck `sv10-045` / `sv10-193` (2 legal)** "Flustered Leap" —
+    *"Once during your turn, if this Pokémon is on your Bench, you may discard the bottom
+    card of your deck. If you do, discard all cards from this Pokémon and put this Pokémon
+    on top of your deck."* The NEW `benchOnly` spot gate (`activeOnly`'s mirror), the NEW
+    `discardDeckBottom` filing `moved`, the §9.2 `recordGate`, and `returnSelf`'s NEW
+    `"deckTop"` zone with Crobat ex's `attachmentsTo: "discard"` split. **R-FL**: an EMPTY
+    deck mills nothing, the gate closes and nothing happens; UNRULED half: the same card
+    uid replayed later in the turn stays locked by its `${uid}:Flustered Leap` key (what the
+    engine does, not a ruling — a card back in play may be a new Pokémon). (The card is a Basic,
+    so "all cards from this Pokémon" on an evolved body is unreachable — a note, not a
+    reading.) */
+const FLUSTERED_LEAP: CardProgram = {
+  abilities: [
+    {
+      name: "Flustered Leap",
+      oncePerTurn: true,
+      activeOnly: false,
+      benchOnly: true,
+      program: [
+        { op: "discardDeckBottom", count: 1, recordAs: "moved" },
+        {
+          op: "recordGate",
+          slot: "moved",
+          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
+          then: [{ op: "returnSelf", dest: "deckTop", attachmentsTo: "discard" }],
+        },
+      ],
+    },
+  ],
+};
+
+/** 🆕🆕🆕 **D565 — Team Rocket's Orbeetle `sv10-089` / `sv10-198` (2 legal)** "Rocket
+    Brain" — *"As often as you like during your turn, you may move 1 damage counter from 1 of
+    your Team Rocket's Pokémon to another of your Pokémon."* The NEW `moveCounterOwnChosen`
+    (source: a damaged own body in the `"Team Rocket"` subgroup, the Active included;
+    destination: ANOTHER own body). `oncePerTurn: false` — the printed *"as often as you
+    like"* (Baxcalibur, Emboar, Iono's Bellibolt). A lethal move is swept mid-turn and the
+    Prize goes to the OPPONENT. */
+const ROCKET_BRAIN: CardProgram = {
+  abilities: [
+    {
+      name: "Rocket Brain",
+      oncePerTurn: false,
+      activeOnly: false,
+      program: [{ op: "moveCounterOwnChosen", ownerPokemon: "Team Rocket" }],
+    },
+  ],
+};
+
+/** 🆕🆕🆕 **D565 — Ruffian `sv09-157` / `sv09-181` (Supporter, 2 legal)** — *"Discard a
+    Pokémon Tool and a Special Energy from 1 of your opponent's Pokémon."* The NEW body-first
+    `discardToolAndSpecialEnergyChosen`: one pick over the opponent's bodies carrying a Tool
+    or a Special Energy (shield-filtered), whose answer buys the two body-narrowed discards.
+    **R-RU1**: a body carrying only one of the two is a legal pick, and the card does what it
+    can. Refused by `programPlayable` when no body qualifies. */
+const RUFFIAN: CardProgram = { trainer: [{ op: "discardToolAndSpecialEnergyChosen" }] };
+
+/** 🆕🆕🆕 **D565 — Farfetch'd `sv06-132` (1 legal)** "Impromptu Carrier" — *"When you play
+    this Pokémon from your hand onto your Bench during your turn, you may search your deck for
+    a Pokémon Tool card and attach it to this Pokémon. Then, shuffle your deck."*
+    `onPlayToBench` (parks like a Trainer) + `searchDeck`'s NEW `dest: "attachToSelf"` + the
+    Nest Ball shuffle. The *"you may"* is the search's own `min: 0` (Dig Dig Dig's reading).
+    **R-IC1**: only SIMULATED Tools are offered (`toolCardSimulated`, the predicate
+    `attachTool` asks). **R-IC2**: the hand-play Tool bar does NOT apply — this is not a play
+    from hand. Its attack "Mach Cut" derives exactly as before (no `attack` key). */
+const IMPROMPTU_CARRIER: CardProgram = {
+  triggered: [
+    {
+      name: "Impromptu Carrier",
+      trigger: "onPlayToBench",
+      optional: true,
+      program: [
+        { op: "searchDeck", filter: { kind: "toolCard" }, dest: "attachToSelf", max: 1 },
+        { op: "shuffleDeck" },
+      ],
+    },
+  ],
+};
+
+/** 🆕🆕🆕 **D565 — Palafin `sv06-060` (1 legal)** "Zero to Hero" — *"Once during your turn,
+    when this Pokémon moves from the Active Spot to the Bench, you may search your deck for a
+    Palafin ex and switch it with this Pokémon. Any attached cards, damage counters, Special
+    Conditions, turns in play, and any other effects remain on the new Pokémon. If you
+    switched a Pokémon in this way, put this card into your deck. Then, shuffle your deck."*
+    `onActiveMovedToBench`'s NEW self direction (triggers.ts `runActiveBenchedTriggers`,
+    restricted to the moved body, behind the "during your turn" gate), the NEW trigger
+    `oncePerTurn`, and the NEW non-parking `switchWithDeckNamed` — Palafin ex ×4's licensed
+    route in (`intoPlayOnlyVia`, D563). **R-ZH1 (UNRULED)**: the *"you may"* auto-resolves
+    YES because the watched runner cannot park. **R-ZH2**: a failed search still shuffles and
+    spends the lock. "Wave Splash" derives exactly as before (no `attack` key). */
+const ZERO_TO_HERO: CardProgram = {
+  triggered: [
+    {
+      name: "Zero to Hero",
+      trigger: "onActiveMovedToBench",
+      optional: true,
+      oncePerTurn: true,
+      program: [{ op: "switchWithDeckNamed", name: "Palafin ex" }],
+    },
+  ],
+};
 
 const REGISTRY: Record<string, CardProgram> = {
   // Professor's Research (SV base prints)
@@ -15564,6 +15727,16 @@ const REGISTRY: Record<string, CardProgram> = {
   "sv10-173": TEAM_ROCKETS_FACTORY, // Team Rocket's Factory — played a "Team Rocket" Supporter this turn: draw 2
   "sv06-146": COMMUNITY_CENTER, // Community Center — played a Supporter this turn: heal 10 from each of your Pokémon
   "sv06.5-029": SHADOWY_ENVOY, // Crobat — played Janine's Secret Art this turn: draw until 8 in hand
+  // ── 🆕🆕🆕 D565 — four Abilities and a Supporter: 8 printings / 5 texts / 5 objects,
+  //    MID-MAP (D395/D396), so `raw[last]` does not move. No row authors an `attack` key. ──
+  "sv10-045": FLUSTERED_LEAP, // Misty's Psyduck — on the Bench: mill the bottom card; if you did, self to deck top, attachments discarded
+  "sv10-193": FLUSTERED_LEAP, // Misty's Psyduck (reprint)
+  "sv10-089": ROCKET_BRAIN, // Team Rocket's Orbeetle — as often as you like: 1 counter from a Team Rocket's Pokémon to another of yours
+  "sv10-198": ROCKET_BRAIN, // Team Rocket's Orbeetle (reprint)
+  "sv09-157": RUFFIAN, // Ruffian — a Tool and a Special Energy off 1 opponent's Pokémon
+  "sv09-181": RUFFIAN, // Ruffian (reprint)
+  "sv06-132": IMPROMPTU_CARRIER, // Farfetch'd — played to the Bench: search a Tool and attach it to itself
+  "sv06-060": ZERO_TO_HERO, // Palafin — Active to Bench, once per turn: switch in a Palafin ex from the deck
   // ── D190 — THE **STANDARD-LEGAL** REPRINT-ALIAS MAP (Tier 0 of
   //    `docs/reference/coverage-backlog-legal.md`). 22 printings, 9 map targets,
   //    ZERO new code: every row below prints a sentence that is already authored
@@ -16008,7 +16181,8 @@ const REGISTRY: Record<string, CardProgram> = {
   // `legal_standard = 1`, GROUPED BY SENTENCE — remote D1 `luminous`, 2026-08-07)
   // and not carried from the row. The same sweep's ONLY other hit on that shape
   // is `sv06-132`, a Pokémon-Tool DECK search on the same opening — a different
-  // mechanism, named here rather than left as a claim. Both cards below are
+  // mechanism, named here rather than left as a claim (🆕🆕🆕 still a different mechanism,
+  // and BUILT at D565 on `searchDeck { dest: "attachToSelf" }`). Both cards below are
   // Bloodmoon Ursaluna and are byte-identical, so no `fix-` demonstrator is owed:
   // `sv06.5-025` has been in `FIXTURE_POOL` since D168 with this Ability carried
   // verbatim and declared UNSIMULATED, and this row is what retires that word.

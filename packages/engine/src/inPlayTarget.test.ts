@@ -247,9 +247,11 @@ const IN_PLAY_TARGET_CENSUS = [
     card: "Team Rocket's Orbeetle",
     surface: "ability",
     ids: ["sv10-089", "sv10-198"],
-    landed: false,
+    // 🆕🆕🆕 D565 — LANDED (inverted from `landed: false`). ~~"No op moves counters between
+    // the controller's OWN two Pokémon at all"~~ (D539): `moveCounterOwnChosen` does.
+    landed: true,
     needs:
-      "⚠️ ABSENT FROM D200's FLAG TABLE. No op moves counters between the controller's OWN two Pokémon at all — the counter-move family is self→defender only.",
+      "⚠️ ABSENT FROM D200's FLAG TABLE. BUILT at D565 on the SIBLING op `moveCounterOwnChosen` (one counter, a damaged own Team Rocket's body → another own body, `oncePerTurn: false`) — not a widening of the self→defender family.",
   },
   {
     sentence: "Choose 1 of your Benched N's Pokémon's attacks and use it as this attack.",
@@ -873,7 +875,7 @@ function abilitySurface(id: string): unknown {
 }
 
 describe("the re-derived census — what landed, and what is still owed a piece", () => {
-  it("lands 16 in-play-target printings across FOUR ops, plus Spikemuth Gym", () => {
+  it("lands 18 in-play-target printings across FIVE ops, plus Spikemuth Gym (🆕🆕🆕 16 → 18 at D565)", () => {
     const landed = IN_PLAY_TARGET_CENSUS.filter((row) => row.landed);
     // 16 = D204's 7 (Iono's Bellibolt ex 5 + N's PP Up 1 + Marnie's Grimmsnarl ex
     // 1) + D205's 6 (Ethan's Ho-Oh ex 4 + Team Rocket's Wobbuffet 2) + D206's 3
@@ -881,7 +883,9 @@ describe("the re-derived census — what landed, and what is still owed a piece"
     // re-derived census finds. The denominator is unmoved: D205 re-derived every
     // id in this table against the live catalog and every one resolves to the
     // card D204 named; D206 re-resolved the three rows it touches the same way.
-    expect(landed.flatMap((row) => row.ids)).toHaveLength(16);
+    // 🆕🆕🆕 D565 — + Team Rocket's Orbeetle's 2 (Rocket Brain, `moveCounterOwnChosen`, the
+    // fifth op): 16 → 18 of the same 22.
+    expect(landed.flatMap((row) => row.ids)).toHaveLength(18);
     expect(IN_PLAY_TARGET_CENSUS.flatMap((row) => row.ids)).toHaveLength(22);
     for (const row of landed) {
       for (const id of row.ids) {
@@ -899,9 +903,9 @@ describe("the re-derived census — what landed, and what is still owed a piece"
 
   it("⚠️ every FLAGGED SURFACE is still UNBUILT — exact map or flag, never a plausible one", () => {
     const flagged = IN_PLAY_TARGET_CENSUS.filter((row) => !row.landed);
-    // 6 = Orbeetle 2 + Zoroark ex 4 (15 at D204 — Ethan's 4 and Wobbuffet's 2
-    // were built by D205, Giovanni's 3 by D206).
-    expect(flagged.flatMap((row) => row.ids)).toHaveLength(6);
+    // 4 = Zoroark ex 4 (15 at D204 — Ethan's 4 and Wobbuffet's 2 were built by D205,
+    // Giovanni's 3 by D206; 🆕🆕🆕 6 → 4 at D565, Orbeetle's 2 built).
+    expect(flagged.flatMap((row) => row.ids)).toHaveLength(4);
     for (const row of flagged) {
       for (const id of row.ids) {
         const program = programFor(id);

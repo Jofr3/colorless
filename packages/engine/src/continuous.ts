@@ -419,9 +419,24 @@ export function stadiumPoisonExtraCounters(state: GameState, top: Card | undefin
     through `passivesOf`: the card is in a hidden zone when this is asked, and a §9
     Ability-lock must not lift a restriction printed on the card being played. Here rather
     than at the two read sites because interpreter.ts takes no runtime edge to
-    registry.ts; read by `evolve` (turn.ts) and `evolveFromDeckOffer` (interpreter.ts). */
+    registry.ts; read by `evolve` (turn.ts) and `evolveFromDeckOffer` (interpreter.ts).
+    🆕🆕🆕 D565 — both reads are REFUSALS and stay so; the route the value names is Zero to
+    Hero's `switchWithDeckNamed` (interpreter.ts), which is BUILT and never asks this. */
 export function intoPlayOnlyViaOf(card: Card): string | undefined {
   return programFor(card.id)?.intoPlayOnlyVia;
+}
+
+/** 🆕🆕🆕 §7.4 (D565) — does this Pokémon Tool card DO anything while attached? The ONE
+    predicate for "is this Tool simulated", EXTRACTED from `attachTool` (cardplay.ts), which
+    spelled it inline since D171 (a `passive`, or a `triggered` list that is non-empty), so
+    that Farfetch'd "Impromptu Carrier"'s `searchDeck { dest: "attachToSelf" }` offer
+    (interpreter.ts) asks exactly the question the hand attach asks and cannot come to offer
+    a Tool the hand refuses (R-IC1: an unsimulated Tool would occupy the one slot doing
+    nothing). Here rather than in cardplay.ts because interpreter.ts takes no runtime edge
+    to registry.ts (`intoPlayOnlyViaOf`'s reason, one function up). */
+export function toolCardSimulated(card: Card): boolean {
+  const toolProgram = programFor(card.id);
+  return toolProgram?.passive !== undefined || (toolProgram?.triggered ?? []).length > 0;
 }
 
 /** Every continuous modifier affecting one in-play Pokémon, aggregated from

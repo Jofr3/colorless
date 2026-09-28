@@ -1,6 +1,8 @@
 import type { ApplyResult } from "./actions";
 import { ok } from "./actions";
 import { topCardOf, topUid } from "./cards";
+// 🆕🆕🆕 D565 — the ONE once-per-turn key funnel, for a TRIGGERED row's lock (Zero to Hero).
+import { abilityUsedKey } from "./cardplay";
 import { disabledAbilityUids, toolsInEffect } from "./continuous";
 import type { GameEvent } from "./events";
 import { recoverStatuses, settleProgram } from "./flow";
@@ -286,6 +288,10 @@ function sweepTriggers(
   watch: "self" | "opponent",
   events: GameEvent[],
   atMoment: GameState,
+  /** 🆕🆕🆕 D565 — restrict the sweep to ONE body: the self direction of the Active→Bench
+      move (Zero to Hero's *"when THIS Pokémon moves…"*) is a property of the body that
+      moved, not of every body on the board. Absent = every body, byte for byte. */
+  onlyUid?: string,
 ): GameState {
   // Active, then each bench slot. The walk re-reads the CURRENT board each step
   // for `runCheckupTriggers`' reason — and the bench LENGTH cannot change here,
@@ -306,9 +312,25 @@ function sweepTriggers(
     if (pokemon === undefined) continue;
     const uid = topUid(pokemon);
     if (uid === undefined) continue;
+    if (onlyUid !== undefined && uid !== onlyUid) continue;
     for (const ability of triggersOf(next, pokemon, timing, uid === activeUidAtMoment, watch)) {
       if (stacked.has(ability.name)) continue;
       if (ability.doesNotStack === true) stacked.add(ability.name);
+      // 🆕🆕🆕 D565 — the printed "Once during your turn" on a trigger (Zero to Hero),
+      // keyed through `abilityUsedKey` on the existing `abilitiesUsed`: a spent row is
+      // skipped, and the key is written BEFORE the program runs (a failed search still
+      // shuffles — R-ZH2 — so the use is spent either way).
+      if (ability.oncePerTurn === true) {
+        const usedKey = abilityUsedKey(uid, ability);
+        if (next.allowances.abilitiesUsed.includes(usedKey)) continue;
+        next = {
+          ...next,
+          allowances: {
+            ...next.allowances,
+            abilitiesUsed: [...next.allowances.abilitiesUsed, usedKey],
+          },
+        };
+      }
       events.push({ type: "ABILITY_TRIGGERED", seat: watcher, uid, ability: ability.name });
       next = recoverStatuses(
         runProgram(next, ability.program, { seat: watcher, sourceUid: uid, subjectUid }, events)
@@ -369,7 +391,24 @@ export function runActiveBenchedTriggers(
   // rearranges `seat`'s OWN board, and the watcher is `otherSeat(seat)`, whose
   // Active is untouched between the move and this sweep. There is no rider on
   // this moment the way §6.1's Jet switch rides the §6.2 attach.
-  return runWatchedTriggers(state, seat, movedUid, "onActiveMovedToBench", events, state);
+  const watched = runWatchedTriggers(state, seat, movedUid, "onActiveMovedToBench", events, state);
+  // 🆕🆕🆕 D565 — THE SELF DIRECTION, and its first printing: Palafin "Zero to Hero" (*"when
+  // THIS Pokémon moves from the Active Spot to the Bench"*). The same sweep with `watch:
+  // "self"`, RESTRICTED to the body that moved, behind the same "during your turn" gate
+  // above (a Boss's Orders on the opponent's turn moves it and fires nothing). Both movers
+  // already call this function, so retreat and every `switchInto` route reach it.
+  // NON-PARKING by construction (`sweepTriggers` keeps `.state`), which is why the one
+  // program is a forced swap (R-ZH1).
+  return sweepTriggers(
+    watched,
+    seat,
+    movedUid,
+    "onActiveMovedToBench",
+    "self",
+    events,
+    state,
+    movedUid,
+  );
 }
 
 /** Run every betweenTurns triggered Ability in play during the Pokémon Checkup

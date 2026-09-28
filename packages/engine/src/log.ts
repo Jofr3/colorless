@@ -1262,15 +1262,20 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
       // card that left play — would over-count the discard by the whole Golbat and
       // Zubat underneath. The two branches therefore count DIFFERENT things, which
       // is why the split is a branch rather than an extra clause.
+      // 🆕🆕🆕 D565 — `"deckTop"` is a POSITION (Flustered Leap: "put this Pokémon on
+      // top of your deck"): the verb is "put" and the preposition is "on top of", so the
+      // row cannot read as a shuffle-in.
       const zone = event.dest === "discard" ? "discard pile" : event.dest;
       const verb = event.dest === "deck" ? "shuffled " : "put ";
+      const into = event.dest === "deckTop" ? " on top of " : " into ";
+      const place = zone === "deckTop" ? "deck" : zone;
       const split = event.attachmentsTo;
       if (split !== undefined) {
         const n = split.uids.length;
         return row(event.actor, [
           plain(verb),
           strong(cardName(state, event.uid)),
-          plain(` into ${names[event.seat]}'s ${zone}`),
+          plain(`${into}${names[event.seat]}'s ${place}`),
           plain(n > 0 ? ` and discarded ${n} attached card${n === 1 ? "" : "s"}` : ""),
         ]);
       }
@@ -1279,9 +1284,20 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
         plain(verb),
         strong(cardName(state, event.uid)),
         plain(extra > 0 ? ` and ${extra} attached card${extra === 1 ? "" : "s"}` : ""),
-        plain(` into ${names[event.seat]}'s ${zone}`),
+        plain(`${into}${names[event.seat]}'s ${place}`),
       ]);
     }
+    case "POKEMON_SWAPPED_FROM_DECK":
+      // 🆕🆕🆕 D565 — Zero to Hero's swap. Names both cards: the new one is face up in play
+      // and the old one was face up a moment ago; the SHUFFLE row that follows says the
+      // rest ("…put this card into your deck. Then, shuffle your deck.").
+      return row(event.seat, [
+        plain("switched "),
+        strong(cardName(state, event.fromUid)),
+        plain(" with "),
+        strong(cardName(state, event.toUid)),
+        plain(" from their deck"),
+      ]);
     case "PRIZES_OWED": {
       const n = event.count;
       return row(event.seat, [plain(`takes ${n} prize card${n === 1 ? "" : "s"}`)]);
@@ -1857,6 +1873,14 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
             ? `discarded ${cards} from the top of their deck`
             : `had ${cards} discarded from the top of their deck`,
         ),
+      ]);
+    }
+    case "DECK_BOTTOM_DISCARDED": {
+      // 🆕🆕🆕 D565 — Flustered Leap's own-deck cost, off the BOTTOM. Count only, like the
+      // top mill above; ACTIVE voice, because the one producer mills the actor's own deck.
+      const n = event.uids.length;
+      return row(event.seat, [
+        plain(`discarded ${n} card${n === 1 ? "" : "s"} from the bottom of their deck`),
       ]);
     }
     case "DECK_TOP_REORDERED": {

@@ -335,6 +335,8 @@ function usableAbilities(game: GameState, seat: Seat): AbilityOption[] {
       const disabled =
         (ability.activeOnly && target.spot !== "active") ||
         bodyGateUnmet ||
+        // 🆕🆕🆕 D565 — `benchOnly`, `activeOnly`'s mirror (Flustered Leap).
+        (ability.benchOnly === true && target.spot !== "bench") ||
         // ⚠️ THE KEY COMES FROM `abilityUsedKey`, NEVER SPELLED HERE. A
         // "sharedByName" Ability (Fezandipiti ex: "You can't use more than 1 Flip
         // the Script Ability each turn") keys on its NAME alone; a HUD still
@@ -1753,6 +1755,8 @@ const CHOOSE_CARDS_VERB: Record<
   deckTop: { mandatory: "Put on top", upTo: "Put on top" },
   discard: { mandatory: "Discard", upTo: "Discard" },
   evolve: { mandatory: "Evolve", upTo: "Evolve" },
+  // 🆕🆕🆕 D565 — Impromptu Carrier's "…and attach it to this Pokémon" (an up-to search).
+  attach: { mandatory: "Attach", upTo: "Attach" },
 };
 
 function ChooseCardsDialog({

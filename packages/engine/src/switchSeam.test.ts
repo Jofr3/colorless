@@ -162,7 +162,9 @@ const EXTENDED_DAMAGRIIIGUS =
     see. */
 const ADRENA_BRAIN =
   "Once during your turn, if this Pokémon has any {D} Energy attached, you may move up to 3 damage counters from 1 of your Pokémon to 1 of your opponent's Pokémon.";
-/** ⏹️ Team Rocket's Orbeetle `sv10-089/-198` — D205's flag, re-priced. */
+/** ✅ Team Rocket's Orbeetle `sv10-089/-198` — D205's flag, re-priced, and 🆕🆕🆕 BUILT AT
+    D565 on the sibling `moveCounterOwnChosen` (was ⏹️); kept as the witness that the flag
+    was paid rather than deleted. */
 const ROCKET_BRAIN =
   "As often as you like during your turn, you may move 1 damage counter from 1 of your Team Rocket's Pokémon to another of your Pokémon.";
 /** ⏹️ N's Zoroark ex `sv09-098/-175/-185/-189` — D205's flag, re-priced. */
@@ -836,14 +838,16 @@ describe("the landed census, re-derived", () => {
 // unbuilt — that assertion passed for D200 on ids naming the WRONG CARDS — so it
 // is never the whole of a flag here.
 
-describe("⏹️ FLAGGED — the CHOSEN DESTINATION counter move (D216: 2 of 8 landed)", () => {
+describe("⏹️ FLAGGED — the CHOSEN DESTINATION counter move (D216: 2 of 8 landed; 🆕🆕🆕 D565: 4 of 8)", () => {
   // D205 sized this at 2 (Cofagrigus). D206 re-measured it at 7. ⚠️ **D216 makes
   // it 8** — Alakazam sv06-082 "Strange Hacking" prints the same axis on an
   // ATTACK, with BOTH ends on the opponent's board, and neither earlier sweep
   // named it. D216 BUILT the Cofagrigus surface (2 legal, `moveCountersChosen`)
   // and left the other three refused on a MECHANISM each; the ids below are the
   // ones that are still flagged, which is what keeps this block a flag.
-  const IDS = ["sv06-095", "sv06.5-072", "sv08.5-044", "sv10-089", "sv10-198", "sv06-082"];
+  // 🆕🆕🆕 D565 — Orbeetle's two (`sv10-089`/`-198`) LEAVE the list: Rocket Brain is built on
+  // the sibling op `moveCounterOwnChosen`. Six → four.
+  const IDS = ["sv06-095", "sv06.5-072", "sv08.5-044", "sv06-082"];
 
   it("⚠️ the ONE counter move in the union ALWAYS lands on the defender, and NEVER asks — driven", () => {
     // The missing piece is not a predicate and not a field: it is a SECOND
@@ -882,7 +886,8 @@ describe("⏹️ FLAGGED — the CHOSEN DESTINATION counter move (D216: 2 of 8 l
     expect(done.players.p2.bench[0]?.damage).toBe(0);
   });
 
-  it("⚠️ and the SIX still-flagged printings resolve on NEITHER route", () => {
+  // 🆕🆕🆕 D565 — ~~"the SIX still-flagged printings"~~ (D539): four; Orbeetle's two are built.
+  it("⚠️ and the FOUR still-flagged printings resolve on NEITHER route", () => {
     // Per surface AND through both routes — D205's repair of D204's vacuous arm,
     // applied here rather than cited. Munkidori and Orbeetle are ABILITIES
     // (`abilities` + `triggered`); Alakazam is an ATTACK (deriver + registry).
@@ -891,12 +896,18 @@ describe("⏹️ FLAGGED — the CHOSEN DESTINATION counter move (D216: 2 of 8 l
     // replaces it says so rather than being deleted — the witness moves, it is
     // never quietly dropped (D139/D140's precedent on the neighbouring anchor).
     expect(deriveAttackEffect(EXTENDED_DAMAGRIIIGUS)).toEqual([{ op: "moveCountersChosen" }]);
-    for (const id of ["sv06-095", "sv06.5-072", "sv08.5-044", "sv10-089", "sv10-198"]) {
+    for (const id of ["sv06-095", "sv06.5-072", "sv08.5-044"]) {
       expect(programFor(id)?.abilities, `${id} was half-built`).toBeUndefined();
       expect(programFor(id)?.triggered, `${id} was half-built as a trigger`).toBeUndefined();
     }
     expect(programFor("sv06-082")?.attack, "sv06-082 was half-built").toBeUndefined();
-    expect(IDS).toHaveLength(6);
+    expect(IDS).toHaveLength(4);
+    // 🆕🆕🆕 D565 — and the witness that moved: Orbeetle is built, on its OWN op.
+    for (const id of ["sv10-089", "sv10-198"]) {
+      expect(programFor(id)?.abilities?.[0]?.program, id).toEqual([
+        { op: "moveCounterOwnChosen", ownerPokemon: "Team Rocket" },
+      ]);
+    }
     // The three sentences share ONE axis and differ on the others, which is what
     // makes them one flag rather than three: bounded amounts (Munkidori "up to 3",
     // Orbeetle "1") and repetition ("as often as you like") are SECOND pieces.

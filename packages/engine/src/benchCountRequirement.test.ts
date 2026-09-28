@@ -504,7 +504,12 @@ describe("§5 — the census terms, MEASURED rather than assumed", () => {
     // ids, no `fix-*` key (`trainerBundleD564.test.ts` / `sideDamageNextTurnD564.test.ts` drive
     // a LOCAL `cardPool`), inserted MID-MAP after `sv08.5-151`, and no row authors an `attack`
     // program.
-    expect(ids).toHaveLength(897);
+    // 🆕🆕🆕 D565 — 897 -> **905**: EIGHT registry keys on FIVE program objects — Misty's
+    // Psyduck ×2 "Flustered Leap", Team Rocket's Orbeetle ×2 "Rocket Brain", Farfetch'd
+    // "Impromptu Carrier", Palafin "Zero to Hero", Ruffian ×2. Real catalog ids, no `fix-*` key
+    // (`abilityBundleD565.test.ts` / `ruffianD565.test.ts` drive a LOCAL `cardPool`), inserted
+    // MID-MAP after `sv06.5-029`, and no row authors an `attack` program.
+    expect(ids).toHaveLength(905);
     for (const id of VICTINI_IDS) {
       expect(ids, id).not.toContain(id);
       expect(programFor(id), id).toBeUndefined();

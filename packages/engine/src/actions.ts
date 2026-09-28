@@ -283,6 +283,12 @@ export type ErrorCode =
   | "NO_SUCH_ABILITY"
   /** §9 — the Ability may only be used from the Active Spot. */
   | "ABILITY_ACTIVE_ONLY"
+  /** 🆕🆕🆕 §9 (D565) — the Ability may only be used from the Bench (Misty's Psyduck
+      "Flustered Leap": "if this Pokémon is on your Bench"). `ABILITY_ACTIVE_ONLY`'s
+      mirror and a code of its OWN rather than a reuse: the two are opposite printed
+      spots, and a client rendering "can only be used from the Active Spot" for a
+      benched-only row would say the wrong spot in its own words. */
+  | "ABILITY_BENCH_ONLY"
   /** §9 — a continuous Ability-lock aura (Klefki / Spiritomb / Ting-Lu ex — 🆕🆕🆕
       D559: and Flutter Mane "Midnight Fluttering" / Gastrodon "Sticky Bind", the two
       legal locks the registry builds; Iron Thorns ex "Initialization" and Team Rocket's
