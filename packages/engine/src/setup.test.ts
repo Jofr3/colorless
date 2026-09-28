@@ -514,6 +514,8 @@ describe("finishing setup", () => {
       stadiumAbilityUsed: false,
       abilitiesUsed: [],
       sideAttackBonuses: [], // 🆕🆕🆕 D556 — the this-turn side-wide bonus bag starts empty
+      supporterPlayedUid: null, // 🆕🆕🆕 D564 — no Supporter played yet (REQUIRED, MRV 35 → 36)
+      endOfTurnHandDiscard: null, // 🆕🆕🆕 D564 — no Amarys discard pending (REQUIRED, MRV 35 → 36)
     });
   });
 });

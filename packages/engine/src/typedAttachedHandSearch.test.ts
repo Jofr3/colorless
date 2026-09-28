@@ -644,10 +644,10 @@ describe("D531 §3 — a new optional rider on a PERSISTED op, and the record ve
     expect(Object.keys(cont).sort()).toEqual(["ctx", "pendingOp", "record", "rest"].filter((k) => k in cont).sort());
   });
 
-  it("🛑 `MATCH_RECORD_VERSION` is 35 (🆕🆕🆕 D556 stepped it 34 → 35; D552 stepped it 33 → 34; D549 stepped it 32 → 33; D548 stepped it 31 → 32; D547 stepped it 30 → 31; this slice held it) in `apps/api` — a widening, not a new shape", () => {
+  it("🛑 `MATCH_RECORD_VERSION` is 36 (🆕🆕🆕 D564 stepped it 35 → 36; D556 stepped it 34 → 35; D552 stepped it 33 → 34; D549 stepped it 32 → 33; D548 stepped it 31 → 32; D547 stepped it 30 → 31; this slice held it) in `apps/api` — a widening, not a new shape", () => {
     const match = Object.entries(RAW).find(([k]) => k.endsWith("/lobby/match.ts"))?.[1] ?? "";
     // 🆕🆕🆕 D547 — the constant this slice held is now 31: D547 added two REQUIRED `InPlayPokemon` fields (apps/api match.ts).
-    expect(match).toContain("export const MATCH_RECORD_VERSION = 35;");
+    expect(match).toContain("export const MATCH_RECORD_VERSION = 36;");
   });
 });
 
@@ -1001,7 +1001,7 @@ const RAW: Record<string, string> = (
 describe("D531 §6 — the version steps and the bytes this suite drove are the bytes that shipped", () => {
   it("engineVersion and `manifest.version` agree, and the bump is owed for BEHAVIOUR", () => {
     // ⚠️ The version is NOT spelled in this `it(…)` title (D460's fourth class).
-    expect(engineVersion).toBe("0.447.0");
+    expect(engineVersion).toBe("0.448.0");
     expect(manifest.version).toBe(engineVersion);
   });
 

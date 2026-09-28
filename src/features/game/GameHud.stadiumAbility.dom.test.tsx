@@ -341,6 +341,66 @@ describe("GameHud — the Stadium row's printed HAND COST (D561, R-AN)", () => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
+// 🆕🆕🆕 D564 — THE STADIUM ABILITY'S PRINTED GATE (`StadiumAbility.playableIf`).
+//
+// Community Center `sv06-146` (*"Once during each player's turn, if they played a Supporter
+// card from their hand this turn, they may heal 10 damage from each of their Pokémon."*) is the
+// first Stadium ability with a board gate; `useStadiumAbility` refuses an unlicensed use
+// (PLAY_CONDITION_NOT_MET), so the local fold greys the row with the printed clause, term for
+// term with the engine and with `redact.ts` (driven there in `trainerBundleD564.test.ts`).
+// Grafted exactly as Academy at Night is above; the Supporter flag is the one surgery.
+
+const COMMUNITY_CENTER = "sv06-146";
+function withCommunityCenter(state: GameState): GameState {
+  const uid = "d564-center-0";
+  const grafted: GameState = {
+    ...state,
+    cardPool: {
+      ...state.cardPool,
+      [COMMUNITY_CENTER]: {
+        ...trainerCard(
+          COMMUNITY_CENTER,
+          "Stadium",
+          "Once during each player's turn, if they played a Supporter card from their hand this turn, they may heal 10 damage from each of their Pokémon.",
+        ),
+        name: "Community Center",
+      },
+    },
+    cardIdByUid: { ...state.cardIdByUid, [uid]: COMMUNITY_CENTER },
+    players: { ...state.players, p1: { ...state.players.p1, hand: [...state.players.p1.hand, uid] } },
+  };
+  return must(applyAction(grafted, { type: "playTrainer", seat: "p1", uid }));
+}
+
+describe("GameHud — the Stadium row's printed GATE (D564, Community Center)", () => {
+  it("greys with the printed clause when no Supporter was played, refuses to dispatch, and the engine agrees", () => {
+    const played = withCommunityCenter(p1Turn2(1));
+    expect(played.allowances.supporterPlayed).toBe(false);
+    const dispatch = vi.fn<(action: GameAction) => void>();
+    renderHud(played, "p1", dispatch);
+    expect(stadiumRow()?.textContent).toBe("Community Center");
+    expect(stadiumRow()?.disabled).toBe(true);
+    expect((stadiumSection() as HTMLElement).querySelector("li")?.getAttribute("title")).toBe(
+      "Only if you played a Supporter card from your hand during this turn",
+    );
+    fireEvent.click(stadiumRow() as HTMLButtonElement);
+    expect(dispatch).not.toHaveBeenCalled();
+    expect(applyAction(played, { type: "useStadiumAbility", seat: "p1" }).ok).toBe(false);
+  });
+
+  it("lights once a Supporter was played this turn, and the click's own payload is accepted", () => {
+    const played = withCommunityCenter(p1Turn2(1));
+    const licensed: GameState = { ...played, allowances: { ...played.allowances, supporterPlayed: true } };
+    const dispatch = vi.fn<(action: GameAction) => void>();
+    renderHud(licensed, "p1", dispatch);
+    expect(stadiumRow()?.disabled).toBe(false);
+    expect((stadiumSection() as HTMLElement).querySelector("li[title]")).toBeNull();
+    fireEvent.click(stadiumRow() as HTMLButtonElement);
+    mustApply(licensed, dispatch.mock.calls[0]?.[0] as GameAction);
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
 // THE `programPlayable` TERM, AND THE HONEST ADMISSION ABOUT IT.
 
 describe("the `programPlayable` term in the LOCAL fold is correct and, today, UNREACHABLE", () => {

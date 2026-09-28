@@ -847,14 +847,14 @@ describe("D536 §10 — the PERSISTED bytes, both directions", () => {
     expect(op).toEqual({ op: "discardDefender" });
   });
 
-  it("🛑 `MATCH_RECORD_VERSION` is 35 (🆕🆕🆕 D556 stepped it 34 → 35; D552 stepped it 33 → 34; D549 stepped it 32 → 33; D548 stepped it 31 → 32; D547 stepped it 30 → 31; this slice held it) — read off the raw source, not retyped", () => {
+  it("🛑 `MATCH_RECORD_VERSION` is 36 (🆕🆕🆕 D564 stepped it 35 → 36; D556 stepped it 34 → 35; D552 stepped it 33 → 34; D549 stepped it 32 → 33; D548 stepped it 31 → 32; D547 stepped it 30 → 31; this slice held it) — read off the raw source, not retyped", () => {
     // 🆕🆕🆕 D547 — the constant this slice held is now 31: D547 added two REQUIRED `InPlayPokemon` fields (apps/api match.ts).
-    expect(raw("/match.ts")).toContain("MATCH_RECORD_VERSION = 35");
+    expect(raw("/match.ts")).toContain("MATCH_RECORD_VERSION = 36");
   });
 
-  it("🛑 the engine version stepped to 0.447.0 in BOTH places", () => {
-    expect(engineVersion).toBe("0.447.0");
-    expect(manifest.version).toBe("0.447.0");
+  it("🛑 the engine version stepped to 0.448.0 in BOTH places", () => {
+    expect(engineVersion).toBe("0.448.0");
+    expect(manifest.version).toBe("0.448.0");
   });
 
   it("🛑 the op ITSELF never parks — no new `PendingStage` inhabitant, no new `EffectPrompt` value, and on a NON-PARKING board nothing new reaches `phase.cont`", () => {

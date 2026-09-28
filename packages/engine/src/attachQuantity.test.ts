@@ -824,7 +824,13 @@ describe("D359 §6 — the ids this file rests on are real and locally seated", 
     // (`abilityCostEvolveD563.test.ts` / `torrentialHeartD563.test.ts` drive a LOCAL
     // `cardPool`), inserted MID-MAP after `sv08.5-108`, and no row authors an `attack`
     // program.
-    expect(registryCardIds()).toHaveLength(888);
+    // 🆕🆕🆕 D564 — 888 -> **897**: NINE registry keys on FIVE program objects — Jasmine's
+    // Gaze ×3, Amarys ×3, Team Rocket's Factory, Community Center, Crobat "Shadowy Envoy"
+    // (Caretaker's rider re-authors an EXISTING object on its two existing keys). Real catalog
+    // ids, no `fix-*` key (`trainerBundleD564.test.ts` / `sideDamageNextTurnD564.test.ts` drive
+    // a LOCAL `cardPool`), inserted MID-MAP after `sv08.5-151`, and no row authors an `attack`
+    // program.
+    expect(registryCardIds()).toHaveLength(897);
     for (const id of Object.values(QUANTITY_IDS).flat()) {
       if (programFor(id) === undefined) continue;
       // Every id that DOES have a program had one before this slice: the eight

@@ -309,6 +309,22 @@ export interface EffectContext {
       The optionality is for the OTHER `runProgram` callers, which have no damage to
       report at all — it is not a "sometimes attack.ts forgets" hedge. */
   dealt?: number;
+  /** 🆕🆕🆕 **D564 — THE PLAYED TRAINER CARD'S OWN UID**, the printed *"this Caretaker"*.
+      Set by cardplay.ts `playTrainer`'s ONE `runProgram` call (the card is already in the
+      discard pile by then — `playTrainer` discards up front) and ABSENT everywhere else.
+      Read by `shufflePlayedCardIntoDeck` alone.
+
+      🛑 **NOT `sourceUid`.** That field names a POKÉMON ("this Pokémon") and a Trainer must
+      leave it absent: a `self`-reading op authored on a Trainer finds no body and whiffs
+      (D222's self-op hazard), which is the designed behaviour this field must not disturb.
+      A card is not a body; one field per referent.
+
+      OPTIONAL, a widening (D125): `ctx` rides `EffectContinuation` into a parked
+      `phase.cont`, and since `playTrainer` sets it on EVERY Trainer run, EVERY parked Trainer
+      continuation carries it (sourceUid.test.ts pins Nest Ball's). Only
+      `shufflePlayedCardIntoDeck` reads it, and no parking program authors that op; an older
+      continuation simply lacks it and reads as "no played card". */
+  playedUid?: string;
 }
 
 /** A specific in-play Pokémon, addressed by the board it sits on and the spot.
@@ -2090,6 +2106,9 @@ function stepOp(
     // 🆕🆕🆕 D556 — the THIS-TURN side-wide bonus (Black Belt's Training), on the bag.
     case "boostSideAttacksThisTurn":
       return { done: boostSideAttacksThisTurn(state, op, ctx, events) };
+    // 🆕🆕🆕 D564 — the NEXT-TURN side-wide reduction (Jasmine's Gaze), on the SIDE.
+    case "installSideDamageReductionNextTurn":
+      return { done: installSideDamageReductionNextTurn(state, op, ctx, events) };
     case "preventChosenAttack":
       return preventChosenAttack(state, ctx, events);
     case "reduceDamage":
@@ -2556,6 +2575,12 @@ function stepOp(
       };
     case "discardHand":
       return { done: discardHand(state, ctx, events) };
+    // 🆕🆕🆕 D564 — Amarys: the threshold on the bag; flow.ts's `endTurn` stage pays it.
+    case "scheduleEndOfTurnHandDiscard":
+      return { done: scheduleEndOfTurnHandDiscard(state, op, ctx, events) };
+    // 🆕🆕🆕 D564 — Caretaker's *"shuffle this Caretaker into your deck"*, by `ctx.playedUid`.
+    case "shufflePlayedCardIntoDeck":
+      return { done: shufflePlayedCardIntoDeck(state, ctx, events) };
     case "shuffleDeck":
       return { done: shuffleDeck(state, ctx, op, events) };
     case "bottomDeckTop":
@@ -5755,6 +5780,30 @@ export function conditionHolds(state: GameState, seat: Seat, cond: BoardConditio
       return state.players[otherSeat(seat)].discard.some(
         (uid) => cardOf(state, uid)?.name.includes(cond.fragment) === true,
       );
+    case "youPlayedSupporterNamedThisTurn": {
+      // 🆕🆕🆕 D564 — Team Rocket's Factory's *"if they played a Supporter card that has
+      // "Team Rocket" in its name from their hand this turn"* and Crobat "Shadowy Envoy"'s
+      // *"if you played Janine's Secret Art from your hand this turn"*. The seat guard is
+      // `youPlayedSupporterThisTurn`'s, VERBATIM and for its reason: the allowance bag is
+      // the turn OWNER's, so a non-turn seat (a `conditionGate` under a koTrigger /
+      // damagedTrigger stage) must read FALSE rather than the owner's Supporter.
+      if (phaseViewOf(state, seat).activeSeat !== seat) return false;
+      const played = state.allowances.supporterPlayedUid;
+      if (played === null) return false;
+      // `cardOfUid` resolves the uid in ANY zone (R-FC): the discard, or the deck after a
+      // Caretaker under Community Center shuffled itself back — it was played either way.
+      const name = cardOfUid(state, played)?.name;
+      if (name === undefined) return false;
+      if (cond.name !== undefined) return name === cond.name;
+      return cond.nameContains !== undefined && name.includes(cond.nameContains);
+    }
+    case "stadiumInPlayNamed": {
+      // 🆕🆕🆕 D564 — Caretaker's *"if Community Center is in play"*: `stadiumInPlay` with a
+      // NAME test, and no owner test (no possessive is printed — D378's reading). `seat`
+      // is unread, for that arm's reason.
+      const stadium = state.stadium;
+      return stadium !== null && cardOfUid(state, stadium.uid)?.name === cond.name;
+    }
     case "yourPokemonKoedOnOpponentsLastTurn":
       // D271 — "any of your Pokémon were Knocked Out during your opponent's last
       // turn" (Unfair Stamp sv06-165, Hassel sv06-151/-205). The whole predicate
@@ -6815,6 +6864,16 @@ export function conditionNote(cond: BoardCondition): string {
       // 🆕🆕🆕 D563 — the printed clause with only the leading "If" dropped; the quotation
       // marks are printed bytes (`yourBenchHasNameContaining`'s call).
       return `your opponent has any cards in their discard pile that have "${cond.fragment}" in the name`;
+    case "youPlayedSupporterNamedThisTurn":
+      // 🆕🆕🆕 D564 — the two printed clauses, each in its own words minus the leading "if":
+      // the Factory's substring form keeps its printed quotation marks (Plasma Bane's call);
+      // Crobat's exact form names the card.
+      return cond.name !== undefined
+        ? `you played ${cond.name} from your hand this turn`
+        : `you played a Supporter card that has "${cond.nameContains ?? ""}" in its name from your hand this turn`;
+    case "stadiumInPlayNamed":
+      // 🆕🆕🆕 D564 — Caretaker's printed clause verbatim, minus the "if".
+      return `${cond.name} is in play`;
     case "yourPokemonKoedOnOpponentsLastTurn":
       // The printed clause verbatim — the family's THIRD full round-trip, and it
       // keeps the possessive "your opponent's last turn" that the predicate turns
@@ -8195,6 +8254,63 @@ function boostSideAttacksThisTurn(
         { amount: op.amount, target: op.target },
       ],
     },
+  };
+}
+
+/** 🆕🆕🆕 §8.5 (D564) — INSTALL Jasmine's Gaze: stamp the CONTROLLER's side with
+    `{ turn: state.turn + 1, amount }` (types.ts `SideDamageReduction` — `lockSideAttacks`'
+    opponent-form `+ 1`: the Supporter is played on its owner's turn, and the next turn is
+    the opponent's). OVERWRITES any standing record (named at the type: one Supporter per
+    turn, and two windows on one side cannot overlap). Read by continuous.ts
+    `seatDamageReduction`. The ONE writer of the key. */
+function installSideDamageReductionNextTurn(
+  state: GameState,
+  op: Extract<EffectOp, { op: "installSideDamageReductionNextTurn" }>,
+  ctx: EffectContext,
+  events: GameEvent[],
+): GameState {
+  const side = state.players[ctx.seat];
+  events.push({ type: "SIDE_DAMAGE_REDUCTION_INSTALLED", seat: ctx.seat, amount: op.amount });
+  return withSide(state, ctx.seat, {
+    ...side,
+    sideDamageReduction: { turn: state.turn + 1, amount: op.amount },
+  });
+}
+
+/** 🆕🆕🆕 §5.3 (D564) — SCHEDULE Amarys's end-of-turn discard: the printed threshold onto
+    `allowances.endOfTurnHandDiscard` (the ONE writer). The bag belongs to the turn's owner
+    and only the turn's owner can play a Supporter, so `ctx.seat` IS that owner; flow.ts's
+    `endTurn` stage reads it for `stage.seat`, the same seat. */
+function scheduleEndOfTurnHandDiscard(
+  state: GameState,
+  op: Extract<EffectOp, { op: "scheduleEndOfTurnHandDiscard" }>,
+  ctx: EffectContext,
+  events: GameEvent[],
+): GameState {
+  events.push({ type: "HAND_DISCARD_SCHEDULED", seat: ctx.seat, atLeast: op.atLeast });
+  return { ...state, allowances: { ...state.allowances, endOfTurnHandDiscard: op.atLeast } };
+}
+
+/** 🆕🆕🆕 §7.2 (D564) — Caretaker's *"shuffle this Caretaker into your deck instead of
+    discarding it"*. `playTrainer` put the card in the discard pile BEFORE the program ran,
+    so "instead of discarding it" is a MOVE discard → deck, then a shuffle — Super Rod's
+    two shipped rows (`DISCARD_RETRIEVED { dest: "deck" }`, `SHUFFLE`). The card is named
+    by `ctx.playedUid` (NOT `sourceUid`, D222). No played card, or a played card no longer
+    in the controller's discard: a silent no-op. */
+function shufflePlayedCardIntoDeck(
+  state: GameState,
+  ctx: EffectContext,
+  events: GameEvent[],
+): GameState {
+  const uid = ctx.playedUid;
+  const side = state.players[ctx.seat];
+  if (uid === undefined || !side.discard.includes(uid)) return state;
+  const [deck, rngState] = shuffle([...side.deck, uid], state.rngState);
+  events.push({ type: "DISCARD_RETRIEVED", seat: ctx.seat, dest: "deck", uids: [uid] });
+  events.push({ type: "SHUFFLE", seat: ctx.seat });
+  return {
+    ...withSide(state, ctx.seat, { ...side, discard: without(side.discard, uid), deck }),
+    rngState,
   };
 }
 
@@ -11893,7 +12009,10 @@ function healSelf(
   return withActive(state, ctx.seat, healedBody(active, healed, state.turn));
 }
 
-function discardHand(state: GameState, ctx: EffectContext, events: GameEvent[]): GameState {
+/** Discard `ctx.seat`'s whole hand, filing `HAND_DISCARDED` (nothing on an empty hand).
+    🆕🆕🆕 D564 — EXPORTED for flow.ts's `endTurn` stage (Amarys's end-of-turn discard), so
+    the one writer serves both callers rather than a second copy of it. */
+export function discardHand(state: GameState, ctx: EffectContext, events: GameEvent[]): GameState {
   const side = state.players[ctx.seat];
   if (side.hand.length === 0) return state;
   events.push({ type: "HAND_DISCARDED", seat: ctx.seat, uids: [...side.hand] });

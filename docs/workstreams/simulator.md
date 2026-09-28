@@ -28234,7 +28234,7 @@ New: `onceAbilities.test.ts` (39) and `onceAbilitySearch.test.ts` (30), REAL ids
 ### (e) Owed
 The rest of the audit's cluster 1 — Samurott *"Torrential Whirlpool"* (the opponent-answered `choosePokemon` park on
 the ability path), Thwackey *"Boom Boom Groove"* (a `yourActiveHasAbilityNamed` gate and the Klefki-lock ruling — 🆕🆕🆕 BUILT at D560 as `yourActiveHasAbility`, the lock question left UNRULED as R-TW), and
-the separately-priced Crobat (record bump) and Cradily (new prompt kind — 🆕🆕🆕 BUILT at D560 with NO new prompt kind: the three-way pick is two labelled `optional`s, the UI reading R-CR); the census re-scope (R4) and the 380/376
+the separately-priced Crobat (record bump; 🆕🆕🆕 BUILT at D564, MRV 35 → 36) and Cradily (new prompt kind — 🆕🆕🆕 BUILT at D560 with NO new prompt kind: the three-way pick is two labelled `optional`s, the UI reading R-CR); the census re-scope (R4) and the 380/376
 reconciliation.
 
 ## D554 — nine deck-search Trainers: 15 printings / 9 texts / 9 objects, zero vocabulary, and the singular hand-size note (engine 0.438.0, `MATCH_RECORD_VERSION` 34 HELD)
@@ -28315,7 +28315,7 @@ R1 ⚠️ UNRULED: Wicked Tail is two independent coin gates (two single flips i
 Sink's "you may" is the inner `optional` (the trigger flag auto-fires); either player's Stadium goes · R3 Poké Vital A's
 retrieval clause is a named fidelity gap · R4 ⚠️ UNRULED (D553 R1): Cook / Poké Vital A on an undamaged board and Ancient
 Wing with no evolved target play and whiff — the brief's predicted Potion refusal does NOT exist (measured) · R5 Sand
-Stream fires at every Checkup (TREVENANT) · R6 Meddling Memo's "If they do" is `handPlus 0`. Excluded: Community Center
+Stream fires at every Checkup (TREVENANT) · R6 Meddling Memo's "If they do" is `handPlus 0`. Excluded: Community Center (🆕🆕🆕 D564: BUILT)
 (no Stadium-Ability usable-if gate, D222) and Smog Signals (a mid-attack search answered by the non-turn seat).
 
 ### (d) Tests, census and mutants
@@ -28334,7 +28334,7 @@ Trainers (Team Rocket's Ariana, Billy — 2 `BoardCondition` members), Thwackey 
 that need vocabulary. (D555 landing: Ariana, Billy & O'Nare and Team Rocket's Great Ball are BUILT by the parked D556,
 `d556-prep` at `aaba3087`, which lands after D555's sweep; the queue's live head is Thwackey / Crobat / Cradily.)
 (🆕🆕🆕 Ariana and Billy BUILT at D556; Thwackey and Cradily BUILT at D560, Cradily with no new
-prompt kind; Crobat still owed.)
+prompt kind; Crobat still owed; 🆕🆕🆕 Crobat BUILT at D564.)
 
 ## D556 — the this-turn side-wide bonus, three conditional Trainers on three new `BoardCondition` members, and three riders: 19 printings / 7 texts / 7 objects (engine 0.440.0, `MATCH_RECORD_VERSION` 34 → 35)
 
@@ -28349,7 +28349,7 @@ committed on `d556-prep` at `aaba3087` and LANDED on `main` by cherry-pick onto 
 | Billy & O'Nare | `sv09-142` | Supporter | `drawCards 2` → `conditionGate yourHandAtLeast 10` → `drawCards 2` |
 | Dragon Elixir | `sv08-172` | Item | `conditionGate yourActiveHasType Dragon` → `heal self 60` |
 | Team Rocket's Great Ball | `sv10-175` | Item | `coinFlipGate` → `searchDeck ownerPokemon` Evolution / else Basic, `reveal` → `shuffleDeck` |
-| Caretaker | `sv06-144`/`-203` | Supporter | `drawCards 2` (the Community Center clause unreachable, R5) |
+| Caretaker | `sv06-144`/`-203` | Supporter | `drawCards 2` (the Community Center clause unreachable, R5 — 🆕🆕🆕 D564: WITHDRAWN, BUILT) |
 | Pecharunt "Toxic Subjugation" | `svp-129`/`-149` | Triggered | `betweenTurns`, `activeOnly`, `conditionGate opponentActivePoisoned` → `damageActive 50` |
 
 ### (b) The mechanism
@@ -28363,7 +28363,7 @@ POSITION: a v34 rollback drops a played +40 mid-turn; a v34 bag throws on the tu
 ### (c) Readings (`docs/decisions.md` D556)
 R1 Black Belt plays and whiffs with no ex Active · R2 Billy's count excludes Billy · R3 ⚠️ UNRULED: Dragon Elixir on a
 non-Dragon Active plays and whiffs · R4 Ariana's "all" is Active + Bench, stack tops · R5 Caretaker's Community Center
-clause is a named, unreachable gap (guarded) · R6 Pecharunt's `ABILITY_TRIGGERED` row is filed even when the gate is false
+clause is a named, unreachable gap (guarded; 🆕🆕🆕 D564: WITHDRAWN — BUILT, the guard inverted) · R6 Pecharunt's `ABILITY_TRIGGERED` row is filed even when the gate is false
 · R7 Pecharunt's counters land after the poison tick and before the KO sweep. Excluded: Kieran ×5 (labelled confirm —
 next), Feraligatr "Torrential Heart" ×2 (🆕🆕🆕 D563: BUILT), Indeedee.
 
@@ -28475,7 +28475,7 @@ Mutants 3,278 → 3,315 (+37 `D558-*`, all killed undeclared; 17 rows re-anchore
 survivors 52 unmoved.
 
 ### (e) Owed
-The whole-corpus sweep (~~D552 → … → D558, all pending~~ D552–D557 PAID, each exact on its first launch — D557's `3226 · 52` at close-out `01c6d987`; ~~D558's pending, predicted `3263 · 52` over 3,315~~ D558's PAID exactly on its first launch at close-out `ff618ad6`: `3263 killed · 52 known survivor(s)` over 3,315, as predicted — reconciled at the D559 landing). Jasmine's Gaze deferred (a new op, a `PlayerSide` key with an
+The whole-corpus sweep (~~D552 → … → D558, all pending~~ D552–D557 PAID, each exact on its first launch — D557's `3226 · 52` at close-out `01c6d987`; ~~D558's pending, predicted `3263 · 52` over 3,315~~ D558's PAID exactly on its first launch at close-out `ff618ad6`: `3263 killed · 52 known survivor(s)` over 3,315, as predicted — reconciled at the D559 landing). Jasmine's Gaze deferred (🆕🆕🆕 D564: BUILT) (a new op, a `PlayerSide` key with an
 expiry, an MRV decision). R-SV1 UNRULED. The HUD shows no damage modifier from a Tool or a Stadium (D552's precedent;
 retreat and attack cost do show). The Ability auras Stone Palace / Curly Wall still pay an own-side hit under D425's
 reading (named debt, pinned); Neutralization Zone's own-side exposure is unreachable today. Next: the ability bundle (15 printings / 8 items).
@@ -28623,7 +28623,7 @@ Night lit a row the engine refuses) — now in `redact.ts` and GameHud, each dri
 
 ### (e) Owed
 The whole-corpus sweep (~~D559 → D561 pending~~ D559 and D560 PAID, each exact — D560's `3333 · 52` over 3,385 at close-out `a4e0cd5e`, on its second launch; only D561's own is owed, predicted `3384 killed · 52 known survivor(s)` over 3,436). R-CR1 UNRULED. The 0.444 rollback readings (named, not bumped). Tera Orb and
-Brock's Scouting (deferred); Farfetch'd `sv06-132`; Festival Grounds / Festival Lead; Team Rocket's Watchtower; Crobat.
+Brock's Scouting (deferred); Farfetch'd `sv06-132`; Festival Grounds / Festival Lead; Team Rocket's Watchtower; Crobat (🆕🆕🆕 D564: BUILT).
 (🆕🆕🆕 D562: Festival Grounds BUILT — see D562 below; Festival Lead stays blocked.)
 
 ## D562 — consumable Tools, Jamming Tower and Festival Grounds: 14 printings / 12 texts / 12 objects (engine 0.446.0, `MATCH_RECORD_VERSION` stays 35)
@@ -28668,7 +28668,7 @@ Tool-walk rows), two D480 rows re-pointed (the Brace is built); declared survivo
 ### (e) Owed
 The whole-corpus sweep ~~(D560 → D562 pending)~~ (🆕 landing: D560's and D561's are PAID, each exact — close-outs `a4e0cd5e`
 and `f310fd9b`; only D562's is pending, predicted `3453 · 52` over 3,505). R-BE, R-BR and R-BF UNRULED. The 0.445 rollback readings (named, not bumped). Ruffian
-(CUT: a body-first pick needs its own op); Team Rocket's Factory + Crobat; Community Center; Torrential Heart; C2's ability
+(CUT: a body-first pick needs its own op); Team Rocket's Factory + Crobat; Community Center (🆕🆕🆕 D564: BUILT); Torrential Heart; C2's ability
 residue (Rocket Brain, Flustered Leap, Tuning Echo, Plasma Bane, Impromptu Carrier). (🆕🆕🆕 D563 (D539): Torrential Heart,
 Tuning Echo and Plasma Bane are BUILT — see D563 below; Rocket Brain, Flustered Leap and Impromptu Carrier stay owed.)
 
@@ -28711,5 +28711,54 @@ D454's `damageSelf` row); declared survivors 52 unmoved.
 
 ### (e) Owed
 The whole-corpus sweep: ~~D562's (running in the main checkout, predicted `3453 · 52` over 3,505) and~~ this one's (predicted
-`3506 · 52` over 3,558) (🆕 landing: D562's is PAID, exactly — `3453 · 52` over 3,505, close-out `3b68a3c1`). R-TH UNRULED. Zero to Hero (Palafin `sv06-060`, an in-place swap op) — until it ships Palafin ex has no
-route into play. Rocket Brain, Flustered Leap, Impromptu Carrier; Team Rocket's Factory + Crobat; Community Center.
+`3506 · 52` over 3,558) (🆕 D564 landing: PAID, exactly — `3506 killed · 52 known survivor(s)` over 3,558, D563 close-out `78823284`) (🆕 landing: D562's is PAID, exactly — `3453 · 52` over 3,505, close-out `3b68a3c1`). R-TH UNRULED. Zero to Hero (Palafin `sv06-060`, an in-place swap op) — until it ships Palafin ex has no
+route into play. Rocket Brain, Flustered Leap, Impromptu Carrier; Team Rocket's Factory + Crobat; Community Center (🆕🆕🆕 D564: BUILT).
+`3506 · 52` over 3,558). R-TH UNRULED. Zero to Hero (Palafin `sv06-060`, an in-place swap op) — until it ships Palafin ex has no
+route into play. Rocket Brain, Flustered Leap, Impromptu Carrier; Team Rocket's Factory + Crobat; Community Center (🆕🆕🆕 D564: BUILT).
+
+## D564 — the MRV 35 → 36 trainer bundle: 9 printings / 5 texts / 5 objects plus the Caretaker rider (engine 0.448.0, `MATCH_RECORD_VERSION` 35 → 36)
+
+**Status:** ✅ BUILT — keyed MID-MAP after `sv08.5-151`. Built in the `lum-wt-d564` worktree STACKED ON THE PARKED, UNLANDED
+D563 commit `ecbd2c4f` while D562's whole-corpus sweep ran in the main checkout; ~~NOT committed by the builder~~ committed there on
+`d564-prep` at `d6729892`, then LANDED on `main` by cherry-pick onto the D563 close-out `78823284`.
+
+### (a) The rows (registry.ts, one block before `const REGISTRY`; no row authors an `attack` key)
+| Card | Ids | Subtype | Program |
+|---|---|---|---|
+| Jasmine's Gaze | `sv08-178`/`sv08-233`/`sv08-245` | Supporter | `trainer [installSideDamageReductionNextTurn { amount: 30 }]` (NEW op) |
+| Amarys | `sv08.5-093`/`sv08.5-132`/`sv08.5-170` | Supporter | `trainer [drawCards 4, scheduleEndOfTurnHandDiscard { atLeast: 5 }]` (NEW op) |
+| Team Rocket's Factory | `sv10-173` | Stadium | `stadium.ability { playableIf: youPlayedSupporterNamedThisTurn { nameContains "Team Rocket" }, [drawCards 2] }` (NEW key + member) |
+| Community Center | `sv06-146` | Stadium | `stadium.ability { playableIf: youPlayedSupporterThisTurn, [healEach 10] }` |
+| Crobat | `sv06.5-029` | Ability "Shadowy Envoy" | `abilities [{ playableIf: youPlayedSupporterNamedThisTurn { name "Janine's Secret Art" }, [drawUntilHandSize 8] }]` — Poison Fang keeps deriving |
+| Caretaker (rider) | `sv06-144`/`sv06-203` | Supporter | `drawCards { 2, recordAs moved }` → `recordGate moved` → `conditionGate stadiumInPlayNamed "Community Center"` → `shufflePlayedCardIntoDeck` (NEW member + op) |
+
+### (b) The mechanism
+Three REQUIRED persisted keys: `TurnAllowances.supporterPlayedUid` (written by `playTrainer` alone, beside `supporterPlayed`),
+`TurnAllowances.endOfTurnHandDiscard` (the printed threshold) and `PlayerSide.sideDamageReduction { turn, amount }` (stamped
+`state.turn + 1`, overwrite semantics). continuous.ts `seatDamageReduction` pays the damaged side's record AFTER the own-side return,
+under `"all"` only. flow.ts's `endTurn` stage discards the turn owner's hand at `>=` the threshold, before `TURN_ENDED`, through the
+exported interpreter.ts `discardHand`. `youPlayedSupporterNamedThisTurn` copies `youPlayedSupporterThisTurn`'s `phaseViewOf` seat
+guard and resolves the played uid's NAME in any zone. `StadiumAbility.playableIf` is read by `useStadiumAbility`
+(`PLAY_CONDITION_NOT_MET`, after the once-per-turn flag), `redactedStadiumAbilityOf` and `GameHud`'s fold. `EffectContext.playedUid`
+(optional; `playTrainer` only; NOT `sourceUid`) names the card `shufflePlayedCardIntoDeck` moves discard → deck. Events
+`SIDE_DAMAGE_REDUCTION_INSTALLED` and `HAND_DISCARD_SCHEDULED` (not persisted), each with a log row.
+
+### (c) Readings (`docs/decisions.md` D564)
+R-JG1 (Feint Attack's `"othersOnly"` drops the Gaze — an effect on the damaged Pokémon; the Stadium stays) · R-JG2 (own-side hits
+unpaid) · R-JG3 (a side record: new Pokémon covered, no §10 shed) · R-JG4 (the Stadium's damage-site scope, inherited, unmeasured) ·
+R-AM (the `endTurn` stage runs after an attack's KO and prize stages, so prizes count; a mid-turn `resumeTurn` never reaches it) ·
+R-FC (the played Supporter is read by uid → name in any zone) · R-CT ("drew any cards" is the draw's own record) · R-CC (a no-damage
+Community Center use whiffs and is spent). HUD debt: no wire field shows the side reduction or a pending Amarys discard.
+
+### (d) Tests and mutants
+`trainerBundleD564.test.ts` (52) and `sideDamageNextTurnD564.test.ts` (22), plus a D564 block in
+`GameHud.stadiumAbility.dom.test.tsx` (2). Mutants 3,558 → 3,611 (+53 `D564-*`, all killed undeclared); seven MRV rows moved
+(D326/D501 re-transcribed, D547/D548/D549/D552/D556 re-anchored onto D564's doc tail), `D556-caretaker-draws-3` re-anchored,
+D275's version step; declared survivors 52 unmoved.
+
+### (e) Owed
+The whole-corpus sweep: ~~D562's (running in the main checkout, predicted `3453 · 52` over 3,505), D563's (predicted `3506 · 52` over
+3,558) and~~ this one's (predicted `3559 · 52` over 3,611) (🆕 landing: D562's and D563's are PAID, each exactly — `3453 · 52`
+over 3,505, close-out `3b68a3c1`, and `3506 · 52` over 3,558, close-out `78823284` — so this one rests on a measured base). The HUD debt above. Zero to Hero (Palafin ex's only route);
+Rocket Brain, Flustered Leap, Impromptu Carrier; Team Rocket's Watchtower; Brock's Scouting (deferred); Tera Orb; Ruffian (CUT, D562). (🆕 landing: Zero to Hero, Rocket Brain, Flustered Leap,
+Impromptu Carrier and Ruffian are all in D565, parked on `d565-prep` at `47eba40f`, stacked on this slice.)

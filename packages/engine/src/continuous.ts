@@ -43,7 +43,7 @@ import type {
   StadiumEffects,
 } from "./registry";
 import { programFor } from "./registry";
-import type { AttackBlock, GameState, InPlayPokemon, Seat } from "./types";
+import type { AttackBlock, GameState, InPlayPokemon, PlayerSide, Seat } from "./types";
 import { SEATS, otherSeat, stampedActBarFor, stampedBarFor, takenPrizes } from "./types";
 
 // The continuous-modifier pipeline (M4 slice 3): the one place the always-on
@@ -4612,9 +4612,26 @@ export function seatDamageReduction(
     // (every protection read off the damaged body) still governs them; that is a
     // named debt (docs/decisions.md D558), not an oversight.
     if (seat === attackerSeat) return taken; // an own-side hit: the Stadium's "the opponent's" fails
+    // 🆕🆕🆕 D564 — Jasmine's Gaze, the damaged side's OWN next-turn record (types.ts
+    // `SideDamageReduction`), added ONCE here and AFTER the own-side return above: the print
+    // is *"from attacks from your opponent's Pokémon"*, so an own-side hit is never paid
+    // (R-JG2). A record on the SIDE, so a body that came into play after the install is
+    // covered with no per-body write and no §10 shed (R-JG3). ⚠️ UNDER `"all"` ONLY — the
+    // Stadium's inverse (R-JG1): a Supporter's *"all of your Pokémon take 30 less"* IS an
+    // effect on the damaged Pokémon, so Feint Attack's `"othersOnly"` drops it with the
+    // catalog half, where the Stadium is no effect on a Pokémon and stays.
+    if (scope === "all") taken += sideDamageReductionOf(state, side);
     return taken + stadiumDamageReduction(state, damagedCard); // this is the Pokémon's own side — no other side can shield it
   }
   return 0;
+}
+
+/** 🆕🆕🆕 §8.5 (D564) — `side`'s live next-turn reduction (Jasmine's Gaze): the record's
+    `amount` when its stamp IS the current turn, else 0. Expires by arithmetic — the stamp
+    is the installer's opponent's next turn, `state.turn + 1` at install. */
+function sideDamageReductionOf(state: GameState, side: PlayerSide): number {
+  const record = side.sideDamageReduction;
+  return record !== null && record.turn === state.turn ? record.amount : 0;
 }
 
 /** 🆕🆕🆕 §8.5 (D558) — the in-play Stadium's post-W/R `damageReductionAfterWR` for a

@@ -607,7 +607,7 @@ describe("allowances across interrupts", () => {
       seat: "p1",
       prizeIndices: [0],
     });
-    expect(done.allowances).toEqual({ energyAttached: false, retreated: false, supporterPlayed: false, stadiumPlayed: false, stadiumAbilityUsed: false, abilitiesUsed: [], sideAttackBonuses: [] }); // 🆕🆕🆕 D556 — the this-turn side-wide bonus bag, wiped with the rest
+    expect(done.allowances).toEqual({ energyAttached: false, retreated: false, supporterPlayed: false, stadiumPlayed: false, stadiumAbilityUsed: false, abilitiesUsed: [], sideAttackBonuses: [], supporterPlayedUid: null, endOfTurnHandDiscard: null }); // 🆕🆕🆕 D564 — the played Supporter's uid and Amarys's pending threshold, wiped with the rest (both REQUIRED, MRV 35 → 36) // 🆕🆕🆕 D556 — the this-turn side-wide bonus bag, wiped with the rest
   });
 });
 

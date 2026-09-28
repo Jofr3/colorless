@@ -625,7 +625,7 @@ describe("the blast radius — what this slice did NOT change", () => {
     ]);
   });
 
-  it("`playableIf` is authored on exactly TEN ids, and nowhere else", () => {
+  it("`playableIf` is authored on exactly ELEVEN ids, and nowhere else", () => {
     // The gate's own population. Of the 29 legal printings on `%Once during your
     // turn, if %`, 15 are the Active-Spot clause `activeOnly` already covers; of
     // the 14 that remain, NINE name THIS POKÉMON (Munkidori ×3, Meowscarada,
@@ -638,6 +638,11 @@ describe("the blast radius — what this slice did NOT change", () => {
     // union does not hold" — `yourActiveHasAbility` (V1) holds it, and Thwackey
     // `sv06-015`/`svp-115` joins the population below. It is a board read of the ACTIVE,
     // not a per-body one, so the NINE above are unaffected. Crobat's stays unheld.)
+    // (🆕🆕🆕 D564 CORRECTION (D539): "Crobat's stays unheld" is WITHDRAWN — the NEW
+    // `youPlayedSupporterNamedThisTurn { name: "Janine's Secret Art" }` holds it, and Crobat
+    // `sv06.5-029` joins the population below. A turn-event read of the SEAT's played
+    // Supporter, not a per-body one, so the NINE above are unaffected. The it() TITLE is
+    // recounted TEN → ELEVEN with it, D460.)
     const gated: string[] = [];
     for (const id of registryCardIds()) {
       for (const ability of programFor(id)?.abilities ?? []) {
@@ -684,6 +689,7 @@ describe("the blast radius — what this slice did NOT change", () => {
     // Active's top card; a lock does not falsify it, R-TW ⚠️ UNRULED).
     expect(gated.sort()).toEqual([
       "sv06-015",
+      "sv06.5-029", // 🆕🆕🆕 D564 — Crobat "Shadowy Envoy"
       "sv06.5-038",
       "sv06.5-084",
       "sv06.5-092",

@@ -659,7 +659,13 @@ describe("§5 — on a BOARD: each of the three cancels and lands, and the ids a
     // (`abilityCostEvolveD563.test.ts` / `torrentialHeartD563.test.ts` drive a LOCAL
     // `cardPool`), inserted MID-MAP after `sv08.5-108`, and no row authors an `attack`
     // program.
-    expect(ids).toHaveLength(888);
+    // 🆕🆕🆕 D564 — 888 -> **897**: NINE registry keys on FIVE program objects — Jasmine's
+    // Gaze ×3, Amarys ×3, Team Rocket's Factory, Community Center, Crobat "Shadowy Envoy"
+    // (Caretaker's rider re-authors an EXISTING object on its two existing keys). Real catalog
+    // ids, no `fix-*` key (`trainerBundleD564.test.ts` / `sideDamageNextTurnD564.test.ts` drive
+    // a LOCAL `cardPool`), inserted MID-MAP after `sv08.5-151`, and no row authors an `attack`
+    // program.
+    expect(ids).toHaveLength(897);
     for (const id of BOUGHT_IDS) {
       expect(ids, id).not.toContain(id);
       expect(programFor(id), id).toBeUndefined();

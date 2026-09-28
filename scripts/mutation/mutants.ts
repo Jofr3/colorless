@@ -6218,7 +6218,7 @@ export const MUTANTS: Mutant[] = [
     // CORPUS QUOTES** (D414/D415), so a value-keyed sweep over `toBe("0.391.0")` cannot
     // see it — this row's `find` spells the DECLARATION, not an assertion. Run
     // `precheck` after every version bump, not after the sweep tells you.
-    find: 'export const engineVersion = "0.447.0";',
+    find: 'export const engineVersion = "0.448.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -11391,8 +11391,11 @@ export const MUTANTS: Mutant[] = [
     // 🆕🆕🆕 D556 - RE-TRANSCRIBED, 34 -> 35, off the new bytes (THE EIGHTH POSITION: the REQUIRED
     //    `TurnAllowances.sideAttackBonuses`). Twelfth consecutive bump to rot this row, predicted
     //    before `precheck`.
-    find: "export const MATCH_RECORD_VERSION = 35;",
-    replace: "export const MATCH_RECORD_VERSION = 34;",
+    // 🆕🆕🆕 D564 - RE-TRANSCRIBED, 35 -> 36, off the new bytes (THE NINTH POSITION: the REQUIRED
+    //    `TurnAllowances.supporterPlayedUid` / `.endOfTurnHandDiscard` and `PlayerSide.
+    //    sideDamageReduction`). Thirteenth consecutive bump to rot this row, predicted before `precheck`.
+    find: "export const MATCH_RECORD_VERSION = 36;",
+    replace: "export const MATCH_RECORD_VERSION = 35;",
     expectKilledBy: ["apps/api/src/lobby/match.test.ts"],
   },
   // == D327 - THE COST SEAM'S SECOND AND THIRD COUNT SOURCES. Every row below is a
@@ -29404,8 +29407,9 @@ export const MUTANTS: Mutant[] = [
     // 🆕🆕🆕 D549 - RE-TRANSCRIBED off the new bytes (32 -> 33), the same step down by one.
     // 🆕🆕🆕 D552 - RE-TRANSCRIBED off the new bytes (33 -> 34), the same step down by one.
     // 🆕🆕🆕 D556 - RE-TRANSCRIBED off the new bytes (34 -> 35), the same step down by one.
-    find: "export const MATCH_RECORD_VERSION = 35;\n",
-    replace: "export const MATCH_RECORD_VERSION = 34;\n",
+    // 🆕🆕🆕 D564 - RE-TRANSCRIBED off the new bytes (35 -> 36), the same step down by one.
+    find: "export const MATCH_RECORD_VERSION = 36;\n",
+    replace: "export const MATCH_RECORD_VERSION = 35;\n",
     expectKilledBy: ["apps/api/src/lobby/match.test.ts"],
   },
   // ────────────────────────────────────────────────────────────────────────────
@@ -34761,11 +34765,15 @@ export const MUTANTS: Mutant[] = [
     // 🆕🆕🆕 D556 - RE-ANCHORED AGAIN off the bytes (D540): D556's EIGHTH POSITION now sits between
     //    D552's doc tail and the constant, so the anchor is D556's last two lines and the patch
     //    drops the constant FIVE steps, to D547's pre-bump 30.
-    find: "    or client byte: the redacted view does not carry `allowances`, so the HUD does not\n    show the side bonus (a carried display debt, decisions.md D556). */\nexport const MATCH_RECORD_VERSION = 35;",
+    // 🆕🆕🆕 D564 - RE-ANCHORED AGAIN off the bytes (D540: the tail read from match.ts, never
+    //    retyped): D564's NINTH POSITION now sits between D556's doc tail and the constant, so
+    //    the anchor is D564's last two lines and the patch drops the constant SIX steps, to
+    //    D547's pre-bump 30. Thirteenth consecutive bump to move this row.
+    find: "    discard, so the HUD shows neither (a carried display debt, `sideAttackLock`'s and\n    `sideAttackBonuses`' precedent, decisions.md D564). */\nexport const MATCH_RECORD_VERSION = 36;",
     // 🆕🆕🆕 D549 - RE-ANCHORED AGAIN off the bytes (D540): D549's block now sits between
     //    D548's doc tail and the constant, so the anchor is D549's last two lines and the
     //    patch drops the constant THREE steps, to D547's pre-bump 30.
-    replace: "    or client byte: the redacted view does not carry `allowances`, so the HUD does not\n    show the side bonus (a carried display debt, decisions.md D556). */\nexport const MATCH_RECORD_VERSION = 30;",
+    replace: "    discard, so the HUD shows neither (a carried display debt, `sideAttackLock`'s and\n    `sideAttackBonuses`' precedent, decisions.md D564). */\nexport const MATCH_RECORD_VERSION = 30;",
     expectKilledBy: ["packages/engine/src/attackFlipLock.test.ts"],
   },
   // ── D548 — CRESCENT PURGE, THE FACE-UP PRIZE. 18 rows, all probed UNDECLARED first
@@ -34933,11 +34941,15 @@ export const MUTANTS: Mutant[] = [
     //    constant THREE steps, to D548's pre-bump 31.
     // 🆕🆕🆕 D556 - RE-ANCHORED off the bytes onto D556's doc tail; the patch drops the constant
     //    FOUR steps, to D548's pre-bump 31.
-    find: "    or client byte: the redacted view does not carry `allowances`, so the HUD does not\n    show the side bonus (a carried display debt, decisions.md D556). */\nexport const MATCH_RECORD_VERSION = 35;",
+    // 🆕🆕🆕 D564 - RE-ANCHORED AGAIN off the bytes (D540: the tail read from match.ts, never
+    //    retyped): D564's NINTH POSITION now sits between D556's doc tail and the constant, so
+    //    the anchor is D564's last two lines and the patch drops the constant FIVE steps, to
+    //    D548's pre-bump 31. Thirteenth consecutive bump to move this row.
+    find: "    discard, so the HUD shows neither (a carried display debt, `sideAttackLock`'s and\n    `sideAttackBonuses`' precedent, decisions.md D564). */\nexport const MATCH_RECORD_VERSION = 36;",
     // 🆕🆕🆕 D549 - RE-ANCHORED off the bytes onto D549's doc tail; the patch drops the
     //    constant TWO steps, to D548's pre-bump 31 (a different patch from
     //    `D549-record-version-not-bumped`, one step, same anchor).
-    replace: "    or client byte: the redacted view does not carry `allowances`, so the HUD does not\n    show the side bonus (a carried display debt, decisions.md D556). */\nexport const MATCH_RECORD_VERSION = 31;",
+    replace: "    discard, so the HUD shows neither (a carried display debt, `sideAttackLock`'s and\n    `sideAttackBonuses`' precedent, decisions.md D564). */\nexport const MATCH_RECORD_VERSION = 31;",
     expectKilledBy: ["packages/engine/src/crescentPurge.test.ts", "apps/api/src/lobby/match.test.ts"],
   },
   // ── 🆕🆕🆕 D549 — THE DEFENDER'S NEXT-TURN MARKS AND THE SIDE-WIDE ATTACK LOCK (`censusAttackCorpus.ts`
@@ -35415,8 +35427,12 @@ export const MUTANTS: Mutant[] = [
     //    `D552-record-version-not-bumped`, one step, same anchor).
     // 🆕🆕🆕 D556 - RE-ANCHORED off the bytes onto D556's doc tail; the patch drops the constant
     //    THREE steps, to D549's pre-bump 32.
-    find: "    or client byte: the redacted view does not carry `allowances`, so the HUD does not\n    show the side bonus (a carried display debt, decisions.md D556). */\nexport const MATCH_RECORD_VERSION = 35;",
-    replace: "    or client byte: the redacted view does not carry `allowances`, so the HUD does not\n    show the side bonus (a carried display debt, decisions.md D556). */\nexport const MATCH_RECORD_VERSION = 32;",
+    // 🆕🆕🆕 D564 - RE-ANCHORED AGAIN off the bytes (D540: the tail read from match.ts, never
+    //    retyped): D564's NINTH POSITION now sits between D556's doc tail and the constant, so
+    //    the anchor is D564's last two lines and the patch drops the constant FOUR steps, to
+    //    D549's pre-bump 32. Thirteenth consecutive bump to move this row.
+    find: "    discard, so the HUD shows neither (a carried display debt, `sideAttackLock`'s and\n    `sideAttackBonuses`' precedent, decisions.md D564). */\nexport const MATCH_RECORD_VERSION = 36;",
+    replace: "    discard, so the HUD shows neither (a carried display debt, `sideAttackLock`'s and\n    `sideAttackBonuses`' precedent, decisions.md D564). */\nexport const MATCH_RECORD_VERSION = 32;",
     expectKilledBy: ["packages/engine/src/sideAttackLock.test.ts", "apps/api/src/lobby/match.test.ts"],
   },
   {
@@ -35989,8 +36005,12 @@ export const MUTANTS: Mutant[] = [
     // 🆕🆕🆕 D556 - RE-ANCHORED off the bytes onto D556's doc tail; the patch drops the constant
     //    TWO steps, to D552's pre-bump 33 (a different patch from `D556-record-version-not-bumped`,
     //    one step, same anchor).
-    find: "    or client byte: the redacted view does not carry `allowances`, so the HUD does not\n    show the side bonus (a carried display debt, decisions.md D556). */\nexport const MATCH_RECORD_VERSION = 35;",
-    replace: "    or client byte: the redacted view does not carry `allowances`, so the HUD does not\n    show the side bonus (a carried display debt, decisions.md D556). */\nexport const MATCH_RECORD_VERSION = 33;",
+    // 🆕🆕🆕 D564 - RE-ANCHORED AGAIN off the bytes (D540: the tail read from match.ts, never
+    //    retyped): D564's NINTH POSITION now sits between D556's doc tail and the constant, so
+    //    the anchor is D564's last two lines and the patch drops the constant THREE steps, to
+    //    D552's pre-bump 33. Thirteenth consecutive bump to move this row.
+    find: "    discard, so the HUD shows neither (a carried display debt, `sideAttackLock`'s and\n    `sideAttackBonuses`' precedent, decisions.md D564). */\nexport const MATCH_RECORD_VERSION = 36;",
+    replace: "    discard, so the HUD shows neither (a carried display debt, `sideAttackLock`'s and\n    `sideAttackBonuses`' precedent, decisions.md D564). */\nexport const MATCH_RECORD_VERSION = 33;",
     expectKilledBy: ["apps/api/src/lobby/match.test.ts"],
   },
   // ── 🆕🆕🆕 D553 — THE SIMPLE ONCE-PER-TURN ABILITIES, 12 printings / 7 texts / 7 objects,
@@ -36859,8 +36879,10 @@ export const MUTANTS: Mutant[] = [
     decision: "D556",
     what: "Caretaker draws 3 instead of the printed 2. Killed by the pin and §7.",
     file: "packages/engine/src/registry.ts",
-    find: "const CARETAKER: CardProgram = {\n  trainer: [{ op: \"drawCards\", count: 2 }],",
-    replace: "const CARETAKER: CardProgram = {\n  trainer: [{ op: \"drawCards\", count: 3 }],",
+    // 🆕🆕🆕 D564 - RE-ANCHORED off the new bytes (D540): the Caretaker rider rewrote the
+    //    program's first line (`recordAs: "moved"` on the draw); the patch is the same count 2 -> 3.
+    find: "const CARETAKER: CardProgram = {\n  trainer: [\n    { op: \"drawCards\", count: 2, recordAs: \"moved\" },",
+    replace: "const CARETAKER: CardProgram = {\n  trainer: [\n    { op: \"drawCards\", count: 3, recordAs: \"moved\" },",
     expectKilledBy: ["packages/engine/src/conditionalTrainersD556.test.ts"],
   },
   {
@@ -36904,8 +36926,12 @@ export const MUTANTS: Mutant[] = [
     decision: "D556",
     what: "🛑 **`MATCH_RECORD_VERSION` STAYS 34 WHILE THE EIGHTH POSITION LANDS** — this deploy accepts a v34 record, whose allowance bag lacks `sideAttackBonuses` (the turn owner's first damaging attack THROWS, D326), and a rollback would drop a played +40 (`sideAttackBonusThisTurn.test.ts` §9). Anchored on D556's own doc tail, one step. Killed by the sixteen engine raw pins and `match.test.ts`.",
     file: "apps/api/src/lobby/match.ts",
-    find: "    or client byte: the redacted view does not carry `allowances`, so the HUD does not\n    show the side bonus (a carried display debt, decisions.md D556). */\nexport const MATCH_RECORD_VERSION = 35;",
-    replace: "    or client byte: the redacted view does not carry `allowances`, so the HUD does not\n    show the side bonus (a carried display debt, decisions.md D556). */\nexport const MATCH_RECORD_VERSION = 34;",
+    // 🆕🆕🆕 D564 - RE-ANCHORED AGAIN off the bytes (D540: the tail read from match.ts, never
+    //    retyped): D564's NINTH POSITION now sits between D556's doc tail and the constant, so
+    //    the anchor is D564's last two lines and the patch drops the constant TWO steps, to
+    //    D556's pre-bump 34. Thirteenth consecutive bump to move this row.
+    find: "    discard, so the HUD shows neither (a carried display debt, `sideAttackLock`'s and\n    `sideAttackBonuses`' precedent, decisions.md D564). */\nexport const MATCH_RECORD_VERSION = 36;",
+    replace: "    discard, so the HUD shows neither (a carried display debt, `sideAttackLock`'s and\n    `sideAttackBonuses`' precedent, decisions.md D564). */\nexport const MATCH_RECORD_VERSION = 34;",
     expectKilledBy: ["apps/api/src/lobby/match.test.ts"],
   },
   // ── 🆕🆕🆕 D557 — ELEVEN TRAINERS, 19 PRINTINGS / 11 TEXTS / 11 OBJECTS: Kieran's labelled
@@ -39738,5 +39764,491 @@ export const MUTANTS: Mutant[] = [
     find: "              : `'s ${event.attack} does ${event.amount} more damage this turn`,",
     replace: "              : `'s attacks do ${event.amount} more damage this turn`,",
     expectKilledBy: ["packages/engine/src/torrentialHeartD563.test.ts"],
+  },
+  // ── 🆕🆕🆕 D564 — THE MRV 35 → 36 TRAINER BUNDLE: 9 printings / 5 texts / 5 objects plus the Caretaker
+  //    rider. One row per new arm and guard — the activeSeat guard, the name/nameContains switch,
+  //    the stamp's `+ 1`, the own-side guard's placement, the `>=` threshold, the uid-vs-sourceUid
+  //    choice, the pre-draw deck check (the draw's record), the Stadium gate at all three surfaces —
+  //    plus the record-version row. Every row was probed UNDECLARED first (D525(3)); every `find`
+  //    was read off the bytes and asserted to occur exactly once before it was written here (D540);
+  //    every replace names only identifiers its target file binds (D533); no row touches a
+  //    catalog, corpus or fixture data file (D538). ──
+  {
+    id: "D564-fresh-bag-keeps-the-uid",
+    decision: "D564",
+    what: "`startTurn` carries `supporterPlayedUid` across the boundary: the OPPONENT's turn opens holding p1's Team Rocket's Supporter, and `turnGate` hands them a Factory licence they never paid for. Killed by §2's boundary rung and §4's p2-turn refusal.",
+    file: "packages/engine/src/flow.ts",
+    find: "    allowances: freshAllowances(),\n    phase: { kind: \"turn:action\", seat },",
+    replace: "    allowances: { ...freshAllowances(), supporterPlayedUid: state.allowances.supporterPlayedUid },\n    phase: { kind: \"turn:action\", seat },",
+    expectKilledBy: ["packages/engine/src/trainerBundleD564.test.ts"],
+  },
+  {
+    id: "D564-fresh-bag-keeps-the-threshold",
+    decision: "D564",
+    what: "`startTurn` carries Amarys's threshold across the boundary: \"At the end of THIS turn\" becomes the opponent's turn too, and p2 discards a hand it was never told to. Killed by §3's opponent-turn rung and the `toBeNull` after every threshold case.",
+    file: "packages/engine/src/flow.ts",
+    find: "    allowances: freshAllowances(),\n    phase: { kind: \"turn:action\", seat },",
+    replace: "    allowances: { ...freshAllowances(), endOfTurnHandDiscard: state.allowances.endOfTurnHandDiscard },\n    phase: { kind: \"turn:action\", seat },",
+    expectKilledBy: ["packages/engine/src/trainerBundleD564.test.ts"],
+  },
+  {
+    id: "D564-threshold-strict",
+    decision: "D564",
+    what: "🛑 `>` for `>=`: the printed \"5 or more\" becomes \"more than 5\", so a hand of exactly 5 is kept. Killed by §3's 5-card threshold case.",
+    file: "packages/engine/src/flow.ts",
+    find: "        threshold !== null && state.players[stage.seat].hand.length >= threshold\n",
+    replace: "        threshold !== null && state.players[stage.seat].hand.length > threshold\n",
+    expectKilledBy: ["packages/engine/src/trainerBundleD564.test.ts"],
+  },
+  {
+    id: "D564-threshold-null-read-as-zero",
+    decision: "D564",
+    what: "The `!== null` guard is dropped: `hand.length >= null` is `>= 0`, so EVERY turn end discards the turn owner's hand, Amarys or not. Killed by §3's controls (the no-KO attack keeps 4, p2's turn keeps 6).",
+    file: "packages/engine/src/flow.ts",
+    find: "        threshold !== null && state.players[stage.seat].hand.length >= threshold\n",
+    replace: "        state.players[stage.seat].hand.length >= threshold!\n",
+    expectKilledBy: ["packages/engine/src/trainerBundleD564.test.ts"],
+  },
+  {
+    id: "D564-endturn-discard-dropped",
+    decision: "D564",
+    what: "The `endTurn` stage never pays the threshold: Amarys draws 4 and nothing is ever discarded. Killed by §3's 5/6-card cases and R-AM.",
+    file: "packages/engine/src/flow.ts",
+    find: "          ? discardHand(state, { seat: stage.seat }, events)\n",
+    replace: "          ? state\n",
+    expectKilledBy: ["packages/engine/src/trainerBundleD564.test.ts"],
+  },
+  {
+    id: "D564-endturn-discards-the-other-seat",
+    decision: "D564",
+    what: "The discard lands on the OTHER seat: the turn owner keeps its hand and the opponent loses theirs. Killed by §3's threshold cases (p1's hand is asserted empty).",
+    file: "packages/engine/src/flow.ts",
+    find: "          ? discardHand(state, { seat: stage.seat }, events)\n",
+    replace: "          ? discardHand(state, { seat: otherSeat(stage.seat) }, events)\n",
+    expectKilledBy: ["packages/engine/src/trainerBundleD564.test.ts"],
+  },
+  {
+    id: "D564-uid-not-written",
+    decision: "D564",
+    what: "`playTrainer` sets the flag and not the uid: no Supporter is ever NAMED, so the Factory and Crobat are unusable on every board. Killed by §2's substring/exact rungs, §4 and §7.",
+    file: "packages/engine/src/cardplay.ts",
+    find: "      allowances: { ...next.allowances, supporterPlayed: true, supporterPlayedUid: action.uid },",
+    replace: "      allowances: { ...next.allowances, supporterPlayed: true },",
+    expectKilledBy: ["packages/engine/src/trainerBundleD564.test.ts"],
+  },
+  {
+    id: "D564-played-uid-not-on-ctx",
+    decision: "D564",
+    what: "The Trainer run carries no `playedUid`: Caretaker under Community Center has no card to shuffle back and stays in the discard. Killed by §6's WITH-Community-Center case.",
+    file: "packages/engine/src/cardplay.ts",
+    find: "    runProgram(next, program, { seat: action.seat, invokedBy, playedUid: action.uid }, events),",
+    replace: "    runProgram(next, program, { seat: action.seat, invokedBy }, events),",
+    expectKilledBy: ["packages/engine/src/trainerBundleD564.test.ts", "packages/engine/src/sourceUid.test.ts"],
+  },
+  {
+    id: "D564-played-uid-as-source-uid",
+    decision: "D564",
+    what: "🛑 THE uid-vs-sourceUid CHOICE: the played card rides as `sourceUid` (D222's self-op hazard — a card is not a body) and `playedUid` is absent, so the shuffle never finds it. Killed by §6 and by `sourceUid.test.ts`'s absent-`sourceUid` rung.",
+    file: "packages/engine/src/cardplay.ts",
+    find: "    runProgram(next, program, { seat: action.seat, invokedBy, playedUid: action.uid }, events),",
+    replace: "    runProgram(next, program, { seat: action.seat, invokedBy, sourceUid: action.uid }, events),",
+    expectKilledBy: ["packages/engine/src/trainerBundleD564.test.ts", "packages/engine/src/sourceUid.test.ts"],
+  },
+  {
+    id: "D564-stadium-gate-ignored",
+    decision: "D564",
+    what: "🛑 `useStadiumAbility` never reads `playableIf`: Community Center heals and the Factory draws with no Supporter played. Killed by §4/§5's refusals and §8's offer-agrees-with-engine rung.",
+    file: "packages/engine/src/cardplay.ts",
+    find: "  if (printedGate !== undefined && !conditionHolds(state, action.seat, printedGate)) {\n    return err(\n      \"PLAY_CONDITION_NOT_MET\",\n      `${ability.label} can only be used",
+    replace: "  if (printedGate !== undefined && false) {\n    return err(\n      \"PLAY_CONDITION_NOT_MET\",\n      `${ability.label} can only be used",
+    expectKilledBy: ["packages/engine/src/trainerBundleD564.test.ts"],
+  },
+  {
+    id: "D564-stadium-gate-reads-the-opponent",
+    decision: "D564",
+    what: "The gate is asked for the OTHER seat: the turn owner's own Supporter never licenses it (the seat guard reads FALSE for the non-owner). Killed by §4/§5's positive uses.",
+    file: "packages/engine/src/cardplay.ts",
+    find: "  if (printedGate !== undefined && !conditionHolds(state, action.seat, printedGate)) {\n    return err(\n      \"PLAY_CONDITION_NOT_MET\",\n      `${ability.label} can only be used",
+    replace: "  if (printedGate !== undefined && !conditionHolds(state, otherSeat(action.seat), printedGate)) {\n    return err(\n      \"PLAY_CONDITION_NOT_MET\",\n      `${ability.label} can only be used",
+    expectKilledBy: ["packages/engine/src/trainerBundleD564.test.ts"],
+  },
+  {
+    id: "D564-redact-gate-dropped",
+    decision: "D564",
+    what: "The online fold never reads the gate: an unlicensed Community Center row is lit and `useStadiumAbility` refuses the press (D46/D47's afford-then-reject). Killed by §8.",
+    file: "packages/engine/src/redact.ts",
+    find: "    ability.playableIf !== undefined &&\n    !conditionHolds(state, viewerSeat, ability.playableIf)\n  ) {",
+    replace: "    ability.playableIf !== undefined &&\n    false\n  ) {",
+    expectKilledBy: ["packages/engine/src/trainerBundleD564.test.ts"],
+  },
+  {
+    id: "D564-redact-gate-enables",
+    decision: "D564",
+    what: "The gated early return says `disabled: false`: the row is greyed in words and lit in fact. Killed by §8's toEqual and the pressable-equals-accepted rung.",
+    file: "packages/engine/src/redact.ts",
+    find: "    return { label: ability.label, disabled: true, reason: `Only if ${conditionNote(ability.playableIf)}` };",
+    replace: "    return { label: ability.label, disabled: false, reason: `Only if ${conditionNote(ability.playableIf)}` };",
+    expectKilledBy: ["packages/engine/src/trainerBundleD564.test.ts"],
+  },
+  {
+    id: "D564-redact-gate-no-reason",
+    decision: "D564",
+    what: "The gated row greys with NO reason: the printed clause never reaches the online tooltip. Killed by §8's toEqual.",
+    file: "packages/engine/src/redact.ts",
+    find: "    return { label: ability.label, disabled: true, reason: `Only if ${conditionNote(ability.playableIf)}` };",
+    replace: "    return { label: ability.label, disabled: true, reason: null };",
+    expectKilledBy: ["packages/engine/src/trainerBundleD564.test.ts"],
+  },
+  {
+    id: "D564-hud-gate-dropped",
+    decision: "D564",
+    what: "The LOCAL fold never reads the gate: an unlicensed Community Center row is lit on the hot-seat HUD. Killed by the D564 DOM block.",
+    file: "src/features/game/GameHud.tsx",
+    find: "    ability.playableIf !== undefined &&\n    !conditionHolds(game, seat, ability.playableIf)\n  ) {",
+    replace: "    ability.playableIf !== undefined &&\n    false\n  ) {",
+    expectKilledBy: ["src/features/game/GameHud.stadiumAbility.dom.test.tsx"],
+  },
+  {
+    id: "D564-hud-gate-enables",
+    decision: "D564",
+    what: "The local gated early return says `disabled: false`: a click the engine refuses is dispatched. Killed by the D564 DOM block.",
+    file: "src/features/game/GameHud.tsx",
+    find: "    return { label: ability.label, disabled: true, reason: `Only if ${conditionNote(ability.playableIf)}` };",
+    replace: "    return { label: ability.label, disabled: false, reason: `Only if ${conditionNote(ability.playableIf)}` };",
+    expectKilledBy: ["src/features/game/GameHud.stadiumAbility.dom.test.tsx"],
+  },
+  {
+    id: "D564-named-seat-guard-dropped",
+    decision: "D564",
+    what: "🛑 THE activeSeat GUARD: the new member reads the bag for ANY seat, so the opponent (a koTrigger/damagedTrigger `conditionGate`) is told it played the turn owner's Supporter. Killed by §2's two seat-guard rungs.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      if (phaseViewOf(state, seat).activeSeat !== seat) return false;\n      const played = state.allowances.supporterPlayedUid;\n",
+    replace: "      const played = state.allowances.supporterPlayedUid;\n",
+    expectKilledBy: ["packages/engine/src/trainerBundleD564.test.ts"],
+  },
+  {
+    id: "D564-named-no-supporter-is-true",
+    decision: "D564",
+    what: "An empty `supporterPlayedUid` reads TRUE: the Factory licenses a turn with no Supporter at all. Killed by §2's first rung and §4's no-Supporter refusal.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      if (played === null) return false;\n      // `cardOfUid` resolves",
+    replace: "      if (played === null) return true;\n      // `cardOfUid` resolves",
+    expectKilledBy: ["packages/engine/src/trainerBundleD564.test.ts"],
+  },
+  {
+    id: "D564-named-exact-as-substring",
+    decision: "D564",
+    what: "🛑 THE name-vs-nameContains SWITCH, one way: the EXACT form tests a substring, so \"Team Rocket\" matches Team Rocket's Ariana as if it were its name. Killed by §2's exact-form rung.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      if (cond.name !== undefined) return name === cond.name;\n",
+    replace: "      if (cond.name !== undefined) return name.includes(cond.name);\n",
+    expectKilledBy: ["packages/engine/src/trainerBundleD564.test.ts"],
+  },
+  {
+    id: "D564-named-exact-arm-dropped",
+    decision: "D564",
+    what: "The exact arm is dropped: Crobat's `{ name }` falls to the substring test with no fragment and reads FALSE — Shadowy Envoy is never usable. Killed by §2 and §7.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      if (cond.name !== undefined) return name === cond.name;\n",
+    replace: "",
+    expectKilledBy: ["packages/engine/src/trainerBundleD564.test.ts"],
+  },
+  {
+    id: "D564-named-substring-as-exact",
+    decision: "D564",
+    what: "🛑 THE SWITCH the other way: the SUBSTRING form tests equality, so no Team Rocket's Supporter's name is exactly \"Team Rocket\" and the Factory never licenses. Killed by §2 and §4.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      return cond.nameContains !== undefined && name.includes(cond.nameContains);\n",
+    replace: "      return cond.nameContains !== undefined && name === cond.nameContains;\n",
+    expectKilledBy: ["packages/engine/src/trainerBundleD564.test.ts"],
+  },
+  {
+    id: "D564-stadium-named-ignores-name",
+    decision: "D564",
+    what: "`stadiumInPlayNamed` reads presence only (`stadiumInPlay`'s arm): Caretaker shuffles itself in under the FACTORY. Killed by §2's stadium rung and §6's different-Stadium case.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      return stadium !== null && cardOfUid(state, stadium.uid)?.name === cond.name;\n",
+    replace: "      return stadium !== null;\n",
+    expectKilledBy: ["packages/engine/src/trainerBundleD564.test.ts"],
+  },
+  {
+    id: "D564-note-exact-form",
+    decision: "D564",
+    what: "The exact form's note drops the card name for the class (Buddy Bolt's words): Crobat's refusal names the wrong condition. Killed by §2's note rung and §7's refusal message.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "        ? `you played ${cond.name} from your hand this turn`\n",
+    replace: "        ? \"you played a Supporter card from your hand during this turn\"\n",
+    expectKilledBy: ["packages/engine/src/trainerBundleD564.test.ts"],
+  },
+  {
+    id: "D564-note-substring-form-unquoted",
+    decision: "D564",
+    what: "The substring note drops the printed quotation marks. Killed by §2's note rung, §4's refusal message and §8's reason.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "        : `you played a Supporter card that has \"${cond.nameContains ?? \"\"}\" in its name from your hand this turn`;\n",
+    replace: "        : `you played a Supporter card that has ${cond.nameContains ?? \"\"} in its name from your hand this turn`;\n",
+    expectKilledBy: ["packages/engine/src/trainerBundleD564.test.ts"],
+  },
+  {
+    id: "D564-note-stadium",
+    decision: "D564",
+    what: "The Stadium note says \"a Stadium is in play\" (`stadiumInPlay`'s words) and loses the name. Killed by §2's note rung.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      return `${cond.name} is in play`;\n",
+    replace: "      return \"a Stadium is in play\";\n",
+    expectKilledBy: ["packages/engine/src/trainerBundleD564.test.ts"],
+  },
+  {
+    id: "D564-stamp-plus-two",
+    decision: "D564",
+    what: "🛑 THE STAMP: `+ 2` (the SELF form's window, `lockSideAttacks`') — the shield is live on the installer's OWN next turn and never on the opponent's. Killed by §2's stamp rung and §3.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "    sideDamageReduction: { turn: state.turn + 1, amount: op.amount },\n",
+    replace: "    sideDamageReduction: { turn: state.turn + 2, amount: op.amount },\n",
+    expectKilledBy: ["packages/engine/src/sideDamageNextTurnD564.test.ts"],
+  },
+  {
+    id: "D564-stamp-this-turn",
+    decision: "D564",
+    what: "The stamp is `state.turn`: the shield covers the installer's own turn, where no opposing attack can land, and is spent before the window. Killed by §2 and §3.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "    sideDamageReduction: { turn: state.turn + 1, amount: op.amount },\n",
+    replace: "    sideDamageReduction: { turn: state.turn, amount: op.amount },\n",
+    expectKilledBy: ["packages/engine/src/sideDamageNextTurnD564.test.ts"],
+  },
+  {
+    id: "D564-install-sums",
+    decision: "D564",
+    what: "A second install SUMS into the first instead of overwriting (the named semantics). Killed by §2's overwrite rung (80 where 50 is printed).",
+    file: "packages/engine/src/interpreter.ts",
+    find: "    sideDamageReduction: { turn: state.turn + 1, amount: op.amount },\n",
+    replace: "    sideDamageReduction: { turn: state.turn + 1, amount: op.amount + (side.sideDamageReduction?.amount ?? 0) },\n",
+    expectKilledBy: ["packages/engine/src/sideDamageNextTurnD564.test.ts"],
+  },
+  {
+    id: "D564-install-on-the-opponent",
+    decision: "D564",
+    what: "The record lands on the OPPONENT's side: the attacker is shielded against its own victim. Killed by §2 (p2 stays null) and §3.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  const side = state.players[ctx.seat];\n  events.push({ type: \"SIDE_DAMAGE_REDUCTION_INSTALLED\", seat: ctx.seat, amount: op.amount });\n  return withSide(state, ctx.seat, {\n",
+    replace: "  const side = state.players[otherSeat(ctx.seat)];\n  events.push({ type: \"SIDE_DAMAGE_REDUCTION_INSTALLED\", seat: ctx.seat, amount: op.amount });\n  return withSide(state, otherSeat(ctx.seat), {\n",
+    expectKilledBy: ["packages/engine/src/sideDamageNextTurnD564.test.ts"],
+  },
+  {
+    id: "D564-install-dispatch-dropped",
+    decision: "D564",
+    what: "The step arm never installs (`{ done: state }`): Jasmine's Gaze is a spent Supporter that does nothing. Killed by §2 and §3.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      return { done: installSideDamageReductionNextTurn(state, op, ctx, events) };",
+    replace: "      return { done: state };",
+    expectKilledBy: ["packages/engine/src/sideDamageNextTurnD564.test.ts"],
+  },
+  {
+    id: "D564-install-event-dropped",
+    decision: "D564",
+    what: "No SIDE_DAMAGE_REDUCTION_INSTALLED row: the log never says the side is shielded. Killed by §2's event and log rungs.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  events.push({ type: \"SIDE_DAMAGE_REDUCTION_INSTALLED\", seat: ctx.seat, amount: op.amount });\n",
+    replace: "",
+    expectKilledBy: ["packages/engine/src/sideDamageNextTurnD564.test.ts"],
+  },
+  {
+    id: "D564-schedule-noop",
+    decision: "D564",
+    what: "`scheduleEndOfTurnHandDiscard` writes nothing: Amarys is a plain draw 4. Killed by §3.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  return { ...state, allowances: { ...state.allowances, endOfTurnHandDiscard: op.atLeast } };\n",
+    replace: "  return state;\n",
+    expectKilledBy: ["packages/engine/src/trainerBundleD564.test.ts"],
+  },
+  {
+    id: "D564-schedule-threshold-hardcoded-4",
+    decision: "D564",
+    what: "The threshold is written as 4 (the draw count, the neighbouring number) rather than `op.atLeast`: a hand of exactly 4 is discarded. Killed by §3's 4-card case.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  return { ...state, allowances: { ...state.allowances, endOfTurnHandDiscard: op.atLeast } };\n",
+    replace: "  return { ...state, allowances: { ...state.allowances, endOfTurnHandDiscard: 4 } };\n",
+    expectKilledBy: ["packages/engine/src/trainerBundleD564.test.ts"],
+  },
+  {
+    id: "D564-schedule-event-dropped",
+    decision: "D564",
+    what: "No HAND_DISCARD_SCHEDULED row. Killed by §3's first rung and the log rung.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  events.push({ type: \"HAND_DISCARD_SCHEDULED\", seat: ctx.seat, atLeast: op.atLeast });\n",
+    replace: "",
+    expectKilledBy: ["packages/engine/src/trainerBundleD564.test.ts"],
+  },
+  {
+    id: "D564-shuffle-played-noop",
+    decision: "D564",
+    what: "`shufflePlayedCardIntoDeck` never moves the card: Caretaker under Community Center stays in the discard. Killed by §6.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  if (uid === undefined || !side.discard.includes(uid)) return state;\n  const [deck, rngState] = shuffle([...side.deck, uid], state.rngState);\n",
+    replace: "  if (uid === undefined || !side.discard.includes(uid)) return state;\n  return state;\n  const [deck, rngState] = shuffle([...side.deck, uid], state.rngState);\n",
+    expectKilledBy: ["packages/engine/src/trainerBundleD564.test.ts"],
+  },
+  {
+    id: "D564-shuffle-played-not-into-deck",
+    decision: "D564",
+    what: "The card leaves the discard and never reaches the deck (the shuffle takes the old deck): a card vanishes from every zone. Killed by §6's deck rungs.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  if (uid === undefined || !side.discard.includes(uid)) return state;\n  const [deck, rngState] = shuffle([...side.deck, uid], state.rngState);\n",
+    replace: "  if (uid === undefined || !side.discard.includes(uid)) return state;\n  const [deck, rngState] = shuffle(side.deck, state.rngState);\n",
+    expectKilledBy: ["packages/engine/src/trainerBundleD564.test.ts"],
+  },
+  {
+    id: "D564-shuffle-played-stays-in-discard",
+    decision: "D564",
+    what: "The card is added to the deck and NOT removed from the discard: one uid in two zones. Killed by §6's not-in-discard rung.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "    ...withSide(state, ctx.seat, { ...side, discard: without(side.discard, uid), deck }),\n",
+    replace: "    ...withSide(state, ctx.seat, { ...side, deck }),\n",
+    expectKilledBy: ["packages/engine/src/trainerBundleD564.test.ts"],
+  },
+  {
+    id: "D564-shuffle-played-no-rows",
+    decision: "D564",
+    what: "No DISCARD_RETRIEVED row for the move. Killed by §6's event rung.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  events.push({ type: \"DISCARD_RETRIEVED\", seat: ctx.seat, dest: \"deck\", uids: [uid] });\n  events.push({ type: \"SHUFFLE\", seat: ctx.seat });\n",
+    replace: "  events.push({ type: \"SHUFFLE\", seat: ctx.seat });\n",
+    expectKilledBy: ["packages/engine/src/trainerBundleD564.test.ts"],
+  },
+  {
+    id: "D564-side-term-dropped",
+    decision: "D564",
+    what: "🛑 `seatDamageReduction` never reads the side record: Jasmine's Gaze installs and shields nothing. Killed by §3, §4, §6, §7.",
+    file: "packages/engine/src/continuous.ts",
+    find: "    if (scope === \"all\") taken += sideDamageReductionOf(state, side);\n",
+    replace: "",
+    expectKilledBy: ["packages/engine/src/sideDamageNextTurnD564.test.ts"],
+  },
+  {
+    id: "D564-side-term-under-othersonly",
+    decision: "D564",
+    what: "🛑 R-JG1 inverted: the Gaze is paid under Feint Attack's `\"othersOnly\"` too, as the Stadium is. Killed by §8 (both the unit rung and Feint's 50 end to end).",
+    file: "packages/engine/src/continuous.ts",
+    find: "    if (scope === \"all\") taken += sideDamageReductionOf(state, side);\n",
+    replace: "    taken += sideDamageReductionOf(state, side);\n",
+    expectKilledBy: ["packages/engine/src/sideDamageNextTurnD564.test.ts"],
+  },
+  {
+    id: "D564-side-term-before-own-side-return",
+    decision: "D564",
+    what: "🛑 R-JG2 PLACEMENT: the term moves ABOVE the own-side return, so p1's OWN hit on its own shielded body is reduced too. Killed by §5's own-side rung.",
+    file: "packages/engine/src/continuous.ts",
+    find: "    if (seat === attackerSeat) return taken; // an own-side hit: the Stadium's \"the opponent's\" fails\n    // 🆕🆕🆕 D564",
+    replace: "    if (scope === \"all\") taken += sideDamageReductionOf(state, side);\n    if (seat === attackerSeat) return taken; // an own-side hit: the Stadium's \"the opponent's\" fails\n    // 🆕🆕🆕 D564",
+    expectKilledBy: ["packages/engine/src/sideDamageNextTurnD564.test.ts"],
+  },
+  {
+    id: "D564-side-window-any-turn",
+    decision: "D564",
+    what: "The window ignores the stamp: the shield is live on every turn forever after one Gaze. Killed by §3's turn-2 and turn-5 rungs.",
+    file: "packages/engine/src/continuous.ts",
+    find: "  return record !== null && record.turn === state.turn ? record.amount : 0;\n",
+    replace: "  return record !== null ? record.amount : 0;\n",
+    expectKilledBy: ["packages/engine/src/sideDamageNextTurnD564.test.ts"],
+  },
+  {
+    id: "D564-side-window-until",
+    decision: "D564",
+    what: "`>=` for `===`: the shield is live from the install through the window (the installer's own turn included) — `lockSideAttacks`-style \"until\" arithmetic. Killed by §3's turn-2 rung.",
+    file: "packages/engine/src/continuous.ts",
+    find: "  return record !== null && record.turn === state.turn ? record.amount : 0;\n",
+    replace: "  return record !== null && record.turn >= state.turn ? record.amount : 0;\n",
+    expectKilledBy: ["packages/engine/src/sideDamageNextTurnD564.test.ts"],
+  },
+  {
+    id: "D564-jasmine-amount-20",
+    decision: "D564",
+    what: "Jasmine's Gaze installs 20, not the printed 30. Killed by §1's pin and every dealt-number rung.",
+    file: "packages/engine/src/registry.ts",
+    find: "  trainer: [{ op: \"installSideDamageReductionNextTurn\", amount: 30 }],",
+    replace: "  trainer: [{ op: \"installSideDamageReductionNextTurn\", amount: 20 }],",
+    expectKilledBy: ["packages/engine/src/sideDamageNextTurnD564.test.ts"],
+  },
+  {
+    id: "D564-amarys-threshold-6",
+    decision: "D564",
+    what: "Amarys schedules at 6: a hand of exactly 5 is kept. Killed by §1's pin and §3's 5-card case.",
+    file: "packages/engine/src/registry.ts",
+    find: "    { op: \"scheduleEndOfTurnHandDiscard\", atLeast: 5 },",
+    replace: "    { op: \"scheduleEndOfTurnHandDiscard\", atLeast: 6 },",
+    expectKilledBy: ["packages/engine/src/trainerBundleD564.test.ts"],
+  },
+  {
+    id: "D564-factory-gate-is-any-supporter",
+    decision: "D564",
+    what: "The Factory takes Community Center's gate (the neighbour's row): ANY Supporter licenses the draw. Killed by §1's pin and §4's non-Team-Rocket refusal.",
+    file: "packages/engine/src/registry.ts",
+    find: "      playableIf: { kind: \"youPlayedSupporterNamedThisTurn\", nameContains: \"Team Rocket\" },",
+    replace: "      playableIf: { kind: \"youPlayedSupporterThisTurn\" },",
+    expectKilledBy: ["packages/engine/src/trainerBundleD564.test.ts"],
+  },
+  {
+    id: "D564-community-center-ungated",
+    decision: "D564",
+    what: "Community Center loses its gate: it heals with no Supporter played. Killed by §1's pin, §5's refusal and §8.",
+    file: "packages/engine/src/registry.ts",
+    find: "      playableIf: { kind: \"youPlayedSupporterThisTurn\" },\n      program: [{ op: \"healEach\", amount: 10 }],",
+    replace: "      program: [{ op: \"healEach\", amount: 10 }],",
+    expectKilledBy: ["packages/engine/src/trainerBundleD564.test.ts"],
+  },
+  {
+    id: "D564-community-center-heals-20",
+    decision: "D564",
+    what: "Community Center heals 20. Killed by §1's pin and §5's exact damage.",
+    file: "packages/engine/src/registry.ts",
+    find: "      program: [{ op: \"healEach\", amount: 10 }],",
+    replace: "      program: [{ op: \"healEach\", amount: 20 }],",
+    expectKilledBy: ["packages/engine/src/trainerBundleD564.test.ts"],
+  },
+  {
+    id: "D564-crobat-gate-is-the-factorys",
+    decision: "D564",
+    what: "Crobat takes the Factory's gate (the neighbour's row): a Team Rocket's Supporter licenses the draw and Janine's Secret Art does not. Killed by §1's pin and §7.",
+    file: "packages/engine/src/registry.ts",
+    find: "      playableIf: { kind: \"youPlayedSupporterNamedThisTurn\", name: \"Janine's Secret Art\" },",
+    replace: "      playableIf: { kind: \"youPlayedSupporterNamedThisTurn\", nameContains: \"Team Rocket\" },",
+    expectKilledBy: ["packages/engine/src/trainerBundleD564.test.ts"],
+  },
+  {
+    id: "D564-caretaker-no-record",
+    decision: "D564",
+    what: "🛑 THE PRE-DRAW DECK CHECK, one way: the draw files nothing, so \"if you drew any cards\" is never true and Caretaker never shuffles itself in. Killed by §6's WITH case and D556 §1's pin.",
+    file: "packages/engine/src/registry.ts",
+    find: "    { op: \"drawCards\", count: 2, recordAs: \"moved\" },\n    {\n      op: \"recordGate\",",
+    replace: "    { op: \"drawCards\", count: 2 },\n    {\n      op: \"recordGate\",",
+    expectKilledBy: ["packages/engine/src/trainerBundleD564.test.ts", "packages/engine/src/conditionalTrainersD556.test.ts"],
+  },
+  {
+    id: "D564-caretaker-ungated-by-the-draw",
+    decision: "D564",
+    what: "🛑 THE PRE-DRAW DECK CHECK, the other way (R-CT): the author drops the `recordGate` and gates on the Stadium alone — an EMPTY deck draws nothing and Caretaker still shuffles itself in. Killed by §6's empty-deck case.",
+    file: "packages/engine/src/registry.ts",
+    find: "const CARETAKER: CardProgram = {\n  trainer: [\n    { op: \"drawCards\", count: 2, recordAs: \"moved\" },\n    {\n      op: \"recordGate\",\n      slot: \"moved\",\n      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.\n      then: [\n        {\n          op: \"conditionGate\",\n          cond: { kind: \"stadiumInPlayNamed\", name: \"Community Center\" },\n          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.\n          then: [{ op: \"shufflePlayedCardIntoDeck\" }],\n        },\n      ],\n    },\n  ],\n};",
+    replace: "const CARETAKER: CardProgram = {\n  trainer: [\n    { op: \"drawCards\", count: 2 },\n    {\n      op: \"conditionGate\",\n      cond: { kind: \"stadiumInPlayNamed\", name: \"Community Center\" },\n      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.\n      then: [{ op: \"shufflePlayedCardIntoDeck\" }],\n    },\n  ],\n};",
+    expectKilledBy: ["packages/engine/src/trainerBundleD564.test.ts"],
+  },
+
+  {
+    id: "D564-caretaker-ignores-the-stadium",
+    decision: "D564",
+    what: "Caretaker shuffles itself in whenever it drew — the Community Center clause is dropped. Killed by §6's WITHOUT-a-Stadium and different-Stadium cases.",
+    file: "packages/engine/src/registry.ts",
+    find: "          cond: { kind: \"stadiumInPlayNamed\", name: \"Community Center\" },\n",
+    replace: "          cond: { kind: \"stadiumInPlay\" },\n",
+    expectKilledBy: ["packages/engine/src/trainerBundleD564.test.ts"],
+  },
+  {
+    id: "D564-record-version-not-bumped",
+    decision: "D564",
+    what: "🛑 **`MATCH_RECORD_VERSION` STAYS 35 WHILE THE NINTH POSITION LANDS** — this deploy accepts a v35 record, whose `PlayerSide` lacks `sideDamageReduction` (the first damaging hit across the table THROWS, D326) and whose bag lacks the two allowance keys; a rollback would drop a played Gaze window, a pending Amarys discard or a Factory/Crobat licence (§9 of both D564 suites). Anchored on D564's own doc tail, one step. Killed by `match.test.ts` (and the sixteen engine raw pins).",
+    file: "apps/api/src/lobby/match.ts",
+    find: "    discard, so the HUD shows neither (a carried display debt, `sideAttackLock`'s and\n    `sideAttackBonuses`' precedent, decisions.md D564). */\nexport const MATCH_RECORD_VERSION = 36;",
+    replace: "    discard, so the HUD shows neither (a carried display debt, `sideAttackLock`'s and\n    `sideAttackBonuses`' precedent, decisions.md D564). */\nexport const MATCH_RECORD_VERSION = 35;",
+    expectKilledBy: ["apps/api/src/lobby/match.test.ts"],
   },
 ];

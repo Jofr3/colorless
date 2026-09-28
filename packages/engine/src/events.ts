@@ -720,6 +720,18 @@ export type GameEvent =
       `retrieveNoun`, the one noun reader). Emitted even when no ex is Active (R1: the
       play whiffs visibly). Not persisted (D141). */
   | { type: "SIDE_ATTACKS_BOOSTED"; seat: Seat; amount: number; target: CardFilter }
+  /** 🆕🆕🆕 §8.5 (D564) — a Supporter installed a SIDE-WIDE post-W/R reduction for the
+      opponent's next turn (Jasmine's Gaze: *"During your opponent's next turn, all of your
+      Pokémon take 30 less damage from attacks from your opponent's Pokémon (after applying
+      Weakness and Resistance)."*). `seat` is the INSTALLER, which is also the SHIELDED side.
+      NO `uid`, `SIDE_ATTACKS_LOCKED`'s reason: the record is on the SIDE, and a Pokémon
+      that comes into play afterwards is covered too. Not persisted (D141). */
+  | { type: "SIDE_DAMAGE_REDUCTION_INSTALLED"; seat: Seat; amount: number }
+  /** 🆕🆕🆕 §5.3 (D564) — a Supporter SCHEDULED an end-of-turn hand discard (Amarys: *"At
+      the end of this turn, if you have 5 or more cards in your hand, discard your hand."*).
+      `atLeast` is the printed threshold. The discard itself, when it happens, is the
+      shipped `HAND_DISCARDED` row filed by flow.ts's `endTurn` stage. Not persisted (D141). */
+  | { type: "HAND_DISCARD_SCHEDULED"; seat: Seat; atLeast: number }
   /** 🆕🆕 §13 (D434 as `COUNTERS_SCHEDULED`, RENAMED AND GENERALISED AT D435) — an
       attack SCHEDULED a delayed effect onto `seat`'s Active for the END of
       `scheduled.turn`. Three payloads share the row because they share the clock:

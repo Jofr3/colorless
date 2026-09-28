@@ -183,7 +183,12 @@ describe("the context carries the source — the mechanism", () => {
       uid: handUid(state, "p1", NEST_BALL),
     });
     if (parked.phase.kind !== "effect:choose") throw new Error("expected effect:choose");
-    expect(parked.phase.cont.ctx).toEqual({ seat: "p1", invokedBy: "item" });
+    // 🆕🆕🆕 D564 — AND A THIRD FIELD DID APPEAR, AND THIS ASSERTION NOTICED IT, as it was
+    // written to: `playedUid`, the PLAYED CARD (Caretaker's "this Caretaker"), set by
+    // `playTrainer`'s one `runProgram` call. It is a CARD, not a body, which is exactly why
+    // it is not `sourceUid` — the absence asserted on the next line still holds.
+    const played = handUid(state, "p1", NEST_BALL);
+    expect(parked.phase.cont.ctx).toEqual({ seat: "p1", invokedBy: "item", playedUid: played });
     expect(Object.hasOwn(parked.phase.cont.ctx, "sourceUid")).toBe(false);
   });
 });

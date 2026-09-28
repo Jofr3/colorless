@@ -153,6 +153,8 @@ function emptySide(deck: string[]): PlayerSide {
     faceUpPrizes: [],
     // 🆕🆕🆕 D549 — no attack has locked a side that has not been dealt yet.
     sideAttackLock: null,
+    // 🆕🆕🆕 D564 — no Supporter has shielded a side that has not been dealt yet.
+    sideDamageReduction: null,
     active: null,
     bench: [],
     mulligans: 0,

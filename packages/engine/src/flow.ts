@@ -12,7 +12,7 @@ import {
 } from "./continuous";
 import type { GameEvent } from "./events";
 import type { RunResult } from "./interpreter";
-import { doomBodyAt, runProgram } from "./interpreter";
+import { discardHand, doomBodyAt, runProgram } from "./interpreter";
 import type { KoPrizeReduction } from "./registry";
 import { flipCoin } from "./rng";
 import {
@@ -2278,9 +2278,22 @@ export function advance(state: GameState, events: GameEvent[]): ApplyResult {
       events.push({ type: "PROMOTION_REQUIRED", seat: stage.seat });
       return ok(next, events);
     }
-    case "endTurn":
+    case "endTurn": {
+      // 🆕🆕🆕 D564 — Amarys's *"At the end of this turn, if you have 5 or more cards in your
+      // hand, discard your hand."* — paid HERE, before `TURN_ENDED`, before the Checkup and
+      // before `startTurn`'s `freshAllowances()` wipes the threshold. `stage.seat` IS the turn
+      // owner (the tail is seeded for the seat whose turn ends), and the bag is that owner's,
+      // so no seat guard is owed. On an attack-ended turn this stage runs AFTER the KO and
+      // prize stages, so a hand grown past the threshold by prizes discards (R-AM); a mid-turn
+      // `resumeTurn` KO never reaches this stage at all. `>=`: the printed "5 or more".
+      const threshold = state.allowances.endOfTurnHandDiscard;
+      const ended =
+        threshold !== null && state.players[stage.seat].hand.length >= threshold
+          ? discardHand(state, { seat: stage.seat }, events)
+          : state;
       events.push({ type: "TURN_ENDED", turn: state.turn, seat: stage.seat });
-      return advance(popStage(state), events);
+      return advance(popStage(ended), events);
+    }
     case "checkup":
       // runCheckup pops the stage itself: its KO stage-pairs go in front of
       // the remainder, and a double-KO tie ends the game outright.

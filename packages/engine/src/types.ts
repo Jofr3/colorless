@@ -653,6 +653,33 @@ export interface SideAttackLock {
   maxEnergy: number | null;
 }
 
+/** 🆕🆕🆕 §8.5/§11 (D564) — a SIDE-WIDE post-W/R damage reduction on one seat's Pokémon,
+    installed by a Supporter for the OPPONENT's next turn: Jasmine's Gaze
+    `sv08-178`/`-233`/`-245` (*"During your opponent's next turn, all of your Pokémon take 30
+    less damage from attacks from your opponent's Pokémon (after applying Weakness and
+    Resistance). (This includes new Pokémon that come into play.)"*, 3 legal printings).
+    Written by the `installSideDamageReductionNextTurn` op onto the ACTING seat's side with
+    `turn: state.turn + 1` — `SideAttackLock`'s OPPONENT form's stamp (*"+ 1 for the
+    opponent's next turn"*), because the Supporter is played on its owner's own turn and the
+    very next turn is the opponent's. Read through continuous.ts `seatDamageReduction`, paid
+    only while `turn === state.turn`, so it expires by arithmetic (no clear to forget).
+
+    ⚠️ A RECORD ON THE SIDE, NOT A STAMP ON A BODY — `SideAttackLock`'s reason verbatim:
+    the printed *"(This includes new Pokémon that come into play.)"* covers a body benched
+    or promoted after the install, which a per-body stamp written at install time cannot
+    express (R-JG3). Not shed by §10 on switching: it is no effect on a Pokémon.
+
+    ⚠️ OVERWRITE, NOT SUM: a second install replaces the first. Only one Supporter may be
+    played per turn (§7.2) and each install's window is the single turn after its owner's
+    turn, so two live windows on one side can never overlap on a legal board — the
+    overwrite is named rather than hedged with an array. */
+export interface SideDamageReduction {
+  /** The single turn this reduction is live on — the installer's opponent's next turn. */
+  turn: number;
+  /** HP subtracted after Weakness and Resistance (the printed 30). */
+  amount: number;
+}
+
 /** §9/§11 (D152, WIDENED D456) — an attack-installed REACTIVE RECOIL on one
     Pokémon, with the printed DURATION baked in as a turn STAMP exactly as
     `AttackBlock`, `DamageReduction` and `AttackDamageDebuff` above bake theirs.
@@ -2027,6 +2054,18 @@ export interface PlayerSide {
 
       REQUIRED (not `?`): `MATCH_RECORD_VERSION` 32 → 33 (the SIXTH position at match.ts). */
   sideAttackLock: SideAttackLock | null;
+  /** 🆕🆕🆕 §8.5 (D564) — the SIDE-WIDE next-turn damage reduction on this seat's Pokémon
+      (see `SideDamageReduction` above), or `null` when none has been installed. Written by
+      `installSideDamageReductionNextTurn` (interpreter.ts), read by `seatDamageReduction`
+      (continuous.ts) for the DAMAGED body's side. Placed beside `sideAttackLock` for that
+      field's measured reason (a `PlayerSide` key forces ONE non-test literal, `emptySide`).
+
+      PUBLIC — a Supporter both players watched — but it rides NO wire field: the HUD does
+      not show it (a carried display debt, `sideAttackLock`'s precedent, decisions.md D564).
+
+      REQUIRED (not `?`): `MATCH_RECORD_VERSION` 35 → 36 (the NINTH position at match.ts) —
+      a v35 rollback would silently drop a played Jasmine's Gaze window. */
+  sideDamageReduction: SideDamageReduction | null;
   active: InPlayPokemon | null;
   /** Dense (no empty slots), capped at BENCH_MAX. */
   bench: InPlayPokemon[];
@@ -2128,6 +2167,38 @@ export interface TurnAllowances {
       `sideAttackBonusThisTurn.test.ts`. REQUIRED, and a v34 record lacks it:
       `MATCH_RECORD_VERSION` 34 → 35, THE EIGHTH POSITION (apps/api match.ts). */
   sideAttackBonuses: SideAttackBonus[];
+  /** 🆕🆕🆕 §7.2 (D564) — the uid of the Supporter the turn's own player played from
+      their hand THIS TURN, or `null` when none has been. Written ONLY by `playTrainer`
+      (cardplay.ts), in the same object literal that sets `supporterPlayed: true`, so the
+      two cannot disagree; cleared by `freshAllowances()` at every `startTurn`.
+
+      Read by `BoardCondition.youPlayedSupporterNamedThisTurn` (interpreter.ts), which
+      resolves the NAME through `cardOfUid` — a uid resolves in ANY zone, so a Caretaker
+      shuffled back into the deck still counts as played (R-FC, decisions.md D564). Two
+      printed readers: Team Rocket's Factory `sv10-173` (*"if they played a Supporter card
+      that has "Team Rocket" in its name from their hand this turn"*) and Crobat
+      `sv06.5-029` "Shadowy Envoy" (*"if you played Janine's Secret Art from your hand this
+      turn"*). Every Supporter play is from the hand (`playTrainer` is the one path).
+
+      ⚠️ THE SEAT HAZARD, `supporterPlayed`'s: this bag describes the TURN'S OWNER only, so
+      the reader copies `youPlayedSupporterThisTurn`'s `phaseViewOf(...).activeSeat` guard.
+
+      REQUIRED: `MATCH_RECORD_VERSION` 35 → 36, THE NINTH POSITION (apps/api match.ts) — a
+      v35 rollback resuming a save taken after the Supporter would drop a Factory or
+      Crobat licence the player already paid a Supporter for. */
+  supporterPlayedUid: string | null;
+  /** 🆕🆕🆕 §7.2/§5.3 (D564) — Amarys's scheduled end-of-turn hand discard: the printed
+      THRESHOLD (5), or `null` when none is pending. Amarys `sv08.5-093`/`-132`/`-170`
+      (*"Draw 4 cards. At the end of this turn, if you have 5 or more cards in your hand,
+      discard your hand."*) writes it through `scheduleEndOfTurnHandDiscard`; flow.ts's
+      `endTurn` stage reads it for the stage's own seat (the turn owner) BEFORE checkup and
+      before `startTurn`'s `freshAllowances()` wipes it, and discards the whole hand when it
+      holds `>=` the threshold. "At the end of this turn" IS this bag's lifetime.
+
+      ⚠️ A NUMBER, NOT A BOOLEAN: the printed threshold is data, and a flag would bake the
+      5 into flow.ts. REQUIRED: `MATCH_RECORD_VERSION` 35 → 36 — a v35 rollback would drop
+      a pending discard the player accepted when they drew the 4. */
+  endOfTurnHandDiscard: number | null;
 }
 
 /** 🆕🆕🆕 §8.5 (D556) — one installed this-turn side-wide bonus: `amount` HP added
@@ -2148,6 +2219,8 @@ export function freshAllowances(): TurnAllowances {
     stadiumAbilityUsed: false,
     abilitiesUsed: [],
     sideAttackBonuses: [],
+    supporterPlayedUid: null,
+    endOfTurnHandDiscard: null,
   };
 }
 

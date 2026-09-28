@@ -396,7 +396,10 @@ function usableAbilities(game: GameState, seat: Seat): AbilityOption[] {
     `cardplay.ts`'s gate, so the button and the engine cannot disagree.
     (🆕🆕🆕 D561 — "the SAME THREE TERMS" undercounts since R-AN: the gate also asks
     `handCostUnmet` (Academy at Night's printed hand cost), and so does this fold —
-    a FOURTH term, reachable on an empty hand.) It lives
+    a FOURTH term, reachable on an empty hand.) (🆕🆕🆕 D564 — and a FIFTH: the Stadium
+    ability's own printed gate, `StadiumAbility.playableIf` (Community Center, Team Rocket's
+    Factory), asked for an UNSPENT use and greying with the printed clause — reachable on
+    every turn before a Supporter is played.) It lives
     HERE beside its two siblings rather than inside TurnPanel for the reason they
     do: the fold is testable without a DOM, and a component-local derivation is
     how the two halves drift.
@@ -441,6 +444,16 @@ function stadiumAbilityOption(game: GameState, seat: Seat): StadiumAbilityOption
   // card that prints no activation.
   const ability = card === undefined ? undefined : programFor(card.id)?.stadium?.ability;
   if (ability === undefined) return null;
+  // 🆕🆕🆕 D564 — the Stadium ability's printed gate (Community Center, Team Rocket's
+  // Factory), term for term with `useStadiumAbility` and `redact.ts`'s fold: asked only for an
+  // UNSPENT use, so "already used" keeps its self-evident undefined reason.
+  if (
+    !game.allowances.stadiumAbilityUsed &&
+    ability.playableIf !== undefined &&
+    !conditionHolds(game, seat, ability.playableIf)
+  ) {
+    return { label: ability.label, disabled: true, reason: `Only if ${conditionNote(ability.playableIf)}` };
+  }
   // D222 — the Stadium's uid, term for term with `useStadiumAbility`.
   const noTarget = !programPlayable(game, ability.program, seat, stadium.uid);
   // 🆕🆕🆕 D561 (R-AN) — `useStadiumAbility` now refuses an unpayable printed hand cost

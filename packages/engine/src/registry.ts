@@ -2793,6 +2793,22 @@ export interface PassiveEffects {
     spot. `label` is the Stadium's own name, for the log/HUD. */
 export interface StadiumAbility {
   label: string;
+  /** 🆕🆕🆕 **§7.3 (D564) — THE STADIUM ABILITY'S OWN PRINTED GATE**, `AbilityProgram.
+      playableIf`'s twin one card class over: the clause between *"Once during each
+      player's turn,"* and the effect. Community Center `sv06-146` (*"if they played a
+      Supporter card from their hand this turn"* — the shipped `youPlayedSupporterThisTurn`)
+      and Team Rocket's Factory `sv10-173` (*"if they played a Supporter card that has "Team
+      Rocket" in its name from their hand this turn"* — the NEW
+      `youPlayedSupporterNamedThisTurn { nameContains }`). Evaluated for the ACTING seat
+      ("they" is whichever player is taking the turn).
+
+      ⚠️ **READ BY THREE SURFACES, AS `playableIf` IS**: `useStadiumAbility` (the reject,
+      `PLAY_CONDITION_NOT_MET` with the `conditionNote` text, after the once-per-turn flag and
+      before `programPlayable`), `redactedStadiumAbilityOf` (the online HUD's
+      `disabled`/`reason`) and `GameHud`'s `stadiumAbilityOption` (the local one). A gate
+      only the engine can see is an afford-then-reject (D190/D222). Absent means ungated
+      (D135) — every pre-D564 Stadium ability. CATALOG data, never persisted. */
+  playableIf?: BoardCondition;
   program: EffectOp[];
 }
 
@@ -13428,7 +13444,9 @@ const WICKED_TAIL: CardProgram = {
 //    Training), three new `BoardCondition` members (`yourPokemonAllOwner`,
 //    `yourHandAtLeast`, `yourActiveHasType` — Ariana, Billy & O'Nare, Dragon Elixir),
 //    and three rows whose every op, filter and gate already ships (Team Rocket's Great
-//    Ball, Caretaker, Pecharunt "Toxic Subjugation"). Texts, subtypes and legality off
+//    Ball, Caretaker, Pecharunt "Toxic Subjugation") (🆕🆕🆕 D564 — Caretaker WITHDRAWN from
+//    that list (D539): its second sentence now rides the NEW `stadiumInPlayNamed` and
+//    `shufflePlayedCardIntoDeck`). Texts, subtypes and legality off
 //    tcgdex (the ingest's own upstream), 2026-09-25 — all nineteen `legal.standard:
 //    true`; one object per printed TEXT (D199), reprints share it. Keyed MID-MAP after
 //    `sv06-138` (D395/D396), so the map's LAST key does not move. ──
@@ -13566,9 +13584,137 @@ const TEAM_ROCKETS_GREAT_BALL: CardProgram = {
     `TRAINER_NOT_SIMULATED`, D222), so no board this engine can reach puts it in the
     zone. A guard rung pins both facts, so building Community Center turns it red and
     owes this clause. `NEUTRALIZATION_ZONE`'s precedent for a printed clause with no
-    reader. */
+    reader.
+
+    🆕🆕🆕 **D564 — THE SECOND SENTENCE IS BUILT, AND "UNREACHABLE TODAY" / "UNBUILT" ABOVE
+    ARE WITHDRAWN (D539), kept as written.** Community Center `sv06-146` now has a `stadium`
+    program (`COMMUNITY_CENTER` below), so the zone can hold it, and the guard rung turned
+    red exactly as it promised and is INVERTED (`conditionalTrainersD556.test.ts` §7). The
+    clause is `drawCards { recordAs: "moved" }` → `recordGate moved` → `conditionGate
+    stadiumInPlayNamed "Community Center"` → the NEW `shufflePlayedCardIntoDeck`:
+      · *"If you drew any cards in this way"* — the draw's OWN record, Dudunsparce "Run Away
+        Draw"'s `recordGate` (D311): it files the cards the draw actually took, so it is
+        non-empty exactly when the deck was non-empty BEFORE the draw (R-CT). A
+        `conditionGate` on the deck after the draw would ask the wrong board.
+      · *"and if Community Center is in play"* — the NEW `stadiumInPlayNamed` (either
+        player's Stadium; no possessive is printed).
+      · *"shuffle this Caretaker into your deck instead of discarding it"* — `playTrainer`
+        discards up front, so the op MOVES the played card (`ctx.playedUid`, not
+        `sourceUid` — D222) from the discard pile into the deck and shuffles. */
 const CARETAKER: CardProgram = {
-  trainer: [{ op: "drawCards", count: 2 }],
+  trainer: [
+    { op: "drawCards", count: 2, recordAs: "moved" },
+    {
+      op: "recordGate",
+      slot: "moved",
+      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
+      then: [
+        {
+          op: "conditionGate",
+          cond: { kind: "stadiumInPlayNamed", name: "Community Center" },
+          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
+          then: [{ op: "shufflePlayedCardIntoDeck" }],
+        },
+      ],
+    },
+  ],
+};
+
+/** 🆕🆕🆕 **D564 — Jasmine's Gaze `sv08-178`/`-233`/`-245` (Supporter, 3 legal)** — *"During
+    your opponent's next turn, all of your Pokémon take 30 less damage from attacks from
+    your opponent's Pokémon (after applying Weakness and Resistance). (This includes new
+    Pokémon that come into play.)"*
+
+    ONE op, the NEW `installSideDamageReductionNextTurn { amount: 30 }`: a record on the
+    controller's SIDE stamped for the opponent's next turn (`state.turn + 1`), read by
+    continuous.ts `seatDamageReduction` after W/R. The parenthesis is reminder text the
+    side record satisfies BY CONSTRUCTION (R-JG3 — no per-body write, no §10 shed). Own-side
+    hits are never paid (R-JG2); Feint Attack's `"othersOnly"` drops it (R-JG1). Always
+    playable (a Supporter that installs a shield has no target to lack). */
+const JASMINES_GAZE: CardProgram = {
+  trainer: [{ op: "installSideDamageReductionNextTurn", amount: 30 }],
+};
+
+/** 🆕🆕🆕 **D564 — Amarys `sv08.5-093`/`-132`/`-170` (Supporter, 3 legal)** — *"Draw 4 cards.
+    At the end of this turn, if you have 5 or more cards in your hand, discard your hand."*
+
+    `drawCards 4` then the NEW `scheduleEndOfTurnHandDiscard { atLeast: 5 }`, which writes
+    the threshold onto the allowance bag; flow.ts's `endTurn` stage pays it for the turn's
+    owner, BEFORE the Checkup (R-AM: an attack-ended turn reaches that stage after its KO
+    and prize stages, so prizes taken count toward the 5). The condition is read at the
+    END, not at the play — the hand in between is the player's to spend. */
+const AMARYS: CardProgram = {
+  trainer: [
+    { op: "drawCards", count: 4 },
+    { op: "scheduleEndOfTurnHandDiscard", atLeast: 5 },
+  ],
+};
+
+/** 🆕🆕🆕 **D564 — Team Rocket's Factory `sv10-173` (Stadium, 1 legal)** — *"Once during each
+    player's turn, if they played a Supporter card that has "Team Rocket" in its name from
+    their hand this turn, they may draw 2 cards."*
+
+    A `stadium.ability` (Town Store's shape) whose NEW `playableIf` is the NEW
+    `youPlayedSupporterNamedThisTurn { nameContains: "Team Rocket" }` — the played
+    Supporter's NAME, read back through `supporterPlayedUid` (R-FC). "Each player's turn":
+    either seat, on its own turn (`turnGate`). The "may" is the activation itself — an
+    unused Stadium ability is the decline. */
+const TEAM_ROCKETS_FACTORY: CardProgram = {
+  stadium: {
+    ability: {
+      label: "Team Rocket's Factory",
+      playableIf: { kind: "youPlayedSupporterNamedThisTurn", nameContains: "Team Rocket" },
+      program: [{ op: "drawCards", count: 2 }],
+    },
+  },
+};
+
+/** 🆕🆕🆕 **D564 — Community Center `sv06-146` (Stadium, 1 legal)** — *"Once during each
+    player's turn, if they played a Supporter card from their hand this turn, they may heal
+    10 damage from each of their Pokémon."*
+
+    A `stadium.ability` gated on the shipped `youPlayedSupporterThisTurn` (Buddy Bolt's
+    member, its seat guard included), running `healEach { amount: 10 }` over the actor's
+    whole board. ⚠️ **A BOARD WITH NO DAMAGE: THE USE IS ALLOWED AND WHIFFS (R-CC)** —
+    `programPlayable` gates no `healEach` (Fennel's precedent), so the once-per-turn use is
+    spent and nothing is healed. Reverses on a ruling that the use is illegal with nothing
+    to heal (then a `programPlayable` arm, read by all three surfaces). Its second job:
+    Caretaker's *"if Community Center is in play"* now has a board. */
+const COMMUNITY_CENTER: CardProgram = {
+  stadium: {
+    ability: {
+      label: "Community Center",
+      playableIf: { kind: "youPlayedSupporterThisTurn" },
+      program: [{ op: "healEach", amount: 10 }],
+    },
+  },
+};
+
+/** 🆕🆕🆕 **D564 — Crobat `sv06.5-029` "Shadowy Envoy" (Ability, 1 legal)** — *"Once during
+    your turn, if you played Janine's Secret Art from your hand this turn, you may draw
+    cards until you have 8 cards in your hand."*
+
+    `playableIf` on the NEW `youPlayedSupporterNamedThisTurn { name: "Janine's Secret Art" }`
+    (the EXACT name — the Factory's row is the substring near-miss, one axis apart), over
+    Grusha's `drawUntilHandSize 8`. Not `activeOnly`: the print puts Crobat nowhere in
+    particular. §9 applies (an Ability lock refuses it — `useAbility`'s shared gate).
+
+    ⚠️ **NO `attack` KEY, AND POISON FANG KEEPS DERIVING.** Crobat's attack (*"Your
+    opponent's Active Pokémon is now Poisoned. During Pokémon Checkup, put 2 damage counters
+    on that Pokémon instead of 1."*) is read off the card by the deriver exactly as before
+    this object existed — D444's `registry ?? derived` rule reads a registry `attack` only
+    when one is authored, and this object authors `abilities` alone. Driven in
+    `trainerBundleD564.test.ts`. */
+const SHADOWY_ENVOY: CardProgram = {
+  abilities: [
+    {
+      name: "Shadowy Envoy",
+      oncePerTurn: true,
+      activeOnly: false,
+      playableIf: { kind: "youPlayedSupporterNamedThisTurn", name: "Janine's Secret Art" },
+      program: [{ op: "drawUntilHandSize", size: 8 }],
+    },
+  ],
 };
 
 /** 🆕🆕🆕 **D556 — Pecharunt `svp-129`/`-149` "Toxic Subjugation" (Ability, 2 legal)** —
@@ -15279,7 +15425,7 @@ const REGISTRY: Record<string, CardProgram> = {
   "sv09-142": BILLY_AND_ONARE, // Billy & O'Nare — draw 2; then at 10+ cards in hand, draw 2 more
   "sv08-172": DRAGON_ELIXIR, // Dragon Elixir — heal 60 from your Active {N} Pokémon
   "sv10-175": TEAM_ROCKETS_GREAT_BALL, // Team Rocket's Great Ball — coin: Evolution / Basic Team Rocket's Pokémon → hand
-  "sv06-144": CARETAKER, // Caretaker — draw 2 (the Community Center clause is unreachable, R5)
+  "sv06-144": CARETAKER, // Caretaker — draw 2; drew any + Community Center in play: shuffles itself into the deck (🆕🆕🆕 D564 — "the Community Center clause is unreachable, R5" WITHDRAWN, D539: Community Center is built)
   "sv06-203": CARETAKER, // Caretaker (reprint)
   "svp-129": TOXIC_SUBJUGATION, // Pecharunt — Toxic Subjugation (Checkup, Active: +50 on the opponent's Poisoned Active)
   "svp-149": TOXIC_SUBJUGATION, // Pecharunt (reprint)
@@ -15406,6 +15552,18 @@ const REGISTRY: Record<string, CardProgram> = {
   "sv06-061": HEROS_SPIRIT, // Palafin ex (reprint)
   "sv06-193": HEROS_SPIRIT, // Palafin ex (reprint)
   "sv08.5-151": HEROS_SPIRIT, // Palafin ex (reprint)
+  // ── 🆕🆕🆕 D564 — the MRV 35 → 36 trainer bundle: 9 printings / 5 texts / 5 objects (plus the
+  //    Caretaker rider on its existing rows above), MID-MAP (D395/D396), so `raw[last]` does
+  //    not move. No row authors an `attack` key (Crobat's Poison Fang keeps deriving). ──
+  "sv08-178": JASMINES_GAZE, // Jasmine's Gaze — opponent's next turn: all your Pokémon take 30 less (after W/R)
+  "sv08-233": JASMINES_GAZE, // Jasmine's Gaze (reprint)
+  "sv08-245": JASMINES_GAZE, // Jasmine's Gaze (reprint)
+  "sv08.5-093": AMARYS, // Amarys — draw 4; end of turn, 5+ cards in hand: discard your hand
+  "sv08.5-132": AMARYS, // Amarys (reprint)
+  "sv08.5-170": AMARYS, // Amarys (reprint)
+  "sv10-173": TEAM_ROCKETS_FACTORY, // Team Rocket's Factory — played a "Team Rocket" Supporter this turn: draw 2
+  "sv06-146": COMMUNITY_CENTER, // Community Center — played a Supporter this turn: heal 10 from each of your Pokémon
+  "sv06.5-029": SHADOWY_ENVOY, // Crobat — played Janine's Secret Art this turn: draw until 8 in hand
   // ── D190 — THE **STANDARD-LEGAL** REPRINT-ALIAS MAP (Tier 0 of
   //    `docs/reference/coverage-backlog-legal.md`). 22 printings, 9 map targets,
   //    ZERO new code: every row below prints a sentence that is already authored

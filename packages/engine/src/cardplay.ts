@@ -178,7 +178,13 @@ export function playTrainer(state: GameState, action: PlayTrainerAction): ApplyR
     discard: [...side.discard, action.uid],
   });
   if (trainerType === "Supporter") {
-    next = { ...next, allowances: { ...next.allowances, supporterPlayed: true } };
+    // 🆕🆕🆕 D564 — AND WHICH Supporter: `supporterPlayedUid` is written HERE, in the same
+    // literal as the flag, and nowhere else (Team Rocket's Factory and Crobat "Shadowy
+    // Envoy" read the played card's NAME back through it — R-FC).
+    next = {
+      ...next,
+      allowances: { ...next.allowances, supporterPlayed: true, supporterPlayedUid: action.uid },
+    };
   }
   // Katy "your turn ends": a Trainer that ends the turn on completion, folded by
   // settleProgram exactly like an Ability's endsTurn (the Koraidon precedent).
@@ -190,8 +196,12 @@ export function playTrainer(state: GameState, action: PlayTrainerAction): ApplyR
   // A Stadium's own program (two calls down) and an Ability's are deliberately
   // unlabelled — neither is "an Item or Supporter card played from their hand".
   const invokedBy = trainerType === "Supporter" ? "supporter" : "item";
+  // 🆕🆕🆕 D564 — `playedUid`: the PLAYED CARD itself, for Caretaker's *"shuffle this
+  // Caretaker into your deck instead of discarding it"* (`shufflePlayedCardIntoDeck`). Set
+  // HERE and nowhere else; NOT `sourceUid`, which names a Pokémon and which a Trainer must
+  // leave absent (D222's self-op hazard — a `self` op would find no body and whiff, or worse).
   return settleProgram(
-    runProgram(next, program, { seat: action.seat, invokedBy }, events),
+    runProgram(next, program, { seat: action.seat, invokedBy, playedUid: action.uid }, events),
     action.seat,
     events,
     { endsTurn },
@@ -900,6 +910,22 @@ export function useStadiumAbility(state: GameState, action: UseStadiumAbilityAct
     return err(
       "STADIUM_ABILITY_ALREADY_USED",
       `${ability.label} was already used this turn (§7.3)`,
+    );
+  }
+  // 🆕🆕🆕 D564 — the Stadium ability's own PRINTED gate (`StadiumAbility.playableIf`):
+  // Community Center's *"if they played a Supporter card from their hand this turn"* and
+  // Team Rocket's Factory's *"… that has "Team Rocket" in its name …"*. Read for the ACTOR
+  // — "each player's turn" / "they": either seat may use the Stadium on its OWN turn, and
+  // `turnGate` above already admits only the turn's seat. Checked AFTER the once-per-turn
+  // flag (an already-spent use says so, `useAbility`'s order) and BEFORE `programPlayable`
+  // (a printed rule is not a would-only-whiff heuristic, `playTrainer`'s order).
+  // (Read through a local: the `useAbility` gate above spells the same test on `ability`,
+  // and one spelling per file keeps each anchor unique.)
+  const printedGate = ability.playableIf;
+  if (printedGate !== undefined && !conditionHolds(state, action.seat, printedGate)) {
+    return err(
+      "PLAY_CONDITION_NOT_MET",
+      `${ability.label} can only be used if ${conditionNote(printedGate)} (§7.3)`,
     );
   }
   // Would-only-whiff gate, exactly as useAbility (Mesagoza's heads-branch search

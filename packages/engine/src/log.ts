@@ -859,6 +859,22 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
         strong(retrieveNoun(event.target).plural),
         plain(" this turn (before Weakness and Resistance)"),
       ]);
+    // 🆕🆕🆕 §8.5 — the Supporter-installed NEXT-TURN side-wide reduction (D564, Jasmine's
+    // Gaze). INSTALLER voice, and the installer is the shielded side: "next turn" is the
+    // OPPONENT's, so the row says so rather than "your next turn". The printed reminder is
+    // rendered for `SIDE_ATTACKS_LOCKED`'s reason — a fresh body is covered too.
+    case "SIDE_DAMAGE_REDUCTION_INSTALLED":
+      return row(event.seat, [
+        plain(
+          `Pokémon take ${event.amount} less damage from attacks during the opponent's next turn (after Weakness and Resistance), including Pokémon that come into play`,
+        ),
+      ]);
+    // 🆕🆕🆕 §5.3 — Amarys's scheduled end-of-turn discard (D564). The threshold is printed,
+    // so the row carries it; the discard itself files the shipped HAND_DISCARDED row.
+    case "HAND_DISCARD_SCHEDULED":
+      return row(event.seat, [
+        plain(`will discard their hand at the end of this turn if it holds ${event.atLeast} or more cards`),
+      ]);
     // 🆕🆕 §13 (D434) — the attack SCHEDULED a counter placement on the DEFENDING
     // Pokémon. PASSIVE/system-free but filed under `event.seat`, which owns the
     // scheduled body — ATTACK_DEBUFF_APPLIED's contract directly above verbatim, and

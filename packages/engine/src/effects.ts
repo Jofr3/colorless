@@ -3037,7 +3037,10 @@ export type BoardCondition =
       ingested 978 cards / 6 sets — one printing, one card, no reprint, and the pool's only
       other "you played" sentence is Crobat sv06.5-029's "Shadowy Envoy" Ability,
       which names a SPECIFIC card ("if you played Janine's Secret Art from your
-      hand this turn") and is a different question entirely.
+      hand this turn") and is a different question entirely. (🆕🆕🆕 D564: BUILT —
+      that different question is the NEW `youPlayedSupporterNamedThisTurn { name }`
+      below, reading the NEW `allowances.supporterPlayedUid`; Team Rocket's Factory
+      asks it too, by substring. THIS member is unchanged and still costs no new state.)
 
       THE FIRST MEMBER OF THIS VOCABULARY THAT READS A TURN EVENT RATHER THAN A
       BOARD, and it costs NO new state: §7.2's one-Supporter-per-turn cap is
@@ -3725,6 +3728,35 @@ export type BoardCondition =
       kind counts ("any cards"), so a Pokémon, a Trainer or an Energy whose name holds the
       fragment all satisfy it. Public: a discard pile is face up. */
   | { kind: "opponentDiscardHasNameContaining"; fragment: string }
+  /** 🆕🆕🆕 **D564 — YOU played, from your hand THIS TURN, a Supporter whose NAME is
+      `name` (exact) or CONTAINS `nameContains` (substring).** Two printed readers:
+      Team Rocket's Factory `sv10-173` (*"if they played a Supporter card that has "Team
+      Rocket" in its name from their hand this turn"* — `nameContains: "Team Rocket"`, the
+      `StadiumAbility.playableIf` gate) and Crobat `sv06.5-029` "Shadowy Envoy" (*"if you
+      played Janine's Secret Art from your hand this turn"* — `name: "Janine's Secret Art"`,
+      the `AbilityProgram.playableIf` gate). Exactly ONE of the two keys is authored; the
+      exact match and the substring are different sentences (a "Team Rocket" substring is
+      not a name, and "Janine's Secret Art" is not a fragment — the two rows differ on one
+      axis, pinned in `trainerBundleD564.test.ts`).
+
+      Reads `state.allowances.supporterPlayedUid` (written by `playTrainer` alone) and
+      resolves the card through `cardOfUid`, which reads the uid in ANY zone (R-FC): the
+      played card has gone to the discard, or — Caretaker under Community Center — back
+      into the deck, and either way it WAS played. Case-sensitive and un-normalised,
+      `yourBenchHasNameContaining`'s reading.
+
+      ⚠️ **THE SEAT GUARD IS `youPlayedSupporterThisTurn`'s, VERBATIM** — the allowance bag
+      describes the turn's OWNER only, so the arm proves `phaseViewOf(state, seat).activeSeat
+      === seat` before it believes the uid is `seat`'s (a `conditionGate` under a
+      koTrigger/damagedTrigger stage evaluates for the non-turn seat). Public: the played
+      Supporter is face up in the discard pile. */
+  | { kind: "youPlayedSupporterNamedThisTurn"; name?: string; nameContains?: string }
+  /** 🆕🆕🆕 **D564 — §7.3, the Stadium in the shared zone is NAMED `name`, whoever played
+      it.** Caretaker `sv06-144`/`-203`'s *"if Community Center is in play"*. `stadiumInPlay`
+      with a name test: no possessive is printed, so ownership is not read (D378's reading).
+      Matched on the Stadium card's catalog `name`, exactly — every printing of one Stadium
+      shares its name (§7.3's same-name rule reads it the same way). Public. */
+  | { kind: "stadiumInPlayNamed"; name: string }
   /** D280 — every one of `conditions` holds for the reading seat. The
       vocabulary's FIRST COMBINATOR and its first RECURSIVE member, bought by
       Call Bell `sv08-165`'s *"You can use this card only if you go second, and
@@ -6836,6 +6868,28 @@ export type EffectOp =
   | { op: "drawUntilHandSize"; size: number }
   /** Discard the controller's whole hand (Professor's Research precedes a draw). */
   | { op: "discardHand" }
+  /** 🆕🆕🆕 **D564 — Amarys `sv08.5-093`/`-132`/`-170` (Supporter, 3 legal)**: *"At the end
+      of this turn, if you have 5 or more cards in your hand, discard your hand."* — writes
+      the printed threshold to `state.allowances.endOfTurnHandDiscard` and does nothing
+      else; flow.ts's `endTurn` stage pays it (R-AM, decisions.md D564). Never parks. A
+      second write overwrites (one Supporter per turn, §7.2, so no legal board has two). */
+  | { op: "scheduleEndOfTurnHandDiscard"; atLeast: number }
+  /** 🆕🆕🆕 **D564 — Jasmine's Gaze `sv08-178`/`-233`/`-245` (Supporter, 3 legal)**: *"During
+      your opponent's next turn, all of your Pokémon take 30 less damage from attacks from
+      your opponent's Pokémon (after applying Weakness and Resistance)."* — stamps the
+      CONTROLLER's side with `sideDamageReduction { turn: state.turn + 1, amount }` (types.ts
+      `SideDamageReduction`: the opponent form's `+ 1`, a record on the SIDE so new Pokémon
+      are covered, overwrite semantics named there). Never parks. Emits
+      `SIDE_DAMAGE_REDUCTION_INSTALLED` (not persisted, D141). */
+  | { op: "installSideDamageReductionNextTurn"; amount: number }
+  /** 🆕🆕🆕 **D564 — Caretaker `sv06-144`/`-203`**: *"… shuffle this Caretaker into your deck
+      instead of discarding it."* — moves the PLAYED card (`EffectContext.playedUid`, set by
+      `playTrainer` alone; NOT `sourceUid`, D222) from the controller's discard pile, where
+      `playTrainer` put it up front, into the deck, and shuffles. Emits the shipped
+      `DISCARD_RETRIEVED { dest: "deck" }` + `SHUFFLE` pair (Super Rod's rows — no new event).
+      A silent no-op when `playedUid` is absent or the card is no longer in the discard (an
+      Ability or attack that authored it has no played card). Never parks. */
+  | { op: "shufflePlayedCardIntoDeck" }
   /** Shuffle the controller's deck (the tail of every search).
 
       🆕🆕 **D534 — `whose: "opponent"` SHUFFLES THE OTHER SEAT's DECK.** Inkay
@@ -19977,7 +20031,9 @@ const CONDITIONAL_DAMAGE_CLAUSES = new Map<string, BoardCondition>([
   // The pool's only other "you played" sentence is Crobat sv06.5-029's "Shadowy
   // Envoy" Ability, which names a SPECIFIC card ("if you played Janine's Secret
   // Art from your hand this turn") and drops the "during" — two differences, and
-  // the whole-sentence anchor refuses it on either one.
+  // the whole-sentence anchor refuses it on either one. (🆕🆕🆕 D564: Crobat is BUILT
+  // as an Ability `playableIf` on `youPlayedSupporterNamedThisTurn`; this attack-clause
+  // table still — rightly — refuses its sentence.)
   [
     "you played a Supporter card from your hand during this turn",
     { kind: "youPlayedSupporterThisTurn" },

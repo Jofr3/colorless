@@ -1025,6 +1025,11 @@ function redactedRareCandyOf(
     the would-only-whiff `programPlayable` gate. The `turnGate` half needs no term
     here — this is a `turn:action` arm and the offer already goes to `phase.seat`
     alone, which is the same seat the gate admits.
+    🆕🆕🆕 D564 — and a SIXTH, the Stadium ability's own printed gate (`StadiumAbility.
+    playableIf`: Community Center, Team Rocket's Factory), asked for an UNSPENT use by an
+    early return that greys the row with the printed clause (`useStadiumAbility` asks it after
+    the once-per-turn flag, so a spent use keeps its self-evident null reason). REACHABLE —
+    every turn before a Supporter is played — and driven in `trainerBundleD564.test.ts` §8.
     🆕🆕🆕 D561 (R-AN) — the gate grew a FIFTH term and this fold follows it: Academy at
     Night `sv06.5-054`'s program is a `payFromHand { count: 1, to: "deckTop" }`, and
     `useStadiumAbility` now refuses an unpayable hand cost (`handCostUnmet`,
@@ -1070,6 +1075,17 @@ function redactedStadiumAbilityOf(
   const card = cardOfUid(state, stadium.uid);
   const ability = card === undefined ? undefined : programFor(card.id)?.stadium?.ability;
   if (ability === undefined) return null;
+  // 🆕🆕🆕 D564 — the Stadium ability's own printed gate (`StadiumAbility.playableIf`:
+  // Community Center, Team Rocket's Factory), term for term with `useStadiumAbility`, which
+  // asks it AFTER the once-per-turn flag — so a spent use keeps its self-evident null reason
+  // and only an UNSPENT, gated use greys with the printed clause.
+  if (
+    !state.allowances.stadiumAbilityUsed &&
+    ability.playableIf !== undefined &&
+    !conditionHolds(state, viewerSeat, ability.playableIf)
+  ) {
+    return { label: ability.label, disabled: true, reason: `Only if ${conditionNote(ability.playableIf)}` };
+  }
   const noTarget = !programPlayable(state, ability.program, viewerSeat);
   // 🆕🆕🆕 D561 (R-AN) — the printed hand cost; no `excludeUid` (the Stadium is in the
   // shared zone, not the hand), exactly as `useStadiumAbility` asks it.

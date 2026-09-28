@@ -13,7 +13,6 @@ import {
   benchFromDeck,
   clearBench,
   deckOf,
-  expectErr,
   mustApply,
   setActiveFromDeck,
   setDamage,
@@ -29,6 +28,8 @@ import {
 //   Dragon Elixir             sv08-172                Item       heal 60 from your Active {N} Pokémon
 //   Team Rocket's Great Ball  sv10-175                Item       coin: an Evolution / a Basic Team Rocket's Pokémon → hand
 //   Caretaker                 sv06-144 / -203         Supporter  draw 2 (the Community Center clause unreachable, R5)
+//                             (🆕🆕🆕 D564 — "unreachable, R5" WITHDRAWN, D539: Community Center is BUILT and the
+//                             clause with it; §7's guard is INVERTED. The rider's own suite: trainerBundleD564.test.ts.)
 //   Pecharunt                 svp-129 / -149          Ability    "Toxic Subjugation": Checkup, Active, +50 on a Poisoned Active
 //
 // The three NEW members — `yourPokemonAllOwner`, `yourHandAtLeast`, `yourActiveHasType` —
@@ -377,7 +378,25 @@ describe("D556 §1 — the prints, and the registry rows that map them", () => {
       ids: CARETAKER,
       text: CARETAKER_TEXT,
       subtype: "Supporter",
-      program: { trainer: [{ op: "drawCards", count: 2 }] },
+      // 🆕🆕🆕 D564 — the rider: the second sentence is BUILT (Community Center has a board now).
+      program: {
+        trainer: [
+          { op: "drawCards", count: 2, recordAs: "moved" },
+          {
+            op: "recordGate",
+            slot: "moved",
+            // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
+            then: [
+              {
+                op: "conditionGate",
+                cond: { kind: "stadiumInPlayNamed", name: "Community Center" },
+                // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
+                then: [{ op: "shufflePlayedCardIntoDeck" }],
+              },
+            ],
+          },
+        ],
+      },
     },
   ];
 
@@ -622,7 +641,7 @@ describe("D556 §6 — Team Rocket's Great Ball: the coin picks the stage; the s
 });
 
 // ────────────────────────────────────────────────────────────────────────────
-describe("D556 §7 — Caretaker: draw 2, and the Community Center clause is UNREACHABLE (R5)", () => {
+describe("D556 §7 — Caretaker: draw 2, and the Community Center clause (🆕🆕🆕 D564: REACHABLE — the guard below is inverted)", () => {
   it("draws 2 and goes to the discard", () => {
     const { uid, state, events } = play(table(FILLER), CARETAKER[0], [FILLER]);
     expect(drawn(events)).toEqual([2]);
@@ -631,14 +650,20 @@ describe("D556 §7 — Caretaker: draw 2, and the Community Center clause is UNR
     expect(play(table(FILLER), CARETAKER[1], []).state.players.p1.hand).toHaveLength(2);
   });
 
-  it("🛑 GUARD — Community Center is UNBUILT and cannot be played, so Caretaker's second sentence has no board (turns RED the day it is built)", () => {
-    expect(programFor(COMMUNITY_CENTER)?.stadium).toBeUndefined();
+  // 🆕🆕🆕 D564 — THE GUARD TURNED RED EXACTLY AS IT PROMISED, AND IS INVERTED RATHER THAN
+  // DELETED (re-point, do not delete): it was *"Community Center is UNBUILT and cannot be
+  // played, so Caretaker's second sentence has no board (turns RED the day it is built)"*.
+  // The OLD claim's discrimination is kept by the new one's second half — a Caretaker WITHOUT
+  // Community Center still goes to the discard (the "draws 2 and goes to the discard" rung
+  // above), and one WITH it now leaves the discard for the deck.
+  it("🛑 GUARD, INVERTED (D564) — Community Center is BUILT and PLAYABLE, so Caretaker's second sentence has a board and runs", () => {
+    expect(programFor(COMMUNITY_CENTER)?.stadium?.ability).toBeDefined();
     const board = setHand(table(FILLER), "p1", [COMMUNITY_CENTER]);
-    expectErr(
-      board,
-      { type: "playTrainer", seat: "p1", uid: board.players.p1.hand[0] as string },
-      "TRAINER_NOT_SIMULATED",
-    );
+    const staged = mustApply(board, { type: "playTrainer", seat: "p1", uid: board.players.p1.hand[0] as string }).state;
+    expect(staged.stadium?.uid).toBe(board.players.p1.hand[0]);
+    const { uid, state } = play(staged, CARETAKER[0], [FILLER]);
+    expect(state.players.p1.discard).not.toContain(uid);
+    expect(state.players.p1.deck).toContain(uid);
   });
 });
 

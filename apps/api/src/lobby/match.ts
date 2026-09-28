@@ -1666,8 +1666,70 @@ export interface MatchRecord {
     `rest` only as a new inhabitant a v34 writer never produced), and
     `GameEvent.SIDE_ATTACKS_BOOSTED` (not persisted, D141). No schema, redact, projection
     or client byte: the redacted view does not carry `allowances`, so the HUD does not
-    show the side bonus (a carried display debt, decisions.md D556). */
-export const MATCH_RECORD_VERSION = 35;
+    show the side bonus (a carried display debt, decisions.md D556).
+
+    🆕🆕🆕 **35 → 36 AT D564 — THE NINTH POSITION: THREE REQUIRED KEYS, EACH A PLAYED EFFECT.**
+    The addresses, named first (D456's rule):
+      · **`GameState.allowances.supporterPlayedUid: string | null`** — the Supporter the turn's
+        owner played from hand this turn, written by `playTrainer` alone beside
+        `supporterPlayed: true`; read back BY NAME for Team Rocket's Factory `sv10-173` (*"if
+        they played a Supporter card that has "Team Rocket" in its name …"*) and Crobat
+        `sv06.5-029` "Shadowy Envoy" (*"if you played Janine's Secret Art …"*). One turn wide.
+      · **`GameState.allowances.endOfTurnHandDiscard: number | null`** — Amarys
+        `sv08.5-093`/`-132`/`-170`'s printed threshold (*"At the end of this turn, if you have 5
+        or more cards in your hand, discard your hand."*), paid by flow.ts's `endTurn` stage.
+        One turn wide.
+      · **`PlayerSide.sideDamageReduction: { turn, amount } | null`** — Jasmine's Gaze
+        `sv08-178`/`-233`/`-245` (*"During your opponent's next turn, all of your Pokémon take
+        30 less damage …"*), stamped `state.turn + 1` and read by `seatDamageReduction`. It
+        OUTLIVES the turn it is played on — the window is the opponent's next turn.
+
+    🛑 **THE FIFTH POSITION'S TEST, RUN ON EACH KEY — AND EACH FAILS (driven).** Each optional
+    spelling passes D441 (an absent key reads as "nothing pending", which is what a v35
+    writer meant) and is detectable in the bytes; each fails D456's *"inert on the board"*,
+    because a v35 ROLLBACK deploy resuming a v36 record ignores the key and silently drops a
+    played Supporter's effect:
+      · a save taken after Team Rocket's Ariana (or Janine's Secret Art) and before the
+        Factory's (or Crobat's) use — the licence the Supporter bought is gone
+        (`trainerBundleD564.test.ts` §9 (i));
+      · a save taken after Amarys — the discard the player accepted when they drew 4 is gone,
+        and the turn ends on a hand the card forbids (§9 (i));
+      · a save taken in the opponent's turn after Jasmine's Gaze — every hit lands 30 harder
+        than the printed card allows (`sideDamageNextTurnD564.test.ts` §9 (i)). This one is
+        NOT a one-turn residue: the window IS the turn after the play, so a between-turns
+        save carries it too.
+    So all three keys are REQUIRED and the version is owed.
+
+    🛑 **AND A v35 RECORD IS NOT READ BENIGNLY — MEASURED.** A v35 `PlayerSide` has no
+    `sideDamageReduction` key: `seatDamageReduction` reads `.turn` of `undefined` on the
+    FIRST damaging hit across the table → **`TypeError`** (D326's class,
+    `sideDamageNextTurnD564.test.ts` §9 (ii)). The two allowance keys read benignly when absent
+    (no discard, no licence — `trainerBundleD564.test.ts` §9 (ii)), and the next `startTurn`
+    would write a fresh bag; the record is retired anyway, by `readMatchRecord`'s version gate,
+    on D124's rule (a key the writer never wrote is not a key with a default).
+
+    🛑 **WHAT WOULD REVERSE THIS (D422).** The fifth position's reversal (a rollback-safety
+    rule that accepts a silently dropped effect as inert, or a pipeline that forbids rollback
+    across a record-shape change) — neither holds today. The eighth position's second escape
+    (saves only between turns) would cover the two ALLOWANCE keys and NOT the side record.
+
+    ⚠️ Also moved, and none is a second reason: three new `EffectOp` members
+    (`installSideDamageReductionNextTurn`, `scheduleEndOfTurnHandDiscard`,
+    `shufflePlayedCardIntoDeck` — D333 widenings; none parks), two new `BoardCondition` members
+    (`youPlayedSupporterNamedThisTurn`, `stadiumInPlayNamed` — a `conditionGate` holding one can
+    ride a parked `rest` only as a new inhabitant a v35 writer never produced), the OPTIONAL
+    `EffectContext.playedUid` (it rides EVERY parked Trainer continuation now — a widening, D125:
+    a v35 continuation lacks it and reads as "no played card", which only
+    `shufflePlayedCardIntoDeck` reads and no parking program authors), the catalog-only
+    `StadiumAbility.playableIf`, and two events (`SIDE_DAMAGE_REDUCTION_INSTALLED`,
+    `HAND_DISCARD_SCHEDULED` — not persisted, D141). One CLIENT byte does move, and it is not
+    a reason either: GameHud.tsx's `stadiumAbilityOption` folds the catalog's
+    `StadiumAbility.playableIf` into its disabled/reason (the third reader beside cardplay and
+    redact). The three persisted keys themselves move no schema, redact-shape, projection or
+    client byte: the redacted view carries neither the side reduction nor a pending Amarys
+    discard, so the HUD shows neither (a carried display debt, `sideAttackLock`'s and
+    `sideAttackBonuses`' precedent, decisions.md D564). */
+export const MATCH_RECORD_VERSION = 36;
 
 /** How a persisted match read back: absent, usable, or written by an
     incompatible deploy (`stale` — the caller decides whether to retire it). */

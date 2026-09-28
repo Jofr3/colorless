@@ -682,7 +682,7 @@ describe("D527 §2 — the literal resolves to the ATTACKER's Bench length at ST
 // (copied from `namedDeckSearch.test.ts` §4's rung and pointed at the new literal).
 // ─────────────────────────────────────────────────────────────────────────────
 
-describe("D527 §3 — `MATCH_RECORD_VERSION` HOLDS at 30 (🆕🆕🆕 held at THIS slice; 31 since D547; 32 since D548; 33 since D549; 34 since D552; 35 since D556), and the argument is a WIDENING driven over v30 bytes", () => {
+describe("D527 §3 — `MATCH_RECORD_VERSION` HOLDS at 30 (🆕🆕🆕 held at THIS slice; 31 since D547; 32 since D548; 33 since D549; 34 since D552; 35 since D556; 36 since D564), and the argument is a WIDENING driven over v30 bytes", () => {
   it("🛑 the parked `pendingOp.max` is the LITERAL `\"yourBenchCount\"` — the persisted word, resolved only when the op steps", () => {
     const parked = swing({ bench: 2 }).after;
     const cont = continuation(parked);
@@ -722,10 +722,10 @@ describe("D527 §3 — `MATCH_RECORD_VERSION` HOLDS at 30 (🆕🆕🆕 held at 
     expect(cardsPrompt(literal).note).not.toBe(any.prompt.note);
   });
 
-  it("🛑 `MATCH_RECORD_VERSION` is 35 (🆕🆕🆕 D556 stepped it 34 → 35; D552 stepped it 33 → 34; D549 stepped it 32 → 33; D548 stepped it 31 → 32; D547 stepped it 30 → 31; this slice held it) in `apps/api` — the widening bumped nothing", () => {
+  it("🛑 `MATCH_RECORD_VERSION` is 36 (🆕🆕🆕 D564 stepped it 35 → 36; D556 stepped it 34 → 35; D552 stepped it 33 → 34; D549 stepped it 32 → 33; D548 stepped it 31 → 32; D547 stepped it 30 → 31; this slice held it) in `apps/api` — the widening bumped nothing", () => {
     const match = Object.entries(RAW).find(([k]) => k.endsWith("/lobby/match.ts"))?.[1] ?? "";
     // 🆕🆕🆕 D547 — the constant this slice held is now 31: D547 added two REQUIRED `InPlayPokemon` fields (apps/api match.ts).
-    expect(match).toContain("export const MATCH_RECORD_VERSION = 35;");
+    expect(match).toContain("export const MATCH_RECORD_VERSION = 36;");
   });
 });
 
@@ -792,7 +792,7 @@ describe("D527 §4 — the census moved in exactly ONE summand, by 1 sentence / 
 
   it("engineVersion and `manifest.version` agree, and the bump is owed for BEHAVIOUR", () => {
     // ⚠️ The version is NOT spelled in this `it(…)` title (D460's fourth class).
-    expect(engineVersion).toBe("0.447.0");
+    expect(engineVersion).toBe("0.448.0");
     expect(manifest.version).toBe(engineVersion);
   });
 

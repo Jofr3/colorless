@@ -920,7 +920,10 @@ import type { GameState, Seat } from "./types";
     is the pool's only other "you played" sentence, and it differs twice over — it
     names a SPECIFIC card ("if you played Janine's Secret Art from your hand this
     turn") and it drops the "during". The whole-sentence anchor refuses it on
-    either difference alone.
+    either difference alone. (🆕🆕🆕 D564: Crobat's sentence is now BUILT — as an Ability
+    `playableIf` on the NEW `youPlayedSupporterNamedThisTurn { name }`, which needed the NEW
+    `TurnAllowances.supporterPlayedUid`; the anchor still refuses it HERE, which stays right —
+    it is not an attack clause, and "a SPECIFIC card" is exactly what this member could not say.)
 
     Cost: 1 union member, 1 `conditionHolds` arm, 1 `conditionNote` arm, 1 literal
     table row, 0 new state fields, 0 registry rows. No new op, event, error code,
@@ -20156,6 +20159,33 @@ import type { GameState, Seat } from "./types";
     `expect(manifest.version)`, `it(…)` titles, the declaration and `package.json` —
     **not** as a value-keyed grep — because a value-keyed grep is precisely the mechanism
     that ate D500's heading.)
+    🆕🆕🆕 engineVersion 0.447.0 → **0.448.0** (D564 — THE MRV 35 → 36 TRAINER BUNDLE: 9 PRINTINGS / 5
+    TEXTS / 5 OBJECTS, PLUS THE CARETAKER RIDER. Five registry `CardProgram`s keyed on nine REAL ids
+    inserted MID-MAP after `sv08.5-151` (D395/D396, so `raw[last]` stays `sv09-107`); no row authors an
+    `attack` key. **Jasmine's Gaze** `sv08-178`/`-233`/`-245` on the NEW `installSideDamageReductionNextTurn
+    { amount: 30 }`, which stamps the NEW REQUIRED `PlayerSide.sideDamageReduction { turn: state.turn + 1,
+    amount }` (the opponent form's `+ 1`, overwrite semantics named), paid by continuous.ts
+    `seatDamageReduction` for the damaged side AFTER the own-side return (R-JG2) and under `"all"` only
+    (R-JG1: Feint Attack's `"othersOnly"` drops it); a side record, so new Pokémon are covered and §10
+    sheds nothing (R-JG3). **Amarys** `sv08.5-093`/`-132`/`-170` — `drawCards 4` then the NEW
+    `scheduleEndOfTurnHandDiscard { atLeast: 5 }` onto the NEW REQUIRED
+    `TurnAllowances.endOfTurnHandDiscard`, paid by flow.ts's `endTurn` stage (the exported interpreter.ts
+    `discardHand`, `>=`) before `TURN_ENDED` — after an attack's KO and prize stages (R-AM). **Team
+    Rocket's Factory** `sv10-173` and **Community Center** `sv06-146` on the NEW
+    `StadiumAbility.playableIf` (read by `useStadiumAbility` — PLAY_CONDITION_NOT_MET, after the
+    once-per-turn flag — and by `redactedStadiumAbilityOf` and `GameHud`'s fold): the Factory on the NEW
+    `BoardCondition.youPlayedSupporterNamedThisTurn { nameContains: "Team Rocket" }`, which reads the NEW
+    REQUIRED `TurnAllowances.supporterPlayedUid` (written by `playTrainer` alone, resolved by name in any
+    zone — R-FC) behind `youPlayedSupporterThisTurn`'s seat guard; Community Center on the shipped
+    `youPlayedSupporterThisTurn` over `healEach 10` (R-CC: a no-damage board whiffs). **Crobat**
+    `sv06.5-029` "Shadowy Envoy" on `youPlayedSupporterNamedThisTurn { name: "Janine's Secret Art" }` over
+    `drawUntilHandSize 8`; Poison Fang keeps deriving. **Caretaker** `sv06-144`/`-203`'s second sentence:
+    `drawCards { recordAs }` → `recordGate` → `conditionGate` on the NEW `stadiumInPlayNamed` → the NEW
+    `shufflePlayedCardIntoDeck`, which moves the PLAYED card (the NEW optional `EffectContext.playedUid`,
+    set by `playTrainer` alone — NOT `sourceUid`) discard → deck (R-CT). New events
+    `SIDE_DAMAGE_REDUCTION_INSTALLED` and `HAND_DISCARD_SCHEDULED` (not persisted). **`MATCH_RECORD_VERSION`
+    35 → 36, THE NINTH POSITION**: three REQUIRED keys, each a played effect a v35 rollback would drop —
+    see docs/decisions.md D564 (d) and apps/api match.ts.)
     🆕🆕🆕 engineVersion 0.446.0 → **0.447.0** (D563 — FIVE ABILITY TEXTS: 11 PRINTINGS / 5 TEXTS / 5
     OBJECTS — TWO OWN-ATTACK COST CLAUSES, AN EVOLVE ALIAS, A SELF-PLACING THIS-TURN BUFF AND A
     CARD-BORNE PLAY RESTRICTION. Five registry `CardProgram`s keyed on eleven REAL ids inserted MID-MAP
@@ -20455,7 +20485,9 @@ import type { GameState, Seat } from "./types";
     UNRULED). THREE ZERO-VOCABULARY ROWS: Team Rocket's Great Ball `sv10-175` (`coinFlipGate` over two
     `searchDeck`s on `ownerPokemon` Evolution / Basic, `reveal`, then ONE `shuffleDeck` — the parked
     search resumes into the queued shuffle, Poké Ball's precedent, driven), Caretaker `sv06-144`/`-203`
-    (`drawCards 2`; the Community Center clause is a named, UNREACHABLE gap, R5, guarded) and Pecharunt
+    (`drawCards 2`; the Community Center clause is a named, UNREACHABLE gap, R5, guarded — 🆕🆕🆕 D564:
+    WITHDRAWN (D539), kept as written: Community Center is BUILT, the clause with it, and the guard is
+    INVERTED) and Pecharunt
     `svp-129`/`-149` "Toxic Subjugation" (`betweenTurns`, `activeOnly`, `conditionGate
     opponentActivePoisoned` → `damageActive 50` — the registry's first gated Checkup trigger; its
     `ABILITY_TRIGGERED` row is filed even when the gate is false, R6). Withdrawn and annotated in place
@@ -24533,7 +24565,7 @@ import type { GameState, Seat } from "./types";
     WITNESS** — the count was re-derived every slice and the word *"three"* was carried.
     A successor of this slice inherits **81 / 61 / 17** again, over **FIVE** history
     occurrences: those four plus `deckMillFilteredScale.test.ts`'s own header arrow.) */
-export const engineVersion = "0.447.0";
+export const engineVersion = "0.448.0";
 
 export type {
   ApplyResult,

@@ -349,6 +349,13 @@ describe("the `programPlayable` term in the fold is correct and, today, UNREACHA
     // returns exactly these eight. `programPlayable` gates `payFromHand` NEITHER (its hand
     // cost is `handCostUnmet`'s, a separate term), so the loop below still holds for it.
     "sv06.5-054", // Academy at Night
+    // 🆕🆕🆕 D564 — the NINTH and TENTH, and the first two with a PRINTED GATE
+    // (`StadiumAbility.playableIf`, read by the fold's early return — driven in
+    // `trainerBundleD564.test.ts`). "Exactly these eight" above is WITHDRAWN (D539): the
+    // measurement over every audited id now returns these ten. Their programs are `drawCards 2`
+    // and `healEach 10`, which `programPlayable` gates NEITHER, so the loop below still holds.
+    "sv10-173", // Team Rocket's Factory
+    "sv06-146", // Community Center
   ];
 
   it("the census is real — every id above carries an ability, and the fixture pool holds no OTHERS", () => {
@@ -368,7 +375,7 @@ describe("the `programPlayable` term in the fold is correct and, today, UNREACHA
   it("NO printed Stadium program can whiff-gate — so no test over the pool can kill this term", () => {
     // The most adverse board `programPlayable` has gates for: nothing in either
     // deck, discard or hand, no opponent Bench, no Energy anywhere. If ANY of the
-    // seven (🆕🆕🆕 D561: eight) programs contained a `gust` / `switchActive` / `moveEnergy` /
+    // seven (🆕🆕🆕 D561: eight; 🆕🆕🆕 D564: ten) programs contained a `gust` / `switchActive` / `moveEnergy` /
     // `discardEnergy` / `attachEnergyFrom` / `bottomFromOpponentHand` /
     // `damageChosen` op, this state would make it false.
     const base = p1Turn2(1);
