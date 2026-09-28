@@ -399,6 +399,11 @@ const SECOND_PLAYERS_FIRST_TURN = {
 //    D544 (`0f4d7257`), 7 at D545. Rows 6 and 7 are COST clauses, not timing clauses
 //    (`alternateCostIf` / `costWaivedIf`, never blocking); their VALUES are driven by
 //    `timingGateFromAttackText` in `attackCostClause.test.ts` §1, not here.
+//    (🆕🆕🆕 D563 (D539): the two cost shapes are now ALSO printed by Abilities —
+//    `PassiveEffects.attackCostClause`, Noivern / Kyurem, read by `attackCostAt` through
+//    `passivesOf` and §9-suppressible — which NO row of this table derives and no
+//    `attackGate` row authors; this table, its seven rows and `ABILITY_ATTACK_GATE_IDS`' 17
+//    stand.)
 
 describe("D444 §1 — the clause→gate table, driven row against row", () => {
   it("🛑 the two `If you go …` rows are OPPOSITE, and one of them carries NO condition", () => {
@@ -868,6 +873,6 @@ describe("D444 §6 — `MATCH_RECORD_VERSION` stays 29, driven over bytes both w
     // D208's debt and D275's mutant: `engineVersion` and `packages/engine/package.json`
     // are one fact with two spellings, and the pin is authored HERE rather than
     // inherited (D427 — count your own suite's pin).
-    expect(engineVersion).toBe("0.446.0");
+    expect(engineVersion).toBe("0.447.0");
   });
 });

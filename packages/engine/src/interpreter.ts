@@ -86,6 +86,8 @@ import {
   berryReductionOf,
   deluxeBombOf,
   stadiumShieldsStatus,
+  // 🆕🆕🆕 D563 — Palafin ex's card-borne "only via Zero to Hero", at the deck-evolve filter.
+  intoPlayOnlyViaOf,
 } from "./continuous";
 import type { KoSurvival } from "./continuous";
 import { POKEMON_TYPES, STATUS_WORD_OF, foldApostrophes } from "./effects";
@@ -2081,7 +2083,10 @@ function stepOp(
     case "preventAttackUse":
       return { done: preventAttackUse(state, op.attack, op.until, ctx, events) };
     case "boostAttack":
-      return { done: boostAttack(state, op.attack, op.amount, op.base, ctx, events) };
+      // 🆕🆕🆕 D563 — `op.holder` / `op.thisTurn` ride through (Feraligatr "Torrential Heart").
+      return {
+        done: boostAttack(state, op.attack, op.amount, op.base, ctx, events, op.holder, op.thisTurn),
+      };
     // 🆕🆕🆕 D556 — the THIS-TURN side-wide bonus (Black Belt's Training), on the bag.
     case "boostSideAttacksThisTurn":
       return { done: boostSideAttacksThisTurn(state, op, ctx, events) };
@@ -2293,6 +2298,11 @@ function stepOp(
       // this file has already chosen twice for a rider on an op's own amount.
       // 🆕🆕🆕 D557 — `op.source` (absent = the attack recoil's `"self"`) rides through,
       // so Team Rocket's Venture Bomb's tails row reads as an Item's placement.
+      // 🆕🆕🆕 D563 — `op.on === "source"` places on the program's SOURCE body instead
+      // (Feraligatr "Torrential Heart", used from the Bench or the Active). The recoil
+      // fold is not asked there: its one rider reads the Active, and no printing pairs it
+      // with the source-body placement, so the printed amount is placed as written.
+      if (op.on === "source") return { done: damageSourceBody(state, op.amount, ctx, events, op.source) };
       return { done: damageSelf(state, recoilAmount(op, state, ctx), ctx, events, op.source) };
     case "damageDefender": {
       // Chien-Pao ex "Hail Blade": `per` (60) HP per card an earlier op filed
@@ -5738,6 +5748,13 @@ export function conditionHolds(state: GameState, seat: Seat, cond: BoardConditio
       const spot = activeTop(state, otherSeat(seat));
       return spot !== null && hasPrintedAbility(spot.card);
     }
+    case "opponentDiscardHasNameContaining":
+      // 🆕🆕🆕 D563 — Kyurem "Plasma Bane"'s *"your opponent has any cards in their
+      // discard pile that have "Colress" in the name"*: the OTHER seat's pile only (R-PB),
+      // any card kind, `yourBenchHasNameContaining`'s case-sensitive `.includes`.
+      return state.players[otherSeat(seat)].discard.some(
+        (uid) => cardOf(state, uid)?.name.includes(cond.fragment) === true,
+      );
     case "yourPokemonKoedOnOpponentsLastTurn":
       // D271 — "any of your Pokémon were Knocked Out during your opponent's last
       // turn" (Unfair Stamp sv06-165, Hassel sv06-151/-205). The whole predicate
@@ -6212,6 +6229,31 @@ export function evolveEarlyLicensed(state: GameState, seat: Seat, pokemon: InPla
   // consumed and which has nothing further to ask.
   return passivesOf(state, pokemon).evolveEarlyExempt.some(
     (cond) => cond === undefined || conditionHolds(state, seat, cond),
+  );
+}
+
+/** 🆕🆕🆕 **§10 (D563) — DOES AN ABILITY ON `target` LET `card` EVOLVE IT UNDER AN ALIAS?**
+    Eevee ex `svp-174` / `sv08.5-075` / `sv08.5-167` "Rainbow DNA" — *"This Pokémon can
+    evolve into any Pokémon ex that evolves from Eevee if you play it from your hand onto
+    this Pokémon."* True when some `evolveAsNamed` entry on `target`'s passives names
+    `card.evolveFrom` and `card`'s suffix is the entry's `intoSuffix`.
+
+    Through `passivesOf`, `evolveEarlyLicensed`'s rule one function up: the alias IS a
+    printed Ability, so a §9 Ability-lock silences it and a locked Eevee ex is evolved by
+    §10's own name match alone ("Eevee ex" — which no printed card evolves from). Seatless:
+    the clause has no seat-relative antecedent.
+
+    ⚠️ **ONE CALLER, `evolve` (turn.ts) — THE HAND (R-RD).** *"if you play it from your
+    hand onto this Pokémon"* scopes the licence to the hand play; `evolveFromDeckOffer`
+    below does NOT ask it, so a deck evolve onto an Eevee ex offers only the cards §10
+    offers. It WIDENS the name match and nothing else: the two timing bans are asked
+    after it exactly as before (the printed parenthesis restates them). */
+export function evolveAliasLicensed(state: GameState, target: InPlayPokemon, card: Card): boolean {
+  const from = evolveFromOf(card);
+  if (from === null) return false;
+  const suffix = pokemonSuffixOf(card);
+  return passivesOf(state, target).evolveAsNamed.some(
+    (alias) => alias.name === from && alias.intoSuffix === suffix,
   );
 }
 
@@ -6769,6 +6811,10 @@ export function conditionNote(cond: BoardCondition): string {
     case "opponentActiveHasAbility":
       // 🆕🆕🆕 D560 — "your opponent's Active Pokémon that has an Ability" as a clause.
       return "your opponent's Active Pokémon has an Ability";
+    case "opponentDiscardHasNameContaining":
+      // 🆕🆕🆕 D563 — the printed clause with only the leading "If" dropped; the quotation
+      // marks are printed bytes (`yourBenchHasNameContaining`'s call).
+      return `your opponent has any cards in their discard pile that have "${cond.fragment}" in the name`;
     case "yourPokemonKoedOnOpponentsLastTurn":
       // The printed clause verbatim — the family's THIRD full round-trip, and it
       // keeps the possessive "your opponent's last turn" that the predicate turns
@@ -8379,7 +8425,12 @@ function preventAttackUse(
   return withActive(state, ctx.seat, { ...active, lockedAttacks: locks });
 }
 
-/** §8.5/§11 (D155) — BUY ONE NAMED ATTACK a durated pre-W/R DAMAGE BONUS on the
+/** 🆕🆕🆕 D563 (D539): the table below is the op's SHIPPED reading — `holder: "source"`
+    now writes the record on the program's SOURCE body (by uid, Bench or Active) and
+    `thisTurn` stamps `state.turn` instead of `+ 2` (Feraligatr "Torrential Heart"); the
+    op still has one writer, this function.
+
+    §8.5/§11 (D155) — BUY ONE NAMED ATTACK a durated pre-W/R DAMAGE BONUS on the
     controller's own Active ("During your next turn, this Pokémon's {AttackName}
     attack does {N} more damage (before applying Weakness and Resistance).", 1
     printing — Seismitoad sv03-052 "Echoed Voice"). `preventAttackUse`'s OPPOSITE
@@ -8473,6 +8524,11 @@ function boostAttack(
   base: true | undefined,
   ctx: EffectContext,
   events: GameEvent[],
+  // 🆕🆕🆕 D563 — `"source"`: the record goes on the program's SOURCE body (by uid, Bench
+  // or Active), not the seat's Active. Absent is every shipped producer.
+  holder?: "source",
+  // 🆕🆕🆕 D563 — stamp `state.turn` (the printed "during this turn"), not `+ 2`.
+  thisTurn?: true,
 ): GameState {
   // 🆕🆕🆕 D546 — `{ attack: null, base: true }` is REFUSED whole: no card prints an
   // all-attacks BASE override, and the record it would write
@@ -8481,8 +8537,13 @@ function boostAttack(
   // index) — a record plus a row announcing a payoff that cannot arrive (D140/D146).
   // Constructed and pinned (`everyAttackBoost.test.ts` §7).
   if (attack === null && base === true) return state;
-  const active = state.players[ctx.seat].active;
-  if (active === null) return state;
+  // 🆕🆕🆕 D563 — the HOLDER: the seat's Active (every producer before this slice), or the
+  // SOURCE body found by uid (`sourceRef`), which may be Benched. `active` keeps its name
+  // for the lines below; it is the holder either way. A departed source installs nothing.
+  const [holderRef] =
+    holder === "source" ? sourceRef(state, ctx) : [{ seat: ctx.seat, spot: { spot: "active" } } as const];
+  const active = holderRef === undefined ? null : (refPokemon(state, holderRef) ?? null);
+  if (active === null || holderRef === undefined) return state;
   const uid = topUid(active);
   const card = topCardOf(state, active);
   if (uid === undefined || card === undefined) return state;
@@ -8496,7 +8557,8 @@ function boostAttack(
   // The one rule, D143's and D154's: the window is the holder's own next turn, and
   // declaring an attack ENDS the turn (§5.3), so the turn after this one is the
   // opponent's and the one after THAT is the holder's.
-  const turn = state.turn + 2;
+  // 🆕🆕🆕 D563 — …unless the op prints "during this turn" (`thisTurn`): then it is NOW.
+  const turn = thisTurn === true ? state.turn : state.turn + 2;
   const existing = active.boostedAttack;
   const stacking =
     existing !== null && existing.turn === turn && existing.attackIndex === attackIndex;
@@ -8534,8 +8596,17 @@ function boostAttack(
     uid,
     attack: attackIndex === null ? null : (printed[attackIndex]?.name ?? attack),
     ...(base === true ? { amount: merged.base ?? amount, base: true as const } : { amount: merged.amount }),
+    ...(thisTurn === true ? { thisTurn: true as const } : {}),
   });
-  return withActive(state, ctx.seat, { ...active, boostedAttack: merged });
+  // 🆕🆕🆕 D563 — written back where the holder SITS (the Active, or its Bench slot).
+  const boosted: InPlayPokemon = { ...active, boostedAttack: merged };
+  if (holderRef.spot.spot === "active") return withActive(state, ctx.seat, boosted);
+  const benchSlot = holderRef.spot.index;
+  const holderSide = state.players[ctx.seat];
+  return withSide(state, ctx.seat, {
+    ...holderSide,
+    bench: holderSide.bench.map((pokemon, i) => (i === benchSlot ? boosted : pokemon)),
+  });
 }
 
 /** §8/§11 (D157) — BAR ONE CHOSEN ATTACK on the OPPONENT's Active ("Choose 1 of
@@ -11757,7 +11828,7 @@ function damageSelf(
   ctx: EffectContext,
   events: GameEvent[],
   // 🆕🆕🆕 D557 — the op's optional provenance; absent is the shipped `"self"` recoil.
-  source?: "trainer",
+  source?: "trainer" | "ability",
 ): GameState {
   if (amount <= 0) return state;
   const active = state.players[ctx.seat].active;
@@ -11766,6 +11837,39 @@ function damageSelf(
   if (uid === undefined) return state;
   events.push({ type: "COUNTERS_PLACED", seat: ctx.seat, uid, amount, source: source ?? "self" });
   return withActive(state, ctx.seat, { ...active, damage: active.damage + amount });
+}
+
+/** 🆕🆕🆕 **D563 — `damageSelf { on: "source" }`: PLACE `amount` HP OF COUNTERS ON THE
+    PROGRAM'S SOURCE BODY**, wherever it sits (`sourceRef` — the Active Spot or a Bench
+    slot, found by `ctx.sourceUid`). Feraligatr `svp-089` / `sv05-041` "Torrential Heart" —
+    *"Once during your turn, you may put 5 damage counters on this Pokémon."* — is used from
+    the Bench as readily as from the Active, which `damageSelf` (the seat's Active) cannot
+    express. `damageSelf`'s placement otherwise: no W/R, no shield, a flat
+    `COUNTERS_PLACED` (source `"ability"` for this printing); never KOs — a lethal total is
+    swept by `resolveMidTurnKnockOuts` with the Prize going to the OPPONENT. A source that
+    has left the board, or a non-positive amount, is silent. */
+function damageSourceBody(
+  state: GameState,
+  amount: number,
+  ctx: EffectContext,
+  events: GameEvent[],
+  source?: "trainer" | "ability",
+): GameState {
+  if (amount <= 0) return state;
+  const [ref] = sourceRef(state, ctx);
+  const body = ref === undefined ? undefined : refPokemon(state, ref);
+  if (ref === undefined || body === undefined) return state;
+  const uid = topUid(body);
+  if (uid === undefined) return state;
+  events.push({ type: "COUNTERS_PLACED", seat: ctx.seat, uid, amount, source: source ?? "self" });
+  const placed: InPlayPokemon = { ...body, damage: body.damage + amount };
+  if (ref.spot.spot === "active") return withActive(state, ctx.seat, placed);
+  const slot = ref.spot.index;
+  const side = state.players[ctx.seat];
+  return withSide(state, ctx.seat, {
+    ...side,
+    bench: side.bench.map((pokemon, i) => (i === slot ? placed : pokemon)),
+  });
 }
 
 /** Heal the controller's own Active (attack "heal from it" op — 🆕🆕🆕 D553: and,
@@ -12073,6 +12177,12 @@ function searchMove(
     should be: the printed sentence carries no stage word, no name and no count —
     Team Rocket's Pupitar `sv10-095` is a **Stage 1** running it, which is the
     printing that proves the rule is the chain and not "a Basic evolving".
+    (🆕🆕🆕 D563 CORRECTION (D539): ~~"Nothing else is checked here and nothing else
+    should be"~~ — one more thing is: a card whose program carries `intoPlayOnlyVia`
+    (Palafin ex "Hero's Spirit") is never a candidate, and the check is on the CARD, so
+    it holds under the `names` predicate too. And `turn.ts`'s hand match is no longer
+    only that equality — Eevee ex's `evolveAsNamed` alias widens it there — but NOT
+    here: the alias is printed for the hand ("if you play it from your hand"), R-RD.)
 
     ⚠️ **THE TWO §10 TIMING BANS DO NOT APPLY AND THAT IS THE PRINT, NOT AN
     OMISSION.** `turn.ts` refuses an evolve when the target `turnPlayed >=
@@ -12144,6 +12254,11 @@ function evolveFromDeckOffer(
       // `Card`, and a missing catalog row must fall OUT of the offer rather than
       // be admitted by a loose comparison (the `hpOf` null rule, one file over).
       if (card === undefined) return false;
+      // 🆕🆕🆕 D563 — Palafin ex "Hero's Spirit" (*"Put this Pokémon into play only with
+      // the effect of Palafin's Zero to Hero Ability."*) is never a deck-evolve candidate,
+      // under either predicate below — read off the CARD's program, not `passivesOf`
+      // (a card in the deck has no fold, and a §9 lock must not lift it).
+      if (intoPlayOnlyViaOf(card) !== undefined) return false;
       // 🆕 D310 — the printed NAME SET, when the sentence prints one, INSTEAD of
       // §10's chain match and never alongside it. Pidove `sv05-133` names
       // `Unfezant`, which evolves from `Tranquill`, so a conjunction would be

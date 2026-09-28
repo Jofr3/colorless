@@ -816,6 +816,11 @@ describe("§10 — `MATCH_RECORD_VERSION` STAYS 30, in three directions, LOSS in
     // row's additive `boostAttack` carries amount >= 1 (arm 24b's guard — 🆕🆕🆕 D546: arm
     // 24b'' carries the same guard verbatim on the ALL-ATTACKS producer), and the
     // registry holds no `boostAttack` at all — walked DEEP, so a gate cannot hide one.
+    // 🆕🆕🆕 D563 CORRECTION (D539): ~~"the registry holds no `boostAttack` at all"~~ is
+    // WITHDRAWN — Feraligatr `svp-089` / `sv05-041` "Torrential Heart" authors one (an
+    // Ability's all-attacks, this-turn install of 120). The argument survives because the
+    // walk now PINS that one producer and its amount, which is >= 1 — still no path writes
+    // `amount: 0` without `base`.
     const additive: number[] = [];
     for (const [, text] of legalAttackCorpus()) {
       for (const op of boostOps(deriveAttackEffect(text))) {
@@ -827,8 +832,13 @@ describe("§10 — `MATCH_RECORD_VERSION` STAYS 30, in three directions, LOSS in
     // 24b'' carries 24b's guard verbatim), so the argument holds unchanged.
     expect(additive).toEqual([100, 120, 80, 60, 100]);
     expect(additive.every((n) => n >= 1)).toBe(true);
+    const authored: [string, number][] = [];
     for (const id of registryCardIds()) {
-      expect(boostOps(programFor(id)), id).toEqual([]);
+      for (const op of boostOps(programFor(id))) authored.push([id, op.amount]);
     }
+    expect(authored).toEqual([
+      ["svp-089", 120],
+      ["sv05-041", 120],
+    ]);
   });
 });

@@ -225,7 +225,26 @@ export function costMet(cost: readonly string[], provided: readonly string[]): b
     cost" leaves. Identity is preserved on the common board: with no clause (or a
     false condition) this returns `effectiveAttackCost`'s own answer, which is the
     printed array itself when no modifier is in play (`redactedAttacksOf` relies on
-    it). */
+    it).
+
+    🆕🆕🆕 **D563 — *"Two clauses, read off `attackGateOf` (the same §9-blind …
+    seam)"* IS NO LONGER THE WHOLE READ (D539: annotated, not rewritten).** A SECOND
+    seam now feeds the same two branches: `passivesOf(pokemon).attackCostClauses`, the
+    cost clause an ABILITY prints on one of the holder's own attacks (Noivern "Tuning
+    Echo" → `costWaivedIf handSizesEqual` on "Frightening Howl"; Kyurem "Plasma Bane" →
+    `alternateCostIf opponentDiscardHasNameContaining "Colress"`, `{C}`, on "Trifrost").
+    It is consulted AFTER the attack-level gate and only when that gate did not fire,
+    matched by PRINTED NAME against `attacksOf(top)[index]`, and it is NOT §9-blind: it
+    rides `passivesOf`, so an Ability-lock on the holder hands the printed cost back.
+    D545's semantics are kept verbatim — the alternate is charged through
+    `effectiveAttackCost` and only if payable (else the printed charge), the waive returns
+    `[]` after every surcharge. ⚠️ **THE CONDITION IS READ UNDER `seat`, WHICH IS THE
+    HOLDER'S SEAT AT ALL THREE CALLERS TODAY** — `attack()` passes `action.seat` with its
+    own Active, `redactedAttacksOf` the viewer's seat with the viewer's Active, and
+    GameHud's TurnPanel the viewer's seat with the viewer's Active — so the "you" of
+    *"you have the same number of cards"* and the "your opponent" of Plasma Bane resolve
+    to the holder's controller. A caller that ever asks about a body across the table
+    must pass that body's seat. */
 export function attackCostAt(
   state: GameState,
   seat: Seat,
@@ -243,6 +262,16 @@ export function attackCostAt(
   }
   if (gate?.kind === "costWaivedIf" && conditionHolds(state, seat, gate.condition)) {
     return [];
+  }
+  // 🆕🆕🆕 D563 — the Ability-printed clause, reached only when the attack-level gate did
+  // not fire. Named by the printed attack NAME, so it cannot reach the holder's other
+  // attack; through `passivesOf`, so a §9 lock on the holder drops it (the printed cost).
+  const attackName = top === undefined ? undefined : attacksOf(top)[index]?.name;
+  for (const clause of passivesOf(state, pokemon).attackCostClauses) {
+    if (clause.attack !== attackName || !conditionHolds(state, seat, clause.gate.condition)) continue;
+    if (clause.gate.kind === "costWaivedIf") return [];
+    const clauseCost = effectiveAttackCost(state, pokemon, clause.gate.cost);
+    if (costMet(clauseCost, provided)) return clauseCost;
   }
   return printedEff;
 }

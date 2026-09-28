@@ -3713,6 +3713,18 @@ export type BoardCondition =
       predicate. "Your opponent's Active Pokémon" is the defender at both pre-W/R
       sites (both hit `otherSeat(seat)`'s Active). An empty Active Spot is FALSE. */
   | { kind: "opponentActiveHasAbility" }
+  /** 🆕🆕🆕 **D563 — YOUR OPPONENT'S DISCARD PILE HOLDS A CARD WHOSE NAME CONTAINS
+      `fragment`.** Kyurem `sv06.5-047` "Plasma Bane" — *"If your opponent has any cards
+      in their discard pile that have "Colress" in the name, this Pokémon can use the
+      Trifrost attack for {C}."* — the `attackCostClause` gate, 1 legal printing.
+
+      Substring, CASE-SENSITIVE and un-normalised — `yourBenchHasNameContaining`'s reading
+      verbatim but for the zone: the catalog `name` IS the printed name and the clause
+      quotes the fragment in its printed capitals. ⚠️ **THE OPPONENT'S PILE ONLY** (R-PB,
+      `decisions.md` D563): a Colress in YOUR OWN discard does not satisfy it. Any card
+      kind counts ("any cards"), so a Pokémon, a Trainer or an Energy whose name holds the
+      fragment all satisfy it. Public: a discard pile is face up. */
+  | { kind: "opponentDiscardHasNameContaining"; fragment: string }
   /** D280 — every one of `conditions` holds for the reading seat. The
       vocabulary's FIRST COMBINATOR and its first RECURSIVE member, bought by
       Call Bell `sv08-165`'s *"You can use this card only if you go second, and
@@ -4861,7 +4873,10 @@ export type EffectOp =
 
       Runs at `attack.ts`'s TAIL like every other `EffectOp`, and that placement is
       free rather than lucky (D125's rule): the bonus's entire effect is in the
-      FUTURE, so it cannot reach the very hit that installs it. Never parks,
+      FUTURE, so it cannot reach the very hit that installs it. (🆕🆕🆕 D563 (D539): true
+      of every ATTACK producer; the op's first non-attack producer is an Ability,
+      Feraligatr "Torrential Heart", whose `thisTurn` record is live at once — it is
+      installed BEFORE the attack it pays, on the Ability's own action.) Never parks,
       consumes no rng, and is idempotent (a re-install writing the same turn, index
       and amount is silent; a larger amount on the same address wins by `Math.max`
       — the interpreter says why; since D544 the max is FIELDWISE over `amount` and
@@ -4894,7 +4909,27 @@ export type EffectOp =
       `base: true` is REFUSED by the installer (state unchanged, no row): an
       all-attacks base override is a sentence no card prints, and the record it
       would write carries a base `boostedAttackBase` never pays. */
-  | { op: "boostAttack"; attack: string | null; amount: number; base?: true }
+  | {
+      op: "boostAttack";
+      attack: string | null;
+      amount: number;
+      base?: true;
+      /** 🆕🆕🆕 **D563 — `holder: "source"` WRITES THE RECORD ON THE PROGRAM'S SOURCE BODY**
+          (`ctx.sourceUid`, by uid, on the Bench or in the Active Spot) instead of the
+          seat's Active. Feraligatr "Torrential Heart" — *"If you do, during this turn,
+          attacks used by this Pokémon do 120 more damage to your opponent's Active
+          Pokémon (before applying Weakness and Resistance)."* — is used from the Bench as
+          readily as from the Active. ABSENT is the shipped reading. A source that has
+          left the board installs nothing and emits no row. */
+      holder?: "source";
+      /** 🆕🆕🆕 **D563 — `thisTurn: true` STAMPS THE RECORD FOR THE CURRENT TURN**
+          (`turn = state.turn`) instead of D155's next-own-turn `state.turn + 2` — the
+          printed *"during this turn"*. `BoostedAttack` keeps `{ turn, attackIndex, amount
+          }`: the readers compare `turn === state.turn` and need no change. The row
+          carries `thisTurn: true` so `log.ts` says "this turn". Never parks, so never
+          persisted (D334); no `MATCH_RECORD_VERSION` bump. */
+      thisTurn?: true;
+    }
   /** 🆕🆕🆕 §8.5 (D556) — the THIS-TURN, SIDE-WIDE pre-W/R bonus a Trainer installs:
       Black Belt's Training `sv08.5-096`/`-097`/`-098`/`-099`, `sv09-143`/`-144`/`-145`,
       `svp-219`/`-220` (Supporter, 9 legal) — *"During this turn, attacks used by your
@@ -5795,8 +5830,21 @@ export type EffectOp =
           producer omits it and is byte-identical) and lands on `COUNTERS_PLACED` as
           `"trainer"`. Placement, not damage: no Weakness, no shield (your own card
           on your own body — D259's owner rule), and a lethal total is swept by
-          `resolveMidTurnKnockOuts` with the Prize going to the OPPONENT. */
-      source?: "trainer";
+          `resolveMidTurnKnockOuts` with the Prize going to the OPPONENT.
+          🆕🆕🆕 **D563 — WIDENED TO `"ability"`**: Feraligatr "Torrential Heart"'s *"put 5
+          damage counters on this Pokémon"* is the same placement made by an ABILITY,
+          filed as `COUNTERS_PLACED` source `"ability"` (a member that row already had). */
+      source?: "trainer" | "ability";
+      /** 🆕🆕🆕 **D563 — WHICH BODY: `"source"` PLACES ON THE PROGRAM'S SOURCE BODY**
+          (`ctx.sourceUid`, found by `sourceRef` on the Bench or in the Active Spot)
+          instead of the seat's Active. Feraligatr `svp-089` / `sv05-041` "Torrential
+          Heart" — *"Once during your turn, you may put 5 damage counters on this
+          Pokémon."* — used from the Bench as readily as from the Active. ABSENT is the
+          shipped reading (the seat's Active), byte-identical for every producer before
+          this slice. A source that has left the board whiffs silently. Placement, not
+          damage (no W/R, no shield); a lethal total is swept by `resolveMidTurnKnockOuts`
+          with the Prize going to the OPPONENT. Never parks, so never persisted. */
+      on?: "source";
     }
   /** Put `amount` HP of damage counters on `count` CHOSEN Benched Pokémon of
       the opponent (Hawlucha "Flying Entry" — 2 × 1 counter; Meowscarada ex
@@ -7269,7 +7317,11 @@ export type EffectOp =
       the program* — and its candidate set is not expressible as a filter at any
       width, because `matchesFilter` never sees the board. The predicate is
       "`evolveFromOf(card)` equals the NAME of `sourceRef`'s top card", which is
-      `evolve`'s own §10 match (turn.ts) asked of the deck instead of the hand. So
+      `evolve`'s own §10 match (turn.ts) asked of the deck instead of the hand. (🆕🆕🆕
+      D563 (D539): no longer `evolve`'s WHOLE match — at the hand `evolve` also accepts
+      Eevee ex's `evolveAsNamed` alias, which this deck predicate deliberately does NOT
+      (R-RD: *"if you play it from your hand"*); and both routes now refuse a card whose
+      program carries `intoPlayOnlyVia` (Palafin ex "Hero's Spirit").) So
       the op carries **NO FIELDS AT ALL**: the printed sentence has no number, no
       noun and no rider, and all four cards print it identically.
 

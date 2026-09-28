@@ -818,7 +818,13 @@ describe("D359 §6 — the ids this file rests on are real and locally seated", 
     // catalog ids, no `fix-*` key (`toolsD562.test.ts` / `stadiumsD562.test.ts` drive a LOCAL
     // `cardPool`), inserted MID-MAP after `sv05-156`, and no row authors an `attack`
     // program.
-    expect(registryCardIds()).toHaveLength(877);
+    // 🆕🆕🆕 D563 — 877 -> **888**: ELEVEN registry keys on FIVE program objects — Eevee ex
+    // ×3 "Rainbow DNA", Noivern "Tuning Echo", Kyurem "Plasma Bane", Feraligatr ×2
+    // "Torrential Heart", Palafin ex ×4 "Hero's Spirit". Real catalog ids, no `fix-*` key
+    // (`abilityCostEvolveD563.test.ts` / `torrentialHeartD563.test.ts` drive a LOCAL
+    // `cardPool`), inserted MID-MAP after `sv08.5-108`, and no row authors an `attack`
+    // program.
+    expect(registryCardIds()).toHaveLength(888);
     for (const id of Object.values(QUANTITY_IDS).flat()) {
       if (programFor(id) === undefined) continue;
       // Every id that DOES have a program had one before this slice: the eight

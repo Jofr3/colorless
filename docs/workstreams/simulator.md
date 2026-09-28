@@ -515,7 +515,12 @@ from hand on the **stack top** of one of the actor's own in-play Pokémon
 is not consulted, `evolveFrom` is the ingested datum). Legality, in order:
 turnGate → **first-turn ban** → hand/uid → NOT_AN_EVOLUTION → wire target →
 resolve target → **EVOLVE_MISMATCH** (the evolution's `evolveFrom` must equal
-the target top card's NAME, §10) → **EVOLVE_TOO_SOON**. Carry-over (§10):
+the target top card's NAME, §10 — 🆕🆕🆕 D563: or an Ability ALIAS on the target must license it, Eevee ex
+"Rainbow DNA") → **EVOLVE_TOO_SOON**. (🆕🆕🆕 D563 — THE ORDER AS BUILT, which the list above no longer
+matches: the §4 ban sits BELOW the target resolve in turn.ts, because the early-evolve licence is read off the
+body — turnGate → hand/uid → NOT_AN_EVOLUTION → wire target → resolve target → EVOLVE_MISMATCH →
+**`EVOLVE_ONLY_VIA_ABILITY`** (D563: a card printing "only with the effect of …", Palafin ex) → FIRST_TURN_EVOLVE →
+EVOLVE_TOO_SOON → `HAND_PLAY_BLOCKED` (D285). So the Palafin ex refusal comes BEFORE both timing bans.) Carry-over (§10):
 damage, Energy, Tools STAY (they ride on the stack, untouched by the spread);
 Special Conditions + markers are cleared; `turnPlayed` resets to `state.turn`.
 Events: `POKEMON_EVOLVED {from, to, target}` + (iff the Active had conditions)
@@ -9242,6 +9247,9 @@ theirs. ⚠️ **D345 BUILT ALL SIX AND THE REFUSAL IS UNCHANGED** — they are 
 programs (`CURSED_BLAST_5` / `CURSED_BLAST_13`, registry.ts), and this anchor
 reads ATTACK text; `counterPut.test.ts`'s `NEAR_MISSES` witness was RE-POINTED
 (to Feraligatr `svp-089`/`sv05-041`) rather than deleted, per its standing note.
+(🆕🆕🆕 D563 (D539): Feraligatr is BUILT and the witness RETIRES — no unbuilt legal Ability prints a
+lowercase mid-sentence "put N damage counter(s) on" (measured), so the sentence stays in `NEAR_MISSES`
+and the id rung flips to the positive.)
 
 ### ⚠️ Two sentences, ONE anchor, two ops in printed order
 
@@ -28357,7 +28365,7 @@ R1 Black Belt plays and whiffs with no ex Active · R2 Billy's count excludes Bi
 non-Dragon Active plays and whiffs · R4 Ariana's "all" is Active + Bench, stack tops · R5 Caretaker's Community Center
 clause is a named, unreachable gap (guarded) · R6 Pecharunt's `ABILITY_TRIGGERED` row is filed even when the gate is false
 · R7 Pecharunt's counters land after the poison tick and before the KO sweep. Excluded: Kieran ×5 (labelled confirm —
-next), Feraligatr "Torrential Heart" ×2, Indeedee.
+next), Feraligatr "Torrential Heart" ×2 (🆕🆕🆕 D563: BUILT), Indeedee.
 
 ### (d) Tests, census and mutants
 New `sideAttackBonusThisTurn.test.ts` (27) and `conditionalTrainersD556.test.ts` (35), plus one `revealClause` rung.
@@ -28369,7 +28377,7 @@ Great Ball's DROPPED row removed from `ownerPrefix.test.ts` (3 → 2). Walkers: 
 ### (e) Owed
 The whole-corpus sweep (~~D552 → D553 → D554 → D555 → D556, all pending~~ D552–D555 PAID, each exact on its first
 launch — D555's `3171 · 53` at close-out `66dbfab3`; ~~D556's pending, predicted `3201 · 53` over 3,254~~ 🆕 D557 landing: D556's PAID, exact on its first launch, `3201 · 53` over 3,254 at close-out `0a9db1be`). The HUD does not show the side bonus (display
-debt). R3 UNRULED. Pecharunt's log noise (R6). Next: Kieran ×5 on this op with a labelled confirm; Torrential Heart ×2;
+debt). R3 UNRULED. Pecharunt's log noise (R6). Next: Kieran ×5 on this op with a labelled confirm; Torrential Heart ×2 (🆕🆕🆕 D563: BUILT);
 the remaining audit rows.
 
 ## D557 — eleven Trainers: Kieran's labelled confirm, Venture Bomb's Item counter source, and one rider each for nine more: 19 printings / 11 texts / 11 objects (engine 0.441.0, `MATCH_RECORD_VERSION` stays 35)
@@ -28515,7 +28523,7 @@ killed undeclared; five rows re-anchored onto the Weakness bytes and re-probed);
 
 ### (e) Owed
 The whole-corpus sweep (~~D556 → D559, all pending~~ D556, D557 and D558 PAID, each exact on its first launch — D558's `3263 · 52` over 3,315 at close-out `ff618ad6`; only D559's own is owed, predicted `3294 killed · 52 known survivor(s)` over 3,346). R-FZ1 UNRULED; R-FZ2 UNRULED for Blooming Garden and D432's bar only. R-O1 (bench recoil read). The HUD does not show
-the rewritten Weakness (display debt, D552 ⑽'s precedent). Next: Feraligatr "Torrential Heart", then (iii)'s non-overlapping
+the rewritten Weakness (display debt, D552 ⑽'s precedent). Next: Feraligatr "Torrential Heart" (🆕🆕🆕 D563: BUILT), then (iii)'s non-overlapping
 remainder (Watchtower, Slaking ex, Thwackey, Drilbur, Festival Grounds, Scoop Up Cyclone, Love Ball), re-priced now that
 Gastrodon and Flutter Mane have landed. (🆕🆕🆕 D560: Slaking ex, Thwackey and Drilbur BUILT — see D560 below.) (🆕🆕🆕 D561:
 Scoop Up Cyclone and Love Ball BUILT — see D561 below.) (🆕🆕🆕 D562: Festival Grounds BUILT — see D562 below; Festival
@@ -28661,4 +28669,47 @@ Tool-walk rows), two D480 rows re-pointed (the Brace is built); declared survivo
 The whole-corpus sweep ~~(D560 → D562 pending)~~ (🆕 landing: D560's and D561's are PAID, each exact — close-outs `a4e0cd5e`
 and `f310fd9b`; only D562's is pending, predicted `3453 · 52` over 3,505). R-BE, R-BR and R-BF UNRULED. The 0.445 rollback readings (named, not bumped). Ruffian
 (CUT: a body-first pick needs its own op); Team Rocket's Factory + Crobat; Community Center; Torrential Heart; C2's ability
-residue (Rocket Brain, Flustered Leap, Tuning Echo, Plasma Bane, Impromptu Carrier).
+residue (Rocket Brain, Flustered Leap, Tuning Echo, Plasma Bane, Impromptu Carrier). (🆕🆕🆕 D563 (D539): Torrential Heart,
+Tuning Echo and Plasma Bane are BUILT — see D563 below; Rocket Brain, Flustered Leap and Impromptu Carrier stay owed.)
+
+## D563 — five Ability texts: 11 printings / 5 texts / 5 objects (engine 0.447.0, `MATCH_RECORD_VERSION` stays 35)
+
+**Status:** ✅ BUILT — keyed MID-MAP after `sv08.5-108`. Built in the `lum-wt-d563` worktree at `9c53b112` (D562 as landed)
+while D562's whole-corpus sweep ran in the main checkout; ~~NOT committed by the builder~~ (🆕 committed there on `d563-prep`
+at `ecbd2c4f`, then LANDED on `main` by cherry-pick onto the D562 close-out `3b68a3c1`).
+
+### (a) The five rows (registry.ts, one block before `const REGISTRY`; no row authors an `attack` key)
+| Card | Ids | Ability | Program |
+|---|---|---|---|
+| Eevee ex | `svp-174`/`sv08.5-075`/`sv08.5-167` | Rainbow DNA | `passive.evolveAsNamed { name "Eevee", intoSuffix "ex" }` (NEW key) |
+| Noivern | `sv09-128` | Tuning Echo | `passive.attackCostClause { "Frightening Howl", costWaivedIf handSizesEqual }` (NEW key) |
+| Kyurem | `sv06.5-047` | Plasma Bane | `passive.attackCostClause { "Trifrost", alternateCostIf opponentDiscardHasNameContaining "Colress", [C] }` (NEW member) |
+| Feraligatr | `svp-089`/`sv05-041` | Torrential Heart | `abilities [damageSelf { 50, on "source", source "ability" }, boostAttack { null, 120, holder "source", thisTurn }]` (NEW riders) |
+| Palafin ex | `svp-126`/`sv06-061`/`sv06-193`/`sv08.5-151` | Hero's Spirit | `intoPlayOnlyVia: "Zero to Hero"` (NEW `CardProgram` key — NOT a passive) |
+
+### (b) The mechanism
+`passivesOf` folds two new RAW lists, `attackCostClauses` and `evolveAsNamed` (the `cantAttackUnless` precedent; §9-suppressible).
+attack.ts `attackCostAt` consults the clause list AFTER the attack-level gate and only when it did not fire, matched by printed
+attack NAME, under the holder's seat (= `seat` at all three callers), with D545's semantics (the alternate through
+`effectiveAttackCost`, charged only if payable; the waive `[]`, last). The new `BoardCondition.opponentDiscardHasNameContaining`
+(one `conditionHolds` arm, one `conditionNote` arm). interpreter.ts `evolveAliasLicensed` widens `evolve`'s (turn.ts) name match
+at the HAND only. continuous.ts `intoPlayOnlyViaOf` reads the card's program: `evolve` refuses `EVOLVE_ONLY_VIA_ABILITY` (NEW
+`ErrorCode`) and `evolveFromDeckOffer` filters the card out. `damageSelf { on: "source" }` → the NEW `damageSourceBody`
+(`damageSelf` byte-identical but for its `source` parameter, widened to `"trainer" | "ability"`); `boostAttack`'s `holder` /
+`thisTurn` riders write the D546 record on the source body stamped `state.turn`; `ATTACK_BOOSTED.thisTurn` → log.ts "this turn".
+
+### (c) Readings (`docs/decisions.md` D563)
+R-PB (the OPPONENT's pile only, case-sensitive, any card kind); R-RD (the alias is scoped to the hand — no deck evolve); R-TH ⚠️
+UNRULED (§10's shed applies to an Ability's this-turn record: switched to the Bench, it is gone; promoted from the Bench, it is
+kept); the shared slot (a live named next-turn record would be replaced — unreachable on Feraligatr); R-PF (Palafin ex is
+unplayable until Zero to Hero ships — print-correct).
+
+### (d) Tests and mutants
+`abilityCostEvolveD563.test.ts` (44) and `torrentialHeartD563.test.ts` (32). Mutants 3,505 → 3,558 (+53 `D563-*`, all killed
+undeclared); four existing rows re-anchored by script and checked against HEAD (D453's and D546's stamp rows, D544's dispatch row,
+D454's `damageSelf` row); declared survivors 52 unmoved.
+
+### (e) Owed
+The whole-corpus sweep: ~~D562's (running in the main checkout, predicted `3453 · 52` over 3,505) and~~ this one's (predicted
+`3506 · 52` over 3,558) (🆕 landing: D562's is PAID, exactly — `3453 · 52` over 3,505, close-out `3b68a3c1`). R-TH UNRULED. Zero to Hero (Palafin `sv06-060`, an in-place swap op) — until it ships Palafin ex has no
+route into play. Rocket Brain, Flustered Leap, Impromptu Carrier; Team Rocket's Factory + Crobat; Community Center.

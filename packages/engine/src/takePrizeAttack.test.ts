@@ -368,7 +368,7 @@ describe("§3 — `MATCH_RECORD_VERSION` stays 26, and the prediction is DRIVEN"
   });
 
   it("the engine version moved and the two spellings agree", () => {
-    expect(engineVersion).toBe("0.446.0");
+    expect(engineVersion).toBe("0.447.0");
   });
 });
 

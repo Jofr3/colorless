@@ -50,6 +50,12 @@ import {
 // — *"can evolve into any Pokémon ex that evolves from Eevee"* — is a DIFFERENT
 // mechanism and is REFUSED here with its name: it widens the `evolveFrom` chain,
 // and `evolve` compares `targetTopCard.name !== evolvesFrom` with no override.)
+// (🆕🆕🆕 D563 CORRECTION (D539): ~~"is REFUSED here"~~ and ~~"with no override"~~ are
+// WITHDRAWN — D563 BUILT the chain widening as `PassiveEffects.evolveAsNamed`, read by
+// `evolveAliasLicensed` at `evolve`, which now accepts a Pokémon ex whose `evolveFrom` is
+// "Eevee" onto an Eevee ex played from the hand (`abilityCostEvolveD563.test.ts`). The
+// REMINDER half is unchanged: still the best evidence for the two bans, still nothing to
+// build, and the two bans still apply to Eevee ex.)
 //
 // The enumeration adds up: 3 (this row) + 2 + 2 (partner-gated, refused) + 3
 // (reminder, nothing to build) = **10**. A census that does not add up is not a
@@ -113,7 +119,9 @@ import {
 //     clause, so the flag would additionally have to split from its zone gate.
 //     **Two mechanisms for 4 printings; Eevee's 3 need neither.**
 //   • **REFUSED — Eevee ex ×3 (reminder text) and Rainbow DNA's chain widening**,
-//     named above.
+//     named above. (🆕🆕🆕 D563 CORRECTION (D539): the chain widening is no longer
+//     refused — BUILT at D563, `evolveAsNamed`; the reminder text is still nothing to
+//     build.)
 //
 //   • **REFUSED — the `rareCandy` sites (3 ban lines), AND THE REFUSAL IS A
 //     READING RATHER THAN A GAP.** Rare Candy prints *"You can't use this card

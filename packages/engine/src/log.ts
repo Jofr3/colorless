@@ -979,7 +979,20 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
     // Active Pokémon …" (`censusAttackCorpus.ts:148`/`:76`). The named wording would
     // promise the bonus on ONE attack and the template would print "null" — both
     // false (D421), and invisible to `tsc`. The verb keeps the printed plural.
+    // 🆕🆕🆕 D563 — AND A THIS-TURN INSTALL SAYS "this turn" (Feraligatr "Torrential
+    // Heart": *"during this turn, attacks used by this Pokémon do 120 more damage …"*);
+    // "next turn" would be false of it (D421). Its one printing names no attack.
     case "ATTACK_BOOSTED":
+      if (event.thisTurn === true) {
+        return row(event.seat, [
+          strong(cardName(state, event.uid)),
+          plain(
+            event.attack === null
+              ? `'s attacks do ${event.amount} more damage this turn`
+              : `'s ${event.attack} does ${event.amount} more damage this turn`,
+          ),
+        ]);
+      }
       if (event.attack === null) {
         return row(event.seat, [
           strong(cardName(state, event.uid)),

@@ -995,7 +995,10 @@ export interface LockedAttack {
     D124's no-defensive-`undefined` rule at the reader. */
 export interface BoostedAttack {
   /** The single turn number this buff is live on (the installing turn + 2 — the
-      HOLDER's own next turn, since declaring an attack ends the turn). */
+      HOLDER's own next turn, since declaring an attack ends the turn). 🆕🆕🆕 D563 (D539):
+      ~~"the installing turn + 2"~~ is no longer the only stamp — an ABILITY printing
+      *"during this turn"* (Feraligatr "Torrential Heart", `boostAttack.thisTurn`) stamps
+      the installing turn itself; the readers compare `turn === state.turn` either way. */
   turn: number;
   /** WHICH attack is boosted, as an index into the stack-top card's `attacks` —
       `LockedAttack.attackIndex`'s twin, resolved from the printed proper noun at
@@ -1656,6 +1659,9 @@ export interface InPlayPokemon {
 
       ⚠️ `state.turn + 2` AND AN ATTACK INDEX, WHICH IS `lockedAttack`'s PAIR OF
       ANSWERS EXACTLY — same window, same body, same address, same three clears.
+      (🆕🆕🆕 D563 (D539): an Ability can now write it too — Feraligatr "Torrential
+      Heart" stamps `state.turn` (*"during this turn"*) on the SOURCE body, Benched or
+      Active, with `attackIndex: null`; the same three clears shed it (R-TH).)
       It is the SEVENTH stamped field and the first whose separation from an
       existing one rests on what the READERS do rather than on the record's shape
       or on two facts colliding: `lockedAttackIndex`'s consumer refuses the index

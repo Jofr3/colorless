@@ -413,6 +413,17 @@ export function stadiumPoisonExtraCounters(state: GameState, top: Card | undefin
   return jungle.amount;
 }
 
+/** 🆕🆕🆕 §10 (D563) — the Ability a card prints as its ONLY licence into play (Palafin ex
+    "Hero's Spirit": *"Put this Pokémon into play only with the effect of Palafin's Zero
+    to Hero Ability."* → `"Zero to Hero"`), or undefined. Off the CARD's own program, never
+    through `passivesOf`: the card is in a hidden zone when this is asked, and a §9
+    Ability-lock must not lift a restriction printed on the card being played. Here rather
+    than at the two read sites because interpreter.ts takes no runtime edge to
+    registry.ts; read by `evolve` (turn.ts) and `evolveFromDeckOffer` (interpreter.ts). */
+export function intoPlayOnlyViaOf(card: Card): string | undefined {
+  return programFor(card.id)?.intoPlayOnlyVia;
+}
+
 /** Every continuous modifier affecting one in-play Pokémon, aggregated from
     its TOP card's printed passive (Bouffalant "Bouffer"), every attached
     Tool (§7.4) and — since D174 — every attached ENERGY (§6.1, Therapeutic
@@ -507,6 +518,16 @@ export function passivesOf(
       (registry.ts's rule) and the read is an OR — see `evolveEarlyLicensed`
       (interpreter.ts), the ONE place that folds it. */
   evolveEarlyExempt: (BoardCondition | undefined)[];
+  /** 🆕🆕🆕 §8.2 (D563) — the COST CLAUSES the holder's own printed Ability puts on its
+      own named attacks (Noivern "Tuning Echo", Kyurem "Plasma Bane"), collected RAW and
+      UNEVALUATED for `cantAttackUnless`' reason verbatim: the condition is seat-relative
+      and this aggregation has no seat. Read by `attackCostAt` (attack.ts) and nothing
+      else. A LIST for the registry's "two sources can name one" rule. */
+  attackCostClauses: NonNullable<PassiveEffects["attackCostClause"]>[];
+  /** 🆕🆕🆕 §10 (D563) — the EVOLVE ALIASES the holder's own printed Ability grants it
+      (Eevee ex "Rainbow DNA"), read by `evolveAliasLicensed` (interpreter.ts). A LIST for
+      the same rule; §9-suppressible because it rides this loop. */
+  evolveAsNamed: NonNullable<PassiveEffects["evolveAsNamed"]>[];
   hpBonus: number;
   /** §9 reactive recoil placed on the ATTACKER when this Pokémon is damaged by
       an attack while Active (Counterattack Quills / Custom Trap) — summed HP.
@@ -1217,6 +1238,8 @@ export function passivesOf(
   const cantAttackUnless: BoardCondition[] = [];
   let attackFirstTurnExempt = false;
   const evolveEarlyExempt: (BoardCondition | undefined)[] = [];
+  const attackCostClauses: NonNullable<PassiveEffects["attackCostClause"]>[] = [];
+  const evolveAsNamed: NonNullable<PassiveEffects["evolveAsNamed"]>[] = [];
   for (const passive of sources) {
     if (passive === undefined) continue;
     damageReductionAfterWR += passive.damageReductionAfterWR ?? 0;
@@ -1489,6 +1512,14 @@ export function passivesOf(
           : { kind: "yourNamedPokemonInPlay", name: licence.ifInPlay },
       );
     }
+    // 🆕🆕🆕 D563 — the Ability-printed COST CLAUSE (Noivern, Kyurem), pushed RAW like
+    // `cantAttackUnless`: the condition is seat-relative, so `attackCostAt` evaluates it.
+    // In THIS loop for that field's §9 reason — the clause IS an Ability, so a lock on the
+    // holder drops `sources[0]` and hands the printed cost back.
+    if (passive.attackCostClause !== undefined) attackCostClauses.push(passive.attackCostClause);
+    // 🆕🆕🆕 D563 — the EVOLVE ALIAS (Eevee ex "Rainbow DNA"), in this loop for the same §9
+    // reason: a locked Eevee ex is evolved by §10's name match alone.
+    if (passive.evolveAsNamed !== undefined) evolveAsNamed.push(passive.evolveAsNamed);
   }
   return {
     damageReductionAfterWR,
@@ -1498,6 +1529,8 @@ export function passivesOf(
     cantAttackUnless,
     attackFirstTurnExempt,
     evolveEarlyExempt,
+    attackCostClauses,
+    evolveAsNamed,
     hpBonus,
     damageAttacker,
     damageAttackerOnKo,
@@ -2561,6 +2594,11 @@ export function firstTurnAttackBanned(
     WITHDRAWN AS COUNTS.** The field now also carries two printed COST clauses
     (`alternateCostIf`, `costWaivedIf`), and this is read by a THIRD caller,
     `attackCostAt` in attack.ts, which is the only reader of those two members.
+    (🆕🆕🆕 D563 (D539): still the only reader of those two members OF THIS FIELD — but
+    `attackCostAt` no longer reads ONLY this seam: it also folds
+    `passivesOf(...).attackCostClauses`, the same two shapes printed by an ABILITY (Noivern
+    "Tuning Echo", Kyurem "Plasma Bane"), which rides the §9 drop and is NOT §9-blind. This
+    function, its one read of `CardProgram.attackGate` and the §9 argument here are unchanged.)
     `attackTimingBlocked` returns `undefined` for them BEFORE asking the condition,
     and `firstTurnAttackBanned` compares only against `firstTurnExempt`, so neither
     older reader's answer moved. Still the ONE read of `CardProgram.attackGate`, and
@@ -2754,7 +2792,11 @@ export function boostedAttackDamage(
     in ctx — pre-existing, D155), and `spreadDamage` / `placeSnipe` omit every pre-W/R
     BONUS by design (D149), so they do not read this. Immune to §9 like its siblings:
     it reads an attack INSTALLATION, not `passivesOf`. docs/decisions.md D546 records
-    the fold and its reversal condition. */
+    the fold and its reversal condition. (🆕🆕🆕 D563: the record can now also be an
+    ABILITY's this-turn install — Feraligatr "Torrential Heart", *"during this turn,
+    attacks used by this Pokémon do 120 more damage to your opponent's Active Pokémon"* —
+    which this reader pays unchanged, and which it keeps paying under a LATER lock for the
+    same reason: it reads the installation.) */
 export function everyAttackBoostOf(state: GameState, pokemon: InPlayPokemon): number {
   const boost = pokemon.boostedAttack;
   return boost === null || boost.turn !== state.turn || boost.attackIndex !== null

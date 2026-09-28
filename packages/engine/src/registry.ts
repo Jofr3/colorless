@@ -2664,7 +2664,13 @@ export interface PassiveEffects {
       corroborates the pair from the other side** — *"(This Pokémon can't evolve
       during your first turn or the turn you play it.)"* is the exact negation of
       this sentence, which is why those 3 printings are a false positive on the
-      phrase and carry no program.
+      phrase and carry no program. (🆕🆕🆕 D563 CORRECTION (D539): ~~"and carry no
+      program"~~ is WITHDRAWN — the three Eevee ex printings carry `evolveAsNamed`
+      (below) for the Ability's FIRST sentence, *"This Pokémon can evolve into any
+      Pokémon ex that evolves from Eevee if you play it from your hand onto this
+      Pokémon."* The parenthesis is still reminder text and still nothing to build: it
+      restates the two timing bans this field lifts, which stay in force on Eevee ex.
+      What survives is that they are a false positive on THIS field's phrase.)
 
       🆕 **D279 WIDENED THIS FROM `true` TO A RECORD, AND THE RECORD HAS TWO KEYS
       BECAUSE THE POOL PRINTS TWO ANTECEDENTS.** `activeOnly` is Eevee's *"As long
@@ -2718,6 +2724,63 @@ export interface PassiveEffects {
       reason verbatim: nothing is persisted, the licence is a CATALOG fact
       re-derived from the live board on every read. */
   evolveEarlyExempt?: { activeOnly?: true; ifInPlay?: string };
+  /** 🆕🆕🆕 **§8.2 (D563) — A COST CLAUSE THE HOLDER'S OWN ABILITY PRINTS ON ONE OF ITS
+      OWN ATTACKS, NAMED BY THE PRINTED ATTACK NAME.** Two legal printings:
+
+        • Noivern `sv09-128` "Tuning Echo" — *"If you have the same number of cards in
+          your hand as your opponent, ignore all Energy in the cost of Frightening Howl
+          used by this Pokémon."* — `{ attack: "Frightening Howl", gate: { kind:
+          "costWaivedIf", condition: handSizesEqual } }`.
+        • Kyurem `sv06.5-047` "Plasma Bane" — *"If your opponent has any cards in their
+          discard pile that have "Colress" in the name, this Pokémon can use the Trifrost
+          attack for {C}."* — `{ attack: "Trifrost", gate: { kind: "alternateCostIf",
+          condition: opponentDiscardHasNameContaining "Colress", cost: ["Colorless"] } }`.
+
+      🛑 **D545's TWO `AttackTimingGate` SHAPES, REUSED, ON A DIFFERENT SEAM.** The clause
+      is D545's printed attack text in every word that matters to the charge (an
+      ALTERNATE that is never stricter than printed; a WAIVE applied last), so
+      `attackCostAt` (attack.ts) charges it through the same two branches. What differs is
+      WHO PRINTS IT: an ABILITY, so it rides `passivesOf` and a §9 Ability-lock silences it
+      (the printed cost comes back) — the exact inverse of `CardProgram.attackGate`, which
+      is attack text read off `topCardOf` and immune to a lock. Two seams for one charge,
+      suppressible on opposite terms, which is why this is a `PassiveEffects` field and
+      not an `attackGate` row.
+
+      ⚠️ **KEYED BY PRINTED NAME, NOT BY INDEX**: the Ability names the attack ("the
+      Trifrost attack", "Frightening Howl"), and `attackCostAt` resolves it by name
+      against `attacksOf(top)` at the index being charged — so the clause can never reach
+      the holder's other attack, and a body whose top prints no attack of that name
+      (evolved away, a different card) is simply not charged by it.
+
+      Collected RAW by `passivesOf` (the `cantAttackUnless` precedent): the condition is
+      seat-relative and the fold has none. ⚠️ **NO `MATCH_RECORD_VERSION` BUMP IS OWED**:
+      nothing is persisted; the clause is a CATALOG fact re-read on every charge. */
+  attackCostClause?: {
+    attack: string;
+    gate:
+      | { kind: "alternateCostIf"; condition: BoardCondition; cost: readonly string[] }
+      | { kind: "costWaivedIf"; condition: BoardCondition };
+  };
+  /** 🆕🆕🆕 **§10 (D563) — AN EVOLVE ALIAS: THIS BODY MAY BE EVOLVED AS IF IT WERE NAMED
+      `name`, BY AN EVOLUTION CARD WHOSE SUFFIX IS `intoSuffix`, PLAYED FROM THE HAND.**
+      Eevee ex `svp-174` / `sv08.5-075` / `sv08.5-167` "Rainbow DNA" (3 legal printings, 1
+      text) — *"This Pokémon can evolve into any Pokémon ex that evolves from Eevee if you
+      play it from your hand onto this Pokémon. (This Pokémon can't evolve during your
+      first turn or the turn you play it.)"*
+
+      Read at ONE site, `evolve` (turn.ts), through `evolveAliasLicensed`
+      (interpreter.ts), which folds `passivesOf` — so a §9 Ability-lock silences it (the
+      Ability IS the licence; `evolveEarlyLicensed`'s rule). The name match is WIDENED,
+      never narrowed: a card whose `evolveFrom` names the target's own top ("Eevee ex")
+      still evolves it by §10 alone.
+
+      ⚠️ **SCOPE STOPS AT THE HAND (R-RD, `decisions.md` D563).** *"if you play it from
+      your hand onto this Pokémon"* — so `evolveFromDeckOffer` (a deck evolve) is NOT
+      widened and does not read this field. The parenthesis restates §4/§10's two timing
+      bans, which stand; it is reminder text and nothing to build. `intoSuffix` is the
+      printed *"Pokémon ex"*. Collected by `passivesOf`; no `MATCH_RECORD_VERSION` bump:
+      nothing is persisted. */
+  evolveAsNamed?: { name: string; intoSuffix: "ex" };
 }
 
 /** A Stadium's "once during each player's turn" ACTIVATED ability (§7.3) —
@@ -3114,7 +3177,14 @@ export interface EnergyProgram {
     by `attackCostAt` (attack.ts) and nowhere else, and `BlockingAttackGate`
     (interpreter.ts) excludes both ON PURPOSE. What survives is the paragraph above:
     of the FIVE, exactly two can block (`onlyIf`, `barredIf`) and one licenses
-    (`firstTurnExempt`). (D178: annotated, not overwritten.) */
+    (`firstTurnExempt`). (D178: annotated, not overwritten.)
+
+    🆕🆕🆕 **D563 (D539) — THE TWO COST SHAPES NOW ALSO LIVE OUTSIDE THIS UNION'S SEAM.**
+    `PassiveEffects.attackCostClause.gate` reuses `alternateCostIf` / `costWaivedIf`
+    for an ABILITY-printed clause (Noivern, Kyurem), folded by `passivesOf` and
+    therefore §9-SUPPRESSIBLE — unlike the `attackGateOf` reading, which stays
+    §9-blind. *"read by `attackCostAt` … and nowhere else"* still holds of both
+    seams: `attackCostAt` is the one reader of each. */
 export type AttackTimingGate =
   /** *"You can use this attack only if <condition>."* — the index is barred
       unless the condition holds. Illumise / Scream Tail ex. */
@@ -3130,7 +3200,9 @@ export type AttackTimingGate =
       printing). While the condition holds, `cost` is an ALTERNATE cost the attack
       may be paid with INSTEAD of its printed one — never stricter than printed
       (UNRULED, `decisions.md` D545; read by `attackCostAt` in attack.ts and by
-      nothing else).
+      nothing else). (🆕🆕🆕 D563: the same shape also rides
+      `PassiveEffects.attackCostClause` — an Ability-printed clause, read by the same
+      `attackCostAt` through `passivesOf`, NOT §9-blind.)
 
       🛑 **A COST CLAUSE, NOT A TIMING CLAUSE, AND IT NEVER BLOCKS.** It lives in
       this union because it is printed attack text keyed to ONE attack index and
@@ -3323,6 +3395,28 @@ export interface CardProgram {
       how playTrainer rejects it (like a Tool) and how the HUD knows to open the
       Rare Candy dialog instead of dispatching playTrainer. */
   rareCandy?: true;
+  /** 🆕🆕🆕 **§10 (D563) — THIS POKÉMON MAY BE PUT INTO PLAY ONLY BY THE NAMED ABILITY.**
+      Palafin ex `svp-126` / `sv06-061` / `sv06-193` / `sv08.5-151` "Hero's Spirit" (4
+      legal printings, 1 text) — *"Put this Pokémon into play only with the effect of
+      Palafin's Zero to Hero Ability."* The value is the printed Ability name.
+
+      🛑 **A `CardProgram` KEY AND DELIBERATELY NOT A `PassiveEffects` FIELD.** The
+      restriction binds the CARD before it is in play — in the hand, in the deck — where
+      no `passivesOf` fold exists, and a §9 Ability-lock must NOT lift it (a lock on the
+      board cannot license a play the card forbids). So it is read straight off
+      `programFor(card.id)` at every route that can put an Evolution into play from a
+      hidden zone: `evolve` (turn.ts, the hand; refused `EVOLVE_ONLY_VIA_ABILITY`) and
+      `evolveFromDeckOffer`'s candidate filter (interpreter.ts; covers `evolveFromDeck` and
+      `evolveFromDeckChosen`). Rare Candy is Stage-2-only and every Bench put is
+      Basic-only, so neither can reach a Stage 1 (the route enumeration is in
+      `decisions.md` D563).
+
+      ⚠️ **R-PF: PALAFIN ex IS UNPLAYABLE UNTIL ZERO TO HERO SHIPS.** Palafin `sv06-060`
+      "Zero to Hero" (an in-place swap from the deck) is NOT built, so no route licenses
+      Palafin ex today. That is print-correct: before D563 the engine let Palafin ex
+      evolve from Finizen out of the hand, which the card forbids. Nothing is persisted;
+      no `MATCH_RECORD_VERSION` bump. */
+  intoPlayOnlyVia?: "Zero to Hero";
   /** The `trainer` play ENDS the controller's turn once its program completes
       (Katy: "Shuffle your hand into your deck. Then, draw 8 cards. Your turn
       ends."). playTrainer passes this to flow.ts settleProgram, which folds it
@@ -11525,7 +11619,9 @@ const POWER_SAVER: CardProgram = {
     ("only if you go second, and only during your first turn" — Illumise
     `sv06-010`, Scream Tail ex `sv06-094` ×2, Call Bell `sv08-165`, Chill Teaser
     Toy `sv08-166`; "if you go second, you can't" — Terapagos ex `sv07-128` ×7),
-    or is REMINDER text (Eevee ex `svp-174` ×3). 3+3+4+1+2+5+7+3 = **28**, plus
+    or is REMINDER text (Eevee ex `svp-174` ×3 — 🆕🆕🆕 D563 (D539): still reminder
+    text on THIS phrase and still nothing to build; the Ability's FIRST sentence is a
+    different clause and is BUILT at D563, `RAINBOW_DNA`). 3+3+4+1+2+5+7+3 = **28**, plus
     Carmine ×4 and Proton ×2 already BUILT = 34, plus Fan Rotom's 2 = **36**.
     **THE MEMBER'S POPULATION IS STILL 2, AND THE PHRASE'S IS 36** — see
     effects.ts's `yourFirstTurn` doc, whose "whole population of `%during your
@@ -11556,7 +11652,9 @@ const DEBUT_PERFORMANCE: CardProgram = {
     header. The short form: the phrase `%evolve during your first turn%` over all
     three text columns returns **10 printings on 4 names**, which split
     **3 Eevee (this row) + 2 Karrablast + 2 Shelmet (partner-gated, REFUSED) +
-    3 Eevee ex (REMINDER text, nothing to build)** — 3+2+2+3 = 10, an
+    3 Eevee ex (REMINDER text, nothing to build)** (🆕🆕🆕 D563 (D539): the REMINDER
+    half is still nothing to build; the first sentence of "Rainbow DNA" is BUILT at
+    D563 as `evolveAsNamed`, `RAINBOW_DNA`) — 3+2+2+3 = 10, an
     enumeration that adds up. `%the turn you play it%` returns the SAME 10, so
     the second half of the sentence is spelled exactly one way in this pool.
 
@@ -14561,6 +14659,82 @@ const JAMMING_TOWER: CardProgram = { stadium: { toolsHaveNoEffect: true } };
     UNBUILT (an attack always ends the turn). */
 const FESTIVAL_GROUNDS: CardProgram = { stadium: { statusShieldIfEnergyAttached: true } };
 
+// ── 🆕🆕🆕 D563 — five Ability texts on eleven printings: two own-attack cost clauses, an
+//    evolve alias, a self-placing attack buff and a card-borne play restriction. ──
+
+/** 🆕🆕🆕 D563 — Eevee ex `svp-174` / `sv08.5-075` / `sv08.5-167` "Rainbow DNA" — *"This
+    Pokémon can evolve into any Pokémon ex that evolves from Eevee if you play it from your
+    hand onto this Pokémon. (This Pokémon can't evolve during your first turn or the turn
+    you play it.)"* The first sentence is `evolveAsNamed`, read at `evolve` (turn.ts) only —
+    the HAND (R-RD); the parenthesis is reminder text for §4/§10's two bans, which stand.
+    Its attack "Coruscating Quartz" derives exactly as before (no `attack` key). */
+const RAINBOW_DNA: CardProgram = { passive: { evolveAsNamed: { name: "Eevee", intoSuffix: "ex" } } };
+
+/** 🆕🆕🆕 D563 — Noivern `sv09-128` "Tuning Echo" — *"If you have the same number of cards
+    in your hand as your opponent, ignore all Energy in the cost of Frightening Howl used by
+    this Pokémon."* D545's `costWaivedIf` on the Ability seam (`attackCostClause`), read by
+    `attackCostAt`; a §9 lock restores the printed {C}{C}{C}. */
+const TUNING_ECHO: CardProgram = {
+  passive: {
+    attackCostClause: {
+      attack: "Frightening Howl",
+      gate: { kind: "costWaivedIf", condition: { kind: "handSizesEqual" } },
+    },
+  },
+};
+
+/** 🆕🆕🆕 D563 — Kyurem `sv06.5-047` "Plasma Bane" — *"If your opponent has any cards in
+    their discard pile that have "Colress" in the name, this Pokémon can use the Trifrost
+    attack for {C}."* D545's `alternateCostIf` on the Ability seam, over the new
+    `opponentDiscardHasNameContaining` (the OPPONENT's pile only, R-PB). */
+const PLASMA_BANE: CardProgram = {
+  passive: {
+    attackCostClause: {
+      attack: "Trifrost",
+      gate: {
+        kind: "alternateCostIf",
+        condition: { kind: "opponentDiscardHasNameContaining", fragment: "Colress" },
+        cost: ["Colorless"],
+      },
+    },
+  },
+};
+
+/** 🆕🆕🆕 D563 — Feraligatr `svp-089` / `sv05-041` "Torrential Heart" — *"Once during your
+    turn, you may put 5 damage counters on this Pokémon. If you do, during this turn, attacks
+    used by this Pokémon do 120 more damage to your opponent's Active Pokémon (before
+    applying Weakness and Resistance)."* The *"you may"* is the decision to use the Ability
+    (FAN_CALL's reading); usable from the Bench (`activeOnly: false`). The counters go on
+    THIS body (`damageSelf { on: "source" }`, filed `"ability"`), and the buff is an
+    all-attacks `boostedAttack` record on THIS body stamped for THIS turn (`holder:
+    "source"`, `thisTurn`). ⚠️ **R-TH (UNRULED)**: the record is §10-shed like every
+    `boostedAttack` — switched from the Active to the Bench, the buff is gone; promoted from
+    the Bench it is kept. ⚠️ **THE SHARED SLOT**: a live named next-turn record on the same
+    body would be replaced (per-address, D155) — unreachable here, since Feraligatr's own
+    attacks install none and evolving sheds prior-stage records. A lethal self-placement is
+    swept mid-turn and the Prize goes to the OPPONENT. */
+const TORRENTIAL_HEART: CardProgram = {
+  abilities: [
+    {
+      name: "Torrential Heart",
+      oncePerTurn: true,
+      activeOnly: false,
+      program: [
+        { op: "damageSelf", amount: 50, on: "source", source: "ability" },
+        { op: "boostAttack", attack: null, amount: 120, holder: "source", thisTurn: true },
+      ],
+    },
+  ],
+};
+
+/** 🆕🆕🆕 D563 — Palafin ex `svp-126` / `sv06-061` / `sv06-193` / `sv08.5-151` "Hero's
+    Spirit" — *"Put this Pokémon into play only with the effect of Palafin's Zero to Hero
+    Ability."* The card-borne `intoPlayOnlyVia` (NOT a passive — a lock must not lift it):
+    refused at `evolve` and filtered out of `evolveFromDeckOffer`. **R-PF**: Zero to Hero
+    (Palafin `sv06-060`) is unbuilt, so Palafin ex has no legal route into play today. Its
+    attack "Giga Impact" derives exactly as before (no `attack` key). */
+const HEROS_SPIRIT: CardProgram = { intoPlayOnlyVia: "Zero to Hero" };
+
 const REGISTRY: Record<string, CardProgram> = {
   // Professor's Research (SV base prints)
   "sv01-189": PROFESSORS_RESEARCH,
@@ -15219,6 +15393,19 @@ const REGISTRY: Record<string, CardProgram> = {
   "sv10-243": JAMMING_TOWER, // Jamming Tower (reprint)
   "sv06-149": FESTIVAL_GROUNDS, // Festival Grounds — Energy-carrying Pokémon: no Special Conditions
   "sv08.5-108": FESTIVAL_GROUNDS, // Festival Grounds (reprint)
+  // ── 🆕🆕🆕 D563 — five Ability texts: 11 printings / 5 texts / 5 objects, MID-MAP
+  //    (D395/D396), so `raw[last]` does not move. No row authors an `attack` key. ──
+  "svp-174": RAINBOW_DNA, // Eevee ex — evolves into any Pokémon ex that evolves from Eevee (hand)
+  "sv08.5-075": RAINBOW_DNA, // Eevee ex (reprint)
+  "sv08.5-167": RAINBOW_DNA, // Eevee ex (reprint)
+  "sv09-128": TUNING_ECHO, // Noivern — equal hands: Frightening Howl costs nothing
+  "sv06.5-047": PLASMA_BANE, // Kyurem — a "Colress" in the opponent's discard: Trifrost for {C}
+  "svp-089": TORRENTIAL_HEART, // Feraligatr — 5 counters on itself: +120 this turn
+  "sv05-041": TORRENTIAL_HEART, // Feraligatr (reprint)
+  "svp-126": HEROS_SPIRIT, // Palafin ex — into play only via Zero to Hero
+  "sv06-061": HEROS_SPIRIT, // Palafin ex (reprint)
+  "sv06-193": HEROS_SPIRIT, // Palafin ex (reprint)
+  "sv08.5-151": HEROS_SPIRIT, // Palafin ex (reprint)
   // ── D190 — THE **STANDARD-LEGAL** REPRINT-ALIAS MAP (Tier 0 of
   //    `docs/reference/coverage-backlog-legal.md`). 22 printings, 9 map targets,
   //    ZERO new code: every row below prints a sentence that is already authored

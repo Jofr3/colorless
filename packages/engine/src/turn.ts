@@ -12,6 +12,7 @@ import { basicFromHandError, cardOfUid, evolveFromOf, isEnergyCard, topUid } fro
 import {
   aceSpecPlayBarred,
   effectiveRetreatCost,
+  intoPlayOnlyViaOf,
   opposingRetreatBlocked,
   pokemonPlayBarred,
   retreatLocked,
@@ -24,7 +25,7 @@ import {
   resolveMidTurnKnockOuts,
   turnTail,
 } from "./flow";
-import { evolveEarlyLicensed, switchInto } from "./interpreter";
+import { evolveAliasLicensed, evolveEarlyLicensed, switchInto } from "./interpreter";
 import { programFor } from "./registry";
 import {
   runActiveBenchedTriggers,
@@ -388,7 +389,9 @@ export function playBasicToBench(state: GameState, action: PlayBasicToBenchActio
 }
 
 /** §10 — place an Evolution card from hand on top of one of your own in-play
-    Pokémon (Active or Bench) whose top card it evolves from. No per-turn cap
+    Pokémon (Active or Bench) whose top card it evolves from (🆕🆕🆕 D563: or whose
+    Ability aliases the name — Eevee ex's `evolveAsNamed`; and never a card whose program
+    carries `intoPlayOnlyVia`, Palafin ex). No per-turn cap
     (each Pokémon may evolve once — enforced by turnPlayed, below), and it
     consumes NONE of the energy/retreat allowances. */
 export function evolve(state: GameState, action: EvolveAction): ApplyResult {
@@ -438,8 +441,23 @@ export function evolve(state: GameState, action: EvolveAction): ApplyResult {
     return err("UNKNOWN_CARD", "the target Pokémon has no resolvable top card");
   }
   // §10 — the evolution's `evolveFrom` must NAME the target's current top card.
-  if (targetTopCard.name !== evolvesFrom) {
+  // 🆕🆕🆕 D563 — …OR an Ability on the target must license the name (Eevee ex "Rainbow
+  // DNA": *"can evolve into any Pokémon ex that evolves from Eevee if you play it from
+  // your hand onto this Pokémon"*). WIDENED here, at the hand, and nowhere else (R-RD);
+  // through `passivesOf`, so a §9 lock hands the plain match back.
+  if (targetTopCard.name !== evolvesFrom && !evolveAliasLicensed(state, target, card)) {
     return err("EVOLVE_MISMATCH", `${card.name} does not evolve from ${targetTopCard.name}`);
+  }
+  // 🆕🆕🆕 D563 — Palafin ex "Hero's Spirit": *"Put this Pokémon into play only with the
+  // effect of Palafin's Zero to Hero Ability."* Off the card's program and NOT through
+  // `passivesOf` — the card is in the HAND and a §9 lock must not lift it (R-PF: Zero to
+  // Hero is unbuilt, so Palafin ex has no legal route in today).
+  const onlyVia = intoPlayOnlyViaOf(card);
+  if (onlyVia !== undefined) {
+    return err(
+      "EVOLVE_ONLY_VIA_ABILITY",
+      `${card.name} can be put into play only with the effect of the ${onlyVia} Ability`,
+    );
   }
   // §4/§10 (D278; SEAT ADDED BY D279) — the TWO standing timing bans, and the ONE
   // printed sentence that lifts both. `evolveEarlyLicensed` (interpreter.ts) is

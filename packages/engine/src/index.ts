@@ -20156,6 +20156,28 @@ import type { GameState, Seat } from "./types";
     `expect(manifest.version)`, `it(…)` titles, the declaration and `package.json` —
     **not** as a value-keyed grep — because a value-keyed grep is precisely the mechanism
     that ate D500's heading.)
+    🆕🆕🆕 engineVersion 0.446.0 → **0.447.0** (D563 — FIVE ABILITY TEXTS: 11 PRINTINGS / 5 TEXTS / 5
+    OBJECTS — TWO OWN-ATTACK COST CLAUSES, AN EVOLVE ALIAS, A SELF-PLACING THIS-TURN BUFF AND A
+    CARD-BORNE PLAY RESTRICTION. Five registry `CardProgram`s keyed on eleven REAL ids inserted MID-MAP
+    after `sv08.5-108` (D395/D396, so `raw[last]` stays `sv09-107`); no row authors an `attack` key.
+    **Noivern** `sv09-128` "Tuning Echo" and **Kyurem** `sv06.5-047` "Plasma Bane" on the NEW
+    `PassiveEffects.attackCostClause { attack, gate }` — D545's `costWaivedIf` / `alternateCostIf`
+    reused on the ABILITY seam, folded RAW by `passivesOf` (`attackCostClauses`) and consulted by
+    `attackCostAt` after the attack-level gate, only when it did not fire, matched by printed attack
+    name, evaluated under the holder's seat (= `seat` at all three callers); a §9 lock restores the
+    printed cost. Kyurem's gate is the NEW `BoardCondition.opponentDiscardHasNameContaining` (the
+    OPPONENT's pile only, case-sensitive — R-PB). **Eevee ex** `svp-174`/`sv08.5-075`/`sv08.5-167`
+    "Rainbow DNA" on the NEW `PassiveEffects.evolveAsNamed`, read by the NEW interpreter.ts
+    `evolveAliasLicensed` at `evolve` (turn.ts) — the HAND only; `evolveFromDeckOffer` is not widened
+    (R-RD). **Feraligatr** `svp-089`/`sv05-041` "Torrential Heart": `damageSelf`'s NEW `on: "source"`
+    rider (the NEW `damageSourceBody`; `source` widened to `"trainer" | "ability"`) and `boostAttack`'s
+    NEW `holder: "source"` / `thisTurn` riders (`ATTACK_BOOSTED.thisTurn`, logged "this turn") — R-TH ⚠️
+    UNRULED: the record sheds when the body is switched to the Bench. **Palafin ex** `svp-126`/`sv06-061`/
+    `sv06-193`/`sv08.5-151` "Hero's Spirit" on the NEW `CardProgram.intoPlayOnlyVia` (NOT a passive —
+    read off the card through the NEW continuous.ts `intoPlayOnlyViaOf`): refused at `evolve` with the
+    NEW `EVOLVE_ONLY_VIA_ABILITY` and filtered out of `evolveFromDeckOffer` (R-PF: unplayable until Zero
+    to Hero ships). **`MATCH_RECORD_VERSION` STAYS 35**: no new op parks, every new key is catalog data,
+    and the event widening is unpersisted — see docs/decisions.md D563 (d).)
     🆕🆕🆕 engineVersion 0.445.0 → **0.446.0** (D562 — CONSUMABLE TOOLS, JAMMING TOWER AND FESTIVAL
     GROUNDS: 14 PRINTINGS / 12 TEXTS / 12 OBJECTS. Twelve registry `CardProgram`s — ten Tools and two
     Stadiums — keyed on fourteen REAL ids inserted MID-MAP after `sv05-156` (D395/D396, so `raw[last]`
@@ -24511,7 +24533,7 @@ import type { GameState, Seat } from "./types";
     WITNESS** — the count was re-derived every slice and the word *"three"* was carried.
     A successor of this slice inherits **81 / 61 / 17** again, over **FIVE** history
     occurrences: those four plus `deckMillFilteredScale.test.ts`'s own header arrow.) */
-export const engineVersion = "0.446.0";
+export const engineVersion = "0.447.0";
 
 export type {
   ApplyResult,

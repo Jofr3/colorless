@@ -1604,6 +1604,25 @@ export interface MatchRecord {
     schema, redact, projection or client byte: the wire does not carry a body's Weakness,
     so the HUD does not show a retype (a carried display debt, decisions.md D552).
 
+    🆕🆕🆕 **STAYS 35 AT D563 — ONE PERSISTED ADDRESS IS WRITTEN, AND IT IS D546's.** (Placed ABOVE the
+    D556 block, out of date order, so the declaration's anchor lines stay byte-identical.)
+    Feraligatr "Torrential Heart" (*"during this turn, attacks used by this Pokémon do 120
+    more damage to your opponent's Active Pokémon …"*) writes `InPlayPokemon.boostedAttack`
+    — persisted on every save — with the SAME three keys D546's all-attacks install writes,
+    `{turn, attackIndex: null, amount}`; only the stamp's VALUE differs (`state.turn`, not
+    `state.turn + 2`), and the holder may be a BENCHED body (the record already lived in
+    `bench[]` bodies' shape). D441: no key added or renamed. D456: a v35 reader of this
+    deploy's record — a ROLLBACK resuming a save taken mid-turn, after the use and before the
+    attack — pays the +120 exactly as this deploy does, because `boostedAttackDamage` /
+    `everyAttackBoostOf` compare `turn === state.turn` and are unedited; the turn stamp
+    retires it at the next turn either way (`torrentialHeartD563.test.ts` §8, over serialized
+    bytes). Nothing else persists: the two new op riders (`damageSelf.on`, `boostAttack.holder`
+    / `.thisTurn`) never park, so no `phase.cont` carries them (D334); `attackCostClause`,
+    `evolveAsNamed`, `intoPlayOnlyVia` and `BoardCondition.opponentDiscardHasNameContaining`
+    are CATALOG data re-read on every call (a new `BoardCondition` member can ride a parked
+    `rest` only inside a `conditionGate`, and no D563 row authors one); the `ATTACK_BOOSTED.
+    thisTurn` widening and the new `EVOLVE_ONLY_VIA_ABILITY` code are not persisted (D141).
+
     🆕🆕🆕 **34 → 35 AT D556 — THE EIGHTH POSITION: A REQUIRED KEY ON THE ALLOWANCE BAG,
     AND A BAG THAT LIVES ONE TURN.** The address, named first (D456's rule):
       · **`GameState.allowances.sideAttackBonuses: SideAttackBonus[]`** — Black Belt's

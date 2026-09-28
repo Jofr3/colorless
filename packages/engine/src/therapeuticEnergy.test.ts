@@ -716,6 +716,12 @@ describe("⚠️ passivesOf's THIRD SOURCE CLASS — an attached ENERGY", () => 
         // nothing, and the claim is about THIS board's sources rather than about
         // the population (the D261 note above, applied a second time).
         "attackFirstTurnExempt",
+        // 🆕🆕🆕 D563 — TWO new list keys, both collected RAW from the holder's printed
+        // Ability and both EMPTY here: `attackCostClauses` (Noivern "Tuning Echo", Kyurem
+        // "Plasma Bane" — read by `attackCostAt`) and `evolveAsNamed` (Eevee ex "Rainbow
+        // DNA" — read by `evolveAliasLicensed`). Therapeutic Energy writes neither; the
+        // claim is about THIS board's sources (the D261 note above).
+        "attackCostClauses",
         "cantAttackUnless",
         "conditionalDamageBonusBeforeWR",
         "damageAttacker",
@@ -732,6 +738,7 @@ describe("⚠️ passivesOf's THIRD SOURCE CLASS — an attached ENERGY", () => 
         // a real writer attached — which is `preventDamageAndEffectsWhileBenched`'s
         // situation with the sign flipped.
         "evolveEarlyExempt",
+        "evolveAsNamed",
         "hpBonus",
         // 🆕 D298 — the fold's newest key, and the audit is RE-READ rather than
         // the number bumped for the umpteenth consecutive time.

@@ -846,7 +846,15 @@ export type GameEvent =
       names no attack. `log.ts` renders it "'s attacks do N more damage next turn";
       the named wording would be FALSE of it (D421), and a template literal would
       print the word "null" — a site `tsc` cannot see, pinned by a log rung and a
-      mutant. A widening of a non-persisted event (D141). */
+      mutant. A widening of a non-persisted event (D141).
+
+      🆕🆕🆕 D563 — `thisTurn?: true`: the install is stamped for the CURRENT turn
+      (Feraligatr "Torrential Heart", *"during this turn, attacks used by this Pokémon do
+      120 more damage …"*), so `log.ts` says "this turn" — "next turn" would be FALSE of
+      it (D421). Written only on this-turn installs; a widening of a non-persisted event
+      (D141). ⚠️ *"the op has no defender arm — so the row is ACTIVE-voiced"* still holds,
+      but the boosted body is now the SOURCE body when the op carries `holder: "source"`
+      (possibly Benched), and `uid` names it. */
   | {
       type: "ATTACK_BOOSTED";
       seat: Seat;
@@ -854,6 +862,7 @@ export type GameEvent =
       attack: string | null;
       amount: number;
       base?: true;
+      thisTurn?: true;
     }
   /** §11 — an attack's EFFECT was refused by the block above ("…prevent all
       damage FROM AND EFFECTS OF attacks…"), on the Pokémon the effect was aimed

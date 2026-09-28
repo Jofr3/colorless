@@ -58,6 +58,8 @@ import {
 //   ABILITY column (15)
 //     3  Eevee            sv08-143/sv08.5-074/svp-173  "…it can EVOLVE during your first turn…"
 //     3  Eevee ex         sv08.5-075 +2                REMINDER TEXT — a false positive
+//                          (🆕🆕🆕 D563: the phrase is still reminder text; the Ability's
+//                          FIRST sentence, "Rainbow DNA"'s evolve alias, is BUILT)
 //     3  Meloetta ex      sv10.5b-044/-159/-167        "…this Pokémon can use ATTACKS…"  ← THIS ROW
 //     2  Karrablast       sv10.5b-009 +1               "…it can EVOLVE…" (partner-gated)
 //     2  Shelmet          sv10.5w-008 +1               "…it can EVOLVE…" (partner-gated)
@@ -91,7 +93,10 @@ import {
 //       predicate, not a first-turn one.**
 //   (c) reminder text restating the standard rule (Eevee ex, 3) — a false positive
 //       the phrase match cannot tell from a real clause, and the reason this
-//       census reads SENTENCES rather than counting rows.
+//       census reads SENTENCES rather than counting rows. (🆕🆕🆕 D563: still a false
+//       positive ON THIS PHRASE — the reminder is nothing to build — but the three
+//       printings now carry a program, `evolveAsNamed`, for the Ability's OTHER
+//       sentence, "can evolve into any Pokémon ex that evolves from Eevee".)
 //
 // **`BoardCondition.yourFirstTurn`'s POPULATION IS STILL 2 AND THE PHRASE'S IS 36.**
 // ⚠️ THAT ALSO CORRECTS A CLAIM IN THE SHIPPED TREE: `yourFirstTurn`'s own doc
@@ -105,7 +110,9 @@ import {
 // ─────────────────────────────────────────────────────────────────────────────
 //
 // Of the 36, twelve are already built (Fan Rotom 2, Carmine 4, Proton 2 — and the
-// remaining 3 Eevee ex are reminder text with nothing to build). Of the 21 left,
+// remaining 3 Eevee ex are reminder text with nothing to build — 🆕🆕🆕 D563 (D539):
+// still true of the REMINDER; the Ability's first sentence is BUILT at D563 as
+// `evolveAsNamed`, which this phrase census never counted). Of the 21 left,
 // the groups rank 7 (Terapagos ex) · 3 (Eevee) · 3 (Meloetta ex) · 2+2 (Karrablast /
 // Shelmet) · 2 (Exeggcute) · 2 (Scream Tail ex) · 1+1+1 (Illumise, Call Bell,
 // Chill Teaser Toy). **THE BIGGEST GROUP IS NOT THE CHEAPEST ROW**, which is

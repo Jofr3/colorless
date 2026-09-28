@@ -653,7 +653,13 @@ describe("§5 — on a BOARD: each of the three cancels and lands, and the ids a
     // catalog ids, no `fix-*` key (`toolsD562.test.ts` / `stadiumsD562.test.ts` drive a LOCAL
     // `cardPool`), inserted MID-MAP after `sv05-156`, and no row authors an `attack`
     // program.
-    expect(ids).toHaveLength(877);
+    // 🆕🆕🆕 D563 — 877 -> **888**: ELEVEN registry keys on FIVE program objects — Eevee ex
+    // ×3 "Rainbow DNA", Noivern "Tuning Echo", Kyurem "Plasma Bane", Feraligatr ×2
+    // "Torrential Heart", Palafin ex ×4 "Hero's Spirit". Real catalog ids, no `fix-*` key
+    // (`abilityCostEvolveD563.test.ts` / `torrentialHeartD563.test.ts` drive a LOCAL
+    // `cardPool`), inserted MID-MAP after `sv08.5-108`, and no row authors an `attack`
+    // program.
+    expect(ids).toHaveLength(888);
     for (const id of BOUGHT_IDS) {
       expect(ids, id).not.toContain(id);
       expect(programFor(id), id).toBeUndefined();

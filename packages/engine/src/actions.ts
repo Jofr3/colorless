@@ -205,8 +205,13 @@ export type ErrorCode =
       cannot be placed on top of an in-play Pokémon as an evolution. */
   | "NOT_AN_EVOLUTION"
   /** §10 — the evolution's `evolveFrom` does not name the target's current
-      top card, so it does not evolve from it. */
+      top card, so it does not evolve from it. (🆕🆕🆕 D563: …and no Ability ALIAS on the
+      target licenses the name — Eevee ex "Rainbow DNA", `evolveAsNamed`.) */
   | "EVOLVE_MISMATCH"
+  /** 🆕🆕🆕 §10 (D563) — the evolution card prints that it may be put into play ONLY by
+      a named Ability's effect (Palafin ex "Hero's Spirit"), so a hand evolve is refused
+      whatever the target; the message names the Ability. */
+  | "EVOLVE_ONLY_VIA_ABILITY"
   /** §10 — the target came into play (or was itself evolved) this turn; a
       Pokémon evolves at most once per turn and never the turn it arrived. */
   | "EVOLVE_TOO_SOON"

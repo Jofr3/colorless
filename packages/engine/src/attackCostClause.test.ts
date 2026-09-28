@@ -50,6 +50,11 @@ import {
 // two NEW `AttackTimingGate` members that never block: `alternateCostIf { condition, cost }`
 // and `costWaivedIf { condition }`. They are read by ONE new function, `attackCostAt`
 // (attack.ts), at the THREE payability sites (the §8.2 check, `redactedAttacksOf`, GameHud).
+// (🆕🆕🆕 D563 (D539): `attackCostAt` now reads a SECOND seam after this one —
+// `passivesOf(...).attackCostClauses`, the same two shapes printed by an ABILITY (Noivern,
+// Kyurem), §9-suppressible — consulted only when this attack-level gate did not fire. Every
+// board in this file carries no such Ability, so each answer here is unchanged;
+// `abilityCostEvolveD563.test.ts` drives the second seam.)
 //
 // 🛑 THE TRAP: `BlockingAttackGate` is an `Exclude` over the union, so both new members
 // landed in it BY DEFAULT — and `attackTimingBlocked` reads every non-`onlyIf` member as a
