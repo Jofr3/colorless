@@ -28713,8 +28713,6 @@ D454's `damageSelf` row); declared survivors 52 unmoved.
 The whole-corpus sweep: ~~D562's (running in the main checkout, predicted `3453 · 52` over 3,505) and~~ this one's (predicted
 `3506 · 52` over 3,558) (🆕 D564 landing: PAID, exactly — `3506 killed · 52 known survivor(s)` over 3,558, D563 close-out `78823284`) (🆕 landing: D562's is PAID, exactly — `3453 · 52` over 3,505, close-out `3b68a3c1`). R-TH UNRULED. Zero to Hero (Palafin `sv06-060`, an in-place swap op) — until it ships Palafin ex has no
 route into play. Rocket Brain, Flustered Leap, Impromptu Carrier; Team Rocket's Factory + Crobat; Community Center (🆕🆕🆕 D564: BUILT).
-`3506 · 52` over 3,558). R-TH UNRULED. Zero to Hero (Palafin `sv06-060`, an in-place swap op) — until it ships Palafin ex has no
-route into play. Rocket Brain, Flustered Leap, Impromptu Carrier; Team Rocket's Factory + Crobat; Community Center (🆕🆕🆕 D564: BUILT).
 
 ## D564 — the MRV 35 → 36 trainer bundle: 9 printings / 5 texts / 5 objects plus the Caretaker rider (engine 0.448.0, `MATCH_RECORD_VERSION` 35 → 36)
 
