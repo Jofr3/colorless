@@ -8510,6 +8510,37 @@ sleep 3'`), the dummy read `PPID 1144` and `SID == PID`.
    read while it ran, only the dummy's. Launching into a scope of its own (`systemd-run --user --scope …`) was not
    measured either, so it is not the recipe yet.
 
+### A withdrawn COUNT claim is also spelled as an ENUMERATION with no number in it, so the sweep keys on the MEMBERS' names too (D567 close-out, extending D539)
+
+D567 added two members to `EffectSlot` (`turnedPrize` and `revealed`, five now), so every present-tense sentence
+saying it has three was withdrawn. D539's rule was followed, and it still took THREE passes to find them all:
+
+1. The builder swept the literal phrase *"Three members"* and annotated two sites.
+2. The parked slice's last review found SIX more, where the claim had been reworded (*"has three inhabitants"*,
+   *"there are three of them"*). The landing then re-swept for a three-count within three lines of `EffectSlot`,
+   `recordAs` or *§9.2 record*, whitespace-collapsed, and found TWO more.
+3. The final review, after the landing commit `a26f3e16`, found TEN more (landed as `b10ce168`). They state the
+   membership as a LIST with no number in it — `"paid" | "moved" | "discarded"`, *(paid / moved / discarded)* — and
+   one of them (*"into the same three slots"*) sits in a block that never names `EffectSlot` at all.
+
+Every gate and the whole suite were green at each stage, as D539 says they will be.
+
+**Why:** D539 says to grep the claim's load-bearing WORD. For a count claim, the number and the type's name are
+not the only load-bearing tokens. The claim is carried just as fully by the list of the old members, and a list has
+no number to grep for and need not name its type.
+
+**The rule:** when a slice changes the size of a union, enum or set that prose describes, sweep for all three
+spellings in ONE pass, engine source first:
+
+1. the literal phrase;
+2. the old count within a few lines of the type's name and its synonyms, whitespace-collapsed;
+3. the old members' names next to one another under any separator (`/`, `|`, `,`, *or*, *and*), skipping windows
+   that already name a new member or carry the slice's note.
+
+Then classify each hit before changing it (D539's second half). A MEASURED population is not a claim about the
+union: D567 left `discardDefender.test.ts:491`, a count of that file's own `recordGate`s. A record of a past state
+is not one either.
+
 ## Git / commits
 - Branch off `main` for non-trivial work; commit/push only when asked.
 - Commit trailer per global config: `Co-Authored-By: Claude ...`.
