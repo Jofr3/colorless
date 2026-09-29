@@ -514,7 +514,9 @@ describe("§5 — the census terms, MEASURED rather than assumed", () => {
     // Real catalog ids, no `fix-*` key (`trainerBundleD566.test.ts` / `koToolsD566.test.ts`
     // drive a LOCAL `cardPool`), inserted MID-MAP after `sv06-060`, and no row authors an
     // `attack` program.
-    expect(ids).toHaveLength(914);
+    // 🆕🆕🆕 D567 — 914 -> **918**: FOUR registry keys on FOUR program objects — Redeemable Ticket,
+    // Accompanying Flute, Team Rocket's Bother-Bot (Items) and Grand Tree (Stadium) — all non-attack.
+    expect(ids).toHaveLength(918);
     for (const id of VICTINI_IDS) {
       expect(ids, id).not.toContain(id);
       expect(programFor(id), id).toBeUndefined();

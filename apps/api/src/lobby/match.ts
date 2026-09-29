@@ -1486,7 +1486,8 @@ export interface MatchRecord {
     (`crescentPurge.test.ts` §11 drives both throws on a v31-shaped state).
 
     ⚠️ Also moved, and none is a second reason: a new `EffectOp` member (`turnPrizeFaceUp`,
-    field-free), a new `BoardCondition` member (`yourFaceDownPrizeRemains`, nullary), a new
+    field-free — 🆕🆕🆕 D567 (D539): no longer, it gained the optional `side` / `recordAs`, see the
+    D567 block), a new `BoardCondition` member (`yourFaceDownPrizeRemains`, nullary), a new
     `EffectPrompt` kind (`choosePrize { indices }`) and a new `EffectChoice` member
     (`{kind: "prize", index}`) — all D333 widenings: the op PARKS, so the prompt and the op
     reach a persisted `phase.cont` (and the condition rides the program's `conditionGate`
@@ -1667,6 +1668,44 @@ export interface MatchRecord {
     `GameEvent.SIDE_ATTACKS_BOOSTED` (not persisted, D141). No schema, redact, projection
     or client byte: the redacted view does not carry `allowances`, so the HUD does not
     show the side bonus (a carried display debt, decisions.md D556).
+
+    🆕🆕🆕 **STAYS 36 AT D567 — EVERY PERSISTED CHANGE IS A D125 WIDENING, AND THE 0.450 ROLLBACK
+    READINGS ARE NAMED, MEASURED FROM 0.450's SOURCE.** (Placed ABOVE the D566 block, out of date
+    order, so the declaration's anchor lines stay byte-identical — D563's placement.) The addresses,
+    named first (D456's rule): `MatchRecord.state.phase.cont.pendingOp` / `.rest` / `.record` and
+    `phase.prompt` (written on a PARK). ⑴ `lookAtTopN`'s NEW optional `whose` (Accompanying Flute)
+    can ride `pendingOp`. ⑵ `turnPrizeFaceUp`'s NEW optional `side` and `recordAs` (Bother-Bot) can
+    ride `pendingOp`; `randomFromOpponentHand`'s NEW `to` member `"reveal"` and optional `recordAs`
+    and the NEW `EffectOp` member `swapTurnedPrizeWithRevealed` can ride `rest` (the latter inside
+    an `optional.then`, which can itself be `pendingOp`); `EffectRecord` can carry the NEW
+    `EffectSlot` keys `turnedPrize` / `revealed` in `cont.record`. ⑶ `evolveFromDeckChosen`'s NEW
+    optional `bodyStage` / `evolveTimingGates` / `thenEvolveAgain` and `evolveFromDeck`'s NEW optional
+    `thenEvolveAgain` (Grand Tree) can ride `pendingOp`. The `choosePrize` prompt's shape is
+    unchanged (`{indices, note}`). D441: no key is renamed or removed, every added key is OPTIONAL or
+    a new union member, and a v36 record written by 0.450 cannot hold any of them — so every older
+    record means exactly what it meant (driven: `trainerBundleD567.test.ts` round-trips the Flute
+    park, both Bother-Bot parks — the confirm WITH its `cont.record` — and the Grand Tree Stage 1
+    park through JSON and resumes each). The 0.450 ROLLBACK readings (D456), named rather than
+    implied, each read off 0.450's own bytes: a parked FLUTE resumes as a SILENT WHIFF — 0.450's
+    `revealFromTop` filters the picks against the CONTROLLER's deck, so no opponent uid lands, the
+    look row names nothing, and the program's `shuffleDeck { whose: "opponent" }` still runs (the Item
+    is spent for nothing). A parked BOTHER-BOT `choosePrize` resumes MISDIRECTED, not as a whiff:
+    0.450's `applyChoice` arm calls `turnPrizeFaceUpAt(state, index, ctx, …)` on the CONTROLLER's OWN
+    row (the index was offered off the opponent's), then 0.450's `randomFromOpponentHand` treats every
+    `to` that is not `"discard"` as the deck route — the revealed card is SHUFFLED INTO the opponent's
+    deck — and, `recordAs` being unknown there, both `recordGate`s read empty slots and no switch is
+    offered. A parked BOTHER-BOT CONFIRM answered YES is a HARD FAILURE: `continuationOps` splices
+    `swapTurnedPrizeWithRevealed`, 0.450's `stepOp` switch has no arm and no `default`, so it returns
+    `undefined` and `runProgram`'s `"park" in stepped` throws (a NO resumes cleanly — `otherwise` is
+    absent, nothing runs). A parked GRAND TREE Stage 1 resumes as a PARTIAL WHIFF: 0.450 places the
+    Stage 1 (`evolveFromDeck` ignores the unknown key) but its `continuationOps` has no
+    `thenEvolveAgain` member, so the printed Stage 2 question is silently never asked, and the shuffle
+    runs; a parked Grand Tree BODY question resumes the same way (0.450's `evolveBodyAnswered` drops
+    the rider). Do not roll back over a record parked on a Bother-Bot confirm. Nothing else persists:
+    the registry rows and `stadium.ability` are CATALOG data; `PRIZES_CYCLED`,
+    `RANDOM_CARD_REVEALED`, `PRIZE_SWITCHED_WITH_HAND` and the `actor?` keys on
+    `PRIZE_TURNED_FACE_UP` / `DECK_TOP_REVEALED` are events (D141); Redeemable Ticket never parks.
+    No client byte moved (the prompt note is a string the HUDs already render).
 
     🆕🆕🆕 **STAYS 36 AT D566 — EVERY PERSISTED CHANGE IS A D125 WIDENING, AND THE 0.449 ROLLBACK
     READINGS ARE NAMED.** (Placed ABOVE the D565 block, out of date order, so the declaration's

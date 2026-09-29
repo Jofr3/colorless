@@ -1332,7 +1332,9 @@ describe("§7 — the census moves in exactly ONE summand, and the other three a
     // Real catalog ids, no `fix-*` key (`trainerBundleD566.test.ts` / `koToolsD566.test.ts`
     // drive a LOCAL `cardPool`), inserted MID-MAP after `sv06-060`, and no row authors an
     // `attack` program.
-    expect(ids.size).toBe(914);
+    // 🆕🆕🆕 D567 — 914 -> **918**: FOUR registry keys on FOUR program objects — Redeemable Ticket,
+    // Accompanying Flute, Team Rocket's Bother-Bot (Items) and Grand Tree (Stadium) — all non-attack.
+    expect(ids.size).toBe(918);
     // ⚠️ ONE of the thirteen IS in the registry — Volbeat `sv06-009` — and it is
     // there on an ABILITY program, which is exactly the count a slice does not
     // think it is checking. Named, rather than glossed by an "all absent" claim

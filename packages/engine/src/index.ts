@@ -8054,7 +8054,8 @@ import type { GameState, Seat } from "./types";
     and the park's `dest` was already a five-member union — so no continuation
     shape changed. ⚠️ **AND NO `actor` FIELD ON THE EVENT**, priced rather than
     skipped: every `lookAtTopN` printing reads the controller's OWN deck, so
-    `actor === seat` on every path. Row 11's residue is what buys it.
+    `actor === seat` on every path. Row 11's residue is what buys it. (🆕🆕🆕 D567 (D539): no
+    longer every — Accompanying Flute's `whose: "opponent"` bought `DECK_TOP_REVEALED.actor?`.)
 
     🛑 **THE 5 LEFT ARE ONE MECHANISM, NOT FIVE, AND IT IS A PROMPT KIND**: *"put
     them back in any order"* (4 printings, 3 of them on the OPPONENT's deck) needs
@@ -17535,7 +17536,8 @@ import type { GameState, Seat } from "./types";
 
     🛑 **`side: "opponent"` IS THE FIRST DECK-TOP OP TO READ THE OTHER SEAT's DECK,
     AND IT PAYS A DEBT `DECK_TOP_REVEALED`'s DOC BLOCK BOOKED IN ADVANCE.** That row
-    declined an `actor` field in writing — *"Every `lookAtTopN` printing reads the
+    declined an `actor` field in writing (🆕🆕🆕 D567 (D539): and bought it at D567, Accompanying
+    Flute) — *"Every `lookAtTopN` printing reads the
     controller's OWN deck, so `actor === seat` on every path today… Row 11's 'Look
     at the top 5 cards of your **opponent's** deck and put them back in any order'
     is what buys it"* — and the field is bought HERE, on `DECK_TOP_REORDERED`, rather
@@ -20169,6 +20171,25 @@ import type { GameState, Seat } from "./types";
     `expect(manifest.version)`, `it(…)` titles, the declaration and `package.json` —
     **not** as a value-keyed grep — because a value-keyed grep is precisely the mechanism
     that ate D500's heading.)
+    🆕🆕🆕 engineVersion 0.450.0 → **0.451.0** (D567 — THE TRAINER BUNDLE: 4 PRINTINGS / 4 TEXTS / 4
+    OBJECTS. Four registry `CardProgram`s keyed on four REAL ids inserted MID-MAP after `sv10-180` (D395/D396,
+    so `raw[last]` stays `sv09-107`); no row authors an `attack` key. **Redeemable Ticket** `sv09-156` on the
+    NEW field-free `cycleOwnPrizes` (the row shuffled under the deck, the top N the new face-down row,
+    `faceUpPrizes` emptied; the NEW `PRIZES_CYCLED { seat, count }` names no uid). **Accompanying Flute**
+    `sv06-142` on `lookAtTopN`'s NEW `whose: "opponent"` — the window, the candidates, the Bench clamp, the
+    landing Bench and the reveal row (`DECK_TOP_REVEALED`'s NEW `actor?`) all the OPPONENT's, the controller
+    answering — then `shuffleDeck { whose: "opponent" }` (R-AF1, R-AF2, R-AF3). **Team Rocket's Bother-Bot**
+    `sv10-172` on `turnPrizeFaceUp`'s NEW `side?: "opponent"` and `recordAs?` (the CONTROLLER picks — R-BB2 ⚠️
+    UNRULED; `PRIZE_TURNED_FACE_UP`'s NEW `actor?`), `randomFromOpponentHand.to`'s NEW `"reveal"` and
+    `recordAs?` (the NEW `RANDOM_CARD_REVEALED`; the card stays in hand), `EffectSlot`'s NEW `"turnedPrize"` /
+    `"revealed"`, and — behind two `recordGate`s and the existing `optional` confirm — the NEW
+    `swapTurnedPrizeWithRevealed` (the RECORDED uids, never the FIRST face-up entry; the NEW
+    `PRIZE_SWITCHED_WITH_HAND`; R-BB1: the slot stays face up). **Grand Tree** `sv07-136` (Stadium, ACE SPEC)
+    as a `stadium.ability` (Levincia's shape) on `evolveFromDeckChosen`'s NEW `bodyStage`, `evolveTimingGates`
+    (the PRINTED §4/§10 gates on this op only — D307/R-SV1 stand) and `thenEvolveAgain` (the chained,
+    declinable Stage 2 onto the same body, bought by `continuationOps` only when the Stage 1 placement
+    happened) — R-GT1, R-GT2, R-GT3 ⚠️ UNRULED. **`MATCH_RECORD_VERSION` STAYS 36**: every persisted change is a
+    D125 widening — see docs/decisions.md D567 (d) and apps/api match.ts.)
     🆕🆕🆕 engineVersion 0.449.0 → **0.450.0** (D566 — THE TRAINER BUNDLE PLUS THE WATCHTOWER RIDER: 9
     PRINTINGS / 6 TEXTS / 6 OBJECTS. Six registry `CardProgram`s keyed on nine REAL ids inserted MID-MAP after
     `sv06-060` (D395/D396, so `raw[last]` stays `sv09-107`); no row authors an `attack` key. **Brock's
@@ -24629,7 +24650,7 @@ import type { GameState, Seat } from "./types";
     WITNESS** — the count was re-derived every slice and the word *"three"* was carried.
     A successor of this slice inherits **81 / 61 / 17** again, over **FIVE** history
     occurrences: those four plus `deckMillFilteredScale.test.ts`'s own header arrow.) */
-export const engineVersion = "0.450.0";
+export const engineVersion = "0.451.0";
 
 export type {
   ApplyResult,

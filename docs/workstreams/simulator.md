@@ -27938,7 +27938,7 @@ up for the rest of the game.)"* — the last refused member of D381's reversed o
 * `PlayerSide.faceUpPrizes: string[]` — UIDS (the row compacts on every take, so an index is not
   stable), a SUBSET of `prizes` (the take prunes in the same `withSide`), ordered by when each was turned.
   A face-up prize is still a prize for §14, `prizesRemaining` and every prizes-remaining condition.
-* `yourFaceDownPrizeRemains` (nullary, `some`, not `length > 0`); `turnPrizeFaceUp` (field-free);
+* `yourFaceDownPrizeRemains` (nullary, `some`, not `length > 0`); `turnPrizeFaceUp` (field-free — 🆕🆕🆕 D567: no longer, `side`/`recordAs` for Bother-Bot);
   `choosePrize { indices }` / `{kind: "prize", index}`; `PRIZE_TURNED_FACE_UP {seat, index, uid}`, whose
   log row NAMES the card. `PRIZES_TAKEN` stays count-only for every take.
 * The wire: `RedactedSide.faceUpPrizes: {index, card}[]` (REQUIRED, index-stable, both seats and
@@ -28847,8 +28847,55 @@ Mutants 3,673 → 3,755 (+82 `D566-*`, all killed undeclared); no existing row r
 declared survivors 52 unmoved.
 
 ### (e) Owed
-The whole-corpus sweeps: ~~D564's (running in the main checkout), D565's (predicted `3621 · 52` over 3,673) and~~ this one's
-(predicted `3703 · 52` over 3,755) (🆕 landing: D564's and D565's are PAID, each exactly — `3559 · 52` over 3,611, close-out
+The whole-corpus sweeps: ~~D564's (running in the main checkout), D565's (predicted `3621 · 52` over 3,673) and~~ ~~this one's
+(predicted `3703 · 52` over 3,755)~~ (🆕 D567 landing: this one's is PAID, exactly, on its first launch — `3703 killed · 52 known survivor(s) · 0 GAP(S)` over 3,755, swept on `bf05fc14`, close-out `7d81ada4`) (🆕 landing: D564's and D565's are PAID, each exactly — `3559 · 52` over 3,611, close-out
 `97ef099b`, and `3621 · 52` over 3,673, close-out `182d4055` — so this one rests on a measured base). R-OM and R-HB UNRULED. The 0.449 rollback readings (named, not bumped).
 PARKED, NOT BUILT: Scovillain ex "Double Type" — a funnel-only slice (~45 in-play binding sites plus `matchesFilter`'s in-play
 arm) that owes R-WT1's move to effective types. Iron Treads "Dual Core" cannot trigger in Standard (`sv05-149` is not legal).
+
+## D567 — the trainer bundle: 4 printings / 4 texts / 4 objects (engine 0.451.0, `MATCH_RECORD_VERSION` stays 36)
+
+**Status:** ✅ BUILT — keyed MID-MAP after `sv10-180`. Built in the `lum-wt-d567` worktree STACKED ON THE PARKED, UNLANDED
+D566 commit `db323c1a` while D565's whole-corpus sweep ran in the main checkout; ~~NOT committed by the builder~~ committed
+there on `d567-prep` at `1cc85745`, then LANDED on `main` by cherry-pick onto the D566 close-out `7d81ada4` (🆕 landing).
+
+### (a) The rows (registry.ts, one block before `const REGISTRY`; no row authors an `attack` key)
+| Card | Ids | Subtype | Program |
+|---|---|---|---|
+| Redeemable Ticket | `sv09-156` | Item | `cycleOwnPrizes` (NEW op, field-free, never parks) |
+| Accompanying Flute | `sv06-142` | Item | `lookAtTopN { n 5, basicPokemon, max "any", dest bench, reveal, whose "opponent" }`, `shuffleDeck { whose "opponent" }` (NEW key) |
+| Team Rocket's Bother-Bot | `sv10-172` | Item | `turnPrizeFaceUp { side "opponent", recordAs "turnedPrize" }`, `randomFromOpponentHand { to "reveal", recordAs "revealed" }`, `recordGate` → `recordGate` → `optional` → `swapTurnedPrizeWithRevealed` (NEW keys, NEW member, NEW op, two NEW `EffectSlot` members) |
+| Grand Tree | `sv07-136` | Stadium (ACE SPEC) | `stadium.ability [evolveFromDeckChosen { bodyStage "Basic", evolveTimingGates, thenEvolveAgain }, shuffleDeck]` (three NEW keys) |
+
+### (b) The mechanism
+`cycleOwnPrizes` shuffles the row under the deck, takes the top N as the new face-down row, empties `faceUpPrizes` and emits
+`PRIZES_CYCLED { seat, count }` (no uid). `lookAtTopN.whose` is ONE key read by ONE helper (`lookOwner`) for the window, the
+candidates, the Bench clamp, the landing Bench and the reveal row (`DECK_TOP_REVEALED.actor?`); the controller answers.
+`turnPrizeFaceUp.side` picks the ROW through `prizeRowOwner` at the park, the forced pick and the answer arm (the controller
+picks — R-BB2); `randomFromOpponentHand`'s `"reveal"` keeps the card in hand and emits `RANDOM_CARD_REVEALED`; both file their
+uid (`recordAs`), and the switch reads exactly those two slots — never "the FIRST face-up prize" (a Crescent Purge prize may
+already be face up; the LAST entry coincides with the recorded uid today, since the row only appends and the `recordGate`s
+block a switch with nothing turned — the record is the spelling, not a drivable difference) — rewriting `faceUpPrizes` in place (R-BB1) and emitting `PRIZE_SWITCHED_WITH_HAND`. Grand Tree narrows the
+bodies to Basics, applies the PRINTED §4/§10 gates on that op only (D307/R-SV1 re-affirmed for every other op), and chains an
+optional Stage 2 onto the SAME body through a `continuationOps` member bought only when the Stage 1 placement happened.
+
+### (c) Readings (`docs/decisions.md` D567)
+R-AF1 (fresh bodies stamped this turn) · R-AF2 (placed, not played: no on-play trigger) · R-AF3 (a full Bench: revealed, none
+taken, shuffled) · R-BB1 (the slot stays face up) · R-BB2 ⚠️ UNRULED (the controller picks the prize) · R-GT1 (the Stage 2 is
+exempt from "evolved this turn" for that body) · R-GT2 (no on-evolve trigger from the deck) · R-GT3 ⚠️ UNRULED (no licence
+exemption from the printed gate).
+
+### (d) Tests and mutants
+`trainerBundleD567.test.ts`, `GameHud.botherBot.dom.test.tsx` and `OnlineHud.botherBot.dom.test.tsx`. Mutants 3,755 → 3,803
+(+48 `D567-*`, all killed undeclared); fifteen existing rows RE-ANCHORED onto the moved bytes (same mutations); the 88 existing rows within 25 lines of a D567 hunk (those fifteen among them)
+re-probed `86 killed · 2 known survivors` — the two DECLARED rows `D334-exactness-leaks-onto-the-second-noun` and
+`D445-log-row-derives-the-actor`, behaving as declared; declared survivors 52 unmoved. (🆕 landing: three more existing rows'
+`what` annotated — D489, D490, D502, the review's D539 miss on *"`EffectSlot` has three inhabitants"*; `what`-only, no
+mutation moved.)
+
+### (e) Owed
+The whole-corpus sweeps: ~~D565's (running in the main checkout), D566's (predicted `3703 · 52` over 3,755) and~~ this one's
+(predicted `3751 · 52` over 3,803)~~, in that order~~ (🆕 landing: D565's and D566's are PAID, each exactly on its first launch —
+`3621 · 52` over 3,673, close-out `182d4055`, and `3703 · 52` over 3,755, close-out `7d81ada4` — so this one rests on a measured
+base). R-BB2 and R-GT3 UNRULED. The 0.450 rollback readings (named, not bumped —
+a parked Bother-Bot confirm answered yes is a hard failure under 0.450). NEXT: D568, Mentally Calm plus Diver's Catch.

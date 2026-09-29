@@ -761,7 +761,11 @@ export const redactedEffectPromptSchema = z.discriminatedUnion("kind", [
       (`prizesRemaining` + `faceUpPrizes`), and they are the ONLY content — no uid and no
       card id, because every offered slot is face down. Mandatory (the decline was the
       confirm in front of it); never empty and never a singleton. The answer is
-      `{kind: "prize", index}`, checked against this offer by `validateChoice`. */
+      `{kind: "prize", index}`, checked against this offer by `validateChoice`.
+      🆕🆕🆕 D567 NOTE (D539): *"your own"* / *"the answerer's own prize row"* are WITHDRAWN as the
+      kind's whole scope — Team Rocket's Bother-Bot `sv10-172` parks it over the OPPONENT's row,
+      answered by the controller; the shape is unchanged and every other sentence here holds on
+      that row too (both players hold its shape; every offered slot is face down). */
   z.object({
     kind: z.literal("choosePrize"),
     indices: z.array(z.number()),

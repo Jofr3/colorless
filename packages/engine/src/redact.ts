@@ -436,6 +436,9 @@ function redactPrompt(state: GameState, prompt: EffectPrompt): RedactedEffectPro
       // 🆕🆕🆕 D548 — INDICES ONLY, copied fresh. Every offered slot is FACE DOWN, so no
       // uid and no card id crosses (a uid would let a client track a hidden card across
       // zones); the client paints the offer from `prizesRemaining` + `faceUpPrizes`.
+      // 🆕🆕🆕 D567 — Bother-Bot parks this over the OPPONENT's row: the rule above holds on
+      // either row (every offered slot is still face down), and both dialogs draw the tiles by
+      // INDEX alone, so nothing here moves; `note` names whose row.
       return { kind: "choosePrize", indices: [...prompt.indices], note: prompt.note };
   }
 }

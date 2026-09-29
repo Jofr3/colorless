@@ -9725,7 +9725,8 @@ const PYRO_DANCE: CardProgram = {
       • `instr(txt,'and put them on the bottom of your deck')` — **4 sentences /
         7 printings / 4 legal**: this one (2 legal, UNBUILT), Deduction Kit
         `sv08-171` (1 legal, BUILT D344), the Prize reset `sv09-156` (1 legal, a
-        different mechanism — Prizes, not a deck-top window) and Rika ×3 (**0
+        different mechanism — Prizes, not a deck-top window; 🆕🆕🆕 D567: BUILT, on
+        `cycleOwnPrizes`, and still a different mechanism) and Rika ×3 (**0
         legal**, BUILT D335). So the clause's whole unbuilt legal residue is this.
       • The SENTENCE it rests on, `instr(txt,'look at the top') AND
         instr(txt,'attach')` — **4 sentences / 7 printings / 2 legal**, and both
@@ -15206,6 +15207,98 @@ const TEAM_ROCKETS_WATCHTOWER: CardProgram = {
   stadium: { disableAbilities: { side: "both", targetType: "Colorless" } },
 };
 
+/** 🆕🆕🆕 **D567 — Redeemable Ticket `sv09-156` (Item, 1 legal)** — *"Count your Prize cards,
+    shuffle them, and put them on the bottom of your deck. Then, take that many cards from the
+    top of your deck and put them face down as your Prize cards."* The NEW field-free
+    `cycleOwnPrizes`: never parks, one `PRIZES_CYCLED` row naming no uid, `faceUpPrizes`
+    emptied (a Crescent Purge face-up prize is retired with the rest). */
+const REDEEMABLE_TICKET: CardProgram = {
+  trainer: [{ op: "cycleOwnPrizes" }],
+};
+
+/** 🆕🆕🆕 **D567 — Accompanying Flute `sv06-142` (Item, 1 legal)** — *"Reveal the top 5 cards of
+    your opponent's deck. You may choose any number of Basic Pokémon you find there and put
+    those Pokémon onto their Bench. Your opponent shuffles the other cards back into their
+    deck."* `lookAtTopN`'s NEW `whose: "opponent"` (window, candidates, Bench clamp, landing
+    side and reveal row move together; the controller answers), then the opponent's shuffle.
+    R-AF1 (fresh bodies, `turnPlayed` = this turn), R-AF2 (placed, not played: no on-play
+    trigger), R-AF3 (a full Bench: revealed, none taken, still shuffled). */
+const ACCOMPANYING_FLUTE: CardProgram = {
+  trainer: [
+    {
+      op: "lookAtTopN",
+      n: 5,
+      filter: { kind: "basicPokemon" },
+      max: "any",
+      dest: "bench",
+      reveal: true,
+      whose: "opponent",
+    },
+    { op: "shuffleDeck", whose: "opponent" },
+  ],
+};
+
+/** 🆕🆕🆕 **D567 — Team Rocket's Bother-Bot `sv10-172` (Item, 1 legal)** — *"Turn 1 of your
+    opponent's face-down Prize cards face up and choose a random card from your opponent's
+    hand. Your opponent reveals that card. You may have your opponent switch those cards.
+    (That Prize card remains face up for the rest of the game.)"* Three ops and a gated
+    confirm: `turnPrizeFaceUp { side: "opponent", recordAs: "turnedPrize" }` (the CONTROLLER
+    picks, R-BB2 ⚠️ UNRULED), `randomFromOpponentHand { to: "reveal", recordAs: "revealed" }`
+    (the card stays in hand), then — only when BOTH slots were filed (§8.6: no face-down prize
+    or an empty hand offers no switch) — the controller's `optional` confirm over the NEW
+    `swapTurnedPrizeWithRevealed`, which addresses the RECORDED uids and never "the first
+    face-up prize" (R-BB1: the slot stays face up). */
+const TEAM_ROCKETS_BOTHER_BOT: CardProgram = {
+  trainer: [
+    { op: "turnPrizeFaceUp", side: "opponent", recordAs: "turnedPrize" },
+    { op: "randomFromOpponentHand", to: "reveal", recordAs: "revealed" },
+    {
+      op: "recordGate",
+      slot: "turnedPrize",
+      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
+      then: [
+        {
+          op: "recordGate",
+          slot: "revealed",
+          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
+          then: [
+            {
+              op: "optional",
+              note: "You may have your opponent switch the revealed card with the Prize card you turned face up.",
+              // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
+              then: [{ op: "swapTurnedPrizeWithRevealed" }],
+            },
+          ],
+        },
+      ],
+    },
+  ],
+};
+
+/** 🆕🆕🆕 **D567 — Grand Tree `sv07-136` (Stadium, ACE SPEC, 1 legal)** — *"Once during each
+    player's turn, that player may search their deck for a Stage 1 Pokémon that evolves from 1
+    of their Basic Pokémon and put it onto that Pokémon to evolve it. If that Pokémon was
+    evolved in this way, that player may search their deck for a Stage 2 Pokémon that evolves
+    from that Pokémon and put it onto that Pokémon to evolve it. Then, that player shuffles
+    their deck. (Players can't evolve a Basic Pokémon during their first turn or a Basic
+    Pokémon that was put into play this turn.)"* Levincia's shape (`stadium.ability`, the
+    per-turn `TurnAllowances.stadiumAbilityUsed` flag already carries "once during EACH
+    player's turn"). `evolveFromDeckChosen`'s three NEW keys: `bodyStage "Basic"`, the PRINTED
+    timing gates (`evolveTimingGates` — on THIS op only; D307/R-SV1 stand elsewhere) and the
+    chained, declinable Stage 2 step onto the SAME body (`thenEvolveAgain`, bought only when
+    the Stage 1 placement happened). Then the shuffle, always. R-GT1, R-GT2, R-GT3 ⚠️ UNRULED. */
+const GRAND_TREE: CardProgram = {
+  stadium: {
+    ability: {
+      label: "Grand Tree",
+      program: [
+        { op: "evolveFromDeckChosen", bodyStage: "Basic", evolveTimingGates: true, thenEvolveAgain: true },
+        { op: "shuffleDeck" },
+      ],
+    },
+  },
+};
+
 const REGISTRY: Record<string, CardProgram> = {
   // Professor's Research (SV base prints)
   "sv01-189": PROFESSORS_RESEARCH,
@@ -15910,6 +16003,12 @@ const REGISTRY: Record<string, CardProgram> = {
   "sv06.5-063": POWERGLASS, // Powerglass — end of turn in the Active: attach a Basic Energy from the discard
   "sv06.5-097": POWERGLASS, // Powerglass (reprint)
   "sv10-180": TEAM_ROCKETS_WATCHTOWER, // Team Rocket's Watchtower — {C} Pokémon have no Abilities
+  // ── 🆕🆕🆕 D567 — the trainer bundle: 4 printings / 4 texts / 4 objects, MID-MAP
+  //    (D395/D396), so `raw[last]` does not move. ──
+  "sv09-156": REDEEMABLE_TICKET, // Redeemable Ticket — prizes under the deck, the top N become new prizes
+  "sv06-142": ACCOMPANYING_FLUTE, // Accompanying Flute — Basics from the opponent's top 5 onto their Bench
+  "sv10-172": TEAM_ROCKETS_BOTHER_BOT, // Team Rocket's Bother-Bot — flip an opponent prize, reveal, may switch
+  "sv07-136": GRAND_TREE, // Grand Tree — Stadium: evolve a Basic from the deck, then optionally to Stage 2
   // ── D190 — THE **STANDARD-LEGAL** REPRINT-ALIAS MAP (Tier 0 of
   //    `docs/reference/coverage-backlog-legal.md`). 22 printings, 9 map targets,
   //    ZERO new code: every row below prints a sentence that is already authored

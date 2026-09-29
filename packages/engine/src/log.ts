@@ -1325,10 +1325,36 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
       // 🆕🆕🆕 D548 — NAMES the card: a face-up prize is public (both seats and spectators
       // see it on the wire), so withholding the name here would hide nothing. The count-only
       // rule above is for a card entering a HAND, and it is kept for every take.
+      // 🆕🆕🆕 D567 — Bother-Bot turns the OPPONENT's prize: filed under the ACTOR with the
+      // row's owner named outright (the RANDOM_CARD_TAKEN rule), so a mirror match cannot
+      // print one row from both seats. Absent `actor` is the D548 row, byte for byte.
+      if (event.actor !== undefined) {
+        return row(event.actor, [
+          plain(`turned ${names[event.seat]}'s `),
+          strong(cardName(state, event.uid)),
+          plain(` face up (Prize ${event.index + 1})`),
+        ]);
+      }
       return row(event.seat, [
         plain("turned "),
         strong(cardName(state, event.uid)),
         plain(` face up (Prize ${event.index + 1})`),
+      ]);
+    case "PRIZES_CYCLED": {
+      // 🆕🆕🆕 D567 — Redeemable Ticket. COUNT-ONLY: every card on both rows is hidden.
+      const n = event.count;
+      return row(event.seat, [
+        plain(`put ${n} Prize card${n === 1 ? "" : "s"} on the bottom of their deck and took ${n} new ones`),
+      ]);
+    }
+    case "PRIZE_SWITCHED_WITH_HAND":
+      // 🆕🆕🆕 D567 — Bother-Bot's switch. Both cards are public (a face-up prize and a card
+      // just revealed), so both are named; under the ACTOR, the owner named outright.
+      return row(event.actor, [
+        plain(`had ${names[event.seat]} switch `),
+        strong(cardName(state, event.handUid)),
+        plain(" with the face-up Prize "),
+        strong(cardName(state, event.prizeUid)),
       ]);
     case "PROMOTION_REQUIRED":
       return row(event.seat, [plain("must promote a benched Pokémon")]);
@@ -1663,6 +1689,13 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
         strong(cardName(state, event.uid)),
         plain(` from ${names[event.seat]}'s hand and discarded it`),
       ]);
+    case "RANDOM_CARD_REVEALED":
+      // 🆕🆕🆕 D567 — Bother-Bot's random REVEAL: the card stayed in the hand. Named (it was
+      // printed as revealed), "random" in the row for RANDOM_CARD_TAKEN's reason below.
+      return row(event.actor, [
+        plain(`chose a random card from ${names[event.seat]}'s hand — ${names[event.seat]} revealed `),
+        strong(cardName(state, event.uid)),
+      ]);
     case "RANDOM_CARD_TAKEN":
       // ⚠️⚠️ D232 — the random pick out of the opponent's hand. NAMED, and it is
       // the second row in this file (after HAND_REVEALED) that names a card which
@@ -1803,6 +1836,20 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
       // the look actually took, because "looked at the top" over a bottom look is a
       // false claim about which cards the looker now knows (D421).
       const end = event.from === "bottom" ? "bottom" : "top";
+      // 🆕🆕🆕 D567 — Accompanying Flute: the ACTOR looked at `seat`'s deck and benched onto
+      // `seat`'s Bench. Filed under the actor, the owner named outright; the placed Basics are
+      // public on the Bench, so they are named whenever any landed.
+      if (event.actor !== undefined) {
+        const owner = names[event.seat];
+        if (n === 0) {
+          return row(event.actor, [plain(`revealed the ${end} of ${owner}'s deck — put nothing onto their Bench`)]);
+        }
+        return row(event.actor, [
+          plain(`revealed the ${end} of ${owner}'s deck — put `),
+          strong(countedNames(event.uids.map((uid) => cardName(state, uid)))),
+          plain(` onto ${owner}'s Bench`),
+        ]);
+      }
       if (n === 0) {
         // No `reveal` branch: a printed "you may reveal a … you find there" that
         // took nothing revealed nothing, so the rider has no cards to name and

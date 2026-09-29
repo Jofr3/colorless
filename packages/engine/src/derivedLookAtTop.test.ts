@@ -97,6 +97,9 @@ import {
 // controller's OWN deck, so `actor === seat` on every path and the field would
 // have no observable meaning (D135). Row 11's opponent-deck sentences are exactly
 // what would buy it, and they are the residue below.
+// (🆕🆕🆕 D567 NOTE (D539): *"Every `lookAtTopN` printing reads the controller's OWN deck"* is
+// WITHDRAWN — Accompanying Flute `sv06-142` (`whose: "opponent"`) reads the opponent's, and the
+// event now carries `actor?` on that path only; every row THIS suite drives is own-deck and has none.)
 
 /** One printed sentence, its program, and the printings measured for it. Both
     figures: `printings` over the whole remote catalog (3,786 rows / 20 sets),

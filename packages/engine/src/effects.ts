@@ -771,11 +771,27 @@ export type CardFilter =
     A CLOSED UNION so a typo is a COMPILE error rather than a silent false: an
     unrecorded slot reads as "nothing moved", which is indistinguishable from a
     real empty answer, so a mistyped `recordAs` would quietly cost Miriam its
-    draw. Three members, matching the three things a program records — what it PAID
+    draw. Three members (🆕🆕🆕 D567 NOTE (D539): FIVE now — see the D567 paragraph below), matching the three things a program records — what it PAID
     (a `payFromHand` cost), what it MOVED (a benefit), and what it DISCARDED
     (Chien-Pao ex "Hail Blade" counts the Energy its own attack discarded "in this
-    way" to scale the damage). Add a member when a card needs a fourth. */
-export type EffectSlot = "paid" | "moved" | "discarded";
+    way" to scale the damage). Add a member when a card needs a fourth.
+
+    🆕🆕🆕 **D567 — THE FOURTH AND FIFTH MEMBERS, AND THE FIRST TWO THAT ARE READ BY
+    NAME RATHER THAN THROUGH A `recordGate`/`exclude` FIELD.** Team Rocket's Bother-Bot
+    `sv10-172` (Item): *"Turn 1 of your opponent's face-down Prize cards face up and
+    choose a random card from your opponent's hand. Your opponent reveals that card. You
+    may have your opponent switch those cards."* — "those cards" are the prize THIS card
+    turned and the card THIS card revealed, so `turnPrizeFaceUp { recordAs: "turnedPrize" }`
+    and `randomFromOpponentHand { to: "reveal", recordAs: "revealed" }` file them, and the
+    field-free `swapTurnedPrizeWithRevealed` reads exactly these two slots. 🛑 **NEVER "the
+    FIRST `faceUpPrizes` entry"**: a Crescent Purge prize (or an earlier Bother-Bot's) may
+    already be face up on that row (driven — THE HAZARD rung, mutant
+    `D567-swap-reads-the-first-face-up`). SCOPED (review): `faceUpPrizes` only grows by
+    appending and both `recordGate`s block the switch when nothing was turned, so the LAST
+    entry would coincide with the recorded uid today — the record is the spelling that
+    does not lean on that ordering, not a behavioural difference a test can drive.
+    A closed-union widening (D125): a record without the keys reads as unfiled. */
+export type EffectSlot = "paid" | "moved" | "discarded" | "turnedPrize" | "revealed";
 
 /** How many cards a `handRefresh` draws AFTER the hand goes into the deck.
     `fixed` draws a constant (Youngster 5, Judge 4, Katy 8); `handPlus` draws the
@@ -6387,7 +6403,7 @@ export type EffectOp =
           NOT `count`.** `perTakenPrize` and `perEnergyOnSelf` name an IMPLICIT source —
           the opponent's taken Prizes, the attacker's own attachments — which the fold
           can find from `(state, ctx)` alone. **A §9.2 slot is an ADDRESS**, and
-          `EffectSlot` has three of them, so a boolean would have to hard-code one: on a
+          `EffectSlot` has three of them (🆕🆕🆕 D567 NOTE (D539): five now — turnedPrize/revealed), so a boolean would have to hard-code one: on a
           program that files `paid` AND `discarded` (D458 measured that two sequential
           recording ops overwrite one slot, which is why the addresses exist at all) the
           boolean reads whichever the author guessed. **And it cannot be spelled `count`,
@@ -7602,6 +7618,17 @@ export type EffectOp =
           `MATCH_RECORD_VERSION` holds (D125/D344) — a parked op carries it in
           `phase.cont.pendingOp`, DRIVEN by `salvatoreD558.test.ts`. */
       noAbilities?: true;
+      /** 🆕🆕🆕 D567 — Grand Tree's chained step: *"If that Pokémon was evolved in this way,
+          that player may search their deck for a Stage 2 Pokémon that evolves from that
+          Pokémon and put it onto that Pokémon to evolve it."* Written only by
+          `evolveBodyAnswered` from `evolveFromDeckChosen.thenEvolveAgain`, never by a
+          deriver. When THIS op's answer actually places a card, `continuationOps` buys ONE
+          more `{ op: "evolveFromDeck", onto }` onto the SAME spot (without this key, so the
+          chain is exactly two long); a decline or an empty offer buys nothing. The second
+          placement is §10's chain asked of the NEW top (a Stage 1's name ⇒ a Stage 2), and
+          this op has no evolved-this-turn gate, so it lands — **R-GT1: the Stage 2 step is
+          exempt from "evolved this turn" for THAT body only, as printed.** OPTIONAL (D125). */
+      thenEvolveAgain?: true;
     }
   /** 🆕 **D308 — "For each of your Benched Pokémon, search your deck for a card
       that evolves from that Pokémon and put it onto that Pokémon to evolve it.
@@ -7672,7 +7699,9 @@ export type EffectOp =
       (🆕🆕🆕 D558 — "NO FIELDS" is WITHDRAWN (D539): Salvatore adds ONE optional
       rider, `noAbilities`, a NOUN rider on the card question the op hands on — the
       op still holds no ANSWER and files nothing, which is the part of this paragraph
-      that stands.)
+      that stands.) (🆕🆕🆕 D567 NOTE (D539): *"ONE optional rider"* is now FOUR — Grand Tree adds
+      `bodyStage`, `evolveTimingGates` and `thenEvolveAgain`; still no field holds an ANSWER, and
+      `thenEvolveAgain` is a rider on the card question the op hands on, exactly as `noAbilities` is.)
 
       ⚠️ **THE CANDIDATE SET IS NARROWED TO BODIES WITH A MATCHING DECK CARD, AND
       THAT IS THE SLICE'S REAL WORK.** *"1 of your Pokémon"* is the whole own board
@@ -7702,6 +7731,32 @@ export type EffectOp =
           (`evolveBodyAnswered`), where the offer applies it again. Optional (no MRV
           move); absent, the D309 op is byte-identical. */
       noAbilities?: true;
+      /** 🆕🆕🆕 **D567 — GRAND TREE `sv07-136` (Stadium, ACE SPEC), THREE OPTIONAL KEYS.**
+          *"Once during each player's turn, that player may search their deck for a Stage 1
+          Pokémon that evolves from 1 of their Basic Pokémon and put it onto that Pokémon to
+          evolve it. If that Pokémon was evolved in this way, that player may search their
+          deck for a Stage 2 Pokémon that evolves from that Pokémon and put it onto that
+          Pokémon to evolve it. Then, that player shuffles their deck. (Players can't evolve a
+          Basic Pokémon during their first turn or a Basic Pokémon that was put into play
+          this turn.)"*
+
+          `bodyStage: "Basic"` — *"1 of their Basic Pokémon"*: `evolvableOwnRefs` offers
+          only bodies whose TOP card is a Basic (it offers any stage without the key). */
+      bodyStage?: "Basic";
+      /** 🆕🆕🆕 D567 — Grand Tree's printed parenthetical, the §4/§10 timing bans AS A
+          CARD-PRINTED GATE ON THIS OP ONLY: a body is not offered on the controller's first
+          turn (`isFirstTurnOf`) nor when its `turnPlayed >= state.turn`. 🛑 **D307/R-SV1
+          STAND for every other op**: `evolveFromDeckOffer` deliberately skips both bans
+          (they are rules about playing from the hand), and nothing here changes that — the
+          gate is read only when this key is present. **R-GT3 ⚠️ UNRULED: a body licensed
+          by `evolveEarlyLicensed` (Eevee "Boosted Evolution", Karrablast/Shelmet) gets NO
+          exemption** — the ban is printed on Grand Tree, and an Ability on the target cannot
+          lift a restriction a different card prints about its own use (D278's Rare Candy
+          argument, verbatim); reversal: a ruling that the licence reaches Grand Tree. */
+      evolveTimingGates?: true;
+      /** 🆕🆕🆕 D567 — the chained, OPTIONAL Stage 2 step: rides onto the `evolveFromDeck`
+          the body answer buys (`evolveBodyAnswered`), see that op's `thenEvolveAgain`. */
+      thenEvolveAgain?: true;
     }
   /** 🆕 **D315 — "Choose up to 2 of your {D} Pokémon. For each of those Pokémon,
       search your deck for a card that evolves from that Pokémon and put it onto
@@ -9647,6 +9702,9 @@ export type EffectOp =
       exclude?: EffectSlot;
     }
   /** Look at the top `n` cards of the controller's deck and put up to `max`
+      (🆕🆕🆕 D567 NOTE (D539): *"the controller's deck"* is the ABSENT-`whose` reading, no
+      longer the op's whole scope — `whose: "opponent"` (Accompanying Flute) reads the
+      opponent's, see that field)
       matching `filter` into their HAND (Great Ball: top 7, a Pokémon; Pokégear
       3.0: top 7, a Supporter — "you may reveal … and put it into your hand").
       The top-of-deck twin of `searchDeck`: like it this is "up to" (the player
@@ -9949,6 +10007,32 @@ export type EffectOp =
           record cannot hold it, so `MATCH_RECORD_VERSION` holds. ~~Dusk Ball "needs
           vocabulary"~~ (D556 (7)(iii)) — PAID. */
       from?: "bottom";
+      /** 🆕🆕🆕 **D567 — WHOSE DECK: `"opponent"` IS ACCOMPANYING FLUTE `sv06-142` (Item):
+          *"Reveal the top 5 cards of your opponent's deck. You may choose any number of
+          Basic Pokémon you find there and put those Pokémon onto their Bench. Your opponent
+          shuffles the other cards back into their deck."*** `reorderTop.side`'s precedent
+          (D341), and ONE key for FIVE things that must move TOGETHER or not at all: the
+          window (`lookWindow` over the OPPONENT's deck), the candidates (read off that
+          window), the Bench-room clamp (`benchSpace` of the OPPONENT's Bench), the
+          destination (the OPPONENT's Bench — *"their Bench"*) and the reveal row
+          (`DECK_TOP_REVEALED { seat: opponent, actor: controller }`). The CONTROLLER answers
+          (the printed "you may choose"; no `decider`). The trailing shuffle is the program's
+          `{ op: "shuffleDeck", whose: "opponent" }`, never this op's.
+          • **R-AF1**: each placed body is a FRESH body (`makeInPlay`) with `turnPlayed =
+            state.turn`, belonging to the opponent — §10's "put into play this turn" ban
+            reads that stamp, and the owner's next turn is a later turn, so it may evolve then.
+          • **R-AF2**: no *"when you play this Pokémon from your hand"* trigger fires — the
+            card is PLACED from a deck, not played from a hand (D307's reading, one zone
+            over; the benched route here is `revealFromTop`'s, which calls no on-play hook).
+          • **R-AF3**: with the opponent's Bench FULL the look still happens and is announced
+            (the empty `DECK_TOP_REVEALED` row), nothing is taken, and the program's shuffle
+            still runs.
+          ⚠️ The printed *"Reveal"* is to both players; the row names the PLACED cards, which
+          are public on the Bench anyway (the unplaced ones go back under a shuffle, D241's
+          rule for what a look row owes). OPTIONAL (D135): absent is the controller's own
+          deck, byte-identical for every shipped producer; a parked op carries it in
+          `phase.cont.pendingOp` (D125 — `MATCH_RECORD_VERSION` holds at 36, driven). */
+      whose?: "opponent";
     }
   /** 🆕🆕 **D341 — LOOK AT THE TOP `n` AND PUT THEM BACK **IN ANY ORDER**.** The
       first op in this engine whose whole content is an ORDER: no card changes
@@ -9974,6 +10058,9 @@ export type EffectOp =
       `DECK_TOP_REORDERED` rather than retrofitted onto `DECK_TOP_REVEALED`,
       because no `lookAtTopN` printing has gained a second seat and D135's rule
       still refuses a field with no observable meaning on THAT row.
+      (🆕🆕🆕 D567 NOTE (D539): *"no `lookAtTopN` printing has gained a second seat"* is
+      WITHDRAWN, kept as written — Accompanying Flute `sv06-142` is one (`lookAtTopN.whose`),
+      so `DECK_TOP_REVEALED` gains `actor?` too, present only on that seat-crossing path.)
 
       ⚠️ **ABSENT IS THE CONTROLLER's OWN DECK** (D135's rule again — Iron Valiant
       `sv05-080` and the three opponent-deck printings must derive to rows that
@@ -11087,6 +11174,12 @@ export type EffectOp =
       *"face-down"* the only printed candidate set — a field would be a value no printing
       varies (D231/D412's positive statement). Own-side (`ctx.seat`), so no §11 shield
       question: nothing is done to an opposing body.
+      (🆕🆕🆕 D567 NOTE (D539): *"FIELD-FREE"* and *"'your' the only printed side"* are
+      WITHDRAWN, kept above as written — Team Rocket's Bother-Bot `sv10-172` prints *"Turn 1
+      of your **opponent's** face-down Prize cards face up"*, so the op gains `side?:
+      "opponent"` and `recordAs?` below. The §11 half STANDS on both sides: a Prize card is
+      not a Pokémon in play, so no shield (§11 protects Pokémon from effects) has anything to
+      say about it — the opponent-side flip files no refusal and asks no shield.)
 
       🛑 **THE OWNER PICKS — WHICH PRIZE IS A PLAYER'S DECISION (the D548 ruling, with its
       reversal condition in `decisions.md`).** D431's `queueTakePrize` block
@@ -11099,8 +11192,61 @@ export type EffectOp =
       no-op anyway (`crescentPurge.test.ts` pins it).
 
       Appends the uid to `PlayerSide.faceUpPrizes` and emits `PRIZE_TURNED_FACE_UP`. The
-      prize STAYS in `prizes`: a face-up prize is still a prize (types.ts). */
-  | { op: "turnPrizeFaceUp" }
+      prize STAYS in `prizes`: a face-up prize is still a prize (types.ts).
+
+      🆕🆕🆕 **D567 — `side: "opponent"`, AND THE CONTROLLER PICKS THERE.** Bother-Bot turns
+      one of the OPPONENT's face-down prizes. D548's owner-picks ruling was about YOUR OWN
+      prizes (*"turn 1 of your face-down Prize cards"* — the owner IS the printed "you");
+      Bother-Bot's printed "you" is the controller and the row is the opponent's, so the
+      CONTROLLER answers the `choosePrize` park (no `decider`), over the opponent's
+      face-down INDICES only (still no uid on the wire). **R-BB2 ⚠️ UNRULED** — reversal: a
+      ruling that the flipped prize is random, or picked by its owner. `PRIZE_TURNED_FACE_UP`
+      keeps `seat` = the ROW's owner and gains `actor` (the controller) on this side only.
+      `recordAs` files the ONE uid actually turned (nothing on the silent zero-prize
+      ending), which is what the swap reads. Both keys OPTIONAL (D125): absent, the D548 op
+      is byte-identical, and a parked op carries them in `phase.cont.pendingOp`
+      (`MATCH_RECORD_VERSION` holds at 36, driven in `trainerBundleD567.test.ts`). */
+  | { op: "turnPrizeFaceUp"; side?: "opponent"; recordAs?: EffectSlot }
+  /** 🆕🆕🆕 **D567 — REDEEMABLE TICKET `sv09-156` (Item): *"Count your Prize cards,
+      shuffle them, and put them on the bottom of your deck. Then, take that many cards from
+      the top of your deck and put them face down as your Prize cards."*** FIELD-FREE: one
+      printing, own prizes, no number (the count is the row's own length), no decision — so
+      it NEVER PARKS.
+
+      `n = prizes.length`; the prizes are shuffled with `rngState` and appended UNDER the
+      deck; the top `n` of the resulting deck become the new row. `faceUpPrizes` is set to
+      `[]`: every old prize has left the row, and the printed *"put them face down"* makes
+      every new one face down — which RETIRES any D548 (Crescent Purge) or Bother-Bot face-up
+      uid, the one piece of state this op must not leave behind (types.ts' subset invariant).
+      A deck too short to refill the row cannot occur: the `n` cards were just appended, so
+      the deck always holds at least `n`. `n = 0` (a row already emptied — the game is already
+      decided) is a SILENT no-op: no event, no rng draw.
+
+      ONE event, `PRIZES_CYCLED { seat, count }`, which names NO uid — the old prizes were
+      face down (or public already, and now hidden again in a deck) and the new ones are
+      face down, so a uid on the row would let a client track a hidden card across zones
+      (redact.ts' rule). No `SHUFFLE` row: the DECK is not shuffled, only the prize cards
+      before they go under it, and "SHUFFLE" is a claim about the whole deck. A new
+      `EffectOp` member (D125). */
+  | { op: "cycleOwnPrizes" }
+  /** 🆕🆕🆕 **D567 — BOTHER-BOT's *"You may have your opponent switch those cards."*** The
+      prize this card turned (`EffectRecord.turnedPrize`) and the hand card it revealed
+      (`EffectRecord.revealed`) trade places on the OPPONENT's side: the hand card goes into
+      THAT prize slot (same index), and the prize card goes into the opponent's hand. Reached
+      only inside `optional`'s `then`, behind two `recordGate`s, so the confirm is never
+      offered on a short board (no face-down prize, or an empty hand — §8.6).
+
+      🛑 **IT ADDRESSES THE RECORDED UID, NEVER "the FIRST `faceUpPrizes` entry"** — a Crescent
+      Purge prize may already be face up on that row (driven; the LAST entry coincides with the
+      recorded uid today — `faceUpPrizes` only appends and the `recordGate`s block a switch
+      with nothing turned — so that spelling is not a drivable difference). **R-BB1: the SLOT stays face up** —
+      `faceUpPrizes` has the outgoing uid REPLACED by the incoming one in place, so the card
+      switched in is face up for the rest of the game (the printed parenthetical; reversal:
+      an official ruling that the switched-in card is face down). Re-validated against the
+      live board (the prize still in the row, the card still in the hand) — a stale record
+      is a silent no-op. Field-free: both slots are fixed names. ONE event,
+      `PRIZE_SWITCHED_WITH_HAND`. Never parks. A new `EffectOp` member (D125). */
+  | { op: "swapTurnedPrizeWithRevealed" }
   /** Move up to `max` Energy from ONE in-play Pokémon to ANOTHER on the SAME
       board — the §6 manual Energy-movement family (Energy Switch: a Basic Energy;
       Poppy: up to 2 any Energy). 🆕 D443 — WHICH board is `side`'s question and
@@ -11458,7 +11604,7 @@ export type EffectOp =
           🛑 **AN `EffectSlot` AND NOT A BOOLEAN, WHICH IS D489's MEASUREMENT REUSED
           RATHER THAN RE-DECIDED.** `damageChosen`'s two scaled-snipe riders are bare
           `true` flags because each names an IMPLICIT source the fold finds from
-          `(state, ctx)`; a §9.2 record is an ADDRESS with three inhabitants, so a
+          `(state, ctx)`; a §9.2 record is an ADDRESS with three inhabitants (🆕🆕🆕 D567 NOTE (D539): five now — turnedPrize/revealed), so a
           boolean would have to hard-code one — and D458 measured the board that
           breaks that, two sequential recorders overwriting one slot.
 
@@ -12267,8 +12413,21 @@ export type EffectOp =
       RNG** — the last clause is the load-bearing one (a build that burned a draw
       on the whiff would desync two otherwise identical replays), and the three
       are held by TWO SEPARATE GUARDS rather than one; see the interpreter helper,
-      whose own comment was corrected by a mutant that turned out equivalent. */
-  | { op: "randomFromOpponentHand"; to: "discard" | "deck" }
+      whose own comment was corrected by a mutant that turned out equivalent.
+
+      🆕🆕🆕 **D567 — A THIRD VALUE, `"reveal"`, AND THE FIRST WHOSE CARD STAYS PUT.**
+      Team Rocket's Bother-Bot `sv10-172`: *"choose a random card from your opponent's
+      hand. Your opponent reveals that card."* The pick is the same `randomIndex` over the
+      same live hand (the seed discipline above, unchanged), but NOTHING MOVES: the card
+      stays in the hand, and the op emits `RANDOM_CARD_REVEALED { seat, uid, actor }` —
+      a reveal that names ONLY that card (the rest of the hand stays shut) — instead of
+      `RANDOM_CARD_TAKEN`, whose name and `to` union claim a move that did not happen.
+      `recordAs` files the revealed uid (§9.2) for the swap that may follow. The empty
+      hand keeps all three guarantees (no card, no event, no rng draw) and files nothing,
+      so no swap is offered. *"ONE FIELD, TWO VALUES"* above now reads THREE; each value is
+      printed and each is killable (D231's test, still passed). Both widenings OPTIONAL /
+      additive (D125): a pre-D567 record is byte-identical. */
+  | { op: "randomFromOpponentHand"; to: "discard" | "deck" | "reveal"; recordAs?: EffectSlot }
   /** 🆕🆕 **D426 — THE OPPONENT DISCARDS `count` CARDS FROM THEIR OWN HAND, AND
       *THEY* CHOOSE WHICH.** Two printed sentences, one op, told apart by the
       count — measured over the committed `legal_standard = 1` attack column
@@ -12367,7 +12526,10 @@ export type EffectOp =
       correctly — one signature standing under two owners in one file, which is the
       two-spellings-of-one-figure class D540 named. The twin's own line reads
       `| { op: "randomFromOpponentHand"; to: "discard" | "deck" }` — REQUIRED, and
-      two-valued with `"discard"` a member. Quoted correctly the twin is spelled the
+      two-valued with `"discard"` a member. (🆕🆕🆕 D567 NOTE (D539): that quoted line is
+      STALE, kept as written — the twin now reads `to: "discard" | "deck" | "reveal";
+      recordAs?: EffectSlot` (Bother-Bot's reveal-and-record arm). Still REQUIRED, still
+      with `"discard"` a member, so the argument below is unchanged by the third value.) Quoted correctly the twin is spelled the
       way the paragraph above declares REFUSED, so the citation is SCOPED rather than
       repaired at the string (D539: a wrong figure is re-argued, not re-typed).
       Scoped, it says three things and each one is measured:
@@ -35854,7 +36016,8 @@ function optionalCostOps(cost: string): { cond: BoardCondition; ops: EffectOp[] 
   // the anchors are disjoint on their verbs, so the order is not observable on any input.
   if (OPTIONAL_COST_PUT_ALL_SELF_ENERGY_TO_HAND.test(cost)) return { cond: { kind: "yourActiveEnergyAtLeast", count: 1 }, ops: [{ op: "discardEnergy", from: "yourActive", filter: { kind: "anyEnergy" }, count: "all", to: "hand" }] };
   // 🆕🆕🆕 D548 — THE FIFTH ROW: a NEW op (`turnPrizeFaceUp`, field-free, the owner picks
-  // WHICH prize) behind a NEW nullary gate (`yourFaceDownPrizeRemains`, D385's
+  // WHICH prize — 🆕🆕🆕 D567 (D539): the op gained optional `side`/`recordAs` for Bother-Bot;
+  // THIS row authors neither, so it is still the field-free own-row op) behind a NEW nullary gate (`yourFaceDownPrizeRemains`, D385's
   // necessary-and-sufficient obligation: the op turns exactly one prize whenever one is face
   // down, and nothing otherwise). ONE LINE for the D524 note's reason, directly above.
   if (OPTIONAL_COST_TURN_PRIZE_FACE_UP.test(cost)) return { cond: { kind: "yourFaceDownPrizeRemains" }, ops: [{ op: "turnPrizeFaceUp" }] };

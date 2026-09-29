@@ -91,6 +91,13 @@
 // (`HAND_PLAY_BLOCKED` on all four seeds), so this remains AFFORD-THEN-REJECT and
 // never a rules gap — D293's verdict is unchanged and now covers three surfaces
 // instead of one.
+// (🆕🆕🆕 D567 — RE-READ AND RE-AFFIRMED: Grand Tree `sv07-136` is now BUILT (a registry
+// `stadium.ability`). The partition above is by CLASS off the D1 census, not by build state,
+// so it stands unchanged, and every board this suite drives uses `sv06.5-060` alone — the
+// suite re-ran green with no edit. What moved is the ENGINE's answer for `sv07-136` on an
+// UNARMED board: before D567 an unbuilt Stadium was refused `TRAINER_NOT_SIMULATED`; now it
+// lands, and under an armed ACE Nullifier it is refused `HAND_PLAY_BLOCKED` exactly as
+// `sv06.5-060` is — driven in `trainerBundleD567.test.ts` §5.)
 //
 // ⚠️ **AND THE ACE SPEC TOOL DRAG HAD NEVER BEEN DRIVEN AT ALL.** §2 asserts the
 // Tool has no ROW; that is a statement about the button list, and every slice

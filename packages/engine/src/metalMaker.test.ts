@@ -42,6 +42,7 @@ import { FIXTURE_POOL, battler, deckOf, itemTrainer, typedEnergy } from "./testF
 //         • Metang ×2 (`abilities_json`, **2 legal**) — UNBUILT. ← this row
 //         • Deduction Kit `sv08-171` (`effect`, 1 legal) — BUILT at D344
 //         • the Prize reset `sv09-156` (`effect`, 1 legal) — a different mechanism
+//           (🆕🆕🆕 D567: BUILT, on `cycleOwnPrizes` — still a different mechanism)
 //         • Rika ×3 (`effect`, **0 legal**) — BUILT at D335
 //       So the clause's whole unbuilt legal residue is this row.
 //   (4) THEN CENSUS THE SENTENCE THE CLAUSE RESTS ON.

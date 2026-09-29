@@ -484,6 +484,11 @@ describe("the pool sweep, structurally", () => {
       "sv08.5-176 trigger :: recordGate",
       "sv08.5-176 trigger :: switchActive",
       "sv10-122 authored attack 0 :: returnSelf",
+      // 🆕🆕🆕 D567 — Team Rocket's Bother-Bot `sv10-172`: `recordGate { then: [recordGate { then:
+      // [optional { then: [swapTurnedPrizeWithRevealed] }] }] }`. The enumerated walk descends
+      // BOTH `recordGate`s (it sees the `optional`) and never descends `optional.then`, so ONE row —
+      // the switch — is missed. MEASURED by running the suite: `missed` 80 → 81.
+      "sv10-172 trainer :: swapTurnedPrizeWithRevealed",
       // 🆕🆕🆕 D556 — Team Rocket's Great Ball `sv10-175`: `coinFlipGate { then: [searchDeck
       // evolution], otherwise: [searchDeck basic] }` → `shuffleDeck`. The enumerated walk
       // descends `coinFlipGate.then` ALONE (D317's gap), so it sees the heads search and

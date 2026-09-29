@@ -2443,7 +2443,8 @@ function PrizeTile({
 }
 
 /** 🆕🆕🆕 D548 — Crescent Purge's cost: pick ONE of your own FACE-DOWN prizes to turn face
-    up. Offers ONLY the slots the prompt names (all face down — the wire carries indices
+    up. (🆕🆕🆕 D567: or one of the OPPONENT's — Team Rocket's Bother-Bot; drawn by index, the
+    heading is the prompt's note, so nothing here moves.) Offers ONLY the slots the prompt names (all face down — the wire carries indices
     and nothing else); picking dispatches `{kind: "prize", index}` directly, the
     `ChooseAttackDialog` shape (no Confirm: the decline was the confirm before it). */
 function ChoosePrizeDialog({

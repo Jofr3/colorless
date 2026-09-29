@@ -964,7 +964,7 @@ const RAW: Record<string, string> = (
 describe("D532 §6 — the version steps and the bytes this suite drove are the bytes that shipped", () => {
   it("engineVersion and `manifest.version` agree, and the bump is owed for BEHAVIOUR", () => {
     // ⚠️ The version is NOT spelled in this `it(…)` title (D460's fourth class).
-    expect(engineVersion).toBe("0.450.0");
+    expect(engineVersion).toBe("0.451.0");
     expect(manifest.version).toBe(engineVersion);
   });
 
@@ -980,7 +980,10 @@ describe("D532 §6 — the version steps and the bytes this suite drove are the 
       '      op: "attachEnergyFrom" as const,\n      source: "discard" as const,\n      anyEnergy: true as const,\n      declinable: true as const,\n      whose: "opponent" as const,\n    }));',
     );
     expect(effectsSrc.split('  whose?: "opponent";\n}').length - 1).toBe(1); // AttachTargetRiders
-    expect(effectsSrc.split('      whose?: "opponent";\n    }').length - 1).toBe(1); // the op
+    // 🆕🆕🆕 D567 — 1 → 2: `lookAtTopN`'s NEW `whose?: "opponent"` (Accompanying Flute) is the second
+    // op to END on this exact field spelling; the D532 op's own declaration is still the one pinned
+    // by the factory literal above, so the count names both rather than narrowing either.
+    expect(effectsSrc.split('      whose?: "opponent";\n    }').length - 1).toBe(2); // the op + lookAtTopN (D567)
     // The factory's three segments — the SIBLING copy above is the file's.
     expect(effectsSrc).toContain(
       "    `(?:(an) Energy card|a Basic (?:\\\\{([${Object.keys(ENERGY_TYPE_BY_CODE).join(\"\")}])\\\\} )?Energy card` +\n" +

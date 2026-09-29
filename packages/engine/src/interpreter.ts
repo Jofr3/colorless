@@ -802,7 +802,10 @@ export type EffectPrompt =
       the M1 doctrine every parking op in this file follows. */
   | { kind: "chooseAttack"; candidates: { index: number; name: string }[]; note: string }
   /** 🆕🆕🆕 **D548 — pick exactly ONE of your OWN face-down Prize cards to turn face up**
-      (Cresselia `sv06.5-021` "Crescent Purge", the `turnPrizeFaceUp` op). `indices` are the
+      (Cresselia `sv06.5-021` "Crescent Purge", the `turnPrizeFaceUp` op). (🆕🆕🆕 D567 NOTE
+      (D539): *"your OWN"* / *"the controller's prize row"* are WITHDRAWN as the prompt's whole
+      scope — Bother-Bot parks it over the OPPONENT's row, answered by the CONTROLLER (R-BB2);
+      the SHAPE is unchanged, `{indices, note}`, and `note` names whose row.) `indices` are the
       FACE-DOWN slots of the controller's prize row (0-based into `PlayerSide.prizes`) and
       NOTHING ELSE: no uid and no card id, because every offered card is face down — a uid
       would let a client track a hidden card across zones (redact.ts' rule for hidden
@@ -1041,7 +1044,8 @@ export type EffectChoice =
       crafted frame off an index the defender does not have. */
   | { kind: "attack"; index: number }
   /** 🆕🆕🆕 D548 — the `choosePrize` answer: ONE face-down slot index of the controller's
-      own prize row. Wire-checked (validateChoice) to be an integer the prompt OFFERED — so
+      own prize row (🆕🆕🆕 D567: or of the OPPONENT's, on Bother-Bot's park — the op's `side`
+      names the row, the answer stays a bare index). Wire-checked (validateChoice) to be an integer the prompt OFFERED — so
       an out-of-range index, a FACE-UP index and a non-integer (an array of two, a string)
       are all refused before the apply runs. */
   | { kind: "prize"; index: number }
@@ -1319,6 +1323,15 @@ function recordSlotOf(op: EffectOp): EffectSlot | undefined {
 // `EffectOp`. **The condition that would put it in this list: a printed Tool
 // discard with a consequent clause.** Until then, enrolling it would add a field
 // nothing writes and a caption nothing varies.
+
+// 🆕🆕🆕 **D567 — `turnPrizeFaceUp` AND `randomFromOpponentHand` NOW CARRY `recordAs` AND ARE
+// DELIBERATELY *NOT* ENROLLED ABOVE, WRITTEN DOWN FOR D206's REASON (the omission is silent).**
+// Bother-Bot is their one recording producer, and what the answers buy is not a consequent a
+// caption can state: the `recordGate`s they feed wrap a SECOND gate and an `optional`, which
+// `describeBranch` has no phrase for (it answers null), and the switch is ASKED by its own
+// confirm, whose note says what "yes" buys. Only `turnPrizeFaceUp` ever parks, and its park is
+// the prize pick, which buys nothing but the flip. **The condition that would enrol them: a
+// printed "If you do," consequent on either op that is NOT behind its own confirm.**
 
 /** Does the record satisfy this gate? The base test is "did the earlier op file
     anything" — a whiffed op files an EMPTY array, which is why the length and not
@@ -1804,14 +1817,43 @@ function counterSourceAnswered(
     `evolveFromDeckOffer` reads `state.players[ctx.seat]`, so a target is
     seat-relative by construction — carrying the seat would create a second place
     for the two to disagree. */
-function evolveBodyAnswered(ref: PokemonRef, noAbilities?: true): EffectOp[] {
+function evolveBodyAnswered(ref: PokemonRef, noAbilities?: true, thenEvolveAgain?: true): EffectOp[] {
   // 🆕🆕🆕 D558 — Salvatore's *"a card that has no Abilities"* rides onto the card
   // question as a CONDITIONAL SPREAD, so every D309/D315 answer stays byte-identical.
+  // 🆕🆕🆕 D567 — Grand Tree's chained Stage 2 step rides the same way (no printing
+  // carries both riders, and the two spreads are independent).
   return [
-    noAbilities === true
-      ? { op: "evolveFromDeck", onto: ref.spot, noAbilities: true }
-      : { op: "evolveFromDeck", onto: ref.spot },
+    {
+      ...(noAbilities === true
+        ? { op: "evolveFromDeck", onto: ref.spot, noAbilities: true }
+        : { op: "evolveFromDeck", onto: ref.spot }),
+      ...(thenEvolveAgain === true ? { thenEvolveAgain: true } : {}),
+    },
   ];
+}
+
+/** 🆕🆕🆕 **D567 — GRAND TREE's SECOND QUESTION, BOUGHT BY THE FIRST ANSWER.** *"If that Pokémon
+    was evolved in this way, that player may search their deck for a Stage 2 Pokémon that
+    evolves from that Pokémon and put it onto that Pokémon to evolve it."* The parked
+    `evolveFromDeck { thenEvolveAgain }` answer is re-derived against the offer the park was
+    built from (`before`, the board BEFORE the placement) — exactly `evolveFromDeckMove`'s
+    belt — and ONE more `evolveFromDeck` onto the SAME spot is bought only when that answer
+    names a card the offer held, i.e. when the placement HAPPENED. A decline (the empty
+    answer) buys nothing. The bought op carries no `thenEvolveAgain`, so the chain is two
+    long, and it parks with `min: 0` like every `evolveFromDeck`, so the Stage 2 is
+    declinable. Its offer is §10's chain asked of the NEW top — a Stage 1's name — so only
+    cards that evolve from THAT Pokémon are offered (R-GT1). */
+function chainedEvolveAnswered(
+  before: GameState,
+  cont: EffectContinuation,
+  op: Extract<EffectOp, { op: "evolveFromDeck" }>,
+  choice: EffectChoice,
+): EffectOp[] {
+  if (choice.kind !== "cards" || op.onto === undefined) return [];
+  const [picked] = choice.uids;
+  const offer = evolveFromDeckOffer(before, cont.ctx, op.onto, op.names, op.noAbilities);
+  if (picked === undefined || offer === undefined || !offer.candidates.includes(picked)) return [];
+  return [{ op: "evolveFromDeck", onto: op.onto }];
 }
 
 /** 🆕🆕🆕 D561 (V5) — Super Potion's healed body, answered: ONE helper for both
@@ -1946,8 +1988,24 @@ function evolvableOwnRefs(
       the SAME offer the card question will, under the same noun, so a body whose
       only evolutions print an Ability is not offered (the D309 whiff argument). */
   noAbilities?: true,
+  /** 🆕🆕🆕 D567 — Grand Tree's two printed body narrowings: `bodyStage` (*"1 of their Basic
+      Pokémon"* — the TOP card must be a Basic) and `timingGates` (the printed parenthetical:
+      no body on the controller's first turn, none with `turnPlayed >= state.turn`). Both
+      absent on every pre-D567 op, which reads exactly as before (D307/R-SV1 unchanged). */
+  grandTree?: { bodyStage?: "Basic"; timingGates?: true },
 ): PokemonRef[] {
+  // 🆕🆕🆕 D567 — §4's half of the printed gate is about the SEAT, so it empties the offer
+  // whole; R-GT3: `evolveEarlyLicensed` is deliberately NOT consulted (the ban is printed on
+  // the Stadium, D278's Rare Candy argument).
+  if (grandTree?.timingGates === true && isFirstTurnOf(state, ctx.seat)) return [];
   return ownInPlayRefs(state, ctx.seat).filter((ref) => {
+    if (grandTree !== undefined) {
+      const body = refPokemon(state, ref);
+      const card = refTopCard(state, ref);
+      if (body === undefined || card === undefined) return false;
+      if (grandTree.bodyStage === "Basic" && !isBasicPokemon(card)) return false;
+      if (grandTree.timingGates === true && body.turnPlayed >= state.turn) return false;
+    }
     if (pokemonType !== undefined) {
       const card = refTopCard(state, ref);
       if (card === undefined) return false;
@@ -2039,7 +2097,14 @@ function continuationOps(
   // so there is no `=== undefined` guard to write: the op exists only to ask, and
   // reaching this line at all means it has been answered.
   if (op.op === "evolveFromDeckChosen") {
-    return pickedPokemon(choice) ? evolveBodyAnswered(choice.ref, op.noAbilities) : [];
+    return pickedPokemon(choice)
+      ? evolveBodyAnswered(choice.ref, op.noAbilities, op.thenEvolveAgain)
+      : [];
+  }
+  // 🆕🆕🆕 D567 — Grand Tree's Stage 1 answer buys the OPTIONAL Stage 2 question onto the
+  // same body, only when the Stage 1 placement actually happened.
+  if (op.op === "evolveFromDeck" && op.thenEvolveAgain === true) {
+    return chainedEvolveAnswered(before, cont, op, choice);
   }
   // 🆕 D315 — THE FOURTH MEMBER, and the FIRST whose answer buys **N** ops rather
   // than one: *"Choose up to 2 … For each of those Pokémon, …"* is D308's
@@ -3108,7 +3173,17 @@ function stepOp(
       // stays byte-for-byte what it was.
       // 🆕🆕🆕 D558 — Salvatore's `noAbilities` narrows the bodies HERE and rides the
       // answer (`evolveBodyAnswered`), so the park and the card question agree.
-      const eligible = evolvableOwnRefs(state, ctx, undefined, op.noAbilities);
+      // 🆕🆕🆕 D567 — Grand Tree's body narrowings, passed only when printed (the D309
+      // and D558 calls stay byte-identical: `undefined`).
+      const eligible = evolvableOwnRefs(
+        state,
+        ctx,
+        undefined,
+        op.noAbilities,
+        op.bodyStage === undefined && op.evolveTimingGates === undefined
+          ? undefined
+          : { bodyStage: op.bodyStage, timingGates: op.evolveTimingGates },
+      );
       if (eligible.length === 0) return { done: state };
       // `parkOrForce`'s own ordering — nothing / one / many — but NOT that helper:
       // its forced arm applies a `(ref) => GameState`, the one shape that cannot
@@ -3118,7 +3193,7 @@ function stepOp(
       // §QUESTION 1's argument, verbatim, at its second site).
       const forced = eligible.length === 1 ? eligible[0] : undefined;
       if (forced !== undefined)
-        return { done: state, schedule: evolveBodyAnswered(forced, op.noAbilities) };
+        return { done: state, schedule: evolveBodyAnswered(forced, op.noAbilities, op.thenEvolveAgain) };
       return {
         park: {
           kind: "choosePokemon",
@@ -3267,7 +3342,10 @@ function stepOp(
       // 🆕🆕🆕 D557 — `from: "bottom"` (Dusk Ball) takes the window off the other end,
       // through the ONE helper the apply reads too (`lookWindow`), so the offer and the
       // leftovers cannot disagree about which cards were looked at.
-      const top = lookWindow(state.players[ctx.seat].deck, op);
+      // 🆕🆕🆕 D567 — WHOSE deck (`whose: "opponent"`, Accompanying Flute): the window, the
+      // candidates, the Bench clamp, the destination and the reveal row all read `lookOwner`,
+      // so the five move together; the CONTROLLER still answers (no `decider`).
+      const top = lookWindow(state.players[lookOwner(op, ctx)].deck, op);
       const matches = (uid: string, filter: CardFilter) =>
         matchesFilter(cardOf(state, uid), filter);
       const also = op.also;
@@ -3342,7 +3420,7 @@ function stepOp(
                   { uids: groupMatches(also.filter), max: also.max },
                 ],
               }),
-          note: lookNote(op.filter, op.n, op.max, op.dest, also, op.exact === true, op.from),
+          note: lookNote(op.filter, op.n, op.max, op.dest, also, op.exact === true, op.from, op.whose),
         },
       };
     }
@@ -4037,8 +4115,16 @@ function stepOp(
       };
     }
     // 🆕🆕🆕 D548 — field-free (`installNoWeakness`'s shape): the owner picks WHICH prize.
+    // (🆕🆕🆕 D567 NOTE (D539): "field-free" is WITHDRAWN — `side` and `recordAs` arrived with
+    // Bother-Bot; on `side: "opponent"` the CONTROLLER picks, R-BB2. The op is threaded whole.)
     case "turnPrizeFaceUp":
-      return turnPrizeFaceUp(state, ctx, events);
+      return turnPrizeFaceUp(state, op, ctx, events, record);
+    // 🆕🆕🆕 D567 — Redeemable Ticket: field-free, never parks (effects.ts).
+    case "cycleOwnPrizes":
+      return { done: cycleOwnPrizes(state, ctx, events) };
+    // 🆕🆕🆕 D567 — Bother-Bot's switch: reads the two RECORDED uids, never parks.
+    case "swapTurnedPrizeWithRevealed":
+      return { done: swapTurnedPrizeWithRevealed(state, ctx, events, record) };
     case "payFromHand": {
       // Pay the printed hand cost — to the DISCARD (Ultra Ball / Earthen Vessel /
       // Tinkaton / Revavroom / Meowscarada ex / Radiant Blastoise) or to the
@@ -4217,7 +4303,7 @@ function stepOp(
     case "randomFromOpponentHand":
       // D232 — the FIRST op whose outcome is drawn from `rngState`. Never parks:
       // "random" is precisely the absence of a chooser, so neither seat is asked.
-      return { done: randomFromOpponentHand(state, op, ctx, events) };
+      return { done: randomFromOpponentHand(state, op, ctx, events, record) };
     case "opponentDiscardsFromHand": {
       // 🆕🆕 D426 — the OPPONENT-CHOOSES half of the same family, and the ONE park
       // in this engine that shows a player their OWN hidden hand on the OTHER
@@ -7790,7 +7876,9 @@ export function applyChoice(
       // `default: return state;`, so this arm is the site `tsc` cannot see (D540/D541/D543):
       // without it a validated answer is silently dropped, the prize stays face down and the
       // +80 is still paid. `crescentPurge.test.ts` drives the ≥2 park through `resolveEffect`.
-      return choice.kind === "prize" ? turnPrizeFaceUpAt(state, choice.index, ctx, events) : state;
+      // 🆕🆕🆕 D567 — the op is threaded: `side` picks the ROW (Bother-Bot's is the opponent's)
+      // and `recordAs` files the uid actually turned, exactly as the forced path does.
+      return choice.kind === "prize" ? turnPrizeFaceUpAt(state, choice.index, op, ctx, events, record) : state;
     case "preventChosenAttack":
       // D157 — the parked half of the opponent-side per-attack lock. Same shape as
       // `healChosen`'s single-pick arm and for the same reason: `validateChoice`
@@ -11356,7 +11444,7 @@ function snipeAmount(
   // accumulator from `cont.record`, so the number the caption quoted and the number
   // the hit deals are the same value on both sides of the park.
   // ⚠️ **`undefined` AND NOT A BOOLEAN**: an `EffectSlot` is an ADDRESS and there
-  // are three of them, so the rider names the one it reads (see effects.ts).
+  // are three of them (🆕🆕🆕 D567 NOTE (D539): five now — turnedPrize/revealed), so the rider names the one it reads (see effects.ts).
   if (op.perRecorded !== undefined)
     return op.amount * recorded(record, op.perRecorded).length;
   // 🆕🆕🆕 **D538 — THE FIFTH RIDER, AND IT IS FOUR LINES BECAUSE THE READER ALREADY
@@ -12868,6 +12956,11 @@ function searchAttachToSelf(
     that half is now the card's text and not only D307's. The FIRST-TURN half stays a
     reading: **R-SV1 (UNRULED)** — a going-second player's first-turn Salvatore evolves
     (§4's ban is on playing from the hand); reversal: a ruling that refuses it.
+    🆕🆕🆕 D567 — RE-AFFIRMED, NOT WITHDRAWN: this offer still skips both bans for every op.
+    Grand Tree `sv07-136` PRINTS them (*"Players can't evolve a Basic Pokémon during their first
+    turn or a Basic Pokémon that was put into play this turn."*), so they are a card-printed gate
+    on THAT op only — `evolveFromDeckChosen.evolveTimingGates`, read in `evolvableOwnRefs`, never
+    here (`trainerBundleD567.test.ts` §5 drives the plain op offering the same body).
 
     `undefined` when the source has left the board — a "this Pokémon" op's
     standing answer, and the shape `switchActive.fromSource` already takes. */
@@ -13067,9 +13160,10 @@ function pushDeckTopLook(
   ctx: EffectContext,
   events: GameEvent[],
 ): void {
+  const owner = lookOwner(op, ctx);
   const event: Extract<GameEvent, { type: "DECK_TOP_REVEALED" }> = {
     type: "DECK_TOP_REVEALED",
-    seat: ctx.seat,
+    seat: owner,
     uids: [...moved],
     // Spread-when-present, not `dest: op.dest` — an explicit `undefined` is not
     // the same wire value as no key at all, and these events are compared by
@@ -13078,8 +13172,18 @@ function pushDeckTopLook(
     ...(op.reveal === true ? { reveal: true as const } : {}),
     // 🆕🆕🆕 D557 — Dusk Ball's end rides the row by the same spread (absent = top).
     ...(op.from === undefined ? {} : { from: op.from }),
+    // 🆕🆕🆕 D567 — Accompanying Flute: the looker is not the deck's owner (D135: present
+    // only on that path, so every own-deck row is byte-identical).
+    ...(owner === ctx.seat ? {} : { actor: ctx.seat }),
   };
   events.push(event);
+}
+
+/** 🆕🆕🆕 D567 — WHOSE deck a `lookAtTopN` reads: the controller's (absent `whose`, every
+    shipped producer) or the opponent's (Accompanying Flute). The ONE reader for the park, the
+    apply and the row — `reorderTopOwner`'s rule (D341), one op over. */
+function lookOwner(op: Extract<EffectOp, { op: "lookAtTopN" }>, ctx: EffectContext): Seat {
+  return op.whose === "opponent" ? otherSeat(ctx.seat) : ctx.seat;
 }
 
 /** 🆕🆕🆕 **D557 — THE LOOKED-AT WINDOW, READ ONCE FOR THE PARK AND THE APPLY.** Absent
@@ -13174,9 +13278,11 @@ function revealFromTop(
   ctx: EffectContext,
   events: GameEvent[],
 ): GameState {
-  const side = state.players[ctx.seat];
+  // 🆕🆕🆕 D567 — the deck, the Bench clamp and the landing side are `lookOwner`'s (Flute).
+  const owner = lookOwner(op, ctx);
+  const side = state.players[owner];
   const inDeck = uids.filter((uid) => side.deck.includes(uid));
-  const moved = op.dest === "bench" ? inDeck.slice(0, benchSpace(state, ctx.seat)) : inDeck;
+  const moved = op.dest === "bench" ? inDeck.slice(0, benchSpace(state, owner)) : inDeck;
   pushDeckTopLook(op, moved, ctx, events);
   const picked = new Set(moved);
   const rest =
@@ -13201,8 +13307,12 @@ function revealFromTop(
   // only ever looks at `ctx.seat`'s own top (the event's own doc says so). Written
   // out rather than left implicit for `attachFromTopApply`'s stated reason: a
   // future look aimed at the opponent's deck is a slice that must edit this line.
+  // (🆕🆕🆕 D567 NOTE (D539): *"only ever looks at `ctx.seat`'s own top"* is WITHDRAWN —
+  // Accompanying Flute looks at the opponent's — and this IS the edit the sentence asked
+  // for: `seat` is the deck's owner and `actor` the controller. No printing pairs `whose`
+  // with `restTo`, so this row is still own-deck on every shipped path.)
   if (toPile.length > 0)
-    events.push({ type: "DECK_TOP_DISCARDED", seat: ctx.seat, actor: ctx.seat, uids: [...toPile] });
+    events.push({ type: "DECK_TOP_DISCARDED", seat: owner, actor: ctx.seat, uids: [...toPile] });
   // The leftovers land in the pile BEFORE the taken cards reach a `dest` of
   // `"discard"` would — but no printing carries both, and the two never share a
   // card, so the pile's order is the window's either way.
@@ -13224,7 +13334,7 @@ function revealFromTop(
   // `rngState` is threaded rather than assumed unchanged: it is a field of
   // `GameState` and not of the side, so a shuffled leftover has to be written back
   // here or the randomness is spent and then thrown away.
-  return withSide({ ...state, rngState }, ctx.seat, updated);
+  return withSide({ ...state, rngState }, owner, updated);
 }
 
 /** Pay a hand cost: move the chosen `uids` out of the controller's hand — into
@@ -13499,12 +13609,21 @@ function randomFromOpponentHand(
   op: Extract<EffectOp, { op: "randomFromOpponentHand" }>,
   ctx: EffectContext,
   events: GameEvent[],
+  record: EffectRecord,
 ): GameState {
   const owner = otherSeat(ctx.seat);
   const side = state.players[owner];
   if (side.hand.length === 0) return state;
   const [index, rngState] = randomIndex(side.hand.length, state.rngState);
   const uid = side.hand[index] as string;
+  // 🆕🆕🆕 D567 — Bother-Bot's *"Your opponent reveals that card."*: the card STAYS in the
+  // hand, the reveal names only it, and the uid is filed for the switch that may follow.
+  // Taken ahead of the move rows so their bytes are D232's, unchanged.
+  if (op.to === "reveal") {
+    events.push({ type: "RANDOM_CARD_REVEALED", seat: owner, uid, actor: ctx.seat });
+    recordMoved(record, op.recordAs, [uid]);
+    return { ...state, rngState };
+  }
   events.push({ type: "RANDOM_CARD_TAKEN", seat: owner, uid, actor: ctx.seat, to: op.to });
   const hand = side.hand.filter((held) => held !== uid);
   if (op.to === "discard") {
@@ -14627,6 +14746,10 @@ function queueTakePrize(state: GameState, ctx: EffectContext): GameState {
 
 /** 🆕🆕🆕 **D548 — `turnPrizeFaceUp`: turn 1 of the controller's OWN face-down Prize cards
     face up** (Cresselia `sv06.5-021` "Crescent Purge", `optionalCostOps`' fifth row).
+    (🆕🆕🆕 D567 NOTE (D539): *"the controller's OWN"* is WITHDRAWN as the op's whole scope,
+    kept as written — `side: "opponent"` (Team Rocket's Bother-Bot `sv10-172`) turns one of the
+    OPPONENT's, and there the CONTROLLER picks (R-BB2 ⚠️ UNRULED; the owner-picks ruling below
+    is about a player's OWN row and is unchanged for it). `prizeRowOwner` is the one reader.)
 
     🛑 **THE OWNER PICKS (the D548 ruling).** The governing precedent is `queueTakePrize`'s
     block directly above: *"WHICH face-down prize is a decision a player must make"* (D431).
@@ -14648,19 +14771,34 @@ function queueTakePrize(state: GameState, ctx: EffectContext): GameState {
     only once the answer lands. */
 function turnPrizeFaceUp(
   state: GameState,
+  op: Extract<EffectOp, { op: "turnPrizeFaceUp" }>,
   ctx: EffectContext,
   events: GameEvent[],
+  record: EffectRecord,
 ): { done: GameState } | { park: EffectPrompt } {
-  const indices = faceDownPrizeIndices(state, ctx.seat);
+  const owner = prizeRowOwner(op, ctx);
+  const indices = faceDownPrizeIndices(state, owner);
   if (indices.length === 0) return { done: state };
-  if (indices.length === 1) return { done: turnPrizeFaceUpAt(state, indices[0] ?? -1, ctx, events) };
+  if (indices.length === 1) return { done: turnPrizeFaceUpAt(state, indices[0] ?? -1, op, ctx, events, record) };
   return {
     park: {
       kind: "choosePrize",
       indices,
-      note: "Choose 1 of your face-down Prize cards to turn face up.",
+      // 🆕🆕🆕 D567 — the note says WHOSE row, in the card's own possessive: Bother-Bot's
+      // controller is choosing among the OPPONENT's face-down prizes (R-BB2).
+      note:
+        owner === ctx.seat
+          ? "Choose 1 of your face-down Prize cards to turn face up."
+          : "Choose 1 of your opponent's face-down Prize cards to turn face up.",
     },
   };
+}
+
+/** 🆕🆕🆕 D567 — WHOSE prize row `turnPrizeFaceUp` turns: the controller's (absent `side`,
+    every D548 program) or the opponent's (Bother-Bot). Read by the park, the forced pick AND
+    the answered park through this one helper, so the three cannot disagree about the row. */
+function prizeRowOwner(op: Extract<EffectOp, { op: "turnPrizeFaceUp" }>, ctx: EffectContext): Seat {
+  return op.side === "opponent" ? otherSeat(ctx.seat) : ctx.seat;
 }
 
 /** The face-down slots of `seat`'s prize row, in row order. */
@@ -14682,20 +14820,86 @@ function faceDownPrizeIndices(state: GameState, seat: Seat): number[] {
 function turnPrizeFaceUpAt(
   state: GameState,
   index: number,
+  op: Extract<EffectOp, { op: "turnPrizeFaceUp" }>,
   ctx: EffectContext,
   events: GameEvent[],
+  record: EffectRecord,
 ): GameState {
-  const side = state.players[ctx.seat];
+  const owner = prizeRowOwner(op, ctx);
+  const side = state.players[owner];
   const uid = side.prizes[index];
   if (uid === undefined || side.faceUpPrizes.includes(uid)) return state;
-  events.push({ type: "PRIZE_TURNED_FACE_UP", seat: ctx.seat, index, uid });
+  // 🆕🆕🆕 D567 — `actor` only when the row is not the controller's (D135), and the uid
+  // ACTUALLY turned is filed for Bother-Bot's switch (never "the first face-up entry").
+  events.push({
+    type: "PRIZE_TURNED_FACE_UP",
+    seat: owner,
+    index,
+    uid,
+    ...(owner === ctx.seat ? {} : { actor: ctx.seat }),
+  });
+  recordMoved(record, op.recordAs, [uid]);
   return {
     ...state,
     players: {
       ...state.players,
-      [ctx.seat]: { ...side, faceUpPrizes: [...side.faceUpPrizes, uid] },
+      [owner]: { ...side, faceUpPrizes: [...side.faceUpPrizes, uid] },
     },
   };
+}
+
+/** 🆕🆕🆕 **D567 — `cycleOwnPrizes`: Redeemable Ticket `sv09-156`.** The whole row (`n` cards)
+    is shuffled with `rngState` and appended UNDER the controller's deck; the top `n` of that
+    deck become the new row, face down — `faceUpPrizes` is emptied, retiring any D548 face-up
+    uid (every old prize left the row; every new one is printed face down). ONE event naming no
+    uid. `n = 0` is a silent no-op that spends no rng (the empty row is unreachable in a live
+    game — it has already been won — and is written as the honest ending anyway). The deck
+    always holds at least `n` here, because the `n` cards were just appended. */
+function cycleOwnPrizes(state: GameState, ctx: EffectContext, events: GameEvent[]): GameState {
+  const side = state.players[ctx.seat];
+  const count = side.prizes.length;
+  if (count === 0) return state;
+  const [shuffled, rngState] = shuffle([...side.prizes], state.rngState);
+  const pile = [...side.deck, ...shuffled];
+  events.push({ type: "PRIZES_CYCLED", seat: ctx.seat, count });
+  return withSide(
+    { ...state, rngState },
+    ctx.seat,
+    { ...side, prizes: pile.slice(0, count), deck: pile.slice(count), faceUpPrizes: [] },
+  );
+}
+
+/** 🆕🆕🆕 **D567 — `swapTurnedPrizeWithRevealed`: Bother-Bot's *"You may have your opponent
+    switch those cards."*** "Those cards" are the RECORD's — `turnedPrize` (filed by
+    `turnPrizeFaceUp`) and `revealed` (filed by `randomFromOpponentHand { to: "reveal" }`) —
+    and NEVER the FIRST `faceUpPrizes` entry, which may be a Crescent Purge prize (the LAST
+    entry coincides with the recorded uid today — the row only appends and the `recordGate`s
+    block a switch with nothing turned — so the record is the spelling, not a drivable
+    difference). The hand card
+    takes the prize's SLOT (same index), the prize card goes to the hand, and `faceUpPrizes`
+    has the outgoing uid REPLACED in place by the incoming one (R-BB1: the slot stays face up).
+    Re-validated on the live board — the prize still in the row, the card still in the hand —
+    so a stale record is a silent no-op. The row and the hand are the OPPONENT's. */
+function swapTurnedPrizeWithRevealed(
+  state: GameState,
+  ctx: EffectContext,
+  events: GameEvent[],
+  record: EffectRecord,
+): GameState {
+  const owner = otherSeat(ctx.seat);
+  const side = state.players[owner];
+  const [prizeUid] = recorded(record, "turnedPrize");
+  const [handUid] = recorded(record, "revealed");
+  if (prizeUid === undefined || handUid === undefined) return state;
+  const index = side.prizes.indexOf(prizeUid);
+  if (index < 0 || !side.hand.includes(handUid)) return state;
+  events.push({ type: "PRIZE_SWITCHED_WITH_HAND", seat: owner, actor: ctx.seat, index, prizeUid, handUid });
+  return withSide(state, owner, {
+    ...side,
+    prizes: side.prizes.map((uid) => (uid === prizeUid ? handUid : uid)),
+    faceUpPrizes: side.faceUpPrizes.map((uid) => (uid === prizeUid ? handUid : uid)),
+    hand: [...side.hand.filter((uid) => uid !== handUid), prizeUid],
+  });
 }
 
 /** The `returnBenched` pick prompt, in the printed card's own words minus its
@@ -18102,6 +18306,8 @@ function lookNote(
   exact = false,
   /** 🆕🆕🆕 D557 — Dusk Ball's *"Look at the bottom 7 cards"*; absent is the top. */
   from?: "bottom",
+  /** 🆕🆕🆕 D567 — Accompanying Flute's *"your opponent's deck"* / *"their Bench"*. */
+  whose?: "opponent",
 ): string {
   const { singular, plural } = retrieveNoun(filter);
   // D241 — the destination is the prompt's, not a fixed phrase. A dialog that
@@ -18110,7 +18316,9 @@ function lookNote(
   // already states one prompt over.
   const where =
     dest === "bench"
-      ? "onto your Bench"
+      ? whose === "opponent"
+        ? "onto their Bench"
+        : "onto your Bench"
       : dest === "discard"
         ? "in the discard pile"
         : "into your hand";
@@ -18140,7 +18348,7 @@ function lookNote(
     also === undefined
       ? first
       : `${first} and ${phrase(also.max, retrieveNoun(also.filter), false)}`;
-  return `Look at the ${from === "bottom" ? "bottom" : "top"} ${n} cards of your deck and put ${what} ${where}.`;
+  return `Look at the ${from === "bottom" ? "bottom" : "top"} ${n} cards of ${whose === "opponent" ? "your opponent's" : "your"} deck and put ${what} ${where}.`;
 }
 
 /** The attachCards prompt string (Electric Generator / Hydreigon "Tri Howl") —

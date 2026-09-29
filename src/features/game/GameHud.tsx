@@ -1479,7 +1479,8 @@ function EffectChooseDialog(props: GameHudProps): ReactElement | null {
 }
 
 /** 🆕🆕🆕 D548 — Crescent Purge's cost: pick ONE of your own face-down prizes to turn face
-    up. Offers ONLY the face-down slots the prompt names (a face-up one is not a legal
+    up. (🆕🆕🆕 D567: or one of the OPPONENT's — Team Rocket's Bother-Bot parks the same prompt over
+    their row; the tiles are drawn by index, so nothing here moves, and the heading is the note.) Offers ONLY the face-down slots the prompt names (a face-up one is not a legal
     answer — `validateChoice` refuses it), on the same `PrizeTile` the take picker uses.
     `ChooseAttackDialog`'s shape: no local state and no Confirm, because picking IS the
     whole decision (the engine never parks this below two face-down prizes, and the

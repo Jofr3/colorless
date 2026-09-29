@@ -1089,8 +1089,31 @@ export type GameEvent =
       the log NAMES it. `PRIZES_TAKEN` stays COUNT-ONLY on purpose, even for a face-up take:
       the log row describes the move to a hand the other player must not read, and one
       wording for every take keeps it from telling a face-up take from a face-down one by
-      its shape. Not persisted (D141). */
-  | { type: "PRIZE_TURNED_FACE_UP"; seat: Seat; index: number; uid: string }
+      its shape. Not persisted (D141).
+      🆕🆕🆕 D567 — `actor`: Team Rocket's Bother-Bot turns the OPPONENT's prize, so `seat` stays
+      the ROW's owner and `actor` names the controller who turned it — present ONLY when the two
+      differ (spread-when-present, D135), so every D548 row is byte-identical. A D125 widening. */
+  | { type: "PRIZE_TURNED_FACE_UP"; seat: Seat; index: number; uid: string; actor?: Seat }
+  /** 🆕🆕🆕 D567 — Redeemable Ticket `sv09-156`: `seat`'s `count` Prize cards were shuffled
+      and put under their deck, and `count` new cards from the deck top became the (face-down)
+      prize row. Names NO uid on purpose — every card on both rows is hidden (a uid would let a
+      client follow a hidden card across zones, redact.ts' rule), and `faceUpPrizes` is emptied.
+      A new union member (D125); not persisted (D141). */
+  | { type: "PRIZES_CYCLED"; seat: Seat; count: number }
+  /** 🆕🆕🆕 D567 — Team Rocket's Bother-Bot's *"You may have your opponent switch those
+      cards."*: in `seat`'s prize row, slot `index` held `prizeUid` (face up — this card turned
+      it) and now holds `handUid` (the card revealed from `seat`'s hand), still FACE UP (R-BB1);
+      `prizeUid` went into `seat`'s hand. `actor` is the controller. Both uids are PUBLIC — one
+      was a face-up prize, the other was just revealed — so the log names both. A new union
+      member (D125); not persisted (D141). */
+  | {
+      type: "PRIZE_SWITCHED_WITH_HAND";
+      seat: Seat;
+      actor: Seat;
+      index: number;
+      prizeUid: string;
+      handUid: string;
+    }
   /** `seat` must promote a benched Pokémon into the empty Active spot
       (§8.1) — the ko:promote prompt twin of PRIZES_OWED. */
   | { type: "PROMOTION_REQUIRED"; seat: Seat }
@@ -1375,7 +1398,13 @@ export type GameEvent =
       in the name and overriding it in the field — and FALSE of `randomFromOpponentHand`,
       whose identifier names a SELECTION MODE over a SOURCE zone and no destination at
       all (`effects.ts:10961`: `to: "discard" | "deck"`, REQUIRED — the very spelling
-      the paragraph in `effects.ts` declares refused for THIS op). The conclusion the
+      the paragraph in `effects.ts` declares refused for THIS op). (🆕🆕🆕 D567 NOTE
+      (D539): that quote is DATED — the union is now THREE-valued, `to: "discard" |
+      "deck" | "reveal"` with an optional `recordAs`, declared at `effects.ts:12430` at
+      D567, and every `effects.ts:` line number in this paragraph is as measured when it
+      was written. Still REQUIRED, and the identifier still names no destination
+      (`"reveal"` moves no card — Bother-Bot's card STAYS in the hand), so the
+      re-scope is unchanged by the third value.) The conclusion the
       pair was cited for is UNCHANGED, because the axis they really share is the one
       stated above and at `effects.ts:11064-11071`. ⚠️ **THIS ADDRESS IS THE ONE THE
       WITHDRAWAL'S FIRST SWEEP MISSED** — the correction landed in `effects.ts`,
@@ -1481,6 +1510,10 @@ export type GameEvent =
       **opponent's** deck and put them back in any order"* is what buys it, and
       that sentence needs an ORDERED answer this engine has no prompt kind for —
       so it is left measured on the backlog rather than half-built here.
+      (🆕🆕🆕 D567 NOTE (D539): *"Every `lookAtTopN` printing reads the controller's OWN
+      deck"* and *"NO `actor` FIELD"* are WITHDRAWN, kept as written — Accompanying Flute
+      `sv06-142` (`lookAtTopN.whose: "opponent"`) reads the OPPONENT's deck, so `actor` is
+      now observable on this row and is bought here, present ONLY on that path.)
 
       🆕🆕 **D341 BOUGHT IT, AND NOT ON THIS ROW.** `reorderTop.side` is the fork,
       and the `actor` it buys sits on `DECK_TOP_REORDERED` below rather than here —
@@ -1509,6 +1542,11 @@ export type GameEvent =
       /** 🆕🆕🆕 D557 — Dusk Ball: the window was the BOTTOM of the deck. ABSENT means
           the top, mirroring `lookAtTopN.from` (D135). Not persisted — no bump. */
       from?: "bottom";
+      /** 🆕🆕🆕 D567 — Accompanying Flute (`lookAtTopN.whose: "opponent"`): `seat` is the
+          DECK's owner (whose Bench gained the cards) and `actor` the controller who looked.
+          PRESENT ONLY on that seat-crossing path (D135), so every own-deck row is
+          byte-identical. A D125 widening; not persisted — no bump. */
+      actor?: Seat;
     }
   /** `uids` went from the top of `seat`'s DECK to `seat`'s DISCARD PILE, in deck
       order, top first — which is the order the pile gained them (§2). That is the
@@ -1762,6 +1800,9 @@ export type GameEvent =
       unobservable. `DECK_TOP_DISCARDED`'s `actor` (D136/D153) is the precedent for
       the shape: an op that reads one player's deck on another player's turn owes a
       row whose VOICE is a claim about agency.
+      (🆕🆕🆕 D567 NOTE (D539): the asymmetry is RETIRED, kept as written — `lookAtTopN`
+      gained its second seat (Accompanying Flute), so `DECK_TOP_REVEALED` carries `actor?`
+      too, by the rule this paragraph states: the row that actually gains the seat.)
 
       **`seat` IS THE DECK's OWNER on both paths**, `DECK_TOP_REVEALED`'s and
       `DECK_TOP_DISCARDED`'s rule, so the own-deck printing renders with
@@ -1893,6 +1934,13 @@ export type GameEvent =
       EMPTY HAND — no card moved, so there is nothing to announce (and no RNG was
       spent; see the op). */
   | { type: "RANDOM_CARD_TAKEN"; seat: Seat; uid: string; actor: Seat; to: "discard" | "deck" }
+  /** 🆕🆕🆕 D567 — `actor` chose a RANDOM card from `seat`'s hand and `seat` REVEALED it; the
+      card STAYED in the hand (Team Rocket's Bother-Bot: *"choose a random card from your
+      opponent's hand. Your opponent reveals that card."*). A SIBLING of `RANDOM_CARD_TAKEN`
+      rather than a third `to` on it: that row's name and its `to` both claim a MOVE, and here
+      nothing moved. Names only that one card — the rest of the hand stays shut. Never emitted
+      for an empty hand (no card, no rng). A new union member (D125); not persisted (D141). */
+  | { type: "RANDOM_CARD_REVEALED"; seat: Seat; uid: string; actor: Seat }
   /** 🆕🆕 D445 — `actor` CHOSE one card out of `seat`'s REVEALED hand and put it in
       `seat`'s own discard pile (*"Your opponent reveals their hand. Discard a card you
       find there."*).

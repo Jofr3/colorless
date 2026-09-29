@@ -840,7 +840,9 @@ describe("D359 §6 — the ids this file rests on are real and locally seated", 
     // Real catalog ids, no `fix-*` key (`trainerBundleD566.test.ts` / `koToolsD566.test.ts`
     // drive a LOCAL `cardPool`), inserted MID-MAP after `sv06-060`, and no row authors an
     // `attack` program.
-    expect(registryCardIds()).toHaveLength(914);
+    // 🆕🆕🆕 D567 — 914 -> **918**: FOUR registry keys on FOUR program objects — Redeemable Ticket,
+    // Accompanying Flute, Team Rocket's Bother-Bot (Items) and Grand Tree (Stadium) — all non-attack.
+    expect(registryCardIds()).toHaveLength(918);
     for (const id of Object.values(QUANTITY_IDS).flat()) {
       if (programFor(id) === undefined) continue;
       // Every id that DOES have a program had one before this slice: the eight

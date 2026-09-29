@@ -5163,7 +5163,7 @@ printed head sentence byte for byte, which turns it into a D457 witness that the
 
 `damageChosen`'s two existing scaled-snipe riders are bare `true` flags because each names an
 **implicit** source the fold finds from `(state, ctx)` — the prize count, the attacker's attached
-Energy. A §9.2 record is an **address** with three inhabitants, so a boolean would have to hard-code
+Energy. A §9.2 record is an **address** with three inhabitants (🆕🆕🆕 D567 NOTE (D539): five now — `turnedPrize` / `revealed`), so a boolean would have to hard-code
 one, and D458 already measured the board that breaks that: two sequential recorders overwrite one
 slot, so a program filing both `paid` and `discarded` needs to say which.
 

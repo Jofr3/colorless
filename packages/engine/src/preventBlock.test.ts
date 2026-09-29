@@ -1192,6 +1192,8 @@ describe("the gated PREVENT clause — the guard is SWEPT, not listed", () => {
     discardHand: "untouched",
     // 🆕🆕🆕 **D548 — `turnPrizeFaceUp`, and it is `takePrize`'s verdict for `takePrize`'s
     // reason.** UNTOUCHED: the op turns one of the ACTOR's OWN face-down prizes face up —
+    // (🆕🆕🆕 D567 (D539): or, on `side: "opponent"` (Bother-Bot), one of the OPPONENT's — still a
+    // PRIZE, never a body, so the verdict below holds on both rows)
     // an own-side zone, no opponent-side body anywhere in it — so a §11 block on the
     // Defending Pokémon has nothing to protect from it, and the implementation does not
     // call `effectRefused` (interpreter.ts `turnPrizeFaceUp`). It reached this table through
