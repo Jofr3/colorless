@@ -8477,6 +8477,38 @@ search tool is not evidence of absence"*. What this section adds is one rule:
 `grep -P`, or the script. If two engines disagree, treat it as a tool fault until shown otherwise, and write down
 the figure the script gives.
 
+### A `setsid --fork` sweep's PPID is its nearest SUBREAPER, not always `1`, and `setsid` leaves it in the launching unit's CGROUP (D566 close-out, refining D541 and D547)
+
+D541 made `SID == PID` the detachment measurement and called `PPID 1` its consequence, and the logs D547's recipe
+wrote all opened with `PPID 1` up to D565's. D566's log opens with `PID 1706648 / PPID 1144 / SID 1706648`.
+`ps -o pid,ppid,cmd -p 1144` reads `/run/current-system/systemd/lib/systemd/systemd --user --deserialize=34`, itself
+`PPID 1`. The sweep ran to its summary line, so nothing was lost. Only the reading changed.
+
+**Why:** when the `setsid(1)` wrapper exits, the kernel hands its orphaned child to the nearest ancestor marked as a
+CHILD SUBREAPER, and to init only if there is none. The systemd user manager is one. This session's shell sits in
+`user.slice/user-1000.slice/user@1000.service/app.slice/t3code.service` (`/proc/$$/cgroup`), under that manager, so
+its orphans go to `1144`. The earlier `PPID 1` launches were presumably made from outside the user manager. Their
+launch context was not recorded, so that is an inference, not a measurement. One reading is consistent with it:
+`systemctl --user show t3code.service -p ActiveEnterTimestamp` reads 2026-09-28 19:53:40. That is after D565's launch
+(17:40:45) and before D566's (09:54:48 the next day). The same reading shows the unit did not restart during D566's
+run. Re-measured at the D566 close-out with a
+dummy launched by the same recipe from the same session (`setsid --fork sh -c 'ps -o pid,ppid,sid,cmd -p $$; exec
+sleep 3'`), the dummy read `PPID 1144` and `SID == PID`.
+
+**The rules:**
+
+1. **`SID == PID` stays the one detachment check. Do not compare the PPID to `1`.** Record the PPID as read and name
+   its process (`ps -o pid,ppid,cmd -p <ppid>`). Init and a `systemd --user` subreaper both mean the orphan was
+   adopted. A shell or a tool runner as PPID means the fork did not happen, which is D541's failure, and so does
+   `SID != PID` whatever the PPID says.
+2. **`setsid` detaches the SESSION, not the CGROUP.** The same dummy's `/proc/<pid>/cgroup` read the launching unit's
+   (`…/app.slice/t3code.service`), and that unit's `KillMode` is `control-group` (`systemctl --user show
+   t3code.service -p KillMode`). So stopping or restarting the unit the launching session runs under would kill the
+   sweep with it, however detached its session is. The log would then stop without a summary line, exactly as it
+   does after a reboot. For a log that stops early, run D542's boot check and ALSO `journalctl --user -u <unit>` for a
+   stop or restart inside the run's window, before classifying it as anything else. The sweep's OWN cgroup was not
+   read while it ran, only the dummy's. Launching into a scope of its own (`systemd-run --user --scope …`) was not
+   measured either, so it is not the recipe yet.
 
 ## Git / commits
 - Branch off `main` for non-trivial work; commit/push only when asked.
