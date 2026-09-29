@@ -12733,7 +12733,7 @@ import type { GameState, Seat } from "./types";
     damage you did to your opponent's Active Pokémon."* at **6** printings, one more than
     this one. It lost on the **KIND OF QUANTITY**, not on the count:
 
-      • `EffectSlot` is `"paid" | "moved" | "discarded"` and `EffectRecord` is
+      • `EffectSlot` is `"paid" | "moved" | "discarded"` (🆕🆕🆕 D567 FINAL-REVIEW NOTE (D539): five members now — `turnedPrize` / `revealed`, both uid lists, so the argument stands) and `EffectRecord` is
         `{ [K in EffectSlot]?: string[] }` — **every §9.2 slot in this engine is a LIST
         OF CARD UIDS**, and *"the same amount of damage"* is an HP FIGURE. There is no
         slot to file it in and no widening that keeps the map's value type.
@@ -17785,7 +17785,7 @@ import type { GameState, Seat } from "./types";
 
       • **`EffectRecord` LOSES ON ITS VALUE TYPE, WHICH IS A HARDER FACT THAN THE
         MEANING.** It is `{ [K in EffectSlot]?: string[] }` and `EffectSlot` is
-        `"paid" | "moved" | "discarded"` — **every §9.2 slot in this engine is a LIST
+        `"paid" | "moved" | "discarded"` (🆕🆕🆕 D567 FINAL-REVIEW NOTE (D539): five members now — `turnedPrize` / `revealed`, both uid lists, so the argument stands) — **every §9.2 slot in this engine is a LIST
         OF CARD UIDS**, and this is an HP FIGURE. There is no slot to file it in and no
         widening that keeps the map's value type. D406 wrote exactly this down while
         DECLINING the sentence on price; D427 is that note acted on rather than

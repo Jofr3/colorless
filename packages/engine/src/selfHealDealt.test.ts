@@ -39,7 +39,7 @@ const LOUD_SENTENCE = "Heal 100 damage from 1 of your Benched Ancient Pokémon."
 // 🛑 **THE DESIGN DECISION IS THE CARRIER, AND `EffectRecord` LOSES ON ITS VALUE TYPE
 // RATHER THAN ON TASTE.** D406 priced this sentence one slice before declining it and
 // named the reason: `EffectRecord` is `{ [K in EffectSlot]?: string[] }` and
-// `EffectSlot` is `"paid" | "moved" | "discarded"` — **every §9.2 slot in this engine
+// `EffectSlot` is `"paid" | "moved" | "discarded"` (🆕🆕🆕 D567 FINAL-REVIEW NOTE (D539): five members now — `turnedPrize` / `revealed`, both uid lists, so the argument stands) — **every §9.2 slot in this engine
 // is a LIST OF CARD UIDS**, and this is an HP FIGURE. There is no slot to file it in
 // and no widening that keeps the map's value type. The MEANING agrees and is the
 // second reason, not the first: the record's own doc block calls it *"what the ops

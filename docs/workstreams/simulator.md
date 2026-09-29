@@ -26980,7 +26980,7 @@ recorded rather than the verdict (D382's practice).
 | (B) | *"Put an Energy attached to this Pokémon into your hand."* | 5 | 0 new + 1 caption branch | **5** |
 
 🛑 **(A) LOSES ON THE KIND OF QUANTITY, NOT ON THE COUNT.** `EffectSlot` is
-`"paid" | "moved" | "discarded"` and `EffectRecord` is `{ [K in EffectSlot]?: string[] }` — **every
+`"paid" | "moved" | "discarded"` (🆕🆕🆕 D567 FINAL-REVIEW NOTE (D539): five members now — `turnedPrize` / `revealed`, both uid lists, so the argument stands) and `EffectRecord` is `{ [K in EffectSlot]?: string[] }` — **every
 §9.2 slot this engine files is a LIST OF CARD UIDS**, and *"the same amount of damage"* is an HP
 figure. Four mechanisms fall out of that, and they are worth writing down because the next slice
 that wants a numeric §9.2 channel will pay all four:

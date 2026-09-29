@@ -5614,7 +5614,7 @@ export type EffectOp =
       question) and exactly ONE writer (its own first answer), so nothing is
       being shared and a shared bus is the wrong home. And the record would be
       the wrong home even if it were free, on MEANING: `EffectRecord` holds *what
-      MOVED* (`paid` / `moved` / `discarded`), and `recordGate` — the printed "if
+      MOVED* (`paid` / `moved` / `discarded` — 🆕🆕🆕 D567 FINAL-REVIEW NOTE (D539): five members now — `turnedPrize` / `revealed`, both uid lists, so the argument stands), and `recordGate` — the printed "if
       you do" / "in this way" — reads it. Filing a source that has been NAMED but
       not yet emptied would make that gate answer true for an action that has not
       happened, which is precisely the "half of a printed action" failure
@@ -7963,7 +7963,7 @@ export type EffectOp =
           read only that the switch happened); `true` files `wasActive` instead, the one
           body the consequent names. 🛑 **A RIDER AND NOT A FOURTH `EffectSlot`
           MEMBER**: the union names WHAT KIND of thing a program files (paid / moved /
-          discarded), and both ends of a switch are "moved" — a `"demoted"` slot would
+          discarded — 🆕🆕🆕 D567 FINAL-REVIEW NOTE (D539): five members now — `turnedPrize` / `revealed`, both uid lists, so the argument stands), and both ends of a switch are "moved" — a `"demoted"` slot would
           put the END into the ADDRESS, so a second switch-reading op could file the
           other end under the same name. Read by `moveEnergy.sourceRecorded`.
           `MATCH_RECORD_VERSION` holds at 35 (optional, absent = D206's filing); the
@@ -7993,7 +7993,7 @@ export type EffectOp =
 
       The filed uid is the OPPONENT's newly promoted body, which is not a novelty
       of this op: `bottomFromOpponentHand` already files uids off the opponent's
-      side into the same three slots.
+      side into the same three slots (🆕🆕🆕 D567 FINAL-REVIEW NOTE (D539): five members now — `turnedPrize` / `revealed`, both uid lists, so the argument stands).
 
       🆕 **D331 — `basicOnly` IS THE FIRST NARROWING THIS OP HAS EVER TAKEN, AND
       IT ARRIVES WITH A FUNNEL RATHER THAN AS A FIELD.** Lisia's Appeal

@@ -267,7 +267,7 @@ export interface EffectContext {
       🛑 **WHY `EffectContext` AND NOT `EffectRecord`, AND THE FIRST REASON IS THE
       VALUE TYPE RATHER THAN THE MEANING.** `EffectRecord` is
       `{ [K in EffectSlot]?: string[] }` and `EffectSlot` is
-      `"paid" | "moved" | "discarded"` — **every §9.2 slot in this engine is a LIST
+      `"paid" | "moved" | "discarded"` (🆕🆕🆕 D567 FINAL-REVIEW NOTE (D539): five members now — `turnedPrize` / `revealed`, both uid lists, so the argument stands) — **every §9.2 slot in this engine is a LIST
       OF CARD UIDS**, and this is an HP FIGURE. There is no slot to file it in and no
       widening that keeps the map's value type, so the record could only carry it by
       becoming a different kind of thing. D406 priced this sentence and named exactly
