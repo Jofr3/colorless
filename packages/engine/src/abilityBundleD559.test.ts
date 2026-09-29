@@ -717,7 +717,7 @@ describe("D559 §7 — R-LK1: lock-vs-lock stays UNGATED (both locks stay on), p
     const state = table(FLUTTER[0], [GASTRODON], FLUTTER[1], [GASTRODON]);
     expect(disabledAbilityUids(state)).toEqual(new Set());
   });
-  it("⚠️ R-LK1 holds only while the two UNBUILT legal locks stay unbuilt — tripwire: Iron Thorns ex and Team Rocket's Watchtower carry no program", () => {
+  it("⚠️ R-LK1 holds only while Iron Thorns ex stays unbuilt — tripwire: it carries no program; Team Rocket's Watchtower is BUILT (D566) and silences neither built lock source", () => {
     // Iron Thorns ex "Initialization" (Active-sourced; Rule Box bodies except Future
     // Pokémon) is a legal lock whose source an Active Flutter Mane silences from across
     // the table — by the rules its lock then switches off, and the ungated
@@ -725,8 +725,23 @@ describe("D559 §7 — R-LK1: lock-vs-lock stays UNGATED (both locks stay on), p
     // pass and must retire this rung. Team Rocket's Watchtower (a Stadium over {C}
     // bodies) silences no built lock source ({P} Flutter Mane, {F} Gastrodon), but it is
     // the other legal lock the D559 prose once omitted, so it is pinned beside it.
-    for (const id of ["sv06-077", "sv06-196", "sv08.5-032", "sv10-180"]) {
+    for (const id of ["sv06-077", "sv06-196", "sv08.5-032"]) {
       expect(programFor(id)).toBeUndefined();
     }
+    // 🆕🆕🆕 D566 — INVERTED: the Watchtower is BUILT (a Stadium lock, which no lock can
+    // silence), and with it in play NEITHER legal Pokémon lock source is silenced — both
+    // are off {C} — so R-LK1 still holds. Driven on the pair board above.
+    expect(programFor("sv10-180")?.stadium?.disableAbilities).toEqual({ side: "both", targetType: "Colorless" });
+    const pair = table(FLUTTER[0], [GASTRODON], FLUTTER[1], [GASTRODON]);
+    // TEST SURGERY: one deck uid re-labelled as the Watchtower and stood in the Stadium zone
+    // (this suite's pool carries no Stadium card; `stadiumEffectsOf` reads the id alone).
+    const towerUid = pair.players.p1.deck[0];
+    if (towerUid === undefined) throw new Error("no deck uid to stand in the Stadium zone");
+    const towered: GameState = {
+      ...pair,
+      cardIdByUid: { ...pair.cardIdByUid, [towerUid]: "sv10-180" },
+      stadium: { uid: towerUid, owner: "p1" },
+    };
+    expect(disabledAbilityUids(towered)).toEqual(new Set());
   });
 });

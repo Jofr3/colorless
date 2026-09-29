@@ -395,6 +395,13 @@ function redactPrompt(state: GameState, prompt: EffectPrompt): RedactedEffectPro
         ...(prompt.caps === undefined
           ? {}
           : { caps: prompt.caps.map((cap) => ({ uids: [...cap.uids], max: cap.max })) }),
+        // 🆕🆕🆕 D566 — the DISJUNCTIVE caps (Brock's Scouting), by `caps`' rule one key up:
+        // spread-when-present, fresh objects and arrays per entry.
+        ...(prompt.capsAnyOf === undefined
+          ? {}
+          : {
+              capsAnyOf: prompt.capsAnyOf.map((entry) => ({ uids: [...entry.uids], max: entry.max })),
+            }),
         note: prompt.note,
       };
     case "attachCards":

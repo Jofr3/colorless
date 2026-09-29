@@ -548,6 +548,10 @@ export function matchesFilter(card: Card | undefined, filter: CardFilter): boole
       // containment — and the real catalog puts the fragment at a non-zero offset on
       // this very family (an owner possessive does it), which is why the fixture that
       // separates the two readings is a body and not a construction.
+      // 🆕🆕🆕 D566 — and the optional rule-box conjunct (Ogre's Mask's *"a Pokémon ex …
+      // that has "Ogerpon" in its name"*), `suffixPokemon`'s EQUALITY one arm down, asked
+      // first so the D512 line below stays the two conjuncts it always was.
+      if (filter.suffix !== undefined && pokemonSuffixOf(card) !== filter.suffix) return false;
       return matchesFilter(card, { kind: "anyPokemon" }) && card.name.includes(filter.fragment);
     case "suffixPokemon":
       // 🆕🆕 D446 — a Pokémon of a printed RULE-BOX CLASS ("your opponent's Pokémon

@@ -1988,6 +1988,13 @@ export type GameEvent =
       evolve moment is announced and none fires. Both cards are named (the new one is
       face up in play; the old one was face up a moment ago). A new union member (D125). */
   | { type: "POKEMON_SWAPPED_FROM_DECK"; seat: Seat; fromUid: string; toUid: string }
+  /** 🆕🆕🆕 D566 — Ogre's Mask: `seat`'s body whose top card was `fromUid` now has `toUid`
+      (a Pokémon ex from the DISCARD PILE) on top instead, IN PLACE, and `fromUid` went to
+      the discard pile (no shuffle, no `SHUFFLE` row). A SIBLING of the deck row rather than a
+      zone rider on it — a rider would make `POKEMON_SWAPPED_FROM_DECK` name the wrong pile
+      (`DECK_BOTTOM_DISCARDED`'s reason, D565). Both cards are public (the discard pile is).
+      A new union member (D125); not persisted (D141). */
+  | { type: "POKEMON_SWAPPED_FROM_DISCARD"; seat: Seat; fromUid: string; toUid: string }
   | {
       type: "POKEMON_RETURNED";
       seat: Seat;

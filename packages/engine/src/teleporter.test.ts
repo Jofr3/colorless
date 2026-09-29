@@ -56,7 +56,9 @@ import {
 // Shortening the literal to `'attached cards'` — as wide as the noun phrase
 // goes — buys THREE rows over D311's width and **all three are a different
 // mechanism** (Palafin `sv06-060` and Ogre's Mask `sv06-159`/`sv08.5-118`:
-// *"Any attached cards, damage counters … remain on the new Pokémon"*). So the
+// *"Any attached cards, damage counters … remain on the new Pokémon"* — 🆕🆕🆕
+// D565/D566: both BUILT, on `switchWithDeckNamed` / `switchWithDiscardNamed`, and still
+// a different mechanism: an in-place swap). So the
 // widest noun-order sweep confirms D311's nine and finds nothing.
 //
 // **REVERSING THE ORDER FINDS FOUR MORE.** `'cards attached'` returns Team

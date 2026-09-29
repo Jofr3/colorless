@@ -64,7 +64,8 @@ import {
 //      (`Future` Pokémon) and Glass Trumpet (`Tera` Pokémon) both rest on a
 //      banner NO CATALOG COLUMN CLASSIFIES (`SELECT suffix, COUNT(*)` returns
 //      NULL 3,157 / `ex` 629 and nothing else — D243/D340's finding, re-run), and
-//      Powerglass wants an end-of-turn TOOL trigger point for 2 printings.
+//      Powerglass wants an end-of-turn TOOL trigger point for 2 printings (🆕🆕🆕 D566
+//      (D539): BUILT — `atEndOfYourTurnInActive`, flow.ts's `endTurnToolTrigger`).
 //   3. **CENSUS THE SENTENCE THE SENTENCE RESTS ON.** The fourth — Lycanroc's
 //      "Spike-Clad" — rests on the `onEvolve` trigger, which is **58 printings /
 //      29 legal / 13 legal sentences**, of which SIX legal sentences are unbuilt.

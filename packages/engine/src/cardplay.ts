@@ -42,6 +42,9 @@ import {
   ruffianBodies,
   runProgram,
   snipeTargets,
+  // 🆕🆕🆕 D566 — Ogre's Mask's two offer funnels.
+  swapBodies,
+  swapDiscardCards,
   switchActiveTargets,
 } from "./interpreter";
 import type { AbilityProgram } from "./registry";
@@ -783,7 +786,8 @@ export function useAbility(state: GameState, action: UseAbilityAction): ApplyRes
   }
   // §9 — a continuous Ability-lock aura (Klefki / Spiritomb / Ting-Lu ex — 🆕🆕🆕 D559:
   // and Flutter Mane / Gastrodon, the two legal locks the registry builds — Iron
-  // Thorns ex "Initialization" and Team Rocket's Watchtower are legal and unbuilt; D539) turns
+  // Thorns ex "Initialization" and Team Rocket's Watchtower are legal and unbuilt; D539 —
+  // 🆕🆕🆕 D566 (D539): the Watchtower is BUILT, the first Stadium-sourced lock) turns
   // this Pokémon's Abilities off. Checked before activeOnly/oncePerTurn/cost so a
   // locked Pokémon reports the lock, not an incidental cost failure.
   if (disabledAbilityUids(state).has(uid)) {
@@ -1412,6 +1416,16 @@ export function programPlayable(
     if (op.op === "discardToolAndSpecialEnergyChosen" && ruffianBodies(state, seat).length === 0) {
       return false;
     }
+    // 🆕🆕🆕 D566 — Ogre's Mask with no qualifying body in play, OR no qualifying card in the
+    // discard pile, can only whiff: refused on the op's OWN two offer funnels. A non-ex
+    // Ogerpon fills neither side (`pokemonNameContaining.suffix`).
+    if (
+      op.op === "switchWithDiscardNamed" &&
+      (swapBodies(state, seat, op.filter).length === 0 ||
+        swapDiscardCards(state, seat, op.filter).length === 0)
+    ) {
+      return false;
+    }
     // 🆕🆕🆕 D565 — Rocket Brain with no damaged own Team Rocket's body, or no OTHER own body
     // to move a counter onto, can only whiff. Both halves are the op's own funnels.
     if (
@@ -1542,6 +1556,22 @@ function validateChoice(prompt: EffectPrompt, choice: EffectChoice): ApplyResult
         if (picked > cap.max) {
           return err("BAD_EFFECT_CHOICE", `pick at most ${cap.max} card(s) of that kind`);
         }
+      }
+      // 🆕🆕🆕 D566 — THE DISJUNCTIVE CAPS (`capsAnyOf`, Brock's Scouting's *"up to 2 Basic
+      // Pokémon OR 1 Evolution Pokémon"*): the answer must come WHOLLY out of ONE entry and
+      // stay within THAT entry's ceiling. `every` over the picks inside `some` over the
+      // entries — a mixed answer (1 Basic + 1 Evolution) is in no entry and is refused, which
+      // is the board the conjunctive loop above would have passed. The empty answer is in
+      // every entry (the printed "up to"). Absent on every other park: the check is skipped.
+      const anyOf = prompt.capsAnyOf;
+      if (
+        anyOf !== undefined &&
+        !anyOf.some(
+          (entry) =>
+            choice.uids.length <= entry.max && choice.uids.every((uid) => entry.uids.includes(uid)),
+        )
+      ) {
+        return err("BAD_EFFECT_CHOICE", "pick from one kind only, within its limit");
       }
       return null;
     }

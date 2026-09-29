@@ -10592,7 +10592,8 @@ import type { GameState, Seat } from "./types";
     widths. Shortening the literal as far as the noun phrase goes
     (`'attached cards'`, 54 rows / **29 legal**) adds three rows over D311's and
     **all three are a different mechanism** (Palafin `sv06-060`, Ogre's Mask
-    `sv06-159`/`sv08.5-118`), so the widest noun-order sweep confirms nine and
+    `sv06-159`/`sv08.5-118` — 🆕🆕🆕 D565/D566: both BUILT, on `switchWithDeckNamed` and
+    `switchWithDiscardNamed`, and still a different mechanism), so the widest noun-order sweep confirms nine and
     finds nothing. **REVERSING THE WORD ORDER FINDS FOUR MORE**:
     `'cards attached'` returns Team Rocket's Crobat ex `sv10-122`/`-217`/`-234`/
     `-242` — *"You may put this Pokémon into your hand. (Discard all cards
@@ -16799,7 +16800,8 @@ import type { GameState, Seat } from "./types";
     REASON RATHER THAN A REMEMBERED ONE.** `ROWS` re-derived by PARSING the array:
     row 9 is largest at 7, but 5 of its 7 are refused on grounds no engine slice can
     reach (a banner no catalog column classifies; a whole end-of-turn Tool trigger
-    point for 2 printings), leaving **2 live**. Row 11's **3 are all live**, and its
+    point for 2 printings — 🆕🆕🆕 D566 (D539): the second ground was a PRICE, not a wall,
+    and D566 paid it: Powerglass is BUILT on `atEndOfYourTurnInActive`), leaving **2 live**. Row 11's **3 are all live**, and its
     cell had named the mechanism. **LIVE RESIDUE IS THE ORDERING, NOT RESIDUE.**
 
     ⚠️ **THE STEP'S SHAPE IS NOT THE RUN'S SHAPE.** Five consecutive slices moved
@@ -17019,7 +17021,7 @@ import type { GameState, Seat } from "./types";
     THE CARD THAT LANDED.** Largest live `ROWS` residue (row 9, 7 ids) → those 7 are
     FOUR blockers, three of which are refused (two rest on the Ancient/Future/Tera
     banner NO CATALOG COLUMN CLASSIFIES; one wants an end-of-turn Tool trigger for 2
-    printings) → census the sentence the fourth one RESTS ON (`onEvolve`: 58
+    printings — 🆕🆕🆕 D566 (D539): BUILT, Powerglass on `atEndOfYourTurnInActive`) → census the sentence the fourth one RESTS ON (`onEvolve`: 58
     printings / 29 legal / 13 legal sentences, SIX unbuilt) → and the cheapest thing
     that family buys turns out to be printed on a SECOND op in a SECOND column,
     doubling the row. **D341's finding at its third instance: the residue named the
@@ -20167,6 +20169,30 @@ import type { GameState, Seat } from "./types";
     `expect(manifest.version)`, `it(…)` titles, the declaration and `package.json` —
     **not** as a value-keyed grep — because a value-keyed grep is precisely the mechanism
     that ate D500's heading.)
+    🆕🆕🆕 engineVersion 0.449.0 → **0.450.0** (D566 — THE TRAINER BUNDLE PLUS THE WATCHTOWER RIDER: 9
+    PRINTINGS / 6 TEXTS / 6 OBJECTS. Six registry `CardProgram`s keyed on nine REAL ids inserted MID-MAP after
+    `sv06-060` (D395/D396, so `raw[last]` stays `sv09-107`); no row authors an `attack` key. **Brock's
+    Scouting** `sv09-146`/`-179` on `searchDeck`'s NEW `orElse` — the printed "or" as ONE park whose answer
+    must lie wholly in ONE alternative: the prompt's NEW `chooseCards.capsAnyOf` (SEPARATE from `caps`, which
+    stays conjunctive), checked by `validateChoice`, carried by redact.ts / `packages/schema` / the projection,
+    mirrored by `GameHud`'s `cappedOut`; the ceiling is the MAX over the alternatives (2), never the sum.
+    **Ogre's Mask** `sv06-159`/`sv08.5-118` on the NEW `switchWithDiscardNamed` (two parks — the body, then
+    the discard card, the prompt's NEW dest `"swap"`; the in-place top swap with the old top to the DISCARD;
+    the NEW `POKEMON_SWAPPED_FROM_DISCARD`) over `pokemonNameContaining`'s NEW `suffix` (a non-ex Ogerpon
+    refused on both sides; `programPlayable` refuses an empty offer) — R-OM ⚠️ UNRULED. **Heavy Baton**
+    `sv05-151` on the NEW `TriggerTiming` `onHolderActiveKnockedOut` — the SELF arm of triggers.ts
+    `koToolTriggersOf` on the existing `koToolTrigger` stage, the Retreat-4 clause a run-time gate in
+    `runKoToolTrigger` (the EFFECTIVE cost, R-HB ⚠️ UNRULED), `moveEnergy { selfToBench, anyDest }`.
+    **Amulet of Hope** `sv08-162` on the NEW `onHolderKnockedOut` — `koTrigger`'s NEW optional `toolUid`,
+    seeded per KO'd body (Active or Bench) in `collectKnockOutPass` off the PRE-batch board, gated by
+    `byAttackFor` AND the opponent's seat (R-AH). **Powerglass** `sv06.5-063`/`-097` on the NEW
+    `atEndOfYourTurnInActive` — the FIRST end-of-turn stage that can park (`endTurnToolTrigger`, seeded by the
+    `endTurn` stage ahead of a copy of itself marked with the NEW optional `toolsDone`), run with the
+    HOLDER's uid (R-PG). **Team Rocket's Watchtower** `sv10-180` — the FIRST Stadium-sourced Ability lock
+    (`StadiumEffects.disableAbilities`, the aura's NEW `targetType`, collected by `disabledAbilityUids`
+    before its no-aura return) — R-WT1 (printed types, tripwired), R-LK1 restated. **`MATCH_RECORD_VERSION`
+    STAYS 36**: every persisted change is a D125 widening — see docs/decisions.md D566 (d) and apps/api
+    match.ts.)
     🆕🆕🆕 engineVersion 0.448.0 → **0.449.0** (D565 — FOUR ABILITIES AND A SUPPORTER: 8 PRINTINGS / 5
     TEXTS / 5 OBJECTS, AND PALAFIN ex ×4 MADE REACHABLE. Five registry `CardProgram`s keyed on eight REAL
     ids inserted MID-MAP after `sv06.5-029` (D395/D396, so `raw[last]` stays `sv09-107`); no row authors an
@@ -20372,7 +20398,8 @@ import type { GameState, Seat } from "./types";
     `targetZone "active" | "bench"` (`auraSuppresses` takes the target's `isActive`); lock-vs-lock stays
     UNGATED and is now ARGUED unreachable among the two legal locks the registry BUILDS (D559 R-LK1 —
     not Standard at large: Iron Thorns ex "Initialization" and Team Rocket's Watchtower are legal and
-    unbuilt, and an Active Flutter Mane silencing an opposing Active Iron Thorns ex re-opens the gap, so
+    unbuilt (🆕🆕🆕 D566 (D539): the Watchtower is BUILT — a Stadium, unsilenceable, over {C} bodies,
+    neither legal lock source being {C}, so R-LK1 holds with it), and an Active Flutter Mane silencing an opposing Active Iron Thorns ex re-opens the gap, so
     the fixpoint pass is owed when Initialization is built; tripwired by id), pinned on a rotated Klefki vs
     Flutter Mane board. **Orthworm ex** `sv07-110`/`-162` "Pummeling Payback" on the NEW
     `damageAttacker.perAttachedEnergy` (the fold multiplies by `countAttachedEnergy`, provision — both read
@@ -24602,7 +24629,7 @@ import type { GameState, Seat } from "./types";
     WITNESS** — the count was re-derived every slice and the word *"three"* was carried.
     A successor of this slice inherits **81 / 61 / 17** again, over **FIVE** history
     occurrences: those four plus `deckMillFilteredScale.test.ts`'s own header arrow.) */
-export const engineVersion = "0.449.0";
+export const engineVersion = "0.450.0";
 
 export type {
   ApplyResult,

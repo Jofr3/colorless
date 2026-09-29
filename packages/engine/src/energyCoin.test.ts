@@ -605,16 +605,21 @@ describe("D355 §7 — what row 10's closure leaves behind", () => {
     expect(programFor("sv09-107")).toBeDefined();
   });
 
-  it("🛑 the LIVE residue is now ONE, and row 9's five are not it", () => {
-    // Row 9's five `effectIds` are all refused on grounds no engine slice can
+  it("🛑 the LIVE residue is now ONE, and row 9's three are not it", () => {
+    // Row 9's ~~five~~ three `effectIds` are all refused on grounds no engine slice can
     // reach: Reboot Pod `sv05-158` and Glass Trumpet `sv07-135`/`sv08.5-110` (no
-    // catalog column classifies the Ancient/Future banner), and Powerglass
-    // `sv06.5-063`/`sv06.5-097` (a whole new end-of-turn Tool trigger point).
+    // catalog column classifies the Ancient/Future banner). ~~and Powerglass
+    // `sv06.5-063`/`sv06.5-097` (a whole new end-of-turn Tool trigger point)~~ —
+    // 🆕🆕🆕 D566 CORRECTION (D539): WITHDRAWN, and it was never a ground "no engine slice
+    // can reach" — it was a PRICE. D566 paid it: the `atEndOfYourTurnInActive` timing and
+    // flow.ts's parking `endTurnToolTrigger` stage BUILD Powerglass (`koToolsD566.test.ts`
+    // §4), so both ids leave this loop.
     // ⚠️ **A COUNT IS NOT A RESIDUE** — that row is the standing example, and after
     // this slice it is the ONLY thing standing between `ROWS`' total of 6 and a
     // live residue of 1.
-    for (const id of ["sv05-158", "sv07-135", "sv08.5-110", "sv06.5-063", "sv06.5-097"]) {
+    for (const id of ["sv05-158", "sv07-135", "sv08.5-110"]) {
       expect(programFor(id)).toBeUndefined();
     }
+    expect(programFor("sv06.5-063")?.triggered?.[0]?.trigger).toBe("atEndOfYourTurnInActive");
   });
 });

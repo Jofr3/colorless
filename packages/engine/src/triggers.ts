@@ -520,6 +520,16 @@ export function damagedByAttackAbility(
         POKÉMON THIS CARD IS ATTACHED TO" names two Pokémon. An Exp. Share on the
         dying Active names one, has no destination distinct from its source, and is
         in the same discard-bound stack as the Energy — so it is not a holder here.
+        🆕🆕🆕 D566: STILL TRUE FOR `onAllyActiveKnockOut` AND NO LONGER THE WHOLE SCAN —
+        the KO'd body's OWN Tools are now read for the SELF timing
+        `onHolderActiveKnockedOut` (Heavy Baton `sv05-151`: *"If the Pokémon this card is
+        attached to has a Retreat Cost of exactly 4, is in the Active Spot, and is Knocked
+        Out…, move up to 3 Basic Energy cards from that Pokémon to your Benched Pokémon"*),
+        which names ONE Pokémon — the dying holder — and a Bench destination. The ally arm's
+        skip rule (`holderUid === koedUid`) is unchanged; the self arm reads ONLY the KO'd
+        body and ONLY that timing. The Retreat Cost clause is NOT asked here: this scan is
+        also attack.ts's presence seed, so the gate is flow.ts `runKoToolTrigger`'s, read at
+        run time before the discard (R-HB).
       • NO §9 GATE. `triggersOf` suppresses a locked Pokémon's triggered Abilities;
         this scan deliberately does not, because a TOOL IS NOT AN ABILITY —
         `passivesOf` states the same rule for the same reason ("a locked Pokémon's
@@ -532,7 +542,11 @@ export function damagedByAttackAbility(
 
     Read by flow.ts (`runKoToolTrigger`, which fires the first match) and by
     attack.ts (presence alone, to decide whether to seed the stage at all — so an
-    attack into a board with no such Tool keeps its exact pre-D171 pending queue). */
+    attack into a board with no such Tool keeps its exact pre-D171 pending queue).
+    🆕🆕🆕 D566 — the order is BOARD order with the Active first, so a Heavy Baton on the
+    dying Active precedes an Exp. Share on a Bench body, and the runner fires the FIRST match
+    ONLY: with both present (Exp. Share `sv01-174` is rotated, so no legal deck holds both)
+    the Baton fires and the Share does not. A stated limitation, pinned, not a ruling. */
 export function koToolTriggersOf(
   state: GameState,
   seat: Seat,
@@ -543,14 +557,72 @@ export function koToolTriggersOf(
   const bodies = side.active === null ? side.bench : [side.active, ...side.bench];
   for (const body of bodies) {
     const holderUid = topUid(body);
-    if (holderUid === undefined || holderUid === koedUid) continue;
+    if (holderUid === undefined) continue;
+    // 🆕🆕🆕 D566 — THE KO'D BODY IS SKIPPED for the ally timing and READ for the self one:
+    // the timing this body answers is chosen by whether it IS the dying body.
+    const timing: TriggerTiming =
+      holderUid === koedUid ? "onHolderActiveKnockedOut" : "onAllyActiveKnockOut";
     for (const toolUid of toolsInEffect(state, body)) {
       const id = state.cardIdByUid[toolUid];
       if (id === undefined) continue;
       for (const ability of programFor(id)?.triggered ?? []) {
-        if (ability.trigger !== "onAllyActiveKnockOut") continue;
+        if (ability.trigger !== timing) continue;
         out.push({ toolUid, holderUid, ability });
       }
+    }
+  }
+  return out;
+}
+
+/** 🆕🆕🆕 §8.1 (D566) — THE TOOL-BORNE AFTER-THE-KNOCK-OUT SCAN: every `onHolderKnockedOut`
+    program a POKÉMON TOOL on `body` carries (Amulet of Hope `sv08-162`: *"If the Pokémon this
+    card is attached to is Knocked Out by damage from an attack from your opponent's Pokémon,
+    search your deck for up to 3 cards and put them into your hand. Then, shuffle your
+    deck."*), as the Tools' uids in attachment order. Asked by flow.ts `collectKnockOutPass`
+    of the PRE-batch body (Active OR Bench), whose seat/cause gate is the caller's; through
+    `toolsInEffect`, so Jamming Tower silences it; NO §9 gate (a Tool is not an Ability). */
+export function koHolderToolTriggersOf(state: GameState, body: InPlayPokemon): string[] {
+  return toolsInEffect(state, body).filter((toolUid) => {
+    const id = state.cardIdByUid[toolUid];
+    return (
+      id !== undefined &&
+      (programFor(id)?.triggered ?? []).some((ability) => ability.trigger === "onHolderKnockedOut")
+    );
+  });
+}
+
+/** 🆕🆕🆕 D566 — the `timing` program printed on the POKÉMON TOOL `toolUid`, or undefined.
+    Resolved through `cardIdByUid` → `programFor`, which stays valid after the Tool left play
+    (Amulet of Hope's stage runs once the holder's stack, Tool included, is in the discard
+    pile — `onKnockOutTrigger`'s reason one screen up). The runners' ONE lookup. */
+export function toolTriggerOf(
+  state: GameState,
+  toolUid: string,
+  timing: TriggerTiming,
+): TriggeredAbility | undefined {
+  const id = state.cardIdByUid[toolUid];
+  if (id === undefined) return undefined;
+  return (programFor(id)?.triggered ?? []).find((ability) => ability.trigger === timing);
+}
+
+/** 🆕🆕🆕 §5.3 (D566) — THE END-OF-TURN TOOL SCAN: every live Tool on `seat`'s ACTIVE carrying
+    an `atEndOfYourTurnInActive` program (Powerglass `sv06.5-063` / `-097`: *"At the end of
+    your turn (after your attack), if the Pokémon this card is attached to is in the Active
+    Spot, you may attach a Basic Energy card from your discard pile to it."*), with it. Asked by
+    flow.ts's `endTurn` stage (the seed) and by its runner (the re-check). The Active only —
+    the print's own clause. Through `toolsInEffect`; no §9 gate. */
+export function endTurnToolTriggersOf(
+  state: GameState,
+  seat: Seat,
+): { toolUid: string; ability: TriggeredAbility }[] {
+  const holder = state.players[seat].active;
+  if (holder === null) return [];
+  const out: { toolUid: string; ability: TriggeredAbility }[] = [];
+  for (const toolUid of toolsInEffect(state, holder)) {
+    const id = state.cardIdByUid[toolUid];
+    if (id === undefined) continue;
+    for (const ability of programFor(id)?.triggered ?? []) {
+      if (ability.trigger === "atEndOfYourTurnInActive") out.push({ toolUid, ability });
     }
   }
   return out;

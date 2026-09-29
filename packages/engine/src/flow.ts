@@ -3,6 +3,7 @@ import type { ApplyResult, ConcedeAction } from "./actions";
 import { err, ok } from "./actions";
 import { activeTop, cardOfUid, prizeValueOf, topCardOf, topUid } from "./cards";
 import {
+  effectiveRetreatCost,
   isLethallyDamaged,
   passivesOf,
   seatBurnExtraCounters,
@@ -18,9 +19,12 @@ import { flipCoin } from "./rng";
 import {
   damagedByAttackAbility,
   damagedToolTriggersOf,
+  endTurnToolTriggersOf,
+  koHolderToolTriggersOf,
   koToolTriggersOf,
   onKnockOutTrigger,
   runCheckupTriggers,
+  toolTriggerOf,
 } from "./triggers";
 import type {
   GameOutcome,
@@ -773,12 +777,36 @@ function collectKnockOutPass(
     if (entry.hasProgram) {
       koTriggerStages.push({ kind: "koTrigger", seat: entry.ref.seat, uid: entry.ref.uid });
     }
+    // 🆕🆕🆕 D566 — AMULET OF HOPE (`onHolderKnockedOut`): *"If the Pokémon this card is
+    // attached to is Knocked Out by damage from an attack from your opponent's Pokémon"*.
+    // One `koTrigger` per such Tool, carrying its uid, BEHIND the body's own on-KO stage and
+    // inside the koTrigger group — so PRIZES → koTriggers → PROMOTIONS is inherited, not
+    // re-spelled. The Tools are read off the PRE-batch `state` (`byAttackFor`'s witness rule:
+    // by now the body's stack is in the discard pile). "By damage from an attack" is
+    // `byAttackFor` (per body: the Checkup and the mid-turn sweep pass no `attackerSeat`, and
+    // `knockOutDefender`'s doom is not damage); "your OPPONENT's Pokémon" is the seat clause
+    // `byAttackFor` does not carry — a recoil or self-damage KO of the attacker's own body in
+    // the same sweep is refused by it.
+    if (attackerSeat !== entry.ref.seat && byAttackFor(entry.ref)) {
+      const holder = preBatchBody(state, entry.ref);
+      for (const toolUid of holder === undefined ? [] : koHolderToolTriggersOf(state, holder)) {
+        koTriggerStages.push({ kind: "koTrigger", seat: entry.ref.seat, uid: entry.ref.uid, toolUid });
+      }
+    }
   }
   return {
     state: next,
     stages: [...prizeStages, ...koTriggerStages, ...promoteStages],
     koedSeats: refs.map((ref) => ref.seat),
   };
+}
+
+/** 🆕🆕🆕 D566 — the in-play body on `ref.seat` whose top uid is `ref.uid`, on `state` (the
+    PRE-batch board `collectKnockOutPass` is handed), or undefined. */
+function preBatchBody(state: GameState, ref: { seat: Seat; uid: string }): InPlayPokemon | undefined {
+  const side = state.players[ref.seat];
+  const bodies = side.active === null ? side.bench : [side.active, ...side.bench];
+  return bodies.find((body) => topUid(body) === ref.uid);
 }
 
 /** The per-KO Prize plan for a batch (§9 on-KO Abilities). Resolve each on-KO
@@ -1456,7 +1484,22 @@ function runKoTrigger(
   koedSeat: Seat,
   uid: string,
   events: GameEvent[],
+  /** 🆕🆕🆕 D566 — the stage's `toolUid` (Amulet of Hope): run THAT Tool's
+      `onHolderKnockedOut` program instead of the body's own on-KO Ability. `sourceUid` is
+      the Tool's (the program reads no body — the search is the controller's deck). No
+      `ABILITY_TRIGGERED` row: a Tool has no Ability to trigger (Exp. Share's rule). */
+  toolUid?: string,
 ): ApplyResult {
+  if (toolUid !== undefined) {
+    const amulet = toolTriggerOf(state, toolUid, "onHolderKnockedOut");
+    if (amulet === undefined) return advance(state, events);
+    return settleProgram(
+      runProgram(state, amulet.program, { seat: koedSeat, sourceUid: toolUid }, events),
+      koedSeat,
+      events,
+      { resumeTail: true },
+    );
+  }
   const ability = onKnockOutTrigger(state, uid);
   if (ability === undefined || ability.program.length === 0) return advance(state, events);
   events.push({ type: "ABILITY_TRIGGERED", seat: koedSeat, uid, ability: ability.name });
@@ -1542,7 +1585,9 @@ function runDamagedTrigger(
     Energy from that Pokémon to the Pokémon this card is attached to"). The third
     sibling of runKoTrigger / runDamagedTrigger, and the first whose `uid` is NOT the
     body whose card runs — the bearer is a SURVIVING Pokémon found by re-scanning the
-    board (triggers.ts `koToolTriggersOf`).
+    board (triggers.ts `koToolTriggersOf`). 🆕🆕🆕 D566: or — for Heavy Baton `sv05-151`
+    (`onHolderActiveKnockedOut`, the scan's self arm) — the DYING Active itself, whose
+    Energy the program moves to the Bench before `knockOut` discards it.
 
     ⚠️ THE PLACEMENT IS THE WHOLE DESIGN, AND IT IS A TEMPORAL FACT RATHER THAN A
     TASTE. This stage sits AHEAD of `attackEpilogue`, so it runs BEFORE
@@ -1577,6 +1622,12 @@ function runDamagedTrigger(
     Fires the FIRST match (§7.4 allows one Tool per Pokémon; several holders on one
     board would each print their own sentence, and chaining a second PARKING trigger
     behind the first is the same follow-up the board triggers already defer).
+    🆕🆕🆕 D566 — the first LIVE match: the scan now also yields the dying Active's OWN
+    Heavy Baton (`onHolderActiveKnockedOut`, the scan's self arm, first in board order),
+    and a Baton failing its Retreat-exactly-4 clause (read below) is skipped rather than
+    firing as a whiff. With a live Baton AND an Exp. Share on the board only the Baton
+    fires — the first-match limitation, stated and pinned (`koToolsD566.test.ts` §2), not a
+    ruling; no legal deck can hold both (Exp. Share `sv01-174` is rotated).
     `sourceUid` is the TOOL's uid, not the holder's — the program's route resolves
     "the Pokémon this card is attached to" from it, which is the phrase a Tool
     prints where a Pokémon prints "this Pokémon". No ABILITY_TRIGGERED row: a Tool
@@ -1587,11 +1638,47 @@ function runKoToolTrigger(state: GameState, koedSeat: Seat, events: GameEvent[])
   if (active === null || !isLethallyDamaged(state, active)) return advance(state, events);
   const uid = topUid(active);
   if (uid === undefined) return advance(state, events);
-  const entry = koToolTriggersOf(state, koedSeat, uid)[0];
+  // 🆕🆕🆕 D566 — HEAVY BATON's *"has a Retreat Cost of exactly 4"*, asked HERE (the scan is
+  // also attack.ts's presence seed): the dying Active's EFFECTIVE Retreat Cost (R-HB,
+  // UNRULED — reversal: the PRINTED cost), read now, BEFORE `knockOut` discards the stack. A
+  // Baton that fails it is not a match, so the FIRST match is the first LIVE one.
+  const entry = koToolTriggersOf(state, koedSeat, uid).find(
+    (candidate) =>
+      candidate.ability.trigger !== "onHolderActiveKnockedOut" ||
+      effectiveRetreatCost(state, active) === 4,
+  );
   if (entry === undefined || entry.ability.program.length === 0) return advance(state, events);
   return settleProgram(
     runProgram(state, entry.ability.program, { seat: koedSeat, sourceUid: entry.toolUid }, events),
     koedSeat,
+    events,
+    { resumeTail: true },
+  );
+}
+
+/** 🆕🆕🆕 §5.3 (D566) — run Powerglass's program (`atEndOfYourTurnInActive`) for the Tool
+    `toolUid`, re-asking the print at run time: the Tool must still be LIVE on `seat`'s
+    ACTIVE (`endTurnToolTriggersOf` — the seed's own scan), else the stage drains as a whiff.
+    `sourceUid` is the HOLDER's top uid, NOT the Tool's: the program's `attachEnergyFrom
+    { toSelf }` resolves "it" (*"attach a Basic Energy card from your discard pile to it"*)
+    through `sourceRef`, which matches a TOP uid and would return nothing for a Tool
+    (`toolHolderRef`'s doc states the two readers). Runs under the TURN OWNER and folds
+    through settleProgram with `resumeTail`, so the declinable park resumes the re-queued
+    `endTurn`. It fires on EVERY turn end with a Powerglass'd Active — an attack is not
+    required ("after your attack" orders it, it does not condition it). */
+function runEndTurnToolTrigger(
+  state: GameState,
+  seat: Seat,
+  toolUid: string,
+  events: GameEvent[],
+): ApplyResult {
+  const holder = state.players[seat].active;
+  const holderUid = holder === null ? undefined : topUid(holder);
+  const entry = endTurnToolTriggersOf(state, seat).find((live) => live.toolUid === toolUid);
+  if (holderUid === undefined || entry === undefined) return advance(state, events);
+  return settleProgram(
+    runProgram(state, entry.ability.program, { seat, sourceUid: holderUid }, events),
+    seat,
     events,
     { resumeTail: true },
   );
@@ -2279,6 +2366,30 @@ export function advance(state: GameState, events: GameEvent[]): ApplyResult {
       return ok(next, events);
     }
     case "endTurn": {
+      // 🆕🆕🆕 D566 — POWERGLASS, THE FIRST END-OF-TURN STAGE THAT CAN PARK: one
+      // `endTurnToolTrigger` per live `atEndOfYourTurnInActive` Tool on the turn owner's
+      // Active, queued AHEAD of a copy of this stage marked `toolsDone` (so the copy ends the
+      // turn instead of seeding again). Seeded only when such a Tool is there, so every other
+      // board keeps its queue byte-identical. It precedes Amarys's discard below — moot
+      // (Powerglass moves no hand card) and pinned.
+      if (stage.toolsDone !== true) {
+        const powerglass = endTurnToolTriggersOf(state, stage.seat);
+        if (powerglass.length > 0) {
+          return advance(
+            {
+              ...state,
+              pending: [
+                ...powerglass.map(
+                  ({ toolUid }): PendingStage => ({ kind: "endTurnToolTrigger", seat: stage.seat, toolUid }),
+                ),
+                { ...stage, toolsDone: true },
+                ...state.pending.slice(1),
+              ],
+            },
+            events,
+          );
+        }
+      }
       // 🆕🆕🆕 D564 — Amarys's *"At the end of this turn, if you have 5 or more cards in your
       // hand, discard your hand."* — paid HERE, before `TURN_ENDED`, before the Checkup and
       // before `startTurn`'s `freshAllowances()` wipes the threshold. `stage.seat` IS the turn
@@ -2311,7 +2422,12 @@ export function advance(state: GameState, events: GameEvent[]): ApplyResult {
       // §9 (M4) — the just-Knocked-Out Pokémon's on-KO Ability. Pop the stage
       // first so the prize/promotion stages behind it are what resumes if the
       // program parks (resume-the-tail); a done program just keeps draining.
-      return runKoTrigger(popStage(state), stage.seat, stage.uid, events);
+      // 🆕🆕🆕 D566 — or, with `toolUid`, an Amulet of Hope that was attached to it.
+      return runKoTrigger(popStage(state), stage.seat, stage.uid, events, stage.toolUid);
+    case "endTurnToolTrigger":
+      // 🆕🆕🆕 D566 — Powerglass. Pop first (resume-the-tail): the re-queued `endTurn` behind
+      // it is what drains when the program is done or its park resolves.
+      return runEndTurnToolTrigger(popStage(state), stage.seat, stage.toolUid, events);
     case "damagedTrigger":
       // §9 — the damaged Active's reactive onDamagedByAttack Ability (Klawf ex's
       // parking Energy discard, Armarouge's Burn). Pop first so the attackEpilogue

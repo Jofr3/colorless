@@ -1757,6 +1757,8 @@ const CHOOSE_CARDS_VERB: Record<
   evolve: { mandatory: "Evolve", upTo: "Evolve" },
   // 🆕🆕🆕 D565 — Impromptu Carrier's "…and attach it to this Pokémon" (an up-to search).
   attach: { mandatory: "Attach", upTo: "Attach" },
+  // 🆕🆕🆕 D566 — Ogre's Mask's "switch it with 1 of your Pokémon ex in play" (a mandatory pick).
+  swap: { mandatory: "Switch in", upTo: "Switch in" },
 };
 
 function ChooseCardsDialog({
@@ -1781,7 +1783,20 @@ function ChooseCardsDialog({
   const cappedOut = (uid: string, prev: readonly string[]) =>
     (prompt.caps ?? []).some(
       (cap) => cap.uids.includes(uid) && prev.filter((u) => cap.uids.includes(u)).length >= cap.max,
-    );
+    ) ||
+    // 🆕🆕🆕 D566 — THE DISJUNCTIVE CAPS (Brock's Scouting's "up to 2 Basic Pokémon OR 1
+    // Evolution Pokémon"): a row is live only while SOME entry can take the picks so far
+    // PLUS this one — so after one Basic every Evolution row greys, after one Evolution every
+    // Basic row greys, and a second Evolution greys too (that entry's ceiling is 1). The
+    // validator's own test (`validateChoice`), asked one pick ahead — never afford-then-reject
+    // (D190/D222).
+    (prompt.capsAnyOf !== undefined &&
+      !prompt.capsAnyOf.some(
+        (entry) =>
+          prev.length + 1 <= entry.max &&
+          entry.uids.includes(uid) &&
+          prev.every((u) => entry.uids.includes(u)),
+      ));
   const toggle = (uid: string) => {
     setPicked((prev) =>
       prev.includes(uid)

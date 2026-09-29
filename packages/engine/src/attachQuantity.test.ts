@@ -835,7 +835,12 @@ describe("D359 §6 — the ids this file rests on are real and locally seated", 
     // "Impromptu Carrier", Palafin "Zero to Hero", Ruffian ×2. Real catalog ids, no `fix-*` key
     // (`abilityBundleD565.test.ts` / `ruffianD565.test.ts` drive a LOCAL `cardPool`), inserted
     // MID-MAP after `sv06.5-029`, and no row authors an `attack` program.
-    expect(registryCardIds()).toHaveLength(905);
+    // 🆕🆕🆕 D566 — 905 -> **914**: NINE registry keys on SIX program objects — Brock's Scouting
+    // ×2, Ogre's Mask ×2, Heavy Baton, Amulet of Hope, Powerglass ×2, Team Rocket's Watchtower.
+    // Real catalog ids, no `fix-*` key (`trainerBundleD566.test.ts` / `koToolsD566.test.ts`
+    // drive a LOCAL `cardPool`), inserted MID-MAP after `sv06-060`, and no row authors an
+    // `attack` program.
+    expect(registryCardIds()).toHaveLength(914);
     for (const id of Object.values(QUANTITY_IDS).flat()) {
       if (programFor(id) === undefined) continue;
       // Every id that DOES have a program had one before this slice: the eight

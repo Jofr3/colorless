@@ -218,7 +218,7 @@ describe("§1 — the census D282 priced its refusal against: counts reproduce, 
     expect(units(gateAll) - units(firstTurn)).toBe(6);
   });
 
-  it("S2 — 17 of 905 registry ids carry an `attackGate`, in three kinds", () => {
+  it("S2 — 17 of 914 registry ids carry an `attackGate`, in three kinds", () => {
     // The registry side of the same 13, walked independently of the text side:
     // a count that agrees across two surfaces is a count, not a transcription.
     // 🆕🆕 D396 — 14 -> **17**, and this is the FIRST slice on which the registry
@@ -349,7 +349,12 @@ describe("§1 — the census D282 priced its refusal against: counts reproduce, 
     // "Impromptu Carrier", Palafin "Zero to Hero", Ruffian ×2. Real catalog ids, no `fix-*` key
     // (`abilityBundleD565.test.ts` / `ruffianD565.test.ts` drive a LOCAL `cardPool`), inserted
     // MID-MAP after `sv06.5-029`, and no row authors an `attack` program.
-    expect(ids.length).toBe(905);
+    // 🆕🆕🆕 D566 — 905 -> **914**: NINE registry keys on SIX program objects — Brock's Scouting
+    // ×2, Ogre's Mask ×2, Heavy Baton, Amulet of Hope, Powerglass ×2, Team Rocket's Watchtower.
+    // Real catalog ids, no `fix-*` key (`trainerBundleD566.test.ts` / `koToolsD566.test.ts`
+    // drive a LOCAL `cardPool`), inserted MID-MAP after `sv06-060`, and no row authors an
+    // `attack` program.
+    expect(ids.length).toBe(914);
     const gated = ids.filter((id) => programFor(id)?.attackGate !== undefined);
     expect(gated.length).toBe(17);
     const kinds = gated.flatMap((id) =>

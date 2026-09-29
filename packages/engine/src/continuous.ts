@@ -235,7 +235,10 @@ export function stadiumShieldsStatus(state: GameState, pokemon: InPlayPokemon): 
     Stage 2. ⚠️ Standard prints two more locks this registry does NOT build: Iron Thorns
     ex `sv06-077`/`-196`/`sv08.5-032` "Initialization" (Active-sourced, Rule Box bodies,
     except Future Pokémon) and the Stadium Team Rocket's Watchtower `sv10-180` ({C}
-    bodies). The first re-opens the gap: an Active Flutter Mane silences an opposing
+    bodies) (🆕🆕🆕 D566 CORRECTION (D539): the Watchtower is BUILT — `StadiumEffects.
+    disableAbilities`, collected below — and R-LK1 still holds with it: a Stadium cannot be
+    silenced, and neither legal Pokémon lock source is {C} — Flutter Mane {P}, Gastrodon
+    {F} — so it switches no lock off; Iron Thorns ex stays the one unbuilt legal lock). The first re-opens the gap: an Active Flutter Mane silences an opposing
     Active Iron Thorns ex, whose lock the rules then switch off and this ungated pass
     would keep on. So R-LK1 holds only while Initialization is UNBUILT, and the fixpoint
     pass is OWED in the slice that builds it (a tripwire in `abilityBundleD559.test.ts`
@@ -260,6 +263,16 @@ export function disabledAbilityUids(state: GameState): Set<string> {
       if (aura.sourceOnBench === true && holder === side.active) continue;
       auras.push({ aura, sourceSeat: seat });
     }
+  }
+  // 🆕🆕🆕 D566 — THE STADIUM'S LOCK (Team Rocket's Watchtower `sv10-180`, *"{C} Pokémon in
+  // play (both yours and your opponent's) have no Abilities."*), collected BEFORE the no-aura
+  // return so a board whose only lock is the Stadium is not waved through. The same aura
+  // type and the same `auraSuppresses` as a Pokémon's; `sourceSeat` is the Stadium's OWNER,
+  // which no `side "both"` aura reads. Ungated like every aura here — and a Stadium is no
+  // Ability, so no lock can silence it (R-ST2's reason; R-LK1 restated in decisions.md D566).
+  const stadiumAura = stadiumEffectsOf(state)?.disableAbilities;
+  if (stadiumAura !== undefined && state.stadium !== null) {
+    auras.push({ aura: stadiumAura, sourceSeat: state.stadium.owner });
   }
   if (auras.length === 0) return disabled;
   // Then evaluate each aura's target predicate against every in-play Pokémon.
@@ -304,6 +317,9 @@ function auraSuppresses(
   if (aura.targetZone === "bench" && isActive) return false;
   if (aura.suffix !== undefined && pokemonSuffixOf(top) !== aura.suffix) return false;
   if (aura.requiresDamage === true && target.damage <= 0) return false;
+  // 🆕🆕🆕 D566 — Team Rocket's Watchtower's "{C} Pokémon": the target's PRINTED types (R-WT1 —
+  // exact while no type-changing passive is built; pinned by a registry walk).
+  if (aura.targetType !== undefined && !(top.types ?? []).includes(aura.targetType)) return false;
   if (aura.exemptSuffix !== undefined && pokemonSuffixOf(top) === aura.exemptSuffix) return false;
   if (
     aura.exemptAbilityNamed !== undefined &&

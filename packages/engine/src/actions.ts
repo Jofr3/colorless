@@ -292,7 +292,9 @@ export type ErrorCode =
   /** §9 — a continuous Ability-lock aura (Klefki / Spiritomb / Ting-Lu ex — 🆕🆕🆕
       D559: and Flutter Mane "Midnight Fluttering" / Gastrodon "Sticky Bind", the two
       legal locks the registry builds; Iron Thorns ex "Initialization" and Team Rocket's
-      Watchtower are legal and unbuilt; the list of three is withdrawn, D539) has turned
+      Watchtower are legal and unbuilt; the list of three is withdrawn, D539 — 🆕🆕🆕 D566
+      (D539): the Watchtower is BUILT, a STADIUM-sourced lock over {C} bodies; Iron Thorns ex
+      stays the one unbuilt legal lock) has turned
       this Pokémon's
       Abilities off. */
   | "ABILITY_DISABLED"

@@ -28276,13 +28276,13 @@ round-trips with `endsTurn`. Census: `BUILT.trainer` 113 → 128 (Item 29 → 34
 
 ### (e) Owed
 The audit's other deck searches need vocabulary: Team Rocket's Great Ball (🆕🆕🆕 2026-09-26 D556 CORRECTION (D539): it needed none — BUILT at D556), TM Machine, Brilliant Blender, Tera Orb,
-Brock's Scouting, Love Ball, Dusk Ball, Crispin, Perrin, Salvatore. (🆕🆕🆕 2026-09-26 D557: TM Machine, Brilliant Blender and
+Brock's Scouting (🆕🆕🆕 D566: BUILT), Love Ball, Dusk Ball, Crispin, Perrin, Salvatore. (🆕🆕🆕 2026-09-26 D557: TM Machine, Brilliant Blender and
 Dusk Ball are BUILT — one small rider each: `CardFilter.toolNameContaining`, `searchDeck.dest: "discard"`, `lookAtTopN.from:
-"bottom"`. Brock's Scouting stays deferred: its either-scope cap is new wire validation, and optional-first is refused by D344.)
+"bottom"`. Brock's Scouting stays deferred (🆕🆕🆕 D566: BUILT): its either-scope cap is new wire validation, and optional-first is refused by D344.)
 (🆕🆕🆕 2026-09-26 D558: Salvatore is BUILT — one optional key, `noAbilities` on `evolveFromDeckChosen` / `evolveFromDeck`,
 threaded through the body narrowing, the answer, the offer and the move.) (🆕🆕🆕 D561: Love Ball, Crispin and Perrin are
 BUILT — `searchDeck.sameNameAsOpponentInPlay`, `attachEnergyFrom.oneOfRecorded`, `searchDeck.maxRecorded` + the declinable
-`payFromHand`'s `"deckBottom"`; Tera Orb and Brock's Scouting remain.) Next queue: the conditional-draw Trainers (Iris,
+`payFromHand`'s `"deckBottom"`; Tera Orb and Brock's Scouting (🆕🆕🆕 D566: BUILT) remain.) Next queue: the conditional-draw Trainers (Iris,
 Ariana, Billy — 6 printings, 2 `BoardCondition` members), then Samurott and Snow Sink.
 
 ## D555 — the zero-vocabulary Trainers and Abilities: 20 printings / 12 texts / 12 objects, one caption branch, and the Samurott refusal retired (engine 0.439.0, `MATCH_RECORD_VERSION` 34 HELD)
@@ -28424,7 +28424,7 @@ re-declared and re-probed); declared survivors 53 → 52.
 
 ### (e) Owed
 The whole-corpus sweep (~~D552 → … → D557, all pending~~ D552–D556 PAID, each exact on its first launch — D556's `3201 · 53` at
-close-out `0a9db1be`; D557's ~~pending, predicted `3226 · 52` over 3,278~~ PAID `3226 · 52` over 3,278 at close-out `01c6d987`, exact on its first launch — 🆕 D558 landing). Brock's Scouting deferred. R-K1, R-L1 UNRULED; R-K2's deviation (a debt).
+close-out `0a9db1be`; D557's ~~pending, predicted `3226 · 52` over 3,278~~ PAID `3226 · 52` over 3,278 at close-out `01c6d987`, exact on its first launch — 🆕 D558 landing). Brock's Scouting deferred (🆕🆕🆕 D566: BUILT). R-K1, R-L1 UNRULED; R-K2's deviation (a debt).
 The HUD does not show a side bonus (D556's debt). Next: the ability bundle (16 printings / 10 items) (🆕 D557 landing: after
 D558 — the first Tools and Stadiums plus Salvatore, parked on `d558-prep` at `28518c81`, stacked on D557 — which lands first).
 
@@ -28524,7 +28524,7 @@ killed undeclared; five rows re-anchored onto the Weakness bytes and re-probed);
 ### (e) Owed
 The whole-corpus sweep (~~D556 → D559, all pending~~ D556, D557 and D558 PAID, each exact on its first launch — D558's `3263 · 52` over 3,315 at close-out `ff618ad6`; only D559's own is owed, predicted `3294 killed · 52 known survivor(s)` over 3,346). R-FZ1 UNRULED; R-FZ2 UNRULED for Blooming Garden and D432's bar only. R-O1 (bench recoil read). The HUD does not show
 the rewritten Weakness (display debt, D552 ⑽'s precedent). Next: Feraligatr "Torrential Heart" (🆕🆕🆕 D563: BUILT), then (iii)'s non-overlapping
-remainder (Watchtower, Slaking ex, Thwackey, Drilbur, Festival Grounds, Scoop Up Cyclone, Love Ball), re-priced now that
+remainder (Watchtower (🆕🆕🆕 D566: BUILT), Slaking ex, Thwackey, Drilbur, Festival Grounds, Scoop Up Cyclone, Love Ball), re-priced now that
 Gastrodon and Flutter Mane have landed. (🆕🆕🆕 D560: Slaking ex, Thwackey and Drilbur BUILT — see D560 below.) (🆕🆕🆕 D561:
 Scoop Up Cyclone and Love Ball BUILT — see D561 below.) (🆕🆕🆕 D562: Festival Grounds BUILT — see D562 below; Festival
 Lead, the Ability that names it, stays blocked.)
@@ -28623,7 +28623,7 @@ Night lit a row the engine refuses) — now in `redact.ts` and GameHud, each dri
 
 ### (e) Owed
 The whole-corpus sweep (~~D559 → D561 pending~~ D559 and D560 PAID, each exact — D560's `3333 · 52` over 3,385 at close-out `a4e0cd5e`, on its second launch; only D561's own is owed, predicted `3384 killed · 52 known survivor(s)` over 3,436). R-CR1 UNRULED. The 0.444 rollback readings (named, not bumped). Tera Orb and
-Brock's Scouting (deferred); Farfetch'd `sv06-132` (🆕🆕🆕 D565: BUILT); Festival Grounds / Festival Lead; Team Rocket's Watchtower; Crobat (🆕🆕🆕 D564: BUILT).
+Brock's Scouting (deferred) (🆕🆕🆕 D566: BUILT); Farfetch'd `sv06-132` (🆕🆕🆕 D565: BUILT); Festival Grounds / Festival Lead; Team Rocket's Watchtower (🆕🆕🆕 D566: BUILT); Crobat (🆕🆕🆕 D564: BUILT).
 (🆕🆕🆕 D562: Festival Grounds BUILT — see D562 below; Festival Lead stays blocked.)
 
 ## D562 — consumable Tools, Jamming Tower and Festival Grounds: 14 printings / 12 texts / 12 objects (engine 0.446.0, `MATCH_RECORD_VERSION` stays 35)
@@ -28762,7 +28762,7 @@ D275's version step; declared survivors 52 unmoved.
 The whole-corpus sweep: ~~D562's (running in the main checkout, predicted `3453 · 52` over 3,505), D563's (predicted `3506 · 52` over
 3,558) and this one's (predicted `3559 · 52` over 3,611)~~ (🆕 D565 landing: this one's is PAID, exactly — `3559 · 52` over 3,611, close-out `97ef099b`. 🆕 landing: D562's and D563's are PAID, each exactly — `3453 · 52`
 over 3,505, close-out `3b68a3c1`, and `3506 · 52` over 3,558, close-out `78823284` — so this one rests on a measured base). The HUD debt above. Zero to Hero (Palafin ex's only route);
-Rocket Brain, Flustered Leap, Impromptu Carrier; Team Rocket's Watchtower; Brock's Scouting (deferred); Tera Orb; Ruffian (CUT, D562). (🆕 landing: Zero to Hero, Rocket Brain, Flustered Leap,
+Rocket Brain, Flustered Leap, Impromptu Carrier; Team Rocket's Watchtower (🆕🆕🆕 D566: BUILT); Brock's Scouting (deferred) (🆕🆕🆕 D566: BUILT); Tera Orb; Ruffian (CUT, D562). (🆕 landing: Zero to Hero, Rocket Brain, Flustered Leap,
 Impromptu Carrier and Ruffian are all in D565, parked on `d565-prep` at `47eba40f`, stacked on this slice.)
 (🆕🆕🆕 D565: Zero to Hero, Rocket Brain, Flustered Leap, Impromptu Carrier and Ruffian BUILT — see D565 below.)
 
@@ -28801,8 +28801,54 @@ watched runner cannot park) · R-ZH2 (a failed search still shuffles and spends 
 killed undeclared); the two `D543` offer rows re-anchored by script (the offer line gained `op.bodyUid`); declared survivors 52 unmoved.
 
 ### (e) Owed
-The whole-corpus sweeps: ~~D563's (running in the main checkout), D564's (predicted `3559 · 52` over 3,611) and~~ this one's (predicted
-`3621 · 52` over 3,673) (🆕 landing: D563's and D564's are PAID, each exactly — `3506 · 52` over 3,558, close-out `78823284`, and
+The whole-corpus sweeps: ~~D563's (running in the main checkout), D564's (predicted `3559 · 52` over 3,611) and~~ ~~this one's (predicted
+`3621 · 52` over 3,673)~~ (🆕 D566 landing: this one's is PAID, exactly, on its first launch — `3621 killed · 52 known survivor(s) · 0 GAP(S)` over 3,673, close-out `182d4055`) (🆕 landing: D563's and D564's are PAID, each exactly — `3506 · 52` over 3,558, close-out `78823284`, and
 `3559 · 52` over 3,611, close-out `97ef099b` — so this one rests on a measured base). R-ZH1 UNRULED. The 0.448 rollback readings (named, not bumped). Next candidate: Scovillain ex
-"Double Type" ×2 with Team Rocket's Watchtower — an effective-types slice. Brock's Scouting; Amulet of Hope / Heavy Baton; Huntail;
-Powerglass.
+"Double Type" ×2 with Team Rocket's Watchtower (🆕🆕🆕 D566: the Watchtower BUILT alone, on PRINTED types — R-WT1; Double Type stays PARKED) — an effective-types slice. Brock's Scouting (🆕🆕🆕 D566: BUILT); Amulet of Hope / Heavy Baton (🆕🆕🆕 D566: BUILT); Huntail;
+Powerglass (🆕🆕🆕 D566: BUILT).
+
+## D566 — the trainer bundle plus the Watchtower rider: 9 printings / 6 texts / 6 objects (engine 0.450.0, `MATCH_RECORD_VERSION` stays 36)
+
+**Status:** ✅ BUILT — keyed MID-MAP after `sv06-060`. Built in the `lum-wt-d566` worktree STACKED ON THE PARKED, UNLANDED
+D565 commit `47eba40f` while D564's whole-corpus sweep ran in the main checkout; ~~NOT committed by the builder~~ committed there on
+`d566-prep` at `db323c1a`, then LANDED on `main` by cherry-pick onto the D565 close-out `182d4055`.
+
+### (a) The rows (registry.ts, one block before `const REGISTRY`; no row authors an `attack` key)
+| Card | Ids | Subtype | Program |
+|---|---|---|---|
+| Brock's Scouting | `sv09-146`/`sv09-179` | Supporter | `searchDeck { basicPokemon, max 2, dest hand, reveal, orElse { evolutionPokemon, max 1 } }`, `shuffleDeck` (NEW key) |
+| Ogre's Mask | `sv06-159`/`sv08.5-118` | Item | `switchWithDiscardNamed { pokemonNameContaining { "Ogerpon", suffix "ex" } }` (NEW op, NEW filter key) |
+| Heavy Baton | `sv05-151` | Tool | `onHolderActiveKnockedOut` (NEW timing) → `moveEnergy { basicEnergy, 3, selfToBench, anyDest }` |
+| Amulet of Hope | `sv08-162` | Tool | `onHolderKnockedOut` (NEW timing) → `searchDeck { anyCard, 3, hand }`, `shuffleDeck` |
+| Powerglass | `sv06.5-063`/`sv06.5-097` | Tool | `atEndOfYourTurnInActive` (NEW timing) → `attachEnergyFrom { discard, toSelf, declinable }` |
+| Team Rocket's Watchtower | `sv10-180` | Stadium | `stadium.disableAbilities { side "both", targetType "Colorless" }` (NEW `StadiumEffects` key, NEW aura key) |
+
+### (b) The mechanism
+`searchDeck.orElse` is `also`'s dual — one alternative, not a second noun — with its own park over the union of both
+alternatives, the ceiling the MAX (2) and the chooseCards prompt's NEW `capsAnyOf` (separate from the conjunctive `caps`),
+checked by `validateChoice`, carried by redact.ts / `packages/schema` / the projection and mirrored by `GameHud`'s
+`cappedOut`: 1 Basic + 1 Evolution is refused. `switchWithDiscardNamed` asks the body, then the discard card (the prompt dest's
+NEW `"swap"`), swaps the top card in place and sends the old one to the discard pile (`POKEMON_SWAPPED_FROM_DISCARD`); the uid
+census re-run for it found no holder. Heavy Baton is the SELF arm of `koToolTriggersOf` on the existing `koToolTrigger` stage,
+its Retreat-exactly-4 clause a run-time gate on the EFFECTIVE cost. Amulet of Hope is a `koTrigger` carrying the Tool's uid,
+seeded in `collectKnockOutPass` off the pre-batch board (by-attack AND the opponent's seat). Powerglass is the first parking
+end-of-turn stage (`endTurnToolTrigger`, seeded by `endTurn` ahead of a `toolsDone` copy of itself), run with the holder's uid.
+The Watchtower is collected by `disabledAbilityUids` before its no-aura return, and its target test reads PRINTED types.
+
+### (c) Readings (`docs/decisions.md` D566)
+R-OM ⚠️ UNRULED (the swapped-in Ogerpon's once-per-turn Ability is fresh) · R-HB ⚠️ UNRULED (the effective Retreat Cost; the
+Baton / Exp. Share first-match limitation stated) · R-AH (by-attack-damage and the opponent's seat, per body, Active or Bench) ·
+R-PG (every turn end with the holder Active, attack or not; before Amarys's discard) · R-WT1 (printed types, tripwired) ·
+R-LK1 restated (holds with the Watchtower built: a Stadium cannot be silenced; neither legal lock source is {C}).
+
+### (d) Tests and mutants
+`trainerBundleD566.test.ts`, `koToolsD566.test.ts`, `GameHud.capsAnyOf.dom.test.tsx` and `OnlineHud.capsAnyOf.dom.test.tsx`.
+Mutants 3,673 → 3,755 (+82 `D566-*`, all killed undeclared); no existing row re-anchored (six kept by reshaping the new code);
+declared survivors 52 unmoved.
+
+### (e) Owed
+The whole-corpus sweeps: ~~D564's (running in the main checkout), D565's (predicted `3621 · 52` over 3,673) and~~ this one's
+(predicted `3703 · 52` over 3,755) (🆕 landing: D564's and D565's are PAID, each exactly — `3559 · 52` over 3,611, close-out
+`97ef099b`, and `3621 · 52` over 3,673, close-out `182d4055` — so this one rests on a measured base). R-OM and R-HB UNRULED. The 0.449 rollback readings (named, not bumped).
+PARKED, NOT BUILT: Scovillain ex "Double Type" — a funnel-only slice (~45 in-play binding sites plus `matchesFilter`'s in-play
+arm) that owes R-WT1's move to effective types. Iron Treads "Dual Core" cannot trigger in Standard (`sv05-149` is not legal).

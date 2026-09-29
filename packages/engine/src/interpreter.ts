@@ -408,8 +408,14 @@ export type EffectPrompt =
           `searchDeck { dest: "attachToSelf" }`). A member for `"evolve"`'s reason: the
           card goes ONTO a Pokémon, and a client told `"hand"` would name the wrong place in
           its own words. The body is not carried (the note names it; the op re-derives it
-          from `ctx.sourceUid` on the way back in). A union widening (D125). */
-      dest: "bench" | "hand" | "deck" | "deckBottom" | "deckTop" | "discard" | "evolve" | "attach";
+          from `ctx.sourceUid` on the way back in). A union widening (D125).
+
+          🆕🆕🆕 **D566 — `"swap"` IS THE NINTH MEMBER** (Ogre's Mask: *"Choose a Pokémon ex
+          in your discard pile … and switch it with 1 of your Pokémon ex in play"*,
+          `switchWithDiscardNamed`'s second question). The picked card goes INTO PLAY in
+          place of a body's top card — not to the hand, not onto a body as an attachment —
+          so neither neighbour's verb is true of it. A union widening (D125). */
+      dest: "bench" | "hand" | "deck" | "deckBottom" | "deckTop" | "discard" | "evolve" | "attach" | "swap";
       /** 🆕 **D332 — PER-KIND CAPS OVER THE SAME CANDIDATE LIST**, the printed
           *"you may reveal **a Pokémon and a Trainer card**"* (Drayton, the sole
           consumer today through `lookAtTopN.also`). Each entry caps how many of
@@ -440,6 +446,23 @@ export type EffectPrompt =
           one, so the version does NOT move. `bottomFromOpponentHand.dest`'s
           argument (D294) and `gust.basicOnly`'s (D331), one prompt over. */
       caps?: readonly { uids: readonly string[]; max: number }[];
+      /** 🆕🆕🆕 **D566 — THE DISJUNCTIVE CAPS, `caps`' DUAL: ONE OF THESE, WHOLLY.** Brock's
+          Scouting's *"up to 2 Basic Pokémon OR 1 Evolution Pokémon"* (`searchDeck.orElse`).
+          An answer is legal only when EVERY pick lies in ONE entry's `uids` and the count
+          is within THAT entry's `max` — `caps` asks every entry of every answer (AND), this
+          asks whether SOME entry takes the whole answer (OR). The empty answer is in every
+          entry, so the printed *"up to"* decline stays legal.
+
+          🛑 **A SEPARATE KEY, NEVER FOLDED INTO `caps`**: `caps` is already written by two
+          producers (`also`, `distinctEnergyTypes`) under the conjunctive reading, and the
+          one board that separates the readings — 1 Basic + 1 Evolution under a flat `max`
+          of 2 — PASSES `caps: [{Basic, 2}, {Evo, 1}]` and is refused by the print. Checked
+          by `validateChoice` (cardplay.ts) and mirrored at the click by `GameHud`'s
+          `cappedOut` (D190/D222: a dialog must not afford what the validator rejects);
+          carried to the wire by redact.ts / `packages/schema` as an optional key. Absent
+          on every other park (spread-when-present, D135), and a widening of the persisted
+          `phase.prompt` (D125). */
+      capsAnyOf?: readonly { uids: readonly string[]; max: number }[];
       note: string;
     }
   /** Pick exactly one in-play Pokémon (switchActive / gust / healChosen) — and,
@@ -2007,6 +2030,10 @@ function continuationOps(
   if (op.op === "discardToolAndSpecialEnergyChosen") {
     return pickedPokemon(choice) ? ruffianBodyAnswered(before, choice.ref) : [];
   }
+  // 🆕🆕🆕 D566 — Ogre's Mask's body answer buys question two (the discard pick).
+  if (op.op === "switchWithDiscardNamed" && op.bodyUid === undefined) {
+    return pickedPokemon(choice) ? swapBodyAnswered(before, op, choice.ref) : [];
+  }
   // 🆕 D309 — THE THIRD MEMBER, and the first whose answer buys an op of a
   // DIFFERENT KIND. `evolveFromDeckChosen` carries no field to be "still unknown",
   // so there is no `=== undefined` guard to write: the op exists only to ask, and
@@ -2394,6 +2421,46 @@ function stepOp(
       // 🆕🆕🆕 D565 — Palafin "Zero to Hero": the in-place swap from the deck. NON-PARKING
       // (the watched runner keeps `.state`), so the forced pick is the whole answer.
       return { done: switchWithDeckNamed(state, op.name, ctx, events) };
+    case "switchWithDiscardNamed": {
+      // 🆕🆕🆕 D566 — Ogre's Mask's two questions, told apart by the ENGINE-WRITTEN `bodyUid`
+      // (D216's two parks; Ruffian's body-first shape). Question 1: the in-play body — an
+      // empty discard offer answers nothing (the card could only whiff; `programPlayable`
+      // refuses it first), one body is forced inline through the same answer helper.
+      const bodyUid = op.bodyUid;
+      if (bodyUid === undefined) {
+        const bodies = swapBodies(state, ctx.seat, op.filter);
+        if (bodies.length === 0 || swapDiscardCards(state, ctx.seat, op.filter).length === 0) {
+          return { done: state };
+        }
+        const onlyBody = bodies.length === 1 ? bodies[0] : undefined;
+        if (onlyBody !== undefined) return { done: state, schedule: swapBodyAnswered(state, op, onlyBody) };
+        return {
+          park: {
+            kind: "choosePokemon",
+            candidates: bodies,
+            note: `Switch out which of your Pokémon in play (${retrieveNoun(op.filter).singular})?`,
+          },
+        };
+      }
+      // Question 2: the discard card, MANDATORY (the print has no "up to"). Copies of ONE
+      // card are interchangeable, so a single distinct id is forced (D42's collapse).
+      const cards = swapDiscardCards(state, ctx.seat, op.filter);
+      const [first] = cards;
+      if (first === undefined) return { done: state };
+      if (new Set(cards.map((uid) => state.cardIdByUid[uid])).size === 1) {
+        return { done: switchWithDiscard(state, bodyUid, first, ctx, events) };
+      }
+      return {
+        park: {
+          kind: "chooseCards",
+          candidates: cards,
+          min: 1,
+          max: 1,
+          dest: "swap",
+          note: `Switch in which card from your discard pile (${retrieveNoun(op.filter).singular})?`,
+        },
+      };
+    }
     case "spreadDamage":
       // 🆕🆕 D425 — `op.target` IS READ HERE FOR THE FIRST TIME. It has been on the op
       // since the op existed and was a SINGLETON, so this arm passed `op.amount`
@@ -2700,6 +2767,11 @@ function stepOp(
       // `reorderTop` it is printed against.
       return { done: bottomDeckTop(state, op.n, ctx, events) };
     case "searchDeck": {
+      // 🆕🆕🆕 D566 — Brock's Scouting's *"up to 2 Basic Pokémon OR 1 Evolution Pokémon"*
+      // (`orElse`) is its OWN park: an alternative is not a further group, so it shares
+      // none of the conjunctive arithmetic below (the SUM total, the `caps` list) and
+      // takes none of the board-resolved riders (no printing carries one beside it).
+      if (op.orElse !== undefined) return searchDeckOrElse(state, op, op.orElse, ctx, record);
       // 🆕 D336 — `also` IS A LIST OF FURTHER filter/cap PAIRS OVER THE SAME DECK
       // (Larry's Skill's three nouns, Secret Box's four). Unlike `lookAtTopN`'s
       // `also` this is not forced by a shared WINDOW — the deck is the whole zone
@@ -7610,6 +7682,14 @@ export function applyChoice(
       // 🆕🆕🆕 D565 — Ruffian's pick moves nothing here: what it buys is the two discards,
       // spliced by `continuationOps` (the `evolveFromDeckChosen` shape).
       return state;
+    case "switchWithDiscardNamed": {
+      // 🆕🆕🆕 D566 — Ogre's Mask: the BODY answer moves nothing (`continuationOps` buys
+      // question two); the CARD answer is the whole swap.
+      const bodyUid = op.bodyUid;
+      const [picked] = choice.kind === "cards" ? choice.uids : [];
+      if (bodyUid === undefined || picked === undefined) return state;
+      return switchWithDiscard(state, bodyUid, picked, ctx, events);
+    }
     case "damageChosen":
       // 🆕🆕🆕 D530 — the per-TARGET fold on the RESUMED side: the multiplier is the
       // chosen body's own counters, so the pick is walked ref by ref with the
@@ -12216,7 +12296,17 @@ function switchWithDeckNamed(
     that switched its own Active and FILED the demoted body (`switchActive.recordDemoted`,
     Scramble Switch) reads that filing AFTER `switchInto` returned — and by then Zero to
     Hero has put the filed uid into the deck. Re-keyed at the filing, so "the Pokémon you
-    moved to your Bench" is the body that is on the Bench. */
+    moved to your Bench" is the body that is on the Bench.
+
+    🆕🆕🆕 **D566 — THE CENSUS RE-RUN FOR THE SECOND SWAP EVENT (`POKEMON_SWAPPED_FROM_DISCARD`,
+    Ogre's Mask) FOUND NO HOLDER, SO THIS HELPER DOES NOT READ IT.** The swap runs inside an
+    ITEM played from `turn:action`: the pending queue is EMPTY (no `attackEpilogue`,
+    `koTrigger` or `damagedTrigger` can hold the old uid), `ctx.sourceUid` is the Item card,
+    `subjectUid` is unset, `KnockOutMark` is read by NAME and holds only KO'd bodies, the
+    `abilitiesUsed` keys are harmless (R-OM: the new top uid is fresh), and the one filing
+    this helper exists for (`switchActive.recordDemoted`) is written by a program that
+    switches — Ogre's Mask's program is the swap alone and runs no `switchInto`. A clause here
+    would be code no board reaches (D442's rule: an unkillable line is removed, not kept). */
 function swappedUid(uid: string, emitted: readonly GameEvent[]): string {
   let current = uid;
   for (const event of emitted) {
@@ -12225,6 +12315,81 @@ function swappedUid(uid: string, emitted: readonly GameEvent[]): string {
     }
   }
   return current;
+}
+
+/** 🆕🆕🆕 D566 — Ogre's Mask's question-1 offer: the controller's in-play bodies (Active first,
+    then the Bench) whose TOP card passes `filter` — the printed *"1 of your Pokémon ex in play
+    that has "Ogerpon" in its name"*. Exported for `programPlayable` (cardplay.ts), which
+    refuses the card on an empty offer (with `swapDiscardCards`). */
+export function swapBodies(state: GameState, seat: Seat, filter: CardFilter): PokemonRef[] {
+  return ownInPlayRefs(state, seat).filter((ref) => {
+    const body = refPokemon(state, ref);
+    const top = body === undefined ? undefined : topCardOf(state, body);
+    return top !== undefined && matchesFilter(top, filter);
+  });
+}
+
+/** 🆕🆕🆕 D566 — Ogre's Mask's question-2 offer: the controller's discard-pile cards passing
+    `filter` (the printed *"a Pokémon ex in your discard pile that has "Ogerpon" in its name"*),
+    in pile order. */
+export function swapDiscardCards(state: GameState, seat: Seat, filter: CardFilter): string[] {
+  return state.players[seat].discard.filter((uid) => {
+    const card = cardOf(state, uid);
+    return card !== undefined && matchesFilter(card, filter);
+  });
+}
+
+/** 🆕🆕🆕 D566 — Ogre's Mask's body answer, on BOTH endings (the forced one and the parked
+    one): question two, narrowed to that body by its TOP uid (`ruffianBodyAnswered`'s shape).
+    No body at the ref — nothing (the ref was offered, so this is the wire belt). */
+function swapBodyAnswered(
+  state: GameState,
+  op: Extract<EffectOp, { op: "switchWithDiscardNamed" }>,
+  ref: PokemonRef,
+): EffectOp[] {
+  const body = refPokemon(state, ref);
+  const uid = body === undefined ? undefined : topUid(body);
+  return uid === undefined ? [] : [{ ...op, bodyUid: uid }];
+}
+
+/** 🆕🆕🆕 D566 — THE SWAP ITSELF: the controller's in-play body whose TOP uid is `bodyUid` gets
+    `cardUid` (out of the discard pile) on top instead, IN PLACE — every other `InPlayPokemon`
+    field rides along (attachments, damage, conditions, `turnPlayed`, `evolvedTurn`, markers,
+    every durated effect: *"Any attached cards, damage counters, Special Conditions, turns in
+    play, and any other effects remain on the new Pokémon"*), and the old top card goes to the
+    DISCARD PILE. `switchWithDeckNamed`'s body with the zones changed, and — the print names no
+    shuffle — no shuffle. Not an evolution (no `onEvolve`, no `EVOLVED` row).
+
+    ⚠️ A NEW TOP CARD CAN MEAN A LOWER HP UNDER THE SAME DAMAGE, and nothing here sweeps: the
+    Item's program settles through `settleProgram`, whose mid-turn Knock Out sweep
+    (`resolveMidTurnKnockOuts`) is the one that takes it (driven). R-OM: the new body's
+    once-per-turn Abilities are FRESH — the use lock keys on the TOP uid (`abilityUsedKey`), and
+    the new card has its own (UNRULED; the reversal is a lock keyed per body). A body that left
+    play, or a card no longer in the pile, swaps nothing (the wire belt). */
+function switchWithDiscard(
+  state: GameState,
+  bodyUid: string,
+  cardUid: string,
+  ctx: EffectContext,
+  events: GameEvent[],
+): GameState {
+  const seat = ctx.seat;
+  const side = state.players[seat];
+  const ref = ownInPlayRefs(state, seat).find((candidate) => {
+    const body = refPokemon(state, candidate);
+    return body !== undefined && topUid(body) === bodyUid;
+  });
+  const body = ref === undefined ? undefined : refPokemon(state, ref);
+  if (ref === undefined || body === undefined || !side.discard.includes(cardUid)) return state;
+  const swapped: InPlayPokemon = { ...body, stack: [...body.stack.slice(0, -1), cardUid] };
+  const discard = [...side.discard.filter((uid) => uid !== cardUid), bodyUid];
+  events.push({ type: "POKEMON_SWAPPED_FROM_DISCARD", seat, fromUid: bodyUid, toUid: cardUid });
+  const spot = ref.spot;
+  const placed: PlayerSide =
+    spot.spot === "active"
+      ? { ...side, discard, active: swapped }
+      : { ...side, discard, bench: side.bench.map((p, i) => (i === spot.index ? swapped : p)) };
+  return withSide(state, seat, placed);
 }
 
 /** PLACE `amount` HP of SELF-damage on the controller's OWN Active — the attack
@@ -17519,6 +17684,92 @@ function cardOf(state: GameState, uid: string): Card | undefined {
     parameter and the op cannot drift apart. */
 type SearchDeckMax = Extract<EffectOp, { op: "searchDeck" }>["max"];
 
+/** 🆕🆕🆕 D566 — THE DISJUNCTIVE SEARCH: Brock's Scouting `sv09-146` / `sv09-179`, *"Search
+    your deck for up to 2 Basic Pokémon or 1 Evolution Pokémon, reveal them, and put them into
+    your hand. Then, shuffle your deck."* ONE park over the UNION of the two alternatives (deck
+    order, each uid once), whose `max` is the LARGER alternative's (2 — never the sum, 3) and
+    whose `capsAnyOf` lists each alternative's matches with its own ceiling: `validateChoice`
+    admits an answer only when ONE entry takes all of it (1 Basic + 1 Evolution is refused —
+    the conjunctive `caps` would have passed it). `min: 0` (the printed *"up to"*; the empty
+    answer is in every entry). The picks resolve through `searchDeck`'s ordinary answer
+    (`dest`, `reveal`), and the trailing `shuffleDeck` is the program's own op.
+
+    A search with no candidate — or no room — files the empty record and parks nothing (the
+    D502 whiff `searchDeck` takes). `op.max` is resolved as the main park resolves it
+    (`"any"` → the group's matches, `"yourBenchCount"` → the Bench), and a `"bench"` dest
+    is clamped to `benchSpace` — neither is printed beside an `orElse` today, both are spelled
+    so a future row cannot fall through the arithmetic as a string. */
+function searchDeckOrElse(
+  state: GameState,
+  op: Extract<EffectOp, { op: "searchDeck" }>,
+  alternative: { filter: CardFilter; max: number },
+  ctx: EffectContext,
+  record: EffectRecord,
+): { done: GameState } | { park: EffectPrompt } {
+  const deck = state.players[ctx.seat].deck;
+  const matching = (filter: CardFilter) =>
+    deck.filter((uid) => {
+      const card = cardOf(state, uid);
+      return card !== undefined && matchesFilter(card, filter);
+    });
+  const firstMatches = matching(op.filter);
+  const firstMax =
+    typeof op.max === "number"
+      ? op.max
+      : op.max === "any"
+        ? firstMatches.length
+        : state.players[ctx.seat].bench.length;
+  const entries = [
+    { uids: firstMatches, max: firstMax },
+    { uids: matching(alternative.filter), max: alternative.max },
+  ];
+  const offered = new Set(entries.flatMap((entry) => entry.uids));
+  const candidates = deck.filter((uid) => offered.has(uid));
+  const ceiling = Math.max(firstMax, alternative.max);
+  const max = op.dest === "bench" ? Math.min(ceiling, benchSpace(state, ctx.seat)) : ceiling;
+  if (candidates.length === 0 || max <= 0) {
+    recordMoved(record, op.recordAs, []);
+    return { done: state };
+  }
+  return {
+    park: {
+      kind: "chooseCards",
+      candidates,
+      min: 0,
+      max,
+      dest: op.dest === "attachToSelf" ? "attach" : op.dest,
+      capsAnyOf: entries,
+      note: searchOrElseNote(op.filter, firstMax, alternative, op.dest),
+    },
+  };
+}
+
+/** 🆕🆕🆕 D566 — `searchDeckOrElse`'s caption, the printed *"or"* kept: *"Search your deck for
+    up to 2 Basic Pokémon or 1 Evolution Pokémon into your hand."* Both nouns take the PLURAL
+    column with the printed digit — the stage nouns are invariant in number ("1 Evolution
+    Pokémon" is the card's own spelling), which is `searchNote`'s multi-group `phrase` rule. */
+function searchOrElseNote(
+  filter: CardFilter,
+  max: number,
+  alternative: { filter: CardFilter; max: number },
+  dest: Extract<EffectOp, { op: "searchDeck" }>["dest"],
+): string {
+  return `Search your deck for up to ${max} ${retrieveNoun(filter).plural} or ${alternative.max} ${
+    retrieveNoun(alternative.filter).plural
+  } ${SEARCH_OR_ELSE_PLACE[dest]}.`;
+}
+
+/** 🆕🆕🆕 D566 — `searchOrElseNote`'s place phrase, keyed on the op's `dest` so a new member
+    reddens `tsc` here (a TOTAL record, D542's rule for the HUD verbs); the words are
+    `searchNote`'s own. */
+const SEARCH_OR_ELSE_PLACE: Record<Extract<EffectOp, { op: "searchDeck" }>["dest"], string> = {
+  bench: "onto your Bench",
+  hand: "into your hand",
+  deckTop: "on top of your deck",
+  discard: "and discard them",
+  attachToSelf: "and attach it to this Pokémon",
+};
+
 function searchNote(
   /** 🆕🆕🆕 D514 — the PRINTED group maxes and NOT the park's resolved ones, which
       is why this parameter carries the union where `max` below carries a number.
@@ -18692,6 +18943,16 @@ export function retrieveNoun(filter: CardFilter): { singular: string; plural: st
       // because this switch is exhaustive over `CardFilter` — which is what makes a new
       // member impossible to add without answering the noun question — and because a
       // REGISTRY author can hand-write the filter into an op tomorrow.
+      // 🆕🆕🆕 D566 — and one did: Ogre's Mask (`switchWithDiscardNamed`) reads this arm for
+      // BOTH of its captions, so the claim above is withdrawn for this member (D539). The new
+      // `suffix` rides the head noun as printed — *"a Pokémon ex … that has "Ogerpon" in its
+      // name"* — so the caption and the predicate cannot disagree (D334's two-arm rule).
+      if (filter.suffix !== undefined) {
+        return {
+          singular: `a Pokémon ${filter.suffix} that has "${filter.fragment}" in its name`,
+          plural: `Pokémon ${filter.suffix} that have "${filter.fragment}" in their names`,
+        };
+      }
       return {
         singular: `a Pokémon that has "${filter.fragment}" in its name`,
         plural: `Pokémon that have "${filter.fragment}" in their names`,

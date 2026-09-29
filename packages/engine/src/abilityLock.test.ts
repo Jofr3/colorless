@@ -101,7 +101,9 @@ describe("disableAbilities — the registry row", () => {
     // 🆕🆕🆕 D559 — "(and nobody else)" was a TITLE until now: nothing asserted it. The two
     // new rows (the only legal locks the registry builds — the six above have rotated;
     // Iron Thorns ex "Initialization" and Team Rocket's Watchtower are legal and unbuilt,
-    // tripwired by id in `abilityBundleD559.test.ts` §7) are pinned in
+    // tripwired by id in `abilityBundleD559.test.ts` §7 — 🆕🆕🆕 D566 (D539): the Watchtower
+    // is BUILT, as a STADIUM lock that carries no `passive`, so it is not one of the keys
+    // counted below) are pinned in
     // `abilityBundleD559.test.ts` §1, and the title's claim is now measured over the
     // WHOLE registry: exactly these ten keys carry a lock.
     expect(

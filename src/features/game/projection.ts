@@ -649,6 +649,8 @@ function effectDecisionFromPrompt(
           // Absent stays absent (the engine arm omits it when one flat cap is the
           // whole story) — `maxPerTarget`'s spelling one prompt down.
           ...(prompt.caps !== undefined ? { caps: prompt.caps } : {}),
+          // 🆕🆕🆕 D566 — the disjunctive caps (Brock's Scouting), absent-stays-absent.
+          ...(prompt.capsAnyOf !== undefined ? { capsAnyOf: prompt.capsAnyOf } : {}),
           note: prompt.note,
         },
       };

@@ -259,7 +259,29 @@ export type TriggerTiming =
       (`switchInto`, interpreter.ts) and all four are the same printed event;
       the §8.1 promotion after a Knock Out is NOT one, because the body that
       left the Active Spot went to the DISCARD and never touched the Bench. */
-  | "onActiveMovedToBench";
+  | "onActiveMovedToBench"
+  /** 🆕🆕🆕 D566 — a POKÉMON TOOL's *"If the Pokémon this card is attached to … is in the
+      Active Spot, and is Knocked Out by damage from an attack from your opponent's
+      Pokémon"* (Heavy Baton `sv05-151`). `onAllyActiveKnockOut`'s SELF twin: the same
+      moment, the same stage (`koToolTrigger`, seeded by attack.ts ahead of the
+      `attackEpilogue`, BEFORE `knockOut` discards the stack — the Energy this sentence
+      moves is still on the body), found by the same scan (triggers.ts `koToolTriggersOf`),
+      whose SELF arm reads it off the dying Active's OWN Tools and whose ally arm keeps
+      skipping the KO'd body for `onAllyActiveKnockOut`. */
+  | "onHolderActiveKnockedOut"
+  /** 🆕🆕🆕 D566 — a POKÉMON TOOL's *"If the Pokémon this card is attached to is Knocked
+      Out by damage from an attack from your opponent's Pokémon"* (Amulet of Hope
+      `sv08-162`) — Active OR Bench, and nothing on the body is read, so it runs AFTER the
+      Knock Out: a `koTrigger` stage carrying the Tool's uid (`toolUid`), seeded per KO'd
+      body by flow.ts `collectKnockOutPass` in the PRIZES → koTriggers → PROMOTIONS
+      grouping, off the PRE-batch board (the Tool is in the discard pile by then). */
+  | "onHolderKnockedOut"
+  /** 🆕🆕🆕 D566 — a POKÉMON TOOL's *"At the end of your turn (after your attack), if the
+      Pokémon this card is attached to is in the Active Spot"* (Powerglass `sv06.5-063` /
+      `-097`). The FIRST end-of-turn moment that can PARK: flow.ts's `endTurn` stage seeds
+      one `endTurnToolTrigger` per live Tool on the turn owner's Active, ahead of itself,
+      before `TURN_ENDED`. */
+  | "atEndOfYourTurnInActive";
 
 /** A card's triggered Ability (§9) — one that FIRES on a game event rather than
     being player-activated. The framework runs `program` through the shared
@@ -1185,7 +1207,9 @@ export interface PassiveEffects {
       `sourceOnBench`, `targetZone "bench"`). And Klefki, Spiritomb and Ting-Lu ex have
       ROTATED, so the two new rows are the only legal locks the registry BUILDS — Standard
       also prints Iron Thorns ex `sv06-077`/`-196`/`sv08.5-032` "Initialization" and the
-      Stadium Team Rocket's Watchtower `sv10-180`, neither built. The ungated collection
+      Stadium Team Rocket's Watchtower `sv10-180`, neither built (🆕🆕🆕 D566 CORRECTION
+      (D539): ~~neither built~~ — the Watchtower is BUILT, as `StadiumEffects.disableAbilities`,
+      the first Stadium-sourced lock; Iron Thorns ex stays unbuilt). The ungated collection
       stays and is now argued rather than deferred (D559 R-LK1, docs/decisions.md D559):
       no BUILT lock can switch off another lock's source — Flutter Mane reaches only the
       opposing Active and exempts itself by name, an Active Gastrodon's lock is already
@@ -1233,6 +1257,13 @@ export interface PassiveEffects {
         "Mischievous Lock" — "except for Mischievous Lock"). Matched against the
         target CARD's printed abilities; keeps a mirror-match Klefki's own lock on. */
     exemptAbilityNamed?: string;
+    /** 🆕🆕🆕 D566 — the TARGET's printed TYPE: Team Rocket's Watchtower `sv10-180`
+        (*"{C} Pokémon in play (both yours and your opponent's) have no Abilities."* —
+        `targetType "Colorless"`). Read off the target's PRINTED `Card.types` (R-WT1:
+        exact while no type-changing passive is built — `trainerBundleD566.test.ts` walks
+        the registry and pins that none is; the parked Scovillain ex "Double Type" slice
+        must move this read to an effective-types reader). Omitted = any type. */
+    targetType?: PokemonType;
   };
   /** §8.5 continuous own-board AURA: while this Pokémon is in play, every one of
       its CONTROLLER's in-play Pokémon "has no Weakness" — the two Weakness read
@@ -3046,6 +3077,18 @@ export interface StadiumEffects {
       `STATUS_PREVENTED`) and at flow.ts `recoverStatuses` (the recovery, every present
       condition), which `playStadium` now also calls — the fifth recovery moment (R-FG). */
   statusShieldIfEnergyAttached?: true;
+  /** 🆕🆕🆕 §9 (D566) — Team Rocket's Watchtower `sv10-180`: *"{C} Pokémon in play (both
+      yours and your opponent's) have no Abilities."* The FIRST Ability lock sourced by a
+      Stadium rather than a Pokémon, spelled as the Pokémon lock's OWN aura type
+      (`PassiveEffects.disableAbilities` — `side "both"`, the NEW `targetType "Colorless"`)
+      so its target predicate is `auraSuppresses`, unchanged. Collected by continuous.ts
+      `disabledAbilityUids` beside the Pokémon auras (BEFORE its no-aura early return), so
+      every one of that Set's read sites — `useAbility`, `passivesOf`, `triggersOf`, the
+      redactor — honours it for free. NOT §9-gated at its SOURCE (a Stadium is no Ability
+      and no lock can silence it — R-ST2's reason), which is why R-LK1 still holds with it
+      BUILT: the two legal Pokémon locks are Flutter Mane {P} and Gastrodon {F}, neither
+      {C}, so no built lock switches another lock's source off. */
+  disableAbilities?: NonNullable<PassiveEffects["disableAbilities"]>;
 }
 
 /** A Special Energy's on-attach effect (§6.1) — runs the moment it is attached
@@ -15044,6 +15087,125 @@ const ZERO_TO_HERO: CardProgram = {
   ],
 };
 
+// ── 🆕🆕🆕 D566 — THE TRAINER BUNDLE PLUS THE WATCHTOWER RIDER: 9 printings / 6 texts / 6
+//    objects. Readings: docs/decisions.md D566 (R-OM, R-HB, R-AH, R-PG, R-WT1, R-LK1
+//    restated). ──
+
+/** 🆕🆕🆕 **D566 — Brock's Scouting `sv09-146` / `sv09-179` (Supporter, 2 legal)** — *"Search
+    your deck for up to 2 Basic Pokémon or 1 Evolution Pokémon, reveal them, and put them into
+    your hand. Then, shuffle your deck."* `searchDeck`'s NEW `orElse` — the printed *"or"* as
+    ONE park whose answer must come wholly out of ONE alternative (the prompt's NEW
+    `capsAnyOf`, checked by `validateChoice` and mirrored by `GameHud`'s `cappedOut`); the
+    ceiling is the LARGER alternative's (2), never the sum. Then the Nest Ball shuffle. */
+const BROCKS_SCOUTING: CardProgram = {
+  trainer: [
+    {
+      op: "searchDeck",
+      filter: { kind: "basicPokemon" },
+      max: 2,
+      dest: "hand",
+      reveal: true,
+      orElse: { filter: { kind: "evolutionPokemon" }, max: 1 },
+    },
+    { op: "shuffleDeck" },
+  ],
+};
+
+/** 🆕🆕🆕 **D566 — Ogre's Mask `sv06-159` / `sv08.5-118` (Item, 2 legal)** — *"Choose a Pokémon
+    ex in your discard pile that has "Ogerpon" in its name, and switch it with 1 of your Pokémon
+    ex in play that has "Ogerpon" in its name. Any attached cards, damage counters, Special
+    Conditions, turns in play, and any other effects remain on the new Pokémon."* The NEW
+    `switchWithDiscardNamed`: question 1 the in-play body, question 2 the discard card, both
+    read through ONE filter (`pokemonNameContaining`'s NEW `suffix`, so a non-ex Ogerpon is
+    refused on BOTH sides); the old top card goes to the discard pile. Refused by
+    `programPlayable` when either offer is empty. **R-OM** (UNRULED): the new Ogerpon's
+    once-per-turn Ability is FRESH — the use lock keys on the top uid. */
+const OGRES_MASK: CardProgram = {
+  trainer: [
+    {
+      op: "switchWithDiscardNamed",
+      filter: { kind: "pokemonNameContaining", fragment: "Ogerpon", suffix: "ex" },
+    },
+  ],
+};
+
+/** 🆕🆕🆕 **D566 — Heavy Baton `sv05-151` (Tool, 1 legal)** — *"If the Pokémon this card is
+    attached to has a Retreat Cost of exactly 4, is in the Active Spot, and is Knocked Out by
+    damage from an attack from your opponent's Pokémon, move up to 3 Basic Energy cards from
+    that Pokémon to your Benched Pokémon in any way you like."* The NEW self timing
+    `onHolderActiveKnockedOut` on the EXISTING `koToolTrigger` stage (triggers.ts
+    `koToolTriggersOf`'s self arm; the Retreat Cost clause is flow.ts `runKoToolTrigger`'s
+    run-time gate — **R-HB**, UNRULED: the EFFECTIVE cost, read before the discard). The move
+    is `selfToBench` (the dying Active → the Bench) with `anyDest` — *"in any way you like"*
+    is a MAP answer, and without it the route has one destination. Up to 3, declinable (the
+    park's `min: 0`). */
+const HEAVY_BATON: CardProgram = {
+  triggered: [
+    {
+      name: "Heavy Baton",
+      trigger: "onHolderActiveKnockedOut",
+      optional: true,
+      program: [
+        {
+          op: "moveEnergy",
+          filter: { kind: "basicEnergy" },
+          max: 3,
+          route: "selfToBench",
+          anyDest: true,
+        },
+      ],
+    },
+  ],
+};
+
+/** 🆕🆕🆕 **D566 — Amulet of Hope `sv08-162` (Tool, 1 legal)** — *"If the Pokémon this card is
+    attached to is Knocked Out by damage from an attack from your opponent's Pokémon, search your
+    deck for up to 3 cards and put them into your hand. Then, shuffle your deck."* The NEW
+    `onHolderKnockedOut`, on a `koTrigger` stage carrying the Tool's uid (flow.ts
+    `collectKnockOutPass`, Active OR Bench, the pre-batch Tools). No *"reveal"* is printed, so
+    none is authored (the search stays NOT_REVEALING — `revealClause.test.ts`). **R-AH**: the
+    gate is by-attack-damage AND the opponent's seat, per body. */
+const AMULET_OF_HOPE: CardProgram = {
+  triggered: [
+    {
+      name: "Amulet of Hope",
+      trigger: "onHolderKnockedOut",
+      program: [
+        { op: "searchDeck", filter: { kind: "anyCard" }, max: 3, dest: "hand" },
+        { op: "shuffleDeck" },
+      ],
+    },
+  ],
+};
+
+/** 🆕🆕🆕 **D566 — Powerglass `sv06.5-063` / `sv06.5-097` (Tool, 2 legal)** — *"At the end of
+    your turn (after your attack), if the Pokémon this card is attached to is in the Active
+    Spot, you may attach a Basic Energy card from your discard pile to it."* The NEW
+    `atEndOfYourTurnInActive`, run by the FIRST end-of-turn stage that can park
+    (`endTurnToolTrigger`, seeded by flow.ts's `endTurn` stage). `attachEnergyFrom { discard,
+    toSelf, declinable }` — Charging Up's row plus the printed *"you may"*; the runner hands
+    the program the HOLDER's uid, which `toSelf` resolves. **R-PG**: it fires on a turn with
+    no attack too ("after your attack" orders the moment, it does not condition it). */
+const POWERGLASS: CardProgram = {
+  triggered: [
+    {
+      name: "Powerglass",
+      trigger: "atEndOfYourTurnInActive",
+      optional: true,
+      program: [{ op: "attachEnergyFrom", source: "discard", toSelf: true, declinable: true }],
+    },
+  ],
+};
+
+/** 🆕🆕🆕 **D566 — Team Rocket's Watchtower `sv10-180` (Stadium, 1 legal)** — *"{C} Pokémon in
+    play (both yours and your opponent's) have no Abilities."* The FIRST Stadium-sourced Ability
+    lock: `StadiumEffects.disableAbilities` (the Pokémon lock's own aura type, the NEW
+    `targetType`), collected by continuous.ts `disabledAbilityUids`. **R-WT1**: the PRINTED
+    types are read (exact while no type-changer is built — pinned). */
+const TEAM_ROCKETS_WATCHTOWER: CardProgram = {
+  stadium: { disableAbilities: { side: "both", targetType: "Colorless" } },
+};
+
 const REGISTRY: Record<string, CardProgram> = {
   // Professor's Research (SV base prints)
   "sv01-189": PROFESSORS_RESEARCH,
@@ -15737,6 +15899,17 @@ const REGISTRY: Record<string, CardProgram> = {
   "sv09-181": RUFFIAN, // Ruffian (reprint)
   "sv06-132": IMPROMPTU_CARRIER, // Farfetch'd — played to the Bench: search a Tool and attach it to itself
   "sv06-060": ZERO_TO_HERO, // Palafin — Active to Bench, once per turn: switch in a Palafin ex from the deck
+  // ── 🆕🆕🆕 D566 — the trainer bundle plus the Watchtower rider: 9 printings / 6 texts /
+  //    6 objects, MID-MAP (D395/D396), so `raw[last]` does not move. ──
+  "sv09-146": BROCKS_SCOUTING, // Brock's Scouting — up to 2 Basic Pokémon OR 1 Evolution Pokémon
+  "sv09-179": BROCKS_SCOUTING, // Brock's Scouting (reprint)
+  "sv06-159": OGRES_MASK, // Ogre's Mask — switch an Ogerpon ex in play with one from the discard pile
+  "sv08.5-118": OGRES_MASK, // Ogre's Mask (reprint)
+  "sv05-151": HEAVY_BATON, // Heavy Baton — Retreat 4 Active KO'd by attack: up to 3 Basic Energy to the Bench
+  "sv08-162": AMULET_OF_HOPE, // Amulet of Hope — KO'd by attack: search up to 3 cards
+  "sv06.5-063": POWERGLASS, // Powerglass — end of turn in the Active: attach a Basic Energy from the discard
+  "sv06.5-097": POWERGLASS, // Powerglass (reprint)
+  "sv10-180": TEAM_ROCKETS_WATCHTOWER, // Team Rocket's Watchtower — {C} Pokémon have no Abilities
   // ── D190 — THE **STANDARD-LEGAL** REPRINT-ALIAS MAP (Tier 0 of
   //    `docs/reference/coverage-backlog-legal.md`). 22 printings, 9 map targets,
   //    ZERO new code: every row below prints a sentence that is already authored
@@ -16881,6 +17054,10 @@ const REGISTRY: Record<string, CardProgram> = {
   // five `effectIds` that remain are the two REFUSED banner rows (Reboot Pod,
   // Glass Trumpet — no catalog column classifies Ancient/Future) and Powerglass
   // ×2, refused on price; none is reachable by an engine slice today.
+  // 🆕🆕🆕 D566 CORRECTION (D539): ~~Powerglass ×2 … none is reachable by an engine slice
+  // today~~ is WITHDRAWN for Powerglass — its price was paid: BUILT on the NEW
+  // `atEndOfYourTurnInActive` timing and flow.ts's parking `endTurnToolTrigger` stage
+  // (`POWERGLASS` above), so row 9's `effectIds` keep only the three banner refusals.
   // ⚠️ TWO NEW IDS, BOTH NON-ATTACK, so `nonAttackRegistryIds()` and `raw.length`
   // step by **+2 each** and stay 0 apart, for the THIRTEENTH slice running.
   // ⚠️ ONE CARD NAME AND ONE PROGRAM OBJECT, so `ABILITY_D1_SHAPE.distinctNames`

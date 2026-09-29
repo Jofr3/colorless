@@ -466,8 +466,18 @@ export type CardFilter =
       sentence names TWO fragments; this member holds ONE, and the producer wraps the pair
       in the combinator that already spells a printed disjunction (D245). That is why the
       member is not `fragments: readonly string[]` — an N-ary field here would be a second
-      spelling of `anyOf` for one axis only (D159), and `anyOf` is already N-ary. */
-  | { kind: "pokemonNameContaining"; fragment: string }
+      spelling of `anyOf` for one axis only (D159), and `anyOf` is already N-ary.
+
+      🆕🆕🆕 **D566 — `suffix`, THE PRINTED *"a Pokémon ex … that has "Ogerpon" in its
+      name"*** (Ogre's Mask `sv06-159` / `sv08.5-118`, both sides of its switch). A
+      CONJUNCT on this member rather than a new `allOf` combinator: the union has no
+      intersection member (`anyOf` is its one combinator, D245), and the printed noun
+      phrase is ONE noun with TWO narrowings — a rule-box class and a name fragment — so
+      the narrowing rides the member that already carries the fragment. Read through
+      `pokemonSuffixOf` (an EQUALITY, `suffixPokemon`'s read, never `isExOrV` — D255/D446),
+      so a non-ex "Ogerpon" (`sv06-024` Teal Mask Ogerpon, `sv10-026`) is refused. Optional
+      and absent on every older producer, which is byte-identical. */
+  | { kind: "pokemonNameContaining"; fragment: string; suffix?: PokemonSuffix }
   /** 🆕🆕 D446 — a Pokémon of a printed RULE-BOX CLASS: the printed *"your
       opponent's **Pokémon ex** in play"* (2 legal printings) and *"your opponent's
       **Pokémon ex and Pokémon V** in play"* (1) — **2 sentences / 3 legal printings**
@@ -7237,6 +7247,32 @@ export type EffectOp =
           bump because a v19 `discardRest: true` kept its type and lost its
           meaning. */
       also?: readonly { filter: CardFilter; max: number }[];
+      /** 🆕🆕🆕 **D566 — THE PRINTED *"up to 2 Basic Pokémon OR 1 Evolution Pokémon"*,
+          AND IT IS `also`'s DUAL: ONE ALTERNATIVE, NOT A SECOND NOUN.** Brock's Scouting
+          `sv09-146` / `sv09-179` (Supporter, 2 legal): *"Search your deck for up to 2
+          Basic Pokémon or 1 Evolution Pokémon, reveal them, and put them into your hand.
+          Then, shuffle your deck."* The op's own `filter`/`max` is alternative ONE; this
+          group is alternative TWO. An answer must come WHOLLY out of one alternative and
+          stay within THAT alternative's `max` — `also` is AND (every group capped, the
+          total their SUM), this is OR (one group chosen, the ceiling their MAX).
+
+          🛑 **THE CONJUNCTIVE CAPS CANNOT SPELL IT, MEASURED ON THE ONE BOARD THAT
+          SEPARATES THEM**: 1 Basic + 1 Evolution satisfies `caps: [{Basic, 2}, {Evo, 1}]`
+          under a flat `max: 2`, and the print refuses it (*"2 Basic OR 1 Evolution"* — a
+          mixed answer is neither). So the prompt carries a SEPARATE key,
+          `chooseCards.capsAnyOf` (interpreter.ts), never folded into `caps` — `caps` is
+          already written by `also` AND by `distinctEnergyTypes` (the park concatenates
+          the two), and a third writer with the opposite quantifier would make one list
+          mean two things.
+
+          ⚠️ **THE TOTAL IS THE MAX OVER THE ALTERNATIVES (2), NOT THE SUM (3).** The empty
+          answer stays legal (the printed *"up to"*: `min: 0`), and D344's refusal of an
+          optional-FIRST reading stands — the two alternatives are one decision over one
+          offer, not a yes/no followed by a second question. Singular (not a list) because
+          the print spells exactly one *"or"* (D331: ship the arity the printing spells).
+          Absent on every older row, which is byte-identical; a widening of a persisted
+          `pendingOp` literal (D125), so `MATCH_RECORD_VERSION` holds. */
+      orElse?: { filter: CardFilter; max: number };
       /** 🆕🆕🆕 **D513 — THE PRINTED *"of different types"*, AND IT IS A PAIRWISE
           RELATION AMONG THE PICKS RATHER THAN A NARROWING OF ANY ONE OF THEM.**
           Sylveon ex `sv06.5-050` "Crystal Wing" (`censusAttackCorpus.ts` **FILE LINE
@@ -8129,7 +8165,9 @@ export type EffectOp =
       `'and all attached cards'` are all the SAME unrelated mechanism (Palafin
       `sv06-060`, Ogre's Mask `sv06-159`/`sv08.5-118`: *"Any attached cards, damage
       counters … remain on the new Pokémon"*), so the widest NOUN-ORDER literal
-      buys nothing. Reversing the order does. `'cards attached'` returns **Team
+      buys nothing (🆕🆕🆕 D565/D566: both are now BUILT — Zero to Hero on
+      `switchWithDeckNamed`, Ogre's Mask on `switchWithDiscardNamed` — and both are still
+      a different mechanism: an in-place swap, not an attachment discard). Reversing the order does. `'cards attached'` returns **Team
       Rocket's Crobat ex `sv10-122`/`-217`/`-234`/`-242` (4 legal)** —
       *"You may put this Pokémon into your hand. (Discard all cards attached to
       this Pokémon.)"* — which **no literal containing the substring `attached
@@ -8468,6 +8506,39 @@ export type EffectOp =
       turns in play REMAIN), and it BYPASSES `intoPlayOnlyVia`, because it IS the licensed
       route. A new `EffectOp` member (D125) that never parks, so no continuation can hold it. */
   | { op: "switchWithDeckNamed"; name: string }
+  /** 🆕🆕🆕 **D566 — THE IN-PLACE SWAP FROM THE DISCARD PILE: OGRE'S MASK.** `sv06-159` /
+      `sv08.5-118` (Item, 2 legal): *"Choose a Pokémon ex in your discard pile that has
+      "Ogerpon" in its name, and switch it with 1 of your Pokémon ex in play that has
+      "Ogerpon" in its name. Any attached cards, damage counters, Special Conditions, turns
+      in play, and any other effects remain on the new Pokémon."* `switchWithDeckNamed`'s
+      swap (the TOP of the body's stack replaced IN PLACE, every other `InPlayPokemon` field
+      riding along) with three differences, each printed: the new card comes out of the
+      DISCARD PILE, the old top card goes INTO the discard pile (the print names no other
+      zone for it, and it is the pile the new one left — no shuffle, no `SHUFFLE` row), and
+      BOTH ends are CHOSEN — so this op PARKS, where Zero to Hero's cannot.
+
+      TWO QUESTIONS, D216's two parks with an ENGINE-WRITTEN `bodyUid` (never a printed
+      word — Ruffian's `bodyUid`, D565): question 1 the in-play body (a `choosePokemon`
+      over the controller's bodies whose TOP card passes `filter`, forced on one);
+      question 2 the discard card (a MANDATORY `chooseCards { min 1, max 1, dest "swap" }`
+      over the discard cards passing `filter`, forced on one). Body FIRST: *"switch it
+      with 1 of your Pokémon ex in play"* is the target the print names last, but it is
+      the half whose offer depends on nothing, and the discard offer depends on nothing
+      either — so the order is free, and body-first matches Ruffian's shape.
+
+      🛑 `filter` IS BOTH SIDES' NOUN, AND THE PRINT SAYS SO: *"a Pokémon ex … that has
+      "Ogerpon" in its name"* is spelled twice, so ONE field reads both ends
+      (`pokemonNameContaining { fragment: "Ogerpon", suffix: "ex" }`) and a non-ex Ogerpon
+      is refused on BOTH. `programPlayable` refuses the card when either offer is empty
+      (a card that could only whiff). NOT AN EVOLUTION (no `onEvolve`, no `EVOLVED`, no
+      `turnPlayed`/`evolvedTurn` write — the print keeps the turns in play); the event is
+      `POKEMON_SWAPPED_FROM_DISCARD`, a NEW row rather than a zone rider on
+      `POKEMON_SWAPPED_FROM_DECK` (a rider would make that name lie — `discardDeckBottom`'s
+      reason, D565); the D565 uid census, re-run for it, found no holder of the old uid
+      (interpreter.ts `swappedUid`'s doc). A new `EffectOp`
+      member that can ride `phase.cont` with its optional engine-written key — a D125
+      widening, `MATCH_RECORD_VERSION` holds. */
+  | { op: "switchWithDiscardNamed"; filter: CardFilter; bodyUid?: string }
   /** 🆕 D345 — THE PRINTED SELF-KNOCK-OUT COST. *"**If you use this Ability, this
       Pokémon is Knocked Out.**"* — Dusclops `sv06.5-019`/`-069`/`sv08.5-036` and
       Dusknoir `sv06.5-020`/`-070`/`sv08.5-037` "Cursed Blast", plus Magneton

@@ -1298,6 +1298,18 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
         strong(cardName(state, event.toUid)),
         plain(" from their deck"),
       ]);
+    case "POKEMON_SWAPPED_FROM_DISCARD": {
+      // 🆕🆕🆕 D566 — Ogre's Mask's swap: both cards are public, and the old one went to the
+      // discard pile the new one came out of (the print names no other zone for it).
+      const incoming = cardName(state, event.toUid);
+      return row(event.seat, [
+        plain("switched "),
+        strong(cardName(state, event.fromUid)),
+        plain(" with "),
+        strong(incoming),
+        plain(" from their discard pile"),
+      ]);
+    }
     case "PRIZES_OWED": {
       const n = event.count;
       return row(event.seat, [plain(`takes ${n} prize card${n === 1 ? "" : "s"}`)]);

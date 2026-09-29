@@ -2240,7 +2240,25 @@ export type PendingStage =
   /** §8.1 — the KO'd seat promotes from the bench; an empty bench at this
       point is the §14.2 loss. */
   | { kind: "promote"; seat: Seat }
-  | { kind: "endTurn"; seat: Seat }
+  /** 🆕🆕🆕 D566 — `toolsDone` is ENGINE-WRITTEN by this stage itself: the `endTurn` case
+      (flow.ts) seeds one `endTurnToolTrigger` per live Powerglass on the turn owner's Active
+      AHEAD of a copy of itself carrying `toolsDone: true`, so the re-queued copy ends the
+      turn instead of seeding again. Absent on every stage any other writer queues, which is
+      byte-identical — an optional key on a persisted stage (D125), `MATCH_RECORD_VERSION`
+      holds. */
+  | { kind: "endTurn"; seat: Seat; toolsDone?: true }
+  /** 🆕🆕🆕 §5.3 (D566) — run the `atEndOfYourTurnInActive` program of the POKÉMON TOOL
+      `toolUid` on `seat`'s Active (Powerglass `sv06.5-063` / `-097`: *"At the end of your turn
+      (after your attack), if the Pokémon this card is attached to is in the Active Spot, you
+      may attach a Basic Energy card from your discard pile to it."*). THE FIRST END-OF-TURN
+      STAGE THAT CAN PARK: seeded by the `endTurn` case ahead of `TURN_ENDED` (and ahead of
+      Amarys's discard, which it cannot change — Powerglass moves no hand card), it runs
+      under `seat` (the turn owner) and folds through settleProgram with `resumeTail`, so a
+      park resumes the re-queued `endTurn` behind it. The runner re-asks the print (the Tool
+      still live on the Active) and runs the program with the HOLDER's top uid as
+      `sourceUid` — `attachEnergyFrom.toSelf` resolves "it" through `sourceRef`, which a Tool
+      uid would not satisfy. A new union member (D125). */
+  | { kind: "endTurnToolTrigger"; seat: Seat; toolUid: string }
   /** The Pokémon Checkup (§13) — `seat` is the player whose turn just ended,
       which the §13.4 paralysis recovery keys on. Its KOs park on the same
       ko:* interrupts the attack KOs use. */
@@ -2259,7 +2277,16 @@ export type PendingStage =
       draining the remaining prize/promotion stages behind it. Queued by
       collectKnockOuts (flow.ts) after the prize stages, before the promotions.
       `uid`'s card left play, but cardIdByUid → programFor still resolves it. */
-  | { kind: "koTrigger"; seat: Seat; uid: string }
+  /** 🆕🆕🆕 D566 — `toolUid` names a POKÉMON TOOL that was attached to the KO'd `uid`
+      (Amulet of Hope `sv08-162`, `onHolderKnockedOut`): the stage runs THAT Tool's program
+      instead of the body's own on-KO Ability, one stage per Tool, queued behind the body's
+      own (flow.ts `collectKnockOutPass`) and inside the koTrigger group, so PRIZES →
+      koTriggers → PROMOTIONS is inherited. Optional and engine-written; absent on every
+      stage an older writer queued, which is byte-identical (D125). The 0.449 ROLLBACK
+      reading, named: a 0.449 reader ignores the key and runs the KO'd BODY's own on-KO
+      lookup — a whiff on every body with no on-KO Ability, and a SECOND run of that Ability
+      on one that has one (apps/api `match.ts`). */
+  | { kind: "koTrigger"; seat: Seat; uid: string; toolUid?: string }
   /** §9 — run the `onDamagedByAttack` reactive Ability of the Active `uid` that a
       main-hit attack just DAMAGED (Armarouge "Scorching Armor" Burns the attacker;
       Klawf ex "Counterattacking Pincer" discards an Energy from the attacker).
@@ -2283,6 +2310,9 @@ export type PendingStage =
       attached to one of `seat`'s SURVIVING Pokémon, because `seat`'s Active is
       about to be Knocked Out by the opponent's attack (Exp. Share sv01-174
       rescues a Basic Energy off the dying body onto the Tool's own holder).
+      🆕🆕🆕 D566 — or the `onHolderActiveKnockedOut` program of a Tool on the DYING Active
+      itself (Heavy Baton `sv05-151`, Retreat exactly 4: up to 3 Basic Energy to the Bench);
+      the shape is unchanged (the seat alone), so no persisted byte moves.
 
       ⚠️ NO `uid`, AND THAT ABSENCE IS THE DESIGN — the one stage in this union
       that names NEITHER the body that acts NOR the body it is about. Both are

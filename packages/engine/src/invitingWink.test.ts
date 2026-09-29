@@ -32,7 +32,8 @@ import {
 //   parsing the table rather than by reading D349's note. Its four blockers are
 //   D349's, re-checked: the by-NAME attach (Lycanroc ×2), the uncatalogued
 //   Ancient/Future/Tera banner (Reboot Pod ×1, Glass Trumpet ×2) and an
-//   end-of-turn Tool trigger point for 2 printings (Powerglass). The Lycanroc
+//   end-of-turn Tool trigger point for 2 printings (Powerglass — 🆕🆕🆕 D566 (D539): BUILT,
+//   `koToolsD566.test.ts` §4). The Lycanroc
 //   clause rests on `onEvolve` — **58 printings / 29 legal / 13 legal sentences**,
 //   re-measured to the digit — and SEVEN of those thirteen are built, leaving six.
 //

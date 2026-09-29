@@ -146,6 +146,11 @@ const MAGNETON_IDS = ["svp-153", "svp-159", "sv08-059"] as const;
     slices measured and neither took: an `anyWay` spread whose four printings are
     `legal_standard = 0`. See the §0 note on why rotation is the wrong filter here. */
 const KORAIDON_IDS = ["sv01-125", "sv01-231", "sv01-247", "sv01-254"] as const;
+/** 🆕🆕🆕 D566 — Powerglass `sv06.5-063` / `-097` (Tool, 2 legal): *"… you may attach a Basic
+    Energy card from your discard pile to it."* — ONE `attachEnergyFrom { toSelf, declinable }`,
+    the D358 decline at width ONE on a single named body (the `atEndOfYourTurnInActive` Tool
+    trigger runs it; `koToolsD566.test.ts` §4). The first LONE flagged op in the registry. */
+const POWERGLASS_IDS = ["sv06.5-063", "sv06.5-097"] as const;
 
 const ASSEMBLE_ALLOY_TEXT =
   "When you play this Pokémon from your hand to evolve 1 of your Pokémon during " +
@@ -451,7 +456,7 @@ function attachOpsByCardId(): Map<string, Extract<EffectOp, { op: "attachEnergyF
 // ── 1. THE POPULATION, AS A CENSUS OVER THE LIVE REGISTRY ────────────────────
 
 describe("D358 §1 — which printings carry the decline, walked off the registry", () => {
-  it("🛑 the declinable set is EXACTLY Archaludon ex ×3, Magneton ×3 and Koraidon ex ×4, by id", () => {
+  it("🛑 the declinable set is EXACTLY Archaludon ex ×3, Magneton ×3, Koraidon ex ×4 and Powerglass ×2, by id", () => {
     // ⚠️ BOTH DIRECTIONS, and over the WHOLE registry rather than a list this file
     // wrote: a printing authored with `declinable` that is not named here reddens
     // this line, and one of these losing it reddens it too. A count alone would
@@ -473,7 +478,9 @@ describe("D358 §1 — which printings carry the decline, walked off the registr
       .filter(([id, ops]) => !id.startsWith("fix-") && ops.some((op) => op.declinable === true))
       .map(([id]) => id)
       .sort();
-    expect(declinable).toEqual([...ARCHALUDON_IDS, ...MAGNETON_IDS, ...KORAIDON_IDS].sort());
+    // 🆕🆕🆕 D566 — and Powerglass ×2, the "you may" of a Tool's end-of-turn attach (by
+    // name, as D360's Koraidon ex was: the guard fired, and this is the slice saying why).
+    expect(declinable).toEqual([...ARCHALUDON_IDS, ...MAGNETON_IDS, ...KORAIDON_IDS, ...POWERGLASS_IDS].sort());
     // The two halves of the set, kept apart on purpose: the printed-legal six this
     // engine can be played with today, and the four rotated ones that print the
     // same sentence and are reachable through `programFor` all the same.
@@ -1016,7 +1023,8 @@ describe("D360 §7 — no `anyWay` spread in EITHER producer is still an exact N
   });
 
   it("🛑 the REGISTRY half: every multi-op `anyWay` program is flagged, Infernape excepted", () => {
-    // The registry's spreads are the four programs §1 names plus Infernape's,
+    // The registry's spreads are the four programs §1 names plus Infernape's
+    // (🆕🆕🆕 D566: §1 now also names Powerglass, which is no spread — one op, one body),
     // which is the ONE deliberate refusal — it prints no "up to" and no empty arm
     // (§9.1), so its printed answer set is {R}, {F}, {R,F} and a declinable pair
     // would legalise an empty answer the sentence does not print.
@@ -1027,7 +1035,14 @@ describe("D360 §7 — no `anyWay` spread in EITHER producer is still an exact N
     }
     // Both halves of the biconditional over the registry too: a flagged op is
     // always part of a multi-op program, never a lone one.
+    // 🆕🆕🆕 D566 CORRECTION (D539): ~~"never a lone one"~~ is WITHDRAWN — Powerglass ×2 is a
+    // LONE flagged op (the printed "you may" on ONE named body: no spread, so the multi-op
+    // biconditional above never applied to it). The half stands for every OTHER id.
     for (const [id, ops] of attachOpsByCardId()) {
+      if ((POWERGLASS_IDS as readonly string[]).includes(id)) {
+        expect(ops, id).toEqual([{ op: "attachEnergyFrom", source: "discard", toSelf: true, declinable: true }]);
+        continue;
+      }
       if (ops.some((op) => op.declinable === true)) expect(ops.length, id).toBeGreaterThan(1);
     }
   });

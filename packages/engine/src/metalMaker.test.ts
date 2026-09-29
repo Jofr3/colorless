@@ -33,7 +33,8 @@ import { FIXTURE_POOL, battler, deckOf, itemTrainer, typedEnergy } from "./testF
 //       engine slice can reach — Reboot Pod ×1 and Glass Trumpet ×2 on the
 //       Ancient/Future banner NO CATALOG COLUMN CLASSIFIES (`suffix` over 3,786 rows
 //       is NULL 3,157 / `ex` 629 and nothing else), and Powerglass ×2 on a whole new
-//       end-of-turn Tool trigger point for 2 printings. Its live residue is **2**.
+//       end-of-turn Tool trigger point for 2 printings (🆕🆕🆕 D566 (D539): WITHDRAWN for
+//       Powerglass — a price, paid: BUILT on `atEndOfYourTurnInActive`). Its live residue is **2**.
 //       Row 11's **3 are all live**, so row 11 is the largest LIVE residue.
 //   (3) CENSUS THE CLAUSE, over all three text columns.
 //       `instr(<col>,'and put them on the bottom of your deck')` — 4 sentences /

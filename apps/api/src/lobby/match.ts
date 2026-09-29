@@ -1668,6 +1668,39 @@ export interface MatchRecord {
     or client byte: the redacted view does not carry `allowances`, so the HUD does not
     show the side bonus (a carried display debt, decisions.md D556).
 
+    🆕🆕🆕 **STAYS 36 AT D566 — EVERY PERSISTED CHANGE IS A D125 WIDENING, AND THE 0.449 ROLLBACK
+    READINGS ARE NAMED.** (Placed ABOVE the D565 block, out of date order, so the declaration's
+    anchor lines stay byte-identical — D563's placement.) The addresses, named first (D456's rule):
+    `MatchRecord.state.phase.cont.pendingOp` / `.rest` and `phase.prompt` (written on a PARK), and
+    `MatchRecord.state.pending` (the stage queue). ⑴ `searchDeck`'s NEW optional `orElse` (Brock's
+    Scouting) can ride `pendingOp`, and its park writes the chooseCards prompt's NEW optional
+    `capsAnyOf`. ⑵ The NEW `EffectOp` member `switchWithDiscardNamed` (Ogre's Mask) can ride
+    `pendingOp` with its optional engine-written `bodyUid`; its second park writes the prompt dest's
+    NEW member `"swap"`; `CardFilter.pokemonNameContaining` gains an optional `suffix` inside it. ⑶
+    The stage queue gains the optional `koTrigger.toolUid` (Amulet of Hope), the optional
+    `endTurn.toolsDone` and the NEW member `endTurnToolTrigger { seat, toolUid }` (Powerglass). D441:
+    no key is renamed or removed, every added key is OPTIONAL, and a v36 record written by 0.449
+    cannot hold any of them — so every older record means exactly what it meant (driven: the D566
+    suites round-trip each new park through JSON and resume it). The 0.449 ROLLBACK readings (D456),
+    named rather than implied: a parked Brock's Scouting resumes under 0.449, whose `validateChoice`
+    does not know `capsAnyOf` — a MIXED answer (1 Basic + 1 Evolution) would then be ACCEPTED (the
+    flat `max` of 2 is the only check left), and 0.449's wire schema strips the key; a parked Ogre's
+    Mask pick resumes as a WHIFF (0.449's `applyChoice` default and `continuationOps` buy nothing —
+    the Item is spent for no effect), and 0.449's schema has no `"swap"` dest; a `koTrigger` carrying
+    a `toolUid` runs 0.449's BODY lookup instead — a whiff on a body with no on-KO Ability, and a
+    SECOND run of that Ability on one that has one; a live Powerglass park resumes under 0.449 as
+    the OLD `attachEnergyFrom` op it is, and 0.449 reads the re-queued `endTurn`'s `toolsDone` as
+    nothing and simply ends the turn (0.449 has no Powerglass row to seed from). An
+    `endTurnToolTrigger` stage itself reaches a persisted queue only BEHIND a first Powerglass park —
+    i.e. only on an Active carrying TWO live Powerglass, a Tool-cap-raising board — and there 0.449's
+    `advance` switch does not know the kind: it falls out of the switch and returns no result, a hard
+    failure on resume rather than a whiff (named, not hidden: do not roll back over such a record).
+    Nothing else
+    persists: the registry rows, the three `TriggerTiming` members, `StadiumEffects.disableAbilities`
+    and the aura's `targetType` are CATALOG data; `POKEMON_SWAPPED_FROM_DISCARD` is an event (D141). A
+    client byte moves (the chooseCards verb record gains `"swap"` in both HUDs; `GameHud`'s `cappedOut`
+    reads `capsAnyOf`) and is not a reason: no persisted shape changes with it.
+
     🆕🆕🆕 **STAYS 36 AT D565 — EVERY PERSISTED CHANGE IS A D125 WIDENING, AND THE 0.448 ROLLBACK
     READINGS ARE NAMED.** (Placed ABOVE the D564 block, out of date order, so the declaration's
     anchor lines stay byte-identical — D563's placement, one block down.) The addresses, named

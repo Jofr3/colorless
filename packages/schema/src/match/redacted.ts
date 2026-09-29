@@ -677,7 +677,9 @@ export const redactedEffectPromptSchema = z.discriminatedUnion("kind", [
     max: z.number(),
     // 🆕🆕🆕 D565 — "attach" (Impromptu Carrier: a deck-searched Tool attached to the
     // Pokémon whose Ability searched). A widening; no older member moves.
-    dest: z.enum(["bench", "hand", "deck", "deckBottom", "deckTop", "discard", "evolve", "attach"]),
+    // 🆕🆕🆕 D566 — "swap" (Ogre's Mask: a discard-pile card switched in for an in-play body's
+    // top card). A widening; no older member moves.
+    dest: z.enum(["bench", "hand", "deck", "deckBottom", "deckTop", "discard", "evolve", "attach", "swap"]),
     /** 🆕 D332 — PER-KIND CAPS over the same candidate list, the printed "a
         Pokémon **and** a Trainer card" (Drayton). `max` above stays the TOTAL;
         each entry caps how many picks may come out of ITS `uids`, which are the
@@ -688,6 +690,13 @@ export const redactedEffectPromptSchema = z.discriminatedUnion("kind", [
         PARTITION of `candidates`, which the controller has already been shown in
         full, and this arm goes to the controller alone. */
     caps: z.array(z.object({ uids: z.array(z.string()), max: z.number() })).optional(),
+    /** 🆕🆕🆕 D566 — the DISJUNCTIVE caps, `caps`' dual (Brock's Scouting: *"up to 2 Basic
+        Pokémon OR 1 Evolution Pokémon"*): an answer must lie WHOLLY in ONE entry's `uids`
+        and within THAT entry's `max`. Optional — absent on every other producer — and it
+        leaks nothing for `caps`' reason: the ids are drawn from `candidates`, which the
+        controller has already been shown. ⚠️ Without this key zod STRIPS it, and the
+        client would afford a mixed answer the engine then refuses. */
+    capsAnyOf: z.array(z.object({ uids: z.array(z.string()), max: z.number() })).optional(),
     note: z.string(),
   }),
   /** Attach cards out of the controller's DECK (top or search) onto their own

@@ -100,6 +100,8 @@ import {
 //     **2 of the 4 legal `effect` printings are the Technical Machine / Ignition
 //     Energy SELF-DISCARD tail**, a different mechanism wearing the same words.
 //     The timing buys 2 legal printings today. Not one slice with this one.
+//     🆕🆕🆕 D566 (D539): BUILT — the timing is `atEndOfYourTurnInActive` and the
+//     hook is flow.ts's parking `endTurnToolTrigger` stage (`koToolsD566.test.ts` §4).
 //
 // ── THE PRICE ───────────────────────────────────────────────────────────────
 //   ONE new `EffectOp` (`knockOutSelf`, FIELD-FREE), TWO registry programs, SIX

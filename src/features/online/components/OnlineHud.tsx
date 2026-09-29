@@ -1426,6 +1426,8 @@ const CHOOSE_CARDS_VERB: Record<
   evolve: { mandatory: "Evolve", upTo: "Evolve" },
   // 🆕🆕🆕 D565 — Impromptu Carrier's "…and attach it to this Pokémon" (an up-to search).
   attach: { mandatory: "Attach", upTo: "Attach" },
+  // 🆕🆕🆕 D566 — Ogre's Mask's "switch it with 1 of your Pokémon ex in play" (a mandatory pick).
+  swap: { mandatory: "Switch in", upTo: "Switch in" },
 };
 
 /** chooseCards (§15.E / §7.1 / §7.5) — pick min..max cards: a deck search, a

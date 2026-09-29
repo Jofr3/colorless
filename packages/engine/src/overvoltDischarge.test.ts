@@ -107,6 +107,8 @@ import {
 //   • Powerglass `sv06.5-063`/`-097` (2 legal) — needs a new `endOfTurn`
 //     `TriggerTiming` plus a Tool hook. `grep -rn "endOfTurn" packages/engine/src`
 //     is ONE hit at this head and it is D345's own note. Re-derived, still refused.
+//     🆕🆕🆕 D566 (D539): no longer refused — BUILT on `atEndOfYourTurnInActive` and
+//     flow.ts's `endTurnToolTrigger` stage (`koToolsD566.test.ts` §4).
 //   • Reboot Pod `sv05-158` and Glass Trumpet `sv07-135`/`sv08.5-110` — DEAD DATUM
 //     (the Future banner and the Tera one have no supply-side column). Recorded.
 //   • The other ten legal printings of this clause — see (3).
