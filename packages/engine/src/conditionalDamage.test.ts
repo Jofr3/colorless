@@ -261,6 +261,9 @@ describe("deriveAttackDamageBonus — the anchor guards (everything else stays L
       // Wing sv06.5-026's, which is blocked on an ingest change), against four
       // suites that each need a witness. energyClause/energyInPlay already share
       // one for the same reason.
+      // (🆕🆕🆕 D569 (D539): "Slither Wing … blocked on an ingest change" is WITHDRAWN —
+      // "Iron Smasher" is a literal `CONDITIONAL_DAMAGE_CLAUSES` row now
+      // (`opponentBannerPokemonInPlay` Future, over `banners.ts`), with no ingest change.)
       //
       // WHY THIS OCCUPANT IS HARD TO MAP OUT FROM UNDER, in the terms D124's
       // predecessors kept getting wrong: it is not one fact but TWO — "evolved"

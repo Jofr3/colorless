@@ -114,6 +114,15 @@ const CLAIMED = [ANY_BODIES, BASIC_BODIES, TR_BODIES, GRASS_BODIES, EVOLUTION_BO
     named-owner rung both still need the bytes; `ANCIENT_BODIES` has not moved and cannot,
     for the reason recorded at its refusal. */
 const ANCIENT_BODIES = "This attack does 30 damage for each of your Ancient Pokémon in play.";
+/** 🆕🆕🆕 **D569 — `ANCIENT_BODIES` HAS LEFT TOO, AND "has not moved and cannot" ABOVE IS
+    WITHDRAWN (D539).** Koraidon `sv05-119`/`svp-091` "Primordial Beatdown" is BUILT: the map's
+    tenth exact key, "Ancient Pokémon" → `bannerPokemon Ancient`, over `banners.ts` (an engine
+    table keyed by printing id — the ingest still drops the banner, TRUE). The vocabulary's
+    refusal needs a NEW witness, and it is this one: the other Paradox banner, which the map
+    still does not spell. ⚠️ UNPRINTED — the column prints no "for each of your Future Pokémon
+    in play" — so it is a CONSTRUCTED witness, one axis (the banner word) from the printed row;
+    it is refused at the MAP (no key, and "Future" misses `CLAUSE_POKEMON_TYPES`). */
+const FUTURE_BODIES = "This attack does 30 damage for each of your Future Pokémon in play.";
 const STAGE1_BODIES = "This attack does 40 damage for each of your Stage 1 Pokémon in play.";
 /** 🆕🆕 D466 — the OTHER printed stage row, and it is a DIFFERENT ANCHOR, a DIFFERENT
     FOLD and a DIFFERENT ZONE from every constant above: `censusAttackCorpus.ts` **file
@@ -479,15 +488,22 @@ describe("§1 — the five printed sentences, their population, and the fixture"
         STAGE1_BODIES,
         FOE_EX_BODIES,
         FOE_EX_V_BODIES,
+        // 🆕🆕🆕 D569 — the ninth: Koraidon "Primordial Beatdown", the map's "Ancient Pokémon" key.
+        ANCIENT_BODIES,
       ].sort(),
     );
+    // (🆕🆕🆕 D569: NINE OF THE NINE — see below.)
     // 🛑 **EIGHT OF THE NINE, AND THE TWO FOE ROWS ARE IN THE CLAIMED HALF — WHICH THE
     // FIRST DRAFT OF THIS RUNG GOT WRONG.** They are refused by the `(?!opponent)`
     // lookahead on the ATTACKER's two anchors and claimed by `IN_PLAY_FOE_BODY_MULTIPLY`
     // in the `×` reader (D446), so "refused by an anchor" and "unclaimed" are different
     // propositions and this population answers the second. ⚠️ **ONE is still LOUD, by
     // name**: ANCIENT, which is DATA-blocked forever.
-    expect(family.filter((s) => !resolvedByAnyReader(s))).toEqual([ANCIENT_BODIES]);
+    // 🆕🆕🆕 D569 (D539): ~~ONE is still LOUD … DATA-blocked forever~~ WITHDRAWN — ANCIENT is
+    // CLAIMED (the map's "Ancient Pokémon" key over `banners.ts`), so the family is NINE OF NINE
+    // and the loud half is EMPTY. The vocabulary's refusal is re-witnessed in §2 (`FUTURE_BODIES`).
+    expect(family.filter((s) => !resolvedByAnyReader(s))).toEqual([]);
+    expect(family.filter((s) => resolvedByAnyReader(s))).toContain(ANCIENT_BODIES);
   });
 
   it("carries fix-inplaybodies's nine printed attacks, `×` and `+` markers included", () => {
@@ -632,10 +648,23 @@ describe("§2 — the two anchors and the `inPlayBodyFilter` vocabulary", () => 
     //     path while its neighbour did not move an inch. The two-reason split is kept
     //     as the record of a prediction that came true.
     // Only `Ancient` must stay on the loud ATTACK_EFFECT_SKIPPED path.
-    for (const text of [ANCIENT_BODIES]) {
+    // 🆕🆕🆕 D569 (D539): ~~`Ancient` is DATA-BLOCKED and permanently so … Nothing in
+    // effects.ts can ever be the fix~~ WITHDRAWN — `banners.ts`, an engine table keyed by printing
+    // id, is the fix, and `ANCIENT_BODIES` is CLAIMED (pinned below, the D466 transition shape).
+    // The refusal this rung exists for is re-witnessed on `FUTURE_BODIES`, the banner the map
+    // still does not spell.
+    for (const text of [FUTURE_BODIES]) {
       expect(deriveAttackDamageMultiplier(text)).toBeNull();
       expect(deriveAttackDamageBonus(text)).toBeNull();
     }
+    expect(deriveAttackDamageMultiplier(ANCIENT_BODIES)).toEqual({
+      per: 30,
+      count: {
+        kind: "pokemonInPlay",
+        seat: "you",
+        filter: { kind: "bannerPokemon", banner: "Ancient" },
+      },
+    });
     // 🆕🆕 **D466 — AND THE ROW THAT LEFT IS PINNED ON THE OTHER SIDE OF THE SAME
     // PREDICATE** (D444/D447: record the transition rather than quietly shrinking).
     expect(deriveAttackDamageMultiplier(STAGE1_BODIES)).toEqual({
@@ -1111,10 +1140,17 @@ describe("§2 — the two anchors and the `inPlayBodyFilter` vocabulary", () => 
     // PRICE — "the row is ONE printing"** — which is a fact about the pool and is still
     // true; what it got wrong was the reason, and the two are recorded separately here
     // because a refusal that survives on a false reason is the expensive kind (D442).
-    expect(deriveAttackDamageMultiplier(ANCIENT_BODIES)).toBeNull();
+    // 🆕🆕🆕 D569 (D539): the DATA-blocked survivor this paragraph leans on was built after all —
+    // by an engine table, not an ingest change — so the witness moves to `FUTURE_BODIES`
+    // (constructed; the map still does not spell that banner), and `ANCIENT_BODIES` is pinned
+    // as claimed by EXACTLY the `×` reader.
+    expect(deriveAttackDamageMultiplier(FUTURE_BODIES)).toBeNull();
+    expect(deriveAttackDamageBonus(FUTURE_BODIES)).toBeNull();
+    for (const reader of OTHERS) expect(reader(FUTURE_BODIES)).toBeNull();
+    expect(resolvedByAnyReader(FUTURE_BODIES)).toBe(false);
+    expect(deriveAttackDamageMultiplier(ANCIENT_BODIES)).not.toBeNull();
     expect(deriveAttackDamageBonus(ANCIENT_BODIES)).toBeNull();
     for (const reader of OTHERS) expect(reader(ANCIENT_BODIES)).toBeNull();
-    expect(resolvedByAnyReader(ANCIENT_BODIES)).toBe(false);
   });
 });
 
@@ -1396,6 +1432,8 @@ describe("§6 — `MATCH_RECORD_VERSION` STAYS 29, driven at all THREE addresses
       suffixPokemon: { kind: "suffixPokemon", suffix: "ex" },
       // 🆕🆕🆕 D568 — Tera Orb's / Prism Charge's noun; the alphabet gate fired a FIFTH time.
       bannerPokemon: { kind: "bannerPokemon", banner: "Tera" },
+      // 🆕🆕🆕 D569 — Roaring Moon's "Ancient card" noun; the alphabet gate fired a SIXTH time.
+      bannerCard: { kind: "bannerCard", banner: "Ancient" },
       toolCard: { kind: "toolCard" },
       basicEnergy: { kind: "basicEnergy" },
       byName: { kind: "byName", name: "Fixmon ex" },
@@ -1445,7 +1483,12 @@ describe("§6 — `MATCH_RECORD_VERSION` STAYS 29, driven at all THREE addresses
     // written first). ⚠️ The CAST below holds only `fix-*` ids, which `banners.ts` does not
     // know, so the member answers false to all of it: its ANTI-VACUITY is carried by
     // `teraBannerD568.test.ts` (a real Tera id, a real non-Tera ex, a Trainer), not here.
-    expect(Object.keys(EVERY_KIND)).toHaveLength(26);
+    // 🆕🆕🆕 **D569 — A SIXTH TIME, 26 → 27**: adding `bannerCard` made `tsc` fail HERE with
+    // `TS2741: Property 'bannerCard' is missing` and nowhere else in `packages/**` (the
+    // `switch`es — `matchesFilter`, `retrieveNoun` — were written first). Its ANTI-VACUITY,
+    // like `bannerPokemon`'s, is carried by `paradoxBannerD569.test.ts` (an Ancient Trainer
+    // and an Ancient Pokémon counted, a Future card and a bannerless card not).
+    expect(Object.keys(EVERY_KIND)).toHaveLength(27);
     // 🛑 **THE BYTES.** Each filter is written out and read back the way
     // `MatchRecord.state` is, and `matchesFilter` must give the IDENTICAL answer over
     // a cast that spans every category the catalog has — a Pokémon with a rule box
@@ -1631,7 +1674,7 @@ describe("§6 — `MATCH_RECORD_VERSION` STAYS 29, driven at all THREE addresses
   });
 
   it("the engine version moved with the behaviour", () => {
-    expect(engineVersion).toBe("0.452.0");
+    expect(engineVersion).toBe("0.453.0");
   });
 });
 
@@ -1879,8 +1922,11 @@ describe("§8 — `stagePokemon`: the printed ordinal, at two zones and two fold
     // exactly one thing, and the thing is named.
     // …the NOUN, and it is the DATA-blocked banner rather than an invented word, so
     // this refusal cannot be casually built away by a successor (D461).
+    // 🆕🆕🆕 D569 (D539): "the DATA-blocked banner … cannot be casually built away" is WITHDRAWN
+    // for Ancient (the map's "Ancient Pokémon" key, `banners.ts`), so the witness is the OTHER
+    // Paradox banner, which the map does not spell (constructed; one axis, the noun).
     expect(
-      deriveAttackDamageBonus("This attack does 40 more damage for each Ancient Pokémon on your Bench."),
+      deriveAttackDamageBonus("This attack does 40 more damage for each Future Pokémon on your Bench."),
     ).toBeNull();
     // …the printed ZERO, which is a SEPARATE guard from the vocabulary: the noun here
     // is one the map holds, so only `per >= 1` can be doing the refusing.
@@ -2010,7 +2056,8 @@ describe("§8 — `stagePokemon`: the printed ordinal, at two zones and two fold
     }
     // …and the control: the LOUD row still files one, so the assertion above is not a
     // claim that this engine never files the event (D424).
-    expect(resolvedByAnyReader(ANCIENT_BODIES)).toBe(false);
+    // 🆕🆕🆕 D569 — the control moves to `FUTURE_BODIES`: `ANCIENT_BODIES` is claimed now.
+    expect(resolvedByAnyReader(FUTURE_BODIES)).toBe(false);
   });
 
   it("🛑 `MATCH_RECORD_VERSION` STAYS 29 — the `DamageCountSource` half, three directions", () => {

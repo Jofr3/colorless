@@ -51,6 +51,13 @@ import {
 // second is blocked twice more — on a block installed over a SET of bodies rather
 // than "this Pokémon", and on a trailing leave-the-spot terminator the turn stamp
 // does not carry. Both stay LOUD, and `censusAtHead.test.ts` counts them.
+// (🆕🆕🆕 D569 (D539): ~~blocked on a SUPPLY-SIDE ABSENCE~~ WITHDRAWN as the reason —
+// `banners.ts`, an engine table keyed by printing id, supplies Ancient/Future since D569.
+// Both STILL stay LOUD, each for its remaining reason: Iron Moth because `fromClass` is
+// PERSISTED and making `AttackerClass.stage` optional would make 0.452's exhaustive
+// `attackerMatchesStage` switch (under `attackerMatchesClass`) fall through on rollback (an MRV bump, deferred); Miraidon
+// `sv08-069` on the set-of-bodies block and the leave-the-spot terminator named above —
+// types.ts and docs/decisions.md D569 (e) say the same.)
 //
 // ⚠️ ALL SEVEN PRINTINGS ARE ONE CARD — Terapagos ex "Crown Opal" ({G}{W}{L},
 // 180, attack INDEX 1) as `svp-165` / `sv07-128` / `-170` / `-173` /
@@ -231,6 +238,10 @@ describe("the typed attacker class — derived, not authored", () => {
   it("leaves the row's other two printed sentences LOUD — supply, not effort", () => {
     for (const text of [
       // Iron Moth sv06.5-009 — the Ancient BANNER, in no column of the catalog.
+      // (🆕🆕🆕 D569 (D539): the title's "supply, not effort" is WITHDRAWN for both rows —
+      // `banners.ts` supplies Ancient/Future since D569. Both stay LOUD on MECHANISM: the
+      // persisted `AttackerClass` rollback reading here, and the set-of-bodies block with
+      // its terminator below. The title is kept byte-identical; this note corrects it.)
       "During your opponent's next turn, prevent all damage done to this Pokémon by attacks from Ancient Pokémon.",
       // Miraidon sv08-069 — three blockers, and the class token is NOT one of
       // them: a block over a SET of bodies, a second demand-only banner, and a

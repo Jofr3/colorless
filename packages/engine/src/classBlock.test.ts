@@ -48,7 +48,11 @@ import {
 // Ancient is a BANNER printed on the card face: no column of the persisted
 // catalog carries it and no field of tcgdex's own card model does either
 // (checked upstream against Roaring Moon ex sv04-124, the canonical Ancient
-// print). It has no reader because it has no DATUM — and a species-name table
+// print). It has no reader because it has no DATUM (🆕🆕🆕 D569 (D539): ~~no DATUM~~
+// WITHDRAWN as the reason — `banners.ts`, an engine table keyed by printing id, supplies
+// Ancient since D569; it stays unread because `fromClass` is PERSISTED and an optional
+// `AttackerClass.stage` falls out of 0.452's `attackerMatchesStage` switch on rollback — an
+// MRV bump, deferred, docs/decisions.md D569 (e)) — and a species-name table
 // would answer three real cards WRONGLY, since Great Tusk ex sv01-123 is the same
 // species with no banner. So the sentence stays LOUD, which is this family's
 // standing answer to a token it cannot resolve.
@@ -187,6 +191,7 @@ describe("the attacker-CLASS filter — derived, not authored", () => {
     expect(deriveAttackEffect(`${BASIC_TEXT} Draw a card.`)).toBeNull();
   });
 
+  // (🆕🆕🆕 D569 (D539): "because there is no DATUM" is WITHDRAWN — the datum is `banners.ts` since D569; Iron Moth still has no reader, because its block is a PERSISTED `AttackerClass` whose widening is an MRV question (deferred, decisions.md D569). The refusal this rung pins is unchanged)
   it("refuses the ANCIENT spelling — no reader, because there is no DATUM", () => {
     // THE SLICE'S HEADLINE REFUSAL, and it is not "we ran out of time". "Ancient"
     // is a banner printed on the card FACE from Paradox Rift (sv04) onward: it is

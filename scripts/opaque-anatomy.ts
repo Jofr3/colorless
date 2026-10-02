@@ -283,12 +283,23 @@ export const MARKERS: readonly Marker[] = [
     //    marker is SPLIT rather than re-declared whole — the Tera evidence is KEPT (as the
     //    `TERA-BANNER` co-marker, never deleted — D508's rule) and the Ancient/Future half keeps
     //    the verdict its built side still earns (0 / 0).
+    // 🛑🛑🛑 D569 — **AND THE ANCIENT/FUTURE HALF IS RE-DECLARED A CO-MARKER, BY THE SAME CONTROL.**
+    //    Slice 2 part a widened `banners.ts` to both banners (86 ids) and built EIGHT sentences
+    //    carrying the words — four through readers (Koraidon "Primordial Beatdown", Roaring Moon
+    //    "Vengeance Fletching", Iron Valiant "Majestic Sword", Slither Wing "Iron Smasher") and four
+    //    as hand-written registry attacks (Peak Acceleration, Land Collapse, Supportive Singing,
+    //    Perplexing Transfer) — so the built side went 0 / 0 → 8 / 12 and `opaque-anatomy-gate.ts`
+    //    §C went RED naming it. The marker keeps its NAME (its history reads from it) and the
+    //    verdict changes; the "an ingest COLUMN" `needs` below is struck, not deleted.
     rx: /\b(?:Ancient|Future)\b/,
-    verdict: "blocker",
+    verdict: "co-marker",
     needs:
       // 🆕🆕🆕 D568 (D539): "an ingest COLUMN" is WITHDRAWN AS THE ONLY FIX — an ENGINE table keyed
       //    by printing id (`banners.ts`, built for Tera) is one; Slice 2 widens it to these two.
-      "an ingest COLUMN. `cardSchema` has 21 keys and none classifies the banner (D468), so a filter over it counts 0 on every board forever",
+      // 🆕🆕🆕 D569 (D539): and Slice 2 part a DID — the former `needs` was ~~"an ingest COLUMN.
+      //    `cardSchema` has 21 keys and none classifies the banner (D468), so a filter over it
+      //    counts 0 on every board forever"~~ ("none classifies" stays TRUE of `cardSchema`).
+      "nothing new — `banners.ts` (D568/D569) classifies all three banners by printing id; what is left of the Ancient/Future residue is blocked by OTHER mechanisms (a persisted attacker class, a seat-level attack record, a reveal-top-N op, a set-target block)",
   },
   {
     name: "TERA-BANNER",

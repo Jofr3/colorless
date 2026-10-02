@@ -516,6 +516,13 @@ export type CardFilter =
       printing ID through `banners.ts`' `bannerOf` (D135) — the banner is on no ingested
       column, so no name or type read could answer it. `matchesFilter`'s arm (cards.ts). */
   | { kind: "bannerPokemon"; banner: Banner }
+  /** 🆕🆕🆕 **D569 — a CARD of ANY category printing a BANNER** ("each Ancient card in your
+      discard pile": Roaring Moon `sv05-109`/`sv08.5-065` "Vengeance Fletching"). A Paradox
+      banner is printed on Trainers too (Explorer's Guidance, Awakening Drum, Reboot Pod,
+      Ciphermaniac's Codebreaking), so "Ancient CARD" must count them and `bannerPokemon`
+      (Pokémon-only) would silently undercount it. Same `bannerOf` read, no category
+      conjunct. `matchesFilter`'s arm (cards.ts). */
+  | { kind: "bannerCard"; banner: Banner }
   /** A Pokémon Tool card (Town Store's "a Pokémon Tool card" — read off the
       catalog's `trainerType: "Tool"`, the same discriminant attachTool uses). */
   | { kind: "toolCard" }
@@ -1701,6 +1708,7 @@ export type BoardCondition =
       SUPPLY),
       (🆕🆕🆕 D568 (D539): WITHDRAWN FOR TERA — `banners.ts` is its supply; "no INGESTED column"
       stays true, and the Ancient/Future half stands.) and the handoff named this candidate as the first in the run that
+      (🆕🆕🆕 D569 (D539): "the Ancient/Future half stands" is WITHDRAWN — Slice 2 part a widened `banners.ts` to Ancient and Future (86 ids), so the banner has an engine supply for all three; "no INGESTED column" stays TRUE)
       could actually fail it. It does not: `InPlayPokemon.energy` holds uids,
       `state.cardIdByUid` resolves each to a catalog id and `cardOfUid` to the
       `Card`, whose `name` is an ingested column that `matchesFilter`'s `byName`
@@ -2024,6 +2032,7 @@ export type BoardCondition =
       are D207 BANNER clauses (`Ancient` ×1, `Tera` ×2, `Future` ×2 — the supply side
       absent from every ingested column) (🆕🆕🆕 D568 (D539): "FIVE" is THREE now — the two
       TERA clauses resolve through literal rows over `banners.ts`; the Ancient ×1 and Future ×2 stand;
+      (🆕🆕🆕 D569 (D539): "the Ancient ×1 and Future ×2 stand" is WITHDRAWN for FUTURE — the two Future clauses (Iron Valiant `sv05-080`, Slither Wing `sv06.5-026`) resolve through literal rows over the widened `banners.ts`, one printing each; the ONE banner clause left is the Ancient ×1 (Koraidon `sv08-116` "Unrelenting Onslaught"), whose blocker is a seat-level attack record, not the banner)
       so the residue is **5 sentences / 8 printings** after D568, not "7 / 10" — Ho-Oh `sv08-019` and
       Regigigas `sv08.5-086` leave it, one sentence and one printing each), ONE at 5 printings is D368's structural
       shape refusal (*"…in addition to this attack's cost"* reads an attack
@@ -2391,7 +2400,7 @@ export type BoardCondition =
       BEFORE THE PREDICATE IS SPELLED.** `Card.resistances` is a real ingested
       column (`packages/schema/src/catalog/card.ts`, `{type, value?}[] | null`) and
       the §8.5 pipeline has read it since 0.1.x — this is not the `Tera` shape,
-      (🆕🆕🆕 D568 (D539): the "no supply / DATA-BLOCKED / unbuildable" reading is WITHDRAWN FOR TERA — `banners.ts`' engine table, keyed by printing id, supplies the banner; "no INGESTED column classifies it" and "`Tera` is not a type" stay TRUE, and every Ancient/Future claim stands.)
+      (🆕🆕🆕 D568 (D539): the "no supply / DATA-BLOCKED / unbuildable" reading is WITHDRAWN FOR TERA — `banners.ts`' engine table, keyed by printing id, supplies the banner; "no INGESTED column classifies it" and "`Tera` is not a type" stay TRUE, and every Ancient/Future claim stands. 🆕🆕🆕 D569 (D539): that last clause is WITHDRAWN in turn — Slice 2 part a gave Ancient/Future the same writer, `banners.ts` (86 more ids); "no INGESTED column classifies it" stays TRUE.)
       where the banner is DEMAND with no column CLASSIFYING it. ⚠️ The only
       population this container can measure is `FIXTURE_POOL` (**24 of 444** bodies
       carry a Resistance, **16** of them `Fighting`), and that is a FLOOR on a
@@ -2606,6 +2615,7 @@ export type BoardCondition =
       CLASSIFIES (D204/D205, and D207's measurement of the same shape on `Tera`),
       so the capture is deliberately loose, the vocabulary refuses it, and the
       sentence stays on the LOUD `ATTACK_EFFECT_SKIPPED` path. **THE MAP IS THE
+      (🆕🆕🆕 D569 (D539): "stays on the LOUD path" is WITHDRAWN — Slither Wing resolves through its OWN literal `CONDITIONAL_DAMAGE_CLAUSES` row, `opponentBannerPokemonInPlay`, over `banners.ts`; THIS template still refuses `Future` (a banner, not a type), so the map-is-the-vocabulary claim stands)
       VOCABULARY, NOT THE REGEX.**
 
       Read through `topCardOf` (§1.2) like every other type-reading member: a
@@ -2632,7 +2642,7 @@ export type BoardCondition =
       existing readers in this union alone (`opponentActiveHasType`,
       `opponentActiveHasResistance`'s neighbour one field over, `yourBenchHasType`,
       and the two aura filters outside it), so this is nowhere near the `Tera` shape.
-      (🆕🆕🆕 D568 (D539): the "no supply / DATA-BLOCKED / unbuildable" reading is WITHDRAWN FOR TERA — `banners.ts`' engine table, keyed by printing id, supplies the banner; "no INGESTED column classifies it" and "`Tera` is not a type" stay TRUE, and every Ancient/Future claim stands.)
+      (🆕🆕🆕 D568 (D539): the "no supply / DATA-BLOCKED / unbuildable" reading is WITHDRAWN FOR TERA — `banners.ts`' engine table, keyed by printing id, supplies the banner; "no INGESTED column classifies it" and "`Tera` is not a type" stay TRUE, and every Ancient/Future claim stands. 🆕🆕🆕 D569 (D539): that last clause is WITHDRAWN in turn — Slice 2 part a gave Ancient/Future the same writer, `banners.ts` (86 more ids); "no INGESTED column classifies it" stays TRUE.)
       **THE WHOLE PRICE IS THE SHAPE.**
 
       🛑 **THE FORM IS AN INTERSECTION OVER TWO VARIABLE-SIZE SETS, AND THE UNION
@@ -3815,6 +3825,20 @@ export type BoardCondition =
   /** 🆕🆕🆕 **D568 — "your opponent's Active Pokémon is a Tera Pokémon"**: Regigigas
       `sv08.5-086` "Jewel Breaker" (+230). The other seat's Active TOP card. Public. */
   | { kind: "opponentActiveIsBanner"; banner: Banner }
+  /** 🆕🆕🆕 **D569 — "your opponent has any Future Pokémon in play"**: Slither Wing
+      `sv06.5-026` "Iron Smasher" (+120). Any of the OTHER seat's in-play bodies (Active and
+      Bench) whose TOP card prints `banner` — `yourBannerPokemonInPlay` one seat over. Public. */
+  | { kind: "opponentBannerPokemonInPlay"; banner: Banner }
+  /** 🆕🆕🆕 **D569 — "you played an Ancient/Future Supporter card from your hand during this
+      turn"**: Great Tusk `sv05-097`/`sv08.5-055` "Land Collapse" (Ancient, its "discard 3
+      more" branch) and Iron Valiant `sv05-080` "Majestic Sword" (Future, +100). Read off
+      `allowances.supporterPlayedUid` — the one datum that already says "you played a
+      Supporter from your hand this turn" (Briar's D568 read) — resolved to its PRINTING and
+      that printing's banner (`banners.ts`, by id, through `matchesFilter`'s `bannerCard`
+      arm). R-PX3 (⚠️ UNRULED). ⚠️ THE SEAT GUARD IS `youPlayedSupporterNamedThisTurn`'s,
+      VERBATIM: the allowance bag is the turn OWNER's, so a non-turn seat reads FALSE. Public:
+      the played Supporter is face up in the discard pile. */
+  | { kind: "yourPlayedBannerSupporterThisTurn"; banner: Banner }
   /** D280 — every one of `conditions` holds for the reading seat. The
       vocabulary's FIRST COMBINATOR and its first RECURSIVE member, bought by
       Call Bell `sv08-165`'s *"You can use this card only if you go second, and
@@ -5613,6 +5637,15 @@ export type EffectOp =
           `CardFilter.ownerPokemon.owner` and `AttachTargetRiders.ownerPokemon`
           take, because all three go into the one predicate. */
       ownerPokemon?: string;
+      /** 🆕🆕🆕 **D569 — the printed BANNER subgroup on the SOURCE**: Flutter Mane `sv08-096`
+          "Perplexing Transfer" — *"Move all damage counters from 1 of your Benched **Ancient**
+          Pokémon to your opponent's Active Pokémon."* Dedenne ex's sentence with a banner
+          word where Rocket Mirror has a possessive, so it is D205's widening one axis over:
+          a `CardFilter` on the source candidate set (`bannerPokemon Ancient`), matched on each
+          Benched body's TOP card through `matchesFilter`. Absent = byte-identical. No Benched
+          Ancient Pokémon is `parkOrForce`'s silent no-op (R-PX4 ⚠️ UNRULED). Read ONLY when
+          the candidate set is built (`stepOp`), never at the apply. */
+      filter?: CardFilter;
     }
   /** The counter move whose DESTINATION is a second decision — *"Move all damage
       counters from 1 of your Benched Pokémon to **1 of your opponent's
@@ -6969,7 +7002,15 @@ export type EffectOp =
       recordAs?: EffectSlot;
       from?: "bottom";
       who?: "eachPlayer";
-      per?: Extract<DamageCountSource, { kind: "opponentBenchCount" }>;
+      per?:
+        | Extract<DamageCountSource, { kind: "opponentBenchCount" }>
+        /** 🆕🆕🆕 **D569 — Awakening Drum `sv05-141`**: *"Draw a card for each of your
+            Ancient Pokémon in play."* The SECOND `per` member, `DamageCountSource`'s own
+            `pokemonInPlay` reused by `Extract` (D159) and counted by the one walk,
+            `countPokemonInPlay` (Active + Bench, TOP cards, `damagedOnly` honoured). Read
+            at resolve like the first; an Item's lone `drawCards` never parks or rides a
+            `rest`, so the member is never persisted. */
+        | Extract<DamageCountSource, { kind: "pokemonInPlay" }>;
     }
   /** "Draw cards until you have `size` cards in your hand" (Grusha) — draw
       `size − hand.length`, i.e. nothing at all when the hand already holds
@@ -9201,6 +9242,15 @@ export type EffectOp =
           parked Super Potion resumed on a rolled-back deploy heals 60 and discards
           NOTHING. */
       discardEnergyFromHealed?: true;
+      /** 🆕🆕🆕 **D569 — the printed BANNER subgroup on the candidates**: Scream Tail
+          `sv05-077` "Supportive Singing" — *"Heal 100 damage from 1 of your Benched
+          **Ancient** Pokémon."* A `CardFilter` (`bannerPokemon Ancient`) matched on each
+          candidate's TOP card, applied in `healChosenTargets` AFTER the zone word and the
+          window — the sole funnel, so `programPlayable` and the offer cannot drift. Absent =
+          byte-identical. No Benched Ancient Pokémon is the silent no-op (R-PX4 ⚠️ UNRULED);
+          a parked pick is validated against the PROMPT, so the rider is never re-read at the
+          apply. */
+      filter?: CardFilter;
     }
   /** Attach Basic Energy from a SOURCE zone (the controller's hand or discard
       pile) to a CHOSEN own in-play Pokémon — the §6 energy-acceleration Ability
@@ -9464,6 +9514,7 @@ export type EffectOp =
           `sv07-135`/`sv08.5-110` *"…to each of them"* and Reboot Pod
           `sv05-158` *"…to each of your Future Pokémon"* are both TRAINERS, and
           the `Future` one is ingest-blocked by D243's finding), so a welded flag
+          (🆕🆕🆕 D569 (D539): "ingest-blocked" is WITHDRAWN — Reboot Pod `sv05-158` is BUILT on `attachFromDiscard` (`targetBanner: "Future"`, `each`) over `banners.ts`; the ingest still drops the banner, TRUE)
           would be observationally identical on every printing that exists. It is
           installed as the mutant `D248-toEach-implies-bench` and killed by a
           case that spreads over an UN-narrowed target set.
@@ -10736,6 +10787,28 @@ export type EffectOp =
       maxPerTarget?: number;
       targetType?: string;
       benchOnly?: true;
+      /** 🆕🆕🆕 D569 — the printed BANNER target (Reboot Pod `sv05-158`: *"…to each of your
+          **Future** Pokémon"*), `AttachTargetRiders.targetBanner` — read once, in
+          `attachEnergyTargets`, as Prism Charge's is on the deck twin. */
+      targetBanner?: Banner;
+      /** 🆕🆕🆕 **D569 — "to EACH of your Future Pokémon"** (Reboot Pod: *"Attach a Basic
+          Energy card from your discard pile to each of your Future Pokémon."*). MANDATORY,
+          not "up to": `max` becomes the PER-TARGET count (the printed "a Basic Energy card"
+          = 1) and the reachable total is `max` × the offered bodies (the parked prompt's
+          `maxPerTarget` is `max`). The player still chooses WHICH card goes WHERE (a Fire
+          and a Water in the pile are a decision), but a short or empty answer is TOPPED UP
+          at the apply — each offered body left without a card gets the next matching card in
+          the discard pile, pile order, while the pile lasts (R-PX1 ⚠️ UNRULED). A pile that
+          collapses to ONE identity AND covers every offered body (`max` each) is no decision
+          at all and is attached inline, no prompt. A SHORT pile parks even when it is one
+          identity: WHICH Future Pokémon get the cards is then the player's choice under the
+          printed sentence (first written as *"a pile that collapses to ONE identity is no
+          decision"* — WITHDRAWN at the D569 final review, D539: true only of a covering pile).
+          Only an answer that leaves a body short meets the target-order top-up.
+          The `attachCards` prompt gains NO field (no `min`): the top-up is the mandatory half.
+          On a 0.452 rollback a parked Reboot Pod resumes with the answer as given and NO
+          top-up (the key is unknown there) — a narrowing, named in match.ts. */
+      each?: true;
     }
   /** ⚠️⚠️ D247 — ATTACH **ANY NUMBER** OF ENERGY OUT OF YOUR **HAND**, each card
       naming its own destination: Alolan Exeggutor ex `sv08-133`/`-225`/`-242`/
@@ -13686,6 +13759,8 @@ const FLIP_DECK_TOP_MILL =
 //     "Anachronism Repulsor", attack INDEX 1) narrows the block by a class token
 //     the CATALOG DOES NOT CARRY — see `PREVENT_DAMAGE_FROM_CLASS` below, where
 //     its Basic-spelled sibling is mapped and the whole finding is written out;
+//     (🆕🆕🆕 D569 (D539): the catalog still does not carry it, but `banners.ts` does since
+//     D569 — the block stays LOUD on its persisted `AttackerClass` rollback reading instead)
 //   • "If your opponent's Pokémon is Knocked Out by damage from this attack, …"
 //     (1 — Corviknight sv02-148 "Accelerate", attack INDEX 0) gates on the
 //     attack's own RESULT,
@@ -13733,6 +13808,7 @@ const FLIP_PREVENT_DAMAGE =
 // METHOD — the banner is a per-PRINTING fact, so an ENGINE table keyed by printing id (never a
 // species list) is a fix, and `banners.ts` is that table for TERA. For ANCIENT this sentence
 // stays unbuilt at this head: `Banner` has no "Ancient" member until Slice 2.)
+// (🆕🆕🆕 D569 (D539): "`Banner` has no Ancient member until Slice 2" is WITHDRAWN — `Banner` is "Tera" | "Ancient" | "Future" since D569. Iron Moth STAYS unbuilt, for a DIFFERENT reason: its block is a PERSISTED `AttackerClass`, and making `stage` optional would make 0.452's `attackerMatchesClass` fall out of its switch on rollback (a silently dropped block) — an MRV question, deferred (docs/decisions.md D569))
 //
 // A SPECIES LIST WOULD BE WRONG, WHICH IS WHY THE SENTENCE STAYS LOUD RATHER THAN
 // GETTING A TABLE. The banner is a per-PRINTING fact (D135's rule): Great Tusk ex
@@ -13743,6 +13819,7 @@ const FLIP_PREVENT_DAMAGE =
 //
 // ONE ANCHOR PER PRINTED STRING, so this is a THIRD regex rather than an optional
 // `(?:Basic|Ancient)` group: a group would map the Ancient sentence to a token the
+// (🆕🆕🆕 D569 (D539): the engine CAN resolve the Ancient token now (`bannerPokemon` over `banners.ts`); what still refuses the group is the persisted `fromClass` union — see the Iron Moth deferral note above)
 // engine cannot resolve, and the `fromClass` union has exactly one member so that
 // the attempt does not even typecheck (continuous.ts `attackerMatchesClass`).
 //
@@ -13764,6 +13841,7 @@ const FLIP_PREVENT_DAMAGE =
 //     rotated fixtures are no longer this sentence's live printing;
 //   • "…by attacks from Ancient Pokémon."         — 1 legal, Iron Moth
 //     `sv06.5-009`, STILL LOUD for the reason written out above, unchanged;
+// (🆕🆕🆕 D569 (D539): still LOUD, but the reason CHANGED — the banner has a writer; the blocker is the persisted `AttackerClass` rollback reading (deferred))
 //   • "…prevent all damage done to **each of your Future Pokémon** by attacks
 //     from Pokémon ex. If this Pokémon is no longer your Active Pokémon, this
 //     effect ends." — 1 legal, Miraidon `sv08-069` "C.O.D.E.: Protect"
@@ -13772,6 +13850,7 @@ const FLIP_PREVENT_DAMAGE =
 //     sentence cannot spell is its TARGET — a block installed on a SET of bodies
 //     ("each of your Future Pokémon") rather than on "this Pokémon", over a
 //     SECOND demand-only banner (`Future`, D204/D205), plus a trailing
+// (🆕🆕🆕 D569 (D539): "demand-only" is WITHDRAWN — `Future` has supply (`banners.ts`); the sentence (Miraidon `sv08-069` "C.O.D.E.: Protect") stays unbuilt on the SET target and the leave-the-spot terminator, deferred)
 //     leave-the-spot terminator `AttackBlock`'s turn stamp does not carry. Three
 //     mechanisms, none of them the class. Written down so the next slice prices
 //     the NOUN and not the token.
@@ -13787,6 +13866,7 @@ const FLIP_PREVENT_DAMAGE =
 // (measured: 975 legal Basic Pokémon, 134 of them Colorless, so the predicate's
 // candidate set is 841 and neither empty nor total — this is NOT the demand-only
 // trap `Ancient` is).
+// (🆕🆕🆕 D569 (D539): `Ancient` is no longer a demand-only trap — `banners.ts` supplies it)
 //
 // ⚠️ THE CAPTURE IS `([A-Z])`, A SINGLE-CHARACTER CLASS AND NOT `(.+)`. Every
 // code in the map is one uppercase letter, and a greedy dot would let the anchor
@@ -14225,6 +14305,7 @@ const SELF_INSTALLED_RECOIL_TAKEN =
 //      the catalog cannot answer is not a rider this anchor can grow — which is
 //      exactly why the capture below requires the POSSESSIVE `'s` rather than
 //      any capitalised word, and why "Ancient Pokémon" falls through it.
+// (🆕🆕🆕 D569 (D539): "no datum" is WITHDRAWN — the datum is `banners.ts`; Flutter Mane "Perplexing Transfer" is BUILT as a hand-written REGISTRY attack on `moveCountersToDefender`'s NEW `filter` rider. THIS anchor still refuses it (the possessive capture stands), so the deriver's claim is unchanged)
 //   ⏹️ Out of scope for legality — Dedenne ex sv02-093/-239 (the printings that
 //      bought this anchor) and Liepard sv04-115 are all `legal_standard = 0`.
 //      The anchor's own printings are rotated OUT; Wobbuffet is the reason it
@@ -17663,6 +17744,7 @@ const BENCH_COUNTER_MULTIPLY =
     here — a SECOND place where a printed noun is assembled, and the one thing that
     lets two readings of one noun drift apart. So *"…on all of your Benched Ancient
     Pokémon."* reaches this line and leaves it LOUD, exactly as its "in play" twin
+    (🆕🆕🆕 D569 (D539): WITHDRAWN — "Ancient Pokémon" is an exact `IN_PLAY_BODY_NOUNS` key since D569, so that (unprinted) string would RESOLVE; the loud witness is now "Future Pokémon", which the map does not spell)
     does, and *"…on all of your Benched Cynthia's Pokémon."* resolves through
     `IN_PLAY_OWNER_NOUN` for free.
 
@@ -17920,6 +18002,7 @@ const YOUR_BENCH_MULTIPLY = /^This attack does (\d+) damage for each of your Ben
     (`IN_PLAY_BODY_MULTIPLY`'s stated reason, and the Drifloon compound is why); and
     what REFUSES is the map, so *"for each Ancient Pokémon on your Bench."* would
     reach this line and leave it LOUD exactly as its "in play" twin does.
+    (🆕🆕🆕 D569 (D539): WITHDRAWN — that (unprinted) noun resolves now through the map's "Ancient Pokémon" key; "Future Pokémon" is the noun that would stay LOUD)
 
     ⚠️ **DISJOINT FROM ALL FIVE BENCH PATTERNS ABOVE AND FROM BOTH "in play" ONES,
     MEASURED RATHER THAN ARGUED**: every one of them is `^…$`-anchored and ends
@@ -17946,6 +18029,7 @@ const YOUR_BENCH_FILTERED_SCALE =
 //     • "This attack does 20 damage for each of your Basic Pokémon in play."      1  → basicPokemon
 //     • "This attack does 20 damage for each of your Pokémon in play."            1  → anyPokemon
 //     • "This attack does 30 damage for each of your Ancient Pokémon in play."    2  → 🛑 NO FILTER (below)
+// (🆕🆕🆕 D569 (D539): → `bannerPokemon Ancient` — the map's tenth exact key, over `banners.ts`; the row is CLAIMED)
 //     • "This attack does 30 damage for each of your Team Rocket's Pokémon in play."  2 → ownerPokemon
 //     • "This attack does 30 damage for each of your {G} Pokémon in play."        2  → typedPokemon
 //     • "This attack does 40 damage for each of your Stage 1 Pokémon in play."    1  → stagePokemon (🆕 D466)
@@ -17959,6 +18043,7 @@ const YOUR_BENCH_FILTERED_SCALE =
 // (D442's rule — a FALSEHOOD is corrected at its site; a mere disagreement is not).**
 // The vocabulary now claims **6 sentences / 9 printings** and exactly ONE row still
 // falls through to null: Ancient (2 printings). "Stage 1 Pokémon" is a
+// (🆕🆕🆕 D569 (D539): WITHDRAWN — NO row falls through any more: Ancient is the map's "Ancient Pokémon" key, and the vocabulary claims 7 sentences / 11 printings)
 // `stagePokemon` map row from D466 on, so the second bullet below is history and is
 // marked as such rather than deleted. That split is deliberate
 // and is `CLAUSE_POKEMON_TYPES`' own stated design — *"the clause pattern is
@@ -17976,6 +18061,7 @@ const YOUR_BENCH_FILTERED_SCALE =
 //     change; nothing in this file can be the fix. (🆕🆕🆕 D568 (D539): the METHOD is
 //     withdrawn — `banners.ts`, an engine table keyed by printing id, is a fix, built for Tera;
 //     Ancient stays blocked at this head, until Slice 2 widens `Banner`.)
+// (🆕🆕🆕 D569 (D539): WITHDRAWN — Slice 2 part a widened `Banner`; Koraidon "Primordial Beatdown" ×2 is BUILT through the map row)
 //   • **Stage 1** (1 printing) was UNBUILT, which is a different thing — and it is
 //     ✅ **BUILT AS OF D466**, so this bullet is kept as the RECORD of why the two
 //     refusals were never one refusal. The reason it gave was right and it was also
@@ -17986,6 +18072,7 @@ const YOUR_BENCH_FILTERED_SCALE =
 //     (`stagePokemon`, reading cards.ts `isStage1Pokemon` / `isStage2Pokemon`, which
 //     D387/D262 had already written for the `boardCondition` antecedents). **Ancient
 //     still needs a column and nothing in this file can be the fix.**
+// (🆕🆕🆕 D569 (D539): WITHDRAWN — no column was needed: an engine table keyed by printing id (`banners.ts`) plus ONE map row in THIS file was the fix)
 //
 // 🛑 THE `(?!opponent)` LOOKAHEAD IS LOAD-BEARING AND THE BENCH TRIO ABOVE DOES
 // NOT NEED ONE — the difference is `[^.]+` versus a literal noun. Those four
@@ -18360,6 +18447,8 @@ const IN_PLAY_BODY_NOUNS: ReadonlyMap<string, CardFilter> = new Map<string, Card
   // `POKEMON_TYPES` names + 11 `{X}` codes). Neither "Drifloon and Drifblim" nor any
   // other exact key ends in a possessive, so `IN_PLAY_OWNER_NOUN` still cannot reach one
   // and `inPlayBodyFilter`'s three branches stay pairwise disjoint.
+  // (🆕🆕🆕 D569 (D539): "now **9** / **31**" is STALE — D569's tenth key, "Ancient Pokémon"
+  // (below), makes it **10** exact keys and **32** nouns; it carries no apostrophe either.)
   //
   // 🛑 **AND THE COUNT IS *NOT* DERIVED FROM `IN_PLAY_BODY_NOUNS.size` — D539 CHECKED THE
   // CLAIM THAT SAID IT WAS AND WITHDREW IT** (`inPlayBodyFilter`'s doc block below, and
@@ -18381,6 +18470,19 @@ const IN_PLAY_BODY_NOUNS: ReadonlyMap<string, CardFilter> = new Map<string, Card
       ],
     },
   ],
+  // 🆕🆕🆕 **D569 — THE TENTH EXACT KEY: THE PRINTED ANCIENT BANNER.** Koraidon `sv05-119`/
+  // `svp-091` "Primordial Beatdown" — *"This attack does 30 damage for each of your Ancient
+  // Pokémon in play."* (1 sentence / 2 legal printings). `bannerPokemon Ancient` over
+  // `banners.ts`, by printing id (D135) — never a species list, never `byName`. An EXACT key,
+  // so it never reaches the typed branch (where "Ancient" still MISSES
+  // `CLAUSE_POKEMON_TYPES`: it is a banner, not a type) — which means the "Ancient Pokémon"
+  // witness `inPlayBodyFilter`'s doc gives for "the map refuses, not the regex" is SPENT
+  // (annotated there). The exact keys are now **10** and the vocabulary **32** (10 exact + 11
+  // `POKEMON_TYPES` names + 11 `{X}` codes). Like every key here it is the vocabulary of the
+  // sibling anchors too; the column prints "Ancient Pokémon" in no other sentence they reach
+  // (measured over `legalAttackCorpus()` — the Benched Ancient heal/move are registry rows,
+  // and Iron Moth's "attacks from Ancient Pokémon" is a different reader, still unbuilt).
+  ["Ancient Pokémon", { kind: "bannerPokemon", banner: "Ancient" }],
 ]);
 /** 🆕🆕🆕 **D492 — THE TWO CLASS NOUNS THIS COLUMN PRINTS IN A WHOLE-SIDE SPREAD'S
     TARGET SLOT**, and they are a SHORTLIST OVER `IN_PLAY_BODY_NOUNS` rather than a
@@ -18538,6 +18640,7 @@ const IN_PLAY_TYPED_NOUN = /^(.+) Pokémon$/;
 /** 🆕🆕 D439 — the printed noun between "for each of your " and " in play.",
     resolved to the `CardFilter` that already answers it, or `null` when this file
     has no way to spell it (Ancient) — which keeps the sentence on the loud
+    (🆕🆕🆕 D569 (D539): it spells Ancient now (the "Ancient Pokémon" key); an unmapped noun such as "Future Pokémon" is what stays loud)
     ATTACK_EFFECT_SKIPPED path.
 
     🆕🆕 **D466 — IT RESOLVES A BENCH NOUN NOW TOO, AND THE NAME IS DELIBERATELY NOT
@@ -18569,6 +18672,11 @@ const IN_PLAY_TYPED_NOUN = /^(.+) Pokémon$/;
     31 nouns — the 9 exact keys, the 11 `POKEMON_TYPES` names and the 11 `{X}`
     codes — and NOT ONE of them matches `IN_PLAY_OWNER_NOUN`, because no Pokémon
     type name ends in a possessive and no exact key carries an apostrophe.
+    (🆕🆕🆕 D569 (D539): "31 nouns — the 9 exact keys" is STALE — the tenth exact key,
+    "Ancient Pokémon" (`bannerPokemon Ancient`), makes it **32 nouns — the 10 exact keys**,
+    and it carries no apostrophe, so the disjointness argument is unchanged. Re-derived by
+    reading the map at this head; `benchNounScaling.test.ts` §5's hand list and hand sum were
+    moved BY HAND to match, for the reason given below.)
     🆕 **D539 — `30 nouns / 8 exact keys` UNTIL NOW**, and it is RE-DERIVED at the new
     count rather than incremented on faith: the ninth exact key is
     *"Drifloon and Drifblim"* and it carries no apostrophe either. ⚠️ **The rung that
@@ -18604,6 +18712,7 @@ const IN_PLAY_TYPED_NOUN = /^(.+) Pokémon$/;
 
     ⚠️ **WHAT DOES THE REFUSING IS THE MAP AND NOT THE REGEX**: `(.+) Pokémon` also
     matches "Ancient Pokémon", which MISSES `CLAUSE_POKEMON_TYPES`, falls past the
+    (🆕🆕🆕 D569 (D539): that example is SPENT — "Ancient Pokémon" is an EXACT key now and never reaches the typed branch; "Future Pokémon" is the live witness (still a miss on `CLAUSE_POKEMON_TYPES`, past the owner pattern, to the trailing `return null`))
     owner pattern too, and reaches the trailing `return null`. That is the vocabulary.
     🆕 **D466 — "Stage 1 Pokémon" USED TO BE THE SECOND EXAMPLE HERE AND IS NOT ONE
     ANY MORE**: it is an EXACT KEY now, so it never reaches the typed branch at all.
@@ -18640,6 +18749,7 @@ function inPlayBodyFilter(noun: string): CardFilter | null {
 //     • "This attack does 20 more damage for each Energy card in your discard pile."             2 → anyEnergy
 //     • "This attack does 60 more damage for each Ethan's Adventure card in your discard pile."   2 → byName
 //     • "This attack does 10 more damage for each Ancient card in your discard pile."             2 → 🛑 NO FILTER (below)
+// (🆕🆕🆕 D569 (D539): → `bannerCard Ancient` — a closed-map ROW over `banners.ts`; the row is CLAIMED)
 //   MULTIPLY (`×`, no adjective), the OPPONENT's pile — 2 sentences / 4 printings reach it:
 //     • "This attack does 30 damage for each Basic Energy card in your opponent's discard pile."  2 → basicEnergy
 //     • "This attack does 30 damage for each Item card in your opponent's discard pile."          2 → item
@@ -18700,6 +18810,7 @@ function inPlayBodyFilter(noun: string): CardFilter | null {
 //     file can be the fix.** (🆕🆕🆕 D568 (D539): the METHOD is withdrawn — an engine table
 //     keyed by printing id, `banners.ts`, is a fix, built for Tera; Ancient stays blocked here
 //     until Slice 2.) D439 refused the same banner one zone over for the same
+// (🆕🆕🆕 D569 (D539): "DATA-BLOCKED and permanently so" and "Ancient stays blocked here until Slice 2" are WITHDRAWN — Roaring Moon "Vengeance Fletching" ×2 is BUILT on the NEW `bannerCard` row; "no persisted column" stays TRUE)
 //     reason and this is the second reading of one permanent block, not a second block.
 //   ✅ **Supporter card that has "Team Rocket" in its name** (2 printings) was the
 //     SECOND refusal here and it is **BUILT at D510**. It was never data-blocked: the
@@ -18720,6 +18831,7 @@ function inPlayBodyFilter(noun: string): CardFilter | null {
 // ANCIENT ROW HONEST. The tempting generalisation is `^(.+) card$` → `byName`, which
 // would spell "Ethan's Adventure card" without this file learning a card name. It also
 // claims **"Ancient card"** — `byName { name: "Ancient" }` matches nothing in the
+// (🆕🆕🆕 D569 (D539): still TRUE of the CAPTURE; "Ancient card" is answered by its own closed-map ROW now (`bannerCard`), which is exactly the honesty this paragraph argues for)
 // catalog, counts 0 on every board, and the sentence would score its printed base
 // FOREVER while `BUILT.attack` stepped for it. That is D190b/D199's rule exactly (*a
 // wrong-but-plausible program is strictly worse than an unbuilt one, which at least
@@ -18874,6 +18986,13 @@ const DISCARD_PILE_NOUNS: ReadonlyMap<string, CardFilter> = new Map<string, Card
   // rider: that field is a CAPTION rider read only by `retrieveNoun` (D264), and this
   // member captions nothing, so emitting it would be an inert value nothing reads.
   ["Ethan's Adventure card", { kind: "byName", name: "Ethan's Adventure" }],
+  // 🆕🆕🆕 **D569 — "Ancient card"**, the refusal two blocks up, RETIRED: Roaring Moon
+  // `sv05-109`/`sv08.5-065` "Vengeance Fletching" — *"This attack does 10 more damage for
+  // each Ancient card in your discard pile."* `bannerCard` (ANY category — Explorer's
+  // Guidance and Awakening Drum are Ancient TRAINERS, and "card" counts them;
+  // `bannerPokemon` would undercount), over `banners.ts` by printing id. Still a closed-map
+  // ROW, never a `^(.+) card$` capture: the generalisation refusal above stands.
+  ["Ancient card", { kind: "bannerCard", banner: "Ancient" }],
 ]);
 /** 🆕🆕🆕 **D510 — THE ONE PARAMETERISED NOUN IN THIS VOCABULARY**, and the whole
     of what corpus FILE LINE 543 was missing: *"each **Supporter card that has "Team
@@ -18886,6 +19005,7 @@ const DISCARD_PILE_NOUNS: ReadonlyMap<string, CardFilter> = new Map<string, Card
     and been refused one step later, by `discardPileFilter` having no way to spell the
     noun. That block says exactly that (*"…or `null` when this file has no way to spell
     it (Ancient, the Team Rocket name substring)"*). **The blocker was a NAME, not a
+    (🆕🆕🆕 D569 (D539): and Ancient's blocker turned out to be an engine TABLE plus a `bannerCard` row — both quoted refusals are spent)
     machine** (D505's shape), which is why this slice adds no pattern to either anchor.
 
     🛑 **THE HEAD NOUN IS A LITERAL AND THE FRAGMENT IS A CAPTURE**, D446's
@@ -18907,6 +19027,7 @@ const PILE_SUPPORTER_NAME_FRAGMENT = /^Supporter card that has "([^"]+)" in its 
 /** 🆕🆕 D440 — the printed noun between "for each " and " in your[ opponent's] discard
     pile.", resolved to the `CardFilter` that already answers it, or `null` when this
     file has no way to spell it (Ancient) — which keeps the sentence on the loud
+    (🆕🆕🆕 D569 (D539): it spells Ancient now (`bannerCard`); an unmapped noun such as "Future card" is what stays loud)
     ATTACK_EFFECT_SKIPPED path.
 
     🆕🆕🆕 **D510 — IT HAS A SECOND BRANCH NOW, AND THE PARAGRAPH BELOW USED TO SAY
@@ -20011,6 +20132,19 @@ const CONDITIONAL_DAMAGE_CLAUSES = new Map<string, BoardCondition>([
     { kind: "opponentActiveIsBanner", banner: "Tera" },
   ],
   ["you have any Tera Pokémon on your Bench", { kind: "yourBannerPokemonOnBench", banner: "Tera" }],
+  // 🆕🆕🆕 D569 — THE TWO PARADOX CLAUSES, LITERAL rows over `banners.ts` (Slice 2 part a).
+  // Iron Valiant `sv05-080` "Majestic Sword" ({P}{P}{C}, 100+, **+100**) — the turn's played
+  // Supporter's banner (`allowances.supporterPlayedUid`, R-PX3) — and Slither Wing
+  // `sv06.5-026` "Iron Smasher" ({F}{C}, 20+, **+120**) — any Future body on the other side.
+  // One legal printing each. Matched in pass ONE like the Tera pair.
+  [
+    "you played a Future Supporter card from your hand during this turn",
+    { kind: "yourPlayedBannerSupporterThisTurn", banner: "Future" },
+  ],
+  [
+    "your opponent has any Future Pokémon in play",
+    { kind: "opponentBannerPokemonInPlay", banner: "Future" },
+  ],
   // 🆕🆕 D388 — Talonflame `sv07-123` "Aero Chase" ({C}{C}, `110+`, **+110**, index
   // 0 of ONE attack), ONE legal printing, and the FIRST key in this table whose
   // grammatical SUBJECT is a card COLUMN rather than a Pokémon: every other row
@@ -20150,6 +20284,9 @@ const CONDITIONAL_DAMAGE_CLAUSES = new Map<string, BoardCondition>([
   // skeleton: the residue it leaves is 7 sentences / 10 printings, all refusals
   // (five D207 BANNERS, D368's structural shape refusal at 5 printings, and this
   // clause's own twin one consequent over).
+  // (🆕🆕🆕 D569 (D539): the five BANNER clauses are ONE now — two Tera (D568) and two
+  // Future (D569) are literal rows over `banners.ts`; the Ancient "Unrelenting Onslaught" is
+  // left, blocked on a seat-level attack record rather than the banner)
   //
   // 🛑 **THE SHARPEST NEAR-MISS IN THIS TABLE IS FOUR ROWS UP AND SHARES THE
   // PRINTED DIGIT.** *"your opponent has 3 or fewer cards in their hand"* is the
@@ -20682,6 +20819,7 @@ const CONDITIONAL_DAMAGE_CLAUSES = new Map<string, BoardCondition>([
   // also prints *"1 of your other Ancient Pokémon used an attack during your last
   // turn"* (1 printing) — the SAME window and the SAME mechanism with a banner
   // bolted on, refused on D207's ground (`Ancient` is a banner no column
+  // (🆕🆕🆕 D569 (D539): D207's ground is WITHDRAWN for Ancient — `banners.ts` supplies the banner; the sentence (Koraidon `sv08-116` "Unrelenting Onslaught") stays unbuilt because "1 of your other Ancient Pokémon used an attack during your last turn" needs a SEAT-level record of who attacked, a new `GameState` key and an MRV bump — deferred)
   // classifies, so a predicate over one has a permanently empty candidate set) and
   // not on the clock. It is the sharpest illustration in the residue of WHERE this
   // family refuses: at the banner, never at the window.
@@ -21020,6 +21158,7 @@ const OPPONENT_ACTIVE_RESISTANCE_CLAUSE =
     token away — *"your opponent has any Future Pokémon in play"* (Slither Wing
     `sv06.5-026`, 1 legal printing) is byte-identical apart from the token, and
     `Future` is a banner no ingested column classifies (D204/D205). It reaches this
+    (🆕🆕🆕 D569 (D539): still TRUE that it misses THIS map — but the sentence no longer stays LOUD: its own literal row (`opponentBannerPokemonInPlay`, over `banners.ts`) wins in pass ONE)
     lookup, MISSES it, falls through to null and stays LOUD, which is the whole
     reason the alternation is not hand-kept.
 
@@ -22289,6 +22428,7 @@ const ATTACK_COIN_PER_BOTH_ACTIVES_ENERGY =
 // bodies does this printed noun name"* is ONE question with ONE answer, so `{D}`
 // resolves through `CLAUSE_POKEMON_TYPES` to `{kind: "typedPokemon", pokemonType:
 // "Darkness"}` and *"Ancient Pokémon"* — which no `cardSchema` column classifies —
+// (🆕🆕🆕 D569 (D539): "reaches the map, MISSES it" is WITHDRAWN — "Ancient Pokémon" is a map key since D569 (`banners.ts`); `cardSchema` still has no banner column, TRUE)
 // reaches the map, MISSES it, and leaves the sentence on the loud
 // ATTACK_EFFECT_SKIPPED path. That is the closed-map property D440 refused a
 // capture to keep: a filter that counts 0 on every board forever while
@@ -23306,6 +23446,7 @@ export function deriveAttackCoinFlip(text: string): AttackCoinFlip | null {
   // `per >= 1` is the coin family's printed-zero guard (a printed 0 would spend a
   // flip, and an `rngState` step, to add nothing), and `filter !== null` is the
   // VOCABULARY — *"Ancient Pokémon"* reaches this line and must leave it LOUD,
+  // (🆕🆕🆕 D569 (D539): WITHDRAWN as the witness — "Ancient Pokémon" resolves through the map now; "Future Pokémon" is the noun that must leave this line LOUD)
   // because no `cardSchema` column classifies the banner and a filter that counts 0
   // forever while `BUILT.attack` steps for it is strictly worse than an unbuilt
   // sentence (D190b/D199 at the instrument layer). Neither guard subsumes the other.
@@ -24867,6 +25008,7 @@ function typedNounFilter(phrase: string, plural: boolean): CardFilter | undefine
     D440 REFUSED `^(.+) card$` ON.** *"Ancient"*, *"Future"* and *"Tera"* are printed
     on the card FACE and are in **no column of the persisted catalog** (D204/D205/D207,
     re-confirmed every slice since) — `byName { name: "Ancient" }` would match nothing
+    (🆕🆕🆕 D569 (D539): still TRUE of `byName`, and the Set STAYS for all three: a printed "Ancient cards" / "Future cards" noun in THIS slot would need `bannerCard`, never `byName`)
     on every board FOREVER while `BUILT.attack` stepped for it, which is D190b/D199's
     wrong-but-plausible program at the instrument layer. **The column prints
     *"search your deck for … Ancient/Future/Tera cards"* ZERO times** (measured over all
@@ -25543,6 +25685,7 @@ const ATTACK_OPPONENT_DISCARDS_HAND =
 // card of your opponent's deck. If you played an Ancient Supporter card from your
 // hand during this turn, discard 3 more cards **in this way**."* (2 printings,
 // `Ancient`-banner and unbuilt) — the §9.2 *"in this way"* is the same backward
+// (🆕🆕🆕 D569 (D539): "unbuilt" is WITHDRAWN — Great Tusk "Land Collapse" ×2 is BUILT as a hand-written REGISTRY attack (a mill, then a `conditionGate` on `yourPlayedBannerSupporterThisTurn` over a second mill of 3); the deriver still does not read it)
 // reference written down. **The family is 2 sentences / 3 printings; this anchor
 // takes 1 / 1**, measured over all 640 rows rather than estimated.
 //
@@ -25936,6 +26079,7 @@ const ATTACK_OPPONENT_DISCARD_ATTACH =
 // derived-to-null in `derivedDeckSearchAttach.test.ts` and written back to the
 // backlog as a measured sub-row, never as "the rest of row 10". Two of the four
 // were priced by the row up front (a Future/Tera SUBGROUP rider, 3 printings; a
+// (🆕🆕🆕 D569 (D539): both halves of that rider are BUILT now as hand-written registry attacks — Tera (Prism Charge, D568) and Future (Miraidon "Peak Acceleration" ×2, D569, `targetBanner: "Future"`))
 // "of different types" distinctness constraint, 1 — 🆕 D513 corrected the CARRIER
 // here (it was written "`CardFilter`", and no filter can express a pairwise relation
 // among the picks — see the D513 block below) — and they overlap on
@@ -25959,6 +26103,7 @@ const ATTACK_OPPONENT_DISCARD_ATTACH =
 // classifies either banner: (🆕🆕🆕 D568 (D539): "DATA-BLOCKED" WITHDRAWN FOR TERA —
 // `banners.ts`; Prism Charge `sv08-161` is BUILT as a registry attack, and the Future half
 // stands) `packages/schema/src/catalog/card.ts` `cardSchema`
+// (🆕🆕🆕 D569 (D539): "the Future half stands" and "DATA-BLOCKED" are WITHDRAWN for FUTURE too — Miraidon `sv05-121`/`svp-092` "Peak Acceleration" is BUILT as a hand-written REGISTRY attack (`PEAK_ACCELERATION`, `targetBanner: "Future"`) over the widened `banners.ts`; "no ingested column classifies either banner" stays TRUE)
 // carries `stage`/`types`/`trainerType`/`energyType` and no subtype column), the
 // "of different types" distinctness constraint (1, on the same `sv08-161` as
 // the Tera one — BOTH blockers on one printing, re-measured by minimal pair:
@@ -25976,6 +26121,7 @@ const ATTACK_OPPONENT_DISCARD_ATTACH =
 // holds for `sv08-161`: it is blocked by the Tera banner (data, no `cardSchema` key)
 // AND by this anchor, (🆕🆕🆕 D568 (D539): the banner half is WITHDRAWN — `banners.ts`;
 // the ANCHOR half stands, so the printing is built as a hand-written REGISTRY attack instead) whose `Energy cards and attach them` is welded — unlike
+// (🆕🆕🆕 D569 (D539): and the Future half of the rider is BUILT the same way — Miraidon `sv05-121`/`svp-092` "Peak Acceleration", `PEAK_ACCELERATION`)
 // `ATTACK_HAND_SEARCH`'s open `([^,.]+?)` noun group, the attach pattern does not
 // admit the phrase at all. **The two "of different types" rows are blocked at
 // DIFFERENT LAYERS, and only the hand row's blocker was a name.**
@@ -34311,6 +34457,7 @@ export function deriveAttackDamageBonus(text: string): AttackDamageBonus | null 
   // `IN_PLAY_BODY_SCALE`'s pair four arms down, verbatim: `per >= 1` is the family's
   // printed-zero guard, and `filter !== null` is the VOCABULARY, which is what keeps
   // *"for each Ancient Pokémon on your Bench."* on the loud ATTACK_EFFECT_SKIPPED
+  // (🆕🆕🆕 D569 (D539): that (unprinted) noun resolves now through the map's "Ancient Pokémon" key; "Future Pokémon" is the loud witness)
   // path.
   //
   // 🛑 **THE FIELD IS OPTIONAL AND `undefined` IS EVERY BODY, SO THIS ARM IS THE
@@ -34341,6 +34488,7 @@ export function deriveAttackDamageBonus(text: string): AttackDamageBonus | null 
   // is the family's printed-zero guard (a printed 0 does nothing, so claiming it
   // would mark a sentence SIMULATED that the engine does nothing about), and
   // `filter !== null` is the VOCABULARY — "Ancient Pokémon" reaches this line and
+  // (🆕🆕🆕 D569 (D539): WITHDRAWN as the witness — "Ancient Pokémon" is a map key now; "Future Pokémon" is what must leave it LOUD)
   // must leave it LOUD. Neither subsumes the other.
   // 🆕 **D466 — "Stage 1 Pokémon" WAS THE SECOND NAME IN THIS SENTENCE AND IS NOW A
   // MAP ROW**, so the vocabulary guard is down to ONE witness on this anchor. It is
@@ -34370,6 +34518,7 @@ export function deriveAttackDamageBonus(text: string): AttackDamageBonus | null 
   // THREE things are read and the third is the one this family invites getting wrong.
   // `per >= 1` is the printed-zero guard every arm in both families carries;
   // `filter !== null` is the VOCABULARY, and "Ancient card" reaches this line and must
+  // (🆕🆕🆕 D569 (D539): WITHDRAWN as the witness — "Ancient card" is a `DISCARD_PILE_NOUNS` row now (`bannerCard`); "Future card" is what must leave it LOUD)
   // leave it LOUD; and the SEAT comes from capture 3 — the printed noun phrase — and
   // NEVER from which reader is running.
   //
@@ -34454,6 +34603,7 @@ export function deriveAttackDamageBonus(text: string): AttackDamageBonus | null 
   // shrank, which `ownerBoardEnergyScaling.test.ts` §GUARD 3 now drives from the
   // ADMITTED side with `{C}` keeping the refused side); and `filter !== null` is the BODY vocabulary, so
   // *"…attached to all of your Ancient Pokémon."* leaves this arm on the loud
+  // (🆕🆕🆕 D569 (D539): that noun resolves through the body map now; "Future Pokémon" is the loud witness)
   // ATTACK_EFFECT_SKIPPED path rather than counting zero forever. None subsumes
   // another, and the middle one is the one a reader is likeliest to drop because the
   // arm above already spells it.
@@ -34734,6 +34884,7 @@ export function deriveAttackDamageMultiplier(text: string): AttackDamageBonus | 
   // `IN_PLAY_BODY_SCALE`'s pair verbatim: `per >= 1` is the family's printed-zero
   // guard, and `filter !== null` is the VOCABULARY, which is what keeps *"…on all of
   // your Benched Ancient Pokémon."* on the loud ATTACK_EFFECT_SKIPPED path. Neither
+  // (🆕🆕🆕 D569 (D539): that noun resolves through the body map now; "Benched Future Pokémon" is the loud witness)
   // subsumes the other.
   //
   // 🛑 **THE FIELD IS OPTIONAL AND `undefined` IS EVERY BODY, SO THIS ARM IS THE
@@ -34882,6 +35033,7 @@ export function deriveAttackDamageMultiplier(text: string): AttackDamageBonus | 
   // TWO guards, refusing for two different reasons, the arm above's verbatim:
   // `per >= 1` is the family's printed-zero guard and `filter !== null` is the
   // VOCABULARY — an opponent-side "Ancient Pokémon" would reach this line and must
+  // (🆕🆕🆕 D569 (D539): "Ancient Pokémon" is a map key now; an opponent-side "Future Pokémon" is the witness)
   // leave it LOUD.
   const foeInPlayBodies = IN_PLAY_FOE_BODY_MULTIPLY.exec(effect);
   if (foeInPlayBodies !== null) {
@@ -35290,6 +35442,7 @@ export function deriveAttackDamageSuppression(text: string): AttackDamageSuppres
   // group is `([^.]+ Pokémon)` and the multiplier arm refuses an unmapped noun
   // (`filter !== null`) and a printed zero (`per >= 1`). A bare `.test()` here would
   // claim *"…on all of your Benched Ancient Pokémon. …isn't affected by Weakness."*
+  // (🆕🆕🆕 D569 (D539): the witness noun resolves now (`bannerPokemon Ancient`); the defect described stands for any UNMAPPED noun — "Benched Future Pokémon" in `benchCounterSuppressed.test.ts` §4)
   // whole — `resolvedByAnyReader` TRUE, `BUILT.attack` stepped, the fold silently
   // dropped and `ATTACK_EFFECT_SKIPPED` never fired. *A `.test()` beside an `.exec()`
   // on one regex is the tell*, and the answer is to ask the arm that owns the guards

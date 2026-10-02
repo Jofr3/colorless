@@ -9933,6 +9933,13 @@ verify by QUERY, never by recognition.**
 
 ### ⚠️ `Ancient` HAS NO DATUM — the finding, and the reason the sentence stays LOUD
 
+> 🆕🆕🆕 **D569 (D539): "HAS NO DATUM" IS WITHDRAWN.** The datum is `packages/engine/src/banners.ts` —
+> an engine table keyed by PRINTING id (the species argument below stands: the same species is printed
+> with and without the banner, and three legal same-species printings carry none) — widened to Ancient
+> and Future at D569. Iron Moth's sentence STILL stays loud, for a different reason: `fromClass` is a
+> PERSISTED `AttackerClass`, and widening its `stage` to optional would make 0.452's exhaustive
+> `attackerMatchesClass` switch fall through on rollback — an MRV question, deferred (decisions.md D569).
+
 The Ancient/Future banner is printed on the card FACE and debuted with Paradox
 Rift (sv04). It is:
 
@@ -21552,7 +21559,7 @@ D370 owed the vocabulary question (*"is the captured token a real `Card.types`
 value?"*) and answered it. D371 owed D207's other one: **name the FIELD before you
 design the predicate.** A predicate over a banner no column CLASSIFIES yields a
 permanently empty candidate set and a card that can never be played — `Tera`'s
-shape, where every occurrence is DEMAND and the SUPPLY side is absent. (🆕🆕🆕 D568 (D539): `Tera` is no longer the example — `banners.ts` supplies it; `Ancient`/`Future` still are.)
+shape, where every occurrence is DEMAND and the SUPPLY side is absent. (🆕🆕🆕 D568 (D539): `Tera` is no longer the example — `banners.ts` supplies it; `Ancient`/`Future` still are.) (🆕🆕🆕 D569 (D539): and neither are they now — `banners.ts` supplies all three banners.)
 
 ✅ `Card.resistances` is a real ingested column (`{type, value?}[] | null`,
 `packages/schema/src/catalog/card.ts`), populated, and read by the §8.5 pipeline
@@ -21670,7 +21677,7 @@ off a live board rather than off the fixture table.
 
 **The rule to carry forward:** D207's failure mode is a predicate over a **banner no
 column CLASSIFIES** (`Tera` — 22 rows, every occurrence DEMAND; `Ancient`/`Future` the
-same). (🆕🆕🆕 D568 (D539): WITHDRAWN for `Tera` — no column still, but `banners.ts`' engine table supplies it; `Ancient`/`Future` stand.) A predicate over a **FIELD** is a different animal, however exotic the value looks.
+same). (🆕🆕🆕 D568 (D539): WITHDRAWN for `Tera` — no column still, but `banners.ts`' engine table supplies it; `Ancient`/`Future` stand.) (🆕🆕🆕 D569 (D539): WITHDRAWN for `Ancient`/`Future` too — the same table, widened.) A predicate over a **FIELD** is a different animal, however exotic the value looks.
 Ask which one you have before pricing anything.
 
 ### The SHAPE question: ONE CARD NAME, not the `Team Rocket's ` prefix family
@@ -25149,6 +25156,9 @@ sentences / 11 printings that remain behind `CONDITIONAL_DAMAGE_BONUS`:
   WITHDRAWN from this list — Ho-Oh `sv08-019` "Shining Blaze" and Regigigas `sv08.5-086` "Jewel
   Breaker" are BUILT on the new engine datum `banners.ts`, the Tera SUPPLY side; the three
   Ancient/Future members stand, and "no INGESTED column classifies the banner" stays true.)
+  (🆕🆕🆕 D569 (D539): the two FUTURE members are withdrawn too — Iron Valiant `sv05-080` "Majestic Sword" and
+  Slither Wing `sv06.5-026` "Iron Smasher" resolve through literal rows over the widened `banners.ts`; the ONE Ancient
+  member left (Koraidon `sv08-116` "Unrelenting Onslaught") waits on a seat-level attack record, not on the banner.)
 * **ONE clause at FIVE printings is D368's structural SHAPE refusal** — *"this Pokémon has at least
   2 extra Energy attached (in addition to this attack's cost)"*, printed at two amounts (2 + 3). It
   reads THIS ATTACK'S COST and `conditionHolds(state, seat, cond)` is handed no attack; the same
@@ -27143,7 +27153,7 @@ null, and a minimal pair per row isolating the axis — never by reading the sen
 | corpus line | p | blocker | state |
 |---|---|---|---|
 | 403 / 412 | 2 / 1 | the batch pinned to ONE body | ✅ **BUILT at D457** (`attachFromDeck.oneTarget`) |
-| 404 / 419 | 2 / 1 | the Future / Tera SUBGROUP | **DATA-BLOCKED** — `cardSchema` has no subtype column (🆕🆕🆕 D568 (D539): WITHDRAWN FOR TERA — `banners.ts`; 419 is BUILT as a registry attack, Terapagos `sv08-161`; 404 (Future) stands) |
+| 404 / 419 | 2 / 1 | the Future / Tera SUBGROUP | **DATA-BLOCKED** — `cardSchema` has no subtype column (🆕🆕🆕 D568 (D539): WITHDRAWN FOR TERA — `banners.ts`; 419 is BUILT as a registry attack, Terapagos `sv08-161`; 404 (Future) stands) (🆕🆕🆕 D569 (D539): 404 is BUILT too — Miraidon `sv05-121`/`svp-092` "Peak Acceleration", a registry attack with `targetBanner: "Future"`) |
 | 419 | (1) | *"of different types"* AND the Tera banner | **STILL BLOCKED — and the CARRIER was named wrong.** 🆕 D513: the phrase is NOT a `CardFilter` need; and its second blocker here is the ANCHOR, whose `Energy cards and attach them` is welded, not just the banner |
 | 420 | 1 | *"of different types"* — a DISTINCTNESS constraint | ✅ **BUILT at D513** (`searchDeck.distinctEnergyTypes` + D332's shipped `chooseCards.caps`) |
 | 410 | 2 | a SECOND printed noun (`{G}` … and `{L}` …) | open — **cheapest row left: two `attachFromDeck` ops, ZERO new fields** |
@@ -28906,7 +28916,7 @@ a parked Bother-Bot confirm answered yes is a hard failure under 0.450). ~~NEXT:
 
 ## D568 — the Tera banner unlock, Slice 1: 19 printings / 10 texts (engine 0.452.0, `MATCH_RECORD_VERSION` stays 36)
 
-**Status:** ✅ BUILT in the `lum-wt-d568` worktree (detached at `d872509e`), ~~not committed by the builder~~ committed on `d568-prep` at `c244f449` and 🆕 LANDED on `main` by cherry-pick onto the D567 close-out `d872509e` (clean pick; re-verified in the main checkout — `progress.md` NEXT (1-land)); its whole-corpus sweep is PENDING, predicted `3794 · 52` over 3,846. The top row of the
+**Status:** ✅ BUILT in the `lum-wt-d568` worktree (detached at `d872509e`), ~~not committed by the builder~~ committed on `d568-prep` at `c244f449` and 🆕 LANDED on `main` by cherry-pick onto the D567 close-out `d872509e` (clean pick; re-verified in the main checkout — `progress.md` NEXT (1-land)); its whole-corpus sweep is ~~PENDING~~ 🆕 PAID, exactly, on its first launch (close-out `8e36c690`), predicted `3794 · 52` over 3,846. The top row of the
 pricing round the D567 close-out asked for (`progress.md` NEXT (7), ranked by printings per blast radius): the banner
 blocker frees ~~51~~ 52 printings (🆕 review correction: Tera is 24, not 23 — the census missed TM Fluorite `sv08-188`, whose Tera sentence is on its granted attack); this slice builds 19.
 
@@ -28944,10 +28954,55 @@ interpreter.ts; all killed undeclared in the probe `--decision D568`); five exis
 two rows' `what` annotated (D370, D472). Declared survivors 52 unmoved.
 
 ### (e) Owed
-The whole-corpus sweep (predicted `3794 · 52` over 3,846 on D567's PAID `3751 · 52`). R-TB1 and R-BR1 UNRULED. Slice 2 (the
-Paradox banners, about 28 printings — single-source table so far, needs the same two-source plus image close). Named debts:
+~~The whole-corpus sweep (predicted `3794 · 52` over 3,846 on D567's PAID `3751 · 52`).~~ (🆕 D569 landing: PAID, exactly, on its first launch — `3794 killed · 52 known survivor(s) · 0 GAP(S)` over 3,846, swept on `4b29bb1c`, close-out `8e36c690`.) R-TB1 and R-BR1 UNRULED. Slice 2 (the
+Paradox banners, about 28 printings — single-source table so far, needs the same two-source plus image close). (🆕🆕🆕 D569:
+PAID in part — Slice 2 part a closed the table from two sources plus the image and built 20; see the D569 section below.) Named debts:
 Area Zero Underdepths ×3 (Bench size 8 — `BENCH_MAX` is a constant), Team Rocket's Mimikyu `sv10-087` (copy-attack) and
 Technical Machine: Fluorite `sv08-188` (its GRANTED attack heals "each of your Tera Pokémon"; excluded because no Technical
 Machine attack-granting Tool is built — the TM mechanism is its blocker). Five printings; Tera is 24, D568 built 19.
 NEXT: see `progress.md` NEXT (7).
 
+## D569 — the Paradox banner unlock, Slice 2 part a: 20 printings / 11 texts (engine 0.453.0, `MATCH_RECORD_VERSION` stays 36)
+
+**Status:** ✅ BUILT in the `lum-wt-d569` worktree (detached at `4b29bb1c`), ~~NOT committed by the builder~~ committed on `d569-prep` at `cefec00f` and 🆕 LANDED on `main` by cherry-pick onto the D568 close-out `8e36c690` (docs-only conflicts, every close-out fact kept; re-verified in the main checkout — `progress.md` NEXT (1-land)); its whole-corpus sweep is PENDING, predicted `3840 · 52` over 3,892 on D568's PAID `3794 · 52`. The top row of the
+D569 pricing round (`progress.md` NEXT (7), recorded verbatim): 20 printings, about 9 engine files, about 2.2 printings per
+file. Nine Paradox printings are DEFERRED, each on a named mechanism (`docs/decisions.md` D569).
+
+### (a) The datum
+`banners.ts` widened: `Banner = "Tera" | "Ancient" | "Future"`, `BANNER_BY_ID` +86 ids (Ancient 44 = 40 Pokémon + 4
+Trainers; Future 42 = 38 + 4). Source 1: pokemon-tcg-data's subtypes (107 tagged, 86 legal). Source 2 (limitless prints no
+Paradox tag): a species/name cross-check over every legal printing of the 22 Paradox species and the banner Trainers; it
+agreed on all 86 and disagreed on three — `sv07-090` Koraidon, `svp-148` Miraidon, `svp-197` Koraidon ex — each settled OUT
+by the tcgdex image (no banner printed). Test-only mirror `paradoxPool.ts` (47 rows: non-ex species printings and the
+Paradox Trainers) beside `bannerPool.ts`. Data, outside the mutation whitelist (D538).
+
+### (b) The rows
+| Card | Ids | Surface | Program |
+|---|---|---|---|
+| Miraidon | `sv05-121` / `svp-092` | attack "Peak Acceleration" | registry `attack[0]`: `attachFromDeck { basicEnergy, 2, targetBanner Future }`, `shuffleDeck` |
+| Great Tusk | `sv05-097` / `sv08.5-055` | attack "Land Collapse" | registry `attack[0]`: `discardDeckTop opponent 1`, `conditionGate yourPlayedBannerSupporterThisTurn Ancient → [discardDeckTop opponent 3]` (R-PX3) |
+| Scream Tail | `sv05-077` | attack "Supportive Singing" | registry `attack[0]`: `healChosen { 100, bench, filter bannerPokemon Ancient }` (NEW rider, R-PX4) |
+| Flutter Mane | `sv08-096` | attack "Perplexing Transfer" | registry `attack[0]`: `moveCountersToDefender { filter bannerPokemon Ancient }` (NEW rider, R-PX4) |
+| Koraidon / Roaring Moon | `sv05-119`, `svp-091` / `sv05-109`, `sv08.5-065` | attacks | derived — `IN_PLAY_BODY_NOUNS` "Ancient Pokémon", `DISCARD_PILE_NOUNS` "Ancient card" (NEW `bannerCard`) |
+| Iron Valiant / Slither Wing | `sv05-080` / `sv06.5-026` | attacks | derived — two literal `CONDITIONAL_DAMAGE_CLAUSES` rows (NEW `yourPlayedBannerSupporterThisTurn`, `opponentBannerPokemonInPlay`) |
+| Iron Crown ex | `sv05-081` / `-191` / `-206` / `-216`, `sv08.5-158`, `svp-146` | Ability "Cobalt Command" | `seatDamageBonusBeforeWR { 20, beneficiary bannerPokemon Future, exceptName "Iron Crown ex" }` (NEW key, R-PX2) |
+| Awakening Drum | `sv05-141` | Item | `drawCards { 1, per pokemonInPlay you bannerPokemon Ancient }` (`per` widened) |
+| Reboot Pod | `sv05-158` | Item | `attachFromDiscard { basicEnergy, 1, targetBanner Future, each }` (NEW keys; mandatory — a covering single-identity pile attaches inline, a short pile parks, a short answer is topped up; R-PX1) |
+
+### (c) Tests and mutants
+`paradoxBannerD569.test.ts` (33); `teraBannerD568.test.ts`' table rungs re-scoped to the Tera rows; the census pins stepped
+(`BUILT.ability` 366 → 372, `BUILT.trainer` 252 → 254, `BUILT.attack` 1693 → 1705, registry 935 → 949). Mutants 3,846 →
+3,892 (+46 `D569-*` on cards.ts, continuous.ts, effects.ts, interpreter.ts and registry.ts, all killed undeclared in the probe
+`--decision D569`); nine existing rows re-anchored by script (cmp against HEAD, D540). Declared survivors 52 unmoved. The neighbour re-probe
+(133 rows) found two real gaps (`D440-vocabulary-*`, killed only by the retired "Ancient card" refusal) — closed by a constructed
+`FUTURE_PILE` witness in `discardPileScaling.test.ts`. The final review's fixes (Reboot Pod's short pile parks — two of the
+46 rows; the D539 sweep completed by script; R-PX6 named) are in `progress.md` NEXT (1-ter). `bun run check` 581 files /
+13,974 tests, exit 0. The second review's fixes — the D539 sweep re-run at a 30-line window (one more engine-source copy,
+the thirteen "71 … DATA-BLOCKED" length-pin comments, a dozen test docs, seven conventions.md claims) and the vocabulary
+count `benchNounScaling.test.ts` §5 still pinned at 31 (now 32, "Ancient Pokémon" listed) — are in NEXT (1-quater); probe
+46 killed · 0 · 0 GAP · 0 error, check green again.
+
+### (d) Owed
+The whole-corpus sweep (predicted `3840 · 52` over 3,892, ~~stacked on D568's still-PENDING~~ 🆕 on D568's PAID `3794 · 52` over 3,846, close-out `8e36c690`). R-PX1 …
+R-PX6 UNRULED. The nine deferred Paradox printings (Initialization ×3, Destructo-Press ×2, C.O.D.E.: Protect, Unrelenting
+Onslaught, Dual Core, Iron Moth's Anachronism Repulsor). NEXT: see `progress.md` NEXT — festival-lead (rank 2, MRV 36 → 37).

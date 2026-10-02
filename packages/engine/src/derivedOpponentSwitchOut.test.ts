@@ -359,6 +359,7 @@ describe("PROVENANCE — the demonstrator carries all three of this slice's sent
     // same length pin and ALL of them were stepped in one pass (D431): a green run
     // after fixing the one that reddened is evidence the runner stopped early.
     expect(attacks).toHaveLength(73); // 🆕🆕 **72 AT D457**, which appended **71** — and NOT to field a new family: index 42 was the demonstrator's LAST unread sentence and D457 built it, leaving `optionalSelfSwitch.test.ts` §7's loud-path attribution control with no subject at all. 71 is corpus line 404 (the Future-banner attach, DATA-BLOCKED rather than merely unbuilt), and `testFixtures.ts` carries the argument. THIRTEEN suites carry this pin and all thirteen were stepped in one pass (D431).
+    // (🆕🆕🆕 D569 (D539): "DATA-BLOCKED rather than merely unbuilt" is WITHDRAWN — the real printings (Miraidon `sv05-121`/`svp-092` "Peak Acceleration") are BUILT as a hand-written REGISTRY attack over `banners.ts`; the DERIVERS still refuse the sentence, so index 71 stays an unread control and this pin is unchanged)
     expect(attacks[KICK_AWAY]?.effect).toBe(CLAUSES[BARE].text);
     expect(attacks[WINDING_WAVES]?.effect).toBe(CLAUSES[MAY].text);
     expect(attacks[INTERJET]?.effect).toBe(CLAUSES[COMPOUND].text);

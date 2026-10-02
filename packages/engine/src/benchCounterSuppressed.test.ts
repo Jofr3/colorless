@@ -451,8 +451,11 @@ describe("§4 — the PAIRING GATE: the two readers cannot half-build a sentence
     // string while the multiplier refuses it for its vocabulary, so `resolvedByAnyReader`
     // would be true, `BUILT.attack` would step, and the fold would silently vanish.
     // `Ancient` is in NO ingested column (D461/D462), so it is the permanent case.
+    // (🆕🆕🆕 D569 (D539): "the permanent case" is WITHDRAWN — the body map answers "Ancient Pokémon" now
+    // through `banners.ts`' engine table (still in no ingested column, TRUE). The unmapped noun is
+    // the other Paradox banner; the local name is kept.)
     const ancient =
-      "This attack does 10 damage for each damage counter on all of your Benched Ancient Pokémon. This attack's damage isn't affected by Weakness.";
+      "This attack does 10 damage for each damage counter on all of your Benched Future Pokémon. This attack's damage isn't affected by Weakness.";
     expect(deriveAttackDamageMultiplier(ancient)).toBeNull();
     expect(deriveAttackDamageSuppression(ancient)).toBeNull();
     expect(resolvedByAnyReader(ancient)).toBe(false);
@@ -652,9 +655,9 @@ describe("§7 — `MATCH_RECORD_VERSION` stays 29: there is NO CARRIER", () => {
 });
 
 describe("§8 — the version", () => {
-  it("engineVersion is 0.452.0 and the bump is owed for BEHAVIOUR", () => {
+  it("engineVersion is 0.453.0 and the bump is owed for BEHAVIOUR", () => {
     // A card can reach this: file line 529's printing scores a number it did not score
     // at 0.387.0, and skips a §8.5 step it did not skip.
-    expect(engineVersion).toBe("0.452.0");
+    expect(engineVersion).toBe("0.453.0");
   });
 });

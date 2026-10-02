@@ -57,6 +57,11 @@ import {
 // banner: `Ancient` is in NO column of the persisted catalog. §8 drives that
 // refusal and states the falsifier, which is an INGEST change and nothing in this
 // package.
+// 🆕🆕🆕 D569 (D539): ~~the reason is DATA … the falsifier is an INGEST change and nothing
+// in this package~~ WITHDRAWN — `banners.ts` (in this package) supplies the banner, and
+// `sv05-077` "Supportive Singing" is BUILT as an index-keyed registry row over the NEW
+// `healChosen.filter`. The DERIVER still refuses the sentence (§8 pins that); "`Ancient`
+// is in NO column of the persisted catalog" stays TRUE.
 
 /** The two printed sentences, verbatim, and the op each derives to. Both are looked
     up in `legalAttackCorpus()` in §1 WITH their printing counts, so a hand-retyped
@@ -704,18 +709,21 @@ describe("§7 — the record-shape derivation, made rather than inherited", () =
     expect(roundTripped.players.p1.bench[1]?.healedTurn).toBeNull();
   });
 
-  it("engineVersion is 0.452.0 and the bump is owed for BEHAVIOUR", () => {
+  it("engineVersion is 0.453.0 and the bump is owed for BEHAVIOUR", () => {
     // 🆕🆕 D461 — 0.359.0 → **0.360.0**. Two printed sentences that derived to `null`
     // and fell to the loud ATTACK_EFFECT_SKIPPED path now heal a NARROWED set, and
     // the narrowing is visible on the board rather than only in the type: the same
     // board under the two sentences heals two DIFFERENT, NON-NESTED sets of bodies
     // (§3 and §4 share one board and disagree about two of its three).
-    expect(engineVersion).toBe("0.452.0");
+    expect(engineVersion).toBe("0.453.0");
   });
 });
 
 describe("§8 — the REFUSAL, with its own reason and its own falsifier", () => {
-  it("the `Ancient` row is a CORPUS row, is UNBUILT, and stays unbuilt", () => {
+  // 🆕🆕🆕 D569 (D539): "is UNBUILT, and stays unbuilt" is WITHDRAWN for the PROGRAM — Scream Tail
+  // `sv05-077` "Supportive Singing" is BUILT as a hand-written REGISTRY attack (`healChosen` with the
+  // NEW `filter: bannerPokemon Ancient`). What this rung still pins is that the DERIVER refuses it.
+  it("the `Ancient` row is a CORPUS row, is UNBUILT, and stays unbuilt (🆕 D569: by the deriver — the registry builds it)", () => {
     // The third member of the printed family, refused for a reason that is not this
     // package's to fix.
     const corpus = new Map(legalAttackCorpus().map(([units, text]) => [text, units]));
@@ -743,7 +751,21 @@ describe("§8 — the REFUSAL, with its own reason and its own falsifier", () =>
     const ancient = legalAttackCorpus().filter(([, text]) => /Ancient/.test(text));
     expect(ancient).toHaveLength(7);
     expect(ancient.reduce((sum, [units]) => sum + units, 0)).toBe(10);
-    for (const [, text] of ancient) expect(resolvedByAnyReader(text)).toBe(false);
+    // 🆕🆕🆕 D569 (D539) — "every one of them is unbuilt" and "the fix is an INGEST change … nothing
+    // in `packages/engine` can be it" are WITHDRAWN: the fix was an ENGINE table keyed by printing
+    // id (`banners.ts`; the `Card` still has no banner field — the falsifier below stays TRUE, and
+    // that is the point: it was the wrong falsifier). Of the seven: TWO are claimed by READERS
+    // (Koraidon "Primordial Beatdown", Roaring Moon "Vengeance Fletching"), THREE are hand-written
+    // REGISTRY attacks the readers still refuse (Great Tusk "Land Collapse", Scream Tail — this
+    // file's own row — and Flutter Mane), and TWO stay unbuilt for reasons that are not the
+    // banner (Iron Moth's persisted attacker class, Koraidon `sv08-116`'s seat-level record).
+    const readerClaimed = ancient.filter(([, text]) => resolvedByAnyReader(text));
+    expect(readerClaimed.map(([, text]) => text).sort()).toEqual(
+      [
+        "This attack does 10 more damage for each Ancient card in your discard pile.",
+        "This attack does 30 damage for each of your Ancient Pokémon in play.",
+      ].sort(),
+    );
     // The falsifier, stated so it can be checked rather than remembered: when the
     // catalog grows a banner column, this rung is what should go red first.
     const CARD_FIELDS_TODAY = Object.keys(FIXTURE_POOL["fix-titan"] ?? {});

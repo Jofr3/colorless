@@ -604,7 +604,10 @@ describe("D488 §3 — the parse: every capture is a field, and the noun group i
     // noun must reach `ATTACK_EFFECT_SKIPPED`, never an unfiltered count. "Ancient" is
     // the standing example (`inPlayBodyFilter`'s own null path, 24 slices off the
     // table) and "Special Energy card" is a noun this map does not hold.
-    for (const noun of ["Ancient card", "Special Energy card", "Pokémon", "Basic Pokémon"]) {
+    // (🆕🆕🆕 D569 (D539): "Ancient card" is a `DISCARD_PILE_NOUNS` key now — `bannerCard`, over
+    // `banners.ts` — so the standing example is the other Paradox banner, "Future card", which no
+    // map this anchor reaches spells.)
+    for (const noun of ["Future card", "Special Energy card", "Pokémon", "Basic Pokémon"]) {
       const text = `Discard the top 3 cards of your deck, and this attack does 80 damage for each ${noun} you discarded in this way.`;
       expect(deriveAttackEffect(text), noun).toBeNull();
       expect(readersClaiming(text), noun).toEqual([]);

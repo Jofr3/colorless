@@ -32,6 +32,10 @@ import {
 //       returns exactly two rows — NULL 3,157 and `ex` 629. 3,157 + 629 = 3,786
 //       ✅, the whole table. **NO COLUMN CLASSIFIES THE Ancient/Future BANNER**,
 //       so a `CardFilter` member for *"Future"* would have nothing to read.
+//       (🆕🆕🆕 D569 (D539): ~~would have nothing to read~~ WITHDRAWN — `bannerPokemon`
+//       reads `banners.ts`, an engine table keyed by printing id (D568 Tera, D569
+//       Ancient/Future), and Cobalt Command is BUILT on it; "NO COLUMN CLASSIFIES the
+//       banner" stays TRUE.)
 //
 //   (2) THE BY-NAME EXEMPTION IS NOT A MISSING CAPABILITY — **IT SHIPPED AT
 //       D273.** The handoff priced it as *"a genuine engine addition, because
@@ -66,6 +70,8 @@ import {
 //
 // Those 20 are **FIVE SENTENCES ON FIVE CARDS**, and only three are legal:
 //     • Iron Crown ex   6 legal — BLOCKED on the banner, see (1) above
+//                         (🆕🆕🆕 D569 (D539): ~~BLOCKED~~ BUILT — Cobalt Command ×6, over
+//                         `banners.ts`; so all 14 legal printings of the family are built)
 //     • Pecharunt ex    5 legal — **BUILT at D273**
 //     • Froslass        3 legal — **THIS ROW**, the last legal one unbuilt
 //     • Ditto ×2, Moltres/Articuno/Zapdos ×3, Simisage ×1 — `legal_standard = 0`
@@ -604,7 +610,8 @@ describe("D340 §6 — the census this row moves, asserted as ARITHMETIC", () =>
   });
 
   it("🛑 the `except any` family closes at 14 legal, of which 3 were unbuilt", () => {
-    // 6 (Iron Crown ex, blocked on the banner) + 5 (Pecharunt ex, BUILT at D273)
+    // 6 (Iron Crown ex, blocked on the banner — 🆕🆕🆕 D569 (D539): BUILT now, Cobalt Command)
+    // + 5 (Pecharunt ex, BUILT at D273)
     // + 3 (this row) = 14 legal, and 14 + 6 illegal = the 20 printings the census
     // returned. Written as arithmetic so a future re-query can disagree with a
     // NUMBER rather than with a paragraph.

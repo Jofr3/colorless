@@ -1480,7 +1480,14 @@ function describeBranch(ops: readonly EffectOp[]): string | null {
         // 🆕🆕🆕 D557 — the `per` rider says its noun (Morty's Conviction's printed
         // words), so a gated per-Bench draw is never captioned as a flat one.
         if (op.per !== undefined) {
-          parts.push("draw a card for each of your opponent's Benched Pokémon");
+          // 🆕🆕🆕 D569 — Awakening Drum's noun ("your Ancient Pokémon in play").
+          parts.push(
+            op.per.kind === "opponentBenchCount"
+              ? "draw a card for each of your opponent's Benched Pokémon"
+              : `draw a card for each of ${op.per.seat === "you" ? "your" : "your opponent's"} ${
+                  retrieveNoun(op.per.filter).plural
+                } in play`,
+          );
           break;
         }
         parts.push(
@@ -2366,11 +2373,21 @@ function stepOp(
       // `parkOrForce`'s existing silent no-op, the ending an empty Bench already
       // takes — an attack that resolves and moves nothing, which is what the
       // sentence does on that board.
+      //
+      // 🆕🆕🆕 D569 — `filter` is Perplexing Transfer's printed BANNER subgroup ("1 of your
+      // Benched Ancient Pokémon"), the same narrowing one axis over (`filteredRefs`); no
+      // Benched Ancient Pokémon is the same silent no-op (R-PX4).
       return parkOrForce(
         state,
-        subgroupRefs(state, ownBenchRefs(state, ctx.seat), op.ownerPokemon),
+        filteredRefs(
+          state,
+          subgroupRefs(state, ownBenchRefs(state, ctx.seat), op.ownerPokemon),
+          op.filter,
+        ),
         (ref) => moveCountersToDefender(state, ref, ctx, events),
-        `Move the damage counters off which of your Benched ${ownerNoun(op.ownerPokemon)}Pokémon?`,
+        `Move the damage counters off which of your Benched ${
+          op.filter === undefined ? `${ownerNoun(op.ownerPokemon)}Pokémon` : retrieveNoun(op.filter).plural
+        }?`,
       );
     case "moveCountersChosen": {
       // D216 — Cofagrigus "Extended Damagriiigus": D138's move with a CHOSEN
@@ -2786,8 +2803,25 @@ function stepOp(
       // Pokémon"*: the printed rate times the CONTROLLER's opponent's Bench, read HERE
       // (after the hand cost the program paid first), so an empty Bench draws 0.
       // Absent `per` is the printed `count`, byte for byte.
-      const count =
-        op.per === undefined ? op.count : op.count * state.players[otherSeat(ctx.seat)].bench.length;
+      // 🆕🆕🆕 D569 — Awakening Drum's *"a card for each of your Ancient Pokémon in play"*: the
+      // second `per` member, counted by the one walk (`countPokemonInPlay`). A `switch` on the
+      // member, never a ternary, for D491's reason (a third member must not fall silently).
+      const perCount = ((): number => {
+        const per = op.per;
+        if (per === undefined) return 1;
+        switch (per.kind) {
+          case "opponentBenchCount":
+            return state.players[otherSeat(ctx.seat)].bench.length;
+          case "pokemonInPlay":
+            return countPokemonInPlay(
+              state,
+              per.seat === "you" ? ctx.seat : otherSeat(ctx.seat),
+              per.filter,
+              per.damagedOnly === true,
+            );
+        }
+      })();
+      const count = op.count * perCount;
       for (const drawSeat of drawSeats) {
         const deck = done.players[drawSeat].deck;
         const wanted = Math.max(count, 0);
@@ -3710,14 +3744,29 @@ function stepOp(
       // where this can only whiff (`programPlayable`).
       const { candidates, targets, max } = attachFromDiscardOffer(state, ctx.seat, op);
       if (candidates.length === 0 || targets.length === 0 || max <= 0) return { done: state };
+      // 🆕🆕🆕 D569 — Reboot Pod's "to EACH of your Future Pokémon": a pile that collapses to
+      // ONE identity AND covers every offered body (`max` cards each) leaves no decision —
+      // every body gets the same card — so it is attached INLINE through the top-up (the M1
+      // no-choice rule) and parks nothing. BOTH conjuncts are load-bearing: a SHORT pile
+      // (1 Psychic, 3 Future bodies) still has a decision — WHICH Future Pokémon get the
+      // cards is the player's, under the printed sentence — so it parks on the same
+      // `attachCards` prompt as a mixed pile (D569 final review).
+      if (
+        op.each === true &&
+        candidates.length >= targets.length * op.max &&
+        new Set(candidates.map((uid) => cardIdentity(state, uid))).size === 1
+      ) {
+        return { done: eachAttachTopUp(state, op, [], ctx, events) };
+      }
+      const perTarget = op.each === true ? op.max : op.maxPerTarget;
       return {
         park: {
           kind: "attachCards",
           candidates,
           targets,
           max,
-          ...(op.maxPerTarget === undefined ? {} : { maxPerTarget: op.maxPerTarget }),
-          note: attachFromDiscardNote(op),
+          ...(perTarget === undefined ? {} : { maxPerTarget: perTarget }),
+          note: op.each === true ? attachEachFromDiscardNote(op) : attachFromDiscardNote(op),
         },
       };
     }
@@ -6160,6 +6209,29 @@ export function conditionHolds(state: GameState, seat: Seat, cond: BoardConditio
         kind: "bannerPokemon",
         banner: cond.banner,
       });
+    case "opponentBannerPokemonInPlay": {
+      // 🆕🆕🆕 D569 — "your opponent has any Future Pokémon in play" (Slither Wing "Iron
+      // Smasher"): `yourBannerPokemonInPlay` one seat over — the OTHER seat's Active AND
+      // Bench, each TOP card through `matchesFilter`'s `bannerPokemon` arm.
+      const theirs = state.players[otherSeat(seat)];
+      const theirBodies = theirs.active === null ? theirs.bench : [theirs.active, ...theirs.bench];
+      return theirBodies.some((body) =>
+        matchesFilter(topCardOf(state, body), { kind: "bannerPokemon", banner: cond.banner }),
+      );
+    }
+    case "yourPlayedBannerSupporterThisTurn": {
+      // 🆕🆕🆕 D569 — "if you played an Ancient/Future Supporter card from your hand during
+      // this turn" (Great Tusk "Land Collapse", Iron Valiant "Majestic Sword"). The seat
+      // guard is `youPlayedSupporterNamedThisTurn`'s, VERBATIM (the allowance bag is the
+      // turn OWNER's); the uid resolves in ANY zone (R-FC) and its PRINTING's banner is read
+      // through `matchesFilter`'s `bannerCard` arm (R-PX3 ⚠️ UNRULED).
+      if (phaseViewOf(state, seat).activeSeat !== seat) return false;
+      const playedUid = state.allowances.supporterPlayedUid;
+      return (
+        playedUid !== null &&
+        matchesFilter(cardOfUid(state, playedUid), { kind: "bannerCard", banner: cond.banner })
+      );
+    }
     case "yourPokemonKoedOnOpponentsLastTurn":
       // D271 — "any of your Pokémon were Knocked Out during your opponent's last
       // turn" (Unfair Stamp sv06-165, Hassel sv06-151/-205). The whole predicate
@@ -7238,6 +7310,11 @@ export function conditionNote(cond: BoardCondition): string {
       return `you have any ${cond.banner} Pokémon on your Bench`;
     case "opponentActiveIsBanner":
       return `your opponent's Active Pokémon is a ${cond.banner} Pokémon`;
+    case "opponentBannerPokemonInPlay":
+      // 🆕🆕🆕 D569 — the two printed clauses verbatim, minus the "if".
+      return `your opponent has any ${cond.banner} Pokémon in play`;
+    case "yourPlayedBannerSupporterThisTurn":
+      return `you played ${cond.banner === "Ancient" ? "an" : "a"} ${cond.banner} Supporter card from your hand during this turn`;
     case "yourPokemonKoedOnOpponentsLastTurn":
       // The printed clause verbatim — the family's THIRD full round-trip, and it
       // keeps the possessive "your opponent's last turn" that the predicate turns
@@ -7906,9 +7983,11 @@ export function applyChoice(
       // 🆕🆕🆕 D568 — Glass Trumpet's answer, applied out of the DISCARD PILE. The couplings
       // (≤ max, ≤ 1 per body, offered uids and bodies only) were enforced by
       // `validateChoice` against the parked prompt; the apply re-checks zone and seat.
-      return choice.kind === "attachCards"
-        ? attachFromZoneApply(state, choice.assignments, "discard", ctx, events).state
-        : state;
+      if (choice.kind !== "attachCards") return state;
+      // 🆕🆕🆕 D569 — Reboot Pod: the answer as given, then the MANDATORY top-up (R-PX1).
+      return op.each === true
+        ? eachAttachTopUp(state, op, choice.assignments, ctx, events)
+        : attachFromZoneApply(state, choice.assignments, "discard", ctx, events).state;
     case "attachFromDeck": {
       if (choice.kind !== "attachCards") return state;
       const attached = attachFromZoneApply(state, choice.assignments, "deck", ctx, events);
@@ -15821,15 +15900,31 @@ export function healChosenTargets(
   op: Extract<EffectOp, { op: "healChosen" }>,
 ): PokemonRef[] {
   const zoned = op.zone === "bench" ? ownBenchRefs(state, seat) : ownInPlayRefs(state, seat);
+  // 🆕🆕🆕 D569 — Supportive Singing's printed BANNER subgroup ("your Benched Ancient
+  // Pokémon"), a conjunct over the same set; absent = byte-identical (`filteredRefs`).
+  const banded = filteredRefs(state, zoned, op.filter);
   const atMost = op.remainingHpAtMost;
-  if (atMost === undefined) return zoned;
-  return zoned.filter((ref) => {
+  if (atMost === undefined) return banded;
+  return banded.filter((ref) => {
     const pokemon = refPokemon(state, ref);
     // A ref this function cannot resolve is dropped rather than offered, exactly
     // as `gustTargets` drops an unreadable body: a narrowed sentence must not put
     // a Pokémon in a prompt whose printed clause it cannot evaluate.
     return pokemon !== undefined && remainingHpWithin(state, pokemon, atMost);
   });
+}
+
+/** 🆕🆕🆕 D569 — narrow a candidate ref list to the bodies whose TOP card matches `filter`
+    (Supportive Singing's and Perplexing Transfer's `bannerPokemon Ancient`), or return it
+    unchanged when no filter is printed. `subgroupRefs`' shape over a whole `CardFilter`:
+    the one predicate (`matchesFilter`) on `refTopCard`, so an empty spot falls out. */
+function filteredRefs(
+  state: GameState,
+  refs: PokemonRef[],
+  filter: CardFilter | undefined,
+): PokemonRef[] {
+  if (filter === undefined) return refs;
+  return refs.filter((ref) => matchesFilter(refTopCard(state, ref), filter));
 }
 
 /** 🆕 D349 — the printed noun for a `healChosen`'s candidates, in the card's own
@@ -15843,7 +15938,9 @@ function healTargetNoun(op: Extract<EffectOp, { op: "healChosen" }>): string {
     op.remainingHpAtMost === undefined
       ? ""
       : ` that has ${op.remainingHpAtMost} HP or less remaining`;
-  return `Heal which of your ${zoneWord}Pokémon${window}?`;
+  // 🆕🆕🆕 D569 — the filter's printed plural noun ("Ancient Pokémon"); absent = "Pokémon".
+  const noun = op.filter === undefined ? "Pokémon" : retrieveNoun(op.filter).plural;
+  return `Heal which of your ${zoneWord}${noun}${window}?`;
 }
 
 /** Gust: switch the OPPONENT's Active with their benched `ref` (Boss's Orders). */
@@ -16484,7 +16581,14 @@ export function attachFromDiscardOffer(
 ): { candidates: string[]; targets: PokemonRef[]; max: number } {
   const targets = attachEnergyTargets(state, seat, op);
   // The reachable total: "up to `max`", and never more than one per offered body.
-  const reach = op.maxPerTarget === undefined ? op.max : Math.min(op.max, targets.length * op.maxPerTarget);
+  // 🆕🆕🆕 D569 — under `each` (Reboot Pod) `max` is the PER-BODY count, so the total is
+  // `max` for EVERY offered body.
+  const reach =
+    op.each === true
+      ? op.max * targets.length
+      : op.maxPerTarget === undefined
+        ? op.max
+        : Math.min(op.max, targets.length * op.maxPerTarget);
   const kept = new Map<string, number>();
   const candidates: string[] = [];
   const pile = state.players[seat].discard;
@@ -16497,6 +16601,42 @@ export function attachFromDiscardOffer(
     candidates.push(uid);
   }
   return { candidates, targets, max: Math.min(reach, candidates.length) };
+}
+
+/** 🆕🆕🆕 D569 — Reboot Pod's MANDATORY "to each of your Future Pokémon" (R-PX1 ⚠️ UNRULED):
+    apply the player's `assignments` out of the discard pile, then give every offered body
+    (`attachEnergyTargets` under the op's riders — the set the prompt offered, re-read on the
+    unchanged board) that still holds fewer than `op.max` of this op's cards the next
+    matching card in the discard pile, PILE ORDER, while the pile lasts. So an empty or short
+    answer cannot decline the Item's effect, and a full answer is untouched. The forced
+    board — a single-identity pile that COVERS every offered body — calls it with no
+    assignments; a SHORT pile parks instead (the choice of WHICH bodies is the player's),
+    and only an answer that leaves a body short reaches the target-order top-up — the
+    player's own forfeit of that choice, never the engine's (D569 final review). */
+function eachAttachTopUp(
+  state: GameState,
+  op: Extract<EffectOp, { op: "attachFromDiscard" }>,
+  assignments: readonly { uid: string; to: PokemonRef }[],
+  ctx: EffectContext,
+  events: GameEvent[],
+): GameState {
+  const given = attachFromZoneApply(state, assignments, "discard", ctx, events);
+  const landed = new Map<string, number>();
+  for (const { uid, to } of assignments) {
+    if (given.attached.includes(uid)) landed.set(refKeyOf(to), (landed.get(refKeyOf(to)) ?? 0) + 1);
+  }
+  const pile = given.state.players[ctx.seat].discard.filter((uid) =>
+    matchesFilter(cardOf(given.state, uid), op.filter),
+  );
+  const fill: { uid: string; to: PokemonRef }[] = [];
+  for (const to of attachEnergyTargets(given.state, ctx.seat, op)) {
+    for (let n = landed.get(refKeyOf(to)) ?? 0; n < op.max; n += 1) {
+      const uid = pile.shift();
+      if (uid === undefined) break;
+      fill.push({ uid, to });
+    }
+  }
+  return attachFromZoneApply(given.state, fill, "discard", ctx, events).state;
 }
 
 /** ⚠️⚠️ D247 — What an `attachFromHand` op is offering: the controller's own HAND
@@ -18708,6 +18848,14 @@ function attachFromDiscardNote(op: Extract<EffectOp, { op: "attachFromDiscard" }
   return `Choose up to ${op.max} of your ${attachTargetNoun(op)} and attach ${singular} from your discard pile to each of them.`;
 }
 
+/** 🆕🆕🆕 D569 — Reboot Pod's caption, the printed sentence: *"Attach a Basic Energy card from
+    your discard pile to each of your Future Pokémon."* (`attachTargetNoun` carries the banner
+    word). Any body left without a card is topped up at the apply (`eachAttachTopUp`). */
+function attachEachFromDiscardNote(op: Extract<EffectOp, { op: "attachFromDiscard" }>): string {
+  const { singular } = retrieveNoun(op.filter);
+  return `Attach ${singular} from your discard pile to each of your ${attachTargetNoun(op)}.`;
+}
+
 /** ⚠️⚠️ D247 — the attachCards prompt string for a HAND attach (Alolan Exeggutor
     ex "Tropical Frenzy"): the printed *"You may attach any number of {noun} from
     your hand to your Pokémon in any way you like."*
@@ -19291,6 +19439,13 @@ export function retrieveNoun(filter: CardFilter): { singular: string; plural: st
     case "bannerPokemon":
       // 🆕🆕🆕 D568 — "a Tera Pokémon" (Tera Orb). Invariant in number, like "Basic Pokémon".
       return { singular: `a ${filter.banner} Pokémon`, plural: `${filter.banner} Pokémon` };
+    case "bannerCard":
+      // 🆕🆕🆕 D569 — "an Ancient card" (Roaring Moon's discard noun). The article follows the
+      // banner's first letter ("an Ancient", "a Future", "a Tera").
+      return {
+        singular: `${filter.banner === "Ancient" ? "an" : "a"} ${filter.banner} card`,
+        plural: `${filter.banner} cards`,
+      };
     case "suffixPokemon":
       // 🆕🆕 D446 — the printed rule-box class, whole: "a Pokémon ex", "a Pokémon V".
       // INVARIANT IN NUMBER like the bare "Basic Pokémon" two arms down — the suffix

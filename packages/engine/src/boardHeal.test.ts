@@ -116,7 +116,11 @@ const REAL_NEAR_MISSES = [
   // deleted, per the STANDING NOTE above, onto the one row of the printed heal family
   // that is STILL refused by every reader — and refused for a reason no arm can fix:
   // the banner `Ancient` is in NO column of the persisted catalog (`PREVENT_DAMAGE_FROM_CLASS`,
-  // re-read at D439/D451/D461), so the falsifier is an INGEST change. It is a NEARER
+  // re-read at D439/D451/D461), so the falsifier is an INGEST change (🆕🆕🆕 D569 (D539):
+  // ~~refused for a reason no arm can fix … the falsifier is an INGEST change~~ WITHDRAWN —
+  // `banners.ts`' engine table supplies the banner with no ingest change, and `sv05-077` is
+  // BUILT as an index-keyed registry row; every DERIVE reader still refuses the sentence,
+  // which is all this slot needs). It is a NEARER
   // miss for this anchor than either predecessor on the zone word and a FARTHER one on
   // the determiner, which is exactly the pair of axes this anchor is anchored against.
   // 1 legal printing, corpus file line 272.

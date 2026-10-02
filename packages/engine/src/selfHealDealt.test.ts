@@ -22,6 +22,13 @@ import {
     `deriveAttack*` readers, by all four splitters and by the registry, and it cannot
     stop being refused: the `Ancient` banner is a per-PRINTING fact and `cardSchema`
     carries no column for it, so no reader at any width can classify it. */
+/* (🆕🆕🆕 D569 (D539): "refused … by the registry, and it cannot stop being refused" and "no
+    reader at any width can classify it" are WITHDRAWN — `banners.ts` (an engine table keyed by
+    printing id, no ingest change) supplies the banner, and the sentence's one printing, Scream
+    Tail `sv05-077` "Supportive Singing", is BUILT as an index-keyed REGISTRY row
+    (`SUPPORTIVE_SINGING`, `healChosen` with the NEW `filter` rider). The 13 derive readers and
+    the four splitters still refuse the TEXT, so on this `fix-*` card (not that printing) it is
+    still LOUD and the control still works — see §7's note.) */
 const LOUD_SENTENCE = "Heal 100 damage from 1 of your Benched Ancient Pokémon.";
 
 // 0.328.0 → 0.329.0 — 🆕🆕 D427: HEAL SELF BY THE DAMAGE THIS ATTACK DEALT.
@@ -452,7 +459,7 @@ describe("§3 — the carrier is `EffectContext`, and `MATCH_RECORD_VERSION` sta
   });
 
   it("the engine version moved and the two spellings agree", () => {
-    expect(engineVersion).toBe("0.452.0");
+    expect(engineVersion).toBe("0.453.0");
   });
 });
 
@@ -656,6 +663,11 @@ describe("§7 — a Knocked Out defender changes nothing about what was dealt", 
     // have left this rung green while it stopped testing anything. The replacement is
     // blocked by DATA (the `Ancient` banner is in no ingested column), so unlike a
     // merely-unbuilt sentence it cannot be claimed by any reader at any width (D461).
+    // 🆕🆕🆕 D569 (D539): ~~blocked by DATA … cannot be claimed by any reader at any
+    // width~~ WITHDRAWN — `banners.ts`' engine table supplies the banner (no ingest
+    // change) and its one printing, `sv05-077`, is BUILT as an index-keyed registry row
+    // (`SUPPORTIVE_SINGING`). The control stands as an UNREAD sentence: no derive reader
+    // claims it, and this fixture is not that printing.
     const loud = swing(board("fix-drainwall", 150), IDX.loud);
     expect(types(loud.events)).toContain("ATTACK_EFFECT_SKIPPED");
     expect(resolvedByAnyReader(LOUD_SENTENCE)).toBe(false);

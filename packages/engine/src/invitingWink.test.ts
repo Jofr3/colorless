@@ -33,7 +33,9 @@ import {
 //   D349's, re-checked: the by-NAME attach (Lycanroc ×2), the uncatalogued
 //   Ancient/Future/Tera banner (Reboot Pod ×1, Glass Trumpet ×2 — 🆕🆕🆕 D568 (D539):
 //   Glass Trumpet BUILT, the Tera banner supplied by `banners.ts`; Reboot Pod's FUTURE
-//   banner stays uncatalogued, TRUE) and an
+//   banner stays uncatalogued, TRUE — 🆕🆕🆕 D569 (D539): "uncatalogued" stays TRUE, but
+//   "refused" is WITHDRAWN for Reboot Pod too: BUILT on `banners.ts`' Future rows,
+//   `REBOOT_POD`, `paradoxBannerD569.test.ts` §7) and an
 //   end-of-turn Tool trigger point for 2 printings (Powerglass — 🆕🆕🆕 D566 (D539): BUILT,
 //   `koToolsD566.test.ts` §4). The Lycanroc
 //   clause rests on `onEvolve` — **58 printings / 29 legal / 13 legal sentences**,

@@ -460,10 +460,15 @@ describe("D559 §1 — the seven registry rows: 15 printings, 7 objects, NO `att
     expect(new Set(ids.map((id) => programFor(id))).size).toBe(7);
   });
 
-  it("the LOOK-ALIKES are not keyed: sv08-096 Flutter Mane, sv10.5b-008/-093 Maractus, sv07-101 Klinklang", () => {
-    for (const id of ["sv08-096", "sv10.5b-008", "sv10.5b-093", "sv07-101"]) {
+  // 🆕🆕🆕 D569 (D539): ~~sv08-096 Flutter Mane is not keyed~~ WITHDRAWN for that one id — it
+  // is keyed now by its ATTACK, "Perplexing Transfer" (`PERPLEXING_TRANSFER`, the Paradox
+  // unlock), and still carries NO Ability program: the look-alike claim this rung makes (no
+  // D559 Ability row) stays true and is pinned on the key set instead.
+  it("the LOOK-ALIKES are not keyed: sv08-096 Flutter Mane (no Ability row — D569 keys its attack), sv10.5b-008/-093 Maractus, sv07-101 Klinklang", () => {
+    for (const id of ["sv10.5b-008", "sv10.5b-093", "sv07-101"]) {
       expect(programFor(id), id).toBeUndefined();
     }
+    expect(Object.keys(programFor("sv08-096") ?? {})).toEqual(["attack"]);
   });
 });
 

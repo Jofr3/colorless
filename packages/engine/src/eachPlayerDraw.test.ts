@@ -95,6 +95,10 @@ import {
 // than a mechanism (D461): the `Ancient` banner is a per-PRINTING fact and `cardSchema`
 // carries no column for it, so no reader at any width can ever claim it, and the day it
 // goes green the thing that changed is the INGEST.
+// 🆕🆕🆕 D569 (D539): ~~no reader at any width can ever claim it … the INGEST~~ WITHDRAWN —
+// the banner is supplied by `banners.ts`' engine table (no ingest change) and the one
+// printing, `sv05-077`, is BUILT as an index-keyed registry row. The controls stay
+// valid: the sentence is still unread by every DERIVE reader, and no fixture is `sv05-077`.
 
 const find = (events: readonly GameEvent[], type: string): GameEvent | undefined =>
   events.find((e) => e.type === type);
@@ -865,7 +869,7 @@ describe("D491 §9 — the version question, asked at the address that persists"
   });
 
   it("the engine version moved and the record version did not", () => {
-    expect(engineVersion).toBe("0.452.0");
+    expect(engineVersion).toBe("0.453.0");
     expect(manifest.version).toBe(engineVersion);
   });
 });

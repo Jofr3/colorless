@@ -218,7 +218,7 @@ describe("§1 — the census D282 priced its refusal against: counts reproduce, 
     expect(units(gateAll) - units(firstTurn)).toBe(6);
   });
 
-  it("S2 — 17 of 935 registry ids carry an `attackGate`, in three kinds", () => {
+  it("S2 — 17 of 949 registry ids carry an `attackGate`, in three kinds", () => {
     // The registry side of the same 13, walked independently of the text side:
     // a count that agrees across two surfaces is a count, not a transcription.
     // 🆕🆕 D396 — 14 -> **17**, and this is the FIRST slice on which the registry
@@ -362,7 +362,13 @@ describe("§1 — the census D282 priced its refusal against: counts reproduce, 
     // Terapagos `sv08-161` — the ONE row that authors an `attack` key ("Prism Charge"). Real
     // catalog ids, no `fix-*` key (`teraBannerD568.test.ts` drives a LOCAL `cardPool`), inserted
     // MID-MAP after `sv07-136`. (Ho-Oh and Regigigas are deriver arms, not keys.)
-    expect(ids.length).toBe(935);
+    // 🆕🆕🆕 D569 — 935 -> **949**: FOURTEEN registry keys on SEVEN program objects — the Paradox
+    // banner unlock, Slice 2 part a: Iron Crown ex ×6 "Cobalt Command", Awakening Drum, Reboot Pod
+    // (non-attack), and SIX `attack`-keyed rows — Miraidon ×2 "Peak Acceleration", Great Tusk ×2
+    // "Land Collapse", Scream Tail "Supportive Singing", Flutter Mane "Perplexing Transfer". Real
+    // catalog ids, no `fix-*` key, inserted MID-MAP after `sv08-161`. (Koraidon ×2, Roaring Moon
+    // ×2, Iron Valiant and Slither Wing are deriver arms, not keys.)
+    expect(ids.length).toBe(949);
     const gated = ids.filter((id) => programFor(id)?.attackGate !== undefined);
     expect(gated.length).toBe(17);
     const kinds = gated.flatMap((id) =>

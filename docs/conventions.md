@@ -154,7 +154,10 @@ the trend improved.
   FOR TERA** — the supply need not be an INGESTED column: `banners.ts`, an engine table keyed by
   PRINTING id (never species or name, D135), is the writer, and D568 built 19 printings on it.
   "No ingested column classifies the banner" stays TRUE, and so does every Ancient/Future claim
-  until Slice 2 widens `Banner`. The rule this bullet teaches stands: name the field — here, the
+  until Slice 2 widens `Banner`. 🆕🆕🆕 **D569 (D539): and Slice 2 part a DID — `Banner` is "Tera" |
+  "Ancient" | "Future" and the table carries 86 more ids (two sources: pokemon-tcg-data's subtypes
+  and a species/name cross-check, every disagreement settled on the printed image); the
+  Ancient/Future claims are WITHDRAWN in turn.** "No ingested column" still stays TRUE. The rule this bullet teaches stands: name the field — here, the
   table — before you design the predicate.
 
 ## Pricing a slice
@@ -1789,6 +1792,10 @@ filter matching nothing in the catalog, counting 0 on every board, leaving a
 permanently DATA-BLOCKED sentence scoring its printed base forever while
 `BUILT.attack` steps for it. That is D190b/D199 at the instrument layer: *a
 wrong-but-plausible program is strictly worse than an unbuilt one*.
+🆕🆕🆕 **D569 (D539): "permanently DATA-BLOCKED" is WITHDRAWN** — `"Ancient card"` is a closed-map
+ROW now (`DISCARD_PILE_NOUNS` → the any-category `bannerCard` over `banners.ts`), Roaring Moon
+"Vengeance Fletching" ×2 is built on it, and the `byName` capture this section refuses is still
+refused — which is exactly the honesty the closed map was for.
 
 **When a vocabulary could be a capture, ask what the capture claims that the map
 refuses** — and write the mutant, because it is right about every sentence the slice
@@ -3557,6 +3564,11 @@ the printed adjective reads.** `{L}` is `Card.types` and cost one anchor and one
 arm. `Ancient` is in no column at all, and building it would have shipped a filter
 that counts 0 on every board forever while `BUILT.attack` stepped for it — strictly
 worse than leaving the sentence unbuilt. The census picks a TOKEN, not a SLICE.
+🆕🆕🆕 **D569 (D539): "`Ancient` is in no column, and building it would have shipped a filter that
+counts 0" is WITHDRAWN as the conclusion** — "in no column" stays TRUE, but the supply was an engine
+table keyed by printing id (`banners.ts`, D568 Tera, D569 Ancient/Future), so a `bannerPokemon` /
+`bannerCard` filter counts real bodies. The rule stands with one more question: if no column reads
+the adjective, ask whether a per-PRINTING engine table could, and price its two-source cost.
 
 ### A refusal re-proposed three times is one `expect` away from self-checking
 
@@ -3569,6 +3581,11 @@ D468 wrote it as a test instead: a section that pins the schema key set read **o
 splitter or registry row takes any of it. **The rung goes red the day ingest lands
 the column, and names it.** When a refusal survives its third re-litigation, stop
 writing the paragraph better and spend the same effort on the assertion.
+🆕🆕🆕 **D569 (D539): "no reader, splitter or registry row takes any of it" is WITHDRAWN at D569** —
+four of the twelve sentences are claimed by READERS and four more by hand-written REGISTRY rows,
+all over `banners.ts`; the schema-key rung stayed GREEN because no ingest column landed, which is
+the lesson: the falsifier named the wrong LAYER. `typedSelfSwitch.test.ts` §9 now pins which four
+the readers claim.
 
 Two corollaries D468 also paid for:
 - **A refusal can be load-bearing.** One of the blocked sentences was already
@@ -9199,6 +9216,13 @@ which was **the last unread index of 71** (measured with `resolvedByAnyReader`, 
   (`packages/schema/src/catalog/card.ts` `cardSchema` carries `stage`/`types`/`trainerType`/
   `energyType` and no subtype column). A merely-unbuilt sentence would disarm the control the
   next time somebody writes an anchor.
+  🆕🆕🆕 **D569 (D539): "DATA-BLOCKED" is WITHDRAWN for index 71** — the banner's supply turned
+  out to be an engine table keyed by printing id (`banners.ts`, no ingest change), and the real
+  printings (Miraidon `sv05-121`/`svp-092` "Peak Acceleration") are BUILT as a hand-written
+  REGISTRY attack. The control still holds because no DERIVER reads the sentence on the `fix-*`
+  card, and its `deriveAttackEffect(...)` → null rung is what goes red the day one does; the
+  thirteen length-pin comments carry the same note. The lesson for the next re-point is the one
+  below: "data-blocked" was a claim about the INGEST, and the engine can supply data itself.
 - **The fixture is APPENDED and the length pin steps in every suite that carries it** — thirteen
   of them at D457 — in one pass (D431: a green run after fixing the one that reddened is evidence
   the runner stopped early).
@@ -9598,6 +9622,10 @@ Two rules, and the second is new:
    unbuilt because a column does not exist cannot be built by any reader at any width, so the slot
    stops needing re-pointing every few slices — and if it ever goes green, the thing that changed
    is the ingest, which is exactly what a witness should be able to tell you.
+   🆕🆕🆕 **D569 (D539): the premise is WITHDRAWN as stated** — D568/D569 supplied a per-printing
+   fact with NO ingest change (`banners.ts`, an engine table keyed by printing id), so "a column
+   does not exist" no longer means "no reader at any width". A witness is durable when no DERIVER
+   reads its TEXT (pin `resolvedByAnyReader` → false beside it), not when its datum is missing.
 
 ## The `Ancient` banner is the residue's largest non-mechanism blocker: 7 sentences / 10 printings (D461)
 
@@ -9611,6 +9639,16 @@ ex `sv01-123`/`-230`/`-246` is the same species with and without it).
 **The falsifier is an INGEST change** (a per-printing column plus a `CardFilter` member). Nothing in
 `packages/engine` can be it. Priced here so successors stop re-deriving it: `Future` is the same
 shape one banner over and blocks two more `PHRASE-1` rows.
+
+🆕🆕🆕 **D569 (D539): "the falsifier is an INGEST change … nothing in `packages/engine` can be it" is
+WITHDRAWN.** The falsifier was `packages/engine/src/banners.ts` — an engine table keyed by PRINTING
+id (D135; the per-printing objection above is exactly why it is id-keyed), Tera at D568, Ancient and
+Future at D569 (86 ids, two sources) — plus the `CardFilter` members `bannerPokemon` and the D569
+any-category `bannerCard`. "The persisted `Card` carries no banner column" stays TRUE. Of the
+Ancient/Future attack rows, D569 built Primordial Beatdown, Vengeance Fletching, Majestic Sword and
+Iron Smasher through readers and Peak Acceleration, Land Collapse, Supportive Singing and Perplexing
+Transfer as index-keyed registry rows; what stays unbuilt (Iron Moth, Unrelenting Onslaught,
+Destructo-Press, C.O.D.E.: Protect) is blocked by a MECHANISM, not by the banner.
 
 ## A refusal that names a SENTENCE is usually a claim about a WARRANT, not about a carrier (D462)
 
@@ -9719,6 +9757,12 @@ arrives.** The eight non-`OPAQUE` rows want the predicate in at least four diffe
 `moveCountersToDefender.ownerPokemon` shape, and a SUPPORTER-CARD predicate for *"If you played an
 Ancient Supporter card…"*, which is not about a Pokémon at all. **Price the CARRIERS, not the
 token.**
+🆕🆕🆕 **D569 (D539): "the data refusal stands" is WITHDRAWN** — the data arrived as an engine table,
+not an ingest column (`banners.ts`, keyed by printing id; "no ingested column carries it" stays
+TRUE), and the carriers prediction held exactly: D569 paid a `CardFilter` kind (`bannerCard`, beside
+`bannerPokemon`), an op FIELD (`moveCountersToDefender.filter`, `healChosen.filter`), and a
+SUPPORTER-CARD predicate (`yourPlayedBannerSupporterThisTurn`); the `fromClass` carrier (Iron Moth)
+is the one deferred, for its rollback reading.
 
 ## The `?suffix=` filter fails CLOSED, and the ingest MAPPER is not what is missing (D462)
 

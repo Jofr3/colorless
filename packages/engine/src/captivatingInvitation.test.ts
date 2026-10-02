@@ -37,6 +37,9 @@ import {
 //          and the row's own named "cheapest entry point", `sv10.5b-003`, is
 //          BUILT (`seatDamageAura.test.ts`). What remains is a "Future" subtype
 //          filter and a by-name exemption, not an aura.
+//          (🆕🆕🆕 D569 (D539): and both are BUILT — Iron Crown ex "Cobalt Command" ×6
+//          rides `seatDamageBonusBeforeWR` with `beneficiary: bannerPokemon Future` over
+//          `banners.ts` and the NEW `exceptName` exclusion. Nothing remains of row 2.)
 //   row 3  Lisia's Appeal (3 legal)     D329's re-price HOLDS: one Basic rider
 //          on `gust`'s candidate scan, which is still unfiltered by stage.
 //   row 4  double-filter window (4)     ⚠️ HALF-ROTTED, and THIS SLICE TAKES THE

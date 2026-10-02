@@ -57,11 +57,12 @@ import {
 // 🛑 **IT PASSES D468's SCHEMA TEST, WHICH IS WHY IT IS THIS ROW AND NOT THE THREE
 // `Tera` ROWS BESIDE IT IN `MULTI-2`.** The residue classifier names a TOKEN, and a
 // token may name a COLUMN (buildable) or a BANNER (data-blocked). `{N}` names a
+// (🆕🆕🆕 D569 (D539): a BANNER is no longer data-blocked — `banners.ts` supplies all three since D569; the column/banner split still describes what the classifier names)
 // COLUMN: `POKEMON_TYPE_BY_CODE` has mapped `N` → `Dragon` since D234, `Dragon` is a
 // `PokemonType`, and `conditionHolds`'s `opponentActiveHasType` arm reads
 // `Card.types` — one of `cardSchema`'s 21 keys, and the same read Weakness and
 // Resistance make two lines later. `Tera` names a BANNER that no ingested column
-// (🆕🆕🆕 D568 (D539): the "no supply / DATA-BLOCKED / unbuildable" reading is WITHDRAWN FOR TERA — `banners.ts`' engine table, keyed by printing id, supplies the banner; "no INGESTED column classifies it" and "`Tera` is not a type" stay TRUE, and every Ancient/Future claim stands.)
+// (🆕🆕🆕 D568 (D539): the "no supply / DATA-BLOCKED / unbuildable" reading is WITHDRAWN FOR TERA — `banners.ts`' engine table, keyed by printing id, supplies the banner; "no INGESTED column classifies it" and "`Tera` is not a type" stay TRUE, and every Ancient/Future claim stands. 🆕🆕🆕 D569 (D539): that last clause is WITHDRAWN in turn — Slice 2 part a gave Ancient/Future the same writer, `banners.ts` (86 more ids); "no INGESTED column classifies it" stays TRUE.)
 // classifies (D207/D468), so a filter over it would count 0 on every board forever
 // while `BUILT.attack` stepped for it — strictly worse than an unbuilt sentence
 // (D190b/D199). §3 drives that refusal on a real board rather than asserting it.
@@ -407,6 +408,7 @@ function conditionsOf(state: GameState, seat: Seat) {
     inverted gate — and by reading `types[0]` off the defender's top card. All seven
     came back exactly as tabulated. Four of them are ALSO driven from inside this
     file as real programs: 17 (§6), 31 (the ungated sibling), and 0 twice (the
+    // (🆕🆕🆕 D569 (D539): "data-blocked" — the banner has a writer since D569; the board's banner sentence stays unread for its own reason)
     data-blocked banner and the clauseless attack). */
 const BOARDS: readonly (readonly [string, Table])[] = [
   ["A — their Active is the Dragon", { swinger: "fix-d472-tideswing", ourBench: "fix-d472-tidesit", foe: "fix-d472-drakefoe", theirBench: "fix-d472-tidesit" }],
@@ -856,6 +858,7 @@ describe("§6 — one board family, eight readings, eight different numbers", ()
     expect(signature("defender", PLAIN_LOCK)).toBe(31);
   });
 
+  // (🆕🆕🆕 D569 (D539): the title's "DATA-BLOCKED" is WITHDRAWN as the reason (`banners.ts`); the sentence is still refused by the reader, which is what the rung pins)
   it("the DATA-BLOCKED banner answers 0, and the clauseless attack answers 0", () => {
     // Two more real programs on the same family: a sentence the reader refuses (loud,
     // 0) and an attack with no sentence at all (0). Together with 17 and 31 they say
@@ -924,7 +927,7 @@ describe("§7 — the persisted bytes, and why 29 does not move", () => {
   });
 
   it("the engine version moved with the behaviour", () => {
-    expect(engineVersion).toBe("0.452.0");
+    expect(engineVersion).toBe("0.453.0");
   });
 });
 

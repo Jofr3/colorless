@@ -107,6 +107,7 @@ export type RefusedPrinting = {
     The other thirteen are attack-surface printings (whose oracle is the derivers),
     data-blocked `Ancient` banner rows (which the same blocks are careful to call
     *"DATA-BLOCKED and permanently so, NOT unbuilt"*), or ids named as a wider
+    (🆕🆕🆕 D569 (D539): those blocks' "DATA-BLOCKED and permanently so" is WITHDRAWN — `banners.ts` supplied the banner and D569 built the Ancient noun/discard rows; the sentence describes how THIS scan classified them at the time and stays true as history)
     sweep's false positives rather than as refusals.
     ⚠️ **`index.ts` IS EXCLUDED ON PURPOSE, AND THAT IS NOT A FUDGE.** It is the
     engine's version changelog: a `0.249.0` block describes the state AT 0.249.0,

@@ -619,6 +619,9 @@ describe("D539 §2 — the `IN_PLAY_BODY_NOUNS` row", () => {
     // `deriveAttackDamageMultiplier`, so a key that stops RESOLVING reddens even though a
     // key that stops EXISTING does not (`effects.ts`'s map block and `index.ts`'s D539
     // entry carry the same withdrawal).
+    // (🆕🆕🆕 D569 (D539): §5's sum is `10 + 11 + 11 = 32` now — D569's tenth key, "Ancient
+    // Pokémon", was missed by the landing and moved BY HAND at its final review, the same
+    // failure a second time.)
     //
     // This rung asserts only the part that is this slice's and that it can actually reach:
     // the ninth key is a key, it reaches a reading, and it carries no apostrophe — which is
@@ -664,7 +667,9 @@ describe("D539 §2 — the `IN_PLAY_BODY_NOUNS` row", () => {
   it("🛑 an UNMAPPED noun leaves the sentence LOUD rather than resolving on a guess (D190b)", () => {
     // `D539-map-row-dropped` is the experiment: with the row gone, `inPlayBodyFilter`
     // answers `null`, both arms decline, and the sentence falls to the skip path.
-    const ancient = PRINTED.replaceAll("Drifloon and Drifblim", "Ancient Pokémon");
+    // (🆕🆕🆕 D569 (D539): "Ancient Pokémon" is a map KEY now — `banners.ts` — so the unmapped witness is
+    // the other Paradox banner; the local name is kept.)
+    const ancient = PRINTED.replaceAll("Drifloon and Drifblim", "Future Pokémon");
     expect(NEW_ANCHOR.test(ancient)).toBe(true); // the PATTERN claims it…
     expect(deriveAttackEffect(ancient)).toBeNull(); // …and the VOCABULARY refuses it
     expect(deriveAttackDamageMultiplier(ancient)).toBeNull();
@@ -1122,7 +1127,7 @@ describe("D539 §7 — the widening at a persisted address, and the version does
   });
 
   it("the engine version moved and the two spellings agree", () => {
-    expect(engineVersion).toBe("0.452.0");
+    expect(engineVersion).toBe("0.453.0");
     expect(manifest.version).toBe(engineVersion);
   });
 });

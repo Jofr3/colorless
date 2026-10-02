@@ -431,16 +431,17 @@ describe("§1 — the price, RE-DERIVED: the does-nothing skeleton goes EMPTY", 
     // distribution goes `{1: 12, 5: 1}` -> `{1: 11, 5: 1}`. ⚠️ AND THIS STEP WAS TAKEN BY A
     // SECOND MEMBER, the OPPOSITE shape from D391's one slice back — the measurements that
     // decided it are driven in `benchNameSubstring.test.ts` §2.
-    expect(refused.length).toBe(3); // 🆕🆕🆕 D568 -2 sentences (THE TWO TERA CLAUSES left the residue — Ho-Oh `sv08-019` "Shining Blaze" and Regigigas `sv08.5-086` "Jewel Breaker", one printing each, two literal rows over `banners.ts`; the three left are the Ancient/Future banners). // 🆕🆕 D436 -2 sentences (THE "EXTRA ENERGY" DECLARATION READ — corpus rows 319/320, **2 sentences / 5 legal printings on ONE clause**, the record D368 refused on SHAPE as a `BoardCondition` and this slice takes as a `DamageCountSource` (`extraEnergyUnitsBeyondCost`), because the predicate reads THIS ATTACK'S COST and the fold runs inside `attack()` where that cost is a local. Claimed WHOLE by `deriveAttackDamageBonus` through ONE new anchor `EXTRA_ENERGY_BONUS`, so the RAW reader summand alone steps: the reader SURFACE stands still at 13 and the registry / split / compound summands were RE-MEASURED UNMOVED rather than assumed.) // 🆕🆕 D398 — 8 -> 7, the DECK-SIZE READ, and the LAST buildable sentence in this residue
-    expect(units(refused)).toBe(3); // 🆕🆕🆕 D568 -2 printings (the two Tera clauses, one printing each). // 🆕🆕 D436 -5 printings (THE "EXTRA ENERGY" DECLARATION READ — corpus rows 319/320, **2 sentences / 5 legal printings on ONE clause**, the record D368 refused on SHAPE as a `BoardCondition` and this slice takes as a `DamageCountSource` (`extraEnergyUnitsBeyondCost`), because the predicate reads THIS ATTACK'S COST and the fold runs inside `attack()` where that cost is a local. Claimed WHOLE by `deriveAttackDamageBonus` through ONE new anchor `EXTRA_ENERGY_BONUS`, so the RAW reader summand alone steps: the reader SURFACE stands still at 13 and the registry / split / compound summands were RE-MEASURED UNMOVED rather than assumed.) // 🆕🆕 D398 — 11 -> 10, the DECK-SIZE READ's one printing
+    expect(refused.length).toBe(1); // (🆕🆕🆕 **D569 −2 sentences / −2 printings — THE TWO FUTURE CLAUSES** left the bonus residue — Iron Valiant `sv05-080` "Majestic Sword" and Slither Wing `sv06.5-026` "Iron Smasher", one printing each, two literal rows over `banners.ts`; the ONE banner clause left is the Ancient "Unrelenting Onslaught", Koraidon `sv08-116`, a seat-level record — deferred.) 🆕🆕🆕 D568 -2 sentences (THE TWO TERA CLAUSES left the residue — Ho-Oh `sv08-019` "Shining Blaze" and Regigigas `sv08.5-086` "Jewel Breaker", one printing each, two literal rows over `banners.ts`; the three left are the Ancient/Future banners). // 🆕🆕 D436 -2 sentences (THE "EXTRA ENERGY" DECLARATION READ — corpus rows 319/320, **2 sentences / 5 legal printings on ONE clause**, the record D368 refused on SHAPE as a `BoardCondition` and this slice takes as a `DamageCountSource` (`extraEnergyUnitsBeyondCost`), because the predicate reads THIS ATTACK'S COST and the fold runs inside `attack()` where that cost is a local. Claimed WHOLE by `deriveAttackDamageBonus` through ONE new anchor `EXTRA_ENERGY_BONUS`, so the RAW reader summand alone steps: the reader SURFACE stands still at 13 and the registry / split / compound summands were RE-MEASURED UNMOVED rather than assumed.) // 🆕🆕 D398 — 8 -> 7, the DECK-SIZE READ, and the LAST buildable sentence in this residue
+    expect(units(refused)).toBe(1); // (🆕🆕🆕 **D569 −2 sentences / −2 printings — THE TWO FUTURE CLAUSES** left the bonus residue — Iron Valiant `sv05-080` "Majestic Sword" and Slither Wing `sv06.5-026` "Iron Smasher", one printing each, two literal rows over `banners.ts`; the ONE banner clause left is the Ancient "Unrelenting Onslaught", Koraidon `sv08-116`, a seat-level record — deferred.) 🆕🆕🆕 D568 -2 printings (the two Tera clauses, one printing each). // 🆕🆕 D436 -5 printings (THE "EXTRA ENERGY" DECLARATION READ — corpus rows 319/320, **2 sentences / 5 legal printings on ONE clause**, the record D368 refused on SHAPE as a `BoardCondition` and this slice takes as a `DamageCountSource` (`extraEnergyUnitsBeyondCost`), because the predicate reads THIS ATTACK'S COST and the fold runs inside `attack()` where that cost is a local. Claimed WHOLE by `deriveAttackDamageBonus` through ONE new anchor `EXTRA_ENERGY_BONUS`, so the RAW reader summand alone steps: the reader SURFACE stands still at 13 and the registry / split / compound summands were RE-MEASURED UNMOVED rather than assumed.) // 🆕🆕 D398 — 11 -> 10, the DECK-SIZE READ's one printing
     // D379's head (which is also D378's, because D379 moved this column by zero — the
     // whole point of the rung) and D377's before it, re-derived from THIS one.
     // 🆕🆕 D392 — the OFFSET gains one on each axis: the head moved, this one's did not.
     // 🆕🆕🆕 D568 — the OFFSET gains TWO on each axis: the head moved by the two Tera clauses (Ho-Oh, Regigigas, one printing each), this one's did not.
-    expect([refused.length + 18, units(refused) + 22]).toEqual([21, 25]);
+    // 🆕🆕🆕 D569 — every OFFSET below gains TWO on each axis: the head moved by the two Future clauses (Iron Valiant `sv05-080`, Slither Wing `sv06.5-026`, one printing each, literal rows over `banners.ts`); the earlier heads did not.
+    expect([refused.length + 20, units(refused) + 24]).toEqual([21, 25]);
     // 🆕🆕 D392 — the OFFSET gains one on each axis: the head moved, this one's did not.
     // 🆕🆕🆕 D568 — the OFFSET gains TWO: the head moved by the two Tera clauses (one printing each), this one's did not.
-    expect([refused.length + 19, units(refused) + 23]).toEqual([22, 26]);
+    expect([refused.length + 21, units(refused) + 25]).toEqual([22, 26]);
   });
 
   it("🛑 BOTH CONSEQUENTS ASKED, AND THE BONUS SIDE IS EMPTY — a first for this family", () => {
@@ -463,14 +464,18 @@ describe("§1 — the price, RE-DERIVED: the does-nothing skeleton goes EMPTY", 
     // not a hand-SIZE read at all — it asks what was PLAYED from the hand this turn.
     const handBonus = corpus().filter(([, s]) => (BONUS.exec(s.trim())?.[1] ?? "").includes("hand"));
     expect(handBonus).toHaveLength(4);
-    expect(handBonus.filter(([, s]) => readByAny(s))).toHaveLength(3);
+    // 🆕🆕🆕 D569 (D539) — 3 → **4**: "the fourth is unresolved" is WITHDRAWN. The fourth — Iron
+    // Valiant `sv05-080` "Majestic Sword", *"If you played a Future Supporter card from your hand
+    // during this turn"* — RESOLVES now (`yourPlayedBannerSupporterThisTurn`, a literal row over
+    // `banners.ts`). It is still not a hand-SIZE read (it asks what was PLAYED), so none of the
+    // four resolves to this member, which is the claim that matters here.
+    expect(handBonus.filter(([, s]) => readByAny(s))).toHaveLength(4);
     for (const sentence of [CURSED_SLUG, EXTRASENSORY]) {
       expect(handBonus.some(([, s]) => s === sentence), sentence).toBe(true);
       expect(readByAny(sentence), sentence).toBe(true);
     }
-    expect(handBonus.filter(([, s]) => !readByAny(s)).map(([, s]) => s)).toEqual([
-      "If you played a Future Supporter card from your hand during this turn, this attack does 100 more damage.",
-    ]);
+    // (🆕🆕🆕 D569: the unresolved list is EMPTY — the Future-Supporter clause above resolves.)
+    expect(handBonus.filter(([, s]) => !readByAny(s)).map(([, s]) => s)).toEqual([]);
     for (const [, s] of handBonus) {
       const bonus = deriveAttackDamageBonus(s);
       const cond = bonus?.count.kind === "boardCondition" ? bonus.count.cond : null;

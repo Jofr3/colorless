@@ -73,7 +73,7 @@ import {
 // third value and no other column carries it — Milotic ex `sv08-042` and Terapagos
 // ex `sv07-128` are both plain `suffix = 'ex'`, so nothing in the ingested catalog
 // can tell a Tera Pokémon from any other. **The addressable group is 6, not 9.**
-// (🆕🆕🆕 D568 (D539): the "no supply / DATA-BLOCKED / unbuildable" reading is WITHDRAWN FOR TERA — `banners.ts`' engine table, keyed by printing id, supplies the banner; "no INGESTED column classifies it" and "`Tera` is not a type" stay TRUE, and every Ancient/Future claim stands.)
+// (🆕🆕🆕 D568 (D539): the "no supply / DATA-BLOCKED / unbuildable" reading is WITHDRAWN FOR TERA — `banners.ts`' engine table, keyed by printing id, supplies the banner; "no INGESTED column classifies it" and "`Tera` is not a type" stay TRUE, and every Ancient/Future claim stands. 🆕🆕🆕 D569 (D539): that last clause is WITHDRAWN in turn — Slice 2 part a gave Ancient/Future the same writer, `banners.ts` (86 more ids); "no INGESTED column classifies it" stays TRUE.)
 //
 // ⚠️ THE WIDENING LADDER, THREE RUNGS, WITH THE FALSE POSITIVES NAMED RATHER THAN
 // COUNTED.

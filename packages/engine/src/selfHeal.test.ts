@@ -164,7 +164,10 @@ const REAL_NEAR_MISSES = [
   // deleted, per the STANDING NOTE above, onto the last row of the printed heal family
   // that no reader claims — and the reason it is unclaimed is DATA rather than shape:
   // the banner `Ancient` is in NO column of the persisted catalog, so the falsifier is
-  // an INGEST change. It is a NEARER miss for THIS anchor than either predecessor on
+  // an INGEST change (🆕🆕🆕 D569 (D539): ~~the falsifier is an INGEST change~~ WITHDRAWN —
+  // the banner came from `banners.ts`' engine table, keyed by printing id, with no ingest
+  // change, and `sv05-077` is BUILT as an index-keyed registry row; the sentence stays
+  // UNREAD by every derive reader, which is all this unmapped slot needs). It is a NEARER miss for THIS anchor than either predecessor on
   // the amount and the verb, and a farther one on the target, which is what the anchor
   // is anchored against. 1 legal printing, corpus file line 272.
   "Heal 100 damage from 1 of your Benched Ancient Pokémon.",
@@ -200,7 +203,12 @@ const REAL_NEAR_MISSES = [
     width. That makes it the most STABLE witness this slot has ever held — and if it
     ever goes green, the thing that changed is the INGEST, which is exactly what a
     witness should be able to tell you. Index 6 is Floette's, refused by THIS anchor,
-    which is the only claim the assertion below ever made about it. */
+    which is the only claim the assertion below ever made about it.
+    (🆕🆕🆕 D569 (D539): "cannot be built by a reader at any width" and "the thing that changed
+    is the INGEST" are WITHDRAWN — `banners.ts` (an engine table keyed by printing id, no ingest
+    change) supplies the banner, and Scream Tail `sv05-077` "Supportive Singing" is BUILT as an
+    index-keyed REGISTRY row (`SUPPORTIVE_SINGING`). THIS anchor still refuses the text, so the
+    witness's claim about this reader is unchanged.) */
 const UNMAPPED_NEAR_MISSES = [REAL_NEAR_MISSES[4], REAL_NEAR_MISSES[6]] as const;
 
 /** U+00A0, spelled as an ESCAPE rather than typed. Byte-different from an ASCII

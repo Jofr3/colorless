@@ -67,6 +67,8 @@ import {
 //     unfiltered walk folds 380.
 //  4. the VOCABULARY could DEFAULT instead of staying loud. §3 keeps
 //     "Ancient Pokémon" null at both new anchors.
+//     (🆕🆕🆕 D569 (D539): the witness is "Benched Future Pokémon" now — "Ancient Pokémon"
+//     is an exact body-map key since D569, so it no longer stays loud.)
 //  5. the two axes could be crossed — BODIES counted where COUNTERS are printed.
 //     §6's board answers 7 counters and 2 bodies on one Bench.
 //  6. the ZONE could widen to "in play". §6's attacker is FIGHTING and carries 9
@@ -331,7 +333,7 @@ describe("§1 — the two printed rows, their printing counts, and the fixture",
     // 🛑 The attacker is FIGHTING on purpose — it is what makes the ZONE axis
     // readable on the counter board (see `counterBoard`'s block).
     expect(card?.types).toEqual(["Fighting"]);
-    expect(engineVersion).toBe("0.452.0");
+    expect(engineVersion).toBe("0.453.0");
   });
 });
 
@@ -387,9 +389,12 @@ describe("§3 — the VOCABULARY refuses, and the ANCHOR does not", () => {
   it("🛑 the two new anchors reach the LOUD nouns and the map is what says no", () => {
     // ⚠️ **ONE AXIS EACH** (D427), and the noun is the DATA-blocked banner rather
     // than an invented word, so this refusal cannot be casually built away (D461).
+    // (🆕🆕🆕 D569 (D539): it WAS built away — not by an ingest change but by `banners.ts`' engine table and
+    // the body map's "Ancient Pokémon" key. The DATA-blocked witness is the other Paradox banner,
+    // which the map does not spell.)
     expect(
       deriveAttackDamageMultiplier(
-        "This attack does 20 damage for each damage counter on all of your Benched Ancient Pokémon.",
+        "This attack does 20 damage for each damage counter on all of your Benched Future Pokémon.",
       ),
     ).toBeNull();
     expect(
@@ -507,7 +512,7 @@ describe("§4 — DISJOINTNESS, driven over the whole column", () => {
 });
 
 describe("§5 — the `inPlayBodyFilter` vocabulary, DERIVED rather than transcribed", () => {
-  it("🛑 the vocabulary is 9 exact keys + 11 names + 11 codes = 31, and none is possessive", () => {
+  it("🛑 the vocabulary is 10 exact keys + 11 names + 11 codes = 32, and none is possessive", () => {
     // 🆕🆕 **D467 — THIS COUNT LIVED IN TWO FILES AND ROTTED IN BOTH.**
     // `inPlayBodyFilter`'s doc block said *"25 nouns — the 3 exact keys"* from D439
     // until D467, which was already wrong at D446 and wronger at D466; D466 fixed
@@ -530,6 +535,12 @@ describe("§5 — the `inPlayBodyFilter` vocabulary, DERIVED rather than transcr
       // apostrophe, so `IN_PLAY_OWNER_NOUN` cannot reach it and `inPlayBodyFilter`'s
       // three branches stay pairwise disjoint.
       "Drifloon and Drifblim",
+      // 🆕🆕🆕 **D569 — THE TENTH KEY**: *"Ancient Pokémon"* (Koraidon `sv05-119`/`svp-091`
+      // "Primordial Beatdown"), `bannerPokemon Ancient` over `banners.ts`. No apostrophe.
+      // ⚠️ D569 (D539): the landing left this list at nine and the sum at 31 and NOTHING
+      // went red — the exact failure the D539 note below records, a second time; the
+      // final review caught it, and both were moved BY HAND.
+      "Ancient Pokémon",
     ];
     const OWNER_SHAPE = /['’]s Pokémon$/;
     for (const noun of EXACT) {
@@ -567,7 +578,7 @@ describe("§5 — the `inPlayBodyFilter` vocabulary, DERIVED rather than transcr
     // (D453/D455: a doc block's "recorded as X" names a file and is one grep from being
     // checked, and three of four such claims in shipped source were false); closing it
     // needs an export, which is a change to `effects.ts`'s surface and not this slice's.
-    expect(EXACT.length + POKEMON_TYPES.length + CODES.length).toBe(31);
+    expect(EXACT.length + POKEMON_TYPES.length + CODES.length).toBe(32); // 🆕🆕🆕 D569: 31 → 32 (the tenth key, "Ancient Pokémon")
   });
 
   it("🛑 the `Charjabug` row is reachable from the OTHER anchors too, and that is DELIBERATE", () => {

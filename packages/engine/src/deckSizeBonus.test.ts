@@ -46,6 +46,9 @@ import {
 // sentences / 11 printings, exactly ONE buildable. After this row it is **7 / 10**,
 // and every one of the seven is a refusal that was measured rather than assumed —
 // FIVE D207 BANNER clauses and, at 5 printings, D368's structural SHAPE refusal.
+// (🆕🆕🆕 D569 (D539): the FIVE banner clauses are ONE now — D568 resolved the two Tera and
+// D569 the two Future clauses through literal rows over `banners.ts`; the one left, Koraidon
+// "Unrelenting Onslaught", is refused for a seat-level attack record, not the banner. §1 pins it.)
 //
 // 🛑 **D379's WARNING IS THE REASON §5 EXISTS: SATURATION LOOKS EXACTLY LIKE
 // VACUITY.** When a population empties, a guard that says "everything left is
@@ -244,9 +247,10 @@ describe("§1 — the price, RE-DERIVED off the corpus rather than inherited", (
     expect(refused.some(([, s]) => s === TAKEN)).toBe(false);
     expect(resolvedByAnyReader(TAKEN)).toBe(true);
     // D397 left the residue at 8 / 11, re-derived here off the live readers.
-    expect([refused.length, units(refused)]).toEqual([3, 3]); // 🆕🆕🆕 D568 -2 sentences / -2 printings (THE TWO TERA CLAUSES left the residue — Ho-Oh `sv08-019` and Regigigas `sv08.5-086`, one printing each, two literal rows over `banners.ts`; the three left are the Ancient/Future banners). // 🆕🆕 D436 -2 sentences / -5 printings (THE "EXTRA ENERGY" DECLARATION READ — corpus rows 319/320, **2 sentences / 5 legal printings on ONE clause**, the record D368 refused on SHAPE as a `BoardCondition` and this slice takes as a `DamageCountSource` (`extraEnergyUnitsBeyondCost`), because the predicate reads THIS ATTACK'S COST and the fold runs inside `attack()` where that cost is a local. Claimed WHOLE by `deriveAttackDamageBonus` through ONE new anchor `EXTRA_ENERGY_BONUS`, so the RAW reader summand alone steps: the reader SURFACE stands still at 13 and the registry / split / compound summands were RE-MEASURED UNMOVED rather than assumed.)
+    expect([refused.length, units(refused)]).toEqual([1, 1]); // (🆕🆕🆕 **D569 −2 sentences / −2 printings — THE TWO FUTURE CLAUSES** left the bonus residue — Iron Valiant `sv05-080` "Majestic Sword" and Slither Wing `sv06.5-026` "Iron Smasher", one printing each, two literal rows over `banners.ts`; the ONE banner clause left is the Ancient "Unrelenting Onslaught", Koraidon `sv08-116`, a seat-level record — deferred.) 🆕🆕🆕 D568 -2 sentences / -2 printings (THE TWO TERA CLAUSES left the residue — Ho-Oh `sv08-019` and Regigigas `sv08.5-086`, one printing each, two literal rows over `banners.ts`; the three left are the Ancient/Future banners). // 🆕🆕 D436 -2 sentences / -5 printings (THE "EXTRA ENERGY" DECLARATION READ — corpus rows 319/320, **2 sentences / 5 legal printings on ONE clause**, the record D368 refused on SHAPE as a `BoardCondition` and this slice takes as a `DamageCountSource` (`extraEnergyUnitsBeyondCost`), because the predicate reads THIS ATTACK'S COST and the fold runs inside `attack()` where that cost is a local. Claimed WHOLE by `deriveAttackDamageBonus` through ONE new anchor `EXTRA_ENERGY_BONUS`, so the RAW reader summand alone steps: the reader SURFACE stands still at 13 and the registry / split / compound summands were RE-MEASURED UNMOVED rather than assumed.)
     // 🆕🆕🆕 D568 — the OFFSET gains TWO on each axis: the head moved by the two Tera clauses (Ho-Oh, Regigigas, one printing each), this one's did not.
-    expect([refused.length + 5, units(refused) + 8]).toEqual([8, 11]);
+    // 🆕🆕🆕 D569 — the OFFSET gains TWO more on each axis: the head moved by the two Future clauses (Iron Valiant, Slither Wing, one printing each), this one's did not.
+    expect([refused.length + 7, units(refused) + 10]).toEqual([8, 11]);
     const byClause = new Map<string, number>();
     for (const [n, s] of refused) {
       const clause = BONUS.exec(s.trim())?.[1] ?? "";
@@ -256,9 +260,9 @@ describe("§1 — the price, RE-DERIVED off the corpus rather than inherited", (
     // else moved. The only clause above one printing is still the 5-printing
     // declaration clause D368 disqualified on SHAPE, so this rung goes red from the
     // other side too — a reader narrowing until some clause returns to 2 fails it.
-    expect(byClause.size).toBe(3); // 🆕🆕🆕 D568 -2 clauses: the two TERA clauses leave (literal rows over `banners.ts`); the 3 remaining are the Ancient/Future banners. // 🆕🆕 D436 -1 clause: the 5-printing DECLARATION clause LEAVES this residue, and the 5 remaining are the D207 banners (THE "EXTRA ENERGY" DECLARATION READ — corpus rows 319/320, **2 sentences / 5 legal printings on ONE clause**, the record D368 refused on SHAPE as a `BoardCondition` and this slice takes as a `DamageCountSource` (`extraEnergyUnitsBeyondCost`), because the predicate reads THIS ATTACK'S COST and the fold runs inside `attack()` where that cost is a local. Claimed WHOLE by `deriveAttackDamageBonus` through ONE new anchor `EXTRA_ENERGY_BONUS`, so the RAW reader summand alone steps: the reader SURFACE stands still at 13 and the registry / split / compound summands were RE-MEASURED UNMOVED rather than assumed.)
+    expect(byClause.size).toBe(1); // (🆕🆕🆕 **D569 −2 sentences / −2 printings — THE TWO FUTURE CLAUSES** left the bonus residue — Iron Valiant `sv05-080` "Majestic Sword" and Slither Wing `sv06.5-026` "Iron Smasher", one printing each, two literal rows over `banners.ts`; the ONE banner clause left is the Ancient "Unrelenting Onslaught", Koraidon `sv08-116`, a seat-level record — deferred.) 🆕🆕🆕 D568 -2 clauses: the two TERA clauses leave (literal rows over `banners.ts`); the 3 remaining are the Ancient/Future banners. // 🆕🆕 D436 -1 clause: the 5-printing DECLARATION clause LEAVES this residue, and the 5 remaining are the D207 banners (THE "EXTRA ENERGY" DECLARATION READ — corpus rows 319/320, **2 sentences / 5 legal printings on ONE clause**, the record D368 refused on SHAPE as a `BoardCondition` and this slice takes as a `DamageCountSource` (`extraEnergyUnitsBeyondCost`), because the predicate reads THIS ATTACK'S COST and the fold runs inside `attack()` where that cost is a local. Claimed WHOLE by `deriveAttackDamageBonus` through ONE new anchor `EXTRA_ENERGY_BONUS`, so the RAW reader summand alone steps: the reader SURFACE stands still at 13 and the registry / split / compound summands were RE-MEASURED UNMOVED rather than assumed.)
     // 🆕🆕🆕 D568 — the singleton band loses the two Tera clauses, 5 -> 3.
-    expect([...byClause.values()].filter((n) => n === 1)).toHaveLength(3);
+    expect([...byClause.values()].filter((n) => n === 1)).toHaveLength(1); // 🆕🆕🆕 D569 −2 clauses: the two FUTURE clauses leave (literal rows over `banners.ts` — Iron Valiant "Majestic Sword", Slither Wing "Iron Smasher"); the ONE remaining is the Ancient "Unrelenting Onslaught" (Koraidon `sv08-116`, deferred).
     expect([...byClause.values()].filter((n) => n === 5)).toHaveLength(0);// 🆕🆕 D436 the 5-printing band EMPTIES with the declaration clause (THE "EXTRA ENERGY" DECLARATION READ — corpus rows 319/320, **2 sentences / 5 legal printings on ONE clause**, the record D368 refused on SHAPE as a `BoardCondition` and this slice takes as a `DamageCountSource` (`extraEnergyUnitsBeyondCost`), because the predicate reads THIS ATTACK'S COST and the fold runs inside `attack()` where that cost is a local. Claimed WHOLE by `deriveAttackDamageBonus` through ONE new anchor `EXTRA_ENERGY_BONUS`, so the RAW reader summand alone steps: the reader SURFACE stands still at 13 and the registry / split / compound summands were RE-MEASURED UNMOVED rather than assumed.)
     expect([...byClause.values()].filter((n) => n === 2)).toHaveLength(0);
   });
@@ -284,7 +288,7 @@ describe("§1 — the price, RE-DERIVED off the corpus rather than inherited", (
     const SHAPE = "this Pokémon has at least 2 extra Energy attached (in addition to this attack's cost)";
     const banner = [...clauses].filter((c) => BANNERS.some((b) => c.includes(b)));
     const shape = [...clauses].filter((c) => c === SHAPE);
-    expect(banner).toHaveLength(3); // 🆕🆕🆕 D568 — 5 → **3**: the two TERA clauses resolve now (literal rows over `banners.ts`); the Ancient ×1 and Future ×2 remain.
+    expect(banner).toHaveLength(1); // 🆕🆕🆕 D569 — 3 → **1**: the two FUTURE clauses resolve now (literal rows over `banners.ts`); the Ancient ×1 ("Unrelenting Onslaught", deferred) remains. // 🆕🆕🆕 D568 — 5 → **3**: the two TERA clauses resolve now (literal rows over `banners.ts`); the Ancient ×1 and Future ×2 remain.
     expect(shape).toHaveLength(0);
     // …and the clause the bucket was built for is CLAIMED, on BOTH of its printed
     // amounts, so "the bucket is empty" cannot be satisfied by the clause vanishing
@@ -522,16 +526,20 @@ describe("§5 — the REFUSALS, driven from OUTSIDE the population as well as in
     // 🆕🆕🆕 D568 (D539) — "until a supply-side column exists" is WITHDRAWN for TERA: the
     // supply is `banners.ts`' id-keyed table, and the two Tera clauses resolve through
     // literal rows (pinned just below). The Ancient/Future three stay refused (Slice 2).
+    // (🆕🆕🆕 D569 (D539): WITHDRAWN for Future — Slice 2 part a resolves the two Future clauses through literal rows (pinned below); the ONE refused clause left is the Ancient "Unrelenting Onslaught", on a seat-level record)
+    // 🆕🆕🆕 D569 (D539) — and for FUTURE: the two Future clauses resolve through literal rows over the
+    // widened table (pinned in the same loop). The ONE Ancient clause stays refused — its blocker
+    // is a seat-level attack record, not the banner (deferred, decisions.md D569).
     for (const clause of [
       "you have any Tera Pokémon on your Bench",
       "your opponent's Active Pokémon is a Tera Pokémon",
+      "you played a Future Supporter card from your hand during this turn",
+      "your opponent has any Future Pokémon in play",
     ]) {
       expect(resolvedByAnyReader(`If ${clause}, this attack does 100 more damage.`), clause).toBe(true);
     }
     const banners = [
       "1 of your other Ancient Pokémon used an attack during your last turn",
-      "you played a Future Supporter card from your hand during this turn",
-      "your opponent has any Future Pokémon in play",
     ];
     for (const clause of banners) {
       const printed = `If ${clause}, this attack does 100 more damage.`;

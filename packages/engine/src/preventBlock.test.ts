@@ -218,6 +218,11 @@ describe("the gated PREVENT clause — derived, not authored", () => {
       // predicate yet": the Ancient/Future banner is printed on the card FACE and
       // exists in no column of the catalog and no field of tcgdex's own model, so
       // there is no datum a predicate could read. Iron Moth sv06.5-009, index 1.
+      // 🆕🆕🆕 D569 (D539): ~~no datum a predicate could read~~ WITHDRAWN as the reason —
+      // `banners.ts` supplies Ancient since D569 (an engine table, no catalog column). It
+      // stays refused because `fromClass` is PERSISTED: an optional `AttackerClass.stage`
+      // falls out of 0.452's `attackerMatchesStage` switch on rollback (MRV, deferred —
+      // docs/decisions.md D569 (e)).
       "During your opponent's next turn, prevent all damage done to this Pokémon by attacks from Ancient Pokémon.",
       // Corviknight sv02-148 "Accelerate" — gated on the attack's own RESULT.
       "If your opponent's Pokémon is Knocked Out by damage from this attack, during your opponent's next turn, prevent all damage from and effects of attacks done to this Pokémon.",

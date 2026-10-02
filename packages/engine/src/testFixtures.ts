@@ -2696,6 +2696,7 @@ export const FIXTURE_POOL: Record<string, Card> = {
       then the fixture dropped "Iron Smasher" and Smashing Wing sat at index 0, so
       `attackDiscards.test.ts` drove the discard under a number the card does not
       give it. "Iron Smasher" ({F}{C}, 20+) asks about the FUTURE banner, which has
+      (🆕🆕🆕 D569 (D539): "no datum anywhere in this engine … no deriver arm" is WITHDRAWN — the datum is `banners.ts` and the deriver arm is a literal `CONDITIONAL_DAMAGE_CLAUSES` row (`opponentBannerPokemonInPlay`), so on this REAL id the attack scores +120 against a Future body; `paradoxBannerD569.test.ts` drives it)
       no datum anywhere in this engine (D146) and no deriver arm — `energyClause`
       pins its OUTER shape as a near-miss the clause refuses — so it is carried as
       a plain 20 that no suite drives. Carrying it is what makes the index honest. */
@@ -4162,6 +4163,7 @@ export const FIXTURE_POOL: Record<string, Card> = {
           ARBITRARY ONE** — `censusAttackCorpus.ts` line **404** (2 legal
           printings), the Future-banner attach that `derivedDeckSearchAttach.test.ts`
           `UNREAD` still refuses. It is DATA-BLOCKED rather than merely unbuilt: no
+          (🆕🆕🆕 D569 (D539): "DATA-BLOCKED … will not be built by a successor" is WITHDRAWN — the real printings (Miraidon `sv05-121`/`svp-092`) are BUILT as a hand-written REGISTRY attack over `banners.ts`. The DERIVER still refuses the sentence, so on this `fix-*` card it is still LOUD and the control still works)
           ingested column classifies the banner (`packages/schema/src/catalog/card.ts`
           `cardSchema` carries `stage`/`types`/`trainerType`/`energyType` and no
           subtype column), so it will not be built by a successor slice deciding to
@@ -15049,6 +15051,7 @@ export const FIXTURE_POOL: Record<string, Card> = {
           stopped testing anything (D462 predicted exactly that and was right). The
           replacement is refused by the `Ancient` BANNER, which **no ingested column
           classifies** — `cardSchema` carries no banner field, and the banner is a
+          (🆕🆕🆕 D569 (D539): "no reader at any width can ever claim it" is WITHDRAWN — `banners.ts` supplies the banner and the real printing (Scream Tail `sv05-077`) is BUILT as a registry attack; NO READER claims the sentence, so on this `fix-*` card it is still LOUD and the control still holds)
           per-PRINTING fact, so no reader at any width can ever claim it. A slot whose
           blocker is data does not need re-pointing every few slices, and the day it
           goes green the thing that changed is the INGEST, which is exactly what a
@@ -15113,6 +15116,7 @@ export const FIXTURE_POOL: Record<string, Card> = {
           slot used to print *"Each player draws 3 cards."* (D427's string for the same
           job) and D491 built that sentence. The replacement's blocker is the `Ancient`
           BANNER, which no ingested column carries, so it is DATA-blocked rather than
+          (🆕🆕🆕 D569 (D539): "DATA-blocked" is WITHDRAWN as the reason — the deriver still refuses the sentence (it is built only as a registry row for the real id), so the control holds for a different reason)
           merely unbuilt (D461).
         • **4 "Pick Drain"** ({C}, 10, *"Discard an Energy from this Pokémon."*) — the
           PARKING sibling, and the only route to the version question. `takePrize` is an

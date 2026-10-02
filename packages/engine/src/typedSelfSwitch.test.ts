@@ -55,6 +55,10 @@ import {
 // the seven would need a predicate over a datum that does not exist — D440's
 // refused `"Ancient card"` capture exactly, *a filter counting 0 on every board
 // forever while `BUILT.attack` steps for it*, which D190b/D199 call strictly worse
+// (🆕🆕🆕 D569 (D539): "a datum that does not exist" is WITHDRAWN — the datum is `banners.ts`,
+// an engine table keyed by printing id (D568 Tera, D569 Ancient/Future), and the filter
+// `bannerPokemon` / `bannerCard` reads it, so it no longer counts 0 forever. THIS row's
+// refusal of the seven stands for the classifier; §9 records which were built elsewhere.)
 // than an unbuilt sentence. What IS buildable beside them is this row, whose
 // printed adjective slot holds the OTHER kind of fact: `{L}` is `Card.types`, a
 // column this engine has read since D238.
@@ -705,8 +709,8 @@ describe("§7 — the gain is the RAW reader summand alone", () => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("§8 — the engine version", () => {
-  it("engineVersion is 0.452.0", () => {
-    expect(engineVersion).toBe("0.452.0");
+  it("engineVersion is 0.453.0", () => {
+    expect(engineVersion).toBe("0.453.0");
   });
 });
 
@@ -723,6 +727,7 @@ describe("§8 — the engine version", () => {
 // for it outright), and every time the reader has had to re-derive it from three
 // doc blocks. It is one `expect` away from being self-checking, and this is it.
 
+// (🆕🆕🆕 D569 (D539): "DATA-BLOCKED" is WITHDRAWN — `banners.ts` (an engine table keyed by printing id) supplies both banners; the `cardSchema` key sweep below stays GREEN because the fix was never a column. See the residue rung's D569 note)
 describe("§9 — the `Ancient`/`Future` banner is DATA-BLOCKED, and the falsifier is executable", () => {
   it("🛑 the persisted `Card` carries NO field that could classify the banner", () => {
     // ⚠️ THE FALSIFIER, AND IT IS THE WHOLE POINT OF THE RUNG: this list is the
@@ -790,8 +795,24 @@ describe("§9 — the `Ancient`/`Future` banner is DATA-BLOCKED, and the falsifi
     expect(banner).toHaveLength(12);
     expect(banner.reduce((total, [printings]) => total + printings, 0)).toBe(17);
     // Not one of them is claimed by any reader, any splitter or any registry row.
+    // 🆕🆕🆕 D569 (D539) — WITHDRAWN: "NONE derives" and the §'s "DATA-BLOCKED" are false at this
+    // head. The banner got an ENGINE writer (`banners.ts`, keyed by printing id — `cardSchema`
+    // still has no banner key, so the falsifier above stays GREEN, and that is the finding: the
+    // falsifier named the wrong layer). FOUR of the twelve are claimed by READERS (two noun rows,
+    // two literal clause rows); four more are hand-written REGISTRY attacks the readers still
+    // refuse; the last four stay unbuilt for reasons that are NOT the banner (Iron Moth's
+    // persisted attacker class, a seat-level attack record, a reveal-top-5 op, an every-Future
+    // prevention). No splitter claims any of the twelve.
+    const readerClaimed = banner.filter(([, text]) => resolvedByAnyReader(text)).map(([, t]) => t);
+    expect(readerClaimed.sort()).toEqual(
+      [
+        "If you played a Future Supporter card from your hand during this turn, this attack does 100 more damage.",
+        "If your opponent has any Future Pokémon in play, this attack does 120 more damage.",
+        "This attack does 10 more damage for each Ancient card in your discard pile.",
+        "This attack does 30 damage for each of your Ancient Pokémon in play.",
+      ].sort(),
+    );
     for (const [, text] of banner) {
-      expect(resolvedByAnyReader(text), text).toBe(false);
       expect(splitAttackGateClause(text), text).toBeNull();
       expect(splitAttackTrailingClause(text), text).toBeNull();
     }
@@ -836,6 +857,10 @@ describe("§9 — the `Ancient`/`Future` banner is DATA-BLOCKED, and the falsifi
     // residue rows — corpus FILE LINES 272 and 406, the heal and the counter-move —
     // and both stay LOUD. So the constructed sentence is not a straw: its slot is
     // occupied by a real printed noun that this engine cannot read.
+    // (🆕🆕🆕 D569 (D539): "both stay LOUD … a noun this engine cannot read" is WITHDRAWN —
+    // both printings are BUILT as hand-written REGISTRY rows over `banners.ts` (Scream Tail
+    // "Supportive Singing", Flutter Mane "Perplexing Transfer"); the READERS still refuse both
+    // texts, which is all the measurement below asserts.)
     const printedSlot = corpus.filter(([, text]) => text.includes("Benched Ancient Pokémon"));
     expect(printedSlot).toHaveLength(2);
     for (const [, text] of printedSlot) expect(deriveAttackEffect(text), text).toBeNull();

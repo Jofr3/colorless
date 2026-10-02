@@ -79,7 +79,7 @@ import {
 // Charizard ex `sv03-125` IS a Tera Pokémon, and its row reads `stage: "Stage2"`,
 // `types_json: ["Darkness"]`, `rarity: "Double rare"`, `regulation_mark: "G"`,
 // name "Charizard ex" — indistinguishable, field for field, from a non-Tera Stage
-// (🆕🆕🆕 D568 (D539): the "no supply / DATA-BLOCKED / unbuildable" reading is WITHDRAWN FOR TERA — `banners.ts`' engine table, keyed by printing id, supplies the banner; "no INGESTED column classifies it" and "`Tera` is not a type" stay TRUE, and every Ancient/Future claim stands.)
+// (🆕🆕🆕 D568 (D539): the "no supply / DATA-BLOCKED / unbuildable" reading is WITHDRAWN FOR TERA — `banners.ts`' engine table, keyed by printing id, supplies the banner; "no INGESTED column classifies it" and "`Tera` is not a type" stay TRUE, and every Ancient/Future claim stands. 🆕🆕🆕 D569 (D539): that last clause is WITHDRAWN in turn — Slice 2 part a gave Ancient/Future the same writer, `banners.ts` (86 more ids); "no INGESTED column classifies it" stays TRUE.)
 // 2. An op authored over that absence has a permanently EMPTY candidate set,
 // which `programPlayable` turns into a card that can NEVER be played: strictly
 // worse than the loud "not simulated" path Briar takes today.

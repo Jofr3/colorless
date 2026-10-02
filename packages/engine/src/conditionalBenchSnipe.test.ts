@@ -503,7 +503,10 @@ describe("§4 — the DISCRIMINATION, on both axes, so neither saturation can im
     }
     const unmapped = [
       "Flamigo is on your Bench",
-      "your opponent has any Future Pokémon in play",
+      // (🆕🆕🆕 D569 (D539): "your opponent has any Future Pokémon in play" is MAPPED now — a literal
+      // `CONDITIONAL_DAMAGE_CLAUSES` row over `banners.ts` — so the unmapped banner witness is the
+      // deferred Ancient clause instead.)
+      "1 of your other Ancient Pokémon used an attack during your last turn",
     ];
     for (const clause of unmapped) {
       const printed = `If ${clause}, this attack also does 120 damage to 2 of your opponent's Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)`;

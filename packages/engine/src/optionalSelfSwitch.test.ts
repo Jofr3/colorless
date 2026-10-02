@@ -855,6 +855,12 @@ describe("§7 — no ATTACK_EFFECT_SKIPPED on ANY branch, and no log row a decli
     // DATA-BLOCKED rather than merely unbuilt: no ingested column classifies the
     // banner, so this control cannot be silently disarmed by the next slice that
     // writes an anchor. `testFixtures.ts` carries the whole argument.
+    // (🆕🆕🆕 D569 (D539): "DATA-BLOCKED … no ingested column classifies the banner, so this
+    // control cannot be silently disarmed" is WITHDRAWN as the REASON — `banners.ts` (an engine
+    // table keyed by printing id) supplies the banner now, and the real printings (Miraidon
+    // `sv05-121`/`svp-092` "Peak Acceleration") are BUILT as a hand-written REGISTRY attack. The
+    // control still holds only because no DERIVER reads the sentence on this `fix-*` card, and the
+    // `deriveAttackEffect(unread)` → null rung below is what goes RED the day one does.)
     const UNREAD = 71;
     const unread = (FIXTURE_POOL["fix-trainerops"]?.attacks ?? [])[UNREAD]?.effect ?? "";
     expect(unread).not.toBe("");
@@ -1015,7 +1021,7 @@ describe("§8 — `MATCH_RECORD_VERSION` stays 26, and BOTH parks are driven thr
   });
 
   it("the engine version moved with the behaviour", () => {
-    expect(engineVersion).toBe("0.452.0");
+    expect(engineVersion).toBe("0.453.0");
   });
 });
 

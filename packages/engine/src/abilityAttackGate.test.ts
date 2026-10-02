@@ -49,6 +49,7 @@ import {
 //   6  BUILT   "Damage from attacks used by this Pokémon isn't affected by any effects…"
 //   6  UNBUILT "Blood Moon used by this Pokémon costs {C} less for each Prize card…"
 //   6  UNBUILT "Attacks used by your Future Pokémon, except any Iron Crown ex, do 20 more…"
+//        (🆕🆕🆕 D569 (D539): BUILT — Cobalt Command ×6, `COBALT_COMMAND`, paradoxBannerD569.test.ts)
 //   5  UNBUILT "Prevent all damage from attacks done to this Pokémon by your opponent's…"
 //   5  UNBUILT "Once during your turn, you may switch 1 of your Benched {D} Pokémon…"
 //   5  BUILT   "As often as you like during your turn, you may attach a Basic {L} Energy…"

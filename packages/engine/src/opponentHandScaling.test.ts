@@ -331,6 +331,7 @@ describe("§1 — the three printed sentences, their population, and the fixture
     // FIXTURE's bytes, and the fixture is asserted to be the CORPUS's.
     const attacks = FIXTURE_POOL["fix-trainerops"]?.attacks ?? [];
     expect(attacks).toHaveLength(73); // 🆕🆕 **72 AT D457**, which appended **71** — and NOT to field a new family: index 42 was the demonstrator's LAST unread sentence and D457 built it, leaving `optionalSelfSwitch.test.ts` §7's loud-path attribution control with no subject at all. 71 is corpus line 404 (the Future-banner attach, DATA-BLOCKED rather than merely unbuilt), and `testFixtures.ts` carries the argument. THIRTEEN suites carry this pin and all thirteen were stepped in one pass (D431).
+    // (🆕🆕🆕 D569 (D539): "DATA-BLOCKED rather than merely unbuilt" is WITHDRAWN — the real printings (Miraidon `sv05-121`/`svp-092` "Peak Acceleration") are BUILT as a hand-written REGISTRY attack over `banners.ts`; the DERIVERS still refuse the sentence, so index 71 stays an unread control and this pin is unchanged)
     expect([HAND_READ, SNATCH, HAND_COUNT_IDX].map((i) => attacks[i]?.effect)).toEqual([
       ...CLAIMED,
     ]);
@@ -953,6 +954,10 @@ describe("§6 — the population claims this slice rests on", () => {
     // for each Future card you find there. …"* (2 printings) is a DECK window, where
     // *"there"* is the five revealed cards; it is refused for its noun (the Ancient/Future
     // banner is in no catalog column — D440's permanent data block) and would be refused
+    // (🆕🆕🆕 D569 (D539): "in no catalog column — D440's permanent data block" is WITHDRAWN as
+    // the REASON — `banners.ts` supplies the Future banner since D569 (no catalog column, TRUE);
+    // the sentence (Iron Thorns `sv05-062`/`svp-098` "Destructo-Press") stays unbuilt on its
+    // reveal-top-5 DECK window, a new op, deferred — so "refused … for its zone" now carries it.)
     // for its zone anyway. What the pattern CANNOT see: a fold spelling the zone without
     // the word *hand* and without *you find there*.
     const DECK_WINDOW_FUTURE =

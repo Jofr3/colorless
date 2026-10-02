@@ -119,7 +119,13 @@ const LEFT_LOUD = {
       and no field of tcgdex's own model, so no reader at any width can claim this row;
       the day it goes green, the thing that changed is the INGEST, which is exactly what
       a witness should be able to tell you. Corpus FILE LINE 182, **1 printing** (not 2 —
-      the count is pinned off the corpus in §3 rather than carried). */
+      the count is pinned off the corpus in §3 rather than carried).
+      🆕🆕🆕 D569 (D539): ~~blocker is DATA … no reader at any width … the thing that changed
+      is the INGEST~~ WITHDRAWN as the reason — `banners.ts` supplies the Ancient banner
+      since D569 with no ingest change. Iron Moth's sentence STAYS unread, on a MECHANISM:
+      `fromClass` is persisted, and an optional `AttackerClass.stage` would fall out of
+      0.452's `attackerMatchesStage` switch on rollback (an MRV bump, deferred — docs/decisions.md
+      D569 (e)). The witness still refuses; its blocker is now that, not data. */
   headsTails:
     "During your opponent's next turn, prevent all damage done to this Pokémon by attacks from Ancient Pokémon.",
   /** 🆕🆕 **RE-POINTED A SECOND TIME AT D464, AND THE PARAGRAPH IT REPLACES IS KEPT
@@ -368,6 +374,7 @@ describe("§1 — the printed data, transcribed rather than recognised", () => {
     expect(rows.get(FLIP_PARALYZE_POISON)).toBe(1);
     expect(rows.get(CONFUSE_POISON_SWITCH)).toBe(1);
     // 🆕🆕 D499 — the slot moved to the DATA-blocked Ancient prevent (corpus FILE LINE
+    // (🆕🆕🆕 D569 (D539): "DATA-blocked" is WITHDRAWN as the reason — Iron Moth's prevent stays unread on its persisted attacker class; the slot still holds)
     // 182) and the count moved WITH it, 2 → 1, read off the corpus rather than carried.
     expect(rows.get(LEFT_LOUD.headsTails)).toBe(1);
     // 🆕 D464 — the trio replaces `paralyzedComma`; all three are corpus rows, 1 printing
@@ -1021,6 +1028,6 @@ describe("§8 — purity and the structural answers", () => {
   });
 
   it("the engine version moved with the behaviour", () => {
-    expect(engineVersion).toBe("0.452.0");
+    expect(engineVersion).toBe("0.453.0");
   });
 });

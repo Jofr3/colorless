@@ -43,6 +43,7 @@ import {
 // 🛑 **THE ROW PASSES D468's SCHEMA TEST, WHICH IS WHY IT IS THIS ONE.** The residue
 // classifier names a TOKEN, and the token may name a COLUMN (buildable) or a BANNER
 // (data-blocked, D468's `Ancient`/`Future`). *"Iono's"* names a COLUMN:
+// (🆕🆕🆕 D569 (D539): the banners are not data-blocked since D569 — `banners.ts` supplies them; the BODY map spells "Ancient Pokémon" and not "Future Pokémon")
 // `CardFilter.ownerPokemon` has read `Card.name` since D242, `Card.name` is one of
 // `cardSchema`'s 21 keys, and `inPlayBodyFilter`'s owner branch already resolves the
 // printed noun. So this filter counts real bodies on real boards rather than 0
@@ -122,9 +123,13 @@ const OPPONENT_SEAT_BOARD =
 
 /** The BODY-vocabulary refusal — D468's data-blocked banner in this anchor's noun
     slot. `inPlayBodyFilter` answers `null`, so the sentence stays on the loud
-    ATTACK_EFFECT_SKIPPED path instead of counting 0 forever. */
+    ATTACK_EFFECT_SKIPPED path instead of counting 0 forever.
+    🆕🆕🆕 D569 (D539): "data-blocked banner" is WITHDRAWN for Ancient — `inPlayBodyFilter` now
+    answers "Ancient Pokémon" (`bannerPokemon` over `banners.ts`). The probe is re-pointed to the
+    OTHER Paradox banner, which the body map does not spell (the name is kept so the rung's
+    history reads; the string is constructed, as it always was). */
 const ANCIENT_NOUN =
-  "This attack does 20 more damage for each {L} Energy attached to all of your Ancient Pokémon.";
+  "This attack does 20 more damage for each {L} Energy attached to all of your Future Pokémon.";
 
 /** The ENERGY-vocabulary probe, one guard over. ⚠️ **D500 CHANGED ITS SIGN**: it was
     the refusal — `attachedEnergyFilter` answered `undefined` for "Basic Energy" — and
@@ -533,6 +538,7 @@ describe("§2 — deriveAttackDamageBonus: the noun the zone did not have", () =
 
   it("🛑 GUARD 2 — the BODY vocabulary refuses, and the sentence stays LOUD", () => {
     // D468's data-blocked banner in this anchor's noun slot: `inPlayBodyFilter`
+    // (🆕🆕🆕 D569 (D539): the probe's banner is "Future" now — "Ancient Pokémon" is a body-map key since D569)
     // answers null, so the arm falls through to `return null` rather than emitting a
     // filter that counts 0 on every board.
     expect(deriveAttackDamageBonus(ANCIENT_NOUN)).toBeNull();
@@ -901,7 +907,7 @@ describe("§8 — `MATCH_RECORD_VERSION` STAYS 29, driven over the bytes", () =>
   });
 
   it("the engine version moved with the behaviour", () => {
-    expect(engineVersion).toBe("0.452.0");
+    expect(engineVersion).toBe("0.453.0");
   });
 });
 

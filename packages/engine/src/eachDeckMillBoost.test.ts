@@ -573,7 +573,10 @@ describe("D490 §3 — the parse and the program", () => {
       // — a different reader and a different number on every board.
       "Discard the top card of each player's deck. This attack does 140 damage for each Energy card discarded in this way.",
       // THE COUNTED NOUN. `Energy card` is a literal here; a captured noun would claim
-      // sentences this column does not print (D440's `Ancient card` refusal).
+      // sentences this column does not print (D440's `Ancient card` refusal — 🆕🆕🆕 D569
+      // (D539): that refusal is RETIRED, `DISCARD_PILE_NOUNS` reads "Ancient card" through
+      // `bannerCard` now; the literal-noun point stands, witnessed by D440's re-pointed
+      // `Future card` refusal in discardPileScaling.test.ts).
       "Discard the top card of each player's deck. This attack does 140 more damage for each card discarded in this way.",
       "Discard the top card of each player's deck. This attack does 140 more damage for each Item card discarded in this way.",
       // THE ANAPHOR. Without "in this way" the clause is a BOARD read of the pile, which is
@@ -1218,7 +1221,7 @@ describe("D490 §9 — `MATCH_RECORD_VERSION` stays 29: reachability, driven", (
     ).toBe(false);
   });
 
-  it("engineVersion is 0.452.0 and `manifest.version` agrees — the bump is for BEHAVIOUR", () => {
+  it("engineVersion is 0.453.0 and `manifest.version` agrees — the bump is for BEHAVIOUR", () => {
     // 🆕🆕🆕 D490 — 0.384.0 → **0.385.0**. A card can reach it: one printed sentence that
     // derived to `null` on all thirteen readers and fell to the loud
     // `ATTACK_EFFECT_SKIPPED` path now mills BOTH decks and deals a number proportional to
@@ -1231,7 +1234,7 @@ describe("D490 §9 — `MATCH_RECORD_VERSION` stays 29: reachability, driven", (
     // changelog entry and missed the entry's actual `0.383.0 → 0.384.0` heading, which is
     // D488's rule fired a second time: *a prose census of exceptions is self-referential
     // the moment it is written down, and the count is taken before the sentence exists.*
-    expect(engineVersion).toBe("0.452.0");
+    expect(engineVersion).toBe("0.453.0");
     expect(manifest.version).toBe(engineVersion);
     expect(deriveAttackDiscardScaledBoost(MILL_BOTH)).not.toBeNull();
   });

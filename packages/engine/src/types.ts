@@ -195,6 +195,7 @@ export interface AttackBlock {
       serves `suffix: "ex"` for a rule box and nothing at all for the banner). So
       the Ancient sentence has no reader because it has no DATUM, and it stays
       LOUD rather than being answered by a hand-authored species list — the
+      (🆕🆕🆕 D569 (D539): "no DATUM" is WITHDRAWN — `banners.ts` (an engine table keyed by printing id, never a species list — the SAME-species argument above stands) has supplied the Ancient/Future banner since D569. Iron Moth's sentence STILL has no reader, for a different reason: `fromClass` is PERSISTED, and widening `AttackerClass.stage` to optional would make 0.452's exhaustive `attackerMatchesClass` switch fall through on rollback — deferred, docs/decisions.md D569)
       species is not even the right key, since the SAME species is printed both
       with the banner (sv04+) and without it (Great Tusk ex sv01-123). The fourth,
       Miraidon sv08-069's *"each of your Future Pokémon … from Pokémon ex"*, is

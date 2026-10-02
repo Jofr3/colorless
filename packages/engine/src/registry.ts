@@ -782,6 +782,16 @@ export interface PassiveEffects {
         up: both pre-W/R read sites hit the opponent's Active by construction. */
     target?: CardFilter;
     noStack?: string;
+    /** 🆕🆕🆕 **D569 — the printed EXCLUSION on the beneficiary**: Iron Crown ex
+        `sv05-081` (+5 reprints) "Cobalt Command" — *"Attacks used by your Future Pokémon,
+        **except any Iron Crown ex**, do 20 more damage to your opponent's Active Pokémon
+        (before applying Weakness and Resistance)."* An attacker whose TOP card's catalog
+        `name` EQUALS this string gets nothing — read beside `beneficiary`, on the ATTACKER
+        alone (never the source: a second Iron Crown ex still pays the bonus to a Future
+        Pokémon that is not one). By NAME and not by id or banner, because the print names
+        the card ("any Iron Crown ex" is every printing of that name). Absent = no exclusion.
+        No `noStack`: the print has none, so two Iron Crown ex pay 40 (R-PX2 ⚠️ UNRULED). */
+    exceptName?: string;
   };
   /** 🆕 §8.1 (D323) — the SEAT-WIDE **PRIZE BONUS**: an Ability on the
       PRIZE-TAKING side that adds Prize cards for a Knock Out on the other board.
@@ -1220,6 +1230,7 @@ export interface PassiveEffects {
       built, and `abilityBundleD559.test.ts` §7's fixture shows Flutter Mane and Klefki
       silencing each other. The claim is: no LEGAL built lock can switch off another
       lock's source, as continuous.ts's `disabledAbilityUids` doc and decisions.md D559
+      (🆕🆕🆕 D569 (D539): R-PX5 ⚠️ UNRULED: the claim stays TRUE at D569 — Initialization is still unbuilt. Iron Thorns ex is now a Future Pokémon to the engine (`banners.ts`), so it receives Cobalt Command, Peak Acceleration and Reboot Pod; none of those is a lock, so no lock source changes)
       already say. ⚠️ That holds only
       while Initialization is unbuilt: an Active Flutter Mane silences an opposing Active
       Iron Thorns ex, whose lock the rules then switch off, so the fixpoint pass is owed
@@ -1435,6 +1446,7 @@ export interface PassiveEffects {
           `Card.abilities` — an ingested nullable array, read by `cards.ts
           hasPrintedAbility`. **That column is the reason this row is cheap where
           D243's Ancient/Future banner was unbuildable: the banner has no column at
+          (🆕🆕🆕 D569 (D539): "unbuildable" is WITHDRAWN — the banner still has no INGESTED column (TRUE), but an engine table keyed by printing id (`banners.ts`) supplies it, and D569 built the Future aura (Iron Crown ex "Cobalt Command"))
           all, this one does;**
         • it FOLDS like the ex/V flag and not like the type list. A boolean OR,
           because the gate names no VALUE — two sources cannot disagree about it, so
@@ -1472,6 +1484,7 @@ export interface PassiveEffects {
           (`continuous.ts attackerHasSpecialEnergy` → `hasAttachedEnergy(…,
           "special")`). **That is the reason this row is cheap where D243's
           Ancient/Future banner was unbuildable, arriving by a different route: the
+          (🆕🆕🆕 D569 (D539): "unbuildable" is WITHDRAWN — `banners.ts` supplies the banner (no ingested column, TRUE); D569 built the Future aura)
           banner has no column AND no board fact; this gate needs no column because
           the board already answers it;**
         • it FOLDS like the ex/V flag and D251's — a boolean OR, because the gate
@@ -5229,6 +5242,7 @@ const TREVENANT: CardProgram = {
     CARD.** `except any` is **20 printings / 5 sentences / 5 cards**, and only three
     of those sentences are Standard-legal: Iron Crown ex (6, BLOCKED — its base noun
     is the Ancient/Future banner, which NO catalog column classifies: `suffix` holds
+    (🆕🆕🆕 D569 (D539): "BLOCKED" is WITHDRAWN — Iron Crown ex ×6 is BUILT (`COBALT_COMMAND`: `beneficiary: bannerPokemon Future` over `banners.ts`, plus the NEW `exceptName`); the catalog-column measurement stays TRUE)
     only NULL 3,157 + `ex` 629 = 3,786, the whole table), Pecharunt ex (5, **BUILT at
     D273**) and this one. **The grammar the backlog priced as a missing engine
     capability was already built; what was actually missing was this card.**
@@ -6610,6 +6624,7 @@ const CURLY_WALL: CardProgram = {
 //    Crown ex, do 20 more damage…") and calls the bare Serperior sentence its
 //    cheap entry point, on the expectation that the Future version then becomes a
 //    RIDER on this field. It cannot: `beneficiary` is a `CardFilter`, every member
+// (🆕🆕🆕 D569 (D539): "It cannot" is WITHDRAWN — it DID become a rider on this field: `beneficiary: bannerPokemon Future` (a `CardFilter` member that reads `banners.ts`, not a column) plus ONE new optional key, `exceptName` (`COBALT_COMMAND`))
 //    of which reads an INGESTED column, and the Ancient/Future banner is printed on
 //    the card FACE and appears in NO column (D146, D204/D205, re-verified at D243 —
 //    `select distinct suffix … where legal_standard = 1` returns exactly `NULL` and
@@ -15524,6 +15539,136 @@ const PRISM_CHARGE: CardProgram = {
   },
 };
 
+// ── 🆕🆕🆕 D569 — THE PARADOX BANNER UNLOCK, SLICE 2 PART a: 20 PRINTINGS / 11 TEXTS
+//    (7 registry objects here over 14 ids; Koraidon ×2, Roaring Moon ×2, Iron Valiant and
+//    Slither Wing are DERIVER arms — effects.ts `IN_PLAY_BODY_NOUNS` "Ancient Pokémon",
+//    `DISCARD_PILE_NOUNS` "Ancient card" and two `CONDITIONAL_DAMAGE_CLAUSES` rows — and carry
+//    no row). `banners.ts` now answers "Ancient" and "Future" (86 ids). Texts and legality
+//    off tcgdex (the audit's card JSON), 2026-10-02, all `legal.standard: true`. Keyed
+//    MID-MAP after D568's rows (D395/D396), so `raw[last]` stays `sv09-107`. Every addition
+//    is an optional key or a new union member: `MATCH_RECORD_VERSION` STAYS 36 (D125).
+//    DEFERRED, named (docs/decisions.md D569): Iron Thorns ex "Initialization" ×3, Iron
+//    Thorns "Destructo-Press" ×2, Miraidon `sv08-069` "C.O.D.E.: Protect", Koraidon
+//    `sv08-116` "Unrelenting Onslaught", Iron Treads "Dual Core" and Iron Moth "Anachronism
+//    Repulsor" — 9 printings. ──
+
+/** 🆕🆕🆕 **D569 — Miraidon `sv05-121`/`svp-092` "Peak Acceleration" (attack index 0, 2
+    legal)** — *"Search your deck for up to 2 Basic Energy cards and attach them to your
+    Future Pokémon in any way you like. Then, shuffle your deck."* HAND-WRITTEN (Prism
+    Charge's precedent): `attachFromDeck` with D568's `targetBanner` rider, now "Future".
+    Miraidon itself IS Future, so it is always a legal target. The 40 damage is the printed
+    column. INDEX-KEYED: "Sparking Strike" (idx 1, no effect text) stays unclaimed. */
+const PEAK_ACCELERATION: CardProgram = {
+  attack: {
+    0: [
+      { op: "attachFromDeck", filter: { kind: "basicEnergy" }, max: 2, targetBanner: "Future" },
+      { op: "shuffleDeck" },
+    ],
+  },
+};
+
+/** 🆕🆕🆕 **D569 — Great Tusk `sv05-097`/`sv08.5-055` "Land Collapse" (attack index 0, 2
+    legal)** — *"Discard the top card of your opponent's deck. If you played an Ancient
+    Supporter card from your hand during this turn, discard 3 more cards in this way."* The
+    mill, then a `conditionGate` on the NEW `yourPlayedBannerSupporterThisTurn` (R-PX3 — the
+    turn's played Supporter's printing carries the Ancient banner) over a second mill of 3.
+    INDEX-KEYED: "Giant Tusk" (idx 1, no effect text) stays unclaimed. */
+const LAND_COLLAPSE: CardProgram = {
+  attack: {
+    0: [
+      { op: "discardDeckTop", whose: "opponent", count: 1 },
+      {
+        op: "conditionGate",
+        cond: { kind: "yourPlayedBannerSupporterThisTurn", banner: "Ancient" },
+        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
+        then: [{ op: "discardDeckTop", whose: "opponent", count: 3 }],
+      },
+    ],
+  },
+};
+
+/** 🆕🆕🆕 **D569 — Scream Tail `sv05-077` "Supportive Singing" (attack index 0, 1 legal)** —
+    *"Heal 100 damage from 1 of your Benched Ancient Pokémon."* `healChosen` on the Bench
+    with the NEW `filter` rider (`bannerPokemon Ancient`). No Benched Ancient Pokémon: the
+    silent no-op (R-PX4). INDEX-KEYED: "Hyper Voice" (idx 1) stays unclaimed. */
+const SUPPORTIVE_SINGING: CardProgram = {
+  attack: {
+    0: [
+      {
+        op: "healChosen",
+        amount: 100,
+        zone: "bench",
+        filter: { kind: "bannerPokemon", banner: "Ancient" },
+      },
+    ],
+  },
+};
+
+/** 🆕🆕🆕 **D569 — Flutter Mane `sv08-096` "Perplexing Transfer" (attack index 0, 1 legal)**
+    — *"Move all damage counters from 1 of your Benched Ancient Pokémon to your opponent's
+    Active Pokémon."* `moveCountersToDefender` with the NEW source `filter` rider
+    (`bannerPokemon Ancient`), D205's widening one axis over. No Benched Ancient Pokémon:
+    the silent no-op (R-PX4). INDEX-KEYED: "Moonblast" (idx 1) keeps deriving. */
+const PERPLEXING_TRANSFER: CardProgram = {
+  attack: {
+    0: [{ op: "moveCountersToDefender", filter: { kind: "bannerPokemon", banner: "Ancient" } }],
+  },
+};
+
+/** 🆕🆕🆕 **D569 — Iron Crown ex `sv05-081`/`-191`/`-206`/`-216`, `sv08.5-158`, `svp-146`
+    "Cobalt Command" (6 legal)** — *"Attacks used by your Future Pokémon, except any Iron
+    Crown ex, do 20 more damage to your opponent's Active Pokémon (before applying Weakness
+    and Resistance)."* Regal Cheer's seat aura with D200's beneficiary seam on
+    `bannerPokemon Future` and the NEW `exceptName` exclusion. No `noStack` (none printed):
+    two Iron Crown ex pay 40 to a third Future attacker (R-PX2). §9-suppressible like every
+    member. Its attack "Twin Shotels" keeps deriving. */
+const COBALT_COMMAND: CardProgram = {
+  passive: {
+    seatDamageBonusBeforeWR: {
+      amount: 20,
+      beneficiary: { kind: "bannerPokemon", banner: "Future" },
+      exceptName: "Iron Crown ex",
+    },
+  },
+};
+
+/** 🆕🆕🆕 **D569 — Awakening Drum `sv05-141` (Item, 1 legal)** — *"Draw a card for each of
+    your Ancient Pokémon in play."* `drawCards` with `per` widened to `pokemonInPlay` (your
+    seat, `bannerPokemon Ancient`). No Ancient Pokémon in play draws 0 — the Item is still
+    playable (the Nest Ball play-and-whiff doctrine: a draw is never refused). 🆕🆕🆕 D569 final
+    review (D539): ~~the Nest Ball doctrine~~ is WITHDRAWN as the warrant — Nest Ball whiffs on a
+    HIDDEN deck, and this board is PUBLIC, where compendium ruling/284 would refuse a card the
+    game state prevents from doing anything. The behaviour is kept on Morty's Conviction's
+    precedent (D557: a `drawCards.per` over an empty opponent Bench draws 0 and is played) and is
+    a NAMED ruling now, R-PX6 ⚠️ UNRULED (docs/decisions.md D569), with its one-arm reversal. */
+const AWAKENING_DRUM: CardProgram = {
+  trainer: [
+    {
+      op: "drawCards",
+      count: 1,
+      per: { kind: "pokemonInPlay", seat: "you", filter: { kind: "bannerPokemon", banner: "Ancient" } },
+    },
+  ],
+};
+
+/** 🆕🆕🆕 **D569 — Reboot Pod `sv05-158` (Item, 1 legal)** — *"Attach a Basic Energy card from
+    your discard pile to each of your Future Pokémon."* Glass Trumpet's `attachFromDiscard`
+    with the NEW `targetBanner` ("Future") and the NEW `each` — MANDATORY, `max: 1` per body,
+    one per Future Pokémon while the pile lasts (R-PX1): the player assigns, and any body left
+    short is topped up at the apply. No Future Pokémon or no Basic Energy in the discard
+    REFUSES the Item (`NO_LEGAL_TARGET`, Glass Trumpet's `programPlayable` precedent). */
+const REBOOT_POD: CardProgram = {
+  trainer: [
+    {
+      op: "attachFromDiscard",
+      filter: { kind: "basicEnergy" },
+      max: 1,
+      targetBanner: "Future",
+      each: true,
+    },
+  ],
+};
+
 const REGISTRY: Record<string, CardProgram> = {
   // Professor's Research (SV base prints)
   "sv01-189": PROFESSORS_RESEARCH,
@@ -16253,6 +16398,23 @@ const REGISTRY: Record<string, CardProgram> = {
   "svp-141": JEWEL_SEEKER, // Noctowl (reprint)
   "sv08-074": GLISTENING_BUBBLES, // Azumarill — Tera in play: Double-Edge for {P}
   "sv08-161": PRISM_CHARGE, // Terapagos — Prism Charge: up to 3 Basic Energy of different types onto your Tera Pokémon
+  // ── 🆕🆕🆕 D569 — the Paradox banner unlock, Slice 2 part a: 14 registry ids / 7 objects
+  //    (Koraidon ×2, Roaring Moon ×2, Iron Valiant and Slither Wing are deriver arms),
+  //    MID-MAP (D395/D396), so `raw[last]` does not move. ──
+  "sv05-121": PEAK_ACCELERATION, // Miraidon — Peak Acceleration: up to 2 Basic Energy onto your Future Pokémon
+  "svp-092": PEAK_ACCELERATION, // Miraidon (reprint)
+  "sv05-097": LAND_COLLAPSE, // Great Tusk — Land Collapse: mill 1, +3 after an Ancient Supporter
+  "sv08.5-055": LAND_COLLAPSE, // Great Tusk (reprint)
+  "sv05-077": SUPPORTIVE_SINGING, // Scream Tail — heal 100 from 1 of your Benched Ancient Pokémon
+  "sv08-096": PERPLEXING_TRANSFER, // Flutter Mane — move a Benched Ancient's counters to the Defender
+  "sv05-081": COBALT_COMMAND, // Iron Crown ex — your Future Pokémon (not Iron Crown ex) +20 to the Active
+  "sv05-191": COBALT_COMMAND, // Iron Crown ex (reprint)
+  "sv05-206": COBALT_COMMAND, // Iron Crown ex (reprint)
+  "sv05-216": COBALT_COMMAND, // Iron Crown ex (reprint)
+  "sv08.5-158": COBALT_COMMAND, // Iron Crown ex (reprint)
+  "svp-146": COBALT_COMMAND, // Iron Crown ex (reprint)
+  "sv05-141": AWAKENING_DRUM, // Awakening Drum — draw a card per Ancient Pokémon in play
+  "sv05-158": REBOOT_POD, // Reboot Pod — a Basic Energy from the discard onto each Future Pokémon
   // ── D190 — THE **STANDARD-LEGAL** REPRINT-ALIAS MAP (Tier 0 of
   //    `docs/reference/coverage-backlog-legal.md`). 22 printings, 9 map targets,
   //    ZERO new code: every row below prints a sentence that is already authored
@@ -17416,6 +17578,7 @@ const REGISTRY: Record<string, CardProgram> = {
   // `attachFromDiscard` behind `yourBannerPokemonInPlay`; the Tera banner is supplied by
   // `banners.ts`' engine table keyed by printing id). Row 9's `effectIds` keep ONE banner
   // refusal, Reboot Pod ×1 (the FUTURE banner — still unbuilt until Slice 2, TRUE); "no
+  // (🆕🆕🆕 D569 (D539): "still unbuilt until Slice 2" is WITHDRAWN — Slice 2 part a built Reboot Pod (`REBOOT_POD`: `attachFromDiscard` with `targetBanner: "Future"` and `each`); row 9's `effectIds` are EMPTY. "No catalog column classifies Ancient/Future" stays TRUE)
   // catalog column classifies Ancient/Future" stays TRUE.
   // ⚠️ TWO NEW IDS, BOTH NON-ATTACK, so `nonAttackRegistryIds()` and `raw.length`
   // step by **+2 each** and stay 0 apart, for the THIRTEENTH slice running.

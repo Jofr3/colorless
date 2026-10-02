@@ -112,6 +112,14 @@ const CLAIMED = [ENERGY_PILE, ETHAN_PILE, FOE_BASIC_PILE, FOE_ITEM_PILE] as cons
     and is in no column of the persisted catalog and no field of tcgdex's card model
     (`types.ts`:146-149, re-read at D440). The fix is an INGEST change. */
 const ANCIENT_PILE = "This attack does 10 more damage for each Ancient card in your discard pile.";
+/** 🆕🆕🆕 D569 — THE REFUSAL'S NEW WITNESS. `ANCIENT_PILE` is CLAIMED now (`bannerCard` over
+    `banners.ts`), so the closed map's refusal of an UNMAPPED "X card" noun needs a string that
+    reaches the anchor and misses the map: the other Paradox banner. ⚠️ CONSTRUCTED — the column
+    prints no "for each Future card in your discard pile" — one axis (the banner word) from the
+    printed row. It is what kills `D440-vocabulary-defaults-instead-of-staying-loud` (an unmapped
+    noun defaulting to `anyCard`) and `D440-vocabulary-claims-any-card-noun` (an open `^(.+) card$`
+    → `byName` fall-through), both of which the Ancient row used to kill. */
+const FUTURE_PILE = "This attack does 10 more damage for each Future card in your discard pile.";
 
 /** ✅ **BUILT AT D510**, and it used to be this file's second refusal. The block read:
     *"THE SENTENCE THE ANCHOR REACHES AND THE VOCABULARY REFUSES FOR A COMPLETELY
@@ -426,7 +434,21 @@ describe("§2 — the two anchors, the vocabulary, and the seat/fold confound", 
     // DATA-BLOCKED (no catalog column classifies the banner, so no `CardFilter` at any
     // width can express it and the fix is an INGEST change), where the Team Rocket row
     // was merely UNBUILT and D510 built it.
-    expect(deriveAttackDamageBonus(ANCIENT_PILE)).toBeNull();
+    // 🆕🆕🆕 D569 (D539) — "`Ancient` is DATA-BLOCKED … no `CardFilter` at any width can express it and the
+    // fix is an INGEST change" is WITHDRAWN: the fix was an ENGINE table keyed by printing id
+    // (`banners.ts`; no catalog column classifies the banner — still TRUE) and the NEW
+    // `CardFilter` `bannerCard` (any category: "Ancient CARD" counts Trainers). Roaring Moon
+    // "Vengeance Fletching" ×2 is BUILT, so this family's vocabulary has NO refusal left; the rung
+    // pins the DIRECTION of the change at the value, like the Team Rocket row below.
+    // 🆕🆕🆕 D569 — the vocabulary refusal, on the noun the map still does not spell: the anchor
+    // reaches it (the `per` is fine) and the CLOSED map answers null on both folds.
+    expect(deriveAttackDamageBonus(FUTURE_PILE)).toBeNull();
+    expect(deriveAttackDamageMultiplier(FUTURE_PILE.replace("more damage", "damage"))).toBeNull();
+    expect(resolvedByAnyReader(FUTURE_PILE)).toBe(false);
+    expect(deriveAttackDamageBonus(ANCIENT_PILE)).toEqual({
+      per: 10,
+      count: { kind: "cardsInDiscardPile", seat: "you", filter: { kind: "bannerCard", banner: "Ancient" } },
+    });
     expect(deriveAttackDamageMultiplier(ANCIENT_PILE)).toBeNull();
     // …and the one that moved, asserted AT THE VALUE rather than dropped from the file,
     // so this rung now pins the DIRECTION of the change as well as the survivor.
@@ -589,11 +611,15 @@ describe("§2 — the two anchors, the vocabulary, and the seat/fold confound", 
     // constants rather than a count (D508, D510, now D538). **The one genuine refusal
     // left in this family is `ANCIENT_PILE`**, data-blocked permanently because no
     // catalog column classifies the banner.
+    // 🆕🆕🆕 D569 (D539) — `ANCIENT_PILE` LEAVES too, the FOURTH row in four slices to leave this `for`
+    // by NAME: "data-blocked permanently" is WITHDRAWN (an engine table, `banners.ts`, plus the
+    // NEW `bannerCard` filter). The list is EMPTY, and the claim is pinned on the other side:
+    // claimed by EXACTLY the additive reader.
     for (const text of [ANCIENT_PILE]) {
-      expect(deriveAttackDamageBonus(text)).toBeNull();
+      expect(deriveAttackDamageBonus(text)).not.toBeNull();
       expect(deriveAttackDamageMultiplier(text)).toBeNull();
       for (const reader of OTHERS) expect(reader(text)).toBeNull();
-      expect(resolvedByAnyReader(text)).toBe(false);
+      expect(resolvedByAnyReader(text)).toBe(true);
     }
     // 🛑 **AND THE COUNTER-PLACEMENT COMPOUND IS STILL NOT A DAMAGE FOLD, WHICH IS THE
     // HALF OF THE OLD CLAIM THAT SURVIVES AND IS NOW THE LOAD-BEARING ONE.** D538 claims
@@ -889,7 +915,9 @@ describe("§6 — `MATCH_RECORD_VERSION` STAYS 29, driven in both directions", (
     );
     expect(ancient.map(([, s]) => s)).toEqual([ANCIENT_PILE]);
     expect(ancient.reduce((sum, [n]) => sum + n, 0)).toBe(2);
-    expect(resolvedByAnyReader(ANCIENT_PILE)).toBe(false);
+    // 🆕🆕🆕 D569 (D539) — ⑴'s "DATA-BLOCKED, PERMANENTLY … the fix is an INGEST change" is WITHDRAWN: the
+    // row is still printed and is now CLAIMED (`bannerCard` over `banners.ts`).
+    expect(resolvedByAnyReader(ANCIENT_PILE)).toBe(true);
 
     // ⑵ ✅ **THE NAME SUBSTRING — THE FALSIFIER FIRED, AND THIS IS WHAT IT LOOKS LIKE
     //    AFTERWARDS.** The rung used to read *"UNBUILT, WITH AN EXECUTABLE FALSIFIER
@@ -917,7 +945,9 @@ describe("§6 — `MATCH_RECORD_VERSION` STAYS 29, driven in both directions", (
     expect(countCardsInDiscardPile(canonical(), "p1", ETHAN_BY_NAME)).toBe(1);
     // …and the ONE refusal this file has left, so ⑴ and ⑵ no longer read as one claim:
     // the Ancient banner is still printed, still unclaimed, and still an INGEST problem.
-    expect(resolvedByAnyReader(ANCIENT_PILE)).toBe(false);
+    // (🆕🆕🆕 D569 (D539): WITHDRAWN — "still unclaimed … still an INGEST problem" is false at
+    // this head: ⑴ is claimed through `banners.ts`' engine table. This file has NO refusal left.)
+    expect(resolvedByAnyReader(ANCIENT_PILE)).toBe(true);
   });
 
   it("the FROZEN board is handed back untouched — the purity pair", () => {
@@ -936,6 +966,6 @@ describe("§6 — `MATCH_RECORD_VERSION` STAYS 29, driven in both directions", (
   });
 
   it("the engine version moved with the behaviour", () => {
-    expect(engineVersion).toBe("0.452.0");
+    expect(engineVersion).toBe("0.453.0");
   });
 });

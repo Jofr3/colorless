@@ -408,9 +408,11 @@ describe("D519 §1 — the printed data, measured live over the legal column", (
     // …and a noun the shared map does NOT answer stays LOUD rather than deriving to a
     // wrong filter — the `filter !== null` guard, which is the vocabulary and not the
     // pattern. "Ancient" is in no persisted column at all (types.ts:146-149).
+    // (🆕🆕🆕 D569 (D539): the map ANSWERS "Ancient Pokémon" now — `banners.ts`, an engine table; still in
+    // no persisted column, TRUE — so the witness is the other Paradox banner, which it does not.)
     expect(
       deriveAttackDamageMultiplier(
-        "This attack does 50 damage for each of your Ancient Pokémon that has any damage counters on it.",
+        "This attack does 50 damage for each of your Future Pokémon that has any damage counters on it.",
       ),
     ).toBeNull();
   });
@@ -1034,7 +1036,7 @@ describe("D519 §6 — `MATCH_RECORD_VERSION` HOLDS at 30: there is still no car
   });
 
   it("the engine version moved with the behaviour, and `manifest.version` agrees", () => {
-    expect(engineVersion).toBe("0.452.0");
-    expect(manifest.version).toBe("0.452.0");
+    expect(engineVersion).toBe("0.453.0");
+    expect(manifest.version).toBe("0.453.0");
   });
 });

@@ -330,7 +330,10 @@ describe("D474 §2 — the derived value, and every refusal pinned on ONE printe
     // column classifies, and ship a filter that counts 0 on every board forever while
     // `BUILT.attack` stepped for it. The closed map is what keeps that refusal honest.
     // ⚠️ The ADMISSION is the line directly above, one axis away (D424).
-    for (const noun of ["Ancient", "Future", "Tera", "Stage 9", "banana"]) {
+    // (🆕🆕🆕 D569 (D539): "Ancient" LEAVES this list — "Ancient Pokémon" is a map key now, over
+    // `banners.ts`' engine table; "no `cardSchema` column classifies it" stays TRUE. "Future" and
+    // "Tera" stay: the body map spells neither banner.)
+    for (const noun of ["Future", "Tera", "Stage 9", "banana"]) {
       expect(
         deriveAttackCoinFlip(
           `Flip a coin for each ${noun} Pokémon you have in play. This attack does 60 damage for each heads.`,
@@ -890,13 +893,13 @@ describe("D474 §6 — `MATCH_RECORD_VERSION` stays 29, and this is D473's FIRST
     }
   });
 
-  it("engineVersion is 0.452.0 and `manifest.version` agrees", () => {
+  it("engineVersion is 0.453.0 and `manifest.version` agrees", () => {
     // D460's FOURTH class of version-tax site is the `it()` TITLE, so this one names
     // both halves and BOTH are asserted — a title that reports a claim the body does
     // not make is worse than a stale doc block, because the run log then says a
     // version the suite never checked.
-    expect(engineVersion).toBe("0.452.0");
-    expect(manifest.version).toBe("0.452.0");
+    expect(engineVersion).toBe("0.453.0");
+    expect(manifest.version).toBe("0.453.0");
     expect(manifest.version).toBe(engineVersion);
   });
 });

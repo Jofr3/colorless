@@ -407,15 +407,22 @@ function playRejected(state: GameState, id: string): string {
 
 // ─────────────────────────────────────────────────────────────────────────────
 describe("§1 — the datum: `banners.ts`' 98 Tera ids, two sources plus the printed face", () => {
-  const ids = Object.keys(BANNER_BY_ID);
+  // 🆕🆕🆕 D569 — RE-SCOPED TO THE TERA ROWS. The table now also carries the 86 Ancient/Future
+  // ids (Slice 2 part a, `paradoxBannerD569.test.ts` pins them), so "every id is Tera" and "every
+  // id is a legal Pokémon ex" are claims about the TERA rows only — a Paradox banner is printed on
+  // non-ex Pokémon and on Trainers too. `ids` is the Tera subset; the whole table is pinned beside.
+  const ids = Object.keys(BANNER_BY_ID).filter((id) => BANNER_BY_ID[id] === "Tera");
   const pool = new Map(LEGAL_EX_POOL.map((row) => [row[0], row] as const));
 
-  it("98 ids, every one 'Tera' (Ancient/Future are Slice 2 and are NOT here)", () => {
+  it("98 Tera ids (🆕 D569: beside 86 Ancient/Future ids — Slice 2 part a)", () => {
     expect(ids).toHaveLength(98);
-    expect(new Set(Object.values(BANNER_BY_ID))).toEqual(new Set(["Tera"]));
+    // (🆕🆕🆕 D569 (D539): ~~Ancient/Future are Slice 2 and are NOT here~~ WITHDRAWN — they are
+    // here now: 98 + 86 = 184, three banner values.)
+    expect(Object.keys(BANNER_BY_ID)).toHaveLength(184);
+    expect(new Set(Object.values(BANNER_BY_ID))).toEqual(new Set(["Tera", "Ancient", "Future"]));
   });
 
-  it("🛑 every table id is a Standard-legal Pokémon ex in the local pool (353 rows)", () => {
+  it("🛑 every TERA id is a Standard-legal Pokémon ex in the local pool (353 rows)", () => {
     expect(LEGAL_EX_POOL).toHaveLength(353);
     for (const row of LEGAL_EX_POOL) expect(row[1].endsWith(" ex"), row[0]).toBe(true);
     for (const id of ids) expect(pool.has(id), id).toBe(true);
@@ -427,7 +434,11 @@ describe("§1 — the datum: `banners.ts`' 98 Tera ids, two sources plus the pri
       const key = JSON.stringify([name, hp, attacks, abilities]);
       groups.set(key, [...(groups.get(key) ?? []), id]);
     }
-    const split = [...groups.values()].filter((members) => new Set(members.map((id) => id in BANNER_BY_ID)).size > 1);
+    // 🆕🆕🆕 D569 — membership is TERA membership (the Paradox ex reprints are consistent too, and
+    // pinned on their own pool in `paradoxBannerD569.test.ts`).
+    const split = [...groups.values()].filter(
+      (members) => new Set(members.map((id) => BANNER_BY_ID[id] === "Tera")).size > 1,
+    );
     expect(split).toEqual([]);
     // ⚠️ NOT VACUOUS: the Terapagos ex group is SEVEN printings, and dropping the one id the
     // first source missed (`sv08.5-092`) splits it — the rung is the reason that id is here.
@@ -1106,8 +1117,8 @@ describe("§9 — the three attacks: Shining Blaze, Jewel Breaker, Prism Charge"
 
 // ─────────────────────────────────────────────────────────────────────────────
 describe("§10 — the version", () => {
-  it("the engine is 0.452.0", () => {
-    expect(engineVersion).toBe("0.452.0");
-    expect(manifest.version).toBe("0.452.0");
+  it("the engine is 0.453.0", () => {
+    expect(engineVersion).toBe("0.453.0");
+    expect(manifest.version).toBe("0.453.0");
   });
 });

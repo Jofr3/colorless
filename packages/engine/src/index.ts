@@ -2565,6 +2565,7 @@ import type { GameState, Seat } from "./types";
     ⚠️ **`Ancient` HAS NO READER BECAUSE IT HAS NO DATUM — AND THAT INVERTS THE
     ITEM.** The list called Ancient "the only real work". It is not work at all:
     the Ancient/Future banner is printed on the card FACE from Paradox Rift (sv04)
+    (🆕🆕🆕 D569 (D539): "no reader because no datum" is WITHDRAWN as a GROUND — the datum is `banners.ts` (an engine table keyed by printing id; still no persisted column, TRUE). Iron Moth itself stays unbuilt on the persisted `AttackerClass` rollback reading, deferred)
     onward and appears in **no column of the persisted catalog and no field of
     tcgdex's own card model** — verified UPSTREAM against Roaring Moon ex
     sv04-124, the canonical Ancient print, whose payload carries `suffix: "ex"`
@@ -5855,6 +5856,7 @@ import type { GameState, Seat } from "./types";
     CHOICE and not a predicate; and ⚠️ **Flutter Mane sv08-096 (1 legal) is one
     ADJECTIVE away — "1 of your Benched **Ancient** Pokémon" — and cannot be
     built at all**, because the Ancient/Future banner is printed on the card FACE
+    (🆕🆕🆕 D569 (D539): "cannot be built at all" is WITHDRAWN — Flutter Mane "Perplexing Transfer" is BUILT as a registry attack with `moveCountersToDefender`'s NEW `filter` (`bannerPokemon Ancient` over `banners.ts`); this anchor's possessive capture still refuses it)
     and exists in no ingested column (D146). That is why the capture demands the
     POSSESSIVE rather than any capitalised word. **Wobbuffet sv10-082/svp-203,
     2 legal printings**, built ENTIRELY in the deriver with no registry row.
@@ -5961,6 +5963,7 @@ import type { GameState, Seat } from "./types";
     `ownerPokemon` must refuse rather than approximate: it is a possessive-prefix
     predicate over the card NAME, and pointing it at an energy type produces the
     permanently empty candidate set D205 found for "Ancient".
+    (🆕🆕🆕 D569 (D539): for a NAME predicate, still true; "Ancient" itself is answered by `bannerPokemon` over `banners.ts` since D569)
 
     ⚠️ **TWO OF D205's FLAGS GREW WHEN RE-DERIVED, BECAUSE ITS SWEEP WAS OVER
     `attacks_json` ONLY.** The chosen-DESTINATION counter move is not 2 printings
@@ -7523,6 +7526,7 @@ import type { GameState, Seat } from "./types";
 
     🛑 **THE RESIDUE IS 8 PRINTINGS ON FIVE SENTENCES AND FOUR BLOCKERS, TWO OF
     WHICH THE ROW NEVER PRICED.** The row named a Future/Tera SUBGROUP rider (3)
+    (🆕🆕🆕 D569 (D539): both subgroup riders are BUILT — Tera (Prism Charge, D568) and Future (Miraidon "Peak Acceleration" ×2, D569))
     and an "of different types" distinctness filter (1, on the same printing as one
     of the Tera ones); it did not name the batch gap above (3) or a SECOND printed
     noun, *"up to 2 Basic {G} … and up to 2 Basic {L} …"* (2). Each is pinned
@@ -7856,6 +7860,7 @@ import type { GameState, Seat } from "./types";
 
     🛑 **THE OTHER 2 ARE A PERMANENT FLOOR, NOT A REMAINDER.** `Ancient` (Iron
     Moth `sv06.5-009`) and Miraidon `sv08-069` are BOTH blocked on a SUPPLY-SIDE
+    (🆕🆕🆕 D569 (D539): "SUPPLY-SIDE ABSENCE" is WITHDRAWN — `banners.ts` supplies both banners; both stay unbuilt for OTHER reasons (Iron Moth's persisted class; Miraidon's SET target and terminator), deferred)
     ABSENCE, so no anchor can ever take them. 🆕 **AND THE SECOND ONE'S BLOCKER IS
     NOT ITS CLASS TOKEN** — *"Pokémon ex"* is answerable today (`pokemonSuffixOf`);
     what it cannot spell is its TARGET (*"each of your **Future** Pokémon"* — a
@@ -8161,6 +8166,7 @@ import type { GameState, Seat } from "./types";
     as its "cheapest entry point" so the Future version would become a RIDER. It
     cannot be one: the narrowing is a `CardFilter`, every member of which reads an
     INGESTED COLUMN, and the Ancient/Future banner is on the card FACE and in no
+    (🆕🆕🆕 D569 (D539): "cannot be one" is WITHDRAWN — it IS one: `beneficiary: bannerPokemon Future` (read off `banners.ts`, not a column) plus `exceptName` (`COBALT_COMMAND`))
     column — re-verified at HEAD (`SELECT suffix, COUNT(*) … legal_standard=1` →
     NULL 1668 · ex 353) rather than inherited from D146/D204/D205. What replaced it
     as the rider proof is the OWNER-PREFIXED pair, on `matchesFilter`'s
@@ -8618,6 +8624,7 @@ import type { GameState, Seat } from "./types";
     Pokémon and attach … to each of them"* — is **2 LEGAL** (Glass Trumpet
     `sv07-135`/`sv08.5-110`), in the **`effect` column**, i.e. a TRAINER;
     *"…to each of your **Future** Pokémon"* (Reboot Pod `sv05-158`, 1 legal) is
+    (🆕🆕🆕 D569 (D539): "ingest-blocked" is WITHDRAWN — Reboot Pod is BUILT (`REBOOT_POD`))
     ingest-blocked by D243's finding; the ANCIENT rotation of the same leading
     clause (`sv04-170`/`-239`/`-256`/`sv08.5-120`, 4 printings, 0 legal, with a
     *"draw 3 cards"* tail) and the attack-column `sv04-022` rotation
@@ -12254,6 +12261,7 @@ import type { GameState, Seat } from "./types";
     SECOND ONE BACKWARDS.** (1) The *"Future Pokémon"* predicate is BLOCKED ON THE
     INGEST, re-derived: `suffix` holds only NULL 3,157 + `ex` 629 = 3,786, the whole
     table, so no column classifies the Ancient/Future banner. (2) The by-name
+    (🆕🆕🆕 D569 (D539): (1)'s "BLOCKED ON THE INGEST" is WITHDRAWN — `banners.ts` supplies the banner (no column, TRUE) and D569 built the predicate)
     exemption was priced as *"a genuine engine addition, because `CardFilter` has no
     negation member of any kind"*. The premise is TRUE — the union has 19 members and
     `anyOf` IS its only combinator — and the conclusion does not follow, **because
@@ -12265,7 +12273,8 @@ import type { GameState, Seat } from "./types";
 
     🛑 **SO THE GRAMMAR WAS CENSUSED INSTEAD OF THE CARD**, and that is what found
     this row: `instr(<col>,'except any')` is **20 printings / 5 sentences**, of which
-    three are Standard-legal — Iron Crown ex 6 (blocked), Pecharunt ex 5 (built at
+    three are Standard-legal — Iron Crown ex 6 (blocked — 🆕🆕🆕 D569 (D539): BUILT, Cobalt
+    Command over `banners.ts`' Future rows), Pecharunt ex 5 (built at
     D273) and Froslass 3, **the last legal one unbuilt**. 6 + 5 + 3 = 14 legal.
 
     `MATCH_RECORD_VERSION` **STAYS 20** — a new `EffectOp` member is registry-side
@@ -13337,8 +13346,9 @@ import type { GameState, Seat } from "./types";
     sampling it: 8 sentences / 11 printings, of which exactly ONE was buildable. This
     is it. What remains is **7 sentences / 10 printings and every one is a refusal
     already measured** — FIVE D207 BANNER clauses (`Ancient` ×1, `Tera` ×2, `Future`
-    (🆕🆕🆕 D568 (D539): the "no supply / DATA-BLOCKED / unbuildable" reading is WITHDRAWN FOR TERA — `banners.ts`' engine table, keyed by printing id, supplies the banner; "no INGESTED column classifies it" and "`Tera` is not a type" stay TRUE, and every Ancient/Future claim stands.)
+    (🆕🆕🆕 D568 (D539): the "no supply / DATA-BLOCKED / unbuildable" reading is WITHDRAWN FOR TERA — `banners.ts`' engine table, keyed by printing id, supplies the banner; "no INGESTED column classifies it" and "`Tera` is not a type" stay TRUE, and every Ancient/Future claim stands. 🆕🆕🆕 D569 (D539): that last clause is WITHDRAWN in turn — Slice 2 part a gave Ancient/Future the same writer, `banners.ts` (86 more ids); "no INGESTED column classifies it" stays TRUE.)
     ×2, all demand-only in every ingested column), ONE at 5 printings that is D368's
+    (🆕🆕🆕 D569 (D539): the two Future clauses resolve too, through literal rows over the widened `banners.ts`; ONE banner clause is left (Ancient ×1, Koraidon `sv08-116`, on a seat-level record))
     structural SHAPE refusal (*"…in addition to this attack's cost"* reads an attack
     `conditionHolds` is never handed), and this clause's own TWIN under a different
     consequent. **THE NEXT SLICE IS NOT IN THIS SKELETON**, and pricing it from
@@ -13697,6 +13707,7 @@ import type { GameState, Seat } from "./types";
     ⚠️ **AND THE BANNER TWIN IS REFUSED AT THE BANNER, NOT AT THE WINDOW.** The legal
     column also prints *"1 of your other Ancient Pokémon used an attack during your
     last turn"* (1 printing) — the same clock and the same mechanism — refused on
+    (🆕🆕🆕 D569 (D539): D207's ground is WITHDRAWN — `banners.ts` supplies Ancient; the clause stays unbuilt on its seat-level attack record (a new `GameState` key, an MRV bump), deferred)
     D207's ground, which is the sharpest illustration in the residue of where this
     family stops.
 
@@ -14003,6 +14014,7 @@ import type { GameState, Seat } from "./types";
     from the token**, and `Future` is a banner no ingested column classifies (D204,
     D205; D207 measured the identical shape on `Tera`). The capture stays `(.+)` so the
     refusal happens at the MAP and the sentence stays LOUD.
+    (🆕🆕🆕 D569 (D539): "stays LOUD" is WITHDRAWN — its own literal row (`opponentBannerPokemonInPlay` over `banners.ts`) resolves it; the TEMPLATE's map refusal stands)
 
     ⚠️ **NO APOSTROPHE CLASS ON THIS PATTERN, AND THE CHARACTER IS WHAT DECIDES.** Its
     two nearest siblings spell a POSSESSIVE and carry D136's `['’]`; this clause spells
@@ -15331,6 +15343,7 @@ import type { GameState, Seat } from "./types";
     mode is a predicate over a banner no column CLASSIFIES — `Tera` is on 22 rows and
     **every occurrence is DEMAND**; (🆕🆕🆕 D568 (D539): WITHDRAWN FOR TERA —
     `banners.ts` is its supply; the Ancient/Future half stands) `Ancient` / `Future` likewise (D204, D205) — and
+    (🆕🆕🆕 D569 (D539): "the Ancient/Future half stands" is WITHDRAWN — `banners.ts` supplies Ancient and Future too since D569)
     the handoff named this candidate as the first in the run that could actually fail
     it, because the engine must be able to SEE a `Card.name` on an ATTACHED Energy.
     It can: `InPlayPokemon.energy` holds uids, `state.cardIdByUid` resolves each to a
@@ -15689,7 +15702,7 @@ import type { GameState, Seat } from "./types";
     is `"Metal"`, a real `Card.types` value, and `CLAUSE_POKEMON_TYPES` has carried
     the brace notation since D367 — so `{M}` resolves through vocabulary that
     already exists. **`Tera` does not**: *"you have any Tera Pokémon on your
-    (🆕🆕🆕 D568 (D539): the "no supply / DATA-BLOCKED / unbuildable" reading is WITHDRAWN FOR TERA — `banners.ts`' engine table, keyed by printing id, supplies the banner; "no INGESTED column classifies it" and "`Tera` is not a type" stay TRUE, and every Ancient/Future claim stands.)
+    (🆕🆕🆕 D568 (D539): the "no supply / DATA-BLOCKED / unbuildable" reading is WITHDRAWN FOR TERA — `banners.ts`' engine table, keyed by printing id, supplies the banner; "no INGESTED column classifies it" and "`Tera` is not a type" stay TRUE, and every Ancient/Future claim stands. 🆕🆕🆕 D569 (D539): that last clause is WITHDRAWN in turn — Slice 2 part a gave Ancient/Future the same writer, `banners.ts` (86 more ids); "no INGESTED column classifies it" stays TRUE.)
     Bench"* is the identical sentence one token over, at 1 legal printing, and
     D207 measured every occurrence of that banner as DEMAND with the SUPPLY side
     absent. **THE SAME TEMPLATE THAT BUYS THE ONE MUST REFUSE THE OTHER**, and the
@@ -16825,6 +16838,7 @@ import type { GameState, Seat } from "./types";
     reach (a banner no catalog column classifies — 🆕🆕🆕 D568 (D539): WITHDRAWN for the
     Tera half, Glass Trumpet ×2 BUILT on `banners.ts`' engine table; "no catalog column"
     stays TRUE and Reboot Pod's Future banner stays a blocker; a whole end-of-turn Tool trigger
+    (🆕🆕🆕 D569 (D539): "Reboot Pod's Future banner stays a blocker" is WITHDRAWN — BUILT at D569)
     point for 2 printings — 🆕🆕🆕 D566 (D539): the second ground was a PRICE, not a wall,
     and D566 paid it: Powerglass is BUILT on `atEndOfYourTurnInActive`), leaving **2 live**. Row 11's **3 are all live**, and its
     cell had named the mechanism. **LIVE RESIDUE IS THE ORDERING, NOT RESIDUE.**
@@ -17048,6 +17062,7 @@ import type { GameState, Seat } from "./types";
     banner NO CATALOG COLUMN CLASSIFIES — 🆕🆕🆕 D568 (D539): Glass Trumpet BUILT, the Tera
     banner supplied by `banners.ts`' engine table; "no catalog column" stays TRUE and Reboot
     Pod's Future banner stays a blocker; one wants an end-of-turn Tool trigger for 2
+    (🆕🆕🆕 D569 (D539): "Reboot Pod's Future banner stays a blocker" is WITHDRAWN — BUILT at D569)
     printings — 🆕🆕🆕 D566 (D539): BUILT, Powerglass on `atEndOfYourTurnInActive`) → census the sentence the fourth one RESTS ON (`onEvolve`: 58
     printings / 29 legal / 13 legal sentences, SIX unbuilt) → and the cheapest thing
     that family buys turns out to be printed on a SECOND op in a SECOND column,
@@ -19777,6 +19792,7 @@ import type { GameState, Seat } from "./types";
     legal column's only other gated-increment compound is *"Discard the top card of your
     opponent's deck. If you played an Ancient Supporter card from your hand during this turn,
     discard 3 more cards **in this way**."* (2 printings, `Ancient`-banner and unbuilt) — the
+    (🆕🆕🆕 D569 (D539): "unbuilt" is WITHDRAWN — Great Tusk "Land Collapse" is BUILT as a registry attack at D569)
     §9.2 *"in this way"* this engine reads as `recordGate`. **The family is 2 sentences / 3
     printings, measured over all 640 rows; this anchor takes 1 / 1.**
     `MATCH_RECORD_VERSION` **STAYS 29**, DRIVEN rather than quoted, and the argument is
@@ -20197,6 +20213,24 @@ import type { GameState, Seat } from "./types";
     `expect(manifest.version)`, `it(…)` titles, the declaration and `package.json` —
     **not** as a value-keyed grep — because a value-keyed grep is precisely the mechanism
     that ate D500's heading.)
+    🆕🆕🆕 engineVersion 0.452.0 → **0.453.0** (D569 — THE PARADOX BANNER UNLOCK, SLICE 2 PART a: 20 PRINTINGS
+    / 11 TEXTS (12 attacks, 6 abilities, 2 trainers). **The datum**: `banners.ts` widened — `Banner = "Tera" |
+    "Ancient" | "Future"`, `BANNER_BY_ID` +86 ids (Ancient 44 = 40 Pokémon + 4 Trainers, Future 42 = 38 + 4),
+    measured from pokemon-tcg-data's subtypes and closed by a species/name cross-check over every legal printing
+    (limitless prints no Paradox tag); the three disagreements (`sv07-090`, `svp-148`, `svp-197`) settled OUT
+    from the tcgdex image. **New vocabulary**: the `CardFilter` `bannerCard` (any category — "Ancient CARD"
+    counts Trainers); the `BoardCondition`s `opponentBannerPokemonInPlay` and `yourPlayedBannerSupporterThisTurn`
+    (`allowances.supporterPlayedUid` → its printing's banner, R-PX3); optional `filter` riders on `healChosen`
+    and `moveCountersToDefender` (the source/candidate subgroup, R-PX4); `drawCards.per` widened to
+    `pokemonInPlay` (Awakening Drum with no Ancient in play draws 0 and is played, R-PX6); `attachFromDiscard`'s
+    `targetBanner` and `each` (mandatory, R-PX1 — a single-identity pile that COVERS every Future body attaches
+    inline, a SHORT pile parks so the player picks the bodies, and only a short ANSWER is topped up at the apply);
+    `seatDamageBonusBeforeWR.exceptName` (R-PX2). **Rows**: Miraidon "Peak Acceleration" ×2, Great Tusk "Land
+    Collapse" ×2, Scream Tail "Supportive Singing", Flutter Mane "Perplexing Transfer" (four hand-written
+    registry attacks), Iron Crown ex "Cobalt Command" ×6, Awakening Drum, Reboot Pod; and Koraidon ×2 / Roaring
+    Moon ×2 / Iron Valiant / Slither Wing through two noun-map rows and two literal clause rows. The Tera Bench
+    rule stays TERA-only (`isTeraPokemon`). 9 printings DEFERRED, named in docs/decisions.md D569.
+    **`MATCH_RECORD_VERSION` STAYS 36**: every persisted change is a D125 widening — see apps/api match.ts.)
     🆕🆕🆕 engineVersion 0.451.0 → **0.452.0** (D568 — THE TERA BANNER UNLOCK, SLICE 1: 19 PRINTINGS / 10
     TEXTS. **The datum**: the NEW `banners.ts` — `Banner = "Tera"`, `BANNER_BY_ID` (98 printing ids, measured
     from pokemon-tcg-data's subtypes and closed against limitlesstcg.com over all 353 legal Pokémon ex, the
@@ -23000,6 +23034,7 @@ import type { GameState, Seat } from "./types";
     noun's VOCABULARY. The sixth home is corpus FILE LINE 565 (*"…for each of your Ancient Pokémon
     in play."*, **2 printings, a step UP**), whose null is one layer LOWER — the anchor matches and
     the count is shipped; `inPlayBodyFilter` cannot name an Ancient body and never will, because
+    (🆕🆕🆕 D569 (D539): "never will" is WITHDRAWN — it names one since D569 (the map's "Ancient Pokémon" key over `banners.ts`); the falsifier fired on an ENGINE table, not an ingest change)
     the banner is in no persisted column (`types.ts`:146-149). It can still FIRE, on an ingest
     change.
     ⚠️ **`MATCH_RECORD_VERSION` HELD at 30, RE-DERIVED RATHER THAN INHERITED (D517's rule).**
@@ -24303,6 +24338,7 @@ import type { GameState, Seat } from "./types";
     ⚠️ **THE PAIR IS GATED SO IT CANNOT HALF-BUILD.** The suppression arm reads
     `BENCH_COUNTER_FILTERED_SUPPRESSED.test(t) && deriveAttackDamageMultiplier(t) !== null`,
     so an unmapped noun (*"…Benched Ancient Pokémon."*) or a printed zero leaves the WHOLE
+    (🆕🆕🆕 D569 (D539): "Benched Ancient Pokémon" is mapped now; the unmapped witness is "Benched Future Pokémon")
     sentence on the loud `ATTACK_EFFECT_SKIPPED` path instead of marking it simulated with
     the fold dropped — D445's `.test()`-beside-an-`.exec()` defect, answered by asking the
     arm that owns the guards rather than by restating them.
@@ -24700,7 +24736,7 @@ import type { GameState, Seat } from "./types";
     WITNESS** — the count was re-derived every slice and the word *"three"* was carried.
     A successor of this slice inherits **81 / 61 / 17** again, over **FIVE** history
     occurrences: those four plus `deckMillFilteredScale.test.ts`'s own header arrow.) */
-export const engineVersion = "0.452.0";
+export const engineVersion = "0.453.0";
 
 export type {
   ApplyResult,

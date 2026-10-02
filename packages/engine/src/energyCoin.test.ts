@@ -622,8 +622,20 @@ describe("D355 §7 — what row 10's closure leaves behind", () => {
     // Pokémon in play") — and the "no catalog column classifies the banner" ground is WITHDRAWN
     // for Tera: `banners.ts` is the datum, and D568 BUILT it (`attachFromDiscard` behind
     // `trainerPlayableIf yourBannerPokemonInPlay`). Reboot Pod `sv05-158` (Future) stays.
+    // 🆕🆕🆕 D569 CORRECTION (D539): Reboot Pod `sv05-158` (Future) is BUILT too — "refused on
+    // grounds no engine slice can reach" / "no catalog column classifies the Ancient/Future
+    // banner" is WITHDRAWN as a ground (the ingest still drops the banner, TRUE; `banners.ts`'
+    // engine table keyed by printing id is its writer since Slice 2 part a). It is
+    // `attachFromDiscard` with the NEW `targetBanner: "Future"` and `each`. Row 9's three are ALL
+    // built now, so none of them is the live residue.
     for (const id of ["sv05-158"]) {
-      expect(programFor(id)).toBeUndefined();
+      expect(programFor(id)?.trainer?.[0]).toEqual({
+        op: "attachFromDiscard",
+        filter: { kind: "basicEnergy" },
+        max: 1,
+        targetBanner: "Future",
+        each: true,
+      });
     }
     for (const id of ["sv07-135", "sv08.5-110"]) {
       expect(programFor(id)?.trainer?.[0]?.op).toBe("attachFromDiscard");

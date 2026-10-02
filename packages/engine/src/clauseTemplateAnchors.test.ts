@@ -259,18 +259,30 @@ describe("§3 — the MAP is the vocabulary, and the two maps do not leak into e
         "If you have any Tera Pokémon on your Bench, this attack does 100 more damage.",
         { kind: "yourBannerPokemonOnBench", banner: "Tera" },
       ],
+      // 🆕🆕🆕 D569 — the two FUTURE clauses, literal rows over `banners.ts`' widened table.
+      [
+        "If your opponent has any Future Pokémon in play, this attack does 120 more damage.",
+        { kind: "opponentBannerPokemonInPlay", banner: "Future" },
+      ],
+      [
+        "If you played a Future Supporter card from your hand during this turn, this attack does 100 more damage.",
+        { kind: "yourPlayedBannerSupporterThisTurn", banner: "Future" },
+      ],
     ] as const) {
       expect(corpus().some(([, s]) => s === text), text).toBe(true);
       expect(deriveAttackDamageBonus(text)?.count, text).toEqual({ kind: "boardCondition", cond });
     }
     // These are PRINTED (D207's banner: `Tera` is demand with no supply column),
-    // (🆕🆕🆕 D568 (D539): the "no supply / DATA-BLOCKED / unbuildable" reading is WITHDRAWN FOR TERA — `banners.ts`' engine table, keyed by printing id, supplies the banner; "no INGESTED column classifies it" and "`Tera` is not a type" stay TRUE, and every Ancient/Future claim stands.)
+    // (🆕🆕🆕 D568 (D539): the "no supply / DATA-BLOCKED / unbuildable" reading is WITHDRAWN FOR TERA — `banners.ts`' engine table, keyed by printing id, supplies the banner; "no INGESTED column classifies it" and "`Tera` is not a type" stay TRUE, and every Ancient/Future claim stands. 🆕🆕🆕 D569 (D539): that last clause is WITHDRAWN in turn — Slice 2 part a gave Ancient/Future the same writer, `banners.ts` (86 more ids); "no INGESTED column classifies it" stays TRUE.)
     // so the refusal is about a sentence that exists rather than one invented to
     // be refused — and it is refused at the VOCABULARY while §2's hybrids are
     // refused at the ANCHOR, which is D363's distinction and an order of
     // magnitude in what each would cost to build.
+    // (🆕🆕🆕 D569 (D539): Slither Wing's Future clause is a literal row now — pinned in the resolved
+    // list above — so the printed banner refusal this rung keeps is the ONE left in the column:
+    // Koraidon `sv08-116` "Unrelenting Onslaught", a seat-level attack record, DEFERRED.)
     for (const text of [
-      "If your opponent has any Future Pokémon in play, this attack does 120 more damage.",
+      "If 1 of your other Ancient Pokémon used an attack during your last turn, this attack does 150 more damage.",
     ]) {
       expect(corpus().some(([, s]) => s === text), text).toBe(true);
       expect(deriveAttackDamageBonus(text), text).toBeNull();

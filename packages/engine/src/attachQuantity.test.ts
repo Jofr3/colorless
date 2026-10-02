@@ -848,7 +848,13 @@ describe("D359 §6 — the ids this file rests on are real and locally seated", 
     // Terapagos `sv08-161` — the ONE row that authors an `attack` key ("Prism Charge"). Real
     // catalog ids, no `fix-*` key (`teraBannerD568.test.ts` drives a LOCAL `cardPool`), inserted
     // MID-MAP after `sv07-136`. (Ho-Oh and Regigigas are deriver arms, not keys.)
-    expect(registryCardIds()).toHaveLength(935);
+    // 🆕🆕🆕 D569 — 935 -> **949**: FOURTEEN registry keys on SEVEN program objects — the Paradox
+    // banner unlock, Slice 2 part a: Iron Crown ex ×6 "Cobalt Command", Awakening Drum, Reboot Pod
+    // (non-attack), and SIX `attack`-keyed rows — Miraidon ×2 "Peak Acceleration", Great Tusk ×2
+    // "Land Collapse", Scream Tail "Supportive Singing", Flutter Mane "Perplexing Transfer". Real
+    // catalog ids, no `fix-*` key, inserted MID-MAP after `sv08-161`. (Koraidon ×2, Roaring Moon
+    // ×2, Iron Valiant and Slither Wing are deriver arms, not keys.)
+    expect(registryCardIds()).toHaveLength(949);
     for (const id of Object.values(QUANTITY_IDS).flat()) {
       if (programFor(id) === undefined) continue;
       // Every id that DOES have a program had one before this slice: the eight

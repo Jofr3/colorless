@@ -163,6 +163,7 @@ describe("§1 — one sentence, three printings, and one printed count in the wh
     // 🆕🆕 D491 RE-POINTED index 3. It printed *"Each player draws 3 cards."* until D491
     // BUILT that sentence; a loud control whose sentence has an owner is green and
     // testing nothing. The replacement is DATA-blocked by the `Ancient` banner (no
+    // (🆕🆕🆕 D569 (D539): "DATA-blocked" is WITHDRAWN as the reason — the banner has a writer (`banners.ts`); the row stays unread for its own mechanism, so the control holds)
     // ingested column classifies it), asserted here as a real corpus row at its real
     // printing count rather than byte-pinned (D452/D490).
     expect(attacks[3]?.effect).toBe("Heal 100 damage from 1 of your Benched Ancient Pokémon.");
@@ -368,7 +369,7 @@ describe("§3 — `MATCH_RECORD_VERSION` stays 26, and the prediction is DRIVEN"
   });
 
   it("the engine version moved and the two spellings agree", () => {
-    expect(engineVersion).toBe("0.452.0");
+    expect(engineVersion).toBe("0.453.0");
   });
 });
 

@@ -624,6 +624,14 @@ export function matchesFilter(card: Card | undefined, filter: CardFilter): boole
       // `sv08-189`, Terapagos `sv08-161` "Prism Charge"'s attach target). By printing
       // ID through `banners.ts` (D135), never by name: two Pikachu ex disagree.
       return card.category === "Pokemon" && bannerOf(card) === filter.banner;
+    case "bannerCard":
+      // 🆕🆕🆕 D569 — a CARD of ANY category printing the named BANNER ("each Ancient card
+      // in your discard pile": Roaring Moon "Vengeance Fletching"). `bannerPokemon`'s
+      // sibling WITHOUT the category conjunct, and that is the whole member: a Paradox
+      // banner is printed on Trainers too (Explorer's Guidance, Awakening Drum, Reboot
+      // Pod, Ciphermaniac's Codebreaking), so reusing `bannerPokemon` here would silently
+      // undercount "Ancient card". By printing ID through `banners.ts` (D135).
+      return bannerOf(card) === filter.banner;
     case "suffixPokemon":
       // 🆕🆕 D446 — a Pokémon of a printed RULE-BOX CLASS ("your opponent's Pokémon
       // ex in play"). An EQUALITY on `pokemonSuffixOf` and deliberately NOT

@@ -26,7 +26,15 @@ import {
     `deriveAttack*` readers, by all four splitters and by the registry — and it can
     never stop being refused, because the `Ancient` banner is a per-PRINTING fact that
     `cardSchema` carries no column for. Asserted against the corpus below rather than
-    merely byte-pinned. */
+    merely byte-pinned.
+    🆕🆕🆕 D569 (D539): ~~refused … by the registry — and it can never stop being refused~~
+    WITHDRAWN. The `Ancient` banner is supplied by `banners.ts`' engine table, keyed by
+    printing id (no `cardSchema` column was added — that half stays TRUE), and the one
+    legal printing, Scream Tail `sv05-077`, now has a registry program ("Supportive
+    Singing", `SUPPORTIVE_SINGING`, index-keyed — `paradoxBannerD569.test.ts`). The
+    control below still holds for a narrower reason: the sentence stays unread by every
+    DERIVE reader and splitter, and the fixture body that carries it is not `sv05-077`,
+    so its attack still reports the sentence skipped. */
 const LOUD_SENTENCE = "Heal 100 damage from 1 of your Benched Ancient Pokémon.";
 
 // 0.330.0 → 0.331.0 — 🆕🆕 D429: CLOSING THE PRE-DAMAGE FAMILY.
@@ -825,6 +833,10 @@ describe("§7 — ATTACK_EFFECT_SKIPPED, both directions", () => {
     // blocker is the `Ancient` BANNER, which no ingested column classifies, so it is
     // DATA-blocked rather than merely unbuilt (D461's rule 2) and cannot be built by
     // any reader at any width.
+    // 🆕🆕🆕 D569 (D539): ~~DATA-blocked … cannot be built … at any width~~ WITHDRAWN — it
+    // was BUILT for its one printing (`sv05-077`, a registry row over `banners.ts`). The
+    // control stands because no DERIVE reader reads the sentence and this fixture is not
+    // that printing — an UNREAD sentence, not a data-blocked one.
     expect(skipped?.effect).toBe(LOUD_SENTENCE);
     expect(resolvedByAnyReader(LOUD_SENTENCE)).toBe(false);
     // ⚠️ D452/D490 — assert the specimen IS a row of the committed corpus and read its
@@ -1048,6 +1060,6 @@ describe("§10 — purity and the version", () => {
     // anchor. ⚠️ D427 named the mechanism — **every note counts the pins it INHERITED
     // and never the one it is about to AUTHOR** — and D428 was the first note to get it
     // right. This line is the one being authored.
-    expect(engineVersion).toBe("0.452.0");
+    expect(engineVersion).toBe("0.453.0");
   });
 });

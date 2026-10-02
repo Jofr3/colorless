@@ -26,7 +26,7 @@ import {
 //
 //   5  …by your opponent's Pokémon that have an Ability.          BUILT D251
 //   3  …from your opponent's Tera Pokémon…                        UNBUILDABLE
-// (🆕🆕🆕 D568 (D539): the "no supply / DATA-BLOCKED / unbuildable" reading is WITHDRAWN FOR TERA — `banners.ts`' engine table, keyed by printing id, supplies the banner; "no INGESTED column classifies it" and "`Tera` is not a type" stay TRUE, and every Ancient/Future claim stands.)
+// (🆕🆕🆕 D568 (D539): the "no supply / DATA-BLOCKED / unbuildable" reading is WITHDRAWN FOR TERA — `banners.ts`' engine table, keyed by printing id, supplies the banner; "no INGESTED column classifies it" and "`Tera` is not a type" stay TRUE, and every Ancient/Future claim stands. 🆕🆕🆕 D569 (D539): that last clause is WITHDRAWN in turn — Slice 2 part a gave Ancient/Future the same writer, `banners.ts` (86 more ids); "no INGESTED column classifies it" stays TRUE.)
 //   3  …by attacks from your opponent's Pokémon ex.               BUILT D255
 //   3  As long as this Pokémon is on your Bench, …                BUILT D253
 //   2  …that have any Special Energy attached.                    BUILT D252

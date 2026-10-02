@@ -111,7 +111,7 @@ import {
 //     flow.ts's `endTurnToolTrigger` stage (`koToolsD566.test.ts` §4).
 //   • Reboot Pod `sv05-158` and Glass Trumpet `sv07-135`/`sv08.5-110` — DEAD DATUM
 //     (the Future banner and the Tera one have no supply-side column). Recorded.
-// (🆕🆕🆕 D568 (D539): the "no supply / DATA-BLOCKED / unbuildable" reading is WITHDRAWN FOR TERA — `banners.ts`' engine table, keyed by printing id, supplies the banner; "no INGESTED column classifies it" and "`Tera` is not a type" stay TRUE, and every Ancient/Future claim stands.)
+// (🆕🆕🆕 D568 (D539): the "no supply / DATA-BLOCKED / unbuildable" reading is WITHDRAWN FOR TERA — `banners.ts`' engine table, keyed by printing id, supplies the banner; "no INGESTED column classifies it" and "`Tera` is not a type" stay TRUE, and every Ancient/Future claim stands. 🆕🆕🆕 D569 (D539): that last clause is WITHDRAWN in turn — Slice 2 part a gave Ancient/Future the same writer, `banners.ts` (86 more ids); "no INGESTED column classifies it" stays TRUE.)
 //   • The other ten legal printings of this clause — see (3).
 //
 // ── WHAT THIS ROW COSTS ─────────────────────────────────────────────────────

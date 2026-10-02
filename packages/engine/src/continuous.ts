@@ -245,6 +245,7 @@ export function stadiumShieldsStatus(state: GameState, pokemon: InPlayPokemon): 
     Active Iron Thorns ex, whose lock the rules then switch off and this ungated pass
     would keep on. So R-LK1 holds only while Initialization is UNBUILT, and the fixpoint
     pass is OWED in the slice that builds it (a tripwire in `abilityBundleD559.test.ts`
+    (🆕🆕🆕 D569 (D539): R-PX5 ⚠️ UNRULED: still TRUE — Initialization stays UNBUILT at D569. What changed is that Iron Thorns ex is now a FUTURE Pokémon to the engine (`banners.ts`), so it RECEIVES Cobalt Command's +20, Peak Acceleration's attach and Reboot Pod's attach while its own lock is still unbuilt; none of that touches a lock source, so R-LK1 and the ungated pass stand)
     §7 fails first). So the ungated pass stays; the rotated three still show the
     fixpoint gap on fixtures (Klefki vs Flutter Mane: both locks stay on, pinned in
     `abilityBundleD559.test.ts`). */
@@ -4784,6 +4785,10 @@ export function seatPreWRDamageBonus(
     if (sourceUid !== undefined && disabledAbilityUids(state).has(sourceUid)) continue; // §9
     // The BENEFICIARY clause, on the attacker and on nothing else.
     if (aura.beneficiary !== undefined && !matchesFilter(attackerCard, aura.beneficiary)) continue;
+    // 🆕🆕🆕 D569 — the printed EXCLUSION, on the attacker too ("your Future Pokémon, except
+    // any Iron Crown ex" — Cobalt Command): an attacker of that NAME gets nothing. An
+    // unresolvable attacker already failed the beneficiary filter above.
+    if (aura.exceptName !== undefined && attackerCard?.name === aura.exceptName) continue;
     // D245 — the TARGET clause, on the defender and on nothing else. The two
     // riders are independent by construction: no printing carries both, and a
     // build that read one against the other's card would be green on all four

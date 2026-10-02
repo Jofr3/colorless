@@ -351,7 +351,15 @@ describe("derivation — the clause resolves to a parameterised member", () => {
     // rather than Energy, and blocked on an ingest change besides (the catalog
     // drops the Ancient/Future tag). This is the clause energyClause.test.ts's
     // loud witness now points at, so it is asserted unmapped in two suites.
-    expect(deriveAttackDamageBonus(SLITHER_WING)).toBeNull();
+    // (🆕🆕🆕 D569 (D539): Slither Wing RESOLVES now — a literal row over `banners.ts`, "the catalog drops
+    // the tag" still TRUE — so the near-miss is pinned at its new value, and the loud banner
+    // witness is the deferred Ancient clause.)
+    expect(deriveAttackDamageBonus(SLITHER_WING)?.per).toBe(120);
+    expect(
+      deriveAttackDamageBonus(
+        "If 1 of your other Ancient Pokémon used an attack during your last turn, this attack does 150 more damage.",
+      ),
+    ).toBeNull();
     // Kingambit sv03-150: "4 or more", a threshold over damage counters, on a
     // knockout consequent rather than a damage one.
     expect(

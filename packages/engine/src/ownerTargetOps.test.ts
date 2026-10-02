@@ -112,6 +112,11 @@ import {
 //        ingested column (D146's finding, re-checked). A subgroup the catalog
 //        cannot answer is not a rider — and it is one adjective away from the
 //        row that WAS taken, which is why the capture demands the POSSESSIVE.
+//        (🆕🆕🆕 D569 (D539): ~~REFUSED AND UNBUILDABLE … a subgroup the catalog cannot
+//        answer~~ WITHDRAWN — `banners.ts` answers it (an engine table; "NO ingested column"
+//        stays TRUE) and Flutter Mane "Perplexing Transfer" is BUILT as an index-keyed
+//        registry row over the NEW `moveCountersToDefender.filter`. The DERIVER still refuses
+//        it, which is all the possessive capture above needs.)
 //     ⏹️ Dedenne ex sv02-093/-239 (the printings that BOUGHT this anchor) and
 //        Liepard sv04-115 are all `legal_standard = 0`. ⚠️ The op's own
 //        printings are rotated OUT of Standard; Wobbuffet is the reason it has
@@ -147,6 +152,7 @@ const ROCKET_MIRROR =
 const TAIL_SWAP =
   "Move all damage counters from 1 of your Benched Pokémon to your opponent's Active Pokémon.";
 /** ⚠️ Flutter Mane sv08-096 "Perplexing Transfer" — one adjective from the row
+    // (🆕🆕🆕 D569 (D539): "unbuildable because Ancient has no datum" is WITHDRAWN — BUILT at D569 as a registry attack (`moveCountersToDefender.filter`, `banners.ts`); THIS anchor still refuses it)
     this slice took, and unbuildable because "Ancient" has no datum. */
 const PERPLEXING_TRANSFER =
   "Move all damage counters from 1 of your Benched Ancient Pokémon to your opponent's Active Pokémon.";
@@ -641,6 +647,7 @@ describe("`COUNTER_MOVE_TO_DEFENDER` — one optional capture, three refusals", 
     expect(derived?.[0]).not.toHaveProperty("ownerPokemon");
   });
 
+  // (🆕🆕🆕 D569 (D539): "no datum" is WITHDRAWN — the datum is `banners.ts`; the ANCHOR's refusal (the possessive capture) is what this rung pins, and it stands)
   it("⚠️ REFUSES 'Ancient' — the subgroup with no datum, one adjective away", () => {
     // The capture demands `'s `, so a MARK-subgroup sentence falls through the
     // whole anchor rather than deriving to an op with a permanently empty
@@ -1021,9 +1028,17 @@ describe("FLAGGED — the two counter-move sentences the widened anchor refuses"
     }
   });
 
-  it("⚠️ Flutter Mane sv08-096 (1 legal) — 'Ancient' has NO DATUM to read", () => {
+  it("⚠️ Flutter Mane sv08-096 (1 legal) — 'Ancient' has NO DATUM to read (🆕 D569: the datum is an engine table; built as a registry row)", () => {
+    // 🆕🆕🆕 D569 (D539) — "has NO DATUM to read" / "unavailable" is WITHDRAWN: the datum is
+    // `banners.ts`, an ENGINE table keyed by printing id (the catalog still carries no banner
+    // column — the key sweep below stays TRUE, and so does the name proof). Flutter Mane
+    // "Perplexing Transfer" is BUILT as a hand-written REGISTRY attack, `moveCountersToDefender`
+    // with the NEW source `filter` (`bannerPokemon Ancient`) — so the ANCHOR's refusal below
+    // still holds (the deriver does not read it), and the registry row is what plays it.
     expect(deriveAttackEffect(PERPLEXING_TRANSFER)).toBeNull();
-    expect(programFor("sv08-096")?.attack).toBeUndefined();
+    expect(programFor("sv08-096")?.attack?.[0]).toEqual([
+      { op: "moveCountersToDefender", filter: { kind: "bannerPokemon", banner: "Ancient" } },
+    ]);
     // ⚠️ THE PROOF THAT IT IS A MISSING DATUM AND NOT A MISSING PREDICATE, taken
     // off the CARD SHAPE rather than off one printing. `Card` is a closed schema
     // (packages/schema catalog/card.ts) and the only mark-like column on it is

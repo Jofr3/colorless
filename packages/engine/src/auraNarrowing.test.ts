@@ -265,8 +265,17 @@ describe("D245 — the six registry rows", () => {
     // The `Future` group, still blocked on the INGEST rather than the engine — and
     // asserted UNBUILT beside the positives off the SAME field, so the pair can
     // only both pass if this slice built exactly the narrowings a column answers.
+    // 🆕🆕🆕 D569 (D539): ~~still blocked … asserted UNBUILT~~ WITHDRAWN — the `Future` group
+    // (Iron Crown ex "Cobalt Command" ×6) is BUILT on `banners.ts`' widened table, the same
+    // field with `beneficiary: bannerPokemon Future` and the NEW `exceptName`. "No INGESTED
+    // column classifies the banner" stays true; the engine table is the writer. The rung now
+    // pins that it is built off the SAME field, so the pair still reads one family.
     for (const id of ["svp-146", "sv05-081", "sv05-191", "sv05-206", "sv05-216", "sv08.5-158"]) {
-      expect(programFor(id), id).toBeUndefined();
+      expect(programFor(id)?.passive?.seatDamageBonusBeforeWR, id).toEqual({
+        amount: 20,
+        beneficiary: { kind: "bannerPokemon", banner: "Future" },
+        exceptName: "Iron Crown ex",
+      });
     }
   });
 

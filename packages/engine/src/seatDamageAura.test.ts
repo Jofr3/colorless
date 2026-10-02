@@ -63,6 +63,16 @@ import {
 // the entry point was priced correctly and the thing it was an entry TO was
 // already known-unbuildable, in this repo's own comments, two decisions earlier.
 //
+// 🆕🆕🆕 D569 (D539): ~~THE `Future` HALF CANNOT BE A RIDER ON THIS FIELD, OR ON ANY FIELD,
+// TODAY … blocked on the INGEST … no amount of engine work moves it … known-unbuildable~~
+// WITHDRAWN. The premise "every `CardFilter` member reads an INGESTED COLUMN" stopped being
+// true at D568, when `bannerPokemon` began reading `banners.ts` — an ENGINE table keyed by
+// printing id; D569 added the Future rows, and Cobalt Command (all six printings above) is
+// BUILT on this very field: `beneficiary { bannerPokemon Future }` plus a NEW `exceptName`
+// ("Iron Crown ex"), `paradoxBannerD569.test.ts` §6. "No catalog column carries the banner"
+// stays TRUE (the `suffix` census above is unchanged); it was engine work, not an ingest
+// change, that moved it. The rider proof below still stands on its own terms.
+//
 // ─────────────────────────────────────────────────────────────────────────────
 // WHAT REPLACED IT — the rider proof, on a subgroup the catalog CAN answer.
 // ─────────────────────────────────────────────────────────────────────────────
@@ -72,6 +82,7 @@ import {
 // this slice ships:
 //
 //   6  BLOCKED "…your **Future** Pokémon, except any Iron Crown ex, do 20 more…"
+//      (🆕🆕🆕 D569 (D539): BUILT — Cobalt Command, see the withdrawal note above)
 //   3  ✅ BUILT "Attacks used by your Pokémon do 20 more damage…"      Serperior ex
 //   2  ✅ BUILT "…your **Cynthia's** Pokémon do 30 more damage…"       Roserade
 //   2  ✅ BUILT "…your **Hop's** Pokémon do 30 more…doesn't stack."    Snorlax
@@ -227,18 +238,27 @@ describe("D243 — the seven registry rows", () => {
     for (const id of ids) expect(programFor(id)?.passive?.seatDamageBonusBeforeWR).toBeDefined();
   });
 
-  it("🛑 the SIX `Future` printings are STILL unbuilt, and the reason is the INGEST", () => {
+  // 🆕🆕🆕 D569 (D539): "STILL unbuilt, and the reason is the INGEST" is WITHDRAWN — the six are
+  // BUILT (`COBALT_COMMAND`); the ingest still drops the banner (TRUE), and the engine table
+  // `banners.ts` is its writer. The rung now pins the SAME field from the other side.
+  it("🛑 the SIX `Future` printings were unbuilt on the INGEST — 🆕 D569: built on `banners.ts`", () => {
     // The row's named half, re-asserted as UNBUILT rather than quietly dropped.
     // This is not a vacuous absence check (conventions: "these ids are unbuilt is
     // nearly always true") — it is paired with the POSITIVE seven above, off the
     // same field, so the pair can only both pass if the slice built exactly the
     // sentences whose subgroup the catalog can answer.
     for (const id of ["svp-146", "sv05-081", "sv05-191", "sv05-206", "sv05-216", "sv08.5-158"]) {
-      expect(programFor(id)).toBeUndefined();
+      expect(programFor(id)?.passive?.seatDamageBonusBeforeWR).toEqual({
+        amount: 20,
+        beneficiary: { kind: "bannerPokemon", banner: "Future" },
+        exceptName: "Iron Crown ex",
+      });
     }
     // The mechanism itself is NOT what blocks them: the field is in place and the
     // amount is identical (20). What is missing is a `CardFilter` member that can
     // name the banner, and no `CardFilter` member reads anything but a column.
+    // (🆕🆕🆕 D569 (D539): "no `CardFilter` member reads anything but a column" was already false
+    // at D568 — `bannerPokemon` reads `banners.ts` — and the missing member is now there.)
     expect(programFor("sv10.5b-003")?.passive?.seatDamageBonusBeforeWR?.amount).toBe(20);
   });
 

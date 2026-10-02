@@ -566,7 +566,19 @@ describe("deriveAttackDamageBonus — the near-misses that stay UNMAPPED (and th
     // which means it cannot be mapped out from under this case by a table row.
     const slitherWing =
       "If your opponent has any Future Pokémon in play, this attack does 120 more damage.";
-    expect(deriveAttackDamageBonus(slitherWing)).toBeNull();
+    // 🆕🆕🆕 D569 (D539) — "it cannot be mapped out from under this case by a table row" is WITHDRAWN: an
+    // engine table keyed by printing id (`banners.ts`) and a literal clause row did exactly that.
+    // Slither Wing now RESOLVES (pinned); the loud witness moves to the one banner clause left —
+    // Koraidon `sv08-116` "Unrelenting Onslaught", whose blocker is a seat-level attack record.
+    expect(deriveAttackDamageBonus(slitherWing)?.count).toEqual({
+      kind: "boardCondition",
+      cond: { kind: "opponentBannerPokemonInPlay", banner: "Future" },
+    });
+    expect(
+      deriveAttackDamageBonus(
+        "If 1 of your other Ancient Pokémon used an attack during your last turn, this attack does 150 more damage.",
+      ),
+    ).toBeNull();
     // It also keeps the discriminator this case was originally chosen for: "in
     // play" is not "attached", the one word between a board-wide read and a
     // per-Pokémon one, and the reason this suite's template is anchored on the

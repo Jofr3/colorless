@@ -1669,6 +1669,53 @@ export interface MatchRecord {
     or client byte: the redacted view does not carry `allowances`, so the HUD does not
     show the side bonus (a carried display debt, decisions.md D556).
 
+    🆕🆕🆕 **STAYS 36 AT D569 — THE PARADOX BANNER UNLOCK (SLICE 2 PART a) CHANGES NO GameState, Card,
+    EVENT OR PROMPT SHAPE; EVERY PERSISTED CHANGE IS A D125 WIDENING, AND THE 0.452 ROLLBACK READINGS ARE
+    NAMED, MEASURED FROM 0.452's SOURCE.** (Placed ABOVE the D568 block, out of date order, so the
+    declaration's anchor lines stay byte-identical — D563's placement.) The addresses, named first (D456's
+    rule): `MatchRecord.state.phase.cont.pendingOp` / `.rest` and `phase.prompt`. ⑴ `healChosen`'s NEW
+    optional `filter` (Scream Tail "Supportive Singing") and `moveCountersToDefender`'s NEW optional `filter`
+    (Flutter Mane "Perplexing Transfer") ride `pendingOp` when the pick PARKS (two or more Benched Ancient
+    bodies) — on the EXISTING `choosePokemon` prompt. ⑵ `attachFromDiscard`'s NEW optional `targetBanner` /
+    `each` (Reboot Pod) ride `pendingOp` when it parks — on the EXISTING `attachCards` prompt, whose shape is
+    unchanged (no `min` was added: the mandatory half is an apply-time top-up). ⑶ `attachFromDeck.targetBanner`
+    now carries "Future" (Miraidon "Peak Acceleration") at the same address D568 opened. ⑷ `drawCards.per`'s
+    NEW `pokemonInPlay` member (Awakening Drum) is NEVER persisted: the Item's lone `drawCards` neither parks
+    nor rides a `rest`. ⑸ The NEW `CardFilter` `bannerCard` reaches NO persisted address — it is read by a
+    deriver row (`DISCARD_PILE_NOUNS`, a parse-time `DamageCountSource`) and inside `conditionHolds`' code,
+    never written into an op. ⑹ The NEW `BoardCondition`s `opponentBannerPokemonInPlay` /
+    `yourPlayedBannerSupporterThisTurn` are evaluated at step time and never written into a park: Iron
+    Smasher's and Majestic Sword's are derived damage bonuses read at §8.5, and Land Collapse's
+    `conditionGate` follows a `discardDeckTop` that cannot park, so the gate runs in the same action. No
+    `GameState` key is added (the played Supporter is the EXISTING `allowances.supporterPlayedUid`), the
+    86 Ancient/Future ids are CATALOG data (`banners.ts`), and no event gains a member. D441: nothing is
+    renamed or removed, and a v36 record written by 0.452 cannot hold any of the new values — every older
+    record means what it meant. THE 0.452 ROLLBACK READINGS (D456's test — does a reading GRANT an illegal
+    action, or only whiff / narrow?), each read off 0.452's own bytes:
+      • a parked Supportive Singing / Perplexing Transfer resumes AS BUILT — 0.452's `validateChoice`
+        (`choosePokemon`) checks the answer against the PERSISTED prompt's candidates (the Ancient bodies
+        the offer already chose) and `applyChoice` heals / moves the picked ref without re-reading the op;
+        the D561 `healChosen` precedent's key was read at the APPLY, this one only at the OFFER, so nothing
+        is ignored on the way out. ⚠️ The widening the pricing round predicted — 0.452 ignoring `filter`
+        and offering every Benched body — needs 0.452 to STEP the op fresh, i.e. the op in `rest` behind an
+        earlier park; NO D569 program puts a parking op before either rider (each is its attack's only
+        op, and an attack's program starts in the declaring action), so that reading is unreachable from
+        a v36 record, and is named here rather than assumed away;
+      • a parked Reboot Pod resumes with the answer AS GIVEN and NO top-up — 0.452's `applyChoice` arm
+        is `attachFromZoneApply` alone (it never reads `each`), so a short or empty answer stands: a
+        NARROWING (fewer Energy attached, the Item spent), never an illegal attach — every uid and body is
+        still checked against the persisted prompt, `maxPerTarget` 1 included;
+      • a parked Peak Acceleration resumes AS BUILT (the targets are the prompt's; 0.452's apply re-reads
+        no `targetBanner`);
+      • off the park, "Ancient"/"Future" are ABSENT from 0.452's `BANNER_BY_ID`, so `bannerOf` answers
+        `undefined` and every banner read narrows: Cobalt Command's `bannerPokemon Future` beneficiary
+        matches nobody (no bonus — and 0.452 ignores `exceptName`, which could only have narrowed further);
+        the unknown `BoardCondition` kinds and `bannerCard` fall out of 0.452's `conditionHolds` /
+        `matchesFilter` switches with `undefined` (falsy — no bonus, no gate); the four reader rows and the
+        seven registry rows are absent, so those sentences are skipped loudly and those cards are unbuilt.
+    No reading grants an illegal action, so no printing was dropped and `MATCH_RECORD_VERSION` stays 36.
+    No client byte moved (the prompt notes are strings the HUDs already render).
+
     🆕🆕🆕 **STAYS 36 AT D568 — THE TERA BANNER UNLOCK CHANGES NO GameState, Card, EVENT OR PROMPT
     SHAPE; EVERY PERSISTED CHANGE IS A D125 WIDENING, AND THE 0.451 ROLLBACK READINGS ARE NAMED,
     MEASURED FROM 0.451's SOURCE.** (Placed ABOVE the D567 block, out of date order, so the

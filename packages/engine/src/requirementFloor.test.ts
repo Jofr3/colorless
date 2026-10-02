@@ -683,7 +683,13 @@ describe("§5 — on a BOARD: each of the three cancels and lands, and the ids a
     // Terapagos `sv08-161` — the ONE row that authors an `attack` key ("Prism Charge"). Real
     // catalog ids, no `fix-*` key (`teraBannerD568.test.ts` drives a LOCAL `cardPool`), inserted
     // MID-MAP after `sv07-136`. (Ho-Oh and Regigigas are deriver arms, not keys.)
-    expect(ids).toHaveLength(935);
+    // 🆕🆕🆕 D569 — 935 -> **949**: FOURTEEN registry keys on SEVEN program objects — the Paradox
+    // banner unlock, Slice 2 part a: Iron Crown ex ×6 "Cobalt Command", Awakening Drum, Reboot Pod
+    // (non-attack), and SIX `attack`-keyed rows — Miraidon ×2 "Peak Acceleration", Great Tusk ×2
+    // "Land Collapse", Scream Tail "Supportive Singing", Flutter Mane "Perplexing Transfer". Real
+    // catalog ids, no `fix-*` key, inserted MID-MAP after `sv08-161`. (Koraidon ×2, Roaring Moon
+    // ×2, Iron Valiant and Slither Wing are deriver arms, not keys.)
+    expect(ids).toHaveLength(949);
     for (const id of BOUGHT_IDS) {
       expect(ids, id).not.toContain(id);
       expect(programFor(id), id).toBeUndefined();

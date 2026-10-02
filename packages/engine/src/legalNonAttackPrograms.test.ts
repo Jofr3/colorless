@@ -593,14 +593,14 @@ const DROPPED = [
   // the one place the pre-hit value is still in scope. It cost ONE `PassiveEffects`
   // flag, one shared helper and four call sites, and NO new detection site — D171
   // bought the fourth at a high price and this slice deliberately bought none.
-  {
-    sentence:
-      "Attacks used by your Future Pokémon, except any Iron Crown ex, do 20 more damage to your opponent's Active Pokémon (before applying Weakness and Resistance).",
-    ids: ["svp-146", "sv05-081", "sv05-191", "sv05-206", "sv05-216", "sv08.5-158"],
-    legal: 6,
-    needs:
-      "🛑 RE-PRICED AT D330, AND THE AURA HALF IS NO LONGER TRUE. This row read 'a SEAT-WIDE pre-W/R damage AURA. `damageBonusBeforeWR` and both its gated siblings are folded by `passivesOf(attacker)` — they modify their HOLDER only. … i.e. `seatDamageReductionAfterWR`'s scan shape pointed at the bonus seam. It ALSO needs a subtype predicate (Future) and a by-name exemption… The bare version of the same shape — Attacks used by your Pokémon do 20 more damage… (sv10.5b-003/-156/-164, 3 legal) — needs only the aura, and is the cheapest entry point.' — and the aura it asks for SHIPPED AT D243 as `PassiveEffects.seatDamageBonusBeforeWR`, deliberately OUTSIDE `passivesOf`'s fold and built to `seatDamageReductionAfterWR`'s scan shape, which is what this string describes almost word for word. D245 then added BOTH riders: `beneficiary?: CardFilter` (whose attacks get the bonus) and `target?: CardFilter` (who is being hit). 🛑 AND THE 'CHEAPEST ENTRY POINT' IT NAMES IS ITSELF BUILT — `sv10.5b-003` is `REGAL_CHEER`, `{ seatDamageBonusBeforeWR: { amount: 20 } }`, pinned in `seatDamageAura.test.ts`. So a work order pointed a later slice at a row that had already been done, and nothing could redden: this table's assertion guards each row's `ids`, and the entry point lives in the PROSE. WHAT REMAINS IS TWO PIECES AND NEITHER IS AN AURA: (1) a subtype predicate for 'Future' — `beneficiary` takes a `CardFilter` and no member of that union reads a Pokémon SUBTYPE (`typedPokemon` is the ENERGY type; `ownerPokemon` is the printed name prefix); (2) the by-name exemption 'except any Iron Crown ex', which no filter negates. 🆕 A `needs` STRING THAT DESCRIBES A PIECE BY ITS SHAPE RATHER THAN BY ITS NAME ROTS SILENTLY — nobody greps for 'the scan shape pointed at the bonus seam', so D243 built exactly that and this row went on saying it was missing for 87 decisions.",
-  },
+  // 🆕🆕🆕 **D569 — THE IRON CROWN EX ROW LEFT `DROPPED`: BUILT.** Iron Crown ex
+  // `sv05-081`/`-191`/`-206`/`-216`, `sv08.5-158`, `svp-146` "Cobalt Command" (6 legal) is
+  // `COBALT_COMMAND` — `seatDamageBonusBeforeWR { 20, beneficiary: bannerPokemon Future,
+  // exceptName: "Iron Crown ex" }`. Its `needs` string (re-priced at D330) was RIGHT that the aura
+  // half was already built and that the blocker was the Future SUBGROUP; it was wrong that the fix
+  // had to be a catalog column: an ENGINE table keyed by printing id (`banners.ts`) supplied the
+  // banner (the ingest still drops it — TRUE), and the exclusion cost one optional key. The row is
+  // removed rather than kept, because this list asserts UNBUILT. `DROPPED` is now 1.
   // 🛑🛑 **THE BLOOD MOON ROW LIVED HERE FROM D199 UNTIL D242, AND ITS DECLINE WAS
   // WRONG ON THE FACTS.** It read: *"an ATTACK-NAME gate on
   // `attackCostDiscountPerOpponentPrize`. … Authoring the ungated field would
@@ -2236,7 +2236,9 @@ describe("D199 — the registry map", () => {
     // shipped is named in a row's own `ids` and not merely in a `needs` string. That
     // is the contrast the note above was written for: the guard covers the ids, so it
     // fires exactly when the ids are built and stays silent when the prose rots.
-    expect(DROPPED).toHaveLength(2);
+    // 🆕🆕🆕 D569 — 2 -> **1**: the Iron Crown ex aura row is BUILT (`COBALT_COMMAND`), named in a
+    // row's own `ids`, so the guard fired exactly as D331's note says it should.
+    expect(DROPPED).toHaveLength(1);
     for (const d of DROPPED) {
       expect(d.needs.length, `${d.sentence.slice(0, 30)}… has no reason`).toBeGreaterThan(80);
       expect(d.ids, `${d.sentence.slice(0, 30)}… miscounts its printings`).toHaveLength(d.legal);

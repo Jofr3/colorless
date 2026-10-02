@@ -119,8 +119,17 @@ function matchup(
     ⚠️ **AND IT CAN STILL FIRE**, which is what keeps it a falsifier rather than a monument:
     the day the banner reaches a persisted column and `inPlayBodyFilter` answers it,
     `deriveAttackDamageMultiplier` claims this string and the rung goes RED naming its own
-    replacement. §"REFUSES" drives exactly that. */
-const UNREAD_COUNT_NOUN = "This attack does 30 damage for each of your Ancient Pokémon in play.";
+    replacement. §"REFUSES" drives exactly that.
+
+    🆕🆕🆕 **D569 (D539) — IT FIRED, AND "no `CardFilter` inhabitant can name an Ancient body and
+    none can be written" / "The fix is an INGEST change" ARE WITHDRAWN.** The fix was an ENGINE
+    TABLE keyed by printing id (`banners.ts`; the ingest still drops the banner — TRUE) and the
+    map's "Ancient Pokémon" key: Koraidon "Primordial Beatdown" ×2 is BUILT. The witness is
+    re-pointed one axis over, to the OTHER Paradox banner, which the map does not spell —
+    ⚠️ a CONSTRUCTED string now (the column prints no "for each of your Future Pokémon in
+    play"), so it pins the VOCABULARY and no longer a printed row. The printed row is pinned
+    as claimed in `bodiesInPlayScaling.test.ts` §2. */
+const UNREAD_COUNT_NOUN = "This attack does 30 damage for each of your Future Pokémon in play.";
 
 /** 🆕🆕🆕 D519 — the FIFTH home, kept as the LIVE counter-example so *"we re-homed it"* is a
     measurement rather than a story. `censusAttackCorpus.ts` FILE LINE 596, **1 legal
@@ -252,6 +261,8 @@ describe("deriveAttackDamageBonus — the additive counter-scaling reader", () =
     // there is no residue row left with that blocker. The sixth home is blocked one layer
     // LOWER — at the printed noun's VOCABULARY, and permanently, because the Ancient banner
     // is in no persisted column. See its block above.
+    // (🆕🆕🆕 D569 (D539): "permanently" is WITHDRAWN — `banners.ts` plus the map's "Ancient
+    // Pokémon" key built it; the witness is the constructed Future twin, per that block.)
     //
     // 🛑 **THE WITNESS IS RE-POINTED AND EVERY OLD SUBJECT IS ASSERTED LIVE BELOW**, because
     // a lone `toBeNull` on a fresh string would pass even if every reader in this file were
@@ -261,7 +272,7 @@ describe("deriveAttackDamageBonus — the additive counter-scaling reader", () =
     // …and the ANCHOR is not what refuses it: the same pattern claims the same shape at a
     // noun the shared map DOES answer, so the null above is the VOCABULARY and nothing else.
     expect(
-      deriveAttackDamageMultiplier(UNREAD_COUNT_NOUN.replace("Ancient", "Basic")),
+      deriveAttackDamageMultiplier(UNREAD_COUNT_NOUN.replace("Future", "Basic")),
     ).toEqual({
       per: 30,
       count: { kind: "pokemonInPlay", seat: "you", filter: { kind: "basicPokemon" } },
