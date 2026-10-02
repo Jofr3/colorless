@@ -293,20 +293,24 @@ describe("§1 — the price, RE-DERIVED: the residue steps, and the 2-printing b
     // distribution goes `{1: 12, 5: 1}` -> `{1: 11, 5: 1}`. ⚠️ AND THIS STEP WAS TAKEN BY A
     // SECOND MEMBER, the OPPOSITE shape from D391's one slice back — the measurements that
     // decided it are driven in `benchNameSubstring.test.ts` §2.
-    expect(refused.length).toBe(5); // 🆕🆕 D436 -2 sentences (THE "EXTRA ENERGY" DECLARATION READ — corpus rows 319/320, **2 sentences / 5 legal printings on ONE clause**, the record D368 refused on SHAPE as a `BoardCondition` and this slice takes as a `DamageCountSource` (`extraEnergyUnitsBeyondCost`), because the predicate reads THIS ATTACK'S COST and the fold runs inside `attack()` where that cost is a local. Claimed WHOLE by `deriveAttackDamageBonus` through ONE new anchor `EXTRA_ENERGY_BONUS`, so the RAW reader summand alone steps: the reader SURFACE stands still at 13 and the registry / split / compound summands were RE-MEASURED UNMOVED rather than assumed.) // 🆕🆕 D398 — 8 -> 7, the DECK-SIZE READ, and the LAST buildable sentence in this residue
-    expect(units(refused)).toBe(5); // 🆕🆕 D436 -5 printings (THE "EXTRA ENERGY" DECLARATION READ — corpus rows 319/320, **2 sentences / 5 legal printings on ONE clause**, the record D368 refused on SHAPE as a `BoardCondition` and this slice takes as a `DamageCountSource` (`extraEnergyUnitsBeyondCost`), because the predicate reads THIS ATTACK'S COST and the fold runs inside `attack()` where that cost is a local. Claimed WHOLE by `deriveAttackDamageBonus` through ONE new anchor `EXTRA_ENERGY_BONUS`, so the RAW reader summand alone steps: the reader SURFACE stands still at 13 and the registry / split / compound summands were RE-MEASURED UNMOVED rather than assumed.) // 🆕🆕 D398 — 11 -> 10, the DECK-SIZE READ's one printing
+    expect(refused.length).toBe(3); // 🆕🆕🆕 D568 -2 sentences (THE TWO TERA CLAUSES left the residue — Ho-Oh `sv08-019` "Shining Blaze" and Regigigas `sv08.5-086` "Jewel Breaker", one printing each, two literal rows over `banners.ts`; the three left are the Ancient/Future banners). // 🆕🆕 D436 -2 sentences (THE "EXTRA ENERGY" DECLARATION READ — corpus rows 319/320, **2 sentences / 5 legal printings on ONE clause**, the record D368 refused on SHAPE as a `BoardCondition` and this slice takes as a `DamageCountSource` (`extraEnergyUnitsBeyondCost`), because the predicate reads THIS ATTACK'S COST and the fold runs inside `attack()` where that cost is a local. Claimed WHOLE by `deriveAttackDamageBonus` through ONE new anchor `EXTRA_ENERGY_BONUS`, so the RAW reader summand alone steps: the reader SURFACE stands still at 13 and the registry / split / compound summands were RE-MEASURED UNMOVED rather than assumed.) // 🆕🆕 D398 — 8 -> 7, the DECK-SIZE READ, and the LAST buildable sentence in this residue
+    expect(units(refused)).toBe(3); // 🆕🆕🆕 D568 -2 printings (the two Tera clauses, one printing each). // 🆕🆕 D436 -5 printings (THE "EXTRA ENERGY" DECLARATION READ — corpus rows 319/320, **2 sentences / 5 legal printings on ONE clause**, the record D368 refused on SHAPE as a `BoardCondition` and this slice takes as a `DamageCountSource` (`extraEnergyUnitsBeyondCost`), because the predicate reads THIS ATTACK'S COST and the fold runs inside `attack()` where that cost is a local. Claimed WHOLE by `deriveAttackDamageBonus` through ONE new anchor `EXTRA_ENERGY_BONUS`, so the RAW reader summand alone steps: the reader SURFACE stands still at 13 and the registry / split / compound summands were RE-MEASURED UNMOVED rather than assumed.) // 🆕🆕 D398 — 11 -> 10, the DECK-SIZE READ's one printing
     // 🛑 A 1:2 STEP, which is the shape seven earlier slices in this family took —
     // D384's was the family's only 1:1. Written as offsets off the LIVE head so a
     // successor inherits the history without freezing it: D384's 20/24, D378's 21/25,
     // D377's 22/26, D376's 24/28.
     // 🆕🆕 D392 — the OFFSET gains one on each axis: the head moved, this one's did not.
-    expect([refused.length + 15, units(refused) + 19]).toEqual([20, 24]);
+    // 🆕🆕🆕 D568 — the OFFSET gains TWO on each axis: the head moved by the two Tera clauses (Ho-Oh, Regigigas, one printing each), this one's did not.
+    expect([refused.length + 17, units(refused) + 21]).toEqual([20, 24]);
     // 🆕🆕 D392 — the OFFSET gains one on each axis: the head moved, this one's did not.
-    expect([refused.length + 16, units(refused) + 20]).toEqual([21, 25]);
+    // 🆕🆕🆕 D568 — the OFFSET gains TWO: the head moved by the two Tera clauses (one printing each), this one's did not.
+    expect([refused.length + 18, units(refused) + 22]).toEqual([21, 25]);
     // 🆕🆕 D392 — the OFFSET gains one on each axis: the head moved, this one's did not.
-    expect([refused.length + 17, units(refused) + 21]).toEqual([22, 26]);
+    // 🆕🆕🆕 D568 — every EARLIER head below is re-derived from this one, so each OFFSET gains TWO (the two Tera clauses left the residue).
+    expect([refused.length + 19, units(refused) + 23]).toEqual([22, 26]);
     // 🆕🆕 D392 — the OFFSET gains one on each axis: the head moved, this one's did not.
-    expect([refused.length + 19, units(refused) + 23]).toEqual([24, 28]);
+    // 🆕🆕🆕 D568 — every EARLIER head below is re-derived from this one, so each OFFSET gains TWO (the two Tera clauses left the residue).
+    expect([refused.length + 21, units(refused) + 25]).toEqual([24, 28]);
 
     const byClause = new Map<string, number>();
     for (const [n, s] of refused) {
@@ -341,7 +345,9 @@ describe("§1 — the price, RE-DERIVED: the residue steps, and the 2-printing b
     // refusal and D436 claims it, so the distribution loses its only non-singleton
     // entry while the singleton band stands still at 5. ⚠️ THE WHOLE DISTRIBUTION IS
     // STILL ASSERTED (D379's saturation rule), so this reddens if any band reappears.
-    expect([...distribution].sort((a, b) => a[0] - b[0])).toEqual([[1, 5]]);
+    // 🆕🆕🆕 D568 — `{1: 5}` -> `{1: 3}`: the two Tera clauses (one printing each) left the
+    // singleton band; the three left are the Ancient/Future banners.
+    expect([...distribution].sort((a, b) => a[0] - b[0])).toEqual([[1, 3]]);
     // 🆕🆕 D387 — 18 -> **17**: the STAGE 1 clause left the 1-printing band, which is
     // the ONLY band that moved. The 2-printing band was already empty and stays empty,
     // and the refusal is still driven from OUTSIDE it.
@@ -353,7 +359,7 @@ describe("§1 — the price, RE-DERIVED: the residue steps, and the 2-printing b
     // band, with the 2-printing band already empty and staying empty.
     // 🆕🆕 D391 — the TYPED PER-BODY ENERGY THRESHOLD left the 1-printing band too.
     // 🆕🆕 D392 — 13 -> **12**: the SUBSTRING NAME READ's clause left the 1-printing band.
-    expect(byClause.size).toBe(5); // 🆕🆕 D436 -1 clause: the 5-printing DECLARATION clause LEAVES this residue, and the 5 remaining are the D207 banners (THE "EXTRA ENERGY" DECLARATION READ — corpus rows 319/320, **2 sentences / 5 legal printings on ONE clause**, the record D368 refused on SHAPE as a `BoardCondition` and this slice takes as a `DamageCountSource` (`extraEnergyUnitsBeyondCost`), because the predicate reads THIS ATTACK'S COST and the fold runs inside `attack()` where that cost is a local. Claimed WHOLE by `deriveAttackDamageBonus` through ONE new anchor `EXTRA_ENERGY_BONUS`, so the RAW reader summand alone steps: the reader SURFACE stands still at 13 and the registry / split / compound summands were RE-MEASURED UNMOVED rather than assumed.) // 🆕🆕 D398 — the DECK-SIZE READ took ONE more singleton out, a 1:1 step, and it was the LAST BUILDABLE one // 🆕🆕 D397 — the BENCHED-CUBONE FILTER took ONE more singleton out, back to a 1:1 step // 🆕🆕 D394 — the USED-ATTACK PAIR took TWO more singletons out at once, the second two-step in two slices
+    expect(byClause.size).toBe(3); // 🆕🆕🆕 D568 -2 clauses: the two TERA clauses leave (literal rows over `banners.ts`); the 3 remaining are the Ancient/Future banners. // 🆕🆕 D436 -1 clause: the 5-printing DECLARATION clause LEAVES this residue, and the 5 remaining are the D207 banners (THE "EXTRA ENERGY" DECLARATION READ — corpus rows 319/320, **2 sentences / 5 legal printings on ONE clause**, the record D368 refused on SHAPE as a `BoardCondition` and this slice takes as a `DamageCountSource` (`extraEnergyUnitsBeyondCost`), because the predicate reads THIS ATTACK'S COST and the fold runs inside `attack()` where that cost is a local. Claimed WHOLE by `deriveAttackDamageBonus` through ONE new anchor `EXTRA_ENERGY_BONUS`, so the RAW reader summand alone steps: the reader SURFACE stands still at 13 and the registry / split / compound summands were RE-MEASURED UNMOVED rather than assumed.) // 🆕🆕 D398 — the DECK-SIZE READ took ONE more singleton out, a 1:1 step, and it was the LAST BUILDABLE one // 🆕🆕 D397 — the BENCHED-CUBONE FILTER took ONE more singleton out, back to a 1:1 step // 🆕🆕 D394 — the USED-ATTACK PAIR took TWO more singletons out at once, the second two-step in two slices
     // 🆕🆕 **D436 — 5 → 1: THE DECLARATION CLAUSE LEFT AND THE RESIDUE IS FLAT.** The
     // paragraph above is right about the SHAPE and D436 does not contradict it: no
     // `BoardCondition` answers *"in addition to this attack's cost"*, and none does

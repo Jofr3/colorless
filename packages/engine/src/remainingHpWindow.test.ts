@@ -62,7 +62,9 @@ import {
 //   1. Largest live `ROWS` residue in `censusAtHead.test.ts`: **row 9, 7 ids**.
 //   2. Those 7 are FOUR blockers, not one. Three are refused: Reboot Pod
 //      (`Future` Pokémon) and Glass Trumpet (`Tera` Pokémon) both rest on a
-//      banner NO CATALOG COLUMN CLASSIFIES (`SELECT suffix, COUNT(*)` returns
+//      banner NO CATALOG COLUMN CLASSIFIES (🆕🆕🆕 D568 (D539): "refused" WITHDRAWN for
+//      Glass Trumpet — BUILT on `banners.ts`' engine table keyed by printing id; "no
+//      catalog column" stays TRUE and Reboot Pod's Future banner stays refused) (`SELECT suffix, COUNT(*)` returns
 //      NULL 3,157 / `ex` 629 and nothing else — D243/D340's finding, re-run), and
 //      Powerglass wants an end-of-turn TOOL trigger point for 2 printings (🆕🆕🆕 D566
 //      (D539): BUILT — `atEndOfYourTurnInActive`, flow.ts's `endTurnToolTrigger`).

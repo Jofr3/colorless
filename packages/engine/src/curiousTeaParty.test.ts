@@ -91,6 +91,7 @@ import {
 // its target set and the widened scan needs a `scope` no member of that family had
 // needed except `seatDamageReduction`. The 3-printing TERA group at the top of the
 // census stays UNBUILDABLE for D252's measured reason — "Tera" is a printed BANNER
+// (🆕🆕🆕 D568 (D539): the "no supply / DATA-BLOCKED / unbuildable" reading is WITHDRAWN FOR TERA — `banners.ts`' engine table, keyed by printing id, supplies the banner; "no INGESTED column classifies it" and "`Tera` is not a type" stay TRUE, and every Ancient/Future claim stands.)
 // and no ingested column carries it.
 
 const bite = { type: "attack", seat: "p1", index: 0 } as const; // {C}, 30 — the ACTIVE hit

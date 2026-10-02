@@ -90,6 +90,7 @@ import {
 //     Pokémon in play."* The Tera predicate has NO SUPPLY-SIDE DATUM: `SELECT
 //     suffix, COUNT(*) FROM cards GROUP BY 1` is two rows (NULL 3,157 / `ex` 629)
 //     and every `Tera` hit in the catalog is DEMAND (registry.ts's Briar note).
+// (🆕🆕🆕 D568 (D539): the "no supply / DATA-BLOCKED / unbuildable" reading is WITHDRAWN FOR TERA — `banners.ts`' engine table, keyed by printing id, supplies the banner; "no INGESTED column classifies it" and "`Tera` is not a type" stay TRUE, and every Ancient/Future claim stands.)
 //     A permanent floor, not a remainder.
 //   • **Reboot Pod `sv05-158` (1 legal)** — *"to each of your **Future**
 //     Pokémon"*, the same dead datum (D243).

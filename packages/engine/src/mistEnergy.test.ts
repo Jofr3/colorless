@@ -50,6 +50,10 @@ import {
 // group 3 (permanently unbuildable), D253's 3, D252's 2, D254's 1, and 🛑 **17
 // ATTACK printings on 2 sentences** which are D142's durated §11 spelling and NOT
 // a row — reading them as one would author 17 printings twice.
+// (🆕🆕🆕 D568 (D539): "permanently unbuildable" is WITHDRAWN for this TERA group — Milotic ex
+// "Sparkling Scales" ×3 (`sv08-042`/`-217`/`-237`) is BUILT on the new engine datum `banners.ts`
+// (`preventDamageAndEffectsFromBanners`), so this residue is now EMPTY; "no INGESTED column
+// classifies the banner" stays true.)
 //
 // ── THE COLUMN CENSUS, WHICH IS WHAT MAKES THIS ONE SLICE ────────────────────
 // `category='Energy' AND energy_type='Special' AND legal_standard=1 AND effect<>''`
@@ -82,7 +86,8 @@ import {
 //     🆕 D262 SHARPENED THE PROVISION HALF, BY READING `costMet` RATHER THAN BY
 //     INHERITING THE CELL: "it provides 2 in any combination of {P} Energy and
 //     {D} Energy" needs a **THIRD UNIT KIND** — a wildcard CONSTRAINED to a set of
-//     types. `costMet` (attack.ts) has exactly two: a concrete type, and
+//     types. `costMet` (attack.ts; 🆕🆕🆕 D568 (D539): now cards.ts, re-exported from
+//     attack.ts, unchanged) has exactly two: a concrete type, and
 //     `ANY_ENERGY`, which fills ANY slot. `provides: ["Psychic", "Darkness"]` is
 //     NOT this sentence (it refuses a {P}{P} cost the print allows) and
 //     `[ANY_ENERGY, ANY_ENERGY]` — D262's own units — is not either (it pays a

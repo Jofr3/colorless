@@ -2,6 +2,7 @@ import {
   ANY_ENERGY,
   attacksOf,
   cardOfUid,
+  costMet,
   energyProvidesOf,
   hasRuleBox,
   hpOf,
@@ -9,6 +10,7 @@ import {
   isEvolutionPokemon,
   isExOrV,
   isSpecialEnergy,
+  isTeraPokemon,
   isStage2Pokemon,
   matchesFilter,
   pokemonSuffixOf,
@@ -17,6 +19,7 @@ import {
   topUid,
 } from "./cards";
 import type { PokemonSuffix, PreventedAttackerClass } from "./cards";
+import type { Banner } from "./banners";
 import type { BasicEnergyType, Card } from "@luminous/schema";
 import type {
   AttackerClass,
@@ -800,6 +803,12 @@ export function passivesOf(
       every board with no such holder, so the read sites pay one `.some` over
       nothing. */
   preventDamageFromAttackerClasses: PreventedAttackerClass[];
+  /** 🆕🆕🆕 §8.5/§11 (D568) — the BANNERS whose attacks this holder refuses, damage AND
+      effects (Milotic ex "Sparkling Scales": `["Tera"]`). A LIST for
+      `preventDamageFromAttackerClasses`' reason (the field names a value); resolved at the
+      FIVE read sites — the four damage arms and `effectRefusedOn` — through `cards.ts
+      preventsAttackerBanner`. Empty on every board with no such holder. */
+  preventDamageAndEffectsFromBanners: Banner[];
   /** §8.5 (D257) — full damage PREVENTION when the damage that would ACTUALLY be
       placed is this number OR MORE. Drednaw `sv07-044` "Impervious Shell",
       **1 legal printing on ONE sentence**:
@@ -1255,6 +1264,7 @@ export function passivesOf(
   let preventDamageAtOrAbove: number | undefined;
   const preventDamageFromTypes: PokemonType[] = [];
   const preventDamageFromAttackerClasses: PreventedAttackerClass[] = [];
+  const preventDamageAndEffectsFromBanners: Banner[] = [];
   // D258 — the COIN-FLIP shields, collected with their Ability names because a fold
   // destroys provenance and `ABILITY_COIN_FLIP` has to name one.
   const preventDamageOnCoinFlip: { ability: string }[] = [];
@@ -1406,6 +1416,9 @@ export function passivesOf(
     // silently.
     if (passive.preventDamageFromAttackerClass !== undefined)
       preventDamageFromAttackerClasses.push(passive.preventDamageFromAttackerClass);
+    // 🆕🆕🆕 D568 — Sparkling Scales, in THIS loop for the §9 reason its siblings are.
+    if (passive.preventDamageAndEffectsFromBanner !== undefined)
+      preventDamageAndEffectsFromBanners.push(passive.preventDamageAndEffectsFromBanner);
     // D257 — the DAMAGE THRESHOLD, and the ONLY line in this loop that is neither an
     // OR, a push nor a sum. `Math.min` because the field names a VALUE and the two
     // readings a scalar could take are not equivalent: a lower threshold shields
@@ -1573,6 +1586,7 @@ export function passivesOf(
     preventTrainerEffects,
     preventAttackEffects,
     preventDamageFromAttackerClasses,
+    preventDamageAndEffectsFromBanners,
     preventDamageAtOrAbove,
     preventDamageOnCoinFlip,
     koPrizeReductions,
@@ -3136,7 +3150,10 @@ export function remainingHpWithin(
       so it stays playable rather than rejecting.
     The one provision read site: attack.ts's §8.2 cost check and the HUD's
     payability preview both call it, so they cannot drift (the D18 duplication
-    is gone). costMet (attack.ts) consumes this flat list. */
+    is gone). costMet (attack.ts) consumes this flat list. (🆕🆕🆕 D568 (D539): `costMet`
+    now LIVES in cards.ts — moved byte for byte, re-exported from attack.ts — and "the one
+    provision read site" has a THIRD caller: `effectiveAttackCost` reads this list for
+    Sparkling Crystal's any-type removal, `anyTypeCostRemoval`.) */
 export function providedEnergy(state: GameState, pokemon: InPlayPokemon): string[] {
   // Which attached energies are Special — for Luminous's "any OTHER Special
   // Energy attached" condition. Resolved once against the live board, then
@@ -4041,6 +4058,20 @@ function benchShieldScan(
     // The TARGET clause, and it is the ONE thing all three printings share: "your
     // BENCHED Pokémon". An Active holder of this uid is out either way.
     if (!side.bench.some((benched) => topUid(benched) === uid)) continue;
+    // 🆕🆕🆕 D568 — THE PRINTED TERA RULE: *"As long as this Pokémon is on your Bench,
+    // prevent all damage done to this Pokémon by attacks (both yours and your
+    // opponent's)."* One conjunct, on the target alone, ahead of every source:
+    //   • a printed RULE, not an Ability — no `disabledAbilityUids`, no `passivesOf`, so
+    //     neither a Klefki lock nor Team Rocket's Watchtower switches it off;
+    //   • DAMAGE only — damage counters are not damage (§8.5), and the rule prints no
+    //     effects half, so the `"effects"` scan never reaches it;
+    //   • BOTH sides' attacks — no attacker is read (this scan takes none);
+    //   • 🛑 R-TB1 (⚠️ UNRULED): `scope` is NOT consulted. Feint Attack's "any effects on
+    //     that Pokémon" nulls an effect the damaged body GRANTS; this is a rule printed on
+    //     the card, not an effect on it, so a sniped benched Tera Pokémon under Feint
+    //     Attack is still shielded. Reverses if a ruling says the rule is such an effect.
+    // Read off the TOP card (§1.2): a Tera Pokémon that evolves into a non-Tera loses it.
+    if (half === "damage" && isTeraPokemon(targetTop)) return true;
     // Thundurus's SOURCE clause: this side's OWN Active Spot and nowhere else —
     // and the DAMAGE half only, because its sentence prints no effects half at
     // all. A widening that let this field reach the effects site would hand
@@ -5270,6 +5301,9 @@ export function toolAttackCostDiscount(state: GameState, pokemon: InPlayPokemon)
     const id = state.cardIdByUid[toolUid];
     const term = id === undefined ? undefined : programFor(id)?.passive?.attackCostDiscount;
     if (term === undefined) continue;
+    // 🆕🆕🆕 D568 — an ANY-TYPE term (Sparkling Crystal) is not a {C} discount; it is summed
+    // by `toolAnyTypeCostDiscount` below and applied last by `effectiveAttackCost`.
+    if (term.anyType === true) continue;
     if (term.holder !== undefined && !matchesFilter(top, term.holder)) continue;
     if (term.ifMorePrizesRemaining === true && !holderSideLeadsOnPrizesRemaining(state, pokemon))
       continue;
@@ -5278,6 +5312,74 @@ export function toolAttackCostDiscount(state: GameState, pokemon: InPlayPokemon)
   return discount;
 }
 
+
+/** 🆕🆕🆕 §8.2 (D568) — how many Energy of ANY type `pokemon`'s attached Tools take off its
+    attacks: Sparkling Crystal `sv07-142`/`sv08.5-129`, *"When the Tera Pokémon this card is
+    attached to uses an attack, that attack costs 1 Energy less. (The Energy can be of any
+    type.)"* — the `anyType` terms `toolAttackCostDiscount` skips, gated exactly as it gates
+    (the `holder` noun on the holder's TOP card — `bannerPokemon` Tera, so a Crystal on a
+    non-Tera body does nothing; `toolsInEffect`, so none under Jamming Tower; never §9-gated,
+    R-T1). Top-level, so a mutant row may name it. */
+export function toolAnyTypeCostDiscount(state: GameState, pokemon: InPlayPokemon): number {
+  const holderTop = topCardOf(state, pokemon);
+  if (holderTop === undefined) return 0;
+  let total = 0;
+  for (const attachedUid of toolsInEffect(state, pokemon)) {
+    const cardId = state.cardIdByUid[attachedUid];
+    const anyTerm = cardId === undefined ? undefined : programFor(cardId)?.passive?.attackCostDiscount;
+    if (anyTerm === undefined || anyTerm.anyType !== true) continue;
+    if (anyTerm.holder !== undefined && !matchesFilter(holderTop, anyTerm.holder)) continue;
+    if (
+      anyTerm.ifMorePrizesRemaining === true &&
+      !holderSideLeadsOnPrizesRemaining(state, pokemon)
+    )
+      continue;
+    total += anyTerm.amount;
+  }
+  return total;
+}
+
+/** 🆕🆕🆕 §8.2 (D568) — remove `count` symbols of ANY type from `cost`, one at a time, each
+    chosen against the Energy the body can pay with (`provided`, continuous.ts
+    `providedEnergy`'s units). "1 Energy less (any type)" is the PLAYER's choice of symbol,
+    and this makes the choice that can never lose:
+      • if the cost is ALREADY payable, a Colorless goes (the printed typed symbols stay
+        visible; payability cannot change) — or the last symbol if there is no Colorless;
+      • otherwise a TYPED symbol whose removal makes the cost payable, if there is one;
+      • otherwise a typed symbol the attached Energy falls SHORT on (removing a typed
+        symbol is never worse than removing a Colorless one: a Colorless slot is payable by
+        anything a typed slot is), and only on an all-Colorless cost a Colorless.
+    So {R}{R}{C} with {R}{C} attached is charged {R}{C} — the Colorless-only loop above
+    would charge {R}{R} and refuse an attack the card allows. Removes from the END, so
+    the symbols still owed read left to right as printed. Pure; top-level for the gate. */
+export function anyTypeCostRemoval(
+  cost: readonly string[],
+  provided: readonly string[],
+  count: number,
+): readonly string[] {
+  let next: readonly string[] = cost;
+  for (let step = 0; step < count && next.length > 0; step += 1) {
+    const current = next;
+    const without = (index: number): readonly string[] => current.filter((_, i) => i !== index);
+    const lastColorless = current.lastIndexOf("Colorless");
+    if (costMet(current, provided)) {
+      next = without(lastColorless >= 0 ? lastColorless : current.length - 1);
+      continue;
+    }
+    let pick = -1;
+    for (let i = current.length - 1; i >= 0 && pick < 0; i -= 1) {
+      if (current[i] !== "Colorless" && costMet(without(i), provided)) pick = i;
+    }
+    for (let i = current.length - 1; i >= 0 && pick < 0; i -= 1) {
+      const symbol = current[i];
+      if (symbol === undefined || symbol === "Colorless") continue;
+      const owed = current.filter((s) => s === symbol).length;
+      if (owed > provided.filter((unit) => unit === symbol).length) pick = i;
+    }
+    next = without(pick >= 0 ? pick : lastColorless >= 0 ? lastColorless : current.length - 1);
+  }
+  return next;
+}
 
 /** 🆕 **D327** — how many cards named `name` sit in `seat`'s discard pile, for
     `selfAttackCostDiscount`'s Food Prep summand (*"for each Kofu card in your
@@ -5316,6 +5418,18 @@ function namedInDiscard(state: GameState, seat: Seat, name: string): number {
     generic slot and removing one takes a generic slot away. A discount never
     touches a typed symbol; the print says "cost Colorless less" and means it.
 
+    🆕🆕🆕 **D568 (D539) — "THREE sources, TWO SIGNS", "Every symbol moved is a COLORLESS
+    slot" and "A discount never touches a typed symbol" ARE WITHDRAWN AS THE WHOLE READ
+    (annotated, not rewritten; they stay true of every {C} term above, which is still netted
+    Colorless-only by `colorlessNetCost`).** A further source, applied LAST on the
+    {C}-adjusted array: a Tera holder's attached Sparkling Crystal (`toolAnyTypeCostDiscount`)
+    removes 1 Energy of ANY type — the print says *"The Energy can be of any type"* — so it
+    CAN take a TYPED symbol: `anyTypeCostRemoval` picks the symbol the holder's attached
+    Energy falls short on (`providedEnergy` — this function now reads the holder's attached
+    Energy — and `costMet`, which now lives in cards.ts, not attack.ts). Removing a typed
+    symbol is never worse than removing a Colorless one, so a typed symbol goes whenever
+    that makes the cost payable; an already-payable cost loses a Colorless.
+
     ⚠️ THE TWO DIRECTIONS ARE SUMMED INTO ONE NET DELTA AND ARE NEVER ONE FIELD.
     `stadiumRetreatDelta`'s `added - discount` idiom, one seam over, and the reason
     is the same trap D163 hit: a `<= 0` early return on a field that must also carry
@@ -5341,7 +5455,11 @@ function namedInDiscard(state: GameState, seat: Seat, name: string): number {
 
     Returns the printed cost array ITSELF when the net delta is zero, a fresh copy
     when it is not — `redactedAttacksOf` and the HUDs rely on the cheap identity on
-    the overwhelmingly common board with no cost modifier in play. */
+    the overwhelmingly common board with no cost modifier in play. (🆕🆕🆕 D568 (D539):
+    "ITSELF when the net delta is zero" is now conditional — with a Crystal on a Tera
+    holder the any-type removal returns a MODIFIED array even when the {C} net delta is
+    zero. The identity still holds on every board without one, which is the common board
+    the sentence is about.) */
 export function effectiveAttackCost(
   state: GameState,
   pokemon: InPlayPokemon,
@@ -5358,6 +5476,21 @@ export function effectiveAttackCost(
   const added =
     stadium + opposingAttackCostSurcharge(state, pokemon) + installedCostTaxOf(state, pokemon);
   const net = added - selfAttackCostDiscount(state, pokemon);
+  // 🆕🆕🆕 D568 — Sparkling Crystal's ANY-TYPE Energy, applied LAST, on the {C}-adjusted
+  // array, against the holder's attached Energy (`anyTypeCostRemoval`). Zero on every
+  // board without a Crystal on a Tera body, which then returns `colorlessNetCost`'s own
+  // answer — the printed array ITSELF when `net` is 0, as before.
+  const anyType = toolAnyTypeCostDiscount(state, pokemon);
+  const colorlessAdjusted = colorlessNetCost(cost, net);
+  return anyType === 0
+    ? colorlessAdjusted
+    : anyTypeCostRemoval(colorlessAdjusted, providedEnergy(state, pokemon), anyType);
+}
+
+/** The {C}-only half of `effectiveAttackCost`, split out at D568 unchanged: `net` Colorless
+    appended (a surcharge) or removed from the end (a discount), the printed array itself
+    when `net` is 0. */
+function colorlessNetCost(cost: readonly string[], net: number): readonly string[] {
   if (net === 0) return cost;
   if (net > 0) return [...cost, ...Array.from({ length: net }, () => "Colorless")];
   // The discount, applied from the END of the printed cost so the symbols the

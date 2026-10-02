@@ -546,7 +546,7 @@ the op vocabulary its author had in mind.** Each is pinned derived-to-null in
 | *"Search your deck for up to 2 Basic Energy cards and attach **them** to **1 of** your Pokémon. Then, shuffle your deck."* (`sv08.5-014`/`-146`) | **2** | **A batch pinned to ONE chosen body.** `attachFromDeck`'s park is the compound `attachCards` prompt whose answer is a MAP from card to target, so nothing stops a split; the field that would say it is `attachEnergyFrom.count`, on the OTHER op. Adding it here is a PROMPT field — a wire-schema change plus a validator arm plus **both HUD renderers** — i.e. a slice, not a rider. ⚠️ At `max: 1` the phrase IS expressible and D235 reads all four singular printings, which is why this row is 2 rather than 6 | 🛑 **NO** |
 | *"…up to 2 Basic {P} Energy cards and attach them to **1 of** your **Benched** Pokémon…"* (`sv08-075`) | **1** | The same gap wearing a `benchOnly` | 🛑 **NO** |
 | *"…up to 2 Basic Energy cards and attach them to your **Future** Pokémon in any way you like…"* (`svp-092`, `sv05-121`) | **2** | A SUBGROUP target. `targetType` reads `card.types` and *Future* is not a type — and `conventions.md`'s SUPPLY-side warning bites: **name the column before designing the predicate** | ✅ yes |
-| *"…up to 3 Basic Energy cards **of different types** and attach them to your **Tera** Pokémon in any way you like…"* (`sv08-161`) | **1** | **BOTH blockers on one printing**: the Tera subgroup above AND a distinctness constraint no `CardFilter` kind expresses. ⚠️ The row counted these as 3 + 1 = 4 and they OVERLAP, so the subgroup blocker is 3 printings and this one is a strict subset of it | ✅ yes |
+| *"…up to 3 Basic Energy cards **of different types** and attach them to your **Tera** Pokémon in any way you like…"* (`sv08-161`) | **1** | **BOTH blockers on one printing**: the Tera subgroup above AND a distinctness constraint no `CardFilter` kind expresses. ⚠️ The row counted these as 3 + 1 = 4 and they OVERLAP, so the subgroup blocker is 3 printings and this one is a strict subset of it. 🆕🆕🆕 **D568 (D539): ✅ BUILT** — the Tera half is WITHDRAWN (`banners.ts` supplies the banner) and `sv08-161` "Prism Charge" is a hand-written registry `attack` (`attachFromDeck.distinctEnergyTypes` + `targetBanner`); no READER derives the sentence, so the anchor half stands | ✅ yes |
 | *"…up to 2 Basic {G} Energy cards **and** up to 2 Basic {L} Energy cards and attach them to your Pokémon in any way you like…"* (`sv07-050`/`-150`) | **2** | A **SECOND printed noun** — a different sentence SHAPE, so its own arm by D232's rule. Plausibly two `attachFromDeck` ops (one per type, each "up to N"), which is *reachable today* and is the cheapest thing left in this table — but it is an arm, and D235 predicted in writing that it would not build one | 🛑 **NO** |
 
 ### 🆕 D236's RESIDUE — ✅ **D246 TOOK TWO OF THE FOUR, D247 TOOK THE LARGEST; 1 legal attack printing remains**
@@ -690,6 +690,8 @@ less classifying surface than D187 credited.
 
 **EVERY OCCURRENCE OF THESE BANNERS IS *DEMAND*. THE *SUPPLY* SIDE IS ABSENT.**
 
+🆕🆕🆕 **D568 (D539): WITHDRAWN FOR TERA** — `packages/engine/src/banners.ts` (an engine table of 98 printing ids, two sources plus the printed face) is the SUPPLY; D568 builds 19 of the Tera-naming printings. "No INGESTED column classifies the banner" stays TRUE, and the `Ancient`/`Future` rows below stand unchanged (Slice 2). The 23 below is D207's text-unit count, a measurement, not re-stated.
+
 | Banner | Legal text units DEMANDING it (attack / ability / Trainer+SE) | Rows NAMED for it |
 |---|---:|---:|
 | **Tera** | **23** (4 / 7 / 12) | 9 legal — all Terapagos (a species) + Tera Orb (a Trainer that *asks*) |
@@ -710,7 +712,7 @@ the banner.
 
 ⚠️ **WHY IT MATTERS MORE THAN "UNBUILT": an op authored over an absent datum has
 a permanently empty candidate set, which `programPlayable` turns into a card that
-can never be played.** That is strictly worse than leaving the printing unbuilt —
+can never be played.** (🆕🆕🆕 D568 (D539): still TRUE of an op over an ABSENT datum — for Tera the datum now exists, `banners.ts`, so the warning no longer applies to it.) That is strictly worse than leaving the printing unbuilt —
 a silent dead print rather than a loud absence — and it will pass every test
 written against it, because the tests are written by whoever believed the datum
 existed.
@@ -879,7 +881,7 @@ included: **22 on 9, not 25–40 on 12–20.**
 | n | sentence | status |
 |---|---|---|
 | 5 | …by your opponent's Pokémon that have an Ability. | ✅ BUILT D251 |
-| 3 | …from and effects of attacks from your opponent's **Tera** Pokémon… | 🛑 **UNBUILDABLE** |
+| 3 | …from and effects of attacks from your opponent's **Tera** Pokémon… | ~~🛑 **UNBUILDABLE**~~ ✅ **BUILT D568** (Milotic ex "Sparkling Scales", over `banners.ts`) |
 | 3 | …by attacks from your opponent's Pokémon ex. | ✅ **BUILT D255** |
 | 3 | As long as this Pokémon is on your Bench, … | ✅ BUILT D253 |
 | 2 | …that have any Special Energy attached. | ✅ BUILT D252 |
@@ -892,11 +894,11 @@ included: **22 on 9, not 25–40 on 12–20.**
 `abilities_json`, 34 on 9 in `attacks_json`, 1 on 1 in `c.effect`.** Nothing has been
 ingested, so the LADDER is confirmed as a population and not merely as a phrase.
 ✅ **D256 THEN TOOK ROW 15-A's 2**, so the residue is **4 printings on 2 sentences**: the
-3-printing TERA group (permanently unbuildable) and row **15-B** alone. **Row 15-B is
+3-printing TERA group (permanently unbuildable — 🆕🆕🆕 **D568 (D539): WITHDRAWN FOR TERA** — `banners.ts` (an engine table keyed by printing id) supplies the banner; "no ingested column" stays true. BUILT at D568) and row **15-B** alone. **Row 15-B is
 therefore the LAST buildable member of the whole `%prevent all damage%` ability column.**
 
 So **11 of 22 were built coming in, D255 takes 5, and the residue is 6 on 3 sentences** —
-three of which are the permanently unbuildable Tera group (D252's finding: "Tera" is in NO
+three of which are the permanently unbuildable Tera group (🆕🆕🆕 **D568 (D539): WITHDRAWN FOR TERA** — `banners.ts` (an engine table keyed by printing id) supplies the banner; "no ingested column" stays true. BUILT at D568) (D252's finding: "Tera" is in NO
 ingested column; `SELECT suffix, COUNT(*) … GROUP BY suffix` returns only `null` and `ex`,
 and every `name`/`effect` hit for "Tera" is DEMAND, never SUPPLY).
 
@@ -915,7 +917,7 @@ were the query's output, and `censusAtHead.test.ts` row 15's `abilityIds` went
 `["sv07-044","sv10-010","sv10-185"]` → `["sv07-044"]` (D256) → `[]` (D257), going RED at
 each step rather than quietly diverging from this page. 🛑 **ROW 15 IS CLOSED AND THE
 `%prevent all damage%` ABILITY COLUMN HAS NOTHING BUILDABLE LEFT IN IT**: its residue is
-3 printings on 1 sentence, all of them the permanently unbuildable TERA group (D252's
+3 printings on 1 sentence, all of them the permanently unbuildable TERA group (🆕🆕🆕 D568 (D539): "permanently unbuildable" WITHDRAWN — Milotic ex "Sparkling Scales" ×3 is BUILT over `banners.ts`; the column fact below stays TRUE) (D252's
 measured reason — `Tera` is in NO ingested column; `SELECT suffix, COUNT(*) … GROUP BY
 suffix` returns only `null` and `ex`, and every `name`/`effect` hit is DEMAND, never
 SUPPLY). ⚠️ **AND `abilityIds: []` IS A WEAKER GUARD THAN A POPULATED ONE** — it can no
@@ -930,7 +932,10 @@ D253 3, D254 1, D255 3+2, D256 2, D257 1, D258 3+2, D259 4+1, D260 1+1). 🛑 **
 RESIDUE IS 3 PRINTINGS ON 1 SENTENCE AND IT IS THE TERA GROUP, WHICH IS PERMANENTLY
 UNBUILDABLE — SO THIS COLUMN HAS NOTHING BUILDABLE LEFT IN IT AND ROWS 15-A THROUGH
 15-E ARE ALL CLOSED.** The next ability slice in this family needs a NEW CENSUS and not
-a new row here. ⚠️ **AND THE PLACE TO POINT IT IS ALREADY MEASURED**: D260's ladder,
+a new row here. (🆕🆕🆕 D568 (D539): "PERMANENTLY UNBUILDABLE" is WITHDRAWN for the TERA group —
+Milotic ex "Sparkling Scales" ×3 `sv08-042`/`-217`/`-237` is BUILT on the new engine datum
+`banners.ts` (an engine table keyed by printing id), so the column stands at **34 on 15 BUILT** and
+its residue is EMPTY; "no INGESTED column classifies the banner" stays true.) ⚠️ **AND THE PLACE TO POINT IT IS ALREADY MEASURED**: D260's ladder,
 run across all three text columns rather than only `abilities_json`, turned up
 `sv05-161` **Mist Energy** — a SPECIAL ENERGY printing the effects-only sentence about
 *"the Pokémon this card is attached to"*, in the `effect` column, UNBUILT, 1 legal

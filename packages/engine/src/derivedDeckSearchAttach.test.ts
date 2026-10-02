@@ -62,6 +62,7 @@ import {
 // wrong op's vocabulary, D458's an arm priced on D232's rule pointing the other
 // way when the rule is read instead of cited. The TWO that remain are DATA-blocked
 // (no ingested column classifies the Future or Tera banner), which is the first
+// (🆕🆕🆕 D568 (D539): the "no supply / DATA-BLOCKED / unbuildable" reading is WITHDRAWN FOR TERA — `banners.ts`' engine table, keyed by printing id, supplies the banner; "no INGESTED column classifies it" and "`Tera` is not a type" stay TRUE, and every Ancient/Future claim stands.)
 // kind of refusal in this family whose falsifier is an INGEST change rather than
 // an anchor.
 //
@@ -329,6 +330,7 @@ const TWO_NOUNS = 14;
     a rule pointing the other way. ⚠️ **THE TWO THAT REMAIN ARE BOTH
     DATA-BLOCKED** — the ingested `cardSchema` carries no column that classifies the
     Future or Tera banner — which is a different KIND of refusal from either
+    (🆕🆕🆕 D568 (D539): the "no supply / DATA-BLOCKED / unbuildable" reading is WITHDRAWN FOR TERA — `banners.ts`' engine table, keyed by printing id, supplies the banner; "no INGESTED column classifies it" and "`Tera` is not a type" stay TRUE, and every Ancient/Future claim stands.)
     expired one, and the condition that would reverse it is an INGEST change, not an
     arm. */
 const UNREAD = [
@@ -337,6 +339,9 @@ const UNREAD = [
     2,
     "a SUBGROUP target — `targetType` reads `card.types`, and Future is not a type; priced by the row",
   ],
+  // 🆕🆕🆕 D568 (D539): the "Tera subgroup" half of this row's reason is WITHDRAWN — `banners.ts`
+  // supplies the banner and `sv08-161` is BUILT as a hand-written registry `attack`. The
+  // row stays in `UNREAD` because the READERS still refuse it (the anchor half, TRUE).
   [
     "Search your deck for up to 3 Basic Energy cards of different types and attach them to your Tera Pokémon in any way you like. Then, shuffle your deck.",
     1,
@@ -1733,7 +1738,7 @@ describe("🆕🆕 D457 §4 — `MATCH_RECORD_VERSION` STAYS 29, driven over the
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("🆕🆕 D458 §5 — the engine version moved and the record version did not", () => {
-  it("engineVersion is 0.451.0 and `manifest.version` agrees", () => {
+  it("engineVersion is 0.452.0 and `manifest.version` agrees", () => {
     // 🛑 **THE PIN THIS SLICE AUTHORS**, which is the one every version-tax note in
     // this repo has forgotten to count (D427's mechanism): a slice counts the pins
     // it INHERITED and never the one it is about to write. 34 assertions existed
@@ -1743,7 +1748,7 @@ describe("🆕🆕 D458 §5 — the engine version moved and the record version 
     // `null` at 0.356.0 derives to a three-op program at 0.357.0. It is owed for
     // that alone — no new op, no new field and no new prompt key were spent, so a
     // reader looking for a vocabulary diff would find none and conclude wrongly.
-    expect(engineVersion).toBe("0.451.0");
+    expect(engineVersion).toBe("0.452.0");
     expect(manifest.version).toBe(engineVersion);
     // …and the historical values never come back, the shape every sibling pin uses.
     expect(engineVersion).not.toBe("0.355.0");

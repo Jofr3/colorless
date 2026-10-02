@@ -1669,6 +1669,38 @@ export interface MatchRecord {
     or client byte: the redacted view does not carry `allowances`, so the HUD does not
     show the side bonus (a carried display debt, decisions.md D556).
 
+    🆕🆕🆕 **STAYS 36 AT D568 — THE TERA BANNER UNLOCK CHANGES NO GameState, Card, EVENT OR PROMPT
+    SHAPE; EVERY PERSISTED CHANGE IS A D125 WIDENING, AND THE 0.451 ROLLBACK READINGS ARE NAMED,
+    MEASURED FROM 0.451's SOURCE.** (Placed ABOVE the D567 block, out of date order, so the
+    declaration's anchor lines stay byte-identical — D563's placement.) The addresses, named first
+    (D456's rule): `MatchRecord.state.phase.cont.pendingOp` / `.rest` and `phase.prompt`. ⑴ The NEW
+    `EffectOp` member `attachFromDiscard` (Glass Trumpet) can ride `pendingOp` — it PARKS on the
+    existing `attachCards` prompt, whose shape is unchanged. ⑵ `attachFromDeck`'s NEW optional
+    `targetBanner` / `distinctEnergyTypes` (Terapagos "Prism Charge") can ride `pendingOp`; the NEW
+    `CardFilter` member `bannerPokemon` can ride `pendingOp.filter` (Tera Orb's `searchDeck`) and
+    `rest` (Prism Charge's filter is `basicEnergy`; Jewel Seeker's search is `trainerCard`). ⑶ The NEW
+    `BoardCondition` members are read at step time, never written into a park (Jewel Seeker's
+    `conditionGate` is evaluated before its search parks; Glass Trumpet's and Briar's gates are
+    `trainerPlayableIf`, catalog data). No `GameState` key is added: Briar reads the EXISTING
+    `allowances.supporterPlayedUid`, the Tera table is CATALOG data (`banners.ts`), and no event gains
+    a member (`PRIZE_BONUS` is reused). D441: nothing is renamed or removed, and a v36 record written
+    by 0.451 cannot hold any of the new values — so every older record means what it meant. The 0.451
+    ROLLBACK readings (D456), each read off 0.451's own bytes: a benched Tera ex takes attack damage
+    again (0.451's `benchShieldScan` has no banner conjunct); a Briar bonus is not paid (0.451's
+    `koPrizeBonus` has three sources); an attached Sparkling Crystal is INERT (0.451's
+    `toolAttackCostDiscount` reads the term as a {C} discount, and its `holder` — `bannerPokemon`,
+    unknown to 0.451's `matchesFilter`, which falls out of its `switch` with `undefined` — never
+    matches, so nothing is taken off); Sparkling Scales protects nothing (the passive key is unknown);
+    Ho-Oh and Regigigas lose their bonuses (the clause rows are absent; the sentence is skipped
+    loudly). Of the parks: a parked TERA ORB resumes AS BUILT (the candidates are the prompt's, and
+    0.451's `searchMove` re-reads no filter); a parked PRISM CHARGE resumes AS BUILT (the new keys are
+    read only by the OFFER, which already ran; the `attachCards` answer applies through the unchanged
+    `attachFromZoneApply`); a parked GLASS TRUMPET resumes as a SILENT WHIFF — 0.451's `applyChoice`
+    has no `attachFromDiscard` arm and ends in `default: return state`, so a validated answer is
+    dropped, nothing attaches, and the Item is spent (not a hard failure: no `stepOp` is reached, the
+    op is the parked one and `rest` is empty). A parked Jewel Seeker search resumes as built. No
+    client byte moved (the prompt notes are strings the HUDs already render).
+
     🆕🆕🆕 **STAYS 36 AT D567 — EVERY PERSISTED CHANGE IS A D125 WIDENING, AND THE 0.450 ROLLBACK
     READINGS ARE NAMED, MEASURED FROM 0.450's SOURCE.** (Placed ABOVE the D566 block, out of date
     order, so the declaration's anchor lines stay byte-identical — D563's placement.) The addresses,

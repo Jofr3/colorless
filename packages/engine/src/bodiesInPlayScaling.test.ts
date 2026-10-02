@@ -1394,6 +1394,8 @@ describe("§6 — `MATCH_RECORD_VERSION` STAYS 29, driven at all THREE addresses
       attackNamePokemon: { kind: "attackNamePokemon", attack: "Round" },
       pokemonNameContaining: { kind: "pokemonNameContaining", fragment: "Weezing" },
       suffixPokemon: { kind: "suffixPokemon", suffix: "ex" },
+      // 🆕🆕🆕 D568 — Tera Orb's / Prism Charge's noun; the alphabet gate fired a FIFTH time.
+      bannerPokemon: { kind: "bannerPokemon", banner: "Tera" },
       toolCard: { kind: "toolCard" },
       basicEnergy: { kind: "basicEnergy" },
       byName: { kind: "byName", name: "Fixmon ex" },
@@ -1437,7 +1439,13 @@ describe("§6 — `MATCH_RECORD_VERSION` STAYS 29, driven at all THREE addresses
     // (a Technical Machine Tool, a same-fragment non-Tool and a plain Tool, driven both
     // ways), not by the CAST below, which holds no Technical Machine — adding one to
     // `FIXTURE_POOL` was priced and declined (it moves pool-size pins for no reader).
-    expect(Object.keys(EVERY_KIND)).toHaveLength(25);
+    // 🆕🆕🆕 **D568 — A FIFTH TIME, 25 → 26**: adding `bannerPokemon` made `tsc -b` fail HERE
+    // with `TS2741: Property 'bannerPokemon' is missing` and nowhere else in `packages/**`
+    // (the three `switch`es — `matchesFilter`, `retrieveNoun` and the prompt noun — were
+    // written first). ⚠️ The CAST below holds only `fix-*` ids, which `banners.ts` does not
+    // know, so the member answers false to all of it: its ANTI-VACUITY is carried by
+    // `teraBannerD568.test.ts` (a real Tera id, a real non-Tera ex, a Trainer), not here.
+    expect(Object.keys(EVERY_KIND)).toHaveLength(26);
     // 🛑 **THE BYTES.** Each filter is written out and read back the way
     // `MatchRecord.state` is, and `matchesFilter` must give the IDENTICAL answer over
     // a cast that spans every category the catalog has — a Pokémon with a rule box
@@ -1623,7 +1631,7 @@ describe("§6 — `MATCH_RECORD_VERSION` STAYS 29, driven at all THREE addresses
   });
 
   it("the engine version moved with the behaviour", () => {
-    expect(engineVersion).toBe("0.451.0");
+    expect(engineVersion).toBe("0.452.0");
   });
 });
 

@@ -2,6 +2,7 @@ import { BASIC_ENERGY_TYPES } from "@luminous/schema";
 import type { Attack, Card } from "@luminous/schema";
 import type { ApplyResult } from "./actions";
 import { err } from "./actions";
+import { type Banner, bannerOf } from "./banners";
 // TYPE-ONLY, and it must stay that way: effects.ts imports no engine module at
 // runtime (only `import type { StatusName } from "./events"`), and events.ts in
 // turn imports `type { DamageModifier }` back from here — so the cycle
@@ -138,8 +139,46 @@ export function isSpecialEnergy(card: Card): boolean {
     "provides every type of Energy but only 1 at a time"). Distinct from
     "Colorless" as a PROVIDED unit, which pays only Colorless slots. No basic
     energy type is named this, so it is a safe sentinel in a provided list
-    (costMet in attack.ts is the only reader). */
+    (costMet in attack.ts is the only reader — 🆕🆕🆕 D568: `costMet` now lives in
+    this file, below; still the only reader). */
 export const ANY_ENERGY = "Any";
+
+/** 🆕🆕🆕 D568 — MOVED here from attack.ts unchanged (see the note there).
+    §6.4 cost matching. Typed symbols need exactly that type; Colorless slots
+    take whatever is left over. `provided` is the flat list of UNITS the
+    attached energies give (continuous.ts providedEnergy) — a basic energy one
+    unit of its type, a special energy its authored units, possibly several
+    (Double Turbo-likes) and possibly a WILDCARD (`ANY_ENERGY` — Luminous, "any
+    1 type"). A wildcard fills a typed shortfall or a Colorless slot; concrete
+    types are counted per type, wildcards allocated to the (pickier) typed needs
+    first, then everything left pays the Colorless slots. */
+export function costMet(cost: readonly string[], provided: readonly string[]): boolean {
+  const needed = new Map<string, number>();
+  let colorless = 0;
+  for (const symbol of cost) {
+    if (symbol === "Colorless") colorless++;
+    else needed.set(symbol, (needed.get(symbol) ?? 0) + 1);
+  }
+  const counts = new Map<string, number>();
+  let wild = 0;
+  for (const unit of provided) {
+    if (unit === ANY_ENERGY) wild++;
+    else counts.set(unit, (counts.get(unit) ?? 0) + 1);
+  }
+  let typedNeeds = 0;
+  for (const [type, count] of needed) {
+    typedNeeds += count;
+    const shortfall = count - (counts.get(type) ?? 0);
+    if (shortfall > 0) {
+      // Cover the typed shortfall with wildcards; run out and the cost is unmet.
+      if (shortfall > wild) return false;
+      wild -= shortfall;
+    }
+  }
+  // Each typed need consumed exactly one unit; everything else (surplus typed
+  // units, leftover wildcards, Colorless-provided units) pays the Colorless.
+  return provided.length - typedNeeds >= colorless;
+}
 
 /** Printed retreat cost; null (nothing printed / non-Pokémon) = free (§11). */
 export function retreatCostOf(card: Card): number {
@@ -338,6 +377,33 @@ function matchesStage(
 export function hasRuleBox(card: Card): boolean {
   if (card.category !== "Pokemon") return false;
   return pokemonSuffixOf(card) !== null || card.name.startsWith("Radiant ");
+}
+
+/** 🆕🆕🆕 D568 — is `card` a **Tera** Pokémon? The printed banner under the name,
+    read through `banners.ts`' id-keyed table (`bannerOf`) — `hasRuleBox`'s sibling,
+    and like it a CARD read taking no board. The `category` conjunct is belt and
+    braces: every table id is a Pokémon ex (pinned in `teraBannerD568.test.ts`).
+    `undefined` (no resolvable card) is FALSE. A `fix-*` test card is never Tera —
+    the table does not know it (D275: suites use real ids in local pools). */
+export function isTeraPokemon(card: Card | undefined): boolean {
+  return card !== undefined && card.category === "Pokemon" && bannerOf(card) === "Tera";
+}
+
+/** 🆕🆕🆕 D568 — does `attacker` carry one of the banners a holder's prevention names?
+    Milotic ex `sv08-042`/`-217`/`-237` "Sparkling Scales": *"Prevent all damage from
+    and effects of attacks from your opponent's Tera Pokémon done to this Pokémon."*
+    `preventsAttackerClass`' twin one axis over — a SIBLING rather than a widening of
+    `PreventedAttackerClass`, whose `suffix` stays REQUIRED so "prevent all damage from
+    any attack" still cannot be spelled by omission (that record's own argument). Read
+    off the attacker's TOP card (§1.2); `undefined` is FALSE (protects LESS, the
+    family's conservative direction); an empty list short-circuits. */
+export function preventsAttackerBanner(
+  banners: readonly Banner[],
+  attacker: Card | undefined,
+): boolean {
+  if (banners.length === 0 || attacker === undefined) return false;
+  const banner = bannerOf(attacker);
+  return banner !== undefined && banners.includes(banner);
 }
 
 /** Does this Pokémon HAVE an Ability — the gate the 5-printing attacker-property
@@ -553,6 +619,11 @@ export function matchesFilter(card: Card | undefined, filter: CardFilter): boole
       // first so the D512 line below stays the two conjuncts it always was.
       if (filter.suffix !== undefined && pokemonSuffixOf(card) !== filter.suffix) return false;
       return matchesFilter(card, { kind: "anyPokemon" }) && card.name.includes(filter.fragment);
+    case "bannerPokemon":
+      // 🆕🆕🆕 D568 — a Pokémon printing the named BANNER ("a Tera Pokémon": Tera Orb
+      // `sv08-189`, Terapagos `sv08-161` "Prism Charge"'s attach target). By printing
+      // ID through `banners.ts` (D135), never by name: two Pikachu ex disagree.
+      return card.category === "Pokemon" && bannerOf(card) === filter.banner;
     case "suffixPokemon":
       // 🆕🆕 D446 — a Pokémon of a printed RULE-BOX CLASS ("your opponent's Pokémon
       // ex in play"). An EQUALITY on `pokemonSuffixOf` and deliberately NOT

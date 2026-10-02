@@ -150,7 +150,12 @@ the trend improved.
   banner no column CLASSIFIES yields a permanently empty candidate set, which
   `programPlayable` turns into a card that can never be played. The sharp form
   (D207): `Tera` is on 22 rows and **every occurrence is DEMAND — the SUPPLY
-  side is absent**. Same for `Ancient` / `Future` (D205, D204).
+  side is absent**. Same for `Ancient` / `Future` (D205, D204). 🆕🆕🆕 **D568 (D539): WITHDRAWN
+  FOR TERA** — the supply need not be an INGESTED column: `banners.ts`, an engine table keyed by
+  PRINTING id (never species or name, D135), is the writer, and D568 built 19 printings on it.
+  "No ingested column classifies the banner" stays TRUE, and so does every Ancient/Future claim
+  until Slice 2 widens `Banner`. The rule this bullet teaches stands: name the field — here, the
+  table — before you design the predicate.
 
 ## Pricing a slice
 

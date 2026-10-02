@@ -31,7 +31,9 @@ import { FIXTURE_POOL, battler, deckOf, itemTrainer, typedEnergy } from "./testF
 //   (2) 🛑 **LIVE RESIDUE IS THE ORDERING, NOT RESIDUE.** Row 9 is largest at 7 and
 //       has been for four slices, but FIVE of its seven are refused on grounds no
 //       engine slice can reach — Reboot Pod ×1 and Glass Trumpet ×2 on the
-//       Ancient/Future banner NO CATALOG COLUMN CLASSIFIES (`suffix` over 3,786 rows
+//       Ancient/Future banner NO CATALOG COLUMN CLASSIFIES (🆕🆕🆕 D568 (D539): WITHDRAWN
+//       for Glass Trumpet — its banner is Tera, and `banners.ts`' engine table supplies it:
+//       BUILT, `teraBannerD568.test.ts`; Reboot Pod's Future banner stays a blocker, TRUE) (`suffix` over 3,786 rows
 //       is NULL 3,157 / `ex` 629 and nothing else), and Powerglass ×2 on a whole new
 //       end-of-turn Tool trigger point for 2 printings (🆕🆕🆕 D566 (D539): WITHDRAWN for
 //       Powerglass — a price, paid: BUILT on `atEndOfYourTurnInActive`). Its live residue is **2**.

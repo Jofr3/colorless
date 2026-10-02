@@ -44,6 +44,10 @@ import {
 // last unbuilt ONE of the ability column's 22 that a build can reach — the only
 // other residue is the 3-printing TERA group, permanently unbuildable because the
 // banner is in NO ingested column (D252's measured reason).
+// (🆕🆕🆕 D568 (D539): "permanently unbuildable" is WITHDRAWN for this TERA group — Milotic ex
+// "Sparkling Scales" ×3 (`sv08-042`/`-217`/`-237`) is BUILT on the new engine datum `banners.ts`
+// (`preventDamageAndEffectsFromBanners`), so this residue is now EMPTY; "no INGESTED column
+// classifies the banner" stays true.)
 //
 // 🛑 THE SHAPE CALL, WRITTEN DOWN BEFORE THE BUILD AND THE EXACT MIRROR OF D256's.
 // D253's line: a gate naming the HOLDER folds into `passivesOf`; a gate naming the

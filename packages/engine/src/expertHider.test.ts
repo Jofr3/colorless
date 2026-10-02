@@ -58,6 +58,8 @@ import {
 // truth is 3 plus Fezandipiti's gated variant. They are ROTATED OUT, not
 // unbuildable, which is a different residue from D257's TERA group: the field would
 // carry them unchanged the day the format moves.
+// (🆕🆕🆕 D568 (D539): the TERA group is no longer a residue at all — Milotic ex "Sparkling Scales"
+// ×3 is BUILT on the new engine datum `banners.ts`.)
 //
 // 🛑 THE SHAPE CALL, WRITTEN DOWN BEFORE THE BUILD. D253's line: a gate naming the
 // HOLDER folds into `passivesOf`; a gate naming the ATTACKER pays a predicate call

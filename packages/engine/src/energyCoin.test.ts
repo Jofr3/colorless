@@ -617,8 +617,16 @@ describe("D355 §7 — what row 10's closure leaves behind", () => {
     // ⚠️ **A COUNT IS NOT A RESIDUE** — that row is the standing example, and after
     // this slice it is the ONLY thing standing between `ROWS`' total of 6 and a
     // live residue of 1.
-    for (const id of ["sv05-158", "sv07-135", "sv08.5-110"]) {
+    // 🆕🆕🆕 D568 CORRECTION (D539): Glass Trumpet `sv07-135`/`sv08.5-110` is not a Future/
+    // Ancient card at all — it prints "Tera" ("You can use this card only if you have any Tera
+    // Pokémon in play") — and the "no catalog column classifies the banner" ground is WITHDRAWN
+    // for Tera: `banners.ts` is the datum, and D568 BUILT it (`attachFromDiscard` behind
+    // `trainerPlayableIf yourBannerPokemonInPlay`). Reboot Pod `sv05-158` (Future) stays.
+    for (const id of ["sv05-158"]) {
       expect(programFor(id)).toBeUndefined();
+    }
+    for (const id of ["sv07-135", "sv08.5-110"]) {
+      expect(programFor(id)?.trainer?.[0]?.op).toBe("attachFromDiscard");
     }
     expect(programFor("sv06.5-063")?.triggered?.[0]?.trigger).toBe("atEndOfYourTurnInActive");
   });

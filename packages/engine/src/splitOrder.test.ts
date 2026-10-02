@@ -218,7 +218,7 @@ describe("§1 — the census D282 priced its refusal against: counts reproduce, 
     expect(units(gateAll) - units(firstTurn)).toBe(6);
   });
 
-  it("S2 — 17 of 918 registry ids carry an `attackGate`, in three kinds", () => {
+  it("S2 — 17 of 935 registry ids carry an `attackGate`, in three kinds", () => {
     // The registry side of the same 13, walked independently of the text side:
     // a count that agrees across two surfaces is a count, not a transcription.
     // 🆕🆕 D396 — 14 -> **17**, and this is the FIRST slice on which the registry
@@ -356,7 +356,13 @@ describe("§1 — the census D282 priced its refusal against: counts reproduce, 
     // `attack` program.
     // 🆕🆕🆕 D567 — 914 -> **918**: FOUR registry keys on FOUR program objects — Redeemable Ticket,
     // Accompanying Flute, Team Rocket's Bother-Bot (Items) and Grand Tree (Stadium) — all non-attack.
-    expect(ids.length).toBe(918);
+    // 🆕🆕🆕 D568 — 918 -> **935**: SEVENTEEN registry keys on EIGHT program objects — the Tera
+    // banner unlock, Slice 1: Sparkling Crystal ×2, Tera Orb, Glass Trumpet ×2, Briar ×4, Milotic ex
+    // ×3 "Sparkling Scales", Noctowl ×3 "Jewel Seeker", Azumarill "Glistening Bubbles", and
+    // Terapagos `sv08-161` — the ONE row that authors an `attack` key ("Prism Charge"). Real
+    // catalog ids, no `fix-*` key (`teraBannerD568.test.ts` drives a LOCAL `cardPool`), inserted
+    // MID-MAP after `sv07-136`. (Ho-Oh and Regigigas are deriver arms, not keys.)
+    expect(ids.length).toBe(935);
     const gated = ids.filter((id) => programFor(id)?.attackGate !== undefined);
     expect(gated.length).toBe(17);
     const kinds = gated.flatMap((id) =>

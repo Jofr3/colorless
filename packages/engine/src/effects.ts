@@ -30,6 +30,8 @@ import type { AttackTimingGate } from "./registry";
 // which markers exist — `registry.ts` and `continuous.ts` take the identical
 // edge for the identical reason.
 import type { PokemonSuffix } from "./cards";
+// 🆕🆕🆕 D568 — TYPE-ONLY, like the edge above: `banners.ts` imports only `@luminous/schema`.
+import type { Banner } from "./banners";
 // D297 — the ONE value import this file takes from `types.ts`, and it is the
 // §4 Bench ceiling used as a printed-number guard (see
 // `ATTACK_REVEAL_AND_BENCH_UP_TO`). No runtime cycle: `types.ts`'s only
@@ -509,6 +511,11 @@ export type CardFilter =
       exactly one marker each, so `anyPokemon.noRuleBox` NEGATED is not this member
       and could not be. */
   | { kind: "suffixPokemon"; suffix: PokemonSuffix }
+  /** 🆕🆕🆕 **D568 — a Pokémon printing a BANNER** ("a Tera Pokémon": Tera Orb `sv08-189`;
+      "your Tera Pokémon": Terapagos `sv08-161` "Prism Charge"'s attach target). Read by
+      printing ID through `banners.ts`' `bannerOf` (D135) — the banner is on no ingested
+      column, so no name or type read could answer it. `matchesFilter`'s arm (cards.ts). */
+  | { kind: "bannerPokemon"; banner: Banner }
   /** A Pokémon Tool card (Town Store's "a Pokémon Tool card" — read off the
       catalog's `trainerType: "Tool"`, the same discriminant attachTool uses). */
   | { kind: "toolCard" }
@@ -1691,7 +1698,9 @@ export type BoardCondition =
       🛑 **THE SUPPLY QUESTION (D207) WAS ASKED FIRST AND IT PASSES — WHICH IS NOT
       WHAT THE HANDOFF EXPECTED.** D207's failure mode is a predicate over a banner
       no column CLASSIFIES (`Tera`, `Ancient`, `Future`: 22 rows of DEMAND and zero
-      SUPPLY), and the handoff named this candidate as the first in the run that
+      SUPPLY),
+      (🆕🆕🆕 D568 (D539): WITHDRAWN FOR TERA — `banners.ts` is its supply; "no INGESTED column"
+      stays true, and the Ancient/Future half stands.) and the handoff named this candidate as the first in the run that
       could actually fail it. It does not: `InPlayPokemon.energy` holds uids,
       `state.cardIdByUid` resolves each to a catalog id and `cardOfUid` to the
       `Card`, whose `name` is an ingested column that `matchesFilter`'s `byName`
@@ -1756,6 +1765,8 @@ export type BoardCondition =
       "the printed word is 'exactly'", and that is no longer true of the pool it
       serves. The catalog prints the clause BOTH ways: "exactly 2 Prize cards
       remaining" (Briar sv07-132/-163/-171, sv08.5-100 — unbuilt, see registry.ts)
+      (🆕🆕🆕 D568 (D539): ~~unbuilt~~ BUILT — registry.ts `BRIAR`, `counts: [2]`, and its
+      `refusedPrintings.ts` rows deleted)
       and "**3 or fewer** Prize cards remaining" (Lacey ×5 and Emcee's Hype ×2,
       both AUTHORED, as `counts: [0, 1, 2, 3]`). Enumerating the satisfying set is
       how this union spells an inequality, and that is behaviourally EXACT over a
@@ -2011,7 +2022,10 @@ export type BoardCondition =
       `CONDITIONAL_DAMAGE_BONUS` SKELETON.** After it the residue is **7 sentences /
       10 printings**, every one of them a refusal already measured and named: FIVE
       are D207 BANNER clauses (`Ancient` ×1, `Tera` ×2, `Future` ×2 — the supply side
-      absent from every ingested column), ONE at 5 printings is D368's structural
+      absent from every ingested column) (🆕🆕🆕 D568 (D539): "FIVE" is THREE now — the two
+      TERA clauses resolve through literal rows over `banners.ts`; the Ancient ×1 and Future ×2 stand;
+      so the residue is **5 sentences / 8 printings** after D568, not "7 / 10" — Ho-Oh `sv08-019` and
+      Regigigas `sv08.5-086` leave it, one sentence and one printing each), ONE at 5 printings is D368's structural
       shape refusal (*"…in addition to this attack's cost"* reads an attack
       `conditionHolds` is never handed) and the last is this clause's own TWIN, one
       consequent over (below).
@@ -2377,6 +2391,7 @@ export type BoardCondition =
       BEFORE THE PREDICATE IS SPELLED.** `Card.resistances` is a real ingested
       column (`packages/schema/src/catalog/card.ts`, `{type, value?}[] | null`) and
       the §8.5 pipeline has read it since 0.1.x — this is not the `Tera` shape,
+      (🆕🆕🆕 D568 (D539): the "no supply / DATA-BLOCKED / unbuildable" reading is WITHDRAWN FOR TERA — `banners.ts`' engine table, keyed by printing id, supplies the banner; "no INGESTED column classifies it" and "`Tera` is not a type" stay TRUE, and every Ancient/Future claim stands.)
       where the banner is DEMAND with no column CLASSIFYING it. ⚠️ The only
       population this container can measure is `FIXTURE_POOL` (**24 of 444** bodies
       carry a Resistance, **16** of them `Fighting`), and that is a FLOOR on a
@@ -2510,7 +2525,11 @@ export type BoardCondition =
       all** — D207 measured every occurrence of that banner as DEMAND with the
       SUPPLY side absent. So this template captures it, the vocabulary refuses it,
       and the sentence stays on the LOUD `ATTACK_EFFECT_SKIPPED` path rather than
-      deriving a bonus that can never pay. **THE MAP IS THE VOCABULARY, NOT THE
+      deriving a bonus that can never pay.
+      (🆕🆕🆕 D568 (D539): "stays on the LOUD path … can never pay" is WITHDRAWN — the
+      sentence resolves through its own LITERAL row, `yourBannerPokemonOnBench`, over
+      `banners.ts`. "`Tera` is not a `Card.types` value" stays TRUE, and THIS template still
+      refuses it.) **THE MAP IS THE VOCABULARY, NOT THE
       REGEX** — the reason the capture is `(.+)`.
 
       YOUR BENCH ALONE, and the Active Spot is deliberately excluded exactly as
@@ -2613,6 +2632,7 @@ export type BoardCondition =
       existing readers in this union alone (`opponentActiveHasType`,
       `opponentActiveHasResistance`'s neighbour one field over, `yourBenchHasType`,
       and the two aura filters outside it), so this is nowhere near the `Tera` shape.
+      (🆕🆕🆕 D568 (D539): the "no supply / DATA-BLOCKED / unbuildable" reading is WITHDRAWN FOR TERA — `banners.ts`' engine table, keyed by printing id, supplies the banner; "no INGESTED column classifies it" and "`Tera` is not a type" stay TRUE, and every Ancient/Future claim stands.)
       **THE WHOLE PRICE IS THE SHAPE.**
 
       🛑 **THE FORM IS AN INTERSECTION OVER TWO VARIABLE-SIZE SETS, AND THE UNION
@@ -3783,6 +3803,18 @@ export type BoardCondition =
       Matched on the Stadium card's catalog `name`, exactly — every printing of one Stadium
       shares its name (§7.3's same-name rule reads it the same way). Public. */
   | { kind: "stadiumInPlayNamed"; name: string }
+  /** 🆕🆕🆕 **D568 — "you have any Tera Pokémon in play"**: Glass Trumpet `sv07-135`/
+      `sv08.5-110`'s play gate, Noctowl "Jewel Seeker"'s trigger antecedent and Azumarill
+      "Glistening Bubbles"' cost clause. Any of the reading seat's in-play bodies (Active
+      and Bench) whose TOP card prints `banner` (`banners.ts`, by id). Public. */
+  | { kind: "yourBannerPokemonInPlay"; banner: Banner }
+  /** 🆕🆕🆕 **D568 — "you have any Tera Pokémon on your Bench"**: Ho-Oh `sv08-019`
+      "Shining Blaze" (+100). The reading seat's BENCH only — a Tera Active does not count
+      (`yourBenchHasType`'s zone reading). Public. */
+  | { kind: "yourBannerPokemonOnBench"; banner: Banner }
+  /** 🆕🆕🆕 **D568 — "your opponent's Active Pokémon is a Tera Pokémon"**: Regigigas
+      `sv08.5-086` "Jewel Breaker" (+230). The other seat's Active TOP card. Public. */
+  | { kind: "opponentActiveIsBanner"; banner: Banner }
   /** D280 — every one of `conditions` holds for the reading seat. The
       vocabulary's FIRST COMBINATOR and its first RECURSIVE member, bought by
       Call Bell `sv08-165`'s *"You can use this card only if you go second, and
@@ -3961,6 +3993,11 @@ export interface AttachTargetRiders {
       one ever does. The rider is added when a card prints it (D200's own rule for
       the filter's own `stage`), not in advance. */
   ownerPokemon?: string;
+  /** 🆕🆕🆕 **D568 — only Pokémon printing this BANNER** ("attach them to your **Tera**
+      Pokémon in any way you like" — Terapagos `sv08-161` "Prism Charge"). Matched on the
+      body's TOP card through `matchesFilter`'s `bannerPokemon` arm, `ownerPokemon`'s
+      shared-predicate reason. Absent = no banner narrowing (D135). */
+  targetBanner?: Banner;
   /** Only BENCHED Pokémon — the Active is not a target (Electric Generator's
       "your **Benched** {L} Pokémon", where the attach is the whole point of
       putting Energy somewhere the turn's manual attach cannot reach). */
@@ -10604,6 +10641,18 @@ export type EffectOp =
           disagreeing about who is eligible. ⚠️ IGNORED under `toSelf`, exactly as
           `targetType`/`benchOnly` are — the source ref is not filtered. */
       ownerPokemon?: string;
+      /** 🆕🆕🆕 D568 — the printed BANNER target ("your **Tera** Pokémon" — Terapagos
+          `sv08-161` "Prism Charge"), `AttachTargetRiders.targetBanner`, read once in
+          `attachEnergyTargets`. */
+      targetBanner?: Banner;
+      /** 🆕🆕🆕 **D568 — "up to 3 Basic Energy cards OF DIFFERENT TYPES"** (Prism Charge),
+          `searchDeck.distinctEnergyTypes`' reading on this op. It buys NO prompt field and
+          NO validator branch: `attachFromDeckOffer`'s interchangeable collapse is keyed by
+          the provided TYPE (`energyProvidesOf`) instead of the card identity and keeps ONE
+          uid per type, and `validateChoice` already refuses a uid picked twice — so every
+          legal answer is pairwise type-distinct. A v36 record written by 0.451 carries no
+          such key and reads `undefined`, the unconstrained search (D125). */
+      distinctEnergyTypes?: true;
       /** At most this many of the attached cards may land on any ONE Pokémon —
           the printed "for each of those Pokémon" (Janine's Secret Art). Absent =
           "in any way you like", no per-target limit. */
@@ -10665,6 +10714,28 @@ export type EffectOp =
           count. Authoring it alone is the rule; this doc is the enforcement. */
       toSelf?: true;
       recordAs?: EffectSlot;
+    }
+  /** 🆕🆕🆕 **D568 — GLASS TRUMPET `sv07-135`/`sv08.5-110`**: *"Choose up to 2 of your
+      Benched {C} Pokémon and attach a Basic Energy card from your discard pile to each of
+      them."* The compound `attachCards` park (`attachFromDeck`'s) over the controller's
+      DISCARD PILE: `filter` picks the cards, the riders (`targetType`, `benchOnly`) the
+      bodies, `max` is the printed "up to 2" and `maxPerTarget: 1` is "to each of them" —
+      so an answer names at most two DIFFERENT bodies, one card each. The same identity
+      collapse as the deck twin (a player picks a Fire Energy, not a uid), the same
+      `attachFromZoneApply` (zone `"discard"`), the same validator. `targetType` is the
+      PRINTED type (`card.types`, D238's reading — "{C} Pokémon"). No `recordAs`: nothing
+      reads a consequent. The play gate is the card's `trainerPlayableIf` (a Tera Pokémon in
+      play) AND `programPlayable` (cardplay.ts): a board with no Basic Energy in the discard
+      or no Benched {C} body REFUSES the Item (`NO_LEGAL_TARGET`) — the gust rule (§7), not
+      the Nest Ball play-and-whiff doctrine, because the attach can only whiff. A new
+      `EffectOp` member (D125). */
+  | {
+      op: "attachFromDiscard";
+      filter: CardFilter;
+      max: number;
+      maxPerTarget?: number;
+      targetType?: string;
+      benchOnly?: true;
     }
   /** ⚠️⚠️ D247 — ATTACH **ANY NUMBER** OF ENERGY OUT OF YOUR **HAND**, each card
       naming its own destination: Alolan Exeggutor ex `sv08-133`/`-225`/`-242`/
@@ -13293,6 +13364,9 @@ const FLIP_DEFENDER_STATUS_THEN_DISCARD = new RegExp(
 // D234 and `CLAUSE_POKEMON_TYPES` has carried the brace half since D367 — and it is what
 // keeps `Tera` refused AT THE MAP rather than at this regex (D207: every occurrence of
 // that banner is DEMAND and the SUPPLY side is absent from every ingested column).
+// (🆕🆕🆕 D568 (D539): the SUPPLY half is WITHDRAWN FOR TERA — `banners.ts` — and the whole
+// clause is a literal `CONDITIONAL_DAMAGE_CLAUSES` row now, so this sentence derives a banner
+// gate; the MAP still refuses "Tera" as a TYPE.)
 // ⚠️ **THIS IS THE FIRST PRINTING TO INHABIT THE `{N}` ENTRY OF `CLAUSE_POKEMON_TYPES`.**
 // D367's own block says `{C}` and `{N}` are carried though no printing spells them in a
 // clause; that sentence was true when written and this row falsifies its `{N}` half.
@@ -13655,6 +13729,10 @@ const FLIP_PREVENT_DAMAGE =
 // box and nothing whatsoever for the banner. So this is not "a predicate nobody
 // has written yet": there is no datum to write one over, and the fix is an INGEST
 // change, not an engine one.
+// (🆕🆕🆕 D568 (D539): "the fix is an INGEST change, not an engine one" is WITHDRAWN AS A
+// METHOD — the banner is a per-PRINTING fact, so an ENGINE table keyed by printing id (never a
+// species list) is a fix, and `banners.ts` is that table for TERA. For ANCIENT this sentence
+// stays unbuilt at this head: `Banner` has no "Ancient" member until Slice 2.)
 //
 // A SPECIES LIST WOULD BE WRONG, WHICH IS WHY THE SENTENCE STAYS LOUD RATHER THAN
 // GETTING A TABLE. The banner is a per-PRINTING fact (D135's rule): Great Tusk ex
@@ -17895,7 +17973,9 @@ const YOUR_BENCH_FILTERED_SCALE =
 //     name-keyed species table is refused there FOREVER because the banner is a
 //     per-PRINTING fact (Great Tusk ex sv01-123/-230/-246 is the same species with
 //     no banner). Re-read at D439 and it holds word for word. The fix is an INGEST
-//     change; nothing in this file can be the fix.
+//     change; nothing in this file can be the fix. (🆕🆕🆕 D568 (D539): the METHOD is
+//     withdrawn — `banners.ts`, an engine table keyed by printing id, is a fix, built for Tera;
+//     Ancient stays blocked at this head, until Slice 2 widens `Banner`.)
 //   • **Stage 1** (1 printing) was UNBUILT, which is a different thing — and it is
 //     ✅ **BUILT AS OF D466**, so this bullet is kept as the RECORD of why the two
 //     refusals were never one refusal. The reason it gave was right and it was also
@@ -18617,7 +18697,9 @@ function inPlayBodyFilter(noun: string): CardFilter | null {
 //     own card model (checked / upstream against Roaring Moon ex sv04-124, the canonical
 //     Ancient print — it"*. A name-keyed species table is refused there FOREVER because
 //     the banner is a per-PRINTING fact. **The fix is an INGEST change; nothing in this
-//     file can be the fix.** D439 refused the same banner one zone over for the same
+//     file can be the fix.** (🆕🆕🆕 D568 (D539): the METHOD is withdrawn — an engine table
+//     keyed by printing id, `banners.ts`, is a fix, built for Tera; Ancient stays blocked here
+//     until Slice 2.) D439 refused the same banner one zone over for the same
 //     reason and this is the second reading of one permanent block, not a second block.
 //   ✅ **Supporter card that has "Team Rocket" in its name** (2 printings) was the
 //     SECOND refusal here and it is **BUILT at D510**. It was never data-blocked: the
@@ -19918,6 +20000,17 @@ const CONDITIONAL_DAMAGE_CLAUSES = new Map<string, BoardCondition>([
   // FOURTH member on that same reasoning, and the two rows now sit adjacent so the
   // ladder is readable in one screen. Driven apart in `stage1Bonus.test.ts` §3.
   ["your opponent's Active Pokémon is a Stage 2 Pokémon", { kind: "opponentActiveIsStage2" }],
+  // 🆕🆕🆕 D568 — THE TWO TERA CLAUSES, now that the banner has a writer (`banners.ts`).
+  // Regigigas `sv08.5-086` "Jewel Breaker" ({C}{C}{C}{C}, 100+, **+230**) and Ho-Oh `sv08-019`
+  // "Shining Blaze" ({R}{R}{C}, 100+, **+100**), one legal printing each. LITERAL rows,
+  // matched in pass ONE: the loose `OPPONENT_ACTIVE_TYPE_CLAUSE` / `YOUR_BENCH_TYPE_CLAUSE`
+  // templates match both and still MISS (`Tera` is not in `CLAUSE_POKEMON_TYPES` — it is a
+  // banner, not a type, and stays refused there), so the row wins outright.
+  [
+    "your opponent's Active Pokémon is a Tera Pokémon",
+    { kind: "opponentActiveIsBanner", banner: "Tera" },
+  ],
+  ["you have any Tera Pokémon on your Bench", { kind: "yourBannerPokemonOnBench", banner: "Tera" }],
   // 🆕🆕 D388 — Talonflame `sv07-123` "Aero Chase" ({C}{C}, `110+`, **+110**, index
   // 0 of ONE attack), ONE legal printing, and the FIRST key in this table whose
   // grammatical SUBJECT is a card COLUMN rather than a Pokémon: every other row
@@ -20835,7 +20928,10 @@ const OPPONENT_ACTIVE_TYPE_CLAUSE = /^your opponent['’]s Active Pokémon is a 
 
     ⚠️ THE CLAUSE PATTERN IS UNCHANGED AND STILL LOOSE (`(.+)`), so "Stage 1",
     "Tera" and "Evolution" still reach this lookup and still MISS it — they are not
-    types, they fall through to null, and they stay LOUD. That is what makes the
+    types, they fall through to null, and they stay LOUD. (🆕🆕🆕 D568 (D539): "Tera"
+    still MISSES this map — it is not a type — but the two PRINTED Tera clauses no longer
+    reach it: literal `CONDITIONAL_DAMAGE_CLAUSES` rows over `banners.ts` win in pass ONE,
+    so they do not "stay LOUD".) That is what makes the
     map, and not the regex, the vocabulary. */
 const CLAUSE_POKEMON_TYPES: ReadonlyMap<string, PokemonType> = new Map([
   ...POKEMON_TYPES.map((type) => [type, type] as [string, PokemonType]),
@@ -20861,7 +20957,9 @@ const CLAUSE_POKEMON_TYPES: ReadonlyMap<string, PokemonType> = new Map([
     Pokémon on your Bench"* is in the corpus at 1 legal printing and `Tera` is not
     a `Card.types` value (D207). The capture is deliberately loose so the refusal
     happens at the MAP: `Tera` misses, the clause falls through to null, and the
-    sentence stays LOUD. A `(Grass|Fire|…)` alternation here would refuse it at the
+    sentence stays LOUD. (🆕🆕🆕 D568 (D539): WITHDRAWN — the clause resolves through its own
+    LITERAL row, `yourBannerPokemonOnBench`, over `banners.ts`; THIS template still misses
+    `Tera`, which is still not a type.) A `(Grass|Fire|…)` alternation here would refuse it at the
     anchor instead — the same answer today, and a hand-kept list that rots the day
     a type is added to the schema.
 
@@ -24793,7 +24891,9 @@ function typedNounFilter(phrase: string, plural: boolean): CardFilter | undefine
 const NAMED_CARD_NOUN = /^([A-Z][a-zé]+) cards$/;
 /** The three printed FACE BANNERS. Not a `CardFilter`, not a `Card` column, not a
     catalog key — demand with no supply (D207), which is the whole reason this Set
-    exists rather than the capture being trusted. */
+    exists rather than the capture being trusted. (🆕🆕🆕 D568 (D539): "no supply"
+    is WITHDRAWN FOR TERA — `banners.ts` — and the Set STAYS: a printed "Tera cards" noun would
+    need `bannerPokemon`, never `byName`, so refusing it here is still right.) */
 const PRINTED_CARD_BANNERS: ReadonlySet<string> = new Set(["Ancient", "Future", "Tera"]);
 function namedCardNounFilter(phrase: string): CardFilter | undefined {
   const match = NAMED_CARD_NOUN.exec(phrase);
@@ -25856,7 +25956,9 @@ const ATTACK_OPPONENT_DISCARD_ATTACH =
 // carrier reads as a fact about the sentence** (D456's lesson, one family over).
 // The three that remain are unchanged and each keeps its own reason: the
 // Future/Tera SUBGROUP rider (3 printings — DATA-BLOCKED, no ingested column
-// classifies either banner: `packages/schema/src/catalog/card.ts` `cardSchema`
+// classifies either banner: (🆕🆕🆕 D568 (D539): "DATA-BLOCKED" WITHDRAWN FOR TERA —
+// `banners.ts`; Prism Charge `sv08-161` is BUILT as a registry attack, and the Future half
+// stands) `packages/schema/src/catalog/card.ts` `cardSchema`
 // carries `stage`/`types`/`trainerType`/`energyType` and no subtype column), the
 // "of different types" distinctness constraint (1, on the same `sv08-161` as
 // the Tera one — BOTH blockers on one printing, re-measured by minimal pair:
@@ -25872,7 +25974,8 @@ const ATTACK_OPPONENT_DISCARD_ATTACH =
 // different KIND of constraint, not a missing member. The word is corrected to
 // `constraint` in both places and the count is UNCHANGED, because the refusal still
 // holds for `sv08-161`: it is blocked by the Tera banner (data, no `cardSchema` key)
-// AND by this anchor, whose `Energy cards and attach them` is welded — unlike
+// AND by this anchor, (🆕🆕🆕 D568 (D539): the banner half is WITHDRAWN — `banners.ts`;
+// the ANCHOR half stands, so the printing is built as a hand-written REGISTRY attack instead) whose `Energy cards and attach them` is welded — unlike
 // `ATTACK_HAND_SEARCH`'s open `([^,.]+?)` noun group, the attach pattern does not
 // admit the phrase at all. **The two "of different types" rows are blocked at
 // DIFFERENT LAYERS, and only the hand row's blocker was a name.**
@@ -25884,6 +25987,11 @@ const ATTACK_OPPONENT_DISCARD_ATTACH =
 // prompt, which has no `caps` of its own; so the price for `sv08-161` is the banner
 // PLUS an anchor branch PLUS a second carrier at a second prompt. This refusal is
 // narrower and better-founded than it was, not retired.
+// 🆕🆕🆕 D568 (D539): that price is PAID for the PRINTING and the refusal is RETIRED for
+// it — the banner is `banners.ts`, and the second carrier is `attachFromDeck.distinctEnergyTypes`
+// (the offer's identity collapse keyed by provided TYPE, no new prompt field) with
+// `targetBanner`, authored as a hand-written REGISTRY attack (`PRISM_CHARGE`). The ANCHOR
+// branch was NOT bought: no reader derives the sentence, which stays in `UNREAD`.
 //
 // ✅ EVERY READ SITE PRICED BY GREPPING THE FIELDS, NOT THE OPS. `programPlayable`
 // is ZERO by the op's own doc (cardplay.ts:759 — `attachFromDeck` is deliberately

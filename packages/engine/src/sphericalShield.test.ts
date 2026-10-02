@@ -22,6 +22,7 @@ import {
 // on the remote D1 `luminous` (735f0fb5-cdc3-494d-8b97-74a8ade0124a) and got NINE
 // legal printings on FOUR sentences; D252 took 2, D253 took 3, this takes the
 // last 1, and the 3-printing TERA group stays permanently unbuildable ("Tera" is a
+// (🆕🆕🆕 D568 (D539): the "no supply / DATA-BLOCKED / unbuildable" reading is WITHDRAWN FOR TERA — `banners.ts`' engine table, keyed by printing id, supplies the banner; "no INGESTED column classifies it" and "`Tera` is not a type" stay TRUE, and every Ancient/Future claim stands.)
 // printed BANNER and no ingested column carries it). ✅ THE CENSUS WAS RE-RUN AT
 // THIS COMMIT — D253 met `403 / code 7403` on every query and had to INCREMENT
 // `BUILT.ability` 133 → 136 from a transcribed row, flagging the gap in four

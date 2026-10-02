@@ -22,6 +22,7 @@ import { recoverStatuses, resolveMidTurnKnockOuts, settleProgram } from "./flow"
 import type { EffectChoice, EffectPrompt, PokemonRef } from "./interpreter";
 import {
   attachEnergyTargets,
+  attachFromDiscardOffer,
   attachSeat,
   conditionHolds,
   conditionNote,
@@ -1390,6 +1391,12 @@ export function programPlayable(
     // excluded, which this function cannot see. Both action paths call
     // `handCostUnmet` themselves, beside `trainerPlayableIf`. (🆕🆕🆕 D561: all THREE
     // since R-AN — `useStadiumAbility` asks it too, after this function.)
+    // 🆕🆕🆕 D568 — Glass Trumpet: no Basic Energy in the discard pile or no Benched {C}
+    // body → the attach can only whiff, so the Item is not played (§7, the gust rule).
+    if (op.op === "attachFromDiscard") {
+      const offer = attachFromDiscardOffer(state, seat, op);
+      if (offer.candidates.length === 0 || offer.targets.length === 0) return false;
+    }
     if (op.op === "moveEnergy" && !moveEnergyPlayable(state, seat, op, sourceUid)) {
       // No movable Energy, or fewer than two of your Pokémon in play (no distinct
       // destination) → the move can only whiff (Energy Switch / Poppy).

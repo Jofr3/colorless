@@ -119,7 +119,10 @@ export type RefusedPrinting = {
     (🆕🆕🆕 D555: SEVEN rows at this head, counted — the Samurott pair left when D555 built
     it; "fourteen" is an older head's figure, kept.) (🆕🆕🆕 D562: SIX — D562 built
     Survival Brace `sv06-164` (registry.ts `SURVIVAL_BRACE`) and deleted its row, D555's
-    precedent; its cited doc block in registry.ts carries the dated correction.) */
+    precedent; its cited doc block in registry.ts carries the dated correction.) (🆕🆕🆕 D568:
+    TWO — D568 built Briar (`sv07-132`/`-163`/`-171`, `sv08.5-100`, registry.ts `BRIAR`) and
+    deleted all four rows together, as the `sv07-163` row's own reason demanded; the cited
+    effects.ts doc block carries the dated correction.) */
 export const REFUSED_PRINTINGS: readonly RefusedPrinting[] = [
   {
     id: "sv01-127",
@@ -143,50 +146,6 @@ export const REFUSED_PRINTINGS: readonly RefusedPrinting[] = [
       excerpt: "  // more Prizes remaining). 2 printings, 1 legal — `sv02-192` is not Standard.",
     },
   },
-  {
-    id: "sv07-132",
-    card: "Briar",
-    surface: "trainer",
-    why: 'One of the two spellings of the Prize-count clause. `opponentPrizesRemaining` reads the SATISFYING SET (`counts: [0, 1, 2, 3]` for Lacey\'s "3 or fewer"), which is what makes the union spell an inequality; Briar prints "exactly 2 Prize cards remaining" and is refused for the reason recorded beside the member rather than for the shape of the count.',
-    since: "D207",
-    cite: {
-      file: "packages/engine/src/effects.ts",
-      excerpt: '      remaining" (Briar sv07-132/-163/-171, sv08.5-100 — unbuilt, see registry.ts)',
-    },
-  },
-  {
-    id: "sv07-163",
-    card: "Briar (alternate art)",
-    surface: "trainer",
-    why: "A reprint of `sv07-132` and refused with it. Listed on its own line because a refusal covering N printings is N refusals until each is priced (D463) — and because the day Briar is built, all four ids must leave this table together or the survivors become a silent false claim.",
-    since: "D207",
-    cite: {
-      file: "packages/engine/src/effects.ts",
-      excerpt: '      remaining" (Briar sv07-132/-163/-171, sv08.5-100 — unbuilt, see registry.ts)',
-    },
-  },
-  {
-    id: "sv07-171",
-    card: "Briar (alternate art)",
-    surface: "trainer",
-    why: "The third Briar printing, and refused with the other three. Its own row for `sv07-163`'s reason: a refusal covering N printings is N refusals until each is priced (D463), and a partial deletion here would leave a false claim rather than no claim.",
-    since: "D207",
-    cite: {
-      file: "packages/engine/src/effects.ts",
-      excerpt: '      remaining" (Briar sv07-132/-163/-171, sv08.5-100 — unbuilt, see registry.ts)',
-    },
-  },
-  {
-    id: "sv08.5-100",
-    card: "Briar (reprint)",
-    surface: "trainer",
-    why: "The fourth Briar printing, in a later set, and the only one of the four whose id the doc block spells WHOLE. Its own row for `sv07-163`'s reason, and it is the control that keeps the suffix reading honest: one row cited in full beside three cited by suffix.",
-    since: "D207",
-    cite: {
-      file: "packages/engine/src/effects.ts",
-      excerpt: '      remaining" (Briar sv07-132/-163/-171, sv08.5-100 — unbuilt, see registry.ts)',
-    },
-  },
 ];
 
 /** Does `excerpt` actually name `id`? — the anti-typo rung of limit 2, and the
@@ -202,7 +161,9 @@ export const REFUSED_PRINTINGS: readonly RefusedPrinting[] = [
     ("Torrential Whirlpool", registry.ts `TORRENTIAL_WHIRLPOOL`) and deleted both of its
     rows, so the table is seven rows and the suffix pair is Briar's alone. (🆕🆕🆕 D562:
     six rows — Survival Brace `sv06-164`, cited by its whole id, was built and deleted;
-    the suffix pair is unchanged.) **A refusal written in suffix shorthand is
+    the suffix pair is unchanged.) (🆕🆕🆕 D568: TWO rows, and NO suffix-cited row is left —
+    D568 built Briar and deleted all four of its rows, the suffix pair with them; the
+    function is kept for the next shorthand citation.) **A refusal written in suffix shorthand is
     invisible to the `git grep <id>` D321 prescribes**, which is the second way a
     build-state claim goes unchecked and the reason those printings get their own
     rows here. So a citation counts if it spells the id whole, OR if it names the SET

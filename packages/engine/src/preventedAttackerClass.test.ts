@@ -62,6 +62,7 @@ import {
 // So 11 of the 22 were built coming in, this slice takes 5, and the residue is
 // 6 printings on 3 sentences — three of which are the permanently unbuildable TERA
 // group (D252's finding: "Tera" is in NO ingested column; every `name`/`effect`
+// (🆕🆕🆕 D568 (D539): the "no supply / DATA-BLOCKED / unbuildable" reading is WITHDRAWN FOR TERA — `banners.ts`' engine table, keyed by printing id, supplies the banner; "no INGESTED column classifies it" and "`Tera` is not a type" stay TRUE, and every Ancient/Future claim stands.)
 // hit is DEMAND, never SUPPLY). The two genuinely open rows are measured into
 // `coverage-backlog-legal.md` by this slice with their queries.
 //

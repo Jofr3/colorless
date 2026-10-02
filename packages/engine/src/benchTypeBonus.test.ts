@@ -49,6 +49,7 @@ import {
 // `POKEMON_TYPE_BY_CODE["M"]` is `"Metal"`; `Tera` is not a `Card.types` value at
 // all (D207: every occurrence of that banner is DEMAND, the SUPPLY side absent) —
 // and *"you have any Tera Pokémon on your Bench"* is the IDENTICAL sentence one
+// (🆕🆕🆕 D568 (D539): the "no supply / DATA-BLOCKED / unbuildable" reading is WITHDRAWN FOR TERA — `banners.ts`' engine table, keyed by printing id, supplies the banner; "no INGESTED column classifies it" and "`Tera` is not a type" stay TRUE, and every Ancient/Future claim stands.)
 // token over, at 1 legal printing. **THE SAME TEMPLATE THAT BUYS THE ONE MUST
 // REFUSE THE OTHER**, so the refusal is a rung and not a comment.
 //
@@ -117,7 +118,11 @@ const TAKEN = "If you have any {M} Pokémon on your Bench, this attack does 80 m
 const TAKEN_CLAUSE = "you have any {M} Pokémon on your Bench";
 
 /** THE TRAP — the identical sentence one TOKEN over, in the corpus at 1 printing,
-    and refused because `Tera` is not a type. */
+    and refused because `Tera` is not a type. (🆕🆕🆕 D568 — ~~refused~~: `Tera` is STILL not a
+    type, and the template still misses it — but the sentence now RESOLVES through its own
+    LITERAL row, `yourBannerPokemonOnBench { banner: "Tera" }`, because the banner has a
+    writer at last (`banners.ts`). Ho-Oh `sv08-019` "Shining Blaze". The constant keeps its
+    name: it is still the sentence one token over, and §3/§4 below now pin it RESOLVED.) */
 const TRAP = "If you have any Tera Pokémon on your Bench, this attack does 100 more damage.";
 const TRAP_CLAUSE = "you have any Tera Pokémon on your Bench";
 
@@ -285,8 +290,8 @@ describe("§1 — the price, RE-DERIVED: the `needs` column and the band, not th
     // distribution goes `{1: 12, 5: 1}` -> `{1: 11, 5: 1}`. ⚠️ AND THIS STEP WAS TAKEN BY A
     // SECOND MEMBER, the OPPOSITE shape from D391's one slice back — the measurements that
     // decided it are driven in `benchNameSubstring.test.ts` §2.
-    expect(refused.length).toBe(5); // 🆕🆕 D436 -2 sentences (THE "EXTRA ENERGY" DECLARATION READ — corpus rows 319/320, **2 sentences / 5 legal printings on ONE clause**, the record D368 refused on SHAPE as a `BoardCondition` and this slice takes as a `DamageCountSource` (`extraEnergyUnitsBeyondCost`), because the predicate reads THIS ATTACK'S COST and the fold runs inside `attack()` where that cost is a local. Claimed WHOLE by `deriveAttackDamageBonus` through ONE new anchor `EXTRA_ENERGY_BONUS`, so the RAW reader summand alone steps: the reader SURFACE stands still at 13 and the registry / split / compound summands were RE-MEASURED UNMOVED rather than assumed.) // 🆕🆕 D398 — 8 -> 7, the DECK-SIZE READ, and the LAST buildable sentence in this residue
-    expect(units(refused)).toBe(5); // 🆕🆕 D436 -5 printings (THE "EXTRA ENERGY" DECLARATION READ — corpus rows 319/320, **2 sentences / 5 legal printings on ONE clause**, the record D368 refused on SHAPE as a `BoardCondition` and this slice takes as a `DamageCountSource` (`extraEnergyUnitsBeyondCost`), because the predicate reads THIS ATTACK'S COST and the fold runs inside `attack()` where that cost is a local. Claimed WHOLE by `deriveAttackDamageBonus` through ONE new anchor `EXTRA_ENERGY_BONUS`, so the RAW reader summand alone steps: the reader SURFACE stands still at 13 and the registry / split / compound summands were RE-MEASURED UNMOVED rather than assumed.) // 🆕🆕 D398 — 11 -> 10, the DECK-SIZE READ's one printing
+    expect(refused.length).toBe(3); // 🆕🆕🆕 D568 -2 sentences (THE TWO TERA CLAUSES — Ho-Oh `sv08-019` "Shining Blaze" and Regigigas `sv08.5-086` "Jewel Breaker", one printing each, two literal rows over `banners.ts`). // 🆕🆕 D436 -2 sentences (THE "EXTRA ENERGY" DECLARATION READ — corpus rows 319/320, **2 sentences / 5 legal printings on ONE clause**, the record D368 refused on SHAPE as a `BoardCondition` and this slice takes as a `DamageCountSource` (`extraEnergyUnitsBeyondCost`), because the predicate reads THIS ATTACK'S COST and the fold runs inside `attack()` where that cost is a local. Claimed WHOLE by `deriveAttackDamageBonus` through ONE new anchor `EXTRA_ENERGY_BONUS`, so the RAW reader summand alone steps: the reader SURFACE stands still at 13 and the registry / split / compound summands were RE-MEASURED UNMOVED rather than assumed.) // 🆕🆕 D398 — 8 -> 7, the DECK-SIZE READ, and the LAST buildable sentence in this residue
+    expect(units(refused)).toBe(3); // 🆕🆕🆕 D568 -2 printings (the two Tera clauses, one printing each). // 🆕🆕 D436 -5 printings (THE "EXTRA ENERGY" DECLARATION READ — corpus rows 319/320, **2 sentences / 5 legal printings on ONE clause**, the record D368 refused on SHAPE as a `BoardCondition` and this slice takes as a `DamageCountSource` (`extraEnergyUnitsBeyondCost`), because the predicate reads THIS ATTACK'S COST and the fold runs inside `attack()` where that cost is a local. Claimed WHOLE by `deriveAttackDamageBonus` through ONE new anchor `EXTRA_ENERGY_BONUS`, so the RAW reader summand alone steps: the reader SURFACE stands still at 13 and the registry / split / compound summands were RE-MEASURED UNMOVED rather than assumed.) // 🆕🆕 D398 — 11 -> 10, the DECK-SIZE READ's one printing
     // D371's recorded residue, then D370's, then D369's, re-derived from THIS head:
     // add the sentences back rather than freezing the pair that measured them.
     // 🆕🆕 D373 — one more term on each chain, and the step is 1 sentence /
@@ -299,23 +304,26 @@ describe("§1 — the price, RE-DERIVED: the `needs` column and the band, not th
     // by one sentence and two printings while the expected values stayed put — which
     // is the point of writing them as offsets off the live head at all.
     // 🆕🆕 D392 — the OFFSET gains one: the head moved, this one's did not.
-    expect(refused.length + 19).toBe(24);
+    // 🆕🆕🆕 D568 — the OFFSET gains TWO on each axis: the head moved by the two Tera clauses (Ho-Oh, Regigigas, one printing each), this one's did not.
+    expect(refused.length + 21).toBe(24);
     // 🆕🆕 D392 — the OFFSET gains one: the head moved, this one's did not.
-    expect(units(refused) + 23).toBe(28);
-    expect(refused.length + 20).toBe(25);
-    expect(units(refused) + 25).toBe(30);
-    expect(refused.length + 21).toBe(26);
-    expect(units(refused) + 27).toBe(32);
-    expect(refused.length + 22).toBe(27);
-    expect(units(refused) + 29).toBe(34);
-    expect(refused.length + 23).toBe(28);
-    expect(units(refused) + 31).toBe(36);
-    expect(refused.length + 25).toBe(30);
-    expect(units(refused) + 33).toBe(38);
-    expect(refused.length + 26).toBe(31);
-    expect(units(refused) + 35).toBe(40);
-    expect(refused.length + 27).toBe(32);
-    expect(units(refused) + 37).toBe(42);
+    // 🆕🆕🆕 D568 — the OFFSET gains TWO: the head moved by the two Tera clauses (one printing each), this one's did not.
+    expect(units(refused) + 25).toBe(28);
+    // 🆕🆕🆕 D568 — every EARLIER head below is re-derived from this one, so each OFFSET gains TWO (the two Tera clauses left the residue).
+    expect(refused.length + 22).toBe(25);
+    expect(units(refused) + 27).toBe(30);
+    expect(refused.length + 23).toBe(26);
+    expect(units(refused) + 29).toBe(32);
+    expect(refused.length + 24).toBe(27);
+    expect(units(refused) + 31).toBe(34);
+    expect(refused.length + 25).toBe(28);
+    expect(units(refused) + 33).toBe(36);
+    expect(refused.length + 27).toBe(30);
+    expect(units(refused) + 35).toBe(38);
+    expect(refused.length + 28).toBe(31);
+    expect(units(refused) + 37).toBe(40);
+    expect(refused.length + 29).toBe(32);
+    expect(units(refused) + 39).toBe(42);
 
     const byClause = new Map<string, number>();
     for (const [n, s] of refused) {
@@ -356,7 +364,7 @@ describe("§1 — the price, RE-DERIVED: the `needs` column and the band, not th
     // already empty and stays empty, and the refusal is still driven from OUTSIDE it.
     // 🆕🆕 D391 — the TYPED PER-BODY ENERGY THRESHOLD left the 1-printing band.
     // 🆕🆕 D392 — 13 -> **12**: the SUBSTRING NAME READ's clause left the 1-printing band.
-    expect(byClause.size).toBe(5); // 🆕🆕 D436 -1 clause: the 5-printing DECLARATION clause LEAVES this residue, and the 5 remaining are the D207 banners (THE "EXTRA ENERGY" DECLARATION READ — corpus rows 319/320, **2 sentences / 5 legal printings on ONE clause**, the record D368 refused on SHAPE as a `BoardCondition` and this slice takes as a `DamageCountSource` (`extraEnergyUnitsBeyondCost`), because the predicate reads THIS ATTACK'S COST and the fold runs inside `attack()` where that cost is a local. Claimed WHOLE by `deriveAttackDamageBonus` through ONE new anchor `EXTRA_ENERGY_BONUS`, so the RAW reader summand alone steps: the reader SURFACE stands still at 13 and the registry / split / compound summands were RE-MEASURED UNMOVED rather than assumed.) // 🆕🆕 D398 — the DECK-SIZE READ took ONE more singleton out, a 1:1 step, and it was the LAST BUILDABLE one // 🆕🆕 D397 — the BENCHED-CUBONE FILTER took ONE more singleton out, back to a 1:1 step // 🆕🆕 D394 — the USED-ATTACK PAIR took TWO more singletons out at once, the second two-step in two slices
+    expect(byClause.size).toBe(3); // 🆕🆕🆕 D568 -2 clauses: the two TERA clauses leave (literal rows over `banners.ts`); the 3 remaining are the Ancient/Future banners. // 🆕🆕 D436 -1 clause: the 5-printing DECLARATION clause LEAVES this residue, and the 5 remaining are the D207 banners (THE "EXTRA ENERGY" DECLARATION READ — corpus rows 319/320, **2 sentences / 5 legal printings on ONE clause**, the record D368 refused on SHAPE as a `BoardCondition` and this slice takes as a `DamageCountSource` (`extraEnergyUnitsBeyondCost`), because the predicate reads THIS ATTACK'S COST and the fold runs inside `attack()` where that cost is a local. Claimed WHOLE by `deriveAttackDamageBonus` through ONE new anchor `EXTRA_ENERGY_BONUS`, so the RAW reader summand alone steps: the reader SURFACE stands still at 13 and the registry / split / compound summands were RE-MEASURED UNMOVED rather than assumed.) // 🆕🆕 D398 — the DECK-SIZE READ took ONE more singleton out, a 1:1 step, and it was the LAST BUILDABLE one // 🆕🆕 D397 — the BENCHED-CUBONE FILTER took ONE more singleton out, back to a 1:1 step // 🆕🆕 D394 — the USED-ATTACK PAIR took TWO more singletons out at once, the second two-step in two slices
     expect(band.length + 2).toBe(2);
     expect(band.length + 3).toBe(3);
     expect(band.length + 4).toBe(4);
@@ -437,14 +445,21 @@ describe("§2 — THE VOCABULARY CHECK, run FIRST: one token passes and its neig
     expect(shaped.map(([, s]) => s).sort()).toEqual([TRAP, TAKEN].sort());
   });
 
-  it("🛑 the trap is refused by the MAP, not by the anchor — and stays LOUD", () => {
+  it("🛑 D568 FLIPPED THE TRAP: the MAP still refuses `Tera` as a TYPE, and a LITERAL row now reads the sentence", () => {
     // THE DISTINCTION THAT MAKES THIS A RUNG. The template MATCHES the trap
     // sentence — it is the same shape — and the capture then misses the vocabulary.
-    // So the sentence falls through to null and stays on the loud
-    // ATTACK_EFFECT_SKIPPED path, rather than deriving a bonus that can never pay.
+    // ~~So the sentence falls through to null and stays on the loud
+    // ATTACK_EFFECT_SKIPPED path, rather than deriving a bonus that can never pay.~~
+    // 🆕🆕🆕 D568 (D539) — WITHDRAWN for Tera: the bonus CAN pay now — `banners.ts` is the
+    // writer the refusal said was missing — so the clause resolves through its own literal
+    // `CONDITIONAL_DAMAGE_CLAUSES` row (pass ONE, ahead of this template). What stays true
+    // is the part below: `Tera` is not a TYPE, and `CLAUSE_POKEMON_TYPES` still misses it.
     expect(BONUS.test(TRAP)).toBe(true);
-    expect(deriveAttackDamageBonus(TRAP)).toBeNull();
-    expect(resolvedByAnyReader(TRAP)).toBe(false);
+    expect(deriveAttackDamageBonus(TRAP)).toEqual({
+      per: 100,
+      count: { kind: "boardCondition", cond: { kind: "yourBannerPokemonOnBench", banner: "Tera" } },
+    });
+    expect(resolvedByAnyReader(TRAP)).toBe(true);
     // …while the taken sentence, one token over, resolves.
     expect(resolvedByAnyReader(TAKEN)).toBe(true);
     // A `(Grass|Fire|…)` alternation in the pattern would give the same answer here
@@ -561,9 +576,10 @@ describe("§3 — the template: N from the sentence, and a round trip across NOT
 
 describe("§4 — the near-misses stay LOUD, and the siblings are untouched", () => {
   it("refuses CONSTRUCTED rewrites of the clause — the shape is char-for-char", () => {
+    // 🆕🆕🆕 D568 — the TRAP left this list (it resolves through its literal row now, §3);
+    // the TYPE reading of it is still refused, which §3's `POKEMON_TYPES` rungs pin.
+    expect(TRAP_CLAUSE).toBe("you have any Tera Pokémon on your Bench");
     for (const clause of [
-      // The TRAP, first: a real printed sentence, refused at the map.
-      TRAP_CLAUSE,
       // Not a type at all, and each of these is a real printed word elsewhere.
       "you have any Basic Pokémon on your Bench",
       "you have any Stage 2 Pokémon on your Bench",

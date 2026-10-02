@@ -7,16 +7,17 @@ import type {
 } from "./actions";
 import { err } from "./actions";
 import {
-  ANY_ENERGY,
   activeTop,
   applyDamageModifier,
   attacksOf,
   cardOfUid,
+  costMet,
   hasPrintedAbility,
   isExOrV,
   isSpecialEnergy,
   matchesFilter,
   parseAttackDamage,
+  preventsAttackerBanner,
   preventsAttackerClass,
   resistanceOf,
   topCardOf,
@@ -148,41 +149,11 @@ import {
 // here funnels into flow.ts's staged tail — the KO stages simply go in
 // front of it.
 
-/** §6.4 cost matching. Typed symbols need exactly that type; Colorless slots
-    take whatever is left over. `provided` is the flat list of UNITS the
-    attached energies give (continuous.ts providedEnergy) — a basic energy one
-    unit of its type, a special energy its authored units, possibly several
-    (Double Turbo-likes) and possibly a WILDCARD (`ANY_ENERGY` — Luminous, "any
-    1 type"). A wildcard fills a typed shortfall or a Colorless slot; concrete
-    types are counted per type, wildcards allocated to the (pickier) typed needs
-    first, then everything left pays the Colorless slots. */
-export function costMet(cost: readonly string[], provided: readonly string[]): boolean {
-  const needed = new Map<string, number>();
-  let colorless = 0;
-  for (const symbol of cost) {
-    if (symbol === "Colorless") colorless++;
-    else needed.set(symbol, (needed.get(symbol) ?? 0) + 1);
-  }
-  const counts = new Map<string, number>();
-  let wild = 0;
-  for (const unit of provided) {
-    if (unit === ANY_ENERGY) wild++;
-    else counts.set(unit, (counts.get(unit) ?? 0) + 1);
-  }
-  let typedNeeds = 0;
-  for (const [type, count] of needed) {
-    typedNeeds += count;
-    const shortfall = count - (counts.get(type) ?? 0);
-    if (shortfall > 0) {
-      // Cover the typed shortfall with wildcards; run out and the cost is unmet.
-      if (shortfall > wild) return false;
-      wild -= shortfall;
-    }
-  }
-  // Each typed need consumed exactly one unit; everything else (surplus typed
-  // units, leftover wildcards, Colorless-provided units) pays the Colorless.
-  return provided.length - typedNeeds >= colorless;
-}
+// 🆕🆕🆕 D568 — `costMet` (§6.4 cost matching) MOVED to cards.ts, byte for byte, so that
+// continuous.ts `effectiveAttackCost` can read it for Sparkling Crystal's any-type
+// discount without a continuous → attack import cycle (attack.ts already imports
+// continuous.ts by value). Re-exported here so every importer is unchanged.
+export { costMet };
 
 /** 🆕🆕🆕 **D545 — §8.2 THE COST THIS ATTACK IS CHARGED RIGHT NOW: the printed cost
     under every continuous cost effect in play (`effectiveAttackCost`, unchanged) AND
@@ -218,6 +189,16 @@ export function costMet(cost: readonly string[], provided: readonly string[]): b
     signature, body and "THREE sources" doc: a cost CLAUSE is printed on the attack,
     not a continuous effect in play, and folding it there would give that
     seat-blind function a seat and a `provided` list it has no business holding.
+    (🆕🆕🆕 D568 (D539): TWO halves of this paragraph are WITHDRAWN, annotated here and
+    not rewritten. `costMet` no longer "lives here" — it MOVED to cards.ts byte for
+    byte and is re-exported from this module, so the alternate's payability reads the
+    same function through that re-export. And `effectiveAttackCost` did NOT keep its
+    body or its "THREE sources" doc: Sparkling Crystal's any-type discount IS a
+    continuous effect in play (an attached Tool), so it was folded THERE, and that
+    function now reads the holder's `providedEnergy` — the `provided` list this
+    paragraph said it had no business holding. It is still seat-blind (the Tool is the
+    holder's own) and its signature is unchanged; the reason for keeping the printed cost
+    CLAUSE here, not there, stands.)
 
     ⚠️ THE RETURN IS THE CHARGED ARRAY, and `attack()` hands it on to
     `scaledAttackDamage` for the extra-Energy readers (D436/D169) — so under a waive
@@ -3530,6 +3511,8 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
           // fact about the attacking body's printed ROW (name suffix + stage), which
           // is `hasPrintedAbility`'s subject one line up and not D252's board read.
           preventsAttackerClass(defenderPassives.preventDamageFromAttackerClasses, attacker) ||
+          // 🆕🆕🆕 D568 — Sparkling Scales (the banner sibling), inside the suppression guard.
+          preventsAttackerBanner(defenderPassives.preventDamageAndEffectsFromBanners, attacker) ||
           // D252 — the FOURTH attacker-property prevent, at the FIRST of its FIVE
           // read sites (the other four are interpreter.ts's spread, `deals` and
           // snipe arms, plus `attackEffectRefused` — the fifth is what makes this

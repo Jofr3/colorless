@@ -1,5 +1,6 @@
 import type { BasicEnergyType } from "@luminous/schema";
 import { ANY_ENERGY } from "./cards";
+import type { Banner } from "./banners";
 import type { PokemonSuffix, PreventedAttackerClass } from "./cards";
 import { searchTopOrderProgram } from "./effects";
 import type {
@@ -1598,6 +1599,23 @@ export interface PassiveEffects {
       `cards.ts preventsAttackerClass`. Neither sentence carries an "in the Active
       Spot" clause, so both protect a benched holder too. */
   preventDamageFromAttackerClass?: PreventedAttackerClass;
+  /** 🆕🆕🆕 §8.5/§11 (D568) — **"Prevent all damage from and effects of attacks from your
+      opponent's Tera Pokémon done to this Pokémon."** Milotic ex `sv08-042`/`-217`/`-237`
+      "Sparkling Scales", 3 legal printings on one sentence.
+
+      🛑 **A SIBLING FIELD, NOT A WIDENING OF `preventDamageFromAttackerClass`.** That
+      record's `suffix` is REQUIRED so that "prevent all damage from any attack" cannot be
+      spelled by omission; a banner-class member made `suffix` optional or forked the
+      record, and the sentence differs anyway in its SECOND half — "from AND EFFECTS OF",
+      the wide spelling (`preventDamageAndEffectsFromSpecialEnergy`'s five read sites: the
+      four damage arms plus `effectRefusedOn`), where the suffix field is damage-only. So
+      one value (`Banner`) per printing, collected to a LIST by `passivesOf` (the field
+      names a value — D255's shape), resolved at each read site by `cards.ts
+      preventsAttackerBanner` against the attacker's TOP card. An Ability: §9-suppressible
+      through `passivesOf`, and nulled by Feint Attack's `ignoreWR` at the snipe arms with
+      its siblings. "Your opponent's" is the effects funnel's standing seat guard (D430);
+      the damage arms stay seat-blind like every sibling. */
+  preventDamageAndEffectsFromBanner?: Banner;
   /** §8.5 FULL DAMAGE PREVENTION ABOVE A PRINTED THRESHOLD (D257):
 
         "Prevent all damage done to this Pokémon by attacks from your opponent's
@@ -1607,6 +1625,10 @@ export interface PassiveEffects {
       backlog row **15-B** and the LAST buildable member of the `%prevent all
       damage%` ability census (22 printings on 9 sentences; the only other residue
       is the permanently unbuildable 3-printing TERA group).
+      (🆕🆕🆕 D568 (D539): "permanently unbuildable" is WITHDRAWN for this TERA group — Milotic ex
+      "Sparkling Scales" ×3 (`sv08-042`/`-217`/`-237`) is BUILT on the new engine datum `banners.ts`
+      (`preventDamageAndEffectsFromBanners`), so this residue is now EMPTY; "no INGESTED column
+      classifies the banner" stays true.)
 
       🛑 **THE FIRST GATE IN THIS FAMILY WHOSE SUBJECT IS THE NUMBER.** Its seven
       predecessors narrow by a fact about a CARD (`preventDamageFromExV`,
@@ -1833,6 +1855,9 @@ export interface PassiveEffects {
       LAST rung of the 4-sentence "and effects of attacks" family D252 censused
       (9 printings; 6 of 6 addressable now built, the 3-printing TERA group
       permanently out of reach). Re-derived at this commit.
+      (🆕🆕🆕 D568 (D539): "out of reach" / "UNBUILDABLE" is WITHDRAWN — the 3-printing TERA group,
+      Milotic ex "Sparkling Scales", is BUILT on the new engine datum `banners.ts`, so the family is
+      9 of 9 built; "no INGESTED column classifies the banner" stays true.)
 
       ⚠️ **IT IS *NOT* `preventBenchDamageWhileActive` IN A WIDER SPELLING, AND THE
       SLICE THAT ASSUMED IT WAS WOULD HAVE SHIPPED A DIFFERENT CARD.** Two D253
@@ -2614,7 +2639,18 @@ export interface PassiveEffects {
           clause, `conditionHolds`' `morePrizesThanOpponent` arm verbatim —
           continuous.ts cannot call `conditionHolds`). Strict: a tie discounts
           nothing. */
-  attackCostDiscount?: { amount: number; holder?: CardFilter; ifMorePrizesRemaining?: true };
+  attackCostDiscount?: {
+    amount: number;
+    holder?: CardFilter;
+    ifMorePrizesRemaining?: true;
+    /** 🆕🆕🆕 D568 — Sparkling Crystal `sv07-142`/`sv08.5-129`'s *"that attack costs 1
+        Energy less. (The Energy can be of any type.)"*: the discount may remove a TYPED
+        symbol, not only a Colorless one. Summed apart from the {C} terms and applied last
+        by `effectiveAttackCost`, which picks the symbol against the holder's attached
+        Energy (continuous.ts `anyTypeCostRemoval`). Absent = the {C}-only discount. (A
+        member doc, so the D558 block above stays the one attached to the field.) */
+    anyType?: true;
+  };
 
   /** §8/§9 continuous SELF-only ATTACK GATE (D242): the holder **can't attack**
       unless this board condition holds ("This Pokémon can't attack unless you
@@ -3154,7 +3190,8 @@ export interface EnergyProgram {
 
       ⚠️ THE VALUE IS A **MULTISET OF UNITS**, WHICH IS THE HALF THAT CAN GO WRONG.
       `[ANY_ENERGY, ANY_ENERGY]` is TWO wildcard units — "every type of Energy but
-      only **2** at a time" — and not one wildcard worth two. `costMet` (attack.ts)
+      only **2** at a time" — and not one wildcard worth two. `costMet` (attack.ts;
+      🆕🆕🆕 D568 (D539): now cards.ts, moved byte for byte and re-exported from attack.ts)
       consumes the flat list, so a row with a single entry pays every one-symbol
       cost and fails only a two-symbol one; a mutant that drops the second entry is
       in the corpus for exactly that reason. 🆕 Prism's `units` is `[ANY_ENERGY]`
@@ -3564,6 +3601,20 @@ export interface CardProgram {
       one turn it is printed for — the afford-then-reject defect with its sign
       flipped. All three read sites carry it. */
   trainerFirstTurnExempt?: true;
+  /** 🆕🆕🆕 §8.1 (D568) — **BRIAR** `sv07-132`/`-163`/`-171`, `sv08.5-100`: *"During this turn,
+      if your opponent's Active Pokémon is Knocked Out by damage from an attack used by your
+      Tera Pokémon, take 1 more Prize card."* A Supporter whose effect is a THIS-TURN rule
+      about a Knock Out, read by flow.ts `koPrizeBonus` (its FOURTH source) off the turn's
+      played Supporter — `allowances.supporterPlayedUid`, the one datum that already says
+      "you played this this turn" — so nothing is persisted: no new key, no stamp.
+      `attacker` narrows the card the attack's user IS (`bannerPokemon` Tera), resolved off
+      `attackerUid` — never off the Active spot, which Flygon ex's Reversing Storm may have
+      vacated before the Knock Out resolves. Paid only when the dying body WAS the opponent's
+      Active on the pre-KO board, the batch is an attack's epilogue (not the Checkup, not the
+      mid-turn sweep), the body was made lethal by DAMAGE (`knockOutDefender`'s doom is not —
+      D414), and the attack's seat is the taker's ("YOUR Tera Pokémon"). Honoured on the ONE
+      path, like the other `trainer…` fields. */
+  supporterKoPrizeBonus?: { amount: number; attacker: CardFilter };
 }
 
 // ── The programs, authored from the printed text (verified vs the live
@@ -4189,6 +4240,9 @@ const REPELLING_VEIL: CardProgram = {
     sentences and this row is the 1. **6 of 6 addressable printings are now built**
     (2 at D252, 3 at D253, 1 here); the 3-printing TERA group stays UNBUILDABLE for
     D252's measured reason.
+    (🆕🆕🆕 D568 (D539): "out of reach" / "UNBUILDABLE" is WITHDRAWN — the 3-printing TERA group,
+    Milotic ex "Sparkling Scales", is BUILT on the new engine datum `banners.ts`, so the family is 9
+    of 9 built; "no INGESTED column classifies the banner" stays true.)
 
     ⚠️ **`preventBenchDamageAndEffects`, NOT `preventDamageAndEffectsWhileBenched`,
     AND THE NAMES ARE ONE WORD APART FOR A REASON WORTH THE LINE.** D253's field is
@@ -4345,6 +4399,8 @@ const ADRENA_PHEROMONE: CardProgram = {
     D258 rather than inherited from `coverage-backlog.md`'s stale 2-printing count.
     They are ROTATED OUT, not unbuildable — the field would carry them unchanged the
     day the format moves, which is a different residue from the TERA group's.
+    (🆕🆕🆕 D568 (D539): the TERA group is no longer a residue at all — Milotic ex "Sparkling
+    Scales" ×3 is BUILT on the new engine datum `banners.ts`.)
 
     NO ATTACK PROGRAM: "Lick Whip" is a 30-damage `opponentAny` snipe with the
     printed W/R parenthetical, built since D57. */
@@ -11006,7 +11062,7 @@ const ETHANS_HO_OH_EX: CardProgram = {
 //      draw 2 more cards."  Emcee's Hype sv10-163/-220 — **2 legal. TAKEN.**
 //   ⏹️ "You can use this card only if your opponent has exactly 2 Prize cards
 //      remaining. / Your opponent's Active **Tera** Pokémon is Knocked Out…"
-//      Briar sv07-132/-163/-171, sv08.5-100 — 4 legal. **REFUSED.** The GATE is
+//      Briar sv07-132/-163/-171, sv08.5-100 — 4 legal. **REFUSED.** 🆕🆕🆕 D568: ~~REFUSED~~ BUILT (`BRIAR`). The GATE is
 //      free (`trainerPlayableIf: { counts: [2] }`, Fighting Au Lait's idiom at
 //      the exact arity the member was built for), but the SECOND sentence needs a
 //      **Tera** predicate, and the catalog has no way to answer it.
@@ -11024,10 +11080,13 @@ const ETHANS_HO_OH_EX: CardProgram = {
 //      `types_json: ["Darkness"]`, `rarity: "Double rare"`, `regulation_mark:
 //      "G"`, name "Charizard ex" — indistinguishable, field for field, from a
 //      non-Tera Stage 2. The marker is a card-FRAME attribute the ingest drops.
+//      (🆕🆕🆕 D568 (D539): the SUPPLY claim is WITHDRAWN FOR TERA — the ingest still drops the
+//      marker (TRUE), and `banners.ts`' engine table keyed by printing id supplies it.)
 //
 //      An op authored over an absent datum has a permanently EMPTY candidate set,
 //      which `programPlayable` turns into a card that can NEVER be played:
 //      strictly worse than the loud "not simulated" path Briar takes today.
+//      (🆕🆕🆕 D568 (D539): the datum is no longer absent for Tera, and Briar is built.)
 //      Flagged in `docs/reference/coverage-backlog-legal.md`'s dead-datum
 //      section, driven, and left unbuilt.
 
@@ -15299,6 +15358,172 @@ const GRAND_TREE: CardProgram = {
   },
 };
 
+// ── 🆕🆕🆕 D568 — THE TERA BANNER UNLOCK, SLICE 1: 19 PRINTINGS / 10 TEXTS / 10 OBJECTS
+//    (8 registry objects here; Ho-Oh `sv08-019` and Regigigas `sv08.5-086` are DERIVER arms,
+//    effects.ts `CONDITIONAL_DAMAGE_CLAUSES`, and carry no row). The banner has a writer at
+//    last — `banners.ts`' id-keyed table — so every "Tera Pokémon" noun below reads it through
+//    `bannerPokemon` / the three banner `BoardCondition`s. Texts and legality off tcgdex (the
+//    audit's card JSON), 2026-09-30, all `legal.standard: true`. Keyed MID-MAP after D567's
+//    last row (D395/D396), so `raw[last]` stays `sv09-107`. Every addition is an optional key
+//    or a new union member: `MATCH_RECORD_VERSION` STAYS 36 (D125). docs/decisions.md D568. ──
+
+/** 🆕🆕🆕 **D568 — Sparkling Crystal `sv07-142`/`sv08.5-129` (Tool, 2 legal)** — *"When the
+    Tera Pokémon this card is attached to uses an attack, that attack costs 1 Energy less.
+    (The Energy can be of any type.)"* `attackCostDiscount { 1, holder: bannerPokemon Tera,
+    anyType }` — summed by `toolAnyTypeCostDiscount` and applied LAST by
+    `effectiveAttackCost`, which removes the symbol that makes the cost payable against the
+    attached Energy (a typed one if the attached Energy falls short on it). On a non-Tera
+    holder it does nothing (the `holder` noun). */
+const SPARKLING_CRYSTAL: CardProgram = {
+  passive: {
+    attackCostDiscount: {
+      amount: 1,
+      holder: { kind: "bannerPokemon", banner: "Tera" },
+      anyType: true,
+    },
+  },
+};
+
+/** 🆕🆕🆕 **D568 — Tera Orb `sv08-189` (Item, 1 legal)** — *"Search your deck for a Tera
+    Pokémon, reveal it, and put it into your hand. Then, shuffle your deck."* Poké Ball's
+    shape on the new `bannerPokemon` noun; the shuffle runs on the whiff. */
+const TERA_ORB: CardProgram = {
+  trainer: [
+    {
+      op: "searchDeck",
+      filter: { kind: "bannerPokemon", banner: "Tera" },
+      dest: "hand",
+      max: 1,
+      reveal: true,
+    },
+    { op: "shuffleDeck" },
+  ],
+};
+
+/** 🆕🆕🆕 **D568 — Glass Trumpet `sv07-135`/`sv08.5-110` (Item, 2 legal)** — *"You can use
+    this card only if you have any Tera Pokémon in play. Choose up to 2 of your Benched {C}
+    Pokémon and attach a Basic Energy card from your discard pile to each of them."* The
+    play gate is `trainerPlayableIf yourBannerPokemonInPlay`; the effect the NEW
+    `attachFromDiscard` (one compound `attachCards` park, `maxPerTarget: 1`, so two
+    DIFFERENT bodies at most). "{C} Pokémon" is the PRINTED type (D238). Not played on a
+    board where the attach can only whiff (`programPlayable`). */
+const GLASS_TRUMPET: CardProgram = {
+  trainer: [
+    {
+      op: "attachFromDiscard",
+      filter: { kind: "basicEnergy" },
+      max: 2,
+      maxPerTarget: 1,
+      targetType: "Colorless",
+      benchOnly: true,
+    },
+  ],
+  trainerPlayableIf: { kind: "yourBannerPokemonInPlay", banner: "Tera" },
+};
+
+/** 🆕🆕🆕 **D568 — Briar `sv07-132`/`-163`/`-171`, `sv08.5-100` (Supporter, 4 legal)** — *"You
+    can use this card only if your opponent has exactly 2 Prize cards remaining. During this
+    turn, if your opponent's Active Pokémon is Knocked Out by damage from an attack used by
+    your Tera Pokémon, take 1 more Prize card."* The gate is D207's SATISFYING-SET spelling,
+    `opponentPrizesRemaining { counts: [2] }` — "exactly 2" is the one-element set (so the
+    D207 refusal, which was about the BANNER and never the count, is spent). The effect runs
+    no op: `supporterKoPrizeBonus` is read by flow.ts `briarPrizeBonus` off the turn's played
+    Supporter (`allowances.supporterPlayedUid`), so nothing is persisted. */
+const BRIAR: CardProgram = {
+  trainer: [],
+  trainerPlayableIf: { kind: "opponentPrizesRemaining", counts: [2] },
+  supporterKoPrizeBonus: { amount: 1, attacker: { kind: "bannerPokemon", banner: "Tera" } },
+};
+
+/** 🆕🆕🆕 **D568 — Milotic ex `sv08-042`/`-217`/`-237` "Sparkling Scales" (3 legal)** —
+    *"Prevent all damage from and effects of attacks from your opponent's Tera Pokémon done
+    to this Pokémon."* The NEW sibling `preventDamageAndEffectsFromBanner` (not a widening of
+    `preventDamageFromAttackerClass` — see the field). No zone clause: a benched Milotic ex
+    is shielded too. Its attack "Hypno Splash" keeps deriving. */
+const SPARKLING_SCALES: CardProgram = {
+  passive: { preventDamageAndEffectsFromBanner: "Tera" },
+};
+
+/** 🆕🆕🆕 **D568 — Noctowl `sv07-115`/`sv08.5-078`/`svp-141` "Jewel Seeker" (3 legal)** —
+    *"Once during your turn, when you play this Pokémon from your hand to evolve 1 of your
+    Pokémon, if you have any Tera Pokémon in play, you may search your deck for up to 2
+    Trainer cards, reveal them, and put them into your hand. Then, shuffle your deck."*
+    `onEvolve` (so Rare Candy is not a route — Noctowl is a Stage 1), the Tera antecedent a
+    `conditionGate` read at the moment the trigger fires (Noctowl itself is not Tera), the
+    "you may" the search's own `min: 0` (auto-fired, Dig Dig Dig's reading). The shuffle is
+    INSIDE the gate: with no Tera Pokémon in play the Ability does nothing (R-JS1). "Once
+    during your turn" is met by construction — one card is played from the hand to evolve
+    once — so no `oncePerTurn` key (that flag's runner serves another timing). */
+const JEWEL_SEEKER: CardProgram = {
+  triggered: [
+    {
+      name: "Jewel Seeker",
+      trigger: "onEvolve",
+      optional: true,
+      program: [
+        {
+          op: "conditionGate",
+          cond: { kind: "yourBannerPokemonInPlay", banner: "Tera" },
+          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
+          then: [
+            {
+              op: "searchDeck",
+              filter: { kind: "trainerCard" },
+              dest: "hand",
+              max: 2,
+              reveal: true,
+            },
+            { op: "shuffleDeck" },
+          ],
+        },
+      ],
+    },
+  ],
+};
+
+/** 🆕🆕🆕 **D568 — Azumarill `sv08-074` "Glistening Bubbles" (1 legal)** — *"If you have any
+    Tera Pokémon in play, this Pokémon can use the Double-Edge attack for {P}."* D563's
+    Ability-borne cost clause (`attackCostClause`, Kyurem "Plasma Bane"'s shape) on the new
+    `yourBannerPokemonInPlay`: the alternate is charged only while it is payable, and a §9
+    lock hands the printed {P}{P}{P}{P} back. Double-Edge's damage and recoil keep deriving. */
+const GLISTENING_BUBBLES: CardProgram = {
+  passive: {
+    attackCostClause: {
+      attack: "Double-Edge",
+      gate: {
+        kind: "alternateCostIf",
+        condition: { kind: "yourBannerPokemonInPlay", banner: "Tera" },
+        cost: ["Psychic"],
+      },
+    },
+  },
+};
+
+/** 🆕🆕🆕 **D568 — Terapagos `sv08-161` "Prism Charge" (attack index 0, 1 legal)** — *"Search
+    your deck for up to 3 Basic Energy cards of different types and attach them to your Tera
+    Pokémon in any way you like. Then, shuffle your deck."* HAND-WRITTEN: the deriver's
+    `attachFromDeck` anchor stays refused on it (`derivedDeckSearchAttach.test.ts`' UNREAD
+    row — its `Energy cards and attach them` weld does not admit "of different types").
+    `attachFromDeck` with the NEW `targetBanner` rider and the NEW `distinctEnergyTypes` (one
+    candidate per provided type, so the no-uid-twice validator makes every answer pairwise
+    distinct). Terapagos itself is NOT Tera (only Terapagos ex is), so with no Tera Pokémon
+    in play the search offers no target, parks nothing, and the shuffle still runs.
+    INDEX-KEYED: "Hard Tackle" (idx 1, no effect text) stays unclaimed. */
+const PRISM_CHARGE: CardProgram = {
+  attack: {
+    0: [
+      {
+        op: "attachFromDeck",
+        filter: { kind: "basicEnergy" },
+        max: 3,
+        distinctEnergyTypes: true,
+        targetBanner: "Tera",
+      },
+      { op: "shuffleDeck" },
+    ],
+  },
+};
+
 const REGISTRY: Record<string, CardProgram> = {
   // Professor's Research (SV base prints)
   "sv01-189": PROFESSORS_RESEARCH,
@@ -16009,6 +16234,25 @@ const REGISTRY: Record<string, CardProgram> = {
   "sv06-142": ACCOMPANYING_FLUTE, // Accompanying Flute — Basics from the opponent's top 5 onto their Bench
   "sv10-172": TEAM_ROCKETS_BOTHER_BOT, // Team Rocket's Bother-Bot — flip an opponent prize, reveal, may switch
   "sv07-136": GRAND_TREE, // Grand Tree — Stadium: evolve a Basic from the deck, then optionally to Stage 2
+  // ── 🆕🆕🆕 D568 — the Tera banner unlock, Slice 1: 17 registry ids / 8 objects (Ho-Oh and
+  //    Regigigas are deriver arms), MID-MAP (D395/D396), so `raw[last]` does not move. ──
+  "sv07-142": SPARKLING_CRYSTAL, // Sparkling Crystal — Tool: the Tera holder's attacks cost 1 Energy (any type) less
+  "sv08.5-129": SPARKLING_CRYSTAL, // Sparkling Crystal (reprint)
+  "sv08-189": TERA_ORB, // Tera Orb — search a Tera Pokémon
+  "sv07-135": GLASS_TRUMPET, // Glass Trumpet — Tera in play: up to 2 Benched {C} get a Basic Energy from the discard
+  "sv08.5-110": GLASS_TRUMPET, // Glass Trumpet (reprint)
+  "sv07-132": BRIAR, // Briar — opponent at exactly 2 Prizes: a Tera attacker's Active KO takes 1 more
+  "sv07-163": BRIAR, // Briar (reprint)
+  "sv07-171": BRIAR, // Briar (reprint)
+  "sv08.5-100": BRIAR, // Briar (reprint)
+  "sv08-042": SPARKLING_SCALES, // Milotic ex — prevent damage and effects of the opponent's Tera Pokémon's attacks
+  "sv08-217": SPARKLING_SCALES, // Milotic ex (reprint)
+  "sv08-237": SPARKLING_SCALES, // Milotic ex (reprint)
+  "sv07-115": JEWEL_SEEKER, // Noctowl — evolved from hand with a Tera in play: search up to 2 Trainers
+  "sv08.5-078": JEWEL_SEEKER, // Noctowl (reprint)
+  "svp-141": JEWEL_SEEKER, // Noctowl (reprint)
+  "sv08-074": GLISTENING_BUBBLES, // Azumarill — Tera in play: Double-Edge for {P}
+  "sv08-161": PRISM_CHARGE, // Terapagos — Prism Charge: up to 3 Basic Energy of different types onto your Tera Pokémon
   // ── D190 — THE **STANDARD-LEGAL** REPRINT-ALIAS MAP (Tier 0 of
   //    `docs/reference/coverage-backlog-legal.md`). 22 printings, 9 map targets,
   //    ZERO new code: every row below prints a sentence that is already authored
@@ -16697,7 +16941,8 @@ const REGISTRY: Record<string, CardProgram> = {
   // 9 printings on 4 sentences, of which this row is the 2, and the row's two ids
   // re-derive to the digit. The full output is transcribed in
   // `mightyShell.test.ts`'s header, including WHY the 3-printing Tera group at the
-  // top of it is unbuildable.
+  // top of it is unbuildable. (🆕🆕🆕 D568 (D539): ~~unbuildable~~ BUILT —
+  // Milotic ex "Sparkling Scales", `SPARKLING_SCALES`, over `banners.ts`.)
   "sv10.5b-023": MIGHTY_SHELL, // Carracosta — "Mighty Shell"
   "sv10.5b-107": MIGHTY_SHELL, // (reprint)
   // FIXTURE demonstrator — D190's idiom, `fix-cornerstone`'s reason verbatim: the
@@ -16807,6 +17052,10 @@ const REGISTRY: Record<string, CardProgram> = {
   // the 3-printing TERA row is permanently unbuildable. These two are the 3 and the
   // 2. The full ranked transcript, with the built/unbuilt split measured by running
   // `programFor` over every returned id, is in `preventedAttackerClass.test.ts`.
+  // (🆕🆕🆕 D568 (D539): "permanently unbuildable" is WITHDRAWN for this TERA group — Milotic ex
+  // "Sparkling Scales" ×3 (`sv08-042`/`-217`/`-237`) is BUILT on the new engine datum `banners.ts`
+  // (`preventDamageAndEffectsFromBanners`), so this residue is now EMPTY; "no INGESTED column
+  // classifies the banner" stays true.)
   "sv08.5-040": PREVENT_FROM_EX, // Sylveon — "Safeguard" (NOT Mimikyu's ex-and-V one)
   "sv10-012": PREVENT_FROM_EX, // Crustle — "Mysterious Rock Inn", same sentence
   "sv10-186": PREVENT_FROM_EX, // (reprint)
@@ -16832,6 +17081,10 @@ const REGISTRY: Record<string, CardProgram> = {
   // at this commit: 22 printings on 9 sentences, unchanged; the only residue after
   // this row is the permanently unbuildable 3-printing TERA group). A SINGLETON —
   // one printed id, no reprint — so there is no shared object to argue about.
+  // (🆕🆕🆕 D568 (D539): "permanently unbuildable" is WITHDRAWN for this TERA group — Milotic ex
+  // "Sparkling Scales" ×3 (`sv08-042`/`-217`/`-237`) is BUILT on the new engine datum `banners.ts`
+  // (`preventDamageAndEffectsFromBanners`), so this residue is now EMPTY; "no INGESTED column
+  // classifies the banner" stays true.)
   "sv07-044": IMPERVIOUS_SHELL, // Drednaw — "Impervious Shell"
   // FIXTURE demonstrator — `fix-flowercurtain`'s reason verbatim: the manifest
   // holds no `sv07` row either.
@@ -17157,6 +17410,13 @@ const REGISTRY: Record<string, CardProgram> = {
   // today~~ is WITHDRAWN for Powerglass — its price was paid: BUILT on the NEW
   // `atEndOfYourTurnInActive` timing and flow.ts's parking `endTurnToolTrigger` stage
   // (`POWERGLASS` above), so row 9's `effectIds` keep only the three banner refusals.
+  // 🆕🆕🆕 D568 CORRECTION (D539): ~~the two REFUSED banner rows (Reboot Pod, Glass
+  // Trumpet …) … none is reachable by an engine slice today~~ and ~~keep only the three
+  // banner refusals~~ are WITHDRAWN for Glass Trumpet ×2 — BUILT (`GLASS_TRUMPET`, the NEW
+  // `attachFromDiscard` behind `yourBannerPokemonInPlay`; the Tera banner is supplied by
+  // `banners.ts`' engine table keyed by printing id). Row 9's `effectIds` keep ONE banner
+  // refusal, Reboot Pod ×1 (the FUTURE banner — still unbuilt until Slice 2, TRUE); "no
+  // catalog column classifies Ancient/Future" stays TRUE.
   // ⚠️ TWO NEW IDS, BOTH NON-ATTACK, so `nonAttackRegistryIds()` and `raw.length`
   // step by **+2 each** and stay 0 apart, for the THIRTEENTH slice running.
   // ⚠️ ONE CARD NAME AND ONE PROGRAM OBJECT, so `ABILITY_D1_SHAPE.distinctNames`

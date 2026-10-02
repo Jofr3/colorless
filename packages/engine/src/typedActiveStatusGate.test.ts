@@ -61,6 +61,7 @@ import {
 // `PokemonType`, and `conditionHolds`'s `opponentActiveHasType` arm reads
 // `Card.types` — one of `cardSchema`'s 21 keys, and the same read Weakness and
 // Resistance make two lines later. `Tera` names a BANNER that no ingested column
+// (🆕🆕🆕 D568 (D539): the "no supply / DATA-BLOCKED / unbuildable" reading is WITHDRAWN FOR TERA — `banners.ts`' engine table, keyed by printing id, supplies the banner; "no INGESTED column classifies it" and "`Tera` is not a type" stay TRUE, and every Ancient/Future claim stands.)
 // classifies (D207/D468), so a filter over it would count 0 on every board forever
 // while `BUILT.attack` stepped for it — strictly worse than an unbuilt sentence
 // (D190b/D199). §3 drives that refusal on a real board rather than asserting it.
@@ -582,18 +583,28 @@ describe("§2 — the reader, named rather than counted", () => {
 // §3 — THE BANNER STAYS LOUD, ON A BOARD
 // ─────────────────────────────────────────────────────────────────────────────
 
-describe("§3 — `Tera` is refused AT THE MAP, and the refusal is loud on a real board", () => {
-  it("🛑 the derived value is null, and the type slot is what refuses it", () => {
+// 🆕🆕🆕 D568 (D539) — THIS SECTION'S PREMISE IS WITHDRAWN FOR TERA: "a BANNER that no ingested
+// column classifies … would count 0 on every board forever" was true until `banners.ts` gave
+// the banner a writer. The TYPE slot still refuses "Tera" (the map is unchanged), but the
+// WHOLE clause is now a literal `CONDITIONAL_DAMAGE_CLAUSES` row (`opponentActiveIsBanner`),
+// which this sentence's gate reads first — so TERA derives, and on a board with a non-Tera
+// defender the gate is simply FALSE: no status, and no ATTACK_EFFECT_SKIPPED either.
+describe("§3 — `Tera` was refused AT THE MAP; D568 reads it as a BANNER row, and the gate is false on a non-Tera board", () => {
+  it("🛑 D568: the derived value is the BANNER gate, and the type slot still refuses the token", () => {
     // The capture is `.+` on purpose: the MAP is the vocabulary, not the regex. A
     // `(Grass|Fire|…)` alternation would refuse this at the anchor — the same answer
     // today, and a hand-kept list that rots the day a type is added to the schema.
-    expect(deriveAttackEffect(TERA)).toBeNull();
+    const [gate] = deriveAttackEffect(TERA) ?? [];
+    expect(gate?.op === "conditionGate" ? gate.cond : undefined).toEqual({
+      kind: "opponentActiveIsBanner",
+      banner: "Tera",
+    });
     // ONE AXIS (D427/D399): the two strings differ in the type token and in nothing
     // else, so the refusal is attributable.
     expect(TERA.replace("Tera", "{N}")).toBe(GATED);
   });
 
-  it("🛑 …and on a board it reaches ATTACK_EFFECT_SKIPPED with the whole sentence", () => {
+  it("🛑 …and on a board with a NON-Tera defender the gate is false: nothing skipped, nothing applied (D568)", () => {
     // D468's rule with the direction that matters: a data-blocked filter must fail
     // LOUDLY rather than count 0 forever. This drives the whole path — the attack
     // resolves, the damage lands, and the engine announces it did not simulate the
@@ -602,7 +613,9 @@ describe("§3 — `Tera` is refused AT THE MAP, and the refusal is loud on a rea
       table({ swinger: "fix-d472-tideswing", foe: "fix-d472-drakefoe" }),
       BANNER_LOCK,
     );
-    expect(pick(events, "ATTACK_EFFECT_SKIPPED")?.effect).toBe(TERA);
+    // 🆕🆕🆕 D568 — ~~ATTACK_EFFECT_SKIPPED with the whole sentence~~: the sentence is simulated
+    // now, and `fix-d472-drakefoe` is not a Tera id (`banners.ts` knows no `fix-*`).
+    expect(pick(events, "ATTACK_EFFECT_SKIPPED")).toBeUndefined();
     expect(every(events, "STATUS_APPLIED")).toEqual([]);
     expect(conditionsOf(state, "p2").rotation).toBe("none");
     expect(pick(events, "DAMAGE_DEALT")?.dealt).toBe(10);
@@ -911,7 +924,7 @@ describe("§7 — the persisted bytes, and why 29 does not move", () => {
   });
 
   it("the engine version moved with the behaviour", () => {
-    expect(engineVersion).toBe("0.451.0");
+    expect(engineVersion).toBe("0.452.0");
   });
 });
 

@@ -58,6 +58,10 @@ import {
 // attach-family refusal they belong to is NARROWED rather than retired — `sv08-161`
 // is still blocked, by the Tera banner AND by an anchor that does not admit the
 // phrase at all.
+// (🆕🆕🆕 D568 (D539): "`sv08-161` is still blocked, by the Tera banner" is WITHDRAWN —
+// `banners.ts` supplies the banner and `sv08-161` "Prism Charge" is BUILT as a
+// hand-written registry `attack` over `attachFromDeck.distinctEnergyTypes` +
+// `targetBanner`. The ANCHOR half stays TRUE: no READER derives the sentence, §2 pins it.)
 //
 // ✅ **WHAT DOES CARRY IT ALREADY SHIPPED, ONE LAYER DOWN.** D332 built
 // `chooseCards.caps` — `{ uids, max }[]`, a cap on how many picks may come out of a
@@ -108,7 +112,13 @@ const SIBLING =
     it, off the table for 49 slices) AND `DECK_SEARCH_ATTACH` welds `Energy cards and
     attach them`, so that pattern does not admit the phrase at all. **The two rows are
     blocked at DIFFERENT LAYERS**, which is why building one says nothing about the
-    other and is asserted rather than assumed. */
+    other and is asserted rather than assumed.
+    (🆕🆕🆕 D568 (D539): "stays UNBUILT" and "the `Tera` banner is data" as a BLOCKER are
+    WITHDRAWN — `banners.ts`' engine table keyed by printing id supplies the banner, and
+    `sv08-161` is BUILT as a hand-written registry `attack` (Prism Charge,
+    `teraBannerD568.test.ts`). "No `cardSchema` key classifies it" stays TRUE, and so does
+    the anchor half: `DECK_SEARCH_ATTACH` still does not admit the phrase, so no READER
+    derives it — which is what every rung below on `TERA_TWIN` pins.) */
 const TERA_TWIN =
   "Search your deck for up to 3 Basic Energy cards of different types and attach them to your Tera Pokémon in any way you like. Then, shuffle your deck.";
 
@@ -478,6 +488,9 @@ describe("§2 — the resolver, the anchor that was never the blocker, and the r
   });
 
   it("🛑 the TERA TWIN stays unbuilt, and its blocker is a DIFFERENT LAYER", () => {
+    // 🆕🆕🆕 D568 (D539): "stays unbuilt" is WITHDRAWN for the PRINTING — `sv08-161` is
+    // BUILT as a hand-written registry `attack`. What this rung pins stays TRUE: no
+    // READER derives the sentence (the anchor layer), which is why D568 hand-wrote it.
     // FILE LINE 472 prints the same phrase and is NOT collected by this slice. The
     // reason is not the banner alone: `DECK_SEARCH_ATTACH` welds `Energy cards and
     // attach them`, so the attach pattern does not admit the phrase AT ALL — unlike
@@ -779,6 +792,6 @@ describe("§4 — the census step this slice is", () => {
   });
 
   it("the engine version moved with the behaviour", () => {
-    expect(engineVersion).toBe("0.451.0");
+    expect(engineVersion).toBe("0.452.0");
   });
 });

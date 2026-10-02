@@ -46,6 +46,7 @@ import {
 // every one of them is already accounted for. The false positives, named:
 //   ability  3  sv08-042/-217/-237   the TERA banner — permanently UNBUILDABLE
 //                                    (the "Tera" word is in NO ingested column)
+// (🆕🆕🆕 D568 (D539): the "no supply / DATA-BLOCKED / unbuildable" reading is WITHDRAWN FOR TERA — `banners.ts`' engine table, keyed by printing id, supplies the banner; "no INGESTED column classifies it" and "`Tera` is not a type" stay TRUE, and every Ancient/Future claim stands.)
 //   ability  3  sv06-020/-171, sv10-048   BUILT at D253 (Curious Tea Party)
 //   ability  2  sv10.5b-023/-107          BUILT at D252 (Mighty Shell)
 //   ability  1  sv05-024                  BUILT at D254 (Spherical Shield)

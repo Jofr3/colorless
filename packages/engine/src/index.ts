@@ -4178,7 +4178,11 @@ import type { GameState, Seat } from "./types";
     folds the printed COST CLAUSE on the attack index — corpus `:316`'s alternate {F}
     and `:324`'s waive. `effectiveAttackCost` keeps its signature and its "three
     sources" doc; all three payability sites now ask the wrapper. Annotated, not
-    overwritten.): the wire and both HUDs published the **PRINTED** cost while
+    overwritten. 🆕🆕🆕 D568 (D539): "keeps … its "three sources" doc" is WITHDRAWN —
+    Sparkling Crystal's any-type discount was folded INTO `effectiveAttackCost` as a
+    further source applied last (`anyTypeCostRemoval`, which reads the holder's attached
+    Energy and CAN take a typed symbol), so its body and doc both changed; its signature
+    did not. Annotated, not overwritten.): the wire and both HUDs published the **PRINTED** cost while
     `playable`/`disabled` beside it was computed from the **EFFECTIVE** one. A
     shipped divergence, invisible while the pool's only modifier was a SURCHARGE
     (the button greys and the dots do not say why) and **wrong in the worse
@@ -8770,6 +8774,8 @@ import type { GameState, Seat } from "./types";
     QUERY BEFORE THE BUILD**: `suffix` over the legal pool has exactly two values,
     `null` and `ex`, so the Tera banner is in NO ingested column (D243's finding on
     Ancient/Future, re-confirmed). The family's addressable size is 6, not 9.
+    (🆕🆕🆕 D568 (D539): "UNBUILDABLE" WITHDRAWN — no INGESTED column still (TRUE), but
+    `banners.ts` supplies the banner and D568 built the group, Milotic ex "Sparkling Scales".)
 
     **5 new mutants (279 → 284).** engineVersion 0.167.0 → **0.168.0**
     (`packages/engine/package.json` in the same commit). No new op, no new prompt
@@ -8840,6 +8846,9 @@ import type { GameState, Seat } from "./types";
     family D252 opened at **6 of 6 addressable** (2 + 3 + 1; the 3-printing TERA
     group is permanently unbuildable). `BUILT.ability` **136 → 137**;
     `BUILT.attack` **STANDS STILL at 1115** for the NINTH slice.
+    (🆕🆕🆕 D568 (D539): "out of reach" / "UNBUILDABLE" is WITHDRAWN — the 3-printing TERA group,
+    Milotic ex "Sparkling Scales", is BUILT on the new engine datum `banners.ts`, so the family is 9
+    of 9 built; "no INGESTED column classifies the banner" stays true.)
 
     ✅ **AND D253's ONE UNVERIFIED NUMBER IS SETTLED.** The remote D1 answered this
     session: the census re-runs at **9 printings on 4 sentences** unchanged, D253's
@@ -8962,6 +8971,10 @@ import type { GameState, Seat } from "./types";
     for the ELEVENTH slice. The `%prevent all damage%` ability ladder is **22 on 9,
     UNCHANGED**, and the residue after this slice is **4 printings on 2 sentences**
     (the unbuildable TERA group, and row 15-B alone).
+    (🆕🆕🆕 D568 (D539): "permanently unbuildable" is WITHDRAWN for this TERA group — Milotic ex
+    "Sparkling Scales" ×3 (`sv08-042`/`-217`/`-237`) is BUILT on the new engine datum `banners.ts`
+    (`preventDamageAndEffectsFromBanners`), so this residue is now EMPTY; "no INGESTED column
+    classifies the banner" stays true.)
 
     ✅ **THE SHAPE CALL WAS WRITTEN DOWN BEFORE THE BUILD AND HELD ON EVERY CLAUSE,
     WHICH IS THE FIRST TIME THE FOLD/SCAN QUESTION HAS BEEN ANSWERED IN ADVANCE IN
@@ -9018,6 +9031,10 @@ import type { GameState, Seat } from "./types";
     and after this slice its ability residue is **3 printings on 1 sentence**, all
     of them the permanently unbuildable TERA group. **Row 15's `abilityIds` is
     EMPTY.**
+    (🆕🆕🆕 D568 (D539): "permanently unbuildable" is WITHDRAWN for this TERA group — Milotic ex
+    "Sparkling Scales" ×3 (`sv08-042`/`-217`/`-237`) is BUILT on the new engine datum `banners.ts`
+    (`preventDamageAndEffectsFromBanners`), so this residue is now EMPTY; "no INGESTED column
+    classifies the banner" stays true.)
 
     ✅ **THE SHAPE CALL WAS WRITTEN DOWN BEFORE THE BUILD AND IS THE EXACT MIRROR OF
     D256's, WHICH IS WHAT MAKES IT EVIDENCE RATHER THAN A COINCIDENCE.** D253's line
@@ -13320,6 +13337,7 @@ import type { GameState, Seat } from "./types";
     sampling it: 8 sentences / 11 printings, of which exactly ONE was buildable. This
     is it. What remains is **7 sentences / 10 printings and every one is a refusal
     already measured** — FIVE D207 BANNER clauses (`Ancient` ×1, `Tera` ×2, `Future`
+    (🆕🆕🆕 D568 (D539): the "no supply / DATA-BLOCKED / unbuildable" reading is WITHDRAWN FOR TERA — `banners.ts`' engine table, keyed by printing id, supplies the banner; "no INGESTED column classifies it" and "`Tera` is not a type" stay TRUE, and every Ancient/Future claim stands.)
     ×2, all demand-only in every ingested column), ONE at 5 printings that is D368's
     structural SHAPE refusal (*"…in addition to this attack's cost"* reads an attack
     `conditionHolds` is never handed), and this clause's own TWIN under a different
@@ -15239,7 +15257,8 @@ import type { GameState, Seat } from "./types";
 
     ✅ **D207's SUPPLY QUESTION WAS ASKED FIRST AND IS NOT CLOSE.** `Card.types` is
     an ingested column with four existing readers in this union alone. Nothing here
-    resembles the `Tera` shape (22 rows of DEMAND, the SUPPLY side absent).
+    resembles the `Tera` shape (22 rows of DEMAND, the SUPPLY side absent). (🆕🆕🆕 D568
+    (D539): the SUPPLY half is WITHDRAWN FOR TERA — `banners.ts`.)
 
     🛑 **THE SHAPE, WHICH IS THE ENTIRE PRICE: AN INTERSECTION OVER TWO
     VARIABLE-SIZE SETS.** `handSizesEqual` and `activeEnergyCountsEqual` are the
@@ -15310,7 +15329,8 @@ import type { GameState, Seat } from "./types";
 
     ✅ **THE SUPPLY QUESTION PASSES, AND THAT WAS THE ONE IN DOUBT.** D207's failure
     mode is a predicate over a banner no column CLASSIFIES — `Tera` is on 22 rows and
-    **every occurrence is DEMAND**; `Ancient` / `Future` likewise (D204, D205) — and
+    **every occurrence is DEMAND**; (🆕🆕🆕 D568 (D539): WITHDRAWN FOR TERA —
+    `banners.ts` is its supply; the Ancient/Future half stands) `Ancient` / `Future` likewise (D204, D205) — and
     the handoff named this candidate as the first in the run that could actually fail
     it, because the engine must be able to SEE a `Card.name` on an ATTACHED Energy.
     It can: `InPlayPokemon.energy` holds uids, `state.cardIdByUid` resolves each to a
@@ -15570,7 +15590,8 @@ import type { GameState, Seat } from "./types";
     had already run the vocabulary one), and settle a named SHAPE question before
     spelling anything (D368's ordering: shape before price).
 
-    ✅ **SUPPLY: THE FIELD EXISTS AND IS INGESTED — THIS IS NOT THE `Tera` SHAPE.**
+    ✅ **SUPPLY: THE FIELD EXISTS AND IS INGESTED — THIS IS NOT THE `Tera` SHAPE.** (🆕🆕🆕 D568
+    (D539): the `Tera` "shape" — demand with no supply — is WITHDRAWN; `banners.ts` supplies it.)
     D207's failure mode is a predicate over a banner **no column CLASSIFIES**,
     which yields a permanently empty candidate set and a card that can never be
     played. `Card.resistances` is a real ingested column (`{type, value?}[] | null`,
@@ -15668,6 +15689,7 @@ import type { GameState, Seat } from "./types";
     is `"Metal"`, a real `Card.types` value, and `CLAUSE_POKEMON_TYPES` has carried
     the brace notation since D367 — so `{M}` resolves through vocabulary that
     already exists. **`Tera` does not**: *"you have any Tera Pokémon on your
+    (🆕🆕🆕 D568 (D539): the "no supply / DATA-BLOCKED / unbuildable" reading is WITHDRAWN FOR TERA — `banners.ts`' engine table, keyed by printing id, supplies the banner; "no INGESTED column classifies it" and "`Tera` is not a type" stay TRUE, and every Ancient/Future claim stands.)
     Bench"* is the identical sentence one token over, at 1 legal printing, and
     D207 measured every occurrence of that banner as DEMAND with the SUPPLY side
     absent. **THE SAME TEMPLATE THAT BUYS THE ONE MUST REFUSE THE OTHER**, and the
@@ -16800,7 +16822,9 @@ import type { GameState, Seat } from "./types";
     🛑 **AND THE ROW WAS FOUND BY REFUSING THE LARGEST RESIDUE FOR A MEASURED
     REASON RATHER THAN A REMEMBERED ONE.** `ROWS` re-derived by PARSING the array:
     row 9 is largest at 7, but 5 of its 7 are refused on grounds no engine slice can
-    reach (a banner no catalog column classifies; a whole end-of-turn Tool trigger
+    reach (a banner no catalog column classifies — 🆕🆕🆕 D568 (D539): WITHDRAWN for the
+    Tera half, Glass Trumpet ×2 BUILT on `banners.ts`' engine table; "no catalog column"
+    stays TRUE and Reboot Pod's Future banner stays a blocker; a whole end-of-turn Tool trigger
     point for 2 printings — 🆕🆕🆕 D566 (D539): the second ground was a PRICE, not a wall,
     and D566 paid it: Powerglass is BUILT on `atEndOfYourTurnInActive`), leaving **2 live**. Row 11's **3 are all live**, and its
     cell had named the mechanism. **LIVE RESIDUE IS THE ORDERING, NOT RESIDUE.**
@@ -17021,7 +17045,9 @@ import type { GameState, Seat } from "./types";
     ⚠️ **THE ROW WAS PICKED BY THE FIVE-STEP METHOD AND THE CARD THAT SENT ME IS NOT
     THE CARD THAT LANDED.** Largest live `ROWS` residue (row 9, 7 ids) → those 7 are
     FOUR blockers, three of which are refused (two rest on the Ancient/Future/Tera
-    banner NO CATALOG COLUMN CLASSIFIES; one wants an end-of-turn Tool trigger for 2
+    banner NO CATALOG COLUMN CLASSIFIES — 🆕🆕🆕 D568 (D539): Glass Trumpet BUILT, the Tera
+    banner supplied by `banners.ts`' engine table; "no catalog column" stays TRUE and Reboot
+    Pod's Future banner stays a blocker; one wants an end-of-turn Tool trigger for 2
     printings — 🆕🆕🆕 D566 (D539): BUILT, Powerglass on `atEndOfYourTurnInActive`) → census the sentence the fourth one RESTS ON (`onEvolve`: 58
     printings / 29 legal / 13 legal sentences, SIX unbuilt) → and the cheapest thing
     that family buys turns out to be printed on a SECOND op in a SECOND column,
@@ -20171,6 +20197,24 @@ import type { GameState, Seat } from "./types";
     `expect(manifest.version)`, `it(…)` titles, the declaration and `package.json` —
     **not** as a value-keyed grep — because a value-keyed grep is precisely the mechanism
     that ate D500's heading.)
+    🆕🆕🆕 engineVersion 0.451.0 → **0.452.0** (D568 — THE TERA BANNER UNLOCK, SLICE 1: 19 PRINTINGS / 10
+    TEXTS. **The datum**: the NEW `banners.ts` — `Banner = "Tera"`, `BANNER_BY_ID` (98 printing ids, measured
+    from pokemon-tcg-data's subtypes and closed against limitlesstcg.com over all 353 legal Pokémon ex, the
+    disagreements settled from the tcgdex card image: `sv08.5-028` Pikachu ex REMOVED, `sv08.5-092` Terapagos ex
+    ADDED, `svp-166`/`-174`/`-175`/`-176` added) and `bannerOf`, keyed by printing id (D135); read by cards.ts'
+    NEW `isTeraPokemon` and `preventsAttackerBanner`, the NEW `CardFilter` `bannerPokemon`, the NEW
+    `BoardCondition`s `yourBannerPokemonInPlay` / `yourBannerPokemonOnBench` / `opponentActiveIsBanner`, and the NEW
+    `AttachTargetRiders.targetBanner`. **The printed rule**: `benchShieldScan` refuses attack DAMAGE to a benched
+    Tera body from either side (a rule, not an Ability — no §9; counters still land; R-TB1 ⚠️ UNRULED: Feint Attack
+    does not null it). **Rows**: Sparkling Crystal (`attackCostDiscount.anyType`, applied last by
+    `effectiveAttackCost` through the NEW `anyTypeCostRemoval` against the holder's attached Energy — `costMet`
+    MOVED to cards.ts, re-exported from attack.ts), Tera Orb, Glass Trumpet (the NEW `attachFromDiscard`), Briar
+    (the NEW `supporterKoPrizeBonus`, flow.ts' NEW `briarPrizeBonus` — `koPrizeBonus`'s FOURTH source, read off
+    `allowances.supporterPlayedUid`), Milotic ex "Sparkling Scales" (the NEW `preventDamageAndEffectsFromBanner`,
+    five read sites), Noctowl "Jewel Seeker", Azumarill "Glistening Bubbles", Terapagos "Prism Charge"
+    (`attachFromDeck`'s NEW `targetBanner` and `distinctEnergyTypes`), and Ho-Oh / Regigigas through two literal
+    `CONDITIONAL_DAMAGE_CLAUSES` rows. **`MATCH_RECORD_VERSION` STAYS 36**: every persisted change is a D125
+    widening — see docs/decisions.md D568 and apps/api match.ts.)
     🆕🆕🆕 engineVersion 0.450.0 → **0.451.0** (D567 — THE TRAINER BUNDLE: 4 PRINTINGS / 4 TEXTS / 4
     OBJECTS. Four registry `CardProgram`s keyed on four REAL ids inserted MID-MAP after `sv10-180` (D395/D396,
     so `raw[last]` stays `sv09-107`); no row authors an `attack` key. **Redeemable Ticket** `sv09-156` on the
@@ -21012,7 +21056,12 @@ import type { GameState, Seat } from "./types";
     SITES** — the §8.2 check, `redactedAttacksOf` and GameHud's TurnPanel. It WRAPS
     `effectiveAttackCost`, which keeps its signature, body and "THREE sources" doc; it lives in
     attack.ts because the alternate's payability is `costMet` and interpreter.ts cannot import
-    that without a cycle. THREE UNRULED DECISIONS, each with a reversal condition in
+    that without a cycle. (🆕🆕🆕 D568 (D539): BOTH halves WITHDRAWN, annotated here and not
+    rewritten — `effectiveAttackCost` kept its signature but NOT its body or its "THREE
+    sources" doc (Sparkling Crystal's any-type discount, `anyTypeCostRemoval`, is folded
+    there, last, against the holder's attached Energy), and `costMet` no longer lives in
+    attack.ts: it MOVED to cards.ts byte for byte and is re-exported from attack.ts, so the
+    alternate's payability reads the same function. `attackCostAt` itself stays in attack.ts.) THREE UNRULED DECISIONS, each with a reversal condition in
     `docs/decisions.md` D545: `:316` is an ALTERNATE (charged only if payable, never stricter
     than printed; surcharges apply ON TOP of it); `:324` is WAIVE-LAST (a League HQ or Quaking
     Zone {C} is ignored with the rest); and with the condition true and NEITHER array payable
@@ -23659,7 +23708,8 @@ import type { GameState, Seat } from "./types";
     card and true of no card. It is a different KIND of constraint, not a missing member,
     and widening that union however far never reaches it. All three sites are corrected
     IN PLACE (D178/D457/D466/D508) and the attach-family refusal they belong to is
-    NARROWED rather than retired: `sv08-161` is still blocked, by the Tera banner AND by
+    NARROWED rather than retired: `sv08-161` is still blocked, by the Tera banner AND by (🆕🆕🆕 D568 (D539):
+    the Tera-banner half WITHDRAWN — `banners.ts`; `sv08-161` is BUILT as a registry attack)
     `DECK_SEARCH_ATTACH`'s welded `Energy cards and attach them`, which does not admit the
     phrase at all. **The two printings of one phrase are blocked at DIFFERENT LAYERS.**
     ✅ **WHAT CARRIES IT ALREADY SHIPPED, ONE LAYER DOWN: D332's `chooseCards.caps`.** A
@@ -24650,7 +24700,7 @@ import type { GameState, Seat } from "./types";
     WITNESS** — the count was re-derived every slice and the word *"three"* was carried.
     A successor of this slice inherits **81 / 61 / 17** again, over **FIVE** history
     occurrences: those four plus `deckMillFilteredScale.test.ts`'s own header arrow.) */
-export const engineVersion = "0.451.0";
+export const engineVersion = "0.452.0";
 
 export type {
   ApplyResult,

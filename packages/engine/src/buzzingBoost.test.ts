@@ -26,6 +26,7 @@ import { makeInPlay } from "./types";
 //       row 9 = 7 raw but **4 live**, because 3 of its 5 `effectIds` are D346's
 //       recorded DEAD DATUM (Reboot Pod `sv05-158`, Glass Trumpet `sv07-135`/
 //       `sv08.5-110` — the Future and Tera banners have no supply-side column);
+// (🆕🆕🆕 D568 (D539): the "no supply / DATA-BLOCKED / unbuildable" reading is WITHDRAWN FOR TERA — `banners.ts`' engine table, keyed by printing id, supplies the banner; "no INGESTED column classifies it" and "`Tera` is not a type" stay TRUE, and every Ancient/Future claim stands.)
 //       row 12 = 4; row 11 = 3; rows 13/0/15 = 0. **Row 10 wins.**
 //   (2) CENSUS THE CLAUSE, NOT THE CARD, over ALL THREE text columns (remote D1
 //       `luminous`, uuid 735f0fb5-cdc3-494d-8b97-74a8ade0124a, 2026-08-15).

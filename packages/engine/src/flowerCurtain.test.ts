@@ -26,6 +26,7 @@ import {
 //
 //   5  …by your opponent's Pokémon that have an Ability.          BUILT D251
 //   3  …from your opponent's Tera Pokémon…                        UNBUILDABLE
+// (🆕🆕🆕 D568 (D539): the "no supply / DATA-BLOCKED / unbuildable" reading is WITHDRAWN FOR TERA — `banners.ts`' engine table, keyed by printing id, supplies the banner; "no INGESTED column classifies it" and "`Tera` is not a type" stay TRUE, and every Ancient/Future claim stands.)
 //   3  …by attacks from your opponent's Pokémon ex.               BUILT D255
 //   3  As long as this Pokémon is on your Bench, …                BUILT D253
 //   2  …that have any Special Energy attached.                    BUILT D252
@@ -42,6 +43,10 @@ import {
 // figure is an increment. After this slice the residue is **4 printings on 2
 // sentences**, three of them the permanently unbuildable TERA group and the last
 // being row 15-B (Drednaw `sv07-044`) alone.
+// (🆕🆕🆕 D568 (D539): "permanently unbuildable" is WITHDRAWN for this TERA group — Milotic ex
+// "Sparkling Scales" ×3 (`sv08-042`/`-217`/`-237`) is BUILT on the new engine datum `banners.ts`
+// (`preventDamageAndEffectsFromBanners`), so this residue is now EMPTY; "no INGESTED column
+// classifies the banner" stays true.)
 //
 // ✅ THE SHAPE CALL WAS WRITTEN DOWN BEFORE THE BUILD AND IT HELD, WHICH IS THE
 // FIRST TIME IN THIS FAMILY THE FOLD/SCAN QUESTION HAS BEEN ANSWERED IN ADVANCE.

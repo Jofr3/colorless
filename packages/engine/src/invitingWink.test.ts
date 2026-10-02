@@ -31,7 +31,9 @@ import {
 //   Largest live `ROWS` residue at this head is **row 9 (7 ids)**, re-derived by
 //   parsing the table rather than by reading D349's note. Its four blockers are
 //   D349's, re-checked: the by-NAME attach (Lycanroc ×2), the uncatalogued
-//   Ancient/Future/Tera banner (Reboot Pod ×1, Glass Trumpet ×2) and an
+//   Ancient/Future/Tera banner (Reboot Pod ×1, Glass Trumpet ×2 — 🆕🆕🆕 D568 (D539):
+//   Glass Trumpet BUILT, the Tera banner supplied by `banners.ts`; Reboot Pod's FUTURE
+//   banner stays uncatalogued, TRUE) and an
 //   end-of-turn Tool trigger point for 2 printings (Powerglass — 🆕🆕🆕 D566 (D539): BUILT,
 //   `koToolsD566.test.ts` §4). The Lycanroc
 //   clause rests on `onEvolve` — **58 printings / 29 legal / 13 legal sentences**,

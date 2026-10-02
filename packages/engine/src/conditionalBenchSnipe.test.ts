@@ -489,10 +489,20 @@ describe("§4 — the DISCRIMINATION, on both axes, so neither saturation can im
     // `CONDITIONAL_DAMAGE_CLAUSES`, so the whole sentence must return null. Flamigo's
     // is the sharpest — this file's arm is the reason that sentence's refusal moved
     // from the SHAPE to the CLAUSE, and `alsoBenchedSnipe.test.ts` says so.
+    // 🆕🆕🆕 D568 — the two TERA clauses LEFT this list: they are `CONDITIONAL_DAMAGE_CLAUSES`
+    // rows now (the banner has a writer, `banners.ts`), so this skeleton reads them too —
+    // pinned just below as the member each maps to. Neither is PRINTED behind this
+    // consequent, so no census moves for it.
+    for (const [clause, cond] of [
+      ["your opponent's Active Pokémon is a Tera Pokémon", { kind: "opponentActiveIsBanner", banner: "Tera" }],
+      ["you have any Tera Pokémon on your Bench", { kind: "yourBannerPokemonOnBench", banner: "Tera" }],
+    ] as const) {
+      const printed = `If ${clause}, this attack also does 120 damage to 2 of your opponent's Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)`;
+      const [gate] = deriveAttackEffect(printed) ?? [];
+      expect(gate?.op === "conditionGate" ? gate.cond : undefined, clause).toEqual(cond);
+    }
     const unmapped = [
       "Flamigo is on your Bench",
-      "your opponent's Active Pokémon is a Tera Pokémon",
-      "you have any Tera Pokémon on your Bench",
       "your opponent has any Future Pokémon in play",
     ];
     for (const clause of unmapped) {

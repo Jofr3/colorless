@@ -18,6 +18,7 @@ import {
   isStage2Pokemon,
   matchesFilter,
   pokemonSuffixOf,
+  preventsAttackerBanner,
   preventsAttackerClass,
   resistanceOf,
   topCardOf,
@@ -3702,6 +3703,24 @@ function stepOp(
         },
       };
     }
+    case "attachFromDiscard": {
+      // 🆕🆕🆕 D568 — Glass Trumpet: the compound `attachCards` park over the DISCARD PILE
+      // (`attachFromDeck`'s shape, the op's doc). Nothing to put back and no record, so a
+      // dead end simply returns the board; the Item's play gate already refused a board
+      // where this can only whiff (`programPlayable`).
+      const { candidates, targets, max } = attachFromDiscardOffer(state, ctx.seat, op);
+      if (candidates.length === 0 || targets.length === 0 || max <= 0) return { done: state };
+      return {
+        park: {
+          kind: "attachCards",
+          candidates,
+          targets,
+          max,
+          ...(op.maxPerTarget === undefined ? {} : { maxPerTarget: op.maxPerTarget }),
+          note: attachFromDiscardNote(op),
+        },
+      };
+    }
     case "attachFromHand": {
       // D247 — the THIRD producer of the compound `attachCards` park, over the
       // third candidate zone: the controller's own HAND (Alolan Exeggutor ex
@@ -6119,6 +6138,28 @@ export function conditionHolds(state: GameState, seat: Seat, cond: BoardConditio
       const stadium = state.stadium;
       return stadium !== null && cardOfUid(state, stadium.uid)?.name === cond.name;
     }
+    case "yourBannerPokemonInPlay": {
+      // 🆕🆕🆕 D568 — "you have any Tera Pokémon in play": the reading seat's Active AND
+      // Bench, each body's TOP card (§1.2) through `matchesFilter`'s `bannerPokemon` arm —
+      // the one reading of the banner (cards.ts), so the gate and the filter cannot drift.
+      const side = state.players[seat];
+      const bodies = side.active === null ? side.bench : [side.active, ...side.bench];
+      return bodies.some((body) =>
+        matchesFilter(topCardOf(state, body), { kind: "bannerPokemon", banner: cond.banner }),
+      );
+    }
+    case "yourBannerPokemonOnBench":
+      // 🆕🆕🆕 D568 — "on your Bench": the Active is EXCLUDED (`yourBenchHasType`'s zone).
+      return state.players[seat].bench.some((body) =>
+        matchesFilter(topCardOf(state, body), { kind: "bannerPokemon", banner: cond.banner }),
+      );
+    case "opponentActiveIsBanner":
+      // 🆕🆕🆕 D568 — "your opponent's Active Pokémon is a Tera Pokémon": the OTHER seat's
+      // Active top card. An empty Active Spot is false (`activeTop` is undefined).
+      return matchesFilter(activeTop(state, otherSeat(seat))?.card, {
+        kind: "bannerPokemon",
+        banner: cond.banner,
+      });
     case "yourPokemonKoedOnOpponentsLastTurn":
       // D271 — "any of your Pokémon were Knocked Out during your opponent's last
       // turn" (Unfair Stamp sv06-165, Hassel sv06-151/-205). The whole predicate
@@ -7189,6 +7230,14 @@ export function conditionNote(cond: BoardCondition): string {
     case "stadiumInPlayNamed":
       // 🆕🆕🆕 D564 — Caretaker's printed clause verbatim, minus the "if".
       return `${cond.name} is in play`;
+    case "yourBannerPokemonInPlay":
+      // 🆕🆕🆕 D568 — the three printed clauses verbatim, minus the "if" (Glass Trumpet's
+      // "You can use this card only if …" reads back whole).
+      return `you have any ${cond.banner} Pokémon in play`;
+    case "yourBannerPokemonOnBench":
+      return `you have any ${cond.banner} Pokémon on your Bench`;
+    case "opponentActiveIsBanner":
+      return `your opponent's Active Pokémon is a ${cond.banner} Pokémon`;
     case "yourPokemonKoedOnOpponentsLastTurn":
       // The printed clause verbatim — the family's THIRD full round-trip, and it
       // keeps the possessive "your opponent's last turn" that the predicate turns
@@ -7853,6 +7902,13 @@ export function applyChoice(
       recordMoved(record, op.recordAs, attached.attached);
       return attached.state;
     }
+    case "attachFromDiscard":
+      // 🆕🆕🆕 D568 — Glass Trumpet's answer, applied out of the DISCARD PILE. The couplings
+      // (≤ max, ≤ 1 per body, offered uids and bodies only) were enforced by
+      // `validateChoice` against the parked prompt; the apply re-checks zone and seat.
+      return choice.kind === "attachCards"
+        ? attachFromZoneApply(state, choice.assignments, "discard", ctx, events).state
+        : state;
     case "attachFromDeck": {
       if (choice.kind !== "attachCards") return state;
       const attached = attachFromZoneApply(state, choice.assignments, "deck", ctx, events);
@@ -10014,6 +10070,9 @@ function effectRefusedOn(
   const auraRefuses =
     (passivesOf(state, target).preventDamageAndEffectsFromSpecialEnergy &&
       attackerHasSpecialEnergy(state, attackerTop?.active)) ||
+    // 🆕🆕🆕 D568 — Sparkling Scales' EFFECTS half ("from and effects of attacks from your
+    // opponent's Tera Pokémon"), the FIFTH read site; the seat guard above is "opponent's".
+    preventsAttackerBanner(passivesOf(state, target).preventDamageAndEffectsFromBanners, attacker) ||
     passivesOf(state, target).preventDamageAndEffectsWhileBenched ||
     passivesOf(state, target).preventAttackEffects ||
     benchShieldedFromEffects(state, target) ||
@@ -10303,6 +10362,8 @@ function spreadDamage(
       // up. `preventsAttackerClass` takes the OPTIONAL card and answers FALSE for an
       // unresolvable attacker, which is why there is no `!== undefined` beside it.
       preventsAttackerClass(passives.preventDamageFromAttackerClasses, attackerCard) ||
+      // 🆕🆕🆕 D568 — Sparkling Scales at the spread arm (a benched Milotic ex is shielded).
+      preventsAttackerBanner(passives.preventDamageAndEffectsFromBanners, attackerCard) ||
       // D252 — the SECOND of the wide prevent's five read sites. A spread reaches
       // the BENCH and "Mighty Shell" has no Active-Spot clause, so a benched holder
       // is protected from a spread exactly as the Active is — `preventDamageFrom
@@ -10662,6 +10723,8 @@ function placeSnipe(
           // catalog aura ON the damaged Pokémon, so Feint Attack nulls it and a
           // sniped Sylveon really does take the hit from a Pokémon ex.
           preventsAttackerClass(targetPassives.preventDamageFromAttackerClasses, attackerCard) ||
+          // 🆕🆕🆕 D568 — Sparkling Scales at the snipe arm, inside the `ignoreWR` guard.
+          preventsAttackerBanner(targetPassives.preventDamageAndEffectsFromBanners, attackerCard) ||
           // D252 — the THIRD of the wide prevent's five read sites, inside the
           // `ignoreWR` guard with its three siblings for their reason verbatim: all
           // four are catalog auras ON the damaged Pokémon, so Feint Attack nulls
@@ -11024,6 +11087,8 @@ function snipeActive(
         // `attacker?.card` and not `attacker.card`, its two neighbours' conservative
         // direction: an unresolvable attacker protects LESS rather than more.
         preventsAttackerClass(targetPassives.preventDamageFromAttackerClasses, attacker?.card) ||
+        // 🆕🆕🆕 D568 — Sparkling Scales at `snipeActive`, inside the `ignoreWR` guard.
+        preventsAttackerBanner(targetPassives.preventDamageAndEffectsFromBanners, attacker?.card) ||
         // D252 — the FOURTH of the wide prevent's five read sites, and the last of
         // its four DAMAGE ones. `attacker?.active` and not `attacker.active`:
         // `attackerHasSpecialEnergy` takes the optional and answers FALSE for an
@@ -16124,7 +16189,8 @@ export function attachEnergyTargets(
     if (
       riders.targetType !== undefined ||
       riders.basicOnly === true ||
-      riders.ownerPokemon !== undefined
+      riders.ownerPokemon !== undefined ||
+      riders.targetBanner !== undefined
     ) {
       const card = topCardOf(state, pokemon);
       // 🆕🆕 D354 — `targetType` may be a LIST (the printed union of types), so
@@ -16159,6 +16225,14 @@ export function attachEnergyTargets(
       if (
         riders.ownerPokemon !== undefined &&
         !matchesFilter(card, { kind: "ownerPokemon", owner: riders.ownerPokemon })
+      ) {
+        return false;
+      }
+      // 🆕🆕🆕 D568 — the printed BANNER target ("your Tera Pokémon"), `ownerPokemon`'s
+      // shared-predicate reason: `matchesFilter`'s `bannerPokemon` arm, by printing id.
+      if (
+        riders.targetBanner !== undefined &&
+        !matchesFilter(card, { kind: "bannerPokemon", banner: riders.targetBanner })
       ) {
         return false;
       }
@@ -16380,14 +16454,49 @@ function attachFromDeckOffer(
   );
   const kept = new Map<string, number>();
   const candidates: string[] = [];
+  // 🆕🆕🆕 D568 — "of different types" (Prism Charge): the collapse is keyed by the
+  // provided TYPE and keeps ONE uid per type, so — with `validateChoice`'s no-uid-twice —
+  // every legal answer is pairwise type-distinct. No new prompt field (see the op's doc).
+  const distinct = op.distinctEnergyTypes === true;
   for (const uid of matches) {
-    const key = cardIdentity(state, uid);
+    const card = distinct ? cardOf(state, uid) : undefined;
+    const key = distinct
+      ? `type:${card === undefined ? uid : energyProvidesOf(card)}`
+      : cardIdentity(state, uid);
     const already = kept.get(key) ?? 0;
-    if (already >= cap) continue;
+    if (already >= (distinct ? 1 : cap)) continue;
     kept.set(key, already + 1);
     candidates.push(uid);
   }
   return { candidates, targets, max: Math.min(cap, candidates.length) };
+}
+
+/** 🆕🆕🆕 D568 — What an `attachFromDiscard` op is offering (Glass Trumpet): the
+    controller's DISCARD cards its filter admits, collapsed by card identity to at most
+    the reachable total (`attachFromDeckOffer`'s collapse — the player picks "a Fire
+    Energy", and a pile of ten identical cards is one decision, not ten), the bodies
+    `attachEnergyTargets` admits under the op's riders, and the ceiling. Exported for
+    `programPlayable`: an offer with no card or no body can only whiff. */
+export function attachFromDiscardOffer(
+  state: GameState,
+  seat: Seat,
+  op: Extract<EffectOp, { op: "attachFromDiscard" }>,
+): { candidates: string[]; targets: PokemonRef[]; max: number } {
+  const targets = attachEnergyTargets(state, seat, op);
+  // The reachable total: "up to `max`", and never more than one per offered body.
+  const reach = op.maxPerTarget === undefined ? op.max : Math.min(op.max, targets.length * op.maxPerTarget);
+  const kept = new Map<string, number>();
+  const candidates: string[] = [];
+  const pile = state.players[seat].discard;
+  for (const uid of pile) {
+    if (!matchesFilter(cardOf(state, uid), op.filter)) continue;
+    const key = cardIdentity(state, uid);
+    const already = kept.get(key) ?? 0;
+    if (already >= reach) continue;
+    kept.set(key, already + 1);
+    candidates.push(uid);
+  }
+  return { candidates, targets, max: Math.min(reach, candidates.length) };
 }
 
 /** ⚠️⚠️ D247 — What an `attachFromHand` op is offering: the controller's own HAND
@@ -16481,7 +16590,8 @@ function attachFromHandOffer(
 function attachFromZoneApply(
   state: GameState,
   assignments: readonly { uid: string; to: PokemonRef }[],
-  zone: "deck" | "hand",
+  // 🆕🆕🆕 D568 — `"discard"` (Glass Trumpet): the same apply, a third source zone.
+  zone: "deck" | "hand" | "discard",
   ctx: EffectContext,
   events: GameEvent[],
 ): { state: GameState; attached: string[] } {
@@ -18392,7 +18502,10 @@ function attachTargetNoun(riders: AttachTargetRiders): string {
   // `zone` so D354's line below and the three-line caption at the park stay byte for byte
   // what they were (their mutant finds hold). Absent = the byte-identical pre-D532 noun.
   const zone = riders.whose === "opponent" ? `opponent's ${printedZone}` : printedZone;
-  const owner = ownerNoun(riders.ownerPokemon);
+  // 🆕🆕🆕 D568 — the banner word rides where the owner prefix does ("your Tera Pokémon");
+  // no printing spells both, so the two never stack. Absent = byte-identical.
+  const owner =
+    riders.targetBanner === undefined ? ownerNoun(riders.ownerPokemon) : `${riders.targetBanner} `;
   const types = targetTypeNames(riders.targetType);
   // 🆕🆕 D354 — NO TYPE: the bare noun, byte-identical to the pre-D354 spelling.
   if (types.length === 0) return `${zone}${owner}Pokémon`;
@@ -18580,9 +18693,19 @@ function attachFromDeckNote(op: Extract<EffectOp, { op: "attachFromDeck" }>): st
   if (op.oneTarget === true) {
     return `Search your deck for up to ${op.max} ${plural} and attach them to 1 of your ${where}.`;
   }
+  // 🆕🆕🆕 D568 — "of different types" (Prism Charge) rides the plural noun.
+  const many = op.distinctEnergyTypes === true ? `${plural} of different types` : plural;
   return op.max > 1
-    ? `Search your deck for up to ${op.max} ${plural} and attach them to your ${where} in any way you like.`
+    ? `Search your deck for up to ${op.max} ${many} and attach them to your ${where} in any way you like.`
     : `Search your deck for ${singular} and attach it to your ${where}.`;
+}
+
+/** 🆕🆕🆕 D568 — Glass Trumpet's caption: *"Choose up to 2 of your Benched Colorless
+    Pokémon and attach a Basic Energy card from your discard pile to each of them."* —
+    the printed sentence with the brace code written out (`attachTargetNoun`, D238). */
+function attachFromDiscardNote(op: Extract<EffectOp, { op: "attachFromDiscard" }>): string {
+  const { singular } = retrieveNoun(op.filter);
+  return `Choose up to ${op.max} of your ${attachTargetNoun(op)} and attach ${singular} from your discard pile to each of them.`;
 }
 
 /** ⚠️⚠️ D247 — the attachCards prompt string for a HAND attach (Alolan Exeggutor
@@ -19165,6 +19288,9 @@ export function retrieveNoun(filter: CardFilter): { singular: string; plural: st
         singular: `a Pokémon that has "${filter.fragment}" in its name`,
         plural: `Pokémon that have "${filter.fragment}" in their names`,
       };
+    case "bannerPokemon":
+      // 🆕🆕🆕 D568 — "a Tera Pokémon" (Tera Orb). Invariant in number, like "Basic Pokémon".
+      return { singular: `a ${filter.banner} Pokémon`, plural: `${filter.banner} Pokémon` };
     case "suffixPokemon":
       // 🆕🆕 D446 — the printed rule-box class, whole: "a Pokémon ex", "a Pokémon V".
       // INVARIANT IN NUMBER like the bare "Basic Pokémon" two arms down — the suffix

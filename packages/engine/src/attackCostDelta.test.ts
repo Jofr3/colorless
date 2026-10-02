@@ -48,7 +48,10 @@ import {
 // ⚠️ BOTH SIGNS WERE ALREADY EXPRESSIBLE, AND NO TYPE CHANGED. `effectiveAttackCost`
 // returns `readonly string[]` of literal energy symbols with "Colorless" a
 // distinguished member — `costMet` (attack.ts) buckets it by exactly that string
-// compare — so a surcharge APPENDS and a discount REMOVES. **The array floors
+// compare — so a surcharge APPENDS and a discount REMOVES. (🆕🆕🆕 D568 (D539): `costMet`
+// now lives in cards.ts, re-exported from attack.ts; and ONE discount now CAN remove a typed
+// symbol — Sparkling Crystal's any-type Energy, `anyTypeCostRemoval`, teraBannerD568.test.ts
+// §4. Every {C} term this suite drives is still Colorless-only.) **The array floors
 // itself**: a removal loop can only remove symbols that are present, so a 6-Prize
 // discount against a printed {W}{W} leaves {W}{W}. That is the sharpest structural
 // difference from `effectiveRetreatCost`, whose cost is a NUMBER and which must
@@ -359,6 +362,11 @@ describe("Quaking Zone — the cross-board SURCHARGE", () => {
 
 // ─────────────────────────────────────────────────────────────────────────────
 // THE FOLD — three sources, two signs, one array.
+// (🆕🆕🆕 D568 (D539): "three sources" is WITHDRAWN as a count of the whole seam —
+// `effectiveAttackCost` now folds a FOURTH source, applied last: Sparkling Crystal's
+// any-type removal (`anyTypeCostRemoval`, teraBannerD568.test.ts §4), which reads the
+// holder's attached Energy and can take a TYPED symbol. It stays true of the three {C}
+// sources this block drives — Stadium, aura, discount — none of which is Tera-gated.)
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("effectiveAttackCost — the ± fold", () => {
@@ -389,7 +397,9 @@ describe("effectiveAttackCost — the ± fold", () => {
     expect(effectiveAttackCost(state, activeOf(state, "p1"), printed)).toBe(printed);
   });
 
-  it("folds ALL THREE sources — Stadium + aura − discount", () => {
+  // 🆕🆕🆕 D568 (D539): "ALL THREE" is all three {C} sources, not the whole seam — a fourth,
+  // Sparkling Crystal's any-type removal, is driven in teraBannerD568.test.ts §4.
+  it("folds ALL THREE {C} sources — Stadium + aura − discount (D568: the any-type fourth is teraBannerD568 §4)", () => {
     let state = active(board(), "p1", "swsh10.5-011");
     state = active(state, "p2", "sv03-052");
     state = withStadium(state, "sv03-192");

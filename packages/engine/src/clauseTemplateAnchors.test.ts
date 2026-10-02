@@ -246,14 +246,30 @@ describe("§3 — the MAP is the vocabulary, and the two maps do not leak into e
   });
 
   it("🛑 refuses the catalog's OWN traps — real printed sentences, refused at the map", () => {
+    // 🆕🆕🆕 D568 (D539) — THE TWO TERA SENTENCES LEFT THIS LIST: "`Tera` is demand with no
+    // supply column" is WITHDRAWN for Tera (`banners.ts` is the supply), and both now resolve
+    // through LITERAL rows (pass ONE) while the TEMPLATES below still miss the token — pinned
+    // just below. The Future row stays: Ancient/Future still have no writer (Slice 2).
+    for (const [text, cond] of [
+      [
+        "If your opponent's Active Pokémon is a Tera Pokémon, this attack does 230 more damage.",
+        { kind: "opponentActiveIsBanner", banner: "Tera" },
+      ],
+      [
+        "If you have any Tera Pokémon on your Bench, this attack does 100 more damage.",
+        { kind: "yourBannerPokemonOnBench", banner: "Tera" },
+      ],
+    ] as const) {
+      expect(corpus().some(([, s]) => s === text), text).toBe(true);
+      expect(deriveAttackDamageBonus(text)?.count, text).toEqual({ kind: "boardCondition", cond });
+    }
     // These are PRINTED (D207's banner: `Tera` is demand with no supply column),
+    // (🆕🆕🆕 D568 (D539): the "no supply / DATA-BLOCKED / unbuildable" reading is WITHDRAWN FOR TERA — `banners.ts`' engine table, keyed by printing id, supplies the banner; "no INGESTED column classifies it" and "`Tera` is not a type" stay TRUE, and every Ancient/Future claim stands.)
     // so the refusal is about a sentence that exists rather than one invented to
     // be refused — and it is refused at the VOCABULARY while §2's hybrids are
     // refused at the ANCHOR, which is D363's distinction and an order of
     // magnitude in what each would cost to build.
     for (const text of [
-      "If your opponent's Active Pokémon is a Tera Pokémon, this attack does 230 more damage.",
-      "If you have any Tera Pokémon on your Bench, this attack does 100 more damage.",
       "If your opponent has any Future Pokémon in play, this attack does 120 more damage.",
     ]) {
       expect(corpus().some(([, s]) => s === text), text).toBe(true);

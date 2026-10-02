@@ -759,6 +759,9 @@ describe("⚠️ passivesOf's THIRD SOURCE CLASS — an attached ENERGY", () => 
         // EMPTY here, like every other zero, because this board's Energy is
         // Therapeutic and carries no reduction.
         "koPrizeReductions",
+        // 🆕🆕🆕 D568 — `preventDamageAndEffectsFromBanners` (Milotic ex "Sparkling Scales"): an
+        // Ability's list, EMPTY here because this board's Energy is Therapeutic and writes none.
+        "preventDamageAndEffectsFromBanners",
         "preventDamageAndEffectsFromSpecialEnergy",
         "preventDamageAndEffectsWhileBenched",
         "preventDamageAtOrAbove",

@@ -20520,7 +20520,7 @@ than repeated.** `name GLOB '*Tera*'` is **10** rows and `effect GLOB '*Tera *'`
 Terapagos (plus the Item "Tera Orb"), and the `effect` rows are five Trainers
 **asking** for Tera Pokémon (Briar ×4, Area Zero Underdepths ×3, Glass Trumpet ×2,
 Sparkling Crystal ×2, Tera Orb). **Every hit is DEMAND; the SUPPLY side is
-absent** — and the demonstration is a card this engine already authors: Charizard
+absent** 🆕🆕🆕 **D568 (D539): WITHDRAWN FOR TERA** — `banners.ts` (an engine table keyed by printing id) supplies the banner; "no ingested column" stays true. — and the demonstration is a card this engine already authors: Charizard
 ex `sv03-125` **is** a Tera Pokémon, and its row reads `stage: "Stage2"`,
 `types_json: ["Darkness"]`, `rarity: "Double rare"`, `regulation_mark: "G"`, name
 "Charizard ex" — indistinguishable, field for field, from a non-Tera Stage 2. The
@@ -21552,7 +21552,7 @@ D370 owed the vocabulary question (*"is the captured token a real `Card.types`
 value?"*) and answered it. D371 owed D207's other one: **name the FIELD before you
 design the predicate.** A predicate over a banner no column CLASSIFIES yields a
 permanently empty candidate set and a card that can never be played — `Tera`'s
-shape, where every occurrence is DEMAND and the SUPPLY side is absent.
+shape, where every occurrence is DEMAND and the SUPPLY side is absent. (🆕🆕🆕 D568 (D539): `Tera` is no longer the example — `banners.ts` supplies it; `Ancient`/`Future` still are.)
 
 ✅ `Card.resistances` is a real ingested column (`{type, value?}[] | null`,
 `packages/schema/src/catalog/card.ts`), populated, and read by the §8.5 pipeline
@@ -21670,7 +21670,7 @@ off a live board rather than off the fixture table.
 
 **The rule to carry forward:** D207's failure mode is a predicate over a **banner no
 column CLASSIFIES** (`Tera` — 22 rows, every occurrence DEMAND; `Ancient`/`Future` the
-same). A predicate over a **FIELD** is a different animal, however exotic the value looks.
+same). (🆕🆕🆕 D568 (D539): WITHDRAWN for `Tera` — no column still, but `banners.ts`' engine table supplies it; `Ancient`/`Future` stand.) A predicate over a **FIELD** is a different animal, however exotic the value looks.
 Ask which one you have before pricing anything.
 
 ### The SHAPE question: ONE CARD NAME, not the `Team Rocket's ` prefix family
@@ -25145,7 +25145,10 @@ sentences / 11 printings that remain behind `CONDITIONAL_DAMAGE_BONUS`:
   hand during this turn"* (1) and *"your opponent has any **Future** Pokémon in play"* (1). No
   column classifies any of the three banners; every occurrence is DEMAND and the SUPPLY side is
   absent. Measured at this head: `Tera Pokémon` is 4 sentences / 4 printings of demand, `Future ` 5
-  / 7, `Ancient ` 7 / 10 — **all demand.**
+  / 7, `Ancient ` 7 / 10 — **all demand.** (🆕🆕🆕 D568 (D539): the two **Tera** members are
+  WITHDRAWN from this list — Ho-Oh `sv08-019` "Shining Blaze" and Regigigas `sv08.5-086` "Jewel
+  Breaker" are BUILT on the new engine datum `banners.ts`, the Tera SUPPLY side; the three
+  Ancient/Future members stand, and "no INGESTED column classifies the banner" stays true.)
 * **ONE clause at FIVE printings is D368's structural SHAPE refusal** — *"this Pokémon has at least
   2 extra Energy attached (in addition to this attack's cost)"*, printed at two amounts (2 + 3). It
   reads THIS ATTACK'S COST and `conditionHolds(state, seat, cond)` is handed no attack; the same
@@ -27140,7 +27143,7 @@ null, and a minimal pair per row isolating the axis — never by reading the sen
 | corpus line | p | blocker | state |
 |---|---|---|---|
 | 403 / 412 | 2 / 1 | the batch pinned to ONE body | ✅ **BUILT at D457** (`attachFromDeck.oneTarget`) |
-| 404 / 419 | 2 / 1 | the Future / Tera SUBGROUP | **DATA-BLOCKED** — `cardSchema` has no subtype column |
+| 404 / 419 | 2 / 1 | the Future / Tera SUBGROUP | **DATA-BLOCKED** — `cardSchema` has no subtype column (🆕🆕🆕 D568 (D539): WITHDRAWN FOR TERA — `banners.ts`; 419 is BUILT as a registry attack, Terapagos `sv08-161`; 404 (Future) stands) |
 | 419 | (1) | *"of different types"* AND the Tera banner | **STILL BLOCKED — and the CARRIER was named wrong.** 🆕 D513: the phrase is NOT a `CardFilter` need; and its second blocker here is the ANCHOR, whose `Energy cards and attach them` is welded, not just the banner |
 | 420 | 1 | *"of different types"* — a DISTINCTNESS constraint | ✅ **BUILT at D513** (`searchDeck.distinctEnergyTypes` + D332's shipped `chooseCards.caps`) |
 | 410 | 2 | a SECOND printed noun (`{G}` … and `{L}` …) | open — **cheapest row left: two `attachFromDeck` ops, ZERO new fields** |
@@ -28894,8 +28897,57 @@ re-probed `86 killed · 2 known survivors` — the two DECLARED rows `D334-exact
 mutation moved.)
 
 ### (e) Owed
-The whole-corpus sweeps: ~~D565's (running in the main checkout), D566's (predicted `3703 · 52` over 3,755) and~~ this one's
-(predicted `3751 · 52` over 3,803)~~, in that order~~ (🆕 landing: D565's and D566's are PAID, each exactly on its first launch —
+The whole-corpus sweeps: ~~D565's (running in the main checkout), D566's (predicted `3703 · 52` over 3,755) and~~ ~~this one's
+(predicted `3751 · 52` over 3,803)~~ (🆕🆕🆕 D568: this one's is PAID, exactly, on its first launch — `3751 killed · 52 known
+survivor(s) · 0 GAP(S)` over 3,803, swept on `b10ce168`, close-out `d872509e`)~~, in that order~~ (🆕 landing: D565's and D566's are PAID, each exactly on its first launch —
 `3621 · 52` over 3,673, close-out `182d4055`, and `3703 · 52` over 3,755, close-out `7d81ada4` — so this one rests on a measured
 base). R-BB2 and R-GT3 UNRULED. The 0.450 rollback readings (named, not bumped —
-a parked Bother-Bot confirm answered yes is a hard failure under 0.450). NEXT: D568, Mentally Calm plus Diver's Catch.
+a parked Bother-Bot confirm answered yes is a hard failure under 0.450). ~~NEXT: D568, Mentally Calm plus Diver's Catch.~~ (🆕🆕🆕 D568: re-pointed — the pricing round ranked the Tera banner unlock first by printings per blast radius, and D568 is its Slice 1; Mentally Calm plus Diver's Catch is rank 5 of that round, `progress.md` NEXT (7).)
+
+## D568 — the Tera banner unlock, Slice 1: 19 printings / 10 texts (engine 0.452.0, `MATCH_RECORD_VERSION` stays 36)
+
+**Status:** ✅ BUILT in the `lum-wt-d568` worktree (detached at `d872509e`), ~~not committed by the builder~~ committed on `d568-prep` at `c244f449` and 🆕 LANDED on `main` by cherry-pick onto the D567 close-out `d872509e` (clean pick; re-verified in the main checkout — `progress.md` NEXT (1-land)); its whole-corpus sweep is PENDING, predicted `3794 · 52` over 3,846. The top row of the
+pricing round the D567 close-out asked for (`progress.md` NEXT (7), ranked by printings per blast radius): the banner
+blocker frees ~~51~~ 52 printings (🆕 review correction: Tera is 24, not 23 — the census missed TM Fluorite `sv08-188`, whose Tera sentence is on its granted attack); this slice builds 19.
+
+### (a) The datum
+`packages/engine/src/banners.ts` — `Banner = "Tera"`, `BANNER_BY_ID` (98 printing ids), `bannerOf`. Keyed by printing id
+(D135). Measured from pokemon-tcg-data's subtypes (94), closed against limitlesstcg.com over all 353 Standard-legal Pokémon
+ex, disagreements settled by the tcgdex card image: `sv08.5-028` removed, `sv08.5-092` added, `svp-166`/`-174`/`-175`/`-176`
+added. Test-only mirror `bannerPool.ts` (353 rows) carries the membership and REPRINT-CONSISTENCY rungs. Data, outside the
+mutation whitelist (D538); no schema, ingest, wire or `Card` change.
+
+### (b) The rows
+| Card | Ids | Surface | Program |
+|---|---|---|---|
+| Sparkling Crystal | `sv07-142` / `sv08.5-129` | Tool (ACE SPEC) | `attackCostDiscount { 1, holder bannerPokemon Tera, anyType }` (NEW key) |
+| Tera Orb | `sv08-189` | Item | `searchDeck { bannerPokemon Tera, hand, 1, reveal }`, `shuffleDeck` |
+| Glass Trumpet | `sv07-135` / `sv08.5-110` | Item | `attachFromDiscard { basicEnergy, 2, maxPerTarget 1, targetType Colorless, benchOnly }` (NEW op) behind `trainerPlayableIf yourBannerPokemonInPlay` |
+| Briar | `sv07-132` / `-163` / `-171`, `sv08.5-100` | Supporter | `trainer []`, `trainerPlayableIf opponentPrizesRemaining [2]`, `supporterKoPrizeBonus { 1, bannerPokemon Tera }` (NEW key) |
+| Milotic ex | `sv08-042` / `-217` / `-237` | Ability "Sparkling Scales" | `passive.preventDamageAndEffectsFromBanner "Tera"` (NEW key, five read sites) |
+| Noctowl | `sv07-115`, `sv08.5-078`, `svp-141` | Ability "Jewel Seeker" | `onEvolve`, `conditionGate yourBannerPokemonInPlay → [searchDeck trainerCard 2, shuffleDeck]` |
+| Azumarill | `sv08-074` | Ability "Glistening Bubbles" | `attackCostClause { Double-Edge, alternateCostIf yourBannerPokemonInPlay, [Psychic] }` |
+| Terapagos | `sv08-161` | attack "Prism Charge" | registry `attack[0]`: `attachFromDeck { basicEnergy, 3, distinctEnergyTypes, targetBanner Tera }`, `shuffleDeck` |
+| Ho-Oh / Regigigas | `sv08-019` / `sv08.5-086` | attacks | derived — two literal `CONDITIONAL_DAMAGE_CLAUSES` rows |
+
+### (c) The mechanism
+The printed Tera Bench rule is one conjunct in `benchShieldScan` (damage only, both sides' attacks, the target benched and
+Tera; a rule, not an Ability — no §9; counters land; R-TB1 ⚠️ UNRULED: Feint Attack does not null it). Crystal's any-type
+Energy is applied last by `effectiveAttackCost` through `anyTypeCostRemoval` against the holder's attached Energy (`costMet`
+moved to cards.ts). Briar is flow.ts `koPrizeBonus`'s fourth source (`briarPrizeBonus`), read off the turn's played
+Supporter — no persisted key. Readings: R-TB1, R-SC1, R-BR1 ⚠️ UNRULED, R-JS1, R-PC1 (`docs/decisions.md` D568).
+
+### (d) Tests and mutants
+`teraBannerD568.test.ts` (52). Mutants 3,803 → 3,846 (+43 `D568-*` on cards.ts, continuous.ts, flow.ts and
+interpreter.ts; all killed undeclared in the probe `--decision D568`); five existing rows re-anchored (D252, D480 ×2, D495, D323 —
+~~six~~, final review: the list named four and D440/D457 were never re-anchored; D323 follows `koPrizeBonus`' new `attackerSeat`),
+two rows' `what` annotated (D370, D472). Declared survivors 52 unmoved.
+
+### (e) Owed
+The whole-corpus sweep (predicted `3794 · 52` over 3,846 on D567's PAID `3751 · 52`). R-TB1 and R-BR1 UNRULED. Slice 2 (the
+Paradox banners, about 28 printings — single-source table so far, needs the same two-source plus image close). Named debts:
+Area Zero Underdepths ×3 (Bench size 8 — `BENCH_MAX` is a constant), Team Rocket's Mimikyu `sv10-087` (copy-attack) and
+Technical Machine: Fluorite `sv08-188` (its GRANTED attack heals "each of your Tera Pokémon"; excluded because no Technical
+Machine attack-granting Tool is built — the TM mechanism is its blocker). Five printings; Tera is 24, D568 built 19.
+NEXT: see `progress.md` NEXT (7).
+

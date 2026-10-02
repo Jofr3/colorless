@@ -79,6 +79,7 @@ import {
 // Charizard ex `sv03-125` IS a Tera Pokémon, and its row reads `stage: "Stage2"`,
 // `types_json: ["Darkness"]`, `rarity: "Double rare"`, `regulation_mark: "G"`,
 // name "Charizard ex" — indistinguishable, field for field, from a non-Tera Stage
+// (🆕🆕🆕 D568 (D539): the "no supply / DATA-BLOCKED / unbuildable" reading is WITHDRAWN FOR TERA — `banners.ts`' engine table, keyed by printing id, supplies the banner; "no INGESTED column classifies it" and "`Tera` is not a type" stay TRUE, and every Ancient/Future claim stands.)
 // 2. An op authored over that absence has a permanently EMPTY candidate set,
 // which `programPlayable` turns into a card that can NEVER be played: strictly
 // worse than the loud "not simulated" path Briar takes today.
@@ -87,6 +88,9 @@ import {
 // `undefined` below. That guard goes red the moment anyone authors Briar — which
 // is exactly the event that needs a second look, because the only honest way to
 // author it is to have added the Tera datum first.
+// (🆕🆕🆕 D568 (D539): the guard FIRED — "asserted `undefined` below" and the section's
+// "REFUSED" are WITHDRAWN: Briar ×4 is BUILT, the Tera datum added first as `banners.ts`'
+// engine table, and the rung below now pins the program. The gate reading stays TRUE.)
 //
 // ── ⚠️ TWO SPELLINGS EXIST AND THEY ARE NOT THE SAME NUMBER ──────────────────
 // (🆕🆕🆕 D548: *"what is still face down"* on the next line is WITHDRAWN — `prizes.length`
@@ -110,7 +114,9 @@ const HYPE_TEXT =
 const LACEY_IDS = ["sv07-139", "sv07-166", "sv07-172", "sv08.5-114", "sv08.5-175"] as const;
 const HYPE_IDS = ["sv10-163", "sv10-220"] as const;
 /** The refused sibling — same clause, same union member, a second sentence with
-    no datum behind it. */
+    no datum behind it. (🆕🆕🆕 D568 — ~~refused~~ / ~~no datum behind it~~: BUILT. The datum is
+    `banners.ts`' engine table, and the program is registry.ts `BRIAR` — this file's §5 is
+    flipped, not deleted.) */
 const BRIAR_IDS = ["sv07-132", "sv07-163", "sv07-171", "sv08.5-100"] as const;
 
 const LOCAL_CARDS: Record<string, Card> = {
@@ -385,16 +391,30 @@ describe("D207 — Emcee's Hype ('2 MORE' is additive where Lacey's 'instead' re
 
 // ── 5. What did NOT land, and what turns each flag red ────────────────────────
 
-describe("D207 — Briar stays UNBUILT, and the guard says when to look again", () => {
-  it("⚠️ no program on any of the four printings", () => {
+describe("D207 → D568 — Briar was UNBUILT; the guard fired, and the datum it asked for exists", () => {
+  it("🆕🆕🆕 D568 — ONE program on all four printings, with the gate at [2] and the Tera attacker filter", () => {
     // RED when: anyone authors Briar. That is the event worth interrupting for,
     // because the only honest way to author its second sentence is to have added
-    // a Tera datum to the ingest first — and if it was authored WITHOUT one, the
+    // a Tera datum ~~to the ingest~~ first — and if it was authored WITHOUT one, the
     // card can never be played and this guard is the only thing that says so.
-    for (const id of BRIAR_IDS) expect(programFor(id)).toBeUndefined();
+    // 🆕🆕🆕 D568 (D539) — THE GUARD FIRED, AS DESIGNED, AND THE CONDITION IT NAMED IS MET BY
+    // AN ENGINE TABLE rather than an ingest column ("the fix is an INGEST change" is
+    // withdrawn for Tera): `banners.ts` is the datum, and Briar's second sentence reads it
+    // through `supporterKoPrizeBonus.attacker` (`bannerPokemon` Tera). Flipped to pin the
+    // program rather than its absence.
+    const first = programFor(BRIAR_IDS[0]);
+    expect(first).toBeDefined();
+    for (const id of BRIAR_IDS) expect(programFor(id)).toBe(first);
+    expect(first?.trainerPlayableIf).toEqual({ kind: "opponentPrizesRemaining", counts: [2] });
+    expect(first?.supporterKoPrizeBonus).toEqual({
+      amount: 1,
+      attacker: { kind: "bannerPokemon", banner: "Tera" },
+    });
   });
 
   it("⚠️ but its GATE is free — the refusal is the SECOND sentence, priced honestly", () => {
+    // 🆕🆕🆕 D568 (D539): "the refusal" is WITHDRAWN — the second sentence is BUILT
+    // (`supporterKoPrizeBonus` over `banners.ts`); what this rung pins, the free gate, stays TRUE.
     // If the gate were the expensive part, this line could not be written. It is
     // the same member at the arity it was built for, and it evaluates correctly
     // right now on a board Briar would legally see.

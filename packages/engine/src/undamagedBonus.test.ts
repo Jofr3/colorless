@@ -520,12 +520,17 @@ describe("§6 — the census this row moves, and the three summands it does not"
     // LITERAL table, not through the token map: the loose pattern still reaches
     // `CLAUSE_POKEMON_TYPES` with that token and still misses it, so the map's
     // vocabulary is unchanged and the anchored-template floor is unchanged with it.
-    expect(anchored.sort()).toEqual(["Tera"]);
+    // 🆕🆕🆕 D568 — **ONE -> ZERO, AND "Tera" LEFT THE WAY "Stage 1" DID**: through a LITERAL
+    // row (Regigigas `sv08.5-086`, `opponentActiveIsBanner`), not through the map — the loose
+    // pattern still reaches `CLAUSE_POKEMON_TYPES` with "Tera" and still misses it.
+    expect(anchored.sort()).toEqual([]);
     // The one that remains is a trap and not floor: "Tera" is not a `Card.types` value
-    // at all — it is DEMAND with no supply column (D207), so no predicate over the
-    // catalog can answer it. So the floor over this residue is STILL ZERO, which is
-    // the measurement that says a member has to be bought or nothing taken.
-    expect(anchored.filter((t) => t === "Tera")).toHaveLength(1);
+    // at all — ~~it is DEMAND with no supply column (D207), so no predicate over the
+    // catalog can answer it~~ (🆕🆕🆕 D568, D539: WITHDRAWN — `banners.ts` is the supply, and
+    // the predicate is `bannerOf`; "not a `Card.types` value" stays TRUE). So the floor over
+    // this residue is STILL ZERO, which is the measurement that says a member has to be
+    // bought or nothing taken.
+    expect(anchored.filter((t) => t === "Tera")).toHaveLength(0);
     // 🛑 …and the token that LEFT is proved to have left through the ROW rather than
     // through the MAP, on the template that shares the map and owns no literal row.
     expect(

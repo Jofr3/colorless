@@ -1,7 +1,7 @@
 import type { Card } from "@luminous/schema";
 import type { ApplyResult, ConcedeAction } from "./actions";
 import { err, ok } from "./actions";
-import { activeTop, cardOfUid, prizeValueOf, topCardOf, topUid } from "./cards";
+import { activeTop, cardOfUid, matchesFilter, prizeValueOf, topCardOf, topUid } from "./cards";
 import {
   effectiveRetreatCost,
   isLethallyDamaged,
@@ -15,6 +15,7 @@ import type { GameEvent } from "./events";
 import type { RunResult } from "./interpreter";
 import { discardHand, doomBodyAt, runProgram } from "./interpreter";
 import type { KoPrizeReduction } from "./registry";
+import { programFor } from "./registry";
 import { flipCoin } from "./rng";
 import {
   damagedByAttackAbility,
@@ -871,6 +872,7 @@ function koPrizeBonus(
   baseCount: number,
   attackerUid: string | undefined,
   checkup: boolean,
+  attackerSeat: Seat | undefined,
 ): { state: GameState; count: number; events: GameEvent[] } {
   const takerSeat = otherSeat(ref.seat);
   const side = state.players[ref.seat];
@@ -930,7 +932,55 @@ function koPrizeBonus(
     count += bounty.amount;
     events.push({ type: "PRIZE_BONUS", seat: ref.seat, uid: ref.uid, by: bounty.amount, count });
   }
+  // 🆕🆕🆕 D568 — THE FOURTH SOURCE, BRIAR: the taker's THIS-TURN Supporter, after the
+  // seat bonuses and the bounty. No coin, no ABILITY_TRIGGERED (not an Ability — the
+  // bounty's precedent): one PRIZE_BONUS with the same seat rule.
+  const briar = briarPrizeBonus(state, takerSeat, dying, attackerSeat, attackerUid, checkup);
+  if (briar > 0) {
+    count += briar;
+    events.push({ type: "PRIZE_BONUS", seat: ref.seat, uid: ref.uid, by: briar, count });
+  }
   return { state: next, count, events };
+}
+
+/** 🆕🆕🆕 §8.1 (D568) — BRIAR's +1 (`CardProgram.supporterKoPrizeBonus`): *"During this turn,
+    if your opponent's Active Pokémon is Knocked Out by damage from an attack used by your
+    Tera Pokémon, take 1 more Prize card."* Every conjunct on the PRE-KO board:
+      • the TAKER's played Supporter this turn carries the field — read off
+        `allowances.supporterPlayedUid` (the turn owner's; the attacker-seat conjunct below
+        proves the taker IS the turn owner) — so nothing is persisted;
+      • `dying` is the opponent's ACTIVE (`koWasActive`'s body, else null);
+      • an attack's epilogue: `attackerUid` present (the Checkup and the mid-turn sweep pass
+        none) and not the Checkup;
+      • by DAMAGE: not doomed by `knockOutDefender` (D414's marker — an effect, not damage);
+      • "used by YOUR Tera Pokémon": the attack's SEAT is the taker's (`attackerSeat`, the
+        epilogue's own — which also proves the taker is the turn owner whose Supporter
+        `supporterPlayedUid` records), and the card `attackerUid` names matches the field's
+        `attacker` filter, RESOLVED OFF THE UID (`cardOfUid`) AND NEVER OFF A SPOT. 🛑 "the
+        attacker is still the taker's Active when the Knock Out resolves" is NOT the print:
+        Flygon ex `sv08-106`/`sv08-222` (Tera) "Reversing Storm" may switch ITSELF to the
+        Bench before the Knock Out resolves, and the attack was still "used by your Tera
+        Pokémon" — so a switched-out Tera attacker pays exactly as a staying one does
+        (teraBannerD568.test.ts §6, both answers to the switch).
+    ⚠️ Damage counters an ATTACK places ride the engine's standing "by an attack" reading
+    (Greedy Eater's, D323/D414) — the batch cannot tell them from damage. Top-level, so a
+    mutant row may name it (the binding gate). */
+export function briarPrizeBonus(
+  state: GameState,
+  takerSeat: Seat,
+  dying: InPlayPokemon | null,
+  attackerSeat: Seat | undefined,
+  attackerUid: string | undefined,
+  checkup: boolean,
+): number {
+  if (dying === null || checkup || attackerUid === undefined) return 0;
+  if (lethalByEffect(dying, state.turn)) return 0;
+  const played = state.allowances.supporterPlayedUid;
+  const playedId = played === null ? undefined : state.cardIdByUid[played];
+  const rule = playedId === undefined ? undefined : programFor(playedId)?.supporterKoPrizeBonus;
+  if (rule === undefined) return 0;
+  if (attackerSeat !== takerSeat) return 0;
+  return matchesFilter(cardOfUid(state, attackerUid), rule.attacker) ? rule.amount : 0;
 }
 
 function planPrizes(
@@ -971,7 +1021,7 @@ function planPrizes(
       next = attached.state;
       const bonus = denied
         ? { state: next, count: attached.count, events: [] as GameEvent[] }
-        : koPrizeBonus(next, ref, attached.count, attackerUid, checkup);
+        : koPrizeBonus(next, ref, attached.count, attackerUid, checkup, attackerSeat);
       next = bonus.state;
       entries.push({
         ref,

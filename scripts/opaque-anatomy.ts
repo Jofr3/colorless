@@ -275,10 +275,29 @@ export const MARKERS: readonly Marker[] = [
   },
   {
     name: "SCHEMA-BANNER",
-    rx: /\b(?:Ancient|Future|Tera)\b/,
+    // 🛑🛑🛑 D568 — **`Tera` LEFT THIS ALTERNATION AND BECAME ITS OWN CO-MARKER BELOW, BY THIS
+    //    FILE'S OWN CONTROL.** D568 built three sentences carrying the word (Ho-Oh `sv08-019`,
+    //    Regigigas `sv08.5-086`, Terapagos `sv08-161`), so the marker's built side went 0 → 3 / 3
+    //    and `opaque-anatomy-gate.ts` §C went RED naming it. The refutation is about TERA only:
+    //    `banners.ts` supplies that banner and nothing supplies Ancient/Future yet, so the
+    //    marker is SPLIT rather than re-declared whole — the Tera evidence is KEPT (as the
+    //    `TERA-BANNER` co-marker, never deleted — D508's rule) and the Ancient/Future half keeps
+    //    the verdict its built side still earns (0 / 0).
+    rx: /\b(?:Ancient|Future)\b/,
     verdict: "blocker",
     needs:
+      // 🆕🆕🆕 D568 (D539): "an ingest COLUMN" is WITHDRAWN AS THE ONLY FIX — an ENGINE table keyed
+      //    by printing id (`banners.ts`, built for Tera) is one; Slice 2 widens it to these two.
       "an ingest COLUMN. `cardSchema` has 21 keys and none classifies the banner (D468), so a filter over it counts 0 on every board forever",
+  },
+  {
+    name: "TERA-BANNER",
+    // 🆕🆕🆕 D568 — split out of `SCHEMA-BANNER` above when the Tera banner got its writer
+    //    (`banners.ts`); a CO-MARKER from birth, with a built side of 3 / 3.
+    rx: /\bTera\b/,
+    verdict: "co-marker",
+    needs:
+      "nothing new — `banners.ts` (D568) classifies the banner by printing id; what is left of the Tera residue is blocked by OTHER markers (copy-attack; the Bench size)",
   },
   {
     name: "NAMED-ATTACK",
