@@ -761,7 +761,7 @@ describe("⚠️ THE CHECKUP — NOT gated, and that is DERIVED rather than skip
     // no reachable board could ever make disagree with the first.
     //
     // Driven rather than asserted, and the Checkup needs no second action to
-    // reach: declaring an attack ENDS THE TURN (§5.3), so §13 runs inside the very
+    // reach: declaring an attack ENDS THE TURN [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which no board here builds] (§5.3), so §13 runs inside the very
     // same reduction and its rows sit in the swing's own event list.
     const done = swing(board("hotBite", "sv01-099"), "hotBite");
     expect(conditionsOf(done.state, "p2")?.burned).toBe(false);
@@ -919,7 +919,7 @@ describe("the structural questions", () => {
     // (§11, D142). The first two belong to BOTH terms; the third belongs to the
     // §11 block alone, and the new gate sits BEHIND it so a refused ATTACK keeps
     // reporting itself as one. The two can never both hold: `preventDamage`
-    // installs only on the ATTACKER's own Active, an attack ends the turn (§5.3),
+    // installs only on the ATTACKER's own Active, an attack ends the turn [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which no board here builds] (§5.3),
     // and NEITHER immune printing has an attack that installs a block — so no
     // legal board reaches both gates and the ordering is unobservable.
     for (const id of ["sv01-068", "sv01-099", "sv01-208"] as const) {

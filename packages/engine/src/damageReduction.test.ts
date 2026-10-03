@@ -893,7 +893,7 @@ describe("the durated damage reduction — the LIFETIME", () => {
   });
 
   it("ends on EVOLVING — unreachable by construction, written anyway", () => {
-    // §10 sheds the effects of ATTACKS. Installing ends the turn, the window is the
+    // §10 sheds the effects of ATTACKS. Installing ends the turn [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, whose four attacks install nothing and whose window admits only `attack` / `endTurn` (R-FL1); no board here builds it], the window is the
     // opponent's, and nobody evolves on someone else's turn — so no legal sequence
     // puts an evolution between the install and the expiry, exactly as at D142.
     // A surgery pins the RULE rather than a sequence, and the pair is real cards:
@@ -938,7 +938,7 @@ describe("the durated damage reduction — the LIFETIME", () => {
   });
 
   it("MERGES by MAX when installed twice in one window, and says nothing when it need not", () => {
-    // Unreachable off any printing (one attack per turn, and no card prints two of
+    // Unreachable off any printing (one attack per turn [🆕🆕🆕 D570 (D539): two in one turn under Festival Lead with Festival Grounds in play, but its four attacks install nothing, so this stays unreachable], and no card prints two of
     // these), so it is constructed — D144/D146's precedent. The rule is D142's `||`
     // with the boolean replaced by a number: a second installation may never leave
     // the holder with LESS protection than one of them printed.

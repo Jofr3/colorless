@@ -610,7 +610,7 @@ describe("§8 — the persisted question: `MATCH_RECORD_VERSION` STAYS 29", () =
       expect(wire, label).not.toContain("damageCountersOnSelf");
     }
     // …and the attack RESOLVED IN ONE ACTION — no park, no continuation, nothing
-    // for a later deploy to resume. Attacking ends the turn (§8 step 7), so the
+    // for a later deploy to resume. Attacking ends the turn [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which no board here builds] (§8 step 7), so the
     // phase the board lands in is the NEXT seat's ordinary action phase.
     expect(after.phase.kind).toBe("turn:action");
     expect(after.pending).toEqual([]);
@@ -640,7 +640,7 @@ describe("§8 — the persisted question: `MATCH_RECORD_VERSION` STAYS 29", () =
   });
 
   it("🛑 the engine version moved with the behaviour", () => {
-    expect(engineVersion).toBe("0.453.0");
+    expect(engineVersion).toBe("0.454.0");
   });
 
   it("the FROZEN board is handed back untouched — the purity pair", () => {

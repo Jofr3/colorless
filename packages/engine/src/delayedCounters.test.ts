@@ -1123,7 +1123,7 @@ describe("§8 — the bump, and the soft landing it refuses", () => {
   });
 
   it("the engine version moved with the behaviour", () => {
-    expect(engineVersion).toBe("0.453.0");
+    expect(engineVersion).toBe("0.454.0");
   });
 });
 
@@ -1164,7 +1164,7 @@ describe("§9 — a §11 effects-block refuses the schedule, and the control is 
 // §10 — idempotence and the merge, constructed because no printing reaches them.
 // ─────────────────────────────────────────────────────────────────────────────
 describe("§10 — a second schedule in the same turn merges by MAX, not by sum", () => {
-  // ⚠️ UNREACHABLE OFF ANY PRINTING — one attack per turn, and no card in the pool
+  // ⚠️ UNREACHABLE OFF ANY PRINTING — one attack per turn [🆕🆕🆕 D570 (D539): two in one turn under Festival Lead with Festival Grounds in play, but its four attacks install nothing, so this stays unreachable], and no card in the pool
   // prints two of these — so the merge is reached by surgery rather than by a board
   // no deck can build, and it is CONSTRUCTED AND PINNED rather than trusted
   // (`weakenDefenderAttacks`' answer, transferred with its reason).

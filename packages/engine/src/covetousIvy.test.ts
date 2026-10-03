@@ -236,7 +236,7 @@ describe("Covetous Ivy — a Prize-scaled hit on 1 CHOSEN Benched Pokémon", () 
     if (after.phase.kind !== "ko:takePrizes") throw new Error("expected ko:takePrizes");
     expect(after.phase.seat).toBe("p1");
     const { state: done } = mustApply(after, { type: "takePrizes", seat: "p1", prizeIndices: [0] });
-    // An attack KO ENDS the turn (unlike the mid-turn Ability snipe, which resumes it).
+    // An attack KO ENDS the turn [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which no board here builds] (unlike the mid-turn Ability snipe, which resumes it).
     expect(done.phase).toEqual({ kind: "turn:action", seat: "p2" });
     expect(done.players.p1.prizes).toHaveLength(5); // full 6 → took 1 for the KO
     expect(done.players.p2.bench).toHaveLength(0);

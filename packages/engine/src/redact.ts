@@ -74,6 +74,7 @@ import {
 } from "./continuous";
 import type { DiscardScope, EffectPrompt, PokemonRef } from "./interpreter";
 import {
+  attackAgainBarred,
   attackBarredByAbility,
   attackTimingBlocked,
   conditionHolds,
@@ -161,14 +162,20 @@ function redactPhase(state: GameState, viewerSeat: Seat, spectating: boolean): R
       // actor's HAND, so leaking them to a spectator would leak the hand the
       // board redaction just hid.
       const actor = spectating ? null : phase.seat;
+      // 🆕🆕🆕 D570 (R-FL1) — inside Festival Lead's attack-again window only `attack` and
+      // `endTurn` are legal (turn.ts `turnGate`), so every OTHER affordance is withheld:
+      // `null` for this one projection's non-attack lists, through the same `actor`
+      // guard each helper already honours — no schema shape change (empty lists and a
+      // null retreat are what the opponent's view of turn:action already carries).
+      const mainPhase = state.allowances.attackAgainUid === null ? actor : null;
       return {
         kind: "turn:action",
         attacks: redactedAttacksOf(state, viewerSeat, actor),
-        retreat: redactedRetreatOf(state, viewerSeat, actor),
-        abilities: redactedAbilitiesOf(state, viewerSeat, actor),
-        trainers: redactedTrainersOf(state, viewerSeat, actor),
-        rareCandy: redactedRareCandyOf(state, viewerSeat, actor),
-        stadiumAbility: redactedStadiumAbilityOf(state, viewerSeat, actor),
+        retreat: redactedRetreatOf(state, viewerSeat, mainPhase),
+        abilities: redactedAbilitiesOf(state, viewerSeat, mainPhase),
+        trainers: redactedTrainersOf(state, viewerSeat, mainPhase),
+        rareCandy: redactedRareCandyOf(state, viewerSeat, mainPhase),
+        stadiumAbility: redactedStadiumAbilityOf(state, viewerSeat, mainPhase),
       };
     }
     case "ko:takePrizes":
@@ -589,10 +596,15 @@ function redactedAttacksOf(
   // computed once would grey Volbeat's licensed "Quick Sign" along with the
   // "Coordinated Strike" that really is banned. The reader is unchanged and still
   // shared with `attack.ts` and GameHud; what moved is WHERE it is asked.
+  // 🆕🆕🆕 D570 (R-FL2) — …and Festival Lead's second-declaration bar: inside the
+  // attack-again window a body that no longer holds it (moved, replaced, locked, Festival
+  // Grounds gone) may not attack, which greys every row together — a BODY fact,
+  // `attackBarredByAbility`'s shape. Through `attackAgainBarred`, attack.ts's own reader.
   const banned =
     isImmobilized(active.conditions) ||
     attackLocked(state, active) ||
-    attackBarredByAbility(state, viewerSeat, active) !== undefined;
+    attackBarredByAbility(state, viewerSeat, active) !== undefined ||
+    attackAgainBarred(state, viewerSeat, active);
   // §8/§11 (D154) — …and the PER-ATTACK bar, which is the first thing on this line
   // that is not a property of the whole DECLARATION. It rides `playable` for
   // `banned`'s reason verbatim (the client needs to know it cannot use this

@@ -498,7 +498,7 @@ describe("D479 §5 — the SEAT: `who: \"you\"` is the printed subject, not a de
     expect(oldHand.length).toBeGreaterThan(0);
     const { state: done, events } = mustApply(state, attack);
     // 🛑 ASSERTED AS *STILL IN HAND*, NOT AS AN EQUALITY, AND THE REASON IS A REAL EVENT
-    // RATHER THAN A TOLERANCE. The attack ends P1's turn, so P2's turn STARTS inside this
+    // RATHER THAN A TOLERANCE. The attack ends P1's turn [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which no board here builds], so P2's turn STARTS inside this
     // same event list and P2 draws one card for it — an equality here would go red for
     // §5.3's draw and not for anything this slice does. Under `who: "both"` or
     // `who: "opponent"` every uid below would be in P2's DECK instead, which no
@@ -615,6 +615,6 @@ describe("D479 §7 — what this slice did NOT buy, measured", () => {
     //   • REACHABILITY (D450) — the op NEVER PARKS, so no `phase.cont.pendingOp` or
     //     `rest` can hold it and no saved match can contain a shape an older deploy
     //     could not read. `interpreter.ts`'s case returns `{ done: … }` and nothing else.
-    expect(engineVersion).toBe("0.453.0");
+    expect(engineVersion).toBe("0.454.0");
   });
 });

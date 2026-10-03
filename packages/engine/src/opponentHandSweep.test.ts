@@ -512,7 +512,7 @@ describe("§5 — the discriminating board, computed BEFORE it is asserted", () 
       seat: "p1",
       index: SWEEP_ATTACK,
     });
-    // ⚠️ READ THE DISCARD PILE, NOT THE HAND: an attack ends the turn, so the opponent has
+    // ⚠️ READ THE DISCARD PILE, NOT THE HAND: an attack ends the turn [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which no board here builds], so the opponent has
     // already drawn for their own turn by the time this state exists. The pile is the
     // zone the sentence writes and the only one that cannot be moved by the draw.
     expect(idsIn(state, "p2", "discard")).toEqual(
@@ -693,10 +693,10 @@ describe("§8 — the persisted record cannot hold this op", () => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("§9 — the version, and what it is owed for", () => {
-  it("engineVersion is 0.453.0 and the bump is owed for BEHAVIOUR", () => {
+  it("engineVersion is 0.454.0 and the bump is owed for BEHAVIOUR", () => {
     // A sentence that derived to `null` derives to a two-op program, and a new `EffectOp`
     // member runs in the interpreter. That is behaviour, so the bump is owed.
-    expect(engineVersion).toBe("0.453.0");
+    expect(engineVersion).toBe("0.454.0");
     expect(manifest.version).toBe(engineVersion);
   });
 });

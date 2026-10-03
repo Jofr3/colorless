@@ -236,7 +236,7 @@ function find<T extends GameEvent["type"]>(events: GameEvent[], type: T): Extrac
 }
 
 /** The draws THIS SENTENCE caused: `reason: "effect"` on the attacking seat. An attack
-    ends the turn, so every batch below also carries the OPPONENT's turn-start draw — a
+    ends the turn [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which no board here builds], so every batch below also carries the OPPONENT's turn-start draw — a
     rung that merely asked whether `CARDS_DRAWN` is absent would be green on a build that
     drew for the wrong seat. */
 const effectDraws = (events: GameEvent[]): GameEvent[] =>
@@ -739,7 +739,7 @@ describe("D487 §9 — an empty deck, and three silences that are not the same s
     // exactly why this board needs the controls below to mean anything.
     const { state, events } = swing(table([]), BOTTOM_DEAL);
     expect(idsIn(state, "p1", "deck")).toEqual([]);
-    // ⚠️ FILTER THE EVENT, DO NOT COUNT THE TYPE. An attack ENDS THE TURN, so the
+    // ⚠️ FILTER THE EVENT, DO NOT COUNT THE TYPE. An attack ENDS THE TURN [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which no board here builds], so the
     // opponent's own turn-start draw is in this batch — a bare `not.toContain` here
     // passes on a build that draws nothing AND on one that draws for the wrong seat.
     expect(effectDraws(events)).toEqual([]);

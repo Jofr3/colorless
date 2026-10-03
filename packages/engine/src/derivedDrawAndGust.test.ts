@@ -951,7 +951,7 @@ function face(events: GameEvent[]): CoinFace | undefined {
 }
 
 /** The draws THIS ATTACK made. ⚠️ Not `all(events, "CARDS_DRAWN")`: declaring an
-    attack ENDS the turn, so the opponent's turn-start draw lands in the same
+    attack ENDS the turn [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which no board here builds], so the opponent's turn-start draw lands in the same
     event list and a bare filter counts it. `reason: "effect"` is the discriminator
     the event already carries, and getting this wrong is how a "drew nothing" case
     passes while reporting someone else's card. */

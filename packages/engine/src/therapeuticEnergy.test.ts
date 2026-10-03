@@ -573,6 +573,8 @@ describe("⚠️ passivesOf's THIRD SOURCE CLASS — an attached ENERGY", () => 
     // this board carries one — and empty rather than absent, which is the property
     // that stops a `?? []` at any read site hiding a wiring break.
     expect(fold.cantAttackUnless).toEqual([]);
+    // 🆕🆕🆕 D570 — empty rather than absent, for the same reason: Festival Lead's licence.
+    expect(fold.attackTwiceIf).toEqual([]);
     // 🆕 D298 — empty rather than absent, `cantAttackUnless`'s property verbatim:
     // a `?? []` at the read site could otherwise hide a wiring break.
     expect(fold.koPrizeReductions).toEqual([]);
@@ -722,6 +724,11 @@ describe("⚠️ passivesOf's THIRD SOURCE CLASS — an attached ENERGY", () => 
         // DNA" — read by `evolveAliasLicensed`). Therapeutic Energy writes neither; the
         // claim is about THIS board's sources (the D261 note above).
         "attackCostClauses",
+        // 🆕🆕🆕 D570 — `attackTwiceIf`, Festival Lead's ATTACK-AGAIN licence, collected RAW
+        // from the holder's printed Ability (`cantAttackUnless`' split, the opposite
+        // polarity) and EMPTY here: Therapeutic Energy licenses nothing — THIS board's
+        // sources (the D261 note above).
+        "attackTwiceIf",
         "cantAttackUnless",
         "conditionalDamageBonusBeforeWR",
         "damageAttacker",
@@ -916,7 +923,7 @@ describe("THE IMMUNITY — the three NAMED conditions are refused", () => {
     expect(types(immune.events)).not.toContain("STATUS_APPLIED");
 
     // ⚠️ THE CONTROL IS ASSERTED ON THE EVENT AND NOT ON THE BOARD, ON PURPOSE.
-    // Declaring an attack ENDS THE TURN (§5.3), so §13.3's wake-up flip runs inside
+    // Declaring an attack ENDS THE TURN [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which no board here builds] (§5.3), so §13.3's wake-up flip runs inside
     // the same reduction and a heads seed clears the Sleep before the board can be
     // read — a board assertion here would be silently seed-dependent. The refusal
     // above has no such problem: nothing was applied, so nothing can be cleared.
@@ -962,7 +969,7 @@ describe("THE IMMUNITY — the three NAMED conditions are refused", () => {
     // The per-condition claim, on the one printing that names three. "Immune" is
     // the wrong word for what this card prints, and the negative is what says so.
     // Asserted on the EVENT and on the §13.2 BURN TICK rather than on the final
-    // `burned` flag: the attack ends the turn, so the Checkup's cure flip runs in
+    // `burned` flag: the attack ends the turn [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which no board here builds], so the Checkup's cure flip runs in
     // the same reduction and a heads seed would clear the flag before it could be
     // read. The tick is the proof it was really there.
     const { events } = swing(boardWithEnergy("hotBite", "fix-bigbody"), "hotBite");

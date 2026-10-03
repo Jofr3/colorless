@@ -528,7 +528,7 @@ describe("D522 §2 — Stadium PRESENT: the base lands first, the Bench takes 30
     expect(after.players.p1.discard).not.toContain(stadium.uid);
   });
 
-  it("🛑 no `ATTACK_EFFECT_SKIPPED`, and an attack ENDS the turn (D491) — p2's action phase on turn 3", () => {
+  it("🛑 no `ATTACK_EFFECT_SKIPPED`, and an attack ENDS the turn [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which no board here builds] (D491) — p2's action phase on turn 3", () => {
     const { after, events } = swing();
     expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
     expect(types(events)).not.toContain("KNOCKED_OUT");
@@ -623,7 +623,7 @@ describe("D522 §2b — Stadium ABSENT, an EMPTY Bench, and the Knock Out the sp
     expect(events.find((e) => e.type === "KNOCKED_OUT")).toMatchObject({ seat: "p2", uid: brittle });
     expect(after.stadium).toBeNull();
     expect(types(events)).toContain("STADIUM_DISCARDED");
-    // ⚠️ AN ATTACK ENDS THE TURN, BUT NOT YET: the KO interrupts with the Prize in front of it.
+    // ⚠️ AN ATTACK ENDS THE TURN [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which no board here builds], BUT NOT YET: the KO interrupts with the Prize in front of it.
     expect(after.phase).toEqual({ kind: "ko:takePrizes", seat: "p1", count: 1 });
     expect(types(events)).not.toContain("TURN_ENDED");
     const done = must(applyAction(after, { type: "takePrizes", seat: "p1", prizeIndices: [0] }));
@@ -735,7 +735,7 @@ const RAW: Record<string, string> = (
 describe("D522 §4 — the version steps, the heading is written, the prose is corrected, and what stands still", () => {
   it("engineVersion and `manifest.version` agree, and the bump is owed for BEHAVIOUR", () => {
     // ⚠️ The version is NOT spelled in this `it(…)` title (D460's fourth class).
-    expect(engineVersion).toBe("0.453.0");
+    expect(engineVersion).toBe("0.454.0");
     expect(manifest.version).toBe(engineVersion);
   });
 

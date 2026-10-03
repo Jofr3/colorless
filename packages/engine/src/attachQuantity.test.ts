@@ -854,7 +854,10 @@ describe("D359 §6 — the ids this file rests on are real and locally seated", 
     // "Land Collapse", Scream Tail "Supportive Singing", Flutter Mane "Perplexing Transfer". Real
     // catalog ids, no `fix-*` key, inserted MID-MAP after `sv08-161`. (Koraidon ×2, Roaring Moon
     // ×2, Iron Valiant and Slither Wing are deriver arms, not keys.)
-    expect(registryCardIds()).toHaveLength(949);
+    // 🆕🆕🆕 D570 — 949 -> **956**: SEVEN registry keys on ONE program object — Festival Lead
+    // (Dipplin ×3, Goldeen ×2, Swirlix, Seaking), all NON-attack (`passive.attackTwiceIf`). Real
+    // catalog ids, no `fix-*` key, inserted MID-MAP after D569's rows (`raw[last]` stays put).
+    expect(registryCardIds()).toHaveLength(956);
     for (const id of Object.values(QUANTITY_IDS).flat()) {
       if (programFor(id) === undefined) continue;
       // Every id that DOES have a program had one before this slice: the eight

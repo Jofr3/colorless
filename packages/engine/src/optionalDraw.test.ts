@@ -82,7 +82,7 @@ import {
 // And on the ATTACK path there is a second, sharper failure available that the
 // hand-built suite cannot see: an attack is USED whether or not its optional
 // rider fires, so a decline that dropped the queued `attackEpilogue` would end
-// the game's turn nowhere — no §8.1 Knock Out sweep, no §5.3 turn end, a live
+// the game's turn nowhere — no §8.1 Knock Out sweep, no §5.3 turn end [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play — `finishAttack` then queues `resumeTurn` (the attack-again window) in place of the turn tail], a live
 // board stuck on P1's turn with the damage already dealt. Every accept case here
 // therefore has a decline twin, and the decline twins check the turn, the KO and
 // the deck as hard as they check the hand.
@@ -815,7 +815,7 @@ describe("end to end — a printed card asks, and the answer is the effect", () 
   it("⚠️ NO draws NOTHING — and the attack is still USED, so the turn still ends", () => {
     // THE CASE THE WHOLE SLICE TURNS ON. A decline declines the BRANCH, never the
     // attack: the damage is already dealt, the epilogue is already queued, and
-    // §5.3 owes a turn end regardless. A build that dropped the epilogue on the
+    // §5.3 owes a turn end regardless [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play — `finishAttack` then queues `resumeTurn` (the attack-again window) in place of the turn tail]. A build that dropped the epilogue on the
     // decline leaves a live board on a turn that can never end.
     const state = matchup(11, "fix-may-return", "fix-bigbody");
     const { state: parked } = mustApply(state, { type: "attack", seat: "p1", index: 0 });

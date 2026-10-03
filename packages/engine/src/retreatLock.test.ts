@@ -318,7 +318,7 @@ describe("the retreat lock — the §11 gate", () => {
 
 describe("the retreat lock — the lifetime is §13.4's paralysis clock", () => {
   it("survives the Checkup that ends the ATTACKER's turn, then lifts at the next one", () => {
-    // The attack ends P1's turn, so a Checkup runs immediately with
+    // The attack ends P1's turn [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which no board here builds], so a Checkup runs immediately with
     // endedSeat = p1. The block must NOT lift there — it is P2 who owes the turn.
     const { state: p2Turn, events: attackEvents } = mustApply(armed(8), {
       type: "attack",
@@ -400,7 +400,7 @@ describe("the retreat lock — the early clears (an effect of an attack ends)", 
 // `preventAttack`'s ternary"*. THAT SHIPS A PROGRAM THAT RESOLVES AND DOES NOTHING,
 // and the refutation was already in the tree: `retreatBlocked` rides §13.4's
 // paralysis clock, flow.ts clears it for `endedSeat`, and an attack ENDS the
-// installer's turn (§5.3) — so a self-installed flag is lifted at the very first
+// installer's turn [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which no board here builds] (§5.3) — so a self-installed flag is lifted at the very first
 // Checkup, before its window opens. flow.ts's own comment guarded the clear with
 // *"which no print in the pool can do (the deriver's only two shapes both target
 // the DEFENDER)"*; this slice builds a third shape and keeps that parenthesis true

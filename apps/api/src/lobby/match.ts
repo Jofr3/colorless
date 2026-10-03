@@ -1211,7 +1211,7 @@ export interface MatchRecord {
         additive record and pays the printed base plus the bonus. It is unreachable off
         any printing — the ground is the turn structure, not a count of the ~~four~~ legal
         sentences that write this record (🆕🆕🆕 D546: SIX now, measured —
-        `attackBaseOverride.test.ts` §1) (a declared attack ends the turn, and two
+        `attackBaseOverride.test.ts` §1) (a declared attack ends the turn [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which opens the attack-again window instead (flow.ts `finishAttack`); the window keeps `state.turn`, so no turn-stamp argument here moves], and two
         installs merge only when they name the same index for the same stamped turn) —
         which is why it is priced here and pinned (§9 of the same suite)
         rather than designed around.
@@ -1907,8 +1907,66 @@ export interface MatchRecord {
     redact). The three persisted keys themselves move no schema, redact-shape, projection or
     client byte: the redacted view carries neither the side reduction nor a pending Amarys
     discard, so the HUD shows neither (a carried display debt, `sideAttackLock`'s and
-    `sideAttackBonuses`' precedent, decisions.md D564). */
-export const MATCH_RECORD_VERSION = 36;
+    `sideAttackBonuses`' precedent, decisions.md D564).
+
+    🆕🆕🆕 **36 → 37 AT D570 — THE TENTH POSITION: ONE REQUIRED KEY, A TURN-MACHINE WINDOW.**
+    The address, named first (D456's rule):
+      · **`GameState.allowances.attackAgainUid: string | null`** — Festival Lead's attack-again
+        window (Dipplin `sv06-018`/`-170`/`sv08.5-010`, Goldeen `sv06-044`/`sv08.5-020`, Swirlix
+        `sv06-089`, Seaking `sv08.5-021`: *"If Festival Grounds is in play, this Pokémon may use
+        an attack it has twice. …"*): the uid of the Active that may declare a SECOND attack
+        this turn, written ONLY by flow.ts `finishAttack` on the first finish, read by turn.ts
+        `turnGate` (only `attack` / `endTurn` while it is non-null — R-FL1), by
+        `attackAgainBarred` (the second declaration's re-read — R-FL2) and by `finishAttack`
+        itself (no third attack) [🆕 D570 landing (D539): and read DIRECTLY by flow.ts
+        `resumeTurn` (the `ATTACK_AGAIN_OFFERED` row), redact.ts `mainPhase` and GameHud.tsx
+        `attackAgainWindow`]. One turn wide: `freshAllowances()` wipes it at `startTurn`.
+
+    🛑 **THE FIFTH POSITION'S TEST, RUN ON THE KEY — AND IT FAILS (driven).** The optional
+    spelling passes D441 (an absent key reads as "no window", which is what a v36 writer
+    meant) and is detectable in the bytes; it fails D456's *"inert on the board"*, because a
+    0.453 ROLLBACK deploy resuming a v37 record saved INSIDE the window ignores the key and
+    hands the turn owner a whole main phase between the two attacks: Trainer, attach,
+    retreat, evolve and Ability plays the printed card never allows
+    (`festivalLeadD570.test.ts` §8 (i)). A save taken mid-window is an ordinary save — the
+    window survives the first attack's prize and promotion PARKS, and the attacker's own
+    turn:action is a resting point — so this is not a residue a between-turns pipeline
+    escapes. The key is REQUIRED and the version is owed.
+
+    🛑 **AND A v36 RECORD IS NOT READ BENIGNLY — MEASURED.** A v36 bag has no
+    `attackAgainUid` key: `turnGate` reads `undefined !== null` as an OPEN window and refuses
+    every in-turn action but `attack` and `endTurn`, and `attackAgainBarred` reads a window
+    no body holds and refuses the attack too — the turn owner is stranded with `endTurn`
+    alone (`festivalLeadD570.test.ts` §8 (ii); D326's class, silent rather than a throw). The
+    record is retired by `readMatchRecord`'s version gate on D124's rule.
+
+    🛑 **WHY THE WINDOW IS NOT DERIVED FROM `usedAttack.turn` — REFUSED, ON THE SAME TEST.**
+    D394's persisted `InPlayPokemon.usedAttack` already says "this body attacked this turn",
+    so "the window is open iff the Active's `usedAttack.turn === state.turn` and the licence
+    holds" would persist NOTHING new and hold the version at 36. It fails the identical
+    rollback test: a 0.453 reader does not know that a `usedAttack` stamp narrows the turn,
+    so the same mid-window save resumes into a full main phase — the derivation hides the
+    window from the version gate without making the rollback safe. It is ALSO insufficient
+    on this deploy's own boards: the SECOND attack writes the same `usedAttack.turn` stamp
+    the first did, so "the window was closed by the second attack" (no third attack, R-FL4)
+    needs a second persisted fact anyway — which is the key this block adds, written once,
+    by the one site that knows.
+
+    🛑 **WHAT WOULD REVERSE THIS (D422).** The fifth position's reversal (a rollback-safety
+    rule that accepts a granted main phase as inert, or a pipeline that forbids rollback
+    across a record-shape change) — neither holds today. The eighth position's second escape
+    (saves only between turns) would cover this key too; it does not hold either.
+
+    ⚠️ Also moved, and none is a second reason: the catalog-only `PassiveEffects.attackTwiceIf`
+    (and its `passivesOf` list — derived, never persisted), the event `ATTACK_AGAIN_OFFERED`
+    (not persisted, D141), and the client: redact.ts withholds retreat and the Ability,
+    Trainer, Rare Candy and Stadium affordances inside the window (empty lists and a null
+    retreat — the shapes the opponent's view already carries, so NO schema byte moves), and
+    GameHud.tsx mirrors it. No `PendingStage` member is added: the window rides the shipped
+    `resumeTurn` stage. The HUD draws no "attack again" banner and the playmat's drag
+    affordances are not pre-folded against the window (a carried display debt, decisions.md
+    D570). */
+export const MATCH_RECORD_VERSION = 37;
 
 /** How a persisted match read back: absent, usable, or written by an
     incompatible deploy (`stale` — the caller decides whether to retire it). */

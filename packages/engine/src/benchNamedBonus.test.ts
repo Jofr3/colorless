@@ -1364,7 +1364,10 @@ describe("§7 — the census moves in exactly ONE summand, and the other three a
     // "Land Collapse", Scream Tail "Supportive Singing", Flutter Mane "Perplexing Transfer". Real
     // catalog ids, no `fix-*` key, inserted MID-MAP after `sv08-161`. (Koraidon ×2, Roaring Moon
     // ×2, Iron Valiant and Slither Wing are deriver arms, not keys.)
-    expect(ids.size).toBe(949);
+    // 🆕🆕🆕 D570 — 949 -> **956**: SEVEN registry keys on ONE program object — Festival Lead
+    // (Dipplin ×3, Goldeen ×2, Swirlix, Seaking), all NON-attack (`passive.attackTwiceIf`). Real
+    // catalog ids, no `fix-*` key, inserted MID-MAP after D569's rows (`raw[last]` stays put).
+    expect(ids.size).toBe(956);
     // ⚠️ ONE of the thirteen IS in the registry — Volbeat `sv06-009` — and it is
     // there on an ABILITY program, which is exactly the count a slice does not
     // think it is checking. Named, rather than glossed by an "all absent" claim

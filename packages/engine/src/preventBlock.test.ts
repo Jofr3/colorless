@@ -442,7 +442,7 @@ describe("the gated PREVENT clause — the DAMAGE half (both spellings)", () => 
   });
 
   it("does NOT lift at the Checkup that ends the INSTALLER's own turn", () => {
-    // The D112 clock would have. Installing ends P1's turn, so a Checkup runs
+    // The D112 clock would have. Installing ends P1's turn [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which no board here builds], so a Checkup runs
     // immediately with endedSeat = p1 — the holder's OWN seat — and a paralysis-
     // clock clear keyed on `endedSeat` lifts the block a full turn EARLY, before
     // its window has opened at all. That failure is invisible on the retreat
@@ -697,7 +697,7 @@ describe("the gated PREVENT clause — the early clears (an effect of an attack 
   });
 
   it("ends on evolution (§10) — unreachable in play, pinned anyway", () => {
-    // NO LEGAL SEQUENCE REACHES THIS. Installing ends the turn (§5.3), the window
+    // NO LEGAL SEQUENCE REACHES THIS. Installing ends the turn [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, whose four attacks install nothing and whose window admits only `attack` / `endTurn` (R-FL1); no board here builds it] (§5.3), the window
     // is the opponent's turn, and a player cannot evolve during it — so by the
     // time the holder may evolve, the stamp has already expired. The clear is
     // written because §10 sheds the effects of ATTACKS and this is one; the

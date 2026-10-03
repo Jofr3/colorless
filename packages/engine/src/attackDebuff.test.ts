@@ -1004,7 +1004,7 @@ describe("the attacker-side debuff — the LIFETIME", () => {
   it("ends when the victim RETREATS out of it — the victim's own counterplay", () => {
     // §10's clear, with D148's agency: the window is the VICTIM's own turn, so all
     // three routes off the Active Spot are lines of play the victim can take, and
-    // the INSTALLER can reach none of them (their turn ended when they declared).
+    // the INSTALLER can reach none of them (their turn ended when they declared) [🆕🆕🆕 D570 (D539): a FIRST attack under Festival Lead opens the attack-again window instead, but its four attacks (Do the Wave, Whirlpool, Sneaky Placement, Rapid Draw) install nothing, so this stays true on every printing].
     let state = installed("swsh10.5-061", "sv02-062", [
       { id: "fix-lightning-energy", count: 1 },
       { id: "fix-energy", count: 1 },
@@ -1114,7 +1114,7 @@ describe("the attacker-side debuff — the LIFETIME", () => {
   });
 
   it("MERGES by Math.max — unreachable off any printing, DRIVEN through the interpreter", () => {
-    // One attack per turn, and two installs would have to land on the SAME turn, so
+    // One attack per turn [🆕🆕🆕 D570 (D539): two in one turn under Festival Lead with Festival Grounds in play, but its four attacks install nothing, so this stays unreachable], and two installs would have to land on the SAME turn, so
     // no legal sequence stacks these. The rule is `reduceDamage`'s read from the
     // installing side — *a second installation may never leave the installer with
     // less than one of them printed* — and a SUM is refused for its reason: this

@@ -590,7 +590,7 @@ describe("§5 — the four registry attacks", () => {
       let state = table({ p1: GREAT_TUSK });
       state = energize(state, "p1", "active", F, 2);
       state = prep(state);
-      // Read off the opponent's DISCARD PILE: the attack ends the turn and p2 draws, so the
+      // Read off the opponent's DISCARD PILE: the attack ends the turn [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which no board here builds] and p2 draws, so the
       // deck count would carry a draw the mill never made.
       const before = state.players.p2.discard.length;
       const after = run(state, { type: "attack", seat: "p1", index: 0 }).state;
@@ -868,8 +868,8 @@ describe("§8 — R-PX5: Iron Thorns ex is FUTURE now, and its own Initializatio
 
 // ─────────────────────────────────────────────────────────────────────────────
 describe("§9 — the version", () => {
-  it("the engine is 0.453.0", () => {
-    expect(engineVersion).toBe("0.453.0");
-    expect(manifest.version).toBe("0.453.0");
+  it("the engine is 0.454.0", () => {
+    expect(engineVersion).toBe("0.454.0");
+    expect(manifest.version).toBe("0.454.0");
   });
 });

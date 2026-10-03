@@ -2711,8 +2711,11 @@ export const MUTANTS: Mutant[] = [
     decision: "D242",
     what: "the ONLINE payability mirror drops the gate, so `redactedAttacksOf` ships `playable: true` on rows the §8 gate refuses with ATTACK_PREVENTED. D157's live soft-lock shape exactly: nothing throws, the client renders a button, the server says no, and the only surface that could have told the player why is this one",
     file: "packages/engine/src/redact.ts",
-    find: "    attackLocked(state, active) ||\n    attackBarredByAbility(state, viewerSeat, active) !== undefined;",
-    replace: "    attackLocked(state, active);",
+    // 🆕🆕🆕 D570 - RE-ANCHORED off the new bytes (D540: read from redact.ts by script, never
+    //    retyped): D570's `attackAgainBarred` conjunct now follows the D242 term on `banned`, so the
+    //    anchor carries it and the patch still drops the D242 term ALONE (the semantics unchanged).
+    find: "    attackLocked(state, active) ||\n    attackBarredByAbility(state, viewerSeat, active) !== undefined ||\n    attackAgainBarred(state, viewerSeat, active);",
+    replace: "    attackLocked(state, active) ||\n    attackAgainBarred(state, viewerSeat, active);",
     expectKilledBy: ["packages/engine/src/abilityAttackGate.test.ts"],
   },
   {
@@ -6225,7 +6228,7 @@ export const MUTANTS: Mutant[] = [
     // CORPUS QUOTES** (D414/D415), so a value-keyed sweep over `toBe("0.391.0")` cannot
     // see it — this row's `find` spells the DECLARATION, not an assertion. Run
     // `precheck` after every version bump, not after the sweep tells you.
-    find: 'export const engineVersion = "0.453.0";',
+    find: 'export const engineVersion = "0.454.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -11409,8 +11412,11 @@ export const MUTANTS: Mutant[] = [
     // 🆕🆕🆕 D564 - RE-TRANSCRIBED, 35 -> 36, off the new bytes (THE NINTH POSITION: the REQUIRED
     //    `TurnAllowances.supporterPlayedUid` / `.endOfTurnHandDiscard` and `PlayerSide.
     //    sideDamageReduction`). Thirteenth consecutive bump to rot this row, predicted before `precheck`.
-    find: "export const MATCH_RECORD_VERSION = 36;",
-    replace: "export const MATCH_RECORD_VERSION = 35;",
+    // 🆕🆕🆕 D570 - RE-TRANSCRIBED, 36 -> 37, off the new bytes (THE TENTH POSITION: the REQUIRED
+    //    `TurnAllowances.attackAgainUid`). Fourteenth consecutive bump to rot this row, predicted
+    //    before `precheck`.
+    find: "export const MATCH_RECORD_VERSION = 37;",
+    replace: "export const MATCH_RECORD_VERSION = 36;",
     expectKilledBy: ["apps/api/src/lobby/match.test.ts"],
   },
   // == D327 - THE COST SEAM'S SECOND AND THIRD COUNT SOURCES. Every row below is a
@@ -12608,7 +12614,7 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D338-drops-the-trailing-shuffle",
     decision: "D338",
-    what: 'the printed "Then, shuffle your deck" is deleted. The search still finds, still reveals and still delivers to the hand, so every candidate and every answer in the suite is unchanged - and the player keeps a deck whose order they have just read in full. \u26a0\ufe0f AND ON AN ATTACK THIS IS WORSE THAN ON A SUPPORTER: the turn ends immediately after, so the opponent draws into a deck the attacker has read and the attacker has not',
+    what: 'the printed "Then, shuffle your deck" is deleted. The search still finds, still reveals and still delivers to the hand, so every candidate and every answer in the suite is unchanged - and the player keeps a deck whose order they have just read in full. \u26a0\ufe0f AND ON AN ATTACK THIS IS WORSE THAN ON A SUPPORTER: the turn ends [D570 (D539): except a FIRST attack under Festival Lead, which opens the attack-again window; not the board of this row] immediately after, so the opponent draws into a deck the attacker has read and the attacker has not',
     file: "packages/engine/src/registry.ts",
     find: '        },\n        dest: "hand",\n        max: 3,\n        reveal: true,\n      },\n      { op: "shuffleDeck" },\n    ],\n  },\n};',
     replace:
@@ -17077,7 +17083,7 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D394-used-attack-window-becomes-this-turn",
     decision: "D394",
-    what: "\u{1F6D1} C2 - **THE WINDOW BECOMES `=== state.turn`**, which is D393's `evolvedTurn` arm's REAL code one member over and the shape every OTHER stamp in this union uses. It is right about the field and wrong about the printed word: *\"during your LAST turn\"* is not *\"during this turn\"*, and since declaring an attack ENDS the turn (§5.3) the mutated gate can only ever be true for the attack currently resolving - so the bonus is unreachable rather than merely early. ⚠️ THE FAILING BOARD IS THE ORDINARY ONE: §3's two-turn combo, which is the only line of play either printing has",
+    what: "\u{1F6D1} C2 - **THE WINDOW BECOMES `=== state.turn`**, which is D393's `evolvedTurn` arm's REAL code one member over and the shape every OTHER stamp in this union uses. It is right about the field and wrong about the printed word: *\"during your LAST turn\"* is not *\"during this turn\"*, and since declaring an attack ENDS the turn [D570 (D539): except a FIRST attack under Festival Lead, which opens the attack-again window; not this row's board] (§5.3) the mutated gate can only ever be true for the attack currently resolving - so the bonus is unreachable rather than merely early. ⚠️ THE FAILING BOARD IS THE ORDINARY ONE: §3's two-turn combo, which is the only line of play either printing has",
     file: "packages/engine/src/types.ts",
     find: "  return used !== null && used.name === attack && used.turn === state.turn - 2;",
     replace: "  return used !== null && used.name === attack && used.turn === state.turn;",
@@ -18385,7 +18391,7 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D412-self-arm-writes-the-boolean",
     decision: "D412",
-    what: "🛑 C2 — **THE DEFECT THE WHOLE SLICE EXISTS TO AVOID**: the self arm writes `retreatBlocked: true` instead of the stamp, which is D410's resume point taken at its word (\"give the op a `target`\"). It COMPILES, it EMITS `RETREAT_BLOCKED`, it counts as BUILT on every reader-keyed instrument, **and it changes no board** — flow.ts clears the boolean for `endedSeat`, an attack ends the installer's turn, so the lock lifts at the very first Checkup before its window opens. D408's \"resolved and did nothing\" defect, in the one place the tree had already written down the warning",
+    what: "🛑 C2 — **THE DEFECT THE WHOLE SLICE EXISTS TO AVOID**: the self arm writes `retreatBlocked: true` instead of the stamp, which is D410's resume point taken at its word (\"give the op a `target`\"). It COMPILES, it EMITS `RETREAT_BLOCKED`, it counts as BUILT on every reader-keyed instrument, **and it changes no board** — flow.ts clears the boolean for `endedSeat`, an attack ends the installer's turn [D570 (D539): except a FIRST attack under Festival Lead, which opens the attack-again window; not this row's board], so the lock lifts at the very first Checkup before its window opens. D408's \"resolved and did nothing\" defect, in the one place the tree had already written down the warning",
     file: "packages/engine/src/interpreter.ts",
     find: "    events.push({ type: \"RETREAT_BLOCKED\", seat, uid });\n    return withActive(state, seat, { ...active, retreatLockedTurn: turn });",
     replace: "    events.push({ type: \"RETREAT_BLOCKED\", seat, uid });\n    return withActive(state, seat, { ...active, retreatBlocked: true });",
@@ -18965,7 +18971,7 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D421-reader-keeps-the-turn-comparison",
     decision: "D421",
-    what: "🛑 C2 — THE READER STOPS EXEMPTING THE UNBOUNDED BAR: `lockedAttackIndexes` falls back to D154's bare `locked.turn === state.turn`, which is the line that shipped for 267 decisions and is what an author restores by reflex. **THE RECORD IS STILL WRITTEN, THE LOG STILL PROMISES A PERMANENT BAR, AND THE BAR NEVER BITES ONCE** — the entry's `turn` is the INSTALL turn and declaring ENDS the turn (§5.3), so the number names a turn its holder has already spent. ⚠️ A build that stamped `+ 2` instead would have degraded quietly into a one-turn lock here; the install turn is chosen precisely so this mutant is loud on the very next turn",
+    what: "🛑 C2 — THE READER STOPS EXEMPTING THE UNBOUNDED BAR: `lockedAttackIndexes` falls back to D154's bare `locked.turn === state.turn`, which is the line that shipped for 267 decisions and is what an author restores by reflex. **THE RECORD IS STILL WRITTEN, THE LOG STILL PROMISES A PERMANENT BAR, AND THE BAR NEVER BITES ONCE** — the entry's `turn` is the INSTALL turn and declaring ENDS the turn [D570 (D539): except a FIRST attack under Festival Lead, which opens the attack-again window; not this row's board] (§5.3), so the number names a turn its holder has already spent. ⚠️ A build that stamped `+ 2` instead would have degraded quietly into a one-turn lock here; the install turn is chosen precisely so this mutant is loud on the very next turn",
     file: "packages/engine/src/continuous.ts",
     find: "    .filter((locked) => locked.until === \"leavesActive\" || locked.turn === state.turn)",
     replace: "    .filter((locked) => locked.turn === state.turn)",
@@ -20140,7 +20146,7 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D432-stamp-is-this-turn",
     decision: "D432",
-    what: "The window is the INSTALLING turn rather than the opponent's next one. The printed sentence says \"During your opponent's next turn\", and declaring an attack ENDS the turn (§5.3), so a bar stamped `state.turn` is live only on a turn that is already over — the bar never bites at all. It is the slip an author makes by reading \"this turn\" off the op's own position in the program, and the board looks entirely normal",
+    what: "The window is the INSTALLING turn rather than the opponent's next one. The printed sentence says \"During your opponent's next turn\", and declaring an attack ENDS the turn [D570 (D539): except a FIRST attack under Festival Lead, which opens the attack-again window; not this row's board] (§5.3), so a bar stamped `state.turn` is live only on a turn that is already over — the bar never bites at all. It is the slip an author makes by reading \"this turn\" off the op's own position in the program, and the board looks entirely normal",
     file: "packages/engine/src/interpreter.ts",
     find: "  const turn = state.turn + 1;\n  if (active.noWeaknessTurn === turn) return state;",
     replace: "  const turn = state.turn;\n  if (active.noWeaknessTurn === turn) return state;",
@@ -20436,7 +20442,7 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D434-merge-sums-instead-of-maxing",
     decision: "D434",
-    what: "`Math.max` becomes a sum — `reduceDamage`'s merge, which really does add, transplanted onto an op whose record is a printed AMOUNT rather than an accumulating shield. Unreachable off any printing (one attack per turn), which is exactly why §10 drives it through `runProgram` instead of through a board: without that rung this defect would ship with a green suite",
+    what: "`Math.max` becomes a sum — `reduceDamage`'s merge, which really does add, transplanted onto an op whose record is a printed AMOUNT rather than an accumulating shield. Unreachable off any printing (one attack per turn [D570 (D539): two in one turn under Festival Lead, whose four attacks install nothing, so still unreachable]), which is exactly why §10 drives it through `runProgram` instead of through a board: without that rung this defect would ship with a green suite",
     file: "packages/engine/src/interpreter.ts",
     find: "              ? Math.max(stacking.amount, payload.amount)\n              : payload.amount,",
     replace: "              ? stacking.amount + payload.amount\n              : payload.amount,",
@@ -22838,7 +22844,7 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D453-boost-window-is-the-opponents-turn",
     decision: "D453",
-    what: "⚠ **`boostAttack`'s WINDOW BECOMES `reduceDamage`'s** — the exact converse of D453's first row, and the byte `reduceDamage` really writes. The doc block one line above states the rule the `+ 2` encodes: the printed window is *\"During YOUR next turn\"*, declaring an attack ends the turn (§5.3), so the turn after this one belongs to the opponent and the holder's is the one after THAT. At `+ 1` the boost is armed for a turn the holder cannot attack in and has expired by the time it could",
+    what: "⚠ **`boostAttack`'s WINDOW BECOMES `reduceDamage`'s** — the exact converse of D453's first row, and the byte `reduceDamage` really writes. The doc block one line above states the rule the `+ 2` encodes: the printed window is *\"During YOUR next turn\"*, declaring an attack ends the turn [D570 (D539): except a FIRST attack under Festival Lead, which opens the attack-again window; not this row's board] (§5.3), so the turn after this one belongs to the opponent and the holder's is the one after THAT. At `+ 1` the boost is armed for a turn the holder cannot attack in and has expired by the time it could",
     file: "packages/engine/src/interpreter.ts",
     find: "  const turn = thisTurn === true ? state.turn : state.turn + 2;\n  const existing = active.boostedAttack;",
     replace: "  const turn = thisTurn === true ? state.turn : state.turn + 1;\n  const existing = active.boostedAttack;",
@@ -23040,7 +23046,7 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D454-recoil-merge-takes-the-smaller",
     decision: "D454",
-    what: "⚠ **THE STACKING MERGE TAKES THE MINIMUM** — the doc block states the rule in its own words (*\"a second installation may never leave the holder with less than one of them printed\"*), so `Math.min` is the exact negation of the sentence written above the line. A second, weaker arming then DOWNGRADES a live 100 to 10 and files a RECOIL_ARMED row announcing the downgrade as an install. Unreachable off any printing (one attack per turn), which is precisely why `installedRecoil.test.ts` constructs it — and why nothing but a mutant can tell whether that construction still discriminates",
+    what: "⚠ **THE STACKING MERGE TAKES THE MINIMUM** — the doc block states the rule in its own words (*\"a second installation may never leave the holder with less than one of them printed\"*), so `Math.min` is the exact negation of the sentence written above the line. A second, weaker arming then DOWNGRADES a live 100 to 10 and files a RECOIL_ARMED row announcing the downgrade as an install. Unreachable off any printing (one attack per turn [D570 (D539): two in one turn under Festival Lead, whose four attacks install nothing, so still unreachable]), which is precisely why `installedRecoil.test.ts` constructs it — and why nothing but a mutant can tell whether that construction still discriminates",
     file: "packages/engine/src/interpreter.ts",
     find: "  const merged = stacking ? Math.max(existing.amount, floor) : floor;",
     replace: "  const merged = stacking ? Math.min(existing.amount, floor) : floor;",
@@ -23051,7 +23057,7 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D454-recoil-window-is-your-own-next-turn",
     decision: "D454",
-    what: "⚠ **THE WINDOW MOVES ONE TURN LATE** — `state.turn + 2` is `boostAttack`'s real byte (*\"During YOUR next turn\"*), and this sentence prints *\"During your OPPONENT's next turn\"*. Declaring an attack ends the turn (§5.3), so the turn after this one is the opponent's and `+ 1` is the whole of the window. At `+ 2` the recoil is armed for a turn in which the holder is the one attacking, the §9 read never fires while the opponent swings, and §10's three early endings clear a stamp that was never live. D434's `-stamp-is-off-by-one` on the schedule twin, on the op whose own doc block says the number is shared",
+    what: "⚠ **THE WINDOW MOVES ONE TURN LATE** — `state.turn + 2` is `boostAttack`'s real byte (*\"During YOUR next turn\"*), and this sentence prints *\"During your OPPONENT's next turn\"*. Declaring an attack ends the turn [D570 (D539): except a FIRST attack under Festival Lead, which opens the attack-again window; not this row's board] (§5.3), so the turn after this one is the opponent's and `+ 1` is the whole of the window. At `+ 2` the recoil is armed for a turn in which the holder is the one attacking, the §9 read never fires while the opponent swings, and §10's three early endings clear a stamp that was never live. D434's `-stamp-is-off-by-one` on the schedule twin, on the op whose own doc block says the number is shared",
     file: "packages/engine/src/interpreter.ts",
     find: "  const turn = state.turn + 1;\n  const existing = active.installedRecoil;",
     replace: "  const turn = state.turn + 2;\n  const existing = active.installedRecoil;",
@@ -23244,7 +23250,7 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D455-attack-lock-window-swaps-the-two-turns",
     decision: "D455",
-    what: "⚠ **THE TWO WINDOWS ARE SWAPPED** — the doc block above states the rule and names both failure modes in its own words: declaring an attack ends the turn (§5.3), so the DEFENDER's next turn is `+ 1` and the installer's own is `+ 2`. Swapped, a self-lock stamped `+ 1` is live only on a turn its holder could not have acted on anyway — the printed drawback silently disappears — while a defender lock stamped `+ 2` skips the printed window entirely and bites a turn late, on a body that has already been free to attack once. Neither is loud; both are the card doing the opposite of what it prints. **6 attack-corpus sentences / 71 legal printings, and 0 registry cards** — measured this slice; the whole live population is derived, so every killer named here is an attack suite",
+    what: "⚠ **THE TWO WINDOWS ARE SWAPPED** — the doc block above states the rule and names both failure modes in its own words: declaring an attack ends the turn [D570 (D539): except a FIRST attack under Festival Lead, which opens the attack-again window; not this row's board] (§5.3), so the DEFENDER's next turn is `+ 1` and the installer's own is `+ 2`. Swapped, a self-lock stamped `+ 1` is live only on a turn its holder could not have acted on anyway — the printed drawback silently disappears — while a defender lock stamped `+ 2` skips the printed window entirely and bites a turn late, on a body that has already been free to attack once. Neither is loud; both are the card doing the opposite of what it prints. **6 attack-corpus sentences / 71 legal printings, and 0 registry cards** — measured this slice; the whole live population is derived, so every killer named here is an attack suite",
     file: "packages/engine/src/interpreter.ts",
     find: "  const turn = state.turn + (op.target === \"defender\" ? 1 : 2);",
     replace: "  const turn = state.turn + (op.target === \"defender\" ? 2 : 1);",
@@ -25336,7 +25342,7 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D471-min-region-takes-the-first-hit",
     decision: "D471",
-    what: "\ud83d\uded1 **THE CENTRAL ARM MUTATED TO ITS NEAREST WRONG SIBLING: the search keeps the FIRST admitted alignment instead of the SMALLEST.** The neighbour is real code one token away (`best === null` in place of `best === null || regions.length < best.k`), the class table still looks plausible, no row changes side between REACHED and FAR, and every k is silently too large. \u26a0\ufe0f **\u00a7A CANNOT SEE IT** \u2014 inflating k never produces the forbidden `k = 1` \u2014 **and it is the row that proves \u00a7E earns its place**: \u00a7E is the only section that goes red, because it asks the same question with an independent loop. Measured ALONE, and with every other observer measured alone beside it: `residue-census-gate`, `residue-census`, `precheck`, `lint-coverage`, `biome` and the whole of `bun run check` (459 files / 10,328 tests) are ALL GREEN under this mutant. **Nothing in the repo except this gate can see a defect in a committed measurement, which is D465's rule stated as a measurement rather than as a warning.**",
+    what: "\ud83d\uded1 **THE CENTRAL ARM MUTATED TO ITS NEAREST WRONG SIBLING: the search keeps the FIRST admitted alignment instead of the SMALLEST.** The neighbour is real code one token away (`best === null` in place of `best === null || regions.length < best.k`), the class table still looks plausible, no row changes side between REACHED and FAR, and every k is silently too large. \u26a0\ufe0f **\u00a7A CANNOT SEE IT** \u2014 inflating k never produces the forbidden `k = 1` \u2014 **and it is the row that proves \u00a7E earns its place**: \u00a7E is the only section that goes red, because it asks the same question with an independent loop. [🆕 D569 close-out `a04889a9` (D539): NO LONGER HOW IT DIES — the independent loop could only go red while a LIVE OPAQUE row had a first-admitted alignment larger than its minimum, and its only such witness (Roaring Moon «This attack does 10 more damage for each Ancient card in your discard pile.») was BUILT by D569, so this row came back as D569's one GAP. The killer is now §E's PINNED witness, `minRegionHit(PIN_TEXT, 4, PIN_TARGETS)` («a b c d e» onto «a x c y e» at k = 2 and «a b c d x» at k = 1), with its premise re-measured.] Measured ALONE, and with every other observer measured alone beside it: `residue-census-gate`, `residue-census`, `precheck`, `lint-coverage`, `biome` and the whole of `bun run check` (459 files / 10,328 tests) [🆕 D569 close-out (D539): a D471-era measurement, not re-taken since; the suite is 583 files / 14,010 tests at D570] are ALL GREEN under this mutant. **Nothing in the repo except this gate can see a defect in a committed measurement, which is D465's rule stated as a measurement rather than as a warning.**",
     file: "scripts/opaque-anatomy.ts",
     find: "    if (best === null || regions.length < best.k) best = { k: regions.length, onto, regions };",
     replace: "    if (best === null) best = { k: regions.length, onto, regions };",
@@ -29443,8 +29449,9 @@ export const MUTANTS: Mutant[] = [
     // 🆕🆕🆕 D552 - RE-TRANSCRIBED off the new bytes (33 -> 34), the same step down by one.
     // 🆕🆕🆕 D556 - RE-TRANSCRIBED off the new bytes (34 -> 35), the same step down by one.
     // 🆕🆕🆕 D564 - RE-TRANSCRIBED off the new bytes (35 -> 36), the same step down by one.
-    find: "export const MATCH_RECORD_VERSION = 36;\n",
-    replace: "export const MATCH_RECORD_VERSION = 35;\n",
+    // 🆕🆕🆕 D570 - RE-TRANSCRIBED off the new bytes (36 -> 37), the same step down by one.
+    find: "export const MATCH_RECORD_VERSION = 37;\n",
+    replace: "export const MATCH_RECORD_VERSION = 36;\n",
     expectKilledBy: ["apps/api/src/lobby/match.test.ts"],
   },
   // ────────────────────────────────────────────────────────────────────────────
@@ -34570,8 +34577,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D547",
     what: "🛑 **THE CONFUSION COIN IS FLIPPED BEFORE THE LOCK'S** — the two blocks swapped, which is the order D547's first draft shipped as \"UNRULED\" and review withdrew: the official rulebook's \"Full details of attacking\" puts B) \"Apply any effects that might alter or cancel the attack\" (its printed example IS this sentence family) before C) the Confusion check (docs/decisions.md D547 ruling 1). On the swapped build a flip-locked Confused body whose Confusion coin comes up tails takes its counters and never flips for the lock. Killed by §6.",
     file: "packages/engine/src/attack.ts",
-    find: "  // 🆕🆕🆕 §8 (D547) — THE FLIP-TO-ATTACK LOCK: \"During your opponent's next turn, if\n  // the Defending Pokémon tries to use an attack, your opponent flips a coin. If\n  // tails, that attack doesn't happen.\" (`censusAttackCorpus.ts:176`). The attack\n  // was DECLARED — the §8 gate above let it through, because this lock is NOT\n  // `attackLocked` (a hard lock still REJECTS the declaration there, first) — and\n  // now the locked player flips. Tails: ATTACK_FAILED `\"flipLock\"`, nothing\n  // resolves, no counters, and the turn ends (§5.3, `finishAttack`); heads: the\n  // attack resolves normally.\n  //\n  // ⚠️ THE RNG IS SPENT ONLY WHILE THE LOCK IS LIVE: the whole block is behind\n  // `attackFlipLocked`, so an unlocked declaration draws nothing and every\n  // pre-D547 rng sequence — a Confused attacker's included — is byte-identical.\n  //\n  // 🛑 BEFORE THE CONFUSION FLIP, AND THAT ORDER IS THE RULEBOOK'S (docs/decisions.md\n  // D547 ruling 1). The official rulebook's \"Full details of attacking\" (pokemon.com\n  // `par_rulebook_en.pdf`, p. 20) lists B) \"Apply any effects that might alter or\n  // cancel the attack\" — and the worked example it prints is THIS sentence family —\n  // before C) \"If your Active Pokémon is Confused, check now to see if its attack\n  // doesn't happen.\" So a lock TAILS ends the attack with NO Confusion coin and NO\n  // Confusion counters, and only a lock HEADS reaches the Confusion block below.\n  //\n  // `active`, the declaration snapshot, is the right binding for the reason the\n  // Confusion block below gives: nothing before §8.5 has rebound the body. The seat\n  // is `action.seat` — \"your opponent flips\" names the LOCKED body's controller,\n  // who is the declaring player.\n  if (attackFlipLocked(state, active)) {\n    const [face, rngState] = flipCoin(next.rngState);\n    next = { ...next, rngState };\n    events.push({ type: \"ATTACK_FLIP_LOCK_CHECK\", seat: action.seat, uid: attackerUid, result: face });\n    if (face === \"tails\") {\n      events.push({\n        type: \"ATTACK_FAILED\",\n        seat: action.seat,\n        uid: attackerUid,\n        reason: \"flipLock\",\n      });\n      return finishAttack(next, events, action.seat, attackerUid, declared.name);\n    }\n  }\n\n  // §8 step 3 — the confusion flip, AFTER every gate and the cost check\n  // passed (§12): tails and the declared attack does not resolve at all —\n  // no damage, no effects — the attacker takes 30 itself (possibly a\n  // self-KO, prized to the defender) and the turn still ends.\n  if (rotation === \"confused\") {\n    const [face, rngState] = flipCoin(next.rngState);\n    next = { ...next, rngState };\n    events.push({ type: \"CONFUSION_CHECK\", seat: action.seat, uid: attackerUid, result: face });\n    if (face === \"tails\") {\n      events.push({\n        type: \"ATTACK_FAILED\",\n        seat: action.seat,\n        uid: attackerUid,\n        reason: \"confusion\",\n      });\n      // 🆕🆕🆕 **D501 — THE AMOUNT IS READ OFF THE BODY, NOT HARD-CODED.** This was a\n      // literal `30` in two places from P3-M3 (2026-07-17) until D501, and the two\n      // places are the whole of the observable behaviour: the DAMAGE and the ROW.\n      // `SpecialConditions.confusionDamage` carries the rulebook's 3 counters for\n      // every body that has never met a raising effect, so every pre-D501 board\n      // answers the identical number.\n      //\n      // ⚠️ **THE ATTACKER'S OWN CONDITIONS, AND `active` IS THE RIGHT BINDING HERE\n      // EVEN THOUGH IT IS THE DECLARATION SNAPSHOT (D429).** This block runs BEFORE\n      // §8.5 and before any pre-damage act — it is §8 step 3 — so nothing has\n      // rebound the body yet and `attackerBody` is still `active`. `rotation` on the\n      // line above is read off the same snapshot, so a read that reached elsewhere\n      // would be asking two questions of two boards.\n      const confusionDamage = active.conditions.confusionDamage;\n      const hurt = { ...active, damage: active.damage + confusionDamage };\n      next = withActive(next, action.seat, hurt);\n      events.push({\n        type: \"COUNTERS_PLACED\",\n        seat: action.seat,\n        uid: attackerUid,\n        amount: confusionDamage,\n        source: \"confusion\",\n      });\n      // The self-hit can KO the attacker itself — prized to the DEFENDER\n      // (collectKnockOuts owes each KO's prize to the KO'd side's opponent). The\n      // epilogue sweeps both boards; the defender took no damage on this failed\n      // attack, so only the attacker's own board can be lethal here.\n      return finishAttack(next, events, action.seat, attackerUid, declared.name);\n    }\n  }\n\n",
-    replace: "  // §8 step 3 — the confusion flip, AFTER every gate and the cost check\n  // passed (§12): tails and the declared attack does not resolve at all —\n  // no damage, no effects — the attacker takes 30 itself (possibly a\n  // self-KO, prized to the defender) and the turn still ends.\n  if (rotation === \"confused\") {\n    const [face, rngState] = flipCoin(next.rngState);\n    next = { ...next, rngState };\n    events.push({ type: \"CONFUSION_CHECK\", seat: action.seat, uid: attackerUid, result: face });\n    if (face === \"tails\") {\n      events.push({\n        type: \"ATTACK_FAILED\",\n        seat: action.seat,\n        uid: attackerUid,\n        reason: \"confusion\",\n      });\n      // 🆕🆕🆕 **D501 — THE AMOUNT IS READ OFF THE BODY, NOT HARD-CODED.** This was a\n      // literal `30` in two places from P3-M3 (2026-07-17) until D501, and the two\n      // places are the whole of the observable behaviour: the DAMAGE and the ROW.\n      // `SpecialConditions.confusionDamage` carries the rulebook's 3 counters for\n      // every body that has never met a raising effect, so every pre-D501 board\n      // answers the identical number.\n      //\n      // ⚠️ **THE ATTACKER'S OWN CONDITIONS, AND `active` IS THE RIGHT BINDING HERE\n      // EVEN THOUGH IT IS THE DECLARATION SNAPSHOT (D429).** This block runs BEFORE\n      // §8.5 and before any pre-damage act — it is §8 step 3 — so nothing has\n      // rebound the body yet and `attackerBody` is still `active`. `rotation` on the\n      // line above is read off the same snapshot, so a read that reached elsewhere\n      // would be asking two questions of two boards.\n      const confusionDamage = active.conditions.confusionDamage;\n      const hurt = { ...active, damage: active.damage + confusionDamage };\n      next = withActive(next, action.seat, hurt);\n      events.push({\n        type: \"COUNTERS_PLACED\",\n        seat: action.seat,\n        uid: attackerUid,\n        amount: confusionDamage,\n        source: \"confusion\",\n      });\n      // The self-hit can KO the attacker itself — prized to the DEFENDER\n      // (collectKnockOuts owes each KO's prize to the KO'd side's opponent). The\n      // epilogue sweeps both boards; the defender took no damage on this failed\n      // attack, so only the attacker's own board can be lethal here.\n      return finishAttack(next, events, action.seat, attackerUid, declared.name);\n    }\n  }\n\n  // 🆕🆕🆕 §8 (D547) — THE FLIP-TO-ATTACK LOCK: \"During your opponent's next turn, if\n  // the Defending Pokémon tries to use an attack, your opponent flips a coin. If\n  // tails, that attack doesn't happen.\" (`censusAttackCorpus.ts:176`). The attack\n  // was DECLARED — the §8 gate above let it through, because this lock is NOT\n  // `attackLocked` (a hard lock still REJECTS the declaration there, first) — and\n  // now the locked player flips. Tails: ATTACK_FAILED `\"flipLock\"`, nothing\n  // resolves, no counters, and the turn ends (§5.3, `finishAttack`); heads: the\n  // attack resolves normally.\n  //\n  // ⚠️ THE RNG IS SPENT ONLY WHILE THE LOCK IS LIVE: the whole block is behind\n  // `attackFlipLocked`, so an unlocked declaration draws nothing and every\n  // pre-D547 rng sequence — a Confused attacker's included — is byte-identical.\n  //\n  // 🛑 BEFORE THE CONFUSION FLIP, AND THAT ORDER IS THE RULEBOOK'S (docs/decisions.md\n  // D547 ruling 1). The official rulebook's \"Full details of attacking\" (pokemon.com\n  // `par_rulebook_en.pdf`, p. 20) lists B) \"Apply any effects that might alter or\n  // cancel the attack\" — and the worked example it prints is THIS sentence family —\n  // before C) \"If your Active Pokémon is Confused, check now to see if its attack\n  // doesn't happen.\" So a lock TAILS ends the attack with NO Confusion coin and NO\n  // Confusion counters, and only a lock HEADS reaches the Confusion block below.\n  //\n  // `active`, the declaration snapshot, is the right binding for the reason the\n  // Confusion block below gives: nothing before §8.5 has rebound the body. The seat\n  // is `action.seat` — \"your opponent flips\" names the LOCKED body's controller,\n  // who is the declaring player.\n  if (attackFlipLocked(state, active)) {\n    const [face, rngState] = flipCoin(next.rngState);\n    next = { ...next, rngState };\n    events.push({ type: \"ATTACK_FLIP_LOCK_CHECK\", seat: action.seat, uid: attackerUid, result: face });\n    if (face === \"tails\") {\n      events.push({\n        type: \"ATTACK_FAILED\",\n        seat: action.seat,\n        uid: attackerUid,\n        reason: \"flipLock\",\n      });\n      return finishAttack(next, events, action.seat, attackerUid, declared.name);\n    }\n  }\n\n",
+    find: "  // 🆕🆕🆕 §8 (D547) — THE FLIP-TO-ATTACK LOCK: \"During your opponent's next turn, if\n  // the Defending Pokémon tries to use an attack, your opponent flips a coin. If\n  // tails, that attack doesn't happen.\" (`censusAttackCorpus.ts:176`). The attack\n  // was DECLARED — the §8 gate above let it through, because this lock is NOT\n  // `attackLocked` (a hard lock still REJECTS the declaration there, first) — and\n  // now the locked player flips. Tails: ATTACK_FAILED `\"flipLock\"`, nothing\n  // resolves, no counters, and the turn ends [🆕🆕🆕 D570 (D539): or, after a FIRST attack under Festival Lead with Festival Grounds in play, the attack-again window opens instead (flow.ts `finishAttack`) — a failed or cancelled attack is still an attack that was USED] (§5.3, `finishAttack`); heads: the\n  // attack resolves normally.\n  //\n  // ⚠️ THE RNG IS SPENT ONLY WHILE THE LOCK IS LIVE: the whole block is behind\n  // `attackFlipLocked`, so an unlocked declaration draws nothing and every\n  // pre-D547 rng sequence — a Confused attacker's included — is byte-identical.\n  //\n  // 🛑 BEFORE THE CONFUSION FLIP, AND THAT ORDER IS THE RULEBOOK'S (docs/decisions.md\n  // D547 ruling 1). The official rulebook's \"Full details of attacking\" (pokemon.com\n  // `par_rulebook_en.pdf`, p. 20) lists B) \"Apply any effects that might alter or\n  // cancel the attack\" — and the worked example it prints is THIS sentence family —\n  // before C) \"If your Active Pokémon is Confused, check now to see if its attack\n  // doesn't happen.\" So a lock TAILS ends the attack with NO Confusion coin and NO\n  // Confusion counters, and only a lock HEADS reaches the Confusion block below.\n  //\n  // `active`, the declaration snapshot, is the right binding for the reason the\n  // Confusion block below gives: nothing before §8.5 has rebound the body. The seat\n  // is `action.seat` — \"your opponent flips\" names the LOCKED body's controller,\n  // who is the declaring player.\n  if (attackFlipLocked(state, active)) {\n    const [face, rngState] = flipCoin(next.rngState);\n    next = { ...next, rngState };\n    events.push({ type: \"ATTACK_FLIP_LOCK_CHECK\", seat: action.seat, uid: attackerUid, result: face });\n    if (face === \"tails\") {\n      events.push({\n        type: \"ATTACK_FAILED\",\n        seat: action.seat,\n        uid: attackerUid,\n        reason: \"flipLock\",\n      });\n      return finishAttack(next, events, action.seat, attackerUid, declared.name);\n    }\n  }\n\n  // §8 step 3 — the confusion flip, AFTER every gate and the cost check\n  // passed (§12): tails and the declared attack does not resolve at all —\n  // no damage, no effects — the attacker takes 30 itself (possibly a\n  // self-KO, prized to the defender) and the turn still ends [🆕🆕🆕 D570 (D539): or, after a FIRST attack under Festival Lead with Festival Grounds in play, the attack-again window opens instead (flow.ts `finishAttack`) — a failed or cancelled attack is still an attack that was USED].\n  if (rotation === \"confused\") {\n    const [face, rngState] = flipCoin(next.rngState);\n    next = { ...next, rngState };\n    events.push({ type: \"CONFUSION_CHECK\", seat: action.seat, uid: attackerUid, result: face });\n    if (face === \"tails\") {\n      events.push({\n        type: \"ATTACK_FAILED\",\n        seat: action.seat,\n        uid: attackerUid,\n        reason: \"confusion\",\n      });\n      // 🆕🆕🆕 **D501 — THE AMOUNT IS READ OFF THE BODY, NOT HARD-CODED.** This was a\n      // literal `30` in two places from P3-M3 (2026-07-17) until D501, and the two\n      // places are the whole of the observable behaviour: the DAMAGE and the ROW.\n      // `SpecialConditions.confusionDamage` carries the rulebook's 3 counters for\n      // every body that has never met a raising effect, so every pre-D501 board\n      // answers the identical number.\n      //\n      // ⚠️ **THE ATTACKER'S OWN CONDITIONS, AND `active` IS THE RIGHT BINDING HERE\n      // EVEN THOUGH IT IS THE DECLARATION SNAPSHOT (D429).** This block runs BEFORE\n      // §8.5 and before any pre-damage act — it is §8 step 3 — so nothing has\n      // rebound the body yet and `attackerBody` is still `active`. `rotation` on the\n      // line above is read off the same snapshot, so a read that reached elsewhere\n      // would be asking two questions of two boards.\n      const confusionDamage = active.conditions.confusionDamage;\n      const hurt = { ...active, damage: active.damage + confusionDamage };\n      next = withActive(next, action.seat, hurt);\n      events.push({\n        type: \"COUNTERS_PLACED\",\n        seat: action.seat,\n        uid: attackerUid,\n        amount: confusionDamage,\n        source: \"confusion\",\n      });\n      // The self-hit can KO the attacker itself — prized to the DEFENDER\n      // (collectKnockOuts owes each KO's prize to the KO'd side's opponent). The\n      // epilogue sweeps both boards; the defender took no damage on this failed\n      // attack, so only the attacker's own board can be lethal here.\n      return finishAttack(next, events, action.seat, attackerUid, declared.name);\n    }\n  }\n\n",
+    replace: "  // §8 step 3 — the confusion flip, AFTER every gate and the cost check\n  // passed (§12): tails and the declared attack does not resolve at all —\n  // no damage, no effects — the attacker takes 30 itself (possibly a\n  // self-KO, prized to the defender) and the turn still ends [🆕🆕🆕 D570 (D539): or, after a FIRST attack under Festival Lead with Festival Grounds in play, the attack-again window opens instead (flow.ts `finishAttack`) — a failed or cancelled attack is still an attack that was USED].\n  if (rotation === \"confused\") {\n    const [face, rngState] = flipCoin(next.rngState);\n    next = { ...next, rngState };\n    events.push({ type: \"CONFUSION_CHECK\", seat: action.seat, uid: attackerUid, result: face });\n    if (face === \"tails\") {\n      events.push({\n        type: \"ATTACK_FAILED\",\n        seat: action.seat,\n        uid: attackerUid,\n        reason: \"confusion\",\n      });\n      // 🆕🆕🆕 **D501 — THE AMOUNT IS READ OFF THE BODY, NOT HARD-CODED.** This was a\n      // literal `30` in two places from P3-M3 (2026-07-17) until D501, and the two\n      // places are the whole of the observable behaviour: the DAMAGE and the ROW.\n      // `SpecialConditions.confusionDamage` carries the rulebook's 3 counters for\n      // every body that has never met a raising effect, so every pre-D501 board\n      // answers the identical number.\n      //\n      // ⚠️ **THE ATTACKER'S OWN CONDITIONS, AND `active` IS THE RIGHT BINDING HERE\n      // EVEN THOUGH IT IS THE DECLARATION SNAPSHOT (D429).** This block runs BEFORE\n      // §8.5 and before any pre-damage act — it is §8 step 3 — so nothing has\n      // rebound the body yet and `attackerBody` is still `active`. `rotation` on the\n      // line above is read off the same snapshot, so a read that reached elsewhere\n      // would be asking two questions of two boards.\n      const confusionDamage = active.conditions.confusionDamage;\n      const hurt = { ...active, damage: active.damage + confusionDamage };\n      next = withActive(next, action.seat, hurt);\n      events.push({\n        type: \"COUNTERS_PLACED\",\n        seat: action.seat,\n        uid: attackerUid,\n        amount: confusionDamage,\n        source: \"confusion\",\n      });\n      // The self-hit can KO the attacker itself — prized to the DEFENDER\n      // (collectKnockOuts owes each KO's prize to the KO'd side's opponent). The\n      // epilogue sweeps both boards; the defender took no damage on this failed\n      // attack, so only the attacker's own board can be lethal here.\n      return finishAttack(next, events, action.seat, attackerUid, declared.name);\n    }\n  }\n\n  // 🆕🆕🆕 §8 (D547) — THE FLIP-TO-ATTACK LOCK: \"During your opponent's next turn, if\n  // the Defending Pokémon tries to use an attack, your opponent flips a coin. If\n  // tails, that attack doesn't happen.\" (`censusAttackCorpus.ts:176`). The attack\n  // was DECLARED — the §8 gate above let it through, because this lock is NOT\n  // `attackLocked` (a hard lock still REJECTS the declaration there, first) — and\n  // now the locked player flips. Tails: ATTACK_FAILED `\"flipLock\"`, nothing\n  // resolves, no counters, and the turn ends [🆕🆕🆕 D570 (D539): or, after a FIRST attack under Festival Lead with Festival Grounds in play, the attack-again window opens instead (flow.ts `finishAttack`) — a failed or cancelled attack is still an attack that was USED] (§5.3, `finishAttack`); heads: the\n  // attack resolves normally.\n  //\n  // ⚠️ THE RNG IS SPENT ONLY WHILE THE LOCK IS LIVE: the whole block is behind\n  // `attackFlipLocked`, so an unlocked declaration draws nothing and every\n  // pre-D547 rng sequence — a Confused attacker's included — is byte-identical.\n  //\n  // 🛑 BEFORE THE CONFUSION FLIP, AND THAT ORDER IS THE RULEBOOK'S (docs/decisions.md\n  // D547 ruling 1). The official rulebook's \"Full details of attacking\" (pokemon.com\n  // `par_rulebook_en.pdf`, p. 20) lists B) \"Apply any effects that might alter or\n  // cancel the attack\" — and the worked example it prints is THIS sentence family —\n  // before C) \"If your Active Pokémon is Confused, check now to see if its attack\n  // doesn't happen.\" So a lock TAILS ends the attack with NO Confusion coin and NO\n  // Confusion counters, and only a lock HEADS reaches the Confusion block below.\n  //\n  // `active`, the declaration snapshot, is the right binding for the reason the\n  // Confusion block below gives: nothing before §8.5 has rebound the body. The seat\n  // is `action.seat` — \"your opponent flips\" names the LOCKED body's controller,\n  // who is the declaring player.\n  if (attackFlipLocked(state, active)) {\n    const [face, rngState] = flipCoin(next.rngState);\n    next = { ...next, rngState };\n    events.push({ type: \"ATTACK_FLIP_LOCK_CHECK\", seat: action.seat, uid: attackerUid, result: face });\n    if (face === \"tails\") {\n      events.push({\n        type: \"ATTACK_FAILED\",\n        seat: action.seat,\n        uid: attackerUid,\n        reason: \"flipLock\",\n      });\n      return finishAttack(next, events, action.seat, attackerUid, declared.name);\n    }\n  }\n\n",
     expectKilledBy: ["packages/engine/src/attackFlipLock.test.ts"],
   },
   {
@@ -34810,11 +34817,15 @@ export const MUTANTS: Mutant[] = [
     //    retyped): D564's NINTH POSITION now sits between D556's doc tail and the constant, so
     //    the anchor is D564's last two lines and the patch drops the constant SIX steps, to
     //    D547's pre-bump 30. Thirteenth consecutive bump to move this row.
-    find: "    discard, so the HUD shows neither (a carried display debt, `sideAttackLock`'s and\n    `sideAttackBonuses`' precedent, decisions.md D564). */\nexport const MATCH_RECORD_VERSION = 36;",
+    // 🆕🆕🆕 D570 - RE-ANCHORED AGAIN off the bytes (D540: the tail read from match.ts by script,
+    //    never retyped): D570's TENTH POSITION now sits between D564's doc tail and the constant,
+    //    so the anchor is D570's last two lines and the patch drops the constant one step further
+    //    than before (37 -> the same pre-bump value). Fourteenth consecutive bump to move this row.
+    find: "    affordances are not pre-folded against the window (a carried display debt, decisions.md\n    D570). */\nexport const MATCH_RECORD_VERSION = 37;",
     // 🆕🆕🆕 D549 - RE-ANCHORED AGAIN off the bytes (D540): D549's block now sits between
     //    D548's doc tail and the constant, so the anchor is D549's last two lines and the
     //    patch drops the constant THREE steps, to D547's pre-bump 30.
-    replace: "    discard, so the HUD shows neither (a carried display debt, `sideAttackLock`'s and\n    `sideAttackBonuses`' precedent, decisions.md D564). */\nexport const MATCH_RECORD_VERSION = 30;",
+    replace: "    affordances are not pre-folded against the window (a carried display debt, decisions.md\n    D570). */\nexport const MATCH_RECORD_VERSION = 30;",
     expectKilledBy: ["packages/engine/src/attackFlipLock.test.ts"],
   },
   // ── D548 — CRESCENT PURGE, THE FACE-UP PRIZE. 18 rows, all probed UNDECLARED first
@@ -34998,11 +35009,15 @@ export const MUTANTS: Mutant[] = [
     //    retyped): D564's NINTH POSITION now sits between D556's doc tail and the constant, so
     //    the anchor is D564's last two lines and the patch drops the constant FIVE steps, to
     //    D548's pre-bump 31. Thirteenth consecutive bump to move this row.
-    find: "    discard, so the HUD shows neither (a carried display debt, `sideAttackLock`'s and\n    `sideAttackBonuses`' precedent, decisions.md D564). */\nexport const MATCH_RECORD_VERSION = 36;",
+    // 🆕🆕🆕 D570 - RE-ANCHORED AGAIN off the bytes (D540: the tail read from match.ts by script,
+    //    never retyped): D570's TENTH POSITION now sits between D564's doc tail and the constant,
+    //    so the anchor is D570's last two lines and the patch drops the constant one step further
+    //    than before (37 -> the same pre-bump value). Fourteenth consecutive bump to move this row.
+    find: "    affordances are not pre-folded against the window (a carried display debt, decisions.md\n    D570). */\nexport const MATCH_RECORD_VERSION = 37;",
     // 🆕🆕🆕 D549 - RE-ANCHORED off the bytes onto D549's doc tail; the patch drops the
     //    constant TWO steps, to D548's pre-bump 31 (a different patch from
     //    `D549-record-version-not-bumped`, one step, same anchor).
-    replace: "    discard, so the HUD shows neither (a carried display debt, `sideAttackLock`'s and\n    `sideAttackBonuses`' precedent, decisions.md D564). */\nexport const MATCH_RECORD_VERSION = 31;",
+    replace: "    affordances are not pre-folded against the window (a carried display debt, decisions.md\n    D570). */\nexport const MATCH_RECORD_VERSION = 31;",
     expectKilledBy: ["packages/engine/src/crescentPurge.test.ts", "apps/api/src/lobby/match.test.ts"],
   },
   // ── 🆕🆕🆕 D549 — THE DEFENDER'S NEXT-TURN MARKS AND THE SIDE-WIDE ATTACK LOCK (`censusAttackCorpus.ts`
@@ -35484,8 +35499,12 @@ export const MUTANTS: Mutant[] = [
     //    retyped): D564's NINTH POSITION now sits between D556's doc tail and the constant, so
     //    the anchor is D564's last two lines and the patch drops the constant FOUR steps, to
     //    D549's pre-bump 32. Thirteenth consecutive bump to move this row.
-    find: "    discard, so the HUD shows neither (a carried display debt, `sideAttackLock`'s and\n    `sideAttackBonuses`' precedent, decisions.md D564). */\nexport const MATCH_RECORD_VERSION = 36;",
-    replace: "    discard, so the HUD shows neither (a carried display debt, `sideAttackLock`'s and\n    `sideAttackBonuses`' precedent, decisions.md D564). */\nexport const MATCH_RECORD_VERSION = 32;",
+    // 🆕🆕🆕 D570 - RE-ANCHORED AGAIN off the bytes (D540: the tail read from match.ts by script,
+    //    never retyped): D570's TENTH POSITION now sits between D564's doc tail and the constant,
+    //    so the anchor is D570's last two lines and the patch drops the constant one step further
+    //    than before (37 -> the same pre-bump value). Fourteenth consecutive bump to move this row.
+    find: "    affordances are not pre-folded against the window (a carried display debt, decisions.md\n    D570). */\nexport const MATCH_RECORD_VERSION = 37;",
+    replace: "    affordances are not pre-folded against the window (a carried display debt, decisions.md\n    D570). */\nexport const MATCH_RECORD_VERSION = 32;",
     expectKilledBy: ["packages/engine/src/sideAttackLock.test.ts", "apps/api/src/lobby/match.test.ts"],
   },
   {
@@ -36062,8 +36081,12 @@ export const MUTANTS: Mutant[] = [
     //    retyped): D564's NINTH POSITION now sits between D556's doc tail and the constant, so
     //    the anchor is D564's last two lines and the patch drops the constant THREE steps, to
     //    D552's pre-bump 33. Thirteenth consecutive bump to move this row.
-    find: "    discard, so the HUD shows neither (a carried display debt, `sideAttackLock`'s and\n    `sideAttackBonuses`' precedent, decisions.md D564). */\nexport const MATCH_RECORD_VERSION = 36;",
-    replace: "    discard, so the HUD shows neither (a carried display debt, `sideAttackLock`'s and\n    `sideAttackBonuses`' precedent, decisions.md D564). */\nexport const MATCH_RECORD_VERSION = 33;",
+    // 🆕🆕🆕 D570 - RE-ANCHORED AGAIN off the bytes (D540: the tail read from match.ts by script,
+    //    never retyped): D570's TENTH POSITION now sits between D564's doc tail and the constant,
+    //    so the anchor is D570's last two lines and the patch drops the constant one step further
+    //    than before (37 -> the same pre-bump value). Fourteenth consecutive bump to move this row.
+    find: "    affordances are not pre-folded against the window (a carried display debt, decisions.md\n    D570). */\nexport const MATCH_RECORD_VERSION = 37;",
+    replace: "    affordances are not pre-folded against the window (a carried display debt, decisions.md\n    D570). */\nexport const MATCH_RECORD_VERSION = 33;",
     expectKilledBy: ["apps/api/src/lobby/match.test.ts"],
   },
   // ── 🆕🆕🆕 D553 — THE SIMPLE ONCE-PER-TURN ABILITIES, 12 printings / 7 texts / 7 objects,
@@ -36983,8 +37006,12 @@ export const MUTANTS: Mutant[] = [
     //    retyped): D564's NINTH POSITION now sits between D556's doc tail and the constant, so
     //    the anchor is D564's last two lines and the patch drops the constant TWO steps, to
     //    D556's pre-bump 34. Thirteenth consecutive bump to move this row.
-    find: "    discard, so the HUD shows neither (a carried display debt, `sideAttackLock`'s and\n    `sideAttackBonuses`' precedent, decisions.md D564). */\nexport const MATCH_RECORD_VERSION = 36;",
-    replace: "    discard, so the HUD shows neither (a carried display debt, `sideAttackLock`'s and\n    `sideAttackBonuses`' precedent, decisions.md D564). */\nexport const MATCH_RECORD_VERSION = 34;",
+    // 🆕🆕🆕 D570 - RE-ANCHORED AGAIN off the bytes (D540: the tail read from match.ts by script,
+    //    never retyped): D570's TENTH POSITION now sits between D564's doc tail and the constant,
+    //    so the anchor is D570's last two lines and the patch drops the constant one step further
+    //    than before (37 -> the same pre-bump value). Fourteenth consecutive bump to move this row.
+    find: "    affordances are not pre-folded against the window (a carried display debt, decisions.md\n    D570). */\nexport const MATCH_RECORD_VERSION = 37;",
+    replace: "    affordances are not pre-folded against the window (a carried display debt, decisions.md\n    D570). */\nexport const MATCH_RECORD_VERSION = 34;",
     expectKilledBy: ["apps/api/src/lobby/match.test.ts"],
   },
   // ── 🆕🆕🆕 D557 — ELEVEN TRAINERS, 19 PRINTINGS / 11 TEXTS / 11 OBJECTS: Kieran's labelled
@@ -40305,8 +40332,12 @@ export const MUTANTS: Mutant[] = [
     decision: "D564",
     what: "🛑 **`MATCH_RECORD_VERSION` STAYS 35 WHILE THE NINTH POSITION LANDS** — this deploy accepts a v35 record, whose `PlayerSide` lacks `sideDamageReduction` (the first damaging hit across the table THROWS, D326) and whose bag lacks the two allowance keys; a rollback would drop a played Gaze window, a pending Amarys discard or a Factory/Crobat licence (§9 of both D564 suites). Anchored on D564's own doc tail, one step. Killed by `match.test.ts` (and the sixteen engine raw pins).",
     file: "apps/api/src/lobby/match.ts",
-    find: "    discard, so the HUD shows neither (a carried display debt, `sideAttackLock`'s and\n    `sideAttackBonuses`' precedent, decisions.md D564). */\nexport const MATCH_RECORD_VERSION = 36;",
-    replace: "    discard, so the HUD shows neither (a carried display debt, `sideAttackLock`'s and\n    `sideAttackBonuses`' precedent, decisions.md D564). */\nexport const MATCH_RECORD_VERSION = 35;",
+    // 🆕🆕🆕 D570 - RE-ANCHORED AGAIN off the bytes (D540: the tail read from match.ts by script,
+    //    never retyped): D570's TENTH POSITION now sits between D564's doc tail and the constant,
+    //    so the anchor is D570's last two lines and the patch drops the constant one step further
+    //    than before (37 -> the same pre-bump value). Fourteenth consecutive bump to move this row.
+    find: "    affordances are not pre-folded against the window (a carried display debt, decisions.md\n    D570). */\nexport const MATCH_RECORD_VERSION = 37;",
+    replace: "    affordances are not pre-folded against the window (a carried display debt, decisions.md\n    D570). */\nexport const MATCH_RECORD_VERSION = 35;",
     expectKilledBy: ["apps/api/src/lobby/match.test.ts"],
   },
   // ── 🆕🆕🆕 D565 — FOUR ABILITIES AND A SUPPORTER (Flustered Leap, Rocket Brain, Ruffian, Impromptu
@@ -42886,5 +42917,268 @@ export const MUTANTS: Mutant[] = [
     find: "    { kind: \"opponentBannerPokemonInPlay\", banner: \"Future\" },",
     replace: "    { kind: \"yourBannerPokemonInPlay\", banner: \"Future\" },",
     expectKilledBy: ["packages/engine/src/paradoxBannerD569.test.ts"],
+  },
+  // ── 🆕🆕🆕 D570 — FESTIVAL LEAD, THE ATTACK-AGAIN TURN MACHINE: the window's three reads (flow.ts
+  //    `finishAttack` opens it — the null check, the licence, the orphaned splice; turn.ts `turnGate`
+  //    narrows it — R-FL1 both arms; attack.ts re-reads it — R-FL2 [🆕 D570 landing (D539): three of
+  //    its readers, not all — flow.ts `resumeTurn`, redact.ts `mainPhase` and GameHud read it too, and
+  //    are rowed below as the offer row, the wire's `mainPhase` and the HUD's mirrors]), `attackAgainBarred`'s two
+  //    conjuncts and `attackAgainLicensed`'s condition, the fold's collection, the registry row's
+  //    printed Stadium, the fresh bag, the offer row, the wire's `mainPhase` and `banned`, the HUD's
+  //    three mirrors, and the TENTH POSITION's constant. Every `find` asserted to occur exactly once
+  //    before it was written (D540); every replace names only identifiers its file binds (D533).
+  //    Killed by `festivalLeadD570.test.ts`, `GameHud.festivalLead.dom.test.tsx` and
+  //    `match.test.ts`. ──
+  {
+    id: "D570-turngate-window-never-refuses",
+    decision: "D570",
+    what: "R-FL1 DROPPED: `turnGate` never reads the window, so every main-phase action (attach, bench, evolve, Rare Candy, retreat, Trainer, Tool, Ability, Stadium ability) is legal between the two attacks. Killed by §5 and §8's round-trip rung.",
+    file: "packages/engine/src/turn.ts",
+    find: "    state.allowances.attackAgainUid !== null &&\n    action.type !== \"attack\" &&",
+    replace: "    state.allowances.attackAgainUid === undefined &&\n    action.type !== \"attack\" &&",
+    expectKilledBy: ["packages/engine/src/festivalLeadD570.test.ts"],
+  },
+  {
+    id: "D570-turngate-window-refuses-the-attack",
+    decision: "D570",
+    what: "the window refuses the SECOND ATTACK too — the licence it exists to grant. Killed by §2 and §4.",
+    file: "packages/engine/src/turn.ts",
+    find: "    action.type !== \"attack\" &&\n    action.type !== \"endTurn\"\n  ) {",
+    replace: "    action.type !== \"endTurn\"\n  ) {",
+    expectKilledBy: ["packages/engine/src/festivalLeadD570.test.ts"],
+  },
+  {
+    id: "D570-turngate-window-refuses-the-decline",
+    decision: "D570",
+    what: "the window refuses `endTurn` — the printed \"may\" cannot be declined and a barred second declaration strands the turn. Killed by §4's Checkup rung and §6.",
+    file: "packages/engine/src/turn.ts",
+    find: "    action.type !== \"attack\" &&\n    action.type !== \"endTurn\"\n  ) {",
+    replace: "    action.type !== \"attack\"\n  ) {",
+    expectKilledBy: ["packages/engine/src/festivalLeadD570.test.ts"],
+  },
+  {
+    id: "D570-second-declaration-not-reread",
+    decision: "D570",
+    what: "R-FL2's SECOND read DROPPED at the §8 gate: a body that left the Active, lost Festival Grounds or was locked by a promoted Flutter Mane attacks again anyway. Killed by §6.",
+    file: "packages/engine/src/attack.ts",
+    find: "  if (attackAgainBarred(state, action.seat, active)) {",
+    replace: "  if (state.allowances.attackAgainUid === undefined) {",
+    expectKilledBy: ["packages/engine/src/festivalLeadD570.test.ts"],
+  },
+  {
+    id: "D570-reread-skips-the-licence",
+    decision: "D570",
+    what: "`attackAgainBarred` checks only the uid: Festival Grounds leaving play (or a lock) between the attacks no longer bars the second. Killed by §6 and §7.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  return topUid(active) !== uid || !attackAgainLicensed(state, seat, active);",
+    replace: "  return topUid(active) !== uid;",
+    expectKilledBy: ["packages/engine/src/festivalLeadD570.test.ts", "src/features/game/GameHud.festivalLead.dom.test.tsx"],
+  },
+  {
+    id: "D570-reread-skips-the-uid",
+    decision: "D570",
+    what: "`attackAgainBarred` checks only the licence: a DIFFERENT body in the Active Spot inherits the window. Killed by §6's swapped-body rung and §8 (ii).",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  return topUid(active) !== uid || !attackAgainLicensed(state, seat, active);",
+    replace: "  return !attackAgainLicensed(state, seat, active);",
+    expectKilledBy: ["packages/engine/src/festivalLeadD570.test.ts"],
+  },
+  {
+    id: "D570-licence-ignores-the-stadium",
+    decision: "D570",
+    what: "`attackAgainLicensed` answers the fold's NON-EMPTINESS, not its condition: every Festival Lead body attacks twice with no Stadium (or another one) in play. Killed by §1 and §3.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  return passivesOf(state, pokemon).attackTwiceIf.some((cond) =>\n    conditionHolds(state, seat, cond),\n  );",
+    replace: "  return passivesOf(state, pokemon).attackTwiceIf.length > 0;",
+    expectKilledBy: ["packages/engine/src/festivalLeadD570.test.ts"],
+  },
+  {
+    id: "D570-window-reopens-after-the-second-attack",
+    decision: "D570",
+    what: "R-FL4's \"no third attack\" DROPPED: the null check goes, so the second finish reopens the window and the turn never ends by attacking. Killed by §2.",
+    file: "packages/engine/src/flow.ts",
+    find: "    batch.state.allowances.attackAgainUid === null &&\n    swept !== null &&",
+    replace: "    swept !== null &&",
+    expectKilledBy: ["packages/engine/src/festivalLeadD570.test.ts"],
+  },
+  {
+    id: "D570-window-drops-the-orphaned-promotion",
+    decision: "D570",
+    what: "the window's queue drops `...orphaned`: an attack that discards the Defender with no Knock Out hands turn:action back while the opponent's Active Spot is EMPTY. Killed by §4's orphaned rung.",
+    file: "packages/engine/src/flow.ts",
+    find: "        pending: [...batch.stages, ...orphaned, { kind: \"resumeTurn\", seat: attackerSeat }, ...batch.state.pending],",
+    replace: "        pending: [...batch.stages, { kind: \"resumeTurn\", seat: attackerSeat }, ...batch.state.pending],",
+    expectKilledBy: ["packages/engine/src/festivalLeadD570.test.ts"],
+  },
+  {
+    id: "D570-window-not-licensed",
+    decision: "D570",
+    what: "R-FL2's FIRST read DROPPED: the window opens for any attacker still Active, with no Festival Lead, no Festival Grounds or a locked Ability. Killed by §3.",
+    file: "packages/engine/src/flow.ts",
+    find: "    topUid(swept) === attackerUid &&\n    attackAgainLicensed(batch.state, attackerSeat, swept)\n  ) {",
+    replace: "    topUid(swept) === attackerUid\n  ) {",
+    expectKilledBy: ["packages/engine/src/festivalLeadD570.test.ts"],
+  },
+  {
+    id: "D570-offer-row-dropped",
+    decision: "D570",
+    what: "no ATTACK_AGAIN_OFFERED row: the window still opens and the turn machine is untouched, but it opens UNANNOUNCED, so the log never tells the player they may attack again. Killed by §2 and §4.",
+    file: "packages/engine/src/flow.ts",
+    find: "        state.allowances.attackAgainUid !== null &&\n        offerActive !== null &&",
+    replace: "        state.allowances.attackAgainUid === undefined &&\n        offerActive !== null &&",
+    expectKilledBy: ["packages/engine/src/festivalLeadD570.test.ts"],
+  },
+  {
+    id: "D570-offer-ignores-the-bar",
+    decision: "D570",
+    what: "🆕 (third review) the offer row skips the second declaration's re-read: on a board where the window is open but the declaration is barred (the KO's promotion put an opposing Flutter Mane in the Active Spot), the log still says the attacker may attack again. Killed by §6's Flutter Mane rung.",
+    file: "packages/engine/src/flow.ts",
+    find: "        !attackAgainBarred(state, stage.seat, offerActive)\n",
+    replace: "        true\n",
+    expectKilledBy: ["packages/engine/src/festivalLeadD570.test.ts"],
+  },
+  {
+    id: "D570-stadium-name-swapped",
+    decision: "D570",
+    what: "the licence names the WRONG Stadium (Community Center): no printing ever opens the window. Killed by §1 and §2.",
+    file: "packages/engine/src/registry.ts",
+    find: "  passive: { attackTwiceIf: { kind: \"stadiumInPlayNamed\", name: \"Festival Grounds\" } },",
+    replace: "  passive: { attackTwiceIf: { kind: \"stadiumInPlayNamed\", name: \"Community Center\" } },",
+    expectKilledBy: ["packages/engine/src/festivalLeadD570.test.ts"],
+  },
+  {
+    id: "D570-any-stadium-licenses",
+    decision: "D570",
+    what: "the licence drops the NAME (`stadiumInPlay`): Jamming Tower opens the window. Killed by §1 and §3.",
+    file: "packages/engine/src/registry.ts",
+    find: "  passive: { attackTwiceIf: { kind: \"stadiumInPlayNamed\", name: \"Festival Grounds\" } },",
+    replace: "  passive: { attackTwiceIf: { kind: \"stadiumInPlay\" } },",
+    expectKilledBy: ["packages/engine/src/festivalLeadD570.test.ts"],
+  },
+  {
+    id: "D570-fold-drops-the-licence",
+    decision: "D570",
+    what: "`passivesOf` never collects `attackTwiceIf`: the Ability is printed and dead. Killed by §1, §2, §4.",
+    file: "packages/engine/src/continuous.ts",
+    find: "    if (passive.attackTwiceIf !== undefined) attackTwiceIf.push(passive.attackTwiceIf);\n",
+    replace: "",
+    expectKilledBy: ["packages/engine/src/festivalLeadD570.test.ts"],
+  },
+  {
+    id: "D570-redact-leaks-the-trainers",
+    decision: "D570",
+    what: "the window leaks the Trainer list onto the wire: a button the server refuses with the window's message. Killed by §7.",
+    file: "packages/engine/src/redact.ts",
+    find: "        trainers: redactedTrainersOf(state, viewerSeat, mainPhase),",
+    replace: "        trainers: redactedTrainersOf(state, viewerSeat, actor),",
+    expectKilledBy: ["packages/engine/src/festivalLeadD570.test.ts"],
+  },
+  {
+    id: "D570-redact-leaks-the-retreat",
+    decision: "D570",
+    what: "the window leaks a retreat option onto the wire. Killed by §7.",
+    file: "packages/engine/src/redact.ts",
+    find: "        retreat: redactedRetreatOf(state, viewerSeat, mainPhase),",
+    replace: "        retreat: redactedRetreatOf(state, viewerSeat, actor),",
+    expectKilledBy: ["packages/engine/src/festivalLeadD570.test.ts"],
+  },
+  {
+    id: "D570-redact-leaks-the-abilities",
+    decision: "D570",
+    what: "the window leaks the activated-Ability list onto the wire: a lit Recon Directive the server refuses with the window's message. Green on `table()` (no activated Ability there) — killed only by §7's live-affordance board (D570 review).",
+    file: "packages/engine/src/redact.ts",
+    find: "        abilities: redactedAbilitiesOf(state, viewerSeat, mainPhase),",
+    replace: "        abilities: redactedAbilitiesOf(state, viewerSeat, actor),",
+    expectKilledBy: ["packages/engine/src/festivalLeadD570.test.ts"],
+  },
+  {
+    id: "D570-redact-leaks-the-rare-candy",
+    decision: "D570",
+    what: "the window leaks the Rare Candy pairings onto the wire: a dialog whose every answer the server refuses. Green on `table()` (no Rare Candy, and p1's first turn) — killed only by §7's live-affordance board (D570 review).",
+    file: "packages/engine/src/redact.ts",
+    find: "        rareCandy: redactedRareCandyOf(state, viewerSeat, mainPhase),",
+    replace: "        rareCandy: redactedRareCandyOf(state, viewerSeat, actor),",
+    expectKilledBy: ["packages/engine/src/festivalLeadD570.test.ts"],
+  },
+  {
+    id: "D570-redact-leaks-the-stadium-ability",
+    decision: "D570",
+    what: "the window leaks the Stadium row onto the wire. Green on every reachable board (only Festival Grounds, which has no activated ability, opens a window) — killed only by §7's constructed Town Store board (D570 review).",
+    file: "packages/engine/src/redact.ts",
+    find: "        stadiumAbility: redactedStadiumAbilityOf(state, viewerSeat, mainPhase),",
+    replace: "        stadiumAbility: redactedStadiumAbilityOf(state, viewerSeat, actor),",
+    expectKilledBy: ["packages/engine/src/festivalLeadD570.test.ts"],
+  },
+  {
+    id: "D570-redact-second-declaration-not-banned",
+    decision: "D570",
+    what: "the wire's `banned` drops the second-declaration bar: a lost licence still offers a live attack button. Killed by §7.",
+    file: "packages/engine/src/redact.ts",
+    find: "    attackBarredByAbility(state, viewerSeat, active) !== undefined ||\n    attackAgainBarred(state, viewerSeat, active);",
+    replace: "    attackBarredByAbility(state, viewerSeat, active) !== undefined;",
+    expectKilledBy: ["packages/engine/src/festivalLeadD570.test.ts"],
+  },
+  {
+    id: "D570-hud-retreat-in-the-window",
+    decision: "D570",
+    what: "GameHud offers Retreat inside the window (the redact twin's `mainPhase` not mirrored). Killed by the HUD suite (b).",
+    file: "src/features/game/GameHud.tsx",
+    find: "    !game.allowances.retreated &&\n    !attackAgainWindow &&\n",
+    replace: "    !game.allowances.retreated &&\n",
+    expectKilledBy: ["src/features/game/GameHud.festivalLead.dom.test.tsx"],
+  },
+  {
+    id: "D570-hud-trainers-in-the-window",
+    decision: "D570",
+    what: "GameHud lists the hand's Trainers inside the window. Killed by the HUD suite (b).",
+    file: "src/features/game/GameHud.tsx",
+    find: "  const trainerOptions = attackAgainWindow ? [] : playableTrainers(game, viewerSeat);",
+    replace: "  const trainerOptions = playableTrainers(game, viewerSeat);",
+    expectKilledBy: ["src/features/game/GameHud.festivalLead.dom.test.tsx"],
+  },
+  {
+    id: "D570-hud-abilities-in-the-window",
+    decision: "D570",
+    what: "GameHud lists activated Abilities inside the window. Green on (b)'s board (no activated Ability) — killed only by the HUD suite's (d) (D570 review).",
+    file: "src/features/game/GameHud.tsx",
+    find: "  const abilityOptions = attackAgainWindow ? [] : usableAbilities(game, viewerSeat);",
+    replace: "  const abilityOptions = usableAbilities(game, viewerSeat);",
+    expectKilledBy: ["src/features/game/GameHud.festivalLead.dom.test.tsx"],
+  },
+  {
+    id: "D570-hud-stadium-in-the-window",
+    decision: "D570",
+    what: "GameHud draws the Stadium row inside the window. Green on (b)'s board (Festival Grounds has no activated ability) — killed only by the HUD suite's constructed (d) (D570 review).",
+    file: "src/features/game/GameHud.tsx",
+    find: "  const stadiumAbility = attackAgainWindow ? null : stadiumAbilityOption(game, viewerSeat);",
+    replace: "  const stadiumAbility = stadiumAbilityOption(game, viewerSeat);",
+    expectKilledBy: ["src/features/game/GameHud.festivalLead.dom.test.tsx"],
+  },
+  {
+    id: "D570-hud-second-declaration-not-greyed",
+    decision: "D570",
+    what: "GameHud drops the second-declaration bar: a lost licence still lights the attack row. Killed by the HUD suite (c).",
+    file: "src/features/game/GameHud.tsx",
+    find: "              attackAgainBarredNow ||\n",
+    replace: "",
+    expectKilledBy: ["src/features/game/GameHud.festivalLead.dom.test.tsx"],
+  },
+  {
+    id: "D570-fresh-bag-opens-a-window",
+    decision: "D570",
+    what: "`freshAllowances()` seeds `attackAgainUid` NON-null: every turn starts inside a window nobody holds — only `endTurn` is legal. Killed by §1 and §2.",
+    file: "packages/engine/src/types.ts",
+    find: "    attackAgainUid: null,\n  };",
+    replace: "    attackAgainUid: \"\",\n  };",
+    expectKilledBy: ["packages/engine/src/festivalLeadD570.test.ts"],
+  },
+  {
+    id: "D570-record-version-not-bumped",
+    decision: "D570",
+    what: "🛑 **`MATCH_RECORD_VERSION` STAYS 36 WHILE THE TENTH POSITION LANDS** — this deploy accepts a v36 record, whose allowance bag lacks `attackAgainUid` (read as an OPEN window: every action but `endTurn` refused, D326's class), and a 0.453 rollback would grant a main phase between the two attacks (`festivalLeadD570.test.ts` §8). Anchored on D570's own doc tail, one step. Killed by `match.test.ts` (and the sixteen engine raw pins).",
+    file: "apps/api/src/lobby/match.ts",
+    find: "    affordances are not pre-folded against the window (a carried display debt, decisions.md\n    D570). */\nexport const MATCH_RECORD_VERSION = 37;",
+    replace: "    affordances are not pre-folded against the window (a carried display debt, decisions.md\n    D570). */\nexport const MATCH_RECORD_VERSION = 36;",
+    expectKilledBy: ["apps/api/src/lobby/match.test.ts"],
   },
 ];

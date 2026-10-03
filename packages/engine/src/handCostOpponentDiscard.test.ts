@@ -610,7 +610,7 @@ describe("D515 §3 — the BOARD: two parks, two seats, and the gate between the
     // answer, and this is the board that shows it: nothing paid, nothing bought.
     //
     // ⚠️ THE DISCARD PILES ARE THE READING, NOT THE HANDS (D491). A settled attack ENDS
-    // THE TURN inside the same action, so the defender's turn-start draw lands before
+    // THE TURN [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which no board here builds] inside the same action, so the defender's turn-start draw lands before
     // this state is observed and p2's HAND comes back one HIGHER than it went in.
     const empty = mustStep(handOfIds(handOfIds(fielded(13), "p1", []), "p2", THREE), attack).state;
     expect(empty.phase.kind).not.toBe("effect:choose");
@@ -823,9 +823,9 @@ describe("D515 §6 — `MATCH_RECORD_VERSION` stays 30, and the argument is DRIV
     expect(hands(lost)).toEqual([2, 4]);
   });
 
-  it("engineVersion is 0.453.0 and the bump is owed for BEHAVIOUR", () => {
+  it("engineVersion is 0.454.0 and the bump is owed for BEHAVIOUR", () => {
     // D471's rule: the bump is owed because `packages/engine` changed behaviour — an
     // anchor, an arm and a `describeBranch` case — and not because a slice happened.
-    expect(engineVersion).toBe("0.453.0");
+    expect(engineVersion).toBe("0.454.0");
   });
 });

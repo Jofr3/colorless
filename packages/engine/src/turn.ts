@@ -51,7 +51,8 @@ import {
 // The in-turn actions (rules §5). Turn start/end mechanics live in flow.ts:
 // ending a turn seeds the staged tail (TURN_ENDED → checkup → the opponent's
 // startTurn) and `advance` drains it — attack.ts feeds the same tail with
-// the KO stages in front, which is why the tail is a queue and not a call.
+// the KO stages in front, which is why the tail is a queue and not a call
+// [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play — `finishAttack` then queues `resumeTurn` (the attack-again window) in place of the turn tail].
 
 /** Bench slots are array indices, and the arrays are dense. The `Number` check
     guards the wire: TS says these are numbers, JSON does not, and a string
@@ -74,6 +75,22 @@ export function turnGate(
   }
   if (phase.seat !== action.seat) {
     return err("WRONG_SEAT", `it is ${phase.seat}'s turn`);
+  }
+  // 🆕🆕🆕 §5.3/§8 (D570, R-FL1) — Festival Lead's attack-again window: between the two
+  // attacks the turn is NARROWED to the second declaration or its decline. The printed
+  // "may use an attack it has twice" grants a second ATTACK, not a second main phase, so
+  // every other in-turn action (attach, bench, evolve, Rare Candy, retreat, Trainer, Tool,
+  // Ability, Stadium ability) is refused here, once, for all nine handlers. The window is
+  // `allowances.attackAgainUid` (types.ts), opened only by flow.ts `finishAttack`.
+  if (
+    state.allowances.attackAgainUid !== null &&
+    action.type !== "attack" &&
+    action.type !== "endTurn"
+  ) {
+    return err(
+      "BAD_PHASE",
+      `${action.type} is not legal now: only a second attack or ending the turn is legal (Festival Lead)`,
+    );
   }
   return null;
 }

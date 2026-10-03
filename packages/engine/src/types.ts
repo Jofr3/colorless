@@ -132,7 +132,7 @@ export function presentStatuses(conditions: SpecialConditions): StatusName[] {
 
     ⚠️ A TURN STAMP, NOT A FLAG — D124's decision, taken again for a reason of its
     own. `turn` is the ONE turn number on which the block is live: the installing
-    attack runs during turn N and ends it (§5.3), so the opponent's next turn is
+    attack runs during turn N and ends it (§5.3) [🆕🆕🆕 D570 (D539): a FIRST attack under Festival Lead opens the attack-again window instead, but its four attacks (Do the Wave, Whirlpool, Sneaky Placement, Rapid Draw) install nothing, so this stays true on every printing], so the opponent's next turn is
     turn N + 1 and that is what gets stamped. The block then expires BY ARITHMETIC
     (`turn === state.turn` stops holding) with no turn-boundary clear anywhere —
     which matters more here than it did at D124, because the §13.4 paralysis clock
@@ -518,7 +518,7 @@ export type ScheduledEffect =
     and D124's no-defensive-`undefined` rule at the reader. */
 export interface AttackDamageDebuff {
   /** The single turn number this debuff is live on (the installing turn + 1 —
-      the VICTIM's own next turn, since declaring an attack ends the turn). */
+      the VICTIM's own next turn, since declaring an attack ends the turn [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which opens the attack-again window instead (flow.ts `finishAttack`); the window keeps `state.turn`, so no turn-stamp argument here moves]). */
   turn: number;
   /** HP subtracted from every damage this Pokémon's attacks do, BEFORE Weakness
       and Resistance — the printed parenthetical, and the whole of why the number
@@ -570,7 +570,7 @@ export interface AttackDamageDebuff {
     `Math.max` on a same-window re-install (the interpreter says why). */
 export interface DamageVulnerability {
   /** The single turn number this vulnerability is live on — the installing turn
-      + 2, the INSTALLER's own next turn (declaring an attack ends the turn, §5.3,
+      + 2, the INSTALLER's own next turn (declaring an attack ends the turn [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which opens the attack-again window instead (flow.ts `finishAttack`); the window keeps `state.turn`, so no turn-stamp argument here moves], §5.3,
       so the turn in between is the holder's). */
   turn: number;
   /** HP ADDED to every attack's damage to this Pokémon AFTER Weakness and
@@ -707,7 +707,7 @@ export interface SideDamageReduction {
     ⚠️ IT IS `DamageReduction`'s SIBLING ON EVERY AXIS BUT THE READ SITE, and that
     is the whole shape of the slice. Same holder ("this Pokémon" — the installer's
     own Active), same `state.turn + 1` window (the sentence prints "During your
-    opponent's next turn" and declaring an attack ENDS the turn, §5.3), same
+    opponent's next turn" and declaring an attack ENDS the turn [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which opens the attack-again window instead (flow.ts `finishAttack`); the window keeps `state.turn`, so no turn-stamp argument here moves], §5.3), same
     `{ turn, amount }` record, same three §10 clears, same `Math.max` merge. What
     differs is WHICH number it feeds: that one is subtracted at §8.5 step 5, this
     one is ADDED at the §9 reactive recoil (attack.ts), the site that already sums
@@ -851,7 +851,7 @@ export interface InstalledRecoil {
     writers does this slot have, and can any two of them stamp the same turn".**
 
     THE WINDOW IS `state.turn + 2`, D143's number and not D142's: the sentence
-    prints "During YOUR next turn" and declaring an attack ENDS the turn (§5.3),
+    prints "During YOUR next turn" and declaring an attack ENDS the turn [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which opens the attack-again window instead (flow.ts `finishAttack`); the window keeps `state.turn`, so no turn-stamp argument here moves] (§5.3),
     so the turn after the installing one is the opponent's and the one after THAT
     is the holder's own. A `+ 1` stamp would be live only on a turn the holder
     could not have acted on anyway, which is the failure mode D143 wrote down —
@@ -864,7 +864,7 @@ export interface InstalledRecoil {
 export interface LockedAttack {
   /** The single turn number this lock is live on — the installing turn + 2 when
       `preventAttackUse` wrote it (the HOLDER's own next turn, since declaring an
-      attack ends the turn) and + 1 when `lockDefenderAttack` did (the VICTIM's
+      attack ends the turn [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which opens the attack-again window instead (flow.ts `finishAttack`); the window keeps `state.turn`, so no turn-stamp argument here moves]) and + 1 when `lockDefenderAttack` did (the VICTIM's
       next turn, which is the turn immediately after). Two writers, two offsets,
       one number — which is exactly how two entries come to share it (D165).
 
@@ -883,7 +883,7 @@ export interface LockedAttack {
       make a build that DROPPED the rider degrade silently into D154's next-turn
       lock — a real bar, on a real turn, that simply stops one turn later than the
       card says. Stamping the install turn makes the same build produce a bar
-      stamped for a turn its holder has already spent (declaring ENDS the turn,
+      stamped for a turn its holder has already spent (declaring ENDS the turn [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which opens the attack-again window instead (flow.ts `finishAttack`); the window keeps `state.turn`, so no turn-stamp argument here moves],
       §5.3), so it never bites at all and a board says so on the very next turn.
       The rider is the fact; the stamp is the audit trail. */
   turn: number;
@@ -1013,7 +1013,7 @@ export interface LockedAttack {
     not yet been separated on.
 
     THE WINDOW IS `state.turn + 2`, `LockedAttack`'s number and D143's: the
-    sentence prints "During YOUR next turn" and declaring an attack ENDS the turn
+    sentence prints "During YOUR next turn" and declaring an attack ENDS the turn [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which opens the attack-again window instead (flow.ts `finishAttack`); the window keeps `state.turn`, so no turn-stamp argument here moves]
     (§5.3), so the turn after the installing one is the opponent's and the one
     after THAT is the holder's own.
 
@@ -1023,7 +1023,7 @@ export interface LockedAttack {
     D124's no-defensive-`undefined` rule at the reader. */
 export interface BoostedAttack {
   /** The single turn number this buff is live on (the installing turn + 2 — the
-      HOLDER's own next turn, since declaring an attack ends the turn). 🆕🆕🆕 D563 (D539):
+      HOLDER's own next turn, since declaring an attack ends the turn [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which opens the attack-again window instead (flow.ts `finishAttack`); the window keeps `state.turn`, so no turn-stamp argument here moves]). 🆕🆕🆕 D563 (D539):
       ~~"the installing turn + 2"~~ is no longer the only stamp — an ABILITY printing
       *"during this turn"* (Feraligatr "Torrential Heart", `boostAttack.thisTurn`) stamps
       the installing turn itself; the readers compare `turn === state.turn` either way. */
@@ -1120,7 +1120,7 @@ export interface BoostedAttack {
     ⚠️ **ONE SLOT IS ENOUGH, AND THAT IS AN ARGUMENT ABOUT THE WRITERS AND NOT A
     SIMPLIFICATION** (D165's test: *how many writers does this slot have, and can
     any two of them stamp the same turn*). This slot has exactly ONE writer —
-    `finishAttack` (flow.ts) — and declaring an attack ENDS the turn (§5.3), so a
+    `finishAttack` (flow.ts) — and declaring an attack ENDS the turn [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which opens the attack-again window instead (flow.ts `finishAttack`); the window keeps `state.turn`, so no turn-stamp argument here moves] (§5.3), so a
     body can write it at most once per turn and never twice for one turn. The
     printed window is *"your last turn"*, and the attack a body used on its last
     turn is by construction the most recent one it used at the moment the question
@@ -1166,7 +1166,7 @@ export interface InPlayPokemon {
       NARROWING IS LOAD-BEARING RATHER THAN COSMETIC. `preventRetreat`'s `"self"`
       arm writes `retreatLockedTurn` below instead, because the paralysis clock
       this field rides CANNOT express a self-installed window: flow.ts clears it
-      for `endedSeat`, an attack ENDS the installer's turn (§5.3), so the very
+      for `endedSeat`, an attack ENDS the installer's turn [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which opens the attack-again window instead (flow.ts `finishAttack`); the window keeps `state.turn`, so no turn-stamp argument here moves] (§5.3), so the very
       first Checkup after a self-lock would lift it before its window opened.
       That is not a hypothetical — flow.ts's own clear comment says a block
       applied by the ended seat's own attack "would lift a turn early", and
@@ -1237,7 +1237,7 @@ export interface InPlayPokemon {
 
       ⚠️ `state.turn + 2` ON THE SELF ARM AND `+ 1` ON THE DEFENDER ARM, AND THAT
       IS ONE RULE RATHER THAN TWO. The window is always *the locked Pokémon's
-      controller's NEXT turn*; declaring an attack ENDS the turn (§5.3), so the
+      controller's NEXT turn*; declaring an attack ENDS the turn [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which opens the attack-again window instead (flow.ts `finishAttack`); the window keeps `state.turn`, so no turn-stamp argument here moves] (§5.3), so the
       turn after the installing one is the opponent's and the one after that is the
       installer's own. The printed wordings differ ("during YOUR next turn" /
       "during your OPPONENT's next turn") for exactly that reason. The stamp is
@@ -1313,7 +1313,7 @@ export interface InPlayPokemon {
       by the §8 gate AND by two payability projections (`redactedAttacksOf`,
       GameHud) — a greyed button. This lock leaves the declaration LEGAL: the
       attack is declared, the locked player flips at `attack.ts`'s §8 step-3 seam,
-      and on tails "that attack doesn't happen" and the turn ends. Folded into
+      and on tails "that attack doesn't happen" and the turn ends [🆕🆕🆕 D570 (D539): or, after a FIRST attack under Festival Lead with Festival Grounds in play, the attack-again window opens instead (flow.ts `finishAttack`) — a failed or cancelled attack is still an attack that was USED]. Folded into
       `attackLocked`, it would grey a button the player is entitled to press; so
       NO projection reads this field and `redact.ts`/`packages/schema`/GameHud take
       no byte (pinned: `attackFlipLock.test.ts`).
@@ -1350,7 +1350,7 @@ export interface InPlayPokemon {
       window (a Boss's Orders played by the opponent on the very turn the
       reduction is live drags the body off the spot and the protection goes with
       it), while EVOLVING is unreachable by construction (installing ends the
-      turn, the window is the opponent's, and nobody evolves on someone else's
+      turn [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which opens the attack-again window instead; its four attacks install nothing, and only `attack` / `endTurn` are legal in the window (R-FL1), so nobody evolves in it], the window is the opponent's, and nobody evolves on someone else's
       turn) and is written anyway, pinned by a surgery. A Knocked Out holder takes
       it out of play with the rest of the stack. */
   damageReduction: DamageReduction | null;
@@ -1382,13 +1382,13 @@ export interface InPlayPokemon {
       ⚠️ `state.turn + 1`, `damageReduction`'s AND `installedRecoil`'s PAIR OF
       ANSWERS: the sentence prints "During your OPPONENT's next turn" and "this
       Pokémon", so the window is the opponent's (declaring an attack ends the
-      turn, §5.3) and the holder is the installer's own Active.
+      turn [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which opens the attack-again window instead (flow.ts `finishAttack`); the window keeps `state.turn`, so no turn-stamp argument here moves], §5.3) and the holder is the installer's own Active.
 
       THE THREE §10 EARLY CLEARS ARE THE SAME THREE, with `damageReduction`'s
       reachability story verbatim: leaving the Active Spot is REACHABLE inside the
       window (a Boss's Orders played by the opponent on the very turn the bar is
       live drags the body off the spot and the bar goes with it), while EVOLVING
-      is unreachable by construction (installing ends the turn, the window is the
+      is unreachable by construction (installing ends the turn [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which opens the attack-again window instead; its four attacks install nothing, and only `attack` / `endTurn` are legal in the window (R-FL1), so nobody evolves in it], the window is the
       opponent's, and nobody evolves on someone else's turn) and is written anyway
       — §10 sheds the effects of ATTACKS and this is one. A Knocked Out holder
       takes it out of play with the rest of the stack. All three literals are
@@ -1468,7 +1468,7 @@ export interface InPlayPokemon {
       ⚠️ `state.turn + 1`, LIKE `attackBlock` AND `damageReduction` — AND IT IS
       WRITTEN ONTO THE OPPONENT'S BODY, WHICH IS WHAT MAKES IT THE ONLY ONE OF THE
       FOUR THE INSTALLER NEVER HOLDS. The printed sentence says "During your
-      opponent's next turn", declaring an attack ENDS the turn (§5.3), so the turn
+      opponent's next turn", declaring an attack ENDS the turn [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which opens the attack-again window instead (flow.ts `finishAttack`); the window keeps `state.turn`, so no turn-stamp argument here moves] (§5.3), so the turn
       after the installing one is the victim's — and the victim is the holder. So
       the number is D142's and the HOLDER is D148's `target: "defender"` arm's:
       this field is the first in the family whose stamp and whose body come from
@@ -1590,7 +1590,7 @@ export interface InPlayPokemon {
       Spot is REACHABLE inside the window (a Boss's Orders played by the opponent
       on the very turn the recoil is armed drags the body off the spot and the
       trap goes with it), while EVOLVING is unreachable by construction
-      (installing ends the turn, the window is the opponent's, and nobody evolves
+      (installing ends the turn [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which opens the attack-again window instead; its four attacks install nothing, and only `attack` / `endTurn` are legal in the window (R-FL1), so nobody evolves in it], the window is the opponent's, and nobody evolves
       on someone else's turn) and is written anyway, pinned by a surgery. A
       Knocked Out holder takes it out of play with the rest of the stack — and
       that is NOT the printed "(even if it is Knocked Out)", which is about the
@@ -1838,7 +1838,7 @@ export interface InPlayPokemon {
       🛑 **THE WINDOW IS `state.turn - 2`, D143's NUMBER REFLECTED, AND IT WAS
       MEASURED RATHER THAN ASSUMED.** `preventAttackUse` and `BoostedAttack` both
       stamp *"during your next turn"* as `state.turn + 2` because declaring an
-      attack ends the turn and the turn after the declaring one is the opponent's;
+      attack ends the turn [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which opens the attack-again window instead (flow.ts `finishAttack`); the window keeps `state.turn`, so no turn-stamp argument here moves] and the turn after the declaring one is the opponent's;
       *"during your last turn"* is that same claim read backwards. The measurement
       that settles it is a KO PARK: `turnTail` queues exactly ONE `startTurn` and
       the KO's prize/promotion stages are spliced in FRONT of it, so a Knock Out —
@@ -2200,6 +2200,35 @@ export interface TurnAllowances {
       5 into flow.ts. REQUIRED: `MATCH_RECORD_VERSION` 35 → 36 — a v35 rollback would drop
       a pending discard the player accepted when they drew the 4. */
   endOfTurnHandDiscard: number | null;
+  /** 🆕🆕🆕 §5.3/§8 (D570) — the ATTACK-AGAIN WINDOW: the uid of the turn owner's Active that
+      may declare a SECOND attack this turn, or `null` when no window is open. "Festival
+      Lead" (Dipplin, Goldeen, Swirlix, Seaking — 7 printings): *"If Festival Grounds is in
+      play, this Pokémon may use an attack it has twice. If the first attack Knocks Out your
+      opponent's Active Pokémon, you may attack again after your opponent chooses a new
+      Active Pokémon."*
+
+      Written ONLY by flow.ts `finishAttack`, when the FIRST attack finishes with this key
+      still `null`, the attacker still the Active, and `attackAgainLicensed` true; the
+      turn's tail is then a `resumeTurn` instead of `turnTail` (R-FL4: the window survives
+      the first attack's prize, koTrigger and promotion stages; no Checkup runs between the
+      attacks). Read by turn.ts `turnGate` (R-FL1: only `attack` and `endTurn` while it is
+      non-null), by `attackAgainBarred` (interpreter.ts — R-FL2's second read: same uid,
+      still Active, still licensed) and by `finishAttack` itself (non-null on the second
+      finish, so there is no third attack) [🆕 D570 landing (D539): and read DIRECTLY by three
+      more — flow.ts `resumeTurn` (the `ATTACK_AGAIN_OFFERED` row's uid and its guard),
+      redact.ts `mainPhase` (withheld while non-null) and GameHud.tsx `attackAgainWindow`
+      (the HUD's mirror)]. Cleared by `freshAllowances()` at every
+      `startTurn`, so "this turn" IS this bag's lifetime — no stamp, `supporterPlayed`'s
+      argument (D123).
+
+      ⚠️ THE SEAT HAZARD, `supporterPlayed`'s: this bag describes the TURN'S OWNER only;
+      every reader asks for that seat.
+
+      REQUIRED: `MATCH_RECORD_VERSION` 36 → 37, THE TENTH POSITION (apps/api match.ts) — a
+      0.453 rollback resuming a save taken INSIDE the window ignores the key and would grant
+      Trainer / attach / retreat / Ability plays between the two attacks, and a v36 bag
+      lacks the key. */
+  attackAgainUid: string | null;
 }
 
 /** 🆕🆕🆕 §8.5 (D556) — one installed this-turn side-wide bonus: `amount` HP added
@@ -2222,6 +2251,7 @@ export function freshAllowances(): TurnAllowances {
     sideAttackBonuses: [],
     supporterPlayedUid: null,
     endOfTurnHandDiscard: null,
+    attackAgainUid: null,
   };
 }
 
@@ -2231,7 +2261,11 @@ export function freshAllowances(): TurnAllowances {
     player decision (which prize, which promotion) and resuming from the head
     once the deciding action lands. This un-fuses M1's TURN_ENDED → checkup →
     startTurn single reduction: every stage boundary is a legal place for the
-    game to wait. */
+    game to wait.
+    🆕🆕🆕 D570 CORRECTION (D539) — "attack, which ends the turn through the same tail" is
+    true except under Festival Lead: a FIRST attack that opens the attack-again window
+    (`TurnAllowances.attackAgainUid`) seeds `resumeTurn` instead of this tail (flow.ts
+    `finishAttack`), and the SECOND attack (or an `endTurn` declining it) seeds the tail. */
 export type PendingStage =
   /** §8.1 — the KOing seat picks `count` face-down prizes (clamped to what
       is left when processed; forced picks auto-resolve). 🆕🆕🆕 D548: the row may
@@ -2269,7 +2303,13 @@ export type PendingStage =
       spread/snipe ability. Unlike an attack KO (which ends the turn) or a
       Checkup KO (between turns), the actor keeps playing once the KO's
       prize/promotion decisions settle: this stage restores their turn:action
-      phase. Always the tail of a mid-turn KO's stages, so nothing follows it. */
+      phase. Always the tail of a mid-turn KO's stages, so nothing follows it.
+      🆕🆕🆕 D570 CORRECTION (D539) — "an attack KO (which ends the turn)" is true except
+      under Festival Lead: a FIRST attack that opens the attack-again window queues THIS
+      stage behind its KO's prize/koTrigger/promotion stages (flow.ts `finishAttack`), so
+      the attacker gets turn:action back for the second attack (R-FL4). "Nothing follows
+      it" still holds: `finishAttack`'s queue behind it is the (always empty) incoming
+      `pending`. No new `PendingStage` member. */
   | { kind: "resumeTurn"; seat: Seat }
   /** §9 (M4) — run the on-KO triggered Ability of the just-Knocked-Out `uid`
       (owned by `seat`). Fires DURING the opponent's turn, mid-KO-sweep: its
@@ -2432,7 +2472,8 @@ export type Phase =
           queued behind it — the SAME shape as the on-KO trigger, read the same way;
         • an ATTACK's effect program (§8 step 4), which parks with the
           attackEpilogue stage queued behind it — here `seat` IS the turn owner
-          (the attacker), and draining the tail runs the KO sweep + turn end.
+          (the attacker), and draining the tail runs the KO sweep + turn end
+          [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play — `finishAttack` then queues `resumeTurn` (the attack-again window) in place of the turn tail].
       Both are read the same way by resolveEffect; only the projection needs to
       tell them apart. */
   | {
@@ -2578,7 +2619,7 @@ export interface GameState {
       🛑 **A `GameState` FIELD AND NOT A DERIVED READ, AND THE TEST IS D275's.**
       `isFirstTurnOf` refused a field because both its operands were already on
       the state and could not drift. This one has NO operands: the lock is
-      installed by an attack that has ALREADY RESOLVED, and §5.3 ends the turn
+      installed by an attack that has ALREADY RESOLVED, and §5.3 ends the turn [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which opens the attack-again window instead (flow.ts `finishAttack`); the window keeps `state.turn`, so no turn-stamp argument here moves]
       immediately after — so by the time the barred seat reaches for a Supporter,
       nothing on the board says the attack ever happened. The attacking body is
       not evidence either (it prints two attacks and the state records neither
@@ -3013,7 +3054,7 @@ export function evolveOnto(
     // §10 — evolving sheds the effects of attacks too, not just conditions. That
     // covers the retreat block and, since D142, the attack-installed damage
     // block. The second one is UNREACHABLE and deliberately written anyway: the
-    // block is installed by an attack, an attack ends the turn (§5.3), and its
+    // block is installed by an attack, an attack ends the turn [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which opens the attack-again window instead (flow.ts `finishAttack`); the window keeps `state.turn`, so no turn-stamp argument here moves] (§5.3), and its
     // window is the opponent's next turn — during which the holder's controller
     // cannot evolve anything — so no legal sequence puts an evolution between the
     // install and the expiry. The rule belongs with the concept rather than with

@@ -478,7 +478,7 @@ describe("the install — the address is resolved once, at the site that owns th
       seat: "p1",
       index: SLASHING_STEEL_INDEX,
     });
-    // The declaration ENDS the turn (§5.3) rather than parking on a choice, and no
+    // The declaration ENDS the turn [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which no board here builds] (§5.3) rather than parking on a choice, and no
     // coin was flipped — the whole family is seed-free for that reason.
     expect(state.phase).toEqual({ kind: "turn:action", seat: "p2" });
     expect(state.rngState).toBe(before.rngState);
@@ -486,7 +486,7 @@ describe("the install — the address is resolved once, at the site that owns th
 
   it("a re-install that says the SAME thing is silent, a different index is ADDED", () => {
     // Both cases are CONSTRUCTED *for this op*: installing needs an attack, an
-    // attack ends the turn, and the window is the holder's own next turn — on
+    // attack ends the turn [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which no board here builds], and the window is the holder's own next turn — on
     // which the only attack that could re-install is the very one this record
     // bars. So a second install of THIS op can never land on a live record of
     // THIS op, and the surgery says which of the two rules `addLockedAttack`

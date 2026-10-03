@@ -415,7 +415,7 @@ describe("D232 — 'Your opponent reveals their hand.' (7 legal)", () => {
     expect(find(events, "HAND_REVEALED")?.uids).toEqual(before);
     // NOTHING moved: the reveal is a fact, not a movement. The one deck card
     // that left is P2's own turn-start draw, which rides the same reduction once
-    // the attack ends P1's turn (§5.3) — so the deck is its own tail, unreordered.
+    // the attack ends P1's turn [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which no board here builds] (§5.3) — so the deck is its own tail, unreordered.
     expect(done.players.p2.discard).toEqual(state.players.p2.discard);
     expect(done.players.p2.deck).toEqual(state.players.p2.deck.slice(1));
     // …and P2's hand is `before` plus exactly that draw.

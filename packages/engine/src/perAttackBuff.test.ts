@@ -415,7 +415,7 @@ describe("the install — the address is resolved once, by the helper D154 wrote
     // `everyAttackBoost.test.ts` §7), measured by deriving
     // `legalAttackCorpus()` — and the ground is the turn structure, not the count;
     // the base-set merge is pinned in `attackBaseOverride.test.ts` §9;
-    // an attack ends the turn and the window is
+    // an attack ends the turn [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which no board here builds] and the window is
     // the holder's own next turn), so this is constructed — and it is the case
     // that separates this op's merge from `preventAttackUse`'s. That record has no
     // number, so a re-install is a bare early return; this one carries one, so the
@@ -741,7 +741,7 @@ describe("the row renders under the seat that owns the boosted Pokémon", () => 
     // anyway, because "always the actor's own" is a claim about the OP and the
     // renderer cannot know it.
     const { state, events } = boosted("sv03-052", ECHOED_VOICE_INDEX);
-    // The declaration ENDS the turn (§5.3), so the rendered batch runs on past the
+    // The declaration ENDS the turn [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which no board here builds] (§5.3), so the rendered batch runs on past the
     // rider into the opponent's draw — the row is found by its content rather than
     // by position, which is also what makes the assertion read as one claim.
     const rows = render(events, state);

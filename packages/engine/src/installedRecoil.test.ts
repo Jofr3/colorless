@@ -382,7 +382,7 @@ describe("arming it — the stamp, the window and the row", () => {
     const before = ready();
     const { state, events } = mustApply(before, { type: "attack", seat: "p1", index: 1 });
     // The window is `state.turn + 1` — the printed "during your opponent's next
-    // turn", and declaring an attack ENDS the turn (§5.3), so the turn after the
+    // turn", and declaring an attack ENDS the turn [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which no board here builds] (§5.3), so the turn after the
     // arming one is the opponent's by construction.
     expect(state.players.p1.active?.installedRecoil).toEqual({
       turn: before.turn + 1,
@@ -437,7 +437,7 @@ describe("arming it — the stamp, the window and the row", () => {
   });
 
   it("MERGES by MAX when armed twice in one window, and says nothing when it need not", () => {
-    // Unreachable off any printing — one attack per turn, and no card prints two of
+    // Unreachable off any printing — one attack per turn [🆕🆕🆕 D570 (D539): two in one turn under Festival Lead with Festival Grounds in play, but its four attacks install nothing, so this stays unreachable], and no card prints two of
     // these — so it is CONSTRUCTED and pinned, fed straight to `runProgram` from
     // the armer's chair (D144/D150's precedent). The rule both this and D147's
     // `Math.max` are instances of: a second installation may never leave the holder
@@ -608,7 +608,7 @@ describe("⚠️ the `dealt > 0` boundary — D149's cases, which this must not 
     // The INNER gate, and the sharper one: the §8.5 branch IS entered (a printed 30
     // Bite), a DAMAGE_DEALT row IS emitted, and `dealt` is 0 — so the recoil must
     // not fire. Constructed, and it says so: an armed body and a live shield are
-    // two installs whose windows are the same turn, which one attack per turn
+    // two installs whose windows are the same turn, which one attack per turn [🆕🆕🆕 D570 (D539): two in one turn under Festival Lead with Festival Grounds in play, but its four attacks install nothing, so this stays unreachable]
     // cannot produce (D144/D146's precedent for pinning a rule with no card).
     let state = armed();
     state = withReduction(state, "p1", 200, state.turn);
@@ -709,7 +709,7 @@ describe("the lifetime — one turn, and the three §10 early endings", () => {
   });
 
   it("ends on EVOLVING — unreachable by construction, written anyway", () => {
-    // §10 sheds the effects of ATTACKS. Arming ends the turn, the window is the
+    // §10 sheds the effects of ATTACKS. Arming ends the turn [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, whose four attacks install nothing and whose window admits only `attack` / `endTurn` (R-FL1); no board here builds it], the window is the
     // opponent's, and nobody evolves on someone else's turn — so no legal sequence
     // puts an evolution between the arming and the expiry, exactly as at D147. A
     // surgery pins the RULE rather than a sequence.
@@ -900,7 +900,7 @@ describe("🆕🆕 D456 §2 — the record, the row and the merge", () => {
   });
 
   it("MERGES the two inhabitants: the flag STICKS and the flat amount is the FLOOR", () => {
-    // Unreachable off any printing — one attack per turn, and no card prints two of
+    // Unreachable off any printing — one attack per turn [🆕🆕🆕 D570 (D539): two in one turn under Festival Lead with Festival Grounds in play, but its four attacks install nothing, so this stays unreachable], and no card prints two of
     // these — so CONSTRUCTED and pinned, D152's own two-installs case extended by one
     // axis. The rule the merge keeps is D152's, restated for a channel: *a second
     // installation may never leave the holder with less than one of them printed*, so

@@ -126,7 +126,7 @@ const PROGRAM: EffectOp[] = [
 const units = (rows: readonly (readonly [number, string])[]) => rows.reduce((s, [n]) => s + n, 0);
 
 /** 🛑 **THE CONTROLLER'S EFFECT DRAW, AND NEVER "the first `CARDS_DRAWN` row".** An attack
-    ENDS THE TURN, so the DEFENDER's turn-start draw lands inside the same action (D491) —
+    ENDS THE TURN [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which no board here builds], so the DEFENDER's turn-start draw lands inside the same action (D491) —
     on a board where this op draws nothing, a bare `find(events, "CARDS_DRAWN")` returns
     P2's turn-start row and reports one card drawn. Every count here is filtered by SEAT
     and by `reason`, so a rung cannot pass on the other player's card. */
@@ -423,7 +423,7 @@ describe("D516 §4 — the count is the OPPONENT'S hand size, and four rivals sa
     expect(types(events)).not.toContain("HAND_TO_BOTTOM_OF_DECK");
     // 🛑 THE OPPONENT'S ZONES ARE UNTOUCHED BY THE OP — `who: "you"` is the printed
     // subject, and the count READS the other seat without moving a card of theirs.
-    // ⚠️ **NOT "BYTE-UNCHANGED", AND THE DIFFERENCE IS D491's**: an attack ENDS THE TURN,
+    // ⚠️ **NOT "BYTE-UNCHANGED", AND THE DIFFERENCE IS D491's**: an attack ENDS THE TURN [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which no board here builds],
     // so P2's turn-start draw lands inside this same action. The assertion is therefore
     // *"every card they held they still hold, plus exactly one off the top of their own
     // deck"* — which is a STRICTER statement than a length check and the only one that is
@@ -589,7 +589,7 @@ describe("D516 §7 — what this slice did NOT buy, measured", () => {
     // write. The claim therefore rests on REACHABILITY (D450) ALONE, and reachability is
     // a measurement over the PRODUCERS rather than a property of the op — which is what
     // the rung below drives.
-    expect(engineVersion).toBe("0.453.0");
+    expect(engineVersion).toBe("0.454.0");
   });
 
   it("🛑 REACHABILITY IS EMPTY, MEASURED OVER EVERY PRODUCER RATHER THAN ASSERTED", () => {

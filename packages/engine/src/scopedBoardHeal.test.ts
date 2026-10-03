@@ -683,7 +683,7 @@ describe("§7 — the record-shape derivation, made rather than inherited", () =
   it("🛑 driven over the SERIALIZED BYTES, in three directions", () => {
     const state = threeBodies();
     // The turn the heal RUNS on — read before the attack, because the attack ends the
-    // turn and `done.turn` is already the next one. A stamp compared against the wrong
+    // turn [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which no board here builds] and `done.turn` is already the next one. A stamp compared against the wrong
     // turn is green on a board where nothing healed at all.
     const healTurn = state.turn;
     const { state: done } = mustApply(state, { type: "attack", seat: "p1", index: BASIC_SALVE });
@@ -709,13 +709,13 @@ describe("§7 — the record-shape derivation, made rather than inherited", () =
     expect(roundTripped.players.p1.bench[1]?.healedTurn).toBeNull();
   });
 
-  it("engineVersion is 0.453.0 and the bump is owed for BEHAVIOUR", () => {
+  it("engineVersion is 0.454.0 and the bump is owed for BEHAVIOUR", () => {
     // 🆕🆕 D461 — 0.359.0 → **0.360.0**. Two printed sentences that derived to `null`
     // and fell to the loud ATTACK_EFFECT_SKIPPED path now heal a NARROWED set, and
     // the narrowing is visible on the board rather than only in the type: the same
     // board under the two sentences heals two DIFFERENT, NON-NESTED sets of bodies
     // (§3 and §4 share one board and disagree about two of its three).
-    expect(engineVersion).toBe("0.453.0");
+    expect(engineVersion).toBe("0.454.0");
   });
 });
 

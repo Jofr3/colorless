@@ -4184,7 +4184,7 @@ export type EffectOp =
 
       ⚠️ AND THE SELF ARM DOES NOT WRITE `retreatBlocked`. It writes
       `retreatLockedTurn`, because the boolean rides a clock that clears for
-      `endedSeat` and an attack ends the installer's own turn — see that field's
+      `endedSeat` and an attack ends the installer's own turn [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which opens the attack-again window instead (flow.ts `finishAttack`); the window keeps `state.turn`, so no turn-stamp argument here moves] — see that field's
       doc block in types.ts. A `target` on this op WITHOUT the new field would ship
       a program that resolves, emits `RETREAT_BLOCKED`, counts as BUILT on every
       reader-keyed instrument, and changes no board.
@@ -4554,7 +4554,7 @@ export type EffectOp =
       rows 53 and 113) say it too, so the whole family aims one way. The day a
       self-side printing exists it is D131's widening on the holder axis, and the
       stamp follows the holder for `preventAttack`'s reason (`+ 1` for the defender,
-      `+ 2` for the installer, because declaring an attack ends the turn).
+      `+ 2` for the installer, because declaring an attack ends the turn [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which opens the attack-again window instead (flow.ts `finishAttack`); the window keeps `state.turn`, so no turn-stamp argument here moves]).
 
       ⚠️ `amount` IS HP, NOT COUNTERS — the deriver multiplies the printed `(\d+)`
       by 10 at the arm, `installRecoil`'s convention verbatim, so nothing downstream
@@ -4759,7 +4759,7 @@ export type EffectOp =
           the window is the LOCKED POKÉMON's controller's NEXT turn
 
       — and the two numbers are that one rule evaluated on the two seats, because
-      DECLARING AN ATTACK ENDS THE TURN (§5.3). The installer's own next turn is
+      DECLARING AN ATTACK ENDS THE TURN [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which opens the attack-again window instead (flow.ts `finishAttack`); the window keeps `state.turn`, so no turn-stamp argument here moves] (§5.3). The installer's own next turn is
       `+ 2`; the defender's is `+ 1`. So the stamp is a pure FUNCTION of the
       holder, the printed wording differs ("your next turn" / "your opponent's next
       turn") for exactly the same reason, and one field determines both. D131's
@@ -4821,7 +4821,7 @@ export type EffectOp =
       the declaration ILLEGAL (`attack.ts`'s §8 gate REJECTS it — nothing spent, the
       turn goes on) and writes `attackLockedTurn`; this op leaves the declaration
       LEGAL and gates its RESOLUTION on a coin (the attack is declared, the locked
-      player flips, and on tails the attack "doesn't happen" and the turn ENDS), so
+      player flips, and on tails the attack "doesn't happen" and the turn ENDS [🆕🆕🆕 D570 (D539): or, after a FIRST attack under Festival Lead with Festival Grounds in play, the attack-again window opens instead (flow.ts `finishAttack`) — a failed or cancelled attack is still an attack that was USED]), so
       it writes `attackFlipLockTurn` and is read at `attack.ts`'s §8 step-3 seam
       just AHEAD of the Confusion flip (the rulebook's step B before step C,
       docs/decisions.md D547 ruling 1), not at the gate. One op with an optional key would
@@ -4834,7 +4834,7 @@ export type EffectOp =
       this sentence (`censusAttackCorpus.ts`, measured over all 640 rows by the
       anchor below). The stamp is `state.turn + 1` — the locked body's controller's
       next turn, `preventAttack`'s defender arm verbatim (§5.3: declaring an attack
-      ends the turn).
+      ends the turn [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which opens the attack-again window instead (flow.ts `finishAttack`); the window keeps `state.turn`, so no turn-stamp argument here moves]).
 
       ⚠️ IT IS AN EFFECT OF AN ATTACK DONE TO THE DEFENDING POKÉMON, so a live §11
       "effects of attacks" block refuses it — `preventAttack`'s defender-arm check
@@ -4908,7 +4908,7 @@ export type EffectOp =
       player about a drawback that cannot bite.
 
       THE STAMP IS `state.turn + 2` — D143's number, not D142's. The sentence
-      prints "During YOUR next turn", declaring an attack ENDS the turn (§5.3), so
+      prints "During YOUR next turn", declaring an attack ENDS the turn [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which opens the attack-again window instead (flow.ts `finishAttack`); the window keeps `state.turn`, so no turn-stamp argument here moves] (§5.3), so
       the holder's own next turn is two away. See `LockedAttack` (types.ts) for why
       this is a second field beside `attackLockedTurn` rather than a key on it.
 
@@ -5125,7 +5125,7 @@ export type EffectOp =
 
       THE STAMP IS `state.turn + 1` — D142/D148's number, not D143's. The sentence
       prints "During your OPPONENT's next turn", and declaring an attack ENDS the
-      turn (§5.3), so the very next turn belongs to the locked seat. One rule (the
+      turn [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which opens the attack-again window instead (flow.ts `finishAttack`); the window keeps `state.turn`, so no turn-stamp argument here moves] (§5.3), so the very next turn belongs to the locked seat. One rule (the
       window is the LOCKED Pokémon's controller's next turn) evaluated on the other
       seat, exactly as D148 established.
 
@@ -8555,7 +8555,7 @@ export type EffectOp =
       already-total `promote` stage — and the ONE thing that differs is the tail the
       stages are spliced in front of: `resumeTurn` there because the actor keeps
       playing, `turnTail` here because §8.1's promotion is owed BEFORE the turn
-      ends. **Two sites, one seam, no stage** is the third consecutive slice to
+      ends [🆕🆕🆕 D570 (D539): on the attack site, except a FIRST attack under Festival Lead with Festival Grounds in play — `finishAttack`'s window exit splices the same stages in front of `resumeTurn` instead, the promotion still owed first]. **Two sites, one seam, no stage** is the third consecutive slice to
       answer D307's third question the same way.
 
       🆕 🛑 **D313 — THE DESTINATION IS NOW TWO FIELDS, AND IT IS AUTHORED OVER ALL
@@ -23081,7 +23081,7 @@ export type AttackFlipThreshold = { face: CoinFace; atLeast: number };
         BEFORE Weakness and Resistance) and the printed base is KEPT (these are
         "D+" printings); tails adds nothing and the attack resolves normally.
       • `cancelOnTails` — one flip; tails cancels the whole attack (no damage, no
-        W/R, no effect ops, and the turn still ends); heads resolves normally.
+        W/R, no effect ops, and the turn still ends [🆕🆕🆕 D570 (D539): or, after a FIRST attack under Festival Lead with Festival Grounds in play, the attack-again window opens instead (flow.ts `finishAttack`) — a failed or cancelled attack is still an attack that was USED]); heads resolves normally.
       • `perHeads` — `flips` flips; the damage is `per` × the number of heads and
         the printed base is DROPPED (these are "D×" printings, where D is `per`).
     `cancelOnTails` is "flip once, then take the printed branch", with the other
@@ -28246,7 +28246,7 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   //     D410's resume point priced this as "give the op a `target` and transfer
   //     `preventAttack`'s ternary". That ships a program that RESOLVES AND DOES
   //     NOTHING: `retreatBlocked` rides the §13.4 paralysis clock, which clears
-  //     for `endedSeat`, and an attack ends the installer's own turn — so a
+  //     for `endedSeat`, and an attack ends the installer's own turn [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which opens the attack-again window instead (flow.ts `finishAttack`); the window keeps `state.turn`, so no turn-stamp argument here moves] — so a
   //     self-installed flag lifts at the very first Checkup, before its window
   //     opens. The op carries `target` AND the interpreter writes a turn STAMP
   //     (`retreatLockedTurn`); either half alone is the defect.
@@ -30312,7 +30312,7 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   //     printed self-discard cost) have parked from an attack tail for many
   //     slices, through the same `settleProgram(..., { resumeTail: true })` that
   //     keeps `attackEpilogue` on `state.pending` until the choice lands. So the
-  //     KO sweep, the prizes and §5.3's turn end all still happen AFTER the heal,
+  //     KO sweep, the prizes and §5.3's turn end [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play — `finishAttack` then queues `resumeTurn` (the attack-again window) in place of the turn tail] all still happen AFTER the heal,
   //     in that order, with no attack.ts diff.
   match = CHOSEN_HEAL.exec(effect);
   if (match !== null) {
@@ -31205,7 +31205,7 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   //     ⚠️ THE STAMP IS DERIVED FROM `target`, NOT CARRIED BESIDE IT. See the op's
   //     doc block: one rule ("the locked Pokémon's controller's next turn") read
   //     on two seats gives `+ 1` here and `+ 2` on the self arm, because declaring
-  //     an attack ends the turn. That is why this is ONE field and not two.
+  //     an attack ends the turn [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which opens the attack-again window instead (flow.ts `finishAttack`); the window keeps `state.turn`, so no turn-stamp argument here moves]. That is why this is ONE field and not two.
   // 26a (D408). "During your opponent's next turn, the Defending Pokémon can't
   //      attack." (3) and "…can't use attacks." (4) — the BARE opponent-side lock in
   //      both printed verbs, 7 legal printings, and the arm D148's own census said

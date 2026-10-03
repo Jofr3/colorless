@@ -75,7 +75,7 @@ import {
 //   finishAttack              [...batch.stages, ...orphaned, ...turnTail]
 //
 // An Ability does not end a turn (§9), so the actor RESUMES; an attack does
-// (§5.3), so the turn ENDS — and §8.1 owes the promotion BEFORE it does, because
+// (§5.3), so the turn ENDS [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which no board here builds] — and §8.1 owes the promotion BEFORE it does, because
 // a player does not hand over a board with an empty Active Spot. §3 drives that
 // ORDER, which is the only thing about this site that could have been got wrong.
 //

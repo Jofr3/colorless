@@ -26,7 +26,7 @@ import {
 // flow.ts `runDamagedTrigger` folds it through settleProgram with `resumeTail`
 // under the DAMAGED seat (the koTrigger routing) — so the DEFENDER is the
 // answerer, the attacker still owns the turn (koParkActiveSeat), and finishAttack
-// (KO sweep + turn end) resumes after the pick.
+// (KO sweep + turn end) [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play — `finishAttack` then queues `resumeTurn` (the attack-again window) in place of the turn tail] resumes after the pick.
 
 const bite = { type: "attack", seat: "p1", index: 0 } as const; // Bite — {C}, 30, no effect
 const yawn = { type: "attack", seat: "p1", index: 2 } as const; // Yawn — no damage, a status

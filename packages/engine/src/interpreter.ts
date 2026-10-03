@@ -6547,6 +6547,50 @@ export function attackBarredByAbility(
   );
 }
 
+/** 🆕🆕🆕 §5.3/§8 (D570) — does `pokemon`'s own printed ATTACK-AGAIN licence hold RIGHT NOW
+    for `seat`? "Festival Lead" (7 printings): *"If Festival Grounds is in play, this Pokémon
+    may use an attack it has twice."* True when any `passivesOf(...).attackTwiceIf`
+    condition holds — `attackBarredByAbility`'s split (collected RAW by the seatless fold,
+    evaluated here where `conditionHolds` lives), with the opposite polarity: that reader
+    returns the unmet BAR, this one answers whether the LICENCE exists. A §9-locked holder
+    contributes no passive, so the licence is silent under Klefki or an opposing Flutter
+    Mane (R-FL2).
+
+    Read at THREE moments (R-FL2): flow.ts `finishAttack` (does the window OPEN), and the
+    second declaration's bar `attackAgainBarred` below (attack.ts, redact.ts, GameHud)
+    [🆕 D570 landing (D539): that names two moments — the THIRD is flow.ts `resumeTurn`, which
+    reads the licence through `attackAgainBarred` before it files the `ATTACK_AGAIN_OFFERED`
+    row; so three sites: `finishAttack`, the second declaration (attack.ts), the offer]. */
+export function attackAgainLicensed(
+  state: GameState,
+  seat: Seat,
+  pokemon: InPlayPokemon,
+): boolean {
+  return passivesOf(state, pokemon).attackTwiceIf.some((cond) =>
+    conditionHolds(state, seat, cond),
+  );
+}
+
+/** 🆕🆕🆕 §5.3/§8 (D570) — is a declaration by `seat`'s Active `active` barred because the
+    attack-again window is open and THIS body no longer holds it? The SECOND declaration's
+    re-read (R-FL2): while `TurnAllowances.attackAgainUid` is non-null, only that uid may
+    attack, only from the Active Spot, and only while its licence still holds (the Ability
+    unlocked, Festival Grounds still in play). False whenever the window is closed — the
+    first attack of every turn is untouched. One reader for the three payability
+    projections of one rule (attack.ts's §8 gate, redact.ts `banned`, GameHud's
+    `disabled`) [🆕 D570 landing (D539): and a FOURTH caller, flow.ts `resumeTurn`'s offer
+    row — `ATTACK_AGAIN_OFFERED` is filed only while this returns false], `attackLocked`'s
+    doctrine. The bag describes the TURN'S OWNER only, and every caller asks for that seat. */
+export function attackAgainBarred(
+  state: GameState,
+  seat: Seat,
+  active: InPlayPokemon,
+): boolean {
+  const uid = state.allowances.attackAgainUid;
+  if (uid === null) return false;
+  return topUid(active) !== uid || !attackAgainLicensed(state, seat, active);
+}
+
 /** §4/§8 (D281) — is the attack at `index` blocked RIGHT NOW by the printed
     timing clause on the card itself, and if so by which clause? Returns the
     blocking gate (so the §8 reject can name the printed condition through
@@ -8159,7 +8203,7 @@ export function applyStatus(
   // the same board; only the ROW differs. Reaching both at once would need a body
   // that carries an immunity AND has installed a §11 "prevent all … effects of
   // attacks" block on itself, and `preventDamage` only ever installs on the
-  // ATTACKER's own Active (an attack ends the turn, §5.3) — neither immune
+  // ATTACKER's own Active (an attack ends the turn [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which opens the attack-again window instead (flow.ts `finishAttack`); the window keeps `state.turn`, so no turn-stamp argument here moves], §5.3) — neither immune
   // printing has such an attack, and no card can install one on another body. So
   // this sits behind the older, broader gate: when the whole attack has been
   // refused, the attack-level row is the true one, and the per-condition row would
@@ -8389,7 +8433,7 @@ function preventRetreat(
     IT IS.** `preventAttack` one function down stamps `+ 1` on the DEFENDER and
     `+ 2` on itself, because "their next turn" and "your next turn" are one round
     apart; every printing of THIS sentence says *their*, so the window is the
-    seat that plays next (§5.3: an attack ends the turn and `turnTail` queues
+    seat that plays next (§5.3: an attack ends the turn [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which opens the attack-again window instead (flow.ts `finishAttack`); the window keeps `state.turn`, so no turn-stamp argument here moves] and `turnTail` queues
     `startTurn(otherSeat)`), which is `state.turn + 1` by construction.
 
     🛑 **NO `effectRefused` GATE, AND THAT IS A RULES DECISION RATHER THAN AN
@@ -8410,7 +8454,7 @@ function preventRetreat(
     compute the same `state.turn + 1`, so the second write is the value the first
     one left. The row is emitted each time, which is honest — two attacks really
     did print the sentence — and no board in this catalog can reach it (an attack
-    ends the turn), so an early return would be a line that cannot go red. */
+    ends the turn [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which opens the attack-again window instead (flow.ts `finishAttack`); the window keeps `state.turn`, so no turn-stamp argument here moves]), so an early return would be a line that cannot go red. */
 function preventHandPlay(
   state: GameState,
   bars: StampedPlayLockKey,
@@ -8436,7 +8480,7 @@ function preventHandPlay(
     op carries no `target` and there is nothing to choose, hence no park.
 
     THE STAMP IS `state.turn + 1`, AND THAT ARITHMETIC IS THE WHOLE DURATION.
-    Declaring an attack ENDS the turn (§5.3), so the turn after the installing one
+    Declaring an attack ENDS the turn [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which opens the attack-again window instead (flow.ts `finishAttack`); the window keeps `state.turn`, so no turn-stamp argument here moves] (§5.3), so the turn after the installing one
     is by construction the opponent's; the block is therefore live for exactly the
     window the card prints, is NOT live for the remainder of the installing turn
     (the printed word is "next"), and is dead again on the holder's following turn
@@ -8558,7 +8602,7 @@ function sameAttackerClass(a: AttackBlock["fromClass"], b: AttackBlock["fromClas
     ⚠️ THE STAMP IS DERIVED FROM THE HOLDER, AND THAT IS WHY `target` IS ONE AXIS.
     There is exactly ONE rule here — *the window is the locked Pokémon's
     controller's NEXT turn* — and the two numbers this function can write are that
-    rule evaluated on the two seats, because DECLARING AN ATTACK ENDS THE TURN
+    rule evaluated on the two seats, because DECLARING AN ATTACK ENDS THE TURN [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which opens the attack-again window instead (flow.ts `finishAttack`); the window keeps `state.turn`, so no turn-stamp argument here moves]
     (§5.3). The turn after the installing one belongs to the opponent, so the
     defender's next turn is `+ 1`; the one after THAT is the installer's own, so
     the self arm is `+ 2`. The printed wordings differ for the identical reason
@@ -8586,7 +8630,7 @@ function sameAttackerClass(a: AttackBlock["fromClass"], b: AttackBlock["fromClas
     the call `applyStatus` already made for its own two arms.
 
     IDEMPOTENT, and on the self arm that is by construction rather than by care:
-    installing needs an attack, an attack ends the turn, and a locked Pokémon
+    installing needs an attack, an attack ends the turn [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which opens the attack-again window instead (flow.ts `finishAttack`); the window keeps `state.turn`, so no turn-stamp argument here moves], and a locked Pokémon
     cannot declare the attack that would re-install. The DEFENDER arm makes the
     question live for the first time — two installers can lock one body — and the
     answer is that a later stamp is never an EARLIER turn than the one it replaces:
@@ -8657,7 +8701,7 @@ function flipLockAttack(state: GameState, ctx: EffectContext, events: GameEvent[
 
     THE WINDOW IS DERIVED FROM THE SIDE, `preventAttack`'s one rule: the locked side's
     controller's NEXT turn — `+ 2` on the installer's own side, `+ 1` on the opponent's
-    (§5.3: declaring an attack ends the turn).
+    (§5.3: declaring an attack ends the turn [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which opens the attack-again window instead (flow.ts `finishAttack`); the window keeps `state.turn`, so no turn-stamp argument here moves]).
 
     🛑 NO `effectRefused` GATE (docs/decisions.md D549 R5) — `preventHandPlay`'s rules
     argument: the object of this effect is a SIDE, not a Pokémon, so no "prevent all
@@ -8675,7 +8719,7 @@ function flipLockAttack(state: GameState, ctx: EffectContext, events: GameEvent[
     re-install that says nothing new is silent (`preventAttack`'s answer).
 
     A record for a DIFFERENT window is OVERWRITTEN, and that is SAFE rather than
-    convenient: an install happens only by ATTACKING, and an attack ENDS the turn it is
+    convenient: an install happens only by ATTACKING, and an attack ENDS the turn [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which opens the attack-again window instead (flow.ts `finishAttack`); the window keeps `state.turn`, so no turn-stamp argument here moves] it is
     declared on (§5.3). A live record's window is the CURRENT turn at most, so any
     install that overwrites it is on the turn that consumed it; and a record for a
     future window other than the new one cannot exist, because the only future windows
@@ -8961,7 +9005,7 @@ function addLockedAttack(
     that drives it, which is D150's rule.
 
     IDEMPOTENT, and here that is by construction exactly as D143's self arm was:
-    installing needs an attack, an attack ends the turn, and the window is the
+    installing needs an attack, an attack ends the turn [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which opens the attack-again window instead (flow.ts `finishAttack`); the window keeps `state.turn`, so no turn-stamp argument here moves], and the window is the
     holder's own next turn — on which the only attack that could re-install is the
     very one this record bars. So a second install of THIS op can never land on a
     live record of THIS op, and `addLockedAttack`'s early return covers the
@@ -8990,7 +9034,7 @@ function preventAttackUse(
   const attackIndex = printedAttackIndex(printed, attack);
   if (attackIndex < 0) return state;
   // The one rule, D143's: the window is the holder's own next turn, and declaring
-  // an attack ENDS the turn (§5.3), so the turn after this one is the opponent's
+  // an attack ENDS the turn [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which opens the attack-again window instead (flow.ts `finishAttack`); the window keeps `state.turn`, so no turn-stamp argument here moves] (§5.3), so the turn after this one is the opponent's
   // and the one after THAT is the holder's.
   // 🆕🆕 D421 — …and when the printed duration is "until it leaves the Active
   // Spot" there is no window to stamp, so the number recorded is the INSTALLING
@@ -9083,7 +9127,7 @@ function preventAttackUse(
     this record (~~three additive, one base-set~~ 🆕🆕🆕 D546: SIX — five additive, two
     of them ALL-ATTACKS, and one base-set — measured by deriving
     `legalAttackCorpus()`); the ground is the turn structure, not the count (an
-    attack ends the turn, and the window is the holder's own next turn),
+    attack ends the turn [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which opens the attack-again window instead (flow.ts `finishAttack`); the window keeps `state.turn`, so no turn-stamp argument here moves], and the window is the holder's own next turn),
     so it is constructed and pinned; the row is suppressed when the merge says
     nothing new (D142's idempotence answer).
 
@@ -9149,7 +9193,7 @@ function boostAttack(
   const attackIndex = attack === null ? null : printedAttackIndex(printed, attack);
   if (attackIndex !== null && attackIndex < 0) return state;
   // The one rule, D143's and D154's: the window is the holder's own next turn, and
-  // declaring an attack ENDS the turn (§5.3), so the turn after this one is the
+  // declaring an attack ENDS the turn [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which opens the attack-again window instead (flow.ts `finishAttack`); the window keeps `state.turn`, so no turn-stamp argument here moves] (§5.3), so the turn after this one is the
   // opponent's and the one after THAT is the holder's.
   // 🆕🆕🆕 D563 — …unless the op prints "during this turn" (`thisTurn`): then it is NOW.
   const turn = thisTurn === true ? state.turn : state.turn + 2;
@@ -9241,7 +9285,7 @@ function boostAttack(
 
     THE STAMP IS `state.turn + 1` — D142/D148's number. One rule (the window is
     the LOCKED Pokémon's controller's next turn) on the other seat: declaring an
-    attack ENDS the turn (§5.3), so the turn after this one belongs to the victim.
+    attack ENDS the turn [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which opens the attack-again window instead (flow.ts `finishAttack`); the window keeps `state.turn`, so no turn-stamp argument here moves] (§5.3), so the turn after this one belongs to the victim.
 
     ⚠️ THE ENDINGS ARE `parkOrForce`'s THREE, ON A CANDIDATE SET THAT IS NOT A
     LIST OF POKÉMON — which is why they are spelled here rather than routed
@@ -9327,7 +9371,7 @@ function lockDefenderAttack(
   const row = printed[attackIndex];
   if (row === undefined) return state;
   // The one rule, D142/D148's: the window is the LOCKED Pokémon's controller's
-  // next turn, and declaring an attack ENDS the turn (§5.3), so the turn after
+  // next turn, and declaring an attack ENDS the turn [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which opens the attack-again window instead (flow.ts `finishAttack`); the window keeps `state.turn`, so no turn-stamp argument here moves] (§5.3), so the turn after
   // this one is the victim's.
   const turn = state.turn + 1;
   const locks = addLockedAttack(active.lockedAttacks, state.turn, turn, attackIndex);
@@ -9352,7 +9396,7 @@ function lockDefenderAttack(
 
     THE STAMP IS `state.turn + 1` FOR `preventDamage`'s REASON VERBATIM — the
     sentence prints "during your OPPONENT's next turn", declaring an attack ENDS
-    the turn (§5.3), so the turn after the installing one is the opponent's by
+    the turn [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which opens the attack-again window instead (flow.ts `finishAttack`); the window keeps `state.turn`, so no turn-stamp argument here moves] (§5.3), so the turn after the installing one is the opponent's by
     construction. It is the same NUMBER `attackBlock.turn` carries, which is why
     the two windows can be driven apart only by what they DO, never by when.
 
@@ -9365,7 +9409,7 @@ function lockDefenderAttack(
     passive with an attached Tool — but this field holds ONE installation with ONE
     window, so summing would make the stored number depend on how many times the
     record was written rather than on what was printed. Unreachable off any
-    printing (one attack per turn, and no card prints two of these), so it is
+    printing (one attack per turn [🆕🆕🆕 D570 (D539): two in one turn are possible under Festival Lead with Festival Grounds in play, but its four attacks (Do the Wave, Whirlpool, Sneaky Placement, Rapid Draw) install nothing, so this stays unreachable], and no card prints two of these), so it is
     constructed and pinned; the day a printing installs this on the DEFENDER, the
     field becomes a list and the sum becomes the live question.
 
@@ -9399,7 +9443,7 @@ function reduceDamage(
 
     THE STAMP IS `state.turn + 1` FOR `reduceDamage`'s REASON VERBATIM — the
     sentence prints "during your OPPONENT's next turn", declaring an attack ENDS
-    the turn (§5.3), so the turn after the installing one is the opponent's by
+    the turn [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which opens the attack-again window instead (flow.ts `finishAttack`); the window keeps `state.turn`, so no turn-stamp argument here moves] (§5.3), so the turn after the installing one is the opponent's by
     construction.
 
     ⚠️ IDEMPOTENT **BY THE STAMP**, WHICH IS `retreatLockedTurn`'s ANSWER AND NOT
@@ -9409,7 +9453,7 @@ function reduceDamage(
     the first one left. The early return is what suppresses the duplicate ROW —
     announcing a re-install that changed nothing would be announcing a non-event
     (D140/D146), the same rule `reduceDamage` states one function up. Unreachable
-    off any printing (one attack per turn, and no card prints two of these), so it
+    off any printing (one attack per turn [🆕🆕🆕 D570 (D539): two in one turn are possible under Festival Lead with Festival Grounds in play, but its four attacks (Do the Wave, Whirlpool, Sneaky Placement, Rapid Draw) install nothing, so this stays unreachable], and no card prints two of these), so it
     is constructed and pinned.
 
     ⚠️ NO `attackEffectRefused` CHECK, AND THAT IS `reduceDamage`'s AND
@@ -9450,7 +9494,7 @@ function installNoWeakness(state: GameState, ctx: EffectContext, events: GameEve
 
     THE STAMP IS `state.turn + 1`, AND HERE THE ARITHMETIC AND THE HOLDER COME
     FROM TWO DIFFERENT PRECEDENTS. The printed words are "during your OPPONENT's
-    next turn" and declaring an attack ENDS the turn (§5.3), so the turn after the
+    next turn" and declaring an attack ENDS the turn [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which opens the attack-again window instead (flow.ts `finishAttack`); the window keeps `state.turn`, so no turn-stamp argument here moves] (§5.3), so the turn after the
     installing one is the opponent's — D142's number verbatim. But the body is the
     OPPONENT's, which is D148's `target: "defender"` arm. The two agree here for
     the reason D148 wrote down: the window is always the HOLDER's controller's
@@ -9473,7 +9517,7 @@ function installNoWeakness(state: GameState, ctx: EffectContext, events: GameEve
     the other reading and is refused for the same reason: this field holds ONE
     installation with ONE window, so summing would make the stored number depend
     on how many times the record was written rather than on what was printed.
-    Unreachable off any printing (one attack per turn, and the two installs would
+    Unreachable off any printing (one attack per turn [🆕🆕🆕 D570 (D539): two in one turn are possible under Festival Lead with Festival Grounds in play, but its four attacks (Do the Wave, Whirlpool, Sneaky Placement, Rapid Draw) install nothing, so this stays unreachable], and the two installs would
     have to land on the same turn), so it is constructed and pinned. The row is
     suppressed when the merge says nothing new (D142's idempotence answer). */
 function weakenDefenderAttacks(
@@ -9508,7 +9552,7 @@ function weakenDefenderAttacks(
     suppressed no-news row — with ONE number changed and it is the whole reading:
 
     ⚠️ THE STAMP IS `state.turn + 2`, NOT `+ 1`. The printed window is "During YOUR
-    next turn" — the INSTALLER's — and declaring an attack ends the turn (§5.3), so
+    next turn" — the INSTALLER's — and declaring an attack ends the turn [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which opens the attack-again window instead (flow.ts `finishAttack`); the window keeps `state.turn`, so no turn-stamp argument here moves] (§5.3), so
     the turn after this one is the holder's and the one after THAT is the
     installer's. D143/D155/D544/D546 wrote the same `+ 2` for the installer's next
     turn; the difference here is only that the body written to is the opponent's.
@@ -9663,7 +9707,7 @@ function bountyDefender(
     an appointment.
 
     THE STAMP IS `state.turn + 1` FOR `weakenDefenderAttacks`' REASON VERBATIM — the
-    sentence prints *"your opponent's next turn"*, declaring an attack ENDS the turn
+    sentence prints *"your opponent's next turn"*, declaring an attack ENDS the turn [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which opens the attack-again window instead (flow.ts `finishAttack`); the window keeps `state.turn`, so no turn-stamp argument here moves]
     (§5.3), so the turn after the installing one is the opponent's by construction.
     `runCheckup` compares it to `state.turn` as it stands, and the Checkup runs
     BEFORE `startTurn` increments (flow.ts `knockOut`'s note), so the stamped turn is
@@ -9841,7 +9885,7 @@ function sameSchedule(a: ScheduledEffect, b: ScheduledEffect): boolean {
 
     THE STAMP IS `state.turn + 1` FOR `reduceDamage`'s REASON VERBATIM — the
     sentence prints "during your OPPONENT's next turn", declaring an attack ENDS
-    the turn (§5.3), so the turn after the installing one is the opponent's by
+    the turn [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which opens the attack-again window instead (flow.ts `finishAttack`); the window keeps `state.turn`, so no turn-stamp argument here moves] (§5.3), so the turn after the installing one is the opponent's by
     construction. It is the same NUMBER `attackBlock.turn` and `damageReduction.turn`
     carry, which is why these windows can be driven apart only by what they DO.
 
@@ -9861,7 +9905,7 @@ function sameSchedule(a: ScheduledEffect, b: ScheduledEffect): boolean {
     §9 read site really does SUM this stamp with `passivesOf`'s catalog fold,
     because those are two different card effects from two different sources. One
     field, one installation, MAX; two sources, SUM.) Unreachable off any printing
-    (one attack per turn, and no card prints two of these), so it is constructed
+    (one attack per turn [🆕🆕🆕 D570 (D539): two in one turn are possible under Festival Lead with Festival Grounds in play, but its four attacks (Do the Wave, Whirlpool, Sneaky Placement, Rapid Draw) install nothing, so this stays unreachable], and no card prints two of these), so it is constructed
     and pinned. The row is suppressed when the merge says nothing new, exactly as
     the two above (D140/D142/D146). */
 function installRecoil(
@@ -16002,7 +16046,7 @@ export function switchInto(
   // and it is the one D143's story called the holder's: the window is the victim's
   // own turn, so the victim Switches out of it and attacks with whatever comes up.
   // The installer cannot use this path at all — their turn ended when they
-  // declared. FOUR durated effects, FOUR reachability stories, one clear, and the
+  // declared [🆕🆕🆕 D570 (D539): a FIRST attack under Festival Lead opens the attack-again window instead, but its four attacks (Do the Wave, Whirlpool, Sneaky Placement, Rapid Draw) install nothing, so this stays true on every printing]. FOUR durated effects, FOUR reachability stories, one clear, and the
   // set is swept rather than listed (attackLock.test.ts) precisely because this
   // literal is one of three that have to agree with nothing making them.
   const benched = {

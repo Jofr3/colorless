@@ -44,6 +44,7 @@ import {
 //   8  BUILT   "…attach a Basic {G} Energy card from your hand to this Pokémon…draw a card."
 //   7  BUILT   "If this Pokémon has full HP and would be Knocked Out…HP becomes 10."
 //   7  UNBUILT "If Festival Grounds is in play, this Pokémon may use an attack it has twice…"
+//        (🆕🆕🆕 D570 (D539): BUILT — Festival Lead ×7, `FESTIVAL_LEAD`, festivalLeadD570.test.ts)
 //   6  UNBUILT "When you play this Pokémon from your hand onto your Bench…move any amount…"
 //   6  UNBUILT "This Pokémon can't attack unless you have 4 or more Team Rocket's Pokémon in play."
 //   6  BUILT   "Damage from attacks used by this Pokémon isn't affected by any effects…"
@@ -65,6 +66,9 @@ import {
 //   • **The biggest UNBUILT ability group is SEVEN, not six** — Festival Grounds
 //     (`sv06-018`/`-044`/`-089`/`-170`/`sv08.5-010`/`-020`/`-021`), which the row
 //     does not mention at all.
+//     (🆕🆕🆕 D570 (D539): a D242 snapshot — that SEVEN is BUILT since D570 (Festival Lead,
+//     `FESTIVAL_LEAD`); it is no longer an unbuilt group, so "the biggest UNBUILT ability group
+//     is SEVEN" is WITHDRAWN as a present-tense claim. The superlative lesson stands.)
 //   • **There are FOUR six-printing unbuilt groups, not three** — the row names
 //     three of them and silently drops "Attacks used by your **Future** Pokémon …
 //     do 20 more damage" (`svp-146`/…).

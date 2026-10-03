@@ -13,7 +13,7 @@ import {
 } from "./continuous";
 import type { GameEvent } from "./events";
 import type { RunResult } from "./interpreter";
-import { discardHand, doomBodyAt, runProgram } from "./interpreter";
+import { attackAgainBarred, attackAgainLicensed, discardHand, doomBodyAt, runProgram } from "./interpreter";
 import type { KoPrizeReduction } from "./registry";
 import { programFor } from "./registry";
 import { flipCoin } from "./rng";
@@ -204,7 +204,7 @@ export function knockOut(
 
     ⚠️ **THE THREE CALLERS DIFFER ONLY IN THE TAIL THEY SPLICE IN FRONT OF**, which is
     what D312 said and what the hoist preserves: `resumeTurn` where the actor keeps
-    playing, `turnTail` where §8.1's promotion is owed before the turn ends, and — at
+    playing, `turnTail` where §8.1's promotion is owed before the turn ends [🆕🆕🆕 D570 (D539): on the attack site, except a FIRST attack under Festival Lead with Festival Grounds in play — `finishAttack`'s window exit splices the same stages in front of `resumeTurn` instead, the promotion still owed first], and — at
     the Checkup — the queue that was already pending, because the promotion is owed
     before the NEXT player's turn starts and a board handed over with an empty Active
     Spot is exactly what §8.1 forbids. */
@@ -1084,7 +1084,7 @@ function planPrizes(
     an evolve that drops a charmed Basic below its new stage's HP (§8.1, a
     Bravery Charm's Basic-only bonus falling off), or a future spread/snipe
     ability. Resolve every KO on `seats`, then RESUME the actor's turn: unlike
-    an attack KO (ends the turn) or a Checkup KO (between turns), the actor
+    an attack KO (ends the turn [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which opens the attack-again window instead (flow.ts `finishAttack`); the window keeps `state.turn`, so no turn-stamp argument here moves]) or a Checkup KO (between turns), the actor
     keeps playing once the KO's prize/promotion decisions settle. Allowances
     live on GameState, so they survive the interrupt untouched. A KO that hands
     the actor's last Pokémon to the opponent — or that takes the opponent's
@@ -1167,7 +1167,7 @@ export function resolveMidTurnKnockOuts(
     the attack on itself — prizes to each KO'd side's opponent, re-read off the
     state since the effect ops replace the Pokémon objects. Then end
     `attackerSeat`'s turn through the staged tail, the KO's decision stages in
-    front of it.
+    front of it [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play — `finishAttack` then queues `resumeTurn` (the attack-again window) in place of the turn tail].
 
     **The sweep is [defender, attacker] ORDER, and that order is §8.1.** When an
     attack KOs both the Defending Pokémon and the attacker itself at once, "the
@@ -1328,6 +1328,8 @@ export function finishAttack(
   // `turnTail` is queued below — and it stays the attacking turn across a Knock Out
   // PARK, since the prize/promotion stages are spliced in FRONT of that tail and
   // hold the counter at the ending turn's value for the whole interrupt.
+  // [🆕🆕🆕 D570 (D539, third review): on Festival Lead's window exit they are spliced in
+  // front of `resumeTurn` instead — no `endTurn` runs, so the counter holds just the same.]
   let next = stampAttackUse(state, attackerSeat, attackerUid, attackName);
   const koRecoil = koRecoilOf(next, otherSeat(attackerSeat));
   const recoiled = koRecoil > 0 ? addDamageByUid(next, attackerSeat, attackerUid, koRecoil) : null;
@@ -1378,7 +1380,7 @@ export function finishAttack(
   // and the difference is what makes this one correct: D311's stages sit in front
   // of `{kind:"resumeTurn"}` because the actor keeps playing, and these sit in
   // front of `turnTail(attackerSeat)` because §8.1's promotion is owed BEFORE the
-  // turn ends — a player does not hand over a board with an empty Active Spot.
+  // turn ends [🆕🆕🆕 D570 (D539): on the attack site, except a FIRST attack under Festival Lead with Festival Grounds in play — `finishAttack`'s window exit splices the same stages in front of `resumeTurn` instead, the promotion still owed first] — a player does not hand over a board with an empty Active Spot.
   //
   // ⚠️ **AND THE SEATS ARE THE SWEEP'S OWN SEATS**, `[defender, attacker]`, for
   // `resolveMidTurnKnockOuts`' reason verbatim: only the attacker's board can be
@@ -1397,7 +1399,41 @@ export function finishAttack(
     [otherSeat(attackerSeat), attackerSeat],
     batch.stages,
   );
-  // §5.3 — attacking ends the turn, through the same staged tail as a pass.
+  // 🆕🆕🆕 §5.3/§8 (D570) — FESTIVAL LEAD'S ATTACK-AGAIN WINDOW, the one exit from this
+  // function that does NOT end the turn. *"If Festival Grounds is in play, this Pokémon may
+  // use an attack it has twice. If the first attack Knocks Out your opponent's Active
+  // Pokémon, you may attack again after your opponent chooses a new Active Pokémon."*
+  // Opens only on the FIRST attack of the turn (`attackAgainUid` still `null` — on the
+  // second finish it is non-null and this falls through to `turnTail`: no third attack,
+  // R-FL4), only for an attacker STILL in its Active Spot on the swept board (a recoil KO,
+  // a self-switch or a self-shuffle forfeits it), and only while the licence holds
+  // (R-FL2's first read: the Ability unlocked, Festival Grounds in play). The KO's stages
+  // and the orphaned promotions stay in FRONT, exactly as they are in front of `turnTail`
+  // below — the opponent promotes first, then `resumeTurn` hands turn:action back
+  // (R-FL4: no Checkup between the attacks). The window is the allowance; turn.ts
+  // `turnGate` narrows the turn to `attack` / `endTurn` while it is open (R-FL1).
+  const swept = batch.state.players[attackerSeat].active;
+  if (
+    batch.state.allowances.attackAgainUid === null &&
+    swept !== null &&
+    topUid(swept) === attackerUid &&
+    attackAgainLicensed(batch.state, attackerSeat, swept)
+  ) {
+    const windowed: GameState = {
+      ...batch.state,
+      allowances: { ...batch.state.allowances, attackAgainUid: attackerUid },
+    };
+    return advance(
+      {
+        ...windowed,
+        pending: [...batch.stages, ...orphaned, { kind: "resumeTurn", seat: attackerSeat }, ...batch.state.pending],
+      },
+      events,
+    );
+  }
+  // §5.3 — attacking ends the turn [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which opens the attack-again window instead (flow.ts `finishAttack`); the window keeps `state.turn`, so no turn-stamp argument here moves], through the same staged tail as a pass.
+  // 🆕🆕🆕 D570 CORRECTION (D539) — "attacking ends the turn" is true except for the FIRST
+  // attack under Festival Lead, which opens the window above instead.
   // COMPOSES with whatever is still queued rather than overwriting it: both
   // callers hand over an empty queue (turn:action never carries a tail, and the
   // attackEpilogue case pops its own stage first), so this is behaviour-identical
@@ -1439,7 +1475,8 @@ export function finishAttack(
     • an on-KO triggered Ability (runKoTrigger) — the sweep's prize/promotion
       stages are queued behind the koTrigger;
     • an ATTACK's effect program (attack.ts, §8 step 4) — the attackEpilogue
-      stage is queued behind it, and draining it runs the KO sweep + turn end.
+      stage is queued behind it, and draining it runs the KO sweep + turn end
+      [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play — `finishAttack` then queues `resumeTurn` (the attack-again window) in place of the turn tail].
     Neither wants the mid-turn KO sweep below: the on-KO program does not damage,
     and an attack's KOs are the epilogue's own job — its sweep reads the
     POST-effect board and now covers BOTH seats, so a spread that KOs the defender
@@ -1574,7 +1611,8 @@ function runKoTrigger(
     PARKING discard PARKS on effect:choose (the DEFENDER decides which of the
     attacker's Energy) and draining RESUMES the attackEpilogue queued behind it —
     which then sweeps §8.1 (so "even if this Pokémon is Knocked Out" holds: the
-    reaction lands before the sweep) and ends the attacker's turn. `damagedSeat`
+    reaction lands before the sweep) and ends the attacker's turn
+    [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play — `finishAttack` then queues `resumeTurn` (the attack-again window) in place of the turn tail]. `damagedSeat`
     being the controller makes it the answerer by default (no `decider`), exactly
     as runKoTrigger routes a KO'd player's on-KO decision; the projection reads the
     real turn owner off the attackEpilogue in `pending` (koParkActiveSeat). A stage
@@ -2249,7 +2287,10 @@ function copyOutcome(outcome: GameOutcome): GameOutcome {
 /** The staged end-of-turn tail every way of ending `seat`'s turn seeds
     (§5.3): TURN_ENDED, the between-turns checkup (which carries the ended
     seat — §13.4 paralysis recovery keys on it), the opponent's turn start.
-    attack.ts puts its KO stages in FRONT of this tail. */
+    attack.ts puts its KO stages in FRONT of this tail [🆕🆕🆕 D570 (D539, third review):
+    except a FIRST attack under Festival Lead with Festival Grounds in play —
+    `finishAttack`'s window exit puts them in front of `resumeTurn` instead, and this
+    tail is not seeded until the turn really ends]. */
 export function turnTail(seat: Seat): PendingStage[] {
   return [
     { kind: "endTurn", seat },
@@ -2459,15 +2500,39 @@ export function advance(state: GameState, events: GameEvent[]): ApplyResult {
       // runCheckup pops the stage itself: its KO stage-pairs go in front of
       // the remainder, and a double-KO tie ends the game outright.
       return runCheckup(state, stage.seat, events);
-    case "resumeTurn":
+    case "resumeTurn": {
       // A mid-turn KO (evolve-below-HP, a snipe ability) has resolved: hand the
       // turn BACK to the actor rather than ending it. Allowances live on
       // GameState, untouched by the KO flow, so the actor resumes exactly where
       // they were. Always the last stage, so popping leaves an empty queue.
+      // 🆕🆕🆕 D570 — …and Festival Lead's attack-again window (`finishAttack`): the
+      // allowance is non-null ONLY there (in the window only `attack`/`endTurn` are legal,
+      // and neither queues this stage), so the offer is announced HERE, the moment
+      // turn:action actually comes back — a first attack that takes the last Prize ends
+      // the game at its `takePrizes` stage and never reaches this line, so no row offers a
+      // second attack in a game that is over.
+      // 🆕 D570 REVIEW — and only while the second declaration is NOT barred: the window can
+      // be open with its licence already lost by the time turn:action comes back (the KO's
+      // promotion put an opposing Flutter Mane in the Active Spot, so Midnight Fluttering
+      // silences Festival Lead), and the row's own doc says *"may declare a SECOND attack"*.
+      // `attackAgainBarred` is the same re-read attack.ts gates the declaration on (R-FL2).
+      const offerActive = state.players[stage.seat].active;
+      if (
+        state.allowances.attackAgainUid !== null &&
+        offerActive !== null &&
+        !attackAgainBarred(state, stage.seat, offerActive)
+      ) {
+        events.push({
+          type: "ATTACK_AGAIN_OFFERED",
+          seat: stage.seat,
+          uid: state.allowances.attackAgainUid,
+        });
+      }
       return ok(
         { ...popStage(state), phase: { kind: "turn:action", seat: stage.seat } },
         events,
       );
+    }
     case "koTrigger":
       // §9 (M4) — the just-Knocked-Out Pokémon's on-KO Ability. Pop the stage
       // first so the prize/promotion stages behind it are what resumes if the
@@ -2482,7 +2547,7 @@ export function advance(state: GameState, events: GameEvent[]): ApplyResult {
       // §9 — the damaged Active's reactive onDamagedByAttack Ability (Klawf ex's
       // parking Energy discard, Armarouge's Burn). Pop first so the attackEpilogue
       // behind it is what resumes if the program parks (resume-the-tail); a done
-      // program just keeps draining into the sweep + turn end.
+      // program just keeps draining into the sweep + turn end [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play — `finishAttack` then queues `resumeTurn` (the attack-again window) in place of the turn tail].
       return runDamagedTrigger(popStage(state), stage.seat, stage.uid, events);
     case "koToolTrigger":
       // §8.1 (D171) — a Pokémon TOOL on the DEFENDER's surviving board reacting to
@@ -2494,7 +2559,8 @@ export function advance(state: GameState, events: GameEvent[]): ApplyResult {
     case "attackEpilogue":
       // §8 step 4 has finished (the effect program ran to completion, possibly
       // across one or more parks): sweep BOTH boards (a spread that KO'd the
-      // defender, a recoil that KO'd the attacker) and end the attacker's turn.
+      // defender, a recoil that KO'd the attacker) and end the attacker's turn
+      // [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play — `finishAttack` then queues `resumeTurn` (the attack-again window) in place of the turn tail].
       // The pop is REQUIRED — finishAttack composes with what is still queued, so
       // leaving this stage on would re-queue the epilogue behind the turn tail and
       // run the whole attack ending a second time.

@@ -51,7 +51,7 @@ import {
 //     at attack.ts's TAIL (D125), so "230 damage, then discard 5 of your own"
 //     resolves in the printed order for free — asserted rather than assumed.
 //   • §14.3 IS STILL A DRAW-STEP RULE, on the direction that is new. An OPPONENT
-//     mill-out loses in the same event batch (attacking ends the turn, so their turn
+//     mill-out loses in the same event batch (attacking ends the turn [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which no board here builds], so their turn
 //     starts here); a SELF mill-out loses A FULL TURN LATER, and that asymmetry is
 //     entirely in the rule rather than in the op.
 //   • NO RNG, NO PARK, NO REGISTRY ROW.
@@ -198,7 +198,7 @@ const NIBBLE_MILL = 1;
 const SPLASH_MILL = 5;
 const SPLASH_DAMAGE = 230;
 
-/** ATTACKING ENDS THE TURN (§5.3), so the OPPONENT's turn starts inside the same
+/** ATTACKING ENDS THE TURN [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which no board here builds] (§5.3), so the OPPONENT's turn starts inside the same
     event batch and they DRAW — one more card off the very deck an opponent-side mill
     just shortened. Named rather than folded into the numbers, because it is the one
     thing that makes "P2's deck is 1 shorter" mean two different things depending on
@@ -685,7 +685,7 @@ describe("the deck's edge — clamped, silent at zero, and §14.3 owed to the DR
 
   it("an OPPONENT mill-out loses at THEIR draw — inside this same batch", () => {
     // §14.3 is a turn-START rule. Milling to zero does not end the game; the loss
-    // happens when the milled player must DRAW and cannot. Attacking ends the turn
+    // happens when the milled player must DRAW and cannot. Attacking ends the turn [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which no board here builds]
     // (§5.3), so P2's next turn starts inside this batch and the row really does
     // arrive here — which makes the claim about WHERE it sits, not whether it exists.
     const state = trimDeckTo(skwovetActive(board(), "p1"), "p2", NIBBLE_MILL);
@@ -754,7 +754,7 @@ describe("what the mill costs the rest of the engine — nothing", () => {
 
   it("never PARKS — the attack resolves to an ordinary action phase", () => {
     // No choice in "the top N", so no prompt and no continuation. The turn simply
-    // ends, which is what every non-parking attack does.
+    // ends [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which no board here builds], which is what every non-parking attack does.
     const { state: done } = mustApply(skwovetActive(board(), "p1"), {
       type: "attack",
       seat: "p1",

@@ -495,7 +495,7 @@ describe("§4 — no boost without damage or on the Bench; the Active snipe pays
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("§5 — `:76`: both Actives fall Asleep, and the holder may sleep through its window", () => {
-  /** Lullaby declared from a chosen rng cursor. The attack ENDS the turn, so the first
+  /** Lullaby declared from a chosen rng cursor. The attack ENDS the turn [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which no board here builds], so the first
       Pokémon Checkup (both Actives flip, §13.3) runs inside this action; the cursor
       is set BEFORE it because Lullaby itself flips nothing. */
   function lulled(rngState?: number) {
@@ -780,6 +780,6 @@ describe("§9 — `MATCH_RECORD_VERSION` STAYS 30: the null value round-trips, a
       revived.turn !== turn || revived.attackIndex !== index ? 0 : revived.amount;
     for (const i of [REV_UP, STRIKE, SWIPE, REST, PICK_OFF, SPRAY]) expect(v30Reader(i, 5)).toBe(0);
     // …and the version is a widening, not a bump.
-    expect(engineVersion).toBe("0.453.0");
+    expect(engineVersion).toBe("0.454.0");
   });
 });

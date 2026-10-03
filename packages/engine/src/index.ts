@@ -435,7 +435,7 @@ import type { GameState, Seat } from "./types";
     under the DAMAGED seat — so, exactly like an on-KO trigger, the DEFENDER is the
     answerer (no `decider`/`answerer` needed), the attacker still owns the turn
     (koParkActiveSeat reads the attackEpilogue behind the park), and finishAttack's
-    §8.1 sweep + turn end resume after the pick ("even if Knocked Out" stays free;
+    §8.1 sweep + turn end [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play — `finishAttack` then queues `resumeTurn` (the attack-again window) in place of the turn tail] resume after the pick ("even if Knocked Out" stays free;
     Klawf ex prizes 2). triggers.ts `runDamagedByAttackTriggers` (the D99 inline
     runner) became the `damagedByAttackAbility` gated lookup. Armarouge's Burn
     (non-parking) rides the same staged path, byte-identical. No web/API/DB/schema
@@ -1006,7 +1006,7 @@ import type { GameState, Seat } from "./types";
     AFTER the §8.5 damage pipeline, and no op can retract damage already dealt. A
     cancel must be evaluated in FRONT of the pipeline, so it is not a program at
     all — it is a gate, and the gate the engine already had for exactly this
-    ("no damage, no effects, the turn still ends") is the §8 step-3 CONFUSION
+    ("no damage, no effects, the turn still ends [🆕🆕🆕 D570 (D539): or, after a FIRST attack under Festival Lead with Festival Grounds in play, the attack-again window opens instead (flow.ts `finishAttack`) — a failed or cancelled attack is still an attack that was USED]") is the §8 step-3 CONFUSION
     path. D125 is that path minus the self-damage: `ATTACK_FAILED` then
     `finishAttack`. GENERALISATION: derived-text shapes are separated by WHERE IN
     RESOLUTION THEY LAND, not by how their sentence reads — a shape that must run
@@ -1085,7 +1085,7 @@ import type { GameState, Seat } from "./types";
     damage already dealt — so a flip that GATES damage must run in front of the
     pipeline, at the same site as §8's confusion flip. The tails branch reuses
     D125's ending exactly (`ATTACK_FAILED` → `finishAttack`, so the turn still
-    ends), and the block sits AFTER the D125 requirement gate so a
+    ends [🆕🆕🆕 D570 (D539): or, after a FIRST attack under Festival Lead with Festival Grounds in play, the attack-again window opens instead (flow.ts `finishAttack`) — a failed or cancelled attack is still an attack that was USED]), and the block sits AFTER the D125 requirement gate so a
     already-cancelled attack never burns an rngState step. (No pool printing
     carries both, so that order is a rules reading, not a pinned behaviour.)
 
@@ -1336,7 +1336,7 @@ import type { GameState, Seat } from "./types";
     §14.3 DECK-OUT IS A TURN-START RULE AND THE MILL DOES NOT TOUCH IT. Milling a
     deck to zero does not end the game: the milled player loses when they must DRAW
     and cannot (flow.ts `startTurn`), exactly as a short `drawCards` short-draws
-    rather than losing. Attacking ends the turn, so the loss does arrive in the same
+    rather than losing. Attacking ends the turn [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which opens the attack-again window instead (flow.ts `finishAttack`); the window keeps `state.turn`, so no turn-stamp argument here moves], so the loss does arrive in the same
     event batch — AFTER TURN_ENDED and TURN_STARTED, with reason "deckOut", which is
     what the clamp cases pin.
 
@@ -1408,7 +1408,7 @@ import type { GameState, Seat } from "./types";
     printings mill their OWN deck for damage (Haxorus 230 for 3 cards, Tyranitar 230
     for 4), so the op can now empty the ATTACKER's deck — and the deck-out rule is
     unchanged by that: the loss is owed at that player's next draw step (flow.ts
-    `startTurn`), not the instant the deck runs dry. Attacking ends the turn, so an
+    `startTurn`), not the instant the deck runs dry. Attacking ends the turn [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which opens the attack-again window instead (flow.ts `finishAttack`); the window keeps `state.turn`, so no turn-stamp argument here moves], so an
     opponent-mill-out surfaces in the same event batch and a self-mill-out surfaces a
     full turn later. Both are pinned.
 
@@ -1621,7 +1621,7 @@ import type { GameState, Seat } from "./types";
     self-discard cost) already park from an attack tail, through the same
     `settleProgram(..., { resumeTail: true })` trainers use minus the flag. The park
     writes an `effect:choose` phase and LEAVES `attackEpilogue` on `state.pending`, so
-    the KO sweep, the prizes and §5.3's turn end all wait for the choice and then run
+    the KO sweep, the prizes and §5.3's turn end [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play — `finishAttack` then queues `resumeTurn` (the attack-again window) in place of the turn tail] all wait for the choice and then run
     in order. ZERO attack.ts / flow.ts / cardplay.ts diff. The generalisation is about
     the NOTE rather than the code: A FORECAST OF COST IS NOT A MEASUREMENT OF IT — the
     note was written by a slice that never looked, carried forward verbatim three
@@ -2125,7 +2125,7 @@ import type { GameState, Seat } from "./types";
     INSTALLER's own**, so the first Checkup after the attack has `endedSeat` = the
     holder's seat and that clock lifts the block a full turn EARLY, before its
     window has opened at all. `InPlayPokemon.attackBlock: { turn, effects } |
-    null` stamps `state.turn + 1` — an attack ENDS the turn (§5.3), so the next
+    null` stamps `state.turn + 1` — an attack ENDS the turn [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which opens the attack-again window instead (flow.ts `finishAttack`); the window keeps `state.turn`, so no turn-stamp argument here moves] (§5.3), so the next
     turn is the opponent's by construction — and expires by arithmetic with
     nothing anywhere to clear it. **Measured: reusing the paralysis clock fails 12
     tests; stamping the installing turn instead of the next one fails the same
@@ -2162,7 +2162,7 @@ import type { GameState, Seat } from "./types";
     field (`clearOnLeavingActive`, `switchInto`, `placeEvolution`). For the retreat
     block the switch clear was the observable one and the evolve clear reachable;
     here the EVOLVE clear is **unreachable by construction** (installing ends the
-    turn, the window is the opponent's, and nobody evolves on someone else's turn)
+    turn [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which opens the attack-again window instead; its four attacks install nothing, and only `attack` / `endTurn` are legal in the window (R-FL1), so nobody evolves in it], the window is the opponent's, and nobody evolves on someone else's turn)
     and is written anyway with a surgery pinning it — while the SWITCH clear is
     reachable in the sharpest possible way: a Boss's Orders played INSIDE the
     window drags the shielded body off the spot and the protection goes with it,
@@ -2209,7 +2209,7 @@ import type { GameState, Seat } from "./types";
     `During your opponent's next turn` and this sentence says *your*.
 
     ⚠️ THE STAMP IS `state.turn + 2`, VERIFIED BY DRIVING IT RATHER THAN BY
-    ARGUING IT, and it is the whole slice. Declaring an attack ENDS the turn
+    ARGUING IT, and it is the whole slice. Declaring an attack ENDS the turn [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which opens the attack-again window instead (flow.ts `finishAttack`); the window keeps `state.turn`, so no turn-stamp argument here moves]
     (§5.3), so the turn after the installing one belongs to the OPPONENT and the
     one after that is the installer's own: D142's block prints "during your
     OPPONENT's next turn" and stamps `+ 1`, this prints "during YOUR next turn"
@@ -2798,7 +2798,7 @@ import type { GameState, Seat } from "./types";
     field is two axes rather than one". Both numbers are real. They are **not
     independent**: there is exactly ONE rule — *the window is the LOCKED Pokémon's
     controller's NEXT turn* — and the two numbers are that rule evaluated on the
-    two seats, because DECLARING AN ATTACK ENDS THE TURN (§5.3). The printed
+    two seats, because DECLARING AN ATTACK ENDS THE TURN [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which opens the attack-again window instead (flow.ts `finishAttack`); the window keeps `state.turn`, so no turn-stamp argument here moves] (§5.3). The printed
     wordings differ ("during YOUR next turn" / "during your OPPONENT's next
     turn") for exactly the same reason, which is the tell. So the stamp is a pure
     FUNCTION of the holder, one field determines both, and D131's widen-don't-add
@@ -4063,7 +4063,7 @@ import type { GameState, Seat } from "./types";
     Two second-order behaviours of the `×` fold are INHERITED and now DRIVEN rather
     than discovered later: at zero counters `scaledBase + scaledTotal` is 0, so
     `attack.ts` skips the §8.5 pipeline and **no `DAMAGE_DEALT` is emitted at all**
-    (rules-correct — the attack does 0 damage, and the turn still ends); and the log
+    (rules-correct — the attack does 0 damage, and the turn still ends [🆕🆕🆕 D570 (D539): or, after a FIRST attack under Festival Lead with Festival Grounds in play, the attack-again window opens instead (flow.ts `finishAttack`) — a failed or cancelled attack is still an attack that was USED]); and the log
     crumb renders the entire damage as ` · scaled +N` off `base 0`, as every
     existing member of this fold already does.
 
@@ -5681,7 +5681,7 @@ import type { GameState, Seat } from "./types";
     HAS A FAILURE THE HAND-BUILT SUITE CANNOT SEE.** An attack is USED whether or
     not its optional rider fires, so a decline that dropped the queued
     `attackEpilogue` would leave a live board on a turn that can never end — no
-    §8.1 Knock Out sweep, no §5.3 turn end, damage already dealt. Every accept case
+    §8.1 Knock Out sweep, no §5.3 turn end [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play — `finishAttack` then queues `resumeTurn` (the attack-again window) in place of the turn tail], damage already dealt. Every accept case
     has a decline twin, and the twins check the deck ELEMENT BY ELEMENT (a
     draw-and-put-back keeps the length and moves the order), check that the only
     `CARDS_DRAWN` in the batch is P2's `turnStart` one, check the damage stayed on
@@ -8096,7 +8096,9 @@ import type { GameState, Seat } from "./types";
     🛑 **BUT ITS SUPERLATIVE IS FALSE, AND THAT IS A THIRD KIND OF CLAIM.** *"The
     ABILITY column's three biggest reprint groups"* is not what those three
     sentences are: the biggest unbuilt group is **SEVEN** (Festival Grounds) and
-    there are **FOUR** six-printing groups, not three. 🆕 **A COUNT, A COMPOSITION
+    there are **FOUR** six-printing groups, not three. (🆕🆕🆕 D570 (D539): a D242 snapshot —
+    the SEVEN is BUILT since D570, Festival Lead `FESTIVAL_LEAD`, and the Future six since
+    D569, so neither is an unbuilt group at this head.) 🆕 **A COUNT, A COMPOSITION
     AND A SUPERLATIVE ARE THREE CLAIMS, AND ONLY THE FIRST TWO ARE UNDER A QUERY
     OVER THE ROW'S OWN IDS** — the third needs the query run WITHOUT them.
 
@@ -10637,7 +10639,7 @@ import type { GameState, Seat } from "./types";
     **The second site cost the same six lines**: same filter, same `.map`, same
     already-total `promote` stage. **The ONE thing that differs is the tail the
     stages splice in front of** — `resumeTurn` there because an Ability does not
-    end a turn (§9), `turnTail` here because an attack does (§5.3) and §8.1 owes
+    end a turn (§9), `turnTail` here because an attack does (§5.3) [🆕🆕🆕 D570 (D539): on the attack site, except a FIRST attack under Festival Lead with Festival Grounds in play — `finishAttack`'s window exit splices the same stages in front of `resumeTurn` instead, the promotion still owed first] and §8.1 owes
     the promotion BEFORE it. That order is the only thing about this site that
     could have been got wrong, and it is driven rather than argued.
 
@@ -18227,7 +18229,7 @@ import type { GameState, Seat } from "./types";
     before anything happens and this reads the RESULT of an act the attack already
     performed. The branch sits at the pre-damage call site immediately after the two
     rebinds and returns through the same `finishAttack` the confusion-tails path, D125
-    and D126 all use — so §8.1 still sweeps BOTH boards and the §5.3 turn still ends.
+    and D126 all use — so §8.1 still sweeps BOTH boards and the §5.3 turn still ends [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play — `finishAttack` then queues `resumeTurn` (the attack-again window) in place of the turn tail].
     Driven with a lethal defender on the cancelled path (Knocked Out with zero damage
     dealt) plus the non-lethal control, so the sweep claim is not vacuous. ⚠️ The call
     site tests `cancelled`, never `kind`: which members print a cancel branch is the
@@ -20213,6 +20215,25 @@ import type { GameState, Seat } from "./types";
     `expect(manifest.version)`, `it(…)` titles, the declaration and `package.json` —
     **not** as a value-keyed grep — because a value-keyed grep is precisely the mechanism
     that ate D500's heading.)
+    🆕🆕🆕 engineVersion 0.453.0 → **0.454.0** (D570 — FESTIVAL LEAD, THE ATTACK-AGAIN TURN MACHINE: 7
+    PRINTINGS / 1 TEXT / 1 OBJECT. Dipplin `sv06-018`/`-170`/`sv08.5-010`, Goldeen `sv06-044`/`sv08.5-020`,
+    Swirlix `sv06-089`, Seaking `sv08.5-021` — *"If Festival Grounds is in play, this Pokémon may use an attack
+    it has twice. If the first attack Knocks Out your opponent's Active Pokémon, you may attack again after your
+    opponent chooses a new Active Pokémon."* One registry object keyed on seven REAL ids MID-MAP after D569's
+    rows (D395/D396, so `raw[last]` stays `sv09-107`); no row authors an `attack` key. **New vocabulary**:
+    `PassiveEffects.attackTwiceIf` (a `BoardCondition`, D564's `stadiumInPlayNamed "Festival Grounds"`),
+    collected RAW by `passivesOf` (so a §9 lock silences it) and evaluated by the NEW `attackAgainLicensed`;
+    the NEW `attackAgainBarred` (the second declaration's re-read, one reader for attack.ts, redact.ts and
+    GameHud [🆕 D570 landing (D539): and flow.ts `resumeTurn`'s offer row, a fourth caller — see below]); the REQUIRED `TurnAllowances.attackAgainUid` — the window, opened ONLY by flow.ts `finishAttack`
+    on the FIRST finish for an attacker still Active and licensed, with a `resumeTurn` tail behind the KO's
+    prize/koTrigger/promotion stages instead of `turnTail` (R-FL4: no Checkup between the attacks, no third
+    attack); turn.ts `turnGate` narrows the window to `attack` / `endTurn` (R-FL1); attack.ts re-reads the
+    licence at the second declaration (R-FL2: same uid, still Active, unlocked, Festival Grounds in play);
+    redact.ts withholds retreat / Abilities / Trainers / Rare Candy / the Stadium ability in the window (no
+    schema change); the NEW event `ATTACK_AGAIN_OFFERED { seat, uid }` (filed by the `resumeTurn` stage while the second declaration is not barred — `attackAgainBarred`, third review — not
+    persisted). R-FL1..R-FL4 ⚠️ UNRULED. **`MATCH_RECORD_VERSION` 36 → 37, THE TENTH POSITION**: a 0.453
+    rollback resuming a mid-window record would grant main-phase plays between the attacks, and a v36 bag read
+    by this deploy refuses every action but `endTurn` — see docs/decisions.md D570 and apps/api match.ts.)
     🆕🆕🆕 engineVersion 0.452.0 → **0.453.0** (D569 — THE PARADOX BANNER UNLOCK, SLICE 2 PART a: 20 PRINTINGS
     / 11 TEXTS (12 attacks, 6 abilities, 2 trainers). **The datum**: `banners.ts` widened — `Banner = "Tera" |
     "Ancient" | "Future"`, `BANNER_BY_ID` +86 ids (Ancient 44 = 40 Pokémon + 4 Trainers, Future 42 = 38 + 4),
@@ -20981,7 +21002,7 @@ import type { GameState, Seat } from "./types";
     printed example is this sentence family, before C, the Confusion check; `docs/decisions.md`
     D547 ruling 1, which WITHDRAWS the draft's "Confusion first, UNRULED in-tree" before
     commit) — only while the lock is live; tails files ATTACK_FAILED
-    `"flipLock"` (an explicit `log.ts` arm) and ends the turn. `ATTACK_LOCKED` gains
+    `"flipLock"` (an explicit `log.ts` arm) and ends the turn [🆕🆕🆕 D570 (D539): or, after a FIRST attack under Festival Lead with Festival Grounds in play, the attack-again window opens instead (flow.ts `finishAttack`) — a failed or cancelled attack is still an attack that was USED]. `ATTACK_LOCKED` gains
     `flip?: true` (the bare row would say "can't attack", false — D421) and
     `ATTACK_FLIP_LOCK_CHECK` is CONFUSION_CHECK's sibling.
     🛑 **B — `reduceDamage`'s SIGN FLIPPED ONTO THE DEFENDER, IN THE INSTALLER'S WINDOW.**
@@ -22851,7 +22872,7 @@ import type { GameState, Seat } from "./types";
     program's tail — Oinkologne sv03-183's exact path. The recoil is FLAT (no W/R against
     the attacker's own Weakness — driven on a body Weak to its own type) and a self-KO is
     swept by the attack epilogue's two-seat §8.1 sweep, with the turn ending only after the
-    Prize and the forced promotion (D491: an attack ENDS the turn; sequenced explicitly).
+    Prize and the forced promotion (D491: an attack ENDS the turn [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which opens the attack-again window instead (flow.ts `finishAttack`); the window keeps `state.turn`, so no turn-stamp argument here moves]; sequenced explicitly).
     ⚠️ **Which two of `sv06-090`, `sv10-148`, `sv10-202` carry :202 is UNRESOLVABLE on this
     checkout** (no D1, no sqlite; the D355 census named all three across :202 AND :213
     without splitting them — D425) and the ids are stated unresolved, never invented; the
@@ -24736,7 +24757,7 @@ import type { GameState, Seat } from "./types";
     WITNESS** — the count was re-derived every slice and the word *"three"* was carried.
     A successor of this slice inherits **81 / 61 / 17** again, over **FIVE** history
     occurrences: those four plus `deckMillFilteredScale.test.ts`'s own header arrow.) */
-export const engineVersion = "0.453.0";
+export const engineVersion = "0.454.0";
 
 export type {
   ApplyResult,
@@ -24865,6 +24886,13 @@ export { conditionHolds, conditionNote } from "./interpreter";
     ⚠️ ITS HELPER `countOwnerPokemonInPlay` IS NOT RE-EXPORTED: nothing outside the
     engine counts a subgroup, and an API with no caller is D135's defect. */
 export { attackBarredByAbility } from "./interpreter";
+/** 🆕🆕🆕 §5.3/§8 (D570) — Festival Lead's SECOND-declaration bar: inside the attack-again
+    window (`TurnAllowances.attackAgainUid`), true when the Active is not the body that
+    holds the window or its licence no longer holds. Exported for `attackBarredByAbility`'s
+    reason verbatim: the hot-seat HUD greys the attack rows with the same reader `attack`'s
+    §8 gate rejects by. ⚠️ `attackAgainLicensed` (the licence alone) is NOT re-exported:
+    no caller outside the engine asks it, and an API with no caller is D135's defect. */
+export { attackAgainBarred } from "./interpreter";
 /** §4/§8 (D281) — the printed TIMING CLAUSE on ONE attack index, and the sentence
     that renders it. Exported for `attackBarredByAbility`'s reason verbatim: the
     hot-seat HUD greys the attack ROW with the same reader `attack`'s §8 gate

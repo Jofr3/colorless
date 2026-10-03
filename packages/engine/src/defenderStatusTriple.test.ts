@@ -413,7 +413,7 @@ describe("§4 — the board: three conditions land, and all three are observable
   });
 
   it("…and TWO of the three conditions are visible in the DAMAGE, not just the log", () => {
-    // 🛑 THE ARITHMETIC IS THE POINT AND IT IS DETERMINISTIC. An attack ENDS the turn
+    // 🛑 THE ARITHMETIC IS THE POINT AND IT IS DETERMINISTIC. An attack ENDS the turn [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which no board here builds]
     // (§5.3), so the Checkup runs before this state is handed back: the printed 50,
     // plus BURN's 20, plus POISON's default 10 = **80**. Confused places nothing, which
     // is why §4's first rung reads the model and this one reads the total — between
@@ -648,10 +648,10 @@ describe("§7 — purity and the structural answers", () => {
     }
   });
 
-  it("engineVersion is 0.453.0 and the bump is owed for BEHAVIOUR", () => {
+  it("engineVersion is 0.454.0 and the bump is owed for BEHAVIOUR", () => {
     // 🆕🆕 D462 — 0.360.0 → **0.361.0**. One printed sentence that derived to `null`
     // now derives to a program: an OBSERVABLE change to what the engine does with a
     // real catalog row, which is the bump's whole trigger.
-    expect(engineVersion).toBe("0.453.0");
+    expect(engineVersion).toBe("0.454.0");
   });
 });

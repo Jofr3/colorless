@@ -758,7 +758,7 @@ describe("D490 §5 — the three boards, driven end to end", () => {
     // opponent's Pokémon would not have moved) and from a single-deck walk.
     //
     // ⚠️ **AND THE DEFENDER'S DECK IS READ AFTER THEIR TURN-START DRAW.** An attack ends
-    // the turn, so `done` is already p2's turn and p2 has drawn the card the mill left on
+    // the turn [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which no board here builds], so `done` is already p2's turn and p2 has drawn the card the mill left on
     // top. The attacker's deck is untouched by that (it is not their turn), and neither
     // DISCARD PILE is — which is why the piles carry the load-bearing half of this claim.
     expect(idsIn(done, "p1", "deck")).toEqual(["d490-item-1", "d490-filler"]);
@@ -1221,7 +1221,7 @@ describe("D490 §9 — `MATCH_RECORD_VERSION` stays 29: reachability, driven", (
     ).toBe(false);
   });
 
-  it("engineVersion is 0.453.0 and `manifest.version` agrees — the bump is for BEHAVIOUR", () => {
+  it("engineVersion is 0.454.0 and `manifest.version` agrees — the bump is for BEHAVIOUR", () => {
     // 🆕🆕🆕 D490 — 0.384.0 → **0.385.0**. A card can reach it: one printed sentence that
     // derived to `null` on all thirteen readers and fell to the loud
     // `ATTACK_EFFECT_SKIPPED` path now mills BOTH decks and deals a number proportional to
@@ -1234,7 +1234,7 @@ describe("D490 §9 — `MATCH_RECORD_VERSION` stays 29: reachability, driven", (
     // changelog entry and missed the entry's actual `0.383.0 → 0.384.0` heading, which is
     // D488's rule fired a second time: *a prose census of exceptions is self-referential
     // the moment it is written down, and the count is taken before the sentence exists.*
-    expect(engineVersion).toBe("0.453.0");
+    expect(engineVersion).toBe("0.454.0");
     expect(manifest.version).toBe(engineVersion);
     expect(deriveAttackDiscardScaledBoost(MILL_BOTH)).not.toBeNull();
   });

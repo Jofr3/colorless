@@ -516,6 +516,7 @@ describe("finishing setup", () => {
       sideAttackBonuses: [], // 🆕🆕🆕 D556 — the this-turn side-wide bonus bag starts empty
       supporterPlayedUid: null, // 🆕🆕🆕 D564 — no Supporter played yet (REQUIRED, MRV 35 → 36)
       endOfTurnHandDiscard: null, // 🆕🆕🆕 D564 — no Amarys discard pending (REQUIRED, MRV 35 → 36)
+      attackAgainUid: null, // 🆕🆕🆕 D570 — no Festival Lead attack-again window open (REQUIRED, MRV 36 → 37)
     });
   });
 });

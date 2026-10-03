@@ -692,7 +692,7 @@ describe("§3 — a new PRODUCER of a shipped literal, and the record version do
   });
 
   it("the engine version moved", () => {
-    expect(engineVersion).toBe("0.453.0");
+    expect(engineVersion).toBe("0.454.0");
   });
 });
 
@@ -1009,7 +1009,7 @@ function types(events: GameEvent[]): string[] {
 // A reference to `applyAction` so the import earns its place: every board above goes
 // through `mustApply`, which wraps it — this is the one direct call, and it pins that a
 // second attack in the same turn is refused, i.e. that the boards above really did end
-// their turn on the attack rather than leaving one open (§8's one-attack rule).
+// their turn on the attack rather than leaving one open (§8's one-attack rule [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which no board here builds]).
 describe("§7 — the attack really is the turn's last action", () => {
   it("refuses a second attack after the placement resolves", () => {
     const { state } = mustApply(fielded(12), { type: "attack", seat: "p1", index: IDX.bare });

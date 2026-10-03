@@ -440,7 +440,7 @@ describe("the tails gate — installing it, on BOTH faces", () => {
         uid: installer,
       });
       // D143's window, unchanged: turn 2 installed it, turn 3 is the OPPONENT's
-      // (declaring an attack ends the turn, §5.3), turn 4 is the printed one.
+      // (declaring an attack ends the turn [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which no board here builds], §5.3), turn 4 is the printed one.
       expect(done.players.p1.active?.attackLockedTurn).toBe(4);
       expect(done.turn).toBe(3);
       // The printed damage lands on BOTH faces — the coin gates the drawback and

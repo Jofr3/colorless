@@ -5411,6 +5411,12 @@ reasoning and check what it ranges over before letting it price anything.
 
 ### An attack ENDS THE TURN, so the defender's turn-start draw lands inside the same action (D491)
 
+🆕🆕🆕 **D570 (D539) — SCOPED, NOT WITHDRAWN.** True on every board except a FIRST attack by a Festival
+Lead body (Dipplin, Goldeen, Swirlix, Seaking) with Festival Grounds in play: that attack opens the
+attack-again window (`TurnAllowances.attackAgainUid`, flow.ts `finishAttack`) and the turn does NOT end,
+so no turn-start draw lands in the action; the second attack (or `endTurn`) ends it. A suite that
+drives a Festival Lead body under Festival Grounds must read the draw one action later.
+
 Any claim about what an attack's *effect* drew must filter `CARDS_DRAWN` on **`reason: "effect"`**. A
 bare row count is off by one for the defender on every board — and worse, it **passes a build that
 walks the seats in either order**, because the extra row makes `["p1","p2"]` and `["p2","p1"]` both
@@ -7603,7 +7609,7 @@ the parked one**. D515's first draft did exactly that and the symptom was a `WRO
 park it did not expect. **Name the card ids when a board must park**; a count is not a board.
 
 ⚠️ **AND READ THE DISCARD PILES, NOT THE HANDS, AFTER A SETTLED ATTACK** (D491): the attack ends the
-turn inside the same action, so the defender's turn-start draw lands before the state is observed and
+turn [🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which opens the attack-again window instead] inside the same action, so the defender's turn-start draw lands before the state is observed and
 their hand comes back one HIGHER than it went in. A hand-size assertion written the obvious way is
 off by one in the direction that looks like the effect failing.
 
@@ -8613,6 +8619,27 @@ read. All 15 are KILLED.
   turns it into the next silent GAP, and a Paradox part b slice is the likeliest to remove three of them. Pin it the same
   way, with a literal far row that a co-marker labels, before or with that slice. It was not pinned at this close-out,
   which was scoped to the GAP row.
+
+### A withdrawn claim about a MECHANISM is also spelled as the mechanism's DATA, so the sweep keys on those shapes too (D570 third review, extending D539 and D567)
+
+D570 made one exit from `finishAttack` keep the turn (Festival Lead's attack-again window). Every sentence saying an
+attack ends the turn was swept, and it still took THREE reviews to find them all:
+
+1. The build swept the literal phrase (*"attacking ends the turn"*) line by line.
+2. The first review re-swept whitespace-collapsed, on more verbs (*"finishAttack still ends the turn"*).
+3. The second review found claims with no "attack … ends" in them (*"the §5.3 turn still ends"*, *"turn end"*,
+   *"feeds the same tail"*), `finishAttack`'s own doc first.
+4. The third review found `phaseView.ts`'s *"(pending: [ko…, endTurn, checkup, startTurn])"* — the claim spelled as a
+   QUEUE LITERAL — and *"puts its KO stages in FRONT of this tail"*, the claim spelled as a POSITION.
+
+**Why:** a mechanism claim is carried by the mechanism's data as fully as by its verb: a stage sequence, a call
+order, a "before / after / in front of" position. None of those contain the verb a prose sweep keys on.
+
+**The rule:** when a slice adds an exit, a branch or a stage to a mechanism that prose describes, sweep in ONE pass,
+engine source first: (1) the verb phrases, whitespace-collapsed (D539 / D567); (2) the mechanism's DATA spellings —
+the old stage or call sequence written as a literal (`[a, b, c]`, `a → b → c`) under any separator; (3) POSITION
+words next to the mechanism's names (`in front of`, `behind`, `queued`, `then`). Classify each hit (D539's second
+half): a named board on which the new branch cannot fire is true and stays.
 
 ## Git / commits
 - Branch off `main` for non-trivial work; commit/push only when asked.

@@ -958,7 +958,7 @@ describe("end to end — out of the ATTACKER's deck, into the ATTACKER's hand", 
     // landed in the ACTOR's hand. A one-`otherSeat` build lands it opposite.
     expect(done.players.p1.hand).toContain(pick);
     expect(done.players.p1.deck).not.toContain(pick);
-    // ⚠️ NOT a count on the other side — the attack ENDS THE TURN, so p2 draws
+    // ⚠️ NOT a count on the other side — the attack ENDS THE TURN [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which no board here builds], so p2 draws
     // for theirs a moment later and a length would move for a reason that has
     // nothing to do with this op. The uid is the fact.
     expect(done.players.p2.hand).not.toContain(pick);

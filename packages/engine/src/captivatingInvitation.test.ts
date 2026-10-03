@@ -30,6 +30,10 @@ import {
 //   row 1  Festival Grounds (7 legal)   `needs` CORRECT. There is no
 //          attack-again state under any spelling, and no named-Stadium
 //          `BoardCondition` member. Two absences, unchanged.
+//          (🆕🆕🆕 D570 (D539): BOTH absences WITHDRAWN — the named-Stadium member is
+//          `stadiumInPlayNamed` since D564, and the attack-again state is
+//          `TurnAllowances.attackAgainUid` since D570, which BUILT the row (Festival
+//          Lead, `FESTIVAL_LEAD`); `DROPPED` is empty.)
 //   row 2  Iron Crown ex aura (6 legal) 🛑 ROTTED. It asks for "a SEAT-WIDE
 //          pre-W/R damage AURA … `seatDamageReductionAfterWR`'s scan shape
 //          pointed at the bonus seam". That is `seatDamageBonusBeforeWR` and it

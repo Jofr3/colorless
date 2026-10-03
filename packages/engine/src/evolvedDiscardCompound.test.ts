@@ -838,7 +838,7 @@ describe("§6 — an EMPTY opponent hand, and the two silences it has to separat
     const attacks = CARDS["d486-salazzle"]?.attacks ?? [];
     expect(deriveAttackEffect(attacks[NO_EFFECT_AT_ALL]?.effect ?? "")).toBeNull();
     // ⚠️ **THE ZONE READ HERE IS THE DISCARD PILE AND NOT THE HAND**, deliberately: an
-    // attack ENDS the turn, so the other seat draws before this assertion can be made and
+    // attack ENDS the turn [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which no board here builds], so the other seat draws before this assertion can be made and
     // a hand count would be measuring the draw step. The discard pile only moves if this
     // program moved it.
     const state = ready({ from: "d486-salandit", to: "d486-salazzle", oppHand: [] });
@@ -1022,13 +1022,13 @@ describe("§9 — every describer this program reaches, asked on the load-bearin
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("§10 — the version, and what it is owed for", () => {
-  it("engineVersion is 0.453.0 and the bump is owed for BEHAVIOUR", () => {
+  it("engineVersion is 0.454.0 and the bump is owed for BEHAVIOUR", () => {
     // A sentence that derived to `null` derives to a two-op program. No new op, no new
     // field and no new interpreter byte — but `deriveAttackEffect` answers differently on
     // a printed string, which is behaviour, so the bump is owed. ⚠️ **A slice that adds
     // ZERO mechanism still owes it**: the tax is on what the engine DOES, not on how much
     // of it is new.
-    expect(engineVersion).toBe("0.453.0");
+    expect(engineVersion).toBe("0.454.0");
     expect(manifest.version).toBe(engineVersion);
   });
 });

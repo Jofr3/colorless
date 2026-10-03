@@ -760,7 +760,7 @@ describe("D306 §3 — the blocker, DRIVEN: placeEvolution's two tails are phase
   //
   // ⚠️ AND THE HALF THAT WOULD BE CHEAP IF IT WERE THE ONLY ONE. In an ATTACK
   // context the KO tail's *"resume the actor's turn"* is nearly free — the attack
-  // ends the turn anyway (§5.3) and `finishAttack` already sweeps the ATTACKER's
+  // ends the turn [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which no board here builds] anyway (§5.3) and `finishAttack` already sweeps the ATTACKER's
   // own board. It is the TRIGGER tail that has no answer: an on-evolve program
   // parking inside an attack-effect program is a park inside a park, and
   // `EffectContinuation` holds exactly one `pendingOp`.

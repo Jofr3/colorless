@@ -110,6 +110,7 @@ import {
 } from "./flow";
 import {
   applyStatus,
+  attackAgainBarred,
   attackBarredByAbility,
   attackTimingBlocked,
   attackTimingNote,
@@ -145,7 +146,7 @@ import {
 } from "./types";
 
 // The attack step (§8) and the two KO-resolution decisions it can park on
-// (§8.1). Declaring an attack ends the turn (§5.3), so every path out of
+// (§8.1). Declaring an attack ends the turn [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which opens the attack-again window instead (flow.ts `finishAttack`); the window keeps `state.turn`, so no turn-stamp argument here moves] (§5.3), so every path out of
 // here funnels into flow.ts's staged tail — the KO stages simply go in
 // front of it.
 
@@ -1086,7 +1087,7 @@ type AttackPreDamageResult = {
   tools: number;
   /** The member's own printed *"this attack does nothing"* branch fired. The caller
       ends the attack through `finishAttack` (§8.1 still sweeps, the turn still
-      ends); `false` for every member that prints no such branch. */
+      ends [🆕🆕🆕 D570 (D539): or, after a FIRST attack under Festival Lead with Festival Grounds in play, the attack-again window opens instead (flow.ts `finishAttack`) — a failed or cancelled attack is still an attack that was USED]); `false` for every member that prints no such branch. */
   cancelled: boolean;
 };
 
@@ -1328,7 +1329,12 @@ function applyAttackPreDamage(
 
 /** §8 — declare one attack with the Active Pokémon; resolving it ends the
     turn through the staged tail. The cost is a CHECK, not a payment (§8.2):
-    energy stays attached unless attack text discards it (M4). */
+    energy stays attached unless attack text discards it (M4).
+    🆕🆕🆕 D570 CORRECTION (D539) — "resolving it ends the turn" is true except for a FIRST
+    attack under Festival Lead, which opens the attack-again window
+    (`TurnAllowances.attackAgainUid`, flow.ts `finishAttack`) and hands turn:action back;
+    the SECOND declaration is a full one (cost, Special Conditions, every §8 gate) plus the
+    window's own re-read (`attackAgainBarred`, R-FL2), and its resolution ends the turn. */
 export function attack(state: GameState, action: AttackAction): ApplyResult {
   const rejected = turnGate(state, action);
   if (rejected !== null) return rejected;
@@ -1440,6 +1446,22 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
     return err(
       "ATTACK_PREVENTED",
       `this Pokémon's Ability stops it attacking unless ${conditionNote(abilityGate)} (§9)`,
+    );
+  }
+  // 🆕🆕🆕 §5.3/§8 (D570, R-FL2) — the SECOND declaration under Festival Lead re-reads the
+  // licence. While the attack-again window is open (`allowances.attackAgainUid`), only THAT
+  // uid may declare, only from the Active Spot, and only while "If Festival Grounds is in
+  // play" still holds for an unlocked Ability. The window can survive a board that no
+  // longer licenses it: the opponent's on-KO trigger may move or Knock Out the body, the
+  // attacker's own recoil KO is followed by a PROMOTION (a different uid now stands in the
+  // spot), the opponent's promoted Active may be a Flutter Mane that locks the Ability.
+  // On every such board only `endTurn` remains. Through `attackAgainBarred` so redact.ts's
+  // `banned` and GameHud's `disabled` project the same bar (`attackLocked`'s rule). Beside
+  // the D242 body gate because it is a fact about the BODY, before the index is known.
+  if (attackAgainBarred(state, action.seat, active)) {
+    return err(
+      "ATTACK_PREVENTED",
+      "this Pokémon may not attack again this turn: the Festival Lead window belongs to the Pokémon that attacked first, and needs Festival Grounds in play and its Ability unlocked (§9)",
     );
   }
   const attackerUid = topUid(active);
@@ -1591,7 +1613,7 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
   // was DECLARED — the §8 gate above let it through, because this lock is NOT
   // `attackLocked` (a hard lock still REJECTS the declaration there, first) — and
   // now the locked player flips. Tails: ATTACK_FAILED `"flipLock"`, nothing
-  // resolves, no counters, and the turn ends (§5.3, `finishAttack`); heads: the
+  // resolves, no counters, and the turn ends [🆕🆕🆕 D570 (D539): or, after a FIRST attack under Festival Lead with Festival Grounds in play, the attack-again window opens instead (flow.ts `finishAttack`) — a failed or cancelled attack is still an attack that was USED] (§5.3, `finishAttack`); heads: the
   // attack resolves normally.
   //
   // ⚠️ THE RNG IS SPENT ONLY WHILE THE LOCK IS LIVE: the whole block is behind
@@ -1628,7 +1650,7 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
   // §8 step 3 — the confusion flip, AFTER every gate and the cost check
   // passed (§12): tails and the declared attack does not resolve at all —
   // no damage, no effects — the attacker takes 30 itself (possibly a
-  // self-KO, prized to the defender) and the turn still ends.
+  // self-KO, prized to the defender) and the turn still ends [🆕🆕🆕 D570 (D539): or, after a FIRST attack under Festival Lead with Festival Grounds in play, the attack-again window opens instead (flow.ts `finishAttack`) — a failed or cancelled attack is still an attack that was USED].
   if (rotation === "confused") {
     const [face, rngState] = flipCoin(next.rngState);
     next = { ...next, rngState };
@@ -2518,7 +2540,7 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
   // exactly what may happen — no damage, no W/R, no effect ops, no triggers.
   // Structurally the confusion-tails path (§8 step 3) minus the self-damage, and
   // it reuses that path's ending on purpose: `finishAttack` still sweeps §8.1 and
-  // still ends the turn, because a cancelled attack is an attack that was USED.
+  // still ends the turn [🆕🆕🆕 D570 (D539): or, after a FIRST attack under Festival Lead with Festival Grounds in play, the attack-again window opens instead (flow.ts `finishAttack`) — a failed or cancelled attack is still an attack that was USED], because a cancelled attack is an attack that was USED.
   //
   // The clause is read against `next`, the board as of declaration — which is
   // what discharges Lycanroc's printed "before this attack does damage" for
@@ -2604,7 +2626,7 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
   // `ATTACK_EFFECT_COIN_FLIP` rows at all and no rngState step consumed, where
   // D127's zero-HEADS outcome spends its flips and announces every one of them.
   // Both then land on the same ending — `coinBonus` 0, `scaledBase` 0, so the
-  // §8.5 gate below deals no damage and `finishAttack` still ends the turn. No
+  // §8.5 gate below deals no damage and `finishAttack` still ends the turn [🆕🆕🆕 D570 (D539): or, after a FIRST attack under Festival Lead with Festival Grounds in play, the attack-again window opens instead (flow.ts `finishAttack`) — a failed or cancelled attack is still an attack that was USED]. No
   // printing in the pool can reach it (all three carry a cost floor of at least
   // one Energy, and Torkoal's `{R}` cost is itself the `{R}` its filter counts),
   // so the branch is defensive and its test is a constructed fixture.
@@ -2682,7 +2704,7 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
     if (coinFlip.kind === "cancelOnTails" || coinFlip.kind === "cancelOnTailsElseProgram") {
       if (heads === 0) {
         // D125's ending, third caller: no damage, no W/R, no effect ops, no
-        // triggers — and `finishAttack` still sweeps §8.1 and still ends the turn,
+        // triggers — and `finishAttack` still sweeps §8.1 and still ends the turn [🆕🆕🆕 D570 (D539): or, after a FIRST attack under Festival Lead with Festival Grounds in play, the attack-again window opens instead (flow.ts `finishAttack`) — a failed or cancelled attack is still an attack that was USED],
         // because an attack that did nothing is an attack that was USED.
         events.push({
           type: "ATTACK_FAILED",
@@ -3024,7 +3046,8 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
     // no damage, no W/R, no effect ops, no triggers — but conditioned on what the
     // PRE-DAMAGE SEAM JUST DID rather than on a board fact read before anything
     // happened. `finishAttack` is the shared ending: §8.1 still sweeps BOTH boards and
-    // the §5.3 turn still ends, because a cancelled attack is an attack that was USED.
+    // the §5.3 turn still ends, because a cancelled attack is an attack that was USED
+    // [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play — `finishAttack` then queues `resumeTurn` (the attack-again window) in place of the turn tail].
     //
     // ⚠️ THE TEST IS `stripped.cancelled` AND NOT `preDamage.kind`. Which members print
     // a cancel branch is the union's business (`applyAttackPreDamage`), and a `kind`
@@ -3831,7 +3854,8 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
     return advance({ ...next, pending: [...next.pending, ...epilogue] }, events);
   }
 
-  // §8.1 Knock Out sweep on both boards, then the §5.3 turn end. With no effect
+  // §8.1 Knock Out sweep on both boards, then the §5.3 turn end
+  // [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play — `finishAttack` then queues `resumeTurn` (the attack-again window) in place of the turn tail]. With no effect
   // program there is no recoil, so only the defender's board can be lethal, but the
   // sweep stays total (finishAttack owns the order + the §14 tie).
   return finishAttack(next, events, action.seat, attackerUid, declared.name);

@@ -481,7 +481,7 @@ describe("the install — the record lands ACROSS the table, stamped + 1", () =>
     const victimUid = activeUid(before, "p2");
     const { state, row } = barred(BITE);
     // The stamp is the LOCKED Pokémon's controller's next turn — D142/D148's
-    // number, not D143's. Declaring an attack ENDS the turn (§5.3), so the turn
+    // number, not D143's. Declaring an attack ENDS the turn [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which no board here builds] (§5.3), so the turn
     // after the installing one belongs to the victim, and the window opens the
     // moment the epilogue drains.
     expect(state.players.p2.active?.lockedAttacks).toEqual([{ turn: 3, attackIndex: BITE }]);
@@ -526,7 +526,7 @@ describe("the install — the record lands ACROSS the table, stamped + 1", () =>
   });
 
   it("is IDEMPOTENT on the same address and ADDS a different one", () => {
-    // Unreachable off the two printings on this side too (an attack ends the turn,
+    // Unreachable off the two printings on this side too (an attack ends the turn [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which no board here builds],
     // and the window is the very next one), so it is a surgery — and it is
     // `addLockedAttack`'s EARLY RETURN rather than `boostAttack`'s `Math.max`,
     // because this record carries an address and no number.

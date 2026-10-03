@@ -569,7 +569,7 @@ describe("§3 — the board: the OWNER's pile, and a zone that is genuinely vaca
     // mechanism over. The repair is not a bigger pile: it is asserting the pile's
     // CONTENTS as an extension of its own former contents, and pinning the zones a
     // cross-seat read would overwrite. ⚠️ **A WHOLE-SIDE COMPARISON WAS TRIED FIRST
-    // AND IS WRONG**: the attack ends P1's turn, so P2 legitimately DRAWS before this
+    // AND IS WRONG**: the attack ends P1's turn [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which no board here builds], so P2 legitimately DRAWS before this
     // line runs, and the guard would have been red on a correct engine.
     expect(state.players.p2.discard).toEqual([...before.players.p2.discard, stadium.uid]);
     expect(state.players.p2.active).toEqual(before.players.p2.active);

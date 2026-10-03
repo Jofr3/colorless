@@ -147,10 +147,13 @@ A turn is: **Start-of-turn** → **Action phase** → **Attack (optional, ends t
 | **Retreat** the Active Pokémon | **1 per turn** | §11 |
 | Use an **Ability** | per the Ability's own limit | §9; some once-per-turn, some passive |
 
-### 5.3 Attack step (optional; ends the turn)
-- The player **may** declare **one attack** with their **Active Pokémon** (see §9).
+### 5.3 Attack step (optional; ends the turn [🆕 D570 (D539): except under Festival Lead, below])
+- The player **may** declare **one attack** with their **Active Pokémon** (see §9) [🆕 D570 (D539): Festival Lead (7 printings) is the built exception — with Festival Grounds in play, the same Pokémon may attack twice].
 - Declaring an attack **ends the action phase**; after the attack resolves, the turn
   ends (proceed to Between-turns). A player may also **end the turn without attacking**.
+  [🆕 D570 (D539): under Festival Lead, the FIRST attack instead opens an attack-again window
+  (R-FL1: only a second `attack` or `endTurn` is legal; R-FL4: no Checkup between the two,
+  no third attack); the turn ends after the second attack or on `endTurn`.]
 - P1 cannot attack on turn 1 (§4).
 
 ---
@@ -295,9 +298,9 @@ Order of operations for a declared attack:
    - first any effect that might alter or cancel the declared attack — the rulebook's
      own example is "If the Defending Pokémon tries to attack during your opponent's
      next turn, your opponent flips a coin. If tails, that attack doesn't happen."
-     (tails ⇒ the attack doesn't happen and the turn ends; no Confusion flip follows);
+     (tails ⇒ the attack doesn't happen and the turn ends [🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which goes through `finishAttack` and opens the attack-again window instead]; no Confusion flip follows);
    - **Confusion check** (if Confused): flip a coin; **tails ⇒ attack fails**, place
-   **30 damage (3 counters) on the attacker**, and the turn ends (§12).
+   **30 damage (3 counters) on the attacker**, and the turn ends (§12) [🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which goes through `finishAttack` and opens the attack-again window instead — 🆕 D570 third review: UNREACHABLE for a CONFUSED attacker, since Festival Grounds keeps every Pokémon with Energy attached free of Special Conditions and every Festival Lead attack costs Energy].
 4. **Resolve attack text** in printed order — base damage, then any additional
    effects/conditions (coin flips, energy discards, status infliction, etc.).
 5. **Compute damage to the Defending (opponent's Active) Pokémon**:
@@ -318,7 +321,7 @@ Order of operations for a declared attack:
      Pokémon**, never to Bench damage.
 6. **Place damage counters** on the Defender (and on any other Pokémon the attack
    targets — e.g. "damage to Benched Pokémon", which ignore Weakness/Resistance).
-7. **Knock Out check** (see §8.1). Then the turn ends → Between-turns (§13).
+7. **Knock Out check** (see §8.1). Then the turn ends → Between-turns (§13) [🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which reopens the action phase for a second attack or `endTurn` only (§5.3)].
 
 ### 8.1 Knock Out (KO) & taking prizes
 - A Pokémon is **Knocked Out** when its **damage ≥ its current HP**.
@@ -360,7 +363,7 @@ line of code (see D41/D43, `interpreter.ts forcedDiscards`).
 ## 9. Abilities vs. Attacks
 
 - **Attacks** cost energy, are used **only from the Active spot**, and (with rare
-  exceptions) **end the turn**. Only **one attack per turn**.
+  exceptions) **end the turn**. Only **one attack per turn** [🆕 D570 (D539): Festival Lead (7 printings) is the built exception — with Festival Grounds in play, the same Pokémon may attack twice].
 - **Abilities** are **not attacks**:
   - They do **not** cost energy and do **not** end the turn.
   - Many can be used from the **Bench** as well as Active (per the Ability's text).
@@ -584,7 +587,7 @@ Only the **Active Pokémon** can have Special Conditions; **Benched Pokémon are
 |---|---|---|---|
 | **Asleep** | Cannot **attack** or **retreat** | Flip a coin: **heads ⇒ wake up** (remove Asleep); tails stays Asleep | coin flip, card effect |
 | **Burned** | No action restriction | Place **2 damage counters (20)**, then flip a coin: **heads ⇒ remove Burn** | coin flip, card effect |
-| **Confused** | When it **attacks**, flip a coin: **tails ⇒ attack fails, 30 damage (3 counters) placed on itself, turn ends**. (Retreat/other actions still allowed.) | No checkup effect | card effect |
+| **Confused** | When it **attacks**, flip a coin: **tails ⇒ attack fails, 30 damage (3 counters) placed on itself, turn ends** [🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which goes through `finishAttack` and opens the attack-again window instead — 🆕 D570 third review: UNREACHABLE for a CONFUSED attacker, since Festival Grounds keeps every Pokémon with Energy attached free of Special Conditions and every Festival Lead attack costs Energy]. (Retreat/other actions still allowed.) | No checkup effect | card effect |
 | **Paralyzed** | Cannot **attack** or **retreat** | Removed during the Checkup **after the affected player's own turn** (i.e., recovers for "the player who just finished their turn") | automatic (lasts ~1 turn), card effect |
 | **Poisoned** | No action restriction | Place **1 damage counter (10)** on it (some effects poison for more) | card effect |
 

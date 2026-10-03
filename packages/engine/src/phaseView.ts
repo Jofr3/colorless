@@ -156,7 +156,11 @@ export function inSetup(state: GameState): boolean {
 
 /** The turn a parked ko:* interrupt sits INSIDE — or null when it sits BETWEEN
     turns. Attack-origin KOs park with the turn tail still queued behind the ko
-    stages (pending: [ko…, endTurn, checkup, startTurn]), so the parity owner
+    stages (pending: [ko…, endTurn, checkup, startTurn]) [🆕🆕🆕 D570 (D539):
+    except a FIRST attack under Festival Lead with Festival Grounds in play —
+    `finishAttack`'s window exit parks [ko…, resumeTurn] instead (the
+    attack-again window), which the `resumeTurn` arm below already counts as
+    in-turn, so the function is unchanged], so the parity owner
     still owns the turn. A MID-TURN KO (evolve-below-HP, a snipe ability) parks
     with a resumeTurn stage queued behind it (pending: [ko…, resumeTurn]) — still
     inside the actor's turn, so it counts too. So does an ATTACK whose effect

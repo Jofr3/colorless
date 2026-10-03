@@ -1239,7 +1239,7 @@ describe("Wugtrio — the PRINTED count: 3 flips, one op per heads, 3 cards each
       expect(done.players.p2.discard.length - discardBefore).toBe(TUNNEL_MILL * heads);
 
       // THE DECK SHRANK BY THE MILL PLUS EXACTLY ONE, and the one is P2's own
-      // turn-start draw: attacking ends the turn (§5.3), so P2's §5.1 draw lands
+      // turn-start draw: attacking ends the turn [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which no board here builds] (§5.3), so P2's §5.1 draw lands
       // inside this same batch. Naming it rather than hiding it is what keeps the
       // mill delta exact — and the drawn card is the one the mill stopped at, which
       // is a second statement that the mill took from the TOP.
@@ -1567,7 +1567,7 @@ describe("the CLAMP — a deck shallower than the printed number", () => {
     // must DRAW and cannot, exactly as a short `drawCards` short-draws rather than
     // losing. The op therefore checks nothing and flow.ts's `startTurn` owns the rule.
     //
-    // ATTACKING ENDS THE TURN (§5.3), so P2's next turn starts inside this same batch
+    // ATTACKING ENDS THE TURN [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which no board here builds] (§5.3), so P2's next turn starts inside this same batch
     // and the deck-out really does arrive here — which means the claim cannot be "no
     // GAME_OVER row" and has to be the sharper one: WHERE the row sits. It follows
     // TURN_ENDED and TURN_STARTED, it carries reason "deckOut", and there is nothing

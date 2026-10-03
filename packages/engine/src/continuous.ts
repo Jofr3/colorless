@@ -511,6 +511,13 @@ export function passivesOf(
       gates on one body is expressible even though no legal printing carries a
       second one today. */
   cantAttackUnless: BoardCondition[];
+  /** 🆕🆕🆕 §5.3/§8 (D570) — the holder's own printed ATTACK-AGAIN licences ("Festival
+      Lead", 7 printings), collected RAW and UNEVALUATED for `cantAttackUnless`' reason
+      verbatim: the condition is seat-relative and this fold has no seat, so
+      `attackAgainLicensed` (interpreter.ts) evaluates it. In the loop, so a §9-locked
+      holder contributes nothing and goes silent (R-FL2). A LIST for the registry's "two
+      sources can name one" rule; no legal printing carries two. */
+  attackTwiceIf: BoardCondition[];
   /** §4 (D277) — the holder's own printed Ability LICENSES it to attack on the
       going-first player's first turn ("Debut Performance"). A boolean OR and not
       a list, unlike the gate above it: two sources naming it say the same thing
@@ -1278,6 +1285,7 @@ export function passivesOf(
     targetSuffix: PokemonSuffix;
   }[] = [];
   const cantAttackUnless: BoardCondition[] = [];
+  const attackTwiceIf: BoardCondition[] = [];
   let attackFirstTurnExempt = false;
   const evolveEarlyExempt: (BoardCondition | undefined)[] = [];
   const attackCostClauses: NonNullable<PassiveEffects["attackCostClause"]>[] = [];
@@ -1513,6 +1521,9 @@ export function passivesOf(
     // catalog row off `top` at the payability sites would be shorter and would
     // get that wrong silently.
     if (passive.cantAttackUnless !== undefined) cantAttackUnless.push(passive.cantAttackUnless);
+    // 🆕🆕🆕 D570 — the ATTACK-AGAIN licence (Festival Lead), pushed RAW one line under its
+    // polarity twin and in this loop for its §9 reason: a locked holder loses the window.
+    if (passive.attackTwiceIf !== undefined) attackTwiceIf.push(passive.attackTwiceIf);
     // D277 — the §4 attack LICENCE, the mirror image of the gate one line up and
     // in this loop for the same reason: the §9 drop on `sources[0]` is what makes
     // Klefki's Ability-lock silence "Debut Performance" and hand the §4 ban back.
@@ -1572,6 +1583,7 @@ export function passivesOf(
     conditionalDamageBonusBeforeWR,
     targetConditionalDamageBonusBeforeWR,
     cantAttackUnless,
+    attackTwiceIf,
     attackFirstTurnExempt,
     evolveEarlyExempt,
     attackCostClauses,
@@ -2489,7 +2501,7 @@ export function installedCostTaxOf(state: GameState, pokemon: InPlayPokemon): nu
     and GameHud (the greyed buttons). This lock answers a different question —
     "must the declared attack survive a coin?" — and the answer to the first stays
     YES under it: the attack is declared, the locked player flips at `attack.ts`'s
-    §8 step-3 seam, and only a tails stops it (and ends the turn). An `||` into
+    §8 step-3 seam, and only a tails stops it (and ends the turn [🆕🆕🆕 D570 (D539): or, after a FIRST attack under Festival Lead with Festival Grounds in play, the attack-again window opens instead (flow.ts `finishAttack`) — a failed or cancelled attack is still an attack that was USED]). An `||` into
     `attackLocked` would grey a button the player is entitled to press and turn a
     coin into a certainty. So this has ONE caller, `attack.ts`, and redact.ts,
     `packages/schema` and GameHud take no byte (`attackFlipLock.test.ts` pins

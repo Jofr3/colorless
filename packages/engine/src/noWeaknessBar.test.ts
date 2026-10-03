@@ -322,7 +322,7 @@ describe("§3 — what the install writes, and what it announces", () => {
     const state = armed("p1", "fix-bolt");
     expect(state.turn).toBe(2);
     const { state: after, events } = mustApply(state, { type: "attack", seat: "p1", index: VEIL });
-    // Declaring ENDS the turn (§5.3), so the board is already on the window.
+    // Declaring ENDS the turn [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which no board here builds] (§5.3), so the board is already on the window.
     expect(after.turn).toBe(3);
     expect(must0(after.players.p1.active).noWeaknessTurn).toBe(3);
     // …and nothing landed on the opponent's body: the op has no defender arm.
@@ -368,7 +368,7 @@ describe("§3 — what the install writes, and what it announces", () => {
   });
 
   it("idempotent BY THE STAMP — a second install in one turn writes nothing and says nothing", () => {
-    // Unreachable off any printing (one attack per turn, and no card prints two of
+    // Unreachable off any printing (one attack per turn [🆕🆕🆕 D570 (D539): two in one turn under Festival Lead with Festival Grounds in play, but its four attacks install nothing, so this stays unreachable], and no card prints two of
     // these), so it is CONSTRUCTED and pinned. There is no amount for a `Math.max` to
     // be about, which is what makes this `retreatLockedTurn`'s answer rather than
     // `reduceDamage`'s.
@@ -695,7 +695,7 @@ describe("§8 — the bump, and the soft landing it refuses", () => {
   });
 
   it("the engine version moved with the behaviour", () => {
-    expect(engineVersion).toBe("0.453.0");
+    expect(engineVersion).toBe("0.454.0");
   });
 });
 

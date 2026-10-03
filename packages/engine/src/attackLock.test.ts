@@ -37,7 +37,7 @@ import {
 //
 //   • THE STAMP IS `state.turn + 2`, and that is the whole slice. D142's block
 //     prints "during your OPPONENT's next turn" and stamps + 1; this prints
-//     "during YOUR next turn". Declaring an attack ends the turn (§5.3), so the
+//     "during YOUR next turn". Declaring an attack ends the turn [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which no board here builds] (§5.3), so the
 //     holder's next turn is two away — and a + 1 stamp would be live only on a
 //     turn its holder could not act on anyway, silently deleting the drawback the
 //     card is balanced around. Every window case below is DRIVEN across real turn
@@ -449,7 +449,7 @@ describe("the self-lock — installing it", () => {
       uid: installer,
     });
     // ⚠️ THE + 2, WRITTEN DOWN ONCE AND DRIVEN EVERYWHERE BELOW. Turn 2 installed
-    // it; turn 3 is the OPPONENT's (declaring an attack ends the turn, §5.3) and
+    // it; turn 3 is the OPPONENT's (declaring an attack ends the turn [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which no board here builds], §5.3) and
     // turn 4 is the holder's next one, which is the printed window.
     expect(done.players.p1.active?.attackLockedTurn).toBe(4);
     expect(done.turn).toBe(3);
@@ -668,7 +668,7 @@ describe("the self-lock — the WINDOW, driven across four turn boundaries", () 
 
   it("does NOT lift at the Checkup that ends the installer's own turn", () => {
     // D112's §13.4 paralysis clock — cleared in `runCheckup` for `endedSeat` —
-    // would have. Installing ends P1's turn, so a Checkup runs immediately with
+    // would have. Installing ends P1's turn [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which no board here builds], so a Checkup runs immediately with
     // `endedSeat` = p1, the holder's OWN seat; that clock lifts this lock a full
     // turn before its window opens. The install events carry that whole Checkup,
     // which is what makes this assertable at all.

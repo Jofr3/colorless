@@ -556,7 +556,7 @@ describe("§3 — TWO REQUIRED fields on a shipped op, and the record version do
   });
 
   it("the engine version moved and the record version did not", () => {
-    expect(engineVersion).toBe("0.453.0");
+    expect(engineVersion).toBe("0.454.0");
   });
 });
 
@@ -901,7 +901,7 @@ describe("§9 — `source` on the wire, and the shipped Ability path unchanged",
 // A reference to `applyAction` so the import earns its place: every board above goes
 // through `mustApply`, which wraps it — this is the one direct call, and it pins that a
 // second attack in the same turn is refused, i.e. that the boards above really did end
-// their turn on the attack rather than leaving one open (§8's one-attack rule).
+// their turn on the attack rather than leaving one open (§8's one-attack rule [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which no board here builds]).
 describe("§10 — the attack really is the turn's last action", () => {
   it("refuses a second attack after the fold resolves", () => {
     const { state } = attack(fielded(90, { theirs: ["fix-bigbody"] }), IDX.board);

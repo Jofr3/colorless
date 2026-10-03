@@ -732,6 +732,15 @@ export type GameEvent =
       `atLeast` is the printed threshold. The discard itself, when it happens, is the
       shipped `HAND_DISCARDED` row filed by flow.ts's `endTurn` stage. Not persisted (D141). */
   | { type: "HAND_DISCARD_SCHEDULED"; seat: Seat; atLeast: number }
+  /** 🆕🆕🆕 §5.3/§8 (D570) — Festival Lead's attack-again window opened: `seat`'s Active
+      `uid` may declare a SECOND attack this turn (*"If Festival Grounds is in play, this
+      Pokémon may use an attack it has twice."*), or end the turn instead. Filed by flow.ts's
+      `resumeTurn` stage, the moment turn:action comes back after the first attack (and
+      after any Knock Out it caused has been prized and promoted) — 🆕 D570 third review: and
+      only while that declaration is NOT barred (`attackAgainBarred`, R-FL2's re-read), so a
+      promotion that silences the licence offers nothing. A new union member
+      (D125); not persisted (D141). */
+  | { type: "ATTACK_AGAIN_OFFERED"; seat: Seat; uid: string }
   /** 🆕🆕 §13 (D434 as `COUNTERS_SCHEDULED`, RENAMED AND GENERALISED AT D435) — an
       attack SCHEDULED a delayed effect onto `seat`'s Active for the END of
       `scheduled.turn`. Three payloads share the row because they share the clock:
@@ -1010,7 +1019,7 @@ export type GameEvent =
       CONFUSION_CHECK at all (docs/decisions.md D547 ruling 1). */
   | { type: "ATTACK_FLIP_LOCK_CHECK"; seat: Seat; uid: string; result: CoinFace }
   /** The declared attack did NOT resolve: no damage to the defender, no
-      effects — and the turn still ends either way. Three reasons, and they differ
+      effects — and the turn still ends [🆕🆕🆕 D570 (D539): or, after a FIRST attack under Festival Lead with Festival Grounds in play, the attack-again window opens instead (flow.ts `finishAttack`) — a failed or cancelled attack is still an attack that was USED] either way. Three reasons, and they differ
       only in what follows:
         • "confusion" — §12, the step-3 flip came up tails; the self-damage
           follows as COUNTERS_PLACED. 🆕🆕 **CORRECTED AT D501, WHICH FALSIFIED IT.**
@@ -1049,7 +1058,7 @@ export type GameEvent =
       /** 🆕🆕🆕 D547 — `"flipLock"`: the FLIP-TO-ATTACK lock's coin came up tails
           ("If tails, that attack doesn't happen."). PRECEDED by its own
           ATTACK_FLIP_LOCK_CHECK row and followed by nothing — no counters, no
-          damage; the turn ends. A free widening of this enum (above). */
+          damage; the turn ends [🆕🆕🆕 D570 (D539): or, after a FIRST attack under Festival Lead with Festival Grounds in play, the attack-again window opens instead (flow.ts `finishAttack`) — a failed or cancelled attack is still an attack that was USED]. A free widening of this enum (above). */
       reason: "confusion" | "requirement" | "coinFlip" | "preDamage" | "flipLock";
     }
   /** Damage removed from one of `seat`'s IN-PLAY Pokémon by an effect; `amount`

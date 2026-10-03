@@ -22,7 +22,7 @@ import {
 // which silently DROPPED a parked prompt and every op behind it. It now seeds a
 // one-stage `pending` queue before the program runs and folds through
 // settleProgram's `resumeTail`, so a program that stops for a decision leaves the
-// epilogue (the §8.1 KO sweep + the §5.3 turn end) waiting in the queue, and
+// epilogue (the §8.1 KO sweep + the §5.3 turn end) [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play — `finishAttack` then queues `resumeTurn` (the attack-again window) in place of the turn tail] waiting in the queue, and
 // resolveEffect drains it once the answer lands.
 //
 // The card family that needs it is the self-discard attack COST, a DERIVED effect

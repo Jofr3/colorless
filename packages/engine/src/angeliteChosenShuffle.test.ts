@@ -403,7 +403,7 @@ const benchIds = (state: GameState, seat: Seat): string[] =>
   state.players[seat].bench.map((b) => state.cardIdByUid[b.stack[b.stack.length - 1] ?? ""] ?? "?");
 const benchRef = (index: number): PokemonRef => ({ seat: "p2", spot: { spot: "bench", index } });
 const rows = (events: readonly GameEvent[], type: string) => events.filter((e) => e.type === type);
-/** ⚠️ **AN ATTACK ENDS THE TURN**, so every board measured AFTER the answer has
+/** ⚠️ **AN ATTACK ENDS THE TURN [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which no board here builds]**, so every board measured AFTER the answer has
     already run p2's turn tail — and that tail DRAWS ONE CARD off the very deck this
     op just shuffled into. The pile this op writes is therefore `deck ∪ hand`
     (`benchKeepShuffleRest.test.ts`'s finding, re-derived here rather than copied:
@@ -1246,7 +1246,7 @@ describe("D541 §7 — `SYLVEON_EX_ANGELITE` is KEPT as defence in depth, and th
 // §8 — THE PERSISTED BYTES (D450's two doors), over SERIALIZED BYTES.
 // ─────────────────────────────────────────────────────────────────────────────
 
-describe("D541 §8 — the parked op IS persisted, and `MATCH_RECORD_VERSION` HOLDS at 30 (🆕🆕🆕 held at THIS slice; 31 since D547; 32 since D548; 33 since D549; 34 since D552; 35 since D556; 36 since D564)", () => {
+describe("D541 §8 — the parked op IS persisted, and `MATCH_RECORD_VERSION` HOLDS at 30 (🆕🆕🆕 held at THIS slice; 31 since D547; 32 since D548; 33 since D549; 34 since D552; 35 since D556; 36 since D564; 37 since D570)", () => {
   it("🛑 THE FIRST DOOR: `phase.cont.pendingOp` carries the op as a LITERAL byte string", () => {
     // 🛑 **DO NOT RE-DERIVE THIS AS *"it never parks"*.** This op PARKS, so the
     // serialized alphabet GROWS: `{"op":"returnBenchedChosen","count":2}` is a byte
@@ -1311,9 +1311,9 @@ describe("D541 §8 — the parked op IS persisted, and `MATCH_RECORD_VERSION` HO
     expect(JSON.stringify(state)).not.toContain("returnBenchedChosen");
   });
 
-  it("🛑 `MATCH_RECORD_VERSION` is 36 (🆕🆕🆕 D564 stepped it 35 → 36; D556 stepped it 34 → 35; D552 stepped it 33 → 34; D549 stepped it 32 → 33; D548 stepped it 31 → 32; D547 stepped it 30 → 31; this slice held it) — read off the raw source, not retyped", () => {
+  it("🛑 `MATCH_RECORD_VERSION` is 37 (🆕🆕🆕 D570 stepped it 36 → 37; D564 stepped it 35 → 36; D556 stepped it 34 → 35; D552 stepped it 33 → 34; D549 stepped it 32 → 33; D548 stepped it 31 → 32; D547 stepped it 30 → 31; this slice held it) — read off the raw source, not retyped", () => {
     // 🆕🆕🆕 D547 — the constant this slice held is now 31: D547 added two REQUIRED `InPlayPokemon` fields (apps/api match.ts).
-    expect(raw("/match.ts")).toContain("MATCH_RECORD_VERSION = 36");
+    expect(raw("/match.ts")).toContain("MATCH_RECORD_VERSION = 37");
   });
 });
 
@@ -1323,8 +1323,8 @@ describe("D541 §8 — the parked op IS persisted, and `MATCH_RECORD_VERSION` HO
 
 describe("D541 §9 — the version tax and the byte pins", () => {
   it("🛑 the engine version is the CURRENT one in BOTH places (🆕 D541 — the TITLE is de-valued on purpose: D460's fifth site kind is the `it()` title, and a title carrying BOTH arrows is a site the next bump has to edit twice)", () => {
-    expect(engineVersion).toBe("0.453.0");
-    expect(manifest.version).toBe("0.453.0");
+    expect(engineVersion).toBe("0.454.0");
+    expect(manifest.version).toBe("0.454.0");
   });
 
   it("🛑 the OP NAME is untouched by the funnel RENAME — it is a persisted member", () => {

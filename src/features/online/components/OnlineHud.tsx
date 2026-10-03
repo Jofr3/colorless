@@ -2033,7 +2033,7 @@ function AttackPanel({
             printing D501 landed. `battle` itself is optional (a setup-phase hidden back
             carries none), which is what the first conjunct is for; the local HUD's
             `?? 30` is there for the same totality reason and nothing else. Same fact,
-            same spelling as `GameHud.tsx` (D421). */}
+            same spelling as `GameHud.tsx` (D421). [🆕🆕🆕 D570 (D539): "turn ends" is false for a FIRST attack under Festival Lead with Festival Grounds in play — the confusion-tails failure goes through `finishAttack`, which opens the attack-again window; this hint does not say so, carried as display debt with the missing attack-again banner (D570, the D556 precedent) — 🆕 D570 THIRD-REVIEW CORRECTION: that board is UNREACHABLE in play (Festival Grounds keeps every Pokémon with Energy attached free of Special Conditions, and every Festival Lead attack costs Energy, so a licensed attacker is never Confused), so NO display debt is owed here; the note stands as the code fact] */}
         {battle !== undefined && battle.conditions.rotation === "confused" && (
           <p className="mt-2 text-[11px] text-white/45">
             Confused: attacking flips a coin — tails: {battle.conditions.confusionDamage} damage to

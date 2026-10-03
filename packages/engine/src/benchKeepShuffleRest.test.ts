@@ -325,7 +325,7 @@ const benchIds = (state: GameState, seat: Seat): string[] =>
   state.players[seat].bench.map((b) => state.cardIdByUid[b.stack[b.stack.length - 1] ?? ""] ?? "?");
 const benchRef = (index: number): PokemonRef => ({ seat: "p2", spot: { spot: "bench", index } });
 const rows = (events: readonly GameEvent[], type: string) => events.filter((e) => e.type === type);
-/** ⚠️ **AN ATTACK ENDS THE TURN**, so every board this suite measures AFTER the answer
+/** ⚠️ **AN ATTACK ENDS THE TURN [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which no board here builds]**, so every board this suite measures AFTER the answer
     has already run p2's turn tail — and that tail DRAWS ONE CARD off the very deck this
     op just shuffled into. The pile this op writes is therefore `deck ∪ hand`, and
     asserting on `deck` alone would be a rung whose colour depends on which card the
@@ -579,7 +579,7 @@ describe("D537 §3 — bench ≤ keep asks NOTHING, and the ABSENCE is pinned (D
       // movement row nor the shuffle row was filed.
       expect(benchIds(state, "p2")).toEqual([...bench]);
       // The deck is the start deck MINUS its top card, and that one card is the TURN
-      // TAIL's draw rather than anything this op did — an attack ends the turn. The
+      // TAIL's draw rather than anything this op did — an attack ends the turn [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which no board here builds]. The
       // ORDER is untouched, which is the half a stray shuffle would break.
       expect(state.players.p2.deck).toEqual(start.players.p2.deck.slice(1));
       expect(state.rngState).toBe(start.rngState);
@@ -838,7 +838,7 @@ describe("D537 §6 — the shield is asked about the COMPLEMENT and about nothin
 // §7 — THE PERSISTED BYTES (D450's doors), MEASURED IN BOTH DIRECTIONS.
 // ─────────────────────────────────────────────────────────────────────────────
 
-describe("D537 §7 — the parked op IS persisted, and `MATCH_RECORD_VERSION` still holds at 30 (🆕🆕🆕 held at THIS slice; 31 since D547; 32 since D548; 33 since D549; 34 since D552; 35 since D556; 36 since D564)", () => {
+describe("D537 §7 — the parked op IS persisted, and `MATCH_RECORD_VERSION` still holds at 30 (🆕🆕🆕 held at THIS slice; 31 since D547; 32 since D548; 33 since D549; 34 since D552; 35 since D556; 36 since D564; 37 since D570)", () => {
   it("🛑 THE FIRST DOOR, MEASURED: `phase.cont.pendingOp` carries the op as a LITERAL", () => {
     // 🛑 **DO NOT RE-DERIVE *\"it never parks, so it is not persisted\"*.** This op parks,
     // so the serialized alphabet GROWS: `{\"op\":\"returnBenchedRest\",\"keep\":3}` is a byte
@@ -876,14 +876,14 @@ describe("D537 §7 — the parked op IS persisted, and `MATCH_RECORD_VERSION` st
     expect(benchIds(done, "p2")).toEqual([B1, B2, B3]);
   });
 
-  it("🛑 `MATCH_RECORD_VERSION` is 36 (🆕🆕🆕 D564 stepped it 35 → 36; D556 stepped it 34 → 35; D552 stepped it 33 → 34; D549 stepped it 32 → 33; D548 stepped it 31 → 32; D547 stepped it 30 → 31; this slice held it) — read off the raw source, not retyped", () => {
+  it("🛑 `MATCH_RECORD_VERSION` is 37 (🆕🆕🆕 D570 stepped it 36 → 37; D564 stepped it 35 → 36; D556 stepped it 34 → 35; D552 stepped it 33 → 34; D549 stepped it 32 → 33; D548 stepped it 31 → 32; D547 stepped it 30 → 31; this slice held it) — read off the raw source, not retyped", () => {
     // 🆕🆕🆕 D547 — the constant this slice held is now 31: D547 added two REQUIRED `InPlayPokemon` fields (apps/api match.ts).
-    expect(raw("/match.ts")).toContain("MATCH_RECORD_VERSION = 36");
+    expect(raw("/match.ts")).toContain("MATCH_RECORD_VERSION = 37");
   });
 
   it("🛑 the engine version is the CURRENT one in BOTH places (🆕 D538 — 0.422.0 → 0.423.0; the title is de-valued so the version tax is one edit per site, not two)", () => {
-    expect(engineVersion).toBe("0.453.0");
-    expect(manifest.version).toBe("0.453.0");
+    expect(engineVersion).toBe("0.454.0");
+    expect(manifest.version).toBe("0.454.0");
   });
 });
 

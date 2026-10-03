@@ -619,7 +619,7 @@ describe("D526 §2 — exactly 1 / 2 / 3 heads pay +20 / +50 / +80 on top of the
     expect(b.events).toEqual(a.events);
   });
 
-  it("🛑 (x) NO park, EVER: on every face pattern the phase is `turn:action` for P2 after the attack (the attack ends the turn, D491), no `EFFECT_PENDING`, `TURN_ENDED` present", () => {
+  it("🛑 (x) NO park, EVER: on every face pattern the phase is `turn:action` for P2 after the attack (the attack ends the turn [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which no board here builds], D491), no `EFFECT_PENDING`, `TURN_ENDED` present", () => {
     for (const faces of [HHH, HHT, HTT, TTT]) {
       const { after, events } = swing({ faces });
       expect(after.phase, faces.join("-")).toEqual({ kind: "turn:action", seat: "p2" });
@@ -738,7 +738,7 @@ const RAW: Record<string, string> = (
 describe("D526 §4 — the version steps, the heading is written, the prose is corrected, and what stands still", () => {
   it("engineVersion and `manifest.version` agree, and the bump is owed for BEHAVIOUR", () => {
     // ⚠️ The version is NOT spelled in this `it(…)` title (D460's fourth class).
-    expect(engineVersion).toBe("0.453.0");
+    expect(engineVersion).toBe("0.454.0");
     expect(manifest.version).toBe(engineVersion);
   });
 

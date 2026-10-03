@@ -695,7 +695,7 @@ describe("what the bare heal costs the rest of the engine — nothing", () => {
 
   it("never PARKS — the attack resolves to an ordinary action phase", () => {
     // "This Pokémon" names its target outright, so there is no prompt and no
-    // continuation. The turn simply ends, which is what every non-parking attack
+    // continuation. The turn simply ends [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which no board here builds], which is what every non-parking attack
     // does — and is the visible difference between this op and its `healChosen`
     // sibling, which parks on exactly this kind of sentence with "1 of your Pokémon"
     // in place of "this Pokémon".

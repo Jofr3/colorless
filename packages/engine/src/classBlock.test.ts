@@ -632,7 +632,7 @@ describe("the attacker-CLASS filter — lifetime, merging and the early clears",
   });
 
   it("ends on evolution (§10) — unreachable in play, pinned anyway", () => {
-    // No legal sequence reaches it: installing ends the turn, the window is the
+    // No legal sequence reaches it: installing ends the turn [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, whose four attacks install nothing and whose window admits only `attack` / `endTurn` (R-FL1); no board here builds it], the window is the
     // opponent's, and nobody evolves during it. §10 sheds the effects of ATTACKS
     // and this is one, so the rule is asserted by surgery (D142's own shape).
     let state = must(applyAction(installed("sv01-150"), { type: "endTurn", seat: "p2" }));

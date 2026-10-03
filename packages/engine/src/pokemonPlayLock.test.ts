@@ -308,7 +308,7 @@ function turnOf(state: GameState, seat: Seat): GameState {
 }
 
 /** Attach one Energy from hand and swing attack `index` — the only route by
-    which the STAMP is written in this file. Attacking ends the turn (§5.3), so
+    which the STAMP is written in this file. Attacking ends the turn [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which no board here builds] (§5.3), so
     the returned board is the BARRED seat's. */
 function swing(state: GameState, seat: Seat, index: number): GameState {
   let next = state;

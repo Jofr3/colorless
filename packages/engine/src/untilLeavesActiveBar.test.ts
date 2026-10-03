@@ -379,7 +379,7 @@ describe("§3 — the install writes an entry with NO window", () => {
       attack: "Blaze Blitz",
       until: "leavesActive",
     });
-    // 🛑 THE TURN IS 2 — THE INSTALLING TURN — AND NOT 4. Declaring ENDS the turn
+    // 🛑 THE TURN IS 2 — THE INSTALLING TURN — AND NOT 4. Declaring ENDS the turn [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which no board here builds]
     // (§5.3), so a `2` here names a turn its holder has already spent: the number
     // is PROVENANCE and no reader compares it (types.ts). Stamping `+ 2` would
     // have made a build that dropped the rider degrade silently into D154's
@@ -948,7 +948,7 @@ describe("§9 — a v26 record still means what it meant, and this one is readab
   });
 
   it("the engine version moved with the behaviour", () => {
-    expect(engineVersion).toBe("0.453.0");
+    expect(engineVersion).toBe("0.454.0");
   });
 });
 

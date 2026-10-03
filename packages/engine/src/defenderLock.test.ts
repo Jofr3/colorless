@@ -38,7 +38,7 @@ import {
 //     would have to carry a DIFFERENT STAMP as well as a different holder (the
 //     defender-side window is state.turn + 1, this one is + 2)". Both numbers are
 //     real and they are NOT independent: the window is always the LOCKED
-//     Pokémon's controller's next turn, and declaring an attack ends the turn
+//     Pokémon's controller's next turn, and declaring an attack ends the turn [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which no board here builds]
 //     (§5.3), so `+ 1` and `+ 2` are one rule read on two seats. The stamp is
 //     DERIVED from the field, which is exactly the widen-don't-add test D131 asks
 //     for and D143 said to run with two readings in hand;
@@ -795,7 +795,7 @@ describe("the opponent-side lock — §10 ends it, and every route is the VICTIM
   it("the INSTALLER cannot reach any of the three routes inside the window", () => {
     // The agency claim, stated as a fact about the turn order rather than as
     // prose: the window is the victim's own turn, so the installer has no action
-    // at all while it is open — their turn ended when they declared (§5.3). This
+    // at all while it is open — their turn ended when they declared (§5.3) [🆕🆕🆕 D570 (D539): a FIRST attack under Festival Lead opens the attack-again window instead, but its four attacks (Do the Wave, Whirlpool, Sneaky Placement, Rapid Draw) install nothing, so this stays true on every printing]. This
     // is the exact inversion of D142's block, whose only in-window clear was the
     // OPPONENT's Boss's Orders.
     const held = installed("sv03-134", "sv01-048");

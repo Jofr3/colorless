@@ -30,6 +30,7 @@ import {
   handCostUnmet,
   attackCostAt,
   costMet,
+  attackAgainBarred,
   attackBarredByAbility,
   attackTimingBlocked,
   effectiveRetreatCost,
@@ -757,6 +758,18 @@ function TurnPanel(props: GameHudProps) {
   // for free by being a live read rather than a stamp. The server-side twin is
   // `redactedAttacksOf`'s `banned` (redact.ts).
   const abilityGateUnmet = attackBarredByAbility(game, viewerSeat, active) !== undefined;
+  // 🆕🆕🆕 §5.3/§8 (D570) — Festival Lead's attack-again window. Inside it the SECOND
+  // declaration is barred for a body that no longer holds the window (moved, replaced,
+  // locked, Festival Grounds gone — R-FL2), read through the engine's own reader exactly as
+  // the gates above are; the server-side twin is `redactedAttacksOf`'s `banned`. And while
+  // the window is open only `attack` and `endTurn` are legal (R-FL1, turn.ts `turnGate`),
+  // so retreat, the Trainer/Ability lists and the Stadium row are withheld below —
+  // `redactPhase`'s `mainPhase` twin. ⚠️ CARRIED DISPLAY DEBT (decisions.md D570, D556's
+  // precedent): no "attack again" banner is drawn, and the playmat's drag affordances
+  // (moveToAction.ts) are not pre-folded against the window — a drag inside it is refused
+  // by the server with the window's own message.
+  const attackAgainWindow = game.allowances.attackAgainUid !== null;
+  const attackAgainBarredNow = attackAgainBarred(game, viewerSeat, active);
 
   // THE retreat derivation site — RetreatDialog receives these as props. The
   // cost is the CONTINUOUS one (§7.3 — Beach Court discounts Basics), the
@@ -783,16 +796,17 @@ function TurnPanel(props: GameHudProps) {
     // read live off both Active spots rather than off a flag on this Pokémon.
     !opposingRetreatBlocked(game, active) &&
     !game.allowances.retreated &&
+    !attackAgainWindow &&
     side.bench.length > 0 &&
     active.energy.length >= retreatCost;
 
   // Trainer/Ability plays (§7/§9) — read off raw GameState like payability
   // above (the acknowledged P4 blocker); the engine still owns fine legality.
-  const trainerOptions = playableTrainers(game, viewerSeat);
-  const abilityOptions = usableAbilities(game, viewerSeat);
+  const trainerOptions = attackAgainWindow ? [] : playableTrainers(game, viewerSeat);
+  const abilityOptions = attackAgainWindow ? [] : usableAbilities(game, viewerSeat);
   // §7.3 — the shared Stadium's activated ability, the one turn affordance that
   // fits in NEITHER list above (see stadiumAbilityOption). Null = no row.
-  const stadiumAbility = stadiumAbilityOption(game, viewerSeat);
+  const stadiumAbility = attackAgainWindow ? null : stadiumAbilityOption(game, viewerSeat);
 
   return (
     <>
@@ -829,6 +843,7 @@ function TurnPanel(props: GameHudProps) {
               immobilized ||
               attackLockedNow ||
               abilityGateUnmet ||
+              attackAgainBarredNow ||
               barredAttackIndexes.includes(index) ||
               // §4/§8 (D281) — the printed TIMING CLAUSE on this one attack
               // ("…only if you go second, and only during your first turn." —
@@ -881,7 +896,7 @@ function TurnPanel(props: GameHudProps) {
             predicate). Found by D412's procedure: grep every read site of the fact
             before fixing any of them. `confusionDamage` is REQUIRED on the projected
             conditions, so the `?? ` fallback is unreachable and exists only to keep
-            the expression total while `conditions` itself may be undefined. */}
+            the expression total while `conditions` itself may be undefined. [🆕🆕🆕 D570 (D539): "turn ends" is false for a FIRST attack under Festival Lead with Festival Grounds in play — the confusion-tails failure goes through `finishAttack`, which opens the attack-again window; this hint does not say so, carried as display debt with the missing attack-again banner (D570, the D556 precedent) — 🆕 D570 THIRD-REVIEW CORRECTION: that board is UNREACHABLE in play (Festival Grounds keeps every Pokémon with Energy attached free of Special Conditions, and every Festival Lead attack costs Energy, so a licensed attacker is never Confused), so NO display debt is owed here; the note stands as the code fact] */}
         {rotation === "confused" && (
           <p className="mt-2 text-[11px] text-white/45">
             Confused: attacking flips a coin — tails:{" "}

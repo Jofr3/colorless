@@ -820,7 +820,7 @@ describe("§5 — `bottomFromOpponentHand.dest: \"discard\"`", () => {
     expect(resolved.state.players.p2.discard).toContain(uid);
     expect(resolved.state.players.p1.discard).not.toContain(uid);
     // ⚠️ EXACTLY ONE of the seven left, and it is counted against the ORIGINAL hand
-    // rather than against a length: the attack ends p1's turn (§5.3), so p2's turn-start
+    // rather than against a length: the attack ends p1's turn [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which no board here builds] (§5.3), so p2's turn-start
     // draw lands in that hand in the same batch and a bare `toHaveLength(6)` would be
     // asserting the draw as much as the discard.
     const kept = state.players.p2.hand.filter((u) => resolved.state.players.p2.hand.includes(u));

@@ -789,7 +789,7 @@ describe("Greavard — Underworld Stroll, the derived attack twin", () => {
     expect(find(events, "CARD_TO_BOTTOM_OF_DECK")).toBeUndefined();
     expect(find(events, "TURN_ENDED")).toBeDefined();
     // The revealed hand is intact — the extra card is P2's own turn-start
-    // draw, which rides the same reduction once the attack ends the turn.
+    // draw, which rides the same reduction once the attack ends the turn [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which no board here builds].
     expect(done.players.p2.hand.slice(0, oppHand.length)).toEqual(oppHand);
     expect(done.players.p2.hand).toHaveLength(oppHand.length + 1);
     expect(done.phase).toEqual({ kind: "turn:action", seat: "p2" });

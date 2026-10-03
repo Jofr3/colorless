@@ -101,7 +101,12 @@ export interface AbilityProgram {
       adds Thwackey `sv06-015`/`svp-115` "Boom Boom Groove" on the NEW
       `yourActiveHasAbility { name: "Festival Lead" }`: **10 printings on 4 cards and 4
       members**. Thwackey's clause names "your Active Pokémon", a board read — the per-body
-      rule above is untouched. */
+      rule above is untouched.
+      🆕🆕🆕 D570 NOTE (D539) — the Festival Lead Ability Thwackey's gate names is itself
+      BUILT now (`FESTIVAL_LEAD`, `PassiveEffects.attackTwiceIf`); it is an ATTACK licence,
+      not a `playableIf`, so the "10 printings on 4 cards and 4 members" count above is
+      unchanged, and V1 still reads the PRINTED Ability name (a locked Festival Lead Active
+      still satisfies Boom Boom Groove, R-TW). */
   playableIf?: BoardCondition;
   /** 🆕 **D310 — §9's PER-BODY printed gate, and the field the block above asked
       for by name.** *"Once during your turn, if this Pokémon's remaining HP is 30
@@ -2709,6 +2714,43 @@ export interface PassiveEffects {
       sentence, on the NEW `opponentHasExOrVInPlay` — the vocabulary choice above paid for
       itself exactly as argued: 8 printings on 2 sentences, zero read-site bytes. */
   cantAttackUnless?: BoardCondition;
+  /** 🆕🆕🆕 §5.3/§8 (D570) — the holder's own printed ATTACK-AGAIN licence, "Festival Lead"
+      (Dipplin `sv06-018`/`-170`/`sv08.5-010`, Goldeen `sv06-044`/`sv08.5-020`, Swirlix
+      `sv06-089`, Seaking `sv08.5-021` — **7 legal printings**): *"If Festival Grounds is in
+      play, this Pokémon may use an attack it has twice. If the first attack Knocks Out your
+      opponent's Active Pokémon, you may attack again after your opponent chooses a new
+      Active Pokémon."* The condition is the PERMISSION (`cantAttackUnless`' polarity is the
+      opposite: that field stores what must hold for the BAR to lift; this one stores what
+      must hold for the LICENCE to exist), and the one legal spelling is
+      `stadiumInPlayNamed "Festival Grounds"` (D564's member — the "no named-Stadium member"
+      half of the old blocker is withdrawn).
+
+      ⚠️ **COLLECTED RAW BY `passivesOf`, EVALUATED BY `attackAgainLicensed`** (interpreter.ts),
+      `cantAttackUnless`' split verbatim: the condition is seat-relative and that fold has no
+      seat, and it rides the fold's LOOP so a §9 Ability-lock (Klefki `sv01-096`, an opposing
+      Flutter Mane's "Midnight Fluttering") silences it.
+
+      THE TURN MACHINE (all UNRULED, decisions.md D570):
+        · **R-FL1** — while the window is open (between the two attacks) only `attack` and
+          `endTurn` are legal; `endTurn` is the printed "may" declined (turn.ts `turnGate`).
+        · **R-FL2** — the licence is read TWICE [🆕 D570 landing (D539): THREE times in the code —
+          the two below, which decide, plus flow.ts `resumeTurn`, which re-reads it through
+          `attackAgainBarred` only to decide whether to file the `ATTACK_AGAIN_OFFERED` row]: when the first attack finishes (flow.ts
+          `finishAttack` opens the window only for the attacker still in the Active Spot),
+          and again at the second declaration (attack.ts), where the SAME uid must still be
+          the Active, the Ability must not be locked and Festival Grounds must still be in play.
+        · **R-FL3** — "the same or a different attack" does not arise: every printing has
+          exactly one attack.
+        · **R-FL4** — the window survives the first attack's prize, koTrigger and promotion
+          stages (the `resumeTurn` tail); no Checkup runs between the attacks; there is no
+          third attack (`TurnAllowances.attackAgainUid` is non-null on the second finish).
+      The second attack is a FULL declaration: cost, Special Conditions (a confusion flip),
+      the §8 gates and `attackBarredByAbility` all apply again.
+
+      ⚠️ The window itself is PERSISTED (`TurnAllowances.attackAgainUid`, REQUIRED):
+      `MATCH_RECORD_VERSION` 36 → 37, THE TENTH POSITION (apps/api match.ts). The licence on
+      this field is a CATALOG fact and persists nothing. */
+  attackTwiceIf?: BoardCondition;
 
   /** §4 continuous SELF-only ATTACK **LICENCE** (D277): the holder MAY attack on
       the going-first player's first turn, lifting the ban `attack` imposes on
@@ -14974,7 +15016,11 @@ const JAMMING_TOWER: CardProgram = { stadium: { toolsHaveNoEffect: true } };
     all Special Conditions and can't be affected by any Special Conditions."*
     `StadiumEffects.statusShieldIfEnergyAttached` (NEW key), read by continuous.ts
     `stadiumShieldsStatus` (R-FG). The Festival Lead Ability that names this Stadium stays
-    UNBUILT (an attack always ends the turn). */
+    UNBUILT (an attack always ends the turn [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which opens the attack-again window instead (flow.ts `finishAttack`); the window keeps `state.turn`, so no turn-stamp argument here moves]).
+    🆕🆕🆕 D570 CORRECTION (D539) — "stays UNBUILT (an attack always ends the turn)" is
+    WITHDRAWN: Festival Lead is BUILT (`FESTIVAL_LEAD`, `PassiveEffects.attackTwiceIf` on
+    `stadiumInPlayNamed "Festival Grounds"`), and an attack ends the turn [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which opens the attack-again window instead (flow.ts `finishAttack`); the window keeps `state.turn`, so no turn-stamp argument here moves] except when the
+    attack-again window opens (`TurnAllowances.attackAgainUid`, flow.ts `finishAttack`). */
 const FESTIVAL_GROUNDS: CardProgram = { stadium: { statusShieldIfEnergyAttached: true } };
 
 // ── 🆕🆕🆕 D563 — five Ability texts on eleven printings: two own-attack cost clauses, an
@@ -15667,6 +15713,24 @@ const REBOOT_POD: CardProgram = {
       each: true,
     },
   ],
+};
+
+// ── 🆕🆕🆕 D570 — FESTIVAL LEAD, THE ATTACK-AGAIN TURN MACHINE: 7 printings / 1 text / 1 object.
+//    Texts and legality off tcgdex (the audit's card JSON), all `legal.standard: true`. Each
+//    printing has exactly ONE attack and every one already derives (no `attack` key). Keyed
+//    MID-MAP after D569's rows (D395/D396), so `raw[last]` stays `sv09-107`. ──
+
+/** 🆕🆕🆕 **D570 — "Festival Lead" (Ability, 7 legal)** — Dipplin `sv06-018`/`sv06-170`/
+    `sv08.5-010` (Do the Wave), Goldeen `sv06-044`/`sv08.5-020` (Whirlpool), Swirlix `sv06-089`
+    (Sneaky Placement), Seaking `sv08.5-021` (Rapid Draw): *"If Festival Grounds is in play,
+    this Pokémon may use an attack it has twice. If the first attack Knocks Out your
+    opponent's Active Pokémon, you may attack again after your opponent chooses a new Active
+    Pokémon."* `PassiveEffects.attackTwiceIf` on D564's `stadiumInPlayNamed` (Festival
+    Grounds `sv06-149`/`sv08.5-108`, built at D562); the window is
+    `TurnAllowances.attackAgainUid` (types.ts), opened by flow.ts `finishAttack`, policed by
+    turn.ts `turnGate` and attack.ts (R-FL1..R-FL4, decisions.md D570). */
+const FESTIVAL_LEAD: CardProgram = {
+  passive: { attackTwiceIf: { kind: "stadiumInPlayNamed", name: "Festival Grounds" } },
 };
 
 const REGISTRY: Record<string, CardProgram> = {
@@ -16415,6 +16479,15 @@ const REGISTRY: Record<string, CardProgram> = {
   "svp-146": COBALT_COMMAND, // Iron Crown ex (reprint)
   "sv05-141": AWAKENING_DRUM, // Awakening Drum — draw a card per Ancient Pokémon in play
   "sv05-158": REBOOT_POD, // Reboot Pod — a Basic Energy from the discard onto each Future Pokémon
+  // ── 🆕🆕🆕 D570 — Festival Lead: 7 registry ids / 1 object, MID-MAP (D395/D396), so
+  //    `raw[last]` does not move. ──
+  "sv06-018": FESTIVAL_LEAD, // Dipplin — Festival Lead: attack twice while Festival Grounds is in play
+  "sv06-170": FESTIVAL_LEAD, // Dipplin (reprint)
+  "sv08.5-010": FESTIVAL_LEAD, // Dipplin (reprint)
+  "sv06-044": FESTIVAL_LEAD, // Goldeen — Festival Lead
+  "sv08.5-020": FESTIVAL_LEAD, // Goldeen (reprint)
+  "sv06-089": FESTIVAL_LEAD, // Swirlix — Festival Lead
+  "sv08.5-021": FESTIVAL_LEAD, // Seaking — Festival Lead
   // ── D190 — THE **STANDARD-LEGAL** REPRINT-ALIAS MAP (Tier 0 of
   //    `docs/reference/coverage-backlog-legal.md`). 22 printings, 9 map targets,
   //    ZERO new code: every row below prints a sentence that is already authored

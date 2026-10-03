@@ -196,7 +196,7 @@ prompt).
   no-op stub) → `startTurn(other)` in one reduction, and `runCheckup` is
   `GameState → GameState` so it **cannot pause**. M2's KO resolution needs to
   stop mid-sequence for decisions (which prize, which Pokémon to promote), and
-  M2's attack ends the turn through the same tail. Expect to restructure this
+  M2's attack ends the turn [🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which opens the attack-again window instead] through the same tail. Expect to restructure this
   into a resumable/staged transition rather than fill in the stub.
 - **Per-turn allowances live on the `turn:action` phase object** ("replacing the
   phase IS the reset"). Any mid-turn *interrupt* phase (targeting, prize pick,
@@ -6555,7 +6555,7 @@ D113 precedent exactly — reuse the event, fix the *message*.
 
 ⚠️ **DECK-OUT IS NOT THE OP'S BUSINESS, and the test cannot assert it naively.** §14.3
 is checked at the DRAW (`flow.ts` `startTurn`), so milling to zero does not end the game
-on the spot — but **attacking ends the turn**, so a clamped mill reaches the victim's
+on the spot — but **attacking ends the turn** [🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which opens the attack-again window instead], so a clamped mill reaches the victim's
 draw in the SAME event batch and `GAME_OVER reason:"deckOut"` always follows. The claim
 is therefore pinned on **ORDER** (`DECK_TOP_DISCARDED` < `TURN_ENDED` < `TURN_STARTED`
 < `GAME_OVER`, and no `CARDS_DRAWN`): a build that ended the game inside the op would
@@ -8800,7 +8800,7 @@ turn early — before its window has opened at all.** The two shapes look identi
 doc and are mirror images in the code.
 
 `InPlayPokemon.attackBlock: { turn: number; effects: boolean } | null` therefore stamps
-**`state.turn + 1`**. Declaring an attack ENDS the turn (§5.3), so the turn after the
+**`state.turn + 1`**. Declaring an attack ENDS the turn [🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which opens the attack-again window instead] (§5.3), so the turn after the
 installing one is the opponent's *by construction* — no seat is stored and none needs
 to be. The lifetime table:
 
@@ -8874,7 +8874,7 @@ guessed at.
 
 Both endings null the field, in the three places `retreatBlocked` is already nulled.
 
-- **EVOLVE — unreachable by construction, written anyway.** Installing ends the turn,
+- **EVOLVE — unreachable by construction, written anyway.** Installing ends the turn [🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which opens the attack-again window instead],
   the window is the opponent's, and nobody evolves on someone else's turn, so no legal
   sequence puts an evolution between the install and the expiry. §10 sheds the effects
   of ATTACKS and this is one; a surgery pins the rule rather than a sequence.
@@ -9102,7 +9102,7 @@ written beside the property that refuses it.
 
 ### ⚠️ The "+2", verified by DRIVING it
 
-The item flagged this and it was right to. Declaring an attack ENDS the turn
+The item flagged this and it was right to. Declaring an attack ENDS the turn [🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which opens the attack-again window instead]
 (§5.3), so the turn after the installing one belongs to the OPPONENT and the one
 after that is the installer's own. D142's block prints *"during your OPPONENT's
 next turn"* and stamps `+ 1`; this prints *"during YOUR next turn"* and stamps
@@ -10420,7 +10420,7 @@ SUM would be the other reading — two continuous effects from two SOURCES do st
 which is exactly why `passivesOf` sums a passive with a Tool — but this field holds
 ONE installation with ONE window, so summing would make the stored number depend on
 how many times the record was written rather than on what was printed. Unreachable
-off any printing (one attack per turn, no card prints two of these), constructed
+off any printing (one attack per turn [🆕 D570 (D539): two in one turn under Festival Lead with Festival Grounds in play — its four attacks install nothing, so this stays unreachable], no card prints two of these), constructed
 and pinned; the day a printing installs this on the DEFENDER, the field becomes a
 list and the sum becomes the live question. The row is suppressed when the merge
 says nothing new.
@@ -10603,7 +10603,7 @@ Both numbers are real. They are not **independent**. There is exactly one rule:
 > **the window is the LOCKED POKÉMON's controller's NEXT turn**
 
 and the two numbers are that one rule evaluated on the two seats, because
-**declaring an attack ENDS the turn (§5.3)**. The turn after the installing one
+**declaring an attack ENDS the turn [🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which opens the attack-again window instead] (§5.3)**. The turn after the installing one
 belongs to the opponent — so the defender's next turn is `+ 1` — and the one after
 that is the installer's own, `+ 2`. The printed wordings differ for exactly the
 same reason:
@@ -11975,7 +11975,7 @@ anything. **A name matching nothing installs nothing and emits no row** —
 unreachable off all five printings, constructed and pinned.
 
 **The stamp is `state.turn + 2`** — D143's number, not D142's, because the sentence
-prints "During YOUR next turn" and declaring an attack ends the turn (§5.3).
+prints "During YOUR next turn" and declaring an attack ends the turn [🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which opens the attack-again window instead] (§5.3).
 
 ### Two separations, both D131's widen-don't-add test run in the direction that says NO
 
@@ -14659,7 +14659,7 @@ correctness bug.** Scope `git diff origin/backend...HEAD` — **11 commits, D154
 | Short-circuits when | `turn === turn && index === index` | `turn === turn && index === index` |
 
 Both were **correct about themselves and silent about each other.** A self-side
-re-install always stamps a later turn (an attack ends the turn, and the window is the
+re-install always stamps a later turn (an attack ends the turn [🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which opens the attack-again window instead], and the window is the
 holder's own next one), and §5.3 forbids a second declaration inside one turn — so
 neither op could ever land on its OWN live record. `preventAttackUse`'s doc block said
 so out loud:
@@ -16638,7 +16638,7 @@ Three early returns sit ahead of the new gate:
 
 The new gate sits **BEHIND** the third, so a refused ATTACK keeps reporting itself as one.
 ⚠️ **The ordering is UNOBSERVABLE, and that is SAID rather than left as a coincidence:**
-`preventDamage` installs only on the ATTACKER's own Active, an attack ends the turn
+`preventDamage` installs only on the ATTACKER's own Active, an attack ends the turn [🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which opens the attack-again window instead]
 (§5.3), and **neither immune printing has an attack that installs a block** — so no legal
 board reaches both gates. **Asserted over the fixtures' printed attack text and over
 `attackBlock` being null on the board**, not left in a comment.
@@ -19272,7 +19272,7 @@ would prevent damage from a body the card does not mention), a **stage** refinem
 "opponent"` (2), `attachEnergyFrom`'s **self target** a second time (2 — D190's Teal
 Dance finding, on the discard source), `discardPileRetrieval.dest: "bench"` + an HP
 threshold (2), two filters on one `lookAtTopN` window and a `trainer` filter kind (4+2),
-and an attack-again mechanism (7).
+and an attack-again mechanism (7) (🆕🆕🆕 D570 (D539): BUILT — Festival Lead ×7, see D570 below).
 
 ### Doctrine and mutation check
 
@@ -24518,7 +24518,7 @@ decision for an unbounded time. Both park shapes were built and driven rather th
 
 The mechanism is that **`turnTail` queues exactly ONE `startTurn` and every KO stage is spliced in
 FRONT of it**. So `state.turn - 2` is D143's `state.turn + 2` reflected — the same claim
-(*"declaring an attack ENDS the turn, so the turn after this one is the opponent's"*) read backwards.
+(*"declaring an attack ENDS the turn [🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which opens the attack-again window instead], so the turn after this one is the opponent's"*) read backwards.
 A `- 1` is the OPPONENT's clock and compares against a turn number no body of this seat can carry.
 
 ### 🆕 THE PARITY DOES THE SEAT CHECK FOR FREE
@@ -26362,7 +26362,7 @@ head `SELF_HEAL` already claims. One bare anchor (`SELF_CANT_RETREAT`), one arm,
 D411's resume point (following D410's) priced this as *"give `preventRetreat` a `target` and transfer
 `preventAttack`'s ternary"*. **That ships a program that resolves and does nothing.** `retreatBlocked`
 rides §13.4's paralysis clock; `flow.ts` clears it for `endedSeat`; an attack ENDS the installer's
-turn (§5.3) — so a self-installed flag is lifted at the very first Checkup, before its window opens.
+turn [🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which opens the attack-again window instead] (§5.3) — so a self-installed flag is lifted at the very first Checkup, before its window opens.
 
 🛑 **BOTH HALVES OF THE REFUTATION WERE ALREADY COMMITTED, IN COMMENTS NOBODY HAD OPENED.**
 `flow.ts`'s clear guards its own correctness with *"a block applied by the ended seat's OWN attack
@@ -26448,7 +26448,7 @@ asked:
    whose turn just ended — on the §13.4 paralysis clock. The comment states the consequence itself:
    *"a block applied by the ended seat's OWN attack would lift a turn early, which no print in the
    pool can do (the deriver's only two shapes both target the DEFENDER)."* **BUILDING THE SELF-SIDE
-   ARM IS PRECISELY WHAT MAKES THAT PARENTHESIS FALSE.** An attack ends the installer's turn (§5.3),
+   ARM IS PRECISELY WHAT MAKES THAT PARENTHESIS FALSE.** An attack ends the installer's turn [🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which opens the attack-again window instead] (§5.3),
    so the very first Checkup has `endedSeat === the holder's seat` and the lock lifts **before its
    window ever opens**.
 2. **`types.ts`, in `attackBlock`'s doc block, about a DIFFERENT op** — which is why it reads as
@@ -28540,7 +28540,7 @@ the rewritten Weakness (display debt, D552 ⑽'s precedent). Next: Feraligatr "T
 remainder (Watchtower (🆕🆕🆕 D566: BUILT), Slaking ex, Thwackey, Drilbur, Festival Grounds, Scoop Up Cyclone, Love Ball), re-priced now that
 Gastrodon and Flutter Mane have landed. (🆕🆕🆕 D560: Slaking ex, Thwackey and Drilbur BUILT — see D560 below.) (🆕🆕🆕 D561:
 Scoop Up Cyclone and Love Ball BUILT — see D561 below.) (🆕🆕🆕 D562: Festival Grounds BUILT — see D562 below; Festival
-Lead, the Ability that names it, stays blocked.)
+Lead, the Ability that names it, stays blocked.) (🆕🆕🆕 D570 (D539): Festival Lead BUILT — see D570 below.)
 
 ## D560 — the ability bundle, part two: 17 printings / 11 texts / 11 objects (engine 0.444.0, `MATCH_RECORD_VERSION` stays 35)
 
@@ -28637,7 +28637,7 @@ Night lit a row the engine refuses) — now in `redact.ts` and GameHud, each dri
 ### (e) Owed
 The whole-corpus sweep (~~D559 → D561 pending~~ D559 and D560 PAID, each exact — D560's `3333 · 52` over 3,385 at close-out `a4e0cd5e`, on its second launch; only D561's own is owed, predicted `3384 killed · 52 known survivor(s)` over 3,436). R-CR1 UNRULED. The 0.444 rollback readings (named, not bumped). Tera Orb and
 Brock's Scouting (deferred) (🆕🆕🆕 D566: BUILT); Farfetch'd `sv06-132` (🆕🆕🆕 D565: BUILT); Festival Grounds / Festival Lead; Team Rocket's Watchtower (🆕🆕🆕 D566: BUILT); Crobat (🆕🆕🆕 D564: BUILT).
-(🆕🆕🆕 D562: Festival Grounds BUILT — see D562 below; Festival Lead stays blocked.)
+(🆕🆕🆕 D562: Festival Grounds BUILT — see D562 below; Festival Lead stays blocked.) (🆕🆕🆕 D570 (D539): "Festival Lead stays blocked" WITHDRAWN — BUILT at D570.)
 
 ## D562 — consumable Tools, Jamming Tower and Festival Grounds: 14 printings / 12 texts / 12 objects (engine 0.446.0, `MATCH_RECORD_VERSION` stays 35)
 
@@ -29005,4 +29005,79 @@ count `benchNounScaling.test.ts` §5 still pinned at 31 (now 32, "Ancient Pokém
 ### (d) Owed
 The whole-corpus sweep (predicted `3840 · 52` over 3,892, ~~stacked on D568's still-PENDING~~ 🆕 on D568's PAID `3794 · 52` over 3,846, close-out `8e36c690`). R-PX1 …
 R-PX6 UNRULED. The nine deferred Paradox printings (Initialization ×3, Destructo-Press ×2, C.O.D.E.: Protect, Unrelenting
-Onslaught, Dual Core, Iron Moth's Anachronism Repulsor). NEXT: see `progress.md` NEXT — festival-lead (rank 2, MRV 36 → 37).
+Onslaught, Dual Core, Iron Moth's Anachronism Repulsor). NEXT: see `progress.md` NEXT — festival-lead (rank 2, MRV 36 → 37). (🆕🆕🆕 D570: TAKEN — built as D570 below.)
+
+## D570 — Festival Lead, the attack-again turn machine: 7 printings / 1 text / 1 object (engine 0.454.0, `MATCH_RECORD_VERSION` 36 → 37)
+
+**Status:** ✅ BUILT in the `lum-wt-d570` worktree (detached at `5ae558f3`), ~~NOT committed by the builder~~ committed there on `d570-prep` at `c1097d62` and 🆕 LANDED on `main` by cherry-pick onto the D569 close-out `a04889a9` (re-verified there, `progress.md` NEXT (1-land)), while D569's
+whole-corpus sweep ran in the main checkout (never written). The top row of the D570 pricing round (`progress.md` NEXT (7),
+recorded verbatim): 7 printings, 12 engine files (10 without the optional event), 0.58 printings per file / 0.37 per site.
+
+### (a) The card
+*"If Festival Grounds is in play, this Pokémon may use an attack it has twice. If the first attack Knocks Out your
+opponent's Active Pokémon, you may attack again after your opponent chooses a new Active Pokémon."* — Dipplin
+`sv06-018` / `sv06-170` / `sv08.5-010` (Do the Wave), Goldeen `sv06-044` / `sv08.5-020` (Whirlpool), Swirlix `sv06-089`
+(Sneaky Placement), Seaking `sv08.5-021` (Rapid Draw). One attack per printing; all four derive (no `attack` key).
+
+### (b) The machine
+| Piece | Where | What |
+|---|---|---|
+| licence | registry.ts `PassiveEffects.attackTwiceIf` | `FESTIVAL_LEAD = { passive: { attackTwiceIf: stadiumInPlayNamed "Festival Grounds" } }`, 7 rows MID-MAP |
+| fold | continuous.ts `passivesOf(...).attackTwiceIf` | collected RAW in the loop, so a §9 lock silences it |
+| reader | interpreter.ts `attackAgainLicensed` / `attackAgainBarred` | the licence; the second declaration's bar (same uid, still Active, still licensed) |
+| window | types.ts `TurnAllowances.attackAgainUid` (REQUIRED) | null in `freshAllowances()`; written only by flow.ts `finishAttack` |
+| opening | flow.ts `finishAttack` | first finish + attacker still Active + licensed → allowance set, `[...stages, ...orphaned, resumeTurn]` instead of `turnTail` |
+| narrowing | turn.ts `turnGate` | in the window only `attack` / `endTurn` (R-FL1) |
+| re-read | attack.ts, beside the D242 gate | `attackAgainBarred` → `ATTACK_PREVENTED` (R-FL2) |
+| wire | redact.ts | `mainPhase`: retreat null, Abilities / Trainers / Rare Candy empty, Stadium ability null; `banned` folds the bar |
+| HUD | GameHud.tsx | the same three withholds and the bar (display debt: no banner, drag affordances not pre-folded) |
+| event | events.ts / log.ts | `ATTACK_AGAIN_OFFERED { seat, uid }`, filed by the `resumeTurn` stage (🆕 third review: only while the second declaration is not barred) — "Seaking may attack again (Festival Lead)" |
+
+### (c) Tests and mutants
+`festivalLeadD570.test.ts` (32) and `GameHud.festivalLead.dom.test.tsx` (4); the MRV step (16 engine raw pins + `match.test.ts`,
+titles stepped), the three whole-allowance pins, the census pins (`BUILT.ability` 372 → 379, `BUILT.trainer` 254 unmoved,
+registry 949 → 956), `DROPPED` emptied (its guard turned into a graduation assertion). Mutants 3,892 → 3,919 (+27 `D570-*`, [🆕 third review: 3,920, +28 — (c-quater)]
+all killed undeclared in the probe `--decision D570`); eight MRV rows, `D242-wire-projection-offers-the-barred-button` and
+(review) `D547-confusion-flips-before-lock` re-anchored off the new bytes by script (D540).
+
+### (c-bis) The review (decisions.md D570 (h))
+- **The D539 sweep was line-based and missed every split copy, engine source included.** [🆕 Its scope figure below was still short — (c-ter).] Re-swept with whitespace collapsed:
+  37 more engine-source sites, 40 test comments, 5 mutant `what` lines, one re-anchored row, and docs (conventions.md,
+  ptcg-rules.md, this file ×13). The scope is stated: claims about a named board with no Festival Grounds, and "ends the
+  turn" with a non-attack subject, are true and stay.
+- **Three `mainPhase` projections and two HUD mirrors passed on board defaults.** New rungs put an activated Ability, a Rare
+  Candy pairing and (constructed) a Stadium ability on the board LIVE and read the same state with the window closed and
+  open; five new rows (`D570-redact-leaks-the-abilities` / `-rare-candy` / `-stadium-ability`,
+  `D570-hud-abilities-in-the-window`, `D570-hud-stadium-in-the-window`) are killed only by them.
+- `D570-offer-row-dropped`'s `what` corrected (it drops the log row, not the turn machine); §6's Asleep rung marked
+  UNREACHABLE (Festival Grounds shields every Pokémon with Energy attached).
+
+### (c-ter) The second review (decisions.md D570 (i))
+- **(c-bis)'s re-sweep was still incomplete in engine source.** Its keys matched "attack … ENDS the turn" and missed
+  "ends the attacker's turn", "the §5.3 turn still ends", "turn end" and "feeds the same tail" — `finishAttack`'s own doc
+  among them. The reviewer's nine sites (flow.ts ×4, attack.ts ×2, turn.ts, types.ts, `ptcg-rules.md` §5.3 / §8 step 7)
+  annotated, then a re-sweep on turn-end keys (529 hits, 300 read and left as named-board or non-attack claims) annotated
+  30 more (engine source 15, tests 9, docs 4, HUD doc comments 2). New display debt: both HUDs' confusion hint says
+  "turn ends", false for a first attack under Festival Lead [🆕 third review: WITHDRAWN as a debt — unreachable in play,
+  (c-quater)]. No row moved; precheck still 3,919.
+
+### (c-quater) The third review (decisions.md D570 (j))
+- **The D539 class a third time, engine source**: phaseView.ts `koParkActiveSeat`'s pending-shape claim
+  ("[ko…, endTurn, checkup, startTurn]") is false for a first Festival Lead attack that KOs (`[takePrizes, promote,
+  resumeTurn]`); annotated, plus two flow.ts tail-position claims (`turnTail`'s doc, the D394 stamp comment) found by a
+  re-sweep on pending-shape keys.
+- **`progress.md` NEXT (7)**: the table's "stays 36" cells and row 5's "36 → 37", and the NEXT CANDIDATES' "stays 36",
+  were false on arrival (D570 steps the constant to 37) — annotated in place; the pricer's "D570a" label is D571.
+- **The offer row** is now filed only while the second declaration is not barred (`attackAgainBarred`): on a promotion
+  that puts an opposing Flutter Mane in the Active Spot, no row says the attacker may attack again. +1 row
+  (`D570-offer-ignores-the-bar`), `D570-offer-row-dropped` re-anchored. Mutants 3,920 (+28 `D570-*`); probe
+  `28 killed · 0 known survivor(s) · 0 GAP(S) · 0 stale · 0 skipped(dirty) · 0 clobber(s) · 0 error(s) · 151.7s total`.
+- **A new `conventions.md` section**: a withdrawn mechanism claim is also spelled as the mechanism's data (a stage
+  literal, a position word); sweep those shapes with the verbs.
+- **The confusion-hint debt is withdrawn**: Festival Grounds keeps every body with Energy free of Special Conditions and
+  every Festival Lead attack costs Energy, so the hint can never be wrong for a licensed attacker.
+
+### (d) Owed
+The whole-corpus sweep (predicted `3868 · 52` over 3,920 [third review; `3867 · 52` over 3,919 before], stacked on ~~D569's still-PENDING `3840 · 52` over 3,892~~ 🆕 D569's PAID-WITH-ONE-GAP `3839 · 52 · 1 GAP` over 3,892 (close-out `a04889a9`; the GAP row `D471-min-region-takes-the-first-hit` restored to KILLED there by a fixed pinned §E witness, so the effective base is the predicted `3840 · 52`) — the prediction stands, and the exact-prediction streak restarts at D570). R-FL1 …
+R-FL4 UNRULED. The display debt (no "attack again" banner; `moveToAction.ts` drag affordances not pre-folded against the
+window; 🆕 (c-ter) both HUDs' confusion hint still says "turn ends" [🆕 third review: NOT a debt — unreachable in play, (c-quater)]). NEXT: see `progress.md` NEXT — paradox-part-b D570a [🆕 third review: the label collides with D570 = Festival Lead; taken next it is D571, and `MATCH_RECORD_VERSION` stays 37].

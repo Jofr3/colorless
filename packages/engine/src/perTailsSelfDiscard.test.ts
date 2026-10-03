@@ -702,7 +702,7 @@ describe("§6 — the FACE axis against the COUNT axis", () => {
       // NOT park, deliberately, so the two halves of this rung are read through two
       // different mechanisms and cannot both be wrong in the same way.
       // ⚠️ **THE ROWS AND NOT THE DECK SIZE, MEASURED THE HARD WAY FIRST**: the attack ends
-      // the turn, the opponent then draws, and a deck-size difference silently counts that
+      // the turn [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which no board here builds], the opponent then draws, and a deck-size difference silently counts that
       // draw as a fourth mill. The event rows are the op's own witness and the draw is not
       // one of them.
       const headsCount = wanted.filter((f) => f === "heads").length;
@@ -819,10 +819,10 @@ describe("§7 — purity and the structural answers", () => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("§8 — the version", () => {
-  it("engineVersion is 0.453.0 and the bump is owed for BEHAVIOUR", () => {
+  it("engineVersion is 0.454.0 and the bump is owed for BEHAVIOUR", () => {
     // A sentence that fell to the loud `ATTACK_EFFECT_SKIPPED` path now flips three coins
     // and queues one park per tails, and a shipped union member gained a REQUIRED field —
     // so `packages/engine` behaviour moved and the minor is owed (D275).
-    expect(engineVersion).toBe("0.453.0");
+    expect(engineVersion).toBe("0.454.0");
   });
 });

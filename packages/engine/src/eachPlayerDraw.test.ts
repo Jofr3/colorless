@@ -269,7 +269,7 @@ function swing(
   return mustApply(state, { type: "attack", seat, index });
 }
 
-/** 🛑 **AN ATTACK ENDS THE TURN, SO THE DEFENDER'S §5.1 TURN-START DRAW LANDS INSIDE THE
+/** 🛑 **AN ATTACK ENDS THE TURN [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which no board here builds], SO THE DEFENDER'S §5.1 TURN-START DRAW LANDS INSIDE THE
     SAME ACTION.** Every draw claim in this file therefore reads the rows whose `reason` is
     `"effect"` — the ones this op filed — and never a bare `CARDS_DRAWN` count, which would
     be off by one for the defender on every board and would have made the ORDER rungs in §6
@@ -681,7 +681,7 @@ describe("D491 §5 — the shallow decks, and who loses when a deck runs out", (
     // `ptcg-rules.md` §5.1 (*"This check happens at draw time"*) and §14.3 (*"your opponent
     // cannot draw a card at the START of their turn … Checked at the draw step"*) agree.
     //
-    // 🛑 **AND AN ATTACK ENDS THE TURN, SO THAT NEXT DRAW STEP IS INSIDE THIS ACTION.** The
+    // 🛑 **AND AN ATTACK ENDS THE TURN [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which no board here builds], SO THAT NEXT DRAW STEP IS INSIDE THIS ACTION.** The
     // ORDER of the events is what carries the claim: both draws and the §8.5 hit land
     // FIRST, the turn changes, and only then does the game end.
     const { state, events } = swing(table("p1", ["d491-a1"], ["d491-b1"]), "p1", SHARE_OUT);
@@ -732,7 +732,7 @@ describe("D491 §6 — controller-first, and the rung runs from p2's chair", () 
     // order IS the log's order. ⚠️ AND THE CLAIM IS INERT FROM P1's CHAIR — controller-
     // first and absolute agree there — which is why this board is the other way round.
     const { state, events } = swing(table("p2", SELF_TOP, FOE_TOP), "p2", SHARE_OUT);
-    // ⚠️ THE ROWS ARE FILTERED BY `reason: "effect"`. An attack ENDS THE TURN, so the
+    // ⚠️ THE ROWS ARE FILTERED BY `reason: "effect"`. An attack ENDS THE TURN [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which no board here builds], so the
     // defender's §5.1 turn-start draw files a third `CARDS_DRAWN` inside this same action
     // — and a bare row count would read `["p2","p1","p1"]` and pass a build that walked
     // the seats either way.
@@ -869,7 +869,7 @@ describe("D491 §9 — the version question, asked at the address that persists"
   });
 
   it("the engine version moved and the record version did not", () => {
-    expect(engineVersion).toBe("0.453.0");
+    expect(engineVersion).toBe("0.454.0");
     expect(manifest.version).toBe(engineVersion);
   });
 });

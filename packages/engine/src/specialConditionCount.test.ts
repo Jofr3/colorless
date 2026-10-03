@@ -505,7 +505,7 @@ describe("D518 §3 — the tally on a board: 0, 1, 2, 3 — and `confusionDamage
     // Active Pokémon is now Burned, Confused, and Poisoned."* — a built `applyStatus`
     // batch — so the conditions arrive the way a game delivers them.
     //
-    // ⚠️ **AN ATTACK ENDS THE TURN (D491)**, so the tally is read a full round later, and
+    // ⚠️ **AN ATTACK ENDS THE TURN [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which no board here builds] (D491)**, so the tally is read a full round later, and
     // §13.2's Burn coin may cure the Burn in between. The expectation is therefore
     // DERIVED from the board at declaration rather than pinned at 3: what is asserted is
     // that the fold equals `100 × presentStatuses(defender)`, whatever the Checkup did —
@@ -784,7 +784,7 @@ describe("D518 §6 — `MATCH_RECORD_VERSION` HOLDS at 30: there is no carrier a
   });
 
   it("the engine version moved with the behaviour, and `manifest.version` agrees", () => {
-    expect(engineVersion).toBe("0.453.0");
-    expect(manifest.version).toBe("0.453.0");
+    expect(engineVersion).toBe("0.454.0");
+    expect(manifest.version).toBe("0.454.0");
   });
 });

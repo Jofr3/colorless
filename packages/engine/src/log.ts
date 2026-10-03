@@ -875,6 +875,13 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
       return row(event.seat, [
         plain(`will discard their hand at the end of this turn if it holds ${event.atLeast} or more cards`),
       ]);
+    // 🆕🆕🆕 §5.3/§8 — Festival Lead's attack-again window (D570). The Ability is named so the
+    // row explains why the turn did not end.
+    case "ATTACK_AGAIN_OFFERED":
+      return row(event.seat, [
+        strong(cardName(state, event.uid)),
+        plain(" may attack again (Festival Lead)"),
+      ]);
     // 🆕🆕 §13 (D434) — the attack SCHEDULED a counter placement on the DEFENDING
     // Pokémon. PASSIVE/system-free but filed under `event.seat`, which owns the
     // scheduled body — ATTACK_DEBUFF_APPLIED's contract directly above verbatim, and

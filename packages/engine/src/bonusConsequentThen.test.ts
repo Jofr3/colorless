@@ -697,7 +697,7 @@ describe("D382 §5 — CHI-YU ON A REAL BOARD: both arms, and the zone", () => {
     expect(find(events, "STADIUM_DISCARDED")).toMatchObject({ seat: "p1" });
   });
 
-  it("the attack still ends the turn on the DECLINE arm — nothing here is a cancellation", () => {
+  it("the attack still ends the turn [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which no board here builds] on the DECLINE arm — nothing here is a cancellation", () => {
     const { state: done } = apply(board({ attacker: CHIYU, stadium: null }), MELTER);
     expect(done.phase).toMatchObject({ seat: "p2" });
   });

@@ -723,7 +723,7 @@ describe("D317 §3 — OGERPON: the board condition, and BOTH arms on a real boa
     expect(POOL[BASIC]?.evolveFrom).toBeNull();
   });
 
-  it("the attack still ends the turn on the DECLINE arm — nothing here is a cancellation", () => {
+  it("the attack still ends the turn [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which no board here builds] on the DECLINE arm — nothing here is a cancellation", () => {
     const { state: done } = apply(
       board({ attacker: OGERPON, energy: FIRE, count: 3, defender: BASIC }),
       BLAZE,

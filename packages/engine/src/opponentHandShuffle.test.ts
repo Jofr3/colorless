@@ -275,7 +275,7 @@ function answerWith(state: GameState, seat: Seat, uids: readonly string[]) {
   } satisfies GameAction);
 }
 
-/** ⚠️ **THE ATTACK ENDS THE TURN, SO THE HAND'S OWNER DRAWS EXACTLY ONE CARD
+/** ⚠️ **THE ATTACK ENDS THE TURN [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which no board here builds], SO THE HAND'S OWNER DRAWS EXACTLY ONE CARD
     BEFORE ANY POST-RESOLUTION ASSERTION RUNS — AND THAT DRAW COMES OFF THE DECK THE
     PICKED CARDS JUST ENTERED.** So *"the three cards are in the deck"* is not a
     board-observable statement after the fact: one of them may legitimately be back
@@ -931,7 +931,7 @@ describe("🛑 §9 — the persisted op, over the serialized bytes", () => {
 
 describe("§10 — the version moved with the behaviour", () => {
   it("engineVersion", () => {
-    expect(engineVersion).toBe("0.453.0");
+    expect(engineVersion).toBe("0.454.0");
   });
 
   it("the op is PURE — the parked board is not mutated by resolving it", () => {

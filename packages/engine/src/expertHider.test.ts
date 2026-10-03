@@ -643,7 +643,7 @@ describe("what this field deliberately does NOT reach", () => {
     const state = withRng(holderActive("fix-experthider"), HEADS);
     const { events } = mustApply(state, yawn);
     // ⚠️ ASSERTED ON THE EVENT, NOT THE END BOARD, AND THE REASON IS THE ENGINE'S
-    // OWN CLOCK: attacking ENDS THE TURN, so the between-turns Checkup runs its own
+    // OWN CLOCK: attacking ENDS THE TURN [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which no board here builds], so the between-turns Checkup runs its own
     // Asleep coin before this function returns and may wake the body up again. The
     // claim is that the status LANDED on a shielded holder, which is the event.
     expect(find(events, "STATUS_APPLIED")).toMatchObject({ seat: "p2", status: "asleep" });

@@ -662,7 +662,7 @@ describe("§3 — BURNED: armed by the game, and CURED by the game", () => {
     //
     // 🛑 AND THE SEED IS PINNED BECAUSE §13.2 FLIPS A CURE COIN AT EVERY CHECKUP. Two
     // Checkups run between Singe and Roasting Heat — one when P1's attack ends the
-    // turn and one when P2 passes back — so the Burn only survives on two TAILS. The
+    // turn [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which no board here builds] and one when P2 passes back — so the Burn only survives on two TAILS. The
     // flips are ASSERTED off `CHECKUP_COIN_FLIP` rather than assumed, which is what
     // makes this rung fail LOUDLY (and with a readable message) if the RNG ever moves,
     // instead of silently becoming the clean-Active case wearing a Burn's name.

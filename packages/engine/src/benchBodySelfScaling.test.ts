@@ -865,7 +865,7 @@ describe("D282 §6 — the gate still bites, and the unread bodies stay loud", (
     expect(returned?.actor).toBe("p1");
     expect(returned?.dest).toBe("deck");
     expect(after.players.p2.bench).toHaveLength(0);
-    // ⚠️ NOT A DECK-LENGTH ASSERTION. The attack ENDS the turn, so p2's own
+    // ⚠️ NOT A DECK-LENGTH ASSERTION. The attack ENDS the turn [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which no board here builds], so p2's own
     // turn-start draw takes a card back off the deck in the same result — a
     // length would net to +0 and read as "nothing happened". The uid is the
     // observable that survives the draw.

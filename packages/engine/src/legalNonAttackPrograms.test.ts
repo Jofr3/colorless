@@ -562,14 +562,22 @@ const LANDED = [
     PIECE OF ENGINE IT NEEDS. Ranked by legal printings. Every `id` is asserted
     below to still have NO program, so a later slice cannot silently half-build
     one and leave this table lying. */
-const DROPPED = [
-  {
-    sentence: "If Festival Grounds is in play, this Pokémon may use an attack it has twice…",
-    ids: ["sv06-018", "sv06-044", "sv06-089", "sv06-170", "sv08.5-010", "sv08.5-020", "sv08.5-021"],
-    legal: 7,
-    needs:
-      "an ATTACK-AGAIN mechanism. §5.3 makes an attack end the turn unconditionally (turn.ts seeds the turn tail from attack.ts's epilogue); there is no state for 'this seat may declare a second attack', no `CardProgram` field to request one, and the printed gate is a named STADIUM in play, which no `BoardCondition` member expresses either. Two absences, and the bigger one is the turn machine.",
-  },
+const DROPPED: { sentence: string; ids: string[]; legal: number; needs: string }[] = [
+  // 🆕🆕🆕 **D570 — THE FESTIVAL LEAD ROW LEFT `DROPPED`: BUILT, AND THE LIST IS NOW EMPTY.**
+  // *"If Festival Grounds is in play, this Pokémon may use an attack it has twice…"* (Dipplin
+  // `sv06-018`/`-170`/`sv08.5-010`, Goldeen `sv06-044`/`sv08.5-020`, Swirlix `sv06-089`, Seaking
+  // `sv08.5-021` — 7 legal) is `FESTIVAL_LEAD`: `PassiveEffects.attackTwiceIf` on
+  // `stadiumInPlayNamed "Festival Grounds"`, the window `TurnAllowances.attackAgainUid`. Its
+  // `needs` string read: *"an ATTACK-AGAIN mechanism. §5.3 makes an attack end the turn
+  // unconditionally (turn.ts seeds the turn tail from attack.ts's epilogue); there is no state for
+  // 'this seat may declare a second attack', no `CardProgram` field to request one, and the
+  // printed gate is a named STADIUM in play, which no `BoardCondition` member expresses either.
+  // Two absences, and the bigger one is the turn machine."* (D539) Its STADIUM half was WITHDRAWN
+  // at D564 (`stadiumInPlayNamed`, effects.ts) and nobody re-priced the row; its turn-machine half
+  // was RIGHT and is what D570 built (flow.ts `finishAttack`'s window, turn.ts `turnGate`, the
+  // attack.ts re-read). "§5.3 makes an attack end the turn unconditionally" is WITHDRAWN: it does
+  // except under Festival Lead. The row is removed rather than kept, because this list asserts
+  // UNBUILT. `DROPPED` is now 0 (see the guard below, which now asserts the graduation).
   // ✅ D208 BUILT THIS ROW — "If this Pokémon has full HP and would be Knocked Out
   // by damage from an attack, it is not Knocked Out, and its remaining HP becomes
   // 10." (Pikachu ex "Resolute Heart" sv08-057/-219/-238/-247, sv08.5-179; Crustle
@@ -2166,11 +2174,17 @@ describe("D199 — the registry map", () => {
     });
   });
 
-  it("⚠️ the DROPPED sentences are still UNBUILT — the work order cannot rot", () => {
-    for (const { sentence, ids } of DROPPED) {
-      for (const id of ids) {
-        expect(programFor(id), `${id} (${sentence.slice(0, 40)}…) was half-built`).toBeUndefined();
-      }
+  it("⚠️ the DROPPED sentences are still UNBUILT — the work order cannot rot (🆕🆕🆕 D570: the list is EMPTY, so the guard asserts the GRADUATION of its last row instead)", () => {
+    // 🆕🆕🆕 D570 — the per-id `toBeUndefined()` loop that stood here iterated `DROPPED`, which is
+    // now EMPTY, so it asserted nothing; a vacuous guard is not left behind (it is restored, in
+    // its shipped form at `5ae558f3`, the day a row is added back). What replaces it is not
+    // vacuous: the list IS empty, and every id its last row named now HAS a program.
+    expect(DROPPED).toEqual([]);
+    for (const id of ["sv06-018", "sv06-044", "sv06-089", "sv06-170", "sv08.5-010", "sv08.5-020", "sv08.5-021"]) {
+      expect(programFor(id)?.passive?.attackTwiceIf, `${id} graduated from DROPPED at D570`).toEqual({
+        kind: "stadiumInPlayNamed",
+        name: "Festival Grounds",
+      });
     }
     // The list's own arithmetic: 13 sentences (20 at D199 — the Iono's attach was
     // built by D204, Lacey's prize gate by D207, the §8.1 KO-survival clamp by
@@ -2238,11 +2252,11 @@ describe("D199 — the registry map", () => {
     // fires exactly when the ids are built and stays silent when the prose rots.
     // 🆕🆕🆕 D569 — 2 -> **1**: the Iron Crown ex aura row is BUILT (`COBALT_COMMAND`), named in a
     // row's own `ids`, so the guard fired exactly as D331's note says it should.
-    expect(DROPPED).toHaveLength(1);
-    for (const d of DROPPED) {
-      expect(d.needs.length, `${d.sentence.slice(0, 30)}… has no reason`).toBeGreaterThan(80);
-      expect(d.ids, `${d.sentence.slice(0, 30)}… miscounts its printings`).toHaveLength(d.legal);
-    }
+    // 🆕🆕🆕 D570 — 1 -> **0**: the Festival Lead row is BUILT (`FESTIVAL_LEAD`), named in a row's
+    // own `ids`, so the guard fired exactly as D331's note says it should. The per-row shape loop
+    // that followed (a `needs` string over 80 characters, `ids` of length `legal`) iterated an
+    // empty list and is dropped for the vacuity reason above; the `DROPPED` type keeps the shape.
+    expect(DROPPED).toHaveLength(0);
   });
 });
 

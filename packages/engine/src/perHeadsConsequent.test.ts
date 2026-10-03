@@ -569,7 +569,7 @@ describe("§3 — no new persisted byte, in three directions", () => {
   });
 
   it("the engine version moved and the record version did not", () => {
-    expect(engineVersion).toBe("0.453.0");
+    expect(engineVersion).toBe("0.454.0");
   });
 });
 
@@ -605,7 +605,7 @@ describe("§4 — 2 flips, one op per heads, ONE card each", () => {
       expect(milledUids).toEqual(deckBefore.slice(0, heads));
       expect(done.players.p2.discard).toEqual([...state.players.p2.discard, ...deckBefore.slice(0, heads)]);
       // The deck shrank by the mill plus exactly ONE — p2's own turn-start draw, since
-      // attacking ends the turn (§5.3) and p2's §5.1 draw lands in this same batch.
+      // attacking ends the turn [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which no board here builds] (§5.3) and p2's §5.1 draw lands in this same batch.
       expect(deckBefore.length - done.players.p2.deck.length).toBe(heads + 1);
       expect(done.players.p1.discard).toEqual(state.players.p1.discard);
       expect(types(events)).not.toContain("DAMAGE_DEALT");

@@ -906,7 +906,7 @@ describe("Palafin — the promotion requirement through a REAL attack", () => {
     // attacking. A gate that asked "did any Active move this turn" would score a
     // 210 here; the printed clause is about the attacker's own body.
     //
-    // Unreachable any other way: a KO promotion ends the turn in the same apply,
+    // Unreachable any other way: a KO promotion ends the turn in the same apply, [🆕🆕🆕 D570 (D539): except after a FIRST attack under Festival Lead with Festival Grounds in play, whose KO promotion hands turn:action back for the attack-again window — but only that same Festival Lead body may then attack, and none of the 7 is a Palafin, so for this board the claim stands]
     // and a retreat only ever moves your own Pokémon.
     for (const attacker of ["p1", "p2"] as const) {
       const defender = other(attacker);

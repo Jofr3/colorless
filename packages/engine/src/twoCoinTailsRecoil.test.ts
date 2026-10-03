@@ -545,7 +545,7 @@ describe("D521 §2 — four seeded boards: recoil on [T,T] only, two rows always
     }
   });
 
-  it("🛑 an attack ENDS the turn (D491) — on every non-KO board the phase is p2's action phase on turn 3", () => {
+  it("🛑 an attack ENDS the turn [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which no board here builds] (D491) — on every non-KO board the phase is p2's action phase on turn 3", () => {
     for (const faces of FACES) {
       const { after, events } = firstBoardWithFaces(faces);
       expect(after.phase, faces.join("-")).toEqual({ kind: "turn:action", seat: "p2" });
@@ -591,7 +591,7 @@ describe("D521 §2b — the self-KO on a pre-damaged body, and the turn ends onl
     expect(after.players.p1.discard).toContain(attacker);
     // The defender took the base and is NOT out — a PURE self-KO.
     expect(after.players.p2.active?.damage).toBe(BASE);
-    // ⚠️ AN ATTACK ENDS THE TURN, BUT NOT YET: the KO interrupts with its own queue behind it.
+    // ⚠️ AN ATTACK ENDS THE TURN [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which no board here builds], BUT NOT YET: the KO interrupts with its own queue behind it.
     expect(after.phase).toEqual({ kind: "ko:takePrizes", seat: "p2", count: 1 });
     expect(after.pending.map((s) => s.kind)).toEqual(["takePrizes", "promote", "endTurn", "checkup", "startTurn"]);
     expect(types(events)).not.toContain("TURN_ENDED");
@@ -721,7 +721,7 @@ const RAW: Record<string, string> = (
 describe("D521 §4 — the version steps, the heading is written, and what stands still", () => {
   it("engineVersion and `manifest.version` agree, and the bump is owed for BEHAVIOUR", () => {
     // ⚠️ The version is NOT spelled in this `it(…)` title (D460's fourth class).
-    expect(engineVersion).toBe("0.453.0");
+    expect(engineVersion).toBe("0.454.0");
     expect(manifest.version).toBe(engineVersion);
   });
 

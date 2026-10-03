@@ -595,7 +595,7 @@ describe("§4 the apply — the ANSWER'S POSITIONS are the whole effect", () => 
   it("🛑 the OPPONENT arm orders the OPPONENT's deck, AND THE NEW TOP IS WHAT THEY DRAW", () => {
     // 🛑 THE FIRST DRAFT OF THIS RUNG ASSERTED `p2.deck.slice(0, 5) === rotated`
     // AND WAS SIMPLY FALSE — the board was never too narrow (D340's distinction).
-    // This is an ATTACK, so its epilogue ends p1's turn, the Checkup runs and p2
+    // This is an ATTACK, so its epilogue ends p1's turn [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play — `finishAttack` then queues `resumeTurn` (the attack-again window) in place of the turn tail], the Checkup runs and p2
     // STARTS THEIR TURN, which draws. The engine was right and the assertion was
     // a claim about a state that no longer exists by the time the action returns.
     //
@@ -644,7 +644,7 @@ describe("§4 the apply — the ANSWER'S POSITIONS are the whole effect", () => 
   it("the program finishes and the turn returns to the controller", () => {
     const parked = attack(seededOwn(47)).state;
     const done = must(answer(parked, [...parkedPrompt(parked).candidates].reverse()));
-    // The attack's own tail ran: this is an attack, so the turn ends through it.
+    // The attack's own tail ran: this is an attack, so the turn ends through it [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play — `finishAttack` then queues `resumeTurn` (the attack-again window) in place of the turn tail].
     expect(done.phase.kind).not.toBe("effect:choose");
   });
 });

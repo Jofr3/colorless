@@ -673,7 +673,7 @@ describe("Seviper sv01-128 'Venoshock' — opponentActivePoisoned", () => {
     //
     // The arithmetic has to account for §13.1: the Checkup runs between EVERY pair
     // of turns and ticks Poison on both Actives, so P2's fix-bigbody takes 10 when
-    // P1's attack ends the turn and another 10 when P2 passes back — 20 already on
+    // P1's attack ends the turn [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which no board here builds] and another 10 when P2 passes back — 20 already on
     // it before Venoshock is even declared. That is accounted for, not worked
     // around: the DAMAGE_DEALT is still exactly 60 + 120, and 20 + 180 = 200 is
     // precisely fix-bigbody's HP, so the hit is also lethal.

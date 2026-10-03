@@ -19319,7 +19319,7 @@ export const PROMOTED_CLAUSE_DECK = deckOf({
       it is the ONLY way to reach the board it needs: it promotes a Pokémon on the
       OPPONENT's side DURING YOUR OWN TURN, so `yourActivePromotedThisTurn` is TRUE
       for the seat that is not attacking while the attacker's own Palafin has not
-      budged. Without it that board is unreachable — a KO promotion ends the turn in
+      budged. Without it that board is unreachable — a KO promotion ends the turn in [🆕🆕🆕 D570 (D539): except after a FIRST attack under Festival Lead with Festival Grounds in play, whose KO promotion hands turn:action back for the attack-again window — but only that same Festival Lead body may then attack, and none of the 7 is a Palafin, so for this board the claim stands]
       the same apply, and a retreat only ever moves your own body.
 
     Both are authored in the registry (an unauthored Trainer is refused outright
@@ -21027,7 +21027,7 @@ export const COMPOUND_COMPOSE_DECK = deckOf({
     sv01-194 Switch is the victim's §10 route out of the window. ⚠️ THERE IS NO
     BOSS'S ORDERS IN THIS DECK, unlike every earlier durated deck, and the absence
     is the point: the FORCED half of `switchInto` is UNREACHABLE for this field.
-    The window is the victim's own turn, and the installer's turn ended when they
+    The window is the victim's own turn, and the installer's turn ended when they [🆕🆕🆕 D570 (D539): a FIRST attack under Festival Lead opens the attack-again window instead, but its four attacks (Do the Wave, Whirlpool, Sneaky Placement, Rapid Draw) install nothing, so this stays true on every printing]
     declared, so nobody but the victim can move the debuffed body while it is live.
 
     sv01-193 Rocky Helmet is the `dealt > 0` boundary (D141/D145): worn by the
@@ -23949,7 +23949,7 @@ export const OPPONENT_COUNTER_MULTIPLY_DECK = deckOf({
     🛑 **NOT SEED-FREE, AND THE SUITE SAYS SO RATHER THAN INHERITING D143's
     BOILERPLATE.** Indices 0 and 1 open no choice and their own program takes no coin —
     but the sentence they derive lands BURN, and §12's burn RECOVERY is a coin at the
-    Checkup that an attack's turn end runs immediately (`flow.ts`, `CHECKUP_COIN_FLIP`).
+    Checkup that an attack's turn end [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play — `finishAttack` then queues `resumeTurn` (the attack-again window) in place of the turn tail] runs immediately (`flow.ts`, `CHECKUP_COIN_FLIP`).
     At SEED 11 it comes up TAILS, which is why `burned: true` is observable after the
     swing; `defenderStatusTriple.test.ts` §4 asserts that flip in its own rung so the
     dependency reddens with an explanation instead of reddening two board assertions
