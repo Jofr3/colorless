@@ -201,7 +201,7 @@ describe("§2 build state, re-derived off the module surface", () => {
   // 🆕🆕🆕 D552 — INVERTED (D516): the compound is claimed by EXACTLY ONE reader now, the
   // additive-fold reader's third member, and still by no splitter.
   it("🛑 the printed compound is refused by ALL FOUR splitters — 🆕 D552: INVERTED, and claimed by exactly ONE reader of the thirteen", () => {
-    expect(attackReaderSurface()).toHaveLength(13);
+    expect(attackReaderSurface()).toHaveLength(14 /* 🆕🆕🆕 D573: 13 → 14, + deriveAttackCopy */);
     expect(claimants(PRINTED)).toEqual(["deriveAttackDiscardScaledBoost"]);
     expect(resolvedByAnyReader(PRINTED)).toBe(true);
     expect(splitVerdicts(PRINTED)).toEqual({

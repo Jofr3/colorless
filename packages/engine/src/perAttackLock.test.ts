@@ -450,8 +450,11 @@ describe("the install — the address is resolved once, at the site that owns th
   });
 
   it("installs NOTHING when the printed name matches no attack on the holder", () => {
-    // Unreachable off every printing — all five name their own attack — so it is
-    // CONSTRUCTED and said so. The alternative shapes are both worse: an index of
+    // ~~Unreachable off every printing — all five name their own attack — so it is
+    // CONSTRUCTED and said so.~~ 🆕🆕🆕 D573 (D539): WITHDRAWN — a COPY reaches it: a
+    // copier (Foul Play, Metronome, …) copying "can't use Slashing Strike" holds no
+    // attack of that name, so nothing installs (R-CP9 ⚠️ UNRULED, decisions.md D573;
+    // driven in `copyAttackD573.test.ts` §3c). This rung stays the constructed pin. The alternative shapes are both worse: an index of
     // −1 puts a value into a persisted record no read site can act on, and a row
     // emitted anyway tells a player about a drawback that cannot bite.
     const before = ready("sv03-142");

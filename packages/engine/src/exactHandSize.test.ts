@@ -8,6 +8,7 @@ import {
   deriveAttackBonusConsequent,
   deriveAttackCancelRequirement,
   deriveAttackCoinFlip,
+  deriveAttackCopy,
   deriveAttackDamageBonus,
   deriveAttackDamageMultiplier,
   deriveAttackDamagePenalty,
@@ -157,6 +158,8 @@ const READERS: readonly ((text: string) => unknown)[] = [
   // array's LAST entries plus its closing bracket, and appending moves that anchor
   // without a character of it changing.
   deriveAttackPreDamage,
+  // 🆕🆕🆕 D573 — THE FOURTEENTH, the copy-attack reader. Spliced before the last entry (D419).
+  deriveAttackCopy,
   deriveAttackCancelRequirement,
 ];
 
@@ -360,7 +363,7 @@ describe("§1 — the price, RE-DERIVED: the does-nothing skeleton goes EMPTY", 
     expect(READERS.map((read) => read.name).sort()).toEqual(attackReaderSurface());
     // ⚠️ THE COUNT IS PINNED SEPARATELY FROM THE DIFF, because the diff alone stays
     // GREEN when a reader leaves the module and this list in the same commit.
-    expect(attackReaderSurface()).toHaveLength(13);
+    expect(attackReaderSurface()).toHaveLength(14 /* 🆕🆕🆕 D573: 13 → 14, + deriveAttackCopy */);
   });
 
   it("🛑 the CANCEL residue reaches ZERO — there is no sentence left to name", () => {

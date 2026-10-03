@@ -4,6 +4,7 @@ import {
   deriveAttackBonusConsequent,
   deriveAttackCancelRequirement,
   deriveAttackCoinFlip,
+  deriveAttackCopy,
   deriveAttackDamageBonus,
   deriveAttackDamageMultiplier,
   deriveAttackDamagePenalty,
@@ -155,6 +156,8 @@ const READERS = [
   deriveAttackOptionalCostBoost,
   deriveAttackCancelRequirement,
   deriveAttackPreDamage,
+  // 🆕🆕🆕 D573 — THE FOURTEENTH, the copy-attack reader. Spliced before the last entry (D419).
+  deriveAttackCopy,
   deriveAttackDiscardScaledBoost,
 ];
 
@@ -644,8 +647,8 @@ describe("D517 §6 — the describer surfaces, and the union's seat idiom", () =
 
 describe("D517 §7 — the price, and both version constants", () => {
   it("the hand-kept READERS list IS the module's reader surface, still THIRTEEN", () => {
-    expect(attackReaderSurface()).toHaveLength(13);
-    expect(READERS).toHaveLength(13);
+    expect(attackReaderSurface()).toHaveLength(14 /* 🆕🆕🆕 D573: 13 → 14, + deriveAttackCopy */);
+    expect(READERS).toHaveLength(14 /* 🆕🆕🆕 D573: 13 → 14, + deriveAttackCopy */);
   });
 
   it("🛑 the GENERALISED clause slot would buy ZERO printings, MEASURED over the column", () => {
@@ -678,7 +681,7 @@ describe("D517 §7 — the price, and both version constants", () => {
   });
 
   it("🛑 the ENGINE version moved and `MATCH_RECORD_VERSION` did not, and both are argued", () => {
-    expect(engineVersion).toBe("0.456.0");
+    expect(engineVersion).toBe("0.457.0");
   });
 
   it("🛑 REACHABILITY IS EMPTY, MEASURED OVER EVERY PRODUCER RATHER THAN ASSERTED", () => {

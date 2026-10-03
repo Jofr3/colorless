@@ -276,9 +276,25 @@ export const MARKERS: readonly Marker[] = [
   {
     name: "COPY-ATTACK",
     rx: /use it as this attack/,
-    verdict: "blocker",
+    // 🛑🛑🛑 D573 — **RE-DECLARED `blocker` → `co-marker`, BY THIS FILE'S OWN CONTROL AND NOT BY AN
+    //    OPINION — THE REFUTATION IS THE FINDING (D178/D508).** D573 built four of the six
+    //    sentences carrying the phrase (corpus FILE LINES 77, 78, 80, 245 — Night Joker ×4, Foul
+    //    Play ×2, Metronome, Gemstone Mimicry, Try to Imitate: `deriveAttackCopy` plus attack.ts's
+    //    declaration-time substitution), so the built side went 0 / 0 → 4 / 9 and
+    //    `opaque-anatomy-gate.ts` §C went RED naming it — exactly the falsification its doc
+    //    block forecast. The regex is KEPT WHOLE: narrowing it to the two unbuilt members would
+    //    restore the `blocker` verdict by deleting the evidence against it. The two left (Haughty
+    //    Order ×3, Seek Inspiration ×1) fall to UNEXPLAINED, which is intended.
+    verdict: "co-marker",
     needs:
-      "attack() §8.5 as a callable function taking an attacker, a defender and a `declared` — the standing refusal's own executable falsifier, plus a bound on `runProgram`'s unbounded queue",
+      // 🆕🆕🆕 D573 (D539): ~~"attack() §8.5 as a callable function taking an attacker, a defender
+      //    and a `declared` — the standing refusal's own executable falsifier, plus a bound on
+      //    `runProgram`'s unbounded queue"~~ — MET: `attack()` takes a `declared` override and the
+      //    copy family is excluded as a candidate (the bound). 🆕🆕🆕 D573 REVIEW: *"MET"* needed a
+      //    THIRD leg the first build lacked — a copied attack's printed timing clause was split off
+      //    and enforced against no one (laundered through the gate seam); attack.ts `usableCopies`
+      //    now asks it for the copier's seat and drops every candidate it bars (R-CP4).
+      "nothing new for the four built sentences; the remaining two (Haughty Order, Seek Inspiration) REVEAL or MILL before the choice, so they need a park in the MIDDLE of an attack",
   },
   {
     name: "SCHEMA-BANNER",
@@ -317,7 +333,10 @@ export const MARKERS: readonly Marker[] = [
     rx: /\bTera\b/,
     verdict: "co-marker",
     needs:
-      "nothing new — `banners.ts` (D568) classifies the banner by printing id; what is left of the Tera residue is blocked by OTHER markers (copy-attack; the Bench size)",
+      // 🆕🆕🆕 D573 (D539): ~~"what is left of the Tera residue is blocked by OTHER markers
+      //    (copy-attack; the Bench size)"~~ — WITHDRAWN: D573 built the Tera copy-attack (Gemstone
+      //    Mimicry), and the marker's ATTACK residue is now EMPTY (measured).
+      "nothing new — `banners.ts` (D568) classifies the banner by printing id; its attack residue is EMPTY at D573 (Gemstone Mimicry, the last Tera attack sentence, is built)",
   },
   {
     name: "NAMED-ATTACK",

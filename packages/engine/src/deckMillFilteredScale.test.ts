@@ -467,7 +467,7 @@ describe("D488 §1 — the two printed rows, off the column rather than off this
     // Both rows land inside `deriveAttackEffect`, so the surface is untouched. A
     // fourteenth reader would move census figures in 40 files and is exactly what this
     // rung exists to make loud (D418).
-    expect(attackReaderSurface()).toHaveLength(13);
+    expect(attackReaderSurface()).toHaveLength(14 /* 🆕🆕🆕 D573: 13 → 14, + deriveAttackCopy */);
     expect(attackReaderSurface()).toContain("deriveAttackEffect");
   });
 });

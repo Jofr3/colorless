@@ -263,7 +263,7 @@ describe("§1 — the anchor claims the row WHOLE, and only it", () => {
       return (read?.(S171) ?? null) !== null;
     });
     expect(claimants).toEqual(["deriveAttackEffect"]);
-    expect(attackReaderSurface()).toHaveLength(13);
+    expect(attackReaderSurface()).toHaveLength(14 /* 🆕🆕🆕 D573: 13 → 14, + deriveAttackCopy */);
   });
 
   it("the ONE apostrophe slot is U+0027 in the corpus, and the U+2019 twin derives the same op", () => {
@@ -625,8 +625,8 @@ describe("§11 — the v33 bytes round-trip, and a v32-shaped state is why the v
     expect(() => redactGame(revived, "p2")).toThrow(TypeError);
   });
 
-  it("the engine version stepped to 0.456.0 in BOTH places", () => {
-    expect(engineVersion).toBe("0.456.0");
-    expect(manifest.version).toBe("0.456.0");
+  it("the engine version stepped to 0.457.0 in BOTH places", () => {
+    expect(engineVersion).toBe("0.457.0");
+    expect(manifest.version).toBe("0.457.0");
   });
 });

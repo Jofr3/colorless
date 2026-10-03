@@ -5,6 +5,7 @@ import {
   deriveAttackBonusConsequent,
   deriveAttackCancelRequirement,
   deriveAttackCoinFlip,
+  deriveAttackCopy,
   deriveAttackDamageBonus,
   deriveAttackDamageMultiplier,
   deriveAttackDamagePenalty,
@@ -505,6 +506,8 @@ describe("deriveAttackDamageSuppression — four sentences, three booleans", () 
       // array's LAST entries plus its closing bracket, and appending moves that anchor
       // without a character of it changing.
       deriveAttackPreDamage,
+      // 🆕🆕🆕 D573 — THE FOURTEENTH, the copy-attack reader. Spliced before the last entry (D419).
+      deriveAttackCopy,
       deriveAttackCoinFlip,
     ];
     // 🆕🆕 D419 — THE TWO-RUNG GUARD, CO-LOCATED because this list is function-local.
@@ -512,7 +515,7 @@ describe("deriveAttackDamageSuppression — four sentences, three booleans", () 
     // diff alone stays GREEN when a slice deletes a reader from the module and from
     // this list in the same commit.
     expect([...others.map((read) => read.name), "deriveAttackDamageSuppression"].sort()).toEqual(attackReaderSurface());
-    expect(attackReaderSurface()).toHaveLength(13);
+    expect(attackReaderSurface()).toHaveLength(14 /* 🆕🆕🆕 D573: 13 → 14, + deriveAttackCopy */);
 
     for (const sentence of [S_EFFECTS, S_RESISTANCE, S_WR_EFFECTS, S_WR]) {
       for (const read of others) expect(read(sentence)).toBeNull();

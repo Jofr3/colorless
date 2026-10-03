@@ -425,8 +425,12 @@ describe("§3 — the install writes an entry with NO window", () => {
   });
 
   it("installs NOTHING when the printed name matches no attack on the holder", () => {
-    // Unreachable off all five printings — every one names its own attack — so it
-    // is CONSTRUCTED and said so. The op is fed through the real deriver so only
+    // ~~Unreachable off all five printings — every one names its own attack — so it
+    // is CONSTRUCTED and said so.~~ 🆕🆕🆕 D573 (D539): WITHDRAWN — a COPY reaches it:
+    // Foul Play or Metronome copying Gouging Fire ex's Blaze Blitz holds no attack of
+    // that name, so no bar installs and the copy repeats every turn (R-CP9 ⚠️ UNRULED,
+    // decisions.md D573; driven in `copyAttackD573.test.ts` §3c). This stays the
+    // constructed pin. The op is fed through the real deriver so only
     // the HOLDER is substituted, and the contract is D154's unchanged: a bar on an
     // attack the card does not have is inert, and the honest shape of inert is
     // absence.
@@ -948,7 +952,7 @@ describe("§9 — a v26 record still means what it meant, and this one is readab
   });
 
   it("the engine version moved with the behaviour", () => {
-    expect(engineVersion).toBe("0.456.0");
+    expect(engineVersion).toBe("0.457.0");
   });
 });
 

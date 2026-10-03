@@ -10,6 +10,7 @@ import {
   deriveAttackBonusConsequent,
   deriveAttackCancelRequirement,
   deriveAttackCoinFlip,
+  deriveAttackCopy,
   deriveAttackDamageBonus,
   deriveAttackDamageMultiplier,
   deriveAttackDamagePenalty,
@@ -126,6 +127,8 @@ const READERS: readonly ((t: string) => unknown)[] = [
   deriveAttackOptionalCostBoost,
   deriveAttackCancelRequirement,
   deriveAttackPreDamage,
+  // 🆕🆕🆕 D573 — THE FOURTEENTH, the copy-attack reader. Spliced before the last entry (D419).
+  deriveAttackCopy,
   deriveAttackDiscardScaledBoost,
 ];
 
@@ -147,7 +150,7 @@ describe("D473 §1 — the two sentences, measured live over the legal column", 
     // alone stays green when a slice deletes a reader from the module and this list
     // in the same commit.
     expect(READERS.map((read) => read.name).sort()).toEqual(attackReaderSurface());
-    expect(attackReaderSurface()).toHaveLength(13);
+    expect(attackReaderSurface()).toHaveLength(14 /* 🆕🆕🆕 D573: 13 → 14, + deriveAttackCopy */);
   });
 
   it("both are really in the column, ONCE each, at ONE printing each", () => {
@@ -785,6 +788,6 @@ describe("D473 §6 — `MATCH_RECORD_VERSION` stays 29, and the argument is DRIV
     // D471 correctly REFUSED this step because `packages/engine` was byte-unchanged;
     // this slice adds an anchor and an arm, so a printed sentence the engine refused
     // yesterday resolves today and the bump is owed.
-    expect(engineVersion).toBe("0.456.0");
+    expect(engineVersion).toBe("0.457.0");
   });
 });

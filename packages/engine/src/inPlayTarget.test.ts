@@ -1,6 +1,7 @@
 import type { Card } from "@luminous/schema";
 import { describe, expect, it } from "vitest";
 import { applyAction, createGame, deriveAttackEffect, programFor, topCardOf } from "./index";
+import { deriveAttackCopy } from "./effects";
 import type { GameEvent, GameState, PokemonRef, Seat } from "./index";
 // `attachEnergyTargets` is not re-exported from index.ts (it is an engine-internal
 // read site cardplay.ts imports directly); the attach test files reach it the same
@@ -75,6 +76,12 @@ import {
 //       rider surface at all: Team Rocket's Wobbuffet's counter-move (2), Team
 //       Rocket's Orbeetle's counter-move (2), N's Zoroark ex's attack-copy (4).
 //       They are FLAGGED here with their exact missing piece.
+//       🆕🆕🆕 D573 (D539) — *"They are FLAGGED here"* IS WITHDRAWN FOR ALL THREE: Wobbuffet
+//       was built at D205, Orbeetle at D565, and N's Zoroark ex's attack-copy (4) at D573
+//       (`deriveAttackCopy` + attack.ts's declaration-time substitution). NO ROW of the census
+//       below is flagged any more (`landed: true` on all of them; the flagged-row loop in §6 is
+//       vacuous by construction and its `toHaveLength(0)` is the assertion). The arithmetic
+//       paragraphs below are the D204/D205 record and are left as written (D178).
 //
 // The arithmetic, stated so a later slice can check it rather than inherit it.
 // D200 flagged **10 sentences / 23 legal printings**; it missed **5 sentences /
@@ -258,9 +265,11 @@ const IN_PLAY_TARGET_CENSUS = [
     card: "N's Zoroark ex",
     surface: "attack",
     ids: ["sv09-098", "sv09-175", "sv09-185", "sv09-189"],
-    landed: false,
+    // 🆕🆕🆕 D573 — LANDED (inverted from `landed: false`). BUILT as the copy-attack
+    // SUBSTITUTION (`deriveAttackCopy` + attack.ts's declaration-time re-entry), not as an op.
+    landed: true,
     needs:
-      "⚠️ ABSENT FROM D200's FLAG TABLE. An attack-COPY op (choose a benched body, then one of ITS attacks, then run it) — two coupled decisions and a re-entrant attack resolution, of which the target predicate is the smallest part.",
+      "⚠️ ABSENT FROM D200's FLAG TABLE. BUILT at D573 — not as an attack-COPY op but as a declaration-time SUBSTITUTION: `deriveAttackCopy` claims the sentence, and attack.ts asks for the Benched N's body (choosePokemon), then one of ITS attacks (chooseAttack), and re-enters `attack()` with it (two coupled decisions and a re-entrant attack resolution, as named; the target predicate is `ownerPokemon`).",
   },
 ] as const;
 
@@ -860,7 +869,13 @@ describe("Spikemuth Gym sv10-169 — the row held back for scope only", () => {
 // D200, one level down: an assertion that is well-formed, runs, is green, and
 // cannot fail for the reason it exists. Both arms below now ask BOTH halves.
 function attackIsBuilt(id: string, sentence: string): boolean {
-  return programFor(id)?.attack !== undefined || deriveAttackEffect(sentence) !== null;
+  // 🆕🆕🆕 D573 — a THIRD route: the copy-attack substitution's reader (`deriveAttackCopy`), which
+  // attack.ts acts on at declaration. Added to the predicate rather than special-cased in a rung.
+  return (
+    programFor(id)?.attack !== undefined ||
+    deriveAttackEffect(sentence) !== null ||
+    deriveAttackCopy(sentence) !== null
+  );
 }
 
 /** ⚠️ AND THE ABILITY SURFACE HAS THE SAME HOLE, ONE FIELD OVER (D205). A
@@ -875,7 +890,7 @@ function abilitySurface(id: string): unknown {
 }
 
 describe("the re-derived census — what landed, and what is still owed a piece", () => {
-  it("lands 18 in-play-target printings across FIVE ops, plus Spikemuth Gym (🆕🆕🆕 16 → 18 at D565)", () => {
+  it("lands 22 in-play-target printings across FIVE ops and the copy substitution, plus Spikemuth Gym (🆕🆕🆕 16 → 18 at D565, 18 → 22 at D573)", () => {
     const landed = IN_PLAY_TARGET_CENSUS.filter((row) => row.landed);
     // 16 = D204's 7 (Iono's Bellibolt ex 5 + N's PP Up 1 + Marnie's Grimmsnarl ex
     // 1) + D205's 6 (Ethan's Ho-Oh ex 4 + Team Rocket's Wobbuffet 2) + D206's 3
@@ -885,7 +900,9 @@ describe("the re-derived census — what landed, and what is still owed a piece"
     // card D204 named; D206 re-resolved the three rows it touches the same way.
     // 🆕🆕🆕 D565 — + Team Rocket's Orbeetle's 2 (Rocket Brain, `moveCounterOwnChosen`, the
     // fifth op): 16 → 18 of the same 22.
-    expect(landed.flatMap((row) => row.ids)).toHaveLength(18);
+    // 🆕🆕🆕 D573 — + N's Zoroark ex's 4 (Night Joker, the copy-attack substitution): 18 → 22 of
+    // the same 22. Every row of the census has landed.
+    expect(landed.flatMap((row) => row.ids)).toHaveLength(22);
     expect(IN_PLAY_TARGET_CENSUS.flatMap((row) => row.ids)).toHaveLength(22);
     for (const row of landed) {
       for (const id of row.ids) {
@@ -905,7 +922,10 @@ describe("the re-derived census — what landed, and what is still owed a piece"
     const flagged = IN_PLAY_TARGET_CENSUS.filter((row) => !row.landed);
     // 4 = Zoroark ex 4 (15 at D204 — Ethan's 4 and Wobbuffet's 2 were built by D205,
     // Giovanni's 3 by D206; 🆕🆕🆕 6 → 4 at D565, Orbeetle's 2 built).
-    expect(flagged.flatMap((row) => row.ids)).toHaveLength(4);
+    // 🆕🆕🆕 D573 — 4 → **0**: N's Zoroark ex's Night Joker is BUILT (the copy substitution). The
+    // loop below iterates over nothing now, which is VACUOUS BY CONSTRUCTION — so the emptiness
+    // is the assertion, and the per-surface loop is kept for the next flagged row.
+    expect(flagged.flatMap((row) => row.ids)).toHaveLength(0);
     for (const row of flagged) {
       for (const id of row.ids) {
         const program = programFor(id);
@@ -914,7 +934,10 @@ describe("the re-derived census — what landed, and what is still owed a piece"
         // is real rather than pedantic. `programFor("sv09-098")` is DEFINED: all
         // four N's Zoroark ex printings already carry their "Trade" Ability
         // (payFromHand + drawCards). It is the ATTACK that is unsimulated, which
-        // is the surface the flagged sentence lives on. A whole-id assertion —
+        // is the surface the flagged sentence lives on. (🆕🆕🆕 D573 (D539): *"It is the
+        // ATTACK that is unsimulated"* is WITHDRAWN — Night Joker is built by the copy
+        // substitution, the row is `landed: true`, and this loop runs over no row. The
+        // per-surface argument stands for the next flagged row.) A whole-id assertion —
         // the shape D200's flag list used — would have read that card as built
         // and quietly dropped it from the backlog.
         //
@@ -930,6 +953,8 @@ describe("the re-derived census — what landed, and what is still owed a piece"
     // future edit to "Trade" cannot silently satisfy the flag above.
     expect(programFor("sv09-098")?.abilities?.[0]?.name).toBe("Trade");
     expect(programFor("sv09-098")?.attack).toBeUndefined();
+    // 🆕🆕🆕 D573 — …and the attack is built through the READER, not the registry.
+    expect(deriveAttackCopy("Choose 1 of your Benched N's Pokémon's attacks and use it as this attack.")).not.toBeNull();
   });
 
 

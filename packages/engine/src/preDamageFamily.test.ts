@@ -300,7 +300,7 @@ describe("§1 — the sentences, measured live over the legal column", () => {
     // One reader for the whole family rather than four, so this slice moves the census
     // figures by PRINTINGS and not by instrument shape. Contrast D428, which moved
     // 12 → 13 by adding `deriveAttackPreDamage` itself.
-    expect(attackReaderSurface()).toHaveLength(13);
+    expect(attackReaderSurface()).toHaveLength(14 /* 🆕🆕🆕 D573: 13 → 14, + deriveAttackCopy */);
     expect(attackReaderSurface()).toContain("deriveAttackPreDamage");
     // Neither splitter and no registry row: all three sentences leave the RAW residue
     // and the split-aware residue by the same 1 / 1 each.
@@ -1060,6 +1060,6 @@ describe("§10 — purity and the version", () => {
     // anchor. ⚠️ D427 named the mechanism — **every note counts the pins it INHERITED
     // and never the one it is about to AUTHOR** — and D428 was the first note to get it
     // right. This line is the one being authored.
-    expect(engineVersion).toBe("0.456.0");
+    expect(engineVersion).toBe("0.457.0");
   });
 });

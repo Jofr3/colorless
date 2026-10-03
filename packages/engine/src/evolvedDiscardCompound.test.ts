@@ -7,6 +7,7 @@ import {
   deriveAttackBonusConsequent,
   deriveAttackCancelRequirement,
   deriveAttackCoinFlip,
+  deriveAttackCopy,
   deriveAttackDamageBonus,
   deriveAttackDamageMultiplier,
   deriveAttackDamagePenalty,
@@ -178,6 +179,8 @@ const READERS: readonly ((text: string) => unknown)[] = [
   deriveAttackDiscardScaledBoost,
   deriveAttackOptionalCostBoost,
   deriveAttackPreDamage,
+  // 🆕🆕🆕 D573 — THE FOURTEENTH, the copy-attack reader. Spliced before the last entry (D419).
+  deriveAttackCopy,
   deriveAttackBonusConsequent,
 ];
 
@@ -465,7 +468,7 @@ describe("§2 — the oracle, and what exactly one of thirteen readers claims", 
     expect(READERS.map((read) => read.name).sort()).toEqual(attackReaderSurface());
     // Pinned separately from the diff: a diff alone stays green when a slice deletes a
     // reader from the module and from this list in the SAME commit (D419).
-    expect(attackReaderSurface()).toHaveLength(13);
+    expect(attackReaderSurface()).toHaveLength(14 /* 🆕🆕🆕 D573: 13 → 14, + deriveAttackCopy */);
   });
 
   it("🛑 exactly ONE of the thirteen claims the compound, and it is `deriveAttackEffect`", () => {
@@ -1022,13 +1025,13 @@ describe("§9 — every describer this program reaches, asked on the load-bearin
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("§10 — the version, and what it is owed for", () => {
-  it("engineVersion is 0.456.0 and the bump is owed for BEHAVIOUR", () => {
+  it("engineVersion is 0.457.0 and the bump is owed for BEHAVIOUR", () => {
     // A sentence that derived to `null` derives to a two-op program. No new op, no new
     // field and no new interpreter byte — but `deriveAttackEffect` answers differently on
     // a printed string, which is behaviour, so the bump is owed. ⚠️ **A slice that adds
     // ZERO mechanism still owes it**: the tax is on what the engine DOES, not on how much
     // of it is new.
-    expect(engineVersion).toBe("0.456.0");
+    expect(engineVersion).toBe("0.457.0");
     expect(manifest.version).toBe(engineVersion);
   });
 });

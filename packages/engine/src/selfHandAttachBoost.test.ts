@@ -80,7 +80,7 @@ describe("D552 §1 — the sentence is claimed WHOLE by ONE reader, and the halv
   });
 
   it("🛑 `deriveAttackDiscardScaledBoost` owns it by VALUE, and it is the ONLY claimant of the thirteen", () => {
-    expect(attackReaderSurface()).toHaveLength(13);
+    expect(attackReaderSurface()).toHaveLength(14 /* 🆕🆕🆕 D573: 13 → 14, + deriveAttackCopy */);
     expect(deriveAttackDiscardScaledBoost(PRINTED)).toEqual(MEMBER);
     expect(claimants(PRINTED)).toEqual(["deriveAttackDiscardScaledBoost"]);
     expect(resolvedByAnyReader(PRINTED)).toBe(true);
@@ -566,7 +566,7 @@ describe("D552 §5 — the parked record round-trips byte-equal, and a rollback 
     const done = resolve(rollback, phase.prompt.kind === "attachCards" ? phase.prompt.candidates : []);
     expect(done.state.players.p1.active?.energy).toHaveLength(7);
     expect(dealtTo(done.state, "p2")).toBe(60);
-    expect(engineVersion).toBe("0.456.0");
+    expect(engineVersion).toBe("0.457.0");
   });
 
   it("the dead end FILES AN EMPTY ANSWER — no source body means no target, and the slot is overwritten", () => {

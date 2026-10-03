@@ -1,6 +1,7 @@
 import type { Card } from "@luminous/schema";
 import { describe, expect, it } from "vitest";
 import { matchesFilter } from "./cards";
+import { deriveAttackCopy } from "./effects";
 import { applyAction, createGame, deriveAttackEffect, programFor, topCardOf } from "./index";
 import type { GameEvent, GameState, PokemonRef, Seat } from "./index";
 import {
@@ -160,7 +161,9 @@ const PERPLEXING_TRANSFER =
     axis, printed on an attack and still refused. */
 const EXTENDED_DAMAGRIIIGUS =
   "Move all damage counters from 1 of your Benched Pokémon to 1 of your opponent's Pokémon.";
-/** N's Zoroark ex "Night Joker" — flagged, the attack-copy row. */
+/** N's Zoroark ex "Night Joker" — flagged, the attack-copy row. (🆕🆕🆕 D573: BUILT on its own
+    reader, `deriveAttackCopy` — the declaration-time substitution; this file's anchors still
+    refuse it, which is what the rungs below assert.) */
 const NIGHT_JOKER = "Choose 1 of your Benched N's Pokémon's attacks and use it as this attack.";
 /** Team Rocket's Giovanni — flagged, the parameterised switch + "If you do". */
 const GIOVANNI =
@@ -989,7 +992,7 @@ describe("🆕🆕🆕 LANDED at D565 (was FLAGGED) — Team Rocket's Orbeetle s
 describe("FLAGGED — N's Zoroark ex sv09-098/-175/-185/-189 (4 legal)", () => {
   const IDS = ["sv09-098", "sv09-175", "sv09-185", "sv09-189"] as const;
 
-  it("⚠️ the ATTACK is unbuilt on BOTH routes, and the ABILITY is built", () => {
+  it("⚠️ the ATTACK is built on NEITHER of these two routes (🆕🆕🆕 D573: it is built on a THIRD, `deriveAttackCopy`), and the ABILITY is built", () => {
     for (const id of IDS) {
       // Per SURFACE and through BOTH routes — the registry AND the deriver. D204
       // established the first half; the second is this slice's repair, and it is
@@ -998,9 +1001,13 @@ describe("FLAGGED — N's Zoroark ex sv09-098/-175/-185/-189 (4 legal)", () => {
       expect(programFor(id)?.abilities?.[0]?.name, `${id} lost its Trade Ability`).toBe("Trade");
     }
     expect(deriveAttackEffect(NIGHT_JOKER)).toBeNull();
+    // 🆕🆕🆕 D573 — …and the third route, which is the one that BUILT it (D438's polarity rule).
+    expect(deriveAttackCopy(NIGHT_JOKER)).toEqual({ from: "benchOwner", owner: "N" });
   });
 
   it("⚠️ names the piece: an attack-COPY, of which the target predicate is the least", () => {
+    // 🆕🆕🆕 D573 — the piece was paid as named: a body choice, then one of ITS attacks, then a
+    // re-entrant `attack()` (`copyAttackD573.test.ts` §2/§4).
     // Two coupled decisions (a benched body, then one of ITS attacks) and a
     // re-entrant attack resolution. The predicate this slice's other rows needed
     // is the smallest part, which is why 4 printings is not the price signal.

@@ -212,7 +212,7 @@ describe("§1 — the population, and the warrant for ONE anchor", () => {
     // The price claim, made executable: a slice that had quietly added a reader
     // would move every whole-corpus figure in the repo, and this is where it says
     // so by name.
-    expect(attackReaderSurface()).toHaveLength(13);
+    expect(attackReaderSurface()).toHaveLength(14 /* 🆕🆕🆕 D573: 13 → 14, + deriveAttackCopy */);
     expect(attackReaderSurface()).toContain("deriveAttackDamagePenalty");
   });
 
@@ -640,7 +640,7 @@ describe("§8 — the persisted question: `MATCH_RECORD_VERSION` STAYS 29", () =
   });
 
   it("🛑 the engine version moved with the behaviour", () => {
-    expect(engineVersion).toBe("0.456.0");
+    expect(engineVersion).toBe("0.457.0");
   });
 
   it("the FROZEN board is handed back untouched — the purity pair", () => {

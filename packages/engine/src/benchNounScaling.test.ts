@@ -333,7 +333,7 @@ describe("§1 — the two printed rows, their printing counts, and the fixture",
     // 🛑 The attacker is FIGHTING on purpose — it is what makes the ZONE axis
     // readable on the counter board (see `counterBoard`'s block).
     expect(card?.types).toEqual(["Fighting"]);
-    expect(engineVersion).toBe("0.456.0");
+    expect(engineVersion).toBe("0.457.0");
   });
 });
 
@@ -767,7 +767,7 @@ describe("§10 — corpus file line 529: BUILT at D493, and what its TWO blocker
       const read = (effectsModule as unknown as Record<string, (t: string) => unknown>)[name];
       expect(read?.(CYNTHIA_PRINTED) ?? null, name).toBeNull();
     }
-    expect(attackReaderSurface()).toHaveLength(13);
+    expect(attackReaderSurface()).toHaveLength(14 /* 🆕🆕🆕 D573: 13 → 14, + deriveAttackCopy */);
   });
 
   it("🛑 …and the COMPOUND's fold is the HEAD's fold, by construction rather than by agreement", () => {

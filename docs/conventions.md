@@ -1141,6 +1141,41 @@ instrument layer rather than the program layer).
 §8.5 block becomes a callable function taking an attacker, a defender and a
 `declared`.
 
+🆕🆕🆕 **D573 — THE FALSIFIER WAS MET, AND THE REFUSAL REVERSED FOR FOUR OF THE SIX SENTENCES
+(4 / 9 built; the family is 2 sentences / 4 printings now).** Not by extracting §8.5 but by
+the cheaper shape the falsifier names: `attack()` takes an optional `declared` OVERRIDE
+(`AttackCopyOverride`) and re-enters itself with the COPIED attack at declaration time, so
+`effectSimulated` is computed from the COPIED text — a copied unbuilt sentence still fires
+`ATTACK_EFFECT_SKIPPED`, carrying that text (`copyAttackD573.test.ts` §3, the anti-laundering
+rung). The disqualifying part above does not happen. The rule this section states is
+UNCHANGED and still binding: a mechanism that makes the coverage instrument report success
+it did not earn is worse than an unbuilt sentence. Haughty Order ×3 and Seek Inspiration
+REVEAL or MILL before the choice and need a park in the MIDDLE of an attack; they stay
+refused under this section until that exists.
+
+🆕🆕🆕 **D573 REVIEW — *"The disqualifying part above does not happen"* WAS FALSE AS FIRST BUILT,
+FOR ONE SENTENCE CLASS, AND THE LESSON IS THIS SECTION'S OWN.** The override substituted the
+copied text at the EFFECT seam and the GATE-SPLIT seam, and the split removed a copied
+attack's printed timing / requirement clause (*"If you go second, you can't use this attack
+during your first turn."*, the Rollout and Angelite clauses) as "simulated" while
+`attackTimingBlocked` — the one enforcer — still ran only on the COPIER's own attack. The
+clause fired no ATTACK_EFFECT_SKIPPED and bound no one (a reviewer drove a Foul Play for 90 on
+the turn the copied attack itself is ATTACK_PREVENTED). **The census was laundered through the
+gate seam while the effect seam was honest, and the anti-laundering rung could not see it
+because it only fed an unbuilt EFFECT sentence.** Closed: attack.ts `usableCopies` asks the
+copied clause (looked up where printed, asked for the copier's seat) and drops every candidate
+it bars (R-CP4; `copyAttackD573.test.ts` §3b). ⚠️ **When a substitution re-points a seam that
+REMOVES text as accounted-for, the enforcer of that text must be re-pointed in the same hunk —
+every seam that marks a sentence "simulated" is a laundering seam if its enforcer is not.**
+🆕🆕🆕 **D573 third review — and when a substitution re-points the HOLDER's text while the holder
+stays put, every installer that resolves a printed NAME against the holder is asked a new
+question.** A copied *"this Pokémon can't use Slashing Strike"* or *"…Echoed Voice attack does 80
+more"* resolves against the COPIER, which prints no such attack, so it installs nothing — read as
+the rules answer under the name-reference reading (R-CP9, ⚠️ UNRULED, decisions.md D573) and
+DRIVEN (`copyAttackD573.test.ts` §3c), not left silent. The test: for every "unreachable off every
+printing" a substitution can reach, either rule the outcome or skip the sentence — and withdraw
+the claim in place (D539).
+
 ## Unbounded queues (attack-copy refusal)
 
 `runProgram` is `while (queue.length > 0)` with **no step limit**, and gates splice
@@ -1148,6 +1183,13 @@ with `queue.unshift(...)`. Any op whose candidate set can include an instance of
 itself is an unbounded loop inside a Durable Object request — not a failing test, a
 hang. **Before adding an op that can name another op's source, ask whether the
 source set can contain the op itself, and what bounds it.**
+
+🆕🆕🆕 **D573 — ANSWERED FOR THE COPY FAMILY, AND THE ANSWER IS THE BOUND, NOT A STEP LIMIT.**
+The copy never enters `runProgram`'s queue at all (its op `useAttackAs` is only ever PARKED,
+never stepped), and its source set CAN contain a copy — so every attack whose text carries
+`COPY_FAMILY_MARKER` (*"use it as this attack"*, all six family sentences, built or not) is
+excluded as a candidate (R-CP3, ⚠️ UNRULED). The re-entry is therefore at most one level
+deep. If a ruling ever allows nesting, the bound becomes a depth counter — never "no bound".
 
 ## A brief that supplies the list pre-empts the audit (D431)
 

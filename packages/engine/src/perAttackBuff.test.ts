@@ -378,9 +378,12 @@ describe("the install — the address is resolved once, by the helper D154 wrote
     // `legalAttackCorpus()`: three ADDITIVE, Echoed Voice ×3, Meteor Mash ×2 and
     // Tornado Rush ×1, and one BASE-SET, Hyper Fang ×2 — 🆕🆕🆕 D546: SIX, the two
     // ALL-ATTACKS sentences `:76`/`:148` ×1 each naming NO attack, so they cannot miss
-    // one and this case stays about the NAMED path). Unreachable off the three
+    // one and this case stays about the NAMED path). ~~Unreachable off the three
     // Meloetta ex Echoed Voice printings (`sv10.5b-044`/`-159`/`-167`, D277), whose
-    // only attack IS the named one; UNMEASURED for the other five, since no
+    // only attack IS the named one~~ — 🆕🆕🆕 D573 (D539): WITHDRAWN — a COPY reaches it:
+    // Foul Play / Metronome copying Echoed Voice holds no attack of that name, so no
+    // record is written and the next copy pays +0 (R-CP9 ⚠️ UNRULED, decisions.md
+    // D573; driven in `copyAttackD573.test.ts` §3c); UNMEASURED for the other five, since no
     // registry, `catalogManifest` or `testFixtures` id carries Meteor Mash, Tornado
     // Rush or Hyper Fang to say whether the card prints an attack of that name —
     // so it is a CONSTRUCTED case and it is pinned as one. A bonus on an attack the card does

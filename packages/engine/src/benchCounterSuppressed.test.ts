@@ -307,7 +307,7 @@ describe("§2 — TWO readers own it, and the other eleven still refuse", () => 
     }
     // The surface COUNT beside the loop, because a loop over a shrinking surface stays
     // green (D417: pin the diff AND the count).
-    expect(attackReaderSurface()).toHaveLength(13);
+    expect(attackReaderSurface()).toHaveLength(14 /* 🆕🆕🆕 D573: 13 → 14, + deriveAttackCopy */);
   });
 
   it("the COMPOUND's fold is the HEAD's fold — two anchors that cannot drift apart", () => {
@@ -655,9 +655,9 @@ describe("§7 — `MATCH_RECORD_VERSION` stays 29: there is NO CARRIER", () => {
 });
 
 describe("§8 — the version", () => {
-  it("engineVersion is 0.456.0 and the bump is owed for BEHAVIOUR", () => {
+  it("engineVersion is 0.457.0 and the bump is owed for BEHAVIOUR", () => {
     // A card can reach this: file line 529's printing scores a number it did not score
     // at 0.387.0, and skips a §8.5 step it did not skip.
-    expect(engineVersion).toBe("0.456.0");
+    expect(engineVersion).toBe("0.457.0");
   });
 });

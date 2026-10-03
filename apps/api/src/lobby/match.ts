@@ -1909,6 +1909,28 @@ export interface MatchRecord {
     discard, so the HUD shows neither (a carried display debt, `sideAttackLock`'s and
     `sideAttackBonuses`' precedent, decisions.md D564).
 
+    🆕🆕🆕 **STAYS 37 AT D573 — THE COPY-ATTACK SUBSTITUTION (NIGHT JOKER, FOUL PLAY, METRONOME, GEMSTONE
+    MIMICRY, TRY TO IMITATE) ADDS ONE PARK-ONLY OP, A WIDENING; THE 0.456 ROLLBACK READING IS DRIVEN AND INERT.**
+    (Placed ABOVE the D572 block, out of date order, so the declaration's anchor lines — and every
+    `*-record-version-not-bumped` row's `find` and the D570 doc tail — stay byte-identical: D563's placement.)
+    The addresses, named first (D456's rule): ⑴ the NEW `EffectOp` `useAttackAs { from, owner?, flip?, index,
+    sourceRef? }` is written into `phase.cont.pendingOp` by attack.ts's DECLARATION-TIME park (two or more
+    candidate attacks, or — Night Joker — two or more eligible Benched N's bodies), with `rest: []` and
+    `ctx: { seat, sourceUid }` — a new union member, D125's widening: no v37 record written by 0.456 can hold
+    it. The prompts it parks are the EXISTING `chooseAttack` and `choosePokemon` kinds, shapes unchanged. ⑵
+    `ATTACK_DECLARED.as` is an EVENT key and `GameEvent` is not persisted (D141). ⑶ `deriveAttackCopy` is a
+    READER over catalog text; nothing it returns is stored. D441: nothing is renamed or removed. THE 0.456
+    ROLLBACK READING, DRIVEN rather than argued (`copyAttackD573.test.ts` §5, the D567 precedent): 0.456 has no
+    `useAttackAs` route in `resolveEffect`, so a parked copy goes `validateChoice` (the prompt kinds are
+    0.456's own) → `resumeProgram` → `applyChoice`'s `default: return state` → `continuationOps` → `[]` →
+    `runProgram([])` → `settleProgram` → `turn:action` for the copier's seat. The park itself wrote NO board
+    change, NO RNG step and no event but EFFECT_PENDING (it sits BEFORE ATTACK_DECLARED), so the rolled-back
+    resolution is INERT: no ATTACK_DECLARED, no damage, no `usedAttack` stamp, the board and `rngState`
+    byte-identical, and the player simply holds an undeclared turn (at 0.456 a re-declared copy is the old
+    loud `ATTACK_EFFECT_SKIPPED`). No reading grants an illegal action or reinterprets a persisted byte, so no
+    printing was dropped and `MATCH_RECORD_VERSION` stays 37. No client byte moved (the prompt notes are
+    strings the HUDs already render; the log's "(as …)" suffix is engine-rendered).
+
     🆕🆕🆕 **STAYS 37 AT D572 — "CALM DIVERS" (ADRENA-BRAIN, MENTALLY CALM, DIVER'S CATCH, EMERGENCY ROTATION)
     ADDS ONE PARKING OP AND ONE OPTIONAL PROMPT KEY, BOTH WIDENINGS; THE 0.455 ROLLBACK READINGS ARE NAMED.**
     (Placed ABOVE the D571 block, out of date order, so the declaration's anchor lines — and every

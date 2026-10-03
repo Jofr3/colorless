@@ -320,6 +320,8 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
         strong(cardName(state, event.uid)),
         plain(" used "),
         strong(event.attack),
+        // 🆕🆕🆕 D573 — a copy-attack names what it became: "used Foul Play (as Cruel Slash)".
+        ...(event.as === undefined ? [] : [plain(" (as "), strong(event.as), plain(")")]),
       ]);
     case "ATTACK_EFFECT_SKIPPED": {
       // The event contract (events.ts): `effect` carries the UNSIMULATED

@@ -11981,7 +11981,7 @@ INTERPRETER resolves it against the holder's own `attacks` and stamps the index.
 That is D152's `× 10` decision made from the other side: translate at the site that
 owns the printed token, so nothing downstream has to know a sentence named
 anything. **A name matching nothing installs nothing and emits no row** —
-unreachable off all five printings, constructed and pinned.
+~~unreachable off all five printings, constructed and pinned.~~ [🆕🆕🆕 D573 (D539): WITHDRAWN — a COPY reaches it off real printings: Foul Play / Metronome / Gemstone Mimicry / Try to Imitate / Night Joker substitute the copied text while the COPIER stays the holder (R-CP2), so Scyther `sv05-001`'s "can't use Slashing Strike" (or Gouging Fire ex's Blaze Blitz bar, or Meloetta ex's Echoed Voice boost) resolves against a card that prints no such attack and installs nothing — read as R-CP9 (⚠️ UNRULED, decisions.md D573 (d)) and driven in `copyAttackD573.test.ts` §3c].
 
 **The stamp is `state.turn + 2`** — D143's number, not D142's, because the sentence
 prints "During YOUR next turn" and declaring an attack ends the turn [🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which opens the attack-again window instead] (§5.3).
@@ -29194,7 +29194,77 @@ red). D27 cited for the auto-fire.
 `bun run check` 585 files / 14,085 tests, exit 0; precheck 3,973; the four gates OK; the probe `--decision D572 --allow-dirty` 38 killed · 0 ·
 0 GAP · 0 error; 108 neighbour rows 108 killed / 0 / 0 GAP; all 16 live-census gate rows killed. Census: `BUILT.ability` 388,
 `BUILT.trainer` 254 (unmoved, checked), `BUILT.specialEnergy` 9, `BUILT.attack` 1707; residue 18/25, OPAQUE 13/20
-(unchanged). Owed: the whole-corpus sweep (predicted `3922 · 51` over 3,973 — the stale D312 declaration retired — stacked
+(unchanged). ~~Owed:~~ 🆕 PAID, EXACTLY, on the first launch (D572 close-out `1c40e5a5`, `tmp/sweep-D572.log:7958`; struck at D573's landing): the whole-corpus sweep (predicted `3922 · 51` over 3,973 — the stale D312 declaration retired — stacked
 on ~~D571's PENDING~~ 🆕 D571's PAID-EXACTLY `3883 · 52` over 3,935, close-out `b83179da`). Carried: Diver's Catch's missing `ABILITY_TRIGGERED` row (the KO row's tail is
 its trace); a locked Swoobat / Espathra pick still parks and whiffs. NEXT: see `progress.md` NEXT — copy-attack re-priced
-under the declaration-time substitution design, then the Paradox MRV trio (37 → 38).
+under the declaration-time substitution design, then the Paradox MRV trio (37 → 38). (🆕🆕🆕 D573: copy-attack TAKEN — built as D573 below,
+by declaration-time substitution, `MATCH_RECORD_VERSION` stays 37.)
+
+## D573 — the copy-attack substitution: 9 printings / 4 texts (engine 0.457.0, `MATCH_RECORD_VERSION` stays 37)
+
+**Status:** ✅ BUILT in the `lum-wt-d573` worktree (detached at `cb16bd63`), ~~NOT committed by the builder, NOT landed~~ committed on `d573-prep` at `8c935cd1` and 🆕 LANDED on `main` by cherry-pick onto the D572 close-out `1c40e5a5`,
+while D572's whole-corpus sweep ran in the main checkout (never written). The top row of the D573 pricing round
+(`progress.md` NEXT (7), recorded verbatim): copy-attack-substitution, 9 printings, about 1.3 printings per core file /
+about 0.45-0.6 per binding site. Haughty Order ×3 and Seek Inspiration stay BLOCKED (a park in the MIDDLE of an attack).
+
+### (a) The cards
+- N's Zoroark ex `sv09-098` / `-175` / `-185` / `-189` — "Night Joker" (index 0): *"Choose 1 of your Benched N's Pokémon's
+  attacks and use it as this attack."*
+- Zoroark `sv10.5w-062` / `-143` — "Foul Play" (index 1), and Clefable `sv06-079` — "Metronome" (index 0): *"Choose 1 of
+  your opponent's Active Pokémon's attacks and use it as this attack."*
+- Team Rocket's Mimikyu `sv10-087` — "Gemstone Mimicry" (index 0): *"…your opponent's Active Tera Pokémon's attacks…"*
+- Ethan's Sudowoodo `sv10-093` — "Try to Imitate" (index 1): *"Flip a coin. If heads, choose 1 of your opponent's Active
+  Pokémon's attacks and use it as this attack."*
+
+### (b) The design
+- **The reader** — effects.ts `deriveAttackCopy`, four whole-sentence anchors → `{ from, owner?, flip? }`, no program; the
+  attack reader surface 13 → 14; NOT in `ATTACK_WHOLE_SENTENCE_READERS` (a copy-headed compound stays unsplit and loud).
+- **The substitution** — attack.ts `attack(state, action, copied?)`: after the §8.2 cost check, a copy sentence computes
+  its candidates (opponent's Active; the same only when Tera; own Benched N's bodies), excludes every
+  `COPY_FAMILY_MARKER` attack (R-CP3) and (review round) every attack whose printed timing clause bars the COPIER now
+  (`usableCopies`, R-CP4), and re-enters `attack()` EMPTY (0), with the one candidate (1), or PARKS
+  `chooseAttack` / Night Joker's `choosePokemon` on the park-only `useAttackAs` op. The park: no RNG, no board change,
+  EFFECT_PENDING only.
+- **The answer** — cardplay.ts `resolveEffect` routes `useAttackAs` to `resolveCopiedAttack` before `settleProgram`:
+  `turn:action` restored, the copier re-validated (PHASE_DESYNC otherwise), `attack()` re-entered, every gate re-run.
+- **Four substitution sites** — damage box, effect text, `attackGateOf` body/index, registry card/index. Everything else
+  (name, type, W/R, cost, "this Pokémon", prevention, index-keyed boosts) stays the copier's.
+- **Try to Imitate** — `ATTACK_EFFECT_COIN_FLIP` after the Confusion block; tails resolves nothing.
+- **The event** — `ATTACK_DECLARED.as` (log: "used Foul Play (as Cruel Slash)"), stamped only once the copy RESOLVES —
+  absent on Try to Imitate's tails and a Confusion / flip-lock tails (review round).
+
+### (c) Readings (`docs/decisions.md` D573)
+R-CP1 the copied cost is ignored · R-CP2 the copier does the attack · R-CP3 ⚠️ no copy-family candidate (the bound) ·
+R-CP4 a copied timing / requirement clause is LOOKED UP on the source and BINDS THE COPIER — a barred attack is not a
+candidate (⚠️ only "not offered" vs "offered and fails" is unruled; ~~"reads the SOURCE body and index"~~, the first
+build's, withdrawn — the clause was enforced nowhere) · R-CP5 ⚠️ extra-Energy scaling counts the
+copier's charged cost · R-CP6 index-keyed boosts at the copier's index · R-CP7 `usedAttack` stamps the copier's name ·
+R-CP8 ⚠️ the choice comes at declaration, before every coin · R-CP9 ⚠️ (third review round) a copied self-lock /
+self-boost that NAMES its attack ("can't use Slashing Strike", "can't use Blaze Blitz again until…", "…Echoed Voice
+attack does 80 more…") resolves against the COPIER's printed attacks and installs nothing — the name-reference reading,
+driven in `copyAttackD573.test.ts` §3c.
+
+### (d) Verified, and owed
+`bun run check` 586 files / 14,150 tests, exit 0 (14,144 before the third review round's six §3c rungs); precheck 4,009; the four gates OK; the probe `--decision D573 --allow-dirty` 36 killed · 0 · 0 GAP ·
+0 error (30 at the first build, +6 in the review round); 43 neighbour rows 42 killed / 1 known (D282, declared `equivalent`) / 0 GAP — neighbour rows; all 16 live-census gate rows killed (before and after). Census: `BUILT.attack` 1707 → **1716**
+(reader summand), `BUILT.ability` 388 and `BUILT.trainer` 254 (unmoved, checked); residue 18/25 → **14/16**, OPAQUE 13/20 →
+**9/11** (UNEXPLAINED 4/4 → 6/8, the two blocked copy sentences); `COPY-ATTACK` re-declared a co-marker. MRV: the 0.456
+rollback of a parked copy is DRIVEN and INERT. Owed: the whole-corpus sweep (predicted `3958 · 51` over 4,009, stacked on
+~~D572's PENDING~~ 🆕 D572's PAID-EXACTLY `3922 · 51` over 3,973, close-out `1c40e5a5`, so it stands as written). Carried: Haughty Order ×3 / Seek Inspiration (a mid-attack park); R-CP3/5/8/9
+unruled, R-CP4 only in "not offered" vs "offered and fails".
+
+### (e) The review round
+A reviewer found a copied attack's printed timing clause split off as simulated (substitution site 3) and enforced
+against no one: Foul Play copied *"If you go second, you can't use this attack during your first turn. …"* for 90 on the
+turn that attack is ATTACK_PREVENTED, and the SITE 3 rung asserted it. Fixed by `usableCopies` (attack.ts): the clause is
+looked up where printed and asked for the copier's seat by `attackTimingBlocked`; a barred attack is not a candidate.
+`ATTACK_DECLARED.as` moved below the coins. +6 mutant rows (site 3 half-reverts, the gate filter's three wrong builds,
+`as` at declaration). Lesson (`conventions.md`, *"A mechanism that launders the census"*, annotated): a substitution that
+re-points a seam which REMOVES text as accounted-for must re-point that text's enforcer in the same hunk. A second review round found one D539 residue — `docs/reference/coverage-backlog-legal.md` row 16 still read *"13 (6 sentences) … no seam exists"* — now annotated (13 → 4; the seam claim withdrawn for the declaration-time half); a re-sweep over the untouched files annotated `opponentHandScaling.test.ts` and `opponentHandFamily.test.ts` (comment-only; the Supporter copy's refusal stands on its own reasons). A third review round found the copy REACHES a
+case four sites called unreachable: a copied name-keyed self-lock / self-boost (Scyther's Slashing Strike, Gouging Fire
+ex's Blaze Blitz, Meloetta ex's Echoed Voice) resolves against the copier and installs nothing, unruled and unpinned.
+Recorded as R-CP9 (⚠️ UNRULED) with its reversal; the ~~four~~ 🆕 SIX *"Unreachable off every printing"* claims withdrawn in place,
+engine source first (interpreter.ts `preventAttackUse`'s doc, `perAttackLock` / `untilLeavesActiveBar` / `perAttackBuff`
+suites; 🆕 at the landing, by a case-INSENSITIVE re-sweep, D154's two lowercase copies — the `decisions.md` D154 row and
+the D154 section of this file — which the builder's case-sensitive sweep missed); §3c adds six rungs; no mutant row (the D573 rows stay 36). NEXT: see `progress.md` NEXT — attack-residue Bundle A (or its 3-printing rider sharing a 37 → 38 step with the
+Paradox MRV trio), then antique-fossils, Tyme, Scovillain ex.

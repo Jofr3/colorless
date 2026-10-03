@@ -268,7 +268,7 @@ describe("§1 — the sentence, measured live over the legal column", () => {
   });
 
   it("the reader surface grew by ONE, and the sentence leaves BOTH residues together", () => {
-    expect(attackReaderSurface()).toHaveLength(13);
+    expect(attackReaderSurface()).toHaveLength(14 /* 🆕🆕🆕 D573: 13 → 14, + deriveAttackCopy */);
     expect(attackReaderSurface()).toContain("deriveAttackPreDamage");
     // No registry row and neither splitter: the sentence leaves the raw refusal and
     // the split-aware residue by the same 1 / 5, which is what a READER buys and what
@@ -778,6 +778,6 @@ describe("§9 — purity and the version", () => {
     // `packages/engine/package.json`, `index.ts`'s declaration and `D275`'s mutant
     // anchor. ⚠️ D427 named the mechanism: **every note counts the pins it INHERITED
     // and never the one it is about to AUTHOR.** This line is the one being authored.
-    expect(engineVersion).toBe("0.456.0");
+    expect(engineVersion).toBe("0.457.0");
   });
 });

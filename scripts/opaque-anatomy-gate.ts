@@ -48,7 +48,10 @@
  *   every `co-marker` must really have a POSITIVE one. This is the section that
  *   makes the partition falsifiable by the corpus rather than by argument: the
  *   day a slice builds an attack-copy sentence, `COPY-ATTACK`'s built side goes
- *   positive and this gate goes RED and names it. It also asserts that no row is
+ *   positive and this gate goes RED and names it. (🆕🆕🆕 D573: IT DID — D573 built four of the
+ *   six copy-attack sentences, the built side went 0 / 0 → 4 / 9, this section went RED naming
+ *   `COPY-ATTACK`, and the marker was re-declared a `co-marker` with its regex kept whole, D508's
+ *   rule. The forecast is kept as the record of a prediction that came true.) It also asserts that no row is
  *   ever LABELLED by a `co-marker`, which is the whole discipline the second
  *   axis rests on.
  *   ⚠️ **THAT LAST CLAIM ALSO NEEDS A WITNESS IN THE POPULATION (D571).** It goes

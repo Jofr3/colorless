@@ -5837,6 +5837,37 @@ export type EffectOp =
       /** The SOURCE, once question 1 is answered. Engine-written only. */
       from?: PokemonTarget;
     }
+  /** 🆕🆕🆕 **D573 — THE COPY-ATTACK CHOICE, AND IT IS ONLY EVER *PARKED*, NEVER STEPPED.**
+      Night Joker / Foul Play / Metronome / Gemstone Mimicry / Try to Imitate (`deriveAttackCopy`,
+      9 legal printings). attack.ts writes this op as the `pendingOp` of an `effect:choose` park
+      made at DECLARATION time — after the §8.2 cost check, before ATTACK_DECLARED, the
+      Confusion flip or any RNG — when the copier has two or more candidate attacks
+      (`chooseAttack`), or, for Night Joker, two or more eligible Benched N's bodies
+      (`choosePokemon` first). cardplay.ts `resolveEffect` routes the answer to attack.ts
+      `resolveCopiedAttack` BEFORE `settleProgram`, which restores `turn:action` and re-enters
+      `attack()` with the copied attack, so every declaration gate runs again on the COPIER.
+
+      No program carries it and `runProgram` never reaches it: interpreter.ts `stepOp`'s arm is
+      there because the switch is exhaustive, and returns `{ done: state }` unchanged.
+      `applyChoice` has NO arm (its `default` returns the state) and `continuationOps` none
+      either, which is exactly what a 0.456 ROLLBACK deploy reads off a parked record: the
+      answer applies nothing, the empty `rest` finishes, and `settleProgram` folds back to
+      `turn:action` — no ATTACK_DECLARED, no board change, no stamp (an INERT park, so a new
+      union member is a D125 widening and `MATCH_RECORD_VERSION` stays 37, decisions.md D573).
+
+      `index` is the COPIER's declared attack index (engine-written), re-validated against the
+      live Active on the resume. `sourceRef` is the source body once known (Night Joker's
+      bench pick, or its single eligible body); absent for the two opponent-Active forms. */
+  | {
+      op: "useAttackAs";
+      from: AttackCopy["from"];
+      owner?: AttackCopy["owner"];
+      flip?: true;
+      /** The copier's declared attack index. Engine-written only. */
+      index: number;
+      /** The SOURCE body (own Bench), once known. Engine-written only. */
+      sourceRef?: PokemonTarget;
+    }
   /** Spread damage (§8.5): place `amount` HP of damage on EACH Benched Pokémon of
       the side `target` names. Weakness/Resistance NEVER apply to Benched Pokémon,
       so this is flat. A SECONDARY damage clause, distinct from the attack's main
@@ -16985,6 +17016,11 @@ const CHOSEN_ANY_TARGET = new RegExp(
 // possessive AND the contraction — per D136/D137. A WHOLE-SENTENCE anchor, because
 // the family is one printed sentence at every candidate head and nothing smaller is
 // claimable (D121/D425/D489).
+// 🆕🆕🆕 **D573 (D539) — *"(copy-attack, 3 printings — BLOCKED family)"* IS WITHDRAWN: FILE
+// LINES 78 AND 80 ARE BUILT**, both claimed whole by `deriveAttackCopy` (the declaration-time
+// substitution, `copyAttackD573.test.ts`). This anchor still refuses both, which is what keeps
+// the two readers disjoint; only the copy-family REMAINDER (Haughty Order, Seek Inspiration)
+// stays blocked, and neither shares this opening.
 const ATTACK_PICK_WITH_REPLACEMENT_SNIPE = new RegExp(
   `^Choose 1 of your opponent['’]s Pokémon (\\d+) times\\. ` +
     "\\(You can choose the same Pokémon more than once\\.\\) " +
@@ -37602,6 +37638,14 @@ const ATTACK_WHOLE_SENTENCE_READERS: readonly ((text: string) => unknown)[] = [
   // answer because nothing here represents *"if you discarded one"*.
   deriveAttackPreDamage,
 ];
+// 🆕🆕🆕 D573 — `deriveAttackCopy` (the fourteenth reader) is DELIBERATELY ABSENT from the array
+// above. It returns no program: attack.ts acts on it only when it claims the WHOLE printed text,
+// so a compound whose HEAD is a copy sentence must stay unsplit and LOUD — admitting it there
+// would hand the head to `deriveAttackEffect`, which reads nothing, and silently drop the copy
+// while the tail ran. `compoundCompose.test.ts` §1 names it as the one `loud` exception. No corpus
+// compound has a head this reader claims (measured: its four sentences are each a whole printed
+// text). (Written BELOW the `];`, so `D428-reader-array-drops-the-pre-damage-reader`'s anchor —
+// the last entry and the bracket — stays byte-identical.)
 
 /** Does ANY whole-sentence reader claim this string? The splitter's refusal and
     its admission are the same question asked of two different strings. */
@@ -37968,5 +38012,90 @@ export function deriveAttackPreDamage(text: string): AttackPreDamage | null {
   if (ATTACK_PRE_DAMAGE_TOOL_DISCARD_THEN_PARALYZE.test(trimmed)) {
     return { kind: "discardOpponentActiveToolsThenParalyze" };
   }
+  return null;
+}
+
+// ── 🆕🆕🆕 D573 — THE COPY-ATTACK SUBSTITUTION ("…and use it as this attack.") ──
+//
+// Four printed sentences / **9 legal printings** over `legalAttackCorpus()`, each anchored
+// WHOLE (`^…$`, no `/i`, `['’]` on EVERY apostrophe slot — the possessives and the
+// contraction-free text alike, D136/D137):
+//   · corpus FILE LINE **77** — *"Choose 1 of your Benched N's Pokémon's attacks and use it
+//     as this attack."* (N's Zoroark ex `sv09-098`/`-175`/`-185`/`-189` "Night Joker", 4);
+//   · FILE LINE **78** — *"Choose 1 of your opponent's Active Pokémon's attacks and use it as
+//     this attack."* (Zoroark `sv10.5w-062`/`-143` "Foul Play" ×2, Clefable `sv06-079`
+//     "Metronome", 3);
+//   · FILE LINE **80** — *"Choose 1 of your opponent's Active Tera Pokémon's attacks and use
+//     it as this attack."* (Team Rocket's Mimikyu `sv10-087` "Gemstone Mimicry", 1);
+//   · FILE LINE **245** — *"Flip a coin. If heads, choose 1 of your opponent's Active
+//     Pokémon's attacks and use it as this attack."* (Ethan's Sudowoodo `sv10-093` "Try to
+//     Imitate", 1).
+//
+// 🛑 **THIS READER RETURNS NO PROGRAM, AND THAT IS THE DESIGN.** The sentence does not
+// describe an effect; it REPLACES the attack. attack.ts asks this reader right after the
+// §8.2 cost check and, when it answers, re-enters `attack()` with the COPIED attack as an
+// override (`AttackCopyOverride`): four declaration-time reads (the damage box, the effect
+// text, the gate lookup's body/index, the registry lookup's card/index) take the source,
+// and everything else — the copier's name, type, Weakness/Resistance, cost, "this Pokémon",
+// the prevention passives — stays the COPIER's (R-CP2, decisions.md D573).
+//
+// ⚠️ **THE STANDING REFUSAL'S FALSIFIER IS MET, NOT WAIVED** (`conventions.md`, *"A
+// mechanism that launders the census"*): `effectSimulated` is computed from the COPIED text,
+// so a copied UNBUILT sentence still fires `ATTACK_EFFECT_SKIPPED` carrying that text; and
+// every copy-family attack is EXCLUDED as a candidate (`COPY_FAMILY_MARKER`, R-CP3), which
+// is the bound on the recursion (*"Unbounded queues"*).
+// 🆕🆕🆕 **D573 REVIEW (D539) — *"MET"* WAS FALSE AS FIRST BUILT, FOR ONE SENTENCE CLASS, AND IS
+// TRUE NOW.** The first build split a copied attack's printed TIMING / REQUIREMENT clause off
+// its text (substitution site 3) and enforced it NOWHERE — so the clause counted as simulated,
+// fired no ATTACK_EFFECT_SKIPPED and bound no one: a Foul Play copied *"If you go second, you
+// can't use this attack during your first turn. …"* for 90 on the very turn that attack is
+// ATTACK_PREVENTED, and a Foul Play or Metronome against a Rollout- or Angelite-gated Active
+// used it freely on any turn. That is the laundering the refusal names, arriving through the
+// gate seam rather than the effect seam. It is closed by a THIRD leg: attack.ts's
+// `usableCopies` drops every candidate whose clause — looked up where it is printed, asked for
+// the COPIER's seat (`attackTimingBlocked`) — bars the copier now (R-CP4), so the split clause
+// is one that was ENFORCED (`copyAttackD573.test.ts` §3b; `D573-copied-gate-not-enforced`).
+//
+// The remaining two copy-family sentences — Haughty Order (FILE LINE 434, 3 printings) and
+// Seek Inspiration (FILE LINE 131, 1) — REVEAL or MILL before the choice, so they need a park
+// in the MIDDLE of the attack. This reader refuses both (they are not these four strings).
+const ATTACK_COPY_OPPONENT_ACTIVE =
+  /^Choose 1 of your opponent['’]s Active Pokémon['’]s attacks and use it as this attack\.$/;
+const ATTACK_COPY_OPPONENT_ACTIVE_TERA =
+  /^Choose 1 of your opponent['’]s Active Tera Pokémon['’]s attacks and use it as this attack\.$/;
+const ATTACK_COPY_BENCHED_N =
+  /^Choose 1 of your Benched N['’]s Pokémon['’]s attacks and use it as this attack\.$/;
+const ATTACK_COPY_FLIP_OPPONENT_ACTIVE =
+  /^Flip a coin\. If heads, choose 1 of your opponent['’]s Active Pokémon['’]s attacks and use it as this attack\.$/;
+
+/** 🆕🆕🆕 D573 — the marker every copy-family sentence prints (all SIX corpus rows, built or
+    not: 77, 78, 80, 131, 245, 434). attack.ts drops every candidate attack whose text carries
+    it, so a copy can never copy a copy (R-CP3, ⚠️ UNRULED — it reverses to a depth counter if
+    a ruling allows nesting). Deliberately the bare phrase, not the four anchors above: the
+    bound must also exclude the two BLOCKED members, or Foul Play against a Persian ex would
+    offer Haughty Order and silently launder it. */
+export const COPY_FAMILY_MARKER = /use it as this attack/;
+
+/** 🆕🆕🆕 D573 — WHERE the copied attack comes from. `opponentActive`: the opponent's Active;
+    `opponentActiveTera`: the same body, only when it is a Tera Pokémon (`isTeraPokemon`);
+    `benchOwner`: the attacker's own Benched `<owner>'s Pokémon` (`ownerPokemon`). `flip` is
+    Try to Imitate's printed coin, taken AFTER the choice (R-CP8). */
+export interface AttackCopy {
+  from: "opponentActive" | "opponentActiveTera" | "benchOwner";
+  /** The printed owner prefix, `benchOwner` only ("N"). */
+  owner?: "N";
+  flip?: true;
+}
+
+/** 🆕🆕🆕 D573 — the copy-attack reader: the four whole-sentence anchors above, `null` for
+    every other string (the two mid-attack-park members included). On the ATTACK READER
+    SURFACE by its `deriveAttack` prefix (`censusAttackCorpus.ts` `surface()`), which goes
+    13 → 14 with it. */
+export function deriveAttackCopy(text: string): AttackCopy | null {
+  const trimmed = text.trim();
+  if (ATTACK_COPY_OPPONENT_ACTIVE.test(trimmed)) return { from: "opponentActive" };
+  if (ATTACK_COPY_OPPONENT_ACTIVE_TERA.test(trimmed)) return { from: "opponentActiveTera" };
+  if (ATTACK_COPY_BENCHED_N.test(trimmed)) return { from: "benchOwner", owner: "N" };
+  if (ATTACK_COPY_FLIP_OPPONENT_ACTIVE.test(trimmed)) return { from: "opponentActive", flip: true };
   return null;
 }

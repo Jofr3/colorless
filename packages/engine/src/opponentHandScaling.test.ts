@@ -142,7 +142,10 @@ const CLAIMED = [REVEAL_TRAINER_SCALE, REVEAL_DISCARD, HAND_COUNT] as const;
       shape worth its own op — that rung goes RED.
     · `REVEAL_COPY` (1 legal printing) is refused as a member of the ATTACK-COPY
       family, re-argued for a SUPPORTER rather than inherited (D436's defect is a
-      refusal carried without re-argument). See §6 for the argument in full. */
+      refusal carried without re-argument). See §6 for the argument in full.
+      🆕🆕🆕 D573 (D539): the ATTACK-COPY family is no longer wholly refused — 9 of
+      its 13 printings were built at D573 by declaration-time substitution. This
+      Supporter copy stays refused on its own reasons (§6: no Trainer text deriver). */
 const REVEAL_SWEEP =
   "Your opponent reveals their hand. Discard all Item cards and Pokémon Tool cards you find there.";
 const REVEAL_COPY =
@@ -1042,10 +1045,20 @@ describe("§6 — the population claims this slice rests on", () => {
     //      are REGISTRY rows keyed by card id — so a copy op would answer for the authored
     //      rows and for nothing else, and *"the effect of a Supporter card you find there"*
     //      would silently do nothing for every unauthored Supporter in the opponent's hand.
+    //      🆕🆕🆕 D573 (D539): **WITHDRAWN FOR THE ATTACK FAMILY, 9 OF ITS 13 PRINTINGS.**
+    //      D573 did not splice `deriveAttackEffect`'s output: it re-enters `attack()` at
+    //      DECLARATION with the copied attack (`deriveAttackCopy` + the parked-only op
+    //      `useAttackAs`), so every reader reaches the copy and the 44% bar dissolves for
+    //      attacks. The SUPPORTER half of ⑴ is unchanged — there is still no Trainer text
+    //      deriver — so this refusal stands on its own reasons, no longer inherited.
     //   ⑵ **THE INSTRUMENT.** `effectSimulated` is computed from the COPIER's sentence, so
     //      the moment this anchor claims the string `ATTACK_EFFECT_SKIPPED` can never fire
     //      for this attack again — the engine's one honest failure channel switched off
     //      exactly where it is needed most, while `BUILT.attack` stepped for it.
+    //      🆕🆕🆕 D573 (D539): for the ATTACK family this falsifier is MET — under the
+    //      substitution `effectSimulated` is computed from the COPIED attack's text, so a
+    //      copied unbuilt sentence still fires ATTACK_EFFECT_SKIPPED (copyAttackD573.test.ts,
+    //      the anti-laundering rung). For a Supporter copy ⑵ still holds as written.
     //   ⑶ **AND ONE THE ATTACK FAMILY DOES NOT HAVE**: the copied program would run with
     //      an `EffectContext` whose `invokedBy` is `"attack"` over a Supporter's ops, and
     //      several of those ops are gated on the §7.2 one-Supporter-per-turn rule the
@@ -1055,6 +1068,10 @@ describe("§6 — the population claims this slice rests on", () => {
     // **THE FALSIFIER IS THE SAME ONE THE ATTACK FAMILY CARRIES, ONE COLUMN OVER**: this
     // reverses when a Trainer TEXT deriver exists, at which point ⑴ dissolves and ⑵ and ⑶
     // become the whole argument.
+    // 🆕🆕🆕 D573 (D539): the attack family's own falsifier was met at D573 for 9 of its 13
+    // printings (declaration-time substitution; `docs/decisions.md` D573). Its 4 left —
+    // Haughty Order ×3 and Seek Inspiration — need a park in the MIDDLE of the attack. This
+    // Supporter refusal does not move with it: its falsifier is still a Trainer text deriver.
     expect(legalAttackCorpus().filter(([, s]) => s === REVEAL_COPY)).toHaveLength(1);
     expect(resolvedByAnyReader(REVEAL_COPY)).toBe(false);
     expect(splitAttackTrailingClause(REVEAL_COPY)).toBeNull();

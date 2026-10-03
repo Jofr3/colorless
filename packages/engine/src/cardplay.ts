@@ -9,6 +9,7 @@ import type {
   UseStadiumAbilityAction,
 } from "./actions";
 import { err, ok } from "./actions";
+import { resolveCopiedAttack } from "./attack";
 import { cardOfUid, isBasicPokemon, topUid } from "./cards";
 import {
   disabledAbilityUids,
@@ -1052,6 +1053,12 @@ export function resolveEffect(state: GameState, action: ResolveEffectAction): Ap
   }
   const invalid = validateChoice(phase.prompt, action.choice);
   if (invalid !== null) return invalid;
+  // 🆕🆕🆕 D573 — the COPY-ATTACK park is answered by re-entering `attack()`, not by a program:
+  // routed here, after the prompt check and BEFORE `settleProgram`. (A 0.456 deploy has no
+  // route and reads the park as inert — `applyChoice`'s default, an empty `rest`, back to
+  // `turn:action`; decisions.md D573.)
+  const pendingOp = phase.cont.pendingOp;
+  if (pendingOp.op === "useAttackAs") return resolveCopiedAttack(state, phase, pendingOp, action.choice);
   const events: GameEvent[] = [];
   // resumeTail (§9 on-KO trigger, flow.ts): this park was made MID-KO-SWEEP, so
   // finishing the program resumes the remaining prize/promotion tail rather than

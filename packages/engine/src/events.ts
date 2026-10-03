@@ -150,8 +150,15 @@ export type GameEvent =
       discardedEnergy: string[];
     }
   /** `seat`'s Active declared its printed attack `attack` (index into the
-      top card's attacks); `uid` is the attacker's top card. */
-  | { type: "ATTACK_DECLARED"; seat: Seat; uid: string; attack: string; index: number }
+      top card's attacks); `uid` is the attacker's top card.
+      🆕🆕🆕 D573 — `as` is the COPIED attack's printed name when `attack` is a copy-attack
+      (Night Joker / Foul Play / Metronome / Gemstone Mimicry / Try to Imitate) that resolved
+      as another Pokémon's attack. ABSENT on every other declaration, and on a copy that found
+      nothing to copy (D135) — 🆕🆕🆕 D573 review: and on a copy that RESOLVED nothing: Try to
+      Imitate's tails, a Confusion tails, a flip-lock tails. attack.ts stamps it onto the event
+      only once the copied attack is known to resolve, so the log never reads "(as Smash)" over
+      an attack that did nothing. `attack` stays the COPIER's own name (R-CP7). */
+  | { type: "ATTACK_DECLARED"; seat: Seat; uid: string; attack: string; index: number; as?: string }
   /** The declared attack carries text (or a damage modifier like "60+") the
       engine does not simulate yet — that is M4's effect-op system. The
       numeric base damage still applied; consumers surface the skipped text

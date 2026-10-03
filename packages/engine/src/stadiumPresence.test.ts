@@ -9,6 +9,7 @@ import {
   deriveAttackCancelRequirement,
   deriveAttackOptionalCostBoost,
   deriveAttackCoinFlip,
+  deriveAttackCopy,
   deriveAttackDamageBonus,
   deriveAttackDamageMultiplier,
   deriveAttackDamagePenalty,
@@ -132,6 +133,9 @@ const READERS: readonly ((text: string) => unknown)[] = [
   deriveAttackRequirement,
   deriveAttackDamageSuppression,
   deriveAttackOptionalBoost,
+  // 🆕🆕🆕 D573 — THE FOURTEENTH, the copy-attack reader — spliced ABOVE the last three entries
+  // (D382's three-line anchor; the D428 block below is the lesson, and precheck said so again).
+  deriveAttackCopy,
   // 🆕🆕 D428 — THE THIRTEENTH, the PRE-DAMAGE Tool discard.
   // 🛑 **SPLICED HERE, ABOVE THE LAST THREE ENTRIES, FOR THE REASON THE BLOCK BELOW
   // ALREADY SPELLS OUT — AND THE FIRST DRAFT GOT IT WRONG AND `precheck` SAID SO.**
@@ -336,7 +340,7 @@ describe("§1 — the price, RE-DERIVED: a 2:3 step whose CANCEL half is the big
     // ⚠️ THE COUNT IS PINNED SEPARATELY FROM THE DIFF, because the diff alone stays
     // GREEN when a reader leaves the module and this list in the same commit — and
     // every figure in §1 would then move with nothing naming the cause.
-    expect(attackReaderSurface()).toHaveLength(13);
+    expect(attackReaderSurface()).toHaveLength(14 /* 🆕🆕🆕 D573: 13 → 14, + deriveAttackCopy */);
   });
 
   it("🛑 the bonus residue steps by exactly ONE sentence and ONE printing", () => {

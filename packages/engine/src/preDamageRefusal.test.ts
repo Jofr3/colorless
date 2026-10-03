@@ -272,7 +272,7 @@ describe("§1 — every §11 printing names the OPPONENT as the attack's source"
     // what the engine DOES. The reader surface is 13 (unchanged since D428), and all
     // four members of the pre-damage family were already claimed at D429 — the refusal
     // is a rule applied to a sentence, never a sentence.
-    expect(attackReaderSurface()).toHaveLength(13);
+    expect(attackReaderSurface()).toHaveLength(14 /* 🆕🆕🆕 D573: 13 → 14, + deriveAttackCopy */);
     for (const sentence of [
       "Before doing damage, discard all Pokémon Tools and Special Energy from your opponent's Active Pokémon.",
       "Before doing damage, discard all Pokémon Tools from this Pokémon. If you can't discard any, this attack does nothing.",
@@ -697,6 +697,6 @@ describe("§7 — the version", () => {
     // `manifest.version`) plus `package.json`, the declaration and the mutant `find`.
     // The increment is this line — the pin being AUTHORED, which is the one D427 named
     // as the thing every note forgets.
-    expect(engineVersion).toBe("0.456.0");
+    expect(engineVersion).toBe("0.457.0");
   });
 });

@@ -186,7 +186,7 @@ describe("§1 — the price, RE-DERIVED, and D368's refusal collected rather tha
     // The arm lives inside `deriveAttackDamageBonus`, an existing reader — so this is
     // a READER-keyed census move with no fourteenth reader behind it. Derived from the
     // module rather than from a hand-kept list (D417/D419).
-    expect(attackReaderSurface()).toHaveLength(13);
+    expect(attackReaderSurface()).toHaveLength(14 /* 🆕🆕🆕 D573: 13 → 14, + deriveAttackCopy */);
     for (const [sentence] of PRINTED) {
       expect(resolvedByAnyReader(sentence), sentence).toBe(true);
     }
@@ -465,6 +465,6 @@ describe("§7 — `MATCH_RECORD_VERSION` STAYS 29, driven in both directions", (
   });
 
   it("the engine version moved with the behaviour", () => {
-    expect(engineVersion).toBe("0.456.0");
+    expect(engineVersion).toBe("0.457.0");
   });
 });

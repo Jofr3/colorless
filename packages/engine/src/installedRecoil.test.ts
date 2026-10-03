@@ -804,7 +804,7 @@ describe("🆕🆕 D456 §1 — the datum, and the family CLOSED over the corpus
     expect(family.some(([, t]) => t.includes("10 damage counters"))).toBe(false);
     // …and ALL THREE now resolve, so the ATTACK column's half of this family is CLOSED.
     for (const [, t] of family) expect(resolvedByAnyReader(t), t).toBe(true);
-    expect(attackReaderSurface()).toHaveLength(13); // no fourteenth reader
+    expect(attackReaderSurface()).toHaveLength(14 /* 🆕🆕🆕 D573: 13 → 14, + deriveAttackCopy */); // no fourteenth reader
   });
 
   it("the parenthetical varies BY PRINTING, which is why the alternation is not invented", () => {

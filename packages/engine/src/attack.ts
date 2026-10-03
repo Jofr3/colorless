@@ -1,3 +1,4 @@
+import type { Attack, Card } from "@luminous/schema";
 import type {
   ApplyResult,
   AttackAction,
@@ -15,6 +16,7 @@ import {
   hasPrintedAbility,
   isExOrV,
   isSpecialEnergy,
+  isTeraPokemon,
   matchesFilter,
   parseAttackDamage,
   preventsAttackerBanner,
@@ -71,7 +73,9 @@ import {
 } from "./continuous";
 import {
   bonusConsequentProgram,
+  COPY_FAMILY_MARKER,
   deriveAttackBonusConsequent,
+  deriveAttackCopy,
   deriveAttackCoinFlip,
   deriveAttackDamageBonus,
   deriveAttackDamageMultiplier,
@@ -94,6 +98,7 @@ import {
 } from "./effects";
 import type {
   AttackCoinFlip,
+  AttackCopy,
   AttackDamageBonus,
   AttackFlipCount,
   AttackPreDamage,
@@ -129,13 +134,13 @@ import {
   effectRefused,
   runProgram,
 } from "./interpreter";
-import type { EffectContext } from "./interpreter";
+import type { EffectChoice, EffectContext, EffectPrompt } from "./interpreter";
 import { programFor } from "./registry";
 import { flipCoin, flipUntilTails, MAX_UNTIL_TAILS_FLIPS } from "./rng";
 import type { CoinFace } from "./rng";
 import { damagedByAttackAbility, damagedToolTriggersOf, koToolTriggersOf } from "./triggers";
 import { isBenchIndex, turnGate } from "./turn";
-import type { GameState, InPlayPokemon, PendingStage, Phase, Seat } from "./types";
+import type { GameState, InPlayPokemon, PendingStage, Phase, PokemonTarget, Seat } from "./types";
 import {
   isImmobilized,
   otherSeat,
@@ -1334,8 +1339,17 @@ function applyAttackPreDamage(
     attack under Festival Lead, which opens the attack-again window
     (`TurnAllowances.attackAgainUid`, flow.ts `finishAttack`) and hands turn:action back;
     the SECOND declaration is a full one (cost, Special Conditions, every §8 gate) plus the
-    window's own re-read (`attackAgainBarred`, R-FL2), and its resolution ends the turn. */
-export function attack(state: GameState, action: AttackAction): ApplyResult {
+    window's own re-read (`attackAgainBarred`, R-FL2), and its resolution ends the turn.
+    🆕🆕🆕 D573 — `copied` is the COPY-ATTACK override (Night Joker / Foul Play / Metronome /
+    Gemstone Mimicry / Try to Imitate). Absent on every ordinary declaration; when the declared
+    attack's text is a `deriveAttackCopy` sentence, this function re-enters ITSELF with it
+    (`declareAttackCopy`), at once or after the player's answer (`resolveCopiedAttack`), and every
+    gate above the cost check runs again on the COPIER. See `AttackCopyOverride`. */
+export function attack(
+  state: GameState,
+  action: AttackAction,
+  copied?: AttackCopyOverride,
+): ApplyResult {
   const rejected = turnGate(state, action);
   if (rejected !== null) return rejected;
   const side = state.players[action.seat];
@@ -1552,6 +1566,21 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
   if (!costMet(cost, provided)) {
     return err("ATTACK_COST_UNMET", `${declared.name} costs [${cost.join(", ")}]`);
   }
+  // 🆕🆕🆕 §8 (D573) — THE COPY-ATTACK SUBSTITUTION, AT DECLARATION. *"Choose 1 of … attacks and
+  // use it as this attack."* (`deriveAttackCopy`, 9 legal printings). Every gate above has
+  // passed for the COPIER — §4, §12, §11, D242, D570, the index, D154, the timing clause and the
+  // charged cost (R-CP1: only the copier's cost is checked; the copied attack's is ignored) — so
+  // the choice is made HERE, before ATTACK_DECLARED, before the flip-lock and Confusion coins
+  // and before Try to Imitate's own flip (R-CP8, ⚠️ UNRULED). `declareAttackCopy` forces 0 or 1
+  // candidate by re-entering this function with the override, or PARKS the choice with no
+  // RNG, no board change and no event but the park's own EFFECT_PENDING. Asked only when no
+  // override is present, so the re-entry cannot ask again (and R-CP3's exclusion means no
+  // candidate is itself a copy, so the override never names a copy sentence).
+  const copyText = declared.effect ?? null;
+  const copy = copied === undefined && copyText !== null ? deriveAttackCopy(copyText) : null;
+  if (copy !== null) return declareAttackCopy(state, action, copy, attackerUid, declared.name);
+  // The SOURCE of a non-empty override, else null — read at the four substitution sites below.
+  const copiedFrom = copied === undefined || copied.empty === true ? null : copied;
 
   const defenderSeat = otherSeat(action.seat);
   const defenderSpot = activeTop(state, defenderSeat);
@@ -1602,9 +1631,17 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
   // `D429-own-strip-not-rebound` is exactly that build.
   let attackerBody = active;
 
-  const events: GameEvent[] = [
-    { type: "ATTACK_DECLARED", seat: action.seat, uid: attackerUid, attack: declared.name, index },
-  ];
+  // 🆕🆕🆕 D573 — bound by name so the copy can stamp `as` onto it once the copied attack is
+  // known to RESOLVE (below the Confusion block and Try to Imitate's coin). `attack` stays the
+  // COPIER's own name (R-CP7: the copier did the attack).
+  const declaredEvent: Extract<GameEvent, { type: "ATTACK_DECLARED" }> = {
+    type: "ATTACK_DECLARED",
+    seat: action.seat,
+    uid: attackerUid,
+    attack: declared.name,
+    index,
+  };
+  const events: GameEvent[] = [declaredEvent];
   let next = state;
 
   // 🆕🆕🆕 §8 (D547) — THE FLIP-TO-ATTACK LOCK: "During your opponent's next turn, if
@@ -1693,6 +1730,29 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
     }
   }
 
+  // 🆕🆕🆕 D573 — Try to Imitate's printed coin (*"Flip a coin. If heads, choose 1 of …"*),
+  // taken AFTER the Confusion block: a Confused tails resolves no copy and spends no second
+  // coin (§8 step 3 comes first). The choice itself was made at declaration (R-CP8). Tails —
+  // and an EMPTY override (no candidate: a non-Tera Active against Gemstone Mimicry, an
+  // opponent whose every attack is a copy, no Benched N's Pokémon with one) — resolve nothing
+  // at all: the attack was declared and the turn ends through the staged tail.
+  if (copied?.flip === true) {
+    const [face, rngState] = flipCoin(next.rngState);
+    next = { ...next, rngState };
+    events.push({ type: "ATTACK_EFFECT_COIN_FLIP", seat: action.seat, result: face });
+    if (face === "tails") return finishAttack(next, events, action.seat, attackerUid, declared.name);
+  }
+  if (copied?.empty === true) {
+    return finishAttack(next, events, action.seat, attackerUid, declared.name);
+  }
+  // 🆕🆕🆕 D573 (review) — THE COPY RESOLVES FROM HERE, AND ONLY NOW IS `ATTACK_DECLARED.as`
+  // WRITTEN (events.ts: *"absent … on a copy that found nothing to copy"*). Every return above
+  // — the flip-lock tails, the Confusion tails, Try to Imitate's tails, the empty override —
+  // resolved NOTHING, and a log reading "used Try to Imitate (as Smash)" over a tails coin told
+  // the table the attack became Smash when it did nothing. `events[0]` IS `declaredEvent`: no
+  // push above this line is an unshift.
+  if (copiedFrom !== null) events[0] = { ...declaredEvent, as: copiedFrom.attack.name };
+
   // Coverage strategy (simulator.md): the mechanical part of the attack
   // (numeric damage, weakness/resistance) is simulated, and effect text
   // derives into executable steps for exactly the sentence shapes effects.ts
@@ -1711,7 +1771,9 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
   // MODIFIER is kept: a "×" base overridden this way is UNREACHED (Hyper Fang's
   // printed damage is unmeasured on this checkout) and is named rather than
   // asserted. `attackerBody` is `active` here (no pre-damage seam has run yet).
-  const { base: printedBase, modifier } = parseAttackDamage(declared.damage);
+  // 🆕🆕🆕 D573 SUBSTITUTION SITE 1 of 4 — the COPIED attack's printed damage box. (The
+  // boost on the next line is index-keyed and stays at the COPIER's index, R-CP6.)
+  const { base: printedBase, modifier } = parseAttackDamage((copiedFrom?.attack ?? declared).damage);
   const base = boostedAttackBase(next, attackerBody, index) ?? printedBase;
   // 🛑 D282 — THE SPLIT ANCHOR, AND IT IS ONE REBIND RATHER THAN SEVEN WIDENINGS.
   // D281 built `CardProgram.attackGate` and enforced it at the §4/§8 declaration
@@ -1751,9 +1813,21 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
   // ATTACK_EFFECT_SKIPPED report, so an unresolved remainder is reported as the
   // BODY sentence alone (Illumise, Scream Tail ex, Exeggcute) — naming the half
   // this engine still cannot read instead of the whole compound it half can.
-  const printedEffect = declared.effect ?? null;
+  // 🆕🆕🆕 D573 SUBSTITUTION SITES 2 and 3 of 4 — the COPIED attack's effect text, and the gate
+  // lookup on the SOURCE body and index, where the clause is PRINTED (R-CP4): a copied
+  // clause-bearing attack is split exactly as its owner's would be. The split is honest only
+  // because the clause was ENFORCED before the copy was offered — `usableCopies` (below
+  // `attack()`) asked this same gate for the COPIER's seat and dropped every attack it bars, so
+  // "the gate that already ran" above is, under a copy, that filter. (🆕🆕🆕 D573 review: the
+  // first build split the clause here and enforced it NOWHERE — a Foul Play copied a
+  // going-second first-turn-barred attack for 90 on the turn the attack itself is
+  // ATTACK_PREVENTED, with no skip; withdrawn, D539.) `effectSimulated` is computed from THIS
+  // text, so a copied unbuilt sentence still reports itself (ATTACK_EFFECT_SKIPPED carries the
+  // copied text).
+  const printedEffect = (copiedFrom?.attack ?? declared).effect ?? null;
   const gateSplit =
-    printedEffect === null || attackGateOf(state, active, index) === undefined
+    printedEffect === null ||
+    attackGateOf(state, copiedFrom?.body ?? active, copiedFrom?.index ?? index) === undefined
       ? null
       : splitAttackGateClause(printedEffect);
   // 🆕🆕 D395 — `gateSplit.body` IS `""` FOR A CLAUSE-ONLY PRINTING (Miltank
@@ -1931,7 +2005,9 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
   // "derivable" have stopped being exclusive, and the `??` below is what makes
   // that a non-event rather than a conflict: the row wins, the deriver is never
   // asked, and the two suites assert the agreement instead of a null.
-  const authored = programFor(attacker.id)?.attack?.[index] ?? null;
+  // 🆕🆕🆕 D573 SUBSTITUTION SITE 4 of 4 — a copied REGISTRY-authored attack runs the SOURCE
+  // card's program at the SOURCE index.
+  const authored = programFor((copiedFrom?.card ?? attacker).id)?.attack?.[copiedFrom?.index ?? index] ?? null;
   const derivedHead = effect === null || effect === "" ? null : deriveAttackEffect(effect);
   // 🆕🆕 D409 — THE COMPOSITION SITE, AND IT IS ONE CONCATENATION IN PRINTED ORDER.
   // `derivedHead` is null on the two Prize compounds (their head is a damage-bonus
@@ -3859,6 +3935,235 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
   // program there is no recoil, so only the defender's board can be lethal, but the
   // sweep stays total (finishAttack owns the order + the §14 tie).
   return finishAttack(next, events, action.seat, attackerUid, declared.name);
+}
+
+// ── 🆕🆕🆕 D573 — THE COPY-ATTACK SUBSTITUTION ──────────────────────────────────────────────
+//
+// *"Choose 1 of your opponent's Active Pokémon's attacks and use it as this attack."* and its
+// three siblings (`deriveAttackCopy`, effects.ts — 9 legal printings). The copy is made at
+// DECLARATION by re-entering `attack()` with an override, so the copied attack resolves through
+// the one §8 pipeline every other attack takes. Rulings (decisions.md D573): R-CP1 the copied
+// attack's cost is ignored; R-CP2 the COPIER does the attack (type, W/R, "this Pokémon",
+// prevention); R-CP3 no copy-family attack is a candidate (⚠️ UNRULED); R-CP4 a copied
+// timing/requirement clause is LOOKED UP on the SOURCE body and index and BINDS THE COPIER — a
+// copy it bars is not a candidate (`usableCopies`; only "not offered" vs "offered and fails"
+// is ⚠️ UNRULED); R-CP5 extra-
+// Energy scaling counts the copier's charged cost (⚠️ UNRULED); R-CP6 index-keyed boosts read
+// the copier's index; R-CP7 `usedAttack` stamps the copier's name; R-CP8 the choice comes at
+// declaration, before every coin (⚠️ UNRULED); R-CP9 a copied self-lock / self-boost that NAMES
+// its attack resolves against the COPIER's printed attacks and installs nothing (⚠️ UNRULED,
+// the name-reference reading; `copyAttackD573.test.ts` §3c).
+
+/** 🆕🆕🆕 D573 — the override `attack()` re-enters itself with. `empty` is the no-candidate
+    reading (declared, Confusion flipped, nothing resolved); otherwise the SOURCE attack, its
+    card, its body and its index. `flip` is Try to Imitate's printed coin. */
+export type AttackCopyOverride =
+  | { empty: true; flip?: true }
+  | { empty?: undefined; attack: Attack; card: Card; body: InPlayPokemon; index: number; flip?: true };
+
+/** One body the copy may read, with its ELIGIBLE attacks (`index` into `attacksOf`). `ref` is
+    the own-Bench spot for Night Joker, `null` for the opponent's Active. */
+interface CopySource {
+  body: InPlayPokemon;
+  card: Card;
+  ref: PokemonTarget | null;
+  attacks: { index: number; attack: Attack }[];
+}
+
+/** R-CP3 — every printed attack of `card` that is NOT itself a copy-family attack. */
+function copyCandidates(card: Card): { index: number; attack: Attack }[] {
+  return attacksOf(card).flatMap((attack, index) =>
+    COPY_FAMILY_MARKER.test(attack.effect ?? "") ? [] : [{ index, attack }],
+  );
+}
+
+/** 🆕🆕🆕 R-CP4 (D573 review) — the eligible attacks of one SOURCE body for the COPIER's `seat`:
+    `copyCandidates` minus every attack whose printed timing / requirement clause BARS THE COPIER
+    right now. The clause is LOOKED UP where it is printed (`attackGateOf` on the source body at
+    the source index — registry ?? derived, the one read of `CardProgram.attackGate`) and ASKED
+    for the copier's seat (`attackTimingBlocked`'s `seat`; every `BoardCondition` a gate row
+    carries is seat-relative, and "this Pokémon" in one — `yourActiveUsedAttackLastTurn` — is
+    the seat's Active, i.e. the COPIER, R-CP2). The clause binds the player and the Pokémon DOING
+    the attack, so *"If you go second, you can't use this attack during your first turn."* bars
+    a copy on exactly the turn it bars the attack itself. Before this filter the clause was split
+    off the copied text (substitution site 3) and enforced against NO ONE — a printed rule
+    deleted with nothing reported. A barred attack is not OFFERED (⚠️ UNRULED only in that:
+    offered-and-fails would resolve the same nothing, with one more prompt). The two COST
+    members never block (`BlockingAttackGate`), and R-CP1 ignores the copied cost anyway. */
+function usableCopies(
+  state: GameState,
+  seat: Seat,
+  body: InPlayPokemon,
+  card: Card,
+): { index: number; attack: Attack }[] {
+  return copyCandidates(card).filter(({ index }) => attackTimingBlocked(state, seat, body, index) === undefined);
+}
+
+/** The bodies `copy` reads for `seat`, each with ≥ 1 eligible attack, live off `state`. */
+function copySources(
+  state: GameState,
+  seat: Seat,
+  copy: { from: AttackCopy["from"]; owner?: AttackCopy["owner"] },
+): CopySource[] {
+  if (copy.from === "benchOwner") {
+    const owner = copy.owner;
+    if (owner === undefined) return [];
+    return state.players[seat].bench.flatMap((body, index) => {
+      const card = topCardOf(state, body);
+      if (card === undefined || !matchesFilter(card, { kind: "ownerPokemon", owner })) return [];
+      const attacks = usableCopies(state, seat, body, card);
+      return attacks.length === 0 ? [] : [{ body, card, ref: { spot: "bench" as const, index }, attacks }];
+    });
+  }
+  const body = state.players[otherSeat(seat)].active;
+  if (body === null) return [];
+  const card = topCardOf(state, body);
+  if (card === undefined) return [];
+  if (copy.from === "opponentActiveTera" && !isTeraPokemon(card)) return [];
+  const attacks = usableCopies(state, seat, body, card);
+  return attacks.length === 0 ? [] : [{ body, card, ref: null, attacks }];
+}
+
+/** The PARK: `effect:choose` for the copier's seat, built by `settleProgram`'s own park branch
+    (so the phase is byte-for-byte the shape every other park has). No RNG, no board change,
+    no event but EFFECT_PENDING; no `resumeTail`, no `endsTurn`. */
+function parkCopy(
+  state: GameState,
+  seat: Seat,
+  attackerUid: string,
+  op: Extract<EffectOp, { op: "useAttackAs" }>,
+  prompt: EffectPrompt,
+): ApplyResult {
+  return settleProgram(
+    { kind: "parked", state, prompt, cont: { pendingOp: op, rest: [], ctx: { seat, sourceUid: attackerUid } } },
+    seat,
+    [],
+  );
+}
+
+/** The `chooseAttack` prompt over one source body's eligible attacks. */
+function chooseCopiedAttack(source: CopySource, copierName: string): EffectPrompt {
+  return {
+    kind: "chooseAttack",
+    candidates: source.attacks.map(({ index, attack }) => ({ index, name: attack.name })),
+    note: `Choose 1 of ${source.card.name}'s attacks to use as ${copierName}.`,
+  };
+}
+
+/** The override for one (source, attack) pair. */
+function copiedOverride(
+  source: CopySource,
+  picked: { index: number; attack: Attack },
+  flip: true | undefined,
+): AttackCopyOverride {
+  return {
+    attack: picked.attack,
+    card: source.card,
+    body: source.body,
+    index: picked.index,
+    ...(flip === true ? { flip } : {}),
+  };
+}
+
+/** 🆕🆕🆕 D573 — the declaration-time branch: 0 candidates → re-enter EMPTY; exactly 1
+    (one body, one attack) → re-enter with it (the M1 rule, no prompt); otherwise PARK —
+    `chooseAttack` over the one source, or, for Night Joker with 2+ eligible bodies,
+    `choosePokemon` over those bodies first. */
+function declareAttackCopy(
+  state: GameState,
+  action: AttackAction,
+  copy: AttackCopy,
+  attackerUid: string,
+  copierName: string,
+): ApplyResult {
+  const sources = copySources(state, action.seat, copy);
+  const pairs = sources.flatMap((source) => source.attacks.map((picked) => ({ source, picked })));
+  const only = pairs.length === 1 ? pairs[0] : undefined;
+  if (pairs.length === 0) return attack(state, action, { empty: true, ...(copy.flip === true ? { flip: true } : {}) });
+  if (only !== undefined) return attack(state, action, copiedOverride(only.source, only.picked, copy.flip));
+  const op: Extract<EffectOp, { op: "useAttackAs" }> = {
+    op: "useAttackAs",
+    from: copy.from,
+    ...(copy.owner === undefined ? {} : { owner: copy.owner }),
+    ...(copy.flip === true ? { flip: true as const } : {}),
+    index: action.index,
+  };
+  const single = sources.length === 1 ? sources[0] : undefined;
+  if (single !== undefined) {
+    return parkCopy(
+      state,
+      action.seat,
+      attackerUid,
+      single.ref === null ? op : { ...op, sourceRef: single.ref },
+      chooseCopiedAttack(single, copierName),
+    );
+  }
+  return parkCopy(state, action.seat, attackerUid, op, {
+    kind: "choosePokemon",
+    candidates: sources.flatMap((source) =>
+      source.ref === null ? [] : [{ seat: action.seat, spot: source.ref }],
+    ),
+    note: `Choose 1 of your Benched ${copy.owner ?? ""}'s Pokémon. You will then choose which of its attacks to use as ${copierName}.`,
+  });
+}
+
+/** 🆕🆕🆕 D573 — resolve a copy park (cardplay.ts `resolveEffect` routes here, after
+    `validateChoice` and BEFORE `settleProgram`, when the pending op is `useAttackAs`).
+    Restores `turn:action` for the copier's seat, RE-VALIDATES against the live board (the
+    Active is still the uid that declared, its printed attack at `op.index` is still the same
+    copy sentence, the source and the picked attack are still eligible) and re-enters `attack()`
+    with the override — so every declaration gate runs again on the COPIER. A Night Joker body
+    pick either re-parks `chooseAttack` on that body or, at one eligible attack, forces it. */
+export function resolveCopiedAttack(
+  state: GameState,
+  phase: Extract<Phase, { kind: "effect:choose" }>,
+  op: Extract<EffectOp, { op: "useAttackAs" }>,
+  choice: EffectChoice,
+): ApplyResult {
+  const seat = phase.seat;
+  const resumed: GameState = { ...state, phase: { kind: "turn:action", seat } };
+  const action: AttackAction = { type: "attack", seat, index: op.index };
+  const copier = resumed.players[seat].active;
+  const copierCard = copier === null ? undefined : topCardOf(resumed, copier);
+  const printed = copierCard === undefined ? undefined : attacksOf(copierCard)[op.index];
+  const copy = printed?.effect === undefined ? null : deriveAttackCopy(printed.effect);
+  if (
+    copier === null ||
+    printed === undefined ||
+    topUid(copier) !== phase.cont.ctx.sourceUid ||
+    copy === null ||
+    copy.from !== op.from
+  ) {
+    return err("PHASE_DESYNC", "the copying Pokémon is no longer the Active that declared this attack");
+  }
+  const sources = copySources(resumed, seat, op);
+  if (choice.kind === "pokemon") {
+    const ref = choice.ref;
+    const source =
+      ref === undefined || ref.seat !== seat || ref.spot.spot !== "bench"
+        ? undefined
+        : sources.find((s) => s.ref?.spot === "bench" && ref.spot.spot === "bench" && s.ref.index === ref.spot.index);
+    if (source === undefined || source.ref === null) {
+      return err("BAD_EFFECT_CHOICE", "that Pokémon has no attack this copy can use");
+    }
+    const forced = source.attacks.length === 1 ? source.attacks[0] : undefined;
+    if (forced !== undefined) return attack(resumed, action, copiedOverride(source, forced, op.flip));
+    return parkCopy(resumed, seat, phase.cont.ctx.sourceUid ?? "", { ...op, sourceRef: source.ref }, chooseCopiedAttack(source, printed.name));
+  }
+  if (choice.kind === "attack") {
+    const want = op.sourceRef;
+    const source = sources.find((s) =>
+      want === undefined
+        ? s.ref === null
+        : s.ref?.spot === "bench" && want.spot === "bench" && s.ref.index === want.index,
+    );
+    const picked = source?.attacks.find((a) => a.index === choice.index);
+    if (source === undefined || picked === undefined) {
+      return err("BAD_EFFECT_CHOICE", `${String(choice.index)} is not an attack this copy can use`);
+    }
+    return attack(resumed, action, copiedOverride(source, picked, op.flip));
+  }
+  return err("BAD_EFFECT_CHOICE", "expected an attack or Pokémon choice");
 }
 
 /** The interrupt phases that park the tail on a ko:* decision (§8.1). */

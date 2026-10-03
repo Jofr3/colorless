@@ -10,6 +10,7 @@ import {
   deriveAttackBonusConsequent,
   deriveAttackCancelRequirement,
   deriveAttackCoinFlip,
+  deriveAttackCopy,
   deriveAttackDamageBonus,
   deriveAttackDamageMultiplier,
   deriveAttackDamagePenalty,
@@ -129,6 +130,8 @@ const READERS: readonly ((t: string) => unknown)[] = [
   deriveAttackOptionalCostBoost,
   deriveAttackCancelRequirement,
   deriveAttackPreDamage,
+  // 🆕🆕🆕 D573 — THE FOURTEENTH, the copy-attack reader. Spliced before the last entry (D419).
+  deriveAttackCopy,
   deriveAttackDiscardScaledBoost,
 ];
 
@@ -148,7 +151,7 @@ describe("D515 §1 — the sentence, measured live over the legal column", () =>
     // D417/D419's guard: a hand-kept copy of a module-derived surface cannot go red,
     // it can only go quiet, so the DIFF and the COUNT are pinned separately.
     expect(READERS.map((read) => read.name).sort()).toEqual(attackReaderSurface());
-    expect(attackReaderSurface()).toHaveLength(13);
+    expect(attackReaderSurface()).toHaveLength(14 /* 🆕🆕🆕 D573: 13 → 14, + deriveAttackCopy */);
   });
 
   it("the row is really in the column, ONCE, at ONE printing — and so are its four controls", () => {
@@ -823,9 +826,9 @@ describe("D515 §6 — `MATCH_RECORD_VERSION` stays 30, and the argument is DRIV
     expect(hands(lost)).toEqual([2, 4]);
   });
 
-  it("engineVersion is 0.456.0 and the bump is owed for BEHAVIOUR", () => {
+  it("engineVersion is 0.457.0 and the bump is owed for BEHAVIOUR", () => {
     // D471's rule: the bump is owed because `packages/engine` changed behaviour — an
     // anchor, an arm and a `describeBranch` case — and not because a slice happened.
-    expect(engineVersion).toBe("0.456.0");
+    expect(engineVersion).toBe("0.457.0");
   });
 });

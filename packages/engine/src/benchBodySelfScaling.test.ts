@@ -9,6 +9,7 @@ import {
   deriveAttackBonusConsequent,
   deriveAttackCancelRequirement,
   deriveAttackCoinFlip,
+  deriveAttackCopy,
   deriveAttackDamageBonus,
   deriveAttackDamageMultiplier,
   deriveAttackDamagePenalty,
@@ -644,6 +645,8 @@ describe("D282 §3 — splitAttackGateClause", () => {
       // array's LAST entries plus its closing bracket, and appending moves that anchor
       // without a character of it changing.
       deriveAttackPreDamage,
+      // 🆕🆕🆕 D573 — THE FOURTEENTH, the copy-attack reader. Spliced before the last entry (D419).
+      deriveAttackCopy,
       deriveAttackDamageSuppression,
     ];
     // 🆕🆕 D419 — THE TWO-RUNG GUARD, CO-LOCATED because this list is function-local.
@@ -651,7 +654,7 @@ describe("D282 §3 — splitAttackGateClause", () => {
     // diff alone stays GREEN when a slice deletes a reader from the module and from
     // this list in the same commit.
     expect(readers.map((read) => read.name).sort()).toEqual(attackReaderSurface());
-    expect(attackReaderSurface()).toHaveLength(13);
+    expect(attackReaderSurface()).toHaveLength(14 /* 🆕🆕🆕 D573: 13 → 14, + deriveAttackCopy */);
     for (const text of [TERAPAGOS_TEXT, VOLBEAT_TEXT, ILLUMISE_TEXT]) {
       // 🆕🆕 D419 — the claim the TITLE makes, taken off the module rather than off
       // the list beside it. The loop below names WHICH reader broke and is kept for

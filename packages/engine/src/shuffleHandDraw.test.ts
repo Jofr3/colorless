@@ -4,6 +4,7 @@ import {
   deriveAttackBonusConsequent,
   deriveAttackCancelRequirement,
   deriveAttackCoinFlip,
+  deriveAttackCopy,
   deriveAttackDamageBonus,
   deriveAttackDamageMultiplier,
   deriveAttackDamagePenalty,
@@ -87,6 +88,8 @@ const READERS: readonly ((t: string) => unknown)[] = [
   deriveAttackOptionalCostBoost,
   deriveAttackCancelRequirement,
   deriveAttackPreDamage,
+  // 🆕🆕🆕 D573 — THE FOURTEENTH, the copy-attack reader. Spliced before the last entry (D419).
+  deriveAttackCopy,
   deriveAttackDiscardScaledBoost,
 ];
 
@@ -591,7 +594,7 @@ describe("D479 §7 — what this slice did NOT buy, measured", () => {
     // alone stays green when a slice deletes a reader from the module and from this list
     // in the same commit.
     expect(READERS.map((read) => read.name).sort()).toEqual(attackReaderSurface());
-    expect(attackReaderSurface()).toHaveLength(13);
+    expect(attackReaderSurface()).toHaveLength(14 /* 🆕🆕🆕 D573: 13 → 14, + deriveAttackCopy */);
   });
 
   it("`FIXTURE_POOL` is BYTE-UNCHANGED — the demonstrator is a per-board clone", () => {
@@ -615,6 +618,6 @@ describe("D479 §7 — what this slice did NOT buy, measured", () => {
     //   • REACHABILITY (D450) — the op NEVER PARKS, so no `phase.cont.pendingOp` or
     //     `rest` can hold it and no saved match can contain a shape an older deploy
     //     could not read. `interpreter.ts`'s case returns `{ done: … }` and nothing else.
-    expect(engineVersion).toBe("0.456.0");
+    expect(engineVersion).toBe("0.457.0");
   });
 });

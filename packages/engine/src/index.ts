@@ -20228,6 +20228,39 @@ import type { GameState, Seat } from "./types";
     `expect(manifest.version)`, `it(…)` titles, the declaration and `package.json` —
     **not** as a value-keyed grep — because a value-keyed grep is precisely the mechanism
     that ate D500's heading.)
+    🆕🆕🆕 engineVersion 0.456.0 → **0.457.0** (D573 — THE COPY-ATTACK SUBSTITUTION: 9 PRINTINGS / 4 TEXTS, ONE
+    READER AND ONE PARK-ONLY OP. N's Zoroark ex `sv09-098`/`-175`/`-185`/`-189` "Night Joker", Zoroark
+    `sv10.5w-062`/`-143` "Foul Play", Clefable `sv06-079` "Metronome", Team Rocket's Mimikyu `sv10-087` "Gemstone
+    Mimicry", Ethan's Sudowoodo `sv10-093` "Try to Imitate". The NEW fourteenth attack reader `deriveAttackCopy`
+    (effects.ts — four whole-sentence anchors, `['’]` on every apostrophe slot; the reader surface 13 → 14) returns
+    `{ from, owner?, flip? }` and no program. attack.ts `attack()` gains an optional override
+    (`AttackCopyOverride`): right after the §8.2 cost check a copy sentence computes its candidates (the opponent's
+    Active; the same only when `isTeraPokemon`; the own Benched `ownerPokemon "N"` bodies), drops every attack whose
+    text carries `COPY_FAMILY_MARKER` (R-CP3, the recursion bound) and every attack whose printed timing clause —
+    looked up on the source, asked for the COPIER's seat — bars the copier now (R-CP4, `usableCopies`), and either re-enters `attack()` EMPTY (no
+    candidate), re-enters with the one candidate (forced), or PARKS `chooseAttack` (or, for Night Joker with 2+
+    eligible bodies, `choosePokemon` first) on the NEW park-only `EffectOp` `useAttackAs { from, owner?, flip?,
+    index, sourceRef? }` — no RNG, no board change, no event but EFFECT_PENDING. cardplay.ts `resolveEffect` routes
+    that answer to the NEW exported `resolveCopiedAttack` BEFORE `settleProgram`: it restores `turn:action`,
+    re-validates the copier and re-enters `attack()`, so every declaration gate runs again on the COPIER. FOUR
+    substitution sites read the SOURCE: the damage box, the effect text, `attackGateOf`'s body/index (the clause split) and the
+    registry lookup's card/index; the copier's name, type, W/R, cost, "this Pokémon" and the prevention passives
+    stay the copier's (R-CP1/R-CP2/R-CP6/R-CP7). Try to Imitate's coin is taken AFTER the Confusion block (R-CP8).
+    `ATTACK_DECLARED` gains the optional `as` (the copied name; log "used Foul Play (as Cruel Slash)"), stamped only
+    once the copy RESOLVES — absent on Try to Imitate's tails and a Confusion / flip-lock tails.
+    interpreter.ts `stepOp` gains the inert arm tsc requires. Haughty Order ×3 and Seek Inspiration stay BLOCKED
+    (a mid-attack park); the loud witnesses (`fix-nowk` / `fix-filteredsnipe` index 2, `deckBottomDraw.test.ts`)
+    moved to Haughty Order first. `scripts/opaque-anatomy.ts` re-declares `COPY-ATTACK` a co-marker (its built
+    side 0/0 → 4/9). `BUILT.attack` 1707 → 1716 (reader summand); residue 18/25 → 14/16. `MATCH_RECORD_VERSION`
+    STAYS 37 (apps/api match.ts — the 0.456 rollback reading of a parked copy is DRIVEN and INERT). Rulings
+    R-CP1..9, R-CP3/5/8/9 ⚠️ UNRULED, R-CP4 only in "not offered" vs "offered and fails": `docs/decisions.md` D573.
+    R-CP9 (third review round): a copied name-keyed self-lock / self-boost — "can't use Slashing Strike", "can't use
+    Blaze Blitz again until…", "…Echoed Voice attack does 80 more…" — resolves against the COPIER and installs
+    nothing; the ~~four~~ SIX "unreachable off every printing" claims it falsified are withdrawn in place (D539):
+    four in engine source and suites (interpreter.ts `preventAttackUse`'s doc, perAttackLock / untilLeavesActiveBar /
+    perAttackBuff tests), and — found at the landing by a case-INSENSITIVE re-sweep the builder's case-sensitive
+    one missed — D154's two lowercase "unreachable off all five printings" copies in docs/decisions.md (the D154
+    row) and docs/workstreams/simulator.md (the D154 section).)
     🆕🆕🆕 engineVersion 0.455.0 → **0.456.0** (D572 — "CALM DIVERS": 6 PRINTINGS / 4 TEXTS / 4 OBJECTS. Munkidori
     `sv06-095`/`sv06.5-072`/`sv08.5-044` "Adrena-Brain", Milotic `sv06-050` "Mentally Calm", Huntail `sv10-055`
     "Diver's Catch", Klinklang `sv07-101` "Emergency Rotation" — all four printed attacks keep deriving. Keyed
@@ -20866,7 +20899,8 @@ import type { GameState, Seat } from "./types";
     resolves for either sentence (MEASURED, D425): the new suites `selfHandAttachBoost.test.ts` and
     `weaknessRetype.test.ts` ride declared `d552-*` demonstrators, and `fix-tideattach` carries both
     sentences in `FIXTURE_POOL` for the sweeps; `fix-nowk` index 2 was moved to a BLOCKED copy-attack
-    sentence first. Claims withdrawn (D539), annotated in place: `attachFromHand`'s *"no target rider"*
+    sentence first (🆕🆕🆕 D573 (D539): that sentence, row 78, is BUILT now, and the witness moved again,
+    to row 434 Haughty Order — the copy-family remainder that stays blocked). Claims withdrawn (D539), annotated in place: `attachFromHand`'s *"no target rider"*
     and *"no recordAs"*, the D479/D503 blocks at `ATTACK_HAND_ANY_NUMBER_ATTACH`, the D432 near-miss
     note, attack.ts' *"UNOBSERVABLE on today's column"* as D503's reason, effects.ts' *"ONE remains
     unbuildable"*, and the D503 mutant rows' prose. Census (`SUBMAX=12`): reader 578/1632 → 580/1634,
@@ -21199,7 +21233,8 @@ import type { GameState, Seat } from "./types";
     `SUBMAX=12` (`OPAQUE` UNMOVED at 16/24 there); `OPAQUE` 30/42 → 28/40 and `UNEXPLAINED`
     13/15 → 11/13 at `SUBMAX=4`. ⚠️ THE SENTENCE STEP AND THE PRINTING STEP ARE BOTH 2. The
     `fix-filteredsnipe` index-2 control (which printed `:316`) is re-homed onto corpus `:78`,
-    the BLOCKED copy-attack row, so its `ATTACK_EFFECT_SKIPPED` rung keeps its property.)
+    the BLOCKED copy-attack row, so its `ATTACK_EFFECT_SKIPPED` rung keeps its property. 🆕🆕🆕 D573
+    (D539): `:78` is BUILT now; the control moved again, to `:434` Haughty Order.)
     🆕🆕🆕 engineVersion 0.428.0 → **0.429.0** (D544 — THE NAMED ATTACK'S BASE DAMAGE,
     OVERRIDDEN FOR ONE WINDOW, AS A RIDER ON THE OP THAT ALREADY OWNED THE ADDRESS.
     `censusAttackCorpus.ts` **file line 166** (leading count column `2`) — *"During your next
@@ -24267,7 +24302,9 @@ import type { GameState, Seat } from "./types";
     frees, for a fraction of the cost. ⚠️ **THE RESIDUE HOLDS THREE COIN-OPENING ROWS, NOT
     TWO**: the third is *"Flip a coin. If tails, this attack does nothing. If heads, …"*
     (2 printings), which a `^Flip a coin\. If heads,` pattern cannot see — and it frees
-    zero either way, as does the copy-attack row whose inner half is itself unbuilt.
+    zero either way, as does the copy-attack row whose inner half is itself unbuilt. (🆕🆕🆕 D573
+    (D539): that copy-attack row — Try to Imitate, `:245` — is BUILT now, on its own reader
+    `deriveAttackCopy`; the coin is the reader's `flip`, not a gate composition.)
 
     D472's WIDENING MEASUREMENT, over all 640 corpus rows: the verb-widened
     `can['’]t (?:attack|use attacks)` — the alternation the BARE anchor carries because the
@@ -24827,7 +24864,7 @@ import type { GameState, Seat } from "./types";
     WITNESS** — the count was re-derived every slice and the word *"three"* was carried.
     A successor of this slice inherits **81 / 61 / 17** again, over **FIVE** history
     occurrences: those four plus `deckMillFilteredScale.test.ts`'s own header arrow.) */
-export const engineVersion = "0.456.0";
+export const engineVersion = "0.457.0";
 
 export type {
   ApplyResult,

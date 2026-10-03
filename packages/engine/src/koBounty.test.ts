@@ -317,7 +317,7 @@ describe("§1 — the anchor claims the row WHOLE, and only it", () => {
       return (read?.(S149) ?? null) !== null;
     });
     expect(claimants).toEqual(["deriveAttackEffect"]);
-    expect(attackReaderSurface()).toHaveLength(13);
+    expect(attackReaderSurface()).toHaveLength(14 /* 🆕🆕🆕 D573: 13 → 14, + deriveAttackCopy */);
   });
 
   it("the sentence prints NO apostrophe, so the anchor owns no `['’]` slot", () => {
@@ -720,8 +720,8 @@ describe("§11 — the v33 bytes round-trip, and a v32-shaped body THROWS at its
     );
   });
 
-  it("the engine version stepped to 0.456.0 in BOTH places", () => {
-    expect(engineVersion).toBe("0.456.0");
-    expect(manifest.version).toBe("0.456.0");
+  it("the engine version stepped to 0.457.0 in BOTH places", () => {
+    expect(engineVersion).toBe("0.457.0");
+    expect(manifest.version).toBe("0.457.0");
   });
 });

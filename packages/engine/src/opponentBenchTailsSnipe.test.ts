@@ -6,6 +6,7 @@ import {
   deriveAttackBonusConsequent,
   deriveAttackCancelRequirement,
   deriveAttackCoinFlip,
+  deriveAttackCopy,
   deriveAttackDamageBonus,
   deriveAttackDamageMultiplier,
   deriveAttackDamagePenalty,
@@ -84,6 +85,8 @@ const READERS: readonly ((t: string) => unknown)[] = [
   deriveAttackOptionalCostBoost,
   deriveAttackCancelRequirement,
   deriveAttackPreDamage,
+  // 🆕🆕🆕 D573 — THE FOURTEENTH, the copy-attack reader. Spliced before the last entry (D419).
+  deriveAttackCopy,
   deriveAttackDiscardScaledBoost,
 ];
 
@@ -97,7 +100,7 @@ const units = (rows: readonly (readonly [number, string])[]): number =>
 describe("D550 §1 — the sentence, measured live over the legal column", () => {
   it("🛑 the hand-kept READERS list IS the module's reader surface, and it is 13", () => {
     expect(READERS.map((read) => read.name).sort()).toEqual(attackReaderSurface());
-    expect(attackReaderSurface()).toHaveLength(13);
+    expect(attackReaderSurface()).toHaveLength(14 /* 🆕🆕🆕 D573: 13 → 14, + deriveAttackCopy */);
   });
 
   it("is really in the column, ONCE, at ONE printing — and it is the only per-tails fold", () => {
@@ -583,9 +586,9 @@ describe("D550 §4 — nothing new is persisted, so the record version holds", (
     expect(LOCAL_CARDS[SNIPER]?.attacks?.[TOLL_INDEX]).toMatchObject({ effect: PRINTED, damage: "80×" });
   });
 
-  it("engineVersion is 0.456.0 and `manifest.version` agrees", () => {
-    expect(engineVersion).toBe("0.456.0");
-    expect(manifest.version).toBe("0.456.0");
+  it("engineVersion is 0.457.0 and `manifest.version` agrees", () => {
+    expect(engineVersion).toBe("0.457.0");
+    expect(manifest.version).toBe("0.457.0");
     expect(manifest.version).toBe(engineVersion);
   });
 });

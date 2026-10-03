@@ -140,7 +140,7 @@ describe("§1 — the two printed sentences, and what the placement family still
     // Asked of the SURFACE rather than of one reader (D447's own correction): both arms
     // sit inside `deriveAttackEffect`, so there is no fourteenth reader.
     for (const s of [BARE, CHOSEN]) expect(resolvedByAnyReader(s), s).toBe(true);
-    expect(attackReaderSurface()).toHaveLength(13);
+    expect(attackReaderSurface()).toHaveLength(14 /* 🆕🆕🆕 D573: 13 → 14, + deriveAttackCopy */);
   });
 
   it("🛑 the PLACEMENT family, now CLOSED — the positive, and every departure by name", () => {
@@ -692,7 +692,7 @@ describe("§3 — a new PRODUCER of a shipped literal, and the record version do
   });
 
   it("the engine version moved", () => {
-    expect(engineVersion).toBe("0.456.0");
+    expect(engineVersion).toBe("0.457.0");
   });
 });
 

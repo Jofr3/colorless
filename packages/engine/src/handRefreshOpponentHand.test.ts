@@ -4,6 +4,7 @@ import {
   deriveAttackBonusConsequent,
   deriveAttackCancelRequirement,
   deriveAttackCoinFlip,
+  deriveAttackCopy,
   deriveAttackDamageBonus,
   deriveAttackDamageMultiplier,
   deriveAttackDamagePenalty,
@@ -105,6 +106,8 @@ const READERS: readonly ((t: string) => unknown)[] = [
   deriveAttackOptionalCostBoost,
   deriveAttackCancelRequirement,
   deriveAttackPreDamage,
+  // 🆕🆕🆕 D573 — THE FOURTEENTH, the copy-attack reader. Spliced before the last entry (D419).
+  deriveAttackCopy,
   deriveAttackDiscardScaledBoost,
 ];
 
@@ -549,7 +552,7 @@ describe("D516 §6 — the describer surfaces, checked rather than assumed", () 
 describe("D516 §7 — what this slice did NOT buy, measured", () => {
   it("the hand-kept READERS list IS the module's reader surface, still THIRTEEN", () => {
     expect(READERS.map((read) => read.name).sort()).toEqual(attackReaderSurface());
-    expect(attackReaderSurface()).toHaveLength(13);
+    expect(attackReaderSurface()).toHaveLength(14 /* 🆕🆕🆕 D573: 13 → 14, + deriveAttackCopy */);
   });
 
   it("`FIXTURE_POOL` is BYTE-UNCHANGED — the demonstrator is a per-board clone", () => {
@@ -589,7 +592,7 @@ describe("D516 §7 — what this slice did NOT buy, measured", () => {
     // write. The claim therefore rests on REACHABILITY (D450) ALONE, and reachability is
     // a measurement over the PRODUCERS rather than a property of the op — which is what
     // the rung below drives.
-    expect(engineVersion).toBe("0.456.0");
+    expect(engineVersion).toBe("0.457.0");
   });
 
   it("🛑 REACHABILITY IS EMPTY, MEASURED OVER EVERY PRODUCER RATHER THAN ASSERTED", () => {

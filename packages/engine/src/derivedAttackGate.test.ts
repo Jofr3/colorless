@@ -782,7 +782,7 @@ describe("D444 §5 — `timingGateFromAttackText` is NOT a whole-sentence reader
     // alone stays green when a reader is deleted from the module and the list
     // together (D417).
     const surface = attackReaderSurface();
-    expect(surface).toHaveLength(13);
+    expect(surface).toHaveLength(14 /* 🆕🆕🆕 D573: 13 → 14, + deriveAttackCopy */);
     expect(surface).not.toContain("timingGateFromAttackText");
     expect(surface).not.toContain("deriveAttackTimingGate");
     for (const name of surface) expect(name.startsWith("deriveAttack"), name).toBe(true);
@@ -873,6 +873,6 @@ describe("D444 §6 — `MATCH_RECORD_VERSION` stays 29, driven over bytes both w
     // D208's debt and D275's mutant: `engineVersion` and `packages/engine/package.json`
     // are one fact with two spellings, and the pin is authored HERE rather than
     // inherited (D427 — count your own suite's pin).
-    expect(engineVersion).toBe("0.456.0");
+    expect(engineVersion).toBe("0.457.0");
   });
 });

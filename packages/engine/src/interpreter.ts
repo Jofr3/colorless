@@ -2499,6 +2499,12 @@ function stepOp(
         "Move the damage counter onto which of your Pokémon?",
       );
     }
+    // 🆕🆕🆕 D573 — NEVER QUEUED. `useAttackAs` is only ever the `pendingOp` of attack.ts's
+    // declaration-time copy park, answered through `resolveCopiedAttack` (cardplay.ts
+    // `resolveEffect` routes it BEFORE `settleProgram`); no program carries it, so `runProgram`
+    // never steps it. The arm exists because this switch is exhaustive (tsc), and it is inert.
+    case "useAttackAs":
+      return { done: state };
     case "moveCountersToOpponentChosen": {
       // 🆕🆕🆕 D572 — Munkidori "Adrena-Brain": up to `upTo` counters, own → opponent. D216's two
       // questions, `op.from` telling them apart.
@@ -9100,9 +9106,19 @@ function addLockedAttack(
     counters to HP, in the same direction: translate at the site that owns the
     printed token, so nothing downstream has to know a sentence named anything.
 
-    ⚠️ A NAME THAT MATCHES NOTHING INSTALLS NOTHING, AND SILENTLY. Unreachable off
+    ⚠️ A NAME THAT MATCHES NOTHING INSTALLS NOTHING, AND SILENTLY. ~~Unreachable off
     every printing in the pool — all six name their own attack — so it is a
-    CONSTRUCTED case and it is pinned as one. The alternative (stamping an index
+    CONSTRUCTED case and it is pinned as one.~~ 🆕🆕🆕 D573 (D539): WITHDRAWN — a COPY
+    reaches it off real printings. Foul Play / Metronome / Gemstone Mimicry / Try to
+    Imitate / Night Joker substitute the copied text while the COPIER stays the holder
+    (R-CP2), so Scyther sv05-001's "can't use Slashing Strike" or Gouging Fire ex's
+    "can't use Blaze Blitz again until it leaves the Active Spot" resolves against a
+    card that prints no such attack and installs nothing — and the copier may copy it
+    again next turn. Read as the RULES answer under the name-reference reading, R-CP9
+    (⚠️ UNRULED, decisions.md D573; `copyAttackD573.test.ts` §3c drives both), and
+    NOT a laundered sentence: the name binds nothing because the copier has no attack
+    by that name. It reverses to "resolve the name on the SOURCE card and stamp the
+    COPIER's copy-attack index" if a ruling binds the copier. The alternative (stamping an index
     of −1, or the printed name itself) would put a value into a persisted record
     that no read site can act on, and the alternative to THAT (emitting a row
     anyway) would tell a player about a drawback that cannot bite. A lock on an

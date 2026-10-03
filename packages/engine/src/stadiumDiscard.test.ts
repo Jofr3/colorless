@@ -9,6 +9,7 @@ import {
   deriveAttackBonusConsequent,
   deriveAttackCancelRequirement,
   deriveAttackCoinFlip,
+  deriveAttackCopy,
   deriveAttackDamageBonus,
   deriveAttackDamageMultiplier,
   deriveAttackDamagePenalty,
@@ -160,6 +161,8 @@ const READERS: readonly ((text: string) => unknown)[] = [
   // array's LAST entries plus its closing bracket, and appending moves that anchor
   // without a character of it changing.
   deriveAttackPreDamage,
+  // 🆕🆕🆕 D573 — THE FOURTEENTH, the copy-attack reader. Spliced before the last entry (D419).
+  deriveAttackCopy,
   deriveAttackCancelRequirement,
 ];
 
@@ -317,7 +320,7 @@ describe("§1 — the price, MEASURED: six printings on one op, against ONE for 
     // ⚠️ THE COUNT IS PINNED SEPARATELY FROM THE DIFF, because the diff alone stays
     // GREEN when a reader leaves the module and this list in the same commit — and
     // §1's and §6's figures would then move with nothing naming the cause.
-    expect(attackReaderSurface()).toHaveLength(13);
+    expect(attackReaderSurface()).toHaveLength(14 /* 🆕🆕🆕 D573: 13 → 14, + deriveAttackCopy */);
   });
 
   it("🛑 the family is 6 sentences / 11 printings, and 5 / 10 of them now resolve", () => {

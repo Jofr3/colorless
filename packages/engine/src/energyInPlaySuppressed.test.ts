@@ -333,7 +333,7 @@ describe("§2 — TWO readers own it, and the other eleven still refuse", () => 
     }
     // The surface COUNT beside the loop, because a loop over a shrinking surface stays
     // green (D417: pin the diff AND the count).
-    expect(attackReaderSurface()).toHaveLength(13);
+    expect(attackReaderSurface()).toHaveLength(14 /* 🆕🆕🆕 D573: 13 → 14, + deriveAttackCopy */);
     // …and no splitter serves it either, so the claim is genuinely WHOLE-SENTENCE.
     expect(splitAttackRequirementClause(PRINTED)).toBeNull();
     expect(splitAttackCancelClause(PRINTED)).toBeNull();
@@ -755,9 +755,9 @@ describe("§10 — `MATCH_RECORD_VERSION` stays 29, and the slice has TWO addres
 });
 
 describe("§11 — the version", () => {
-  it("engineVersion is 0.456.0 and the bump is owed for BEHAVIOUR", () => {
+  it("engineVersion is 0.457.0 and the bump is owed for BEHAVIOUR", () => {
     // A card can reach this: file line 337's printing scores a number it did not score
     // at 0.388.0, and skips a §8.5 step it did not skip.
-    expect(engineVersion).toBe("0.456.0");
+    expect(engineVersion).toBe("0.457.0");
   });
 });

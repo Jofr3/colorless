@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { deriveAttackCoinFlip, deriveAttackEffect, programFor } from "./index";
+import { deriveAttackCopy } from "./effects";
 import type { CoinFace, GameEvent, GameState, Seat } from "./index";
 import {
   FIXTURE_POOL,
@@ -81,6 +82,9 @@ const CLAUSES = [
         Cetitan's shuffle-a-Benched-Pokémon and Kangaskhan's Energy search: three
         consequents this reader has no op for at all. They are this file's "stays
         LOUD" witnesses.
+        🆕🆕🆕 D573 — indices 0 and 2 ONLY: index 1 (Ethan's Sudowoodo "Try to Imitate", the
+        slot's D299 replacement) is MAPPED by a different reader now, `deriveAttackCopy`, and
+        sits with index 6 in the third group below; nothing unmapped is left to re-point at.
       • MAPPED BY ANOTHER ARM OF THIS VERY READER (indices 3–5). The Paralyze form
         (`FLIP_DEFENDER_NOW`, 16 printings), the Energy hammer
         (`FLIP_OPPONENT_ACTIVE_DISCARD`, 4) and — since D181 — the GATED GUST
@@ -120,6 +124,13 @@ const REAL_NEAR_MISSES = [
   // the corpus line) — so the slot keeps the property that made the old
   // witness worth having: a LOWERCASE mid-sentence "choose" behind the shared
   // prefix, refused by the consequent and not by the prefix.
+  // 🆕🆕🆕 **D573 — MAPPED NOW, BY A DIFFERENT READER, AND KEPT IN PLACE RATHER THAN DELETED.**
+  // `deriveAttackCopy` (the copy-attack substitution) claims this sentence WHOLE; the op
+  // deriver and the coin reader still refuse it, which is the property THIS suite asserts of
+  // it — so it moves from the unmapped group to the "mapped by a different reader" group,
+  // index 6's shape. ⚠️ **NOT RE-POINTED, BECAUSE THERE IS NOTHING LEFT TO RE-POINT AT**:
+  // measured at D573, no "Flip a coin. If heads, …" attack sentence in the legal corpus or in
+  // the audit card set (sv05 onward) is unresolved. The unmapped group is TWO witnesses now.
   "Flip a coin. If heads, choose 1 of your opponent's Active Pokémon's attacks and use it as this attack.",
   "Flip a coin. If heads, search your deck for up to 5 Grass Energy cards and attach them to your Pokémon in any way you like. Then, shuffle your deck.",
   "Flip a coin. If heads, your opponent's Active Pokémon is now Paralyzed.",
@@ -131,7 +142,7 @@ const REAL_NEAR_MISSES = [
 /** The three of the seven that are unmapped EVERYWHERE. Split out rather than sliced
     inline, because the other four's exclusion is a CLAIM (they are simulated, by a
     named arm or a named reader) and not a loop bound. */
-const UNMAPPED_NEAR_MISSES = REAL_NEAR_MISSES.slice(0, 3);
+const UNMAPPED_NEAR_MISSES = REAL_NEAR_MISSES.filter((_, i) => i === 0 || i === 2); // 🆕🆕🆕 D573: index 1 (Try to Imitate) is mapped by `deriveAttackCopy`
 
 /** U+00A0, spelled as an ESCAPE rather than typed. Byte-different from an ASCII
     space and INVISIBLE in a diff, which is exactly why the case names it instead of
@@ -331,12 +342,17 @@ describe("the anchors — 3 printings, 2 clauses, two literal arms", () => {
     for (const text of UNMAPPED_NEAR_MISSES) {
       expect(deriveAttackEffect(text)).toBeNull();
     }
-    expect(UNMAPPED_NEAR_MISSES).toHaveLength(REAL_NEAR_MISSES.length - 4);
+    expect(UNMAPPED_NEAR_MISSES).toHaveLength(REAL_NEAR_MISSES.length - 5); // 🆕🆕🆕 D573: − 4 → − 5 (index 1 left the group)
     // …and they are not quietly picked up by the coin reader either, so each row is a
     // genuine gap rather than a half-simulation.
     for (const text of UNMAPPED_NEAR_MISSES) {
       expect(deriveAttackCoinFlip(text)).toBeNull();
     }
+    // 🆕🆕🆕 D573 — index 1 (Try to Imitate) is MAPPED by a different reader: this suite's two
+    // readers still refuse it, and `deriveAttackCopy` claims it whole (D438's polarity rule).
+    expect(deriveAttackEffect(REAL_NEAR_MISSES[1])).toBeNull();
+    expect(deriveAttackCoinFlip(REAL_NEAR_MISSES[1])).toBeNull();
+    expect(deriveAttackCopy(REAL_NEAR_MISSES[1])).toEqual({ from: "opponentActive", flip: true });
   });
 
   it("leaves the family's THREE OTHER members to their own arms", () => {

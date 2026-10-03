@@ -235,7 +235,7 @@ describe("§2 — the derivation, and the boundaries the anchor holds", () => {
     // proposition is *"no export is named for THIS sentence"*, and a slice that
     // quietly split the heal arm out into a `deriveAttackHealDealt` reader breaks the
     // third rung while the first two stay green.
-    expect(attackReaderSurface()).toHaveLength(13);
+    expect(attackReaderSurface()).toHaveLength(14 /* 🆕🆕🆕 D573: 13 → 14, + deriveAttackCopy */);
     expect(attackReaderSurface()).toContain("deriveAttackEffect");
     expect(attackReaderSurface().filter((name) => /Heal|Dealt/i.test(name))).toEqual([]);
   });
@@ -459,7 +459,7 @@ describe("§3 — the carrier is `EffectContext`, and `MATCH_RECORD_VERSION` sta
   });
 
   it("the engine version moved and the two spellings agree", () => {
-    expect(engineVersion).toBe("0.456.0");
+    expect(engineVersion).toBe("0.457.0");
   });
 });
 

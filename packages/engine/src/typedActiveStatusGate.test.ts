@@ -5,6 +5,7 @@ import {
   deriveAttackBonusConsequent,
   deriveAttackCancelRequirement,
   deriveAttackCoinFlip,
+  deriveAttackCopy,
   deriveAttackDamageBonus,
   deriveAttackDamageMultiplier,
   deriveAttackDamagePenalty,
@@ -164,6 +165,8 @@ const READERS: readonly (readonly [string, (text: string) => unknown])[] = [
   ["deriveAttackOptionalBoost", deriveAttackOptionalBoost],
   ["deriveAttackOptionalCostBoost", deriveAttackOptionalCostBoost],
   ["deriveAttackPreDamage", deriveAttackPreDamage],
+  // 🆕🆕🆕 D573 — THE FOURTEENTH, the copy-attack reader. Spliced before the last entry (D419).
+  ["deriveAttackCopy", deriveAttackCopy],
   ["deriveAttackRequirement", deriveAttackRequirement],
 ];
 
@@ -927,7 +930,7 @@ describe("§7 — the persisted bytes, and why 29 does not move", () => {
   });
 
   it("the engine version moved with the behaviour", () => {
-    expect(engineVersion).toBe("0.456.0");
+    expect(engineVersion).toBe("0.457.0");
   });
 });
 

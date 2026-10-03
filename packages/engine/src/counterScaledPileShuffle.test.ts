@@ -379,7 +379,7 @@ describe("D538 §1 — the corpus row, read off the census rather than retyped",
     // Asked of the SURFACE rather than of one reader: arm 23b-bis sits inside
     // `deriveAttackEffect`, so there is no fourteenth reader and `attackReaderSurface()`
     // is the same length it was at HEAD.
-    expect(attackReaderSurface()).toHaveLength(13);
+    expect(attackReaderSurface()).toHaveLength(14 /* 🆕🆕🆕 D573: 13 → 14, + deriveAttackCopy */);
   });
 
   it("🛑 ONE apostrophe slot, COUNTED off the printed bytes", () => {
@@ -1030,9 +1030,9 @@ describe("D538 §7 — two literals GROW the serialized alphabet and `MATCH_RECO
     expect(raw("/match.ts")).toContain("MATCH_RECORD_VERSION = 37");
   });
 
-  it("🛑 the engine version stepped to 0.456.0 in BOTH places", () => {
-    expect(engineVersion).toBe("0.456.0");
-    expect(manifest.version).toBe("0.456.0");
+  it("🛑 the engine version stepped to 0.457.0 in BOTH places", () => {
+    expect(engineVersion).toBe("0.457.0");
+    expect(manifest.version).toBe("0.457.0");
   });
 });
 

@@ -1,6 +1,7 @@
 import type { Card } from "@luminous/schema";
 import { describe, expect, it } from "vitest";
 import { matchesFilter } from "./cards";
+import { deriveAttackCopy } from "./effects";
 import { applyAction, createGame, deriveAttackEffect, programFor, topCardOf } from "./index";
 import { resumeProgram, runProgram } from "./interpreter";
 import type { GameEvent, GameState, PokemonRef, Seat } from "./index";
@@ -170,7 +171,9 @@ const ADRENA_BRAIN =
     was paid rather than deleted. */
 const ROCKET_BRAIN =
   "As often as you like during your turn, you may move 1 damage counter from 1 of your Team Rocket's Pokémon to another of your Pokémon.";
-/** ⏹️ N's Zoroark ex `sv09-098/-175/-185/-189` — D205's flag, re-priced. */
+/** ✅ N's Zoroark ex `sv09-098/-175/-185/-189` — D205's flag, re-priced, and 🆕🆕🆕 BUILT AT D573
+    on its own reader `deriveAttackCopy` (the copy-attack substitution; was ⏹️); kept as the
+    witness that the flag was paid rather than deleted. */
 const NIGHT_JOKER = "Choose 1 of your Benched N's Pokémon's attacks and use it as this attack.";
 /** D138's own sentence — the counter move whose destination is FIXED. */
 const TAIL_SWAP =
@@ -1188,7 +1191,7 @@ describe("⏹️ FLAGGED — the seam on the ATTACK surface (4 legal printings)"
 describe("⏹️ FLAGGED — N's Zoroark ex sv09-098/-175/-185/-189 (4 legal)", () => {
   const IDS = ["sv09-098", "sv09-175", "sv09-185", "sv09-189"] as const;
 
-  it("⚠️ unbuilt on BOTH routes, and the gap is the COPY rather than the predicate", () => {
+  it("⚠️ built on NEITHER of these two routes (🆕🆕🆕 D573: BUILT on a THIRD, `deriveAttackCopy`), and the gap was the COPY rather than the predicate", () => {
     for (const id of IDS) {
       expect(programFor(id)?.attack, `${id} grew a registry attack`).toBeUndefined();
       expect(programFor(id)?.abilities?.[0]?.name, `${id} lost its Trade Ability`).toBe("Trade");
@@ -1201,6 +1204,11 @@ describe("⏹️ FLAGGED — N's Zoroark ex sv09-098/-175/-185/-189 (4 legal)", 
     // that builds the predicate cannot come back and claim this row.
     expect(deriveAttackEffect("Choose 1 of your Benched Pokémon's attacks and use it as this attack.")).toBeNull();
     expect(NIGHT_JOKER).toContain("use it as this attack");
+    // 🆕🆕🆕 D573 — the prediction held: what built it was an attack-COPY (a declaration-time
+    // re-entry of `attack()`), not the predicate; the copy reader claims the printed sentence and
+    // refuses the subgroup-stripped one (no printing prints it).
+    expect(deriveAttackCopy(NIGHT_JOKER)).toEqual({ from: "benchOwner", owner: "N" });
+    expect(deriveAttackCopy("Choose 1 of your Benched Pokémon's attacks and use it as this attack.")).toBeNull();
   });
 });
 

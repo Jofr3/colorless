@@ -517,7 +517,7 @@ describe("§3 — one reader owns the sentence, and the trap got worse", () => {
 
 describe("§4 — no new reader, no registry row", () => {
   it("the surface is still 13 and the sentence resolves through it", () => {
-    expect(attackReaderSurface()).toHaveLength(13);
+    expect(attackReaderSurface()).toHaveLength(14 /* 🆕🆕🆕 D573: 13 → 14, + deriveAttackCopy */);
     expect(resolvedByAnyReader(PRINTED_TAILS)).toBe(true);
   });
 
@@ -819,10 +819,10 @@ describe("§7 — purity and the structural answers", () => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("§8 — the version", () => {
-  it("engineVersion is 0.456.0 and the bump is owed for BEHAVIOUR", () => {
+  it("engineVersion is 0.457.0 and the bump is owed for BEHAVIOUR", () => {
     // A sentence that fell to the loud `ATTACK_EFFECT_SKIPPED` path now flips three coins
     // and queues one park per tails, and a shipped union member gained a REQUIRED field —
     // so `packages/engine` behaviour moved and the minor is owed (D275).
-    expect(engineVersion).toBe("0.456.0");
+    expect(engineVersion).toBe("0.457.0");
   });
 });

@@ -123,8 +123,18 @@ const CLAUSE = " that has any damage counters on it";
     census"*) and still RESIDUE: `resolvedByAnyReader`, `splitAttackGateClause` and
     `splitAttackTrailingClause` all answer null on it (probed at D545). So the control keeps
     the property it exists for — a REAL printed sentence, unread, on the same body — and
-    this time it is one whose unread status is a POLICY rather than a missing reader. */
-const UNREAD_SIBLING = "Choose 1 of your opponent's Active Pokémon's attacks and use it as this attack.";
+    this time it is one whose unread status is a POLICY rather than a missing reader.
+
+    🛑 **🆕🆕🆕 D573 — RE-POINTED A FOURTH TIME, BECAUSE D573 BUILT FILE LINE 78** (the
+    copy-attack substitution: `deriveAttackCopy` claims it whole and attack.ts re-enters
+    itself with the copied attack). ~~*"the copy-attack family, BLOCKED by standing refusal …
+    and still RESIDUE"*~~ is withdrawn for row 78 (D539). The constant is re-homed onto corpus
+    **FILE LINE 434** — Haughty Order, *"Reveal the top 10 cards of your opponent's deck. You
+    may choose an attack from a Pokémon you find there and use it as this attack. Shuffle the
+    revealed cards into your opponent's deck."*, **3 legal printings**, the copy-family
+    REMAINDER: it reveals BEFORE the choice, so it needs a park in the MIDDLE of the attack,
+    and stays BLOCKED. Row 78 is kept LIVE beside it as `BUILT_COPY_ATTACK` (D444/D447). */
+const UNREAD_SIBLING = "Reveal the top 10 cards of your opponent's deck. You may choose an attack from a Pokémon you find there and use it as this attack. Shuffle the revealed cards into your opponent's deck.";
 /** 🆕🆕🆕 D545 — the row `UNREAD_SIBLING` vacated at D545 (corpus FILE LINE 316), kept LIVE
     as the counter-example (D444/D447): it builds on the GATE arm now. */
 const BUILT_COST_CLAUSE =
@@ -142,7 +152,7 @@ const BUILT_FORMER_SIBLING =
 
 const PICKY = 0; // {C}, 30 damage, corpus row 528 — the NARROWED rider
 const BLUNT = 1; // {C}, 30 damage — the same rider UN-narrowed: the one-axis control
-const IDLE = 2; // {C}, 30 damage, corpus row 78 (316 until D545, 601 until D520, 596 until D519) — deliberately unread
+const IDLE = 2; // {C}, 30 damage, corpus row 434 (78 until D573, 316 until D545, 601 until D520, 596 until D519) — deliberately unread
 
 const units = (rows: readonly (readonly [number, string])[]): number =>
   rows.reduce((sum, [n]) => sum + n, 0);
@@ -208,7 +218,7 @@ describe("§1 — the price and the family, re-derived off the corpus rather tha
     // `deriveAttackEffect`, not a fourteenth reader, so the surface stands still —
     // and the count is pinned separately from any list, because a list is the thing
     // that rots.
-    expect(attackReaderSurface()).toHaveLength(13);
+    expect(attackReaderSurface()).toHaveLength(14 /* 🆕🆕🆕 D573: 13 → 14, + deriveAttackCopy */);
   });
 
   it("🛑 the printed sentence is real, is worth THREE printings, and is now CLAIMED", () => {
@@ -307,6 +317,9 @@ describe("§1 — the price and the family, re-derived off the corpus rather tha
     // `alternateCostIf`), so the control is now corpus FILE LINE 78, the copy-attack row
     // (3 legal printings, BLOCKED), which no arm of the four claims. Its old subject is
     // asserted live beside it (D444/D447).
+    // 🆕🆕🆕 **D573 — RE-POINTED A FOURTH TIME**: FILE LINE 78 was BUILT (the copy-attack
+    // substitution), so the control is now corpus FILE LINE 434, Haughty Order (3 legal
+    // printings, the copy-family remainder, BLOCKED: it reveals before the choice).
     expect(family.map(([, s]) => s)).not.toContain(UNREAD_SIBLING);
     expect(corpus().filter(([, s]) => s === UNREAD_SIBLING)).toHaveLength(1);
     expect(corpus().find(([, s]) => s === UNREAD_SIBLING)?.[0]).toBe(3);
@@ -416,7 +429,7 @@ describe("§2 — the derivation, and the number agreement that keeps D399's run
     const readers = Object.entries(effects).filter(
       ([name, value]) => name.startsWith("deriveAttack") && typeof value === "function",
     ) as [string, (text: string) => unknown][];
-    expect(readers).toHaveLength(13);
+    expect(readers).toHaveLength(14 /* 🆕🆕🆕 D573: 13 → 14, + deriveAttackCopy */);
     const claiming = readers.filter(([, read]) => read(PRINTED) !== null).map(([name]) => name);
     expect(claiming).toEqual(["deriveAttackEffect"]);
     // The two SPLITTERS are not on that surface and are asked by name: the sentence
@@ -870,6 +883,6 @@ describe("§8 — the persisted question: `MATCH_RECORD_VERSION` STAYS 29", () =
   });
 
   it("🛑 the engine version moved with `package.json`", () => {
-    expect(engineVersion).toBe("0.456.0");
+    expect(engineVersion).toBe("0.457.0");
   });
 });

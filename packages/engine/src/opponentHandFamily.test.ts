@@ -185,6 +185,10 @@ const DEFERRED: readonly (readonly [string, string, number])[] = [
   // `opponentHandSweep.test.ts`'s. **THE STEP IS TAKEN AS A TERM, NOT AS AN EDIT TO A
   // NUMBER**: `builtElsewhere` gains 1 where `left` loses 1, so the family's 31 is
   // re-derived rather than re-typed.
+  // 🆕🆕🆕 D573 (D539): the reason below says the attack-copy family has "no seam". That
+  // is WITHDRAWN for 9 of the family's 13 printings (D573 re-enters `attack()` at
+  // declaration, and `effectSimulated` reads the COPIED text). This Supporter refusal
+  // keeps its own D445 reasons: a Supporter's program is a registry row, with no deriver.
   [
     "Your opponent reveals their hand. You may use the effect of a Supporter card you find there as the effect of this attack.",
     "running another card's program as this one's — no seam exists. 🆕 D445 RE-ARGUED this refusal for a SUPPORTER rather than inheriting it from the attack-copy family (D436's defect is a refusal carried without re-argument), and the reasons hold in a STRONGER form: a Supporter's program is a REGISTRY row keyed by card id, so a copy op could reach only the 82 authored rows and would answer NOTHING for the rest — and `effectSimulated` is computed from the COPIER's sentence, so claiming this anchor would switch off `ATTACK_EFFECT_SKIPPED` for the attack forever. See opponentHandScaling.test.ts §6",
@@ -322,6 +326,9 @@ describe("D232 — the opponent-hand family's census", () => {
     // as `opponentHandSweep.test.ts`'s row on a new op that does what D445's refusal named.
     // What is left is the Supporter copy (1, still refused as a member of the attack-copy
     // family) and the three-coin fold (1, the composition rather than the op).
+    // 🆕🆕🆕 D573 (D539): the attack-copy family is no longer wholly refused — D573 built 9
+    // of its 13 printings by declaration-time substitution. The Supporter copy's refusal
+    // stands on its own D445 reasons (no Trainer text deriver), not on the family's.
     expect(left).toBe(2);
     const builtElsewhere = 8; // D297's Lickitung pair + D445's five + D485's sweep
     // 21 built here + 8 built later + 2 deferred = the family's 31 legal ATTACK

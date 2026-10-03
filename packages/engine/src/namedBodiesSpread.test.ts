@@ -389,7 +389,7 @@ describe("D539 §1 — the corpus row and the whole-compound anchor", () => {
   });
 
   it("🛑 the SURFACE did not grow: a new ARM is not a new READER (D447)", () => {
-    expect(attackReaderSurface()).toHaveLength(13);
+    expect(attackReaderSurface()).toHaveLength(14 /* 🆕🆕🆕 D573: 13 → 14, + deriveAttackCopy */);
   });
 
   it("🛑 THE `\\2` BACKREFERENCE, DRIVEN BOTH WAYS — matched nouns match", () => {
@@ -1127,7 +1127,7 @@ describe("D539 §7 — the widening at a persisted address, and the version does
   });
 
   it("the engine version moved and the two spellings agree", () => {
-    expect(engineVersion).toBe("0.456.0");
+    expect(engineVersion).toBe("0.457.0");
     expect(manifest.version).toBe(engineVersion);
   });
 });

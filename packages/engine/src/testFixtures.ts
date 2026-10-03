@@ -13957,6 +13957,16 @@ export const FIXTURE_POOL: Record<string, Card> = {
       standing refusal, still residue; reader, gate and trailing all null, probed at D545).
       Its printed `{C}` cost is kept, so no board's Energy moves.
 
+      🛑 **🆕🆕🆕 D573 — RE-HOMED A FOURTH TIME, BECAUSE D573 BUILT FILE LINE 78** (the
+      copy-attack substitution, `deriveAttackCopy` + attack.ts's declaration-time re-entry), so
+      ~~*"the copy-attack family (BLOCKED by standing refusal, still residue …)"*~~ is withdrawn
+      for that row (D539). Index 2 now prints corpus **FILE LINE 434** — Haughty Order, *"Reveal
+      the top 10 cards of your opponent's deck. You may choose an attack from a Pokémon you find
+      there and use it as this attack. Shuffle the revealed cards into your opponent's deck."*,
+      3 legal printings, the copy-family REMAINDER that stays BLOCKED (it reveals before the
+      choice, so it needs a park in the MIDDLE of the attack). Moved BEFORE the deriver landed,
+      so the loud control never went dark. Touched by hand (fixture data, D538).
+
       🛑 **NO ids ARE INVENTED.** This checkout has no D1 — no local sqlite, no
       remote credentials — so the three carriers of row 528 could not be resolved and
       are NOT guessed (D425). The SENTENCES are transcribed off `censusAttackCorpus.ts`
@@ -13992,7 +14002,7 @@ export const FIXTURE_POOL: Record<string, Card> = {
         cost: ["Colorless"],
         name: "Idle Barrage",
         damage: "30",
-        effect: "Choose 1 of your opponent's Active Pokémon's attacks and use it as this attack.",
+        effect: "Reveal the top 10 cards of your opponent's deck. You may choose an attack from a Pokémon you find there and use it as this attack. Shuffle the revealed cards into your opponent's deck.",
       },
     ],
   }),
@@ -15364,7 +15374,16 @@ export const FIXTURE_POOL: Record<string, Card> = {
       is not callable (BLOCKED-COPY-ATTACK), so it is a STABLE loud witness rather than
       the next row a slice will build. It is no longer from the Weakness family; the
       suite's "the skip fires for index 2 and NOT for index 0" is unchanged. Touched by
-      hand (fixture data, D538). */
+      hand (fixture data, D538).
+
+      🆕🆕🆕 **D573 — RE-POINTED AGAIN, AND "BLOCKED while `attack()` §8.5 is not callable
+      (BLOCKED-COPY-ATTACK)" IS WITHDRAWN FOR ROW 78 (D539): row 78 is BUILT** (the
+      declaration-time substitution, `copyAttackD573.test.ts`). Index 2 ("Copy Veil") now
+      prints row 434, Haughty Order (*"Reveal the top 10 cards of your opponent's deck. You may
+      choose an attack from a Pokémon you find there and use it as this attack. Shuffle the
+      revealed cards into your opponent's deck."*, 3 legal printings) — the copy-family
+      remainder, which stays BLOCKED because it reveals BEFORE the choice and so needs a park
+      in the middle of the attack. Moved before the deriver landed. Touched by hand (D538). */
   "fix-nowk": battler("fix-nowk", {
     types: ["Water"],
     hp: 220,
@@ -15382,7 +15401,7 @@ export const FIXTURE_POOL: Record<string, Card> = {
         cost: ["Colorless"],
         name: "Copy Veil",
         damage: 10,
-        effect: "Choose 1 of your opponent's Active Pokémon's attacks and use it as this attack.",
+        effect: "Reveal the top 10 cards of your opponent's deck. You may choose an attack from a Pokémon you find there and use it as this attack. Shuffle the revealed cards into your opponent's deck.",
       },
     ],
   }),

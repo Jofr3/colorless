@@ -4,6 +4,7 @@ import {
   deriveAttackBonusConsequent,
   deriveAttackCancelRequirement,
   deriveAttackCoinFlip,
+  deriveAttackCopy,
   deriveAttackDamageBonus,
   deriveAttackDamageMultiplier,
   deriveAttackDamagePenalty,
@@ -437,6 +438,8 @@ describe("the unsimulated-'+' witness, re-homed off Entei onto Pachirisu", () =>
       // array's LAST entries plus its closing bracket, and appending moves that anchor
       // without a character of it changing.
       deriveAttackPreDamage,
+      // 🆕🆕🆕 D573 — THE FOURTEENTH, the copy-attack reader. Spliced before the last entry (D419).
+      deriveAttackCopy,
       deriveAttackCoinFlip,
     ];
     // 🆕🆕 D419 — THE TWO-RUNG GUARD, CO-LOCATED because this list is function-local.
@@ -444,7 +447,7 @@ describe("the unsimulated-'+' witness, re-homed off Entei onto Pachirisu", () =>
     // diff alone stays GREEN when a slice deletes a reader from the module and from
     // this list in the same commit.
     expect(readers.map((read) => read.name).sort()).toEqual(attackReaderSurface());
-    expect(attackReaderSurface()).toHaveLength(13);
+    expect(attackReaderSurface()).toHaveLength(14 /* 🆕🆕🆕 D573: 13 → 14, + deriveAttackCopy */);
     // 🆕🆕 D419 — the claim taken off the MODULE. The loop below names WHICH reader
     // broke; this line is what makes "unread by every reader in the family" a fact
     // about `effects.ts` rather than about the array above it.
@@ -1182,7 +1185,7 @@ describe("D459 — the `Energy card` spelling, on the `×` fold only", () => {
     // reader. That combination (residue falls, surface unmoved) is what says the cost
     // was a map entry and not a parser.
     expect(resolvedByAnyReader(BASIC_DRAW)).toBe(true);
-    expect(attackReaderSurface()).toHaveLength(13);
+    expect(attackReaderSurface()).toHaveLength(14 /* 🆕🆕🆕 D573: 13 → 14, + deriveAttackCopy */);
   });
 });
 
@@ -1256,7 +1259,7 @@ describe("the record-shape derivation, made rather than inherited", () => {
     ).toEqual({ per: 30, count: { kind: "energyOnSelf", zone: "board", energyType: "special" } });
   });
 
-  it("engineVersion is 0.456.0 and `manifest.version` agrees", () => {
+  it("engineVersion is 0.457.0 and `manifest.version` agrees", () => {
     // 🆕🆕 D459 — 0.357.0 → **0.358.0**, and the bump is owed for BEHAVIOUR and for
     // nothing else, which is the same shape D458's was: no op, no field, no prompt
     // key, no wire byte and no vocabulary diff moved, so a reader looking for one
@@ -1270,6 +1273,6 @@ describe("the record-shape derivation, made rather than inherited", () => {
     // forecast of "36 / 40" reproduced TO THE DIGIT — the first inherited figure in
     // this series to be checked and found right. This rung is the 37th assertion,
     // so a successor inherits 37 / 41 (D427's mechanism as arithmetic).
-    expect(engineVersion).toBe("0.456.0");
+    expect(engineVersion).toBe("0.457.0");
   });
 });

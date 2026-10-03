@@ -80,7 +80,7 @@ import {
 // THE ARGUMENT IS MEASURED MARGINAL SITES (D424).** `censusAttackCorpus.ts` derives the
 // reader surface from `effects.ts` BY NAME PREFIX (D444), so a new `deriveAttack*` export
 // enrols itself — and at this head that would have moved **75 `expect(
-// attackReaderSurface()).toHaveLength(13)` assertions across 74 files**, plus each of those
+// attackReaderSurface()).toHaveLength(14 /* 🆕🆕🆕 D573: 13 → 14, + deriveAttackCopy */)` assertions across 74 files**, plus each of those
 // files' hand-listed `READERS` array. Riding `deriveAttackDiscardScaledBoost` costs **ZERO
 // bytes in `attack.ts`**: `scaledBase`, `effectSimulated` and `modifierSimulated` are each
 // spelled `discardScaledBoost !== null`, and the assembler is already called with the
@@ -355,7 +355,7 @@ describe("D490 §1 — the printed row, off the column rather than off this file
     // the refusals.
     expect(readersClaiming(MILL_BOTH)).toEqual(["deriveAttackDiscardScaledBoost"]);
     expect(resolvedByAnyReader(MILL_BOTH)).toBe(true);
-    expect(attackReaderSurface()).toHaveLength(13);
+    expect(attackReaderSurface()).toHaveLength(14 /* 🆕🆕🆕 D573: 13 → 14, + deriveAttackCopy */);
   });
 
   it("🛑 no SPLITTER composes it, before the build or after", () => {
@@ -1221,7 +1221,7 @@ describe("D490 §9 — `MATCH_RECORD_VERSION` stays 29: reachability, driven", (
     ).toBe(false);
   });
 
-  it("engineVersion is 0.456.0 and `manifest.version` agrees — the bump is for BEHAVIOUR", () => {
+  it("engineVersion is 0.457.0 and `manifest.version` agrees — the bump is for BEHAVIOUR", () => {
     // 🆕🆕🆕 D490 — 0.384.0 → **0.385.0**. A card can reach it: one printed sentence that
     // derived to `null` on all thirteen readers and fell to the loud
     // `ATTACK_EFFECT_SKIPPED` path now mills BOTH decks and deals a number proportional to
@@ -1234,7 +1234,7 @@ describe("D490 §9 — `MATCH_RECORD_VERSION` stays 29: reachability, driven", (
     // changelog entry and missed the entry's actual `0.383.0 → 0.384.0` heading, which is
     // D488's rule fired a second time: *a prose census of exceptions is self-referential
     // the moment it is written down, and the count is taken before the sentence exists.*
-    expect(engineVersion).toBe("0.456.0");
+    expect(engineVersion).toBe("0.457.0");
     expect(manifest.version).toBe(engineVersion);
     expect(deriveAttackDiscardScaledBoost(MILL_BOTH)).not.toBeNull();
   });

@@ -9,6 +9,7 @@ import {
   deriveAttackBonusConsequent,
   deriveAttackCancelRequirement,
   deriveAttackCoinFlip,
+  deriveAttackCopy,
   deriveAttackDamageBonus,
   deriveAttackDamageMultiplier,
   deriveAttackDamagePenalty,
@@ -112,6 +113,8 @@ const READERS: readonly ((text: string) => unknown)[] = [
   // array's LAST entries plus its closing bracket, and appending moves that anchor
   // without a character of it changing.
   deriveAttackPreDamage,
+  // 🆕🆕🆕 D573 — THE FOURTEENTH, the copy-attack reader. Spliced before the last entry (D419).
+  deriveAttackCopy,
   deriveAttackBonusConsequent,
 ];
 
@@ -212,7 +215,7 @@ describe("§1 — the price, RE-DERIVED: the residue, the band and the shape of 
     // load-bearing: a diff alone stays GREEN when a slice deletes a reader from the
     // module and from this list in the SAME commit, and the figures would then move
     // with nothing naming the cause.
-    expect(attackReaderSurface()).toHaveLength(13);
+    expect(attackReaderSurface()).toHaveLength(14 /* 🆕🆕🆕 D573: 13 → 14, + deriveAttackCopy */);
   });
 
   it("🛑 the sentence is real, is worth ONE printing, and reached the SKELETON all along", () => {

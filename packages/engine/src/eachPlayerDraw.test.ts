@@ -311,7 +311,7 @@ describe("D491 §1 — one reader claims it and the other twelve still refuse", 
     // D417/D418: a hand-kept `READERS` array cannot go red, only quiet. This figure is
     // derived from `effects.ts`'s exports by name prefix, in the module every census file
     // already imports.
-    expect(attackReaderSurface()).toHaveLength(13);
+    expect(attackReaderSurface()).toHaveLength(14 /* 🆕🆕🆕 D573: 13 → 14, + deriveAttackCopy */);
     expect(attackReaderSurface()).toContain("deriveAttackEffect");
   });
 
@@ -869,7 +869,7 @@ describe("D491 §9 — the version question, asked at the address that persists"
   });
 
   it("the engine version moved and the record version did not", () => {
-    expect(engineVersion).toBe("0.456.0");
+    expect(engineVersion).toBe("0.457.0");
     expect(manifest.version).toBe(engineVersion);
   });
 });

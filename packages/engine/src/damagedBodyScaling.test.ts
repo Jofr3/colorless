@@ -4,6 +4,7 @@ import {
   deriveAttackBonusConsequent,
   deriveAttackCancelRequirement,
   deriveAttackCoinFlip,
+  deriveAttackCopy,
   deriveAttackDamageBonus,
   deriveAttackDamageMultiplier,
   deriveAttackDamagePenalty,
@@ -167,6 +168,8 @@ const READERS = [
   deriveAttackOptionalBoost,
   deriveAttackOptionalCostBoost,
   deriveAttackPreDamage,
+  // 🆕🆕🆕 D573 — THE FOURTEENTH, the copy-attack reader. Spliced before the last entry (D419).
+  deriveAttackCopy,
   deriveAttackRequirement,
 ];
 
@@ -1015,7 +1018,7 @@ describe("D519 §6 — `MATCH_RECORD_VERSION` HOLDS at 30: there is still no car
     // D419's guard. The COUNT is pinned separately from the diff, because a diff alone stays
     // green when a slice deletes a reader from the module and from this list at once.
     expect(READERS.map((read) => read.name).sort()).toEqual(attackReaderSurface());
-    expect(attackReaderSurface()).toHaveLength(13);
+    expect(attackReaderSurface()).toHaveLength(14 /* 🆕🆕🆕 D573: 13 → 14, + deriveAttackCopy */);
   });
 
   it("🛑 `FIXTURE_POOL` is BYTE-UNCHANGED — the demonstrator is a per-board clone", () => {
@@ -1036,7 +1039,7 @@ describe("D519 §6 — `MATCH_RECORD_VERSION` HOLDS at 30: there is still no car
   });
 
   it("the engine version moved with the behaviour, and `manifest.version` agrees", () => {
-    expect(engineVersion).toBe("0.456.0");
-    expect(manifest.version).toBe("0.456.0");
+    expect(engineVersion).toBe("0.457.0");
+    expect(manifest.version).toBe("0.457.0");
   });
 });

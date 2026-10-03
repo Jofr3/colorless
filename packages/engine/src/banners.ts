@@ -13,7 +13,9 @@ import type { Card } from "@luminous/schema";
 // Noctowl ×3, Azumarill) and 4 Pokémon attacks (Ho-Oh `sv08-019`, Terapagos `sv08-161`,
 // Regigigas `sv08.5-086`, Team Rocket's Mimikyu `sv10-087`). D568 builds 19; the 5 left
 // are Underdepths ×3 (Bench size), Mimikyu (copy-attack) and TM Fluorite (a Tool that
-// grants an attack — no Technical Machine attack is built). Before this table the
+// grants an attack — no Technical Machine attack is built). (🆕🆕🆕 D573 (D539): Mimikyu is
+// WITHDRAWN from that list — Gemstone Mimicry is BUILT, the copy-attack substitution reading
+// `isTeraPokemon` off this table; 4 are left.) Before this table the
 // engine could not read one of them: NO INGESTED COLUMN CLASSIFIES
 // THE BANNER (still true, and not changed here — `cardSchema` carries no subtype
 // list, and D1 has no column for it). The fix is not an ingest change: the banner is

@@ -86,8 +86,10 @@ const BOTTOM = "Draw 3 cards from the bottom of your deck.";
 const TOP = "Draw 3 cards.";
 /** A residue sentence no reader claims, fielded as the LOUD control: it is what makes
     "no `ATTACK_EFFECT_SKIPPED`" mean something on the boards where nothing is drawn. Its
-    refusal is asserted live in §9 rather than assumed (D480). */
-const LOUD = "Choose 1 of your opponent's Active Pokémon's attacks and use it as this attack.";
+    refusal is asserted live in §9 rather than assumed (D480). 🆕🆕🆕 D573 — re-pointed from corpus
+    row 78 (the copy-attack sentence, BUILT at D573) to row 434, Haughty Order, the copy-family
+    remainder that stays BLOCKED (it reveals before the choice). */
+const LOUD = "Reveal the top 10 cards of your opponent's deck. You may choose an attack from a Pokémon you find there and use it as this attack. Shuffle the revealed cards into your opponent's deck.";
 
 const PROGRAM: readonly EffectOp[] = [{ op: "drawCards", count: 3, from: "bottom" }];
 /** The v29 byte string: the SAME op with the key absent. §8 reads it back. */
@@ -328,7 +330,7 @@ describe("D487 §2 — the thirteen readers, run rather than read", () => {
     // limit 1 says so and the table deliberately carries no `"attack"` surface. The oracle
     // is the reader surface, run programmatically against the printed string.
     const surface = attackReaderSurface();
-    expect(surface).toHaveLength(13);
+    expect(surface).toHaveLength(14 /* 🆕🆕🆕 D573: 13 → 14, + deriveAttackCopy */);
     // The surface is a list of NAMES; the readers themselves come off the module, which
     // is `residue-census.ts`'s own move — a name lookup that missed would yield
     // `undefined`, and `undefined !== null` is TRUE, so every reader would "claim"

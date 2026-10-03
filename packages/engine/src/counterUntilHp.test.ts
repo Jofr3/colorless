@@ -183,7 +183,7 @@ describe("§1 — three sentences, five printings, and the class is CLOSED", () 
     // Asked of the SURFACE rather than of one reader (D447): both arms sit inside
     // `deriveAttackEffect`, so there is no fourteenth reader.
     for (const s of [BENCH_100, ACTIVE_50, ACTIVE_10]) expect(resolvedByAnyReader(s), s).toBe(true);
-    expect(attackReaderSurface()).toHaveLength(13);
+    expect(attackReaderSurface()).toHaveLength(14 /* 🆕🆕🆕 D573: 13 → 14, + deriveAttackCopy */);
   });
 
   it("🛑 the PLACEMENT family closes from SEVEN rows to FOUR to TWO, each refusal by name", () => {
@@ -568,7 +568,7 @@ describe("§3 — a NEW `EffectOp` inhabitant, and the record version does not m
   });
 
   it("the engine version moved and the record version did not", () => {
-    expect(engineVersion).toBe("0.456.0");
+    expect(engineVersion).toBe("0.457.0");
   });
 });
 

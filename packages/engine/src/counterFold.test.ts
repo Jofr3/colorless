@@ -157,7 +157,7 @@ describe("§1 — the three printed folds, and the placement family's remaining 
     for (const s of [ABILITY_FOLD, BOARD_FOLD, WOUNDED_FOLD]) {
       expect(resolvedByAnyReader(s), s).toBe(true);
     }
-    expect(attackReaderSurface()).toHaveLength(13);
+    expect(attackReaderSurface()).toHaveLength(14 /* 🆕🆕🆕 D573: 13 → 14, + deriveAttackCopy */);
   });
 
   it("🛑 the PLACEMENT family closes from TEN rows to SEVEN to TWO to ZERO, each departure by name", () => {
@@ -556,7 +556,7 @@ describe("§3 — TWO REQUIRED fields on a shipped op, and the record version do
   });
 
   it("the engine version moved and the record version did not", () => {
-    expect(engineVersion).toBe("0.456.0");
+    expect(engineVersion).toBe("0.457.0");
   });
 });
 

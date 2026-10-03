@@ -343,7 +343,7 @@ describe("§2 — the oracle, and the anchor's yield measured over the whole col
   it("the reader surface is still THIRTEEN, derived off the module", () => {
     // The oracle this slice used, pinned so a fourteenth reader cannot arrive unnoticed
     // and quietly change what "13 / 13 null" meant.
-    expect(attackReaderSurface()).toHaveLength(13);
+    expect(attackReaderSurface()).toHaveLength(14 /* 🆕🆕🆕 D573: 13 → 14, + deriveAttackCopy */);
   });
 });
 
@@ -693,10 +693,10 @@ describe("§8 — the persisted record cannot hold this op", () => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("§9 — the version, and what it is owed for", () => {
-  it("engineVersion is 0.456.0 and the bump is owed for BEHAVIOUR", () => {
+  it("engineVersion is 0.457.0 and the bump is owed for BEHAVIOUR", () => {
     // A sentence that derived to `null` derives to a two-op program, and a new `EffectOp`
     // member runs in the interpreter. That is behaviour, so the bump is owed.
-    expect(engineVersion).toBe("0.456.0");
+    expect(engineVersion).toBe("0.457.0");
     expect(manifest.version).toBe(engineVersion);
   });
 });

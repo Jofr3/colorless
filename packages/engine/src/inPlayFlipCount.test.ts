@@ -10,6 +10,7 @@ import {
   deriveAttackBonusConsequent,
   deriveAttackCancelRequirement,
   deriveAttackCoinFlip,
+  deriveAttackCopy,
   deriveAttackDamageBonus,
   deriveAttackDamageMultiplier,
   deriveAttackDamagePenalty,
@@ -133,6 +134,8 @@ const READERS: readonly ((t: string) => unknown)[] = [
   deriveAttackOptionalCostBoost,
   deriveAttackCancelRequirement,
   deriveAttackPreDamage,
+  // 🆕🆕🆕 D573 — THE FOURTEENTH, the copy-attack reader. Spliced before the last entry (D419).
+  deriveAttackCopy,
   deriveAttackDiscardScaledBoost,
 ];
 
@@ -144,7 +147,7 @@ describe("D474 §1 — the sentence, measured live over the legal column", () =>
     // D417/D419's guard: a hand-kept copy of a module-derived surface cannot go red,
     // it can only go quiet, so the DIFF and the COUNT are pinned separately.
     expect(READERS.map((read) => read.name).sort()).toEqual(attackReaderSurface());
-    expect(attackReaderSurface()).toHaveLength(13);
+    expect(attackReaderSurface()).toHaveLength(14 /* 🆕🆕🆕 D573: 13 → 14, + deriveAttackCopy */);
   });
 
   it("is really in the column, ONCE, at TWO printings", () => {
@@ -893,13 +896,13 @@ describe("D474 §6 — `MATCH_RECORD_VERSION` stays 29, and this is D473's FIRST
     }
   });
 
-  it("engineVersion is 0.456.0 and `manifest.version` agrees", () => {
+  it("engineVersion is 0.457.0 and `manifest.version` agrees", () => {
     // D460's FOURTH class of version-tax site is the `it()` TITLE, so this one names
     // both halves and BOTH are asserted — a title that reports a claim the body does
     // not make is worse than a stale doc block, because the run log then says a
     // version the suite never checked.
-    expect(engineVersion).toBe("0.456.0");
-    expect(manifest.version).toBe("0.456.0");
+    expect(engineVersion).toBe("0.457.0");
+    expect(manifest.version).toBe("0.457.0");
     expect(manifest.version).toBe(engineVersion);
   });
 });
