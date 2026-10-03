@@ -1909,6 +1909,27 @@ export interface MatchRecord {
     discard, so the HUD shows neither (a carried display debt, `sideAttackLock`'s and
     `sideAttackBonuses`' precedent, decisions.md D564).
 
+    🆕🆕🆕 **STAYS 37 AT D571 — PARADOX PART b (IRON THORNS) + THE IGNITION RIDER CHANGES NO GameState,
+    PendingStage, Card, EVENT OR PROMPT SHAPE; NOTHING NEW PARKS, AND THE 0.454 ROLLBACK READINGS ARE NAMED.**
+    (Placed ABOVE the D570 block, out of date order, so the declaration's anchor lines — and
+    `D570-record-version-not-bumped`'s `find` — stay byte-identical: D563's placement.) The addresses,
+    named first (D456's rule): none is persisted. ⑴ `disableAbilities.ruleBox` / `.exemptBanner` (Iron
+    Thorns ex "Initialization") are CATALOG-only keys on `PassiveEffects`, read from the registry on every
+    `disabledAbilityUids` call; the stratified lock pass (R-LK2) is computed, never stored. ⑵ The NEW
+    `EffectOp` `revealTopDiscardMatching` (Iron Thorns "Destructo-Press") NEVER parks and no D571 program puts
+    a parking op before it, so it is never written into `phase.cont.pendingOp` or `.rest`. ⑶
+    `EnergyProgram.discardAtEndOfYourTurn` (Ignition Energy) is CATALOG-only, read by flow.ts's `endTurn`
+    stage, which pays it in the same action (no new `PendingStage`). ⑷ No event gains a member or a field
+    (the discards are the EXISTING `DECK_TOP_DISCARDED` / `ENERGY_DISCARDED` / `SHUFFLE`). D441: nothing is
+    renamed or removed, and a v37 record written by 0.454 cannot hold any new value. THE 0.454 ROLLBACK
+    READINGS, each the reading of a card 0.454 does not build (the D569 block's "those cards are unbuilt"),
+    not of a record shape: Initialization reads as NO LOCK (0.454 has no `INITIALIZATION` row, and its
+    `disabledAbilityUids` is the single ungated pass); Destructo-Press is an UNBUILT ATTACK (the printed
+    column, the sentence skipped loudly); Ignition Energy is NEVER discarded and provides `Normal` → `{C}`
+    through `energyProvidesOf` (0.454 has no `IGNITION_ENERGY` row); every catalog-only key and the new
+    op kind are non-reasons, because no v37 record can carry them. No reading reinterprets a persisted
+    byte, so no printing was dropped and `MATCH_RECORD_VERSION` stays 37. No client byte moved.
+
     🆕🆕🆕 **36 → 37 AT D570 — THE TENTH POSITION: ONE REQUIRED KEY, A TURN-MACHINE WINDOW.**
     The address, named first (D456's rule):
       · **`GameState.allowances.attackAgainUid: string | null`** — Festival Lead's attack-again

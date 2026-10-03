@@ -367,8 +367,8 @@ describe("§1 — the prints and the registry rows", () => {
     expect(programFor(WATCHTOWER)).toEqual({ stadium: { disableAbilities: { side: "both", targetType: "Colorless" } } });
   });
 
-  it("the engine is 0.454.0", () => {
-    expect(engineVersion).toBe("0.454.0");
+  it("the engine is 0.455.0", () => {
+    expect(engineVersion).toBe("0.455.0");
   });
 });
 
@@ -738,9 +738,16 @@ describe("§4 — Team Rocket's Watchtower: the first Stadium-sourced Ability lo
 
   it("🛑 R-LK1 RESTATED WITH THE WATCHTOWER BUILT: neither legal Pokémon lock source is {C}, so it switches no lock off", () => {
     // Flutter Mane `sv05-078` is {P} and Gastrodon `sv08-107` is {F} (tcgdex, 2026-09-28).
+    // 🆕🆕🆕 D571 — and Iron Thorns ex `sv06-077` "Initialization" (built at D571, the THIRD legal
+    // Pokémon lock) is {L} (tcgdex, 2026-10-03), so the Watchtower still switches no lock off.
     expect(programFor("sv05-078")?.passive?.disableAbilities).toBeDefined();
     expect(programFor("sv08-107")?.passive?.disableAbilities).toBeDefined();
-    const printed: Record<string, readonly string[]> = { "sv05-078": ["Psychic"], "sv08-107": ["Fighting"] };
+    expect(programFor("sv06-077")?.passive?.disableAbilities).toBeDefined();
+    const printed: Record<string, readonly string[]> = {
+      "sv05-078": ["Psychic"],
+      "sv08-107": ["Fighting"],
+      "sv06-077": ["Lightning"],
+    };
     for (const types of Object.values(printed)) expect(types).not.toContain("Colorless");
   });
 });

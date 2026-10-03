@@ -53,7 +53,7 @@ const GREAT_TUSK = "sv05-097"; // Ancient — Land Collapse, mill 1 (+3 after an
 const SCREAM_TAIL = "sv05-077"; // Ancient — Supportive Singing, heal 100 from a Benched Ancient
 const FLUTTER_MANE = "sv08-096"; // Ancient — Perplexing Transfer, move a Benched Ancient's counters
 const IRON_CROWN = "sv05-081"; // Future ex — Cobalt Command
-const IRON_THORNS_EX = "sv06-077"; // Future ex — Initialization (UNBUILT)
+const IRON_THORNS_EX = "sv06-077"; // Future ex — Initialization (UNBUILT at D569; 🆕🆕🆕 D571 (D539): BUILT, `INITIALIZATION`)
 const DRUM = "sv05-141"; // Ancient Item
 const POD = "sv05-158"; // Future Item
 const GUIDANCE = "sv05-147"; // Ancient Supporter — Explorer's Guidance
@@ -845,13 +845,18 @@ describe("§7 — Awakening Drum and Reboot Pod", () => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-describe("§8 — R-PX5: Iron Thorns ex is FUTURE now, and its own Initialization stays unbuilt", () => {
-  it("🛑 it receives Cobalt Command and Peak Acceleration as a Future body; it has no program", () => {
-    expect(programFor(IRON_THORNS_EX)).toBeUndefined();
+describe("§8 — R-PX5: Iron Thorns ex is FUTURE now, and its own Initialization stays unbuilt (🆕🆕🆕 D571: BUILT — `ironThornsD571.test.ts`)", () => {
+  it("🛑 it receives Cobalt Command and Peak Acceleration as a Future body; it has no program (🆕🆕🆕 D571: it HAS one — Initialization)", () => {
+    // 🆕🆕🆕 D571 (D539) — INVERTED: `programFor(IRON_THORNS_EX)` was asserted UNDEFINED (R-PX5's
+    // "Initialization stays UNBUILT"). D571 built it, so the program is now DEFINED and carries
+    // the lock. The `size === 0` line below STILL holds, now for a different reason: both bodies
+    // on this board are FUTURE, which Initialization exempts (and Iron Crown ex is the only
+    // Rule Box body besides the source).
+    expect(programFor(IRON_THORNS_EX)?.passive?.disableAbilities?.exemptBanner).toBe("Future");
     expect(bannerOf(card(IRON_THORNS_EX))).toBe("Future");
     const state = table({ p1: IRON_THORNS_EX, p1Bench: [IRON_CROWN] });
     expect(seatPreWRDamageBonus(state, "p1", card(IRON_THORNS_EX))).toBe(20);
-    expect(disabledAbilityUids(state).size).toBe(0); // no lock is built for it
+    expect(disabledAbilityUids(state).size).toBe(0); // no lock is built for it (🆕🆕🆕 D571: it is — and both bodies are Future, so it silences neither)
   });
 
   it("the four registry sentences stay UNREAD by the deriver (index-keyed rows play them)", () => {
@@ -868,8 +873,8 @@ describe("§8 — R-PX5: Iron Thorns ex is FUTURE now, and its own Initializatio
 
 // ─────────────────────────────────────────────────────────────────────────────
 describe("§9 — the version", () => {
-  it("the engine is 0.454.0", () => {
-    expect(engineVersion).toBe("0.454.0");
-    expect(manifest.version).toBe("0.454.0");
+  it("the engine is 0.455.0", () => {
+    expect(engineVersion).toBe("0.455.0");
+    expect(manifest.version).toBe("0.455.0");
   });
 });

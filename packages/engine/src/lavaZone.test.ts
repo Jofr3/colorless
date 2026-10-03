@@ -604,7 +604,8 @@ describe("§9 — THE ABILITY-LOCK CASE IS REFUSED, AND THE REFUSAL IS THE RESUL
     expect(programFor("sv01-096")?.passive?.disableAbilities?.stage).toBe("Basic");
     expect(programFor("sv02-089")?.passive?.disableAbilities?.stage).toBe("Basic");
     expect(programFor("sv02-127")?.passive?.disableAbilities?.requiresActive).toBe(true);
-    // 🆕🆕🆕 D559 — the two legal locks the registry builds: Flutter Mane is Active-sourced on the OPPONENT's
+    // 🆕🆕🆕 D559 — the two legal locks the registry builds [🆕🆕🆕 D571 (D539): THREE — Iron Thorns ex
+    // "Initialization" is built; it reaches only Rule Box bodies and is Active-sourced]: Flutter Mane is Active-sourced on the OPPONENT's
     // Active (Ting-Lu's argument), Gastrodon names Stage 2 only.
     // ⛔ WITHDRAWN (D559 landing): this `it`'s title and "(Ting-Lu's argument)" —
     // Flutter Mane is NOT narrower than this row: promoted into the actor's Active

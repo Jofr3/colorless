@@ -10585,6 +10585,35 @@ export type EffectOp =
       count: number;
       recordAs?: EffectSlot;
     }
+  /** 🆕🆕🆕 **D571 — REVEAL THE TOP `n` OF THE CONTROLLER's DECK, DISCARD THE MATCHES, SHUFFLE
+      THE REST BACK.** Iron Thorns `sv05-062`/`svp-098` "Destructo-Press" — *"Reveal the top
+      5 cards of your deck. This attack does 70 damage for each Future card you find there.
+      Then, discard those Future cards and shuffle the other cards back into your deck."* —
+      **2 legal printings**, a registry program (`DESTRUCTO_PRESS`): this op with `filter`
+      `bannerCard "Future"` and `recordAs "discarded"`, then `damageDefender { per: 70,
+      count: "discarded" }`. The window is `min(n, deck)`; the cards matching `filter` go to
+      the discard pile (one `DECK_TOP_DISCARDED`, D334's "no per-card decision" — the print
+      names which cards leave, so no prompt), and the whole deck is then shuffled through
+      `rngState` (one `SHUFFLE`). The matched uids are filed under `recordAs` ALWAYS — the
+      empty list too, before the zero-card return (`discardDeckTop`'s overwrite rule).
+
+      🛑 **A SIBLING AND NOT A WIDENING, OF EITHER NEIGHBOUR.** `discardDeckTop` is
+      COUNT-ONLY and never shuffles (its own doc says both, and a `filter` rider would make
+      the first false and the shuffle the second); `lookAtTopN` PARKS a `chooseCards` and has
+      no `recordAs`. No `whose`: the one printing says *"your deck"* (D231/D412).
+
+      ⚠️ **R-DP1 ⚠️ UNRULED (docs/decisions.md D571): THE DISCARD RUNS BEFORE THE DAMAGE**,
+      against the printed "Then" order — the count is fixed at the reveal and the discard
+      moves no card the damage reads, so the number is the same on every board. ⚠️ **THE
+      REVEAL OF THE NON-MATCHING CARDS IS A DISPLAY DEBT**: the log names the discarded
+      matches only (decisions.md D571). A new `EffectOp` member (D125): it rides no park (the
+      op itself never parks), and a 0.454 reader never sees it outside a D571 program. */
+  | {
+      op: "revealTopDiscardMatching";
+      n: number;
+      filter: CardFilter;
+      recordAs?: EffectSlot;
+    }
   /** SEARCH the controller's whole deck for up to `max` Energy cards matching
       `filter` and ATTACH them straight onto the controller's own in-play Pokémon
       — the deck-SEARCH sibling of `attachFromTop`, which reaches only a window on
@@ -19027,7 +19056,7 @@ const PILE_SUPPORTER_NAME_FRAGMENT = /^Supporter card that has "([^"]+)" in its 
 /** 🆕🆕 D440 — the printed noun between "for each " and " in your[ opponent's] discard
     pile.", resolved to the `CardFilter` that already answers it, or `null` when this
     file has no way to spell it (Ancient) — which keeps the sentence on the loud
-    (🆕🆕🆕 D569 (D539): it spells Ancient now (`bannerCard`); an unmapped noun such as "Future card" is what stays loud)
+    (🆕🆕🆕 D569 (D539): it spells Ancient now (`bannerCard`); an unmapped noun such as "Future card" is what stays loud) (🆕🆕🆕 D571: still TRUE — Destructo-Press's "Future card" is built on the REGISTRY route, which adds no reader)
     ATTACK_EFFECT_SKIPPED path.
 
     🆕🆕🆕 **D510 — IT HAS A SECOND BRANCH NOW, AND THE PARAGRAPH BELOW USED TO SAY
@@ -34519,6 +34548,7 @@ export function deriveAttackDamageBonus(text: string): AttackDamageBonus | null 
   // `per >= 1` is the printed-zero guard every arm in both families carries;
   // `filter !== null` is the VOCABULARY, and "Ancient card" reaches this line and must
   // (🆕🆕🆕 D569 (D539): WITHDRAWN as the witness — "Ancient card" is a `DISCARD_PILE_NOUNS` row now (`bannerCard`); "Future card" is what must leave it LOUD)
+  // (🆕🆕🆕 D571: still TRUE — Destructo-Press is BUILT on the REGISTRY route and adds no reader)
   // leave it LOUD; and the SEAT comes from capture 3 — the printed noun phrase — and
   // NEVER from which reader is running.
   //

@@ -725,6 +725,13 @@ are collected ungated, a lock does not disable ANOTHER lock's source — an Acti
 Ting-Lu ex opposite a damaged Klefki should switch Mischievous Lock off and does not.
 Fixing it means a fixpoint pass rather than one read; `abilityLock.test.ts` holds a
 tripwire test that pins the current behaviour and flips when the fixpoint lands.
+🆕🆕🆕 **D571 (D539): the stratified pass LANDED (R-LK2 ⚠️ UNRULED, `continuous.ts
+disabledAbilityUids`), but the example above is NOT paid — it is CONTRADICTED.** Ting-Lu ex
+opposite a DAMAGED Klefki is a MUTUAL cycle (Mischievous Lock reaches Ting-Lu ex, a Basic;
+Cursed Land reaches the damaged non-ex Klefki), and R-LK2 keeps a source cycle BOTH ON, so
+Mischievous Lock stays on there (pinned as a rung in `abilityLock.test.ts`). The tripwire D571
+flipped is a different, ONE-WAY board — an UNDAMAGED Klefki, which Cursed Land cannot reach —
+where Cursed Land now goes OFF.
 
 **The second non-holder-modifying passive: `removeWeakness` (D104, engine 0.55.0).**
 Florges sv01-093 "Blooming Garden" ("Your Pokémon in play have no Weakness") is
@@ -28524,7 +28531,7 @@ R-FZ1 ⚠️ UNRULED, reachable: rewrite then retype → {C}×2 · R-FZ2: the nu
 drops the rewrite · R-FZ4 a Dragon with no printed Weakness takes ×2 from {P} · R-LK1 (not D557's R-L1) lock-vs-lock stays ungated,
 argued unreachable among the two legal locks the registry builds — only while Iron Thorns ex "Initialization" stays
 unbuilt (an Active Flutter Mane silencing an opposing Active Iron Thorns ex re-opens it; the fixpoint pass is owed then;
-tripwired by id), pinned on Klefki vs Flutter Mane · R-O1 ⚠️ a reachable DEVIATION: a benched Orthworm ex
+tripwired by id) [🆕🆕🆕 D571 (D539): PAID — Initialization BUILT with the stratified pass, R-LK2; see D571 below], pinned on Klefki vs Flutter Mane · R-O1 ⚠️ a reachable DEVIATION: a benched Orthworm ex
 does not retaliate · R-M1 only an Active Maractus KO pays · R-GC Gear Coating stacks and pays own-side hits (D558 ⑶-bis
 inherited) · R-RA Rock Armor pays own-side hits ("from attacks").
 
@@ -29005,7 +29012,7 @@ count `benchNounScaling.test.ts` §5 still pinned at 31 (now 32, "Ancient Pokém
 ### (d) Owed
 The whole-corpus sweep (predicted `3840 · 52` over 3,892, ~~stacked on D568's still-PENDING~~ 🆕 on D568's PAID `3794 · 52` over 3,846, close-out `8e36c690`). R-PX1 …
 R-PX6 UNRULED. The nine deferred Paradox printings (Initialization ×3, Destructo-Press ×2, C.O.D.E.: Protect, Unrelenting
-Onslaught, Dual Core, Iron Moth's Anachronism Repulsor). NEXT: see `progress.md` NEXT — festival-lead (rank 2, MRV 36 → 37). (🆕🆕🆕 D570: TAKEN — built as D570 below.)
+Onslaught, Dual Core, Iron Moth's Anachronism Repulsor). (🆕🆕🆕 D571 (D539): Initialization ×3 and Destructo-Press ×2 BUILT — see D571 below; four stay deferred.) NEXT: see `progress.md` NEXT — festival-lead (rank 2, MRV 36 → 37). (🆕🆕🆕 D570: TAKEN — built as D570 below.)
 
 ## D570 — Festival Lead, the attack-again turn machine: 7 printings / 1 text / 1 object (engine 0.454.0, `MATCH_RECORD_VERSION` 36 → 37)
 
@@ -29080,4 +29087,62 @@ all killed undeclared in the probe `--decision D570`); eight MRV rows, `D242-wir
 ### (d) Owed
 The whole-corpus sweep (predicted `3868 · 52` over 3,920 [third review; `3867 · 52` over 3,919 before], stacked on ~~D569's still-PENDING `3840 · 52` over 3,892~~ 🆕 D569's PAID-WITH-ONE-GAP `3839 · 52 · 1 GAP` over 3,892 (close-out `a04889a9`; the GAP row `D471-min-region-takes-the-first-hit` restored to KILLED there by a fixed pinned §E witness, so the effective base is the predicted `3840 · 52`) — the prediction stands, and the exact-prediction streak restarts at D570). R-FL1 …
 R-FL4 UNRULED. The display debt (no "attack again" banner; `moveToAction.ts` drag affordances not pre-folded against the
-window; 🆕 (c-ter) both HUDs' confusion hint still says "turn ends" [🆕 third review: NOT a debt — unreachable in play, (c-quater)]). NEXT: see `progress.md` NEXT — paradox-part-b D570a [🆕 third review: the label collides with D570 = Festival Lead; taken next it is D571, and `MATCH_RECORD_VERSION` stays 37].
+window; 🆕 (c-ter) both HUDs' confusion hint still says "turn ends" [🆕 third review: NOT a debt — unreachable in play, (c-quater)]). NEXT: see `progress.md` NEXT — paradox-part-b D570a [🆕 third review: the label collides with D570 = Festival Lead; taken next it is D571, and `MATCH_RECORD_VERSION` stays 37]. (🆕🆕🆕 D571: TAKEN — built as D571 below, with the Ignition rider.)
+
+## D571 — Paradox part b (Iron Thorns) + the Ignition rider: 6 printings / 3 texts / 3 objects (engine 0.455.0, `MATCH_RECORD_VERSION` stays 37)
+
+**Status:** ✅ BUILT in the `lum-wt-d571` worktree (detached at `f879402c`), ~~NOT committed by the builder~~ committed on
+`d571-prep` at `03e68891` and 🆕 LANDED on `main` by cherry-pick onto the D570 close-out `b3a0d539`, while D570's
+whole-corpus sweep ran in the main checkout (never written). The top row of the D571 pricing round (`progress.md` NEXT
+(7), recorded verbatim): paradox-part-b-thorns plus the judge's Ignition rider, 6 printings, 0.55 printings per file /
+0.33 per site.
+
+### (a) The cards
+- Iron Thorns ex `sv06-077` / `sv06-196` / `sv08.5-032` — Ability "Initialization": *"As long as this Pokémon is in the
+  Active Spot, Pokémon with a Rule Box in play (both yours and your opponent's) have no Abilities, except for Future
+  Pokémon."* Volt Cyclone keeps deriving.
+- Iron Thorns `sv05-062` / `svp-098` — attack index 0 "Destructo-Press": *"Reveal the top 5 cards of your deck. This
+  attack does 70 damage for each Future card you find there. Then, discard those Future cards and shuffle the other cards
+  back into your deck."* Megaton Lariat (index 1) stays unclaimed.
+- Ignition Energy `sv10.5w-086`: *"If this card is attached to 1 of your Pokémon, discard it at the end of your turn. As
+  long as this card is attached to a Pokémon, it provides {C} Energy. If this card is attached to an Evolution Pokémon, it
+  provides {C}{C}{C} Energy instead."*
+
+### (b) The design
+- **Step 0, the gate witness** (the D569 close-out's rule): `opaque-anatomy-gate.ts` §C labels a literal PRIZE-ZONE
+  sentence through the NEW exported `blockerMarkerOf` (`opaque-anatomy.ts`, the labelling line moved byte for byte), its
+  premise re-measured, so `D471-co-marker-may-label` no longer rides the live residue (Destructo-Press was one of its five
+  witnesses). +1 row on the premise.
+- **Initialization** — `INITIALIZATION` beside `MISCHIEVOUS_LOCK`: `{ side "both", requiresActive, ruleBox, exemptBanner
+  "Future" }`. Two catalog-only keys on `PassiveEffects.disableAbilities`, two `auraSuppresses` lines (`hasRuleBox`,
+  `matchesFilter` `bannerPokemon`).
+- **R-LK2, the stratified lock pass** (`disabledAbilityUids`): ungated collection, each Pokémon aura tagged with its
+  holder (a Stadium has none); a grounded fixpoint — ON once every aura reaching the holder is OFF, OFF once an ON aura
+  reaches it; what is left undecided holds the mutual cycles and what lies downstream of them, so only the SOURCE
+  cycles (no undecided aura outside them reaches them) are switched ON and the grounding re-runs, until nothing is
+  undecided (the review's fix: a lock downstream of a cycle was left ON); only ON auras mark targets; skipped below
+  two auras. Flutter Mane vs Iron Thorns ex is one-way (Initialization OFF); Klefki vs Flutter Mane stays both-on;
+  Klefki now switches Ting-Lu ex's Cursed Land OFF and silences Spiritomb (whose OFF verdict no board can observe —
+  Klefki's Basics contain Spiritomb's Basic Vs); Initialization switches Ting-Lu ex OFF; Ting-Lu ex vs a damaged
+  Flutter Mane is a source cycle (both ON) that switches a damaged benched Gastrodon OFF.
+- **Destructo-Press** — `DESTRUCTO_PRESS` on the registry route: the NEW non-parking `revealTopDiscardMatching { n,
+  filter, recordAs? }` (a sibling of `discardDeckTop` / `discardDeckBottom`; `DECK_TOP_DISCARDED` for the matches,
+  `SHUFFLE` through `rngState`, the matches filed always) over `bannerCard "Future"`, then `damageDefender { per 70,
+  count "discarded" }`.
+- **Ignition** — `IGNITION_ENERGY`: Reversal's `"Evolution"` stage value, three Colorless units, and the NEW
+  `EnergyProgram.discardAtEndOfYourTurn`, paid by flow.ts's `endTurn` stage (`discardEndOfTurnEnergy`, the turn owner's
+  bodies, one `ENERGY_DISCARDED` per body).
+
+### (c) Readings (`docs/decisions.md` D571) — all ⚠️ UNRULED
+R-LK2 the stratified pass (above) · R-DP1 the discard precedes the damage (same number on every board) · R-IG1 Ignition
+discards after Powerglass and Amarys, before `TURN_ENDED`, on the turn owner's bodies only.
+
+### (d) Verified, and owed
+`bun run check` 584 files / 14,040 tests, exit 0; precheck 3,935; the four gates OK; the probe
+`--decision D571 --allow-dirty` 15 killed · 0 · 0 GAP · 0 error; 51 neighbour rows killed; all 16 live-census gate rows
+killed. Census: `BUILT.ability` 382, `BUILT.trainer` 254 (unmoved, checked), `BUILT.specialEnergy` 9, `BUILT.attack`
+1707; residue 18/25, OPAQUE 13/20. Owed: the whole-corpus sweep (predicted `3883 · 52` over 3,935, stacked on D570's
+~~still-PENDING~~ 🆕 PAID-EXACTLY `3868 · 52` over 3,920, close-out `b3a0d539`). Carried: the reveal display debt (the non-matching revealed cards are not
+logged), Ignition's catalog `energyType "Normal"` debt (cards.ts `basicEnergy` matches it — outside the whitelist,
+D538). NEXT: see `progress.md` NEXT — calm-divers or chooseNumber-A (one, not both; re-price the rider now that Ignition
+is spent), then the Paradox MRV trio (37 → 38).

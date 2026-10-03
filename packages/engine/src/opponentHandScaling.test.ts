@@ -958,6 +958,10 @@ describe("§6 — the population claims this slice rests on", () => {
     // the REASON — `banners.ts` supplies the Future banner since D569 (no catalog column, TRUE);
     // the sentence (Iron Thorns `sv05-062`/`svp-098` "Destructo-Press") stays unbuilt on its
     // reveal-top-5 DECK window, a new op, deferred — so "refused … for its zone" now carries it.)
+    // (🆕🆕🆕 D571 (D539): "stays unbuilt … a new op, deferred" is WITHDRAWN — D571 built the op
+    // (`revealTopDiscardMatching`) and the sentence on the REGISTRY route (`DESTRUCTO_PRESS`). The
+    // READERS still refuse it for its zone, which is all this rung asserts: `resolvedByAnyReader`
+    // stays false.)
     // for its zone anyway. What the pattern CANNOT see: a fold spelling the zone without
     // the word *hand* and without *you find there*.
     const DECK_WINDOW_FUTURE =

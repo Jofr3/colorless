@@ -857,7 +857,11 @@ describe("D359 §6 — the ids this file rests on are real and locally seated", 
     // 🆕🆕🆕 D570 — 949 -> **956**: SEVEN registry keys on ONE program object — Festival Lead
     // (Dipplin ×3, Goldeen ×2, Swirlix, Seaking), all NON-attack (`passive.attackTwiceIf`). Real
     // catalog ids, no `fix-*` key, inserted MID-MAP after D569's rows (`raw[last]` stays put).
-    expect(registryCardIds()).toHaveLength(956);
+    // 🆕🆕🆕 D571 — 956 -> **962**: SIX registry keys on THREE program objects — Iron Thorns ex
+    // "Initialization" ×3 (non-attack, `passive.disableAbilities`), Iron Thorns "Destructo-Press"
+    // ×2 (ATTACK index 0) and Ignition Energy ×1 (non-attack, `energy`). Real catalog ids, no
+    // `fix-*` key, inserted MID-MAP after D570's rows (`raw[last]` stays put).
+    expect(registryCardIds()).toHaveLength(962);
     for (const id of Object.values(QUANTITY_IDS).flat()) {
       if (programFor(id) === undefined) continue;
       // Every id that DOES have a program had one before this slice: the eight

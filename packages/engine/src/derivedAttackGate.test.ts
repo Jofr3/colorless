@@ -873,6 +873,6 @@ describe("D444 §6 — `MATCH_RECORD_VERSION` stays 29, driven over bytes both w
     // D208's debt and D275's mutant: `engineVersion` and `packages/engine/package.json`
     // are one fact with two spellings, and the pin is authored HERE rather than
     // inherited (D427 — count your own suite's pin).
-    expect(engineVersion).toBe("0.454.0");
+    expect(engineVersion).toBe("0.455.0");
   });
 });

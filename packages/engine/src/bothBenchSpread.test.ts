@@ -1073,7 +1073,10 @@ describe("D507 §8 — the FOUR-ZONE sibling is REFUSED, and the condition that 
     // 🆕🆕🆕 D552 — `damageDefender` 10 → 11 ALONE: `discardScaledBoostProgram`'s `selfHandAttach`
     // case is one more raw `op: "damageDefender",` site (corpus FILE LINE 569); `spreadDamage` is
     // untouched. Outside the census sweep's shape, found by the full run (D419/D521 (4)).
-    expect(producers("damageDefender")).toBe(11);
+    // 🆕🆕🆕 D571 — `damageDefender` 11 → 12: registry.ts `DESTRUCTO_PRESS`'s `{ op:
+    // "damageDefender", per: 70, count: "discarded" }` is one more raw site; `spreadDamage`
+    // untouched at 10. Outside the census sweep's shape, found by the full run (D419/D521 (4)).
+    expect(producers("damageDefender")).toBe(12);
     expect(producers("spreadDamage")).toBe(10);
     expect(producers("damageDefender")).toBeGreaterThan(producers("spreadDamage") - 4);
   });

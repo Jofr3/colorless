@@ -788,7 +788,9 @@ export function useAbility(state: GameState, action: UseAbilityAction): ApplyRes
   // §9 — a continuous Ability-lock aura (Klefki / Spiritomb / Ting-Lu ex — 🆕🆕🆕 D559:
   // and Flutter Mane / Gastrodon, the two legal locks the registry builds — Iron
   // Thorns ex "Initialization" and Team Rocket's Watchtower are legal and unbuilt; D539 —
-  // 🆕🆕🆕 D566 (D539): the Watchtower is BUILT, the first Stadium-sourced lock) turns
+  // 🆕🆕🆕 D566 (D539): the Watchtower is BUILT, the first Stadium-sourced lock — 🆕🆕🆕 D571
+  // (D539): and Initialization is BUILT, so the legal Pokémon locks the registry builds are
+  // Flutter Mane / Gastrodon / Iron Thorns ex, settled by the stratified pass, R-LK2) turns
   // this Pokémon's Abilities off. Checked before activeOnly/oncePerTurn/cost so a
   // locked Pokémon reports the lock, not an incidental cost failure.
   if (disabledAbilityUids(state).has(uid)) {

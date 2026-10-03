@@ -34,6 +34,7 @@ import type {
   InPlayPokemon,
   KnockOutMark,
   PendingStage,
+  PokemonTarget,
   Seat,
   UsedAttack,
 } from "./types";
@@ -2402,6 +2403,30 @@ export function resolvePromotionAndResume(
   return advance(next, events);
 }
 
+/** 🆕🆕🆕 D571 — Ignition Energy `sv10.5w-086`: every attached Energy card whose program sets
+    `discardAtEndOfYourTurn` comes off `seat`'s in-play Pokémon into `seat`'s discard pile, one
+    `ENERGY_DISCARDED` per body, Active then Bench (`discardEnergy`'s row order). Called by the
+    `endTurn` stage with the TURN OWNER, so the opponent's Ignition stays put until their own
+    turn ends. A board with none returns `state` itself, so every other turn end is
+    byte-identical. */
+function discardEndOfTurnEnergy(state: GameState, seat: Seat, events: GameEvent[]): GameState {
+  const side = state.players[seat];
+  const discarded: string[] = [];
+  const strip = (pokemon: InPlayPokemon, from: PokemonTarget): InPlayPokemon => {
+    const taken = pokemon.energy.filter(
+      (uid) => programFor(cardOfUid(state, uid)?.id ?? "")?.energy?.discardAtEndOfYourTurn === true,
+    );
+    if (taken.length === 0) return pokemon;
+    discarded.push(...taken);
+    events.push({ type: "ENERGY_DISCARDED", seat, actor: seat, uids: taken, from, host: topUid(pokemon) ?? "" });
+    return { ...pokemon, energy: pokemon.energy.filter((uid) => !taken.includes(uid)) };
+  };
+  const active = side.active === null ? null : strip(side.active, { spot: "active" });
+  const bench = side.bench.map((pokemon, index) => strip(pokemon, { spot: "bench", index }));
+  if (discarded.length === 0) return state;
+  return withSide(state, seat, { ...side, active, bench, discard: [...side.discard, ...discarded] });
+}
+
 /** Drain GameState.pending stage by stage. Automatic stages (TURN_ENDED,
     checkup, the next startTurn) just run; decision stages either PARK — set
     the matching ko:* interrupt phase, announce it with a prompt event so an
@@ -2493,8 +2518,13 @@ export function advance(state: GameState, events: GameEvent[]): ApplyResult {
         threshold !== null && state.players[stage.seat].hand.length >= threshold
           ? discardHand(state, { seat: stage.seat }, events)
           : state;
+      // 🆕🆕🆕 D571 — Ignition Energy's *"If this card is attached to 1 of your Pokémon,
+      // discard it at the end of your turn."* — the TURN OWNER's bodies only ("your turn"),
+      // after Powerglass (whose attach is then discarded too, should it ever attach one) and
+      // after Amarys (moot: neither moves the other's cards) — R-IG1 ⚠️ UNRULED. Never parks.
+      const ignited = discardEndOfTurnEnergy(ended, stage.seat, events);
       events.push({ type: "TURN_ENDED", turn: state.turn, seat: stage.seat });
-      return advance(popStage(ended), events);
+      return advance(popStage(ignited), events);
     }
     case "checkup":
       // runCheckup pops the stage itself: its KO stage-pairs go in front of

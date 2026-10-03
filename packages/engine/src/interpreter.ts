@@ -3692,6 +3692,32 @@ function stepOp(
         }),
       };
     }
+    case "revealTopDiscardMatching": {
+      // 🆕🆕🆕 D571 — Destructo-Press: reveal the top `n` (clamped by the deck), discard the
+      // ones matching `filter`, shuffle the rest back. The matches are filed under `recordAs`
+      // BEFORE the zero-card return (`discardDeckTop`'s overwrite rule). R-DP1: the discard
+      // precedes the printed damage, which reads only the filed count.
+      const side = state.players[ctx.seat];
+      const window = side.deck.slice(0, Math.max(0, op.n));
+      const matched = window.filter((uid) => matchesFilter(cardOfUid(state, uid), op.filter));
+      recordMoved(record, op.recordAs, matched);
+      if (window.length === 0) return { done: state };
+      const taken = new Set(matched);
+      const [deck, rngState] = shuffle(
+        side.deck.filter((uid) => !taken.has(uid)),
+        state.rngState,
+      );
+      if (matched.length > 0) {
+        events.push({ type: "DECK_TOP_DISCARDED", seat: ctx.seat, actor: ctx.seat, uids: matched });
+      }
+      events.push({ type: "SHUFFLE", seat: ctx.seat });
+      return {
+        done: {
+          ...withSide(state, ctx.seat, { ...side, deck, discard: [...side.discard, ...matched] }),
+          rngState,
+        },
+      };
+    }
     case "attachFromDeck": {
       // SEARCH the deck for Energy and attach it onto your own Pokémon (Charizard
       // ex "Infernal Reign" / Janine's Secret Art). The same compound decision

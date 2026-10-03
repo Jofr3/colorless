@@ -709,8 +709,8 @@ describe("§7 — the gain is the RAW reader summand alone", () => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("§8 — the engine version", () => {
-  it("engineVersion is 0.454.0", () => {
-    expect(engineVersion).toBe("0.454.0");
+  it("engineVersion is 0.455.0", () => {
+    expect(engineVersion).toBe("0.455.0");
   });
 });
 
@@ -803,6 +803,10 @@ describe("§9 — the `Ancient`/`Future` banner is DATA-BLOCKED, and the falsifi
     // refuse; the last four stay unbuilt for reasons that are NOT the banner (Iron Moth's
     // persisted attacker class, a seat-level attack record, a reveal-top-5 op, an every-Future
     // prevention). No splitter claims any of the twelve.
+    // 🆕🆕🆕 D571 (D539): "the last four stay unbuilt" is now THREE — the reveal-top-5 row (Iron
+    // Thorns "Destructo-Press") is a hand-written REGISTRY attack on the NEW
+    // `revealTopDiscardMatching`; the readers still refuse it, so the reader-claimed list below
+    // is unchanged.
     const readerClaimed = banner.filter(([, text]) => resolvedByAnyReader(text)).map(([, t]) => t);
     expect(readerClaimed.sort()).toEqual(
       [

@@ -414,6 +414,10 @@ describe("§1 — the SHAPE question: which reading does the printed noun phrase
     // an engine table keyed by printing id was the fix). RE-POINTED BY VALUE AND OWNER again (D438)
     // to the next still-unread row at the SAME printing count, 2: Iron Thorns `sv05-062`/`svp-098`
     // "Destructo-Press" — a reveal-top-5 op the engine does not have (deferred, decisions.md D569).
+    // 🆕🆕🆕 D571 (D539): ~~"a reveal-top-5 op the engine does not have"~~ — the op EXISTS
+    // (`revealTopDiscardMatching`) and Destructo-Press is BUILT on the REGISTRY route
+    // (`DESTRUCTO_PRESS`). No READER reads the sentence, so it is still the still-unread control
+    // this rung needs (`resolvedByAnyReader` false, below) — the value stays, the reason moved.
     const stillUnread =
       "Reveal the top 5 cards of your deck. This attack does 70 damage for each Future card you find there. Then, discard those Future cards and shuffle the other cards back into your deck.";
     expect(units(corpus().filter(([, s]) => s === stillUnread))).toBe(prizeRow.printings);

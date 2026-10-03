@@ -6228,7 +6228,7 @@ export const MUTANTS: Mutant[] = [
     // CORPUS QUOTES** (D414/D415), so a value-keyed sweep over `toBe("0.391.0")` cannot
     // see it — this row's `find` spells the DECLARATION, not an assertion. Run
     // `precheck` after every version bump, not after the sweep tells you.
-    find: 'export const engineVersion = "0.454.0";',
+    find: 'export const engineVersion = "0.455.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -25372,7 +25372,7 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D471-co-marker-may-label",
     decision: "D471",
-    what: "\u26a0\ufe0f **THE DISCIPLINE THE SECOND AXIS RESTS ON, DELETED.** Dropping `m.verdict === \"blocker\" &&` lets a refuted CO-MARKER label a row, so `BLOCKED-CONTINUOUS` and `BLOCKED-PRIZE-ZONE` appear in the class table and `UNEXPLAINED` shrinks from 31 to something that reads like progress. **A partition that explains more rows is not a better partition if the extra explanations are the ones its own control already refuted** \u2014 the whole value of the built-side column is that it DISQUALIFIES markers, and a marker that can label after being disqualified is a column nobody reads. Killed by \u00a7C's `a CO-MARKER labelled a row` claim, which is what stops that assertion from being decorative.",
+    what: "\u26a0\ufe0f **THE DISCIPLINE THE SECOND AXIS RESTS ON, DELETED.** Dropping `m.verdict === \"blocker\" &&` lets a refuted CO-MARKER label a row, so `BLOCKED-CONTINUOUS` and `BLOCKED-PRIZE-ZONE` appear in the class table and `UNEXPLAINED` shrinks from 31 to something that reads like progress. **A partition that explains more rows is not a better partition if the extra explanations are the ones its own control already refuted** \u2014 the whole value of the built-side column is that it DISQUALIFIES markers, and a marker that can label after being disqualified is a column nobody reads. Killed by \u00a7C's `a CO-MARKER labelled a row` claim, which is what stops that assertion from being decorative. [🆕🆕🆕 D571 (D539, the D569 close-out's gate-witness rule): that claim rides FIVE live far residue sentences and D571 BUILT one of them (Destructo-Press, a SCHEMA-BANNER witness — 3/4 → 2/2), so the row is ALSO killed by §C's PINNED witness now: `blockerMarkerOf({ text: CO_PIN })` over the literal PRIZE-ZONE sentence «If you use this attack when you have exactly 1 Prize card remaining, you win this game.», its premise re-measured (`D571-gate-co-marker-pin-premise-broken`). The labelling line moved into the exported `blockerMarkerOf` byte for byte; this `find` is unchanged.]",
     file: "scripts/opaque-anatomy.ts",
     find: "    MARKERS.find((m) => m.verdict === \"blocker\" && m.rx.test(r.text)) ?? null;",
     replace: "    MARKERS.find((m) => m.rx.test(r.text)) ?? null;",
@@ -28690,8 +28690,9 @@ export const MUTANTS: Mutant[] = [
     //    Charge (REGISTRY, 1 printing); MEASURED off the live census. `replace` is the GENUINE
     //    pre-slice value (D552's 1690).
     // 🆕🆕🆕 RE-ANCHORED AT D569 (by script, cmp'd against HEAD — D540): 1693 -> 1705 (and the replace 1690 -> 1693, the GENUINE pre-slice value). ⚠️ THE STEP IS **12** ON TWO SUMMANDS — the four Paradox reader sentences (+6 printings) and the four registry attacks (+6) — MEASURED off the live census.
-    find: "  attack: 1705,",
-    replace: "  attack: 1693,",
+    // 🆕🆕🆕 RE-ANCHORED AT D571 (by script off the new bytes — D540): 1705 -> 1707 (and the replace 1693 -> 1705, the GENUINE pre-slice value). THE STEP IS **2** ON ONE SUMMAND — the registry attack Destructo-Press ×2 — MEASURED off the live census. `precheck` reported the `find` at 0x on the edit round that moved the constant, as it has since D495.
+    find: "  attack: 1707,",
+    replace: "  attack: 1705,",
     expectKilledBy: [
       "packages/engine/src/censusAtHead.test.ts",
     ],
@@ -41305,7 +41306,10 @@ export const MUTANTS: Mutant[] = [
     decision: "D566",
     what: "the Stadium's aura is never collected — Team Rocket's Watchtower silences nothing. Killed by §4's lock rungs.",
     file: "packages/engine/src/continuous.ts",
-    find: "  if (stadiumAura !== undefined && state.stadium !== null) {\n    auras.push({ aura: stadiumAura, sourceSeat: state.stadium.owner });\n  }\n",
+    // 🆕🆕🆕 D571 - RE-ANCHORED off the new bytes (D540: read from continuous.ts by script, never
+    //    retyped): the Stadium aura's push now carries `holder: null` (the stratified pass's tag —
+    //    a Stadium has no holder and is never attacked). The patch still deletes the whole push.
+    find: "  if (stadiumAura !== undefined && state.stadium !== null) {\n    auras.push({ aura: stadiumAura, sourceSeat: state.stadium.owner, holder: null });\n  }\n",
     replace: "",
     expectKilledBy: ["packages/engine/src/trainerBundleD566.test.ts"],
   },
@@ -43180,5 +43184,152 @@ export const MUTANTS: Mutant[] = [
     find: "    affordances are not pre-folded against the window (a carried display debt, decisions.md\n    D570). */\nexport const MATCH_RECORD_VERSION = 37;",
     replace: "    affordances are not pre-folded against the window (a carried display debt, decisions.md\n    D570). */\nexport const MATCH_RECORD_VERSION = 36;",
     expectKilledBy: ["apps/api/src/lobby/match.test.ts"],
+  },
+  // ── 🆕🆕🆕 D571 — PARADOX PART b (IRON THORNS) + THE IGNITION RIDER: the stratified lock pass
+  //    (R-LK2 — the source-cycle rule, the downstream rule the review added, the one-way OFF rule,
+  //    the ≥2-aura guard), `auraSuppresses`' two
+  //    new lines, the NEW `revealTopDiscardMatching` (clamp, filter, shuffle, the empty filing),
+  //    the Ignition `endTurn` discard and its owner-seat guard, two registry values, and the
+  //    gate's pinned co-marker witness. Every `find` asserted to occur exactly once before it was
+  //    written (D540); every replace names only identifiers its file binds (D533). Killed by
+  //    `ironThornsD571.test.ts` (plus D559 §7 and abilityLock's flipped rung) and
+  //    `opaque-anatomy-gate.ts`. ──
+  {
+    id: "D571-gate-co-marker-pin-premise-broken",
+    decision: "D571",
+    what: "the PINNED co-marker witness is swapped for a sentence NO co-marker matches: the pin's own claim (`blockerMarkerOf` returns null) still passes, so only the premise re-measure can see that the witness stopped discriminating. Killed by §C's premise check — the row that keeps the D571 pin from rotting into a tautology (the D569 close-out's gate-witness rule).",
+    file: "scripts/opaque-anatomy-gate.ts",
+    find: "const CO_PIN = \"If you use this attack when you have exactly 1 Prize card remaining, you win this game.\";",
+    replace: "const CO_PIN = \"If you use this attack, you win this game.\";",
+    expectKilledBy: [],
+    killedByCommand: ["bun", "scripts/opaque-anatomy-gate.ts"],
+  },
+  {
+    id: "D571-stratified-cycle-turns-off",
+    decision: "D571",
+    what: "R-LK2's cycle rule INVERTED: a mutual pair left undecided is switched OFF instead of kept ON, so Klefki vs Flutter Mane (D559 §7) silences each other and NEITHER lock bites. Killed by §2's mutual-pair rung and D559 §7.",
+    file: "packages/engine/src/continuous.ts",
+    // 🆕 RE-ANCHORED after the D571 review (by script off the new bytes — D540): the leftover-ON
+    //    line is gone; the cycle rule now lives in the SOURCE-cycle switch, and this row inverts it.
+    find: "      for (const i of sources) on[i] = true;",
+    replace: "      for (const i of sources) on[i] = false;",
+    expectKilledBy: ["packages/engine/src/ironThornsD571.test.ts", "packages/engine/src/abilityBundleD559.test.ts"],
+  },
+  {
+    id: "D571-stratified-no-one-way-off",
+    decision: "D571",
+    what: "R-LK2's OFF rule DROPPED: an ON lock reaching another lock's holder no longer switches it off, so every reached aura is left undecided and kept ON — the D559 ungated read restored. Killed by §2's Flutter Mane one-way rung and abilityLock's flipped Ting-Lu rung.",
+    file: "packages/engine/src/continuous.ts",
+    find: "          if (by.some((j) => on[j] === true)) {",
+    replace: "        if (false) {",
+    expectKilledBy: ["packages/engine/src/ironThornsD571.test.ts", "packages/engine/src/abilityLock.test.ts"],
+  },
+  {
+    id: "D571-stratified-downstream-kept-on",
+    decision: "D571",
+    what: "🆕 (the D571 review's BLOCKER, restored): every aura left undecided after the grounding is switched ON, not only the SOURCE cycles — so a lock DOWNSTREAM of a cycle keeps locking although an ON lock silences its holder (Ting-Lu ex vs a damaged Flutter Mane: Gastrodon silenced, yet Sticky Bind still locks a benched Stage 2). Killed by §2's downstream rung.",
+    file: "packages/engine/src/continuous.ts",
+    find: "        up.has(i) && [...up].every((k) => upstream[k]?.has(i) === true) ? [i] : [],",
+    replace: "        on[i] === undefined ? [i] : [],",
+    expectKilledBy: ["packages/engine/src/ironThornsD571.test.ts"],
+  },
+  {
+    id: "D571-stratified-guard-skips-pairs",
+    decision: "D571",
+    what: "the ≥2-aura guard raised to 3: a TWO-lock board (Flutter Mane vs Iron Thorns ex, Klefki vs Ting-Lu ex) skips the stratified pass and both auras stay ON. Killed by §2's one-way rung.",
+    file: "packages/engine/src/continuous.ts",
+    find: "  if (auras.length >= 2) {",
+    replace: "  if (auras.length >= 3) {",
+    expectKilledBy: ["packages/engine/src/ironThornsD571.test.ts"],
+  },
+  {
+    id: "D571-aura-rulebox-dropped",
+    decision: "D571",
+    what: "`auraSuppresses` drops the Rule Box narrowing: Initialization silences EVERY non-Future body, Rule Box or not. Killed by §2's first rung (a non-Rule-Box Bench body) and §2's Gastrodon rung.",
+    file: "packages/engine/src/continuous.ts",
+    find: "  if (aura.ruleBox === true && !hasRuleBox(top)) return false;\n",
+    replace: "",
+    expectKilledBy: ["packages/engine/src/ironThornsD571.test.ts"],
+  },
+  {
+    id: "D571-aura-banner-exemption-dropped",
+    decision: "D571",
+    what: "`auraSuppresses` drops \"except for Future Pokémon\": Initialization silences its own source and every Future Rule Box body, and a mirror pair locks itself out. Killed by §2's first rung and the mirror rung.",
+    file: "packages/engine/src/continuous.ts",
+    find: "  if (aura.exemptBanner !== undefined && matchesFilter(top, { kind: \"bannerPokemon\", banner: aura.exemptBanner })) return false;\n",
+    replace: "",
+    expectKilledBy: ["packages/engine/src/ironThornsD571.test.ts"],
+  },
+  {
+    id: "D571-reveal-window-unclamped",
+    decision: "D571",
+    what: "the reveal window is the WHOLE deck, not the top `n`: a Future card sixth from the top is counted and discarded. Killed by §4's first rung (210, not 280).",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      const window = side.deck.slice(0, Math.max(0, op.n));\n      const matched = window.filter",
+    replace: "      const window = side.deck;\n      const matched = window.filter",
+    expectKilledBy: ["packages/engine/src/ironThornsD571.test.ts"],
+  },
+  {
+    id: "D571-reveal-filter-ignored",
+    decision: "D571",
+    what: "the reveal's `filter` is ignored: every revealed card is discarded and counted. Killed by §4 (350, not 210; and the no-Future rung).",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      const matched = window.filter((uid) => matchesFilter(cardOfUid(state, uid), op.filter));",
+    replace: "      const matched = window.filter((uid) => cardOfUid(state, uid) !== undefined);",
+    expectKilledBy: ["packages/engine/src/ironThornsD571.test.ts"],
+  },
+  {
+    id: "D571-reveal-never-shuffles",
+    decision: "D571",
+    what: "the printed \"shuffle the other cards back into your deck\" DROPPED: the remainder keeps its order and the player keeps a deck whose top they have just read. The `SHUFFLE` row still prints. Killed by §4's shuffle rung (the order and the rng state).",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      const [deck, rngState] = shuffle(\n        side.deck.filter((uid) => !taken.has(uid)),\n        state.rngState,\n      );",
+    replace: "      const [deck, rngState] = [side.deck.filter((uid) => !taken.has(uid)), state.rngState] as const;",
+    expectKilledBy: ["packages/engine/src/ironThornsD571.test.ts"],
+  },
+  {
+    id: "D571-reveal-empty-deck-not-filed",
+    decision: "D571",
+    what: "the filing moves BEHIND the zero-card return: an empty deck leaves a STALE `discarded` slot standing, and the trailing count answers for an earlier op (`discardDeckTop`'s overwrite rule). Killed by §4's runProgram rung.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      recordMoved(record, op.recordAs, matched);\n      if (window.length === 0) return { done: state };",
+    replace: "      if (window.length === 0) return { done: state };\n      recordMoved(record, op.recordAs, matched);",
+    expectKilledBy: ["packages/engine/src/ironThornsD571.test.ts"],
+  },
+  {
+    id: "D571-ignition-never-discarded",
+    decision: "D571",
+    what: "the `endTurn` stage never pays Ignition Energy's discard: the {C}{C}{C} stays attached forever. Killed by §5.",
+    file: "packages/engine/src/flow.ts",
+    find: "      const ignited = discardEndOfTurnEnergy(ended, stage.seat, events);",
+    replace: "      const ignited = ended;",
+    expectKilledBy: ["packages/engine/src/ironThornsD571.test.ts"],
+  },
+  {
+    id: "D571-ignition-wrong-seat",
+    decision: "D571",
+    what: "the discard reads the OTHER seat: your turn's end strips your opponent's Ignition and leaves yours. Killed by §5's owner rung and the Active/Bench rung.",
+    file: "packages/engine/src/flow.ts",
+    find: "      const ignited = discardEndOfTurnEnergy(ended, stage.seat, events);",
+    replace: "      const ignited = discardEndOfTurnEnergy(ended, otherSeat(stage.seat), events);",
+    expectKilledBy: ["packages/engine/src/ironThornsD571.test.ts"],
+  },
+  {
+    id: "D571-destructo-counts-pokemon-only",
+    decision: "D571",
+    what: "Destructo-Press counts Future POKÉMON (`bannerPokemon`) where the print says Future CARD: a Future Trainer (Reboot Pod) in the window is neither counted nor discarded. Killed by §1 and §4's first rung.",
+    file: "packages/engine/src/registry.ts",
+    find: "        filter: { kind: \"bannerCard\", banner: \"Future\" },\n        recordAs: \"discarded\",",
+    replace: "        filter: { kind: \"bannerPokemon\", banner: \"Future\" },\n        recordAs: \"discarded\",",
+    expectKilledBy: ["packages/engine/src/ironThornsD571.test.ts"],
+  },
+  {
+    id: "D571-initialization-exempts-ancient",
+    decision: "D571",
+    what: "Initialization exempts ANCIENT Pokémon instead of Future: it silences its own source and every Future Rule Box body (a lone aura is ON whatever reaches its holder). Killed by §1 and §2's first rung.",
+    file: "packages/engine/src/registry.ts",
+    find: "      ruleBox: true,\n      exemptBanner: \"Future\",",
+    replace: "      ruleBox: true,\n      exemptBanner: \"Ancient\",",
+    expectKilledBy: ["packages/engine/src/ironThornsD571.test.ts"],
   },
 ];

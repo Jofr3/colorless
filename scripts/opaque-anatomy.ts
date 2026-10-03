@@ -306,7 +306,9 @@ export const MARKERS: readonly Marker[] = [
       // 🆕🆕🆕 D569 (D539): and Slice 2 part a DID — the former `needs` was ~~"an ingest COLUMN.
       //    `cardSchema` has 21 keys and none classifies the banner (D468), so a filter over it
       //    counts 0 on every board forever"~~ ("none classifies" stays TRUE of `cardSchema`).
-      "nothing new — `banners.ts` (D568/D569) classifies all three banners by printing id; what is left of the Ancient/Future residue is blocked by OTHER mechanisms (a persisted attacker class, a seat-level attack record, a reveal-top-N op, a set-target block)",
+      // 🆕🆕🆕 D571 (D539): "a reveal-top-N op" is WITHDRAWN from the list — D571 built it
+      //    (`revealTopDiscardMatching`, Iron Thorns "Destructo-Press" on the registry route).
+      "nothing new — `banners.ts` (D568/D569) classifies all three banners by printing id; what is left of the Ancient/Future residue is blocked by OTHER mechanisms (a persisted attacker class, a seat-level attack record, a set-target block)",
   },
   {
     name: "TERA-BANNER",
@@ -526,11 +528,22 @@ export type Anatomy = {
     the class is an ARTEFACT — gets the first question. The marker table below
     reports every marker's hits over ALL of `OPAQUE`, not only over the far half,
     so nothing a `MULTI-k` label covers is hidden by the ordering. */
+/** 🆕🆕🆕 D571 — AXIS ②'s LABEL for one FAR row, lifted out of `ANATOMY`'s map byte for
+    byte (the `MARKERS.find` line, and so `D471-co-marker-may-label`'s `find`, is unchanged).
+    Exported for ONE extra caller: `opaque-anatomy-gate.ts` §C's PINNED co-marker witness,
+    which asks this question of a LITERAL far sentence rather than of the live residue
+    (the D569 close-out's gate-witness rule — D571 builds Destructo-Press, one of the five
+    live co-marker witnesses, and the three Ancient/Future ones are the next to go). */
+export function blockerMarkerOf(r: { readonly text: string }): Marker | null {
+  const marker =
+    MARKERS.find((m) => m.verdict === "blocker" && m.rx.test(r.text)) ?? null;
+  return marker;
+}
+
 export const ANATOMY: readonly Anatomy[] = OPAQUE.map((r) => {
   const hit = minRegionHit(r.text);
   if (hit !== null) return { units: r.units, text: r.text, cls: `MULTI-${hit.k}`, hit, marker: null };
-  const marker =
-    MARKERS.find((m) => m.verdict === "blocker" && m.rx.test(r.text)) ?? null;
+  const marker = blockerMarkerOf(r);
   return {
     units: r.units,
     text: r.text,

@@ -707,7 +707,7 @@ describe("D559 §6 — Sticky Bind: from the Bench, BENCHED Stage 2 Pokémon, bo
 });
 
 // ────────────────────────────────────────────────────────────────────────────
-describe("D559 §7 — R-LK1: lock-vs-lock stays UNGATED (both locks stay on), pinned on rotated Klefki", () => {
+describe("D559 §7 — R-LK1: lock-vs-lock stays UNGATED (both locks stay on), pinned on rotated Klefki (🆕🆕🆕 D571: STRATIFIED now, R-LK2 — a MUTUAL pair still stays both-on)", () => {
   it("🛑 Klefki (Active) vs Flutter Mane (Active): each silences the other, and BOTH auras still bite", () => {
     const state = table(KLEFKI, [LILLIE[0]], FLUTTER[0], [LILLIE[1]]);
     const locked = disabledAbilityUids(state);
@@ -722,16 +722,24 @@ describe("D559 §7 — R-LK1: lock-vs-lock stays UNGATED (both locks stay on), p
     const state = table(FLUTTER[0], [GASTRODON], FLUTTER[1], [GASTRODON]);
     expect(disabledAbilityUids(state)).toEqual(new Set());
   });
-  it("⚠️ R-LK1 holds only while Iron Thorns ex stays unbuilt — tripwire: it carries no program; Team Rocket's Watchtower is BUILT (D566) and silences neither built lock source", () => {
+  it("🆕🆕🆕 D571 — the tripwire FIRED: Iron Thorns ex \"Initialization\" is BUILT (and the stratified pass with it, `ironThornsD571.test.ts`); Team Rocket's Watchtower is BUILT (D566) and silences neither built lock source", () => {
     // Iron Thorns ex "Initialization" (Active-sourced; Rule Box bodies except Future
     // Pokémon) is a legal lock whose source an Active Flutter Mane silences from across
-    // the table — by the rules its lock then switches off, and the ungated
-    // `disabledAbilityUids` would keep it on. The slice that builds it owes the fixpoint
-    // pass and must retire this rung. Team Rocket's Watchtower (a Stadium over {C}
-    // bodies) silences no built lock source ({P} Flutter Mane, {F} Gastrodon), but it is
-    // the other legal lock the D559 prose once omitted, so it is pinned beside it.
+    // the table — by the rules its lock then switches off. 🆕🆕🆕 D571 (D539): this rung was
+    // titled "⚠️ R-LK1 holds only while Iron Thorns ex stays unbuilt — tripwire: it carries
+    // no program" and asserted `programFor(id)` UNDEFINED on all three ids. D571 built the
+    // lock AND the owed fixpoint (continuous.ts `disabledAbilityUids`, R-LK2 ⚠️ UNRULED), so
+    // the loop is INVERTED to the positive rung below and the one-way board is driven in
+    // `ironThornsD571.test.ts` §2. Team Rocket's Watchtower (a Stadium over {C} bodies)
+    // silences no built lock source ({P} Flutter Mane, {F} Gastrodon, {L} Iron Thorns ex),
+    // and is pinned beside it.
     for (const id of ["sv06-077", "sv06-196", "sv08.5-032"]) {
-      expect(programFor(id)).toBeUndefined();
+      expect(programFor(id)?.passive?.disableAbilities).toEqual({
+        side: "both",
+        requiresActive: true,
+        ruleBox: true,
+        exemptBanner: "Future",
+      });
     }
     // 🆕🆕🆕 D566 — INVERTED: the Watchtower is BUILT (a Stadium lock, which no lock can
     // silence), and with it in play NEITHER legal Pokémon lock source is silenced — both

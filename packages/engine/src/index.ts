@@ -419,7 +419,10 @@ import type { GameState, Seat } from "./types";
     (redact.ts — the row greys, so the client never offers a button the engine
     refuses). Auras are collected UNGATED, so a lock never turns itself or another
     lock off: the aura-vs-aura fixpoint (Ting-Lu ex opposite a damaged Klefki) is a
-    documented follow-up, pinned by a tripwire test. Empty Set on every board with
+    documented follow-up, pinned by a tripwire test [🆕🆕🆕 D571 (D539): the stratified pass
+    landed at 0.455.0, R-LK2 — but NOT for the board named here: Ting-Lu ex opposite a DAMAGED
+    Klefki is a mutual cycle, which R-LK2 keeps BOTH ON; the tripwire D571 flipped is the
+    one-way UNDAMAGED-Klefki board]. Empty Set on every board with
     no lock in play. No web/API/DB/schema change. */
 
 /* 0.52.0 — COUNTERATTACKING PINCER: the PARKING `onDamagedByAttack` reactive
@@ -20215,6 +20218,33 @@ import type { GameState, Seat } from "./types";
     `expect(manifest.version)`, `it(…)` titles, the declaration and `package.json` —
     **not** as a value-keyed grep — because a value-keyed grep is precisely the mechanism
     that ate D500's heading.)
+    🆕🆕🆕 engineVersion 0.454.0 → **0.455.0** (D571 — PARADOX PART b (IRON THORNS) + THE IGNITION RIDER: 6
+    PRINTINGS / 3 TEXTS / 3 OBJECTS. Iron Thorns ex `sv06-077`/`-196`/`sv08.5-032` "Initialization", Iron Thorns
+    `sv05-062`/`svp-098` "Destructo-Press" (attack index 0), Ignition Energy `sv10.5w-086`. Keyed MID-MAP after
+    D570's rows (D395/D396, so `raw[last]` stays `sv09-107`). **Initialization** is Mischievous Lock's aura with
+    two NEW catalog-only `disableAbilities` keys, `ruleBox` (cards.ts `hasRuleBox`) and `exemptBanner` (the
+    target's printed banner, `bannerPokemon` — Iron Thorns ex is itself Future, so it never silences itself);
+    and because it is the first LEGAL lock whose source another legal lock reaches, continuous.ts
+    `disabledAbilityUids` now settles the auras by THE STRATIFIED LOCK PASS (R-LK2 ⚠️ UNRULED): each Pokémon aura
+    is tagged with its holder, an aura is ON once every aura reaching its holder is OFF and OFF once an ON aura
+    reaches it, the SOURCE mutual cycles left undecided are switched ON (D559 §7's Klefki-vs-Flutter Mane pin) and
+    the grounding re-runs to settle what they reach (a lock downstream of a cycle is decided, not kept ON), and only
+    ON auras mark targets —
+    run only for two or more auras, so every board with one lock or none is byte-identical. Fallout on rotated
+    fixtures: Klefki now switches Ting-Lu ex's Cursed Land OFF (`abilityLock.test.ts`'s "KNOWN LIMITATION",
+    retitled and flipped), and Klefki silences Spiritomb (whose OFF verdict no board can observe: Klefki's Basics
+    contain Spiritomb's Basic Vs). **Destructo-Press** is a registry program on the NEW
+    non-parking `EffectOp` `revealTopDiscardMatching { n, filter, recordAs? }` (the top `min(n, deck)` revealed,
+    the `filter` matches discarded under ONE `DECK_TOP_DISCARDED`, the deck shuffled through `rngState`, the
+    matches filed ALWAYS) over `bannerCard "Future"`, then `damageDefender { per: 70, count: "discarded" }`
+    (R-DP1 ⚠️ UNRULED: the discard precedes the damage; the number is the same on every board). The reveal of
+    the non-matching cards is a named DISPLAY DEBT (no event names them). **Ignition Energy**: Reversal's
+    `"Evolution"` provision with three Colorless units and the NEW `EnergyProgram.discardAtEndOfYourTurn`, paid
+    by flow.ts's `endTurn` stage on the TURN OWNER's bodies (one `ENERGY_DISCARDED` per body, after Powerglass
+    and Amarys — R-IG1 ⚠️ UNRULED); its catalog `energyType "Normal"` debt (cards.ts `basicEnergy` matches it)
+    is carried, as Prism's and Reversal's are. **`MATCH_RECORD_VERSION` STAYS 37**: no GameState, PendingStage
+    or Card key is added, nothing parks, and every addition is a catalog-only key or a new union member — see
+    docs/decisions.md D571 and apps/api match.ts.)
     🆕🆕🆕 engineVersion 0.453.0 → **0.454.0** (D570 — FESTIVAL LEAD, THE ATTACK-AGAIN TURN MACHINE: 7
     PRINTINGS / 1 TEXT / 1 OBJECT. Dipplin `sv06-018`/`-170`/`sv08.5-010`, Goldeen `sv06-044`/`sv08.5-020`,
     Swirlix `sv06-089`, Seaking `sv08.5-021` — *"If Festival Grounds is in play, this Pokémon may use an attack
@@ -20520,7 +20550,8 @@ import type { GameState, Seat } from "./types";
     not Standard at large: Iron Thorns ex "Initialization" and Team Rocket's Watchtower are legal and
     unbuilt (🆕🆕🆕 D566 (D539): the Watchtower is BUILT — a Stadium, unsilenceable, over {C} bodies,
     neither legal lock source being {C}, so R-LK1 holds with it), and an Active Flutter Mane silencing an opposing Active Iron Thorns ex re-opens the gap, so
-    the fixpoint pass is owed when Initialization is built; tripwired by id), pinned on a rotated Klefki vs
+    the fixpoint pass is owed when Initialization is built; tripwired by id [🆕🆕🆕 D571 (D539): PAID — Initialization
+    and the stratified pass are built, R-LK2; three legal Pokémon locks now]), pinned on a rotated Klefki vs
     Flutter Mane board. **Orthworm ex** `sv07-110`/`-162` "Pummeling Payback" on the NEW
     `damageAttacker.perAttachedEnergy` (the fold multiplies by `countAttachedEnergy`, provision — both read
     sites a zero diff; ⚠️ R-O1, a reachable DEVIATION: a benched Orthworm hit by a spread or snipe does not
@@ -24757,7 +24788,7 @@ import type { GameState, Seat } from "./types";
     WITNESS** — the count was re-derived every slice and the word *"three"* was carried.
     A successor of this slice inherits **81 / 61 / 17** again, over **FIVE** history
     occurrences: those four plus `deckMillFilteredScale.test.ts`'s own header arrow.) */
-export const engineVersion = "0.454.0";
+export const engineVersion = "0.455.0";
 
 export type {
   ApplyResult,

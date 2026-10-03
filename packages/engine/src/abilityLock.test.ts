@@ -106,6 +106,10 @@ describe("disableAbilities — the registry row", () => {
     // counted below) are pinned in
     // `abilityBundleD559.test.ts` §1, and the title's claim is now measured over the
     // WHOLE registry: exactly these ten keys carry a lock.
+    // 🆕🆕🆕 D571 (D539) — ~~"Iron Thorns ex "Initialization" … legal and unbuilt"~~ and "ten
+    // keys" are WITHDRAWN: Initialization is BUILT (`INITIALIZATION`, three keys), so THIRTEEN
+    // keys carry a lock, and three legal Pokémon locks are built (Flutter Mane, Gastrodon,
+    // Iron Thorns ex), plus the Watchtower's Stadium lock.
     expect(
       registryCardIds()
         .filter((id) => programFor(id)?.passive?.disableAbilities !== undefined)
@@ -122,6 +126,9 @@ describe("disableAbilities — the registry row", () => {
         "sv08.5-043",
         "svp-097",
         "sv08-107", // 🆕🆕🆕 D559 — Gastrodon "Sticky Bind"
+        "sv06-077", // 🆕🆕🆕 D571 — Iron Thorns ex "Initialization"
+        "sv06-196",
+        "sv08.5-032",
       ].sort(),
     );
   });
@@ -222,14 +229,16 @@ describe("disabledAbilityUids — the aura scan", () => {
     expect(disabledAbilityUids(state)).toEqual(new Set());
   });
 
-  it("KNOWN LIMITATION: a locked lock keeps locking (no aura-vs-aura fixpoint)", () => {
+  it("🆕🆕🆕 D571 — a locked lock STOPS locking (the stratified pass, R-LK2): Klefki silences Ting-Lu ex, so Cursed Land is OFF", () => {
     // Klefki Active vs Ting-Lu ex Active. Klefki's lock reaches Ting-Lu (a Basic;
     // Mischievous Lock carries no ex exemption), so BY THE PRINTED RULES Cursed
     // Land is off and P1's damaged Stage 1 — which only Ting-Lu could reach, Klefki
-    // being Basic-only — keeps its Abilities. The engine collects auras UNGATED (a
-    // deliberate one-pass read; the fixpoint is a documented follow-up), so it does
-    // not. Pinned as CURRENT behaviour: flip the last assertion when the fixpoint
-    // pass lands, and this test is the tripwire that says so.
+    // being Basic-only — keeps its Abilities. 🆕🆕🆕 D571 (D539): this test was titled
+    // "KNOWN LIMITATION: a locked lock keeps locking (no aura-vs-aura fixpoint)" and
+    // pinned the OPPOSITE (the ungated one-pass read kept Cursed Land on). The fixpoint
+    // landed with Initialization (continuous.ts `disabledAbilityUids`, R-LK2 ⚠️ UNRULED):
+    // Klefki is undamaged, so Ting-Lu does not reach it — one-way — and Klefki's lock is
+    // ON, Cursed Land OFF. The last assertion is FLIPPED, as the old comment said to.
     let state = setActiveFromDeck(board(38), "p1", "sv01-096"); // P1 bench: [fix-bigbody]
     state = benchFromDeck(state, "p1", "fix-stage1"); // …[fix-bigbody, a Stage 1]
     state = setBenchDamage(state, "p1", 1, 10);
@@ -238,7 +247,38 @@ describe("disabledAbilityUids — the aura scan", () => {
     const locked = disabledAbilityUids(state);
 
     expect(locked.has(activeUid(state, "p2"))).toBe(true); // Klefki DOES lock Ting-Lu ex
-    expect(locked.has(benchTopUid(state, "p1", 1))).toBe(true); // …yet Cursed Land still fires
+    expect(locked.has(benchTopUid(state, "p1", 1))).toBe(false); // …so Cursed Land is OFF (D571)
+  });
+
+  it("🆕🆕🆕 D571 — the DAMAGED-Klefki board is a MUTUAL cycle (R-LK2): Ting-Lu ex and Klefki silence each other, and BOTH locks stay ON", () => {
+    // The example the old KNOWN LIMITATION prose named ("an Active Ting-Lu ex opposite a
+    // damaged Klefki, which by the rules should switch Mischievous Lock off"). Klefki reaches
+    // Ting-Lu ex (a Basic) AND, damaged and not an ex, Cursed Land reaches Klefki: a cycle,
+    // which the stratified pass keeps BOTH ON (R-LK2 ⚠️ UNRULED). So that sentence's "should
+    // switch Mischievous Lock off" is CONTRADICTED by D571, not paid (continuous.ts,
+    // registry.ts and index.ts annotate it so).
+    let state = setActiveFromDeck(board(38), "p1", "sv01-096"); // P1 bench: [fix-bigbody]
+    state = benchFromDeck(state, "p1", "fix-stage1"); // …[fix-bigbody, a Stage 1]
+    state = setBenchDamage(state, "p1", 1, 10);
+    state = setDamage(state, "p1", 10); // the DAMAGED Klefki — inside Cursed Land's reach
+    state = setActiveFromDeck(state, "p2", "sv02-127");
+
+    const locked = disabledAbilityUids(state);
+
+    expect(locked.has(activeUid(state, "p2"))).toBe(true); // Mischievous Lock ON: Ting-Lu ex silenced
+    expect(locked.has(activeUid(state, "p1"))).toBe(true); // Cursed Land ON: the damaged Klefki silenced
+    expect(locked.has(benchTopUid(state, "p1", 1))).toBe(true); // …and Cursed Land still reaches the damaged Stage 1
+    // The whole Set: Klefki's lock also takes both boards' Basic fix-bigbody — exactly the
+    // ungated one-pass answer, because a cycle changes nothing (Mischievous Lock stays on).
+    expect(locked).toEqual(
+      new Set([
+        activeUid(state, "p1"),
+        benchTopUid(state, "p1", 0),
+        benchTopUid(state, "p1", 1),
+        activeUid(state, "p2"),
+        benchTopUid(state, "p2", 0),
+      ]),
+    );
   });
 });
 

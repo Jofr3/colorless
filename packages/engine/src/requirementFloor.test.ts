@@ -692,7 +692,11 @@ describe("§5 — on a BOARD: each of the three cancels and lands, and the ids a
     // 🆕🆕🆕 D570 — 949 -> **956**: SEVEN registry keys on ONE program object — Festival Lead
     // (Dipplin ×3, Goldeen ×2, Swirlix, Seaking), all NON-attack (`passive.attackTwiceIf`). Real
     // catalog ids, no `fix-*` key, inserted MID-MAP after D569's rows (`raw[last]` stays put).
-    expect(ids).toHaveLength(956);
+    // 🆕🆕🆕 D571 — 956 -> **962**: SIX registry keys on THREE program objects — Iron Thorns ex
+    // "Initialization" ×3 (non-attack, `passive.disableAbilities`), Iron Thorns "Destructo-Press"
+    // ×2 (ATTACK index 0) and Ignition Energy ×1 (non-attack, `energy`). Real catalog ids, no
+    // `fix-*` key, inserted MID-MAP after D570's rows (`raw[last]` stays put).
+    expect(ids).toHaveLength(962);
     for (const id of BOUGHT_IDS) {
       expect(ids, id).not.toContain(id);
       expect(programFor(id), id).toBeUndefined();

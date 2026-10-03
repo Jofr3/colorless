@@ -1367,7 +1367,11 @@ describe("§7 — the census moves in exactly ONE summand, and the other three a
     // 🆕🆕🆕 D570 — 949 -> **956**: SEVEN registry keys on ONE program object — Festival Lead
     // (Dipplin ×3, Goldeen ×2, Swirlix, Seaking), all NON-attack (`passive.attackTwiceIf`). Real
     // catalog ids, no `fix-*` key, inserted MID-MAP after D569's rows (`raw[last]` stays put).
-    expect(ids.size).toBe(956);
+    // 🆕🆕🆕 D571 — 956 -> **962**: SIX registry keys on THREE program objects — Iron Thorns ex
+    // "Initialization" ×3 (non-attack, `passive.disableAbilities`), Iron Thorns "Destructo-Press"
+    // ×2 (ATTACK index 0) and Ignition Energy ×1 (non-attack, `energy`). Real catalog ids, no
+    // `fix-*` key, inserted MID-MAP after D570's rows (`raw[last]` stays put).
+    expect(ids.size).toBe(962);
     // ⚠️ ONE of the thirteen IS in the registry — Volbeat `sv06-009` — and it is
     // there on an ABILITY program, which is exactly the count a slice does not
     // think it is checking. Named, rather than glossed by an "all absent" claim

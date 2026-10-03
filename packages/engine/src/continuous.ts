@@ -220,7 +220,15 @@ export function stadiumShieldsStatus(state: GameState, pokemon: InPlayPokemon): 
     Set by top uid. Empty when no lock is in play, so every board without one is
     byte-identically unaffected.
 
-    KNOWN LIMITATION (documented follow-up, not this slice): a lock does not
+    KNOWN LIMITATION (documented follow-up, not this slice) [🆕🆕🆕 D571 (D539): the
+    one-pass read is REPLACED by the stratified pass (the D571 paragraph at the end of this
+    block), but the EXAMPLE below is NOT paid — it is CONTRADICTED. A damaged Klefki opposite
+    an Active Ting-Lu ex is a MUTUAL cycle (Klefki reaches Ting-Lu ex, a Basic with no ex
+    exemption on Mischievous Lock; Cursed Land reaches the damaged non-ex Klefki), and R-LK2
+    keeps a source cycle BOTH ON — so "should switch Mischievous Lock off" is WITHDRAWN as a
+    ruling the engine follows (R-LK2 ⚠️ UNRULED rules the cycle both-on; pinned in
+    `abilityLock.test.ts`, the damaged-Klefki rung). What D571 flipped is the ONE-WAY board
+    (an UNDAMAGED Klefki)]: a lock does not
     disable ANOTHER lock's source — the aura-disables-aura fixpoint (e.g. an Active
     Ting-Lu ex opposite a damaged Klefki, which by the rules should switch
     Mischievous Lock off) resolves as if both auras stay on. The three cards in
@@ -231,7 +239,7 @@ export function stadiumShieldsStatus(state: GameState, pokemon: InPlayPokemon): 
     LIMITATION IS ARGUED UNREACHABLE AMONG THE LOCKS THIS REGISTRY BUILDS — NOT IN
     STANDARD AT LARGE (D559 R-LK1).** Flutter Mane "Midnight Fluttering" and Gastrodon
     "Sticky Bind" joined, and Klefki, Spiritomb and Ting-Lu ex have ROTATED. Among the two
-    legal locks the registry BUILDS no lock can switch off another lock's source: Flutter
+    legal locks the registry BUILDS [🆕🆕🆕 D571 (D539): THREE — see the D571 paragraph below] no lock can switch off another lock's source: Flutter
     Mane reaches only the OPPOSING Active and exempts itself by name (a mirror Flutter
     Mane keeps its lock); Gastrodon reaches only BENCHED Stage 2 bodies, an Active
     Gastrodon's lock is already off (`sourceOnBench`), and neither built source is a
@@ -241,18 +249,45 @@ export function stadiumShieldsStatus(state: GameState, pokemon: InPlayPokemon): 
     bodies) (🆕🆕🆕 D566 CORRECTION (D539): the Watchtower is BUILT — `StadiumEffects.
     disableAbilities`, collected below — and R-LK1 still holds with it: a Stadium cannot be
     silenced, and neither legal Pokémon lock source is {C} — Flutter Mane {P}, Gastrodon
-    {F} — so it switches no lock off; Iron Thorns ex stays the one unbuilt legal lock). The first re-opens the gap: an Active Flutter Mane silences an opposing
+    {F} — so it switches no lock off; Iron Thorns ex stays the one unbuilt legal lock [🆕🆕🆕 D571 (D539): no longer — it is BUILT]). The first re-opens the gap: an Active Flutter Mane silences an opposing
     Active Iron Thorns ex, whose lock the rules then switch off and this ungated pass
-    would keep on. So R-LK1 holds only while Initialization is UNBUILT, and the fixpoint
+    would keep on. So R-LK1 holds only while Initialization is UNBUILT [🆕🆕🆕 D571 (D539): it is BUILT, and R-LK1 is SUPERSEDED by R-LK2 below], and the fixpoint
     pass is OWED in the slice that builds it (a tripwire in `abilityBundleD559.test.ts`
-    (🆕🆕🆕 D569 (D539): R-PX5 ⚠️ UNRULED: still TRUE — Initialization stays UNBUILT at D569. What changed is that Iron Thorns ex is now a FUTURE Pokémon to the engine (`banners.ts`), so it RECEIVES Cobalt Command's +20, Peak Acceleration's attach and Reboot Pod's attach while its own lock is still unbuilt; none of that touches a lock source, so R-LK1 and the ungated pass stand)
+    (🆕🆕🆕 D569 (D539): R-PX5 ⚠️ UNRULED: still TRUE — Initialization stays UNBUILT at D569 [🆕🆕🆕 D571 (D539): BUILT at D571]. What changed is that Iron Thorns ex is now a FUTURE Pokémon to the engine (`banners.ts`), so it RECEIVES Cobalt Command's +20, Peak Acceleration's attach and Reboot Pod's attach while its own lock is still unbuilt; none of that touches a lock source, so R-LK1 and the ungated pass stand)
     §7 fails first). So the ungated pass stays; the rotated three still show the
     fixpoint gap on fixtures (Klefki vs Flutter Mane: both locks stay on, pinned in
-    `abilityBundleD559.test.ts`). */
+    `abilityBundleD559.test.ts`).
+
+    🆕🆕🆕 **D571 — THE FIXPOINT LANDED WITH INITIALIZATION (R-LK2 ⚠️ UNRULED, decisions.md
+    D571), AND THE "TWO LEGAL LOCKS THE REGISTRY BUILDS" ARE THREE.** Iron Thorns ex
+    "Initialization" is built (`ruleBox`, `exemptBanner "Future"`, Active-sourced). The
+    collection below stays ungated, but each Pokémon aura is now tagged with its HOLDER and
+    the auras are settled by a STRATIFIED pass before any target is marked: an aura is ON
+    once every aura reaching its holder is OFF (vacuously, when none does; a Stadium has no
+    holder and is always ON), OFF once an ON aura reaches its holder; what that leaves
+    undecided holds the mutual cycles AND the locks downstream of them, so only the SOURCE
+    cycles (no undecided lock outside them reaches them) are switched ON and the grounding
+    re-runs, until nothing is undecided — so the Klefki-vs-Flutter Mane both-on pin above STANDS, while
+    an Active Flutter Mane now switches an opposing Active Iron Thorns ex's lock OFF
+    (one-way: Flutter Mane has no Rule Box). Only ON auras mark targets. The pass runs only
+    for two or more auras, so every board with one lock or none is byte-identical, and the
+    call sites read the same Set. Rotated fallout, pinned: an undamaged Klefki switches an
+    opposing Ting-Lu ex's Cursed Land OFF (`abilityLock.test.ts`, its KNOWN LIMITATION
+    retitled and flipped); Initialization switches Ting-Lu ex OFF; and Ting-Lu ex vs a damaged
+    Flutter Mane is a source cycle (both ON) that switches a damaged benched Gastrodon OFF
+    (`ironThornsD571.test.ts` §2). Klefki also silences a Spiritomb, whose OFF verdict no board
+    can observe (Klefki's Basics contain every Basic V Spiritomb reaches) — named, not pinned. */
 export function disabledAbilityUids(state: GameState): Set<string> {
   const disabled = new Set<string>();
   // Collect the live auras first (ungated), each tagged with its source's seat.
-  const auras: { aura: NonNullable<PassiveEffects["disableAbilities"]>; sourceSeat: Seat }[] = [];
+  // 🆕🆕🆕 D571 — and with its HOLDER (the source body, its top card and whether it is
+  // Active), so the stratified pass below can ask whether ANOTHER aura reaches it. A
+  // Stadium's aura has no holder (`null`): no Ability can silence a Stadium.
+  const auras: {
+    aura: NonNullable<PassiveEffects["disableAbilities"]>;
+    sourceSeat: Seat;
+    holder: { body: InPlayPokemon; top: Card; isActive: boolean } | null;
+  }[] = [];
   for (const seat of SEATS) {
     const side = state.players[seat];
     const holders = side.active === null ? side.bench : [side.active, ...side.bench];
@@ -265,7 +300,7 @@ export function disabledAbilityUids(state: GameState): Set<string> {
       // 🆕🆕🆕 D559 — Gastrodon's *"As long as this Pokémon is on your Bench"*, the
       // mirror of the line above and spelled with the same test.
       if (aura.sourceOnBench === true && holder === side.active) continue;
-      auras.push({ aura, sourceSeat: seat });
+      auras.push({ aura, sourceSeat: seat, holder: { body: holder, top, isActive: holder === side.active } });
     }
   }
   // 🆕🆕🆕 D566 — THE STADIUM'S LOCK (Team Rocket's Watchtower `sv10-180`, *"{C} Pokémon in
@@ -276,10 +311,78 @@ export function disabledAbilityUids(state: GameState): Set<string> {
   // Ability, so no lock can silence it (R-ST2's reason; R-LK1 restated in decisions.md D566).
   const stadiumAura = stadiumEffectsOf(state)?.disableAbilities;
   if (stadiumAura !== undefined && state.stadium !== null) {
-    auras.push({ aura: stadiumAura, sourceSeat: state.stadium.owner });
+    auras.push({ aura: stadiumAura, sourceSeat: state.stadium.owner, holder: null });
   }
   if (auras.length === 0) return disabled;
-  // Then evaluate each aura's target predicate against every in-play Pokémon.
+  // 🆕🆕🆕 D571 — R-LK2 ⚠️ UNRULED, THE STRATIFIED LOCK PASS (the fixpoint D559 owed to the
+  // slice that builds Initialization). `true` = ON, `false` = OFF, `undefined` = undecided.
+  // Settled by a GROUNDED fixpoint over "aura j reaches aura i's holder": an aura is ON once
+  // every aura reaching its holder is OFF (vacuously, when none does — and always for a
+  // Stadium, which has no holder), and OFF once an ON aura reaches its holder. When nothing
+  // changes, every aura still undecided has an undecided reacher, so the undecided auras hold
+  // at least one mutual cycle — but an aura DOWNSTREAM of a cycle is undecided too (the D571
+  // review's board: Ting-Lu ex vs a damaged Flutter Mane, with a damaged benched Gastrodon
+  // reached only by Ting-Lu). So only the SOURCE cycles are switched ON — the strongly
+  // connected groups of undecided auras that no undecided aura outside them reaches (Klefki
+  // vs Flutter Mane, D559 §7: both locks keep locking, as before) — and the grounding is run
+  // again, which then decides everything they reach. Repeat until nothing is undecided; each
+  // round decides at least one source cycle, so it ends. Run only for two or more auras: a
+  // lone aura is ON either way, so every board with one lock or none keeps D559's single
+  // ungated read byte for byte.
+  const on: (boolean | undefined)[] = auras.map(() => true);
+  if (auras.length >= 2) {
+    // `reachedBy[i]` — the auras whose predicate reaches aura i's HOLDER. A Pokémon aura's
+    // `sourceSeat` IS its holder's seat.
+    const reachedBy = auras.map(({ holder, sourceSeat: holderSeat }) =>
+      holder === null
+        ? []
+        : auras.flatMap(({ aura, sourceSeat }, j) =>
+            auraSuppresses(aura, sourceSeat, holderSeat, holder.body, holder.top, holder.isActive)
+              ? [j]
+              : [],
+          ),
+    );
+    on.fill(undefined);
+    for (;;) {
+      let changed = true;
+      while (changed) {
+        changed = false;
+        for (const [i, by] of reachedBy.entries()) {
+          if (on[i] !== undefined) continue;
+          if (by.some((j) => on[j] === true)) {
+            on[i] = false; // one-way: an ON lock reaches this lock's source
+            changed = true;
+          } else if (by.every((j) => on[j] === false)) {
+            on[i] = true; // grounded: nothing ON reaches it, and nothing undecided does
+            changed = true;
+          }
+        }
+      }
+      // `upstream[i]` — the undecided auras that reach aura i's holder, directly or through
+      // other undecided auras (empty for a decided aura).
+      const upstream = reachedBy.map((by, i) => {
+        const seen = new Set<number>();
+        if (on[i] !== undefined) return seen;
+        const stack = by.filter((j) => on[j] === undefined);
+        for (let j = stack.pop(); j !== undefined; j = stack.pop()) {
+          if (seen.has(j)) continue;
+          seen.add(j);
+          for (const k of reachedBy[j] ?? []) if (on[k] === undefined) stack.push(k);
+        }
+        return seen;
+      });
+      // A SOURCE cycle member: on a cycle (it reaches itself), and every undecided aura that
+      // reaches it is one it reaches back — kept ON (D559 §7's Klefki-vs-Flutter Mane pin).
+      const sources = upstream.flatMap((up, i) =>
+        up.has(i) && [...up].every((k) => upstream[k]?.has(i) === true) ? [i] : [],
+      );
+      if (sources.length === 0) break;
+      for (const i of sources) on[i] = true;
+    }
+  }
+  // Then evaluate each aura's target predicate against every in-play Pokémon. Only an aura
+  // the pass switched OFF stays silent (`!== false`): one left undecided — unreachable, since
+  // every round above decides a source cycle — reads ON, D559's ungated default.
   for (const targetSeat of SEATS) {
     const side = state.players[targetSeat];
     const targets = side.active === null ? side.bench : [side.active, ...side.bench];
@@ -291,8 +394,9 @@ export function disabledAbilityUids(state: GameState): Set<string> {
       // Pokémon", Gastrodon's "Benched Stage 2 Pokémon").
       const isActive = target === side.active;
       if (
-        auras.some(({ aura, sourceSeat }) =>
-          auraSuppresses(aura, sourceSeat, targetSeat, target, top, isActive),
+        auras.some(
+          ({ aura, sourceSeat }, i) =>
+            on[i] !== false && auraSuppresses(aura, sourceSeat, targetSeat, target, top, isActive),
         )
       )
         disabled.add(uid);
@@ -324,6 +428,10 @@ function auraSuppresses(
   // 🆕🆕🆕 D566 — Team Rocket's Watchtower's "{C} Pokémon": the target's PRINTED types (R-WT1 —
   // exact while no type-changing passive is built; pinned by a registry walk).
   if (aura.targetType !== undefined && !(top.types ?? []).includes(aura.targetType)) return false;
+  // 🆕🆕🆕 D571 — Iron Thorns ex "Initialization": *"Pokémon with a Rule Box in play … except
+  // for Future Pokémon"* — the Rule Box narrowing, then the banner exemption (by printing id).
+  if (aura.ruleBox === true && !hasRuleBox(top)) return false;
+  if (aura.exemptBanner !== undefined && matchesFilter(top, { kind: "bannerPokemon", banner: aura.exemptBanner })) return false;
   if (aura.exemptSuffix !== undefined && pokemonSuffixOf(top) === aura.exemptSuffix) return false;
   if (
     aura.exemptAbilityNamed !== undefined &&

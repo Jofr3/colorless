@@ -1212,7 +1212,11 @@ export interface PassiveEffects {
       sides), Ting-Lu ex "Cursed Land" (the opponent's DAMAGED Pokémon, except ex).
       The aura is collected UNGATED (a lock never turns itself — or another lock —
       off): the aura-disables-aura fixpoint (e.g. Ting-Lu ex vs a damaged Klefki) is
-      a documented follow-up, not this slice.
+      a documented follow-up, not this slice. [🆕🆕🆕 D571 (D539): the pass LANDED —
+      continuous.ts `disabledAbilityUids` settles the auras by the STRATIFIED pass, R-LK2 —
+      but the EXAMPLE is not paid: Ting-Lu ex vs a DAMAGED Klefki is a MUTUAL cycle (each
+      reaches the other's holder), which R-LK2 keeps BOTH ON, as before. The board D571
+      flips is the one-way one, an UNDAMAGED Klefki (`abilityLock.test.ts`).]
       🆕🆕🆕 **D559 CORRECTION (D539) — THE THREE-CARD LIST ABOVE IS NOW FIVE.** Flutter
       Mane `sv05-078`/`sv08.5-043`/`svp-097` "Midnight Fluttering" (*"As long as this
       Pokémon is in the Active Spot, your opponent's Active Pokémon has no Abilities,
@@ -1225,7 +1229,8 @@ export interface PassiveEffects {
       also prints Iron Thorns ex `sv06-077`/`-196`/`sv08.5-032` "Initialization" and the
       Stadium Team Rocket's Watchtower `sv10-180`, neither built (🆕🆕🆕 D566 CORRECTION
       (D539): ~~neither built~~ — the Watchtower is BUILT, as `StadiumEffects.disableAbilities`,
-      the first Stadium-sourced lock; Iron Thorns ex stays unbuilt). The ungated collection
+      the first Stadium-sourced lock; Iron Thorns ex stays unbuilt [🆕🆕🆕 D571 (D539): BUILT —
+      `INITIALIZATION`; the legal Pokémon locks the registry builds are THREE]). The ungated collection
       stays and is now argued rather than deferred (D559 R-LK1, docs/decisions.md D559):
       no BUILT lock can switch off another lock's source — Flutter Mane reaches only the
       opposing Active and exempts itself by name, an Active Gastrodon's lock is already
@@ -1234,12 +1239,17 @@ export interface PassiveEffects {
       is FALSE as written — the rotated-out Klefki, Spiritomb and Ting-Lu ex are still
       built, and `abilityBundleD559.test.ts` §7's fixture shows Flutter Mane and Klefki
       silencing each other. The claim is: no LEGAL built lock can switch off another
-      lock's source, as continuous.ts's `disabledAbilityUids` doc and decisions.md D559
-      (🆕🆕🆕 D569 (D539): R-PX5 ⚠️ UNRULED: the claim stays TRUE at D569 — Initialization is still unbuilt. Iron Thorns ex is now a Future Pokémon to the engine (`banners.ts`), so it receives Cobalt Command, Peak Acceleration and Reboot Pod; none of those is a lock, so no lock source changes)
+      lock's source [🆕🆕🆕 D571 (D539): FALSE since D571 — an Active Flutter Mane switches an
+      opposing Active Iron Thorns ex's Initialization off; the stratified pass, R-LK2, answers it], as continuous.ts's `disabledAbilityUids` doc and decisions.md D559
+      (🆕🆕🆕 D569 (D539): R-PX5 ⚠️ UNRULED: the claim stays TRUE at D569 — Initialization is still unbuilt [🆕🆕🆕 D571 (D539): BUILT at D571 — see below]. Iron Thorns ex is now a Future Pokémon to the engine (`banners.ts`), so it receives Cobalt Command, Peak Acceleration and Reboot Pod; none of those is a lock, so no lock source changes)
       already say. ⚠️ That holds only
       while Initialization is unbuilt: an Active Flutter Mane silences an opposing Active
       Iron Thorns ex, whose lock the rules then switch off, so the fixpoint pass is owed
-      in the slice that builds Initialization. */
+      in the slice that builds Initialization.
+      🆕🆕🆕 D571 (D539): PAID — Initialization is built (`ruleBox` + `exemptBanner` below) and
+      the fixpoint with it (continuous.ts, R-LK2 ⚠️ UNRULED): the Flutter Mane board now
+      switches Initialization OFF, one-way, and a SOURCE mutual cycle (one no undecided lock
+      outside it reaches) still keeps both locks on. */
   disableAbilities?: {
     /** Target must be this stage (Klefki/Spiritomb: "Basic"; 🆕🆕🆕 D559 Gastrodon:
         "Stage2", read through `isStage2Pokemon`); omitted = any stage (Ting-Lu,
@@ -1281,6 +1291,17 @@ export interface PassiveEffects {
         the registry and pins that none is; the parked Scovillain ex "Double Type" slice
         must move this read to an effective-types reader). Omitted = any type. */
     targetType?: PokemonType;
+    /** 🆕🆕🆕 D571 — the TARGET must have a RULE BOX: Iron Thorns ex `sv06-077`/`-196`/
+        `sv08.5-032` "Initialization" (*"Pokémon with a Rule Box in play (both yours and
+        your opponent's) have no Abilities"*). Read through cards.ts `hasRuleBox` (the
+        name-derived suffix / "Radiant " read Reversal Energy's `noRuleBox` uses).
+        Catalog-only: never persisted. */
+    ruleBox?: true;
+    /** 🆕🆕🆕 D571 — a TARGET printing this BANNER keeps its Abilities: Initialization's
+        *"except for Future Pokémon"*. Read through `matchesFilter`'s `bannerPokemon`
+        (`banners.ts`, by printing id, D569). Iron Thorns ex is itself Future, so the
+        source never silences itself and a mirror pair both stay ON. Catalog-only. */
+    exemptBanner?: Banner;
   };
   /** §8.5 continuous own-board AURA: while this Pokémon is in play, every one of
       its CONTROLLER's in-play Pokémon "has no Weakness" — the two Weakness read
@@ -3178,7 +3199,11 @@ export interface StadiumEffects {
       redactor — honours it for free. NOT §9-gated at its SOURCE (a Stadium is no Ability
       and no lock can silence it — R-ST2's reason), which is why R-LK1 still holds with it
       BUILT: the two legal Pokémon locks are Flutter Mane {P} and Gastrodon {F}, neither
-      {C}, so no built lock switches another lock's source off. */
+      {C}, so no built lock switches another lock's source off. [🆕🆕🆕 D571 (D539): THREE legal
+      Pokémon locks — Iron Thorns ex {L} "Initialization" joined; still none is {C}, so the
+      Watchtower switches no lock source off. "No built lock switches another lock's source off"
+      is FALSE in general since D571 (Flutter Mane switches Initialization off — R-LK2), and is
+      kept here only of the Watchtower.] */
   disableAbilities?: NonNullable<PassiveEffects["disableAbilities"]>;
 }
 
@@ -3306,6 +3331,12 @@ export interface EnergyProgram {
     whileMorePrizesRemaining?: true;
     units: string[];
   };
+  /** 🆕🆕🆕 D571 — *"If this card is attached to 1 of your Pokémon, discard it at the end of
+      your turn."* (Ignition Energy `sv10.5w-086`). Read by ONE site: flow.ts's `endTurn`
+      stage, which discards every such card attached to the TURN OWNER's in-play Pokémon
+      (one `ENERGY_DISCARDED` per body), after Powerglass and after Amarys (R-IG1 ⚠️
+      UNRULED, docs/decisions.md D571). Catalog-only: never persisted. */
+  discardAtEndOfYourTurn?: true;
   /** Effect run on attach from hand (Jet's switch). */
   onAttach?: EnergyOnAttach;
   /** ⚠️ THE CONTINUOUS SURFACE (D174) — the one field on this interface that is
@@ -3914,6 +3945,27 @@ const MISCHIEVOUS_LOCK: CardProgram = {
       side: "both",
       requiresActive: true,
       exemptAbilityNamed: "Mischievous Lock",
+    },
+  },
+};
+
+/** 🆕🆕🆕 **D571 — Iron Thorns ex `sv06-077`/`sv06-196`/`sv08.5-032` "Initialization"
+    (Ability, 3 legal)** — *"As long as this Pokémon is in the Active Spot, Pokémon with a
+    Rule Box in play (both yours and your opponent's) have no Abilities, except for Future
+    Pokémon. (Pokémon ex, Pokémon V, etc. have Rule Boxes.)"* Mischievous Lock's aura with
+    the two NEW catalog-only narrowings `ruleBox` and `exemptBanner` ("Future"). It is the
+    first LEGAL lock whose source another legal lock reaches (an Active Flutter Mane silences
+    an opposing Active Iron Thorns ex, which has no Future exemption against Midnight
+    Fluttering), so continuous.ts `disabledAbilityUids` now settles the auras by the
+    STRATIFIED pass (R-LK2 ⚠️ UNRULED, docs/decisions.md D571). Its attack "Volt Cyclone"
+    keeps deriving. */
+const INITIALIZATION: CardProgram = {
+  passive: {
+    disableAbilities: {
+      side: "both",
+      requiresActive: true,
+      ruleBox: true,
+      exemptBanner: "Future",
     },
   },
 };
@@ -15596,7 +15648,8 @@ const PRISM_CHARGE: CardProgram = {
 //    DEFERRED, named (docs/decisions.md D569): Iron Thorns ex "Initialization" ×3, Iron
 //    Thorns "Destructo-Press" ×2, Miraidon `sv08-069` "C.O.D.E.: Protect", Koraidon
 //    `sv08-116` "Unrelenting Onslaught", Iron Treads "Dual Core" and Iron Moth "Anachronism
-//    Repulsor" — 9 printings. ──
+//    Repulsor" — 9 printings. [🆕🆕🆕 D571 (D539): Initialization ×3 and Destructo-Press ×2 are
+//    BUILT (`INITIALIZATION`, `DESTRUCTO_PRESS`); the four others — 4 printings — stay deferred.] ──
 
 /** 🆕🆕🆕 **D569 — Miraidon `sv05-121`/`svp-092` "Peak Acceleration" (attack index 0, 2
     legal)** — *"Search your deck for up to 2 Basic Energy cards and attach them to your
@@ -15731,6 +15784,53 @@ const REBOOT_POD: CardProgram = {
     turn.ts `turnGate` and attack.ts (R-FL1..R-FL4, decisions.md D570). */
 const FESTIVAL_LEAD: CardProgram = {
   passive: { attackTwiceIf: { kind: "stadiumInPlayNamed", name: "Festival Grounds" } },
+};
+
+// ── 🆕🆕🆕 D571 — PARADOX PART b (IRON THORNS) + THE IGNITION RIDER: 6 printings / 3 texts /
+//    3 objects. Texts and legality off tcgdex (the audit's card JSON), all `legal.standard:
+//    true`. Iron Thorns ex "Initialization" is `INITIALIZATION` above (beside
+//    `MISCHIEVOUS_LOCK`). Keyed MID-MAP after D570's rows (D395/D396), so `raw[last]` stays
+//    `sv09-107`. Every addition is an optional catalog-only key or a new union member:
+//    `MATCH_RECORD_VERSION` STAYS 37 (apps/api match.ts). ──
+
+/** 🆕🆕🆕 **D571 — Iron Thorns `sv05-062`/`svp-098` "Destructo-Press" (attack index 0, 2
+    legal)** — *"Reveal the top 5 cards of your deck. This attack does 70 damage for each
+    Future card you find there. Then, discard those Future cards and shuffle the other cards
+    back into your deck."* The NEW `revealTopDiscardMatching` over `bannerCard "Future"`
+    (D569's any-category banner filter: a Future TRAINER counts — Techno Radar, Reboot Pod),
+    filed under `discarded`, then `damageDefender` 70× it; attack.ts `programDamage` drops
+    the printed 70× base. R-DP1 ⚠️ UNRULED: the discard runs before the damage (the number
+    is the same on every board). INDEX-KEYED: "Megaton Lariat" (idx 1, no effect text)
+    stays unclaimed. */
+const DESTRUCTO_PRESS: CardProgram = {
+  attack: {
+    0: [
+      {
+        op: "revealTopDiscardMatching",
+        n: 5,
+        filter: { kind: "bannerCard", banner: "Future" },
+        recordAs: "discarded",
+      },
+      { op: "damageDefender", per: 70, count: "discarded" },
+    ],
+  },
+};
+
+/** 🆕🆕🆕 **D571 — Ignition Energy `sv10.5w-086` (Special Energy, 1 legal)** — *"If this card
+    is attached to 1 of your Pokémon, discard it at the end of your turn. / As long as this
+    card is attached to a Pokémon, it provides {C} Energy. / If this card is attached to an
+    Evolution Pokémon, it provides {C}{C}{C} Energy instead."* Reversal Energy's `"Evolution"`
+    stage value with NO riders and THREE COLORLESS units (not wildcards), plus the NEW
+    `discardAtEndOfYourTurn` (flow.ts `endTurn`, R-IG1). ⚠️ CARRIED DEBT, named and not fixed:
+    the catalog tags it `energyType "Normal"`, so cards.ts `basicEnergy` matches it (Basic
+    Energy searches, the deck-count rule) — Prism's and Reversal's debt, and its fix is
+    catalog data outside this whitelist (D538). */
+const IGNITION_ENERGY: CardProgram = {
+  energy: {
+    provides: ["Colorless"],
+    promoteOnHolderStage: { stage: "Evolution", units: ["Colorless", "Colorless", "Colorless"] },
+    discardAtEndOfYourTurn: true,
+  },
 };
 
 const REGISTRY: Record<string, CardProgram> = {
@@ -16488,6 +16588,14 @@ const REGISTRY: Record<string, CardProgram> = {
   "sv08.5-020": FESTIVAL_LEAD, // Goldeen (reprint)
   "sv06-089": FESTIVAL_LEAD, // Swirlix — Festival Lead
   "sv08.5-021": FESTIVAL_LEAD, // Seaking — Festival Lead
+  // ── 🆕🆕🆕 D571 — Paradox part b (Iron Thorns) + the Ignition rider: 6 registry ids / 3
+  //    objects, MID-MAP (D395/D396), so `raw[last]` does not move. ──
+  "sv06-077": INITIALIZATION, // Iron Thorns ex — Initialization: Active, Rule Box Pokémon have no Abilities, except Future
+  "sv06-196": INITIALIZATION, // Iron Thorns ex (reprint)
+  "sv08.5-032": INITIALIZATION, // Iron Thorns ex (reprint)
+  "sv05-062": DESTRUCTO_PRESS, // Iron Thorns — Destructo-Press: 70× per Future card in the top 5, discard them
+  "svp-098": DESTRUCTO_PRESS, // Iron Thorns (reprint)
+  "sv10.5w-086": IGNITION_ENERGY, // Ignition Energy — {C}, {C}{C}{C} on an Evolution, discarded at the end of your turn
   // ── D190 — THE **STANDARD-LEGAL** REPRINT-ALIAS MAP (Tier 0 of
   //    `docs/reference/coverage-backlog-legal.md`). 22 printings, 9 map targets,
   //    ZERO new code: every row below prints a sentence that is already authored

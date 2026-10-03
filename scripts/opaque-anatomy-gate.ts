@@ -51,6 +51,10 @@
  *   positive and this gate goes RED and names it. It also asserts that no row is
  *   ever LABELLED by a `co-marker`, which is the whole discipline the second
  *   axis rests on.
+ *   ⚠️ **THAT LAST CLAIM ALSO NEEDS A WITNESS IN THE POPULATION (D571).** It goes
+ *   red only while some live FAR row matches a co-marker, and D571 built one of
+ *   the five. So § C also labels a PINNED literal far sentence (the `PRIZE-ZONE`
+ *   witness's words) through `blockerMarkerOf`, with its premise re-measured.
  *
  * § D — THE PARTITION IS TOTAL AND DISJOINT. Every `OPAQUE` row gets exactly one
  *   class; the class sentence-counts and printing-counts sum to the class's own.
@@ -84,9 +88,11 @@
 import {
   ANATOMY,
   BUILT_SENTENCES,
+  blockerMarkerOf,
   type EditRegion,
   editRegions,
   MARKER_COUNTS,
+  MARKERS,
   minRegionHit,
   OPAQUE,
 } from "./opaque-anatomy";
@@ -182,6 +188,30 @@ check(
   "§C a CO-MARKER labelled a row — only a BLOCKER may label",
   coLabelled.length === 0,
   `${coLabelled.length} row(s); first: «${coLabelled[0]?.text ?? "—"}» labelled ${coLabelled[0]?.cls ?? "—"}`,
+);
+// 🛑 THE PINNED CO-MARKER WITNESS (D571, the D569 close-out's gate-witness rule). The claim
+// above can only kill `D471-co-marker-may-label` while some LIVE far OPAQUE row matches a
+// co-marker, and at D570 there were FIVE such rows: three `SCHEMA-BANNER` (Ancient/Future),
+// one `PRIZE-ZONE` and one `ANY-NUMBER-OF`. D571 BUILT one of the three (Iron Thorns
+// "Destructo-Press"), and a Paradox slice is the likeliest to build the other two. So the
+// label is also asked of a FIXED far sentence no slice can build away: the live
+// `PRIZE-ZONE` witness's own words, held here as a literal. A co-marker matches it and no
+// blocker does, so only a labeller that lets a co-marker label returns non-null.
+const CO_PIN = "If you use this attack when you have exactly 1 Prize card remaining, you win this game.";
+const coPinned = blockerMarkerOf({ text: CO_PIN });
+check(
+  "§C the PINNED far sentence was labelled by a CO-MARKER — only a BLOCKER may label",
+  coPinned === null,
+  `«${CO_PIN}» labelled ${coPinned === null ? "—" : coPinned.name} (${coPinned?.verdict ?? "—"})`,
+);
+// The pin's own premise, re-measured so it cannot rot into a tautology: some CO-MARKER
+// must really match it (else the claim above passes under the mutant too), and NO blocker
+// may (else the claim above is red at a green HEAD).
+const coPinMatches = MARKERS.filter((m) => m.rx.test(CO_PIN));
+check(
+  "§C the pinned co-marker witness's premise broke — no co-marker matches it, or a blocker does",
+  coPinMatches.length > 0 && coPinMatches.every((m) => m.verdict === "co-marker"),
+  `matched by «${coPinMatches.map((m) => `${m.name}:${m.verdict}`).join(", ") || "nothing"}»`,
 );
 
 // ─── § D. THE PARTITION IS TOTAL AND DISJOINT ────────────────────────────────

@@ -8587,7 +8587,8 @@ discriminating.**
 1. **When a slice changes the residue** (it builds, reaches or reclassifies any corpus sentence), probe EVERY row whose
    killer is a gate over the live census before you write the prediction, not only the rows near your hunks. List them
    by `killedByCommand`, not by file. At D569 there are fifteen: 8 on `bun scripts/opaque-anatomy-gate.ts` and 7 on
-   `bun scripts/residue-census-gate.ts`. Probing all of them takes a few seconds.
+   `bun scripts/residue-census-gate.ts`. Probing all of them takes a few seconds. 🆕🆕🆕 D571: SIXTEEN — 9 on
+   `opaque-anatomy-gate.ts` with `D571-gate-co-marker-pin-premise-broken` (population-independent: a literal premise).
 2. **Prefer a pinned literal witness to a population witness** for any row that tests the INSTRUMENT's logic rather than
    a claim about the corpus. D569's fix has that shape. It adds an optional `targets` parameter whose default is the
    live side, so every existing caller is unchanged, and pins a fixed pair. The gate re-measures the pair's premise, so
@@ -8618,7 +8619,13 @@ read. All 15 are KILLED.
   `SCHEMA-BANNER` (Ancient/Future), one `PRIZE-ZONE` and one `ANY-NUMBER-OF`. A slice that builds or reaches all five
   turns it into the next silent GAP, and a Paradox part b slice is the likeliest to remove three of them. Pin it the same
   way, with a literal far row that a co-marker labels, before or with that slice. It was not pinned at this close-out,
-  which was scoped to the GAP row.
+  which was scoped to the GAP row. 🆕🆕🆕 **D571: PINNED, and it moves to population-independent — 10 of 16, since its premise row (below) is a sixteenth gate row and is population-independent too.** D571 (Paradox
+  part b) built Destructo-Press, one of the three SCHEMA-BANNER witnesses (SCHEMA-BANNER OPAQUE 3/4 → 2/2), so before the
+  build `opaque-anatomy-gate.ts` §C gained a literal witness: `blockerMarkerOf` (the labelling line, exported from
+  `opaque-anatomy.ts` byte for byte, so the row's `find` is unchanged) is asked of the PRIZE-ZONE sentence «If you use
+  this attack when you have exactly 1 Prize card remaining, you win this game.», with its premise (a co-marker matches it,
+  no blocker does) re-measured; a new row, `D571-gate-co-marker-pin-premise-broken`, keeps the premise honest. The live
+  witnesses are four now (two SCHEMA-BANNER, one PRIZE-ZONE, one ANY-NUMBER-OF); the row no longer depends on them.
 
 ### A withdrawn claim about a MECHANISM is also spelled as the mechanism's DATA, so the sweep keys on those shapes too (D570 third review, extending D539 and D567)
 
@@ -9726,7 +9733,8 @@ any-category `bannerCard`. "The persisted `Card` carries no banner column" stays
 Ancient/Future attack rows, D569 built Primordial Beatdown, Vengeance Fletching, Majestic Sword and
 Iron Smasher through readers and Peak Acceleration, Land Collapse, Supportive Singing and Perplexing
 Transfer as index-keyed registry rows; what stays unbuilt (Iron Moth, Unrelenting Onslaught,
-Destructo-Press, C.O.D.E.: Protect) is blocked by a MECHANISM, not by the banner.
+Destructo-Press, C.O.D.E.: Protect) is blocked by a MECHANISM, not by the banner. 🆕🆕🆕 D571 (D539): Destructo-Press is
+BUILT (its mechanism, a reveal-and-discard-matches op, `revealTopDiscardMatching`); three stay unbuilt.
 
 ## A refusal that names a SENTENCE is usually a claim about a WARRANT, not about a carrier (D462)
 

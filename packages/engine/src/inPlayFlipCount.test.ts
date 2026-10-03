@@ -893,13 +893,13 @@ describe("D474 §6 — `MATCH_RECORD_VERSION` stays 29, and this is D473's FIRST
     }
   });
 
-  it("engineVersion is 0.454.0 and `manifest.version` agrees", () => {
+  it("engineVersion is 0.455.0 and `manifest.version` agrees", () => {
     // D460's FOURTH class of version-tax site is the `it()` TITLE, so this one names
     // both halves and BOTH are asserted — a title that reports a claim the body does
     // not make is worse than a stale doc block, because the run log then says a
     // version the suite never checked.
-    expect(engineVersion).toBe("0.454.0");
-    expect(manifest.version).toBe("0.454.0");
+    expect(engineVersion).toBe("0.455.0");
+    expect(manifest.version).toBe("0.455.0");
     expect(manifest.version).toBe(engineVersion);
   });
 });

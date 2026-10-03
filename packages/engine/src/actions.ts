@@ -294,7 +294,8 @@ export type ErrorCode =
       legal locks the registry builds; Iron Thorns ex "Initialization" and Team Rocket's
       Watchtower are legal and unbuilt; the list of three is withdrawn, D539 — 🆕🆕🆕 D566
       (D539): the Watchtower is BUILT, a STADIUM-sourced lock over {C} bodies; Iron Thorns ex
-      stays the one unbuilt legal lock) has turned
+      stays the one unbuilt legal lock — 🆕🆕🆕 D571 (D539): no longer; Iron Thorns ex
+      "Initialization" is BUILT, the third legal Pokémon lock) has turned
       this Pokémon's
       Abilities off. */
   | "ABILITY_DISABLED"
