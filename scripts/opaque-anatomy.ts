@@ -218,11 +218,18 @@ export type RegionHit = { k: number; onto: string; regions: EditRegion[] };
     sentence, or `null` when no alignment keeps every region within `SUBMAX`.
     ⚠️ The bound is applied to the alignment BEFORE the count is compared, which
     is what stops the probe from degenerating: without it every sentence is one
-    region away from every other and the table reads `MULTI-1` for all 78. */
-export function minRegionHit(text: string, submax: number = SUBMAX): RegionHit | null {
+    region away from every other and the table reads `MULTI-1` for all 78.
+    `targets` defaults to the live BUILT side and exists for ONE caller: the
+    gate's § E pinned witness (D569), which needs the search run over a FIXED
+    pair rather than over a population a slice can shrink out from under it. */
+export function minRegionHit(
+  text: string,
+  submax: number = SUBMAX,
+  targets: readonly string[] = BUILT_SENTENCES,
+): RegionHit | null {
   const a = text.split(" ");
   let best: RegionHit | null = null;
-  for (const onto of BUILT_SENTENCES) {
+  for (const onto of targets) {
     const regions = editRegions(a, onto.split(" "));
     if (regions.length === 0) continue;
     if (regions.some((r) => r.alen > submax || r.blen > submax)) continue;

@@ -65,6 +65,12 @@
  *   narrowing shows up as a COUNT rather than as an absence (D465's third
  *   property), and it pins non-degeneracy in BOTH directions: neither the
  *   reached half nor the far half may be empty.
+ *   ⚠️ **THE RE-DERIVATION NEEDS A WITNESS IN THE POPULATION, AND D569 BUILT IT.**
+ *   It only goes red under a first-hit search while some live row's first
+ *   admitted alignment is larger than its minimum; after D569 none is. So § E
+ *   also runs `minRegionHit` over a PINNED literal pair whose first target is
+ *   admitted at k = 2 and whose second is admitted at k = 1 — the
+ *   population-independent half of the same claim.
  *
  * ⚠️ WHAT IT DOES NOT ASSERT, STATED (D419/D455). It pins **no class sizes** —
  * `MULTI-2 = 11` is exactly the kind of figure a future build is supposed to
@@ -81,6 +87,7 @@ import {
   type EditRegion,
   editRegions,
   MARKER_COUNTS,
+  minRegionHit,
   OPAQUE,
 } from "./opaque-anatomy";
 
@@ -236,6 +243,33 @@ check(
   "§E the re-derived minimum region count disagrees with the instrument's",
   disagree.length === 0,
   `${disagree.length} row(s); first: ${disagree[0] ?? "—"}`,
+);
+// 🛑 THE PINNED WITNESS (D569). The re-derivation above can only kill
+// `D471-min-region-takes-the-first-hit` while some LIVE `OPAQUE` row has a
+// first-admitted alignment larger than its minimum — and the last such row,
+// «This attack does 10 more damage for each Ancient card in your discard
+// pile.» (first admitted k = 5, minimum k = 2), was BUILT by D569 and left the
+// residue. The suite did not weaken; its only witness was consumed by progress.
+// So the search is also run over a FIXED pair that no slice can build away: the
+// FIRST target is admitted at k = 2, the SECOND at k = 1, and only a search
+// that keeps the SMALLEST returns the second. Population-independent, so this
+// row's kill no longer rides on what the residue happens to contain.
+const PIN_TEXT = "a b c d e";
+const PIN_TARGETS = ["a x c y e", "a b c d x"] as const;
+const pinned = minRegionHit(PIN_TEXT, 4, PIN_TARGETS);
+check(
+  "§E the search kept a LARGER alignment than the pinned minimum — it is not taking the smallest",
+  pinned?.k === 1 && pinned.onto === PIN_TARGETS[1],
+  `expected k = 1 onto «${PIN_TARGETS[1]}», got ${pinned === null ? "null" : `k = ${pinned.k} onto «${pinned.onto}»`}`,
+);
+// The pin's own premise, re-measured so it cannot rot into a tautology: the
+// FIRST target must really be admitted with MORE regions than the second, or
+// the witness above no longer distinguishes first-hit from smallest-hit.
+const pinFirst = editRegions(T(PIN_TEXT), T(PIN_TARGETS[0]));
+check(
+  "§E the pinned witness's premise broke — its first target is not admitted at a larger k",
+  pinFirst.length === 2 && pinFirst.every((x) => x.alen <= 4 && x.blen <= 4),
+  `first target reduces to «${shape(pinFirst)}»`,
 );
 check(
   "§E the grid is not the full (OPAQUE × BUILT) product",

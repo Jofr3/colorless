@@ -8563,6 +8563,57 @@ Then classify each hit before changing it (D539's second half). A MEASURED popul
 union: D567 left `discardDefender.test.ts:491`, a count of that file's own `recordGate`s. A record of a past state
 is not one either.
 
+### A gate mutant whose only witness is a LIVE residue sentence dies the day a slice BUILDS that sentence, and nothing goes red (D569 close-out, extending D467, D516 and D459)
+
+`D471-min-region-takes-the-first-hit` read KILLED on every sweep through D568. It came back as the ONE undeclared
+survivor of D569's sweep, ending a 36-run exact-prediction streak, although its bytes, its target line and its gate had
+not changed. Its killer, `opaque-anatomy-gate.ts` §E, re-derives a measurement over the LIVE residue, so it could catch
+a first-hit search only while some live OPAQUE row had a first-admitted alignment larger than its minimum. Exactly one
+row did: Roaring Moon's «This attack does 10 more damage for each Ancient card in your discard pile.». D569 built it. The
+gate stayed green, the slice's probes never reached the row, and the sweep was the first thing to notice.
+
+D467 and D516 cover a suite witness that a build turns RED. This is the silent case. **A gate over a population passes
+on any population, so when its witness leaves, the gate stays green, and only its mutant can show that it has stopped
+discriminating.**
+
+**The rule:**
+
+1. **When a slice changes the residue** (it builds, reaches or reclassifies any corpus sentence), probe EVERY row whose
+   killer is a gate over the live census before you write the prediction, not only the rows near your hunks. List them
+   by `killedByCommand`, not by file. At D569 there are fifteen: 8 on `bun scripts/opaque-anatomy-gate.ts` and 7 on
+   `bun scripts/residue-census-gate.ts`. Probing all of them takes a few seconds.
+2. **Prefer a pinned literal witness to a population witness** for any row that tests the INSTRUMENT's logic rather than
+   a claim about the corpus. D569's fix has that shape. It adds an optional `targets` parameter whose default is the
+   live side, so every existing caller is unchanged, and pins a fixed pair. The gate re-measures the pair's premise, so
+   the pin cannot quietly become a tautology.
+3. **Classify each gate row once and keep the class.** There are four classes:
+   - **Population-independent:** the witness is a literal input, so no slice can use it up.
+   - **Population-dependent but loud:** the gate's own non-degeneracy check goes red before the row can survive.
+   - **Grows with progress:** the witness is the BUILT side or the corpus, so only rotation threatens it.
+   - **At risk:** the witness is a handful of live residue sentences. This GAP had that shape.
+
+**The class sweep at D569, on the fixed tree.** Each of the 15 rows was applied by hand and the claim that fired was
+read. All 15 are KILLED.
+
+- **Population-independent (8):** the five `D465-*` tail-repair rows (`residue-census-gate` §B literals),
+  `D471-regions-never-separate`, `D471-adjacent-edits-oversplit`, and now `D471-min-region-takes-the-first-hit`.
+- **Population-dependent but loud (2):**
+  - `D471-region-bound-not-applied`. It dies on §A (k = 1 on every row) and on §E's "far half is empty", and the gate
+    already requires a far row.
+  - `D471-built-side-control-inverted`. It dies on §C. Building only empties residue sides further, so the number of
+    killing claims can only grow.
+- **Grows with progress (4):**
+  - `D471-continuous-declared-a-blocker`: CONTINUOUS has 59 built sentences / 230 printings.
+  - `D508-named-attack-marker-kept-as-blocker`: NAMED-ATTACK has 4 built sentences / 7 printings.
+  - the two `D529-*-refuses-the-clause-only-gate-again` rows: they need the 3 clause-only-gate sentences, which are
+    already built.
+- ⚠️ **At risk (1): `D471-co-marker-may-label`.** It dies on §C's *"a CO-MARKER labelled a row"*, which needs a FAR
+  OPAQUE row that matches a non-blocker marker. Its whole witness population is FIVE live residue sentences: three
+  `SCHEMA-BANNER` (Ancient/Future), one `PRIZE-ZONE` and one `ANY-NUMBER-OF`. A slice that builds or reaches all five
+  turns it into the next silent GAP, and a Paradox part b slice is the likeliest to remove three of them. Pin it the same
+  way, with a literal far row that a co-marker labels, before or with that slice. It was not pinned at this close-out,
+  which was scoped to the GAP row.
+
 ## Git / commits
 - Branch off `main` for non-trivial work; commit/push only when asked.
 - Commit trailer per global config: `Co-Authored-By: Claude ...`.
