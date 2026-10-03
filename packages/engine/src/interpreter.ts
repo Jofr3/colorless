@@ -92,6 +92,8 @@ import {
   intoPlayOnlyViaOf,
   // 🆕🆕🆕 D565 — the ONE "is this Tool simulated" predicate, shared with `attachTool`.
   toolCardSimulated,
+  // 🆕🆕🆕 D572 — Milotic "Mentally Calm": the in-play → hand lock, at every hand writer.
+  inPlayToHandBlocked,
 } from "./continuous";
 import type { KoSurvival } from "./continuous";
 import { POKEMON_TYPES, STATUS_WORD_OF, foldApostrophes } from "./effects";
@@ -527,7 +529,17 @@ export type EffectPrompt =
       build would read as `upTo === undefined`, i.e. MANDATORY, and a resumed
       match would refuse a decline the player was promised. D352 made exactly this
       call one op over (`attachFromTop.discardRest` → `restTo`). */
-  | { kind: "choosePokemon"; candidates: PokemonRef[]; upTo?: number; note: string }
+  /** 🆕🆕🆕 **D572 — `takeVerb` IS THE VERB THE QUANTITY PICKER SAYS, AND ABSENT MEANS "attach".**
+      Every `upTo` park before D572 attached Energy, so both HUDs captioned the quantity row
+      "Attach N"; Adrena-Brain's ceiling counts DAMAGE COUNTERS MOVED, and a dialog promising an
+      attach would lie about the answer. OPTIONAL with the old reading as its absent arm — D441's
+      test (*"does the old byte string still mean what it meant"*): a v37 park written by 0.455
+      carries no key and reads "attach", which is what it meant. A 0.455 ROLLBACK deploy's zod
+      schema strips the unknown key, so a parked Adrena-Brain prompt there captions "attach" —
+      display only; the answer's `take` means the same number. Carried on the PROMPT (redact,
+      the wire schema, both HUDs) for `anySource`'s reason: the dialogs read the prompt, never the
+      op. */
+  | { kind: "choosePokemon"; candidates: PokemonRef[]; upTo?: number; takeVerb?: "move"; note: string }
   /** Pick `min`..`max` in-play Pokémon — the multi-target snipe (damageChosen:
       Hawlucha's "choose 2", Meowscarada ex / Radiant Blastoise's "on 1 of your
       opponent's Benched Pokémon"). Distinct from choosePokemon (exactly one) in
@@ -2092,6 +2104,10 @@ function continuationOps(
   if (op.op === "moveCounterOwnChosen" && op.from === undefined) {
     return pickedPokemon(choice) ? counterOwnSourceAnswered(op, choice.ref) : [];
   }
+  // 🆕🆕🆕 D572 — Adrena-Brain's SOURCE answer buys question two (D216's member, a third time).
+  if (op.op === "moveCountersToOpponentChosen" && op.from === undefined) {
+    return pickedPokemon(choice) ? [{ ...op, from: choice.ref.spot }] : [];
+  }
   // 🆕🆕🆕 D565 — Ruffian's body answer buys the two body-narrowed discards.
   if (op.op === "discardToolAndSpecialEnergyChosen") {
     return pickedPokemon(choice) ? ruffianBodyAnswered(before, choice.ref) : [];
@@ -2482,6 +2498,43 @@ function stepOp(
         (ref) => moveOneOwnCounter(state, from, ref, ctx, events),
         "Move the damage counter onto which of your Pokémon?",
       );
+    }
+    case "moveCountersToOpponentChosen": {
+      // 🆕🆕🆕 D572 — Munkidori "Adrena-Brain": up to `upTo` counters, own → opponent. D216's two
+      // questions, `op.from` telling them apart.
+      const source = op.from;
+      if (source === undefined) {
+        // QUESTION 1 — the SOURCE: any own damaged body (Munkidori included). One is FORCED and
+        // handed on through the SAME splice the parked answer takes (`continuationOps`).
+        const damagedOwn = counterToOpponentSources(state, ctx.seat);
+        if (damagedOwn.length === 0) return { done: state };
+        const lone = damagedOwn.length === 1 ? damagedOwn[0] : undefined;
+        if (lone !== undefined) return { done: state, schedule: [{ ...op, from: lone.spot }] };
+        return {
+          park: {
+            kind: "choosePokemon",
+            candidates: damagedOwn,
+            note: `Move up to ${op.upTo} damage counters off which of your Pokémon? You will then choose where they go.`,
+          },
+        };
+      }
+      // QUESTION 2 — the DESTINATION and the COUNT, one answer (D359's compound pick). ALWAYS
+      // PARKED, never `parkOrForce`'s forced arm: a lone opponent body still has `upTo + 1`
+      // answers (D47/D358). `upTo` is the PRINTED ceiling and is not clamped (redact.ts); the
+      // mover clamps the take to the source's counters. A source with no counters left is the
+      // silent whiff (no question about nothing).
+      if ((refPokemon(state, { seat: ctx.seat, spot: source })?.damage ?? 0) <= 0) return { done: state };
+      const opposing = oppAnyRefs(state, ctx.seat);
+      if (opposing.length === 0) return { done: state };
+      return {
+        park: {
+          kind: "choosePokemon",
+          candidates: opposing,
+          upTo: op.upTo,
+          takeVerb: "move",
+          note: `Move up to ${op.upTo} damage counters onto which of your opponent's Pokémon?`,
+        },
+      };
     }
     case "discardToolAndSpecialEnergyChosen": {
       // 🆕🆕🆕 D565 — Ruffian: ONE question (which opponent body), whose answer buys the two
@@ -6258,6 +6311,21 @@ export function conditionHolds(state: GameState, seat: Seat, cond: BoardConditio
         matchesFilter(cardOfUid(state, playedUid), { kind: "bannerCard", banner: cond.banner })
       );
     }
+    case "opponentStage2PokemonInPlay": {
+      // 🆕🆕🆕 D572 — Klinklang "Emergency Rotation"'s *"your opponent has any Stage 2 Pokémon in
+      // play"*: `opponentHasExOrVInPlay`'s spread (the OTHER seat's Active AND Bench, each TOP
+      // card) through `isStage2Pokemon`, `opponentActiveIsStage2`'s predicate.
+      const foes = state.players[otherSeat(seat)];
+      const foeBodies = foes.active === null ? foes.bench : [foes.active, ...foes.bench];
+      return foeBodies.some((body) => {
+        const top = topCardOf(state, body);
+        return top !== undefined && isStage2Pokemon(top);
+      });
+    }
+    case "yourInPlayToHandAllowed":
+      // 🆕🆕🆕 D572 — the negation of the Milotic lock on the READING seat's own cards (Zarude
+      // "Jungle Whip"'s cost gate, D385).
+      return !inPlayToHandBlocked(state, seat);
     case "yourPokemonKoedOnOpponentsLastTurn":
       // D271 — "any of your Pokémon were Knocked Out during your opponent's last
       // turn" (Unfair Stamp sv06-165, Hassel sv06-151/-205). The whole predicate
@@ -7385,6 +7453,12 @@ export function conditionNote(cond: BoardCondition): string {
       return `your opponent has any ${cond.banner} Pokémon in play`;
     case "yourPlayedBannerSupporterThisTurn":
       return `you played ${cond.banner === "Ancient" ? "an" : "a"} ${cond.banner} Supporter card from your hand during this turn`;
+    case "opponentStage2PokemonInPlay":
+      // 🆕🆕🆕 D572 — Emergency Rotation's printed clause verbatim, minus the "and".
+      return "your opponent has any Stage 2 Pokémon in play";
+    case "yourInPlayToHandAllowed":
+      // 🆕🆕🆕 D572 — no printed clause (the gate is D385's, not the card's); named after the lock.
+      return "your Pokémon in play and attached cards can be put into your hand";
     case "yourPokemonKoedOnOpponentsLastTurn":
       // The printed clause verbatim — the family's THIRD full round-trip, and it
       // keeps the possessive "your opponent's last turn" that the predicate turns
@@ -7960,6 +8034,15 @@ export function applyChoice(
       if (!pickedPokemon(choice) || from === undefined) return state;
       return moveOneOwnCounter(state, from, choice.ref, ctx, events);
     }
+    case "moveCountersToOpponentChosen": {
+      // 🆕🆕🆕 D572 — Adrena-Brain's two parks, told apart by `op.from`. The SOURCE answer moves
+      // nothing (`continuationOps` buys question two). The DESTINATION answer is the whole move:
+      // its `take` is the count (absent = the printed `upTo`, D359), and the ref-less answer is
+      // the DECLINE — `pickedPokemon` false, nothing moves, no event.
+      const source = op.from;
+      if (!pickedPokemon(choice) || source === undefined) return state;
+      return moveCountersToOpponent(state, source, choice.ref, choice.take ?? op.upTo, ctx, events);
+    }
     case "discardToolAndSpecialEnergyChosen":
       // 🆕🆕🆕 D565 — Ruffian's pick moves nothing here: what it buys is the two discards,
       // spliced by `continuationOps` (the `evolveFromDeckChosen` shape).
@@ -8025,6 +8108,9 @@ export function applyChoice(
       // move a Pokémon rather than a countable batch onto one, so a quantity on
       // their answers would have no referent. Absent = the whole batch, which is
       // why the pre-D359 wire frame still means what it always meant.
+      // 🆕🆕🆕 D572 (D539) — "the ONLY arm in this switch that reads it" IS WITHDRAWN: Adrena-Brain's
+      // `moveCountersToOpponentChosen` arm reads `choice.take` too (a countable batch of DAMAGE
+      // COUNTERS moved onto one body), with the same absent = `upTo` reading.
       return pickedPokemon(choice)
         ? attachEnergyFrom(state, op, choice.ref, ctx, events, record, choice.take)
         : state;
@@ -12528,6 +12614,52 @@ function moveOneOwnCounter(
   );
 }
 
+/** 🆕🆕🆕 D572 — Adrena-Brain's SOURCE candidates: *"1 of your Pokémon"* — every own in-play body
+    (Active first, then the Bench) carrying damage, the Munkidori itself included. Exported for
+    `programPlayable`, which must refuse on exactly this set (`gustTargets`' rule). */
+export function counterToOpponentSources(state: GameState, seat: Seat): PokemonRef[] {
+  return ownInPlayRefs(state, seat).filter((ref) => (refPokemon(state, ref)?.damage ?? 0) > 0);
+}
+
+/** 🆕🆕🆕 D572 — MOVE `count` DAMAGE COUNTERS from the controller's own `from` body onto the
+    OPPONENT's `dest` body (Adrena-Brain). `moveOneOwnCounter`'s two halves with the count
+    clamped to what the source carries (*"up to 3"* over a body holding 2 moves 2): the heal is
+    `healChosen` (`HEALED` + the D386 stamp), the placement `COUNTERS_PLACED { source: "moved" }`
+    on the destination's seat, written off the healed board. Silent endings, all wire belts: a
+    destination on the controller's own board, an empty spot, nothing to move. No §11 question
+    (an Ability, not an attack). The op never Knocks Out — a lethal placement is swept by
+    `settleProgram` → `resolveMidTurnKnockOuts`, NOT by an attack (no `attackerSeat`). */
+function moveCountersToOpponent(
+  state: GameState,
+  from: PokemonTarget,
+  dest: PokemonRef,
+  count: number,
+  ctx: EffectContext,
+  events: GameEvent[],
+): GameState {
+  if (dest.seat === ctx.seat) return state;
+  const sourceRef: PokemonRef = { seat: ctx.seat, spot: from };
+  const source = refPokemon(state, sourceRef);
+  const target = refPokemon(state, dest);
+  if (source === undefined || target === undefined) return state;
+  const targetUid = topUid(target);
+  const moved = Math.min(count * 10, source.damage);
+  if (targetUid === undefined || moved <= 0) return state;
+  const relieved = healChosen(state, sourceRef, moved, ctx, events);
+  events.push({ type: "COUNTERS_PLACED", seat: dest.seat, uid: targetUid, amount: moved, source: "moved" });
+  const landing = refPokemon(relieved, dest) ?? target;
+  const loaded: InPlayPokemon = { ...landing, damage: landing.damage + moved };
+  const theirs = relieved.players[dest.seat];
+  const at = dest.spot;
+  return withSide(
+    relieved,
+    dest.seat,
+    at.spot === "active"
+      ? { ...theirs, active: loaded }
+      : { ...theirs, bench: theirs.bench.map((pokemon, i) => (i === at.index ? loaded : pokemon)) },
+  );
+}
+
 /** 🆕🆕🆕 D565 — Ruffian's candidates: every opponent body (Active first, then the Bench)
     carrying a Pokémon Tool OR a Special Energy — either half of the print is something to
     discard (R-RU1). The shield is NOT asked here (the `devolveTargets` order: the set
@@ -13899,6 +14031,9 @@ function returnBenched(
   if (body === undefined) return state;
   const uid = topUid(body);
   if (uid === undefined) return state;
+  // 🆕🆕🆕 D572 — Milotic "Mentally Calm" opposite the OWNER: the hand return WHIFFS, the body
+  // stays on the Bench (the deck arm is untouched — the print names the hand).
+  if (op.dest === "hand" && inPlayToHandBlocked(state, owner)) return state;
   const uids = stackUids(body);
   const bench = [...side.bench.slice(0, index), ...side.bench.slice(index + 1)];
   events.push({ type: "POKEMON_RETURNED", seat: owner, uid, actor: ctx.seat, dest: op.dest, uids });
@@ -13926,6 +14061,8 @@ function returnOwnActive(
   if (body === null) return state;
   const uid = topUid(body);
   if (uid === undefined) return state;
+  // 🆕🆕🆕 D572 — the Active arm's Milotic guard (Scoop Up Cyclone): the body stays Active.
+  if (op.dest === "hand" && inPlayToHandBlocked(state, owner)) return state;
   const pile = stackUids(body);
   events.push({ type: "POKEMON_RETURNED", seat: owner, uid, actor: ctx.seat, dest: op.dest, uids: pile });
   if (op.dest === "hand") {
@@ -14128,6 +14265,9 @@ function returnSelf(
           bench: [...side.bench.slice(0, ref.spot.index), ...side.bench.slice(ref.spot.index + 1)],
         };
   const dest = op.dest ?? "deck";
+  // 🆕🆕🆕 D572 — Milotic "Mentally Calm" opposite: "put this Pokémon into your hand" WHIFFS whole
+  // (Lillie's Comfey, Team Rocket's Crobat ex) — the body and its attachments stay in play.
+  if (dest === "hand" && inPlayToHandBlocked(state, seat)) return state;
   const attached = [...body.energy, ...body.tools];
   const split = op.attachmentsTo !== undefined && op.attachmentsTo !== dest;
   const bodyPile = split ? [...body.stack] : uids;
@@ -14537,6 +14677,10 @@ function devolveBodyToHand(
   // reason every ref guard in this file is: the op validates refs, and a wire answer
   // whose body has since left play moves nothing (`returnBenched`'s trust level).
   if (body === null || body === undefined) return state;
+  // 🆕🆕🆕 D572 — Milotic "Mentally Calm" opposite the body's OWNER (R-MC1: the Milotic owner's own
+  // Archeops / Espathra included): the devolution FAILS WHOLE (R-MC3) — the card cannot reach the
+  // hand, so nothing is shed and the body keeps its Stage.
+  if (inPlayToHandBlocked(state, ref.seat)) return state;
   const from = body.stack[body.stack.length - 1];
   if (from === undefined) return state;
   const cleared = presentStatuses(body.conditions);
@@ -17262,6 +17406,9 @@ function discardEnergyApply(
 ): { state: GameState; discarded: string[] } {
   if (uids.length === 0) return { state, discarded: [] };
   const victim = discardVictimSeat(ctx.seat, op);
+  // 🆕🆕🆕 D572 — Milotic "Mentally Calm" opposite the VICTIM: the `to: "hand"` move WHIFFS and
+  // the Energy stays attached (Chill Teaser Toy, Opposing Winds, Energy Loop, Jungle Whip's cost).
+  if (op.to === "hand" && inPlayToHandBlocked(state, victim)) return { state, discarded: [] };
   const side = state.players[victim];
   const picks = new Set(uids);
   // Per affected Pokémon: the spot it sits on and what came off it. Collected in
@@ -18023,6 +18170,10 @@ export function discardEnergyPlayable(
   op: Extract<EffectOp, { op: "discardEnergy" }>,
   sourceUid?: string,
 ): boolean {
+  // 🆕🆕🆕 D572 — R-MC2 (⚠️ UNRULED): a `to: "hand"` move the Milotic lock wholly blocks can only
+  // whiff, so the play is refused (Chill Teaser Toy by the Milotic owner — D222, no afford-then-
+  // reject). The seat is the VICTIM's, `discardEnergyApply`'s guard's own.
+  if (op.to === "hand" && inPlayToHandBlocked(state, discardVictimSeat(seat, op))) return false;
   return discardableEnergies(state, seat, op, sourceUid).length > 0;
 }
 

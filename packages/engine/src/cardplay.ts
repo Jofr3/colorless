@@ -13,6 +13,9 @@ import { cardOfUid, isBasicPokemon, topUid } from "./cards";
 import {
   disabledAbilityUids,
   handPlayBarred,
+  // 🆕🆕🆕 D572 — Adrena-Brain's {D} body gate and the Milotic lock (R-MC2).
+  hasAttachedEnergy,
+  inPlayToHandBlocked,
   remainingHpWithin,
   toolCardSimulated,
 } from "./continuous";
@@ -29,6 +32,8 @@ import {
   // 🆕🆕🆕 D565 — Rocket Brain's two candidate funnels, so the grey-out and the offer agree.
   counterOwnDestinations,
   counterOwnSources,
+  // 🆕🆕🆕 D572 — Adrena-Brain's source funnel.
+  counterToOpponentSources,
   discardEnergyPlayable,
   // 🆕🆕🆕 D557 — the Tool offer's own funnel, so the grey-out and the offer agree.
   discardableTools,
@@ -734,7 +739,10 @@ export function abilityUsedKey(
 }
 
 /** 🆕 **D310 — THE SOLE FUNNEL FOR §9's PER-BODY `remainingHpAtMost` GATE**, for
-    the reason `abilityUsedKey` one line up is one: THREE readers consult it —
+    the reason `abilityUsedKey` one line up is one [🆕🆕🆕 D572 (D539): "FOR THE
+    `remainingHpAtMost` GATE" IS WITHDRAWN as a description of the whole funnel — it is the sole
+    funnel for BOTH per-body gates now, `remainingHpAtMost` and Munkidori's
+    `requiresEnergyType`, and their ONE reason text is `abilityBodyGateClause` below]: THREE readers consult it —
     `useAbility` below, `redactedAbilitiesOf` (redact.ts) and the local `GameHud` —
     and a per-body gate hand-spelled in three places is the shape that rots into an
     afford-then-reject the moment one of them is edited (D222).
@@ -755,6 +763,12 @@ export function abilityBodyGateMet(
   ability: AbilityProgram,
   pokemon: InPlayPokemon,
 ): boolean {
+  // 🆕🆕🆕 D572 — Munkidori "Adrena-Brain"'s *"if this Pokémon has any {D} Energy attached"*,
+  // through `hasAttachedEnergy` (the D118 provision rule). Asked FIRST and returning only on a
+  // fail, so a row carrying no such field falls through to the HP gate byte-identically.
+  if (ability.requiresEnergyType !== undefined && !hasAttachedEnergy(state, pokemon, ability.requiresEnergyType)) {
+    return false;
+  }
   if (ability.remainingHpAtMost === undefined) return true;
   // 🆕 D349 — WAS THIS FUNCTION'S OWN THREE LINES, NOW `remainingHpWithin`
   // (continuous.ts). The arithmetic is byte-identical; what changed is that the
@@ -764,6 +778,20 @@ export function abilityBodyGateMet(
   // makes the PREDICATE a sole funnel for its three subjects, which is the same
   // rule one level down.
   return remainingHpWithin(state, pokemon, ability.remainingHpAtMost);
+}
+
+/** 🆕🆕🆕 D572 — THE ONE SPELLING of the per-body gate's printed clause (minus "if"), for the three
+    readers' reason text: `useAbility`'s reject, `redactedAbilitiesOf`'s and `GameHud`'s greyed-row
+    reason. The Energy clause first, `abilityBodyGateMet`'s own order; `null` for a row with no
+    per-body gate. */
+export function abilityBodyGateClause(ability: AbilityProgram): string | null {
+  if (ability.requiresEnergyType !== undefined) {
+    return `this Pokémon has any ${ability.requiresEnergyType} Energy attached`;
+  }
+  if (ability.remainingHpAtMost !== undefined) {
+    return `this Pokémon's remaining HP is ${ability.remainingHpAtMost} or less`;
+  }
+  return null;
 }
 
 /** §9 — use an in-play Pokémon's activated Ability. Does not cost energy, does
@@ -846,7 +874,8 @@ export function useAbility(state: GameState, action: UseAbilityAction): ApplyRes
   if (!abilityBodyGateMet(state, ability, resolved.pokemon)) {
     return err(
       "ABILITY_CONDITION_NOT_MET",
-      `${ability.name} can only be used if this Pokémon's remaining HP is ${ability.remainingHpAtMost} or less (§9)`,
+      // 🆕🆕🆕 D572 — the clause through `abilityBodyGateClause`, so the Energy gate names itself.
+      `${ability.name} can only be used if ${abilityBodyGateClause(ability) ?? "its printed condition holds"} (§9)`,
     );
   }
   // A card that would do NOTHING cannot be used — the snipe needs an opponent
@@ -1433,6 +1462,22 @@ export function programPlayable(
       (swapBodies(state, seat, op.filter).length === 0 ||
         swapDiscardCards(state, seat, op.filter).length === 0)
     ) {
+      return false;
+    }
+    // 🆕🆕🆕 D572 — Adrena-Brain with no damaged own body, or no opponent body to move onto, can
+    // only whiff. Both halves are the op's own funnels (`counterToOpponentSources`, the
+    // opponent's whole board — `oppAnyRefs`' set, empty exactly when no body is in play there).
+    if (
+      op.op === "moveCountersToOpponentChosen" &&
+      (counterToOpponentSources(state, seat).length === 0 ||
+        (state.players[otherSeat(seat)].active === null && state.players[otherSeat(seat)].bench.length === 0))
+    ) {
+      return false;
+    }
+    // 🆕🆕🆕 D572 — R-MC2 (⚠️ UNRULED): a hand return the Milotic lock wholly blocks can only
+    // whiff, so the card is refused (Scoop Up Cyclone with every own body locked). Own board
+    // only — the one `returnBenched … dest: "hand"` population is `whose: "self"`.
+    if (op.op === "returnBenched" && op.dest === "hand" && op.whose === "self" && inPlayToHandBlocked(state, seat)) {
       return false;
     }
     // 🆕🆕🆕 D565 — Rocket Brain with no damaged own Team Rocket's body, or no OTHER own body

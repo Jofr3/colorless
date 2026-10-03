@@ -5,6 +5,7 @@ import { activeTop, cardOfUid, matchesFilter, prizeValueOf, topCardOf, topUid } 
 import {
   effectiveRetreatCost,
   isLethallyDamaged,
+  koEnergyRescueUids,
   passivesOf,
   seatBurnExtraCounters,
   seatKoPrizeBonuses,
@@ -34,6 +35,7 @@ import type {
   InPlayPokemon,
   KnockOutMark,
   PendingStage,
+  PlayerSide,
   PokemonTarget,
   Seat,
   UsedAttack,
@@ -122,6 +124,10 @@ export function knockOut(
   prizeSeat: Seat,
   events: GameEvent[],
   byAttack = false,
+  /** 🆕🆕🆕 D572 — the uids Huntail "Diver's Catch" sends to `koedSeat`'s HAND instead of the
+      discard pile (`koEnergyRescueUids`, decided by the caller off the pre-batch board). Empty
+      (the default) on every other Knock Out, which is then byte-identical. */
+  toHand: readonly string[] = [],
 ): { state: GameState; stages: PendingStage[] } {
   const side = state.players[koedSeat];
   // D271 — stamp the turn this seat lost a Pokémon on. 🆕 D326 — and co-stamp
@@ -157,8 +163,8 @@ export function knockOut(
   if (side.active !== null && topUid(side.active) === koedUid) {
     const card = topCardOf(state, side.active);
     const stamped = stampFor(card);
-    const cleanup = discardFromStack(side, side.active, "all");
-    events.push({ type: "KNOCKED_OUT", seat: koedSeat, uid: koedUid, discarded: cleanup.discarded });
+    const cleanup = koCleanup(side, side.active, toHand);
+    events.push(knockedOutEvent(koedSeat, koedUid, cleanup));
     return {
       state: withSide(stamped, koedSeat, { ...cleanup.side, active: null }),
       stages: [
@@ -173,9 +179,9 @@ export function knockOut(
   if (benched !== undefined) {
     const card = topCardOf(state, benched);
     const stamped = stampFor(card);
-    const cleanup = discardFromStack(side, benched, "all");
+    const cleanup = koCleanup(side, benched, toHand);
     const bench = [...side.bench.slice(0, index), ...side.bench.slice(index + 1)];
-    events.push({ type: "KNOCKED_OUT", seat: koedSeat, uid: koedUid, discarded: cleanup.discarded });
+    events.push(knockedOutEvent(koedSeat, koedUid, cleanup));
     return {
       state: withSide(stamped, koedSeat, { ...cleanup.side, bench }),
       stages: [{ kind: "takePrizes", seat: prizeSeat, count: card === undefined ? 1 : prizeValueOf(card) }],
@@ -183,6 +189,42 @@ export function knockOut(
   }
   // Not in play — unreachable (every caller just scanned it lethal). No-op.
   return { state, stages: [] };
+}
+
+/** 🆕🆕🆕 D572 — `knockOut`'s whole-stack teardown with Huntail's split: `discardFromStack`'s
+    `"all"` move, then the `toHand` uids that actually left this body peeled back out of the
+    discard pile and appended to the OWNER's hand (§2 pile order kept in both zones). With nothing
+    rescued it IS `discardFromStack(…, "all")`, so every other Knock Out is byte-identical. */
+function koCleanup(
+  side: PlayerSide,
+  body: InPlayPokemon,
+  toHand: readonly string[],
+): { side: PlayerSide; discarded: string[]; toHand: string[] } {
+  const cleanup = discardFromStack(side, body, "all");
+  const rescued = cleanup.discarded.filter((uid) => toHand.includes(uid));
+  if (rescued.length === 0) return { side: cleanup.side, discarded: cleanup.discarded, toHand: [] };
+  const discarded = cleanup.discarded.filter((uid) => !toHand.includes(uid));
+  return {
+    side: { ...cleanup.side, discard: [...side.discard, ...discarded], hand: [...side.hand, ...rescued] },
+    discarded,
+    toHand: rescued,
+  };
+}
+
+/** 🆕🆕🆕 D572 — the `KNOCKED_OUT` row, `toHand` as a conditional spread (D135's absent-key rule:
+    every Knock Out nothing rescued from is the byte-identical three-field event it always was). */
+function knockedOutEvent(
+  seat: Seat,
+  uid: string,
+  cleanup: { discarded: string[]; toHand: string[] },
+): GameEvent {
+  return {
+    type: "KNOCKED_OUT",
+    seat,
+    uid,
+    discarded: cleanup.discarded,
+    ...(cleanup.toHand.length === 0 ? {} : { toHand: cleanup.toHand }),
+  };
 }
 
 /** 🆕🆕 **D435 — THE §8.1 PROMOTION OWED FOR AN ACTIVE SPOT NOTHING KNOCKED OUT,
@@ -759,6 +801,15 @@ function collectKnockOutPass(
     // time this loop reaches a later ref the earlier Knock Outs have already left
     // play, so the body carrying the marker may be gone. The question is about how
     // this body BECAME lethal, which the pre-batch state is the only witness to.
+    // 🆕🆕🆕 D572 — HUNTAIL "DIVER'S CATCH": *"When 1 of your {W} Pokémon is Knocked Out by damage
+    // from an attack from your opponent's Pokémon, you may put all Basic {W} Energy attached to that
+    // Pokémon into your hand instead of the discard pile."* The CAUSE is Amulet of Hope's two
+    // clauses below (`byAttackFor`, and the attacker on the OTHER seat — a recoil KO of the
+    // attacker's own body is refused), spelled seat-first here; the board half — holder, type, the
+    // Milotic lock — is `koEnergyRescueUids`, asked of the PRE-batch `state` (R-DC2). Auto-fires
+    // (D27). Decided BEFORE `knockOut`, because the split happens inside its teardown.
+    const rescuable =
+      entry.ref.seat !== attackerSeat && byAttackFor(entry.ref) ? preBatchBody(state, entry.ref) : undefined;
     const ko = knockOut(
       next,
       entry.ref.seat,
@@ -766,6 +817,7 @@ function collectKnockOutPass(
       otherSeat(entry.ref.seat),
       events,
       byAttackFor(entry.ref),
+      rescuable === undefined ? [] : koEnergyRescueUids(state, entry.ref.seat, rescuable),
     );
     next = ko.state;
     for (const guardEvent of entry.guardEvents) events.push(guardEvent);

@@ -517,7 +517,8 @@ function ChoosePokemonDialog({
               >
                 <span className="truncate">
                   {refName(board, seat, ref)}
-                  {take === undefined ? "" : ` — attach ${take}`}
+                  {/* 🆕🆕🆕 D572 — the prompt's verb; absent reads "attach" (every older park). */}
+                  {take === undefined ? "" : ` — ${prompt.takeVerb ?? "attach"} ${take}`}
                 </span>
                 {ref.seat !== seat && (
                   <span className="ml-2 shrink-0 text-[10px] uppercase tracking-wide text-white/40">

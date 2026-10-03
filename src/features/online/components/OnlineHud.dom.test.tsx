@@ -665,6 +665,41 @@ describe("OnlineHud — effect:choose public-ref prompts (2b-iii-b)", () => {
     });
   });
 
+  it("🆕🆕🆕 D572 choosePokemon: a prompt carrying `takeVerb: \"move\"` captions its rows \"move N\"", () => {
+    // Munkidori "Adrena-Brain" — the quantity is DAMAGE COUNTERS moved onto the
+    // opponent's body. The D359 rung above pins the ABSENT verb's "attach" (D441);
+    // this one pins that the PRESENT verb is read rather than the literal.
+    const onAction = vi.fn();
+    render(
+      <OnlineHud
+        game={game({
+          phase: {
+            kind: "effect:choose",
+            prompt: {
+              kind: "choosePokemon",
+              candidates: [YOU_BENCH0],
+              upTo: 2,
+              takeVerb: "move",
+              note: "Move up to 2 damage counters to which Pokémon?",
+            },
+          },
+          you: { bench: [inPlay("b0", "My Bench")] },
+        })}
+        waitingOn="you"
+        activePlaced={false}
+        onAction={onAction}
+      />,
+    );
+    expect(screen.queryByRole("button", { name: /attach/ })).toBeNull();
+    expect(screen.getByRole("button", { name: /My Bench — move 1/ })).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: /My Bench — move 2/ }));
+    expect(onAction).toHaveBeenCalledWith({
+      type: "resolveEffect",
+      seat: "p1",
+      choice: { kind: "pokemon", ref: YOU_BENCH0, take: 2 },
+    });
+  });
+
   it("🆕 D359 choosePokemon: `upTo: 1` renders the SINGLE row it always did", () => {
     // 🛑 THE LINE THAT KEEPS EVERY PRE-D359 DIALOG BYTE-IDENTICAL. A take-1-or-none
     // pick has exactly ONE non-empty answer, and spelling it `take: 1` on the wire

@@ -524,6 +524,68 @@ export function seatBurnExtraCounters(state: GameState, burnedSeat: Seat): numbe
   return extra;
 }
 
+/** 🆕🆕🆕 §9 (D572) — may `ownerSeat`'s in-play cards (a Pokémon, or anything attached to one)
+    NOT be put into `ownerSeat`'s hand right now? Milotic `sv06-050` "Mentally Calm" — *"Your
+    opponent's Pokémon in play and all attached cards can't be put into your opponent's hand."*
+    `seatBurnExtraCounters`' scan one function up, first-match: the sources are the top cards on
+    `ownerSeat`'s OPPONENT's board, Active and Bench (no zone clause), each §9-gated through
+    `disabledAbilityUids` (a locked Milotic locks nothing). Keyed on the OWNER of the moving card
+    and never on who moves it, so the Milotic owner's own effects aimed at the opponent's board are
+    stopped too (R-MC1, ⚠️ UNRULED). Read at EVERY in-play → hand writer (the D572 trace,
+    decisions.md) and by `yourInPlayToHandAllowed`. False on a board with no Milotic, and the lock
+    scan runs only once a source is found. */
+export function inPlayToHandBlocked(state: GameState, ownerSeat: Seat): boolean {
+  const side = state.players[otherSeat(ownerSeat)];
+  const holders = side.active === null ? side.bench : [side.active, ...side.bench];
+  for (const holder of holders) {
+    const top = topCardOf(state, holder);
+    if (top === undefined || programFor(top.id)?.passive?.opponentInPlayToHandBlocked !== true) continue;
+    const uid = topUid(holder);
+    if (uid !== undefined && disabledAbilityUids(state).has(uid)) continue; // §9
+    return true;
+  }
+  return false;
+}
+
+/** 🆕🆕🆕 §8.1 (D572) — the uids Huntail `sv10-055` "Diver's Catch" puts into `seat`'s HAND
+    instead of the discard pile when `body` (on `seat`'s board) is Knocked Out, or `[]`. ASKED OF
+    THE PRE-BATCH BOARD by flow.ts `collectKnockOutPass`, and ONLY for a Knock Out by damage from
+    an attack from the opponent's Pokémon (the caller's `byAttackFor` and seat clauses — this
+    function does not know the cause). Three board conjuncts, each a printed clause:
+      • a LIVE, UNSUPPRESSED holder on `seat`'s board (Active or Bench) — the first top card
+        carrying `koBasicEnergyToHand` that `disabledAbilityUids` does not silence. R-DC2 (⚠️
+        UNRULED): the holder may be the dying body itself or die in the same batch — the board
+        is the pre-batch one, `koPrizeReduction`'s precedent;
+      • the dying body is a printed `{W}` Pokémon — `matchesFilter`'s `typedPokemon` on its TOP
+        card, the predicate every "your {X} Pokémon" reader shares (R-DC3a, ⚠️ UNRULED: the
+        PRINTED type; no SV-legal effect retypes a body);
+      • the move is not locked — `inPlayToHandBlocked(state, seat)` (R-DC3b, ⚠️ UNRULED:
+        Milotic "Mentally Calm" opposite sends the Energy to the discard as usual).
+    Then every attached Energy the `basicEnergy` filter of that type admits (a Special Energy and
+    a Basic Energy of another type stay in the discard path). The "you may" auto-fires (D27);
+    two holders do not stack (the first answers). */
+export function koEnergyRescueUids(state: GameState, seat: Seat, body: InPlayPokemon): string[] {
+  const side = state.players[seat];
+  const holders = side.active === null ? side.bench : [side.active, ...side.bench];
+  let rescued: BasicEnergyType | undefined;
+  for (const holder of holders) {
+    const top = topCardOf(state, holder);
+    const type = top === undefined ? undefined : programFor(top.id)?.passive?.koBasicEnergyToHand;
+    if (type === undefined) continue;
+    const uid = topUid(holder);
+    if (uid !== undefined && disabledAbilityUids(state).has(uid)) continue; // §9
+    rescued = type;
+    break;
+  }
+  if (rescued === undefined) return [];
+  if (!matchesFilter(topCardOf(state, body), { kind: "typedPokemon", pokemonType: rescued })) return [];
+  if (inPlayToHandBlocked(state, seat)) return [];
+  const energyType = rescued;
+  return body.energy.filter((uid) =>
+    matchesFilter(cardOfUid(state, uid), { kind: "basicEnergy", energyType }),
+  );
+}
+
 /** 🆕🆕🆕 §13.1 (D561) — the EXTRA Poison damage the in-play Stadium owes a Poisoned
     body whose top card is `top`: Perilous Jungle `sv05-156` (*"…put 2 more damage
     counters on each Poisoned non-{D} Pokémon (both yours and your opponent's)."*).

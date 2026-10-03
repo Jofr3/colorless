@@ -1245,6 +1245,11 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
         strong(cardName(state, event.uid)),
         plain(" was "),
         { text: "Knocked Out", tone: "damage" },
+        // 🆕🆕🆕 D572 — Huntail "Diver's Catch": the Energy that went to the hand instead of the
+        // discard pile, COUNTED (the cards were face up in play; the count is what the row adds).
+        ...(event.toHand === undefined
+          ? []
+          : [plain(` — ${event.toHand.length} Basic Energy put into the hand instead of the discard pile`)]),
       ]);
     case "POKEMON_RETURNED": {
       // 🆕 D299 — a benched body left play without being Knocked Out. Attributed

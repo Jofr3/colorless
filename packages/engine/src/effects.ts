@@ -3839,6 +3839,21 @@ export type BoardCondition =
       VERBATIM: the allowance bag is the turn OWNER's, so a non-turn seat reads FALSE. Public:
       the played Supporter is face up in the discard pile. */
   | { kind: "yourPlayedBannerSupporterThisTurn"; banner: Banner }
+  /** 🆕🆕🆕 **D572 — "your opponent has any Stage 2 Pokémon in play"** (Klinklang `sv07-101`
+      "Emergency Rotation", `CardProgram.benchFromHand.playableIf`). `opponentHasExOrVInPlay`'s
+      spread (the OTHER seat's Active AND Bench, each TOP card) through `isStage2Pokemon`
+      (cards.ts, D262 — `opponentActiveIsStage2`'s predicate over the whole side). NULLARY: the
+      one printing names one stage, so a `stage` field would be a value nothing reads (D138).
+      Catalog-only — it never rides an `EffectOp`. Public. */
+  | { kind: "opponentStage2PokemonInPlay" }
+  /** 🆕🆕🆕 **D572 — your in-play cards CAN be put into your hand right now**: the negation of
+      continuous.ts `inPlayToHandBlocked(state, seat)` (Milotic "Mentally Calm" opposite).
+      Bought by D385's necessary-and-sufficient obligation on Zarude `sv08-011` "Jungle Whip"'s
+      optional cost (*"You may put all Energy attached to this Pokémon into your hand to have this
+      attack do 80 more damage."*): under the lock the cost WHIFFS, so a "yes" would collect the
+      +80 for nothing — the cost row's gate is `allOf` this and `yourActiveEnergyAtLeast 1`.
+      Evaluated at the gate before anything parks. Public. */
+  | { kind: "yourInPlayToHandAllowed" }
   /** D280 — every one of `conditions` holds for the reading seat. The
       vocabulary's FIRST COMBINATOR and its first RECURSIVE member, bought by
       Call Bell `sv08-165`'s *"You can use this card only if you go second, and
@@ -5602,7 +5617,8 @@ export type EffectOp =
       counters from 1 of your Pokémon (any zone) to 1 of your OPPONENT's Pokémon
       (a second choice), and Slowbro sv01-043 "Strange Behavior" moves *1*
       counter from 1 of your OTHER Pokémon to THIS one (your own side as the
-      destination).
+      destination). (🆕🆕🆕 D572: Adrena-Brain is BUILT on the SIBLING
+      `moveCountersToOpponentChosen` — this op still takes no field for it.)
 
       ⚠️ **D205 IS THAT SECOND ATTACK PRINTING, AND IT DIFFERS ON EXACTLY ONE
       AXIS — THE SOURCE'S SUBGROUP, NOT THE AMOUNT AND NOT THE DESTINATION.**
@@ -5707,6 +5723,11 @@ export type EffectOp =
           — *"move **up to 3** damage counters"* is a THIRD decision, and a
           how-many prompt is a shape no `EffectPrompt` kind has. That is a WIRE
           change (`packages/schema` + the HUD dialog), not an engine one.
+          🆕🆕🆕 **D572 (D539) — "a how-many prompt is a shape no `EffectPrompt` kind has"
+          IS WITHDRAWN, AND IT WAS ALREADY FALSE SINCE D359**: `choosePokemon.upTo` with the
+          answer's `take` asks "which body, and how many onto it" in ONE answer. ✅ BUILT at
+          D572 on the SIBLING op `moveCountersToOpponentChosen` (below); the only wire bytes
+          added are the OPTIONAL caption `takeVerb: "move"`.
         • ⏹️ Team Rocket's Orbeetle sv10-089/-198 "Rocket Brain" (ability, 2) —
           *"**As often as you like** during your turn"* is an unbounded repeat the
           phase model has no shape for, and its destination is the controller's
@@ -5779,6 +5800,40 @@ export type EffectOp =
       /** The printed owner subgroup of the SOURCE, the bare owner name. Required: the one
           printing names one. */
       ownerPokemon: string;
+      /** The SOURCE, once question 1 is answered. Engine-written only. */
+      from?: PokemonTarget;
+    }
+  /** 🆕🆕🆕 **D572 — MOVE UP TO N DAMAGE COUNTERS FROM ONE OWN BODY TO ONE OPPONENT BODY.**
+      Munkidori `sv06-095`/`sv06.5-072`/`sv08.5-044` "Adrena-Brain" (Ability, **3 legal**):
+      *"… you may move up to 3 damage counters from 1 of your Pokémon to 1 of your opponent's
+      Pokémon."*
+
+      🛑 **A SIBLING OF `moveCountersChosen` / `moveCounterOwnChosen` AND NOT A WIDENING (D131).**
+      `moveCountersChosen` moves ALL counters off a BENCHED own body; `moveCounterOwnChosen` moves
+      ONE counter own → own; this one moves a CHOSEN QUANTITY (0..`upTo`) off ANY own body
+      (the Active included) onto ANY opponent body. A widened older op would also be read by a
+      0.455 ROLLBACK deploy resuming a parked record — and would move every counter (or one)
+      where the player chose a number, misdirecting counters; a NEW member reads there as an
+      unknown op, a WHIFF (D125).
+
+      TWO QUESTIONS, D216's shape: **question 1** is the SOURCE — an own body carrying damage,
+      forced when only one qualifies (the M1 rule, the `moveCountersChosen` `then` route);
+      **question 2** is the DESTINATION — any opponent body (`oppAnyRefs`), **ALWAYS PARKED**
+      (never `parkOrForce`'s forced arm) on a `choosePokemon` carrying `upTo` (the PRINTED
+      ceiling, never clamped — the redact.ts claim) and `takeVerb: "move"`. The answer's
+      `take` is the count (absent = `upTo`, D359), clamped by the mover to the source's
+      counters; the ref-less answer is the decline and moves NONE. `from` is engine-written.
+
+      ⚠️ The op only places: a lethal placement is swept by `settleProgram` →
+      `resolveMidTurnKnockOuts`, which passes no `attackerSeat`, so the Knock Out is NOT "by an
+      attack" — Munkidori ex "Oh No You Don't", Amulet of Hope and Huntail "Diver's Catch" do
+      not fire on it. `programPlayable` refuses the use with no damaged own body or no
+      opponent body. It parks, so it rides `EffectContinuation.pendingOp`; a new union member
+      is a D125 widening and `MATCH_RECORD_VERSION` holds (decisions.md D572). */
+  | {
+      op: "moveCountersToOpponentChosen";
+      /** The printed ceiling ("up to 3"). */
+      upTo: number;
       /** The SOURCE, once question 1 is answered. Engine-written only. */
       from?: PokemonTarget;
     }
@@ -8382,7 +8437,8 @@ export type EffectOp =
       ⚠️ **AND FOUR MORE MECHANISMS SHARE THE STRING WITHOUT SHARING THE
       SENTENCE**, which is why the wider `'and all attached cards'` sweep (51 rows /
       **26 legal**) is not this family: Milotic `sv06-050` is a PREVENTION aura
-      (*"…can't be put into your opponent's hand"*), Scoop Up Cyclone
+      (*"…can't be put into your opponent's hand"* — 🆕🆕🆕 BUILT at D572,
+      `passive.opponentInPlayToHandBlocked`, read at every in-play → hand writer), Scoop Up Cyclone
       `sv06-162`/`sv08.5-128` is a TRAINER naming *1 of your Pokémon* (a CHOICE
       over both spots), and Team Rocket's Grimer `sv10-123` / Moltres ex
       `sv10-031`/`-208`/`-229` DISCARD the opponent's Active.
@@ -14277,6 +14333,8 @@ const SELF_INSTALLED_RECOIL_TAKEN =
 // ABILITIES on a different reader:
 //   • Munkidori sv06.5-072 "Adrena-Brain" — "…you may move up to 3 damage
 //     counters from 1 of your Pokémon to 1 of your opponent's Pokémon." (1)
+//     (🆕🆕🆕 D572: BUILT as an Ability program on `moveCountersToOpponentChosen`; no attack
+//     reader is involved, so this anchor's refusal of the shape stands.)
 //   • Slowbro sv01-043 "Strange Behavior" — "…you may move 1 damage counter from
 //     1 of your other Pokémon to this Pokémon." (1)
 // Both differ from this anchor on THREE axes at once (a bounded amount, a source
@@ -36305,7 +36363,10 @@ function optionalCostOps(cost: string): { cond: BoardCondition; ops: EffectOp[] 
   // twice. Placed ABOVE the shuffle exec rather than after it because
   // `D383-the-printed-verb-loses-its-shuffle` quotes that block's tail through `return null;`;
   // the anchors are disjoint on their verbs, so the order is not observable on any input.
-  if (OPTIONAL_COST_PUT_ALL_SELF_ENERGY_TO_HAND.test(cost)) return { cond: { kind: "yourActiveEnergyAtLeast", count: 1 }, ops: [{ op: "discardEnergy", from: "yourActive", filter: { kind: "anyEnergy" }, count: "all", to: "hand" }] };
+  // 🆕🆕🆕 D572 — the gate is now `allOf` the payability AND `yourInPlayToHandAllowed` (Milotic
+  // "Mentally Calm" opposite makes the hand move WHIFF, and a whiffing cost must not be offered —
+  // D385's necessary-and-sufficient obligation). Still ONE line, for the D522 (3)/D523 reason above.
+  if (OPTIONAL_COST_PUT_ALL_SELF_ENERGY_TO_HAND.test(cost)) return { cond: { kind: "allOf", conditions: [{ kind: "yourActiveEnergyAtLeast", count: 1 }, { kind: "yourInPlayToHandAllowed" }] }, ops: [{ op: "discardEnergy", from: "yourActive", filter: { kind: "anyEnergy" }, count: "all", to: "hand" }] };
   // 🆕🆕🆕 D548 — THE FIFTH ROW: a NEW op (`turnPrizeFaceUp`, field-free, the owner picks
   // WHICH prize — 🆕🆕🆕 D567 (D539): the op gained optional `side`/`recordAs` for Bother-Bot;
   // THIS row authors neither, so it is still the field-free own-row op) behind a NEW nullary gate (`yourFaceDownPrizeRemains`, D385's

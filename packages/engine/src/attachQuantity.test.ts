@@ -861,7 +861,11 @@ describe("D359 §6 — the ids this file rests on are real and locally seated", 
     // "Initialization" ×3 (non-attack, `passive.disableAbilities`), Iron Thorns "Destructo-Press"
     // ×2 (ATTACK index 0) and Ignition Energy ×1 (non-attack, `energy`). Real catalog ids, no
     // `fix-*` key, inserted MID-MAP after D570's rows (`raw[last]` stays put).
-    expect(registryCardIds()).toHaveLength(962);
+    // 🆕🆕🆕 D572 — 962 -> **968**: SIX registry keys on FOUR program objects — Munkidori ×3
+    // "Adrena-Brain" (`abilities`), Milotic "Mentally Calm" and Huntail "Diver's Catch"
+    // (`passive`), Klinklang `sv07-101` "Emergency Rotation" (the NEW `benchFromHand`), ALL
+    // non-attack. Real catalog ids, no `fix-*` key, inserted MID-MAP after D571's rows.
+    expect(registryCardIds()).toHaveLength(968);
     for (const id of Object.values(QUANTITY_IDS).flat()) {
       if (programFor(id) === undefined) continue;
       // Every id that DOES have a program had one before this slice: the eight

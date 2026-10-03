@@ -56,6 +56,9 @@ import {
 //                count: "all", to: "hand" } ],
 //       payoff: { kind: "moreDamage", bonus: 80 } }
 //
+// 🆕🆕🆕 D572 (D539): the `cond` above is now `{ kind: "allOf", conditions: [<that member>,
+// { kind: "yourInPlayToHandAllowed" }] }` — Milotic "Mentally Calm" opposite makes the cost whiff.
+//
 // 🛑 **THE PRICE IS ONE ANCHOR PAIR, ONE COST ROW AND ONE ARM — ZERO NEW VOCABULARY.** The op is
 // D405's arm (`PUT_SELF_ENERGY_TO_HAND`) with `count: "all"`; the gate is D383's member at `count:
 // 1`; the payoff is D381's; the assembler (`optionalCostBoostProgram`) and `attack.ts`'s read site
@@ -112,9 +115,18 @@ const DISCARD_ALL_TO_HAND: EffectOp = {
   to: "hand",
 };
 
+/** 🆕🆕🆕 D572 — THE GATE, now `allOf` the payability AND `yourInPlayToHandAllowed`: Milotic
+    "Mentally Calm" opposite makes the hand move WHIFF, and a whiffing cost must not be offered
+    (D385's necessary-and-sufficient obligation; `calmDiversD572.test.ts` §3 drives it on a board).
+    The payability half is the D524 member unchanged. */
+const GATE: AttackOptionalCostBoost["cond"] = {
+  kind: "allOf",
+  conditions: [{ kind: "yourActiveEnergyAtLeast", count: 1 }, { kind: "yourInPlayToHandAllowed" }],
+};
+
 /** THE READING, spelled once at the captured bonus. */
 const reading = (bonus: number): AttackOptionalCostBoost => ({
-  cond: { kind: "yourActiveEnergyAtLeast", count: 1 },
+  cond: GATE,
   ops: [DISCARD_ALL_TO_HAND],
   payoff: { kind: "moreDamage", bonus },
 });
@@ -308,7 +320,7 @@ describe("D524 §1 — the printed row derives to EXACTLY D405's op at `all` beh
     if (got === null) throw new Error("the row derived null");
     expect(got.ops).toHaveLength(1);
     expect(Object.keys(got.ops[0] ?? {}).sort()).toEqual(["count", "filter", "from", "op", "to"]);
-    expect(got.cond).toEqual({ kind: "yourActiveEnergyAtLeast", count: 1 });
+    expect(got.cond).toEqual(GATE); // 🆕🆕🆕 D572 — was the bare `yourActiveEnergyAtLeast 1` (D539).
     expect(got.payoff).toEqual({ kind: "moreDamage", bonus: 80 });
     // The op is D405's arm with `count: "all"` — measured against the D405 derivation, not quoted.
     const [d405] = deriveAttackEffect(D405_TAKEN) as EffectOp[];
@@ -429,7 +441,7 @@ describe("D524 §2 — the gate asks only on a non-empty Active, the confirm hol
     expect(optionalCostBoostProgram(READING, BASE, PRINTED)).toEqual([
       {
         op: "conditionGate",
-        cond: { kind: "yourActiveEnergyAtLeast", count: 1 },
+        cond: GATE, // 🆕🆕🆕 D572 — the allOf (D539).
         // biome-ignore lint/suspicious/noThenProperty: the effect contract's gated-step list, not a thenable.
         then: [
           {
@@ -702,7 +714,7 @@ const RAW: Record<string, string> = (
 describe("D524 §4 — the version steps, the heading is written, the prose is corrected, and what stands still", () => {
   it("engineVersion and `manifest.version` agree, and the bump is owed for BEHAVIOUR", () => {
     // ⚠️ The version is NOT spelled in this `it(…)` title (D460's fourth class).
-    expect(engineVersion).toBe("0.455.0");
+    expect(engineVersion).toBe("0.456.0");
     expect(manifest.version).toBe(engineVersion);
   });
 

@@ -464,11 +464,16 @@ describe("D559 §1 — the seven registry rows: 15 printings, 7 objects, NO `att
   // is keyed now by its ATTACK, "Perplexing Transfer" (`PERPLEXING_TRANSFER`, the Paradox
   // unlock), and still carries NO Ability program: the look-alike claim this rung makes (no
   // D559 Ability row) stays true and is pinned on the key set instead.
-  it("the LOOK-ALIKES are not keyed: sv08-096 Flutter Mane (no Ability row — D569 keys its attack), sv10.5b-008/-093 Maractus, sv07-101 Klinklang", () => {
-    for (const id of ["sv10.5b-008", "sv10.5b-093", "sv07-101"]) {
+  // 🆕🆕🆕 D572 (D539): ~~sv07-101 Klinklang is not keyed~~ WITHDRAWN for that id — it is keyed
+  // now by its IN-HAND Ability, "Emergency Rotation" (`EMERGENCY_ROTATION`, the NEW
+  // `benchFromHand`), and still carries NO Gear Coating row: the look-alike claim (no D559
+  // `passive` row) stays true and is pinned on the key set instead, as D569 did for Flutter Mane.
+  it("the LOOK-ALIKES are not keyed: sv08-096 Flutter Mane (no Ability row — D569 keys its attack), sv10.5b-008/-093 Maractus, sv07-101 Klinklang (no Gear Coating row — D572 keys its in-hand Ability)", () => {
+    for (const id of ["sv10.5b-008", "sv10.5b-093"]) {
       expect(programFor(id), id).toBeUndefined();
     }
     expect(Object.keys(programFor("sv08-096") ?? {})).toEqual(["attack"]);
+    expect(Object.keys(programFor("sv07-101") ?? {})).toEqual(["benchFromHand"]);
   });
 });
 

@@ -1165,6 +1165,18 @@ describe("projectionFromRedacted — the wire round-trip equals the local projec
         upTo: 2,
         note: "Attach up to 2 Energy to which of your Pokémon?",
       },
+      // 🆕🆕🆕 D572 — the SAME kind carrying `takeVerb` (Munkidori "Adrena-Brain"'s
+      // "move up to 3 damage counters"). Here for D359's reason above, verbatim: the
+      // verb is OPTIONAL, so the arm above pins that a prompt WITHOUT it rebuilds
+      // byte-identically and this one pins that a prompt WITH it does not lose it —
+      // which would caption a counter move "attach N" on the far side of the wire.
+      {
+        kind: "choosePokemon",
+        candidates: [active("p2")],
+        upTo: 3,
+        takeVerb: "move",
+        note: "Move up to 3 damage counters to which of your opponent's Pokémon?",
+      },
       {
         kind: "choosePokemonMulti",
         candidates: [active("p2"), bench0],

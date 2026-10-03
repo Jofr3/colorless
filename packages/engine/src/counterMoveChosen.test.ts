@@ -86,7 +86,8 @@ const CHOSEN_OP = { op: "moveCountersChosen" } as const;
     three printings are one sentence, and Cofagrigus's two are one attack. */
 const FAMILY = [
   { surface: "attack:Extended Damagriiigus", ids: ["sv10.5w-040", "sv10.5w-123"], built: true },
-  { surface: "ability:Adrena-Brain", ids: ["sv06-095", "sv06.5-072", "sv08.5-044"], built: false },
+  // 🆕🆕🆕 D572 — `built: true` (was false): on the SIBLING op `moveCountersToOpponentChosen`, not this one.
+  { surface: "ability:Adrena-Brain", ids: ["sv06-095", "sv06.5-072", "sv08.5-044"], built: true },
   // 🆕🆕🆕 D565 — `built: true` (was false): on the SIBLING op `moveCounterOwnChosen`, not this one.
   { surface: "ability:Rocket Brain", ids: ["sv10-089", "sv10-198"], built: true },
   { surface: "attack:Strange Hacking", ids: ["sv06-082"], built: false },
@@ -181,18 +182,35 @@ describe("the census — re-derived, per surface, both scopes", () => {
     // attack, whose destination is chosen on the OPPONENT's own board.
     const built = FAMILY.filter((row) => row.built);
     // 🆕🆕🆕 D565 — 1 → 2 surfaces built: Rocket Brain, on the SIBLING `moveCounterOwnChosen`.
-    expect(built).toHaveLength(2);
-    expect(built.flatMap((row) => row.ids)).toEqual(["sv10.5w-040", "sv10.5w-123", "sv10-089", "sv10-198"]);
+    // 🆕🆕🆕 D572 — 2 → 3 surfaces built: Adrena-Brain, on the SIBLING `moveCountersToOpponentChosen`.
+    expect(built).toHaveLength(3);
+    expect(built.flatMap((row) => row.ids)).toEqual([
+      "sv10.5w-040",
+      "sv10.5w-123",
+      "sv06-095",
+      "sv06.5-072",
+      "sv08.5-044",
+      "sv10-089",
+      "sv10-198",
+    ]);
+    expect(programFor("sv06-095")?.abilities?.[0]?.program).toEqual([
+      { op: "moveCountersToOpponentChosen", upTo: 3 },
+    ]);
     expect(programFor("sv10-089")?.abilities?.[0]?.program).toEqual([
       { op: "moveCounterOwnChosen", ownerPokemon: "Team Rocket" },
     ]);
     // …and the other two are refused on a MECHANISM each, not on a predicate:
     // an amount prompt (`up to 3`) and a many-to-many assignment (`in any way you
     // like`). Each is a wire or a phase change; none is a rider this op could grow.
+    // 🆕🆕🆕 D572 (D539) — ~~"an amount prompt (`up to 3`) … a wire or a phase change"~~ is
+    // WITHDRAWN for the amount: `choosePokemon`'s `upTo` + the answer's `take` (D359) already
+    // asked "how many" — Adrena-Brain is built with only the OPTIONAL `takeVerb` caption added
+    // on the wire, no phase change. Only the many-to-many assignment (Alakazam) stays refused.
     // 🆕🆕🆕 D565 — ~~"an unbounded repeat (`as often as you like`)"~~ (D539): WITHDRAWN,
     // and already false — an Ability with `oncePerTurn: false` repeats one activation at a
     // time (Baxcalibur, Emboar, Iono's Bellibolt); Rocket Brain is built. Six → four.
-    expect(FAMILY.filter((row) => !row.built).flatMap((row) => row.ids)).toHaveLength(4);
+    // 🆕🆕🆕 D572 — four → ONE (Alakazam alone).
+    expect(FAMILY.filter((row) => !row.built).flatMap((row) => row.ids)).toHaveLength(1);
   });
 });
 
@@ -242,6 +260,8 @@ describe("the anchor — one clause, one regex, NO capture", () => {
       // card prints with a possessive.
       "Move all damage counters from 1 of your Benched Team Rocket's Pokémon to 1 of your opponent's Pokémon.",
       // THE AMOUNT — Munkidori's shape, and this op has no field to bound it with.
+      // (🆕🆕🆕 D572: Munkidori is BUILT on the sibling `moveCountersToOpponentChosen`, an Ability;
+      // THIS attack-text anchor still refuses the shape, and no card prints it as an attack.)
       "Move up to 3 damage counters from 1 of your Benched Pokémon to 1 of your opponent's Pokémon.",
       // THE SOURCE ZONE — dropping "Benched" would silently offer the attacker.
       "Move all damage counters from 1 of your Pokémon to 1 of your opponent's Pokémon.",

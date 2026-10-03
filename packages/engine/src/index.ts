@@ -1696,6 +1696,8 @@ import type { GameState, Seat } from "./types";
     TO 3, from any of your Pokémon, to a CHOSEN one of your opponent's) and Slowbro
     sv01-043 "Strange Behavior" (move 1, to YOUR OWN side). They differ on three
     axes at once, which is what makes a field-less op the honest shape.
+    (🆕🆕🆕 D572: Adrena-Brain is BUILT — a registry Ability on the SIBLING
+    `moveCountersToOpponentChosen`; this op stays field-less.)
 
     THE RESUME POINT'S TWO CLAIMS, CHECKED BEFORE ANYTHING WAS BUILT (D135's rule).
     "The CHOICE half is free" — TRUE, and exactly: `ownBenchRefs` through
@@ -5977,6 +5979,10 @@ import type { GameState, Seat } from "./types";
     parked once cannot park again** — a chosen destination is a SECOND QUESTION,
     and the engine's only two-ended decision (`moveEnergy`) dodges it with a
     compound prompt kind, i.e. a WIRE change. D205's data itself HOLDS row by row.
+    (🆕🆕🆕 D572 (D539): "a WIRE change" is WITHDRAWN for the whole family — D216 built the
+    second question as a second `choosePokemon` park with no wire change, and D572 builds
+    Munkidori's on the sibling `moveCountersToOpponentChosen`, its "how many" riding D359's
+    `upTo`/`take`; only the optional `takeVerb` caption crosses the wire.)
 
     ⚠️ **`switchActive`'s TRAINER seam had no legal card behind it**: all three
     printings of the bare sentence (Switch sv01-194 / sv03.5-206 / mfb-34) are
@@ -6237,6 +6243,10 @@ import type { GameState, Seat } from "./types";
         *"move **up to 3**"* is a THIRD decision and no `EffectPrompt` kind can
         ask "how many". A WIRE change, which is what D206 priced this whole family
         at and is true of THIS surface only.
+        (🆕🆕🆕 D572 (D539): ~~"no `EffectPrompt` kind can ask 'how many'"~~ is WITHDRAWN —
+        `choosePokemon.upTo` + the answer's `take` (D359) already did; ✅ BUILT at D572 on the
+        SIBLING op `moveCountersToOpponentChosen`, with only the optional `takeVerb` caption on
+        the wire.)
       • ⏹️ Team Rocket's Orbeetle `sv10-089`/`-198` "Rocket Brain" (2) — *"**as
         often as you like** during your turn"*, an unbounded repeat the phase model
         has no shape for; its destination is the controller's OWN board.
@@ -20218,6 +20228,35 @@ import type { GameState, Seat } from "./types";
     `expect(manifest.version)`, `it(…)` titles, the declaration and `package.json` —
     **not** as a value-keyed grep — because a value-keyed grep is precisely the mechanism
     that ate D500's heading.)
+    🆕🆕🆕 engineVersion 0.455.0 → **0.456.0** (D572 — "CALM DIVERS": 6 PRINTINGS / 4 TEXTS / 4 OBJECTS. Munkidori
+    `sv06-095`/`sv06.5-072`/`sv08.5-044` "Adrena-Brain", Milotic `sv06-050` "Mentally Calm", Huntail `sv10-055`
+    "Diver's Catch", Klinklang `sv07-101` "Emergency Rotation" — all four printed attacks keep deriving. Keyed
+    MID-MAP after D571's rows (`raw[last]` stays `sv09-107`). **Adrena-Brain**: the NEW per-body gate
+    `AbilityProgram.requiresEnergyType` (read inside `abilityBodyGateMet` through `hasAttachedEnergy`, so all three
+    readers inherit it; the reason text is the NEW `abilityBodyGateClause`, exported) and the NEW parking `EffectOp`
+    `moveCountersToOpponentChosen { upTo, from? }` (a sibling, not a widening, D131): Q1 the source (any damaged
+    own body, forced at one), Q2 the destination over the opponent's whole board ALWAYS parked with the printed
+    `upTo` and the NEW optional prompt key `choosePokemon.takeVerb: "move"` (redact, the wire schema, both HUDs and
+    the local projection carry it; absent reads "attach", D441); the answer's `take` is the count (the SECOND
+    reader of `choice.take`), clamped to the source's counters; the ref-less answer moves none. A lethal move is
+    swept mid-turn and is NOT "by an attack". **Mentally Calm**: the NEW `PassiveEffects.opponentInPlayToHandBlocked`
+    and ONE predicate, continuous.ts `inPlayToHandBlocked(state, ownerSeat)` (the owner's OPPONENT's unsuppressed
+    Milotic, Active or Bench), guarding every in-play → hand writer — `returnBenched` (Bench and Active arms),
+    `returnSelf`, `devolveBodyToHand` (the devolve fails whole, R-MC3), `discardEnergyApply` `to: "hand"` — plus
+    `programPlayable` for a wholly blocked Trainer (R-MC2: Scoop Up Cyclone; Chill Teaser Toy via
+    `discardEnergyPlayable`) and the NEW `BoardCondition` `yourInPlayToHandAllowed` in Zarude's optional-cost gate
+    (D385). Symmetric in reach (R-MC1). **Diver's Catch**: the NEW `PassiveEffects.koBasicEnergyToHand`, read by
+    flow.ts `collectKnockOutPass` through continuous.ts `koEnergyRescueUids` off the PRE-batch board (R-DC2) for a
+    Knock Out `byAttackFor` and from the OTHER seat; the KO'd body's printed {W} type (R-DC3a), the Milotic lock
+    (R-DC3b); `knockOut` gains an optional `toHand` that splits the teardown (`koCleanup`), and `KNOCKED_OUT`
+    gains an optional `toHand` (not persisted) with its log tail. Auto-fires (D27). **Emergency Rotation**: the
+    NEW `CardProgram.benchFromHand { name, playableIf }` over the NEW nullary `BoardCondition`
+    `opponentStage2PokemonInPlay`, honoured in turn.ts `playBasicToBench` ahead of the Basic guard (once per turn
+    on `abilityUsedKey`, `ABILITY_USED` filed; R-KR1 Potent Glare still bars it, R-KR2 no in-play lock reaches the
+    hand) — no `GameAction`, wire or HUD change. R-DC2 / R-DC3a/b / R-MC1..3 / R-KR1..2 ⚠️ UNRULED.
+    **`MATCH_RECORD_VERSION` STAYS 37**: the new op and the new prompt key are D125/D441 widenings (a 0.455 rollback
+    resumes a parked Adrena-Brain as a whiff and captions the quantity "attach"); every other addition is
+    catalog-only or an unpersisted event key — see docs/decisions.md D572 and apps/api match.ts.)
     🆕🆕🆕 engineVersion 0.454.0 → **0.455.0** (D571 — PARADOX PART b (IRON THORNS) + THE IGNITION RIDER: 6
     PRINTINGS / 3 TEXTS / 3 OBJECTS. Iron Thorns ex `sv06-077`/`-196`/`sv08.5-032` "Initialization", Iron Thorns
     `sv05-062`/`svp-098` "Destructo-Press" (attack index 0), Ignition Energy `sv10.5w-086`. Keyed MID-MAP after
@@ -24788,7 +24827,7 @@ import type { GameState, Seat } from "./types";
     WITNESS** — the count was re-derived every slice and the word *"three"* was carried.
     A successor of this slice inherits **81 / 61 / 17** again, over **FIVE** history
     occurrences: those four plus `deckMillFilteredScale.test.ts`'s own header arrow.) */
-export const engineVersion = "0.455.0";
+export const engineVersion = "0.456.0";
 
 export type {
   ApplyResult,
@@ -24965,7 +25004,9 @@ export { programPlayable } from "./cardplay";
     `${uid}:` would light the second copy of Fezandipiti ex after the first spent
     the turn's only use. Takes the whole `AbilityProgram`, so no caller can ask
     about one Ability's name under another's scope. */
-export { abilityBodyGateMet, abilityUsedKey } from "./cardplay";
+// 🆕🆕🆕 D572 — `abilityBodyGateClause`, the per-body gate's ONE reason text (the local HUD's
+// greyed row reads it beside `abilityBodyGateMet`).
+export { abilityBodyGateClause, abilityBodyGateMet, abilityUsedKey } from "./cardplay";
 export type { BlockingAttackGate } from "./interpreter";
 export type {
   DiscardScope,

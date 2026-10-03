@@ -565,11 +565,18 @@ export const redactedEffectPromptSchema = z.discriminatedUnion("kind", [
       simply dropped) and then reads as `upTo === undefined`, i.e. MANDATORY — so
       a resumed match would refuse a decline the player was promised. A widening
       is safe because the old bytes still mean what they meant; a RENAME is not.
-      D352 made exactly this call for `attachFromTop.discardRest` → `restTo`. */
+      D352 made exactly this call for `attachFromTop.discardRest` → `restTo`.
+
+      🆕🆕🆕 **D572 — `takeVerb` IS THE QUANTITY ROW'S VERB, OPTIONAL, AND ABSENT READS "attach".**
+      Munkidori "Adrena-Brain" moves up to 3 DAMAGE COUNTERS, so its rows read "move N". A
+      WIDENING in D441's sense — every older snapshot carries no key and meant "attach" — so
+      `MATCH_RECORD_VERSION` does not move; an older deploy's schema strips the key (zod drops
+      undeclared keys), and the dialog there captions the same number "attach". */
   z.object({
     kind: z.literal("choosePokemon"),
     candidates: z.array(redactedPokemonRefSchema),
     upTo: z.number().int().positive().optional(),
+    takeVerb: z.literal("move").optional(),
     note: z.string(),
   }),
   /** Pick `min`..`max` in-play Pokémon — the multi-target snipe. `declinable`

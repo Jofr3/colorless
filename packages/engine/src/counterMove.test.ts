@@ -99,7 +99,9 @@ const CENSUS_IDS = ["sv02-093", "sv02-239"] as const;
     its destination noun phrase and PUT counters instead of moving them:
       • Munkidori sv06.5-072 "Adrena-Brain" — an ABILITY that moves UP TO 3
         counters, from ANY of your Pokémon, to a CHOSEN one of your opponent's.
-        Three axes away, and the closest live text in the pool.
+        Three axes away, and the closest live text in the pool. (🆕🆕🆕 D572: BUILT as an
+        Ability on the sibling `moveCountersToOpponentChosen` — this ATTACK anchor's refusal
+        stands, which is what this rung pins.)
       • Slowbro sv01-043 "Strange Behavior" — an ABILITY that moves 1 counter to
         YOUR OWN side. The destination reversed, which is the one difference a
         loose matcher on "move … damage counter" would get catastrophically wrong.

@@ -2555,6 +2555,9 @@ describe("Inferno Fandango / Seething Spirit — the attachEnergyFrom rows", () 
 //
 // Subtracting the ONE false positive (Huntail `sv10-055` "Diver's Catch", which
 // says "instead of the discard pile" and is a KO-trigger recovery, not an attach)
+// [🆕🆕🆕 D572 (D539): still a false positive for THIS ladder — it attaches nothing — but no
+// longer UNBUILT: Diver's Catch is BUILT as `passive.koBasicEnergyToHand` (flow.ts
+// `collectKnockOutPass` → `knockOut`'s hand split), so it leaves the residue either way]
 // leaves **ability 13 / 6 sentences** — D234's figure to the digit, re-derived
 // rather than inherited. One printing was authored (`sv09-024`); these three
 // sentences are 7 more, and the residue is **5 on 2 sentences, both seam-blocked**:

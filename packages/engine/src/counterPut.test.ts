@@ -109,7 +109,8 @@ function putOp(hp: number): EffectOp {
         FILTER nothing in the vocabulary expresses. ⚠️ RE-POINTED AT D140 from
         Ting-Lu ex sv02-127 "Land Scoop", which this list used to hold and which
         D140 MAPPED (see the dedicated case below).
-      • Munkidori sv06.5-072 "Adrena-Brain" and Feraligatr `svp-089`/`sv05-041`
+      • Munkidori sv06.5-072 "Adrena-Brain" (🆕🆕🆕 D572: BUILT as a registry Ability, not by
+        this reader) and Feraligatr `svp-089`/`sv05-041`
         ~~"Bite Off"~~ "Torrential Heart" (🆕🆕🆕 D563 CORRECTION (D539): the Ability's
         printed name; "Bite Off" was a misname) — ABILITIES whose printed "put … damage counters" is lowercase
         and mid-sentence, which is exactly what the capitalised "Put" plus `^…$`

@@ -8,7 +8,8 @@ import type {
   RetreatAction,
 } from "./actions";
 import { err, ok } from "./actions";
-import { basicFromHandError, cardOfUid, evolveFromOf, isEnergyCard, topUid } from "./cards";
+import { abilityUsedKey } from "./cardplay";
+import { basicFromHandError, cardOfUid, evolveFromOf, isBasicPokemon, isEnergyCard, topUid } from "./cards";
 import {
   aceSpecPlayBarred,
   effectiveRetreatCost,
@@ -25,7 +26,13 @@ import {
   resolveMidTurnKnockOuts,
   turnTail,
 } from "./flow";
-import { evolveAliasLicensed, evolveEarlyLicensed, switchInto } from "./interpreter";
+import {
+  conditionHolds,
+  conditionNote,
+  evolveAliasLicensed,
+  evolveEarlyLicensed,
+  switchInto,
+} from "./interpreter";
 import { programFor } from "./registry";
 import {
   runActiveBenchedTriggers,
@@ -354,6 +361,38 @@ function bodyHoldingEnergy(state: GameState, seat: Seat, energyUid: string): str
   return undefined;
 }
 
+/** 🆕🆕🆕 §9 (D572) — is `uid` a NON-Basic in `seat`'s hand whose card carries an in-hand
+    bench Ability (`CardProgram.benchFromHand`, Klinklang "Emergency Rotation")? `null` when it is
+    not (the caller then runs the ordinary Basic guard); otherwise either the reject the Ability's
+    own printed limits owe — once per turn first (`useAbility`'s order: "you already used it"
+    tells the player something), then the board clause through the shared `conditionHolds` — or
+    the allowance key to spend and the Ability's name. A Basic carrying the key (none is printed)
+    would take the ordinary route. R-KR2 (⚠️ UNRULED): `disabledAbilityUids` is NOT asked — an
+    in-play lock does not reach a card in the hand. */
+function benchFromHandRotation(
+  state: GameState,
+  seat: Seat,
+  uid: string,
+): { reject: ApplyResult } | { usedKey: string; name: string } | null {
+  if (!state.players[seat].hand.includes(uid)) return null;
+  const card = cardOfUid(state, uid);
+  const rotation = card === undefined || isBasicPokemon(card) ? undefined : programFor(card.id)?.benchFromHand;
+  if (rotation === undefined) return null;
+  const usedKey = abilityUsedKey(uid, rotation);
+  if (state.allowances.abilitiesUsed.includes(usedKey)) {
+    return { reject: err("ABILITY_ALREADY_USED", `${rotation.name} was already used this turn (§9)`) };
+  }
+  if (!conditionHolds(state, seat, rotation.playableIf)) {
+    return {
+      reject: err(
+        "ABILITY_CONDITION_NOT_MET",
+        `${rotation.name} can only be used if ${conditionNote(rotation.playableIf)} (§9)`,
+      ),
+    };
+  }
+  return { usedKey, name: rotation.name };
+}
+
 /** §5.2 — Basics to the bench, any number per turn, cap 5. */
 export function playBasicToBench(state: GameState, action: PlayBasicToBenchAction): ApplyResult {
   const rejected = turnGate(state, action);
@@ -362,8 +401,16 @@ export function playBasicToBench(state: GameState, action: PlayBasicToBenchActio
   if (side.bench.length >= BENCH_MAX) {
     return err("BENCH_FULL", `the bench holds at most ${BENCH_MAX} Pokémon`);
   }
-  const invalid = basicFromHandError(state, action.seat, action.uid);
-  if (invalid !== null) return invalid;
+  // 🆕🆕🆕 §9 (D572) — THE IN-HAND ABILITY: Klinklang `sv07-101` "Emergency Rotation" puts a
+  // NON-Basic onto the Bench. Asked BEFORE `basicFromHandError`, which would refuse it as
+  // NOT_A_BASIC_POKEMON; a card without the key (every Basic, every other Evolution) falls through
+  // to that guard byte-identically. `pokemonPlayBarred` below still applies (R-KR1).
+  const rotation = benchFromHandRotation(state, action.seat, action.uid);
+  if (rotation !== null && "reject" in rotation) return rotation.reject;
+  if (rotation === null) {
+    const invalid = basicFromHandError(state, action.seat, action.uid);
+    if (invalid !== null) return invalid;
+  }
   // §7.5 (D285) — THE FIRST READ SITE OF THE POKÉMON-SURFACE PLAY GATE, and the
   // one only the CONTINUOUS source reaches: Team Rocket's Arbok `sv10-113`
   // "Potent Glare" bars the PLAY, so it covers a bench placement, while Bronzong
@@ -386,12 +433,30 @@ export function playBasicToBench(state: GameState, action: PlayBasicToBenchActio
 
   // makeInPlay records turnPlayed — M4's evolution timing ("not the turn it
   // came into play", §10) reads it.
-  const next = withSide(state, action.seat, {
+  const benched = withSide(state, action.seat, {
     ...side,
     hand: without(side.hand, action.uid),
     bench: [...side.bench, makeInPlay(action.uid, state.turn)],
   });
-  const events: GameEvent[] = [{ type: "POKEMON_BENCHED", seat: action.seat, uid: action.uid }];
+  // 🆕🆕🆕 D572 — the Ability's once-per-turn allowance is SPENT here (`abilityUsedKey`'s
+  // `${uid}:${name}`, the activated Abilities' own spelling), and `ABILITY_USED` precedes the bench
+  // row, the order `useAbility` files them in.
+  const next =
+    rotation === null
+      ? benched
+      : {
+          ...benched,
+          allowances: {
+            ...benched.allowances,
+            abilitiesUsed: [...benched.allowances.abilitiesUsed, rotation.usedKey],
+          },
+        };
+  const events: GameEvent[] = [
+    ...(rotation === null
+      ? []
+      : [{ type: "ABILITY_USED" as const, seat: action.seat, uid: action.uid, ability: rotation.name }]),
+    { type: "POKEMON_BENCHED", seat: action.seat, uid: action.uid },
+  ];
   // §9 — a "when you play this Pokémon onto your Bench during your turn"
   // triggered Ability (Flamigo's Insta-Flock) fires now, on the freshly
   // benched Pokémon (the last, dense slot). It may park on effect:choose.

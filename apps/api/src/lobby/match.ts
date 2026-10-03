@@ -1909,6 +1909,29 @@ export interface MatchRecord {
     discard, so the HUD shows neither (a carried display debt, `sideAttackLock`'s and
     `sideAttackBonuses`' precedent, decisions.md D564).
 
+    🆕🆕🆕 **STAYS 37 AT D572 — "CALM DIVERS" (ADRENA-BRAIN, MENTALLY CALM, DIVER'S CATCH, EMERGENCY ROTATION)
+    ADDS ONE PARKING OP AND ONE OPTIONAL PROMPT KEY, BOTH WIDENINGS; THE 0.455 ROLLBACK READINGS ARE NAMED.**
+    (Placed ABOVE the D571 block, out of date order, so the declaration's anchor lines — and every
+    `*-record-version-not-bumped` row's `find` — stay byte-identical: D563's placement.) The addresses,
+    named first (D456's rule): ⑴ the NEW `EffectOp` `moveCountersToOpponentChosen { upTo, from? }`
+    (Munkidori "Adrena-Brain") PARKS twice, so it IS written into `phase.cont.pendingOp` — a new union
+    member, D125's widening: no v37 record written by 0.455 can hold it. ⑵ The NEW optional
+    `choosePokemon.takeVerb: "move"` rides the persisted `effect:choose` prompt — OPTIONAL with "attach" as
+    its absent reading, which is what every older park meant (D441's test). ⑶ `KNOCKED_OUT.toHand` (Huntail
+    "Diver's Catch") is an EVENT key and `GameEvent` is not persisted (D141). ⑷
+    `PassiveEffects.opponentInPlayToHandBlocked` / `.koBasicEnergyToHand`, `CardProgram.benchFromHand` and the
+    two new `BoardCondition` members (`opponentStage2PokemonInPlay` is catalog-only; `yourInPlayToHandAllowed`
+    sits in Zarude's cost gate, evaluated before anything in that program parks) are CATALOG-only. ⑸ The
+    Klinklang allowance is a plain `${uid}:Emergency Rotation` string in the existing
+    `allowances.abilitiesUsed`. D441: nothing is renamed or removed. THE 0.455 ROLLBACK READINGS: a PARKED
+    Adrena-Brain resumes as a WHIFF (0.455's `applyChoice` / `continuationOps` default arms move nothing for
+    an op they do not know — the counters stay put, the use is spent); its prompt's `takeVerb` is stripped by
+    0.455's zod schema and the quantity rows caption "attach" (display only — the answer's `take` is the same
+    number); Huntail, Milotic and Klinklang are CATALOG-ONLY there (0.455 has no `DIVERS_CATCH`,
+    `MENTALLY_CALM` or `EMERGENCY_ROTATION` row — the Energy is discarded, nothing is locked, a Klinklang in
+    hand is NOT_A_BASIC_POKEMON). No reading reinterprets a persisted byte, so no printing was dropped and
+    `MATCH_RECORD_VERSION` stays 37. Client bytes moved: the optional `takeVerb` caption only.
+
     🆕🆕🆕 **STAYS 37 AT D571 — PARADOX PART b (IRON THORNS) + THE IGNITION RIDER CHANGES NO GameState,
     PendingStage, Card, EVENT OR PROMPT SHAPE; NOTHING NEW PARKS, AND THE 0.454 ROLLBACK READINGS ARE NAMED.**
     (Placed ABOVE the D570 block, out of date order, so the declaration's anchor lines — and

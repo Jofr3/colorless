@@ -736,7 +736,7 @@ describe("🆕 D359 effect:choose — the printed CEILING on the target dialog",
       park lives in `sv08`/`sv09`/`sv10`, none of which the local HUD pool holds,
       and the claim here is about the DIALOG rather than about a card. The engine
       side is driven end to end on real ids in `attachQuantity.test.ts`. */
-  function parkedWith(upTo: number | undefined): GameState {
+  function parkedWith(upTo: number | undefined, takeVerb?: "move"): GameState {
     let state = p1Turn2(2, both);
     state = handFromDeck(state, "p1", "fix-basic-1", 1);
     const benchUid = handUid(state, "p1", "fix-basic-1");
@@ -750,6 +750,7 @@ describe("🆕 D359 effect:choose — the printed CEILING on the target dialog",
           kind: "choosePokemon",
           candidates: [{ seat: "p1", spot: { spot: "bench", index: 0 } }],
           ...(upTo === undefined ? {} : { upTo }),
+          ...(takeVerb === undefined ? {} : { takeVerb }),
           note: "Attach up to 2 Energy to which of your Pokémon?",
         },
         cont: { pendingOp: { op: "drawCards", count: 1 }, rest: [], ctx: { seat: "p1" } },
@@ -771,6 +772,29 @@ describe("🆕 D359 effect:choose — the printed CEILING on the target dialog",
       kind: "pokemon",
       ref: { seat: "p1", spot: { spot: "bench", index: 0 } },
       take: 1,
+    });
+  });
+
+  it("🆕🆕🆕 D572 — a prompt carrying `takeVerb: \"move\"` captions its quantity rows \"move N\", never \"attach N\"", () => {
+    // Munkidori "Adrena-Brain" parks its destination with `takeVerb: "move"`: the
+    // quantity is DAMAGE COUNTERS moved, not Energy attached. The rung above pins the
+    // ABSENT verb's "attach" (D441's absent-means-the-old-reading); this one pins that
+    // a PRESENT verb is read rather than the literal — and that the click still
+    // dispatches body AND quantity.
+    const dispatch = vi.fn();
+    renderHud(parkedWith(2, "move"), dispatch);
+    const labels = screen.getAllByRole("button").map((b) => b.textContent ?? "");
+    expect(labels.filter((t) => / — move [12]$/.test(t))).toHaveLength(2);
+    expect(labels.filter((t) => t.includes("attach"))).toHaveLength(0);
+    const row = screen.getAllByRole("button").find((b) => (b.textContent ?? "").endsWith(" — move 2"));
+    if (row === undefined) throw new Error("no \"move 2\" row");
+    fireEvent.click(row);
+    const call = dispatch.mock.calls[0]?.[0] as GameAction;
+    if (call.type !== "resolveEffect") throw new Error("expected resolveEffect");
+    expect(call.choice).toEqual({
+      kind: "pokemon",
+      ref: { seat: "p1", spot: { spot: "bench", index: 0 } },
+      take: 2,
     });
   });
 

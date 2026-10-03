@@ -77,7 +77,9 @@ export interface AbilityProgram {
       this Pokémon has any {D} Energy attached" (Munkidori ×3), "if this Pokémon's
       remaining HP is 30 or less" (Pidove sv05-133), "if this Pokémon is in your
       hand" (Klinklang sv07-101, which additionally needs the in-hand Ability
-      surface this engine does not have). A per-BODY predicate is a different
+      surface this engine does not have [🆕🆕🆕 D572 (D539): WITHDRAWN — the in-hand surface
+      is BUILT, `CardProgram.benchFromHand`, read by turn.ts `playBasicToBench`; and the
+      Munkidori clause is `requiresEnergyType` below]). A per-BODY predicate is a different
       mechanism and must NOT be forced through this field: `conditionHolds` takes
       a seat and no uid, so a self-pronoun has no referent in it.
 
@@ -155,6 +157,15 @@ export interface AbilityProgram {
       now the other two: Munkidori's *"has any {D} Energy attached"* and Klinklang's
       *"is in your hand"*.
 
+      🆕🆕🆕 **D572 — THE THIRD ASK, AND THIS TIME THE ANSWER IS YES FOR ONE OF THE TWO.**
+      Munkidori's *"has any {D} Energy attached"* IS a per-body predicate, and it is served by
+      the SIBLING field `requiresEnergyType` below, read inside the SAME funnel
+      (`abilityBodyGateMet`), so this field is still the narrow number it was and
+      "THE SOLE FUNNEL FOR `remainingHpAtMost`" is now the sole funnel for BOTH per-body
+      gates (D539: the funnel's name in cardplay.ts is annotated, not renamed). Klinklang's
+      *"is in your hand"* is NOT a body gate at all — the card is not in play — and is served
+      by `CardProgram.benchFromHand` (turn.ts).
+
       ⚠️ **REMAINING HP IS `effectiveMaxHp − damage`, NOT `hpOf − damage`.** The
       printed word is *"remaining"*, and a Bravery Charm on the holder moves the
       maximum — so a body at 30 damage under a Charm has 40 remaining, not 30, and
@@ -167,6 +178,18 @@ export interface AbilityProgram {
       `redactedAbilitiesOf` (the online HUD) and `GameHud` (the local one). A gate
       only the engine can see is an afford-then-reject (D190/D222). */
   remainingHpAtMost?: number;
+  /** 🆕🆕🆕 **D572 — §9's SECOND PER-BODY printed gate: *"if this Pokémon has any {D} Energy
+      attached"*** (Munkidori `sv06-095`/`sv06.5-072`/`sv08.5-044` "Adrena-Brain", 3 legal
+      printings, one text). Read inside `abilityBodyGateMet` (cardplay.ts) through
+      continuous.ts `hasAttachedEnergy` — the D118 provision rule, so an Energy that can PAY
+      a {D} cost is exactly an Energy this clause counts — which is what makes all THREE
+      readers inherit it with no edit of their own: `useAbility` (the reject),
+      `redactedAbilitiesOf` (the online HUD) and `GameHud` (the local one). Their reason
+      text branches through `abilityBodyGateClause`, the one spelling of the clause. A
+      sibling of `remainingHpAtMost` rather than a widening of it: the two are different
+      predicates and no printing carries both. Optional and absent-means-no-gate, so every
+      existing row is byte-identical. */
+  requiresEnergyType?: BasicEnergyType;
   /** The Ability may only be used while this Pokémon is the Active (Chien-Pao's
       "if this Pokémon is in the Active Spot"). */
   activeOnly: boolean;
@@ -1360,6 +1383,34 @@ export interface PassiveEffects {
       trigger shape: `runCheckupTriggers` runs AFTER the flip, so a healed Burn would
       no longer be "Burned" when it asked. */
   opponentBurnExtraCounters?: number;
+  /** 🆕🆕🆕 **D572 — THE IN-PLAY → HAND LOCK, faced at the OPPONENT:** Milotic `sv06-050`
+      "Mentally Calm" — *"Your opponent's Pokémon in play and all attached cards can't be put
+      into your opponent's hand."* 1 legal printing.
+
+      `opponentBurnExtraCounters`' placement one field up: a dedicated seat scan (continuous.ts
+      `inPlayToHandBlocked(state, ownerSeat)`), true when `ownerSeat`'s OPPONENT has a top
+      card carrying this flag in play — Active OR Bench (the print has no spot clause) — whose
+      Ability `disabledAbilityUids` does not suppress. Read at every writer that moves an
+      in-play card into a hand (the D572 trace in decisions.md): the move WHIFFS and the card
+      stays where it is. ⚠️ SYMMETRIC IN REACH (R-MC1, UNRULED): the Milotic owner's OWN
+      effects that put the opponent's in-play cards into the opponent's hand (Archeops /
+      Espathra's devolve, Chill Teaser Toy, D295's opponent-side `discardEnergy to:"hand"`) are
+      stopped too — the print names the CARDS and the HAND, not who moves them. */
+  opponentInPlayToHandBlocked?: true;
+  /** 🆕🆕🆕 **D572 — THE KNOCK-OUT RESCUE:** Huntail `sv10-055` "Diver's Catch" — *"When 1 of
+      your {W} Pokémon is Knocked Out by damage from an attack from your opponent's Pokémon,
+      you may put all Basic {W} Energy attached to that Pokémon into your hand instead of the
+      discard pile."* 1 legal printing. The value is the printed type, read TWICE (the KO'd
+      body's printed type, R-DC3a, and the Basic Energy's). Read by flow.ts
+      `collectKnockOutPass` off the PRE-batch board, per KO'd body, when `byAttackFor` holds
+      and the attacker is the OPPONENT (Amulet of Hope's two clauses, D566), the holder is
+      live and unsuppressed (R-DC2: a Huntail Knocked Out in the SAME batch still counts —
+      `koPrizeReduction`'s pre-batch precedent), and the move is not locked
+      (`inPlayToHandBlocked`, R-DC3b). The "you may" AUTO-FIRES under the D27 convention
+      (*"Optional (you may) triggers AUTO-FIRE"*: putting your own Energy into your hand
+      instead of the discard is pure upside), so nothing parks. Two Huntail do not stack: the
+      rescue is all-or-nothing per body. */
+  koBasicEnergyToHand?: BasicEnergyType;
   /** §8.5 continuous ATTACKER-side suppression (D192): "Damage from attacks used
       by this Pokémon isn't affected by any effects on your opponent's Active
       Pokémon." — Walking Wake ex "Azure Seas" (sv05-050/-189/-205/-215,
@@ -3589,7 +3640,9 @@ export interface CardProgram {
       Item/Supporter branch. `playStadium`, the `rareCandy` action, `attachTool`
       and `useAbility` all return before it and would ignore it SILENTLY, so an
       Ability-level gate (Luxray's "if you have more Prize cards remaining",
-      which also needs an in-hand Ability surface this engine does not have) must
+      which also needs an in-hand Ability surface this engine does not have
+      [🆕🆕🆕 D572 (D539): an in-hand surface EXISTS now — `benchFromHand` below, the
+      Bench put only; Luxray's is a different in-hand act and stays unbuilt]) must
       NOT be authored here — it needs its own check on useAbility, sharing the
       same `conditionHolds`. The `trainerEndsTurn` flag above is scoped the same
       way for the same reason. */
@@ -3646,6 +3699,26 @@ export interface CardProgram {
       Palafin ex evolve from Finizen out of the hand, which the card forbids. Nothing is
       persisted; no `MATCH_RECORD_VERSION` bump. */
   intoPlayOnlyVia?: "Zero to Hero";
+  /** 🆕🆕🆕 **§9 (D572) — THE FIRST IN-HAND ABILITY: put this (non-Basic) Pokémon from the hand
+      onto the Bench.** Klinklang `sv07-101` "Emergency Rotation" (1 legal) — *"Once during
+      your turn, if this Pokémon is in your hand and your opponent has any Stage 2 Pokémon in
+      play, you may put this Pokémon onto your Bench."* `name` is the printed Ability name
+      (the once-per-turn key is `abilityUsedKey(uid, { name })`, the activated Abilities' own
+      `${uid}:${name}` spelling) and `playableIf` the printed board clause, through the shared
+      `conditionHolds`.
+
+      🛑 **A `CardProgram` KEY AND NOT AN `abilities` ROW** — `intoPlayOnlyVia`'s argument one
+      key up, read the other way: the card is in the HAND, where no in-play reader looks.
+      Every reader of `abilities` is an IN-PLAY surface (`useAbility`, `redactedAbilitiesOf`,
+      `GameHud`), so a row there would light an "Emergency Rotation" button on a Klinklang
+      already on the Bench. Honoured on ONE path, turn.ts `playBasicToBench` — the client's
+      bench drag already sends that action for any Pokémon (moveToAction / placement do no
+      Basic check), so no wire, HUD or `GameAction` change is owed. R-KR1 (⚠️ UNRULED): a
+      Pokémon-PLAY bar (Potent Glare) refuses it — `pokemonPlayBarred` runs after the branch.
+      R-KR2 (⚠️ UNRULED): an in-play Ability lock does NOT reach a card in the hand, so
+      `disabledAbilityUids` is not asked. Catalog-only; nothing is persisted beyond the
+      existing `allowances.abilitiesUsed` string. */
+  benchFromHand?: { name: string; playableIf: BoardCondition };
   /** The `trainer` play ENDS the controller's turn once its program completes
       (Katy: "Shuffle your hand into your deck. Then, draw 8 cards. Your turn
       ends."). playTrainer passes this to flow.ts settleProgram, which folds it
@@ -14482,7 +14555,9 @@ const EXPLODING_NEEDLES: CardProgram = {
     your Pokémon that have any {M} Energy attached take 20 less damage from attacks from
     your opponent's Pokémon (after applying Weakness and Resistance)."*
     `seatDamageReductionAfterWR` with the NEW `beneficiaryHasEnergy`. No `noStack` (none
-    printed): two Klinklang pay 40. (`sv07-101` is a different Klinklang, not keyed.) */
+    printed): two Klinklang pay 40. (`sv07-101` is a different Klinklang, not keyed.
+    🆕🆕🆕 D572 (D539): KEYED NOW — `EMERGENCY_ROTATION`, the in-hand bench Ability; still a
+    different card from this one.) */
 const GEAR_COATING: CardProgram = {
   passive: { seatDamageReductionAfterWR: { amount: 20, beneficiaryHasEnergy: "Metal" } },
 };
@@ -15833,6 +15908,48 @@ const IGNITION_ENERGY: CardProgram = {
   },
 };
 
+/** 🆕🆕🆕 **D572 — Munkidori `sv06-095` / `sv06.5-072` / `sv08.5-044` (3 legal)** "Adrena-Brain" —
+    *"Once during your turn, if this Pokémon has any {D} Energy attached, you may move up to 3
+    damage counters from 1 of your Pokémon to 1 of your opponent's Pokémon."* The per-body gate
+    is the NEW `requiresEnergyType` (read in `abilityBodyGateMet`); the move is the NEW
+    `moveCountersToOpponentChosen` — the source any damaged own body (Munkidori included),
+    forced when only one qualifies; the destination any opponent body, ALWAYS parked with the
+    printed ceiling (`upTo: 3`, `takeVerb: "move"`), so the player may move 1, 2, 3 or none.
+    Mind Bend (attack index 0) still derives. */
+const ADRENA_BRAIN: CardProgram = {
+  abilities: [
+    {
+      name: "Adrena-Brain",
+      oncePerTurn: true,
+      activeOnly: false,
+      requiresEnergyType: "Darkness",
+      program: [{ op: "moveCountersToOpponentChosen", upTo: 3 }],
+    },
+  ],
+};
+
+/** 🆕🆕🆕 **D572 — Milotic `sv06-050` (1 legal)** "Mentally Calm" — *"Your opponent's Pokémon in
+    play and all attached cards can't be put into your opponent's hand."* The NEW
+    `opponentInPlayToHandBlocked` (continuous.ts `inPlayToHandBlocked`). R-MC1/2/3 (⚠️
+    UNRULED) — see the field. Hydro Splash still derives. */
+const MENTALLY_CALM: CardProgram = { passive: { opponentInPlayToHandBlocked: true } };
+
+/** 🆕🆕🆕 **D572 — Huntail `sv10-055` (1 legal)** "Diver's Catch" — *"When 1 of your {W} Pokémon is
+    Knocked Out by damage from an attack from your opponent's Pokémon, you may put all Basic {W}
+    Energy attached to that Pokémon into your hand instead of the discard pile."* The NEW
+    `koBasicEnergyToHand` (flow.ts `collectKnockOutPass`). AUTO-FIRES (D27). Wave Splash still
+    derives. */
+const DIVERS_CATCH: CardProgram = { passive: { koBasicEnergyToHand: "Water" } };
+
+/** 🆕🆕🆕 **D572 — Klinklang `sv07-101` (1 legal)** "Emergency Rotation" — *"Once during your
+    turn, if this Pokémon is in your hand and your opponent has any Stage 2 Pokémon in play, you
+    may put this Pokémon onto your Bench."* The NEW `CardProgram.benchFromHand` over the NEW
+    nullary `opponentStage2PokemonInPlay` (turn.ts `playBasicToBench`). Hyper Ray still derives.
+    (Not the Gear Coating Klinklang `sv10.5b-063`/`-141`.) */
+const EMERGENCY_ROTATION: CardProgram = {
+  benchFromHand: { name: "Emergency Rotation", playableIf: { kind: "opponentStage2PokemonInPlay" } },
+};
+
 const REGISTRY: Record<string, CardProgram> = {
   // Professor's Research (SV base prints)
   "sv01-189": PROFESSORS_RESEARCH,
@@ -16596,6 +16713,12 @@ const REGISTRY: Record<string, CardProgram> = {
   "sv05-062": DESTRUCTO_PRESS, // Iron Thorns — Destructo-Press: 70× per Future card in the top 5, discard them
   "svp-098": DESTRUCTO_PRESS, // Iron Thorns (reprint)
   "sv10.5w-086": IGNITION_ENERGY, // Ignition Energy — {C}, {C}{C}{C} on an Evolution, discarded at the end of your turn
+  "sv06-095": ADRENA_BRAIN, // Munkidori — Adrena-Brain: with any {D} attached, move up to 3 counters own → opponent
+  "sv06.5-072": ADRENA_BRAIN, // Munkidori (reprint)
+  "sv08.5-044": ADRENA_BRAIN, // Munkidori (reprint)
+  "sv06-050": MENTALLY_CALM, // Milotic — Mentally Calm: the opponent's in-play cards can't go to their hand
+  "sv10-055": DIVERS_CATCH, // Huntail — Diver's Catch: a {W} body KO'd by an attack keeps its Basic {W} Energy in hand
+  "sv07-101": EMERGENCY_ROTATION, // Klinklang — Emergency Rotation: from the hand to the Bench vs a Stage 2
   // ── D190 — THE **STANDARD-LEGAL** REPRINT-ALIAS MAP (Tier 0 of
   //    `docs/reference/coverage-backlog-legal.md`). 22 printings, 9 map targets,
   //    ZERO new code: every row below prints a sentence that is already authored

@@ -2113,7 +2113,9 @@ playTrainer's Item/Supporter branch. `playStadium`, the `rareCandy` action,
 `attachTool` and `useAbility` all return before it and would ignore it
 **silently**. So an Ability-level gate (Luxray's "if you have more Prize cards
 remaining", which also needs an in-hand Ability surface this engine does not
-have) must NOT be authored here — it needs its own check on `useAbility`, sharing
+have [🆕 D572 (D539): an in-hand surface EXISTS now — `CardProgram.benchFromHand`,
+read by turn.ts `playBasicToBench` for Klinklang sv07-101's Bench put only;
+Luxray's is a different in-hand act and stays unbuilt]) must NOT be authored here — it needs its own check on `useAbility`, sharing
 the same `conditionHolds`. Same scoping, same reason, as `trainerEndsTurn` (D38).
 
 ### Consumer B — the mid-program branch (the `conditionGate` op)
@@ -20625,7 +20627,7 @@ the card id), Standard first / Expanded second:
 | surface | ids | Std | Exp | verdict |
 | --- | --- | --- | --- | --- |
 | attack **Extended Damagriiigus** (Cofagrigus) | `sv10.5w-040`, `-123` | 2 | 2 | ✅ **BUILT** |
-| ability **Adrena-Brain** (Munkidori) | `sv06-095`, `sv06.5-072`, `sv08.5-044` | 3 | 3 | ⏹️ *"up to 3"* — a THIRD decision, and **no `EffectPrompt` kind can ask "how many"**. A WIRE change. |
+| ability **Adrena-Brain** (Munkidori) | `sv06-095`, `sv06.5-072`, `sv08.5-044` | 3 | 3 | ⏹️ *"up to 3"* — a THIRD decision, and **no `EffectPrompt` kind can ask "how many"**. A WIRE change. (🆕🆕🆕 D572 (D539): WITHDRAWN — `choosePokemon.upTo` + `take` (D359) already asked it; ✅ BUILT at D572 on `moveCountersToOpponentChosen`, only an optional `takeVerb` caption on the wire.) |
 | ability **Rocket Brain** (Team Rocket's Orbeetle) | `sv10-089`, `-198` | 2 | 2 | ⏹️ *"as often as you like"* — an unbounded repeat the phase model has no shape for; destination is the controller's OWN board. (🆕🆕🆕 D565 (D539): ~~"an unbounded repeat the phase model has no shape for"~~ — withdrawn, already false (`oncePerTurn: false`, Baxcalibur / Emboar / Iono's Bellibolt); ✅ **BUILT at D565** on the sibling op `moveCounterOwnChosen`.) |
 | attack **Strange Hacking** (Alakazam) | `sv06-082` | 1 | 1 | ⏹️ *"any number … in any way you like"* — `attachCards`' many-to-many assignment, both ends on the opponent's board. |
 
@@ -28516,7 +28518,8 @@ reading (named debt, pinned); Neutralization Zone's own-side exposure is unreach
 | Regirock | `sv09-082` | Rock Armor | `damageReductionAfterWRIfEnergy: 30` |
 
 Not keyed: `sv08-096` Flutter Mane, `sv10.5b-008`/`-093` Maractus, `sv07-101` Klinklang (different cards); the Antique Root
-Fossil (no play-as-Pokémon route).
+Fossil (no play-as-Pokémon route). (🆕🆕🆕 D572 (D539): `sv07-101` Klinklang is KEYED NOW — `EMERGENCY_ROTATION`, the
+in-hand bench Ability; still a different card from Gear Coating, and still not keyed to it.)
 
 ### (b) The vocabulary (seven new optional catalog-side keys plus one widened union, one scan, one parameter)
 `PassiveEffects.opponentWeaknessRewrite` + continuous.ts `seatWeaknessRewrite` (the defender's opponent's board, §9-gated)
@@ -29141,8 +29144,57 @@ discards after Powerglass and Amarys, before `TURN_ENDED`, on the turn owner's b
 `bun run check` 584 files / 14,040 tests, exit 0; precheck 3,935; the four gates OK; the probe
 `--decision D571 --allow-dirty` 15 killed · 0 · 0 GAP · 0 error; 51 neighbour rows killed; all 16 live-census gate rows
 killed. Census: `BUILT.ability` 382, `BUILT.trainer` 254 (unmoved, checked), `BUILT.specialEnergy` 9, `BUILT.attack`
-1707; residue 18/25, OPAQUE 13/20. Owed: the whole-corpus sweep (predicted `3883 · 52` over 3,935, stacked on D570's
+1707; residue 18/25, OPAQUE 13/20. ~~Owed:~~ 🆕 PAID, EXACTLY, on the first launch (D571 close-out `b83179da`, `tmp/sweep-D571.log:7882`): the whole-corpus sweep (predicted `3883 · 52` over 3,935, stacked on D570's
 ~~still-PENDING~~ 🆕 PAID-EXACTLY `3868 · 52` over 3,920, close-out `b3a0d539`). Carried: the reveal display debt (the non-matching revealed cards are not
 logged), Ignition's catalog `energyType "Normal"` debt (cards.ts `basicEnergy` matches it — outside the whitelist,
 D538). NEXT: see `progress.md` NEXT — calm-divers or chooseNumber-A (one, not both; re-price the rider now that Ignition
-is spent), then the Paradox MRV trio (37 → 38).
+is spent), then the Paradox MRV trio (37 → 38). (🆕🆕🆕 D572: calm-divers TAKEN — built as D572 below.)
+
+## D572 — "calm divers": 6 printings / 4 texts / 4 objects (engine 0.456.0, `MATCH_RECORD_VERSION` stays 37)
+
+**Status:** ✅ BUILT in the `lum-wt-d572` worktree (detached at `4b7892f1`), ~~NOT committed by the builder, NOT landed~~ committed on `d572-prep` at `ec525ac7` and 🆕 LANDED on `main` by cherry-pick onto the D571 close-out `b83179da`, while
+D571's whole-corpus sweep ran in the main checkout (never written). The top row of the D572 pricing round (`progress.md`
+NEXT (7), recorded verbatim): calm-divers, 6 printings, 0.35 printings per file / 0.13 per site.
+
+### (a) The cards
+- Munkidori `sv06-095` / `sv06.5-072` / `sv08.5-044` — Ability "Adrena-Brain": *"Once during your turn, if this Pokémon has
+  any {D} Energy attached, you may move up to 3 damage counters from 1 of your Pokémon to 1 of your opponent's Pokémon."*
+- Milotic `sv06-050` — Ability "Mentally Calm": *"Your opponent's Pokémon in play and all attached cards can't be put into
+  your opponent's hand."*
+- Huntail `sv10-055` — Ability "Diver's Catch": *"When 1 of your {W} Pokémon is Knocked Out by damage from an attack from
+  your opponent's Pokémon, you may put all Basic {W} Energy attached to that Pokémon into your hand instead of the discard
+  pile."*
+- Klinklang `sv07-101` — Ability "Emergency Rotation": *"Once during your turn, if this Pokémon is in your hand and your
+  opponent has any Stage 2 Pokémon in play, you may put this Pokémon onto your Bench."*
+- Mind Bend, Hydro Splash, Wave Splash and Hyper Ray keep deriving.
+
+### (b) The design
+- **Adrena-Brain** — `requiresEnergyType "Darkness"` inside `abilityBodyGateMet` (all three readers inherit it;
+  `abilityBodyGateClause` is the one reason text) and the NEW parking `moveCountersToOpponentChosen { upTo 3 }`: Q1 any
+  damaged own body (forced at one), Q2 the opponent's board ALWAYS parked with `upTo` and `takeVerb: "move"`; `take` is
+  the count, clamped to the source's counters; the decline moves none. The KO a move causes is not "by an attack".
+- **`takeVerb`** — optional on `choosePokemon`, absent = "attach" (D441): the prompt type, redact.ts, the wire schema,
+  projection.ts, GameHud, OnlineHud.
+- **Mentally Calm** — `opponentInPlayToHandBlocked` and `inPlayToHandBlocked(state, ownerSeat)`, guarding `returnBenched`
+  (Bench and Active arms), `returnSelf`, `devolveBodyToHand`, `discardEnergyApply` `to: "hand"`, Huntail's rescue,
+  `programPlayable` / `discardEnergyPlayable` (R-MC2) and Zarude's cost gate (`yourInPlayToHandAllowed`).
+- **Diver's Catch** — `koBasicEnergyToHand "Water"`, `koEnergyRescueUids` off the pre-batch board in
+  `collectKnockOutPass`, `knockOut`'s optional `toHand` (`koCleanup`), `KNOCKED_OUT.toHand` with a log tail; auto-fires (D27).
+- **Emergency Rotation** — `CardProgram.benchFromHand { name, playableIf opponentStage2PokemonInPlay }`, honoured by
+  `playBasicToBench` ahead of the Basic guard (once per turn, `ABILITY_USED`); engine-only.
+
+### (c) Readings (`docs/decisions.md` D572) — all ⚠️ UNRULED
+R-DC2 a same-batch Huntail still rescues · R-DC3a the printed {W} type · R-DC3b Milotic opposite blocks the rescue ·
+R-MC1 the lock reaches the Milotic owner's own effects · R-MC2 a wholly blocked Trainer is refused · R-MC3 a blocked
+devolve fails whole · R-KR1 Potent Glare refuses the bench put · R-KR2 no in-play lock reaches the hand (witness: Gastrodon "Sticky Bind" on the
+user's own Bench, the lock that silences the landed Klinklang — the review round's rewrite of a rung that could not go
+red). D27 cited for the auto-fire.
+
+### (d) Verified, and owed
+`bun run check` 585 files / 14,085 tests, exit 0; precheck 3,973; the four gates OK; the probe `--decision D572 --allow-dirty` 38 killed · 0 ·
+0 GAP · 0 error; 108 neighbour rows 108 killed / 0 / 0 GAP; all 16 live-census gate rows killed. Census: `BUILT.ability` 388,
+`BUILT.trainer` 254 (unmoved, checked), `BUILT.specialEnergy` 9, `BUILT.attack` 1707; residue 18/25, OPAQUE 13/20
+(unchanged). Owed: the whole-corpus sweep (predicted `3922 · 51` over 3,973 — the stale D312 declaration retired — stacked
+on ~~D571's PENDING~~ 🆕 D571's PAID-EXACTLY `3883 · 52` over 3,935, close-out `b83179da`). Carried: Diver's Catch's missing `ABILITY_TRIGGERED` row (the KO row's tail is
+its trace); a locked Swoobat / Espathra pick still parks and whiffs. NEXT: see `progress.md` NEXT — copy-attack re-priced
+under the declaration-time substitution design, then the Paradox MRV trio (37 → 38).

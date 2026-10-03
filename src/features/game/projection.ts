@@ -562,6 +562,9 @@ function effectDecisionFromPrompt(
           // it counted the engine and the wire and forgot the way back.
           ...(prompt.upTo === undefined ? {} : { upTo: prompt.upTo }),
           note: prompt.note,
+          // 🆕🆕🆕 D572 — the quantity picker's verb, the same conditional spread (and the same
+          // forgotten-way-back hazard D358 named above).
+          ...(prompt.takeVerb === undefined ? {} : { takeVerb: prompt.takeVerb }),
         },
       };
     case "choosePokemonMulti":

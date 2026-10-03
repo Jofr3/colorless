@@ -19,6 +19,7 @@ import type {
   Seat,
 } from "@luminous/engine";
 import {
+  abilityBodyGateClause,
   abilityBodyGateMet,
   abilityUsedKey,
   attackLocked,
@@ -360,8 +361,9 @@ function usableAbilities(game: GameState, seat: Seat): AbilityOption[] {
             ? `Only if you ${handCostAction(costUnmet, false)}`
             : ability.playableIf !== undefined && gateUnmet
               ? `Only if ${conditionNote(ability.playableIf)}`
-              : bodyGateUnmet
-                ? `Only if this Pokémon's remaining HP is ${ability.remainingHpAtMost} or less`
+              : // 🆕🆕🆕 D572 — the clause through `abilityBodyGateClause` (Adrena-Brain's {D} gate).
+                bodyGateUnmet
+                ? `Only if ${abilityBodyGateClause(ability) ?? "its printed condition holds"}`
                 : noTarget
                   ? "No legal target"
                   : undefined,
@@ -2140,7 +2142,8 @@ function ChoosePokemonDialog({
               >
                 <span className="truncate">
                   {refName(game, ref)}
-                  {take === undefined ? "" : ` — attach ${take}`}
+                  {/* 🆕🆕🆕 D572 — the prompt's verb; absent reads "attach" (every older park). */}
+                  {take === undefined ? "" : ` — ${prompt.takeVerb ?? "attach"} ${take}`}
                 </span>
                 {ref.seat !== viewerSeat && (
                   <span className="ml-2 shrink-0 text-[10px] uppercase tracking-wide text-white/40">

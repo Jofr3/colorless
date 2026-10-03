@@ -54,6 +54,7 @@ import type {
 import { EMPTY_CARD_ID, EMPTY_CARD_NAME, HIDDEN_CARD_ID, HIDDEN_CARD_NAME } from "@luminous/schema";
 import { attackCostAt, costMet } from "./attack";
 import {
+  abilityBodyGateClause,
   abilityBodyGateMet,
   abilityUsedKey,
   programPlayable,
@@ -320,11 +321,15 @@ function redactPrompt(state: GameState, prompt: EffectPrompt): RedactedEffectPro
       // prompt only to the seat that must ANSWER it. The reason the ceiling is
       // unclamped is that `note` quotes the printed number, so a clamped one would
       // contradict its own caption — see the field's doc in `interpreter.ts`.)
+      // 🆕🆕🆕 D572 — `takeVerb` rides through the SAME conditional spread (D135): absent on every
+      // park but Adrena-Brain's destination, so every older prompt redacts byte-identically. It is
+      // a caption word and hides nothing.
       return {
         kind: "choosePokemon",
         candidates: prompt.candidates.map(redactedRefOf),
         ...(prompt.upTo === undefined ? {} : { upTo: prompt.upTo }),
         note: prompt.note,
+        ...(prompt.takeVerb === undefined ? {} : { takeVerb: prompt.takeVerb }),
       };
     case "choosePokemonMulti":
       return {
@@ -802,8 +807,9 @@ function redactedAbilitiesOf(
               : // 🆕 D310 — below the board gate in the chain, matching the reject
                 // order in `useAbility`, so the two surfaces name the same clause
                 // on a board where both are unmet.
+                // 🆕🆕🆕 D572 — the clause through `abilityBodyGateClause` (Adrena-Brain's {D} gate).
                 bodyGateUnmet
-                ? `Only if this Pokémon's remaining HP is ${ability.remainingHpAtMost} or less`
+                ? `Only if ${abilityBodyGateClause(ability) ?? "its printed condition holds"}`
                 : noTarget
                   ? "No legal target"
                   : null,

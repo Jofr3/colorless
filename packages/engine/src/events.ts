@@ -1078,8 +1078,12 @@ export type GameEvent =
   | { type: "ATTACK_EFFECT_COIN_FLIP"; seat: Seat; result: CoinFace }
   /** §8.1 — `seat`'s `uid` was Knocked Out: the whole stack (evolution
       cards, energy, tools) left play for `seat`'s discard; `discarded` lists
-      every uid that moved, in pile order. */
-  | { type: "KNOCKED_OUT"; seat: Seat; uid: string; discarded: string[] }
+      every uid that moved, in pile order.
+      🆕🆕🆕 D572 — `toHand` is the OPTIONAL split (Huntail "Diver's Catch"): the Basic {W}
+      Energy that went to `seat`'s HAND instead, and then `discarded` lists only what reached
+      the pile (the two partition the stack). ABSENT on every other Knock Out (D135), so those
+      rows are byte-identical; `GameEvent` is not persisted (D141), so no record moves. */
+  | { type: "KNOCKED_OUT"; seat: Seat; uid: string; discarded: string[]; toHand?: string[] }
   /** `seat` owes a prize pick (which face-down cards, §8.1) — announced when
       the game parks on ko:takePrizes so an event-only client never hangs on
       an unseen prompt. Forced picks resolve straight to PRIZES_TAKEN.

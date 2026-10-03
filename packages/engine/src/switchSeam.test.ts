@@ -48,6 +48,8 @@ import {
 //     ABILITY surface — Cofagrigus's axis exactly — and Orbeetle's own row is a
 //     third member of it (own → own). One missing piece, three cards, 7 legal
 //     printings, and §6 names what that piece structurally is.
+//     🆕🆕🆕 D572 (D539): all three cards are BUILT now — Cofagrigus (D216), Orbeetle (D565) and
+//     Munkidori (D572, `moveCountersToOpponentChosen`); only Alakazam's attack stays flagged.
 //   • The "Switch … If you do" family is not one card but **8 legal printings /
 //     5 sentences**, of which this slice lands 5 and refuses 3 with reasons.
 //
@@ -157,9 +159,10 @@ const VOLT_SWITCH = "Switch this Pokémon with 1 of your Benched {L} Pokémon.";
     file's flag was paid rather than deleted. */
 const EXTENDED_DAMAGRIIIGUS =
   "Move all damage counters from 1 of your Benched Pokémon to 1 of your opponent's Pokémon.";
-/** ⏹️ ⚠️ Munkidori `sv06-095`/`sv06.5-072`/`sv08.5-044` — the SAME axis on the
+/** ✅ ⚠️ Munkidori `sv06-095`/`sv06.5-072`/`sv08.5-044` — the SAME axis on the
     ABILITY surface, and 3 legal printings D205's attacks-only sweep could not
-    see. */
+    see. 🆕🆕🆕 BUILT AT D572 on the sibling `moveCountersToOpponentChosen` (was ⏹️); kept as the
+    witness that the flag was paid rather than deleted. */
 const ADRENA_BRAIN =
   "Once during your turn, if this Pokémon has any {D} Energy attached, you may move up to 3 damage counters from 1 of your Pokémon to 1 of your opponent's Pokémon.";
 /** ✅ Team Rocket's Orbeetle `sv10-089/-198` — D205's flag, re-priced, and 🆕🆕🆕 BUILT AT
@@ -838,7 +841,7 @@ describe("the landed census, re-derived", () => {
 // unbuilt — that assertion passed for D200 on ids naming the WRONG CARDS — so it
 // is never the whole of a flag here.
 
-describe("⏹️ FLAGGED — the CHOSEN DESTINATION counter move (D216: 2 of 8 landed; 🆕🆕🆕 D565: 4 of 8)", () => {
+describe("⏹️ FLAGGED — the CHOSEN DESTINATION counter move (D216: 2 of 8 landed; 🆕🆕🆕 D565: 4 of 8; 🆕🆕🆕 D572: 7 of 8)", () => {
   // D205 sized this at 2 (Cofagrigus). D206 re-measured it at 7. ⚠️ **D216 makes
   // it 8** — Alakazam sv06-082 "Strange Hacking" prints the same axis on an
   // ATTACK, with BOTH ends on the opponent's board, and neither earlier sweep
@@ -847,7 +850,9 @@ describe("⏹️ FLAGGED — the CHOSEN DESTINATION counter move (D216: 2 of 8 l
   // ones that are still flagged, which is what keeps this block a flag.
   // 🆕🆕🆕 D565 — Orbeetle's two (`sv10-089`/`-198`) LEAVE the list: Rocket Brain is built on
   // the sibling op `moveCounterOwnChosen`. Six → four.
-  const IDS = ["sv06-095", "sv06.5-072", "sv08.5-044", "sv06-082"];
+  // 🆕🆕🆕 D572 — Munkidori's three (`sv06-095`/`sv06.5-072`/`sv08.5-044`) LEAVE the list: Adrena-Brain
+  // is built on the sibling op `moveCountersToOpponentChosen`. Four → ONE: Alakazam alone.
+  const IDS = ["sv06-082"];
 
   it("⚠️ the ONE counter move in the union ALWAYS lands on the defender, and NEVER asks — driven", () => {
     // The missing piece is not a predicate and not a field: it is a SECOND
@@ -887,7 +892,8 @@ describe("⏹️ FLAGGED — the CHOSEN DESTINATION counter move (D216: 2 of 8 l
   });
 
   // 🆕🆕🆕 D565 — ~~"the SIX still-flagged printings"~~ (D539): four; Orbeetle's two are built.
-  it("⚠️ and the FOUR still-flagged printings resolve on NEITHER route", () => {
+  // 🆕🆕🆕 D572 — ~~"the FOUR still-flagged printings"~~ (D539): ONE (Alakazam); Munkidori's three are built.
+  it("⚠️ and the ONE still-flagged printing resolves on NEITHER route (🆕🆕🆕 D572: was FOUR)", () => {
     // Per surface AND through both routes — D205's repair of D204's vacuous arm,
     // applied here rather than cited. Munkidori and Orbeetle are ABILITIES
     // (`abilities` + `triggered`); Alakazam is an ATTACK (deriver + registry).
@@ -896,12 +902,14 @@ describe("⏹️ FLAGGED — the CHOSEN DESTINATION counter move (D216: 2 of 8 l
     // replaces it says so rather than being deleted — the witness moves, it is
     // never quietly dropped (D139/D140's precedent on the neighbouring anchor).
     expect(deriveAttackEffect(EXTENDED_DAMAGRIIIGUS)).toEqual([{ op: "moveCountersChosen" }]);
+    expect(programFor("sv06-082")?.attack, "sv06-082 was half-built").toBeUndefined();
+    expect(IDS).toHaveLength(1);
+    // 🆕🆕🆕 D572 — and the witness that moved: Munkidori is built, on its OWN op (the source any
+    // own body, the destination parked with the printed ceiling).
     for (const id of ["sv06-095", "sv06.5-072", "sv08.5-044"]) {
-      expect(programFor(id)?.abilities, `${id} was half-built`).toBeUndefined();
+      expect(programFor(id)?.abilities?.[0]?.program, id).toEqual([{ op: "moveCountersToOpponentChosen", upTo: 3 }]);
       expect(programFor(id)?.triggered, `${id} was half-built as a trigger`).toBeUndefined();
     }
-    expect(programFor("sv06-082")?.attack, "sv06-082 was half-built").toBeUndefined();
-    expect(IDS).toHaveLength(4);
     // 🆕🆕🆕 D565 — and the witness that moved: Orbeetle is built, on its OWN op.
     for (const id of ["sv10-089", "sv10-198"]) {
       expect(programFor(id)?.abilities?.[0]?.program, id).toEqual([
