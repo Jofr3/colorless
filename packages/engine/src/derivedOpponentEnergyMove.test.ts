@@ -665,6 +665,6 @@ describe("§8 — the version block", () => {
     // are one fact with two spellings, and the pin is authored HERE rather than
     // inherited (D427 — every note counts the pins it inherited and never the one it
     // is about to author; this is D443's own).
-    expect(engineVersion).toBe("0.459.0");
+    expect(engineVersion).toBe("0.460.0");
   });
 });

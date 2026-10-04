@@ -626,16 +626,21 @@ describe("D293 §4 — the WIRE agrees with the local board at every step", () =
     expect(row("Beach Court")?.disabled).toBe(false);
   });
 
-  it("🛑 THE REDACTED `turn:action` CARRIES EXACTLY THESE SEVEN KEYS — the LITERAL anchor", () => {
+  it("🛑 THE REDACTED `turn:action` CARRIES EXACTLY THESE SEVEN KEYS (🆕🆕🆕 D576: EIGHT — `discardable`) — the LITERAL anchor", () => {
     // ⚠️ **A LITERAL KEY LIST, NOT A DIFF** (D279's half-guard rule): a comparison
     // between two boards of one build is blind to "the phase grew a key". This is
     // the assertion that goes red the day an `energies` / `playables` array is
     // added, which is exactly the design call D293 refuses — so the refusal is
     // observable rather than merely written down.
     const wire = redactGame(board(SEEDS[0], true), "p1");
+    // 🆕🆕🆕 D576 (D539): ~~"SEVEN"~~ — EIGHT. The phase DID grow a key, and not the one D293
+    // refuses: `discardable` is an Antique Fossil's "discard this card from play" offer (R-FO3), a
+    // board-spot affordance (an in-play body, never a hand card), so this refusal stands — no
+    // per-hand-card Energy row was added.
     expect(Object.keys(wire.phase).sort()).toEqual([
       "abilities",
       "attacks",
+      "discardable",
       "kind",
       "rareCandy",
       "retreat",

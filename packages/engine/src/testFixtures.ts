@@ -9029,7 +9029,12 @@ export const FIXTURE_POOL: Record<string, Card> = {
       Active Spot, prevent all damage done to your Benched Pokémon by attacks from
       your opponent's Pokémon."* — the pool's only ZONE-scoped prevention, and the
       one member of this family that filters NO ATTACKER: "your opponent's Pokémon"
-      is every attacker there is.
+      is every attacker there is. (🆕🆕🆕 D576 (D539): ~~"is every attacker there
+      is"~~ — and ~~"filters NO ATTACKER"~~, which holds for attacker IDENTITY only —
+      are WITHDRAWN — FALSE since D425: the `"yourBench"` spread (D425) and the
+      own-Bench snipe (D447) are attacks by the holder's OWN side, so the print
+      narrows the attacker by SEAT; by READING, not driven, the unseated scan shields
+      from them too — decisions.md D576 (g) ⑵, not fixed here.)
 
       A BASIC, which is load-bearing rather than incidental: the §9 gate this scan
       relies on is only assertable through a lock whose target predicate the source
@@ -10818,7 +10823,12 @@ export const FIXTURE_POOL: Record<string, Card> = {
           paid on;
         • the ATTACKER side — the sentence filters no attacker at all ("your
           opponent's Pokémon" is every attacker there is), so `fix-shellcracker` is
-          reused verbatim for the fifth slice running.
+          reused verbatim for the fifth slice running. (🆕🆕🆕 D576 (D539):
+          ~~"is every attacker there is"~~ — and ~~"filters no attacker at all"~~,
+          which holds for attacker IDENTITY only — are WITHDRAWN — FALSE since
+          D425: own-side spread (D425) and own-Bench snipe (D447) attacks exist,
+          so the print narrows the attacker by SEAT; the reuse of an OPPOSING attacker stands —
+          decisions.md D576 (g) ⑵, not fixed here.)
 
       ⚠️ **IT MUST NOT HAVE A RULE BOX ITSELF, AND THAT IS LOAD-BEARING RATHER THAN
       INCIDENTAL.** The real Shaymin is a plain Basic, so a benched holder is inside

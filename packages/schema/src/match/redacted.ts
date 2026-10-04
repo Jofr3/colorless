@@ -383,6 +383,20 @@ export const redactedStadiumAbilitySchema = z.object({
 });
 export type RedactedStadiumAbility = z.infer<typeof redactedStadiumAbilitySchema>;
 
+/** 🆕🆕🆕 D576 — one of the acting viewer's OWN in-play bodies whose top card may be discarded
+    from play right now: an Antique Fossil's printed *"At any time during your turn, you may
+    discard this card from play."* (R-FO3). `target` is the seatless spot the
+    `discardFromPlay` action dispatches back VERBATIM; `label` the display string ("Name
+    (Active)" / "Name (Bench 2)"). Server-computed by the engine's one offer funnel
+    (`discardableTargets`), so the client needs no engine logic. Only the acting viewer's own
+    main phase carries entries — [] for the non-acting viewer, a spectator, and inside Festival
+    Lead's attack-again window. */
+export const redactedDiscardableSchema = z.object({
+  target: redactedPokemonTargetSchema,
+  label: z.string(),
+});
+export type RedactedDiscardable = z.infer<typeof redactedDiscardableSchema>;
+
 /** A specific in-play Pokémon a prompt refers to — the wire mirror of the
     engine's `PokemonRef`. Its `seat` is ABSOLUTE (p1/p2), NOT viewer-relative
     like the rest of RedactedGame, and deliberately: these refs must round-trip
@@ -835,6 +849,11 @@ export const redactedPhaseSchema = z.discriminatedUnion("kind", [
         which is also why it could not ride `abilities`, whose every entry names
         a Pokémon on the actor's own board. */
     stadiumAbility: redactedStadiumAbilitySchema.nullable(),
+    /** 🆕🆕🆕 D576 — the actor's own bodies whose top card may be discarded from play (an
+        Antique Fossil, R-FO3) — `redactedDiscardableSchema`. REQUIRED: a new client reading an
+        old server's frame would refuse it, while an old client's `z.object` STRIPS the unknown
+        key — so **DEPLOY THE SERVER FIRST**. [] for the non-acting viewer. */
+    discardable: z.array(redactedDiscardableSchema),
   }),
   z.object({ kind: z.literal("ko:takePrizes"), count: z.number() }),
   z.object({ kind: z.literal("ko:promote") }),

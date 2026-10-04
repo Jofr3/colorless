@@ -707,8 +707,8 @@ describe("D571 §5 — Ignition Energy", () => {
 
 // ────────────────────────────────────────────────────────────────────────────
 describe("D571 §6 — the version", () => {
-  it("the engine is 0.459.0", () => {
-    expect(engineVersion).toBe("0.459.0");
-    expect(manifest.version).toBe("0.459.0");
+  it("the engine is 0.460.0", () => {
+    expect(engineVersion).toBe("0.460.0");
+    expect(manifest.version).toBe("0.460.0");
   });
 });

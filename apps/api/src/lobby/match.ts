@@ -2117,8 +2117,39 @@ export interface MatchRecord {
     persisted, D141), the `ErrorCode` `ENERGY_ATTACH_BARRED`, and `AttachTargetRiders.source`
     (catalog-side). No `PendingStage` member is added: Hypno's turn end seeds the shipped turn
     tail. The HUD draws neither the side block nor the hand mark, and a barred attach comes back as
-    an error toast (carried display debts, decisions.md D575). */
-export const MATCH_RECORD_VERSION = 38;
+    an error toast (carried display debts, decisions.md D575).
+
+    🆕🆕🆕 **38 → 39 AT D576 — THE TWELFTH POSITION: A TRAINER UID IN A STACK.** The address, named
+    first (D456's rule): **`InPlayPokemon.stack` may now hold an Antique Fossil's uid** (Antique
+    Cover Fossil `sv07-129` / `sv10.5b-080`, Antique Root Fossil `sv07-130`, Antique Plume Fossil
+    `sv10.5w-079` — Items played *"as if it were a 60-HP Basic {C} Pokémon"*). No key is added and
+    no type widens: the BYTES are a uid in a string array, which every deploy since M1 reads. What
+    changes is what those bytes MEAN — and that is the fifth position's test, not the shape's.
+    0.460's `cardOfUid` (engine cards.ts) is ZONE-AWARE: a fossil uid that is a card of an in-play
+    stack reads as its hand-written Pokémon face (`fossils.ts` — the ingest drops the face, so no
+    catalog row carries it), 60 HP, Basic, {C}, its Ability. **0.459's `cardOfUid` is the pool
+    lookup**: the same bytes read as the catalog Item, `hp: null`, and `hpOf` reads a null HP as a
+    DATA GAP — *"the KO check skips rather than insta-KOs"* — so under a 0.459 ROLLBACK a v39 fossil
+    body can never be Knocked Out, carries no Ability and has no card rules (it takes Special
+    Conditions and retreats). Not inert on the board: driven in `antiqueFossilsD576.test.ts` §7
+    through THIS build's real KO check on the 0.459 reading of the bytes (an Item uid on top of a
+    stack: 900 damage, not lethal). The version is owed.
+
+    ⚠️ **THE TWO OTHER POSITIONS THE PRICING ROUND NAMED ARE NOT PAID HERE.** Area Zero Underdepths
+    ×3 (a Bench above 5 — 0.459's `isBenchIndex` is `< 5` — and a persisted `benchTrim` stage) is
+    PARKED as D577 on the brief's off-ramp: its *"no Tera left"* trim needs a producer at EACH of
+    the three Knock Out sweeps (mid-turn, attack, Checkup) PLUS the two Stadium-leave sites with
+    the owner-first order carried through them — five, against the off-ramp's three (decisions.md
+    D576). Neither shape moves at 0.460: `BENCH_MAX` stays 5 and `PendingStage` gains no member.
+
+    ⚠️ Also moved, and none is a second reason: the NEW `GameAction` member `discardFromPlay` (an
+    action, never persisted — added to `MATCH_ACTION_DISPOSITION` as "supported" in the SAME deploy
+    as its wire offer and its OnlineHud row, D210's order), the `ErrorCode` `NOT_DISCARDABLE`, the
+    catalog-side `CardProgram.playAsPokemon` and `PassiveEffects.preventDamageWhileBenched` /
+    `opponentActiveAttackCostSurchargeBasicOnly`, and the REQUIRED wire key
+    `turn:action.discardable` — 🛑 **DEPLOY THE SERVER FIRST**: an old client's `z.object` STRIPS
+    the unknown key, while a new client's REQUIRED key refuses an old server's frame. */
+export const MATCH_RECORD_VERSION = 39;
 
 /** How a persisted match read back: absent, usable, or written by an
     incompatible deploy (`stale` — the caller decides whether to retire it). */
@@ -2233,6 +2264,10 @@ export const MATCH_ACTION_DISPOSITION = {
   retreat: "supported",
   resolveEffect: "supported",
   endTurn: "supported",
+  // 🆕🆕🆕 D576 — an Antique Fossil's "discard this card from play" (R-FO3), supported in the
+  // SAME deploy as its wire offer (`turn:action.discardable`) and its OnlineHud row — D210's
+  // order, held by the biconditional in match.test.ts.
+  discardFromPlay: "supported",
 } as const satisfies Record<GameAction["type"], "supported" | "withheld">;
 
 /** The engine action types the online client can DRIVE and RECOVER from: setup,

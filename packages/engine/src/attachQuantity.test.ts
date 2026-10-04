@@ -867,7 +867,11 @@ describe("D359 §6 — the ids this file rests on are real and locally seated", 
     // non-attack. Real catalog ids, no `fix-*` key, inserted MID-MAP after D571's rows.
     // 🆕🆕🆕 D574 — 968 -> **969**: ONE registry key — Malamar `sv06.5-034` "Colluding Tentacles"
     // (`MALAMAR_COLLUDING_TENTACLES`, an ATTACK row on existing ops), keyed beside Xerosic's Machinations.
-    expect(registryCardIds()).toHaveLength(969);
+    // 🆕🆕🆕 D576 — 969 -> **973**: FOUR registry keys on THREE program objects — the Antique Fossils
+    // `sv07-129` / `sv10.5b-080` (`PROTECTIVE_COVER`), `sv07-130` (`PRIMAL_ROOT`), `sv10.5w-079`
+    // (`PLUME_PROTECTION`): `playAsPokemon` + `passive`, ALL non-attack. Real catalog ids, no `fix-*`
+    // key, inserted MID-MAP after D572's rows (Area Zero Underdepths ×3 is PARKED, D577).
+    expect(registryCardIds()).toHaveLength(973);
     for (const id of Object.values(QUANTITY_IDS).flat()) {
       if (programFor(id) === undefined) continue;
       // Every id that DOES have a program had one before this slice: the eight

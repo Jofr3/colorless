@@ -1380,7 +1380,11 @@ describe("§7 — the census moves in exactly ONE summand, and the other three a
     // non-attack. Real catalog ids, no `fix-*` key, inserted MID-MAP after D571's rows.
     // 🆕🆕🆕 D574 — 968 -> **969**: ONE registry key — Malamar `sv06.5-034` "Colluding Tentacles"
     // (`MALAMAR_COLLUDING_TENTACLES`, an ATTACK row on existing ops), keyed beside Xerosic's Machinations.
-    expect(ids.size).toBe(969);
+    // 🆕🆕🆕 D576 — 969 -> **973**: FOUR registry keys on THREE program objects — the Antique Fossils
+    // `sv07-129` / `sv10.5b-080` (`PROTECTIVE_COVER`), `sv07-130` (`PRIMAL_ROOT`), `sv10.5w-079`
+    // (`PLUME_PROTECTION`): `playAsPokemon` + `passive`, ALL non-attack. Real catalog ids, no `fix-*`
+    // key, inserted MID-MAP after D572's rows (Area Zero Underdepths ×3 is PARKED, D577).
+    expect(ids.size).toBe(973);
     // ⚠️ ONE of the thirteen IS in the registry — Volbeat `sv06-009` — and it is
     // there on an ABILITY program, which is exactly the count a slice does not
     // think it is checking. Named, rather than glossed by an "all absent" claim

@@ -3652,6 +3652,9 @@ export function attack(
           // their reason verbatim.
           (defenderPassives.preventDamageAndEffectsFromSpecialEnergy &&
             attackerHasSpecialEnergy(next, attackerBody)) ||
+          // 🆕🆕🆕 D576 — Plume Protection, the damage-only twin (R-FO5), at the same DAMAGE
+          // site, beside D253's sibling below.
+          defenderPassives.preventDamageWhileBenched ||
           // D253 — the fifth prevent, at the FIRST of its five read sites, and the
           // first of the three that are DEAD BY CONSTRUCTION: this arm damages the
           // defending ACTIVE (§8), and the flag is false for any body that is not

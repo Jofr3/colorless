@@ -313,6 +313,7 @@ describe("redactGame — the redacted phase (the action-routing discriminant)", 
       rareCandy: [],
       // D210 — no Stadium is in play in this fixture, so the §7.3 offer is null.
       stadiumAbility: null,
+      discardable: [], // 🆕🆕🆕 D576 — the REQUIRED Antique Fossil offer (R-FO3)
     });
   });
 
@@ -407,6 +408,7 @@ describe("redactGame — turn:action attack options (the online HUD's playabilit
       // discriminating version of this claim lives in
       // `redactStadiumAbility.test.ts`, with a Stadium actually on the board.)
       stadiumAbility: null,
+      discardable: [], // 🆕🆕🆕 D576 — the REQUIRED Antique Fossil offer (R-FO3)
     });
   });
 
@@ -1179,6 +1181,7 @@ describe("redactGame — the SPECTATOR view (3c-vii)", () => {
       // gate, which is the point of that gate: an affordance added to this arm is
       // withheld by default rather than by someone remembering to withhold it.
       stadiumAbility: null,
+      discardable: [], // 🆕🆕🆕 D576 — the REQUIRED Antique Fossil offer (R-FO3)
     });
   });
 

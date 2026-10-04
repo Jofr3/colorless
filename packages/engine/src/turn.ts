@@ -1,6 +1,7 @@
 import type {
   ApplyResult,
   AttachEnergyAction,
+  DiscardFromPlayAction,
   EndTurnAction,
   EvolveAction,
   GameAction,
@@ -9,7 +10,15 @@ import type {
 } from "./actions";
 import { err, ok } from "./actions";
 import { abilityUsedKey } from "./cardplay";
-import { basicFromHandError, cardOfUid, evolveFromOf, isBasicPokemon, isEnergyCard, topUid } from "./cards";
+import {
+  basicFromHandError,
+  cardOfUid,
+  evolveFromOf,
+  isBasicPokemon,
+  isEnergyCard,
+  isFossilTop,
+  topUid,
+} from "./cards";
 import {
   aceSpecPlayBarred,
   effectiveRetreatCost,
@@ -107,7 +116,8 @@ export function turnGate(
     Like every wire value (types are not validation) — a null or garbled
     shape must reject, not throw on `.spot`. The bench index is checked at
     the use site (isBenchIndex), same as every other wire index. Shared by the
-    attach/evolve/ability targets and the effect-choice Pokémon ref. */
+    attach/evolve/ability targets and the effect-choice Pokémon ref (🆕🆕🆕 D576: and
+    `discardFromPlay`'s target, R-FO3). */
 export function isPokemonTarget(value: unknown): value is PokemonTarget {
   if (typeof value !== "object" || value === null) return false;
   const spot = (value as { spot?: unknown }).spot;
@@ -904,7 +914,14 @@ export function retreat(state: GameState, action: RetreatAction): ApplyResult {
   // one message for the same reason it stays one error code: the player is told it
   // cannot retreat because of an attack, not whose attack (D112).
   if (retreatLocked(state, active)) {
-    return err("RETREAT_PREVENTED", "an attack effect prevents this Pokémon from retreating (§11)");
+    // 🆕🆕🆕 D576 — `retreatLocked` now also answers an Antique Fossil's printed "can't retreat"
+    // (R-FO4), which is a card rule and not an attack effect, so the message names it.
+    return err(
+      "RETREAT_PREVENTED",
+      isFossilTop(state, active)
+        ? "this card can't retreat (its own printed rule)"
+        : "an attack effect prevents this Pokémon from retreating (§11)",
+    );
   }
   // §11 — an opposing CONTINUOUS Ability holding it in place (Snorlax "Block").
   // Same error code as the attack rider above — the client is told it cannot
@@ -1062,4 +1079,67 @@ export function endTurn(state: GameState, action: EndTurnAction): ApplyResult {
   const rejected = turnGate(state, action);
   if (rejected !== null) return rejected;
   return advance({ ...state, pending: turnTail(action.seat) }, []);
+}
+
+/** 🆕🆕🆕 D576 — the actor's own in-play spots whose TOP card may be discarded from play
+    right now (R-FO3): every body topped by an Antique Fossil, Active first, while it is
+    `seat`'s own MAIN phase (`turn:action`, outside Festival Lead's attack-again window).
+    Empty otherwise. The ONE offer funnel — `redactedDiscardableOf` (redact.ts) and GameHud's
+    buttons read it, and `discardFromPlay` below accepts exactly these spots. */
+export function discardableTargets(state: GameState, seat: Seat): PokemonTarget[] {
+  if (turnGate(state, { type: "discardFromPlay", seat }) !== null) return [];
+  const side = state.players[seat];
+  const out: PokemonTarget[] = [];
+  if (side.active !== null && isFossilTop(state, side.active)) out.push({ spot: "active" });
+  side.bench.forEach((body, index) => {
+    if (isFossilTop(state, body)) out.push({ spot: "bench", index });
+  });
+  return out;
+}
+
+/** 🆕🆕🆕 §7.1 (D576) — an Antique Fossil's *"At any time during your turn, you may discard this
+    card from play."* (R-FO3, ⚠️ UNRULED → ruled at D576).
+
+    • WHEN: the actor's own main phase — `turnGate` (turn:action, the actor's seat, and not
+      Festival Lead's attack-again window). "At any time during your turn" is read as the
+      player's own action window: never mid-prompt (`effect:choose`), never inside a KO park.
+    • WHAT: a body whose TOP card is a fossil (an evolved fossil is a Lileep, not a fossil —
+      R-FO6). The WHOLE stack (the fossil and anything under it), its Energy and its Tools go
+      to the discard pile through `discardFromStack(…, "all")`, announced as the shipped
+      `POKEMON_RETURNED` with `dest: "discard"` — `discardDefender`'s recipe (interpreter.ts).
+    • NOT A KNOCK OUT: no Prize is taken, no KO stamp is written, no on-KO trigger fires.
+    • THE EMPTY SPOT: an Active discarded this way is owed a promotion, and an empty board is
+      the §14.2 loss — both through `resolveMidTurnKnockOuts`' shipped `orphanedPromotions` and
+      `advance`'s promote / win check, so the turn resumes (`resumeTurn`) once it is answered. */
+export function discardFromPlay(state: GameState, action: DiscardFromPlayAction): ApplyResult {
+  const rejected = turnGate(state, action);
+  if (rejected !== null) return rejected;
+  if (!isPokemonTarget(action.target)) {
+    return err("BAD_TARGET", "discardFromPlay needs an Active or Bench target");
+  }
+  const side = state.players[action.seat];
+  const target = action.target;
+  if (target.spot === "bench" && !isBenchIndex(target.index)) {
+    return err("BAD_BENCH_INDEX", `no benched Pokémon at index ${String(target.index)}`);
+  }
+  const body = target.spot === "active" ? side.active : side.bench[target.index];
+  if (body === null || body === undefined) {
+    return err("NO_TARGET", "there is no Pokémon in that spot");
+  }
+  const uid = topUid(body);
+  if (uid === undefined || !isFossilTop(state, body)) {
+    return err("NOT_DISCARDABLE", "only a card that prints \"discard this card from play\" can be discarded from play");
+  }
+  const cleanup = discardFromStack(side, body, "all");
+  const events: GameEvent[] = [
+    { type: "POKEMON_RETURNED", seat: action.seat, uid, actor: action.seat, dest: "discard", uids: cleanup.discarded },
+  ];
+  const next = withSide(
+    state,
+    action.seat,
+    target.spot === "active"
+      ? { ...cleanup.side, active: null }
+      : { ...cleanup.side, bench: cleanup.side.bench.filter((_, index) => index !== target.index) },
+  );
+  return resolveMidTurnKnockOuts(next, action.seat, [action.seat], events);
 }

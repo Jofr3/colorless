@@ -1631,6 +1631,21 @@ export interface PassiveEffects {
       unreachable on today's op set. It is guarded at all five anyway and only the
       two BENCH arms (spread, `placeSnipe`) carry mutants. */
   preventDamageAndEffectsWhileBenched?: true;
+  /** 🆕🆕🆕 §8.5 (D576) — `preventDamageAndEffectsWhileBenched` WITH THE EFFECTS HALF REMOVED:
+      Antique Plume Fossil `sv10.5w-079` "Plume Protection" — *"As long as this Pokémon is on
+      your Bench, prevent all damage done to this Pokémon by attacks from your opponent's
+      Pokémon."* The zone clause is the same HOLDER gate, resolved inside `passivesOf` the same
+      way; the consequent names DAMAGE only, so it is read at the four DAMAGE sites beside its
+      sibling (attack.ts's main hit, interpreter.ts's spread, `placeSnipe` and `snipeActive`)
+      and NOT at `attackEffectRefused` — an effect aimed at a benched Plume still lands (R-FO5).
+      ⚠️ "from YOUR OPPONENT'S Pokémon" is a SEAT gate, read at the two LIVE arms (spread,
+      `placeSnipe`) as `victim !== ctx.seat`: D425's `"yourBench"` spread and D447's own-Bench
+      snipe hit the attacker's OWN Bench, and a Plume there takes that damage (Survival Brace's
+      D562 reading). The other two sites aim at an Active, so the zone clause already folds false.
+      A separate field, never a reuse: merging it into the sibling would give Plume an effects
+      shield it does not print. An Ability, so a §9 lock (Watchtower on a {C} body, Klefki on a
+      Basic) switches it off through the fold's `disabled` drop. */
+  preventDamageWhileBenched?: true;
   /** §8.5 continuous holder-modifying PREVENTION, GATED ON THE ATTACKER'S PRINTED
       RULE-BOX CLASS — the SIXTH member of the prevent family and the first whose
       gate is PARAMETERISED since D159's type list. TWO Standard-legal sentences,
@@ -1910,7 +1925,15 @@ export interface PassiveEffects {
       ⚠️ IT IS IN THE ATTACKER-FILTER FAMILY BY CENSUS ADJACENCY AND FILTERS NO
       ATTACKER AT ALL. §D146 grouped it with Dachsbun/Bellibolt because the four
       sentences share the string "by attacks from"; this one's object is "your
-      opponent's Pokémon", i.e. every attacker there is. What it narrows is the
+      opponent's Pokémon", i.e. every attacker there is (🆕🆕🆕 D576 (D539):
+      ~~"i.e. every attacker there is"~~ — and the headline's ~~"FILTERS NO
+      ATTACKER AT ALL"~~, which holds for attacker IDENTITY only — are WITHDRAWN —
+      FALSE since D425: the `"yourBench"` spread (D425) and the own-Bench snipe
+      (D447) are attacks by the holder's OWN side, so "your opponent's Pokémon" is a
+      seat narrowing, and
+      `benchShieldedFromDamage` takes no attacker seat — by READING, not driven,
+      this scan looks to shield the Bench from its own side too; a pre-existing gap,
+      carried as decisions.md D576 (g) ⑵, not fixed here). What it narrows is the
       PROTECTED body — the Bench — which is why it cannot be a `preventDamageFrom…`
       refinement and is a scan instead.
 
@@ -2321,7 +2344,16 @@ export interface PassiveEffects {
 
       A BOOLEAN by the standing rule: the gate names no VALUE, so an OR over N
       sources is lossless. §9-suppressible — the printing IS a Pokémon Ability, so
-      it rides this fold and Klefki's lock switches it off. */
+      it rides this fold and Klefki's lock switches it off.
+
+      🆕🆕🆕 D576 (D539): ~~"**1 legal printing**"~~ — THREE: Antique Cover Fossil `sv07-129` /
+      `sv10.5b-080` "Protective Cover" print the sentence word for word (`PROTECTIVE_COVER`, zero
+      new vocabulary; the fossil's face is a Basic, so Klefki's lock reaches it too). ⚠️ AND A
+      CARRIED FINDING, measured while building it: *"a benched Skeledirge and an Active one answer
+      identically"* is not true of the PUT-COUNTER snipe — `placeSnipe`'s `!deals` arm (interpreter.ts)
+      places counters on a BENCHED body without asking any effects refusal, so a benched Unaware or
+      Cover holder takes them. Pre-existing, shared by both printings, recorded in decisions.md D576
+      and NOT changed here (the Active arm refuses them, driven in `antiqueFossilsD576.test.ts` §5). */
   preventAttackEffects?: true;
   /** §11 continuous TARGET-GROUP PREVENTION of an ATTACK's EFFECTS — the field
       directly above with its object moved off the holder and onto a NAMED SUBGROUP
@@ -2611,7 +2643,8 @@ export interface PassiveEffects {
       describe a board that cannot exist).
       A bare number, not an object (the D104 rule): the print is unconditional once
       both ends are Active.
-      ⚠️ STAGE-AGNOSTIC ON BOTH ENDS, which is the one thing it does NOT share with
+      ⚠️ STAGE-AGNOSTIC ON BOTH ENDS (🆕🆕🆕 D576 (D539): unless the rider below narrows the
+      ATTACKER end to Basic — Antique Root Fossil "Primal Root"), which is the one thing it does NOT share with
       the Stadium already on this seam. `StadiumEffects.basicAttackCostSurcharge`
       (League HQ) prints "each BASIC Pokémon in play"; this sentence prints no stage
       at all — and Seismitoad is itself a Stage 2, so a scan inheriting the
@@ -2620,6 +2653,14 @@ export interface PassiveEffects {
       than the function's early return (`stadiumRetreatDelta`'s move, one seam
       over). */
   opponentActiveAttackCostSurcharge?: number;
+  /** 🆕🆕🆕 §8.2 (D576) — the BASIC-ATTACKER rider on the field above: Antique Root Fossil
+      `sv07-130` "Primal Root" — *"As long as this Pokémon is in the Active Spot, attacks used
+      by your opponent's Basic Pokémon cost {C} more."* Quaking Zone's sentence with ONE printed
+      adjective added, so the same scan (`opposingAttackCostSurcharge`) reads it, gated on the
+      ATTACKER's TOP card being a Basic Pokémon (§1.2 — an evolved body is not Basic). A rider
+      and not a second surcharge field, because the source clause, the target clause, the seat
+      and the §9 gate are all Quaking Zone's (R-FO5). */
+  opponentActiveAttackCostSurchargeBasicOnly?: true;
   /** §8.2 continuous SELF-only cost DISCOUNT: THIS Pokémon's attacks cost this many
       {C} less FOR EACH Prize card its owner's opponent has already taken (Radiant
       Charizard swsh10.5-011 "Excited Heart" — "This Pokémon's attacks cost Colorless
@@ -3673,6 +3714,17 @@ export interface CardProgram {
       how playTrainer rejects it (like a Tool) and how the HUD knows to open the
       Rare Candy dialog instead of dispatching playTrainer. */
   rareCandy?: true;
+  /** 🆕🆕🆕 **§7.1 (D576) — THIS ITEM IS PLAYED ONTO THE BENCH "AS IF IT WERE A 60-HP BASIC {C}
+      POKÉMON".** The four Antique Fossils (`sv07-129`, `sv10.5b-080`, `sv07-130`,
+      `sv10.5w-079`). Rare Candy's shape: a marker, NOT a `trainer` array, because the card
+      runs no op program — it becomes a body. `playTrainer` (cardplay.ts) routes it to
+      `playFossil` BEFORE the `trainer` lookup: an ITEM play (the Item bars still refuse it —
+      R-FO1) that needs a free Bench slot and lands through `makeInPlay`, announced
+      `TRAINER_PLAYED` then `POKEMON_BENCHED`. It is NOT "playing a Basic Pokémon", so no
+      Pokémon-play bar and no on-bench-play trigger is consulted. The body's Pokémon face
+      (60 HP, Basic, {C}, the printed Ability) is `fossils.ts`' hand-written table, read
+      through the zone-aware `cardOfUid`; its Ability is this program's `passive`. */
+  playAsPokemon?: true;
   /** 🆕🆕🆕 **§10 (D563) — THIS POKÉMON MAY BE PUT INTO PLAY ONLY BY THE NAMED ABILITY.**
       Palafin ex `svp-126` / `sv06-061` / `sv06-193` / `sv08.5-151` "Hero's Spirit" (4
       legal printings, 1 text) — *"Put this Pokémon into play only with the effect of
@@ -4141,7 +4193,14 @@ const MIGHTY_SHELL: CardProgram = {
     `MIGHTY_SHELL`'s twin with the attacker predicate REMOVED and a zone clause
     ADDED, and the whole slice is that swap: the printed object here is "your
     opponent's Pokémon", which is every attacker there is, so there is no attacker
-    narrowing to express at all. Argued in full at `PassiveProgram.
+    narrowing to express at all. (🆕🆕🆕 D576 (D539): ~~"which is every attacker
+    there is, so there is no attacker narrowing to express at all"~~ is WITHDRAWN —
+    FALSE since D425: the `"yourBench"` spread (D425) and the own-Bench snipe (D447)
+    are attacks by the holder's OWN side, so the print narrows the attacker by SEAT,
+    and the spread and `placeSnipe` arms read this flag with NO seat test — the
+    holder is shielded from its own side's attacks. A pre-existing gap, carried as
+    decisions.md D576 (g) ⑵, not fixed here; `PLUME_PROTECTION` below is the
+    seat-gated sibling.) Argued in full at `PassiveProgram.
     preventDamageAndEffectsWhileBenched` above.
 
     ⚠️ THE ZONE CLAUSE IS THE ONLY THING PROTECTING THIS BODY, AND IT IS ALSO WHAT
@@ -4862,7 +4921,15 @@ const INSULATOR: CardProgram = { passive: { preventDamageFromType: "Lightning" }
     aura-scan family's first SAME-SEAT cross-body member (the Active protects the
     Bench). It filters no attacker at all: "your opponent's Pokémon" is every
     attacker there is, so unlike the two rows above it the narrowing is entirely on
-    the PROTECTED side. Read through continuous.ts `benchShieldedFromDamage`. */
+    the PROTECTED side. (🆕🆕🆕 D576 (D539): ~~"It filters no attacker at all:
+    "your opponent's Pokémon" is every attacker there is"~~ is WITHDRAWN — FALSE
+    since D425: the `"yourBench"` spread (D425) and the own-Bench snipe (D447) are
+    attacks by the holder's OWN side, so "your opponent's Pokémon" narrows the
+    attacker by SEAT; it filters no attacker IDENTITY, which is what the rows above
+    it filter. `benchShieldedFromDamage` takes no attacker seat, so by READING, not
+    driven, it looks to shield the Bench from its own side's attacks too — a
+    pre-existing gap, carried as decisions.md D576 (g) ⑵, not fixed here.) Read
+    through continuous.ts `benchShieldedFromDamage`. */
 const ADVERSE_WEATHER: CardProgram = { passive: { preventBenchDamageWhileActive: true } };
 
 /** Seismitoad (sv03-052) — "Quaking Zone": "As long as this Pokémon is in the
@@ -15988,6 +16055,40 @@ const EMERGENCY_ROTATION: CardProgram = {
   benchFromHand: { name: "Emergency Rotation", playableIf: { kind: "opponentStage2PokemonInPlay" } },
 };
 
+// 🆕🆕🆕 D576 — THE ANTIQUE FOSSILS: 4 printings / 3 texts / 3 program objects. Each is an ITEM
+// played onto the Bench as a 60-HP Basic {C} Pokémon (`playAsPokemon`, R-FO1/R-FO2) whose
+// printed Ability is its `passive`. The body's face — HP, stage, type and the Ability's printed
+// name and text — is `fossils.ts`' hand-written table (the ingest drops it; decisions.md D576).
+// The two CARD RULES ("can't be affected by any Special Conditions and can't retreat") are NOT
+// here: they are not Abilities, so no lock may lift them, and they are read off the fossil id
+// by continuous.ts (`passivesOf`'s ungated card-rule source, `retreatLocked` — R-FO4).
+
+/** Antique Cover Fossil `sv07-129` / `sv10.5b-080` — "Protective Cover": *"Prevent all effects
+    of attacks used by your opponent's Pokémon done to this Pokémon. (Damage is not an
+    effect.)"* — Skeledirge "Unaware"'s sentence word for word, so `UNAWARE`'s field and ZERO
+    new vocabulary (R-FO5). */
+const PROTECTIVE_COVER: CardProgram = {
+  playAsPokemon: true,
+  passive: { preventAttackEffects: true },
+};
+
+/** Antique Root Fossil `sv07-130` — "Primal Root": *"As long as this Pokémon is in the Active
+    Spot, attacks used by your opponent's Basic Pokémon cost {C} more."* — `QUAKING_ZONE`'s
+    surcharge with the Basic-attacker rider (R-FO5). */
+const PRIMAL_ROOT: CardProgram = {
+  playAsPokemon: true,
+  passive: { opponentActiveAttackCostSurcharge: 1, opponentActiveAttackCostSurchargeBasicOnly: true },
+};
+
+/** Antique Plume Fossil `sv10.5w-079` — "Plume Protection": *"As long as this Pokémon is on your
+    Bench, prevent all damage done to this Pokémon by attacks from your opponent's Pokémon."* —
+    `CURIOUS_TEA_PARTY`'s zone gate with the effects half removed (R-FO5) — and with the SEAT gate
+    that sibling lacks, asked at the read sites (decisions.md D576 (c) ⑤, (g) ⑵). */
+const PLUME_PROTECTION: CardProgram = {
+  playAsPokemon: true,
+  passive: { preventDamageWhileBenched: true },
+};
+
 const REGISTRY: Record<string, CardProgram> = {
   // Professor's Research (SV base prints)
   "sv01-189": PROFESSORS_RESEARCH,
@@ -16246,7 +16347,7 @@ const REGISTRY: Record<string, CardProgram> = {
   "sv01-099": WELL_BAKED_BODY, // Dachsbun — Well-Baked Body (BOTH clauses since D172: the Burn immunity + the {R} prevention)
   "sv03-078": INSULATOR, // Bellibolt — Insulator ("Prevent all damage done to this Pokémon by attacks from your opponent's {L} Pokémon")
   "sv03-201": INSULATOR, // (reprint — Illustration rare)
-  "sv03-070": ADVERSE_WEATHER, // Thundurus — Adverse Weather (the Active shields the BENCH; no attacker filter at all)
+  "sv03-070": ADVERSE_WEATHER, // Thundurus — Adverse Weather (the Active shields the BENCH; no attacker filter at all — 🆕🆕🆕 D576 (D539): ~~"no attacker filter at all"~~ WITHDRAWN: no attacker-IDENTITY filter; the print narrows by attacker SEAT, unread here — decisions.md D576 (g) ⑵)
   // — M5 long-tail: the §12 STATUS-IMMUNITY family (D172), re-censused as its own
   //   question against the local D1 (978 rows / 6 sets, 2026-08-03) over ALL THREE
   //   text columns and with FIXTURE_POOL swept as a separate population: FOUR
@@ -16758,6 +16859,12 @@ const REGISTRY: Record<string, CardProgram> = {
   "sv06-050": MENTALLY_CALM, // Milotic — Mentally Calm: the opponent's in-play cards can't go to their hand
   "sv10-055": DIVERS_CATCH, // Huntail — Diver's Catch: a {W} body KO'd by an attack keeps its Basic {W} Energy in hand
   "sv07-101": EMERGENCY_ROTATION, // Klinklang — Emergency Rotation: from the hand to the Bench vs a Stage 2
+  // ── 🆕🆕🆕 D576 — the Antique Fossils: 4 registry ids / 3 objects, MID-MAP (D395/D396), so
+  //    `raw[last]` does not move. Area Zero Underdepths ×3 is PARKED (D577, decisions.md D576). ──
+  "sv07-129": PROTECTIVE_COVER, // Antique Cover Fossil — an Item played as a 60-HP Basic {C}; Protective Cover
+  "sv10.5b-080": PROTECTIVE_COVER, // Antique Cover Fossil (reprint)
+  "sv07-130": PRIMAL_ROOT, // Antique Root Fossil — Primal Root: Active, the opponent's Basic attackers cost {C} more
+  "sv10.5w-079": PLUME_PROTECTION, // Antique Plume Fossil — Plume Protection: Benched, no damage from the opponent's attacks
   // ── D190 — THE **STANDARD-LEGAL** REPRINT-ALIAS MAP (Tier 0 of
   //    `docs/reference/coverage-backlog-legal.md`). 22 printings, 9 map targets,
   //    ZERO new code: every row below prints a sentence that is already authored

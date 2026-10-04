@@ -66,6 +66,7 @@ function turnAction(
     trainers: [],
     rareCandy: [],
     stadiumAbility,
+    discardable: [], // 🆕🆕🆕 D576 — the REQUIRED Antique Fossil offer (R-FO3)
   };
 }
 

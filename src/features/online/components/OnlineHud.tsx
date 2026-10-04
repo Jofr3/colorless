@@ -13,6 +13,8 @@ import type {
   RedactedRetreat,
   RedactedStadiumAbility,
   RedactedTrainer,
+  // 🆕🆕🆕 D576 — the Antique Fossils' "discard this card from play" offer (R-FO3).
+  RedactedDiscardable,
   MatchSeat,
 } from "@luminous/schema";
 import { type ReactElement, useEffect, useRef, useState } from "react";
@@ -167,6 +169,7 @@ export function OnlineHud({
           trainers={game.phase.trainers}
           rareCandy={game.phase.rareCandy}
           stadiumAbility={game.phase.stadiumAbility}
+          discardable={game.phase.discardable}
           firstTurn={game.turn === 1}
           seat={seat}
           onAction={onAction}
@@ -1931,6 +1934,7 @@ function AttackPanel({
   trainers,
   rareCandy,
   stadiumAbility,
+  discardable,
   firstTurn,
   seat,
   onAction,
@@ -1948,6 +1952,9 @@ function AttackPanel({
       ability (D210), server-folded; null when there is no row to render (no
       Stadium in play, or a continuous-only one like Beach Court). */
   stadiumAbility: RedactedStadiumAbility | null;
+  /** 🆕🆕🆕 D576 — the actor's own bodies whose top card (an Antique Fossil) may be discarded
+      from play now (R-FO3), server-computed by the engine's `discardableTargets`. */
+  discardable: readonly RedactedDiscardable[];
   firstTurn: boolean;
   seat: MatchSeat;
   onAction: (action: GameAction) => void;
@@ -2137,6 +2144,29 @@ function AttackPanel({
                   <span className="sr-only">{stadiumAbility.reason}</span>
                 )}
               </li>
+            </ul>
+          </div>
+        )}
+        {/* 🆕🆕🆕 D576 — the Antique Fossils' "discard this card from play" (R-FO3): one row per
+            server-offered spot, dispatching `discardFromPlay` with that spot VERBATIM (the DO
+            rebinds the acting seat). The local HUD's twin section reads the same funnel. */}
+        {discardable.length > 0 && (
+          <div className="mt-3">
+            <p className="text-[10px] font-semibold uppercase tracking-wide text-white/40">
+              Discard from play
+            </p>
+            <ul className="mt-1.5 flex flex-col gap-1.5">
+              {discardable.map((opt) => (
+                <li key={opt.target.spot === "bench" ? `bench-${opt.target.index}` : "active"}>
+                  <button
+                    type="button"
+                    onClick={() => onAction({ type: "discardFromPlay", seat, target: opt.target })}
+                    className={`${ROW_BUTTON_BASE} ${ROW_BUTTON_ENABLED}`}
+                  >
+                    <span className="truncate">{opt.label}</span>
+                  </button>
+                </li>
+              ))}
             </ul>
           </div>
         )}

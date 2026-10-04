@@ -168,6 +168,18 @@ export interface EndTurnAction {
   seat: Seat;
 }
 
+/** 🆕🆕🆕 D576 — the Antique Fossils' printed *"At any time during your turn, you may discard
+    this card from play."* (R-FO3). `target` is one of the actor's OWN in-play spots whose TOP
+    card is a fossil. Legal in the actor's own main phase only (`turnGate` — not mid-prompt, not
+    inside Festival Lead's attack-again window). The whole stack leaves for the discard pile; it
+    is not a Knock Out and gives no Prize; an emptied Active Spot is owed a promotion, and an
+    emptied board is the §14.2 loss. */
+export interface DiscardFromPlayAction {
+  type: "discardFromPlay";
+  seat: Seat;
+  target: PokemonTarget;
+}
+
 export type GameAction =
   | ChooseFirstPlayerAction
   | SetupDrawExtraAction
@@ -188,7 +200,8 @@ export type GameAction =
   | ResolveEffectAction
   | TakePrizesAction
   | PromoteAction
-  | EndTurnAction;
+  | EndTurnAction
+  | DiscardFromPlayAction;
 
 export type ErrorCode =
   | "GAME_OVER"
@@ -329,6 +342,9 @@ export type ErrorCode =
   | "STADIUM_ABILITY_ALREADY_USED"
   /** resolveEffect's choice does not match the parked prompt (bad uid/ref/count). */
   | "BAD_EFFECT_CHOICE"
+  /** 🆕🆕🆕 D576 — `discardFromPlay` aimed at a body whose TOP card prints no "you may discard
+      this card from play" (only an Antique Fossil does — R-FO3). */
+  | "NOT_DISCARDABLE"
   /** §12 — an Asleep or Paralyzed Active cannot attack. (Confusion does not
       block declaring — it flips at resolution, attack.ts.) */
   | "STATUS_PREVENTS_ATTACK"

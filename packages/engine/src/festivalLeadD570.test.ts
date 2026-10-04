@@ -633,7 +633,11 @@ describe("D570 §7 — redaction parity (redact.ts `mainPhase`, mirrored in Game
   // window was honoured — MEASURED: redact.ts reading `actor` for those three stayed green. The
   // two rungs below put each affordance on the board LIVE and read the SAME state twice, the
   // window open and closed, so the only difference between the two projections is the window.
-  it("🛑 every main-phase affordance LIVE with the window closed — an activated Ability, a Rare Candy pairing, the Trainer row, Retreat — and each one WITHHELD inside it", () => {
+  // 🆕🆕🆕 D576 — "every main-phase affordance" GREW A SIXTH, `turn:action.discardable` (an
+  // Antique Fossil's discard-from-play offer). This board has no fossil, so that affordance's
+  // window rung lives in `antiqueFossilsD576.test.ts` §3 (the same state, window shut and
+  // open, read on the wire) — the title below names the ones this board carries.
+  it("🛑 every main-phase affordance on this board LIVE with the window closed — an activated Ability, a Rare Candy pairing, the Trainer row, Retreat (the fossil discard offer: D576 §3) — and each one WITHHELD inside it", () => {
     const win = swing(mainPhaseBoard()).state;
     expect(win.allowances.attackAgainUid).toBe(topOf(win, "p1"));
     const shut = redactGame(closed(win), "p1").phase;
@@ -719,7 +723,7 @@ describe("§8 — the bytes, and THE TENTH POSITION (`MATCH_RECORD_VERSION` 36 �
     expect(all(run(v36, { type: "endTurn", seat: "p1" }).events, "TURN_ENDED")).toHaveLength(1);
   });
 
-  it("the engine is 0.459.0", () => {
-    expect(engineVersion).toBe("0.459.0");
+  it("the engine is 0.460.0", () => {
+    expect(engineVersion).toBe("0.460.0");
   });
 });

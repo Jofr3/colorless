@@ -13341,9 +13341,14 @@ two flags, D118's rule where the evidence is thinnest. It is a LIST in the
 `damageBonusBeforeWRIf`'s idiom, because the fold is over the holder's passive PLUS
 every attached Tool and a scalar could only ever be last-wins.
 
-### Thundurus is in this family by census adjacency and filters NO attacker
+### Thundurus is in this family by census adjacency and filters NO attacker IDENTITY
 
-Its object is "your opponent's Pokémon" — every attacker there is. What it narrows
+Its object is "your opponent's Pokémon" — every attacker there is (🆕🆕🆕 D576 (D539):
+~~"every attacker there is"~~ — and the heading's old ~~"filters NO attacker"~~, retitled
+to "attacker IDENTITY" — are WITHDRAWN — FALSE since D425: the `"yourBench"` spread
+(D425) and the own-Bench snipe (D447) are attacks by the holder's OWN side, so the object
+narrows the attacker by SEAT, and by READING, not driven, the unseated scan shields from
+them too — decisions.md D576 (g) ⑵, not fixed here). What it narrows
 is the PROTECTED side, which is why `benchShieldedByActive` takes no `attacker`
 argument at all. It is the aura-scan family's **EIGHTH** member and its **FIRST
 same-seat cross-body** one (`disabledAbilityUids` / `seatRemovesWeakness` /
@@ -28555,7 +28560,8 @@ reading (named debt, pinned); Neutralization Zone's own-side exposure is unreach
 | Regirock | `sv09-082` | Rock Armor | `damageReductionAfterWRIfEnergy: 30` |
 
 Not keyed: `sv08-096` Flutter Mane, `sv10.5b-008`/`-093` Maractus, `sv07-101` Klinklang (different cards); the Antique Root
-Fossil (no play-as-Pokémon route). (🆕🆕🆕 D572 (D539): `sv07-101` Klinklang is KEYED NOW — `EMERGENCY_ROTATION`, the
+Fossil (no play-as-Pokémon route) [🆕🆕🆕 D576 (D539): ~~"no play-as-Pokémon route"~~ — BUILT: `playAsPokemon` /
+`playFossil`, the face hand-written in `fossils.ts`; "Primal Root" is keyed (`PRIMAL_ROOT`), and still not to this row]. (🆕🆕🆕 D572 (D539): `sv07-101` Klinklang is KEYED NOW — `EMERGENCY_ROTATION`, the
 in-hand bench Ability; still a different card from Gear Coating, and still not keyed to it.)
 
 ### (b) The vocabulary (seven new optional catalog-side keys plus one widened union, one scan, one parameter)
@@ -28609,7 +28615,7 @@ Lead, the Ability that names it, stays blocked.) (🆕🆕🆕 D570 (D539): Fest
 | Cradily | `sv07-006` | Selective Slime | `coinFlipGate` → `optional { Burned / Confused or Poisoned }` → `optional { Confused / Poisoned }` |
 
 Not keyed: `sv08-108`, `sv10.5b-045`/`-124` Drilbur, `sv08-100` Annihilape, `sv10.5w-034`/`-117` Galvantula (no Ability).
-Out: the Antique Root Fossil (no play-as-Pokémon route), Farfetch'd `sv06-132` (a new search destination for 1 printing — 🆕🆕🆕 D565: BUILT, `searchDeck { dest: "attachToSelf" }`).
+Out: the Antique Root Fossil (no play-as-Pokémon route — 🆕🆕🆕 D576 (D539): WITHDRAWN, BUILT as `PRIMAL_ROOT` on the NEW `playAsPokemon` route), Farfetch'd `sv06-132` (a new search destination for 1 printing — 🆕🆕🆕 D565: BUILT, `searchDeck { dest: "attachToSelf" }`).
 
 ### (b) The vocabulary
 Four `BoardCondition` members (`yourActiveHasAbility`, `opponentHasExOrVInPlay`, `yourActiveDamageCountersAtLeast` in
@@ -29304,7 +29310,7 @@ Recorded as R-CP9 (⚠️ UNRULED) with its reversal; the ~~four~~ 🆕 SIX *"Un
 engine source first (interpreter.ts `preventAttackUse`'s doc, `perAttackLock` / `untilLeavesActiveBar` / `perAttackBuff`
 suites; 🆕 at the landing, by a case-INSENSITIVE re-sweep, D154's two lowercase copies — the `decisions.md` D154 row and
 the D154 section of this file — which the builder's case-sensitive sweep missed); §3c adds six rungs; no mutant row (the D573 rows stay 36). NEXT: see `progress.md` NEXT — attack-residue Bundle A (or its 3-printing rider sharing a 37 → 38 step with the
-Paradox MRV trio), then antique-fossils, Tyme, Scovillain ex. (🆕🆕🆕 D574: the rider TAKEN with the copy-family remainder, NO MRV step — D574 below.)
+Paradox MRV trio), then antique-fossils, Tyme, Scovillain ex. (🆕🆕🆕 D574: the rider TAKEN with the copy-family remainder, NO MRV step — D574 below.) (🆕🆕🆕 D576: antique-fossils TAKEN, 38 → 39, Area Zero Underdepths PARKED as D577 — D576 below.)
 
 ## D574 — the copy-family remainder + the Bundle A rider: 7 printings / 5 texts (engine 0.458.0, `MATCH_RECORD_VERSION` stays 37)
 
@@ -29367,7 +29373,7 @@ INERT. Owed: ~~D573's sweep (predicted `3958 · 51` over 4,009, PENDING) and~~ �
 4,009, close-out `b022087d`); ~~owed: D574's (predicted `3982 · 51` over 4,033, stands as written).~~ 🆕 D574's is PAID,
 EXACTLY, on the first launch (`3982 · 51` over 4,033, close-out `f268886b`, `tmp/sweep-D574.log:8078`; struck at the D575 landing).
 NEXT: see `progress.md` NEXT (7) — the MRV slice (Iron Moth + Miraidon + Glimmora + Hypno, 37 → 38), then Blipbug [🆕🆕🆕 D575: TAKEN, with Blipbug AND N's Sigilyph riding the same step — D575 below],
-antique-fossils, Tyme, Scovillain ex; Koraidon after its R-1.
+antique-fossils [🆕🆕🆕 D576: TAKEN, 38 → 39, Area Zero Underdepths PARKED as D577 — D576 below], Tyme, Scovillain ex; Koraidon after its R-1.
 
 ## D575 — the MRV-38 attack slice: 6 printings / 6 texts (engine 0.459.0, `MATCH_RECORD_VERSION` 37 → 38)
 
@@ -29430,7 +29436,9 @@ See `progress.md` NEXT (1)-(5) for the pasted figures: `bun run check`, precheck
 Census: `BUILT.attack` 1723 → **1729** (reader +6); raw 47/76 → **41/70**; residue 9/9 → **3/3**; backlog row 15 CLOSED;
 OPAQUE 6 → **2** (1 reached, 1 far); `BUILT.ability` 388 / `BUILT.trainer` 254 +0, re-derived by the join. MRV 37 → 38, the
 ELEVENTH position (match.ts). Owed: ~~D574's sweep (`3982 · 51` over 4,033, PENDING) and~~ 🆕 D574's sweep is PAID, EXACTLY
-(close-out `f268886b`); D575's (`4023 · 51` over 4,074, stacked on it, so it stands as written). Display debts carried: a barred Glimmora attach is an error toast; neither the side block nor the hand
+(close-out `f268886b`); ~~D575's (`4023 · 51` over 4,074, stacked on it, so it stands as written)~~ 🆕 D575's sweep is PAID,
+EXACTLY, on the first launch (`4023 · 51` over 4,074, close-out `65211a5b`, `tmp/sweep-D575.log:8160`; struck at D576's
+landing, as the close-out asked). Display debts carried: a barred Glimmora attach is an error toast; neither the side block nor the hand
 mark is drawn; the private look renders in the `orderCards` dialog ("Put the cards back in order").
 
 ### (e) The review round (fixes on the same bytes, still NOT committed)
@@ -29471,5 +29479,73 @@ with `--no-commit`, no amend; docs-only conflicts resolved keeping every close-o
 (`progress.md` NEXT (1-land)).
 
 NEXT: see `progress.md` NEXT (7) — ⑴ fossils + Area Zero Underdepths (MRV 38 → 39, after an ingest decision on
-map.ts:103-108), ⑵ Relicanth + TM Fluorite, ⑶ Tyme, ⑷ Scovillain + Iron Treads, ⑸ the census close-out (Walking Wake +
+map.ts:103-108) [🆕🆕🆕 D576: TAKEN for the four fossils WITHOUT the ingest decision (the face hand-written in `fossils.ts`,
+the widening a USER follow-up); Underdepths ×3 PARKED as D577 — D576 below], ⑵ Relicanth + TM Fluorite, ⑶ Tyme, ⑷ Scovillain + Iron Treads, ⑸ the census close-out (Walking Wake +
 Koraidon after R-1, the gates on constructed literals); the Mega ingest is a user decision.
+
+## D576 — the Antique Fossils: 4 printings / 3 texts (engine 0.460.0, `MATCH_RECORD_VERSION` 38 → 39)
+
+**Status:** ✅ BUILT in the `lum-wt-d576` worktree (detached at `61a980d2`, D575), ~~NOT committed (the brief: "DO NOT
+COMMIT")~~ 🆕 committed on `d576-prep` at `010a95f0` and LANDED on `main` by cherry-pick onto the D575 close-out
+`65211a5b` (`progress.md` NEXT (1-land)), while D575's whole-corpus sweep ran in the main checkout (never written). Rank 1 of the D576 pricing round
+(`progress.md` NEXT (7), recorded verbatim): fossils + Area Zero Underdepths, 7 printings — built DOWN TO ITS OFF-RAMP,
+the four fossils alone: Underdepths' trim needs five settle-point producers, not three, so it is PARKED as D577
+(decisions.md D576 (e)). DEPLOY THE SERVER FIRST (the REQUIRED `turn:action.discardable` wire key; server and client must
+deploy together).
+
+### (a) The cards
+- Antique Cover Fossil `sv07-129`, `sv10.5b-080` — "Protective Cover": *"Prevent all effects of attacks used by your
+  opponent's Pokémon done to this Pokémon. (Damage is not an effect.)"*
+- Antique Root Fossil `sv07-130` — "Primal Root": *"As long as this Pokémon is in the Active Spot, attacks used by your
+  opponent's Basic Pokémon cost {C} more."*
+- Antique Plume Fossil `sv10.5w-079` — "Plume Protection": *"As long as this Pokémon is on your Bench, prevent all damage
+  done to this Pokémon by attacks from your opponent's Pokémon."*
+- All four (Items) print: *"Play this card as if it were a 60-HP Basic {C} Pokémon. This card can't be affected by any
+  Special Conditions and can't retreat. At any time during your turn, you may discard this card from play."*
+
+### (b) The design
+- **The face, hand-written** — `packages/engine/src/fossils.ts` (NEW, DATA, outside the mutation whitelist): four rows,
+  three texts, `FOSSIL_IDS`, `fossilPokemonCard` (Basic, {C}, 60 HP, the printed Ability, no attacks / Weakness /
+  Resistance / Retreat Cost). 🛑 The ingest DROPS the face (`map.ts`: `hp` / `abilitiesJson` null; the Trainer branch
+  refills only `trainerType` / `effect`); tcgdex carries it. USER follow-up: widen the Trainer branch, re-ingest,
+  regenerate `catalogManifest` and the fixtures.
+- **The zone-aware accessor** — cards.ts `cardOfUid`: the fossil-id `Set` first, then "is this uid a card of an in-play
+  stack?" — the Pokémon face in play, the catalog Item everywhere else (R-FO2); interpreter.ts's `cardOf` delegates.
+- **The play** — `CardProgram.playAsPokemon` routes `playTrainer` to `playFossil`: the Item bar applies, a free Bench slot
+  is required (`fossilPlayable`, shared by both Trainer lists), the body lands through `makeInPlay`, `TRAINER_PLAYED` then
+  `POKEMON_BENCHED`; no Pokémon-play bar, no on-bench-play trigger (R-FO1).
+- **The discard** — `GameAction` `discardFromPlay { seat, target }` (turn.ts, behind `turnGate`), the whole stack through
+  `discardFromStack(…, "all")` as `POKEMON_RETURNED` `dest: "discard"`, then the mid-turn sweep (a promotion owed for an
+  emptied Active; an empty board is the §14.2 loss); no Knock Out, no Prize; `ErrorCode` `NOT_DISCARDABLE`; the offer
+  funnel `discardableTargets` → the REQUIRED wire key `turn:action.discardable` → a "Discard from play" section in both
+  HUDs (R-FO3).
+- **The card rules** — an UNGATED `passivesOf` source (`FOSSIL_CARD_RULE`, all five `statusImmunities`) and
+  `retreatLocked`'s third source (`isFossilTop`): no lock lifts either; Switch still moves the fossil (R-FO4).
+- **The Abilities** — Cover: `preventAttackEffects` (Unaware's field); Root: Quaking Zone's surcharge + the NEW
+  `opponentActiveAttackCostSurchargeBasicOnly` (the attacker's top card must be Basic); Plume: the NEW damage-only
+  `preventDamageWhileBenched` at the four DAMAGE sites, SEAT-GATED at the two live ones (spread, `placeSnipe`): an
+  own-Bench spread or snipe (D425 / D447) is not an attack "from your opponent's Pokémon" and lands on it (Survival
+  Brace's D562 reading; the first build missed it, the review round caught it). All §9-suppressible (Watchtower on {C},
+  Klefki on Basic) — R-FO5.
+- **Evolution** — Lileep evolves from "Antique Root Fossil" by name (not on the turn it was played); Rare Candy bridges
+  to Cradily; once evolved, the top card is no longer a fossil and the card rules and Ability stop (R-FO6).
+
+### (c) Readings (`docs/decisions.md` D576 (d))
+R-FO1 an Item play onto the Bench · R-FO2 a Pokémon only in play · R-FO3 discard from play in your own main phase, no KO ·
+R-FO4 card rules, not Abilities · R-FO5 the three Abilities are Abilities · R-FO6 ⚠️ UNRULED-then-ruled: evolution
+follows the in-play face. Parked with D577: R-AZ1 per-seat Bench limit · R-AZ2 the Tera check at settle points · R-AZ3
+both seats trim on leave, owner first · R-AZ4 the owner chooses · R-AZ5 whole stacks, no KO.
+
+### (d) Verified, and owed
+See `progress.md` NEXT (0)-(6) for the pasted figures: `bun run check`, precheck (corpus 4,109), the four gates, the probe
+`--decision D576 --allow-dirty` (35 killed), the neighbour re-probe and the 16 gate-witness rows (KILLED before and after).
+Census: `BUILT.trainer` 254 → **258**; `BUILT.ability` 388 UNMOVED and CHECKED; `built` 2380 → **2384**; Item 61 → 65.
+MRV 38 → 39, the TWELFTH position (match.ts). Owed: ~~D575's sweep (`4023 · 51` over 4,074, PENDING) and~~ 🆕 D575's sweep is PAID, EXACTLY
+(`4023 · 51` over 4,074, close-out `65211a5b`); D576's (`4058 · 51` over 4,109, stacked on it, so it stands as written). Carried: D577 (Underdepths ×3, parked); the ingest widening (USER); two pre-existing gaps,
+unchanged — `placeSnipe`'s put-counter arm asks no effects refusal for a BENCHED body (Unaware and Cover alike), and
+D253's Curious Tea Party (with, by reading, the Thundurus / Rabsca / Shaymin side-scan shields) has no seat test, so an
+own-Bench spread or snipe is shielded although the print says "from your opponent's Pokémon" (decisions.md D576 (g)).
+
+NEXT: see `progress.md` NEXT (7) — ⑴ D577 Area Zero Underdepths ×3 (or types-and-tyme split, Scovillain first), ⑵
+borrowed-attacks and special-energy as riders, ⑶ the census close-out; the Mega ingest and the fossil-face ingest
+widening are user decisions.

@@ -37,6 +37,7 @@ import type {
   RedactedAbility,
   RedactedAttack,
   RedactedCard,
+  RedactedDiscardable,
   RedactedDiscardScope,
   RedactedEffectPrompt,
   RedactedGame,
@@ -57,6 +58,8 @@ import {
   abilityBodyGateClause,
   abilityBodyGateMet,
   abilityUsedKey,
+  // 🆕🆕🆕 D576 — the Antique Fossil row's Bench-space gate.
+  fossilPlayable,
   programPlayable,
   rareCandyOptions,
 } from "./cardplay";
@@ -84,6 +87,7 @@ import {
   handCostUnmet,
 } from "./interpreter";
 import { inSetup, phaseViewOf } from "./phaseView";
+import { discardableTargets } from "./turn";
 import { programFor } from "./registry";
 import type {
   GameOutcome,
@@ -177,6 +181,8 @@ function redactPhase(state: GameState, viewerSeat: Seat, spectating: boolean): R
         trainers: redactedTrainersOf(state, viewerSeat, mainPhase),
         rareCandy: redactedRareCandyOf(state, viewerSeat, mainPhase),
         stadiumAbility: redactedStadiumAbilityOf(state, viewerSeat, mainPhase),
+        // 🆕🆕🆕 D576 — the Antique Fossils' "discard this card from play" offers (R-FO3).
+        discardable: redactedDiscardableOf(state, viewerSeat, mainPhase),
       };
     }
     case "ko:takePrizes":
@@ -896,12 +902,19 @@ function redactedTrainersOf(
     // offered; the coverage strategy surfaces it as "not simulated" on attempt.
     // Rare Candy is exempt: it is a marker program (`{rareCandy: true}`) with no
     // `trainer` ops, since the `rareCandy` action evolves instead of running one.
+    // (🆕🆕🆕 D576: and so is an Antique Fossil — `{playAsPokemon: true}`, no `trainer` ops,
+    // since `playTrainer` puts it onto the Bench instead of running one.)
     // ⚠️ A STADIUM'S PLAY PATH IS `program.stadium`, NOT `program.trainer` — the
     // local list's own discriminant, and the reason D287's `if (card.trainerType
     // === "Stadium") continue;` was DEAD CODE: every authored Stadium is
     // `{stadium: …}` with `trainer` undefined, so the line below already skipped
     // every one of them and deleting the guard moved NOTHING.
-    if (!isRareCandy && (isStadium ? program.stadium === undefined : program.trainer === undefined)) {
+    // 🆕🆕🆕 D576 — an Antique Fossil's play path is `playAsPokemon` (no `trainer` array).
+    const isFossil = program.playAsPokemon === true;
+    if (
+      !isRareCandy &&
+      (isStadium ? program.stadium === undefined : program.trainer === undefined && !isFossil)
+    ) {
       continue;
     }
     seen.add(card.id);
@@ -924,8 +937,11 @@ function redactedTrainersOf(
       isRareCandy || isStadium
         ? null
         : handCostUnmet(state, viewerSeat, program.trainer ?? [], uid);
+    // 🆕🆕🆕 D576 — a fossil runs no program; its one gate is a free Bench slot (R-FO1).
     const noTarget =
-      !isRareCandy && !isStadium && !programPlayable(state, program.trainer ?? [], viewerSeat);
+      !isRareCandy &&
+      !isStadium &&
+      (isFossil ? !fossilPlayable(state, viewerSeat) : !programPlayable(state, program.trainer ?? [], viewerSeat));
     // ⚠️ THE §4 TERM CARRIES THE CARD'S OWN EXEMPTION (D223,
     // `trainerFirstTurnExempt`: Carmine's "If you go first, you may use this card
     // during your first turn."). Without it this mirror would grey out a row
@@ -1191,6 +1207,29 @@ function redactedSideOf(state: GameState, seat: Seat, visibility: SideVisibility
     // §2 — the discard pile is ordered and public.
     discard: side.discard.map((uid) => redactedCardOf(state, uid)),
   };
+}
+
+/** 🆕🆕🆕 D576 — the acting viewer's own bodies whose top card (an Antique Fossil) may be
+    discarded from play now (R-FO3), each with a FRESH seatless target (the no-alias contract)
+    and a display label in the Ability rows' `(Active)` / `(Bench N)` spelling. Read off the
+    engine's ONE funnel (`discardableTargets`, turn.ts), which `discardFromPlay` accepts exactly;
+    [] for any viewer who is not the acting seat (and a spectator, whose `turnSeat` is null). */
+function redactedDiscardableOf(
+  state: GameState,
+  viewerSeat: Seat,
+  turnSeat: Seat | null,
+): RedactedDiscardable[] {
+  if (viewerSeat !== turnSeat) return [];
+  const side = state.players[viewerSeat];
+  return discardableTargets(state, viewerSeat).map((target) => {
+    const body = target.spot === "active" ? side.active : side.bench[target.index];
+    const name = (body === null || body === undefined ? undefined : topCardOf(state, body)?.name) ?? "?";
+    const where = target.spot === "active" ? "Active" : `Bench ${target.index + 1}`;
+    return {
+      target: target.spot === "active" ? { spot: "active" } : { spot: "bench", index: target.index },
+      label: `${name} (${where})`,
+    };
+  });
 }
 
 /** A public card: full identity, keyed by its engine uid. Carries the raw

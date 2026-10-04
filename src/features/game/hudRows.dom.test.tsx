@@ -186,6 +186,7 @@ describe("OnlineHud rows honour prefers-reduced-motion (D214)", () => {
           trainers: [],
           rareCandy: [],
           stadiumAbility: { label: "Levincia", disabled: false, reason: null },
+          discardable: [], // 🆕🆕🆕 D576 — the REQUIRED Antique Fossil offer (R-FO3)
         },
         { active: inPlay("sneasel", "Sneasel") },
       ),

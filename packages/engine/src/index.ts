@@ -37,7 +37,7 @@ import {
   setupPlaceBench,
   setupReady,
 } from "./setup";
-import { attachEnergy, endTurn, evolve, playBasicToBench, retreat } from "./turn";
+import { attachEnergy, discardFromPlay, endTurn, evolve, playBasicToBench, retreat } from "./turn";
 import type { GameState, Seat } from "./types";
 
 /** Engine milestone marker (M5 op-slice: **`attachFromTop`** — the from-the-top
@@ -3715,7 +3715,11 @@ import type { GameState, Seat } from "./types";
     read sites by `preventsAttackerType`. `PassiveEffects.preventBenchDamageWhileActive`
     (Thundurus `sv03-070`) is the aura-scan family's EIGHTH member and its FIRST
     same-seat cross-body one — the Active shields its own Bench — and it filters NO
-    ATTACKER at all. `StadiumEffects.preventDamageToNoRuleBoxFromExV` (Neutralization
+    ATTACKER at all (🆕🆕🆕 D576 (D539): ~~"it filters NO ATTACKER at all"~~ is
+    WITHDRAWN — FALSE since D425: the own-side `"yourBench"` spread (D425) and
+    own-Bench snipe (D447) exist, so "your opponent's Pokémon" narrows the attacker
+    by SEAT; it filters no attacker IDENTITY, and the unseated scan is decisions.md
+    D576 (g) ⑵, not fixed here). `StadiumEffects.preventDamageToNoRuleBoxFromExV` (Neutralization
     Zone `sv06.5-060`, an **ACE SPEC**) is the first Stadium in the pool on the §8.5
     DAMAGE seam: `hasRuleBox` NEGATED on the body being hit, `isExOrV` on the body
     hitting it, both boards, no seat to derive and no §9 gate.
@@ -20243,6 +20247,32 @@ import type { GameState, Seat } from "./types";
     `expect(manifest.version)`, `it(…)` titles, the declaration and `package.json` —
     **not** as a value-keyed grep — because a value-keyed grep is precisely the mechanism
     that ate D500's heading.)
+    🆕🆕🆕 engineVersion 0.459.0 → **0.460.0** (D576 — THE ANTIQUE FOSSILS: 4 PRINTINGS / 3 TEXTS, AN ITEM PLAYED AS
+    A POKÉMON, `MATCH_RECORD_VERSION` 38 → 39 (THE TWELFTH POSITION). Antique Cover Fossil `sv07-129` / `sv10.5b-080`,
+    Antique Root Fossil `sv07-130`, Antique Plume Fossil `sv10.5w-079`. The Pokémon face the ingest DROPS (60 HP,
+    Basic, {C}, the printed Ability) is HAND-WRITTEN in the NEW data table `fossils.ts`, keyed by printing id (the
+    `banners.ts` precedent; outside the mutation whitelist, D538), and cards.ts `cardOfUid` is now ZONE-AWARE — a
+    fossil uid that is a card of an in-play stack reads as that face, the catalog Item everywhere else (R-FO2);
+    interpreter.ts's private `cardOf` delegates to it. The NEW `CardProgram.playAsPokemon` routes the play in
+    `playTrainer` to the NEW `playFossil` — an ITEM play (the Item bars refuse it), needing a free Bench slot
+    (`fossilPlayable`, the one funnel both Trainer lists share), landing through `makeInPlay` with
+    `TRAINER_PLAYED` then `POKEMON_BENCHED`; no Pokémon-play bar, no on-bench-play trigger (R-FO1). The NEW
+    `GameAction` `discardFromPlay` (turn.ts; `turnGate`, so the actor's main phase only; the whole stack through
+    `discardFromStack(…, "all")` as `POKEMON_RETURNED` `dest: "discard"`; no Knock Out, no Prize; an emptied Active
+    owes a promotion and an empty board is the §14.2 loss — R-FO3), the NEW `ErrorCode` `NOT_DISCARDABLE`, and the
+    NEW offer funnel `discardableTargets`, carried on the REQUIRED wire key `turn:action.discardable` (DEPLOY THE
+    SERVER FIRST) and rendered by both HUDs. The two CARD RULES are not Abilities (R-FO4): an UNGATED
+    `passivesOf` source with all five `statusImmunities`, and `retreatLocked`'s third source. The three Abilities
+    (R-FO5): Protective Cover is Skeledirge "Unaware"'s `preventAttackEffects` (zero vocabulary); Primal Root is
+    Quaking Zone's surcharge with the NEW Basic-attacker rider `opponentActiveAttackCostSurchargeBasicOnly`; Plume
+    Protection is the NEW damage-only `preventDamageWhileBenched`, read at the four DAMAGE sites and not at
+    `attackEffectRefused`, and SEAT-GATED at its two live arms (spread, `placeSnipe`): an own-Bench spread or snipe
+    (D425 / D447) is not an attack "from your opponent's Pokémon" and lands on it. Evolution onto a fossil follows
+    the in-play face (Lileep from "Antique Root Fossil", Rare Candy through it), and an evolved fossil is no longer
+    a fossil (R-FO6). Area Zero Underdepths ×3 is PARKED as D577 on the brief's off-ramp. R-FO1 … R-FO6: `docs/decisions.md` D576. VERSION-TAX EXCEPTIONS: the nine history
+    lines that name `0.459.0` as the version something was BUILT at — D575's heading below (its arrow line), its
+    seven D539 annotations in this file (*"BUILT at 0.459.0"*, *"0.459.0, `lookAtPrize`"*) and effects.ts' D575 Iron
+    Moth note — kept, 9 of 219 lines; 210 stepped by split/join on the version string.)
     🆕🆕🆕 engineVersion 0.458.0 → **0.459.0** (D575 — THE MRV-38 ATTACK SLICE: 6 PRINTINGS / 6 TEXTS, FOUR NEW OPS,
     `MATCH_RECORD_VERSION` 37 → 38 (THE ELEVENTH POSITION). Iron Moth `sv06.5-009` "Anachronism Repulsor" — the
     shipped `preventDamage` with `AttackerClass.stage` WIDENED to `"ancient"` (read through `bannerOf`, R-IM1);
@@ -24930,7 +24960,7 @@ import type { GameState, Seat } from "./types";
     WITNESS** — the count was re-derived every slice and the word *"three"* was carried.
     A successor of this slice inherits **81 / 61 / 17** again, over **FIVE** history
     occurrences: those four plus `deckMillFilteredScale.test.ts`'s own header arrow.) */
-export const engineVersion = "0.459.0";
+export const engineVersion = "0.460.0";
 
 export type {
   ApplyResult,
@@ -24938,6 +24968,7 @@ export type {
   AttachToolAction,
   AttackAction,
   ChooseFirstPlayerAction,
+  DiscardFromPlayAction,
   EndTurnAction,
   EngineError,
   ErrorCode,
@@ -25098,6 +25129,9 @@ export { handCostAction, handCostUnmet } from "./interpreter";
     hidden-zone CONTENTS never decide playability — the Poké Ball rule), so the
     hot-seat HUD may call it freely; the P4 projection caveat above applies. */
 export { programPlayable } from "./cardplay";
+/** 🆕🆕🆕 D576 — the Antique Fossil play's one gate (a free Bench slot), shared by both Trainer
+    lists and `playTrainer` so a fossil row greys exactly when the play is refused. */
+export { fossilPlayable } from "./cardplay";
 /** D272 — the SOLE FUNNEL for the §9/§15.J `allowances.abilitiesUsed` key.
     Exported for the same reason `programPlayable` is: `useAbility` both READS and
     WRITES this key, and the two HUD mirrors (this app's `GameHud`, the wire's
@@ -25183,6 +25217,12 @@ export type {
 /** Exported for effect handlers: the shared turn gate every in-turn action
     runs first, and the M2 cost matcher. */
 export { turnGate } from "./turn";
+/** 🆕🆕🆕 D576 — the actor's own spots whose top card (an Antique Fossil) may be discarded from
+    play right now: the ONE offer funnel GameHud's buttons and the wire's `discardable` share. */
+export { discardableTargets } from "./turn";
+/** 🆕🆕🆕 D576 — the four Antique Fossil printing ids (`fossils.ts`, hand-written: the ingest
+    drops their Pokémon face — decisions.md D576). */
+export { FOSSIL_IDS } from "./fossils";
 export { costMet } from "./attack";
 /** 🆕🆕🆕 D545 — the cost an attack is CHARGED right now (the printed cost under
     every continuous cost effect, and the printed COST CLAUSE on that index): the ONE
@@ -25252,6 +25292,9 @@ export function applyAction(state: GameState, action: GameAction): ApplyResult {
       return endTurn(state, action);
     case "concede":
       return concede(state, action);
+    // 🆕🆕🆕 D576 — an Antique Fossil's "you may discard this card from play" (R-FO3).
+    case "discardFromPlay":
+      return discardFromPlay(state, action);
     default:
       return err("UNKNOWN_ACTION", `unknown action type "${(action as { type: string }).type}"`);
   }

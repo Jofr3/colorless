@@ -650,6 +650,8 @@ describe("⚠️ passivesOf's THIRD SOURCE CLASS — an attached ENERGY", () => 
     // block does not mistake a structural false for a measured one. No Energy or
     // Tool writer today — all three printings are Pokémon Abilities.
     expect(fold.preventDamageAndEffectsWhileBenched).toBe(false);
+    // 🆕🆕🆕 D576 — its damage-only twin (Plume Protection), FALSE for the same reason.
+    expect(fold.preventDamageWhileBenched).toBe(false);
     // ⚠️ D255 — the EIGHTEENTH key, and the audit's SECOND non-boolean zero after
     // `preventDamageFromTypes`. Its zero is an EMPTY LIST rather than a FALSE, which
     // is what makes it informative where the key above it is not: an Energy writer
@@ -777,6 +779,9 @@ describe("⚠️ passivesOf's THIRD SOURCE CLASS — an attached ENERGY", () => 
         "preventDamageFromHasAbility",
         "preventDamageFromTypes",
         "preventDamageOnCoinFlip",
+        // 🆕🆕🆕 D576 — `preventDamageWhileBenched` (Antique Plume Fossil "Plume Protection"): an
+        // Ability's flag, FALSE here because this board's Energy is Therapeutic and writes none.
+        "preventDamageWhileBenched",
         "preventTrainerEffects",
         "preventAttackEffects",
         "statusImmunities",

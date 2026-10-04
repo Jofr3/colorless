@@ -27,6 +27,9 @@ import {
   cardOfUid,
   conditionHolds,
   conditionNote,
+  // 🆕🆕🆕 D576 — the Antique Fossils: the play row's Bench gate and the discard offer funnel.
+  discardableTargets,
+  fossilPlayable,
   handCostAction,
   handCostUnmet,
   attackCostAt,
@@ -124,11 +127,14 @@ function playableTrainers(game: GameState, seat: Seat): TrainerOption[] {
     if (program === undefined) continue;
     const isRareCandy = program.rareCandy === true;
     const isStadium = card.trainerType === "Stadium";
-    // A card with no play path (no program, no stadium, not Rare Candy) is not
-    // offered — the coverage strategy surfaces it as "not simulated" on attempt.
+    // A card with no play path (no program, no stadium, not Rare Candy — 🆕🆕🆕 D576: and not an
+    // Antique Fossil) is not offered — the coverage strategy surfaces it as "not simulated" on attempt.
+    // 🆕🆕🆕 D576 — an Antique Fossil's play path is `playAsPokemon` (no `trainer` array);
+    // redact.ts's online twin carries the same arm.
+    const isFossil = program.playAsPokemon === true;
     if (
       !isRareCandy &&
-      (isStadium ? program.stadium === undefined : program.trainer === undefined)
+      (isStadium ? program.stadium === undefined : program.trainer === undefined && !isFossil)
     ) {
       continue;
     }
@@ -168,8 +174,12 @@ function playableTrainers(game: GameState, seat: Seat): TrainerOption[] {
     // playability inside it (the Poké Ball rule), so mirroring leaks nothing.
     // Scoped to the Item/Supporter path with the two above: playStadium and the
     // rareCandy action never consult it.
+    // 🆕🆕🆕 D576 — a fossil runs no program; its one gate is a free Bench slot (R-FO1),
+    // the engine's own `fossilPlayable`, which `playTrainer` refuses on.
     const noTarget =
-      !isRareCandy && !isStadium && !programPlayable(game, program.trainer ?? [], seat);
+      !isRareCandy &&
+      !isStadium &&
+      (isFossil ? !fossilPlayable(game, seat) : !programPlayable(game, program.trainer ?? [], seat));
     // ⚠️ THE §4 TERM CARRIES THE CARD'S OWN EXEMPTION (D223,
     // `trainerFirstTurnExempt`: Carmine's "If you go first, you may use this card
     // during your first turn."), exactly as redact.ts's online twin does. A flag
@@ -809,6 +819,14 @@ function TurnPanel(props: GameHudProps) {
   // §7.3 — the shared Stadium's activated ability, the one turn affordance that
   // fits in NEITHER list above (see stadiumAbilityOption). Null = no row.
   const stadiumAbility = attackAgainWindow ? null : stadiumAbilityOption(game, viewerSeat);
+  // 🆕🆕🆕 D576 — an Antique Fossil's "you may discard this card from play" (R-FO3): one row per
+  // own body topped by a fossil, read off the engine's ONE offer funnel (which already folds the
+  // turn gate and the attack-again window), labelled as the wire's `discardable` rows are.
+  const discardOptions = discardableTargets(game, viewerSeat).map((target) => {
+    const body = target.spot === "active" ? side.active : side.bench[target.index];
+    const name = (body === null || body === undefined ? undefined : topCardOf(game, body)?.name) ?? "?";
+    return { target, label: `${name} (${target.spot === "active" ? "Active" : `Bench ${target.index + 1}`})` };
+  });
 
   return (
     <>
@@ -1005,6 +1023,28 @@ function TurnPanel(props: GameHudProps) {
                   <span className="sr-only">{stadiumAbility.reason}</span>
                 )}
               </li>
+            </ul>
+          </div>
+        )}
+        {/* 🆕🆕🆕 D576 — the Antique Fossils' "discard this card from play" (R-FO3). Its own
+            section: it is neither a hand card nor an Ability, and the action takes the spot. */}
+        {discardOptions.length > 0 && (
+          <div className="mt-3">
+            <p className="text-[10px] font-semibold uppercase tracking-wide text-white/40">
+              Discard from play
+            </p>
+            <ul className="mt-1.5 flex flex-col gap-1.5">
+              {discardOptions.map((opt) => (
+                <li key={opt.target.spot === "bench" ? `bench-${opt.target.index}` : "active"}>
+                  <button
+                    type="button"
+                    onClick={() => dispatch({ type: "discardFromPlay", seat: viewerSeat, target: opt.target })}
+                    className={`${ROW_BUTTON_BASE} ${ROW_BUTTON_ENABLED}`}
+                  >
+                    <span className="truncate">{opt.label}</span>
+                  </button>
+                </li>
+              ))}
             </ul>
           </div>
         )}

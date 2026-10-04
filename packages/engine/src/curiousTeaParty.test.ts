@@ -26,6 +26,11 @@ import {
 // This one narrows the attacker not at all — the printed object is "your
 // opponent's Pokémon", which is every attacker there is — and narrows instead
 // WHERE ITS OWN BODY IS STANDING.
+// (🆕🆕🆕 D576 (D539): ~~"which is every attacker there is"~~ is WITHDRAWN — FALSE
+// since D425: the `"yourBench"` spread (D425) and the own-Bench snipe (D447) are
+// attacks by the holder's OWN side, so the print narrows the attacker by SEAT, and
+// the spread and `placeSnipe` arms read this flag with no seat test. A pre-existing
+// gap, carried as decisions.md D576 (g) ⑵, not fixed here.)
 //
 // 🛑 THAT ONE DIFFERENCE IS THE WHOLE SLICE, AND IT WAS SETTLED BY READING A
 // SIGNATURE RATHER THAN BY ANALOGY. The question the handoff called "the whole
@@ -428,7 +433,12 @@ describe("Curious Tea Party — the gate is LIVE-READ, not stamped", () => {
   // Pokémon", so there is nothing to narrow. Same holder, two different attackers,
   // same answer — the assertion that would go red if someone "helpfully" added a
   // predicate at the read sites.
-  it("does not consult the attacker — the printed object is every attacker there is", () => {
+  // (🆕🆕🆕 D576 (D539): the title's ~~"the printed object is every attacker there
+  // is"~~ is WITHDRAWN — FALSE since D425 (own-side spread, D425; own-Bench snipe,
+  // D447): the printed object narrows the attacker by SEAT. What this rung pins
+  // stands — the FOLD consults no attacker IDENTITY; the missing seat test at the
+  // read sites is decisions.md D576 (g) ⑵, not fixed here.)
+  it("does not consult the attacker's identity — the fold reads no attacker", () => {
     const shell = benched("fix-shellcracker");
     const titan = benched("fix-titan");
     const a = holderOnBench(shell);

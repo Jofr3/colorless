@@ -59,6 +59,7 @@ const MATCH_GAME: RedactedGame = {
     trainers: [],
     rareCandy: [],
     stadiumAbility: null,
+    discardable: [], // 🆕🆕🆕 D576 — the REQUIRED Antique Fossil offer (R-FO3)
   },
   board: {
     stadium: null,

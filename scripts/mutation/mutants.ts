@@ -6230,7 +6230,7 @@ export const MUTANTS: Mutant[] = [
     // CORPUS QUOTES** (D414/D415), so a value-keyed sweep over `toBe("0.391.0")` cannot
     // see it — this row's `find` spells the DECLARATION, not an assertion. Run
     // `precheck` after every version bump, not after the sweep tells you.
-    find: 'export const engineVersion = "0.459.0";',
+    find: 'export const engineVersion = "0.460.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -7620,8 +7620,11 @@ export const MUTANTS: Mutant[] = [
     decision: "D288",
     what: '🛑 THE WHOLE SLICE UNDONE, AND BY THE ROUTE D287 THOUGHT WOULD DO IT: the play-path discriminant loses its Stadium arm, so every Stadium falls back to `program.trainer === undefined` and the projection emits no Stadium row at all — the pre-D288 wire exactly. ⚠️ THIS IS THE ROW THAT PROVES THE DELETED `if (card.trainerType === "Stadium") continue;` WAS NEVER THE GUARD: restoring that line is a NO-OP (measured — the suite stays green), and THIS is the line that actually held the absence. A census cannot see it (no printing stops resolving, `BUILT.ability` does not move); only the wire assertions can',
     file: "packages/engine/src/redact.ts",
-    find: "    if (!isRareCandy && (isStadium ? program.stadium === undefined : program.trainer === undefined)) {",
-    replace: "    if (!isRareCandy && program.trainer === undefined) {",
+    // 🆕🆕🆕 D576 - RE-ANCHORED off the bytes (D540): the guard grew an Antique Fossil arm
+    //    (`&& !isFossil` — `playAsPokemon` is a fossil's play path, R-FO1) and biome-wrapped onto its
+    //    own line; the patch is the SAME deletion of the Stadium arm, the fossil arm kept intact.
+    find: "      (isStadium ? program.stadium === undefined : program.trainer === undefined && !isFossil)",
+    replace: "      (program.trainer === undefined && !isFossil)",
     expectKilledBy: [
       "packages/engine/src/stadiumWireMirror.test.ts",
       "packages/engine/src/stadiumBar.test.ts",
@@ -11427,8 +11430,9 @@ export const MUTANTS: Mutant[] = [
     //    `TurnAllowances.attackAgainUid`). Fourteenth consecutive bump to rot this row, predicted
     //    before `precheck`.
     // 🆕🆕🆕 D575 - stepped with the constant, 37 -> 38 (the ELEVENTH position); one step back, as always.
-    find: "export const MATCH_RECORD_VERSION = 38;",
-    replace: "export const MATCH_RECORD_VERSION = 37;",
+    // 🆕🆕🆕 D576 - stepped with the constant, 38 -> 39 (the TWELFTH position); one step back, as always.
+    find: "export const MATCH_RECORD_VERSION = 39;",
+    replace: "export const MATCH_RECORD_VERSION = 38;",
     expectKilledBy: ["apps/api/src/lobby/match.test.ts"],
   },
   // == D327 - THE COST SEAM'S SECOND AND THIRD COUNT SOURCES. Every row below is a
@@ -29468,8 +29472,9 @@ export const MUTANTS: Mutant[] = [
     // 🆕🆕🆕 D564 - RE-TRANSCRIBED off the new bytes (35 -> 36), the same step down by one.
     // 🆕🆕🆕 D570 - RE-TRANSCRIBED off the new bytes (36 -> 37), the same step down by one.
     // 🆕🆕🆕 D575 - stepped with the constant, 37 -> 38 (the ELEVENTH position); one step back, as always.
-    find: "export const MATCH_RECORD_VERSION = 38;\n",
-    replace: "export const MATCH_RECORD_VERSION = 37;\n",
+    // 🆕🆕🆕 D576 - stepped with the constant, 38 -> 39 (the TWELFTH position); one step back, as always.
+    find: "export const MATCH_RECORD_VERSION = 39;\n",
+    replace: "export const MATCH_RECORD_VERSION = 38;\n",
     expectKilledBy: ["apps/api/src/lobby/match.test.ts"],
   },
   // ────────────────────────────────────────────────────────────────────────────
@@ -34852,11 +34857,15 @@ export const MUTANTS: Mutant[] = [
     //    never retyped): D575's ELEVENTH POSITION now sits between D570's doc tail and the constant,
     //    so the anchor is D575's last two lines and the patch value is unchanged (38 -> the same
     //    pre-bump value). Fifteenth consecutive bump to move these rows.
-    find: "    tail. The HUD draws neither the side block nor the hand mark, and a barred attach comes back as\n    an error toast (carried display debts, decisions.md D575). */\nexport const MATCH_RECORD_VERSION = 38;",
+    // 🆕🆕🆕 D576 - RE-ANCHORED AGAIN off the bytes (D540: the tail read from match.ts by script,
+    //    never retyped): D576's TWELFTH POSITION now sits between D575's doc tail and the constant,
+    //    so the anchor is D576's last two lines and the patch value is unchanged (39 -> the same
+    //    pre-bump value). Sixteenth consecutive bump to move these rows.
+    find: "    `turn:action.discardable` — 🛑 **DEPLOY THE SERVER FIRST**: an old client's `z.object` STRIPS\n    the unknown key, while a new client's REQUIRED key refuses an old server's frame. */\nexport const MATCH_RECORD_VERSION = 39;",
     // 🆕🆕🆕 D549 - RE-ANCHORED AGAIN off the bytes (D540): D549's block now sits between
     //    D548's doc tail and the constant, so the anchor is D549's last two lines and the
     //    patch drops the constant THREE steps, to D547's pre-bump 30.
-    replace: "    tail. The HUD draws neither the side block nor the hand mark, and a barred attach comes back as\n    an error toast (carried display debts, decisions.md D575). */\nexport const MATCH_RECORD_VERSION = 30;",
+    replace: "    `turn:action.discardable` — 🛑 **DEPLOY THE SERVER FIRST**: an old client's `z.object` STRIPS\n    the unknown key, while a new client's REQUIRED key refuses an old server's frame. */\nexport const MATCH_RECORD_VERSION = 30;",
     expectKilledBy: ["packages/engine/src/attackFlipLock.test.ts"],
   },
   // ── D548 — CRESCENT PURGE, THE FACE-UP PRIZE. 18 rows, all probed UNDECLARED first
@@ -35048,11 +35057,15 @@ export const MUTANTS: Mutant[] = [
     //    never retyped): D575's ELEVENTH POSITION now sits between D570's doc tail and the constant,
     //    so the anchor is D575's last two lines and the patch value is unchanged (38 -> the same
     //    pre-bump value). Fifteenth consecutive bump to move these rows.
-    find: "    tail. The HUD draws neither the side block nor the hand mark, and a barred attach comes back as\n    an error toast (carried display debts, decisions.md D575). */\nexport const MATCH_RECORD_VERSION = 38;",
+    // 🆕🆕🆕 D576 - RE-ANCHORED AGAIN off the bytes (D540: the tail read from match.ts by script,
+    //    never retyped): D576's TWELFTH POSITION now sits between D575's doc tail and the constant,
+    //    so the anchor is D576's last two lines and the patch value is unchanged (39 -> the same
+    //    pre-bump value). Sixteenth consecutive bump to move these rows.
+    find: "    `turn:action.discardable` — 🛑 **DEPLOY THE SERVER FIRST**: an old client's `z.object` STRIPS\n    the unknown key, while a new client's REQUIRED key refuses an old server's frame. */\nexport const MATCH_RECORD_VERSION = 39;",
     // 🆕🆕🆕 D549 - RE-ANCHORED off the bytes onto D549's doc tail; the patch drops the
     //    constant TWO steps, to D548's pre-bump 31 (a different patch from
     //    `D549-record-version-not-bumped`, one step, same anchor).
-    replace: "    tail. The HUD draws neither the side block nor the hand mark, and a barred attach comes back as\n    an error toast (carried display debts, decisions.md D575). */\nexport const MATCH_RECORD_VERSION = 31;",
+    replace: "    `turn:action.discardable` — 🛑 **DEPLOY THE SERVER FIRST**: an old client's `z.object` STRIPS\n    the unknown key, while a new client's REQUIRED key refuses an old server's frame. */\nexport const MATCH_RECORD_VERSION = 31;",
     expectKilledBy: ["packages/engine/src/crescentPurge.test.ts", "apps/api/src/lobby/match.test.ts"],
   },
   // ── 🆕🆕🆕 D549 — THE DEFENDER'S NEXT-TURN MARKS AND THE SIDE-WIDE ATTACK LOCK (`censusAttackCorpus.ts`
@@ -35542,8 +35555,12 @@ export const MUTANTS: Mutant[] = [
     //    never retyped): D575's ELEVENTH POSITION now sits between D570's doc tail and the constant,
     //    so the anchor is D575's last two lines and the patch value is unchanged (38 -> the same
     //    pre-bump value). Fifteenth consecutive bump to move these rows.
-    find: "    tail. The HUD draws neither the side block nor the hand mark, and a barred attach comes back as\n    an error toast (carried display debts, decisions.md D575). */\nexport const MATCH_RECORD_VERSION = 38;",
-    replace: "    tail. The HUD draws neither the side block nor the hand mark, and a barred attach comes back as\n    an error toast (carried display debts, decisions.md D575). */\nexport const MATCH_RECORD_VERSION = 32;",
+    // 🆕🆕🆕 D576 - RE-ANCHORED AGAIN off the bytes (D540: the tail read from match.ts by script,
+    //    never retyped): D576's TWELFTH POSITION now sits between D575's doc tail and the constant,
+    //    so the anchor is D576's last two lines and the patch value is unchanged (39 -> the same
+    //    pre-bump value). Sixteenth consecutive bump to move these rows.
+    find: "    `turn:action.discardable` — 🛑 **DEPLOY THE SERVER FIRST**: an old client's `z.object` STRIPS\n    the unknown key, while a new client's REQUIRED key refuses an old server's frame. */\nexport const MATCH_RECORD_VERSION = 39;",
+    replace: "    `turn:action.discardable` — 🛑 **DEPLOY THE SERVER FIRST**: an old client's `z.object` STRIPS\n    the unknown key, while a new client's REQUIRED key refuses an old server's frame. */\nexport const MATCH_RECORD_VERSION = 32;",
     expectKilledBy: ["packages/engine/src/sideAttackLock.test.ts", "apps/api/src/lobby/match.test.ts"],
   },
   {
@@ -36130,8 +36147,12 @@ export const MUTANTS: Mutant[] = [
     //    never retyped): D575's ELEVENTH POSITION now sits between D570's doc tail and the constant,
     //    so the anchor is D575's last two lines and the patch value is unchanged (38 -> the same
     //    pre-bump value). Fifteenth consecutive bump to move these rows.
-    find: "    tail. The HUD draws neither the side block nor the hand mark, and a barred attach comes back as\n    an error toast (carried display debts, decisions.md D575). */\nexport const MATCH_RECORD_VERSION = 38;",
-    replace: "    tail. The HUD draws neither the side block nor the hand mark, and a barred attach comes back as\n    an error toast (carried display debts, decisions.md D575). */\nexport const MATCH_RECORD_VERSION = 33;",
+    // 🆕🆕🆕 D576 - RE-ANCHORED AGAIN off the bytes (D540: the tail read from match.ts by script,
+    //    never retyped): D576's TWELFTH POSITION now sits between D575's doc tail and the constant,
+    //    so the anchor is D576's last two lines and the patch value is unchanged (39 -> the same
+    //    pre-bump value). Sixteenth consecutive bump to move these rows.
+    find: "    `turn:action.discardable` — 🛑 **DEPLOY THE SERVER FIRST**: an old client's `z.object` STRIPS\n    the unknown key, while a new client's REQUIRED key refuses an old server's frame. */\nexport const MATCH_RECORD_VERSION = 39;",
+    replace: "    `turn:action.discardable` — 🛑 **DEPLOY THE SERVER FIRST**: an old client's `z.object` STRIPS\n    the unknown key, while a new client's REQUIRED key refuses an old server's frame. */\nexport const MATCH_RECORD_VERSION = 33;",
     expectKilledBy: ["apps/api/src/lobby/match.test.ts"],
   },
   // ── 🆕🆕🆕 D553 — THE SIMPLE ONCE-PER-TURN ABILITIES, 12 printings / 7 texts / 7 objects,
@@ -37059,8 +37080,12 @@ export const MUTANTS: Mutant[] = [
     //    never retyped): D575's ELEVENTH POSITION now sits between D570's doc tail and the constant,
     //    so the anchor is D575's last two lines and the patch value is unchanged (38 -> the same
     //    pre-bump value). Fifteenth consecutive bump to move these rows.
-    find: "    tail. The HUD draws neither the side block nor the hand mark, and a barred attach comes back as\n    an error toast (carried display debts, decisions.md D575). */\nexport const MATCH_RECORD_VERSION = 38;",
-    replace: "    tail. The HUD draws neither the side block nor the hand mark, and a barred attach comes back as\n    an error toast (carried display debts, decisions.md D575). */\nexport const MATCH_RECORD_VERSION = 34;",
+    // 🆕🆕🆕 D576 - RE-ANCHORED AGAIN off the bytes (D540: the tail read from match.ts by script,
+    //    never retyped): D576's TWELFTH POSITION now sits between D575's doc tail and the constant,
+    //    so the anchor is D576's last two lines and the patch value is unchanged (39 -> the same
+    //    pre-bump value). Sixteenth consecutive bump to move these rows.
+    find: "    `turn:action.discardable` — 🛑 **DEPLOY THE SERVER FIRST**: an old client's `z.object` STRIPS\n    the unknown key, while a new client's REQUIRED key refuses an old server's frame. */\nexport const MATCH_RECORD_VERSION = 39;",
+    replace: "    `turn:action.discardable` — 🛑 **DEPLOY THE SERVER FIRST**: an old client's `z.object` STRIPS\n    the unknown key, while a new client's REQUIRED key refuses an old server's frame. */\nexport const MATCH_RECORD_VERSION = 34;",
     expectKilledBy: ["apps/api/src/lobby/match.test.ts"],
   },
   // ── 🆕🆕🆕 D557 — ELEVEN TRAINERS, 19 PRINTINGS / 11 TEXTS / 11 OBJECTS: Kieran's labelled
@@ -40389,8 +40414,12 @@ export const MUTANTS: Mutant[] = [
     //    never retyped): D575's ELEVENTH POSITION now sits between D570's doc tail and the constant,
     //    so the anchor is D575's last two lines and the patch value is unchanged (38 -> the same
     //    pre-bump value). Fifteenth consecutive bump to move these rows.
-    find: "    tail. The HUD draws neither the side block nor the hand mark, and a barred attach comes back as\n    an error toast (carried display debts, decisions.md D575). */\nexport const MATCH_RECORD_VERSION = 38;",
-    replace: "    tail. The HUD draws neither the side block nor the hand mark, and a barred attach comes back as\n    an error toast (carried display debts, decisions.md D575). */\nexport const MATCH_RECORD_VERSION = 35;",
+    // 🆕🆕🆕 D576 - RE-ANCHORED AGAIN off the bytes (D540: the tail read from match.ts by script,
+    //    never retyped): D576's TWELFTH POSITION now sits between D575's doc tail and the constant,
+    //    so the anchor is D576's last two lines and the patch value is unchanged (39 -> the same
+    //    pre-bump value). Sixteenth consecutive bump to move these rows.
+    find: "    `turn:action.discardable` — 🛑 **DEPLOY THE SERVER FIRST**: an old client's `z.object` STRIPS\n    the unknown key, while a new client's REQUIRED key refuses an old server's frame. */\nexport const MATCH_RECORD_VERSION = 39;",
+    replace: "    `turn:action.discardable` — 🛑 **DEPLOY THE SERVER FIRST**: an old client's `z.object` STRIPS\n    the unknown key, while a new client's REQUIRED key refuses an old server's frame. */\nexport const MATCH_RECORD_VERSION = 35;",
     expectKilledBy: ["apps/api/src/lobby/match.test.ts"],
   },
   // ── 🆕🆕🆕 D565 — FOUR ABILITIES AND A SUPPORTER (Flustered Leap, Rocket Brain, Ruffian, Impromptu
@@ -43237,8 +43266,12 @@ export const MUTANTS: Mutant[] = [
     //    never retyped): D575's ELEVENTH POSITION now sits between D570's doc tail and the constant,
     //    so the anchor is D575's last two lines and the patch value is unchanged (38 -> the same
     //    pre-bump value). Fifteenth consecutive bump to move these rows.
-    find: "    tail. The HUD draws neither the side block nor the hand mark, and a barred attach comes back as\n    an error toast (carried display debts, decisions.md D575). */\nexport const MATCH_RECORD_VERSION = 38;",
-    replace: "    tail. The HUD draws neither the side block nor the hand mark, and a barred attach comes back as\n    an error toast (carried display debts, decisions.md D575). */\nexport const MATCH_RECORD_VERSION = 36;",
+    // 🆕🆕🆕 D576 - RE-ANCHORED AGAIN off the bytes (D540: the tail read from match.ts by script,
+    //    never retyped): D576's TWELFTH POSITION now sits between D575's doc tail and the constant,
+    //    so the anchor is D576's last two lines and the patch value is unchanged (39 -> the same
+    //    pre-bump value). Sixteenth consecutive bump to move these rows.
+    find: "    `turn:action.discardable` — 🛑 **DEPLOY THE SERVER FIRST**: an old client's `z.object` STRIPS\n    the unknown key, while a new client's REQUIRED key refuses an old server's frame. */\nexport const MATCH_RECORD_VERSION = 39;",
+    replace: "    `turn:action.discardable` — 🛑 **DEPLOY THE SERVER FIRST**: an old client's `z.object` STRIPS\n    the unknown key, while a new client's REQUIRED key refuses an old server's frame. */\nexport const MATCH_RECORD_VERSION = 36;",
     expectKilledBy: ["apps/api/src/lobby/match.test.ts"],
   },
   // ── 🆕🆕🆕 D571 — PARADOX PART b (IRON THORNS) + THE IGNITION RIDER: the stratified lock pass
@@ -44659,8 +44692,331 @@ export const MUTANTS: Mutant[] = [
     decision: "D575",
     what: "🛑 **`MATCH_RECORD_VERSION` STAYS 37 WHILE THE ELEVENTH POSITION LANDS** — this deploy accepts a v37 record, whose sides lack `sideAttackBlock` and whose bodies lack `handAttachMark` (the side arm and `liveHandAttachMark` dereference `.turn` of `undefined` — D326's class), and a 0.458 rollback would drop a live C.O.D.E.: Protect window, grant a barred attach, keep a Daydream turn and read an `\"ancient\"` block as none (`mrvAttackSliceD575.test.ts` §8). Anchored on D575's own doc tail, one step. Killed by `match.test.ts`.",
     file: "apps/api/src/lobby/match.ts",
-    find: "    tail. The HUD draws neither the side block nor the hand mark, and a barred attach comes back as\n    an error toast (carried display debts, decisions.md D575). */\nexport const MATCH_RECORD_VERSION = 38;",
-    replace: "    tail. The HUD draws neither the side block nor the hand mark, and a barred attach comes back as\n    an error toast (carried display debts, decisions.md D575). */\nexport const MATCH_RECORD_VERSION = 37;",
+    // 🆕🆕🆕 D576 - RE-ANCHORED AGAIN off the bytes (D540: the tail read from match.ts by script,
+    //    never retyped): D576's TWELFTH POSITION now sits between D575's doc tail and the constant,
+    //    so the anchor is D576's last two lines and the patch value is unchanged (39 -> the same
+    //    pre-bump value). Sixteenth consecutive bump to move these rows.
+    find: "    `turn:action.discardable` — 🛑 **DEPLOY THE SERVER FIRST**: an old client's `z.object` STRIPS\n    the unknown key, while a new client's REQUIRED key refuses an old server's frame. */\nexport const MATCH_RECORD_VERSION = 39;",
+    replace: "    `turn:action.discardable` — 🛑 **DEPLOY THE SERVER FIRST**: an old client's `z.object` STRIPS\n    the unknown key, while a new client's REQUIRED key refuses an old server's frame. */\nexport const MATCH_RECORD_VERSION = 37;",
     expectKilledBy: ["apps/api/src/lobby/match.test.ts"],
+  },
+  // ── 🆕🆕🆕 D576 — THE ANTIQUE FOSSILS (Antique Cover Fossil ×2, Antique Root Fossil, Antique Plume Fossil),
+  //    `MATCH_RECORD_VERSION` 38 → 39. Engine source only: `fossils.ts` is DATA outside the whitelist (D538) and
+  //    is pinned literally by the suite, never mutated. Every `find` asserted to occur exactly once, by script,
+  //    before it was written here (D540); every replace names only what its file binds (binding-gate.ts). ──
+  {
+    id: "D576-zone-check-dropped",
+    decision: "D576",
+    what: "🛑 `cardOfUid` stops being ZONE-AWARE in the OFF direction: an in-play fossil reads as the catalog Item (`hp: null`, no Ability) — exactly the 0.459 reading the twelfth MRV position names. Killed by §2's zone rung, §2's 60-HP KO and §0/§5's Ability rungs.",
+    file: "packages/engine/src/cards.ts",
+    find: "  return uidInPlayStack(state, uid) ? fossilPokemonCard(card) : card;",
+    replace: "  return card;",
+    expectKilledBy: ["packages/engine/src/antiqueFossilsD576.test.ts"],
+  },
+  {
+    id: "D576-face-in-every-zone",
+    decision: "D576",
+    what: "🛑 the Pokémon face leaks OUT of play: a fossil in the hand or the deck reads as a Basic Pokémon, so it is placeable in setup, a Nest Ball finds it and the bench-play action takes it (R-FO2). Killed by §2's zone, setup and Nest Ball rungs and §1's not-a-Basic rung.",
+    file: "packages/engine/src/cards.ts",
+    find: "  return uidInPlayStack(state, uid) ? fossilPokemonCard(card) : card;",
+    replace: "  return fossilPokemonCard(card);",
+    expectKilledBy: ["packages/engine/src/antiqueFossilsD576.test.ts"],
+  },
+  {
+    id: "D576-stack-scan-misses-the-bench",
+    decision: "D576",
+    what: "the in-play scan reads the Active Spot only: a BENCHED fossil reads as the catalog Item — Plume Protection, the Bench KO and the wire's battle row all vanish. Killed by §2's zone and wire rungs and §5's Plume rungs.",
+    file: "packages/engine/src/cards.ts",
+    find: "    if (side.bench.some((body) => body.stack.includes(uid))) return true;\n",
+    replace: "",
+    expectKilledBy: ["packages/engine/src/antiqueFossilsD576.test.ts"],
+  },
+  {
+    id: "D576-fossil-top-reads-the-bottom",
+    decision: "D576",
+    what: "🛑 R-FO6 — `isFossilTop` reads the BOTTOM of the stack: an evolved Lileep keeps the fossil's card rules (can't retreat, no Special Conditions) and stays discardable. Killed by §6's evolved-body rung.",
+    file: "packages/engine/src/cards.ts",
+    find: "  const uid = pokemon.stack[pokemon.stack.length - 1];\n  const id = uid === undefined ? undefined : state.cardIdByUid[uid];\n  return id !== undefined && FOSSIL_IDS.has(id);",
+    replace: "  const uid = pokemon.stack[0];\n  const id = uid === undefined ? undefined : state.cardIdByUid[uid];\n  return id !== undefined && FOSSIL_IDS.has(id);",
+    expectKilledBy: ["packages/engine/src/antiqueFossilsD576.test.ts"],
+  },
+  {
+    id: "D576-card-rule-rides-the-lock",
+    decision: "D576",
+    what: "🛑 R-FO4 — the card rule rides the §9 `disabled` drop as if it were an Ability: Watchtower or Klefki lifts the status immunity. Killed by §4's Watchtower and Klefki rungs and §5's Root/Plume lock rungs.",
+    file: "packages/engine/src/continuous.ts",
+    find: "    isFossilTop(state, pokemon) ? FOSSIL_CARD_RULE : undefined,",
+    replace: "    !disabled && isFossilTop(state, pokemon) ? FOSSIL_CARD_RULE : undefined,",
+    expectKilledBy: ["packages/engine/src/antiqueFossilsD576.test.ts"],
+  },
+  {
+    id: "D576-card-rule-source-dropped",
+    decision: "D576",
+    what: "the card-rule source is deleted from `passivesOf`: every Special Condition lands on a fossil. Killed by §4's five status rungs.",
+    file: "packages/engine/src/continuous.ts",
+    find: "    isFossilTop(state, pokemon) ? FOSSIL_CARD_RULE : undefined,",
+    replace: "    undefined,",
+    expectKilledBy: ["packages/engine/src/antiqueFossilsD576.test.ts"],
+  },
+  {
+    id: "D576-immunity-misses-poison",
+    decision: "D576",
+    what: "the printed \"any Special Conditions\" loses one member: a fossil can be Poisoned. Killed by §4's Poisoned rung (and the five-member lock rungs).",
+    file: "packages/engine/src/continuous.ts",
+    find: "  statusImmunities: [\"asleep\", \"burned\", \"confused\", \"paralyzed\", \"poisoned\"],",
+    replace: "  statusImmunities: [\"asleep\", \"burned\", \"confused\", \"paralyzed\"],",
+    expectKilledBy: ["packages/engine/src/antiqueFossilsD576.test.ts"],
+  },
+  {
+    id: "D576-plume-zone-gate-dropped",
+    decision: "D576",
+    what: "🛑 Plume Protection loses its printed \"As long as this Pokémon is on your Bench\": an ACTIVE Plume takes no damage either. Killed by §5's Active-Plume rung.",
+    file: "packages/engine/src/continuous.ts",
+    find: "    if (passive.preventDamageWhileBenched === true && onBench) preventDamageWhileBenched = true;",
+    replace: "    if (passive.preventDamageWhileBenched === true) preventDamageWhileBenched = true;",
+    expectKilledBy: ["packages/engine/src/antiqueFossilsD576.test.ts"],
+  },
+  {
+    id: "D576-retreat-rule-dropped",
+    decision: "D576",
+    what: "🛑 R-FO4 — `retreatLocked` loses the fossil's \"can't retreat\": the retreat lands and the wire offers it. Killed by §4's retreat rung and the lock rungs.",
+    file: "packages/engine/src/continuous.ts",
+    find: "  if (isFossilTop(state, pokemon)) return true;\n",
+    replace: "",
+    expectKilledBy: ["packages/engine/src/antiqueFossilsD576.test.ts"],
+  },
+  {
+    id: "D576-root-rider-ignored",
+    decision: "D576",
+    what: "🛑 Primal Root's printed \"your opponent's BASIC Pokémon\" is ignored: a Stage 1 attacker is surcharged too. Killed by §5's Stage 1 rung.",
+    file: "packages/engine/src/continuous.ts",
+    find: "    if (passive?.opponentActiveAttackCostSurchargeBasicOnly === true) {",
+    replace: "    if (passive?.opponentActiveAttackCostSurchargeBasicOnly === false) {",
+    expectKilledBy: ["packages/engine/src/antiqueFossilsD576.test.ts"],
+  },
+  {
+    id: "D576-root-reads-the-holder-stage",
+    decision: "D576",
+    what: "🛑 the Basic test reads the SOURCE (the Basic Root itself) instead of the ATTACKER: every attacker is surcharged, whatever its stage. Killed by §5's Stage 1 rung.",
+    file: "packages/engine/src/continuous.ts",
+    find: "      if (attacker === undefined || !isBasicPokemon(attacker)) return 0;",
+    replace: "      if (attacker === undefined || !isBasicPokemon(top)) return 0;",
+    expectKilledBy: ["packages/engine/src/antiqueFossilsD576.test.ts"],
+  },
+  {
+    id: "D576-plume-spread-unwired",
+    decision: "D576",
+    what: "Plume Protection is deleted from the SPREAD arm (one of its two LIVE damage sites — §8 aims at an Active, so the main hit and `snipeActive` are dead by construction): a benched Plume takes the splash. Killed by §5's spread rung.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      (passives.preventDamageWhileBenched && victim !== ctx.seat) ||\n",
+    replace: "",
+    expectKilledBy: ["packages/engine/src/antiqueFossilsD576.test.ts"],
+  },
+  {
+    id: "D576-plume-spread-any-seat",
+    decision: "D576",
+    what: "🛑 the spread arm's SEAT gate is dropped: Plume Protection shields its holder from its OWN side's `\"yourBench\"` spread (D425), though the print says \"attacks from your OPPONENT'S Pokémon\". Killed by §5's own-Bench spread rung.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      (passives.preventDamageWhileBenched && victim !== ctx.seat) ||\n",
+    replace: "      passives.preventDamageWhileBenched ||\n",
+    expectKilledBy: ["packages/engine/src/antiqueFossilsD576.test.ts"],
+  },
+  {
+    id: "D576-plume-snipe-unwired",
+    decision: "D576",
+    what: "Plume Protection is deleted from `placeSnipe`'s `deals` arm (the OTHER live site): a benched Plume takes the snipe. Killed by §5's snipe rung.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "          (targetPassives.preventDamageWhileBenched && benchVictim !== ctx.seat) ||\n",
+    replace: "",
+    expectKilledBy: ["packages/engine/src/antiqueFossilsD576.test.ts"],
+  },
+  {
+    id: "D576-plume-snipe-any-seat",
+    decision: "D576",
+    what: "🛑 `placeSnipe`'s SEAT gate is dropped: Plume Protection shields its holder from its OWN side's Bench snipe (D447). Killed by §5's own-Bench snipe rung.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "          (targetPassives.preventDamageWhileBenched && benchVictim !== ctx.seat) ||\n",
+    replace: "          targetPassives.preventDamageWhileBenched ||\n",
+    expectKilledBy: ["packages/engine/src/antiqueFossilsD576.test.ts"],
+  },
+  {
+    id: "D576-fossil-route-dropped",
+    decision: "D576",
+    what: "🛑 the play route never fires for an Item: every fossil play falls through to the `trainer` lookup and is refused TRAINER_NOT_SIMULATED. Killed by every §1 play rung.",
+    file: "packages/engine/src/cardplay.ts",
+    find: "  if (trainerType === \"Item\" && entry?.playAsPokemon === true) {",
+    replace: "  if (trainerType === \"Supporter\" && entry?.playAsPokemon === true) {",
+    expectKilledBy: ["packages/engine/src/antiqueFossilsD576.test.ts"],
+  },
+  {
+    id: "D576-fossil-ignores-the-item-bar",
+    decision: "D576",
+    what: "🛑 R-FO1 — the fossil play skips the Item bar (it is played as if it were a Pokémon, the misreading): Tyranitar's gaze and a stamped Item lock no longer refuse it. Killed by §1's Item-bar rung.",
+    file: "packages/engine/src/cardplay.ts",
+    find: "  if (itemBarred) {",
+    replace: "  if (itemBarred && action.seat !== action.seat) {",
+    expectKilledBy: ["packages/engine/src/antiqueFossilsD576.test.ts"],
+  },
+  {
+    id: "D576-fossil-goes-to-the-discard",
+    decision: "D576",
+    what: "the played fossil goes to the discard pile like any Item instead of onto the Bench. Killed by §1's lands-on-the-Bench rung.",
+    file: "packages/engine/src/cardplay.ts",
+    find: "      bench: [...side.bench, makeInPlay(action.uid, state.turn)],\n    }),\n    events,",
+    replace: "      discard: [...side.discard, action.uid],\n    }),\n    events,",
+    expectKilledBy: ["packages/engine/src/antiqueFossilsD576.test.ts"],
+  },
+  {
+    id: "D576-fossil-turn-played-zero",
+    decision: "D576",
+    what: "🛑 §10 / R-FO6 — the fossil enters play stamped turn 0, so a Lileep evolves from it on the turn it was played. Killed by §6's EVOLVE_TOO_SOON rung and §1's `turnPlayed` assertion.",
+    file: "packages/engine/src/cardplay.ts",
+    find: "      bench: [...side.bench, makeInPlay(action.uid, state.turn)],\n    }),\n    events,",
+    replace: "      bench: [...side.bench, makeInPlay(action.uid, 0)],\n    }),\n    events,",
+    expectKilledBy: ["packages/engine/src/antiqueFossilsD576.test.ts"],
+  },
+  {
+    id: "D576-fossil-full-bench-admitted",
+    decision: "D576",
+    what: "🛑 the Bench gate admits a SIXTH body: a fossil plays onto a full Bench and both Trainer lists leave its row lit. Killed by §1's full-Bench rung.",
+    file: "packages/engine/src/cardplay.ts",
+    find: "  return state.players[seat].bench.length < BENCH_MAX;",
+    replace: "  return state.players[seat].bench.length <= BENCH_MAX;",
+    expectKilledBy: ["packages/engine/src/antiqueFossilsD576.test.ts"],
+  },
+  {
+    id: "D576-fossil-bench-event-dropped",
+    decision: "D576",
+    what: "the body's arrival is not announced: `TRAINER_PLAYED` alone, so an event-only client never learns a Pokémon reached the Bench. Killed by §1's event and log rungs.",
+    file: "packages/engine/src/cardplay.ts",
+    find: "    { type: \"POKEMON_BENCHED\", seat: action.seat, uid: action.uid },\n  ];\n  return ok(",
+    replace: "  ];\n  return ok(",
+    expectKilledBy: ["packages/engine/src/antiqueFossilsD576.test.ts"],
+  },
+  {
+    id: "D576-discard-any-body",
+    decision: "D576",
+    what: "🛑 R-FO3 — `discardFromPlay` discards ANY body: a non-fossil Active leaves play for free (a Knock Out with no Prize). Killed by §3's refusal rung.",
+    file: "packages/engine/src/turn.ts",
+    find: "  if (uid === undefined || !isFossilTop(state, body)) {",
+    replace: "  if (uid === undefined) {",
+    expectKilledBy: ["packages/engine/src/antiqueFossilsD576.test.ts"],
+  },
+  {
+    id: "D576-discard-off-turn",
+    decision: "D576",
+    what: "🛑 R-FO3's \"during YOUR turn\" is dropped from the handler: the opponent discards on your turn, and mid-prompt / attack-again discards are accepted. Killed by §3's timing rung.",
+    file: "packages/engine/src/turn.ts",
+    find: "export function discardFromPlay(state: GameState, action: DiscardFromPlayAction): ApplyResult {\n  const rejected = turnGate(state, action);\n  if (rejected !== null) return rejected;\n",
+    replace: "export function discardFromPlay(state: GameState, action: DiscardFromPlayAction): ApplyResult {\n",
+    expectKilledBy: ["packages/engine/src/antiqueFossilsD576.test.ts"],
+  },
+  {
+    id: "D576-discard-keeps-the-attachments",
+    decision: "D576",
+    what: "the event names the fossil alone, not the cards that left with it: the log row stops counting the attached Energy. Killed by §3's whole-stack rung.",
+    file: "packages/engine/src/turn.ts",
+    find: "    { type: \"POKEMON_RETURNED\", seat: action.seat, uid, actor: action.seat, dest: \"discard\", uids: cleanup.discarded },",
+    replace: "    { type: \"POKEMON_RETURNED\", seat: action.seat, uid, actor: action.seat, dest: \"discard\", uids: [uid] },",
+    expectKilledBy: ["packages/engine/src/antiqueFossilsD576.test.ts"],
+  },
+  {
+    id: "D576-discard-wrong-bench-slot",
+    decision: "D576",
+    what: "the Bench write removes slot 0 instead of the named slot: the fossil's cards reach the discard pile while ANOTHER body vanishes and the fossil stays. Killed by §3's whole-stack rung.",
+    file: "packages/engine/src/turn.ts",
+    find: "      : { ...cleanup.side, bench: cleanup.side.bench.filter((_, index) => index !== target.index) },",
+    replace: "      : { ...cleanup.side, bench: cleanup.side.bench.filter((_, index) => index !== 0) },",
+    expectKilledBy: ["packages/engine/src/antiqueFossilsD576.test.ts"],
+  },
+  {
+    id: "D576-discard-skips-the-sweep",
+    decision: "D576",
+    what: "🛑 the emptied Active Spot owes nothing: no promotion is queued and an empty board is not the §14.2 loss — turn:action resumes with NO Active. Killed by §3's promotion, forced-promotion and empty-board rungs.",
+    file: "packages/engine/src/turn.ts",
+    find: "      : { ...cleanup.side, bench: cleanup.side.bench.filter((_, index) => index !== target.index) },\n  );\n  return resolveMidTurnKnockOuts(next, action.seat, [action.seat], events);",
+    replace: "      : { ...cleanup.side, bench: cleanup.side.bench.filter((_, index) => index !== target.index) },\n  );\n  return ok(next, events);",
+    expectKilledBy: ["packages/engine/src/antiqueFossilsD576.test.ts"],
+  },
+  {
+    id: "D576-offer-funnel-ignores-the-gate",
+    decision: "D576",
+    what: "the offer funnel stops asking the turn gate: the off-turn seat, a parked prompt and the attack-again window are all offered discards the handler refuses (afford-then-reject). Killed by §3's timing rung.",
+    file: "packages/engine/src/turn.ts",
+    find: "  if (turnGate(state, { type: \"discardFromPlay\", seat }) !== null) return [];\n",
+    replace: "",
+    expectKilledBy: ["packages/engine/src/antiqueFossilsD576.test.ts"],
+  },
+  {
+    id: "D576-retreat-message-generic",
+    decision: "D576",
+    what: "the fossil's retreat refusal names an ATTACK EFFECT that does not exist — the card rule is the reason. Killed by §4's retreat-message rung.",
+    file: "packages/engine/src/turn.ts",
+    find: "        ? \"this card can't retreat (its own printed rule)\"",
+    replace: "        ? \"an attack effect prevents this Pokémon from retreating (§11)\"",
+    expectKilledBy: ["packages/engine/src/antiqueFossilsD576.test.ts"],
+  },
+  {
+    id: "D576-wire-offers-the-opponent",
+    decision: "D576",
+    what: "🛑 the wire's discard offers reach the NON-acting viewer (and a spectator): rows for an action they can never take. Killed by §3's wire rung.",
+    file: "packages/engine/src/redact.ts",
+    find: "): RedactedDiscardable[] {\n  if (viewerSeat !== turnSeat) return [];",
+    replace: "): RedactedDiscardable[] {",
+    expectKilledBy: ["packages/engine/src/antiqueFossilsD576.test.ts"],
+  },
+  {
+    id: "D576-wire-trainer-row-skips-the-fossil",
+    decision: "D576",
+    what: "🛑 the online Trainer list loses the fossil row (no `trainer` array, the pre-D576 discriminant): an online player can never play a fossil. Killed by §1's full-Bench wire rung.",
+    file: "packages/engine/src/redact.ts",
+    find: "      (isStadium ? program.stadium === undefined : program.trainer === undefined && !isFossil)",
+    replace: "      (isStadium ? program.stadium === undefined : program.trainer === undefined)",
+    expectKilledBy: ["packages/engine/src/antiqueFossilsD576.test.ts"],
+  },
+  {
+    id: "D576-wire-fossil-row-never-greys",
+    decision: "D576",
+    what: "the wire's fossil row stays lit on a full Bench — afford-then-reject, the playTrainer refusal arriving as a toast. Killed by §1's full-Bench wire rung.",
+    file: "packages/engine/src/redact.ts",
+    find: "      (isFossil ? !fossilPlayable(state, viewerSeat) : !programPlayable(state, program.trainer ?? [], viewerSeat));",
+    replace: "      (isFossil ? false : !programPlayable(state, program.trainer ?? [], viewerSeat));",
+    expectKilledBy: ["packages/engine/src/antiqueFossilsD576.test.ts"],
+  },
+  {
+    id: "D576-wire-discard-label-off-by-one",
+    decision: "D576",
+    what: "the discard row's label counts Bench slots from 0 while every Ability row counts from 1. Killed by §3's wire rung.",
+    file: "packages/engine/src/redact.ts",
+    find: "    const where = target.spot === \"active\" ? \"Active\" : `Bench ${target.index + 1}`;\n    return {",
+    replace: "    const where = target.spot === \"active\" ? \"Active\" : `Bench ${target.index}`;\n    return {",
+    expectKilledBy: ["packages/engine/src/antiqueFossilsD576.test.ts"],
+  },
+  {
+    id: "D576-dispatch-dropped",
+    decision: "D576",
+    what: "🛑 the reducer has no `discardFromPlay` arm: the action is UNKNOWN_ACTION everywhere. Killed by every §3 rung that applies it.",
+    file: "packages/engine/src/index.ts",
+    find: "    case \"discardFromPlay\":\n      return discardFromPlay(state, action);\n",
+    replace: "",
+    expectKilledBy: ["packages/engine/src/antiqueFossilsD576.test.ts"],
+  },
+  {
+    id: "D576-root-rider-unauthored",
+    decision: "D576",
+    what: "the Root row drops its printed \"Basic\" — Quaking Zone's unconditional surcharge on every attacker. Killed by §5's Stage 1 rung and §0's registry rung.",
+    file: "packages/engine/src/registry.ts",
+    find: "  passive: { opponentActiveAttackCostSurcharge: 1, opponentActiveAttackCostSurchargeBasicOnly: true },",
+    replace: "  passive: { opponentActiveAttackCostSurcharge: 1 },",
+    expectKilledBy: ["packages/engine/src/antiqueFossilsD576.test.ts"],
+  },
+  {
+    id: "D576-plume-gets-the-effects-half",
+    decision: "D576",
+    what: "Plume is authored as Curious Tea Party's damage-AND-effects shield, an effects half the card does not print. Killed by §0's registry rung.",
+    file: "packages/engine/src/registry.ts",
+    find: "  passive: { preventDamageWhileBenched: true },",
+    replace: "  passive: { preventDamageAndEffectsWhileBenched: true },",
+    expectKilledBy: ["packages/engine/src/antiqueFossilsD576.test.ts"],
   },
 ];

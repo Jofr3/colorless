@@ -9,6 +9,8 @@ import {
   isBasicPokemon,
   isEvolutionPokemon,
   isExOrV,
+  // 🆕🆕🆕 D576 — the Antique Fossils' two CARD RULES (R-FO4) read the fossil TOP card.
+  isFossilTop,
   isSpecialEnergy,
   isTeraPokemon,
   isStage2Pokemon,
@@ -641,6 +643,14 @@ export function toolCardSimulated(card: Card): boolean {
     working. 🆕🆕🆕 D562 — the Tools keep working under a §9 lock, and stop under
     Jamming Tower: the Tool entries come through `toolsInEffect`, a non-§9 gate (a
     Stadium, not an Ability-lock). */
+/** 🆕🆕🆕 D576 — the Antique Fossils' printed CARD RULE as a `passivesOf` source: *"This card
+    can't be affected by any Special Conditions"* — all five, by name (R-FO4). Added to the
+    fold's `sources` UNGATED (never through the `disabled` drop), because a card rule is not
+    an Ability and no lock lifts it. */
+const FOSSIL_CARD_RULE: PassiveEffects = {
+  statusImmunities: ["asleep", "burned", "confused", "paralyzed", "poisoned"],
+};
+
 export function passivesOf(
   state: GameState,
   pokemon: InPlayPokemon,
@@ -893,6 +903,13 @@ export function passivesOf(
       like every flag in this loop (all three printings ARE Abilities) and nulled
       by `ignoreWR` at the snipe arm with its siblings. */
   preventDamageAndEffectsWhileBenched: boolean;
+  /** 🆕🆕🆕 §8.5 (D576) — the line above with the EFFECTS half removed (Antique Plume Fossil
+      "Plume Protection"): the zone clause resolved here the same way, read at the four DAMAGE
+      sites only and never at `attackEffectRefused` (R-FO5). §9-suppressible — it is an
+      Ability, so it rides the `disabled` drop on `sources[0]`. The fold answers the ZONE clause
+      only; "from your opponent's Pokémon" is a SEAT question the two live read sites ask
+      (interpreter.ts's spread and `placeSnipe`: an own-Bench hit lands on it). */
+  preventDamageWhileBenched: boolean;
   /** §11 (D259) — does this Pokémon refuse the effects of an Item or Supporter the
       OPPONENT plays? Fraxure `sv06.5-045`/`-077` "Unnerve" and Cetitan ex
       `sv10-065`/`-210` "Snow Camouflage", 4 legal printings on one sentence.
@@ -1109,7 +1126,12 @@ export function passivesOf(
       Both happen HERE, in the one `disabled` drop the `sources` array makes on its
       FIRST element only. A build that read the catalog row directly at `applyStatus`
       would be one line shorter and would get BOTH signs wrong at once — this
-      family's sharpest available defect, and the mutation pass drives it. */
+      family's sharpest available defect, and the mutation pass drives it.
+
+      🆕🆕🆕 D576 — A FOURTH WRITER, ON THE ENERGY'S SIGN: the Antique Fossils' printed CARD RULE
+      *"This card can't be affected by any Special Conditions"* — all five — rides `sources` as
+      its own ungated element (`FOSSIL_CARD_RULE`), because a card rule is not an Ability and no
+      lock lifts it (R-FO4; `antiqueFossilsD576.test.ts` §4 drives Watchtower and Klefki). */
   statusImmunities: StatusName[];
   /** §12 RECOVERY (D174) — the Special Conditions a live effect CLEARS from this
       body ("The Pokémon this card is attached to RECOVERS FROM BEING Asleep,
@@ -1172,6 +1194,10 @@ export function passivesOf(
   // element takes the §9 `disabled` drop, so the exemption the Energy needs is the
   // one the Tools have always had — and it is exempt because an Energy is not an
   // Ability, which is the same reason with a different noun rather than a new rule.
+  // (🆕🆕🆕 D576 (D539): ~~"THREE SOURCE CLASSES"~~ — FOUR: the second element is now the
+  // Antique Fossils' CARD RULE (`FOSSIL_CARD_RULE`, all five `statusImmunities`), a source
+  // that is neither an Ability, a Tool nor an Energy. It is UNGATED for this paragraph's own
+  // reason — not an Ability, so the §9 drop on the FIRST element cannot reach it (R-FO4).)
   //
   // ⚠️ EVERY FIELD BELOW SILENTLY GAINED AN ATTACHED-ENERGY CONTRIBUTOR THE DAY
   // THAT LINE LANDED, SO EVERY ONE WAS RE-READ. The audit, field by field over the
@@ -1399,6 +1425,12 @@ export function passivesOf(
   // holder's printed passive and its Energy stay, since neither is a Tool).
   const sources: (PassiveEffects | undefined)[] = [
     disabled || top === undefined ? undefined : programFor(top.id)?.passive,
+    // 🆕🆕🆕 D576 — THE ANTIQUE FOSSILS' CARD RULE, *"This card can't be affected by any Special
+    // Conditions"* (R-FO4). A RULE printed on the card, NOT an Ability, so it is a source of
+    // its own and does NOT ride the `disabled`-gated element above: Klefki, Watchtower and
+    // every other §9 lock leave it standing. The top card only — an evolved fossil (R-FO6)
+    // has no such rule. Its one consumer is `applyStatus`'s immunity gate.
+    isFossilTop(state, pokemon) ? FOSSIL_CARD_RULE : undefined,
     // 🆕🆕🆕 D562 — through `toolsInEffect`: under Jamming Tower no Tool reaches the fold.
     ...toolsInEffect(state, pokemon).map((uid) => {
       const id = state.cardIdByUid[uid];
@@ -1432,6 +1464,7 @@ export function passivesOf(
   let preventDamageFromHasAbility = false;
   let preventDamageAndEffectsFromSpecialEnergy = false;
   let preventDamageAndEffectsWhileBenched = false;
+  let preventDamageWhileBenched = false;
   let preventTrainerEffects = false;
   let preventAttackEffects = false;
   let suppressTargetEffectsOnAttack = false;
@@ -1569,6 +1602,8 @@ export function passivesOf(
     // keeps the five read sites free of a predicate call.
     if (passive.preventDamageAndEffectsWhileBenched === true && onBench)
       preventDamageAndEffectsWhileBenched = true;
+    // 🆕🆕🆕 D576 — Plume Protection: the line above's zone gate, damage only.
+    if (passive.preventDamageWhileBenched === true && onBench) preventDamageWhileBenched = true;
     // D259 — the TRAINER-borne shield, and a BARE OR with no antecedent to resolve,
     // which is the whole difference from the line directly above. That sentence
     // prints "As long as this Pokémon is on your Bench"; this one prints no zone
@@ -1766,6 +1801,7 @@ export function passivesOf(
     preventDamageFromHasAbility,
     preventDamageAndEffectsFromSpecialEnergy,
     preventDamageAndEffectsWhileBenched,
+    preventDamageWhileBenched,
     preventTrainerEffects,
     preventAttackEffects,
     preventDamageFromAttackerClasses,
@@ -2751,6 +2787,10 @@ export function attackFlipLocked(state: GameState, pokemon: InPlayPokemon): bool
     disjunction and neither wants to know which half said yes. Spelled inline at
     both sites they would be two hand-written disjunctions over the same pair, and
     the day a THIRD source of the fact arrives one of them silently keeps answering
+    [🆕🆕🆕 D576 (D539): ~~"two fields and one question"~~ — the THIRD source ARRIVED and this
+    function took it, as written: an Antique Fossil's printed "can't retreat" (`isFossilTop`,
+    R-FO4), so turn.ts's gate, `redactedRetreatOf` and GameHud's `canRetreat` read it with no
+    edit; the fact now has two fields and one card rule]
     the old question — D222's defect verbatim, whose recorded remedy is *route them
     through the one helper instead*.
 
@@ -2767,6 +2807,12 @@ export function attackFlipLocked(state: GameState, pokemon: InPlayPokemon): bool
     `opposingRetreatBlocked`'s rule one file over and is why the retreat gate asks
     three separate questions rather than adding to one number. */
 export function retreatLocked(state: GameState, pokemon: InPlayPokemon): boolean {
+  // 🆕🆕🆕 D576 — and the THIRD source of the fact: an Antique Fossil's printed card rule
+  // *"…and can't retreat."* (R-FO4). Read HERE so the three readers (turn.ts's §11 gate,
+  // redact.ts's `redactedRetreatOf`, GameHud's `canRetreat`) take it with no edit — this
+  // function's own reason for existing. A card RULE, so no lock lifts it; the TOP card only
+  // (an evolved fossil retreats normally, R-FO6). Switch effects never ask it (R-FO4).
+  if (isFossilTop(state, pokemon)) return true;
   return pokemon.retreatBlocked || pokemon.retreatLockedTurn === state.turn;
 }
 
@@ -4237,7 +4283,13 @@ export function opposingAttackDebuff(state: GameState, pokemon: InPlayPokemon): 
     `preventDamageFrom…` REFINEMENT. §D146's census grouped Thundurus's sentence
     with Dachsbun's and Bellibolt's on the shared string "by attacks from"; its
     object is "your opponent's Pokémon" — every attacker there is, and Rabsca's
-    object is the same. The narrowing is entirely on the PROTECTED side, so this
+    object is the same. (🆕🆕🆕 D576 (D539): ~~"every attacker there is"~~ is
+    WITHDRAWN — FALSE since D425: the `"yourBench"` spread (D425) and the own-Bench
+    snipe (D447) are attacks by the protected body's OWN side, so "your opponent's
+    Pokémon" IS a narrowing — by attacker SEAT, not by attacker identity. This scan
+    takes no attacker seat, so by READING, not driven, it looks to shield a Bench
+    from its own side's attacks too; a pre-existing gap, carried as decisions.md
+    D576 (g) ⑵, not fixed here. The sentence below stands for attacker IDENTITY.) The narrowing is entirely on the PROTECTED side, so this
     takes no `attacker` argument at all, and a signature that took one would be
     documenting a filter neither card prints.
 
@@ -5432,7 +5484,10 @@ function stadiumRetreatDelta(state: GameState, top: Card): number {
     the source clause is the opponent's Active ALONE, so there is exactly one
     candidate and a loop would describe a board that cannot exist.
 
-    ⚠️ STAGE-AGNOSTIC ON BOTH ENDS, and that is the one line this scan does NOT
+    ⚠️ STAGE-AGNOSTIC ON BOTH ENDS (🆕🆕🆕 D576 (D539): for QUAKING ZONE — Antique Root Fossil
+    "Primal Root" prints *"your opponent's BASIC Pokémon"*, read by the
+    `opponentActiveAttackCostSurchargeBasicOnly` rider against the ATTACKER's top card; the
+    source end stays stage-agnostic), and that is the one line this scan does NOT
     share with the Stadium sitting on the same seam. League HQ prints "each BASIC
     Pokémon in play"; this prints no stage at all — and its own holder is a Stage 2,
     so a fold that kept the Basic test as an early return would have switched this
@@ -5449,11 +5504,16 @@ export function opposingAttackCostSurcharge(state: GameState, pokemon: InPlayPok
     const source = state.players[otherSeat(seat)].active;
     if (source === null) return 0;
     const top = topCardOf(state, source);
-    const amount =
-      top === undefined
-        ? undefined
-        : programFor(top.id)?.passive?.opponentActiveAttackCostSurcharge;
+    const passive = top === undefined ? undefined : programFor(top.id)?.passive;
+    const amount = passive?.opponentActiveAttackCostSurcharge;
     if (amount === undefined) return 0;
+    // 🆕🆕🆕 D576 — Primal Root's *"your opponent's BASIC Pokémon"*: the ATTACKER's top card
+    // (`pokemon`, the surcharged Active) must be a Basic Pokémon (R-FO5). Quaking Zone prints
+    // no stage, carries no rider, and is byte-identical through this line.
+    if (passive?.opponentActiveAttackCostSurchargeBasicOnly === true) {
+      const attacker = topCardOf(state, pokemon);
+      if (attacker === undefined || !isBasicPokemon(attacker)) return 0;
+    }
     const sourceUid = topUid(source);
     if (sourceUid !== undefined && disabledAbilityUids(state).has(sourceUid)) return 0; // §9
     return amount;

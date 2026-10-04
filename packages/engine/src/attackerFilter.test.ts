@@ -565,10 +565,17 @@ describe("benchShieldedFromDamage — the same-seat cross-body scan", () => {
     expect(rowFor(events, titanUid)?.prevented).toBeUndefined();
   });
 
-  it("it filters NO ATTACKER — an ex spread is nulled by the same shield", () => {
+  it("it filters no attacker IDENTITY — an ex spread is nulled by the same shield", () => {
     // Adverse Weather's object is "your opponent's Pokémon", i.e. every attacker
     // there is. This is the case that says the sentence narrows the PROTECTED side
     // and nothing else, which is why the scan takes no `attacker` argument.
+    // (🆕🆕🆕 D576 (D539): the old title's ~~"it filters NO ATTACKER"~~ and
+    // ~~"i.e. every attacker there is"~~ / ~~"narrows the PROTECTED side and nothing
+    // else"~~ are WITHDRAWN — FALSE since D425: the `"yourBench"` spread (D425) and
+    // the own-Bench snipe (D447) are attacks by the holder's OWN side, so the print
+    // narrows the attacker by SEAT. What this case pins stands — an ex attacker
+    // (attacker IDENTITY) is not filtered; the scan's missing seat test is
+    // decisions.md D576 (g) ⑵, not fixed here.)
     const state = shieldBoard("fix-attacker-ex", ["fix-titan"]);
     const titanUid = state.players.p2.bench[0]?.stack.at(-1);
     const { events } = swing(state, "fix-attacker-ex");

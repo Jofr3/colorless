@@ -588,9 +588,9 @@ describe("D535 §3 — the PERSISTED BYTES: the version claim, driven rather tha
     expect(fromBytes.state).toEqual(fromLive.state);
   });
 
-  it("🛑 `MATCH_RECORD_VERSION` is 38 (🆕🆕🆕 D575 stepped it 37 → 38; D570 stepped it 36 → 37; D564 stepped it 35 → 36; D556 stepped it 34 → 35; D552 stepped it 33 → 34; D549 stepped it 32 → 33; D548 stepped it 31 → 32; D547 stepped it 30 → 31; this slice held it) in `apps/api` — D237's POPULATION change, not a widening and not a rename", () => {
+  it("🛑 `MATCH_RECORD_VERSION` is 39 (🆕🆕🆕 D576 stepped it 38 → 39; D575 stepped it 37 → 38; D570 stepped it 36 → 37; D564 stepped it 35 → 36; D556 stepped it 34 → 35; D552 stepped it 33 → 34; D549 stepped it 32 → 33; D548 stepped it 31 → 32; D547 stepped it 30 → 31; this slice held it) in `apps/api` — D237's POPULATION change, not a widening and not a rename", () => {
     // 🆕🆕🆕 D547 — the constant this slice held is now 31: D547 added two REQUIRED `InPlayPokemon` fields (apps/api match.ts).
-    expect(raw("/lobby/match.ts")).toContain("export const MATCH_RECORD_VERSION = 38;");
+    expect(raw("/lobby/match.ts")).toContain("export const MATCH_RECORD_VERSION = 39;");
     // …and the reason, pinned where a successor will look: `cardplay.ts`'s distinctness
     // guard is what makes six parks the shape, and it is still there.
     expect(raw("/cardplay.ts")).toContain(
@@ -833,7 +833,7 @@ describe("D535 §8 — the POPULATION RUNG and the version", () => {
   });
 
   it("engineVersion and `manifest.version` agree, and the bump is owed for BEHAVIOUR", () => {
-    expect(engineVersion).toBe("0.459.0");
+    expect(engineVersion).toBe("0.460.0");
     expect(manifest.version).toBe(engineVersion);
     expect(raw("/index.ts")).toContain("engineVersion 0.419.0 → **0.420.0** (D535");
   });

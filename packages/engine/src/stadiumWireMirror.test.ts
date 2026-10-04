@@ -607,6 +607,9 @@ describe("D288 §7 — the version does NOT move, and the claim is driven", () =
       [
         "abilities",
         "attacks",
+        // 🆕🆕🆕 D576 — the Antique Fossils' REQUIRED `discardable` offer (R-FO3), a key this
+        // phase gained after D288; the D288 claim (the Stadium bar moved no wire key) stands.
+        "discardable",
         "kind",
         "rareCandy",
         "retreat",

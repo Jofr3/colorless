@@ -58,7 +58,7 @@ import type { AbilityProgram } from "./registry";
 import { programFor } from "./registry";
 import { isBenchIndex, isPokemonTarget, placeEvolution, turnGate } from "./turn";
 import type { GameState, InPlayPokemon, PlayerSide, PokemonTarget, Seat } from "./types";
-import { BENCH_MAX, SEATS, isFirstTurnOf, otherSeat, withSide, without } from "./types";
+import { BENCH_MAX, SEATS, isFirstTurnOf, makeInPlay, otherSeat, withSide, without } from "./types";
 
 // The M4 card-play actions (§7 Trainers, §9 Abilities) and the resolver for the
 // mid-effect decisions they park on (§15.E/G). playTrainer/useAbility/
@@ -72,7 +72,9 @@ import { BENCH_MAX, SEATS, isFirstTurnOf, otherSeat, withSide, without } from ".
 /** §7.1–§7.3 — play a Trainer from hand: an Item (any number) or Supporter
     (one per turn) resolves its authored program then discards; a Stadium (one
     play per turn) replaces the shared zone's occupant — different names only —
-    and STAYS in play, its continuous effects live from this moment. */
+    and STAYS in play, its continuous effects live from this moment.
+    (🆕🆕🆕 D576 (D539): one Item does NOT resolve-then-discard — an Antique Fossil
+    (`playAsPokemon`) goes onto the Bench as a Pokémon, `playFossil` below, R-FO1.) */
 export function playTrainer(state: GameState, action: PlayTrainerAction): ApplyResult {
   const rejected = turnGate(state, action);
   if (rejected !== null) return rejected;
@@ -107,6 +109,12 @@ export function playTrainer(state: GameState, action: PlayTrainerAction): ApplyR
       "TRAINER_TYPE_UNSUPPORTED",
       `${trainerType ?? "this"} Trainers are not supported yet`,
     );
+  }
+  // 🆕🆕🆕 §7.1 (D576) — an Antique Fossil is played "as if it were a 60-HP Basic {C} Pokémon":
+  // an ITEM play that becomes a body (R-FO1), routed BEFORE the `trainer` lookup because it
+  // runs no program (Rare Candy's marker shape, `CardProgram.playAsPokemon`).
+  if (trainerType === "Item" && entry?.playAsPokemon === true) {
+    return playFossil(state, action, card);
   }
   const program = entry?.trainer;
   if (program === undefined) {
@@ -226,6 +234,53 @@ export function playTrainer(state: GameState, action: PlayTrainerAction): ApplyR
     events,
     { endsTurn },
   );
+}
+
+/** 🆕🆕🆕 §7.1 (D576) — THE ANTIQUE FOSSIL PLAY (`sv07-129`, `sv10.5b-080`, `sv07-130`,
+    `sv10.5w-079`): *"Play this card as if it were a 60-HP Basic {C} Pokémon."* — split out of
+    playTrainer's Item path (hand / uid / category / Item already validated there).
+
+    R-FO1 (⚠️ UNRULED → ruled at D576): **it is an ITEM play** — the opponent's Item bar
+    (`handPlayBarred` with `"Item"`, both its stamped and its continuous sources) refuses it,
+    exactly as it refuses any Item. **It is NOT "playing a Basic Pokémon from your hand"**, so
+    no Pokémon-play bar (`pokemonPlayBarred`) is asked and no on-bench-play trigger
+    (`runBoardTrigger "onPlayToBench"`) fires — the card is a Trainer while it is being played.
+    It needs a free Bench slot (§5.2's cap — the printed "as if it were a … Basic Pokémon"
+    puts it where a Basic goes, and a full Bench has nowhere to put it).
+
+    The card leaves the hand for the BENCH (never the discard pile): `makeInPlay` stamps
+    `turnPlayed`, so a Lileep cannot evolve from it on the turn it was played (§10, R-FO6).
+    Announced `TRAINER_PLAYED` (the Item play) then `POKEMON_BENCHED` (the body). No mid-turn
+    sweep is owed: a fresh 60-HP body with no damage cannot be Knocked Out by arriving. */
+function playFossil(state: GameState, action: PlayTrainerAction, card: Card): ApplyResult {
+  const itemBarred = handPlayBarred(state, action.seat, "Item", card);
+  if (itemBarred) {
+    return err("HAND_PLAY_BLOCKED", "your opponent prevents you from playing Item cards from your hand");
+  }
+  const side = state.players[action.seat];
+  if (!fossilPlayable(state, action.seat)) {
+    return err("BENCH_FULL", `the bench holds at most ${BENCH_MAX} Pokémon`);
+  }
+  const events: GameEvent[] = [
+    { type: "TRAINER_PLAYED", seat: action.seat, uid: action.uid, trainerType: "Item" },
+    { type: "POKEMON_BENCHED", seat: action.seat, uid: action.uid },
+  ];
+  return ok(
+    withSide(state, action.seat, {
+      ...side,
+      hand: without(side.hand, action.uid),
+      bench: [...side.bench, makeInPlay(action.uid, state.turn)],
+    }),
+    events,
+  );
+}
+
+/** 🆕🆕🆕 D576 — can `seat` put an Antique Fossil onto its Bench right now? A free Bench slot is
+    the whole of it (R-FO1). The ONE funnel `playFossil` refuses on and both Trainer lists
+    (GameHud's `playableTrainers`, redact.ts's `redactedTrainersOf`) grey a fossil row on — the
+    `programPlayable` role for a card that runs no program. */
+export function fossilPlayable(state: GameState, seat: Seat): boolean {
+  return state.players[seat].bench.length < BENCH_MAX;
 }
 
 /** §7.3 — the Stadium play, split out of playTrainer's Item/Supporter path

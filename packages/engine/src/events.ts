@@ -32,7 +32,8 @@ export type GameEvent =
   | { type: "MULLIGAN_REVEALED"; seat: Seat; hand: string[] }
   /** Setup placement — face-down until SETUP_REVEALED. */
   | { type: "POKEMON_PLACED"; seat: Seat; uid: string; spot: "active" | "bench" }
-  /** In-turn Basic played to the bench (§5.2).
+  /** In-turn Basic played to the bench (§5.2). (🆕🆕🆕 D576: or an Antique Fossil, an ITEM played onto
+      the Bench as a 60-HP Basic {C} Pokémon — filed right after its `TRAINER_PLAYED`, R-FO1.)
 
       🆕 **D294 — `actor` IS THE OPTIONAL "SOMEBODY ELSE PUT IT THERE".** Absent
       (the §5.2 play, every row before this slice) means `seat` benched it out of
@@ -1180,7 +1181,10 @@ export type GameEvent =
       its `trainerType`: an Item/Supporter discards after its effect resolves,
       a Stadium moves into the shared stadium zone (§7.3 — a replaced
       predecessor announces its own STADIUM_DISCARDED). Tools are not played
-      through this event — attaching is TOOL_ATTACHED. */
+      through this event — attaching is TOOL_ATTACHED.
+      (🆕🆕🆕 D576 (D539): ~~"an Item … discards after its effect resolves"~~ is no longer every
+      Item — an Antique Fossil (`trainerType: "Item"`) lands on the BENCH, and its arrival is the
+      `POKEMON_BENCHED` filed right after this one, R-FO1.) */
   | { type: "TRAINER_PLAYED"; seat: Seat; uid: string; trainerType: string }
   /** §7.4 — `seat` attached the Pokémon Tool `uid` from hand to their own
       in-play Pokémon at `target`. It stays attached (rides the stack through

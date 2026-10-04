@@ -10867,6 +10867,12 @@ function spreadDamage(
       // reaches the Bench at all.
       (passives.preventDamageAndEffectsFromSpecialEnergy &&
         attackerHasSpecialEnergy(state, attackerTop?.active)) ||
+      // 🆕🆕🆕 D576 — Plume Protection, the damage-only twin (R-FO5), at the same DAMAGE
+      // site, beside D253's sibling below. ⚠️ SEAT-GATED: the print reads "attacks FROM
+      // YOUR OPPONENT'S Pokémon", and D425's `"yourBench"` arm makes `victim` the
+      // attacker's own seat — so an own-Bench spread lands on the fossil (D562's Survival
+      // Brace reading, `koSurvivalClamp(…, ctx.seat)` below).
+      (passives.preventDamageWhileBenched && victim !== ctx.seat) ||
       // D253 — the fifth prevent, at the SECOND of its five read sites and the
       // FIRST OF THE TWO THAT CAN EVER FIRE. `side.bench.map` is this arm's whole
       // domain, so every body it reaches satisfies "on your Bench" and this is
@@ -11227,6 +11233,11 @@ function placeSnipe(
           // all four.
           (targetPassives.preventDamageAndEffectsFromSpecialEnergy &&
             attackerHasSpecialEnergy(next, attackerTop?.active)) ||
+          // 🆕🆕🆕 D576 — Plume Protection, the damage-only twin (R-FO5), at the same DAMAGE
+          // site, beside D253's sibling below. ⚠️ SEAT-GATED for `spreadDamage`'s reason
+          // verbatim: D447's own-Bench pick makes `benchVictim` the attacker's seat, and
+          // "attacks from your opponent's Pokémon" does not shield against that.
+          (targetPassives.preventDamageWhileBenched && benchVictim !== ctx.seat) ||
           // D253 — the THIRD of the fifth prevent's read sites and the SECOND of
           // the two that can fire: `placeSnipe` maps `side.bench`, so the picked
           // body is benched by construction. INSIDE the `ignoreWR` guard with its
@@ -11591,6 +11602,9 @@ function snipeActive(
         // unresolvable attacker, its two neighbours' conservative direction.
         (targetPassives.preventDamageAndEffectsFromSpecialEnergy &&
           attackerHasSpecialEnergy(state, attacker?.active)) ||
+        // 🆕🆕🆕 D576 — Plume Protection, the damage-only twin (R-FO5), at the same DAMAGE
+        // site, beside D253's sibling below.
+        targetPassives.preventDamageWhileBenched ||
         // D253 — the FOURTH read site, and the second of the three DEAD ones:
         // `snipeActive` damages `target.active`, so the zone clause `passivesOf`
         // already folded is false here by construction. Total, not case-covering.
@@ -18753,9 +18767,11 @@ function benchSpace(state: GameState, seat: Seat): number {
   return BENCH_MAX - state.players[seat].bench.length;
 }
 
+// 🆕🆕🆕 D576 — DELEGATES to the one zone-aware accessor (cards.ts `cardOfUid`), so an
+// in-play Antique Fossil reads as its Pokémon face here exactly as everywhere else (R-FO2).
+// A private copy of the pool lookup would see the catalog Item on the board.
 function cardOf(state: GameState, uid: string): Card | undefined {
-  const id = state.cardIdByUid[uid];
-  return id === undefined ? undefined : state.cardPool[id];
+  return cardOfUid(state, uid);
 }
 
 /** The chooseCards note for a deck search — the printed "Search your deck for

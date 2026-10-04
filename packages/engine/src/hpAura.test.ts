@@ -81,7 +81,9 @@ import {
 //     (D539): Rescue Board was NOT built when this line said so; it is now,
 //     `RESCUE_BOARD`, whose free tier reads `remainingHpWithin` — D349's predicate);
 //     Antique Fossils print a
-//     60-HP body; Tyme asks the opponent to GUESS one; and all five
+//     60-HP body (🆕🆕🆕 D576: BUILT — the body is `fossils.ts`' hand-written face, read
+//     through the zone-aware `cardOfUid`; it is a printed HP, not a max-HP term, so this
+//     seam's classification stands); Tyme asks the opponent to GUESS one; and all five
 //     `attacks_json` hits are *"put damage counters until its remaining HP is
 //     N"*, which is a DAMAGE op and not a maximum. **`BUILT.attack` cannot move
 //     on this seam at any width** — D306's rule, holding for the fifth slice.

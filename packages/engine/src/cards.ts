@@ -3,6 +3,7 @@ import type { Attack, Card } from "@luminous/schema";
 import type { ApplyResult } from "./actions";
 import { err } from "./actions";
 import { type Banner, bannerOf } from "./banners";
+import { FOSSIL_IDS, fossilPokemonCard } from "./fossils";
 // TYPE-ONLY, and it must stay that way: effects.ts imports no engine module at
 // runtime (only `import type { StatusName } from "./events"`), and events.ts in
 // turn imports `type { DamageModifier }` back from here — so the cycle
@@ -15,10 +16,40 @@ import type { GameState, InPlayPokemon, Seat } from "./types";
 // The engine reads catalog data only through these accessors, so the exact
 // Card surface it depends on (category, stage, retreat, hp, attacks,
 // weakness/resistance, the energy name) stays one small, auditable module.
-
+//
+// 🆕🆕🆕 D576 — AND THE ONE ACCESSOR IS NOW ZONE-AWARE FOR FOUR PRINTINGS. An Antique Fossil
+// (`fossils.ts`) is an Item card everywhere but in play, where it is "a 60-HP Basic {C}
+// Pokémon" (R-FO2). So a fossil uid that is a card of an IN-PLAY STACK reads as its
+// synthesized Pokémon face, and the catalog Item everywhere else. The fossil-id test runs
+// FIRST, so every other lookup pays one `Set.has` (this is the engine's hottest read).
 export function cardOfUid(state: GameState, uid: string): Card | undefined {
   const id = state.cardIdByUid[uid];
-  return id === undefined ? undefined : state.cardPool[id];
+  if (id === undefined) return undefined;
+  const card = state.cardPool[id];
+  if (card === undefined || !FOSSIL_IDS.has(id)) return card;
+  return uidInPlayStack(state, uid) ? fossilPokemonCard(card) : card;
+}
+
+/** 🆕🆕🆕 D576 — is `uid` one of the cards of an in-play stack (either seat, Active or
+    Bench)? Asked only for a fossil id (`cardOfUid`). An attached Energy or Tool is not a
+    stack card. */
+function uidInPlayStack(state: GameState, uid: string): boolean {
+  for (const seat of ["p1", "p2"] as const) {
+    const side = state.players[seat];
+    if (side.active?.stack.includes(uid) === true) return true;
+    if (side.bench.some((body) => body.stack.includes(uid))) return true;
+  }
+  return false;
+}
+
+/** 🆕🆕🆕 D576 — is `pokemon`'s TOP card an Antique Fossil? The read behind the fossil's two
+    CARD RULES (R-FO4: no Special Conditions, can't retreat — continuous.ts) and its
+    "discard this card from play" (R-FO3, turn.ts). The TOP card only: an evolved fossil
+    (Lileep on Antique Root Fossil, R-FO6) is not a fossil any more. */
+export function isFossilTop(state: GameState, pokemon: InPlayPokemon): boolean {
+  const uid = pokemon.stack[pokemon.stack.length - 1];
+  const id = uid === undefined ? undefined : state.cardIdByUid[uid];
+  return id !== undefined && FOSSIL_IDS.has(id);
 }
 
 /** `stage` uses the tcgdex vocabulary ("Basic" | "Stage1" | "Stage2" | …). */
