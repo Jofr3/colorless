@@ -41,6 +41,7 @@ import type { InPlayPokemon } from "./types";
 // any Special Conditions and can't retreat. At any time during your turn, you may discard this card from
 // play."* — R-FO1 (an ITEM play), R-FO2 (a Pokémon only in play), R-FO3 (discard from play), R-FO4 (the
 // card rules are not Abilities), R-FO6 (evolution onto it). Area Zero Underdepths ×3 is PARKED (D577).
+// (🆕🆕🆕 D577 (D539): *"PARKED"* is WITHDRAWN — BUILT at D577, `areaZeroUnderdepthsD577.test.ts`.)
 //
 // Every card is driven on its REAL id on a LOCAL `cardPool` (D275) in the suite's OWN deck (D270). The
 // fossils are built exactly as the catalog row arrives today — an Item with `hp: null` and
@@ -1063,7 +1064,7 @@ describe("D576 §7 — the persisted position: a fossil's Trainer uid in `InPlay
     expect(isLethallyDamaged(s, { ...fossil, damage: 50 })).toBe(false);
   });
 
-  it("the engine is 0.460.0", () => {
-    expect(engineVersion).toBe("0.460.0");
+  it("the engine is 0.461.0", () => {
+    expect(engineVersion).toBe("0.461.0");
   });
 });

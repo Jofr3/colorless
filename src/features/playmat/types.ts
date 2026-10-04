@@ -64,6 +64,11 @@ export interface PlayerBoard {
       row order; `[]` on every board without a Crescent Purge. Every other prize is face
       down and is the count above only. */
   faceUpPrizes: FaceUpPrize[];
+  /** 🆕🆕🆕 D577 — this side's LIVE Bench limit as the engine reads it (`benchLimitOf`: 8
+      under Area Zero Underdepths with a Tera Pokémon in play, else 5), written by both game
+      projections. Optional: a board without it (the /simulator mock) falls back to the
+      board-wide stadium rule in `benchLimitFor`. */
+  benchLimit?: number;
 }
 
 export interface BoardState {

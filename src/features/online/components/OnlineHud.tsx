@@ -263,6 +263,9 @@ function EffectChooseDialog({
   switch (prompt.kind) {
     case "mayDraw":
       return <MayDrawDialog prompt={prompt} seat={seat} onAction={onAction} />;
+    case "guessHp":
+      // 🆕🆕🆕 D577 — Tyme's guess; the local HUD's dialog mirrored (D412).
+      return <GuessHpDialog prompt={prompt} seat={seat} onAction={onAction} />;
     case "confirm":
       return <ConfirmPromptDialog prompt={prompt} seat={seat} onAction={onAction} />;
     case "choosePokemon":
@@ -344,6 +347,53 @@ function MayDrawDialog({
             Decline
           </button>
         </div>
+      </div>
+    </Dialog>
+  );
+}
+
+/** 🆕🆕🆕 D577 — Tyme's guess over the wire: the told NAME and the note only (R-TY3), one
+    whole-number input, Guess disabled until it is an integer ≥ 0 (R-TY2, the server's
+    `validateChoice` rule). Owed — no `onDismiss`. GameHud's `GuessHpDialog` restated. */
+function GuessHpDialog({
+  prompt,
+  seat,
+  onAction,
+}: {
+  prompt: Extract<RedactedEffectPrompt, { kind: "guessHp" }>;
+  seat: MatchSeat;
+  onAction: (action: GameAction) => void;
+}) {
+  const [text, setText] = useState("");
+  const hp = Number(text);
+  const valid = text.trim() !== "" && Number.isInteger(hp) && hp >= 0;
+  return (
+    <Dialog label="Guess the HP">
+      <p className="text-xs font-semibold uppercase tracking-wide text-white/45">
+        Your opponent's card is asking
+      </p>
+      <h2 className="mt-1 text-lg font-semibold text-white">{prompt.note}</h2>
+      <label className="mt-3 block text-sm text-white/70">
+        HP of {prompt.name}
+        <input
+          type="number"
+          min={0}
+          step={10}
+          inputMode="numeric"
+          className="mt-1 block w-32 rounded bg-white/10 px-2 py-1 text-white"
+          value={text}
+          onChange={(event) => setText(event.target.value)}
+        />
+      </label>
+      <div className="mt-5 flex justify-end gap-2">
+        <button
+          type="button"
+          className={ACCENT_BUTTON}
+          disabled={!valid}
+          onClick={() => onAction({ type: "resolveEffect", seat, choice: { kind: "hpGuess", hp } })}
+        >
+          Guess
+        </button>
       </div>
     </Dialog>
   );
@@ -1432,6 +1482,8 @@ const CHOOSE_CARDS_VERB: Record<
   attach: { mandatory: "Attach", upTo: "Attach" },
   // 🆕🆕🆕 D566 — Ogre's Mask's "switch it with 1 of your Pokémon ex in play" (a mandatory pick).
   swap: { mandatory: "Switch in", upTo: "Switch in" },
+  // 🆕🆕🆕 D577 — Tyme's "Tell your opponent the name of a Pokémon in your hand" (GameHud's cell).
+  name: { mandatory: "Name", upTo: "Name" },
 };
 
 /** chooseCards (§15.E / §7.1 / §7.5) — pick min..max cards: a deck search, a

@@ -139,6 +139,8 @@ describe("OnlineHud — effect:choose chooseAttack (D157's kind, dialoged at D20
  *  switch (that switch compiled fine; it just rendered `undefined`). */
 const ONE_PER_KIND: Record<RedactedEffectPrompt["kind"], RedactedEffectPrompt> = {
   mayDraw: { kind: "mayDraw", count: 1, note: "You may draw a card." },
+  // 🆕🆕🆕 D577 — Tyme's guess (the thirteenth kind): the told name and the note only.
+  guessHp: { kind: "guessHp", name: "Pikachu ex", note: "Guess the HP of your opponent's Pikachu ex." },
   confirm: { kind: "confirm", note: "You may discard a card." },
   // 🆕 D341 — TWO candidates, not one, and that is the pin rather than a
   // flourish: `orderCards` never parks with fewer than 2 (one ordering is not a

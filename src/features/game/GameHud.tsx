@@ -1521,6 +1521,9 @@ function EffectChooseDialog(props: GameHudProps): ReactElement | null {
       return <AttachCardsDialog {...props} prompt={prompt} />;
     case "mayDraw":
       return <MayDrawDialog {...props} prompt={prompt} />;
+    case "guessHp":
+      // 🆕🆕🆕 D577 — Tyme's guess, on the OPPONENT's screen (the answerer).
+      return <GuessHpDialog {...props} prompt={prompt} />;
     case "chooseAttack":
       return <ChooseAttackDialog {...props} prompt={prompt} />;
     case "confirm":
@@ -1732,6 +1735,54 @@ function MayDrawDialog({
   );
 }
 
+/** 🆕🆕🆕 D577 — Tyme's guess (`guessHp`), owed by the OPPONENT of the player who named the
+    card: a whole-number HP for the NAMED Pokémon (the name is all the prompt carries — R-TY3).
+    `MayDrawDialog`'s shape (the answering seat named above the question, on a hot-seat
+    device), with one number input; Guess is disabled until the input is a whole number ≥ 0,
+    the rule `validateChoice` enforces (R-TY2). Escape is swallowed: the guess is owed. */
+function GuessHpDialog({
+  viewerSeat,
+  names,
+  dispatch,
+  prompt,
+}: GameHudProps & { prompt: Extract<EffectPrompt, { kind: "guessHp" }> }) {
+  const [text, setText] = useState("");
+  const hp = Number(text);
+  const valid = text.trim() !== "" && Number.isInteger(hp) && hp >= 0;
+  return (
+    <HudDialog label="Guess the HP">
+      <p className="text-xs font-semibold uppercase tracking-wide text-white/45">
+        {names[viewerSeat]} — your opponent's card is asking
+      </p>
+      <h2 className="mt-1 text-lg font-semibold text-white">{prompt.note}</h2>
+      <label className="mt-3 block text-sm text-white/70">
+        HP of {prompt.name}
+        <input
+          type="number"
+          min={0}
+          step={10}
+          inputMode="numeric"
+          className="mt-1 block w-32 rounded bg-white/10 px-2 py-1 text-white"
+          value={text}
+          onChange={(event) => setText(event.target.value)}
+        />
+      </label>
+      <div className="mt-5 flex justify-end gap-2">
+        <button
+          type="button"
+          className={ACCENT_BUTTON_CLASS}
+          disabled={!valid}
+          onClick={() =>
+            dispatch({ type: "resolveEffect", seat: viewerSeat, choice: { kind: "hpGuess", hp } })
+          }
+        >
+          Guess
+        </button>
+      </div>
+    </HudDialog>
+  );
+}
+
 /** A card pick, origin-agnostic — a deck search (§15.E), a discard-pile
     retrieval (§7.1), a look at the deck top, a printed hand COST (§7.5, paid to
     the discard (Ultra Ball) or under the deck (Dendra)), or 🆕 **D426's
@@ -1817,6 +1868,9 @@ const CHOOSE_CARDS_VERB: Record<
   attach: { mandatory: "Attach", upTo: "Attach" },
   // 🆕🆕🆕 D566 — Ogre's Mask's "switch it with 1 of your Pokémon ex in play" (a mandatory pick).
   swap: { mandatory: "Switch in", upTo: "Switch in" },
+  // 🆕🆕🆕 D577 — Tyme's "Tell your opponent the name of a Pokémon in your hand" (a mandatory
+  // pick that moves nothing — "Take" would promise a move).
+  name: { mandatory: "Name", upTo: "Name" },
 };
 
 function ChooseCardsDialog({

@@ -179,7 +179,7 @@ export function canPlace(
 
   // Bench occupancy — only matters when adding a new card to the bench.
   if (target.zone === "bench" && source.zone !== "bench") {
-    if (player.bench.length >= benchLimitFor(board)) return false;
+    if (player.bench.length >= benchLimitFor(board, source.owner)) return false;
   }
 
   // Active occupancy — hand → active only when active is empty (no swap-out
@@ -276,7 +276,7 @@ function placeCard(board: BoardState, placement: CardPlacement, card: CardModel)
   }
 
   if (placement.zone === "bench") {
-    if (player.bench.length >= benchLimitFor(board)) return false;
+    if (player.bench.length >= benchLimitFor(board, placement.owner)) return false;
     const insertIdx =
       placement.index != null
         ? Math.max(0, Math.min(placement.index, player.bench.length))
@@ -404,7 +404,7 @@ export function moveCardOnBoard(board: BoardState, request: CardMoveRequest): Bo
     const player = next[source.owner];
     const activeCard = player.active;
     if (!activeCard || activeCard.id !== request.cardId) return board;
-    if (!retreatActiveToBench(player, activeCard, benchLimitFor(next), request.to.index))
+    if (!retreatActiveToBench(player, activeCard, benchLimitFor(next, source.owner), request.to.index))
       return board;
     return next;
   }

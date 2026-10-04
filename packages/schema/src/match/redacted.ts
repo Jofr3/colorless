@@ -506,6 +506,11 @@ export const redactedEffectPromptSchema = z.discriminatedUnion("kind", [
       decline. `note` addresses that answerer ("You may draw a card."). No card
       identity crosses — the whole decision is the `count`. */
   z.object({ kind: z.literal("mayDraw"), count: z.number(), note: z.string() }),
+  /** 🆕🆕🆕 D577 — Tyme's guess, owed by the ANSWERER (the controller's opponent): the HP of the
+      Pokémon whose NAME the controller told them. The name and the note only — the face-down
+      card's identity and HP never cross before the reveal (R-TY3). Answered with
+      `{ kind: "hpGuess", hp }`, an integer ≥ 0. A widening: the CLIENT deploys first. */
+  z.object({ kind: z.literal("guessHp"), name: z.string(), note: z.string() }),
   /** The printed "**You may** …" (the engine's `optional` op), answered by the
       CONTROLLER — a bare yes/no whose "yes" splices the op's branch into the
       running program and whose "no" runs nothing. The smallest arm in this union
@@ -710,7 +715,8 @@ export const redactedEffectPromptSchema = z.discriminatedUnion("kind", [
     // Pokémon whose Ability searched). A widening; no older member moves.
     // 🆕🆕🆕 D566 — "swap" (Ogre's Mask: a discard-pile card switched in for an in-play body's
     // top card). A widening; no older member moves.
-    dest: z.enum(["bench", "hand", "deck", "deckBottom", "deckTop", "discard", "evolve", "attach", "swap"]),
+    // 🆕🆕🆕 D577 — "name" (Tyme: a card in hand NAMED, which moves nowhere). A widening.
+    dest: z.enum(["bench", "hand", "deck", "deckBottom", "deckTop", "discard", "evolve", "attach", "swap", "name"]),
     /** 🆕 D332 — PER-KIND CAPS over the same candidate list, the printed "a
         Pokémon **and** a Trainer card" (Drayton). `max` above stays the TOTAL;
         each entry caps how many picks may come out of ITS `uids`, which are the

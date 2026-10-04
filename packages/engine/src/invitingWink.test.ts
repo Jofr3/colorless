@@ -85,7 +85,9 @@ import {
 // ── THE ENGINE DIFF, AND WHY IT IS NOT ZERO ─────────────────────────────────
 //   `upTo?: number` → `upTo?: number | "any"`. **Behaviourally `upTo: BENCH_MAX`
 //   would have been sufficient** — the park already clamps to the live
-//   `benchSpace` and `BENCH_MAX` is 5, so a numeric cap of 5 can never bind. It is
+//   `benchSpace` and `BENCH_MAX` is 5, so a numeric cap of 5 can never bind [🆕🆕🆕 D577 (D539):
+//   WITHDRAWN at an Area Zero Underdepths 8-Bench, where it CAN bind — and the offer's cap is
+//   now `BENCH_CEILING`; driven in `areaZeroUnderdepthsD577.test.ts` §7]. It is
 //   refused on the CAPTION and on falsifiability: this op's note is grown one
 //   printed form per card and round-trips to the catalog text, so `upTo: 5` would
 //   caption the card with a number it does not print and would be
@@ -521,7 +523,7 @@ describe("D350 §4 — the ceiling is the BOARD, not the card", () => {
     expect([prompt.min, prompt.max]).toEqual([0, BENCH_MAX - 3]);
   });
 
-  it("🛑 and `BENCH_MAX` is why `upTo: 5` would have been behaviourally equal", () => {
+  it("🛑 and `BENCH_MAX` is why `upTo: 5` would have been behaviourally equal (🆕🆕🆕 D577: on a board without Area Zero Underdepths)", () => {
     // The refutation, DRIVEN: with the whole Bench free the ceiling is the offer,
     // and the offer can never exceed what a hand of five Basics could land anyway.
     // The member is bought for the CAPTION (§5), and this is the assertion that

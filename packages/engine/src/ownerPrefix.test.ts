@@ -176,6 +176,8 @@ const LANDED = [
     fixture: "fix-invitingflowers",
     ids: ["sv09-068"],
     legal: 1,
+    // 🆕🆕🆕 D577 (D539) — `max: BENCH_CEILING` now (an Area Zero Underdepths Bench holds 8); the
+    // clamp argument is unchanged.
     ops: "the printed 'any number' at max BENCH_MAX, which the bench clamp makes exact rather than approximate",
   },
 ] as const;
@@ -1017,7 +1019,7 @@ describe("D200 — the `stage` rider on the board", () => {
 });
 
 describe("D200 — Inviting Flowers (Lillie's Comfey sv09-068): the printed 'any number'", () => {
-  it("offers the whole Bench when the Bench is empty — BENCH_MAX is a cap, not a guess", () => {
+  it("offers the whole Bench when the Bench is empty — BENCH_MAX is a cap, not a guess (🆕🆕🆕 D577: the cap is BENCH_CEILING; the live limit binds here)", () => {
     let state = withActive(7, "fix-invitingflowers");
     state = attachFromDeck(state, "p1", "fix-energy", 1);
     const { state: parked } = mustApply(state, { type: "attack", seat: "p1", index: 0 });

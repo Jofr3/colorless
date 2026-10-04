@@ -83,7 +83,9 @@ import {
 //     Antique Fossils print a
 //     60-HP body (🆕🆕🆕 D576: BUILT — the body is `fossils.ts`' hand-written face, read
 //     through the zone-aware `cardOfUid`; it is a printed HP, not a max-HP term, so this
-//     seam's classification stands); Tyme asks the opponent to GUESS one; and all five
+//     seam's classification stands); Tyme asks the opponent to GUESS one (🆕🆕🆕 D577: BUILT —
+//     `opponentGuessesHp` compares the guess with the PRINTED catalog HP, not a max-HP term, so
+//     this seam's classification stands); and all five
 //     `attacks_json` hits are *"put damage counters until its remaining HP is
 //     N"*, which is a DAMAGE op and not a maximum. **`BUILT.attack` cannot move
 //     on this seam at any width** — D306's rule, holding for the fifth slice.

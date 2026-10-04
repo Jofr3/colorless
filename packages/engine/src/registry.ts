@@ -12,7 +12,7 @@ import type {
   PokemonType,
 } from "./effects";
 import type { StatusName } from "./events";
-import { BENCH_MAX } from "./types";
+import { BENCH_CEILING } from "./types";
 
 // The id-keyed card-program registry (D8, "op programs are keyed by card id").
 // It sits ABOVE the text deriver: attacks resolve `programFor(id)?.attack ??
@@ -3297,6 +3297,14 @@ export interface StadiumEffects {
       is FALSE in general since D571 (Flutter Mane switches Initialization off — R-LK2), and is
       kept here only of the Watchtower.] */
   disableAbilities?: NonNullable<PassiveEffects["disableAbilities"]>;
+  /** 🆕🆕🆕 §7.3 (D577) — Area Zero Underdepths `sv07-131`/`sv07-174`/`sv08.5-094`: *"Each
+      player who has any Tera Pokémon in play can have up to 8 Pokémon on their Bench."* The
+      widened limit, read PER SEAT by ONE function, continuous.ts `benchLimitOf` (R-AZ1: only
+      a seat with a Tera Pokémon in play gets it). The card's two discard sentences are not a
+      field: they are the state check `benchTrimStages` runs at every settle point (R-AZ2,
+      R-AZ3), which needs nothing but this number and the board. Not §9-gated (a Stadium is
+      no Ability). */
+  benchLimitWithTera?: number;
 }
 
 /** A Special Energy's on-attach effect (§6.1) — runs the moment it is attached
@@ -3329,6 +3337,13 @@ export type EnergyOnAttach =
     something) rather than loudly rejecting like a Trainer. */
 export interface EnergyProgram {
   provides: string[];
+  /** 🆕🆕🆕 §6.1 (D577) — Boomerang Energy `sv06-166`: *"If this card is discarded by an effect
+      of an attack used by the Pokémon this card is attached to, attach this card from your
+      discard pile to that Pokémon after attacking."* Read by interpreter.ts
+      `discardEnergyApply` (the ONE writer of an attack's Energy discard, R-BE1/R-BE5), which
+      records the uid on the queued `attackEpilogue`; flow.ts `returnBoomerangs` re-attaches
+      it (R-BE2). */
+  returnAfterAttackDiscard?: true;
   /** Luminous: the units provided INSTEAD when the holder already has another
       Special Energy attached ("this card provides {C} Energy instead"). */
   demoteWithOtherSpecial?: string[];
@@ -10616,6 +10631,31 @@ const MIST_ENERGY: CardProgram = {
   energy: { provides: ["Colorless"], passive: { preventAttackEffects: true } },
 };
 
+/** 🆕🆕🆕 **D577 — Boomerang Energy `sv06-166` (Special Energy, 1 legal printing)**: *"As long
+    as this card is attached to a Pokémon, it provides {C} Energy. If this card is discarded by
+    an effect of an attack used by the Pokémon this card is attached to, attach this card from
+    your discard pile to that Pokémon after attacking."* R-BE1 … R-BE5 (decisions.md D577). */
+const BOOMERANG_ENERGY: CardProgram = {
+  energy: { provides: ["Colorless"], returnAfterAttackDiscard: true },
+};
+
+/** 🆕🆕🆕 **D577 — Area Zero Underdepths `sv07-131`/`sv07-174`/`sv08.5-094` (Stadium, 3 legal
+    printings)**: *"Each player who has any Tera Pokémon in play can have up to 8 Pokémon on
+    their Bench. If a player no longer has any Tera Pokémon in play, that player discards
+    Pokémon from their Bench until they have 5. When this card leaves play, both players
+    discard Pokémon from their Bench until they have 5, and the player who played this card
+    discards first."* The ONE field is the number; both discard sentences are the state check
+    continuous.ts `benchTrimStages` (R-AZ1 … R-AZ8, decisions.md D576 (d) and D577). */
+const AREA_ZERO_UNDERDEPTHS: CardProgram = { stadium: { benchLimitWithTera: BENCH_CEILING } };
+
+/** 🆕🆕🆕 **D577 — Tyme `sv08-190`/`sv08.5-143` (Supporter, 2 legal printings)**: *"Tell your
+    opponent the name of a Pokémon in your hand and put that Pokémon face down in front of you.
+    Your opponent guesses that Pokémon's HP, and then you reveal it. If your opponent guessed
+    right, they draw 4 cards. If they guessed wrong, you draw 4 cards. Then, return the Pokémon
+    to your hand."* ONE op (`opponentGuessesHp`), R-TY1 … R-TY3 (decisions.md D577); refused by
+    `programPlayable` on a hand with no Pokémon. */
+const TYME: CardProgram = { trainer: [{ op: "opponentGuessesHp", draw: 4 }] };
+
 /** D261 — Enriching Energy `sv08-191`: "As long as this card is attached to a
     Pokémon, it provides {C} Energy. / When you attach this card from your hand to
     a Pokémon, draw 4 cards."
@@ -10971,7 +11011,9 @@ const SUMMONING_SIGN: CardProgram = {
     clamped to `benchSpace` in TWO places (the park's `max` and `searchMove`'s
     slice), so `BENCH_MAX` is not an approximation of "any number": it is the
     largest value the printed sentence can ever mean, and every smaller board
-    clamps below it anyway. (effects.ts's `attachFromDeck` note says "no printed
+    clamps below it anyway. [🆕🆕🆕 D577 (D539): `BENCH_MAX` is WITHDRAWN as that largest value — an Area
+    Zero Underdepths Bench holds 8, so the row spells `max: BENCH_CEILING`; every smaller board
+    still clamps below it through `benchSpace`.] (effects.ts's `attachFromDeck` note says "no printed
     search says 'any number'" — true of ENERGY searches, which is the population
     it was written about; this is the Pokémon one, and it does.) 1 legal printing
     of 1.
@@ -10999,7 +11041,9 @@ const LILLIES_COMFEY: CardProgram = {
         op: "searchDeck",
         filter: { kind: "ownerPokemon", owner: "Lillie", stage: "basic" },
         dest: "bench",
-        max: BENCH_MAX,
+        // 🆕🆕🆕 D577 — `BENCH_CEILING`, not `BENCH_MAX`: an 8-Bench under Area Zero
+        // Underdepths has 3 more slots, and `benchSpace` still clamps to the live limit.
+        max: BENCH_CEILING,
       },
       { op: "shuffleDeck" },
     ],
@@ -16860,11 +16904,20 @@ const REGISTRY: Record<string, CardProgram> = {
   "sv10-055": DIVERS_CATCH, // Huntail — Diver's Catch: a {W} body KO'd by an attack keeps its Basic {W} Energy in hand
   "sv07-101": EMERGENCY_ROTATION, // Klinklang — Emergency Rotation: from the hand to the Bench vs a Stage 2
   // ── 🆕🆕🆕 D576 — the Antique Fossils: 4 registry ids / 3 objects, MID-MAP (D395/D396), so
-  //    `raw[last]` does not move. Area Zero Underdepths ×3 is PARKED (D577, decisions.md D576). ──
+  //    `raw[last]` does not move. Area Zero Underdepths ×3 is PARKED (D577, decisions.md D576).
+  //    (🆕🆕🆕 D577 (D539): *"PARKED"* is WITHDRAWN — BUILT, the D577 block below.) ──
   "sv07-129": PROTECTIVE_COVER, // Antique Cover Fossil — an Item played as a 60-HP Basic {C}; Protective Cover
   "sv10.5b-080": PROTECTIVE_COVER, // Antique Cover Fossil (reprint)
   "sv07-130": PRIMAL_ROOT, // Antique Root Fossil — Primal Root: Active, the opponent's Basic attackers cost {C} more
   "sv10.5w-079": PLUME_PROTECTION, // Antique Plume Fossil — Plume Protection: Benched, no damage from the opponent's attacks
+  // ── 🆕🆕🆕 D577 — Area Zero Underdepths ×3 + Boomerang Energy + Tyme ×2: 6 registry ids / 3 objects,
+  //    MID-MAP (D395/D396), so `raw[last]` does not move. ──
+  "sv07-131": AREA_ZERO_UNDERDEPTHS, // Area Zero Underdepths — a Tera Pokémon in play: up to 8 on that Bench
+  "sv07-174": AREA_ZERO_UNDERDEPTHS, // Area Zero Underdepths (reprint)
+  "sv08.5-094": AREA_ZERO_UNDERDEPTHS, // Area Zero Underdepths (reprint)
+  "sv06-166": BOOMERANG_ENERGY, // Boomerang Energy — {C}; discarded by its holder's attack: re-attached after attacking
+  "sv08-190": TYME, // Tyme — name a Pokémon in hand; the opponent guesses its HP: right, they draw 4; wrong, you do
+  "sv08.5-143": TYME, // Tyme (reprint)
   // ── D190 — THE **STANDARD-LEGAL** REPRINT-ALIAS MAP (Tier 0 of
   //    `docs/reference/coverage-backlog-legal.md`). 22 printings, 9 map targets,
   //    ZERO new code: every row below prints a sentence that is already authored
@@ -17051,7 +17104,9 @@ const REGISTRY: Record<string, CardProgram> = {
   // column query above (not a ladder — D261 closed the column): 7 sentences / 8
   // printings legal, 4 built at HEAD, this is the 5th. The three left are
   // `sv06-166`, `sv06-167` and `sv10-182`, each still named with its blocker in
-  // `mistEnergy.test.ts`'s header.
+  // `mistEnergy.test.ts`'s header. (🆕🆕🆕 D577 (D539): the three-left list is WITHDRAWN as
+  // the live residue — `sv06-167` BUILT at D298 and `sv06-166` (Boomerang Energy) at D577;
+  // `sv10-182` alone is left.)
   "sv05-162": NEO_UPPER_ENERGY, // Neo Upper Energy — the CONDITIONAL provision (Stage 2)
   "fix-neo-upper-energy": NEO_UPPER_ENERGY,
   "sv10.5b-086": PRISM_ENERGY, // 🆕 D300 — Prism Energy — the SAME shape, gated on Basic

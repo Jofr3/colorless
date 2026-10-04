@@ -69,7 +69,9 @@ import {
 //     `neoUpperEnergy.test.ts`. The residue below is therefore THREE.
 //   sv06-166 Boomerang Energy     — re-attach from the discard pile after attacking,
 //     and only if an attack's own effect discarded it. Nothing records WHY a card
-//     left a body.
+//     left a body. (🆕🆕🆕 D577 (D539): ✅ **BUILT at D577** — the blocker is WITHDRAWN:
+//     interpreter.ts `discardEnergyApply` records the uid on the queued `attackEpilogue`, which
+//     re-attaches it after the attack. See `boomerangEnergyD577.test.ts`.)
 //   sv06-167 Legacy Energy        — ✅ **BUILT at D298.** The blocker recorded here
 //     for five slices — "a PRIZE-COUNT modifier on the holder's KO, once per game.
 //     Needs a prize hook AND a per-game latch; §14 has neither" — held its
@@ -259,12 +261,17 @@ describe("Mist / Enriching Energy — the registry data rows", () => {
   // that shipped a fifth Special Energy without touching it would have to say so.
   // `sv05-162` keeps a line here — as BUILT, and pointing at the suite that owns
   // it — so the column's arithmetic stays readable from one place.
-  it("authors NOTHING on the TWO remaining Special Energy sentences", () => {
-    for (const id of ["sv06-166", "sv10-182"]) {
+  it("authors NOTHING on the TWO remaining Special Energy sentences (🆕🆕🆕 D577: ONE — `sv06-166` BUILT)", () => {
+    // 🆕🆕🆕 D577 (D539) — `sv06-166` (Boomerang Energy) is BUILT; `sv10-182` alone is unbuilt.
+    expect(programFor("sv06-166"), "sv06-166 is BUILT at D577").toBeDefined();
+    for (const id of ["sv10-182"]) {
       expect(programFor(id), `${id} is counted UNBUILT`).toBeUndefined();
     }
     // …and the two that LEFT this list are asserted BUILT in the same test, so the
     // halves of "4 = 2 built + 2 left" cannot drift apart.
+    // 🆕🆕🆕 D577 (D539) — WITHDRAWN: "the two that LEFT" / "4 = 2 built + 2 left" is now
+    // THREE that left (`sv05-162` D262, `sv06-167` D298, `sv06-166` D577 above) and ONE
+    // left (`sv10-182`): "4 = 3 built + 1 left".
     expect(programFor("sv05-162"), "sv05-162 is BUILT at D262").toBeDefined();
     expect(programFor("sv06-167"), "sv06-167 is BUILT at D298").toBeDefined();
   });

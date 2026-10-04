@@ -21,6 +21,10 @@ import {
 } from "./cards";
 import {
   aceSpecPlayBarred,
+  // 🆕🆕🆕 D577 — the live per-seat Bench limit (Area Zero Underdepths, R-AZ1) and the
+  // trim check on the non-sweeping evolve path.
+  benchLimitOf,
+  benchTrimStages,
   effectiveRetreatCost,
   intoPlayOnlyViaOf,
   opposingRetreatBlocked,
@@ -52,7 +56,7 @@ import {
 } from "./triggers";
 import type { GameState, InPlayPokemon, PlayerSide, PokemonTarget, Seat } from "./types";
 import {
-  BENCH_MAX,
+  BENCH_CEILING,
   discardFromStack,
   drawToHand,
   evolveOnto,
@@ -73,9 +77,13 @@ import {
 
 /** Bench slots are array indices, and the arrays are dense. The `Number` check
     guards the wire: TS says these are numbers, JSON does not, and a string
-    index misbehaves silently rather than loudly (see the call sites). */
+    index misbehaves silently rather than loudly (see the call sites).
+    🆕🆕🆕 D577 — bounded by `BENCH_CEILING` (8), not `BENCH_MAX`: under Area Zero
+    Underdepths a Bench index 5 … 7 is a real slot. A ref past the LIVE Bench still misses
+    at its call site (every one re-reads `bench[index]`), so the ceiling is the shape check
+    and the board is the existence check, as before. */
 export function isBenchIndex(value: unknown): value is number {
-  return Number.isInteger(value) && (value as number) >= 0 && (value as number) < BENCH_MAX;
+  return Number.isInteger(value) && (value as number) >= 0 && (value as number) < BENCH_CEILING;
 }
 
 /** The gate every in-turn action shares: right phase, right seat. Returns
@@ -434,13 +442,16 @@ function benchFromHandRotation(
   return { usedKey, name: rotation.name };
 }
 
-/** §5.2 — Basics to the bench, any number per turn, cap 5. */
+/** §5.2 — Basics to the bench, any number per turn, cap 5 (🆕🆕🆕 D577: the live
+    `benchLimitOf` — 8 under Area Zero Underdepths with a Tera Pokémon in play). */
 export function playBasicToBench(state: GameState, action: PlayBasicToBenchAction): ApplyResult {
   const rejected = turnGate(state, action);
   if (rejected !== null) return rejected;
   const side = state.players[action.seat];
-  if (side.bench.length >= BENCH_MAX) {
-    return err("BENCH_FULL", `the bench holds at most ${BENCH_MAX} Pokémon`);
+  // 🆕🆕🆕 D577 — the LIVE limit (Area Zero Underdepths + a Tera Pokémon in play: 8).
+  const benchLimit = benchLimitOf(state, action.seat);
+  if (side.bench.length >= benchLimit) {
+    return err("BENCH_FULL", `the bench holds at most ${benchLimit} Pokémon`);
   }
   // 🆕🆕🆕 §9 (D572) — THE IN-HAND ABILITY: Klinklang `sv07-101` "Emergency Rotation" puts a
   // NON-Basic onto the Bench. Asked BEFORE `basicFromHandError`, which would refuse it as
@@ -758,7 +769,20 @@ export function placeEvolution(
   if (subject !== null && subject !== undefined && isLethallyDamaged(watched, subject)) {
     return resolveMidTurnKnockOuts(watched, seat, [seat], events);
   }
-  return runBoardTrigger(watched, seat, target, "onEvolve", events);
+  const triggered = runBoardTrigger(watched, seat, target, "onEvolve", events);
+  // 🆕🆕🆕 §7.3 (D577) — the mid-turn sweep's state check on the one evolve path that ran no
+  // sweep: an evolution that took `seat`'s LAST Tera Pokémon out of play (its top card is no
+  // longer Tera) under Area Zero Underdepths owes the trim now (R-AZ2). A trigger that ran
+  // already settled through the sweep (`settleProgram`), and a parked one will; so this asks
+  // only a board back at `turn:action` that is still over its limit.
+  if (
+    !triggered.ok ||
+    triggered.state.phase.kind !== "turn:action" ||
+    benchTrimStages(triggered.state, seat).length === 0
+  ) {
+    return triggered;
+  }
+  return resolveMidTurnKnockOuts(triggered.state, seat, [seat], triggered.events);
 }
 
 /** Leaving the Active spot removes Special Conditions (§11/§12) and every other

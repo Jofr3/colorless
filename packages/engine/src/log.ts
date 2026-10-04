@@ -1494,6 +1494,30 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
       // Follows the replacing Stadium's TRAINER_PLAYED row (§7.3); `seat` is
       // the OWNER whose discard pile gained the old card.
       return row("system", [strong(cardName(state, event.uid)), plain(" left play — replaced")]);
+    case "POKEMON_NAMED":
+      // 🆕🆕🆕 D577 — Tyme: the told name only (the card is face down — no HP here).
+      return row(event.seat, [plain("named "), strong(event.name), plain(" — the opponent guesses its HP")]);
+    case "HP_GUESSED":
+      // 🆕🆕🆕 D577 — Tyme's reveal, under the player who played it.
+      return row(event.seat, [
+        plain("revealed "),
+        strong(cardName(state, event.uid)),
+        plain(` (${event.hp === null ? "no" : event.hp} HP) — the guess ${event.guess} was `),
+        strong(event.right ? "right" : "wrong"),
+      ]);
+    case "BENCH_TRIMMED": {
+      // 🆕🆕🆕 D577 — Area Zero Underdepths' trim, under the OWNER (they chose, R-AZ4). Names
+      // each body (face up in play a moment ago — nothing leaks) and counts the pile.
+      const segments: LogSegment[] = [plain("discarded ")];
+      event.uids.forEach((uid, index) => {
+        if (index > 0) segments.push(plain(index === event.uids.length - 1 ? " and " : ", "));
+        segments.push(strong(cardName(state, uid)));
+      });
+      const extra = event.discarded.length - event.uids.length;
+      segments.push(plain(" from the Bench (limit 5)"));
+      if (extra > 0) segments.push(plain(` with ${extra} attached card${extra === 1 ? "" : "s"}`));
+      return row(event.seat, segments);
+    }
     case "ABILITY_USED":
       return row(event.seat, [
         strong(cardName(state, event.uid)),

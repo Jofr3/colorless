@@ -80,7 +80,7 @@ export function placementPredicateFor(ctx: PlacementContext): PlacementPredicate
         // setup energy → own occupied Pokémon was the confirmed bug here.
         if (sourceType !== "pokemon") return false;
         if (target.zone === "active") return board.you.active === null;
-        if (target.zone === "bench") return board.you.bench.length < benchLimitFor(board);
+        if (target.zone === "bench") return board.you.bench.length < benchLimitFor(board, "you");
         return false;
       }
       case "turn:action": {
@@ -121,7 +121,7 @@ export function placementPredicateFor(ctx: PlacementContext): PlacementPredicate
           if (target.index !== undefined && board.you.bench[target.index]?.type === "pokemon") {
             return true; // evolve the benched Pokémon at this slot
           }
-          return board.you.bench.length < benchLimitFor(board); // play a Basic
+          return board.you.bench.length < benchLimitFor(board, "you"); // play a Basic
         }
         if (sourceType === "tool") {
           // attachTool needs an existing own Pokémon host — the energy-attach

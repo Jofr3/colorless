@@ -217,10 +217,11 @@ function collectCardDescriptors(
   backDesign: CardBackDesign,
 ): CardDescriptor[] {
   const descriptors: CardDescriptor[] = [];
-  const benchLimit = benchLimitFor(board);
 
   for (const owner of PLAYER_IDS) {
     const player = board[owner];
+    // 🆕🆕🆕 D577 — per seat (Area Zero Underdepths widens only a side with a Tera Pokémon).
+    const benchLimit = benchLimitFor(board, owner);
     const active = player.active;
     const side: SidePosition = owner === perspectivePlayer ? "bottom" : "top";
 
@@ -1350,7 +1351,7 @@ export function AnimatedCardsLayer({
 
     const shouldCollapseAttachments = shouldCollapseBenchAttachments(
       orderedDescriptors.map((descriptor) => descriptor.card),
-      benchLimitFor(boardRef.current),
+      benchLimitFor(boardRef.current, owner),
     );
 
     let cardW = 0;

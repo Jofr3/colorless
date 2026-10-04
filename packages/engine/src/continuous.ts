@@ -48,8 +48,16 @@ import type {
   StadiumEffects,
 } from "./registry";
 import { programFor } from "./registry";
-import type { AttackBlock, GameState, HandAttachMark, InPlayPokemon, PlayerSide, Seat } from "./types";
-import { SEATS, otherSeat, stampedActBarFor, stampedBarFor, takenPrizes } from "./types";
+import type {
+  AttackBlock,
+  GameState,
+  HandAttachMark,
+  InPlayPokemon,
+  PendingStage,
+  PlayerSide,
+  Seat,
+} from "./types";
+import { BENCH_MAX, SEATS, otherSeat, stampedActBarFor, stampedBarFor, takenPrizes } from "./types";
 
 // The continuous-modifier pipeline (M4 slice 3): the one place the always-on
 // effects of the shared Stadium (§7.3) and of attached Tools / printed
@@ -78,6 +86,76 @@ export function stadiumEffectsOf(state: GameState): StadiumEffects | undefined {
   if (state.stadium === null) return undefined;
   const id = state.cardIdByUid[state.stadium.uid];
   return id === undefined ? undefined : programFor(id)?.stadium;
+}
+
+/** 🆕🆕🆕 §7.3 (D577) — the LIVE Bench limit, ONE rule over card ids so the web's
+    redacted board asks the same question (`benchLimitForIds`): the in-play Stadium's
+    `benchLimitWithTera` (Area Zero Underdepths: 8) when `teraInPlay`, else `BENCH_MAX` (R-AZ1). */
+function benchLimitFrom(stadiumCardId: string | undefined, teraInPlay: boolean): number {
+  const widened =
+    stadiumCardId === undefined ? undefined : programFor(stadiumCardId)?.stadium?.benchLimitWithTera;
+  return widened !== undefined && teraInPlay ? widened : BENCH_MAX;
+}
+
+/** 🆕🆕🆕 §7.3 (D577) — how many Benched Pokémon `seat` may have RIGHT NOW (R-AZ1): 8 iff
+    Area Zero Underdepths is the live Stadium AND `seat` has a Tera Pokémon in play (its
+    Active or a Benched TOP card, `isTeraPokemon` — the printed "in play"), otherwise
+    `BENCH_MAX`. PER SEAT — each player's Tera presence is their own. Every live Bench
+    cap reads this (turn.ts `playBasicToBench`, cardplay.ts `fossilPlayable` and the
+    Look-for-Prey bench test, interpreter.ts `benchSpace`); `BENCH_CEILING` bounds only
+    what a ref may address. */
+export function benchLimitOf(state: GameState, seat: Seat): number {
+  const stadiumCardId = state.stadium === null ? undefined : state.cardIdByUid[state.stadium.uid];
+  const side = state.players[seat];
+  const bodies = side.active === null ? side.bench : [side.active, ...side.bench];
+  return benchLimitFrom(
+    stadiumCardId,
+    bodies.some((body) => isTeraPokemon(topCardOf(state, body))),
+  );
+}
+
+/** 🆕🆕🆕 §7.3 (D577) — `benchLimitOf` over CARD IDS, for a board that carries ids and no
+    `GameState` (the web's `projectionFromRedacted`): the Stadium's catalog id and the catalog
+    ids of one seat's in-play TOP cards. The Tera read is the banner table's (`bannerOf`). */
+export function benchLimitForIds(
+  stadiumCardId: string | undefined,
+  inPlayCardIds: readonly string[],
+): number {
+  return benchLimitFrom(
+    stadiumCardId,
+    inPlayCardIds.some((id) => bannerOf({ id } as Card) === "Tera"),
+  );
+}
+
+/** 🆕🆕🆕 §7.3 (D577) — the Area Zero Underdepths STATE CHECK (R-AZ2, R-AZ3): one
+    `benchTrim` stage per seat whose Bench now holds MORE than `benchLimitOf` allows, `first`
+    then the other seat, skipping a seat `queued` already holds a trim for. The five
+    producers pass `first`: the Stadium's OWNER when it is the Stadium leaving (cardplay.ts
+    `playStadium`'s replacement, interpreter.ts `discardStadium` — R-AZ3's *"the player who
+    played this card discards first"*), the acting / ended seat at a sweep. Over-limit is
+    the whole test: after the Stadium leaves every seat's limit is 5, and with it in play a
+    seat over 5 has just lost its last Tera Pokémon — the card's two discard sentences are
+    one predicate. The stage carries no count; `runBenchTrim` re-reads the excess. */
+export function benchTrimStages(
+  state: GameState,
+  first: Seat,
+  queued: readonly PendingStage[] = [],
+): PendingStage[] {
+  return [first, otherSeat(first)]
+    .filter(
+      (seat) =>
+        state.players[seat].bench.length > benchLimitOf(state, seat) &&
+        !queued.some((stage) => stage.kind === "benchTrim" && stage.seat === seat),
+    )
+    .map((seat): PendingStage => ({ kind: "benchTrim", seat }));
+}
+
+/** 🆕🆕🆕 §6.1 (D577) — does the Energy card `uid` print Boomerang Energy's *"attach this card
+    from your discard pile to that Pokémon after attacking"* (`EnergyProgram.returnAfterAttackDiscard`)?
+    The ONE read interpreter.ts `discardEnergyApply` asks of a card it discarded. */
+export function returnsAfterAttackDiscard(state: GameState, uid: string): boolean {
+  const id = state.cardIdByUid[uid];
+  return id !== undefined && programFor(id)?.energy?.returnAfterAttackDiscard === true;
 }
 
 /** 🆕🆕🆕 §7.4 (D562) — THE TOOLS ON `pokemon` WHOSE PRINTED EFFECTS ARE LIVE: every

@@ -1268,6 +1268,18 @@ export type GameEvent =
       replaced by a different-named Stadium (whose own TRAINER_PLAYED rides in
       the same batch). */
   | { type: "STADIUM_DISCARDED"; seat: Seat; uid: string }
+  /** 🆕🆕🆕 §7.3 (D577) — Area Zero Underdepths' TRIM: `seat` discarded the Benched Pokémon
+      `uids` (their TOP cards, in Bench order) with every attached card (`discarded`, the
+      whole pile that went to `seat`'s discard pile) to get back to 5 — no Knock Out, no Prize
+      (R-AZ5). Filed under the OWNER: they chose (R-AZ4). Never emitted for an empty pick. */
+  | { type: "BENCH_TRIMMED"; seat: Seat; uids: string[]; discarded: string[] }
+  /** 🆕🆕🆕 D577 — Tyme: `seat` told the opponent the NAME of a Pokémon in their hand (public;
+      the card itself stays face down — no uid, no HP, R-TY3). */
+  | { type: "POKEMON_NAMED"; seat: Seat; name: string }
+  /** 🆕🆕🆕 D577 — Tyme's REVEAL: `seat`'s named card `uid` prints `hp` (null: no printed HP);
+      the opponent guessed `guess`, `right` or not, and `drawer` draws (the opponent when right,
+      `seat` when wrong). Public — the card is revealed. */
+  | { type: "HP_GUESSED"; seat: Seat; uid: string; guess: number; hp: number | null; right: boolean; drawer: Seat }
   /** `seat` used the Ability named `ability` on their in-play `uid`. */
   | { type: "ABILITY_USED"; seat: Seat; uid: string; ability: string }
   /** §7.3 — `seat` activated the shared Stadium's "once during each player's

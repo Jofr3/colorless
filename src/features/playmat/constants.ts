@@ -1,5 +1,5 @@
 import type { CSSProperties } from "react";
-import type { BoardState } from "./types";
+import type { BoardState, PlayerId } from "./types";
 
 export const CARD_RENDER_WIDTH = 140;
 
@@ -7,15 +7,20 @@ export const CARD_RENDER_WIDTH = 140;
 // City) raises it to 8 for both players while it is in play. `benchLimitFor`
 // is the single source of truth: the move logic (cardMovement) and the layout
 // (Bench/PlayerSide/benchLayout) all derive the active limit from the board.
+// 🆕🆕🆕 D577 — PER SEAT: Area Zero Underdepths (`sv07-131`/`sv07-174`/`sv08.5-094`)
+// raises it to 8 only for a player with a Tera Pokémon in play. That read is the
+// ENGINE's (`benchLimitOf` / `benchLimitForIds` — the Tera banner table lives there,
+// and this layer keeps zero engine imports), so both game projections write it onto
+// `PlayerBoard.benchLimit`; a board without it (the /simulator mock) reads the
+// board-wide stadium rule below, Lumiose City's `me3-111` kept as it was.
 export const DEFAULT_BENCH_LIMIT = 5;
 export const EXPANDED_BENCH_LIMIT = 8;
 export const BENCH_EXPANDING_STADIUM_CARD_IDS: ReadonlySet<string> = new Set(["me3-111"]);
 
-export function benchLimitFor(board: BoardState): number {
+export function benchLimitFor(board: BoardState, owner: PlayerId): number {
   const stadiumCardId = board.stadium?.cardId;
-  return stadiumCardId && BENCH_EXPANDING_STADIUM_CARD_IDS.has(stadiumCardId)
-    ? EXPANDED_BENCH_LIMIT
-    : DEFAULT_BENCH_LIMIT;
+  if (stadiumCardId && BENCH_EXPANDING_STADIUM_CARD_IDS.has(stadiumCardId)) return EXPANDED_BENCH_LIMIT;
+  return board[owner].benchLimit ?? DEFAULT_BENCH_LIMIT;
 }
 
 // Slack (in card widths) the bench frame reserves beyond its `benchLimit`

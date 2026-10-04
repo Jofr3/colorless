@@ -272,6 +272,10 @@ function redactPrompt(state: GameState, prompt: EffectPrompt): RedactedEffectPro
   switch (prompt.kind) {
     case "mayDraw":
       return { kind: "mayDraw", count: prompt.count, note: prompt.note };
+    case "guessHp":
+      // 🆕🆕🆕 D577 — Tyme's guess, routed to the OPPONENT (the answerer gate above): the told
+      // NAME and the note, never the face-down card's uid or HP (R-TY3). Fresh object.
+      return { kind: "guessHp", name: prompt.name, note: prompt.note };
     case "confirm":
       // The printed "you may" (the `optional` op). The SECOND no-reference arm,
       // and a strictly smaller one than `mayDraw`: there is not even a `count` to

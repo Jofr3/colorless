@@ -70,7 +70,9 @@ export function PlaymatView({
   const bottomPlayer = perspective;
   const topPlayer = opponentOf(bottomPlayer);
   // A bench-expanding stadium lifts the cap to 8 for both players.
-  const benchLimit = benchLimitFor(board);
+  // 🆕🆕🆕 D577 — PER SEAT: Area Zero Underdepths widens only a side with a Tera Pokémon.
+  const topBenchLimit = benchLimitFor(board, topPlayer);
+  const bottomBenchLimit = benchLimitFor(board, bottomPlayer);
 
   // Mirror the perspective onto <body> so the shared background glow
   // (index.css) flips blue/red top-to-bottom on the opponent's turn.
@@ -95,7 +97,7 @@ export function PlaymatView({
         player={board[topPlayer]}
         side="top"
         activeTurn={turn.activePlayer === topPlayer}
-        benchLimit={benchLimit}
+        benchLimit={topBenchLimit}
         pile={piles?.[topPlayer]}
       />
       <PlayerSide
@@ -103,7 +105,7 @@ export function PlaymatView({
         player={board[bottomPlayer]}
         side="bottom"
         activeTurn={turn.activePlayer === bottomPlayer}
-        benchLimit={benchLimit}
+        benchLimit={bottomBenchLimit}
         pile={piles?.[bottomPlayer]}
       />
       <Hand cards={board[bottomPlayer].hand} owner={bottomPlayer} />

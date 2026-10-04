@@ -12,6 +12,8 @@ import { err, ok } from "./actions";
 import { resolveCopiedAttack, resolveFoundAttack } from "./attack";
 import { cardOfUid, isBasicPokemon, topUid } from "./cards";
 import {
+  // 🆕🆕🆕 D577 — the live per-seat Bench limit (Area Zero Underdepths, R-AZ1).
+  benchLimitOf,
   disabledAbilityUids,
   handPlayBarred,
   // 🆕🆕🆕 D572 — Adrena-Brain's {D} body gate and the Milotic lock (R-MC2).
@@ -43,6 +45,8 @@ import {
   healChosenTargets,
   handCostAction,
   handCostUnmet,
+  // 🆕🆕🆕 D577 — Tyme's candidate funnel (R-TY1), so the grey-out and the offer agree.
+  handPokemonUids,
   moveEnergyPlayable,
   resumeProgram,
   // 🆕🆕🆕 D565 — Ruffian's candidate funnel.
@@ -58,7 +62,7 @@ import type { AbilityProgram } from "./registry";
 import { programFor } from "./registry";
 import { isBenchIndex, isPokemonTarget, placeEvolution, turnGate } from "./turn";
 import type { GameState, InPlayPokemon, PlayerSide, PokemonTarget, Seat } from "./types";
-import { BENCH_MAX, SEATS, isFirstTurnOf, makeInPlay, otherSeat, withSide, without } from "./types";
+import { SEATS, isFirstTurnOf, makeInPlay, otherSeat, withSide, without } from "./types";
 
 // The M4 card-play actions (§7 Trainers, §9 Abilities) and the resolver for the
 // mid-effect decisions they park on (§15.E/G). playTrainer/useAbility/
@@ -259,7 +263,7 @@ function playFossil(state: GameState, action: PlayTrainerAction, card: Card): Ap
   }
   const side = state.players[action.seat];
   if (!fossilPlayable(state, action.seat)) {
-    return err("BENCH_FULL", `the bench holds at most ${BENCH_MAX} Pokémon`);
+    return err("BENCH_FULL", `the bench holds at most ${benchLimitOf(state, action.seat)} Pokémon`);
   }
   const events: GameEvent[] = [
     { type: "TRAINER_PLAYED", seat: action.seat, uid: action.uid, trainerType: "Item" },
@@ -280,7 +284,8 @@ function playFossil(state: GameState, action: PlayTrainerAction, card: Card): Ap
     (GameHud's `playableTrainers`, redact.ts's `redactedTrainersOf`) grey a fossil row on — the
     `programPlayable` role for a card that runs no program. */
 export function fossilPlayable(state: GameState, seat: Seat): boolean {
-  return state.players[seat].bench.length < BENCH_MAX;
+  // 🆕🆕🆕 D577 — the LIVE limit (Area Zero Underdepths + a Tera Pokémon in play: 8).
+  return state.players[seat].bench.length < benchLimitOf(state, seat);
 }
 
 /** §7.3 — the Stadium play, split out of playTrainer's Item/Supporter path
@@ -393,8 +398,11 @@ function playStadium(state: GameState, action: PlayTrainerAction, card: Card): A
   // no Tool writes `statusRecovery` today). Before the sweep so
   // the sweep reads the recovered board — which moves no damage, so the order is free for
   // the KO and fixed only for the event sequence (STATUS_CLEARED, then any KO).
+  // 🆕🆕🆕 §7.3 (D577) — the REPLACED Stadium left play, so its OWNER trims first (R-AZ3:
+  // Area Zero Underdepths' *"the player who played this card discards first"*). With no
+  // Stadium replaced the sweep's state check runs actor-first, as every sweep does.
   next = recoverStatuses(next, events);
-  return resolveMidTurnKnockOuts(next, action.seat, SEATS, events);
+  return resolveMidTurnKnockOuts(next, action.seat, SEATS, events, undefined, current?.owner);
 }
 
 /** §7.4 — attach a Pokémon Tool from hand to one of the actor's own in-play
@@ -1417,10 +1425,14 @@ export function programPlayable(
     if (
       op.op === "bottomFromOpponentHand" &&
       op.dest === "bench" &&
-      state.players[otherSeat(seat)].bench.length >= BENCH_MAX
+      // 🆕🆕🆕 D577 — the OPPONENT's live limit (their Tera Pokémon, R-AZ1).
+      state.players[otherSeat(seat)].bench.length >= benchLimitOf(state, otherSeat(seat))
     ) {
       return false;
     }
+    // 🆕🆕🆕 D577 — Tyme names "a Pokémon in your hand": none there, and the card can only whiff
+    // (R-TY1, §7). The SAME funnel the op's first question offers from, so they cannot disagree.
+    if (op.op === "opponentGuessesHp" && handPokemonUids(state, seat).length === 0) return false;
     if (op.op === "bottomFromOpponentHand" && state.players[otherSeat(seat)].hand.length === 0) {
       // An empty opponent hand is PUBLIC knowledge (the count shows), so
       // "this can only whiff" is a fact the board states — the Catcher/Hammer
@@ -2087,6 +2099,14 @@ function validateChoice(prompt: EffectPrompt, choice: EffectChoice): ApplyResult
         if (prompt.oneTarget === true && perTarget.size > 1) {
           return err("BAD_EFFECT_CHOICE", "attach every card to the same Pokémon");
         }
+      }
+      return null;
+    }
+    case "guessHp": {
+      // 🆕🆕🆕 D577 — Tyme's guess: an INTEGER ≥ 0 and nothing else (R-TY2) — a P4 client's
+      // "60", 59.5 or -10 is refused here, never compared.
+      if (choice.kind !== "hpGuess" || !Number.isInteger(choice.hp) || choice.hp < 0) {
+        return err("BAD_EFFECT_CHOICE", "expected a whole-number HP guess");
       }
       return null;
     }

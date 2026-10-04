@@ -6230,7 +6230,7 @@ export const MUTANTS: Mutant[] = [
     // CORPUS QUOTES** (D414/D415), so a value-keyed sweep over `toBe("0.391.0")` cannot
     // see it — this row's `find` spells the DECLARATION, not an assertion. Run
     // `precheck` after every version bump, not after the sweep tells you.
-    find: 'export const engineVersion = "0.460.0";',
+    find: 'export const engineVersion = "0.461.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -8007,7 +8007,8 @@ export const MUTANTS: Mutant[] = [
     // so `invitingWink.test.ts` §5 joins the kill list below. The MEASURED "6 of
     // 6,099" in `what` is D297's figure at D297's head and is kept as the dated
     // measurement it was — this slice re-probed the row rather than re-scaling it.
-    find: '  const cap = op.upTo === "any" ? BENCH_MAX : (op.upTo ?? 1);',
+    // 🆕🆕🆕 D577 — RE-ANCHORED off the bytes (D540) — the `"any"` arm reads `BENCH_CEILING` (an Area Zero Underdepths Bench holds 8); the patch is the same hard 1.
+    find: "  const cap = op.upTo === \"any\" ? BENCH_CEILING : (op.upTo ?? 1);",
     replace: "  const cap = 1;",
     expectKilledBy: [
       "packages/engine/src/tonguePull.test.ts",
@@ -8432,8 +8433,9 @@ export const MUTANTS: Mutant[] = [
     // found both halves — D317's finding, arriving for the third time. The row is
     // re-aimed at the single line it was always about, which is unique in this file
     // (the `onPlayToBench` call site names a different timing and a different state).
-    find: '  return runBoardTrigger(watched, seat, target, "onEvolve", events);',
-    replace: "  return ok(watched, events);",
+    // 🆕🆕🆕 D577 — RE-ANCHORED off the bytes (D540) — the trigger's result is now bound (`triggered`) so the Underdepths trim check can follow it; the patch still drops the trigger.
+    find: "  const triggered = runBoardTrigger(watched, seat, target, \"onEvolve\", events);",
+    replace: "  const triggered = ok(watched, events);",
     // PROBED INDIVIDUALLY: 22 assertions move across 5 files — the widest of the
     // three, and worth saying so: this row measures the ALREADY-EXISTING trigger
     // coverage far more than it measures D306's, which contributes 1 of the 22.
@@ -8989,8 +8991,9 @@ export const MUTANTS: Mutant[] = [
     // 🆕🆕🆕 D575 - RE-ANCHORED off the bytes (D540): the early return gained a third conjunct, `tail === undefined` (Hypno's
     //    turn end rides the sweep's tail, R-HY2), and spans three lines; the mutant still drops the
     //    orphan conjunct alone.
-    find: "  if (batch.stages.length === 0 && orphaned.length === 0 && tail === undefined) {",
-    replace: "  if (batch.stages.length === 0 && tail === undefined) {",
+    // 🆕🆕🆕 D577 — RE-ANCHORED off the bytes (D540) — the fast path gained the `trims` conjunct; the patch still drops the orphaned-promotion conjunct.
+    find: "  if (batch.stages.length === 0 && orphaned.length === 0 && trims.length === 0 && tail === undefined) {",
+    replace: "  if (batch.stages.length === 0 && trims.length === 0 && tail === undefined) {",
     expectKilledBy: ["packages/engine/src/runAwayDraw.test.ts"],
   },
   {
@@ -9093,8 +9096,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D312",
     what: "🛑 THE SLICE'S WHOLE SEAM AT THE SECOND SITE, DELETED. `finishAttack` goes back to splicing only the KO batch's stages, so a Gholdengo that shuffles itself away ends the turn with its own Active Spot EMPTY and hands the opponent a board with nothing standing on it. This is the tree as it stood after D311 -- which is the point: D311's seam is in `resolveMidTurnKnockOuts` and the attack path never goes through it, so the ability suite stays green while every attack printing of the same sentence is broken",
     file: "packages/engine/src/flow.ts",
-    find: "    ...batch.stages,\n    ...orphaned,\n    ...turnTail(attackerSeat),",
-    replace: "    ...batch.stages,\n    ...turnTail(attackerSeat),",
+    // 🆕🆕🆕 D577 — RE-ANCHORED off the bytes (D540) — the tail gained `...trims` between the promotions and the turn tail; the patch still drops `...orphaned`.
+    find: "    ...batch.stages,\n    ...orphaned,\n    ...trims,\n    ...turnTail(attackerSeat),",
+    replace: "    ...batch.stages,\n    ...trims,\n    ...turnTail(attackerSeat),",
     expectKilledBy: ["packages/engine/src/surfBack.test.ts"],
   },
   {
@@ -9102,8 +9106,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D312",
     what: "⚠️ THE ROW THAT IS THE WHOLE DIFFERENCE BETWEEN THE TWO SITES. The promotion stages are spliced BEHIND `turnTail` instead of in front of it, so the turn ends, the Checkup runs and the opponent's turn STARTS -- all against an empty Active Spot -- and only then is the promotion asked for. Every other assertion about the seam still passes: the stage is queued, the spot is refilled, the game does not hang. Only the ORDER is wrong, and §8.1 is entirely about the order",
     file: "packages/engine/src/flow.ts",
-    find: "    ...batch.stages,\n    ...orphaned,\n    ...turnTail(attackerSeat),",
-    replace: "    ...batch.stages,\n    ...turnTail(attackerSeat),\n    ...orphaned,",
+    // 🆕🆕🆕 D577 — RE-ANCHORED off the bytes (D540) — the tail gained `...trims`; the patch still moves `...orphaned` behind the turn tail.
+    find: "    ...batch.stages,\n    ...orphaned,\n    ...trims,\n    ...turnTail(attackerSeat),",
+    replace: "    ...batch.stages,\n    ...trims,\n    ...turnTail(attackerSeat),\n    ...orphaned,",
     expectKilledBy: ["packages/engine/src/surfBack.test.ts"],
   },
   {
@@ -11431,8 +11436,9 @@ export const MUTANTS: Mutant[] = [
     //    before `precheck`.
     // 🆕🆕🆕 D575 - stepped with the constant, 37 -> 38 (the ELEVENTH position); one step back, as always.
     // 🆕🆕🆕 D576 - stepped with the constant, 38 -> 39 (the TWELFTH position); one step back, as always.
-    find: "export const MATCH_RECORD_VERSION = 39;",
-    replace: "export const MATCH_RECORD_VERSION = 38;",
+    // 🆕🆕🆕 D577 — RE-ANCHORED off the bytes (D540) — D577 stepped the constant 39 → 40; the patch is still ONE step back.
+    find: "export const MATCH_RECORD_VERSION = 40;",
+    replace: "export const MATCH_RECORD_VERSION = 39;",
     expectKilledBy: ["apps/api/src/lobby/match.test.ts"],
   },
   // == D327 - THE COST SEAM'S SECOND AND THIRD COUNT SOURCES. Every row below is a
@@ -11599,7 +11605,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D328",
     what: "\u{1F6D1} THE GAP D324 PINNED AS INTENDED, RESTORED: `playStadium` returns `ok` and sweeps nothing. Gravity Mountain takes 30 off every Stage 2 in play and a Stage 2 already past its reduced maximum simply stays standing until the Checkup - able to attack, retreat, or be healed or evolved out of a Knock Out §8.1 had already decided",
     file: "packages/engine/src/cardplay.ts",
-    find: "  return resolveMidTurnKnockOuts(next, action.seat, SEATS, events);",
+    // 🆕🆕🆕 D577 — RE-ANCHORED off the bytes (D540) — the call passes the replaced Stadium's owner (`trimFirst`, R-AZ3); the patch still skips the sweep.
+    find: "  return resolveMidTurnKnockOuts(next, action.seat, SEATS, events, undefined, current?.owner);",
     replace: "  return ok(next, events);",
     expectKilledBy: ["packages/engine/src/hpAura.test.ts"],
   },
@@ -11608,8 +11615,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D328",
     what: "the Stadium sweep passes `[action.seat]` - turn.ts's THREE call sites' argument, copied to a site whose printed clause is different. All three legal `hpDelta` printings say `both yours and your opponent's`, so this reads as consistency and silently exempts the opponent's board from a card the actor played",
     file: "packages/engine/src/cardplay.ts",
-    find: "  return resolveMidTurnKnockOuts(next, action.seat, SEATS, events);",
-    replace: "  return resolveMidTurnKnockOuts(next, action.seat, [action.seat], events);",
+    // 🆕🆕🆕 D577 — RE-ANCHORED off the bytes (D540) — the call passes the replaced Stadium's owner; the patch still narrows the KO sweep to the actor.
+    find: "  return resolveMidTurnKnockOuts(next, action.seat, SEATS, events, undefined, current?.owner);",
+    replace: "  return resolveMidTurnKnockOuts(next, action.seat, [action.seat], events, undefined, current?.owner);",
     expectKilledBy: ["packages/engine/src/hpAura.test.ts"],
   },
   {
@@ -13906,8 +13914,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D350",
     what: '🛑 THE `"any"` OFFER KEEPS ONE REPRESENTATIVE PER INTERCHANGEABLE CLASS, so an opponent hand of FIVE copies of one printed Basic offers ONE candidate and four of the five can never reach the Bench - the printed *"any number of"* silently meaning *"one"*. ⚠️ **IT IS D297\'s CAP ROW ON THE NEW ARM AND IT IS NOT THE SAME MUTANT**: that row hard-wires the cap for EVERY producer and dies in `tonguePull.test.ts`; this one leaves Lickitung untouched and can only be seen through the same-copies board, which is the fixture a natural "the effect works" suite never writes (D279\'s rule). **MEASURED: 5 of 7,354, all in `invitingWink.test.ts` — and `tonguePull.test.ts`, `lookForPrey.test.ts` and `opponentHandFamily.test.ts` all stay GREEN under it, which is the control that says the row bites the NEW arm and not the field**',
     file: "packages/engine/src/interpreter.ts",
-    find: '  const cap = op.upTo === "any" ? BENCH_MAX : (op.upTo ?? 1);',
-    replace: '  const cap = op.upTo === "any" ? 1 : (op.upTo ?? 1);',
+    // 🆕🆕🆕 D577 — RE-ANCHORED off the bytes (D540) — the `"any"` arm reads `BENCH_CEILING`; the patch still collapses it to 1.
+    find: "  const cap = op.upTo === \"any\" ? BENCH_CEILING : (op.upTo ?? 1);",
+    replace: "  const cap = op.upTo === \"any\" ? 1 : (op.upTo ?? 1);",
     expectKilledBy: ["packages/engine/src/invitingWink.test.ts"],
   },
   {
@@ -17137,8 +17146,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D394",
     what: "\u{1F6D1} C6 - **THE PARKED ROUTE DROPS THE CARRIED NAME** and stamps the empty string. It is the whole reason `PendingStage.attackEpilogue` gained a REQUIRED `attack` at all, and it is invisible on FOUR of the five routes into `finishAttack`: only a program that PARKS reaches this line, so a suite whose attacks all resolve inline is green on it. Falinks's index 0 is a deck search and parks every time, which is why that fixture carries BOTH printed attacks rather than only the one this slice buys",
     file: "packages/engine/src/flow.ts",
-    find: "      return finishAttack(popStage(state), events, stage.seat, stage.uid, stage.attack);",
-    replace: "      return finishAttack(popStage(state), events, stage.seat, stage.uid, \"\");",
+    // 🆕🆕🆕 D577 — RE-ANCHORED off the bytes (D540) — the epilogue's call spans lines (Boomerang's `returnBoomerangs` wraps the popped state); the patch still drops the attack name.
+    find: "        stage.uid,\n        stage.attack,\n      );",
+    replace: "        stage.uid,\n        \"\",\n      );",
     expectKilledBy: ["packages/engine/src/usedAttackBonus.test.ts"],
   },
   {
@@ -20613,8 +20623,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D435",
     what: "\ud83d\uded1 THE THIRD SITE OF D311/D312's PROMOTION SEAM, DROPPED. The delayed discard is the first thing in this engine that empties an Active Spot DURING the Checkup, and the next stage in the queue is the OTHER seat's `startTurn`. Under this build the victim faces an attack with no Active Pok\u00e9mon at all, and a victim with an empty Bench never reaches the \u00a714.2 loss they are owed \u2014 while every event up to that point is identical. This is D312's own forecast (*\"a THIRD caller owes the same six lines\"*) as an executable defect",
     file: "packages/engine/src/flow.ts",
-    find: "      pending: [...batch.stages, ...orphaned, ...batch.state.pending.slice(1)],",
-    replace: "      pending: [...batch.stages, ...batch.state.pending.slice(1)],",
+    // 🆕🆕🆕 D577 — RE-ANCHORED off the bytes (D540) — the Checkup tail gained `...trims`; the patch still drops `...orphaned`.
+    find: "      pending: [...batch.stages, ...orphaned, ...trims, ...batch.state.pending.slice(1)],",
+    replace: "      pending: [...batch.stages, ...trims, ...batch.state.pending.slice(1)],",
     expectKilledBy: ["packages/engine/src/delayedCounters.test.ts"],
   },
   {
@@ -26566,10 +26577,12 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D480-resolved-row-points-at-an-unbuilt-neighbour",
     decision: "D480",
-    what: "The OTHER direction, and the one a revert reaches: Unfair Stamp `sv06-165` in `RESOLVED_REFUSALS` becomes `sv06-164`, its unbuilt shelf-mate. The table then claims D271 built Survival Brace. §3's build case refuses it by id, and §5's disjointness case refuses it a second way (`sv06-164` would sit in BOTH tables at once) — two independent rungs, because a totality claim that only holds in one direction is the defect this file was written about. 🆕🆕🆕 **D562 CORRECTION (D539): ~~\"its unbuilt shelf-mate\"~~ and the disjointness half are WITHDRAWN** — D562 BUILT Survival Brace `sv06-164` and deleted its `REFUSED_PRINTINGS` row, so pointing the resolved row at it would now make a TRUE claim and SURVIVE. The `replace` was re-pointed (D540, by script) to the next shelf-mate, Boomerang Energy `sv06-166`, MEASURED unbuilt at this head (no registry key, no row in either table): §3's build case refuses it by id; §5's disjointness case no longer applies (`sv06-166` sits in neither table), so ONE rung kills it, not two.",
+    what: "The OTHER direction, and the one a revert reaches: Unfair Stamp `sv06-165` in `RESOLVED_REFUSALS` becomes `sv06-164`, its unbuilt shelf-mate. The table then claims D271 built Survival Brace. §3's build case refuses it by id, and §5's disjointness case refuses it a second way (`sv06-164` would sit in BOTH tables at once) — two independent rungs, because a totality claim that only holds in one direction is the defect this file was written about. 🆕🆕🆕 **D562 CORRECTION (D539): ~~\"its unbuilt shelf-mate\"~~ and the disjointness half are WITHDRAWN** — D562 BUILT Survival Brace `sv06-164` and deleted its `REFUSED_PRINTINGS` row, so pointing the resolved row at it would now make a TRUE claim and SURVIVE. The `replace` was re-pointed (D540, by script) to the next shelf-mate, Boomerang Energy `sv06-166`, MEASURED unbuilt at this head (no registry key, no row in either table): §3's build case refuses it by id; §5's disjointness case no longer applies (`sv06-166` sits in neither table), so ONE rung kills it, not two. 🆕🆕🆕 **D577 CORRECTION (D539): ~~Boomerang Energy `sv06-166`, MEASURED unbuilt~~ is WITHDRAWN** — D577 BUILT it (`BOOMERANG_ENERGY`), so the `replace` is re-pointed (D540, by script) to Raifort `sv06-161` (Supporter, `legal.standard: false`, no registry key, in neither table — MEASURED at this head).",
     file: "packages/engine/src/refusedPrintings.ts",
     find: "    id: \"sv06-165\",",
-    replace: "    id: \"sv06-166\",",
+    // 🆕🆕🆕 D577 — RE-POINTED (D540, by script): D577 BUILT Boomerang Energy `sv06-166`, so the
+    // claim would now be TRUE and SURVIVE; the next MEASURED-unbuilt neighbour is Raifort `sv06-161`.
+    replace: "    id: \"sv06-161\",",
     expectKilledBy: ["packages/engine/src/refusedPrintings.test.ts"],
   },
   {
@@ -29473,8 +29486,9 @@ export const MUTANTS: Mutant[] = [
     // 🆕🆕🆕 D570 - RE-TRANSCRIBED off the new bytes (36 -> 37), the same step down by one.
     // 🆕🆕🆕 D575 - stepped with the constant, 37 -> 38 (the ELEVENTH position); one step back, as always.
     // 🆕🆕🆕 D576 - stepped with the constant, 38 -> 39 (the TWELFTH position); one step back, as always.
-    find: "export const MATCH_RECORD_VERSION = 39;\n",
-    replace: "export const MATCH_RECORD_VERSION = 38;\n",
+    // 🆕🆕🆕 D577 — RE-ANCHORED off the bytes (D540) — D577 stepped the constant 39 → 40; the patch is still ONE step back.
+    find: "export const MATCH_RECORD_VERSION = 40;\n",
+    replace: "export const MATCH_RECORD_VERSION = 39;\n",
     expectKilledBy: ["apps/api/src/lobby/match.test.ts"],
   },
   // ────────────────────────────────────────────────────────────────────────────
@@ -34861,11 +34875,12 @@ export const MUTANTS: Mutant[] = [
     //    never retyped): D576's TWELFTH POSITION now sits between D575's doc tail and the constant,
     //    so the anchor is D576's last two lines and the patch value is unchanged (39 -> the same
     //    pre-bump value). Sixteenth consecutive bump to move these rows.
-    find: "    `turn:action.discardable` — 🛑 **DEPLOY THE SERVER FIRST**: an old client's `z.object` STRIPS\n    the unknown key, while a new client's REQUIRED key refuses an old server's frame. */\nexport const MATCH_RECORD_VERSION = 39;",
+    // 🆕🆕🆕 D577 — RE-ANCHORED off the bytes (D540) — D577's THIRTEENTH POSITION now sits between D576's doc tail and the constant, so the anchor is D577's last two lines; the patch drops the constant to 30, the row's own pre-bump value.
+    find: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 40;",
     // 🆕🆕🆕 D549 - RE-ANCHORED AGAIN off the bytes (D540): D549's block now sits between
     //    D548's doc tail and the constant, so the anchor is D549's last two lines and the
     //    patch drops the constant THREE steps, to D547's pre-bump 30.
-    replace: "    `turn:action.discardable` — 🛑 **DEPLOY THE SERVER FIRST**: an old client's `z.object` STRIPS\n    the unknown key, while a new client's REQUIRED key refuses an old server's frame. */\nexport const MATCH_RECORD_VERSION = 30;",
+    replace: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 30;",
     expectKilledBy: ["packages/engine/src/attackFlipLock.test.ts"],
   },
   // ── D548 — CRESCENT PURGE, THE FACE-UP PRIZE. 18 rows, all probed UNDECLARED first
@@ -35061,11 +35076,12 @@ export const MUTANTS: Mutant[] = [
     //    never retyped): D576's TWELFTH POSITION now sits between D575's doc tail and the constant,
     //    so the anchor is D576's last two lines and the patch value is unchanged (39 -> the same
     //    pre-bump value). Sixteenth consecutive bump to move these rows.
-    find: "    `turn:action.discardable` — 🛑 **DEPLOY THE SERVER FIRST**: an old client's `z.object` STRIPS\n    the unknown key, while a new client's REQUIRED key refuses an old server's frame. */\nexport const MATCH_RECORD_VERSION = 39;",
+    // 🆕🆕🆕 D577 — RE-ANCHORED off the bytes (D540) — D577's THIRTEENTH POSITION now sits between D576's doc tail and the constant, so the anchor is D577's last two lines; the patch drops the constant to 31, the row's own pre-bump value.
+    find: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 40;",
     // 🆕🆕🆕 D549 - RE-ANCHORED off the bytes onto D549's doc tail; the patch drops the
     //    constant TWO steps, to D548's pre-bump 31 (a different patch from
     //    `D549-record-version-not-bumped`, one step, same anchor).
-    replace: "    `turn:action.discardable` — 🛑 **DEPLOY THE SERVER FIRST**: an old client's `z.object` STRIPS\n    the unknown key, while a new client's REQUIRED key refuses an old server's frame. */\nexport const MATCH_RECORD_VERSION = 31;",
+    replace: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 31;",
     expectKilledBy: ["packages/engine/src/crescentPurge.test.ts", "apps/api/src/lobby/match.test.ts"],
   },
   // ── 🆕🆕🆕 D549 — THE DEFENDER'S NEXT-TURN MARKS AND THE SIDE-WIDE ATTACK LOCK (`censusAttackCorpus.ts`
@@ -35559,8 +35575,9 @@ export const MUTANTS: Mutant[] = [
     //    never retyped): D576's TWELFTH POSITION now sits between D575's doc tail and the constant,
     //    so the anchor is D576's last two lines and the patch value is unchanged (39 -> the same
     //    pre-bump value). Sixteenth consecutive bump to move these rows.
-    find: "    `turn:action.discardable` — 🛑 **DEPLOY THE SERVER FIRST**: an old client's `z.object` STRIPS\n    the unknown key, while a new client's REQUIRED key refuses an old server's frame. */\nexport const MATCH_RECORD_VERSION = 39;",
-    replace: "    `turn:action.discardable` — 🛑 **DEPLOY THE SERVER FIRST**: an old client's `z.object` STRIPS\n    the unknown key, while a new client's REQUIRED key refuses an old server's frame. */\nexport const MATCH_RECORD_VERSION = 32;",
+    // 🆕🆕🆕 D577 — RE-ANCHORED off the bytes (D540) — D577's THIRTEENTH POSITION now sits between D576's doc tail and the constant, so the anchor is D577's last two lines; the patch drops the constant to 32, the row's own pre-bump value.
+    find: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 40;",
+    replace: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 32;",
     expectKilledBy: ["packages/engine/src/sideAttackLock.test.ts", "apps/api/src/lobby/match.test.ts"],
   },
   {
@@ -36151,8 +36168,9 @@ export const MUTANTS: Mutant[] = [
     //    never retyped): D576's TWELFTH POSITION now sits between D575's doc tail and the constant,
     //    so the anchor is D576's last two lines and the patch value is unchanged (39 -> the same
     //    pre-bump value). Sixteenth consecutive bump to move these rows.
-    find: "    `turn:action.discardable` — 🛑 **DEPLOY THE SERVER FIRST**: an old client's `z.object` STRIPS\n    the unknown key, while a new client's REQUIRED key refuses an old server's frame. */\nexport const MATCH_RECORD_VERSION = 39;",
-    replace: "    `turn:action.discardable` — 🛑 **DEPLOY THE SERVER FIRST**: an old client's `z.object` STRIPS\n    the unknown key, while a new client's REQUIRED key refuses an old server's frame. */\nexport const MATCH_RECORD_VERSION = 33;",
+    // 🆕🆕🆕 D577 — RE-ANCHORED off the bytes (D540) — D577's THIRTEENTH POSITION now sits between D576's doc tail and the constant, so the anchor is D577's last two lines; the patch drops the constant to 33, the row's own pre-bump value.
+    find: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 40;",
+    replace: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 33;",
     expectKilledBy: ["apps/api/src/lobby/match.test.ts"],
   },
   // ── 🆕🆕🆕 D553 — THE SIMPLE ONCE-PER-TURN ABILITIES, 12 printings / 7 texts / 7 objects,
@@ -37084,8 +37102,9 @@ export const MUTANTS: Mutant[] = [
     //    never retyped): D576's TWELFTH POSITION now sits between D575's doc tail and the constant,
     //    so the anchor is D576's last two lines and the patch value is unchanged (39 -> the same
     //    pre-bump value). Sixteenth consecutive bump to move these rows.
-    find: "    `turn:action.discardable` — 🛑 **DEPLOY THE SERVER FIRST**: an old client's `z.object` STRIPS\n    the unknown key, while a new client's REQUIRED key refuses an old server's frame. */\nexport const MATCH_RECORD_VERSION = 39;",
-    replace: "    `turn:action.discardable` — 🛑 **DEPLOY THE SERVER FIRST**: an old client's `z.object` STRIPS\n    the unknown key, while a new client's REQUIRED key refuses an old server's frame. */\nexport const MATCH_RECORD_VERSION = 34;",
+    // 🆕🆕🆕 D577 — RE-ANCHORED off the bytes (D540) — D577's THIRTEENTH POSITION now sits between D576's doc tail and the constant, so the anchor is D577's last two lines; the patch drops the constant to 34, the row's own pre-bump value.
+    find: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 40;",
+    replace: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 34;",
     expectKilledBy: ["apps/api/src/lobby/match.test.ts"],
   },
   // ── 🆕🆕🆕 D557 — ELEVEN TRAINERS, 19 PRINTINGS / 11 TEXTS / 11 OBJECTS: Kieran's labelled
@@ -40418,8 +40437,9 @@ export const MUTANTS: Mutant[] = [
     //    never retyped): D576's TWELFTH POSITION now sits between D575's doc tail and the constant,
     //    so the anchor is D576's last two lines and the patch value is unchanged (39 -> the same
     //    pre-bump value). Sixteenth consecutive bump to move these rows.
-    find: "    `turn:action.discardable` — 🛑 **DEPLOY THE SERVER FIRST**: an old client's `z.object` STRIPS\n    the unknown key, while a new client's REQUIRED key refuses an old server's frame. */\nexport const MATCH_RECORD_VERSION = 39;",
-    replace: "    `turn:action.discardable` — 🛑 **DEPLOY THE SERVER FIRST**: an old client's `z.object` STRIPS\n    the unknown key, while a new client's REQUIRED key refuses an old server's frame. */\nexport const MATCH_RECORD_VERSION = 35;",
+    // 🆕🆕🆕 D577 — RE-ANCHORED off the bytes (D540) — D577's THIRTEENTH POSITION now sits between D576's doc tail and the constant, so the anchor is D577's last two lines; the patch drops the constant to 35, the row's own pre-bump value.
+    find: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 40;",
+    replace: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 35;",
     expectKilledBy: ["apps/api/src/lobby/match.test.ts"],
   },
   // ── 🆕🆕🆕 D565 — FOUR ABILITIES AND A SUPPORTER (Flustered Leap, Rocket Brain, Ruffian, Impromptu
@@ -41333,8 +41353,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D566",
     what: "the prompt dest enum lacks `\"swap\"` — Ogre's Mask's frame fails the parse. Killed by the OnlineHud schema rung.",
     file: "packages/schema/src/match/redacted.ts",
-    find: "    dest: z.enum([\"bench\", \"hand\", \"deck\", \"deckBottom\", \"deckTop\", \"discard\", \"evolve\", \"attach\", \"swap\"]),",
-    replace: "    dest: z.enum([\"bench\", \"hand\", \"deck\", \"deckBottom\", \"deckTop\", \"discard\", \"evolve\", \"attach\"]),",
+    // 🆕🆕🆕 D577 — RE-ANCHORED off the bytes (D540) — the enum gained `"name"` (Tyme); the patch still drops `"swap"`.
+    find: "    dest: z.enum([\"bench\", \"hand\", \"deck\", \"deckBottom\", \"deckTop\", \"discard\", \"evolve\", \"attach\", \"swap\", \"name\"]),",
+    replace: "    dest: z.enum([\"bench\", \"hand\", \"deck\", \"deckBottom\", \"deckTop\", \"discard\", \"evolve\", \"attach\", \"name\"]),",
     expectKilledBy: ["src/features/online/components/OnlineHud.capsAnyOf.dom.test.tsx"],
   },
   {
@@ -43091,8 +43112,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D570",
     what: "the window's queue drops `...orphaned`: an attack that discards the Defender with no Knock Out hands turn:action back while the opponent's Active Spot is EMPTY. Killed by §4's orphaned rung.",
     file: "packages/engine/src/flow.ts",
-    find: "        pending: [...batch.stages, ...orphaned, { kind: \"resumeTurn\", seat: attackerSeat }, ...batch.state.pending],",
-    replace: "        pending: [...batch.stages, { kind: \"resumeTurn\", seat: attackerSeat }, ...batch.state.pending],",
+    // 🆕🆕🆕 D577 — RE-ANCHORED off the bytes (D540) — the window exit spans lines and gained `...trims`; the patch still drops `...orphaned`.
+    find: "          ...orphaned,\n          ...trims,\n          { kind: \"resumeTurn\", seat: attackerSeat },",
+    replace: "          ...trims,\n          { kind: \"resumeTurn\", seat: attackerSeat },",
     expectKilledBy: ["packages/engine/src/festivalLeadD570.test.ts"],
   },
   {
@@ -43270,8 +43292,9 @@ export const MUTANTS: Mutant[] = [
     //    never retyped): D576's TWELFTH POSITION now sits between D575's doc tail and the constant,
     //    so the anchor is D576's last two lines and the patch value is unchanged (39 -> the same
     //    pre-bump value). Sixteenth consecutive bump to move these rows.
-    find: "    `turn:action.discardable` — 🛑 **DEPLOY THE SERVER FIRST**: an old client's `z.object` STRIPS\n    the unknown key, while a new client's REQUIRED key refuses an old server's frame. */\nexport const MATCH_RECORD_VERSION = 39;",
-    replace: "    `turn:action.discardable` — 🛑 **DEPLOY THE SERVER FIRST**: an old client's `z.object` STRIPS\n    the unknown key, while a new client's REQUIRED key refuses an old server's frame. */\nexport const MATCH_RECORD_VERSION = 36;",
+    // 🆕🆕🆕 D577 — RE-ANCHORED off the bytes (D540) — D577's THIRTEENTH POSITION now sits between D576's doc tail and the constant, so the anchor is D577's last two lines; the patch drops the constant to 36, the row's own pre-bump value.
+    find: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 40;",
+    replace: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 36;",
     expectKilledBy: ["apps/api/src/lobby/match.test.ts"],
   },
   // ── 🆕🆕🆕 D571 — PARADOX PART b (IRON THORNS) + THE IGNITION RIDER: the stratified lock pass
@@ -44674,8 +44697,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D575",
     what: "`resolveMidTurnKnockOuts` ignores the tail its caller passed and resumes the turn: with a Knock Out on the board, Hypno's turn end is lost BEHIND the parked prize pick and the promotion — the turn resumes instead. Killed by §5's Knock Out rung (and its no-KO twin).",
     file: "packages/engine/src/flow.ts",
-    find: "      pending: [...batch.stages, ...orphaned, ...(tail ?? [{ kind: \"resumeTurn\", seat: actorSeat }])],",
-    replace: "      pending: [...batch.stages, ...orphaned, { kind: \"resumeTurn\", seat: actorSeat }],",
+    // 🆕🆕🆕 D577 — RE-ANCHORED off the bytes (D540) — the sweep tail gained `...trims`; the patch still replaces the tail with `resumeTurn`.
+    find: "      pending: [...batch.stages, ...orphaned, ...trims, ...(tail ?? [{ kind: \"resumeTurn\", seat: actorSeat }])],",
+    replace: "      pending: [...batch.stages, ...orphaned, ...trims, { kind: \"resumeTurn\", seat: actorSeat }],",
     expectKilledBy: ["packages/engine/src/mrvAttackSliceD575.test.ts"],
   },
   {
@@ -44696,8 +44720,9 @@ export const MUTANTS: Mutant[] = [
     //    never retyped): D576's TWELFTH POSITION now sits between D575's doc tail and the constant,
     //    so the anchor is D576's last two lines and the patch value is unchanged (39 -> the same
     //    pre-bump value). Sixteenth consecutive bump to move these rows.
-    find: "    `turn:action.discardable` — 🛑 **DEPLOY THE SERVER FIRST**: an old client's `z.object` STRIPS\n    the unknown key, while a new client's REQUIRED key refuses an old server's frame. */\nexport const MATCH_RECORD_VERSION = 39;",
-    replace: "    `turn:action.discardable` — 🛑 **DEPLOY THE SERVER FIRST**: an old client's `z.object` STRIPS\n    the unknown key, while a new client's REQUIRED key refuses an old server's frame. */\nexport const MATCH_RECORD_VERSION = 37;",
+    // 🆕🆕🆕 D577 — RE-ANCHORED off the bytes (D540) — D577's THIRTEENTH POSITION now sits between D576's doc tail and the constant, so the anchor is D577's last two lines; the patch drops the constant to 37, the row's own pre-bump value.
+    find: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 40;",
+    replace: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 37;",
     expectKilledBy: ["apps/api/src/lobby/match.test.ts"],
   },
   // ── 🆕🆕🆕 D576 — THE ANTIQUE FOSSILS (Antique Cover Fossil ×2, Antique Root Fossil, Antique Plume Fossil),
@@ -44880,8 +44905,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D576",
     what: "🛑 the Bench gate admits a SIXTH body: a fossil plays onto a full Bench and both Trainer lists leave its row lit. Killed by §1's full-Bench rung.",
     file: "packages/engine/src/cardplay.ts",
-    find: "  return state.players[seat].bench.length < BENCH_MAX;",
-    replace: "  return state.players[seat].bench.length <= BENCH_MAX;",
+    // 🆕🆕🆕 D577 — RE-ANCHORED off the bytes (D540) — the limit is the LIVE `benchLimitOf` (Area Zero Underdepths); the patch is the same `<=`.
+    find: "  return state.players[seat].bench.length < benchLimitOf(state, seat);",
+    replace: "  return state.players[seat].bench.length <= benchLimitOf(state, seat);",
     expectKilledBy: ["packages/engine/src/antiqueFossilsD576.test.ts"],
   },
   {
@@ -45018,5 +45044,320 @@ export const MUTANTS: Mutant[] = [
     find: "  passive: { preventDamageWhileBenched: true },",
     replace: "  passive: { preventDamageAndEffectsWhileBenched: true },",
     expectKilledBy: ["packages/engine/src/antiqueFossilsD576.test.ts"],
+  },
+  {
+    id: "D577-limit-ignores-tera",
+    decision: "D577",
+    what: "R-AZ1's Tera conjunct dropped: Underdepths widens EVERY seat to 8, Tera or not. Killed by §2's per-seat rung (the seat without a Tera Pokémon reads 5) and `benchLimitForIds`' no-Tera rung.",
+    file: "packages/engine/src/continuous.ts",
+    find: "  return widened !== undefined && teraInPlay ? widened : BENCH_MAX;",
+    replace: "  return widened !== undefined ? widened : BENCH_MAX;",
+    expectKilledBy: ["packages/engine/src/areaZeroUnderdepthsD577.test.ts", "src/features/game/areaZeroTymeD577.dom.test.tsx"],
+  },
+  {
+    id: "D577-limit-ignores-the-stadium",
+    decision: "D577",
+    what: "the Stadium conjunct dropped: a Tera Pokémon alone widens the Bench to 8 on any board. Killed by §2's no-Stadium and other-Stadium rungs.",
+    file: "packages/engine/src/continuous.ts",
+    find: "  return widened !== undefined && teraInPlay ? widened : BENCH_MAX;",
+    replace: "  return teraInPlay ? 8 : BENCH_MAX;",
+    expectKilledBy: ["packages/engine/src/areaZeroUnderdepthsD577.test.ts", "src/features/game/areaZeroTymeD577.dom.test.tsx"],
+  },
+  {
+    id: "D577-tera-read-off-the-active-only",
+    decision: "D577",
+    what: "\"in play\" narrowed to the Active: a Benched Tera Pokémon no longer widens its seat. Killed by §2's Bench-Tera rung and §6's bounce rung (the Tera body is on the Bench).",
+    file: "packages/engine/src/continuous.ts",
+    find: "    bodies.some((body) => isTeraPokemon(topCardOf(state, body))),",
+    replace: "    side.active !== null && isTeraPokemon(topCardOf(state, side.active)),",
+    expectKilledBy: ["packages/engine/src/areaZeroUnderdepthsD577.test.ts"],
+  },
+  {
+    id: "D577-bench-index-capped-at-the-rule",
+    decision: "D577",
+    what: "`isBenchIndex` back to 0.460's `< 5`: a Bench slot 5 … 7 is refused as malformed (MRV 39 → 40's address (i)). Killed by §1's index rung and §3's attach-to-index-7 rung.",
+    file: "packages/engine/src/turn.ts",
+    find: "  return Number.isInteger(value) && (value as number) >= 0 && (value as number) < BENCH_CEILING;",
+    replace: "  return Number.isInteger(value) && (value as number) >= 0 && (value as number) < 5;",
+    expectKilledBy: ["packages/engine/src/areaZeroUnderdepthsD577.test.ts"],
+  },
+  {
+    id: "D577-bench-play-reads-the-rule",
+    decision: "D577",
+    what: "`playBasicToBench` ignores the live limit: the sixth Basic is refused under Underdepths with a Tera Pokémon in play. Killed by §3's play-to-8 rung.",
+    file: "packages/engine/src/turn.ts",
+    find: "  const benchLimit = benchLimitOf(state, action.seat);",
+    replace: "  const benchLimit = 5;",
+    expectKilledBy: ["packages/engine/src/areaZeroUnderdepthsD577.test.ts"],
+  },
+  {
+    id: "D577-bench-space-reads-the-rule",
+    decision: "D577",
+    what: "`benchSpace` back to 5 − bench: every bench-landing op clamps at 5 under an 8-Bench. Killed by §7's Inviting Wink and Lillie's Comfey rungs (max 7 → 4 / 5).",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  return Math.max(0, benchLimitOf(state, seat) - state.players[seat].bench.length);",
+    replace: "  return Math.max(0, BENCH_MAX - state.players[seat].bench.length);",
+    expectKilledBy: ["packages/engine/src/areaZeroUnderdepthsD577.test.ts"],
+  },
+  {
+    id: "D577-any-offer-capped-at-the-rule",
+    decision: "D577",
+    what: "Inviting Wink's `\"any\"` representatives capped at 5 again: seven same-name Basics offer five onto an 8-Bench. Killed by §7's Inviting Wink rung (7 candidates).",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  const cap = op.upTo === \"any\" ? BENCH_CEILING : (op.upTo ?? 1);",
+    replace: "  const cap = op.upTo === \"any\" ? BENCH_MAX : (op.upTo ?? 1);",
+    expectKilledBy: ["packages/engine/src/areaZeroUnderdepthsD577.test.ts"],
+  },
+  {
+    id: "D577-comfey-max-is-the-rule",
+    decision: "D577",
+    what: "Lillie's Comfey's printed \"any number\" back to 5: the search stops at 5 on an 8-Bench. Killed by §7's Comfey rung (max 7).",
+    file: "packages/engine/src/registry.ts",
+    find: "        max: BENCH_CEILING,",
+    replace: "        max: 5,",
+    expectKilledBy: ["packages/engine/src/areaZeroUnderdepthsD577.test.ts"],
+  },
+  {
+    id: "D577-mid-turn-sweep-drops-the-trim",
+    decision: "D577",
+    what: "PRODUCER 1 gone: the mid-turn sweep never asks the state check — a Stadium replacement, an evolve and an Item bounce leave a Bench over its limit. Killed by §4, §5's Item rung and §6's evolve / bounce rungs.",
+    file: "packages/engine/src/flow.ts",
+    find: "  const trims = [...queued, ...benchTrimStages(batch.state, trimFirst ?? actorSeat, queued)];",
+    replace: "  const trims = [...queued];",
+    expectKilledBy: ["packages/engine/src/areaZeroUnderdepthsD577.test.ts"],
+  },
+  {
+    id: "D577-attack-sweep-drops-the-trim",
+    decision: "D577",
+    what: "PRODUCER 2 gone: an attack that Knocks Out a seat's last Tera Pokémon leaves its 7-Bench standing into the next turn. Killed by §6's attack-KO rungs.",
+    file: "packages/engine/src/flow.ts",
+    find: "  const trims = benchTrimStages(batch.state, attackerSeat, batch.state.pending);",
+    replace: "  const trims: PendingStage[] = [];",
+    expectKilledBy: ["packages/engine/src/areaZeroUnderdepthsD577.test.ts"],
+  },
+  {
+    id: "D577-checkup-drops-the-trim",
+    decision: "D577",
+    what: "PRODUCER 3 gone: a Checkup Knock Out of the last Tera Pokémon trims nothing. Killed by §6's Checkup rung.",
+    file: "packages/engine/src/flow.ts",
+    find: "  const trims = benchTrimStages(batch.state, endedSeat);",
+    replace: "  const trims: PendingStage[] = [];",
+    expectKilledBy: ["packages/engine/src/areaZeroUnderdepthsD577.test.ts"],
+  },
+  {
+    id: "D577-stadium-leave-queues-no-trim",
+    decision: "D577",
+    what: "PRODUCER 5 gone: a `discardStadium` inside an attack queues nothing in front of the epilogue, and inside an Item the later sweep trims ACTOR-first. Killed by §5's attack rung (the queue) and Item rung (the owner answers first).",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  const trims = benchTrimStages(after, before.stadium.owner, after.pending);",
+    replace: "  const trims: PendingStage[] = [];",
+    expectKilledBy: ["packages/engine/src/areaZeroUnderdepthsD577.test.ts"],
+  },
+  {
+    id: "D577-stadium-leave-trims-the-other-first",
+    decision: "D577",
+    what: "R-AZ3's order inverted on the op path: the player who did NOT play Underdepths discards first. Killed by §5's Item and attack rungs (p2 owns it, p2 first).",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  const trims = benchTrimStages(after, before.stadium.owner, after.pending);",
+    replace: "  const trims = benchTrimStages(after, otherSeat(before.stadium.owner), after.pending);",
+    expectKilledBy: ["packages/engine/src/areaZeroUnderdepthsD577.test.ts"],
+  },
+  {
+    id: "D577-replacement-trims-actor-first",
+    decision: "D577",
+    what: "R-AZ3's order dropped on the replacement path: the REPLACING player trims first. Killed by §4's first rung (p2 owns the replaced Underdepths and answers first).",
+    file: "packages/engine/src/cardplay.ts",
+    find: "  return resolveMidTurnKnockOuts(next, action.seat, SEATS, events, undefined, current?.owner);",
+    replace: "  return resolveMidTurnKnockOuts(next, action.seat, SEATS, events, undefined, undefined);",
+    expectKilledBy: ["packages/engine/src/areaZeroUnderdepthsD577.test.ts"],
+  },
+  {
+    id: "D577-trim-ahead-of-the-promotion",
+    decision: "D577",
+    what: "R-AZ6 inverted: the trim runs BEFORE the prize and the promotion, on a Bench the promotion has not yet shrunk (excess 2, not 1). Killed by §6's attack-KO rung (the queue order and the 1-pick prompt).",
+    file: "packages/engine/src/flow.ts",
+    find: "    ...batch.stages,\n    ...orphaned,\n    ...trims,\n    ...turnTail(attackerSeat),",
+    replace: "    ...trims,\n    ...batch.stages,\n    ...orphaned,\n    ...turnTail(attackerSeat),",
+    expectKilledBy: ["packages/engine/src/areaZeroUnderdepthsD577.test.ts"],
+  },
+  {
+    id: "D577-trim-answered-by-the-other-seat",
+    decision: "D577",
+    what: "R-AZ4 inverted: the park is filed under the OTHER seat, which then answers a pick over a Bench it does not own. Killed by every trim rung that reads the prompt's seat (§4, §5, §6).",
+    file: "packages/engine/src/flow.ts",
+    find: "  return settleProgram(runProgram(state, [{ op: \"trimBench\" }], { seat }, events), seat, events, {",
+    replace: "  return settleProgram(runProgram(state, [{ op: \"trimBench\" }], { seat }, events), otherSeat(seat), events, {",
+    expectKilledBy: ["packages/engine/src/areaZeroUnderdepthsD577.test.ts"],
+  },
+  {
+    id: "D577-trim-parks-at-no-excess",
+    decision: "D577",
+    what: "the excess re-read dropped: a seat the promotion already brought back to 5 is still asked to discard (min = max = 0). Killed by §6's at-5-after-the-promotion rung.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      if (excess <= 0) return { done: state };\n      return {\n        park: {\n          kind: \"choosePokemonMulti\",\n          candidates: ownBenchRefs(state, ctx.seat),",
+    replace: "      return {\n        park: {\n          kind: \"choosePokemonMulti\",\n          candidates: ownBenchRefs(state, ctx.seat),",
+    expectKilledBy: ["packages/engine/src/areaZeroUnderdepthsD577.test.ts"],
+  },
+  {
+    id: "D577-trim-discards-nothing",
+    decision: "D577",
+    what: "the resumed half dropped: the owner's answer is accepted and nothing leaves the Bench. Killed by §4's 'Bench at 5 after the trim' rungs.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      return choice.kind === \"pokemonMulti\" ? discardBenchedRefs(state, choice.refs, ctx, events) : state;",
+    replace: "      return state;",
+    expectKilledBy: ["packages/engine/src/areaZeroUnderdepthsD577.test.ts"],
+  },
+  {
+    id: "D577-trim-keeps-the-attachments",
+    decision: "D577",
+    what: "R-AZ5's whole stack narrowed to the Pokémon cards: an attached Energy vanishes with the body instead of reaching the discard pile. Killed by §4's whole-stack rung.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "    const cleanup = discardFromStack(side, body, \"all\");",
+    replace: "    const cleanup = discardFromStack(side, body, new Set(body.stack));",
+    expectKilledBy: ["packages/engine/src/areaZeroUnderdepthsD577.test.ts"],
+  },
+  {
+    id: "D577-boomerang-any-host",
+    decision: "D577",
+    what: "R-BE1's host gate dropped: a Boomerang the attack discarded off ANOTHER own body is recorded and returned to the attacker. Killed by §4's Benched-body rung.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "          .filter((entry) => entry.host === ctx.sourceUid)",
+    replace: "          .filter(() => true)",
+    expectKilledBy: ["packages/engine/src/boomerangEnergyD577.test.ts"],
+  },
+  {
+    id: "D577-boomerang-any-program",
+    decision: "D577",
+    what: "R-BE1's attack gate dropped: a non-attack program's discard off the epilogue's body is recorded. Killed by §4's `runProgram` rung (no `invokedBy`, nothing recorded).",
+    file: "packages/engine/src/interpreter.ts",
+    find: "    toHand || toDeck || ctx.invokedBy !== \"attack\" || ctx.sourceUid === undefined",
+    replace: "    toHand || toDeck || ctx.sourceUid === undefined",
+    expectKilledBy: ["packages/engine/src/boomerangEnergyD577.test.ts"],
+  },
+  {
+    id: "D577-epilogue-never-returns",
+    decision: "D577",
+    what: "R-BE2 gone: the record is written and never read — Boomerang stays in the discard pile. Killed by §2's return rungs and §3's stage rungs.",
+    file: "packages/engine/src/flow.ts",
+    find: "        returnBoomerangs(popStage(state), stage, events),",
+    replace: "        popStage(state),",
+    expectKilledBy: ["packages/engine/src/boomerangEnergyD577.test.ts"],
+  },
+  {
+    id: "D577-boomerang-found-on-the-active-only",
+    decision: "D577",
+    what: "R-BE2's by-uid search narrowed to the Active: a self-switched attacker on its Bench gets nothing back. Killed by §3's self-switch rung.",
+    file: "packages/engine/src/flow.ts",
+    find: "  const onBench = side.bench.findIndex((body) => topUid(body) === stage.uid);",
+    replace: "  const onBench = -1;",
+    expectKilledBy: ["packages/engine/src/boomerangEnergyD577.test.ts"],
+  },
+  {
+    id: "D577-boomerang-ignores-the-discard-pile",
+    decision: "D577",
+    what: "R-BE2's discard-pile check dropped: a card that left the pile (here, for the hand) is attached anyway and sits in two zones. Killed by §3's left-the-pile rung.",
+    file: "packages/engine/src/flow.ts",
+    find: "  const back = uids.filter((uid, i) => side.discard.includes(uid) && uids.indexOf(uid) === i);",
+    replace: "  const back = uids.filter((uid, i) => uids.indexOf(uid) === i);",
+    expectKilledBy: ["packages/engine/src/boomerangEnergyD577.test.ts"],
+  },
+  {
+    id: "D577-tyme-compares-as-a-floor",
+    decision: "D577",
+    what: "R-TY2's exact equality loosened to a floor: an over-guess counts as right. Killed by §3's over-guess rung.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  const right = hp !== null && guess === hp;",
+    replace: "  const right = hp !== null && guess >= hp;",
+    expectKilledBy: ["packages/engine/src/tymeD577.test.ts"],
+  },
+  {
+    id: "D577-tyme-right-draws-the-controller",
+    decision: "D577",
+    what: "the two draws swapped: a right guess draws for the player who played Tyme. Killed by §3's right / wrong rungs.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  const drawer = right ? otherSeat(ctx.seat) : ctx.seat;",
+    replace: "  const drawer = right ? ctx.seat : otherSeat(ctx.seat);",
+    expectKilledBy: ["packages/engine/src/tymeD577.test.ts"],
+  },
+  {
+    id: "D577-tyme-controller-guesses",
+    decision: "D577",
+    what: "the decider dropped: the player who named the card answers their own guess. Killed by §2's answerer rung, §3's opponent-answers rungs and §4's wire rung.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "        park: { kind: \"guessHp\", name: card.name, note: `Guess the HP of your opponent's ${card.name}.` },\n        decider: otherSeat(ctx.seat),",
+    replace: "        park: { kind: \"guessHp\", name: card.name, note: `Guess the HP of your opponent's ${card.name}.` },",
+    expectKilledBy: ["packages/engine/src/tymeD577.test.ts"],
+  },
+  {
+    id: "D577-tyme-prompt-leaks-the-hp",
+    decision: "D577",
+    what: "R-TY3's barrier breached at the source: the prompt the opponent receives carries the face-down card's HP. Killed by §2 / §4's exact-prompt rungs and the wire rung.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "        park: { kind: \"guessHp\", name: card.name, note: `Guess the HP of your opponent's ${card.name}.` },",
+    replace: "        park: { kind: \"guessHp\", name: `${card.name} (${card.hp} HP)`, note: `Guess the HP of your opponent's ${card.name}.` },",
+    expectKilledBy: ["packages/engine/src/tymeD577.test.ts"],
+  },
+  {
+    id: "D577-tyme-empty-hand-playable",
+    decision: "D577",
+    what: "R-TY1's refusal dropped: Tyme is played onto a hand with no Pokémon and whiffs (§7). Killed by §2's refusal rung.",
+    file: "packages/engine/src/cardplay.ts",
+    find: "    if (op.op === \"opponentGuessesHp\" && handPokemonUids(state, seat).length === 0) return false;\n",
+    replace: "",
+    expectKilledBy: ["packages/engine/src/tymeD577.test.ts"],
+  },
+  {
+    id: "D577-tyme-names-any-card",
+    decision: "D577",
+    what: "R-TY1's category read dropped: an Antique Fossil (an Item in hand) or an Energy can be named. Killed by §2's refusal rung (the hand of a fossil and an Energy is playable) and the forced-naming rung.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  return state.players[seat].hand.filter((uid) => cardOf(state, uid)?.category === \"Pokemon\");",
+    replace: "  return state.players[seat].hand.filter((uid) => cardOf(state, uid) !== undefined);",
+    expectKilledBy: ["packages/engine/src/tymeD577.test.ts"],
+  },
+  {
+    id: "D577-tyme-guess-not-integer-checked",
+    decision: "D577",
+    what: "R-TY2's integer check dropped: 59.5 and NaN are accepted guesses. Killed by §3's refusal rung.",
+    file: "packages/engine/src/cardplay.ts",
+    find: "      if (choice.kind !== \"hpGuess\" || !Number.isInteger(choice.hp) || choice.hp < 0) {",
+    replace: "      if (choice.kind !== \"hpGuess\" || choice.hp < 0) {",
+    expectKilledBy: ["packages/engine/src/tymeD577.test.ts"],
+  },
+  {
+    id: "D577-tyme-guess-may-be-negative",
+    decision: "D577",
+    what: "R-TY2's floor dropped: −10 is accepted. Killed by §3's refusal rung.",
+    file: "packages/engine/src/cardplay.ts",
+    find: "      if (choice.kind !== \"hpGuess\" || !Number.isInteger(choice.hp) || choice.hp < 0) {",
+    replace: "      if (choice.kind !== \"hpGuess\" || !Number.isInteger(choice.hp)) {",
+    expectKilledBy: ["packages/engine/src/tymeD577.test.ts"],
+  },
+  {
+    id: "D577-web-limit-board-wide",
+    decision: "D577",
+    what: "the playmat ignores the engine's per-seat limit: an Underdepths 8-Bench is drawn and gated at 5. Killed by the web suite's per-seat and 8-slot rungs.",
+    file: "src/features/playmat/constants.ts",
+    find: "  return board[owner].benchLimit ?? DEFAULT_BENCH_LIMIT;",
+    replace: "  return DEFAULT_BENCH_LIMIT;",
+    expectKilledBy: ["src/features/game/areaZeroTymeD577.dom.test.tsx"],
+  },
+  {
+    id: "D577-projection-drops-the-limit",
+    decision: "D577",
+    what: "the LOCAL projection never writes `benchLimit`: /play draws every Bench at 5. Killed by the web suite's local-projection rung.",
+    file: "src/features/game/projection.ts",
+    find: "    ...benchLimitField(benchLimitOf(state, seat)),",
+    replace: "",
+    expectKilledBy: ["src/features/game/areaZeroTymeD577.dom.test.tsx"],
+  },
+  {
+    id: "D577-online-projection-drops-the-limit",
+    decision: "D577",
+    what: "the ONLINE projection never writes `benchLimit`: the wire board draws every Bench at 5. Killed by the web suite's online-projection rungs (both chairs).",
+    file: "src/features/game/projection.ts",
+    find: "    ...benchLimitField(benchLimitForIds(stadiumCardId, inPlay)),",
+    replace: "",
+    expectKilledBy: ["src/features/game/areaZeroTymeD577.dom.test.tsx"],
   },
 ];

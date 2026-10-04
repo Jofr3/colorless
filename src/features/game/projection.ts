@@ -47,7 +47,17 @@ import type {
   Seat,
   SpecialConditions,
 } from "@luminous/engine";
-import { cardOfUid, effectiveMaxHp, inSetup, otherSeat, phaseViewOf, topUid } from "@luminous/engine";
+import {
+  BENCH_MAX,
+  benchLimitForIds,
+  benchLimitOf,
+  cardOfUid,
+  effectiveMaxHp,
+  inSetup,
+  otherSeat,
+  phaseViewOf,
+  topUid,
+} from "@luminous/engine";
 import type {
   CardCategory,
   RedactedDiscardScope,
@@ -213,7 +223,16 @@ function playerBoardOf(state: GameState, seat: Seat, visibility: SideVisibility)
     faceUpPrizes: side.prizes.flatMap((uid, index) =>
       side.faceUpPrizes.includes(uid) ? [{ index, card: cardModelOf(state, uid) }] : [],
     ),
+    // 🆕🆕🆕 D577 — the engine's LIVE Bench limit (Area Zero Underdepths + a Tera Pokémon in
+    // play: 8), absent when it is the rule's 5 so every pre-D577 board projects byte for byte.
+    ...benchLimitField(benchLimitOf(state, seat)),
   };
+}
+
+/** 🆕🆕🆕 D577 — `PlayerBoard.benchLimit`, written only when it is not `BENCH_MAX` (the
+    absent-when-default rule): the playmat falls back to 5 on its own. */
+function benchLimitField(limit: number): { benchLimit?: number } {
+  return limit === BENCH_MAX ? {} : { benchLimit: limit };
 }
 
 function pilesOf(state: GameState, seat: Seat): ProjectedPiles {
@@ -403,11 +422,12 @@ function outcomeFor(outcome: GameOutcome, viewerSeat: Seat): ProjectedOutcome {
     Pure; the read-only online board (features/online) feeds the result to
     PlaymatView exactly as LocalMatch feeds projectGameState's. */
 export function projectionFromRedacted(game: RedactedGame): GameProjection {
+  const stadiumCardId = game.board.stadium?.cardId;
   return {
     board: {
       stadium: game.board.stadium === null ? null : cardModelFromRedacted(game.board.stadium),
-      you: playerBoardFromRedacted(game.board.you),
-      opponent: playerBoardFromRedacted(game.board.opponent),
+      you: playerBoardFromRedacted(game.board.you, stadiumCardId),
+      opponent: playerBoardFromRedacted(game.board.opponent, stadiumCardId),
     },
     piles: {
       you: pilesFromRedacted(game.board.you),
@@ -428,7 +448,10 @@ export function projectionFromRedacted(game: RedactedGame): GameProjection {
   };
 }
 
-function playerBoardFromRedacted(side: RedactedSide): PlayerBoard {
+function playerBoardFromRedacted(side: RedactedSide, stadiumCardId: string | undefined): PlayerBoard {
+  // 🆕🆕🆕 D577 — the same per-seat limit off the wire's public card ids (the Stadium and this
+  // side's in-play top cards), through the engine's `benchLimitForIds`.
+  const inPlay = [...(side.active === null ? [] : [side.active]), ...side.bench].map((card) => card.cardId);
   return {
     hand: side.hand.map(cardModelFromRedacted),
     active: side.active === null ? null : cardModelFromRedacted(side.active),
@@ -437,6 +460,7 @@ function playerBoardFromRedacted(side: RedactedSide): PlayerBoard {
     // 🆕🆕🆕 D551 — the wire already carries the face-up slots (D548); rebuilt card by card so
     // the round trip equals the local projection's `faceUpPrizes` exactly.
     faceUpPrizes: side.faceUpPrizes.map((p) => ({ index: p.index, card: cardModelFromRedacted(p.card) })),
+    ...benchLimitField(benchLimitForIds(stadiumCardId, inPlay)),
   };
 }
 
@@ -531,6 +555,9 @@ function effectDecisionFromPrompt(
         kind: "effectChoose",
         prompt: { kind: "mayDraw", count: prompt.count, note: prompt.note },
       };
+    case "guessHp":
+      // 🆕🆕🆕 D577 — Tyme's guess: the name and the note are the whole prompt (R-TY3).
+      return { kind: "effectChoose", prompt: { kind: "guessHp", name: prompt.name, note: prompt.note } };
     case "confirm":
       // The printed "you may" — the whole prompt is its sentence, so the
       // round-trip is the identity and the engine prompt rebuilds field for

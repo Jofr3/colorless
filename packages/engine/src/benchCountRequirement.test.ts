@@ -40,7 +40,8 @@ import {
 //
 // 🛑 **THE COMPARATOR WAS A CATALOG QUESTION AND IT WAS ASKED FIRST.** The printed
 // clause is *"4 or fewer"* under a NEGATIVE consequent, so the positive fact is
-// *"5 or more"* — which on a §3.3 five-slot Bench is FULL. A `yourBenchIsFull`
+// *"5 or more"* — which on a §3.3 five-slot Bench is FULL [🆕🆕🆕 D577 (D539): not under Area Zero
+// Underdepths, where a seat with a Tera Pokémon may Bench 8]. A `yourBenchIsFull`
 // predicate would answer this card identically on every board it can ever reach,
 // and would be wrong the day a printing spells a different threshold. The
 // whole-pool `%Benched Pokémon%` census on all three text columns returns exactly
@@ -369,7 +370,9 @@ describe("§4 — on a BOARD: the cancel, the land, and the boundary between the
     // The mutation rows on this member are a threshold and a comparator, so the
     // suite has to be able to tell 4 from 5 from 6. `count: 4` would attack off a
     // four-body Bench (the row above proves it must not); `count: 6` could never
-    // attack at all, because `BENCH_MAX` is 5.
+    // attack at all, because `BENCH_MAX` is 5. [🆕🆕🆕 D577 (D539): *"could never attack at all"* is
+    // WITHDRAWN — an Area Zero Underdepths Bench reaches 6 … 8 with a Tera Pokémon in play;
+    // `count: 6` is still wrong on the 5-Bench board this rung drives.]
     const base = (n: number, seed: number) => withBench(ready(seed), n);
     const holds = (n: number, count: number) =>
       conditionHolds(base(n, 4300 + n), "p1", { kind: "yourBenchAtLeast", count });
@@ -381,6 +384,8 @@ describe("§4 — on a BOARD: the cancel, the land, and the boundary between the
     expect(holds(4, 4)).toBe(true);
     expect(holds(4, 5)).toBe(false);
     // A stored 6 is unreachable at every legal Bench size, `BENCH_MAX` included.
+    // [🆕🆕🆕 D577 (D539): *"unreachable at every legal Bench size"* is WITHDRAWN — 6 … 8 is reachable under
+    // Area Zero Underdepths; on THIS 5-Bench board the stored 6 still separates.]
     expect(holds(5, 6)).toBe(false);
   });
 
@@ -545,7 +550,12 @@ describe("§5 — the census terms, MEASURED rather than assumed", () => {
     // `sv07-129` / `sv10.5b-080` (`PROTECTIVE_COVER`), `sv07-130` (`PRIMAL_ROOT`), `sv10.5w-079`
     // (`PLUME_PROTECTION`): `playAsPokemon` + `passive`, ALL non-attack. Real catalog ids, no `fix-*`
     // key, inserted MID-MAP after D572's rows (Area Zero Underdepths ×3 is PARKED, D577).
-    expect(ids).toHaveLength(973);
+    // 🆕🆕🆕 D577 — 973 -> **979**: SIX registry keys on THREE program objects — Area Zero Underdepths
+    // `sv07-131` / `sv07-174` / `sv08.5-094` (`AREA_ZERO_UNDERDEPTHS`, a `stadium`), Boomerang Energy
+    // `sv06-166` (`BOOMERANG_ENERGY`, an `energy`) and Tyme `sv08-190` / `sv08.5-143` (`TYME`, a
+    // `trainer`): ALL non-attack. Real catalog ids, no `fix-*` key, inserted MID-MAP after D576's rows.
+    // (🆕🆕🆕 D577 (D539): *"Area Zero Underdepths ×3 is PARKED, D577"* above is WITHDRAWN — BUILT here.)
+    expect(ids).toHaveLength(979);
     for (const id of VICTINI_IDS) {
       expect(ids, id).not.toContain(id);
       expect(programFor(id), id).toBeUndefined();

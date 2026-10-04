@@ -3624,7 +3624,9 @@ export type BoardCondition =
       🛑 **THE FIRST MEMBER IN THIS UNION THAT COUNTS YOUR OWN BODIES, AND THE
       PARAMETER IS SETTLED BY THE POOL RATHER THAN BY THIS PRINTING.** The printed
       clause sits under a NEGATIVE consequent, so the positive fact required is
-      *"5 or more"*, which on a §3.3 five-slot Bench (`BENCH_MAX`) means FULL — and
+      *"5 or more"*, which on a §3.3 five-slot Bench (`BENCH_MAX`) means FULL [🆕🆕🆕 D577 (D539): *"means
+      FULL"* is WITHDRAWN as a universal — under Area Zero Underdepths a seat with a Tera Pokémon
+      may Bench 8, so 5 is no longer full there; the FLOOR reading below is unaffected] — and
       a `yourBenchIsFull` predicate would answer this one card identically forever
       while being the wrong shape. The whole-pool `%Benched Pokémon%` census on all
       three text columns (remote D1 `luminous`, `$.effect`, extractor verified
@@ -3727,7 +3729,8 @@ export type BoardCondition =
       `>=`, a FLOOR — the printed word is "or more", `yourBenchAtLeast`'s and
       `yourEnergyInPlayAtLeast`'s reading and NOT `opponentPrizesRemaining`'s set
       membership. Reachable at every value from 0 to `BENCH_MAX`, so no rung of the
-      ladder is unreachable.
+      ladder is unreachable. [🆕🆕🆕 D577 (D539): the range is now 0 to `BENCH_CEILING` (8, Area Zero
+      Underdepths with a Tera Pokémon in play); still no unreachable rung.]
 
       Public: every Benched Pokémon is face-up on the table, on BOTH sides, so the
       union's public-state invariant holds and redact.ts needs no byte. */
@@ -7423,7 +7426,9 @@ export type EffectOp =
           ONE.** `sv09-068` spells its printed *"any number"* as `max: BENCH_MAX`, and
           that is sound **because the DESTINATION supplies a cap**: a bench-bound search
           is clamped to `benchSpace` in two places, so `BENCH_MAX` is the largest value
-          the sentence can ever mean. A **HAND** has no cap at all. So the hand printing
+          the sentence can ever mean. [🆕🆕🆕 D577 (D539): `max: BENCH_MAX` and *"the largest value"* are
+          WITHDRAWN — an Area Zero Underdepths Bench holds 8, so `sv09-068` now spells it
+          `max: BENCH_CEILING`; the argument (the destination supplies the cap) is unchanged.] A **HAND** has no cap at all. So the hand printing
           has no number to hand-write — only a deck size, which is not a printed word —
           and a registry road would have had to spell this member anyway or ship a
           caption the card does not carry. **The op field is not the expensive half of
@@ -8753,6 +8758,34 @@ export type EffectOp =
       so it is not persisted"** — the member directly above says so in as many words,
       and that reading was FALSE of D536's op and is false of this one twice over. */
   | { op: "returnBenchedChosen"; count: number }
+  /** 🆕🆕🆕 **D577 — AREA ZERO UNDERDEPTHS' TRIM: the CONTROLLER discards Benched Pokémon
+      from their OWN Bench until they have 5.** *"…that player discards Pokémon from their
+      Bench until they have 5."* / *"…both players discard Pokémon from their Bench until
+      they have 5…"* — no deriver produces it: it is run by flow.ts `runBenchTrim` for ONE
+      `benchTrim` stage, with the Bench OWNER as the program's controller (R-AZ4). A sibling
+      of `returnBenchedRest` / `returnBenchedChosen` (an exact count over one Bench, parked
+      on the shipped `choosePokemonMulti`) whose candidates are the CONTROLLER's own Bench and
+      whose destination is the discard pile with the whole stack, no Knock Out and no Prize
+      (R-AZ5). The count is not a field: it is the LIVE excess over `BENCH_MAX` (the printed
+      5), re-read when the op runs. It PARKS, so `{"op":"trimBench"}` is written into
+      `phase.cont.pendingOp` — a D125 widening that rides `MATCH_RECORD_VERSION` 39 → 40. */
+  | { op: "trimBench" }
+  /** 🆕🆕🆕 **D577 — TYME `sv08-190`/`sv08.5-143` (Supporter): THE NAMED, FACE-DOWN HP GUESS.**
+      *"Tell your opponent the name of a Pokémon in your hand and put that Pokémon face down in
+      front of you. Your opponent guesses that Pokémon's HP, and then you reveal it. If your
+      opponent guessed right, they draw 4 cards. If they guessed wrong, you draw 4 cards. Then,
+      return the Pokémon to your hand."* `opponentMayDraw`'s neighbour: a park answered by the
+      OPPONENT (its `decider`). Two questions, one op (the D216 channel): with `uid` absent the
+      CONTROLLER picks a Pokémon-category card in hand (a `chooseCards` with the `"name"` dest,
+      forced at one, R-TY1); `continuationOps` re-runs the op with `uid` set, which announces
+      the NAME (public, `POKEMON_NAMED`) and parks the NEW `guessHp` prompt on the opponent —
+      the name only, never the uid or the HP (R-TY3). The answer is any integer ≥ 0, compared
+      by exact equality with the printed catalog HP (R-TY2); right → the opponent draws
+      `draw`, wrong → the controller does, a short deck drawing what it can. No zone move: the
+      card is "face down in front of you" only in the print, and returned to the hand it never
+      left. Registry-only (no deriver reads a Supporter's text). It PARKS, so the op, the
+      prompt and the choice ride `phase.cont` — `MATCH_RECORD_VERSION` 39 → 40. */
+  | { op: "opponentGuessesHp"; draw: number; uid?: string }
   /** 🆕 **D311 — TAKE THE PROGRAM'S OWN BODY OFF THE BOARD WITH EVERY CARD
       ATTACHED TO IT AND SHUFFLE THE WHOLE PILE INTO ITS CONTROLLER'S DECK.**
       *"…shuffle **this Pokémon** and all attached cards into your deck."*
@@ -12722,7 +12755,9 @@ export type EffectOp =
           CAPTION AND NOT ON BEHAVIOUR — AND THE DISTINCTION IS THE ARGUMENT FOR
           THE MEMBER.** `BENCH_MAX` is 5 and the park already clamps to the live
           `benchSpace`, so `upTo: 5` would BEHAVE identically at every legal board:
-          a numeric cap of 5 can never bind. It is refused because this op's note
+          a numeric cap of 5 can never bind. [🆕🆕🆕 D577 (D539): *"at every legal board"* is WITHDRAWN —
+          on an opponent Bench Area Zero Underdepths widens to 8, a cap of 5 CAN bind; the
+          refusal of `upTo: 5` now stands on behaviour as well as on the caption.] It is refused because this op's note
           is grown ONE PRINTED FORM PER CARD and round-trips to the catalog text
           (interpreter.ts `bottomFromOpponentHandNote`) — `upTo: 5` captions the
           card with a number it does not print, and makes it indistinguishable from
@@ -12737,7 +12772,8 @@ export type EffectOp =
           on the second op that prints it.
 
           ⚠️ **IT REACHES THE SAME TWO NON-PARK PLACES THE NUMBER DOES, AND NO
-          OTHERS.** The offer's per-class `cap` becomes `BENCH_MAX` (the true
+          OTHERS.** The offer's per-class `cap` becomes `BENCH_MAX` [🆕🆕🆕 D577 (D539): `BENCH_CEILING` — an
+          Area Zero Underdepths Bench holds 8] (the true
           ceiling of what can land — the offer already returns EMPTY on a full
           opponent Bench, so nothing wider could ever be picked), and the park's
           `max` becomes the OFFER's own size clamped by `benchSpace`, because a
@@ -21970,6 +22006,9 @@ const ATTACK_REQUIREMENT_CLAUSES = new Map<string, BoardCondition>([
   // *"5 or more"* — `count: 5`, not `count: 4`. Off by one in either direction and
   // the card is wrong on exactly one board apiece: at 4 it attacks off a Bench the
   // printed text cancels on, at 6 it can never attack at all (`BENCH_MAX` is 5).
+  // [🆕🆕🆕 D577 (D539): *"can never attack at all"* is WITHDRAWN — under Area Zero Underdepths a seat
+  // with a Tera Pokémon may Bench 6 … 8, so a floor of 6 would attack there and be wrong only
+  // on the 5-Bench board; the `count: 5` reading is unaffected.]
   //
   // ⚠️ **AND THE 5 IS NOT A FULL-BENCH PREDICATE WEARING A NUMBER.** See the
   // member's own doc block: the pool's other bench-count sentence is
@@ -25855,7 +25894,10 @@ const ATTACK_REVEAL_AND_BOTTOM =
 // numeric arm in this file carries rather than a welded `2`. The ceiling is
 // `BENCH_MAX`, not the attach family's 10: this number sizes a BENCH, and a
 // printing that asked for more bodies than a Bench holds would be a malformed row
-// rather than a card. (The park clamps to the live `benchSpace` on top of this —
+// rather than a card. [🆕🆕🆕 D577 (D539): STAYS `BENCH_MAX` at the guard below, deliberately — it bounds
+// a PRINTED number ("up to N" on the catalog), and no legal printing of this family names more
+// than 5; the 8-Bench of Area Zero Underdepths is a BOARD fact the park's `benchSpace` clamp
+// answers, not a printed one. "More bodies than a Bench holds" now means more than 5 PRINTED.] (The park clamps to the live `benchSpace` on top of this —
 // the guard refuses the DATA, the clamp answers the BOARD.)
 const ATTACK_REVEAL_AND_BENCH_UP_TO =
   /^Your opponent reveals their hand\. Put up to (\d+) Basic Pokémon you find there onto your opponent['’]s Bench\.$/;

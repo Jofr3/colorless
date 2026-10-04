@@ -33,7 +33,8 @@ import {
 // incremented.
 //
 // The residue after this slice is **3 printings on 3 sentences** — `sv06-166`
-// (a post-attack re-attach that needs to know WHY a card left a body), `sv06-167`
+// (a post-attack re-attach that needs to know WHY a card left a body — 🆕🆕🆕 D577 (D539): BUILT,
+// `BOOMERANG_ENERGY`; the WHY rides the queued `attackEpilogue`), `sv06-167`
 // (a prize hook plus a per-game latch) and `sv10-182` (an attach restriction plus
 // a continuous self-discard) — each still named with its blocker in
 // `mistEnergy.test.ts`'s header, which is where that residue lives.

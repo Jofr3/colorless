@@ -2141,6 +2141,10 @@ export interface MatchRecord {
     the three Knock Out sweeps (mid-turn, attack, Checkup) PLUS the two Stadium-leave sites with
     the owner-first order carried through them — five, against the off-ramp's three (decisions.md
     D576). Neither shape moves at 0.460: `BENCH_MAX` stays 5 and `PendingStage` gains no member.
+    (🆕🆕🆕 D577 (D539): *"Neither shape moves at 0.460"* stays TRUE of 0.460 and is WITHDRAWN as a
+    standing claim, kept as written — at 0.461 (D577) `BENCH_MAX` still stays 5, but a Bench may
+    hold up to `BENCH_CEILING` (8) and `PendingStage` GAINS `benchTrim`; both are paid by the
+    THIRTEENTH POSITION below.)
 
     ⚠️ Also moved, and none is a second reason: the NEW `GameAction` member `discardFromPlay` (an
     action, never persisted — added to `MATCH_ACTION_DISPOSITION` as "supported" in the SAME deploy
@@ -2148,8 +2152,40 @@ export interface MatchRecord {
     catalog-side `CardProgram.playAsPokemon` and `PassiveEffects.preventDamageWhileBenched` /
     `opponentActiveAttackCostSurchargeBasicOnly`, and the REQUIRED wire key
     `turn:action.discardable` — 🛑 **DEPLOY THE SERVER FIRST**: an old client's `z.object` STRIPS
-    the unknown key, while a new client's REQUIRED key refuses an old server's frame. */
-export const MATCH_RECORD_VERSION = 39;
+    the unknown key, while a new client's REQUIRED key refuses an old server's frame.
+
+    🆕🆕🆕 **39 → 40 AT D577 — THE THIRTEENTH POSITION: AN 8-BENCH, A TRIM, A BOOMERANG AND A
+    GUESS.** The addresses, named first (D456's rule), each one a v40 byte a 0.460 reader would
+    read wrongly — not inert, so the version is owed:
+    (i) **A Bench index above 4** — Area Zero Underdepths `sv07-131` / `sv07-174` / `sv08.5-094`
+    lets a seat with a Tera Pokémon in play hold up to `BENCH_CEILING` (8) Benched Pokémon
+    (engine continuous.ts `benchLimitOf`). A v40 `PlayerSide.bench` may hold 6 … 8 bodies; 0.460's
+    turn.ts `isBenchIndex` is `< BENCH_MAX` (5), so every action addressing slot 5 … 7 (a
+    promotion, an attach, a retreat target) is refused as malformed on a board it cannot address.
+    (ii) **The persisted `PendingStage` member `{ kind: "benchTrim", seat }`** — the trim back to 5
+    when a seat loses its last Tera Pokémon or the Stadium leaves (R-AZ2 / R-AZ3). 0.460's
+    exhaustive `advance` switch has no arm for it: the stage falls through, `advance` returns
+    `undefined`, and the reducer hands the caller a non-result — a wedged queue, D326's class.
+    (iii) **`attackEpilogue.boomerang?: string[]`** — Boomerang Energy `sv06-166`'s record, written
+    on the queued epilogue by the attack's own discard and re-attached when it drains. OPTIONAL,
+    and that is the FIFTH POSITION's failure: a 0.460 reader drops it silently, so a parked
+    attack resumed under a rollback discards the Boomerang it printed back.
+    (iv) **Tyme's op, prompt and choice in `phase.cont` / `effect:choose`** — the `EffectOp`
+    `opponentGuessesHp { draw, uid? }` parked in `cont.pendingOp`, the THIRTEENTH prompt kind
+    `guessHp { name, note }` on the phase (TWELVE until now — the count at the D548 note below is
+    withdrawn), and the `hpGuess` answer. 0.460 has no `stepOp` arm for the op (its exhaustive
+    switch falls through to `undefined`) and its `validateChoice` / `redactPrompt` switches no arm
+    for the prompt — a parked Tyme under a rollback cannot be answered.
+    🛑 **AND A v39 RECORD IS READ BENIGNLY BY 0.461, BUT IS RETIRED ANYWAY** — every v39 byte means
+    the same at 0.461 (a Bench of ≤ 5, no trim, no Boomerang, no Tyme), so the retirement is D124's
+    rule, not a hazard.
+    ⚠️ Also moved, and none is a second reason: the chooseCards `dest` member `"name"` and the wire
+    arm `guessHp` (both additive schema widenings — 🛑 **DEPLOY THE CLIENT FIRST**, or both
+    together: an old client's `z.discriminatedUnion` / `z.enum` refuses the new arm and member),
+    the `trimBench` `EffectOp` (parked in `cont`, a D125 widening carried by (ii)), the events
+    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side
+    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */
+export const MATCH_RECORD_VERSION = 40;
 
 /** How a persisted match read back: absent, usable, or written by an
     incompatible deploy (`stale` — the caller decides whether to retire it). */
@@ -2345,6 +2381,10 @@ export const MATCH_ACTION_DISPOSITION = {
     🆕🆕🆕 **D548 steps it to TWELVE** with `choosePrize` — MEASURED, not counted:
     `redactedEffectPromptSchema.options.length` read at D548's head is **12**, and the
     list off `.options` ends `…, chooseAttack, choosePrize`.
+    🆕🆕🆕 **D577 steps it to THIRTEEN** with Tyme's `guessHp` (D539: the TWELVE above is
+    withdrawn as the live count, kept as D548's measurement) — MEASURED:
+    `redactedEffectPromptSchema.options.length` reads **13** at D577, the list off `.options`
+    now `mayDraw, guessHp, confirm, …, chooseAttack, choosePrize`.
     ⚠️ **A PROSE COUNT OF A UNION IS A PIN NO RUNNER REPORTS** — which is the
     paragraph's own lesson ("an invariant asserted in a comment is checked by
     nothing, and reads exactly like one that is") arriving a second time at the

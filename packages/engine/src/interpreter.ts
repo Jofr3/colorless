@@ -96,6 +96,11 @@ import {
   toolCardSimulated,
   // 🆕🆕🆕 D572 — Milotic "Mentally Calm": the in-play → hand lock, at every hand writer.
   inPlayToHandBlocked,
+  // 🆕🆕🆕 D577 — the live per-seat Bench limit (`benchSpace`, `trimBench`), the
+  // Underdepths trim check (`discardStadium`) and Boomerang Energy's print.
+  benchLimitOf,
+  benchTrimStages,
+  returnsAfterAttackDiscard,
 } from "./continuous";
 import type { KoSurvival } from "./continuous";
 import { POKEMON_TYPES, STATUS_WORD_OF, foldApostrophes } from "./effects";
@@ -145,6 +150,7 @@ import type {
   Seat,
 } from "./types";
 import {
+  BENCH_CEILING,
   BENCH_MAX,
   DEFAULT_CONFUSION_DAMAGE,
   DEFAULT_POISON_DAMAGE,
@@ -423,8 +429,14 @@ export type EffectPrompt =
           in your discard pile … and switch it with 1 of your Pokémon ex in play"*,
           `switchWithDiscardNamed`'s second question). The picked card goes INTO PLAY in
           place of a body's top card — not to the hand, not onto a body as an attachment —
-          so neither neighbour's verb is true of it. A union widening (D125). */
-      dest: "bench" | "hand" | "deck" | "deckBottom" | "deckTop" | "discard" | "evolve" | "attach" | "swap";
+          so neither neighbour's verb is true of it. A union widening (D125).
+
+          🆕🆕🆕 **D577 — `"name"` IS THE TENTH MEMBER** (Tyme: *"Tell your opponent the name of
+          a Pokémon in your hand and put that Pokémon face down"*, `opponentGuessesHp`'s first
+          question). The picked card goes NOWHERE — it is named, and stays in the hand — so no
+          zone's verb is true of it ("Take" would promise a move). A union widening (D125),
+          `"swap"`'s precedent. */
+      dest: "bench" | "hand" | "deck" | "deckBottom" | "deckTop" | "discard" | "evolve" | "attach" | "swap" | "name";
       /** 🆕 **D332 — PER-KIND CAPS OVER THE SAME CANDIDATE LIST**, the printed
           *"you may reveal **a Pokémon and a Trainer card**"* (Drayton, the sole
           consumer today through `lookAtTopN.also`). Each entry caps how many of
@@ -794,6 +806,11 @@ export type EffectPrompt =
       card (an empty deck auto-resolves — the M1 no-choice rule), so "yes" is
       never a no-op. */
   | { kind: "mayDraw"; count: number; note: string }
+  /** 🆕🆕🆕 **D577 — the THIRTEENTH prompt kind: Tyme's guess** (`opponentGuessesHp`'s second
+      question). Answered by the OPPONENT (the park's `decider`, filed as `answerer`), who sees
+      the NAME the controller told them and nothing else — no uid, no HP (R-TY3). The answer
+      is an `hpGuess`. */
+  | { kind: "guessHp"; name: string; note: string }
   /** §8/§11 (D157) — pick exactly one of ANOTHER Pokémon's printed ATTACKS, to
       bar it for that Pokémon's next turn ("Choose 1 of your opponent's Active
       Pokémon's attacks…" — Medicham sv01-111, Oranguru sv02-094). The first
@@ -1068,6 +1085,9 @@ export type EffectChoice =
       decline. A plain boolean (wire-checked to be one: a P4 client's truthy
       string must not read as consent), answered by the phase's `answerer`. */
   | { kind: "mayDraw"; draw: boolean }
+  /** 🆕🆕🆕 D577 — the `guessHp` answer: the guessed HP, an integer ≥ 0 (`validateChoice`
+      refuses anything else — R-TY2). Answered by the controller's OPPONENT. */
+  | { kind: "hpGuess"; hp: number }
   /** The chooseAttack answer (D157): the INDEX of the barred attack, into the
       chosen Pokémon's printed `attacks`. A bare number rather than a ref or a uid
       because an attack is not an addressable object in this engine — the index IS
@@ -2139,6 +2159,11 @@ function continuationOps(
   }
   // 🆕🆕🆕 D575 — Blipbug's BLIND slot answer buys the LOOK (the same op with `index` set,
   // which parks the private one-card `orderCards` show). The show's own answer buys nothing.
+  // 🆕🆕🆕 D577 — Tyme's NAMING answer buys question two (D216's channel).
+  if (op.op === "opponentGuessesHp" && op.uid === undefined) {
+    const [named] = choice.kind === "cards" ? choice.uids : [];
+    return named === undefined ? [] : [{ ...op, uid: named }];
+  }
   if (op.op === "lookAtPrize" && op.index === undefined) {
     return choice.kind === "prize" ? [{ ...op, index: choice.index }] : [];
   }
@@ -4674,6 +4699,36 @@ function stepOp(
       );
       return { done: discardChosenFromHand(state, otherSeat(ctx.seat), swept, events) };
     }
+    case "opponentGuessesHp": {
+      // 🆕🆕🆕 D577 — Tyme. QUESTION ONE (no `uid` yet): the controller names a Pokémon in
+      // hand — only Pokémon-category cards (R-TY1; a fossil in hand is an Item), forced at one
+      // (the M1 rule, `schedule`), parked on `chooseCards` with the `"name"` dest otherwise.
+      if (op.uid === undefined) {
+        const named = handPokemonUids(state, ctx.seat);
+        const [only] = named;
+        if (only === undefined) return { done: state };
+        if (named.length === 1) return { done: state, schedule: [{ ...op, uid: only }] };
+        return {
+          park: {
+            kind: "chooseCards",
+            candidates: named,
+            min: 1,
+            max: 1,
+            dest: "name",
+            note: "Name a Pokémon in your hand — your opponent guesses its HP.",
+          },
+        };
+      }
+      // QUESTION TWO: the name is told (public), the card stays face down (in the hand —
+      // nothing moves), and the OPPONENT guesses: the park's decider (R-TY3).
+      const card = cardOf(state, op.uid);
+      if (card === undefined || !state.players[ctx.seat].hand.includes(op.uid)) return { done: state };
+      events.push({ type: "POKEMON_NAMED", seat: ctx.seat, name: card.name });
+      return {
+        park: { kind: "guessHp", name: card.name, note: `Guess the HP of your opponent's ${card.name}.` },
+        decider: otherSeat(ctx.seat),
+      };
+    }
     case "opponentMayDraw": {
       // The opponent's printed "may" — the FIRST park whose ANSWERER is the other
       // seat (the decider below; settleProgram files it as phase.answerer).
@@ -4927,6 +4982,27 @@ function stepOp(
         // above already make. This sentence prints no chooser, so nothing inverts it.
       };
     }
+    case "trimBench": {
+      // 🆕🆕🆕 §7.3 (D577) — Area Zero Underdepths' trim (R-AZ2 … R-AZ5): the controller (the
+      // Bench OWNER, flow.ts `runBenchTrim`) picks EXACTLY the excess over the printed 5 from
+      // their own Bench. Only while over the LIVE limit — a seat back at it trims nothing. The
+      // pick is never forced: the excess is always smaller than the Bench, so the M1
+      // no-choice rule has nothing to collapse. No §11 shield (nothing is done TO a body by
+      // an attack; the owner discards their own).
+      const bench = state.players[ctx.seat].bench.length;
+      const excess = bench > benchLimitOf(state, ctx.seat) ? bench - BENCH_MAX : 0;
+      if (excess <= 0) return { done: state };
+      return {
+        park: {
+          kind: "choosePokemonMulti",
+          candidates: ownBenchRefs(state, ctx.seat),
+          min: excess,
+          max: excess,
+          declinable: false,
+          note: `Your Bench can hold only ${BENCH_MAX} Pokémon: discard ${excess} of your Benched Pokémon (and all attached cards).`,
+        },
+      };
+    }
     case "returnSelf":
       // 🆕 D311 — the same unmaking with NO pick in it: the printed subject is
       // "this Pokémon", so the ref comes from `sourceRef` and there is nothing to
@@ -5008,7 +5084,9 @@ function stepOp(
       // maximum owes is `finishAttack`'s `collectKnockOuts` / `settleProgram`'s
       // `resolveMidTurnKnockOuts`, never this line. No sweep here, no new event, no
       // new stage — `playStadium` already owns the identical transition (cardplay.ts).
-      return { done: discardStadium(state, events) };
+      // [🆕🆕🆕 D577 (D539): *"no new stage"* is WITHDRAWN, kept as written — a departing
+      // Area Zero Underdepths queues its owner-first `benchTrim` stages here (R-AZ3/R-AZ7).]
+      return { done: queueStadiumLeaveTrims(state, discardStadium(state, events)) };
     // 🆕🆕 D433 — no `op.` read at all, which is the shape of a field-free op. It is
     // the FOURTH op in this file that can change a body's MAXIMUM without touching its
     // damage, and the FIRST that does so by shortening the evolution stack: the §8.1
@@ -7946,6 +8024,12 @@ export function applyChoice(
       recordMoved(record, op.recordAs, moved.moved);
       return moved.state;
     }
+    case "opponentGuessesHp":
+      // 🆕🆕🆕 D577 — Tyme. The NAMING answer moves nothing (`continuationOps` buys question
+      // two); the GUESS answer is the reveal and the draw.
+      return op.uid !== undefined && choice.kind === "hpGuess"
+        ? hpGuessApply(state, op, op.uid, choice.hp, ctx, events)
+        : state;
     case "opponentMayDraw":
       // The drawer is the answerer — the controller's OPPONENT (the op's whole
       // point); a decline moves nothing and says nothing.
@@ -8031,6 +8115,13 @@ export function applyChoice(
         events,
       );
     }
+    case "trimBench":
+      // 🆕🆕🆕 §7.3 (D577) — the RESUMED half of Area Zero Underdepths' trim: the answer
+      // names the bodies that GO (the owner's own Bench, `validateChoice` already held the
+      // refs to the candidates and the exact count). Omitting this arm would typecheck green
+      // and discard the owner's answer silently (D541's measurement at the neighbour), so it
+      // is driven parked in `areaZeroUnderdepthsD577.test.ts`.
+      return choice.kind === "pokemonMulti" ? discardBenchedRefs(state, choice.refs, ctx, events) : state;
     case "returnBenchedChosen": {
       // 🛑🛑 **🆕🆕🆕 D541 — THE RESUMED HALF, AND IT IS THE ONE SITE IN THIS SLICE
       // THE COMPILER CANNOT SEE.** This `switch` ends in a `default:` that returns
@@ -14153,12 +14244,15 @@ function bottomFromOpponentHandOffer(
   // size is public — so this arm is the resolve-time half of one rule.)
   if (op.dest === "bench" && benchSpace(state, otherSeat(ctx.seat)) === 0) return [];
   const hand = state.players[otherSeat(ctx.seat)].hand;
-  // 🆕 D350 — `"any"` (Lillie's Ribombee "Inviting Wink") keeps `BENCH_MAX`
+  // 🆕 D350 — `"any"` (Lillie's Ribombee "Inviting Wink") keeps `BENCH_MAX` [D577: `BENCH_CEILING`]
   // representatives per interchangeable class rather than a printed count: the
   // sentence names no number, and `BENCH_MAX` is the true ceiling of what could
   // ever land — the full-Bench guard three lines up has already returned EMPTY
   // when nothing can. A wider cap would only lengthen a list nobody can spend.
-  const cap = op.upTo === "any" ? BENCH_MAX : (op.upTo ?? 1);
+  // 🆕🆕🆕 D577 (D539): *"`BENCH_MAX` is the true ceiling"* is WITHDRAWN, kept as written —
+  // under Area Zero Underdepths a Bench holds 8, so the ceiling is `BENCH_CEILING`; the
+  // full-Bench guard above still reads the LIVE limit (`benchSpace`).
+  const cap = op.upTo === "any" ? BENCH_CEILING : (op.upTo ?? 1);
   const kept = new Map<string, number>();
   const candidates: string[] = [];
   for (const uid of hand) {
@@ -14575,6 +14669,67 @@ function shuffleBenchedRefsIntoDeck(
   const [deck, rngState] = shuffle([...side.deck, ...moved], state.rngState);
   events.push({ type: "SHUFFLE", seat: owner });
   return { ...withSide(state, owner, { ...side, bench, deck }), rngState };
+}
+
+/** 🆕🆕🆕 D577 — the Pokémon-category cards in `seat`'s hand (Tyme's candidates, R-TY1), read
+    through the zone-aware `cardOf` (an Antique Fossil in hand is the Item it is there).
+    Exported for cardplay.ts `programPlayable`, which refuses Tyme on an empty list. */
+export function handPokemonUids(state: GameState, seat: Seat): string[] {
+  return state.players[seat].hand.filter((uid) => cardOf(state, uid)?.category === "Pokemon");
+}
+
+/** 🆕🆕🆕 D577 — Tyme's REVEAL: the guess against the named card's PRINTED HP, by exact
+    equality (R-TY2: a card with no printed HP matches no guess); right → the OPPONENT draws
+    `op.draw`, wrong → the CONTROLLER does (a short deck draws what it has, `drawToHand`).
+    `HP_GUESSED` is public — the reveal names the card, its HP and the guess. */
+function hpGuessApply(
+  state: GameState,
+  op: Extract<EffectOp, { op: "opponentGuessesHp" }>,
+  uid: string,
+  guess: number,
+  ctx: EffectContext,
+  events: GameEvent[],
+): GameState {
+  const hp = cardOf(state, uid)?.hp ?? null;
+  const right = hp !== null && guess === hp;
+  const drawer = right ? otherSeat(ctx.seat) : ctx.seat;
+  events.push({ type: "HP_GUESSED", seat: ctx.seat, uid, guess, hp, right, drawer });
+  return drawToHand(state, drawer, op.draw, "effect", events);
+}
+
+/** 🆕🆕🆕 §7.3 (D577) — discard the controller's Benched bodies `refs` names, each with its
+    WHOLE stack (R-AZ5: no Knock Out, no Prize, no `KNOCKED_OUT`), into the controller's own
+    discard pile, compacting the Bench once. `shuffleBenchedRefsIntoDeck`'s gather-then-splice
+    shape (a per-ref splice would re-index under its own feet), its live re-read (a ref whose
+    body has left play matches nothing) and ONE `BENCH_TRIMMED` row for the whole pick. */
+function discardBenchedRefs(
+  state: GameState,
+  refs: readonly PokemonRef[],
+  ctx: EffectContext,
+  events: GameEvent[],
+): GameState {
+  let side = state.players[ctx.seat];
+  const picked = new Set(
+    refs
+      .filter((ref) => ref.seat === ctx.seat && ref.spot.spot === "bench")
+      .map((ref) => (ref.spot.spot === "bench" ? ref.spot.index : -1)),
+  );
+  const tops: string[] = [];
+  const discarded: string[] = [];
+  const kept: InPlayPokemon[] = [];
+  side.bench.forEach((body, index) => {
+    if (!picked.has(index)) {
+      kept.push(body);
+      return;
+    }
+    const cleanup = discardFromStack(side, body, "all");
+    side = cleanup.side;
+    tops.push(topUid(body) ?? "");
+    discarded.push(...cleanup.discarded);
+  });
+  if (tops.length === 0) return state;
+  events.push({ type: "BENCH_TRIMMED", seat: ctx.seat, uids: tops, discarded });
+  return withSide(state, ctx.seat, { ...side, bench: kept });
 }
 
 /** 🆕 D311 — Take the PROGRAM'S OWN body (`ctx.sourceUid`, the printed "this
@@ -15388,6 +15543,20 @@ function discardStadium(state: GameState, events: GameEvent[]): GameState {
   // The zone is cleared LAST, off `next`, so the pile update and the vacancy are one
   // reduction — nothing can observe a Stadium that is in neither place.
   return { ...next, stadium: null };
+}
+
+/** 🆕🆕🆕 §7.3 (D577) — PRODUCER 5 of the Area Zero Underdepths state check, wrapped around
+    `discardStadium` (whose body is unchanged): *"When this card leaves play, both players
+    discard Pokémon from their Bench until they have 5, and the player who played this card
+    discards first."* The OWNER is read off `before` — the vacated zone no longer names it —
+    and the trims go at the FRONT of `pending` (R-AZ7), so they drain before the attack's
+    queued tail when the op runs inside an attack, and `settleProgram`'s sweep carries them
+    owner-first for an Item or an Ability. A Stadium that widened nothing leaves no Bench over
+    5, so this queues nothing. */
+function queueStadiumLeaveTrims(before: GameState, after: GameState): GameState {
+  if (before.stadium === null) return after;
+  const trims = benchTrimStages(after, before.stadium.owner, after.pending);
+  return trims.length === 0 ? after : { ...after, pending: [...trims, ...after.pending] };
 }
 
 /** 🆕🆕 **D431 — §8.1's PRIZE, QUEUED BY AN ATTACK'S EFFECT INSTEAD OF BY A KNOCK
@@ -17895,7 +18064,7 @@ function discardEnergyApply(
       ...(toHand ? { to: "hand" as const } : toDeck ? { to: "deck" as const } : {}),
     });
   }
-  return {
+  const result = {
     state: withSide(state, victim, {
       ...side,
       active,
@@ -17917,6 +18086,37 @@ function discardEnergyApply(
     }),
     discarded,
   };
+  // 🆕🆕🆕 §6.1 (D577) — Boomerang Energy (R-BE1): a flagged card this ATTACK's program put
+  // into the DISCARD PILE off the attacker itself (`host` is the attacker's top uid, captured
+  // pre-strip) is recorded on the queued `attackEpilogue`, which re-attaches it after the
+  // attack (flow.ts `returnBoomerangs`). Discard to hand or deck is not "discarded"; an
+  // Item's, Ability's or Supporter's discard is not "by an effect of an attack"; a body
+  // other than the attacker is not "the Pokémon this card is attached to".
+  const boomerang =
+    toHand || toDeck || ctx.invokedBy !== "attack" || ctx.sourceUid === undefined
+      ? []
+      : pulled
+          .filter((entry) => entry.host === ctx.sourceUid)
+          .flatMap((entry) => entry.uids)
+          .filter((uid) => returnsAfterAttackDiscard(state, uid));
+  return { ...result, state: recordBoomerang(result.state, ctx.sourceUid, boomerang) };
+}
+
+/** 🆕🆕🆕 §6.1 (D577) — append `uids` to the queued `attackEpilogue` of the attacker
+    `attackerUid` (R-BE1). That stage is queued BEFORE the attack's program runs (attack.ts),
+    so it is on `pending` whenever an attack's discard lands; with none queued the record has
+    no carrier and nothing returns (no attack is running). */
+function recordBoomerang(
+  state: GameState,
+  attackerUid: string | undefined,
+  uids: readonly string[],
+): GameState {
+  if (uids.length === 0) return state;
+  const at = state.pending.findIndex((stage) => stage.kind === "attackEpilogue" && stage.uid === attackerUid);
+  const stage = state.pending[at];
+  if (stage === undefined || stage.kind !== "attackEpilogue") return state;
+  const carried: PendingStage = { ...stage, boomerang: [...(stage.boomerang ?? []), ...uids] };
+  return { ...state, pending: state.pending.map((queued, index) => (index === at ? carried : queued)) };
 }
 
 /** 🆕🆕🆕 **D543 — strip the picked Pokémon Tools off the OPPONENT's bodies and
@@ -18764,7 +18964,9 @@ function ownInPlayRefs(state: GameState, seat: Seat): PokemonRef[] {
 }
 
 function benchSpace(state: GameState, seat: Seat): number {
-  return BENCH_MAX - state.players[seat].bench.length;
+  // 🆕🆕🆕 D577 — the LIVE limit (Area Zero Underdepths + a Tera Pokémon in play: 8), never
+  // below zero (a Bench over its limit is owed a trim, and has no space meanwhile).
+  return Math.max(0, benchLimitOf(state, seat) - state.players[seat].bench.length);
 }
 
 // 🆕🆕🆕 D576 — DELEGATES to the one zone-aware accessor (cards.ts `cardOfUid`), so an

@@ -29010,7 +29010,7 @@ two rows' `what` annotated (D370, D472). Declared survivors 52 unmoved.
 ~~The whole-corpus sweep (predicted `3794 · 52` over 3,846 on D567's PAID `3751 · 52`).~~ (🆕 D569 landing: PAID, exactly, on its first launch — `3794 killed · 52 known survivor(s) · 0 GAP(S)` over 3,846, swept on `4b29bb1c`, close-out `8e36c690`.) R-TB1 and R-BR1 UNRULED. Slice 2 (the
 Paradox banners, about 28 printings — single-source table so far, needs the same two-source plus image close). (🆕🆕🆕 D569:
 PAID in part — Slice 2 part a closed the table from two sources plus the image and built 20; see the D569 section below.) Named debts:
-Area Zero Underdepths ×3 (Bench size 8 — `BENCH_MAX` is a constant), Team Rocket's Mimikyu `sv10-087` (copy-attack) and
+Area Zero Underdepths ×3 (Bench size 8 — `BENCH_MAX` is a constant) [🆕🆕🆕 D577: PAID — BUILT, `BENCH_CEILING` / `benchLimitOf`, D577 below], Team Rocket's Mimikyu `sv10-087` (copy-attack) and
 Technical Machine: Fluorite `sv08-188` (its GRANTED attack heals "each of your Tera Pokémon"; excluded because no Technical
 Machine attack-granting Tool is built — the TM mechanism is its blocker). Five printings; Tera is 24, D568 built 19.
 NEXT: see `progress.md` NEXT (7).
@@ -29310,7 +29310,7 @@ Recorded as R-CP9 (⚠️ UNRULED) with its reversal; the ~~four~~ 🆕 SIX *"Un
 engine source first (interpreter.ts `preventAttackUse`'s doc, `perAttackLock` / `untilLeavesActiveBar` / `perAttackBuff`
 suites; 🆕 at the landing, by a case-INSENSITIVE re-sweep, D154's two lowercase copies — the `decisions.md` D154 row and
 the D154 section of this file — which the builder's case-sensitive sweep missed); §3c adds six rungs; no mutant row (the D573 rows stay 36). NEXT: see `progress.md` NEXT — attack-residue Bundle A (or its 3-printing rider sharing a 37 → 38 step with the
-Paradox MRV trio), then antique-fossils, Tyme, Scovillain ex. (🆕🆕🆕 D574: the rider TAKEN with the copy-family remainder, NO MRV step — D574 below.) (🆕🆕🆕 D576: antique-fossils TAKEN, 38 → 39, Area Zero Underdepths PARKED as D577 — D576 below.)
+Paradox MRV trio), then antique-fossils, Tyme, Scovillain ex. (🆕🆕🆕 D574: the rider TAKEN with the copy-family remainder, NO MRV step — D574 below.) (🆕🆕🆕 D577: Tyme TAKEN, with Area Zero Underdepths and Boomerang Energy, 39 → 40 — D577 below.) (🆕🆕🆕 D576: antique-fossils TAKEN, 38 → 39, Area Zero Underdepths PARKED as D577 — D576 below.)
 
 ## D574 — the copy-family remainder + the Bundle A rider: 7 printings / 5 texts (engine 0.458.0, `MATCH_RECORD_VERSION` stays 37)
 
@@ -29373,7 +29373,7 @@ INERT. Owed: ~~D573's sweep (predicted `3958 · 51` over 4,009, PENDING) and~~ �
 4,009, close-out `b022087d`); ~~owed: D574's (predicted `3982 · 51` over 4,033, stands as written).~~ 🆕 D574's is PAID,
 EXACTLY, on the first launch (`3982 · 51` over 4,033, close-out `f268886b`, `tmp/sweep-D574.log:8078`; struck at the D575 landing).
 NEXT: see `progress.md` NEXT (7) — the MRV slice (Iron Moth + Miraidon + Glimmora + Hypno, 37 → 38), then Blipbug [🆕🆕🆕 D575: TAKEN, with Blipbug AND N's Sigilyph riding the same step — D575 below],
-antique-fossils [🆕🆕🆕 D576: TAKEN, 38 → 39, Area Zero Underdepths PARKED as D577 — D576 below], Tyme, Scovillain ex; Koraidon after its R-1.
+antique-fossils [🆕🆕🆕 D576: TAKEN, 38 → 39, Area Zero Underdepths PARKED as D577 — D576 below], Tyme [🆕🆕🆕 D577: TAKEN with Underdepths and Boomerang, 39 → 40 — D577 below], Scovillain ex; Koraidon after its R-1.
 
 ## D575 — the MRV-38 attack slice: 6 printings / 6 texts (engine 0.459.0, `MATCH_RECORD_VERSION` 37 → 38)
 
@@ -29480,7 +29480,7 @@ with `--no-commit`, no amend; docs-only conflicts resolved keeping every close-o
 
 NEXT: see `progress.md` NEXT (7) — ⑴ fossils + Area Zero Underdepths (MRV 38 → 39, after an ingest decision on
 map.ts:103-108) [🆕🆕🆕 D576: TAKEN for the four fossils WITHOUT the ingest decision (the face hand-written in `fossils.ts`,
-the widening a USER follow-up); Underdepths ×3 PARKED as D577 — D576 below], ⑵ Relicanth + TM Fluorite, ⑶ Tyme, ⑷ Scovillain + Iron Treads, ⑸ the census close-out (Walking Wake +
+the widening a USER follow-up); Underdepths ×3 PARKED as D577 — D576 below], ⑵ Relicanth + TM Fluorite, ⑶ Tyme [🆕🆕🆕 D577: TAKEN — D577 below], ⑷ Scovillain + Iron Treads, ⑸ the census close-out (Walking Wake +
 Koraidon after R-1, the gates on constructed literals); the Mega ingest is a user decision.
 
 ## D576 — the Antique Fossils: 4 printings / 3 texts (engine 0.460.0, `MATCH_RECORD_VERSION` 38 → 39)
@@ -29541,11 +29541,69 @@ See `progress.md` NEXT (0)-(6) for the pasted figures: `bun run check`, precheck
 `--decision D576 --allow-dirty` (35 killed), the neighbour re-probe and the 16 gate-witness rows (KILLED before and after).
 Census: `BUILT.trainer` 254 → **258**; `BUILT.ability` 388 UNMOVED and CHECKED; `built` 2380 → **2384**; Item 61 → 65.
 MRV 38 → 39, the TWELFTH position (match.ts). Owed: ~~D575's sweep (`4023 · 51` over 4,074, PENDING) and~~ 🆕 D575's sweep is PAID, EXACTLY
-(`4023 · 51` over 4,074, close-out `65211a5b`); D576's (`4058 · 51` over 4,109, stacked on it, so it stands as written). Carried: D577 (Underdepths ×3, parked); the ingest widening (USER); two pre-existing gaps,
+(`4023 · 51` over 4,074, close-out `65211a5b`); D576's (`4058 · 51` over 4,109, stacked on it, so it stands as written) — 🆕 PAID, EXACTLY (close-out `34d11336`, `tmp/sweep-D576.log:8230`). Carried: D577 (Underdepths ×3, parked — 🆕🆕🆕 D577: BUILT, D577 below); the ingest widening (USER); two pre-existing gaps,
 unchanged — `placeSnipe`'s put-counter arm asks no effects refusal for a BENCHED body (Unaware and Cover alike), and
 D253's Curious Tea Party (with, by reading, the Thundurus / Rabsca / Shaymin side-scan shields) has no seat test, so an
 own-Bench spread or snipe is shielded although the print says "from your opponent's Pokémon" (decisions.md D576 (g)).
 
-NEXT: see `progress.md` NEXT (7) — ⑴ D577 Area Zero Underdepths ×3 (or types-and-tyme split, Scovillain first), ⑵
+NEXT: see `progress.md` NEXT (7) — ⑴ D577 Area Zero Underdepths ×3 (or types-and-tyme split, Scovillain first) [🆕🆕🆕 D577: TAKEN, with Boomerang and Tyme — D577 below], ⑵
 borrowed-attacks and special-energy as riders, ⑶ the census close-out; the Mega ingest and the fossil-face ingest
 widening are user decisions.
+
+## D577 — Area Zero Underdepths ×3 + Boomerang Energy + Tyme ×2: 6 printings / 3 texts (engine 0.461.0, `MATCH_RECORD_VERSION` 39 → 40)
+
+**Status:** ✅ BUILT in the `lum-wt-d577` worktree (detached at `6d87241c`, D576), ~~NOT committed (the brief: "DO NOT
+COMMIT")~~ 🆕 committed on `d577-prep` at `e51d1706` and LANDED on `main` by cherry-pick onto the D576 close-out
+`34d11336` (`progress.md` NEXT (1-land)), while D576's whole-corpus sweep ran in the main checkout (never written). Rank 1 of the D577 pricing round
+(`progress.md` NEXT (7), recorded verbatim): underdepths-boomerang + the Tyme rider, 6 printings — built WHOLE, no
+off-ramp fired (112 crude code hunks over 24 non-test source files against the judge's ~115-130 / ~27). DEPLOY THE
+CLIENT FIRST (the `guessHp` wire arm and the chooseCards `"name"` dest are schema widenings).
+
+### (a) The cards
+- Area Zero Underdepths `sv07-131`, `sv07-174`, `sv08.5-094` (Stadium): *"Each player who has any Tera Pokémon in play
+  can have up to 8 Pokémon on their Bench. If a player no longer has any Tera Pokémon in play, that player discards
+  Pokémon from their Bench until they have 5. When this card leaves play, both players discard Pokémon from their Bench
+  until they have 5, and the player who played this card discards first."*
+- Boomerang Energy `sv06-166` (Special): *"As long as this card is attached to a Pokémon, it provides {C} Energy. If
+  this card is discarded by an effect of an attack used by the Pokémon this card is attached to, attach this card from
+  your discard pile to that Pokémon after attacking."*
+- Tyme `sv08-190`, `sv08.5-143` (Supporter): *"Tell your opponent the name of a Pokémon in your hand and put that
+  Pokémon face down in front of you. Your opponent guesses that Pokémon's HP, and then you reveal it. If your opponent
+  guessed right, they draw 4 cards. If they guessed wrong, you draw 4 cards. Then, return the Pokémon to your hand."*
+
+### (b) The machine (`docs/decisions.md` D577 (b))
+- **The limit.** `BENCH_CEILING = 8` beside `BENCH_MAX = 5` (still the rule and the setup cap, R-AZ8);
+  `StadiumEffects.benchLimitWithTera`; continuous.ts `benchLimitOf(state, seat)` (R-AZ1, per seat) and
+  `benchLimitForIds` (the redacted board's twin), read at every live cap; `isBenchIndex`, Inviting Wink's `"any"`,
+  Lillie's Comfey's `max` and `MAX_KO_PASSES` read the ceiling.
+- **The trim.** ONE predicate, `benchTrimStages` (a seat over its live limit) — the card's two discard sentences are the
+  same test. Five producers queue the NEW persisted `benchTrim` stage behind the sweep's prize / promotion stages
+  (R-AZ6): `resolveMidTurnKnockOuts` (fast path included; `playStadium`'s replacement passes the old owner first, and
+  the non-sweeping evolve path now calls it), `finishAttack`, `runCheckup`, and `queueStadiumLeaveTrims` around
+  `discardStadium` (owner first, at the FRONT of `pending`, R-AZ7). `runBenchTrim` runs the NEW `trimBench` op with the
+  Bench OWNER as controller (R-AZ4) on the shipped `choosePokemonMulti`; whole stacks to the discard pile, the NEW
+  `BENCH_TRIMMED` row, no Knock Out, no Prize (R-AZ5).
+- **Boomerang.** `returnAfterAttackDiscard`; `discardEnergyApply` (the one writer, R-BE5) records the attacker's own
+  discarded Boomerang on the queued `attackEpilogue` (`boomerang?`, R-BE1); flow.ts `returnBoomerangs` re-attaches it by
+  uid before `finishAttack` (R-BE2 / R-BE3). A copied attack's discard lands on the epilogue that runs (R-BE4).
+- **Tyme.** `opponentGuessesHp { draw, uid? }`: the controller names a Pokémon in hand (`chooseCards`, the tenth dest
+  `"name"`, forced at one; refused on a hand with none, R-TY1), then the THIRTEENTH prompt kind `guessHp { name, note }`
+  goes to the opponent, answered `hpGuess { hp }` (an integer ≥ 0, exact equality, R-TY2); `POKEMON_NAMED` /
+  `HP_GUESSED`; no zone move, the uid and the HP never on the opponent's wire before the reveal (R-TY3).
+- **Web.** `benchLimitFor(board, owner)`, per seat, off the engine's limit on the optional `PlayerBoard.benchLimit`
+  (both projections; absent at 5); `me3-111` kept; both HUDs' `GuessHpDialog` and the `"Name"` verb.
+
+### (c) Readings (`docs/decisions.md` D577 (a))
+R-AZ1 … R-AZ5 carried from D576 (d); R-AZ6 and R-AZ7 ⚠️ UNRULED; R-AZ8; R-BE1 … R-BE5; R-TY1 … R-TY3.
+
+### (d) Owed
+See `progress.md` NEXT (0)-(6) for the pasted figures: `bun run check`, precheck (corpus 4,144), the four gates, the probe
+`--decision D577 --allow-dirty` (35 killed), the neighbour re-probe and the 16 gate-witness rows (KILLED before and after —
+16, not the judge's 19). Census: `BUILT.trainer` 258 → **263**, `BUILT.specialEnergy` 9 → **10**, `BUILT.ability` 388
+UNMOVED and CHECKED; `built` 2384 → **2390**. MRV 39 → 40, the THIRTEENTH position (match.ts). Owed: ~~D576's sweep
+(`4058 · 51` over 4,109, PENDING) and~~ 🆕 D576's sweep is PAID, EXACTLY (`4058 · 51` over 4,109, close-out `34d11336`);
+D577's (`4093 · 51` over 4,144, stacked on it, so it stands as written). Carried: decisions.md D577 (g), including ⑷ the
+evolve-path trim's missing mutant row (a known coverage gap).
+
+NEXT: see `progress.md` NEXT (7) — ⑴ Scovillain ×2 + Relicanth ×2 + TM Fluorite as one MRV-hold slice (or apart),
+⑵ TR Energy as a rider, ⑶ the census close-out; the Mega ingest and the map.ts Trainer-branch widening are user decisions.

@@ -11518,7 +11518,8 @@ import type { GameState, Seat } from "./types";
     ⚠️ **IT TERMINATES ON A STRICTLY DECREASING FINITE MEASURE**: a pass runs only
     on a non-empty `lethalRefs`, and every ref it finds is a body `knockOut`
     REMOVES from play, so each pass strictly decreases the number of Pokémon in
-    play — which starts at most `2 × (1 + BENCH_MAX)` and cannot grow inside this
+    play — which starts at most `2 × (1 + BENCH_MAX)` [🆕🆕🆕 D577 (D539): `2 × (1 + BENCH_CEILING)`, an Area
+    Zero Underdepths Bench holds 8 — `MAX_KO_PASSES` steps with it] and cannot grow inside this
     function (promotions are QUEUED, never run). `MAX_KO_PASSES` states that bound
     as a hard stop so a future op that DOES refill mid-sweep cannot turn a
     correctness bug into a hang. The §14 tie guard stays PER PASS — a widening, not
@@ -16015,7 +16016,8 @@ import type { GameState, Seat } from "./types";
     have 4 or fewer Benched Pokémon, this attack does nothing."* — 4 legal
     printings, twice any other candidate, and ALL of the sentence's printings
     anywhere in the catalog. The skeleton owns the negation, so the positive fact
-    is *"5 or more"*, which on a five-slot Bench is FULL — and a `yourBenchIsFull`
+    is *"5 or more"*, which on a five-slot Bench is FULL [🆕🆕🆕 D577 (D539): not under Area Zero
+    Underdepths, where a seat with a Tera Pokémon may Bench 8] — and a `yourBenchIsFull`
     predicate would answer this card identically forever while being the wrong
     shape. The whole-pool `%Benched Pokémon%` census on all three text columns
     returns exactly TWO bench-count board facts: this one, and *"If your opponent
@@ -16963,7 +16965,8 @@ import type { GameState, Seat } from "./types";
     CAPTION, NOT ON BEHAVIOUR — WHICH IS A DIFFERENT AND MORE HONEST FAILURE THAN
     THE USUAL ONE.** `BENCH_MAX` is 5 and the park already clamps to the live
     `benchSpace`, so `upTo: 5` would behave identically at every legal board: a
-    numeric cap of 5 can never bind. It is refused because this op's note is grown
+    numeric cap of 5 can never bind. [🆕🆕🆕 D577 (D539): WITHDRAWN at an Area Zero Underdepths 8-Bench, where
+    a cap of 5 binds — and the offer's cap is `BENCH_CEILING` now.] It is refused because this op's note is grown
     ONE PRINTED FORM PER CARD and round-trips to the catalog text — `upTo: 5` would
     caption the card "Put up to 5 Basic Pokémon …", a number it does not print, and
     would be indistinguishable from a future card that DOES print *"up to 5"*.
@@ -20247,6 +20250,35 @@ import type { GameState, Seat } from "./types";
     `expect(manifest.version)`, `it(…)` titles, the declaration and `package.json` —
     **not** as a value-keyed grep — because a value-keyed grep is precisely the mechanism
     that ate D500's heading.)
+    🆕🆕🆕 engineVersion 0.460.0 → **0.461.0** (D577 — AREA ZERO UNDERDEPTHS ×3 + BOOMERANG ENERGY + TYME ×2: 6
+    PRINTINGS / 3 TEXTS, `MATCH_RECORD_VERSION` 39 → 40 (THE THIRTEENTH POSITION). **Area Zero Underdepths**
+    `sv07-131` / `sv07-174` / `sv08.5-094` (Stadium): the NEW `BENCH_CEILING` (8) beside `BENCH_MAX` (5, still
+    the rule and the setup cap — R-AZ8), the NEW `StadiumEffects.benchLimitWithTera` and the NEW exported
+    `benchLimitOf(state, seat)` / `benchLimitForIds` (continuous.ts — 8 iff the live Stadium widens AND that
+    seat has an `isTeraPokemon` top card in play, R-AZ1), read at every live Bench cap (turn.ts
+    `playBasicToBench`, cardplay.ts `fossilPlayable` and Look-for-Prey's whiff test, interpreter.ts
+    `benchSpace`); `isBenchIndex`, Inviting Wink's `"any"` cap, Lillie's Comfey's `max` and flow.ts
+    `MAX_KO_PASSES` read `BENCH_CEILING`. The trim (R-AZ2 … R-AZ7) is ONE state check, continuous.ts
+    `benchTrimStages` (a seat over its live limit), queued as the NEW persisted `PendingStage` `benchTrim` at
+    FIVE producers, which are FOUR functions — flow.ts `resolveMidTurnKnockOuts` (its no-KO fast path asks it
+    too; reached by every program settle, the evolve path that ran no sweep, and cardplay.ts `playStadium`'s
+    REPLACEMENT with the old Stadium's owner first — the fifth producer, run THROUGH this one), `finishAttack`, `runCheckup`, and interpreter.ts `discardStadium`'s NEW
+    wrapper `queueStadiumLeaveTrims` (owner first, at the FRONT of `pending`) — behind the sweep's prize and
+    promotion stages (R-AZ6), drained by the NEW `runBenchTrim` through the NEW `EffectOp` `trimBench` (the
+    Bench OWNER controls and answers a shipped `choosePokemonMulti`, R-AZ4) and discarding whole stacks with
+    the NEW `BENCH_TRIMMED` event (no Knock Out, no Prize, R-AZ5). **Boomerang Energy** `sv06-166`: `provides
+    {C}` plus the NEW `EnergyProgram.returnAfterAttackDiscard`; `discardEnergyApply` records a flagged uid it
+    put into the discard pile off the ATTACKER during an attack (R-BE1) on the queued `attackEpilogue`'s NEW
+    optional `boomerang`, and flow.ts `returnBoomerangs` re-attaches it by uid before `finishAttack` (R-BE2 /
+    R-BE3; `ENERGY_ATTACHED`). **Tyme** `sv08-190` / `sv08.5-143` (Supporter): the NEW `EffectOp`
+    `opponentGuessesHp { draw, uid? }` — a controller `chooseCards` with the NEW tenth `dest` member `"name"`
+    (forced at one Pokémon in hand, R-TY1; `programPlayable` refuses a hand with none), then the NEW
+    THIRTEENTH prompt kind `guessHp { name, note }` answered by the opponent with the NEW `EffectChoice`
+    `hpGuess { hp }` (an integer ≥ 0, exact equality with the printed HP, R-TY2), the NEW events
+    `POKEMON_NAMED` / `HP_GUESSED`; the wire arm and the `dest` member are schema widenings (DEPLOY THE CLIENT
+    FIRST). R-AZ1 … R-AZ8, R-BE1 … R-BE5, R-TY1 … R-TY3: `docs/decisions.md` D577. VERSION-TAX EXCEPTIONS:
+    D576's heading below — its arrow line — kept, 1 of 213 lines; 212 stepped by split/join on the version
+    string.)
     🆕🆕🆕 engineVersion 0.459.0 → **0.460.0** (D576 — THE ANTIQUE FOSSILS: 4 PRINTINGS / 3 TEXTS, AN ITEM PLAYED AS
     A POKÉMON, `MATCH_RECORD_VERSION` 38 → 39 (THE TWELFTH POSITION). Antique Cover Fossil `sv07-129` / `sv10.5b-080`,
     Antique Root Fossil `sv07-130`, Antique Plume Fossil `sv10.5w-079`. The Pokémon face the ingest DROPS (60 HP,
@@ -20269,7 +20301,7 @@ import type { GameState, Seat } from "./types";
     `attackEffectRefused`, and SEAT-GATED at its two live arms (spread, `placeSnipe`): an own-Bench spread or snipe
     (D425 / D447) is not an attack "from your opponent's Pokémon" and lands on it. Evolution onto a fossil follows
     the in-play face (Lileep from "Antique Root Fossil", Rare Candy through it), and an evolved fossil is no longer
-    a fossil (R-FO6). Area Zero Underdepths ×3 is PARKED as D577 on the brief's off-ramp. R-FO1 … R-FO6: `docs/decisions.md` D576. VERSION-TAX EXCEPTIONS: the nine history
+    a fossil (R-FO6). Area Zero Underdepths ×3 is PARKED as D577 on the brief's off-ramp (🆕🆕🆕 D577 (D539): WITHDRAWN — BUILT at D577, see the heading above). R-FO1 … R-FO6: `docs/decisions.md` D576. VERSION-TAX EXCEPTIONS: the nine history
     lines that name `0.459.0` as the version something was BUILT at — D575's heading below (its arrow line), its
     seven D539 annotations in this file (*"BUILT at 0.459.0"*, *"0.459.0, `lookAtPrize`"*) and effects.ts' D575 Iron
     Moth note — kept, 9 of 219 lines; 210 stepped by split/join on the version string.)
@@ -23866,7 +23898,8 @@ import type { GameState, Seat } from "./types";
     ANYWAY — WHICH IS WHY THE READER ROAD IS NOT THE EXPENSIVE ONE.** The sibling one
     destination over (`sv09-068`, FILE LINE 656, *"…any number of Basic Lillie's Pokémon and
     put them onto your Bench…"*) IS a registry row, and `LILLIES_COMFEY` spells its printed
-    *"any number"* as `max: BENCH_MAX` — sound only because the DESTINATION supplies a cap.
+    *"any number"* as `max: BENCH_MAX` [🆕🆕🆕 D577 (D539): `max: BENCH_CEILING` — an Area Zero Underdepths
+    Bench holds 8] — sound only because the DESTINATION supplies a cap.
     **A HAND HAS NO CAP AT ALL**, so the hand printing has no number a registry author could
     write down; the registry road would have had to widen `searchDeck.max` too, or ship a
     caption naming a number the card does not print (D190b: a wrong-but-plausible program is
@@ -24960,7 +24993,7 @@ import type { GameState, Seat } from "./types";
     WITNESS** — the count was re-derived every slice and the word *"three"* was carried.
     A successor of this slice inherits **81 / 61 / 17** again, over **FIVE** history
     occurrences: those four plus `deckMillFilteredScale.test.ts`'s own header arrow.) */
-export const engineVersion = "0.460.0";
+export const engineVersion = "0.461.0";
 
 export type {
   ApplyResult,
@@ -25039,6 +25072,10 @@ export {
   seatRemovesWeakness,
   stadiumEffectsOf,
 } from "./continuous";
+/** 🆕🆕🆕 D577 — the LIVE per-seat Bench limit (Area Zero Underdepths: 8 for a seat with a Tera
+    Pokémon in play, else 5) and its card-id twin for a redacted board: the one rule both web
+    projections write onto `PlayerBoard.benchLimit`. */
+export { benchLimitForIds, benchLimitOf } from "./continuous";
 export {
   deriveAttackCancelRequirement,
   deriveAttackCoinFlip,
@@ -25186,6 +25223,7 @@ export type { CoinFace } from "./rng";
 export { createGame } from "./setup";
 export type { CreateErrorCode, CreateGameOptions, CreateGameResult } from "./setup";
 export {
+  BENCH_CEILING,
   BENCH_MAX,
   DECK_SIZE,
   DEFAULT_POISON_DAMAGE,

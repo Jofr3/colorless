@@ -50,7 +50,8 @@ import {
 // build was a REGISTRY row — the sibling one destination over (`sv09-068`, corpus FILE
 // LINE 656, *"…any number of Basic Lillie's Pokémon and put them onto your Bench…"*) is
 // exactly that, and it is a hand-written program. **It could not have transferred**:
-// `LILLIES_COMFEY` spells its printed *"any number"* as `max: BENCH_MAX`, and that is
+// `LILLIES_COMFEY` spells its printed *"any number"* as `max: BENCH_MAX` [🆕🆕🆕 D577 (D539): `max:
+// BENCH_CEILING` — an Area Zero Underdepths Bench holds 8], and that is
 // sound only because the DESTINATION supplies a cap (a bench-bound search is clamped to
 // `benchSpace` in two places). **A HAND HAS NO CAP AT ALL.** So the hand printing has no
 // number a registry author could write down — only a deck size, which is not a printed
@@ -794,6 +795,6 @@ describe("§4 — the census step this slice is", () => {
   });
 
   it("the engine version moved with the behaviour", () => {
-    expect(engineVersion).toBe("0.460.0");
+    expect(engineVersion).toBe("0.461.0");
   });
 });

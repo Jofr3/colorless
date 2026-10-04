@@ -3,6 +3,8 @@ import type { ApplyResult, ConcedeAction } from "./actions";
 import { err, ok } from "./actions";
 import { activeTop, cardOfUid, matchesFilter, prizeValueOf, topCardOf, topUid } from "./cards";
 import {
+  // 🆕🆕🆕 D577 — the Area Zero Underdepths state check, queued at the three sweeps.
+  benchTrimStages,
   effectiveRetreatCost,
   isLethallyDamaged,
   koEnergyRescueUids,
@@ -41,7 +43,7 @@ import type {
   UsedAttack,
 } from "./types";
 import {
-  BENCH_MAX,
+  BENCH_CEILING,
   SEATS,
   discardFromStack,
   drawToHand,
@@ -632,7 +634,8 @@ export function collectKnockOuts(
   // MEASURE.** A pass runs only when `lethalRefs` is non-empty, and each ref it
   // finds is a body `knockOut` REMOVES from play (the Active spot is emptied, a
   // benched body is spliced out) — so every pass strictly decreases the number of
-  // Pokémon in play, which starts at most `2 × (1 + BENCH_MAX)` and never grows
+  // Pokémon in play, which starts at most `2 × (1 + BENCH_MAX)` [🆕🆕🆕 D577 (D539): `2 × (1 +
+  // BENCH_CEILING)` — an Area Zero Underdepths Bench holds 8] and never grows
   // inside this function (nothing here plays or promotes anything; the `promote`
   // stages are QUEUED, not run). The loop therefore runs at most that many times.
   // `MAX_KO_PASSES` states the same bound as a hard stop so a future op that DOES
@@ -731,8 +734,9 @@ function tiedOverTheBatch(state: GameState, stages: readonly PendingStage[]): Ga
 
 /** The most Knock Out passes `collectKnockOuts` can need — one per Pokémon that
     can be in play at once, which is the measure its loop decreases. A pass that
-    finds nothing exits earlier; this is the hard stop, not the expected count. */
-const MAX_KO_PASSES = 2 * (1 + BENCH_MAX);
+    finds nothing exits earlier; this is the hard stop, not the expected count.
+    🆕🆕🆕 D577 — `BENCH_CEILING`: under Area Zero Underdepths a Bench holds 8. */
+const MAX_KO_PASSES = 2 * (1 + BENCH_CEILING);
 
 /** What ONE pass Knocked Out: the post-KO state, the decision stages it queued
     and the SEATS it took a body from — the last of which is what the accumulated
@@ -1196,6 +1200,9 @@ export function resolveMidTurnKnockOuts(
       when the action that got here ENDS the turn (Hypno "Daydream", turn.ts `attachEnergy` —
       R-HY2). Absent = `resumeTurn`, every pre-D575 caller byte for byte. */
   tail?: PendingStage[],
+  /** 🆕🆕🆕 D577 — who trims FIRST when both seats are over their Bench limit: the
+      REPLACED Stadium's owner (cardplay.ts `playStadium`, R-AZ3). Absent = `actorSeat`. */
+  trimFirst?: Seat,
 ): ApplyResult {
   // 🆕🆕🆕 D549 — `false`: a mid-turn Knock Out is DURING a turn (the bounty pays).
   const batch = collectKnockOuts(state, seats, events, false);
@@ -1204,14 +1211,23 @@ export function resolveMidTurnKnockOuts(
   // `finishAttack` below and with `runCheckup`'s third site. Nothing about this
   // call's behaviour changed; what changed is that there is one copy of it.
   const orphaned = orphanedPromotions(batch.state, seats, batch.stages);
-  // Nothing KO'd and no spot left empty.
-  if (batch.stages.length === 0 && orphaned.length === 0 && tail === undefined) {
+  // 🆕🆕🆕 §7.3 (D577) — PRODUCER 1 of the Area Zero Underdepths state check (R-AZ2): a
+  // seat over its Bench limit trims, BEHIND the sweep's prize and promotion stages (R-AZ6).
+  // `queued` are the trims an in-program `discardStadium` already put on `pending`
+  // (owner-first, R-AZ7); they keep their order and the state check skips their seats.
+  // Every pre-D577 caller hands over a `pending` with no `benchTrim` in it, and only
+  // `benchTrim` stages are carried, so every pre-D577 board drains byte for byte.
+  const queued = batch.state.pending.filter((stage) => stage.kind === "benchTrim");
+  const trims = [...queued, ...benchTrimStages(batch.state, trimFirst ?? actorSeat, queued)];
+  // Nothing KO'd, no spot left empty and no Bench over its limit — the fast path asks the
+  // trim too (D576 (e)'s measurement: it used to return without draining anything).
+  if (batch.stages.length === 0 && orphaned.length === 0 && trims.length === 0 && tail === undefined) {
     return ok(batch.state, events);
   }
   return advance(
     {
       ...batch.state,
-      pending: [...batch.stages, ...orphaned, ...(tail ?? [{ kind: "resumeTurn", seat: actorSeat }])],
+      pending: [...batch.stages, ...orphaned, ...trims, ...(tail ?? [{ kind: "resumeTurn", seat: actorSeat }])],
     },
     events,
   );
@@ -1458,6 +1474,10 @@ export function finishAttack(
     [otherSeat(attackerSeat), attackerSeat],
     batch.stages,
   );
+  // 🆕🆕🆕 §7.3 (D577) — PRODUCER 2 of the Area Zero Underdepths state check (R-AZ2): the
+  // attack Knocked Out (or bounced) a seat's last Tera Pokémon. Behind the KO's prize and
+  // promotion stages (R-AZ6), in front of the tail, the attacker's seat first.
+  const trims = benchTrimStages(batch.state, attackerSeat, batch.state.pending);
   // 🆕🆕🆕 §5.3/§8 (D570) — FESTIVAL LEAD'S ATTACK-AGAIN WINDOW, the one exit from this
   // function that does NOT end the turn. *"If Festival Grounds is in play, this Pokémon may
   // use an attack it has twice. If the first attack Knocks Out your opponent's Active
@@ -1485,7 +1505,13 @@ export function finishAttack(
     return advance(
       {
         ...windowed,
-        pending: [...batch.stages, ...orphaned, { kind: "resumeTurn", seat: attackerSeat }, ...batch.state.pending],
+        pending: [
+          ...batch.stages,
+          ...orphaned,
+          ...trims,
+          { kind: "resumeTurn", seat: attackerSeat },
+          ...batch.state.pending,
+        ],
       },
       events,
     );
@@ -1501,6 +1527,7 @@ export function finishAttack(
   const pending: PendingStage[] = [
     ...batch.stages,
     ...orphaned,
+    ...trims,
     ...turnTail(attackerSeat),
     ...batch.state.pending,
   ];
@@ -1614,7 +1641,10 @@ export function settleProgram(
   // at program completion, so a hand attach before a later park ends the turn once the park
   // resolves (R-HY2's "after", on this path).
   if (opts.endsTurn === true || handAttachTripped(settled, controller)) {
-    return advance({ ...settled, pending: turnTail(controller) }, events);
+    // 🆕🆕🆕 D577 — a trim an in-program `discardStadium` queued (R-AZ7) is kept in front of
+    // the tail; on every pre-D577 board `pending` holds none, so this is `turnTail` alone.
+    const queued = settled.pending.filter((stage) => stage.kind === "benchTrim");
+    return advance({ ...settled, pending: [...queued, ...turnTail(controller)] }, events);
   }
   const resumed: GameState = { ...settled, phase: { kind: "turn:action", seat: controller } };
   return resolveMidTurnKnockOuts(resumed, controller, SEATS, events);
@@ -2277,15 +2307,74 @@ function runCheckup(state: GameState, endedSeat: Seat, events: GameEvent[]): App
   // `startTurn` that was already queued, because §8.1 owes it before the next
   // player's turn begins.
   const orphaned = orphanedPromotions(batch.state, order, batch.stages);
+  // 🆕🆕🆕 §7.3 (D577) — PRODUCER 3 of the Area Zero Underdepths state check (R-AZ2): a
+  // Checkup Knock Out of a seat's last Tera Pokémon. Behind the prize / promotion stages
+  // (R-AZ6), in front of the next `startTurn`, the ended seat first (the Checkup's order).
+  const trims = benchTrimStages(batch.state, endedSeat);
   // Pop the checkup stage, put the KO stages in front of what remains
   // (the startTurn) and keep draining — a decision stage parks as usual.
   return advance(
     {
       ...batch.state,
-      pending: [...batch.stages, ...orphaned, ...batch.state.pending.slice(1)],
+      pending: [...batch.stages, ...orphaned, ...trims, ...batch.state.pending.slice(1)],
     },
     events,
   );
+}
+
+/** 🆕🆕🆕 §7.3 (D577) — drain ONE `benchTrim` stage: `seat` discards Benched Pokémon until it
+    is back at its limit (Area Zero Underdepths, R-AZ2/R-AZ3). The excess is RE-READ by the
+    op when the stage drains — a promotion queued in front of it shrank the Bench, and a
+    seat already back at its limit finishes without a park and the queue keeps draining. The pick is the interpreter's `trimBench` op, run with
+    the BENCH OWNER as controller (R-AZ4: the owner chooses, on the non-turn seat too — the
+    `koTrigger` routing, so the park answers through `effect:choose` like every other) and
+    folded with `resumeTail` so the queue behind it (the sweep's tail, the turn tail, the
+    attack epilogue, the next `startTurn`) resumes once it lands. */
+function runBenchTrim(state: GameState, seat: Seat, events: GameEvent[]): ApplyResult {
+  // No guard here: the op re-reads the excess itself and finishes at once (no park) when the
+  // seat is back at its limit, and the `resumeTail` fold then just keeps draining.
+  return settleProgram(runProgram(state, [{ op: "trimBench" }], { seat }, events), seat, events, {
+    resumeTail: true,
+  });
+}
+
+/** 🆕🆕🆕 §6.1 (D577) — Boomerang Energy `sv06-166`: re-attach every uid the attack's own
+    program discarded off its attacker (`stage.boomerang`, written by interpreter.ts
+    `discardEnergyApply`, R-BE1) to THAT body, found by uid across its seat's board — a
+    self-switched attacker is on its Bench and is still the Pokémon that attacked (R-BE2).
+    No attach when the attacker left play, or when the card is no longer in the discard
+    pile (R-BE2); several Boomerangs each return (R-BE3). Announced with the SHIPPED
+    `ENERGY_ATTACHED` (the card lands face up). `recoverStatuses` runs after an attach, the
+    settle invariant D174 states for every Energy writer. */
+function returnBoomerangs(
+  state: GameState,
+  stage: Extract<PendingStage, { kind: "attackEpilogue" }>,
+  events: GameEvent[],
+): GameState {
+  const uids = stage.boomerang ?? [];
+  if (uids.length === 0) return state;
+  const side = state.players[stage.seat];
+  const onBench = side.bench.findIndex((body) => topUid(body) === stage.uid);
+  const onActive = side.active !== null && topUid(side.active) === stage.uid;
+  if (!onActive && onBench === -1) return state;
+  const back = uids.filter((uid, i) => side.discard.includes(uid) && uids.indexOf(uid) === i);
+  if (back.length === 0) return state;
+  const host = (body: InPlayPokemon): InPlayPokemon => ({ ...body, energy: [...body.energy, ...back] });
+  const next = withSide(state, stage.seat, {
+    ...side,
+    active: onActive && side.active !== null ? host(side.active) : side.active,
+    bench: onActive ? side.bench : side.bench.map((body, index) => (index === onBench ? host(body) : body)),
+    discard: side.discard.filter((uid) => !back.includes(uid)),
+  });
+  for (const uid of back) {
+    events.push({
+      type: "ENERGY_ATTACHED",
+      seat: stage.seat,
+      uid,
+      target: onActive ? { spot: "active" } : { spot: "bench", index: onBench },
+    });
+  }
+  return recoverStatuses(next, events);
 }
 
 /** §14.1–§14.2, evaluated for BOTH seats at once and in precedence order per
@@ -2673,7 +2762,17 @@ export function advance(state: GameState, events: GameEvent[]): ApplyResult {
       // however many parks the effect program took (D189). This is the path where
       // re-reading the spot is not merely fragile but WRONG: the program that just
       // finished is the one allowed to have moved its own actor.
-      return finishAttack(popStage(state), events, stage.seat, stage.uid, stage.attack);
+      // 🆕🆕🆕 §6.1 (D577) — Boomerang Energy comes back "after attacking", BEFORE the sweep
+      // and the tail (R-BE2).
+      return finishAttack(
+        returnBoomerangs(popStage(state), stage, events),
+        events,
+        stage.seat,
+        stage.uid,
+        stage.attack,
+      );
+    case "benchTrim":
+      return runBenchTrim(popStage(state), stage.seat, events);
     case "startTurn":
       return startTurn(popStage(state), stage.seat, events);
   }

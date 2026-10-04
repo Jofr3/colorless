@@ -67,7 +67,8 @@ import {
 //     Dance) and this slice's six SCALING ones — and every other HP row in all
 //     three columns is a KO refusal (Resolute Heart / Sturdy / Survival Brace), a
 //     THRESHOLD (`N HP or less`), a printed Fossil body (🆕🆕🆕 D576: BUILT, as `fossils.ts`'
-//     hand-written face — a printed HP, not a max-HP term, so the set stays EMPTY), Tyme's guess, or an
+//     hand-written face — a printed HP, not a max-HP term, so the set stays EMPTY), Tyme's guess
+//     (🆕🆕🆕 D577: BUILT — the PRINTED catalog HP, not a max-HP term, so the set stays EMPTY), or an
 //     `attacks_json` *"until its remaining HP is N"* damage op. **`BUILT.attack`
 //     cannot move on this seam at any width** — D306's rule, holding for a sixth
 //     slice.

@@ -838,7 +838,7 @@ describe("D537 §6 — the shield is asked about the COMPLEMENT and about nothin
 // §7 — THE PERSISTED BYTES (D450's doors), MEASURED IN BOTH DIRECTIONS.
 // ─────────────────────────────────────────────────────────────────────────────
 
-describe("D537 §7 — the parked op IS persisted, and `MATCH_RECORD_VERSION` still holds at 30 (🆕🆕🆕 held at THIS slice; 31 since D547; 32 since D548; 33 since D549; 34 since D552; 35 since D556; 36 since D564; 37 since D570; 38 since D575; 39 since D576)", () => {
+describe("D537 §7 — the parked op IS persisted, and `MATCH_RECORD_VERSION` still holds at 30 (🆕🆕🆕 held at THIS slice; 31 since D547; 32 since D548; 33 since D549; 34 since D552; 35 since D556; 36 since D564; 37 since D570; 38 since D575; 39 since D576; 40 since D577)", () => {
   it("🛑 THE FIRST DOOR, MEASURED: `phase.cont.pendingOp` carries the op as a LITERAL", () => {
     // 🛑 **DO NOT RE-DERIVE *\"it never parks, so it is not persisted\"*.** This op parks,
     // so the serialized alphabet GROWS: `{\"op\":\"returnBenchedRest\",\"keep\":3}` is a byte
@@ -876,14 +876,14 @@ describe("D537 §7 — the parked op IS persisted, and `MATCH_RECORD_VERSION` st
     expect(benchIds(done, "p2")).toEqual([B1, B2, B3]);
   });
 
-  it("🛑 `MATCH_RECORD_VERSION` is 39 (🆕🆕🆕 D576 stepped it 38 → 39; D575 stepped it 37 → 38; D570 stepped it 36 → 37; D564 stepped it 35 → 36; D556 stepped it 34 → 35; D552 stepped it 33 → 34; D549 stepped it 32 → 33; D548 stepped it 31 → 32; D547 stepped it 30 → 31; this slice held it) — read off the raw source, not retyped", () => {
+  it("🛑 `MATCH_RECORD_VERSION` is 40 (🆕🆕🆕 D577 stepped it 39 → 40; D576 stepped it 38 → 39; D575 stepped it 37 → 38; D570 stepped it 36 → 37; D564 stepped it 35 → 36; D556 stepped it 34 → 35; D552 stepped it 33 → 34; D549 stepped it 32 → 33; D548 stepped it 31 → 32; D547 stepped it 30 → 31; this slice held it) — read off the raw source, not retyped", () => {
     // 🆕🆕🆕 D547 — the constant this slice held is now 31: D547 added two REQUIRED `InPlayPokemon` fields (apps/api match.ts).
-    expect(raw("/match.ts")).toContain("MATCH_RECORD_VERSION = 39");
+    expect(raw("/match.ts")).toContain("MATCH_RECORD_VERSION = 40");
   });
 
   it("🛑 the engine version is the CURRENT one in BOTH places (🆕 D538 — 0.422.0 → 0.423.0; the title is de-valued so the version tax is one edit per site, not two)", () => {
-    expect(engineVersion).toBe("0.460.0");
-    expect(manifest.version).toBe("0.460.0");
+    expect(engineVersion).toBe("0.461.0");
+    expect(manifest.version).toBe("0.461.0");
   });
 });
 

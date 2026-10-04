@@ -30,6 +30,14 @@ export const DECK_SIZE = 60;
 export const HAND_SIZE = 7;
 export const PRIZE_COUNT = 6;
 export const BENCH_MAX = 5;
+/** 🆕🆕🆕 §7.3 (D577) — the LARGEST Bench any printing can grant: Area Zero Underdepths
+    `sv07-131`/`sv07-174`/`sv08.5-094`, *"Each player who has any Tera Pokémon in play can have
+    up to 8 Pokémon on their Bench."* `BENCH_MAX` stays 5 and is still the RULE (setup, every
+    board without that Stadium); the LIVE per-seat limit is continuous.ts `benchLimitOf`. This
+    constant bounds what a ref may ADDRESS (turn.ts `isBenchIndex`), what an "any number" may
+    MEAN (Inviting Wink, Lillie's Comfey) and the KO sweep's pass bound (flow.ts
+    `MAX_KO_PASSES`) — never what a seat may currently hold. */
+export const BENCH_CEILING = 8;
 
 /** §12/§13.1 — the HP a Poisoned Pokémon takes at each Checkup unless the
     inflicting effect raised it ("put N damage counters … instead of 1"). */
@@ -2154,7 +2162,10 @@ export interface PlayerSide {
       a 0.458 rollback would silently drop a live C.O.D.E.: Protect window. */
   sideAttackBlock: SideAttackBlock | null;
   active: InPlayPokemon | null;
-  /** Dense (no empty slots), capped at BENCH_MAX. */
+  /** Dense (no empty slots), capped at BENCH_MAX. (🆕🆕🆕 D577 (D539): *"capped at BENCH_MAX"*
+      is WITHDRAWN as the whole rule, kept as written — the cap is continuous.ts
+      `benchLimitOf(state, seat)`: 8 while Area Zero Underdepths is in play and this seat has a
+      Tera Pokémon in play, otherwise `BENCH_MAX` (5); never above `BENCH_CEILING`.) */
   bench: InPlayPokemon[];
   /** Setup mulligan count — drives the opponent's compensation draw. */
   mulligans: number;
@@ -2517,7 +2528,34 @@ export type PendingStage =
       argument about `uid` with the subject changed from "which body" to "which
       attack", and it costs `MATCH_RECORD_VERSION` 24 → 25 alongside
       `InPlayPokemon.usedAttack` itself. */
-  | { kind: "attackEpilogue"; seat: Seat; uid: string; attack: string }
+  | {
+      kind: "attackEpilogue";
+      seat: Seat;
+      uid: string;
+      attack: string;
+      /** 🆕🆕🆕 §6.1 (D577) — Boomerang Energy `sv06-166`: *"If this card is discarded by an
+          effect of an attack used by the Pokémon this card is attached to, attach this card
+          from your discard pile to that Pokémon after attacking."* The Boomerang uids THIS
+          attack's own program discarded off the attacker (`uid`), appended by interpreter.ts
+          `discardEnergyApply` (R-BE1) and re-attached by flow.ts `returnBoomerangs` when this
+          stage drains, before `finishAttack` (R-BE2). OPTIONAL (absent = none, every
+          pre-D577 stage byte for byte); a 0.460 reader would drop it silently, which is one
+          of the addresses `MATCH_RECORD_VERSION` 39 → 40 pays. */
+      boomerang?: string[];
+    }
+  /** 🆕🆕🆕 §7.3 (D577) — Area Zero Underdepths' TRIM: `seat` holds more Benched Pokémon
+      than `benchLimitOf` now allows (its last Tera Pokémon left play, or the Stadium left),
+      so it discards Benched Pokémon — whole stacks, no Knock Out, no Prize (R-AZ5) — until it
+      has 5. Queued by continuous.ts `benchTrimStages` at the five settle-point producers,
+      which are FOUR functions (flow.ts `resolveMidTurnKnockOuts`, `finishAttack`, `runCheckup`,
+      and interpreter.ts `queueStadiumLeaveTrims` around `discardStadium` at the FRONT of
+      `pending`, R-AZ7) — the fifth, cardplay.ts `playStadium`'s replacement, runs THROUGH
+      producer 1 (`resolveMidTurnKnockOuts` with the old owner as `trimFirst`) — behind the sweep's prize / promotion stages (R-AZ6). The excess is
+      RE-READ when the stage drains (a promotion in front of it shrinks the Bench), and the
+      pick parks on the SHIPPED `choosePokemonMulti` with the BENCH OWNER as controller and
+      answerer (R-AZ4; flow.ts `runBenchTrim`, the `koTrigger` routing). A new union member
+      (D125) — `MATCH_RECORD_VERSION` 39 → 40. */
+  | { kind: "benchTrim"; seat: Seat }
   | { kind: "startTurn"; seat: Seat };
 
 // The phase is the discriminant every action is validated against: mandatory
