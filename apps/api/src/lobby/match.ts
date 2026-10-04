@@ -2061,8 +2061,64 @@ export interface MatchRecord {
     GameHud.tsx mirrors it. No `PendingStage` member is added: the window rides the shipped
     `resumeTurn` stage. The HUD draws no "attack again" banner and the playmat's drag
     affordances are not pre-folded against the window (a carried display debt, decisions.md
-    D570). */
-export const MATCH_RECORD_VERSION = 37;
+    D570).
+
+    🆕🆕🆕 **37 → 38 AT D575 — THE ELEVENTH POSITION: ONE WIDENED PERSISTED VALUE, TWO REQUIRED
+    KEYS, AND A RIDING ENUM WIDENING — EACH A PLAYED ATTACK EFFECT.** The addresses, named first
+    (D456's rule):
+      · **`InPlayPokemon.attackBlock.fromClass` — `AttackerClass.stage` WIDENED from `"basic"` to
+        `"basic" | "ancient" | "ex"`** (Iron Moth `sv06.5-009` "Anachronism Repulsor": *"…by
+        attacks from Ancient Pokémon"*; Miraidon `sv08-069` "C.O.D.E.: Protect": *"…by attacks
+        from Pokémon ex"*). The key stays REQUIRED on the record (never optional — D569 (e)).
+      · **`PlayerSide.sideAttackBlock: SideAttackBlock | null`** — Miraidon's SIDE-WIDE block over
+        the controller's Future Pokémon, `{ turn, sourceUid, banner, fromClass }`, written by
+        `installSideAttackBlock`, read by continuous.ts `attackBlockOf`'s side arm, cleared by
+        interpreter.ts `switchInto` when the source leaves the Active (R-MI1). One non-test
+        literal (setup.ts `emptySide`).
+      · **`InPlayPokemon.handAttachMark: HandAttachMark | null`** — the Defending Pokémon's
+        next-turn hand-attach mark, `{ turn, barred, endsTurn, tripped }` (Glimmora `sv08-115`
+        "Corrosive Shards": no Energy from hand to it; Hypno `sv06.5-017` "Daydream": a hand
+        attach to it ends the turn), written by `markHandAttach`, read by turn.ts `attachEnergy`,
+        interpreter.ts `attachEnergyTargets` / `attachEnergyFrom` and flow.ts `settleProgram`;
+        five literals write `null` (`makeInPlay` forced, four spread literals held by mutants).
+      · **`GameOverReason` gains `"cardEffect"`** (N's Sigilyph `sv09-064` "Victory Symbol":
+        *"…you win this game."*, the `winGame` op through flow.ts `finishGame`). A WIDENING alone
+        would not bump (this block's own WIDENING paragraph above, the `conceded` precedent); it
+        RIDES this bump. ⚠️ **DEPLOY THE CLIENT FIRST**: `packages/schema` `redactedGameOverReasonSchema`
+        is a `z.enum`, so an OLD client parsing a snapshot whose outcome reason is `"cardEffect"`
+        REJECTS it (`mrvAttackSliceD575.test.ts` §8 (iv)).
+
+    🛑 **THE FIFTH POSITION'S TEST, RUN ON EACH — AND EACH FAILS (driven, `mrvAttackSliceD575.test.ts`
+    §8 (i), (ii), (ii-b), (iii)).** (i) An optional
+    `sideAttackBlock?` passes D441 (absent reads "no block", what a v37 writer meant) and fails
+    D456's *"inert on the board"*: a 0.458 ROLLBACK resuming a v38 record saved inside the window
+    ignores the key and the Pokémon ex's attack lands on the Future bodies the printed card
+    protects. (ii) An optional `handAttachMark?` fails the same way: 0.458 grants the attach
+    Glimmora bars (§8 (ii)) and keeps the turn Hypno ends (§8 (ii-b)). (iii) The `fromClass` widening is not even a
+    question of optionality — a v38 record holding `{ stage: "ancient" }` falls out of 0.458's
+    exhaustive `attackerMatchesStage` switch (`undefined`, falsy) and the block refuses NOTHING:
+    D569 (e)'s finding, the reason Iron Moth waited for a bump. 0.458's code cannot run here, so
+    §8 (iii) drives the FALL-OUT through THIS build's real `attackBlockOf` instead — a stage word
+    the switch has no arm for (the position a v38 member occupies under 0.458) reads as NO block —
+    and `D575-stage-switch-unknown-member-protects` is the mutant that turns it red. A save inside the opponent's
+    turn is an ordinary save (every window here is that turn), so no between-turns pipeline
+    escapes it. The keys are REQUIRED and the version is owed.
+
+    🛑 **AND A v37 RECORD IS NOT READ BENIGNLY.** A v37 side has no `sideAttackBlock` key and a
+    v37 body no `handAttachMark`: `attackBlockOf`'s side arm reads `undefined !== null` and
+    dereferences `.turn` of `undefined` on the next attack (a `TypeError`, D326's class), and
+    `liveHandAttachMark` does the same on the next attach. Retired by `readMatchRecord`'s version
+    gate on D124's rule.
+
+    ⚠️ Also moved, and none is a second reason: four `EffectOp` members (`installSideAttackBlock`,
+    `markHandAttach`, `lookAtPrize`, `winGame` — only `lookAtPrize` parks, on the SHIPPED
+    `choosePrize` and `orderCards` prompts, so no prompt kind and no wire byte moves), four events
+    (`SIDE_ATTACK_BLOCK_APPLIED` / `_ENDED`, `HAND_ATTACH_MARKED`, `PRIZE_LOOKED_AT` — not
+    persisted, D141), the `ErrorCode` `ENERGY_ATTACH_BARRED`, and `AttachTargetRiders.source`
+    (catalog-side). No `PendingStage` member is added: Hypno's turn end seeds the shipped turn
+    tail. The HUD draws neither the side block nor the hand mark, and a barred attach comes back as
+    an error toast (carried display debts, decisions.md D575). */
+export const MATCH_RECORD_VERSION = 38;
 
 /** How a persisted match read back: absent, usable, or written by an
     incompatible deploy (`stale` — the caller decides whether to retire it). */

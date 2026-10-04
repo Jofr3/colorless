@@ -270,6 +270,13 @@ export type ErrorCode =
       a player who cannot tell them apart cannot tell which of their cards is
       dead for the turn (types.ts `handPlayLockedTurn`). */
   | "HAND_PLAY_BLOCKED"
+  /** 🆕🆕🆕 §6.2/§11 (D575) — an OPPONENT'S attack barred Energy attaches from this seat's
+      hand to THIS Pokémon for exactly this turn (Glimmora `sv08-115` "Corrosive Shards":
+      *"…Energy cards can't be attached from your opponent's hand to that Pokémon."*). A code
+      of its own rather than `HAND_PLAY_BLOCKED`: that bar is on a CLASS of card from the
+      whole hand, this one is on a TARGET — every other body still takes the Energy, so a
+      client must not grey the card. Not spending the §6.2 allowance. */
+  | "ENERGY_ATTACH_BARRED"
   /** The play has no legal target (gust with no opponent Bench, Switch with no
       Bench) — a card that would do nothing cannot be played. */
   | "NO_LEGAL_TARGET"

@@ -111,6 +111,8 @@ export const GAME_OVER_DETAIL: Record<GameOverReason, string> = {
   noPokemon: "No Pokémon left in play.",
   deckOut: "No cards left to draw.",
   conceded: "The match was forfeited.",
+  // 🆕🆕🆕 D575 — a card's printed win (N's Sigilyph "Victory Symbol"); no possessive, above.
+  cardEffect: "A card's effect won the game.",
 };
 
 export interface GameProjection {

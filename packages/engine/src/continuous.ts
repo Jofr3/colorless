@@ -19,7 +19,7 @@ import {
   topUid,
 } from "./cards";
 import type { PokemonSuffix, PreventedAttackerClass } from "./cards";
-import type { Banner } from "./banners";
+import { type Banner, bannerOf } from "./banners";
 import type { BasicEnergyType, Card } from "@luminous/schema";
 import type {
   AttackerClass,
@@ -46,7 +46,7 @@ import type {
   StadiumEffects,
 } from "./registry";
 import { programFor } from "./registry";
-import type { AttackBlock, GameState, InPlayPokemon, PlayerSide, Seat } from "./types";
+import type { AttackBlock, GameState, HandAttachMark, InPlayPokemon, PlayerSide, Seat } from "./types";
 import { SEATS, otherSeat, stampedActBarFor, stampedBarFor, takenPrizes } from "./types";
 
 // The continuous-modifier pipeline (M4 slice 3): the one place the always-on
@@ -2214,19 +2214,55 @@ export function attackBlockOf(
   // read benignly here — which is the whole reason that constant was bumped
   // (D124's rule, and its argument against exactly this kind of soft landing).
   const block = pokemon.attackBlock;
-  if (block === null || block.turn !== state.turn) return null;
+  // 🆕🆕🆕 D575 — the SIDE-WIDE block (Miraidon "C.O.D.E.: Protect") is the second answer, asked
+  // whenever the body's own block does not apply: two independent installations, either of
+  // which refuses the attack, so this function returns the body's when it applies and the
+  // side's otherwise. The three callers are unchanged.
+  if (block === null || block.turn !== state.turn) return sideAttackBlockOf(state, pokemon, attacker);
   // D240 — the CAP, checked before the class for no reason but reading order:
   // the two narrowings are independent conjuncts and no printing carries both.
   // `<=` is the printed "or less", inclusive: a 40-cap refuses a 40 and lets a 41
   // through. An ABSENT key is no cap at all, which is what every record persisted
   // before this field existed already meant.
   if (block.maxDamage !== undefined && !(damage !== undefined && damage <= block.maxDamage)) {
-    return null;
+    return sideAttackBlockOf(state, pokemon, attacker);
   }
   // The unfiltered reading — every printing D142 mapped, and the ABSENT key that
   // makes an older persisted block read back as exactly what it used to mean.
   if (block.fromClass === undefined) return block;
-  return attacker !== undefined && attackerMatchesClass(attacker, block.fromClass) ? block : null;
+  return attacker !== undefined && attackerMatchesClass(attacker, block.fromClass)
+    ? block
+    : sideAttackBlockOf(state, pokemon, attacker);
+}
+
+/** 🆕🆕🆕 §11 (D575) — the side arm of `attackBlockOf`: the damaged body's SIDE carries a live
+    `sideAttackBlock` (Miraidon "C.O.D.E.: Protect"), the body's top card prints the block's
+    BANNER (read LIVE, R-MI2 ⚠️ UNRULED), the block's SOURCE is still that side's Active (the
+    printed terminator's read-time half — `switchInto` clears the record, R-MI1 ⚠️ UNRULED),
+    and the attacker belongs to the printed CLASS (`attackerMatchesClass`, the body arm's own
+    predicate). The answer is a synthesized `AttackBlock` (`effects: false` — the print says
+    "damage", not "damage and effects"; no cap), so every caller reads one shape. An
+    unreadable attacker protects LESS, the body arm's polarity. */
+function sideAttackBlockOf(
+  state: GameState,
+  pokemon: InPlayPokemon,
+  attacker: Card | undefined,
+): AttackBlock | null {
+  const uid = topUid(pokemon);
+  if (uid === undefined || attacker === undefined) return null;
+  for (const seat of SEATS) {
+    const side = state.players[seat];
+    const record = side.sideAttackBlock;
+    if (record === null || record.turn !== state.turn) continue;
+    if (side.active === null || topUid(side.active) !== record.sourceUid) continue;
+    const onSide = side.active.stack.includes(uid) || side.bench.some((b) => b.stack.includes(uid));
+    if (!onSide) continue;
+    if (bannerOf(topCardOf(state, pokemon)) !== record.banner) return null;
+    return attackerMatchesClass(attacker, record.fromClass)
+      ? { turn: record.turn, effects: false, fromClass: record.fromClass }
+      : null;
+  }
+  return null;
 }
 
 /** Does `attacker` belong to the printed CLASS a filtered block names? The whole
@@ -2234,6 +2270,8 @@ export function attackBlockOf(
     and still ONE spelling of each printed conjunct, which is the reason
     `AttackerClass` is a record (effects.ts carries the argument).
 
+    (🆕🆕🆕 D575 (D539): ~~"a one-member union"~~ — three members since D575, `"ancient"` and `"ex"` read by
+    the arms of `attackerMatchesStage`; the switch is still the whole body.)
     THE STAGE WORD STAYS AN EXHAUSTIVE `switch` over a one-member union rather
     than an `if`: `AttackerClass["stage"]` is the closed vocabulary D120 requires
     of a token that varies, and this switch is what makes "closed" a compiler fact
@@ -2276,7 +2314,25 @@ function attackerMatchesStage(attacker: Card, stage: AttackerClass["stage"]): bo
   switch (stage) {
     case "basic":
       return isBasicPokemon(attacker);
+    // 🆕🆕🆕 D575 — the printed BANNER (Iron Moth "…from Ancient Pokémon"), read off the
+    // attacker's TOP card by printing id at damage time (R-IM1, ⚠️ UNRULED).
+    case "ancient":
+      return bannerOf(attacker) === "Ancient";
+    // 🆕🆕🆕 D575 — EXACTLY "Pokémon ex" (Miraidon "…from Pokémon ex"): the name-derived
+    // suffix, never `isExOrV` (a V is not an ex) nor `hasRuleBox` (the judge's (d)).
+    case "ex":
+      return pokemonSuffixOf(attacker) === "ex";
   }
+}
+
+/** 🆕🆕🆕 §6.2/§11 (D575) — `pokemon`'s LIVE hand-attach mark (types.ts `HandAttachMark`:
+    Glimmora's bar, Hypno's turn end), or `null`. `attackBlockOf`'s contract: the field holds
+    a turn STAMP, so the mark is live iff that stamp is the turn now being played, and an
+    expired one stops answering without anyone having cleared it. The ONE read of the field
+    (turn.ts `attachEnergy`, interpreter.ts `attachEnergyTargets` / `attachEnergyFrom`). */
+export function liveHandAttachMark(state: GameState, pokemon: InPlayPokemon): HandAttachMark | null {
+  const mark = pokemon.handAttachMark;
+  return mark !== null && mark.turn === state.turn ? mark : null;
 }
 
 /** §8.5/§11 (D147) — the HP an attack-installed DAMAGE REDUCTION takes off any

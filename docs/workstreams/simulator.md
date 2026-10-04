@@ -9019,7 +9019,8 @@ census above** are all CLOSED. Do not re-run any of them.
 - **The attacker-CLASS filter — 4 printings / 2 clauses.** `…prevent all damage done to
   this Pokémon by attacks from [Basic|Ancient] Pokémon.` UNGATED, so no coin; one
   optional field on `preventDamage` plus a predicate over the ATTACKER's card. `Basic` is
-  `isBasicPokemon` verbatim; `Ancient` has no reader at all. The cheapest widening of
+  `isBasicPokemon` verbatim; `Ancient` has no reader at all. (🆕🆕🆕 D575 (D539): ~~"`Ancient` has no
+  reader at all"~~ — BUILT at D575, `AttackerClass.stage` "ancient" read through `bannerOf`.) The cheapest widening of
   this slice's own op.
 - **The `takes {N} less damage` family — 14 printings / 4 amounts** (`During your
   opponent's next turn, this Pokémon takes {20|30|50|100} less damage from attacks (after
@@ -9948,6 +9949,8 @@ verify by QUERY, never by recognition.**
 > and Future at D569. Iron Moth's sentence STILL stays loud, for a different reason: `fromClass` is a
 > PERSISTED `AttackerClass`, and widening its `stage` to optional would make 0.452's exhaustive
 > `attackerMatchesClass` switch fall through on rollback — an MRV question, deferred (decisions.md D569).
+> 🆕🆕🆕 **D575 (D539): ~~"STILL stays loud … deferred"~~ — BUILT at D575**: `AttackerClass.stage` widened to `"ancient"` (kept REQUIRED, the
+> switch exhaustive) behind `MATCH_RECORD_VERSION` 37 → 38, the ELEVENTH position.
 
 The Ancient/Future banner is printed on the card FACE and debuted with Paradox
 Rift (sv04). It is:
@@ -9977,6 +9980,10 @@ the `fromClass` union has exactly **ONE** member, and `attackerMatchesClass`
 (continuous.ts) is an **EXHAUSTIVE `switch`** — the closed vocabulary D120 requires
 of a varying token, enforced by tsc rather than by a comment: a second member
 cannot be added without the compiler demanding the predicate that reads it.
+🆕🆕🆕 **D575 (D539): ~~"falls through to `ATTACK_EFFECT_SKIPPED` and stays LOUD"~~ and
+~~"exactly ONE member"~~ are WITHDRAWN**, kept as written (D418): since D575 the Ancient sentence
+DERIVES, and the union has THREE members, `"basic" | "ancient" | "ex"` — the switch stayed exhaustive,
+which is exactly what made the widening a compiler-checked edit (`MATCH_RECORD_VERSION` 37 → 38).
 
 **`Future` obliges NOTHING, and the answer is written down rather than assumed.**
 It is a real class in this pool (4 printings / 2 cards — Iron Moth `sv06.5-009`,
@@ -9998,7 +10005,7 @@ attacker-filter neighbourhood is 10 printings across 7 sentences:**
 | Sentence | Printings | Kind | Status after D146 |
 |---|---|---|---|
 | `…prevent all damage done to this Pokémon by attacks from Basic Pokémon.` | **3** | attack | ✅ `preventDamage { fromClass: "Basic" }` — Staraptor `sv01-150` idx 0, Noivern ex `sv02-153`/`-246` idx 0 |
-| `…prevent all damage done to this Pokémon by attacks from Ancient Pokémon.` | 1 | attack | ❌ LOUD — Iron Moth `sv06.5-009` idx 1. No datum (above) |
+| `…prevent all damage done to this Pokémon by attacks from Ancient Pokémon.` | 1 | attack | ❌ LOUD — Iron Moth `sv06.5-009` idx 1. No datum (above) — 🆕🆕🆕 **D575 (D539): ✅ BUILT at D575**, `preventDamage { fromClass: { stage: "ancient" } }` (the datum is `banners.ts`; the persisted widening paid by MRV 37 → 38) |
 | `Prevent all damage done to this Pokémon by attacks from your opponent's Pokémon ex and Pokémon V.` | 1 | **Ability** | ✅ since 0.58.0 — Mimikyu `sv02-097` "Safeguard" (`preventDamageFromExV`, gated on `isExOrV`) |
 | `…by attacks from your opponent's {R} Pokémon.` | 1 | **Ability** | ❌ Dachsbun `sv01-099` "Well-Baked Body" — filters by ENERGY TYPE, and carries a second sentence ("can't be Burned"). ✅ **BOTH clauses are read now — the filter at D159 (`preventDamageFromType`), the §12 immunity at D172 (`statusImmunity`); two fields, two pipelines, one card** |
 | `…by attacks from your opponent's {L} Pokémon.` | 2 | **Ability** | ❌ Bellibolt `sv03-078`/`-201` "Insulator" — the same type filter, one printing short of a family with Dachsbun |
@@ -10062,7 +10069,10 @@ modifier is what settles this: a modifier whose condition does not hold simply
 does not apply, and nothing else about the step changes.
 
 **It does not touch the effects half at all, and that is a printed fact rather
-than a simplification.** All three `fromClass` printings are the NARROW spelling
+than a simplification.** All three `fromClass` printings [🆕🆕🆕 D575 (D539): ~~"three"~~ —
+a stale count; MEASURED at the D575 landing over `legalAttackCorpus()`: 8 legal printings
+before D575 and **10** after (Iron Moth's Ancient, Miraidon's side-wide ex), every one still
+NARROW, so the point holds] are the NARROW spelling
 (no "from and effects of"), so a MATCHED Basic attacker has its damage nulled and
 still lands everything else it prints — driven end to end on Pincurchin
 `sv02-072`'s Energy discard, Mimikyu `sv02-097`'s 7 PLACED counters and
@@ -10132,7 +10142,8 @@ off any printing (no card prints two of these attacks), constructed and pinned.
    DECLINED would be announcing a non-event: loudness in this engine is owed to
    UNREAD TEXT, not to a read rule saying no (D140).
 3. **Is the guard ASSERTED?** Three ways rather than one. The vocabulary is a
-   COMPILER fact (the exhaustive `switch` over a one-member union). The PRODUCER
+   COMPILER fact (the exhaustive `switch` over a one-member union — 🆕🆕🆕 D575 (D539):
+   ~~"one-member"~~, THREE members since D575, `"basic" | "ancient" | "ex"`). The PRODUCER
    SET is swept out of the pool rather than listed (D145's move — the sweep walks
    every attack the deriver can read, asserts every emitted `fromClass` is
    vocabulary the predicate has an arm for, and pins the set at exactly
@@ -10197,6 +10208,10 @@ Moth `sv06.5-009`'s Ancient filter and Slither Wing `sv06.5-026`'s Future
 board-condition bonus. Neither is a slice; both are one schema/ingest change and
 then a one-line predicate each. **Do not put either on a remainder list as engine
 work**, and do not let a later session "fix" them with a species table.
+🆕🆕🆕 **D575 (D539): ~~"TWO SENTENCES ARE NOW BLOCKED ON INGEST"~~ is WITHDRAWN**, kept as written (D418): neither
+needed an ingest change — `banners.ts` (an engine table keyed by printing id, never a species table) supplies both
+banners since D569, which built Slither Wing's bonus; D575 builds Iron Moth's Ancient filter on the persisted
+`AttackerClass.stage` `"ancient"` member behind `MATCH_RECORD_VERSION` 37 → 38.
 
 - **The `takes {N} less damage` family — 14 printings / 4 amounts, now the LARGEST
   un-taken count in the tail by a wide margin.** A DURATED
@@ -10555,6 +10570,8 @@ INCOMING-DAMAGE-REDUCTION neighbourhood above**.
   last or not at all.
 - **BLOCKED ON INGEST, NOT ON THE ENGINE (D146):** Iron Moth `sv06.5-009`'s Ancient
   filter and Slither Wing `sv06.5-026`'s Future bonus. Not slices.
+  (🆕🆕🆕 D575 (D539): ~~"BLOCKED ON INGEST"~~ — the banner came from `banners.ts` (D569, no ingest),
+  Slither Wing's "Iron Smasher" was BUILT at D569 and Iron Moth's Ancient filter at D575.)
 
 ---
 
@@ -10976,6 +10993,8 @@ neighbourhood (§D147) and **the OPPONENT-SIDE ATTACK-DENIAL neighbourhood above
   last or not at all.
 - **BLOCKED ON INGEST, NOT ON THE ENGINE (§D146):** Iron Moth `sv06.5-009`'s
   Ancient filter and Slither Wing `sv06.5-026`'s Future bonus. Not slices.
+  (🆕🆕🆕 D575 (D539): ~~"BLOCKED ON INGEST"~~ — the banner came from `banners.ts` (D569, no ingest),
+  Slither Wing's "Iron Smasher" was BUILT at D569 and Iron Moth's Ancient filter at D575.)
 
 ---
 
@@ -11325,6 +11344,8 @@ query, which covers the ADD half as well as the SUBTRACT half).
   last or not at all.
 - **BLOCKED ON INGEST, NOT ON THE ENGINE (§D146):** Iron Moth `sv06.5-009`'s
   Ancient filter and Slither Wing `sv06.5-026`'s Future bonus. Not slices.
+  (🆕🆕🆕 D575 (D539): ~~"BLOCKED ON INGEST"~~ — the banner came from `banners.ts` (D569, no ingest),
+  Slither Wing's "Iron Smasher" was BUILT at D569 and Iron Moth's Ancient filter at D575.)
 
 ## D150 — HARDENING, NOT A CARD SLICE: the §11 classification table is a PROOF (engine 0.98.0 UNCHANGED, MATCH_RECORD_VERSION 7 UNCHANGED — TEST-ONLY, 0 engine lines)
 
@@ -13449,6 +13470,16 @@ unreachability is turned into an ASSERTION on the scan (`benchShieldedByActive`
 reads FALSE for an Active holder) rather than left as a comment. D154's
 delete-the-free-guard rule is about a free TEST; these are free READS whose absence
 is precisely the trap D150 found at `placeSnipe`.
+[🆕🆕🆕 **D575 (D539):** the quoted standard's FACT half — ~~"the Bench-target arms
+are unreachable by construction"~~ — is WITHDRAWN in the `attackDamageBlocked` doc
+block itself (annotated in place at the D575 landing): D575's `sideAttackBlockOf`
+(continuous.ts, the side arm of `attackBlockOf`, read from `PlayerSide.sideAttackBlock`,
+Miraidon `sv08-069` "C.O.D.E.: Protect") protects Benched Future bodies, so those Bench
+arms now refuse damage off a printed card (`mrvAttackSliceD575.test.ts` §3). The
+standard's RULE half — guard the read anyway — stands, and D575 is one more case of it
+paying: the side arm needed no new read site. These two `benchShieldedByActive`
+survivors are unaffected (their unreachability is the scan's TARGET clause, not a block's
+lifetime).]
 
 ### Cost
 
@@ -29021,7 +29052,7 @@ count `benchNounScaling.test.ts` §5 still pinned at 31 (now 32, "Ancient Pokém
 ### (d) Owed
 The whole-corpus sweep (predicted `3840 · 52` over 3,892, ~~stacked on D568's still-PENDING~~ 🆕 on D568's PAID `3794 · 52` over 3,846, close-out `8e36c690`). R-PX1 …
 R-PX6 UNRULED. The nine deferred Paradox printings (Initialization ×3, Destructo-Press ×2, C.O.D.E.: Protect, Unrelenting
-Onslaught, Dual Core, Iron Moth's Anachronism Repulsor). (🆕🆕🆕 D571 (D539): Initialization ×3 and Destructo-Press ×2 BUILT — see D571 below; four stay deferred.) NEXT: see `progress.md` NEXT — festival-lead (rank 2, MRV 36 → 37). (🆕🆕🆕 D570: TAKEN — built as D570 below.)
+Onslaught, Dual Core, Iron Moth's Anachronism Repulsor). (🆕🆕🆕 D571 (D539): Initialization ×3 and Destructo-Press ×2 BUILT — see D571 below; four stay deferred.) (🆕🆕🆕 D575 (D539): C.O.D.E.: Protect and Anachronism Repulsor BUILT — see D575 below; two stay deferred, Unrelenting Onslaught and Dual Core.) NEXT: see `progress.md` NEXT — festival-lead (rank 2, MRV 36 → 37). (🆕🆕🆕 D570: TAKEN — built as D570 below.)
 
 ## D570 — Festival Lead, the attack-again turn machine: 7 printings / 1 text / 1 object (engine 0.454.0, `MATCH_RECORD_VERSION` 36 → 37)
 
@@ -29333,6 +29364,112 @@ gate rows killed (before and after). Census: `BUILT.attack` 1716 → **1723** (r
 46/75 corrected: Alakazam composes and stays raw); residue 14/16 → **9/9**; backlog row 16 CLOSED; OPAQUE 9/11 → **6/6**;
 `BUILT.ability` 388 / `BUILT.trainer` 254 unmoved, checked. MRV: all three new parks' 0.457 rollback readings DRIVEN and
 INERT. Owed: ~~D573's sweep (predicted `3958 · 51` over 4,009, PENDING) and~~ 🆕 D573's sweep is PAID, EXACTLY (`3958 · 51` over
-4,009, close-out `b022087d`); owed: D574's (predicted `3982 · 51` over 4,033, stands as written).
-NEXT: see `progress.md` NEXT (7) — the MRV slice (Iron Moth + Miraidon + Glimmora + Hypno, 37 → 38), then Blipbug,
+4,009, close-out `b022087d`); ~~owed: D574's (predicted `3982 · 51` over 4,033, stands as written).~~ 🆕 D574's is PAID,
+EXACTLY, on the first launch (`3982 · 51` over 4,033, close-out `f268886b`, `tmp/sweep-D574.log:8078`; struck at the D575 landing).
+NEXT: see `progress.md` NEXT (7) — the MRV slice (Iron Moth + Miraidon + Glimmora + Hypno, 37 → 38), then Blipbug [🆕🆕🆕 D575: TAKEN, with Blipbug AND N's Sigilyph riding the same step — D575 below],
 antique-fossils, Tyme, Scovillain ex; Koraidon after its R-1.
+
+## D575 — the MRV-38 attack slice: 6 printings / 6 texts (engine 0.459.0, `MATCH_RECORD_VERSION` 37 → 38)
+
+**Status:** ✅ BUILT in the `lum-wt-d575` worktree (detached at `380f8b4e`, D574), NOT committed (the brief: "DO NOT
+COMMIT"), while D574's whole-corpus sweep ran in the main checkout (never written). Rank 1 of the D575 pricing round
+(`progress.md` NEXT (7), recorded verbatim): the MRV-38 core (Iron Moth, Miraidon, Glimmora, Hypno) plus Blipbug and N's
+Sigilyph, 6 printings over about 57-65 binding sites, the version step paid once; Walking Wake left OUT (the last REACHED
+OPAQUE row — building it empties opaque-anatomy-gate §E, simulated by the judge). 🆕 Committed there on `d575-prep` at
+`d212f0a2`; LANDED on `main` by cherry-pick onto the D574 close-out `f268886b` (`progress.md` NEXT (1-land)) — DEPLOY THE
+CLIENT FIRST.
+
+### (a) The cards
+- Iron Moth `sv06.5-009` — "Anachronism Repulsor" (index 1): *"During your opponent's next turn, prevent all damage done to
+  this Pokémon by attacks from Ancient Pokémon."* (corpus FILE LINE 182)
+- Miraidon `sv08-069` — "C.O.D.E.: Protect" (index 0): *"During your opponent's next turn, prevent all damage done to each
+  of your Future Pokémon by attacks from Pokémon ex. If this Pokémon is no longer your Active Pokémon, this effect ends."*
+  (181)
+- Glimmora `sv08-115` — "Corrosive Shards" (index 0): *"Your opponent's Active Pokémon is now Poisoned. During your
+  opponent's next turn, Energy cards can't be attached from your opponent's hand to that Pokémon."* (690)
+- Hypno `sv06.5-017` — "Daydream" (index 0): *"During your opponent's next turn, if they attach an Energy card from their
+  hand to the Defending Pokémon, their turn ends."* (177)
+- Team Rocket's Blipbug `sv10-015` — "Searching Eyes" (index 0): *"Look at 1 of your opponent's face-down Prize cards."*
+  (394)
+- N's Sigilyph `sv09-064` — "Victory Symbol" (index 1): *"If you use this attack when you have exactly 1 Prize card
+  remaining, you win this game."* (346)
+
+### (b) The design
+- **The attacker classes** — `AttackerClass.stage` widened `"basic"` → `"basic" | "ancient" | "ex"` (the key keeps its
+  name and stays REQUIRED); `attackerMatchesStage` stays the exhaustive switch that is its whole body: `"ancient"` is
+  `bannerOf(attacker) === "Ancient"` at damage time (R-IM1), `"ex"` is `pokemonSuffixOf(attacker) === "ex"` — exactly the
+  printed class, never `isExOrV` / `hasRuleBox`. Iron Moth is arm 19c's `preventDamage` with the new member.
+- **The side-wide block** — the NEW `installSideAttackBlock` writes the REQUIRED `PlayerSide.sideAttackBlock { turn,
+  sourceUid, banner, fromClass }`; ONE side arm inside `attackBlockOf` answers when the body's own block does not (the
+  side's live record, the source still its Active, the damaged body's banner read LIVE — R-MI2 — and the class);
+  `switchInto` CLEARS it when the source leaves the Active and emits `SIDE_ATTACK_BLOCK_ENDED` (R-MI1).
+- **The hand-attach mark** — the NEW `markHandAttach { barred?, endsTurn? }` writes the REQUIRED
+  `InPlayPokemon.handAttachMark { turn, barred, endsTurn, tripped }` on the Defending Pokémon (`+ 1`, the victim's turn),
+  shed by all five literals. Glimmora: turn.ts `attachEnergy` refuses with the NEW `ENERGY_ATTACH_BARRED` (the allowance
+  unspent); effect attaches from hand skip the body (`AttachTargetRiders.source`, `handOpenRefs`, and an apply-side belt
+  in `attachEnergyFrom`) — R-GL1. Hypno: the attach action seeds the turn tail AFTER its riders, recovery and watched
+  triggers, behind any parked prize pick (`resolveMidTurnKnockOuts`' new `tail`) — R-HY2; an effect's hand attach TRIPS
+  the mark and `settleProgram` ends the turn when the program settles — R-HY1 (+5 sites, under the +6 ceiling).
+- **The private look** — the NEW `lookAtPrize { side: "opponent", index? }`: 0 face-down → nothing; 1 → straight to the
+  look; 2+ → the shipped `choosePrize` park, answered BLIND (R-BL1), the answer buying the op again with `index`; the look
+  parks the shipped `orderCards` over ONE uid — `redactPrompt` resolves it for the answerer alone — and the public
+  `PRIZE_LOOKED_AT` names the slot only (R-BL2). No new prompt kind, no wire byte, no persisted knowledge field.
+- **The printed win** — `conditionGate { yourPrizesRemaining [1] }` around the NEW `winGame`, which calls `finishGame`
+  from the interpreter (a flow ↔ interpreter cycle, function bodies only) with the NEW `GameOverReason` `"cardEffect"`
+  (R-VS1); the schema `z.enum` and the web projection widen with it — deploy the CLIENT first.
+
+### (c) Readings (`docs/decisions.md` D575 (c), all ⚠️ UNRULED)
+R-IM1 Ancient by banner at damage time · R-MI1 the terminator cleared in `switchInto` (plus a read-time source check) ·
+R-MI2 the Future set read live · R-GL1 the bar covers effect attaches from hand · R-HY1 an effect's hand attach ends the
+turn too · R-HY2 after the riders, behind a parked prize pick · R-BL1 the blind slot · R-BL2 the private look, slot-only
+row · R-VS1 read at use, the win immediate, no tie.
+
+### (d) Verified, and owed
+See `progress.md` NEXT (1)-(5) for the pasted figures: `bun run check`, precheck (corpus 4,074), the four gates, the probe
+`--decision D575 --allow-dirty` (41 killed), the neighbour re-probe and the 16 gate-witness rows (KILLED before and after).
+Census: `BUILT.attack` 1723 → **1729** (reader +6); raw 47/76 → **41/70**; residue 9/9 → **3/3**; backlog row 15 CLOSED;
+OPAQUE 6 → **2** (1 reached, 1 far); `BUILT.ability` 388 / `BUILT.trainer` 254 +0, re-derived by the join. MRV 37 → 38, the
+ELEVENTH position (match.ts). Owed: ~~D574's sweep (`3982 · 51` over 4,033, PENDING) and~~ 🆕 D574's sweep is PAID, EXACTLY
+(close-out `f268886b`); D575's (`4023 · 51` over 4,074, stacked on it, so it stands as written). Display debts carried: a barred Glimmora attach is an error toast; neither the side block nor the hand
+mark is drawn; the private look renders in the `orderCards` dialog ("Put the cards back in order").
+
+### (e) The review round (fixes on the same bytes, still NOT committed)
+A reviewer could not refute the mechanics or the figures and found seven defects, all fixed in place: (1) more copies of
+the withdrawn *"one-member union"* / *"stays LOUD … deferred"* claims (typedSelfSwitch.test.ts, classBlock.test.ts,
+index.ts, conventions.md, flipStatusHeadsTails.test.ts' control, and — swept again by script — effects.ts' two Iron Moth
+notes, conventions.md's *"three stay unbuilt"*, coverage-backlog-legal.md's *"4 left"* and this file's D146 / *"BLOCKED ON
+INGEST"* lines), annotated, never deleted; (2) the Hypno (Daydream) rollback is now DRIVEN (§8 (ii-b)), so *"drops a live
+protection, grants a barred attach and keeps a Daydream turn"* is true as written; (3) §3's gust rung asserts the
+`SIDE_ATTACK_BLOCK_ENDED` event and its row, the install-and-end rung asserts both rows, an expired record is cleared
+silently (a new rung), and two mutant rows hold the event and the row's consequent; (4) R-HY2's SWEEP tail — the
+`resolveMidTurnKnockOuts(…, endsTurn ? turnTail(…) : undefined)` branch taken when an attach-watched trigger fires — is
+driven by two new §5 rungs on Gengar ex "Gnawing Curse" (no Knock Out; and a Knock Out whose turn end waits behind p1's
+parked prize pick and p2's parked promotion), held by `D575-hypno-tail-dropped-behind-a-watched-trigger` and
+`D575-sweep-tail-replaced-by-resume`; (5) §8 (iii) no longer asserts on a local switch: it drives the fall-out of a stage
+word the switch has no arm for through THIS build's real `attackBlockOf`, and `D575-stage-switch-unknown-member-protects`
+turns it red; (6) match.test.ts' pin comment now names *"one WIDENED persisted value, two REQUIRED keys and a riding enum
+widening"*, as match.ts and decisions.md do; (7) the NEXT block's biome file count is marked as a worktree-local figure
+(biome's include globs reach gitignored scratch under `tmp/`). +5 `D575-*` rows (36 → 41), corpus 4,069 → 4,074.
+
+### (f) The second and third review rounds (docs and suites, still NOT committed)
+The second round found more unannotated copies of the withdrawn claims (bold-wrapped *"exactly **ONE** member"* among them) and
+one under-asserting rung (§7 now checks the redacted reason). The third round found the sweep still blind inside one-line
+`decisions.md` rows and one-line `progress.md` headers: D142's *"each stays LOUD"*, D146's *"STAYS LOUD … NO DATUM"* and
+*"exactly ONE member"*, D239's *"PERMANENT FLOOR"*, D517's *"exactly four inhabitants"* / *"PRICED AND NOT BUILT"*, D532's
+LOUD control on Blipbug's sentence and D574's *"three (two SCHEMA-BANNER, one PRIZE-ZONE)"*, plus their header, session-log
+and archived copies, and `coverage-backlog-legal.md` row 15's figure (now attack 0, CLOSED). All annotated in place; the
+scan now asks for a D575 note within ±700 characters of each matched span rather than within N lines. No code or mutant
+row changed. [🆕 **D575 landing (D539):** the code sweep had NOT found everything — the parked FINAL review found
+`interpreter.ts`'s `attackDamageBlocked` doc block still calling the Bench-target arms *"unreachable by construction"*,
+which D575's own `sideAttackBlockOf` falsifies (Benched Future bodies). Annotated in place at the landing, with its quoted
+copy in this file (the D159 survivor note); the stale *"three `fromClass` printings"* annotated with the measured 8 → 10.
+Comments and docs only; still no mutant row changed.]
+
+### (g) The landing
+Picked onto the D574 close-out `f268886b` (D574's sweep PAID EXACTLY at `3982 · 51`, so `4023 · 51` over 4,074 stands)
+with `--no-commit`, no amend; docs-only conflicts resolved keeping every close-out fact; re-verified in the main checkout
+(`progress.md` NEXT (1-land)).
+
+NEXT: see `progress.md` NEXT (7) — ⑴ fossils + Area Zero Underdepths (MRV 38 → 39, after an ingest decision on
+map.ts:103-108), ⑵ Relicanth + TM Fluorite, ⑶ Tyme, ⑷ Scovillain + Iron Treads, ⑸ the census close-out (Walking Wake +
+Koraidon after R-1, the gates on constructed literals); the Mega ingest is a user decision.

@@ -897,7 +897,10 @@ describe("deriveAttackEffect (effects.ts)", () => {
       // 🆕🆕🆕 D574 — FILE LINE 686's TAIL is built (`moveCountersOpponentAnyWay`) and the compound
       // composes behind the Confusion head; the WHOLE string still derives null here, so it stays.
       "Your opponent's Active Pokémon is now Confused. You may move any number of damage counters from your opponent's Pokémon to their other Pokémon in any way you like.", // corpus FILE LINE 686 — same drift, same anchor
-      "Your opponent's Active Pokémon is now Poisoned. During your opponent's next turn, Energy cards can't be attached from your opponent's hand to that Pokémon.", // corpus FILE LINE 690 — same drift, same anchor
+      // 🆕🆕🆕 D575 — corpus FILE LINE 690 (Glimmora "Corrosive Shards") LEFT THIS LIST, removed rather
+      // than shortened silently (D501's move): it is claimed WHOLE by its own anchor
+      // (`POISON_AND_BAR_HAND_ATTACH`), so `deriveAttackEffect` no longer returns null on it — pinned
+      // positively below. `DEFENDER_NOW`'s `\.$` still refuses it (`defenderStatusPair.test.ts` §2).
       "Flip a coin. If heads, choose a Special Condition. Your opponent's Active Pokémon is now affected by that Special Condition.", // sv01-010
       "The Defending Pokémon is now Asleep.", // old-era phrasing
       "Flip a coin. If tails, your opponent's Active Pokémon is now Asleep.",
@@ -909,6 +912,15 @@ describe("deriveAttackEffect (effects.ts)", () => {
     ]) {
       expect(deriveAttackEffect(text)).toBeNull();
     }
+    // 🆕🆕🆕 D575 — the row that left, claimed WHOLE as a two-op program (the Poison, then the bar).
+    expect(
+      deriveAttackEffect(
+        "Your opponent's Active Pokémon is now Poisoned. During your opponent's next turn, Energy cards can't be attached from your opponent's hand to that Pokémon.",
+      ),
+    ).toEqual([
+      { op: "applyStatus", target: "defender", status: "poisoned" },
+      { op: "markHandAttach", barred: true },
+    ]);
   });
 });
 

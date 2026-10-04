@@ -860,6 +860,7 @@ describe("the structural answers", () => {
         // nothing: the pin is on the HEAD's key set, so it moves whenever anybody adds a
         // key, and what it asserts is that none of them was added HERE.
         "evolvedTurn",
+        "handAttachMark", // 🆕🆕🆕 D575 (37 -> 38) — the hand-attach mark (Glimmora / Hypno); the pin is on the HEAD's key set
         "healedTurn",
         "installedRecoil",
         "koBounty", // 🆕🆕🆕 D549 (32 -> 33) — the Knock Out bounty; the pin is on the HEAD's key set

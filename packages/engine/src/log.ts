@@ -81,6 +81,13 @@ function attackerClassPhrase(cls: AttackerClass): string {
   return cls.excludingType === undefined ? stage : `${stage} non-${cls.excludingType}`;
 }
 
+/** 🆕🆕🆕 D575 — the WHOLE printed class noun ("Basic Pokémon", "Ancient Pokémon",
+    "Pokémon ex"), because the ex class prints its word AFTER "Pokémon" and the row can no
+    longer append " Pokémon" to the phrase. Every pre-D575 row renders byte-identically. */
+function attackerClassNoun(cls: AttackerClass): string {
+  return cls.stage === "ex" ? "Pokémon ex" : `${attackerClassPhrase(cls)} Pokémon`;
+}
+
 /** The stage word's printed CASING, and a `switch` for `attackerMatchesStage`'s
     reason (continuous.ts): the stored token is lowercase, the printed word is
     capitalised, and a new member must be given a spelling by a human rather than
@@ -89,6 +96,11 @@ function stageWord(stage: AttackerClass["stage"]): string {
   switch (stage) {
     case "basic":
       return "Basic";
+    // 🆕🆕🆕 D575 — the banner word and the rule-box suffix, spelled by a human.
+    case "ancient":
+      return "Ancient";
+    case "ex":
+      return "ex";
   }
 }
 
@@ -166,6 +178,8 @@ const GAME_OVER_REASONS: Record<GameOverReason, string> = {
   noPokemon: "the opponent has no Pokémon left",
   deckOut: "the opponent could not draw",
   conceded: "the opponent forfeited",
+  // 🆕🆕🆕 D575 — a card's printed win (N's Sigilyph "Victory Symbol": "…you win this game.").
+  cardEffect: "a card's effect won the game",
 };
 
 /** One event → its log rows (usually one), or null to skip it. The switch is
@@ -643,7 +657,7 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
         strong(cardName(state, event.uid)),
         plain(
           (event.fromClass !== undefined
-            ? ` is protected from damage from ${attackerClassPhrase(event.fromClass)} Pokémon's attacks during your opponent's next turn`
+            ? ` is protected from damage from ${attackerClassNoun(event.fromClass)}'s attacks during your opponent's next turn`
             : event.effects
               ? " is protected from damage and effects of attacks during your opponent's next turn"
               : " is protected from damage from attacks during your opponent's next turn") +
@@ -875,6 +889,39 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
     // Gaze). INSTALLER voice, and the installer is the shielded side: "next turn" is the
     // OPPONENT's, so the row says so rather than "your next turn". The printed reminder is
     // rendered for `SIDE_ATTACKS_LOCKED`'s reason — a fresh body is covered too.
+    // 🆕🆕🆕 §11 — Miraidon "C.O.D.E.: Protect"'s side-wide block (D575). Filed under the
+    // INSTALLER (the shielded side), the class read off the ROW through the one renderer, and
+    // the printed terminator named so the opponent knows a gust ends it.
+    case "SIDE_ATTACK_BLOCK_APPLIED":
+      return row(event.seat, [
+        plain(`${event.banner} Pokémon are protected from damage from ${attackerClassNoun(event.fromClass)}'s attacks during the opponent's next turn, while `),
+        strong(cardName(state, event.uid)),
+        plain(" stays in the Active Spot"),
+      ]);
+    case "SIDE_ATTACK_BLOCK_ENDED":
+      return row(event.seat, [
+        strong(cardName(state, event.uid)),
+        plain(" left the Active Spot — its protection ended"),
+      ]);
+    // 🆕🆕🆕 §6.2/§11 — the hand-attach mark (D575), filed under the MARKED Pokémon's owner,
+    // victim-voiced (`ATTACK_LOCK_APPLIED`'s rule): each printed consequent is named.
+    case "HAND_ATTACH_MARKED": {
+      const parts = [
+        ...(event.barred ? ["can't have Energy cards attached from hand"] : []),
+        ...(event.endsTurn ? ["ends its owner's turn if an Energy card is attached to it from hand"] : []),
+      ];
+      return row(event.seat, [
+        strong(cardName(state, event.uid)),
+        plain(` ${parts.join(" and ")} during its owner's next turn`),
+      ]);
+    }
+    // 🆕🆕🆕 (D575) — Blipbug "Searching Eyes". SLOT-ONLY (`PRIZE_LOOKED_AT`'s doc): the log is
+    // broadcast to both seats, so the card is never named here — the looker sees it in the
+    // dialog. Filed under the ACTOR with the row's owner named (the D567 Bother-Bot rule).
+    case "PRIZE_LOOKED_AT":
+      return row(event.actor, [
+        plain(`looked at ${names[event.seat]}'s face-down Prize ${event.index + 1}`),
+      ]);
     case "SIDE_DAMAGE_REDUCTION_INSTALLED":
       return row(event.seat, [
         plain(

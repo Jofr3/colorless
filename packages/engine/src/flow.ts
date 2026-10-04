@@ -1192,6 +1192,10 @@ export function resolveMidTurnKnockOuts(
   actorSeat: Seat,
   seats: readonly Seat[],
   events: GameEvent[],
+  /** 🆕🆕🆕 D575 — what follows the sweep's stages in place of `resumeTurn`: the turn tail
+      when the action that got here ENDS the turn (Hypno "Daydream", turn.ts `attachEnergy` —
+      R-HY2). Absent = `resumeTurn`, every pre-D575 caller byte for byte. */
+  tail?: PendingStage[],
 ): ApplyResult {
   // 🆕🆕🆕 D549 — `false`: a mid-turn Knock Out is DURING a turn (the bounty pays).
   const batch = collectKnockOuts(state, seats, events, false);
@@ -1201,11 +1205,13 @@ export function resolveMidTurnKnockOuts(
   // call's behaviour changed; what changed is that there is one copy of it.
   const orphaned = orphanedPromotions(batch.state, seats, batch.stages);
   // Nothing KO'd and no spot left empty.
-  if (batch.stages.length === 0 && orphaned.length === 0) return ok(batch.state, events);
+  if (batch.stages.length === 0 && orphaned.length === 0 && tail === undefined) {
+    return ok(batch.state, events);
+  }
   return advance(
     {
       ...batch.state,
-      pending: [...batch.stages, ...orphaned, { kind: "resumeTurn", seat: actorSeat }],
+      pending: [...batch.stages, ...orphaned, ...(tail ?? [{ kind: "resumeTurn", seat: actorSeat }])],
     },
     events,
   );
@@ -1602,11 +1608,27 @@ export function settleProgram(
   // An Ability that ends the turn (Koraidon "Dino Cry") seeds the turn tail
   // instead of returning to turn:action. Its program does not damage, so no
   // mid-turn KO sweep is owed — the tail's Checkup handles between-turns KOs.
-  if (opts.endsTurn === true) {
+  // 🆕🆕🆕 D575 — and so does a program whose HAND attach landed on a body carrying Hypno
+  // "Daydream"'s live `endsTurn` mark (R-HY1 ⚠️ UNRULED: the effect path as well as the attach
+  // action; the attach op TRIPPED the mark, interpreter.ts `tripHandAttachMark`). Read HERE,
+  // at program completion, so a hand attach before a later park ends the turn once the park
+  // resolves (R-HY2's "after", on this path).
+  if (opts.endsTurn === true || handAttachTripped(settled, controller)) {
     return advance({ ...settled, pending: turnTail(controller) }, events);
   }
   const resumed: GameState = { ...settled, phase: { kind: "turn:action", seat: controller } };
   return resolveMidTurnKnockOuts(resumed, controller, SEATS, events);
+}
+
+/** 🆕🆕🆕 D575 — does any of `seat`'s bodies carry a LIVE, TRIPPED hand-attach mark (Hypno
+    "Daydream" — an effect's hand attach landed on the marked Defending Pokémon this turn)? */
+function handAttachTripped(state: GameState, seat: Seat): boolean {
+  const side = state.players[seat];
+  const bodies = side.active === null ? side.bench : [side.active, ...side.bench];
+  // ⚠️ `?.` and not `!== null`: this runs over EVERY body at EVERY program completion, and
+  // hand-built test bodies that predate the field (cardplay.test.ts `benchN`) omit it. A real
+  // v38 body always carries it; a v37 record is retired by the version gate, not read here.
+  return bodies.some((body) => body.handAttachMark?.turn === state.turn && body.handAttachMark.tripped);
 }
 
 /** Run the on-KO triggered Ability of the just-Knocked-Out `uid` (owned by

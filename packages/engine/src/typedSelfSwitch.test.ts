@@ -709,8 +709,8 @@ describe("§7 — the gain is the RAW reader summand alone", () => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("§8 — the engine version", () => {
-  it("engineVersion is 0.458.0", () => {
-    expect(engineVersion).toBe("0.458.0");
+  it("engineVersion is 0.459.0", () => {
+    expect(engineVersion).toBe("0.459.0");
   });
 });
 
@@ -807,9 +807,15 @@ describe("§9 — the `Ancient`/`Future` banner is DATA-BLOCKED, and the falsifi
     // Thorns "Destructo-Press") is a hand-written REGISTRY attack on the NEW
     // `revealTopDiscardMatching`; the readers still refuse it, so the reader-claimed list below
     // is unchanged.
+    // 🆕🆕🆕 D575 (D539): "the last four … now THREE" is now ONE — D575 BUILDS Iron Moth's persisted
+    // attacker class (`"ancient"`) and the every-Future prevention (Miraidon, `sideAttackBlock`),
+    // both claimed WHOLE by READERS, so the reader-claimed list gains those two; the seat-level
+    // attack record (Koraidon `sv08-116` "Unrelenting Onslaught") is the one left.
     const readerClaimed = banner.filter(([, text]) => resolvedByAnyReader(text)).map(([, t]) => t);
     expect(readerClaimed.sort()).toEqual(
       [
+        "During your opponent's next turn, prevent all damage done to each of your Future Pokémon by attacks from Pokémon ex. If this Pokémon is no longer your Active Pokémon, this effect ends.",
+        "During your opponent's next turn, prevent all damage done to this Pokémon by attacks from Ancient Pokémon.",
         "If you played a Future Supporter card from your hand during this turn, this attack does 100 more damage.",
         "If your opponent has any Future Pokémon in play, this attack does 120 more damage.",
         "This attack does 10 more damage for each Ancient card in your discard pile.",
@@ -826,6 +832,8 @@ describe("§9 — the `Ancient`/`Future` banner is DATA-BLOCKED, and the falsifi
     // D462's finding, kept executable: *price the CARRIERS, not the token.* The
     // eight non-`OPAQUE` rows want the predicate in at least four different places —
     // a `CardFilter` kind, `preventDamage.fromClass` (a one-member union), an op
+    // (🆕🆕🆕 D575 (D539): ~~"a one-member union"~~ — THREE members since D575,
+    // `"basic" | "ancient" | "ex"`; the `fromClass` carrier is the one D575 paid, Iron Moth's)
     // FIELD in the `moveCountersToDefender.ownerPokemon` shape, and a SUPPORTER-CARD
     // predicate for *"If you played an Ancient Supporter card…"*, which is not about
     // a Pokémon at all. The rung below is the cheap half of that claim: the family

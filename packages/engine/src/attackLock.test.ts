@@ -993,6 +993,9 @@ describe("the self-lock — the §10 clear set is SWEPT, not listed", () => {
       installedRecoil: { turn: 99, amount: 40 },
       lockedAttacks: [{ turn: 99, attackIndex: 0 }],
       boostedAttack: { turn: 99, attackIndex: 0, amount: 20 },
+      // 🆕🆕🆕 D575 — the HAND-ATTACH mark (Glimmora's bar, Hypno's turn end), a stamp for turn 99:
+      // it blocks no route, so all three carry it and all three must shed it.
+      handAttachMark: { turn: 99, barred: true, endsTurn: true, tripped: false },
     };
   }
 
@@ -1015,6 +1018,7 @@ describe("the self-lock — the §10 clear set is SWEPT, not listed", () => {
     if (pokemon.installedRecoil !== null) set.push("installedRecoil");
     if (pokemon.lockedAttacks.length > 0) set.push("lockedAttacks");
     if (pokemon.boostedAttack !== null) set.push("boostedAttack");
+    if (pokemon.handAttachMark !== null) set.push("handAttachMark"); // 🆕🆕🆕 D575
     return set;
   }
 
@@ -1118,6 +1122,7 @@ describe("the self-lock — the §10 clear set is SWEPT, not listed", () => {
       "installedRecoil",
       "lockedAttacks",
       "boostedAttack",
+      "handAttachMark", // 🆕🆕🆕 D575 — the hand-attach mark joins the swept set
     ]);
   });
 });

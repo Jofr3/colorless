@@ -56,6 +56,15 @@ import {
 // would answer three real cards WRONGLY, since Great Tusk ex sv01-123 is the same
 // species with no banner. So the sentence stays LOUD, which is this family's
 // standing answer to a token it cannot resolve.
+//
+// 🆕🆕🆕 D575 (D539): ~~"THE FOURTH PRINTING OF THIS SENTENCE IS NOT MAPPED … it stays
+// unread … an MRV bump, deferred … So the sentence stays LOUD"~~ is WITHDRAWN — the
+// paragraph above is kept as the record (D418). D575 MAPS the fourth printing: the MRV
+// bump was PAID (`MATCH_RECORD_VERSION` 37 → 38, the ELEVENTH position), `AttackerClass.stage`
+// gained `"ancient"` (kept REQUIRED, read through `bannerOf` by printing id at damage
+// time — R-IM1; the Great Tusk ex species argument above still holds), and Iron Moth's
+// sentence DERIVES `{ op: "preventDamage", fromClass: { stage: "ancient" } }` — see the
+// ANCIENT rung below and mrvAttackSliceD575.test.ts.
 
 const BASIC_TEXT =
   "During your opponent's next turn, prevent all damage done to this Pokémon by attacks from Basic Pokémon.";
@@ -192,6 +201,7 @@ describe("the attacker-CLASS filter — derived, not authored", () => {
   });
 
   // (🆕🆕🆕 D569 (D539): "because there is no DATUM" is WITHDRAWN — the datum is `banners.ts` since D569; Iron Moth still has no reader, because its block is a PERSISTED `AttackerClass` whose widening is an MRV question (deferred, decisions.md D569). The refusal this rung pins is unchanged)
+  // (🆕🆕🆕 D575 (D539): the TITLE below — ~~"refuses the ANCIENT spelling — no reader"~~ — is WITHDRAWN and kept as the record (D418): since D575 the rung pins that the Ancient spelling DERIVES `{ stage: "ancient" }`, not that it is refused)
   it("refuses the ANCIENT spelling — no reader, because there is no DATUM", () => {
     // THE SLICE'S HEADLINE REFUSAL, and it is not "we ran out of time". "Ancient"
     // is a banner printed on the card FACE from Paradox Rift (sv04) onward: it is
@@ -202,7 +212,11 @@ describe("the attacker-CLASS filter — derived, not authored", () => {
     // sv01-123/-230/-246 is one of the Ancient species and carries no banner, so
     // any name-keyed answer is wrong on three real cards with no failure anywhere.
     // Loud is the only honest answer, and this is where it is pinned.
-    expect(deriveAttackEffect(ANCIENT_TEXT)).toBeNull();
+    // 🆕🆕🆕 D575 (D539): ~~the refusal~~ is WITHDRAWN — the rung's title and the paragraph above
+    // are kept as the record (D418). D575 BUILDS the Ancient spelling: `AttackerClass.stage`
+    // gained `"ancient"` (read through `bannerOf`, by printing id — never a species table, so the
+    // Great Tusk ex argument above still holds) and `MATCH_RECORD_VERSION` stepped 37 → 38.
+    expect(deriveAttackEffect(ANCIENT_TEXT)).toEqual([{ op: "preventDamage", fromClass: { stage: "ancient" } }]);
     // The two sentences differ in ONE WORD, so the refusal is a property of the
     // anchor rather than of the shape — assert that they really are one word apart.
     expect(ANCIENT_TEXT).toBe(BASIC_TEXT.replace("Basic Pokémon", "Ancient Pokémon"));
@@ -260,6 +274,11 @@ describe("the attacker-CLASS filter — derived, not authored", () => {
     // ⚠️ D239 WIDENED WHAT "VOCABULARY" MEANS HERE, AND THE SWEEP WENT RED FIRST
     // — which is the pin working. The field is now an `AttackerClass` RECORD, so
     // the closed set is checked per KEY: `stage` against the one-member union the
+    // (🆕🆕🆕 D575 (D539): ~~"the one-member union"~~ — THREE members since D575,
+    // `"basic" | "ancient" | "ex"`; the sweep below still pins `"basic"` because it walks
+    // `FIXTURE_POOL`, where no card prints Iron Moth's Ancient sentence, and Miraidon's ex
+    // block rides `installSideAttackBlock`, not `preventDamage` — mrvAttackSliceD575.test.ts
+    // drives the two new members)
     // predicate switches on, and `excludingType` against `POKEMON_TYPES` (absent
     // is allowed and is D146's own reading). Asserting the whole record against a
     // literal would have to list eleven exclusions the day a second code prints.
@@ -561,7 +580,11 @@ describe("the attacker-CLASS filter — the EFFECTS half, unreachable but guarde
       constructed rather than pretended into a board — D144's precedent for a rule
       with no card — because the alternative is `fromClass` meaning one thing at
       the four damage sites and another at the effects gate, which is precisely the
-      drift the single-read contract exists to stop. */
+      drift the single-read contract exists to stop.
+      (🆕🆕🆕 D575 (D539): ~~"all three `fromClass` printings"~~ — a stale count.
+      MEASURED at the D575 landing over `legalAttackCorpus()`: 8 legal printings
+      before D575 and **10** after (Iron Moth's Ancient and Miraidon's side-wide ex
+      added), all still the narrow spelling, so the point holds.) */
   function wideFiltered(state: GameState): GameState {
     const active = state.players.p1.active;
     if (active === null) throw new Error("no Active to shield");

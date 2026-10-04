@@ -965,6 +965,7 @@ describe("§9 — nothing persisted moves, and it is DRIVEN rather than argued",
       "damageVulnerability", // 🆕🆕🆕 D547 (30 -> 31)
       "energy",
       "evolvedTurn",
+      "handAttachMark", // 🆕🆕🆕 D575 (37 -> 38) — the hand-attach mark (Glimmora / Hypno); the pin is on the HEAD's key set
       "healedTurn",
       "installedRecoil",
       "koBounty", // 🆕🆕🆕 D549 (32 -> 33) — the Knock Out bounty; the pin is on the HEAD's key set
@@ -1060,6 +1061,6 @@ describe("§10 — purity and the version", () => {
     // anchor. ⚠️ D427 named the mechanism — **every note counts the pins it INHERITED
     // and never the one it is about to AUTHOR** — and D428 was the first note to get it
     // right. This line is the one being authored.
-    expect(engineVersion).toBe("0.458.0");
+    expect(engineVersion).toBe("0.459.0");
   });
 });

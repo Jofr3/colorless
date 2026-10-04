@@ -334,6 +334,10 @@ export const MARKERS: readonly Marker[] = [
       //    counts 0 on every board forever"~~ ("none classifies" stays TRUE of `cardSchema`).
       // 🆕🆕🆕 D571 (D539): "a reveal-top-N op" is WITHDRAWN from the list — D571 built it
       //    (`revealTopDiscardMatching`, Iron Thorns "Destructo-Press" on the registry route).
+      // 🆕🆕🆕 D575 (D539): of the three "OTHER mechanisms" in the string below, ~~"a persisted attacker
+      //    class"~~ and ~~"a set-target block"~~ are BUILT (Iron Moth "Anachronism Repulsor", Miraidon
+      //    "C.O.D.E.: Protect" — the ELEVENTH `MATCH_RECORD_VERSION` position); only "a seat-level attack
+      //    record" (Koraidon `sv08-116`, unruled R-1) remains. The string is kept as written (D178).
       "nothing new — `banners.ts` (D568/D569) classifies all three banners by printing id; what is left of the Ancient/Future residue is blocked by OTHER mechanisms (a persisted attacker class, a seat-level attack record, a set-target block)",
   },
   {

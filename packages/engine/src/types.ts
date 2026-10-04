@@ -1,4 +1,5 @@
 import type { Card } from "@luminous/schema";
+import type { Banner } from "./banners";
 import type {
   AttackerClass,
   CardFilter,
@@ -201,9 +202,11 @@ export interface AttackBlock {
       Miraidon sv08-069's *"each of your Future Pokémon … from Pokémon ex"*, is
       refused by its TARGET rather than by its class (effects.ts
       `PREVENT_DAMAGE_FROM_CLASS`).
+      (🆕🆕🆕 D575 (D539): both are BUILT at D575 — Iron Moth on the NEW `"ancient"` member and Miraidon on
+      `"ex"` plus the side-wide `PlayerSide.sideAttackBlock`; the "LOUD" readings above are WITHDRAWN.)
 
       ⚠️ IT IS AN `AttackerClass` RECORD RATHER THAN A STRING, AND THAT IS D239's
-      whole edit here. `stage` stays a one-member closed vocabulary so
+      whole edit here. (🆕🆕🆕 D575 (D539): ~~"one-member"~~ — three members since D575.) `stage` stays a one-member closed vocabulary so
       `attackerMatchesClass` (continuous.ts) keeps its EXHAUSTIVE switch — a
       second stage word cannot be added without the compiler demanding the
       predicate that reads it — while the printed *"non-{X}"* exclusion rides an
@@ -679,6 +682,60 @@ export interface SideDamageReduction {
   turn: number;
   /** HP subtracted after Weakness and Resistance (the printed 30). */
   amount: number;
+}
+
+/** 🆕🆕🆕 §11 (D575) — a SIDE-WIDE, class-filtered next-turn damage block: Miraidon `sv08-069`
+    "C.O.D.E.: Protect" (*"…prevent all damage done to each of your Future Pokémon by attacks
+    from Pokémon ex. If this Pokémon is no longer your Active Pokémon, this effect ends."*).
+    Written by `installSideAttackBlock` (interpreter.ts) on the INSTALLER's side, read by ONE
+    side arm in continuous.ts `attackBlockOf` for the damaged body's side.
+
+    `banner` is the printed DEFENDER set ("Future"), read LIVE off the damaged body's top card
+    at damage time — never a snapshot of which bodies were Future at install (R-MI2 ⚠️
+    UNRULED: a Future body benched after the install is covered). `fromClass` is the printed
+    ATTACKER class (`{ stage: "ex" }`), resolved by `attackBlockOf`'s own class predicate.
+    `sourceUid` is the installer's top-card uid: the terminator *"If this Pokémon is no longer
+    your Active Pokémon, this effect ends"* is CLEARED where the source leaves the Active
+    (`switchInto` — the reachable route inside the window, a gust) and re-checked at read
+    time (the source must still be its side's Active) for every other route (a Knock Out, a
+    bounce) — R-MI1 ⚠️ UNRULED: a read-time check ALONE would revive the effect after a gust
+    and a re-promotion, so the clear is the primary half.
+
+    OVERWRITE on a second install (one attack per turn; a second Miraidon's install replaces
+    the first — the later source owns the terminator). */
+export interface SideAttackBlock {
+  /** The single turn this block is live on — the installer's opponent's next turn. */
+  turn: number;
+  /** The installing body's top-card uid (the printed "this Pokémon" of the terminator). */
+  sourceUid: string;
+  /** The printed defender banner ("each of your Future Pokémon"). */
+  banner: Banner;
+  /** The printed attacker class ("by attacks from Pokémon ex"). */
+  fromClass: AttackerClass;
+}
+
+/** 🆕🆕🆕 §6.2/§11 (D575) — the DEFENDING Pokémon's next-turn HAND-ATTACH mark, written by
+    the `markHandAttach` op on the opponent's Active, stamped `state.turn + 1` (the victim's
+    own turn). Two printed consequents on one window:
+      `barred` — Glimmora `sv08-115` "Corrosive Shards": Energy cards can't be attached from
+        the victim's hand to this body (turn.ts `attachEnergy` → `ENERGY_ATTACH_BARRED`; the
+        effect attaches from hand drop the body from their targets — R-GL1 ⚠️ UNRULED);
+      `endsTurn` — Hypno `sv06.5-017` "Daydream": an Energy card attached from the victim's
+        hand to this body ENDS their turn (R-HY1 ⚠️ UNRULED — the attach action AND an
+        effect's hand attach), AFTER the on-attach riders and watched triggers and behind any
+        parked prize pick (R-HY2 ⚠️ UNRULED);
+      `tripped` — the EFFECT path's carrier (R-HY1): an effect's hand attach onto a live
+        `endsTurn` body sets it, and flow.ts `settleProgram` ends the controller's turn when
+        the program settles (the Koraidon precedent). Always `false` when written.
+    A second install inside one window MERGES by OR. Shed by §10 with every other effect of an
+    attack (`clearOnLeavingActive`, `switchInto`, `evolveOnto`, `devolvedBodyOf`; `makeInPlay`
+    writes `null`). */
+export interface HandAttachMark {
+  /** The single turn this mark is live on — the installer's opponent's next turn. */
+  turn: number;
+  barred: boolean;
+  endsTurn: boolean;
+  tripped: boolean;
 }
 
 /** §9/§11 (D152, WIDENED D456) — an attack-installed REACTIVE RECOIL on one
@@ -1568,6 +1625,19 @@ export interface InPlayPokemon {
       PLAYED lines that shed it, and a gust or devolution sheds it too. All five
       literals write it; only `makeInPlay` is compiler-forced. */
   koBounty: KoBounty | null;
+  /** 🆕🆕🆕 §6.2/§11 (D575) — the next-turn HAND-ATTACH mark on this Pokémon (see
+      `HandAttachMark` above: Glimmora's bar, Hypno's turn end), or `null`. `state.turn + 1`
+      on the OPPONENT's Active, so the window is the VICTIM's own turn and the victim's
+      retreat, Switch or evolution on it are PLAYED lines that shed it (§10): all five
+      literals write `null` (`makeInPlay`, `evolveOnto`, `clearOnLeavingActive`,
+      `devolvedBodyOf`, `switchInto`); only `makeInPlay` is compiler-forced, the four spread
+      literals are held by mutants and by `attackLock.test.ts`'s sweep.
+
+      PUBLIC (an attack both players watched) and on NO wire field: the HUD draws no mark (a
+      carried display debt, decisions.md D575) — a barred attach comes back as an error toast.
+
+      REQUIRED (not `?`): `MATCH_RECORD_VERSION` 37 → 38 (the ELEVENTH position). */
+  handAttachMark: HandAttachMark | null;
   /** §9/§11 (D152) — the attack-installed REACTIVE RECOIL on this Pokémon (see
       `InstalledRecoil` above), or `null` when none has been installed. Read
       through `installedRecoilOf` (continuous.ts) rather than by touching this
@@ -1952,6 +2022,9 @@ export function makeInPlay(uid: string, turnPlayed: number): InPlayPokemon {
     // compiler forces these two lines; the four spread literals are held by mutants.
     costTaxTurn: null,
     koBounty: null,
+    // 🆕🆕🆕 …nor MARKED its hand attaches (D575). The compiler forces this line; the four
+    // spread literals are held by mutants.
+    handAttachMark: null,
     // …and no attack has armed a durated recoil on it either (D152) — the
     // reduction's sibling on the §9 side of the pipeline. Same reading of §10's
     // carry-over rule from the other end as the four lines above.
@@ -2067,6 +2140,19 @@ export interface PlayerSide {
       REQUIRED (not `?`): `MATCH_RECORD_VERSION` 35 → 36 (the NINTH position at match.ts) —
       a v35 rollback would silently drop a played Jasmine's Gaze window. */
   sideDamageReduction: SideDamageReduction | null;
+  /** 🆕🆕🆕 §11 (D575) — the SIDE-WIDE, class-filtered next-turn damage block on this seat's
+      Future Pokémon (Miraidon "C.O.D.E.: Protect", see `SideAttackBlock` above), or `null`.
+      Written by `installSideAttackBlock`, read by continuous.ts `attackBlockOf`'s side arm,
+      cleared by `switchInto` when the source leaves the Active (R-MI1). Placed beside
+      `sideDamageReduction` for that field's measured reason (ONE non-test literal,
+      `emptySide`).
+
+      PUBLIC — installed by an attack both players watched — but it rides NO wire field: the
+      HUD does not show it (a carried display debt, the D564/D570 precedent, decisions.md D575).
+
+      REQUIRED (not `?`): `MATCH_RECORD_VERSION` 37 → 38 (the ELEVENTH position at match.ts) —
+      a 0.458 rollback would silently drop a live C.O.D.E.: Protect window. */
+  sideAttackBlock: SideAttackBlock | null;
   active: InPlayPokemon | null;
   /** Dense (no empty slots), capped at BENCH_MAX. */
   bench: InPlayPokemon[];
@@ -2093,8 +2179,14 @@ export interface StadiumInPlay {
     the game up. It is deliberately ONE reason for both ways that happens — the
     player pressed concede, or an online player vanished and their abandonment
     timer ran out (P4 3c-ii) — because to the opponent they are the same event,
-    a forfeit, and the engine has no business knowing about sockets. */
-export type GameOverReason = "prizesTaken" | "noPokemon" | "deckOut" | "conceded";
+    a forfeit, and the engine has no business knowing about sockets.
+    (🆕🆕🆕 D575 (D539): *"conceded is the fourth and only non-rules one"* is WITHDRAWN as a
+    count, kept as written — there are FIVE members: `cardEffect` is the fifth, a card's
+    printed win (N's Sigilyph `sv09-064` "Victory Symbol": *"…you win this game."*), written
+    only by the `winGame` op through `finishGame`, never by `evaluateWin`. A WIDENING (match.ts
+    103-107) that rides the ELEVENTH position's bump; the schema `z.enum` widens with it, so
+    the CLIENT deploys FIRST — an old client's enum rejects the new reason.) */
+export type GameOverReason = "prizesTaken" | "noPokemon" | "deckOut" | "conceded" | "cardEffect";
 
 /** §14 — how a finished game ended. A win names the condition met; a TIE is
     the simultaneous case (both players met one at the same instant), with
@@ -3140,6 +3232,10 @@ export function evolveOnto(
     // window is the INSTALLER's next turn, so evolving on the turn in between sheds the
     // "2 more Prize cards" (evolve clear, D549 bounty).
     koBounty: null,
+    // 🆕🆕🆕 …and, since D575, the HAND-ATTACH mark — the cost tax's story: the window is the
+    // marked body's controller's own turn, so evolving it is the victim's played line and
+    // the evolved body takes Energy from hand freely (evolve clear, D575 hand mark).
+    handAttachMark: null,
     // …and, since D152, the attack-armed RECOIL — the reduction's story two lines
     // up rather than the debuff's, and for the same arithmetic: its window is the
     // OPPONENT's next turn, during which the holder's controller cannot evolve

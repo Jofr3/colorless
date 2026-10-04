@@ -125,9 +125,14 @@ const LEFT_LOUD = {
       since D569 with no ingest change. Iron Moth's sentence STAYS unread, on a MECHANISM:
       `fromClass` is persisted, and an optional `AttackerClass.stage` would fall out of
       0.452's `attackerMatchesStage` switch on rollback (an MRV bump, deferred — docs/decisions.md
-      D569 (e)). The witness still refuses; its blocker is now that, not data. */
+      D569 (e)). The witness still refuses; its blocker is now that, not data.
+      🆕🆕🆕 D575 — RE-POINTED (never deleted, D418): D575 BUILDS Iron Moth's sentence
+      (`AttackerClass.stage` "ancient", `MATCH_RECORD_VERSION` 37 → 38), so the slot now holds
+      Walking Wake `sv06-063` "Undulating Slice" (1 printing) — a residue sentence D575 leaves
+      unbuilt, VERIFIED before choosing (`readersClaiming` is []; no anchor in this file reaches
+      it). Its refusal is a MECHANISM again (a chosen counter count feeding the damage), not data. */
   headsTails:
-    "During your opponent's next turn, prevent all damage done to this Pokémon by attacks from Ancient Pokémon.",
+    "Put up to 9 damage counters on this Pokémon. This attack does 20 damage for each damage counter you placed in this way.",
   /** 🆕🆕 **RE-POINTED A SECOND TIME AT D464, AND THE PARAGRAPH IT REPLACES IS KEPT
       VERBATIM BELOW BECAUSE IT WAS WRONG IN AN INSTRUCTIVE WAY (D178).**
 
@@ -172,8 +177,15 @@ const LEFT_LOUD = {
     //    `copyRemainderBundleD574.test.ts` §1. The one survivor (FILE LINE 690, Glimmora) is in the
     //    NEXT MRV slice, so the loud control no longer leans on it alone: the recorded refusal
     //    (FILE LINE 676, Mr. Mime, D445) rides beside it in the attribution loop.
-    "Your opponent's Active Pokémon is now Poisoned. During your opponent's next turn, Energy cards can't be attached from your opponent's hand to that Pokémon.",
-  ],
+    // 🆕🆕🆕 **D575 — corpus FILE LINE 690 (Glimmora `sv08-115` "Corrosive Shards"), THE LAST
+    //    SURVIVOR, LEFT THIS LIST — REMOVED RATHER THAN THE LIST SHORTENED SILENTLY (D501's move, a
+    //    third time).** It is claimed WHOLE by the NEW anchor `POISON_AND_BAR_HAND_ATTACH`
+    //    (`applyStatus` Poisoned + `markHandAttach { barred }`), so it is no longer LOUD. The list is
+    //    now EMPTY, and the rungs that walk it assert so explicitly (the vacuity guard) rather than
+    //    looping over nothing; the row is kept LIVE as `BUILT_AT_D575` for the `\.$` drift
+    //    measurement, which still holds of it (`DEFENDER_NOW`'s `\.$` refuses it; the new anchor
+    //    is a different regex).
+  ] as readonly string[],
   /** 🆕🆕🆕 D574 — a REAL printing held by a RECORDED REFUSAL (corpus FILE LINE 676, Mr. Mime
       `sv05-063` "Look-Alike Show", D445), outside every family the D574 pricing round ranks — the
       attribution loop's stable witness, since `dotAnchorTrio`'s survivor is next in line (D540). */
@@ -184,6 +196,12 @@ const LEFT_LOUD = {
     measurement still names it (D418): refused WHOLE, drifted-not-strict, and composed now. */
 const COMPOSED_AT_D574 =
   "Your opponent's Active Pokémon is now Confused. You may move any number of damage counters from your opponent's Pokémon to their other Pokémon in any way you like.";
+
+/** 🆕🆕🆕 D575 — the LAST row that left `dotAnchorTrio` (FILE LINE 690, Glimmora "Corrosive Shards"),
+    kept LIVE so the `\.$` drift measurement still names it (D418): drifted-not-strict, and claimed
+    WHOLE now by its own anchor. */
+const BUILT_AT_D575 =
+  "Your opponent's Active Pokémon is now Poisoned. During your opponent's next turn, Energy cards can't be attached from your opponent's hand to that Pokémon.";
 
 /** 🛑 THE COLLISION SENTENCES, AND THEY ARE CONSTRUCTED — SAID OUT LOUD. No card
     prints two rotation statuses together (§3 pins that on the POPULATION), so this
@@ -398,6 +416,9 @@ describe("§1 — the printed data, transcribed rather than recognised", () => {
     // 🆕 D464 — the trio replaces `paralyzedComma`; all three are corpus rows, 1 printing
     // each (FILE LINES 685, 686, 690), and the transcription is asserted the same way.
     for (const text of LEFT_LOUD.dotAnchorTrio) expect(rows.get(text)).toBe(1);
+    // 🆕🆕🆕 D575 — the trio is EMPTY now (Glimmora is built); the vacuity guard says so outright.
+    expect(LEFT_LOUD.dotAnchorTrio).toEqual([]);
+    expect(rows.get(BUILT_AT_D575)).toBe(1);
     // 🆕🆕🆕 D574 — the row that left, and the recorded refusal that joined the loud loop: 1 each.
     expect(rows.get(COMPOSED_AT_D574)).toBe(1);
     expect(rows.get(LEFT_LOUD.recordedRefusal)).toBe(1);
@@ -539,7 +560,14 @@ describe("§2 — the derivation, parameterised on both axes", () => {
     // branch resolves at a different SEAM. One rung, two mechanisms, and folding them
     // under one title is exactly the mistake D464 corrected two anchors over.
     expect(deriveAttackEffect(LEFT_LOUD.headsTails)).toBeNull();
+    // 🆕🆕🆕 D575 — the VACUITY GUARD (D501): the survivor set is genuinely EMPTY, not skipped —
+    // its last member (Glimmora, FILE LINE 690) is claimed WHOLE now, by its OWN anchor.
+    expect(LEFT_LOUD.dotAnchorTrio).toEqual([]);
     for (const text of LEFT_LOUD.dotAnchorTrio) expect(deriveAttackEffect(text)).toBeNull();
+    expect(deriveAttackEffect(BUILT_AT_D575)).toEqual([
+      { op: "applyStatus", target: "defender", status: "poisoned" },
+      { op: "markHandAttach", barred: true },
+    ]);
     expect(deriveAttackEffect(COMPOSED_AT_D574)).toBeNull();
     // The compound is refused WHOLE — deliberately, so the SPLITTER claims it (§5)
     // rather than a hand-written anchor shadowing the composition path.
@@ -560,7 +588,8 @@ describe("§2 — the derivation, parameterised on both axes", () => {
     const hit = (re: RegExp) => rows.filter(([, s]) => re.test(s));
     expect([hit(strict).length, hit(strict).reduce((a, [n]) => a + n, 0)]).toEqual([4, 74]);
     expect([hit(drifted).length, hit(drifted).reduce((a, [n]) => a + n, 0)]).toEqual([16, 96]);
-    for (const text of [...LEFT_LOUD.dotAnchorTrio, COMPOSED_AT_D574]) {
+    // 🆕🆕🆕 D575 — the trio is empty; its last member rides on as `BUILT_AT_D575`.
+    for (const text of [...LEFT_LOUD.dotAnchorTrio, COMPOSED_AT_D574, BUILT_AT_D575]) {
       expect(strict.test(text)).toBe(false);
       expect(drifted.test(text)).toBe(true);
     }
@@ -980,6 +1009,9 @@ describe("§7 — the printed text stops being flagged, on every carrier", () =>
     // control keeps its job and gains two members rather than losing one (D418).
     const b = board("ninetales", "fix-titan");
     // 🆕🆕🆕 D574 — FILE LINE 686 left (composed now); the recorded refusal joins (see `LEFT_LOUD`).
+    // 🆕🆕🆕 D575 — FILE LINE 690 left too (built), so the trio is EMPTY (asserted, not looped over
+    // silently), and `headsTails` holds Walking Wake now: the loop runs over TWO real printings.
+    expect(LEFT_LOUD.dotAnchorTrio).toEqual([]);
     for (const text of [LEFT_LOUD.headsTails, ...LEFT_LOUD.dotAnchorTrio, LEFT_LOUD.recordedRefusal]) {
       const doctored = withEffect(b, "fix-ninetales", text);
       expect(find(swing(doctored, "ninetales").events, "ATTACK_EFFECT_SKIPPED")?.effect).toBe(text);
@@ -1051,6 +1083,6 @@ describe("§8 — purity and the structural answers", () => {
   });
 
   it("the engine version moved with the behaviour", () => {
-    expect(engineVersion).toBe("0.458.0");
+    expect(engineVersion).toBe("0.459.0");
   });
 });

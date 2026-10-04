@@ -15,6 +15,7 @@ import {
   effectiveRetreatCost,
   intoPlayOnlyViaOf,
   opposingRetreatBlocked,
+  liveHandAttachMark,
   pokemonPlayBarred,
   retreatLocked,
 } from "./continuous";
@@ -179,6 +180,23 @@ export function attachEnergy(state: GameState, action: AttachEnergyAction): Appl
   if (!isPokemonTarget(action.target)) {
     return err("BAD_TARGET", "attach target must name the Active spot or a bench index");
   }
+  // 🆕🆕🆕 §6.2/§11 (D575) — the DEFENDING Pokémon's live hand-attach mark (types.ts
+  // `HandAttachMark`), read off the TARGET as it stands before the attach. Glimmora
+  // "Corrosive Shards" — *"Energy cards can't be attached from your opponent's hand to that
+  // Pokémon"* — REFUSES the attach with its own code (the §6.2 allowance is not spent: the
+  // card never leaves hand, the ACE SPEC bar's rule above). Hypno "Daydream" — *"…if they
+  // attach an Energy card from their hand to the Defending Pokémon, their turn ends"* — is
+  // carried to the tail below (R-HY2). A bad bench index reads no mark and is refused below.
+  const markedTarget =
+    action.target.spot === "active" ? side.active : side.bench[action.target.index];
+  const mark = markedTarget == null ? null : liveHandAttachMark(state, markedTarget);
+  if (mark?.barred === true) {
+    return err(
+      "ENERGY_ATTACH_BARRED",
+      "an attack prevents Energy cards from being attached from your hand to that Pokémon this turn",
+    );
+  }
+  const endsTurn = mark?.endsTurn === true;
 
   const hand = without(side.hand, action.uid);
   let updated: PlayerSide;
@@ -335,9 +353,22 @@ export function attachEnergy(state: GameState, action: AttachEnergyAction): Appl
       next = watched;
       // The counters can be lethal, and this is the acting seat's own board
       // mid-turn — `placeEvolution`'s sweep, for `placeEvolution`'s reason.
-      return resolveMidTurnKnockOuts(next, action.seat, [action.seat], events);
+      // 🆕🆕🆕 D575 — Hypno's turn end rides BEHIND the sweep's prize / promotion stages in
+      // place of `resumeTurn` (R-HY2: after every rider and watched trigger, behind any parked
+      // prize pick).
+      return resolveMidTurnKnockOuts(
+        next,
+        action.seat,
+        [action.seat],
+        events,
+        endsTurn ? turnTail(action.seat) : undefined,
+      );
     }
   }
+  // 🆕🆕🆕 D575 — Hypno "Daydream": the attach onto the marked Defending Pokémon ENDS the turn,
+  // seeded here after the §6.1 riders, the §12 recovery and the watched triggers have all run
+  // (R-HY2 ⚠️ UNRULED) — the Koraidon "Dino Cry" fold, `settleProgram`'s `endsTurn`.
+  if (endsTurn) return advance({ ...next, pending: turnTail(action.seat) }, events);
   return ok(next, events);
 }
 
@@ -808,6 +839,10 @@ function clearOnLeavingActive(pokemon: InPlayPokemon): InPlayPokemon {
     // holder's retreat on the turn in between walks the marked body out from under
     // the "2 more Prize cards" (retreat clear, D549 bounty).
     koBounty: null,
+    // 🆕🆕🆕 D575 — the HAND-ATTACH mark (Glimmora's bar, Hypno's turn end): the window is the
+    // holder's own turn, so a retreat on it is a PLAYED line that sheds the mark — the
+    // promoted body takes the Energy freely (retreat clear, D575 hand mark).
+    handAttachMark: null,
     // D152 — the armed recoil, whose story here is the REDUCTION's: the window is
     // the opponent's turn, so the RETREAT half is unreachable inside it (the
     // holder's controller cannot retreat on someone else's turn) and the FORCED

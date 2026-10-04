@@ -223,7 +223,9 @@ describe("the gated PREVENT clause — derived, not authored", () => {
       // stays refused because `fromClass` is PERSISTED: an optional `AttackerClass.stage`
       // falls out of 0.452's `attackerMatchesStage` switch on rollback (MRV, deferred —
       // docs/decisions.md D569 (e)).
-      "During your opponent's next turn, prevent all damage done to this Pokémon by attacks from Ancient Pokémon.",
+      // 🆕🆕🆕 D575 — Iron Moth LEFT THIS LIST, removed rather than shortened silently (D501's
+      // move): D575 BUILDS it (`AttackerClass.stage` "ancient", `MATCH_RECORD_VERSION` 37 → 38),
+      // pinned positively below. (D539: the title's "FOUR printings" is WITHDRAWN as a count.)
       // Corviknight sv02-148 "Accelerate" — gated on the attack's own RESULT.
       "If your opponent's Pokémon is Knocked Out by damage from this attack, during your opponent's next turn, prevent all damage from and effects of attacks done to this Pokémon.",
       // Squawkabilly sv01-162 "Fly" — a SECOND consequent on the same flip.
@@ -234,6 +236,12 @@ describe("the gated PREVENT clause — derived, not authored", () => {
     ]) {
       expect(deriveAttackEffect(text)).toBeNull();
     }
+    // 🆕🆕🆕 D575 — the row that left: arm 19c's op with the NEW class member.
+    expect(
+      deriveAttackEffect(
+        "During your opponent's next turn, prevent all damage done to this Pokémon by attacks from Ancient Pokémon.",
+      ),
+    ).toEqual([{ op: "preventDamage", fromClass: { stage: "ancient" } }]);
     // …and the sentence that LEFT this list is asserted to have left it, so the
     // re-pointing above is a fact rather than a comment (D144's own move applied
     // to D142's own witness).

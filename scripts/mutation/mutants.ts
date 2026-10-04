@@ -3168,8 +3168,10 @@ export const MUTANTS: Mutant[] = [
     decision: "D247",
     what: "🛑 the cap stops being the candidate set and becomes 1, so 'any number' attaches at most one card. The park still appears, the answer still validates, and every board with a one-card hand behaves identically — which is why the deck stocks THREE",
     file: "packages/engine/src/interpreter.ts",
-    find: "  return { candidates, targets: attachEnergyTargets(state, seat, {}), max: candidates.length };",
-    replace: "  return { candidates, targets: attachEnergyTargets(state, seat, {}), max: 1 };",
+    // 🆕🆕🆕 D575 - RE-ANCHORED off the bytes (D540): the offer's riders argument is `{ source: "hand" }` now (Glimmora's
+    //    bar, R-GL1); the claim (the cap is the candidate set) is unchanged.
+    find: "  return { candidates, targets: attachEnergyTargets(state, seat, { source: \"hand\" }), max: candidates.length };",
+    replace: "  return { candidates, targets: attachEnergyTargets(state, seat, { source: \"hand\" }), max: 1 };",
     expectKilledBy: ["packages/engine/src/derivedAnyNumberAttach.test.ts"],
   },
   {
@@ -6228,7 +6230,7 @@ export const MUTANTS: Mutant[] = [
     // CORPUS QUOTES** (D414/D415), so a value-keyed sweep over `toBe("0.391.0")` cannot
     // see it — this row's `find` spells the DECLARATION, not an assertion. Run
     // `precheck` after every version bump, not after the sweep tells you.
-    find: 'export const engineVersion = "0.458.0";',
+    find: 'export const engineVersion = "0.459.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -8981,8 +8983,11 @@ export const MUTANTS: Mutant[] = [
     decision: "D311",
     what: "🛑 THE SLICE'S WHOLE SEAM, DELETED. `resolveMidTurnKnockOuts` goes back to sweeping KNOCK OUTS only, so an Active Dudunsparce shuffles itself away and the Active Spot stays EMPTY -- the turn resumes on a board with no Active, the §14.2 loss never fires, and the very next attack resolves against nothing. This is the tree as it stood before this slice, which is exactly why the row exists: the op was buildable without it and the suite would have been green on the BENCH half alone",
     file: "packages/engine/src/flow.ts",
-    find: "  if (batch.stages.length === 0 && orphaned.length === 0) return ok(batch.state, events);",
-    replace: "  if (batch.stages.length === 0) return ok(batch.state, events);",
+    // 🆕🆕🆕 D575 - RE-ANCHORED off the bytes (D540): the early return gained a third conjunct, `tail === undefined` (Hypno's
+    //    turn end rides the sweep's tail, R-HY2), and spans three lines; the mutant still drops the
+    //    orphan conjunct alone.
+    find: "  if (batch.stages.length === 0 && orphaned.length === 0 && tail === undefined) {",
+    replace: "  if (batch.stages.length === 0 && tail === undefined) {",
     expectKilledBy: ["packages/engine/src/runAwayDraw.test.ts"],
   },
   {
@@ -11421,8 +11426,9 @@ export const MUTANTS: Mutant[] = [
     // 🆕🆕🆕 D570 - RE-TRANSCRIBED, 36 -> 37, off the new bytes (THE TENTH POSITION: the REQUIRED
     //    `TurnAllowances.attackAgainUid`). Fourteenth consecutive bump to rot this row, predicted
     //    before `precheck`.
-    find: "export const MATCH_RECORD_VERSION = 37;",
-    replace: "export const MATCH_RECORD_VERSION = 36;",
+    // 🆕🆕🆕 D575 - stepped with the constant, 37 -> 38 (the ELEVENTH position); one step back, as always.
+    find: "export const MATCH_RECORD_VERSION = 38;",
+    replace: "export const MATCH_RECORD_VERSION = 37;",
     expectKilledBy: ["apps/api/src/lobby/match.test.ts"],
   },
   // == D327 - THE COST SEAM'S SECOND AND THIRD COUNT SOURCES. Every row below is a
@@ -25378,7 +25384,7 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D471-co-marker-may-label",
     decision: "D471",
-    what: "\u26a0\ufe0f **THE DISCIPLINE THE SECOND AXIS RESTS ON, DELETED.** Dropping `m.verdict === \"blocker\" &&` lets a refuted CO-MARKER label a row, so `BLOCKED-CONTINUOUS` and `BLOCKED-PRIZE-ZONE` appear in the class table and `UNEXPLAINED` shrinks from 31 to something that reads like progress. **A partition that explains more rows is not a better partition if the extra explanations are the ones its own control already refuted** \u2014 the whole value of the built-side column is that it DISQUALIFIES markers, and a marker that can label after being disqualified is a column nobody reads. Killed by \u00a7C's `a CO-MARKER labelled a row` claim, which is what stops that assertion from being decorative. [🆕🆕🆕 D571 (D539, the D569 close-out's gate-witness rule): that claim rides FIVE live far residue sentences and D571 BUILT one of them (Destructo-Press, a SCHEMA-BANNER witness — 3/4 → 2/2), so the row is ALSO killed by §C's PINNED witness now: `blockerMarkerOf({ text: CO_PIN })` over the literal PRIZE-ZONE sentence «If you use this attack when you have exactly 1 Prize card remaining, you win this game.», its premise re-measured (`D571-gate-co-marker-pin-premise-broken`). The labelling line moved into the exported `blockerMarkerOf` byte for byte; this `find` is unchanged.]",
+    what: "\u26a0\ufe0f **THE DISCIPLINE THE SECOND AXIS RESTS ON, DELETED.** Dropping `m.verdict === \"blocker\" &&` lets a refuted CO-MARKER label a row, so `BLOCKED-CONTINUOUS` and `BLOCKED-PRIZE-ZONE` appear in the class table and `UNEXPLAINED` shrinks from 31 to something that reads like progress. **A partition that explains more rows is not a better partition if the extra explanations are the ones its own control already refuted** \u2014 the whole value of the built-side column is that it DISQUALIFIES markers, and a marker that can label after being disqualified is a column nobody reads. Killed by \u00a7C's `a CO-MARKER labelled a row` claim, which is what stops that assertion from being decorative. [🆕🆕🆕 D571 (D539, the D569 close-out's gate-witness rule): that claim rides FIVE live far residue sentences and D571 BUILT one of them (Destructo-Press, a SCHEMA-BANNER witness — 3/4 → 2/2), so the row is ALSO killed by §C's PINNED witness now: `blockerMarkerOf({ text: CO_PIN })` over the literal PRIZE-ZONE sentence «If you use this attack when you have exactly 1 Prize card remaining, you win this game.», its premise re-measured (`D571-gate-co-marker-pin-premise-broken`). [🆕🆕🆕 D575 (D539): ~~the three live far witnesses~~ — D575 BUILT the pinned PRIZE-ZONE sentence itself (N's Sigilyph \"Victory Symbol\") and the Miraidon SCHEMA-BANNER witness; ONE live far witness remains (Koraidon `sv08-116`), and the PINNED literal still holds the row — the gate-witness probe read 16/16 KILLED after the build.] The labelling line moved into the exported `blockerMarkerOf` byte for byte; this `find` is unchanged.]",
     file: "scripts/opaque-anatomy.ts",
     find: "    MARKERS.find((m) => m.verdict === \"blocker\" && m.rx.test(r.text)) ?? null;",
     replace: "    MARKERS.find((m) => m.rx.test(r.text)) ?? null;",
@@ -28699,8 +28705,10 @@ export const MUTANTS: Mutant[] = [
     // 🆕🆕🆕 RE-ANCHORED AT D571 (by script off the new bytes — D540): 1705 -> 1707 (and the replace 1693 -> 1705, the GENUINE pre-slice value). THE STEP IS **2** ON ONE SUMMAND — the registry attack Destructo-Press ×2 — MEASURED off the live census. `precheck` reported the `find` at 0x on the edit round that moved the constant, as it has since D495.
     // 🆕🆕🆕 RE-ANCHORED AT D573 (by script off the new bytes — D540): 1707 -> 1716 (and the replace 1705 -> 1707, the GENUINE pre-slice value). THE STEP IS **9** ON ONE SUMMAND — the READER summand, the fourteenth reader `deriveAttackCopy` (Night Joker ×4, Foul Play ×2, Metronome, Gemstone Mimicry, Try to Imitate; 4 sentences) — MEASURED off the live census.
     // 🆕🆕🆕 RE-ANCHORED AT D574 (by script off the new bytes — D540): 1716 -> 1723 (and the replace 1707 -> 1716, the GENUINE pre-slice value). THE STEP IS **7** ON THREE SUMMANDS — READER +5 (Haughty Order ×3, Seek Inspiration, Sableye), TRAILING +1 (Alakazam), REGISTRY +1 (Malamar) — MEASURED off the live census. `precheck` reported the `find` at 0x on the edit round that moved the constant, exactly as it has since D495.
-    find: "  attack: 1723,",
-    replace: "  attack: 1716,",
+    // 🆕🆕🆕 D575 - RE-ANCHORED off the bytes (D540): `BUILT.attack` 1723 -> 1729 (the six MRV-38 reader rows); the mutant
+    //    leaves it at the previous slice's value, as at every step.
+    find: "  attack: 1729,",
+    replace: "  attack: 1723,",
     expectKilledBy: [
       "packages/engine/src/censusAtHead.test.ts",
     ],
@@ -29459,8 +29467,9 @@ export const MUTANTS: Mutant[] = [
     // 🆕🆕🆕 D556 - RE-TRANSCRIBED off the new bytes (34 -> 35), the same step down by one.
     // 🆕🆕🆕 D564 - RE-TRANSCRIBED off the new bytes (35 -> 36), the same step down by one.
     // 🆕🆕🆕 D570 - RE-TRANSCRIBED off the new bytes (36 -> 37), the same step down by one.
-    find: "export const MATCH_RECORD_VERSION = 37;\n",
-    replace: "export const MATCH_RECORD_VERSION = 36;\n",
+    // 🆕🆕🆕 D575 - stepped with the constant, 37 -> 38 (the ELEVENTH position); one step back, as always.
+    find: "export const MATCH_RECORD_VERSION = 38;\n",
+    replace: "export const MATCH_RECORD_VERSION = 37;\n",
     expectKilledBy: ["apps/api/src/lobby/match.test.ts"],
   },
   // ────────────────────────────────────────────────────────────────────────────
@@ -29729,8 +29738,10 @@ export const MUTANTS: Mutant[] = [
     decision: "D503",
     what: "🛑 C4 — **THE OFFER'S UN-NARROWED RIDERS, WHICH NOTHING PINNED.** `attachFromHandOffer` hands `attachEnergyTargets` an EMPTY rider object, and that empty object is the whole reason the printed *'to this Pokémon'* is unbuildable on this op — `AttachTargetRiders` carries `targetType`/`basicOnly`/`ownerPokemon`/`benchOnly`/`bonusCounters`/`notIfKO` and NO self flag, so the only spatial narrowing available is the one that points the wrong way. This row installs it: `benchOnly: true` is D263's Dynamotor rider, real shipped code, and under it the controller's ACTIVE falls out of the offer entirely. ⚠️ THE ROW IS HONEST ABOUT ITS DIRECTION — D503's print names the Active and this narrows to the Bench; what it pins is that the offer is UN-NARROWED AT ALL, which is the fact the refusal's destination branch rests on. The two shipped rows in this function's span (`D247-hand-offer-caps-at-one`, `D247-hand-offer-reads-the-deck`) are about the cap and the zone and neither can see the riders. 🆕🆕🆕 D552 — *'that empty object is the whole reason the printed to this Pokémon is unbuildable on this op'* IS WITHDRAWN (D539): the op carries `toSelf` and the offer resolves it through `sourceRef` in an EARLY RETURN above this line, which is why this row's find (D247's un-narrowed return) is byte-stable. It still pins that D247's offer is UN-NARROWED.",
     file: "packages/engine/src/interpreter.ts",
-    find: "  return { candidates, targets: attachEnergyTargets(state, seat, {}), max: candidates.length };",
-    replace: "  return { candidates, targets: attachEnergyTargets(state, seat, { benchOnly: true }), max: candidates.length };",
+    // 🆕🆕🆕 D575 - RE-ANCHORED off the bytes (D540): the offer's riders argument is `{ source: "hand" }` now (R-GL1); the
+    //    narrowing the mutant adds rides beside it.
+    find: "  return { candidates, targets: attachEnergyTargets(state, seat, { source: \"hand\" }), max: candidates.length };",
+    replace: "  return { candidates, targets: attachEnergyTargets(state, seat, { source: \"hand\", benchOnly: true }), max: candidates.length };",
     expectKilledBy: ["packages/engine/src/derivedAnyNumberAttach.test.ts"],
   },
 
@@ -34837,11 +34848,15 @@ export const MUTANTS: Mutant[] = [
     //    never retyped): D570's TENTH POSITION now sits between D564's doc tail and the constant,
     //    so the anchor is D570's last two lines and the patch drops the constant one step further
     //    than before (37 -> the same pre-bump value). Fourteenth consecutive bump to move this row.
-    find: "    affordances are not pre-folded against the window (a carried display debt, decisions.md\n    D570). */\nexport const MATCH_RECORD_VERSION = 37;",
+    // 🆕🆕🆕 D575 - RE-ANCHORED AGAIN off the bytes (D540: the tail read from match.ts by script,
+    //    never retyped): D575's ELEVENTH POSITION now sits between D570's doc tail and the constant,
+    //    so the anchor is D575's last two lines and the patch value is unchanged (38 -> the same
+    //    pre-bump value). Fifteenth consecutive bump to move these rows.
+    find: "    tail. The HUD draws neither the side block nor the hand mark, and a barred attach comes back as\n    an error toast (carried display debts, decisions.md D575). */\nexport const MATCH_RECORD_VERSION = 38;",
     // 🆕🆕🆕 D549 - RE-ANCHORED AGAIN off the bytes (D540): D549's block now sits between
     //    D548's doc tail and the constant, so the anchor is D549's last two lines and the
     //    patch drops the constant THREE steps, to D547's pre-bump 30.
-    replace: "    affordances are not pre-folded against the window (a carried display debt, decisions.md\n    D570). */\nexport const MATCH_RECORD_VERSION = 30;",
+    replace: "    tail. The HUD draws neither the side block nor the hand mark, and a barred attach comes back as\n    an error toast (carried display debts, decisions.md D575). */\nexport const MATCH_RECORD_VERSION = 30;",
     expectKilledBy: ["packages/engine/src/attackFlipLock.test.ts"],
   },
   // ── D548 — CRESCENT PURGE, THE FACE-UP PRIZE. 18 rows, all probed UNDECLARED first
@@ -35029,11 +35044,15 @@ export const MUTANTS: Mutant[] = [
     //    never retyped): D570's TENTH POSITION now sits between D564's doc tail and the constant,
     //    so the anchor is D570's last two lines and the patch drops the constant one step further
     //    than before (37 -> the same pre-bump value). Fourteenth consecutive bump to move this row.
-    find: "    affordances are not pre-folded against the window (a carried display debt, decisions.md\n    D570). */\nexport const MATCH_RECORD_VERSION = 37;",
+    // 🆕🆕🆕 D575 - RE-ANCHORED AGAIN off the bytes (D540: the tail read from match.ts by script,
+    //    never retyped): D575's ELEVENTH POSITION now sits between D570's doc tail and the constant,
+    //    so the anchor is D575's last two lines and the patch value is unchanged (38 -> the same
+    //    pre-bump value). Fifteenth consecutive bump to move these rows.
+    find: "    tail. The HUD draws neither the side block nor the hand mark, and a barred attach comes back as\n    an error toast (carried display debts, decisions.md D575). */\nexport const MATCH_RECORD_VERSION = 38;",
     // 🆕🆕🆕 D549 - RE-ANCHORED off the bytes onto D549's doc tail; the patch drops the
     //    constant TWO steps, to D548's pre-bump 31 (a different patch from
     //    `D549-record-version-not-bumped`, one step, same anchor).
-    replace: "    affordances are not pre-folded against the window (a carried display debt, decisions.md\n    D570). */\nexport const MATCH_RECORD_VERSION = 31;",
+    replace: "    tail. The HUD draws neither the side block nor the hand mark, and a barred attach comes back as\n    an error toast (carried display debts, decisions.md D575). */\nexport const MATCH_RECORD_VERSION = 31;",
     expectKilledBy: ["packages/engine/src/crescentPurge.test.ts", "apps/api/src/lobby/match.test.ts"],
   },
   // ── 🆕🆕🆕 D549 — THE DEFENDER'S NEXT-TURN MARKS AND THE SIDE-WIDE ATTACK LOCK (`censusAttackCorpus.ts`
@@ -35519,8 +35538,12 @@ export const MUTANTS: Mutant[] = [
     //    never retyped): D570's TENTH POSITION now sits between D564's doc tail and the constant,
     //    so the anchor is D570's last two lines and the patch drops the constant one step further
     //    than before (37 -> the same pre-bump value). Fourteenth consecutive bump to move this row.
-    find: "    affordances are not pre-folded against the window (a carried display debt, decisions.md\n    D570). */\nexport const MATCH_RECORD_VERSION = 37;",
-    replace: "    affordances are not pre-folded against the window (a carried display debt, decisions.md\n    D570). */\nexport const MATCH_RECORD_VERSION = 32;",
+    // 🆕🆕🆕 D575 - RE-ANCHORED AGAIN off the bytes (D540: the tail read from match.ts by script,
+    //    never retyped): D575's ELEVENTH POSITION now sits between D570's doc tail and the constant,
+    //    so the anchor is D575's last two lines and the patch value is unchanged (38 -> the same
+    //    pre-bump value). Fifteenth consecutive bump to move these rows.
+    find: "    tail. The HUD draws neither the side block nor the hand mark, and a barred attach comes back as\n    an error toast (carried display debts, decisions.md D575). */\nexport const MATCH_RECORD_VERSION = 38;",
+    replace: "    tail. The HUD draws neither the side block nor the hand mark, and a barred attach comes back as\n    an error toast (carried display debts, decisions.md D575). */\nexport const MATCH_RECORD_VERSION = 32;",
     expectKilledBy: ["packages/engine/src/sideAttackLock.test.ts", "apps/api/src/lobby/match.test.ts"],
   },
   {
@@ -35821,7 +35844,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D552",
     what: "🛑 C6 — **THE OFFER DROPS ITS `toSelf` BRANCH** and falls through to D247's un-narrowed `attachEnergyTargets(state, seat, {})`: the prompt offers the Bench, and a player can put the {W} on a Benched body where it adds nothing to the printed count (and the validator accepts it). Killed by §3's sole-target rung.",
     file: "packages/engine/src/interpreter.ts",
-    find: "  if (op.toSelf === true) {\n    return { candidates, targets: sourceRef(state, ctx), max: candidates.length };\n  }\n",
+    // 🆕🆕🆕 D575 - RE-ANCHORED off the bytes (D540): the `toSelf` arm filters its one body through Glimmora's bar now
+    //    (`handOpenRefs`, R-GL1); deleting the arm still offers the whole board.
+    find: "  if (op.toSelf === true) {\n    return { candidates, targets: handOpenRefs(state, sourceRef(state, ctx)), max: candidates.length };\n  }\n",
     replace: "",
     expectKilledBy: ["packages/engine/src/selfHandAttachBoost.test.ts"],
   },
@@ -36101,8 +36126,12 @@ export const MUTANTS: Mutant[] = [
     //    never retyped): D570's TENTH POSITION now sits between D564's doc tail and the constant,
     //    so the anchor is D570's last two lines and the patch drops the constant one step further
     //    than before (37 -> the same pre-bump value). Fourteenth consecutive bump to move this row.
-    find: "    affordances are not pre-folded against the window (a carried display debt, decisions.md\n    D570). */\nexport const MATCH_RECORD_VERSION = 37;",
-    replace: "    affordances are not pre-folded against the window (a carried display debt, decisions.md\n    D570). */\nexport const MATCH_RECORD_VERSION = 33;",
+    // 🆕🆕🆕 D575 - RE-ANCHORED AGAIN off the bytes (D540: the tail read from match.ts by script,
+    //    never retyped): D575's ELEVENTH POSITION now sits between D570's doc tail and the constant,
+    //    so the anchor is D575's last two lines and the patch value is unchanged (38 -> the same
+    //    pre-bump value). Fifteenth consecutive bump to move these rows.
+    find: "    tail. The HUD draws neither the side block nor the hand mark, and a barred attach comes back as\n    an error toast (carried display debts, decisions.md D575). */\nexport const MATCH_RECORD_VERSION = 38;",
+    replace: "    tail. The HUD draws neither the side block nor the hand mark, and a barred attach comes back as\n    an error toast (carried display debts, decisions.md D575). */\nexport const MATCH_RECORD_VERSION = 33;",
     expectKilledBy: ["apps/api/src/lobby/match.test.ts"],
   },
   // ── 🆕🆕🆕 D553 — THE SIMPLE ONCE-PER-TURN ABILITIES, 12 printings / 7 texts / 7 objects,
@@ -37026,8 +37055,12 @@ export const MUTANTS: Mutant[] = [
     //    never retyped): D570's TENTH POSITION now sits between D564's doc tail and the constant,
     //    so the anchor is D570's last two lines and the patch drops the constant one step further
     //    than before (37 -> the same pre-bump value). Fourteenth consecutive bump to move this row.
-    find: "    affordances are not pre-folded against the window (a carried display debt, decisions.md\n    D570). */\nexport const MATCH_RECORD_VERSION = 37;",
-    replace: "    affordances are not pre-folded against the window (a carried display debt, decisions.md\n    D570). */\nexport const MATCH_RECORD_VERSION = 34;",
+    // 🆕🆕🆕 D575 - RE-ANCHORED AGAIN off the bytes (D540: the tail read from match.ts by script,
+    //    never retyped): D575's ELEVENTH POSITION now sits between D570's doc tail and the constant,
+    //    so the anchor is D575's last two lines and the patch value is unchanged (38 -> the same
+    //    pre-bump value). Fifteenth consecutive bump to move these rows.
+    find: "    tail. The HUD draws neither the side block nor the hand mark, and a barred attach comes back as\n    an error toast (carried display debts, decisions.md D575). */\nexport const MATCH_RECORD_VERSION = 38;",
+    replace: "    tail. The HUD draws neither the side block nor the hand mark, and a barred attach comes back as\n    an error toast (carried display debts, decisions.md D575). */\nexport const MATCH_RECORD_VERSION = 34;",
     expectKilledBy: ["apps/api/src/lobby/match.test.ts"],
   },
   // ── 🆕🆕🆕 D557 — ELEVEN TRAINERS, 19 PRINTINGS / 11 TEXTS / 11 OBJECTS: Kieran's labelled
@@ -40352,8 +40385,12 @@ export const MUTANTS: Mutant[] = [
     //    never retyped): D570's TENTH POSITION now sits between D564's doc tail and the constant,
     //    so the anchor is D570's last two lines and the patch drops the constant one step further
     //    than before (37 -> the same pre-bump value). Fourteenth consecutive bump to move this row.
-    find: "    affordances are not pre-folded against the window (a carried display debt, decisions.md\n    D570). */\nexport const MATCH_RECORD_VERSION = 37;",
-    replace: "    affordances are not pre-folded against the window (a carried display debt, decisions.md\n    D570). */\nexport const MATCH_RECORD_VERSION = 35;",
+    // 🆕🆕🆕 D575 - RE-ANCHORED AGAIN off the bytes (D540: the tail read from match.ts by script,
+    //    never retyped): D575's ELEVENTH POSITION now sits between D570's doc tail and the constant,
+    //    so the anchor is D575's last two lines and the patch value is unchanged (38 -> the same
+    //    pre-bump value). Fifteenth consecutive bump to move these rows.
+    find: "    tail. The HUD draws neither the side block nor the hand mark, and a barred attach comes back as\n    an error toast (carried display debts, decisions.md D575). */\nexport const MATCH_RECORD_VERSION = 38;",
+    replace: "    tail. The HUD draws neither the side block nor the hand mark, and a barred attach comes back as\n    an error toast (carried display debts, decisions.md D575). */\nexport const MATCH_RECORD_VERSION = 35;",
     expectKilledBy: ["apps/api/src/lobby/match.test.ts"],
   },
   // ── 🆕🆕🆕 D565 — FOUR ABILITIES AND A SUPPORTER (Flustered Leap, Rocket Brain, Ruffian, Impromptu
@@ -43196,8 +43233,12 @@ export const MUTANTS: Mutant[] = [
     decision: "D570",
     what: "🛑 **`MATCH_RECORD_VERSION` STAYS 36 WHILE THE TENTH POSITION LANDS** — this deploy accepts a v36 record, whose allowance bag lacks `attackAgainUid` (read as an OPEN window: every action but `endTurn` refused, D326's class), and a 0.453 rollback would grant a main phase between the two attacks (`festivalLeadD570.test.ts` §8). Anchored on D570's own doc tail, one step. Killed by `match.test.ts` (and the sixteen engine raw pins).",
     file: "apps/api/src/lobby/match.ts",
-    find: "    affordances are not pre-folded against the window (a carried display debt, decisions.md\n    D570). */\nexport const MATCH_RECORD_VERSION = 37;",
-    replace: "    affordances are not pre-folded against the window (a carried display debt, decisions.md\n    D570). */\nexport const MATCH_RECORD_VERSION = 36;",
+    // 🆕🆕🆕 D575 - RE-ANCHORED AGAIN off the bytes (D540: the tail read from match.ts by script,
+    //    never retyped): D575's ELEVENTH POSITION now sits between D570's doc tail and the constant,
+    //    so the anchor is D575's last two lines and the patch value is unchanged (38 -> the same
+    //    pre-bump value). Fifteenth consecutive bump to move these rows.
+    find: "    tail. The HUD draws neither the side block nor the hand mark, and a barred attach comes back as\n    an error toast (carried display debts, decisions.md D575). */\nexport const MATCH_RECORD_VERSION = 38;",
+    replace: "    tail. The HUD draws neither the side block nor the hand mark, and a barred attach comes back as\n    an error toast (carried display debts, decisions.md D575). */\nexport const MATCH_RECORD_VERSION = 36;",
     expectKilledBy: ["apps/api/src/lobby/match.test.ts"],
   },
   // ── 🆕🆕🆕 D571 — PARADOX PART b (IRON THORNS) + THE IGNITION RIDER: the stratified lock pass
@@ -44243,5 +44284,383 @@ export const MUTANTS: Mutant[] = [
     find: "deck\\. You may choose an attack from a Pokémon you find there",
     replace: "deck\\. (?:You may c|C)hoose an attack from a Pokémon you find there",
     expectKilledBy: ["packages/engine/src/copyRemainderBundleD574.test.ts"],
+  },
+  // ── 🆕🆕🆕 D575 — THE MRV-38 ATTACK SLICE: the `"ancient"` / `"ex"` attacker classes (the
+  //    exhaustive switch, the exact-ex read), the side-wide block (the side arm, its banner and source
+  //    conjuncts, the `switchInto` clear, the window, the setup literal), the hand-attach mark (both
+  //    consequents on both paths, the window, the holder, all five literals), the private look (the
+  //    blind pick, the threaded answer, the slot-only row) and the printed win (the count, the
+  //    winner), six anchors / arms, and THE ELEVENTH POSITION. Every `find` asserted to occur exactly
+  //    once in its target before it was written (D540, by script `tmp/gen-d575-rows.py`); every
+  //    replace names only identifiers its file binds (D533). Killed by `mrvAttackSliceD575.test.ts`,
+  //    `attackLock.test.ts`'s three-route sweep and `match.test.ts`. ──
+  {
+    id: "D575-ancient-class-falls-through",
+    decision: "D575",
+    what: "the `\"ancient\"` arm loses its `return` and FALLS THROUGH to the `\"ex\"` arm: Iron Moth's block refuses Pokémon ex instead of Ancient Pokémon, so Sandy Shocks (Ancient, not ex) hits at full damage. Killed by §2.",
+    file: "packages/engine/src/continuous.ts",
+    find: "    case \"ancient\":\n      return bannerOf(attacker) === \"Ancient\";\n",
+    replace: "    case \"ancient\":\n",
+    expectKilledBy: ["packages/engine/src/mrvAttackSliceD575.test.ts"],
+  },
+  {
+    id: "D575-ex-widened-to-the-rule-box",
+    decision: "D575",
+    what: "the persisted `\"ex\"` member widened to ANY rule box (ex, V, VMAX, VSTAR, GX — `hasRuleBox`'s reading without Radiant): a Pokémon V's spread is refused on Miraidon's Future bodies, which the print (*\"from Pokémon ex\"*) does not do — the judge's (d). Killed by §3's V rung.",
+    file: "packages/engine/src/continuous.ts",
+    find: "      return pokemonSuffixOf(attacker) === \"ex\";",
+    replace: "      return pokemonSuffixOf(attacker) !== null;",
+    expectKilledBy: ["packages/engine/src/mrvAttackSliceD575.test.ts"],
+  },
+  {
+    id: "D575-side-arm-never-asked",
+    decision: "D575",
+    what: "`attackBlockOf` stops asking the SIDE arm when the body has no block of its own — which is every Future body under C.O.D.E.: Protect: the side-wide block is installed and never read. Killed by §3.",
+    file: "packages/engine/src/continuous.ts",
+    find: "  if (block === null || block.turn !== state.turn) return sideAttackBlockOf(state, pokemon, attacker);",
+    replace: "  if (block === null || block.turn !== state.turn) return null;",
+    expectKilledBy: ["packages/engine/src/mrvAttackSliceD575.test.ts"],
+  },
+  {
+    id: "D575-side-block-ignores-the-banner",
+    decision: "D575",
+    what: "the side arm drops the BANNER conjunct: every body on Miraidon's side is protected, not only the Future ones (the Filler takes 0). Killed by §3.",
+    file: "packages/engine/src/continuous.ts",
+    find: "    if (bannerOf(topCardOf(state, pokemon)) !== record.banner) return null;\n",
+    replace: "",
+    expectKilledBy: ["packages/engine/src/mrvAttackSliceD575.test.ts"],
+  },
+  {
+    id: "D575-future-set-read-off-the-source",
+    decision: "D575",
+    what: "the banner is read off the SOURCE (Miraidon, Future) rather than the DAMAGED body (R-MI2's live read): every body passes, the non-Future Filler is protected too. Killed by §3.",
+    file: "packages/engine/src/continuous.ts",
+    find: "bannerOf(topCardOf(state, pokemon)) !== record.banner",
+    replace: "bannerOf(topCardOf(state, side.active)) !== record.banner",
+    expectKilledBy: ["packages/engine/src/mrvAttackSliceD575.test.ts"],
+  },
+  {
+    id: "D575-side-block-outlives-its-source",
+    decision: "D575",
+    what: "the read-time half of R-MI1 dropped: a record whose source is no longer the Active (a Knock Out, a bounce — any route `switchInto` does not see) keeps protecting. Killed by §3's read-time rung.",
+    file: "packages/engine/src/continuous.ts",
+    find: "    if (side.active === null || topUid(side.active) !== record.sourceUid) continue;\n",
+    replace: "    if (side.active === null) continue;\n",
+    expectKilledBy: ["packages/engine/src/mrvAttackSliceD575.test.ts"],
+  },
+  {
+    id: "D575-side-key-not-cleared-in-switchInto",
+    decision: "D575",
+    what: "`switchInto` no longer CLEARS the side-wide block when its source leaves the Active (R-MI1): a gust leaves the record standing (the read-time half still hides it while Miraidon is benched), and re-promoting Miraidon REVIVES it — the printed *\"this effect ends\"* undone. Killed by §3's gust and re-promotion rungs.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "    ...(blockEnds ? { sideAttackBlock: null } : {}),\n",
+    replace: "",
+    expectKilledBy: ["packages/engine/src/mrvAttackSliceD575.test.ts"],
+  },
+  {
+    id: "D575-side-block-window-is-the-installers-turn",
+    decision: "D575",
+    what: "the side block is stamped for the INSTALLER's next turn (`+ 2`), not the opponent's: the printed window passes unprotected. Killed by §3.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "    sideAttackBlock: { turn: state.turn + 1, sourceUid: source, banner: op.banner, fromClass: { ...op.fromClass } },",
+    replace: "    sideAttackBlock: { turn: state.turn + 2, sourceUid: source, banner: op.banner, fromClass: { ...op.fromClass } },",
+    expectKilledBy: ["packages/engine/src/mrvAttackSliceD575.test.ts"],
+  },
+  {
+    id: "D575-setup-init-dropped",
+    decision: "D575",
+    what: "`emptySide` omits the REQUIRED `sideAttackBlock`: every side starts with the key ABSENT and the side arm dereferences `.turn` of `undefined` on the first attack — the v37-record hazard, made at setup. Killed by every attack in the suite.",
+    file: "packages/engine/src/setup.ts",
+    find: "    sideAttackBlock: null,\n",
+    replace: "",
+    expectKilledBy: ["packages/engine/src/mrvAttackSliceD575.test.ts"],
+  },
+  {
+    id: "D575-makeInPlay-mark-init-dropped",
+    decision: "D575",
+    what: "`makeInPlay` omits the REQUIRED `handAttachMark` (the one literal the compiler forces — the runner does not typecheck): every fresh body reads the mark as `undefined` and `liveHandAttachMark` throws on the first attach. Killed by §4/§5.",
+    file: "packages/engine/src/types.ts",
+    find: "    // spread literals are held by mutants.\n    handAttachMark: null,\n",
+    replace: "    // spread literals are held by mutants.\n",
+    expectKilledBy: ["packages/engine/src/mrvAttackSliceD575.test.ts"],
+  },
+  {
+    id: "D575-switch-clear-of-the-mark-deleted",
+    decision: "D575",
+    what: "🛑 THE `switch` §10 CLEAR OF `handAttachMark` IS DELETED (`switchInto`) — a spread literal, so `tsc` cannot see it. Killed by §4's played Switch and by `attackLock.test.ts`'s three-route sweep.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "(switch clear, D575 hand mark).\n    handAttachMark: null,",
+    replace: "(switch clear, D575 hand mark).",
+    expectKilledBy: ["packages/engine/src/mrvAttackSliceD575.test.ts", "packages/engine/src/attackLock.test.ts"],
+  },
+  {
+    id: "D575-retreat-clear-of-the-mark-deleted",
+    decision: "D575",
+    what: "🛑 THE `retreat` §10 CLEAR OF `handAttachMark` IS DELETED (turn.ts `clearOnLeavingActive`) — a spread literal. Killed by `attackLock.test.ts`'s three-route sweep.",
+    file: "packages/engine/src/turn.ts",
+    find: "(retreat clear, D575 hand mark).\n    handAttachMark: null,",
+    replace: "(retreat clear, D575 hand mark).",
+    expectKilledBy: ["packages/engine/src/attackLock.test.ts"],
+  },
+  {
+    id: "D575-evolve-clear-of-the-mark-deleted",
+    decision: "D575",
+    what: "🛑 THE `evolve` §10 CLEAR OF `handAttachMark` IS DELETED (`evolveOnto`) — a spread literal. Killed by `attackLock.test.ts`'s three-route sweep.",
+    file: "packages/engine/src/types.ts",
+    find: "(evolve clear, D575 hand mark).\n    handAttachMark: null,",
+    replace: "(evolve clear, D575 hand mark).",
+    expectKilledBy: ["packages/engine/src/attackLock.test.ts"],
+  },
+  {
+    id: "D575-devolve-clear-of-the-mark-deleted",
+    decision: "D575",
+    what: "🛑 THE `devolve` §10 CLEAR OF `handAttachMark` IS DELETED (`devolvedBodyOf`) — a spread literal; the devolved body keeps the bar. Killed by §4's devolve rung.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "    // 🆕🆕🆕 D575 — the hand-attach mark (devolve clear, D575 hand mark).\n    handAttachMark: null,\n",
+    replace: "",
+    expectKilledBy: ["packages/engine/src/mrvAttackSliceD575.test.ts"],
+  },
+  {
+    id: "D575-glimmora-bar-not-checked",
+    decision: "D575",
+    what: "the attach ACTION never refuses: Glimmora's bar is installed and the victim attaches to the barred body anyway. Killed by §4 (and §8 (ii)).",
+    file: "packages/engine/src/turn.ts",
+    find: "  if (mark?.barred === true) {",
+    replace: "  if (mark === undefined) {",
+    expectKilledBy: ["packages/engine/src/mrvAttackSliceD575.test.ts"],
+  },
+  {
+    id: "D575-glimmora-bar-ignores-the-offer-path",
+    decision: "D575",
+    what: "R-GL1's effect path dropped from `attachEnergyTargets`: an Ability's hand attach (Quaquaval \"Energy Carnival\") is OFFERED the barred body — the offer parks over two targets instead of forcing the one open body. Killed by §4.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "    if (riders.source === \"hand\" && liveHandAttachMark(state, pokemon)?.barred === true) return false;\n",
+    replace: "",
+    expectKilledBy: ["packages/engine/src/mrvAttackSliceD575.test.ts"],
+  },
+  {
+    id: "D575-glimmora-bar-ignores-the-toSelf-apply",
+    decision: "D575",
+    what: "the APPLY-side belt dropped from `attachEnergyFrom`: a `toSelf` hand attach (Teal Mask Ogerpon ex \"Teal Dance\"), whose one target never passes `attachEnergyTargets`, lands on the barred body and draws. Killed by §4's Teal Dance rung.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  if (op.source === \"hand\" && liveHandAttachMark(state, pokemon)?.barred === true) return state;\n",
+    replace: "",
+    expectKilledBy: ["packages/engine/src/mrvAttackSliceD575.test.ts"],
+  },
+  {
+    id: "D575-hypno-ends-the-turn-before-the-attach",
+    decision: "D575",
+    what: "Hypno's turn end runs BEFORE the attach and its riders (R-HY2 inverted): the turn ends with the Energy still in hand. Killed by §5.",
+    file: "packages/engine/src/turn.ts",
+    find: "  const endsTurn = mark?.endsTurn === true;\n",
+    replace: "  const endsTurn = mark?.endsTurn === true;\n  if (endsTurn) return advance({ ...state, pending: turnTail(action.seat) }, []);\n",
+    expectKilledBy: ["packages/engine/src/mrvAttackSliceD575.test.ts"],
+  },
+  {
+    id: "D575-hypno-never-ends-the-turn",
+    decision: "D575",
+    what: "the attach action's turn-end tail dropped: Hypno's mark is installed and read, and the victim keeps the turn. Killed by §5.",
+    file: "packages/engine/src/turn.ts",
+    find: "  if (endsTurn) return advance({ ...next, pending: turnTail(action.seat) }, events);\n",
+    replace: "",
+    expectKilledBy: ["packages/engine/src/mrvAttackSliceD575.test.ts"],
+  },
+  {
+    id: "D575-hypno-effect-path-not-read",
+    decision: "D575",
+    what: "`settleProgram` stops reading the TRIPPED mark: an Ability's hand attach onto the Defending Pokémon (R-HY1's effect path) leaves the turn running. Killed by §5's Energy Carnival and Teal Dance rungs.",
+    file: "packages/engine/src/flow.ts",
+    find: "  if (opts.endsTurn === true || handAttachTripped(settled, controller)) {",
+    replace: "  if (opts.endsTurn === true) {",
+    expectKilledBy: ["packages/engine/src/mrvAttackSliceD575.test.ts"],
+  },
+  {
+    id: "D575-hypno-effect-path-not-tripped",
+    decision: "D575",
+    what: "`attachEnergyFrom` no longer trips the mark: the effect path's hand attach is invisible to `settleProgram`, so the turn runs on. Killed by §5.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  if (op.source === \"hand\") updated = tripHandAttachMark(state, updated);\n",
+    replace: "",
+    expectKilledBy: ["packages/engine/src/mrvAttackSliceD575.test.ts"],
+  },
+  {
+    id: "D575-hand-mark-window-off-by-one",
+    decision: "D575",
+    what: "the hand-attach mark is stamped for the INSTALLER's next turn (`+ 2`): the victim's own turn — the printed window — passes unmarked. Killed by §4/§5.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  if (effectRefused(state, victimSeat, ctx, events)) return state;\n  const turn = state.turn + 1;",
+    replace: "  if (effectRefused(state, victimSeat, ctx, events)) return state;\n  const turn = state.turn + 2;",
+    expectKilledBy: ["packages/engine/src/mrvAttackSliceD575.test.ts"],
+  },
+  {
+    id: "D575-hand-mark-lands-on-the-installer",
+    decision: "D575",
+    what: "`markHandAttach` marks the ATTACKER's own Active instead of the Defending Pokémon. Killed by §4/§5.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  const victimSeat = otherSeat(ctx.seat);",
+    replace: "  const victimSeat = ctx.seat;",
+    expectKilledBy: ["packages/engine/src/mrvAttackSliceD575.test.ts"],
+  },
+  {
+    id: "D575-look-event-carries-the-card",
+    decision: "D575",
+    what: "🛑 R-BL2 BROKEN — the public `PRIZE_LOOKED_AT` row carries the looked-at card's uid: the event stream every consumer sees (both seats on /play, the log builder online) now names the face-down card to its owner's opponent's opponent — the card leaks. Killed by §6's exact-row rung.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  events.push({ type: \"PRIZE_LOOKED_AT\", seat: owner, actor: ctx.seat, index });",
+    replace: "  events.push({ type: \"PRIZE_LOOKED_AT\", seat: owner, actor: ctx.seat, index, uid });",
+    expectKilledBy: ["packages/engine/src/mrvAttackSliceD575.test.ts"],
+  },
+  {
+    id: "D575-look-skips-the-blind-pick",
+    decision: "D575",
+    what: "the attacker's BLIND pick (R-BL1) is taken by the engine: the first face-down slot is looked at without a question. Killed by §6.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  const index = op.index ?? (slots.length === 1 ? slots[0] : undefined);",
+    replace: "  const index = op.index ?? slots[0];",
+    expectKilledBy: ["packages/engine/src/mrvAttackSliceD575.test.ts"],
+  },
+  {
+    id: "D575-look-answer-not-threaded",
+    decision: "D575",
+    what: "the slot answer buys nothing (`continuationOps`): the attacker picks a slot and is never shown the card — the look silently whiffs. Killed by §6.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "    return choice.kind === \"prize\" ? [{ ...op, index: choice.index }] : [];",
+    replace: "    return [];",
+    expectKilledBy: ["packages/engine/src/mrvAttackSliceD575.test.ts"],
+  },
+  {
+    id: "D575-look-reads-the-own-row",
+    decision: "D575",
+    what: "Searching Eyes looks at the attacker's OWN Prize row (*\"your opponent's\"* lost). Killed by §6.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  const owner = otherSeat(ctx.seat);\n  const slots = faceDownPrizeIndices(state, owner);",
+    replace: "  const owner = ctx.seat;\n  const slots = faceDownPrizeIndices(state, owner);",
+    expectKilledBy: ["packages/engine/src/mrvAttackSliceD575.test.ts"],
+  },
+  {
+    id: "D575-sigilyph-wins-at-2-prizes",
+    decision: "D575",
+    what: "Victory Symbol's gate reads 2 Prizes, not *\"exactly 1\"*: the game is won a Prize early and NOT won at 1. Killed by §7.",
+    file: "packages/engine/src/effects.ts",
+    find: "    const atOnePrize: BoardCondition = { kind: \"yourPrizesRemaining\", counts: [1] };",
+    replace: "    const atOnePrize: BoardCondition = { kind: \"yourPrizesRemaining\", counts: [2] };",
+    expectKilledBy: ["packages/engine/src/mrvAttackSliceD575.test.ts"],
+  },
+  {
+    id: "D575-win-names-the-opponent",
+    decision: "D575",
+    what: "`winGame` hands the win to the OPPONENT of the attacker. Killed by §7.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "{ result: \"win\", winner: ctx.seat, reason: \"cardEffect\" }",
+    replace: "{ result: \"win\", winner: otherSeat(ctx.seat), reason: \"cardEffect\" }",
+    expectKilledBy: ["packages/engine/src/mrvAttackSliceD575.test.ts"],
+  },
+  {
+    id: "D575-iron-moth-arm-reads-basic",
+    decision: "D575",
+    what: "the Iron Moth arm installs the BASIC class (D146's) instead of the Ancient one: Sandy Shocks, a Basic, is still refused but the derived program is not the print's. Killed by §1 and §2's record rung.",
+    file: "packages/engine/src/effects.ts",
+    find: "    return [{ op: \"preventDamage\", fromClass: { stage: \"ancient\" } }];",
+    replace: "    return [{ op: \"preventDamage\", fromClass: { stage: \"basic\" } }];",
+    expectKilledBy: ["packages/engine/src/mrvAttackSliceD575.test.ts"],
+  },
+  {
+    id: "D575-protect-arm-loses-the-ex-class",
+    decision: "D575",
+    what: "the C.O.D.E.: Protect arm installs the BASIC attacker class instead of *\"Pokémon ex\"*: the non-ex Basic spreaders are refused too. Killed by §1 and §3.",
+    file: "packages/engine/src/effects.ts",
+    find: "    return [{ op: \"installSideAttackBlock\", banner: \"Future\", fromClass: { stage: \"ex\" } }];",
+    replace: "    return [{ op: \"installSideAttackBlock\", banner: \"Future\", fromClass: { stage: \"basic\" } }];",
+    expectKilledBy: ["packages/engine/src/mrvAttackSliceD575.test.ts"],
+  },
+  {
+    id: "D575-glimmora-compound-drops-the-poison",
+    decision: "D575",
+    what: "Glimmora's compound claimed WHOLE loses its head: the bar installs and the printed Poison does not. Killed by §1 and §4.",
+    file: "packages/engine/src/effects.ts",
+    find: "      { op: \"applyStatus\", target: \"defender\", status: \"poisoned\" },\n      { op: \"markHandAttach\", barred: true },",
+    replace: "      { op: \"markHandAttach\", barred: true },",
+    expectKilledBy: ["packages/engine/src/mrvAttackSliceD575.test.ts"],
+  },
+  {
+    id: "D575-ancient-anchor-takes-any-banner",
+    decision: "D575",
+    what: "Iron Moth's anchor loosened to either Paradox banner: the near miss *\"…from Future Pokémon\"* (no printing) derives the Ancient block. Killed by §1's near-miss rung.",
+    file: "packages/engine/src/effects.ts",
+    find: "by attacks from Ancient Pokémon\\.$/;",
+    replace: "by attacks from (?:Ancient|Future) Pokémon\\.$/;",
+    expectKilledBy: ["packages/engine/src/mrvAttackSliceD575.test.ts"],
+  },
+  {
+    id: "D575-victory-anchor-any-count",
+    decision: "D575",
+    what: "Victory Symbol's anchor admits any count: the near miss *\"exactly 2\"* derives the 1-Prize gate. Killed by §1's near-miss rung.",
+    file: "packages/engine/src/effects.ts",
+    find: "/^If you use this attack when you have exactly 1 Prize card",
+    replace: "/^If you use this attack when you have exactly \\d Prize card",
+    expectKilledBy: ["packages/engine/src/mrvAttackSliceD575.test.ts"],
+  },
+  {
+    id: "D575-log-look-row-off-by-one",
+    decision: "D575",
+    what: "the `PRIZE_LOOKED_AT` row prints the 0-based slot (\"Prize 2\" for the third card). Killed by §6's log rung.",
+    file: "packages/engine/src/log.ts",
+    find: "face-down Prize ${event.index + 1}`),",
+    replace: "face-down Prize ${event.index}`),",
+    expectKilledBy: ["packages/engine/src/mrvAttackSliceD575.test.ts"],
+  },
+  {
+    id: "D575-side-block-end-event-dropped",
+    decision: "D575",
+    what: "the printed terminator's EVENT is deleted from `switchInto`: a gust still clears the record, but nothing says the protection ended — no `SIDE_ATTACK_BLOCK_ENDED`, no log row (the review round's finding: no test asserted it). Killed by §3's gust and row rungs.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "    events.push({ type: \"SIDE_ATTACK_BLOCK_ENDED\", seat, uid: wasActive });\n",
+    replace: "",
+    expectKilledBy: ["packages/engine/src/mrvAttackSliceD575.test.ts"],
+  },
+  {
+    id: "D575-side-block-end-row-loses-the-consequent",
+    decision: "D575",
+    what: "the END row stops saying the protection ENDED (\"Miraidon left the Active Spot\" alone — a plain retreat row's words): the one row that tells either player the side-wide block is gone. Killed by §3's row rungs.",
+    file: "packages/engine/src/log.ts",
+    find: "        plain(\" left the Active Spot — its protection ended\"),",
+    replace: "        plain(\" left the Active Spot\"),",
+    expectKilledBy: ["packages/engine/src/mrvAttackSliceD575.test.ts"],
+  },
+  {
+    id: "D575-hypno-tail-dropped-behind-a-watched-trigger",
+    decision: "D575",
+    what: "🛑 R-HY2's SWEEP PATH — when an attach-WATCHED trigger fires (Gengar ex \"Gnawing Curse\"), `attachEnergy` hands `resolveMidTurnKnockOuts` no tail: the counters land and the victim KEEPS the turn Daydream ends (the review round's finding: no test reached this branch). Killed by §5's two Gnawing Curse rungs.",
+    file: "packages/engine/src/turn.ts",
+    find: "        endsTurn ? turnTail(action.seat) : undefined,\n",
+    replace: "        undefined,\n",
+    expectKilledBy: ["packages/engine/src/mrvAttackSliceD575.test.ts"],
+  },
+  {
+    id: "D575-sweep-tail-replaced-by-resume",
+    decision: "D575",
+    what: "`resolveMidTurnKnockOuts` ignores the tail its caller passed and resumes the turn: with a Knock Out on the board, Hypno's turn end is lost BEHIND the parked prize pick and the promotion — the turn resumes instead. Killed by §5's Knock Out rung (and its no-KO twin).",
+    file: "packages/engine/src/flow.ts",
+    find: "      pending: [...batch.stages, ...orphaned, ...(tail ?? [{ kind: \"resumeTurn\", seat: actorSeat }])],",
+    replace: "      pending: [...batch.stages, ...orphaned, { kind: \"resumeTurn\", seat: actorSeat }],",
+    expectKilledBy: ["packages/engine/src/mrvAttackSliceD575.test.ts"],
+  },
+  {
+    id: "D575-stage-switch-unknown-member-protects",
+    decision: "D575",
+    what: "🛑 the stage switch grows a `default: return true` — the SILENT WIDENING D146's doc names: a stage word the build has no arm for (the position a v38 `\"ancient\"` record occupies under 0.458) reads as a block that refuses EVERY attacker. The two real members are unaffected; §8 (iii), the rollback rung that drives the fall-out through `attackBlockOf`, is the one that goes red (the review round's finding: it used to assert on a local copy and could not).",
+    file: "packages/engine/src/continuous.ts",
+    find: "    case \"ex\":\n      return pokemonSuffixOf(attacker) === \"ex\";\n  }\n}",
+    replace: "    case \"ex\":\n      return pokemonSuffixOf(attacker) === \"ex\";\n    default:\n      return true;\n  }\n}",
+    expectKilledBy: ["packages/engine/src/mrvAttackSliceD575.test.ts"],
+  },
+  {
+    id: "D575-record-version-not-bumped",
+    decision: "D575",
+    what: "🛑 **`MATCH_RECORD_VERSION` STAYS 37 WHILE THE ELEVENTH POSITION LANDS** — this deploy accepts a v37 record, whose sides lack `sideAttackBlock` and whose bodies lack `handAttachMark` (the side arm and `liveHandAttachMark` dereference `.turn` of `undefined` — D326's class), and a 0.458 rollback would drop a live C.O.D.E.: Protect window, grant a barred attach, keep a Daydream turn and read an `\"ancient\"` block as none (`mrvAttackSliceD575.test.ts` §8). Anchored on D575's own doc tail, one step. Killed by `match.test.ts`.",
+    file: "apps/api/src/lobby/match.ts",
+    find: "    tail. The HUD draws neither the side block nor the hand mark, and a barred attach comes back as\n    an error toast (carried display debts, decisions.md D575). */\nexport const MATCH_RECORD_VERSION = 38;",
+    replace: "    tail. The HUD draws neither the side block nor the hand mark, and a barred attach comes back as\n    an error toast (carried display debts, decisions.md D575). */\nexport const MATCH_RECORD_VERSION = 37;",
+    expectKilledBy: ["apps/api/src/lobby/match.test.ts"],
   },
 ];

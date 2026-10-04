@@ -66,6 +66,8 @@ import {
   installedVulnerabilityOf,
   installedWeaknessRetypeOf,
   koSurvivalClamp,
+  // 🆕🆕🆕 D575 — the hand-attach mark's one reader (Glimmora's bar, Hypno's turn end).
+  liveHandAttachMark,
   opposingAttackDebuff,
   passivesOf,
   preventedByDamageThreshold,
@@ -112,6 +114,10 @@ import type {
   PokemonType,
 } from "./effects";
 import type { GameEvent, StatusName } from "./events";
+// 🆕🆕🆕 D575 — `finishGame`, the ONE GAME_OVER emitter, for N's Sigilyph "Victory Symbol"
+// (`winGame`). A cycle (flow.ts imports `runProgram` from here), the triggers.ts shape below:
+// both ends are hoisted function DECLARATIONS called only at run time.
+import { finishGame } from "./flow";
 // THE one exhaustive switch over `Phase` (phaseView.ts) — `conditionHolds` reads
 // the turn OWNER from it rather than re-deriving one by turn parity, which that
 // module's header forbids. phaseView.ts imports from here TYPE-ONLY
@@ -2131,6 +2137,11 @@ function continuationOps(
     if (!pickedPokemon(choice)) return [];
     return op.source === undefined ? [anyWaySourceAnswered(before, op, choice.ref, choice.take)] : [nextAnyWayRound(op)];
   }
+  // 🆕🆕🆕 D575 — Blipbug's BLIND slot answer buys the LOOK (the same op with `index` set,
+  // which parks the private one-card `orderCards` show). The show's own answer buys nothing.
+  if (op.op === "lookAtPrize" && op.index === undefined) {
+    return choice.kind === "prize" ? [{ ...op, index: choice.index }] : [];
+  }
   // 🆕🆕🆕 D565 — Ruffian's body answer buys the two body-narrowed discards.
   if (op.op === "discardToolAndSpecialEnergyChosen") {
     return pickedPokemon(choice) ? ruffianBodyAnswered(before, choice.ref) : [];
@@ -2303,6 +2314,15 @@ function stepOp(
     // 🆕🆕🆕 D564 — the NEXT-TURN side-wide reduction (Jasmine's Gaze), on the SIDE.
     case "installSideDamageReductionNextTurn":
       return { done: installSideDamageReductionNextTurn(state, op, ctx, events) };
+    // 🆕🆕🆕 D575 — the MRV-38 attack slice's four ops (docs/decisions.md D575).
+    case "installSideAttackBlock":
+      return { done: installSideAttackBlock(state, op, ctx, events) };
+    case "markHandAttach":
+      return { done: markHandAttach(state, op, ctx, events) };
+    case "lookAtPrize":
+      return lookAtPrize(state, op, ctx, events);
+    case "winGame":
+      return { done: winGame(state, ctx, events) };
     case "preventChosenAttack":
       return preventChosenAttack(state, ctx, events);
     case "reduceDamage":
@@ -8330,6 +8350,11 @@ export function applyChoice(
       // `recordAs` — no printing pairs the sentence with a §9.2 "If you do,".
       return toolDiscardApply(state, choice.uids, ctx, events).state;
     }
+    case "lookAtPrize":
+      // 🆕🆕🆕 D575 — BOTH answers move nothing: the slot answer buys the look through
+      // `continuationOps`, and the one-card `orderCards` answer puts the card back where it
+      // was. Spelled rather than left to `default` so the parking op is named here.
+      return state;
     default:
       // Synchronous ops never park, so never reach the choice path.
       return state;
@@ -9002,6 +9027,116 @@ function installSideDamageReductionNextTurn(
     ...side,
     sideDamageReduction: { turn: state.turn + 1, amount: op.amount },
   });
+}
+
+/** 🆕🆕🆕 §11 (D575) — INSTALL Miraidon "C.O.D.E.: Protect"'s SIDE-WIDE block on the
+    controller's side (`PlayerSide.sideAttackBlock`, types.ts): the window is the opponent's
+    next turn (`state.turn + 1`), the source is the attacker (`ctx.sourceUid`, the printed
+    "this Pokémon" of the terminator). OVERWRITES a prior record (the later source owns the
+    terminator). A source no longer in the Active Spot installs nothing — the effect would
+    already have ended (R-MI1). */
+function installSideAttackBlock(
+  state: GameState,
+  op: Extract<EffectOp, { op: "installSideAttackBlock" }>,
+  ctx: EffectContext,
+  events: GameEvent[],
+): GameState {
+  const side = state.players[ctx.seat];
+  const source = side.active === null ? undefined : topUid(side.active);
+  if (source === undefined || (ctx.sourceUid !== undefined && ctx.sourceUid !== source)) return state;
+  events.push({
+    type: "SIDE_ATTACK_BLOCK_APPLIED",
+    seat: ctx.seat,
+    uid: source,
+    banner: op.banner,
+    fromClass: { ...op.fromClass },
+  });
+  return withSide(state, ctx.seat, {
+    ...side,
+    sideAttackBlock: { turn: state.turn + 1, sourceUid: source, banner: op.banner, fromClass: { ...op.fromClass } },
+  });
+}
+
+/** 🆕🆕🆕 §6.2/§11 (D575) — MARK the DEFENDING Pokémon's hand attaches for the opponent's next
+    turn (`InPlayPokemon.handAttachMark`): Glimmora's bar (`barred`), Hypno's turn end
+    (`endsTurn`). `bountyDefender`'s holder resolution and guards: the §11 "effects of attacks"
+    refusal FIRST, then a same-window OR merge with a silent no-news early return, then the
+    stamp (`state.turn + 1` — the VICTIM's own turn, the printed "During your opponent's next
+    turn"). A `+ 2` build would mark the installer's own turn, when the victim attaches nothing. */
+function markHandAttach(
+  state: GameState,
+  op: Extract<EffectOp, { op: "markHandAttach" }>,
+  ctx: EffectContext,
+  events: GameEvent[],
+): GameState {
+  const victimSeat = otherSeat(ctx.seat);
+  const marked = state.players[victimSeat].active;
+  if (marked === null) return state;
+  const markedUid = topUid(marked);
+  if (markedUid === undefined) return state;
+  if (effectRefused(state, victimSeat, ctx, events)) return state;
+  const turn = state.turn + 1;
+  const prior = marked.handAttachMark;
+  const same = prior !== null && prior.turn === turn;
+  const barred = op.barred === true || (same && prior.barred);
+  const endsTurn = op.endsTurn === true || (same && prior.endsTurn);
+  if (same && barred === prior.barred && endsTurn === prior.endsTurn) return state;
+  events.push({ type: "HAND_ATTACH_MARKED", seat: victimSeat, uid: markedUid, barred, endsTurn });
+  return withActive(state, victimSeat, {
+    ...marked,
+    handAttachMark: { turn, barred, endsTurn, tripped: false },
+  });
+}
+
+/** 🆕🆕🆕 (D575) — Team Rocket's Blipbug "Searching Eyes": look at 1 of the opponent's
+    face-down Prize cards. TWO questions on ONE op, `moveCountersToOpponentChosen`'s shape:
+    `index` ABSENT — zero face-down prizes is a silent no-op; one is taken without a question;
+    two or more PARK the shipped `choosePrize` over the face-down slots, answered BLIND by the
+    attacker (R-BL1 ⚠️ UNRULED), and `continuationOps` buys this op again with `index`.
+    `index` PRESENT — the LOOK: the public `PRIZE_LOOKED_AT` row (slot only, R-BL2 ⚠️ UNRULED)
+    and a park of the shipped `orderCards` prompt over that ONE uid, which `redactPrompt`
+    resolves to the ANSWERER alone — the only channel that shows the card to the looker and
+    to nobody else (a log row is broadcast to both seats). Its answer is the one-card
+    permutation and changes nothing (`applyChoice` default). A slot no longer face down (or
+    gone) looks at nothing. */
+function lookAtPrize(
+  state: GameState,
+  op: Extract<EffectOp, { op: "lookAtPrize" }>,
+  ctx: EffectContext,
+  events: GameEvent[],
+): { done: GameState } | { park: EffectPrompt } {
+  const owner = otherSeat(ctx.seat);
+  const slots = faceDownPrizeIndices(state, owner);
+  const index = op.index ?? (slots.length === 1 ? slots[0] : undefined);
+  if (index === undefined) {
+    if (slots.length === 0) return { done: state };
+    return {
+      park: {
+        kind: "choosePrize",
+        indices: slots,
+        note: "Choose 1 of your opponent's face-down Prize cards to look at.",
+      },
+    };
+  }
+  const uid = state.players[owner].prizes[index];
+  if (uid === undefined || !slots.includes(index)) return { done: state };
+  events.push({ type: "PRIZE_LOOKED_AT", seat: owner, actor: ctx.seat, index });
+  return {
+    park: {
+      kind: "orderCards",
+      candidates: [uid],
+      note: "You looked at this face-down Prize card. Put it back face down.",
+    },
+  };
+}
+
+/** 🆕🆕🆕 §14 (D575) — N's Sigilyph "Victory Symbol": the controller WINS, through flow.ts
+    `finishGame` (the one GAME_OVER emitter: the phase parks on `gameOver` and `pending` is
+    cleared, so the attack's queued epilogue never runs — nothing else resolves, R-VS1 ⚠️
+    UNRULED). Reached only behind `conditionGate { yourPrizesRemaining [1] }`. */
+function winGame(state: GameState, ctx: EffectContext, events: GameEvent[]): GameState {
+  const result = finishGame(state, { result: "win", winner: ctx.seat, reason: "cardEffect" }, events);
+  return result.ok ? result.state : state;
 }
 
 /** 🆕🆕🆕 §5.3 (D564) — SCHEDULE Amarys's end-of-turn discard: the printed threshold onto
@@ -10208,6 +10343,22 @@ function installRecoil(
     the Bench-target arms are unreachable by construction and are guarded anyway,
     which costs one read and removes a standing assumption.
 
+    (🆕🆕🆕 D575 (D539): ~~"A block can in fact only ever be live on an ACTIVE … so
+    the Bench-target arms are unreachable by construction"~~ is WITHDRAWN, and so is
+    the opening line's ~~"refused by its own live block"~~ as the WHOLE question. Since
+    D575 `attackBlockOf` (continuous.ts) also answers through its side arm,
+    `sideAttackBlockOf`, read from the REQUIRED `PlayerSide.sideAttackBlock` that
+    Miraidon `sv08-069` "C.O.D.E.: Protect" installs: it protects EVERY Future body
+    on the holder's side, BENCHED ones included, so the Bench-target arms (the
+    spread, `deals` and snipe sites) now refuse damage off a printed card —
+    `mrvAttackSliceD575.test.ts` §3 drives a Pokémon ex's spread into a Benched
+    Iron Treads and reads 0. What still holds: a body's OWN `attackBlock` can only
+    be live on an Active, and the guard-anyway standard above is exactly why the
+    side arm cost no new read site here (D253/D254: a deadness argued from today's
+    op set is a fact about the op set, not a rule of the game). The side arm's
+    synthesized block has `effects: false`, so D150's *"a wide block can only ever
+    be live on an Active"* still holds.)
+
     It takes the ATTACKING CARD too, since D146: a block may be narrowed to
     attacks "from Basic Pokémon", and `attackBlockOf` resolves that against the
     attacker rather than answering it here (continuous.ts). Every caller already
@@ -10342,6 +10493,13 @@ function effectRefusedOn(
   // block off a real card. Ignoring the filter here would make `fromClass` mean
   // one thing at four sites and another at the fifth, which is exactly the drift
   // the single-read contract exists to stop; a constructed program pins it.
+  // (🆕🆕🆕 D575 (D539): ~~"The three `fromClass` printings"~~ — a stale count. MEASURED
+  // at the D575 landing over `legalAttackCorpus()` through `deriveAttackEffect`: 8
+  // legal printings before D575 (Basic ×1, Basic non-{C} ×7) and **10** after
+  // (+ Iron Moth's Ancient, + Miraidon's side-wide ex), every one still the NARROW
+  // spelling, so the point holds. And the "Bench-arm argument above" it leans on is
+  // withdrawn for the side-wide block (see `attackDamageBlocked`'s D575 note); the
+  // guard-anyway half of it, the half this line uses, stands.)
   //
   // ⚠️ D240 — AND THE DAMAGE AMOUNT IS `undefined` HERE ON PURPOSE, WHICH IS THE
   // ONE SITE OF THE FIVE WHERE IT IS. This gate is about an EFFECT — a status, a
@@ -14600,6 +14758,8 @@ function devolvedBodyOf(body: InPlayPokemon): InPlayPokemon {
     costTaxTurn: null,
     // 🆕🆕🆕 D549 — the knock out bounty (devolve clear, D549 bounty).
     koBounty: null,
+    // 🆕🆕🆕 D575 — the hand-attach mark (devolve clear, D575 hand mark).
+    handAttachMark: null,
     installedRecoil: null,
     lockedAttacks: [],
     boostedAttack: null,
@@ -16478,6 +16638,9 @@ export function switchInto(
     // Switch, or the installer's own gust, moves the marked body off the Active Spot and
     // the bounty with it (switch clear, D549 bounty).
     koBounty: null,
+    // 🆕🆕🆕 D575 — and the HAND-ATTACH mark (the tax's story): the victim's Switch walks the
+    // marked body out from under the bar / the turn end (switch clear, D575 hand mark).
+    handAttachMark: null,
     // D152 — and the armed RECOIL's story here is D147's rather than D149's: the
     // window is the OPPONENT's turn, so the only player who can move the body
     // inside it is the opponent — a Boss's Orders played on that very turn drags
@@ -16530,10 +16693,23 @@ export function switchInto(
   // on-attach switch — because all three land here. A Pokémon dragged out by
   // the opponent really did move to the Active Spot on THAT turn; the stamp is
   // a turn number, so it simply fails to match the controller's next turn.
+  // 🆕🆕🆕 D575 — Miraidon "C.O.D.E.: Protect"'s printed terminator, *"If this Pokémon is no
+  // longer your Active Pokémon, this effect ends."* The side-wide block is CLEARED here, where
+  // its source leaves the Active (a gust inside the window — the reachable route), and stays
+  // cleared if the source is later re-promoted: a read-time check alone would revive it
+  // (R-MI1 ⚠️ UNRULED; `attackBlockOf`'s read-time conjunct covers the routes that do not
+  // come through here).
+  // The ROW only for a LIVE window (an expired record is cleared silently — nothing ended).
+  const sideBlock = side.sideAttackBlock;
+  const blockEnds = sideBlock !== null && sideBlock.sourceUid === wasActive;
+  if (blockEnds && sideBlock.turn === state.turn) {
+    events.push({ type: "SIDE_ATTACK_BLOCK_ENDED", seat, uid: wasActive });
+  }
   const moved = withSide(state, seat, {
     ...side,
     active: { ...incoming, promotedTurn: state.turn },
     bench,
+    ...(blockEnds ? { sideAttackBlock: null } : {}),
   });
   // 🆕 D320 — §9 THE OPPONENT-ACTION TRIGGER ON THIS MOVE (Magcargo `sv05-029`
   // "Lava Zone": *"Whenever your opponent's Active Pokémon moves to the Bench
@@ -16761,6 +16937,8 @@ export function attachEnergyTargets(
       const hp = effectiveMaxHp(state, pokemon);
       if (hp !== null && pokemon.damage + riders.bonusCounters >= hp) return false;
     }
+    // 🆕🆕🆕 D575 — Glimmora's bar on the effect path (R-GL1): a hand attach skips a barred body.
+    if (riders.source === "hand" && liveHandAttachMark(state, pokemon)?.barred === true) return false;
     return true;
   };
   const refs: PokemonRef[] = [];
@@ -17105,10 +17283,32 @@ function attachFromHandOffer(
   // so the sole target is `sourceRef` — `attachFromDeckOffer`'s `toSelf` reader, ONE
   // reading of the phrase on the family. An EARLY RETURN so D247's own return line
   // below stays byte-identical. Bench bodies and the rest of the board are NOT offered.
+  // 🆕🆕🆕 D575 (D539): ~~"THE RIDERS ARGUMENT IS THE EMPTY OBJECT"~~ is WITHDRAWN — it is
+  // `{ source: "hand" }`, so Glimmora's bar (R-GL1) drops a barred body from the offer; the
+  // `toSelf` arm filters its one body through the same mark.
   if (op.toSelf === true) {
-    return { candidates, targets: sourceRef(state, ctx), max: candidates.length };
+    return { candidates, targets: handOpenRefs(state, sourceRef(state, ctx)), max: candidates.length };
   }
-  return { candidates, targets: attachEnergyTargets(state, seat, {}), max: candidates.length };
+  return { candidates, targets: attachEnergyTargets(state, seat, { source: "hand" }), max: candidates.length };
+}
+
+/** 🆕🆕🆕 D575 — `refs` minus every body carrying a live Glimmora bar (R-GL1): the `toSelf`
+    hand attaches' one target, which does not come through `attachEnergyTargets`. */
+function handOpenRefs(state: GameState, refs: PokemonRef[]): PokemonRef[] {
+  return refs.filter((ref) => {
+    const side = state.players[ref.seat];
+    const body = ref.spot.spot === "active" ? side.active : side.bench[ref.spot.index];
+    return body == null || liveHandAttachMark(state, body)?.barred !== true;
+  });
+}
+
+/** 🆕🆕🆕 D575 — Hypno "Daydream" on the EFFECT path (R-HY1 ⚠️ UNRULED: an effect's hand
+    attach onto the marked Defending Pokémon ends the turn too). `body` just took an Energy
+    from hand; when it carries a live `endsTurn` mark, the mark is TRIPPED, and flow.ts
+    `settleProgram` ends the controller's turn when the program settles (R-HY2). */
+function tripHandAttachMark(state: GameState, body: InPlayPokemon): InPlayPokemon {
+  const mark = liveHandAttachMark(state, body);
+  return mark?.endsTurn ? { ...body, handAttachMark: { ...mark, tripped: true } } : body;
 }
 
 /** Apply a deck-search attach (Charizard ex "Infernal Reign" / Janine's Secret
@@ -17165,13 +17365,16 @@ function attachFromZoneApply(
   const attached = new Set<string>();
   for (const { uid, to } of assignments) {
     if (!inZone.has(uid) || attached.has(uid) || to.seat !== ctx.seat) continue;
+    // 🆕🆕🆕 D575 — Hypno's turn end on the effect path (R-HY1): a HAND attach trips the mark.
+    const trip = (body: InPlayPokemon): InPlayPokemon =>
+      zone === "hand" ? tripHandAttachMark(state, body) : body;
     if (to.spot.spot === "active") {
       if (active === null) continue;
-      active = { ...active, energy: [...active.energy, uid] };
+      active = trip({ ...active, energy: [...active.energy, uid] });
     } else {
       const index = to.spot.index;
       if (bench[index] === undefined) continue;
-      bench = bench.map((p, i) => (i === index ? { ...p, energy: [...p.energy, uid] } : p));
+      bench = bench.map((p, i) => (i === index ? trip({ ...p, energy: [...p.energy, uid] }) : p));
     }
     attached.add(uid);
     events.push({
@@ -17267,9 +17470,15 @@ function attachEnergyFrom(
   const side = state.players[seat]; // D532 — the OWNER's side (the actor's unless `whose`)
   const pokemon = ref.spot.spot === "active" ? side.active : side.bench[ref.spot.index];
   if (pokemon === undefined || pokemon === null) return state;
+  // 🆕🆕🆕 D575 — Glimmora's bar (R-GL1) at the APPLY, the belt behind `attachEnergyTargets`'s
+  // filter: it is what refuses the `toSelf` hand attaches, whose one target is `sourceRef` and
+  // never passes through that filter. A barred body takes nothing and nothing is filed.
+  if (op.source === "hand" && liveHandAttachMark(state, pokemon)?.barred === true) return state;
   const targetUid = topUid(pokemon);
   if (targetUid === undefined) return state;
   let updated: InPlayPokemon = { ...pokemon, energy: [...pokemon.energy, ...energyUids] };
+  // 🆕🆕🆕 D575 — Hypno's turn end on the effect path (R-HY1): a HAND attach trips the mark.
+  if (op.source === "hand") updated = tripHandAttachMark(state, updated);
   // Remove the Energy from its source zone (hand or the public discard pile).
   const drop = (zone: readonly string[]): string[] =>
     energyUids.reduce<string[]>((rest, uid) => without(rest, uid), [...zone]);

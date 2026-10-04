@@ -58,6 +58,9 @@
  *   red only while some live FAR row matches a co-marker, and D571 built one of
  *   the five. So § C also labels a PINNED literal far sentence (the `PRIZE-ZONE`
  *   witness's words) through `blockerMarkerOf`, with its premise re-measured.
+ *   (🆕🆕🆕 D575 (D539): D575 built the pinned sentence itself — N's Sigilyph "Victory Symbol" — and one
+ *   more `SCHEMA-BANNER` witness; one live far witness, Koraidon `sv08-116`, remains, and the literal
+ *   carries the claim regardless.)
  *
  * § D — THE PARTITION IS TOTAL AND DISJOINT. Every `OPAQUE` row gets exactly one
  *   class; the class sentence-counts and printing-counts sum to the class's own.
@@ -198,9 +201,15 @@ check(
 // one `PRIZE-ZONE` and one `ANY-NUMBER-OF`. D571 BUILT one of the three (Iron Thorns
 // "Destructo-Press"), and a Paradox slice is the likeliest to build the other two. (🆕🆕🆕 D574:
 // and D574 BUILT the `ANY-NUMBER-OF` one — Sableye "Damage Collection" — so the live witnesses
-// are three: two `SCHEMA-BANNER`, one `PRIZE-ZONE`. This pin is what still holds the row.) So the
+// are three: two `SCHEMA-BANNER`, one `PRIZE-ZONE`. This pin is what still holds the row.) (🆕🆕🆕 D575 (D539):
+// ~~"three remain"~~ — D575 BUILT the `PRIZE-ZONE` witness (N's Sigilyph "Victory Symbol", the very
+// sentence pinned below) and one of the two `SCHEMA-BANNER` ones (Miraidon "C.O.D.E.: Protect"); ONE live
+// far witness remains — Koraidon `sv08-116`
+// "Unrelenting Onslaught", `SCHEMA-BANNER` — and the pinned literal below still holds the row, unchanged:
+// a literal is not built away when its sentence is. The gate-witness probe read 16/16 KILLED after D575.) So the
 // label is also asked of a FIXED far sentence no slice can build away: the live
-// `PRIZE-ZONE` witness's own words, held here as a literal. A co-marker matches it and no
+// `PRIZE-ZONE` witness's own words, held here as a literal (🆕🆕🆕 D575 (D539): the sentence is BUILT now — no longer
+// "live" — and the literal is exactly why that changes nothing here). A co-marker matches it and no
 // blocker does, so only a labeller that lets a co-marker label returns non-null.
 const CO_PIN = "If you use this attack when you have exactly 1 Prize card remaining, you win this game.";
 const coPinned = blockerMarkerOf({ text: CO_PIN });

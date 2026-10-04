@@ -15759,7 +15759,10 @@ const PRISM_CHARGE: CardProgram = {
 //    Thorns "Destructo-Press" ×2, Miraidon `sv08-069` "C.O.D.E.: Protect", Koraidon
 //    `sv08-116` "Unrelenting Onslaught", Iron Treads "Dual Core" and Iron Moth "Anachronism
 //    Repulsor" — 9 printings. [🆕🆕🆕 D571 (D539): Initialization ×3 and Destructo-Press ×2 are
-//    BUILT (`INITIALIZATION`, `DESTRUCTO_PRESS`); the four others — 4 printings — stay deferred.] ──
+//    BUILT (`INITIALIZATION`, `DESTRUCTO_PRESS`); the four others — 4 printings — stay deferred.]
+//    [🆕🆕🆕 D575 (D539): Miraidon "C.O.D.E.: Protect" and Iron Moth "Anachronism Repulsor" are BUILT too, as
+//    `deriveAttackEffect` arms (no registry row); Koraidon `sv08-116` and Iron Treads "Dual Core" — 2
+//    printings — stay deferred.] ──
 
 /** 🆕🆕🆕 **D569 — Miraidon `sv05-121`/`svp-092` "Peak Acceleration" (attack index 0, 2
     legal)** — *"Search your deck for up to 2 Basic Energy cards and attach them to your

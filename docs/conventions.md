@@ -8692,6 +8692,12 @@ read. All 15 are KILLED.
   this attack when you have exactly 1 Prize card remaining, you win this game.», with its premise (a co-marker matches it,
   no blocker does) re-measured; a new row, `D571-gate-co-marker-pin-premise-broken`, keeps the premise honest. The live
   witnesses are four now (two SCHEMA-BANNER, one PRIZE-ZONE, one ANY-NUMBER-OF); the row no longer depends on them.
+  🆕🆕🆕 **D575 (D539): ~~"four now (two SCHEMA-BANNER, one PRIZE-ZONE, one ANY-NUMBER-OF)"~~ is WITHDRAWN**, kept as
+  written (D418): so is the *"FIVE live residue sentences: three `SCHEMA-BANNER` … one `PRIZE-ZONE` and one `ANY-NUMBER-OF`"* above (D571 built one `SCHEMA-BANNER`, D574 the `ANY-NUMBER-OF`, D575 the rest but Koraidon). D574 built the ANY-NUMBER-OF witness (Sableye "Damage Collection"), and D575 built the PRIZE-ZONE one
+  (N's Sigilyph "Victory Symbol" — the very sentence `CO_PIN` holds) and one SCHEMA-BANNER one (Miraidon "C.O.D.E.:
+  Protect"). ONE live far witness remains — Koraidon `sv08-116` "Unrelenting Onslaught", SCHEMA-BANNER — and the
+  `CO_PIN` literal still holds the row unchanged (a literal is not built away when its sentence is): the gate-witness
+  probe read 16/16 KILLED after D575.
 
 ### A withdrawn claim about a MECHANISM is also spelled as the mechanism's DATA, so the sweep keys on those shapes too (D570 third review, extending D539 and D567)
 
@@ -9818,6 +9824,10 @@ Iron Smasher through readers and Peak Acceleration, Land Collapse, Supportive Si
 Transfer as index-keyed registry rows; what stays unbuilt (Iron Moth, Unrelenting Onslaught,
 Destructo-Press, C.O.D.E.: Protect) is blocked by a MECHANISM, not by the banner. 🆕🆕🆕 D571 (D539): Destructo-Press is
 BUILT (its mechanism, a reveal-and-discard-matches op, `revealTopDiscardMatching`); three stay unbuilt.
+🆕🆕🆕 D575 (D539): ~~"three stay unbuilt"~~ — ONE stays unbuilt (Unrelenting Onslaught). Iron Moth (the `"ancient"` member of the
+persisted `AttackerClass`) and C.O.D.E.: Protect (`PlayerSide.sideAttackBlock`, ended by `switchInto`) are
+BUILT at D575 behind `MATCH_RECORD_VERSION` 37 → 38; Unrelenting Onslaught (Koraidon `sv08-116`, R-1 unruled)
+remains, and it is still a MECHANISM blocker.
 
 ## A refusal that names a SENTENCE is usually a claim about a WARRANT, not about a carrier (D462)
 
@@ -9922,7 +9932,8 @@ residue holds **12 sentences / 16 printings** mentioning `Ancient` or `Future` �
 **The data refusal stands** (`effects.ts`, `PREVENT_DAMAGE_FROM_CLASS`'s doc block): the banner is a
 per-PRINTING fact and no ingested column carries it. **But it is not one mechanism even if the data
 arrives.** The eight non-`OPAQUE` rows want the predicate in at least four different carriers — a
-`CardFilter` kind, `preventDamage.fromClass` (a one-member union), an op FIELD in the
+`CardFilter` kind, `preventDamage.fromClass` (a one-member union — 🆕🆕🆕 D575 (D539): ~~"one-member"~~,
+THREE members since D575, `"basic" | "ancient" | "ex"`), an op FIELD in the
 `moveCountersToDefender.ownerPokemon` shape, and a SUPPORTER-CARD predicate for *"If you played an
 Ancient Supporter card…"*, which is not about a Pokémon at all. **Price the CARRIERS, not the
 token.**
@@ -9932,6 +9943,11 @@ TRUE), and the carriers prediction held exactly: D569 paid a `CardFilter` kind (
 `bannerPokemon`), an op FIELD (`moveCountersToDefender.filter`, `healChosen.filter`), and a
 SUPPORTER-CARD predicate (`yourPlayedBannerSupporterThisTurn`); the `fromClass` carrier (Iron Moth)
 is the one deferred, for its rollback reading.
+🆕🆕🆕 **D575 (D539): ~~"the `fromClass` carrier (Iron Moth) is the one deferred"~~ is WITHDRAWN** —
+kept as written (D418). D575 PAID the fourth carrier: `AttackerClass.stage` widened to
+`"basic" | "ancient" | "ex"` (kept REQUIRED, `attackerMatchesStage` an exhaustive `switch`) behind
+`MATCH_RECORD_VERSION` 37 → 38, the ELEVENTH position — the rollback reading is answered by the bump,
+not by an optional key (decisions.md D575). All four carriers are now paid.
 
 ## The `?suffix=` filter fails CLOSED, and the ingest MAPPER is not what is missing (D462)
 

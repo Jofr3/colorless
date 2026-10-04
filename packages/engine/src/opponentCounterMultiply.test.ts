@@ -769,6 +769,7 @@ describe("§7 — the structural answers", () => {
         "damageVulnerability", // 🆕🆕🆕 D547 (30 -> 31)
         "energy",
         "evolvedTurn",
+        "handAttachMark", // 🆕🆕🆕 D575 (37 -> 38) — the hand-attach mark (Glimmora / Hypno); the pin is on the HEAD's key set
         "healedTurn",
         "installedRecoil",
         "koBounty", // 🆕🆕🆕 D549 (32 -> 33) — the Knock Out bounty; the pin is on the HEAD's key set
@@ -822,7 +823,7 @@ describe("§7 — the structural answers", () => {
   });
 
   it("the engine version moved with the behaviour", () => {
-    expect(engineVersion).toBe("0.458.0");
+    expect(engineVersion).toBe("0.459.0");
   });
 });
 

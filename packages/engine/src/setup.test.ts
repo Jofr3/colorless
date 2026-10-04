@@ -318,6 +318,9 @@ describe("placement", () => {
       // with `koBounty` ABSENT would THROW; `installedCostTaxOf` would silently read 0.
       costTaxTurn: null,
       koBounty: null,
+      // 🆕🆕🆕 D575 — the hand-attach mark (Glimmora's bar, Hypno's turn end), REQUIRED (37 -> 38):
+      // a placed Basic carries none.
+      handAttachMark: null,
       // 🆕🆕🆕 …and no WEAKNESS RETYPE (D552): `installedWeaknessRetypeOf` asks `=== null` and
       // then dereferences `.turn`, so a body reaching a Weakness step with the key ABSENT would
       // THROW — why it is `… | null` and required (MATCH_RECORD_VERSION 33 -> 34).

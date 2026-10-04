@@ -80,9 +80,14 @@ const MIND_JACK_TEXT = "This attack does 30 damage for each of your opponent's B
 /** A REAL gate clause (`ATTACK_GATE_CLAUSES` row 1) in front of a REAL built body (corpus FILE LINE 335). */
 const GATED_TEXT =
   "If you go second, you can't use this attack during your first turn. This attack does 30 damage for each of your Benched Pokémon.";
-/** A REAL corpus sentence no reader claims (asserted live in §3, D480) — the anti-laundering witness. */
+/** A REAL corpus sentence no reader claims (asserted live in §3, D480) — the anti-laundering witness.
+    🆕🆕🆕 D575 — RE-POINTED (never deleted, D418): it held Hypno `sv06.5-017` "Daydream" (*"During your
+    opponent's next turn, if they attach an Energy card from their hand to the Defending Pokémon, their
+    turn ends."*, corpus FILE LINE 177), which D575 BUILDS (`markHandAttach { endsTurn }`). It now holds
+    Walking Wake `sv06-063` "Undulating Slice" — a residue sentence D575 leaves unbuilt, VERIFIED before
+    choosing (D532): `readersClaiming` is [] and the row is in the legal column. */
 const UNREAD_TEXT =
-  "During your opponent's next turn, if they attach an Energy card from their hand to the Defending Pokémon, their turn ends.";
+  "Put up to 9 damage counters on this Pokémon. This attack does 20 damage for each damage counter you placed in this way.";
 
 /** 🆕🆕🆕 D573 second review — three REAL corpus sentences that LOCK or BOOST an attack BY NAME on
     "this Pokémon" (Scyther sv05-001 Slashing Strike; Gouging Fire ex sv05-038/-188/-204/-214/svp-144
@@ -1166,7 +1171,7 @@ describe("D573 §5 — the park: inert, serialisable, and inert under a 0.456 ro
 
 // ─────────────────────────────────────────────────────────────────────────────
 describe("D573 §6 — the version", () => {
-  it("the engine is 0.458.0", () => {
-    expect(engineVersion).toBe("0.458.0");
+  it("the engine is 0.459.0", () => {
+    expect(engineVersion).toBe("0.459.0");
   });
 });

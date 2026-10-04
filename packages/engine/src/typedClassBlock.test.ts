@@ -58,6 +58,10 @@ import {
 // `attackerMatchesStage` switch (under `attackerMatchesClass`) fall through on rollback (an MRV bump, deferred); Miraidon
 // `sv08-069` on the set-of-bodies block and the leave-the-spot terminator named above —
 // types.ts and docs/decisions.md D569 (e) say the same.)
+// (🆕🆕🆕 D575 (D539): ~~"Both STILL stay LOUD"~~ — both are BUILT at D575: `AttackerClass.stage` gained
+// `"ancient"` and `"ex"` behind `MATCH_RECORD_VERSION` 37 → 38, and Miraidon's SET is
+// `PlayerSide.sideAttackBlock` with its terminator cleared by `switchInto`. All four printed class
+// phrases have a reader now; the rung below pins the two new ones positively.)
 //
 // ⚠️ ALL SEVEN PRINTINGS ARE ONE CARD — Terapagos ex "Crown Opal" ({G}{W}{L},
 // 180, attack INDEX 1) as `svp-165` / `sv07-128` / `-170` / `-173` /
@@ -242,14 +246,22 @@ describe("the typed attacker class — derived, not authored", () => {
       // `banners.ts` supplies Ancient/Future since D569. Both stay LOUD on MECHANISM: the
       // persisted `AttackerClass` rollback reading here, and the set-of-bodies block with
       // its terminator below. The title is kept byte-identical; this note corrects it.)
-      "During your opponent's next turn, prevent all damage done to this Pokémon by attacks from Ancient Pokémon.",
+      // 🆕🆕🆕 D575 — Iron Moth LEFT THIS LIST (removed, D501's move): BUILT, the "ancient" class.
       // Miraidon sv08-069 — three blockers, and the class token is NOT one of
       // them: a block over a SET of bodies, a second demand-only banner, and a
       // trailing leave-the-spot terminator.
-      "During your opponent's next turn, prevent all damage done to each of your Future Pokémon by attacks from Pokémon ex. If this Pokémon is no longer your Active Pokémon, this effect ends.",
-    ]) {
+      // 🆕🆕🆕 D575 — Miraidon LEFT THIS LIST too (removed, D501's move): BUILT, the SET as a
+      // `PlayerSide.sideAttackBlock`, the banner read live, the terminator cleared by `switchInto`.
+      // The list is EMPTY (the literal is kept as the record), and both rows are pinned positively.
+    ] as string[]) {
       expect(deriveAttackEffect(text)).toBeNull();
     }
+    expect(deriveAttackEffect("During your opponent's next turn, prevent all damage done to this Pokémon by attacks from Ancient Pokémon.")).toEqual([
+      { op: "preventDamage", fromClass: { stage: "ancient" } },
+    ]);
+    expect(deriveAttackEffect("During your opponent's next turn, prevent all damage done to each of your Future Pokémon by attacks from Pokémon ex. If this Pokémon is no longer your Active Pokémon, this effect ends.")).toEqual([
+      { op: "installSideAttackBlock", banner: "Future", fromClass: { stage: "ex" } },
+    ]);
   });
 
   it("does not read the damage-CAP sibling that shares its 14-word PREFIX", () => {

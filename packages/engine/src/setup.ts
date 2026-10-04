@@ -155,6 +155,8 @@ function emptySide(deck: string[]): PlayerSide {
     sideAttackLock: null,
     // 🆕🆕🆕 D564 — no Supporter has shielded a side that has not been dealt yet.
     sideDamageReduction: null,
+    // 🆕🆕🆕 D575 — no attack has blocked damage to a side that has not been dealt yet.
+    sideAttackBlock: null,
     active: null,
     bench: [],
     mulligans: 0,

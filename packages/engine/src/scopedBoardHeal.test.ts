@@ -709,13 +709,13 @@ describe("§7 — the record-shape derivation, made rather than inherited", () =
     expect(roundTripped.players.p1.bench[1]?.healedTurn).toBeNull();
   });
 
-  it("engineVersion is 0.458.0 and the bump is owed for BEHAVIOUR", () => {
+  it("engineVersion is 0.459.0 and the bump is owed for BEHAVIOUR", () => {
     // 🆕🆕 D461 — 0.359.0 → **0.360.0**. Two printed sentences that derived to `null`
     // and fell to the loud ATTACK_EFFECT_SKIPPED path now heal a NARROWED set, and
     // the narrowing is visible on the board rather than only in the type: the same
     // board under the two sentences heals two DIFFERENT, NON-NESTED sets of bodies
     // (§3 and §4 share one board and disagree about two of its three).
-    expect(engineVersion).toBe("0.458.0");
+    expect(engineVersion).toBe("0.459.0");
   });
 });
 
@@ -759,9 +759,13 @@ describe("§8 — the REFUSAL, with its own reason and its own falsifier", () =>
     // REGISTRY attacks the readers still refuse (Great Tusk "Land Collapse", Scream Tail — this
     // file's own row — and Flutter Mane), and TWO stay unbuilt for reasons that are not the
     // banner (Iron Moth's persisted attacker class, Koraidon `sv08-116`'s seat-level record).
+    // 🆕🆕🆕 D575 (D539): "TWO stay unbuilt" is now ONE — Iron Moth is BUILT (the `"ancient"`
+    // attacker class, `MATCH_RECORD_VERSION` 37 → 38) and claimed WHOLE by a READER; Koraidon
+    // `sv08-116` is the one left.
     const readerClaimed = ancient.filter(([, text]) => resolvedByAnyReader(text));
     expect(readerClaimed.map(([, text]) => text).sort()).toEqual(
       [
+        "During your opponent's next turn, prevent all damage done to this Pokémon by attacks from Ancient Pokémon.",
         "This attack does 10 more damage for each Ancient card in your discard pile.",
         "This attack does 30 damage for each of your Ancient Pokémon in play.",
       ].sort(),

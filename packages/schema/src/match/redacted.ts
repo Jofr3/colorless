@@ -44,12 +44,16 @@ export type MatchSeat = z.infer<typeof matchSeatSchema>;
 /** Mirrors the engine `GameOverReason`. `conceded` covers BOTH ways a player
     can forfeit — pressing concede, or an online player abandoning the match
     until their timer runs out (P4 3c-ii) — because to the opponent they are the
-    same event. */
+    same event.
+    🆕🆕🆕 D575 — `cardEffect`, a card's printed win (N's Sigilyph "Victory Symbol"). A
+    WIDENING of a validated enum: an OLD client's schema rejects the new reason, so the
+    CLIENT deploys FIRST (apps/api match.ts, the ELEVENTH position; decisions.md D575). */
 export const redactedGameOverReasonSchema = z.enum([
   "prizesTaken",
   "noPokemon",
   "deckOut",
   "conceded",
+  "cardEffect",
 ]);
 export type RedactedGameOverReason = z.infer<typeof redactedGameOverReasonSchema>;
 

@@ -1,4 +1,5 @@
 import type { DamageModifier } from "./cards";
+import type { Banner } from "./banners";
 import type { AttackerClass, CardFilter, StampedPlayLockKey } from "./effects";
 import type { CoinFace } from "./rng";
 import type { GameOutcome, PokemonTarget, ScheduledEffect, Seat } from "./types";
@@ -741,6 +742,33 @@ export type GameEvent =
       NO `uid`, `SIDE_ATTACKS_LOCKED`'s reason: the record is on the SIDE, and a Pokémon
       that comes into play afterwards is covered too. Not persisted (D141). */
   | { type: "SIDE_DAMAGE_REDUCTION_INSTALLED"; seat: Seat; amount: number }
+  /** 🆕🆕🆕 §11 (D575) — an attack installed a SIDE-WIDE, class-filtered damage block on
+      `seat`'s `banner` Pokémon for the opponent's next turn (Miraidon `sv08-069` "C.O.D.E.:
+      Protect"). `uid` is the SOURCE (the printed "this Pokémon" of the terminator);
+      `fromClass` is the printed attacker class, a fresh copy (no alias into the state). Not
+      persisted (D141). */
+  | {
+      type: "SIDE_ATTACK_BLOCK_APPLIED";
+      seat: Seat;
+      uid: string;
+      banner: Banner;
+      fromClass: AttackerClass;
+    }
+  /** 🆕🆕🆕 §11 (D575) — the side-wide block ENDED because its source `uid` left `seat`'s
+      Active Spot inside the window (the printed *"If this Pokémon is no longer your Active
+      Pokémon, this effect ends."*, cleared by `switchInto` — R-MI1). */
+  | { type: "SIDE_ATTACK_BLOCK_ENDED"; seat: Seat; uid: string }
+  /** 🆕🆕🆕 §6.2/§11 (D575) — the DEFENDING Pokémon `uid` (owned by `seat`) was marked for
+      `seat`'s next turn: `barred` — Energy cards can't be attached to it from `seat`'s hand
+      (Glimmora "Corrosive Shards"); `endsTurn` — attaching one from hand ends `seat`'s turn
+      (Hypno "Daydream"). The MERGED mark after this install. */
+  | { type: "HAND_ATTACH_MARKED"; seat: Seat; uid: string; barred: boolean; endsTurn: boolean }
+  /** 🆕🆕🆕 (D575) — `actor` LOOKED AT the face-down Prize card in slot `index` of `seat`'s
+      row (Team Rocket's Blipbug "Searching Eyes"). SLOT-ONLY, and that is the
+      confidentiality rule (`DECK_TOP_REORDERED`'s): the log is broadcast to BOTH seats, so
+      naming the card here would publish it to the row's owner; the card reaches the looker
+      alone, through the `orderCards` park `redactPrompt` resolves for the answerer (R-BL2). */
+  | { type: "PRIZE_LOOKED_AT"; seat: Seat; actor: Seat; index: number }
   /** 🆕🆕🆕 §5.3 (D564) — a Supporter SCHEDULED an end-of-turn hand discard (Amarys: *"At
       the end of this turn, if you have 5 or more cards in your hand, discard your hand."*).
       `atLeast` is the printed threshold. The discard itself, when it happens, is the

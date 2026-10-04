@@ -972,6 +972,8 @@ export type PokemonType = (typeof POKEMON_TYPES)[number];
 
     `stage` is a one-member closed vocabulary and stays a `switch` at the read
     site for D146's original reason — widen it and tsc demands the predicate.
+    (🆕🆕🆕 D575 (D539): ~~"one-member"~~ — THREE members since D575, `"basic" | "ancient" | "ex"`;
+    the widening paid exactly that price, the arms tsc demanded.)
     `excludingType` is ABSENT rather than `null` when the sentence prints no
     exclusion (D135's absent-key rule), so D146's records read back unchanged in
     meaning. ⚠️ It is a `PokemonType` and NOT a `BasicEnergyType`: the printed
@@ -1087,8 +1089,18 @@ export type StampedPokemonPlayAct = Extract<PokemonPlayAct, "evolve">;
 export type StampedPlayLockKey = StampedHandPlayClass | StampedPokemonPlayAct;
 
 export interface AttackerClass {
-  /** The printed STAGE word. One member, and `switch`ed rather than compared. */
-  readonly stage: "basic";
+  /** The printed STAGE word. One member, and `switch`ed rather than compared.
+      🆕🆕🆕 **D575 — THE PRINTED CLASS WORD, THREE MEMBERS** (D539: *"One member"* is
+      WITHDRAWN, kept as written): `"ancient"` — Iron Moth `sv06.5-009` "Anachronism
+      Repulsor", *"…by attacks from Ancient Pokémon"*, read through `bannerOf` (banners.ts,
+      by printing id) at damage time (R-IM1); `"ex"` — Miraidon `sv08-069` "C.O.D.E.:
+      Protect", *"…by attacks from Pokémon ex"*, read as EXACTLY the printed class
+      (`pokemonSuffixOf(card) === "ex"`, never `isExOrV` / `hasRuleBox` — the judge's (d)).
+      The key keeps its NAME (a rename would be a second shape change for nothing) and stays
+      REQUIRED (never optional — D569 (e)); `attackerMatchesStage` (continuous.ts) stays an
+      exhaustive `switch` that is its whole body. A PERSISTED widening: `MATCH_RECORD_VERSION`
+      37 → 38 (the ELEVENTH position, apps/api match.ts). */
+  readonly stage: "basic" | "ancient" | "ex";
   /** The printed *"non-{X}"* exclusion, resolved through `POKEMON_TYPE_BY_CODE`.
       ABSENT = the sentence excluded nothing. */
   readonly excludingType?: PokemonType;
@@ -4046,6 +4058,13 @@ export interface AttachTargetRiders {
   /** Exclude any target `bonusCounters` would Knock Out ("you can't use this on
       a Pokémon that would be Knocked Out"), so the placement is never lethal. */
   notIfKO?: true;
+  /** 🆕🆕🆕 §6.2/§11 (D575) — the SOURCE ZONE, read for ONE fact: an attach FROM HAND may not
+      land on a body carrying a live Glimmora bar (`HandAttachMark.barred`, *"Energy cards
+      can't be attached from your opponent's hand to that Pokémon"* — R-GL1 ⚠️ UNRULED: the
+      print names no actor, so an effect's hand attach is barred too). `attachEnergyFrom`
+      already carries `source` and passes itself; `attachFromHandOffer` passes
+      `{ source: "hand" }`. ABSENT (the deck / top / discard attaches) = no bar. */
+  source?: "hand" | "discard";
   /** 🆕🆕🆕 **D532 — THE CROSS-SEAT ATTACH: WHOSE BOARD THE TARGETS ARE ON.** Grafaiai
       `sv08-121` *"Attach up to 3 Energy cards from your **opponent's** discard pile to
       **their** Pokémon in any way you like."* (corpus FILE LINE 70, 1 legal printing).
@@ -4330,6 +4349,47 @@ export type EffectOp =
       types.ts `AttackBlock.fromClass` for which of the pool's class tokens stay
       LOUD and why. */
   | { op: "preventDamage"; effects?: true; fromClass?: AttackerClass; maxDamage?: number }
+  /** 🆕🆕🆕 §11 (D575) — Miraidon `sv08-069` "C.O.D.E.: Protect" (index 0): *"During your
+      opponent's next turn, prevent all damage done to each of your Future Pokémon by attacks
+      from Pokémon ex. If this Pokémon is no longer your Active Pokémon, this effect ends."*
+      A SIDE-WIDE block — the target is a SET of bodies, so it is written on the controller's
+      `PlayerSide.sideAttackBlock` (types.ts), never on one body: `{ turn: state.turn + 1,
+      sourceUid, banner, fromClass }`. Read by ONE side arm inside continuous.ts
+      `attackBlockOf` (its three callers unchanged); the Future set is read LIVE off the
+      damaged body's banner at damage time (R-MI2), and the terminator is CLEARED where the
+      source leaves the Active (`switchInto`, R-MI1), with a read-time "the source is still the
+      Active" conjunct behind it for every other route (a Knock Out, a bounce). Never parks. */
+  | { op: "installSideAttackBlock"; banner: Banner; fromClass: AttackerClass }
+  /** 🆕🆕🆕 §6.2/§11 (D575) — the DEFENDING Pokémon's next-turn HAND-ATTACH mark
+      (`InPlayPokemon.handAttachMark`, types.ts), stamped `state.turn + 1` on the opponent's
+      Active:
+        `barred` — Glimmora `sv08-115` "Corrosive Shards": *"…Energy cards can't be attached
+          from your opponent's hand to that Pokémon."* (turn.ts `attachEnergy` refuses with
+          `ENERGY_ATTACH_BARRED`; the effect attaches from hand drop the body from their
+          targets, R-GL1);
+        `endsTurn` — Hypno `sv06.5-017` "Daydream": *"…if they attach an Energy card from
+          their hand to the Defending Pokémon, their turn ends."* (R-HY1 / R-HY2).
+      Both keys optional on the OP (the printed word adds the key, D135); the persisted MARK
+      carries both as booleans and merges by OR within one window. Shed by §10 with every other
+      effect of an attack (the five spread literals). Never parks. */
+  | { op: "markHandAttach"; barred?: true; endsTurn?: true }
+  /** 🆕🆕🆕 (D575) — Team Rocket's Blipbug `sv10-015` "Searching Eyes": *"Look at 1 of your
+      opponent's face-down Prize cards."* A NEW name, NOT a `turnPrizeFaceUp` widening (that
+      op turns a card face UP for both players; this one turns nothing). Zero face-down prizes
+      — a silent no-op; one — taken without a question; two or more — the attacker picks a
+      slot BLIND on the shipped `choosePrize` park (R-BL1), and the answer buys this op again
+      with `index` set (`continuationOps`). With `index` set it parks the shipped `orderCards`
+      prompt over that ONE uid — the private look itself: `redactPrompt` resolves the card to
+      the ANSWERER alone (R-BL2) — and the public `PRIZE_LOOKED_AT` row names the slot only.
+      No new prompt kind, no wire byte, no persisted knowledge field. */
+  | { op: "lookAtPrize"; side: "opponent"; index?: number }
+  /** 🆕🆕🆕 §14 (D575) — N's Sigilyph `sv09-064` "Victory Symbol" (index 1): *"If you use this
+      attack when you have exactly 1 Prize card remaining, you win this game."* Derived as a
+      `conditionGate` on the shipped `yourPrizesRemaining { counts: [1] }` around THIS op,
+      which ends the game through flow.ts `finishGame` (the one GAME_OVER emitter) with the NEW
+      `GameOverReason` `"cardEffect"` — read at the moment of use, before any damage (R-VS1);
+      the attack prints no damage, and nothing else resolves (no simultaneous-condition tie). */
+  | { op: "winGame" }
   /** §8.5/§11 (D147) — INSTALL a durated DAMAGE REDUCTION on the controller's own
       Active:
 
@@ -9206,6 +9266,8 @@ export type EffectOp =
       rule) and `devolvedBodyOf` (the §10/§12 shed object), which is the drift hazard
       the block below names, and NOTHING else was extracted. `devolveEach.test.ts`
       §10's loud-path witness is now corpus row 346, not this sentence.
+      (🆕🆕🆕 D575 (D539): ~~"corpus row 346"~~ WITHDRAWN — row 346 is BUILT at D575 (N's Sigilyph
+      "Victory Symbol"); §10's witness is Walking Wake `sv06-063` "Undulating Slice" now.)
 
       🛑 **FIELD-FREE, BECAUSE EVERY TOKEN OF THE SENTENCE IS SPENT.** "each of
       your opponent's" is the side AND the quantifier, "evolved" is the filter,
@@ -13961,6 +14023,8 @@ const FLIP_DECK_TOP_MILL =
 //   • "…by attacks from ANCIENT Pokémon." (1 — Iron Moth sv06.5-009
 //     "Anachronism Repulsor", attack INDEX 1) narrows the block by a class token
 //     the CATALOG DOES NOT CARRY — see `PREVENT_DAMAGE_FROM_CLASS` below, where
+//     (🆕🆕🆕 D575 (D539): no longer LOUD — BUILT, `PREVENT_DAMAGE_FROM_ANCIENT` below; the list of THREE
+//     remaining printings is TWO now)
 //     its Basic-spelled sibling is mapped and the whole finding is written out;
 //     (🆕🆕🆕 D569 (D539): the catalog still does not carry it, but `banners.ts` does since
 //     D569 — the block stays LOUD on its persisted `AttackerClass` rollback reading instead)
@@ -14012,6 +14076,7 @@ const FLIP_PREVENT_DAMAGE =
 // species list) is a fix, and `banners.ts` is that table for TERA. For ANCIENT this sentence
 // stays unbuilt at this head: `Banner` has no "Ancient" member until Slice 2.)
 // (🆕🆕🆕 D569 (D539): "`Banner` has no Ancient member until Slice 2" is WITHDRAWN — `Banner` is "Tera" | "Ancient" | "Future" since D569. Iron Moth STAYS unbuilt, for a DIFFERENT reason: its block is a PERSISTED `AttackerClass`, and making `stage` optional would make 0.452's `attackerMatchesClass` fall out of its switch on rollback (a silently dropped block) — an MRV question, deferred (docs/decisions.md D569))
+// (🆕🆕🆕 D575 (D539): ~~"Iron Moth STAYS unbuilt … deferred"~~ and the paragraph below's "THE SENTENCE STAYS LOUD … falls through to ATTACK_EFFECT_SKIPPED" are WITHDRAWN — Iron Moth is BUILT at 0.459.0 by `PREVENT_DAMAGE_FROM_ANCIENT` on the `"ancient"` member, read through `bannerOf` (banners.ts, by PRINTING id — so the species-list objection below still holds and is still why there is no name table); `MATCH_RECORD_VERSION` 37 → 38)
 //
 // A SPECIES LIST WOULD BE WRONG, WHICH IS WHY THE SENTENCE STAYS LOUD RATHER THAN
 // GETTING A TABLE. The banner is a per-PRINTING fact (D135's rule): Great Tusk ex
@@ -14024,6 +14089,8 @@ const FLIP_PREVENT_DAMAGE =
 // `(?:Basic|Ancient)` group: a group would map the Ancient sentence to a token the
 // (🆕🆕🆕 D569 (D539): the engine CAN resolve the Ancient token now (`bannerPokemon` over `banners.ts`); what still refuses the group is the persisted `fromClass` union — see the Iron Moth deferral note above)
 // engine cannot resolve, and the `fromClass` union has exactly one member so that
+// (🆕🆕🆕 D575 (D539): ~~"exactly one member"~~ — three since D575; the Ancient sentence has its OWN anchor,
+// `PREVENT_DAMAGE_FROM_ANCIENT`, so the group stays refused for the one-anchor-per-string reason)
 // the attempt does not even typecheck (continuous.ts `attackerMatchesClass`).
 //
 // ⚠️⚠️ D239 WIDENS THIS ANCHOR BY AN OPTIONAL BRACE-CODED EXCLUSION, AND THE
@@ -14045,6 +14112,7 @@ const FLIP_PREVENT_DAMAGE =
 //   • "…by attacks from Ancient Pokémon."         — 1 legal, Iron Moth
 //     `sv06.5-009`, STILL LOUD for the reason written out above, unchanged;
 // (🆕🆕🆕 D569 (D539): still LOUD, but the reason CHANGED — the banner has a writer; the blocker is the persisted `AttackerClass` rollback reading (deferred))
+// (🆕🆕🆕 D575 (D539): ~~"STILL LOUD"~~ — BUILT, the `"ancient"` class behind `MATCH_RECORD_VERSION` 37 → 38)
 //   • "…prevent all damage done to **each of your Future Pokémon** by attacks
 //     from Pokémon ex. If this Pokémon is no longer your Active Pokémon, this
 //     effect ends." — 1 legal, Miraidon `sv08-069` "C.O.D.E.: Protect"
@@ -14054,6 +14122,7 @@ const FLIP_PREVENT_DAMAGE =
 //     ("each of your Future Pokémon") rather than on "this Pokémon", over a
 //     SECOND demand-only banner (`Future`, D204/D205), plus a trailing
 // (🆕🆕🆕 D569 (D539): "demand-only" is WITHDRAWN — `Future` has supply (`banners.ts`); the sentence (Miraidon `sv08-069` "C.O.D.E.: Protect") stays unbuilt on the SET target and the leave-the-spot terminator, deferred)
+// (🆕🆕🆕 D575 (D539): ~~"stays unbuilt … deferred"~~ — BUILT: the SET is `PlayerSide.sideAttackBlock`, the terminator is cleared by `switchInto` and re-checked at read time)
 //     leave-the-spot terminator `AttackBlock`'s turn stamp does not carry. Three
 //     mechanisms, none of them the class. Written down so the next slice prices
 //     the NOUN and not the token.
@@ -14077,6 +14146,34 @@ const FLIP_PREVENT_DAMAGE =
 // audited for. An unknown letter returns null (LOUD) rather than defaulting.
 const PREVENT_DAMAGE_FROM_CLASS =
   /^During your opponent['’]s next turn, prevent all damage done to this Pokémon by attacks from Basic (?:non-\{([A-Z])\} )?Pokémon\.$/;
+// 🆕🆕🆕 D575 — THE MRV-38 ATTACK SLICE: six whole-sentence anchors, one printing each, each
+// the only legal Standard printing of its sentence (`^…$`, no `/i`, `['’]` on every apostrophe
+// slot). (D539: the paragraphs above that call Iron Moth "STILL LOUD" on the persisted
+// `AttackerClass` rollback reading and Miraidon "refused by its TARGET" are WITHDRAWN as of
+// D575, kept as written — both are BUILT here: `AttackerClass.stage` gained `"ancient"` and
+// `"ex"` and `MATCH_RECORD_VERSION` stepped 37 → 38, the ELEVENTH position.)
+//   • Iron Moth `sv06.5-009` "Anachronism Repulsor" (index 1) — arm 19c's own op with the
+//     NEW class member: `preventDamage { fromClass: { stage: "ancient" } }` (R-IM1);
+const PREVENT_DAMAGE_FROM_ANCIENT =
+  /^During your opponent['’]s next turn, prevent all damage done to this Pokémon by attacks from Ancient Pokémon\.$/;
+//   • Miraidon `sv08-069` "C.O.D.E.: Protect" (index 0) — the SIDE-WIDE block over the
+//     controller's Future bodies, `installSideAttackBlock` (R-MI1 / R-MI2);
+const PREVENT_DAMAGE_FUTURE_SIDE_FROM_EX =
+  /^During your opponent['’]s next turn, prevent all damage done to each of your Future Pokémon by attacks from Pokémon ex\. If this Pokémon is no longer your Active Pokémon, this effect ends\.$/;
+//   • Glimmora `sv08-115` "Corrosive Shards" (index 0) — CLAIMED WHOLE as a two-op program
+//     (the shipped `applyStatus` Poisoned, then the NEW `markHandAttach { barred }`), not
+//     composed on the trailing seam, so the raw reader-only residue shrinks by it (R-GL1);
+const POISON_AND_BAR_HAND_ATTACH =
+  /^Your opponent['’]s Active Pokémon is now Poisoned\. During your opponent['’]s next turn, Energy cards can['’]t be attached from your opponent['’]s hand to that Pokémon\.$/;
+//   • Hypno `sv06.5-017` "Daydream" (index 0) — `markHandAttach { endsTurn }` (R-HY1 / R-HY2);
+const HAND_ATTACH_ENDS_TURN =
+  /^During your opponent['’]s next turn, if they attach an Energy card from their hand to the Defending Pokémon, their turn ends\.$/;
+//   • Team Rocket's Blipbug `sv10-015` "Searching Eyes" (index 0) — `lookAtPrize` (R-BL1 / R-BL2);
+const LOOK_AT_OPPONENT_PRIZE = /^Look at 1 of your opponent['’]s face-down Prize cards\.$/;
+//   • N's Sigilyph `sv09-064` "Victory Symbol" (index 1) — `conditionGate` on the shipped
+//     `yourPrizesRemaining { counts: [1] }` around the NEW `winGame` (R-VS1).
+const WIN_AT_ONE_PRIZE =
+  /^If you use this attack when you have exactly 1 Prize card remaining, you win this game\.$/;
 // The DAMAGE CAP (D240) — backlog row 17, and a row that exists only because row
 // 15's PROSE claimed these three printings while row 15's own GLOB could not see
 // them (they never contain "by attacks from"). Re-derived at HEAD before the
@@ -15804,6 +15901,8 @@ const SELF_DISCARD_ONE_THEN_DEFENDER_LOCK =
 // on the same word: that anchor spells `by attacks from Basic Pokémon` and lets
 // the pool's other class token (Ancient) stay LOUD, and the vocabulary is closed
 // where the READING is (there, the `fromClass` union; here, `BoardCondition`).
+// (🆕🆕🆕 D575 (D539): ~~"lets … (Ancient) stay LOUD"~~ WITHDRAWN — D575 reads Ancient on the
+// `fromClass` union's own `"ancient"` member (MRV 37 → 38); the closed-vocabulary point stands.)
 // A `(.+)` here would have to reject "an Evolution Pokémon" and eleven type names
 // through a table nothing in the pool asks for — D120's precondition (does exactly
 // one token VARY across printings?) is answered NO by a one-printing sentence
@@ -18716,6 +18815,8 @@ const IN_PLAY_BODY_NOUNS: ReadonlyMap<string, CardFilter> = new Map<string, Card
   // sibling anchors too; the column prints "Ancient Pokémon" in no other sentence they reach
   // (measured over `legalAttackCorpus()` — the Benched Ancient heal/move are registry rows,
   // and Iron Moth's "attacks from Ancient Pokémon" is a different reader, still unbuilt).
+  // (🆕🆕🆕 D575 (D539): ~~"still unbuilt"~~ — Iron Moth's sentence is BUILT at D575 by its OWN anchor,
+  // `PREVENT_DAMAGE_FROM_ANCIENT`; it is still a different reader, so this key's vocabulary is unchanged)
   ["Ancient Pokémon", { kind: "bannerPokemon", banner: "Ancient" }],
 ]);
 /** 🆕🆕🆕 **D492 — THE TWO CLASS NOUNS THIS COLUMN PRINTS IN A WHOLE-SIDE SPREAD'S
@@ -30340,6 +30441,35 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
     if (excludingType !== undefined) {
       return [{ op: "preventDamage", fromClass: { stage: "basic", excludingType } }];
     }
+  }
+  // 🆕🆕🆕 19c-D575. THE MRV-38 ATTACK SLICE — six whole-sentence arms (anchors and rulings at
+  //      `PREVENT_DAMAGE_FROM_ANCIENT` above; docs/decisions.md D575).
+  if (PREVENT_DAMAGE_FROM_ANCIENT.test(effect)) {
+    return [{ op: "preventDamage", fromClass: { stage: "ancient" } }];
+  }
+  if (PREVENT_DAMAGE_FUTURE_SIDE_FROM_EX.test(effect)) {
+    return [{ op: "installSideAttackBlock", banner: "Future", fromClass: { stage: "ex" } }];
+  }
+  if (POISON_AND_BAR_HAND_ATTACH.test(effect)) {
+    return [
+      { op: "applyStatus", target: "defender", status: "poisoned" },
+      { op: "markHandAttach", barred: true },
+    ];
+  }
+  if (HAND_ATTACH_ENDS_TURN.test(effect)) return [{ op: "markHandAttach", endsTurn: true }];
+  if (LOOK_AT_OPPONENT_PRIZE.test(effect)) return [{ op: "lookAtPrize", side: "opponent" }];
+  if (WIN_AT_ONE_PRIZE.test(effect)) {
+    // The shipped member at `[1]` (D517's own gate value), bound once so this arm's bytes stay
+    // distinct from D517's paralyze arm (its mutant rows anchor on that arm's `cond:` line).
+    const atOnePrize: BoardCondition = { kind: "yourPrizesRemaining", counts: [1] };
+    return [
+      {
+        op: "conditionGate",
+        cond: atOnePrize,
+        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
+        then: [{ op: "winGame" }],
+      },
+    ];
   }
   // 19c-bis. The DAMAGE CAP (D240) — 3 legal printings on 2 sentences, backlog
   //      row 17, and the family's THIRD narrowing axis. UNGATED like arm 19c and

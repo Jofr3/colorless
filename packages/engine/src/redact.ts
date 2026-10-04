@@ -459,6 +459,10 @@ function redactPrompt(state: GameState, prompt: EffectPrompt): RedactedEffectPro
       // 🆕🆕🆕 D567 — Bother-Bot parks this over the OPPONENT's row: the rule above holds on
       // either row (every offered slot is still face down), and both dialogs draw the tiles by
       // INDEX alone, so nothing here moves; `note` names whose row.
+      // 🆕🆕🆕 D575 — Team Rocket's Blipbug "Searching Eyes" parks this over the OPPONENT's row too,
+      // answered BLIND by the attacker (R-BL1); the card it then looks at reaches the attacker through
+      // the `orderCards` arm below — ONE candidate, resolved for the answerer alone (R-BL2). Nothing
+      // here moves.
       return { kind: "choosePrize", indices: [...prompt.indices], note: prompt.note };
   }
 }

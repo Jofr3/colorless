@@ -618,6 +618,7 @@ describe("§6 — persistence, purity, and the property the export did not cost"
       "damageVulnerability", // 🆕🆕🆕 D547 (30 -> 31)
       "energy",
       "evolvedTurn",
+      "handAttachMark", // 🆕🆕🆕 D575 (37 -> 38) — the hand-attach mark (Glimmora / Hypno); the pin is on the HEAD's key set
       "healedTurn",
       "installedRecoil",
       "koBounty", // 🆕🆕🆕 D549 (32 -> 33) — the Knock Out bounty; the pin is on the HEAD's key set
@@ -697,6 +698,6 @@ describe("§7 — the version", () => {
     // `manifest.version`) plus `package.json`, the declaration and the mutant `find`.
     // The increment is this line — the pin being AUTHORED, which is the one D427 named
     // as the thing every note forgets.
-    expect(engineVersion).toBe("0.458.0");
+    expect(engineVersion).toBe("0.459.0");
   });
 });

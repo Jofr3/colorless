@@ -315,8 +315,10 @@ describe("§1 — the printed `ex`/`V` class over the whole column, and what blo
     // on its own, only in a TARGET position.
     const built = named.filter(([, s]) => resolvedByAnyReader(s));
     // 🆕🆕🆕 D574 — Seek Inspiration (file line 131) prints the class inside its Rule-Box gloss *"(Pokémon ex, Pokémon V, etc. have Rule Boxes.)"* and is BUILT now (`deriveAttackCopy`'s resolve-time kind): it moves from the residue half to the built half. 18/28 → 19/29.
-    expect(built).toHaveLength(19);
-    expect(units(built)).toBe(29);
+    // 🆕🆕🆕 D575 — the source-side prevention (Miraidon `sv08-069` "C.O.D.E.: Protect", file line 181)
+    // is BUILT now (`installSideAttackBlock`, the `"ex"` attacker class), so all twenty are built.
+    expect(built).toHaveLength(20);
+    expect(units(built)).toBe(30);
   });
 
   it("🛑 the RESIDUE half of that pattern, and the brief's four-row cluster is 4 of 6", () => {
@@ -337,8 +339,10 @@ describe("§1 — the printed `ex`/`V` class over the whole column, and what blo
     // cluster at all**: the source-side prevention and the parenthetical Rule-Box gloss.
     // 🆕🆕🆕 D574 — Seek Inspiration (file line 131) prints the class inside its Rule-Box gloss *"(Pokémon ex, Pokémon V, etc. have Rule Boxes.)"* and is BUILT now (`deriveAttackCopy`'s resolve-time kind): it moves from the residue half to the built half. 2/2 → 1/1: the
     // source-side prevention is what is left.
-    expect(residue).toHaveLength(1);
-    expect(units(residue)).toBe(1);
+    // 🆕🆕🆕 D575 — and it is BUILT too (Miraidon "C.O.D.E.: Protect", `installSideAttackBlock`): the
+    // residue half of the pattern is EMPTY, asserted rather than left implied.
+    expect(residue).toHaveLength(0);
+    expect(units(residue)).toBe(0);
     // …and the two this slice built have LEFT that residue, which is the only way this
     // rung can be read as a measurement of THIS head rather than of the brief's.
     expect(residue.map(([, s]) => s)).not.toContain(EX_OR_V_60);
@@ -1025,10 +1029,10 @@ describe("§7 — what the class group refuses, and what it must not have moved"
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("§8 — the persisted address, and why 29 does not move", () => {
-  it("engineVersion is 0.458.0 and `manifest.version` agrees", () => {
+  it("engineVersion is 0.459.0 and `manifest.version` agrees", () => {
     // `packages/engine` behaviour moved (a new op field, a new candidate funnel branch and
     // a new caption arm), so the version steps.
-    expect(engineVersion).toBe("0.458.0");
+    expect(engineVersion).toBe("0.459.0");
     expect(manifest.version).toBe(engineVersion);
   });
 

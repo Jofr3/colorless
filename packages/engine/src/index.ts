@@ -2101,7 +2101,8 @@ import type { GameState, Seat } from "./types";
     D134's census was `LIKE '%Flip a coin. If heads,%'`, so it structurally could
     not see the SIX ungated / otherwise-gated printings of the same family (3
     "…by attacks from Basic Pokémon", 1 "…from Ancient Pokémon", 1 KO-gated, 1
-    two-consequent coin) — 19 printings in all. Each stays LOUD and each is
+    two-consequent coin) — 19 printings in all (🆕🆕🆕 D575 (D539): ~~"Each stays LOUD"~~ — the
+    Basic three were built at D146 and the Ancient one, Iron Moth, is BUILT at 0.459.0). Each stays LOUD and each is
     written down with the property that refuses it, so the next slice inherits the
     list. **A census run for one purpose is a floor for every other purpose.**
 
@@ -2572,7 +2573,7 @@ import type { GameState, Seat } from "./types";
     ⚠️ **`Ancient` HAS NO READER BECAUSE IT HAS NO DATUM — AND THAT INVERTS THE
     ITEM.** The list called Ancient "the only real work". It is not work at all:
     the Ancient/Future banner is printed on the card FACE from Paradox Rift (sv04)
-    (🆕🆕🆕 D569 (D539): "no reader because no datum" is WITHDRAWN as a GROUND — the datum is `banners.ts` (an engine table keyed by printing id; still no persisted column, TRUE). Iron Moth itself stays unbuilt on the persisted `AttackerClass` rollback reading, deferred)
+    (🆕🆕🆕 D569 (D539): "no reader because no datum" is WITHDRAWN as a GROUND — the datum is `banners.ts` (an engine table keyed by printing id; still no persisted column, TRUE). Iron Moth itself stays unbuilt on the persisted `AttackerClass` rollback reading, deferred) (🆕🆕🆕 D575 (D539): ~~"stays unbuilt … deferred"~~ — BUILT at 0.459.0, the `"ancient"` member behind the ELEVENTH `MATCH_RECORD_VERSION` position)
     onward and appears in **no column of the persisted catalog and no field of
     tcgdex's own card model** — verified UPSTREAM against Roaring Moon ex
     sv04-124, the canonical Ancient print, whose payload carries `suffix: "ex"`
@@ -2584,6 +2585,9 @@ import type { GameState, Seat } from "./types";
     so any name-keyed answer is wrong on three real cards **with no failure
     anywhere**, which is the outcome this family refuses. The sentence therefore
     stays LOUD, the union has exactly ONE member, and `attackerMatchesClass`
+    (🆕🆕🆕 D575 (D539): ~~"stays LOUD, the union has exactly ONE member"~~ — BUILT at 0.459.0;
+    the union has THREE members, `"basic" | "ancient" | "ex"`, and the exhaustive switch
+    is what demanded the `"ancient"` arm, exactly as the next clause predicts)
     (continuous.ts) is an EXHAUSTIVE switch so a second member cannot be added
     without the compiler demanding the predicate that reads it. **`Future` obliges
     nothing here** and is not in the union: it is a real class in the pool
@@ -7888,6 +7892,9 @@ import type { GameState, Seat } from "./types";
     leave-the-spot terminator the turn stamp does not carry). **Three mechanisms,
     none of them the class.** The prediction priced the token and not the noun,
     which is why it said 8 and the answer is 7.
+    (🆕🆕🆕 D575 (D539): ~~"THE OTHER 2 ARE A PERMANENT FLOOR … no anchor can ever take them"~~ WITHDRAWN —
+    both are BUILT at 0.459.0: Iron Moth on `AttackerClass.stage` "ancient", Miraidon's SET target as
+    `PlayerSide.sideAttackBlock` with its terminator cleared by `switchInto`; `MATCH_RECORD_VERSION` 37 → 38.)
 
     ✅ **THE FIELD IS A RECORD, AND TWO INDEPENDENT ARGUMENTS SAY SO** (D238's own
     lesson: one argument is a preference, two are a finding). The VOCABULARY
@@ -18727,7 +18734,8 @@ import type { GameState, Seat } from "./types";
     which is the door a refusal of a PARAMETERISED op leaves open; the `/[Dd]evolv/`
     family is CLOSED at 2 sentences / 4 printings with zero unresolved rows and no
     Ancient/Future/Tera member. `devolveEach.test.ts` §10's loud-path witness is now
-    corpus row 346, not this sentence. **The two-row claim is a RUNG, not a sentence**:
+    corpus row 346, not this sentence (🆕🆕🆕 D575 (D539): ~~"corpus row 346"~~ WITHDRAWN — row 346
+    is BUILT at 0.459.0; §10's witness is Walking Wake `sv06-063` "Undulating Slice" now). **The two-row claim is a RUNG, not a sentence**:
     `devolveEach.test.ts` §1 runs the stem over the live corpus, so a third devolve
     printing entering the legal column reddens the suite and re-opens the template
     question by construction (D422's executable falsifier).
@@ -20235,6 +20243,25 @@ import type { GameState, Seat } from "./types";
     `expect(manifest.version)`, `it(…)` titles, the declaration and `package.json` —
     **not** as a value-keyed grep — because a value-keyed grep is precisely the mechanism
     that ate D500's heading.)
+    🆕🆕🆕 engineVersion 0.458.0 → **0.459.0** (D575 — THE MRV-38 ATTACK SLICE: 6 PRINTINGS / 6 TEXTS, FOUR NEW OPS,
+    `MATCH_RECORD_VERSION` 37 → 38 (THE ELEVENTH POSITION). Iron Moth `sv06.5-009` "Anachronism Repulsor" — the
+    shipped `preventDamage` with `AttackerClass.stage` WIDENED to `"ancient"` (read through `bannerOf`, R-IM1);
+    Miraidon `sv08-069` "C.O.D.E.: Protect" — the NEW `installSideAttackBlock` writing the REQUIRED
+    `PlayerSide.sideAttackBlock` (Future set read live, R-MI2; `"ex"` attacker class, exactly the printed class),
+    read by ONE side arm in `attackBlockOf`, cleared by `switchInto` when the source leaves the Active (R-MI1);
+    Glimmora `sv08-115` "Corrosive Shards" and Hypno `sv06.5-017` "Daydream" — the NEW `markHandAttach` on the
+    REQUIRED `InPlayPokemon.handAttachMark` (`barred`: turn.ts `attachEnergy` refuses with the NEW
+    `ENERGY_ATTACH_BARRED` and the effect attaches from hand skip the body via the NEW `AttachTargetRiders.source`,
+    R-GL1; `endsTurn`: the attach action seeds the turn tail after its riders and behind any parked prize pick,
+    and an effect's hand attach trips the mark for `settleProgram`, R-HY1 / R-HY2); Team Rocket's Blipbug
+    `sv10-015` "Searching Eyes" — the NEW `lookAtPrize` (a BLIND slot on the shipped `choosePrize`, then the
+    private look on the shipped `orderCards` over one uid, R-BL1 / R-BL2; the NEW public `PRIZE_LOOKED_AT` names
+    the slot only); N's Sigilyph `sv09-064` "Victory Symbol" — `conditionGate { yourPrizesRemaining [1] }` around
+    the NEW `winGame`, ending the game through `finishGame` with the NEW `GameOverReason` `"cardEffect"` (R-VS1;
+    the schema enum widens with it, so the CLIENT deploys first). All six are claimed WHOLE by
+    `deriveAttackEffect` anchors. R-IM1 / R-MI1 / R-MI2 / R-GL1 / R-HY1 / R-HY2 / R-BL1 / R-BL2 / R-VS1 ⚠️
+    UNRULED: `docs/decisions.md` D575. VERSION-TAX EXCEPTIONS: D574's own heading below — its arrow line and its
+    *"BUILT at 0.458.0"* note — kept, 2 of 210 lines.)
     🆕🆕🆕 engineVersion 0.457.0 → **0.458.0** (D574 — THE COPY-FAMILY REMAINDER + THE BUNDLE A RIDER: 7 PRINTINGS /
     5 TEXTS, TWO NEW OPS, NO MRV STEP. Team Rocket's Persian ex `sv10-150`/`sv10-219`/`svp-218` "Haughty Order",
     Slowking `sv07-058` "Seek Inspiration", Malamar `sv06.5-034` "Colluding Tentacles", Sableye `sv05-107` "Damage
@@ -22350,7 +22377,8 @@ import type { GameState, Seat } from "./types";
     D360 §6 rung inverted with the old claim's discrimination kept (every op carries two keys the
     D234 arm can never emit); `attachDecline.test.ts` §7's derived spreads 3 → 4 sentences / 4 → 5
     printings and its `+ 1 refused` population note re-pointed; `deckMillFilteredScale.test.ts`'s
-    LOUD control re-pointed onto *"Look at 1 of your opponent's face-down Prize cards."* (a residue
+    LOUD control re-pointed onto *"Look at 1 of your opponent's face-down Prize cards."* (🆕🆕🆕 D575 (D539): BUILT at
+    0.459.0, `lookAtPrize`; the control moved again, to Walking Wake `sv06-063`) (a residue
     sentence with ZERO suites — `readersClaiming` [] and the skip on the ENERGY board verified before
     choosing); `censusAtHead.test.ts` row 9's attack entry 1 → 0 (`attack: []`, D528's precedent one
     row over), `inRows` 21 → 20 and the ratio 26 → 25 (the ORDINARY shape, D458 — numerator and
@@ -23528,7 +23556,11 @@ import type { GameState, Seat } from "./types";
     cannot: `interpreter.ts` contains ZERO references to `finishGame` or `GAME_OVER`, and `stepOp`
     returns a STATE rather than an `ApplyResult`), and the new inhabitant lands on a union
     `MatchRecord.state.phase` carries DIRECTLY — a `MATCH_RECORD_VERSION` question rather than a
-    reader one. §14 would have to be reachable from a program for the first time. **THE REFUSAL IS WRITTEN AGAINST A FUNCTION AND DRIVEN AS AN
+    reader one. §14 would have to be reachable from a program for the first time. (🆕🆕🆕 D575 (D539): ~~the refusal~~ is
+    WITHDRAWN — `:346` is BUILT at 0.459.0 exactly as priced here: the NEW `winGame` op calls `finishGame`
+    from `interpreter.ts` (so ~~"ZERO references to `finishGame`"~~ is false now — the stepOp returns the
+    STATE `finishGame` produced), the FIFTH inhabitant `cardEffect` lands, and it rides the ELEVENTH
+    `MATCH_RECORD_VERSION` position, 37 → 38.) **THE REFUSAL IS WRITTEN AGAINST A FUNCTION AND DRIVEN AS AN
     EXECUTABLE FALSIFIER** (`prizeGateParalyze.test.ts` §8), which is D473's and D479's shape —
     both of which aged 42 and 37 decisions because they named what was MISSING rather than what
     was spelled.
@@ -24898,7 +24930,7 @@ import type { GameState, Seat } from "./types";
     WITNESS** — the count was re-derived every slice and the word *"three"* was carried.
     A successor of this slice inherits **81 / 61 / 17** again, over **FIVE** history
     occurrences: those four plus `deckMillFilteredScale.test.ts`'s own header arrow.) */
-export const engineVersion = "0.458.0";
+export const engineVersion = "0.459.0";
 
 export type {
   ApplyResult,

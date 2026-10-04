@@ -129,7 +129,9 @@ const SIB_NOT_34 = "If your opponent doesn't have exactly 3 or 4 Prize cards rem
 const SIB_4_FEWER = "If your opponent has 4 or fewer Prize cards remaining, this attack does 70 more damage."; // :353
 
 /** Corpus FILE LINE 346 — the row that shares this row's GATE and is deliberately NOT
-    built here. See §8, which drives the refusal rather than asserting it. */
+    built here. See §8, which drives the refusal rather than asserting it.
+    (🆕🆕🆕 D575 (D539): ~~"drives the refusal"~~ WITHDRAWN — D575 BUILT the row (N's Sigilyph
+    `sv09-064` "Victory Symbol", the `winGame` op); §8 now pins the derived program.) */
 const WIN_ROW =
   "If you use this attack when you have exactly 1 Prize card remaining, you win this game.";
 
@@ -270,8 +272,10 @@ describe("D517 §1 — the printed data, measured live over the legal column", (
     );
     expect(units(family)).toBe(7);
     // Four of the five are now built; `WIN_ROW` is the one that is not, and §8 says why.
+    // 🆕🆕🆕 D575 (D539): ~~"`WIN_ROW` is the one that is not"~~ — it IS built now (N's Sigilyph
+    // "Victory Symbol", the `winGame` op behind this member at `[1]`), so the family is CLOSED.
     const unbuilt = family.filter(([, s]) => !resolvedByAnyReader(s));
-    expect(unbuilt.map(([, s]) => s)).toEqual([WIN_ROW]);
+    expect(unbuilt.map(([, s]) => s)).toEqual([]);
   });
 
   it("🆕🆕 D517 — the sentence is now RESOLVED, and by exactly one reader", () => {
@@ -681,7 +685,7 @@ describe("D517 §7 — the price, and both version constants", () => {
   });
 
   it("🛑 the ENGINE version moved and `MATCH_RECORD_VERSION` did not, and both are argued", () => {
-    expect(engineVersion).toBe("0.458.0");
+    expect(engineVersion).toBe("0.459.0");
   });
 
   it("🛑 REACHABILITY IS EMPTY, MEASURED OVER EVERY PRODUCER RATHER THAN ASSERTED", () => {
@@ -777,7 +781,9 @@ describe("D517 §7 — the price, and both version constants", () => {
     expect(offenders).toEqual([]);
     // …and the walk actually SAW the member, so an empty `offenders` is a finding rather
     // than a walk that missed (D200 — a guard that cannot go red is not a guard).
-    expect(carriers).toBe(1);
+    // 🆕🆕🆕 D575 — 1 → 2: N's Sigilyph "Victory Symbol" carries the member too, at index 0 of its
+    // derived list and around the non-parking `winGame`, so the invariant still holds of both.
+    expect(carriers).toBe(2);
     expect(opLists).toBeGreaterThan(100);
     expect(derived).toBeGreaterThan(200);
   });
@@ -787,7 +793,7 @@ describe("D517 §7 — the price, and both version constants", () => {
 // §8 — THE FOLLOW-ON THIS MEMBER UNBLOCKS, AND THE REFUSAL, DRIVEN.
 // ─────────────────────────────────────────────────────────────────────────────
 
-describe("D517 §8 — corpus `:346` shares this GATE and is deliberately NOT built", () => {
+describe("D517 §8 — corpus `:346` shares this GATE and is deliberately NOT built (🆕🆕🆕 D575: BUILT — the falsifier below fired as written)", () => {
   it("🛑 FALSIFIER — the gate is now available to it and the CONSEQUENT is what is missing", () => {
     // 🛑 THE REFUSAL, WRITTEN AGAINST A FUNCTION RATHER THAN A SPELLING (D473/D479,
     // both of which aged 42 and 37 decisions because they named what was MISSING).
@@ -819,10 +825,21 @@ describe("D517 §8 — corpus `:346` shares this GATE and is deliberately NOT bu
     for (const [, text] of legalAttackCorpus()) collect(deriveAttackEffect(text));
     expect(names.size).toBeGreaterThan(50);
     const ENDERS = [...names].filter((n) => /win|victor|gameEnd|endGame|concede|forfeit/i.test(n));
-    expect(ENDERS).toEqual([]);
-    // …and the row is still unread, loudly. It is NOT half-claimed by the new anchor.
-    expect(resolvedByAnyReader(WIN_ROW)).toBe(false);
-    expect(deriveAttackEffect(WIN_ROW)).toBeNull();
+    // 🆕🆕🆕 D575 — THE FALSIFIER FIRED, AS WRITTEN: `winGame` shipped (N's Sigilyph
+    // "Victory Symbol", `:346`), and the row became the two-line arm over this member that
+    // the paragraph above forecast — `conditionGate { yourPrizesRemaining [1] }` around it.
+    // The refusal is WITHDRAWN (D539) and kept as the record (D418); the rungs now pin the build.
+    expect(ENDERS).toEqual(["winGame"]);
+    // …and the row is READ now, whole, by the anchor `WIN_AT_ONE_PRIZE` (effects.ts).
+    expect(resolvedByAnyReader(WIN_ROW)).toBe(true);
+    expect(deriveAttackEffect(WIN_ROW)).toEqual([
+      {
+        op: "conditionGate",
+        cond: { kind: "yourPrizesRemaining", counts: [1] },
+        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
+        then: [{ op: "winGame" }],
+      },
+    ]);
   });
 
   it("🛑 the PRICE of `:346`, recorded: the GATE is free and the WRAPPER is one group", () => {
@@ -855,20 +872,26 @@ describe("D517 §8 — corpus `:346` shares this GATE and is deliberately NOT bu
     // `Record<GameOverReason, …>` is TOTAL, so the compiler enumerates the union for us
     // and a fifth reason makes THIS FILE fail to compile — which is a stronger tripwire
     // than any grep over prose, and the same instrument `log.ts` already uses.
+    // 🆕🆕🆕 D575 — THE TRIPWIRE FIRED AS DESIGNED: the fifth reason, `cardEffect`, landed with
+    // N's Sigilyph "Victory Symbol" (`winGame`), and this literal failed to compile until it was
+    // added. Kept as the record (D418), with the fifth member.
     const REASONS: Record<GameOverReason, true> = {
       prizesTaken: true,
       noPokemon: true,
       deckOut: true,
       conceded: true,
+      cardEffect: true,
     };
     expect(Object.keys(REASONS).sort()).toEqual(
-      ["conceded", "deckOut", "noPokemon", "prizesTaken"].sort(),
+      ["cardEffect", "conceded", "deckOut", "noPokemon", "prizesTaken"].sort(),
     );
     // 🛑 **NONE OF THE FOUR IS "a card said so".** Every one is a BOARD condition
     // `evaluateWin` derives from the state; *"you win this game"* is a printed
     // DECLARATION, so the row needs a FIFTH inhabitant as well as an op — and the
     // inhabitant is on a union that `MatchRecord.state.phase` carries directly, which is
     // a `MATCH_RECORD_VERSION` question rather than a reader one.
-    expect(Object.keys(REASONS)).toHaveLength(4);
+    // (🆕🆕🆕 D575 (D539): ~~"NONE OF THE FOUR IS 'a card said so'"~~ — there are FIVE now, and
+    // the fifth IS: `cardEffect`, riding the ELEVENTH `MATCH_RECORD_VERSION` position, 37 → 38.)
+    expect(Object.keys(REASONS)).toHaveLength(5);
   });
 });

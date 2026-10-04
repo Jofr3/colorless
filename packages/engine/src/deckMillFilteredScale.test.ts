@@ -107,7 +107,12 @@ const BARE_MILL = "Discard the top 3 cards of your deck.";
 // to hold is BUILT at D532 (corpus FILE LINE 70, `attachEnergyFrom.whose`), so it no longer flags
 // `ATTACK_EFFECT_SKIPPED`. The control now holds a residue sentence with ZERO suites of its own —
 // VERIFIED before choosing: `readersClaiming` is [] and the ENERGY board flags the skip (§11).
-const LOUD = "Look at 1 of your opponent's face-down Prize cards.";
+// 🆕🆕🆕 D575 — RE-POINTED AGAIN (never deleted, D418): *"Look at 1 of your opponent's face-down Prize
+// cards."* (Team Rocket's Blipbug `sv10-015` "Searching Eyes", corpus FILE LINE 394) is BUILT at D575
+// (`lookAtPrize`). The control now holds Walking Wake `sv06-063` "Undulating Slice" — a residue sentence
+// D575 leaves unbuilt, VERIFIED before choosing: `readersClaiming` is [] (§11 asserts it live).
+const LOUD =
+  "Put up to 9 damage counters on this Pokémon. This attack does 20 damage for each damage counter you placed in this way.";
 
 const ENERGY_PROGRAM: readonly EffectOp[] = [
   { op: "discardDeckTop", whose: "self", count: 3, recordAs: "discarded" },

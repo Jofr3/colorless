@@ -84,7 +84,8 @@ import { koByEffectMarker } from "./types";
 // used as this suite's loud-path witness (§10)"* HAS EXPIRED**: row 87 is BUILT as
 // `devolveChosen` (`devolveChosen.test.ts`), the `/[Dd]evolv/` family is CLOSED at 2
 // sentences / 4 printings with zero unresolved rows, and §10's loud-path witness is now
-// corpus row 346 — see `WITNESS` below for which row and why that one.
+// corpus row 346 — see `WITNESS` below for which row and why that one. (🆕🆕🆕 D575 (D539): row 346
+// is BUILT at D575; the witness moved to Walking Wake `sv06-063` — see `WITNESS`.)
 
 const SENTENCE =
   "Devolve each of your opponent's evolved Pokémon by shuffling the highest Stage Evolution card on it into your opponent's deck.";
@@ -100,16 +101,20 @@ const SIBLING =
     printing**, classified `OPAQUE` at BOTH `SUBMAX=4` and `SUBMAX=12`, and a family of
     ONE (`/win this game/` over the whole 640-sentence corpus returns exactly it). §10
     asserts it is unresolved off the live census predicate, so the day it is built this
-    suite reddens instead of lying (D422's executable falsifier). */
+    suite reddens instead of lying (D422's executable falsifier).
+    🆕🆕🆕 D575 — IT REDDENED, AS DESIGNED, AND IS RE-POINTED (never deleted, D418): D575 BUILDS row
+    346 (N's Sigilyph "Victory Symbol", `winGame`). The witness now holds Walking Wake `sv06-063`
+    "Undulating Slice" — a residue sentence D575 leaves unbuilt, VERIFIED before choosing
+    (`readersClaiming` is []; 1 printing). The §10 title's "row 346" is kept as the record. */
 const WITNESS =
-  "If you use this attack when you have exactly 1 Prize card remaining, you win this game.";
+  "Put up to 9 damage counters on this Pokémon. This attack does 20 damage for each damage counter you placed in this way.";
 
 const CALL = 0; // {C}, NO damage, the sentence — the pure "maximum moved" board
 const BLOW = 1; // {C}, 130 damage, the sentence — the already-lethal board (§6)
 const PLAIN = 2; // {C}, NO damage, NO effect — the one-axis control
 const HAND = 3; // {C}, NO damage, corpus row 87 — 🆕 D540: BUILT, so no longer a skip
 const TOLL = 4; // {C}, a PARKING sibling, so §11 has a persisted `cont.rest` to load
-const WIN = 5; // 🆕 D540 — {C}, corpus row 346, the replacement loud-path witness (§10)
+const WIN = 5; // 🆕 D540 — {C}, corpus row 346, the replacement loud-path witness (§10) (🆕🆕🆕 D575: row 346 is BUILT; the slot carries Walking Wake now — see `WITNESS`)
 
 /** The chain this suite devolves down: 60 / 90 / 140 HP, three distinct numbers so
     no assertion can be satisfied by the wrong body. The ids are `fix-*` keys with
@@ -1033,7 +1038,7 @@ describe("§10 — `ATTACK_EFFECT_SKIPPED`, both directions", () => {
     expect(find(events, "POKEMON_DEVOLVED")?.zone).toBe("hand");
   });
 
-  it("🛑 THE REPLACEMENT LOUD-PATH WITNESS — corpus row 346 is still LOUD", () => {
+  it("🛑 THE REPLACEMENT LOUD-PATH WITNESS — corpus row 346 is still LOUD (🆕🆕🆕 D575: row 346 is BUILT; the witness is Walking Wake `sv06-063` now)", () => {
     // The witness that "built" means something. Same card, same board, same turn: only
     // the index moves. ⚠️ **WHICH ROW, AND WHY THIS ONE.** `WITNESS` is corpus row 346,
     // *"If you use this attack when you have exactly 1 Prize card remaining, you win
@@ -1044,6 +1049,10 @@ describe("§10 — `ATTACK_EFFECT_SKIPPED`, both directions", () => {
     // 2-row `/face-down Prize/` family a live pricing report names as a candidate
     // closure, and a witness inside a family under active pricing is a rung scheduled
     // to expire — which is the exact rot this slice spent its time cleaning up.
+    // (🆕🆕🆕 D575 (D539): ~~"`WITNESS` is corpus row 346"~~ WITHDRAWN, the paragraph kept as the
+    // record (D418) — row 346 is BUILT at D575 (and so is row 394, Team Rocket's Blipbug
+    // "Searching Eyes", which this paragraph's decline predicted). `WITNESS` is Walking Wake
+    // `sv06-063` "Undulating Slice" now — see its doc comment.)
     const { events } = strike(armed(20, { stages: 1 }), "p1", WIN);
     const skipped = find(events, "ATTACK_EFFECT_SKIPPED");
     expect(skipped?.effect).toBe(WITNESS);
@@ -1123,7 +1132,7 @@ describe("§11 — the version prediction is DRIVEN, not asserted", () => {
   });
 
   it("the engine version moved with the behaviour", () => {
-    expect(engineVersion).toBe("0.458.0");
+    expect(engineVersion).toBe("0.459.0");
   });
 });
 
