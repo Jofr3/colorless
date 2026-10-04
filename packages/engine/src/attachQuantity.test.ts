@@ -865,7 +865,9 @@ describe("D359 §6 — the ids this file rests on are real and locally seated", 
     // "Adrena-Brain" (`abilities`), Milotic "Mentally Calm" and Huntail "Diver's Catch"
     // (`passive`), Klinklang `sv07-101` "Emergency Rotation" (the NEW `benchFromHand`), ALL
     // non-attack. Real catalog ids, no `fix-*` key, inserted MID-MAP after D571's rows.
-    expect(registryCardIds()).toHaveLength(968);
+    // 🆕🆕🆕 D574 — 968 -> **969**: ONE registry key — Malamar `sv06.5-034` "Colluding Tentacles"
+    // (`MALAMAR_COLLUDING_TENTACLES`, an ATTACK row on existing ops), keyed beside Xerosic's Machinations.
+    expect(registryCardIds()).toHaveLength(969);
     for (const id of Object.values(QUANTITY_IDS).flat()) {
       if (programFor(id) === undefined) continue;
       // Every id that DOES have a program had one before this slice: the eight

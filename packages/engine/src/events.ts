@@ -159,6 +159,13 @@ export type GameEvent =
       only once the copied attack is known to resolve, so the log never reads "(as Smash)" over
       an attack that did nothing. `attack` stays the COPIER's own name (R-CP7). */
   | { type: "ATTACK_DECLARED"; seat: Seat; uid: string; attack: string; index: number; as?: string }
+  /** 🆕🆕🆕 D574 — the SECOND HALF of a resolve-time copy (Haughty Order / Seek Inspiration)
+      resolved as another Pokémon's attack `as`. ATTACK_DECLARED went out with the FIRST half
+      (before the reveal / mill and the park), so the copied name cannot ride its `as` — this row
+      carries it instead, once the copied attack is known to resolve, and `attack` stays the
+      COPIER's name (R-CP7). Never emitted on a decline, an empty find or a tails. A new union
+      member (D125); not persisted (D141). */
+  | { type: "ATTACK_COPY_RESOLVED"; seat: Seat; uid: string; attack: string; as: string }
   /** The declared attack carries text (or a damage modifier like "60+") the
       engine does not simulate yet — that is M4's effect-op system. The
       numeric base damage still applied; consumers surface the skipped text
@@ -1487,6 +1494,11 @@ export type GameEvent =
   /** A look-at-the-top-N resolved: `uids` moved deck → `dest`. The other
       looked-at cards are shuffled back — a trailing SHUFFLE in the same batch
       hides the deck order.
+      🆕🆕🆕 D574 (D539): ~~`uids` moved deck → `dest`~~ is no longer true of
+      every row — with `dest: "deck"` (Team Rocket's Persian ex "Haughty
+      Order") NOTHING moves: `uids` are the top cards REVEALED to BOTH players
+      (`reveal: true`) and left in the deck, and the trailing SHUFFLE takes all
+      of them. The look-only reading below (D225 / D241) is the other dests'.
 
       **THE NAME RECORDS THE LOOK, NOT THE ANNOUNCEMENT** (D225). The top `n` was
       revealed to its OWNER, which is what makes the pick legal; whether the
@@ -1555,8 +1567,12 @@ export type GameEvent =
   | {
       type: "DECK_TOP_REVEALED";
       seat: Seat;
-      /** ABSENT means the HAND, mirroring the op's own field (D135). */
-      dest?: "bench" | "discard";
+      /** ABSENT means the HAND, mirroring the op's own field (D135).
+          🆕🆕🆕 D574 — `"deck"`: the cards were REVEALED and STAYED in the deck (Team Rocket's
+          Persian ex "Haughty Order" reveals the opponent's top 10, then shuffles them back —
+          attack.ts `copyAtResolution`); `seat` the deck's owner, `actor` the attacker, `reveal`
+          true. A D125 widening; not persisted — no bump. */
+      dest?: "bench" | "discard" | "deck";
       uids: string[];
       reveal?: true;
       /** 🆕🆕🆕 D557 — Dusk Ball: the window was the BOTTOM of the deck. ABSENT means

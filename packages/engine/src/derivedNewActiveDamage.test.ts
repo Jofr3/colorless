@@ -250,7 +250,7 @@ describe("the two anchors — one new op, and the promotion each sentence prints
     }
   });
 
-  it("🛑 REFUSES the near misses, including the one legal printing left unbuilt", () => {
+  it("🛑 REFUSES the near misses, including the one legal printing the DERIVER leaves unread (BUILT at D574 as a registry row)", () => {
     // ⚠️ THE RESIDUAL IS NAMED RATHER THAN ROUNDED AWAY. Malamar `sv06.5-034`
     // "Colluding Tentacles" is a THIRD sentence on the same string — a trailing
     // "this attack does nothing" requirement over a fact the engine does not keep
@@ -258,6 +258,14 @@ describe("the two anchors — one new op, and the promotion each sentence prints
     // turn") — so it needs the composition seam D192's block already defers, not a
     // looser regex here. Every deriver in this engine is fully anchored, so it
     // falls to the loud ATTACK_EFFECT_SKIPPED path rather than being half-read.
+    // 🆕🆕🆕 D574 (D539): ~~"a fact the engine does not keep"~~ and ~~"falls to the loud
+    // ATTACK_EFFECT_SKIPPED path"~~ are WITHDRAWN, and the title's ~~"left unbuilt"~~ with them.
+    // The fact IS kept since D564 (`TurnAllowances.supporterPlayedUid`, read by the condition
+    // `youPlayedSupporterNamedThisTurn`), and Malamar is BUILT at D574 as a REGISTRY row
+    // (`MALAMAR_COLLUDING_TENTACLES`): the registry program wins over the deriver, so no
+    // ATTACK_EFFECT_SKIPPED fires (`copyRemainderBundleD574.test.ts` §4 drives it). What STANDS
+    // is the claim this rung asserts: `deriveAttackEffect` still refuses the sentence, whole and
+    // un-half-read — the build went around the deriver, not through a looser regex here.
     const residual =
       "Switch in 1 of your opponent's Benched Pokémon to the Active Spot. If you do, this attack does 120 damage to the new Active Pokémon. If you didn't play Xerosic's Machinations from your hand during this turn, this attack does nothing.";
     expect(deriveAttackEffect(residual)).toBeNull();

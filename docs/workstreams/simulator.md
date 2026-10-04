@@ -20250,7 +20250,7 @@ reproduces at **exactly 8 printings / 5 clauses**.
 | "Switch in 1 of your opponent's Benched Pokémon to the Active Spot. If you do, switch your Active Pokémon with 1 of your Benched Pokémon." (Prime Catcher) | `sv05-157`, `sv08.5-119` — **2 legal** | ✅ **TAKEN** — the same two ops, the other way round |
 | "Switch in 1 of your opponent's Benched **Basic** Pokémon to the Active Spot. If you do, the new Active Pokémon is now Confused." (Lisia's Appeal) | `sv08-179/-234/-246` — 3 legal | ⏹️ REFUSED — a stage filter AND a status on the promoted body |
 | "…If you do, you may move any amount of Energy from **the Pokémon you moved to your Bench** to the new Active Pokémon." (Scramble Switch) | `sv08-186` — 1 legal | ⏹️ REFUSED — the OTHER end of the switch (🆕🆕🆕 D561: ✅ BUILT — `switchActive.recordDemoted` files that end, `moveEnergy.sourceRecorded` reads it) |
-| the four ATTACK-surface rows — Kilowattrel ex `sv08-068`, Iron Bundle `sv06-062`, Grimmsnarl `sv07-096`, Malamar `sv06.5-034` | **4 legal** | ⏹️ REFUSED — a self-target on `attachEnergyFrom`; an OPPONENT-DECIDED promotion (`gust` is the controller choosing); a cards-played-this-turn history no board keeps |
+| the four ATTACK-surface rows — Kilowattrel ex `sv08-068`, Iron Bundle `sv06-062`, Grimmsnarl `sv07-096`, Malamar `sv06.5-034` | **4 legal** | ⏹️ REFUSED — a self-target on `attachEnergyFrom`; an OPPONENT-DECIDED promotion (`gust` is the controller choosing); a cards-played-this-turn history no board keeps (🆕🆕🆕 D574 (D539): "REFUSED" for the four and ~~"a cards-played-this-turn history no board keeps"~~ are WITHDRAWN — D227 built Iron Bundle, D228 Grimmsnarl, D246 Kilowattrel ex, and `TurnAllowances.supporterPlayedUid` (D564) keeps WHICH Supporter was played, so Malamar is ✅ BUILT at D574 as a registry row, `MALAMAR_COLLUDING_TENTACLES`. All 4 printings are read now.) |
 | "Switch this Pokémon with 1 of your Benched **{L}** Pokémon." (Vikavolt) | `sv07-053` — 1 legal | ✅ **TAKEN AT D468** — `censusAttackCorpus.ts` **FILE LINE 499**. ⚠️ **THE REFUSAL BELOW IS CORRECTED RATHER THAN DELETED (D442), AND IT WAS RIGHT ABOUT ITS OWN SUBJECT**: `ownerPokemon` genuinely cannot say `{L}` and still must not try — `switchSeam.test.ts` §4 keeps that claim, re-pointed onto the derived VALUE (D449/D438) instead of onto a `toBeNull` the build falsified. What the note never said is that a DIFFERENT field already could: `switchActive.targetType?: PokemonType` shipped at **D273** for the ABILITY surface (Pecharunt ex, 5 legal), `switchBenchNarrowing` already narrows the Bench end through `matchesFilter`'s `typedPokemon`, and `switchTargetNoun` already spells the type into the caption — so the ATTACK-surface READER was the only missing piece, and it cost ONE anchor (`ATTACK_SELF_SWITCH_TYPED`) and ONE arm. **A refusal names a CARRIER, and the carrier can be wrong** (D457): this one priced the row against the field that refused it rather than against the field that would serve it, and the correct field was named in this very op's doc block, three slices earlier. |
 | "Switch your Active Pokémon with 1 of your Benched Pokémon." (bare) | `sv01-194`, `sv03.5-206`, `mfb-34` | `legal_standard = 0` |
 
@@ -20448,6 +20448,12 @@ bare `{ op: "switchActive" }`, and its candidate set is materialised in
   a Supporter and reading `allowances`, which records a BOOLEAN that one was
   played and never WHICH: D205's rule (check the datum exists before designing a
   predicate over it), applied to a history rather than to a banner.
+  (🆕🆕🆕 D574 (D539): "All four are refused" and ~~"records a BOOLEAN that one was
+  played and never WHICH"~~ are WITHDRAWN — D227 built Iron Bundle, D228 Grimmsnarl,
+  D246 Kilowattrel ex, and since D564 `TurnAllowances.supporterPlayedUid` records
+  WHICH Supporter was played; Malamar is ✅ BUILT at D574 as a registry row,
+  `MALAMAR_COLLUDING_TENTACLES`, its gate failing SILENTLY (R-MA1, UNRULED). D205's
+  rule itself stands — the datum now exists.)
 
 Suite: **+38 tests in 1 new file**, nothing else moved. ⚠️ **The baseline had to
 be re-measured rather than inherited.** D205's commit and this slice's work order
@@ -20629,7 +20635,7 @@ the card id), Standard first / Expanded second:
 | attack **Extended Damagriiigus** (Cofagrigus) | `sv10.5w-040`, `-123` | 2 | 2 | ✅ **BUILT** |
 | ability **Adrena-Brain** (Munkidori) | `sv06-095`, `sv06.5-072`, `sv08.5-044` | 3 | 3 | ⏹️ *"up to 3"* — a THIRD decision, and **no `EffectPrompt` kind can ask "how many"**. A WIRE change. (🆕🆕🆕 D572 (D539): WITHDRAWN — `choosePokemon.upTo` + `take` (D359) already asked it; ✅ BUILT at D572 on `moveCountersToOpponentChosen`, only an optional `takeVerb` caption on the wire.) |
 | ability **Rocket Brain** (Team Rocket's Orbeetle) | `sv10-089`, `-198` | 2 | 2 | ⏹️ *"as often as you like"* — an unbounded repeat the phase model has no shape for; destination is the controller's OWN board. (🆕🆕🆕 D565 (D539): ~~"an unbounded repeat the phase model has no shape for"~~ — withdrawn, already false (`oncePerTurn: false`, Baxcalibur / Emboar / Iono's Bellibolt); ✅ **BUILT at D565** on the sibling op `moveCounterOwnChosen`.) |
-| attack **Strange Hacking** (Alakazam) | `sv06-082` | 1 | 1 | ⏹️ *"any number … in any way you like"* — `attachCards`' many-to-many assignment, both ends on the opponent's board. |
+| attack **Strange Hacking** (Alakazam) | `sv06-082` | 1 | 1 | ⏹️ *"any number … in any way you like"* — `attachCards`' many-to-many assignment, both ends on the opponent's board. (🆕🆕🆕 D574 (D539): ~~"`attachCards`' many-to-many assignment"~~ — WITHDRAWN as the reading; ✅ **BUILT at D574** as a LOOP of one-source, one-destination rounds on the sibling op `moveCountersOpponentAnyWay`, bounded by an engine-written budget (R-AK1, UNRULED) and §11-filtered at both ends (R-AK2). "Both ends on the opponent's board" stands.) |
 
 **8, not D205's 2 and not D206's 7.** Both are floors: D205 read `attacks_json`
 alone; D206 added the two ABILITY surfaces but **missed Alakazam**, which is on the
@@ -29205,7 +29211,7 @@ by declaration-time substitution, `MATCH_RECORD_VERSION` stays 37.)
 **Status:** ✅ BUILT in the `lum-wt-d573` worktree (detached at `cb16bd63`), ~~NOT committed by the builder, NOT landed~~ committed on `d573-prep` at `8c935cd1` and 🆕 LANDED on `main` by cherry-pick onto the D572 close-out `1c40e5a5`,
 while D572's whole-corpus sweep ran in the main checkout (never written). The top row of the D573 pricing round
 (`progress.md` NEXT (7), recorded verbatim): copy-attack-substitution, 9 printings, about 1.3 printings per core file /
-about 0.45-0.6 per binding site. Haughty Order ×3 and Seek Inspiration stay BLOCKED (a park in the MIDDLE of an attack).
+about 0.45-0.6 per binding site. Haughty Order ×3 and Seek Inspiration stay BLOCKED (a park in the MIDDLE of an attack) [🆕🆕🆕 D574 (D539): BUILT at D574, below].
 
 ### (a) The cards
 - N's Zoroark ex `sv09-098` / `-175` / `-185` / `-189` — "Night Joker" (index 0): *"Choose 1 of your Benched N's Pokémon's
@@ -29249,8 +29255,8 @@ driven in `copyAttackD573.test.ts` §3c.
 0 error (30 at the first build, +6 in the review round); 43 neighbour rows 42 killed / 1 known (D282, declared `equivalent`) / 0 GAP — neighbour rows; all 16 live-census gate rows killed (before and after). Census: `BUILT.attack` 1707 → **1716**
 (reader summand), `BUILT.ability` 388 and `BUILT.trainer` 254 (unmoved, checked); residue 18/25 → **14/16**, OPAQUE 13/20 →
 **9/11** (UNEXPLAINED 4/4 → 6/8, the two blocked copy sentences); `COPY-ATTACK` re-declared a co-marker. MRV: the 0.456
-rollback of a parked copy is DRIVEN and INERT. Owed: the whole-corpus sweep (predicted `3958 · 51` over 4,009, stacked on
-~~D572's PENDING~~ 🆕 D572's PAID-EXACTLY `3922 · 51` over 3,973, close-out `1c40e5a5`, so it stands as written). Carried: Haughty Order ×3 / Seek Inspiration (a mid-attack park); R-CP3/5/8/9
+rollback of a parked copy is DRIVEN and INERT. ~~Owed:~~ 🆕 PAID, EXACTLY, on the first launch (D573 close-out `b022087d`, `tmp/sweep-D573.log:8030`; struck at D574's landing): the whole-corpus sweep (predicted `3958 · 51` over 4,009, stacked on
+~~D572's PENDING~~ 🆕 D572's PAID-EXACTLY `3922 · 51` over 3,973, close-out `1c40e5a5`, so it stands as written). Carried: Haughty Order ×3 / Seek Inspiration (a mid-attack park) [🆕🆕🆕 D574 (D539): BUILT at D574, below]; R-CP3/5/8/9
 unruled, R-CP4 only in "not offered" vs "offered and fails".
 
 ### (e) The review round
@@ -29267,4 +29273,66 @@ Recorded as R-CP9 (⚠️ UNRULED) with its reversal; the ~~four~~ 🆕 SIX *"Un
 engine source first (interpreter.ts `preventAttackUse`'s doc, `perAttackLock` / `untilLeavesActiveBar` / `perAttackBuff`
 suites; 🆕 at the landing, by a case-INSENSITIVE re-sweep, D154's two lowercase copies — the `decisions.md` D154 row and
 the D154 section of this file — which the builder's case-sensitive sweep missed); §3c adds six rungs; no mutant row (the D573 rows stay 36). NEXT: see `progress.md` NEXT — attack-residue Bundle A (or its 3-printing rider sharing a 37 → 38 step with the
-Paradox MRV trio), then antique-fossils, Tyme, Scovillain ex.
+Paradox MRV trio), then antique-fossils, Tyme, Scovillain ex. (🆕🆕🆕 D574: the rider TAKEN with the copy-family remainder, NO MRV step — D574 below.)
+
+## D574 — the copy-family remainder + the Bundle A rider: 7 printings / 5 texts (engine 0.458.0, `MATCH_RECORD_VERSION` stays 37)
+
+**Status:** ✅ BUILT in the `lum-wt-d574` worktree (detached at `b0e16eb4`, D573), ~~NOT committed (the brief's final
+instruction), the tree parked uncommitted on the branch `d574-prep`~~ committed there on `d574-prep` at `0f028a27`, while
+D573's whole-corpus sweep ran in the main checkout (never written); 🆕 LANDED on `main` by cherry-pick onto the D573
+close-out `b022087d`. The top row of the D574 pricing round (`progress.md` NEXT (7), recorded verbatim): the judge's
+combination of the copy-family remainder (Haughty Order ×3, Seek Inspiration) and the MRV-free Bundle A rider (Malamar,
+Sableye, Alakazam), 7 printings over about 42 binding sites — 0.17 per site — and the D573 round's "the copy-family
+remainder stays blocked … not a candidate" withdrawn by the judge.
+
+### (a) The cards
+- Team Rocket's Persian ex `sv10-150` / `sv10-219` / `svp-218` — "Haughty Order" (index 0): *"Reveal the top 10 cards of
+  your opponent's deck. You may choose an attack from a Pokémon you find there and use it as this attack. Shuffle the
+  revealed cards into your opponent's deck."*
+- Slowking `sv07-058` — "Seek Inspiration" (index 0): *"Discard the top card of your deck, and if that card is a Pokémon
+  that doesn't have a Rule Box, choose 1 of its attacks and use it as this attack. (Pokémon ex, Pokémon V, etc. have Rule
+  Boxes.)"*
+- Malamar `sv06.5-034` — "Colluding Tentacles" (index 0): *"Switch in 1 of your opponent's Benched Pokémon to the Active
+  Spot. If you do, this attack does 120 damage to the new Active Pokémon. If you didn't play Xerosic's Machinations from
+  your hand during this turn, this attack does nothing."*
+- Sableye `sv05-107` — "Damage Collection" (index 1): *"You may move any number of damage counters from your opponent's
+  Benched Pokémon to their Active Pokémon."*
+- Alakazam `sv06-082` — "Strange Hacking" (index 0): *"Your opponent's Active Pokémon is now Confused. You may move any
+  number of damage counters from your opponent's Pokémon to their other Pokémon in any way you like."*
+
+### (b) The design
+- **The resolve-time copy** — `deriveAttackCopy` gains two whole-sentence anchors → the NEW `ResolvedAttackCopy`
+  (`opponentDeckTop` / `ownDeckTopMill`); the reader surface stays 14; `useAttackAs.from` keeps its three members.
+  attack.ts skips D573's declaration branch for them and runs `copyAtResolution` AFTER the flip-lock and Confusion coins:
+  Haughty Order reveals min(10, deck) (`DECK_TOP_REVEALED { dest: "deck", reveal, actor }`), shuffles AT ONCE, then a
+  `confirm` and a flattened `chooseAttack`; Seek Inspiration mills 1 and takes a Pokémon without a Rule Box, inline at
+  one pair. Candidates: `usableCopies` over a PHANTOM one-card body (`makeInPlay` on the out-of-play uid).
+- **The park and the answer** — the NEW park-only `useFoundAttackAs { from, index, candidates, accepted? }` in the
+  in-attack shape (`resumeTail` + a queued `attackEpilogue`), a NEW name and not a `useAttackAs` widening (0.457 would
+  PHASE_DESYNC on one). cardplay.ts routes every answer but Haughty Order's decline to `resolveFoundAttack`: strip the
+  queued epilogue, re-validate copier and source zone, re-enter `attack()` RESUMED (no second ATTACK_DECLARED, no coin,
+  no reveal); the NEW event `ATTACK_COPY_RESOLVED` ("Persian ex's Haughty Order became Cruel Slash").
+- **The loop** — two whole-sentence anchors → the NEW `moveCountersOpponentAnyWay { from, budget?, source?, take? }`:
+  the budget written on the first step, each round Q1 (source + count, `upTo` the live budget, declinable) and Q2
+  (destination; forced to their Active for Sableye), the mover `moveCountersBetweenOpponents`, the op re-emitted with
+  the budget spent; Alakazam's tail composes behind its Confusion head.
+- **Malamar** — the registry row `MALAMAR_COLLUDING_TENTACLES` on existing ops (`conditionGate` /
+  `youPlayedSupporterNamedThisTurn` / `gust { recordAs }` / `recordGate` / `damageNewActive`).
+
+### (c) Readings (`docs/decisions.md` D574 (c), all ⚠️ UNRULED)
+R-HO1 the shuffle at the park, before the copied attack (reverses to a queued stage, 37 → 38) · R-HO2 / R-SI1 the choice
+after the coins (the asymmetry with R-CP8 is the printed order) · R-CP3 / R-CP4 extended to an out-of-play source through
+the phantom body · R-SB1 Sableye Bench → their Active only · R-AK1 the loop bound: an engine-written budget, ≥ 1 counter a
+round, a decline ends it · R-AK2 §11-shielded bodies are neither source nor destination, announced once · R-MA1 Malamar's
+gate fails silently (no ATTACK_FAILED row).
+
+### (d) Verified, and owed
+`bun run check` 587 files / 14,207 tests, exit 0; precheck 4,033 (binding gate green); the four gates OK; the probe
+`--decision D574 --allow-dirty` 24 killed · 0 · 0 GAP · 0 error; 66 neighbour rows 66 killed / 0 / 0 GAP; all 16 live-census
+gate rows killed (before and after). Census: `BUILT.attack` 1716 → **1723** (reader +5, trailing +1, registry +1); raw 50/81 → **47/76** (the judge's
+46/75 corrected: Alakazam composes and stays raw); residue 14/16 → **9/9**; backlog row 16 CLOSED; OPAQUE 9/11 → **6/6**;
+`BUILT.ability` 388 / `BUILT.trainer` 254 unmoved, checked. MRV: all three new parks' 0.457 rollback readings DRIVEN and
+INERT. Owed: ~~D573's sweep (predicted `3958 · 51` over 4,009, PENDING) and~~ 🆕 D573's sweep is PAID, EXACTLY (`3958 · 51` over
+4,009, close-out `b022087d`); owed: D574's (predicted `3982 · 51` over 4,033, stands as written).
+NEXT: see `progress.md` NEXT (7) — the MRV slice (Iron Moth + Miraidon + Glimmora + Hypno, 37 → 38), then Blipbug,
+antique-fossils, Tyme, Scovillain ex; Koraidon after its R-1.

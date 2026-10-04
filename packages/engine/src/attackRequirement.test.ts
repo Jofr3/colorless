@@ -525,6 +525,14 @@ describe("the rest of the 'does nothing' family stays LOUD", () => {
     // two sentences precede it, so `^If` fails — and it would be refused again at
     // the table, because "you didn't play Xerosic's Machinations from your hand
     // during this turn" names a SPECIFIC CARD and no member tracks that.
+    // 🆕🆕🆕 D574 (D539): ~~"no member tracks that"~~ is WITHDRAWN, and was already false
+    // since D564 — `BoardCondition` (what `deriveAttackRequirement` returns) has
+    // `youPlayedSupporterNamedThisTurn { name }`, read off `TurnAllowances.supporterPlayedUid`.
+    // What STANDS is the table miss this rung asserts: the requirement TABLE has no row
+    // mapping this clause onto that member, so both guards still refuse. Malamar is BUILT at
+    // D574 as a REGISTRY row (`MALAMAR_COLLUDING_TENTACLES`, a `conditionGate` on that very
+    // member), around the derivers rather than through them — and its gate fails SILENTLY,
+    // with no ATTACK_FAILED "requirement" row (R-MA1 ⚠️ UNRULED), unlike a derived gate.
     const colludingTentacles =
       "Switch in 1 of your opponent's Benched Pokémon to the Active Spot. If you do, this attack does 120 damage to the new Active Pokémon. If you didn't play Xerosic's Machinations from your hand during this turn, this attack does nothing.";
     expect(colludingTentacles.startsWith("If ")).toBe(false);

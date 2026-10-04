@@ -459,8 +459,18 @@ describe("§1 — the census, measured over the corpus rather than quoted", () =
     // printing, `OPAQUE` at BOTH census caps, and its `/move any number of damage
     // counters/` family is 2 rows of which BOTH are unread, so nothing about it is one
     // slice away from moving. It is on no pricing list in the tree.
+    // 🆕🆕🆕 **D574 — RE-POINTED, BEFORE THE READER LANDED, AND ~~"both are unread … nothing about it is
+    // one slice away from moving. It is on no pricing list in the tree."~~ IS WITHDRAWN (D539)**: the
+    // D574 pricing round priced FILE LINE 649 (Sableye "Damage Collection") and D574 BUILDS it (and
+    // its sibling, Alakazam's tail), so the witness was a rung scheduled to expire — D540's rule,
+    // arriving. The replacement is corpus **FILE LINE 676**, Mr. Mime `sv05-063` "Look-Alike Show"
+    // (1 legal printing), held by a RECORDED REFUSAL (D445, `opponentHandScaling.test.ts`: its
+    // falsifier is a Trainer TEXT deriver, which does not exist) and outside every family the D574
+    // round ranks. It is a STRONGER carrier of this condition than the row it replaces: its HEAD
+    // (*"Your opponent reveals their hand."*) IS claimed and its TAIL is not, so the splitter refuses
+    // it for exactly the second condition's reason — not for having no claimed half at all.
     const UNREAD =
-      "You may move any number of damage counters from your opponent's Benched Pokémon to their Active Pokémon.";
+      "Your opponent reveals their hand. You may use the effect of a Supporter card you find there as the effect of this attack.";
     // The witness is asserted to BE in the corpus, so a re-ingest that retires the
     // sentence reddens here instead of leaving the rung testing a string nothing prints.
     expect(legalAttackCorpus().some(([, s]) => s === UNREAD)).toBe(true);
@@ -1156,6 +1166,6 @@ describe("§8 — the structural answers", () => {
   });
 
   it("the engine version moved and the two spellings agree", () => {
-    expect(engineVersion).toBe("0.457.0");
+    expect(engineVersion).toBe("0.458.0");
   });
 });

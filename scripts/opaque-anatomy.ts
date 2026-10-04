@@ -87,7 +87,11 @@
  *   one alternative `any number of` and its built side goes to 5 sentences / 12
  *   printings and it is refuted. That is not a flaw to be hidden — it is why
  *   `ANY-NUMBER-OF` ships beside it as a declared `CO-MARKER`, so the sensitivity
- *   is visible in the output rather than in this paragraph. 🆕🆕🆕 **D525 — AND
+ *   is visible in the output rather than in this paragraph. (🆕🆕🆕 D574 — the "5 sentences / 12
+ *   printings" is VARIABLE-MAX's built side under that one alternation AS MEASURED THEN; D574 built
+ *   two more `any number of` sentences — Sableye "Damage Collection" and Alakazam "Strange
+ *   Hacking" — so the figure is a dated measurement, not a live one; `ANY-NUMBER-OF`'s own row is
+ *   re-measured on every run.) 🆕🆕🆕 **D525 — AND
  *   `VARIABLE-MAX` IS NOW A CO-MARKER AS SPELLED**, refuted by a BUILD (corpus FILE
  *   LINE 219, `retrievalUpToHeads`): its built side is 1 sentence / 2 printings and
  *   §C of the gate said so on the first run after the arm — the paragraph above
@@ -285,6 +289,10 @@ export const MARKERS: readonly Marker[] = [
     //    block forecast. The regex is KEPT WHOLE: narrowing it to the two unbuilt members would
     //    restore the `blocker` verdict by deleting the evidence against it. The two left (Haughty
     //    Order ×3, Seek Inspiration ×1) fall to UNEXPLAINED, which is intended.
+    // 🆕🆕🆕 D574 — AND THE TWO LEFT ARE BUILT: the marker's built side 4 / 9 → 6 / 13 (the WHOLE
+    //    family; `deriveAttackCopy`'s two resolve-time anchors and attack.ts's mid-attack park), its
+    //    residue side 2 / 4 → 0 / 0, so it stays a co-marker and labels nothing. ~~"fall to
+    //    UNEXPLAINED"~~ is history: they left the OPAQUE class altogether.
     verdict: "co-marker",
     needs:
       // 🆕🆕🆕 D573 (D539): ~~"attack() §8.5 as a callable function taking an attacker, a defender
@@ -294,7 +302,9 @@ export const MARKERS: readonly Marker[] = [
       //    THIRD leg the first build lacked — a copied attack's printed timing clause was split off
       //    and enforced against no one (laundered through the gate seam); attack.ts `usableCopies`
       //    now asks it for the copier's seat and drops every candidate it bars (R-CP4).
-      "nothing new for the four built sentences; the remaining two (Haughty Order, Seek Inspiration) REVEAL or MILL before the choice, so they need a park in the MIDDLE of an attack",
+      // 🆕🆕🆕 D574 (D539): ~~"the remaining two … need a park in the MIDDLE of an attack"~~ — BUILT:
+      //    `useFoundAttackAs`, attack.ts's mid-attack park on D573's re-entry seam (R-HO1/R-HO2/R-SI1).
+      "nothing — all six sentences are built (four at declaration, D573; the two that REVEAL or MILL first in the MIDDLE of the attack, D574)",
   },
   {
     name: "SCHEMA-BANNER",
@@ -492,6 +502,11 @@ export const MARKERS: readonly Marker[] = [
     name: "ANY-NUMBER-OF",
     rx: /any number of/,
     verdict: "co-marker",
+    // 🆕🆕🆕 D574 — its one far OPAQUE row (Sableye `sv05-107` "Damage Collection") and its Alakazam
+    //    `sv06-082` compound are BUILT (`moveCountersOpponentAnyWay`, the looping round), so its
+    //    residue side shrinks and its built side grows — a co-marker before and after. It was one
+    //    of the five live witnesses of `D471-co-marker-may-label`; `opaque-anatomy-gate.ts`'s
+    //    CO_PIN literal (D571) is what keeps that row KILLED without it.
     needs:
       "nothing this marker can name — and it ships PRECISELY to show how narrow a `blocker` verdict is: this is one alternation away from `VARIABLE-MAX`, and it is refuted where that one is not",
   },

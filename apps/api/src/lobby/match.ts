@@ -1909,6 +1909,36 @@ export interface MatchRecord {
     discard, so the HUD shows neither (a carried display debt, `sideAttackLock`'s and
     `sideAttackBonuses`' precedent, decisions.md D564).
 
+    🆕🆕🆕 **STAYS 37 AT D574 — THE COPY-FAMILY REMAINDER (HAUGHTY ORDER, SEEK INSPIRATION) + THE BUNDLE A
+    RIDER (MALAMAR, SABLEYE, ALAKAZAM) ADDS TWO PARKING OPS UNDER NEW NAMES, BOTH WIDENINGS; BOTH 0.457 ROLLBACK
+    READINGS ARE DRIVEN AND INERT.** (Placed ABOVE the D573 block, out of date order, so the declaration's
+    anchor lines — and every `*-record-version-not-bumped` row's `find` and the D570 doc tail — stay
+    byte-identical: D563's placement.) The addresses, named first (D456's rule): ⑴ the NEW `EffectOp`
+    `useFoundAttackAs { from, index, candidates, accepted? }` is written into `phase.cont.pendingOp` by
+    attack.ts's MID-ATTACK copy park (Haughty Order's confirm and flattened `chooseAttack`; Seek
+    Inspiration's `chooseAttack`), with `resumeTail: true` on the phase and an `attackEpilogue` QUEUED in
+    `pending` (attack.ts's in-attack park shape) — a new union member, D125's widening. 🛑 It is a NEW NAME
+    and NOT a `useAttackAs` widening ON PURPOSE: 0.457 routes EVERY `useAttackAs` to `resolveCopiedAttack`,
+    which re-derives the copier's text with 0.457's `deriveAttackCopy`, gets `null` for these two sentences
+    and returns PHASE_DESYNC — a parked match no answer could leave (verified at attack.ts's re-validation).
+    ⑵ the NEW `EffectOp` `moveCountersOpponentAnyWay { from, budget?, source?, take? }` (Sableye / Alakazam)
+    PARKS each round (Q1 `choosePokemon` with `upTo` + `takeVerb "move"`, Q2 `choosePokemon`) — a new
+    union member, D125's widening; the prompt kinds and keys are 0.457's own. ⑶ `ATTACK_COPY_RESOLVED` and
+    `DECK_TOP_REVEALED.dest: "deck"` are EVENT shapes and `GameEvent` is not persisted (D141). ⑷ Malamar is
+    a registry row over EXISTING ops (no vocabulary); `ResolvedAttackCopy` is a READER result, never stored.
+    D441: nothing is renamed or removed. THE 0.457 ROLLBACK READINGS, DRIVEN rather than argued
+    (`copyRemainderBundleD574.test.ts` §6, the D567 / D573 precedent): 0.457 has no route for either name in
+    `resolveEffect`, so a parked answer goes `validateChoice` (0.457's own prompt kinds) → `resumeProgram` →
+    `applyChoice`'s `default: return state` → `continuationOps` → `[]` → `runProgram([])` → `settleProgram`
+    with `resumeTail` → `advance` drains the queued `attackEpilogue` → `finishAttack`. So the attack ENDS
+    having copied / moved NOTHING — an INERT WHIFF: the first half's public facts (the declaration, the
+    coins, Haughty Order's reveal and shuffle, Seek Inspiration's mill) stand as they were already applied
+    and logged, no board byte is reinterpreted, no illegal action is granted, the `usedAttack` stamp is the
+    copier's own name, and the turn passes. For Haughty Order the rolled-back board is BYTE-IDENTICAL to
+    0.458's own DECLINE (driven). No printing is dropped and `MATCH_RECORD_VERSION` stays 37. (Had either
+    whiff not been inert, the off-ramp was 37 → 38 at the eleventh position — not taken.) No client byte
+    moved (the new prompts are the existing kinds; the log rows are engine-rendered).
+
     🆕🆕🆕 **STAYS 37 AT D573 — THE COPY-ATTACK SUBSTITUTION (NIGHT JOKER, FOUL PLAY, METRONOME, GEMSTONE
     MIMICRY, TRY TO IMITATE) ADDS ONE PARK-ONLY OP, A WIDENING; THE 0.456 ROLLBACK READING IS DRIVEN AND INERT.**
     (Placed ABOVE the D572 block, out of date order, so the declaration's anchor lines — and every

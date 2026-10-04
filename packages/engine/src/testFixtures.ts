@@ -6975,6 +6975,10 @@ export const FIXTURE_POOL: Record<string, Card> = {
   //   If tails, …" prints, 3 anaphoric "If you can't, …" prints, and Sharpedo
   //   sv06.5-034's named-card multi-sentence one — and attackRequirement.test.ts
   //   carries every one of those strings verbatim as a refusal witness.
+  //   🆕🆕🆕 D574 (D539): ~~"The other 16 stay LOUD"~~ is WITHDRAWN for the named-card one — and
+  //   "Sharpedo" above is a misnaming: `sv06.5-034` is Malamar "Colluding Tentacles", BUILT at D574 as
+  //   a REGISTRY row (`MALAMAR_COLLUDING_TENTACLES`), so it is no longer LOUD. The requirement
+  //   anchor still refuses its string, which is what attackRequirement.test.ts's witness asserts.
   /** Palafin sv03-062 "Justice Kick" ({W}{W}, 210) — a WATER STAGE 1 evolving from
       Finizen, 150 HP, retreat 2, ×2 Lightning, NO Resistance, NO Ability
       (`abilities_json` is NULL on the row), reg mark G, "Rare", illustrator
@@ -13967,6 +13971,14 @@ export const FIXTURE_POOL: Record<string, Card> = {
       choice, so it needs a park in the MIDDLE of the attack). Moved BEFORE the deriver landed,
       so the loud control never went dark. Touched by hand (fixture data, D538).
 
+      🛑 **🆕🆕🆕 D574 — RE-HOMED A FIFTH TIME, BECAUSE D574 BUILDS FILE LINE 434** (the mid-attack
+      copy on D573's re-entry seam), so ~~*"the copy-family REMAINDER that stays BLOCKED"*~~ is
+      withdrawn (D539). Index 2 now prints corpus **FILE LINE 676** — Mr. Mime `sv05-063`
+      "Look-Alike Show", *"Your opponent reveals their hand. You may use the effect of a Supporter
+      card you find there as the effect of this attack."*, 1 legal printing, a RECORDED REFUSAL
+      (D445) outside every family the D574 pricing round ranks (D540). Moved BEFORE the reader
+      landed. Touched by hand (fixture data, D538).
+
       🛑 **NO ids ARE INVENTED.** This checkout has no D1 — no local sqlite, no
       remote credentials — so the three carriers of row 528 could not be resolved and
       are NOT guessed (D425). The SENTENCES are transcribed off `censusAttackCorpus.ts`
@@ -14002,7 +14014,7 @@ export const FIXTURE_POOL: Record<string, Card> = {
         cost: ["Colorless"],
         name: "Idle Barrage",
         damage: "30",
-        effect: "Reveal the top 10 cards of your opponent's deck. You may choose an attack from a Pokémon you find there and use it as this attack. Shuffle the revealed cards into your opponent's deck.",
+        effect: "Your opponent reveals their hand. You may use the effect of a Supporter card you find there as the effect of this attack.",
       },
     ],
   }),
@@ -15383,7 +15395,14 @@ export const FIXTURE_POOL: Record<string, Card> = {
       choose an attack from a Pokémon you find there and use it as this attack. Shuffle the
       revealed cards into your opponent's deck."*, 3 legal printings) — the copy-family
       remainder, which stays BLOCKED because it reveals BEFORE the choice and so needs a park
-      in the middle of the attack. Moved before the deriver landed. Touched by hand (D538). */
+      in the middle of the attack. Moved before the deriver landed. Touched by hand (D538).
+
+      🆕🆕🆕 **D574 — RE-POINTED AGAIN, AND "the copy-family remainder, which stays BLOCKED" IS
+      WITHDRAWN (D539): row 434 is BUILT** (the mid-attack copy, `copyRemainderBundleD574.test.ts`).
+      Index 2 ("Copy Veil") now prints row 676, Mr. Mime `sv05-063` "Look-Alike Show" (*"Your
+      opponent reveals their hand. You may use the effect of a Supporter card you find there as the
+      effect of this attack."*, 1 legal printing) — a RECORDED REFUSAL (D445), outside every family
+      the D574 pricing round ranks (D540). Moved before the reader landed. Touched by hand (D538). */
   "fix-nowk": battler("fix-nowk", {
     types: ["Water"],
     hp: 220,
@@ -15401,7 +15420,7 @@ export const FIXTURE_POOL: Record<string, Card> = {
         cost: ["Colorless"],
         name: "Copy Veil",
         damage: 10,
-        effect: "Reveal the top 10 cards of your opponent's deck. You may choose an attack from a Pokémon you find there and use it as this attack. Shuffle the revealed cards into your opponent's deck.",
+        effect: "Your opponent reveals their hand. You may use the effect of a Supporter card you find there as the effect of this attack.",
       },
     ],
   }),

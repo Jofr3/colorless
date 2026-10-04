@@ -88,8 +88,12 @@ const TOP = "Draw 3 cards.";
     "no `ATTACK_EFFECT_SKIPPED`" mean something on the boards where nothing is drawn. Its
     refusal is asserted live in §9 rather than assumed (D480). 🆕🆕🆕 D573 — re-pointed from corpus
     row 78 (the copy-attack sentence, BUILT at D573) to row 434, Haughty Order, the copy-family
-    remainder that stays BLOCKED (it reveals before the choice). */
-const LOUD = "Reveal the top 10 cards of your opponent's deck. You may choose an attack from a Pokémon you find there and use it as this attack. Shuffle the revealed cards into your opponent's deck.";
+    remainder that stays BLOCKED (it reveals before the choice). 🆕🆕🆕 D574 — RE-POINTED AGAIN, BEFORE
+    THE READER LANDED: row 434 is BUILT at D574 (the mid-attack copy, `deriveAttackCopy`'s resolve-time
+    kind), so ~~"stays BLOCKED"~~ is withdrawn (D539). The control is now corpus FILE LINE 676, Mr. Mime
+    `sv05-063` "Look-Alike Show" — a REAL printing held by a RECORDED REFUSAL (D445), unread by every
+    reader and splitter, and outside every family the D574 pricing round ranks (D540). */
+const LOUD = "Your opponent reveals their hand. You may use the effect of a Supporter card you find there as the effect of this attack.";
 
 const PROGRAM: readonly EffectOp[] = [{ op: "drawCards", count: 3, from: "bottom" }];
 /** The v29 byte string: the SAME op with the key absent. §8 reads it back. */

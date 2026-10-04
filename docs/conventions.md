@@ -1176,6 +1176,16 @@ DRIVEN (`copyAttackD573.test.ts` §3c), not left silent. The test: for every "un
 printing" a substitution can reach, either rule the outcome or skip the sentence — and withdraw
 the claim in place (D539).
 
+🆕🆕🆕 **D574 — THE LAST TWO SENTENCES ARE BUILT, AND *"they stay refused under this section until
+that exists"* IS DISCHARGED, NOT WAIVED.** The park in the MIDDLE of an attack exists: attack.ts
+`copyAtResolution` reveals / mills after the coins and parks `useFoundAttackAs`; the answer
+re-enters `attack()` RESUMED with the found attack as the same `AttackCopyOverride`, so
+`effectSimulated` is still computed from the COPIED text (a revealed unbuilt attack reports
+ITSELF — `copyRemainderBundleD574.test.ts` §2's anti-laundering rung) and the copied gate is still
+enforced, through a PHANTOM one-card body for a source that is not in play (R-CP4 extended). Both
+D573 lessons above held without a new seam: no text is removed as accounted-for without its
+enforcer, and every holder-keyed name still resolves against the copier (R-CP9 unchanged).
+
 ## Unbounded queues (attack-copy refusal)
 
 `runProgram` is `while (queue.length > 0)` with **no step limit**, and gates splice
@@ -1190,6 +1200,20 @@ never stepped), and its source set CAN contain a copy — so every attack whose 
 `COPY_FAMILY_MARKER` (*"use it as this attack"*, all six family sentences, built or not) is
 excluded as a candidate (R-CP3, ⚠️ UNRULED). The re-entry is therefore at most one level
 deep. If a ruling ever allows nesting, the bound becomes a depth counter — never "no bound".
+
+🆕🆕🆕 **D574 — TWO MORE ANSWERS, ONE OF EACH KIND.** ① The resolve-time copies (Haughty Order,
+Seek Inspiration) take the same bound: their found candidates exclude every marker attack, so the
+mid-attack re-entry is also one level deep. ② **The first op that LOOPS — re-emits itself with
+no fixed number of questions** — `moveCountersOpponentAnyWay` (Sableye / Alakazam, *"any number of
+damage counters … in any way you like"*) schedules its next round after every move, so its source
+set DOES contain itself. (Re-emission alone is not new: `moveCountersChosen` → `{ ...op, fromBench }`,
+`moveCountersToOpponentChosen` → `{ ...op, from }` and the `schedule: [{ ...op, from: lone.spot }]`
+arm each re-emit once with a progressed field, for a FIXED count of questions.) The
+bound is an ENGINE-WRITTEN BUDGET, not a step limit (R-AK1, ⚠️ UNRULED): the counters in the
+op's source zone when it first steps; every round moves ≥ 1 counter and spends exactly what it
+moved; a decline ends it. An A → B → A cycle therefore ends within the budget (driven, and held
+by `D574-loop-budget-never-spent`). **The question to ask before adding a looping op: what
+monotone quantity does each round strictly consume, and who writes it?**
 
 ## A brief that supplies the list pre-empts the audit (D431)
 

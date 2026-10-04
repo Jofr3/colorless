@@ -379,7 +379,9 @@ describe("§1 — the census D282 priced its refusal against: counts reproduce, 
     // "Adrena-Brain" (`abilities`), Milotic "Mentally Calm" and Huntail "Diver's Catch"
     // (`passive`), Klinklang `sv07-101` "Emergency Rotation" (the NEW `benchFromHand`), ALL
     // non-attack. Real catalog ids, no `fix-*` key, inserted MID-MAP after D571's rows.
-    expect(ids.length).toBe(968);
+    // 🆕🆕🆕 D574 — 968 -> **969**: ONE registry key — Malamar `sv06.5-034` "Colluding Tentacles"
+    // (an ATTACK row on existing ops, no `attackGate`, so the gated count below stands at 17).
+    expect(ids.length).toBe(969);
     const gated = ids.filter((id) => programFor(id)?.attackGate !== undefined);
     expect(gated.length).toBe(17);
     const kinds = gated.flatMap((id) =>
@@ -757,7 +759,7 @@ describe("§6 — FOUR strippers at one seam, and all six pairs are DISJOINT", (
       ["gate", 9, 19],
       ["requirement", 1, 2],
       ["cancel", 4, 5],
-      ["trailing", 11, 21], // 🆕🆕 D435 10/19 → 11/21 — the delayed KNOCK-OUT anchor claims the TAIL of one more printed compound (corpus row 113, 2 printings); no stripper changed, and the other three rows stand still for a SECOND slice running. 🆕🆕 D424 9/18 → 10/19 — the two-status pair claims the HEAD of one more printed compound; no stripper changed, and the other three rows stand still.
+      ["trailing", 12, 22], // 🆕🆕🆕 D574 11/21 → 12/22 — `COUNTER_MOVE_OPPONENT_ANY_WAY` claims the TAIL of Alakazam's compound (corpus FILE LINE 686, 1 printing), so the splitter admits it; no stripper changed, and the other three rows stand still. 🆕🆕 D435 10/19 → 11/21 — the delayed KNOCK-OUT anchor claims the TAIL of one more printed compound (corpus row 113, 2 printings); no stripper changed, and the other three rows stand still for a SECOND slice running. 🆕🆕 D424 9/18 → 10/19 — the two-status pair claims the HEAD of one more printed compound; no stripper changed, and the other three rows stand still.
     ]);
     // …and every one of the four MOVES a string, which is what stops the matrix
     // below being a matrix of four dead functions.
@@ -830,9 +832,9 @@ describe("§6 — FOUR strippers at one seam, and all six pairs are DISJOINT", (
     // The other two parts are unmoved literals in the same breath, so a widening that
     // had leaked into the gate or the composition path reddens on the PART rather
     // than only on the sum.
-    expect(corpus().filter(([, s]) => fourSiteOrder(s) !== s).length).toBe(25); // 🆕🆕🆕 D545 23 → 25 — MEASURED: the two clause-only COST clauses (`:316`/`:324`) are rewritten to the empty string by the gate stripper. 🆕🆕🆕 D541 22 → 23 — MEASURED: the four-stripper seam rewrites ONE more SENTENCE (the trailing gate branch's only row), where the PRINTING pins above step by 3. The parts below are unmoved literals in the same breath, so a widening that leaked into another stripper reddens on the PART. // 🆕🆕 D435 21 → 22: the four-stripper seam rewrites one more sentence, and the WHOLE step is the trailing term — 7 + 11 + 4 — so a widening that had leaked into the gate or the cancel path reddens on the PART below rather than only on this sum. 🆕🆕 D424 20 → 21: the four-stripper seam now rewrites one more sentence, because the trailing splitter admits one more.
+    expect(corpus().filter(([, s]) => fourSiteOrder(s) !== s).length).toBe(26); // 🆕🆕🆕 D574 25 → 26 — MEASURED: Alakazam's compound (file line 686) is rewritten by the TRAILING stripper now (its tail claimed). // 🆕🆕🆕 D545 23 → 25 — MEASURED: the two clause-only COST clauses (`:316`/`:324`) are rewritten to the empty string by the gate stripper. 🆕🆕🆕 D541 22 → 23 — MEASURED: the four-stripper seam rewrites ONE more SENTENCE (the trailing gate branch's only row), where the PRINTING pins above step by 3. The parts below are unmoved literals in the same breath, so a widening that leaked into another stripper reddens on the PART. // 🆕🆕 D435 21 → 22: the four-stripper seam rewrites one more sentence, and the WHOLE step is the trailing term — 7 + 11 + 4 — so a widening that had leaked into the gate or the cancel path reddens on the PART below rather than only on this sum. 🆕🆕 D424 20 → 21: the four-stripper seam now rewrites one more sentence, because the trailing splitter admits one more.
     expect(corpus().filter(([, s]) => siteOrder(s) !== s).length).toBe(10); // 🆕🆕🆕 D545 8 → 10 — the same two rows through the two-stripper pipeline. 🆕🆕🆕 D541 7 → 8 — the SAME sentence, seen through the two-stripper pipeline; §2's own copy of this figure steps with it.
-    expect(corpus().filter(([, s]) => splitAttackTrailingClause(s) !== null).length).toBe(11); // 🆕🆕 D435 10 → 11. 🆕🆕 D424 9 → 10 — an UNNAMED re-derivation of the trailing-split census; reachable by no grep of the constant.
+    expect(corpus().filter(([, s]) => splitAttackTrailingClause(s) !== null).length).toBe(12); // 🆕🆕🆕 D574 11 → 12 (Alakazam, file line 686). 🆕🆕 D435 10 → 11. 🆕🆕 D424 9 → 10 — an UNNAMED re-derivation of the trailing-split census; reachable by no grep of the constant.
     expect(corpus().filter(([, s]) => splitAttackCancelClause(s) !== null).length).toBe(4);
   });
 

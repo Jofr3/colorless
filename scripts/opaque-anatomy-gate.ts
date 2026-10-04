@@ -196,7 +196,9 @@ check(
 // above can only kill `D471-co-marker-may-label` while some LIVE far OPAQUE row matches a
 // co-marker, and at D570 there were FIVE such rows: three `SCHEMA-BANNER` (Ancient/Future),
 // one `PRIZE-ZONE` and one `ANY-NUMBER-OF`. D571 BUILT one of the three (Iron Thorns
-// "Destructo-Press"), and a Paradox slice is the likeliest to build the other two. So the
+// "Destructo-Press"), and a Paradox slice is the likeliest to build the other two. (🆕🆕🆕 D574:
+// and D574 BUILT the `ANY-NUMBER-OF` one — Sableye "Damage Collection" — so the live witnesses
+// are three: two `SCHEMA-BANNER`, one `PRIZE-ZONE`. This pin is what still holds the row.) So the
 // label is also asked of a FIXED far sentence no slice can build away: the live
 // `PRIZE-ZONE` witness's own words, held here as a literal. A co-marker matches it and no
 // blocker does, so only a labeller that lets a co-marker label returns non-null.

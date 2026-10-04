@@ -542,6 +542,12 @@ export const redactedEffectPromptSchema = z.discriminatedUnion("kind", [
       where `upTo` carries a printed ceiling, say how many of the moved thing the
       pick takes, down to NONE. The candidates are public in-play refs.
 
+      (🆕🆕🆕 D574 (D539): ~~"`upTo` IS THE PRINTED"~~ is WITHDRAWN for one producer — Sableye /
+      Alakazam's loop prints no number, so its `upTo` is the LIVE engine-written budget (R-AK1):
+      the counters on the source zone when the op first stepped, less what earlier rounds moved.
+      It also counts counters on §11-shielded bodies that can never move, so it can exceed what is
+      movable; the engine clamps the taken amount silently. The wire shape and its meaning as a
+      ceiling are unchanged.)
       🆕🆕 **D359 — `upTo` IS THE PRINTED *"attach up to N"* AND IT REPLACES
       D358's `declinable`**, which was the same right at width one. Six sentences
       and 13 Standard-legal printings spell a ceiling above one (Ethan's Ho-Oh ex

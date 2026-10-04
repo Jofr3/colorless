@@ -614,7 +614,9 @@ describe("§8 — the STAMP SITES: one helper, and the count is the guard", () =
     const declarations = src.split("function healedBody(").length - 1;
     const calls = src.split("healedBody(").length - 1 - declarations;
     expect(declarations).toBe(1);
-    expect(pushes).toBe(7);
+    // 🆕🆕🆕 D574 — 7 → 8: `moveCountersBetweenOpponents` (Sableye / Alakazam) files a `HEALED` on the
+    // SOURCE body and writes it through `healedBody` — the mover precedent (Cofagrigus, Munkidori).
+    expect(pushes).toBe(8);
     expect(calls).toBe(pushes);
   });
 

@@ -9,7 +9,7 @@ import type {
   UseStadiumAbilityAction,
 } from "./actions";
 import { err, ok } from "./actions";
-import { resolveCopiedAttack } from "./attack";
+import { resolveCopiedAttack, resolveFoundAttack } from "./attack";
 import { cardOfUid, isBasicPokemon, topUid } from "./cards";
 import {
   disabledAbilityUids,
@@ -1059,6 +1059,12 @@ export function resolveEffect(state: GameState, action: ResolveEffectAction): Ap
   // `turn:action`; decisions.md D573.)
   const pendingOp = phase.cont.pendingOp;
   if (pendingOp.op === "useAttackAs") return resolveCopiedAttack(state, phase, pendingOp, action.choice);
+  // 🆕🆕🆕 D574 — the MID-ATTACK copy park (Haughty Order / Seek Inspiration), routed the same way —
+  // EXCEPT Haughty Order's *"You may"* DECLINE, which takes the default drain below: no arm applies,
+  // the empty `rest` finishes and `resumeTail` runs the queued attack epilogue (exactly what a
+  // 0.457 deploy reads off any answer to this park — decisions.md D574).
+  const declined = action.choice.kind === "confirm" && !action.choice.yes;
+  if (pendingOp.op === "useFoundAttackAs" && !declined) return resolveFoundAttack(state, phase, pendingOp, action.choice);
   const events: GameEvent[] = [];
   // resumeTail (§9 on-KO trigger, flow.ts): this park was made MID-KO-SWEEP, so
   // finishing the program resumes the remaining prize/promotion tail rather than

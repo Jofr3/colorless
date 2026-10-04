@@ -317,7 +317,15 @@ function redactPrompt(state: GameState, prompt: EffectPrompt): RedactedEffectPro
       // 🛑 **IT HIDES NOTHING, AND THAT IS A PROPERTY OF THE NUMBER RATHER THAN
       // OF THIS ARM.** `upTo` is the PRINTED ceiling, never a count of what the
       // controller actually holds, and the `note` beside it already says "up to
-      // N". (⚠️ It would not leak even if it were: `redactPhase` sends this whole
+      // N". (🆕🆕🆕 D574 (D539): ~~"the PRINTED ceiling, never a count"~~ is WITHDRAWN for
+      // one producer — Sableye / Alakazam's loop prints no number, so its Q1 `upTo` IS a
+      // live count: R-AK1's engine-written BUDGET — the counters on the op's source zone when it
+      // first stepped, less what earlier rounds moved. That budget also counts counters on
+      // §11-shielded bodies (R-AK2), which can never move, so it is NOT "the counters still
+      // movable": a `take` above what the chosen source holds is clamped SILENTLY (the
+      // behaviour is right; only the number can over-promise). It still hides nothing — damage
+      // counters are face-up on the table — and its `note` quotes the same live number, so the
+      // caption and the ceiling agree.) (⚠️ It would not leak even if it were: `redactPhase` sends this whole
       // prompt only to the seat that must ANSWER it. The reason the ceiling is
       // unclamped is that `note` quotes the printed number, so a clamped one would
       // contradict its own caption — see the field's doc in `interpreter.ts`.)

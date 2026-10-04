@@ -5741,9 +5741,19 @@ export type EffectOp =
         • ⏹️ Alakazam sv06-082 "Strange Hacking" (attack, 1) — *"any number …
           **in any way you like**"* is a many-to-many assignment, `attachCards`'
           shape rather than this one, and both ends sit on the opponent's board.
+          🆕🆕🆕 **D574 (D539) — "a many-to-many assignment, `attachCards`' shape" IS
+          WITHDRAWN AS THE READING, AND THE ROW IS NO LONGER REFUSED.** ✅ BUILT at D574 on the
+          SIBLING op `moveCountersOpponentAnyWay` (below): the assignment is a LOOP of one-source,
+          one-destination rounds under an engine-written budget (R-AK1), not one batch answer.
+          "Both ends sit on the opponent's board" stands, and is why it is a sibling, not this op.
       The three refused rows are refused on a MECHANISM each, none of which this
       op could approximate — the D138 rule (take the width the printing measures)
-      pointed the other way. */
+      pointed the other way. 🆕🆕🆕 **D574 (D539) — "THE THREE REFUSED ROWS ARE REFUSED"
+      IS WITHDRAWN: NONE OF THE THREE IS REFUSED NOW.** Orbeetle was BUILT at D565
+      (`moveCounterOwnChosen`), Munkidori at D572 (`moveCountersToOpponentChosen`) and
+      Alakazam at D574 (`moveCountersOpponentAnyWay`) — the summary was already stale for
+      the first two, and this slice built the last. What stands is the second half: each is
+      built on a SIBLING op, never by approximating this one, which is the D138 rule held. */
   | {
       op: "moveCountersChosen";
       /** The Bench index the counters come OFF, once the first question has been
@@ -5867,6 +5877,83 @@ export type EffectOp =
       index: number;
       /** The SOURCE body (own Bench), once known. Engine-written only. */
       sourceRef?: PokemonTarget;
+    }
+  /** 🆕🆕🆕 **D574 — THE COPY-ATTACK CHOICE MADE *IN THE MIDDLE* OF THE ATTACK, AND IT IS ONLY
+      EVER *PARKED*, NEVER STEPPED.** Team Rocket's Persian ex `sv10-150`/`sv10-219`/`svp-218`
+      "Haughty Order" (reveal the opponent's top 10, *"You may"*, shuffle) and Slowking `sv07-058`
+      "Seek Inspiration" (mill 1, no Rule Box) — `deriveAttackCopy`'s two RESOLVE-TIME kinds
+      (`ResolvedAttackCopy`). attack.ts writes this op as the `pendingOp` of an `effect:choose`
+      park made AFTER ATTACK_DECLARED, the flip-lock and Confusion coins, the reveal / mill and
+      (Haughty Order) the shuffle — so, unlike `useAttackAs`, the park carries `resumeTail` and a
+      QUEUED `attackEpilogue` (attack.ts's in-attack park shape). cardplay.ts `resolveEffect`
+      routes every answer but Haughty Order's DECLINE to attack.ts `resolveFoundAttack` BEFORE
+      `settleProgram`; it strips the queued epilogue and re-enters `attack()` RESUMED.
+
+      🛑 **A NEW NAME, NOT A `useAttackAs` WIDENING, AND THAT IS THE ROLLBACK ARGUMENT.** A 0.457
+      deploy routes EVERY `useAttackAs` to its `resolveCopiedAttack`, which re-derives the copier's
+      text with ITS `deriveAttackCopy`, gets `null` for these two sentences and returns
+      PHASE_DESYNC — a parked match no answer could ever leave. Under this name 0.457 has no route:
+      `applyChoice`'s default, `continuationOps` none, an empty `rest`, and `settleProgram`'s
+      `resumeTail` drains the queued epilogue — the attack ends having copied nothing (an INERT
+      whiff, `copyRemainderBundleD574.test.ts` §6), so a new union member is a D125 widening and
+      `MATCH_RECORD_VERSION` stays 37 (decisions.md D574). Haughty Order's decline takes exactly
+      that path on 0.458 too.
+
+      `candidates` are the stored (uid, printed attack index, label) PAIRS, flattened in reveal
+      order, collapsed on (card NAME, attack index, printed attack): two printings printed alike
+      offer one row. The `chooseAttack` answer indexes THIS list, not one card's attacks. `accepted`
+      is Haughty Order's *"You may"* once answered "yes" (the confirm park precedes it). All engine-written. */
+  | {
+      op: "useFoundAttackAs";
+      from: ResolvedAttackCopy["from"];
+      /** The copier's declared attack index. Engine-written only. */
+      index: number;
+      /** The eligible (card, attack) pairs found. Engine-written only. */
+      candidates: { uid: string; attackIndex: number; name: string }[];
+      /** Haughty Order's confirm, answered yes. Engine-written only. */
+      accepted?: true;
+    }
+  /** 🆕🆕🆕 **D574 — MOVE ANY NUMBER OF DAMAGE COUNTERS BETWEEN THE OPPONENT'S OWN BODIES, ONE
+      ROUND AT A TIME, UNDER AN ENGINE-WRITTEN BUDGET.** Sableye `sv05-107` "Damage Collection"
+      (*"You may move any number of damage counters from your opponent's Benched Pokémon to their
+      Active Pokémon."*, `from: "bench"`) and Alakazam `sv06-082` "Strange Hacking"'s tail (*"You
+      may move any number of damage counters from your opponent's Pokémon to their other Pokémon in
+      any way you like."*, `from: "any"`, composed behind the claimed *"…is now Confused."* head).
+
+      🛑 **A SIBLING OF THE THREE MOVERS, NOT A WIDENING (D131).** Every older mover has the
+      CONTROLLER's board at one end; both ends of this one are the OPPONENT's, and the quantity is
+      unprinted. A widened older op would also be read by a 0.457 ROLLBACK resuming a parked
+      record and move counters between the wrong boards; a NEW member reads there as an unknown
+      op — `applyChoice` default, `continuationOps` none — so the parked round moves NOTHING and
+      the queued attack epilogue ends the attack (an INERT whiff, D125; MRV stays 37).
+
+      EACH ROUND IS TWO QUESTIONS (D216's shape): **Q1** the SOURCE and the COUNT in one
+      `choosePokemon` answer (`upTo` + `take`, `takeVerb: "move"`, D359/D572) — ALWAYS parked
+      (*"You may"*: the ref-less answer is the DECLINE and ends the loop); **Q2** the DESTINATION —
+      FORCED to the opponent's Active for `"bench"` (R-SB1), any OTHER opponent body for `"any"`
+      (forced at one, parked otherwise). After each move the op RE-EMITS itself with the budget
+      spent (`continuationOps` / `schedule`), so the loop is a queue of rounds.
+
+      ⚠️ **R-AK1 — THE LOOP BOUND (`conventions.md` *"Unbounded queues"*).** `budget` is written
+      by the ENGINE when the op first steps: the counters on the opponent's board in the source
+      zone (the Bench for `"bench"`, every body for `"any"`). Every round moves ≥ 1 counter (Q1's
+      `take` is ≥ 1 by the validator and clamped to the source's counters) and spends exactly what
+      it moved, so an A → B → A cycle ends within `budget` rounds. No final distribution is lost:
+      any arrangement is reachable moving each counter at most once. R-AK2 (§11): a shielded body
+      is neither a source nor a destination (`unshieldedRefs`, announced once when the budget is
+      written). Counters only — a lethal arrangement is swept by the attack epilogue as a Knock
+      Out BY THE ATTACK (prizes to the attacker; the Cofagrigus precedent). `source` / `take` are
+      the round's Q1 answer. All but `from` engine-written. */
+  | {
+      op: "moveCountersOpponentAnyWay";
+      /** The printed SOURCE zone: `"bench"` (→ their Active) or `"any"` (→ their other Pokémon). */
+      from: "bench" | "any";
+      /** R-AK1 — the counters this op may still move. Engine-written only. */
+      budget?: number;
+      /** This round's SOURCE, once Q1 is answered. Engine-written only. */
+      source?: PokemonTarget;
+      /** This round's count, clamped. Engine-written only. */
+      take?: number;
     }
   /** Spread damage (§8.5): place `amount` HP of damage on EACH Benched Pokémon of
       the side `target` names. Weakness/Resistance NEVER apply to Benched Pokémon,
@@ -14473,6 +14560,17 @@ const COUNTER_MOVE_TO_DEFENDER =
 // conclusion stands for this anchor, and no longer for the whole family.
 const COUNTER_MOVE_TO_CHOSEN =
   /^Move all damage counters from 1 of your Benched Pokémon to 1 of your opponent['’]s Pokémon\.$/;
+// 🆕🆕🆕 D574 — THE OPPONENT-TO-OPPONENT MOVE, BOTH ENDS ON THEIR BOARD AND THE QUANTITY
+// UNPRINTED (*"any number"*). Two WHOLE-SENTENCE anchors, one printing each: Sableye `sv05-107`
+// "Damage Collection" (Bench → Active) and the TAIL of Alakazam `sv06-082` "Strange Hacking"
+// (any → their other Pokémon, composed behind the claimed *"Your opponent's Active Pokémon is
+// now Confused."* head by `splitAttackTrailingClause`). `['’]` on the one apostrophe slot each,
+// no `/i` (D136/D137). Both derive the sibling op `moveCountersOpponentAnyWay` (the looping
+// round, R-AK1), never `moveCountersChosen`: the controller's board is at neither end.
+const COUNTER_MOVE_OPPONENT_BENCH_TO_ACTIVE =
+  /^You may move any number of damage counters from your opponent['’]s Benched Pokémon to their Active Pokémon\.$/;
+const COUNTER_MOVE_OPPONENT_ANY_WAY =
+  /^You may move any number of damage counters from your opponent['’]s Pokémon to their other Pokémon in any way you like\.$/;
 // The PUT on the defender (D139) — "Put {N} damage counters on your opponent's
 // Active Pokémon.", the whole printed effect. TWO printings / TWO distinct
 // clauses, on two different cards: Mimikyu sv02-097 "Ghost Eye" ({P}{C}, N = 7)
@@ -14605,6 +14703,12 @@ const COUNTER_PUT_ON_OPPONENT_BENCH =
 //     status clause — so a filter count was wearing an anchor count's name. That is
 //     D347's unit defect exactly, one family over. The **13** matched nothing at
 //     all. Re-queried through `json_each` on remote D1 2026-08-15.
+//     🆕🆕🆕 D574 (D539): "Munkidori" above is a MISNAMING — `sv06-082` is
+//     Alakazam "Strange Hacking", and that sentence is BUILT at D574 (the
+//     looping `moveCountersOpponentAnyWay` op, its "Confused." head composed
+//     first). It is still not read by THIS anchor; its own anchor,
+//     `COUNTER_MOVE_OPPONENT_ANY_WAY`, sits beside
+//     COUNTER_MOVE_TO_CHOSEN.
 //       ✅ "Put 6 …on your opponent's Benched Pokémon…" — Dragapult ex sv06-130 /
 //          sv06-200 / sv08.5-073 / sv08.5-165 "Phantom Dive", **4 legal**.
 //       ✅ "Put 2 …on your opponent's Benched Pokémon…" — Flutter Mane svp-097 /
@@ -14629,7 +14733,12 @@ const COUNTER_PUT_ON_OPPONENT_BENCH =
 // many-to-many DISTRIBUTION, which is `attachCards` for counters"* — a NEW prompt
 // kind. That is the price D346 already paid and refuted one family over:
 // **"in any way you like" at a PRINTED COUNT is N independent ops; the compound
-// `attachCards` MAP exists for "any NUMBER", which has no N to unroll.** 6, 2 and 4
+// `attachCards` MAP exists for "any NUMBER", which has no N to unroll.**
+// (🆕🆕🆕 D574 (D539): ~~"the compound `attachCards` MAP exists for 'any NUMBER'"~~ is WITHDRAWN as
+// the ONLY reading of an unprinted count — Alakazam's *"any number of damage counters … in any way
+// you like"* is BUILT as a LOOP of one-source, one-destination rounds under an engine-written
+// budget (`moveCountersOpponentAnyWay`, R-AK1), with no new prompt kind. The printed-count half of
+// this paragraph stands.) 6, 2 and 4
 // are printed counts, so the op sequence IS the sentence, and `attachEnergyFrom`'s
 // own doc block has said so in words since D205: *"the ops-in-sequence model stays
 // for the 'in any way you like' family and `count` is the SAME-TARGET one."*
@@ -17020,7 +17129,9 @@ const CHOSEN_ANY_TARGET = new RegExp(
 // LINES 78 AND 80 ARE BUILT**, both claimed whole by `deriveAttackCopy` (the declaration-time
 // substitution, `copyAttackD573.test.ts`). This anchor still refuses both, which is what keeps
 // the two readers disjoint; only the copy-family REMAINDER (Haughty Order, Seek Inspiration)
-// stays blocked, and neither shares this opening.
+// stays blocked, and neither shares this opening. (🆕🆕🆕 D574 (D539): ~~"stays blocked"~~ is
+// WITHDRAWN — the remainder is BUILT, `deriveAttackCopy`'s resolve-time kind; "neither shares this
+// opening" stands, so the disjointness argument is unchanged.)
 const ATTACK_PICK_WITH_REPLACEMENT_SNIPE = new RegExp(
   `^Choose 1 of your opponent['’]s Pokémon (\\d+) times\\. ` +
     "\\(You can choose the same Pokémon more than once\\.\\) " +
@@ -24677,7 +24788,14 @@ const ATTACK_SELF_SWITCH_THEN_OPPONENT_SWITCH_OUT = new RegExp(
 // ("If you didn't play Xerosic's Machinations from your hand during this turn,
 // this attack does nothing."), which wants the trailing-requirement COMPOSITION
 // seam D192's block already defers and a "played this card this turn" fact the
-// engine does not keep. Two more sentences in the family are rotated and unread
+// engine does not keep. (🆕🆕🆕 D574 (D539): ~~"a 'played this card this turn' fact the engine
+// does not keep"~~ is WITHDRAWN, and was false since D564 — `TurnAllowances.supporterPlayedUid`
+// is that fact and `youPlayedSupporterNamedThisTurn` reads it. Malamar is BUILT at D574 as a
+// REGISTRY row — `conditionGate` on that condition around `gust { recordAs }` → `recordGate` →
+// `damageNewActive 120` (registry.ts `MALAMAR_COLLUDING_TENTACLES`). The DERIVER still refuses
+// it — this anchor's `$` and the trailing seam are unchanged — so the sentence stays in the RAW
+// reader residue, and the gate fails SILENTLY (R-MA1): no ATTACK_FAILED row, the printed
+// "this attack does nothing".) Two more sentences in the family are rotated and unread
 // (`sv03-069` Eelektross' flip-and-Paralyze compound, and the two "is now Asleep"
 // riders, 0 legal between them). Pinned in `derivedNewActiveDamage.test.ts`.
 //
@@ -30487,6 +30605,12 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   //      nothing to branch on and the op is FIELD-LESS — which is what D138's arm
   //      looked like before a printing bought it a rider.
   if (COUNTER_MOVE_TO_CHOSEN.test(effect)) return [{ op: "moveCountersChosen" }];
+  // 🆕🆕🆕 D574 — the two opponent-to-opponent moves (Sableye; Alakazam's tail). Field-less but
+  // for the printed zone: the budget, the source and the count are the engine's (R-AK1).
+  if (COUNTER_MOVE_OPPONENT_BENCH_TO_ACTIVE.test(effect)) {
+    return [{ op: "moveCountersOpponentAnyWay", from: "bench" }];
+  }
+  if (COUNTER_MOVE_OPPONENT_ANY_WAY.test(effect)) return [{ op: "moveCountersOpponentAnyWay", from: "any" }];
 
   // 21. "Move all damage counters from 1 of your Benched Pokémon to your
   //     opponent's Active Pokémon." — D138's COUNTER MOVE, 2 printings on one
@@ -38058,7 +38182,13 @@ export function deriveAttackPreDamage(text: string): AttackPreDamage | null {
 //
 // The remaining two copy-family sentences — Haughty Order (FILE LINE 434, 3 printings) and
 // Seek Inspiration (FILE LINE 131, 1) — REVEAL or MILL before the choice, so they need a park
-// in the MIDDLE of the attack. This reader refuses both (they are not these four strings).
+// in the MIDDLE of the attack. ~~This reader refuses both (they are not these four strings).~~
+// 🆕🆕🆕 **D574 (D539) — "refuses both" IS WITHDRAWN: BOTH ARE CLAIMED NOW**, by the two
+// RESOLVE-TIME anchors below (`ResolvedAttackCopy`), and built on D573's re-entry seam: the
+// choice is made AFTER the reveal / mill — the park in the middle of the attack the paragraph
+// above names, `useFoundAttackAs` (attack.ts `copyAtResolution` / `resolveFoundAttack`). The
+// first sentence of this paragraph stands: they reveal or mill before the choice, which is why
+// they are a second KIND rather than two more `AttackCopy` sources.
 const ATTACK_COPY_OPPONENT_ACTIVE =
   /^Choose 1 of your opponent['’]s Active Pokémon['’]s attacks and use it as this attack\.$/;
 const ATTACK_COPY_OPPONENT_ACTIVE_TERA =
@@ -38067,13 +38197,24 @@ const ATTACK_COPY_BENCHED_N =
   /^Choose 1 of your Benched N['’]s Pokémon['’]s attacks and use it as this attack\.$/;
 const ATTACK_COPY_FLIP_OPPONENT_ACTIVE =
   /^Flip a coin\. If heads, choose 1 of your opponent['’]s Active Pokémon['’]s attacks and use it as this attack\.$/;
+// 🆕🆕🆕 D574 — the two RESOLVE-TIME members, WHOLE (`^…$`, no `/i`, `['’]` on every apostrophe
+// slot — Haughty Order's two possessives, Seek Inspiration's contraction): corpus FILE LINE
+// **434** (Team Rocket's Persian ex `sv10-150`/`sv10-219`/`svp-218`, 3) and FILE LINE **131**
+// (Slowking `sv07-058`, 1, its printed reminder parenthetical included).
+const ATTACK_COPY_OPPONENT_DECK_TOP =
+  /^Reveal the top 10 cards of your opponent['’]s deck\. You may choose an attack from a Pokémon you find there and use it as this attack\. Shuffle the revealed cards into your opponent['’]s deck\.$/;
+const ATTACK_COPY_OWN_DECK_TOP_MILL =
+  /^Discard the top card of your deck, and if that card is a Pokémon that doesn['’]t have a Rule Box, choose 1 of its attacks and use it as this attack\. \(Pokémon ex, Pokémon V, etc\. have Rule Boxes\.\)$/;
 
 /** 🆕🆕🆕 D573 — the marker every copy-family sentence prints (all SIX corpus rows, built or
     not: 77, 78, 80, 131, 245, 434). attack.ts drops every candidate attack whose text carries
     it, so a copy can never copy a copy (R-CP3, ⚠️ UNRULED — it reverses to a depth counter if
     a ruling allows nesting). Deliberately the bare phrase, not the four anchors above: the
     bound must also exclude the two BLOCKED members, or Foul Play against a Persian ex would
-    offer Haughty Order and silently launder it. */
+    offer Haughty Order and silently launder it. (🆕🆕🆕 D574 (D539): ~~"BLOCKED"~~ — both are BUILT
+    now; the bound still excludes them, because a copy must never copy a copy at any depth: R-CP3
+    covers the resolve-time kinds too, and Haughty Order / Seek Inspiration exclude every family
+    attack they find, `copyRemainderBundleD574.test.ts` §2/§3.) */
 export const COPY_FAMILY_MARKER = /use it as this attack/;
 
 /** 🆕🆕🆕 D573 — WHERE the copied attack comes from. `opponentActive`: the opponent's Active;
@@ -38087,15 +38228,37 @@ export interface AttackCopy {
   flip?: true;
 }
 
+/** 🆕🆕🆕 D574 — the RESOLVE-TIME copy kinds: the source is FOUND while the attack resolves, so
+    the choice is made after the flip-lock and Confusion coins (R-HO2 / R-SI1, ⚠️ UNRULED — the
+    asymmetry with D573's declaration-time R-CP8 is the printed order: there is nothing to choose
+    from until the cards are revealed / milled). `opponentDeckTop`: reveal the opponent's top
+    `count` (10), *"You may"* choose an attack from a Pokémon found there, then SHUFFLE them in —
+    the shuffle is taken AT the park, before the copied attack resolves (R-HO1, ⚠️ UNRULED).
+    `ownDeckTopMill`: discard the controller's top `count` (1); only a Pokémon WITHOUT a Rule Box
+    (`hasRuleBox`) offers its attacks, and the choice is mandatory. A SEPARATE type from
+    `AttackCopy`, so `useAttackAs.from` (a persisted field) keeps its three members (D573). */
+export type ResolvedAttackCopy =
+  | { from: "opponentDeckTop"; count: 10; may: true }
+  | { from: "ownDeckTopMill"; count: 1 };
+
+/** 🆕🆕🆕 D574 — does this copy resolve in the MIDDLE of the attack rather than at declaration? */
+export function isResolvedAttackCopy(copy: AttackCopy | ResolvedAttackCopy): copy is ResolvedAttackCopy {
+  return copy.from === "opponentDeckTop" || copy.from === "ownDeckTopMill";
+}
+
 /** 🆕🆕🆕 D573 — the copy-attack reader: the four whole-sentence anchors above, `null` for
-    every other string (the two mid-attack-park members included). On the ATTACK READER
+    every other string ~~(the two mid-attack-park members included)~~ (🆕🆕🆕 D574 (D539): the
+    two mid-attack-park members are claimed now, as the two `ResolvedAttackCopy` kinds — six
+    anchors, 6 sentences / 13 printings, the whole marker family). On the ATTACK READER
     SURFACE by its `deriveAttack` prefix (`censusAttackCorpus.ts` `surface()`), which goes
-    13 → 14 with it. */
-export function deriveAttackCopy(text: string): AttackCopy | null {
+    13 → 14 with it (and stays 14 at D574: a widening, not a reader). */
+export function deriveAttackCopy(text: string): AttackCopy | ResolvedAttackCopy | null {
   const trimmed = text.trim();
   if (ATTACK_COPY_OPPONENT_ACTIVE.test(trimmed)) return { from: "opponentActive" };
   if (ATTACK_COPY_OPPONENT_ACTIVE_TERA.test(trimmed)) return { from: "opponentActiveTera" };
   if (ATTACK_COPY_BENCHED_N.test(trimmed)) return { from: "benchOwner", owner: "N" };
   if (ATTACK_COPY_FLIP_OPPONENT_ACTIVE.test(trimmed)) return { from: "opponentActive", flip: true };
+  if (ATTACK_COPY_OPPONENT_DECK_TOP.test(trimmed)) return { from: "opponentDeckTop", count: 10, may: true };
+  if (ATTACK_COPY_OWN_DECK_TOP_MILL.test(trimmed)) return { from: "ownDeckTopMill", count: 1 };
   return null;
 }

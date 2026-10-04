@@ -223,6 +223,9 @@ describe("§1 — the deriver: two anchors, two sentences, and the possessive th
         // …and the damage-COUNTER movers, which are `moveCountersChosen` and a
         // different family entirely. Named so a survey that drops them is not
         // mistaken for one that never saw them.
+        // 🆕🆕🆕 D574 (D539): ~~"which are `moveCountersChosen`"~~ — the last two (Sableye, Alakazam's
+        // tail) are BUILT on the sibling `moveCountersOpponentAnyWay`, not `moveCountersChosen`; the
+        // Ancient row stays unread. "A different family entirely" stands: none moves Energy.
         "Move all damage counters from 1 of your Benched Ancient Pokémon to your opponent's Active Pokémon.",
         "Move all damage counters from 1 of your Benched Pokémon to 1 of your opponent's Pokémon.",
         "Move all damage counters from 1 of your Benched Team Rocket's Pokémon to your opponent's Active Pokémon.",
@@ -662,6 +665,6 @@ describe("§8 — the version block", () => {
     // are one fact with two spellings, and the pin is authored HERE rather than
     // inherited (D427 — every note counts the pins it inherited and never the one it
     // is about to author; this is D443's own).
-    expect(engineVersion).toBe("0.457.0");
+    expect(engineVersion).toBe("0.458.0");
   });
 });

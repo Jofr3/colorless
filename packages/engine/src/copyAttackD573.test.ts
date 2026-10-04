@@ -2,7 +2,7 @@ import type { Card } from "@luminous/schema";
 import { redactedEffectPromptSchema } from "@luminous/schema";
 import { describe, expect, it } from "vitest";
 import { attackReaderSurface, legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
-import { COPY_FAMILY_MARKER, deriveAttackCopy, deriveAttackEffect } from "./effects";
+import { COPY_FAMILY_MARKER, deriveAttackCopy, deriveAttackEffect, isResolvedAttackCopy } from "./effects";
 import type { EffectOp } from "./effects";
 import type { GameEvent } from "./events";
 import { settleProgram } from "./flow";
@@ -592,9 +592,11 @@ describe("D573 §1 — the reader: four whole-sentence anchors, nine printings, 
     expect(deriveAttackCopy(TRY_TO_IMITATE)).toEqual({ from: "opponentActive", flip: true });
   });
 
-  it("🛑 refuses the two mid-attack-park members (they stay BLOCKED) and every one-token near miss", () => {
-    expect(deriveAttackCopy(HAUGHTY_ORDER)).toBeNull();
-    expect(deriveAttackCopy(SEEK_INSPIRATION)).toBeNull();
+  it("🛑 ~~refuses the two mid-attack-park members (they stay BLOCKED)~~ (🆕🆕🆕 D574: claims them as RESOLVE-TIME kinds) and refuses every one-token near miss", () => {
+    // 🆕🆕🆕 D574 — INVERTED (D539): the two mid-attack-park members are BUILT
+    // (`copyRemainderBundleD574.test.ts`), as the second KIND — never as one of these four sources.
+    expect(deriveAttackCopy(HAUGHTY_ORDER)).toEqual({ from: "opponentDeckTop", count: 10, may: true });
+    expect(deriveAttackCopy(SEEK_INSPIRATION)).toEqual({ from: "ownDeckTopMill", count: 1 });
     expect(deriveAttackCopy("Choose 1 of your Benched Pokémon's attacks and use it as this attack.")).toBeNull();
     expect(deriveAttackCopy("Choose 1 of your opponent's Benched Pokémon's attacks and use it as this attack.")).toBeNull();
     expect(deriveAttackCopy("choose 1 of your opponent's Active Pokémon's attacks and use it as this attack.")).toBeNull();
@@ -607,9 +609,14 @@ describe("D573 §1 — the reader: four whole-sentence anchors, nine printings, 
     for (const text of [FOUL_PLAY, GEMSTONE, NIGHT_JOKER, TRY_TO_IMITATE]) expect(deriveAttackEffect(text)).toBeNull();
   });
 
-  it("the corpus: 4 sentences / 9 legal printings claimed; the marker spans all 6 family sentences / 13 printings", () => {
+  it("the corpus: 4 sentences / 9 legal printings claimed at DECLARATION; the marker spans all 6 family sentences / 13 printings", () => {
     const corpus = legalAttackCorpus();
-    const claimed = corpus.filter(([, s]) => deriveAttackCopy(s) !== null);
+    // 🆕🆕🆕 D574 — narrowed to the DECLARATION-TIME kinds (this suite's four): the reader claims all
+    // six family sentences now, and the two RESOLVE-TIME ones are `copyRemainderBundleD574.test.ts`'s.
+    const claimed = corpus.filter(([, s]) => {
+      const copy = deriveAttackCopy(s);
+      return copy !== null && !isResolvedAttackCopy(copy);
+    });
     expect(claimed.map(([n, s]) => [n, s]).sort()).toEqual(
       [
         [1, GEMSTONE],
@@ -622,15 +629,26 @@ describe("D573 §1 — the reader: four whole-sentence anchors, nine printings, 
     const family = corpus.filter(([, s]) => COPY_FAMILY_MARKER.test(s));
     expect([family.length, family.reduce((n, [c]) => n + c, 0)]).toEqual([6, 13]);
     // …and the two left are exactly the two this slice does not build.
-    expect(family.filter(([, s]) => deriveAttackCopy(s) === null).map(([n, s]) => [n, s]).sort()).toEqual(
+    // 🆕🆕🆕 D574 — INVERTED (D539): they are left by THIS suite's kinds only; D574 claims both as
+    // RESOLVE-TIME kinds, so the family has NO unclaimed member and both resolve now.
+    expect(
+      family
+        .filter(([, s]) => {
+          const copy = deriveAttackCopy(s);
+          return copy === null || isResolvedAttackCopy(copy);
+        })
+        .map(([n, s]) => [n, s])
+        .sort(),
+    ).toEqual(
       [
         [1, SEEK_INSPIRATION],
         [3, HAUGHTY_ORDER],
       ].sort(),
     );
+    expect(family.filter(([, s]) => deriveAttackCopy(s) === null)).toEqual([]);
     for (const [, s] of claimed) expect(resolvedByAnyReader(s)).toBe(true);
-    expect(resolvedByAnyReader(HAUGHTY_ORDER)).toBe(false);
-    expect(resolvedByAnyReader(SEEK_INSPIRATION)).toBe(false);
+    expect(resolvedByAnyReader(HAUGHTY_ORDER)).toBe(true);
+    expect(resolvedByAnyReader(SEEK_INSPIRATION)).toBe(true);
   });
 
   it("is on the ATTACK READER SURFACE by its prefix — 13 → 14", () => {
@@ -1148,7 +1166,7 @@ describe("D573 §5 — the park: inert, serialisable, and inert under a 0.456 ro
 
 // ─────────────────────────────────────────────────────────────────────────────
 describe("D573 §6 — the version", () => {
-  it("the engine is 0.457.0", () => {
-    expect(engineVersion).toBe("0.457.0");
+  it("the engine is 0.458.0", () => {
+    expect(engineVersion).toBe("0.458.0");
   });
 });

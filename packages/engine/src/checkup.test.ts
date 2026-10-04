@@ -894,6 +894,8 @@ describe("deriveAttackEffect (effects.ts)", () => {
       // believed to guard, now pointed at the anchor that has it.
       // 🆕🆕🆕 D501 — corpus FILE LINE 685 LEFT THIS LIST. It is claimed WHOLE by `deriveAttackEffect` through `DEFENDER_CONFUSION_N`, into an `applyStatus` carrying the raised amount — a STATUS op, which is what this family's refusal always said it would be. Re-pointed onto the OP rather than decremented (D465/D488): a count that steps says something left and nothing about what, where naming the op reddens on a reader widened past the count clause and stays green only on the build that actually shipped.
       // (The sibling two lines below still carries the `\.$` claim, unchanged.)
+      // 🆕🆕🆕 D574 — FILE LINE 686's TAIL is built (`moveCountersOpponentAnyWay`) and the compound
+      // composes behind the Confusion head; the WHOLE string still derives null here, so it stays.
       "Your opponent's Active Pokémon is now Confused. You may move any number of damage counters from your opponent's Pokémon to their other Pokémon in any way you like.", // corpus FILE LINE 686 — same drift, same anchor
       "Your opponent's Active Pokémon is now Poisoned. During your opponent's next turn, Energy cards can't be attached from your opponent's hand to that Pokémon.", // corpus FILE LINE 690 — same drift, same anchor
       "Flip a coin. If heads, choose a Special Condition. Your opponent's Active Pokémon is now affected by that Special Condition.", // sv01-010

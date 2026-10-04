@@ -1046,7 +1046,9 @@ import type { GameState, Seat } from "./types";
     16 printings LOUD, and on the CLAUSE rather than on the shape — the 12
     coin-flip "If tails" prints (a different mechanism, and the flip sentence in
     front already denies them `^If`), the 3 anaphoric "If you can't" prints, and
-    Malamar sv06.5-034's named-card multi-sentence one.
+    Malamar sv06.5-034's named-card multi-sentence one. (🆕🆕🆕 D574 (D539): Malamar is no
+    longer LOUD — it is BUILT as a REGISTRY row, `MALAMAR_COLLUDING_TENTACLES`; the deriver still
+    refuses it, which is what this anchor's argument is about, so the clause claim stands.)
 
     Cost: 1 new skeleton regex, 1 new 2-row table, 1 exported deriver, 1 reader +
     1 gate in attack.ts, 1 `effectSimulated` term, 1 ENUM WIDENING on
@@ -5960,6 +5962,9 @@ import type { GameState, Seat } from "./types";
     sv06-062, Grimmsnarl sv07-096, Malamar sv06.5-034) each want a further piece —
     a self-target on `attachEnergyFrom`, an OPPONENT-DECIDED promotion (which
     `gust` is not), or a cards-played-this-turn history the state does not keep.
+    (🆕🆕🆕 D574 (D539): ~~"a cards-played-this-turn history the state does not keep"~~ is
+    WITHDRAWN — `TurnAllowances.supporterPlayedUid` (D564) keeps which Supporter was played, and
+    Malamar is BUILT on it at D574 as a registry row.)
     ⚠️ **Both of this slice's own first counts of that family were WRONG in D200's
     way** — a sweep anchored on the wrong half of the sentence, and an id read off
     a grouped query that named Yanmega `svp-187` for a sentence Iron Bundle prints
@@ -6257,7 +6262,9 @@ import type { GameState, Seat } from "./types";
       • ⏹️ **Alakazam `sv06-082` "Strange Hacking" (1) — NEITHER EARLIER SWEEP
         NAMED IT.** *"any number … **in any way you like**"*, both ends on the
         opponent's board: `attachCards`' many-to-many assignment shape, not this
-        one.
+        one. (🆕🆕🆕 D574 (D539): ~~"`attachCards`' many-to-many assignment shape"~~ WITHDRAWN as
+        the reading — ✅ BUILT at D574 as a LOOP of one-source, one-destination rounds on the
+        SIBLING op `moveCountersOpponentAnyWay`; "not this one" stands.)
     ⚠️ And the anchor carries **NO owner capture**, where D205's sibling does: no
     chosen-destination printing prints a possessive in either scope, so a capture
     would derive a reading no card has — D138's own rule (take the width the
@@ -20228,6 +20235,31 @@ import type { GameState, Seat } from "./types";
     `expect(manifest.version)`, `it(…)` titles, the declaration and `package.json` —
     **not** as a value-keyed grep — because a value-keyed grep is precisely the mechanism
     that ate D500's heading.)
+    🆕🆕🆕 engineVersion 0.457.0 → **0.458.0** (D574 — THE COPY-FAMILY REMAINDER + THE BUNDLE A RIDER: 7 PRINTINGS /
+    5 TEXTS, TWO NEW OPS, NO MRV STEP. Team Rocket's Persian ex `sv10-150`/`sv10-219`/`svp-218` "Haughty Order",
+    Slowking `sv07-058` "Seek Inspiration", Malamar `sv06.5-034` "Colluding Tentacles", Sableye `sv05-107` "Damage
+    Collection", Alakazam `sv06-082` "Strange Hacking". **The remainder** on D573's re-entry seam, entered from the
+    MIDDLE: `deriveAttackCopy` gains two whole-sentence anchors returning the NEW resolve-time kind
+    `ResolvedAttackCopy` (`opponentDeckTop` reveal 10 / may / shuffle; `ownDeckTopMill` 1 / no Rule Box) — a
+    widening, the reader surface stays 14 — and attack.ts takes them AFTER the flip-lock and Confusion coins
+    (`copyAtResolution`, R-HO2 / R-SI1): Haughty Order reveals min(10, deck) on the widened `DECK_TOP_REVEALED`
+    (`dest: "deck"`, `actor`), shuffles AT ONCE (R-HO1) and parks a confirm, then a flattened `chooseAttack`; Seek
+    Inspiration mills 1 (`DECK_TOP_DISCARDED`), and re-enters INLINE at one pair or parks `chooseAttack`. Candidates
+    are `usableCopies` over a PHANTOM one-card body (`makeInPlay` on the out-of-play uid: R-CP3 / R-CP4 extended).
+    The parks are the in-attack shape (`resumeTail` + a queued `attackEpilogue`) on the NEW park-only `EffectOp`
+    `useFoundAttackAs { from, index, candidates, accepted? }` — a NEW name, not a `useAttackAs` widening (0.457 routes
+    every `useAttackAs` to its re-derivation and would PHASE_DESYNC). cardplay.ts routes every answer but the decline
+    to the NEW exported `resolveFoundAttack`, which strips the queued epilogue, re-validates and re-enters `attack()`
+    RESUMED (no ATTACK_DECLARED, no coin, no reveal); the NEW event `ATTACK_COPY_RESOLVED { attack, as }` names what
+    the attack became. **Malamar** is a REGISTRY row with zero vocabulary (`conditionGate` on
+    `youPlayedSupporterNamedThisTurn` around `gust { recordAs }` → `recordGate` → `damageNewActive 120`, R-MA1 silent).
+    **Sableye / Alakazam** derive the NEW looping `EffectOp` `moveCountersOpponentAnyWay { from, budget?, source?,
+    take? }` from two whole-sentence anchors (Alakazam's composes behind the claimed Confusion head): Q1 source + count
+    (`upTo` the LIVE budget, `takeVerb "move"`, declinable), Q2 the destination (forced to their Active for Sableye,
+    R-SB1), re-emitted each round with the budget spent (R-AK1, the loop bound) and the §11 shield filtered (R-AK2).
+    `MATCH_RECORD_VERSION` STAYS 37 (apps/api match.ts "STAYS 37 AT D574": both new parks are DRIVEN INERT under the
+    0.457 reading, `copyRemainderBundleD574.test.ts` §6). R-HO1 / R-HO2 / R-SI1 / R-SB1 / R-AK1 / R-AK2 / R-MA1 ⚠️
+    UNRULED: `docs/decisions.md` D574.)
     🆕🆕🆕 engineVersion 0.456.0 → **0.457.0** (D573 — THE COPY-ATTACK SUBSTITUTION: 9 PRINTINGS / 4 TEXTS, ONE
     READER AND ONE PARK-ONLY OP. N's Zoroark ex `sv09-098`/`-175`/`-185`/`-189` "Night Joker", Zoroark
     `sv10.5w-062`/`-143` "Foul Play", Clefable `sv06-079` "Metronome", Team Rocket's Mimikyu `sv10-087` "Gemstone
@@ -20249,7 +20281,7 @@ import type { GameState, Seat } from "./types";
     `ATTACK_DECLARED` gains the optional `as` (the copied name; log "used Foul Play (as Cruel Slash)"), stamped only
     once the copy RESOLVES — absent on Try to Imitate's tails and a Confusion / flip-lock tails.
     interpreter.ts `stepOp` gains the inert arm tsc requires. Haughty Order ×3 and Seek Inspiration stay BLOCKED
-    (a mid-attack park); the loud witnesses (`fix-nowk` / `fix-filteredsnipe` index 2, `deckBottomDraw.test.ts`)
+    (a mid-attack park) [🆕🆕🆕 D574 (D539): BUILT at 0.458.0 — the mid-attack park `useFoundAttackAs`]; the loud witnesses (`fix-nowk` / `fix-filteredsnipe` index 2, `deckBottomDraw.test.ts`)
     moved to Haughty Order first. `scripts/opaque-anatomy.ts` re-declares `COPY-ATTACK` a co-marker (its built
     side 0/0 → 4/9). `BUILT.attack` 1707 → 1716 (reader summand); residue 18/25 → 14/16. `MATCH_RECORD_VERSION`
     STAYS 37 (apps/api match.ts — the 0.456 rollback reading of a parked copy is DRIVEN and INERT). Rulings
@@ -20900,7 +20932,8 @@ import type { GameState, Seat } from "./types";
     `weaknessRetype.test.ts` ride declared `d552-*` demonstrators, and `fix-tideattach` carries both
     sentences in `FIXTURE_POOL` for the sweeps; `fix-nowk` index 2 was moved to a BLOCKED copy-attack
     sentence first (🆕🆕🆕 D573 (D539): that sentence, row 78, is BUILT now, and the witness moved again,
-    to row 434 Haughty Order — the copy-family remainder that stays blocked). Claims withdrawn (D539), annotated in place: `attachFromHand`'s *"no target rider"*
+    to row 434 Haughty Order — the copy-family remainder that stays blocked; 🆕🆕🆕 D574 (D539): row 434 is
+    BUILT too, and the witness moved again, to row 676, Mr. Mime's recorded refusal). Claims withdrawn (D539), annotated in place: `attachFromHand`'s *"no target rider"*
     and *"no recordAs"*, the D479/D503 blocks at `ATTACK_HAND_ANY_NUMBER_ATTACH`, the D432 near-miss
     note, attack.ts' *"UNOBSERVABLE on today's column"* as D503's reason, effects.ts' *"ONE remains
     unbuildable"*, and the D503 mutant rows' prose. Census (`SUBMAX=12`): reader 578/1632 → 580/1634,
@@ -21234,7 +21267,8 @@ import type { GameState, Seat } from "./types";
     13/15 → 11/13 at `SUBMAX=4`. ⚠️ THE SENTENCE STEP AND THE PRINTING STEP ARE BOTH 2. The
     `fix-filteredsnipe` index-2 control (which printed `:316`) is re-homed onto corpus `:78`,
     the BLOCKED copy-attack row, so its `ATTACK_EFFECT_SKIPPED` rung keeps its property. 🆕🆕🆕 D573
-    (D539): `:78` is BUILT now; the control moved again, to `:434` Haughty Order.)
+    (D539): `:78` is BUILT now; the control moved again, to `:434` Haughty Order. 🆕🆕🆕 D574 (D539): `:434`
+    is BUILT too; the control moved again, to `:676`, Mr. Mime's recorded refusal.)
     🆕🆕🆕 engineVersion 0.428.0 → **0.429.0** (D544 — THE NAMED ATTACK'S BASE DAMAGE,
     OVERRIDDEN FOR ONE WINDOW, AS A RIDER ON THE OP THAT ALREADY OWNED THE ADDRESS.
     `censusAttackCorpus.ts` **file line 166** (leading count column `2`) — *"During your next
@@ -24864,7 +24898,7 @@ import type { GameState, Seat } from "./types";
     WITNESS** — the count was re-derived every slice and the word *"three"* was carried.
     A successor of this slice inherits **81 / 61 / 17** again, over **FIVE** history
     occurrences: those four plus `deckMillFilteredScale.test.ts`'s own header arrow.) */
-export const engineVersion = "0.457.0";
+export const engineVersion = "0.458.0";
 
 export type {
   ApplyResult,

@@ -14201,6 +14201,41 @@ const XEROSICS_MACHINATIONS: CardProgram = {
   trainer: [{ op: "opponentDiscardsFromHand", untilHandSize: 3 }],
 };
 
+/** 🆕🆕🆕 **D574 — Malamar `sv06.5-034` "Colluding Tentacles" (attack index 0, 1 legal)** —
+    *"Switch in 1 of your opponent's Benched Pokémon to the Active Spot. If you do, this attack
+    does 120 damage to the new Active Pokémon. If you didn't play Xerosic's Machinations from
+    your hand during this turn, this attack does nothing."* ZERO new vocabulary: the printed
+    gate is `conditionGate` on D564's `youPlayedSupporterNamedThisTurn { name }` (the turn
+    owner's `supporterPlayedUid`, any zone — R-FC), around Grimmsnarl's gated shape with the
+    player's `gust` (*"Switch in"* — the attacker chooses) filing `moved`, the printed *"If you
+    do"* as `recordGate`, and `damageNewActive` (W/R apply: it is the Active). An empty
+    opponent Bench gusts nothing, files nothing, deals nothing. R-MA1 (⚠️ UNRULED): the gate
+    fails SILENTLY — the printed *"this attack does nothing"*, no ATTACK_FAILED row — unlike
+    D125's derived requirement gate, which reports. The DERIVER still refuses the text
+    (effects.ts's gust block), so the sentence stays in the RAW reader residue; a copier
+    (Foul Play, Haughty Order) runs THIS row (attack.ts substitution site 4), and the gate
+    reads the COPIER's seat. Damage box empty, so the row is the attack's whole number. */
+const MALAMAR_COLLUDING_TENTACLES: CardProgram = {
+  attack: {
+    0: [
+      {
+        op: "conditionGate",
+        cond: { kind: "youPlayedSupporterNamedThisTurn", name: "Xerosic's Machinations" },
+        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
+        then: [
+          { op: "gust", recordAs: "moved" },
+          {
+            op: "recordGate",
+            slot: "moved",
+            // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
+            then: [{ op: "damageNewActive", amount: 120 }],
+          },
+        ],
+      },
+    ],
+  },
+};
+
 /** 🆕🆕🆕 **D557 — Lucian `sv06-157`/`-208` (Supporter, 2 legal)** — *"Each player
     shuffles their hand and puts it on the bottom of their deck. If either player put any
     cards on the bottom of their deck in this way, each player flips a coin. If heads,
@@ -16511,6 +16546,7 @@ const REGISTRY: Record<string, CardProgram> = {
   "sv05-211": MORTYS_CONVICTION, // Morty's Conviction (reprint)
   "sv06.5-064": XEROSICS_MACHINATIONS, // Xerosic's Machinations — opponent discards down to 3
   "sv06.5-089": XEROSICS_MACHINATIONS, // Xerosic's Machinations (reprint)
+  "sv06.5-034": MALAMAR_COLLUDING_TENTACLES, // 🆕🆕🆕 D574 — Malamar "Colluding Tentacles": gust + 120, only after Xerosic's Machinations
   "sv06-157": LUCIAN, // Lucian — both hands under the decks; each player flips: 6 or 3
   "sv06-208": LUCIAN, // Lucian (reprint)
   "sv10-161": ARVENS_SANDWICH, // Arven's Sandwich — heal 30, or 100 on an Arven's Active

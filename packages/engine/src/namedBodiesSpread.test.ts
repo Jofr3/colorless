@@ -581,7 +581,9 @@ describe("D539 §1 — the corpus row and the whole-compound anchor", () => {
     expect(changed).toBe(0);
     // …and the ELEVEN currently-split rows are the population that argument is about,
     // which is the trailing-split census figure §9 pins UNMOVED.
-    expect(splitToday).toBe(11);
+    // 🆕🆕🆕 D574 — ELEVEN → TWELVE: Alakazam (file line 686) composes on the trailing seam now; the
+    // two widening measurements above are UNMOVED (0 / 0 admitted, 0 changed).
+    expect(splitToday).toBe(12);
   });
 });
 
@@ -1127,7 +1129,7 @@ describe("D539 §7 — the widening at a persisted address, and the version does
   });
 
   it("the engine version moved and the two spellings agree", () => {
-    expect(engineVersion).toBe("0.457.0");
+    expect(engineVersion).toBe("0.458.0");
     expect(manifest.version).toBe(engineVersion);
   });
 });

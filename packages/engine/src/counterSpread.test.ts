@@ -122,6 +122,8 @@ const NEAR_MISSES = [
   "Put 1 damage counter on each of your opponent's Pokémon for each of your Maushold in play.",
   // The distribution tail on a MOVE rather than a PUT, and behind a status clause —
   // the one row in the catalog that carries this file's phrase and is NOT its arm.
+  // (🆕🆕🆕 D574: its TAIL is built now, on `moveCountersOpponentAnyWay`, and the compound composes;
+  // the WHOLE string still derives null here and is still not this arm — the rung below holds.)
   "Your opponent's Active Pokémon is now Confused. You may move any number of damage counters from your opponent's Pokémon to their other Pokémon in any way you like.",
   // "any number" rather than a printed count: the compound MAP's shape, which has
   // no N to unroll and is the reading this arm's finding refuses.

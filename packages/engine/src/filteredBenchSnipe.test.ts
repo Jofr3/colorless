@@ -133,8 +133,16 @@ const CLAUSE = " that has any damage counters on it";
     may choose an attack from a Pokémon you find there and use it as this attack. Shuffle the
     revealed cards into your opponent's deck."*, **3 legal printings**, the copy-family
     REMAINDER: it reveals BEFORE the choice, so it needs a park in the MIDDLE of the attack,
-    and stays BLOCKED. Row 78 is kept LIVE beside it as `BUILT_COPY_ATTACK` (D444/D447). */
-const UNREAD_SIBLING = "Reveal the top 10 cards of your opponent's deck. You may choose an attack from a Pokémon you find there and use it as this attack. Shuffle the revealed cards into your opponent's deck.";
+    and stays BLOCKED. Row 78 is kept LIVE beside it as `BUILT_COPY_ATTACK` (D444/D447).
+
+    🛑 **🆕🆕🆕 D574 — RE-POINTED A FIFTH TIME, BECAUSE D574 BUILDS FILE LINE 434** (the copy made in the
+    MIDDLE of the attack — `deriveAttackCopy`'s resolve-time kind on D573's re-entry seam). ~~*"and stays
+    BLOCKED"*~~ is withdrawn for row 434 (D539). The constant is re-homed onto corpus **FILE LINE 676** —
+    Mr. Mime `sv05-063` "Look-Alike Show", *"Your opponent reveals their hand. You may use the effect of a
+    Supporter card you find there as the effect of this attack."*, **1 legal printing**, held by a RECORDED
+    REFUSAL (D445) and outside every family the D574 pricing round ranks (D540), so it is not the next row
+    a slice builds. Reader, gate and trailing all null (asserted in §1). Moved BEFORE the reader landed. */
+const UNREAD_SIBLING = "Your opponent reveals their hand. You may use the effect of a Supporter card you find there as the effect of this attack.";
 /** 🆕🆕🆕 D545 — the row `UNREAD_SIBLING` vacated at D545 (corpus FILE LINE 316), kept LIVE
     as the counter-example (D444/D447): it builds on the GATE arm now. */
 const BUILT_COST_CLAUSE =
@@ -152,7 +160,7 @@ const BUILT_FORMER_SIBLING =
 
 const PICKY = 0; // {C}, 30 damage, corpus row 528 — the NARROWED rider
 const BLUNT = 1; // {C}, 30 damage — the same rider UN-narrowed: the one-axis control
-const IDLE = 2; // {C}, 30 damage, corpus row 434 (78 until D573, 316 until D545, 601 until D520, 596 until D519) — deliberately unread
+const IDLE = 2; // {C}, 30 damage, corpus row 676 (434 until D574, 78 until D573, 316 until D545, 601 until D520, 596 until D519) — deliberately unread
 
 const units = (rows: readonly (readonly [number, string])[]): number =>
   rows.reduce((sum, [n]) => sum + n, 0);
@@ -320,9 +328,12 @@ describe("§1 — the price and the family, re-derived off the corpus rather tha
     // 🆕🆕🆕 **D573 — RE-POINTED A FOURTH TIME**: FILE LINE 78 was BUILT (the copy-attack
     // substitution), so the control is now corpus FILE LINE 434, Haughty Order (3 legal
     // printings, the copy-family remainder, BLOCKED: it reveals before the choice).
+    // 🆕🆕🆕 **D574 — RE-POINTED A FIFTH TIME**: FILE LINE 434 is BUILT (the mid-attack copy), so the
+    // control is now corpus FILE LINE 676, Mr. Mime "Look-Alike Show" (1 legal printing, D445's
+    // recorded refusal) — the printing count below moves 3 → 1 WITH the row, read off the corpus.
     expect(family.map(([, s]) => s)).not.toContain(UNREAD_SIBLING);
     expect(corpus().filter(([, s]) => s === UNREAD_SIBLING)).toHaveLength(1);
-    expect(corpus().find(([, s]) => s === UNREAD_SIBLING)?.[0]).toBe(3);
+    expect(corpus().find(([, s]) => s === UNREAD_SIBLING)?.[0]).toBe(1);
     expect(resolvedByAnyReader(UNREAD_SIBLING)).toBe(false);
     expect(splitAttackGateClause(UNREAD_SIBLING)).toBeNull();
     expect(splitAttackTrailingClause(UNREAD_SIBLING)).toBeNull();
@@ -883,6 +894,6 @@ describe("§8 — the persisted question: `MATCH_RECORD_VERSION` STAYS 29", () =
   });
 
   it("🛑 the engine version moved with `package.json`", () => {
-    expect(engineVersion).toBe("0.457.0");
+    expect(engineVersion).toBe("0.458.0");
   });
 });

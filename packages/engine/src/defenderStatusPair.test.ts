@@ -162,10 +162,28 @@ const LEFT_LOUD = {
     //    unchanged and the two survivors carry it. `confusionDamage.test.ts` §3 pins the
     //    positive (which reader owns it now) so the transition is recorded rather than
     //    disappearing into a shorter array (D418/D444/D449/D465).
-    "Your opponent's Active Pokémon is now Confused. You may move any number of damage counters from your opponent's Pokémon to their other Pokémon in any way you like.",
+    // 🆕🆕🆕 **D574 — corpus FILE LINE 686 (Alakazam `sv06-082` "Strange Hacking") LEFT THIS LIST
+    //    TOO, REMOVED RATHER THAN THE LIST SHORTENED SILENTLY (D501's move, verbatim).** Its
+    //    tail is claimed by the NEW whole-sentence anchor `COUNTER_MOVE_OPPONENT_ANY_WAY` and the
+    //    compound COMPOSES behind the claimed Confusion head (`splitAttackTrailingClause`), so it is
+    //    no longer LOUD and cannot carry an ATTACK_EFFECT_SKIPPED control. ⚠️ ONLY THE LOUDNESS
+    //    HALF MOVED AGAIN: `DEFENDER_NOW`'s `\.$` still refuses it and `deriveAttackEffect` still
+    //    returns null on the WHOLE string — pinned on `COMPOSED_AT_D574` / in
+    //    `copyRemainderBundleD574.test.ts` §1. The one survivor (FILE LINE 690, Glimmora) is in the
+    //    NEXT MRV slice, so the loud control no longer leans on it alone: the recorded refusal
+    //    (FILE LINE 676, Mr. Mime, D445) rides beside it in the attribution loop.
     "Your opponent's Active Pokémon is now Poisoned. During your opponent's next turn, Energy cards can't be attached from your opponent's hand to that Pokémon.",
   ],
+  /** 🆕🆕🆕 D574 — a REAL printing held by a RECORDED REFUSAL (corpus FILE LINE 676, Mr. Mime
+      `sv05-063` "Look-Alike Show", D445), outside every family the D574 pricing round ranks — the
+      attribution loop's stable witness, since `dotAnchorTrio`'s survivor is next in line (D540). */
+  recordedRefusal: "Your opponent reveals their hand. You may use the effect of a Supporter card you find there as the effect of this attack.",
 } as const;
+
+/** 🆕🆕🆕 D574 — the row that LEFT `dotAnchorTrio` (FILE LINE 686), kept LIVE so the `\.$` drift
+    measurement still names it (D418): refused WHOLE, drifted-not-strict, and composed now. */
+const COMPOSED_AT_D574 =
+  "Your opponent's Active Pokémon is now Confused. You may move any number of damage counters from your opponent's Pokémon to their other Pokémon in any way you like.";
 
 /** 🛑 THE COLLISION SENTENCES, AND THEY ARE CONSTRUCTED — SAID OUT LOUD. No card
     prints two rotation statuses together (§3 pins that on the POPULATION), so this
@@ -380,6 +398,9 @@ describe("§1 — the printed data, transcribed rather than recognised", () => {
     // 🆕 D464 — the trio replaces `paralyzedComma`; all three are corpus rows, 1 printing
     // each (FILE LINES 685, 686, 690), and the transcription is asserted the same way.
     for (const text of LEFT_LOUD.dotAnchorTrio) expect(rows.get(text)).toBe(1);
+    // 🆕🆕🆕 D574 — the row that left, and the recorded refusal that joined the loud loop: 1 each.
+    expect(rows.get(COMPOSED_AT_D574)).toBe(1);
+    expect(rows.get(LEFT_LOUD.recordedRefusal)).toBe(1);
     // The apostrophe byte, asserted rather than eyeballed.
     for (const s of [BURN_CONFUSE, FLIP_CONFUSE_POISON, FLIP_PARALYZE_POISON]) {
       expect(s.includes("opponent's")).toBe(true);
@@ -519,6 +540,7 @@ describe("§2 — the derivation, parameterised on both axes", () => {
     // under one title is exactly the mistake D464 corrected two anchors over.
     expect(deriveAttackEffect(LEFT_LOUD.headsTails)).toBeNull();
     for (const text of LEFT_LOUD.dotAnchorTrio) expect(deriveAttackEffect(text)).toBeNull();
+    expect(deriveAttackEffect(COMPOSED_AT_D574)).toBeNull();
     // The compound is refused WHOLE — deliberately, so the SPLITTER claims it (§5)
     // rather than a hand-written anchor shadowing the composition path.
     expect(deriveAttackEffect(CONFUSE_POISON_SWITCH)).toBeNull();
@@ -538,7 +560,7 @@ describe("§2 — the derivation, parameterised on both axes", () => {
     const hit = (re: RegExp) => rows.filter(([, s]) => re.test(s));
     expect([hit(strict).length, hit(strict).reduce((a, [n]) => a + n, 0)]).toEqual([4, 74]);
     expect([hit(drifted).length, hit(drifted).reduce((a, [n]) => a + n, 0)]).toEqual([16, 96]);
-    for (const text of LEFT_LOUD.dotAnchorTrio) {
+    for (const text of [...LEFT_LOUD.dotAnchorTrio, COMPOSED_AT_D574]) {
       expect(strict.test(text)).toBe(false);
       expect(drifted.test(text)).toBe(true);
     }
@@ -957,7 +979,8 @@ describe("§7 — the printed text stops being flagged, on every carrier", () =>
     // 🆕 D464 — `paralyzedComma` was BUILT and is replaced by `dotAnchorTrio`; the
     // control keeps its job and gains two members rather than losing one (D418).
     const b = board("ninetales", "fix-titan");
-    for (const text of [LEFT_LOUD.headsTails, ...LEFT_LOUD.dotAnchorTrio]) {
+    // 🆕🆕🆕 D574 — FILE LINE 686 left (composed now); the recorded refusal joins (see `LEFT_LOUD`).
+    for (const text of [LEFT_LOUD.headsTails, ...LEFT_LOUD.dotAnchorTrio, LEFT_LOUD.recordedRefusal]) {
       const doctored = withEffect(b, "fix-ninetales", text);
       expect(find(swing(doctored, "ninetales").events, "ATTACK_EFFECT_SKIPPED")?.effect).toBe(text);
     }
@@ -1028,6 +1051,6 @@ describe("§8 — purity and the structural answers", () => {
   });
 
   it("the engine version moved with the behaviour", () => {
-    expect(engineVersion).toBe("0.457.0");
+    expect(engineVersion).toBe("0.458.0");
   });
 });

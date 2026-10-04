@@ -700,7 +700,9 @@ describe("§5 — on a BOARD: each of the three cancels and lands, and the ids a
     // "Adrena-Brain" (`abilities`), Milotic "Mentally Calm" and Huntail "Diver's Catch"
     // (`passive`), Klinklang `sv07-101` "Emergency Rotation" (the NEW `benchFromHand`), ALL
     // non-attack. Real catalog ids, no `fix-*` key, inserted MID-MAP after D571's rows.
-    expect(ids).toHaveLength(968);
+    // 🆕🆕🆕 D574 — 968 -> **969**: ONE registry key — Malamar `sv06.5-034` "Colluding Tentacles"
+    // (`MALAMAR_COLLUDING_TENTACLES`, an ATTACK row on existing ops), keyed beside Xerosic's Machinations.
+    expect(ids).toHaveLength(969);
     for (const id of BOUGHT_IDS) {
       expect(ids, id).not.toContain(id);
       expect(programFor(id), id).toBeUndefined();

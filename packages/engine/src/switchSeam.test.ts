@@ -51,6 +51,10 @@ import {
 //     printings, and §6 names what that piece structurally is.
 //     🆕🆕🆕 D572 (D539): all three cards are BUILT now — Cofagrigus (D216), Orbeetle (D565) and
 //     Munkidori (D572, `moveCountersToOpponentChosen`); only Alakazam's attack stays flagged.
+//     🆕🆕🆕 D574 (D539): ~~"only Alakazam's attack stays flagged"~~ is WITHDRAWN — Alakazam
+//     `sv06-082` "Strange Hacking" is BUILT at D574 on the sibling op `moveCountersOpponentAnyWay`;
+//     nothing on this axis stays flagged (the "⏹️ FLAGGED — the CHOSEN DESTINATION counter
+//     move" block's `IDS` is empty).
 //   • The "Switch … If you do" family is not one card but **8 legal printings /
 //     5 sentences**, of which this slice lands 5 and refuses 3 with reasons.
 //
@@ -95,6 +99,11 @@ import {
 //        sv06.5-034 (damage to "the new Active Pokémon" PLUS "if you didn't play
 //        Xerosic's Machinations from your hand during this turn", a
 //        cards-played-this-turn history the state does not keep).
+//        🆕🆕🆕 D574 (D539): "ALL REFUSED" and ~~"a cards-played-this-turn history the
+//        state does not keep"~~ are WITHDRAWN — D227 built Iron Bundle, D228 Grimmsnarl,
+//        D246 Kilowattrel ex (the "⏹️ FLAGGED — the seam on the ATTACK surface" block below), and `TurnAllowances.supporterPlayedUid`
+//        (D564) keeps which Supporter was played, so Malamar is BUILT at D574 as a registry
+//        row (`MALAMAR_COLLUDING_TENTACLES`). All 4 printings are read now.
 //     ⏹️ "Switch this Pokémon with 1 of your Benched **{L}** Pokémon."  Vikavolt
 //        sv07-053 — 1 legal. ⚠️ THE SECOND NARROWING AXIS, and the row that makes
 //        `ownerPokemon`'s width a measurement rather than a guess.
@@ -844,7 +853,7 @@ describe("the landed census, re-derived", () => {
 // unbuilt — that assertion passed for D200 on ids naming the WRONG CARDS — so it
 // is never the whole of a flag here.
 
-describe("⏹️ FLAGGED — the CHOSEN DESTINATION counter move (D216: 2 of 8 landed; 🆕🆕🆕 D565: 4 of 8; 🆕🆕🆕 D572: 7 of 8)", () => {
+describe("⏹️ FLAGGED — the CHOSEN DESTINATION counter move (D216: 2 of 8 landed; 🆕🆕🆕 D565: 4 of 8; 🆕🆕🆕 D572: 7 of 8; 🆕🆕🆕 D574: 8 of 8 — the flag is EMPTY)", () => {
   // D205 sized this at 2 (Cofagrigus). D206 re-measured it at 7. ⚠️ **D216 makes
   // it 8** — Alakazam sv06-082 "Strange Hacking" prints the same axis on an
   // ATTACK, with BOTH ends on the opponent's board, and neither earlier sweep
@@ -855,7 +864,10 @@ describe("⏹️ FLAGGED — the CHOSEN DESTINATION counter move (D216: 2 of 8 l
   // the sibling op `moveCounterOwnChosen`. Six → four.
   // 🆕🆕🆕 D572 — Munkidori's three (`sv06-095`/`sv06.5-072`/`sv08.5-044`) LEAVE the list: Adrena-Brain
   // is built on the sibling op `moveCountersToOpponentChosen`. Four → ONE: Alakazam alone.
-  const IDS = ["sv06-082"];
+  // 🆕🆕🆕 D574 — Alakazam (`sv06-082`) LEAVES the list: "Strange Hacking"'s tail is built on the sibling
+  // op `moveCountersOpponentAnyWay` (the looping round, R-AK1) and the compound composes behind its
+  // Confusion head. ONE → ZERO: the flag is empty, and the block stays as the record (D178).
+  const IDS: string[] = [];
 
   it("⚠️ the ONE counter move in the union ALWAYS lands on the defender, and NEVER asks — driven", () => {
     // The missing piece is not a predicate and not a field: it is a SECOND
@@ -896,7 +908,7 @@ describe("⏹️ FLAGGED — the CHOSEN DESTINATION counter move (D216: 2 of 8 l
 
   // 🆕🆕🆕 D565 — ~~"the SIX still-flagged printings"~~ (D539): four; Orbeetle's two are built.
   // 🆕🆕🆕 D572 — ~~"the FOUR still-flagged printings"~~ (D539): ONE (Alakazam); Munkidori's three are built.
-  it("⚠️ and the ONE still-flagged printing resolves on NEITHER route (🆕🆕🆕 D572: was FOUR)", () => {
+  it("⚠️ and the ~~ONE still-flagged printing resolves on NEITHER route~~ (🆕🆕🆕 D572: was FOUR; 🆕🆕🆕 D574: ZERO — Alakazam resolves on the DERIVER route, by composition)", () => {
     // Per surface AND through both routes — D205's repair of D204's vacuous arm,
     // applied here rather than cited. Munkidori and Orbeetle are ABILITIES
     // (`abilities` + `triggered`); Alakazam is an ATTACK (deriver + registry).
@@ -906,7 +918,14 @@ describe("⏹️ FLAGGED — the CHOSEN DESTINATION counter move (D216: 2 of 8 l
     // never quietly dropped (D139/D140's precedent on the neighbouring anchor).
     expect(deriveAttackEffect(EXTENDED_DAMAGRIIIGUS)).toEqual([{ op: "moveCountersChosen" }]);
     expect(programFor("sv06-082")?.attack, "sv06-082 was half-built").toBeUndefined();
-    expect(IDS).toHaveLength(1);
+    // 🆕🆕🆕 D574 — 1 → 0, and the witness that moved: the DERIVER route claims Alakazam's tail (the
+    // registry row stays absent — the line above is unchanged and still true).
+    expect(IDS).toHaveLength(0);
+    expect(
+      deriveAttackEffect(
+        "You may move any number of damage counters from your opponent's Pokémon to their other Pokémon in any way you like.",
+      ),
+    ).toEqual([{ op: "moveCountersOpponentAnyWay", from: "any" }]);
     // 🆕🆕🆕 D572 — and the witness that moved: Munkidori is built, on its OWN op (the source any
     // own body, the destination parked with the printed ceiling).
     for (const id of ["sv06-095", "sv06.5-072", "sv08.5-044"]) {
@@ -1118,9 +1137,13 @@ describe("⏹️ FLAGGED — the seam on the ATTACK surface (4 legal printings)"
     expect(deriveAttackEffect(GOAD_N_GRAB)).not.toEqual([{ op: "opponentSwitchOut" }]);
     // …and every one of the four is still unauthored in the REGISTRY, which is the
     // half of this case D227 did not touch (an arm is not a row).
-    for (const id of ["sv08-068", "sv06-062", "sv06.5-034", "sv07-096"]) {
+    // 🆕🆕🆕 D574 — INVERTED FOR ONE (D539): ~~"every one of the four"~~ is now THREE. Malamar
+    // `sv06.5-034` IS authored in the registry (`MALAMAR_COLLUDING_TENTACLES`); its sentence is
+    // still refused by every ANCHOR (the claim this case exists for), which is asserted beside it.
+    for (const id of ["sv08-068", "sv06-062", "sv07-096"]) {
       expect(programFor(id)?.attack, `${id} was half-built`).toBeUndefined();
     }
+    expect(programFor("sv06.5-034")?.attack?.[0]?.[0]).toMatchObject({ op: "conditionGate" });
     // ⚠️ …and Yanmega `svp-187` is the card this slice first mis-attributed
     // "Interjet" to. It prints the BARE self-switch, so it IS built — pinned here
     // so the correction cannot rot back into the wrong id.
@@ -1167,6 +1190,10 @@ describe("⏹️ FLAGGED — the seam on the ATTACK surface (4 legal printings)"
     // a DATUM the state does not keep rather than on a piece of vocabulary — which
     // is the useful shape of this whole table: a missing OP gets built, a missing
     // FACT does not.
+    // 🆕🆕🆕 D574 (D539): ~~"blocked on a DATUM the state does not keep"~~ is WITHDRAWN — the datum
+    // was kept since D564 (`supporterPlayedUid`), and Malamar is BUILT at D574 as a registry row on
+    // it. Of the four printings this block flags, ZERO are unread now; the "missing FACT" was a
+    // missing READ of a fact already kept.
     expect(programFor("sv02-172")?.trainer).toEqual([{ op: "gust" }]);
     expect(INTERJET).toContain("Your opponent chooses");
     // Malamar sv06.5-034 wants a second thing no board keeps: "if you didn't play
@@ -1175,6 +1202,12 @@ describe("⏹️ FLAGGED — the seam on the ATTACK surface (4 legal printings)"
     // predicate has no datum — D205's rule (check the datum exists before
     // designing a predicate over it), applied to a HISTORY rather than a banner.
     // Driven: play a Supporter and read the turn's allowances.
+    // 🆕🆕🆕 D574 (D539): ~~"a second thing no board keeps … never WHICH card — so the predicate has
+    // no datum"~~ is WITHDRAWN, and was false since D564: `TurnAllowances.supporterPlayedUid` keeps
+    // WHICH Supporter (its UID, resolved through `cardOfUid` in any zone), and
+    // `youPlayedSupporterNamedThisTurn` reads it. Malamar is BUILT at D574 on it (a registry row,
+    // `copyRemainderBundleD574.test.ts` §4). The rung below is re-pointed onto that datum: the
+    // allowances name the played uid, never the card ID — which is all the old drive could see.
     const state = stage(93, "fix-plain", ["fix-tr-nidorino", "fix-tr-meowth"]);
     const staged = inHand(state, "sv08-187");
     const { state: parked } = mustApply(staged.state, {
@@ -1185,6 +1218,7 @@ describe("⏹️ FLAGGED — the seam on the ATTACK surface (4 legal printings)"
     const { state: done } = mustApply(parked, pick("p1", P1_BENCH(0)));
     expect(done.allowances.supporterPlayed).toBe(true);
     expect(JSON.stringify(done.allowances)).not.toContain("sv08-187");
+    expect(done.allowances.supporterPlayedUid).toBe(staged.uid);
   });
 });
 

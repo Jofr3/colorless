@@ -323,6 +323,16 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
         // 🆕🆕🆕 D573 — a copy-attack names what it became: "used Foul Play (as Cruel Slash)".
         ...(event.as === undefined ? [] : [plain(" (as "), strong(event.as), plain(")")]),
       ]);
+    case "ATTACK_COPY_RESOLVED":
+      // 🆕🆕🆕 D574 — the second half of Haughty Order / Seek Inspiration: "Persian ex's Haughty
+      // Order became Cruel Slash". The ATTACK_DECLARED row above it already said "used".
+      return row(event.seat, [
+        strong(cardName(state, event.uid)),
+        plain("'s "),
+        strong(event.attack),
+        plain(" became "),
+        strong(event.as),
+      ]);
     case "ATTACK_EFFECT_SKIPPED": {
       // The event contract (events.ts): `effect` carries the UNSIMULATED
       // printed text — null means the text derived and ran (or there was
@@ -1853,6 +1863,17 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
       // 🆕🆕🆕 D567 — Accompanying Flute: the ACTOR looked at `seat`'s deck and benched onto
       // `seat`'s Bench. Filed under the actor, the owner named outright; the placed Basics are
       // public on the Bench, so they are named whenever any landed.
+      // 🆕🆕🆕 D574 — Haughty Order: the cards were REVEALED and STAY in the deck (a SHUFFLE row
+      // follows). Public — both players saw them — so they are named.
+      if (event.dest === "deck") {
+        const owner = names[event.seat];
+        const who = event.actor ?? event.seat;
+        if (n === 0) return row(who, [plain(`revealed the ${end} of ${owner}'s deck — it was empty`)]);
+        return row(who, [
+          plain(`revealed the ${end} ${n} card${n === 1 ? "" : "s"} of ${owner}'s deck: `),
+          strong(countedNames(event.uids.map((uid) => cardName(state, uid)))),
+        ]);
+      }
       if (event.actor !== undefined) {
         const owner = names[event.seat];
         if (n === 0) {

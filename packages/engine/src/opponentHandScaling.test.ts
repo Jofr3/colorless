@@ -1072,6 +1072,10 @@ describe("§6 — the population claims this slice rests on", () => {
     // printings (declaration-time substitution; `docs/decisions.md` D573). Its 4 left —
     // Haughty Order ×3 and Seek Inspiration — need a park in the MIDDLE of the attack. This
     // Supporter refusal does not move with it: its falsifier is still a Trainer text deriver.
+    // 🆕🆕🆕 D574 (D539): ~~"Its 4 left … need a park in the MIDDLE of the attack"~~ — that park is
+    // BUILT (`useFoundAttackAs`, `copyRemainderBundleD574.test.ts`): all 13 attack-family printings are
+    // met now. This Supporter refusal STILL does not move: ⑴ is unchanged (no Trainer text deriver),
+    // and it is now the stable LOUD witness three suites re-pointed to (row 676).
     expect(legalAttackCorpus().filter(([, s]) => s === REVEAL_COPY)).toHaveLength(1);
     expect(resolvedByAnyReader(REVEAL_COPY)).toBe(false);
     expect(splitAttackTrailingClause(REVEAL_COPY)).toBeNull();

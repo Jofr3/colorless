@@ -529,6 +529,12 @@ export type EffectPrompt =
       build would read as `upTo === undefined`, i.e. MANDATORY, and a resumed
       match would refuse a decline the player was promised. D352 made exactly this
       call one op over (`attachFromTop.discardRest` → `restTo`). */
+  /** 🆕🆕🆕 **D574 (D539) — THE CEILING IS NO LONGER ALWAYS A PRINTED NUMBER.** The paragraphs above
+      argue an unclamped ceiling because the `note` quotes a PRINTED count. Sableye / Alakazam's
+      *"any number of damage counters"* prints none: their Q1 park (`moveCountersOpponentAnyWay`)
+      carries `upTo` = the op's LIVE engine-written budget (R-AK1), and the `note` quotes that same
+      live number, so the prompt still agrees with its own caption. Public either way (counters are
+      on the table) and sent only to the answerer. Every printed-ceiling producer is unchanged. */
   /** 🆕🆕🆕 **D572 — `takeVerb` IS THE VERB THE QUANTITY PICKER SAYS, AND ABSENT MEANS "attach".**
       Every `upTo` park before D572 attached Energy, so both HUDs captioned the quantity row
       "Attach N"; Adrena-Brain's ceiling counts DAMAGE COUNTERS MOVED, and a dialog promising an
@@ -812,7 +818,16 @@ export type EffectPrompt =
 
       `candidates` is never empty and never a singleton: the op resolves both
       degenerate boards inline (no attacks → silent no-op, one attack → forced),
-      the M1 doctrine every parking op in this file follows. */
+      the M1 doctrine every parking op in this file follows.
+
+      🆕🆕🆕 **D574 (D539) — ~~"the only thing the answer can be is an INDEX into
+      `attacksOf(card)`"~~ IS WITHDRAWN FOR ONE PRODUCER.** attack.ts's MID-ATTACK copy park
+      (`useFoundAttackAs`: Haughty Order over up to 10 revealed cards, Seek Inspiration over
+      one milled card) offers attacks from SEVERAL cards in one prompt, so its `index` is an
+      index into the op's own FLATTENED `candidates` list (each `name` labelled with its card,
+      "Smash (D574 Target)"), not an attack index; `resolveFoundAttack` maps it back to the
+      (uid, printed index) pair. The shape, the wire and the answer kind are unchanged, and the
+      never-a-singleton rule holds there too (one pair is forced). */
   | { kind: "chooseAttack"; candidates: { index: number; name: string }[]; note: string }
   /** 🆕🆕🆕 **D548 — pick exactly ONE of your OWN face-down Prize cards to turn face up**
       (Cresselia `sv06.5-021` "Crescent Purge", the `turnPrizeFaceUp` op). (🆕🆕🆕 D567 NOTE
@@ -2108,6 +2123,14 @@ function continuationOps(
   if (op.op === "moveCountersToOpponentChosen" && op.from === undefined) {
     return pickedPokemon(choice) ? [{ ...op, from: choice.ref.spot }] : [];
   }
+  // 🆕🆕🆕 D574 — the opponent-to-opponent LOOP (Sableye / Alakazam): Q1's answer buys Q2 (the
+  // source and the count, clamped off the board BEFORE the answer); Q2's answer — the move,
+  // applied by `applyChoice` — buys the NEXT ROUND with the budget spent (R-AK1). The ref-less Q1
+  // answer is the DECLINE and ends the loop (no round follows).
+  if (op.op === "moveCountersOpponentAnyWay") {
+    if (!pickedPokemon(choice)) return [];
+    return op.source === undefined ? [anyWaySourceAnswered(before, op, choice.ref, choice.take)] : [nextAnyWayRound(op)];
+  }
   // 🆕🆕🆕 D565 — Ruffian's body answer buys the two body-narrowed discards.
   if (op.op === "discardToolAndSpecialEnergyChosen") {
     return pickedPokemon(choice) ? ruffianBodyAnswered(before, choice.ref) : [];
@@ -2505,6 +2528,62 @@ function stepOp(
     // never steps it. The arm exists because this switch is exhaustive (tsc), and it is inert.
     case "useAttackAs":
       return { done: state };
+    // 🆕🆕🆕 D574 — NEVER QUEUED either, for the same reason: `useFoundAttackAs` is only ever the
+    // `pendingOp` of attack.ts's MID-ATTACK copy park (Haughty Order / Seek Inspiration), answered
+    // through `resolveFoundAttack`. Inert (tsc's exhaustive switch).
+    case "useFoundAttackAs":
+      return { done: state };
+    case "moveCountersOpponentAnyWay": {
+      // 🆕🆕🆕 D574 — Sableye "Damage Collection" / Alakazam "Strange Hacking": one ROUND of the
+      // opponent-to-opponent move. FIRST STEP: write the budget (R-AK1) and, when there is anything
+      // to move, announce each shielded opponent body ONCE (R-AK2); every later round filters the
+      // shield silently. A zero budget ends the op with NO row: no move could ever have happened.
+      if (op.budget === undefined) {
+        const budget = anyWayBudget(state, ctx.seat, op.from);
+        if (budget <= 0) return { done: state };
+        unshieldedRefs(state, oppAnyRefs(state, ctx.seat), ctx, events);
+        return { done: state, schedule: [{ ...op, budget }] };
+      }
+      if (op.budget <= 0) return { done: state };
+      const source = op.source;
+      if (source === undefined) {
+        // Q1 — the SOURCE and the COUNT, ALWAYS PARKED (*"You may"*: the decline is the ref-less
+        // answer). `upTo` is the LIVE budget, not a printed ceiling — nothing is printed.
+        const sources = anyWaySources(state, ctx, op.from);
+        if (sources.length === 0) return { done: state };
+        return {
+          park: {
+            kind: "choosePokemon",
+            candidates: sources,
+            upTo: op.budget,
+            takeVerb: "move",
+            note:
+              op.from === "bench"
+                ? `Move up to ${op.budget} damage counters off which of your opponent's Benched Pokémon onto their Active Pokémon? Decline to stop.`
+                : `Move up to ${op.budget} damage counters off which of your opponent's Pokémon? You will then choose which of their other Pokémon they go to. Decline to stop.`,
+          },
+        };
+      }
+      // Q2 — the DESTINATION: the opponent's Active for "bench" (R-SB1), any OTHER opponent body
+      // for "any"; forced at one candidate, parked otherwise. The forced move schedules the next
+      // round through the SAME helper the parked answer's splice uses.
+      const take = op.take ?? 0;
+      if (take <= 0) return { done: state };
+      const from: PokemonRef = { seat: otherSeat(ctx.seat), spot: source };
+      const dests = anyWayDestinations(state, ctx, op.from, from);
+      const lone = dests.length === 1 ? dests[0] : undefined;
+      if (dests.length === 0) return { done: state };
+      if (lone !== undefined) {
+        return { done: moveCountersBetweenOpponents(state, from, lone, take, ctx, events), schedule: [nextAnyWayRound(op)] };
+      }
+      return {
+        park: {
+          kind: "choosePokemon",
+          candidates: dests,
+          note: `Move ${take} damage counter${take === 1 ? "" : "s"} onto which of your opponent's other Pokémon?`,
+        },
+      };
+    }
     case "moveCountersToOpponentChosen": {
       // 🆕🆕🆕 D572 — Munkidori "Adrena-Brain": up to `upTo` counters, own → opponent. D216's two
       // questions, `op.from` telling them apart.
@@ -8049,6 +8128,14 @@ export function applyChoice(
       if (!pickedPokemon(choice) || source === undefined) return state;
       return moveCountersToOpponent(state, source, choice.ref, choice.take ?? op.upTo, ctx, events);
     }
+    case "moveCountersOpponentAnyWay": {
+      // 🆕🆕🆕 D574 — the loop's two parks, told apart by `op.source`. Q1 (the source + count)
+      // moves nothing (`continuationOps` buys Q2); Q2's answer is the round's whole move.
+      const source = op.source;
+      if (!pickedPokemon(choice) || source === undefined) return state;
+      const from: PokemonRef = { seat: otherSeat(ctx.seat), spot: source };
+      return moveCountersBetweenOpponents(state, from, choice.ref, op.take ?? 0, ctx, events);
+    }
     case "discardToolAndSpecialEnergyChosen":
       // 🆕🆕🆕 D565 — Ruffian's pick moves nothing here: what it buys is the two discards,
       // spliced by `continuationOps` (the `evolveFromDeckChosen` shape).
@@ -12673,6 +12760,112 @@ function moveCountersToOpponent(
     at.spot === "active"
       ? { ...theirs, active: loaded }
       : { ...theirs, bench: theirs.bench.map((pokemon, i) => (i === at.index ? loaded : pokemon)) },
+  );
+}
+
+// ── 🆕🆕🆕 D574 — THE OPPONENT-TO-OPPONENT LOOP (`moveCountersOpponentAnyWay`) ──────────────
+
+/** The opponent bodies a round's SOURCE may come from, unfiltered: their Bench for `"bench"`
+    (Sableye), every body for `"any"` (Alakazam). The budget's zone too (R-AK1). */
+function anyWayZone(state: GameState, seat: Seat, from: "bench" | "any"): PokemonRef[] {
+  return from === "bench" ? oppBenchRefs(state, seat) : oppAnyRefs(state, seat);
+}
+
+/** R-AK1 — the counters the op may move in all: those on its source zone when it first steps. */
+function anyWayBudget(state: GameState, seat: Seat, from: "bench" | "any"): number {
+  return anyWayZone(state, seat, from).reduce(
+    (sum, ref) => sum + Math.floor((refPokemon(state, ref)?.damage ?? 0) / 10),
+    0,
+  );
+}
+
+/** A round's DESTINATIONS for the source `from`: the opponent's Active for `"bench"` (R-SB1,
+    the printed *"to their Active Pokémon"*), every OTHER opponent body for `"any"` — §11-shielded
+    bodies dropped SILENTLY (R-AK2; the refusal was announced once, when the budget was written). */
+function anyWayDestinations(
+  state: GameState,
+  ctx: EffectContext,
+  zone: "bench" | "any",
+  from: PokemonRef,
+): PokemonRef[] {
+  const opp = otherSeat(ctx.seat);
+  const offered: PokemonRef[] =
+    zone === "bench"
+      ? state.players[opp].active === null
+        ? []
+        : [{ seat: opp, spot: { spot: "active" } }]
+      : oppAnyRefs(state, ctx.seat).filter((ref) => refKeyOf(ref) !== refKeyOf(from));
+  return unshieldedRefs(state, offered, ctx, []);
+}
+
+/** A round's SOURCES: damaged, unshielded opponent bodies in the zone that have at least one
+    destination to move to (a source with nowhere to go is not offered — the M1 rule). */
+function anyWaySources(state: GameState, ctx: EffectContext, zone: "bench" | "any"): PokemonRef[] {
+  const damaged = anyWayZone(state, ctx.seat, zone).filter((ref) => (refPokemon(state, ref)?.damage ?? 0) >= 10);
+  return unshieldedRefs(state, damaged, ctx, []).filter(
+    (ref) => anyWayDestinations(state, ctx, zone, ref).length > 0,
+  );
+}
+
+/** Q1's answer: the round's source and its count — the answer's `take` (absent = the whole
+    budget, D359), CLAMPED SILENTLY to the counters on the source and to the budget. */
+function anyWaySourceAnswered(
+  before: GameState,
+  op: Extract<EffectOp, { op: "moveCountersOpponentAnyWay" }>,
+  ref: PokemonRef,
+  take: number | undefined,
+): EffectOp {
+  const budget = op.budget ?? 0;
+  const onSource = Math.floor((refPokemon(before, ref)?.damage ?? 0) / 10);
+  return { ...op, source: ref.spot, take: Math.min(take ?? budget, onSource, budget) };
+}
+
+/** The round after a move: the same op, the budget SPENT by what this round took (R-AK1). */
+function nextAnyWayRound(op: Extract<EffectOp, { op: "moveCountersOpponentAnyWay" }>): EffectOp {
+  return { op: "moveCountersOpponentAnyWay", from: op.from, budget: (op.budget ?? 0) - (op.take ?? 0) };
+}
+
+/** 🆕🆕🆕 D574 — MOVE `count` DAMAGE COUNTERS between two of the OPPONENT's bodies (both ends on
+    `otherSeat(ctx.seat)`). `moveCountersToOpponent`'s two halves with the controller's board at
+    neither end: the source half is a `HEALED` row on the source's seat with the D386 stamp (the
+    precedent every mover follows), the destination half `COUNTERS_PLACED { source: "moved" }`,
+    written off the relieved board. Silent endings (wire belts): either end not the opponent's,
+    the same body, an empty spot, nothing to move. Never Knocks Out: inside an attack the
+    epilogue's sweep takes a lethal arrangement as a Knock Out BY THE ATTACK. */
+function moveCountersBetweenOpponents(
+  state: GameState,
+  from: PokemonRef,
+  dest: PokemonRef,
+  count: number,
+  ctx: EffectContext,
+  events: GameEvent[],
+): GameState {
+  const opp = otherSeat(ctx.seat);
+  if (from.seat !== opp || dest.seat !== opp || refKeyOf(from) === refKeyOf(dest)) return state;
+  const source = refPokemon(state, from);
+  const target = refPokemon(state, dest);
+  if (source === undefined || target === undefined) return state;
+  const sourceUid = topUid(source);
+  const targetUid = topUid(target);
+  const moved = Math.min(source.damage, count * 10);
+  if (sourceUid === undefined || targetUid === undefined || moved <= 0) return state;
+  events.push({ type: "HEALED", seat: opp, uid: sourceUid, amount: moved });
+  const relieved = withBodyAt(state, from, healedBody(source, moved, state.turn));
+  events.push({ type: "COUNTERS_PLACED", seat: opp, uid: targetUid, amount: moved, source: "moved" });
+  const landing = refPokemon(relieved, dest) ?? target;
+  return withBodyAt(relieved, dest, { ...landing, damage: landing.damage + moved });
+}
+
+/** Write `body` back at `ref`. */
+function withBodyAt(state: GameState, ref: PokemonRef, body: InPlayPokemon): GameState {
+  const side = state.players[ref.seat];
+  const spot = ref.spot;
+  return withSide(
+    state,
+    ref.seat,
+    spot.spot === "active"
+      ? { ...side, active: body }
+      : { ...side, bench: side.bench.map((pokemon, i) => (i === spot.index ? body : pokemon)) },
   );
 }
 

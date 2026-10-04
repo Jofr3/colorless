@@ -6,7 +6,7 @@ import type {
   PromoteAction,
   TakePrizesAction,
 } from "./actions";
-import { err } from "./actions";
+import { err, ok } from "./actions";
 import {
   activeTop,
   applyDamageModifier,
@@ -14,6 +14,7 @@ import {
   cardOfUid,
   costMet,
   hasPrintedAbility,
+  hasRuleBox,
   isExOrV,
   isSpecialEnergy,
   isTeraPokemon,
@@ -88,6 +89,7 @@ import {
   deriveAttackCancelRequirement,
   deriveAttackPreDamage,
   deriveAttackRequirement,
+  isResolvedAttackCopy,
   optionalBoostProgram,
   discardScaledBoostProgram,
   optionalCostBoostProgram,
@@ -104,6 +106,7 @@ import type {
   AttackPreDamage,
   CardFilter,
   EffectOp,
+  ResolvedAttackCopy,
 } from "./effects";
 import type { GameEvent } from "./events";
 import {
@@ -136,13 +139,14 @@ import {
 } from "./interpreter";
 import type { EffectChoice, EffectContext, EffectPrompt } from "./interpreter";
 import { programFor } from "./registry";
-import { flipCoin, flipUntilTails, MAX_UNTIL_TAILS_FLIPS } from "./rng";
+import { flipCoin, flipUntilTails, MAX_UNTIL_TAILS_FLIPS, shuffle } from "./rng";
 import type { CoinFace } from "./rng";
 import { damagedByAttackAbility, damagedToolTriggersOf, koToolTriggersOf } from "./triggers";
 import { isBenchIndex, turnGate } from "./turn";
 import type { GameState, InPlayPokemon, PendingStage, Phase, PokemonTarget, Seat } from "./types";
 import {
   isImmobilized,
+  makeInPlay,
   otherSeat,
   presentStatuses,
   takenPrizes,
@@ -1578,7 +1582,13 @@ export function attack(
   // candidate is itself a copy, so the override never names a copy sentence).
   const copyText = declared.effect ?? null;
   const copy = copied === undefined && copyText !== null ? deriveAttackCopy(copyText) : null;
-  if (copy !== null) return declareAttackCopy(state, action, copy, attackerUid, declared.name);
+  // 🆕🆕🆕 D574 — …EXCEPT A RESOLVE-TIME COPY (Haughty Order, Seek Inspiration), whose source is
+  // FOUND while the attack resolves: it takes no branch here and is resolved below the Confusion
+  // block (`copyAtResolution`, R-HO2 / R-SI1 ⚠️ UNRULED — the asymmetry with R-CP8 is the printed
+  // order: there is nothing to choose from until the cards are revealed or milled).
+  if (copy !== null && !isResolvedAttackCopy(copy)) {
+    return declareAttackCopy(state, action, copy, attackerUid, declared.name);
+  }
   // The SOURCE of a non-empty override, else null — read at the four substitution sites below.
   const copiedFrom = copied === undefined || copied.empty === true ? null : copied;
 
@@ -1641,7 +1651,9 @@ export function attack(
     attack: declared.name,
     index,
   };
-  const events: GameEvent[] = [declaredEvent];
+  // 🆕🆕🆕 D574 — a RESUMED re-entry (`resolveFoundAttack`) is the SECOND HALF of an attack whose
+  // ATTACK_DECLARED already went out with the first; it declares nothing again.
+  const events: GameEvent[] = copiedFrom?.resumed === true ? [] : [declaredEvent];
   let next = state;
 
   // 🆕🆕🆕 §8 (D547) — THE FLIP-TO-ATTACK LOCK: "During your opponent's next turn, if
@@ -1669,7 +1681,9 @@ export function attack(
   // Confusion block below gives: nothing before §8.5 has rebound the body. The seat
   // is `action.seat` — "your opponent flips" names the LOCKED body's controller,
   // who is the declaring player.
-  if (attackFlipLocked(state, active)) {
+  // 🆕🆕🆕 D574 — not on a RESUMED half: this coin was flipped in the first half (heads, or the
+  // attack would have ended there) and is never flipped twice.
+  if (copiedFrom?.resumed !== true && attackFlipLocked(state, active)) {
     const [face, rngState] = flipCoin(next.rngState);
     next = { ...next, rngState };
     events.push({ type: "ATTACK_FLIP_LOCK_CHECK", seat: action.seat, uid: attackerUid, result: face });
@@ -1688,7 +1702,8 @@ export function attack(
   // passed (§12): tails and the declared attack does not resolve at all —
   // no damage, no effects — the attacker takes 30 itself (possibly a
   // self-KO, prized to the defender) and the turn still ends [🆕🆕🆕 D570 (D539): or, after a FIRST attack under Festival Lead with Festival Grounds in play, the attack-again window opens instead (flow.ts `finishAttack`) — a failed or cancelled attack is still an attack that was USED].
-  if (rotation === "confused") {
+  // 🆕🆕🆕 D574 — and not on a RESUMED half either (the first half flipped it, heads).
+  if (rotation === "confused" && copiedFrom?.resumed !== true) {
     const [face, rngState] = flipCoin(next.rngState);
     next = { ...next, rngState };
     events.push({ type: "CONFUSION_CHECK", seat: action.seat, uid: attackerUid, result: face });
@@ -1751,7 +1766,18 @@ export function attack(
   // resolved NOTHING, and a log reading "used Try to Imitate (as Smash)" over a tails coin told
   // the table the attack became Smash when it did nothing. `events[0]` IS `declaredEvent`: no
   // push above this line is an unshift.
-  if (copiedFrom !== null) events[0] = { ...declaredEvent, as: copiedFrom.attack.name };
+  // 🆕🆕🆕 D574 — THE RESOLVE-TIME COPY TAKES ITS SOURCE HERE: after every coin above (R-HO2 /
+  // R-SI1), Haughty Order reveals and shuffles, Seek Inspiration mills, and the choice is forced,
+  // parked or (no candidate) the attack ends having copied nothing.
+  if (copy !== null && isResolvedAttackCopy(copy)) {
+    return copyAtResolution(next, events, action, copy, attackerUid, declared.name);
+  }
+  // 🆕🆕🆕 D574 — a RESUMED half names what the attack became in its OWN row: ATTACK_DECLARED went
+  // out with the first half, so `events[0]` here is not it and is never stamped.
+  if (copiedFrom !== null && copiedFrom?.resumed === true) {
+    events.push({ type: "ATTACK_COPY_RESOLVED", seat: action.seat, uid: attackerUid, attack: declared.name, as: copiedFrom.attack.name });
+  }
+  if (copiedFrom !== null && copiedFrom?.resumed !== true) events[0] = { ...declaredEvent, as: copiedFrom.attack.name };
 
   // Coverage strategy (simulator.md): the mechanical part of the attack
   // (numeric damage, weakness/resistance) is simulated, and effect text
@@ -3959,7 +3985,19 @@ export function attack(
     card, its body and its index. `flip` is Try to Imitate's printed coin. */
 export type AttackCopyOverride =
   | { empty: true; flip?: true }
-  | { empty?: undefined; attack: Attack; card: Card; body: InPlayPokemon; index: number; flip?: true };
+  | {
+      empty?: undefined;
+      attack: Attack;
+      card: Card;
+      body: InPlayPokemon;
+      index: number;
+      flip?: true;
+      /** 🆕🆕🆕 D574 — the SECOND HALF of a resolve-time copy (`resolveFoundAttack`): no
+          ATTACK_DECLARED, no flip-lock or Confusion coin, no reveal / mill; `as` rides its own
+          ATTACK_COPY_RESOLVED row. `body` is then a PHANTOM one-card body over the source card
+          (`makeInPlay`), which `attackGateOf` reads by its top card alone (R-CP4). */
+      resumed?: true;
+    };
 
 /** One body the copy may read, with its ELIGIBLE attacks (`index` into `attacksOf`). `ref` is
     the own-Bench spot for Night Joker, `null` for the opponent's Active. */
@@ -4164,6 +4202,224 @@ export function resolveCopiedAttack(
     return attack(resumed, action, copiedOverride(source, picked, op.flip));
   }
   return err("BAD_EFFECT_CHOICE", "expected an attack or Pokémon choice");
+}
+
+// ── 🆕🆕🆕 D574 — THE COPY MADE IN THE MIDDLE OF THE ATTACK (Haughty Order, Seek Inspiration) ──
+//
+// *"Reveal the top 10 cards of your opponent's deck. You may choose an attack from a Pokémon you
+// find there and use it as this attack. Shuffle the revealed cards into your opponent's deck."*
+// (Team Rocket's Persian ex ×3) and *"Discard the top card of your deck, and if that card is a
+// Pokémon that doesn't have a Rule Box, choose 1 of its attacks and use it as this attack."*
+// (Slowking). D573's re-entry seam, entered from the MIDDLE: `attack()` has declared, flipped the
+// flip-lock and Confusion coins, and calls `copyAtResolution` where it would stamp `as`. The
+// source is OUT OF PLAY (the opponent's deck, the controller's discard pile), so the copied
+// attack's printed gate is read through a PHANTOM one-card body (`makeInPlay` over the source
+// uid — `attackGateOf` reads only its top card, through `cardOfUid`, which resolves any zone),
+// and `usableCopies` is asked exactly as D573 asks it (R-CP3 / R-CP4 extended to an out-of-play
+// source, decisions.md D574). Rulings: R-HO1 the shuffle is taken AT the park, before the copied
+// attack resolves; R-HO2 / R-SI1 the choice is made after the coins (all ⚠️ UNRULED).
+
+/** One eligible (card, attack) pair found by a resolve-time copy, as the op stores it. */
+type FoundPair = { uid: string; attackIndex: number; name: string };
+
+/** The eligible pairs among `uids` (in their order) for the COPIER's `seat`: every Pokémon card's
+    `usableCopies` over a phantom body, collapsed on (card NAME, attack index, the printed attack) —
+    two copies of one card offer one row (D42), and so do two PRINTINGS of one card whose attack is
+    printed alike (Persian ex `sv10-150` + `sv10-219` revealed together offer ONE "Cruel Slash" row,
+    not two identical ones). `ruleBoxFree` is Seek Inspiration's printed *"doesn't have a Rule
+    Box"* (`hasRuleBox`). */
+function foundPairs(state: GameState, seat: Seat, uids: readonly string[], ruleBoxFree: boolean): FoundPair[] {
+  const seen = new Set<string>();
+  return uids.flatMap((uid) => {
+    const card = cardOfUid(state, uid);
+    if (card === undefined || card.category !== "Pokemon") return [];
+    if (ruleBoxFree && hasRuleBox(card)) return [];
+    return usableCopies(state, seat, makeInPlay(uid, state.turn), card).flatMap(({ index, attack }) => {
+      const key = `${card.name}#${String(index)}#${JSON.stringify(attack)}`;
+      if (seen.has(key)) return [];
+      seen.add(key);
+      return [{ uid, attackIndex: index, name: `${attack.name} (${card.name})` }];
+    });
+  });
+}
+
+/** The `chooseAttack` prompt over the FLATTENED pairs: the answer's `index` is an index into
+    `candidates`, not into one card's attacks (interpreter.ts's `chooseAttack` doc, D574 note). */
+function chooseFoundAttack(pairs: readonly FoundPair[], copierName: string): EffectPrompt {
+  return {
+    kind: "chooseAttack",
+    candidates: pairs.map((pair, index) => ({ index, name: pair.name })),
+    note: `Choose an attack to use as ${copierName}.`,
+  };
+}
+
+/** The MID-ATTACK PARK: attack.ts's in-attack park shape (`settleProgram` with `resumeTail` and
+    the `attackEpilogue` QUEUED behind it), so a reader with no route for the op — a 0.457
+    ROLLBACK, or Haughty Order's decline — drains the epilogue and ends the attack having copied
+    nothing. The first half's events ride the park's result. */
+function parkFoundCopy(
+  state: GameState,
+  events: GameEvent[],
+  seat: Seat,
+  attackerUid: string,
+  copierName: string,
+  op: Extract<EffectOp, { op: "useFoundAttackAs" }>,
+  prompt: EffectPrompt,
+): ApplyResult {
+  const epilogue: PendingStage = { kind: "attackEpilogue", seat, uid: attackerUid, attack: copierName };
+  return settleProgram(
+    {
+      kind: "parked",
+      state: { ...state, pending: [...state.pending, epilogue] },
+      prompt,
+      cont: { pendingOp: op, rest: [], ctx: { seat, sourceUid: attackerUid, invokedBy: "attack", dealt: 0 } },
+    },
+    seat,
+    events,
+    { resumeTail: true },
+  );
+}
+
+/** 🆕🆕🆕 D574 — the resolve-time copy's FIRST HALF, called by `attack()` after every coin with the
+    events so far (ATTACK_DECLARED and the coins). Haughty Order: reveal the opponent's top
+    min(10, deck) as a PUBLIC row, collect the pairs, SHUFFLE at once (R-HO1), then end (no pair)
+    or park the *"You may"* confirm. Seek Inspiration: mill 1 (an empty deck mills nothing and
+    ends), then end (no pair: not a Pokémon, a Rule Box, or no usable attack), re-enter INLINE (one
+    pair, its events appended to this half's), or park `chooseAttack` (two or more). */
+function copyAtResolution(
+  state: GameState,
+  events: GameEvent[],
+  action: AttackAction,
+  copy: ResolvedAttackCopy,
+  attackerUid: string,
+  copierName: string,
+): ApplyResult {
+  const seat = action.seat;
+  if (copy.from === "opponentDeckTop") {
+    const owner = otherSeat(seat);
+    const side = state.players[owner];
+    const shown = side.deck.slice(0, copy.count);
+    events.push({ type: "DECK_TOP_REVEALED", seat: owner, dest: "deck", uids: [...shown], reveal: true, actor: seat });
+    const pairs = foundPairs(state, seat, shown, false);
+    const [deck, rngState] = shuffle(side.deck, state.rngState);
+    events.push({ type: "SHUFFLE", seat: owner });
+    const shuffled: GameState = { ...withSide(state, owner, { ...side, deck }), rngState };
+    if (pairs.length === 0) return finishAttack(shuffled, events, seat, attackerUid, copierName);
+    return parkFoundCopy(
+      shuffled,
+      events,
+      seat,
+      attackerUid,
+      copierName,
+      { op: "useFoundAttackAs", from: copy.from, index: action.index, candidates: pairs },
+      {
+        kind: "confirm",
+        note: `Use an attack from a Pokémon revealed from your opponent's deck as ${copierName}?`,
+        labels: { yes: "Choose an attack", no: "Don't" },
+      },
+    );
+  }
+  const side = state.players[seat];
+  const top = side.deck[0];
+  if (top === undefined) return finishAttack(state, events, seat, attackerUid, copierName);
+  events.push({ type: "DECK_TOP_DISCARDED", seat, actor: seat, uids: [top] });
+  const milled = withSide(state, seat, { ...side, deck: side.deck.slice(1), discard: [...side.discard, top] });
+  const pairs = foundPairs(milled, seat, [top], true);
+  const only = pairs.length === 1 ? pairs[0] : undefined;
+  if (pairs.length === 0) return finishAttack(milled, events, seat, attackerUid, copierName);
+  if (only !== undefined) {
+    const resumed = reenterFound(milled, action, only);
+    return resumed.ok ? ok(resumed.state, [...events, ...resumed.events]) : resumed;
+  }
+  return parkFoundCopy(
+    milled,
+    events,
+    seat,
+    attackerUid,
+    copierName,
+    { op: "useFoundAttackAs", from: copy.from, index: action.index, candidates: pairs },
+    chooseFoundAttack(pairs, copierName),
+  );
+}
+
+/** Re-enter `attack()` RESUMED with one found pair, re-validated against the live board: the
+    source card is still in the zone the copy left it in (the opponent's deck for Haughty Order,
+    the controller's discard pile for Seek Inspiration), and the attack is still eligible
+    (`usableCopies` over a fresh phantom). Every declaration gate then runs again on the COPIER. */
+function reenterFound(state: GameState, action: AttackAction, pair: FoundPair): ApplyResult {
+  const card = cardOfUid(state, pair.uid);
+  const body = makeInPlay(pair.uid, state.turn);
+  const picked =
+    card === undefined
+      ? undefined
+      : usableCopies(state, action.seat, body, card).find((c) => c.index === pair.attackIndex);
+  if (card === undefined || picked === undefined) {
+    return err("PHASE_DESYNC", "the found attack is no longer one this copy can use");
+  }
+  return attack(state, action, { attack: picked.attack, card, body, index: picked.index, resumed: true });
+}
+
+/** 🆕🆕🆕 D574 — resolve a mid-attack copy park (cardplay.ts `resolveEffect` routes here, after
+    `validateChoice` and BEFORE `settleProgram`, for every `useFoundAttackAs` answer but Haughty
+    Order's DECLINE, which takes the default drain). Haughty Order's "yes" re-parks `chooseAttack`
+    over two or more pairs (the phase keeps its `resumeTail` and queued epilogue) or takes the one
+    pair; a `chooseAttack` answer takes the pair it indexes. Taking a pair restores `turn:action`,
+    STRIPS the queued `attackEpilogue` (the re-entered attack queues or runs its own — one
+    epilogue, one `usedAttack`), re-validates the COPIER (still the Active that declared, its
+    printed attack at `op.index` still this copy) and the source zone, and re-enters `attack()`
+    RESUMED. */
+export function resolveFoundAttack(
+  state: GameState,
+  phase: Extract<Phase, { kind: "effect:choose" }>,
+  op: Extract<EffectOp, { op: "useFoundAttackAs" }>,
+  choice: EffectChoice,
+): ApplyResult {
+  const seat = phase.seat;
+  const sourceUid = phase.cont.ctx.sourceUid ?? "";
+  let pair: FoundPair | undefined;
+  if (op.from === "opponentDeckTop" && op.accepted !== true) {
+    if (choice.kind !== "confirm" || !choice.yes) return err("BAD_EFFECT_CHOICE", "expected a yes");
+    if (op.candidates.length > 1) {
+      return settleProgram(
+        {
+          kind: "parked",
+          state,
+          prompt: chooseFoundAttack(op.candidates, copierNameOf(state, seat, op.index)),
+          cont: { ...phase.cont, pendingOp: { ...op, accepted: true } },
+        },
+        seat,
+        [],
+        { resumeTail: true },
+      );
+    }
+    pair = op.candidates[0];
+  } else {
+    if (choice.kind !== "attack") return err("BAD_EFFECT_CHOICE", "expected an attack choice");
+    pair = op.candidates[choice.index];
+  }
+  if (pair === undefined) return err("BAD_EFFECT_CHOICE", "that is not an attack this copy found");
+  const restored: GameState = {
+    ...state,
+    phase: { kind: "turn:action", seat },
+    pending: state.pending.filter((stage) => !(stage.kind === "attackEpilogue" && stage.uid === sourceUid)),
+  };
+  const copier = restored.players[seat].active;
+  const copierCard = copier === null ? undefined : topCardOf(restored, copier);
+  const printed = copierCard === undefined ? undefined : attacksOf(copierCard)[op.index];
+  const copy = printed?.effect === undefined ? null : deriveAttackCopy(printed.effect);
+  const zone = op.from === "opponentDeckTop" ? restored.players[otherSeat(seat)].deck : restored.players[seat].discard;
+  if (copier === null || topUid(copier) !== sourceUid || copy === null || copy.from !== op.from) {
+    return err("PHASE_DESYNC", "the copying Pokémon is no longer the Active that declared this attack");
+  }
+  if (!zone.includes(pair.uid)) return err("PHASE_DESYNC", "the found card has left the zone the copy found it in");
+  return reenterFound(restored, { type: "attack", seat, index: op.index }, pair);
+}
+
+/** The copier's printed attack name at `index` (the re-parked prompt's caption). */
+function copierNameOf(state: GameState, seat: Seat, index: number): string {
+  const active = state.players[seat].active;
+  const card = active === null ? undefined : topCardOf(state, active);
+  return (card === undefined ? undefined : attacksOf(card)[index]?.name) ?? "this attack";
 }
 
 /** The interrupt phases that park the tail on a ko:* decision (§8.1). */

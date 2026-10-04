@@ -90,7 +90,9 @@ const FAMILY = [
   { surface: "ability:Adrena-Brain", ids: ["sv06-095", "sv06.5-072", "sv08.5-044"], built: true },
   // 🆕🆕🆕 D565 — `built: true` (was false): on the SIBLING op `moveCounterOwnChosen`, not this one.
   { surface: "ability:Rocket Brain", ids: ["sv10-089", "sv10-198"], built: true },
-  { surface: "attack:Strange Hacking", ids: ["sv06-082"], built: false },
+  // 🆕🆕🆕 D574 — `built: true` (was false): on the SIBLING op `moveCountersOpponentAnyWay` (a looping
+  // round under an engine-written budget, R-AK1), not this one.
+  { surface: "attack:Strange Hacking", ids: ["sv06-082"], built: true },
 ] as const;
 
 const P1_ACTIVE: PokemonRef = { seat: "p1", spot: { spot: "active" } };
@@ -183,7 +185,8 @@ describe("the census — re-derived, per surface, both scopes", () => {
     const built = FAMILY.filter((row) => row.built);
     // 🆕🆕🆕 D565 — 1 → 2 surfaces built: Rocket Brain, on the SIBLING `moveCounterOwnChosen`.
     // 🆕🆕🆕 D572 — 2 → 3 surfaces built: Adrena-Brain, on the SIBLING `moveCountersToOpponentChosen`.
-    expect(built).toHaveLength(3);
+    // 🆕🆕🆕 D574 — 3 → 4 surfaces built: Strange Hacking, on the SIBLING `moveCountersOpponentAnyWay`.
+    expect(built).toHaveLength(4);
     expect(built.flatMap((row) => row.ids)).toEqual([
       "sv10.5w-040",
       "sv10.5w-123",
@@ -192,6 +195,7 @@ describe("the census — re-derived, per surface, both scopes", () => {
       "sv08.5-044",
       "sv10-089",
       "sv10-198",
+      "sv06-082",
     ]);
     expect(programFor("sv06-095")?.abilities?.[0]?.program).toEqual([
       { op: "moveCountersToOpponentChosen", upTo: 3 },
@@ -210,7 +214,10 @@ describe("the census — re-derived, per surface, both scopes", () => {
     // and already false — an Ability with `oncePerTurn: false` repeats one activation at a
     // time (Baxcalibur, Emboar, Iono's Bellibolt); Rocket Brain is built. Six → four.
     // 🆕🆕🆕 D572 — four → ONE (Alakazam alone).
-    expect(FAMILY.filter((row) => !row.built).flatMap((row) => row.ids)).toHaveLength(1);
+    // 🆕🆕🆕 D574 (D539) — ONE → ZERO, and ~~"Only the many-to-many assignment (Alakazam) stays
+    // refused"~~ is WITHDRAWN: the assignment is a LOOP of one-source, one-destination rounds (R-AK1),
+    // built on the sibling `moveCountersOpponentAnyWay` (`copyRemainderBundleD574.test.ts` §5).
+    expect(FAMILY.filter((row) => !row.built).flatMap((row) => row.ids)).toHaveLength(0);
   });
 });
 
