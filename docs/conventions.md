@@ -8690,6 +8690,23 @@ the old stage or call sequence written as a literal (`[a, b, c]`, `a → b → c
 words next to the mechanism's names (`in front of`, `behind`, `queued`, `then`). Classify each hit (D539's second
 half): a named board on which the new branch cannot fire is true and stays.
 
+### A withdrawal sweep is case-INSENSITIVE: the claim's lowercase copy hides mid-sentence (D573 landing, extending D539)
+
+D573's third review withdrew the claim *"Unreachable off every printing"* at four sites, and the builder's sweep for
+it (*"Unreachable off"* / *"name their own attack"*, case-sensitive) reported "no other claim a copy reaches". The landing
+re-ran it with `git grep -n -i` and found two more: D154's *"A name matching nothing installs nothing and emits no row
+— unreachable off all five printings, constructed and pinned."*, in its `decisions.md` row and its `simulator.md`
+section. The same claim, written lowercase mid-sentence. So the count was SIX, not four, and two "found no other
+claim" sentences were false as written. No gate and no test reads prose, so nothing went red.
+
+**Why:** a claim that opens a sentence in one place is capitalised there and lowercase wherever it follows a dash, a
+colon or a clause. A case-sensitive sweep keyed on the first copy found misses every copy that is not also a sentence
+start, and nothing executable notices.
+
+**The rule:** every D539 / D567 / D570 withdrawal sweep is run with `git grep -n -i`, engine source first, on each
+phrase it keys on. A sweep reported as "found no other claim" names its flags (the `-i` included), so a reviewer can
+tell a case-insensitive negative from a case-sensitive one.
+
 ## Git / commits
 - Branch off `main` for non-trivial work; commit/push only when asked.
 - Commit trailer per global config: `Co-Authored-By: Claude ...`.
