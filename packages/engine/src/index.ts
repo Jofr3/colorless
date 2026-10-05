@@ -19,7 +19,7 @@
 // event stream) and the api Worker (authoritative online matches, P4).
 
 import type { ApplyResult, GameAction } from "./actions";
-import { err } from "./actions";
+import { err, ok } from "./actions";
 import { attack, promote, takePrizes } from "./attack";
 import {
   attachTool,
@@ -29,7 +29,7 @@ import {
   useAbility,
   useStadiumAbility,
 } from "./cardplay";
-import { concede } from "./flow";
+import { concede, discardMisplacedEnergy } from "./flow";
 import {
   chooseFirstPlayer,
   setupDrawExtra,
@@ -20250,6 +20250,44 @@ import type { GameState, Seat } from "./types";
     `expect(manifest.version)`, `it(…)` titles, the declaration and `package.json` —
     **not** as a value-keyed grep — because a value-keyed grep is precisely the mechanism
     that ate D500's heading.)
+    🆕🆕🆕 engineVersion 0.461.0 → **0.462.0** (D578 — SCOVILLAIN ex ×2 + RELICANTH ×2 + TECHNICAL MACHINE: FLUORITE + TEAM
+    ROCKET'S ENERGY: 6 PRINTINGS / 4 TEXTS, `MATCH_RECORD_VERSION` STAYS 40 (match.ts "STAYS 40 AT D578"). **Scovillain
+    ex** `sv08-037` / `sv08-216` "Double Type": the NEW `PassiveEffects.typesInPlay` (`["Grass", "Fire"]`) and the NEW
+    exported continuous.ts `inPlayCardOf(state, pokemon)` / `effectiveTypesOf` — the TOP card's IN-PLAY view (its in-play
+    types; the printed card under a §9 lock, and the card ITSELF on every body without the key) — read at every in-play
+    type site: the §8.5 attacker and defender (Weakness / Resistance, each still applied ONCE), the Berries, the
+    type-keyed shields and attacker-class blocks, `passivesOf`' holder (`holderCard`), Jungle's Poison exemption, the
+    retreat Stadium terms, the type `BoardCondition` arms, `healEach`'s type, the attach targets and every in-play
+    typed `matchesFilter` (`refTopCard` included) — classified one by one in `scovillainD578.test.ts`' allowlist. The
+    Watchtower's {C} read STAYS printed (R-WT1, annotated: the effective reader would recurse; no retype names {C}).
+    **The ATTACK MENU** — the NEW exported `attackMenuOf(state, seat, pokemon)`: the printed attacks FIRST, then the
+    NEW Memory Dive section, then the NEW Tool section; `AttackAction.index` / `RedactedAttack.index` are its flat index
+    (docs annotated, no shape change); `attackGateOf` resolves through it (the source card at its own index — the one
+    funnel for the §4 ban, the timing gate and the cost clause), `attackCostAt` charges the row's own cost (R-MD1),
+    `attack()` declares the row (no `as` — it is not a copy), looks its program up on the source card, and keys every
+    PERSISTED index (the per-attack bar, a named boost) on the printed index only (`printedIndex`, -1 for a menu row —
+    R-MD3 / R-MD4); redact.ts and GameHud list the menu. **Relicanth** `sv05-084` / `sv05-173` "Memory Dive": the NEW
+    `PassiveEffects.memoryDive` and `memoryDiveLive(state, seat)` (any unlocked holder on the seat; several do not
+    stack) — the attacks of the cards UNDER an evolved body's top, bottom to top (R-MD1 … R-MD5; R-MD4 ~~⚠️ UNRULED, a
+    name-keyed self-lock from a borrowed attack installs nothing~~ 🆕 RULED, fixed at the landing: it binds to the row
+    used by its printed NAME — the NEW optional `LockedAttack.attackName` written with `attackIndex: -1`, the NEW
+    optional `EffectContext.borrowedAttack`, the NEW exported `lockedAttackNames` read by the §8 gate, redact.ts and
+    GameHud). **Technical Machine: Fluorite** `sv08-188` (Tool): its
+    attack hand-written in the NEW data table `technicalMachines.ts` (the ingest drops a Trainer's attacks; outside the
+    mutation whitelist, D538), the NEW `CardProgram.toolAttacks` (and `toolCardSimulated` reads it) with its program at
+    the row's own `attack[0]` (`discardEnergy` all, then `healEach` `"all"` with the NEW `banner` rider), and the NEW
+    `CardProgram.toolDiscardAtEndOfYourTurn`, swept by flow.ts `discardEndOfTurnTools` for the TURN OWNER beside Ignition
+    (`TOOLS_DISCARDED { when: "consumed" }`). **Team Rocket's Energy** `sv10-182`: the NEW constrained provided unit
+    (cards.ts `constrainedEnergyUnit` / `constrainedEnergyTypes`; `costMet` pays concrete units, then constrained units
+    against their members' summed shortfall, then wildcards — exact for the laminar sets the registry builds, ONE),
+    `providesEnergyType`'s membership arm (R-TRE2: a card counts once), and the NEW `EnergyProgram.attachOnlyToOwner`
+    behind the NEW continuous.ts `energyMayBeAttachedTo` — turn.ts refuses the hand attach (`BAD_TARGET`, the allowance
+    not spent), a misplaced card provides nothing, and flow.ts `discardMisplacedEnergy` discards it at the top of
+    `advance` (R-TRE1 ~~⚠️ UNRULED~~ 🆕 RULED, fixed at the landing: the same state check, now EXPORTED, also runs after
+    every `runProgram` step, on `resumeProgram`'s answer and on every accepted `applyAction` — the card never remains
+    on a non-Team Rocket's body). Census: `BUILT.ability` 388 → 392, `BUILT.trainer` 263 → 264 (264 of 264),
+    `BUILT.specialEnergy` 10 → 11 (11 of 11). `docs/decisions.md` D578. VERSION-TAX EXCEPTIONS: D577's heading below —
+    its arrow line — kept, 1 of 215 lines; 214 stepped by split/join on the version string.)
     🆕🆕🆕 engineVersion 0.460.0 → **0.461.0** (D577 — AREA ZERO UNDERDEPTHS ×3 + BOOMERANG ENERGY + TYME ×2: 6
     PRINTINGS / 3 TEXTS, `MATCH_RECORD_VERSION` 39 → 40 (THE THIRTEENTH POSITION). **Area Zero Underdepths**
     `sv07-131` / `sv07-174` / `sv08.5-094` (Stadium): the NEW `BENCH_CEILING` (8) beside `BENCH_MAX` (5, still
@@ -24993,7 +25031,7 @@ import type { GameState, Seat } from "./types";
     WITNESS** — the count was re-derived every slice and the word *"three"* was carried.
     A successor of this slice inherits **81 / 61 / 17** again, over **FIVE** history
     occurrences: those four plus `deckMillFilteredScale.test.ts`'s own header arrow.) */
-export const engineVersion = "0.461.0";
+export const engineVersion = "0.462.0";
 
 export type {
   ApplyResult,
@@ -25064,6 +25102,9 @@ export {
   installedNoWeakness,
   installedReductionOf,
   lockedAttackIndexes,
+  // 🆕🆕🆕 D578 (R-MD4, RULED: fixed at the landing) — the NAME-keyed bars (a borrowed row's own
+  // self-lock), GameHud's twin of the §8 gate's read.
+  lockedAttackNames,
   opposingRetreatBlocked,
   retreatLocked,
   opposingRetreatSurcharge,
@@ -25076,6 +25117,11 @@ export {
     Pokémon in play, else 5) and its card-id twin for a redacted board: the one rule both web
     projections write onto `PlayerBoard.benchLimit`. */
 export { benchLimitForIds, benchLimitOf } from "./continuous";
+/** 🆕🆕🆕 D578 — the ATTACK MENU (printed attacks first, then Relicanth's Memory Dive rows, then
+    a Technical Machine's) whose flat index `AttackAction.index` carries — GameHud's TurnPanel
+    lists it — and the IN-PLAY card / types (Scovillain ex "Double Type"). */
+export { attackMenuOf, effectiveTypesOf, inPlayCardOf } from "./continuous";
+export type { AttackMenuEntry } from "./continuous";
 export {
   deriveAttackCancelRequirement,
   deriveAttackCoinFlip,
@@ -25276,6 +25322,18 @@ export { attackCostAt } from "./attack";
     never-throw contract has to hold for a bogus `type` or `seat` too (an
     unknown seat would otherwise index `players` with undefined and throw). */
 export function applyAction(state: GameState, action: GameAction): ApplyResult {
+  const result = dispatchAction(state, action);
+  if (!result.ok) return result;
+  // 🆕🆕🆕 D578 (R-TRE1, RULED: fixed at the landing) — Team Rocket's Energy's STATE CHECK on every
+  // accepted action: the net under every route that puts the card on a non-Team Rocket's body
+  // without running a program step or draining `advance` (flow.ts `discardMisplacedEnergy`, which
+  // hands the SAME state back when nothing moves — so every other result is returned as is).
+  const swept = discardMisplacedEnergy(result.state, result.events);
+  return swept === result.state ? result : ok(swept, result.events);
+}
+
+/** `applyAction`'s dispatch, before the D578 state check. */
+function dispatchAction(state: GameState, action: GameAction): ApplyResult {
   // A finished game accepts nothing further.
   if (state.phase.kind === "gameOver") {
     const outcome = state.phase.outcome;

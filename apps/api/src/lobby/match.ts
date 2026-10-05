@@ -2154,6 +2154,47 @@ export interface MatchRecord {
     `turn:action.discardable` — 🛑 **DEPLOY THE SERVER FIRST**: an old client's `z.object` STRIPS
     the unknown key, while a new client's REQUIRED key refuses an old server's frame.
 
+    🆕🆕🆕 **STAYS 40 AT D578 — SCOVILLAIN ex "DOUBLE TYPE", RELICANTH "MEMORY DIVE", TECHNICAL MACHINE:
+    FLUORITE AND TEAM ROCKET'S ENERGY CHANGE NO GameState, PendingStage OR `cont` SHAPE; EVERY 0.461
+    ROLLBACK READING IS INERT.** (Placed ABOVE the D577 block, out of date order, so the declaration's
+    anchor lines — and every `*-record-version-not-bumped` row's `find` and the D577 doc tail — stay
+    byte-identical: D563's placement.) The addresses, named first (D456's rule): ⑴ NOTHING NEW IS
+    PERSISTED. The four programs are catalog-side registry rows (`PassiveEffects.typesInPlay` /
+    `memoryDive`, `CardProgram.toolAttacks` / `toolDiscardAtEndOfYourTurn`, `EnergyProgram.attachOnlyToOwner`,
+    the constrained provided unit) read off the live board; `GameState`, `InPlayPokemon`, `PendingStage`
+    and the `cont` / `pendingOp` shapes gain no key and no member. ⑵ The ATTACK MENU's flat index rides
+    only `AttackAction.index` (an action, never persisted) and the wire's `RedactedAttack.index`; every
+    persisted index — a `lockedAttacks` entry, a `boostedAttack` record — stays a PRINTED index, because
+    the menu lists the printed attacks FIRST and a borrowed or Technical Machine row writes none (R-MD4)
+    [🆕🆕🆕 D578 landing (R-MD4, RULED: fixed): ~~writes none~~ writes a NAME-keyed entry — ⑸ below].
+    ⑶ The `healEach` `banner` rider is an `EffectOp` key, but the one program carrying it (TM Fluorite's)
+    never parks before it, so no `cont` can hold it. ⑷ The `ENERGY_DISCARDED` / `TOOLS_DISCARDED` rows the
+    two new sweeps emit are existing EVENT shapes, not persisted (D141). THE 0.461 ROLLBACK READINGS, each
+    inert (no illegal action is granted, no byte is reinterpreted against its writer): **the TM** —
+    0.461 has no program for `sv08-188`, so an attached TM grants NOTHING (no menu row) and is NEVER
+    discarded at its owner's turn end (it sits as a dead Tool, occupying the slot); **borrowed rows** —
+    0.461 offers the printed attacks only, so a Memory Dive or TM index is `BAD_ATTACK_INDEX` and no
+    record names one; **Team Rocket's Energy** — 0.461 has no program for `sv10-182`, so it DEGRADES to
+    one {C} (`energyProvidesOf`'s unauthored-Special fallback) on whatever body holds it; **Scovillain
+    ex** — 0.461 reads its printed {R} only. And the other direction: a LIVE v40 record written under
+    0.461 may hold Team Rocket's Energy on a non-Team Rocket's body (legal at 0.461, where the card was a
+    plain {C}); 0.462's state check (flow.ts `discardMisplacedEnergy`, the top of `advance`) discards it
+    on that record's first drain after deploy — benign, the card's own printed rule applied late, and
+    the same answer the hand attach now refuses up front. No printing is dropped and
+    `MATCH_RECORD_VERSION` stays 40. No schema shape moves (two doc annotations only); the web HUD
+    lists the engine menu.
+    🆕🆕🆕 ⑸ **AT THE LANDING (R-MD4 and R-TRE1 FIXED, not shipped unruled) — TWO OPTIONAL KEYS, BOTH
+    WIDENINGS, AND THE CONSTANT STILL STAYS 40** (~~⑴'s *"gain no key"*~~ is withdrawn for these two,
+    D539): `LockedAttack.attackName?` (a borrowed row's own self-lock, written with `attackIndex: -1`)
+    and `EffectContext.borrowedAttack?` (rides `phase.cont.ctx`). D421's `until` and D427's `dealt`
+    are the precedent: every record written before them lacks the key and reads as before. THE 0.461
+    ROLLBACK READINGS, each inert: a `{ turn, attackIndex: -1, attackName }` entry answers `-1` from
+    0.461's `lockedAttackIndexes`, which no `action.index` (an integer ≥ 0 over the printed list) and
+    no projection row equals — the bar lapses, the player's favour, 0.461's own reading of a game it
+    could not have produced; a `cont.ctx.borrowedAttack` is never read by 0.461 (`preventAttackUse`
+    there resolves the name on the printed attacks, D154). R-TRE1's fix moves no byte: the state
+    check now also runs after each program step, on a parked answer and on every accepted action.
+
     🆕🆕🆕 **39 → 40 AT D577 — THE THIRTEENTH POSITION: AN 8-BENCH, A TRIM, A BOOMERANG AND A
     GUESS.** The addresses, named first (D456's rule), each one a v40 byte a 0.460 reader would
     read wrongly — not inert, so the version is owed:

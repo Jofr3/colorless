@@ -23,7 +23,7 @@ import {
   abilityBodyGateMet,
   abilityUsedKey,
   attackLocked,
-  attacksOf,
+  attackMenuOf,
   cardOfUid,
   conditionHolds,
   conditionNote,
@@ -42,6 +42,7 @@ import {
   handPlayBarred,
   isImmobilized,
   lockedAttackIndexes,
+  lockedAttackNames,
   opposingRetreatBlocked,
   otherSeat,
   programFor,
@@ -664,7 +665,8 @@ function PlacePanel({ projection, viewerSeat, dispatch }: GameHudProps) {
   );
 }
 
-/** The turn:action side panel: printed attacks with engine-computed
+/** The turn:action side panel: printed attacks [🆕🆕🆕 D578 (D539): the engine's ATTACK MENU,
+    `attackMenuOf` — printed, Memory Dive and Technical Machine rows] with engine-computed
     payability, the retreat entry point, and the per-turn allowance state. */
 function TurnPanel(props: GameHudProps) {
   const { game, projection, viewerSeat, dispatch } = props;
@@ -682,7 +684,11 @@ function TurnPanel(props: GameHudProps) {
   // wildcards) vs the printed cost. ONE shared helper with the engine's own
   // cost check (providedEnergy), so the HUD preview can't drift from it.
   const provided = providedEnergy(game, active);
-  const attacks = attacksOf(activeCard);
+  // 🆕🆕🆕 D578 — the ATTACK MENU (`attackMenuOf`, the engine's one list): the printed attacks
+  // first, then Relicanth's Memory Dive rows, then a Technical Machine's — each row's `index` is
+  // the flat index `attack` takes, as on the wire (`redactedAttacksOf`).
+  const menu = attackMenuOf(game, viewerSeat, active);
+  const attacks = menu.map((row) => row.attack);
   // §4 — turn 1 is by construction the going-first player's turn… unless the
   // Active's own printed Ability licenses it ("Debut Performance", Meloetta ex,
   // D277). Read off raw GameState through the engine's own predicate, exactly as
@@ -757,6 +763,9 @@ function TurnPanel(props: GameHudProps) {
   // server rejects, on a board where the player has a card in front of them saying
   // it should not be there.
   const barredAttackIndexes = lockedAttackIndexes(game, active);
+  // 🆕🆕🆕 D578 (R-MD4, RULED: fixed at the landing) — the NAME-keyed bars (a borrowed row's own
+  // self-lock, `lockedAttackNames`); `redactedAttacksOf`'s `barredNames` is the server twin.
+  const barredAttackNames = lockedAttackNames(game, active);
   // §8/§9 (D242) — …and the ALWAYS-ON gate the body's OWN printed Ability imposes
   // ("This Pokémon can't attack unless you have 4 or more Team Rocket's Pokémon in
   // play"), read off raw GameState through the engine's own reader exactly as the
@@ -864,7 +873,10 @@ function TurnPanel(props: GameHudProps) {
               attackLockedNow ||
               abilityGateUnmet ||
               attackAgainBarredNow ||
-              barredAttackIndexes.includes(index) ||
+              // 🆕🆕🆕 D578 — per PRINTED index: a borrowed row is never barred by one (R-MD4).
+              (menu[index]?.origin === "printed" && barredAttackIndexes.includes(menu[index].sourceIndex)) ||
+              // 🆕🆕🆕 D578 (R-MD4, RULED: fixed at the landing) — …a borrowed row by its NAME.
+              barredAttackNames.includes(attack.name) ||
               // §4/§8 (D281) — the printed TIMING CLAUSE on this one attack
               // ("…only if you go second, and only during your first turn." —
               // Illumise / Scream Tail ex; its negation on Terapagos ex ×7). Read

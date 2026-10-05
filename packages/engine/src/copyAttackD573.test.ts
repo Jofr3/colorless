@@ -1171,7 +1171,7 @@ describe("D573 §5 — the park: inert, serialisable, and inert under a 0.456 ro
 
 // ─────────────────────────────────────────────────────────────────────────────
 describe("D573 §6 — the version", () => {
-  it("the engine is 0.461.0", () => {
-    expect(engineVersion).toBe("0.461.0");
+  it("the engine is 0.462.0", () => {
+    expect(engineVersion).toBe("0.462.0");
   });
 });

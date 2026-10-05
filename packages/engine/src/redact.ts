@@ -63,15 +63,18 @@ import {
   programPlayable,
   rareCandyOptions,
 } from "./cardplay";
-import { attacksOf, cardOfUid, topCardOf, topUid } from "./cards";
+import { cardOfUid, topCardOf, topUid } from "./cards";
 import {
   attackLocked,
+  // 🆕🆕🆕 D578 — the ATTACK MENU: the wire's attack rows (printed, Memory Dive, Tool).
+  attackMenuOf,
   disabledAbilityUids,
   effectiveMaxHp,
   effectiveRetreatCost,
   firstTurnAttackBanned,
   handPlayBarred,
   lockedAttackIndexes,
+  lockedAttackNames,
   opposingRetreatBlocked,
   providedEnergy,
   retreatLocked,
@@ -653,7 +656,16 @@ function redactedAttacksOf(
   // gate (attack.ts §8) rejects with ATTACK_PREVENTED naming the attack; this line
   // is what stops the client offering the button at all.
   const barred = lockedAttackIndexes(state, active);
-  return attacksOf(card).map((attack, index) => {
+  // 🆕🆕🆕 D578 (R-MD4, RULED: fixed at the landing) — …and the NAME-keyed bars a borrowed row's own
+  // self-lock wrote (`lockedAttackNames`): the row of that name is greyed, the §8 gate's twin.
+  const barredNames = lockedAttackNames(state, active);
+  // 🆕🆕🆕 D578 — the rows are the ATTACK MENU (`attackMenuOf`): the printed attacks first (each
+  // flat `index` its printed index, so every pre-D578 frame is byte-identical), then Relicanth's
+  // Memory Dive rows, then a Technical Machine's. `cost` is the cost printed on the row's OWN
+  // card; the per-attack bar is compared per PRINTED index (a borrowed row has none, R-MD4)
+  // [🆕🆕🆕 D578 (R-MD4, RULED: fixed at the landing): a borrowed row is barred by NAME instead —
+  // `barredNames` above].
+  return attackMenuOf(state, viewerSeat, active).map(({ attack, origin, sourceIndex }, index) => {
     const printed = attack.cost ?? [];
     // §8.2/§7.3 — the cost the gate CHARGES, folding the Stadium's Basic surcharge,
     // the opposing "Quaking Zone" aura and the holder's own "Excited Heart"
@@ -686,7 +698,8 @@ function redactedAttacksOf(
       damage: attack.damage === undefined ? null : String(attack.damage),
       playable:
         !banned &&
-        !barred.includes(index) &&
+        !(origin === "printed" && barred.includes(sourceIndex)) &&
+        !barredNames.includes(attack.name) &&
         // §4 (D277, per-INDEX since D281) — the first-turn ban and the two
         // licences that lift it, one printed as an Ability on the body and one
         // printed on this very attack. Asked HERE rather than on `banned` above

@@ -34,9 +34,14 @@ import {
   attackFlipLocked,
   attackGateOf,
   attackLocked,
+  // 🆕🆕🆕 D578 — the ATTACK MENU (printed, Memory Dive, Tool): `declared`, the charged cost.
+  attackMenuOf,
   attackerHasSpecialEnergy,
   attackerSuppressesTargetEffects,
   benchShieldedFromDamage,
+  // 🆕🆕🆕 D578 — the IN-PLAY card (Scovillain ex "Double Type"): the attacker's and the
+  // defender's types as the §8.5 reads see them.
+  inPlayCardOf,
   boostedAttackBase,
   boostedAttackDamage,
   coinFlipShieldPrevents,
@@ -56,6 +61,7 @@ import {
   installedWeaknessRetypeOf,
   koSurvivalClamp,
   lockedAttackIndexes,
+  lockedAttackNames,
   // 🆕🆕🆕 D562 — the Berry's §8.5 summand and its "not asked" answer.
   NO_CONSUMABLE,
   berryReductionOf,
@@ -225,7 +231,9 @@ export { costMet };
     Echo" → `costWaivedIf handSizesEqual` on "Frightening Howl"; Kyurem "Plasma Bane" →
     `alternateCostIf opponentDiscardHasNameContaining "Colress"`, `{C}`, on "Trifrost").
     It is consulted AFTER the attack-level gate and only when that gate did not fire,
-    matched by PRINTED NAME against `attacksOf(top)[index]`, and it is NOT §9-blind: it
+    matched by PRINTED NAME against `attacksOf(top)[index]` [🆕🆕🆕 D578 (D539): *"against
+    `attacksOf(top)[index]`"* is WITHDRAWN — against the ATTACK MENU row's own name
+    (`entry.attack.name`, the D578 paragraph below); identical for a printed row], and it is NOT §9-blind: it
     rides `passivesOf`, so an Ability-lock on the holder hands the printed cost back.
     D545's semantics are kept verbatim — the alternate is charged through
     `effectiveAttackCost` and only if payable (else the printed charge), the waive returns
@@ -235,7 +243,16 @@ export { costMet };
     GameHud's TurnPanel the viewer's seat with the viewer's Active — so the "you" of
     *"you have the same number of cards"* and the "your opponent" of Plasma Bane resolve
     to the holder's controller. A caller that ever asks about a body across the table
-    must pass that body's seat. */
+    must pass that body's seat.
+
+    🆕🆕🆕 **D578 — `index` IS THE FLAT MENU INDEX (`attackMenuOf`), AND THE COST IS THE MENU
+    ENTRY'S OWN.** *"(You still need the necessary Energy to use each attack.)"* — a Memory Dive
+    attack charges the cost printed on the lower stage, a Technical Machine attack the cost
+    printed on the Tool (R-MD1: every cost modifier below applies to it as to a printed one).
+    For a printed attack the entry IS `attacksOf(top)[index]` (printed attacks come first), so
+    every pre-D578 board charges the identical array. ⚠️ `seat` is now also the menu's seat
+    (Relicanth is "Each of YOUR evolved Pokémon") — the holder's controller at all three
+    callers, as the paragraph above already requires. */
 export function attackCostAt(
   state: GameState,
   seat: Seat,
@@ -243,8 +260,8 @@ export function attackCostAt(
   index: number,
   provided: readonly string[],
 ): readonly string[] {
-  const top = topCardOf(state, pokemon);
-  const printed = (top === undefined ? undefined : attacksOf(top)[index]?.cost) ?? [];
+  const entry = attackMenuOf(state, seat, pokemon)[index];
+  const printed = entry?.attack.cost ?? [];
   const printedEff = effectiveAttackCost(state, pokemon, printed);
   const gate = attackGateOf(state, pokemon, index);
   if (gate?.kind === "alternateCostIf" && conditionHolds(state, seat, gate.condition)) {
@@ -257,7 +274,7 @@ export function attackCostAt(
   // 🆕🆕🆕 D563 — the Ability-printed clause, reached only when the attack-level gate did
   // not fire. Named by the printed attack NAME, so it cannot reach the holder's other
   // attack; through `passivesOf`, so a §9 lock on the holder drops it (the printed cost).
-  const attackName = top === undefined ? undefined : attacksOf(top)[index]?.name;
+  const attackName = entry?.attack.name;
   for (const clause of passivesOf(state, pokemon).attackCostClauses) {
     if (clause.attack !== attackName || !conditionHolds(state, seat, clause.gate.condition)) continue;
     if (clause.gate.kind === "costWaivedIf") return [];
@@ -406,7 +423,8 @@ function scaledAttackDamage(
       // 🛑 **THE PREDICATE IS `benchBodies`' AND THE FOLD IS NOT, WHICH IS WHY THIS IS
       // AN INLINE GUARD AND NOT A CALL.** *"Which bodies on this Bench does the printed
       // noun name"* is ONE question (D159) and it is answered here by the SAME
-      // expression `benchBodies` uses — `matchesFilter(topCardOf(state, p), filter)`,
+      // expression `benchBodies` uses — `matchesFilter(topCardOf(state, p), filter)` [🆕🆕🆕 D578
+      // (D539): now `matchesFilter(inPlayCardOf(state, p), filter)` at both, the in-play view],
       // the TOP card (§1.2) so a body that has evolved twice IS a Stage 2 now. What
       // differs is what is summed: that walk counts 1 per body, this one sums
       // `damage ÷ 10`. Sharing the walk would mean a `benchBodies` that returns a LIST,
@@ -420,7 +438,7 @@ function scaledAttackDamage(
         bench.reduce(
           (total, p) =>
             total +
-            (p !== null && (filter === undefined || matchesFilter(topCardOf(state, p), filter))
+            (p !== null && (filter === undefined || matchesFilter(inPlayCardOf(state, p), filter))
               ? Math.floor(p.damage / 10)
               : 0),
           0,
@@ -802,7 +820,7 @@ function benchBodies(state: GameState, seat: Seat, filter?: CardFilter): number 
   // 🆕🆕 D466 — the OPTIONAL printed noun. `undefined` counts every body, which is
   // the shape D282 and D193 shipped and is what keeps this function's three shipped
   // callers (`opponentBenchCount`, `yourBenchCount`, `bothSidesBenchCount`) byte-
-  // identical in behaviour. The read is the **TOP card** (§1.2) through `topCardOf`,
+  // identical in behaviour. [🆕🆕🆕 D578 (D539): now `inPlayCardOf` — the TOP card's in-play view, so a retyped body (Scovillain ex) reads its in-play types; §1.2's reason is unchanged.] The read is the **TOP card** (§1.2) through `topCardOf`,
   // not the bottom of the stack: a Basic that has evolved twice IS a Stage 2 now,
   // which is what makes the §10 evolve a real line of play here rather than a rule
   // written for symmetry — `opponentActiveIsStage2`'s own reading (interpreter.ts),
@@ -812,7 +830,7 @@ function benchBodies(state: GameState, seat: Seat, filter?: CardFilter): number 
   return state.players[seat].bench.reduce(
     (total, p) =>
       total +
-      (p !== null && (filter === undefined || matchesFilter(topCardOf(state, p), filter)) ? 1 : 0),
+      (p !== null && (filter === undefined || matchesFilter(inPlayCardOf(state, p), filter)) ? 1 : 0),
     0,
   );
 }
@@ -1483,20 +1501,37 @@ export function attack(
     );
   }
   const attackerUid = topUid(active);
-  const attacker = topCardOf(state, active);
+  // 🆕🆕🆕 D578 — the IN-PLAY view (`inPlayCardOf`): the card itself on every body without a
+  // retype, and Scovillain ex as {G} and {R} — so Weakness / Resistance, the type-keyed
+  // shields, the Berries and the attacker-class blocks below read the types it HAS in play.
+  const attacker = inPlayCardOf(state, active);
   if (attackerUid === undefined || attacker === undefined) {
     return err("UNKNOWN_CARD", "no catalog card for the Active Pokémon");
   }
-  const attacks = attacksOf(attacker);
+  // 🆕🆕🆕 D578 — `index` addresses the ATTACK MENU (`attackMenuOf`): the printed attacks first
+  // (so every pre-D578 index names the attack it always named), then Relicanth's Memory Dive
+  // section, then a Technical Machine's. `declared` is the menu row's attack — its own name,
+  // cost, damage and effect — and `entry` keeps the card it is printed on for the program
+  // lookup below. Not a copy: no `as` stamp, and ATTACK_DECLARED names the attack itself.
+  const menu = attackMenuOf(state, action.seat, active);
   const index = action.index;
   // Wire check (types are not validation): the integer gate matters because
-  // a string "0" WOULD resolve `attacks["0"]` while corrupting everything
+  // a string "0" WOULD resolve `menu["0"]` while corrupting everything
   // downstream that does arithmetic with it; the indexed access then covers
   // range (and noUncheckedIndexedAccess types it `| undefined` anyway).
-  const declared = Number.isInteger(index) ? attacks[index] : undefined;
-  if (declared === undefined) {
+  const entry = Number.isInteger(index) ? menu[index] : undefined;
+  if (entry === undefined) {
     return err("BAD_ATTACK_INDEX", `${attacker.name} has no attack at index ${String(index)}`);
   }
+  const declared = entry.attack;
+  // 🆕🆕🆕 D578 — the index a PERSISTED record may name (a `lockedAttacks` entry, a NAMED
+  // `boostedAttack`): the printed index for a printed row, and -1 — no record's index — for a
+  // Memory Dive or Tool row, so a per-attack lock or a named boost never reaches a borrowed
+  // attack (R-MD4) while a whole-body lock and an all-attacks (`null`) boost still do (R-MD3).
+  // [🆕🆕🆕 D578 (R-MD4, RULED: fixed at the landing): "a per-attack lock … never reaches a
+  // borrowed attack" is true of the INDEX-keyed lock only — a self-lock the borrowed row's OWN
+  // text installs is NAME-keyed (`LockedAttack.attackName`) and is refused by the gate below.]
+  const printedIndex = entry.origin === "printed" ? entry.sourceIndex : -1;
   // §8/§11 (D154) — an attack barred THIS ONE attack on THIS turn ("During your
   // next turn, this Pokémon can't use {AttackName}."). Read through
   // `lockedAttackIndexes`, so the turn comparison lives in one place and this site
@@ -1524,7 +1559,13 @@ export function attack(
   // one) whose stamps collide from adjacent turns, so a body can carry TWO live
   // bars and this gate must refuse BOTH. As one index it refused whichever was
   // written last, and let the player use the other.
-  if (lockedAttackIndexes(state, active).includes(index)) {
+  // 🆕🆕🆕 D578 (R-MD4, RULED: fixed at the landing) — …and a NAME-keyed bar (`lockedAttackNames`)
+  // refuses the menu row of that name: Scizor ex's borrowed "Slashing Strike" on the turn after
+  // it used it. The per-index bar above still never reaches a borrowed row (`printedIndex` -1).
+  if (
+    lockedAttackIndexes(state, active).includes(printedIndex) ||
+    lockedAttackNames(state, active).includes(declared.name)
+  ) {
     return err(
       "ATTACK_PREVENTED",
       `an attack effect stops this Pokémon using ${declared.name} this turn (§11)`,
@@ -1598,7 +1639,10 @@ export function attack(
     // Unreachable — the KO'd side promotes (or loses) before play resumes.
     return err("NO_TARGET", "no Defending Pokémon");
   }
-  const { active: declaredDefender, uid: defenderUid, card: defenderCard } = defenderSpot;
+  const { active: declaredDefender, uid: defenderUid } = defenderSpot;
+  // 🆕🆕🆕 D578 — the defender's IN-PLAY card (`inPlayCardOf`), for the type-keyed reads below
+  // (the Fairy Zone rewrite's target type, the typed pre-W/R bonus filters).
+  const defenderCard = inPlayCardOf(state, declaredDefender) ?? defenderSpot.card;
   // 🆕🆕 **D428 — REBINDABLE, AND THE REBIND IS THE WHOLE OBSERVABILITY OF THE
   // PRE-DAMAGE SEAM.** `defenderSpot` is read here, ~1,150 lines before §8.5, and
   // the object it hands back is a SNAPSHOT: `passivesOf(next, defender)`,
@@ -1800,7 +1844,7 @@ export function attack(
   // 🆕🆕🆕 D573 SUBSTITUTION SITE 1 of 4 — the COPIED attack's printed damage box. (The
   // boost on the next line is index-keyed and stays at the COPIER's index, R-CP6.)
   const { base: printedBase, modifier } = parseAttackDamage((copiedFrom?.attack ?? declared).damage);
-  const base = boostedAttackBase(next, attackerBody, index) ?? printedBase;
+  const base = boostedAttackBase(next, attackerBody, printedIndex) ?? printedBase;
   // 🛑 D282 — THE SPLIT ANCHOR, AND IT IS ONE REBIND RATHER THAN SEVEN WIDENINGS.
   // D281 built `CardProgram.attackGate` and enforced it at the §4/§8 declaration
   // seam above; from here down the gate clause is SPENT — it has already decided
@@ -2033,7 +2077,11 @@ export function attack(
   // asked, and the two suites assert the agreement instead of a null.
   // 🆕🆕🆕 D573 SUBSTITUTION SITE 4 of 4 — a copied REGISTRY-authored attack runs the SOURCE
   // card's program at the SOURCE index.
-  const authored = programFor((copiedFrom?.card ?? attacker).id)?.attack?.[copiedFrom?.index ?? index] ?? null;
+  // 🆕🆕🆕 D578 — …and a MENU row's program is its SOURCE card's, at its index there (a Memory
+  // Dive attack's lower stage, a Technical Machine's Tool row); a printed row's `entry.card` is
+  // the top card and `entry.sourceIndex` IS `index`, so that lookup is the pre-D578 one.
+  const authored =
+    programFor((copiedFrom?.card ?? entry.card).id)?.attack?.[copiedFrom?.index ?? entry.sourceIndex] ?? null;
   const derivedHead = effect === null || effect === "" ? null : deriveAttackEffect(effect);
   // 🆕🆕 D409 — THE COMPOSITION SITE, AND IT IS ONE CONCATENATION IN PRINTED ORDER.
   // `derivedHead` is null on the two Prize compounds (their head is a damage-bonus
@@ -3301,7 +3349,7 @@ export function attack(
     // ATTACKER's number (docs/decisions.md D556).
     const bonus =
       attackerPreWRBonus(next, attackerBody, action.seat, defenderCard) +
-      boostedAttackDamage(next, attackerBody, index) +
+      boostedAttackDamage(next, attackerBody, printedIndex) +
       sideAttackBonusThisTurn(next, action.seat, defenderCard);
     // §8.5 step 5, the OTHER pre-W/R term (D149) — the printed "attacks used by
     // the Defending Pokémon do {N} less damage (before applying Weakness and
@@ -3516,7 +3564,8 @@ export function attack(
     // Hariyama on the Bench keeps shielding its Active teammate through it.
     //
     // 🆕🆕🆕 D562 — AND A FOURTH SUMMAND ON THE ON-TARGET ARM: THE BERRY (continuous.ts
-    // `berryReductionOf` — an opposing attacker whose printed types include the Berry's).
+    // `berryReductionOf` — an opposing attacker whose printed types include the Berry's
+    // [🆕🆕🆕 D578 (D539): IN-PLAY types — `attacker` is the attacker's `inPlayCardOf` view]).
     // A Tool on the damaged Active, so `suppressTargetEffects` drops it with the catalog
     // half; and it is asked only past the rulebook's damage step 2 stop (`preWR > 0`,
     // D547's gate below), because a stopped hit never reaches the after-W/R step. A
@@ -3939,7 +3988,18 @@ export function attack(
         // and keeping them together is what makes
         // `invokedBy === "attack"` ⟺ `dealt !== undefined` true of every continuation
         // this engine writes. A widening either way, so `MATCH_RECORD_VERSION` stays 26.
-        { seat: action.seat, sourceUid: attackerUid, invokedBy: "attack", dealt: dealtToDefender },
+        //
+        // 🆕🆕🆕 D578 (R-MD4, RULED: fixed at the landing) — `borrowedAttack` names the declared
+        // menu row when it is a Memory Dive or Technical Machine row (and no copy is running),
+        // so a name-keyed self-lock in its text ("this Pokémon can't use Slashing Strike")
+        // binds to THAT row (`preventAttackUse`). Absent on a printed row: byte-identical ctx.
+        {
+          seat: action.seat,
+          sourceUid: attackerUid,
+          invokedBy: "attack",
+          dealt: dealtToDefender,
+          ...(entry.origin === "printed" || copiedFrom !== null ? {} : { borrowedAttack: declared.name }),
+        },
         events,
       ),
       action.seat,
@@ -4166,6 +4226,15 @@ export function resolveCopiedAttack(
   const action: AttackAction = { type: "attack", seat, index: op.index };
   const copier = resumed.players[seat].active;
   const copierCard = copier === null ? undefined : topCardOf(resumed, copier);
+  // 🆕🆕🆕 D578 — `op.index` is the declared FLAT ATTACK MENU index, read here as a PRINTED index
+  // on the copier's top card. Exact because no copy-family attack is ever a non-printed menu row:
+  // no copy holder sits under an evolved body (~~`memoryDiveD578.test.ts` §10, the census walk~~
+  // [🆕🆕🆕 D578 landing (the parked review's finding (3)): MEASURED by the UNTRACKED script
+  // `tmp/d578-scr/lines.py` over the audit card JSON — no tracked data a test can read carries
+  // `evolveFrom` — and PINNED in the suite only by §10's 13-printing count of copy holders; a new
+  // card evolving FROM an existing holder would turn nothing red]) and
+  // no Technical Machine prints one, so a copy is always declared from the printed section,
+  // where the flat index IS the printed index.
   const printed = copierCard === undefined ? undefined : attacksOf(copierCard)[op.index];
   const copy = printed?.effect === undefined ? null : deriveAttackCopy(printed.effect);
   if (
@@ -4408,6 +4477,15 @@ export function resolveFoundAttack(
   };
   const copier = restored.players[seat].active;
   const copierCard = copier === null ? undefined : topCardOf(restored, copier);
+  // 🆕🆕🆕 D578 — `op.index` is the declared FLAT ATTACK MENU index, read here as a PRINTED index
+  // on the copier's top card. Exact because no copy-family attack is ever a non-printed menu row:
+  // no copy holder sits under an evolved body (~~`memoryDiveD578.test.ts` §10, the census walk~~
+  // [🆕🆕🆕 D578 landing (the parked review's finding (3)): MEASURED by the UNTRACKED script
+  // `tmp/d578-scr/lines.py` over the audit card JSON — no tracked data a test can read carries
+  // `evolveFrom` — and PINNED in the suite only by §10's 13-printing count of copy holders; a new
+  // card evolving FROM an existing holder would turn nothing red]) and
+  // no Technical Machine prints one, so a copy is always declared from the printed section,
+  // where the flat index IS the printed index.
   const printed = copierCard === undefined ? undefined : attacksOf(copierCard)[op.index];
   const copy = printed?.effect === undefined ? null : deriveAttackCopy(printed.effect);
   const zone = op.from === "opponentDeckTop" ? restored.players[otherSeat(seat)].deck : restored.players[seat].discard;
@@ -4418,7 +4496,10 @@ export function resolveFoundAttack(
   return reenterFound(restored, { type: "attack", seat, index: op.index }, pair);
 }
 
-/** The copier's printed attack name at `index` (the re-parked prompt's caption). */
+/** The copier's printed attack name at `index` (the re-parked prompt's caption). [🆕🆕🆕 D578: `index`
+    is the flat menu index, equal to the printed one for every copy attack — see `resolveCopiedAttack`
+    (the guarantee measured by an untracked script and pinned only by `memoryDiveD578.test.ts` §10's
+    13-printing count — D578 landing).] */
 function copierNameOf(state: GameState, seat: Seat, index: number): string {
   const active = state.players[seat].active;
   const card = active === null ? undefined : topCardOf(state, active);

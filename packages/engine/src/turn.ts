@@ -26,6 +26,8 @@ import {
   benchLimitOf,
   benchTrimStages,
   effectiveRetreatCost,
+  // 🆕🆕🆕 D578 — Team Rocket's Energy's owner restriction, at the hand attach.
+  energyMayBeAttachedTo,
   intoPlayOnlyViaOf,
   opposingRetreatBlocked,
   liveHandAttachMark,
@@ -215,6 +217,13 @@ export function attachEnergy(state: GameState, action: AttachEnergyAction): Appl
     );
   }
   const endsTurn = mark?.endsTurn === true;
+  // 🆕🆕🆕 §6.1 (D578) — Team Rocket's Energy's *"This card can only be attached to a Team
+  // Rocket's Pokémon."* — REFUSED, `BAD_TARGET` (a fact about the target), the allowance not
+  // spent (the card never leaves hand). Through `energyMayBeAttachedTo`, the predicate flow.ts's
+  // sweep discards by. A bad bench index reads no body and is refused below.
+  if (markedTarget != null && !energyMayBeAttachedTo(state, card, markedTarget)) {
+    return err("BAD_TARGET", `${card.name} can only be attached to a ${programFor(card.id)?.energy?.attachOnlyToOwner ?? ""}'s Pokémon`);
+  }
 
   const hand = without(side.hand, action.uid);
   let updated: PlayerSide;

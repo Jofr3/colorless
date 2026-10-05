@@ -157,7 +157,7 @@ export const CATALOG_MANIFEST = {
       the printed attack and Ability NAMES in printed ORDER. The order is
       load-bearing: an attack's INDEX is what the `attack` action, the registry's
       `attack` map and D154/D155's `attackIndex` all key on, and a fixture that
-      drops a LEADING attack silently renumbers every one after it.
+      drops a LEADING attack silently renumbers every one after it. [🆕🆕🆕 D578 (D539): the `attack` action's index is now the flat ATTACK MENU index (`attackMenuOf`) — the printed index for every printed attack, which come first; a Memory Dive or Technical Machine row has no index on the holder's printed list.]
 
       `types` is here since D173, and it is the first field on this row that is
       NOT a list of names. It was added because the wrong-index sweep turned up a

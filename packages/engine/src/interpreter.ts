@@ -96,6 +96,8 @@ import {
   toolCardSimulated,
   // 🆕🆕🆕 D572 — Milotic "Mentally Calm": the in-play → hand lock, at every hand writer.
   inPlayToHandBlocked,
+  // 🆕🆕🆕 D578 — the IN-PLAY card (Scovillain ex "Double Type"), at every in-play type read.
+  inPlayCardOf,
   // 🆕🆕🆕 D577 — the live per-seat Bench limit (`benchSpace`, `trimBench`), the
   // Underdepths trim check (`discardStadium`) and Boomerang Energy's print.
   benchLimitOf,
@@ -122,7 +124,7 @@ import type { GameEvent, StatusName } from "./events";
 // 🆕🆕🆕 D575 — `finishGame`, the ONE GAME_OVER emitter, for N's Sigilyph "Victory Symbol"
 // (`winGame`). A cycle (flow.ts imports `runProgram` from here), the triggers.ts shape below:
 // both ends are hoisted function DECLARATIONS called only at run time.
-import { finishGame } from "./flow";
+import { discardMisplacedEnergy, finishGame } from "./flow";
 // THE one exhaustive switch over `Phase` (phaseView.ts) — `conditionHolds` reads
 // the turn OWNER from it rather than re-deriving one by turn parity, which that
 // module's header forbids. phaseView.ts imports from here TYPE-ONLY
@@ -343,6 +345,17 @@ export interface EffectContext {
       `shufflePlayedCardIntoDeck` reads it, and no parking program authors that op; an older
       continuation simply lacks it and reads as "no played card". */
   playedUid?: string;
+  /** 🆕🆕🆕 **D578 (R-MD4, RULED: fixed at the landing) — THE NAME OF THE DECLARED ATTACK-MENU
+      ROW, WHEN THAT ROW IS NOT PRINTED ON THE TOP CARD** (a Relicanth "Memory Dive" row or a
+      Technical Machine's Tool row, continuous.ts `attackMenuOf`). Set by attack.ts `attack()`'s
+      ONE program `runProgram` call, and ABSENT on a printed row, a copy, and every non-attack
+      program. Read by `preventAttackUse` alone: *"During your next turn, this Pokémon can't use
+      Slashing Strike."* used through Memory Dive (Scizor ex `sv05-111`/`-195` via Scyther,
+      Incineroar ex `sv05-034`/`-187` via Torracat "Flare Strike") binds to THIS row by its
+      name, because the holder prints no attack of that name and a flat menu index is never
+      persisted. OPTIONAL, a widening (D125 / D427): `ctx` rides `EffectContinuation` into a
+      parked `phase.cont`; an older continuation lacks it and reads as "a printed row". */
+  borrowedAttack?: string;
 }
 
 /** A specific in-play Pokémon, addressed by the board it sits on and the spot.
@@ -819,7 +832,7 @@ export type EffectPrompt =
       its own rather than reusing `chooseCards`: an attack has no uid, and the only
       thing the answer can be is an INDEX into `attacksOf(card)` — the same value
       the `attack` action carries, the registry's `attack` map is keyed by and
-      `InPlayPokemon.lockedAttack` stores.
+      `InPlayPokemon.lockedAttack` stores. [🆕🆕🆕 D578 (D539): the `attack` action's index is now the flat ATTACK MENU index (`attackMenuOf`) — the printed index for every printed attack, which come first; a Memory Dive or Technical Machine row has no index on the holder's printed list.]
 
       ⚠️ PUBLIC INFORMATION, AND THE ANSWERER GATE IS A CONVENIENCE HERE RATHER
       THAN A BARRIER — the `choosePokemon` end of the split (2b-iii-b), not the
@@ -1093,7 +1106,7 @@ export type EffectChoice =
       because an attack is not an addressable object in this engine — the index IS
       its identity everywhere else (the `attack` action, the registry's `attack`
       map, `InPlayPokemon.lockedAttack.attackIndex`), and inventing a second
-      addressing here would be a second thing to keep in step. Wire-checked to be
+      addressing here would be a second thing to keep in step. [🆕🆕🆕 D578 (D539): the `attack` action's index is now the flat ATTACK MENU index (`attackMenuOf`) — the printed index for every printed attack, which come first; a Memory Dive or Technical Machine row has no index on the holder's printed list.] Wire-checked to be
       one of the OFFERED indices (validateChoice), which is also what keeps a
       crafted frame off an index the defender does not have. */
   | { kind: "attack"; index: number }
@@ -1294,7 +1307,11 @@ export function runProgram(
         ...(stepped.decider === undefined ? {} : { decider: stepped.decider }),
       };
     }
-    next = stepped.done;
+    // 🆕🆕🆕 D578 (R-TRE1, RULED: fixed at the landing) — Team Rocket's Energy's state check after
+    // EVERY synchronous step: an op that attached or moved the card onto a non-Team Rocket's body
+    // discards it before the next op reads the board (flow.ts `discardMisplacedEnergy`; the
+    // identity on every board without a misplaced card).
+    next = discardMisplacedEnergy(stepped.done, events);
     // D216 — a synchronous step may schedule more ops (see `stepOp`'s doc). The
     // same `unshift` the three gates use, so an op the step scheduled can park
     // like any other, and `rest` on that park is the queue as it stands here.
@@ -2220,7 +2237,12 @@ export function resumeProgram(
   // park: Superior Energy Retrieval's cost and Miriam's retrieval both PARK, so
   // every recording this engine can do happens on exactly this path.
   const record: EffectRecord = { ...cont.record };
-  const applied = applyChoice(state, cont.pendingOp, choice, cont.ctx, events, record);
+  // 🆕🆕🆕 D578 (R-TRE1, RULED: fixed at the landing) — the parked op's answer may attach or move
+  // Team Rocket's Energy: the state check runs on it before the rest of the program.
+  const applied = discardMisplacedEnergy(
+    applyChoice(state, cont.pendingOp, choice, cont.ctx, events, record),
+    events,
+  );
   // THE FOURTH GATE, SPLICED HERE RATHER THAN IN AN APPLY ARM. `optional` is the
   // printed "you may", and a gate's whole job is to put ops into the queue —
   // which `runProgram` does three times over (`coinFlipGate` / `conditionGate` /
@@ -5839,14 +5861,16 @@ export function conditionHolds(state: GameState, seat: Seat, cond: BoardConditio
       // null on Trainers and Energy, hence the `?? []`. Empty Active Spot is
       // FALSE, as with the two other card-reading members.
       const spot = activeTop(state, otherSeat(seat));
-      return spot !== null && (spot.card.types ?? []).includes(cond.type);
+      // 🆕🆕🆕 D578 — the IN-PLAY types (`inPlayCardOf`): an opposing Scovillain ex is {G} and {R}.
+      return spot !== null && ((inPlayCardOf(state, spot.active) ?? spot.card).types ?? []).includes(cond.type);
     }
     case "yourActiveHasType": {
       // 🆕🆕🆕 D556 — Dragon Elixir's *"your Active {N} Pokémon"*: the arm directly above
       // with `otherSeat(seat)` replaced by `seat` and NOTHING else — the same `activeTop`,
       // the same `Card.types` column §8.5's Weakness reads, the same empty-Spot FALSE.
       const spot = activeTop(state, seat);
-      return spot !== null && (spot.card.types ?? []).includes(cond.type);
+      // 🆕🆕🆕 D578 — the IN-PLAY types (`inPlayCardOf`), the arm above's read.
+      return spot !== null && ((inPlayCardOf(state, spot.active) ?? spot.card).types ?? []).includes(cond.type);
     }
     case "opponentActiveHasResistance": {
       // 🆕 D371 — the BODY of the arm directly above and a different COLUMN of it:
@@ -5929,8 +5953,10 @@ export function conditionHolds(state: GameState, seat: Seat, cond: BoardConditio
       // Read through `topCardOf` for the arm below's §1.2 reason verbatim: the
       // stack TOP is the Pokémon's identity, so evolving a benched {M} Basic into
       // a body of another type stops satisfying the clause mid-turn.
+      // [🆕🆕🆕 D578 (D539): now `inPlayCardOf` — the TOP card's in-play view, so a retyped body (Scovillain ex) reads its in-play types; §1.2's reason is unchanged.]
       return state.players[seat].bench.some(
-        (p) => p !== null && (topCardOf(state, p)?.types ?? []).includes(cond.type),
+        // 🆕🆕🆕 D578 — the IN-PLAY types (`inPlayCardOf`).
+        (p) => p !== null && (inPlayCardOf(state, p)?.types ?? []).includes(cond.type),
       );
     case "opponentInPlayHasType":
       // 🆕 D390 — Electivire sv05-054 "Short-Circuit Knuckle" ({C}{C}, 40+): "If
@@ -5953,7 +5979,7 @@ export function conditionHolds(state: GameState, seat: Seat, cond: BoardConditio
       //
       // `.includes` and never `types[0] ===` — the field is an array and dual types
       // are a real printing. `types` is null on Trainers and Energy, hence the
-      // `?? []`. Read through `topCardOf` for the arm below's §1.2 reason verbatim:
+      // `?? []`. [🆕🆕🆕 D578 (D539): now `inPlayCardOf` — the TOP card's in-play view, so a retyped body (Scovillain ex) reads its in-play types; §1.2's reason is unchanged.] Read through `topCardOf` for the arm below's §1.2 reason verbatim:
       // the stack TOP is the Pokémon's identity, so evolving the opponent's {W}
       // Basic into another type DISARMS the clause mid-turn. An opponent with
       // nothing in play is FALSE, and that is forced by the printed "any" rather
@@ -5961,7 +5987,8 @@ export function conditionHolds(state: GameState, seat: Seat, cond: BoardConditio
       return [
         state.players[otherSeat(seat)].active,
         ...state.players[otherSeat(seat)].bench,
-      ].some((p) => p !== null && (topCardOf(state, p)?.types ?? []).includes(cond.type));
+        // 🆕🆕🆕 D578 — the IN-PLAY types (`inPlayCardOf`).
+      ].some((p) => p !== null && (inPlayCardOf(state, p)?.types ?? []).includes(cond.type));
     case "inPlayTypesIntersect": {
       // 🆕 D375 — "any of your Pokémon in play are the same type as any of your
       // opponent's Pokémon in play" (Enamorus sv06-093 "Love Resonance", +120). The
@@ -5990,13 +6017,15 @@ export function conditionHolds(state: GameState, seat: Seat, cond: BoardConditio
       // array gives it for free, which is exactly why the boundary needs a rung
       // rather than a comment. `types` is null on Trainers and Energy, hence `?? []`.
       //
+      // [🆕🆕🆕 D578 (D539): now `inPlayCardOf` — the TOP card's in-play view, so a retyped body (Scovillain ex) reads its in-play types; §1.2's reason is unchanged.]
       // Read through `topCardOf` for `yourBenchHasType`'s §1.2 reason verbatim: the
       // stack TOP is the Pokémon's identity, so evolving a body ARMS or DISARMS this
       // clause mid-turn.
       const typesInPlay = (s: Seat): string[] => {
         const side = state.players[s];
         return [side.active, ...side.bench].flatMap((p) =>
-          p === null ? [] : (topCardOf(state, p)?.types ?? []),
+          // 🆕🆕🆕 D578 — the IN-PLAY types (`inPlayCardOf`).
+          p === null ? [] : (inPlayCardOf(state, p)?.types ?? []),
         );
       };
       const theirs = new Set(typesInPlay(otherSeat(seat)));
@@ -6657,7 +6686,8 @@ export function countPokemonInPlay(
   return [side.active, ...side.bench].filter((body) => {
     if (body === null) return false;
     if (damagedOnly && !hasAnyDamageCounters(body)) return false;
-    const card = topCardOf(state, body);
+    // 🆕🆕🆕 D578 — the IN-PLAY card (`inPlayCardOf`): a typed count reads the types each body has.
+    const card = inPlayCardOf(state, body);
     return card !== undefined && matchesFilter(card, filter);
   }).length;
 }
@@ -7743,7 +7773,9 @@ function printedList(values: readonly number[]): string {
 
     ⚠️ THE ATTACKER'S CARD IS RESOLVED HERE AND NOT PASSED IN, which keeps both
     call sites at a ZERO signature diff — `pokemon` is already the attacking body
-    and `topCardOf` is the same read `passivesOf` makes on the line above. */
+    and `topCardOf` is the same read `passivesOf` makes on the line above [🆕🆕🆕 D578 (D539):
+    the card passed on is now `inPlayCardOf` — `topCardOf`'s card with its in-play types
+    (Scovillain ex), so the zero-signature-diff argument stands but the "same read" does not]. */
 export function attackerPreWRBonus(
   state: GameState,
   pokemon: InPlayPokemon,
@@ -7761,7 +7793,8 @@ export function attackerPreWRBonus(
   // D245 — the defender's card now crosses too, for the aura's `target` rider.
   // Both call sites still take a ZERO signature diff: `defenderCard` is already
   // this function's fourth parameter (Choice Belt's suffix read, two lines up).
-  return bonus + seatPreWRDamageBonus(state, seat, topCardOf(state, pokemon), defenderCard);
+  // 🆕🆕🆕 D578 — the attacker's IN-PLAY card (`inPlayCardOf`) for a typed `beneficiary`.
+  return bonus + seatPreWRDamageBonus(state, seat, inPlayCardOf(state, pokemon), defenderCard);
 }
 
 /** 🆕 D358 — **DID THE ANSWER NAME A POKÉMON?** The `pokemon` choice carries an
@@ -9369,6 +9402,10 @@ function addLockedAttack(
   turn: number,
   attackIndex: number,
   until?: "leavesActive",
+  /** 🆕🆕🆕 D578 (R-MD4, RULED: fixed at the landing) — a NAME-keyed bar for a borrowed menu row
+      (types.ts `LockedAttack.attackName`), written with `attackIndex: -1`. Part of BOTH
+      idempotence keys, so two different borrowed names are two bars. */
+  attackName?: string,
 ): LockedAttack[] | null {
   // 🆕🆕 D421 — THE IDEMPOTENCE KEY IS TWO KEYS, BECAUSE THE TWO KINDS OF ENTRY
   // ARE ADDRESSED DIFFERENTLY. A turn-stamped bar is identified by the PAIR
@@ -9384,7 +9421,9 @@ function addLockedAttack(
       ? (lock: LockedAttack) =>
           lock.until === undefined && lock.turn === turn && lock.attackIndex === attackIndex
       : (lock: LockedAttack) => lock.until === until && lock.attackIndex === attackIndex;
-  if (existing.some(duplicate)) return null;
+  // 🆕🆕🆕 D578 (R-MD4, RULED: fixed at the landing) — …and the NAME is part of both keys: two
+  // name-keyed bars share `attackIndex: -1`, and only their names tell them apart.
+  if (existing.some((lock) => duplicate(lock) && lock.attackName === attackName)) return null;
   // 🆕🆕 D421 — …AND THE PRUNE EXEMPTS THE SAME ENTRIES, FOR THE OPPOSITE REASON.
   // The garbage rule below is sound only because a stamp names a turn that will
   // eventually be behind `now`; an unbounded bar's `turn` is the INSTALL turn and
@@ -9394,7 +9433,13 @@ function addLockedAttack(
   // most one such entry per attack index, and §10 sheds the whole list the moment
   // it leaves the Active Spot, which is the only thing that ends this bar at all.
   const kept = existing.filter((lock) => lock.until === "leavesActive" || lock.turn >= now);
-  return [...kept, until === undefined ? { turn, attackIndex } : { turn, attackIndex, until }];
+  return [
+    ...kept,
+    {
+      ...(until === undefined ? { turn, attackIndex } : { turn, attackIndex, until }),
+      ...(attackName === undefined ? {} : { attackName }),
+    },
+  ];
 }
 
 /** §8/§11 (D154) — BAR ONE NAMED ATTACK on the controller's own Active ("During
@@ -9414,7 +9459,12 @@ function addLockedAttack(
     The deriver captures a PROPER NOUN because that is what the sentence contains;
     every consumer of the record addresses attacks by INDEX (attack.ts's §8 gate
     compares `action.index`, and both payability projections map over
-    `attacksOf(card)`). So the lookup happens once, at the install, against the
+    `attacksOf(card)` [🆕🆕🆕 D578 (D539): WITHDRAWN as spelled — the gate compares the declared
+    ATTACK MENU row's PRINTED index (`printedIndex`, -1 for a Memory Dive or Technical Machine
+    row, R-MD4) and both projections map over `attackMenuOf`, comparing `sourceIndex` for
+    printed rows only; the address is still the printed index, so the lookup below stands]
+    [🆕🆕🆕 D578 landing (R-MD4, RULED: fixed): …except for the attack being USED as a Memory Dive
+    or Technical Machine row (`ctx.borrowedAttack`), whose bar is keyed by its NAME — below]). So the lookup happens once, at the install, against the
     HOLDER's own stack-top card — the same call D152's deriver made converting
     counters to HP, in the same direction: translate at the site that owns the
     printed token, so nothing downstream has to know a sentence named anything.
@@ -9472,8 +9522,16 @@ function preventAttackUse(
   const card = topCardOf(state, active);
   if (uid === undefined || card === undefined) return state;
   const printed = attacksOf(card);
-  const attackIndex = printedAttackIndex(printed, attack);
-  if (attackIndex < 0) return state;
+  // 🆕🆕🆕 D578 (R-MD4, RULED: fixed at the landing) — the attack being USED is a Memory Dive or
+  // Technical Machine menu row (`ctx.borrowedAttack`, attack.ts) and the sentence names IT
+  // (Scizor ex using Scyther's "Slashing Strike"): the bar binds to that row by its printed NAME
+  // (`attackIndex: -1`, `attackName`), because the holder prints no such attack and a flat menu
+  // index is never persisted. Asked BEFORE the printed lookup: the row actually used is the
+  // referent of "this Pokémon can't use X". A copy never sets the field (R-CP9 unchanged).
+  const borrowed =
+    ctx.borrowedAttack !== undefined && foldApostrophes(ctx.borrowedAttack) === attack ? ctx.borrowedAttack : undefined;
+  const attackIndex = borrowed === undefined ? printedAttackIndex(printed, attack) : -1;
+  if (attackIndex < 0 && borrowed === undefined) return state;
   // The one rule, D143's: the window is the holder's own next turn, and declaring
   // an attack ENDS the turn [🆕🆕🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which opens the attack-again window instead (flow.ts `finishAttack`); the window keeps `state.turn`, so no turn-stamp argument here moves] (§5.3), so the turn after this one is the opponent's
   // and the one after THAT is the holder's.
@@ -9485,7 +9543,7 @@ function preventAttackUse(
   // bar stamped for a turn its holder has already spent, which never bites once,
   // where `+ 2` would have degraded quietly into D154's next-turn lock.
   const turn = until === undefined ? state.turn + 2 : state.turn;
-  const locks = addLockedAttack(active.lockedAttacks, state.turn, turn, attackIndex, until);
+  const locks = addLockedAttack(active.lockedAttacks, state.turn, turn, attackIndex, until, borrowed);
   if (locks === null) return state;
   // The RESOLVED row's own name and not the op's token: the two differ only in
   // punctuation (the op's is folded, the card's is as printed), and a log row is
@@ -9498,7 +9556,7 @@ function preventAttackUse(
     type: "ATTACK_LOCKED",
     seat: ctx.seat,
     uid,
-    attack: printed[attackIndex]?.name ?? attack,
+    attack: borrowed ?? printed[attackIndex]?.name ?? attack,
     ...(until === undefined ? {} : { until }),
   });
   return withActive(state, ctx.seat, { ...active, lockedAttacks: locks });
@@ -10613,7 +10671,8 @@ function effectRefusedOn(
   // record with a turn's life, an aura is a catalog fold with none, and only the
   // aura consults the attacker's ATTACHMENTS.
   const attackerTop = activeTop(state, ctx.seat);
-  const attacker = attackerTop?.card;
+  // 🆕🆕🆕 D578 — the IN-PLAY card (`inPlayCardOf`): the attacker's types as the blocks read them.
+  const attacker = attackerTop === null ? undefined : inPlayCardOf(state, attackerTop.active);
   // ⚠️ THE AURA IS READ THROUGH `passivesOf` AND NOT OFF THE TARGET'S TOP CARD, for
   // the reason every flag in that fold is there: both printings ARE Abilities, so a
   // §9 lock over the holder must switch the refusal off and let the Poison land.
@@ -10836,7 +10895,8 @@ function spreadDamage(
   // Mimikyu "Safeguard" prevents spread damage too (no "Active Spot" clause) when
   // the attacker is an ex/V — the same gate the main hit runs.
   const attackerTop = activeTop(state, ctx.seat);
-  const attackerCard = attackerTop?.card;
+  // 🆕🆕🆕 D578 — the IN-PLAY card (`inPlayCardOf`): the attacker's types as the shields read them.
+  const attackerCard = attackerTop === null ? undefined : inPlayCardOf(state, attackerTop.active);
   // D149 — the pre-W/R DEBUFF on the ATTACKER reaches the Bench, where the
   // attacker's pre-W/R BONUS deliberately does not, and the printed text is the
   // whole reason: every pre-W/R printing in the pool that ADDS damage scopes
@@ -10913,7 +10973,8 @@ function spreadDamage(
     // actually be placed, so the reduction has to be known before the prevention
     // is asked (continuous.ts `attackBlockOf` argues which number and why).
     // 🆕🆕🆕 D562 — THE BERRY, a fourth summand (continuous.ts `berryReductionOf`: an
-    // opposing attacker of the printed type). No suppression reaches a spread, but the
+    // opposing attacker of the printed type [🆕🆕🆕 D578 (D539): of the IN-PLAY type —
+    // `attackerCard` is `inPlayCardOf`]). No suppression reaches a spread, but the
     // rulebook's damage step 2 stop does (attack.ts's main hit quotes it): a splash the
     // debuff took to 0 never reaches the after-W/R step, so no Berry applies or is spent.
     const berry =
@@ -11193,7 +11254,8 @@ function placeSnipe(
   // Mimikyu "Safeguard" — an ex/V attacker's Benched-target attack damage is
   // prevented too (the deals arm only; a placed counter below is not "damage").
   const attackerTop = activeTop(next, ctx.seat);
-  const attackerCard = attackerTop?.card;
+  // 🆕🆕🆕 D578 — the IN-PLAY card (`inPlayCardOf`): the attacker's types as the shields read them.
+  const attackerCard = attackerTop === null ? undefined : inPlayCardOf(next, attackerTop.active);
   // D149 — the attacker's pre-W/R debuff, on the `deals` arm below only: a PLACED
   // counter is not damage from an attack (D138/D139), so the sentence "…attacks do
   // {N} less damage" has nothing to take off it, exactly as no reduction passive
@@ -11520,9 +11582,11 @@ function snipeActive(
   events: GameEvent[],
 ): GameState {
   const opponent = otherSeat(ctx.seat);
-  const target = activeTop(state, opponent);
+  // 🆕🆕🆕 D578 — both spots as IN-PLAY cards (`activeInPlay`): Weakness / Resistance and the
+  // type-keyed shields below read the types each body HAS in play (Scovillain ex "Double Type").
+  const target = activeInPlay(state, opponent);
   if (target === null) return state;
-  const attacker = activeTop(state, ctx.seat);
+  const attacker = activeInPlay(state, ctx.seat);
   // 🆕🆕🆕 D546 — the ALL-ATTACKS buff ("During your next turn, attacks used by this
   // Pokémon do N more damage to your opponent's Active Pokémon (before applying
   // Weakness and Resistance).", `censusAttackCorpus.ts:148`/`:76`) is FOLDED here,
@@ -12280,7 +12344,9 @@ function healedBody(pokemon: InPlayPokemon, healed: number, turn: number): InPla
     is its evolution's type, not its Basic's), which is why this goes through
     `topCardOf` rather than through the `InPlayPokemon`'s own fields — the same
     datum and the same `(card?.types ?? []).includes(...)` spelling that
-    `attachEnergyTargets`' `targetType` rider reads one seam over, so a board's
+    `attachEnergyTargets`' `targetType` rider reads one seam over [🆕🆕🆕 D578 (D539): both
+    reads are now `inPlayCardOf` — the TOP card's IN-PLAY view (Scovillain ex "Double Type" is
+    {G} and {R}; a §9-locked holder is its printed card), still one datum at both sites], so a board's
     "{L} Pokémon" cannot mean two things in one engine. `types` is a LIST, so a
     dual-type body satisfies either half. A card the pool cannot resolve reads as
     an EMPTY list and is REFUSED: a data gap is never healed by default.
@@ -12334,7 +12400,8 @@ function healEach(
       if (!matchesFilter(card, { kind: "basicPokemon" })) return pokemon;
     }
     if (pokemonType !== undefined) {
-      const card = topCardOf(state, pokemon);
+      // 🆕🆕🆕 D578 — the IN-PLAY types (`inPlayCardOf`).
+      const card = inPlayCardOf(state, pokemon);
       if (!(card?.types ?? []).includes(pokemonType)) return pokemon;
     }
     // 🆕🆕🆕 D560 — the printed *"Evolution"*, `basicOnly`'s twin through the same
@@ -12342,6 +12409,11 @@ function healEach(
     if (op.evolutionOnly === true) {
       const card = topCardOf(state, pokemon);
       if (!matchesFilter(card, { kind: "evolutionPokemon" })) return pokemon;
+    }
+    // 🆕🆕🆕 D578 — the printed *"Tera"* (TM Fluorite), `basicOnly`'s twin on the banner axis.
+    if (op.banner !== undefined) {
+      const card = topCardOf(state, pokemon);
+      if (!matchesFilter(card, { kind: "bannerPokemon", banner: op.banner })) return pokemon;
     }
     const uid = topUid(pokemon);
     // 🆕🆕🆕 D560 — `"all"` is this body's OWN damage; the clamp is then a no-op.
@@ -12519,7 +12591,8 @@ function counterEachAll(
   for (const seat of walked) {
     const board = next.players[seat];
     const counterOne = (pokemon: InPlayPokemon): InPlayPokemon => {
-      const card = topCardOf(next, pokemon);
+      // 🆕🆕🆕 D578 — the IN-PLAY card (`inPlayCardOf`), for a typed filter.
+      const card = inPlayCardOf(next, pokemon);
       if (!matchesFilter(card, filter)) return pokemon;
       if (exceptNamed !== undefined && card?.name === exceptNamed) return pokemon;
       if (op.damagedOnly === true && !hasAnyDamageCounters(pokemon)) return pokemon;
@@ -13230,7 +13303,8 @@ function swappedUid(uid: string, emitted: readonly GameEvent[]): string {
 export function swapBodies(state: GameState, seat: Seat, filter: CardFilter): PokemonRef[] {
   return ownInPlayRefs(state, seat).filter((ref) => {
     const body = refPokemon(state, ref);
-    const top = body === undefined ? undefined : topCardOf(state, body);
+    // 🆕🆕🆕 D578 — the IN-PLAY card (`inPlayCardOf`), for a typed filter.
+    const top = body === undefined ? undefined : inPlayCardOf(state, body);
     return top !== undefined && matchesFilter(top, filter);
   });
 }
@@ -17071,7 +17145,8 @@ export function attachEnergyTargets(
       riders.ownerPokemon !== undefined ||
       riders.targetBanner !== undefined
     ) {
-      const card = topCardOf(state, pokemon);
+      // 🆕🆕🆕 D578 — the IN-PLAY card (`inPlayCardOf`), so `targetType` reads the types the body has.
+      const card = inPlayCardOf(state, pokemon);
       // 🆕🆕 D354 — `targetType` may be a LIST (the printed union of types), so
       // the test is an INTERSECTION of two lists rather than a membership in
       // one: the body's TOP card carries several types of its own, and the rider
@@ -18941,7 +19016,8 @@ export function snipeTargets(
           // Same conservative direction as the window below and as `matchesFilter`'s own:
           // a ref that resolves to no body, or to a body whose top card cannot be read,
           // is DROPPED rather than admitted.
-          return pokemon !== undefined && matchesFilter(topCardOf(state, pokemon), narrowing);
+          // 🆕🆕🆕 D578 — the IN-PLAY card (`inPlayCardOf`), for a typed narrowing.
+          return pokemon !== undefined && matchesFilter(inPlayCardOf(state, pokemon), narrowing);
         });
   if (op.damagedOnly !== true) return classed;
   // A ref that resolves to no body is DROPPED rather than admitted — the narrowed
@@ -19568,13 +19644,27 @@ function subgroupRefs(
   );
 }
 
+/** 🆕🆕🆕 D578 — `activeTop` with its `card` as the IN-PLAY view (`inPlayCardOf`), for the §8.5
+    sites whose Weakness / Resistance and type-keyed reads take the spot's card. */
+function activeInPlay(
+  state: GameState,
+  seat: Seat,
+): { active: InPlayPokemon; uid: string; card: Card } | null {
+  const spot = activeTop(state, seat);
+  if (spot === null) return null;
+  return { ...spot, card: inPlayCardOf(state, spot.active) ?? spot.card };
+}
+
 /** D273 — the top card of the body a ref points at, or undefined when the spot is
     empty. Extracted from `subgroupRefs`, whose four lines of spot-walking are now
     asked by TWO narrowings rather than one; `matchesFilter` answers false for an
-    undefined card, so an empty spot falls out of every predicate for free. */
+    undefined card, so an empty spot falls out of every predicate for free.
+    [🆕🆕🆕 D578: the top card's IN-PLAY view, `inPlayCardOf` — see the line below.] */
 function refTopCard(state: GameState, ref: PokemonRef): Card | undefined {
   const body = refPokemon(state, ref);
-  return body === undefined ? undefined : topCardOf(state, body);
+  // 🆕🆕🆕 D578 — the IN-PLAY card (`inPlayCardOf`): every caller asks about a body in play, so a
+  // typed filter here ("your {G} Pokémon") sees Scovillain ex as {G} and {R}.
+  return body === undefined ? undefined : inPlayCardOf(state, body);
 }
 
 /** 🆕 D349 — `refTopCard`'s first half, split out because a candidate scan can

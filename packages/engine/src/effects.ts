@@ -2565,7 +2565,10 @@ export type BoardCondition =
       EXISTENTIAL over the Bench ("any"), so an EMPTY Bench is FALSE — forced by
       logic rather than chosen, which is the distinction D369 drew when it deferred
       the union's second universal. `Card.types` is read through the stack TOP
-      (§1.2, `yourBenchHasNamed`'s rule): evolving a benched Metal Basic into
+      (§1.2, `yourBenchHasNamed`'s rule) [🆕🆕🆕 D578 (D539): `yourBenchHasNamed`'s
+      `topCardOf` read is no longer this member's — interpreter.ts `conditionHolds` reads the
+      TYPES through `inPlayCardOf`, the TOP card's IN-PLAY view (Scovillain ex "Double Type");
+      still the stack TOP, so the §1.2 reason stands]: evolving a benched Metal Basic into
       something else stops satisfying the clause, which is the right answer. The
       read is `.includes` and not an equality on `types[0]`, because the field is
       an array and dual types are a real printing — the same reading Weakness and
@@ -2630,7 +2633,10 @@ export type BoardCondition =
       (🆕🆕🆕 D569 (D539): "stays on the LOUD path" is WITHDRAWN — Slither Wing resolves through its OWN literal `CONDITIONAL_DAMAGE_CLAUSES` row, `opponentBannerPokemonInPlay`, over `banners.ts`; THIS template still refuses `Future` (a banner, not a type), so the map-is-the-vocabulary claim stands)
       VOCABULARY, NOT THE REGEX.**
 
-      Read through `topCardOf` (§1.2) like every other type-reading member: a
+      Read through `topCardOf` (§1.2) like every other type-reading member [🆕🆕🆕 D578
+      (D539): *"through `topCardOf`"* is WITHDRAWN — interpreter.ts `conditionHolds` now reads
+      every type-reading member through `inPlayCardOf`, the TOP card's IN-PLAY view, so an
+      opposing Scovillain ex "Double Type" is {G} and {R}; the §1.2 reason below is unchanged]: a
       stack's TOP is the Pokémon's identity, so evolving an opponent's {W} Basic
       into a body of another type DISARMS the clause mid-turn. `.includes` and never
       `types[0] ===` — the field is an array and dual types are a real printing, the
@@ -2708,7 +2714,11 @@ export type BoardCondition =
       hence the `?? []`, and a null Active Spot contributes nothing.
 
       Read through `topCardOf` (§1.2) on every body, the rule `yourBenchHasType` and
-      `yourNamedPokemonInPlay` already carry: a stack's TOP is the Pokémon, so an
+      `yourNamedPokemonInPlay` already carry [🆕🆕🆕 D578 (D539): *"through `topCardOf`"* is
+      WITHDRAWN for this member and `yourBenchHasType` — interpreter.ts `conditionHolds` reads
+      their TYPES through `inPlayCardOf`, the TOP card's IN-PLAY view (Scovillain ex is {G} and
+      {R} in play); `yourNamedPokemonInPlay` reads a NAME and stays on `topCardOf`; the §1.2
+      reason is unchanged]: a stack's TOP is the Pokémon, so an
       evolution can ARM or DISARM this clause mid-turn. Types are public the moment a
       Pokémon is in play, so the union's public-state invariant holds. */
   | { kind: "inPlayTypesIntersect" }
@@ -5311,7 +5321,9 @@ export type EffectOp =
       unable to spell a hypothetical *"each of your {N} Pokémon"*.
 
       ⚠️ **AND IT IS A BOARD READ, NOT A CARD READ.** The gate walks the seat's
-      IN-PLAY bodies and compares their TOP card's `types`, which is why it is a
+      IN-PLAY bodies and compares their TOP card's `types` [🆕🆕🆕 D578 (D539): their TOP card's
+      IN-PLAY `types` — interpreter.ts reads them through `inPlayCardOf`, so a Scovillain ex
+      "Double Type" is {G} and {R} to this gate], which is why it is a
       field on the op beside `attachEnergyTargets`' `targetType` rider and NOT a
       `CardFilter` member — `typedPokemon` is the deck/hand/discard half of the
       same axis and would be the wrong instrument here.
@@ -5398,6 +5410,13 @@ export type EffectOp =
           `discardEnergyApply`'s own (one `ENERGY_DISCARDED` per body, after every
           `HEALED`). */
       discardEnergyFromHealed?: true;
+      /** 🆕🆕🆕 D578 — *"each of your **Tera** Pokémon"* (Technical Machine: Fluorite `sv08-188`'s
+          granted attack: *"Discard all Energy from this Pokémon, and heal all damage from each of
+          your Tera Pokémon."*). `basicOnly`'s twin on the BANNER axis: a CARD fact on the TOP
+          card, asked through `matchesFilter`'s `bannerPokemon` arm (`banners.ts`, by printing
+          id), Active AND Bench. A body that does not print the banner keeps its damage.
+          Authored only (registry `TM_FLUORITE`); no deriver produces it. */
+      banner?: Banner;
     }
   /** Heal `amount` HP from EVERY in-play Pokémon on BOTH boards (Picnic Basket
       "Heal 30 damage from each Pokémon (both yours and your opponent's)"). The
@@ -11072,7 +11091,9 @@ export type EffectOp =
       so an answer names at most two DIFFERENT bodies, one card each. The same identity
       collapse as the deck twin (a player picks a Fire Energy, not a uid), the same
       `attachFromZoneApply` (zone `"discard"`), the same validator. `targetType` is the
-      PRINTED type (`card.types`, D238's reading — "{C} Pokémon"). No `recordAs`: nothing
+      PRINTED type (`card.types`, D238's reading — "{C} Pokémon") [🆕🆕🆕 D578 (D539): the
+      IN-PLAY type — `attachEnergyTargets` reads `inPlayCardOf`; no `typesInPlay` value adds or
+      removes {C}]. No `recordAs`: nothing
       reads a consequent. The play gate is the card's `trainerPlayableIf` (a Tera Pokémon in
       play) AND `programPlayable` (cardplay.ts): a board with no Basic Energy in the discard
       or no Benched {C} body REFUSES the Item (`NO_LEGAL_TARGET`) — the gust rule (§7), not

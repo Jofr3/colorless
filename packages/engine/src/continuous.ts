@@ -2,6 +2,8 @@ import {
   ANY_ENERGY,
   attacksOf,
   cardOfUid,
+  // 🆕🆕🆕 D578 — Team Rocket's Energy's constrained unit, read at the provision predicate.
+  constrainedEnergyTypes,
   costMet,
   energyProvidesOf,
   hasRuleBox,
@@ -22,7 +24,7 @@ import {
 } from "./cards";
 import type { PokemonSuffix, PreventedAttackerClass } from "./cards";
 import { type Banner, bannerOf } from "./banners";
-import type { BasicEnergyType, Card } from "@luminous/schema";
+import type { Attack, BasicEnergyType, Card } from "@luminous/schema";
 import type {
   AttackerClass,
   BoardCondition,
@@ -53,6 +55,7 @@ import type {
   GameState,
   HandAttachMark,
   InPlayPokemon,
+  LockedAttack,
   PendingStage,
   PlayerSide,
   Seat,
@@ -214,6 +217,8 @@ export const NO_CONSUMABLE: { amount: number; toolUids: readonly string[] } = {
     by an attack from your opponent's {X} Pokémon, it takes 60 less damage (after applying
     Weakness and Resistance), and discard this card."*), and the Tools that pay it. The
     ATTACKER gate lives here: an opposing seat (`opposedToolPassives`) and the printed type
+    [🆕🆕🆕 D578 (D539): the IN-PLAY type — all four callers pass the attacker's `inPlayCardOf`
+    view, so an attacking Scovillain ex trips a Grass Berry and a Fire Berry alike]
     among the attacking card's `types` (`preventsAttackerType`'s reading of §8.5's type
     word). NOT folded by `passivesOf`, which sums into numbers and cannot say which Tool
     paid. Read at the four §8.5 sites and summed into their `reduction`; the caller
@@ -506,7 +511,14 @@ function auraSuppresses(
   if (aura.suffix !== undefined && pokemonSuffixOf(top) !== aura.suffix) return false;
   if (aura.requiresDamage === true && target.damage <= 0) return false;
   // 🆕🆕🆕 D566 — Team Rocket's Watchtower's "{C} Pokémon": the target's PRINTED types (R-WT1 —
-  // exact while no type-changing passive is built; pinned by a registry walk).
+  // ~~exact while no type-changing passive is built; pinned by a registry walk~~ 🆕🆕🆕 D578
+  // (D418/D539): WITHDRAWN as stated — a type-changing passive IS built (Scovillain ex "Double
+  // Type", `typesInPlay`), and this read STAYS PRINTED on purpose: the effective reader
+  // (`inPlayCardOf`) asks `disabledAbilityUids`, which is the function this line sits under, so
+  // reading it here would recurse. It stays EXACT because no `typesInPlay` value and no
+  // holder's printed types name {C} — a retype can neither add nor remove {C} — pinned by a
+  // registry walk in `scovillainD578.test.ts`, and the R-WT1 tripwire in
+  // `trainerBundleD566.test.ts` now names `typesInPlay`.)
   if (aura.targetType !== undefined && !(top.types ?? []).includes(aura.targetType)) return false;
   // 🆕🆕🆕 D571 — Iron Thorns ex "Initialization": *"Pokémon with a Rule Box in play … except
   // for Future Pokémon"* — the Rule Box narrowing, then the banner exemption (by printing id).
@@ -638,7 +650,10 @@ export function inPlayToHandBlocked(state: GameState, ownerSeat: Seat): boolean 
         is the pre-batch one, `koPrizeReduction`'s precedent;
       • the dying body is a printed `{W}` Pokémon — `matchesFilter`'s `typedPokemon` on its TOP
         card, the predicate every "your {X} Pokémon" reader shares (R-DC3a, ⚠️ UNRULED: the
-        PRINTED type; no SV-legal effect retypes a body);
+        PRINTED type; no SV-legal effect retypes a body) [🆕🆕🆕 D578 (D539): WITHDRAWN —
+        Scovillain ex "Double Type" is an SV-legal retype; the read is now the TOP card's IN-PLAY
+        view (`inPlayCardOf`), so R-DC3a reads the type the dying body IS while still in play
+        (moot for {W} today: Double Type is {G} and {R}, and a §9-locked holder is its printed card)];
       • the move is not locked — `inPlayToHandBlocked(state, seat)` (R-DC3b, ⚠️ UNRULED:
         Milotic "Mentally Calm" opposite sends the Energy to the discard as usual).
     Then every attached Energy the `basicEnergy` filter of that type admits (a Special Energy and
@@ -658,7 +673,8 @@ export function koEnergyRescueUids(state: GameState, seat: Seat, body: InPlayPok
     break;
   }
   if (rescued === undefined) return [];
-  if (!matchesFilter(topCardOf(state, body), { kind: "typedPokemon", pokemonType: rescued })) return [];
+  // 🆕🆕🆕 D578 — the KO'd body's IN-PLAY types (`inPlayCardOf`): it is still on the board here.
+  if (!matchesFilter(inPlayCardOf(state, body), { kind: "typedPokemon", pokemonType: rescued })) return [];
   if (inPlayToHandBlocked(state, seat)) return [];
   const energyType = rescued;
   return body.energy.filter((uid) =>
@@ -706,7 +722,12 @@ export function intoPlayOnlyViaOf(card: Card): string | undefined {
     to registry.ts (`intoPlayOnlyViaOf`'s reason, one function up). */
 export function toolCardSimulated(card: Card): boolean {
   const toolProgram = programFor(card.id);
-  return toolProgram?.passive !== undefined || (toolProgram?.triggered ?? []).length > 0;
+  // 🆕🆕🆕 D578 — …or it GRANTS attacks (Technical Machine: Fluorite, `toolAttacks`).
+  return (
+    toolProgram?.passive !== undefined ||
+    (toolProgram?.triggered ?? []).length > 0 ||
+    toolProgram?.toolAttacks !== undefined
+  );
 }
 
 /** Every continuous modifier affecting one in-play Pokémon, aggregated from
@@ -721,6 +742,47 @@ export function toolCardSimulated(card: Card): boolean {
     working. 🆕🆕🆕 D562 — the Tools keep working under a §9 lock, and stop under
     Jamming Tower: the Tool entries come through `toolsInEffect`, a non-§9 gate (a
     Stadium, not an Ability-lock). */
+// 🆕🆕🆕 D578 — memoized per catalog card OBJECT (a suite's local pool hands a different
+// object for the same id), so every read of one retyped body sees ONE view.
+const retypedViews = new WeakMap<Card, Card>();
+
+/** 🆕🆕🆕 §9 (D578) — the TOP card of an IN-PLAY body as the in-play rules see it: the
+    catalog card itself, or — while the holder's own printed Ability retypes it (Scovillain ex
+    "Double Type", `PassiveEffects.typesInPlay`) and no §9 lock silences that Ability — a view
+    of that card whose `types` are the in-play types. Everything else on the view is the
+    card's own (id, attacks, Weakness, Resistance), so a caller that hands it to a `Card`
+    reader changes ONE answer: which types the body has.
+
+    🛑 **THE ONE WRITER OF "WHAT TYPE IS THIS POKÉMON IN PLAY"**, and every in-play type read
+    resolves its card through here (the allowlist in `scovillainD578.test.ts` classifies each
+    `.types` read and each in-play `matchesFilter` call). The card object itself is returned
+    on every body that has no retype, so every board without a Scovillain ex reads exactly
+    what it read before D578. Hand, deck and discard cards are NEVER passed through this
+    (*"As long as this Pokémon is in play"*).
+
+    ⚠️ The §9 check reads `disabledAbilityUids` only when the top card carries the key, and
+    that function must never call back here: its Watchtower arm (`auraSuppresses`,
+    `targetType`) reads PRINTED types for exactly that reason (R-WT1, annotated at D578). */
+export function inPlayCardOf(state: GameState, pokemon: InPlayPokemon): Card | undefined {
+  const top = topCardOf(state, pokemon);
+  if (top === undefined) return undefined;
+  const typesInPlay = programFor(top.id)?.passive?.typesInPlay;
+  if (typesInPlay === undefined) return top;
+  const uid = topUid(pokemon);
+  if (uid !== undefined && disabledAbilityUids(state).has(uid)) return top; // §9: printed
+  const cached = retypedViews.get(top);
+  if (cached !== undefined) return cached;
+  const view: Card = { ...top, types: [...typesInPlay] };
+  retypedViews.set(top, view);
+  return view;
+}
+
+/** 🆕🆕🆕 §9 (D578) — the in-play TYPES of `pokemon` (`inPlayCardOf`'s `types`, `[]` for an
+    unresolvable body). */
+export function effectiveTypesOf(state: GameState, pokemon: InPlayPokemon): readonly string[] {
+  return inPlayCardOf(state, pokemon)?.types ?? [];
+}
+
 /** 🆕🆕🆕 D576 — the Antique Fossils' printed CARD RULE as a `passivesOf` source: *"This card
     can't be affected by any Special Conditions"* — all five, by name (R-FO4). Added to the
     fold's `sources` UNGATED (never through the `disabled` drop), because a card rule is not
@@ -738,7 +800,8 @@ export function passivesOf(
       beside them (Rock Chestplate `sv01-192`, "The {F} Pokémon this card is
       attached to takes 30 less damage…"). That gate names the HOLDER, which is
       the body this fold already has, so it is resolved HERE against
-      `top.types` — `basicHpBonus`'s placement — and the four read sites take a
+      `top.types` [🆕🆕🆕 D578 (D539): `holderCard.types`, the top card's IN-PLAY view
+      (`inPlayCardOf`) — Scovillain ex's {G} and {R}] — `basicHpBonus`'s placement — and the four read sites take a
       ZERO diff. Contrast `preventDamageFromTypes` below, whose gate names the
       ATTACKER and therefore cannot be resolved anywhere but a read site. */
   damageReductionAfterWR: number;
@@ -1413,6 +1476,7 @@ export function passivesOf(
   //                                writers are Tools, so a §9 lock leaves both
   //                                standing — correctly, a Tool is not an Ability.
   //                                ⚠️ AND ITS `beneficiary` FILTER READS `top`, the
+  //                                [🆕🆕🆕 D578 (D539): `holderCard`, the top card's in-play view]
   //                                HOLDER's card, so it is `holderTypes`' axis with
   //                                a CardFilter instead of a type — an unreadable
   //                                top card fails it and gets LESS HP, never more.
@@ -1520,11 +1584,16 @@ export function passivesOf(
     }),
   ];
   const isBasic = top !== undefined && isBasicPokemon(top);
-  // D161 — the HOLDER's printed types, for Rock Chestplate's "{F} Pokémon this
+  // D161 — the HOLDER's printed types [🆕🆕🆕 D578 (D539): "printed" WITHDRAWN — the in-play
+  // types, see below], for Rock Chestplate's "{F} Pokémon this
   // card is attached to" gate. Read from the TOP card, so an evolution that
   // changes the line's type ends the reduction with the Tool still attached —
   // `isBasic` one line up, on the other axis of the same printed idiom.
-  const holderTypes = top?.types ?? [];
+  // 🆕🆕🆕 D578 — the holder's IN-PLAY card (`inPlayCardOf`: Scovillain ex "Double Type" reads
+  // {G} and {R} here), so Rock Chestplate, Brave Bangle's and Cynthia's Power Weight's holder
+  // filters below ask what type the body IS. A locked holder is its printed card.
+  const holderCard = disabled ? top : inPlayCardOf(state, pokemon);
+  const holderTypes = holderCard?.types ?? [];
   // D253 — the HOLDER's ZONE, for Poltchageist's "As long as this Pokémon is on
   // your Bench" gate. Bound HERE with `isBasic` and `holderTypes`, the fold's two
   // other holder-shaped gates, because it is the same kind of clause on a third
@@ -1574,7 +1643,8 @@ export function passivesOf(
   for (const passive of sources) {
     if (passive === undefined) continue;
     damageReductionAfterWR += passive.damageReductionAfterWR ?? 0;
-    // D161 — the same number, gated on the holder's own printed type. SUMMED into
+    // D161 — the same number, gated on the holder's own printed type [🆕🆕🆕 D578 (D539): its
+    // IN-PLAY type — `holderTypes` above]. SUMMED into
     // the ungated total rather than reported separately: it is the identical
     // sentence at the identical §8.5 step, so splitting it would give the read
     // sites two channels for one reading (D131).
@@ -1591,12 +1661,13 @@ export function passivesOf(
     if (passive.damageBonusBeforeWRIf !== undefined)
       conditionalDamageBonusBeforeWR.push(passive.damageBonusBeforeWRIf);
     // 🆕🆕🆕 D558 — Brave Bangle's HOLDER clause (*"If the Pokémon this card is
-    // attached to doesn't have a Rule Box"*), resolved HERE against `top` because
+    // attached to doesn't have a Rule Box"*), resolved HERE against `top` [🆕🆕🆕 D578 (D539):
+    // `holderCard`, its in-play view] because
     // the fold holds the holder and the read sites hold only the defender.
     const targeted = passive.damageBonusBeforeWRIfTarget;
     if (
       targeted !== undefined &&
-      (targeted.holder === undefined || matchesFilter(top, targeted.holder))
+      (targeted.holder === undefined || matchesFilter(holderCard, targeted.holder))
     )
       targetConditionalDamageBonusBeforeWR.push(targeted);
     if (isBasic) hpBonus += passive.basicHpBonus ?? 0;
@@ -1616,7 +1687,7 @@ export function passivesOf(
     const stageFree = passive.hpBonus;
     if (
       stageFree !== undefined &&
-      (stageFree.beneficiary === undefined || matchesFilter(top, stageFree.beneficiary)) &&
+      (stageFree.beneficiary === undefined || matchesFilter(holderCard, stageFree.beneficiary)) &&
       (stageFree.requiresEnergyType === undefined ||
         hasAttachedEnergy(state, pokemon, stageFree.requiresEnergyType))
     ) {
@@ -2943,7 +3014,10 @@ export function firstTurnAttackBanned(
   // the question is asked about.
   //
   // ⚠️ **AND IT IS READ OFF THE TOP CARD, NOT THROUGH `passivesOf`, WHICH IS THE
-  // INVERSE OF THE LINE ABOVE.** §9 locks ABILITIES. The Meloetta ex licence one
+  // INVERSE OF THE LINE ABOVE.** [🆕🆕🆕 D578 (D539): *"OFF THE TOP CARD"* is WITHDRAWN —
+  // `attackGateOf` reads the gate off the ATTACK MENU row's SOURCE card (the top card for a
+  // printed attack, a lower stage for a Memory Dive row, the Tool for a Technical Machine
+  // row); still NOT through `passivesOf`, so the §9 argument here stands.] §9 locks ABILITIES. The Meloetta ex licence one
   // line up is printed as an Ability and a Klefki must take it away; Volbeat's is
   // printed as ATTACK TEXT and no §9 lock in the game touches it. Two licences for
   // one ban, suppressible on different terms — driven under a live lock rather
@@ -2952,13 +3026,21 @@ export function firstTurnAttackBanned(
 }
 
 /** §4/§8 (D281) — the printed TIMING clause `pokemon`'s stack-top card puts on
-    the attack at `index`, or undefined when it prints none. The ONE read of
+    the attack at `index`, or undefined when it prints none. [🆕🆕🆕 D578 (D539): *"`pokemon`'s
+    stack-top card"* and *"the attack at `index`"* are WITHDRAWN — `index` is the flat ATTACK
+    MENU index (`attackMenuOf`), and the clause is the one the menu row's SOURCE card prints on
+    the attack at the row's `sourceIndex`: the stack-top card at its printed index for a
+    printed attack (printed attacks come FIRST, so the two readings agree byte for byte on
+    every pre-D578 board), the card UNDER the top for a Relicanth "Memory Dive" row (R-MD5),
+    the attached Tool for a Technical Machine row.] The ONE read of
     `CardProgram.attackGate`, shared by `firstTurnAttackBanned` one function up
     (the `firstTurnExempt` arm) and `attackTimingBlocked` in interpreter.ts (the
     two condition arms) — `cantAttackUnless`'s split verbatim, and for its reason:
     the condition arms are SEAT-RELATIVE and this file has no seat.
 
-    🛑 **OFF `topCardOf` AND DELIBERATELY NOT THROUGH `passivesOf`.** Every clause
+    🛑 **OFF `topCardOf` AND DELIBERATELY NOT THROUGH `passivesOf`.** [🆕🆕🆕 D578 (D539):
+    *"OFF `topCardOf`"* is WITHDRAWN — off the menu row's SOURCE card (above); the
+    *"NOT THROUGH `passivesOf`"* half and its §9 argument are unchanged.] Every clause
     in this field is printed as ATTACK TEXT, and §9 Ability-locks silence
     ABILITIES — so a Klefki `sv01-096` must NOT hand Terapagos ex its barred
     "Unified Beatdown" back, and must NOT take Volbeat's licence away. That is the
@@ -2985,7 +3067,11 @@ export function firstTurnAttackBanned(
     🛑 **THE ADDRESS IS THE PRINTED TEXT AT `index`, WHICH IS WHY THE INDEX KEY IS
     STILL MEANINGFUL WITH NO ROW TO KEY OFF.** A derived gate has no registry entry,
     so the question "what is it keyed by" has to be answered from somewhere — and the
-    answer is that `attacksOf(top)[index]` IS the key: the clause is read off the very
+    answer is that `attacksOf(top)[index]` IS the key [🆕🆕🆕 D578 (D539): *"`attacksOf(top)[index]`"*
+    is WITHDRAWN as the spelling — the key is the menu row's own attack (`entry.attack`, printed on
+    `entry.card` at `entry.sourceIndex`), which IS `attacksOf(top)[index]` for a printed row; the
+    argument — the clause is read off the very attack it governs — is unchanged and now covers a
+    borrowed or Tool row too]: the clause is read off the very
     attack it governs. That makes the leak this design invites unconstructible rather
     than merely untested. **Volbeat `sv06-009` is the board**: its idx 0 "Quick Sign"
     prints the licence and its idx 1 "Coordinated Strike" prints no effect text at all,
@@ -2994,7 +3080,9 @@ export function firstTurnAttackBanned(
     cannot express it. `derivedAttackGate.test.ts` §4 drives both indices on an
     UNREGISTERED twin of that card, where the registry cannot be masking the answer.
 
-    ⚠️ **AND IT IS STILL READ OFF `topCardOf` AND NOT THROUGH `passivesOf`** — the
+    ⚠️ **AND IT IS STILL READ OFF `topCardOf` AND NOT THROUGH `passivesOf`** [🆕🆕🆕 D578 (D539):
+    *"READ OFF `topCardOf`"* is WITHDRAWN — off the menu row's SOURCE card; *"NOT THROUGH
+    `passivesOf`"* stands] — the
     §9 argument above is unchanged by the new producer, and is in fact stronger for
     it: the derivation reads printed ATTACK text, which no Ability-lock touches.
 
@@ -3017,10 +3105,98 @@ export function attackGateOf(
   pokemon: InPlayPokemon,
   index: number,
 ): AttackTimingGate | undefined {
+  // 🆕🆕🆕 D578 — RESOLVED THROUGH THE MENU (`attackMenuOf`): `index` is the flat menu index
+  // `AttackAction.index` carries, and the gate is looked up on the card the attack is PRINTED
+  // on, at its own index there — the top card for a printed attack (the pre-D578 read, byte for
+  // byte: printed attacks come FIRST, so their flat index IS their printed index), a lower
+  // stage for a Memory Dive attack (R-MD5: Exeggcute's "Precocious Evolution" keeps its
+  // licence), the Tool for a granted one. The single funnel for `firstTurnAttackBanned`,
+  // `attackTimingBlocked` and `attackCostAt`. A body that is not in play (a copy's phantom) has
+  // no seat, so its menu is its printed attacks.
+  const entry = attackMenuOf(state, seatOfPokemon(state, pokemon), pokemon)[index];
+  if (entry === undefined) return undefined;
+  const authored = programFor(entry.card.id)?.attackGate?.[entry.sourceIndex];
+  return authored ?? timingGateFromAttackText(entry.attack.effect);
+}
+
+/** 🆕🆕🆕 §8 (D578) — one row of a body's ATTACK MENU: the attack, the card it is printed on,
+    its index ON THAT CARD, and which section offered it. */
+export interface AttackMenuEntry {
+  attack: Attack;
+  /** The card the attack is printed on: the top card (`"printed"`), a card UNDER it
+      (`"memoryDive"`), or an attached Tool (`"tool"`). Its program (`attack`, `attackGate`)
+      is keyed by `sourceIndex`. */
+  card: Card;
+  /** The attack's index on `card` — its printed index, or its index in the Tool's
+      `toolAttacks`. Never persisted: only a `"printed"` row's index is ever stamped on a
+      lock or a boost (R-MD4) [🆕🆕🆕 D578 landing (R-MD4, RULED: fixed): a borrowed row's own
+      self-lock is stamped by its NAME instead (`LockedAttack.attackName`, `attackIndex: -1`)]. */
+  sourceIndex: number;
+  origin: "printed" | "memoryDive" | "tool";
+}
+
+/** 🆕🆕🆕 §9 (D578) — is Relicanth "Memory Dive" live for `seat`: any in-play body of that seat
+    whose TOP card carries `PassiveEffects.memoryDive` and whose Ability no §9 lock silences.
+    A boolean: several Relicanth say the same thing and do not stack. */
+export function memoryDiveLive(state: GameState, seat: Seat): boolean {
+  const side = state.players[seat];
+  const bodies = side.active === null ? side.bench : [side.active, ...side.bench];
+  return bodies.some((body) => {
+    const top = topCardOf(state, body);
+    if (top === undefined || programFor(top.id)?.passive?.memoryDive !== true) return false;
+    const uid = topUid(body);
+    return uid !== undefined && !disabledAbilityUids(state).has(uid);
+  });
+}
+
+/** 🆕🆕🆕 §8 (D578) — THE ATTACK MENU of `pokemon`: every attack it can declare, in ONE flat
+    order whose index IS `AttackAction.index` (and the wire's `RedactedAttack.index`):
+
+      1. its PRINTED attacks (the top card's), FIRST — so every printed index is its flat
+         index, and every persisted printed index (a `lockedAttacks` entry, a `boostedAttack`
+         record) keeps naming the same attack whatever the sections below hold;
+      2. 🆕 the MEMORY DIVE section — while `memoryDiveLive(seat)` and the body is EVOLVED
+         (stack length > 1): the attacks of each card UNDER the top, bottom to top (the cards
+         in the stack only, so a stage Rare Candy skipped contributes nothing);
+      3. 🆕 the TOOL section — the `toolAttacks` of every in-effect attached Tool
+         (`toolsInEffect`: none under Jamming Tower), Technical Machine: Fluorite's.
+
+    `seat` is the body's controller (`undefined` for a body that is not in play — a copy's
+    phantom — which gets no Memory Dive section). The flat index is NEVER persisted: a section
+    can grow or empty between two reads (Relicanth leaves play, the TM is discarded), which is
+    why only a `"printed"` row's index is ever stamped (R-MD4) [🆕🆕🆕 D578 landing (R-MD4, RULED:
+    fixed): a borrowed row's own self-lock is keyed by its printed NAME — `lockedAttackNames`]. */
+export function attackMenuOf(
+  state: GameState,
+  seat: Seat | undefined,
+  pokemon: InPlayPokemon,
+): AttackMenuEntry[] {
   const top = topCardOf(state, pokemon);
-  if (top === undefined) return undefined;
-  const authored = programFor(top.id)?.attackGate?.[index];
-  return authored ?? timingGateFromAttackText(attacksOf(top)[index]?.effect);
+  if (top === undefined) return [];
+  const menu: AttackMenuEntry[] = attacksOf(top).map((attack, sourceIndex) => ({
+    attack,
+    card: top,
+    sourceIndex,
+    origin: "printed",
+  }));
+  if (seat !== undefined && pokemon.stack.length > 1 && memoryDiveLive(state, seat)) {
+    for (const uid of pokemon.stack.slice(0, -1)) {
+      const lower = cardOfUid(state, uid);
+      if (lower === undefined) continue;
+      attacksOf(lower).forEach((attack, sourceIndex) => {
+        menu.push({ attack, card: lower, sourceIndex, origin: "memoryDive" });
+      });
+    }
+  }
+  for (const toolUid of toolsInEffect(state, pokemon)) {
+    const tool = cardOfUid(state, toolUid);
+    const granted = tool === undefined ? undefined : programFor(tool.id)?.toolAttacks;
+    if (tool === undefined || granted === undefined) continue;
+    granted.forEach((attack, sourceIndex) => {
+      menu.push({ attack, card: tool, sourceIndex, origin: "tool" });
+    });
+  }
+  return menu;
 }
 
 /** §8/§11 (D154; PLURAL since D165) — WHICH of `pokemon`'s attacks are barred
@@ -3089,9 +3265,31 @@ export function lockedAttackIndexes(state: GameState, pokemon: InPlayPokemon): n
   // so a build that dropped this clause would compare a number naming a turn its
   // holder has already spent — a bar that never bites once, rather than one that
   // bites for the wrong length.
-  return pokemon.lockedAttacks
-    .filter((locked) => locked.until === "leavesActive" || locked.turn === state.turn)
+  // 🆕🆕🆕 D578 (R-MD4, RULED: fixed at the landing) — a NAME-keyed entry (`attackName`, written
+  // with `attackIndex: -1` for a borrowed menu row) is `lockedAttackNames`' below, not this
+  // reader's: skipped here, so its -1 never meets an index comparison.
+  return liveLockedAttacks(state, pokemon)
+    .filter((locked) => locked.attackName === undefined)
     .map((locked) => locked.attackIndex);
+}
+
+/** The live entries of `pokemon.lockedAttacks` — `lockedAttackIndexes`' turn rule (D154 / D421),
+    shared by both readers so the window lives in one place. */
+function liveLockedAttacks(state: GameState, pokemon: InPlayPokemon): LockedAttack[] {
+  return pokemon.lockedAttacks
+    .filter((locked) => locked.until === "leavesActive" || locked.turn === state.turn);
+}
+
+/** 🆕🆕🆕 §8/§11 (D578, R-MD4 — RULED: fixed at the landing) — the PRINTED NAMES of the attacks
+    `pokemon` is barred from right now by a NAME-keyed entry: *"During your next turn, this
+    Pokémon can't use Slashing Strike."* used as a Memory Dive (or Technical Machine) row, which
+    the holder does not print (types.ts `LockedAttack.attackName`). `lockedAttackIndexes`' twin,
+    on the same live window; the §8 gate, `redactedAttacksOf` and GameHud each bar a menu row
+    whose own `attack.name` is in this list (the row's printed spelling is what was stored). */
+export function lockedAttackNames(state: GameState, pokemon: InPlayPokemon): string[] {
+  return liveLockedAttacks(state, pokemon).flatMap((locked) =>
+    locked.attackName === undefined ? [] : [locked.attackName],
+  );
 }
 
 /** §8.5/§11 (D155) — the HP an attack-installed PER-ATTACK BUFF adds to the
@@ -3537,6 +3735,25 @@ export function unitsProvidedBy(state: GameState, pokemon: InPlayPokemon, uid: s
   return unitsOf(state, pokemon, uid, specialEnergyUids(state, pokemon));
 }
 
+/** 🆕🆕🆕 §6.1 (D578) — may the Energy `card` sit on `holder`? FALSE only for a card whose
+    `EnergyProgram.attachOnlyToOwner` names an owner the holder's TOP card does not carry (Team
+    Rocket's Energy `sv10-182` off a Team Rocket's Pokémon), read through `matchesFilter`'s
+    `ownerPokemon` arm. The ONE predicate behind the three places the card's restriction
+    reaches: turn.ts `attachEnergy`'s refusal, flow.ts `discardMisplacedEnergy`'s sweep, and
+    `unitsOf` below (a misplaced card provides NOTHING while it waits for the sweep — R-TRE1)
+    [🆕🆕🆕 D578 landing (R-TRE1, RULED: fixed): the sweep now runs after every program step, on a
+    parked op's answer and on every accepted action too (flow.ts `discardMisplacedEnergy`), so the
+    wait is never longer than the step that misplaced it — `unitsOf`'s arm still answers a board
+    built by surgery or a 0.461-era record before its first drain]. */
+export function energyMayBeAttachedTo(
+  state: GameState,
+  card: Card | undefined,
+  holder: InPlayPokemon,
+): boolean {
+  const owner = card === undefined ? undefined : programFor(card.id)?.energy?.attachOnlyToOwner;
+  return owner === undefined || matchesFilter(topCardOf(state, holder), { kind: "ownerPokemon", owner });
+}
+
 /** Does `uid`, attached to `pokemon`, provide `energyType` (§6.3)? The
     `providesEnergy` filter's predicate.
 
@@ -3553,7 +3770,14 @@ export function providesEnergyType(
   energyType: string,
 ): boolean {
   const units = unitsProvidedBy(state, pokemon, uid);
-  return units.includes(energyType) || units.includes(ANY_ENERGY);
+  // 🆕🆕🆕 D578 — …or a CONSTRAINED unit whose set holds it (Team Rocket's Energy is a {P} Energy
+  // and a {D} Energy, as it can pay either). R-TRE2: a count of "{P} Energy attached" asks this
+  // per CARD, so the two units count the card ONCE.
+  return (
+    units.includes(energyType) ||
+    units.includes(ANY_ENERGY) ||
+    units.some((unit) => constrainedEnergyTypes(unit)?.includes(energyType) === true)
+  );
 }
 
 /** Does `pokemon` have ANY attached Energy of `energy` (§6.3)? The predicate
@@ -3729,7 +3953,8 @@ export function countEnergyInPlay(
   const holders = side.active === null ? side.bench : [side.active, ...side.bench];
   let total = 0;
   for (const holder of holders) {
-    if (filter !== undefined && !matchesFilter(topCardOf(state, holder), filter)) continue;
+    // 🆕🆕🆕 D578 — the IN-PLAY card (`inPlayCardOf`): a typed filter reads the types the body has.
+    if (filter !== undefined && !matchesFilter(inPlayCardOf(state, holder), filter)) continue;
     if (energy === null) {
       total += holder.energy.length;
       continue;
@@ -3975,6 +4200,10 @@ function unitsOf(
   const program = programFor(card.id)?.energy;
   // Basic energy → its type; an unauthored special energy → Colorless.
   if (program === undefined) return [energyProvidesOf(card)];
+  // 🆕🆕🆕 D578 — R-TRE1: a restricted card on a body it may not sit on provides NOTHING (it is
+  // discarded at the next drain point, flow.ts `discardMisplacedEnergy`) [🆕🆕🆕 D578 landing
+  // (R-TRE1, RULED: fixed): ~~the next drain point~~ the step that put it there].
+  if (!energyMayBeAttachedTo(state, card, pokemon)) return [];
   const demote = program.demoteWithOtherSpecial;
   if (demote !== undefined && specialUids.some((other) => other !== uid)) return [...demote];
   const promote = program.promoteOnHolderStage;
@@ -4092,7 +4321,8 @@ export function hasFreeRetreatAura(state: GameState, pokemon: InPlayPokemon): bo
 export function opposingRetreatSurcharge(state: GameState, pokemon: InPlayPokemon): number {
   const uid = topUid(pokemon);
   if (uid === undefined) return 0;
-  const targetTop = topCardOf(state, pokemon);
+  // 🆕🆕🆕 D578 — the IN-PLAY card (`inPlayCardOf`), so a typed `target` reads the types it has.
+  const targetTop = inPlayCardOf(state, pokemon);
   for (const seat of SEATS) {
     const side = state.players[seat];
     // The TARGET clause: only the side's Active is surcharged, so a benched
@@ -4849,7 +5079,8 @@ export function pokemonPlayBarred(
 export function groupShieldedFromAttackEffects(state: GameState, pokemon: InPlayPokemon): boolean {
   const uid = topUid(pokemon);
   if (uid === undefined) return false;
-  const targetTop = topCardOf(state, pokemon);
+  // 🆕🆕🆕 D578 — the IN-PLAY card (`inPlayCardOf`), so a typed group filter reads the types it has.
+  const targetTop = inPlayCardOf(state, pokemon);
   for (const seat of SEATS) {
     const side = state.players[seat];
     // The DERIVED SEAT, `benchShieldScan`'s answer: the caller hands us one of a
@@ -4969,7 +5200,8 @@ export function seatDamageReduction(
   // being hit, where the identically-named rider on the pre-W/R sibling field
   // narrows who is attacking. `undefined` fails every filter, `matchesFilter`'s
   // own conservative direction — an unreadable body is shielded LESS, not more.
-  const damagedCard = topCardOf(state, pokemon);
+  // 🆕🆕🆕 D578 — the IN-PLAY card (`inPlayCardOf`): a typed beneficiary reads the types it has.
+  const damagedCard = inPlayCardOf(state, pokemon);
   for (const seat of SEATS) {
     const side = state.players[seat];
     const holders = side.active === null ? side.bench : [side.active, ...side.bench];
@@ -5422,7 +5654,9 @@ export function hasFreeRetreatSelf(state: GameState, pokemon: InPlayPokemon): bo
     ONCE**: three sources on a {C} Active clamp at zero rather than going negative
     and paying an opposing surcharge back out of it. */
 export function effectiveRetreatCost(state: GameState, pokemon: InPlayPokemon): number {
-  const top = topCardOf(state, pokemon);
+  // 🆕🆕🆕 D578 — the IN-PLAY card (`inPlayCardOf`): the Stadium's typed exemption and N's
+  // Castle's filter read the types the body has (the printed Retreat Cost is the card's own).
+  const top = inPlayCardOf(state, pokemon);
   if (top === undefined) return 0;
   if (hasFreeRetreatAura(state, pokemon) || hasFreeRetreatSelf(state, pokemon)) return 0;
   // 🆕🆕🆕 D558 — the free tier's TOOL and STADIUM members, each its own top-level
@@ -5674,7 +5908,8 @@ export function selfAttackCostDiscount(state: GameState, pokemon: InPlayPokemon)
         reused rather than re-spelled (D131/D222), so `effectiveAttackCost`'s three
         readers keep a zero signature diff. */
 export function toolAttackCostDiscount(state: GameState, pokemon: InPlayPokemon): number {
-  const top = topCardOf(state, pokemon);
+  // 🆕🆕🆕 D578 — the IN-PLAY card (`inPlayCardOf`), for a typed `holder` noun.
+  const top = inPlayCardOf(state, pokemon);
   const uid = topUid(pokemon);
   if (top === undefined || uid === undefined) return 0;
   let discount = 0;
@@ -5702,7 +5937,8 @@ export function toolAttackCostDiscount(state: GameState, pokemon: InPlayPokemon)
     non-Tera body does nothing; `toolsInEffect`, so none under Jamming Tower; never §9-gated,
     R-T1). Top-level, so a mutant row may name it. */
 export function toolAnyTypeCostDiscount(state: GameState, pokemon: InPlayPokemon): number {
-  const holderTop = topCardOf(state, pokemon);
+  // 🆕🆕🆕 D578 — the IN-PLAY card (`inPlayCardOf`), for a typed `holder` noun.
+  const holderTop = inPlayCardOf(state, pokemon);
   if (holderTop === undefined) return 0;
   let total = 0;
   for (const attachedUid of toolsInEffect(state, pokemon)) {
@@ -5755,7 +5991,12 @@ export function anyTypeCostRemoval(
       const symbol = current[i];
       if (symbol === undefined || symbol === "Colorless") continue;
       const owed = current.filter((s) => s === symbol).length;
-      if (owed > provided.filter((unit) => unit === symbol).length) pick = i;
+      // 🆕🆕🆕 D578 — a CONSTRAINED unit whose set holds `symbol` can pay it too (Team Rocket's
+      // Energy for a {P} or a {D}), so it counts toward what the holder can cover.
+      const payers = provided.filter(
+        (unit) => unit === symbol || constrainedEnergyTypes(unit)?.includes(symbol) === true,
+      ).length;
+      if (owed > payers) pick = i;
     }
     next = without(pick >= 0 ? pick : lastColorless >= 0 ? lastColorless : current.length - 1);
   }

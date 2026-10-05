@@ -959,7 +959,15 @@ export interface LockedAttack {
       verbatim (effects.ts) — but every consumer of this record asks the question
       per INDEX: `attack.ts`'s §8 gate compares it against `action.index`, and
       both payability projections (`redactedAttacksOf`, GameHud) build their rows
-      by `attacks.map((attack, index) => …)`. Resolving the name ONCE, at the
+      by `attacks.map((attack, index) => …)` [🆕🆕🆕 D578 (D539): both halves WITHDRAWN as
+      spelled — the §8 gate compares this against the declared ATTACK MENU row's PRINTED index
+      (`attack.ts` `printedIndex`: the row's `sourceIndex` when `origin === "printed"`, else -1,
+      so a Memory Dive or Technical Machine row is never barred by it, R-MD4), and both
+      projections now map over `attackMenuOf` and compare `sourceIndex` for PRINTED rows only.
+      The address is still the printed index; only the read sites moved. 🆕🆕🆕 D578 (R-MD4,
+      RULED: fixed at the landing): ~~"so a Memory Dive or Technical Machine row is never barred by
+      it, R-MD4"~~ still true of THIS index — a borrowed row's bar is the `attackName` entry below,
+      written with `attackIndex: -1`]. Resolving the name ONCE, at the
       install, is the same call D152's deriver made for its unit conversion: the
       translation happens at the site that reads the printed token, so no consumer
       downstream has to know the sentence named anything.
@@ -998,6 +1006,24 @@ export interface LockedAttack {
       (effects.ts): the axis is a DURATION and a second one is a printing away,
       while a boolean would have to be renamed to admit it. */
   until?: "leavesActive";
+  /** 🆕🆕🆕 **D578 (R-MD4, RULED: fixed at the landing) — the bar keyed by the attack's PRINTED
+      NAME, for an attack the holder does not print.** Present only when `preventAttackUse` ran
+      for a declared Memory Dive or Technical Machine menu row (`EffectContext.borrowedAttack`):
+      Scizor ex `sv05-111`/`-195` using Scyther's "Slashing Strike", Incineroar ex
+      `sv05-034`/`-187` using Torracat's "Flare Strike". Such an entry is written with
+      `attackIndex: -1` — no printed index — and is read by `lockedAttackNames` (continuous.ts),
+      which the §8 gate, `redactedAttacksOf` and GameHud compare against each menu row's own
+      name; `lockedAttackIndexes` skips it, so the -1 never reaches an index comparison. A NAME
+      and not a flat menu index, because the menu can grow or empty between two reads (a
+      Relicanth leaves play, the Technical Machine is discarded) and a flat index is NEVER
+      persisted.
+
+      OPTIONAL, a widening (D421's `until` precedent): every entry written before D578 lacks it
+      and reads as before, so `MATCH_RECORD_VERSION` STAYS 40. A 0.461 rollback reading a v40
+      record that holds such an entry answers `-1` from its `lockedAttackIndexes`, which no
+      `action.index` and no projection row ever equals: inert (the bar lapses, the player's
+      favour — the pre-landing reading). */
+  attackName?: string;
 }
 
 /** §8.5/§11 (D155) — an attack-installed PER-ATTACK DAMAGE BUFF on one Pokémon,
@@ -1174,7 +1200,10 @@ export interface BoostedAttack {
     🛑 **A NAME AND NOT AN INDEX, WHICH IS `LockedAttack`'s ANSWER INVERTED AND FOR
     `LockedAttack`'s OWN REASON.** D154 stored an INDEX because every consumer of
     that record asks per index (the §8 gate compares `action.index`, both payability
-    projections build rows by `attacks.map`), and the printed proper noun was
+    projections build rows by `attacks.map` [🆕🆕🆕 D578 (D539): WITHDRAWN as spelled — the gate
+    compares the declared ATTACK MENU row's PRINTED index, -1 for a Memory Dive or Technical
+    Machine row, and both projections map over `attackMenuOf`, comparing `sourceIndex` for
+    printed rows only; still per printed INDEX, so the argument stands]), and the printed proper noun was
     resolved ONCE at the install. This record's only consumer is
     `conditionHolds`, which compares against a printed clause key that is a NAME —
     so the same rule ("translate at the site that reads the printed token") lands on
@@ -2523,7 +2552,10 @@ export type PendingStage =
       `uid` at the one site that knows it and carried across a park unchanged.
       `finishAttack` stamps `InPlayPokemon.usedAttack` with it, and this stage is
       the ONE of the five routes into that function on which the name cannot be
-      re-derived: the top card's `attacks[index]` is gone from scope, and the body
+      re-derived: the top card's `attacks[index]` [🆕🆕🆕 D578 (D539): the ATTACK MENU row at
+      `index`, `attackMenuOf(...)[index]` — a printed, Memory Dive or Technical Machine row; the
+      argument is unchanged, and stronger: the menu also depends on a Relicanth and a Tool that
+      may have left] is gone from scope, and the body
       may by then have self-switched or been shuffled away entirely. It is D189's
       argument about `uid` with the subject changed from "which body" to "which
       attack", and it costs `MATCH_RECORD_VERSION` 24 → 25 alongside

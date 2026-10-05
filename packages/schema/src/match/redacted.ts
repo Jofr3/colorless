@@ -163,7 +163,9 @@ export const redactedBoardSchema = z.object({
 });
 export type RedactedBoard = z.infer<typeof redactedBoardSchema>;
 
-/** One of the viewer's Active's printed attacks, with server-computed
+/** One of the viewer's Active's printed attacks [🆕🆕🆕 D578 (D539): one row of its ATTACK
+    MENU — the printed attacks, then Relicanth's Memory Dive rows, then an attached Technical
+    Machine's; `cost` is the cost printed on the row's OWN card], with server-computed
     payability — the online turn HUD (increment 2b) renders a button per entry
     without ever reading the full state the local HUD does (attacksOf / costMet /
     providedEnergy over the raw board). `playable` folds §8.2 payability (under
@@ -176,7 +178,10 @@ export type RedactedBoard = z.infer<typeof redactedBoardSchema>;
     Only the viewer's OWN Active's attacks ever appear (their own public table
     facts), and only while it is their `turn:action`. */
 export const redactedAttackSchema = z.object({
-  /** Index into the Active's printed attacks — the `attack` action's discriminant. */
+  /** ~~Index into the Active's printed attacks~~ 🆕🆕🆕 D578 (D539): WITHDRAWN as the whole
+      address — an index into the Active's ATTACK MENU (engine `attackMenuOf`: the printed
+      attacks FIRST, each at its printed index, then Relicanth's Memory Dive rows, then an
+      attached Technical Machine's) — the `attack` action's discriminant. No shape change. */
   index: z.number(),
   name: z.string(),
   /** The PRINTED cost — the symbols on the card face, unchanged since increment 2b
@@ -782,7 +787,7 @@ export const redactedEffectPromptSchema = z.discriminatedUnion("kind", [
 
       `index` is the answer's whole content and is the engine's own addressing
       (the `attack` action's discriminant, the registry's `attack` key,
-      `InPlayPokemon.lockedAttack.attackIndex`); the answer dispatches it back
+      `InPlayPokemon.lockedAttack.attackIndex`) [🆕🆕🆕 D578 (D539): the `attack` action's index is now the flat ATTACK MENU index (`attackMenuOf`) — the printed index for every printed attack, which come first; a Memory Dive or Technical Machine row has no index on the holder's printed list.]; the answer dispatches it back
       verbatim and `validateChoice` checks it against this offer. MANDATORY — the
       printed sentence is "Choose 1", with no "you may", so there is no decline
       and no bounds pair to carry. Never empty and never a singleton: the engine

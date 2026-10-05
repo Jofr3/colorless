@@ -6,6 +6,10 @@ import {
   // 🆕🆕🆕 D577 — the Area Zero Underdepths state check, queued at the three sweeps.
   benchTrimStages,
   effectiveRetreatCost,
+  // 🆕🆕🆕 D578 — Team Rocket's Energy's owner restriction, swept at the top of `advance`.
+  energyMayBeAttachedTo,
+  // 🆕🆕🆕 D578 — the IN-PLAY card (Scovillain ex "Double Type"), at the §13.1 Poison read.
+  inPlayCardOf,
   isLethallyDamaged,
   koEnergyRescueUids,
   passivesOf,
@@ -2180,7 +2184,8 @@ function runCheckup(state: GameState, endedSeat: Seat, events: GameEvent[]): App
     if (spot === null || spot.active.conditions.poisonDamage <= 0) continue;
     const { active, uid } = spot;
     const amount =
-      active.conditions.poisonDamage + stadiumPoisonExtraCounters(next, topCardOf(next, active));
+      // 🆕🆕🆕 D578 — the IN-PLAY card (`inPlayCardOf`): Jungle's {D} exemption reads the types it has.
+      active.conditions.poisonDamage + stadiumPoisonExtraCounters(next, inPlayCardOf(next, active));
     next = withActive(next, seat, { ...active, damage: active.damage + amount });
     events.push({ type: "COUNTERS_PLACED", seat, uid, amount, source: "poison" });
   }
@@ -2590,6 +2595,71 @@ function discardEndOfTurnEnergy(state: GameState, seat: Seat, events: GameEvent[
   return withSide(state, seat, { ...side, active, bench, discard: [...side.discard, ...discarded] });
 }
 
+/** 🆕🆕🆕 §6.1 (D578) — Team Rocket's Energy's *"If this card is attached to anything other than
+    a Team Rocket's Pokémon, discard this card."* — a STATE CHECK over both seats' bodies: every
+    attached Energy that `energyMayBeAttachedTo` refuses on its holder goes to that seat's
+    discard pile, one `ENERGY_DISCARDED` per host. Run at ONE drain point, the top of
+    `advance`. The hand attach is refused outright (turn.ts), so this catches the other routes
+    — an effect that attaches or moves the card onto another body, an evolve onto a
+    different owner (R-TRE1 ⚠️ UNRULED: the card is attached, then discarded here) — and a
+    live v40 record written under 0.461 (where the card was a plain {C}). Returns `state`
+    ITSELF when nothing moves, so every board without a misplaced card is untouched.
+
+    🆕🆕🆕 **D578 (R-TRE1, RULED: fixed at the landing) — ~~Run at ONE drain point, the top of
+    `advance`~~ … ~~(R-TRE1 ⚠️ UNRULED: the card is attached, then discarded here)~~: it is a
+    STATE-BASED check and now runs wherever an effect can put the card on a body, not only at
+    the next drain.** Three more callers, so the card NEVER remains on a non-Team Rocket's body
+    past the step that put it there, fast paths with no `advance` included: interpreter.ts
+    `runProgram` after EVERY synchronous op (an attach or move inside a program is swept before
+    the program's next op reads the board), `resumeProgram` right after the parked op's answer
+    lands, and index.ts `applyAction` on every accepted action (the net under every route that
+    is not a program — an evolve onto a different owner among them). The top of `advance` stays
+    (a 0.461-era record's first drain). EXPORTED for those callers. */
+export function discardMisplacedEnergy(state: GameState, events: GameEvent[]): GameState {
+  let next = state;
+  for (const seat of SEATS) {
+    const side = next.players[seat];
+    const discarded: string[] = [];
+    const strip = (pokemon: InPlayPokemon, from: PokemonTarget): InPlayPokemon => {
+      const taken = pokemon.energy.filter((uid) => !energyMayBeAttachedTo(state, cardOfUid(state, uid), pokemon));
+      if (taken.length === 0) return pokemon;
+      discarded.push(...taken);
+      events.push({ type: "ENERGY_DISCARDED", seat, actor: seat, uids: taken, from, host: topUid(pokemon) ?? "" });
+      return { ...pokemon, energy: pokemon.energy.filter((uid) => !taken.includes(uid)) };
+    };
+    const active = side.active === null ? null : strip(side.active, { spot: "active" });
+    const bench = side.bench.map((pokemon, index) => strip(pokemon, { spot: "bench", index }));
+    if (discarded.length === 0) continue;
+    next = withSide(next, seat, { ...side, active, bench, discard: [...side.discard, ...discarded] });
+  }
+  return next;
+}
+
+/** 🆕🆕🆕 §7.4 (D578) — Technical Machine: Fluorite's *"If this card is attached to 1 of your
+    Pokémon, discard it at the end of your turn."* — `discardEndOfTurnEnergy`'s Tool twin: every
+    attached Tool carrying `toolDiscardAtEndOfYourTurn` on `seat`'s bodies (the TURN OWNER's —
+    *"your turn"*) goes to `seat`'s discard pile, one `TOOLS_DISCARDED { when: "consumed" }` per
+    host (the existing row: the card's owner discards it by its own printed sentence). Reads the
+    tool list itself, not `toolsInEffect`: Jamming Tower silences a Tool's EFFECT, and this is a
+    rule about the card. Returns `state` ITSELF when nothing moves. Never parks. */
+function discardEndOfTurnTools(state: GameState, seat: Seat, events: GameEvent[]): GameState {
+  const side = state.players[seat];
+  const discarded: string[] = [];
+  const strip = (pokemon: InPlayPokemon): InPlayPokemon => {
+    const taken = pokemon.tools.filter(
+      (uid) => programFor(cardOfUid(state, uid)?.id ?? "")?.toolDiscardAtEndOfYourTurn === true,
+    );
+    if (taken.length === 0) return pokemon;
+    discarded.push(...taken);
+    events.push({ type: "TOOLS_DISCARDED", seat, actor: seat, uids: taken, host: topUid(pokemon) ?? "", when: "consumed" });
+    return { ...pokemon, tools: pokemon.tools.filter((uid) => !taken.includes(uid)) };
+  };
+  const active = side.active === null ? null : strip(side.active);
+  const bench = side.bench.map(strip);
+  if (discarded.length === 0) return state;
+  return withSide(state, seat, { ...side, active, bench, discard: [...side.discard, ...discarded] });
+}
+
 /** Drain GameState.pending stage by stage. Automatic stages (TURN_ENDED,
     checkup, the next startTurn) just run; decision stages either PARK — set
     the matching ko:* interrupt phase, announce it with a prompt event so an
@@ -2597,7 +2667,10 @@ function discardEndOfTurnEnergy(state: GameState, seat: Seat, events: GameEvent[
     at the head — or auto-resolve when exactly one legal resolution exists
     (the M1 doctrine: a choice with no choice in it is not a choice). The
     recursion is bounded by the queue length (a handful of stages). */
-export function advance(state: GameState, events: GameEvent[]): ApplyResult {
+export function advance(stateIn: GameState, events: GameEvent[]): ApplyResult {
+  // 🆕🆕🆕 D578 — Team Rocket's Energy's state check, at the ONE drain point (the identity on
+  // every board without a misplaced restricted Energy).
+  const state = discardMisplacedEnergy(stateIn, events);
   const stage = state.pending[0];
   if (stage === undefined) return ok(state, events);
   switch (stage.kind) {
@@ -2686,8 +2759,12 @@ export function advance(state: GameState, events: GameEvent[]): ApplyResult {
       // after Powerglass (whose attach is then discarded too, should it ever attach one) and
       // after Amarys (moot: neither moves the other's cards) — R-IG1 ⚠️ UNRULED. Never parks.
       const ignited = discardEndOfTurnEnergy(ended, stage.seat, events);
+      // 🆕🆕🆕 D578 — Technical Machine: Fluorite's *"discard it at the end of your turn"*, beside
+      // Ignition and for the same TURN OWNER only: a TM is never discarded at the end of the turn
+      // of the player whose Pokémon do NOT hold it.
+      const toolsShed = discardEndOfTurnTools(ignited, stage.seat, events);
       events.push({ type: "TURN_ENDED", turn: state.turn, seat: stage.seat });
-      return advance(popStage(ignited), events);
+      return advance(popStage(toolsShed), events);
     }
     case "checkup":
       // runCheckup pops the stage itself: its KO stage-pairs go in front of

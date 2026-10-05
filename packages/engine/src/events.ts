@@ -153,6 +153,14 @@ export type GameEvent =
     }
   /** `seat`'s Active declared its printed attack `attack` (index into the
       top card's attacks); `uid` is the attacker's top card.
+      [🆕🆕🆕 D578 (D539): *"its printed attack"* and *"index into the top card's attacks"* are
+      WITHDRAWN — `index` is the flat ATTACK MENU index `AttackAction.index` carries
+      (continuous.ts `attackMenuOf`), and `attack` is that menu row's own name. For a printed
+      attack the two readings agree byte for byte (printed attacks come FIRST, so the flat index
+      IS the printed index); a Relicanth "Memory Dive" row names an attack printed on a card
+      UNDER the top, and a Technical Machine row one printed on the attached Tool, each at its
+      flat menu index (`memoryDiveD578.test.ts` §3, `tmFluoriteD578.test.ts`). `uid` is still the
+      attacker's top card. No shape change.]
       🆕🆕🆕 D573 — `as` is the COPIED attack's printed name when `attack` is a copy-attack
       (Night Joker / Foul Play / Metronome / Gemstone Mimicry / Try to Imitate) that resolved
       as another Pokémon's attack. ABSENT on every other declaration, and on a copy that found

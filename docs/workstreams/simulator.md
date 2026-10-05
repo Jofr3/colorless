@@ -28870,7 +28870,7 @@ killed undeclared); the two `D543` offer rows re-anchored by script (the offer l
 The whole-corpus sweeps: ~~D563's (running in the main checkout), D564's (predicted `3559 · 52` over 3,611) and~~ ~~this one's (predicted
 `3621 · 52` over 3,673)~~ (🆕 D566 landing: this one's is PAID, exactly, on its first launch — `3621 killed · 52 known survivor(s) · 0 GAP(S)` over 3,673, close-out `182d4055`) (🆕 landing: D563's and D564's are PAID, each exactly — `3506 · 52` over 3,558, close-out `78823284`, and
 `3559 · 52` over 3,611, close-out `97ef099b` — so this one rests on a measured base). R-ZH1 UNRULED. The 0.448 rollback readings (named, not bumped). Next candidate: Scovillain ex
-"Double Type" ×2 with Team Rocket's Watchtower (🆕🆕🆕 D566: the Watchtower BUILT alone, on PRINTED types — R-WT1; Double Type stays PARKED) — an effective-types slice. Brock's Scouting (🆕🆕🆕 D566: BUILT); Amulet of Hope / Heavy Baton (🆕🆕🆕 D566: BUILT); Huntail;
+"Double Type" ×2 with Team Rocket's Watchtower (🆕🆕🆕 D566: the Watchtower BUILT alone, on PRINTED types — R-WT1; Double Type stays PARKED; 🆕🆕🆕 D578: Double Type BUILT on the in-play type view, the Watchtower's read still printed — R-WT1 annotated) — an effective-types slice. Brock's Scouting (🆕🆕🆕 D566: BUILT); Amulet of Hope / Heavy Baton (🆕🆕🆕 D566: BUILT); Huntail;
 Powerglass (🆕🆕🆕 D566: BUILT).
 
 ## D566 — the trainer bundle plus the Watchtower rider: 9 printings / 6 texts / 6 objects (engine 0.450.0, `MATCH_RECORD_VERSION` stays 36)
@@ -28917,7 +28917,9 @@ The whole-corpus sweeps: ~~D564's (running in the main checkout), D565's (predic
 (predicted `3703 · 52` over 3,755)~~ (🆕 D567 landing: this one's is PAID, exactly, on its first launch — `3703 killed · 52 known survivor(s) · 0 GAP(S)` over 3,755, swept on `bf05fc14`, close-out `7d81ada4`) (🆕 landing: D564's and D565's are PAID, each exactly — `3559 · 52` over 3,611, close-out
 `97ef099b`, and `3621 · 52` over 3,673, close-out `182d4055` — so this one rests on a measured base). R-OM and R-HB UNRULED. The 0.449 rollback readings (named, not bumped).
 PARKED, NOT BUILT: Scovillain ex "Double Type" — a funnel-only slice (~45 in-play binding sites plus `matchesFilter`'s in-play
-arm) that owes R-WT1's move to effective types. Iron Treads "Dual Core" cannot trigger in Standard (`sv05-149` is not legal).
+arm) that owes R-WT1's move to effective types. [🆕🆕🆕 D578: BUILT — `inPlayCardOf`; *"owes R-WT1's move to effective types"*
+is WITHDRAWN (D539): the Watchtower read STAYS printed (the effective reader would recurse) and stays exact because no
+retype names {C} — D578 below.] Iron Treads "Dual Core" cannot trigger in Standard (`sv05-149` is not legal).
 
 ## D567 — the trainer bundle: 4 printings / 4 texts / 4 objects (engine 0.451.0, `MATCH_RECORD_VERSION` stays 36)
 
@@ -29012,7 +29014,8 @@ Paradox banners, about 28 printings — single-source table so far, needs the sa
 PAID in part — Slice 2 part a closed the table from two sources plus the image and built 20; see the D569 section below.) Named debts:
 Area Zero Underdepths ×3 (Bench size 8 — `BENCH_MAX` is a constant) [🆕🆕🆕 D577: PAID — BUILT, `BENCH_CEILING` / `benchLimitOf`, D577 below], Team Rocket's Mimikyu `sv10-087` (copy-attack) and
 Technical Machine: Fluorite `sv08-188` (its GRANTED attack heals "each of your Tera Pokémon"; excluded because no Technical
-Machine attack-granting Tool is built — the TM mechanism is its blocker). Five printings; Tera is 24, D568 built 19.
+Machine attack-granting Tool is built — the TM mechanism is its blocker) [🆕🆕🆕 D578: PAID — BUILT, `technicalMachines.ts` +
+`toolAttacks` on the attack menu, D578 below]. Five printings; Tera is 24, D568 built 19.
 NEXT: see `progress.md` NEXT (7).
 
 ## D569 — the Paradox banner unlock, Slice 2 part a: 20 printings / 11 texts (engine 0.453.0, `MATCH_RECORD_VERSION` stays 36)
@@ -29310,7 +29313,7 @@ Recorded as R-CP9 (⚠️ UNRULED) with its reversal; the ~~four~~ 🆕 SIX *"Un
 engine source first (interpreter.ts `preventAttackUse`'s doc, `perAttackLock` / `untilLeavesActiveBar` / `perAttackBuff`
 suites; 🆕 at the landing, by a case-INSENSITIVE re-sweep, D154's two lowercase copies — the `decisions.md` D154 row and
 the D154 section of this file — which the builder's case-sensitive sweep missed); §3c adds six rungs; no mutant row (the D573 rows stay 36). NEXT: see `progress.md` NEXT — attack-residue Bundle A (or its 3-printing rider sharing a 37 → 38 step with the
-Paradox MRV trio), then antique-fossils, Tyme, Scovillain ex. (🆕🆕🆕 D574: the rider TAKEN with the copy-family remainder, NO MRV step — D574 below.) (🆕🆕🆕 D577: Tyme TAKEN, with Area Zero Underdepths and Boomerang Energy, 39 → 40 — D577 below.) (🆕🆕🆕 D576: antique-fossils TAKEN, 38 → 39, Area Zero Underdepths PARKED as D577 — D576 below.)
+Paradox MRV trio), then antique-fossils, Tyme, Scovillain ex [🆕🆕🆕 D578: TAKEN — D578 below]. (🆕🆕🆕 D574: the rider TAKEN with the copy-family remainder, NO MRV step — D574 below.) (🆕🆕🆕 D577: Tyme TAKEN, with Area Zero Underdepths and Boomerang Energy, 39 → 40 — D577 below.) (🆕🆕🆕 D576: antique-fossils TAKEN, 38 → 39, Area Zero Underdepths PARKED as D577 — D576 below.)
 
 ## D574 — the copy-family remainder + the Bundle A rider: 7 printings / 5 texts (engine 0.458.0, `MATCH_RECORD_VERSION` stays 37)
 
@@ -29373,7 +29376,7 @@ INERT. Owed: ~~D573's sweep (predicted `3958 · 51` over 4,009, PENDING) and~~ �
 4,009, close-out `b022087d`); ~~owed: D574's (predicted `3982 · 51` over 4,033, stands as written).~~ 🆕 D574's is PAID,
 EXACTLY, on the first launch (`3982 · 51` over 4,033, close-out `f268886b`, `tmp/sweep-D574.log:8078`; struck at the D575 landing).
 NEXT: see `progress.md` NEXT (7) — the MRV slice (Iron Moth + Miraidon + Glimmora + Hypno, 37 → 38), then Blipbug [🆕🆕🆕 D575: TAKEN, with Blipbug AND N's Sigilyph riding the same step — D575 below],
-antique-fossils [🆕🆕🆕 D576: TAKEN, 38 → 39, Area Zero Underdepths PARKED as D577 — D576 below], Tyme [🆕🆕🆕 D577: TAKEN with Underdepths and Boomerang, 39 → 40 — D577 below], Scovillain ex; Koraidon after its R-1.
+antique-fossils [🆕🆕🆕 D576: TAKEN, 38 → 39, Area Zero Underdepths PARKED as D577 — D576 below], Tyme [🆕🆕🆕 D577: TAKEN with Underdepths and Boomerang, 39 → 40 — D577 below], Scovillain ex [🆕🆕🆕 D578: TAKEN — D578 below]; Koraidon after its R-1.
 
 ## D575 — the MRV-38 attack slice: 6 printings / 6 texts (engine 0.459.0, `MATCH_RECORD_VERSION` 37 → 38)
 
@@ -29480,7 +29483,7 @@ with `--no-commit`, no amend; docs-only conflicts resolved keeping every close-o
 
 NEXT: see `progress.md` NEXT (7) — ⑴ fossils + Area Zero Underdepths (MRV 38 → 39, after an ingest decision on
 map.ts:103-108) [🆕🆕🆕 D576: TAKEN for the four fossils WITHOUT the ingest decision (the face hand-written in `fossils.ts`,
-the widening a USER follow-up); Underdepths ×3 PARKED as D577 — D576 below], ⑵ Relicanth + TM Fluorite, ⑶ Tyme [🆕🆕🆕 D577: TAKEN — D577 below], ⑷ Scovillain + Iron Treads, ⑸ the census close-out (Walking Wake +
+the widening a USER follow-up); Underdepths ×3 PARKED as D577 — D576 below], ⑵ Relicanth + TM Fluorite [🆕🆕🆕 D578: TAKEN — D578 below], ⑶ Tyme [🆕🆕🆕 D577: TAKEN — D577 below], ⑷ Scovillain + Iron Treads [🆕🆕🆕 D578: Scovillain TAKEN; Iron Treads stays excluded], ⑸ the census close-out (Walking Wake +
 Koraidon after R-1, the gates on constructed literals); the Mega ingest is a user decision.
 
 ## D576 — the Antique Fossils: 4 printings / 3 texts (engine 0.460.0, `MATCH_RECORD_VERSION` 38 → 39)
@@ -29547,7 +29550,7 @@ D253's Curious Tea Party (with, by reading, the Thundurus / Rabsca / Shaymin sid
 own-Bench spread or snipe is shielded although the print says "from your opponent's Pokémon" (decisions.md D576 (g)).
 
 NEXT: see `progress.md` NEXT (7) — ⑴ D577 Area Zero Underdepths ×3 (or types-and-tyme split, Scovillain first) [🆕🆕🆕 D577: TAKEN, with Boomerang and Tyme — D577 below], ⑵
-borrowed-attacks and special-energy as riders, ⑶ the census close-out; the Mega ingest and the fossil-face ingest
+borrowed-attacks and special-energy as riders [🆕🆕🆕 D578: both TAKEN, with Scovillain — D578 below], ⑶ the census close-out; the Mega ingest and the fossil-face ingest
 widening are user decisions.
 
 ## D577 — Area Zero Underdepths ×3 + Boomerang Energy + Tyme ×2: 6 printings / 3 texts (engine 0.461.0, `MATCH_RECORD_VERSION` 39 → 40)
@@ -29602,8 +29605,63 @@ See `progress.md` NEXT (0)-(6) for the pasted figures: `bun run check`, precheck
 16, not the judge's 19). Census: `BUILT.trainer` 258 → **263**, `BUILT.specialEnergy` 9 → **10**, `BUILT.ability` 388
 UNMOVED and CHECKED; `built` 2384 → **2390**. MRV 39 → 40, the THIRTEENTH position (match.ts). Owed: ~~D576's sweep
 (`4058 · 51` over 4,109, PENDING) and~~ 🆕 D576's sweep is PAID, EXACTLY (`4058 · 51` over 4,109, close-out `34d11336`);
-D577's (`4093 · 51` over 4,144, stacked on it, so it stands as written). Carried: decisions.md D577 (g), including ⑷ the
+~~D577's (`4093 · 51` over 4,144, stacked on it, so it stands as written)~~ 🆕 D577's is PAID, EXACTLY (`4093 · 51` over 4,144, close-out `f537dd0e`, `tmp/sweep-D577.log:8300`; struck at the D578 landing). Carried: decisions.md D577 (g), including ⑷ the
 evolve-path trim's missing mutant row (a known coverage gap).
 
 NEXT: see `progress.md` NEXT (7) — ⑴ Scovillain ×2 + Relicanth ×2 + TM Fluorite as one MRV-hold slice (or apart),
-⑵ TR Energy as a rider, ⑶ the census close-out; the Mega ingest and the map.ts Trainer-branch widening are user decisions.
+⑵ TR Energy as a rider [🆕🆕🆕 D578: ⑴ and ⑵ TAKEN TOGETHER, MRV held at 40 — D578 below], ⑶ the census close-out; the Mega ingest and the map.ts Trainer-branch widening are user decisions.
+
+## D578 — Scovillain ex ×2 + Relicanth ×2 + Technical Machine: Fluorite + Team Rocket's Energy: 6 printings / 4 texts (engine 0.462.0, `MATCH_RECORD_VERSION` stays 40)
+
+**Status:** ✅ BUILT in the `lum-wt-d578` worktree (detached at `2635118f`, D577), ~~NOT committed (the brief: "DO NOT
+COMMIT")~~ 🆕 committed on `d578-prep` at `88d88dd9` and LANDED on `main` by cherry-pick onto the D577 close-out
+`f537dd0e`, R-MD4 and R-TRE1 FIXED there (progress.md NEXT (1-land)), while D577's whole-corpus sweep ran in the main checkout (never written). Rank 1 of the D578 pricing round
+(`progress.md` NEXT (7), recorded verbatim): plus-tr-energy, 6 printings — built WHOLE, neither off-ramp fired (Relicanth is
+NOT parked; the rider is in). The Trainer column (264 / 264), the Special Energy column (11 / 11) and the Tera banner's 24
+printings are now whole.
+
+### (a) The cards
+- Scovillain ex `sv08-037`, `sv08-216` — Ability "Double Type": *"As long as this Pokémon is in play, it is {G} and {R}
+  type."*
+- Relicanth `sv05-084`, `sv05-173` — Ability "Memory Dive": *"Each of your evolved Pokémon can use any attack from its
+  previous Evolutions. (You still need the necessary Energy to use each attack.)"*
+- Technical Machine: Fluorite `sv08-188` (Tool): *"The Pokémon this card is attached to can use the attack on this card. (You
+  still need the necessary Energy to use this attack.) If this card is attached to 1 of your Pokémon, discard it at the end
+  of your turn."* — "Fluorite" {G}{W}{P}: *"Discard all Energy from this Pokémon, and heal all damage from each of your Tera
+  Pokémon."*
+- Team Rocket's Energy `sv10-182` (Special): *"This card can only be attached to a Team Rocket's Pokémon. If this card is
+  attached to anything other than a Team Rocket's Pokémon, discard this card. / As long as this card is attached to a
+  Pokémon, it provides 2 in any combination of {P} Energy and {D} Energy."*
+
+### (b) The machine (`docs/decisions.md` D578 (b))
+- **Types in play.** `PassiveEffects.typesInPlay`; continuous.ts `inPlayCardOf` (the card itself on every body without the
+  key; the printed card under a §9 lock) and `effectiveTypesOf`, read at every in-play type site and classified by the AST
+  allowlist (`scovillainD578.test.ts` §7). Weakness / Resistance read the view and still apply ONCE. The Watchtower read
+  stays printed (R-WT1, annotated).
+- **The attack menu.** `attackMenuOf(state, seat, pokemon)`: printed first, then Memory Dive, then the in-effect Tools'
+  `toolAttacks`; its flat index is `AttackAction.index` (docs annotated, no shape change). `attackGateOf`, `attackCostAt`,
+  `attack()`, redact.ts and GameHud read it; the persisted indices stay printed (`printedIndex`).
+- **Technical Machine: Fluorite.** The attack in the NEW data table `technicalMachines.ts` (the ingest drops it; outside every
+  whitelist), `CardProgram.toolAttacks` (+ `toolCardSimulated`), the program at `attack[0]` (`healEach.banner`), and
+  `toolDiscardAtEndOfYourTurn` → flow.ts `discardEndOfTurnTools` (the turn owner only).
+- **Memory Dive.** `PassiveEffects.memoryDive` + `memoryDiveLive`: the cards under an evolved top, bottom to top.
+- **Team Rocket's Energy.** cards.ts `constrainedEnergyUnit` / `constrainedEnergyTypes` and `costMet`'s three passes;
+  `providesEnergyType`'s membership arm; `EnergyProgram.attachOnlyToOwner` behind `energyMayBeAttachedTo` — the hand-attach
+  refusal (turn.ts), nothing provided while misplaced, flow.ts `discardMisplacedEnergy` at the top of `advance`.
+
+### (c) Readings (`docs/decisions.md` D578 (a))
+R-MD1, R-MD2, R-MD3, R-MD4 ~~⚠️ UNRULED (flagged to the user, the fix path not built)~~ 🆕 FIXED at the landing (the lock binds
+to the borrowed row by name), R-MD5, R-TRE1 ~~⚠️ UNRULED (flagged)~~ 🆕 FIXED at the landing (the state check runs at every step),
+R-TM1 ⚠️ UNRULED (flagged), R-TRE2 ⚠️ UNRULED (flagged); R-WT1 annotated. 🆕 The ⚠️ UNRULED set is exactly R-TM1 and R-TRE2.
+
+### (d) Owed
+See `progress.md` NEXT (0)-(6) for the pasted figures: `bun run check`, precheck (corpus 4,189), the four gates, the probe
+`--decision D578 --allow-dirty` (45 killed; 🆕 55 at the landing), the edited-row and neighbour re-probe, the 16 gate-witness rows and the 12
+docs rows. Census: `BUILT.ability` 388 → **392**, `BUILT.trainer` 263 → **264**, `BUILT.specialEnergy` 10 → **11**,
+`BUILT.attack` UNMOVED; `built` 2390 → **2396**. MRV stays 40 (match.ts). Owed: ~~D577's sweep (`4093 · 51` over 4,144,
+PENDING) and D578's (`4138 · 51` over 4,189, stacked on it — re-derive if D577's lands differently)~~ 🆕 D577's sweep is PAID,
+EXACTLY (close-out `f537dd0e`); D578's is owed at `4148 · 51` over 4,199 (re-derived at the landing: +10 rule-fix rows). Carried:
+decisions.md D578 (g).
+
+NEXT: see `progress.md` NEXT (7) — ⑴ the census close-out (Walking Wake + Koraidon, after the user's R-1 decision); ⑵ the
+Mega Evolution ingest and the map.ts Trainer-branch attack widening as USER decisions.

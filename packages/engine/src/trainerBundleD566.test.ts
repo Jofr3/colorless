@@ -367,8 +367,8 @@ describe("§1 — the prints and the registry rows", () => {
     expect(programFor(WATCHTOWER)).toEqual({ stadium: { disableAbilities: { side: "both", targetType: "Colorless" } } });
   });
 
-  it("the engine is 0.461.0", () => {
-    expect(engineVersion).toBe("0.461.0");
+  it("the engine is 0.462.0", () => {
+    expect(engineVersion).toBe("0.462.0");
   });
 });
 
@@ -716,23 +716,27 @@ describe("§4 — Team Rocket's Watchtower: the first Stadium-sourced Ability lo
     }
   });
 
-  it("🛑 R-WT1 TRIPWIRE: no registered passive rewrites a Pokémon's TYPE — the Watchtower reads PRINTED types, exact only while that holds", () => {
-    // The parked Scovillain ex "Double Type" (sv08-037 / sv08-216, *"it is {G} and {R}
-    // type"*) is the first such passive; it is UNBUILT, and the day it lands this rung must
-    // move the Watchtower's read to an effective-types reader.
-    expect(programFor("sv08-037")).toBeUndefined();
-    expect(programFor("sv08-216")).toBeUndefined();
+  it("🛑 R-WT1 TRIPWIRE (🆕🆕🆕 D578: INVERTED): ONE registered passive rewrites a Pokémon's TYPE, `typesInPlay` — the Watchtower still reads PRINTED types, exact because no retype names {C}", () => {
+    // ~~The parked Scovillain ex "Double Type" … is UNBUILT, and the day it lands this rung must
+    // move the Watchtower's read to an effective-types reader.~~ 🆕🆕🆕 D578 (D539): BUILT
+    // (`DOUBLE_TYPE`, `typesInPlay: ["Grass", "Fire"]`), and the Watchtower read STAYS PRINTED
+    // (the effective reader would recurse through `disabledAbilityUids`); its exactness is now
+    // the no-{C} registry walk in `scovillainD578.test.ts`.
+    expect(programFor("sv08-037")?.passive?.typesInPlay).toEqual(["Grass", "Fire"]);
+    expect(programFor("sv08-216")).toBe(programFor("sv08-037"));
     const passiveKeys = new Set<string>();
     for (const id of registryCardIds()) {
       for (const key of Object.keys(programFor(id)?.passive ?? {})) passiveKeys.add(key);
     }
     const typeKeys = [...passiveKeys].filter((key) => /type/i.test(key)).sort();
     // Every type-NAMING passive key, each one a filter, a reduction or a weakness rewrite —
-    // none rewrites the holder's own `types`. A new key here must be read before it is added.
+    // ~~none rewrites the holder's own `types`~~ 🆕🆕🆕 D578 (D539): ONE does, `typesInPlay`. A
+    // new key here must be read before it is added.
     expect(typeKeys).toEqual([
       "damageReductionAfterWRFromTypeThenDiscard",
       "damageReductionAfterWRIfType",
       "preventDamageFromType",
+      "typesInPlay", // 🆕🆕🆕 D578 — the ONE key that rewrites the holder's own types
     ]);
   });
 

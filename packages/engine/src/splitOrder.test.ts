@@ -390,7 +390,13 @@ describe("§1 — the census D282 priced its refusal against: counts reproduce, 
     // `sv06-166` (`BOOMERANG_ENERGY`, an `energy`) and Tyme `sv08-190` / `sv08.5-143` (`TYME`, a
     // `trainer`): ALL non-attack. Real catalog ids, no `fix-*` key, inserted MID-MAP after D576's
     // rows; no `attackGate`, so the gated count below stands at 17.
-    expect(ids.length).toBe(979);
+    // 🆕🆕🆕 D578 — 979 -> **985**: SIX registry keys on FOUR program objects — Scovillain ex
+    // `sv08-037` / `sv08-216` (`DOUBLE_TYPE`, a `passive`), Technical Machine: Fluorite `sv08-188`
+    // (`TM_FLUORITE`, `toolAttacks` + `toolDiscardAtEndOfYourTurn` + an `attack` key for its GRANTED
+    // attack), Relicanth `sv05-084` / `sv05-173` (`MEMORY_DIVE`, a `passive`) and Team Rocket's Energy
+    // `sv10-182` (`TEAM_ROCKETS_ENERGY`, an `energy`). Real catalog ids, no `fix-*` key, inserted
+    // MID-MAP after D577's rows; no `attackGate`.
+    expect(ids.length).toBe(985);
     const gated = ids.filter((id) => programFor(id)?.attackGate !== undefined);
     expect(gated.length).toBe(17);
     const kinds = gated.flatMap((id) =>

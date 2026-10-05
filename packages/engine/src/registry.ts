@@ -1,5 +1,5 @@
-import type { BasicEnergyType } from "@luminous/schema";
-import { ANY_ENERGY } from "./cards";
+import type { Attack, BasicEnergyType } from "@luminous/schema";
+import { ANY_ENERGY, constrainedEnergyUnit } from "./cards";
 import type { Banner } from "./banners";
 import type { PokemonSuffix, PreventedAttackerClass } from "./cards";
 import { searchTopOrderProgram } from "./effects";
@@ -12,6 +12,8 @@ import type {
   PokemonType,
 } from "./effects";
 import type { StatusName } from "./events";
+// 🆕🆕🆕 D578 — Technical Machine: Fluorite's granted attack TEXT (DATA, the ingest drops it).
+import { TM_FLUORITE_ATTACKS } from "./technicalMachines";
 import { BENCH_CEILING } from "./types";
 
 // The id-keyed card-program registry (D8, "op programs are keyed by card id").
@@ -524,7 +526,8 @@ export interface PassiveEffects {
   /** Flat HP subtracted from the attack damage this Pokémon TAKES, applied
       AFTER Weakness and Resistance (Bouffalant "Bouffer", §8.5/§15.B). */
   damageReductionAfterWR?: number;
-  /** `damageReductionAfterWR` GATED on the HOLDER's own printed TYPE (Rock
+  /** `damageReductionAfterWR` GATED on the HOLDER's own printed TYPE [🆕🆕🆕 D578 (D539): its
+      IN-PLAY type — continuous.ts `passivesOf` reads `holderTypes` off `inPlayCardOf`] (Rock
       Chestplate sv01-192, a Pokémon TOOL: "The {F} Pokémon this card is attached
       to takes 30 less damage from attacks from your opponent's Pokémon (after
       applying Weakness and Resistance)."). 1 printing, and the local D1's ONLY
@@ -535,7 +538,10 @@ export interface PassiveEffects {
       printed NAME to the `Card.types` datum" and then had to resolve it at the
       READ SITES, because the body it names is the ATTACKER and `passivesOf` has
       no attacker. This gate names the HOLDER — the very body `passivesOf` is
-      folding — so it is resolved INSIDE that fold against `topCardOf(...)?.types`,
+      folding — so it is resolved INSIDE that fold against `topCardOf(...)?.types` [🆕🆕🆕 D578
+      (D539): *"`topCardOf(...)?.types`"* is WITHDRAWN as the spelling — `passivesOf` resolves it
+      against `inPlayCardOf(...)`'s types (the top card's IN-PLAY view); the placement argument
+      is unchanged],
       exactly as `basicHpBonus` resolves "The Basic Pokémon this card is attached
       to" against `isBasicPokemon(top)`. The DATUM is reused from D159
       (`Card.types`, `PokemonType`); the PLACEMENT is Bravery Charm's. Consequence:
@@ -1310,9 +1316,14 @@ export interface PassiveEffects {
     /** 🆕🆕🆕 D566 — the TARGET's printed TYPE: Team Rocket's Watchtower `sv10-180`
         (*"{C} Pokémon in play (both yours and your opponent's) have no Abilities."* —
         `targetType "Colorless"`). Read off the target's PRINTED `Card.types` (R-WT1:
-        exact while no type-changing passive is built — `trainerBundleD566.test.ts` walks
+        ~~exact while no type-changing passive is built — `trainerBundleD566.test.ts` walks
         the registry and pins that none is; the parked Scovillain ex "Double Type" slice
-        must move this read to an effective-types reader). Omitted = any type. */
+        must move this read to an effective-types reader~~ 🆕🆕🆕 D578 (D539): WITHDRAWN —
+        Scovillain ex "Double Type" (`typesInPlay`) is BUILT and this read STAYS PRINTED:
+        the effective reader asks `disabledAbilityUids`, which this read sits under, so it
+        would recurse. It stays exact because no `typesInPlay` value and no holder's printed
+        types name {C} — pinned by a registry walk, `scovillainD578.test.ts`). Omitted = any
+        type. */
     targetType?: PokemonType;
     /** 🆕🆕🆕 D571 — the TARGET must have a RULE BOX: Iron Thorns ex `sv06-077`/`-196`/
         `sv08.5-032` "Initialization" (*"Pokémon with a Rule Box in play (both yours and
@@ -1401,7 +1412,8 @@ export interface PassiveEffects {
       your {W} Pokémon is Knocked Out by damage from an attack from your opponent's Pokémon,
       you may put all Basic {W} Energy attached to that Pokémon into your hand instead of the
       discard pile."* 1 legal printing. The value is the printed type, read TWICE (the KO'd
-      body's printed type, R-DC3a, and the Basic Energy's). Read by flow.ts
+      body's printed type, R-DC3a [🆕🆕🆕 D578 (D539): the KO'd body's IN-PLAY type —
+      continuous.ts `koEnergyRescueUids` reads `inPlayCardOf`], and the Basic Energy's). Read by flow.ts
       `collectKnockOutPass` off the PRE-batch board, per KO'd body, when `byAttackFor` holds
       and the attacker is the OPPONENT (Amulet of Hope's two clauses, D566), the holder is
       live and unsuppressed (R-DC2: a Huntail Knocked Out in the SAME batch still counts —
@@ -3020,13 +3032,21 @@ export interface PassiveEffects {
       `attackCostAt` (attack.ts) charges it through the same two branches. What differs is
       WHO PRINTS IT: an ABILITY, so it rides `passivesOf` and a §9 Ability-lock silences it
       (the printed cost comes back) — the exact inverse of `CardProgram.attackGate`, which
-      is attack text read off `topCardOf` and immune to a lock. Two seams for one charge,
+      is attack text read off `topCardOf` [🆕🆕🆕 D578 (D539): *"read off `topCardOf`"* is
+      WITHDRAWN — continuous.ts `attackGateOf` reads it off the ATTACK MENU row's SOURCE card
+      (the top card for a printed attack, a lower stage for a Memory Dive row, the Tool for a
+      Technical Machine row); still attack text, still immune to a lock] and immune to a lock. Two seams for one charge,
       suppressible on opposite terms, which is why this is a `PassiveEffects` field and
       not an `attackGate` row.
 
       ⚠️ **KEYED BY PRINTED NAME, NOT BY INDEX**: the Ability names the attack ("the
       Trifrost attack", "Frightening Howl"), and `attackCostAt` resolves it by name
-      against `attacksOf(top)` at the index being charged — so the clause can never reach
+      against `attacksOf(top)` at the index being charged [🆕🆕🆕 D578 (D539): *"against
+      `attacksOf(top)`"* is WITHDRAWN — `attackCostAt` matches it against the ATTACK MENU row's
+      own name, `attackMenuOf(...)[index].attack.name`, which is `attacksOf(top)[index]` for a
+      printed row; a borrowed (Memory Dive) or Technical Machine row of the same name WOULD be
+      matched, and none exists: "Trifrost" and "Frightening Howl" are printed only on Kyurem
+      `sv06.5-047` (a Basic) and Noivern `sv09-128` (Noibat prints neither), audit card JSON] — so the clause can never reach
       the holder's other attack, and a body whose top prints no attack of that name
       (evolved away, a different card) is simply not charged by it.
 
@@ -3059,6 +3079,33 @@ export interface PassiveEffects {
       printed *"Pokémon ex"*. Collected by `passivesOf`; no `MATCH_RECORD_VERSION` bump:
       nothing is persisted. */
   evolveAsNamed?: { name: string; intoSuffix: "ex" };
+  /** 🆕🆕🆕 **§9 (D578) — THE HOLDER'S TYPES WHILE IT IS IN PLAY, REPLACING ITS PRINTED ONES.**
+      Scovillain ex `sv08-037` / `sv08-216` "Double Type" (2 legal printings, 1 text) — *"As
+      long as this Pokémon is in play, it is {G} and {R} type."* The holder's printed type is
+      {R}, so the value is `["Grass", "Fire"]`: the full IN-PLAY type list, not an addend.
+
+      Read by ONE function, continuous.ts `inPlayCardOf` (and its `effectiveTypesOf`
+      projection), which hands every in-play type read a view of the TOP card carrying these
+      types — Weakness and Resistance (§8.5, the attacker's types), the defender's
+      type-keyed shields, the type-gated Tools, Stadiums and board conditions, and every
+      in-play typed `matchesFilter`. A §9 Ability lock on the holder hands back the PRINTED
+      types (the Ability IS the retype). Hand, deck and discard reads stay printed (*"As long
+      as this Pokémon is in play"*). ⚠️ Team Rocket's Watchtower's `targetType` STAYS on the
+      printed types (continuous.ts `auraSuppresses`, R-WT1 annotated at D578): reading the
+      effective types there would recurse through `disabledAbilityUids`, and it stays EXACT
+      because no `typesInPlay` value adds or removes {C} (pinned by a registry walk,
+      `scovillainD578.test.ts`). Catalog-only: never persisted. */
+  typesInPlay?: readonly PokemonType[];
+  /** 🆕🆕🆕 **§9 (D578) — "MEMORY DIVE": EACH OF YOUR EVOLVED POKÉMON CAN USE ANY ATTACK FROM ITS
+      PREVIOUS EVOLUTIONS.** Relicanth `sv05-084` / `sv05-173` (2 legal printings, 1 text) —
+      *"Each of your evolved Pokémon can use any attack from its previous Evolutions. (You
+      still need the necessary Energy to use each attack.)"* A SEAT-wide licence read by ONE
+      function, continuous.ts `memoryDiveLive` (any in-play holder on the seat whose Ability no
+      §9 lock silences — several holders do not stack), which `attackMenuOf` reads to add the
+      attacks of the cards UNDER an evolved body's top card, bottom to top (the cards in the
+      stack only — a stage Rare Candy skipped contributes nothing). R-MD1 … R-MD5,
+      decisions.md D578. Catalog-only: never persisted. */
+  memoryDive?: true;
 }
 
 /** A Stadium's "once during each player's turn" ACTIVATED ability (§7.3) —
@@ -3261,7 +3308,9 @@ export interface StadiumEffects {
       more damage counters on each Poisoned non-{D} Pokémon (both yours and your
       opponent's)."*). `amount` is in HP (the printed 2 counters = 20, §12's conversion at
       the row); `excludesType` is `basicRetreatSurcharge`'s rider verbatim, matched
-      against the Poisoned Active's TOP card `types`, so a dual-type {D} body is exempt.
+      against the Poisoned Active's TOP card `types` [🆕🆕🆕 D578 (D539): its IN-PLAY `types` —
+      flow.ts passes `inPlayCardOf(next, active)`; no `typesInPlay` value names {D}, so no board
+      moves], so a dual-type {D} body is exempt.
       Read ONCE by `stadiumPoisonExtraCounters` (continuous.ts) inside flow.ts's §13.1
       Poison loop and SUMMED into that one `COUNTERS_PLACED { source: "poison" }` row
       (R-PJ; reversal: attribute the Stadium's share on its own row when a reader needs
@@ -3444,6 +3493,21 @@ export interface EnergyProgram {
       (one `ENERGY_DISCARDED` per body), after Powerglass and after Amarys (R-IG1 ⚠️
       UNRULED, docs/decisions.md D571). Catalog-only: never persisted. */
   discardAtEndOfYourTurn?: true;
+  /** 🆕🆕🆕 §6.1 (D578) — *"This card can only be attached to a Team Rocket's Pokémon. If this card
+      is attached to anything other than a Team Rocket's Pokémon, discard this card."* (Team
+      Rocket's Energy `sv10-182`). The OWNER PREFIX of the Pokémon this card may sit on, read
+      through `matchesFilter`'s `ownerPokemon` arm on the holder's TOP card (evolving onto a
+      non-Team Rocket's Pokémon makes it "attached to anything other than"). Read by ONE
+      predicate, continuous.ts `energyMayBeAttachedTo`, with THREE callers: turn.ts
+      `attachEnergy` REFUSES the hand attach onto any other body (`BAD_TARGET`, the allowance
+      not spent); flow.ts `discardMisplacedEnergy` — ~~at ONE drain point, the top of `advance`~~
+      [🆕🆕🆕 D578 landing (R-TRE1, RULED: fixed): at the top of `advance` AND after every program
+      step, on a parked op's answer and on every accepted action, so the card never REMAINS] —
+      discards it from any body it ended up on by another route (R-TRE1 ~~⚠️ UNRULED~~: an effect
+      that attaches or moves it there attaches it, then it is discarded); and continuous.ts
+      `unitsOf`, where a misplaced card provides NOTHING while it waits for that sweep.
+      Catalog-only: never persisted. */
+  attachOnlyToOwner?: string;
   /** Effect run on attach from hand (Jet's switch). */
   onAttach?: EnergyOnAttach;
   /** ⚠️ THE CONTINUOUS SURFACE (D174) — the one field on this interface that is
@@ -3558,7 +3622,8 @@ export type AttackTimingGate =
 export interface CardProgram {
   /** Registry-authored attack programs, keyed by ATTACK INDEX (the position in
       the card's printed `attacks` list — the same index the `attack` action
-      carries). A card authors the attacks the deriver does not read; the rest fall
+      carries — [🆕🆕🆕 D578 (D539): the `attack` action's index is now the flat ATTACK MENU index (`attackMenuOf`) — the printed index for every printed attack, which come first; a Memory Dive or Technical Machine row has no index on the holder's printed list.] 🆕🆕🆕 D578: a Technical Machine's row keys its
+      `attack` programs by the index into its `toolAttacks`). A card authors the attacks the deriver does not read; the rest fall
       back to `deriveAttackEffect` (or stay unsimulated).
       Sits ABOVE the deriver (D8): `programFor(id)?.attack?.[index] ?? derive`.
       Chien-Pao ex "Hail Blade" (sv02-061 idx 0, D96) was the first; Mewtwo VSTAR
@@ -3841,6 +3906,23 @@ export interface CardProgram {
       D414), and the attack's seat is the taker's ("YOUR Tera Pokémon"). Honoured on the ONE
       path, like the other `trainer…` fields. */
   supporterKoPrizeBonus?: { amount: number; attacker: CardFilter };
+  /** 🆕🆕🆕 **§7.4 (D578) — A TOOL THAT GRANTS ATTACKS: the attacks printed ON THE TOOL**, which
+      *"The Pokémon this card is attached to can use"* — Technical Machine: Fluorite `sv08-188`
+      (1 legal printing). The attack text is hand-written in `technicalMachines.ts` (DATA: the
+      ingest drops a Trainer's attacks), and this key carries it by reference. Read by ONE
+      function, continuous.ts `attackMenuOf`, whose `"tool"` section lists them after the
+      printed attacks and the Memory Dive section, for every IN-EFFECT Tool (`toolsInEffect`:
+      none under Jamming Tower). Their programs are this row's own `attack` key, at the index
+      into THIS list; their timing clauses are read off `attackGateOf` through the menu. Makes
+      `toolCardSimulated` true. Catalog-only: never persisted. */
+  toolAttacks?: readonly Attack[];
+  /** 🆕🆕🆕 **§7.4 (D578) — *"If this card is attached to 1 of your Pokémon, discard it at the
+      end of your turn."*** — Technical Machine: Fluorite `sv08-188`. The Tool twin of
+      `EnergyProgram.discardAtEndOfYourTurn` (Ignition Energy), read by flow.ts
+      `discardEndOfTurnTools` beside `discardEndOfTurnEnergy`, for the TURN OWNER's bodies only
+      (*"your turn"*) — so the opponent's turn end never discards it. Never parks;
+      `TOOLS_DISCARDED { when: "consumed" }`. */
+  toolDiscardAtEndOfYourTurn?: true;
 }
 
 // ── The programs, authored from the printed text (verified vs the live
@@ -8662,7 +8744,9 @@ const CHARIZARD_EX: CardProgram = {
     who could stack both on the Active would.
 
     `targetType: "Darkness"` is "your **{D}** Pokémon", read off the TOP card's
-    types by the shared `attachEnergyTargets`.
+    types by the shared `attachEnergyTargets` [🆕🆕🆕 D578 (D539): the TOP card's IN-PLAY types —
+    `attachEnergyTargets` now reads `inPlayCardOf`; no `typesInPlay` value names {D}, so no
+    board moves].
 
     The last sentence is §9.2 and needs the gate's `contains` narrowing: not "did
     you attach anything" but "did anything land on your ACTIVE". `recordAs:
@@ -9582,7 +9666,9 @@ const DYNAMOTOR: CardProgram = {
     ⚠️ **`energyType` AND `targetType` ARE THE SAME PRINTED BRACE CODE ON TWO
     DIFFERENT NOUNS, AND BOTH ARE SPELLED.** `{M}` first narrows WHICH card comes
     out of the pile (a Basic Metal Energy) and then WHICH bodies may receive it
-    (a {M} Pokémon, read off `topCardOf` by `attachEnergyTargets`). Dropping
+    (a {M} Pokémon, read off `topCardOf` by `attachEnergyTargets` [🆕🆕🆕 D578 (D539): *"read
+    off `topCardOf`"* is WITHDRAWN — interpreter.ts `attachEnergyTargets` now reads the TOP
+    card's IN-PLAY view, `inPlayCardOf`; no `typesInPlay` value names {M}, so no board moves]). Dropping
     either leaves a program that still attaches something, which is why they are
     mutated separately.
 
@@ -10655,6 +10741,56 @@ const AREA_ZERO_UNDERDEPTHS: CardProgram = { stadium: { benchLimitWithTera: BENC
     to your hand."* ONE op (`opponentGuessesHp`), R-TY1 … R-TY3 (decisions.md D577); refused by
     `programPlayable` on a hand with no Pokémon. */
 const TYME: CardProgram = { trainer: [{ op: "opponentGuessesHp", draw: 4 }] };
+
+/** 🆕🆕🆕 **D578 — Scovillain ex `sv08-037`/`sv08-216` (2 legal printings)** "Double Type": *"As
+    long as this Pokémon is in play, it is {G} and {R} type."* ONE passive key, `typesInPlay`,
+    read by continuous.ts `inPlayCardOf` (decisions.md D578). Its printed attack "Spicy Rage"
+    keeps deriving (no `attack` key). */
+const DOUBLE_TYPE: CardProgram = { passive: { typesInPlay: ["Grass", "Fire"] } };
+
+/** 🆕🆕🆕 **D578 — Team Rocket's Energy `sv10-182` (Special Energy, 1 legal printing)**: *"This card
+    can only be attached to a Team Rocket's Pokémon. If this card is attached to anything other
+    than a Team Rocket's Pokémon, discard this card. / As long as this card is attached to a
+    Pokémon, it provides 2 in any combination of {P} Energy and {D} Energy."* TWO constrained
+    units over {P, D} (cards.ts `constrainedEnergyUnit` — no caller spells the string) and the
+    owner restriction `attachOnlyToOwner` (R-TRE1, R-TRE2, decisions.md D578). */
+const TEAM_ROCKETS_ENERGY: CardProgram = {
+  energy: {
+    provides: [
+      constrainedEnergyUnit(["Psychic", "Darkness"]),
+      constrainedEnergyUnit(["Psychic", "Darkness"]),
+    ],
+    attachOnlyToOwner: "Team Rocket",
+  },
+};
+
+/** 🆕🆕🆕 **D578 — Relicanth `sv05-084`/`sv05-173` (2 legal printings)** "Memory Dive": *"Each of
+    your evolved Pokémon can use any attack from its previous Evolutions. (You still need the
+    necessary Energy to use each attack.)"* ONE passive key, `memoryDive`, read by continuous.ts
+    `memoryDiveLive` for `attackMenuOf`'s Memory Dive section (R-MD1 … R-MD5, decisions.md D578).
+    Its printed attack "Razor Fin" keeps deriving (no `attack` key). */
+const MEMORY_DIVE: CardProgram = { passive: { memoryDive: true } };
+
+/** 🆕🆕🆕 **D578 — Technical Machine: Fluorite `sv08-188` (Tool, 1 legal printing)**: *"The Pokémon
+    this card is attached to can use the attack on this card. (You still need the necessary
+    Energy to use this attack.) If this card is attached to 1 of your Pokémon, discard it at the
+    end of your turn."* — the granted attack "Fluorite" {G}{W}{P}: *"Discard all Energy from this
+    Pokémon, and heal all damage from each of your Tera Pokémon."* The attack TEXT is DATA
+    (`technicalMachines.ts`, the ingest drops it); `toolAttacks` offers it on the holder's attack
+    menu (continuous.ts `attackMenuOf`, the `"tool"` section); this row's `attack` key at index 0
+    is its program (the two clauses in printed order: "this Pokémon" is the attacker, the Active;
+    the heal is `healEach`'s `"all"` over the NEW `banner` rider, Active and Bench); the end-of-turn
+    discard is flow.ts `discardEndOfTurnTools`. */
+const TM_FLUORITE: CardProgram = {
+  toolAttacks: TM_FLUORITE_ATTACKS,
+  attack: {
+    0: [
+      { op: "discardEnergy", from: "yourActive", filter: { kind: "anyEnergy" }, count: "all" },
+      { op: "healEach", amount: "all", banner: "Tera" },
+    ],
+  },
+  toolDiscardAtEndOfYourTurn: true,
+};
 
 /** D261 — Enriching Energy `sv08-191`: "As long as this card is attached to a
     Pokémon, it provides {C} Energy. / When you attach this card from your hand to
@@ -13126,7 +13262,9 @@ const CURSED_BLAST_13: CardProgram = {
     Energy cards"* with no brace code, which is `attachableEnergies`' default
     (`card.energyType === "Normal"`, no `anyEnergy`) — every Basic Energy in the
     pile and no Special one. `targetType: "Lightning"` is the OTHER printed noun
-    (*"your {L} Pokémon"*), read off `topCardOf`. Archaludon spells the same brace
+    (*"your {L} Pokémon"*), read off `topCardOf` [🆕🆕🆕 D578 (D539): *"read off `topCardOf`"*
+    is WITHDRAWN — interpreter.ts `attachEnergyTargets` now reads the TOP card's IN-PLAY view,
+    `inPlayCardOf`; no `typesInPlay` value names {L}, so no board moves]. Archaludon spells the same brace
     code on BOTH nouns; this card spells it on one, which is why they are separate
     fields and are mutated separately.
 
@@ -14429,7 +14567,10 @@ const BRILLIANT_BLENDER: CardProgram = {
     revealing hand search, then the shuffle. ⚠️ **THE SEARCH IS FAITHFUL; MOST OF WHAT
     IT FINDS IS UNBUILT** — few Technical Machine Tools carry a registry program, so a
     found TM can be refused at `attachTool` (`TRAINER_NOT_SIMULATED`). That is the
-    Tools' debt, named, not this card's. */
+    Tools' debt, named, not this card's. [🆕🆕🆕 D578 (D539): *"MOST OF WHAT IT FINDS IS UNBUILT"*
+    is WITHDRAWN for the legal pool — the audit card JSON holds ONE Technical Machine printing,
+    Technical Machine: Fluorite `sv08-188`, and it is BUILT (`TM_FLUORITE`), so a legal deck's
+    search finds only simulated Tools; the refusal stays for a non-legal TM.] */
 const TM_MACHINE: CardProgram = {
   trainer: [
     {
@@ -15595,7 +15736,11 @@ const POWERGLASS: CardProgram = {
     play (both yours and your opponent's) have no Abilities."* The FIRST Stadium-sourced Ability
     lock: `StadiumEffects.disableAbilities` (the Pokémon lock's own aura type, the NEW
     `targetType`), collected by continuous.ts `disabledAbilityUids`. **R-WT1**: the PRINTED
-    types are read (exact while no type-changer is built — pinned). */
+    types are read (exact while no type-changer is built — pinned) [🆕🆕🆕 D578 (D539): the
+    parenthesis is WITHDRAWN — Scovillain ex "Double Type" is a built type-changer. The read stays
+    PRINTED (an in-play read would recurse through `disabledAbilityUids`) and stays exact because
+    no `typesInPlay` value adds or removes {C} — the registry walk in scovillainD578.test.ts
+    pins it]. */
 const TEAM_ROCKETS_WATCHTOWER: CardProgram = {
   stadium: { disableAbilities: { side: "both", targetType: "Colorless" } },
 };
@@ -15739,7 +15884,9 @@ const TERA_ORB: CardProgram = {
     Pokémon and attach a Basic Energy card from your discard pile to each of them."* The
     play gate is `trainerPlayableIf yourBannerPokemonInPlay`; the effect the NEW
     `attachFromDiscard` (one compound `attachCards` park, `maxPerTarget: 1`, so two
-    DIFFERENT bodies at most). "{C} Pokémon" is the PRINTED type (D238). Not played on a
+    DIFFERENT bodies at most). "{C} Pokémon" is the PRINTED type (D238) [🆕🆕🆕 D578 (D539): the
+    IN-PLAY type — interpreter.ts `attachEnergyTargets` reads `inPlayCardOf`; no `typesInPlay`
+    value adds or removes {C}, so no board moves]. Not played on a
     board where the attach can only whiff (`programPlayable`). */
 const GLASS_TRUMPET: CardProgram = {
   trainer: [
@@ -16918,6 +17065,15 @@ const REGISTRY: Record<string, CardProgram> = {
   "sv06-166": BOOMERANG_ENERGY, // Boomerang Energy — {C}; discarded by its holder's attack: re-attached after attacking
   "sv08-190": TYME, // Tyme — name a Pokémon in hand; the opponent guesses its HP: right, they draw 4; wrong, you do
   "sv08.5-143": TYME, // Tyme (reprint)
+  // ── 🆕🆕🆕 D578 — Scovillain ex ×2 "Double Type" + Technical Machine: Fluorite + Relicanth ×2
+  //    "Memory Dive" + Team Rocket's Energy: 6 registry ids / 4 objects, MID-MAP (D395/D396), so
+  //    `raw[last]` does not move. ──
+  "sv08-037": DOUBLE_TYPE, // Scovillain ex — Double Type: in play, it is {G} and {R}
+  "sv08-216": DOUBLE_TYPE, // Scovillain ex (reprint)
+  "sv08-188": TM_FLUORITE, // Technical Machine: Fluorite — a Tool granting "Fluorite"; discarded at its owner's turn end
+  "sv05-084": MEMORY_DIVE, // Relicanth — Memory Dive: your evolved Pokémon use their previous Evolutions' attacks
+  "sv05-173": MEMORY_DIVE, // Relicanth (reprint)
+  "sv10-182": TEAM_ROCKETS_ENERGY, // Team Rocket's Energy — 2 units of {P}/{D}; Team Rocket's Pokémon only
   // ── D190 — THE **STANDARD-LEGAL** REPRINT-ALIAS MAP (Tier 0 of
   //    `docs/reference/coverage-backlog-legal.md`). 22 printings, 9 map targets,
   //    ZERO new code: every row below prints a sentence that is already authored
@@ -17106,7 +17262,8 @@ const REGISTRY: Record<string, CardProgram> = {
   // `sv06-166`, `sv06-167` and `sv10-182`, each still named with its blocker in
   // `mistEnergy.test.ts`'s header. (🆕🆕🆕 D577 (D539): the three-left list is WITHDRAWN as
   // the live residue — `sv06-167` BUILT at D298 and `sv06-166` (Boomerang Energy) at D577;
-  // `sv10-182` alone is left.)
+  // `sv10-182` alone is left. 🆕🆕🆕 D578 (D539): *"`sv10-182` alone is left"* is WITHDRAWN —
+  // Team Rocket's Energy is BUILT (`TEAM_ROCKETS_ENERGY`); NONE is left.)
   "sv05-162": NEO_UPPER_ENERGY, // Neo Upper Energy — the CONDITIONAL provision (Stage 2)
   "fix-neo-upper-energy": NEO_UPPER_ENERGY,
   "sv10.5b-086": PRISM_ENERGY, // 🆕 D300 — Prism Energy — the SAME shape, gated on Basic

@@ -101,8 +101,12 @@ export interface RetreatAction {
 export interface AttackAction {
   type: "attack";
   seat: Seat;
-  /** Index into the Active's printed attacks (the top card defines them,
-      §1.2). Runtime-checked — integer, in range — like every wire value. */
+  /** ~~Index into the Active's printed attacks (the top card defines them,
+      §1.2).~~ 🆕🆕🆕 D578 (D539): WITHDRAWN as the whole address — an index into the Active's
+      ATTACK MENU (engine `attackMenuOf`): its printed attacks FIRST (the top card defines them,
+      §1.2 — so every printed attack's index is unchanged), then Relicanth's Memory Dive rows,
+      then an attached Technical Machine's. No shape change. Runtime-checked — integer, in
+      range — like every wire value. */
   index: number;
 }
 

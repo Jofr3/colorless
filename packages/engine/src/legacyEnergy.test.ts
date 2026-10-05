@@ -517,15 +517,18 @@ describe("the population of the printed sentence — 2 of 2, and the residue mov
     expect(carriers).toEqual(["fix-legacy-energy", "fix-lillies-pearl"]);
   });
 
-  it("🛑 the Special Energy residue is now TWO, and this file owns the correction (🆕🆕🆕 D577: ONE — Boomerang Energy BUILT)", () => {
+  it("🛑 the Special Energy residue is now TWO, and this file owns the correction (🆕🆕🆕 D577: ONE — Boomerang Energy BUILT; 🆕🆕🆕 D578: NONE — Team Rocket's Energy BUILT)", () => {
     // `mistEnergy.test.ts` has carried the residue since D261 and D262 re-homed it
     // once already. `sv06-167` leaves it BUILT; `sv06-166` and `sv10-182` remain,
     // each with a blocker that is still real.
     // 🆕🆕🆕 D577 (D539): *"`sv06-166` and `sv10-182` remain"* is WITHDRAWN — `sv06-166` is BUILT
-    // (`BOOMERANG_ENERGY`, `boomerangEnergyD577.test.ts`); `sv10-182` alone remains.
+    // (`BOOMERANG_ENERGY`, `boomerangEnergyD577.test.ts`); ~~`sv10-182` alone remains.~~
+    // 🆕🆕🆕 D578 (D539): `sv10-182` is BUILT too (`TEAM_ROCKETS_ENERGY`,
+    // `teamRocketsEnergyD578.test.ts`) — the residue is EMPTY.
     expect(programFor("sv06-167"), "sv06-167 is BUILT at D298").toBeDefined();
     expect(programFor("sv06-166"), "sv06-166 is BUILT at D577").toBeDefined();
-    for (const id of ["sv10-182"]) {
+    expect(programFor("sv10-182"), "sv10-182 is BUILT at D578").toBeDefined();
+    for (const id of [] as string[]) {
       expect(programFor(id), `${id} is counted UNBUILT`).toBeUndefined();
     }
   });
@@ -1089,8 +1092,8 @@ describe("the engine version", () => {
     // 🆕🆕 D416 — 0.319.0 → **0.320.0**, moved with the behaviour: THE PARKING KO PAIR (*"Flip a coin. If heads, Knock Out your opponent's Active Basic Pokémon. If tails, Knock Out 1 of your opponent's Benched Basic Pokémon."*, 4 printings, and *"Knock Out 1 of your opponent's Pokémon that has exactly 6 damage counters on it."*, 2 printings — **2 sentences / 6 printings**, both claimed WHOLE by `deriveAttackEffect`) is a WIDENING — ONE new PARKING `EffectOp` (`knockOutChosen`, required `target` plus two optional riders) reached through the EXISTING `choosePokemon` prompt and the EXISTING `KNOCKED_OUT` sweep, ZERO new persisted record fields — so the engine version moves and `MATCH_RECORD_VERSION` STAYS 26 (D307's paragraph: no v26 deploy can author `{ op: "knockOutChosen", … }` into a record THIS deploy reads).
     // 🆕🆕 D417 — 0.320.0 → **0.321.0**, moved with the behaviour: THE TRAILING CANCEL (*"Discard a Stadium in play. If you can't, this attack does nothing."*, Eternatus `sv08-141`, **1 legal printing**) gains a TWELFTH whole-sentence reader, `deriveAttackCancelRequirement` — the anaphoric cancel `deriveAttackRequirement`'s leading `^If` could never see. `MATCH_RECORD_VERSION` **STAYS 26**, asked rather than assumed: the reader returns an EXISTING `BoardCondition` through the EXISTING requirement channel and adds NO persisted field, so no v26 record gains a shape this deploy would not already read.
     // 🆕🆕 D422 — 0.323.0 → **0.324.0**, moved with the behaviour: THE OPTIONAL SELF-SWITCH (*"You may switch this Pokémon with 1 of your Benched Pokémon."*, **3 legal printings** — the last unbuilt sentence of the family D181 opened and D189 half-closed) is a pure READER widening: ONE anchor and ONE `deriveAttackEffect` arm returning `[{ op: "optional", note, then: [{ op: "switchActive" }] }]`, both ops shipped. `MATCH_RECORD_VERSION` **STAYS 26**, DRIVEN rather than asserted (`optionalSelfSwitch.test.ts` §8 round-trips BOTH parks through JSON, replays each through `applyAction`, and compares their key sets against the parks THIS build writes for two SHIPPED sentences — D227's mirror for the `confirm`, D189's bare self-switch for the `choosePokemon`). ZERO new ops, fields, prompt kinds, events, log rows, redactions or persisted shapes, so no v26 record gains a shape this deploy would not already read.
-    expect(engineVersion).toBe("0.461.0");
-    expect(manifest.version).toBe("0.461.0");
+    expect(engineVersion).toBe("0.462.0");
+    expect(manifest.version).toBe("0.462.0");
     expect(manifest.version).toBe(engineVersion);
   });
 });

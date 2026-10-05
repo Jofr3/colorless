@@ -174,6 +174,26 @@ export function isSpecialEnergy(card: Card): boolean {
     this file, below; still the only reader). */
 export const ANY_ENERGY = "Any";
 
+/** 🆕🆕🆕 §6.4 (D578) — the prefix of a CONSTRAINED provided unit: ONE unit that can pay a
+    symbol of any ONE of a fixed set of types (and any Colorless slot), never another type.
+    Team Rocket's Energy `sv10-182`: *"provides 2 in any combination of {P} Energy and {D}
+    Energy"* is TWO such units over {P, D}. Spelled ONLY by `constrainedEnergyUnit` and read
+    ONLY by `constrainedEnergyTypes` — no caller writes the string. No basic type and no
+    `ANY_ENERGY` starts with it, so it is a safe sentinel in a provided list. */
+const CONSTRAINED_PREFIX = "OneOf:";
+
+/** 🆕🆕🆕 §6.4 (D578) — the provided unit "one of `types`" (the members sorted, so two spellings
+    of one set are one unit). */
+export function constrainedEnergyUnit(types: readonly string[]): string {
+  return `${CONSTRAINED_PREFIX}${[...types].sort().join(",")}`;
+}
+
+/** 🆕🆕🆕 §6.4 (D578) — the member types of a constrained unit, or `null` for any other unit (a
+    concrete type, "Colorless", `ANY_ENERGY`). */
+export function constrainedEnergyTypes(unit: string): readonly string[] | null {
+  return unit.startsWith(CONSTRAINED_PREFIX) ? unit.slice(CONSTRAINED_PREFIX.length).split(",") : null;
+}
+
 /** 🆕🆕🆕 D568 — MOVED here from attack.ts unchanged (see the note there).
     §6.4 cost matching. Typed symbols need exactly that type; Colorless slots
     take whatever is left over. `provided` is the flat list of UNITS the
@@ -191,15 +211,45 @@ export function costMet(cost: readonly string[], provided: readonly string[]): b
     else needed.set(symbol, (needed.get(symbol) ?? 0) + 1);
   }
   const counts = new Map<string, number>();
+  // 🆕🆕🆕 D578 — the CONSTRAINED units (`constrainedEnergyUnit`), counted per distinct set.
+  const constrained = new Map<string, number>();
   let wild = 0;
   for (const unit of provided) {
     if (unit === ANY_ENERGY) wild++;
+    else if (constrainedEnergyTypes(unit) !== null) constrained.set(unit, (constrained.get(unit) ?? 0) + 1);
     else counts.set(unit, (counts.get(unit) ?? 0) + 1);
   }
+  // 🆕🆕🆕 D578 — THREE PASSES, NARROWEST UNIT FIRST: concrete units pay their own type; then
+  // each constrained set pays the summed shortfall of its member types (as much as it can);
+  // then wildcards pay whatever typed shortfall is left. ⚠️ GREEDY IS EXACT HERE BECAUSE THE
+  // SETS ARE LAMINAR: every constrained set is a subset of ANY, a concrete unit is a singleton,
+  // and the registry builds exactly ONE constrained set ({P, D}, Team Rocket's Energy — pinned
+  // registry-wide in `teamRocketsEnergyD578.test.ts`), so a unit that can pay a shortfall is
+  // never better spent elsewhere: a constrained unit not spent on its members can only pay
+  // Colorless, which a wildcard pays equally. Sets are processed smallest first, so a second,
+  // NESTED set would still be exact; two OVERLAPPING non-nested sets would not — that test
+  // reddens before one can be built. A constrained unit inside its set's shortfall is ONE unit
+  // for ONE symbol, so `typedNeeds` below is unchanged.
+  const shortfalls = new Map<string, number>();
   let typedNeeds = 0;
   for (const [type, count] of needed) {
     typedNeeds += count;
     const shortfall = count - (counts.get(type) ?? 0);
+    if (shortfall > 0) shortfalls.set(type, shortfall);
+  }
+  const sets = [...constrained.entries()]
+    .map(([unit, count]) => ({ members: constrainedEnergyTypes(unit) ?? [], count }))
+    .sort((a, b) => a.members.length - b.members.length);
+  for (const set of sets) {
+    let budget = set.count;
+    for (const type of set.members) {
+      const short = shortfalls.get(type) ?? 0;
+      const paid = Math.min(short, budget);
+      if (paid > 0) shortfalls.set(type, short - paid);
+      budget -= paid;
+    }
+  }
+  for (const shortfall of shortfalls.values()) {
     if (shortfall > 0) {
       // Cover the typed shortfall with wildcards; run out and the cost is unmet.
       if (shortfall > wild) return false;

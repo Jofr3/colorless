@@ -698,6 +698,6 @@ describe("§7 — the version", () => {
     // `manifest.version`) plus `package.json`, the declaration and the mutant `find`.
     // The increment is this line — the pin being AUTHORED, which is the one D427 named
     // as the thing every note forgets.
-    expect(engineVersion).toBe("0.461.0");
+    expect(engineVersion).toBe("0.462.0");
   });
 });

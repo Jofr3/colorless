@@ -36,7 +36,8 @@ import {
 // (a post-attack re-attach that needs to know WHY a card left a body — 🆕🆕🆕 D577 (D539): BUILT,
 // `BOOMERANG_ENERGY`; the WHY rides the queued `attackEpilogue`), `sv06-167`
 // (a prize hook plus a per-game latch) and `sv10-182` (an attach restriction plus
-// a continuous self-discard) — each still named with its blocker in
+// a continuous self-discard — 🆕🆕🆕 D578 (D539): BUILT, `TEAM_ROCKETS_ENERGY`, the restriction
+// `attachOnlyToOwner` and two constrained {P}/{D} units) — each still named with its blocker in
 // `mistEnergy.test.ts`'s header, which is where that residue lives.
 //
 // ── WHAT THIS ROW COSTS, AND WHY IT IS NOT A NEW SEAM ────────────────────────

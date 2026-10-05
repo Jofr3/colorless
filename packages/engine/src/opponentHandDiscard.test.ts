@@ -1166,6 +1166,6 @@ describe("§8 — the structural answers", () => {
   });
 
   it("the engine version moved and the two spellings agree", () => {
-    expect(engineVersion).toBe("0.461.0");
+    expect(engineVersion).toBe("0.462.0");
   });
 });

@@ -84,7 +84,12 @@ import {
 //     CONCLUSION can outlive its REASON by five slices, and nobody re-typed it
 //     because the conclusion kept reading true.** The residue below is therefore TWO.
 //   sv10-182 Team Rocket's Energy — an ATTACH RESTRICTION plus a continuous
-//     self-discard when the restriction stops holding. No seam for either.
+//     self-discard when the restriction stops holding. ~~No seam for either.~~
+//     🆕🆕🆕 D578 (D539): BUILT — `TEAM_ROCKETS_ENERGY`: the restriction is
+//     `EnergyProgram.attachOnlyToOwner` (turn.ts refuses the hand attach; flow.ts
+//     `discardMisplacedEnergy` is the self-discard), the provision TWO constrained units
+//     (cards.ts `constrainedEnergyUnit`, the third unit kind named just below);
+//     `teamRocketsEnergyD578.test.ts`. The Special Energy residue is now ZERO.
 //     🆕 D262 SHARPENED THE PROVISION HALF, BY READING `costMet` RATHER THAN BY
 //     INHERITING THE CELL: "it provides 2 in any combination of {P} Energy and
 //     {D} Energy" needs a **THIRD UNIT KIND** — a wildcard CONSTRAINED to a set of
@@ -261,17 +266,20 @@ describe("Mist / Enriching Energy — the registry data rows", () => {
   // that shipped a fifth Special Energy without touching it would have to say so.
   // `sv05-162` keeps a line here — as BUILT, and pointing at the suite that owns
   // it — so the column's arithmetic stays readable from one place.
-  it("authors NOTHING on the TWO remaining Special Energy sentences (🆕🆕🆕 D577: ONE — `sv06-166` BUILT)", () => {
-    // 🆕🆕🆕 D577 (D539) — `sv06-166` (Boomerang Energy) is BUILT; `sv10-182` alone is unbuilt.
+  it("authors NOTHING on the TWO remaining Special Energy sentences (🆕🆕🆕 D577: ONE — `sv06-166` BUILT; 🆕🆕🆕 D578: NONE — `sv10-182` BUILT)", () => {
+    // 🆕🆕🆕 D577 (D539) — `sv06-166` (Boomerang Energy) is BUILT; ~~`sv10-182` alone is unbuilt.~~
+    // 🆕🆕🆕 D578 (D539) — `sv10-182` (Team Rocket's Energy) is BUILT too: NOTHING is unbuilt.
     expect(programFor("sv06-166"), "sv06-166 is BUILT at D577").toBeDefined();
-    for (const id of ["sv10-182"]) {
+    expect(programFor("sv10-182"), "sv10-182 is BUILT at D578").toBeDefined();
+    for (const id of [] as string[]) {
       expect(programFor(id), `${id} is counted UNBUILT`).toBeUndefined();
     }
     // …and the two that LEFT this list are asserted BUILT in the same test, so the
     // halves of "4 = 2 built + 2 left" cannot drift apart.
     // 🆕🆕🆕 D577 (D539) — WITHDRAWN: "the two that LEFT" / "4 = 2 built + 2 left" is now
     // THREE that left (`sv05-162` D262, `sv06-167` D298, `sv06-166` D577 above) and ONE
-    // left (`sv10-182`): "4 = 3 built + 1 left".
+    // left (`sv10-182`): "4 = 3 built + 1 left". 🆕🆕🆕 D578 (D539): FOUR that left, NONE left —
+    // "4 = 4 built + 0 left" (`sv10-182` BUILT at D578 above).
     expect(programFor("sv05-162"), "sv05-162 is BUILT at D262").toBeDefined();
     expect(programFor("sv06-167"), "sv06-167 is BUILT at D298").toBeDefined();
   });
