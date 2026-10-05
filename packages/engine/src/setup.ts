@@ -132,6 +132,9 @@ export function createGame(options: CreateGameOptions): CreateGameResult {
     // …and nothing to say about WHICH body, for the same reason. Empty and not
     // null: the reader returns a list, and a closed window is an empty one.
     lastKoMarks: { p1: [], p2: [] },
+    // 🆕🆕🆕 D579 — no attack has been used on a board that has not been dealt yet. Empty and
+    // not null, `lastKoMarks`' reason: the reader asks a list.
+    recentAttackers: { p1: [], p2: [] },
     // No attack has resolved on a board that has not been dealt yet, so no seat
     // is barred from playing anything — see the field's own note in types.ts.
     handPlayLockedTurn: freshHandPlayLocks(),

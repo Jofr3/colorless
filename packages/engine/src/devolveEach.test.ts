@@ -105,7 +105,8 @@ const SIBLING =
     🆕🆕🆕 D575 — IT REDDENED, AS DESIGNED, AND IS RE-POINTED (never deleted, D418): D575 BUILDS row
     346 (N's Sigilyph "Victory Symbol", `winGame`). The witness now holds Walking Wake `sv06-063`
     "Undulating Slice" — a residue sentence D575 leaves unbuilt, VERIFIED before choosing
-    (`readersClaiming` is []; 1 printing). The §10 title's "row 346" is kept as the record. */
+    (`readersClaiming` is []; 1 printing). The §10 title's "row 346" is kept as the record.
+    (🆕🆕🆕 D579 (D539): "a residue sentence D575 leaves unbuilt" is WITHDRAWN — Walking Wake `sv06-063` is BUILT at D579 as a REGISTRY row keyed by id (`UNDULATING_SLICE`); no READER claims the sentence, so `readersClaiming` is still [] and a card carrying it on any other id still takes the loud path — the witness holds on a re-stated premise.) */
 const WITNESS =
   "Put up to 9 damage counters on this Pokémon. This attack does 20 damage for each damage counter you placed in this way.";
 
@@ -1132,7 +1133,7 @@ describe("§11 — the version prediction is DRIVEN, not asserted", () => {
   });
 
   it("the engine version moved with the behaviour", () => {
-    expect(engineVersion).toBe("0.462.0");
+    expect(engineVersion).toBe("0.463.0");
   });
 });
 

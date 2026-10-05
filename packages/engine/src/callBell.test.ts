@@ -575,6 +575,7 @@ describe("D280 — MATCH_RECORD_VERSION stays 14, and the reachability claim is 
       "pending",
       "phase",
       "players",
+      "recentAttackers", // 🆕🆕🆕 D579 — the REQUIRED seat-level attack record (Koraidon "Unrelenting Onslaught", R-1 reading B); MRV 40 → 41
       "rngState",
       "stadium",
       "turn",

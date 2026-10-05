@@ -404,6 +404,28 @@ function stampAttackUse(
   });
 }
 
+/** 🆕🆕🆕 **D579 — RECORD ON THE SEAT THAT `uid` USED AN ATTACK ON THIS TURN** (`GameState.
+    recentAttackers`, read by Koraidon "Unrelenting Onslaught"). Unlike `stampAttackUse` it
+    never looks the body up, so a body that has already left play (Surf Back, D312) is still
+    recorded — the record outlives the body (R-1, reading B, RULED BY THE USER 2026-10-05).
+
+    Appends `{ turn: state.turn, uid }` only when no entry already holds that pair — IDEMPOTENT,
+    so Festival Lead's second attack by the same body (D570) and a copied attack adds nothing
+    twice — and PRUNES every entry older than `state.turn - 2`, the seat's previous turn, which
+    is the oldest window any reader asks about. So the list is bounded at two turns. */
+function stampSeatAttacker(state: GameState, seat: Seat, uid: string): GameState {
+  const turn = state.turn;
+  const kept = state.recentAttackers[seat].filter((entry) => entry.turn >= turn - 2);
+  const already = kept.some((entry) => entry.turn === turn && entry.uid === uid);
+  return {
+    ...state,
+    recentAttackers: {
+      ...state.recentAttackers,
+      [seat]: already ? kept : [...kept, { turn, uid }],
+    },
+  };
+}
+
 /** §8.1 CAUSE-CONDITIONED PRIZE REDUCTION — Munkidori ex sv06.5-037/-083/-091
     "Oh No You Don't": "If this Pokémon is Knocked Out by damage from an attack
     from your opponent's Pokémon, and if you have any Pecharunt ex in play, your
@@ -1409,7 +1431,11 @@ export function finishAttack(
   // hold the counter at the ending turn's value for the whole interrupt.
   // [🆕🆕🆕 D570 (D539, third review): on Festival Lead's window exit they are spliced in
   // front of `resumeTurn` instead — no `endTurn` runs, so the counter holds just the same.]
+  // 🆕🆕🆕 D579 — and the SEAT-level twin, written at the same instant for the same ordering
+  // reason (Koraidon's "+150" is read at declaration, so this attack cannot satisfy its own
+  // antecedent): `stampSeatAttacker` keeps the record when the body leaves play (R-1, reading B).
   let next = stampAttackUse(state, attackerSeat, attackerUid, attackName);
+  next = stampSeatAttacker(next, attackerSeat, attackerUid);
   const koRecoil = koRecoilOf(next, otherSeat(attackerSeat));
   const recoiled = koRecoil > 0 ? addDamageByUid(next, attackerSeat, attackerUid, koRecoil) : null;
   if (recoiled !== null) {

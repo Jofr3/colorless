@@ -5251,7 +5251,7 @@ printed head sentence byte for byte, which turns it into a D457 witness that the
 
 `damageChosen`'s two existing scaled-snipe riders are bare `true` flags because each names an
 **implicit** source the fold finds from `(state, ctx)` — the prize count, the attacker's attached
-Energy. A §9.2 record is an **address** with three inhabitants (🆕🆕🆕 D567 NOTE (D539): five now — `turnedPrize` / `revealed`), so a boolean would have to hard-code
+Energy. A §9.2 record is an **address** with three inhabitants (🆕🆕🆕 D567 NOTE (D539): five now — `turnedPrize` / `revealed`; 🆕🆕🆕 D579 (D539): SIX now — `"placed"`, one entry per damage counter placed; the address argument only strengthens), so a boolean would have to hard-code
 one, and D458 already measured the board that breaks that: two sequential recorders overwrite one
 slot, so a program filing both `paid` and `discarded` needs to say which.
 
@@ -8606,7 +8606,7 @@ sleep 3'`), the dummy read `PPID 1144` and `SID == PID`.
 
 ### A withdrawn COUNT claim is also spelled as an ENUMERATION with no number in it, so the sweep keys on the MEMBERS' names too (D567 close-out, extending D539)
 
-D567 added two members to `EffectSlot` (`turnedPrize` and `revealed`, five now), so every present-tense sentence
+D567 added two members to `EffectSlot` (`turnedPrize` and `revealed`, five now; 🆕🆕🆕 D579 (D539): six since D579 — `"placed"`), so every present-tense sentence
 saying it has three was withdrawn. D539's rule was followed, and it still took THREE passes to find them all:
 
 1. The builder swept the literal phrase *"Three members"* and annotated two sites.
@@ -8698,6 +8698,10 @@ read. All 15 are KILLED.
   Protect"). ONE live far witness remains — Koraidon `sv08-116` "Unrelenting Onslaught", SCHEMA-BANNER — and the
   `CO_PIN` literal still holds the row unchanged (a literal is not built away when its sentence is): the gate-witness
   probe read 16/16 KILLED after D575.
+  🆕🆕🆕 **D579 (D539): ~~"ONE live far witness remains — Koraidon"~~ is WITHDRAWN** — D579 BUILT Koraidon `sv08-116`
+  (a literal clause row over the seat-level `GameState.recentAttackers`); the `OPAQUE` class is EMPTY, no live far witness
+  remains, and the row rests on the `CO_PIN` literal ALONE — the case the pin was written for. The gate-witness probe
+  read 16/16 KILLED on the D579 bytes.
 
 ### A withdrawn claim about a MECHANISM is also spelled as the mechanism's DATA, so the sweep keys on those shapes too (D570 third review, extending D539 and D567)
 
@@ -9828,6 +9832,9 @@ BUILT (its mechanism, a reveal-and-discard-matches op, `revealTopDiscardMatching
 persisted `AttackerClass`) and C.O.D.E.: Protect (`PlayerSide.sideAttackBlock`, ended by `switchInto`) are
 BUILT at D575 behind `MATCH_RECORD_VERSION` 37 → 38; Unrelenting Onslaught (Koraidon `sv08-116`, R-1 unruled)
 remains, and it is still a MECHANISM blocker.
+🆕🆕🆕 D579 (D539): ~~"ONE stays unbuilt (Unrelenting Onslaught) … R-1 unruled … remains"~~ — BUILT at D579: R-1 was RULED by
+the user (reading B, 2026-10-05) and the mechanism, a seat-level attack record (`GameState.recentAttackers`,
+`MATCH_RECORD_VERSION` 40 → 41), was built. No Ancient/Future attack row stays unbuilt.
 
 ## A refusal that names a SENTENCE is usually a claim about a WARRANT, not about a carrier (D462)
 

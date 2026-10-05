@@ -342,7 +342,10 @@ describe("§1 — the two printed sentences, and what the placement family still
     // IMAGINED (D425).** `/put \d* ?damage counters/i` requires the count to sit
     // immediately before the noun, so it misses the BOUNDED spelling — corpus line 433,
     // *"Put UP TO 9 damage counters on this Pokémon. This attack does 20 damage for each
-    // damage counter you placed in this way."*, 1 printing, unbuilt. `/put up to \d+
+    // damage counter you placed in this way."*, 1 printing, unbuilt [🆕🆕🆕 D579 (D539): "unbuilt" is
+    // WITHDRAWN — BUILT at D579 as a REGISTRY row (`UNDULATING_SLICE`, `putCountersOnSelfChosen`: the
+    // "pick is a NUMBER" refusal below was answered by a `choosePokemon` with `upTo`, D359's shape);
+    // no reader derives it, so the pattern edge measured here is unchanged]. `/put up to \d+
     // damage counters/i` returns exactly that ONE row over all 640, which is the query
     // that establishes the edge. It is refused twice over and neither reason is any of
     // the ten above: the pick is a NUMBER (every prompt this engine has picks cards or
@@ -692,7 +695,7 @@ describe("§3 — a new PRODUCER of a shipped literal, and the record version do
   });
 
   it("the engine version moved", () => {
-    expect(engineVersion).toBe("0.462.0");
+    expect(engineVersion).toBe("0.463.0");
   });
 });
 

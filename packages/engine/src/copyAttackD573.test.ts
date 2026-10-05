@@ -85,7 +85,8 @@ const GATED_TEXT =
     opponent's next turn, if they attach an Energy card from their hand to the Defending Pokémon, their
     turn ends."*, corpus FILE LINE 177), which D575 BUILDS (`markHandAttach { endsTurn }`). It now holds
     Walking Wake `sv06-063` "Undulating Slice" — a residue sentence D575 leaves unbuilt, VERIFIED before
-    choosing (D532): `readersClaiming` is [] and the row is in the legal column. */
+    choosing (D532): `readersClaiming` is [] and the row is in the legal column.
+    (🆕🆕🆕 D579 (D539): "a residue sentence D575 leaves unbuilt" is WITHDRAWN — Walking Wake `sv06-063` is BUILT at D579 as a REGISTRY row keyed by id (`UNDULATING_SLICE`); no READER claims the sentence, so `readersClaiming` is still [] and a card carrying it on any other id still takes the loud path — the witness holds on a re-stated premise.) */
 const UNREAD_TEXT =
   "Put up to 9 damage counters on this Pokémon. This attack does 20 damage for each damage counter you placed in this way.";
 
@@ -1171,7 +1172,7 @@ describe("D573 §5 — the park: inert, serialisable, and inert under a 0.456 ro
 
 // ─────────────────────────────────────────────────────────────────────────────
 describe("D573 §6 — the version", () => {
-  it("the engine is 0.462.0", () => {
-    expect(engineVersion).toBe("0.462.0");
+  it("the engine is 0.463.0", () => {
+    expect(engineVersion).toBe("0.463.0");
   });
 });

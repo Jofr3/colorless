@@ -284,7 +284,7 @@ export interface EffectContext {
       🛑 **WHY `EffectContext` AND NOT `EffectRecord`, AND THE FIRST REASON IS THE
       VALUE TYPE RATHER THAN THE MEANING.** `EffectRecord` is
       `{ [K in EffectSlot]?: string[] }` and `EffectSlot` is
-      `"paid" | "moved" | "discarded"` (🆕🆕🆕 D567 FINAL-REVIEW NOTE (D539): five members now — `turnedPrize` / `revealed`, both uid lists, so the argument stands) — **every §9.2 slot in this engine is a LIST
+      `"paid" | "moved" | "discarded"` (🆕🆕🆕 D567 FINAL-REVIEW NOTE (D539): five members now — `turnedPrize` / `revealed`, both uid lists, so the argument stands; 🆕🆕🆕 D579 (D539): SIX members now — `"placed"` (Walking Wake), and it is NOT a list of distinct card uids: it files a COUNT as repeated top uids, one entry per damage counter placed. So the ABSOLUTE form of the argument around this note — ~~every slot is a list of card uids; no slot to file a figure in and no widening that keeps the map's value type~~ — is WITHDRAWN: a count CAN ride a slot by repetition with `string[]` unchanged. It stands only QUALIFIED: every slot's VALUE TYPE is still a uid list, and the dealt-damage figure stays on `EffectContext.dealt` by CHOICE (an HP figure read by arithmetic, not a handful of counters), not because no slot could hold it) — **every §9.2 slot in this engine is a LIST
       OF CARD UIDS**, and this is an HP FIGURE. There is no slot to file it in and no
       widening that keeps the map's value type, so the record could only carry it by
       becoming a different kind of thing. D406 priced this sentence and named exactly
@@ -576,7 +576,14 @@ export type EffectPrompt =
       display only; the answer's `take` means the same number. Carried on the PROMPT (redact,
       the wire schema, both HUDs) for `anySource`'s reason: the dialogs read the prompt, never the
       op. */
-  | { kind: "choosePokemon"; candidates: PokemonRef[]; upTo?: number; takeVerb?: "move"; note: string }
+  /** 🆕🆕🆕 **D579 — A SECOND PRESENT MEMBER, `"put"`.** Walking Wake "Undulating Slice" parks its
+      quantity as `choosePokemon { candidates: [this Pokémon], upTo: 9, takeVerb: "put" }` — the
+      counters are PUT on the attacker, and "move N" would name a source the card does not have.
+      A closed-union WIDENING (D441's test passes: every v40 byte still means what it meant). 🛑
+      **DEPLOY THE CLIENT FIRST** (apps/api match.ts "D579"): the wire schema was
+      `z.literal("move")`, so a 0.462 client's parse REFUSES a frame carrying `"put"` — a strict
+      literal does not strip an unknown VALUE the way it strips an unknown KEY. */
+  | { kind: "choosePokemon"; candidates: PokemonRef[]; upTo?: number; takeVerb?: "move" | "put"; note: string }
   /** Pick `min`..`max` in-play Pokémon — the multi-target snipe (damageChosen:
       Hawlucha's "choose 2", Meowscarada ex / Radiant Blastoise's "on 1 of your
       opponent's Benched Pokémon"). Distinct from choosePokemon (exactly one) in
@@ -1381,7 +1388,13 @@ function recordSlotOf(op: EffectOp): EffectSlot | undefined {
     // clause to a missing enrolment.
     op.op === "attachFromHand"
     ? op.recordAs
-    : undefined;
+    : // 🆕🆕🆕 D579 — `putCountersOnSelfChosen` is the TENTH recorder and the first whose slot is
+      // FIXED rather than an op field: Walking Wake prints "for each damage counter you placed
+      // in this way", so the op always files `"placed"` (no `recordAs` to forget). Enrolled for
+      // D206's reason — the omission is silent — though no `recordGate` reads `placed` today.
+      op.op === "putCountersOnSelfChosen"
+      ? "placed"
+      : undefined;
 }
 
 // 🛑 **D543 — `discardTools` IS DELIBERATELY *NOT* IN THE LIST ABOVE, AND THE
@@ -2685,6 +2698,22 @@ function stepOp(
           upTo: op.upTo,
           takeVerb: "move",
           note: `Move up to ${op.upTo} damage counters onto which of your opponent's Pokémon?`,
+        },
+      };
+    }
+    case "putCountersOnSelfChosen": {
+      // 🆕🆕🆕 D579 — Walking Wake "Undulating Slice": ALWAYS PARKED over the ONE candidate (this
+      // Pokémon, the attacking Active), never `parkOrForce`'s forced arm — a lone body still has
+      // `upTo + 1` answers (D47/D358), and forcing it would place the whole `upTo` unasked. No
+      // Active (a board no attack reaches) files nothing and asks nothing.
+      if (state.players[ctx.seat].active === null) return { done: state };
+      return {
+        park: {
+          kind: "choosePokemon",
+          candidates: [{ seat: ctx.seat, spot: { spot: "active" } }],
+          upTo: op.upTo,
+          takeVerb: "put",
+          note: `Put up to ${op.upTo} damage counters on this Pokémon? This attack does damage for each one you put. Decline to put none.`,
         },
       };
     }
@@ -6510,6 +6539,23 @@ export function conditionHolds(state: GameState, seat: Seat, cond: BoardConditio
         matchesFilter(topCardOf(state, body), { kind: "bannerPokemon", banner: cond.banner }),
       );
     }
+    case "yourOtherBannerPokemonAttackedLastTurn": {
+      // 🆕🆕🆕 D579 — Koraidon "Unrelenting Onslaught": the SEAT-level record (`recentAttackers`),
+      // never the per-body stamp, so a departed attacker still counts (R-1, reading B). Three
+      // tests, each load-bearing on its own board (koraidonD579.test.ts): the WINDOW (`- 2`, the
+      // seat's previous turn — two turns ago is not "your last turn"), the BANNER (read off the
+      // card by uid, which outlives the body), and OTHER (not a card of the reading seat's
+      // Active stack, so Koraidon's own attack last turn does not count). Safe off-turn by
+      // PARITY (`usedAttackOnYourLastTurn`'s argument): a seat is only stamped on its own turns.
+      const attacker = state.players[seat].active;
+      const own = attacker === null ? [] : attacker.stack;
+      return state.recentAttackers[seat].some(
+        (entry) =>
+          entry.turn === state.turn - 2 &&
+          !own.includes(entry.uid) &&
+          matchesFilter(cardOfUid(state, entry.uid), { kind: "bannerPokemon", banner: cond.banner }),
+      );
+    }
     case "yourPlayedBannerSupporterThisTurn": {
       // 🆕🆕🆕 D569 — "if you played an Ancient/Future Supporter card from your hand during
       // this turn" (Great Tusk "Land Collapse", Iron Valiant "Majestic Sword"). The seat
@@ -7664,6 +7710,10 @@ export function conditionNote(cond: BoardCondition): string {
     case "opponentBannerPokemonInPlay":
       // 🆕🆕🆕 D569 — the two printed clauses verbatim, minus the "if".
       return `your opponent has any ${cond.banner} Pokémon in play`;
+    case "yourOtherBannerPokemonAttackedLastTurn":
+      // 🆕🆕🆕 D579 — Koraidon's printed clause verbatim, minus the "If" (`yourPokemonUsedAttackLastTurn`'s
+      // treatment: "1 of your" is already board-relative, so no pronoun is resolved).
+      return `1 of your other ${cond.banner} Pokémon used an attack during your last turn`;
     case "yourPlayedBannerSupporterThisTurn":
       return `you played ${cond.banner === "Ancient" ? "an" : "a"} ${cond.banner} Supporter card from your hand during this turn`;
     case "opponentStage2PokemonInPlay":
@@ -8271,6 +8321,19 @@ export function applyChoice(
       const source = op.from;
       if (!pickedPokemon(choice) || source === undefined) return state;
       return moveCountersToOpponent(state, source, choice.ref, choice.take ?? op.upTo, ctx, events);
+    }
+    case "putCountersOnSelfChosen": {
+      // 🆕🆕🆕 D579 — the answer's `take` is the count (absent = the printed `upTo`, D359); the
+      // ref-less answer is the DECLINE, which files `[]` and places nothing (R-W2). The count is
+      // filed as ONE entry per counter under `"placed"` (effects.ts `EffectSlot`, D579 (b)), which
+      // the program's top-level `damageDefender { per: 20, count: "placed" }` then reads.
+      if (!pickedPokemon(choice)) {
+        recordMoved(record, "placed", []);
+        return state;
+      }
+      const placed = placeCountersOnSelf(state, choice.take ?? op.upTo, ctx, events);
+      recordMoved(record, "placed", placed.placed);
+      return placed.state;
     }
     case "moveCountersOpponentAnyWay": {
       // 🆕🆕🆕 D574 — the loop's two parks, told apart by `op.source`. Q1 (the source + count)
@@ -12174,7 +12237,7 @@ function snipeAmount(
   // accumulator from `cont.record`, so the number the caption quoted and the number
   // the hit deals are the same value on both sides of the park.
   // ⚠️ **`undefined` AND NOT A BOOLEAN**: an `EffectSlot` is an ADDRESS and there
-  // are three of them (🆕🆕🆕 D567 NOTE (D539): five now — turnedPrize/revealed), so the rider names the one it reads (see effects.ts).
+  // are three of them (🆕🆕🆕 D567 NOTE (D539): five now — turnedPrize/revealed; 🆕🆕🆕 D579 (D539): SIX now — `"placed"`, one entry per damage counter placed; the address argument only strengthens), so the rider names the one it reads (see effects.ts).
   if (op.perRecorded !== undefined)
     return op.amount * recorded(record, op.perRecorded).length;
   // 🆕🆕🆕 **D538 — THE FIFTH RIDER, AND IT IS FOUR LINES BECAUSE THE READER ALREADY
@@ -13428,6 +13491,29 @@ function damageSelf(
   if (uid === undefined) return state;
   events.push({ type: "COUNTERS_PLACED", seat: ctx.seat, uid, amount, source: source ?? "self" });
   return withActive(state, ctx.seat, { ...active, damage: active.damage + amount });
+}
+
+/** 🆕🆕🆕 **D579 — PUT `count` DAMAGE COUNTERS ON THE CONTROLLER'S ACTIVE AND SAY WHICH WERE PUT.**
+    `damageSelf`'s flat placement (no W/R, no shield, one `COUNTERS_PLACED { source: "self" }`
+    row) with the COUNT returned as one entry per counter — the attacker's top uid, repeated —
+    so `putCountersOnSelfChosen` can file it under `"placed"`. NOT clamped to the remaining HP
+    (R-W1: the self-KO is the epilogue's). A non-positive count, or no Active, places nothing
+    and returns no entries. */
+function placeCountersOnSelf(
+  state: GameState,
+  count: number,
+  ctx: EffectContext,
+  events: GameEvent[],
+): { state: GameState; placed: string[] } {
+  const active = state.players[ctx.seat].active;
+  const uid = active === null ? undefined : topUid(active);
+  if (count <= 0 || active === null || uid === undefined) return { state, placed: [] };
+  const amount = count * 10;
+  events.push({ type: "COUNTERS_PLACED", seat: ctx.seat, uid, amount, source: "self" });
+  return {
+    state: withActive(state, ctx.seat, { ...active, damage: active.damage + amount }),
+    placed: Array.from({ length: count }, () => uid),
+  };
 }
 
 /** 🆕🆕🆕 **D563 — `damageSelf { on: "source" }`: PLACE `amount` HP OF COUNTERS ON THE

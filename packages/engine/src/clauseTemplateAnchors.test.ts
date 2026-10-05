@@ -268,6 +268,12 @@ describe("§3 — the MAP is the vocabulary, and the two maps do not leak into e
         "If you played a Future Supporter card from your hand during this turn, this attack does 100 more damage.",
         { kind: "yourPlayedBannerSupporterThisTurn", banner: "Future" },
       ],
+      // 🆕🆕🆕 D579 — the ANCIENT clause, the column's last printed banner refusal, is a literal row
+      // now, over the new seat-level `GameState.recentAttackers` (Koraidon `sv08-116`).
+      [
+        "If 1 of your other Ancient Pokémon used an attack during your last turn, this attack does 150 more damage.",
+        { kind: "yourOtherBannerPokemonAttackedLastTurn", banner: "Ancient" },
+      ],
     ] as const) {
       expect(corpus().some(([, s]) => s === text), text).toBe(true);
       expect(deriveAttackDamageBonus(text)?.count, text).toEqual({ kind: "boardCondition", cond });
@@ -281,10 +287,16 @@ describe("§3 — the MAP is the vocabulary, and the two maps do not leak into e
     // (🆕🆕🆕 D569 (D539): Slither Wing's Future clause is a literal row now — pinned in the resolved
     // list above — so the printed banner refusal this rung keeps is the ONE left in the column:
     // Koraidon `sv08-116` "Unrelenting Onslaught", a seat-level attack record, DEFERRED.)
+    // 🆕🆕🆕 D579 (D539) — "the ONE left in the column … DEFERRED" is WITHDRAWN: Koraidon's clause is
+    // BUILT (pinned in the resolved list above), and the legal column prints NO banner clause the map
+    // refuses any more. So the refusal is RE-POINTED to a CONSTRUCTED twin — Koraidon's clause with
+    // the OTHER banner — asserted ABSENT from the corpus (so it is not a printed sentence silently
+    // refused) and refused at the map: the Ancient row is a whole-clause literal, never a template
+    // over the banner token, so the Future spelling must not resolve through it.
     for (const text of [
-      "If 1 of your other Ancient Pokémon used an attack during your last turn, this attack does 150 more damage.",
+      "If 1 of your other Future Pokémon used an attack during your last turn, this attack does 150 more damage.",
     ]) {
-      expect(corpus().some(([, s]) => s === text), text).toBe(true);
+      expect(corpus().some(([, s]) => s === text), text).toBe(false);
       expect(deriveAttackDamageBonus(text), text).toBeNull();
     }
   });

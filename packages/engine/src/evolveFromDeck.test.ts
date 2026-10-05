@@ -664,6 +664,7 @@ describe("D307 §6 — the persisted shape: the op and the dest reach the phase"
       "pending",
       "phase",
       "players",
+      "recentAttackers", // 🆕🆕🆕 D579 — the REQUIRED seat-level attack record (Koraidon "Unrelenting Onslaught", R-1 reading B); MRV 40 → 41
       "rngState",
       "stadium",
       "turn",

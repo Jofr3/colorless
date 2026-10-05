@@ -605,12 +605,18 @@ export const redactedEffectPromptSchema = z.discriminatedUnion("kind", [
       Munkidori "Adrena-Brain" moves up to 3 DAMAGE COUNTERS, so its rows read "move N". A
       WIDENING in D441's sense — every older snapshot carries no key and meant "attach" — so
       `MATCH_RECORD_VERSION` does not move; an older deploy's schema strips the key (zod drops
-      undeclared keys), and the dialog there captions the same number "attach". */
+      undeclared keys), and the dialog there captions the same number "attach".
+
+      🆕🆕🆕 **D579 — AND A SECOND VALUE, `"put"`** (Walking Wake "Undulating Slice" puts up to 9
+      damage counters on itself, so its rows read "put N"). 🛑 **THIS ONE IS NOT STRIPPED BY AN
+      OLDER SCHEMA**: zod drops an undeclared KEY, but a declared key holding an undeclared VALUE
+      fails `z.literal("move")` and the whole frame is REFUSED. So the CLIENT DEPLOYS FIRST (apps/api
+      match.ts "D579"); old snapshots carry "move" or nothing and still parse here. */
   z.object({
     kind: z.literal("choosePokemon"),
     candidates: z.array(redactedPokemonRefSchema),
     upTo: z.number().int().positive().optional(),
-    takeVerb: z.literal("move").optional(),
+    takeVerb: z.enum(["move", "put"]).optional(),
     note: z.string(),
   }),
   /** Pick `min`..`max` in-play Pokémon — the multi-target snipe. `declinable`

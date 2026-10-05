@@ -396,7 +396,7 @@ describe("§1 — the census D282 priced its refusal against: counts reproduce, 
     // attack), Relicanth `sv05-084` / `sv05-173` (`MEMORY_DIVE`, a `passive`) and Team Rocket's Energy
     // `sv10-182` (`TEAM_ROCKETS_ENERGY`, an `energy`). Real catalog ids, no `fix-*` key, inserted
     // MID-MAP after D577's rows; no `attackGate`.
-    expect(ids.length).toBe(985);
+    expect(ids.length).toBe(986); // (🆕🆕🆕 **D579 +1** — Walking Wake `sv06-063`, one attack-only registry id, inserted MID-MAP.)
     const gated = ids.filter((id) => programFor(id)?.attackGate !== undefined);
     expect(gated.length).toBe(17);
     const kinds = gated.flatMap((id) =>

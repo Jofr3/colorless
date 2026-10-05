@@ -2154,6 +2154,36 @@ export interface MatchRecord {
     `turn:action.discardable` — 🛑 **DEPLOY THE SERVER FIRST**: an old client's `z.object` STRIPS
     the unknown key, while a new client's REQUIRED key refuses an old server's frame.
 
+    🆕🆕🆕 **40 → 41 AT D579 — THE FOURTEENTH POSITION: A NEW REQUIRED `GameState` KEY, AND A SECOND
+    `takeVerb` VALUE.** (Placed ABOVE the D578 and D577 blocks, out of date order — D563's placement —
+    so the D577 doc tail every `*-record-version-not-bumped` row anchors on stays byte-identical.) The
+    addresses, named first (D456's rule):
+    ⑴ **`GameState.recentAttackers: Record<Seat, readonly { turn, uid }[]>`** — REQUIRED (D326/D271:
+    a new required `GameState` key always bumps). Koraidon `sv08-116` "Unrelenting Onslaught" reads
+    it for "+150 if 1 of your other Ancient Pokémon used an attack during your last turn" (R-1,
+    reading B, RULED BY THE USER 2026-10-05: the record outlives the body). A v40 record lacks the key
+    and this deploy INDEXES it (`state.recentAttackers[seat]`) at every attack's end and at every
+    Koraidon declaration — D326's throw, so the record is retired rather than read.
+    ⑵ **THE 0.462 ROLLBACK READING, NAMED**: a 0.462 deploy resuming a v41 record IGNORES the key (it
+    has no reader), so Koraidon's +150 LAPSES for the one turn whose record it was written in — a
+    played effect silently gone, not inert, which is why the version moves rather than holds on
+    D572's whiff argument.
+    ⑶ **A PARKED Walking Wake `sv06-063` "Undulating Slice"** — the NEW `EffectOp`
+    `putCountersOnSelfChosen { upTo }` in `phase.cont.pendingOp`, with `damageDefender { count:
+    "placed" }` in `cont.rest`, the NEW `EffectSlot` member `"placed"` in `cont.record` and the
+    prompt's `takeVerb: "put"`. Under a 0.462 rollback the op has no `stepOp` arm and no
+    `applyChoice` arm, so the park WHIFFS through the default arms (D572's reading): nothing is
+    placed, the `placed` slot stays unfiled, and the hit counts 0 — inert in the player's disfavour,
+    no illegal state. This rides the bump; it is not a second reason for it.
+    🛑 **DEPLOY THE CLIENT FIRST** (or both together): the wire schema's `takeVerb` widens from
+    `z.literal("move")` to `z.enum(["move", "put"])`, and a 0.462 client's strict literal REFUSES a
+    frame carrying `"put"` (zod strips an unknown KEY, never an unknown VALUE). The web HUDs already
+    interpolate `prompt.takeVerb ?? "attach"`, so no client code moves beyond the schema.
+    ⚠️ Also moved, none a further reason: the `BoardCondition` member
+    `yourOtherBannerPokemonAttackedLastTurn` (read at declaration, never persisted) and one
+    `CONDITIONAL_DAMAGE_CLAUSES` row. ⚠️ **ANGELITE IS NOT RE-POINTED (R-1b, ⚠️ UNRULED)**: Sylveon ex's
+    bar still reads the per-body `InPlayPokemon.usedAttack`, so no v40 byte under it changes meaning.
+
     🆕🆕🆕 **STAYS 40 AT D578 — SCOVILLAIN ex "DOUBLE TYPE", RELICANTH "MEMORY DIVE", TECHNICAL MACHINE:
     FLUORITE AND TEAM ROCKET'S ENERGY CHANGE NO GameState, PendingStage OR `cont` SHAPE; EVERY 0.461
     ROLLBACK READING IS INERT.** (Placed ABOVE the D577 block, out of date order, so the declaration's
@@ -2226,7 +2256,7 @@ export interface MatchRecord {
     the `trimBench` `EffectOp` (parked in `cont`, a D125 widening carried by (ii)), the events
     `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side
     `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */
-export const MATCH_RECORD_VERSION = 40;
+export const MATCH_RECORD_VERSION = 41;
 
 /** How a persisted match read back: absent, usable, or written by an
     incompatible deploy (`stale` — the caller decides whether to retire it). */

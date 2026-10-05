@@ -736,7 +736,7 @@ describe("🆕 D359 effect:choose — the printed CEILING on the target dialog",
       park lives in `sv08`/`sv09`/`sv10`, none of which the local HUD pool holds,
       and the claim here is about the DIALOG rather than about a card. The engine
       side is driven end to end on real ids in `attachQuantity.test.ts`. */
-  function parkedWith(upTo: number | undefined, takeVerb?: "move"): GameState {
+  function parkedWith(upTo: number | undefined, takeVerb?: "move" | "put"): GameState {
     let state = p1Turn2(2, both);
     state = handFromDeck(state, "p1", "fix-basic-1", 1);
     const benchUid = handUid(state, "p1", "fix-basic-1");
@@ -788,6 +788,29 @@ describe("🆕 D359 effect:choose — the printed CEILING on the target dialog",
     expect(labels.filter((t) => t.includes("attach"))).toHaveLength(0);
     const row = screen.getAllByRole("button").find((b) => (b.textContent ?? "").endsWith(" — move 2"));
     if (row === undefined) throw new Error("no \"move 2\" row");
+    fireEvent.click(row);
+    const call = dispatch.mock.calls[0]?.[0] as GameAction;
+    if (call.type !== "resolveEffect") throw new Error("expected resolveEffect");
+    expect(call.choice).toEqual({
+      kind: "pokemon",
+      ref: { seat: "p1", spot: { spot: "bench", index: 0 } },
+      take: 2,
+    });
+  });
+
+  it("🆕🆕🆕 D579 — a prompt carrying `takeVerb: \"put\"` captions its quantity rows \"put N\" (Walking Wake \"Undulating Slice\")", () => {
+    // Walking Wake parks `choosePokemon { candidates: [itself], upTo: 9, takeVerb: "put" }`: the
+    // counters are PUT on the attacker — "move N" would name a source the card does not have, and
+    // "attach N" an Energy. The HUD interpolates the verb (`prompt.takeVerb ?? "attach"`), so no HUD
+    // code moved; this rung pins that the second PRESENT value is read too, and still dispatches
+    // body AND quantity.
+    const dispatch = vi.fn();
+    renderHud(parkedWith(2, "put"), dispatch);
+    const labels = screen.getAllByRole("button").map((b) => b.textContent ?? "");
+    expect(labels.filter((t) => / — put [12]$/.test(t))).toHaveLength(2);
+    expect(labels.filter((t) => / — (attach|move) [12]$/.test(t))).toHaveLength(0);
+    const row = screen.getAllByRole("button").find((b) => (b.textContent ?? "").endsWith(" — put 2"));
+    if (row === undefined) throw new Error("no \"put 2\" row");
     fireEvent.click(row);
     const call = dispatch.mock.calls[0]?.[0] as GameAction;
     if (call.type !== "resolveEffect") throw new Error("expected resolveEffect");

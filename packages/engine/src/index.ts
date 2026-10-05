@@ -12793,7 +12793,7 @@ import type { GameState, Seat } from "./types";
     damage you did to your opponent's Active Pokémon."* at **6** printings, one more than
     this one. It lost on the **KIND OF QUANTITY**, not on the count:
 
-      • `EffectSlot` is `"paid" | "moved" | "discarded"` (🆕🆕🆕 D567 FINAL-REVIEW NOTE (D539): five members now — `turnedPrize` / `revealed`, both uid lists, so the argument stands) and `EffectRecord` is
+      • `EffectSlot` is `"paid" | "moved" | "discarded"` (🆕🆕🆕 D567 FINAL-REVIEW NOTE (D539): five members now — `turnedPrize` / `revealed`, both uid lists, so the argument stands; 🆕🆕🆕 D579 (D539): SIX members now — `"placed"` (Walking Wake), and it is NOT a list of distinct card uids: it files a COUNT as repeated top uids, one entry per damage counter placed. So the ABSOLUTE form of the argument around this note — ~~every slot is a list of card uids; no slot to file a figure in and no widening that keeps the map's value type~~ — is WITHDRAWN: a count CAN ride a slot by repetition with `string[]` unchanged. It stands only QUALIFIED: every slot's VALUE TYPE is still a uid list, and the dealt-damage figure stays on `EffectContext.dealt` by CHOICE (an HP figure read by arithmetic, not a handful of counters), not because no slot could hold it) and `EffectRecord` is
         `{ [K in EffectSlot]?: string[] }` — **every §9.2 slot in this engine is a LIST
         OF CARD UIDS**, and *"the same amount of damage"* is an HP FIGURE. There is no
         slot to file it in and no widening that keeps the map's value type.
@@ -13383,6 +13383,7 @@ import type { GameState, Seat } from "./types";
     (🆕🆕🆕 D568 (D539): the "no supply / DATA-BLOCKED / unbuildable" reading is WITHDRAWN FOR TERA — `banners.ts`' engine table, keyed by printing id, supplies the banner; "no INGESTED column classifies it" and "`Tera` is not a type" stay TRUE, and every Ancient/Future claim stands. 🆕🆕🆕 D569 (D539): that last clause is WITHDRAWN in turn — Slice 2 part a gave Ancient/Future the same writer, `banners.ts` (86 more ids); "no INGESTED column classifies it" stays TRUE.)
     ×2, all demand-only in every ingested column), ONE at 5 printings that is D368's
     (🆕🆕🆕 D569 (D539): the two Future clauses resolve too, through literal rows over the widened `banners.ts`; ONE banner clause is left (Ancient ×1, Koraidon `sv08-116`, on a seat-level record))
+    (🆕🆕🆕 D579 (D539): "ONE banner clause is left" is WITHDRAWN — D579 builds the seat-level record and Koraidon's clause is a literal row; no banner clause is left)
     structural SHAPE refusal (*"…in addition to this attack's cost"* reads an attack
     `conditionHolds` is never handed), and this clause's own TWIN under a different
     consequent. **THE NEXT SLICE IS NOT IN THIS SKELETON**, and pricing it from
@@ -13742,6 +13743,7 @@ import type { GameState, Seat } from "./types";
     column also prints *"1 of your other Ancient Pokémon used an attack during your
     last turn"* (1 printing) — the same clock and the same mechanism — refused on
     (🆕🆕🆕 D569 (D539): D207's ground is WITHDRAWN — `banners.ts` supplies Ancient; the clause stays unbuilt on its seat-level attack record (a new `GameState` key, an MRV bump), deferred)
+    (🆕🆕🆕 D579 (D539): "stays unbuilt … deferred" is WITHDRAWN — D579 adds that key, `GameState.recentAttackers` (MRV 40 → 41), and the clause is a literal row)
     D207's ground, which is the sharpest illustration in the residue of where this
     family stops.
 
@@ -17862,7 +17864,7 @@ import type { GameState, Seat } from "./types";
 
       • **`EffectRecord` LOSES ON ITS VALUE TYPE, WHICH IS A HARDER FACT THAN THE
         MEANING.** It is `{ [K in EffectSlot]?: string[] }` and `EffectSlot` is
-        `"paid" | "moved" | "discarded"` (🆕🆕🆕 D567 FINAL-REVIEW NOTE (D539): five members now — `turnedPrize` / `revealed`, both uid lists, so the argument stands) — **every §9.2 slot in this engine is a LIST
+        `"paid" | "moved" | "discarded"` (🆕🆕🆕 D567 FINAL-REVIEW NOTE (D539): five members now — `turnedPrize` / `revealed`, both uid lists, so the argument stands; 🆕🆕🆕 D579 (D539): SIX members now — `"placed"` (Walking Wake), and it is NOT a list of distinct card uids: it files a COUNT as repeated top uids, one entry per damage counter placed. So the ABSOLUTE form of the argument around this note — ~~every slot is a list of card uids; no slot to file a figure in and no widening that keeps the map's value type~~ — is WITHDRAWN: a count CAN ride a slot by repetition with `string[]` unchanged. It stands only QUALIFIED: every slot's VALUE TYPE is still a uid list, and the dealt-damage figure stays on `EffectContext.dealt` by CHOICE (an HP figure read by arithmetic, not a handful of counters), not because no slot could hold it) — **every §9.2 slot in this engine is a LIST
         OF CARD UIDS**, and this is an HP FIGURE. There is no slot to file it in and no
         widening that keeps the map's value type. D406 wrote exactly this down while
         DECLINING the sentence on price; D427 is that note acted on rather than
@@ -18742,7 +18744,7 @@ import type { GameState, Seat } from "./types";
     family is CLOSED at 2 sentences / 4 printings with zero unresolved rows and no
     Ancient/Future/Tera member. `devolveEach.test.ts` §10's loud-path witness is now
     corpus row 346, not this sentence (🆕🆕🆕 D575 (D539): ~~"corpus row 346"~~ WITHDRAWN — row 346
-    is BUILT at 0.459.0; §10's witness is Walking Wake `sv06-063` "Undulating Slice" now). **The two-row claim is a RUNG, not a sentence**:
+    is BUILT at 0.459.0; §10's witness is Walking Wake `sv06-063` "Undulating Slice" now; 🆕🆕🆕 D579 (D539): Walking Wake is BUILT at 0.463.0 as a REGISTRY row, no reader claims the sentence, and the witness — another id — stays loud). **The two-row claim is a RUNG, not a sentence**:
     `devolveEach.test.ts` §1 runs the stem over the live corpus, so a third devolve
     printing entering the legal column reddens the suite and re-opens the template
     question by construction (D422's executable falsifier).
@@ -20250,6 +20252,22 @@ import type { GameState, Seat } from "./types";
     `expect(manifest.version)`, `it(…)` titles, the declaration and `package.json` —
     **not** as a value-keyed grep — because a value-keyed grep is precisely the mechanism
     that ate D500's heading.)
+    🆕🆕🆕 engineVersion 0.462.0 → **0.463.0** (D579 — THE CENSUS CLOSE-OUT: WALKING WAKE `sv06-063` "UNDULATING
+    SLICE" + KORAIDON `sv08-116` "UNRELENTING ONSLAUGHT", 2 PRINTINGS / 2 TEXTS; `MATCH_RECORD_VERSION` 40 → 41 (apps/api
+    match.ts "40 → 41 AT D579"); the ingested legal attack pool closes at 1731 / 1732 — Mr. Mime `sv05-063` held under D445 —
+    and the `OPAQUE` class is EMPTY). **Walking Wake** (a REGISTRY row, `UNDULATING_SLICE`): the NEW `EffectOp`
+    `putCountersOnSelfChosen { upTo }` — ALWAYS parked over its one candidate (this Pokémon) as `choosePokemon { upTo,
+    takeVerb: "put" }`, the answer's `take` (absent = `upTo`) placed as a flat `COUNTERS_PLACED { source: "self" }` and filed
+    ONE ENTRY PER COUNTER under the NEW `EffectSlot` member `"placed"` (enrolled in `recordSlotOf`), then a TOP-LEVEL
+    `damageDefender { per: 20, count: "placed" }` so `programDamage` drops the printed `20×` (R-W1 self-KO allowed, the hit
+    still dealt; R-W2 0 placed deals 0; R-W3 W/R once). The prompt's `takeVerb` widens to `"move" | "put"` (engine
+    `PromptKind` and the wire schema `z.enum(["move", "put"])` — 🛑 DEPLOY THE CLIENT FIRST). **Koraidon** (a READER row):
+    the NEW REQUIRED `GameState.recentAttackers: Record<Seat, readonly RecentAttacker[]>` (`{ turn, uid }`, written by
+    flow.ts `stampSeatAttacker` beside `stampAttackUse`, idempotent, pruned to the seat's previous turn), the NEW
+    `BoardCondition` `yourOtherBannerPokemonAttackedLastTurn { banner }` (interpreter.ts `conditionHolds` / `conditionNote`)
+    and one `CONDITIONAL_DAMAGE_CLAUSES` literal; R-1 READING B (RULED BY THE USER 2026-10-05): the record outlives the
+    body. Angelite is NOT re-pointed (R-1b ⚠️ UNRULED). scripts/opaque-anatomy-gate.ts § E's four population checks are
+    vacuous-safe and § E′ asks them of a fixed literal grid.)
     🆕🆕🆕 engineVersion 0.461.0 → **0.462.0** (D578 — SCOVILLAIN ex ×2 + RELICANTH ×2 + TECHNICAL MACHINE: FLUORITE + TEAM
     ROCKET'S ENERGY: 6 PRINTINGS / 4 TEXTS, `MATCH_RECORD_VERSION` STAYS 40 (match.ts "STAYS 40 AT D578"). **Scovillain
     ex** `sv08-037` / `sv08-216` "Double Type": the NEW `PassiveEffects.typesInPlay` (`["Grass", "Fire"]`) and the NEW
@@ -22478,7 +22496,8 @@ import type { GameState, Seat } from "./types";
     D234 arm can never emit); `attachDecline.test.ts` §7's derived spreads 3 → 4 sentences / 4 → 5
     printings and its `+ 1 refused` population note re-pointed; `deckMillFilteredScale.test.ts`'s
     LOUD control re-pointed onto *"Look at 1 of your opponent's face-down Prize cards."* (🆕🆕🆕 D575 (D539): BUILT at
-    0.459.0, `lookAtPrize`; the control moved again, to Walking Wake `sv06-063`) (a residue
+    0.459.0, `lookAtPrize`; the control moved again, to Walking Wake `sv06-063`; 🆕🆕🆕 D579 (D539): BUILT at 0.463.0 as a
+    REGISTRY row — no reader claims it, so the control stays loud) (a residue
     sentence with ZERO suites — `readersClaiming` [] and the skip on the ENERGY board verified before
     choosing); `censusAtHead.test.ts` row 9's attack entry 1 → 0 (`attack: []`, D528's precedent one
     row over), `inRows` 21 → 20 and the ratio 26 → 25 (the ORDINARY shape, D458 — numerator and
@@ -25031,7 +25050,7 @@ import type { GameState, Seat } from "./types";
     WITNESS** — the count was re-derived every slice and the word *"three"* was carried.
     A successor of this slice inherits **81 / 61 / 17** again, over **FIVE** history
     occurrences: those four plus `deckMillFilteredScale.test.ts`'s own header arrow.) */
-export const engineVersion = "0.462.0";
+export const engineVersion = "0.463.0";
 
 export type {
   ApplyResult,

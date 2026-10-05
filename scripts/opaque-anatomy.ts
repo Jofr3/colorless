@@ -338,6 +338,9 @@ export const MARKERS: readonly Marker[] = [
       //    class"~~ and ~~"a set-target block"~~ are BUILT (Iron Moth "Anachronism Repulsor", Miraidon
       //    "C.O.D.E.: Protect" — the ELEVENTH `MATCH_RECORD_VERSION` position); only "a seat-level attack
       //    record" (Koraidon `sv08-116`, unruled R-1) remains. The string is kept as written (D178).
+      // 🆕🆕🆕 D579 (D539): ~~"only 'a seat-level attack record' … remains"~~ — BUILT too (`GameState.
+      //    recentAttackers`, Koraidon `sv08-116`, R-1 reading B RULED by the user 2026-10-05); all three
+      //    "OTHER mechanisms" are built and the OPAQUE class is EMPTY. The string is still kept (D178).
       "nothing new — `banners.ts` (D568/D569) classifies all three banners by printing id; what is left of the Ancient/Future residue is blocked by OTHER mechanisms (a persisted attacker class, a seat-level attack record, a set-target block)",
   },
   {

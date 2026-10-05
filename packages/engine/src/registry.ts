@@ -10792,6 +10792,24 @@ const TM_FLUORITE: CardProgram = {
   toolDiscardAtEndOfYourTurn: true,
 };
 
+/** 🆕🆕🆕 **D579 — Walking Wake `sv06-063` "Undulating Slice" ({W}{W}{C}, `20×`, attack index 1,
+    1 legal printing)**: *"Put up to 9 damage counters on this Pokémon. This attack does 20 damage
+    for each damage counter you placed in this way."* The ALWAYS-parked quantity pick
+    (`putCountersOnSelfChosen`, `takeVerb: "put"`), which files one `"placed"` entry per counter,
+    then the TOP-LEVEL `damageDefender` reading that slot — top-level so attack.ts `programDamage`
+    drops the printed `20×` base (R-W1 … R-W3, decisions.md D579). The sentence stays
+    REGISTRY-held: no deriver arm claims it, so the residue census keeps it RAW and `builds()`
+    serves it by id. INDEX-KEYED: "Aurora Gain" (idx 0, "Heal 20 damage from this Pokémon.")
+    keeps deriving. */
+const UNDULATING_SLICE: CardProgram = {
+  attack: {
+    1: [
+      { op: "putCountersOnSelfChosen", upTo: 9 },
+      { op: "damageDefender", per: 20, count: "placed" },
+    ],
+  },
+};
+
 /** D261 — Enriching Energy `sv08-191`: "As long as this card is attached to a
     Pokémon, it provides {C} Energy. / When you attach this card from your hand to
     a Pokémon, draw 4 cards."
@@ -16020,7 +16038,10 @@ const PRISM_CHARGE: CardProgram = {
 //    BUILT (`INITIALIZATION`, `DESTRUCTO_PRESS`); the four others — 4 printings — stay deferred.]
 //    [🆕🆕🆕 D575 (D539): Miraidon "C.O.D.E.: Protect" and Iron Moth "Anachronism Repulsor" are BUILT too, as
 //    `deriveAttackEffect` arms (no registry row); Koraidon `sv08-116` and Iron Treads "Dual Core" — 2
-//    printings — stay deferred.] ──
+//    printings — stay deferred.]
+//    [🆕🆕🆕 D579 (D539): Koraidon `sv08-116` "Unrelenting Onslaught" is BUILT too, a `deriveAttackDamageBonus`
+//    literal row over the new seat-level `GameState.recentAttackers` (no registry row); Iron Treads `sv05-118`
+//    "Dual Core" alone stays — its condition card `sv05-149` is not Standard-legal.] ──
 
 /** 🆕🆕🆕 **D569 — Miraidon `sv05-121`/`svp-092` "Peak Acceleration" (attack index 0, 2
     legal)** — *"Search your deck for up to 2 Basic Energy cards and attach them to your
@@ -17074,6 +17095,10 @@ const REGISTRY: Record<string, CardProgram> = {
   "sv05-084": MEMORY_DIVE, // Relicanth — Memory Dive: your evolved Pokémon use their previous Evolutions' attacks
   "sv05-173": MEMORY_DIVE, // Relicanth (reprint)
   "sv10-182": TEAM_ROCKETS_ENERGY, // Team Rocket's Energy — 2 units of {P}/{D}; Team Rocket's Pokémon only
+  // ── 🆕🆕🆕 D579 — Walking Wake "Undulating Slice": 1 registry id / 1 object, MID-MAP (D395/D396),
+  //    so `raw[last]` does not move. (Koraidon `sv08-116` "Unrelenting Onslaught" is a DERIVER arm —
+  //    a `CONDITIONAL_DAMAGE_CLAUSES` row over the new `recentAttackers` record — and carries no row.) ──
+  "sv06-063": UNDULATING_SLICE, // Walking Wake — Undulating Slice: put up to 9 counters on itself, 20× per counter put
   // ── D190 — THE **STANDARD-LEGAL** REPRINT-ALIAS MAP (Tier 0 of
   //    `docs/reference/coverage-backlog-legal.md`). 22 printings, 9 map targets,
   //    ZERO new code: every row below prints a sentence that is already authored

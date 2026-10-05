@@ -61,6 +61,8 @@
  *   (🆕🆕🆕 D575 (D539): D575 built the pinned sentence itself — N's Sigilyph "Victory Symbol" — and one
  *   more `SCHEMA-BANNER` witness; one live far witness, Koraidon `sv08-116`, remains, and the literal
  *   carries the claim regardless.)
+ *   (🆕🆕🆕 D579 (D539): ~~"one live far witness … remains"~~ — D579 BUILT Koraidon; none remains, and
+ *   the literal carries the claim alone.)
  *
  * § D — THE PARTITION IS TOTAL AND DISJOINT. Every `OPAQUE` row gets exactly one
  *   class; the class sentence-counts and printing-counts sum to the class's own.
@@ -81,6 +83,11 @@
  *   also runs `minRegionHit` over a PINNED literal pair whose first target is
  *   admitted at k = 2 and whose second is admitted at k = 1 — the
  *   population-independent half of the same claim.
+ *   🆕🆕🆕 **D579 — AND THE WHOLE POPULATION IS GONE.** D579 built the last two `OPAQUE`
+ *   sentences, so § E's four population claims are vacuous-safe (`OPAQUE.length === 0 || …`)
+ *   and § E′ asks the same claims of a FIXED literal grid, plus the region bound asked of
+ *   `minRegionHit` directly on a pinned over-bound pair. The gate-witness rows that § E killed
+ *   are killed by § E′ at 0 OPAQUE (measured, all sixteen).
  *
  * ⚠️ WHAT IT DOES NOT ASSERT, STATED (D419/D455). It pins **no class sizes** —
  * `MULTI-2 = 11` is exactly the kind of figure a future build is supposed to
@@ -206,7 +213,10 @@ check(
 // sentence pinned below) and one of the two `SCHEMA-BANNER` ones (Miraidon "C.O.D.E.: Protect"); ONE live
 // far witness remains — Koraidon `sv08-116`
 // "Unrelenting Onslaught", `SCHEMA-BANNER` — and the pinned literal below still holds the row, unchanged:
-// a literal is not built away when its sentence is. The gate-witness probe read 16/16 KILLED after D575.) So the
+// a literal is not built away when its sentence is. The gate-witness probe read 16/16 KILLED after D575.) (🆕🆕🆕 D579 (D539):
+// ~~"ONE live far witness remains — Koraidon"~~ — D579 BUILT it; NO live far witness remains and the OPAQUE
+// class is EMPTY, so this row rests on the pinned literal ALONE — exactly the case the pin was written for.
+// The gate-witness probe read 16/16 KILLED on the D579 bytes.) So the
 // label is also asked of a FIXED far sentence no slice can build away: the live
 // `PRIZE-ZONE` witness's own words, held here as a literal (🆕🆕🆕 D575 (D539): the sentence is BUILT now — no longer
 // "live" — and the literal is exactly why that changes nothing here). A co-marker matches it and no
@@ -320,26 +330,112 @@ check(
   pairs === OPAQUE.length * BUILT_SENTENCES.length,
   `${pairs} pairs against ${OPAQUE.length} × ${BUILT_SENTENCES.length} = ${OPAQUE.length * BUILT_SENTENCES.length}`,
 );
+// 🆕🆕🆕 D579 — THE FOUR POPULATION CHECKS BELOW ARE VACUOUS-SAFE (`OPAQUE.length === 0 || …`).
+// D579 built the last two `OPAQUE` sentences (Walking Wake `sv06-063` "Undulating Slice" and
+// Koraidon `sv08-116` "Unrelenting Onslaught"), so the class is EMPTY at this head: a grid of
+// 0 × N pairs admits nothing and reaches nothing, and the four claims would be red on a repo
+// that improved — the failure mode this file's own doc block refuses. Each claim still holds
+// over a NON-empty population, and what it protected is carried, population-independently, by
+// § E′ below (the same four claims over a FIXED literal grid). Measured: at 0 OPAQUE the four
+// mutation rows these claims killed (`D471-region-bound-not-applied` above all) are killed by
+// § E′ alone.
 check(
   "§E the bound admitted NOTHING — the probe is dead code",
-  admitted > 0,
+  OPAQUE.length === 0 || admitted > 0,
   `0 admitted alignments over ${pairs} pairs`,
 );
 check(
   "§E the bound admitted EVERYTHING — the probe is degenerate",
-  admitted < pairs,
+  OPAQUE.length === 0 || admitted < pairs,
   `${admitted} of ${pairs} pairs admitted; with no effective bound every sentence is one region from every other`,
 );
 const reached = ANATOMY.filter((a) => a.hit !== null).length;
 check(
   "§E the reached half is empty — no row is explained by the single-region blind spot",
-  reached > 0,
+  OPAQUE.length === 0 || reached > 0,
   "0 rows carry a bounded multi-region hit",
 );
 check(
   "§E the far half is empty — every OPAQUE row is a probe artefact, which would be a finding, not a pass",
-  reached < ANATOMY.length,
+  OPAQUE.length === 0 || reached < ANATOMY.length,
   `all ${reached} rows carry a hit`,
+);
+
+// ─── § E′ (D579). THE SAME CLAIMS OVER A FIXED LITERAL GRID ──────────────────
+// 🛑 THE GATE-WITNESS RULE (the D569 close-out), paid BEFORE the build that needed it. § E's
+// re-derivation, its grid total and its two non-degeneracy pairs all read the LIVE `OPAQUE`
+// class, and D579 empties it — so every mutation row those claims killed would silently
+// survive. This section asks the same questions of a FIXED 2 × 2 grid no slice can build away:
+// the plain-loop minimum must agree with `minRegionHit` row by row; the bound must admit
+// something and not everything; and the reached half and the far half must both be non-empty.
+// Row 1 is admitted onto target 1 at k = 2 (③'s two separated 1→1 regions) and is REACHED;
+// row 2 is a 12-token sentence that reduces onto target 2 to a 5→0 head plus a 0→3 tail and
+// onto target 1 to one 12→5 region — over the bound both ways, so it is FAR.
+const E2_TARGETS = ["a b c d e", "p q r s t u v w x y"] as const;
+const E2_ROWS = ["a x c y e", "k l m n o p q r s t u v"] as const;
+let e2Pairs = 0;
+let e2Admitted = 0;
+let e2Reached = 0;
+const e2Disagree: string[] = [];
+for (const row of E2_ROWS) {
+  const a = row.split(" ");
+  let mine: number | null = null;
+  for (const onto of E2_TARGETS) {
+    e2Pairs++;
+    const regions = editRegions(a, onto.split(" "));
+    if (regions.length === 0) continue;
+    if (regions.some((x) => x.alen > SUBMAX || x.blen > SUBMAX)) continue;
+    e2Admitted++;
+    if (mine === null || regions.length < mine) mine = regions.length;
+  }
+  const theirs = minRegionHit(row, SUBMAX, E2_TARGETS)?.k ?? null;
+  if (mine !== theirs) e2Disagree.push(`«${row}» gate says ${mine}, minRegionHit says ${theirs}`);
+  if (theirs !== null) e2Reached++;
+}
+check(
+  "§E′ the re-derived minimum disagrees with minRegionHit over the literal grid",
+  e2Disagree.length === 0,
+  `${e2Disagree.length} row(s); first: ${e2Disagree[0] ?? "—"}`,
+);
+check(
+  "§E′ the bound admitted NOTHING over the literal grid — the probe is dead code",
+  e2Admitted > 0,
+  `0 admitted alignments over ${e2Pairs} pairs`,
+);
+check(
+  "§E′ the bound admitted EVERYTHING over the literal grid — the probe is degenerate",
+  e2Admitted < e2Pairs,
+  `${e2Admitted} of ${e2Pairs} pairs admitted`,
+);
+check(
+  "§E′ the reached half of the literal grid is empty",
+  e2Reached > 0,
+  `0 of ${E2_ROWS.length} rows reached`,
+);
+check(
+  "§E′ the far half of the literal grid is empty",
+  e2Reached < E2_ROWS.length,
+  `all ${e2Reached} rows reached`,
+);
+// 🛑 THE REGION BOUND, ASKED OF `minRegionHit` DIRECTLY. Six tokens rewritten wholesale is ONE
+// 6→6 region, over the bound of 4, so the search must answer null; a search that never applies
+// the bound answers k = 1. This is the claim `D471-region-bound-not-applied` dies on at 0 OPAQUE
+// (measured: § E′'s grid above does not reach it on its own), so the literal is load-bearing.
+const E2_BOUND_TEXT = "a b c d e f";
+const E2_BOUND_TARGET = "u v w x y z";
+const e2Bound = minRegionHit(E2_BOUND_TEXT, 4, [E2_BOUND_TARGET]);
+check(
+  "§E′ minRegionHit admitted a region over the bound — the bound is not applied",
+  e2Bound === null,
+  `expected null, got ${e2Bound === null ? "null" : `k = ${e2Bound.k} onto «${e2Bound.onto}»`}`,
+);
+// The literal's own premise, re-measured so it cannot rot into a tautology: the pair must
+// really reduce to ONE region whose size is over the bound.
+const e2BoundPremise = editRegions(T(E2_BOUND_TEXT), T(E2_BOUND_TARGET));
+check(
+  "§E′ the region-bound literal's premise broke — it is not one region over the bound",
+  e2BoundPremise.length === 1 && (e2BoundPremise[0]?.alen ?? 0) > 4,
+  `reduces to «${shape(e2BoundPremise)}»`,
 );
 
 // ─── VERDICT ─────────────────────────────────────────────────────────────────
@@ -350,5 +446,5 @@ if (failures.length > 0) {
 }
 const blockers = MARKER_COUNTS.filter((m) => m.marker.verdict === "blocker").length;
 console.log(
-  `opaque-anatomy-gate: OK — §A no k=1 row over ${OPAQUE.length} OPAQUE sentences, §B ${B_CASES.length} region-reduction claims hold, §C ${blockers} blocker(s) with an empty built side and ${MARKER_COUNTS.length - blockers} co-marker(s) with a live one, §D ${classes.size} classes covering ${sumS} sentences / ${sumU} printings exactly once, §E ${admitted} admitted of ${pairs} grid pairs and ${reached} reached / ${ANATOMY.length - reached} far, re-derived in agreement.`,
+  `opaque-anatomy-gate: OK — §A no k=1 row over ${OPAQUE.length} OPAQUE sentences, §B ${B_CASES.length} region-reduction claims hold, §C ${blockers} blocker(s) with an empty built side and ${MARKER_COUNTS.length - blockers} co-marker(s) with a live one, §D ${classes.size} classes covering ${sumS} sentences / ${sumU} printings exactly once, §E ${admitted} admitted of ${pairs} grid pairs and ${reached} reached / ${ANATOMY.length - reached} far, re-derived in agreement, §E′ ${e2Admitted} admitted of ${e2Pairs} literal pairs and ${e2Reached} reached / ${E2_ROWS.length - e2Reached} far, the region bound applied.`,
 );

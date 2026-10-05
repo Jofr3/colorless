@@ -343,7 +343,10 @@ function redactPrompt(state: GameState, prompt: EffectPrompt): RedactedEffectPro
       // unclamped is that `note` quotes the printed number, so a clamped one would
       // contradict its own caption — see the field's doc in `interpreter.ts`.)
       // 🆕🆕🆕 D572 — `takeVerb` rides through the SAME conditional spread (D135): absent on every
-      // park but Adrena-Brain's destination, so every older prompt redacts byte-identically. It is
+      // park but Adrena-Brain's destination (🆕🆕🆕 D579 (D539): ~~"absent on every park but
+      // Adrena-Brain's destination"~~ — stale since D574 (Sableye's `"move"`) and more so now that
+      // Walking Wake's `putCountersOnSelfChosen` parks `"put"`; absent on every park that sets no caption
+      // verb), so every older prompt redacts byte-identically. It is
       // a caption word and hides nothing.
       return {
         kind: "choosePokemon",

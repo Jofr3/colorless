@@ -130,7 +130,8 @@ const LEFT_LOUD = {
       (`AttackerClass.stage` "ancient", `MATCH_RECORD_VERSION` 37 → 38), so the slot now holds
       Walking Wake `sv06-063` "Undulating Slice" (1 printing) — a residue sentence D575 leaves
       unbuilt, VERIFIED before choosing (`readersClaiming` is []; no anchor in this file reaches
-      it). Its refusal is a MECHANISM again (a chosen counter count feeding the damage), not data. */
+      it). Its refusal is a MECHANISM again (a chosen counter count feeding the damage), not data.
+      (🆕🆕🆕 D579 (D539): "a residue sentence D575 leaves unbuilt" is WITHDRAWN — Walking Wake `sv06-063` is BUILT at D579 as a REGISTRY row keyed by id (`UNDULATING_SLICE`); no READER claims the sentence, so `readersClaiming` is still [] and a card carrying it on any other id still takes the loud path — the witness holds on a re-stated premise.) */
   headsTails:
     "Put up to 9 damage counters on this Pokémon. This attack does 20 damage for each damage counter you placed in this way.",
   /** 🆕🆕 **RE-POINTED A SECOND TIME AT D464, AND THE PARAGRAPH IT REPLACES IS KEPT
@@ -1083,6 +1084,6 @@ describe("§8 — purity and the structural answers", () => {
   });
 
   it("the engine version moved with the behaviour", () => {
-    expect(engineVersion).toBe("0.462.0");
+    expect(engineVersion).toBe("0.463.0");
   });
 });

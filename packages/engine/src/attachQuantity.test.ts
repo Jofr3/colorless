@@ -882,7 +882,7 @@ describe("D359 §6 — the ids this file rests on are real and locally seated", 
     // attack), Relicanth `sv05-084` / `sv05-173` (`MEMORY_DIVE`, a `passive`) and Team Rocket's Energy
     // `sv10-182` (`TEAM_ROCKETS_ENERGY`, an `energy`). Real catalog ids, no `fix-*` key, inserted
     // MID-MAP after D577's rows; no `attackGate`.
-    expect(registryCardIds()).toHaveLength(985);
+    expect(registryCardIds()).toHaveLength(986); // (🆕🆕🆕 **D579 +1** — Walking Wake `sv06-063`, one attack-only registry id, inserted MID-MAP.)
     for (const id of Object.values(QUANTITY_IDS).flat()) {
       if (programFor(id) === undefined) continue;
       // Every id that DOES have a program had one before this slice: the eight

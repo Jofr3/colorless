@@ -214,8 +214,8 @@ function damageRow(events: readonly GameEvent[]): Extract<GameEvent, { type: "DA
 const SCOV_SPOT: Spot = { id: SCOVILLAIN, under: [CAPSAKID] };
 
 describe("D578 Scovillain §0 — the version", () => {
-  it("is built at engine 0.462.0", () => {
-    expect(engineVersion).toBe("0.462.0");
+  it("is built at engine 0.463.0", () => {
+    expect(engineVersion).toBe("0.463.0");
   });
 });
 
@@ -479,6 +479,9 @@ const ALLOWLIST: Record<string, string> = {
   "filter · interpreter.ts · bottomFromOpponentHandOffer · cardOf(state, uid) · op.filter": `${P} — a hand card`,
   "filter · interpreter.ts · conditionHolds · activeTop(state, otherSeat(seat))?.card · { kind: \"bannerPokemon\", banner: cond.banner, }": B,
   "filter · interpreter.ts · conditionHolds · cardOfUid(state, playedUid) · { kind: \"bannerCard\", banner: cond.banner }": B,
+  // 🆕🆕🆕 D579 — Koraidon "Unrelenting Onslaught"'s banner read over `GameState.recentAttackers`: a
+  // banner is keyed by printing id, never by type, and the uid may name a body that has LEFT PLAY.
+  "filter · interpreter.ts · conditionHolds · cardOfUid(state, entry.uid) · { kind: \"bannerPokemon\", banner: cond.banner }": B,
   "filter · interpreter.ts · conditionHolds · spot.card · { kind: \"ownerPokemon\", owner: cond.owner }": B,
   "filter · interpreter.ts · conditionHolds · topCardOf(state, body) · { kind: \"bannerPokemon\", banner: cond.banner }": B,
   "filter · interpreter.ts · countCardsInDiscardPile · cardOfUid(state, uid) · filter": `${P} — a discard card`,

@@ -355,9 +355,18 @@ describe("derivation — the clause resolves to a parameterised member", () => {
     // the tag" still TRUE — so the near-miss is pinned at its new value, and the loud banner
     // witness is the deferred Ancient clause.)
     expect(deriveAttackDamageBonus(SLITHER_WING)?.per).toBe(120);
+    // 🆕🆕🆕 D579 (D539) — "the loud banner witness is the deferred Ancient clause" is WITHDRAWN: the
+    // Ancient clause RESOLVES now (Koraidon `sv08-116`, a literal row over the seat-level
+    // `GameState.recentAttackers`, pinned at its value). The loud witness is RE-POINTED to a
+    // CONSTRUCTED clause no row carries — the Ancient row's FUTURE twin.
     expect(
       deriveAttackDamageBonus(
         "If 1 of your other Ancient Pokémon used an attack during your last turn, this attack does 150 more damage.",
+      )?.per,
+    ).toBe(150);
+    expect(
+      deriveAttackDamageBonus(
+        "If 1 of your other Future Pokémon used an attack during your last turn, this attack does 150 more damage.",
       ),
     ).toBeNull();
     // Kingambit sv03-150: "4 or more", a threshold over damage counters, on a

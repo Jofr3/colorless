@@ -562,9 +562,9 @@ const RAW: Record<string, string> = (
 ).glob(["../../../apps/api/src/lobby/match.ts"], { query: "?raw", import: "default", eager: true });
 
 describe("D550 §4 — nothing new is persisted, so the record version holds", () => {
-  it("🛑 `MATCH_RECORD_VERSION` HOLDS at 33 (🆕🆕🆕 at THIS slice; 34 since D552; 35 since D556; 36 since D564; 37 since D570; 38 since D575; 39 since D576; 40 since D577) — the member is spent into a NUMBER at the fold, the attack never parks, and the board round-trips BYTE-EQUAL", () => {
+  it("🛑 `MATCH_RECORD_VERSION` HOLDS at 33 (🆕🆕🆕 at THIS slice; 34 since D552; 35 since D556; 36 since D564; 37 since D570; 38 since D575; 39 since D576; 40 since D577; 41 since D579) — the member is spent into a NUMBER at the fold, the attack never parks, and the board round-trips BYTE-EQUAL", () => {
     const matchTs = Object.entries(RAW).find(([k]) => k.endsWith("/match.ts"))?.[1] ?? "";
-    expect(matchTs).toContain("export const MATCH_RECORD_VERSION = 40;");
+    expect(matchTs).toContain("export const MATCH_RECORD_VERSION = 41;");
     expect(JSON.parse(JSON.stringify(MEMBER))).toEqual(MEMBER);
     for (const [own, foe] of [
       [1, 3],
@@ -586,9 +586,9 @@ describe("D550 §4 — nothing new is persisted, so the record version holds", (
     expect(LOCAL_CARDS[SNIPER]?.attacks?.[TOLL_INDEX]).toMatchObject({ effect: PRINTED, damage: "80×" });
   });
 
-  it("engineVersion is 0.462.0 and `manifest.version` agrees", () => {
-    expect(engineVersion).toBe("0.462.0");
-    expect(manifest.version).toBe("0.462.0");
+  it("engineVersion is 0.463.0 and `manifest.version` agrees", () => {
+    expect(engineVersion).toBe("0.463.0");
+    expect(manifest.version).toBe("0.463.0");
     expect(manifest.version).toBe(engineVersion);
   });
 });

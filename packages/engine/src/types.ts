@@ -2770,6 +2770,46 @@ export interface GameState {
       Knock Out and both saw which body it was. Per-SEAT and naming the side that
       LOST the Pokémon. */
   lastKoMarks: Record<Seat, readonly KnockOutMark[]>;
+  /** 🆕🆕🆕 **D579 — WHICH BODIES OF THIS SEAT USED AN ATTACK, ON THIS TURN AND ON THE SEAT'S
+      PREVIOUS TURN — A SEAT-LEVEL RECORD THAT OUTLIVES THE BODY.** Koraidon `sv08-116`
+      "Unrelenting Onslaught" ({C}{C}, `30+`, attack index 0, 1 legal): *"If 1 of your other
+      Ancient Pokémon used an attack during your last turn, this attack does 150 more damage."*
+
+      🛑 **R-1, RULED BY THE USER 2026-10-05: READING B — THE RECORD OUTLIVES THE BODY.** An
+      Ancient Pokémon that attacked last turn and was then Knocked Out (or shuffled away, or
+      sent to the hand) STILL counts: the printed clause asks whether it USED an attack, not
+      whether it is still in play. `InPlayPokemon.usedAttack` (D394) cannot answer that — it is
+      written on the in-play BODY and "the record dies with the body" (flow.ts
+      `stampAttackUse`). So this is a SECOND, seat-level record, keyed by the attacking body's
+      TOP uid (the form `stampAttackUse` receives), and the banner is read back from the card by
+      uid (`cardOfUid` → `cardIdByUid`, which is fixed for the whole game and so outlives every
+      zone change).
+
+      ⚠️ **A LIST OF `{ turn, uid }` AND NOT ONE `{ turn, uids }` SNAPSHOT — the one deviation from
+      the D579 brief, argued (decisions.md D579 (b)).** A single snapshot REPLACED when the turn
+      differs would hold only THIS turn's attackers after a seat's first attack, so a second
+      attack in the same turn (Festival Lead's attack-again, D570) would read an empty "last
+      turn". The writer (flow.ts `stampSeatAttacker`, beside `stampAttackUse`) appends
+      `{ turn: state.turn, uid }` uid-and-turn-idempotently and PRUNES every entry older than
+      `state.turn - 2`, so the list holds at most two turns of one seat and never grows.
+
+      The reader is interpreter.ts's `yourOtherBannerPokemonAttackedLastTurn` arm: some entry with
+      `turn === state.turn - 2` (the seat's previous turn — the parity argument of
+      `usedAttackOnYourLastTurn`) whose card prints the banner and whose uid is not one of the
+      attacking Active's stack cards ("other"). ⚠️ **R-1c (⚠️ UNRULED, named by the D579 review,
+      not fixed blind)**: the test is by CARD UID, so the SAME Koraidon card that attacked last turn,
+      went to the hand and was replayed (a NEW Pokémon in rules terms) is still "itself" here and its
+      old attack gives no +150 — under reading B it arguably counts.
+
+      ⚠️ **ANGELITE IS NOT RE-POINTED (R-1b, ⚠️ UNRULED).** Sylveon ex "Angelite"'s bar
+      (`yourPokemonUsedAttackLastTurn`, D396) still reads the per-body stamp, so a Sylveon ex that
+      used Angelite and then LEFT PLAY no longer bars it — the opposite of reading B. Moving it
+      onto this record is a behaviour change and waits for the user's ruling.
+
+      REQUIRED (D326/D271: a new required `GameState` key always bumps) — `MATCH_RECORD_VERSION`
+      40 → 41 (apps/api match.ts "D579"). PUBLIC: every attack was declared in front of both
+      players and `ATTACK_DECLARED` named it. Per-SEAT, naming the side that ATTACKED. */
+  recentAttackers: Record<Seat, readonly RecentAttacker[]>;
   /** §7.1/§7.2 (D283) — the TURN NUMBER during which this seat may not play
       cards of the named class from its hand, imposed by an OPPONENT'S ATTACK
       ("Your opponent can't play any Supporter cards from their hand during their
@@ -2957,6 +2997,10 @@ export function usedAttackOnYourLastTurn(
     printed phrases are one family, and a second reading of "by an attack" would
     be free to drift from the first. */
 export type KnockOutMark = { uid: string; name: string; byAttack: boolean };
+
+/** 🆕🆕🆕 D579 — one entry of `GameState.recentAttackers`: the attacking body's TOP uid at the
+    attack's end, and the turn it attacked on. */
+export type RecentAttacker = { turn: number; uid: string };
 
 /** 🆕🆕 D414 — the marker a NON-DAMAGE Knock Out stamps on the body it dooms, and
     the reason it carries the turn.

@@ -499,6 +499,12 @@ describe("§4 — the DISCRIMINATION, on both axes, so neither saturation can im
     for (const [clause, cond] of [
       ["your opponent's Active Pokémon is a Tera Pokémon", { kind: "opponentActiveIsBanner", banner: "Tera" }],
       ["you have any Tera Pokémon on your Bench", { kind: "yourBannerPokemonOnBench", banner: "Tera" }],
+      // 🆕🆕🆕 D579 — the ANCIENT clause joins them: a `CONDITIONAL_DAMAGE_CLAUSES` row over the new
+      // seat-level record, so this skeleton reads it too (not printed behind this consequent).
+      [
+        "1 of your other Ancient Pokémon used an attack during your last turn",
+        { kind: "yourOtherBannerPokemonAttackedLastTurn", banner: "Ancient" },
+      ],
     ] as const) {
       const printed = `If ${clause}, this attack also does 120 damage to 2 of your opponent's Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)`;
       const [gate] = deriveAttackEffect(printed) ?? [];
@@ -509,7 +515,11 @@ describe("§4 — the DISCRIMINATION, on both axes, so neither saturation can im
       // (🆕🆕🆕 D569 (D539): "your opponent has any Future Pokémon in play" is MAPPED now — a literal
       // `CONDITIONAL_DAMAGE_CLAUSES` row over `banners.ts` — so the unmapped banner witness is the
       // deferred Ancient clause instead.)
-      "1 of your other Ancient Pokémon used an attack during your last turn",
+      // 🆕🆕🆕 D579 (D539): "the deferred Ancient clause" is WITHDRAWN — it is MAPPED now (pinned in the
+      // list above). This skeleton shares the clause TABLE, so the witness is REPLACED rather than
+      // re-pinned: a CONSTRUCTED clause no row carries — the Ancient row's FUTURE twin, which the
+      // whole-clause literal must not reach.
+      "1 of your other Future Pokémon used an attack during your last turn",
     ];
     for (const clause of unmapped) {
       const printed = `If ${clause}, this attack also does 120 damage to 2 of your opponent's Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)`;

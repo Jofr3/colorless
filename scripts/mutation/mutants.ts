@@ -6233,7 +6233,7 @@ export const MUTANTS: Mutant[] = [
     // CORPUS QUOTES** (D414/D415), so a value-keyed sweep over `toBe("0.391.0")` cannot
     // see it — this row's `find` spells the DECLARATION, not an assertion. Run
     // `precheck` after every version bump, not after the sweep tells you.
-    find: 'export const engineVersion = "0.462.0";',
+    find: 'export const engineVersion = "0.463.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -11441,8 +11441,9 @@ export const MUTANTS: Mutant[] = [
     // 🆕🆕🆕 D575 - stepped with the constant, 37 -> 38 (the ELEVENTH position); one step back, as always.
     // 🆕🆕🆕 D576 - stepped with the constant, 38 -> 39 (the TWELFTH position); one step back, as always.
     // 🆕🆕🆕 D577 — RE-ANCHORED off the bytes (D540) — D577 stepped the constant 39 → 40; the patch is still ONE step back.
-    find: "export const MATCH_RECORD_VERSION = 40;",
-    replace: "export const MATCH_RECORD_VERSION = 39;",
+    // 🆕🆕🆕 D579 — RE-ANCHORED off the bytes (D540) — D579 stepped the constant 40 → 41; the patch is still ONE step back.
+    find: "export const MATCH_RECORD_VERSION = 41;",
+    replace: "export const MATCH_RECORD_VERSION = 40;",
     expectKilledBy: ["apps/api/src/lobby/match.test.ts"],
   },
   // == D327 - THE COST SEAM'S SECOND AND THIRD COUNT SOURCES. Every row below is a
@@ -25428,7 +25429,7 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D471-co-marker-may-label",
     decision: "D471",
-    what: "\u26a0\ufe0f **THE DISCIPLINE THE SECOND AXIS RESTS ON, DELETED.** Dropping `m.verdict === \"blocker\" &&` lets a refuted CO-MARKER label a row, so `BLOCKED-CONTINUOUS` and `BLOCKED-PRIZE-ZONE` appear in the class table and `UNEXPLAINED` shrinks from 31 to something that reads like progress. **A partition that explains more rows is not a better partition if the extra explanations are the ones its own control already refuted** \u2014 the whole value of the built-side column is that it DISQUALIFIES markers, and a marker that can label after being disqualified is a column nobody reads. Killed by \u00a7C's `a CO-MARKER labelled a row` claim, which is what stops that assertion from being decorative. [🆕🆕🆕 D571 (D539, the D569 close-out's gate-witness rule): that claim rides FIVE live far residue sentences and D571 BUILT one of them (Destructo-Press, a SCHEMA-BANNER witness — 3/4 → 2/2), so the row is ALSO killed by §C's PINNED witness now: `blockerMarkerOf({ text: CO_PIN })` over the literal PRIZE-ZONE sentence «If you use this attack when you have exactly 1 Prize card remaining, you win this game.», its premise re-measured (`D571-gate-co-marker-pin-premise-broken`). [🆕🆕🆕 D575 (D539): ~~the three live far witnesses~~ — D575 BUILT the pinned PRIZE-ZONE sentence itself (N's Sigilyph \"Victory Symbol\") and the Miraidon SCHEMA-BANNER witness; ONE live far witness remains (Koraidon `sv08-116`), and the PINNED literal still holds the row — the gate-witness probe read 16/16 KILLED after the build.] The labelling line moved into the exported `blockerMarkerOf` byte for byte; this `find` is unchanged.]",
+    what: "\u26a0\ufe0f **THE DISCIPLINE THE SECOND AXIS RESTS ON, DELETED.** Dropping `m.verdict === \"blocker\" &&` lets a refuted CO-MARKER label a row, so `BLOCKED-CONTINUOUS` and `BLOCKED-PRIZE-ZONE` appear in the class table and `UNEXPLAINED` shrinks from 31 to something that reads like progress. **A partition that explains more rows is not a better partition if the extra explanations are the ones its own control already refuted** \u2014 the whole value of the built-side column is that it DISQUALIFIES markers, and a marker that can label after being disqualified is a column nobody reads. Killed by \u00a7C's `a CO-MARKER labelled a row` claim, which is what stops that assertion from being decorative. [🆕🆕🆕 D571 (D539, the D569 close-out's gate-witness rule): that claim rides FIVE live far residue sentences and D571 BUILT one of them (Destructo-Press, a SCHEMA-BANNER witness — 3/4 → 2/2), so the row is ALSO killed by §C's PINNED witness now: `blockerMarkerOf({ text: CO_PIN })` over the literal PRIZE-ZONE sentence «If you use this attack when you have exactly 1 Prize card remaining, you win this game.», its premise re-measured (`D571-gate-co-marker-pin-premise-broken`). [🆕🆕🆕 D575 (D539): ~~the three live far witnesses~~ — D575 BUILT the pinned PRIZE-ZONE sentence itself (N's Sigilyph \"Victory Symbol\") and the Miraidon SCHEMA-BANNER witness; ONE live far witness remains (Koraidon `sv08-116`), and the PINNED literal still holds the row — the gate-witness probe read 16/16 KILLED after the build.] [🆕🆕🆕 D579 (D539): ~~\"ONE live far witness remains\"~~ — D579 BUILT Koraidon; the OPAQUE class is EMPTY and the PINNED literal holds the row ALONE — the gate-witness probe read 16/16 KILLED on the D579 bytes.] The labelling line moved into the exported `blockerMarkerOf` byte for byte; this `find` is unchanged.]",
     file: "scripts/opaque-anatomy.ts",
     find: "    MARKERS.find((m) => m.verdict === \"blocker\" && m.rx.test(r.text)) ?? null;",
     replace: "    MARKERS.find((m) => m.rx.test(r.text)) ?? null;",
@@ -27551,7 +27552,7 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D489-arm-names-the-wrong-slot",
     decision: "D489",
-    what: "\u26a0\ufe0f A4 \u2014 **THE RIDER READS `paid` WHERE THE PAYMENT FILES `discarded`.** `EffectSlot` has three inhabitants (\ud83c\udd95\ud83c\udd95\ud83c\udd95 D567 NOTE (D539): five now \u2014 turnedPrize/revealed) and `payFromHand`'s own shipped producers file under `paid` (D473's draw pair), so this is the neighbouring arm's REAL value copied onto this one \u2014 the single most likely mistake at a field whose whole point is that it is an address. Nothing files `paid` in this program, so the fold is 0 and the pick never happens.",
+    what: "\u26a0\ufe0f A4 \u2014 **THE RIDER READS `paid` WHERE THE PAYMENT FILES `discarded`.** `EffectSlot` has three inhabitants (\ud83c\udd95\ud83c\udd95\ud83c\udd95 D567 NOTE (D539): five now \u2014 turnedPrize/revealed; \ud83c\udd95\ud83c\udd95\ud83c\udd95 D579 (D539): SIX now \u2014 `placed`) and `payFromHand`'s own shipped producers file under `paid` (D473's draw pair), so this is the neighbouring arm's REAL value copied onto this one \u2014 the single most likely mistake at a field whose whole point is that it is an address. Nothing files `paid` in this program, so the fold is 0 and the pick never happens.",
     file: "packages/engine/src/effects.ts",
     find: "          deals: true,\n          perRecorded: \"discarded\",\n        },",
     replace: "          deals: true,\n          perRecorded: \"paid\",\n        },",
@@ -27841,7 +27842,7 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D490-assembler-reads-the-wrong-slot",
     decision: "D490",
-    what: "⚠️ **THE FOLD READS `paid` WHERE THE MILL FILED `discarded`.** `EffectSlot` has three inhabitants (🆕🆕🆕 D567 NOTE (D539): five now — turnedPrize/revealed) and the two ops must agree on ONE address — which is exactly why `damageDefender.count` is a NAMED slot rather than a boolean (D489's argument at the sibling op). The mutation is invisible in the program's shape: both ops are present, both are well-formed, and the count is 0 on every board because nothing ever wrote `paid`.",
+    what: "⚠️ **THE FOLD READS `paid` WHERE THE MILL FILED `discarded`.** `EffectSlot` has three inhabitants (🆕🆕🆕 D567 NOTE (D539): five now — turnedPrize/revealed; 🆕🆕🆕 D579 (D539): SIX now — `placed`) and the two ops must agree on ONE address — which is exactly why `damageDefender.count` is a NAMED slot rather than a boolean (D489's argument at the sibling op). The mutation is invisible in the program's shape: both ops are present, both are well-formed, and the count is 0 on every board because nothing ever wrote `paid`.",
     file: "packages/engine/src/effects.ts",
     find: "          per: reading.per,\n          count: \"discarded\",\n          countFilter: { kind: \"anyEnergy\" },",
     replace: "          per: reading.per,\n          count: \"paid\",\n          countFilter: { kind: \"anyEnergy\" },",
@@ -28756,8 +28757,11 @@ export const MUTANTS: Mutant[] = [
     // 🆕🆕🆕 RE-ANCHORED AT D574 (by script off the new bytes — D540): 1716 -> 1723 (and the replace 1707 -> 1716, the GENUINE pre-slice value). THE STEP IS **7** ON THREE SUMMANDS — READER +5 (Haughty Order ×3, Seek Inspiration, Sableye), TRAILING +1 (Alakazam), REGISTRY +1 (Malamar) — MEASURED off the live census. `precheck` reported the `find` at 0x on the edit round that moved the constant, exactly as it has since D495.
     // 🆕🆕🆕 D575 - RE-ANCHORED off the bytes (D540): `BUILT.attack` 1723 -> 1729 (the six MRV-38 reader rows); the mutant
     //    leaves it at the previous slice's value, as at every step.
-    find: "  attack: 1729,",
-    replace: "  attack: 1723,",
+    // 🆕🆕🆕 D579 - RE-ANCHORED off the bytes (D540): `BUILT.attack` 1729 -> 1731 (Walking Wake through the
+    //    REGISTRY summand, Koraidon through the READER summand — 1731 / 1732, Mr. Mime held under D445); the
+    //    mutant leaves it at the previous slice's value, as at every step.
+    find: "  attack: 1731,",
+    replace: "  attack: 1729,",
     expectKilledBy: [
       "packages/engine/src/censusAtHead.test.ts",
     ],
@@ -29519,8 +29523,9 @@ export const MUTANTS: Mutant[] = [
     // 🆕🆕🆕 D575 - stepped with the constant, 37 -> 38 (the ELEVENTH position); one step back, as always.
     // 🆕🆕🆕 D576 - stepped with the constant, 38 -> 39 (the TWELFTH position); one step back, as always.
     // 🆕🆕🆕 D577 — RE-ANCHORED off the bytes (D540) — D577 stepped the constant 39 → 40; the patch is still ONE step back.
-    find: "export const MATCH_RECORD_VERSION = 40;\n",
-    replace: "export const MATCH_RECORD_VERSION = 39;\n",
+    // 🆕🆕🆕 D579 — RE-ANCHORED off the bytes (D540) — D579 stepped the constant 40 → 41; the patch is still ONE step back.
+    find: "export const MATCH_RECORD_VERSION = 41;\n",
+    replace: "export const MATCH_RECORD_VERSION = 40;\n",
     expectKilledBy: ["apps/api/src/lobby/match.test.ts"],
   },
   // ────────────────────────────────────────────────────────────────────────────
@@ -29614,7 +29619,7 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D502-gate-reads-a-different-slot",
     decision: "D502",
-    what: "⚠️ C8 — THE GATE READS `discarded` WHERE THE SEARCH WROTE `moved`. `EffectSlot` has three inhabitants (🆕🆕🆕 D567 NOTE (D539): five now — turnedPrize/revealed) and D458 measured the board that punishes a hard-coded one, so naming the wrong end of the wire is the mistake an author actually makes. The gate reads an empty slot, answers NO, and the Energy never moves — and `withConsequence` finds no gate on the slot the op files either, so the caption loses its clause as well. Two surfaces, one slip.",
+    what: "⚠️ C8 — THE GATE READS `discarded` WHERE THE SEARCH WROTE `moved`. `EffectSlot` has three inhabitants (🆕🆕🆕 D567 NOTE (D539): five now — turnedPrize/revealed; 🆕🆕🆕 D579 (D539): SIX now — `placed`) and D458 measured the board that punishes a hard-coded one, so naming the wrong end of the wire is the mistake an author actually makes. The gate reads an empty slot, answers NO, and the Energy never moves — and `withConsequence` finds no gate on the slot the op files either, so the caption loses its clause as well. Two surfaces, one slip.",
     file: "packages/engine/src/effects.ts",
     find: "        slot: \"moved\",\n        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).\n        then: [\n          {\n            op: \"moveEnergy\",",
     replace: "        slot: \"discarded\",\n        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).\n        then: [\n          {\n            op: \"moveEnergy\",",
@@ -30746,7 +30751,7 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D515-gate-reads-the-payments-neighbour-slot",
     decision: "D515",
-    what: "🛑 C2 — THE GATE POINTED AT THE SLOT NEXT DOOR. `EffectSlot` has three members (🆕🆕🆕 D567: five — `turnedPrize` / `revealed` added, read by one op by name) and `moved` is the one a §9.2 gate most often reads (`switchActive`, `bottomFromOpponentHand`, `searchDeck` all file under it), so a gate spelled `slot: \"moved\"` over a `recordAs: \"paid\"` payment is the copy an author actually makes. It compiles, it derives, and it fires off whatever some other op filed — which on this two-op program is nothing at all, so the opponent never discards on ANY board. The payment/gate identity is the single fact the sentence turns on. Killed by the program rung.",
+    what: "🛑 C2 — THE GATE POINTED AT THE SLOT NEXT DOOR. `EffectSlot` has three members (🆕🆕🆕 D567: five — `turnedPrize` / `revealed` added, read by one op by name; 🆕🆕🆕 D579 (D539): six — `placed` added, filed by one op and read as a count) and `moved` is the one a §9.2 gate most often reads (`switchActive`, `bottomFromOpponentHand`, `searchDeck` all file under it), so a gate spelled `slot: \"moved\"` over a `recordAs: \"paid\"` payment is the copy an author actually makes. It compiles, it derives, and it fires off whatever some other op filed — which on this two-op program is nothing at all, so the opponent never discards on ANY board. The payment/gate identity is the single fact the sentence turns on. Killed by the program rung.",
     file: "packages/engine/src/effects.ts",
     find: "  if (HAND_COST_THEN_OPPONENT_DISCARD.test(effect)) {\n    return [\n      { op: \"payFromHand\", count: 1, to: \"discard\", recordAs: \"paid\" },\n      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).\n      { op: \"recordGate\", slot: \"paid\", then: [{ op: \"opponentDiscardsFromHand\", count: 1 }] },\n    ];\n  }",
     replace: "  if (HAND_COST_THEN_OPPONENT_DISCARD.test(effect)) {\n    return [\n      { op: \"payFromHand\", count: 1, to: \"discard\", recordAs: \"paid\" },\n      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).\n      { op: \"recordGate\", slot: \"moved\", then: [{ op: \"opponentDiscardsFromHand\", count: 1 }] },\n    ];\n  }",
@@ -34909,7 +34914,8 @@ export const MUTANTS: Mutant[] = [
     //    so the anchor is D576's last two lines and the patch value is unchanged (39 -> the same
     //    pre-bump value). Sixteenth consecutive bump to move these rows.
     // 🆕🆕🆕 D577 — RE-ANCHORED off the bytes (D540) — D577's THIRTEENTH POSITION now sits between D576's doc tail and the constant, so the anchor is D577's last two lines; the patch drops the constant to 30, the row's own pre-bump value.
-    find: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 40;",
+    // 🆕🆕🆕 D579 — RE-ANCHORED off the bytes (D540): D579 places its FOURTEENTH POSITION above the D578 and D577 blocks, so D577's doc tail is unchanged and only the constant's value in the anchor moves (40 → 41); the patch value is unchanged.
+    find: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 41;",
     // 🆕🆕🆕 D549 - RE-ANCHORED AGAIN off the bytes (D540): D549's block now sits between
     //    D548's doc tail and the constant, so the anchor is D549's last two lines and the
     //    patch drops the constant THREE steps, to D547's pre-bump 30.
@@ -35110,7 +35116,8 @@ export const MUTANTS: Mutant[] = [
     //    so the anchor is D576's last two lines and the patch value is unchanged (39 -> the same
     //    pre-bump value). Sixteenth consecutive bump to move these rows.
     // 🆕🆕🆕 D577 — RE-ANCHORED off the bytes (D540) — D577's THIRTEENTH POSITION now sits between D576's doc tail and the constant, so the anchor is D577's last two lines; the patch drops the constant to 31, the row's own pre-bump value.
-    find: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 40;",
+    // 🆕🆕🆕 D579 — RE-ANCHORED off the bytes (D540): D579 places its FOURTEENTH POSITION above the D578 and D577 blocks, so D577's doc tail is unchanged and only the constant's value in the anchor moves (40 → 41); the patch value is unchanged.
+    find: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 41;",
     // 🆕🆕🆕 D549 - RE-ANCHORED off the bytes onto D549's doc tail; the patch drops the
     //    constant TWO steps, to D548's pre-bump 31 (a different patch from
     //    `D549-record-version-not-bumped`, one step, same anchor).
@@ -35609,7 +35616,8 @@ export const MUTANTS: Mutant[] = [
     //    so the anchor is D576's last two lines and the patch value is unchanged (39 -> the same
     //    pre-bump value). Sixteenth consecutive bump to move these rows.
     // 🆕🆕🆕 D577 — RE-ANCHORED off the bytes (D540) — D577's THIRTEENTH POSITION now sits between D576's doc tail and the constant, so the anchor is D577's last two lines; the patch drops the constant to 32, the row's own pre-bump value.
-    find: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 40;",
+    // 🆕🆕🆕 D579 — RE-ANCHORED off the bytes (D540): D579 places its FOURTEENTH POSITION above the D578 and D577 blocks, so D577's doc tail is unchanged and only the constant's value in the anchor moves (40 → 41); the patch value is unchanged.
+    find: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 41;",
     replace: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 32;",
     expectKilledBy: ["packages/engine/src/sideAttackLock.test.ts", "apps/api/src/lobby/match.test.ts"],
   },
@@ -36202,7 +36210,8 @@ export const MUTANTS: Mutant[] = [
     //    so the anchor is D576's last two lines and the patch value is unchanged (39 -> the same
     //    pre-bump value). Sixteenth consecutive bump to move these rows.
     // 🆕🆕🆕 D577 — RE-ANCHORED off the bytes (D540) — D577's THIRTEENTH POSITION now sits between D576's doc tail and the constant, so the anchor is D577's last two lines; the patch drops the constant to 33, the row's own pre-bump value.
-    find: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 40;",
+    // 🆕🆕🆕 D579 — RE-ANCHORED off the bytes (D540): D579 places its FOURTEENTH POSITION above the D578 and D577 blocks, so D577's doc tail is unchanged and only the constant's value in the anchor moves (40 → 41); the patch value is unchanged.
+    find: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 41;",
     replace: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 33;",
     expectKilledBy: ["apps/api/src/lobby/match.test.ts"],
   },
@@ -37137,7 +37146,8 @@ export const MUTANTS: Mutant[] = [
     //    so the anchor is D576's last two lines and the patch value is unchanged (39 -> the same
     //    pre-bump value). Sixteenth consecutive bump to move these rows.
     // 🆕🆕🆕 D577 — RE-ANCHORED off the bytes (D540) — D577's THIRTEENTH POSITION now sits between D576's doc tail and the constant, so the anchor is D577's last two lines; the patch drops the constant to 34, the row's own pre-bump value.
-    find: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 40;",
+    // 🆕🆕🆕 D579 — RE-ANCHORED off the bytes (D540): D579 places its FOURTEENTH POSITION above the D578 and D577 blocks, so D577's doc tail is unchanged and only the constant's value in the anchor moves (40 → 41); the patch value is unchanged.
+    find: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 41;",
     replace: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 34;",
     expectKilledBy: ["apps/api/src/lobby/match.test.ts"],
   },
@@ -40475,7 +40485,8 @@ export const MUTANTS: Mutant[] = [
     //    so the anchor is D576's last two lines and the patch value is unchanged (39 -> the same
     //    pre-bump value). Sixteenth consecutive bump to move these rows.
     // 🆕🆕🆕 D577 — RE-ANCHORED off the bytes (D540) — D577's THIRTEENTH POSITION now sits between D576's doc tail and the constant, so the anchor is D577's last two lines; the patch drops the constant to 35, the row's own pre-bump value.
-    find: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 40;",
+    // 🆕🆕🆕 D579 — RE-ANCHORED off the bytes (D540): D579 places its FOURTEENTH POSITION above the D578 and D577 blocks, so D577's doc tail is unchanged and only the constant's value in the anchor moves (40 → 41); the patch value is unchanged.
+    find: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 41;",
     replace: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 35;",
     expectKilledBy: ["apps/api/src/lobby/match.test.ts"],
   },
@@ -43332,7 +43343,8 @@ export const MUTANTS: Mutant[] = [
     //    so the anchor is D576's last two lines and the patch value is unchanged (39 -> the same
     //    pre-bump value). Sixteenth consecutive bump to move these rows.
     // 🆕🆕🆕 D577 — RE-ANCHORED off the bytes (D540) — D577's THIRTEENTH POSITION now sits between D576's doc tail and the constant, so the anchor is D577's last two lines; the patch drops the constant to 36, the row's own pre-bump value.
-    find: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 40;",
+    // 🆕🆕🆕 D579 — RE-ANCHORED off the bytes (D540): D579 places its FOURTEENTH POSITION above the D578 and D577 blocks, so D577's doc tail is unchanged and only the constant's value in the anchor moves (40 → 41); the patch value is unchanged.
+    find: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 41;",
     replace: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 36;",
     expectKilledBy: ["apps/api/src/lobby/match.test.ts"],
   },
@@ -43581,7 +43593,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D572",
     what: "the wire schema forgets `takeVerb`: zod strips the undeclared key on parse, so the online client never sees \"move\". Killed by §2's schema parse.",
     file: "packages/schema/src/match/redacted.ts",
-    find: "    takeVerb: z.literal(\"move\").optional(),\n",
+    // 🆕🆕🆕 D579 — RE-ANCHORED off the bytes (D540): D579 widened the key to `z.enum(["move", "put"])`; the
+    //    claim is unchanged (the KEY deleted, so zod strips it), D414.
+    find: "    takeVerb: z.enum([\"move\", \"put\"]).optional(),\n",
     replace: "",
     expectKilledBy: ["packages/engine/src/calmDiversD572.test.ts"],
   },
@@ -44763,7 +44777,8 @@ export const MUTANTS: Mutant[] = [
     //    so the anchor is D576's last two lines and the patch value is unchanged (39 -> the same
     //    pre-bump value). Sixteenth consecutive bump to move these rows.
     // 🆕🆕🆕 D577 — RE-ANCHORED off the bytes (D540) — D577's THIRTEENTH POSITION now sits between D576's doc tail and the constant, so the anchor is D577's last two lines; the patch drops the constant to 37, the row's own pre-bump value.
-    find: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 40;",
+    // 🆕🆕🆕 D579 — RE-ANCHORED off the bytes (D540): D579 places its FOURTEENTH POSITION above the D578 and D577 blocks, so D577's doc tail is unchanged and only the constant's value in the anchor moves (40 → 41); the patch value is unchanged.
+    find: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 41;",
     replace: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 37;",
     expectKilledBy: ["apps/api/src/lobby/match.test.ts"],
   },
@@ -45896,5 +45911,326 @@ export const MUTANTS: Mutant[] = [
     find: "  const swept = discardMisplacedEnergy(result.state, result.events);",
     replace: "  const swept = result.state;",
     expectKilledBy: ["packages/engine/src/teamRocketsEnergyD578.test.ts"],
+  },
+  // ── 🆕🆕🆕 D579 — THE CENSUS CLOSE-OUT: Walking Wake `sv06-063` "Undulating Slice" (a registry row on the NEW
+  //    op `putCountersOnSelfChosen` and the NEW `EffectSlot` `"placed"`) + Koraidon `sv08-116` "Unrelenting
+  //    Onslaught" (a literal clause row over the NEW REQUIRED `GameState.recentAttackers`), `MATCH_RECORD_VERSION`
+  //    40 → 41. Every `find` asserted to occur exactly once, by script, before it was written here (D540); every
+  //    replace names only what its file binds (binding-gate.ts). ⚠️ NO ROW on `recordSlotOf`'s `"placed"`
+  //    enrolment: it is SILENT (no `recordGate` reads `placed`) — D206's omission, stated rather than mutated. ──
+  {
+    id: "D579-put-verb-dropped",
+    decision: "D579",
+    what: "the park drops `takeVerb: \"put\"`: both HUDs caption the counter quantity \"attach N\". Killed by §2's prompt `toEqual` and its wire rung.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "          upTo: op.upTo,\n          takeVerb: \"put\",\n          note: `Put up to",
+    replace: "          upTo: op.upTo,\n          note: `Put up to",
+    expectKilledBy: ["packages/engine/src/walkingWakeD579.test.ts"],
+  },
+  {
+    id: "D579-put-ceiling-dropped",
+    decision: "D579",
+    what: "the park carries no `upTo`: the lone candidate's prompt asks no quantity, `validateChoice` refuses every `take` and the decline. Killed by §2 and §3.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "          upTo: op.upTo,\n          takeVerb: \"put\",",
+    replace: "          takeVerb: \"put\",",
+    expectKilledBy: ["packages/engine/src/walkingWakeD579.test.ts"],
+  },
+  {
+    id: "D579-put-never-asks",
+    decision: "D579",
+    what: "the op never parks and never places (the whole park replaced by a silent finish): Undulating Slice deals 0 on every board. Killed by §2 and §3.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      if (state.players[ctx.seat].active === null) return { done: state };\n      return {\n        park: {\n          kind: \"choosePokemon\",\n          candidates: [{ seat: ctx.seat, spot: { spot: \"active\" } }],",
+    replace: "      if (state.players[ctx.seat].active !== null) return { done: state };\n      return {\n        park: {\n          kind: \"choosePokemon\",\n          candidates: [{ seat: ctx.seat, spot: { spot: \"active\" } }],",
+    expectKilledBy: ["packages/engine/src/walkingWakeD579.test.ts"],
+  },
+  {
+    id: "D579-put-candidate-is-the-opponent",
+    decision: "D579",
+    what: "the lone candidate is the OPPONENT's Active, not \"this Pokémon\": the prompt names the wrong body. Killed by §2's prompt `toEqual`.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "          candidates: [{ seat: ctx.seat, spot: { spot: \"active\" } }],\n          upTo: op.upTo,\n          takeVerb: \"put\",",
+    replace: "          candidates: [{ seat: otherSeat(ctx.seat), spot: { spot: \"active\" } }],\n          upTo: op.upTo,\n          takeVerb: \"put\",",
+    expectKilledBy: ["packages/engine/src/walkingWakeD579.test.ts"],
+  },
+  {
+    id: "D579-put-note-drifts",
+    decision: "D579",
+    what: "the note stops quoting the printed ceiling. Killed by §2's prompt `toEqual`.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "note: `Put up to ${op.upTo} damage counters on this Pokémon? This attack does damage for each one you put. Decline to put none.`,",
+    replace: "note: `Put damage counters on this Pokémon? This attack does damage for each one you put. Decline to put none.`,",
+    expectKilledBy: ["packages/engine/src/walkingWakeD579.test.ts"],
+  },
+  {
+    id: "D579-put-ignores-take",
+    decision: "D579",
+    what: "the answer's `take` is ignored and the printed 9 always placed: \"3 put\" puts 9 and deals 180. Killed by §3's 3-put rung.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      const placed = placeCountersOnSelf(state, choice.take ?? op.upTo, ctx, events);",
+    replace: "      const placed = placeCountersOnSelf(state, op.upTo, ctx, events);",
+    expectKilledBy: ["packages/engine/src/walkingWakeD579.test.ts"],
+  },
+  {
+    id: "D579-put-absent-take-is-one",
+    decision: "D579",
+    what: "an ABSENT `take` reads 1, not the printed `upTo` (D359's absent = the whole batch): the default answer puts 1 and deals 20. Killed by §3's absent-take rung.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      const placed = placeCountersOnSelf(state, choice.take ?? op.upTo, ctx, events);",
+    replace: "      const placed = placeCountersOnSelf(state, choice.take ?? 1, ctx, events);",
+    expectKilledBy: ["packages/engine/src/walkingWakeD579.test.ts"],
+  },
+  {
+    id: "D579-put-decline-places-all",
+    decision: "D579",
+    what: "the DECLINE arm is skipped: a ref-less answer falls through and places the printed 9 (R-W2 broken — \"put none\" deals 180). Killed by §3's decline rung.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      if (!pickedPokemon(choice)) {\n        recordMoved(record, \"placed\", []);\n        return state;\n      }\n      const placed = placeCountersOnSelf(",
+    replace: "      if (false) {\n        recordMoved(record, \"placed\", []);\n        return state;\n      }\n      const placed = placeCountersOnSelf(",
+    expectKilledBy: ["packages/engine/src/walkingWakeD579.test.ts"],
+  },
+  {
+    id: "D579-placed-never-filed",
+    decision: "D579",
+    what: "the answer places the counters but files NOTHING under `\"placed\"`: the top-level hit counts an empty slot and deals 0. Killed by §3.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      recordMoved(record, \"placed\", placed.placed);",
+    replace: "      recordMoved(record, \"placed\", []);",
+    expectKilledBy: ["packages/engine/src/walkingWakeD579.test.ts"],
+  },
+  {
+    id: "D579-placed-files-one-entry",
+    decision: "D579",
+    what: "the slot holds ONE entry per ANSWER instead of one per counter: every count deals 20. Killed by §3's per-count rung.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "    placed: Array.from({ length: count }, () => uid),",
+    replace: "    placed: [uid],",
+    expectKilledBy: ["packages/engine/src/walkingWakeD579.test.ts"],
+  },
+  {
+    id: "D579-counter-is-one-hp",
+    decision: "D579",
+    what: "a damage counter is placed as 1 HP, not 10: \"3 put\" leaves 3 damage on Walking Wake. Killed by §3.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  const amount = count * 10;\n  events.push({ type: \"COUNTERS_PLACED\", seat: ctx.seat, uid, amount, source: \"self\" });",
+    replace: "  const amount = count;\n  events.push({ type: \"COUNTERS_PLACED\", seat: ctx.seat, uid, amount, source: \"self\" });",
+    expectKilledBy: ["packages/engine/src/walkingWakeD579.test.ts"],
+  },
+  {
+    id: "D579-placement-credited-to-an-ability",
+    decision: "D579",
+    what: "the placement row says `source: \"ability\"`: the log credits an Ability with the attack's own counters. Killed by §3's event `toEqual`.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  events.push({ type: \"COUNTERS_PLACED\", seat: ctx.seat, uid, amount, source: \"self\" });\n  return {\n    state: withActive(state, ctx.seat, { ...active, damage: active.damage + amount }),\n    placed:",
+    replace: "  events.push({ type: \"COUNTERS_PLACED\", seat: ctx.seat, uid, amount, source: \"ability\" });\n  return {\n    state: withActive(state, ctx.seat, { ...active, damage: active.damage + amount }),\n    placed:",
+    expectKilledBy: ["packages/engine/src/walkingWakeD579.test.ts"],
+  },
+  {
+    id: "D579-placement-on-the-opponent",
+    decision: "D579",
+    what: "the counters land on the OPPONENT's Active: Walking Wake stays undamaged and the Defender takes the counters and the hit. Killed by §3.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "    state: withActive(state, ctx.seat, { ...active, damage: active.damage + amount }),\n    placed:",
+    replace: "    state: withActive(state, otherSeat(ctx.seat), { ...active, damage: active.damage + amount }),\n    placed:",
+    expectKilledBy: ["packages/engine/src/walkingWakeD579.test.ts"],
+  },
+  {
+    id: "D579-row-reads-the-wrong-slot",
+    decision: "D579",
+    what: "the hit counts `\"moved\"` instead of `\"placed\"`: an empty slot, 0 dealt on every board. Killed by §1's row `toEqual` and §3.",
+    file: "packages/engine/src/registry.ts",
+    find: "      { op: \"damageDefender\", per: 20, count: \"placed\" },",
+    replace: "      { op: \"damageDefender\", per: 20, count: \"moved\" },",
+    expectKilledBy: ["packages/engine/src/walkingWakeD579.test.ts"],
+  },
+  {
+    id: "D579-row-per-counter-halved",
+    decision: "D579",
+    what: "the hit is 10 per counter, not the printed 20. Killed by §1 and §3.",
+    file: "packages/engine/src/registry.ts",
+    find: "      { op: \"damageDefender\", per: 20, count: \"placed\" },",
+    replace: "      { op: \"damageDefender\", per: 10, count: \"placed\" },",
+    expectKilledBy: ["packages/engine/src/walkingWakeD579.test.ts"],
+  },
+  {
+    id: "D579-row-ceiling-eight",
+    decision: "D579",
+    what: "the printed ceiling is 8, not 9. Killed by §1 and §2's prompt.",
+    file: "packages/engine/src/registry.ts",
+    find: "      { op: \"putCountersOnSelfChosen\", upTo: 9 },",
+    replace: "      { op: \"putCountersOnSelfChosen\", upTo: 8 },",
+    expectKilledBy: ["packages/engine/src/walkingWakeD579.test.ts"],
+  },
+  {
+    id: "D579-row-hit-before-the-pick",
+    decision: "D579",
+    what: "the two ops are swapped: the hit reads the slot BEFORE the pick files it and deals 0. Killed by §1 and §3.",
+    file: "packages/engine/src/registry.ts",
+    find: "      { op: \"putCountersOnSelfChosen\", upTo: 9 },\n      { op: \"damageDefender\", per: 20, count: \"placed\" },",
+    replace: "      { op: \"damageDefender\", per: 20, count: \"placed\" },\n      { op: \"putCountersOnSelfChosen\", upTo: 9 },",
+    expectKilledBy: ["packages/engine/src/walkingWakeD579.test.ts"],
+  },
+  {
+    id: "D579-schema-refuses-put",
+    decision: "D579",
+    what: "the wire schema keeps the D572 literal: a frame carrying `takeVerb: \"put\"` fails to parse (the client-first hazard). Killed by Walking Wake §2's schema parse.",
+    file: "packages/schema/src/match/redacted.ts",
+    find: "    takeVerb: z.enum([\"move\", \"put\"]).optional(),",
+    replace: "    takeVerb: z.literal(\"move\").optional(),",
+    expectKilledBy: ["packages/engine/src/walkingWakeD579.test.ts"],
+  },
+  {
+    id: "D579-schema-forgets-move",
+    decision: "D579",
+    what: "the widened enum drops `\"move\"`: every Adrena-Brain / Damage Collection frame fails to parse. Killed by calmDiversD572.test.ts's schema parse.",
+    file: "packages/schema/src/match/redacted.ts",
+    find: "    takeVerb: z.enum([\"move\", \"put\"]).optional(),",
+    replace: "    takeVerb: z.enum([\"put\"]).optional(),",
+    expectKilledBy: ["packages/engine/src/calmDiversD572.test.ts"],
+  },
+  {
+    id: "D579-window-takes-any-earlier-turn",
+    decision: "D579",
+    what: "the window reads `<=` (any earlier turn of the seat): an Ancient attack two of your turns ago still pays +150. Killed by §3's window rung.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "          entry.turn === state.turn - 2 &&\n          !own.includes(entry.uid) &&",
+    replace: "          entry.turn <= state.turn - 2 &&\n          !own.includes(entry.uid) &&",
+    expectKilledBy: ["packages/engine/src/koraidonD579.test.ts"],
+  },
+  {
+    id: "D579-window-reads-this-turn",
+    decision: "D579",
+    what: "the window reads THIS turn: last turn's Ancient attack never pays. Killed by §3 and §4.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "          entry.turn === state.turn - 2 &&\n          !own.includes(entry.uid) &&",
+    replace: "          entry.turn === state.turn &&\n          !own.includes(entry.uid) &&",
+    expectKilledBy: ["packages/engine/src/koraidonD579.test.ts"],
+  },
+  {
+    id: "D579-other-dropped",
+    decision: "D579",
+    what: "\"other\" is deleted: Koraidon's OWN attack last turn pays its +150. Killed by §3's other-vs-self rung.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "          entry.turn === state.turn - 2 &&\n          !own.includes(entry.uid) &&",
+    replace: "          entry.turn === state.turn - 2 &&",
+    expectKilledBy: ["packages/engine/src/koraidonD579.test.ts"],
+  },
+  {
+    id: "D579-banner-dropped",
+    decision: "D579",
+    what: "the banner test is deleted: a non-Ancient attacker last turn pays +150. Killed by §3's banner rung.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "          matchesFilter(cardOfUid(state, entry.uid), { kind: \"bannerPokemon\", banner: cond.banner }),\n      );",
+    replace: "          true,\n      );",
+    expectKilledBy: ["packages/engine/src/koraidonD579.test.ts"],
+  },
+  {
+    id: "D579-reading-a-record-dies-with-the-body",
+    decision: "D579",
+    what: "READING A (the record dies with the body): only an Ancient attacker still on the Bench counts, so a departed one pays nothing — R-1 as RULED is reading B. Killed by §3's departed-body rung.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "          entry.turn === state.turn - 2 &&\n          !own.includes(entry.uid) &&",
+    replace: "          entry.turn === state.turn - 2 &&\n          !own.includes(entry.uid) &&\n          state.players[seat].bench.some((body) => body.stack.includes(entry.uid)) &&",
+    expectKilledBy: ["packages/engine/src/koraidonD579.test.ts"],
+  },
+  {
+    id: "D579-reads-the-other-seat",
+    decision: "D579",
+    what: "the arm reads the OTHER seat's record: your own Ancient attack never pays. Killed by §3 and §4.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      return state.recentAttackers[seat].some(",
+    replace: "      return state.recentAttackers[otherSeat(seat)].some(",
+    expectKilledBy: ["packages/engine/src/koraidonD579.test.ts"],
+  },
+  {
+    id: "D579-note-drifts",
+    decision: "D579",
+    what: "the note stops round-tripping the printed clause. Killed by §1's note rung.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      return `1 of your other ${cond.banner} Pokémon used an attack during your last turn`;",
+    replace: "      return `1 of your ${cond.banner} Pokémon used an attack during your last turn`;",
+    expectKilledBy: ["packages/engine/src/koraidonD579.test.ts"],
+  },
+  {
+    id: "D579-row-maps-the-future-banner",
+    decision: "D579",
+    what: "the literal row maps the clause to the FUTURE banner: Koraidon reads the wrong population. Killed by §1 and §3.",
+    file: "packages/engine/src/effects.ts",
+    find: "    { kind: \"yourOtherBannerPokemonAttackedLastTurn\", banner: \"Ancient\" },\n  ],",
+    replace: "    { kind: \"yourOtherBannerPokemonAttackedLastTurn\", banner: \"Future\" },\n  ],",
+    expectKilledBy: ["packages/engine/src/koraidonD579.test.ts"],
+  },
+  {
+    id: "D579-record-never-written",
+    decision: "D579",
+    what: "the attack epilogue never stamps the seat record: no Koraidon ever pays +150. Killed by §2 and §4.",
+    file: "packages/engine/src/flow.ts",
+    find: "  next = stampSeatAttacker(next, attackerSeat, attackerUid);\n",
+    replace: "",
+    expectKilledBy: ["packages/engine/src/koraidonD579.test.ts"],
+  },
+  {
+    id: "D579-record-on-the-wrong-seat",
+    decision: "D579",
+    what: "the stamp lands on the DEFENDING seat's record. Killed by §2's stamp rung.",
+    file: "packages/engine/src/flow.ts",
+    find: "  next = stampSeatAttacker(next, attackerSeat, attackerUid);\n",
+    replace: "  next = stampSeatAttacker(next, otherSeat(attackerSeat), attackerUid);\n",
+    expectKilledBy: ["packages/engine/src/koraidonD579.test.ts"],
+  },
+  {
+    id: "D579-record-turn-off-by-one",
+    decision: "D579",
+    what: "the stamp records the NEXT turn: the reader's `- 2` window misses it. Killed by §2 and §4.",
+    file: "packages/engine/src/flow.ts",
+    find: "  const turn = state.turn;\n  const kept = state.recentAttackers[seat].filter",
+    replace: "  const turn = state.turn + 1;\n  const kept = state.recentAttackers[seat].filter",
+    expectKilledBy: ["packages/engine/src/koraidonD579.test.ts"],
+  },
+  {
+    id: "D579-record-prunes-last-turn",
+    decision: "D579",
+    what: "the prune keeps THIS turn only: a second attack in the same turn (Festival Lead) erases the record of last turn. Killed by §2's prune rung.",
+    file: "packages/engine/src/flow.ts",
+    find: ".filter((entry) => entry.turn >= turn - 2);",
+    replace: ".filter((entry) => entry.turn >= turn);",
+    expectKilledBy: ["packages/engine/src/koraidonD579.test.ts"],
+  },
+  {
+    id: "D579-record-never-prunes",
+    decision: "D579",
+    what: "the prune is deleted: the record grows for the whole game. Killed by §2's prune rung.",
+    file: "packages/engine/src/flow.ts",
+    find: ".filter((entry) => entry.turn >= turn - 2);",
+    replace: ".filter((entry) => entry.turn >= 0);",
+    expectKilledBy: ["packages/engine/src/koraidonD579.test.ts"],
+  },
+  {
+    id: "D579-record-not-idempotent",
+    decision: "D579",
+    what: "the append is not idempotent: a body stamped twice in one turn appears twice. Killed by §2's idempotence rung.",
+    file: "packages/engine/src/flow.ts",
+    find: "      [seat]: already ? kept : [...kept, { turn, uid }],",
+    replace: "      [seat]: [...kept, { turn, uid }],",
+    expectKilledBy: ["packages/engine/src/koraidonD579.test.ts"],
+  },
+  {
+    id: "D579-setup-omits-the-record",
+    decision: "D579",
+    what: "a fresh board carries no `recentAttackers`: the first attack's end reads `undefined` and throws (D326's class, on a NEW game). Killed by §2's fresh-board rung.",
+    file: "packages/engine/src/setup.ts",
+    find: "    recentAttackers: { p1: [], p2: [] },\n",
+    replace: "",
+    expectKilledBy: ["packages/engine/src/koraidonD579.test.ts"],
+  },
+  {
+    id: "D579-record-version-not-bumped",
+    decision: "D579",
+    what: "🛑 **`MATCH_RECORD_VERSION` STAYS 40 WHILE THE FOURTEENTH POSITION LANDS** — this deploy accepts a v40 record with no `GameState.recentAttackers` and throws at its first attack's end (D326), and a 0.462 rollback silently drops a live +150 window. Killed by match.test.ts's pin and Koraidon §5's raw-source rung.",
+    file: "apps/api/src/lobby/match.ts",
+    find: "export const MATCH_RECORD_VERSION = 41;",
+    replace: "export const MATCH_RECORD_VERSION = 40;",
+    expectKilledBy: ["apps/api/src/lobby/match.test.ts", "packages/engine/src/koraidonD579.test.ts"],
   },
 ];

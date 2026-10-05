@@ -46,7 +46,7 @@ const LOUD_SENTENCE = "Heal 100 damage from 1 of your Benched Ancient Pokémon."
 // 🛑 **THE DESIGN DECISION IS THE CARRIER, AND `EffectRecord` LOSES ON ITS VALUE TYPE
 // RATHER THAN ON TASTE.** D406 priced this sentence one slice before declining it and
 // named the reason: `EffectRecord` is `{ [K in EffectSlot]?: string[] }` and
-// `EffectSlot` is `"paid" | "moved" | "discarded"` (🆕🆕🆕 D567 FINAL-REVIEW NOTE (D539): five members now — `turnedPrize` / `revealed`, both uid lists, so the argument stands) — **every §9.2 slot in this engine
+// `EffectSlot` is `"paid" | "moved" | "discarded"` (🆕🆕🆕 D567 FINAL-REVIEW NOTE (D539): five members now — `turnedPrize` / `revealed`, both uid lists, so the argument stands; 🆕🆕🆕 D579 (D539): SIX members now — `"placed"` (Walking Wake), and it is NOT a list of distinct card uids: it files a COUNT as repeated top uids, one entry per damage counter placed. So the ABSOLUTE form of the argument around this note — ~~every slot is a list of card uids; no slot to file a figure in and no widening that keeps the map's value type~~ — is WITHDRAWN: a count CAN ride a slot by repetition with `string[]` unchanged. It stands only QUALIFIED: every slot's VALUE TYPE is still a uid list, and the dealt-damage figure stays on `EffectContext.dealt` by CHOICE (an HP figure read by arithmetic, not a handful of counters), not because no slot could hold it) — **every §9.2 slot in this engine
 // is a LIST OF CARD UIDS**, and this is an HP FIGURE. There is no slot to file it in
 // and no widening that keeps the map's value type. The MEANING agrees and is the
 // second reason, not the first: the record's own doc block calls it *"what the ops
@@ -328,11 +328,16 @@ function contOf(state: GameState): { ctx: Record<string, unknown>; rest: EffectO
 }
 
 describe("§3 — the carrier is `EffectContext`, and `MATCH_RECORD_VERSION` stays 26", () => {
-  it("🛑 `EffectRecord` could not have held it — every slot's value type is a LIST OF UIDS", () => {
+  it("🛑 `EffectRecord` ~~could not have held it~~ (🆕🆕🆕 D579 (D539): WITHDRAWN as absolute — `placed` files a COUNT as repeated uids; the figure stays on `ctx.dealt` by CHOICE) — every slot's value type is a LIST OF UIDS", () => {
     // The decision, stated as a fact about the model rather than as a preference
     // (D424: prefer a refusal the type system re-derives). Every value ever filed in
-    // a record by any op in the vocabulary is an array of strings; an HP figure has
-    // no slot and no widening that keeps the map's value type. Driven off a REAL
+    // a record by any op in the vocabulary is an array of strings; ~~an HP figure has
+    // no slot and no widening that keeps the map's value type~~ (🆕🆕🆕 D579 (D539):
+    // WITHDRAWN as absolute — D579's `"placed"` slot files a COUNT as one repeated uid
+    // per counter, so a count CAN ride a slot by repetition with `string[]` unchanged;
+    // what this rung still pins is the VALUE TYPE (every entry a string), and the HP
+    // figure stays on `EffectContext.dealt` by CHOICE, not because no slot could hold
+    // it — see the D579 note at the head of this file). Driven off a REAL
     // parked record rather than off the type, because a type claim is not executable.
     const cont = contOf(parkedMidAttack());
     const record = (cont as unknown as { record?: Record<string, unknown> }).record ?? {};
@@ -459,7 +464,7 @@ describe("§3 — the carrier is `EffectContext`, and `MATCH_RECORD_VERSION` sta
   });
 
   it("the engine version moved and the two spellings agree", () => {
-    expect(engineVersion).toBe("0.462.0");
+    expect(engineVersion).toBe("0.463.0");
   });
 });
 

@@ -25209,7 +25209,7 @@ sentences / 11 printings that remain behind `CONDITIONAL_DAMAGE_BONUS`:
   Ancient/Future members stand, and "no INGESTED column classifies the banner" stays true.)
   (🆕🆕🆕 D569 (D539): the two FUTURE members are withdrawn too — Iron Valiant `sv05-080` "Majestic Sword" and
   Slither Wing `sv06.5-026` "Iron Smasher" resolve through literal rows over the widened `banners.ts`; the ONE Ancient
-  member left (Koraidon `sv08-116` "Unrelenting Onslaught") waits on a seat-level attack record, not on the banner.)
+  member left (Koraidon `sv08-116` "Unrelenting Onslaught") waits on a seat-level attack record, not on the banner.) (🆕🆕🆕 D579 (D539): ~~waits on a seat-level attack record~~ — Koraidon is BUILT at D579 on that record, `GameState.recentAttackers` (MRV 40 → 41, R-1 reading B RULED by the user 2026-10-05); no Ancient/Future demand member is left unbuilt.)
 * **ONE clause at FIVE printings is D368's structural SHAPE refusal** — *"this Pokémon has at least
   2 extra Energy attached (in addition to this attack's cost)"*, printed at two amounts (2 + 3). It
   reads THIS ATTACK'S COST and `conditionHolds(state, seat, cond)` is handed no attack; the same
@@ -27044,7 +27044,7 @@ recorded rather than the verdict (D382's practice).
 | (B) | *"Put an Energy attached to this Pokémon into your hand."* | 5 | 0 new + 1 caption branch | **5** |
 
 🛑 **(A) LOSES ON THE KIND OF QUANTITY, NOT ON THE COUNT.** `EffectSlot` is
-`"paid" | "moved" | "discarded"` (🆕🆕🆕 D567 FINAL-REVIEW NOTE (D539): five members now — `turnedPrize` / `revealed`, both uid lists, so the argument stands) and `EffectRecord` is `{ [K in EffectSlot]?: string[] }` — **every
+`"paid" | "moved" | "discarded"` (🆕🆕🆕 D567 FINAL-REVIEW NOTE (D539): five members now — `turnedPrize` / `revealed`, both uid lists, so the argument stands; 🆕🆕🆕 D579 (D539): SIX members now — `"placed"` (Walking Wake), and it is NOT a list of distinct card uids: it files a COUNT as repeated top uids, one entry per damage counter placed. So the ABSOLUTE form of the argument around this note — ~~every slot is a list of card uids; no slot to file a figure in and no widening that keeps the map's value type~~ — is WITHDRAWN: a count CAN ride a slot by repetition with `string[]` unchanged. It stands only QUALIFIED: every slot's VALUE TYPE is still a uid list, and the dealt-damage figure stays on `EffectContext.dealt` by CHOICE (an HP figure read by arithmetic, not a handful of counters), not because no slot could hold it) and `EffectRecord` is `{ [K in EffectSlot]?: string[] }` — **every
 §9.2 slot this engine files is a LIST OF CARD UIDS**, and *"the same amount of damage"* is an HP
 figure. Four mechanisms fall out of that, and they are worth writing down because the next slice
 that wants a numeric §9.2 channel will pay all four:
@@ -29061,7 +29061,7 @@ count `benchNounScaling.test.ts` §5 still pinned at 31 (now 32, "Ancient Pokém
 ### (d) Owed
 The whole-corpus sweep (predicted `3840 · 52` over 3,892, ~~stacked on D568's still-PENDING~~ 🆕 on D568's PAID `3794 · 52` over 3,846, close-out `8e36c690`). R-PX1 …
 R-PX6 UNRULED. The nine deferred Paradox printings (Initialization ×3, Destructo-Press ×2, C.O.D.E.: Protect, Unrelenting
-Onslaught, Dual Core, Iron Moth's Anachronism Repulsor). (🆕🆕🆕 D571 (D539): Initialization ×3 and Destructo-Press ×2 BUILT — see D571 below; four stay deferred.) (🆕🆕🆕 D575 (D539): C.O.D.E.: Protect and Anachronism Repulsor BUILT — see D575 below; two stay deferred, Unrelenting Onslaught and Dual Core.) NEXT: see `progress.md` NEXT — festival-lead (rank 2, MRV 36 → 37). (🆕🆕🆕 D570: TAKEN — built as D570 below.)
+Onslaught, Dual Core, Iron Moth's Anachronism Repulsor). (🆕🆕🆕 D571 (D539): Initialization ×3 and Destructo-Press ×2 BUILT — see D571 below; four stay deferred.) (🆕🆕🆕 D575 (D539): C.O.D.E.: Protect and Anachronism Repulsor BUILT — see D575 below; two stay deferred, Unrelenting Onslaught and Dual Core.) (🆕🆕🆕 D579 (D539): Unrelenting Onslaught BUILT — see D579; ~~two stay deferred, Unrelenting Onslaught and Dual Core~~ → one stays deferred, Dual Core.) NEXT: see `progress.md` NEXT — festival-lead (rank 2, MRV 36 → 37). (🆕🆕🆕 D570: TAKEN — built as D570 below.)
 
 ## D570 — Festival Lead, the attack-again turn machine: 7 printings / 1 text / 1 object (engine 0.454.0, `MATCH_RECORD_VERSION` 36 → 37)
 
@@ -29384,7 +29384,7 @@ antique-fossils [🆕🆕🆕 D576: TAKEN, 38 → 39, Area Zero Underdepths PARK
 COMMIT"), while D574's whole-corpus sweep ran in the main checkout (never written). Rank 1 of the D575 pricing round
 (`progress.md` NEXT (7), recorded verbatim): the MRV-38 core (Iron Moth, Miraidon, Glimmora, Hypno) plus Blipbug and N's
 Sigilyph, 6 printings over about 57-65 binding sites, the version step paid once; Walking Wake left OUT (the last REACHED
-OPAQUE row — building it empties opaque-anatomy-gate §E, simulated by the judge). 🆕 Committed there on `d575-prep` at
+OPAQUE row — building it empties opaque-anatomy-gate §E, simulated by the judge). [🆕🆕🆕 D579: BUILT, after § E was made vacuous-safe and § E′ added — D579 below.] 🆕 Committed there on `d575-prep` at
 `d212f0a2`; LANDED on `main` by cherry-pick onto the D574 close-out `f268886b` (`progress.md` NEXT (1-land)) — DEPLOY THE
 CLIENT FIRST.
 
@@ -29484,7 +29484,7 @@ with `--no-commit`, no amend; docs-only conflicts resolved keeping every close-o
 NEXT: see `progress.md` NEXT (7) — ⑴ fossils + Area Zero Underdepths (MRV 38 → 39, after an ingest decision on
 map.ts:103-108) [🆕🆕🆕 D576: TAKEN for the four fossils WITHOUT the ingest decision (the face hand-written in `fossils.ts`,
 the widening a USER follow-up); Underdepths ×3 PARKED as D577 — D576 below], ⑵ Relicanth + TM Fluorite [🆕🆕🆕 D578: TAKEN — D578 below], ⑶ Tyme [🆕🆕🆕 D577: TAKEN — D577 below], ⑷ Scovillain + Iron Treads [🆕🆕🆕 D578: Scovillain TAKEN; Iron Treads stays excluded], ⑸ the census close-out (Walking Wake +
-Koraidon after R-1, the gates on constructed literals); the Mega ingest is a user decision.
+Koraidon after R-1, the gates on constructed literals); the Mega ingest is a user decision. [🆕🆕🆕 D579: the census close-out TAKEN — D579 below]
 
 ## D576 — the Antique Fossils: 4 printings / 3 texts (engine 0.460.0, `MATCH_RECORD_VERSION` 38 → 39)
 
@@ -29550,7 +29550,7 @@ D253's Curious Tea Party (with, by reading, the Thundurus / Rabsca / Shaymin sid
 own-Bench spread or snipe is shielded although the print says "from your opponent's Pokémon" (decisions.md D576 (g)).
 
 NEXT: see `progress.md` NEXT (7) — ⑴ D577 Area Zero Underdepths ×3 (or types-and-tyme split, Scovillain first) [🆕🆕🆕 D577: TAKEN, with Boomerang and Tyme — D577 below], ⑵
-borrowed-attacks and special-energy as riders [🆕🆕🆕 D578: both TAKEN, with Scovillain — D578 below], ⑶ the census close-out; the Mega ingest and the fossil-face ingest
+borrowed-attacks and special-energy as riders [🆕🆕🆕 D578: both TAKEN, with Scovillain — D578 below], ⑶ the census close-out; the Mega ingest and the fossil-face ingest [🆕🆕🆕 D579: ⑶ TAKEN — D579 below]
 widening are user decisions.
 
 ## D577 — Area Zero Underdepths ×3 + Boomerang Energy + Tyme ×2: 6 printings / 3 texts (engine 0.461.0, `MATCH_RECORD_VERSION` 39 → 40)
@@ -29609,7 +29609,7 @@ UNMOVED and CHECKED; `built` 2384 → **2390**. MRV 39 → 40, the THIRTEENTH po
 evolve-path trim's missing mutant row (a known coverage gap).
 
 NEXT: see `progress.md` NEXT (7) — ⑴ Scovillain ×2 + Relicanth ×2 + TM Fluorite as one MRV-hold slice (or apart),
-⑵ TR Energy as a rider [🆕🆕🆕 D578: ⑴ and ⑵ TAKEN TOGETHER, MRV held at 40 — D578 below], ⑶ the census close-out; the Mega ingest and the map.ts Trainer-branch widening are user decisions.
+⑵ TR Energy as a rider [🆕🆕🆕 D578: ⑴ and ⑵ TAKEN TOGETHER, MRV held at 40 — D578 below], ⑶ the census close-out; the Mega ingest and the map.ts Trainer-branch widening are user decisions. [🆕🆕🆕 D579: ⑶ TAKEN — D579 below]
 
 ## D578 — Scovillain ex ×2 + Relicanth ×2 + Technical Machine: Fluorite + Team Rocket's Energy: 6 printings / 4 texts (engine 0.462.0, `MATCH_RECORD_VERSION` stays 40)
 
@@ -29661,8 +29661,62 @@ See `progress.md` NEXT (0)-(6) for the pasted figures: `bun run check`, precheck
 docs rows. Census: `BUILT.ability` 388 → **392**, `BUILT.trainer` 263 → **264**, `BUILT.specialEnergy` 10 → **11**,
 `BUILT.attack` UNMOVED; `built` 2390 → **2396**. MRV stays 40 (match.ts). Owed: ~~D577's sweep (`4093 · 51` over 4,144,
 PENDING) and D578's (`4138 · 51` over 4,189, stacked on it — re-derive if D577's lands differently)~~ 🆕 D577's sweep is PAID,
-EXACTLY (close-out `f537dd0e`); D578's is owed at `4148 · 51` over 4,199 (re-derived at the landing: +10 rule-fix rows). Carried:
+EXACTLY (close-out `f537dd0e`); D578's ~~is owed at~~ 🆕 is PAID, EXACTLY, on the first launch (close-out `49290a0b`, `tmp/sweep-D578.log:8410`): `4148 · 51` over 4,199 (re-derived at the landing: +10 rule-fix rows). Carried:
 decisions.md D578 (g).
 
-NEXT: see `progress.md` NEXT (7) — ⑴ the census close-out (Walking Wake + Koraidon, after the user's R-1 decision); ⑵ the
+NEXT: see `progress.md` NEXT (7) — ⑴ the census close-out (Walking Wake + Koraidon, after the user's R-1 decision); ⑵ the [🆕🆕🆕 D579: ⑴ TAKEN after the user ruled R-1 (reading B) — D579 below]
 Mega Evolution ingest and the map.ts Trainer-branch attack widening as USER decisions.
+
+## D579 — the census close-out: Walking Wake "Undulating Slice" + Koraidon "Unrelenting Onslaught", 2 printings / 2 texts (engine 0.463.0, `MATCH_RECORD_VERSION` 40 → 41)
+
+**Status:** ✅ BUILT in the `lum-wt-d579` worktree (detached at `4ed880b2`, D578), ~~NOT committed (the brief: "DO NOT
+COMMIT")~~ 🆕 committed on `d579-prep` at `7eed24e8` and LANDED on `main` by cherry-pick onto the D578 close-out `49290a0b`,
+while D578's whole-corpus sweep ran in the main checkout (never written by the build). Rank 1 of the D579 pricing round
+(`progress.md` NEXT (7), recorded verbatim with the judge's corrections): census-closeout, 2 printings, built WHOLE — the
+off-ramp (slice A, MRV held at 40) did not fire. The ingested legal ATTACK pool closes at **1731 / 1732** (Mr. Mime
+`sv05-063` is held under D445) and the `OPAQUE` class is EMPTY.
+
+### (a) The cards
+- Walking Wake `sv06-063`, attack index 1 "Undulating Slice" {W}{W}{C} `20×`: *"Put up to 9 damage counters on this
+  Pokémon. This attack does 20 damage for each damage counter you placed in this way."*
+- Koraidon `sv08-116`, attack index 0 "Unrelenting Onslaught" {C}{C} `30+`: *"If 1 of your other Ancient Pokémon used an
+  attack during your last turn, this attack does 150 more damage."*
+
+### (b) The machine (`docs/decisions.md` D579 (b))
+- **Layer 0 — the gate, pre-paid.** `scripts/opaque-anatomy-gate.ts` § E's four population checks are vacuous-safe and the
+  NEW § E′ asks them of a fixed literal grid, plus the region bound asked of `minRegionHit` directly. The sixteen
+  gate-witness rows were probed KILLED after layer 0, after the cards and on the final bytes.
+- **Walking Wake (a registry row).** The NEW op `putCountersOnSelfChosen { upTo }` — ALWAYS parked over its one candidate
+  as `choosePokemon { upTo, takeVerb: "put" }` — files ONE `"placed"` entry per counter (the NEW `EffectSlot` member), and the
+  TOP-LEVEL `damageDefender { per: 20, count: "placed" }` reads it, so the printed `20×` base is dropped. `takeVerb` widens to
+  `"move" | "put"` in the engine prompt and the wire schema (DEPLOY THE CLIENT FIRST).
+- **Koraidon (a reader row).** The NEW REQUIRED `GameState.recentAttackers` (`{ turn, uid }` per seat, written by flow.ts
+  `stampSeatAttacker` beside `stampAttackUse`, idempotent, pruned to the seat's previous turn — a list rather than the brief's
+  replace-on-turn snapshot, so a second attack in the same turn keeps last turn's record); the NEW `BoardCondition`
+  `yourOtherBannerPokemonAttackedLastTurn { banner }`; one `CONDITIONAL_DAMAGE_CLAUSES` literal.
+
+### (c) Readings (`docs/decisions.md` D579 (a))
+R-1 RULED BY THE USER 2026-10-05 (reading B: the record outlives the body). R-1b ⚠️ UNRULED (Angelite still reads the
+per-body stamp; NOT re-pointed; flagged to the user). R-1c ⚠️ UNRULED (named by the review, not fixed: "other" is a
+card-uid test, so the same Koraidon card replayed after attacking gets no +150). R-W1 (self-KO allowed, the hit still dealt), R-W2 (0 placed deals 0),
+R-W3 (Weakness / Resistance once) — argued and driven.
+
+### (d) Owed
+See `progress.md` NEXT (0)-(6) for the pasted figures: `bun run check`, precheck (corpus 4,234), the four gates
+(`opaque-anatomy-gate` at 0 OPAQUE; `residue-census-gate` at 40 / 1 / 1, 639 + 1), the probe `--decision D579
+--allow-dirty` (35 killed), the edited-row and neighbour re-probe and the 16 gate-witness rows. Census: `BUILT.attack`
+1729 → **1731**, `built` 2396 → **2398**, `BUILT.ability` 392 / `BUILT.trainer` 264 UNMOVED (the join). MRV 40 → 41,
+the FOURTEENTH position (match.ts). Owed: ~~D578's sweep (`4148 · 51` over 4,199, PENDING) and~~ 🆕 D578's sweep is PAID, EXACTLY (`4148 · 51` over
+4,199, close-out `49290a0b`); D579's (`4183 · 51` over 4,234, stacked on it ~~— re-derive if D578's lands differently~~,
+so it stands as written) is owed. Carried: decisions.md D579 (g), including the residue gate's
+§ C single-witness risk. The build review's BLOCKING D539 miss — the `EffectSlot` count *"five members now"*
+standing unannotated at 22 sites, several carrying the *"every slot is a list of card uids"* HP-figure argument that
+`"placed"` (a count filed as repeated uids) contradicts — is fixed in place (decisions.md D579 (e)). The second and third
+reviews found three and then one more D539 miss (comments, docs and two it() TITLES — selfHealDealt's *"could not have
+held it"*, usedAttackBonus' *"4 of them stay unbought"*, stale since D395 / D396: Rollout and Angelite are registry-built),
+all struck and annotated in place; no behaviour was wrong.
+
+NEXT: see `progress.md` NEXT — the attack pool is closed; what is left is USER decisions (R-1b, R-TM1, R-TRE2, the Mega
+Evolution ingest, the map.ts Trainer-branch widening). [🆕 D579 landing: R-1c is on that list too; and D580 — Mr. Mime
+`sv05-063` + Iron Treads `sv05-118`, the user's request — is being built stacked on D579 in `lum-wt-d580`, landing after
+D579's sweep pays.]

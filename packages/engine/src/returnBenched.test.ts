@@ -621,6 +621,7 @@ describe("D299 §5 — the persisted shape, and the bump a slice ago never made"
       "pending",
       "phase",
       "players",
+      "recentAttackers", // 🆕🆕🆕 D579 — the REQUIRED seat-level attack record (Koraidon "Unrelenting Onslaught", R-1 reading B); MRV 40 → 41
       "rngState",
       "stadium",
       "turn",

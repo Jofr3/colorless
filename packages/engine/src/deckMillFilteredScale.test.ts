@@ -111,6 +111,7 @@ const BARE_MILL = "Discard the top 3 cards of your deck.";
 // cards."* (Team Rocket's Blipbug `sv10-015` "Searching Eyes", corpus FILE LINE 394) is BUILT at D575
 // (`lookAtPrize`). The control now holds Walking Wake `sv06-063` "Undulating Slice" — a residue sentence
 // D575 leaves unbuilt, VERIFIED before choosing: `readersClaiming` is [] (§11 asserts it live).
+// (🆕🆕🆕 D579 (D539): "a residue sentence D575 leaves unbuilt" is WITHDRAWN — Walking Wake `sv06-063` is BUILT at D579 as a REGISTRY row keyed by id (`UNDULATING_SLICE`); no READER claims the sentence, so `readersClaiming` is still [] and a card carrying it on any other id still takes the loud path — the witness holds on a re-stated premise.)
 const LOUD =
   "Put up to 9 damage counters on this Pokémon. This attack does 20 damage for each damage counter you placed in this way.";
 

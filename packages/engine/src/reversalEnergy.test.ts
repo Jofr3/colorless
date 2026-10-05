@@ -443,6 +443,7 @@ describe("D302 §5 — the persisted shape does NOT move, and that is measured",
       "pending",
       "phase",
       "players",
+      "recentAttackers", // 🆕🆕🆕 D579 — the REQUIRED seat-level attack record (Koraidon "Unrelenting Onslaught", R-1 reading B); MRV 40 → 41
       "rngState",
       "stadium",
       "turn",

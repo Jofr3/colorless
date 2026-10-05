@@ -942,7 +942,7 @@ describe("D538 §6 — a head noun the tail cannot be about falls to the LOUD sk
 // §7 — THE PERSISTED BYTES (D450's two doors), MEASURED IN THREE DIRECTIONS.
 // ─────────────────────────────────────────────────────────────────────────────
 
-describe("D538 §7 — two literals GROW the serialized alphabet and `MATCH_RECORD_VERSION` still holds at 30 (🆕🆕🆕 held at THIS slice; 31 since D547; 32 since D548; 33 since D549; 34 since D552; 35 since D556; 36 since D564; 37 since D570; 38 since D575; 39 since D576; 40 since D577)", () => {
+describe("D538 §7 — two literals GROW the serialized alphabet and `MATCH_RECORD_VERSION` still holds at 30 (🆕🆕🆕 held at THIS slice; 31 since D547; 32 since D548; 33 since D549; 34 since D552; 35 since D556; 36 since D564; 37 since D570; 38 since D575; 39 since D576; 40 since D577; 41 since D579)", () => {
   it("🛑 THE FIRST DOOR, MEASURED: the rider rides `phase.cont.pendingOp`", () => {
     // 🛑 **DO NOT RE-DERIVE *"the type is unpersisted"*.** `damageChosen` PARKS, so the
     // rider's bytes genuinely reach a stored match record.
@@ -1025,14 +1025,14 @@ describe("D538 §7 — two literals GROW the serialized alphabet and `MATCH_RECO
     expect(done.players.p1.discard).toHaveLength(5);
   });
 
-  it("🛑 `MATCH_RECORD_VERSION` is 40 (🆕🆕🆕 D577 stepped it 39 → 40; D576 stepped it 38 → 39; D575 stepped it 37 → 38; D570 stepped it 36 → 37; D564 stepped it 35 → 36; D556 stepped it 34 → 35; D552 stepped it 33 → 34; D549 stepped it 32 → 33; D548 stepped it 31 → 32; D547 stepped it 30 → 31; this slice held it) — read off the raw source, not retyped", () => {
+  it("🛑 `MATCH_RECORD_VERSION` is 41 (🆕🆕🆕 D579 stepped it 40 → 41; D577 stepped it 39 → 40; D576 stepped it 38 → 39; D575 stepped it 37 → 38; D570 stepped it 36 → 37; D564 stepped it 35 → 36; D556 stepped it 34 → 35; D552 stepped it 33 → 34; D549 stepped it 32 → 33; D548 stepped it 31 → 32; D547 stepped it 30 → 31; this slice held it) — read off the raw source, not retyped", () => {
     // 🆕🆕🆕 D547 — the constant this slice held is now 31: D547 added two REQUIRED `InPlayPokemon` fields (apps/api match.ts).
-    expect(raw("/match.ts")).toContain("MATCH_RECORD_VERSION = 40");
+    expect(raw("/match.ts")).toContain("MATCH_RECORD_VERSION = 41");
   });
 
-  it("🛑 the engine version stepped to 0.462.0 in BOTH places", () => {
-    expect(engineVersion).toBe("0.462.0");
-    expect(manifest.version).toBe("0.462.0");
+  it("🛑 the engine version stepped to 0.463.0 in BOTH places", () => {
+    expect(engineVersion).toBe("0.463.0");
+    expect(manifest.version).toBe("0.463.0");
   });
 });
 

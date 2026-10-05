@@ -574,9 +574,19 @@ describe("deriveAttackDamageBonus — the near-misses that stay UNMAPPED (and th
       kind: "boardCondition",
       cond: { kind: "opponentBannerPokemonInPlay", banner: "Future" },
     });
+    // 🆕🆕🆕 D579 (D539) — "the loud witness moves to the one banner clause left — Koraidon" is
+    // WITHDRAWN: Koraidon's clause RESOLVES now (a literal row over the seat-level
+    // `GameState.recentAttackers`, pinned here at its value), and the legal column prints no banner
+    // clause the map refuses. The loud witness is RE-POINTED to a CONSTRUCTED clause no row carries
+    // — the Ancient row's FUTURE twin — which must stay null (a whole-clause literal, not a template).
     expect(
       deriveAttackDamageBonus(
         "If 1 of your other Ancient Pokémon used an attack during your last turn, this attack does 150 more damage.",
+      )?.count,
+    ).toEqual({ kind: "boardCondition", cond: { kind: "yourOtherBannerPokemonAttackedLastTurn", banner: "Ancient" } });
+    expect(
+      deriveAttackDamageBonus(
+        "If 1 of your other Future Pokémon used an attack during your last turn, this attack does 150 more damage.",
       ),
     ).toBeNull();
     // It also keeps the discriminator this case was originally chosen for: "in

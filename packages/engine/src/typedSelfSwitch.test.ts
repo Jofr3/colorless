@@ -709,8 +709,8 @@ describe("§7 — the gain is the RAW reader summand alone", () => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("§8 — the engine version", () => {
-  it("engineVersion is 0.462.0", () => {
-    expect(engineVersion).toBe("0.462.0");
+  it("engineVersion is 0.463.0", () => {
+    expect(engineVersion).toBe("0.463.0");
   });
 });
 
@@ -811,9 +811,14 @@ describe("§9 — the `Ancient`/`Future` banner is DATA-BLOCKED, and the falsifi
     // attacker class (`"ancient"`) and the every-Future prevention (Miraidon, `sideAttackBlock`),
     // both claimed WHOLE by READERS, so the reader-claimed list gains those two; the seat-level
     // attack record (Koraidon `sv08-116` "Unrelenting Onslaught") is the one left.
+    // 🆕🆕🆕 D579 (D539): "the one left" is WITHDRAWN — D579 BUILDS the seat-level attack record
+    // (`GameState.recentAttackers`) and Koraidon's clause is claimed WHOLE by a READER (a literal
+    // `CONDITIONAL_DAMAGE_CLAUSES` row), so the reader-claimed list gains it: all TWELVE banner
+    // sentences are built — SEVEN by readers, five as registry attacks.
     const readerClaimed = banner.filter(([, text]) => resolvedByAnyReader(text)).map(([, t]) => t);
     expect(readerClaimed.sort()).toEqual(
       [
+        "If 1 of your other Ancient Pokémon used an attack during your last turn, this attack does 150 more damage.",
         "During your opponent's next turn, prevent all damage done to each of your Future Pokémon by attacks from Pokémon ex. If this Pokémon is no longer your Active Pokémon, this effect ends.",
         "During your opponent's next turn, prevent all damage done to this Pokémon by attacks from Ancient Pokémon.",
         "If you played a Future Supporter card from your hand during this turn, this attack does 100 more damage.",

@@ -785,7 +785,7 @@ export type CardFilter =
     A CLOSED UNION so a typo is a COMPILE error rather than a silent false: an
     unrecorded slot reads as "nothing moved", which is indistinguishable from a
     real empty answer, so a mistyped `recordAs` would quietly cost Miriam its
-    draw. Three members (🆕🆕🆕 D567 NOTE (D539): FIVE now — see the D567 paragraph below), matching the three things a program records — what it PAID
+    draw. Three members (🆕🆕🆕 D567 NOTE (D539): FIVE now — see the D567 paragraph below; 🆕🆕🆕 D579 (D539): SIX — `"placed"`, the D579 block below), matching the three things a program records — what it PAID
     (a `payFromHand` cost), what it MOVED (a benefit), and what it DISCARDED
     (Chien-Pao ex "Hail Blade" counts the Energy its own attack discarded "in this
     way" to scale the damage). Add a member when a card needs a fourth.
@@ -805,7 +805,18 @@ export type CardFilter =
     entry would coincide with the recorded uid today — the record is the spelling that
     does not lean on that ordering, not a behavioural difference a test can drive.
     A closed-union widening (D125): a record without the keys reads as unfiled. */
-export type EffectSlot = "paid" | "moved" | "discarded" | "turnedPrize" | "revealed";
+/** 🆕🆕🆕 **D579 — THE SIXTH MEMBER, `"placed"`, AND THE FIRST WHOSE ENTRIES ARE NOT CARDS.**
+    Walking Wake `sv06-063` "Undulating Slice" (attack index 1, 1 legal): *"Put up to 9 damage
+    counters on this Pokémon. This attack does 20 damage for each damage counter you placed in
+    this way."* The "in this way" count is DAMAGE COUNTERS, which have no uid. 🛑 **THE
+    REPRESENTATIONAL CHOICE (decisions.md D579 (b)): ONE ENTRY PER COUNTER PLACED, each the
+    attacking body's own top uid** — so `damageDefender { per: 20, count: "placed" }` reads the
+    slot's `.length` exactly as Hail Blade reads `discarded`, and no reader learns a second
+    shape. The entries are NOT a set of distinct cards and no `countFilter` may be paired with
+    this slot (every entry resolves to the same card, so a filter would score all or none). Filed
+    by `putCountersOnSelfChosen` only (enrolled in interpreter.ts `recordSlotOf`); a decline files
+    `[]`. A closed-union widening (D125): a record without the key reads as unfiled. */
+export type EffectSlot = "paid" | "moved" | "discarded" | "turnedPrize" | "revealed" | "placed";
 
 /** How many cards a `handRefresh` draws AFTER the hand goes into the deck.
     `fixed` draws a constant (Youngster 5, Judge 4, Katy 8); `handPlus` draws the
@@ -2044,7 +2055,7 @@ export type BoardCondition =
       are D207 BANNER clauses (`Ancient` ×1, `Tera` ×2, `Future` ×2 — the supply side
       absent from every ingested column) (🆕🆕🆕 D568 (D539): "FIVE" is THREE now — the two
       TERA clauses resolve through literal rows over `banners.ts`; the Ancient ×1 and Future ×2 stand;
-      (🆕🆕🆕 D569 (D539): "the Ancient ×1 and Future ×2 stand" is WITHDRAWN for FUTURE — the two Future clauses (Iron Valiant `sv05-080`, Slither Wing `sv06.5-026`) resolve through literal rows over the widened `banners.ts`, one printing each; the ONE banner clause left is the Ancient ×1 (Koraidon `sv08-116` "Unrelenting Onslaught"), whose blocker is a seat-level attack record, not the banner)
+      (🆕🆕🆕 D569 (D539): "the Ancient ×1 and Future ×2 stand" is WITHDRAWN for FUTURE — the two Future clauses (Iron Valiant `sv05-080`, Slither Wing `sv06.5-026`) resolve through literal rows over the widened `banners.ts`, one printing each; the ONE banner clause left is the Ancient ×1 (Koraidon `sv08-116` "Unrelenting Onslaught"), whose blocker is a seat-level attack record, not the banner) (🆕🆕🆕 D579 (D539): "the ONE banner clause left" is WITHDRAWN — Koraidon's clause is a literal row over the new seat-level `GameState.recentAttackers`, and the bonus residue is EMPTY)
       so the residue is **5 sentences / 8 printings** after D568, not "7 / 10" — Ho-Oh `sv08-019` and
       Regigigas `sv08.5-086` leave it, one sentence and one printing each), ONE at 5 printings is D368's structural
       shape refusal (*"…in addition to this attack's cost"* reads an attack
@@ -3854,6 +3865,16 @@ export type BoardCondition =
       `sv06.5-026` "Iron Smasher" (+120). Any of the OTHER seat's in-play bodies (Active and
       Bench) whose TOP card prints `banner` — `yourBannerPokemonInPlay` one seat over. Public. */
   | { kind: "opponentBannerPokemonInPlay"; banner: Banner }
+  /** 🆕🆕🆕 **D579 — "1 of your other Ancient Pokémon used an attack during your last turn"**:
+      Koraidon `sv08-116` "Unrelenting Onslaught" (+150, 1 legal). Read off the SEAT-level record
+      `GameState.recentAttackers` (D579), NOT the per-body `InPlayPokemon.usedAttack` stamp: some
+      entry stamped on the seat's previous turn (`turn === state.turn - 2`, the parity argument of
+      `usedAttackOnYourLastTurn`) whose card — resolved by uid, so a body that has since LEFT PLAY
+      still counts (R-1, reading B, RULED BY THE USER 2026-10-05) — prints `banner`, and whose uid
+      is NOT a card of the reading seat's Active stack ("other": the attacker's own attack last
+      turn does not count). ANY attack, unnamed — the printed clause names none, which is the
+      whole difference from `yourPokemonUsedAttackLastTurn { attack }`. Public. */
+  | { kind: "yourOtherBannerPokemonAttackedLastTurn"; banner: Banner }
   /** 🆕🆕🆕 **D569 — "you played an Ancient/Future Supporter card from your hand during this
       turn"**: Great Tusk `sv05-097`/`sv08.5-055` "Land Collapse" (Ancient, its "discard 3
       more" branch) and Iron Valiant `sv05-080` "Majestic Sword" (Future, +100). Read off
@@ -5782,7 +5803,7 @@ export type EffectOp =
       question) and exactly ONE writer (its own first answer), so nothing is
       being shared and a shared bus is the wrong home. And the record would be
       the wrong home even if it were free, on MEANING: `EffectRecord` holds *what
-      MOVED* (`paid` / `moved` / `discarded` — 🆕🆕🆕 D567 FINAL-REVIEW NOTE (D539): five members now — `turnedPrize` / `revealed`, both uid lists, so the argument stands), and `recordGate` — the printed "if
+      MOVED* (`paid` / `moved` / `discarded` — 🆕🆕🆕 D567 FINAL-REVIEW NOTE (D539): five members now — `turnedPrize` / `revealed`, both uid lists, so the argument stands; 🆕🆕🆕 D579 (D539): SIX members now — `"placed"`, the first whose entries are NOT distinct cards (it files a COUNT as repeated top uids, one per damage counter placed); the argument here rests on what a slot NAMES, not on its entries being distinct cards, so it still stands), and `recordGate` — the printed "if
       you do" / "in this way" — reads it. Filing a source that has been NAMED but
       not yet emptied would make that gate answer true for an action that has not
       happened, which is precisely the "half of a printed action" failure
@@ -5928,6 +5949,33 @@ export type EffectOp =
       upTo: number;
       /** The SOURCE, once question 1 is answered. Engine-written only. */
       from?: PokemonTarget;
+    }
+  /** 🆕🆕🆕 **D579 — PUT A CHOSEN NUMBER OF DAMAGE COUNTERS (0..`upTo`) ON THIS POKÉMON, AND FILE
+      HOW MANY.** Walking Wake `sv06-063` "Undulating Slice" ({W}{W}{C}, `20×`, attack index 1,
+      **1 legal**): *"Put up to 9 damage counters on this Pokémon. This attack does 20 damage for
+      each damage counter you placed in this way."* — authored as
+      this op (`upTo` 9) followed by a `damageDefender` reading `per` 20 off `count` `"placed"`
+      (registry.ts `UNDULATING_SLICE`), the `damageDefender` TOP-LEVEL so attack.ts's
+      `programDamage` drops the printed `20×` base (a nested or continuation-scheduled hit would
+      deal the base on top).
+
+      🛑 **ALWAYS PARKED, NEVER `parkOrForce`'s FORCED ARM, though the candidate set is ONE body
+      by construction.** D47/D358: a pick with a ceiling has `upTo + 1` answers over one
+      candidate — the quantity IS the question. The park is `choosePokemon { candidates: [this
+      Pokémon], upTo, takeVerb: "put" }`; the answer's `take` is the count (absent = `upTo`,
+      D359), the ref-less answer is the decline and places NONE (R-W2: 0 placed deals 0).
+
+      ⚠️ **"Put … damage counters" IS A PLACEMENT, NOT DAMAGE** — no Weakness, no Resistance, no
+      shield, `damageSelf`'s flat model and its `COUNTERS_PLACED { source: "self" }` row. The
+      count is NOT clamped to the remaining HP: placing past 0 HP is legal and the self-KO is
+      swept by the attack epilogue's two-seat sweep AFTER the hit is dealt (R-W1); Weakness and
+      Resistance apply ONCE to the 20×n hit (R-W3, `damageDefender`'s one `snipeActive` pass).
+      It parks, so it rides `EffectContinuation.pendingOp`: a new union member is a D125
+      widening, read by a 0.462 rollback as an unknown op — a whiff (apps/api match.ts). */
+  | {
+      op: "putCountersOnSelfChosen";
+      /** The printed ceiling ("up to 9"). */
+      upTo: number;
     }
   /** 🆕🆕🆕 **D573 — THE COPY-ATTACK CHOICE, AND IT IS ONLY EVER *PARKED*, NEVER STEPPED.**
       Night Joker / Foul Play / Metronome / Gemstone Mimicry / Try to Imitate (`deriveAttackCopy`,
@@ -6728,7 +6776,7 @@ export type EffectOp =
           NOT `count`.** `perTakenPrize` and `perEnergyOnSelf` name an IMPLICIT source —
           the opponent's taken Prizes, the attacker's own attachments — which the fold
           can find from `(state, ctx)` alone. **A §9.2 slot is an ADDRESS**, and
-          `EffectSlot` has three of them (🆕🆕🆕 D567 NOTE (D539): five now — turnedPrize/revealed), so a boolean would have to hard-code one: on a
+          `EffectSlot` has three of them (🆕🆕🆕 D567 NOTE (D539): five now — turnedPrize/revealed; 🆕🆕🆕 D579 (D539): SIX now — `"placed"`, one entry per damage counter placed; the address argument only strengthens), so a boolean would have to hard-code one: on a
           program that files `paid` AND `discarded` (D458 measured that two sequential
           recording ops overwrite one slot, which is why the addresses exist at all) the
           boolean reads whichever the author guessed. **And it cannot be spelled `count`,
@@ -8298,7 +8346,7 @@ export type EffectOp =
           read only that the switch happened); `true` files `wasActive` instead, the one
           body the consequent names. 🛑 **A RIDER AND NOT A FOURTH `EffectSlot`
           MEMBER**: the union names WHAT KIND of thing a program files (paid / moved /
-          discarded — 🆕🆕🆕 D567 FINAL-REVIEW NOTE (D539): five members now — `turnedPrize` / `revealed`, both uid lists, so the argument stands), and both ends of a switch are "moved" — a `"demoted"` slot would
+          discarded — 🆕🆕🆕 D567 FINAL-REVIEW NOTE (D539): five members now — `turnedPrize` / `revealed`, both uid lists, so the argument stands; 🆕🆕🆕 D579 (D539): SIX members now — `"placed"`, the first whose entries are NOT distinct cards (it files a COUNT as repeated top uids, one per damage counter placed); the argument here rests on what a slot NAMES, not on its entries being distinct cards, so it still stands), and both ends of a switch are "moved" — a `"demoted"` slot would
           put the END into the ADDRESS, so a second switch-reading op could file the
           other end under the same name. Read by `moveEnergy.sourceRecorded`.
           `MATCH_RECORD_VERSION` holds at 35 (optional, absent = D206's filing); the
@@ -8328,7 +8376,7 @@ export type EffectOp =
 
       The filed uid is the OPPONENT's newly promoted body, which is not a novelty
       of this op: `bottomFromOpponentHand` already files uids off the opponent's
-      side into the same three slots (🆕🆕🆕 D567 FINAL-REVIEW NOTE (D539): five members now — `turnedPrize` / `revealed`, both uid lists, so the argument stands).
+      side into the same three slots (🆕🆕🆕 D567 FINAL-REVIEW NOTE (D539): five members now — `turnedPrize` / `revealed`, both uid lists, so the argument stands; 🆕🆕🆕 D579 (D539): SIX members now — `"placed"`, the first whose entries are NOT distinct cards (it files a COUNT as repeated top uids, one per damage counter placed); the argument here rests on what a slot NAMES, not on its entries being distinct cards, so it still stands).
 
       🆕 **D331 — `basicOnly` IS THE FIRST NARROWING THIS OP HAS EVER TAKEN, AND
       IT ARRIVES WITH A FUNNEL RATHER THAN AS A FIELD.** Lisia's Appeal
@@ -9320,6 +9368,8 @@ export type EffectOp =
       §10's loud-path witness is now corpus row 346, not this sentence.
       (🆕🆕🆕 D575 (D539): ~~"corpus row 346"~~ WITHDRAWN — row 346 is BUILT at D575 (N's Sigilyph
       "Victory Symbol"); §10's witness is Walking Wake `sv06-063` "Undulating Slice" now.)
+      (🆕🆕🆕 D579 (D539): Walking Wake is BUILT at D579 as a REGISTRY row keyed by id; no reader claims
+      the sentence, so the §10 witness — a card carrying it on another id — still takes the loud path.)
 
       🛑 **FIELD-FREE, BECAUSE EVERY TOKEN OF THE SENTENCE IS SPENT.** "each of
       your opponent's" is the side AND the quantifier, "evolved" is the filter,
@@ -12067,7 +12117,7 @@ export type EffectOp =
           🛑 **AN `EffectSlot` AND NOT A BOOLEAN, WHICH IS D489's MEASUREMENT REUSED
           RATHER THAN RE-DECIDED.** `damageChosen`'s two scaled-snipe riders are bare
           `true` flags because each names an IMPLICIT source the fold finds from
-          `(state, ctx)`; a §9.2 record is an ADDRESS with three inhabitants (🆕🆕🆕 D567 NOTE (D539): five now — turnedPrize/revealed), so a
+          `(state, ctx)`; a §9.2 record is an ADDRESS with three inhabitants (🆕🆕🆕 D567 NOTE (D539): five now — turnedPrize/revealed; 🆕🆕🆕 D579 (D539): SIX now — `"placed"`, one entry per damage counter placed; the address argument only strengthens), so a
           boolean would have to hard-code one — and D458 measured the board that
           breaks that, two sequential recorders overwriting one slot.
 
@@ -20679,6 +20729,8 @@ const CONDITIONAL_DAMAGE_CLAUSES = new Map<string, BoardCondition>([
   // (🆕🆕🆕 D569 (D539): the five BANNER clauses are ONE now — two Tera (D568) and two
   // Future (D569) are literal rows over `banners.ts`; the Ancient "Unrelenting Onslaught" is
   // left, blocked on a seat-level attack record rather than the banner)
+  // (🆕🆕🆕 D579 (D539): ~~"the Ancient … is left"~~ — BUILT: a literal row below, over the new
+  // seat-level `GameState.recentAttackers`; the table's banner residue is EMPTY)
   //
   // 🛑 **THE SHARPEST NEAR-MISS IN THIS TABLE IS FOUR ROWS UP AND SHARES THE
   // PRINTED DIGIT.** *"your opponent has 3 or fewer cards in their hand"* is the
@@ -21215,6 +21267,16 @@ const CONDITIONAL_DAMAGE_CLAUSES = new Map<string, BoardCondition>([
   // classifies, so a predicate over one has a permanently empty candidate set) and
   // not on the clock. It is the sharpest illustration in the residue of WHERE this
   // family refuses: at the banner, never at the window.
+  // 🆕🆕🆕 D579 — AND THE BANNER TWIN IS BOUGHT NOW (D539: the "DELIBERATELY NOT BOUGHT HERE"
+  // paragraph above is WITHDRAWN). Koraidon `sv08-116` "Unrelenting Onslaught" ({C}{C}, `30+`,
+  // +150, index 0 of TWO), ONE legal printing: a LITERAL row over the NEW seat-level record
+  // `GameState.recentAttackers` (MRV 40 → 41) — the banner was never the blocker after D569,
+  // the record was. R-1 reading B (RULED BY THE USER 2026-10-05): a departed Ancient attacker
+  // still counts.
+  [
+    "1 of your other Ancient Pokémon used an attack during your last turn",
+    { kind: "yourOtherBannerPokemonAttackedLastTurn", banner: "Ancient" },
+  ],
   [
     "this Pokémon used Form Ranks during your last turn",
     { kind: "yourActiveUsedAttackLastTurn", attack: "Form Ranks" },

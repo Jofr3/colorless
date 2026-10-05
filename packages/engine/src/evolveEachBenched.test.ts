@@ -537,6 +537,7 @@ describe("D308 §4 — the persisted shape: `cont.rest` carries the schedule acr
       "pending",
       "phase",
       "players",
+      "recentAttackers", // 🆕🆕🆕 D579 — the REQUIRED seat-level attack record (Koraidon "Unrelenting Onslaught", R-1 reading B); MRV 40 → 41
       "rngState",
       "stadium",
       "turn",
