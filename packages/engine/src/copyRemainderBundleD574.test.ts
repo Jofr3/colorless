@@ -88,7 +88,8 @@ const FOUL_PLAY = "Choose 1 of your opponent's Active Pokémon's attacks and use
 const GATED_TEXT =
   "If you go second, you can't use this attack during your first turn. This attack does 30 damage for each of your Benched Pokémon.";
 /** A REAL corpus sentence held by a RECORDED REFUSAL (Mr. Mime `sv05-063` "Look-Alike Show", D445) —
-    the anti-laundering witness, outside every family the D574 pricing round ranks (asserted in §1). */
+    the anti-laundering witness, outside every family the D574 pricing round ranks (asserted in §1).
+    (🆕🆕🆕 D580 (D539): ~~held by a RECORDED REFUSAL (D445)~~ — D445's refusal is RETIRED: Mr. Mime `sv05-063` is BUILT at D580 as a REGISTRY row keyed by its id (`MR_MIME_LOOK_ALIKE_SHOW`). No reader or splitter claims the sentence, so on a `fix-*` carrier it is still unread and still takes the loud path — the witness stands.) */
 const UNREAD_TEXT =
   "Your opponent reveals their hand. You may use the effect of a Supporter card you find there as the effect of this attack.";
 
@@ -1225,7 +1226,7 @@ describe("D574 §6 — the parks: wire-legal, serialisable, and INERT under a 0.
 
 // ─────────────────────────────────────────────────────────────────────────────
 describe("D574 §7 — the version", () => {
-  it("the engine is 0.463.0", () => {
-    expect(engineVersion).toBe("0.463.0");
+  it("the engine is 0.464.0", () => {
+    expect(engineVersion).toBe("0.464.0");
   });
 });

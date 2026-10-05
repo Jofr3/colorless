@@ -3096,6 +3096,22 @@ export interface PassiveEffects {
       because no `typesInPlay` value adds or removes {C} (pinned by a registry walk,
       `scovillainD578.test.ts`). Catalog-only: never persisted. */
   typesInPlay?: readonly PokemonType[];
+  /** 🆕🆕🆕 **§9 (D580) — `typesInPlay`'s CONDITION: ONLY WHILE AN ATTACHED TOOL OF THIS NAME IS ON
+      THE HOLDER.** Iron Treads `sv05-118` "Dual Core" (1 legal printing) — *"As long as this
+      Pokémon has a Future Booster Energy Capsule attached, it is {F} and {M} type."* Paired with
+      `typesInPlay: ["Fighting", "Metal"]`; absent = D578's unconditional retype (Scovillain ex).
+      Read by continuous.ts `inPlayCardOf` ONLY, BEFORE its per-card view cache (the cache is
+      keyed by the top card, and this condition is per BODY): while no card in the body's
+      ATTACHED `tools` carries exactly this card NAME, the body is handed its PRINTED card.
+      R-DC1 (UNRULED): the ATTACHED list, not `toolsInEffect` — a Jamming Tower Tool "has no
+      effect" but is still ATTACHED, and Dual Core reads attachment (reversal: read
+      `toolsInEffect`). R-DC2 (by text): a §9 lock on the holder hands back the printed types,
+      exactly as for D578. R-DC3 (by text): the NAME is compared, never a filter.
+      🛑 **NEVER FIRES IN A STANDARD-LEGAL DECK**: Future Booster Energy Capsule (`sv05-149`) is
+      regulation G and not Standard-legal, and it is not ingested; the behaviour is proven only
+      on a CONSTRUCTED fixture Tool of that name (`dualCoreD580.test.ts`). Catalog-only: never
+      persisted. */
+  typesInPlayWhileToolNamed?: string;
   /** 🆕🆕🆕 **§9 (D578) — "MEMORY DIVE": EACH OF YOUR EVOLVED POKÉMON CAN USE ANY ATTACK FROM ITS
       PREVIOUS EVOLUTIONS.** Relicanth `sv05-084` / `sv05-173` (2 legal printings, 1 text) —
       *"Each of your evolved Pokémon can use any attack from its previous Evolutions. (You
@@ -9668,7 +9684,11 @@ const DYNAMOTOR: CardProgram = {
     out of the pile (a Basic Metal Energy) and then WHICH bodies may receive it
     (a {M} Pokémon, read off `topCardOf` by `attachEnergyTargets` [🆕🆕🆕 D578 (D539): *"read
     off `topCardOf`"* is WITHDRAWN — interpreter.ts `attachEnergyTargets` now reads the TOP
-    card's IN-PLAY view, `inPlayCardOf`; no `typesInPlay` value names {M}, so no board moves]). Dropping
+    card's IN-PLAY view, `inPlayCardOf`; no `typesInPlay` value names {M}, so no board moves]
+    [🆕🆕🆕 D580 (D539): ~~"no `typesInPlay` value names {M}"~~ is FALSE now — Iron Treads `sv05-118`
+    "Dual Core" (`DUAL_CORE`) is {F}{M} while a Future Booster Energy Capsule is attached; its
+    printed type is already {M}, so this attach's {M} target set is unchanged by it, and the Capsule
+    is not Standard-legal — still no legal board moves]). Dropping
     either leaves a program that still attaches something, which is why they are
     mutated separately.
 
@@ -10748,6 +10768,18 @@ const TYME: CardProgram = { trainer: [{ op: "opponentGuessesHp", draw: 4 }] };
     keeps deriving (no `attack` key). */
 const DOUBLE_TYPE: CardProgram = { passive: { typesInPlay: ["Grass", "Fire"] } };
 
+/** 🆕🆕🆕 **D580 — Iron Treads `sv05-118` (1 legal printing)** "Dual Core": *"As long as this Pokémon
+    has a Future Booster Energy Capsule attached, it is {F} and {M} type."* D578's `typesInPlay`
+    behind the new `typesInPlayWhileToolNamed` condition, read by continuous.ts `inPlayCardOf`
+    (decisions.md D580, R-DC1 … R-DC3). Its own Weakness ({R}) and Resistance ({G}) stay as
+    printed: being {F}{M} changes what its ATTACKS hit for Weakness / Resistance and what the
+    type-keyed effects see. 🛑 **IT CAN NEVER FIRE IN A STANDARD-LEGAL DECK** — the Capsule
+    (`sv05-149`) is regulation G, not Standard-legal and not ingested; proven only on a
+    constructed fixture Tool. Its printed attack "Wheel Pass" keeps deriving (no `attack` key). */
+const DUAL_CORE: CardProgram = {
+  passive: { typesInPlay: ["Fighting", "Metal"], typesInPlayWhileToolNamed: "Future Booster Energy Capsule" },
+};
+
 /** 🆕🆕🆕 **D578 — Team Rocket's Energy `sv10-182` (Special Energy, 1 legal printing)**: *"This card
     can only be attached to a Team Rocket's Pokémon. If this card is attached to anything other
     than a Team Rocket's Pokémon, discard this card. / As long as this card is attached to a
@@ -10808,6 +10840,17 @@ const UNDULATING_SLICE: CardProgram = {
       { op: "damageDefender", per: 20, count: "placed" },
     ],
   },
+};
+
+/** 🆕🆕🆕 **D580 — Mr. Mime `sv05-063` "Look-Alike Show" ({C}, no damage, attack index 0, 1 legal
+    printing)**: *"Your opponent reveals their hand. You may use the effect of a Supporter card you
+    find there as the effect of this attack."* The shipped `revealOpponentHand` (D232) and the NEW
+    `useOpponentSupporterEffect` (R-LA1 … R-LA6, decisions.md D580). The sentence stays
+    REGISTRY-held: no deriver arm claims it, so the residue census keeps it RAW and `builds()`
+    serves it by id. INDEX-KEYED: "Eerie Wave" (idx 1, *"Your opponent's Active Pokémon is now
+    Confused."*) keeps deriving. Retires D445's recorded refusal. */
+const MR_MIME_LOOK_ALIKE_SHOW: CardProgram = {
+  attack: { 0: [{ op: "revealOpponentHand" }, { op: "useOpponentSupporterEffect" }] },
 };
 
 /** D261 — Enriching Energy `sv08-191`: "As long as this card is attached to a
@@ -16041,7 +16084,12 @@ const PRISM_CHARGE: CardProgram = {
 //    printings — stay deferred.]
 //    [🆕🆕🆕 D579 (D539): Koraidon `sv08-116` "Unrelenting Onslaught" is BUILT too, a `deriveAttackDamageBonus`
 //    literal row over the new seat-level `GameState.recentAttackers` (no registry row); Iron Treads `sv05-118`
-//    "Dual Core" alone stays — its condition card `sv05-149` is not Standard-legal.] ──
+//    "Dual Core" alone stays — its condition card `sv05-149` is not Standard-legal.]
+//    [🆕🆕🆕 D580 (D539): ~~"Iron Treads "Dual Core" alone stays"~~ WITHDRAWN — Dual Core is BUILT
+//    (`DUAL_CORE`, D578's `typesInPlay` behind the new `typesInPlayWhileToolNamed` condition). Its
+//    condition card `sv05-149` is still not Standard-legal, so it can never fire in a legal deck; the
+//    behaviour is proven on a constructed fixture Tool (`dualCoreD580.test.ts`). The D569 deferred list
+//    is EMPTY.] ──
 
 /** 🆕🆕🆕 **D569 — Miraidon `sv05-121`/`svp-092` "Peak Acceleration" (attack index 0, 2
     legal)** — *"Search your deck for up to 2 Basic Energy cards and attach them to your
@@ -17099,6 +17147,11 @@ const REGISTRY: Record<string, CardProgram> = {
   //    so `raw[last]` does not move. (Koraidon `sv08-116` "Unrelenting Onslaught" is a DERIVER arm —
   //    a `CONDITIONAL_DAMAGE_CLAUSES` row over the new `recentAttackers` record — and carries no row.) ──
   "sv06-063": UNDULATING_SLICE, // Walking Wake — Undulating Slice: put up to 9 counters on itself, 20× per counter put
+  // ── 🆕🆕🆕 D580 — THE LAST ATTACK AND THE LAST ABILITY: Iron Treads "Dual Core" + Mr. Mime
+  //    "Look-Alike Show": 2 registry ids / 2 objects, MID-MAP (D395/D396), so `raw[last]` does not
+  //    move. ──
+  "sv05-118": DUAL_CORE, // Iron Treads — Dual Core: {F} and {M} while a Future Booster Energy Capsule is attached
+  "sv05-063": MR_MIME_LOOK_ALIKE_SHOW, // Mr. Mime — Look-Alike Show: reveal the opponent's hand, use 1 Supporter's effect
   // ── D190 — THE **STANDARD-LEGAL** REPRINT-ALIAS MAP (Tier 0 of
   //    `docs/reference/coverage-backlog-legal.md`). 22 printings, 9 map targets,
   //    ZERO new code: every row below prints a sentence that is already authored

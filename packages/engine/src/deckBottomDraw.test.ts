@@ -92,7 +92,8 @@ const TOP = "Draw 3 cards.";
     THE READER LANDED: row 434 is BUILT at D574 (the mid-attack copy, `deriveAttackCopy`'s resolve-time
     kind), so ~~"stays BLOCKED"~~ is withdrawn (D539). The control is now corpus FILE LINE 676, Mr. Mime
     `sv05-063` "Look-Alike Show" — a REAL printing held by a RECORDED REFUSAL (D445), unread by every
-    reader and splitter, and outside every family the D574 pricing round ranks (D540). */
+    reader and splitter, and outside every family the D574 pricing round ranks (D540).
+    (🆕🆕🆕 D580 (D539): ~~held by a RECORDED REFUSAL (D445)~~ — D445's refusal is RETIRED: Mr. Mime `sv05-063` is BUILT at D580 as a REGISTRY row keyed by its id (`MR_MIME_LOOK_ALIKE_SHOW`). No reader or splitter claims the sentence, so on a `fix-*` carrier it is still unread and still takes the loud path — the witness stands.) */
 const LOUD = "Your opponent reveals their hand. You may use the effect of a Supporter card you find there as the effect of this attack.";
 
 const PROGRAM: readonly EffectOp[] = [{ op: "drawCards", count: 3, from: "bottom" }];

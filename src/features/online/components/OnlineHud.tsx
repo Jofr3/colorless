@@ -1484,6 +1484,8 @@ const CHOOSE_CARDS_VERB: Record<
   swap: { mandatory: "Switch in", upTo: "Switch in" },
   // 🆕🆕🆕 D577 — Tyme's "Tell your opponent the name of a Pokémon in your hand" (GameHud's cell).
   name: { mandatory: "Name", upTo: "Name" },
+  // 🆕🆕🆕 D580 — Mr. Mime "Look-Alike Show"'s "You may use the effect of a Supporter card…" (GameHud's cell).
+  use: { mandatory: "Use", upTo: "Use" },
 };
 
 /** chooseCards (§15.E / §7.1 / §7.5) — pick min..max cards: a deck search, a

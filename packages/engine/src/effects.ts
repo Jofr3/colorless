@@ -6043,6 +6043,35 @@ export type EffectOp =
       /** Haughty Order's confirm, answered yes. Engine-written only. */
       accepted?: true;
     }
+  /** 🆕🆕🆕 **D580 — USE THE EFFECT OF A SUPPORTER FOUND IN THE OPPONENT'S (ALREADY REVEALED) HAND
+      AS THE EFFECT OF THIS ATTACK.** Mr. Mime `sv05-063` "Look-Alike Show" ({C}, no damage, attack
+      index 0, **1 legal**): *"Your opponent reveals their hand. You may use the effect of a
+      Supporter card you find there as the effect of this attack."* — authored as
+      `revealOpponentHand` then this op (registry.ts `MR_MIME_LOOK_ALIKE_SHOW`). FIELD-FREE.
+
+      The step (interpreter.ts) offers the opponent's hand cards that are Supporters with a
+      registry `trainer` program (an EMPTY program, Briar's `[]`, IS offered), ONE candidate per
+      card id, filtered for the ATTACKER's seat by the Supporter's PRINTED play conditions only —
+      `trainerPlayableIf` and `handCostUnmet` (R-LA2, UNRULED; NOT cardplay's would-only-whiff
+      `programPlayable`; a hand-relative condition excludes the card itself, so Cassiopeia's
+      *"the last card in your hand"* reads an EMPTY attacker hand — R-LA2a, UNRULED, `copiedPlayableIf`). An empty offer is done (R-LA5: the reveal only); otherwise it ALWAYS
+      parks `chooseCards { min: 0, max: 1, dest: "use" }` (the printed *"You may"* — a lone
+      candidate is still asked, D297). A pick emits `SUPPORTER_EFFECT_USED` and splices the
+      Supporter's `trainer` program ahead of the rest through `continuationOps` (D216's channel),
+      run in the SAME attack context (`invokedBy: "attack"`, the attacker's seat, no `playedUid`);
+      a decline splices nothing.
+
+      🛑 **EFFECT ONLY (R-LA1)**: the Supporter stays in the opponent's hand, no Supporter
+      allowance is spent or required, `supporterPlayedUid` is not written, and "you" is the
+      ATTACKER. Card-level keys are NOT carried (R-LA6): `supporterKoPrizeBonus` (Briar, read off
+      the PLAYED Supporter) and `trainerFirstTurnExempt` — vacuous for this attacker (no damage,
+      not Tera, and the attack ends the turn). It is an ATTACK effect for the shields (R-LA4,
+      UNRULED). This RETIRES D445's recorded refusal (the "Supporter copy", `opponentHandScaling
+      .test.ts` §6): every legal Supporter carries a registry program, and the copy is spliced by
+      card id, never by text. It parks, so it rides `EffectContinuation.pendingOp`: a new union
+      member is a D125 widening, read by a 0.463 rollback as an op it has no arm for — nothing is
+      used, an inert whiff (apps/api match.ts "STAYS 41 AT D580"). */
+  | { op: "useOpponentSupporterEffect" }
   /** 🆕🆕🆕 **D574 — MOVE ANY NUMBER OF DAMAGE COUNTERS BETWEEN THE OPPONENT'S OWN BODIES, ONE
       ROUND AT A TIME, UNDER AN ENGINE-WRITTEN BUDGET.** Sableye `sv05-107` "Damage Collection"
       (*"You may move any number of damage counters from your opponent's Benched Pokémon to their

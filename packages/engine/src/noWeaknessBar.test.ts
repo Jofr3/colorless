@@ -82,6 +82,8 @@ const PLAIN = 1; // fix-nowk index 1 — the ONE-AXIS control: same cost, same d
 // and index 2 was MOVED FIRST once more, to row 676 (Mr. Mime "Look-Alike Show", 1 printing — D445's
 // recorded refusal, outside every family the D574 pricing round ranks). "row 434" above is withdrawn
 // as the CURRENT witness.
+// 🆕🆕🆕 D580 (D539): D445's refusal is RETIRED — Mr. Mime `sv05-063` is BUILT as a REGISTRY row keyed by its
+// id; no reader claims the sentence, so `fix-nowk` index 2 still takes the loud path and the control stands.
 const LOUD = 2; // fix-nowk index 2 — a REAL BLOCKED corpus sentence, the loud-path control
 
 function find<T extends GameEvent["type"]>(
@@ -200,7 +202,7 @@ describe("§1 — one sentence, three printings, and the family read to its edge
       // It is what `fix-nowk` index 2 prints, so this suite's loud-path control is a
       // real legal sentence rather than an invented one (🆕🆕🆕 D552: PRINTED — index 2
       // now prints row 78, a BLOCKED copy-attack sentence, because this one is BUILT; 🆕🆕🆕 D573: row 434,
-      // Haughty Order, because row 78 is BUILT too; 🆕🆕🆕 D574: row 676, Mr. Mime's recorded refusal,
+      // Haughty Order, because row 78 is BUILT too; 🆕🆕🆕 D574: row 676, Mr. Mime's recorded refusal, [🆕🆕🆕 D580 (D539): retired — Mr. Mime is BUILT at D580 as a REGISTRY row; the sentence stays unread by every reader]
       // because row 434 is BUILT too); and it is NOT the refusal
       // rung's near-miss, because a three-axis miss tests nothing about any of them
       // (D427). §2's near-misses vary one token each.
@@ -213,7 +215,7 @@ describe("§1 — one sentence, three printings, and the family read to its edge
     // never by this suite's `SELF_NO_WEAKNESS` — so `fix-nowk` index 2 was re-pointed to a
     // BLOCKED copy-attack sentence BEFORE this rung flipped (🆕🆕🆕 D573: row 78 is BUILT too, and
     // index 2 now prints Haughty Order, row 434, the copy-family remainder; 🆕🆕🆕 D574: row 434 is BUILT
-    // too, and index 2 now prints row 676, Mr. Mime's recorded refusal). The two-row remainder above is
+    // too, and index 2 now prints row 676, Mr. Mime's recorded refusal) [🆕🆕🆕 D580 (D539): retired — Mr. Mime is BUILT at D580 as a REGISTRY row; the sentence stays unread by every reader]. The two-row remainder above is
     // unchanged: it is a fact about the printed WORDS, not about what is built.
     expect(resolvedByAnyReader(rest.map(([, t]) => t).sort()[1] as string)).toBe(true);
     expect(deriveAttackEffect(rest.map(([, t]) => t).sort()[1] as string)).toEqual([
@@ -369,7 +371,7 @@ describe("§3 — what the install writes, and what it announces", () => {
     const built = mustApply(armed("p1", "fix-bolt"), { type: "attack", seat: "p1", index: VEIL });
     expect(count(built.events, "ATTACK_EFFECT_SKIPPED")).toBe(0);
     // 🆕🆕🆕 D552 — `LOUD` (row 78, BLOCKED copy-attack; 🆕🆕🆕 D573: row 434, Haughty Order, since row
-    // 78 is BUILT; 🆕🆕🆕 D574: row 676, Mr. Mime's recorded refusal, since row 434 is BUILT) where this read `RETYPE` (row 629,
+    // 78 is BUILT; 🆕🆕🆕 D574: row 676, Mr. Mime's recorded refusal, [🆕🆕🆕 D580 (D539): retired — Mr. Mime is BUILT at D580 as a REGISTRY row; the sentence stays unread by every reader] since row 434 is BUILT) where this read `RETYPE` (row 629,
     // now BUILT); the rung's claim is unchanged.
     const loud = mustApply(armed("p1", "fix-bolt"), { type: "attack", seat: "p1", index: LOUD });
     expect(count(loud.events, "ATTACK_EFFECT_SKIPPED")).toBe(1);
@@ -707,7 +709,7 @@ describe("§8 — the bump, and the soft landing it refuses", () => {
   });
 
   it("the engine version moved with the behaviour", () => {
-    expect(engineVersion).toBe("0.463.0");
+    expect(engineVersion).toBe("0.464.0");
   });
 });
 

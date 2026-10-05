@@ -1497,6 +1497,13 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
     case "POKEMON_NAMED":
       // 🆕🆕🆕 D577 — Tyme: the told name only (the card is face down — no HP here).
       return row(event.seat, [plain("named "), strong(event.name), plain(" — the opponent guesses its HP")]);
+    case "SUPPORTER_EFFECT_USED":
+      // 🆕🆕🆕 D580 — Look-Alike Show, under the ATTACKER. The op's one producer is Mr. Mime
+      // `sv05-063` (registry.ts `MR_MIME_LOOK_ALIKE_SHOW`), so the attack is named as printed.
+      return row(event.seat, [
+        plain("Mr. Mime's Look-Alike Show used the effect of "),
+        strong(cardName(state, event.uid)),
+      ]);
     case "HP_GUESSED":
       // 🆕🆕🆕 D577 — Tyme's reveal, under the player who played it.
       return row(event.seat, [

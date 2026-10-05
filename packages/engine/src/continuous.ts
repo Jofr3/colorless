@@ -29,6 +29,8 @@ import type {
   AttackerClass,
   BoardCondition,
   CardFilter,
+  // 🆕🆕🆕 D580 — `supporterEffectOf`'s return shape (Look-Alike Show).
+  EffectOp,
   HandPlayClass,
   PokemonPlayAct,
   PokemonType,
@@ -159,6 +161,21 @@ export function benchTrimStages(
 export function returnsAfterAttackDiscard(state: GameState, uid: string): boolean {
   const id = state.cardIdByUid[uid];
   return id !== undefined && programFor(id)?.energy?.returnAfterAttackDiscard === true;
+}
+
+/** 🆕🆕🆕 D580 — a card's SUPPORTER EFFECT as Mr. Mime `sv05-063` "Look-Alike Show" uses it
+    (interpreter.ts's offer and `continuationOps` splice, which take no runtime edge to
+    registry.ts): the registry `trainer` ops and the PRINTED play condition `trainerPlayableIf`.
+    `undefined` for a card with no `trainer` key — never offered. An EMPTY program (Briar's `[]`)
+    is a program. ⚠️ The card-level keys `supporterKoPrizeBonus` (Briar) and
+    `trainerFirstTurnExempt` are deliberately NOT handed over (R-LA6): a copy is the EFFECT, and
+    both are read off a PLAYED card. */
+export function supporterEffectOf(
+  cardId: string,
+): { ops: readonly EffectOp[]; playableIf: BoardCondition | undefined } | undefined {
+  const program = programFor(cardId);
+  if (program?.trainer === undefined) return undefined;
+  return { ops: program.trainer, playableIf: program.trainerPlayableIf };
 }
 
 /** 🆕🆕🆕 §7.4 (D562) — THE TOOLS ON `pokemon` WHOSE PRINTED EFFECTS ARE LIVE: every
@@ -762,7 +779,14 @@ const retypedViews = new WeakMap<Card, Card>();
 
     ⚠️ The §9 check reads `disabledAbilityUids` only when the top card carries the key, and
     that function must never call back here: its Watchtower arm (`auraSuppresses`,
-    `targetType`) reads PRINTED types for exactly that reason (R-WT1, annotated at D578). */
+    `targetType`) reads PRINTED types for exactly that reason (R-WT1, annotated at D578).
+
+    🆕🆕🆕 D580 — AND THE RETYPE MAY BE CONDITIONAL. Iron Treads `sv05-118` "Dual Core"
+    (`PassiveEffects.typesInPlayWhileToolNamed`) is {F}{M} only while a Tool NAMED "Future Booster
+    Energy Capsule" is in the body's ATTACHED `tools` (R-DC1: attachment, so a Jamming Tower does
+    not lift it; R-DC3: by name). That check runs AFTER the §9 check and BEFORE the per-card
+    cache, so the same top card on a body without the Tool is handed the printed card. ⚠️ The
+    Capsule is not Standard-legal: in a legal deck this branch always returns the printed card. */
 export function inPlayCardOf(state: GameState, pokemon: InPlayPokemon): Card | undefined {
   const top = topCardOf(state, pokemon);
   if (top === undefined) return undefined;
@@ -770,6 +794,11 @@ export function inPlayCardOf(state: GameState, pokemon: InPlayPokemon): Card | u
   if (typesInPlay === undefined) return top;
   const uid = topUid(pokemon);
   if (uid !== undefined && disabledAbilityUids(state).has(uid)) return top; // §9: printed
+  // 🆕🆕🆕 D580 — Iron Treads "Dual Core": the retype holds only while an ATTACHED Tool (R-DC1:
+  // `pokemon.tools`, not `toolsInEffect`) prints this exact NAME (R-DC3). BEFORE the cache, which
+  // is keyed by the top card while this condition is per body.
+  const whileTool = programFor(top.id)?.passive?.typesInPlayWhileToolNamed;
+  if (whileTool !== undefined && !pokemon.tools.some((t) => cardOfUid(state, t)?.name === whileTool)) return top;
   const cached = retypedViews.get(top);
   if (cached !== undefined) return cached;
   const view: Card = { ...top, types: [...typesInPlay] };

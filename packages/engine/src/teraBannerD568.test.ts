@@ -1117,8 +1117,8 @@ describe("§9 — the three attacks: Shining Blaze, Jewel Breaker, Prism Charge"
 
 // ─────────────────────────────────────────────────────────────────────────────
 describe("§10 — the version", () => {
-  it("the engine is 0.463.0", () => {
-    expect(engineVersion).toBe("0.463.0");
-    expect(manifest.version).toBe("0.463.0");
+  it("the engine is 0.464.0", () => {
+    expect(engineVersion).toBe("0.464.0");
+    expect(manifest.version).toBe("0.464.0");
   });
 });

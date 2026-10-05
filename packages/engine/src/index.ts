@@ -20252,9 +20252,29 @@ import type { GameState, Seat } from "./types";
     `expect(manifest.version)`, `it(…)` titles, the declaration and `package.json` —
     **not** as a value-keyed grep — because a value-keyed grep is precisely the mechanism
     that ate D500's heading.)
+    🆕🆕🆕 engineVersion 0.463.0 → **0.464.0** (D580 — THE LAST ATTACK AND THE LAST ABILITY: MR. MIME `sv05-063` "LOOK-ALIKE
+    SHOW" + IRON TREADS `sv05-118` "DUAL CORE", 2 PRINTINGS / 2 TEXTS; `MATCH_RECORD_VERSION` STAYS 41 (apps/api match.ts
+    "STAYS 41 AT D580"). THE WHOLE INGESTED LEGAL STANDARD POOL IS BUILT: attacks 1732 / 1732, abilities 376 / 376, trainers
+    264 / 264; the residue census is EMPTY). **Mr. Mime** (a REGISTRY row, `MR_MIME_LOOK_ALIKE_SHOW`, index 0; "Eerie Wave"
+    keeps deriving): the shipped `revealOpponentHand`, then the NEW field-free `EffectOp` `useOpponentSupporterEffect` — it
+    offers the opponent's hand Supporters with a registry `trainer` program (an empty one, Briar's `[]`, included), ONE per
+    card id, filtered for the ATTACKER by their PRINTED play conditions only (`trainerPlayableIf`, `handCostUnmet`; R-LA2
+    ⚠️ UNRULED — not `programPlayable`; R-LA2a ⚠️ UNRULED, the review round's fix: a hand-relative condition excludes the
+    copied card itself, so Cassiopeia's *"the last card in your hand"* is offered on an EMPTY attacker hand), and ALWAYS parks `chooseCards { min: 0, max: 1, dest: "use" }` (the NEW eleventh
+    `dest` member; wire `z.enum` widened — 🛑 DEPLOY THE CLIENT FIRST; both HUDs' verb "Use"). A pick emits the NEW
+    `SUPPORTER_EFFECT_USED { seat, uid }` (not persisted) and `continuationOps` splices the Supporter's program into THIS
+    ATTACK's context (R-LA1: effect only — the card stays put, no allowance spent, `supporterPlayedUid` unwritten, "you" is
+    the attacker; R-LA4 ⚠️ UNRULED: attack-effect shields apply; R-LA5: a decline or an empty offer is the reveal only;
+    R-LA3 / R-LA6 measured vacuous; Caretaker's played-card shuffle whiffs). Retires D445's recorded refusal. **Iron Treads**
+    (`DUAL_CORE`): the NEW `PassiveEffects.typesInPlayWhileToolNamed`, read by continuous.ts `inPlayCardOf` BEFORE its
+    per-card cache — {F}{M} only while an ATTACHED Tool of that NAME is on the body (R-DC1 ⚠️ UNRULED: attachment, not
+    `toolsInEffect`; R-DC2: a §9 lock hands back the printed {M}; R-DC3: by name). 🛑 Dual Core can NEVER fire in a
+    Standard-legal deck — its condition card `sv05-149` is not legal — and is proven on a constructed fixture Tool.
+    scripts/residue-census-gate.ts § C's dead-code check is vacuous-safe and § C′ asks it of a fixed literal list.)
     🆕🆕🆕 engineVersion 0.462.0 → **0.463.0** (D579 — THE CENSUS CLOSE-OUT: WALKING WAKE `sv06-063` "UNDULATING
     SLICE" + KORAIDON `sv08-116` "UNRELENTING ONSLAUGHT", 2 PRINTINGS / 2 TEXTS; `MATCH_RECORD_VERSION` 40 → 41 (apps/api
-    match.ts "40 → 41 AT D579"); the ingested legal attack pool closes at 1731 / 1732 — Mr. Mime `sv05-063` held under D445 —
+    match.ts "40 → 41 AT D579"); the ingested legal attack pool closes at 1731 / 1732 — Mr. Mime `sv05-063` ~~held under D445~~
+    [🆕🆕🆕 D580 (D539): BUILT at 0.464.0; D445's refusal is retired — 1732 / 1732] —
     and the `OPAQUE` class is EMPTY). **Walking Wake** (a REGISTRY row, `UNDULATING_SLICE`): the NEW `EffectOp`
     `putCountersOnSelfChosen { upTo }` — ALWAYS parked over its one candidate (this Pokémon) as `choosePokemon { upTo,
     takeVerb: "put" }`, the answer's `take` (absent = `upTo`) placed as a flat `COUNTERS_PLACED { source: "self" }` and filed
@@ -21078,7 +21098,7 @@ import type { GameState, Seat } from "./types";
     sentences in `FIXTURE_POOL` for the sweeps; `fix-nowk` index 2 was moved to a BLOCKED copy-attack
     sentence first (🆕🆕🆕 D573 (D539): that sentence, row 78, is BUILT now, and the witness moved again,
     to row 434 Haughty Order — the copy-family remainder that stays blocked; 🆕🆕🆕 D574 (D539): row 434 is
-    BUILT too, and the witness moved again, to row 676, Mr. Mime's recorded refusal). Claims withdrawn (D539), annotated in place: `attachFromHand`'s *"no target rider"*
+    BUILT too, and the witness moved again, to row 676, Mr. Mime's recorded refusal) [🆕🆕🆕 D580 (D539): retired — Mr. Mime is BUILT at D580 as a REGISTRY row; the sentence stays unread by every reader]. Claims withdrawn (D539), annotated in place: `attachFromHand`'s *"no target rider"*
     and *"no recordAs"*, the D479/D503 blocks at `ATTACK_HAND_ANY_NUMBER_ATTACH`, the D432 near-miss
     note, attack.ts' *"UNOBSERVABLE on today's column"* as D503's reason, effects.ts' *"ONE remains
     unbuildable"*, and the D503 mutant rows' prose. Census (`SUBMAX=12`): reader 578/1632 → 580/1634,
@@ -21413,7 +21433,7 @@ import type { GameState, Seat } from "./types";
     `fix-filteredsnipe` index-2 control (which printed `:316`) is re-homed onto corpus `:78`,
     the BLOCKED copy-attack row, so its `ATTACK_EFFECT_SKIPPED` rung keeps its property. 🆕🆕🆕 D573
     (D539): `:78` is BUILT now; the control moved again, to `:434` Haughty Order. 🆕🆕🆕 D574 (D539): `:434`
-    is BUILT too; the control moved again, to `:676`, Mr. Mime's recorded refusal.)
+    is BUILT too; the control moved again, to `:676`, Mr. Mime's recorded refusal. [🆕🆕🆕 D580 (D539): retired — Mr. Mime is BUILT at D580 as a REGISTRY row; the sentence stays unread by every reader])
     🆕🆕🆕 engineVersion 0.428.0 → **0.429.0** (D544 — THE NAMED ATTACK'S BASE DAMAGE,
     OVERRIDDEN FOR ONE WINDOW, AS A RIDER ON THE OP THAT ALREADY OWNED THE ADDRESS.
     `censusAttackCorpus.ts` **file line 166** (leading count column `2`) — *"During your next
@@ -25050,7 +25070,7 @@ import type { GameState, Seat } from "./types";
     WITNESS** — the count was re-derived every slice and the word *"three"* was carried.
     A successor of this slice inherits **81 / 61 / 17** again, over **FIVE** history
     occurrences: those four plus `deckMillFilteredScale.test.ts`'s own header arrow.) */
-export const engineVersion = "0.463.0";
+export const engineVersion = "0.464.0";
 
 export type {
   ApplyResult,

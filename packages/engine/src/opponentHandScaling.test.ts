@@ -145,7 +145,12 @@ const CLAIMED = [REVEAL_TRAINER_SCALE, REVEAL_DISCARD, HAND_COUNT] as const;
       refusal carried without re-argument). See §6 for the argument in full.
       🆕🆕🆕 D573 (D539): the ATTACK-COPY family is no longer wholly refused — 9 of
       its 13 printings were built at D573 by declaration-time substitution. This
-      Supporter copy stays refused on its own reasons (§6: no Trainer text deriver). */
+      Supporter copy stays refused on its own reasons (§6: no Trainer text deriver).
+      🆕🆕🆕 D580 (D539): ~~"This Supporter copy stays refused"~~ — WITHDRAWN AS A BUILD CLAIM: Mr. Mime
+      `sv05-063` "Look-Alike Show" is BUILT at D580 as a REGISTRY row keyed by its id
+      (`MR_MIME_LOOK_ALIKE_SHOW`: `revealOpponentHand` + `useOpponentSupporterEffect`), and D445's
+      refusal is RETIRED. What stays true is the READER half: no reader or splitter claims the
+      sentence (§6 still asserts that), because the copy is spliced by card ID, never by text. */
 const REVEAL_SWEEP =
   "Your opponent reveals their hand. Discard all Item cards and Pokémon Tool cards you find there.";
 const REVEAL_COPY =
@@ -325,6 +330,8 @@ describe("§1 — the three printed sentences, their population, and the fixture
     );
     // 17 legal printings carry the literal; D445 claims 5 of them (rows 672 + 675)
     // and leaves 2 refused (rows 673 + 676), each with its own reason in §6.
+    // (🆕🆕🆕 D580 (D539): row 676 is BUILT at D580 as a REGISTRY row — the READERS still refuse it,
+    // which is all "refused" means in this table; D445's build refusal is retired.)
     expect(family.reduce((sum, [n]) => sum + n, 0)).toBe(17);
   });
 
@@ -1034,7 +1041,7 @@ describe("§6 — the population claims this slice rests on", () => {
     expect(splitAttackGateClause(REVEAL_SWEEP)).toBeNull();
   });
 
-  it("🛑 REFUSAL 2 — the Supporter COPY, re-argued for a SUPPORTER rather than inherited", () => {
+  it("🛑 REFUSAL 2 — the Supporter COPY: still refused by every READER, and BUILT at D580 as a REGISTRY row (D445's refusal retired)", () => {
     // 🛑 **D436's DEFECT IS A REFUSAL CARRIED WITHOUT RE-ARGUMENT, so the attack-copy
     // family's reasons are re-derived here for a SUPPORTER and both come out STRONGER.**
     //
@@ -1076,6 +1083,17 @@ describe("§6 — the population claims this slice rests on", () => {
     // BUILT (`useFoundAttackAs`, `copyRemainderBundleD574.test.ts`): all 13 attack-family printings are
     // met now. This Supporter refusal STILL does not move: ⑴ is unchanged (no Trainer text deriver),
     // and it is now the stable LOUD witness three suites re-pointed to (row 676).
+    // 🆕🆕🆕 **D580 (D539): THE REFUSAL IS RETIRED — WITHDRAWN IN PLACE, EACH REASON ANSWERED.** Mr. Mime
+    // `sv05-063` is BUILT as a REGISTRY row (`MR_MIME_LOOK_ALIKE_SHOW`, `lookAlikeShowD580.test.ts`), and
+    // the falsifier fired another way than the one written above: not a Trainer TEXT deriver, but a
+    // complete Supporter REGISTRY — ⑴ every one of the 140 legal Supporter printings (51 names) carries a
+    // registry `trainer` program, and the copy splices it by card ID, so no legal Supporter "silently
+    // does nothing" (an unprogrammed Supporter is never OFFERED); ⑵ `effectSimulated` is computed from
+    // the copier's own row, which IS authored, so `ATTACK_EFFECT_SKIPPED` has nothing to report — and
+    // the population loop drives all 51 names through the attack; ⑶ the print says *"use the effect"*,
+    // not *"play"*, so no Supporter allowance is spent or required (R-LA1) and the one-Supporter rule
+    // (§7.2), which governs PLAYING, is not asked. What this rung still asserts is the READER half,
+    // which is unchanged: no reader and no splitter claims the sentence.
     expect(legalAttackCorpus().filter(([, s]) => s === REVEAL_COPY)).toHaveLength(1);
     expect(resolvedByAnyReader(REVEAL_COPY)).toBe(false);
     expect(splitAttackTrailingClause(REVEAL_COPY)).toBeNull();
@@ -1084,7 +1102,7 @@ describe("§6 — the population claims this slice rests on", () => {
     expect(deriveAttackEffect("Your opponent reveals their hand.")).not.toBeNull();
   });
 
-  it("🛑 the family's arithmetic still adds up: 6 claimed, 1 refused, 17 printings", () => {
+  it("🛑 the family's arithmetic still adds up: 6 claimed, 1 refused by every reader (built at D580 as a registry row), 17 printings", () => {
     const family = legalAttackCorpus().filter(([, s]) => s.includes("reveals their hand"));
     const claimed = family.filter(([, s]) => resolvedByAnyReader(s));
     const refused = family.filter(([, s]) => !resolvedByAnyReader(s));
@@ -1094,6 +1112,11 @@ describe("§6 — the population claims this slice rests on", () => {
     // one-element list as an empty one.
     expect([claimed.length, claimed.reduce((n, [u]) => n + u, 0)]).toEqual([6, 16]);
     expect(refused.map(([, s]) => s)).toEqual([REVEAL_COPY]);
+    // 🆕🆕🆕 D580 — the reader-refused sentence is BUILT by id: Mr. Mime's registry row authors it.
+    expect(programFor("sv05-063")?.attack?.[0]).toEqual([
+      { op: "revealOpponentHand" },
+      { op: "useOpponentSupporterEffect" },
+    ]);
     expect(refused.reduce((n, [u]) => n + u, 0)).toBe(1);
     expect(claimed.length + refused.length).toBe(family.length);
   });

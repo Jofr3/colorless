@@ -7,6 +7,7 @@ import type { GameState, Seat } from "./index";
 import { runProgram } from "./interpreter";
 import { type LogContext, formatElapsed, logFromEvents } from "./log";
 import { redactGame } from "./redact";
+import { programFor } from "./registry";
 import { nextU32, randomIndex, shuffle } from "./rng";
 import {
   FIXTURE_POOL,
@@ -155,7 +156,8 @@ const ROTATED: readonly (readonly [string, readonly EffectOp[] | null, string])[
     Every one is a COMPOUND whose second sentence is the real work — which is the
     finding that makes 20 the honest number and 31 the family's floor.
 
-    `[printed sentence, why it is left, legal printings]`. */
+    `[printed sentence, why it is left, legal printings]`.
+    (🆕🆕🆕 D580 (D539): the Supporter copy is no longer here — BUILT as a REGISTRY row; one row is left.) */
 const DEFERRED: readonly (readonly [string, string, number])[] = [
   // 🆕🆕 **D445 — TWO ROWS LEFT THIS LIST, AND BOTH STATED REASONS WERE EXACTLY RIGHT.**
   // *"…This attack does 50 damage for each Trainer card you find there."* (3) was deferred
@@ -189,17 +191,27 @@ const DEFERRED: readonly (readonly [string, string, number])[] = [
   // is WITHDRAWN for 9 of the family's 13 printings (D573 re-enters `attack()` at
   // declaration, and `effectSimulated` reads the COPIED text). This Supporter refusal
   // keeps its own D445 reasons: a Supporter's program is a registry row, with no deriver.
-  [
-    "Your opponent reveals their hand. You may use the effect of a Supporter card you find there as the effect of this attack.",
-    "running another card's program as this one's — no seam exists. 🆕 D445 RE-ARGUED this refusal for a SUPPORTER rather than inheriting it from the attack-copy family (D436's defect is a refusal carried without re-argument), and the reasons hold in a STRONGER form: a Supporter's program is a REGISTRY row keyed by card id, so a copy op could reach only the 82 authored rows and would answer NOTHING for the rest — and `effectSimulated` is computed from the COPIER's sentence, so claiming this anchor would switch off `ATTACK_EFFECT_SKIPPED` for the attack forever. See opponentHandScaling.test.ts §6",
-    1,
-  ],
+  //
+  // 🆕🆕🆕 **D580 — A FOURTH ROW LEFT: THE SUPPORTER COPY IS BUILT, AND D445's REFUSAL IS RETIRED.**
+  // *"Your opponent reveals their hand. You may use the effect of a Supporter card you find there as
+  // the effect of this attack."* (1, Mr. Mime `sv05-063` "Look-Alike Show") was deferred here as
+  // *"running another card's program as this one's — no seam exists … a copy op could reach only the
+  // 82 authored rows and would answer NOTHING for the rest"*. Both halves are answered: the SEAM is
+  // D216's `continuationOps` splice (the NEW `useOpponentSupporterEffect`), and the REACH is whole —
+  // every one of the 140 legal Supporter printings (51 names) now carries a registry program. It is a
+  // REGISTRY row keyed by id (`MR_MIME_LOOK_ALIKE_SHOW`), so `deriveAttackEffect` still returns null
+  // on the sentence (asserted below, `REVEAL_COPY_BUILT_AT_D580`). **THE STEP IS TAKEN AS A TERM**:
+  // `builtElsewhere` gains 1 where `left` loses 1, so the family's 31 is re-derived, not re-typed.
   [
     "Flip 3 coins. For each heads, discard a random card from your opponent's hand.",
     "`programPerHeads` over the built op (D130) — the composition, not the op",
     1,
   ],
 ];
+
+/** 🆕🆕🆕 D580 — the row that LEFT `DEFERRED`, kept LIVE (D444/D447's counter-example posture). */
+const REVEAL_COPY_BUILT_AT_D580 =
+  "Your opponent reveals their hand. You may use the effect of a Supporter card you find there as the effect of this attack.";
 
 // ── The board. Indices 25-27 on `fix-trainerops`, appended by D232. ──
 const SEE_THROUGH = 25; // the bare reveal
@@ -329,8 +341,10 @@ describe("D232 — the opponent-hand family's census", () => {
     // 🆕🆕🆕 D573 (D539): the attack-copy family is no longer wholly refused — D573 built 9
     // of its 13 printings by declaration-time substitution. The Supporter copy's refusal
     // stands on its own D445 reasons (no Trainer text deriver), not on the family's.
-    expect(left).toBe(2);
-    const builtElsewhere = 8; // D297's Lickitung pair + D445's five + D485's sweep
+    // 🆕🆕🆕 D580 — **2 → 1.** The Supporter copy left (see the block on `DEFERRED`): Mr. Mime is a
+    // REGISTRY row now. What is left is the three-coin fold (1, the composition rather than the op).
+    expect(left).toBe(1);
+    const builtElsewhere = 9; // D297's Lickitung pair + D445's five + D485's sweep + 🆕🆕🆕 D580's Supporter copy (Mr. Mime, a registry row)
     // 21 built here + 8 built later + 2 deferred = the family's 31 legal ATTACK
     // printings. The 35 the backlog row printed matches neither this nor the
     // all-columns 43.
@@ -341,6 +355,15 @@ describe("D232 — the opponent-hand family's census", () => {
     for (const [sentence] of DEFERRED) {
       expect(CLAUSES.some((c) => c.text === sentence)).toBe(false);
     }
+  });
+
+  it("🆕🆕🆕 D580 — the Supporter copy left DEFERRED as a REGISTRY row: the reader still refuses it", () => {
+    expect(DEFERRED.some(([sentence]) => sentence === REVEAL_COPY_BUILT_AT_D580)).toBe(false);
+    expect(deriveAttackEffect(REVEAL_COPY_BUILT_AT_D580)).toBeNull();
+    expect(programFor("sv05-063")?.attack?.[0]).toEqual([
+      { op: "revealOpponentHand" },
+      { op: "useOpponentSupporterEffect" },
+    ]);
   });
 });
 

@@ -178,6 +178,7 @@ const LEFT_LOUD = {
     //    `copyRemainderBundleD574.test.ts` §1. The one survivor (FILE LINE 690, Glimmora) is in the
     //    NEXT MRV slice, so the loud control no longer leans on it alone: the recorded refusal
     //    (FILE LINE 676, Mr. Mime, D445) rides beside it in the attribution loop.
+    //    🆕🆕🆕 D580 (D539): D445's refusal is RETIRED — Mr. Mime is BUILT as a REGISTRY row keyed by its id; no reader claims the sentence, so it still rides the loop unread (`recordedRefusal` / `RECORDED_REFUSAL` keep their historical names).
     // 🆕🆕🆕 **D575 — corpus FILE LINE 690 (Glimmora `sv08-115` "Corrosive Shards"), THE LAST
     //    SURVIVOR, LEFT THIS LIST — REMOVED RATHER THAN THE LIST SHORTENED SILENTLY (D501's move, a
     //    third time).** It is claimed WHOLE by the NEW anchor `POISON_AND_BAR_HAND_ATTACH`
@@ -189,7 +190,8 @@ const LEFT_LOUD = {
   ] as readonly string[],
   /** 🆕🆕🆕 D574 — a REAL printing held by a RECORDED REFUSAL (corpus FILE LINE 676, Mr. Mime
       `sv05-063` "Look-Alike Show", D445), outside every family the D574 pricing round ranks — the
-      attribution loop's stable witness, since `dotAnchorTrio`'s survivor is next in line (D540). */
+      attribution loop's stable witness, since `dotAnchorTrio`'s survivor is next in line (D540).
+      (🆕🆕🆕 D580 (D539): ~~held by a RECORDED REFUSAL (D445)~~ — D445's refusal is RETIRED: Mr. Mime `sv05-063` is BUILT at D580 as a REGISTRY row keyed by its id (`MR_MIME_LOOK_ALIKE_SHOW`). No reader or splitter claims the sentence, so on a `fix-*` carrier it is still unread and still takes the loud path — the witness stands.) */
   recordedRefusal: "Your opponent reveals their hand. You may use the effect of a Supporter card you find there as the effect of this attack.",
 } as const;
 
@@ -421,6 +423,7 @@ describe("§1 — the printed data, transcribed rather than recognised", () => {
     expect(LEFT_LOUD.dotAnchorTrio).toEqual([]);
     expect(rows.get(BUILT_AT_D575)).toBe(1);
     // 🆕🆕🆕 D574 — the row that left, and the recorded refusal that joined the loud loop: 1 each.
+    //    (🆕🆕🆕 D580 (D539): the refusal is retired — built as a registry row; the sentence is still unread, still 1.)
     expect(rows.get(COMPOSED_AT_D574)).toBe(1);
     expect(rows.get(LEFT_LOUD.recordedRefusal)).toBe(1);
     // The apostrophe byte, asserted rather than eyeballed.
@@ -1010,6 +1013,7 @@ describe("§7 — the printed text stops being flagged, on every carrier", () =>
     // control keeps its job and gains two members rather than losing one (D418).
     const b = board("ninetales", "fix-titan");
     // 🆕🆕🆕 D574 — FILE LINE 686 left (composed now); the recorded refusal joins (see `LEFT_LOUD`).
+    //    (🆕🆕🆕 D580 (D539): the refusal is retired — Mr. Mime is built as a registry row; still unread by every reader.)
     // 🆕🆕🆕 D575 — FILE LINE 690 left too (built), so the trio is EMPTY (asserted, not looped over
     // silently), and `headsTails` holds Walking Wake now: the loop runs over TWO real printings.
     expect(LEFT_LOUD.dotAnchorTrio).toEqual([]);
@@ -1084,6 +1088,6 @@ describe("§8 — purity and the structural answers", () => {
   });
 
   it("the engine version moved with the behaviour", () => {
-    expect(engineVersion).toBe("0.463.0");
+    expect(engineVersion).toBe("0.464.0");
   });
 });

@@ -2154,6 +2154,30 @@ export interface MatchRecord {
     `turn:action.discardable` — 🛑 **DEPLOY THE SERVER FIRST**: an old client's `z.object` STRIPS
     the unknown key, while a new client's REQUIRED key refuses an old server's frame.
 
+    🆕🆕🆕 **STAYS 41 AT D580 — MR. MIME "LOOK-ALIKE SHOW" AND IRON TREADS "DUAL CORE" ADD NO GameState,
+    PendingStage OR REQUIRED KEY; THE ONE NEW PERSISTED SHAPE IS A PARKED OP, AND A 0.463 ROLLBACK READS
+    IT AS AN INERT WHIFF.** (Placed ABOVE the D579 block, out of date order — D563's placement — so the
+    declaration's anchor lines, every `*-record-version-not-bumped` row's `find` and the D577 doc tail
+    stay byte-identical.) The addresses, named first (D456's rule):
+    ⑴ **A PARKED `useOpponentSupporterEffect`** (field-free) in `phase.cont.pendingOp`, its prompt a
+    `chooseCards` with the NEW `dest` member `"use"`. Under a 0.463 rollback the op has no `stepOp`,
+    `continuationOps` or `applyChoice` arm, so the answer whiffs through the default arms — D572's
+    reading, and D579 ⑶'s own classification of exactly this shape ("inert in the player's disfavour, no
+    illegal state … it rides the bump; it is not a second reason for it"): nothing is used, the reveal
+    was already public, and no card moves. Driven: `lookAlikeShowD580.test.ts` §7 resumes a parked v41
+    state with the op renamed to one this deploy does not know and gets the DECLINE's board exactly.
+    ⑵ **NO `GameState` KEY.** The Supporter's program is spliced into the SAME attack `cont` as ordinary
+    ops (every one already persisted shape), and R-LA1 writes no allowance (`supporterPlayed` /
+    `supporterPlayedUid` untouched). The NEW event `SUPPORTER_EFFECT_USED` is not persisted (D141).
+    ⑶ **`PassiveEffects.typesInPlayWhileToolNamed`** (Dual Core) is CATALOG-only — read off the live
+    board by `inPlayCardOf`, never persisted; a 0.463 rollback reads Iron Treads as its printed {M}, the
+    answer every Standard-legal board gives anyway (its condition card `sv05-149` is not legal).
+    🛑 **DEPLOY THE CLIENT FIRST** (or both together): the wire `chooseCards.dest` `z.enum` gains `"use"`,
+    and a 0.463 client's enum REFUSES a frame carrying it (zod strips an unknown KEY, never an unknown
+    VALUE). Both HUDs' total `CHOOSE_CARDS_VERB` records gain the `use` cell ("Use"). The off-ramp, had
+    the reading failed, was 41 → 42 (19 files pin `MATCH_RECORD_VERSION = 41`); it did not fire, and
+    `MATCH_RECORD_VERSION` stays 41.
+
     🆕🆕🆕 **40 → 41 AT D579 — THE FOURTEENTH POSITION: A NEW REQUIRED `GameState` KEY, AND A SECOND
     `takeVerb` VALUE.** (Placed ABOVE the D578 and D577 blocks, out of date order — D563's placement —
     so the D577 doc tail every `*-record-version-not-bumped` row anchors on stays byte-identical.) The

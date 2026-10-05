@@ -47,6 +47,10 @@
  *   it. This is the one section that reads the corpus rather than a literal, and
  *   it is the section that catches a repair which fires EVERYWHERE — the
  *   mutation that would silently widen every other class in the table.
+ *   🆕🆕🆕 D580 — THE RESIDUE IS EMPTY (Mr. Mime `sv05-063`, the last row, is built), so § C
+ *   runs over 0 sentences and its dead-code check is vacuous-safe. § C′ runs the SAME loop over
+ *   a FIXED literal list (Mr. Mime's sentence and § B ②'s comma-tail shape) that no slice can
+ *   build away — D569/D579's pinned-witness lesson, applied to this gate.
  *
  * ⚠️ WHAT IT DOES NOT ASSERT, STATED (D419/D455). It says nothing about which
  * CLASS any row lands in — a class list is exactly the pinned figure this file
@@ -228,10 +232,61 @@ check(
   stray.length === 0,
   `${stray.length} stray offer(s) over ${spans} spans; first: ${stray[0] ?? "—"}`,
 );
+// 🆕🆕🆕 D580 — THE POPULATION CHECK BELOW IS VACUOUS-SAFE (`rows.length === 0 || …`), D579's
+// opaque-anatomy-gate.ts § E precedent. D580 builds the LAST residue sentence (Mr. Mime `sv05-063`
+// "Look-Alike Show", a registry row), so the residue is EMPTY at this head: a loop over 0 rows
+// offers nothing, and "dead code" would be red on a repo that improved. What this section
+// protected is carried, population-independently, by § C′ below (the same span loop over a
+// FIXED literal list). Measured at D580 with the residue emptied by hand (Mr. Mime added to
+// `REGISTRY_ATTACKS`, both pins at 0, then cmp-reverted): `D465-tail-repair-never-fires` and
+// `D465-tail-repair-fires-on-every-span` stay KILLED, each by § B ①/② AND § C′'s dead-code
+// check (both mutants offer NO repair anywhere — the second re-terminates only interior spans,
+// whose remainders already end on the period, so the repair never changes a string); § C is
+// vacuous at 0 rows and kills neither.
 check(
   "§C the repair never fired at all — it is dead code",
-  offered > 0,
+  rows.length === 0 || offered > 0,
   `0 repaired candidates over ${spans} spans in ${rows.length} residue sentences`,
+);
+
+// ─── § C′. THE SAME SPAN LOOP OVER A FIXED LITERAL LIST (D580) ───────────────
+// The residue is a population every slice is TRYING to empty, so a check that rides on it can
+// only be consumed by progress (D569's lesson, a04889a9). These sentences are pinned literals
+// no slice can build away: the first is Mr. Mime's own printed sentence (the last residue row,
+// built at D580), the second is § B ②'s comma-tail shape. The loop is § C's, byte for byte in
+// what it asks: every span offset and length, a second candidate if and only if the span
+// reaches the last token and does not start at it, and the plain candidate never moved.
+const C_PRIME_TEXTS: readonly string[] = [
+  "Your opponent reveals their hand. You may use the effect of a Supporter card you find there as the effect of this attack.",
+  "Discard the top 3 cards of your deck, and this attack does 80 damage.",
+];
+let offeredPrime = 0;
+let spansPrime = 0;
+const strayPrime: string[] = [];
+for (const text of C_PRIME_TEXTS) {
+  const tok = text.split(" ");
+  for (let len = 1; len < tok.length; len++) {
+    for (let i = 0; i + len <= tok.length; i++) {
+      spansPrime++;
+      const got = keptAfterDeletion(text, tok, i, len);
+      const isTail = i + len === tok.length && i > 0;
+      if (got.length > 1) offeredPrime++;
+      if (got.length > 1 && !isTail) strayPrime.push(`«${text}» at ${i} len ${len}`);
+      if (got[0] !== [...tok.slice(0, i), ...tok.slice(i + len)].join(" ")) {
+        strayPrime.push(`PLAIN CANDIDATE MOVED: «${text}» at ${i} len ${len}`);
+      }
+    }
+  }
+}
+check(
+  "§C′ the repair fired on a span that does not reach the last token (fixed literal list)",
+  strayPrime.length === 0,
+  `${strayPrime.length} stray offer(s) over ${spansPrime} spans; first: ${strayPrime[0] ?? "—"}`,
+);
+check(
+  "§C′ the repair never fired at all over the fixed literal list — it is dead code",
+  offeredPrime > 0,
+  `0 repaired candidates over ${spansPrime} spans in ${C_PRIME_TEXTS.length} pinned sentences`,
 );
 
 // ─── VERDICT ─────────────────────────────────────────────────────────────────
@@ -241,5 +296,5 @@ if (failures.length > 0) {
   process.exit(1);
 }
 console.log(
-  `residue-census-gate: OK — §A three pinned literals agree (${measured.raw} / ${measured.residue} / ${measured.printings}) and builds()/arm() partition ${corpus.length} sentences as ${builtSentences.length} + ${rows.length}, §B ${B_CASES.length + 2} tail-repair claims hold, §C ${offered} repaired candidate(s) over ${spans} spans in ${rows.length} residue sentences, none outside a tail span.`,
+  `residue-census-gate: OK — §A three pinned literals agree (${measured.raw} / ${measured.residue} / ${measured.printings}) and builds()/arm() partition ${corpus.length} sentences as ${builtSentences.length} + ${rows.length}, §B ${B_CASES.length + 2} tail-repair claims hold, §C ${offered} repaired candidate(s) over ${spans} spans in ${rows.length} residue sentences, none outside a tail span; §C′ ${offeredPrime} repaired candidate(s) over ${spansPrime} spans in ${C_PRIME_TEXTS.length} pinned sentences, none outside a tail span.`,
 );

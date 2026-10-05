@@ -293,6 +293,8 @@ describe("§1 — the sentence, and the family it lands in, measured not quoted"
     // refused; this slice claims a sixth row, so the refused remainder is ONE printing —
     // the attack-COPY sentence, which stays refused for its own re-argued reason
     // (`opponentHandScaling.test.ts` §6). Measured through the readers, not asserted.
+    // (🆕🆕🆕 D580 (D539): ~~"stays refused"~~ as a BUILD claim — Mr. Mime is BUILT at D580 as a REGISTRY
+    // row and D445's refusal is retired; the READERS still refuse the sentence, which is all this measures.)
     const refused = family.filter(([, s]) => !resolvedByAnyReader(s));
     expect(refused.map(([, s]) => s)).toEqual([
       "Your opponent reveals their hand. You may use the effect of a Supporter card you find there as the effect of this attack.",
@@ -693,10 +695,10 @@ describe("§8 — the persisted record cannot hold this op", () => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("§9 — the version, and what it is owed for", () => {
-  it("engineVersion is 0.463.0 and the bump is owed for BEHAVIOUR", () => {
+  it("engineVersion is 0.464.0 and the bump is owed for BEHAVIOUR", () => {
     // A sentence that derived to `null` derives to a two-op program, and a new `EffectOp`
     // member runs in the interpreter. That is behaviour, so the bump is owed.
-    expect(engineVersion).toBe("0.463.0");
+    expect(engineVersion).toBe("0.464.0");
     expect(manifest.version).toBe(engineVersion);
   });
 });

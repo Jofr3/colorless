@@ -13988,6 +13988,8 @@ export const FIXTURE_POOL: Record<string, Card> = {
       card you find there as the effect of this attack."*, 1 legal printing, a RECORDED REFUSAL
       (D445) outside every family the D574 pricing round ranks (D540). Moved BEFORE the reader
       landed. Touched by hand (fixture data, D538).
+      🆕🆕🆕 D580 (D539): ~~a RECORDED REFUSAL (D445)~~ — the refusal is RETIRED; Mr. Mime is BUILT as a REGISTRY
+      row keyed by its id, and no reader claims the sentence, so index 2 stays unread on this `fix-*` id.
 
       🛑 **NO ids ARE INVENTED.** This checkout has no D1 — no local sqlite, no
       remote credentials — so the three carriers of row 528 could not be resolved and
@@ -15412,7 +15414,9 @@ export const FIXTURE_POOL: Record<string, Card> = {
       Index 2 ("Copy Veil") now prints row 676, Mr. Mime `sv05-063` "Look-Alike Show" (*"Your
       opponent reveals their hand. You may use the effect of a Supporter card you find there as the
       effect of this attack."*, 1 legal printing) — a RECORDED REFUSAL (D445), outside every family
-      the D574 pricing round ranks (D540). Moved before the reader landed. Touched by hand (D538). */
+      the D574 pricing round ranks (D540). Moved before the reader landed. Touched by hand (D538). 🆕🆕🆕 D580
+      (D539): ~~a RECORDED REFUSAL (D445)~~ — RETIRED; Mr. Mime is BUILT as a REGISTRY row keyed by its id, and no
+      reader claims the sentence, so "Copy Veil" stays unread on this `fix-*` id. */
   "fix-nowk": battler("fix-nowk", {
     types: ["Water"],
     hp: 220,

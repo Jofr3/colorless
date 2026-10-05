@@ -29,6 +29,7 @@ import { applyAction, createGame } from "@luminous/engine";
 import {
   EMERGENCY_DECK,
   FIXTURE_POOL,
+  battler,
   benchFromDeck,
   clearBench,
   mustApply,
@@ -113,6 +114,45 @@ function parkedOnEvolve(seed: number): GameState {
   );
 }
 
+/** 🆕🆕🆕 D580 — P1 on turn 2 with Mr. Mime `sv05-063` Active (TEST SURGERY: the card and its two
+    fresh uids are added to the game's pool) and a REGISTERED Supporter (`sv01-180`, "Draw 3
+    cards.") in p2's hand, one {C} attached, after declaring "Look-Alike Show": the engine's one producer of a
+    `dest: "use"` park. */
+function parkedOnUse(seed: number): GameState {
+  let state = mustApply(localSetup(seed), { type: "endTurn", seat: "p2" }).state;
+  const mime = battler("sv05-063", {
+    name: "Mr. Mime",
+    hp: 90,
+    types: ["Psychic"],
+    attacks: [
+      {
+        cost: ["Colorless"],
+        name: "Look-Alike Show",
+        effect:
+          "Your opponent reveals their hand. You may use the effect of a Supporter card you find there as the effect of this attack.",
+      },
+    ],
+  });
+  const active = state.players.p1.active;
+  if (active === null) throw new Error("p1 has no Active");
+  state = {
+    ...state,
+    cardPool: {
+      ...state.cardPool,
+      "sv05-063": mime,
+      "sv01-180": FIXTURE_POOL["sv01-180"] as typeof mime,
+      "fix-energy": FIXTURE_POOL["fix-energy"] as typeof mime,
+    },
+    cardIdByUid: { ...state.cardIdByUid, "d580-mime": "sv05-063", "d580-sup": "sv01-180", "d580-e": "fix-energy" },
+    players: {
+      ...state.players,
+      p1: { ...state.players.p1, active: { ...active, stack: ["d580-mime"], energy: ["d580-e"] } },
+      p2: { ...state.players.p2, hand: [...state.players.p2.hand, "d580-sup"] },
+    },
+  };
+  return must(applyAction(state, { type: "attack", seat: "p1", index: 0 }));
+}
+
 function renderHud(state: GameState, dispatch: (action: GameAction) => void) {
   render(
     <GameHud
@@ -161,6 +201,27 @@ describe("ChooseCardsDialog — the Confirm verb follows the prompt's own headin
       type: "resolveEffect",
       seat: "p1",
       choice: { kind: "cards", uids: [first] },
+    });
+  });
+
+  it("🆕🆕🆕 D580 — a `use` park (Look-Alike Show) reads USE, not TAKE: the card moves nowhere", () => {
+    const state = parkedOnUse(11);
+    if (state.phase.kind !== "effect:choose") throw new Error("expected a park");
+    const prompt = state.phase.prompt;
+    if (prompt.kind !== "chooseCards") throw new Error("expected chooseCards");
+    expect(prompt.dest).toBe("use");
+    expect(prompt.min).toBe(0); // the printed "You may"
+    const dispatch = vi.fn();
+    renderHud(state, dispatch);
+    expect(screen.getByText(/use the effect of a Supporter card you find there/)).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Use none" })).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Take none" })).toBeNull();
+    fireEvent.click(screen.getAllByRole("button", { name: /sv01-180/ })[0] as HTMLElement);
+    fireEvent.click(screen.getByRole("button", { name: "Use 1" }));
+    expect(dispatch).toHaveBeenCalledWith({
+      type: "resolveEffect",
+      seat: "p1",
+      choice: { kind: "cards", uids: ["d580-sup"] },
     });
   });
 });

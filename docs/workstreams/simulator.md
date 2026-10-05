@@ -28920,6 +28920,8 @@ PARKED, NOT BUILT: Scovillain ex "Double Type" — a funnel-only slice (~45 in-p
 arm) that owes R-WT1's move to effective types. [🆕🆕🆕 D578: BUILT — `inPlayCardOf`; *"owes R-WT1's move to effective types"*
 is WITHDRAWN (D539): the Watchtower read STAYS printed (the effective reader would recurse) and stays exact because no
 retype names {C} — D578 below.] Iron Treads "Dual Core" cannot trigger in Standard (`sv05-149` is not legal).
+[🆕🆕🆕 D580 (D539): still true, and Dual Core is BUILT anyway (`DUAL_CORE`, `typesInPlayWhileToolNamed`), proven on a
+constructed fixture Tool — D580 below.]
 
 ## D567 — the trainer bundle: 4 printings / 4 texts / 4 objects (engine 0.451.0, `MATCH_RECORD_VERSION` stays 36)
 
@@ -29061,7 +29063,7 @@ count `benchNounScaling.test.ts` §5 still pinned at 31 (now 32, "Ancient Pokém
 ### (d) Owed
 The whole-corpus sweep (predicted `3840 · 52` over 3,892, ~~stacked on D568's still-PENDING~~ 🆕 on D568's PAID `3794 · 52` over 3,846, close-out `8e36c690`). R-PX1 …
 R-PX6 UNRULED. The nine deferred Paradox printings (Initialization ×3, Destructo-Press ×2, C.O.D.E.: Protect, Unrelenting
-Onslaught, Dual Core, Iron Moth's Anachronism Repulsor). (🆕🆕🆕 D571 (D539): Initialization ×3 and Destructo-Press ×2 BUILT — see D571 below; four stay deferred.) (🆕🆕🆕 D575 (D539): C.O.D.E.: Protect and Anachronism Repulsor BUILT — see D575 below; two stay deferred, Unrelenting Onslaught and Dual Core.) (🆕🆕🆕 D579 (D539): Unrelenting Onslaught BUILT — see D579; ~~two stay deferred, Unrelenting Onslaught and Dual Core~~ → one stays deferred, Dual Core.) NEXT: see `progress.md` NEXT — festival-lead (rank 2, MRV 36 → 37). (🆕🆕🆕 D570: TAKEN — built as D570 below.)
+Onslaught, Dual Core, Iron Moth's Anachronism Repulsor). (🆕🆕🆕 D571 (D539): Initialization ×3 and Destructo-Press ×2 BUILT — see D571 below; four stay deferred.) (🆕🆕🆕 D575 (D539): C.O.D.E.: Protect and Anachronism Repulsor BUILT — see D575 below; two stay deferred, Unrelenting Onslaught and Dual Core.) (🆕🆕🆕 D579 (D539): Unrelenting Onslaught BUILT — see D579; ~~two stay deferred, Unrelenting Onslaught and Dual Core~~ → one stays deferred, Dual Core.) (🆕🆕🆕 D580 (D539): ~~"one stays deferred, Dual Core"~~ — BUILT at D580; none stays deferred.) NEXT: see `progress.md` NEXT — festival-lead (rank 2, MRV 36 → 37). (🆕🆕🆕 D570: TAKEN — built as D570 below.)
 
 ## D570 — Festival Lead, the attack-again turn machine: 7 printings / 1 text / 1 object (engine 0.454.0, `MATCH_RECORD_VERSION` 36 → 37)
 
@@ -29674,7 +29676,8 @@ COMMIT")~~ 🆕 committed on `d579-prep` at `7eed24e8` and LANDED on `main` by c
 while D578's whole-corpus sweep ran in the main checkout (never written by the build). Rank 1 of the D579 pricing round
 (`progress.md` NEXT (7), recorded verbatim with the judge's corrections): census-closeout, 2 printings, built WHOLE — the
 off-ramp (slice A, MRV held at 40) did not fire. The ingested legal ATTACK pool closes at **1731 / 1732** (Mr. Mime
-`sv05-063` is held under D445) and the `OPAQUE` class is EMPTY.
+`sv05-063` is held under D445) and the `OPAQUE` class is EMPTY. [🆕🆕🆕 D580 (D539): Mr. Mime is BUILT at D580 and D445's
+refusal is retired — **1732 / 1732**; D580 below.]
 
 ### (a) The cards
 - Walking Wake `sv06-063`, attack index 1 "Undulating Slice" {W}{W}{C} `20×`: *"Put up to 9 damage counters on this
@@ -29719,4 +29722,59 @@ all struck and annotated in place; no behaviour was wrong.
 NEXT: see `progress.md` NEXT — the attack pool is closed; what is left is USER decisions (R-1b, R-TM1, R-TRE2, the Mega
 Evolution ingest, the map.ts Trainer-branch widening). [🆕 D579 landing: R-1c is on that list too; and D580 — Mr. Mime
 `sv05-063` + Iron Treads `sv05-118`, the user's request — is being built stacked on D579 in `lum-wt-d580`, landing after
-D579's sweep pays.]
+D579's sweep pays.] [🆕🆕 D580 landing: D579's sweep PAID EXACTLY (`4183 · 51` over 4,234, close-out `56e11018`);
+D580 is BUILT and LANDED — the section below.]
+
+## D580 — the last attack and the last ability: Mr. Mime "Look-Alike Show" + Iron Treads "Dual Core", 2 printings / 2 texts (engine 0.464.0, `MATCH_RECORD_VERSION` stays 41)
+
+**Status:** ✅ BUILT in the `lum-wt-d580` worktree (detached at `7eed24e8`, the parked D579), ~~NOT committed (the brief: "DO
+NOT COMMIT")~~ 🆕 committed on `d580-prep` at `9f53b291` and LANDED on `main` by cherry-pick onto the D579 close-out
+`56e11018`, while D579's whole-corpus sweep ran in the main checkout (never written by the build). The only row of the D580 pricing
+round (`progress.md` NEXT (7), recorded verbatim with the judge's corrections), built WHOLE. **The whole ingested legal
+Standard pool is built: attacks 1732 / 1732, legal ability printings 376 / 376, trainers 264 / 264 (Supporters
+140 / 140).** The residue census is EMPTY; D445's recorded refusal (the Supporter copy) is RETIRED.
+
+### (a) The cards
+- Mr. Mime `sv05-063`, attack index 0 "Look-Alike Show" {C}, no damage: *"Your opponent reveals their hand. You may use the
+  effect of a Supporter card you find there as the effect of this attack."* ("Eerie Wave", index 1, keeps deriving.)
+- Iron Treads `sv05-118`, Ability "Dual Core": *"As long as this Pokémon has a Future Booster Energy Capsule attached, it is
+  {F} and {M} type."* 🛑 **It can NEVER fire in a Standard-legal deck** — the Capsule `sv05-149` is regulation G, not
+  legal and not ingested; every behaviour is proven on a CONSTRUCTED fixture Tool of that name.
+
+### (b) The machine (`docs/decisions.md` D580 (b))
+- **Layer 0 — the gate, pre-paid.** `scripts/residue-census-gate.ts` § C's dead-code check is vacuous-safe and the NEW § C′
+  runs the same span loop over a fixed literal list (Mr. Mime's sentence, § B ②'s comma-tail shape). Proved by emptying
+  the residue by hand and `cmp`-reverting. The sixteen gate-witness rows were probed KILLED on the untouched tree, after
+  layer 0 and after each card; ~~and on the final bytes~~ 🆕 on the final bytes the set is EIGHTEEN (the sixteen plus
+  `D580-residue-c-not-vacuous-safe` and `D580-cprime-literal-list-emptied`), all 18 KILLED.
+- **Dual Core (`DUAL_CORE`).** D578's `typesInPlay: ["Fighting", "Metal"]` behind the NEW `typesInPlayWhileToolNamed`,
+  read by continuous.ts `inPlayCardOf` only — after the §9 check, BEFORE the per-card cache (the condition is per body).
+  By NAME, never `matchesFilter` (the D578 AST allowlist does not move).
+- **Look-Alike Show (a registry row, `MR_MIME_LOOK_ALIKE_SHOW`).** `revealOpponentHand`, then the NEW field-free
+  `useOpponentSupporterEffect`: the offer (the opponent's Supporters with a registry program, one per card id, filtered by
+  their PRINTED play conditions for the attacker), always parked as `chooseCards { min: 0, max: 1, dest: "use" }` (the NEW
+  eleventh dest; wire enum widened — DEPLOY THE CLIENT FIRST; both HUDs "Use"); a pick emits the NEW
+  `SUPPORTER_EFFECT_USED` and `continuationOps` splices the Supporter's program into THIS attack's context. A population
+  loop drives all 51 legal Supporter names through the attack (nested parks pinned whole).
+
+### (c) Readings (`docs/decisions.md` D580 (a))
+R-LA1 (effect only; the card stays put; no allowance; "you" is the attacker), R-LA3 (no copy op, measured), R-LA5 (a decline
+or an empty offer is the reveal only), R-LA6 (card-level keys not carried, measured vacuous), R-DC2 (a §9 lock hands back
+{M}), R-DC3 (by name) — argued and driven. ⚠️ UNRULED and flagged to the user: **R-LA2** (the offer filter: printed play
+conditions only, not `programPlayable`), **R-LA2a** (the review round's fix: a copied HAND-RELATIVE condition excludes
+the card itself — cardplay.ts checks `trainerPlayableIf` while the card is still in hand — so Cassiopeia's "the last card in
+your hand" is offered on an EMPTY attacker hand, never a 1-card one; interpreter.ts `copiedPlayableIf`; reversal: never
+offer a copied Cassiopeia), **R-LA4** (an ATTACK effect for the shields), **R-DC1** (attachment, not
+`toolsInEffect` — moot in Standard). Caretaker's played-card shuffle whiffs in an attack (pinned).
+
+### (d) Owed
+See `progress.md` NEXT (0)-(6) for the pasted figures: `bun run check`, precheck (corpus 4,272), the four gates
+(`residue-census-gate` at 40 / 0 / 0, 640 + 0; `opaque-anatomy-gate` at 0 OPAQUE), the probe `--decision D580
+--allow-dirty` (38 killed — 36 at the build, +2 R-LA2a rows in the review round), the edited-row re-probe and the ~~16~~ 🆕 18 gate-witness rows (the 16 plus the two D580 gate rows). Census: `BUILT.attack` 1731 → **1732**,
+`BUILT.ability` 392 → **393**, `BUILT.trainer` 264 unmoved (the join), `built` 2398 → **2400**. MRV STAYS 41, driven
+(match.ts "STAYS 41 AT D580"). Owed: ~~D579's sweep (`4183 · 51` over 4,234, PENDING) and~~ 🆕 D579's sweep PAID EXACTLY (`4183 · 51` over
+4,234, close-out `56e11018`, `tmp/sweep-D579.log:8484`), so D580's (`4221 · 51` over 4,272, stacked on it) stands as
+written and is owed. Carried: decisions.md D580 (g).
+
+NEXT: see `progress.md` NEXT — the ingested legal pool is whole; what is left is USER decisions (R-LA2, R-LA2a, R-LA4, R-DC1,
+R-1b / R-1c, R-TM1, R-TRE2, the Mega Evolution ingest, the map.ts Trainer-branch widening).

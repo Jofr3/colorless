@@ -727,7 +727,10 @@ export const redactedEffectPromptSchema = z.discriminatedUnion("kind", [
     // 🆕🆕🆕 D566 — "swap" (Ogre's Mask: a discard-pile card switched in for an in-play body's
     // top card). A widening; no older member moves.
     // 🆕🆕🆕 D577 — "name" (Tyme: a card in hand NAMED, which moves nowhere). A widening.
-    dest: z.enum(["bench", "hand", "deck", "deckBottom", "deckTop", "discard", "evolve", "attach", "swap", "name"]),
+    // 🆕🆕🆕 D580 — "use" (Mr. Mime "Look-Alike Show": the EFFECT of a Supporter in the
+    // opponent's revealed hand is used; the card moves nowhere). A widening — a 0.463 client
+    // refuses it, so DEPLOY THE CLIENT FIRST.
+    dest: z.enum(["bench", "hand", "deck", "deckBottom", "deckTop", "discard", "evolve", "attach", "swap", "name", "use"]),
     /** 🆕 D332 — PER-KIND CAPS over the same candidate list, the printed "a
         Pokémon **and** a Trainer card" (Drayton). `max` above stays the TOTAL;
         each entry caps how many picks may come out of ITS `uids`, which are the

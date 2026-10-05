@@ -152,6 +152,8 @@ describe("🛑 OnlineHud chooseCards — the MANDATORY deck pick D542 made reach
       ["deckTop", "Put on top"],
       ["discard", "Discard"],
       ["evolve", "Evolve"],
+      // 🆕🆕🆕 D580 — Look-Alike Show's `use` (its only producer parks `min: 0`; the cell is filled anyway).
+      ["use", "Use"],
     ];
     for (const [dest, verb] of cells) {
       cleanup();
@@ -186,6 +188,8 @@ describe("🛑 OnlineHud chooseCards — the MANDATORY deck pick D542 made reach
       ["deckTop", "Put on top"],
       ["discard", "Discard"],
       ["evolve", "Evolve"],
+      // 🆕🆕🆕 D580 — Look-Alike Show's "You may use the effect of a Supporter card…" (the live cell).
+      ["use", "Use"],
     ];
     for (const [dest, verb] of cells) {
       cleanup();

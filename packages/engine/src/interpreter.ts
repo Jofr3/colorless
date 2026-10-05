@@ -103,6 +103,8 @@ import {
   benchLimitOf,
   benchTrimStages,
   returnsAfterAttackDiscard,
+  // 🆕🆕🆕 D580 — Look-Alike Show's offer and splice (a Supporter's registry program).
+  supporterEffectOf,
 } from "./continuous";
 import type { KoSurvival } from "./continuous";
 import { POKEMON_TYPES, STATUS_WORD_OF, foldApostrophes } from "./effects";
@@ -448,8 +450,16 @@ export type EffectPrompt =
           a Pokémon in your hand and put that Pokémon face down"*, `opponentGuessesHp`'s first
           question). The picked card goes NOWHERE — it is named, and stays in the hand — so no
           zone's verb is true of it ("Take" would promise a move). A union widening (D125),
-          `"swap"`'s precedent. */
-      dest: "bench" | "hand" | "deck" | "deckBottom" | "deckTop" | "discard" | "evolve" | "attach" | "swap" | "name";
+          `"swap"`'s precedent.
+
+          🆕🆕🆕 **D580 — `"use"` IS THE ELEVENTH MEMBER** (Mr. Mime "Look-Alike Show": *"You may
+          use the effect of a Supporter card you find there as the effect of this attack."*,
+          `useOpponentSupporterEffect`). The picked card goes NOWHERE — it is the OPPONENT's card,
+          it stays in their hand, and only its EFFECT is used (R-LA1) — so no zone's verb is true
+          of it, and `"name"`'s "Name" would describe the wrong act. A union widening (D125),
+          `"name"`'s precedent; the wire enum (`packages/schema` redacted.ts) widens with it, so
+          DEPLOY THE CLIENT FIRST. */
+      dest: "bench" | "hand" | "deck" | "deckBottom" | "deckTop" | "discard" | "evolve" | "attach" | "swap" | "name" | "use";
       /** 🆕 **D332 — PER-KIND CAPS OVER THE SAME CANDIDATE LIST**, the printed
           *"you may reveal **a Pokémon and a Trainer card**"* (Drayton, the sole
           consumer today through `lookAtTopN.also`). Each entry caps how many of
@@ -2189,6 +2199,16 @@ function continuationOps(
   }
   // 🆕🆕🆕 D575 — Blipbug's BLIND slot answer buys the LOOK (the same op with `index` set,
   // which parks the private one-card `orderCards` show). The show's own answer buys nothing.
+  // 🆕🆕🆕 D580 — Look-Alike Show's PICK buys the picked Supporter's whole `trainer` program
+  // (D216's channel, Tyme's seam one member up), spliced AHEAD of the rest and run by
+  // `resumeProgram` in `cont.ctx` — THIS ATTACK's context (`invokedBy: "attack"`, the attacker's
+  // seat, no `playedUid`; R-LA1, R-LA4). The program is read by the card's ID off the board
+  // BEFORE the answer (the card never moves). The ref-less (empty) answer is the decline (R-LA5).
+  if (op.op === "useOpponentSupporterEffect") {
+    const [picked] = choice.kind === "cards" ? choice.uids : [];
+    const id = picked === undefined ? undefined : before.cardIdByUid[picked];
+    return id === undefined ? [] : [...(supporterEffectOf(id)?.ops ?? [])];
+  }
   // 🆕🆕🆕 D577 — Tyme's NAMING answer buys question two (D216's channel).
   if (op.op === "opponentGuessesHp" && op.uid === undefined) {
     const [named] = choice.kind === "cards" ? choice.uids : [];
@@ -4468,7 +4488,12 @@ function stepOp(
       //
       // A SHORT hand (fewer candidates than `count`) also lands in that branch
       // and pays what there is. Unreachable through either action path — both
-      // gate on `handCostUnmet` before the card is committed — and deliberately
+      // gate on `handCostUnmet` before the card is committed — (🆕🆕🆕 D580 NOTE (D539): a
+      // THIRD path reaches a Supporter's `payFromHand` now — Mr. Mime "Look-Alike Show" splices
+      // the opponent's Supporter program into the ATTACK — and the claim STILL HOLDS: its offer
+      // (`opponentSupporterOffer`, R-LA2) asks `handCostUnmet` for the attacker before the
+      // Supporter is offered, and nothing moves the attacker's hand between the offer and the
+      // splice) — and deliberately
       // NOT an exception here: an interpreter that threw or no-opped mid-program
       // would leave the play half-resolved, where "do as much as you can" is the
       // rule this engine already applies to a short board (§8.6).
@@ -4628,6 +4653,26 @@ function stepOp(
       // "they showed me nothing" is a real thing that happened at the table.
       revealHand(state, otherSeat(ctx.seat), events);
       return { done: state };
+    case "useOpponentSupporterEffect": {
+      // 🆕🆕🆕 D580 — Mr. Mime "Look-Alike Show"'s SECOND sentence. The reveal is the op before
+      // this one (the printed order; `revealOpponentHand` above), so this arm only OFFERS. The
+      // offer (`opponentSupporterOffer`): the opponent's hand Supporters with a registry program,
+      // one per card id, filtered by their PRINTED play conditions for the ATTACKER (R-LA2). An
+      // EMPTY offer is the reveal only (R-LA5). A non-empty one ALWAYS parks — *"You may"* is a
+      // decline even over a lone candidate (D297) — and the answer is the CONTROLLER's.
+      const candidates = opponentSupporterOffer(state, ctx);
+      if (candidates.length === 0) return { done: state };
+      return {
+        park: {
+          kind: "chooseCards",
+          candidates,
+          min: 0,
+          max: 1,
+          dest: "use",
+          note: LOOK_ALIKE_SHOW_NOTE,
+        },
+      };
+    }
     case "randomFromOpponentHand":
       // D232 — the FIRST op whose outcome is drawn from `rngState`. Never parks:
       // "random" is precisely the absence of a chooser, so neither seat is asked.
@@ -8106,6 +8151,15 @@ export function applyChoice(
       // action that parked.
       recordMoved(record, op.recordAs, moved.moved);
       return moved.state;
+    }
+    case "useOpponentSupporterEffect": {
+      // 🆕🆕🆕 D580 — Look-Alike Show. The PICK moves nothing (the card stays in the opponent's
+      // hand, R-LA1): it is ANNOUNCED here, and `continuationOps` splices the Supporter's
+      // program. A decline (no uid) says nothing.
+      const [picked] = choice.kind === "cards" ? choice.uids : [];
+      if (picked === undefined) return state;
+      events.push({ type: "SUPPORTER_EFFECT_USED", seat: ctx.seat, uid: picked });
+      return state;
     }
     case "opponentGuessesHp":
       // 🆕🆕🆕 D577 — Tyme. The NAMING answer moves nothing (`continuationOps` buys question
@@ -14421,6 +14475,55 @@ function bottomFromOpponentHandOffer(
     const already = kept.get(key) ?? 0;
     if (already >= cap) continue;
     kept.set(key, already + 1);
+    candidates.push(uid);
+  }
+  return candidates;
+}
+
+/** 🆕🆕🆕 D580 — Mr. Mime "Look-Alike Show"'s printed second sentence, the park's heading. */
+const LOOK_ALIKE_SHOW_NOTE =
+  "You may use the effect of a Supporter card you find there as the effect of this attack.";
+
+/** 🆕🆕🆕 D580 (R-LA2a, UNRULED) — A COPIED Supporter's printed play condition, read as if the
+    card were played from the ATTACKER's hand. cardplay.ts checks `trainerPlayableIf` BEFORE the card
+    leaves the hand, so a hand-relative count there INCLUDES the Supporter itself; a copy's Supporter
+    sits in the OTHER hand, so the attacker's hand stands in for "your hand minus this card" — the
+    same reading the hand-cost half takes (`handCostUnmet` over the attacker's hand, nothing
+    excluded). Cassiopeia's *"only when it is the last card in your hand"* (`yourHandExactly 1`) is
+    therefore offered on an EMPTY attacker hand, never on a 1-card one (which would be off by one).
+    `yourHandExactly` is the ONLY hand-relative kind any Supporter's `trainerPlayableIf` prints, and
+    none nests in an `allOf` (lookAlikeShowD580.test.ts §5 pins the population); every other kind
+    passes through unchanged. Reversal: a ruling that the copied card is never "in your hand", so
+    Cassiopeia is never offerable — refuse it here instead of shifting. */
+function copiedPlayableIf(cond: BoardCondition): BoardCondition {
+  if (cond.kind === "yourHandExactly") return { kind: "yourHandExactly", count: cond.count - 1 };
+  return cond;
+}
+
+/** 🆕🆕🆕 D580 — THE LOOK-ALIKE SHOW OFFER: the opponent's hand cards that are Supporters with a
+    registry `trainer` program (`supporterEffectOf`; an EMPTY program such as Briar's `[]` IS
+    offered), ONE candidate per card ID (two copies of one printing are one choice — the
+    information argument `bottomFromOpponentHandOffer` makes, on a hand that is already public),
+    in hand order, filtered for the ATTACKER (`ctx.seat`) by the Supporter's PRINTED play
+    conditions ONLY (R-LA2, UNRULED): its `trainerPlayableIf` (Team Rocket's Archer, Briar,
+    Cassiopeia, Hassel — read through `copiedPlayableIf`, so Cassiopeia's hand-relative count
+    excludes the card itself, R-LA2a) and its hand cost (`handCostUnmet` over the ATTACKER's
+    hand, nothing excluded — the Supporter is in the other hand; Perrin, Iris's Fighting Spirit,
+    Morty's Conviction, Kofu). ⚠️ NOT cardplay's `programPlayable`: that is a would-only-whiff
+    heuristic, not printed text, and the attack already admits a no-effect outcome (R-LA5's
+    decline). Reversal: add `programPlayable`, or drop both predicates. */
+export function opponentSupporterOffer(state: GameState, ctx: EffectContext): string[] {
+  const candidates: string[] = [];
+  const kept = new Set<string>();
+  for (const uid of state.players[otherSeat(ctx.seat)].hand) {
+    const card = cardOf(state, uid);
+    if (card === undefined || card.category !== "Trainer" || card.trainerType !== "Supporter") continue;
+    if (kept.has(card.id)) continue;
+    const effect = supporterEffectOf(card.id);
+    if (effect === undefined) continue;
+    if (effect.playableIf !== undefined && !conditionHolds(state, ctx.seat, copiedPlayableIf(effect.playableIf))) continue;
+    if (handCostUnmet(state, ctx.seat, effect.ops) !== null) continue;
+    kept.add(card.id);
     candidates.push(uid);
   }
   return candidates;

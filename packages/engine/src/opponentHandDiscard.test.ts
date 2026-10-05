@@ -469,6 +469,7 @@ describe("§1 — the census, measured over the corpus rather than quoted", () =
     // round ranks. It is a STRONGER carrier of this condition than the row it replaces: its HEAD
     // (*"Your opponent reveals their hand."*) IS claimed and its TAIL is not, so the splitter refuses
     // it for exactly the second condition's reason — not for having no claimed half at all.
+    // 🆕🆕🆕 D580 (D539): ~~"held by a RECORDED REFUSAL … its falsifier is a Trainer TEXT deriver"~~ — D445's refusal is RETIRED: Mr. Mime is BUILT at D580 as a REGISTRY row keyed by its id (the falsifier fired another way — every legal Supporter carries a program). No reader or splitter claims the sentence, so this witness and both its conditions stand.
     const UNREAD =
       "Your opponent reveals their hand. You may use the effect of a Supporter card you find there as the effect of this attack.";
     // The witness is asserted to BE in the corpus, so a re-ingest that retires the
@@ -1166,6 +1167,6 @@ describe("§8 — the structural answers", () => {
   });
 
   it("the engine version moved and the two spellings agree", () => {
-    expect(engineVersion).toBe("0.463.0");
+    expect(engineVersion).toBe("0.464.0");
   });
 });

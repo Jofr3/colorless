@@ -1883,6 +1883,9 @@ const CHOOSE_CARDS_VERB: Record<
   // 🆕🆕🆕 D577 — Tyme's "Tell your opponent the name of a Pokémon in your hand" (a mandatory
   // pick that moves nothing — "Take" would promise a move).
   name: { mandatory: "Name", upTo: "Name" },
+  // 🆕🆕🆕 D580 — Mr. Mime "Look-Alike Show"'s "You may use the effect of a Supporter card you find
+  // there" (an up-to pick of the OPPONENT's card, which moves nowhere — "Take" would promise a move).
+  use: { mandatory: "Use", upTo: "Use" },
 };
 
 function ChooseCardsDialog({

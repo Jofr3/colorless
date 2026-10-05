@@ -367,8 +367,8 @@ describe("§1 — the prints and the registry rows", () => {
     expect(programFor(WATCHTOWER)).toEqual({ stadium: { disableAbilities: { side: "both", targetType: "Colorless" } } });
   });
 
-  it("the engine is 0.463.0", () => {
-    expect(engineVersion).toBe("0.463.0");
+  it("the engine is 0.464.0", () => {
+    expect(engineVersion).toBe("0.464.0");
   });
 });
 
@@ -737,6 +737,10 @@ describe("§4 — Team Rocket's Watchtower: the first Stadium-sourced Ability lo
       "damageReductionAfterWRIfType",
       "preventDamageFromType",
       "typesInPlay", // 🆕🆕🆕 D578 — the ONE key that rewrites the holder's own types
+      // 🆕🆕🆕 D580 — NOT a second rewriter: Iron Treads "Dual Core"'s CONDITION on `typesInPlay` (the
+      // retype holds only while a Tool of this NAME is attached). It names no type, so the Watchtower's
+      // printed read stays exact — `typesInPlay` is still the ONE key that rewrites a holder's types.
+      "typesInPlayWhileToolNamed",
     ]);
   });
 

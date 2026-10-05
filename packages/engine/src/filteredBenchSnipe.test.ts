@@ -141,7 +141,8 @@ const CLAUSE = " that has any damage counters on it";
     Mr. Mime `sv05-063` "Look-Alike Show", *"Your opponent reveals their hand. You may use the effect of a
     Supporter card you find there as the effect of this attack."*, **1 legal printing**, held by a RECORDED
     REFUSAL (D445) and outside every family the D574 pricing round ranks (D540), so it is not the next row
-    a slice builds. Reader, gate and trailing all null (asserted in §1). Moved BEFORE the reader landed. */
+    a slice builds. Reader, gate and trailing all null (asserted in §1). Moved BEFORE the reader landed.
+    (🆕🆕🆕 D580 (D539): ~~held by a RECORDED REFUSAL (D445)~~ — D445's refusal is RETIRED: Mr. Mime `sv05-063` is BUILT at D580 as a REGISTRY row keyed by its id (`MR_MIME_LOOK_ALIKE_SHOW`). No reader or splitter claims the sentence, so on a `fix-*` carrier it is still unread and still takes the loud path — the witness stands.) */
 const UNREAD_SIBLING = "Your opponent reveals their hand. You may use the effect of a Supporter card you find there as the effect of this attack.";
 /** 🆕🆕🆕 D545 — the row `UNREAD_SIBLING` vacated at D545 (corpus FILE LINE 316), kept LIVE
     as the counter-example (D444/D447): it builds on the GATE arm now. */
@@ -331,6 +332,7 @@ describe("§1 — the price and the family, re-derived off the corpus rather tha
     // 🆕🆕🆕 **D574 — RE-POINTED A FIFTH TIME**: FILE LINE 434 is BUILT (the mid-attack copy), so the
     // control is now corpus FILE LINE 676, Mr. Mime "Look-Alike Show" (1 legal printing, D445's
     // recorded refusal) — the printing count below moves 3 → 1 WITH the row, read off the corpus.
+    // 🆕🆕🆕 D580 (D539): D445's refusal is RETIRED — Mr. Mime is BUILT as a REGISTRY row; reader, gate and trailing still all null, so the control stands.
     expect(family.map(([, s]) => s)).not.toContain(UNREAD_SIBLING);
     expect(corpus().filter(([, s]) => s === UNREAD_SIBLING)).toHaveLength(1);
     expect(corpus().find(([, s]) => s === UNREAD_SIBLING)?.[0]).toBe(1);
@@ -894,6 +896,6 @@ describe("§8 — the persisted question: `MATCH_RECORD_VERSION` STAYS 29", () =
   });
 
   it("🛑 the engine version moved with `package.json`", () => {
-    expect(engineVersion).toBe("0.463.0");
+    expect(engineVersion).toBe("0.464.0");
   });
 });

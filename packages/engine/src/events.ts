@@ -1288,6 +1288,10 @@ export type GameEvent =
       the opponent guessed `guess`, `right` or not, and `drawer` draws (the opponent when right,
       `seat` when wrong). Public — the card is revealed. */
   | { type: "HP_GUESSED"; seat: Seat; uid: string; guess: number; hp: number | null; right: boolean; drawer: Seat }
+  /** 🆕🆕🆕 D580 — Mr. Mime "Look-Alike Show": `seat` (the ATTACKER) used the effect of the
+      Supporter `uid` found in the opponent's revealed hand as the effect of the attack. The card
+      does not move (R-LA1). Public — the hand was revealed. Not persisted (D141). */
+  | { type: "SUPPORTER_EFFECT_USED"; seat: Seat; uid: string }
   /** `seat` used the Ability named `ability` on their in-play `uid`. */
   | { type: "ABILITY_USED"; seat: Seat; uid: string; ability: string }
   /** §7.3 — `seat` activated the shared Stadium's "once during each player's

@@ -105,6 +105,7 @@ const STILL_LOUD = [
   //    `copyRemainderBundleD574.test.ts` §1. The one survivor (FILE LINE 690, Glimmora) is in the
   //    NEXT MRV slice, so the loud control no longer leans on it alone: the recorded refusal
   //    (FILE LINE 676, Mr. Mime, D445) rides beside it in the attribution loop.
+  //    🆕🆕🆕 D580 (D539): D445's refusal is RETIRED — Mr. Mime is BUILT as a REGISTRY row keyed by its id; no reader claims the sentence, so it still rides the loop unread (`recordedRefusal` / `RECORDED_REFUSAL` keep their historical names).
   // 🆕🆕🆕 **D575 — corpus FILE LINE 690 (Glimmora `sv08-115` "Corrosive Shards"), THE LAST SURVIVOR,
   //    LEFT THIS LIST — REMOVED RATHER THAN THE LIST SHORTENED SILENTLY (D501's move, a third
   //    time).** D575 claims it WHOLE (`POISON_AND_BAR_HAND_ATTACH`). The list is EMPTY; both rungs
@@ -113,7 +114,8 @@ const STILL_LOUD = [
 ] as readonly string[];
 
 /** 🆕🆕🆕 D574 — the attribution loop's stable witness (FILE LINE 676, Mr. Mime, D445's recorded
-    refusal), since `STILL_LOUD`'s one survivor is in the next MRV slice (D540). */
+    refusal), since `STILL_LOUD`'s one survivor is in the next MRV slice (D540).
+    (🆕🆕🆕 D580 (D539): ~~held by a RECORDED REFUSAL (D445)~~ — D445's refusal is RETIRED: Mr. Mime `sv05-063` is BUILT at D580 as a REGISTRY row keyed by its id (`MR_MIME_LOOK_ALIKE_SHOW`). No reader or splitter claims the sentence, so on a `fix-*` carrier it is still unread and still takes the loud path — the witness stands.) */
 const RECORDED_REFUSAL =
   "Your opponent reveals their hand. You may use the effect of a Supporter card you find there as the effect of this attack.";
 
@@ -567,6 +569,7 @@ describe("§5 — the printed text stops being flagged, and the loud path still 
     // 🆕🆕🆕 D574 — FILE LINE 686 left (composed now); the recorded refusal rides beside the survivor.
     // 🆕🆕🆕 D575 — FILE LINE 690 left too (built): EMPTY, asserted; the recorded refusal alone.
     // (D539: the title's "three REAL printings" is WITHDRAWN as a count, kept as written.)
+    //    (🆕🆕🆕 D580 (D539): "the recorded refusal" is retired — Mr. Mime is built as a registry row; the sentence stays unread, so the loop's one printing stands.)
     expect(STILL_LOUD).toEqual([]);
     for (const text of [...STILL_LOUD, RECORDED_REFUSAL]) {
       const doctored = withEffect(b, text);
@@ -724,10 +727,10 @@ describe("§7 — purity and the structural answers", () => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("§8 — the version", () => {
-  it("engineVersion is 0.463.0 and the bump is owed for BEHAVIOUR", () => {
+  it("engineVersion is 0.464.0 and the bump is owed for BEHAVIOUR", () => {
     // 🆕🆕 D464 — 0.362.0 → **0.363.0**. A printed sentence that derived to `null` now
     // derives to a program, on two legal printings: an OBSERVABLE change to what the engine
     // does with real catalog rows, which is the bump's whole trigger.
-    expect(engineVersion).toBe("0.463.0");
+    expect(engineVersion).toBe("0.464.0");
   });
 });
