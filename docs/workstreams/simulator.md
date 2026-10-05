@@ -29647,7 +29647,8 @@ printings are now whole.
 - **Memory Dive.** `PassiveEffects.memoryDive` + `memoryDiveLive`: the cards under an evolved top, bottom to top.
 - **Team Rocket's Energy.** cards.ts `constrainedEnergyUnit` / `constrainedEnergyTypes` and `costMet`'s three passes;
   `providesEnergyType`'s membership arm; `EnergyProgram.attachOnlyToOwner` behind `energyMayBeAttachedTo` — the hand-attach
-  refusal (turn.ts), nothing provided while misplaced, flow.ts `discardMisplacedEnergy` at the top of `advance`.
+  refusal (turn.ts), nothing provided while misplaced, flow.ts `discardMisplacedEnergy` at the top of `advance` (🆕 and, R-TRE1
+  fixed at the landing, after every program step, on a parked op's answer and on every accepted action).
 
 ### (c) Readings (`docs/decisions.md` D578 (a))
 R-MD1, R-MD2, R-MD3, R-MD4 ~~⚠️ UNRULED (flagged to the user, the fix path not built)~~ 🆕 FIXED at the landing (the lock binds
@@ -29655,7 +29656,7 @@ to the borrowed row by name), R-MD5, R-TRE1 ~~⚠️ UNRULED (flagged)~~ 🆕 FI
 R-TM1 ⚠️ UNRULED (flagged), R-TRE2 ⚠️ UNRULED (flagged); R-WT1 annotated. 🆕 The ⚠️ UNRULED set is exactly R-TM1 and R-TRE2.
 
 ### (d) Owed
-See `progress.md` NEXT (0)-(6) for the pasted figures: `bun run check`, precheck (corpus 4,189), the four gates, the probe
+See `progress.md` NEXT (0)-(6) for the pasted figures: `bun run check`, precheck (corpus 4,189; 🆕 4,199 at the landing), the four gates, the probe
 `--decision D578 --allow-dirty` (45 killed; 🆕 55 at the landing), the edited-row and neighbour re-probe, the 16 gate-witness rows and the 12
 docs rows. Census: `BUILT.ability` 388 → **392**, `BUILT.trainer` 263 → **264**, `BUILT.specialEnergy` 10 → **11**,
 `BUILT.attack` UNMOVED; `built` 2390 → **2396**. MRV stays 40 (match.ts). Owed: ~~D577's sweep (`4093 · 51` over 4,144,
