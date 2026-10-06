@@ -97,7 +97,12 @@ export function DiscardPile({ discard }: { discard?: CardModel[] }) {
         {top === undefined ? (
           <div style={CARD_SIZE_STYLE} />
         ) : (
-          <div className="relative z-[61]" style={CARD_SIZE_STYLE} data-card-id={top.id}>
+          <div
+            className="relative z-[61]"
+            style={CARD_SIZE_STYLE}
+            data-card-id={top.id}
+            data-discard-card="true"
+          >
             <CardImage
               fill
               imageUrl={top.imageUrl}

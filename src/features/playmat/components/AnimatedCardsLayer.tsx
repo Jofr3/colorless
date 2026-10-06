@@ -44,6 +44,7 @@ interface AnimatedCardsLayerProps {
   perspectivePlayer: PlayerId;
   backDesign: CardBackDesign;
   blueBackPlayer?: PlayerId;
+  passAnimationKey?: number;
   playmatRef: RefObject<HTMLElement | null>;
   onMoveCard: (request: CardMoveRequest) => void;
   /** Drop-legality gate consulted for drop-zone filtering, the live reorder
@@ -432,10 +433,12 @@ export function AnimatedCardsLayer({
   perspectivePlayer,
   backDesign,
   blueBackPlayer = "you",
+  passAnimationKey = 0,
   playmatRef,
   onMoveCard,
   placementPredicate,
 }: AnimatedCardsLayerProps) {
+  const previousPassRef = useRef(passAnimationKey);
   const mountRef = useRef<HTMLDivElement>(null);
   const trainerUseLabelRef = useRef<HTMLOutputElement>(null);
   const trainerUseCardIdRef = useRef<string | null>(null);
@@ -670,7 +673,7 @@ export function AnimatedCardsLayer({
       .sort((a, b) => a.area - b.area)[0];
   }
 
-  function measureCards() {
+  function measureCards(snapPlayerSlots = false) {
     const root = playmatRef.current;
     if (!root) {
       return;
@@ -715,7 +718,9 @@ export function AnimatedCardsLayer({
         placement: descriptor.placement,
       };
 
-      view.setTarget(target);
+      const hostZone = descriptor.attachedHostPlacement?.zone ?? descriptor.placement.zone;
+      const isPlayerSlot = hostZone === "bench" || hostZone === "active";
+      view.setTarget(target, snapPlayerSlots && isPlayerSlot);
     }
 
     for (const [cardId, view] of viewsRef.current) {
@@ -800,7 +805,7 @@ export function AnimatedCardsLayer({
     });
   }
 
-  function syncViews(nextDescriptors: CardDescriptor[]) {
+  function syncViews(nextDescriptors: CardDescriptor[], flipOnPass = false) {
     const scene = sceneRef.current;
     const nextDescriptorMap = new Map(
       nextDescriptors.map((descriptor) => [descriptorKey(descriptor), descriptor]),
@@ -826,8 +831,10 @@ export function AnimatedCardsLayer({
       const presentationOptions = cardPresentationOptions(descriptor);
 
       if (existingView) {
-        existingView.setTextureUrl(textureUrl);
+        const textureChanged = existingView.setTextureUrl(textureUrl);
         existingView.setPresentationOptions(presentationOptions);
+        // A texture change already flips the back; unchanged faces need the same gesture.
+        if (flipOnPass && !textureChanged) existingView.playFlip();
         continue;
       }
 
@@ -841,6 +848,8 @@ export function AnimatedCardsLayer({
       });
       viewsRef.current.set(cardId, view);
       scene.addChild(view.container);
+      // The incoming hand has new views when a hot-seat turn changes perspective.
+      if (flipOnPass) view.playFlip();
     }
   }
 
@@ -1643,7 +1652,7 @@ export function AnimatedCardsLayer({
     dragRef.current = null;
     // Always re-sync to DOM anchors so a rejected/cancelled drop springs
     // back to the source slot instead of staying at the pointer.
-    requestAnimationFrame(measureCards);
+    requestAnimationFrame(() => measureCards());
     root.classList.remove("is-card-dragging");
     setCursor("");
   }
@@ -1674,17 +1683,19 @@ export function AnimatedCardsLayer({
     releaseAttachedCards(drag, false);
     stopPressedReveal(event.pointerId);
     dragRef.current = null;
-    requestAnimationFrame(measureCards);
+    requestAnimationFrame(() => measureCards());
     root.classList.remove("is-card-dragging");
     setCursor("");
   }
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: sync/measurement functions read mutable Pixi refs and should only react to descriptor changes.
   useLayoutEffect(() => {
-    syncViews(descriptors);
-    measureCards();
+    const flipOnPass = previousPassRef.current !== passAnimationKey;
+    previousPassRef.current = passAnimationKey;
+    syncViews(descriptors, flipOnPass);
+    measureCards(flipOnPass);
     scheduleMeasure();
-  }, [descriptors]);
+  }, [descriptors, passAnimationKey]);
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: Pixi app lifecycle is tied to the mount node, not React render callbacks.
   useEffect(() => {

@@ -1,3 +1,4 @@
+import { AutoMulliganDraw } from "../../game/AutoMulliganDraw";
 import { CardChoice, cardChoiceDialogClass, cardChoiceGridClass } from "../../game/CardChoice";
 import { ConfirmCardChoices } from "../../game/ConfirmCardChoices";
 import type { GameAction } from "@luminous/engine";
@@ -86,7 +87,7 @@ import type { PlayerId } from "../../playmat/types";
 // test-only until real decks, since the fixed pure-basic decks can't park at
 // effect:choose (D64).
 
-const TOP_PANEL_CLASS = "left-1/2 top-16 w-[min(24rem,calc(100vw-2rem))] -translate-x-1/2";
+const TOP_PANEL_CLASS = "right-4 top-[max(5rem,12dvh)] w-[min(23rem,calc(100vw-2rem))]";
 const PANEL_CLASS = `pointer-events-auto absolute z-[75] rounded-2xl p-4 ${GLASS_PANEL} ${TOP_PANEL_CLASS}`;
 const ACCENT_BUTTON = `cursor-pointer rounded-full px-4 py-2 text-sm font-semibold disabled:cursor-default disabled:opacity-40 ${GLASS_ACCENT_BUTTON}`;
 const NEUTRAL_BUTTON = `cursor-pointer rounded-full px-4 py-2 text-sm font-medium ${GLASS_NEUTRAL_BUTTON}`;
@@ -136,7 +137,7 @@ export function OnlineHud({
 
     case "setup:drawExtra":
       return acting ? (
-        <DrawExtraPanel owed={game.phase.owed} seat={seat} onAction={onAction} />
+        <AutoMulliganDraw key={seat} owed={game.phase.owed} seat={seat} onAction={onAction} />
       ) : null;
 
     case "setup:place":
@@ -2673,51 +2674,7 @@ function PromoteDialog({
   );
 }
 
-/** The mulligan-compensation draw (§3.5): draw 0..owed cards. */
-function DrawExtraPanel({
-  owed,
-  seat,
-  onAction,
-}: {
-  owed: number;
-  seat: MatchSeat;
-  onAction: (action: GameAction) => void;
-}) {
-  const [count, setCount] = useState(owed);
-  const clamped = Math.max(0, Math.min(owed, count));
-  return (
-    <Panel label="Compensation" title={`Your opponent mulliganed — draw up to ${owed}.`}>
-      <div className="flex items-center gap-3">
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            className={NEUTRAL_BUTTON}
-            onClick={() => setCount((c) => Math.max(0, c - 1))}
-          >
-            −
-          </button>
-          <span className="w-6 text-center text-sm font-semibold tabular-nums">{clamped}</span>
-          <button
-            type="button"
-            className={NEUTRAL_BUTTON}
-            onClick={() => setCount((c) => Math.min(owed, c + 1))}
-          >
-            +
-          </button>
-        </div>
-        <button
-          type="button"
-          className={ACCENT_BUTTON}
-          onClick={() => onAction({ type: "setupDrawExtra", seat, count: clamped })}
-        >
-          {clamped === 0 ? "Skip the draw" : `Draw ${clamped}`}
-        </button>
-      </div>
-    </Panel>
-  );
-}
-
-/** A top-center in-flow prompt panel (the setup phases). */
+/** A right-side prompt panel for the setup phases. */
 function Panel({
   label,
   title,

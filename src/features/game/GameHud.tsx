@@ -6,6 +6,7 @@
 // always for the person holding the device; the gate stays anyway. GameHud
 // enforces it ONCE, at its phase switch — the panels never re-check it.
 
+import { AutoMulliganDraw } from "./AutoMulliganDraw";
 import { CardChoice, cardChoiceDialogClass, cardChoiceGridClass } from "./CardChoice";
 import { ConfirmCardChoices } from "./ConfirmCardChoices";
 import { useEffect, useRef, useState, type ReactElement, type ReactNode } from "react";
@@ -520,7 +521,7 @@ function HudPanel({
   );
 }
 
-const TOP_PANEL_CLASS = "left-1/2 top-16 w-[min(24rem,calc(100vw-2rem))] -translate-x-1/2";
+const TOP_PANEL_CLASS = "right-4 top-[max(5rem,12dvh)] w-[min(23rem,calc(100vw-2rem))]";
 
 /** Native <dialog> modal (the BackToMenu pattern: top layer, focus trap).
     Mounted = open: callers render it conditionally, the mount effect calls
@@ -623,58 +624,6 @@ function ChooseFirstPanel({
           }
         >
           Go second
-        </button>
-      </div>
-    </HudPanel>
-  );
-}
-
-function DrawExtraPanel({
-  game,
-  viewerSeat,
-  names,
-  dispatch,
-  owed,
-}: GameHudProps & { owed: number }) {
-  const [count, setCount] = useState(0);
-  const opponentMulligans = game.players[otherSeat(viewerSeat)].mulligans;
-  const clamped = Math.min(count, owed);
-  return (
-    <HudPanel label="Mulligan draw" className={TOP_PANEL_CLASS}>
-      <p className="text-sm text-white/80">
-        <span className="font-semibold text-white">{names[otherSeat(viewerSeat)]}</span> mulliganed{" "}
-        {opponentMulligans} time{opponentMulligans === 1 ? "" : "s"} — you may draw up to {owed}{" "}
-        extra card{owed === 1 ? "" : "s"}.
-      </p>
-      <div className="mt-3 flex items-center gap-2.5">
-        <button
-          type="button"
-          aria-label="Fewer cards"
-          className={`${NEUTRAL_BUTTON_CLASS} px-3`}
-          disabled={clamped <= 0}
-          onClick={() => setCount(Math.max(0, clamped - 1))}
-        >
-          −
-        </button>
-        <span className="w-6 text-center text-sm font-bold tabular-nums text-white">{clamped}</span>
-        <button
-          type="button"
-          aria-label="More cards"
-          className={`${NEUTRAL_BUTTON_CLASS} px-3`}
-          disabled={clamped >= owed}
-          onClick={() => setCount(Math.min(owed, clamped + 1))}
-        >
-          +
-        </button>
-        <button
-          type="button"
-          className={ACCENT_BUTTON_CLASS}
-          onClick={() => {
-            dispatch({ type: "setupDrawExtra", seat: viewerSeat, count: clamped });
-            setCount(0);
-          }}
-        >
-          {clamped === 0 ? "Skip the draw" : `Draw ${clamped}`}
         </button>
       </div>
     </HudPanel>
@@ -3705,7 +3654,7 @@ export function GameHud(props: GameHudProps) {
   // no actor — waitingOn is null — so the outcome overlay sits OUTSIDE the
   // acting gate.
   const acting = projection.waitingOn === "you";
-  // Keys tie panel-local state (retreat picks, draw counts, prize picks) to
+  // Keys tie panel-local state (retreat picks, prize picks) to
   // the seat and turn they were opened for — a hot-seat flip must never
   // inherit them. The switch mounts at most ONE panel, so the keys only
   // govern remount-on-seat/turn; there is no sibling list to keep unique.
@@ -3721,10 +3670,11 @@ export function GameHud(props: GameHudProps) {
       ) : null;
     case "setup:drawExtra":
       return acting ? (
-        <DrawExtraPanel
+        <AutoMulliganDraw
           key={`draw:${props.viewerSeat}`}
-          {...props}
+          seat={props.viewerSeat}
           owed={game.phase.owed[props.viewerSeat]}
+          onAction={props.dispatch}
         />
       ) : null;
     case "setup:place":

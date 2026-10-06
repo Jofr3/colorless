@@ -1,12 +1,14 @@
 // @vitest-environment jsdom
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
-import type { ReactNode } from "react";
+import { StrictMode, type ReactNode } from "react";
 import { MemoryRouter } from "react-router-dom";
 import type { RedactedGame, RedactedInPlay, SeatLogEntry } from "@luminous/schema";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { redactGame } from "@luminous/engine";
 import {
   driveSetup,
+  mustCreate,
+  ONE_BASIC_DECK,
   handFromDeck,
   handUid,
   mustApply,
@@ -95,6 +97,55 @@ const GAME: RedactedGame = {
   waitingOn: "you",
   outcome: null,
 };
+
+it("takes the full online mulligan bonus once, without showing a prompt", () => {
+  const created = mustCreate(1, { p1: ONE_BASIC_DECK, p2: ONE_BASIC_DECK });
+  if (created.state.phase.kind !== "setup:chooseFirst") throw new Error("Expected coin choice");
+  const pending = mustApply(created.state, {
+    type: "chooseFirstPlayer",
+    seat: created.state.phase.coinWinner,
+    first: "p1",
+  }).state;
+  if (pending.phase.kind !== "setup:drawExtra") throw new Error("Expected mulligans");
+  const onAction = vi.fn();
+  const match = (game: RedactedGame, action = onAction, spectating = false) => (
+    <StrictMode>
+      <MemoryRouter>
+        <OnlineMatch
+          game={game}
+          log={[]}
+          youName="You"
+          opponentName="Opp"
+          opponentAway={null}
+          actionError={null}
+          onAction={action}
+          onRematch={vi.fn()}
+          spectating={spectating}
+        />
+      </MemoryRouter>
+    </StrictMode>
+  );
+  const snapshot = redactGame(pending, "p1");
+  const { rerender } = render(match(snapshot));
+  expect(onAction).toHaveBeenCalledExactlyOnceWith({
+    type: "setupDrawExtra",
+    seat: "p1",
+    count: pending.phase.owed.p1,
+  });
+  expect(screen.queryByLabelText("Compensation")).toBeNull();
+  expect(screen.queryByRole("button", { name: /^Draw/ })).toBeNull();
+  const freshCallback = vi.fn();
+  rerender(match({ ...snapshot }, freshCallback));
+  expect(freshCallback).not.toHaveBeenCalled();
+  const applied = mustApply(pending, onAction.mock.calls[0]?.[0]).state;
+  expect(applied.players.p1.hand).toHaveLength(
+    pending.players.p1.hand.length + pending.phase.owed.p1,
+  );
+  rerender(match(redactGame(applied, "p1"), freshCallback));
+  expect(freshCallback).not.toHaveBeenCalled();
+  rerender(match(snapshot, freshCallback, true));
+  expect(freshCallback).not.toHaveBeenCalled();
+});
 
 it("sends an Item dropped on the mat and opens the server's resulting choice", () => {
   const state = handFromDeck(

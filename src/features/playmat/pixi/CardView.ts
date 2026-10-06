@@ -43,6 +43,7 @@ import {
 } from "../../../lib/animation/spring";
 import type { CardPlacement } from "../types";
 import { cardBackTexture, parseBackUrl } from "./cardBackTexture";
+import { loadCardBitmap } from "./cardBitmap";
 
 const CARD_ASPECT_RATIO = 3.5 / 2.5;
 
@@ -157,20 +158,6 @@ function targetAspectHeight(width: number) {
   return width * CARD_ASPECT_RATIO;
 }
 
-async function fetchBitmap(textureUrl: string): Promise<ImageBitmap> {
-  const response = await fetch(textureUrl, {
-    mode: "cors",
-    credentials: "omit",
-    // Don't leak the app URL to the third-party card-image CDN.
-    referrerPolicy: "no-referrer",
-  });
-  if (!response.ok) {
-    throw new Error(`Unable to load card texture: ${textureUrl} (${response.status})`);
-  }
-  const blob = await response.blob();
-  return createImageBitmap(blob, { imageOrientation: "from-image" });
-}
-
 function loadTexture(textureUrl: string) {
   // Synthetic card-back URLs (`back://<design>/<tone>`, e.g. `back://rays/blue`)
   // bypass the fetch→blob→createImageBitmap path because createImageBitmap on
@@ -192,7 +179,7 @@ function loadTexture(textureUrl: string) {
   // muddy >2× downsampling. With auto-generated mipmaps Pixi samples from
   // the right level. NOTE: autoGenerateMipmaps is a no-op unless
   // mipLevelCount > 1, so we set the level count explicitly.
-  const promise = fetchBitmap(textureUrl).then((bitmap) => {
+  const promise = loadCardBitmap(textureUrl).then((bitmap) => {
     const mipLevelCount = Math.floor(Math.log2(Math.max(bitmap.width, bitmap.height))) + 1;
     const source = new ImageSource({
       resource: bitmap,
@@ -379,9 +366,9 @@ export class CardView {
     this.updateClipMask(width, height);
   }
 
-  setTextureUrl(textureUrl: string) {
+  setTextureUrl(textureUrl: string): boolean {
     if (this.textureUrl === textureUrl) {
-      return;
+      return false;
     }
 
     const isSwap = this.loaded;
@@ -412,17 +399,7 @@ export class CardView {
         };
 
         if (isSwap && !this.reducedMotion) {
-          // Rotate edge-on, change faces at the midpoint, then open again.
-          // A dedicated container keeps the flip independent of hover and juice.
-          this.flipTimeline = gsap.timeline({
-            onComplete: () => {
-              this.flipTimeline = null;
-            },
-          });
-          this.flipTimeline
-            .to(this.flip.scale, { x: 0, duration: 0.12, ease: "power2.in" })
-            .call(applyTexture)
-            .to(this.flip.scale, { x: 1, duration: 0.16, ease: "power2.out" });
+          this.playFlip(applyTexture);
         } else {
           applyTexture();
           if (!isSwap && !this.reducedMotion) {
@@ -437,13 +414,39 @@ export class CardView {
       })
       .catch((error) => {
         if (!this.destroyed && loadId === this.textureLoadId) {
+          // A later board update can retry this URL after the automatic retries.
+          this.textureUrl = "";
           // Failed replacements keep the previous face; first loads keep the placeholder.
           console.warn(`CardView: texture failed to load for "${this.id}" (${textureUrl})`, error);
         }
       });
+    return true;
   }
 
-  setTarget(target: CardViewTarget) {
+  /** The shared turn-handoff flip, including cards whose face stays the same. */
+  playFlip(onMidpoint: () => void = () => {}) {
+    if (this.destroyed) return;
+    this.flipTimeline?.kill();
+    this.flipTimeline = null;
+    this.flip.scale.x = 1;
+    if (this.reducedMotion) {
+      onMidpoint();
+      return;
+    }
+
+    // Keep the flip independent of hover, spring movement and juice.
+    this.flipTimeline = gsap.timeline({
+      onComplete: () => {
+        this.flipTimeline = null;
+      },
+    });
+    this.flipTimeline
+      .to(this.flip.scale, { x: 0, duration: 0.12, ease: "power2.in" })
+      .call(onMidpoint)
+      .to(this.flip.scale, { x: 1, duration: 0.16, ease: "power2.out" });
+  }
+
+  setTarget(target: CardViewTarget, snap = false) {
     const isFirstTarget = !this.target;
     this.target = target;
     this.container.visible = true;
@@ -451,7 +454,7 @@ export class CardView {
     this.redrawCard(this.id, target.width, target.height);
 
     if (isFirstTarget) {
-      const skipIntroMotion = this.reducedMotion || this.slotLocked;
+      const skipIntroMotion = this.reducedMotion || this.slotLocked || snap;
       const introOffset = skipIntroMotion ? 0 : Math.min(100, target.height * 0.55);
       this.current = {
         x: target.x,
@@ -467,10 +470,8 @@ export class CardView {
         // (card.lua:4307 -> 0.02 scale_amt after Card scaling).
         this.introCall = gsap.delayedCall(0.04 + this.seed * 0.08, () => this.juiceUp(0.02, 0.012));
       }
-    } else if (this.slotLocked) {
-      // Deck/prize backs are visual stand-ins for fixed DOM slots. They
-      // should stay glued to those slots during layout changes instead of
-      // springing from their previous measurement like draggable cards do.
+    } else if (this.slotLocked || snap) {
+      // Locked slots and perspective handoffs go directly to their new anchors.
       this.current = {
         x: target.x,
         y: target.y,
@@ -742,20 +743,26 @@ export class CardView {
   }
 
   destroy() {
+    if (this.destroyed) return;
     this.destroyed = true;
     this.holdTween?.kill();
     this.zIndexReturnTween?.kill();
     this.introCall?.kill();
     this.flipTimeline?.kill();
     this.juiceState = null;
-    gsap.killTweensOf([
+    // Kill whole tweens, including those queued for their first frame.
+    // killTweensOf with a list of different targets can leave uninitialized
+    // tweens alive; PixiPlugin then reads scale/position after Pixi nulls them.
+    for (const tween of gsap.getTweensOf([
       this.container,
       this.lift,
       this.emphasisScale,
       this.pressSquash,
       this.juice,
       this.cardMesh,
-    ]);
+    ])) {
+      tween.kill();
+    }
     this.container.destroy({ children: true });
   }
 
@@ -946,7 +953,7 @@ export class CardView {
     // pointerdown sets both `pressed` and `dragging`, and the user reads
     // that subtle wobble as the card "fidgeting" in their hand instead
     // of following the cursor cleanly.
-    if (!this.pressed || this.isDragging || this.reducedMotion) {
+    if (this.destroyed || !this.pressed || this.isDragging || this.reducedMotion) {
       return;
     }
 

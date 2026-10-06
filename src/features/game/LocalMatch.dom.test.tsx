@@ -10,14 +10,28 @@ import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { StrictMode } from "react";
 import { MemoryRouter } from "react-router-dom";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
-import { driveSetup } from "../../../packages/engine/src/testFixtures";
+import {
+  driveSetup,
+  ALL_BASIC_DECK,
+  mustCreate,
+  mustApply,
+  ONE_BASIC_DECK,
+  trainerCard,
+} from "../../../packages/engine/src/testFixtures";
 import { installDomShims } from "../../test/domShims";
 import { LocalMatch } from "./LocalMatch";
 
 // Pixi can't initialise in jsdom (no WebGL); everything else is real.
 vi.mock("../playmat/components/AnimatedCardsLayer", () => ({
-  AnimatedCardsLayer: ({ blueBackPlayer }: { blueBackPlayer: string }) => (
-    <div data-testid="animated-card-layer" data-blue-back-player={blueBackPlayer} />
+  AnimatedCardsLayer: ({
+    blueBackPlayer,
+    passAnimationKey,
+  }: { blueBackPlayer: string; passAnimationKey: number }) => (
+    <div
+      data-testid="animated-card-layer"
+      data-blue-back-player={blueBackPlayer}
+      data-pass-animation-key={passAnimationKey}
+    />
   ),
 }));
 
@@ -44,9 +58,104 @@ function renderMatch() {
 }
 
 describe("LocalMatch HUD across turns", () => {
+  it("puts both Buddy-Buddy Poffin selections on the bench without remounting", () => {
+    const initial = driveSetup(3, { p1: ALL_BASIC_DECK, p2: ALL_BASIC_DECK }, { first: "p1" });
+    const poffinUid = initial.players.p1.hand[0];
+    if (poffinUid === undefined) throw new Error("Expected a card in hand");
+    const state = {
+      ...initial,
+      cardIdByUid: { ...initial.cardIdByUid, [poffinUid]: "sv05-144" },
+      cardPool: {
+        ...initial.cardPool,
+        "sv05-144": {
+          ...trainerCard("sv05-144", "Item", ""),
+          name: "Buddy-Buddy Poffin",
+        },
+      },
+    };
+    const onSave = vi.fn();
+    render(
+      <StrictMode>
+        <MemoryRouter>
+          <LocalMatch
+            setup={{ state, events: [], names: { p1: "Player 1", p2: "Player 2" }, startedAt: 0 }}
+            onPlayAgain={() => {}}
+            onSave={onSave}
+          />
+        </MemoryRouter>
+      </StrictMode>,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Buddy-Buddy Poffin" }));
+    const choices = screen.getAllByRole("button", { name: "fix-basic-1" });
+    const [first, second] = choices;
+    if (first === undefined || second === undefined) throw new Error("Expected two candidates");
+    fireEvent.click(first);
+    fireEvent.click(second);
+    fireEvent.click(screen.getByRole("button", { name: "Take 2" }));
+
+    const saved = onSave.mock.calls.at(-1)?.[0];
+    expect(saved.state.phase.kind).toBe("turn:action");
+    expect(saved.state.players.p1.bench).toHaveLength(2);
+    const anchors = document.querySelectorAll<HTMLElement>(
+      '[data-card-owner="you"][data-card-zone="bench"] [data-card-anchor="true"]',
+    );
+    expect([...anchors].map((anchor) => anchor.dataset.cardId)).toEqual(
+      saved.state.players.p1.bench.map((pokemon: { stack: string[] }) => pokemon.stack.at(-1)),
+    );
+    expect(screen.queryByRole("dialog", { name: "Choose cards" })).toBeNull();
+  });
+
+  it("automatically draws both players' full mulligan bonuses without a prompt", () => {
+    const created = mustCreate(1, { p1: ONE_BASIC_DECK, p2: ONE_BASIC_DECK });
+    if (created.state.phase.kind !== "setup:chooseFirst") throw new Error("Expected coin choice");
+    const pending = mustApply(created.state, {
+      type: "chooseFirstPlayer",
+      seat: created.state.phase.coinWinner,
+      first: "p1",
+    }).state;
+    if (pending.phase.kind !== "setup:drawExtra") throw new Error("Expected mulligans");
+    expect(pending.phase.owed.p1).toBeGreaterThan(0);
+    expect(pending.phase.owed.p2).toBeGreaterThan(0);
+    const onSave = vi.fn();
+    render(
+      <StrictMode>
+        <MemoryRouter>
+          <LocalMatch
+            setup={{
+              state: pending,
+              events: [],
+              names: { p1: "Player 1", p2: "Player 2" },
+              startedAt: 0,
+            }}
+            onPlayAgain={() => {}}
+            onSave={onSave}
+          />
+        </MemoryRouter>
+      </StrictMode>,
+    );
+    const saved = onSave.mock.calls.at(-1)?.[0];
+    expect(saved.state.phase.kind).toBe("setup:place");
+    for (const seat of ["p1", "p2"] as const) {
+      expect(saved.state.players[seat].hand).toHaveLength(
+        pending.players[seat].hand.length + pending.phase.owed[seat],
+      );
+      expect(saved.state.players[seat].deck).toHaveLength(
+        pending.players[seat].deck.length - pending.phase.owed[seat],
+      );
+    }
+    expect(screen.queryByLabelText("Mulligan draw")).toBeNull();
+    expect(screen.queryByRole("button", { name: "Skip the draw" })).toBeNull();
+    expect(
+      screen.getByText("Drag a Basic Pokémon from your hand to the Active slot."),
+    ).toBeTruthy();
+  });
+
   it("swaps deck and prize back colors with each hot-seat handoff", () => {
     renderMatch();
     const initialPerspective = document.body.dataset.perspective;
+    const initialPassKey = Number(
+      screen.getByTestId("animated-card-layer").dataset.passAnimationKey,
+    );
     const anchors = Array.from(document.querySelectorAll<HTMLElement>("[data-card-back-tone]"));
     expect(anchors).toHaveLength(14);
     const initialColors = anchors.map((anchor) => anchor.dataset.cardBackTone);
@@ -65,6 +174,9 @@ describe("LocalMatch HUD across turns", () => {
       // The canvas must receive the same mapping as its deck/prize DOM anchors.
       const blueBackPlayer = screen.getByTestId("animated-card-layer").dataset.blueBackPlayer;
       expect(blueBackPlayer).toBe(document.body.dataset.perspective);
+      expect(Number(screen.getByTestId("animated-card-layer").dataset.passAnimationKey)).toBe(
+        initialPassKey + pass,
+      );
     }
   });
 

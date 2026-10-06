@@ -73,6 +73,39 @@ export function PlaymatView({
   children,
 }: PlaymatViewProps) {
   const playmatRef = useRef<HTMLElement>(null);
+  const previousPassRef = useRef(passAnimationKey);
+
+  // Discards render above the canvas as DOM images; give them the same turn flip.
+  useEffect(() => {
+    const passed = previousPassRef.current !== passAnimationKey;
+    previousPassRef.current = passAnimationKey;
+    if (!passed) return;
+    const media = window.matchMedia("(prefers-reduced-motion: reduce)");
+    if (media.matches) return;
+    const animations: Animation[] = [];
+    for (const card of playmatRef.current?.querySelectorAll<HTMLElement>("[data-discard-card]") ??
+      []) {
+      if (typeof card.animate !== "function") continue;
+      animations.push(
+        card.animate(
+          [
+            { transform: "scaleX(1)", offset: 0, easing: "cubic-bezier(0.42, 0, 1, 1)" },
+            { transform: "scaleX(0)", offset: 3 / 7, easing: "cubic-bezier(0, 0, 0.58, 1)" },
+            { transform: "scaleX(1)", offset: 1 },
+          ],
+          { duration: 280 },
+        ),
+      );
+    }
+    const cancel = () => {
+      for (const animation of animations) animation.cancel();
+    };
+    media.addEventListener("change", cancel);
+    return () => {
+      media.removeEventListener("change", cancel);
+      cancel();
+    };
+  }, [passAnimationKey]);
 
   const bottomPlayer = perspective;
   const topPlayer = opponentOf(bottomPlayer);
@@ -150,6 +183,7 @@ export function PlaymatView({
           perspectivePlayer={bottomPlayer}
           backDesign="twilight"
           blueBackPlayer={blueBackPlayer}
+          passAnimationKey={passAnimationKey}
           playmatRef={playmatRef}
           onMoveCard={onMoveCard}
           placementPredicate={placementPredicate}
