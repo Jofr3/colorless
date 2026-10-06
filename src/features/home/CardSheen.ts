@@ -6,7 +6,15 @@
 // together read as light skating across a tilted glass surface.
 //
 // Kept deliberately faint (peak intensity ~0.06) — it's a glaze, not a flare.
-import { Application, defaultFilterVert, Filter, GlProgram, Graphics, UniformGroup } from "pixi.js";
+import {
+  type Application,
+  defaultFilterVert,
+  Filter,
+  GlProgram,
+  Graphics,
+  UniformGroup,
+} from "pixi.js";
+import { initPixiApplication } from "../../lib/pixi/initPixiApplication";
 
 // rounded-2xl on the card (1rem). The quad is drawn in CSS px (autoDensity),
 // so this matches the DOM corner radius directly.
@@ -121,9 +129,9 @@ export class CardSheen {
   }
 
   async mount(element: HTMLElement) {
-    const app = new Application();
+    let app: Application;
     try {
-      await app.init({
+      app = await initPixiApplication({
         // Force WebGL so the GLSL-only filter (no WGSL twin) always runs.
         preference: "webgl",
         resizeTo: element,
@@ -136,7 +144,6 @@ export class CardSheen {
     } catch {
       // No WebGL / context creation failed — the card simply renders without a
       // sheen. Nothing else depends on this.
-      app.destroy({ removeView: true });
       return;
     }
 

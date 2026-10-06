@@ -11,9 +11,17 @@
 // Mirrors the CardSheen pattern: a per-component Pixi Application driving a
 // Filter over a full-screen quad, rendered on demand (mount, tween frames,
 // resize) with the ticker stopped — the glow is static between transitions.
-import { Application, defaultFilterVert, Filter, GlProgram, Graphics, UniformGroup } from "pixi.js";
+import {
+  type Application,
+  defaultFilterVert,
+  Filter,
+  GlProgram,
+  Graphics,
+  UniformGroup,
+} from "pixi.js";
 import { gsap } from "gsap";
 import { CustomEase } from "gsap/CustomEase";
+import { initPixiApplication } from "../../lib/pixi/initPixiApplication";
 
 gsap.registerPlugin(CustomEase);
 
@@ -129,9 +137,9 @@ export class GlowRenderer {
     this.host = host;
     this.reducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
 
-    const app = new Application();
+    let app: Application;
     try {
-      await app.init({
+      app = await initPixiApplication({
         preference: "webgl", // GLSL fragment shader required
         backgroundAlpha: 0,
         antialias: false, // full-screen quad: no geometry edges to smooth
@@ -143,7 +151,6 @@ export class GlowRenderer {
       });
     } catch {
       // No WebGL — the CSS gradient fallback in index.css stays visible.
-      app.destroy({ removeView: true });
       return;
     }
     if (this.destroyed) {

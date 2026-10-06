@@ -1,4 +1,4 @@
-import { Application } from "pixi.js";
+import { initPixiApplication } from "./initPixiApplication";
 
 // Render at a fixed 2× the CSS pixel grid. Cards scale up dramatically on
 // hover/drag, so a 1× backing store (at DPR 1) loses too much detail from the
@@ -8,9 +8,7 @@ import { Application } from "pixi.js";
 const RENDER_RESOLUTION = 2;
 
 export async function createPixiApplication(resizeTo: HTMLElement) {
-  const app = new Application();
-
-  await app.init({
+  const app = await initPixiApplication({
     resizeTo,
     backgroundAlpha: 0,
     antialias: true,
