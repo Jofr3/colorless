@@ -29774,7 +29774,10 @@ See `progress.md` NEXT (0)-(6) for the pasted figures: `bun run check`, precheck
 `BUILT.ability` 392 → **393**, `BUILT.trainer` 264 unmoved (the join), `built` 2398 → **2400**. MRV STAYS 41, driven
 (match.ts "STAYS 41 AT D580"). Owed: ~~D579's sweep (`4183 · 51` over 4,234, PENDING) and~~ 🆕 D579's sweep PAID EXACTLY (`4183 · 51` over
 4,234, close-out `56e11018`, `tmp/sweep-D579.log:8484`), so D580's (`4221 · 51` over 4,272, stacked on it) stands as
-written and is owed. Carried: decisions.md D580 (g).
+written and ~~is owed~~ 🆕 PAID EXACTLY on the first launch (D580 close-out, `tmp/sweep-D580.log:8556`; the exact-prediction
+streak at 11; the 18 gate-witness rows KILLED). Carried: decisions.md D580 (g).
 
 NEXT: see `progress.md` NEXT — the ingested legal pool is whole; what is left is USER decisions (R-LA2, R-LA2a, R-LA4, R-DC1,
-R-1b / R-1c, R-TM1, R-TRE2, the Mega Evolution ingest, the map.ts Trainer-branch widening).
+R-1b / R-1c, R-TM1, R-TRE2, the Mega Evolution ingest, the map.ts Trainer-branch widening). [🆕 D580 close-out: the sweep
+PAID EXACTLY; the continue-loop is CLOSED — nothing parked, no slice in flight. The list above is the remaining work, all
+of it the user's.]
