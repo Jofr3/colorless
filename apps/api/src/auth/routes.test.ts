@@ -133,6 +133,22 @@ describe("session routes without a cookie", () => {
 });
 
 describe("GET /auth/oauth/:provider (start)", () => {
+  it("uses the configured HTTPS API origin behind a Tailnet proxy", async () => {
+    const res = await app.request(
+      "http://127.0.0.1:8788/auth/oauth/google",
+      {},
+      envWith({
+        GOOGLE_CLIENT_ID: "g-id",
+        GOOGLE_CLIENT_SECRET: "g-secret",
+        API_ORIGIN: "https://dev.example.ts.net:8447",
+      }),
+    );
+    expect(res.status).toBe(302);
+    expect(new URL(res.headers.get("Location") ?? "").searchParams.get("redirect_uri")).toBe(
+      "https://dev.example.ts.net:8447/auth/oauth/google/callback",
+    );
+  });
+
   it("404s unknown providers", async () => {
     const res = await app.request("/auth/oauth/github", {}, envWith());
     expect(res.status).toBe(404);
@@ -228,6 +244,38 @@ describe("email-dependent stubs (§3.5 TODO)", () => {
 });
 
 describe("CORS for the credentialed web app", () => {
+  it.each(["http://localhost:5175", "http://127.0.0.1:5175"])(
+    "allows both local addresses when APP_ORIGIN is %s",
+    async (configured) => {
+      for (const origin of ["http://localhost:5175", "http://127.0.0.1:5175"]) {
+        const res = await app.request(
+          "/auth/me",
+          { headers: { Origin: origin } },
+          envWith({ APP_ORIGIN: configured }),
+        );
+        expect(res.status).toBe(401);
+        expect(res.headers.get("Access-Control-Allow-Origin")).toBe(origin);
+        expect(res.headers.get("Access-Control-Allow-Credentials")).toBe("true");
+      }
+    },
+  );
+
+  it.each([
+    ["http://localhost:5175", "http://localhost:5173"],
+    ["http://localhost:5175", "http://localhost.evil.example:5175"],
+    ["http://localhost:5175", "https://evil.example"],
+    ["https://web.example", "http://localhost:5175"],
+    ["https://web.example", "http://127.0.0.1:5175"],
+    ["https://web.example", "https://evil.example"],
+  ])("does not allow %s to grant access to %s", async (configured, origin) => {
+    const res = await app.request(
+      "/auth/me",
+      { headers: { Origin: origin } },
+      envWith({ APP_ORIGIN: configured }),
+    );
+    expect(res.headers.get("Access-Control-Allow-Origin")).toBeNull();
+  });
+
   it("echoes APP_ORIGIN with credentials on auth responses", async () => {
     const env = envWith({ CACHE: fakeKv().kv, APP_ORIGIN: "https://web.example" });
     const res = await app.request("/auth/me", { headers: { Origin: "https://web.example" } }, env);
@@ -235,20 +283,23 @@ describe("CORS for the credentialed web app", () => {
     expect(res.headers.get("Access-Control-Allow-Credentials")).toBe("true");
   });
 
-  it("answers preflight for cross-origin JSON POSTs", async () => {
-    const res = await app.request(
-      "/auth/login",
-      {
-        method: "OPTIONS",
-        headers: {
-          Origin: "http://127.0.0.1:5175",
-          "Access-Control-Request-Method": "POST",
-          "Access-Control-Request-Headers": "content-type",
+  it.each(["http://localhost:5175", "http://127.0.0.1:5175"])(
+    "answers preflight for %s",
+    async (origin) => {
+      const res = await app.request(
+        "/auth/login",
+        {
+          method: "OPTIONS",
+          headers: {
+            Origin: origin,
+            "Access-Control-Request-Method": "POST",
+            "Access-Control-Request-Headers": "content-type",
+          },
         },
-      },
-      envWith(),
-    );
-    expect(res.status).toBe(204);
-    expect(res.headers.get("Access-Control-Allow-Origin")).toBe("http://127.0.0.1:5175");
-  });
+        envWith(),
+      );
+      expect(res.status).toBe(204);
+      expect(res.headers.get("Access-Control-Allow-Origin")).toBe(origin);
+    },
+  );
 });

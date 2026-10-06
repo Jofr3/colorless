@@ -8,7 +8,7 @@ import { assetsRoutes } from "./assets/routes";
 import { authRoutes } from "./auth/routes";
 import { catalogRoutes } from "./catalog/routes";
 import { deckRoutes, folderRoutes } from "./decks/routes";
-import { appOrigin, type Env } from "./env";
+import { appCorsOrigins, type Env } from "./env";
 import { lobbyRoutes, lobbySocketRoutes } from "./lobby/routes";
 
 const app = new Hono<{ Bindings: Env }>();
@@ -22,7 +22,7 @@ app.route("/lobby", lobbySocketRoutes);
 // sends `credentials: "include"` so the SameSite=None session cookie rides
 // along — that combination requires an exact allow-origin echo, never `*`.
 // Configured per-request because env is only known per-request on Workers.
-app.use("*", (c, next) => cors({ origin: appOrigin(c.env), credentials: true })(c, next));
+app.use("*", (c, next) => cors({ origin: appCorsOrigins(c.env), credentials: true })(c, next));
 
 // Accounts + sessions (§3.5): register/login/logout/me, OAuth, 501 stubs.
 app.route("/auth", authRoutes);

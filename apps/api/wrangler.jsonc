@@ -12,7 +12,7 @@
     // dev` + `bun run dev`; override for production once the web app has a
     // real origin (env-specific vars or the dashboard). OAuth secrets are
     // NOT vars — install via `wrangler secret put GOOGLE_CLIENT_ID` etc.
-    "APP_ORIGIN": "http://127.0.0.1:5175"
+    "APP_ORIGIN": "http://localhost:5175"
   },
   "d1_databases": [
     {

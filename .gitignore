@@ -8,6 +8,7 @@ dist
 tmp/
 .wrangler/
 .dev.vars
+.env
 
 # Session scratchpad — working files, never part of the repo (D346).
 # Every slice since D340 has had the stop-hook nagging about this directory and

@@ -29,6 +29,7 @@ Board state is a plain reducer (`utils/cardMovement.ts`): a drag emits a
 bun install
 bun run dev        # vite dev server (127.0.0.1:5175)
 bun run dev:all    # frontend (5175) + API (8787); Ctrl+C stops both
+bun run dev:tailnet # both servers over Tailnet HTTPS; selects available ports
 bun run build      # tsc -b && vite build
 bun run preview
 bun run typecheck
@@ -45,7 +46,8 @@ Google requires the redirect URI to [match the registered URI exactly](https://d
 
 For local development, copy `apps/api/.dev.vars.example` to `apps/api/.dev.vars`,
 fill in the client ID and secret, and run `bun run dev:all`.
-Open the app at `http://127.0.0.1:5175`, matching `APP_ORIGIN` for CORS and the post-login redirect.
+Open the app at `http://localhost:5175`. Local CORS also accepts `http://127.0.0.1:5175`;
+`APP_ORIGIN` determines where the API sends you after Google login.
 If the Google consent screen is in testing mode, add your sign-in account as a test user.
 
 For the deployed API, run these from `apps/api/`:
@@ -58,6 +60,25 @@ bunx wrangler secret put GOOGLE_CLIENT_SECRET
 Set `APP_ORIGIN` to the deployed frontend's exact origin and build the frontend
 with `VITE_API_ORIGIN=https://luminous-api.jofrescari.workers.dev`.
 Google sign-in reports unavailable until both credentials are configured.
+
+The API dev command supplies the system CA bundle to Wrangler/workerd through
+`NODE_EXTRA_CA_CERTS`, including on NixOS. An existing `NODE_EXTRA_CA_CERTS`
+setting takes precedence. TLS certificate verification remains enabled.
+It also applies pending migrations to the local D1 database before starting,
+so account and session tables are ready on a fresh checkout. This applies to
+`api:dev`, `dev:all`, and `dev:tailnet`; the remote database is not migrated.
+
+### Tailnet development
+
+With Tailscale connected, run `bun run dev:tailnet` and open the printed frontend
+URL on a device in your Tailnet. The command selects free local server and HTTPS
+ports, configures the API URL and CORS, and starts temporary Tailscale Serve
+proxies. Ctrl+C stops its servers and proxies without changing existing Serve routes.
+
+For Google login, add the exact callback URI printed by the command to your
+Google OAuth client. To keep the public URLs stable across runs, set
+`TAILNET_WEB_PORT` and `TAILNET_API_PORT` to available ports; explicitly chosen
+ports fail if occupied. Google credentials still come from `apps/api/.dev.vars`.
 
 ## Project structure
 

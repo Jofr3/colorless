@@ -287,10 +287,11 @@ authRoutes.post("/logout", async (c) => {
 
 // --- OAuth (Google) ------------------------------------------------
 
-/** Our callback URL on THIS deployment — derived from the request origin, so
-    dev (localhost:8787) and prod (workers.dev) register their own URIs. */
+/** Use the public API origin behind an HTTPS proxy, otherwise the request
+    origin, so each deployment registers its own callback URI. */
 function callbackUrl(c: AuthContext, provider: OAuthProvider): string {
-  return `${new URL(c.req.url).origin}/auth/oauth/${provider}/callback`;
+  const origin = new URL(c.env.API_ORIGIN ?? c.req.url).origin;
+  return `${origin}/auth/oauth/${provider}/callback`;
 }
 
 authRoutes.get("/oauth/:provider", (c) => {

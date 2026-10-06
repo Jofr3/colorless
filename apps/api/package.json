@@ -4,11 +4,11 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "wrangler dev",
+    "dev": "CI=true bun run db:migrate:local && bun ../../scripts/with-system-certs.ts wrangler dev",
     "deploy": "wrangler deploy",
     "typecheck": "tsc -b",
     "db:generate": "drizzle-kit generate",
-    "db:migrate:local": "wrangler d1 migrations apply luminous --local",
+    "db:migrate:local": "bun ../../scripts/with-system-certs.ts wrangler d1 migrations apply luminous --local",
     "db:migrate:remote": "wrangler d1 migrations apply luminous --remote"
   },
   "dependencies": {
