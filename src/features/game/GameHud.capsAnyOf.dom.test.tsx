@@ -91,7 +91,7 @@ function renderHud(state: GameState, dispatch: (action: GameAction) => void) {
 
 const rowButtons = () => screen.getAllByRole("button").filter((b) => b.getAttribute("aria-pressed") !== null);
 const refused = (b: HTMLElement) => b.getAttribute("aria-disabled") === "true";
-const named = (name: string) => screen.getAllByRole("button", { name, exact: true });
+const named = (name: string) => screen.getAllByRole("button", { name });
 
 describe("ChooseCardsDialog — the disjunctive caps refuse a row the flat total allows", () => {
   it("the premise: a real park with `capsAnyOf` and a flat max of 2", () => {
