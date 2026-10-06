@@ -94,7 +94,7 @@ export function SandboxSetup({ onStart }: { onStart: (setup: LocalGameSetup) => 
 
   return (
     <main className="mx-auto flex min-h-svh w-full max-w-2xl flex-col items-center justify-center px-6 py-12 text-white">
-      <h1 className="text-2xl font-bold">Sandbox</h1>
+      <h1 className="text-2xl font-bold">Play</h1>
       <p className="mt-2 text-center text-sm text-white/55">
         Choose a deck for each player. Play a local game with opening hands, prizes, and turns.
       </p>
@@ -149,7 +149,7 @@ export function SandboxSetup({ onStart }: { onStart: (setup: LocalGameSetup) => 
           onClick={() => void start()}
           className={`cursor-pointer rounded-full px-5 py-2 text-sm font-semibold disabled:cursor-default disabled:opacity-50 ${GLASS_ACCENT_BUTTON}`}
         >
-          {starting ? "Preparing…" : "Start sandbox"}
+          {starting ? "Preparing…" : "Start game"}
         </button>
       </div>
       <DeckPickerDialog

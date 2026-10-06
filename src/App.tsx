@@ -1,5 +1,5 @@
 import { lazy } from "react";
-import { createBrowserRouter } from "react-router-dom";
+import { createBrowserRouter, Navigate } from "react-router-dom";
 import { RootLayout } from "./components/RootLayout";
 import { RouteError } from "./components/RouteError";
 import { Home } from "./features/home";
@@ -8,12 +8,10 @@ import { Settings } from "./features/settings";
 
 // Home, Settings and the placeholders are light and on the first-paint path, so
 // they stay eager (the settings module is also pulled by FontProvider at the
-// root). Playmat (the PixiJS/GSAP card layer) and Decks are the heavy route
+// root). Play (the PixiJS/GSAP card layer) and Decks are the heavy route
 // leaves, split into their own chunks and loaded on demand when their route is
 // first visited. RootLayout provides the Suspense boundary.
-const Playmat = lazy(() => import("./features/playmat").then((m) => ({ default: m.Playmat })));
-// The local hot-seat game page shares the heavy playmat chunk's dependencies
-// (Pixi/GSAP) via the same dynamic import graph, so it is lazy too.
+// Local play loads the simulator and its Pixi/GSAP dependencies on demand.
 const GamePage = lazy(() =>
   import("./features/game/GamePage").then((m) => ({ default: m.GamePage })),
 );
@@ -40,7 +38,7 @@ export const router = createBrowserRouter([
     children: [
       { path: "/", element: <Home /> },
       { path: "/play", element: <GamePage /> },
-      { path: "/simulator", element: <Playmat /> },
+      { path: "/simulator", element: <Navigate to="/play" replace /> },
       { path: "/lobby", element: <OnlineHub /> },
       { path: "/lobby/:code", element: <LobbyRoom /> },
       { path: "/decks", element: <Decks /> },

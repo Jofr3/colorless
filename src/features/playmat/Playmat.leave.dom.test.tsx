@@ -7,7 +7,7 @@ import { driveSetup } from "../../../packages/engine/src/testFixtures";
 import { installDomShims } from "../../test/domShims";
 import { json, stubFetch } from "../../test/fetchStub";
 import { AuthProvider } from "../auth/AuthProvider";
-import { Playmat } from "./Playmat";
+import { GamePage as Playmat } from "../game/GamePage";
 import { loadSimulatorSave, saveSimulator } from "./simulatorSave";
 
 // Keep the real board shell, confirmation dialog, game and router; omit WebGL.
@@ -23,11 +23,11 @@ afterEach(() => {
 function renderPage() {
   return render(
     <StrictMode>
-      <MemoryRouter initialEntries={["/simulator"]}>
+      <MemoryRouter initialEntries={["/play"]}>
         <AuthProvider>
           <Routes>
-            <Route path="/simulator" element={<Playmat />} />
-            <Route path="/" element={<Link to="/simulator">Open sandbox</Link>} />
+            <Route path="/play" element={<Playmat />} />
+            <Route path="/" element={<Link to="/play">Open sandbox</Link>} />
           </Routes>
         </AuthProvider>
       </MemoryRouter>
@@ -49,7 +49,7 @@ it("keeps the save on Cancel, clears it on Leave, and opens a fresh sandbox on r
   expect(saved).not.toBeNull();
 
   fireEvent.click(screen.getByRole("button", { name: "Back" }));
-  expect(screen.getByRole("dialog", { name: "Leave the sandbox?" })).toBeTruthy();
+  expect(screen.getByRole("dialog", { name: "Leave the game?" })).toBeTruthy();
   expect(
     screen.getByText("This will reset the current game and return to the main menu."),
   ).toBeTruthy();
@@ -61,12 +61,12 @@ it("keeps the save on Cancel, clears it on Leave, and opens a fresh sandbox on r
   fireEvent.click(screen.getByRole("button", { name: "Leave" }));
   expect(loadSimulatorSave()).toBeNull();
   fireEvent.click(screen.getByRole("link", { name: "Open sandbox" }));
-  expect(await screen.findByRole("heading", { name: "Sandbox" })).toBeTruthy();
+  expect(await screen.findByRole("heading", { name: "Play" })).toBeTruthy();
   expect(screen.queryByRole("region", { name: "Trading card game playmat" })).toBeNull();
   expect(loadSimulatorSave()).toBeNull();
 
   page.unmount();
   renderPage();
-  expect(screen.getByRole("heading", { name: "Sandbox" })).toBeTruthy();
+  expect(screen.getByRole("heading", { name: "Play" })).toBeTruthy();
   expect(loadSimulatorSave()).toBeNull();
 });

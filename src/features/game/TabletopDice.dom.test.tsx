@@ -14,7 +14,7 @@ import {
 } from "../../../packages/engine/src/testFixtures";
 import { installDomShims } from "../../test/domShims";
 import { TabletopDice } from "./TabletopDice";
-import { LocalMatch } from "./GamePage";
+import { LocalMatch } from "./LocalMatch";
 import { coinFlipsFromEvents } from "./coinFlips";
 import type { LocalGameSetup } from "./useLocalGame";
 

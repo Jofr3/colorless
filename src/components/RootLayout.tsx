@@ -18,7 +18,6 @@ const APP_NAME = "Luminous";
 // fall back to the bare app name.
 const PAGE_TITLES: Record<string, string> = {
   "/play": "Play",
-  "/simulator": "Sandbox",
   "/decks": "Decks",
   "/login": "Sign in",
   "/register": "Create account",

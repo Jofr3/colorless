@@ -12,7 +12,7 @@ import { MemoryRouter } from "react-router-dom";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { driveSetup } from "../../../packages/engine/src/testFixtures";
 import { installDomShims } from "../../test/domShims";
-import { LocalMatch } from "./GamePage";
+import { LocalMatch } from "./LocalMatch";
 
 // Pixi can't initialise in jsdom (no WebGL); everything else is real.
 vi.mock("../playmat/components/AnimatedCardsLayer", () => ({

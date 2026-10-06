@@ -17,7 +17,7 @@ import { AuthProvider } from "../auth/AuthProvider";
 import { clearCardPoolCache } from "../game/cardPool";
 import { initHost } from "../game/useLocalGame";
 import type { LocalGameSetup } from "../game/useLocalGame";
-import { Playmat } from "./Playmat";
+import { GamePage as Playmat } from "../game/GamePage";
 import type { PlaymatViewProps } from "./PlaymatView";
 import { loadSimulatorSave, saveSimulator, SIMULATOR_SAVE_KEY } from "./simulatorSave";
 
@@ -104,7 +104,7 @@ function stubApi(overrides: Record<string, () => Response> = {}) {
 
 function renderPage() {
   render(
-    <MemoryRouter initialEntries={["/simulator"]}>
+    <MemoryRouter initialEntries={["/play"]}>
       <AuthProvider>
         <Playmat />
       </AuthProvider>
@@ -141,7 +141,7 @@ function savedSetup(state = driveSetup(7)): LocalGameSetup {
   return { ...setup, resume: { log: host.log, viewerSeat: host.viewerSeat } };
 }
 
-describe("Sandbox deck setup", () => {
+describe("Play deck setup", () => {
   it.each([
     { label: "Go first", seed: 1, firstPlayer: "p1" },
     { label: "Go second", seed: 3, firstPlayer: "p2" },
@@ -157,7 +157,7 @@ describe("Sandbox deck setup", () => {
     // Seeds 1 and 3 yield opposite coin winners. The manual choices above
     // deliberately oppose the toss, proving they refer to Player 1.
     vi.spyOn(Date, "now").mockReturnValue(seed);
-    fireEvent.click(screen.getByRole("button", { name: "Start sandbox" }));
+    fireEvent.click(screen.getByRole("button", { name: "Start game" }));
     const choices = await screen.findByRole("region", { name: "Starting player" });
     expect(currentView().board.you.hand).toHaveLength(0);
     expect(currentView().piles?.you.deckCount).toBe(60);
@@ -184,7 +184,7 @@ describe("Sandbox deck setup", () => {
   it("starts a normal game with seven-card hands, prizes, setup and turn draws", async () => {
     stubApi();
     renderPage();
-    const start = screen.getByRole<HTMLButtonElement>("button", { name: "Start sandbox" });
+    const start = screen.getByRole<HTMLButtonElement>("button", { name: "Start game" });
     expect(start.disabled).toBe(true);
     expect(view).not.toHaveBeenCalled();
     await pick(1, first.name);
@@ -262,7 +262,7 @@ describe("Sandbox deck setup", () => {
     await pick(1, second.name);
     await pick(1, first.name, true);
     await pick(2, first.name);
-    fireEvent.click(screen.getByRole("button", { name: "Start sandbox" }));
+    fireEvent.click(screen.getByRole("button", { name: "Start game" }));
     await screen.findByLabelText("Starting player");
     fireEvent.click(screen.getByRole("button", { name: "Coin flip (random)" }));
     await screen.findByLabelText("Setup placement");
@@ -292,11 +292,11 @@ describe("Sandbox deck setup", () => {
     renderPage();
     await pick(1, first.name);
     await pick(2, second.name);
-    fireEvent.click(screen.getByRole("button", { name: "Start sandbox" }));
+    fireEvent.click(screen.getByRole("button", { name: "Start game" }));
     expect((await screen.findByRole("alert")).textContent).toContain("Couldn't load the decks");
     expect(view).not.toHaveBeenCalled();
     fail = false;
-    fireEvent.click(screen.getByRole("button", { name: "Start sandbox" }));
+    fireEvent.click(screen.getByRole("button", { name: "Start game" }));
     await screen.findByLabelText("Starting player");
     fireEvent.click(screen.getByRole("button", { name: "Coin flip (random)" }));
     await screen.findByLabelText("Setup placement");
@@ -307,7 +307,7 @@ describe("Sandbox deck setup", () => {
     renderPage();
     await pick(1, first.name);
     await pick(2, second.name);
-    fireEvent.click(screen.getByRole("button", { name: "Start sandbox" }));
+    fireEvent.click(screen.getByRole("button", { name: "Start game" }));
     expect((await screen.findByRole("alert")).textContent).toContain(
       "Player 2 — “Training deck” has 0 cards; a deck needs exactly 60.",
     );
@@ -321,7 +321,7 @@ describe("Sandbox deck setup", () => {
     renderPage();
     await pick(1, first.name);
     await pick(2, second.name);
-    fireEvent.click(screen.getByRole("button", { name: "Start sandbox" }));
+    fireEvent.click(screen.getByRole("button", { name: "Start game" }));
     expect((await screen.findByRole("alert")).textContent).toContain(
       "Player 2 has no Basic Pokémon",
     );
@@ -333,7 +333,7 @@ describe("Sandbox deck setup", () => {
     renderPage();
     await pick(1, first.name);
     await pick(2, second.name);
-    fireEvent.click(screen.getByRole("button", { name: "Start sandbox" }));
+    fireEvent.click(screen.getByRole("button", { name: "Start game" }));
     expect((await screen.findByRole("alert")).textContent).toContain(
       "These cards aren't in the catalog: stadium",
     );
@@ -393,7 +393,7 @@ describe("Simulator saved games", () => {
     fireEvent.click(screen.getByRole("button", { name: "Play again" }));
     expect(localStorage.getItem(SIMULATOR_SAVE_KEY)).toBeNull();
     reloadPage();
-    expect(screen.getByRole("heading", { name: "Sandbox" })).toBeTruthy();
+    expect(screen.getByRole("heading", { name: "Play" })).toBeTruthy();
     expect(screen.queryByLabelText("Playmat stub")).toBeNull();
   });
 
@@ -413,7 +413,7 @@ describe("Simulator saved games", () => {
     }
     stubApi();
     renderPage();
-    expect(screen.getByRole("heading", { name: "Sandbox" })).toBeTruthy();
+    expect(screen.getByRole("heading", { name: "Play" })).toBeTruthy();
   });
 
   it("keeps the game playable when browser storage is unavailable", async () => {

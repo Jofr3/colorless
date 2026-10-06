@@ -52,8 +52,8 @@ export interface PlaymatViewProps {
 }
 
 /** The presentational playmat shell: renders whatever board/turn/log it is
-    handed and reports interactions upward — it owns no game state. `Playmat`
-    (the /simulator mock) and the /play game page are its two drivers. */
+    handed and reports interactions upward — it owns no game state. Local
+    Play and online matches provide their respective engine projections. */
 export function PlaymatView({
   board,
   interactionDisabled = false,
