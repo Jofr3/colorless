@@ -15,6 +15,7 @@ import type { GameAction, GameState, Seat } from "./index";
 import { conditionHolds, conditionNote, runProgram } from "./interpreter";
 import { type LogContext, formatElapsed, logFromEvents } from "./log";
 import {
+  completeSetup,
   FIXTURE_POOL,
   attachFromDeck,
   battler,
@@ -22,7 +23,6 @@ import {
   clearBench,
   deckOf,
   expectErr,
-  firstBasicInHand,
   must,
   mustApply,
   setActiveFromDeck,
@@ -119,20 +119,7 @@ function localSetup(seed: number): GameState {
   state = must(
     applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p1" }),
   );
-  while (state.phase.kind === "setup:drawExtra") {
-    const phase = state.phase;
-    const seat = (["p1", "p2"] as const).find((s) => !phase.decided[s]);
-    if (seat === undefined) throw new Error("setup:drawExtra with every seat decided");
-    state = must(applyAction(state, { type: "setupDrawExtra", seat, count: phase.owed[seat] }));
-  }
-  for (const seat of ["p1", "p2"] as const) {
-    state = must(
-      applyAction(state, { type: "setupPlaceActive", seat, uid: firstBasicInHand(state, seat) }),
-    );
-  }
-  for (const seat of ["p1", "p2"] as const) {
-    state = must(applyAction(state, { type: "setupReady", seat }));
-  }
+  state = completeSetup(state);
   return state;
 }
 

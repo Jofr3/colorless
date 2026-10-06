@@ -187,7 +187,9 @@ function playableTrainers(game: GameState, seat: Seat): TrainerOption[] {
     const noTarget =
       !isRareCandy &&
       !isStadium &&
-      (isFossil ? !fossilPlayable(game, seat) : !programPlayable(game, program.trainer ?? [], seat));
+      (isFossil
+        ? !fossilPlayable(game, seat)
+        : !programPlayable(game, program.trainer ?? [], seat));
     // ⚠️ THE §4 TERM CARRIES THE CARD'S OWN EXEMPTION (D223,
     // `trainerFirstTurnExempt`: Carmine's "If you go first, you may use this card
     // during your first turn."), exactly as redact.ts's online twin does. A flag
@@ -475,7 +477,11 @@ function stadiumAbilityOption(game: GameState, seat: Seat): StadiumAbilityOption
     ability.playableIf !== undefined &&
     !conditionHolds(game, seat, ability.playableIf)
   ) {
-    return { label: ability.label, disabled: true, reason: `Only if ${conditionNote(ability.playableIf)}` };
+    return {
+      label: ability.label,
+      disabled: true,
+      reason: `Only if ${conditionNote(ability.playableIf)}`,
+    };
   }
   // D222 — the Stadium's uid, term for term with `useStadiumAbility`.
   const noTarget = !programPlayable(game, ability.program, seat, stadium.uid);
@@ -523,7 +529,7 @@ function HudPanel({
   );
 }
 
-const TOP_PANEL_CLASS = "right-4 top-[max(5rem,12dvh)] w-[min(23rem,calc(100vw-2rem))]";
+const SETUP_PANEL_CLASS = "setup-prompt-panel";
 
 /** Native <dialog> modal (the BackToMenu pattern: top layer, focus trap).
     Mounted = open: callers render it conditionally, the mount effect calls
@@ -564,18 +570,14 @@ function HudDialog({
   );
 }
 
-function StartingOrderPanel({
-  dispatch,
-  names,
-  coinWinner,
-}: GameHudProps & { coinWinner: Seat }) {
+function StartingOrderPanel({ dispatch, names, coinWinner }: GameHudProps & { coinWinner: Seat }) {
   const options = [
     { label: "Coin flip (random)", first: coinWinner },
     { label: "Go first", first: "p1" },
     { label: "Go second", first: "p2" },
   ] as const;
   return (
-    <HudPanel label="Starting player" className={TOP_PANEL_CLASS}>
+    <HudPanel label="Starting player" className={SETUP_PANEL_CLASS}>
       <p className="text-sm font-semibold text-white">How should {names.p1} start?</p>
       <div className="mt-3 flex flex-wrap gap-2.5">
         {options.map(({ label, first }, index) => (
@@ -602,7 +604,7 @@ function ChooseFirstPanel({
   // createGame convention: heads means p1 won the toss (setup.ts).
   const face = coinWinner === "p1" ? "heads" : "tails";
   return (
-    <HudPanel label="Coin toss" className={TOP_PANEL_CLASS}>
+    <HudPanel label="Coin toss" className={SETUP_PANEL_CLASS}>
       <p className="text-sm text-white/80">
         Coin toss: <span className="font-semibold text-white">{face}</span> —{" "}
         <span className="font-semibold text-white">{names[viewerSeat]}</span> chooses who goes
@@ -632,14 +634,17 @@ function ChooseFirstPanel({
   );
 }
 
-function PlacePanel({ projection, viewerSeat, dispatch }: GameHudProps) {
+function PlacePanel({ game, projection, viewerSeat, dispatch }: GameHudProps) {
   const activePlaced = projection.board.you.active !== null;
+  const bonus = game.phase.kind === "setup:place" && game.phase.stage === "bonus";
   return (
-    <HudPanel label="Setup placement" className={TOP_PANEL_CLASS}>
+    <HudPanel label="Setup placement" className={SETUP_PANEL_CLASS}>
       <p className="text-sm text-white/80">
-        {activePlaced
-          ? "Drag more Basic Pokémon to your Bench, then press Ready."
-          : "Drag a Basic Pokémon from your hand to the Active slot."}
+        {bonus
+          ? "Bench any Basic Pokémon from your bonus cards, then press Ready."
+          : activePlaced
+            ? "Bench any opening Basic Pokémon, then press Ready to set your Prize cards."
+            : "Drag a Basic Pokémon from your hand to the Active slot."}
       </p>
       <div className="mt-3">
         <button
@@ -823,8 +828,12 @@ function TurnPanel(props: GameHudProps) {
   // turn gate and the attack-again window), labelled as the wire's `discardable` rows are.
   const discardOptions = discardableTargets(game, viewerSeat).map((target) => {
     const body = target.spot === "active" ? side.active : side.bench[target.index];
-    const name = (body === null || body === undefined ? undefined : topCardOf(game, body)?.name) ?? "?";
-    return { target, label: `${name} (${target.spot === "active" ? "Active" : `Bench ${target.index + 1}`})` };
+    const name =
+      (body === null || body === undefined ? undefined : topCardOf(game, body)?.name) ?? "?";
+    return {
+      target,
+      label: `${name} (${target.spot === "active" ? "Active" : `Bench ${target.index + 1}`})`,
+    };
   });
 
   return (
@@ -864,7 +873,8 @@ function TurnPanel(props: GameHudProps) {
               abilityGateUnmet ||
               attackAgainBarredNow ||
               // 🆕🆕🆕 D578 — per PRINTED index: a borrowed row is never barred by one (R-MD4).
-              (menu[index]?.origin === "printed" && barredAttackIndexes.includes(menu[index].sourceIndex)) ||
+              (menu[index]?.origin === "printed" &&
+                barredAttackIndexes.includes(menu[index].sourceIndex)) ||
               // 🆕🆕🆕 D578 (R-MD4, RULED: fixed at the landing) — …a borrowed row by its NAME.
               barredAttackNames.includes(attack.name) ||
               // §4/§8 (D281) — the printed TIMING CLAUSE on this one attack
@@ -921,8 +931,8 @@ function TurnPanel(props: GameHudProps) {
             the expression total while `conditions` itself may be undefined. [🆕🆕🆕 D570 (D539): "turn ends" is false for a FIRST attack under Festival Lead with Festival Grounds in play — the confusion-tails failure goes through `finishAttack`, which opens the attack-again window; this hint does not say so, carried as display debt with the missing attack-again banner (D570, the D556 precedent) — 🆕 D570 THIRD-REVIEW CORRECTION: that board is UNREACHABLE in play (Festival Grounds keeps every Pokémon with Energy attached free of Special Conditions, and every Festival Lead attack costs Energy, so a licensed attacker is never Confused), so NO display debt is owed here; the note stands as the code fact] */}
         {rotation === "confused" && (
           <p className="mt-2 text-[11px] text-white/45">
-            Confused: attacking flips a coin — tails:{" "}
-            {conditions?.confusionDamage ?? 30} damage to itself, turn ends.
+            Confused: attacking flips a coin — tails: {conditions?.confusionDamage ?? 30} damage to
+            itself, turn ends.
           </p>
         )}
         {abilityOptions.length > 0 && (
@@ -1040,7 +1050,9 @@ function TurnPanel(props: GameHudProps) {
                 <li key={opt.target.spot === "bench" ? `bench-${opt.target.index}` : "active"}>
                   <button
                     type="button"
-                    onClick={() => dispatch({ type: "discardFromPlay", seat: viewerSeat, target: opt.target })}
+                    onClick={() =>
+                      dispatch({ type: "discardFromPlay", seat: viewerSeat, target: opt.target })
+                    }
                     className={`${ROW_BUTTON_BASE} ${ROW_BUTTON_ENABLED}`}
                   >
                     <span className="truncate">{opt.label}</span>
@@ -1338,7 +1350,9 @@ function PrizeTile({
     <button
       type="button"
       aria-pressed={selected}
-      aria-label={faceUp === null ? `Prize ${index + 1}` : `Prize ${index + 1} — ${faceUp} (face up)`}
+      aria-label={
+        faceUp === null ? `Prize ${index + 1}` : `Prize ${index + 1} — ${faceUp} (face up)`
+      }
       onClick={onPick}
       className={`${PRIZE_CARD_BASE} ${selected ? PRIZE_CARD_PICKED : PRIZE_CARD_IDLE}`}
     >
@@ -1463,7 +1477,8 @@ function EffectChooseDialog(props: GameHudProps): ReactElement | null {
   // Narrowing only — the phase switch mounts this exactly at effect:choose.
   if (pending?.kind !== "effectChoose") return null;
   const prompt = pending.prompt;
-  if (prompt.kind === "confirm" && prompt.cards !== undefined && prompt.targets !== undefined) return null;
+  if (prompt.kind === "confirm" && prompt.cards !== undefined && prompt.targets !== undefined)
+    return null;
   // AN EXHAUSTIVE SWITCH WITH A DECLARED RETURN TYPE, NOT A TERNARY CHAIN ENDING
   // IN A CATCH-ALL. It was the latter until `confirm` landed, and the difference
   // is the difference between two ways of failing. The old chain's last arm was
@@ -1549,7 +1564,11 @@ function ChoosePrizeDialog({
             faceUp={null}
             selected={false}
             onPick={() =>
-              dispatch({ type: "resolveEffect", seat: viewerSeat, choice: { kind: "prize", index } })
+              dispatch({
+                type: "resolveEffect",
+                seat: viewerSeat,
+                choice: { kind: "prize", index },
+              })
             }
           />
         ))}
@@ -1598,7 +1617,12 @@ function ConfirmPromptDialog({
       ...(prompt.cards.no === undefined ? [] : [{ uid: prompt.cards.no, yes: false }]),
     ].map(({ uid, yes }) => {
       const card = cardOfUid(game, uid);
-      return { name: card?.name ?? uid, cardId: card?.id ?? "", hasImage: card?.image != null, yes };
+      return {
+        name: card?.name ?? uid,
+        cardId: card?.id ?? "",
+        hasImage: card?.image != null,
+        yes,
+      };
     });
     return (
       <HudDialog label="Choose an Energy" cardCount={cards.length}>
@@ -2778,9 +2802,7 @@ function MoveEnergySpreadDialog({
       <output className="mt-1.5 block text-sm text-white/55">
         {pendingName === null
           ? `${floor > 0 ? "Moving all" : "Moving"} ${moves.length}/${prompt.max}. ${
-              atCap
-                ? "Tap a placed Energy to move it."
-                : "Pick an Energy, then where it goes."
+              atCap ? "Tap a placed Energy to move it." : "Pick an Energy, then where it goes."
             }`
           : `Moving ${moves.length}/${prompt.max}. Where does ${pendingName} go?`}
       </output>
@@ -3136,7 +3158,11 @@ function DiscardToolsDialog({
   const [picked, setPicked] = useState<string[]>([]);
   const pick = (uid: string) =>
     setPicked((prev) =>
-      prev.includes(uid) ? prev.filter((u) => u !== uid) : prev.length < cap ? [...prev, uid] : prev,
+      prev.includes(uid)
+        ? prev.filter((u) => u !== uid)
+        : prev.length < cap
+          ? [...prev, uid]
+          : prev,
     );
   const ready = declinable || picked.length === cap;
 
@@ -3571,9 +3597,7 @@ function promptKey(prompt: EffectPrompt): string {
       // three-member union (D359 added `upTo`), so the key spells all three, each
       // with its own quantity: two `upTo` parks that differ only in `max` are
       // different questions and now get different keys.
-      return `discard:${scopeKey(prompt.scope)}:${prompt.discardable
-        .map((d) => d.uid)
-        .join(",")}`;
+      return `discard:${scopeKey(prompt.scope)}:${prompt.discardable.map((d) => d.uid).join(",")}`;
     case "moveEnergy":
       // The DESTINATIONS ride the key for the same reason the scope rides the one
       // above — the dialog's `dest` is derived from them (a sole destination is

@@ -32,7 +32,14 @@ import type { GameEvent, GameState, Seat } from "./index";
 import { countPokemonInPlay } from "./interpreter";
 import { flipCoin } from "./rng";
 import type { CoinFace } from "./rng";
-import { FIXTURE_POOL, basicEnergy, battler, deckOf, itemTrainer } from "./testFixtures";
+import {
+  completeSetup,
+  FIXTURE_POOL,
+  basicEnergy,
+  battler,
+  deckOf,
+  itemTrainer,
+} from "./testFixtures";
 import { makeInPlay } from "./types";
 
 // 0.372.0 → 0.373.0 — 🆕🆕 D475: THE COIN FLIP COUNTED OVER **BOTH ACTIVES**.
@@ -507,15 +514,6 @@ function play(state: GameState, action: Parameters<typeof applyAction>[1]) {
   return { state: outcome.state, events: [...outcome.events] };
 }
 
-function firstBasic(state: GameState, side: Seat): string {
-  const uid = state.players[side].hand.find((held) => {
-    const card = CARD_POOL[state.cardIdByUid[held] ?? ""];
-    return card?.category === "Pokemon" && card.stage === "Basic";
-  });
-  if (uid === undefined) throw new Error(`${side} was dealt no Basic`);
-  return uid;
-}
-
 /** Setup driven against the LOCAL pool, then P2's turn ended so P1 is on
     `turn:action` and may attack (§4 of the rules). */
 function opened(seed: number): GameState {
@@ -530,16 +528,7 @@ function opened(seed: number): GameState {
   state = ok(
     applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }),
   );
-  while (state.phase.kind === "setup:drawExtra") {
-    const drawing = state.phase;
-    const owed = (["p1", "p2"] as const).find((s) => !drawing.decided[s]);
-    if (owed === undefined) throw new Error("setup:drawExtra with every seat decided");
-    state = ok(applyAction(state, { type: "setupDrawExtra", seat: owed, count: drawing.owed[owed] }));
-  }
-  for (const side of ["p1", "p2"] as const) {
-    state = ok(applyAction(state, { type: "setupPlaceActive", seat: side, uid: firstBasic(state, side) }));
-  }
-  for (const side of ["p1", "p2"] as const) state = ok(applyAction(state, { type: "setupReady", seat: side }));
+  state = completeSetup(state);
   return play(state, { type: "endTurn", seat: "p2" }).state;
 }
 

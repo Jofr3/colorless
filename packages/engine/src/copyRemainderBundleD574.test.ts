@@ -21,7 +21,17 @@ import { redactGame } from "./redact";
 import { programFor } from "./registry";
 import { flipCoin } from "./rng";
 import type { CoinFace } from "./rng";
-import { FIXTURE_POOL, battler, benchFromDeck, clearBench, deckOf, setActiveFromDeck, trainerCard, typedEnergy } from "./testFixtures";
+import {
+  completeSetup,
+  FIXTURE_POOL,
+  battler,
+  benchFromDeck,
+  clearBench,
+  deckOf,
+  setActiveFromDeck,
+  trainerCard,
+  typedEnergy,
+} from "./testFixtures";
 import type { InPlayPokemon } from "./types";
 
 // ── 🆕🆕🆕 D574 — THE COPY-FAMILY REMAINDER + THE BUNDLE A RIDER: SEVEN PRINTINGS, FIVE TEXTS ──
@@ -313,18 +323,7 @@ function opened(seed: number): GameState {
   let state = created.state;
   if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
   state = must(applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }));
-  while (state.phase.kind === "setup:drawExtra") {
-    const phase = state.phase;
-    const s = (["p1", "p2"] as const).find((x) => !phase.decided[x]);
-    if (s === undefined) throw new Error("setup:drawExtra with every seat decided");
-    state = must(applyAction(state, { type: "setupDrawExtra", seat: s, count: phase.owed[s] }));
-  }
-  for (const s of ["p1", "p2"] as const) {
-    const uid = state.players[s].hand.find((h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic");
-    if (uid === undefined) throw new Error(`no Basic in ${s}'s hand`);
-    state = must(applyAction(state, { type: "setupPlaceActive", seat: s, uid }));
-  }
-  for (const s of ["p1", "p2"] as const) state = must(applyAction(state, { type: "setupReady", seat: s }));
+  state = completeSetup(state);
   return must(applyAction(state, { type: "endTurn", seat: "p2" }));
 }
 

@@ -61,12 +61,12 @@ it("keeps the save on Cancel, clears it on Leave, and opens a fresh sandbox on r
   fireEvent.click(screen.getByRole("button", { name: "Leave" }));
   expect(loadSimulatorSave()).toBeNull();
   fireEvent.click(screen.getByRole("link", { name: "Open sandbox" }));
-  expect(await screen.findByRole("heading", { name: "Play" })).toBeTruthy();
+  expect(await screen.findByRole("button", { name: "Choose deck for Player 1" })).toBeTruthy();
   expect(screen.queryByRole("region", { name: "Trading card game playmat" })).toBeNull();
   expect(loadSimulatorSave()).toBeNull();
 
   page.unmount();
   renderPage();
-  expect(screen.getByRole("heading", { name: "Play" })).toBeTruthy();
+  expect(screen.getByRole("button", { name: "Choose deck for Player 1" })).toBeTruthy();
   expect(loadSimulatorSave()).toBeNull();
 });

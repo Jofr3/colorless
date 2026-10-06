@@ -16,6 +16,7 @@
 // `Phase` kind is a compile error here instead of a wrong guess.
 
 import type { EffectPrompt } from "./interpreter";
+import { cardOfUid, isBasicPokemon } from "./cards";
 import type { GameOutcome, GameState, Seat } from "./types";
 import { SEATS, otherSeat } from "./types";
 
@@ -68,7 +69,16 @@ export function phaseViewOf(state: GameState, viewerSeat: Seat): PhaseView {
         ...none,
         activeSeat: null,
         waitingSeat: preferViewer(
-          SEATS.filter((seat) => !phase.ready[seat]),
+          SEATS.filter(
+            (seat) =>
+              !phase.ready[seat] &&
+              (phase.stage !== "opening" ||
+                state.players[seat].active !== null ||
+                state.players[seat].hand.some((uid) => {
+                  const card = cardOfUid(state, uid);
+                  return card !== undefined && isBasicPokemon(card);
+                })),
+          ),
           viewerSeat,
         ),
       };

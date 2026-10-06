@@ -23,8 +23,23 @@ import {
 } from "../pixi/CardView";
 import { canPlace, type PlacementPredicate } from "../utils/cardMovement";
 import { shouldCollapseBenchAttachments } from "../utils/benchLayout";
-import { deckBackId } from "../utils/piles";
-import { type CardDescriptor, prizeCardDescriptors } from "../utils/cardDescriptors";
+import { deckBackId, prizeBackId } from "../utils/piles";
+import {
+  BONUS_DEAL_DURATION,
+  PRIZE_FLIP_DURATION,
+  BONUS_TRAVEL_DURATION,
+  SETUP_DEAL_STAGGER,
+  ownerForTone,
+  setupDealsBetween,
+  type SetupAnimationStage,
+  type SetupDeal,
+  type SetupDealSnapshot,
+} from "../utils/setupDeals";
+import {
+  type CardDescriptor,
+  inPlayCardForDisplay,
+  prizeCardDescriptors,
+} from "../utils/cardDescriptors";
 import {
   ATTACHED_CARD_SCALE,
   benchLimitFor,
@@ -45,6 +60,9 @@ interface AnimatedCardsLayerProps {
   backDesign: CardBackDesign;
   blueBackPlayer?: PlayerId;
   turnNumber: number;
+  activePlayer?: PlayerId;
+  holdSetupReveal?: boolean;
+  onSetupAnimationChange?: (stage: SetupAnimationStage | null) => void;
   playmatRef: RefObject<HTMLElement | null>;
   onMoveCard: (request: CardMoveRequest) => void;
   /** Drop-legality gate consulted for drop-zone filtering, the live reorder
@@ -53,6 +71,7 @@ interface AnimatedCardsLayerProps {
       supplies its own so affordance, preview and dispatch never promise a
       drop the page's engine cannot express. */
   placementPredicate?: PlacementPredicate;
+  usableTrainerIds?: ReadonlySet<string>;
 }
 
 interface DropZoneSnapshot {
@@ -116,6 +135,19 @@ interface SlotAnchor {
   index: number;
 }
 
+interface SetupFlight {
+  deal: SetupDeal;
+  view: CardView;
+  startAt: number;
+  endsAt: number;
+  source: CardViewTarget | null;
+  destination: CardViewTarget | null;
+  destinationId?: string;
+  faceUrl: string;
+  revealed: boolean;
+  started: boolean;
+}
+
 // Slightly larger than the CSS protrusion: the host Pokémon still covers the
 // extra painted area, but the attached card no longer looks overly sliced off
 // at the inner edge.
@@ -132,8 +164,7 @@ const INTERACTIVE_SELECTOR =
 
 function cardTextureUrl(card: CardModel) {
   // Card faces come from remote image URLs; backs use the synthetic `back://`
-  // scheme. Every descriptor sets one, so the empty fallback is never hit in
-  // practice — it just keeps the type total.
+  // scheme. Cards without catalog artwork keep the empty fallback.
   return card.imageUrl ?? "";
 }
 
@@ -218,11 +249,15 @@ function collectCardDescriptors(
   perspectivePlayer: PlayerId,
   backDesign: CardBackDesign,
   blueBackPlayer: PlayerId,
+  turnNumber: number,
+  holdSetupReveal = false,
 ): CardDescriptor[] {
   const descriptors: CardDescriptor[] = [];
 
   for (const owner of PLAYER_IDS) {
     const player = board[owner];
+    const tone = cardBackToneFor(owner, blueBackPlayer);
+    const backImageUrl = cardBackImageUrl(backDesign, tone);
     // 🆕🆕🆕 D577 — per seat (Area Zero Underdepths widens only a side with a Tera Pokémon).
     const benchLimit = benchLimitFor(board, owner);
     const active = player.active;
@@ -231,7 +266,7 @@ function collectCardDescriptors(
     if (active) {
       const placement: CardPlacement = { owner, zone: "active" };
       descriptors.push({
-        card: active,
+        card: inPlayCardForDisplay(active, backImageUrl, turnNumber === 0 || holdSetupReveal),
         placement,
         draggable: owner === perspectivePlayer,
         zoneSize: 1,
@@ -244,7 +279,7 @@ function collectCardDescriptors(
     for (const [index, card] of player.bench.entries()) {
       const placement: CardPlacement = { owner, zone: "bench", index };
       descriptors.push({
-        card,
+        card: inPlayCardForDisplay(card, backImageUrl, turnNumber === 0 || holdSetupReveal),
         placement,
         draggable: owner === perspectivePlayer,
         zoneSize: player.bench.length,
@@ -278,9 +313,6 @@ function collectCardDescriptors(
     // hover lift for free. zone "stadium" with a player owner (vs. the real
     // stadium's owner "global") routes them to the low-z fallback in
     // zIndexForPlacement so they sit beneath the playable cards.
-    const tone = cardBackToneFor(owner, blueBackPlayer);
-    const backImageUrl = cardBackImageUrl(backDesign, tone);
-
     descriptors.push({
       card: {
         id: deckBackId(owner),
@@ -434,11 +466,23 @@ export function AnimatedCardsLayer({
   backDesign,
   blueBackPlayer = "you",
   turnNumber,
+  activePlayer = perspectivePlayer,
+  holdSetupReveal = false,
+  onSetupAnimationChange,
   playmatRef,
   onMoveCard,
   placementPredicate,
+  usableTrainerIds,
 }: AnimatedCardsLayerProps) {
   const previousTurnRef = useRef(turnNumber);
+  const previousSetupRef = useRef<SetupDealSnapshot | null>(null);
+  const setupFlightsRef = useRef<SetupFlight[]>([]);
+  const setupFlightSequenceRef = useRef(0);
+  const setupAnimationRef = useRef<SetupAnimationStage | null>(null);
+  const onSetupAnimationChangeRef = useRef(onSetupAnimationChange);
+  const currentSetupRef = useRef({ blueBackPlayer, perspectivePlayer, backDesign });
+  currentSetupRef.current = { blueBackPlayer, perspectivePlayer, backDesign };
+  onSetupAnimationChangeRef.current = onSetupAnimationChange;
   const mountRef = useRef<HTMLDivElement>(null);
   const trainerUseLabelRef = useRef<HTMLOutputElement>(null);
   const trainerUseCardIdRef = useRef<string | null>(null);
@@ -458,10 +502,19 @@ export function AnimatedCardsLayer({
   // Read through a ref like onMoveCard/board: the pointer handlers are bound
   // once (to the playmat node) and would otherwise capture a stale predicate.
   const placementPredicateRef = useRef(placementPredicate ?? canPlace);
+  const usableTrainerIdsRef = useRef(usableTrainerIds);
 
   const descriptors = useMemo(
-    () => collectCardDescriptors(board, perspectivePlayer, backDesign, blueBackPlayer),
-    [board, perspectivePlayer, backDesign, blueBackPlayer],
+    () =>
+      collectCardDescriptors(
+        board,
+        perspectivePlayer,
+        backDesign,
+        blueBackPlayer,
+        turnNumber,
+        holdSetupReveal,
+      ),
+    [board, perspectivePlayer, backDesign, blueBackPlayer, turnNumber, holdSetupReveal],
   );
 
   useEffect(() => {
@@ -477,6 +530,10 @@ export function AnimatedCardsLayer({
   }, [placementPredicate]);
 
   useEffect(() => {
+    usableTrainerIdsRef.current = usableTrainerIds;
+  }, [usableTrainerIds]);
+
+  useEffect(() => {
     const query = window.matchMedia("(prefers-reduced-motion: reduce)");
     reducedMotionRef.current = query.matches;
     // Keep the preference live: propagate runtime OS toggles to every existing
@@ -486,6 +543,7 @@ export function AnimatedCardsLayer({
       for (const view of viewsRef.current.values()) {
         view.setReducedMotion(event.matches);
       }
+      if (event.matches) clearSetupFlights();
     };
     query.addEventListener("change", handleChange);
     return () => query.removeEventListener("change", handleChange);
@@ -746,6 +804,173 @@ export function AnimatedCardsLayer({
       })
       .filter((zone): zone is DropZoneSnapshot => Boolean(zone));
     positionTrainerUseLabel();
+    measureSetupFlights();
+  }
+
+  function publishSetupAnimation(stage: SetupAnimationStage | null) {
+    if (setupAnimationRef.current === stage) return;
+    setupAnimationRef.current = stage;
+    onSetupAnimationChangeRef.current?.(stage);
+  }
+
+  function clearSetupFlights(announce = true) {
+    for (const flight of setupFlightsRef.current) {
+      if (flight.destinationId) {
+        const destination = viewsRef.current.get(flight.destinationId);
+        if (destination) destination.container.visible = true;
+      }
+      flight.view.destroy();
+    }
+    setupFlightsRef.current = [];
+    if (announce) publishSetupAnimation(null);
+    else setupAnimationRef.current = null;
+  }
+
+  function queueSetupDeals(deals: SetupDeal[]) {
+    const scene = sceneRef.current;
+    if (!scene || reducedMotionRef.current || deals.length === 0) return;
+    let nextStart = Math.max(
+      performance.now() / 1000,
+      ...setupFlightsRef.current.map((flight) => flight.endsAt),
+    );
+    for (const kind of ["prizes", "draw"] as const) {
+      const batch = deals.filter((deal) => deal.kind === kind);
+      if (!batch.length) continue;
+      const duration = kind === "prizes" ? PRIZE_FLIP_DURATION : BONUS_DEAL_DURATION;
+      for (const [index, deal] of batch.entries()) {
+        const startAt = nextStart + index * SETUP_DEAL_STAGGER;
+        const view = new CardView({
+          id: `setup-deal-${++setupFlightSequenceRef.current}`,
+          name: kind === "prizes" ? "Face-down Prize card" : "Mulligan bonus card",
+          textureUrl: cardBackImageUrl(currentSetupRef.current.backDesign, deal.tone),
+          seed: index / batch.length,
+          reducedMotion: false,
+          animateTexture: false,
+          slotLocked: true,
+        });
+        view.hide();
+        scene.addChild(view.container);
+        setupFlightsRef.current.push({
+          deal,
+          view,
+          startAt,
+          endsAt: startAt + duration,
+          source: null,
+          destination: null,
+          faceUrl: "",
+          revealed: false,
+          started: false,
+        });
+      }
+      nextStart += (batch.length - 1) * SETUP_DEAL_STAGGER + duration;
+    }
+    publishSetupAnimation(setupFlightsRef.current[0]?.deal.kind ?? null);
+  }
+
+  function measureSetupFlights() {
+    const root = playmatRef.current;
+    const snapshot = previousSetupRef.current;
+    if (!root || !snapshot) return;
+    for (const flight of setupFlightsRef.current) {
+      const owner = ownerForTone(flight.deal.tone, currentSetupRef.current.blueBackPlayer);
+      const source = viewsRef.current.get(deckBackId(owner))?.getTargetSnapshot();
+      if (!source && flight.deal.kind === "draw") continue;
+      flight.source = source ?? null;
+      let destinationId: string | undefined;
+      let faceUrl = "";
+      if (flight.deal.kind === "prizes") {
+        destinationId = prizeBackId(owner, flight.deal.index);
+      } else if (owner === currentSetupRef.current.perspectivePlayer) {
+        const card = snapshot.board[owner].hand[flight.deal.index];
+        destinationId = card?.id;
+        faceUrl = card?.imageUrl ?? "";
+      }
+      flight.destinationId = destinationId;
+      flight.destination = destinationId
+        ? (viewsRef.current.get(destinationId)?.getTargetSnapshot() ?? null)
+        : source
+          ? {
+              ...source,
+              x: root.clientWidth / 2 + ((flight.deal.index % 5) - 2) * 14,
+              y: -source.height * 0.6,
+            }
+          : null;
+      // A local handoff can move a draw to the hidden side while it is in flight.
+      if (flight.faceUrl !== faceUrl && flight.revealed) {
+        flight.view.setTextureUrl(
+          cardBackImageUrl(currentSetupRef.current.backDesign, flight.deal.tone),
+          false,
+        );
+        flight.revealed = false;
+      }
+      flight.faceUrl = faceUrl;
+      if (destinationId) viewsRef.current.get(destinationId)?.hide();
+    }
+  }
+
+  function advanceSetupFlights(time: number, dt: number) {
+    const remaining: SetupFlight[] = [];
+    for (const flight of setupFlightsRef.current) {
+      if (time >= flight.endsAt) {
+        if (flight.destinationId) {
+          const destination = viewsRef.current.get(flight.destinationId);
+          if (destination) destination.container.visible = true;
+        }
+        flight.view.destroy();
+        continue;
+      }
+      remaining.push(flight);
+      if (
+        time < flight.startAt ||
+        !flight.destination ||
+        (flight.deal.kind === "draw" && !flight.source)
+      ) {
+        flight.view.hide();
+        continue;
+      }
+      const elapsed = time - flight.startAt;
+      const destination = flight.destination;
+      if (flight.deal.kind === "prizes") {
+        flight.view.setTarget(destination, true);
+        if (!flight.started) flight.view.flipIntoView(PRIZE_FLIP_DURATION);
+        flight.started = true;
+      } else if (!flight.started && flight.source) {
+        flight.view.setTarget(flight.source, true);
+        flight.started = true;
+        flight.view.slingTo({ ...destination, zIndex: 10_000 + flight.deal.index });
+      } else {
+        const target = flight.view.getTargetSnapshot();
+        if (
+          target?.x !== destination.x ||
+          target?.y !== destination.y ||
+          target?.width !== destination.width ||
+          target?.height !== destination.height
+        ) {
+          flight.view.slingTo({ ...destination, zIndex: 10_000 + flight.deal.index });
+        }
+      }
+      if (
+        flight.deal.kind === "draw" &&
+        elapsed >= BONUS_TRAVEL_DURATION - 0.04 &&
+        !flight.revealed &&
+        flight.faceUrl
+      ) {
+        flight.view.setTextureUrl(flight.faceUrl);
+        flight.revealed = true;
+      }
+      flight.view.container.alpha =
+        flight.deal.kind === "draw" && !flight.destinationId
+          ? 1 -
+            Math.max(
+              0,
+              (elapsed - BONUS_TRAVEL_DURATION) / (BONUS_DEAL_DURATION - BONUS_TRAVEL_DURATION),
+            )
+          : 1;
+      flight.view.update(dt, time);
+    }
+    setupFlightsRef.current = remaining;
+    const active = remaining.find((flight) => time >= flight.startAt) ?? remaining[0];
+    publishSetupAnimation(active?.deal.kind ?? null);
   }
 
   function clearTrainerPlayPreview() {
@@ -758,15 +983,28 @@ export function AnimatedCardsLayer({
     point: { x: number; y: number },
     event: PointerEvent,
   ) {
+    const playmatZone = dropZonesRef.current.find(
+      (zone) => zone.placement.zone === "playmat" && isPointerOverZone(point, zone),
+    );
     const isTrainerPlay =
       drag.moved &&
       drag.cardType === "trainer" &&
       drag.from.zone === "hand" &&
       !shouldIgnorePointer(event) &&
-      findDropZone(point, drag.from, drag.cardType)?.placement.zone === "playmat";
+      playmatZone !== undefined;
+    const canUse =
+      isTrainerPlay &&
+      (usableTrainerIdsRef.current?.has(drag.cardId) ?? true) &&
+      placementPredicateRef.current(
+        boardRef.current,
+        drag.from,
+        playmatZone.placement,
+        drag.cardType,
+      );
     if (isTrainerPlay) trainerUseCardIdRef.current = drag.cardId;
     else if (reducedMotionRef.current) trainerUseCardIdRef.current = null;
     trainerUseLabelRef.current?.classList.toggle("is-visible", isTrainerPlay);
+    trainerUseLabelRef.current?.classList.toggle("is-unusable", isTrainerPlay && !canUse);
     positionTrainerUseLabel();
   }
 
@@ -989,6 +1227,7 @@ export function AnimatedCardsLayer({
   }
 
   function handlePointerDown(event: PointerEvent) {
+    if (setupFlightsRef.current.length > 0) return;
     const root = playmatRef.current;
     if (!root || event.button !== 0 || shouldIgnorePointer(event)) {
       return;
@@ -1613,6 +1852,14 @@ export function AnimatedCardsLayer({
         ? findDropZone(point, drag.from, drag.cardType)
         : undefined;
     let toPlacement: CardPlacement | undefined = dropZone?.placement;
+    if (
+      toPlacement?.zone === "playmat" &&
+      drag.cardType === "trainer" &&
+      usableTrainerIdsRef.current !== undefined &&
+      !usableTrainerIdsRef.current.has(drag.cardId)
+    ) {
+      toPlacement = undefined;
+    }
 
     // When the drop lands inside the zone we were previewing, prefer the
     // live reorder index the user just saw over whichever per-slot drop
@@ -1685,12 +1932,19 @@ export function AnimatedCardsLayer({
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: sync/measurement functions read mutable Pixi refs and should only react to descriptor changes.
   useLayoutEffect(() => {
+    const snapshot = { board, blueBackPlayer, turn: turnNumber, activePlayer };
+    const handoff =
+      previousSetupRef.current !== null &&
+      previousSetupRef.current.blueBackPlayer !== blueBackPlayer;
+    const deals = setupDealsBetween(previousSetupRef.current, snapshot);
+    previousSetupRef.current = snapshot;
     const turnChanged = previousTurnRef.current !== turnNumber;
     previousTurnRef.current = turnNumber;
-    syncViews(descriptors, turnChanged);
-    measureCards(turnChanged);
+    syncViews(descriptors, turnChanged || handoff);
+    queueSetupDeals(deals);
+    measureCards(turnChanged || handoff);
     scheduleMeasure();
-  }, [descriptors, turnNumber]);
+  }, [descriptors, turnNumber, blueBackPlayer, activePlayer]);
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: Pixi app lifecycle is tied to the mount node, not React render callbacks.
   useEffect(() => {
@@ -1712,6 +1966,7 @@ export function AnimatedCardsLayer({
       for (const view of viewsRef.current.values()) {
         view.update(ticker.deltaMS / 1000, time);
       }
+      advanceSetupFlights(time, ticker.deltaMS / 1000);
       positionTrainerUseLabel();
     };
 
@@ -1728,6 +1983,7 @@ export function AnimatedCardsLayer({
           error,
         );
         playmatRef.current?.classList.remove("has-pixi-cards");
+        clearSetupFlights();
         return;
       }
       app = created;
@@ -1756,6 +2012,7 @@ export function AnimatedCardsLayer({
         rafRef.current = null;
       }
       app?.ticker.remove(tick);
+      clearSetupFlights(false);
       for (const view of viewsRef.current.values()) {
         view.destroy();
       }

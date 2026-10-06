@@ -199,6 +199,8 @@ describe("Play deck setup", () => {
     expect(currentView().board.opponent.hand).toHaveLength(7);
     expect(currentView().piles?.you.deckCount).toBe(53);
     expect(currentView().piles?.opponent.deckCount).toBe(53);
+    expect(currentView().board.you.prizesRemaining).toBe(0);
+    expect(currentView().board.opponent.prizesRemaining).toBe(0);
     const names = new Set<string>();
     const dealtIds: string[] = [];
     for (let seat = 0; seat < 2; seat++) {
@@ -414,7 +416,7 @@ describe("Simulator saved games", () => {
     fireEvent.click(screen.getByRole("button", { name: "Play again" }));
     expect(localStorage.getItem(SIMULATOR_SAVE_KEY)).toBeNull();
     reloadPage();
-    expect(screen.getByRole("heading", { name: "Play" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Choose deck for Player 1" })).toBeTruthy();
     expect(screen.queryByLabelText("Playmat stub")).toBeNull();
   });
 
@@ -434,7 +436,7 @@ describe("Simulator saved games", () => {
     }
     stubApi();
     renderPage();
-    expect(screen.getByRole("heading", { name: "Play" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Choose deck for Player 1" })).toBeTruthy();
   });
 
   it("keeps the game playable when browser storage is unavailable", async () => {

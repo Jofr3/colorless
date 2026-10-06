@@ -195,8 +195,7 @@ function resolveMulligans(state: GameState, seat: Seat, events: GameEvent[]): Ga
   return next;
 }
 
-/** The coin winner picks who goes first, then the decision-free §3.4–§3.5
-    stretch (opening hands, mulligans) auto-resolves in the same reduction. */
+/** Choose first, deal opening hands and open face-down Pokémon placement. */
 export function chooseFirstPlayer(state: GameState, action: ChooseFirstPlayerAction): ApplyResult {
   const phase = state.phase;
   if (phase.kind !== "setup:chooseFirst") {
@@ -225,43 +224,19 @@ export function chooseFirstPlayer(state: GameState, action: ChooseFirstPlayerAct
     next = drawToHand(next, seat, HAND_SIZE, "opening", events);
   }
 
-  // §3.5 — mulligans, resolved for p1 fully and then p2. ORDERING: the doc
-  // leaves simultaneity open; sequential seat order is deterministic and,
-  // with full-information events, observationally equivalent.
-  for (const seat of SEATS) {
-    next = resolveMulligans(next, seat, events);
+  // If neither player can place an Active, resolve their mulligans first.
+  // Otherwise the valid player places and sets prizes before the opponent redraws.
+  if (SEATS.every((seat) => !handHasBasic(next, seat))) {
+    for (const seat of SEATS) next = resolveMulligans(next, seat, events);
   }
-
-  // Mulligan compensation (§3.5): you may draw 1 card for EACH mulligan your
-  // OPPONENT took. Mulliganing yourself does not forfeit it — so when both
-  // players mulligan, both are owed (each off the other's count), which is
-  // why the phase holds a per-seat map rather than one owed seat.
-  //
-  // The draw is clamped so a player can never draw themselves below the 6
-  // cards they must still set aside as prizes (§3.8): with an extreme
-  // mulligan run the compensation would otherwise silently short-draw and
-  // leave a player with fewer than 6 prizes, breaking the invariant every
-  // M2 prize-out check rests on.
-  const owed: Record<Seat, number> = { p1: 0, p2: 0 };
-  for (const seat of SEATS) {
-    const spare = Math.max(0, next.players[seat].deck.length - PRIZE_COUNT);
-    owed[seat] = Math.min(next.players[otherSeat(seat)].mulligans, spare);
-  }
-  // Owed 0 is pre-decided: never block the game on a no-op choice, and skip
-  // the phase entirely when neither player is owed anything.
-  const decided: Record<Seat, boolean> = { p1: owed.p1 === 0, p2: owed.p2 === 0 };
   next = {
     ...next,
-    phase:
-      decided.p1 && decided.p2
-        ? { kind: "setup:place", ready: { p1: false, p2: false } }
-        : { kind: "setup:drawExtra", owed, decided },
+    phase: { kind: "setup:place", stage: "opening", ready: { p1: false, p2: false } },
   };
   return ok(next, events);
 }
 
-/** The compensation decision: draw 0…owed extra cards. Placement begins once
-    every owed seat has answered (both may owe a decision — see Phase). */
+/** Draw compensation after prizes, then offer a Bench step for bonus Basics. */
 export function setupDrawExtra(state: GameState, action: SetupDrawExtraAction): ApplyResult {
   const phase = state.phase;
   if (phase.kind !== "setup:drawExtra") {
@@ -275,10 +250,30 @@ export function setupDrawExtra(state: GameState, action: SetupDrawExtraAction): 
     return err("BAD_EXTRA_COUNT", `may draw 0–${owed} extra cards, got ${action.count}`);
   }
   const events: GameEvent[] = [];
-  let next = drawToHand(state, action.seat, action.count, "compensation", events);
+  // Older saved setups may have entered this phase before reserving prizes.
+  let next = setSetupPrizes(state, events);
+  next = drawToHand(next, action.seat, action.count, "compensation", events);
   events.push({ type: "COMPENSATION_DECIDED", seat: action.seat, drawn: action.count, owed });
 
   const decided: Record<Seat, boolean> = { ...phase.decided, [action.seat]: true };
+  if (phase.bonusCards !== undefined) {
+    const drawn = next.players[action.seat].hand.slice(state.players[action.seat].hand.length);
+    const bonusCards = { ...phase.bonusCards, [action.seat]: drawn };
+    if (decided.p1 && decided.p2) {
+      const ready = { p1: false, p2: false };
+      for (const seat of SEATS) {
+        ready[seat] =
+          next.players[seat].bench.length >= BENCH_MAX ||
+          !bonusCards[seat].some((uid) => {
+            const card = cardOfUid(next, uid);
+            return card !== undefined && isBasicPokemon(card);
+          });
+      }
+      next = { ...next, phase: { kind: "setup:place", stage: "bonus", ready, bonusCards } };
+      return ready.p1 && ready.p2 ? finishSetup(next, events) : ok(next, events);
+    }
+    return ok({ ...next, phase: { ...phase, decided, bonusCards } }, events);
+  }
   next = {
     ...next,
     phase:
@@ -333,6 +328,12 @@ export function setupPlaceBench(state: GameState, action: SetupPlaceBenchAction)
   }
   const invalid = basicFromHandError(state, action.seat, action.uid);
   if (invalid !== null) return invalid;
+  if (phase.stage === "bonus" && !phase.bonusCards?.[action.seat].includes(action.uid)) {
+    return err(
+      "SETUP_BONUS_ONLY",
+      "only Basic Pokémon drawn as mulligan bonuses may be benched now",
+    );
+  }
 
   const next = withSide(state, action.seat, {
     ...side,
@@ -342,8 +343,7 @@ export function setupPlaceBench(state: GameState, action: SetupPlaceBenchAction)
   return ok(next, [{ type: "POKEMON_PLACED", seat: action.seat, uid: action.uid, spot: "bench" }]);
 }
 
-/** Locks the seat's placements. When the second seat readies, the rest of
-    setup (§3.8–§3.9: prizes, reveal, turn 1) auto-resolves. */
+/** Opening Ready sets prizes; bonus Ready locks the Bench before the reveal. */
 export function setupReady(state: GameState, action: SetupReadyAction): ApplyResult {
   const phase = state.phase;
   if (phase.kind !== "setup:place") {
@@ -357,23 +357,57 @@ export function setupReady(state: GameState, action: SetupReadyAction): ApplyRes
   }
   const ready = { ...phase.ready, [action.seat]: true };
   const events: GameEvent[] = [{ type: "SETUP_READY", seat: action.seat }];
-  const next: GameState = { ...state, phase: { ...phase, ready } };
+  let next: GameState = { ...state, phase: { ...phase, ready } };
+  if (phase.stage === "opening") {
+    next = setSetupPrizes(next, events, [action.seat]);
+    const opponent = otherSeat(action.seat);
+    if (next.players[opponent].active === null) {
+      next = resolveMulligans(next, opponent, events);
+    }
+    if (!(ready.p1 && ready.p2)) return ok(next, events);
+    const owed = { p1: 0, p2: 0 };
+    for (const seat of SEATS) {
+      owed[seat] = Math.min(
+        next.players[otherSeat(seat)].mulligans,
+        next.players[seat].deck.length,
+      );
+    }
+    const decided = { p1: owed.p1 === 0, p2: owed.p2 === 0 };
+    if (decided.p1 && decided.p2) return finishSetup(next, events);
+    return ok(
+      {
+        ...next,
+        phase: { kind: "setup:drawExtra", owed, decided, bonusCards: { p1: [], p2: [] } },
+      },
+      events,
+    );
+  }
   if (!(ready.p1 && ready.p2)) return ok(next, events);
   return finishSetup(next, events);
 }
 
-/** §3.8–§3.9: prizes down, board face-up, first player's turn begins. */
-function finishSetup(state: GameState, events: GameEvent[]): ApplyResult {
+/** Reserve prizes once, retaining any already-set cards when a setup resumes. */
+function setSetupPrizes(
+  state: GameState,
+  events: GameEvent[],
+  seats: readonly Seat[] = SEATS,
+): GameState {
   let next = state;
-  // §3.8 — the top 6 cards become face-down prizes. The compensation clamp
-  // guarantees the deck can always spare them.
-  for (const seat of SEATS) {
+  for (const seat of seats) {
     const side = next.players[seat];
+    if (side.prizes.length > 0) continue;
     const prizes = side.deck.slice(0, PRIZE_COUNT);
     next = withSide(next, seat, { ...side, deck: side.deck.slice(PRIZE_COUNT), prizes });
     // Copied, not aliased: `prizes` is the array the state now holds.
     events.push({ type: "PRIZES_SET", seat, uids: [...prizes] });
   }
+  return next;
+}
+
+/** Reveal the board and begin the first player's turn. */
+function finishSetup(state: GameState, events: GameEvent[]): ApplyResult {
+  // Preserve compatibility with older saves parked at placement without prizes.
+  const next = setSetupPrizes(state, events);
   // §3.9 — everything flips face-up. The board is already in the state, so
   // the event carries no payload.
   events.push({ type: "SETUP_REVEALED" });

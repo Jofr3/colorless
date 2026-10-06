@@ -4,6 +4,7 @@ import { applyAction, createGame, handCostAction } from "./index";
 import type { EffectOp, GameAction, GameEvent, GameState, PokemonRef, Seat } from "./index";
 import { programFor } from "./registry";
 import {
+  completeSetup,
   FIXTURE_POOL,
   battler,
   benchFromDeck,
@@ -175,22 +176,7 @@ function opened(first: Seat, seed: number): GameState {
   let state = created.state;
   if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
   state = must(applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first }));
-  while (state.phase.kind === "setup:drawExtra") {
-    const phase = state.phase;
-    const s = (["p1", "p2"] as const).find((x) => !phase.decided[x]);
-    if (s === undefined) throw new Error("setup:drawExtra with every seat decided");
-    state = must(applyAction(state, { type: "setupDrawExtra", seat: s, count: phase.owed[s] }));
-  }
-  for (const s of ["p1", "p2"] as const) {
-    // A FILLER when one was dealt, else any Basic (the surgery below re-seats the Active).
-    const hand = state.players[s].hand;
-    const uid =
-      hand.find((h) => state.cardIdByUid[h] === FILLER) ??
-      hand.find((h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic");
-    if (uid === undefined) throw new Error(`no Basic in ${s}'s hand`);
-    state = must(applyAction(state, { type: "setupPlaceActive", seat: s, uid }));
-  }
-  for (const s of ["p1", "p2"] as const) state = must(applyAction(state, { type: "setupReady", seat: s }));
+  state = completeSetup(state);
   return state;
 }
 

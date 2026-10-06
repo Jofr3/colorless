@@ -5,13 +5,13 @@ import type { GameEvent } from "./events";
 import { applyAction, createGame, programFor } from "./index";
 import type { GameState, Seat } from "./index";
 import {
+  completeSetup,
   FIXTURE_POOL,
   attachFromDeck,
   battler,
   benchFromDeck,
   clearBench,
   deckOf,
-  firstBasicInHand,
   handFromDeck,
   handUid,
   must,
@@ -213,20 +213,7 @@ function localSetup(seed: number, first: Seat): GameState {
   state = must(
     applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first }),
   );
-  while (state.phase.kind === "setup:drawExtra") {
-    const phase = state.phase;
-    const seat = (["p1", "p2"] as const).find((s) => !phase.decided[s]);
-    if (seat === undefined) throw new Error("setup:drawExtra with every seat decided");
-    state = must(applyAction(state, { type: "setupDrawExtra", seat, count: phase.owed[seat] }));
-  }
-  for (const seat of ["p1", "p2"] as const) {
-    state = must(
-      applyAction(state, { type: "setupPlaceActive", seat, uid: firstBasicInHand(state, seat) }),
-    );
-  }
-  for (const seat of ["p1", "p2"] as const) {
-    state = must(applyAction(state, { type: "setupReady", seat }));
-  }
+  state = completeSetup(state);
   return state;
 }
 

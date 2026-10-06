@@ -94,11 +94,7 @@ export function SandboxSetup({ onStart }: { onStart: (setup: LocalGameSetup) => 
 
   return (
     <main className="mx-auto flex min-h-svh w-full max-w-2xl flex-col items-center justify-center px-6 py-12 text-white">
-      <h1 className="text-2xl font-bold">Play</h1>
-      <p className="mt-2 text-center text-sm text-white/55">
-        Choose a deck for each player. Play a local game with opening hands, prizes, and turns.
-      </p>
-      <div className="mt-8 grid w-full grid-cols-1 gap-4 sm:grid-cols-2">
+      <div className="grid w-full grid-cols-1 gap-4 sm:grid-cols-2">
         {SLOTS.map(({ owner, label, side }) => (
           <section
             key={owner}
@@ -117,6 +113,7 @@ export function SandboxSetup({ onStart }: { onStart: (setup: LocalGameSetup) => 
               {decks[owner] ? (
                 <div className="w-36 pb-5">
                   <CardBackStack
+                    tone={side}
                     label={
                       <span className="block truncate text-left text-xs font-semibold">
                         {decks[owner].name}
@@ -155,6 +152,7 @@ export function SandboxSetup({ onStart }: { onStart: (setup: LocalGameSetup) => 
       <DeckPickerDialog
         open={picking !== null}
         title={`Choose a deck for ${picking === "opponent" ? "Player 2" : "Player 1"}`}
+        tone={picking === "opponent" ? "red" : "blue"}
         selectedDeckId={picking === null ? null : (decks[picking]?.id ?? null)}
         onSelect={(deck) => {
           if (picking === null) return;

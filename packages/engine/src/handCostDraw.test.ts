@@ -29,7 +29,15 @@ import {
 import { applyAction, createGame, engineVersion } from "./index";
 import type { GameEvent, GameState, Seat } from "./index";
 import { resumeProgram, runProgram } from "./interpreter";
-import { FIXTURE_POOL, battler, basicEnergy, deckOf, itemTrainer, types } from "./testFixtures";
+import {
+  completeSetup,
+  FIXTURE_POOL,
+  battler,
+  basicEnergy,
+  deckOf,
+  itemTrainer,
+  types,
+} from "./testFixtures";
 import { makeInPlay } from "./types";
 
 // 0.370.0 → 0.371.0 — 🆕🆕 D473: THE PRINTED HAND COST WHOSE CONSEQUENT IS GATED ON
@@ -374,15 +382,6 @@ function mustStep(state: GameState, action: Parameters<typeof applyAction>[1]) {
   return { state: result.state, events: [...result.events] };
 }
 
-function firstBasicInHand(state: GameState, side: Seat): string {
-  const uid = state.players[side].hand.find((h) => {
-    const card = POOL[state.cardIdByUid[h] ?? ""];
-    return card?.category === "Pokemon" && card.stage === "Basic";
-  });
-  if (uid === undefined) throw new Error(`no Basic in ${side}'s hand`);
-  return uid;
-}
-
 /** Setup driven against the LOCAL pool (D275's idiom). */
 function localSetup(seed: number, first: Seat): GameState {
   const created = createGame({ seed, decks: { p1: DECK, p2: DECK }, cardPool: POOL });
@@ -392,20 +391,7 @@ function localSetup(seed: number, first: Seat): GameState {
   state = must(
     applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first }),
   );
-  while (state.phase.kind === "setup:drawExtra") {
-    const phase = state.phase;
-    const owed = (["p1", "p2"] as const).find((s) => !phase.decided[s]);
-    if (owed === undefined) throw new Error("setup:drawExtra with every seat decided");
-    state = must(applyAction(state, { type: "setupDrawExtra", seat: owed, count: phase.owed[owed] }));
-  }
-  for (const side of ["p1", "p2"] as const) {
-    state = must(
-      applyAction(state, { type: "setupPlaceActive", seat: side, uid: firstBasicInHand(state, side) }),
-    );
-  }
-  for (const side of ["p1", "p2"] as const) {
-    state = must(applyAction(state, { type: "setupReady", seat: side }));
-  }
+  state = completeSetup(state);
   return state;
 }
 

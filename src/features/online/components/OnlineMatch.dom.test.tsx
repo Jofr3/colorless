@@ -7,6 +7,7 @@ import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { redactGame } from "@luminous/engine";
 import {
   driveSetup,
+  finishOpeningSetup,
   mustCreate,
   ONE_BASIC_DECK,
   handFromDeck,
@@ -101,12 +102,16 @@ const GAME: RedactedGame = {
 it("takes the full online mulligan bonus once, without showing a prompt", () => {
   const created = mustCreate(1, { p1: ONE_BASIC_DECK, p2: ONE_BASIC_DECK });
   if (created.state.phase.kind !== "setup:chooseFirst") throw new Error("Expected coin choice");
-  const pending = mustApply(created.state, {
-    type: "chooseFirstPlayer",
-    seat: created.state.phase.coinWinner,
-    first: "p1",
-  }).state;
+  const pending = finishOpeningSetup(
+    mustApply(created.state, {
+      type: "chooseFirstPlayer",
+      seat: created.state.phase.coinWinner,
+      first: "p1",
+    }).state,
+  ).state;
   if (pending.phase.kind !== "setup:drawExtra") throw new Error("Expected mulligans");
+  expect(pending.players.p1.prizes).toHaveLength(6);
+  expect(pending.players.p2.prizes).toHaveLength(6);
   const onAction = vi.fn();
   const match = (game: RedactedGame, action = onAction, spectating = false) => (
     <StrictMode>
@@ -126,6 +131,8 @@ it("takes the full online mulligan bonus once, without showing a prompt", () => 
     </StrictMode>
   );
   const snapshot = redactGame(pending, "p1");
+  expect(snapshot.board.you.prizesRemaining).toBe(6);
+  expect(snapshot.board.opponent.prizesRemaining).toBe(6);
   const { rerender } = render(match(snapshot));
   expect(onAction).toHaveBeenCalledExactlyOnceWith({
     type: "setupDrawExtra",
@@ -138,6 +145,8 @@ it("takes the full online mulligan bonus once, without showing a prompt", () => 
   rerender(match({ ...snapshot }, freshCallback));
   expect(freshCallback).not.toHaveBeenCalled();
   const applied = mustApply(pending, onAction.mock.calls[0]?.[0]).state;
+  expect(applied.players.p1.prizes).toEqual(pending.players.p1.prizes);
+  expect(applied.players.p2.prizes).toEqual(pending.players.p2.prizes);
   expect(applied.players.p1.hand).toHaveLength(
     pending.players.p1.hand.length + pending.phase.owed.p1,
   );
@@ -172,6 +181,7 @@ it("sends an Item dropped on the mat and opens the server's resulting choice", (
   );
   const { rerender } = render(match(redactGame(state, "p1")));
   const props = cardsLayer.mock.calls.at(-1)?.[0] as PlaymatViewProps;
+  expect(props.usableTrainerIds?.has(uid)).toBe(true);
   const from = { owner: "you", zone: "hand" } as const;
   const to = { owner: "you", zone: "playmat" } as const;
   expect(document.querySelector('[data-card-zone="playmat"]')).not.toBeNull();
@@ -183,6 +193,38 @@ it("sends an Item dropped on the mat and opens the server's resulting choice", (
   const applied = mustApply(state, action).state;
   rerender(match(redactGame(applied, "p1")));
   expect(screen.getByRole("dialog", { name: "Choose cards" })).toBeTruthy();
+});
+
+it("withholds an unusable Trainer drop instead of sending an action that produces a warning", () => {
+  const state = handFromDeck(
+    driveSetup(170, { p1: TRAINER_DECK, p2: TRAINER_DECK }, { first: "p1" }),
+    "p1",
+    "sv01-189",
+    1,
+  );
+  const uid = handUid(state, "p1", "sv01-189");
+  const onAction = vi.fn();
+  wrap(
+    <OnlineMatch
+      game={redactGame(state, "p1")}
+      log={[]}
+      youName="You"
+      opponentName="Opp"
+      opponentAway={null}
+      actionError={null}
+      onAction={onAction}
+      onRematch={vi.fn()}
+    />,
+  );
+  const props = cardsLayer.mock.calls.at(-1)?.[0] as PlaymatViewProps;
+  expect(props.usableTrainerIds?.has(uid)).toBe(false);
+  props.onMoveCard({
+    cardId: uid,
+    from: { owner: "you", zone: "hand" },
+    to: { owner: "you", zone: "playmat" },
+  });
+  expect(onAction).not.toHaveBeenCalled();
+  expect(screen.queryByRole("alert")).toBeNull();
 });
 
 describe("OnlineMatch — the rejection pill (2b-iii-d)", () => {

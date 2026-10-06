@@ -5509,7 +5509,8 @@ export const FIXTURE_POOL: Record<string, Card> = {
         cost: ["Colorless"],
         name: "Full Discharge",
         damage: 20,
-        effect: "Discard all Energy from this Pokémon. Your opponent's Active Pokémon is now Paralyzed.",
+        effect:
+          "Discard all Energy from this Pokémon. Your opponent's Active Pokémon is now Paralyzed.",
       },
       {
         cost: ["Colorless"],
@@ -5586,13 +5587,15 @@ export const FIXTURE_POOL: Record<string, Card> = {
         cost: ["Colorless"],
         name: "Coil Rest",
         damage: 0,
-        effect: "Heal 50 damage from this Pokémon. During your next turn, this Pokémon can't retreat.",
+        effect:
+          "Heal 50 damage from this Pokémon. During your next turn, this Pokémon can't retreat.",
       },
       {
         cost: ["Colorless"],
         name: "Deep Rest",
         damage: 0,
-        effect: "Heal 60 damage from this Pokémon. During your next turn, this Pokémon can't retreat.",
+        effect:
+          "Heal 60 damage from this Pokémon. During your next turn, this Pokémon can't retreat.",
       },
     ],
   }),
@@ -12737,8 +12740,7 @@ export const FIXTURE_POOL: Record<string, Card> = {
         cost: ["Grass"],
         name: "Counterturn",
         damage: "40+",
-        effect:
-          "If there are 3 or fewer cards in your deck, this attack does 200 more damage.",
+        effect: "If there are 3 or fewer cards in your deck, this attack does 200 more damage.",
       },
     ],
   },
@@ -13810,7 +13812,8 @@ export const FIXTURE_POOL: Record<string, Card> = {
         cost: ["Water", "Water", "Water", "Colorless"],
         name: "Frozen Wood",
         damage: "120+",
-        effect: "If this Pokémon has 2 or more {G} Energy attached, this attack does 120 more damage.",
+        effect:
+          "If this Pokémon has 2 or more {G} Energy attached, this attack does 120 more damage.",
       },
     ],
   },
@@ -14026,7 +14029,8 @@ export const FIXTURE_POOL: Record<string, Card> = {
         cost: ["Colorless"],
         name: "Idle Barrage",
         damage: "30",
-        effect: "Your opponent reveals their hand. You may use the effect of a Supporter card you find there as the effect of this attack.",
+        effect:
+          "Your opponent reveals their hand. You may use the effect of a Supporter card you find there as the effect of this attack.",
       },
     ],
   }),
@@ -14567,7 +14571,8 @@ export const FIXTURE_POOL: Record<string, Card> = {
       {
         cost: ["Darkness"],
         name: "Poison Blend",
-        effect: "Flip a coin. If heads, your opponent's Active Pokémon is now Confused and Poisoned.",
+        effect:
+          "Flip a coin. If heads, your opponent's Active Pokémon is now Confused and Poisoned.",
       },
       { cost: ["Darkness", "Darkness"], name: "Bite", damage: 30 },
     ],
@@ -14879,8 +14884,7 @@ export const FIXTURE_POOL: Record<string, Card> = {
       {
         cost: ["Colorless"],
         name: "Twin Grudge",
-        effect:
-          "Choose 2 of your opponent's Pokémon and put 3 damage counters on each of them.",
+        effect: "Choose 2 of your opponent's Pokémon and put 3 damage counters on each of them.",
       },
       {
         cost: ["Colorless"],
@@ -15016,12 +15020,14 @@ export const FIXTURE_POOL: Record<string, Card> = {
       {
         cost: ["Colorless"],
         name: "Deep Sap",
-        effect: "Put damage counters on your opponent's Active Pokémon until its remaining HP is 50.",
+        effect:
+          "Put damage counters on your opponent's Active Pokémon until its remaining HP is 50.",
       },
       {
         cost: ["Colorless"],
         name: "Shallow Sap",
-        effect: "Put damage counters on your opponent's Active Pokémon until its remaining HP is 10.",
+        effect:
+          "Put damage counters on your opponent's Active Pokémon until its remaining HP is 10.",
       },
       { cost: ["Colorless"], name: "Plain Bolt", damage: 20 },
     ],
@@ -15032,9 +15038,7 @@ export const FIXTURE_POOL: Record<string, Card> = {
     stage: "Basic",
     hp: 200,
     retreat: 1,
-    abilities: [
-      { type: "Ability", name: "D450 Idle", effect: "This Ability does nothing." },
-    ],
+    abilities: [{ type: "Ability", name: "D450 Idle", effect: "This Ability does nothing." }],
   }),
   /** 🆕🆕 **D427 — THE SELF-HEAL WHOSE AMOUNT IS THE DAMAGE THE ATTACK JUST DEALT.**
 
@@ -15434,7 +15438,8 @@ export const FIXTURE_POOL: Record<string, Card> = {
         cost: ["Colorless"],
         name: "Copy Veil",
         damage: 10,
-        effect: "Your opponent reveals their hand. You may use the effect of a Supporter card you find there as the effect of this attack.",
+        effect:
+          "Your opponent reveals their hand. You may use the effect of a Supporter card you find there as the effect of this attack.",
       },
     ],
   }),
@@ -22432,41 +22437,106 @@ export interface SetupOptions {
   extraDraw?: Partial<Record<Seat, number>>;
 }
 
-/** Scripts a full setup: choose first, resolve compensation, place actives
-    (+ requested benches), ready both. Returns the state on turn 1. */
+/** Complete opening placement without taking any compensation cards yet. */
+export function finishOpeningSetup(initial: GameState): { state: GameState; events: GameEvent[] } {
+  let state = initial;
+  const events: GameEvent[] = [];
+  while (state.phase.kind === "setup:place" && state.phase.stage === "opening") {
+    const phase = state.phase;
+    const seat = SEATS.find(
+      (s) =>
+        !phase.ready[s] &&
+        (state.players[s].active !== null ||
+          state.players[s].hand.some((uid) => {
+            const card = cardOfUid(state, uid);
+            return card !== undefined && isBasicPokemon(card);
+          })),
+    );
+    if (seat === undefined) throw new Error("No player can complete opening setup");
+    if (state.players[seat].active === null) {
+      const placed = mustApply(state, {
+        type: "setupPlaceActive",
+        seat,
+        uid: firstBasicInHand(state, seat),
+      });
+      state = placed.state;
+      events.push(...placed.events);
+    }
+    const readied = mustApply(state, { type: "setupReady", seat });
+    state = readied.state;
+    events.push(...readied.events);
+  }
+  return { state, events };
+}
+
+/** Scripts opening placements, prizes, compensation and bonus Bench choices. */
 export function driveSetup(
   seed: number,
   decks: { p1: string[]; p2: string[] } = { p1: MIXED_DECK, p2: MIXED_DECK },
   opts: SetupOptions = {},
 ): GameState {
-  let state = mustCreate(seed, decks).state;
-  if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
-  const winner = state.phase.coinWinner;
-  state = must(
-    applyAction(state, { type: "chooseFirstPlayer", seat: winner, first: opts.first ?? winner }),
-  );
-  // Both seats can be owed compensation (each off the other's mulligans), so
-  // every undecided seat has to answer before placement opens.
-  while (state.phase.kind === "setup:drawExtra") {
+  return completeSetup(mustCreate(seed, decks).state, opts);
+}
+
+/** Complete setup using the state's own card pool, including file-local test cards. */
+export function completeSetup(initial: GameState, opts: SetupOptions = {}): GameState {
+  let state = initial;
+  if (state.phase.kind === "setup:chooseFirst") {
+    const winner = state.phase.coinWinner;
+    state = must(
+      applyAction(state, {
+        type: "chooseFirstPlayer",
+        seat: winner,
+        first: opts.first ?? winner,
+      }),
+    );
+  }
+  const pendingBench = { p1: [...(opts.bench?.p1 ?? [])], p2: [...(opts.bench?.p2 ?? [])] };
+  while (state.turn === 0) {
     const phase = state.phase;
-    const seat = SEATS.find((s) => !phase.decided[s]);
-    if (seat === undefined) throw new Error("setup:drawExtra with every seat decided");
-    const count = opts.extraDraw?.[seat] ?? phase.owed[seat];
-    state = must(applyAction(state, { type: "setupDrawExtra", seat, count }));
-  }
-  for (const seat of SEATS) {
-    const activeId = opts.active?.[seat];
-    const uid =
-      activeId === undefined ? firstBasicInHand(state, seat) : handUid(state, seat, activeId);
-    state = must(applyAction(state, { type: "setupPlaceActive", seat, uid }));
-    for (const benchId of opts.bench?.[seat] ?? []) {
-      const benchUid = handUid(state, seat, benchId);
-      state = must(applyAction(state, { type: "setupPlaceBench", seat, uid: benchUid }));
+    if (phase.kind === "setup:drawExtra") {
+      const seat = SEATS.find((s) => !phase.decided[s]);
+      if (seat === undefined) throw new Error("setup:drawExtra with every seat decided");
+      state = must(
+        applyAction(state, {
+          type: "setupDrawExtra",
+          seat,
+          count: opts.extraDraw?.[seat] ?? phase.owed[seat],
+        }),
+      );
+      continue;
     }
-  }
-  for (const seat of SEATS) {
+    if (phase.kind !== "setup:place") throw new Error(`Unexpected setup phase: ${phase.kind}`);
+    const seat = SEATS.find(
+      (s) =>
+        !phase.ready[s] &&
+        (state.players[s].active !== null ||
+          state.players[s].hand.some((uid) => {
+            const card = cardOfUid(state, uid);
+            return card !== undefined && isBasicPokemon(card);
+          })),
+    );
+    if (seat === undefined) throw new Error("No player can complete setup");
+    if (state.players[seat].active === null) {
+      const activeId = opts.active?.[seat];
+      const uid =
+        activeId === undefined ? firstBasicInHand(state, seat) : handUid(state, seat, activeId);
+      state = must(applyAction(state, { type: "setupPlaceActive", seat, uid }));
+    }
+    for (const benchId of [...pendingBench[seat]]) {
+      const uid = state.players[seat].hand.find(
+        (uid) =>
+          state.cardIdByUid[uid] === benchId &&
+          (phase.stage !== "bonus" || phase.bonusCards?.[seat].includes(uid)),
+      );
+      if (uid === undefined) continue;
+      state = must(applyAction(state, { type: "setupPlaceBench", seat, uid }));
+      pendingBench[seat].splice(pendingBench[seat].indexOf(benchId), 1);
+    }
     state = must(applyAction(state, { type: "setupReady", seat }));
   }
+  if (pendingBench.p1.length || pendingBench.p2.length)
+    throw new Error("Requested setup Bench card unavailable");
   return state;
 }
 

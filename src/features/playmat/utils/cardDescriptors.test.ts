@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { CardModel, PlayerBoard } from "../types";
-import { prizeCardDescriptors } from "./cardDescriptors";
+import { EMPTY_CARD_ID, HIDDEN_CARD_ID } from "@luminous/schema";
+import { inPlayCardForDisplay, prizeCardDescriptors } from "./cardDescriptors";
 import { prizeBackId } from "./piles";
 
 // 🆕🆕🆕 D551 — the Pixi prize descriptors, pure. A face-up slot KEEPS the slot id
@@ -24,6 +25,38 @@ const board = (faceUpPrizes: PlayerBoard["faceUpPrizes"], prizesRemaining = 5): 
   bench: [],
   prizesRemaining,
   faceUpPrizes,
+});
+
+describe("setup Pokémon card backs", () => {
+  it.each(["blue", "red"])("uses the %s back for a placed starting Pokémon", (tone) => {
+    const back = `back://twilight/${tone}`;
+    const displayed = inPlayCardForDisplay(cresselia, back, true);
+    expect(displayed.imageUrl).toBe(back);
+    expect(displayed.id).toBe(cresselia.id);
+    expect(displayed.type).toBe("pokemon");
+    expect(cresselia.imageUrl).toBe("https://assets.example/cards/sv06.5-021/high.webp");
+  });
+
+  it("gives an anonymous opponent placement a visible back", () => {
+    const hidden: CardModel = {
+      id: "opponent-active-hidden",
+      cardId: HIDDEN_CARD_ID,
+      name: "Face-down card",
+      type: "trainer",
+    };
+    expect(inPlayCardForDisplay(hidden, BACK)).toEqual({ ...hidden, imageUrl: BACK });
+  });
+
+  it("shows the original card face after setup ends", () => {
+    expect(inPlayCardForDisplay(cresselia, BACK, false)).toBe(cresselia);
+  });
+
+  it("keeps empty placeholders and missing artwork blank", () => {
+    const empty: CardModel = { id: "empty", cardId: EMPTY_CARD_ID, name: "Empty", type: "trainer" };
+    const { imageUrl: _image, ...scanless } = cresselia;
+    expect(inPlayCardForDisplay(empty, BACK)).toBe(empty);
+    expect(inPlayCardForDisplay(scanless, BACK).imageUrl).toBeUndefined();
+  });
 });
 
 describe("🛑 prizeCardDescriptors (D551)", () => {

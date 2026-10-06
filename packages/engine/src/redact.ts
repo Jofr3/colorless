@@ -155,6 +155,10 @@ function redactPhase(state: GameState, viewerSeat: Seat, spectating: boolean): R
       return {
         kind: "setup:place",
         ready: { you: phase.ready[viewerSeat], opponent: phase.ready[otherSeat(viewerSeat)] },
+        ...(phase.stage === undefined ? {} : { stage: phase.stage }),
+        ...(phase.bonusCards === undefined
+          ? {}
+          : { bonusCards: spectating ? [] : phase.bonusCards[viewerSeat] }),
       };
     case "turn:action": {
       // turn:action's actor is phase.seat (phaseView) — only they get an attack
@@ -296,10 +300,14 @@ function redactPrompt(state: GameState, prompt: EffectPrompt): RedactedEffectPro
           : { labels: { yes: prompt.labels.yes, no: prompt.labels.no } }),
         ...(prompt.cards === undefined
           ? {}
-          : { cards: {
-              yes: redactedCardOf(state, prompt.cards.yes),
-              ...(prompt.cards.no === undefined ? {} : { no: redactedCardOf(state, prompt.cards.no) }),
-            } }),
+          : {
+              cards: {
+                yes: redactedCardOf(state, prompt.cards.yes),
+                ...(prompt.cards.no === undefined
+                  ? {}
+                  : { no: redactedCardOf(state, prompt.cards.no) }),
+              },
+            }),
         ...(prompt.targets === undefined ? {} : { targets: prompt.targets.map(redactedRefOf) }),
       };
     case "orderCards":
@@ -443,7 +451,10 @@ function redactPrompt(state: GameState, prompt: EffectPrompt): RedactedEffectPro
         ...(prompt.capsAnyOf === undefined
           ? {}
           : {
-              capsAnyOf: prompt.capsAnyOf.map((entry) => ({ uids: [...entry.uids], max: entry.max })),
+              capsAnyOf: prompt.capsAnyOf.map((entry) => ({
+                uids: [...entry.uids],
+                max: entry.max,
+              })),
             }),
         note: prompt.note,
       };
@@ -572,9 +583,7 @@ function redactedScopeOf(scope: DiscardScope): RedactedDiscardScope {
       return { kind: "upTo", max: scope.max };
   }
   const unhandled: never = scope;
-  throw new Error(
-    `redactedScopeOf: unhandled discard scope ${(unhandled as DiscardScope).kind}`,
-  );
+  throw new Error(`redactedScopeOf: unhandled discard scope ${(unhandled as DiscardScope).kind}`);
 }
 
 /** The acting viewer's Active's attacks with server-computed payability, for the
@@ -805,8 +814,7 @@ function redactedAbilitiesOf(
       // self-evident from the board the player is looking at, so it carries a
       // `reason` below.
       const gateUnmet =
-        ability.playableIf !== undefined &&
-        !conditionHolds(state, viewerSeat, ability.playableIf);
+        ability.playableIf !== undefined && !conditionHolds(state, viewerSeat, ability.playableIf);
       // 🆕 D310 — the §9 PER-BODY gate (Pidove's "if this Pokémon's remaining HP is
       // 30 or less"), through the shared `abilityBodyGateMet` and never spelled
       // here: this mirror is exactly the reader `abilityUsedKey`'s doc block warns
@@ -825,7 +833,8 @@ function redactedAbilitiesOf(
         // "sharedByName" Ability (Fezandipiti ex) keys on its name alone, and a
         // mirror that kept building `${uid}:` would leave the second copy's row
         // lit after the first copy spent the turn's one use.
-        (ability.oncePerTurn && state.allowances.abilitiesUsed.includes(abilityUsedKey(uid, ability))) ||
+        (ability.oncePerTurn &&
+          state.allowances.abilitiesUsed.includes(abilityUsedKey(uid, ability))) ||
         gateUnmet ||
         costUnmet !== null ||
         noTarget;
@@ -915,7 +924,8 @@ function redactedTrainersOf(
   // an id because different prints of one Stadium share it — `playStadium` compares
   // names, so this must too. Resolved once, outside the loop, exactly as the local
   // list has it.
-  const inPlayStadium = state.stadium === null ? undefined : cardOfUid(state, state.stadium.uid)?.name;
+  const inPlayStadium =
+    state.stadium === null ? undefined : cardOfUid(state, state.stadium.uid)?.name;
   const seen = new Set<string>();
   const out: RedactedTrainer[] = [];
   for (const uid of side.hand) {
@@ -968,7 +978,9 @@ function redactedTrainersOf(
     const noTarget =
       !isRareCandy &&
       !isStadium &&
-      (isFossil ? !fossilPlayable(state, viewerSeat) : !programPlayable(state, program.trainer ?? [], viewerSeat));
+      (isFossil
+        ? !fossilPlayable(state, viewerSeat)
+        : !programPlayable(state, program.trainer ?? [], viewerSeat));
     // ⚠️ THE §4 TERM CARRIES THE CARD'S OWN EXEMPTION (D223,
     // `trainerFirstTurnExempt`: Carmine's "If you go first, you may use this card
     // during your first turn."). Without it this mirror would grey out a row
@@ -1169,7 +1181,11 @@ function redactedStadiumAbilityOf(
     ability.playableIf !== undefined &&
     !conditionHolds(state, viewerSeat, ability.playableIf)
   ) {
-    return { label: ability.label, disabled: true, reason: `Only if ${conditionNote(ability.playableIf)}` };
+    return {
+      label: ability.label,
+      disabled: true,
+      reason: `Only if ${conditionNote(ability.playableIf)}`,
+    };
   }
   const noTarget = !programPlayable(state, ability.program, viewerSeat);
   // 🆕🆕🆕 D561 (R-AN) — the printed hand cost; no `excludeUid` (the Stadium is in the
@@ -1250,10 +1266,12 @@ function redactedDiscardableOf(
   const side = state.players[viewerSeat];
   return discardableTargets(state, viewerSeat).map((target) => {
     const body = target.spot === "active" ? side.active : side.bench[target.index];
-    const name = (body === null || body === undefined ? undefined : topCardOf(state, body)?.name) ?? "?";
+    const name =
+      (body === null || body === undefined ? undefined : topCardOf(state, body)?.name) ?? "?";
     const where = target.spot === "active" ? "Active" : `Bench ${target.index + 1}`;
     return {
-      target: target.spot === "active" ? { spot: "active" } : { spot: "bench", index: target.index },
+      target:
+        target.spot === "active" ? { spot: "active" } : { spot: "bench", index: target.index },
       label: `${name} (${where})`,
     };
   });

@@ -1,4 +1,5 @@
-import { useEffect, useRef, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
+import type { SetupAnimationStage } from "./utils/setupDeals";
 import "./playmat.css";
 import { benchLimitFor, CENTER_LINE_TOP, PLAYMAT_WRAPPER_CLASS } from "./constants";
 import { AnimatedCardsLayer } from "./components/AnimatedCardsLayer";
@@ -41,6 +42,8 @@ export interface PlaymatViewProps {
   /** Optional drag-legality gate, forwarded untouched to AnimatedCardsLayer;
       absent (the mock) every placement stays allowed. */
   placementPredicate?: PlacementPredicate;
+  /** Hand Trainer ids that can currently be used; drives the drag label and release. */
+  usableTrainerIds?: ReadonlySet<string>;
   /** Optional override for the Back control's confirmation copy; absent, it asks
       the local /play question. The online match replaces it because leaving there
       forfeits the game (P4 3c-iv). */
@@ -68,11 +71,15 @@ export function PlaymatView({
   logEntries,
   piles,
   placementPredicate,
+  usableTrainerIds,
   leaveConfirm,
   onLeave,
   children,
 }: PlaymatViewProps) {
   const playmatRef = useRef<HTMLElement>(null);
+  const [setupAnimation, setSetupAnimation] = useState<SetupAnimationStage | null>(null);
+  const setupAnimating = setupAnimation !== null;
+  const displayedTurn = setupAnimating && turn.turn > 0 ? { ...turn, turn: 0 } : turn;
 
   const bottomPlayer = perspective;
   const topPlayer = opponentOf(bottomPlayer);
@@ -98,8 +105,9 @@ export function PlaymatView({
       ref={playmatRef}
       className={`${PLAYMAT_WRAPPER_CLASS} has-pixi-cards`}
       aria-label="Trading card game playmat"
+      data-setup-animation={setupAnimation ?? undefined}
     >
-      <div className="contents" inert={interactionDisabled || undefined}>
+      <div className="contents" inert={interactionDisabled || setupAnimating || undefined}>
         {/* A drop-only surface for Items and Supporters, outside the hand. */}
         <div
           className="pointer-events-none absolute inset-x-0 top-0"
@@ -142,7 +150,7 @@ export function PlaymatView({
           <StadiumSlot card={board.stadium} />
         </div>
         {onPassTurn && <TurnControls onPassTurn={onPassTurn} passDisabled={passDisabled} />}
-        <TurnBanner info={turn} passAnimationKey={passAnimationKey} />
+        <TurnBanner info={displayedTurn} passAnimationKey={passAnimationKey} />
         <BackToMenu confirm={leaveConfirm} onLeave={onLeave} />
         <GameLog entries={logEntries} turn={turn.turn} />
         <AnimatedCardsLayer
@@ -151,12 +159,23 @@ export function PlaymatView({
           backDesign="twilight"
           blueBackPlayer={blueBackPlayer}
           turnNumber={turn.turn}
+          activePlayer={turn.activePlayer}
+          holdSetupReveal={setupAnimating && turn.turn > 0}
+          onSetupAnimationChange={setSetupAnimation}
           playmatRef={playmatRef}
           onMoveCard={onMoveCard}
           placementPredicate={placementPredicate}
+          usableTrainerIds={usableTrainerIds}
         />
       </div>
-      {children}
+      <div className="contents" inert={setupAnimating || undefined}>
+        {(!setupAnimating || turn.turn === 0) && children}
+      </div>
+      {setupAnimating && (
+        <output className="sr-only" aria-live="polite">
+          {setupAnimation === "prizes" ? "Setting Prize cards." : "Drawing mulligan bonus cards."}
+        </output>
+      )}
     </section>
   );
 }

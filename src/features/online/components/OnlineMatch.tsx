@@ -5,6 +5,7 @@ import { TransientErrorPill } from "../../../components/TransientErrorPill";
 import { GLASS_HUD_BUTTON, SOLID_PRIMARY_BUTTON } from "../../../lib/glass";
 import { moveToAction } from "../../game/moveToAction";
 import { placementPredicateFor } from "../../game/placement";
+import { usableTrainerIdsFromRedacted } from "../../game/trainerUse";
 import { GAME_OVER_DETAIL, projectionFromRedacted } from "../../game/projection";
 import { viewLogEntries } from "../../game/viewLog";
 import type { LeaveConfirmCopy } from "../../playmat/components/BackToMenu";
@@ -114,14 +115,16 @@ export function OnlineMatch({
   const board = projection.board;
   const phaseKind = game.phase.kind;
   const isViewerTurn = phaseKind === "turn:action" && projection.activePlayer === "you";
+  const usableTrainerIds = useMemo(() => usableTrainerIdsFromRedacted(game), [game]);
 
   const handleMove = useCallback(
     (request: CardMoveRequest) => {
       if (spectating) return;
+      if (request.to.zone === "playmat" && !usableTrainerIds.has(request.cardId)) return;
       const action = moveToAction(request, { phaseKind, isViewerTurn, viewerSeat: seat, board });
       if (action !== null) onAction(action);
     },
-    [phaseKind, isViewerTurn, seat, board, onAction, spectating],
+    [phaseKind, isViewerTurn, seat, board, onAction, spectating, usableTrainerIds],
   );
 
   // The same drop-legality gate the local page uses, from the redacted phase —
@@ -135,6 +138,10 @@ export function OnlineMatch({
             phaseKind,
             isViewerTurn,
             isReady: game.phase.kind === "setup:place" && game.phase.ready.you,
+            bonusCards:
+              game.phase.kind === "setup:place" && game.phase.stage === "bonus"
+                ? (game.phase.bonusCards ?? [])
+                : undefined,
           }),
     [phaseKind, isViewerTurn, game.phase, spectating],
   );
@@ -180,6 +187,7 @@ export function OnlineMatch({
       onMoveCard={handleMove}
       passAnimationKey={projection.turn}
       placementPredicate={placementPredicate}
+      usableTrainerIds={usableTrainerIds}
       leaveConfirm={
         spectating
           ? LEAVE_CONFIRM_WATCHING

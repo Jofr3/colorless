@@ -2600,8 +2600,20 @@ export type Phase =
       be owed at once. `owed` is per seat (0 = nothing to decide); `decided`
       tracks who has answered. Seats owed 0 are pre-decided, and a phase where
       nobody is owed is never entered at all. */
-  | { kind: "setup:drawExtra"; owed: Record<Seat, number>; decided: Record<Seat, boolean> }
-  | { kind: "setup:place"; ready: Record<Seat, boolean> }
+  | {
+      kind: "setup:drawExtra";
+      owed: Record<Seat, number>;
+      decided: Record<Seat, boolean>;
+      /** Present after opening placements, tracking cards eligible for the bonus Bench step. */
+      bonusCards?: Record<Seat, string[]>;
+    }
+  | {
+      kind: "setup:place";
+      ready: Record<Seat, boolean>;
+      /** Absent on older saves, which retain their original placement flow. */
+      stage?: "opening" | "bonus";
+      bonusCards?: Record<Seat, string[]>;
+    }
   // Per-turn allowances live on GameState.allowances (NOT here) so the ko:*
   // interrupts below can replace the phase mid-turn without destroying them.
   | { kind: "turn:action"; seat: Seat }

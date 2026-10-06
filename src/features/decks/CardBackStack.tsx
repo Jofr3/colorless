@@ -1,15 +1,19 @@
 import type { CSSProperties, ReactNode } from "react";
 import { useTiltJuice } from "../../components/useTiltJuice";
 import { cardBackSvgDataUrl } from "../playmat/pixi/cardBackSvg";
+import type { CardBackTone } from "../playmat/types";
 
 // The deck preview's centrepiece: a faux-3D pile of cards whose top card is the
-// exact blue "twilight" back the simulator renders. We reuse the simulator's
+// exact "twilight" back the simulator renders. We reuse the simulator's
 // SVG builder (pixi-free, see cardBackSvg.ts) so the two stay in lockstep, and
 // paint it straight into the DOM as a data URL — built once at module load.
 // Squared corners: the card div clips to rounded-[7px], so the SVG fills all the
 // way to its corners and lets that clip do the rounding — otherwise the SVG's own
 // rounded corners leave a crescent at each corner that shows the div's background.
-const BLUE_BACK = cardBackSvgDataUrl("twilight", "blue", true);
+const BACK_IMAGES: Record<CardBackTone, string> = {
+  blue: cardBackSvgDataUrl("twilight", "blue", true),
+  red: cardBackSvgDataUrl("twilight", "red", true),
+};
 
 // One card in the pile, ordered back-to-front (later layers paint on top).
 // Offsets are PERCENTAGES of the card's own size (CSS translate %), so the pile
@@ -32,14 +36,14 @@ const LAYERS: Layer[] = [
 ];
 
 // The cards under the top one show only their bottom edge peeking out, so they
-// don't carry the blue back at all — they're a flat light blue matching the
+// don't carry the back artwork — they're a flat colour matching the
 // card back's inner border, so the slivers read as the cards' framed edges.
 // Only the top card paints the real back over this.
-const EDGE_COLOR = "#28345a";
+const EDGE_COLORS: Record<CardBackTone, string> = { blue: "#28345a", red: "#5a2834" };
 
-function layerStyle(l: Layer): CSSProperties {
+function layerStyle(l: Layer, tone: CardBackTone): CSSProperties {
   return {
-    backgroundColor: EDGE_COLOR,
+    backgroundColor: EDGE_COLORS[tone],
     transform: `translate(${l.tx}%, ${l.ty}%) rotate(${l.rot}deg) scale(${l.scale})`,
   };
 }
@@ -65,16 +69,19 @@ const TOP_CARD_SCALE = 1.01;
 export function CardBackStack({
   label,
   coverUrl,
+  tone = "blue",
   juiceOnMount,
   dragActive,
 }: {
   label?: ReactNode;
   /** Art for the TOP card (P5-3) — a deck's own headline card, chosen by the
-      server. Absent, the stack stays the blue back it has always been, which is
+      server. Absent, the stack uses its player-coloured back, which is
       what a new or Pokémon-less deck should look like. Only the top card takes
       it: the ones behind are the deck's bulk, and printing the same scan three
       times would read as three copies rather than a stack. */
   coverUrl?: string;
+  /** Player colour for the card back and the stack's visible edges. */
+  tone?: CardBackTone;
   /** Pop the top card with a juice bounce when it first appears (new decks). */
   juiceOnMount?: boolean;
   /** Suppress the hover tilt while a drag is in flight (see useTiltJuice). */
@@ -89,7 +96,7 @@ export function CardBackStack({
       {LAYERS.map((l, i) => {
         // The back cards are static; only the top card is interactive.
         if (i !== LAYERS.length - 1) {
-          return <div key={i} style={layerStyle(l)} className={CARD_CLASS} />;
+          return <div key={i} style={layerStyle(l, tone)} className={CARD_CLASS} />;
         }
         return (
           // Outer layer carries the transient juice (squash + wobble); the inner
@@ -103,7 +110,7 @@ export function CardBackStack({
             <div
               ref={tiltRef}
               {...handlers}
-              style={{ backgroundImage: `url("${coverUrl ?? BLUE_BACK}")`, ...tiltStyle }}
+              style={{ backgroundImage: `url("${coverUrl ?? BACK_IMAGES[tone]}")`, ...tiltStyle }}
               className={`pointer-events-auto cursor-pointer select-none ${CARD_CLASS}`}
             >
               {label && (

@@ -448,12 +448,24 @@ export class CardView {
       .to(this.flip.scale, { x: 1, duration: 0.16, ease: "power2.out" });
   }
 
+  /** Reveal the existing back from an edge-on start without changing its face. */
+  flipIntoView(duration = 0.24) {
+    if (this.destroyed) return;
+    this.flipTimeline?.kill();
+    this.flipTimeline = null;
+    this.flip.scale.x = this.reducedMotion ? 1 : 0;
+    if (this.reducedMotion) return;
+    this.flipTimeline = gsap.timeline({
+      onComplete: () => {
+        this.flipTimeline = null;
+      },
+    });
+    this.flipTimeline.to(this.flip.scale, { x: 1, duration, ease: "power2.out" });
+  }
+
   setTarget(target: CardViewTarget, snap = false) {
     const isFirstTarget = !this.target;
-    this.target = target;
-    this.container.visible = true;
-    this.container.zIndex = this.dragging ? 10_000 : target.zIndex;
-    this.redrawCard(this.id, target.width, target.height);
+    this.applyTarget(target);
 
     if (isFirstTarget) {
       const skipIntroMotion = this.reducedMotion || this.slotLocked || snap;
@@ -483,6 +495,23 @@ export class CardView {
       this.velocity = { x: 0, y: 0, rotation: 0, scale: 0 };
       this.applyCurrentTransform();
     }
+  }
+
+  /** Send a positioned card to its slot with the same spring and pop as a drop. */
+  slingTo(target: CardViewTarget) {
+    if (!this.target || this.reducedMotion) {
+      this.setTarget(target, true);
+      return;
+    }
+    this.applyTarget(target);
+    this.release({ x: 0, y: 0 }, true);
+  }
+
+  private applyTarget(target: CardViewTarget) {
+    this.target = target;
+    this.container.visible = true;
+    this.container.zIndex = this.dragging ? 10_000 : target.zIndex;
+    this.redrawCard(this.id, target.width, target.height);
   }
 
   hide() {

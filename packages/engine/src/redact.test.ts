@@ -126,7 +126,12 @@ describe("redactGame — the viewer's own side", () => {
   it("shows the viewer's active with its battle row (damage / max HP / conditions)", () => {
     let state = turnOneState();
     state = setDamage(state, "p1", 30);
-    state = setConditions(state, "p1", { rotation: "asleep", poisonDamage: 20, burned: true, confusionDamage: 30 });
+    state = setConditions(state, "p1", {
+      rotation: "asleep",
+      poisonDamage: 20,
+      burned: true,
+      confusionDamage: 30,
+    });
     const game = redactGame(state, "p1");
     const active = game.board.you.active;
     if (active === null) throw new Error("expected an active");
@@ -322,10 +327,12 @@ describe("redactGame — the redacted phase (the action-routing discriminant)", 
     // From p1's view, "you" (p1) is ready; from p2's view, "opponent" (p1) is.
     expect(redactGame(state, "p1").phase).toEqual({
       kind: "setup:place",
+      stage: "opening",
       ready: { you: true, opponent: false },
     });
     expect(redactGame(state, "p2").phase).toEqual({
       kind: "setup:place",
+      stage: "opening",
       ready: { you: false, opponent: true },
     });
   });

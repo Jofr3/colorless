@@ -89,8 +89,8 @@ import type { PlayerId } from "../../playmat/types";
 // test-only until real decks, since the fixed pure-basic decks can't park at
 // effect:choose (D64).
 
-const TOP_PANEL_CLASS = "right-4 top-[max(5rem,12dvh)] w-[min(23rem,calc(100vw-2rem))]";
-const PANEL_CLASS = `pointer-events-auto absolute z-[75] rounded-2xl p-4 ${GLASS_PANEL} ${TOP_PANEL_CLASS}`;
+const SETUP_PANEL_CLASS = "setup-prompt-panel";
+const PANEL_CLASS = `pointer-events-auto absolute z-[75] rounded-2xl p-4 ${GLASS_PANEL} ${SETUP_PANEL_CLASS}`;
 const ACCENT_BUTTON = `cursor-pointer rounded-full px-4 py-2 text-sm font-semibold disabled:cursor-default disabled:opacity-40 ${GLASS_ACCENT_BUTTON}`;
 const NEUTRAL_BUTTON = `cursor-pointer rounded-full px-4 py-2 text-sm font-medium ${GLASS_NEUTRAL_BUTTON}`;
 // The compact left-aligned row buttons the effect-prompt dialogs share now come
@@ -147,9 +147,11 @@ export function OnlineHud({
         <Panel
           label="Setup"
           title={
-            activePlaced
-              ? "Drag more Basic Pokémon to your Bench, then Ready."
-              : "Drag a Basic Pokémon from your hand to the Active spot."
+            game.phase.stage === "bonus"
+              ? "Bench any Basic Pokémon from your bonus cards, then Ready."
+              : activePlaced
+                ? "Bench any opening Basic Pokémon, then Ready to set your Prize cards."
+                : "Drag a Basic Pokémon from your hand to the Active spot."
           }
         >
           <button
@@ -273,8 +275,9 @@ function EffectChooseDialog({
       // 🆕🆕🆕 D577 — Tyme's guess; the local HUD's dialog mirrored (D412).
       return <GuessHpDialog prompt={prompt} seat={seat} onAction={onAction} />;
     case "confirm":
-      return prompt.cards !== undefined && prompt.targets !== undefined ? null :
-        <ConfirmPromptDialog prompt={prompt} seat={seat} onAction={onAction} />;
+      return prompt.cards !== undefined && prompt.targets !== undefined ? null : (
+        <ConfirmPromptDialog prompt={prompt} seat={seat} onAction={onAction} />
+      );
     case "choosePokemon":
       return <ChoosePokemonDialog prompt={prompt} board={board} seat={seat} onAction={onAction} />;
     case "choosePokemonMulti":
@@ -442,7 +445,12 @@ function ConfirmPromptDialog({
     const cards = [
       { card: prompt.cards.yes, yes: true },
       ...(prompt.cards.no === undefined ? [] : [{ card: prompt.cards.no, yes: false }]),
-    ].map(({ card, yes }) => ({ name: card.name, cardId: card.cardId, hasImage: card.hasImage, yes }));
+    ].map(({ card, yes }) => ({
+      name: card.name,
+      cardId: card.cardId,
+      hasImage: card.hasImage,
+      yes,
+    }));
     return (
       <Dialog label="Choose an Energy" cardCount={cards.length}>
         <h2 className="text-lg font-semibold text-white">{prompt.note}</h2>
@@ -1278,9 +1286,7 @@ function DiscardEnergyDialog({
                 // above cannot announce. The local HUD's disjunction verbatim.
                 const refused =
                   !selected &&
-                  ((scope.kind === "total" &&
-                    scope.count > 1 &&
-                    picked.length >= scope.count) ||
+                  ((scope.kind === "total" && scope.count > 1 && picked.length >= scope.count) ||
                     (scope.kind === "upTo" && picked.length >= scope.max));
                 return (
                   <li key={uid}>
@@ -1370,7 +1376,11 @@ function DiscardToolsDialog({
   const [picked, setPicked] = useState<string[]>([]);
   const pick = (uid: string) =>
     setPicked((prev) =>
-      prev.includes(uid) ? prev.filter((u) => u !== uid) : prev.length < cap ? [...prev, uid] : prev,
+      prev.includes(uid)
+        ? prev.filter((u) => u !== uid)
+        : prev.length < cap
+          ? [...prev, uid]
+          : prev,
     );
   const ready = declinable || picked.length === cap;
 
@@ -2518,7 +2528,9 @@ function PrizeTile({
     <button
       type="button"
       aria-pressed={selected}
-      aria-label={faceUp === null ? `Prize ${index + 1}` : `Prize ${index + 1} — ${faceUp} (face up)`}
+      aria-label={
+        faceUp === null ? `Prize ${index + 1}` : `Prize ${index + 1} — ${faceUp} (face up)`
+      }
       onClick={onPick}
       className={`${PRIZE_CARD_BASE} ${selected ? PRIZE_CARD_PICKED : PRIZE_CARD_IDLE}`}
     >
@@ -2664,7 +2676,7 @@ function PromoteDialog({
   );
 }
 
-/** A right-side prompt panel for the setup phases. */
+/** A setup prompt centered in the open area beside the board. */
 function Panel({
   label,
   title,

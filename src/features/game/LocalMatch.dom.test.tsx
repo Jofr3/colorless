@@ -6,12 +6,13 @@
 // never deleted when seatKey changed — an orphaned-but-mounted tree with
 // stale props and live buttons. The real PlaymatView shell stays in the
 // tree (the leak's DOM parent); only the Pixi canvas layer is stubbed.
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { StrictMode } from "react";
 import { MemoryRouter } from "react-router-dom";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import {
   driveSetup,
+  finishOpeningSetup,
   ALL_BASIC_DECK,
   mustCreate,
   mustApply,
@@ -20,23 +21,31 @@ import {
 } from "../../../packages/engine/src/testFixtures";
 import { installDomShims } from "../../test/domShims";
 import { LocalMatch } from "./LocalMatch";
+import type { PlaymatViewProps } from "../playmat/PlaymatView";
 
 // Pixi can't initialise in jsdom (no WebGL); everything else is real.
+const cardsLayer = vi.fn();
 vi.mock("../playmat/components/AnimatedCardsLayer", () => ({
-  AnimatedCardsLayer: ({
-    blueBackPlayer,
-    turnNumber,
-  }: { blueBackPlayer: string; turnNumber: number }) => (
-    <div
-      data-testid="animated-card-layer"
-      data-blue-back-player={blueBackPlayer}
-      data-turn-number={turnNumber}
-    />
-  ),
+  AnimatedCardsLayer: (
+    props: PlaymatViewProps & { blueBackPlayer: string; turnNumber: number },
+  ) => {
+    cardsLayer(props);
+    const { blueBackPlayer, turnNumber } = props;
+    return (
+      <div
+        data-testid="animated-card-layer"
+        data-blue-back-player={blueBackPlayer}
+        data-turn-number={turnNumber}
+      />
+    );
+  },
 }));
 
 beforeAll(installDomShims);
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  cardsLayer.mockClear();
+});
 
 function renderMatch() {
   render(
@@ -58,6 +67,43 @@ function renderMatch() {
 }
 
 describe("LocalMatch HUD across turns", () => {
+  it("returns an unusable Trainer drag silently without changing the saved game", () => {
+    const initial = driveSetup(3, { p1: ALL_BASIC_DECK, p2: ALL_BASIC_DECK }, { first: "p1" });
+    const uid = initial.players.p1.hand[0];
+    if (uid === undefined) throw new Error("Expected a hand card");
+    const state = {
+      ...initial,
+      cardIdByUid: { ...initial.cardIdByUid, [uid]: "sv01-189" },
+      cardPool: {
+        ...initial.cardPool,
+        "sv01-189": trainerCard("sv01-189", "Supporter", ""),
+      },
+    };
+    const onSave = vi.fn();
+    render(
+      <MemoryRouter>
+        <LocalMatch
+          setup={{ state, events: [], names: { p1: "One", p2: "Two" }, startedAt: 0 }}
+          onPlayAgain={() => {}}
+          onSave={onSave}
+        />
+      </MemoryRouter>,
+    );
+    const props = cardsLayer.mock.calls.at(-1)?.[0] as PlaymatViewProps;
+    expect(props.usableTrainerIds?.has(uid)).toBe(false);
+    onSave.mockClear();
+    act(() =>
+      props.onMoveCard({
+        cardId: uid,
+        from: { owner: "you", zone: "hand" },
+        to: { owner: "you", zone: "playmat" },
+      }),
+    );
+    expect(screen.queryByRole("alert")).toBeNull();
+    expect(onSave).not.toHaveBeenCalled();
+    expect(props.board.you.hand.some((card) => card.id === uid)).toBe(true);
+  });
+
   it("puts both Buddy-Buddy Poffin selections on the bench without remounting", () => {
     const initial = driveSetup(3, { p1: ALL_BASIC_DECK, p2: ALL_BASIC_DECK }, { first: "p1" });
     const poffinUid = initial.players.p1.hand[0];
@@ -108,14 +154,18 @@ describe("LocalMatch HUD across turns", () => {
   it("automatically draws both players' full mulligan bonuses without a prompt", () => {
     const created = mustCreate(1, { p1: ONE_BASIC_DECK, p2: ONE_BASIC_DECK });
     if (created.state.phase.kind !== "setup:chooseFirst") throw new Error("Expected coin choice");
-    const pending = mustApply(created.state, {
-      type: "chooseFirstPlayer",
-      seat: created.state.phase.coinWinner,
-      first: "p1",
-    }).state;
+    const pending = finishOpeningSetup(
+      mustApply(created.state, {
+        type: "chooseFirstPlayer",
+        seat: created.state.phase.coinWinner,
+        first: "p1",
+      }).state,
+    ).state;
     if (pending.phase.kind !== "setup:drawExtra") throw new Error("Expected mulligans");
     expect(pending.phase.owed.p1).toBeGreaterThan(0);
     expect(pending.phase.owed.p2).toBeGreaterThan(0);
+    expect(pending.players.p1.prizes).toHaveLength(6);
+    expect(pending.players.p2.prizes).toHaveLength(6);
     const onSave = vi.fn();
     render(
       <StrictMode>
@@ -134,20 +184,23 @@ describe("LocalMatch HUD across turns", () => {
       </StrictMode>,
     );
     const saved = onSave.mock.calls.at(-1)?.[0];
-    expect(saved.state.phase.kind).toBe("setup:place");
+    expect(saved.state.phase.kind).toBe("turn:action");
     for (const seat of ["p1", "p2"] as const) {
+      expect(saved.state.players[seat].prizes).toEqual(pending.players[seat].prizes);
       expect(saved.state.players[seat].hand).toHaveLength(
-        pending.players[seat].hand.length + pending.phase.owed[seat],
+        pending.players[seat].hand.length + pending.phase.owed[seat] + (seat === "p1" ? 1 : 0),
       );
       expect(saved.state.players[seat].deck).toHaveLength(
-        pending.players[seat].deck.length - pending.phase.owed[seat],
+        pending.players[seat].deck.length - pending.phase.owed[seat] - (seat === "p1" ? 1 : 0),
       );
     }
     expect(screen.queryByLabelText("Mulligan draw")).toBeNull();
     expect(screen.queryByRole("button", { name: "Skip the draw" })).toBeNull();
     expect(
-      screen.getByText("Drag a Basic Pokémon from your hand to the Active slot."),
-    ).toBeTruthy();
+      screen.queryByText("Drag a Basic Pokémon from your hand to the Active slot."),
+    ).toBeNull();
+    expect(saved.state.players.p1.active).toEqual(pending.players.p1.active);
+    expect(saved.state.players.p2.active).toEqual(pending.players.p2.active);
   });
 
   it("swaps deck and prize back colors with each hot-seat handoff", () => {

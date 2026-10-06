@@ -76,7 +76,7 @@ function offeredRows(): string[] {
   return screen
     .getAllByRole("button")
     .filter((button) => button.hasAttribute("aria-pressed"))
-    .map((button) => button.textContent ?? "");
+    .map((button) => button.getAttribute("aria-label") ?? "");
 }
 
 function texts(entries: SeatLogEntry[]): string[] {

@@ -22,6 +22,8 @@ import {
   STADIUM_TOOL_DECK,
   TRAINER_DECK,
   driveSetup,
+  finishOpeningSetup,
+  ONE_BASIC_DECK,
   handFromDeck,
   handUid,
   must,
@@ -32,7 +34,8 @@ import {
 import type { BoardState, CardPlacement, CardType } from "../playmat/types";
 import { canPlace } from "../playmat/utils/cardMovement";
 import { moveToAction } from "./moveToAction";
-import { gamePlacementPredicate } from "./placement";
+import { gamePlacementPredicate, placementPredicateFor } from "./placement";
+import { redactGame } from "@luminous/engine";
 import { projectGameState } from "./projection";
 
 // Seed 170: MIXED vs MIXED runs mulligan-free (see projection.test.ts), so
@@ -51,6 +54,46 @@ function placingState(): GameState {
     throw new Error(`expected setup:place, got ${state.phase.kind}`);
   return state;
 }
+
+it("offers only bonus cards for the later Bench step on local and online boards", () => {
+  const created = mustCreate(1, { p1: ALL_BASIC_DECK, p2: ONE_BASIC_DECK }).state;
+  if (created.phase.kind !== "setup:chooseFirst") throw new Error("Expected coin choice");
+  let state = finishOpeningSetup(
+    mustApply(created, {
+      type: "chooseFirstPlayer",
+      seat: created.phase.coinWinner,
+      first: "p1",
+    }).state,
+  ).state;
+  if (state.phase.kind !== "setup:drawExtra") throw new Error("Expected bonus draw");
+  state = mustApply(state, {
+    type: "setupDrawExtra",
+    seat: "p1",
+    count: state.phase.owed.p1,
+  }).state;
+  const phase = redactGame(state, "p1").phase;
+  if (phase.kind !== "setup:place") throw new Error("Expected bonus Bench step");
+  const board = projectGameState(state, "p1").board;
+  const localGate = gamePlacementPredicate(state, "p1");
+  const onlineGate = placementPredicateFor({
+    phaseKind: phase.kind,
+    isViewerTurn: false,
+    isReady: phase.ready.you,
+    bonusCards: phase.bonusCards,
+  });
+  expect(phase.stage).toBe("bonus");
+  expect(phase.bonusCards).toHaveLength(2);
+  for (const [index, card] of board.you.hand.entries()) {
+    const source = { owner: "you", zone: "hand", index } as const;
+    const bench = { owner: "you", zone: "bench" } as const;
+    const active = { owner: "you", zone: "active" } as const;
+    const eligible = phase.bonusCards?.includes(card.id);
+    expect(localGate(board, source, bench, card.type)).toBe(eligible);
+    expect(onlineGate(board, source, bench, card.type)).toBe(eligible);
+    expect(localGate(board, source, active, card.type)).toBe(false);
+    expect(onlineGate(board, source, active, card.type)).toBe(false);
+  }
+});
 
 /** setup:place with p1's Active already down (still un-ready) — the board
     shape of confirmed bug (a): a setup energy dropped onto that Active. */

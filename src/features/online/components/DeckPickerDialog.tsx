@@ -20,6 +20,7 @@ import { CardBackStack } from "../../decks/CardBackStack";
 import type { Deck } from "../../decks/data";
 import { folderPath } from "../../decks/tree";
 import { useDeckLibrary } from "../../decks/useDeckLibrary";
+import type { CardBackTone } from "../../playmat/types";
 import type { DeckChoice } from "../net/useLobby";
 import "../online.css";
 
@@ -61,11 +62,13 @@ function DeckOption({
   deck,
   folderLabel,
   selected,
+  tone,
   onSelect,
 }: {
   deck: Deck;
   folderLabel: string | null;
   selected: boolean;
+  tone: CardBackTone;
   onSelect: () => void;
 }) {
   return (
@@ -81,6 +84,7 @@ function DeckOption({
       className={`group relative rounded-[7px] text-left ${FOCUS_RING_INSET}`}
     >
       <CardBackStack
+        tone={tone}
         label={
           <>
             {folderLabel && (
@@ -114,12 +118,14 @@ function DeckOption({
 export function DeckPickerDialog({
   open,
   title,
+  tone = "blue",
   selectedDeckId,
   onSelect,
   onCancel,
 }: {
   open: boolean;
   title?: string;
+  tone?: CardBackTone;
   selectedDeckId: string | null;
   onSelect: (deck: DeckChoice) => void;
   onCancel: () => void;
@@ -354,6 +360,7 @@ export function DeckPickerDialog({
                           <DeckOption
                             key={deck.id}
                             deck={deck}
+                            tone={tone}
                             folderLabel={
                               searching && deck.folderId
                                 ? (folderNameById.get(deck.folderId) ?? null)

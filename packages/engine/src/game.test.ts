@@ -18,6 +18,7 @@ import {
   ONE_BASIC_DECK,
   deepFreeze,
   driveSetup,
+  finishOpeningSetup,
   expectErr,
   handUid,
   must,
@@ -185,7 +186,7 @@ describe("purity", () => {
     expect(JSON.stringify(state)).toBe(snapshot);
 
     // And the compensation draw, on a frozen post-mulligan state.
-    const owedState = deepFreeze(result.state);
+    const owedState = deepFreeze(finishOpeningSetup(result.state).state);
     if (owedState.phase.kind !== "setup:drawExtra") throw new Error("expected setup:drawExtra");
     const owedSnapshot = JSON.stringify(owedState);
     const drawn = applyAction(owedState, { type: "setupDrawExtra", seat: "p1", count: 1 });

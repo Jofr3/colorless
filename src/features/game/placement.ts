@@ -34,6 +34,7 @@ export interface PlacementContext {
   phaseKind: Phase["kind"];
   isViewerTurn: boolean;
   isReady: boolean;
+  bonusCards?: readonly string[];
 }
 
 /** Local wrapper: derive the drop-gate context from the full engine state.
@@ -45,6 +46,10 @@ export function gamePlacementPredicate(game: GameState, viewerSeat: Seat): Place
     phaseKind: phase.kind,
     isViewerTurn: phase.kind === "turn:action" && phase.seat === viewerSeat,
     isReady: phase.kind === "setup:place" && phase.ready[viewerSeat],
+    bonusCards:
+      phase.kind === "setup:place" && phase.stage === "bonus"
+        ? (phase.bonusCards?.[viewerSeat] ?? [])
+        : undefined,
   });
 }
 
@@ -96,6 +101,10 @@ export function placementPredicateFor(ctx: PlacementContext): PlacementPredicate
         // A seat that declared ready has locked its placements — nothing it
         // drops can ever apply (ALREADY_READY).
         if (ctx.isReady) return false;
+        if (ctx.bonusCards !== undefined) {
+          const card = source.index === undefined ? undefined : board.you.hand[source.index];
+          if (card === undefined || !ctx.bonusCards.includes(card.id)) return false;
+        }
         // §3.6–§3.7 place Pokémon. Basic-ness is the engine's call
         // (NOT_A_BASIC_POKEMON — a rule a Pokémon drop gestures at), but a
         // non-Pokémon can never be a Basic, so energies/trainers get no

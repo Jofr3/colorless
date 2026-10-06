@@ -26,6 +26,7 @@ import {
 import type { GameEvent, GameState, Seat } from "./index";
 import { programFor } from "./registry";
 import {
+  completeSetup,
   FIXTURE_POOL,
   battler,
   benchFromDeck,
@@ -281,15 +282,6 @@ function apply(state: GameState, action: Parameters<typeof applyAction>[1]) {
   return result;
 }
 
-function firstBasicInHand(state: GameState, seat: Seat): string {
-  const uid = state.players[seat].hand.find((h) => {
-    const card = POOL[state.cardIdByUid[h] ?? ""];
-    return card?.category === "Pokemon" && card.stage === "Basic";
-  });
-  if (uid === undefined) throw new Error(`no Basic in ${seat}'s hand`);
-  return uid;
-}
-
 function localSetup(seed: number, first: Seat): GameState {
   const created = createGame({ seed, decks: { p1: DECK, p2: DECK }, cardPool: POOL });
   if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
@@ -298,20 +290,7 @@ function localSetup(seed: number, first: Seat): GameState {
   state = must(
     applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first }),
   );
-  while (state.phase.kind === "setup:drawExtra") {
-    const phase = state.phase;
-    const seat = (["p1", "p2"] as const).find((s) => !phase.decided[s]);
-    if (seat === undefined) throw new Error("setup:drawExtra with every seat decided");
-    state = must(applyAction(state, { type: "setupDrawExtra", seat, count: phase.owed[seat] }));
-  }
-  for (const seat of ["p1", "p2"] as const) {
-    state = must(
-      applyAction(state, { type: "setupPlaceActive", seat, uid: firstBasicInHand(state, seat) }),
-    );
-  }
-  for (const seat of ["p1", "p2"] as const) {
-    state = must(applyAction(state, { type: "setupReady", seat }));
-  }
+  state = completeSetup(state);
   return state;
 }
 

@@ -84,7 +84,8 @@ Notes:
 5. **Mulligan check**: a player whose opening hand contains **no Basic Pokémon** must
    reveal the hand, shuffle it back, and draw a new 7. Repeat until they have ≥1 Basic.
    - **Mulligan compensation**: for **each** time a player mulligans, their **opponent**
-     **may draw 1 extra card** (their choice) after both players have a valid hand.
+     **may draw 1 extra card** (their choice) after both players have a valid hand
+     and their six Prize cards have been set aside.
      Engine must count mulligans per player.
    - **Mulliganing yourself does NOT forfeit the compensation you are owed** — the
      counts are independent, so if both players mulligan, **both** draw (each off the
@@ -97,6 +98,16 @@ Notes:
 8. Each player sets aside the **top 6 cards of their deck face-down as Prize cards**.
 9. Both players flip their Active (and Bench) Pokémon face-up. Resolve any
    "when placed at setup" effects if present, then the first player begins.
+
+In the simulator, a player with a valid opening hand chooses their face-down
+Active and optional Bench, then presses Ready to set aside six Prize cards.
+An opponent still missing a Basic then completes their mulligans and opening
+placements. Once both players' prizes are set, compensation is drawn
+automatically. Only Basics from those bonus cards may be added to the Bench;
+the opening Active stays locked. Players with eligible bonus Basics press Ready
+again after their Bench choices, then all Pokémon are revealed. If neither
+opening hand has a Basic, both players must first redraw valid hands so setup
+can proceed.
 
 Deck-out safety at setup: if a player literally cannot set prizes / has issues, that
 is handled by legality, not runtime — assume 60-card legal decks.
@@ -840,8 +851,8 @@ SETUP → (per turn) [ TURN_START → DRAW → ACTION (loop) → ATTACK? → TUR
       → GAME_OVER
 ```
 
-- **SETUP**: coin flip, deal hands, mulligans + compensation, place Active/Bench,
-  set 6 prizes.
+- **SETUP**: coin flip, deal hands, opening Active/Bench and prizes, finish any
+  opponent mulligans and placement, draw compensation, bonus Basics to Bench, reveal.
 - **TURN_START**: reset per-turn counters; resolve start-of-turn triggers.
 - **DRAW**: draw 1 (deck-out ⇒ GAME_OVER for that player).
 - **ACTION**: process player actions in any order under the per-turn caps (§5.2).

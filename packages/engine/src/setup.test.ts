@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { DECK_SIZE, HAND_SIZE, PRIZE_COUNT, applyAction, createGame } from "./index";
-import type { GameState, Seat } from "./index";
+import { phaseViewOf } from "./phaseView";
+import { redactGame } from "./redact";
+import type { GameEvent, GameState, Seat } from "./index";
 import {
   ALL_BASIC_DECK,
   FIXTURE_POOL,
@@ -8,6 +10,7 @@ import {
   ONE_BASIC_DECK,
   deckOf,
   handUid,
+  finishOpeningSetup,
   must,
   mustApply,
   mustCreate,
@@ -78,7 +81,7 @@ describe("createGame", () => {
 });
 
 /** Drives past the coin flip: the winner picks `first`, hands get dealt. */
-function chooseFirst(state: GameState, first: Seat): { state: GameState; events: unknown[] } {
+function chooseFirst(state: GameState, first: Seat): { state: GameState; events: GameEvent[] } {
   if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
   const winner = state.phase.coinWinner;
   return mustApply(state, { type: "chooseFirstPlayer", seat: winner, first });
@@ -101,7 +104,7 @@ describe("chooseFirstPlayer", () => {
     });
     expect(state.firstPlayer).toBe("p2");
     // All-Basic decks cannot mulligan, so the cascade is exactly: choice,
-    // p1's opening 7, p2's opening 7, straight to placement.
+    // p1's opening 7, p2's opening 7, then opening placement.
     expect(events).toEqual([
       { type: "FIRST_PLAYER_CHOSEN", first: "p2", chosenBy: "p1" },
       { type: "CARDS_DRAWN", seat: "p1", uids: state.players.p1.hand, reason: "opening" },
@@ -109,7 +112,13 @@ describe("chooseFirstPlayer", () => {
     ]);
     expect(state.players.p1.hand).toHaveLength(HAND_SIZE);
     expect(state.players.p2.hand).toHaveLength(HAND_SIZE);
-    expect(state.phase).toEqual({ kind: "setup:place", ready: { p1: false, p2: false } });
+    expect(state.phase).toEqual({
+      kind: "setup:place",
+      stage: "opening",
+      ready: { p1: false, p2: false },
+    });
+    expect(state.players.p1.prizes).toHaveLength(0);
+    expect(state.players.p2.prizes).toHaveLength(0);
   });
 
   it("cannot be chosen twice", () => {
@@ -122,29 +131,67 @@ describe("chooseFirstPlayer", () => {
 });
 
 describe("mulligans", () => {
+  it.each(["p1", "p2"] as const)(
+    "sets the valid player's prizes before %s completes mulligans",
+    (mulliganSeat) => {
+      const validSeat = mulliganSeat === "p1" ? "p2" : "p1";
+      const decks = { p1: ALL_BASIC_DECK, p2: ALL_BASIC_DECK };
+      decks[mulliganSeat] = ONE_BASIC_DECK;
+      const created = mustCreate(SEED_MULL, decks);
+      let state = chooseFirst(created.state, "p1").state;
+      expect(state.players[mulliganSeat].mulligans).toBe(0);
+      expect(phaseViewOf(state, mulliganSeat).waitingSeat).toBe(validSeat);
+      expect(applyAction(state, { type: "setupDrawExtra", seat: validSeat, count: 1 }).ok).toBe(
+        false,
+      );
+      const opening = [...state.players[validSeat].hand];
+      state = mustApply(state, {
+        type: "setupPlaceActive",
+        seat: validSeat,
+        uid: opening[0] as string,
+      }).state;
+      state = mustApply(state, {
+        type: "setupPlaceBench",
+        seat: validSeat,
+        uid: opening[1] as string,
+      }).state;
+      const expectedPrizes = state.players[validSeat].deck.slice(0, PRIZE_COUNT);
+      const readied = mustApply(state, { type: "setupReady", seat: validSeat });
+      expect(types(readied.events).indexOf("PRIZES_SET")).toBeLessThan(
+        types(readied.events).indexOf("MULLIGAN_REVEALED"),
+      );
+      expect(readied.state.players[validSeat].prizes).toEqual(expectedPrizes);
+      expect(readied.state.players[mulliganSeat].mulligans).toBeGreaterThan(0);
+      expect(readied.state.players[mulliganSeat].hand).toHaveLength(HAND_SIZE);
+      expect(readied.state.players[mulliganSeat].prizes).toHaveLength(0);
+      expect(phaseViewOf(readied.state, validSeat).waitingSeat).toBe(mulliganSeat);
+    },
+  );
+
   it("auto-resolves reveal/shuffle/redraw until the hand has a Basic", () => {
     const created = mustCreate(SEED_MULL, { p1: ALL_BASIC_DECK, p2: ONE_BASIC_DECK });
-    const { state, events } = chooseFirst(created.state, "p1");
+    const { state, events } = finishOpeningSetup(chooseFirst(created.state, "p1").state);
     const mulligans = state.players.p2.mulligans;
     expect(mulligans).toBeGreaterThanOrEqual(2);
     expect(state.players.p1.mulligans).toBe(0);
     const reveals = events.filter((e) => (e as { type: string }).type === "MULLIGAN_REVEALED");
     expect(reveals).toHaveLength(mulligans);
     // The final hand is valid: 7 cards including the lone Basic.
-    expect(state.players.p2.hand).toHaveLength(HAND_SIZE);
-    expect(state.players.p2.hand.some((u) => state.cardIdByUid[u] === "fix-basic-1")).toBe(true);
+    expect(state.players.p2.hand).toHaveLength(HAND_SIZE - 1);
+    expect(state.players.p2.active).not.toBeNull();
     // One draw per OPPONENT mulligan; p2 mulliganed, so only p1 is owed and
     // p2 (owed 0) is pre-decided rather than prompted.
     expect(state.phase).toEqual({
       kind: "setup:drawExtra",
       owed: { p1: mulligans, p2: 0 },
       decided: { p1: false, p2: true },
+      bonusCards: { p1: [], p2: [] },
     });
   });
 
   it("owes BOTH players when both mulligan — each off the other's count (§3.5)", () => {
     const created = mustCreate(SEED_BOTH_MULL, { p1: ONE_BASIC_DECK, p2: ONE_BASIC_DECK });
-    const { state } = chooseFirst(created.state, "p1");
+    const { state } = finishOpeningSetup(chooseFirst(created.state, "p1").state);
     const p1Mulls = state.players.p1.mulligans;
     const p2Mulls = state.players.p2.mulligans;
     expect(p1Mulls).toBeGreaterThanOrEqual(1);
@@ -154,32 +201,158 @@ describe("mulligans", () => {
       kind: "setup:drawExtra",
       owed: { p1: p2Mulls, p2: p1Mulls },
       decided: { p1: false, p2: false },
+      bonusCards: { p1: [], p2: [] },
     });
   });
 
-  it("opens placement only once every owed seat has answered", () => {
+  it("waits for every bonus draw, then starts when neither player drew a Basic", () => {
     const created = mustCreate(SEED_BOTH_MULL, { p1: ONE_BASIC_DECK, p2: ONE_BASIC_DECK });
-    let state = chooseFirst(created.state, "p1").state;
+    let state = finishOpeningSetup(chooseFirst(created.state, "p1").state).state;
     state = must(applyAction(state, { type: "setupDrawExtra", seat: "p1", count: 0 }));
     expect(state.phase.kind).toBe("setup:drawExtra"); // p2 still owes an answer
     state = must(applyAction(state, { type: "setupDrawExtra", seat: "p2", count: 1 }));
-    expect(state.phase.kind).toBe("setup:place");
+    expect(state.phase.kind).toBe("turn:action");
   });
 
   it("skips compensation when nobody mulligans", () => {
     const created = mustCreate(1, { p1: ALL_BASIC_DECK, p2: ALL_BASIC_DECK });
-    const { state } = chooseFirst(created.state, "p1");
-    expect(state.phase.kind).toBe("setup:place");
+    const { state } = finishOpeningSetup(chooseFirst(created.state, "p1").state);
+    expect(state.phase.kind).toBe("turn:action");
   });
 });
 
 describe("setupDrawExtra", () => {
   function owedState(): { state: GameState; owed: number } {
     const created = mustCreate(SEED_MULL, { p1: ALL_BASIC_DECK, p2: ONE_BASIC_DECK });
-    const { state } = chooseFirst(created.state, "p1");
+    const { state } = finishOpeningSetup(chooseFirst(created.state, "p1").state);
     if (state.phase.kind !== "setup:drawExtra") throw new Error("expected setup:drawExtra");
     return { state, owed: state.phase.owed.p1 };
   }
+
+  it("reserves both prize sets before drawing compensation from the remaining deck", () => {
+    const created = mustCreate(SEED_MULL, { p1: ALL_BASIC_DECK, p2: ONE_BASIC_DECK });
+    const dealt = finishOpeningSetup(chooseFirst(created.state, "p1").state);
+    const state = dealt.state;
+    if (state.phase.kind !== "setup:drawExtra") throw new Error("Expected compensation");
+    expect(types(dealt.events).filter((type) => type === "PRIZES_SET")).toHaveLength(2);
+    for (const seat of ["p1", "p2"] as const) {
+      expect(state.players[seat].prizes).toHaveLength(PRIZE_COUNT);
+      expect(state.players[seat].hand).toHaveLength(HAND_SIZE - 1);
+      expect(state.players[seat].deck).toHaveLength(47);
+    }
+    const count = state.phase.owed.p1;
+    const bonusCards = state.players.p1.deck.slice(0, count);
+    const { state: next, events } = mustApply(state, { type: "setupDrawExtra", seat: "p1", count });
+    expect(next.players.p1.hand.slice(HAND_SIZE - 1)).toEqual(bonusCards);
+    for (const seat of ["p1", "p2"] as const) {
+      expect(next.players[seat].prizes).toEqual(state.players[seat].prizes);
+      expect(next.players[seat].hand.some((uid) => next.players[seat].prizes.includes(uid))).toBe(
+        false,
+      );
+    }
+    expect(events.some((event) => event.type === "PRIZES_SET")).toBe(false);
+  });
+
+  it("locks the opening Active and Bench, then allows only bonus Basics before reveal", () => {
+    const { state, owed } = owedState();
+    const initialActive = state.players.p1.active;
+    const openingBasic = state.players.p1.hand[0] as string;
+    const { state: drawn } = mustApply(state, { type: "setupDrawExtra", seat: "p1", count: owed });
+    if (drawn.phase.kind !== "setup:place" || drawn.phase.stage !== "bonus")
+      throw new Error("Expected bonus Bench step");
+    expect(drawn.turn).toBe(0);
+    expect(drawn.phase.ready).toEqual({ p1: false, p2: true });
+    expect(drawn.players.p1.active).toEqual(initialActive);
+    const bonusUid = drawn.phase.bonusCards?.p1[0] as string;
+    const activeAttempt = applyAction(drawn, {
+      type: "setupPlaceActive",
+      seat: "p1",
+      uid: bonusUid,
+    });
+    expect(activeAttempt.ok).toBe(false);
+    if (!activeAttempt.ok) expect(activeAttempt.error.code).toBe("ACTIVE_ALREADY_PLACED");
+    const openingAttempt = applyAction(drawn, {
+      type: "setupPlaceBench",
+      seat: "p1",
+      uid: openingBasic,
+    });
+    expect(openingAttempt.ok).toBe(false);
+    if (!openingAttempt.ok) expect(openingAttempt.error.code).toBe("SETUP_BONUS_ONLY");
+    // A saved bonus step retains the eligible uids and the locked Active.
+    const restored = JSON.parse(JSON.stringify(drawn)) as GameState;
+    const benched = mustApply(restored, {
+      type: "setupPlaceBench",
+      seat: "p1",
+      uid: bonusUid,
+    }).state;
+    expect(benched.players.p1.bench[0]?.stack).toEqual([bonusUid]);
+    const finished = mustApply(benched, { type: "setupReady", seat: "p1" });
+    expect(types(finished.events)).toEqual([
+      "SETUP_READY",
+      "SETUP_REVEALED",
+      "TURN_STARTED",
+      "CARDS_DRAWN",
+    ]);
+    expect(finished.state.turn).toBe(1);
+    expect(finished.state.players.p1.active).toEqual(initialActive);
+    expect(finished.state.players.p1.prizes).toEqual(state.players.p1.prizes);
+    const ownPhase = redactGame(drawn, "p1").phase;
+    const otherPhase = redactGame(drawn, "p2").phase;
+    const spectatorPhase = redactGame(drawn, "p1", true).phase;
+    expect(ownPhase).toMatchObject({ stage: "bonus", bonusCards: drawn.phase.bonusCards?.p1 });
+    expect(otherPhase).toMatchObject({ bonusCards: [] });
+    expect(spectatorPhase).toMatchObject({ bonusCards: [] });
+  });
+
+  it("skips the bonus Bench step when the Bench is already full", () => {
+    const created = mustCreate(SEED_MULL, { p1: ALL_BASIC_DECK, p2: ONE_BASIC_DECK });
+    let state = chooseFirst(created.state, "p1").state;
+    const opening = [...state.players.p1.hand];
+    state = mustApply(state, {
+      type: "setupPlaceActive",
+      seat: "p1",
+      uid: opening[0] as string,
+    }).state;
+    for (const uid of opening.slice(1, 6))
+      state = mustApply(state, { type: "setupPlaceBench", seat: "p1", uid }).state;
+    state = finishOpeningSetup(state).state;
+    if (state.phase.kind !== "setup:drawExtra") throw new Error("Expected bonus draw");
+    const next = mustApply(state, {
+      type: "setupDrawExtra",
+      seat: "p1",
+      count: state.phase.owed.p1,
+    }).state;
+    expect(next.phase.kind).toBe("turn:action");
+    expect(next.players.p1.bench).toHaveLength(5);
+  });
+
+  it("sets prizes before compensation when resuming an older setup without prizes", () => {
+    const { state, owed } = owedState();
+    const oldState = {
+      ...state,
+      players: {
+        p1: {
+          ...state.players.p1,
+          deck: [...state.players.p1.prizes, ...state.players.p1.deck],
+          prizes: [],
+        },
+        p2: {
+          ...state.players.p2,
+          deck: [...state.players.p2.prizes, ...state.players.p2.deck],
+          prizes: [],
+        },
+      },
+    };
+    const { state: next, events } = mustApply(oldState, {
+      type: "setupDrawExtra",
+      seat: "p1",
+      count: owed,
+    });
+    expect(types(events).slice(0, 3)).toEqual(["PRIZES_SET", "PRIZES_SET", "CARDS_DRAWN"]);
+    expect(next.players.p1.prizes).toEqual(state.players.p1.prizes);
+    expect(next.players.p2.prizes).toEqual(state.players.p2.prizes);
+    expect(next.players.p1.hand.slice(HAND_SIZE - 1)).toEqual(state.players.p1.deck.slice(0, owed));
+  });
 
   it("caps the draw at the owed count", () => {
     const { state, owed } = owedState();
@@ -205,7 +378,7 @@ describe("setupDrawExtra", () => {
       seat: "p1",
       count,
     });
-    expect(next.players.p1.hand).toHaveLength(HAND_SIZE + count);
+    expect(next.players.p1.hand).toHaveLength(HAND_SIZE - 1 + count);
     expect(events).toEqual([
       {
         type: "CARDS_DRAWN",
@@ -226,9 +399,9 @@ describe("setupDrawExtra", () => {
       count: 0,
     });
     // The phase advances, so an event-only consumer has to hear about it.
-    expect(events).toEqual([{ type: "COMPENSATION_DECIDED", seat: "p1", drawn: 0, owed }]);
+    expect(events[0]).toEqual({ type: "COMPENSATION_DECIDED", seat: "p1", drawn: 0, owed });
     expect(next.players.p1.hand).toHaveLength(HAND_SIZE);
-    expect(next.phase.kind).toBe("setup:place");
+    expect(next.phase.kind).toBe("turn:action");
   });
 });
 
@@ -476,9 +649,13 @@ describe("placement", () => {
 });
 
 describe("finishing setup", () => {
-  it("sets prizes, reveals the board and starts turn 1 with a draw", () => {
+  it("preserves the already-set prizes, reveals the board and starts turn 1 with a draw", () => {
     const created = mustCreate(1, { p1: ALL_BASIC_DECK, p2: ALL_BASIC_DECK });
     let state = chooseFirst(created.state, "p1").state;
+    const prizeCards = {
+      p1: state.players.p1.deck.slice(0, PRIZE_COUNT),
+      p2: state.players.p2.deck.slice(0, PRIZE_COUNT),
+    };
     for (const seat of ["p1", "p2"] as const) {
       state = must(
         applyAction(state, {
@@ -494,13 +671,14 @@ describe("finishing setup", () => {
     expect(types(events)).toEqual([
       "SETUP_READY",
       "PRIZES_SET",
-      "PRIZES_SET",
       "SETUP_REVEALED",
       "TURN_STARTED",
       "CARDS_DRAWN",
     ]);
     expect(next.players.p1.prizes).toHaveLength(PRIZE_COUNT);
     expect(next.players.p2.prizes).toHaveLength(PRIZE_COUNT);
+    expect(next.players.p1.prizes).toEqual(prizeCards.p1);
+    expect(next.players.p2.prizes).toEqual(prizeCards.p2);
     // p1 went first and DOES draw on turn 1 (current rules, §4): 60 - 7 hand
     // - 6 prizes - 1 turn draw = 46 left.
     expect(next.players.p1.deck).toHaveLength(46);

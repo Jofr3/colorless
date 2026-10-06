@@ -732,7 +732,19 @@ export const redactedEffectPromptSchema = z.discriminatedUnion("kind", [
     // 🆕🆕🆕 D580 — "use" (Mr. Mime "Look-Alike Show": the EFFECT of a Supporter in the
     // opponent's revealed hand is used; the card moves nowhere). A widening — a 0.463 client
     // refuses it, so DEPLOY THE CLIENT FIRST.
-    dest: z.enum(["bench", "hand", "deck", "deckBottom", "deckTop", "discard", "evolve", "attach", "swap", "name", "use"]),
+    dest: z.enum([
+      "bench",
+      "hand",
+      "deck",
+      "deckBottom",
+      "deckTop",
+      "discard",
+      "evolve",
+      "attach",
+      "swap",
+      "name",
+      "use",
+    ]),
     /** 🆕 D332 — PER-KIND CAPS over the same candidate list, the printed "a
         Pokémon **and** a Trainer card" (Drayton). `max` above stays the TOTAL;
         each entry caps how many picks may come out of ITS `uids`, which are the
@@ -845,6 +857,9 @@ export const redactedPhaseSchema = z.discriminatedUnion("kind", [
   z.object({
     kind: z.literal("setup:place"),
     ready: z.object({ you: z.boolean(), opponent: z.boolean() }),
+    stage: z.enum(["opening", "bonus"]).optional(),
+    /** Only the viewer's bonus card uids; never the opponent's hidden hand. */
+    bonusCards: z.array(z.string()).optional(),
   }),
   z.object({
     kind: z.literal("turn:action"),

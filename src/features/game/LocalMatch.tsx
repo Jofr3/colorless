@@ -9,6 +9,7 @@ import { GameHud } from "./GameHud";
 import { TabletopDice } from "./TabletopDice";
 import { moveToAction } from "./moveToAction";
 import { gamePlacementPredicate } from "./placement";
+import { usableTrainerIdsForGame } from "./trainerUse";
 import { useLocalGame, type LocalGameSetup } from "./useLocalGame";
 
 const ERROR_TTL_MS = 4000;
@@ -53,11 +54,14 @@ export function LocalMatch({
     [tossing, dispatchAction],
   );
 
-  // Drag → action. The engine stays the authority: a null translation
-  // springs back silently, a rejected action shows the pill (nothing else
-  // changes — the board is a pure projection of the accepted state).
+  // Trainer drags use precomputed engine acceptance to spring back silently.
+  // Other translated actions retain their usual rejection feedback.
   const phase = game.phase;
   const board = projection.board;
+  const usableTrainerIds = useMemo(
+    () => usableTrainerIdsForGame(game, viewerSeat),
+    [game, viewerSeat],
+  );
   const handleMoveCard = useCallback(
     (request: CardMoveRequest) => {
       const action = moveToAction(request, {
@@ -66,9 +70,10 @@ export function LocalMatch({
         viewerSeat,
         board,
       });
+      if (request.to.zone === "playmat" && !usableTrainerIds.has(request.cardId)) return;
       if (action !== null) dispatch(action);
     },
-    [phase, viewerSeat, board, dispatch],
+    [phase, viewerSeat, board, dispatch, usableTrainerIds],
   );
 
   // Drop affordances follow the same phase the translator routes by, so the
@@ -133,6 +138,7 @@ export function LocalMatch({
       glowPerspective={viewerSeat === "p1" ? "you" : "opponent"}
       onMoveCard={handleMoveCard}
       placementPredicate={placementPredicate}
+      usableTrainerIds={usableTrainerIds}
       passDisabled={passDisabled}
       passAnimationKey={projection.turn}
       logEntries={logEntries}

@@ -13,9 +13,10 @@ import {
   splitAttackTrailingClause,
 } from "./effects";
 import { applyAction, createGame, engineVersion, logFromEvents } from "./index";
-import type { BoardCondition, GameEvent, GameState, Seat } from "./index";
+import type { BoardCondition, GameEvent, GameState } from "./index";
 import { conditionHolds, conditionNote } from "./interpreter";
 import {
+  completeSetup,
   attachBenchFromDeck,
   attachFromDeck,
   battler,
@@ -170,15 +171,6 @@ function find<T extends GameEvent["type"]>(
   return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
 }
 
-function firstBasicInHand(state: GameState, seat: Seat): string {
-  const uid = state.players[seat].hand.find((h) => {
-    const card = POOL[state.cardIdByUid[h] ?? ""];
-    return card?.category === "Pokemon" && card.stage === "Basic";
-  });
-  if (uid === undefined) throw new Error(`no Basic in ${seat}'s hand`);
-  return uid;
-}
-
 /** `benchCounterSuppressed.test.ts`'s `localSetup`, verbatim in shape: `driveSetup`
     builds its game through `mustCreate`, which reads `FIXTURE_POOL`, so a local pool
     needs its own drive. p2 opens and passes, so p1 carries no §4 first-turn bar. */
@@ -190,20 +182,7 @@ function localSetup(seed: number): GameState {
   state = must(
     applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }),
   );
-  while (state.phase.kind === "setup:drawExtra") {
-    const phase = state.phase;
-    const seat = (["p1", "p2"] as const).find((s) => !phase.decided[s]);
-    if (seat === undefined) throw new Error("setup:drawExtra with every seat decided");
-    state = must(applyAction(state, { type: "setupDrawExtra", seat, count: phase.owed[seat] }));
-  }
-  for (const seat of ["p1", "p2"] as const) {
-    state = must(
-      applyAction(state, { type: "setupPlaceActive", seat, uid: firstBasicInHand(state, seat) }),
-    );
-  }
-  for (const seat of ["p1", "p2"] as const) {
-    state = must(applyAction(state, { type: "setupReady", seat }));
-  }
+  state = completeSetup(state);
   return must(applyAction(state, { type: "endTurn", seat: "p2" }));
 }
 

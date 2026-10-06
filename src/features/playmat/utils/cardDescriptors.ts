@@ -1,3 +1,4 @@
+import { HIDDEN_CARD_ID } from "@luminous/schema";
 import type {
   CardBackTone,
   CardModel,
@@ -23,6 +24,15 @@ export interface CardDescriptor {
   attachedPresentation?: "side" | "behind";
   attachedSide?: SidePosition;
   attachedCollapsed?: boolean;
+}
+
+/** Present setup placements as backs while preserving their ids for dragging. */
+export function inPlayCardForDisplay(
+  card: CardModel,
+  backImageUrl: string,
+  faceDown = false,
+): CardModel {
+  return faceDown || card.cardId === HIDDEN_CARD_ID ? { ...card, imageUrl: backImageUrl } : card;
 }
 
 /** 🆕🆕🆕 D551 — the prize grid's synthetic descriptors, one per still-present slot, read off

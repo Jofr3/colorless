@@ -24,9 +24,10 @@
 
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
-import type { GameAction, GameState, Seat } from "@luminous/engine";
+import type { GameAction, GameState } from "@luminous/engine";
 import { applyAction, createGame } from "@luminous/engine";
 import {
+  completeSetup,
   EMERGENCY_DECK,
   FIXTURE_POOL,
   battler,
@@ -49,15 +50,6 @@ function must(result: ReturnType<typeof applyAction>): GameState {
   return result.state;
 }
 
-function firstBasicInHand(state: GameState, seat: Seat): string {
-  const uid = state.players[seat].hand.find((h) => {
-    const card = FIXTURE_POOL[state.cardIdByUid[h] ?? ""];
-    return card?.category === "Pokemon" && card.stage === "Basic";
-  });
-  if (uid === undefined) throw new Error(`no Basic in ${seat}'s hand`);
-  return uid;
-}
-
 /** `emergencyEvolution.test.ts`'s own setup, reached through the same actions —
     the Ability is the one HUD-reachable producer of a `dest: "evolve"` park. */
 function localSetup(seed: number): GameState {
@@ -72,20 +64,7 @@ function localSetup(seed: number): GameState {
   state = must(
     applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }),
   );
-  while (state.phase.kind === "setup:drawExtra") {
-    const phase = state.phase;
-    const seat = (["p1", "p2"] as const).find((s) => !phase.decided[s]);
-    if (seat === undefined) throw new Error("setup:drawExtra with every seat decided");
-    state = must(applyAction(state, { type: "setupDrawExtra", seat, count: phase.owed[seat] }));
-  }
-  for (const seat of ["p1", "p2"] as const) {
-    state = must(
-      applyAction(state, { type: "setupPlaceActive", seat, uid: firstBasicInHand(state, seat) }),
-    );
-  }
-  for (const seat of ["p1", "p2"] as const) {
-    state = must(applyAction(state, { type: "setupReady", seat }));
-  }
+  state = completeSetup(state);
   return state;
 }
 
