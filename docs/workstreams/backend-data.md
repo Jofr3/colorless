@@ -9,7 +9,7 @@
 |---|---|---|
 | D1 | Backend data strategy | **Own DB** — ingest tcgdex → Cloudflare **D1**, serve our own API |
 | D2 | Accounts & persistence | **Full accounts + auth**; users own their decks |
-| D2a | Auth methods | **Email + password** *and* **social OAuth (Discord + Google)** |
+| D2a | Auth methods | **Email + password** *and* **social OAuth (Google)** |
 | D3 | Catalog scope | **Full-history-capable schema, ingest SV-era first** |
 | D4 | Card images | **Mirror into R2**, serve from our domain |
 | D5 | Card type | **Unify** — one canonical `Card`, with builder/playmat view projections |
@@ -54,7 +54,7 @@ persistence** beyond `localStorage`.
    **D1** database; define **Zod schemas for every tcgdex model** we read.
 3. **Mirror card images into R2**, served from our own domain.
 4. **Serve the catalog** to the frontend, replacing the hand-written fixtures.
-5. **Add accounts + auth** (email/password + Discord/Google OAuth); persist
+5. **Add accounts + auth** (email/password + Google OAuth); persist
    users' **decks** server-side.
 6. **Promote the online lobby to a real server** — a Durable Object over
    WebSocket, reusing the existing lobby reducer + message types.
@@ -240,28 +240,24 @@ data loss rather than a validation failure.
 - **Password-reset + email-verify are 501 stubs** — they need an outbound
   email provider, which is not chosen yet; no token plumbing exists until it
   is (`POST /auth/verify-email`, `POST /auth/reset-password` explain this).
-- **OAuth (Discord + Google):** standard authorization-code flow; CSRF state
+- **OAuth (Google):** standard authorization-code flow; CSRF state
   in a short-lived http-only cookie (also carrying the allowlisted relative
   `?redirect=` path). On callback: verify state → exchange code → fetch
-  profile (Discord `identify email` scopes via `/api/users/@me`; Google
-  `openid email profile` via OIDC userinfo) → find-or-create: linked
+  profile (Google `openid email profile` via OIDC userinfo) → find-or-create: linked
   `oauth_identities` row → that user; else user by **provider-verified**
   email → link (unverified match ⇒ 409, no takeover); else create user
   (`email_verified` from the provider) + identity. Then session + redirect to
   `APP_ORIGIN`. A single user may hold both a password and OAuth identities.
 - **Providers activate by configuration alone** — with secrets absent the
   routes answer `503 {"error":"provider not configured"}`. To activate, register
-  the apps (Discord: <https://discord.com/developers/applications> → OAuth2;
-  Google: <https://console.cloud.google.com/auth/clients>, Web application)
+  a Google OAuth client (<https://console.cloud.google.com/auth/clients>, Web application)
   with BOTH redirect URIs per provider:
-  - `https://luminous-api.jofrescari.workers.dev/auth/oauth/{discord|google}/callback`
-  - `http://localhost:8787/auth/oauth/{discord|google}/callback` (wrangler dev)
+  - `https://luminous-api.jofrescari.workers.dev/auth/oauth/google/callback`
+  - `http://localhost:8787/auth/oauth/google/callback` (wrangler dev)
 
   then install the secrets (from `apps/api/`):
 
   ```sh
-  wrangler secret put DISCORD_CLIENT_ID
-  wrangler secret put DISCORD_CLIENT_SECRET
   wrangler secret put GOOGLE_CLIENT_ID
   wrangler secret put GOOGLE_CLIENT_SECRET
   ```
@@ -763,7 +759,7 @@ POST   /auth/login               # {email, password} → 200 user + session cook
                                  #   uniform 401 on any failure; 429 rate-limited
 POST   /auth/logout              # deletes the session row, clears the cookie → 204
 GET    /auth/me                  # session cookie → user, else 401 (expiry enforced here)
-GET    /auth/oauth/:provider     # discord | google — 302 to provider; 503 until secrets installed
+GET    /auth/oauth/:provider     # google — 302 to provider; 503 until secrets installed
 GET    /auth/oauth/:provider/callback  # state-checked code exchange → session, 302 to APP_ORIGIN
 POST   /auth/verify-email  ·  POST /auth/reset-password
                                  # both 501 — blocked on choosing an email provider (§3.5)
@@ -817,7 +813,7 @@ GET    /lobby/:code/ws           # strict code check (404) → upgrade check (42
   imports.
 - Swap `CARD_POOL` for a fetched, paginated, server-filtered card search.
 - Point deck + folder persistence at the API (behind the `persistedState` seam);
-  add **auth UI** (login/register, Discord/Google buttons, session state).
+  add **auth UI** (login/register, Google buttons, session state).
 - ✅ **Lobby transport swapped** (P1 m8): `net/channel.ts` is a WebSocket
   channel against the DO; lobby types/reducer/codes come from
   `packages/schema`. The api origin is read ONCE, in `src/lib/apiOrigin.ts`,
@@ -851,9 +847,9 @@ GET    /lobby/:code/ws           # strict code check (404) → upgrade check (42
 5. ✅ **Catalog read API** — cards/sets/series with filtering/pagination + KV
    cache (`apps/api/src/catalog/`); canonical domain `Card` in
    `packages/schema/src/catalog/` (§5.2, §6).
-6. ✅ **Auth** — email/password + sessions + Discord/Google OAuth
+6. ✅ **Auth** — email/password + sessions + Google OAuth
    (`apps/api/src/auth/`, §3.5 as-built; email flows 501 pending provider;
-   OAuth 503 until the user sets the four `wrangler secret`s).
+   OAuth 503 until the user sets the two Google `wrangler secret`s).
 7. ✅ **Deck persistence API** — decks/folders CRUD tied to the session user
    (`apps/api/src/decks/`, §6 as-built; domain schemas in
    `packages/schema/src/decks/`; session gate extracted to

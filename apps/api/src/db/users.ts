@@ -47,7 +47,7 @@ export const users = sqliteTable("users", {
 export const oauthIdentities = sqliteTable(
   "oauth_identities",
   {
-    /** "discord" | "google" (§ D2a); text so adding a provider is data-only. */
+    /** "google" (§ D2a); legacy identities remain stored when a provider is removed. */
     provider: text("provider").notNull(),
     providerId: text("provider_id").notNull(),
     userId: text("user_id")

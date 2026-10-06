@@ -315,8 +315,8 @@ export function updateProfile(body: UpdateProfileRequest): Promise<User> {
 /** The url that STARTS an OAuth flow — assign it to window.location (it
     302s to the provider), don't fetch it. The api answers 503 until the
     provider's secrets are installed. */
-export function oauthStartUrl(provider: "discord" | "google"): string {
-  return apiUrl(`/auth/oauth/${provider}`);
+export function oauthStartUrl(provider: "google", redirect = "/decks"): string {
+  return apiUrl(`/auth/oauth/${provider}?${new URLSearchParams({ redirect })}`);
 }
 
 // ---- Decks & folders (every route needs a session; 401 otherwise) -----------

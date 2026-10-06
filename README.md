@@ -27,13 +27,37 @@ Board state is a plain reducer (`utils/cardMovement.ts`): a drag emits a
 
 ```bash
 bun install
-bun run dev        # vite dev server (127.0.0.1:5173)
+bun run dev        # vite dev server (127.0.0.1:5175)
+bun run dev:all    # frontend (5175) + API (8787); Ctrl+C stops both
 bun run build      # tsc -b && vite build
 bun run preview
 bun run typecheck
 bun run lint       # biome
 bun run format     # biome --write
 ```
+
+## Google login
+
+Create a **Web application** OAuth client in [Google Auth Platform](https://console.cloud.google.com/auth/clients).
+Register `http://localhost:8787/auth/oauth/google/callback` for local development
+and `https://luminous-api.jofrescari.workers.dev/auth/oauth/google/callback` for the deployed API.
+Google requires the redirect URI to [match the registered URI exactly](https://developers.google.com/identity/protocols/oauth2/web-server).
+
+For local development, copy `apps/api/.dev.vars.example` to `apps/api/.dev.vars`,
+fill in the client ID and secret, and run `bun run dev:all`.
+Open the app at `http://127.0.0.1:5175`, matching `APP_ORIGIN` for CORS and the post-login redirect.
+If the Google consent screen is in testing mode, add your sign-in account as a test user.
+
+For the deployed API, run these from `apps/api/`:
+
+```sh
+bunx wrangler secret put GOOGLE_CLIENT_ID
+bunx wrangler secret put GOOGLE_CLIENT_SECRET
+```
+
+Set `APP_ORIGIN` to the deployed frontend's exact origin and build the frontend
+with `VITE_API_ORIGIN=https://luminous-api.jofrescari.workers.dev`.
+Google sign-in reports unavailable until both credentials are configured.
 
 ## Project structure
 

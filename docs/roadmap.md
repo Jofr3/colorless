@@ -5,7 +5,7 @@ Live status lives in `progress.md`, not here.
 
 ## Phase 1 — Backend & Data Foundation → `workstreams/backend-data.md`
 Stand up the Bun + Hono API on Cloudflare. Ingest real tcgdex card data into D1,
-mirror images to R2, add accounts + auth (email/password + Discord/Google),
+mirror images to R2, add accounts + auth (email/password + Google),
 persist decks/folders, and stand up the lobby Durable Object (WebSocket) server.
 **Unblocks everything else.**
 

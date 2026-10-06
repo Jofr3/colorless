@@ -5,7 +5,7 @@
 |---|---|---|
 | D1 | Backend data strategy | Own DB — ingest tcgdex → Cloudflare D1, serve our own API |
 | D2 | Accounts & persistence | Full accounts + auth; users own their decks |
-| D2a | Auth methods | Email + password **and** social OAuth (Discord + Google) |
+| D2a | Auth methods | Email + password **and** social OAuth (Google) |
 | D3 | Catalog scope | Full-history-capable schema, ingest SV-era first |
 | D4 | Card images | Mirror into R2, serve from our domain |
 | D5 | Card type | Unify — one canonical `Card`; builder/playmat are view projections |

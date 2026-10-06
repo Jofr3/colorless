@@ -11,11 +11,11 @@ import { z } from "zod";
 import type { Env } from "../env";
 import { fromBase64Url, randomBytes, toBase64Url } from "./encoding";
 
-export type OAuthProvider = "discord" | "google";
+export type OAuthProvider = "google";
 
 /** Narrow a path param to a known provider; null → route 404s. */
 export function parseProvider(value: string): OAuthProvider | null {
-  return value === "discord" || value === "google" ? value : null;
+  return value === "google" ? value : null;
 }
 
 export type OAuthConfig = {
@@ -32,12 +32,6 @@ const PROVIDER_ENDPOINTS: Record<
   OAuthProvider,
   Pick<OAuthConfig, "authorizeUrl" | "tokenUrl" | "userinfoUrl" | "scope">
 > = {
-  discord: {
-    authorizeUrl: "https://discord.com/oauth2/authorize",
-    tokenUrl: "https://discord.com/api/oauth2/token",
-    userinfoUrl: "https://discord.com/api/users/@me",
-    scope: "identify email",
-  },
   google: {
     authorizeUrl: "https://accounts.google.com/o/oauth2/v2/auth",
     tokenUrl: "https://oauth2.googleapis.com/token",
@@ -48,9 +42,8 @@ const PROVIDER_ENDPOINTS: Record<
 
 /** Resolve a provider's config; null while its secrets are not installed. */
 export function oauthConfig(env: Env, provider: OAuthProvider): OAuthConfig | null {
-  const clientId = provider === "discord" ? env.DISCORD_CLIENT_ID : env.GOOGLE_CLIENT_ID;
-  const clientSecret =
-    provider === "discord" ? env.DISCORD_CLIENT_SECRET : env.GOOGLE_CLIENT_SECRET;
+  const clientId = env.GOOGLE_CLIENT_ID;
+  const clientSecret = env.GOOGLE_CLIENT_SECRET;
   if (!clientId || !clientSecret) {
     return null;
   }
@@ -178,17 +171,6 @@ export type OAuthProfile = {
   displayName: string;
 };
 
-// Discord GET /api/users/@me with identify+email scopes. `verified` is the
-// account's email-verification flag; `email` can still be null for
-// pathological accounts, handled upstream.
-const discordUserSchema = z.object({
-  id: z.string().min(1),
-  username: z.string().min(1),
-  global_name: z.string().nullish(),
-  email: z.string().nullish(),
-  verified: z.boolean().nullish(),
-});
-
 // Google OIDC userinfo (openid email profile scopes).
 const googleUserinfoSchema = z.object({
   sub: z.string().min(1),
@@ -198,20 +180,7 @@ const googleUserinfoSchema = z.object({
 });
 
 /** Normalize a provider userinfo payload; null when the shape drifted. */
-export function parseOAuthProfile(provider: OAuthProvider, json: unknown): OAuthProfile | null {
-  if (provider === "discord") {
-    const parsed = discordUserSchema.safeParse(json);
-    if (!parsed.success) {
-      return null;
-    }
-    const { id, username, global_name, email, verified } = parsed.data;
-    return {
-      providerId: id,
-      email: email ? email.toLowerCase() : null,
-      emailVerified: verified === true,
-      displayName: global_name || username,
-    };
-  }
+export function parseOAuthProfile(json: unknown): OAuthProfile | null {
   const parsed = googleUserinfoSchema.safeParse(json);
   if (!parsed.success) {
     return null;

@@ -1,5 +1,5 @@
 // /auth — accounts and sessions (§3.5, §6): email/password register + login,
-// server sessions in D1 behind an http-only cookie, Discord/Google OAuth
+// server sessions in D1 behind an http-only cookie, Google OAuth
 // (config-gated), and 501 stubs for the email-dependent flows.
 //
 // House style as everywhere: the pure logic lives in the sibling modules
@@ -285,7 +285,7 @@ authRoutes.post("/logout", async (c) => {
   return c.body(null, 204);
 });
 
-// --- OAuth (Discord / Google) ------------------------------------------------
+// --- OAuth (Google) ------------------------------------------------
 
 /** Our callback URL on THIS deployment — derived from the request origin, so
     dev (localhost:8787) and prod (workers.dev) register their own URIs. */
@@ -343,7 +343,7 @@ authRoutes.get("/oauth/:provider/callback", async (c) => {
     headers: { Authorization: `Bearer ${accessToken}` },
   });
   const profile = profileResponse.ok
-    ? parseOAuthProfile(provider, await profileResponse.json())
+    ? parseOAuthProfile(await profileResponse.json())
     : null;
   if (profile === null) {
     return c.json({ error: "oauth profile fetch failed" }, 502);

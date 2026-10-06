@@ -67,7 +67,6 @@ function messageForError(error: unknown): string {
 }
 
 const PROVIDER_NAMES: Record<OAuthProvider, string> = {
-  discord: "Discord",
   google: "Google",
 };
 
@@ -145,7 +144,7 @@ function AuthPage({ mode }: { mode: Mode }) {
     if (busy || oauthBusy) return;
     setOauthError(null);
     setOauthBusy(provider);
-    const outcome = await startOAuth(provider);
+    const outcome = await startOAuth(provider, undefined, from);
     // "redirected" means window.location is already changing — keep the
     // button disabled so nothing double-fires while the page tears down.
     if (outcome === "redirected") return;
@@ -256,8 +255,8 @@ function AuthPage({ mode }: { mode: Mode }) {
         </div>
 
         <div className="flex flex-col gap-2">
-          <div className="grid grid-cols-2 gap-2">
-            {(["discord", "google"] as const).map((provider) => (
+          <div className="grid gap-2">
+            {(["google"] as const).map((provider) => (
               <button
                 key={provider}
                 type="button"

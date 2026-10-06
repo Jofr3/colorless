@@ -1,0 +1,5 @@
+# Copy to .dev.vars (gitignored) and fill in a Google OAuth Web application client.
+# Authorized redirect URI: http://localhost:8787/auth/oauth/google/callback
+GOOGLE_CLIENT_ID=
+GOOGLE_CLIENT_SECRET=
+APP_ORIGIN=http://127.0.0.1:5175

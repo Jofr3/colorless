@@ -8,6 +8,7 @@
 import { describe, expect, it } from "vitest";
 import type { Env } from "../env";
 import app from "../index";
+import { unpackStateCookieValue } from "./oauth";
 import { RATE_LIMIT_MAX_ATTEMPTS } from "./rateLimit";
 
 /** In-memory stand-in for the CACHE KV namespace. */
@@ -137,8 +138,17 @@ describe("GET /auth/oauth/:provider (start)", () => {
     expect(res.status).toBe(404);
   });
 
+  it("rejects removed Discord start and callback routes", async () => {
+    for (const path of ["/auth/oauth/discord", "/auth/oauth/discord/callback?code=x&state=y"]) {
+      const res = await app.request(path, {}, envWith());
+      expect(res.status).toBe(404);
+      expect(await res.json()).toEqual({ error: "unknown provider" });
+      expect(res.headers.get("Set-Cookie")).toBeNull();
+    }
+  });
+
   it("503s a known provider whose secrets are not installed", async () => {
-    for (const provider of ["discord", "google"]) {
+    for (const provider of ["google"]) {
       const res = await app.request(`/auth/oauth/${provider}`, {}, envWith());
       expect(res.status).toBe(503);
       expect(await res.json()).toEqual({ error: "provider not configured" });
@@ -146,26 +156,34 @@ describe("GET /auth/oauth/:provider (start)", () => {
   });
 
   it("302s to the provider with a state that matches the cookie", async () => {
-    const env = envWith({ DISCORD_CLIENT_ID: "d-id", DISCORD_CLIENT_SECRET: "d-secret" });
+    const env = envWith({ GOOGLE_CLIENT_ID: "d-id", GOOGLE_CLIENT_SECRET: "d-secret" });
     const res = await app.request(
-      "http://localhost:8787/auth/oauth/discord?redirect=/decks",
+      "http://localhost:8787/auth/oauth/google?redirect=/decks",
       {},
       env,
     );
     expect(res.status).toBe(302);
     const location = new URL(res.headers.get("Location") ?? "");
-    expect(location.origin + location.pathname).toBe("https://discord.com/oauth2/authorize");
+    expect(location.origin + location.pathname).toBe(
+      "https://accounts.google.com/o/oauth2/v2/auth",
+    );
     expect(location.searchParams.get("client_id")).toBe("d-id");
     expect(location.searchParams.get("redirect_uri")).toBe(
-      "http://localhost:8787/auth/oauth/discord/callback",
+      "http://localhost:8787/auth/oauth/google/callback",
     );
-    expect(location.searchParams.get("scope")).toBe("identify email");
+    expect(location.searchParams.get("scope")).toBe("openid email profile");
     const state = location.searchParams.get("state");
     expect(state).toMatch(/^[A-Za-z0-9_-]{22}$/);
     const cookie = res.headers.get("Set-Cookie") ?? "";
     expect(cookie).toContain(`oauth_state=${state}.`);
     expect(cookie).toContain("HttpOnly");
     expect(cookie).toContain("Max-Age=600");
+    expect(
+      unpackStateCookieValue(cookie.split(";")[0]?.slice("oauth_state=".length) ?? null),
+    ).toEqual({
+      state,
+      redirect: "/decks",
+    });
   });
 });
 
@@ -223,7 +241,7 @@ describe("CORS for the credentialed web app", () => {
       {
         method: "OPTIONS",
         headers: {
-          Origin: "http://localhost:5173",
+          Origin: "http://127.0.0.1:5175",
           "Access-Control-Request-Method": "POST",
           "Access-Control-Request-Headers": "content-type",
         },
@@ -231,6 +249,6 @@ describe("CORS for the credentialed web app", () => {
       envWith(),
     );
     expect(res.status).toBe(204);
-    expect(res.headers.get("Access-Control-Allow-Origin")).toBe("http://localhost:5173");
+    expect(res.headers.get("Access-Control-Allow-Origin")).toBe("http://127.0.0.1:5175");
   });
 });

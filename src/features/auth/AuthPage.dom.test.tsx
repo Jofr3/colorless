@@ -48,7 +48,7 @@ describe("Login page", () => {
     expect(screen.getByLabelText("Email")).toBeTruthy();
     expect(screen.getByLabelText("Password")).toBeTruthy();
     expect(screen.getByRole("button", { name: "Sign in" })).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Discord" })).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Discord" })).toBeNull();
     expect(screen.getByRole("button", { name: "Google" })).toBeTruthy();
     const registerLink = screen.getByRole("link", { name: "Create one" });
     expect(registerLink.getAttribute("href")).toBe("/register");
@@ -131,12 +131,26 @@ describe("Login page", () => {
   it("reports an unconfigured OAuth provider inline instead of navigating", async () => {
     stubFetch({
       ...ANONYMOUS_ME,
-      "GET /auth/oauth/discord": () => json({ error: "provider not configured" }, 503),
+      "GET /auth/oauth/google": () => json({ error: "provider not configured" }, 503),
     });
     renderLogin();
 
-    fireEvent.click(screen.getByRole("button", { name: "Discord" }));
+    fireEvent.click(screen.getByRole("button", { name: "Google" }));
 
-    expect(await screen.findByText("Discord sign-in isn't set up yet.")).toBeTruthy();
+    expect(await screen.findByText("Google sign-in isn't set up yet.")).toBeTruthy();
+  });
+
+  it("passes the requested destination to Google login", async () => {
+    const { impl } = stubFetch({
+      ...ANONYMOUS_ME,
+      "GET /auth/oauth/google": () => json({ error: "provider not configured" }, 503),
+    });
+    renderLogin({ pathname: "/login", state: { from: "/settings" } });
+
+    fireEvent.click(screen.getByRole("button", { name: "Google" }));
+
+    await screen.findByText("Google sign-in isn't set up yet.");
+    const request = impl.mock.calls.find(([url]) => String(url).includes("/auth/oauth/google"));
+    expect(new URL(String(request?.[0])).searchParams.get("redirect")).toBe("/settings");
   });
 });

@@ -10,7 +10,7 @@
 
 import { oauthStartUrl } from "../../lib/api";
 
-export type OAuthProvider = "discord" | "google";
+export type OAuthProvider = "google";
 
 export type OAuthStartOutcome =
   /** Provider configured — window.location has been pointed at the flow. */
@@ -28,8 +28,9 @@ export async function startOAuth(
   navigate: (url: string) => void = (url) => {
     window.location.href = url;
   },
+  redirect = "/decks",
 ): Promise<OAuthStartOutcome> {
-  const url = oauthStartUrl(provider);
+  const url = oauthStartUrl(provider, redirect);
   try {
     const response = await fetch(url, { redirect: "manual", credentials: "include" });
     // Cross-origin: a redirect is an opaqueredirect (status 0). Same-origin

@@ -18,14 +18,12 @@ export type Env = {
   APP_ORIGIN?: string;
   // OAuth app credentials (§3.5) — ABSENT until the user registers the apps;
   // the /auth/oauth routes answer 503 meanwhile. Install per provider with:
-  //   wrangler secret put DISCORD_CLIENT_ID     (etc.)
-  DISCORD_CLIENT_ID?: string;
-  DISCORD_CLIENT_SECRET?: string;
+  //   wrangler secret put GOOGLE_CLIENT_ID (and GOOGLE_CLIENT_SECRET)
   GOOGLE_CLIENT_ID?: string;
   GOOGLE_CLIENT_SECRET?: string;
 };
 
-export const DEFAULT_APP_ORIGIN = "http://localhost:5173";
+export const DEFAULT_APP_ORIGIN = "http://127.0.0.1:5175";
 
 /** The web app origin, defaulted for dev. Tolerates an entirely absent env
     (unit tests call app.request() without one). */

@@ -20,8 +20,8 @@ function envWith(vars: Partial<Env>): Env {
 }
 
 describe("parseProvider", () => {
-  it("accepts exactly discord and google", () => {
-    expect(parseProvider("discord")).toBe("discord");
+  it("accepts only google", () => {
+    expect(parseProvider("discord")).toBeNull();
     expect(parseProvider("google")).toBe("google");
     expect(parseProvider("github")).toBeNull();
     expect(parseProvider("")).toBeNull();
@@ -31,25 +31,12 @@ describe("parseProvider", () => {
 
 describe("oauthConfig", () => {
   it("is null until BOTH id and secret are installed", () => {
-    expect(oauthConfig(envWith({}), "discord")).toBeNull();
-    expect(oauthConfig(envWith({ DISCORD_CLIENT_ID: "id" }), "discord")).toBeNull();
-    expect(oauthConfig(envWith({ DISCORD_CLIENT_SECRET: "s" }), "discord")).toBeNull();
-    expect(
-      oauthConfig(envWith({ GOOGLE_CLIENT_ID: "id", GOOGLE_CLIENT_SECRET: "s" }), "discord"),
-    ).toBeNull();
+    expect(oauthConfig(envWith({}), "google")).toBeNull();
+    expect(oauthConfig(envWith({ GOOGLE_CLIENT_ID: "id" }), "google")).toBeNull();
+    expect(oauthConfig(envWith({ GOOGLE_CLIENT_SECRET: "s" }), "google")).toBeNull();
   });
 
   it("resolves per-provider endpoints and scopes once configured", () => {
-    const discord = oauthConfig(
-      envWith({ DISCORD_CLIENT_ID: "d-id", DISCORD_CLIENT_SECRET: "d-secret" }),
-      "discord",
-    );
-    expect(discord).toMatchObject({
-      clientId: "d-id",
-      tokenUrl: "https://discord.com/api/oauth2/token",
-      userinfoUrl: "https://discord.com/api/users/@me",
-      scope: "identify email",
-    });
     const google = oauthConfig(
       envWith({ GOOGLE_CLIENT_ID: "g-id", GOOGLE_CLIENT_SECRET: "g-secret" }),
       "google",
@@ -67,23 +54,23 @@ describe("buildAuthorizeUrl / tokenRequest", () => {
   const config: OAuthConfig = {
     clientId: "client-1",
     clientSecret: "secret-1",
-    authorizeUrl: "https://discord.com/oauth2/authorize",
-    tokenUrl: "https://discord.com/api/oauth2/token",
-    userinfoUrl: "https://discord.com/api/users/@me",
-    scope: "identify email",
+    authorizeUrl: "https://accounts.google.com/o/oauth2/v2/auth",
+    tokenUrl: "https://oauth2.googleapis.com/token",
+    userinfoUrl: "https://openidconnect.googleapis.com/v1/userinfo",
+    scope: "openid email profile",
   };
 
   it("builds the authorize URL with all required, properly-encoded params", () => {
     const url = new URL(
-      buildAuthorizeUrl(config, "http://localhost:8787/auth/oauth/discord/callback", "st4te"),
+      buildAuthorizeUrl(config, "http://localhost:8787/auth/oauth/google/callback", "st4te"),
     );
-    expect(url.origin + url.pathname).toBe("https://discord.com/oauth2/authorize");
+    expect(url.origin + url.pathname).toBe("https://accounts.google.com/o/oauth2/v2/auth");
     expect(url.searchParams.get("response_type")).toBe("code");
     expect(url.searchParams.get("client_id")).toBe("client-1");
     expect(url.searchParams.get("redirect_uri")).toBe(
-      "http://localhost:8787/auth/oauth/discord/callback",
+      "http://localhost:8787/auth/oauth/google/callback",
     );
-    expect(url.searchParams.get("scope")).toBe("identify email");
+    expect(url.searchParams.get("scope")).toBe("openid email profile");
     expect(url.searchParams.get("state")).toBe("st4te");
     // The redirect URI must arrive percent-encoded on the wire.
     expect(url.search).toContain("redirect_uri=http%3A%2F%2Flocalhost");
@@ -167,40 +154,8 @@ describe("sanitizeRedirect", () => {
 });
 
 describe("parseOAuthProfile", () => {
-  it("normalizes a discord user (global_name preferred, email lowercased)", () => {
-    const profile = parseOAuthProfile("discord", {
-      id: "80351110224678912",
-      username: "nelly",
-      discriminator: "0",
-      global_name: "Nelly",
-      email: "Nelly@Example.COM",
-      verified: true,
-      avatar: "8342729096ea3675442027381ff50dfe",
-    });
-    expect(profile).toEqual({
-      providerId: "80351110224678912",
-      email: "nelly@example.com",
-      emailVerified: true,
-      displayName: "Nelly",
-    });
-  });
-
-  it("handles a discord user with null global_name and missing email", () => {
-    const profile = parseOAuthProfile("discord", {
-      id: "1",
-      username: "legacy_user",
-      global_name: null,
-    });
-    expect(profile).toEqual({
-      providerId: "1",
-      email: null,
-      emailVerified: false,
-      displayName: "legacy_user",
-    });
-  });
-
   it("normalizes a google userinfo payload", () => {
-    const profile = parseOAuthProfile("google", {
+    const profile = parseOAuthProfile({
       sub: "10769150350006150715113082367",
       name: "Ash Ketchum",
       given_name: "Ash",
@@ -218,16 +173,15 @@ describe("parseOAuthProfile", () => {
   });
 
   it("falls back to the email local part, then 'player', for nameless google accounts", () => {
-    expect(parseOAuthProfile("google", { sub: "1", email: "misty@example.com" })).toMatchObject({
+    expect(parseOAuthProfile({ sub: "1", email: "misty@example.com" })).toMatchObject({
       displayName: "misty",
       emailVerified: false, // email present but email_verified absent → NOT verified
     });
-    expect(parseOAuthProfile("google", { sub: "1" })).toMatchObject({ displayName: "player" });
+    expect(parseOAuthProfile({ sub: "1" })).toMatchObject({ displayName: "player" });
   });
 
   it("rejects drifted payloads with null", () => {
-    expect(parseOAuthProfile("discord", { username: "no-id" })).toBeNull();
-    expect(parseOAuthProfile("google", { email: "no-sub@example.com" })).toBeNull();
-    expect(parseOAuthProfile("google", "nope")).toBeNull();
+    expect(parseOAuthProfile({ email: "no-sub@example.com" })).toBeNull();
+    expect(parseOAuthProfile("nope")).toBeNull();
   });
 });
