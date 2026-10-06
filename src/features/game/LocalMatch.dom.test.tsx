@@ -16,7 +16,9 @@ import { LocalMatch } from "./LocalMatch";
 
 // Pixi can't initialise in jsdom (no WebGL); everything else is real.
 vi.mock("../playmat/components/AnimatedCardsLayer", () => ({
-  AnimatedCardsLayer: () => null,
+  AnimatedCardsLayer: ({ blueBackPlayer }: { blueBackPlayer: string }) => (
+    <div data-testid="animated-card-layer" data-blue-back-player={blueBackPlayer} />
+  ),
 }));
 
 beforeAll(installDomShims);
@@ -42,6 +44,30 @@ function renderMatch() {
 }
 
 describe("LocalMatch HUD across turns", () => {
+  it("swaps deck and prize back colors with each hot-seat handoff", () => {
+    renderMatch();
+    const initialPerspective = document.body.dataset.perspective;
+    const anchors = Array.from(document.querySelectorAll<HTMLElement>("[data-card-back-tone]"));
+    expect(anchors).toHaveLength(14);
+    const initialColors = anchors.map((anchor) => anchor.dataset.cardBackTone);
+
+    for (let pass = 1; pass <= 4; pass += 1) {
+      fireEvent.click(screen.getByRole("button", { name: "Pass" }));
+      const swapped = pass % 2 === 1;
+      expect(document.body.dataset.perspective === initialPerspective).toBe(!swapped);
+      const current = Array.from(document.querySelectorAll<HTMLElement>("[data-card-back-tone]"));
+      expect(current.map((anchor) => anchor.dataset.cardId)).toEqual(
+        anchors.map((anchor) => anchor.dataset.cardId),
+      );
+      expect(current.map((anchor) => anchor.dataset.cardBackTone)).toEqual(
+        initialColors.map((tone) => (swapped ? (tone === "blue" ? "red" : "blue") : tone)),
+      );
+      // The canvas must receive the same mapping as its deck/prize DOM anchors.
+      const blueBackPlayer = screen.getByTestId("animated-card-layer").dataset.blueBackPlayer;
+      expect(blueBackPlayer).toBe(document.body.dataset.perspective);
+    }
+  });
+
   it("keeps exactly one Turn actions panel as turns pass", () => {
     renderMatch();
     expect(document.querySelectorAll('[aria-label="Turn actions"]')).toHaveLength(1);

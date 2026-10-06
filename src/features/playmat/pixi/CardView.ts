@@ -223,6 +223,10 @@ export class CardView {
 
   private readonly juice = new Container();
 
+  private readonly flip = new Container();
+
+  private flipTimeline: gsap.core.Timeline | null = null;
+
   private readonly cardLayer = new Container();
 
   private readonly placeholder = new Graphics();
@@ -323,7 +327,8 @@ export class CardView {
     this.lift.addChild(this.emphasisScale);
     this.emphasisScale.addChild(this.pressSquash);
     this.pressSquash.addChild(this.juice);
-    this.juice.addChild(this.cardLayer);
+    this.juice.addChild(this.flip);
+    this.flip.addChild(this.cardLayer);
     this.cardLayer.addChild(this.placeholder, this.cardMesh, this.clipMask);
 
     this.setTextureUrl(options.textureUrl);
@@ -379,47 +384,60 @@ export class CardView {
       return;
     }
 
-    // Swapping the texture on an already-loaded card (e.g. cycling the card-back
-    // design) earns a gentle juice pop on top of the alpha fade, reusing the
-    // exact juice primitive normal cards use — so the change reads as an
-    // intentional "flip" rather than a silent repaint. First loads don't pop.
     const isSwap = this.loaded;
-
+    this.flipTimeline?.kill();
+    this.flipTimeline = null;
+    this.flip.scale.x = 1;
+    gsap.killTweensOf(this.cardMesh);
     this.textureUrl = textureUrl;
-    this.loaded = false;
-    this.placeholder.visible = true;
-    this.cardMesh.alpha = 0;
+    // Leave the old face visible while loading the replacement.
+    if (!isSwap) {
+      this.placeholder.visible = true;
+      this.cardMesh.alpha = 0;
+    } else {
+      this.cardMesh.alpha = 1;
+    }
     const loadId = ++this.textureLoadId;
 
     loadTexture(textureUrl)
       .then((texture) => {
-        if (this.destroyed || loadId !== this.textureLoadId) {
-          return;
-        }
+        if (this.destroyed || loadId !== this.textureLoadId) return;
 
-        this.cardMesh.texture = texture;
-        // The texture swap auto-refreshes the geometry's source dimensions
-        // (PerspectiveMesh.textureUpdated). Re-apply our current corners so
-        // the warp stays put across the swap rather than snapping to the
-        // texture's native pixel rect.
-        this.refreshMeshCornersAfterTextureSwap();
-        this.loaded = true;
-        this.placeholder.visible = false;
-        gsap.to(this.cardMesh, {
-          duration: this.reducedMotion ? 0 : 0.16,
-          ease: "power2.out",
-          pixi: { alpha: 1 },
-        });
+        const applyTexture = () => {
+          this.cardMesh.texture = texture;
+          this.refreshMeshCornersAfterTextureSwap();
+          this.loaded = true;
+          this.placeholder.visible = false;
+          this.cardMesh.alpha = 1;
+        };
+
         if (isSwap && !this.reducedMotion) {
-          this.juiceUp(0.03, (this.seed > 0.5 ? 1 : -1) * 0.05);
+          // Rotate edge-on, change faces at the midpoint, then open again.
+          // A dedicated container keeps the flip independent of hover and juice.
+          this.flipTimeline = gsap.timeline({
+            onComplete: () => {
+              this.flipTimeline = null;
+            },
+          });
+          this.flipTimeline
+            .to(this.flip.scale, { x: 0, duration: 0.12, ease: "power2.in" })
+            .call(applyTexture)
+            .to(this.flip.scale, { x: 1, duration: 0.16, ease: "power2.out" });
+        } else {
+          applyTexture();
+          if (!isSwap && !this.reducedMotion) {
+            this.cardMesh.alpha = 0;
+            gsap.to(this.cardMesh, {
+              duration: 0.16,
+              ease: "power2.out",
+              pixi: { alpha: 1 },
+            });
+          }
         }
       })
       .catch((error) => {
-        if (!this.destroyed) {
-          this.loaded = false;
-          this.placeholder.visible = true;
-          // Keep the graceful grey placeholder, but make the failure observable
-          // instead of swallowing it (a CDN/CORS outage is otherwise invisible).
+        if (!this.destroyed && loadId === this.textureLoadId) {
+          // Failed replacements keep the previous face; first loads keep the placeholder.
           console.warn(`CardView: texture failed to load for "${this.id}" (${textureUrl})`, error);
         }
       });
@@ -474,6 +492,9 @@ export class CardView {
 
   setReducedMotion(reducedMotion: boolean) {
     this.reducedMotion = reducedMotion;
+    if (reducedMotion && this.flipTimeline) {
+      this.flipTimeline.progress(1);
+    }
   }
 
   setHovered(hovered: boolean) {
@@ -725,6 +746,7 @@ export class CardView {
     this.holdTween?.kill();
     this.zIndexReturnTween?.kill();
     this.introCall?.kill();
+    this.flipTimeline?.kill();
     this.juiceState = null;
     gsap.killTweensOf([
       this.container,

@@ -50,12 +50,14 @@ function ActiveCardSlot({
 
 function SidePiles({
   owner,
+  blueBackPlayer,
   prizesRemaining,
   faceUpPrizes,
   side,
   pile,
 }: {
   owner: PlayerId;
+  blueBackPlayer?: PlayerId;
   prizesRemaining: number;
   /** 🆕🆕🆕 D551 — the side's face-up prizes, straight through to PrizeGrid. */
   faceUpPrizes: readonly FaceUpPrize[];
@@ -63,7 +65,7 @@ function SidePiles({
   pile?: PileState;
 }) {
   const isTop = side === "top";
-  const cardBackTone = cardBackToneFor(owner);
+  const cardBackTone = cardBackToneFor(owner, blueBackPlayer);
 
   return (
     <>
@@ -111,12 +113,14 @@ function SidePiles({
 
 function BenchArea({
   owner,
+  blueBackPlayer,
   player,
   side,
   benchLimit,
   pile,
 }: {
   owner: PlayerId;
+  blueBackPlayer?: PlayerId;
   player: PlayerBoard;
   side: SidePosition;
   benchLimit: number;
@@ -127,6 +131,7 @@ function BenchArea({
       <Bench cards={player.bench} owner={owner} side={side} benchLimit={benchLimit} />
       <SidePiles
         owner={owner}
+        blueBackPlayer={blueBackPlayer}
         prizesRemaining={player.prizesRemaining}
         faceUpPrizes={player.faceUpPrizes}
         side={side}
@@ -138,6 +143,7 @@ function BenchArea({
 
 export function PlayerSide({
   owner,
+  blueBackPlayer,
   side,
   player,
   activeTurn = false,
@@ -145,6 +151,7 @@ export function PlayerSide({
   pile,
 }: {
   owner: PlayerId;
+  blueBackPlayer?: PlayerId;
   side: SidePosition;
   player: PlayerBoard;
   activeTurn?: boolean;
@@ -155,7 +162,14 @@ export function PlayerSide({
   const isTop = side === "top";
   const activeSlot = <ActiveCardSlot card={player.active} active={activeTurn} owner={owner} />;
   const bench = (
-    <BenchArea owner={owner} player={player} side={side} benchLimit={benchLimit} pile={pile} />
+    <BenchArea
+      owner={owner}
+      blueBackPlayer={blueBackPlayer}
+      player={player}
+      side={side}
+      benchLimit={benchLimit}
+      pile={pile}
+    />
   );
 
   return (

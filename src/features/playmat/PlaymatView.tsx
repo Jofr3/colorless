@@ -84,6 +84,8 @@ export function PlaymatView({
   // Mirror the perspective onto <body> so the shared background glow
   // (index.css) flips blue/red top-to-bottom on the opponent's turn.
   const bodyPerspective = glowPerspective ?? perspective;
+  // Keep card backs tied to the physical seats when the hot-seat projection re-bases.
+  const blueBackPlayer = bodyPerspective === "you" ? bottomPlayer : topPlayer;
   useEffect(() => {
     document.body.dataset.perspective = bodyPerspective;
     return () => {
@@ -111,6 +113,7 @@ export function PlaymatView({
         <BoardSummary board={board} perspectivePlayer={bottomPlayer} piles={piles} />
         <PlayerSide
           owner={topPlayer}
+          blueBackPlayer={blueBackPlayer}
           player={board[topPlayer]}
           side="top"
           activeTurn={turn.activePlayer === topPlayer}
@@ -119,6 +122,7 @@ export function PlaymatView({
         />
         <PlayerSide
           owner={bottomPlayer}
+          blueBackPlayer={blueBackPlayer}
           player={board[bottomPlayer]}
           side="bottom"
           activeTurn={turn.activePlayer === bottomPlayer}
@@ -145,6 +149,7 @@ export function PlaymatView({
           board={board}
           perspectivePlayer={bottomPlayer}
           backDesign="twilight"
+          blueBackPlayer={blueBackPlayer}
           playmatRef={playmatRef}
           onMoveCard={onMoveCard}
           placementPredicate={placementPredicate}

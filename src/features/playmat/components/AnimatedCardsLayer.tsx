@@ -43,6 +43,7 @@ interface AnimatedCardsLayerProps {
   board: BoardState;
   perspectivePlayer: PlayerId;
   backDesign: CardBackDesign;
+  blueBackPlayer?: PlayerId;
   playmatRef: RefObject<HTMLElement | null>;
   onMoveCard: (request: CardMoveRequest) => void;
   /** Drop-legality gate consulted for drop-zone filtering, the live reorder
@@ -215,6 +216,7 @@ function collectCardDescriptors(
   board: BoardState,
   perspectivePlayer: PlayerId,
   backDesign: CardBackDesign,
+  blueBackPlayer: PlayerId,
 ): CardDescriptor[] {
   const descriptors: CardDescriptor[] = [];
 
@@ -275,7 +277,7 @@ function collectCardDescriptors(
     // hover lift for free. zone "stadium" with a player owner (vs. the real
     // stadium's owner "global") routes them to the low-z fallback in
     // zIndexForPlacement so they sit beneath the playable cards.
-    const tone = cardBackToneFor(owner);
+    const tone = cardBackToneFor(owner, blueBackPlayer);
     const backImageUrl = cardBackImageUrl(backDesign, tone);
 
     descriptors.push({
@@ -429,6 +431,7 @@ export function AnimatedCardsLayer({
   board,
   perspectivePlayer,
   backDesign,
+  blueBackPlayer = "you",
   playmatRef,
   onMoveCard,
   placementPredicate,
@@ -454,8 +457,8 @@ export function AnimatedCardsLayer({
   const placementPredicateRef = useRef(placementPredicate ?? canPlace);
 
   const descriptors = useMemo(
-    () => collectCardDescriptors(board, perspectivePlayer, backDesign),
-    [board, perspectivePlayer, backDesign],
+    () => collectCardDescriptors(board, perspectivePlayer, backDesign, blueBackPlayer),
+    [board, perspectivePlayer, backDesign, blueBackPlayer],
   );
 
   useEffect(() => {
