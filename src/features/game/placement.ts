@@ -19,7 +19,7 @@
 // the expected type, and every drop it rejects would have translated to null
 // or to an action the engine deterministically refuses (placement.test.ts
 // enumerates that pairing over real engine states — extend BOTH together;
-// M4's evolve-by-drag now routes here, trainer plays are next).
+// including evolution and Trainer plays by drag).
 
 import type { GameState, Phase, Seat } from "@luminous/engine";
 import { benchLimitFor } from "../playmat/constants";
@@ -53,6 +53,29 @@ export function gamePlacementPredicate(game: GameState, viewerSeat: Seat): Place
     own side is always "you"), so the context alone — no seat — closes it. */
 export function placementPredicateFor(ctx: PlacementContext): PlacementPredicate {
   return (board, source, target, sourceType) => {
+    if (ctx.phaseKind === "effect:choose" && board.energyChoice !== undefined) {
+      if (
+        source.owner === "you" &&
+        source.zone === "choice" &&
+        sourceType === "energy" &&
+        board.energyChoice.cards.length === 1 &&
+        target.owner === "you" &&
+        target.zone === "hand"
+      )
+        return true;
+      return (
+        source.owner === "you" &&
+        source.zone === "choice" &&
+        sourceType === "energy" &&
+        board.energyChoice.targets.some(
+          (candidate) =>
+            candidate.owner === target.owner &&
+            candidate.zone === target.zone &&
+            (candidate.zone !== "bench" ||
+              (target.zone === "bench" && candidate.index === target.index)),
+        )
+      );
+    }
     // Every translatable move starts in the viewer's own hand and lands on
     // their own board — moveToAction's first gate, mirrored here so a drag
     // that would translate to null never shows a legal-drop affordance.
@@ -87,6 +110,9 @@ export function placementPredicateFor(ctx: PlacementContext): PlacementPredicate
         // Not this seat's turn — nothing translates. (A parked interrupt is
         // a different phase kind and falls through to the default below.)
         if (!ctx.isViewerTurn) return false;
+        // Items and Supporters play on the mat, without occupying a slot.
+        // Costs, locks and Supporter allowances stay with the engine.
+        if (sourceType === "trainer") return target.zone === "playmat";
         if (sourceType === "energy") {
           // attachEnergy needs an existing own Pokémon host. Occupancy is
           // structural (an empty slot can never host); whether THIS energy
@@ -140,7 +166,6 @@ export function placementPredicateFor(ctx: PlacementContext): PlacementPredicate
           // engine's (the pill names the rule the drop gestured at).
           return target.zone === "stadium" && target.owner === "global";
         }
-        // Non-Tool/Stadium Trainers stay button plays, not drags.
         return false;
       }
       // chooseFirst / drawExtra / ko:* interrupts / gameOver: decisions are

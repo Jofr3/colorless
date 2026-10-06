@@ -4,7 +4,7 @@ export type CardBackTone = "blue" | "red";
 export type CardBackSize = "card" | "prize";
 
 export type CardOwner = PlayerId | "global";
-export type CardZone = "hand" | "active" | "bench" | "stadium" | "attached";
+export type CardZone = "hand" | "active" | "bench" | "stadium" | "attached" | "playmat" | "choice";
 
 // Discriminated on `zone` so illegal placements are unrepresentable: active
 // never carries an index, and stadium is the only zone that may be globally
@@ -13,8 +13,10 @@ export type CardZone = "hand" | "active" | "bench" | "stadium" | "attached";
 // index, but it is optional: a whole-zone container drop target (the bench
 // frame / hand wrapper) has no index and means "append to the end".
 export type CardPlacement =
-  | { owner: PlayerId; zone: "hand" | "bench" | "attached"; index?: number }
+  | { owner: PlayerId; zone: "hand" | "bench" | "attached" | "choice"; index?: number }
   | { owner: PlayerId; zone: "active" }
+  /** Drop-only surface: Trainers resolve through the engine, never live here. */
+  | { owner: PlayerId; zone: "playmat" }
   | { owner: CardOwner; zone: "stadium" };
 
 export interface CardMoveRequest {
@@ -72,6 +74,8 @@ export interface PlayerBoard {
 }
 
 export interface BoardState {
+  /** Searched Energy staged outside the hand until one is attached. */
+  energyChoice?: { cards: CardModel[]; targets: CardPlacement[] };
   stadium: CardModel | null;
   you: PlayerBoard;
   opponent: PlayerBoard;

@@ -491,8 +491,10 @@ describe("D561 §3 — Crispin: ONE search, then the split as a labelled choice 
     const q = prompt(asked);
     expect(q).toEqual({
       kind: "confirm",
-      note: "Put 1 of them into your hand. Attach the other to 1 of your Pokémon. Which Energy do you attach?",
+      note: "Which Energy do you want to attach?",
       labels: { yes: "Attach Fire Energy", no: "Attach Water Energy" },
+      cards: { yes: fire, no: water },
+      targets: [ACTIVE],
     });
     const yes = mustApply(asked, confirm(true));
     expect(yes.state.players.p1.active?.energy).toEqual([fire]);
@@ -514,6 +516,40 @@ describe("D561 §3 — Crispin: ONE search, then the split as a labelled choice 
     const { state: done } = mustApply(target, pokemon(BENCH(0)));
     expect(done.players.p1.bench[0]?.energy).toEqual([fire]);
     expect(done.players.p1.hand).toEqual([water]);
+  });
+
+  it.each([{ yes: true, spot: ACTIVE }, { yes: false, spot: BENCH(0) }])(
+    "a single drop chooses the Energy and its Pokémon target ($yes)",
+    ({ yes, spot }) => {
+      const { state, fire, water } = searched(table(FILLER, [PIKA]));
+      const asked = mustApply(state, cards([fire, water])).state;
+      const dropped = mustApply(asked, { type: "resolveEffect", seat: "p1",
+        choice: { kind: "confirm", yes, target: spot } });
+      expect(dropped.state.phase.kind).toBe("turn:action");
+      const host = spot.spot.spot === "active" ? dropped.state.players.p1.active : dropped.state.players.p1.bench[spot.spot.index];
+      expect(host?.energy).toContain(yes ? fire : water);
+      expect(dropped.state.players.p1.hand).toEqual([yes ? water : fire]);
+      expect(types(dropped.events)).toContain("SHUFFLE");
+    },
+  );
+
+  it("rejects an opposing or empty target without consuming the staged cards", () => {
+    const { state, fire, water } = searched(table());
+    const asked = mustApply(state, cards([fire, water])).state;
+    for (const target of [{ ...ACTIVE, seat: "p2" as const }, BENCH(0)]) {
+      const result = applyAction(asked, { type: "resolveEffect", seat: "p1", choice: { kind: "confirm", yes: true, target } });
+      expect(result.ok).toBe(false);
+      expect(asked.players.p1.hand).toEqual([fire, water]);
+    }
+  });
+
+  it("attaches the dragged physical Energy, preserving an older copy of the same type in hand", () => {
+    const { state, fire, water } = searched(table(), [FIRE]);
+    const older = state.players.p1.hand[0];
+    const asked = mustApply(state, cards([fire, water])).state;
+    const dropped = mustApply(asked, { type: "resolveEffect", seat: "p1", choice: { kind: "confirm", yes: true, target: ACTIVE } }).state;
+    expect(dropped.players.p1.active?.energy).toEqual([fire]);
+    expect(dropped.players.p1.hand).toEqual([older, water]);
   });
 
   it("🛑 R-CR2's VERIFY — a Special Energy in hand is never the attached card (the attach's Basic-card test)", () => {

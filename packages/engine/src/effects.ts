@@ -14,6 +14,7 @@
 
 import { BASIC_ENERGY_TYPES, type BasicEnergyType } from "@luminous/schema";
 import type { StatusName } from "./events";
+import type { PokemonRef } from "./interpreter";
 // 🆕🆕 D444 — the ONE edge this file takes back to `registry.ts`, and it is
 // TYPE-ONLY, so it is erased wholesale and no runtime cycle exists (registry.ts
 // imports `searchTopOrderProgram` from here by VALUE). `interpreter.ts` takes the
@@ -13476,6 +13477,9 @@ export type EffectOp =
       then: EffectOp[];
       otherwise?: EffectOp[];
       labels?: { yes: string; no: string };
+      /** Optional card faces for a binary card choice; resolution still uses the branches. */
+      cards?: { yes: string; no?: string };
+      targets?: PokemonRef[];
     };
 
 type StatusWord = "Asleep" | "Burned" | "Confused" | "Paralyzed" | "Poisoned";

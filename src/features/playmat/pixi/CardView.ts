@@ -346,6 +346,10 @@ export class CardView {
     return { x: this.current.x, y: this.current.y };
   }
 
+  getCardCenter() {
+    return this.cardLayer.getGlobalPosition();
+  }
+
   getTargetSnapshot(): CardViewTarget | null {
     return this.target ? { ...this.target, placement: { ...this.target.placement } } : null;
   }

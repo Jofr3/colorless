@@ -156,7 +156,7 @@ export function projectGameState(state: GameState, viewerSeat: Seat): GameProjec
   // opponent's in-play stacks (their battle rows included) redact until
   // then. The viewer's own placements stay face-up — they placed them.
   const setup = inSetup(state);
-  return {
+  return withEnergyChoice({
     board: {
       // §7.3 — the one shared Stadium, public to both viewers (played face-up
       // into a shared zone; there is nothing to redact).
@@ -173,6 +173,27 @@ export function projectGameState(state: GameState, viewerSeat: Seat): GameProjec
     waitingOn: asPlayerId(view.waitingSeat, viewerSeat),
     pendingDecision: view.pendingDecision,
     outcome: view.outcome === null ? null : outcomeFor(view.outcome, viewerSeat),
+  });
+}
+
+function withEnergyChoice(projection: GameProjection): GameProjection {
+  const decision = projection.pendingDecision;
+  if (projection.waitingOn !== "you" || decision?.kind !== "effectChoose") return projection;
+  const prompt = decision.prompt;
+  if (prompt.kind !== "confirm" || prompt.cards === undefined || prompt.targets === undefined) return projection;
+  const ids = [prompt.cards.yes, ...(prompt.cards.no === undefined ? [] : [prompt.cards.no])];
+  const board = projection.board;
+  return {
+    ...projection,
+    board: {
+      ...board,
+      energyChoice: {
+        cards: ids.flatMap((id) => board.you.hand.filter((card) => card.id === id)),
+        targets: prompt.targets.map((ref) => ({ owner: "you", zone: ref.spot.spot,
+          ...(ref.spot.spot === "bench" ? { index: ref.spot.index } : {}) })),
+      },
+      you: { ...board.you, hand: board.you.hand.filter((card) => !ids.includes(card.id)) },
+    },
   };
 }
 
@@ -423,7 +444,7 @@ function outcomeFor(outcome: GameOutcome, viewerSeat: Seat): ProjectedOutcome {
     PlaymatView exactly as LocalMatch feeds projectGameState's. */
 export function projectionFromRedacted(game: RedactedGame): GameProjection {
   const stadiumCardId = game.board.stadium?.cardId;
-  return {
+  return withEnergyChoice({
     board: {
       stadium: game.board.stadium === null ? null : cardModelFromRedacted(game.board.stadium),
       you: playerBoardFromRedacted(game.board.you, stadiumCardId),
@@ -445,7 +466,7 @@ export function projectionFromRedacted(game: RedactedGame): GameProjection {
         : game.outcome.result === "win"
           ? { result: "win", winner: game.outcome.winner, reason: game.outcome.reason }
           : { result: "tie", reasons: { ...game.outcome.reasons } },
-  };
+  });
 }
 
 function playerBoardFromRedacted(side: RedactedSide, stadiumCardId: string | undefined): PlayerBoard {
@@ -573,6 +594,13 @@ function effectDecisionFromPrompt(
           ...(prompt.labels === undefined
             ? {}
             : { labels: { yes: prompt.labels.yes, no: prompt.labels.no } }),
+          ...(prompt.cards === undefined
+            ? {}
+            : { cards: {
+                yes: prompt.cards.yes.id,
+                ...(prompt.cards.no === undefined ? {} : { no: prompt.cards.no.id }),
+              } }),
+          ...(prompt.targets === undefined ? {} : { targets: prompt.targets.map(refFromWire) }),
         },
       };
     case "choosePokemon":

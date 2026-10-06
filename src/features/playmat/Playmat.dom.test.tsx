@@ -351,6 +351,27 @@ describe("Play deck setup", () => {
 });
 
 describe("Simulator saved games", () => {
+  it("plays an Item dropped on the mat and opens its choice dialog", async () => {
+    const state = handFromDeck(
+      driveSetup(7, { p1: TRAINER_DECK, p2: TRAINER_DECK }, { first: "p1" }),
+      "p1",
+      "sv01-181",
+      1,
+    );
+    const uid = handUid(state, "p1", "sv01-181");
+    saveSimulator(savedSetup(state));
+    stubApi();
+    renderPage();
+    const props = currentView();
+    const from = { owner: "you", zone: "hand" } as const;
+    const to = { owner: "you", zone: "playmat" } as const;
+    expect(props.placementPredicate?.(props.board, from, to, "trainer")).toBe(true);
+    act(() => props.onMoveCard({ cardId: uid, from, to }));
+    await screen.findByRole("dialog", { name: "Choose cards" });
+    expect(loadSimulatorSave()?.state.players.p1.discard).toContain(uid);
+    expect(currentView().board.you.hand.some((card) => card.id === uid)).toBe(false);
+  });
+
   it("restores a pending card search and its continuation, including shuffle RNG", async () => {
     const state = handFromDeck(
       driveSetup(7, { p1: TRAINER_DECK, p2: TRAINER_DECK }, { first: "p1" }),

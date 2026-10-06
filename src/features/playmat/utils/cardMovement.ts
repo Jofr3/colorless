@@ -62,8 +62,8 @@ function isPlayerOwner(owner: CardOwner): owner is PlayerId {
 
 function samePlacement(a: CardPlacement, b: CardPlacement) {
   if (a.owner !== b.owner || a.zone !== b.zone) return false;
-  const aIndex = a.zone === "active" || a.zone === "stadium" ? undefined : a.index;
-  const bIndex = b.zone === "active" || b.zone === "stadium" ? undefined : b.index;
+  const aIndex = "index" in a ? a.index : undefined;
+  const bIndex = "index" in b ? b.index : undefined;
   return (aIndex ?? -1) === (bIndex ?? -1);
 }
 
@@ -129,6 +129,8 @@ export function canPlace(
   target: CardPlacement,
   sourceType: CardType,
 ): boolean {
+  // The engine consumes Trainer plays; the sandbox has no effect resolver.
+  if (source.zone === "playmat" || target.zone === "playmat" || source.zone === "choice" || target.zone === "choice") return false;
   if (samePlacement(source, target)) return false;
 
   // Stadium slot: only stadium-type cards (owner-agnostic, "global").
@@ -252,6 +254,7 @@ function reorderHand(
 }
 
 function placeCard(board: BoardState, placement: CardPlacement, card: CardModel): boolean {
+  if (placement.zone === "playmat") return false;
   if (placement.zone === "stadium") {
     // Stadium slot holds exactly one card; replacing is fine (there's
     // never more than one stadium in play).
@@ -295,6 +298,7 @@ function placeCard(board: BoardState, placement: CardPlacement, card: CardModel)
 }
 
 function removeCard(board: BoardState, source: CardPlacement, cardId: string): CardModel | null {
+  if (source.zone === "playmat") return null;
   if (source.zone === "stadium") {
     if (!board.stadium || board.stadium.id !== cardId) return null;
     const card = board.stadium;

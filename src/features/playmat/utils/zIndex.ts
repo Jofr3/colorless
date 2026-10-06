@@ -10,8 +10,7 @@ import type { CardPlacement, CardType } from "../types";
     (active/stadium never do; bench/hand/attached may omit it for a whole-zone
     container drop), for host-relative attachment stacking. */
 export function placementIndex(placement: CardPlacement): number {
-  if (placement.zone === "active" || placement.zone === "stadium") return 0;
-  return placement.index ?? 0;
+  return "index" in placement ? (placement.index ?? 0) : 0;
 }
 
 /** Base z-index for a card by zone: hand rides highest, then bench, then the
@@ -23,6 +22,7 @@ export function zIndexForPlacement(
   zoneSize: number,
   cardType?: CardType,
 ): number {
+  if (placement.zone === "choice") return 100 + zoneSize - (placement.index ?? 0);
   if (placement.zone === "hand") {
     return 80 + zoneSize - (placement.index ?? 0);
   }

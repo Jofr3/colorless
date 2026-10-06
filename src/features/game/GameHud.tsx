@@ -7,6 +7,7 @@
 // enforces it ONCE, at its phase switch — the panels never re-check it.
 
 import { CardChoice, cardChoiceDialogClass, cardChoiceGridClass } from "./CardChoice";
+import { ConfirmCardChoices } from "./ConfirmCardChoices";
 import { useEffect, useRef, useState, type ReactElement, type ReactNode } from "react";
 import type { Attack, Card } from "@luminous/schema";
 import type {
@@ -1527,6 +1528,7 @@ function EffectChooseDialog(props: GameHudProps): ReactElement | null {
   // Narrowing only — the phase switch mounts this exactly at effect:choose.
   if (pending?.kind !== "effectChoose") return null;
   const prompt = pending.prompt;
+  if (prompt.kind === "confirm" && prompt.cards !== undefined && prompt.targets !== undefined) return null;
   // AN EXHAUSTIVE SWITCH WITH A DECLARED RETURN TYPE, NOT A TERNARY CHAIN ENDING
   // IN A CATCH-ALL. It was the latter until `confirm` landed, and the difference
   // is the difference between two ways of failing. The old chain's last arm was
@@ -1647,6 +1649,7 @@ function ChoosePrizeDialog({
     neither is "No". Same DOM order (the `yes` arm first), same no-dismiss contract.
     An unlabeled prompt renders exactly as before. */
 function ConfirmPromptDialog({
+  game,
   viewerSeat,
   dispatch,
   prompt,
@@ -1654,6 +1657,21 @@ function ConfirmPromptDialog({
   const answer = (yes: boolean) =>
     dispatch({ type: "resolveEffect", seat: viewerSeat, choice: { kind: "confirm", yes } });
   const labels = prompt.labels;
+  if (prompt.cards !== undefined) {
+    const cards = [
+      { uid: prompt.cards.yes, yes: true },
+      ...(prompt.cards.no === undefined ? [] : [{ uid: prompt.cards.no, yes: false }]),
+    ].map(({ uid, yes }) => {
+      const card = cardOfUid(game, uid);
+      return { name: card?.name ?? uid, cardId: card?.id ?? "", hasImage: card?.image != null, yes };
+    });
+    return (
+      <HudDialog label="Choose an Energy" cardCount={cards.length}>
+        <h2 className="text-lg font-semibold text-white">{prompt.note}</h2>
+        <ConfirmCardChoices cards={cards} noLabel={labels?.no ?? "No"} onAnswer={answer} />
+      </HudDialog>
+    );
+  }
   return (
     <HudDialog label={labels === undefined ? "You may" : "Choose 1"}>
       <h2 className="text-lg font-semibold text-white">{prompt.note}</h2>

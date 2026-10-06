@@ -21,7 +21,7 @@ export interface MoveTranslationContext {
   /** The seat the projection was built for (its board's "you"). */
   viewerSeat: Seat;
   /** The projected board the drag happened on — used to type the dragged
-      card (energy vs Pokémon). Its own-hand CardModel.ids ARE engine uids
+      card. Its own-hand CardModel.ids ARE engine uids
       (D17); hidden cards carry positional ids and are never draggable. */
   board: BoardState;
 }
@@ -31,8 +31,42 @@ export function moveToAction(
   ctx: MoveTranslationContext,
 ): GameAction | null {
   const { from, to, cardId } = request;
+  if (ctx.phaseKind === "effect:choose" && ctx.board.energyChoice !== undefined) {
+    const choice = ctx.board.energyChoice;
+    if (from.owner !== "you" || from.zone !== "choice" || to.owner !== "you") return null;
+    const index = choice.cards.findIndex((card) => card.id === cardId);
+    if (index === 0 && choice.cards.length === 1 && to.zone === "hand") {
+      return {
+        type: "resolveEffect",
+        seat: ctx.viewerSeat,
+        choice: { kind: "confirm", yes: false },
+      };
+    }
+    if (
+      index < 0 ||
+      !choice.targets.some(
+        (target) =>
+          target.owner === to.owner &&
+          target.zone === to.zone &&
+          (target.zone !== "bench" || (to.zone === "bench" && target.index === to.index)),
+      )
+    )
+      return null;
+    const spot =
+      to.zone === "active"
+        ? { spot: "active" as const }
+        : to.zone === "bench" && to.index !== undefined
+          ? { spot: "bench" as const, index: to.index }
+          : null;
+    if (spot === null) return null;
+    return {
+      type: "resolveEffect",
+      seat: ctx.viewerSeat,
+      choice: { kind: "confirm", yes: index === 0, target: { seat: ctx.viewerSeat, spot } },
+    };
+  }
   // Every translatable move starts in the viewer's own hand: setup places,
-  // energy attaches and bench plays all come from hand. Board-to-board drags
+  // attachments, bench plays and Trainer plays all come from hand. Board-to-board drags
   // (bench reorder, active swap) have no M2 action — retreat and promotion go
   // through their dialogs, where the cost/choice is explicit.
   if (from.owner !== "you" || from.zone !== "hand") return null;
@@ -58,6 +92,10 @@ export function moveToAction(
       // Not this seat's turn (a parked interrupt belongs elsewhere anyway —
       // those phase kinds fall through to null below).
       if (!ctx.isViewerTurn) return null;
+      if (model.type === "trainer") {
+        if (to.zone === "playmat") return { type: "playTrainer", seat, uid: cardId };
+        return null;
+      }
       if (model.type === "energy") {
         if (to.zone === "active") {
           return { type: "attachEnergy", seat, uid: cardId, target: { spot: "active" } };
@@ -88,7 +126,12 @@ export function moveToAction(
         }
         if (to.zone === "bench") {
           if (to.index !== undefined && ctx.board.you.bench[to.index]?.type === "pokemon") {
-            return { type: "evolve", seat, uid: cardId, target: { spot: "bench", index: to.index } };
+            return {
+              type: "evolve",
+              seat,
+              uid: cardId,
+              target: { spot: "bench", index: to.index },
+            };
           }
           return { type: "playBasicToBench", seat, uid: cardId };
         }
@@ -101,7 +144,12 @@ export function moveToAction(
           return { type: "attachTool", seat, uid: cardId, target: { spot: "active" } };
         }
         if (to.zone === "bench" && to.index !== undefined) {
-          return { type: "attachTool", seat, uid: cardId, target: { spot: "bench", index: to.index } };
+          return {
+            type: "attachTool",
+            seat,
+            uid: cardId,
+            target: { spot: "bench", index: to.index },
+          };
         }
         return null;
       }

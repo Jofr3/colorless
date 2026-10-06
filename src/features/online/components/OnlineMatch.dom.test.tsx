@@ -4,8 +4,27 @@ import type { ReactNode } from "react";
 import { MemoryRouter } from "react-router-dom";
 import type { RedactedGame, RedactedInPlay, SeatLogEntry } from "@luminous/schema";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
+import { redactGame } from "@luminous/engine";
+import {
+  driveSetup,
+  handFromDeck,
+  handUid,
+  mustApply,
+  TRAINER_DECK,
+} from "../../../../packages/engine/src/testFixtures";
+import type { PlaymatViewProps } from "../../playmat/PlaymatView";
 import { installDomShims } from "../../../test/domShims";
 import { OnlineMatch } from "./OnlineMatch";
+
+const cardsLayer = vi.fn();
+vi.mock("../../playmat/components/AnimatedCardsLayer", () => ({
+  AnimatedCardsLayer: (
+    props: Pick<PlaymatViewProps, "board" | "onMoveCard" | "placementPredicate">,
+  ) => {
+    cardsLayer(props);
+    return null;
+  },
+}));
 
 // PlaymatView's BackToMenu calls useNavigate — render under a router.
 const wrap = (node: ReactNode) => render(<MemoryRouter>{node}</MemoryRouter>);
@@ -15,7 +34,10 @@ const wrap = (node: ReactNode) => render(<MemoryRouter>{node}</MemoryRouter>);
 // allowed" surfaced from the DO's `reject-action`, mirroring the local GamePage.
 
 beforeAll(installDomShims);
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  cardsLayer.mockClear();
+});
 
 function active(name: string): RedactedInPlay {
   return {
@@ -25,7 +47,11 @@ function active(name: string): RedactedInPlay {
     category: "Pokemon",
     trainerType: null,
     hasImage: false,
-    battle: { damage: 0, hp: 60, conditions: { rotation: "none", poisonDamage: 0, burned: false, confusionDamage: 30 } },
+    battle: {
+      damage: 0,
+      hp: 60,
+      conditions: { rotation: "none", poisonDamage: 0, burned: false, confusionDamage: 30 },
+    },
     attached: { tools: [], energies: [] },
   };
 }
@@ -69,6 +95,44 @@ const GAME: RedactedGame = {
   waitingOn: "you",
   outcome: null,
 };
+
+it("sends an Item dropped on the mat and opens the server's resulting choice", () => {
+  const state = handFromDeck(
+    driveSetup(170, { p1: TRAINER_DECK, p2: TRAINER_DECK }, { first: "p1" }),
+    "p1",
+    "sv01-181",
+    1,
+  );
+  const uid = handUid(state, "p1", "sv01-181");
+  const onAction = vi.fn();
+  const match = (game: RedactedGame) => (
+    <MemoryRouter>
+      <OnlineMatch
+        game={game}
+        log={[]}
+        youName="You"
+        opponentName="Opp"
+        opponentAway={null}
+        actionError={null}
+        onAction={onAction}
+        onRematch={vi.fn()}
+      />
+    </MemoryRouter>
+  );
+  const { rerender } = render(match(redactGame(state, "p1")));
+  const props = cardsLayer.mock.calls.at(-1)?.[0] as PlaymatViewProps;
+  const from = { owner: "you", zone: "hand" } as const;
+  const to = { owner: "you", zone: "playmat" } as const;
+  expect(document.querySelector('[data-card-zone="playmat"]')).not.toBeNull();
+  expect(props.placementPredicate?.(props.board, from, to, "trainer")).toBe(true);
+  props.onMoveCard({ cardId: uid, from, to });
+  expect(onAction).toHaveBeenCalledExactlyOnceWith({ type: "playTrainer", seat: "p1", uid });
+  const action = onAction.mock.calls[0]?.[0];
+  if (action === undefined) throw new Error("Expected Item play");
+  const applied = mustApply(state, action).state;
+  rerender(match(redactGame(applied, "p1")));
+  expect(screen.getByRole("dialog", { name: "Choose cards" })).toBeTruthy();
+});
 
 describe("OnlineMatch — the rejection pill (2b-iii-d)", () => {
   it("shows the server's rejection reason and dismisses on the button", () => {

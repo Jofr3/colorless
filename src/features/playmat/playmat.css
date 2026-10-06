@@ -21,6 +21,33 @@
 
 /* Cards ------------------------------------------------------------------ */
 
+.energy-choice-area {
+  width: calc(var(--card-w) * 2 + 16px);
+  left: min(
+    calc(50% + var(--card-w) * 4.5 + var(--side-gap)),
+    calc(100% - var(--card-w) * 2 - 32px)
+  );
+  top: calc((100dvh - var(--hand-h)) / 2 - var(--card-h) / 2 - 56px);
+}
+
+.energy-choice-area__cards {
+  width: 100%;
+  min-height: var(--card-h);
+  flex-shrink: 0;
+}
+
+.energy-choice-area__cards > [data-card-anchor] {
+  flex: 0 0 var(--card-w);
+  height: var(--card-h);
+}
+
+@media (max-width: 767px) {
+  .energy-choice-area {
+    left: auto;
+    right: 16px;
+  }
+}
+
 .static-card {
   position: relative;
   width: 100%;
@@ -147,6 +174,35 @@
   cursor: grabbing;
 }
 
+.trainer-use-label {
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 180ms ease, visibility 0s linear 180ms;
+}
+
+.trainer-use-label.is-visible {
+  opacity: 1;
+  visibility: visible;
+  transition-delay: 0s;
+}
+
+.trainer-use-label {
+  position: absolute;
+  left: 0;
+  top: 0;
+  pointer-events: none;
+  z-index: 62;
+  transform: translate(-50%, -50%);
+  will-change: transform, opacity;
+  color: rgb(134 239 172 / 85%);
+  font-size: clamp(20px, calc(var(--card-w) * 0.28), 40px);
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  -webkit-text-stroke: 3px rgb(0 0 0 / 40%);
+  paint-order: stroke fill;
+  text-shadow: 0 2px 8px rgb(0 0 0 / 80%);
+}
+
 /* Card backs -------------------------------------------------------------- */
 
 /* The .card-back div is just a measurement anchor for the pixi mesh — the
@@ -209,6 +265,10 @@
 /* Reduced motion --------------------------------------------------------- */
 
 @media (prefers-reduced-motion: reduce) {
+  .trainer-use-label {
+    transition: none;
+  }
+
   /* Mute the turn-pass chip pop. The shared glow sweep is muted on <body> in
      index.css; the Pixi/GSAP card motion is muted separately via CardView's
      reducedMotion flag (kept live via a matchMedia subscription in

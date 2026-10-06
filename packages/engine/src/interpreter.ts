@@ -927,7 +927,13 @@ export type EffectPrompt =
       every unlabeled park (D135), so the two-field arm above is still what every
       shipped `optional` persists; the resolution never reads it (continuationOps reads
       the pending op's arms), which is why a v35 record without it resolves the same. */
-  | { kind: "confirm"; note: string; labels?: { yes: string; no: string } }
+  | {
+      kind: "confirm";
+      note: string;
+      labels?: { yes: string; no: string };
+      cards?: { yes: string; no?: string };
+      targets?: PokemonRef[];
+    }
   /** 🆕🆕 **D341 — THE FIRST PROMPT IN THIS ENGINE WHOSE ANSWER IS AN ORDER.**
       `candidates` are the looked-at cards in their CURRENT deck order, index 0 =
       the top; a legal answer is a PERMUTATION of exactly those uids, and the
@@ -1137,7 +1143,7 @@ export type EffectChoice =
       of the rest of the program, `false` runs nothing. A plain boolean, and
       wire-checked to be one for `mayDraw`'s exact reason: a P4 client's truthy
       string must not read as consent. Answered by the CONTROLLER. */
-  | { kind: "confirm"; yes: boolean }
+  | { kind: "confirm"; yes: boolean; target?: PokemonRef }
   /** 🆕 **D341 — the `orderCards` answer: the offered uids RE-SEQUENCED.** Index 0
       is the new top of the deck. A `string[]` exactly like the `cards` answer at
       the head of this union and read by a rule that is its opposite:
@@ -2025,34 +2031,38 @@ function oneOfRecordedChoice(
   state: GameState,
   op: Extract<EffectOp, { op: "attachEnergyFrom" }>,
   record: EffectRecord,
+  seat: Seat,
 ): EffectOp[] {
   const slot = op.oneOfRecorded;
   if (slot === undefined) return [];
-  const types: string[] = [];
+  const choices: { uid: string; type: string }[] = [];
   for (const uid of recorded(record, slot)) {
     const found = cardOf(state, uid);
     if (found !== undefined && matchesFilter(found, { kind: "basicEnergy" })) {
       const type = energyProvidesOf(found);
-      if (!types.includes(type)) types.push(type);
+      if (!choices.some((choice) => choice.type === type)) choices.push({ uid, type });
     }
   }
-  const [first, second] = types.slice(0, 2);
+  const [first, second] = choices.slice(0, 2);
   if (first === undefined) return [];
+  const targets = attachEnergyTargets(state, seat, op);
+  if (targets.length === 0) return [];
   const { oneOfRecorded: _dropped, ...plain } = op;
   const attach = (energyType: string): EffectOp[] => [{ ...plain, energyType }];
-  const note =
-    "Put 1 of them into your hand. Attach the other to 1 of your Pokémon. Which Energy do you attach?";
+  const note = "Which Energy do you want to attach?";
   return [
     {
       op: "optional",
       note,
       labels: {
-        yes: `Attach ${first} Energy`,
-        no: second === undefined ? "Keep it in your hand" : `Attach ${second} Energy`,
+        yes: `Attach ${first.type} Energy`,
+        no: second === undefined ? "Keep it in your hand" : `Attach ${second.type} Energy`,
       },
+      cards: { yes: first.uid, ...(second === undefined ? {} : { no: second.uid }) },
+      targets,
       // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
-      then: attach(first),
-      ...(second === undefined ? {} : { otherwise: attach(second) }),
+      then: attach(first.type),
+      ...(second === undefined ? {} : { otherwise: attach(second.type) }),
     },
   ];
 }
@@ -2158,6 +2168,7 @@ function continuationOps(
   // its base on the decline, and the base is inside the gate because §8.5 runs
   // once per damage op (effects.ts).
   if (op.op === "optional") {
+    if (choice.kind === "confirm" && choice.target !== undefined && op.cards !== undefined) return [];
     return choice.kind === "confirm" && choice.yes ? [...op.then] : [...(op.otherwise ?? [])];
   }
   // 🆕🆕 D344 — **THE FIFTH MEMBER, AND THE FIRST WHOSE TWO ARMS ARE BOTH PRINTED
@@ -4860,6 +4871,8 @@ function stepOp(
           kind: "confirm",
           note: op.note,
           ...(op.labels === undefined ? {} : { labels: { yes: op.labels.yes, no: op.labels.no } }),
+          ...(op.cards === undefined ? {} : { cards: { ...op.cards } }),
+          ...(op.targets === undefined ? {} : { targets: op.targets.map((ref) => ({ ...ref, spot: { ...ref.spot } })) }),
         },
       };
     case "handRefresh":
@@ -5290,7 +5303,7 @@ function stepOp(
       // 🆕🆕🆕 D561 (V4) — Crispin's *"put 1 of them into your hand. Attach the other"*:
       // the rider rewrites this op into the player's type choice (`oneOfRecordedChoice`).
       if (op.oneOfRecorded !== undefined) {
-        return { done: state, schedule: oneOfRecordedChoice(state, op, record) };
+        return { done: state, schedule: oneOfRecordedChoice(state, op, record, ctx.seat) };
       }
       // Same-type Basic Energy is fungible, so the ONLY decision is the target;
       // a source with no matching Energy is a no-op (nothing to attach). The
@@ -8174,21 +8187,14 @@ export function applyChoice(
         ? drawToHand(state, otherSeat(ctx.seat), op.count, "effect", events)
         : state;
     case "optional":
-      // THE ONE APPLY ARM THAT IS INTENTIONALLY EMPTY ON BOTH ANSWERS. A yes
-      // buys the `then` branch, and a branch is spliced into the WORK QUEUE, which
-      // this function cannot see — it returns a `GameState` and knows nothing of
-      // `rest`. `resumeProgram` owns both halves (this call and the `runProgram`
-      // that follows it) and does the splice there, exactly as `runProgram`'s
-      // three gates `unshift` their own branches. So a decline is not "the empty
-      // arm of the apply"; a decline is the ABSENCE of the splice, and both
-      // answers pass through here identically.
-      //
-      // ⚠️ BEHAVIOURALLY EQUIVALENT TO DELETING IT — the `default` below already
-      // returns the state — and kept anyway, because the default's REASON is
-      // false about this op: it reads "synchronous ops never park, so never reach
-      // the choice path", and `optional` parks on every board. An arm that states
-      // the true thing beats one inherited for a wrong reason. Recorded as an
-      // equivalent mutant rather than passed off as a tested line.
+      if (choice.kind === "confirm" && choice.target !== undefined && op.cards !== undefined) {
+        const attach = (choice.yes ? op.then : op.otherwise)?.[0];
+        const uid = choice.yes ? op.cards.yes : op.cards.no;
+        if (attach?.op === "attachEnergyFrom" && uid !== undefined) {
+          return attachEnergyFrom(state, attach, choice.target, ctx, events, record, undefined, uid);
+        }
+      }
+      // Other optional prompts splice their branch through continuationOps.
       return state;
     case "switchActive":
       // D206 — the resumed half records exactly as the forced half does, and for
@@ -17896,6 +17902,7 @@ function attachEnergyFrom(
       function is reachable from `applyChoice` with a wire-supplied number — the
       validator refuses an over-take first, and this is the belt behind it. */
   take?: number,
+  chosenUid?: string,
 ): GameState {
   // 🆕🆕🆕 D532 — THE SEAT IS RESOLVED ONCE, HERE, AND EVERY READ BELOW IS ITS: the pile the
   // Energy leaves, the board the ref is validated against and the side that is rewritten
@@ -17909,10 +17916,12 @@ function attachEnergyFrom(
     seat, // D532 — the printed pile's owner
     op.source,
     op.energyType,
-    take === undefined ? printed : Math.min(take, printed),
+    chosenUid === undefined
+      ? take === undefined ? printed : Math.min(take, printed)
+      : state.players[seat][op.source].length,
     op.anyEnergy, // D246 — absent = the printed "a BASIC Energy card"
     op.energyName, // D353 — absent = the printed noun is a CATEGORY, not a NAME
-  );
+  ).filter((uid) => chosenUid === undefined || uid === chosenUid);
   if (energyUids.length === 0) return state;
   const side = state.players[seat]; // D532 — the OWNER's side (the actor's unless `whose`)
   const pokemon = ref.spot.spot === "active" ? side.active : side.bench[ref.spot.index];

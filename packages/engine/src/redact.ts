@@ -294,6 +294,13 @@ function redactPrompt(state: GameState, prompt: EffectPrompt): RedactedEffectPro
         ...(prompt.labels === undefined
           ? {}
           : { labels: { yes: prompt.labels.yes, no: prompt.labels.no } }),
+        ...(prompt.cards === undefined
+          ? {}
+          : { cards: {
+              yes: redactedCardOf(state, prompt.cards.yes),
+              ...(prompt.cards.no === undefined ? {} : { no: redactedCardOf(state, prompt.cards.no) }),
+            } }),
+        ...(prompt.targets === undefined ? {} : { targets: prompt.targets.map(redactedRefOf) }),
       };
     case "orderCards":
       // 🆕 D341 — THE ORDERED WINDOW, RESOLVED TO THE ANSWERER ALONE. Identical in

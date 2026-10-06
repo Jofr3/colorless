@@ -1,4 +1,5 @@
 import { CardChoice, cardChoiceDialogClass, cardChoiceGridClass } from "../../game/CardChoice";
+import { ConfirmCardChoices } from "../../game/ConfirmCardChoices";
 import type { GameAction } from "@luminous/engine";
 import { otherSeat } from "@luminous/engine";
 import type {
@@ -260,7 +261,7 @@ function EffectChooseDialog({
   board: RedactedBoard;
   seat: MatchSeat;
   onAction: (action: GameAction) => void;
-}): ReactElement {
+}): ReactElement | null {
   switch (prompt.kind) {
     case "mayDraw":
       return <MayDrawDialog prompt={prompt} seat={seat} onAction={onAction} />;
@@ -268,7 +269,8 @@ function EffectChooseDialog({
       // 🆕🆕🆕 D577 — Tyme's guess; the local HUD's dialog mirrored (D412).
       return <GuessHpDialog prompt={prompt} seat={seat} onAction={onAction} />;
     case "confirm":
-      return <ConfirmPromptDialog prompt={prompt} seat={seat} onAction={onAction} />;
+      return prompt.cards !== undefined && prompt.targets !== undefined ? null :
+        <ConfirmPromptDialog prompt={prompt} seat={seat} onAction={onAction} />;
     case "choosePokemon":
       return <ChoosePokemonDialog prompt={prompt} board={board} seat={seat} onAction={onAction} />;
     case "choosePokemonMulti":
@@ -432,6 +434,18 @@ function ConfirmPromptDialog({
   // restatement, over the wire shape (the schema declares `labels`, so it survives
   // the parse). Unlabeled, the dialog is the byte-identical "You may" / Yes / No.
   const labels = prompt.labels;
+  if (prompt.cards !== undefined) {
+    const cards = [
+      { card: prompt.cards.yes, yes: true },
+      ...(prompt.cards.no === undefined ? [] : [{ card: prompt.cards.no, yes: false }]),
+    ].map(({ card, yes }) => ({ name: card.name, cardId: card.cardId, hasImage: card.hasImage, yes }));
+    return (
+      <Dialog label="Choose an Energy" cardCount={cards.length}>
+        <h2 className="text-lg font-semibold text-white">{prompt.note}</h2>
+        <ConfirmCardChoices cards={cards} noLabel={labels?.no ?? "No"} onAnswer={answer} />
+      </Dialog>
+    );
+  }
   return (
     <Dialog label={labels === undefined ? "You may" : "Choose 1"}>
       <h2 className="text-lg font-semibold text-white">{prompt.note}</h2>

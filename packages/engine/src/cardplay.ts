@@ -2128,6 +2128,14 @@ function validateChoice(prompt: EffectPrompt, choice: EffectChoice): ApplyResult
       if (choice.kind !== "confirm" || typeof choice.yes !== "boolean") {
         return err("BAD_EFFECT_CHOICE", "expected a yes/no confirmation");
       }
+      const target = choice.target;
+      if (target !== undefined && (
+        prompt.cards === undefined || (!choice.yes && prompt.cards.no === undefined) ||
+        !isPokemonRef(target) ||
+        !prompt.targets?.some((ref) => refEquals(ref, target))
+      )) {
+        return err("BAD_EFFECT_CHOICE", "not a legal attachment target");
+      }
       return null;
     }
     case "orderCards": {

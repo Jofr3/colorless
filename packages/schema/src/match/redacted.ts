@@ -534,6 +534,8 @@ export const redactedEffectPromptSchema = z.discriminatedUnion("kind", [
     kind: z.literal("confirm"),
     note: z.string(),
     labels: z.object({ yes: z.string(), no: z.string() }).optional(),
+    cards: z.object({ yes: redactedCardSchema, no: redactedCardSchema.optional() }).optional(),
+    targets: z.array(redactedPokemonRefSchema).optional(),
   }),
   /** 🆕 D341 — PUT THE LOOKED-AT CARDS BACK IN ANY ORDER (Iron Valiant `sv05-080`
       "Calculation"; Team Rocket's Dottler `sv10-088` and Gothorita `sv10.5w-042`/

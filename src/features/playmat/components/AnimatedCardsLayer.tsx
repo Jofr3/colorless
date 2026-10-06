@@ -307,6 +307,14 @@ function collectCardDescriptors(
     });
   }
 
+  for (const [index, card] of (board.energyChoice?.cards ?? []).entries()) {
+    descriptors.push({
+      card,
+      placement: { owner: perspectivePlayer, zone: "choice", index },
+      draggable: true,
+      zoneSize: board.energyChoice?.cards.length ?? 0,
+    });
+  }
   return descriptors;
 }
 
@@ -324,7 +332,9 @@ function isCardZone(value: string): value is CardZone {
     value === "active" ||
     value === "bench" ||
     value === "stadium" ||
-    value === "attached"
+    value === "attached" ||
+    value === "playmat" ||
+    value === "choice"
   );
 }
 
@@ -348,12 +358,12 @@ function parsePlacement(element: HTMLElement): CardPlacement | null {
     return null;
   }
 
-  if (zone === "hand" || zone === "bench" || zone === "attached") {
+  if (zone === "hand" || zone === "bench" || zone === "attached" || zone === "choice") {
     if (!isPlayerId(owner)) return null;
     return index !== undefined ? { owner, zone, index } : { owner, zone };
   }
 
-  if (zone === "active") {
+  if (zone === "active" || zone === "playmat") {
     if (!isPlayerId(owner)) return null;
     return { owner, zone };
   }
@@ -424,6 +434,8 @@ export function AnimatedCardsLayer({
   placementPredicate,
 }: AnimatedCardsLayerProps) {
   const mountRef = useRef<HTMLDivElement>(null);
+  const trainerUseLabelRef = useRef<HTMLOutputElement>(null);
+  const trainerUseCardIdRef = useRef<string | null>(null);
   const appRef = useRef<Application | null>(null);
   const sceneRef = useRef<Container | null>(null);
   const viewsRef = useRef(new Map<string, CardView>());
@@ -727,6 +739,51 @@ export function AnimatedCardsLayer({
         } satisfies DropZoneSnapshot;
       })
       .filter((zone): zone is DropZoneSnapshot => Boolean(zone));
+    positionTrainerUseLabel();
+  }
+
+  function clearTrainerPlayPreview() {
+    trainerUseLabelRef.current?.classList.remove("is-visible");
+    if (reducedMotionRef.current) trainerUseCardIdRef.current = null;
+  }
+
+  function updateTrainerPlayPreview(
+    drag: DragState,
+    point: { x: number; y: number },
+    event: PointerEvent,
+  ) {
+    const isTrainerPlay =
+      drag.moved &&
+      drag.cardType === "trainer" &&
+      drag.from.zone === "hand" &&
+      !shouldIgnorePointer(event) &&
+      findDropZone(point, drag.from, drag.cardType)?.placement.zone === "playmat";
+    if (isTrainerPlay) trainerUseCardIdRef.current = drag.cardId;
+    else if (reducedMotionRef.current) trainerUseCardIdRef.current = null;
+    trainerUseLabelRef.current?.classList.toggle("is-visible", isTrainerPlay);
+    positionTrainerUseLabel();
+  }
+
+  function positionTrainerUseLabel() {
+    const label = trainerUseLabelRef.current;
+    const cardId = trainerUseCardIdRef.current;
+    if (!label || !cardId) return;
+    const view = viewsRef.current.get(cardId);
+    let position: { x: number; y: number } | undefined = view?.getCardCenter();
+    if (!position) {
+      const root = playmatRef.current;
+      const card = root?.querySelector<HTMLElement>(`[data-card-id="${CSS.escape(cardId)}"]`);
+      if (!root || !card) return;
+      const rootRect = root.getBoundingClientRect();
+      const rect = card.getBoundingClientRect();
+      position = {
+        x: rect.left - rootRect.left + rect.width / 2,
+        y: rect.top - rootRect.top + rect.height / 2,
+      };
+    }
+    label.style.removeProperty("left");
+    label.style.removeProperty("top");
+    label.style.transform = `translate3d(${position.x}px, ${position.y}px, 0) translate(-50%, -50%)`;
   }
 
   function scheduleMeasure() {
@@ -1041,6 +1098,7 @@ export function AnimatedCardsLayer({
     const draggedY = point.y - drag.offsetY;
     view.dragTo(draggedX, draggedY);
     moveAttachedCardsWithHost(drag, draggedX, draggedY);
+    updateTrainerPlayPreview(drag, point, event);
 
     const nextPreviewZone = detectPreviewZone(drag, point);
 
@@ -1541,8 +1599,12 @@ export function AnimatedCardsLayer({
 
     event.preventDefault();
     const point = pointFromEvent(root, event);
+    clearTrainerPlayPreview();
     const view = viewsRef.current.get(drag.cardId);
-    const dropZone = drag.moved ? findDropZone(point, drag.from, drag.cardType) : undefined;
+    const dropZone =
+      drag.moved && !shouldIgnorePointer(event)
+        ? findDropZone(point, drag.from, drag.cardType)
+        : undefined;
     let toPlacement: CardPlacement | undefined = dropZone?.placement;
 
     // When the drop lands inside the zone we were previewing, prefer the
@@ -1604,6 +1666,7 @@ export function AnimatedCardsLayer({
     }
 
     viewsRef.current.get(drag.cardId)?.stopPress();
+    clearTrainerPlayPreview();
     viewsRef.current.get(drag.cardId)?.release(drag.velocity, false);
     releaseAttachedCards(drag, false);
     stopPressedReveal(event.pointerId);
@@ -1640,6 +1703,7 @@ export function AnimatedCardsLayer({
       for (const view of viewsRef.current.values()) {
         view.update(ticker.deltaMS / 1000, time);
       }
+      positionTrainerUseLabel();
     };
 
     async function start() {
@@ -1761,9 +1825,29 @@ export function AnimatedCardsLayer({
       mutationObserver.disconnect();
       resizeObserver.disconnect();
       rootElement.classList.remove("is-card-dragging");
+      clearTrainerPlayPreview();
       setCursor("");
     };
   }, [playmatRef]);
 
-  return <div ref={mountRef} className="pixi-cards-layer" aria-hidden="true" />;
+  return (
+    <>
+      <div ref={mountRef} className="pixi-cards-layer" aria-hidden="true" />
+      <output
+        ref={trainerUseLabelRef}
+        className="trainer-use-label"
+        aria-hidden="true"
+        onTransitionEnd={(event) => {
+          if (
+            event.propertyName === "opacity" &&
+            !event.currentTarget.classList.contains("is-visible")
+          ) {
+            trainerUseCardIdRef.current = null;
+          }
+        }}
+      >
+        USE
+      </output>
+    </>
+  );
 }

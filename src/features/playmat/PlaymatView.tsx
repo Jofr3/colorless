@@ -6,6 +6,7 @@ import { BackToMenu, type LeaveConfirmCopy } from "./components/BackToMenu";
 import { BoardSummary } from "./components/BoardSummary";
 import { GameLog } from "./components/GameLog";
 import { Hand } from "./components/Hand";
+import { EnergyChoiceArea } from "./components/EnergyChoiceArea";
 import { PlayerSide } from "./components/PlayerSide";
 import { StadiumSlot } from "./components/StadiumSlot";
 import { TurnBanner, TurnControls } from "./components/TurnHud";
@@ -97,6 +98,15 @@ export function PlaymatView({
       aria-label="Trading card game playmat"
     >
       <div className="contents" inert={interactionDisabled || undefined}>
+        {/* A drop-only surface for Items and Supporters, outside the hand. */}
+        <div
+          className="pointer-events-none absolute inset-x-0 top-0"
+          style={{ bottom: "var(--hand-h)" }}
+          aria-hidden="true"
+          data-card-drop-zone="true"
+          data-card-owner={bottomPlayer}
+          data-card-zone="playmat"
+        />
         {/* Screen-reader-only mirror of the board (the canvas is aria-hidden). */}
         <BoardSummary board={board} perspectivePlayer={bottomPlayer} piles={piles} />
         <PlayerSide
@@ -116,6 +126,7 @@ export function PlaymatView({
           pile={piles?.[bottomPlayer]}
         />
         <Hand cards={board[bottomPlayer].hand} owner={bottomPlayer} />
+        <EnergyChoiceArea board={board} onMoveCard={onMoveCard} />
         <div
           className="absolute z-10"
           style={{
