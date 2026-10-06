@@ -128,7 +128,7 @@ const ATTACHED_ENERGY_STEP_SHRINK = 0.03;
 const MIN_ATTACHED_ENERGY_STEP = 0.07;
 const MAX_ATTACHED_ENERGY_SPREAD = 0.42;
 
-function energyStepForStackSize(cardCount: number) {
+export function energyStepForStackSize(cardCount: number) {
   const denseStep = Math.max(
     MIN_ATTACHED_ENERGY_STEP,
     BASE_ATTACHED_ENERGY_STEP - Math.max(0, cardCount - 2) * ATTACHED_ENERGY_STEP_SHRINK,

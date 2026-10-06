@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import type { RedactedGame, RedactedInPlay, RedactedPhase } from "@luminous/schema";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { installDomShims } from "../../../test/domShims";
@@ -191,7 +191,28 @@ describe("OnlineHud — turn:action retreat", () => {
       <OnlineHud
         game={game({
           phase: turnAction({ retreat: { cost: 1, can: true } }),
-          you: { active: activeWithEnergy, bench: [inPlay("b", "Bench Sneasel")] },
+          you: {
+            active: activeWithEnergy,
+            bench: [
+              inPlay("b", "Bench Sneasel", {
+                attached: {
+                  tools: [
+                    {
+                      ...ENERGY,
+                      id: "tool-1",
+                      name: "Bravery Charm",
+                      category: "Trainer",
+                      trainerType: "Tool",
+                    },
+                  ],
+                  energies: [
+                    { ...ENERGY, id: "bench-e1" },
+                    { ...ENERGY, id: "bench-e2" },
+                  ],
+                },
+              }),
+            ],
+          },
         })}
         waitingOn="you"
         activePlaced
@@ -200,6 +221,11 @@ describe("OnlineHud — turn:action retreat", () => {
     );
     // The panel's Retreat control (labelled with the cost) opens the dialog.
     fireEvent.click(screen.getByRole("button", { name: /Retreat \(1\)/ }));
+    const pokemon = screen.getByRole("button", { name: "Bench Sneasel" });
+    expect(within(pokemon).getByRole("img", { name: "Bench Sneasel" })).toBeTruthy();
+    expect(pokemon.textContent).toBe("");
+    expect(within(pokemon).getByRole("img", { name: "Attached Bravery Charm" })).toBeTruthy();
+    expect(within(pokemon).getAllByRole("img", { name: "Attached Water Energy" })).toHaveLength(2);
     // Confirm stays disabled until an energy AND a bench Pokémon are picked.
     const confirm = screen.getByRole<HTMLButtonElement>("button", { name: /^Retreat$/ });
     expect(confirm.disabled).toBe(true);

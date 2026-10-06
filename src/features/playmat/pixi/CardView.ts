@@ -143,6 +143,8 @@ export interface CardViewOptions extends CardViewPresentationOptions {
   textureUrl: string;
   seed: number;
   reducedMotion: boolean;
+  /** Skip texture flips and fades for cards shown during a turn handoff. */
+  animateTexture?: boolean;
 }
 
 export interface ReleaseVelocity {
@@ -318,7 +320,7 @@ export class CardView {
     this.flip.addChild(this.cardLayer);
     this.cardLayer.addChild(this.placeholder, this.cardMesh, this.clipMask);
 
-    this.setTextureUrl(options.textureUrl);
+    this.setTextureUrl(options.textureUrl, options.animateTexture);
     this.redrawCard(options.name, 100, targetAspectHeight(100));
   }
 
@@ -366,7 +368,7 @@ export class CardView {
     this.updateClipMask(width, height);
   }
 
-  setTextureUrl(textureUrl: string): boolean {
+  setTextureUrl(textureUrl: string, animate = true): boolean {
     if (this.textureUrl === textureUrl) {
       return false;
     }
@@ -398,11 +400,11 @@ export class CardView {
           this.cardMesh.alpha = 1;
         };
 
-        if (isSwap && !this.reducedMotion) {
+        if (isSwap && animate && !this.reducedMotion) {
           this.playFlip(applyTexture);
         } else {
           applyTexture();
-          if (!isSwap && !this.reducedMotion) {
+          if (!isSwap && animate && !this.reducedMotion) {
             this.cardMesh.alpha = 0;
             gsap.to(this.cardMesh, {
               duration: 0.16,
@@ -423,7 +425,7 @@ export class CardView {
     return true;
   }
 
-  /** The shared turn-handoff flip, including cards whose face stays the same. */
+  /** Flip a card when its face changes. */
   playFlip(onMidpoint: () => void = () => {}) {
     if (this.destroyed) return;
     this.flipTimeline?.kill();

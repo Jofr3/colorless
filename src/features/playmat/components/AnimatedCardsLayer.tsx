@@ -44,7 +44,7 @@ interface AnimatedCardsLayerProps {
   perspectivePlayer: PlayerId;
   backDesign: CardBackDesign;
   blueBackPlayer?: PlayerId;
-  passAnimationKey?: number;
+  turnNumber: number;
   playmatRef: RefObject<HTMLElement | null>;
   onMoveCard: (request: CardMoveRequest) => void;
   /** Drop-legality gate consulted for drop-zone filtering, the live reorder
@@ -433,12 +433,12 @@ export function AnimatedCardsLayer({
   perspectivePlayer,
   backDesign,
   blueBackPlayer = "you",
-  passAnimationKey = 0,
+  turnNumber,
   playmatRef,
   onMoveCard,
   placementPredicate,
 }: AnimatedCardsLayerProps) {
-  const previousPassRef = useRef(passAnimationKey);
+  const previousTurnRef = useRef(turnNumber);
   const mountRef = useRef<HTMLDivElement>(null);
   const trainerUseLabelRef = useRef<HTMLOutputElement>(null);
   const trainerUseCardIdRef = useRef<string | null>(null);
@@ -673,7 +673,7 @@ export function AnimatedCardsLayer({
       .sort((a, b) => a.area - b.area)[0];
   }
 
-  function measureCards(snapPlayerSlots = false) {
+  function measureCards(snap = false) {
     const root = playmatRef.current;
     if (!root) {
       return;
@@ -718,9 +718,7 @@ export function AnimatedCardsLayer({
         placement: descriptor.placement,
       };
 
-      const hostZone = descriptor.attachedHostPlacement?.zone ?? descriptor.placement.zone;
-      const isPlayerSlot = hostZone === "bench" || hostZone === "active";
-      view.setTarget(target, snapPlayerSlots && isPlayerSlot);
+      view.setTarget(target, snap);
     }
 
     for (const [cardId, view] of viewsRef.current) {
@@ -805,7 +803,7 @@ export function AnimatedCardsLayer({
     });
   }
 
-  function syncViews(nextDescriptors: CardDescriptor[], flipOnPass = false) {
+  function syncViews(nextDescriptors: CardDescriptor[], turnChanged = false) {
     const scene = sceneRef.current;
     const nextDescriptorMap = new Map(
       nextDescriptors.map((descriptor) => [descriptorKey(descriptor), descriptor]),
@@ -831,10 +829,8 @@ export function AnimatedCardsLayer({
       const presentationOptions = cardPresentationOptions(descriptor);
 
       if (existingView) {
-        const textureChanged = existingView.setTextureUrl(textureUrl);
+        existingView.setTextureUrl(textureUrl, !turnChanged);
         existingView.setPresentationOptions(presentationOptions);
-        // A texture change already flips the back; unchanged faces need the same gesture.
-        if (flipOnPass && !textureChanged) existingView.playFlip();
         continue;
       }
 
@@ -844,12 +840,11 @@ export function AnimatedCardsLayer({
         textureUrl,
         seed: cardSeed(descriptor.card.id),
         reducedMotion: reducedMotionRef.current,
+        animateTexture: !turnChanged,
         ...presentationOptions,
       });
       viewsRef.current.set(cardId, view);
       scene.addChild(view.container);
-      // The incoming hand has new views when a hot-seat turn changes perspective.
-      if (flipOnPass) view.playFlip();
     }
   }
 
@@ -1690,12 +1685,12 @@ export function AnimatedCardsLayer({
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: sync/measurement functions read mutable Pixi refs and should only react to descriptor changes.
   useLayoutEffect(() => {
-    const flipOnPass = previousPassRef.current !== passAnimationKey;
-    previousPassRef.current = passAnimationKey;
-    syncViews(descriptors, flipOnPass);
-    measureCards(flipOnPass);
+    const turnChanged = previousTurnRef.current !== turnNumber;
+    previousTurnRef.current = turnNumber;
+    syncViews(descriptors, turnChanged);
+    measureCards(turnChanged);
     scheduleMeasure();
-  }, [descriptors, passAnimationKey]);
+  }, [descriptors, turnNumber]);
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: Pixi app lifecycle is tied to the mount node, not React render callbacks.
   useEffect(() => {

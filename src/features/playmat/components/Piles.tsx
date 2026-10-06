@@ -1,5 +1,8 @@
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { CardImage } from "../../../components/CardImage";
+import { useTiltJuice } from "../../../components/useTiltJuice";
+import { FOCUS_RING_INSET } from "../../../lib/glass";
+import { DiscardPileDialog } from "./DiscardPileDialog";
 import { CARD_SIZE_STYLE, CARD_SLOT_STYLE, FRAME_CLASS, PRIZE_GRID_STYLE } from "../constants";
 import type { CardBackSize, CardBackTone, CardModel, FaceUpPrize, PlayerId } from "../types";
 import { PRIZE_COLUMNS, PRIZE_ROWS, deckBackId, prizeBackId, prizeSlotFaces } from "../utils/piles";
@@ -86,33 +89,91 @@ export function DeckPile({
   );
 }
 
-export function DiscardPile({ discard }: { discard?: CardModel[] }) {
-  // The top (newest) discard renders as a plain DOM image above the Pixi
-  // canvas — discard cards are not board zones, so the animation layer never
-  // draws them. Mock (prop absent) keeps the empty frame.
+function DiscardTopCard({
+  card,
+  label,
+  open,
+  onOpen,
+}: {
+  card: CardModel;
+  label: string;
+  open: boolean;
+  onOpen: () => void;
+}) {
+  const { tiltRef, juiceLayerRef, juiceStyle, tiltStyle, handlers } =
+    useTiltJuice<HTMLButtonElement>({
+      idle: true,
+    });
+
+  return (
+    <div
+      className="relative z-[61]"
+      style={CARD_SIZE_STYLE}
+      data-card-id={card.id}
+      data-discard-card="true"
+    >
+      <div ref={juiceLayerRef} className="h-full w-full" style={juiceStyle}>
+        <button
+          ref={tiltRef}
+          type="button"
+          className={`h-full w-full cursor-pointer rounded-[9px] ${FOCUS_RING_INSET}`}
+          style={tiltStyle}
+          {...handlers}
+          aria-label={label}
+          aria-haspopup="dialog"
+          aria-expanded={open}
+          onClick={onOpen}
+        >
+          <CardImage
+            fill
+            imageUrl={card.imageUrl}
+            alt={`Discard pile, top card ${card.name}`}
+            className="h-full w-full rounded-[9px] object-cover"
+          />
+        </button>
+      </div>
+    </div>
+  );
+}
+
+export function DiscardPile({ owner, discard }: { owner: PlayerId; discard?: CardModel[] }) {
+  const [open, setOpen] = useState(false);
+  const title = owner === "you" ? "Your discard pile" : "Opponent's discard pile";
+  const label = `View ${title.toLowerCase()}`;
+  // The top (newest) discard animates in the DOM above the Pixi canvas;
+  // discard cards are not board zones. Mock (prop absent) keeps the empty frame.
   const top = discard === undefined ? undefined : discard[discard.length - 1];
   return (
     <div className="relative inline-block">
       <PileFrame>
         {top === undefined ? (
-          <div style={CARD_SIZE_STYLE} />
-        ) : (
-          <div
-            className="relative z-[61]"
-            style={CARD_SIZE_STYLE}
-            data-card-id={top.id}
-            data-discard-card="true"
-          >
-            <CardImage
-              fill
-              imageUrl={top.imageUrl}
-              alt={`Discard pile, top card ${top.name}`}
-              className="h-full w-full rounded-[9px] object-cover"
+          discard === undefined ? (
+            <div style={CARD_SIZE_STYLE} />
+          ) : (
+            <button
+              type="button"
+              className={`relative z-[61] block cursor-pointer rounded-[9px] ${FOCUS_RING_INSET}`}
+              style={CARD_SIZE_STYLE}
+              aria-label={label}
+              aria-haspopup="dialog"
+              aria-expanded={open}
+              onClick={() => setOpen(true)}
             />
-          </div>
+          )
+        ) : (
+          <DiscardTopCard
+            key={top.id}
+            card={top}
+            label={label}
+            open={open}
+            onOpen={() => setOpen(true)}
+          />
         )}
       </PileFrame>
       {discard !== undefined && <PileCountChip count={discard.length} />}
+      {open && discard !== undefined && (
+        <DiscardPileDialog title={title} cards={discard} onDismiss={() => setOpen(false)} />
+      )}
     </div>
   );
 }

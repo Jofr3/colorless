@@ -496,7 +496,7 @@ function pilesFromRedacted(side: RedactedSide): ProjectedPiles {
     optional battle/attached are simply absent). The asset URL is built here from
     `cardId` + `hasImage`, so the scheme lives on the client, exactly as
     cardModelOf does for local play. */
-function cardModelFromRedacted(card: RedactedInPlay): CardModel {
+export function cardModelFromRedacted(card: RedactedInPlay): CardModel {
   const model: CardModel = {
     id: card.id,
     cardId: card.cardId,

@@ -25,12 +25,12 @@ import { LocalMatch } from "./LocalMatch";
 vi.mock("../playmat/components/AnimatedCardsLayer", () => ({
   AnimatedCardsLayer: ({
     blueBackPlayer,
-    passAnimationKey,
-  }: { blueBackPlayer: string; passAnimationKey: number }) => (
+    turnNumber,
+  }: { blueBackPlayer: string; turnNumber: number }) => (
     <div
       data-testid="animated-card-layer"
       data-blue-back-player={blueBackPlayer}
-      data-pass-animation-key={passAnimationKey}
+      data-turn-number={turnNumber}
     />
   ),
 }));
@@ -153,9 +153,7 @@ describe("LocalMatch HUD across turns", () => {
   it("swaps deck and prize back colors with each hot-seat handoff", () => {
     renderMatch();
     const initialPerspective = document.body.dataset.perspective;
-    const initialPassKey = Number(
-      screen.getByTestId("animated-card-layer").dataset.passAnimationKey,
-    );
+    const initialTurn = Number(screen.getByTestId("animated-card-layer").dataset.turnNumber);
     const anchors = Array.from(document.querySelectorAll<HTMLElement>("[data-card-back-tone]"));
     expect(anchors).toHaveLength(14);
     const initialColors = anchors.map((anchor) => anchor.dataset.cardBackTone);
@@ -174,8 +172,8 @@ describe("LocalMatch HUD across turns", () => {
       // The canvas must receive the same mapping as its deck/prize DOM anchors.
       const blueBackPlayer = screen.getByTestId("animated-card-layer").dataset.blueBackPlayer;
       expect(blueBackPlayer).toBe(document.body.dataset.perspective);
-      expect(Number(screen.getByTestId("animated-card-layer").dataset.passAnimationKey)).toBe(
-        initialPassKey + pass,
+      expect(Number(screen.getByTestId("animated-card-layer").dataset.turnNumber)).toBe(
+        initialTurn + pass,
       );
     }
   });

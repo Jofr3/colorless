@@ -78,7 +78,7 @@ function SidePiles({
         }
       >
         <div className="relative" style={{ lineHeight: 0 }}>
-          <DiscardPile discard={pile?.discard} />
+          <DiscardPile owner={owner} discard={pile?.discard} />
           <div
             className="absolute left-0"
             style={

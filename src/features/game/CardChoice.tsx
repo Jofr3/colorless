@@ -46,7 +46,11 @@ export function CardChoice({
   onSelect: () => void;
 }) {
   const { tiltRef, juiceLayerRef, juiceStyle, tiltStyle, handlers } =
-    useTiltJuice<HTMLButtonElement>({ disabled: refused, pulse: selected ? 1 : null });
+    useTiltJuice<HTMLButtonElement>({
+      idle: true,
+      disabled: refused,
+      pulse: selected ? 1 : null,
+    });
 
   return (
     <li className="relative min-w-0 hover:z-10 focus-within:z-10">

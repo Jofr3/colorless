@@ -1,6 +1,9 @@
 import { AutoMulliganDraw } from "../../game/AutoMulliganDraw";
 import { CardChoice, cardChoiceDialogClass, cardChoiceGridClass } from "../../game/CardChoice";
 import { ConfirmCardChoices } from "../../game/ConfirmCardChoices";
+import { PokemonChoices } from "../../game/PokemonChoice";
+import { benchLimitFor } from "../../playmat/constants";
+import { cardModelFromRedacted, projectionFromRedacted } from "../../game/projection";
 import type { GameAction } from "@luminous/engine";
 import { otherSeat } from "@luminous/engine";
 import type {
@@ -25,7 +28,6 @@ import { EnergyDots } from "../../game/EnergyDots";
 import {
   ATTACK_ROW_BASE,
   PICK_ROW_BASE,
-  PICK_ROW_SPLIT_BASE,
   PRIZE_CARD_BASE,
   PRIZE_CARD_FACE_UP,
   PRIZE_CARD_IDLE,
@@ -166,6 +168,7 @@ export function OnlineHud({
         <AttackPanel
           active={game.board.you.active}
           bench={game.board.you.bench}
+          benchLimit={benchLimitFor(projectionFromRedacted(game).board, "you")}
           attacks={game.phase.attacks}
           retreat={game.phase.retreat}
           abilities={game.phase.abilities}
@@ -1992,6 +1995,7 @@ function ChooseAttackDialog({
 function AttackPanel({
   active,
   bench,
+  benchLimit,
   attacks,
   retreat,
   abilities,
@@ -2005,6 +2009,7 @@ function AttackPanel({
 }: {
   active: RedactedInPlay | null;
   bench: readonly RedactedInPlay[];
+  benchLimit: number;
   attacks: readonly RedactedAttack[];
   retreat: RedactedRetreat | null;
   abilities: readonly RedactedAbility[];
@@ -2269,6 +2274,7 @@ function AttackPanel({
         <RetreatDialog
           active={active}
           bench={bench}
+          benchLimit={benchLimit}
           cost={retreat.cost}
           seat={seat}
           onAction={onAction}
@@ -2400,6 +2406,7 @@ function RareCandyDialog({
 function RetreatDialog({
   active,
   bench,
+  benchLimit,
   cost,
   seat,
   onAction,
@@ -2407,6 +2414,7 @@ function RetreatDialog({
 }: {
   active: RedactedInPlay;
   bench: readonly RedactedInPlay[];
+  benchLimit: number;
   /** The retreat cost — RedactedRetreat's, not recomputed here. */
   cost: number;
   seat: MatchSeat;
@@ -2430,7 +2438,7 @@ function RetreatDialog({
   const ready = chosen.length === cost && benchIndex !== null;
 
   return (
-    <Dialog label="Retreat" onDismiss={onClose}>
+    <Dialog label="Retreat" cardCount={bench.length} onDismiss={onClose}>
       <h2 className="text-lg font-semibold text-white">Retreat {active.name}</h2>
       {cost > 0 && (
         <>
@@ -2438,7 +2446,7 @@ function RetreatDialog({
             Discard exactly {cost} attached energ{cost === 1 ? "y" : "ies"} ({chosen.length}/{cost}
             ):
           </p>
-          <ul className="mt-2 flex flex-col gap-1.5">
+          <ul className="mt-2 flex max-h-[22svh] shrink-0 flex-col gap-1.5 overflow-y-auto">
             {energies.map((energy) => {
               const selected = chosen.includes(energy.id);
               return (
@@ -2460,30 +2468,12 @@ function RetreatDialog({
         </>
       )}
       <p className="mt-3 text-sm text-white/55">Promote to Active:</p>
-      <ul className="mt-2 flex flex-col gap-1.5">
-        {bench.map((pokemon, index) => {
-          const selected = benchIndex === index;
-          return (
-            <li key={pokemon.id}>
-              <button
-                type="button"
-                aria-pressed={selected}
-                onClick={() => setBenchIndex(index)}
-                className={`${PICK_ROW_SPLIT_BASE} ${
-                  selected ? ROW_BUTTON_SELECTED : ROW_BUTTON_UNSELECTED
-                }`}
-              >
-                <span className="truncate">{pokemon.name}</span>
-                {pokemon.battle !== undefined && pokemon.battle.damage > 0 && (
-                  <span className="ml-2 shrink-0 text-xs font-bold text-rose-300">
-                    {pokemon.battle.damage} dmg
-                  </span>
-                )}
-              </button>
-            </li>
-          );
-        })}
-      </ul>
+      <PokemonChoices
+        cards={bench.map(cardModelFromRedacted)}
+        benchLimit={benchLimit}
+        selectedIndex={benchIndex}
+        onSelect={setBenchIndex}
+      />
       <div className="mt-5 flex justify-end gap-2.5">
         <button type="button" onClick={onClose} className={GLASS_DIALOG_GHOST_BUTTON}>
           Cancel

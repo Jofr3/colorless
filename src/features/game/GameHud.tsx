@@ -9,6 +9,9 @@
 import { AutoMulliganDraw } from "./AutoMulliganDraw";
 import { CardChoice, cardChoiceDialogClass, cardChoiceGridClass } from "./CardChoice";
 import { ConfirmCardChoices } from "./ConfirmCardChoices";
+import { PokemonChoices } from "./PokemonChoice";
+import { benchLimitFor } from "../playmat/constants";
+import type { CardModel } from "../playmat/types";
 import { useEffect, useRef, useState, type ReactElement, type ReactNode } from "react";
 import type { Attack, Card } from "@luminous/schema";
 import type {
@@ -68,7 +71,6 @@ import { EnergyDots } from "./EnergyDots";
 import {
   ATTACK_ROW_BASE,
   PICK_ROW_BASE,
-  PICK_ROW_SPLIT_BASE,
   PRIZE_CARD_BASE,
   PRIZE_CARD_FACE_UP,
   PRIZE_CARD_IDLE,
@@ -1089,7 +1091,8 @@ function TurnPanel(props: GameHudProps) {
           activeCard={activeCard}
           cost={retreatCost}
           energyUids={active.energy}
-          bench={side.bench}
+          bench={projection.board.you.bench}
+          benchLimit={benchLimitFor(projection.board, "you")}
           onClose={() => setRetreatOpen(false)}
         />
       )}
@@ -1220,6 +1223,7 @@ function RetreatDialog({
   cost,
   energyUids,
   bench,
+  benchLimit,
   onClose,
 }: {
   game: GameState;
@@ -1232,7 +1236,8 @@ function RetreatDialog({
   /** The Active's attached energy uids, the discard-pick pool. */
   energyUids: readonly string[];
   /** The bench to promote from. */
-  bench: readonly InPlayPokemon[];
+  bench: readonly CardModel[];
+  benchLimit: number;
   onClose: () => void;
 }) {
   const [chosen, setChosen] = useState<string[]>([]);
@@ -1251,7 +1256,7 @@ function RetreatDialog({
   const ready = chosen.length === cost && benchIndex !== null;
 
   return (
-    <HudDialog label="Retreat" onDismiss={onClose}>
+    <HudDialog label="Retreat" cardCount={bench.length} onDismiss={onClose}>
       <h2 className="text-lg font-semibold text-white">Retreat {activeCard.name}</h2>
       {cost > 0 && (
         <>
@@ -1259,7 +1264,7 @@ function RetreatDialog({
             Discard exactly {cost} attached energ{cost === 1 ? "y" : "ies"} ({chosen.length}/{cost}
             ):
           </p>
-          <ul className="mt-2 flex flex-col gap-1.5">
+          <ul className="mt-2 flex max-h-[22svh] shrink-0 flex-col gap-1.5 overflow-y-auto">
             {energyUids.map((uid) => {
               const selected = chosen.includes(uid);
               return (
@@ -1281,31 +1286,12 @@ function RetreatDialog({
         </>
       )}
       <p className="mt-3 text-sm text-white/55">Promote to Active:</p>
-      <ul className="mt-2 flex flex-col gap-1.5">
-        {bench.map((pokemon, index) => {
-          const name = topCardOf(game, pokemon)?.name ?? "Unknown";
-          const selected = benchIndex === index;
-          return (
-            <li key={topUid(pokemon) ?? index}>
-              <button
-                type="button"
-                aria-pressed={selected}
-                onClick={() => setBenchIndex(index)}
-                className={`${PICK_ROW_SPLIT_BASE} ${
-                  selected ? ROW_BUTTON_SELECTED : ROW_BUTTON_UNSELECTED
-                }`}
-              >
-                <span className="truncate">{name}</span>
-                {pokemon.damage > 0 && (
-                  <span className="ml-2 shrink-0 text-xs font-bold text-rose-300">
-                    {pokemon.damage} dmg
-                  </span>
-                )}
-              </button>
-            </li>
-          );
-        })}
-      </ul>
+      <PokemonChoices
+        cards={bench}
+        benchLimit={benchLimit}
+        selectedIndex={benchIndex}
+        onSelect={setBenchIndex}
+      />
       <div className="mt-5 flex justify-end gap-2.5">
         <button type="button" onClick={onClose} className={GLASS_DIALOG_GHOST_BUTTON}>
           Cancel

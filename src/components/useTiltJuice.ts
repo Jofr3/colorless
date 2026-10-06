@@ -1,5 +1,5 @@
 import type { CSSProperties, PointerEvent as ReactPointerEvent } from "react";
-import { useEffect, useRef } from "react";
+import { useEffect, useId, useRef } from "react";
 import { evaluateJuice, initialSquish, type JuiceState, startJuice } from "../lib/animation/juice";
 
 // Balatro hover/tilt port for DOM cards. On hover the card leans *away* from the
@@ -28,6 +28,13 @@ const JUICE_STYLE: CSSProperties = {
   willChange: "transform",
 };
 
+// Modal cards layer the board's quiet idle float/rotation beneath hover and juice.
+const IDLE_JUICE_STYLE: CSSProperties = {
+  ...JUICE_STYLE,
+  transform:
+    "translateY(var(--idle-y,0px)) perspective(700px) rotateX(var(--idle-rx,0deg)) rotateY(var(--idle-ry,0deg)) rotate(var(--idle-r,0deg)) scale(var(--js,1)) rotate(var(--jr,0deg))",
+};
+
 // Inner layer carries the pointer tilt; its own perspective() makes the 3D
 // transform self-contained, so it composes with the juice on the layer above.
 const TILT_STYLE: CSSProperties = {
@@ -37,6 +44,8 @@ const TILT_STYLE: CSSProperties = {
 };
 
 export type TiltJuiceOptions = {
+  /** Gently float and tilt at rest, independently of hover/selection motion. */
+  idle?: boolean;
   /** Normalised pointer position (0..1 across the card) on every move. Lets the
       caller drive an extra pointer-tracked effect, e.g. the home sheen shader. */
   onPointerMove?: (px: number, py: number) => void;
@@ -67,6 +76,8 @@ export function useTiltJuice<T extends HTMLElement>(options: TiltJuiceOptions = 
   const juiceState = useRef<JuiceState | null>(null);
   const juiceRunner = useRef<(amount: number, rotation: number) => void>(() => {});
   const reducedMotionRef = useRef(false);
+  const idleId = useId();
+  const { idle } = options;
 
   // Honor prefers-reduced-motion: when set, the oscillating juice and the 3D
   // pointer tilt are skipped (only the static hover scale remains). Kept live
@@ -81,6 +92,51 @@ export function useTiltJuice<T extends HTMLElement>(options: TiltJuiceOptions = 
     query.addEventListener("change", handleChange);
     return () => query.removeEventListener("change", handleChange);
   }, []);
+
+  useEffect(() => {
+    if (!idle) return;
+    const layer = juiceLayerRef.current;
+    if (!layer) return;
+    const query = window.matchMedia("(prefers-reduced-motion: reduce)");
+    // Give duplicate prints their own phase so a modal never sways in lockstep.
+    let hash = 2166136261;
+    for (const char of idleId) hash = Math.imul(hash ^ char.charCodeAt(0), 16777619) >>> 0;
+    const seed = hash / 2 ** 32;
+    const phase = seed * Math.PI * 2;
+    let frame: number | null = null;
+
+    const reset = () => {
+      layer.style.setProperty("--idle-y", "0px");
+      for (const key of ["--idle-r", "--idle-rx", "--idle-ry"]) {
+        layer.style.setProperty(key, "0deg");
+      }
+    };
+    const tick = () => {
+      const time = performance.now() / 1000;
+      // Match CardView's 1.6px float, 0.012-radian rotation and ambient orbit.
+      const angle = time * (1.56 + seed) + seed * 9.7;
+      layer.style.setProperty("--idle-y", `${1.6 * Math.sin(0.666 * time + phase)}px`);
+      layer.style.setProperty("--idle-r", `${0.012 * RAD_TO_DEG * Math.sin(2 * time + phase)}deg`);
+      layer.style.setProperty("--idle-rx", `${Math.sin(angle)}deg`);
+      layer.style.setProperty("--idle-ry", `${Math.cos(angle)}deg`);
+      frame = requestAnimationFrame(tick);
+    };
+    const stop = () => {
+      if (frame !== null) cancelAnimationFrame(frame);
+      frame = null;
+      reset();
+    };
+    const handleChange = (event: MediaQueryListEvent) => {
+      stop();
+      if (!event.matches) tick();
+    };
+    if (!query.matches) tick();
+    query.addEventListener("change", handleChange);
+    return () => {
+      query.removeEventListener("change", handleChange);
+      stop();
+    };
+  }, [idle, idleId]);
 
   // Per-frame juice loop. Writes --js (scale) / --jr (rotation) on the juice
   // layer with no CSS transition, so the fast oscillation isn't smeared by the
@@ -207,7 +263,7 @@ export function useTiltJuice<T extends HTMLElement>(options: TiltJuiceOptions = 
   return {
     tiltRef,
     juiceLayerRef,
-    juiceStyle: JUICE_STYLE,
+    juiceStyle: idle ? IDLE_JUICE_STYLE : JUICE_STYLE,
     tiltStyle: TILT_STYLE,
     handlers: {
       onPointerEnter: handlePointerEnter,

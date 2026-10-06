@@ -5,12 +5,13 @@
 // the HUD drifts from what the engine will accept. Real engine states via
 // the fixtures; the HUD reads conditions off the PROJECTED board.
 
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
-import { afterEach, beforeAll, describe, expect, it } from "vitest";
+import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
+import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import type { GameAction, GameState } from "@luminous/engine";
 import {
   OPPONENT_ATTACK_LOCK_DECK,
   attachFromDeck,
+  attachBenchFromDeck,
   deckOf,
   driveSetup,
   mustApply,
@@ -354,5 +355,38 @@ describe("TurnPanel — §11 the retreat lock reaches the panel from BOTH fields
     // greyed Retreat unconditionally would satisfy the two assertions above.
     renderHud(battleReady());
     expect(retreatButton().disabled).toBe(false);
+  });
+});
+
+it("shows a benched Pokémon with every attached Energy when choosing a retreat", () => {
+  const state = attachBenchFromDeck(battleReady(), "p1", 0, "fix-water-energy", 2);
+  const dispatch = vi.fn();
+  render(
+    <GameHud
+      game={state}
+      projection={projectGameState(state, "p1")}
+      viewerSeat="p1"
+      names={NAMES}
+      dispatch={dispatch}
+      onPlayAgain={() => {}}
+    />,
+  );
+  fireEvent.click(screen.getByRole("button", { name: /Retreat \(1\)/ }));
+  const dialog = screen.getByRole("dialog", { name: "Retreat" });
+  const pokemon = within(dialog).getByRole("button", { name: "fix-attacker" });
+  expect(within(pokemon).getByRole("img", { name: "fix-attacker" })).toBeTruthy();
+  expect(pokemon.textContent).toBe("");
+  expect(within(pokemon).getAllByRole("img", { name: "Attached Water Energy" })).toHaveLength(2);
+  const confirm = within(dialog).getByRole<HTMLButtonElement>("button", { name: "Retreat" });
+  expect(confirm.disabled).toBe(true);
+  fireEvent.click(pokemon);
+  expect(confirm.disabled).toBe(true);
+  fireEvent.click(within(dialog).getByRole("button", { name: "Fire Energy" }));
+  fireEvent.click(confirm);
+  expect(dispatch).toHaveBeenCalledWith({
+    type: "retreat",
+    seat: "p1",
+    discardEnergy: state.players.p1.active?.energy,
+    promoteBenchIndex: 0,
   });
 });
