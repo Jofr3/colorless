@@ -15,7 +15,7 @@ import { clearCardPoolCache } from "./cardPool";
 import { DEMO_DECKS } from "./demoDecks";
 import { GamePage } from "./GamePage";
 
-vi.mock("../playmat", () => ({
+vi.mock("../playmat/PlaymatView", () => ({
   PlaymatView: ({ children }: { children?: ReactNode }) => (
     <section aria-label="Playmat stub">{children}</section>
   ),

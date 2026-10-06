@@ -18,7 +18,7 @@ import {
 import { ApiError, getDeck, listDecks } from "../../lib/api";
 import { TransientErrorPill } from "../../components/TransientErrorPill";
 import { useAuth } from "../auth/AuthProvider";
-import { PlaymatView } from "../playmat";
+import { PlaymatView } from "../playmat/PlaymatView";
 import type { CardMoveRequest, TurnInfo } from "../playmat/types";
 import { fetchCardPool } from "./cardPool";
 import { DEMO_DECKS, expandDeck } from "./demoDecks";

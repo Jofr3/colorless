@@ -13,8 +13,7 @@ type MenuItem = {
 };
 
 const MENU_ITEMS: MenuItem[] = [
-  // "Play" is the real engine-driven local game; "Sandbox" is the free-form
-  // mock board the simulator route has always been.
+  // Both local modes use the game engine; Sandbox starts with two library decks.
   { to: "/play", label: "Play", Icon: SimulatorIcon },
   { to: "/simulator", label: "Sandbox", Icon: MoveIcon },
   { to: "/lobby", label: "Online", Icon: SwordsIcon },

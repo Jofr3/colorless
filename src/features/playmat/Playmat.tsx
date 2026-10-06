@@ -1,40 +1,15 @@
-import { useCallback, useState } from "react";
-import { gameLog, initialBoard, initialTurn } from "./data/mockPlaymat";
-import { PlaymatView } from "./PlaymatView";
-import type { CardMoveRequest } from "./types";
-import { moveCardOnBoard } from "./utils/cardMovement";
-import { opponentOf } from "./utils/players";
+import { useState } from "react";
+import { LocalMatch } from "../game/GamePage";
+import type { LocalGameSetup } from "../game/useLocalGame";
+import { SandboxSetup } from "./SandboxSetup";
 
-/** The /simulator sandbox: the mock board, freely mutated by drag-and-drop —
-    exactly the pre-engine behavior, now expressed as a driver of the shared
-    PlaymatView shell (the /play game page is the other driver). */
+/** Two selected decks playing a normal local, hot-seat game. */
 export function Playmat() {
-  const [turn, setTurn] = useState(initialTurn);
-  const [passAnimationKey, setPassAnimationKey] = useState(0);
-  const [board, setBoard] = useState(initialBoard);
+  const [setup, setSetup] = useState<LocalGameSetup | null>(null);
 
-  function passTurn() {
-    setPassAnimationKey((key) => key + 1);
-    setTurn((current) => ({
-      ...current,
-      turn: current.turn + 1,
-      activePlayer: opponentOf(current.activePlayer),
-    }));
-  }
-
-  const handleMoveCard = useCallback((req: CardMoveRequest) => {
-    setBoard((b) => moveCardOnBoard(b, req));
-  }, []);
-
-  return (
-    <PlaymatView
-      board={board}
-      turn={turn}
-      perspective={turn.activePlayer}
-      onMoveCard={handleMoveCard}
-      onPassTurn={passTurn}
-      passAnimationKey={passAnimationKey}
-      logEntries={gameLog}
-    />
+  return setup === null ? (
+    <SandboxSetup onStart={setSetup} />
+  ) : (
+    <LocalMatch key={setup.startedAt} setup={setup} onPlayAgain={() => setSetup(null)} />
   );
 }

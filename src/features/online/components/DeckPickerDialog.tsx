@@ -113,11 +113,13 @@ function DeckOption({
 
 export function DeckPickerDialog({
   open,
+  title,
   selectedDeckId,
   onSelect,
   onCancel,
 }: {
   open: boolean;
+  title?: string;
   selectedDeckId: string | null;
   onSelect: (deck: DeckChoice) => void;
   onCancel: () => void;
@@ -195,7 +197,7 @@ export function DeckPickerDialog({
     // biome-ignore lint/a11y/useKeyWithClickEvents: the native <dialog> handles Escape; this onClick only adds backdrop click-to-cancel for pointer users.
     <dialog
       ref={dialogRef}
-      aria-label="Choose your deck"
+      aria-label={title ?? "Choose your deck"}
       onClose={onCancel}
       onClick={(event) => {
         if (event.target === dialogRef.current) onCancel();
@@ -205,6 +207,7 @@ export function DeckPickerDialog({
       <div
         className={`flex max-h-[80vh] w-[min(44rem,calc(100vw-2.5rem))] flex-col ${GLASS_DIALOG_PANEL}`}
       >
+        {title && <h2 className="mb-4 text-lg font-semibold">{title}</h2>}
         {browsing && (
           <div className="relative">
             <SearchIcon className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-white/40" />
