@@ -1,3 +1,4 @@
+import { CardChoice, cardChoiceDialogClass, cardChoiceGridClass } from "../../game/CardChoice";
 import type { GameAction } from "@luminous/engine";
 import { otherSeat } from "@luminous/engine";
 import type {
@@ -1514,7 +1515,7 @@ function ChooseCardsDialog({
   const mandatory = prompt.min > 0;
   const short = picked.length < prompt.min;
   return (
-    <Dialog label="Choose cards">
+    <Dialog label="Choose cards" cardCount={prompt.candidates.length}>
       <h2 className="text-lg font-semibold text-white">{prompt.note}</h2>
       {/* A live region — the running total is otherwise unannounceable; the
           mandatory branch also states the pick cannot be declined (the absent
@@ -1527,32 +1528,26 @@ function ChooseCardsDialog({
       <output className="mt-1.5 block text-sm text-white/55">
         {mandatory
           ? `Pick ${prompt.min} (${picked.length}/${prompt.max}). ${
-              short ? `Pick ${prompt.min - picked.length} more — this pick can't be declined.` : "Ready."
+              short
+                ? `Pick ${prompt.min - picked.length} more — this pick can't be declined.`
+                : "Ready."
             }`
           : `Pick up to ${prompt.max} (${picked.length}/${prompt.max}).`}
       </output>
-      <ul className="mt-3 flex max-h-64 flex-col gap-1.5 overflow-y-auto">
+      <ul className={cardChoiceGridClass(prompt.candidates.length)}>
         {prompt.candidates.map((card) => {
           const selected = picked.includes(card.id);
           const refused = !selected && picked.length >= prompt.max;
           return (
-            <li key={card.id}>
-              <button
-                type="button"
-                aria-pressed={selected}
-                aria-disabled={refused || undefined}
-                onClick={() => toggle(card.id)}
-                className={`${ROW_BUTTON_BASE} ${
-                  selected
-                    ? ROW_BUTTON_SELECTED
-                    : refused
-                      ? ROW_BUTTON_DISABLED
-                      : ROW_BUTTON_ENABLED
-                }`}
-              >
-                <span className="truncate">{card.name}</span>
-              </button>
-            </li>
+            <CardChoice
+              key={card.id}
+              name={card.name}
+              cardId={card.cardId}
+              hasImage={card.hasImage}
+              selected={selected}
+              refused={refused}
+              onSelect={() => toggle(card.id)}
+            />
           );
         })}
       </ul>
@@ -2734,10 +2729,12 @@ function Panel({
     retreat). */
 function Dialog({
   label,
+  cardCount,
   onDismiss,
   children,
 }: {
   label: string;
+  cardCount?: number;
   onDismiss?: () => void;
   children: React.ReactNode;
 }) {
@@ -2756,7 +2753,11 @@ function Dialog({
       onClose={() => onDismiss?.()}
       className="m-auto border-0 bg-transparent p-0 text-white"
     >
-      <div className={`w-[min(24rem,calc(100vw-2.5rem))] ${GLASS_DIALOG_PANEL}`}>{children}</div>
+      <div
+        className={`${cardCount !== undefined ? cardChoiceDialogClass(cardCount) : "w-[min(24rem,calc(100vw-2.5rem))]"} ${GLASS_DIALOG_PANEL}`}
+      >
+        {children}
+      </div>
     </dialog>
   );
 }

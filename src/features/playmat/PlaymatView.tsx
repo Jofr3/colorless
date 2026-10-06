@@ -15,6 +15,8 @@ import { opponentOf } from "./utils/players";
 
 export interface PlaymatViewProps {
   board: BoardState;
+  /** Suspend board input while a tabletop effect resolves. */
+  interactionDisabled?: boolean;
   turn: TurnInfo;
   /** Which board side renders at the bottom (hand shown, cards draggable).
       The mock passes the active player; the game page always passes "you"
@@ -42,6 +44,8 @@ export interface PlaymatViewProps {
       the local /play question. The online match replaces it because leaving there
       forfeits the game (P4 3c-iv). */
   leaveConfirm?: LeaveConfirmCopy;
+  /** Called only after the player confirms leaving, before returning home. */
+  onLeave?: () => void;
   /** Page-level HUD overlay (phase panels, dialogs, banners). Rendered last,
       above the card canvas. */
   children?: ReactNode;
@@ -52,6 +56,7 @@ export interface PlaymatViewProps {
     (the /simulator mock) and the /play game page are its two drivers. */
 export function PlaymatView({
   board,
+  interactionDisabled = false,
   turn,
   perspective,
   glowPerspective,
@@ -63,6 +68,7 @@ export function PlaymatView({
   piles,
   placementPredicate,
   leaveConfirm,
+  onLeave,
   children,
 }: PlaymatViewProps) {
   const playmatRef = useRef<HTMLElement>(null);
@@ -90,47 +96,49 @@ export function PlaymatView({
       className={`${PLAYMAT_WRAPPER_CLASS} has-pixi-cards`}
       aria-label="Trading card game playmat"
     >
-      {/* Screen-reader-only mirror of the board (the canvas is aria-hidden). */}
-      <BoardSummary board={board} perspectivePlayer={bottomPlayer} piles={piles} />
-      <PlayerSide
-        owner={topPlayer}
-        player={board[topPlayer]}
-        side="top"
-        activeTurn={turn.activePlayer === topPlayer}
-        benchLimit={topBenchLimit}
-        pile={piles?.[topPlayer]}
-      />
-      <PlayerSide
-        owner={bottomPlayer}
-        player={board[bottomPlayer]}
-        side="bottom"
-        activeTurn={turn.activePlayer === bottomPlayer}
-        benchLimit={bottomBenchLimit}
-        pile={piles?.[bottomPlayer]}
-      />
-      <Hand cards={board[bottomPlayer].hand} owner={bottomPlayer} />
-      <div
-        className="absolute z-10"
-        style={{
-          left: "50%",
-          top: CENTER_LINE_TOP,
-          transform: "translate(calc(-150% - var(--side-gap) - 24px), -50%)",
-        }}
-      >
-        <StadiumSlot card={board.stadium} />
+      <div className="contents" inert={interactionDisabled || undefined}>
+        {/* Screen-reader-only mirror of the board (the canvas is aria-hidden). */}
+        <BoardSummary board={board} perspectivePlayer={bottomPlayer} piles={piles} />
+        <PlayerSide
+          owner={topPlayer}
+          player={board[topPlayer]}
+          side="top"
+          activeTurn={turn.activePlayer === topPlayer}
+          benchLimit={topBenchLimit}
+          pile={piles?.[topPlayer]}
+        />
+        <PlayerSide
+          owner={bottomPlayer}
+          player={board[bottomPlayer]}
+          side="bottom"
+          activeTurn={turn.activePlayer === bottomPlayer}
+          benchLimit={bottomBenchLimit}
+          pile={piles?.[bottomPlayer]}
+        />
+        <Hand cards={board[bottomPlayer].hand} owner={bottomPlayer} />
+        <div
+          className="absolute z-10"
+          style={{
+            left: "50%",
+            top: CENTER_LINE_TOP,
+            transform: "translate(calc(-150% - var(--side-gap) - 24px), -50%)",
+          }}
+        >
+          <StadiumSlot card={board.stadium} />
+        </div>
+        {onPassTurn && <TurnControls onPassTurn={onPassTurn} passDisabled={passDisabled} />}
+        <TurnBanner info={turn} passAnimationKey={passAnimationKey} />
+        <BackToMenu confirm={leaveConfirm} onLeave={onLeave} />
+        <GameLog entries={logEntries} turn={turn.turn} />
+        <AnimatedCardsLayer
+          board={board}
+          perspectivePlayer={bottomPlayer}
+          backDesign="twilight"
+          playmatRef={playmatRef}
+          onMoveCard={onMoveCard}
+          placementPredicate={placementPredicate}
+        />
       </div>
-      {onPassTurn && <TurnControls onPassTurn={onPassTurn} passDisabled={passDisabled} />}
-      <TurnBanner info={turn} passAnimationKey={passAnimationKey} />
-      <BackToMenu confirm={leaveConfirm} />
-      <GameLog entries={logEntries} turn={turn.turn} />
-      <AnimatedCardsLayer
-        board={board}
-        perspectivePlayer={bottomPlayer}
-        backDesign="twilight"
-        playmatRef={playmatRef}
-        onMoveCard={onMoveCard}
-        placementPredicate={placementPredicate}
-      />
       {children}
     </section>
   );

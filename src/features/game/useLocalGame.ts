@@ -6,12 +6,13 @@
 // timestamps) rides IN on the dispatched host event, stamped once per user
 // gesture by the dispatch wrapper.
 
-import { useCallback, useMemo, useReducer } from "react";
+import { useCallback, useLayoutEffect, useMemo, useReducer } from "react";
 import type { ErrorCode, GameAction, GameEvent, GameState, Seat } from "@luminous/engine";
 import { applyAction, formatElapsed, logFromEvents, phaseViewOf } from "@luminous/engine";
 import type { SeatLogEntry } from "@luminous/schema";
 import { projectGameState, type GameProjection } from "./projection";
 import { viewLogEntries } from "./viewLog";
+import { coinFlipsFromEvents, coinFlipTitle, type CoinFlipBatch } from "./coinFlips";
 
 /** Everything a fresh match starts from — the createGame result plus the
     display names. Produced by the pregame flow. */
@@ -23,6 +24,8 @@ export interface LocalGameSetup {
   names: Record<Seat, string>;
   /** Wall-clock start, the log's elapsed-time origin. */
   startedAt: number;
+  /** A saved match resumes its accumulated log and the current hot-seat viewer. */
+  resume?: { log: SeatLogEntry[]; viewerSeat: Seat };
 }
 
 export interface GameError {
@@ -33,6 +36,8 @@ export interface GameError {
 }
 
 interface HostState {
+  /** Transient presentation only — never persisted or replayed on refresh. */
+  coinFlipBatch: CoinFlipBatch | null;
   game: GameState;
   names: Record<Seat, string>;
   startedAt: number;
@@ -79,8 +84,17 @@ export function hostReducer(prev: HostState, event: HostEvent): HostState {
     state: result.state,
     elapsed: formatElapsed(event.at - prev.startedAt),
   });
+  const flips = coinFlipsFromEvents(result.events, prev.names);
   return {
     ...prev,
+    coinFlipBatch:
+      flips.length > 0
+        ? {
+            id: (prev.coinFlipBatch?.id ?? 0) + 1,
+            title: coinFlipTitle(prev.game, event.action),
+            flips,
+          }
+        : prev.coinFlipBatch,
     game: result.state,
     log: [...prev.log, ...entries],
     // An accepted action makes any earlier rejection stale — and since the
@@ -94,20 +108,24 @@ export function hostReducer(prev: HostState, event: HostEvent): HostState {
 /** Initial host state from a fresh createGame (exported for tests). */
 export function initHost(setup: LocalGameSetup): HostState {
   return {
+    coinFlipBatch: null,
     game: setup.state,
     names: setup.names,
     startedAt: setup.startedAt,
-    log: logFromEvents(setup.events, {
-      names: setup.names,
-      state: setup.state,
-      elapsed: formatElapsed(0),
-    }),
+    log:
+      setup.resume?.log ??
+      logFromEvents(setup.events, {
+        names: setup.names,
+        state: setup.state,
+        elapsed: formatElapsed(0),
+      }),
     lastError: null,
-    viewerSeat: waitingSeatOf(setup.state, "p1"),
+    viewerSeat: waitingSeatOf(setup.state, setup.resume?.viewerSeat ?? "p1"),
   };
 }
 
 export interface LocalGame {
+  coinFlipBatch: CoinFlipBatch | null;
   /** Full engine state — legitimate for a local hot-seat host (the HUD reads
       attacks/allowances from it); rendering still goes through `projection`. */
   game: GameState;
@@ -121,8 +139,23 @@ export interface LocalGame {
   dispatch: (action: GameAction) => void;
 }
 
-export function useLocalGame(setup: LocalGameSetup): LocalGame {
+export function useLocalGame(
+  setup: LocalGameSetup,
+  onSave?: (snapshot: LocalGameSetup) => void,
+): LocalGame {
   const [host, dispatchHost] = useReducer(hostReducer, setup, initHost);
+
+  // Save the committed state before paint, so a refresh cannot roll back a
+  // move already visible on the board. The reducer stays free of side effects.
+  useLayoutEffect(() => {
+    onSave?.({
+      state: host.game,
+      events: [],
+      names: host.names,
+      startedAt: host.startedAt,
+      resume: { log: host.log, viewerSeat: host.viewerSeat },
+    });
+  }, [host.game, host.log, host.names, host.startedAt, host.viewerSeat, onSave]);
 
   const dispatch = useCallback((action: GameAction) => {
     dispatchHost({ action, at: Date.now() });
@@ -138,6 +171,7 @@ export function useLocalGame(setup: LocalGameSetup): LocalGame {
   );
 
   return {
+    coinFlipBatch: host.coinFlipBatch,
     game: host.game,
     viewerSeat: host.viewerSeat,
     names: host.names,

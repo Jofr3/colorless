@@ -30,7 +30,13 @@ const LOCAL_LEAVE_COPY: LeaveConfirmCopy = {
   message: "You'll return to the main menu. The current board won't be saved.",
 };
 
-export function BackToMenu({ confirm = LOCAL_LEAVE_COPY }: { confirm?: LeaveConfirmCopy }) {
+export function BackToMenu({
+  confirm = LOCAL_LEAVE_COPY,
+  onLeave,
+}: {
+  confirm?: LeaveConfirmCopy;
+  onLeave?: () => void;
+}) {
   const navigate = useNavigate();
   const [confirming, setConfirming] = useState(false);
 
@@ -50,7 +56,10 @@ export function BackToMenu({ confirm = LOCAL_LEAVE_COPY }: { confirm?: LeaveConf
         open={confirming}
         copy={confirm}
         onCancel={() => setConfirming(false)}
-        onConfirm={() => navigate(HOME_PATH)}
+        onConfirm={() => {
+          onLeave?.();
+          navigate(HOME_PATH);
+        }}
       />
     </>
   );

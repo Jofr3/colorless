@@ -73,7 +73,7 @@ export function DeckPile({
   count?: number;
 }) {
   return (
-    <div className="relative inline-block">
+    <div className="relative inline-block" data-card-pile="deck" data-card-owner={owner}>
       <PileFrame>
         {count === 0 ? (
           <div style={CARD_SIZE_STYLE} />

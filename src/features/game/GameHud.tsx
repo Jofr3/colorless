@@ -6,6 +6,7 @@
 // always for the person holding the device; the gate stays anyway. GameHud
 // enforces it ONCE, at its phase switch — the panels never re-check it.
 
+import { CardChoice, cardChoiceDialogClass, cardChoiceGridClass } from "./CardChoice";
 import { useEffect, useRef, useState, type ReactElement, type ReactNode } from "react";
 import type { Attack, Card } from "@luminous/schema";
 import type {
@@ -86,6 +87,8 @@ export interface GameHudProps {
   names: Record<Seat, string>;
   dispatch: (action: GameAction) => void;
   onPlayAgain: () => void;
+  /** Sandbox offers a random start or an explicit order relative to Player 1. */
+  chooseStartOrder?: boolean;
 }
 
 const ACCENT_BUTTON_CLASS = `cursor-pointer rounded-full px-4 py-2 text-sm font-semibold disabled:cursor-default disabled:opacity-40 ${GLASS_ACCENT_BUTTON}`;
@@ -524,10 +527,12 @@ const TOP_PANEL_CLASS = "left-1/2 top-16 w-[min(24rem,calc(100vw-2rem))] -transl
     `onDismiss` the decision is mandatory — Escape is swallowed. */
 function HudDialog({
   label,
+  cardCount,
   onDismiss,
   children,
 }: {
   label: string;
+  cardCount?: number;
   onDismiss?: () => void;
   children: ReactNode;
 }) {
@@ -546,8 +551,41 @@ function HudDialog({
       onClose={() => onDismiss?.()}
       className="leave-dialog m-auto border-0 bg-transparent p-0 text-white"
     >
-      <div className={`w-[min(24rem,calc(100vw-2.5rem))] ${GLASS_DIALOG_PANEL}`}>{children}</div>
+      <div
+        className={`${cardCount !== undefined ? cardChoiceDialogClass(cardCount) : "w-[min(24rem,calc(100vw-2.5rem))]"} ${GLASS_DIALOG_PANEL}`}
+      >
+        {children}
+      </div>
     </dialog>
+  );
+}
+
+function StartingOrderPanel({
+  dispatch,
+  names,
+  coinWinner,
+}: GameHudProps & { coinWinner: Seat }) {
+  const options = [
+    { label: "Coin flip (random)", first: coinWinner },
+    { label: "Go first", first: "p1" },
+    { label: "Go second", first: "p2" },
+  ] as const;
+  return (
+    <HudPanel label="Starting player" className={TOP_PANEL_CLASS}>
+      <p className="text-sm font-semibold text-white">How should {names.p1} start?</p>
+      <div className="mt-3 flex flex-wrap gap-2.5">
+        {options.map(({ label, first }, index) => (
+          <button
+            key={label}
+            type="button"
+            className={index === 0 ? ACCENT_BUTTON_CLASS : NEUTRAL_BUTTON_CLASS}
+            onClick={() => dispatch({ type: "chooseFirstPlayer", seat: coinWinner, first })}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+    </HudPanel>
   );
 }
 
@@ -1936,7 +1974,7 @@ function ChooseCardsDialog({
   const mandatory = prompt.min > 0;
   const short = picked.length < prompt.min;
   return (
-    <HudDialog label="Choose cards">
+    <HudDialog label="Choose cards" cardCount={prompt.candidates.length}>
       <h2 className="text-lg font-semibold text-white">{prompt.note}</h2>
       {/* An <output> (role=status), not a <p>, and it is the ONE live region —
           the running total is otherwise unannounceable, exactly as
@@ -1971,11 +2009,13 @@ function ChooseCardsDialog({
       <output className="mt-1.5 block text-sm text-white/55">
         {mandatory
           ? `Pick ${prompt.min} (${picked.length}/${prompt.max}). ${
-              short ? `Pick ${prompt.min - picked.length} more — this pick can't be declined.` : "Ready."
+              short
+                ? `Pick ${prompt.min - picked.length} more — this pick can't be declined.`
+                : "Ready."
             }`
           : `Pick up to ${prompt.max} (${picked.length}/${prompt.max}).`}
       </output>
-      <ul className="mt-3 flex max-h-64 flex-col gap-1.5 overflow-y-auto">
+      <ul className={cardChoiceGridClass(prompt.candidates.length)}>
         {prompt.candidates.map((uid) => {
           const selected = picked.includes(uid);
           // At the cap a further click is REFUSED, which for a cost is every
@@ -1985,24 +2025,17 @@ function ChooseCardsDialog({
           // one thing the <output> above cannot announce — nothing changes, so
           // nothing is spoken (the DiscardEnergyDialog rule).
           const refused = !selected && (picked.length >= prompt.max || cappedOut(uid, picked));
+          const card = cardOfUid(game, uid);
           return (
-            <li key={uid}>
-              <button
-                type="button"
-                aria-pressed={selected}
-                aria-disabled={refused || undefined}
-                onClick={() => toggle(uid)}
-                className={`${ROW_BUTTON_BASE} ${
-                  selected
-                    ? "bg-white/[0.12] text-white ring-white/40"
-                    : refused
-                      ? ROW_BUTTON_DISABLED
-                      : ROW_BUTTON_ENABLED
-                }`}
-              >
-                <span className="truncate">{cardOfUid(game, uid)?.name ?? uid}</span>
-              </button>
-            </li>
+            <CardChoice
+              key={uid}
+              name={card?.name ?? uid}
+              cardId={card?.id ?? ""}
+              hasImage={card?.image != null}
+              selected={selected}
+              refused={refused}
+              onSelect={() => toggle(uid)}
+            />
           );
         })}
       </ul>
@@ -3661,7 +3694,13 @@ export function GameHud(props: GameHudProps) {
   const seatKey = `${props.viewerSeat}-${game.turn}`;
   switch (game.phase.kind) {
     case "setup:chooseFirst":
-      return acting ? <ChooseFirstPanel {...props} coinWinner={game.phase.coinWinner} /> : null;
+      return acting ? (
+        props.chooseStartOrder ? (
+          <StartingOrderPanel {...props} coinWinner={game.phase.coinWinner} />
+        ) : (
+          <ChooseFirstPanel {...props} coinWinner={game.phase.coinWinner} />
+        )
+      ) : null;
     case "setup:drawExtra":
       return acting ? (
         <DrawExtraPanel

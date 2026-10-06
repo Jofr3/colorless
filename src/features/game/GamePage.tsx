@@ -7,7 +7,13 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import type { DeckSummary } from "@luminous/schema";
-import { DECK_SIZE, createGame, isBasicPokemon, otherSeat } from "@luminous/engine";
+import {
+  DECK_SIZE,
+  createGame,
+  isBasicPokemon,
+  otherSeat,
+  type GameAction,
+} from "@luminous/engine";
 import {
   ERROR_TEXT,
   GLASS_ACCENT_BUTTON,
@@ -19,10 +25,12 @@ import { ApiError, getDeck, listDecks } from "../../lib/api";
 import { TransientErrorPill } from "../../components/TransientErrorPill";
 import { useAuth } from "../auth/AuthProvider";
 import { PlaymatView } from "../playmat/PlaymatView";
+import type { LeaveConfirmCopy } from "../playmat/components/BackToMenu";
 import type { CardMoveRequest, TurnInfo } from "../playmat/types";
 import { fetchCardPool } from "./cardPool";
 import { DEMO_DECKS, expandDeck } from "./demoDecks";
 import { GameHud } from "./GameHud";
+import { TabletopDice } from "./TabletopDice";
 import { moveToAction } from "./moveToAction";
 import { gamePlacementPredicate } from "./placement";
 import { useLocalGame, type LocalGameSetup } from "./useLocalGame";
@@ -226,12 +234,39 @@ const FLIP_BANNER_TTL_MS = 1800;
 export function LocalMatch({
   setup,
   onPlayAgain,
+  onSave,
+  leaveConfirm,
+  onLeave,
+  chooseStartOrder,
 }: {
   setup: LocalGameSetup;
   onPlayAgain: () => void;
+  onSave?: (snapshot: LocalGameSetup) => void;
+  leaveConfirm?: LeaveConfirmCopy;
+  onLeave?: () => void;
+  chooseStartOrder?: boolean;
 }) {
-  const { game, projection, viewerSeat, names, dispatch, logEntries, lastError } =
-    useLocalGame(setup);
+  const {
+    game,
+    projection,
+    viewerSeat,
+    names,
+    dispatch: dispatchAction,
+    logEntries,
+    lastError,
+    coinFlipBatch,
+  } = useLocalGame(setup, onSave);
+  const [shownCoinBatch, setShownCoinBatch] = useState<number | null>(null);
+  const tossing = coinFlipBatch !== null && coinFlipBatch.id !== shownCoinBatch;
+  const finishCoinFlip = useCallback(() => {
+    if (coinFlipBatch !== null) setShownCoinBatch(coinFlipBatch.id);
+  }, [coinFlipBatch]);
+  const dispatch = useCallback(
+    (action: GameAction) => {
+      if (!tossing) dispatchAction(action);
+    },
+    [tossing, dispatchAction],
+  );
 
   // Drag → action. The engine stays the authority: a null translation
   // springs back silently, a rejected action shows the pill (nothing else
@@ -304,6 +339,7 @@ export function LocalMatch({
 
   return (
     <PlaymatView
+      interactionDisabled={tossing}
       board={board}
       turn={turnInfo}
       perspective="you"
@@ -316,16 +352,21 @@ export function LocalMatch({
       passAnimationKey={projection.turn}
       logEntries={logEntries}
       piles={projection.piles}
+      leaveConfirm={leaveConfirm}
+      onLeave={onLeave}
     >
-      <GameHud
-        game={game}
-        projection={projection}
-        viewerSeat={viewerSeat}
-        names={names}
-        dispatch={dispatch}
-        onPlayAgain={onPlayAgain}
-      />
-      {flipNonce !== null && (
+      {!tossing && (
+        <GameHud
+          game={game}
+          projection={projection}
+          viewerSeat={viewerSeat}
+          names={names}
+          dispatch={dispatch}
+          onPlayAgain={onPlayAgain}
+          chooseStartOrder={chooseStartOrder}
+        />
+      )}
+      {!tossing && flipNonce !== null && (
         <div
           key={flipNonce}
           className="pointer-events-none absolute left-1/2 top-1/3 z-[82] -translate-x-1/2 rounded-full bg-[#16161f]/90 px-6 py-3 shadow-[0_12px_40px_rgba(0,0,0,0.5)] ring-1 ring-inset ring-white/15 backdrop-blur-xl"
@@ -342,6 +383,9 @@ export function LocalMatch({
           onDismiss={() => setDismissedNonce(shownError.nonce)}
           className="absolute bottom-[calc(var(--hand-h)+12px)] left-1/2 z-[90] -translate-x-1/2"
         />
+      )}
+      {tossing && coinFlipBatch !== null && (
+        <TabletopDice key={coinFlipBatch.id} batch={coinFlipBatch} onComplete={finishCoinFlip} />
       )}
     </PlaymatView>
   );

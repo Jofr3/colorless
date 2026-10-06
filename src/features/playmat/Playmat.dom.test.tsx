@@ -1,6 +1,13 @@
 // @vitest-environment jsdom
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import type { Card, Deck, DeckSummary } from "@luminous/schema";
+import { applyAction } from "@luminous/engine";
+import {
+  driveSetup,
+  handFromDeck,
+  handUid,
+  TRAINER_DECK,
+} from "../../../packages/engine/src/testFixtures";
 import { MemoryRouter } from "react-router-dom";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { installDomShims } from "../../test/domShims";
@@ -8,8 +15,11 @@ import { json, stubFetch } from "../../test/fetchStub";
 import { cardBrief, USER } from "../../test/fixtures";
 import { AuthProvider } from "../auth/AuthProvider";
 import { clearCardPoolCache } from "../game/cardPool";
+import { initHost } from "../game/useLocalGame";
+import type { LocalGameSetup } from "../game/useLocalGame";
 import { Playmat } from "./Playmat";
 import type { PlaymatViewProps } from "./PlaymatView";
+import { loadSimulatorSave, saveSimulator, SIMULATOR_SAVE_KEY } from "./simulatorSave";
 
 // Keep the setup, picker, API loading and board driver real; skip the canvas.
 const view = vi.fn();
@@ -23,7 +33,9 @@ vi.mock("./PlaymatView", () => ({
 beforeAll(installDomShims);
 afterEach(() => {
   cleanup();
+  vi.restoreAllMocks();
   vi.unstubAllGlobals();
+  localStorage.clear();
   view.mockClear();
   clearCardPoolCache();
 });
@@ -114,7 +126,61 @@ function currentView(): PlaymatViewProps {
   return view.mock.calls.at(-1)?.[0] as PlaymatViewProps;
 }
 
+function reloadPage() {
+  cleanup();
+  clearCardPoolCache();
+  view.mockClear();
+  // A refresh must not need the saved decks or catalog to be available again.
+  stubFetch({ "GET /auth/me": () => json(USER) });
+  renderPage();
+}
+
+function savedSetup(state = driveSetup(7)): LocalGameSetup {
+  const setup = { state, events: [], names: { p1: "Player 1", p2: "Player 2" }, startedAt: 1000 };
+  const host = initHost(setup);
+  return { ...setup, resume: { log: host.log, viewerSeat: host.viewerSeat } };
+}
+
 describe("Sandbox deck setup", () => {
+  it.each([
+    { label: "Go first", seed: 1, firstPlayer: "p1" },
+    { label: "Go second", seed: 3, firstPlayer: "p2" },
+    { label: "Coin flip (random)", seed: 1, firstPlayer: "p2" },
+    { label: "Coin flip (random)", seed: 3, firstPlayer: "p1" },
+  ])("$label starts $firstPlayer first with seed $seed", async ({ label, seed, firstPlayer }) => {
+    stubApi();
+    renderPage();
+    expect(screen.queryByRole("button", { name: "Coin flip (random)" })).toBeNull();
+    expect(screen.queryAllByRole("radio")).toHaveLength(0);
+    await pick(1, first.name);
+    await pick(2, second.name);
+    // Seeds 1 and 3 yield opposite coin winners. The manual choices above
+    // deliberately oppose the toss, proving they refer to Player 1.
+    vi.spyOn(Date, "now").mockReturnValue(seed);
+    fireEvent.click(screen.getByRole("button", { name: "Start sandbox" }));
+    const choices = await screen.findByRole("region", { name: "Starting player" });
+    expect(currentView().board.you.hand).toHaveLength(0);
+    expect(currentView().piles?.you.deckCount).toBe(60);
+    expect(within(choices).getAllByRole("button")).toHaveLength(3);
+    expect(loadSimulatorSave()?.state.firstPlayer).toBeNull();
+    reloadPage();
+    expect(screen.getByRole("region", { name: "Starting player" })).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: label }));
+    await screen.findByLabelText("Setup placement");
+    expect(screen.queryByLabelText("Coin toss")).toBeNull();
+    expect(loadSimulatorSave()?.state.firstPlayer).toBe(firstPlayer);
+    expect(currentView().board.you.hand).toHaveLength(7);
+    expect(currentView().piles?.you.deckCount).toBe(53);
+    const log = currentView()
+      .logEntries.flatMap((entry) =>
+        entry.kind === "action" ? entry.segments.map((segment) => segment.text) : [],
+      )
+      .join("");
+    expect(log).toContain(`${firstPlayer === "p1" ? "Player 1" : "Player 2"} goes first`);
+    reloadPage();
+    expect(loadSimulatorSave()?.state.firstPlayer).toBe(firstPlayer);
+  });
+
   it("starts a normal game with seven-card hands, prizes, setup and turn draws", async () => {
     stubApi();
     renderPage();
@@ -126,10 +192,8 @@ describe("Sandbox deck setup", () => {
     await pick(2, second.name);
     expect(start.disabled).toBe(false);
     fireEvent.click(start);
-    await screen.findByLabelText("Coin toss");
-    expect(currentView().board.you.hand).toHaveLength(0);
-    expect(currentView().piles?.you.deckCount).toBe(60);
-    fireEvent.click(screen.getByRole("button", { name: "Go first" }));
+    await screen.findByLabelText("Starting player");
+    fireEvent.click(screen.getByRole("button", { name: "Coin flip (random)" }));
     await screen.findByLabelText("Setup placement");
     expect(currentView().board.you.hand).toHaveLength(7);
     expect(currentView().board.opponent.hand).toHaveLength(7);
@@ -152,6 +216,15 @@ describe("Sandbox deck setup", () => {
         }),
       );
       fireEvent.click(screen.getByRole("button", { name: "Ready" }));
+      if (seat === 0) {
+        const beforeRefresh = currentView();
+        const saved = loadSimulatorSave();
+        expect(saved).not.toBeNull();
+        reloadPage();
+        expect(currentView().board).toEqual(beforeRefresh.board);
+        expect(currentView().turn).toEqual(beforeRefresh.turn);
+        expect(loadSimulatorSave()).toEqual(saved);
+      }
     }
     expect(names).toEqual(new Set(["Player 1", "Player 2"]));
     expect(dealtIds).toContain("sv06.5-001");
@@ -171,6 +244,16 @@ describe("Sandbox deck setup", () => {
     expect(currentView().turn.youName).not.toBe(started.turn.youName);
     expect(currentView().board.you.hand).toHaveLength(7);
     expect(currentView().piles?.you.deckCount).toBe(46);
+    const beforeRefresh = currentView();
+    const saved = loadSimulatorSave();
+    reloadPage();
+    expect(currentView().board).toEqual(beforeRefresh.board);
+    expect(currentView().turn).toEqual(beforeRefresh.turn);
+    expect(currentView().piles).toEqual(beforeRefresh.piles);
+    expect(currentView().logEntries).toEqual(beforeRefresh.logEntries);
+    expect(loadSimulatorSave()).toEqual(saved);
+    fireEvent.click(screen.getByRole("button", { name: "Pass" }));
+    expect(currentView().turn.turn).toBe(3);
   });
 
   it("allows changing a pick and using the same deck with independent card identities", async () => {
@@ -180,8 +263,8 @@ describe("Sandbox deck setup", () => {
     await pick(1, first.name, true);
     await pick(2, first.name);
     fireEvent.click(screen.getByRole("button", { name: "Start sandbox" }));
-    await screen.findByLabelText("Coin toss");
-    fireEvent.click(screen.getByRole("button", { name: "Go first" }));
+    await screen.findByLabelText("Starting player");
+    fireEvent.click(screen.getByRole("button", { name: "Coin flip (random)" }));
     await screen.findByLabelText("Setup placement");
     const firstHand = currentView().board.you.hand;
     const basic = firstHand[0];
@@ -214,7 +297,9 @@ describe("Sandbox deck setup", () => {
     expect(view).not.toHaveBeenCalled();
     fail = false;
     fireEvent.click(screen.getByRole("button", { name: "Start sandbox" }));
-    await screen.findByLabelText("Coin toss");
+    await screen.findByLabelText("Starting player");
+    fireEvent.click(screen.getByRole("button", { name: "Coin flip (random)" }));
+    await screen.findByLabelText("Setup placement");
   });
 
   it("rejects an empty deck without opening a demo board", async () => {
@@ -262,5 +347,87 @@ describe("Sandbox deck setup", () => {
     await screen.findByText("Sign in to use your decks.");
     expect(screen.getByRole("link", { name: "Sign in" }).getAttribute("href")).toBe("/login");
     await waitFor(() => expect(view).not.toHaveBeenCalled());
+  });
+});
+
+describe("Simulator saved games", () => {
+  it("restores a pending card search and its continuation, including shuffle RNG", async () => {
+    const state = handFromDeck(
+      driveSetup(7, { p1: TRAINER_DECK, p2: TRAINER_DECK }, { first: "p1" }),
+      "p1",
+      "sv01-181",
+      1,
+    );
+    saveSimulator(savedSetup(state));
+    stubApi();
+    renderPage();
+    fireEvent.click(screen.getByRole("button", { name: "sv01-181" }));
+    await screen.findByRole("dialog", { name: "Choose cards" });
+    const saved = loadSimulatorSave();
+    expect(saved?.state.phase.kind).toBe("effect:choose");
+    expect(saved?.state.players.p1.discard).toContain(handUid(state, "p1", "sv01-181"));
+    reloadPage();
+    await screen.findByRole("dialog", { name: "Choose cards" });
+    expect(loadSimulatorSave()).toEqual(saved);
+    if (!saved) throw new Error("Expected saved search");
+    const expected = applyAction(saved.state, {
+      type: "resolveEffect",
+      seat: "p1",
+      choice: { kind: "cards", uids: [] },
+    });
+    expect(expected.ok).toBe(true);
+    fireEvent.click(screen.getByRole("button", { name: "Take none" }));
+    expect(screen.queryByRole("dialog", { name: "Choose cards" })).toBeNull();
+    if (expected.ok) expect(loadSimulatorSave()?.state).toEqual(expected.state);
+  });
+
+  it("clears the completed game when Play again is clicked", () => {
+    const state = driveSetup(7);
+    state.phase = {
+      kind: "gameOver",
+      outcome: { result: "win", winner: "p1", reason: "prizesTaken" },
+    };
+    saveSimulator(savedSetup(state));
+    stubApi();
+    renderPage();
+    fireEvent.click(screen.getByRole("button", { name: "Play again" }));
+    expect(localStorage.getItem(SIMULATOR_SAVE_KEY)).toBeNull();
+    reloadPage();
+    expect(screen.getByRole("heading", { name: "Sandbox" })).toBeTruthy();
+    expect(screen.queryByLabelText("Playmat stub")).toBeNull();
+  });
+
+  it("falls back to deck selection for malformed or incompatible saves", () => {
+    const setup = savedSetup();
+    saveSimulator(setup);
+    const record = JSON.parse(localStorage.getItem(SIMULATOR_SAVE_KEY) ?? "null");
+    for (const raw of [
+      "{bad json",
+      "null",
+      "{}",
+      JSON.stringify({ ...record, engineVersion: "old-engine" }),
+      JSON.stringify({ ...record, snapshot: { ...setup, state: {} } }),
+    ]) {
+      localStorage.setItem(SIMULATOR_SAVE_KEY, raw);
+      expect(loadSimulatorSave()).toBeNull();
+    }
+    stubApi();
+    renderPage();
+    expect(screen.getByRole("heading", { name: "Sandbox" })).toBeTruthy();
+  });
+
+  it("keeps the game playable when browser storage is unavailable", async () => {
+    saveSimulator(savedSetup());
+    stubApi();
+    renderPage();
+    vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => {
+      throw new Error("quota");
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Pass" }));
+    expect(currentView().turn.turn).toBe(2);
+    vi.spyOn(Storage.prototype, "getItem").mockImplementation(() => {
+      throw new Error("blocked");
+    });
+    expect(loadSimulatorSave()).toBeNull();
   });
 });

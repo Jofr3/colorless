@@ -116,7 +116,7 @@ function rows(): [string, boolean][] {
   return screen
     .getAllByRole("button")
     .filter((b) => b.getAttribute("aria-pressed") !== null)
-    .map((b) => [b.textContent ?? "", b.getAttribute("aria-disabled") === "true"]);
+    .map((b) => [b.getAttribute("aria-label") ?? "", b.getAttribute("aria-disabled") === "true"]);
 }
 
 describe("ChooseCardsDialog — the per-kind caps refuse a row the flat total allows", () => {
