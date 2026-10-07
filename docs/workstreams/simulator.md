@@ -29512,7 +29512,7 @@ deploy together).
 - **The face, hand-written** — `packages/engine/src/fossils.ts` (NEW, DATA, outside the mutation whitelist): four rows,
   three texts, `FOSSIL_IDS`, `fossilPokemonCard` (Basic, {C}, 60 HP, the printed Ability, no attacks / Weakness /
   Resistance / Retreat Cost). 🛑 The ingest DROPS the face (`map.ts`: `hp` / `abilitiesJson` null; the Trainer branch
-  refills only `trainerType` / `effect`); tcgdex carries it. USER follow-up: widen the Trainer branch, re-ingest,
+  refills only `trainerType` / `effect`); tcgdex carries it. USER follow-up: widen the Trainer branch, re-ingest, [🆕 D581: DONE — the Trainer branch keeps the face, re-ingested locally; the Ability is read off the row]
   regenerate `catalogManifest` and the fixtures.
 - **The zone-aware accessor** — cards.ts `cardOfUid`: the fossil-id `Set` first, then "is this uid a card of an in-play
   stack?" — the Pokémon face in play, the catalog Item everywhere else (R-FO2); interpreter.ts's `cardOf` delegates.
@@ -29643,7 +29643,7 @@ printings are now whole.
 - **The attack menu.** `attackMenuOf(state, seat, pokemon)`: printed first, then Memory Dive, then the in-effect Tools'
   `toolAttacks`; its flat index is `AttackAction.index` (docs annotated, no shape change). `attackGateOf`, `attackCostAt`,
   `attack()`, redact.ts and GameHud read it; the persisted indices stay printed (`printedIndex`).
-- **Technical Machine: Fluorite.** The attack in the NEW data table `technicalMachines.ts` (the ingest drops it; outside every
+- **Technical Machine: Fluorite.** The attack in the NEW data table `technicalMachines.ts` (the ingest drops it; [🆕 D581: deleted — the attack is the Tool card's catalog row] outside every
   whitelist), `CardProgram.toolAttacks` (+ `toolCardSimulated`), the program at `attack[0]` (`healEach.banner`), and
   `toolDiscardAtEndOfYourTurn` → flow.ts `discardEndOfTurnTools` (the turn owner only).
 - **Memory Dive.** `PassiveEffects.memoryDive` + `memoryDiveLive`: the cards under an evolved top, bottom to top.
@@ -29780,4 +29780,28 @@ streak at 11; the 18 gate-witness rows KILLED). Carried: decisions.md D580 (g).
 NEXT: see `progress.md` NEXT — the ingested legal pool is whole; what is left is USER decisions (R-LA2, R-LA2a, R-LA4, R-DC1,
 R-1b / R-1c, R-TM1, R-TRE2, the Mega Evolution ingest, the map.ts Trainer-branch widening). [🆕 D580 close-out: the sweep
 PAID EXACTLY; the continue-loop is CLOSED — nothing parked, no slice in flight. The list above is the remaining work, all
-of it the user's.]
+of it the user's.] [🆕 D581: the user ruled two of those — the Mega Evolution ingest and the map.ts Trainer-branch widening, both
+taken as D581 below.]
+
+## D581 — the data slice: the Mega Evolution serie ingested and a Trainer's printed face kept (engine 0.465.0, `MATCH_RECORD_VERSION` stays 41)
+
+**Status:** ✅ BUILT in the `luminous_ui-mega` worktree (branch `mega-ingest` at `a4d75939`), NOT committed. The user's
+decisions (1) and (2) after D580. Engine 0.464.0 → 0.465.0. The Mega ex rule is D582's, not this slice's.
+
+- **Ingest.** The tcgdex Trainer schema keeps `hp` / `abilities` / `attacks`; `apps/api/src/ingest/map.ts` writes them on
+  a Trainer row. LOCAL re-ingest of the nine sets whose Trainers print a face (sv03.5 sv04 sv04.5 sv07 sv08 sv10.5w sv10.5b
+  me03 me05) and of `swsh10.5` (lost from the local file again; the remote D1 holds it). 19 Trainer faces now in the catalog.
+- **Engine.** fossils.ts reads a fossil's Ability off its catalog row (the Ability table deleted); `technicalMachines.ts`
+  deleted and `CardProgram.toolAttacks` a flag — `attackMenuOf`'s Tool section reads the Tool card's own `attacks`.
+  `attacksOf`, `hasPrintedAbility` and `hpOf` ask the category (the "a Trainer's catalog row carries `null`" premise is
+  withdrawn at every site, the web builder's comments included); the API's `/cards` HP filter and sort ask it too (`query.ts` `pokemonHp`).
+  🛑 Re-ingest the REMOTE D1 and ship 0.465 back to back, re-ingest first (0.465 on the old catalog loses the fossil
+  Ability and the TM grant; 0.464 on the new one lacks the category guards — no harmful reach found). The KV catalog
+  cache steps v6 → v7 with the deploy, because its 1-hour TTL would otherwise hold pre-re-ingest `/cards/:id` rows.
+- **Census.** `catalogManifest.ts` regenerated (5084 rows / 30 sets, the measured six-set slice `sixSet`, `trainerFaces`).
+  The `sv` attack corpus re-run on the LOCAL D1 is byte-identical; the `me` column is `censusAttackCorpusMe.ts`. Standard
+  pool D581: attacks **2460 / 2771**, abilities **376 / 610**, trainers **264 / 447**, special energy **11 / 22**.
+  Backlog by mechanism: `docs/reference/coverage-backlog-mega.md`.
+- **Owed.** See `progress.md` NEXT for the pasted figures. The whole-corpus sweep is PENDING. `precheck` carries 20 broken
+  rows from the eight post-D580 UI commits (not D581's).
+

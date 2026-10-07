@@ -3428,8 +3428,10 @@ export const MUTANTS: Mutant[] = [
     decision: "D251",
     what: "`hasPrintedAbility` demands MORE THAN ONE printed Ability — the off-by-one a `length > 0` check invites, and one no type can catch. Every real printing of the gate's positive side carries exactly one Ability, so the whole prevention silently stops firing",
     file: "packages/engine/src/cards.ts",
-    find: "  return (card?.abilities ?? []).length > 0;",
-    replace: "  return (card?.abilities ?? []).length > 1;",
+    // 🆕 D581 — RE-ANCHORED, the claim unchanged (D414): `hasPrintedAbility` gained a category conjunct
+    // (a fossil Item carries its catalog Ability since D581); the row still raises the threshold to > 1.
+    find: '  return card?.category === "Pokemon" && (card.abilities ?? []).length > 0;',
+    replace: '  return card?.category === "Pokemon" && (card.abilities ?? []).length > 1;',
     expectKilledBy: ["packages/engine/src/cornerstoneStance.test.ts"],
   },
   {
@@ -6233,7 +6235,7 @@ export const MUTANTS: Mutant[] = [
     // CORPUS QUOTES** (D414/D415), so a value-keyed sweep over `toBe("0.391.0")` cannot
     // see it — this row's `find` spells the DECLARATION, not an assertion. Run
     // `precheck` after every version bump, not after the sweep tells you.
-    find: 'export const engineVersion = "0.464.0";',
+    find: 'export const engineVersion = "0.465.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -10956,7 +10958,7 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D324-max-hp-data-gap-floored",
     decision: "D324",
-    what: "\u{1F6D1} THE NULL DATA GAP TURNED INTO A 10-HP BODY - the early return deleted so an unreadable card falls through to the clamp. `hpOf` returns null for a non-Pokemon and for a missing printing, and this is the mutation that makes every one of them Knock-Outable",
+    what: "\u{1F6D1} THE NULL DATA GAP TURNED INTO A 10-HP BODY - the early return deleted so an unreadable card falls through to the clamp. `hpOf` returns null for a non-Pokemon (D581: by asking the category - a fossil Item's catalog row carries hp 60 since D581) and for a missing printing, and this is the mutation that makes every one of them Knock-Outable",
     file: "packages/engine/src/continuous.ts",
     find: "  const hp = hpOf(top);\n  if (hp === null) return null;",
     replace: "  const hp = hpOf(top) ?? 0;",
@@ -46587,5 +46589,129 @@ export const MUTANTS: Mutant[] = [
     replace: "const C_PRIME_TEXTS: readonly string[] = [];",
     expectKilledBy: [],
     killedByCommand: ["bun", "scripts/residue-census-gate.ts"],
+  },
+  // ── 🆕 D581 — THE DATA SLICE: the Mega Evolution serie ingested into the LOCAL D1, a Trainer's printed Pokémon
+  //    face kept by the ingest (map.ts + the tcgdex Trainer schema), the fossil Ability and the TM attack read off
+  //    the catalog row (fossils.ts' table and technicalMachines.ts deleted), `attacksOf` / `hasPrintedAbility` / `hpOf`
+  //    asking the category, and the census re-baselined over `sv` + `me`. `MATCH_RECORD_VERSION` STAYS 41. Every
+  //    `find` asserted to occur exactly once, by script, before it was written here (D540); every replace names
+  //    only what its file binds (binding-gate.ts). ⚠️ NO ROW on fossils.ts (DATA/rule text, outside the whitelist
+  //    since D538; its catalog read is pinned by antiqueFossilsD576 §0) and none on the GENERATED catalogManifest.ts. ──
+  {
+    id: "D581-attacksof-asks-no-category",
+    decision: "D581",
+    what: "`attacksOf` reads `Card.attacks` on any category: a Technical Machine's catalog row is a Pokémon's printed attack list, and the `attackNamePokemon` filter finds the machine. Killed by trainerFacesD581 §2.",
+    file: "packages/engine/src/cards.ts",
+    find: '  return card.category === "Pokemon" ? (card.attacks ?? []) : [];',
+    replace: "  return card.attacks ?? [];",
+    expectKilledBy: ["packages/engine/src/trainerFacesD581.test.ts"],
+  },
+  {
+    id: "D581-has-ability-asks-no-category",
+    decision: "D581",
+    what: "`hasPrintedAbility` reads `Card.abilities` on any category: a fossil Item in the hand or the deck, which carries its catalog Ability since D581, counts as a Pokémon that has an Ability. Killed by trainerFacesD581 §3 and antiqueFossilsD576 §2's zone rung.",
+    file: "packages/engine/src/cards.ts",
+    find: '  return card?.category === "Pokemon" && (card.abilities ?? []).length > 0;',
+    replace: "  return (card?.abilities ?? []).length > 0;",
+    expectKilledBy: ["packages/engine/src/trainerFacesD581.test.ts", "packages/engine/src/antiqueFossilsD576.test.ts"],
+  },
+  {
+    id: "D581-hpof-asks-no-category",
+    decision: "D581",
+    what: "`hpOf` reads `Card.hp` on any category: a fossil Item (or Snorlax Doll), whose catalog row carries its printed HP since D581, reads as a 60-HP (120-HP) body, and the \"`hpOf` returns null for a non-Pokémon\" contract every call site's prose leans on is false. Killed by trainerFacesD581 §4.",
+    file: "packages/engine/src/cards.ts",
+    find: '  return card.category === "Pokemon" && card.hp !== null && card.hp > 0 ? card.hp : null;',
+    replace: "  return card.hp !== null && card.hp > 0 ? card.hp : null;",
+    expectKilledBy: ["packages/engine/src/trainerFacesD581.test.ts"],
+  },
+  {
+    id: "D581-tool-section-reads-attacksof",
+    decision: "D581",
+    what: "the Tool section reads the machine through `attacksOf`, which is a Pokémon's own list: TM Fluorite grants nothing. Killed by the TM suite's menu rungs.",
+    file: "packages/engine/src/continuous.ts",
+    find: "      tool === undefined || programFor(tool.id)?.toolAttacks !== true ? undefined : (tool.attacks ?? undefined);",
+    replace: "      tool === undefined || programFor(tool.id)?.toolAttacks !== true ? undefined : attacksOf(tool);",
+    expectKilledBy: ["packages/engine/src/tmFluoriteD578.test.ts"],
+  },
+  {
+    id: "D581-tool-section-ignores-the-grant",
+    decision: "D581",
+    what: "the Tool section offers ANY attached Tool's printed attacks: an unbuilt machine (Blindside) puts a programless attack on the menu. Killed by the TM suite's D581 Blindside rung.",
+    file: "packages/engine/src/continuous.ts",
+    find: "      tool === undefined || programFor(tool.id)?.toolAttacks !== true ? undefined : (tool.attacks ?? undefined);",
+    replace: "      tool === undefined ? undefined : (tool.attacks ?? undefined);",
+    expectKilledBy: ["packages/engine/src/tmFluoriteD578.test.ts"],
+  },
+  {
+    id: "D581-ingest-trainer-drops-the-face",
+    decision: "D581",
+    what: "the ingest's Trainer branch drops the printed face again (the pre-D581 map): no fossil hp / Ability, no TM attack reaches the catalog. Killed by map.test's fossil and TM rungs and upserts.test's face rungs.",
+    file: "apps/api/src/ingest/map.ts",
+    find: "        hp: card.hp ?? null,\n        abilitiesJson: card.abilities ?? null,\n        attacksJson: card.attacks ?? null,\n        trainerType: normalizeSentinel(card.trainerType),",
+    replace: "        trainerType: normalizeSentinel(card.trainerType),",
+    expectKilledBy: ["apps/api/src/ingest/map.test.ts", "apps/api/src/ingest/upserts.test.ts"],
+  },
+  {
+    id: "D581-ingest-trainer-drops-attacks",
+    decision: "D581",
+    what: "the ingest's Trainer branch keeps the fossil face but drops a machine's attack: TM Fluorite's row carries no attack. Killed by map.test's TM rung.",
+    file: "apps/api/src/ingest/map.ts",
+    find: "        attacksJson: card.attacks ?? null,\n        trainerType: normalizeSentinel(card.trainerType),",
+    replace: "        attacksJson: null,\n        trainerType: normalizeSentinel(card.trainerType),",
+    expectKilledBy: ["apps/api/src/ingest/map.test.ts"],
+  },
+  {
+    id: "D581-schema-trainer-strips-the-ability",
+    decision: "D581",
+    what: "the tcgdex Trainer schema no longer declares `abilities`: zod strips a fossil's Ability as an unknown key before the map sees it. Killed by the schema suite's fossil rung and map.test's fossil rung.",
+    file: "packages/schema/src/tcgdex/card.ts",
+    find: "  hp: z.number().optional(),\n  abilities: z.array(tcgdexAbilitySchema).optional(),\n  attacks: z.array(tcgdexAttackSchema).optional(),\n});\nexport type TcgdexTrainerCard",
+    replace: "  hp: z.number().optional(),\n  attacks: z.array(tcgdexAttackSchema).optional(),\n});\nexport type TcgdexTrainerCard",
+    expectKilledBy: ["packages/schema/src/tcgdex/tcgdex.test.ts", "apps/api/src/ingest/map.test.ts"],
+  },
+  {
+    id: "D581-me-corpus-record-dropped",
+    decision: "D581",
+    what: "the `me` corpus loses its first record: the transcription no longer matches its provenance (450 / 1,038 / 43,806). Killed by the census suite's D581 transcription rung.",
+    file: "packages/engine/src/censusAttackCorpusMe.ts",
+    find: "const CORPUS_ME = `\n1 At the end of your opponent's next turn, discard the Defending Pokémon and all attached cards.\n",
+    replace: "const CORPUS_ME = `\n",
+    expectKilledBy: ["packages/engine/src/censusAtHead.test.ts"],
+  },
+  {
+    id: "D581-me-arm-credits-the-registry-text",
+    decision: "D581",
+    what: "the `me` build predicate credits a REGISTRY sentence by TEXT: the three `me` printings of `sv` registry texts (no row names their ids) count as built. Killed by the census suite's D581 tally and headline rungs.",
+    file: "packages/engine/src/censusAtHead.test.ts",
+    find: '  return REGISTRY_ATTACK_SENTENCES.includes(text) ? "registryText" : null;',
+    replace: '  return REGISTRY_ATTACK_SENTENCES.includes(text) ? "reader" : null;',
+    expectKilledBy: ["packages/engine/src/censusAtHead.test.ts"],
+  },
+  {
+    id: "D581-population-not-the-sum",
+    decision: "D581",
+    what: "the D581 attack denominator is copied one short of `sv` + `me`. Killed by the census suite's D581 sum rung.",
+    file: "packages/engine/src/censusAtHead.test.ts",
+    find: "  legalRows: 3287,\n  attackUnits: 2771,",
+    replace: "  legalRows: 3287,\n  attackUnits: 2770,",
+    expectKilledBy: ["packages/engine/src/censusAtHead.test.ts"],
+  },
+  {
+    id: "D581-hp-bound-reads-the-bare-column",
+    decision: "D581",
+    what: "`pokemonHp` reads the bare `hp` column again (the pre-D581 SQL): `/cards?hpMin=60` admits the 12 HP-printing Trainers (4,089 rows on the local D1, not 4,077) and `hp-desc` sorts Snorlax Doll among the 120-HP Pokémon. Killed by query.test's D581 bound rung and its hp-desc rung (review round).",
+    file: "apps/api/src/catalog/query.ts",
+    find: "  return sql`(case when ${cards.category} = 'Pokemon' then ${cards.hp} end)`;",
+    replace: "  return sql`${cards.hp}`;",
+    expectKilledBy: ["apps/api/src/catalog/query.test.ts"],
+  },
+  {
+    id: "D581-cache-version-not-bumped",
+    decision: "D581",
+    what: "the KV catalog cache stays on `v6`: a `/cards/:id` body cached before the remote re-ingest keeps serving a fossil with no Ability and TM Fluorite with no attack to 0.465 for up to the 1-hour TTL, and 0.464's `/cards?hpMin=…` / `hp-desc` bodies keep the HP-printing Trainers (cache.ts v6→v7; review round). Killed by cache.test's key rungs and routes.test's cached-body rungs.",
+    file: "apps/api/src/catalog/cache.ts",
+    find: 'const CACHE_VERSION = "v7";',
+    replace: 'const CACHE_VERSION = "v6";',
+    expectKilledBy: ["apps/api/src/catalog/cache.test.ts", "apps/api/src/catalog/routes.test.ts"],
   },
 ];

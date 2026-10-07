@@ -14,7 +14,8 @@ import type { Card } from "@luminous/schema";
 // Regigigas `sv08.5-086`, Team Rocket's Mimikyu `sv10-087`). D568 builds 19; the 5 left
 // are Underdepths ×3 (Bench size), Mimikyu (copy-attack) and TM Fluorite (a Tool that
 // grants an attack — no Technical Machine attack is built [🆕🆕🆕 D578 (D539): WITHDRAWN — one is,
-// `technicalMachines.ts` + `CardProgram.toolAttacks`]). (🆕🆕🆕 D573 (D539): Mimikyu is
+// `technicalMachines.ts` + `CardProgram.toolAttacks` [🆕 D581: `technicalMachines.ts` is deleted — the attack is the
+// Tool card's catalog row, `toolAttacks` a flag]]). (🆕🆕🆕 D573 (D539): Mimikyu is
 // WITHDRAWN from that list — Gemstone Mimicry is BUILT, the copy-attack substitution reading
 // `isTeraPokemon` off this table; 4 are left. 🆕🆕🆕 D577 (D539): *"4 are left"* is WITHDRAWN —
 // Area Zero Underdepths ×3 is BUILT, `benchLimitOf` reading `isTeraPokemon` off this table; ONE is

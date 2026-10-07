@@ -270,14 +270,26 @@ export function retreatCostOf(card: Card): number {
     the KO check skips rather than insta-KOs — like retreatCostOf's null, the
     real fix belongs at ingest. A non-positive printed value is the same gap
     (schema/ingest let 0 through), so it reads as null too: any hp the KO
-    check sees is > 0. */
+    check sees is > 0.
+    🆕 D581 — THE NON-POKÉMON NULL IS NOW ASKED, NOT READ: since D581 the ingest
+    keeps the `hp` a Trainer prints (`apps/api/src/ingest/map.ts` — an Antique
+    Fossil's 60, Snorlax Doll's 120), so a non-Pokémon's catalog `hp` is no longer
+    null and the category conjunct below is what keeps "null for a non-Pokémon"
+    true — the same move as `attacksOf` and `hasPrintedAbility`. A fossil's in-play
+    face is category `"Pokemon"` with `hp: 60` (fossils.ts), so it still reads 60. */
 export function hpOf(card: Card): number | null {
-  return card.hp !== null && card.hp > 0 ? card.hp : null;
+  return card.category === "Pokemon" && card.hp !== null && card.hp > 0 ? card.hp : null;
 }
 
-/** Printed attacks; [] for Trainers/Energy and attackless Pokémon. */
+/** Printed attacks; [] for Trainers/Energy and attackless Pokémon.
+    🆕 D581 — THE CATEGORY IS ASKED, because the catalog stopped answering it: since D581
+    the ingest keeps a Trainer's printed Pokémon face (`apps/api/src/ingest/map.ts`), so a
+    Technical Machine's or Core Memory's catalog row carries `attacks`. Those are the
+    TOOL's attacks, granted to a holder (continuous.ts `attackMenuOf`'s Tool section reads
+    them off the Tool card directly); they were never the card's own as a Pokémon. A
+    fossil's in-play face is category `"Pokemon"` (fossils.ts) with `attacks: []`. */
 export function attacksOf(card: Card): readonly Attack[] {
-  return card.attacks ?? [];
+  return card.category === "Pokemon" ? (card.attacks ?? []) : [];
 }
 
 /** Prizes the KOing player takes for this Pokémon (§8.1): 3 for a VMAX, 2 for
@@ -510,10 +522,14 @@ export function preventsAttackerBanner(
     `preventsAttackerType`'s conservative direction verbatim, and the reason this
     takes an optional where `isExOrV` beside it does not: two of the four read sites
     hold the attacker as `Card | undefined`, so the narrowing would otherwise be
-    spelled twice. NON-Pokémon are false through the same `abilities` read — a
-    Trainer's catalog row carries `null` there. */
+    spelled twice. ~~NON-Pokémon are false through the same `abilities` read — a
+    Trainer's catalog row carries `null` there.~~ 🆕 D581 (D539): WITHDRAWN — since D581
+    the ingest keeps a Trainer's printed Pokémon face, so an Antique Fossil's catalog row
+    carries its Ability while it sits in the hand or the deck as an ITEM. The category is
+    asked instead: an in-play fossil's face is category `"Pokemon"` (fossils.ts) and HAS
+    its Ability; the Item in the hand, the deck or the discard pile does not. */
 export function hasPrintedAbility(card: Card | undefined): boolean {
-  return (card?.abilities ?? []).length > 0;
+  return card?.category === "Pokemon" && (card.abilities ?? []).length > 0;
 }
 
 /** What one attached Energy card provides toward a cost (§6.3). Catalog
@@ -552,7 +568,8 @@ export function matchesFilter(card: Card | undefined, filter: CardFilter): boole
       // construction — `matchesFilter` is never handed an `InPlayPokemon`.
       //
       // ⚠️ THE NULL IS DECIDED HERE RATHER THAN BY THE COMPARISON. `hpOf` returns
-      // null for a non-Pokémon and for a non-positive printed value (a data gap),
+      // null for a non-Pokémon (🆕 D581: by asking the category — the catalog row of a
+      // fossil Item carries `hp: 60` since D581) and for a non-positive printed value (a data gap),
       // and `null <= 70` is TRUE in JavaScript — so `hpOf(card)! <= max` would
       // silently widen the noun to everything with no HP. An unknown HP does not
       // satisfy "70 HP or less", so a null is REFUSED. `isBasicPokemon` already
@@ -644,9 +661,11 @@ export function matchesFilter(card: Card | undefined, filter: CardFilter): boole
     case "abilityPokemon":
       // D285 — a Pokémon that HAS an Ability (Team Rocket's Arbok "Potent
       // Glare"). ONE conjunct and no category test of its own: `hasPrintedAbility`
-      // reads `Card.abilities`, which the catalog leaves null on every Trainer and
+      // reads `Card.abilities`, ~~which the catalog leaves null on every Trainer and
       // every Energy, so a non-Pokémon is false through the same read rather than
-      // through a guard that could drift away from it. The PRINTED-card reading
+      // through a guard that could drift away from it~~ 🆕 D581 (D539): WITHDRAWN as
+      // spelled — a fossil Trainer's catalog row carries its Ability since D581, so
+      // `hasPrintedAbility` itself now asks the category. The PRINTED-card reading
       // (a §9 Ability lock silences an Ability; it does not remove it) is that
       // function's own documented judgement, inherited here rather than re-made.
       return hasPrintedAbility(card);
@@ -654,9 +673,11 @@ export function matchesFilter(card: Card | undefined, filter: CardFilter): boole
       // 🆕🆕 D446 — a Pokémon that HAS a printed attack of that NAME ("your Pokémon
       // in play that has the Round attack"). ONE conjunct and no category test of
       // its own, which is `abilityPokemon`'s arm directly above BYTE FOR BYTE one
-      // card field over: `attacksOf` reads `Card.attacks`, which the catalog leaves
+      // card field over: `attacksOf` reads `Card.attacks`, ~~which the catalog leaves
       // null on every Trainer and every Energy, so a non-Pokémon is false through
-      // the same read rather than through a guard that could drift away from it.
+      // the same read rather than through a guard that could drift away from it~~
+      // 🆕 D581 (D539): WITHDRAWN as spelled — a Technical Machine's catalog row
+      // carries its attack since D581, so `attacksOf` itself now asks the category.
       //
       // ⚠️ `.some` AND AN EXACT `===`, AND BOTH ARE DELIBERATE. A card may print
       // two attacks and the sentence names ONE, so the question is membership and

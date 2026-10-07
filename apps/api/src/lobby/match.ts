@@ -2127,11 +2127,16 @@ export interface MatchRecord {
     changes is what those bytes MEAN — and that is the fifth position's test, not the shape's.
     0.460's `cardOfUid` (engine cards.ts) is ZONE-AWARE: a fossil uid that is a card of an in-play
     stack reads as its hand-written Pokémon face (`fossils.ts` — the ingest drops the face, so no
-    catalog row carries it), 60 HP, Basic, {C}, its Ability. **0.459's `cardOfUid` is the pool
+    catalog row carries it) [🆕 D581 (D539): WITHDRAWN as spelled — the ingest keeps the face since D581 and
+    `fossils.ts` reads the Ability off the catalog row], 60 HP, Basic, {C}, its Ability. **0.459's `cardOfUid` is the pool
     lookup**: the same bytes read as the catalog Item, `hp: null`, and `hpOf` reads a null HP as a
     DATA GAP — *"the KO check skips rather than insta-KOs"* — so under a 0.459 ROLLBACK a v39 fossil
     body can never be Knocked Out, carries no Ability and has no card rules (it takes Special
-    Conditions and retreats). Not inert on the board: driven in `antiqueFossilsD576.test.ts` §7
+    Conditions and retreats). [🆕 D581 (D539): TRUE ONLY OF A CATALOG NOT RE-INGESTED SINCE D581 —
+    after the remote re-ingest the catalog Item carries `hp: 60` and its Ability, and 0.459's `hpOf`
+    and `hasPrintedAbility` ask no category, so under a 0.459 rollback the body IS Knocked Out at 60
+    and reads as having an Ability (with no program behind it); still no card rules. `antiqueFossilsD576.test.ts`
+    §7 drives the PRE-D581 row (`hp: null`), which is what a not-yet-re-ingested remote holds.] Not inert on the board: driven in `antiqueFossilsD576.test.ts` §7
     through THIS build's real KO check on the 0.459 reading of the bytes (an Item uid on top of a
     stack: 900 damage, not lethal). The version is owed.
 
@@ -2153,6 +2158,19 @@ export interface MatchRecord {
     `opponentActiveAttackCostSurchargeBasicOnly`, and the REQUIRED wire key
     `turn:action.discardable` — 🛑 **DEPLOY THE SERVER FIRST**: an old client's `z.object` STRIPS
     the unknown key, while a new client's REQUIRED key refuses an old server's frame.
+
+    🆕🆕🆕 **STAYS 41 AT D581 — THE DATA SLICE ADDS NO GameState, PendingStage, PROMPT OR WIRE KEY.** (Placed
+    ABOVE the D580 block, out of date order — D563's placement — so every anchored line below stays byte-
+    identical.) What moved is CATALOG data and two catalog READS, none of them persisted: the ingest keeps a
+    Trainer's printed face (`hp` / `abilities` / `attacks`), the fossil face reads its Ability off the row, the
+    attack menu's Tool section reads the Tool card's own `attacks` (`toolAttacks` became a flag), and
+    `attacksOf` / `hasPrintedAbility` ask the category. A v41 state carries card IDS, never card faces, so a
+    0.464 rollback reads every v41 byte as before. 🛑 **DEPLOY ORDER IS A DATA ORDER, NOT A CLIENT/SERVER ONE:
+    re-ingest the REMOTE D1 first** (the nine sets whose Trainers print a face, and the `me` serie) — this
+    server reads the fossil Ability and the TM attack OFF THE CATALOG, so against an un-re-ingested D1 the four
+    fossils play with no Ability and Technical Machine: Fluorite grants nothing. The KV catalog cache steps to
+    `v7` with this deploy (catalog/cache.ts): the match pool is fetched through GET `/cards/:id`, so a v6 body
+    cached before the re-ingest would otherwise serve that old row for up to the 1-hour TTL after it.
 
     🆕🆕🆕 **STAYS 41 AT D580 — MR. MIME "LOOK-ALIKE SHOW" AND IRON TREADS "DUAL CORE" ADD NO GameState,
     PendingStage OR REQUIRED KEY; THE ONE NEW PERSISTED SHAPE IS A PARKED OP, AND A 0.463 ROLLBACK READS

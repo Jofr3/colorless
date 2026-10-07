@@ -4,6 +4,7 @@ import {
   legalAttackCorpus,
   resolvedByAnyReader,
 } from "./censusAttackCorpus";
+import { meAttackCorpus } from "./censusAttackCorpusMe";
 import {
   deriveAttackBonusConsequent,
   deriveAttackCancelRequirement,
@@ -81,7 +82,16 @@ import { programFor, registryCardIds } from "./registry";
                 AND effect NOT IN ('')) AS eff_units;
     ```
     ⚠️ `eff_units` is **275 = 264 Trainer + 11 Special Energy**, split by
-    `cards.category`. The denominators did not move from D187. */
+    `cards.category`. The denominators did not move from D187.
+
+    🆕 D581 — THIS IS THE `sv` SERIE's LEGAL POOL, AND IT STILL MEASURES EXACTLY THIS. Re-run
+    against the LOCAL D1 after the 2026-10-07 refresh, restricted to `serie_id = 'sv'` and —
+    for `atk_units` / `abil_units` — to `category = 'Pokemon'` (since D581 a Trainer row keeps
+    its printed face: without the conjunct the `sv` figures read 1,733 / 380, Technical
+    Machine: Fluorite's attack and the four legal fossils' Abilities, which are Trainer
+    printings counted in `trainerUnits`), every figure below is returned unchanged. The
+    Standard pool after the Mega Evolution ingest is `POPULATION_D581` (the D581 block at the
+    foot of this file): this object plus the `me` serie. */
 const POPULATION = {
   legalRows: 2021,
   attackUnits: 1732,
@@ -4076,7 +4086,8 @@ describe("D233 — the derived census re-run at HEAD, and the numbers rows 9-16 
     // 🆕🆕🆕 D578 — and ONE registry attack id that is not a Pokémon's: Technical Machine:
     // Fluorite `sv08-188` (Tool) authors its GRANTED attack's program at `attack[0]`. Its attack
     // text is not in the legal attack corpus (the ingest drops a Trainer's attacks —
-    // `technicalMachines.ts`), so, like the rotated seven, it stays OUT of `BUILT.attack`;
+    // `technicalMachines.ts`) [🆕 D581 (D539): the reason is WITHDRAWN — the ingest keeps it since D581 and the
+    // file is deleted; it stays out because the corpus is `category = 'Pokemon'`], so, like the rotated seven, it stays OUT of `BUILT.attack`;
     // its printing is counted in `BUILT.trainer`.
     const trainerGranted = ["sv08-188"];
     const legalKeys = [...new Set(REGISTRY_ATTACKS.map(([id]) => id))];
@@ -11448,5 +11459,151 @@ describe("D308 — the `specialEnergy` column's 8 ids, keyed on the CARD", () =>
       expect(programFor(id), id).toBeUndefined();
       expect(CENSUS_ENERGY_LEGAL, id).not.toContain(id);
     }
+  });
+});
+
+// ── 🆕 D581 — THE STANDARD POOL AFTER THE MEGA EVOLUTION INGEST: `sv` + `me` ─────────────
+//
+// The `me` serie (10 sets; 1,298 rows, 1,266 `legal_standard = 1` over 9 sets — `30th-c` is
+// not legal) was ingested into the LOCAL D1 for the first time on 2026-10-07. Everything
+// above this block measures the `sv` serie's pool, which the refresh did not touch (see
+// `POPULATION`'s D581 note); this block measures the `me` half and the SUM, on the same
+// columns and by the same predicates.
+//
+// ⚠️ PROVENANCE — the LOCAL D1 (`apps/api/.wrangler/state/v3/d1/…/8437d866….sqlite`),
+// 2026-10-07; the remote D1 has NOT been re-ingested and is not this population:
+//
+//     SELECT (SELECT COUNT(*) FROM cards c JOIN sets s ON s.id = c.set_id
+//               WHERE c.legal_standard = 1 AND s.serie_id = :serie) AS legal_rows,
+//            (SELECT COUNT(*) FROM cards c JOIN sets s ON s.id = c.set_id, json_each(c.attacks_json) j
+//               WHERE c.legal_standard = 1 AND s.serie_id = :serie AND c.category = 'Pokemon'
+//                 AND json_extract(j.value,'$.effect') NOT IN ('')) AS atk_units,
+//            (SELECT COUNT(*) FROM cards c JOIN sets s ON s.id = c.set_id, json_each(c.abilities_json) j
+//               WHERE c.legal_standard = 1 AND s.serie_id = :serie AND c.category = 'Pokemon'
+//                 AND json_extract(j.value,'$.effect') NOT IN ('')) AS abil_units,
+//            (SELECT COUNT(*) FROM cards c JOIN sets s ON s.id = c.set_id
+//               WHERE c.legal_standard = 1 AND s.serie_id = :serie AND c.category = :category
+//                 AND c.effect NOT IN ('')) AS eff_units;   -- :category 'Trainer' / 'Energy'
+//
+// `me`: 1,266 rows / 1,039 / 234 / 183 Trainer / 11 Energy. Three legal `30th` Items (Poké
+// Pad, Switch, Ultra Ball `30th-126`…`-128`) carry NO `effect` in tcgdex and fall outside the
+// Trainer column by `NOT IN ('')` — a data gap upstream, named rather than counted.
+//
+// ⚠️ WHAT IS LIVE AND WHAT IS RECORDED (D273's terms). The `me` attack column is COMMITTED
+// (`censusAttackCorpusMe.ts`) and its BUILT figure is computed LIVE off the readers here.
+// The three non-attack `me` columns are RECORDED catalog facts; their BUILT figure is ZERO,
+// asserted live: no `me` printing id is a registry key, and the registry is the only way a
+// non-attack text is built.
+
+/** The `me` serie's legal pool, per column (the statement above, `:serie = 'me'`). */
+const POPULATION_ME = {
+  legalRows: 1266,
+  attackUnits: 1039,
+  abilityUnits: 234,
+  trainerUnits: 183,
+  specialEnergyUnits: 11,
+} as const;
+
+/** The D581 Standard pool: `sv` + `me`, the statement above with no serie conjunct
+    (3,287 legal rows over 27 sets). Asserted below to be the SUM, column by column. */
+const POPULATION_D581 = {
+  legalRows: 3287,
+  attackUnits: 2771,
+  abilityUnits: 610,
+  trainerUnits: 447,
+  specialEnergyUnits: 22,
+} as const;
+
+/** A `me` printing id (the D581 serie's id shapes). */
+const ME_ID = /^(me\d|mep-|mee-|30th)/;
+
+/** The census's own four-arm BUILD predicate (the `residueSentences` filter above), with the
+    REGISTRY arm keyed on the ID rather than the TEXT — a registry row serves exactly the ids
+    it names, and no `me` id is one, so a `me` printing of a registry sentence is NOT built
+    (it is a reprint-alias candidate: one zero-code registry line would build it). */
+function meArm(text: string): "reader" | "gate" | "trailing" | "registryText" | null {
+  if (resolvedByAnyReader(text)) return "reader";
+  const gate = splitAttackGateClause(text);
+  if (gate !== null && (gate.body === "" || resolvedByAnyReader(gate.body))) return "gate";
+  if (splitAttackTrailingClause(text) !== null) return "trailing";
+  return REGISTRY_ATTACK_SENTENCES.includes(text) ? "registryText" : null;
+}
+
+describe("D581 — the Standard pool after the Mega Evolution ingest, measured (sv + me)", () => {
+  it("the `me` corpus is the transcription its provenance names: 451 sentences / 1,039 printings / 43,900 characters", () => {
+    const me = meAttackCorpus();
+    expect(me.length).toBe(451);
+    expect(me.reduce((sum, [n]) => sum + n, 0)).toBe(POPULATION_ME.attackUnits);
+    expect(me.reduce((sum, [, text]) => sum + text.length, 0)).toBe(43900);
+    // 158 sentences (550 printings) are ALSO printed in the `sv` column; 293 (489) are new.
+    const sv = new Set(legalAttackCorpus().map(([, text]) => text));
+    const shared = me.filter(([, text]) => sv.has(text));
+    expect([shared.length, shared.reduce((sum, [n]) => sum + n, 0)]).toEqual([158, 550]);
+  });
+
+  it("the D581 population is the `sv` pool PLUS the `me` pool, on every column", () => {
+    for (const key of ["legalRows", "attackUnits", "abilityUnits", "trainerUnits", "specialEnergyUnits"] as const) {
+      expect(POPULATION[key] + POPULATION_ME[key], key).toBe(POPULATION_D581[key]);
+    }
+  });
+
+  it("no `me` printing is a registry key — every `me` non-attack text is UNBUILT, and no `me` attack is registry-built", () => {
+    expect(registryCardIds().filter((id) => ME_ID.test(id))).toEqual([]);
+    // The shape check the line above relies on: it really does recognise the serie's ids.
+    for (const id of ["me01-001", "me02.5-210", "mep-001", "mee-008", "30th-126"]) expect(ME_ID.test(id), id).toBe(true);
+    for (const id of ["sv01-001", "svp-001", "sve-001", "fix-energy"]) expect(ME_ID.test(id), id).toBe(false);
+  });
+
+  it("BUILT over the `me` attack column, LIVE: 728 of 1,039 printings (262 of 451 sentences)", () => {
+    type Tally = [sentences: number, printings: number];
+    const tally: Record<"reader" | "gate" | "trailing" | "registryText" | "residue", Tally> = {
+      reader: [0, 0],
+      gate: [0, 0],
+      trailing: [0, 0],
+      registryText: [0, 0],
+      residue: [0, 0],
+    };
+    for (const [n, text] of meAttackCorpus()) {
+      const slot = tally[meArm(text) ?? "residue"];
+      slot[0] += 1;
+      slot[1] += n;
+    }
+    expect(tally).toEqual({
+      reader: [250, 710],
+      gate: [3, 4],
+      trailing: [9, 14],
+      // A REGISTRY sentence printed on a `me` id: not built (no row names the id). The three
+      // are `sv` registry rows' texts: Lillie's Comfey `sv09-068` "Fade Out" (`me` ×5 —
+      // Drifblim `mep-006`, Meowth ex `me03-062`/`-107`/`-121`, Emolga `me04-030`), Terapagos
+      // `sv08-161` "Prism Charge" (×1, `me02.5-178`) and Gholdengo `sv08-131` "Surf Back"
+      // (×2, Drifloon `30th-073`/`-136`). Each needs a registry `attack` entry at its own
+      // printed index — an alias of the `sv` op list, no new vocabulary.
+      registryText: [3, 8],
+      residue: [186, 303],
+    });
+    const built = tally.reader[1] + tally.gate[1] + tally.trailing[1];
+    expect(built).toBe(728);
+    expect(built + tally.registryText[1] + tally.residue[1]).toBe(POPULATION_ME.attackUnits);
+    // Every `me` sentence the `sv` column ALSO prints is built, except those three: the
+    // whole unbuilt `me` residue is text the `sv` pool never printed.
+    const sv = new Set(legalAttackCorpus().map(([, text]) => text));
+    const unbuiltShared = meAttackCorpus().filter(([, text]) => sv.has(text) && meArm(text) === null);
+    expect(unbuiltShared).toEqual([]);
+  });
+
+  it("the D581 headline: attacks 2,460 / 2,771, abilities 376 / 610, trainers 264 / 447, special energy 11 / 22", () => {
+    const meBuiltAttack = meAttackCorpus().reduce((sum, [n, text]) => {
+      const a = meArm(text);
+      return a === "reader" || a === "gate" || a === "trailing" ? sum + n : sum;
+    }, 0);
+    // The `sv` half is `BUILT.attack` (1,732 / 1,732); the `me` half is measured above.
+    expect(BUILT.attack + meBuiltAttack).toBe(2460);
+    expect(POPULATION_D581.attackUnits - (BUILT.attack + meBuiltAttack)).toBe(311);
+    // The non-attack `sv` halves are WHOLE (D580: every legal `sv` ability unit, Trainer and
+    // Special Energy is built — the join of `nonAttackRegistryIds()` against the catalog), and
+    // the `me` halves are ZERO (the registry holds no `me` id — the rung above).
+    expect([POPULATION.abilityUnits, POPULATION_D581.abilityUnits]).toEqual([376, 610]);
+    expect([POPULATION.trainerUnits, POPULATION_D581.trainerUnits]).toEqual([264, 447]);
+    expect([POPULATION.specialEnergyUnits, POPULATION_D581.specialEnergyUnits]).toEqual([11, 22]);
   });
 });

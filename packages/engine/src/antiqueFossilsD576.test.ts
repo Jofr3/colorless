@@ -1,7 +1,8 @@
 import type { Card } from "@luminous/schema";
 import { redactedGameSchema } from "@luminous/schema";
 import { describe, expect, it } from "vitest";
-import { cardOfUid, hpOf, isFossilTop, prizeValueOf } from "./cards";
+import { cardOfUid, hasPrintedAbility, hpOf, isFossilTop, prizeValueOf } from "./cards";
+import { CATALOG_MANIFEST } from "./catalogManifest";
 import { fossilPlayable } from "./cardplay";
 import {
   disabledAbilityUids,
@@ -12,7 +13,7 @@ import {
 } from "./continuous";
 import { deriveAttackEffect } from "./effects";
 import type { GameEvent } from "./events";
-import { FOSSIL_HP, FOSSIL_IDS, fossilAbilityOf, fossilPokemonCard } from "./fossils";
+import { FOSSIL_HP, FOSSIL_IDS, fossilPokemonCard } from "./fossils";
 import { applyAction, attackCostAt, createGame, discardableTargets, engineVersion } from "./index";
 import type { GameAction, GameState, PokemonTarget, Seat } from "./index";
 import { type LogContext, formatElapsed, logFromEvents } from "./log";
@@ -44,10 +45,13 @@ import type { InPlayPokemon } from "./types";
 // (🆕🆕🆕 D577 (D539): *"PARKED"* is WITHDRAWN — BUILT at D577, `areaZeroUnderdepthsD577.test.ts`.)
 //
 // Every card is driven on its REAL id on a LOCAL `cardPool` (D275) in the suite's OWN deck (D270). The
-// fossils are built exactly as the catalog row arrives today — an Item with `hp: null` and
-// `abilities: null` (the ingest drops both; decisions.md D576) — so the Pokémon face this suite sees is
-// `fossils.ts`' and nobody else's. Texts copied VERBATIM from the tcgdex card JSON (2026-09-25); the suite
-// never reads that JSON at run time.
+// fossils are built exactly as the catalog row arrives today — ~~an Item with `hp: null` and
+// `abilities: null` (the ingest drops both; decisions.md D576)~~ 🆕 D581: an Item carrying tcgdex's
+// `hp: 60` and its printed `abilities`, taken from `CATALOG_MANIFEST.trainerFaces` (the local D1,
+// measured — `apps/api/src/ingest/map.ts` keeps a Trainer's printed face since D581) — so the Ability
+// on the Pokémon face this suite sees is the CATALOG's, read by `fossils.ts`. Texts copied VERBATIM from
+// the tcgdex card JSON (2026-09-25) and pinned equal to the manifest's; the suite never reads that JSON
+// at run time.
 
 const COVER = "sv07-129";
 const COVER_2 = "sv10.5b-080";
@@ -99,9 +103,12 @@ const SELF_SNIPE =
 const PUT_COUNTERS = "Put 2 damage counters on 1 of your opponent's Pokémon.";
 const STRIP = "Discard an Energy from your opponent's Active Pokémon.";
 
-/** A fossil exactly as the catalog row arrives: an Item, `hp`/`abilities` null (the ingest drops both). */
+/** A fossil exactly as the catalog row arrives: an Item ~~with `hp`/`abilities` null (the ingest drops
+    both)~~ 🆕 D581: carrying its printed `hp` and `abilities`, read off `CATALOG_MANIFEST.trainerFaces`. */
 function fossilRow(id: string, name: string): Card {
-  return { ...trainerCard(id, "Item", FOSSIL_RULE), name, hp: null, abilities: null };
+  const face = CATALOG_MANIFEST.trainerFaces[id];
+  if (face === undefined) throw new Error(`no catalog face for ${id}`);
+  return { ...trainerCard(id, "Item", FOSSIL_RULE), name, hp: face.hp, abilities: face.abilities };
 }
 
 const LOCAL_CARDS: Record<string, Card> = {
@@ -491,26 +498,41 @@ const discard = (seat: Seat, target: PokemonTarget): GameAction => ({
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-// §0 — the hand-written table, pinned LITERALLY against the printed card.
+// §0 — the face, pinned LITERALLY against the printed card (🆕 D581: the Ability is the catalog row's).
 // ─────────────────────────────────────────────────────────────────────────────
-describe("D576 §0 — `fossils.ts`: the Pokémon face the ingest drops, hand-written and pinned", () => {
+describe("D576 §0 — `fossils.ts`: the Pokémon face, its Ability read off the catalog row (D581)", () => {
   it("🛑 FOUR ids, and only these — keyed by PRINTING id", () => {
     expect([...FOSSIL_IDS].sort()).toEqual([COVER, ROOT, COVER_2, PLUME].sort());
     for (const id of [LILEEP, RARE_CANDY, NEST_BALL, "sv07-131"]) expect(FOSSIL_IDS.has(id), id).toBe(false);
   });
 
-  it("🛑 the three printed Abilities, VERBATIM — names and texts", () => {
-    expect(fossilAbilityOf(COVER)).toEqual({ name: "Protective Cover", effect: PROTECTIVE_COVER_TEXT });
-    expect(fossilAbilityOf(COVER_2)).toEqual({ name: "Protective Cover", effect: PROTECTIVE_COVER_TEXT });
-    expect(fossilAbilityOf(ROOT)).toEqual({ name: "Primal Root", effect: PRIMAL_ROOT_TEXT });
-    expect(fossilAbilityOf(PLUME)).toEqual({ name: "Plume Protection", effect: PLUME_PROTECTION_TEXT });
-    expect(fossilAbilityOf(LILEEP)).toBeUndefined();
+  it("🛑 the three printed Abilities, VERBATIM — names and texts, on the CATALOG rows (D581)", () => {
+    const faces = CATALOG_MANIFEST.trainerFaces;
+    const ability = (name: string, effect: string) => [{ type: "Ability", name, effect }];
+    expect(faces[COVER]?.abilities).toEqual(ability("Protective Cover", PROTECTIVE_COVER_TEXT));
+    expect(faces[COVER_2]?.abilities).toEqual(ability("Protective Cover", PROTECTIVE_COVER_TEXT));
+    expect(faces[ROOT]?.abilities).toEqual(ability("Primal Root", PRIMAL_ROOT_TEXT));
+    expect(faces[PLUME]?.abilities).toEqual(ability("Plume Protection", PLUME_PROTECTION_TEXT));
+    // The rule's "60-HP" and the row's printed `hp` are the same number on all four (FOSSIL_HP).
+    for (const id of [COVER, COVER_2, ROOT, PLUME]) expect(faces[id]?.hp, id).toBe(FOSSIL_HP);
+    expect(faces[LILEEP]).toBeUndefined();
+  });
+
+  it("🛑 D581 — the face's Ability IS the row's: a different row gives a different face, a stale row none", () => {
+    const row = POOL[COVER] as Card;
+    const other = { ...row, abilities: [{ type: "Ability", name: "D581 Other", effect: "Not printed." }] };
+    expect(fossilPokemonCard(other).abilities).toEqual(other.abilities);
+    // A catalog not re-ingested since D581 hands the engine `abilities: null` — the face then has no
+    // Ability (the deploy-order caveat in fossils.ts), and is still the 60-HP Basic {C} Pokémon.
+    const stale = { ...row, hp: null, abilities: null };
+    expect(fossilPokemonCard(stale)).toMatchObject({ category: "Pokemon", hp: 60, abilities: [] });
   });
 
   it("🛑 the in-play face: a Basic {C} Pokémon, 60 HP, its Ability, no attacks / Weakness / Resistance / Retreat", () => {
     const row = POOL[ROOT] as Card;
-    // The catalog row as the ingest writes it today — the reason this table exists.
-    expect(row).toMatchObject({ category: "Trainer", trainerType: "Item", hp: null, abilities: null });
+    // The catalog row as the ingest writes it today (🆕 D581: with its printed hp and Ability).
+    expect(row).toMatchObject({ category: "Trainer", trainerType: "Item", hp: 60 });
+    expect(row.abilities).toEqual([{ type: "Ability", name: "Primal Root", effect: PRIMAL_ROOT_TEXT }]);
     const face = fossilPokemonCard(row);
     expect(FOSSIL_HP).toBe(60);
     expect(face).toMatchObject({
@@ -626,12 +648,14 @@ describe("D576 §2 — R-FO2: a 60-HP Basic {C} Pokémon in play, and an Item ev
   it("🛑 `cardOfUid` is zone-aware: Item in the hand, Pokémon on the Bench, Item again in the discard pile", () => {
     const s = setHand(table(FILLER), "p1", [COVER]);
     const uid = handUidOf(s, "p1", COVER);
-    expect(cardOfUid(s, uid)).toMatchObject({ category: "Trainer", trainerType: "Item", hp: null });
+    expect(cardOfUid(s, uid)).toMatchObject({ category: "Trainer", trainerType: "Item" });
+    // 🆕 D581 — the Item in the hand carries its catalog Ability and is still NOT a Pokémon with one.
+    expect(hasPrintedAbility(cardOfUid(s, uid))).toBe(false);
     const benched = run(s, play(s, COVER)).state;
     expect(cardOfUid(benched, uid)).toMatchObject({ category: "Pokemon", stage: "Basic", hp: 60, types: ["Colorless"] });
     const gone = run(benched, discard("p1", { spot: "bench", index: 0 })).state;
     expect(gone.players.p1.discard).toContain(uid);
-    expect(cardOfUid(gone, uid)).toMatchObject({ category: "Trainer", hp: null });
+    expect(cardOfUid(gone, uid)).toMatchObject({ category: "Trainer", trainerType: "Item" });
     // A non-fossil uid never pays more than the one `Set.has`: the catalog row, by identity.
     const filler = top(bodyAt(gone, "p1", "active"));
     expect(cardOfUid(gone, filler)).toBe(POOL[FILLER]);
@@ -1050,7 +1074,11 @@ describe("D576 §7 — the persisted position: a fossil's Trainer uid in `InPlay
   it("🛑 a 0.459 ROLLBACK reads the SAME bytes as a Trainer with no HP — the body can NEVER be Knocked Out (NOT inert)", () => {
     // 0.459's `cardOfUid` was the pool lookup: the catalog row, an Item with `hp: null`. `hpOf` reads that as
     // a DATA GAP ("the KO check skips rather than insta-KOs"), so under 0.459 a v39 fossil body is unkillable.
-    const row = POOL[COVER] as Card;
+    // (🆕 D581: the row as the catalog held it BEFORE D581's ingest widening — today's row carries `hp: 60`.
+    // So the title holds only against a catalog not re-ingested since D581: on a re-ingested one, 0.459's
+    // category-blind `hpOf` reads 60 off the Item and the rolled-back body IS Knocked Out at 60 — apps/api
+    // match.ts' D576 entry says so.)
+    const row = { ...(POOL[COVER] as Card), hp: null, abilities: null };
     expect(hpOf(row)).toBeNull();
     // DRIVEN through THIS build's real KO check on the 0.459 reading of the bytes: an ordinary Item uid on top
     // of a stack is exactly what 0.459 sees in a v39 fossil body — 900 damage, not lethal, never swept.
@@ -1064,7 +1092,7 @@ describe("D576 §7 — the persisted position: a fossil's Trainer uid in `InPlay
     expect(isLethallyDamaged(s, { ...fossil, damage: 50 })).toBe(false);
   });
 
-  it("the engine is 0.464.0", () => {
-    expect(engineVersion).toBe("0.464.0");
+  it("the engine is 0.465.0", () => {
+    expect(engineVersion).toBe("0.465.0");
   });
 });

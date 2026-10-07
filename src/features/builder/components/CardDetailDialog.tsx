@@ -222,7 +222,10 @@ function ErrorBody({ onRetry }: { onRetry: () => void }) {
 
 /** The resolved card: types, attacks, abilities, the weakness/resistance/retreat
     stat row, Trainer/Energy rules text, then footer meta. Every block is guarded
-    so a Trainer (no types/attacks) or an odd print just omits what it lacks. */
+    so a Trainer (no types/attacks) or an odd print just omits what it lacks.
+    [🆕 D581 (D539): WITHDRAWN as a rule — since D581 a Trainer's row keeps the face it
+    prints, so a Technical Machine shows its attack, an Antique Fossil its Ability and a
+    "60 HP" chip; the guards are unchanged and still omit what a row lacks.] */
 function ReadyBody({ data }: { data: Card }) {
   const types = data.types ?? [];
   const attacks = data.attacks ?? [];

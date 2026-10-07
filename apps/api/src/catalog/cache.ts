@@ -53,8 +53,19 @@ const CACHE_TTL_SECONDS = 3600;
     page under a key that now means something narrower. Nothing in the app
     could have written one (no client sent the param — D197 refused to ship
     it), but the key space genuinely changed meaning, and a cache that can
-    serve the wrong answer for an hour is not worth being clever about. */
-const CACHE_VERSION = "v6";
+    serve the wrong answer for an hour is not worth being clever about.
+    v6→v7: D581, the v3→v4 kind — no shape moved, the code reading the same
+    rows changed meaning. The HP filter and the `hp-desc` sort now read the
+    Pokémon-only HP (query.ts `pokemonHp`), so a v6 `/cards?hpMin=…` or
+    `hp-desc` body written by 0.464 code after the remote re-ingest still
+    holds the 12 HP-printing Trainers. And the 0.465 engine reads a fossil's
+    Ability and a Technical Machine's attack OFF the `/cards/:id` row the
+    match pool is fetched through, so a v6 `/cards/:id` body cached before the
+    re-ingest would play a fossil with no Ability and TM Fluorite with no
+    attack for up to a TTL after the deploy. The bump makes 0.465 start cold;
+    it closes both only when the remote re-ingest has FINISHED before the
+    deploy (a v7 entry written against the old rows is the same hour again). */
+const CACHE_VERSION = "v7";
 
 /**
  * KV key for a request URL: version + path + query, with the query keys

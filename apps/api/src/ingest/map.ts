@@ -14,7 +14,11 @@
 //   alone. This is the SOURCE fix: it stops the sentinel entering the
 //   catalog, but does NOT repair rows already written — that needs a
 //   re-ingest (docs/workstreams/backend-data.md §5.3);
-// - Pokémon-only fields are NULL on Trainer/Energy (and vice versa);
+// - Pokémon-only fields are NULL on Trainer/Energy (and vice versa) — EXCEPT
+//   the printed Pokémon face a Trainer can carry (D581): `hp`, `abilities` and
+//   `attacks` are kept on a Trainer row when tcgdex prints them (the Antique
+//   Fossils' 60 HP and Ability, a Technical Machine's attack). Before D581 the
+//   Trainer branch dropped them and the engine hand-wrote the faces;
 // - `*_url` columns keep the tcgdex ORIGIN base URLs (extensionless, §4.4);
 // - `*Json` fields stay raw objects here — ./sql.ts JSON.stringifies them
 //   into the SQL text (these rows never pass through Drizzle's json mode).
@@ -104,6 +108,11 @@ export function mapCard(card: TcgdexCard): CardRow {
     case "Trainer":
       return {
         ...base,
+        // 🆕 D581 — the printed Pokémon face (header): null when not printed,
+        // exactly as on the Pokémon branch.
+        hp: card.hp ?? null,
+        abilitiesJson: card.abilities ?? null,
+        attacksJson: card.attacks ?? null,
         trainerType: normalizeSentinel(card.trainerType),
         effect: card.effect ?? null,
       };

@@ -57,6 +57,17 @@ describe("pickCoverCardId", () => {
     ).toBe("sneasel");
   });
 
+  // 🆕 D581 — a Trainer can carry a printed HP since D581 (Snorlax Doll sv04-175 at
+  // 120, the Antique Fossils at 60); the category check, not a null HP, keeps it out.
+  it("never fronts a deck with a Trainer that prints an HP (D581)", () => {
+    expect(
+      pickCoverCardId([
+        card({ cardId: "sv04-175", category: "Trainer", hp: 120, count: 4 }),
+        card({ cardId: "sneasel", hp: 70, count: 1 }),
+      ]),
+    ).toBe("sneasel");
+  });
+
   it("skips a Pokémon with no scan rather than rendering a blank card", () => {
     expect(
       pickCoverCardId([

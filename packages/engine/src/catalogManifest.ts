@@ -6,90 +6,134 @@
 // because it is `.wrangler/` dev state and may be absent or stale on any other
 // machine (see the script's header for the tradeoff that buys).
 //
-//   select set_id, count(*) from cards group by set_id;   -- sv01|258  sv02|279  sv03|230  sv06.5|99  sve|24  swsh10.5|88
-//   select count(*) from cards;                           -- 978
+//   select set_id, count(*) from cards group by set_id;   -- 30th|161  30th-c|30  me01|188  me02|130  me02.5|295  me03|124  me04|122  me05|120  mee|16  mep|112  mfb|34  sv01|258  sv02|279  sv03|230  sv03.5|207  sv04|266  sv04.5|245  sv05|218  sv06|226  sv06.5|99  sv07|175  sv08|252  sv08.5|180  sv09|190  sv10|244  sv10.5b|172  sv10.5w|173  sve|24  svp|226  swsh10.5|88
+//   select count(*) from cards;                           -- 5084
 //
 // TEST-ONLY: not exported from the package index, exactly like `testFixtures.ts`.
 
 /** The catalog census, MEASURED — never copied forward, and never quoted without
-    its SCOPE. `rows`/`sets` describe the file on disk today. `history` describes
+    its SCOPE. `rows`/`sets` describe the file on disk today. `sixSet` (D581) is the
+    six-set slice every census comment dated before D581 measured. `history` describes
     the interval in which it held ONE SET FEWER: a census comment dated 2026-08-03
     was measuring THAT population, and its counts are floors against this one.
-    Both are real; what was missing from ~20 comments was which one they meant. */
+    All are real; what was missing from ~20 comments was which one they meant. */
 export const CATALOG_MANIFEST = {
   /** Which file the numbers below describe. `mtime` is the sqlite's last write,
       NOT the day the manifest was generated — the catalog is ingest output and
       does not drift on its own, so the mtime is the honest provenance. */
   source: {
     path: "apps/api/.wrangler/state/v3/d1/miniflare-D1DatabaseObject/8437d86672ef67002c76a06d8e29643de1a9c95e9422816cce0e554c6c5b7286.sqlite",
-    mtime: "2026-08-03T09:22:30.953Z",
-    bytes: 708608,
-    generated: "2026-08-04",
+    mtime: "2026-10-07T09:59:54.557Z",
+    bytes: 3207168,
+    generated: "2026-10-07",
   },
   /** `select count(*) from cards`. */
-  rows: 978,
+  rows: 5084,
   /** `select set_id, count(*) from cards group by set_id` — THE SCOPE, and the
-      first thing a census owes (D154). Six sets, `swsh10.5` among them
-      again since the re-ingest recorded in `history` below; a census dated
-      2026-08-03 saw the other five ONLY, which is what that block exists to say. */
+      first thing a census owes (D154). 🆕 D581 — 30 sets: the whole `sv`
+      serie, the `me` serie (ingested at D581) and `swsh10.5`. The six sets
+      `sixSet` names are the catalog D112 → D580 measured; a census dated 2026-08-03
+      saw five of them ONLY, which is what `history` exists to say. */
   sets: {
+    "30th": 161,
+    "30th-c": 30,
+    "me01": 188,
+    "me02": 130,
+    "me02.5": 295,
+    "me03": 124,
+    "me04": 122,
+    "me05": 120,
+    "mee": 16,
+    "mep": 112,
+    "mfb": 34,
     "sv01": 258,
     "sv02": 279,
     "sv03": 230,
+    "sv03.5": 207,
+    "sv04": 266,
+    "sv04.5": 245,
+    "sv05": 218,
+    "sv06": 226,
     "sv06.5": 99,
+    "sv07": 175,
+    "sv08": 252,
+    "sv08.5": 180,
+    "sv09": 190,
+    "sv10": 244,
+    "sv10.5b": 172,
+    "sv10.5w": 173,
     "sve": 24,
+    "svp": 226,
     "swsh10.5": 88,
   } as Record<string, number>,
   /** `select category, count(*) from cards group by category`. */
   categories: {
-    "Energy": 35,
-    "Pokemon": 810,
-    "Trainer": 133,
+    "Energy": 81,
+    "Pokemon": 4316,
+    "Trainer": 687,
   } as Record<string, number>,
   /** `select count(distinct name) from cards` — a card is a PRINTING, so this
       is well below `rows` (D135/D145: two printings can agree on everything but
       the set and the attacks). */
-  distinctNames: 567,
+  distinctNames: 1768,
   /** The THREE text columns a census must search. Every one of them has been
       missed by a census that searched only one, which is why they are counted
       separately here: rows where the column is present and non-empty. */
   textColumns: {
-    effect: 137,
-    attacksJson: 809,
-    abilitiesJson: 160,
+    effect: 711,
+    attacksJson: 4320,
+    abilitiesJson: 973,
     /** Rows carrying text in AT LEAST ONE of the three — the real denominator
         for "N printings out of M" claims. */
-    any: 947,
+    any: 5026,
   },
   /** Rows whose `attacks_json` contains a STRAIGHT apostrophe (U+0027) — the
       population D137's apostrophe fold is about. */
-  straightApostropheInAttacks: 359,
+  straightApostropheInAttacks: 1915,
   /** Rows carrying a CURLY apostrophe (U+2019) in `effect`, `attacks_json`,
       `abilities_json` or `name`. D137's claim is that this is ZERO — the fold
       exists against a future re-ingest, not against today's bytes. */
   curlyApostropheAnywhere: 0,
   /** `select count(*) from cards where legal_standard = 0` — D113's "not a
-      slice-selection criterion" number, and one of the four axes on which the
-      restoration reconciles (851 − 88 = 763, the count D156
+      slice-selection criterion" number. The restoration reconciles on the SIX-SET
+      slice's own count (851 − 88 = 763, the count D156
       committed for the shrunken catalog). */
-  legalStandardZero: 851,
+  legalStandardZero: 1797,
   /** Pokémon rows carrying NO attacks at all, by id. ⚠️ D156 ASSERTED THIS WAS
       EMPTY — `attacksJson` equals the `Pokemon` category count — and that was
-      true of the FIVE-set catalog and is FALSE of this one. The restored set
+      true of the FIVE-set catalog and is FALSE of the six-set one. The restored set
       brought the counterexample with it, so the claim is now a measured list
       rather than an equality: a Pokémon whose Ability borrows its attacks from
       elsewhere prints none of its own. */
-  pokemonWithoutAttacks: ["swsh10.5-053"] as readonly string[],
+  pokemonWithoutAttacks: ["30th-c-009","30th-c-019","swsh10.5-053"] as readonly string[],
   /** Rows in `sets` and `series`. A card's `set_id` FKs to `sets` and a set's
       `serie_id` to `series`, so a set is a row in all three tables — which is
       what made the loss recorded below a STRUCTURAL fact rather than a filtered
       query, and what makes the restoration one too (`serieRows` went 1 → 2: the
-      `swsh` serie had to come back before its set could). */
-  setRows: 6,
-  serieRows: 2,
+      `swsh` serie had to come back before its set could; 🆕 D581 — 3, with `me`). */
+  setRows: 30,
+  serieRows: 3,
+  /** 🆕 D581 — THE SIX-SET SLICE (`sv01`, `sv02`, `sv03`, `sv06.5`, `sve`, `swsh10.5`), MEASURED off today's file:
+      the catalog this manifest described from D160 to D580 (978 rows / 6 sets), which
+      every census comment dated before D581 quotes. The whole `sv` serie and the `me`
+      serie arrived around it without touching a row of it, so these are the same
+      numbers that manifest committed — measured again, not carried. */
+  sixSet: {
+    sets: ["sv01","sv02","sv03","sv06.5","sve","swsh10.5"] as readonly string[],
+    rows: 978,
+    categories: {
+      "Energy": 35,
+      "Pokemon": 810,
+      "Trainer": 133,
+    } as Record<string, number>,
+    distinctNames: 567,
+    textColumns: { effect: 137, attacksJson: 809, abilitiesJson: 160, any: 947 },
+    straightApostropheInAttacks: 359,
+    legalStandardZero: 851,
+  },
   /** ⚠️ THE SET THIS CATALOG LOST AND GOT BACK — HISTORY, NOT A LIVE DIVERGENCE
-      (D160). Read this block as a record of an episode that is OVER: the counts
-      above are the six-set catalog, exactly as ~20 census comments always said.
+      (D160). Read this block as a record of an episode that is OVER: `sixSet`
+      above is the six-set catalog, exactly as ~20 census comments always said.
 
       WHAT HAPPENED. D112 (2026-08-01) wrote the breakdown down explicitly: *"The
       local pool is 978 cards over SIX sets, not 890 over five —
@@ -102,8 +146,10 @@ export const CATALOG_MANIFEST = {
       checkpointed. D155 read the survivors' "978" as fiction; D156 proved by
       arithmetic that it had been a MEASUREMENT and built this manifest so a
       scopeless count could never pass again. **D160 re-ingested the set and
-      checkpointed it (`PRAGMA wal_checkpoint(TRUNCATE)`), which is why `rows` is
-      978 and `setRows` is 6 above.**
+      checkpointed it (`PRAGMA wal_checkpoint(TRUNCATE)`), which is why `sixSet.rows`
+      is 978 above.** 🆕 D581 — the set was absent from the local file AGAIN before
+      D581 (the whole-`sv` ingest rebuilt it without `swsh10.5`; the remote D1 kept
+      it, 3,786 rows / 20 sets at D190) and was re-ingested by D581 with the same ingest.
 
       ⚠️ WHY THE BLOCK STAYS AFTER THE RESTORE, WHICH IS THE WHOLE POINT. The rows
       came back; the COMMENTS WRITTEN WHILE THEY WERE GONE did not change. Every
@@ -117,7 +163,7 @@ export const CATALOG_MANIFEST = {
 
       ⚠️ AND THE RECONCILIATION IS BY SUBTRACTION ON FOUR AXES, NOT ONE.
       `contributes` is measured off today's file; `shrunken` is what D156
-      committed. `live − contributes === shrunken` on rows, `legal_standard = 0`,
+      committed. `sixSet − contributes === shrunken` on rows, `legal_standard = 0`,
       rows-with-attacks and straight-apostrophe rows. A re-ingest that restored a
       DIFFERENT 88 rows would reconcile on the row count alone and fail the other
       three, which is the only check available for a population nothing can query
@@ -399,4 +445,36 @@ export const CATALOG_MANIFEST = {
       this manifest exists to surface, and a list that can only ever be empty is
       one nobody re-reads. */
   absent: [] as readonly string[],
+  /** 🆕 D581 — every Trainer row that prints a Pokémon face, verbatim (see the generator's
+      `trainerFaceRows`). `legal` is `legal_standard`. */
+  trainerFaces: {
+    "me03-068": { name: "Antique Jaw Fossil", legal: true, hp: 60, abilities: [{"type":"Ability","name":"Intimidating Jaw","effect":"As long as this Pokémon is in the Active Spot, attacks used by your opponent's Active Pokémon do 30 less damage (before applying Weakness and Resistance)."}], attacks: null },
+    "me03-069": { name: "Antique Sail Fossil", legal: true, hp: 60, abilities: [{"type":"Ability","name":"Protective Sail","effect":"Whenever your opponent plays a Supporter card from their hand, prevent all effects of that card done to this Pokémon."}], attacks: null },
+    "me03-070": { name: "Core Memory", legal: true, hp: null, abilities: null, attacks: [{"cost":["Fighting","Fighting","Fighting","Fighting"],"name":"Geobuster","effect":"Discard all Energy from this Pokémon.","damage":350}] },
+    "me05-072": { name: "Antique Armor Fossil", legal: true, hp: 60, abilities: [{"type":"Ability","name":"Protective Armor","effect":"As long as this Pokémon is in the Active Spot, all of your Pokémon take 10 less damage from attacks from your opponent's Pokémon (after applying Weakness and Resistance)."}], attacks: null },
+    "me05-073": { name: "Antique Skull Fossil", legal: true, hp: 60, abilities: [{"type":"Ability","name":"Spiny Skull","effect":"If this Pokémon is in the Active Spot and is damaged by an attack from your opponent's Pokémon (even if this Pokémon is Knocked Out), place 3 damage counters on the Attacking Pokémon."}], attacks: null },
+    "sv03.5-152": { name: "Antique Dome Fossil", legal: false, hp: 60, abilities: [{"type":"Ability","name":"Domed Armor","effect":"This Pokémon takes 30 less damage from attacks (after applying Weakness and Resistance)."}], attacks: null },
+    "sv03.5-153": { name: "Antique Helix Fossil", legal: false, hp: 60, abilities: [{"type":"Ability","name":"Helical Swell","effect":"As long as this Pokémon is in the Active Spot, your opponent can't play any Stadium cards from their hand."}], attacks: null },
+    "sv03.5-154": { name: "Antique Old Amber", legal: false, hp: 60, abilities: [{"type":"Ability","name":"Amber Protection","effect":"Prevent all effects of your opponent's Pokémon's Abilities done to this Pokémon."}], attacks: null },
+    "sv04-175": { name: "Snorlax Doll", legal: false, hp: 120, abilities: null, attacks: null },
+    "sv04-176": { name: "Technical Machine: Blindside", legal: false, hp: null, abilities: null, attacks: [{"cost":["Colorless","Colorless","Colorless"],"name":"Blindside","effect":"This attack does 100 damage to 1 of your opponent's Pokémon that has any damage counters on it. (Don't apply Weakness and Resistance for Benched Pokémon.)"}] },
+    "sv04-177": { name: "Technical Machine: Devolution", legal: false, hp: null, abilities: null, attacks: [{"cost":["Colorless"],"name":"Devolution","effect":"Devolve each of your opponent's evolved Pokémon by putting the highest Stage Evolution card on it into your opponent's hand."}] },
+    "sv04-178": { name: "Technical Machine: Evolution", legal: false, hp: null, abilities: null, attacks: [{"cost":["Colorless"],"name":"Evolution","effect":"Choose up to 2 of your Benched Pokémon. For each of those Pokémon, search your deck for a card that evolves from that Pokémon and put it onto that Pokémon to evolve it. Then, shuffle your deck."}] },
+    "sv04-179": { name: "Technical Machine: Turbo Energize", legal: false, hp: null, abilities: null, attacks: [{"cost":["Colorless"],"name":"Turbo Energize","effect":"Search your deck for up to 2 Basic Energy cards and attach them to your Benched Pokémon in any way you like. Then, shuffle your deck."}] },
+    "sv04.5-090": { name: "Technical Machine: Crisis Punch", legal: false, hp: null, abilities: null, attacks: [{"cost":["Colorless","Colorless","Colorless"],"name":"Crisis Punch","effect":"You can use this attack only when your opponent has exactly 1 Prize card remaining.","damage":280}] },
+    "sv07-129": { name: "Antique Cover Fossil", legal: true, hp: 60, abilities: [{"type":"Ability","name":"Protective Cover","effect":"Prevent all effects of attacks used by your opponent's Pokémon done to this Pokémon. (Damage is not an effect.)"}], attacks: null },
+    "sv07-130": { name: "Antique Root Fossil", legal: true, hp: 60, abilities: [{"type":"Ability","name":"Primal Root","effect":"As long as this Pokémon is in the Active Spot, attacks used by your opponent's Basic Pokémon cost {C} more."}], attacks: null },
+    "sv08-188": { name: "Technical Machine: Fluorite", legal: true, hp: null, abilities: null, attacks: [{"cost":["Grass","Water","Psychic"],"name":"Fluorite","effect":"Discard all Energy from this Pokémon, and heal all damage from each of your Tera Pokémon."}] },
+    "sv10.5b-080": { name: "Antique Cover Fossil", legal: true, hp: 60, abilities: [{"type":"Ability","name":"Protective Cover","effect":"Prevent all effects of attacks used by your opponent's Pokémon done to this Pokémon. (Damage is not an effect.)"}], attacks: null },
+    "sv10.5w-079": { name: "Antique Plume Fossil", legal: true, hp: 60, abilities: [{"type":"Ability","name":"Plume Protection","effect":"As long as this Pokémon is on your Bench, prevent all damage done to this Pokémon by attacks from your opponent's Pokémon."}], attacks: null },
+  } as Record<
+    string,
+    {
+      name: string;
+      legal: boolean;
+      hp: number | null;
+      abilities: { type?: string; name: string; effect?: string }[] | null;
+      attacks: { cost?: string[]; name: string; effect?: string; damage?: number | string }[] | null;
+    }
+  >,
 } as const;

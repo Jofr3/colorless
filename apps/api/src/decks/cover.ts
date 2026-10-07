@@ -13,7 +13,9 @@ export type CoverCandidate = {
   count: number;
   /** "Pokemon" | "Trainer" | "Energy" — only Pokémon can be a cover. */
   category: string;
-  /** Printed HP; null on Trainers and Energy. */
+  /** Printed HP; null on Energy and on most Trainers (🆕 D581: a Trainer that prints
+      an HP — an Antique Fossil, Snorlax Doll — carries it since D581; harmless here,
+      because the category check runs before HP is compared). */
   hp: number | null;
   /** Whether the catalog has a scan for it (`cards.image_url`). */
   hasImage: boolean;

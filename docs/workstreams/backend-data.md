@@ -709,7 +709,7 @@ whose required `suffixes` is `undefined` — a crash, not a stale chip list.
 GET    /health
 
 # Catalog (public; KV cache-aside on every 200, 1h TTL, `x-luminous-cache: hit|miss`,
-# key = `catalog:v6:` + normalized path+sorted-query — bump the version prefix
+# key = `catalog:v7:` (D581) + normalized path+sorted-query — bump the version prefix
 # whenever a cached shape — or its values for already-ingested rows — changes;
 # invalid query params → terse 400 JSON)
 GET    /cards            # CardBrief page `{items, page, pageSize, total}`; filters:

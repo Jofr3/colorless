@@ -250,9 +250,11 @@ describe("the text-equality sweep, over the ONE population a test can read", () 
     expect(ids.size).toBeLessThan(M.rows);
     expect(units.length).toBeGreaterThan(200);
     // The catalog is bigger than this by a wide margin, measured off the
-    // committed manifest rather than a remembered number.
-    expect(M.rows).toBe(978);
-    expect(Object.keys(M.sets)).toHaveLength(6);
+    // committed manifest rather than a remembered number. (🆕 D581: the fixtures'
+    // catalog is the six-set slice, `M.sixSet`; the whole file is 5084 / 30.)
+    expect(M.sixSet.rows).toBe(978);
+    expect(M.sixSet.sets).toHaveLength(6);
+    expect(M.rows).toBeGreaterThan(M.sixSet.rows);
   });
 
   it("is EMPTY — no printed text is READ on one fixture and UNREAD on another", () => {

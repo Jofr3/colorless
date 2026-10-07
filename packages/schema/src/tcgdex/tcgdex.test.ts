@@ -1,5 +1,6 @@
 // The fixtures are verbatim live responses from https://api.tcgdex.net/v2/en/
-// (fetched 2026-07-09). Positive tests: every fixture parses with its schema.
+// (fetched 2026-07-09; the two D581 Trainer faces, sv07-129 and sv08-188,
+// fetched 2026-10-07). Positive tests: every fixture parses with its schema.
 // Negative tests: structurally broken payloads are rejected. For broader
 // coverage against the live API, run `bun packages/schema/scripts/validate-live.ts`.
 
@@ -11,7 +12,9 @@ import cardPokemonAbility from "./__fixtures__/card-pokemon-ability-sv01-081.jso
 import cardPokemonHeldItem from "./__fixtures__/card-pokemon-helditem-dp5-4.json";
 import cardPokemonPromo from "./__fixtures__/card-pokemon-promo-svp-001.json";
 import cardPokemonAttacks from "./__fixtures__/card-pokemon-swsh3-136.json";
+import cardTrainerFossil from "./__fixtures__/card-trainer-fossil-sv07-129.json";
 import cardTrainer from "./__fixtures__/card-trainer-sv01-181.json";
+import cardTrainerTm from "./__fixtures__/card-trainer-tm-sv08-188.json";
 import cardsFilteredPage from "./__fixtures__/cards-filtered-pikachu-hp120.json";
 import serieFull from "./__fixtures__/serie-full-sv.json";
 import seriesList from "./__fixtures__/series-list.json";
@@ -77,6 +80,42 @@ describe("tcgdexCardSchema (full cards)", () => {
     expect(card.category).toBe("Trainer");
     if (card.category === "Trainer") {
       expect(card.trainerType).toBe("Item");
+    }
+  });
+
+  // 🆕 D581 — a Trainer's printed Pokémon face survives the parse instead of
+  // being stripped as an unknown key (the Antique Fossils, the Technical Machines).
+  it("keeps a fossil Trainer's hp and Ability (sv07-129 Antique Cover Fossil)", () => {
+    const card = expectParses(tcgdexCardSchema, cardTrainerFossil);
+    expect(card.category).toBe("Trainer");
+    if (card.category === "Trainer") {
+      expect(card.trainerType).toBe("Item");
+      expect(card.hp).toBe(60);
+      expect(card.abilities).toEqual([
+        {
+          type: "Ability",
+          name: "Protective Cover",
+          effect:
+            "Prevent all effects of attacks used by your opponent's Pokémon done to this Pokémon. (Damage is not an effect.)",
+        },
+      ]);
+      expect(card.attacks).toBeUndefined();
+    }
+  });
+
+  it("keeps a Technical Machine's printed attack (sv08-188 Technical Machine: Fluorite)", () => {
+    const card = expectParses(tcgdexCardSchema, cardTrainerTm);
+    if (card.category === "Trainer") {
+      expect(card.trainerType).toBe("Tool");
+      expect(card.hp).toBeUndefined();
+      expect(card.abilities).toBeUndefined();
+      expect(card.attacks).toEqual([
+        {
+          cost: ["Grass", "Water", "Psychic"],
+          name: "Fluorite",
+          effect: "Discard all Energy from this Pokémon, and heal all damage from each of your Tera Pokémon.",
+        },
+      ]);
     }
   });
 

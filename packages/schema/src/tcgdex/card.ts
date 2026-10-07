@@ -3,10 +3,14 @@
 // MODELING CHOICE — discriminated union on `category`, not one bag of
 // optionals: every live payload carries exactly one of "Pokemon" | "Trainer" |
 // "Energy", and the category-specific fields never bleed across branches
-// (`hp`/`attacks` only on Pokemon, `trainerType` only on Trainer,
+// (`types`/`stage`/`retreat` only on Pokemon, `trainerType` only on Trainer,
 // `energyType` only on Energy). The union therefore parses every real payload
-// while rejecting chimeras (a Trainer with `attacks`, a mangled category) and
-// gives consumers narrowing via `card.category` for free. Within a branch we
+// while rejecting chimeras (a mangled category) and gives consumers narrowing
+// via `card.category` for free. 🆕 D581 — `hp`, `abilities` and `attacks` are
+// NOT Pokémon-only: tcgdex prints them on the Pokémon-faced Trainers (the
+// Antique Fossils carry `hp: 60` and one Ability; a Technical Machine, and
+// me03's Core Memory, carry `attacks`), so the Trainer branch keeps them
+// instead of stripping them at the parse. Within a branch we
 // stay liberal: promos and old sets omit almost everything (sve-002 has no
 // image/illustrator, dp5-4 has `item: {}`), so branch extras are optional.
 
@@ -96,6 +100,11 @@ export const tcgdexTrainerCardSchema = z.object({
   category: z.literal("Trainer"),
   effect: z.string().optional(),
   trainerType: z.string().optional(),
+  // 🆕 D581 — the printed Pokémon face of a Trainer (see the header): an Antique
+  // Fossil's `hp` and Ability, a Technical Machine's / Core Memory's attack.
+  hp: z.number().optional(),
+  abilities: z.array(tcgdexAbilitySchema).optional(),
+  attacks: z.array(tcgdexAttackSchema).optional(),
 });
 export type TcgdexTrainerCard = z.infer<typeof tcgdexTrainerCardSchema>;
 

@@ -6,7 +6,7 @@ import type { GameEvent } from "./events";
 import { applyAction, createGame, redactGame } from "./index";
 import type { GameAction, GameState, Seat } from "./index";
 import { programFor } from "./registry";
-import { TM_FLUORITE_ATTACKS } from "./technicalMachines";
+import { CATALOG_MANIFEST } from "./catalogManifest";
 import { FIXTURE_POOL, battler, deckOf, trainerCard, typedEnergy } from "./testFixtures";
 import { type InPlayPokemon, makeInPlay } from "./types";
 
@@ -17,10 +17,13 @@ import { type InPlayPokemon, makeInPlay } from "./types";
 // it at the end of your turn."* — "Fluorite" {G}{W}{P}: *"Discard all Energy from this Pokémon,
 // and heal all damage from each of your Tera Pokémon."*
 //
-// The attack text is DATA (`technicalMachines.ts` — the ingest drops a Trainer's attacks), the
-// offer is `attackMenuOf`'s TOOL section (after the printed attacks), the program is the
-// registry row's own `attack[0]`, the end-of-turn discard is flow.ts `discardEndOfTurnTools`.
-// The TM card here is a LOCAL face on the real id, `attacks: null` as the catalog hands it.
+// The attack text is ~~DATA (`technicalMachines.ts` — the ingest drops a Trainer's attacks)~~
+// 🆕 D581: the Tool card's own catalog `attacks` (the ingest keeps a Trainer's printed face since
+// D581; `technicalMachines.ts` is deleted), the offer is `attackMenuOf`'s TOOL section (after the
+// printed attacks), the program is the registry row's own `attack[0]`, the end-of-turn discard is
+// flow.ts `discardEndOfTurnTools`. The TM card here is a LOCAL face on the real id, ~~`attacks: null`
+// as the catalog hands it~~ 🆕 D581: carrying the attack the catalog row prints, read off
+// `CATALOG_MANIFEST.trainerFaces` (the local D1, measured).
 
 const TM = "sv08-188";
 const TM_TEXT =
@@ -39,8 +42,11 @@ const P = "d578t-psychic";
 const body = (id: string, extra: Partial<Card> = {}): Card =>
   battler(id, { name: id, hp: 900, types: ["Colorless"], attacks: [{ cost: [], name: "Tap", damage: 10 }], ...extra });
 
+/** 🆕 D581 — the attack the catalog row prints (`apps/api/src/ingest/map.ts` keeps it since D581). */
+const TM_ATTACKS = CATALOG_MANIFEST.trainerFaces[TM]?.attacks ?? null;
+
 const LOCAL_CARDS: Record<string, Card> = {
-  [TM]: { ...trainerCard(TM, "Tool", TM_TEXT), name: "Technical Machine: Fluorite", attacks: null },
+  [TM]: { ...trainerCard(TM, "Tool", TM_TEXT), name: "Technical Machine: Fluorite", attacks: TM_ATTACKS },
   [HOLDER]: body(HOLDER, { name: "D578 Holder" }),
   [TERA]: body(TERA, { name: "Lapras ex" }),
   [TERA_2]: body(TERA_2, { name: "Tatsugiri ex" }),
@@ -183,8 +189,9 @@ function table(opts: {
 const active = (state: GameState, seat: Seat = "p1"): InPlayPokemon => state.players[seat].active as InPlayPokemon;
 
 describe("D578 TM Fluorite §1 — the data and the registry row", () => {
-  it("the granted attack is the card JSON's, verbatim", () => {
-    expect(TM_FLUORITE_ATTACKS).toEqual([
+  it("the granted attack is the card JSON's, verbatim — on the CATALOG row (D581)", () => {
+    expect(POOL[TM]?.attacks).toBe(TM_ATTACKS);
+    expect(TM_ATTACKS).toEqual([
       {
         cost: ["Grass", "Water", "Psychic"],
         name: "Fluorite",
@@ -193,9 +200,10 @@ describe("D578 TM Fluorite §1 — the data and the registry row", () => {
     ]);
   });
 
-  it("the row carries the attack by reference, its program at index 0, and the end-of-turn discard; the Tool is simulated", () => {
+  it("the row grants the Tool's printed attack, its program at index 0, and the end-of-turn discard; the Tool is simulated", () => {
     const program = programFor(TM);
-    expect(program?.toolAttacks).toBe(TM_FLUORITE_ATTACKS);
+    // 🆕 D581 — a FLAG: the attack is the Tool card's own catalog row, not a registry copy.
+    expect(program?.toolAttacks).toBe(true);
     expect(program?.attack?.[0]).toEqual([
       { op: "discardEnergy", from: "yourActive", filter: { kind: "anyEnergy" }, count: "all" },
       { op: "healEach", amount: "all", banner: "Tera" },
@@ -363,5 +371,49 @@ describe("D578 TM Fluorite §6 — the §8 first-turn ban still applies to the T
     const state = table({ p1: { id: HOLDER, tools: [TM], energy: [G, W, P] }, p2: { id: PLAIN } });
     const turnOne: GameState = { ...state, turn: 1 };
     expect(rejected(turnOne, { type: "attack", seat: "p1", index: 1 })).toBe("FIRST_TURN_ATTACK");
+  });
+});
+
+// ── 🆕 D581 — THE TOOL SECTION READS THE TOOL CARD'S OWN PRINTED ATTACKS ──
+// The catalog row keeps a Trainer's printed attacks since D581 (`apps/api/src/ingest/map.ts`),
+// so `toolAttacks` is a FLAG and the menu row's attack IS the row's object. A Tool that prints
+// an attack but whose program grants none (Technical Machine: Blindside `sv04-176`, unbuilt and
+// not Standard-legal) adds nothing, and a catalog not re-ingested since D581 (no `attacks` on the
+// row) grants nothing either — the deploy-order caveat.
+describe("D581 TM Fluorite — the granted attack is the Tool card's catalog row", () => {
+  const BLINDSIDE = "sv04-176";
+  /** Re-point p1's Active's first Tool uid at `id`, carrying `card` in the state's pool. */
+  const retool = (state: GameState, id: string, card: Card): GameState => {
+    const uid = active(state).tools[0] ?? "";
+    return { ...state, cardPool: { ...state.cardPool, [id]: card }, cardIdByUid: { ...state.cardIdByUid, [uid]: id } };
+  };
+  const origins = (state: GameState) => attackMenuOf(state, "p1", active(state)).map((e) => `${e.attack.name}/${e.origin}`);
+
+  it("the menu's Tool row is the catalog row's attack object, at its printed index", () => {
+    const state = table({ p1: { id: PLAIN, tools: [TM] }, p2: { id: PLAIN } });
+    const row = attackMenuOf(state, "p1", active(state)).find((e) => e.origin === "tool");
+    expect(row?.attack).toBe(TM_ATTACKS?.[0]);
+    expect(row?.sourceIndex).toBe(0);
+    expect(row?.card.id).toBe(TM);
+  });
+
+  it("a Tool that PRINTS an attack but whose program grants none adds no row (Blindside, unbuilt)", () => {
+    const face = CATALOG_MANIFEST.trainerFaces[BLINDSIDE];
+    expect(face?.attacks?.map((a) => a.name)).toEqual(["Blindside"]);
+    expect(programFor(BLINDSIDE)).toBeUndefined();
+    const blindside: Card = {
+      ...trainerCard(BLINDSIDE, "Tool", TM_TEXT),
+      name: face?.name ?? BLINDSIDE,
+      attacks: face?.attacks ?? null,
+    };
+    const state = retool(table({ p1: { id: PLAIN, tools: [TM] }, p2: { id: PLAIN } }), BLINDSIDE, blindside);
+    expect(origins(state)).toEqual(["Tap/printed"]);
+  });
+
+  it("a TM row whose catalog row carries no attacks (not re-ingested since D581) grants nothing", () => {
+    const state = table({ p1: { id: PLAIN, tools: [TM] }, p2: { id: PLAIN } });
+    expect(origins(state)).toEqual(["Tap/printed", "Fluorite/tool"]);
+    const stale = retool(state, TM, { ...(POOL[TM] as Card), attacks: null });
+    expect(origins(stale)).toEqual(["Tap/printed"]);
   });
 });

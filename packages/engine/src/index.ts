@@ -20252,6 +20252,26 @@ import type { GameState, Seat } from "./types";
     `expect(manifest.version)`, `it(…)` titles, the declaration and `package.json` —
     **not** as a value-keyed grep — because a value-keyed grep is precisely the mechanism
     that ate D500's heading.)
+    🆕🆕🆕 engineVersion 0.464.0 → **0.465.0** (D581 — THE DATA SLICE: THE MEGA EVOLUTION SERIE INGESTED INTO THE LOCAL
+    D1 AND A TRAINER'S PRINTED POKÉMON FACE KEPT BY THE INGEST; `MATCH_RECORD_VERSION` STAYS 41 (apps/api match.ts
+    "STAYS 41 AT D581"). `apps/api/src/ingest/map.ts`'s Trainer branch keeps `hp` / `abilities` / `attacks` (the
+    `@luminous/schema` tcgdex Trainer schema no longer strips them), so the engine's two hand-written faces are gone:
+    fossils.ts reads a fossil's Ability off its catalog row (the table is deleted; `FOSSIL_IDS` and the rule's 60 HP stay)
+    and `CardProgram.toolAttacks` is the FLAG `true` — continuous.ts `attackMenuOf`'s Tool section reads the Tool card's
+    own `attacks` (`technicalMachines.ts` is deleted). Two predicates that leaned on "a Trainer's catalog row carries
+    `null` there" now ask the category: cards.ts `attacksOf` (`[]` for a non-Pokémon) and `hasPrintedAbility` (a fossil
+    Item in the hand or the deck is not "a Pokémon that has an Ability"; its in-play face is) and `hpOf` (null for a
+    non-Pokémon — a fossil Item's row carries `hp: 60`; review round). 🛑 DEPLOY ORDER: re-ingest the REMOTE D1 (the nine
+    sets with Trainer faces — sv03.5 sv04 sv04.5 sv07 sv08 sv10.5w sv10.5b me03 me05 — and the `me` serie) and ship this
+    engine BACK TO BACK, re-ingest first: this engine on an old catalog plays the four fossils with no Ability and TM
+    Fluorite grants nothing; 0.464 on a re-ingested catalog lacks the three category guards (a fossil Item matches
+    `abilityPokemon`, TM Fluorite `attackNamePokemon` — no harmful reach found) — the benign window. A THIRD window is
+    the API's KV catalog cache (1-hour TTL): a `/cards/:id` row cached before the re-ingest (the match pool's fetch)
+    would keep the first window open after it whatever the order, so the API's `CACHE_VERSION` steps v6 → v7 with
+    this deploy (catalog/cache.ts; review round) — 0.465 starts cold, which closes it if the re-ingest FINISHED first.
+    Census re-baselined over `sv` + `me` (censusAtHead.test.ts D581 block; `censusAttackCorpusMe.ts`): attacks
+    2460 / 2771, abilities 376 / 610, trainers 264 / 447, special energy 11 / 22 — the `sv` halves unchanged and whole,
+    no `me` printing a registry key. catalogManifest.ts regenerated (5084 rows / 30 sets; the six-set slice `sixSet`).)
     🆕🆕🆕 engineVersion 0.463.0 → **0.464.0** (D580 — THE LAST ATTACK AND THE LAST ABILITY: MR. MIME `sv05-063` "LOOK-ALIKE
     SHOW" + IRON TREADS `sv05-118` "DUAL CORE", 2 PRINTINGS / 2 TEXTS; `MATCH_RECORD_VERSION` STAYS 41 (apps/api match.ts
     "STAYS 41 AT D580"). THE WHOLE INGESTED LEGAL STANDARD POOL IS BUILT: attacks 1732 / 1732, abilities 376 / 376, trainers
@@ -20312,7 +20332,7 @@ import type { GameState, Seat } from "./types";
     optional `EffectContext.borrowedAttack`, the NEW exported `lockedAttackNames` read by the §8 gate, redact.ts and
     GameHud). **Technical Machine: Fluorite** `sv08-188` (Tool): its
     attack hand-written in the NEW data table `technicalMachines.ts` (the ingest drops a Trainer's attacks; outside the
-    mutation whitelist, D538), the NEW `CardProgram.toolAttacks` (and `toolCardSimulated` reads it) with its program at
+    mutation whitelist, D538) [🆕 D581 (D539): deleted at 0.465.0 — the attack is the Tool card's catalog row], the NEW `CardProgram.toolAttacks` (and `toolCardSimulated` reads it) with its program at
     the row's own `attack[0]` (`discardEnergy` all, then `healEach` `"all"` with the NEW `banner` rider), and the NEW
     `CardProgram.toolDiscardAtEndOfYourTurn`, swept by flow.ts `discardEndOfTurnTools` for the TURN OWNER beside Ignition
     (`TOOLS_DISCARDED { when: "consumed" }`). **Team Rocket's Energy** `sv10-182`: the NEW constrained provided unit
@@ -20358,7 +20378,8 @@ import type { GameState, Seat } from "./types";
     🆕🆕🆕 engineVersion 0.459.0 → **0.460.0** (D576 — THE ANTIQUE FOSSILS: 4 PRINTINGS / 3 TEXTS, AN ITEM PLAYED AS
     A POKÉMON, `MATCH_RECORD_VERSION` 38 → 39 (THE TWELFTH POSITION). Antique Cover Fossil `sv07-129` / `sv10.5b-080`,
     Antique Root Fossil `sv07-130`, Antique Plume Fossil `sv10.5w-079`. The Pokémon face the ingest DROPS (60 HP,
-    Basic, {C}, the printed Ability) is HAND-WRITTEN in the NEW data table `fossils.ts`, keyed by printing id (the
+    Basic, {C}, the printed Ability) is HAND-WRITTEN in the NEW data table `fossils.ts` [🆕 D581 (D539): the Ability is
+    read off the catalog row since 0.465.0 — the ingest keeps it], keyed by printing id (the
     `banners.ts` precedent; outside the mutation whitelist, D538), and cards.ts `cardOfUid` is now ZONE-AWARE — a
     fossil uid that is a card of an in-play stack reads as that face, the catalog Item everywhere else (R-FO2);
     interpreter.ts's private `cardOf` delegates to it. The NEW `CardProgram.playAsPokemon` routes the play in
@@ -25070,7 +25091,7 @@ import type { GameState, Seat } from "./types";
     WITNESS** — the count was re-derived every slice and the word *"three"* was carried.
     A successor of this slice inherits **81 / 61 / 17** again, over **FIVE** history
     occurrences: those four plus `deckMillFilteredScale.test.ts`'s own header arrow.) */
-export const engineVersion = "0.464.0";
+export const engineVersion = "0.465.0";
 
 export type {
   ApplyResult,
@@ -25345,7 +25366,8 @@ export { turnGate } from "./turn";
     play right now: the ONE offer funnel GameHud's buttons and the wire's `discardable` share. */
 export { discardableTargets } from "./turn";
 /** 🆕🆕🆕 D576 — the four Antique Fossil printing ids (`fossils.ts`, hand-written: the ingest
-    drops their Pokémon face — decisions.md D576). */
+    drops their Pokémon face — decisions.md D576) [🆕 D581 (D539): the ingest keeps the face since D581; the
+    ids stay hand-written, the Ability is read off the catalog row]. */
 export { FOSSIL_IDS } from "./fossils";
 export { costMet } from "./attack";
 /** 🆕🆕🆕 D545 — the cost an attack is CHARGED right now (the printed cost under

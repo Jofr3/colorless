@@ -74,11 +74,17 @@ export const cardsQuerySchema = z.object({
   /** Exact illustrator (vocabulary: GET /facets). */
   illustrator: param.optional(),
   /** Case-insensitive substring over RULES TEXT: Pokémon ability/attack names
-      and effects, plus Trainer/Special-Energy `effect` prose (D197). */
+      and effects, plus Trainer/Special-Energy `effect` prose (D197). 🆕 D581 —
+      also a Trainer's PRINTED Ability/attack (an Antique Fossil's Ability, a
+      Technical Machine's attack), which the ingest keeps since D581: it is text
+      printed on the card, so finding it is the filter's job and is intended. */
   text: param.optional(),
   /** Exact regulation mark, e.g. "H". */
   regulationMark: param.optional(),
-  /** Inclusive HP bounds (Pokémon only — non-Pokémon have NULL hp and never match). */
+  /** Inclusive HP bounds (Pokémon only). ~~non-Pokémon have NULL hp and never match~~
+      🆕 D581: WITHDRAWN as the reason — since D581 the ingest keeps the `hp` a Trainer
+      prints (the Antique Fossils' 60, Snorlax Doll's 120), so the bound now ASKS the
+      category (`pokemonHp` below) instead of leaning on the NULL. */
   hpMin: z.coerce.number().int().min(0).optional(),
   hpMax: z.coerce.number().int().min(0).optional(),
   /** Keep only cards currently legal in the given format. */
@@ -234,10 +240,10 @@ export function buildCardsWhere(query: CardsQuery): SQL | undefined {
     conditions.push(eq(cards.regulationMark, query.regulationMark));
   }
   if (query.hpMin !== undefined) {
-    conditions.push(gte(cards.hp, query.hpMin));
+    conditions.push(gte(pokemonHp(), query.hpMin));
   }
   if (query.hpMax !== undefined) {
-    conditions.push(lte(cards.hp, query.hpMax));
+    conditions.push(lte(pokemonHp(), query.hpMax));
   }
   if (query.legal === "standard") {
     conditions.push(eq(cards.legalStandard, true));
@@ -245,6 +251,19 @@ export function buildCardsWhere(query: CardsQuery): SQL | undefined {
     conditions.push(eq(cards.legalExpanded, true));
   }
   return and(...conditions);
+}
+
+/**
+ * A card's HP AS A POKÉMON: `hp` on a Pokémon row, NULL on every other row.
+ * 🆕 D581 — the HP filter and the `hp-desc` sort read this rather than the bare
+ * column, because the column stopped being Pokémon-only: since D581 the ingest
+ * keeps the `hp` a Trainer prints (12 Trainer rows in the local D1 — the Antique
+ * Fossils' 60, Snorlax Doll's 120), and an HP bound or an HP sort is a question
+ * about Pokémon. The `'Pokemon'` literal is inline SQL (no bound parameter), so
+ * D1's parameter budget is unchanged. Before D581 the NULL answered this alone.
+ */
+function pokemonHp(): SQL {
+  return sql`(case when ${cards.category} = 'Pokemon' then ${cards.hp} end)`;
 }
 
 /**
@@ -260,7 +279,8 @@ const collectorOrder = [asc(cards.setId), asc(cards.localId)];
  * Every sort ends on collector order so pages stay deterministic across equal
  * keys. `hp-desc` relies on SQLite treating NULL as smaller than every value —
  * `hp DESC` puts the hp-less Trainers/Energy last (verified against SQLite
- * directly).
+ * directly). 🆕 D581 — it sorts `pokemonHp()`, not the bare column, so a Trainer
+ * that prints an HP (a fossil, Snorlax Doll) still sorts with the hp-less rows.
  *
  * It used to have a JS TWIN (`compareCardRows`), because the id-hydration
  * path chunked its `IN` list across a db.batch and so had no single statement
@@ -277,6 +297,6 @@ const collectorOrder = [asc(cards.setId), asc(cards.localId)];
  */
 export function cardsOrder(sort: CardsQuery["sort"]): SQL[] {
   if (sort === "name") return [asc(cards.name), ...collectorOrder];
-  if (sort === "hp-desc") return [desc(cards.hp), ...collectorOrder];
+  if (sort === "hp-desc") return [desc(pokemonHp()), ...collectorOrder];
   return collectorOrder;
 }

@@ -100,7 +100,7 @@ import { FIXTURE_POOL } from "./testFixtures";
     Kept identical to the generator's classifier — the totality case below proves
     the two agree, so an id shape neither of them knows about fails loudly instead
     of being silently skipped by both. */
-const REAL_ID = /^(sv|swsh)/;
+const REAL_ID = /^(sv|swsh|me\d|mep-|mee-|30th)/;
 
 const realFixtureIds = Object.keys(FIXTURE_POOL).filter((id) => REAL_ID.test(id)).sort();
 
@@ -255,8 +255,13 @@ const CATALOG_STATE_LIST: readonly { rows: number; sets: number; population: str
   {
     rows: M.rows,
     sets: M.setRows,
+    population: "the file on disk today (🆕 D581: the whole `sv` serie, the `me` serie and `swsh10.5`)",
+  },
+  {
+    rows: M.sixSet.rows,
+    sets: M.sixSet.sets.length,
     population:
-      "the file on disk today — and, identically, the catalog before the loss: the re-ingest restored the state D112 measured, not a new one",
+      "the six-set slice (🆕 D581) — the catalog D160 restored and every census comment before D581 measured: the re-ingest restored the state D112 measured, not a new one",
   },
   {
     rows: M.history.shrunken.rows,
@@ -307,14 +312,16 @@ describe("the manifest is internally consistent", () => {
     // here said "re-ingesting the set makes this fail, which is the day the twelve
     // NO_CATALOG_ROW entries become checkable again". That day came. The list is
     // pinned at SIX so a second silent loss is a failure and not a shrug.
-    expect(Object.keys(M.sets).sort()).toEqual([
-      "sv01",
-      "sv02",
-      "sv03",
-      "sv06.5",
-      "sve",
-      "swsh10.5",
-    ]);
+    // 🆕 D581 — the catalog is the whole `sv` serie + the `me` serie + `swsh10.5`
+    // (re-ingested by D581, having been lost from the local file a second time),
+    // and the SIX sets are now a measured SLICE of it (`M.sixSet`). Both lists are
+    // pinned: the six so the population every pre-D581 census comment quotes cannot
+    // silently shrink again, the whole so a set lost from the wider file is a failure.
+    expect([...M.sixSet.sets].sort()).toEqual(["sv01", "sv02", "sv03", "sv06.5", "sve", "swsh10.5"]);
+    expect(M.sixSet.sets.reduce((sum, set) => sum + (M.sets[set] ?? 0), 0)).toBe(M.sixSet.rows);
+    expect(M.sixSet.rows).toBe(978);
+    expect(Object.keys(M.sets).length).toBe(30);
+    expect(Object.keys(M.sets).filter((set) => !/^(sv|me|mee$|mep$|30th|mfb$|swsh10\.5$)/.test(set))).toEqual([]);
   });
 
   it("the category split sums to the row count, and names all three categories", () => {
@@ -343,8 +350,16 @@ describe("the manifest is internally consistent", () => {
     // the file itself. Restated as the identity that actually holds, with the
     // exceptions ENUMERATED rather than counted — D129/D130's "cards with
     // attacks" denominator is `attacksJson`, never the category.
-    expect(attacksJson + M.pokemonWithoutAttacks.length).toBe(M.categories.Pokemon);
-    expect([...M.pokemonWithoutAttacks]).toEqual(["swsh10.5-053"]);
+    // 🆕 D581 — AND THE IDENTITY GAINED A THIRD TERM: the Trainer rows that print an
+    // attack (the Technical Machines and Core Memory — `apps/api/src/ingest/map.ts` keeps
+    // a Trainer's printed face since D581), counted off `M.trainerFaces` rather than
+    // copied. The two `30th-c` additions are reprints whose printed attacks tcgdex omits.
+    const trainerRowsWithAttacks = Object.values(M.trainerFaces).filter((f) => (f.attacks ?? []).length > 0).length;
+    expect(trainerRowsWithAttacks).toBe(7);
+    expect(attacksJson - trainerRowsWithAttacks + M.pokemonWithoutAttacks.length).toBe(M.categories.Pokemon);
+    expect([...M.pokemonWithoutAttacks]).toEqual(["30th-c-009", "30th-c-019", "swsh10.5-053"]);
+    // The six-set slice keeps D160's exact identity: no Trainer there prints a face.
+    expect(M.sixSet.textColumns.attacksJson + 1).toBe(M.sixSet.categories.Pokemon);
   });
 
   it("records WHICH file it measured, and when that file was last written", () => {
@@ -892,6 +907,16 @@ describe("(e) every catalog count in the engine sources is MEASURED and SCOPED",
     M.history.shrunken.legalStandardZero,
     M.history.shrunken.rowsWithAttacks,
     M.history.shrunken.straightApostropheInAttacks,
+    // 🆕 D581 — the six-set slice's own counts, MEASURED (`M.sixSet`): the population
+    // every census comment written before D581 quotes.
+    M.sixSet.distinctNames,
+    M.sixSet.straightApostropheInAttacks,
+    M.sixSet.legalStandardZero,
+    M.sixSet.textColumns.effect,
+    M.sixSet.textColumns.attacksJson,
+    M.sixSet.textColumns.abilitiesJson,
+    M.sixSet.textColumns.any,
+    ...Object.values(M.sixSet.categories),
   ]);
 
   it("no two catalog states agree on ROWS and disagree on SETS — the collision the Map would swallow", () => {
@@ -916,9 +941,10 @@ describe("(e) every catalog count in the engine sources is MEASURED and SCOPED",
     }
     // …and the derived lookup must not have lost a state to that collapse.
     expect(CATALOG_STATES.size).toBe(owed.size);
-    // Both states are still DISTINCT populations today, which is what keeps the
-    // sweep enforcing two numbers rather than one.
-    expect(CATALOG_STATES.size).toBe(2);
+    // The states are still DISTINCT populations today, which is what keeps the
+    // sweep enforcing three numbers rather than one (🆕 D581: the whole file, the
+    // six-set slice, the shrunken catalog).
+    expect(CATALOG_STATES.size).toBe(3);
     for (const sets of CATALOG_STATES.values()) expect(sets).toBeGreaterThan(0);
   });
 
@@ -969,8 +995,10 @@ describe("(e) every catalog count in the engine sources is MEASURED and SCOPED",
   it("the scoped form is actually written where the census comments are", () => {
     // A one-sided proof would not be one (D150): "no unscoped count" passes on a
     // file that quotes no count at all, so the scoped form must be PRESENT.
+    // 🆕 D581 — the scoped form effects.ts writes is the SIX-SET slice's: every census
+    // comment there predates D581's ingest and measured that slice, not the whole file.
     const effects = ENGINE_SOURCES["./effects.ts"] ?? "";
-    expect(effects).toContain(`${M.rows} cards / ${M.setRows} sets`);
+    expect(effects).toContain(`${M.sixSet.rows} cards / ${M.sixSet.sets.length} sets`);
     expect(effects.match(/\b\d{3,4} cards \/ \d+ sets/g)?.length ?? 0).toBeGreaterThan(10);
   });
 });
@@ -983,17 +1011,21 @@ describe("the set the catalog LOST AND GOT BACK is recorded as HISTORY", () => {
   // sums are now a RECONCILIATION between a measured present and a recorded past,
   // and they are what would catch a re-ingest that brought back the wrong rows.
   it("the restored set reconciles the shrunken catalog on FOUR independent axes", () => {
+    // 🆕 D581 — on the SIX-SET slice (`M.sixSet`), not the whole file: the catalog grew
+    // around those six sets (the whole `sv` serie, the `me` serie) without touching them,
+    // so the slice is the population the reconciliation was always about.
     const { contributes, shrunken } = M.history;
-    expect(M.rows - contributes.rows).toBe(shrunken.rows);
-    expect(M.legalStandardZero - contributes.legalStandardZero).toBe(shrunken.legalStandardZero);
-    expect(M.textColumns.attacksJson - contributes.rowsWithAttacks).toBe(shrunken.rowsWithAttacks);
-    expect(M.straightApostropheInAttacks - contributes.straightApostropheInAttacks).toBe(
+    const six = M.sixSet;
+    expect(six.rows - contributes.rows).toBe(shrunken.rows);
+    expect(six.legalStandardZero - contributes.legalStandardZero).toBe(shrunken.legalStandardZero);
+    expect(six.textColumns.attacksJson - contributes.rowsWithAttacks).toBe(shrunken.rowsWithAttacks);
+    expect(six.straightApostropheInAttacks - contributes.straightApostropheInAttacks).toBe(
       shrunken.straightApostropheInAttacks,
     );
     // FOUR and not one: a re-ingest of a DIFFERENT 88 rows reconciles on the row
     // count alone. This is the only check available for a population nothing can
     // query any more, so it is made on every axis the manifest records.
-    expect(M.setRows - 1).toBe(shrunken.setCount);
+    expect(six.sets.length - 1).toBe(shrunken.setCount);
   });
 
   it("the set is back in `cards`, `sets` AND `series` — a structural restore, not a filter", () => {
@@ -1002,7 +1034,8 @@ describe("the set the catalog LOST AND GOT BACK is recorded as HISTORY", () => {
     // in all three. `serieRows` 1 → 2 is the `swsh` serie coming back: it is the
     // half of the restore that cannot be faked by inserting `cards` rows.
     expect(M.sets[M.history.set]).toBe(M.history.contributes.rows);
-    expect(M.serieRows).toBe(2);
+    // 🆕 D581 — 3: `sv`, `swsh` and the `me` serie D581 ingested.
+    expect(M.serieRows).toBe(3);
     expect(M.setRows).toBe(Object.keys(M.sets).length);
   });
 

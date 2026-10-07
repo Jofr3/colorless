@@ -122,7 +122,12 @@ export const cardSchema = z.object({
   rarity: z.string().nullable(),
   regulationMark: z.string().nullable(),
 
-  // Pokémon-only (null on Trainer/Energy).
+  // Pokémon-only (null on Trainer/Energy) — 🆕 D581: EXCEPT `hp`, `abilities` and
+  // `attacks`, which a Trainer carries when it prints them (the ingest keeps them since
+  // D581: an Antique Fossil's 60 HP and Ability, Snorlax Doll's 120 HP, a Technical
+  // Machine's attack). A reader that means "this Pokémon's" must ask `category` (the
+  // engine's `hpOf` / `attacksOf` / `hasPrintedAbility` do). `stage`, `evolveFrom`,
+  // `types`, `retreat`, `weaknesses` and `resistances` stay null on every Trainer.
   hp: z.number().int().nullable(),
   stage: z.string().nullable(),
   evolveFrom: z.string().nullable(),

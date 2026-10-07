@@ -640,7 +640,7 @@ describe("§8 — the persisted question: `MATCH_RECORD_VERSION` STAYS 29", () =
   });
 
   it("🛑 the engine version moved with the behaviour", () => {
-    expect(engineVersion).toBe("0.464.0");
+    expect(engineVersion).toBe("0.465.0");
   });
 
   it("the FROZEN board is handed back untouched — the purity pair", () => {

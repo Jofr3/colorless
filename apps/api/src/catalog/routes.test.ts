@@ -79,7 +79,7 @@ describe("GET /cards param validation", () => {
 describe("catalog KV cache middleware", () => {
   it("serves a seeded key as a hit without touching D1", async () => {
     const cachedBody = JSON.stringify({ items: [], page: 1, pageSize: 50, total: 0 });
-    const { kv } = fakeKv({ "catalog:v6:/cards?page=1&set=nope": cachedBody });
+    const { kv } = fakeKv({ "catalog:v7:/cards?page=1&set=nope": cachedBody });
     // Param order differs from the stored key — normalization must line up.
     const res = await app.request("/cards?set=nope&page=1", {}, envWith(kv));
     expect(res.status).toBe(200);
@@ -91,7 +91,7 @@ describe("catalog KV cache middleware", () => {
   it("normalizes repeated params into one key — reordered repeats share it", async () => {
     const cachedBody = JSON.stringify({ items: [], page: 1, pageSize: 50, total: 0 });
     const { kv } = fakeKv({
-      "catalog:v6:/cards?rarity=Common&type=Fire&type=Water": cachedBody,
+      "catalog:v7:/cards?rarity=Common&type=Fire&type=Water": cachedBody,
     });
     const res = await app.request("/cards?type=Water&type=Fire&rarity=Common", {}, envWith(kv));
     expect(res.status).toBe(200);
@@ -154,7 +154,7 @@ describe("catalog KV cache middleware", () => {
       regulationMarks: ["H"],
       suffixes: ["ex"],
     };
-    const { kv } = fakeKv({ "catalog:v6:/facets": JSON.stringify(facets) });
+    const { kv } = fakeKv({ "catalog:v7:/facets": JSON.stringify(facets) });
     const res = await app.request("/facets", {}, envWith(kv));
     expect(res.status).toBe(200);
     expect(res.headers.get("x-luminous-cache")).toBe("hit");

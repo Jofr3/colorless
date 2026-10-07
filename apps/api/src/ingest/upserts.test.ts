@@ -15,7 +15,9 @@ import cardPokemonAbility from "../../../../packages/schema/src/tcgdex/__fixture
 import cardPokemonHeldItem from "../../../../packages/schema/src/tcgdex/__fixtures__/card-pokemon-helditem-dp5-4.json";
 import cardPokemonPromo from "../../../../packages/schema/src/tcgdex/__fixtures__/card-pokemon-promo-svp-001.json";
 import cardPokemonAttacks from "../../../../packages/schema/src/tcgdex/__fixtures__/card-pokemon-swsh3-136.json";
+import cardTrainerFossil from "../../../../packages/schema/src/tcgdex/__fixtures__/card-trainer-fossil-sv07-129.json";
 import cardTrainer from "../../../../packages/schema/src/tcgdex/__fixtures__/card-trainer-sv01-181.json";
+import cardTrainerTm from "../../../../packages/schema/src/tcgdex/__fixtures__/card-trainer-tm-sv08-188.json";
 import serieFull from "../../../../packages/schema/src/tcgdex/__fixtures__/serie-full-sv.json";
 import setFull from "../../../../packages/schema/src/tcgdex/__fixtures__/set-full-sv01.json";
 import { cards, series, sets } from "../db/schema";
@@ -153,6 +155,8 @@ describe("generated upsert SQL round-trips through the escaping rules", () => {
       cardPokemonHeldItem,
       cardPokemonPromo,
       cardTrainer,
+      cardTrainerFossil,
+      cardTrainerTm,
       cardEnergyBasic,
       cardEnergySpecial,
     ];
@@ -160,6 +164,18 @@ describe("generated upsert SQL round-trips through the escaping rules", () => {
     const sql = cardsUpsertSql(rows);
     const tuples = parseValuesTuples(sql);
     expect(tuples).toEqual(rows.map((row) => expectedTuple(CARDS_COLUMNS, row)));
+    // 🆕 D581 — a Trainer's printed Pokémon face reaches the SQL text (map.ts keeps
+    // it on the Trainer branch): the fossil's hp and Ability, the machine's attack.
+    const column = (name: string) => CARDS_COLUMNS.findIndex((c) => c.name === name);
+    const fossilTuple = tuples[fixtures.indexOf(cardTrainerFossil)];
+    expect(fossilTuple?.[column("hp")]).toBe(60);
+    expect(JSON.parse(String(fossilTuple?.[column("abilities_json")]))).toEqual([
+      expect.objectContaining({ name: "Protective Cover" }),
+    ]);
+    const tmTuple = tuples[fixtures.indexOf(cardTrainerTm)];
+    expect(JSON.parse(String(tmTuple?.[column("attacks_json")]))).toEqual([
+      expect.objectContaining({ name: "Fluorite", cost: ["Grass", "Water", "Psychic"] }),
+    ]);
     // The JSON columns must decode back to the exact source objects too.
     const hostileTuple = tuples.at(-1);
     const abilitiesIndex = CARDS_COLUMNS.findIndex((c) => c.name === "abilities_json");

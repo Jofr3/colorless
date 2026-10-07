@@ -270,13 +270,18 @@ describe("D190 — the 22 STANDARD-LEGAL reprint aliases", () => {
     // printed bytes live in the remote D1, in the registry's comments and in the
     // decision record; this goes red on the day someone with the local file
     // fixtures one of them, which is exactly when a text pin becomes possible.
+    // 🆕 D581 (D539): "holds NONE of these sets" is WITHDRAWN for the WHOLE file —
+    // the manifest regenerated at D581 measures 5084 rows / 30 sets (every `sv` set
+    // among them); it still holds for the six-set slice the fixtures live in
+    // (`M.sixSet`, 978 / 6), and no alias id is a fixture.
     for (const { id } of ALIASES) {
       expect(FIXTURE_POOL[id], `${id} is now a fixture — pin its TEXT`).toBeUndefined();
       expect(M.printed[id]).toBeUndefined();
       expect(M.absent).not.toContain(id);
+      expect(M.sixSet.sets).not.toContain(id.replace(/-[^-]*$/, ""));
     }
-    expect(M.rows).toBe(978);
-    expect(Object.keys(M.sets)).toHaveLength(6);
+    expect(M.sixSet.rows).toBe(978);
+    expect(M.sixSet.sets).toHaveLength(6);
   });
 });
 

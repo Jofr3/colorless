@@ -73,7 +73,11 @@ export const cards = sqliteTable(
     rarity: text("rarity"),
     regulationMark: text("regulation_mark"),
 
-    // Pokémon-only fields (null on Trainer/Energy).
+    // Pokémon-only fields (null on Trainer/Energy) — 🆕 D581: EXCEPT `hp`,
+    // `abilities_json` and `attacks_json`, which a Trainer row carries when it
+    // prints them (../ingest/map.ts header: the Antique Fossils, Snorlax Doll, the
+    // Technical Machines). /cards' HP filter and sort ask the category for that
+    // reason (../catalog/query.ts `pokemonHp`).
     hp: integer("hp"),
     stage: text("stage"),
     /** tcgdex's PRINT-KIND marker on a Pokémon's name line — "ex", "V",

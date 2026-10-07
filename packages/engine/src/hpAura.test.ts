@@ -81,7 +81,7 @@ import {
 //     (D539): Rescue Board was NOT built when this line said so; it is now,
 //     `RESCUE_BOARD`, whose free tier reads `remainingHpWithin` — D349's predicate);
 //     Antique Fossils print a
-//     60-HP body (🆕🆕🆕 D576: BUILT — the body is `fossils.ts`' hand-written face, read
+//     60-HP body (🆕🆕🆕 D576: BUILT — the body is `fossils.ts`' hand-written face [🆕 D581: its Ability now read off the catalog row], read
 //     through the zone-aware `cardOfUid`; it is a printed HP, not a max-HP term, so this
 //     seam's classification stands); Tyme asks the opponent to GUESS one (🆕🆕🆕 D577: BUILT —
 //     `opponentGuessesHp` compares the guess with the PRINTED catalog HP, not a max-HP term, so

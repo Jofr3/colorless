@@ -1,4 +1,4 @@
-import type { Attack, BasicEnergyType } from "@luminous/schema";
+import type { BasicEnergyType } from "@luminous/schema";
 import { ANY_ENERGY, constrainedEnergyUnit } from "./cards";
 import type { Banner } from "./banners";
 import type { PokemonSuffix, PreventedAttackerClass } from "./cards";
@@ -12,8 +12,6 @@ import type {
   PokemonType,
 } from "./effects";
 import type { StatusName } from "./events";
-// 🆕🆕🆕 D578 — Technical Machine: Fluorite's granted attack TEXT (DATA, the ingest drops it).
-import { TM_FLUORITE_ATTACKS } from "./technicalMachines";
 import { BENCH_CEILING } from "./types";
 
 // The id-keyed card-program registry (D8, "op programs are keyed by card id").
@@ -3639,7 +3637,7 @@ export interface CardProgram {
   /** Registry-authored attack programs, keyed by ATTACK INDEX (the position in
       the card's printed `attacks` list — the same index the `attack` action
       carries — [🆕🆕🆕 D578 (D539): the `attack` action's index is now the flat ATTACK MENU index (`attackMenuOf`) — the printed index for every printed attack, which come first; a Memory Dive or Technical Machine row has no index on the holder's printed list.] 🆕🆕🆕 D578: a Technical Machine's row keys its
-      `attack` programs by the index into its `toolAttacks`). A card authors the attacks the deriver does not read; the rest fall
+      `attack` programs by the index into its `toolAttacks` [🆕 D581: into the Tool card's own printed `attacks`, which `toolAttacks: true` grants]). A card authors the attacks the deriver does not read; the rest fall
       back to `deriveAttackEffect` (or stay unsimulated).
       Sits ABOVE the deriver (D8): `programFor(id)?.attack?.[index] ?? derive`.
       Chien-Pao ex "Hail Blade" (sv02-061 idx 0, D96) was the first; Mewtwo VSTAR
@@ -3818,7 +3816,8 @@ export interface CardProgram {
       R-FO1) that needs a free Bench slot and lands through `makeInPlay`, announced
       `TRAINER_PLAYED` then `POKEMON_BENCHED`. It is NOT "playing a Basic Pokémon", so no
       Pokémon-play bar and no on-bench-play trigger is consulted. The body's Pokémon face
-      (60 HP, Basic, {C}, the printed Ability) is `fossils.ts`' hand-written table, read
+      (60 HP, Basic, {C}, the printed Ability) is `fossils.ts`' hand-written table [🆕 D581: the Ability is read off
+      the catalog row since D581], read
       through the zone-aware `cardOfUid`; its Ability is this program's `passive`. */
   playAsPokemon?: true;
   /** 🆕🆕🆕 **§10 (D563) — THIS POKÉMON MAY BE PUT INTO PLAY ONLY BY THE NAMED ABILITY.**
@@ -3924,14 +3923,17 @@ export interface CardProgram {
   supporterKoPrizeBonus?: { amount: number; attacker: CardFilter };
   /** 🆕🆕🆕 **§7.4 (D578) — A TOOL THAT GRANTS ATTACKS: the attacks printed ON THE TOOL**, which
       *"The Pokémon this card is attached to can use"* — Technical Machine: Fluorite `sv08-188`
-      (1 legal printing). The attack text is hand-written in `technicalMachines.ts` (DATA: the
-      ingest drops a Trainer's attacks), and this key carries it by reference. Read by ONE
-      function, continuous.ts `attackMenuOf`, whose `"tool"` section lists them after the
-      printed attacks and the Memory Dive section, for every IN-EFFECT Tool (`toolsInEffect`:
-      none under Jamming Tower). Their programs are this row's own `attack` key, at the index
-      into THIS list; their timing clauses are read off `attackGateOf` through the menu. Makes
-      `toolCardSimulated` true. Catalog-only: never persisted. */
-  toolAttacks?: readonly Attack[];
+      (1 legal printing). ~~The attack text is hand-written in `technicalMachines.ts` (DATA: the
+      ingest drops a Trainer's attacks), and this key carries it by reference.~~ 🆕 D581 (D539):
+      WITHDRAWN — the ingest keeps a Trainer's printed `attacks` since D581, so the key is a FLAG
+      and the attacks are the Tool card's own catalog `attacks` (`technicalMachines.ts` is
+      deleted). Read by ONE function, continuous.ts `attackMenuOf`, whose `"tool"` section lists
+      them after the printed attacks and the Memory Dive section, for every IN-EFFECT Tool
+      (`toolsInEffect`: none under Jamming Tower). Their programs are this row's own `attack`
+      key, at the index into the Tool's printed `attacks`; their timing clauses are read off
+      `attackGateOf` through the menu. Makes `toolCardSimulated` true. Catalog-only: never
+      persisted. */
+  toolAttacks?: true;
   /** 🆕🆕🆕 **§7.4 (D578) — *"If this card is attached to 1 of your Pokémon, discard it at the
       end of your turn."*** — Technical Machine: Fluorite `sv08-188`. The Tool twin of
       `EnergyProgram.discardAtEndOfYourTurn` (Ignition Energy), read by flow.ts
@@ -10807,14 +10809,15 @@ const MEMORY_DIVE: CardProgram = { passive: { memoryDive: true } };
     this card is attached to can use the attack on this card. (You still need the necessary
     Energy to use this attack.) If this card is attached to 1 of your Pokémon, discard it at the
     end of your turn."* — the granted attack "Fluorite" {G}{W}{P}: *"Discard all Energy from this
-    Pokémon, and heal all damage from each of your Tera Pokémon."* The attack TEXT is DATA
-    (`technicalMachines.ts`, the ingest drops it); `toolAttacks` offers it on the holder's attack
+    Pokémon, and heal all damage from each of your Tera Pokémon."* The attack TEXT is the Tool
+    card's own catalog `attacks` (🆕 D581 — it was hand-written in `technicalMachines.ts` while
+    the ingest dropped it; that file is deleted); `toolAttacks` offers it on the holder's attack
     menu (continuous.ts `attackMenuOf`, the `"tool"` section); this row's `attack` key at index 0
     is its program (the two clauses in printed order: "this Pokémon" is the attacker, the Active;
     the heal is `healEach`'s `"all"` over the NEW `banner` rider, Active and Bench); the end-of-turn
     discard is flow.ts `discardEndOfTurnTools`. */
 const TM_FLUORITE: CardProgram = {
-  toolAttacks: TM_FLUORITE_ATTACKS,
+  toolAttacks: true,
   attack: {
     0: [
       { op: "discardEnergy", from: "yourActive", filter: { kind: "anyEnergy" }, count: "all" },
@@ -16318,7 +16321,8 @@ const EMERGENCY_ROTATION: CardProgram = {
 // 🆕🆕🆕 D576 — THE ANTIQUE FOSSILS: 4 printings / 3 texts / 3 program objects. Each is an ITEM
 // played onto the Bench as a 60-HP Basic {C} Pokémon (`playAsPokemon`, R-FO1/R-FO2) whose
 // printed Ability is its `passive`. The body's face — HP, stage, type and the Ability's printed
-// name and text — is `fossils.ts`' hand-written table (the ingest drops it; decisions.md D576).
+// name and text — is `fossils.ts`' hand-written table (the ingest drops it; decisions.md D576) [🆕 D581 (D539):
+// WITHDRAWN — the ingest keeps the face since D581; the Ability is read off the catalog row, the table is gone].
 // The two CARD RULES ("can't be affected by any Special Conditions and can't retreat") are NOT
 // here: they are not Abilities, so no lock may lift them, and they are read off the fossil id
 // by continuous.ts (`passivesOf`'s ungated card-rule source, `retreatLocked` — R-FO4).

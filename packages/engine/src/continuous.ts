@@ -3157,7 +3157,7 @@ export interface AttackMenuEntry {
       is keyed by `sourceIndex`. */
   card: Card;
   /** The attack's index on `card` — its printed index, or its index in the Tool's
-      `toolAttacks`. Never persisted: only a `"printed"` row's index is ever stamped on a
+      printed `attacks` (🆕 D581: the Tool card's own catalog row, granted by `toolAttacks`). Never persisted: only a `"printed"` row's index is ever stamped on a
       lock or a boost (R-MD4) [🆕🆕🆕 D578 landing (R-MD4, RULED: fixed): a borrowed row's own
       self-lock is stamped by its NAME instead (`LockedAttack.attackName`, `attackIndex: -1`)]. */
   sourceIndex: number;
@@ -3187,8 +3187,11 @@ export function memoryDiveLive(state: GameState, seat: Seat): boolean {
       2. 🆕 the MEMORY DIVE section — while `memoryDiveLive(seat)` and the body is EVOLVED
          (stack length > 1): the attacks of each card UNDER the top, bottom to top (the cards
          in the stack only, so a stage Rare Candy skipped contributes nothing);
-      3. 🆕 the TOOL section — the `toolAttacks` of every in-effect attached Tool
-         (`toolsInEffect`: none under Jamming Tower), Technical Machine: Fluorite's.
+      3. 🆕 the TOOL section — the printed `attacks` of every in-effect attached Tool whose
+         program grants them (`toolAttacks`; `toolsInEffect`: none under Jamming Tower),
+         Technical Machine: Fluorite's. 🆕 D581 — read off the Tool CARD (the catalog row keeps
+         a Trainer's printed attacks since D581), not `attacksOf`, which is a Pokémon's own list
+         and asks the category.
 
     `seat` is the body's controller (`undefined` for a body that is not in play — a copy's
     phantom — which gets no Memory Dive section). The flat index is NEVER persisted: a section
@@ -3219,7 +3222,8 @@ export function attackMenuOf(
   }
   for (const toolUid of toolsInEffect(state, pokemon)) {
     const tool = cardOfUid(state, toolUid);
-    const granted = tool === undefined ? undefined : programFor(tool.id)?.toolAttacks;
+    const granted =
+      tool === undefined || programFor(tool.id)?.toolAttacks !== true ? undefined : (tool.attacks ?? undefined);
     if (tool === undefined || granted === undefined) continue;
     granted.forEach((attack, sourceIndex) => {
       menu.push({ attack, card: tool, sourceIndex, origin: "tool" });

@@ -1,5 +1,6 @@
 import type { Card } from "@luminous/schema";
 import { describe, expect, it } from "vitest";
+import { CATALOG_MANIFEST } from "./catalogManifest";
 import { legalAttackCorpus } from "./censusAttackCorpus";
 import { attackMenuOf, firstTurnAttackBanned, memoryDiveLive } from "./continuous";
 import { COPY_FAMILY_MARKER } from "./effects";
@@ -260,7 +261,8 @@ const LOCAL_CARDS: Record<string, Card> = {
       "The Pokémon this card is attached to can use the attack on this card. (You still need the necessary Energy to use this attack.) If this card is attached to 1 of your Pokémon, discard it at the end of your turn.",
     ),
     name: "Technical Machine: Fluorite",
-    attacks: null,
+    // 🆕 D581 — the attack the catalog row prints (the ingest keeps a Trainer's face since D581).
+    attacks: CATALOG_MANIFEST.trainerFaces[TM]?.attacks ?? null,
   },
   [PLAIN]: poke(PLAIN, { name: "D578 Plain", attacks: [{ cost: [], name: "Tap", damage: 10 }] }),
   [FILLER]: poke(FILLER, { name: "D578 Filler", retreat: 1, attacks: [{ cost: [], name: "Tap", damage: 10 }] }),

@@ -41,7 +41,10 @@ export const SUPERTYPES: Supertype[] = ["Pokémon", "Trainer", "Energy"];
     from the api shapes in catalog.ts). `cardId` is the tcgdex id ("sv06.5-001"),
     also the key of the api's art mirror. Optional fields are absent for
     categories they don't apply to (a Trainer has no `types`/`hp`, an Energy
-    no `hp`, etc.). */
+    no `hp`, etc.). [🆕 D581 (D539): WITHDRAWN for `hp` — since D581 the ingest
+    keeps the HP a Trainer prints, and `toBuilderCard` (catalog.ts) passes it
+    through, so an Antique Fossil carries `hp: 60` and Snorlax Doll `hp: 120`;
+    the 12 HP-printing Trainers are the only Trainers with one.] */
 export interface BuilderCard {
   cardId: string;
   name: string;

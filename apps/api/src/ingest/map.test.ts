@@ -7,7 +7,9 @@ import { describe, expect, it } from "vitest";
 import cardEnergyBasic from "../../../../packages/schema/src/tcgdex/__fixtures__/card-energy-basic-sve-002.json";
 import cardEnergySpecial from "../../../../packages/schema/src/tcgdex/__fixtures__/card-energy-special-sv02-191.json";
 import cardPokemonAbility from "../../../../packages/schema/src/tcgdex/__fixtures__/card-pokemon-ability-sv01-081.json";
+import cardTrainerFossil from "../../../../packages/schema/src/tcgdex/__fixtures__/card-trainer-fossil-sv07-129.json";
 import cardTrainer from "../../../../packages/schema/src/tcgdex/__fixtures__/card-trainer-sv01-181.json";
+import cardTrainerTm from "../../../../packages/schema/src/tcgdex/__fixtures__/card-trainer-tm-sv08-188.json";
 import serieFull from "../../../../packages/schema/src/tcgdex/__fixtures__/serie-full-sv.json";
 import setFull from "../../../../packages/schema/src/tcgdex/__fixtures__/set-full-sv01.json";
 import { mapCard, mapSerie, mapSet } from "./map";
@@ -120,8 +122,46 @@ describe("mapCard", () => {
     expect(row.hp).toBeNull();
     expect(row.typesJson).toBeNull();
     expect(row.attacksJson).toBeNull();
-    expect(row.suffix).toBeNull(); // Pokémon-only, like stage/hp
+    expect(row.abilitiesJson).toBeNull();
+    expect(row.suffix).toBeNull(); // Pokémon-only, like stage (🆕 D581: not like hp — a fossil Trainer keeps its printed hp)
     expect(row.imageUrl).toBe("https://assets.tcgdex.net/en/sv/sv01/181");
+  });
+
+  // 🆕 D581 — the Trainer branch keeps a printed Pokémon face (map.ts header).
+  it("maps a fossil Trainer: hp and the printed Ability kept, the rest of the Pokémon face null", () => {
+    const row = mapCard(tcgdexCardSchema.parse(cardTrainerFossil));
+    expect(row.category).toBe("Trainer");
+    expect(row.trainerType).toBe("Item");
+    expect(row.hp).toBe(60);
+    expect(row.abilitiesJson).toEqual([
+      {
+        type: "Ability",
+        name: "Protective Cover",
+        effect:
+          "Prevent all effects of attacks used by your opponent's Pokémon done to this Pokémon. (Damage is not an effect.)",
+      },
+    ]);
+    expect(row.attacksJson).toBeNull();
+    // Not printed on the Trainer, so still null: the face's type, stage and
+    // retreat are the RULE text's ("a 60-HP Basic {C} Pokémon … can't retreat").
+    expect(row.typesJson).toBeNull();
+    expect(row.stage).toBeNull();
+    expect(row.retreat).toBeNull();
+    expect(row.effect).toMatch(/^Play this card as if it were a 60-HP Basic \{C\} Pokémon\./);
+  });
+
+  it("maps a Technical Machine: the printed attack kept, no hp, no Ability", () => {
+    const row = mapCard(tcgdexCardSchema.parse(cardTrainerTm));
+    expect(row.trainerType).toBe("Tool");
+    expect(row.attacksJson).toEqual([
+      {
+        cost: ["Grass", "Water", "Psychic"],
+        name: "Fluorite",
+        effect: "Discard all Energy from this Pokémon, and heal all damage from each of your Tera Pokémon.",
+      },
+    ]);
+    expect(row.hp).toBeNull();
+    expect(row.abilitiesJson).toBeNull();
   });
 
   it("maps a basic Energy: energyType filled, no effect, no image", () => {

@@ -83,7 +83,8 @@ export type CardFilter =
       mutants and both are owed.
 
       ⚠️ **A NULL `hp` IS REFUSED RATHER THAN ADMITTED, AND THE ARM SAYS SO.**
-      `cards.ts hpOf` returns null for a non-Pokémon and for a non-positive
+      `cards.ts hpOf` returns null for a non-Pokémon (🆕 D581: by asking the
+      category — a fossil Item's catalog row carries `hp: 60` since D581) and for a non-positive
       printed value (a data gap), and `null <= 70` is `true` in JavaScript — so an
       unguarded comparison would offer every Trainer in the pile to a sentence
       that names a Pokémon. The conjunct rides `hpOf` and treats null as NOT
@@ -375,12 +376,14 @@ export type CardFilter =
       the datum before deciding between a map and a capture.**
 
       ⚠️ **NO CATEGORY CONJUNCT, AND THE REASON IS `abilityPokemon`'s VERBATIM.**
-      `attacksOf` reads `Card.attacks`, which the catalog leaves null on every
+      `attacksOf` reads `Card.attacks`, ~~which the catalog leaves null on every
       Trainer and every Energy, so a non-Pokémon is false through the same read
       rather than through a guard that could drift away from it. (The schema
       *permits* a non-null `attacks` on a Trainer — `z.array(attackSchema).nullable()`
       — so this rests on the same ingested fact `abilityPokemon` rests on, stated
-      rather than assumed.)
+      rather than assumed.)~~ 🆕 D581 (D539): WITHDRAWN — the ingested fact stopped
+      holding at D581 (a Technical Machine's catalog row carries its attack), so
+      `attacksOf` asks the category itself and the filter still needs no conjunct.
 
       ⚠️ **EQUALITY AND NOT A SUBSTRING, AND THE WARRANT IS THE PRINT.** `byName`'s
       arm is an exact `===`, and the printed noun does not ask for anything else: the

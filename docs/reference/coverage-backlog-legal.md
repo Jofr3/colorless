@@ -1,5 +1,8 @@
 # Simulator coverage — the STANDARD-LEGAL census (D219 re-measurement, 2026-08-04)
 
+> 🆕 **D581 (2026-10-07):** this page is the `sv` serie's census, and that pool is unchanged and whole. The Mega Evolution
+> serie was ingested at D581; the Standard pool is now `sv` + `me` — see `coverage-backlog-mega.md`.
+
 > # 🛑 THE HEADLINE BELOW IS SUPERSEDED — JUMP TO §"THE D233 RE-DERIVATION AT HEAD"
 >
 > Everything from here to the numbered backlog table was measured at **`02b839c`**

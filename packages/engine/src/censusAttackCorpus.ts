@@ -33,7 +33,7 @@ import * as effects from "./effects";
 // is the transcription's own check: the three totals are asserted there and a
 // dropped or doubled line moves at least one of them.
 //
-// ⚠️ THE POPULATION IS `legal_standard = 1` AND NOTHING ELSE. It is the
+// ⚠️ THE POPULATION IS `legal_standard = 1` AND NOTHING ELSE [🆕 D581 (D539): WITHDRAWN as spelled — also `category = 'Pokemon'` and the `sv` serie; see the D581 note under the corpus]. It is the
 // denominator `POPULATION.attackUnits` (1,732) already names, so the corpus and
 // that constant are two spellings of one query and the suite ties them together.
 //
@@ -48,7 +48,7 @@ import * as effects from "./effects";
 // one legitimate edit is a RE-RUN of the statement above when the sets rotate, and
 // that edit moves `POPULATION` and `BUILT.attack` with it.
 
-/** The whole `legal_standard = 1` attack column, grouped by sentence. */
+/** The whole `legal_standard = 1` attack column, grouped by sentence (🆕 D581: the `sv` serie's; the `me` serie's is `censusAttackCorpusMe.ts`). */
 const CORPUS = `
 1 At the end of your opponent's next turn, discard the Defending Pokémon and all attached cards.
 3 At the end of your opponent's next turn, put 9 damage counters on the Defending Pokémon.
@@ -691,6 +691,22 @@ const CORPUS = `
 3 Your opponent's Active Pokémon is now Poisoned. During your opponent's next turn, that Pokémon can't retreat.
 1 Your opponent's Active Pokémon is now Poisoned. During your opponent's next turn, the Defending Pokémon can't retreat.
 `;
+
+// 🆕 D581 — RE-RUN AGAINST THE LOCAL D1, AND IT IS BYTE-IDENTICAL. (Written HERE, under the
+// corpus, because more than a hundred suites pin its raw FILE LINES — a line added above it
+// would move every one.) After the 2026-10-07 refresh from tcgdex (the whole `sv` serie
+// re-ingested, the `me` serie ingested for the first time, a Trainer's printed face kept by
+// `apps/api/src/ingest/map.ts`), the PROVENANCE statement with TWO added conjuncts —
+// `AND c.category = 'Pokemon'` and `AND c.set_id IN (SELECT id FROM sets WHERE serie_id =
+// 'sv')` — returns the 640 records above exactly (local sqlite `apps/api/.wrangler/state/v3/
+// d1/…/8437d866….sqlite`; the remote D1 was not queried). Both conjuncts are needed now and
+// were no-ops then: the `me` serie's 1,039 legal attack printings are
+// `censusAttackCorpusMe.ts`'s, and Technical Machine: Fluorite `sv08-188`'s attack (a TRAINER
+// row's face since D581) belongs to the Trainer column. So THIS corpus is the `sv` serie's
+// legal Pokémon attack column, `POPULATION.attackUnits` (1,732) is that serie's figure, and
+// the D581 Standard pool is this plus the `me` corpus. The `sv` rows did not change in the
+// refresh: every column of all 3,698 rows compared against a pre-refresh copy of the file —
+// only the 14 Pokémon-faced Trainer rows differ, in `hp` / `abilities_json` / `attacks_json`.
 
 /** The parsed corpus: `[legal printings, printed sentence]`, one entry per DISTINCT
     sentence. Parsed on every call rather than at module load so a malformed record

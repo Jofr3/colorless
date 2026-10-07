@@ -202,9 +202,27 @@ describe("buildCardsWhere", () => {
     expect(sql).toContain('"cards"."category" = ?');
     expect(sql).toContain('"cards"."set_id" = ?');
     expect(sql).toContain('"cards"."rarity" in (?)');
-    expect(sql).toContain('"cards"."hp" >= ?');
-    expect(sql).toContain('"cards"."hp" <= ?');
+    expect(sql).toContain(`(case when "cards"."category" = 'Pokemon' then "cards"."hp" end) >= ?`);
+    expect(sql).toContain(`(case when "cards"."category" = 'Pokemon' then "cards"."hp" end) <= ?`);
     expect(params).toEqual(["Pokemon", "Common", "sv06.5", 60, 120]);
+  });
+
+  // 🆕 D581 — the ingest keeps the `hp` a Trainer prints (12 Trainer rows in the
+  // local D1: the Antique Fossils' 60, Snorlax Doll's 120), so `hp` is no longer
+  // NULL on every non-Pokémon. An HP bound is a question about POKÉMON: each bound
+  // reads the card's HP only on a Pokémon row, with no category param (the user's
+  // own `category` filter is not needed for it, and none is bound). Measured on
+  // the local D1: `hp >= 60` matches 4,089 rows; the guarded bound matches 4,077,
+  // exactly the `category = 'Pokemon'` count — the 12 Trainers drop out.
+  it("bounds HP on Pokémon rows only, without a bound category param (D581)", () => {
+    for (const bound of [{ hpMin: 60 }, { hpMax: 120 }]) {
+      const { sql, params } = render(defaults(bound));
+      expect(sql).not.toMatch(/"cards"\."hp" [<>]=/);
+      expect(sql).toMatch(
+        /\(case when "cards"\."category" = 'Pokemon' then "cards"\."hp" end\) [<>]= \?/,
+      );
+      expect(params).toEqual(Object.values(bound));
+    }
   });
 
   it("maps legal to the matching boolean flag column", () => {
@@ -340,9 +358,12 @@ describe("cardsOrder", () => {
   // NULL hp (Trainers/Energy) lands last on `hp DESC` because SQLite orders
   // NULL below every value — verified against SQLite directly:
   //   ORDER BY hp DESC over (330, NULL, 70, NULL, 60) → 330, 70, 60, NULL, NULL.
+  // 🆕 D581 — the key is the HP AS A POKÉMON, so a Trainer that prints an HP
+  // (Snorlax Doll's 120, a fossil's 60) sorts with the hp-less rows, not among
+  // the 120-HP Pokémon.
   it("sorts hp-desc with collector order as the tiebreak", () => {
     expect(renderOrder("hp-desc")).toContain(
-      'order by "cards"."hp" desc, "cards"."set_id" asc, "cards"."local_id" asc',
+      `order by (case when "cards"."category" = 'Pokemon' then "cards"."hp" end) desc, "cards"."set_id" asc, "cards"."local_id" asc`,
     );
   });
 });
