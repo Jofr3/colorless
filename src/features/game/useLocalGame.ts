@@ -25,7 +25,19 @@ export interface LocalGameSetup {
   /** Wall-clock start, the log's elapsed-time origin. */
   startedAt: number;
   /** A saved match resumes its accumulated log and the current hot-seat viewer. */
-  resume?: { log: SeatLogEntry[]; viewerSeat: Seat };
+  resume?: {
+    log: SeatLogEntry[];
+    viewerSeat: Seat;
+    turns?: LocalTurnSnapshot[];
+    turnIndex?: number;
+    latestTurn?: LocalTurnSnapshot;
+  };
+}
+
+export interface LocalTurnSnapshot {
+  game: GameState;
+  log: SeatLogEntry[];
+  viewerSeat: Seat;
 }
 
 export interface GameError {
@@ -45,13 +57,18 @@ interface HostState {
   lastError: GameError | null;
   /** The hot-seat viewer — follows whoever must act (see waitingSeatOf). */
   viewerSeat: Seat;
+  turns: LocalTurnSnapshot[];
+  turnIndex: number;
+  latestTurn: LocalTurnSnapshot;
 }
 
-interface HostEvent {
+interface HostActionEvent {
   action: GameAction;
   /** Date.now() at dispatch — stamped by the wrapper, not the reducer. */
   at: number;
 }
+
+type HostEvent = HostActionEvent | { type: "previousTurn" | "nextTurn" };
 
 /** The seat the hot-seat screen should hand the device to: the projection's
     own phase→seat mapping (phaseViewOf — THE one exhaustive switch over the
@@ -68,6 +85,12 @@ export function waitingSeatOf(state: GameState, current: Seat): Seat {
     → keep the game, surface the error (nonce-bumped so repeats
     re-announce). */
 export function hostReducer(prev: HostState, event: HostEvent): HostState {
+  if ("type" in event) {
+    const turnIndex = prev.turnIndex + (event.type === "previousTurn" ? -1 : 1);
+    const turn = turnIndex === prev.turns.length - 1 ? prev.latestTurn : prev.turns[turnIndex];
+    if (!turn) return prev;
+    return { ...prev, ...turn, turnIndex, lastError: null };
+  }
   const result = applyAction(prev.game, event.action);
   if (!result.ok) {
     return {
@@ -85,6 +108,27 @@ export function hostReducer(prev: HostState, event: HostEvent): HostState {
     elapsed: formatElapsed(event.at - prev.startedAt),
   });
   const flips = coinFlipsFromEvents(result.events, prev.names);
+  const log = [...prev.log, ...entries];
+  const viewerSeat = waitingSeatOf(result.state, prev.viewerSeat);
+  const turn = { game: result.state, log, viewerSeat };
+  // Preserve setup decisions and player handoffs as well as turn starts.
+  // Automatic bonus draws resolve between checkpoints, so navigating history
+  // never re-dispatches a draw and replaces the recorded future.
+  const turns = prev.turns.slice(0, prev.turnIndex + 1);
+  const setupHandoff =
+    prev.game.turn === 0 &&
+    (prev.game.phase.kind !== result.state.phase.kind ||
+      prev.viewerSeat !== viewerSeat ||
+      (prev.game.phase.kind === "setup:place" &&
+        result.state.phase.kind === "setup:place" &&
+        prev.game.phase.stage !== result.state.phase.stage));
+  if (
+    result.state.phase.kind !== "setup:drawExtra" &&
+    (result.state.turn !== prev.game.turn || setupHandoff)
+  ) {
+    if (turns[prev.turnIndex]?.game.phase.kind === "setup:drawExtra") turns[prev.turnIndex] = turn;
+    else turns.push(turn);
+  }
   return {
     ...prev,
     coinFlipBatch:
@@ -96,31 +140,46 @@ export function hostReducer(prev: HostState, event: HostEvent): HostState {
           }
         : prev.coinFlipBatch,
     game: result.state,
-    log: [...prev.log, ...entries],
+    log,
     // An accepted action makes any earlier rejection stale — and since the
     // viewer flip below also rides on accepted actions, clearing here is
     // what keeps a pill from leaking across the hot-seat handoff.
     lastError: null,
-    viewerSeat: waitingSeatOf(result.state, prev.viewerSeat),
+    viewerSeat,
+    turns,
+    turnIndex: turns.length - 1,
+    latestTurn: turn,
   };
 }
 
 /** Initial host state from a fresh createGame (exported for tests). */
 export function initHost(setup: LocalGameSetup): HostState {
+  const log =
+    setup.resume?.log ??
+    logFromEvents(setup.events, {
+      names: setup.names,
+      state: setup.state,
+      elapsed: formatElapsed(0),
+    });
+  const viewerSeat = waitingSeatOf(setup.state, setup.resume?.viewerSeat ?? "p1");
+  const turns = setup.resume?.turns?.length
+    ? setup.resume.turns
+    : [{ game: setup.state, log, viewerSeat }];
+  const turnIndex = Math.max(
+    0,
+    Math.min(setup.resume?.turnIndex ?? turns.length - 1, turns.length - 1),
+  );
   return {
     coinFlipBatch: null,
     game: setup.state,
     names: setup.names,
     startedAt: setup.startedAt,
-    log:
-      setup.resume?.log ??
-      logFromEvents(setup.events, {
-        names: setup.names,
-        state: setup.state,
-        elapsed: formatElapsed(0),
-      }),
+    log,
     lastError: null,
-    viewerSeat: waitingSeatOf(setup.state, setup.resume?.viewerSeat ?? "p1"),
+    viewerSeat,
+    turns,
+    turnIndex,
+    latestTurn: setup.resume?.latestTurn ?? { game: setup.state, log, viewerSeat },
   };
 }
 
@@ -137,6 +196,10 @@ export interface LocalGame {
   logEntries: ReturnType<typeof viewLogEntries>;
   lastError: GameError | null;
   dispatch: (action: GameAction) => void;
+  previousTurn: () => void;
+  nextTurn: () => void;
+  previousTurnDisabled: boolean;
+  nextTurnDisabled: boolean;
 }
 
 export function useLocalGame(
@@ -153,13 +216,31 @@ export function useLocalGame(
       events: [],
       names: host.names,
       startedAt: host.startedAt,
-      resume: { log: host.log, viewerSeat: host.viewerSeat },
+      resume: {
+        log: host.log,
+        viewerSeat: host.viewerSeat,
+        turns: host.turns,
+        turnIndex: host.turnIndex,
+        latestTurn: host.latestTurn,
+      },
     });
-  }, [host.game, host.log, host.names, host.startedAt, host.viewerSeat, onSave]);
+  }, [
+    host.game,
+    host.log,
+    host.names,
+    host.startedAt,
+    host.viewerSeat,
+    host.turns,
+    host.turnIndex,
+    host.latestTurn,
+    onSave,
+  ]);
 
   const dispatch = useCallback((action: GameAction) => {
     dispatchHost({ action, at: Date.now() });
   }, []);
+  const previousTurn = useCallback(() => dispatchHost({ type: "previousTurn" }), []);
+  const nextTurn = useCallback(() => dispatchHost({ type: "nextTurn" }), []);
 
   const projection = useMemo(
     () => projectGameState(host.game, host.viewerSeat),
@@ -179,5 +260,9 @@ export function useLocalGame(
     logEntries,
     lastError: host.lastError,
     dispatch,
+    previousTurn,
+    nextTurn,
+    previousTurnDisabled: host.turnIndex === 0,
+    nextTurnDisabled: host.turnIndex === host.turns.length - 1,
   };
 }

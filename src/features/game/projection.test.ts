@@ -236,10 +236,35 @@ function sweepContains(projectionJson: string, value: string): boolean {
 
 /** The battle row every pristine in-play fixture Pokémon projects. */
 function pristineBattle(hp: number) {
-  return { damage: 0, hp, conditions: { rotation: "none", poisonDamage: 0, burned: false, confusionDamage: 30 } };
+  return {
+    damage: 0,
+    hp,
+    conditions: { rotation: "none", poisonDamage: 0, burned: false, confusionDamage: 30 },
+  };
 }
 
 describe("projectGameState — zones", () => {
+  it("keeps mulligan dice on the recipients' decks across viewers and clears them after bonus draws", () => {
+    const base = turnOneState();
+    const state: GameState = {
+      ...base,
+      turn: 0,
+      players: {
+        p1: { ...base.players.p1, mulligans: 2 },
+        p2: { ...base.players.p2, mulligans: 5 },
+      },
+      phase: { kind: "setup:drawExtra", owed: { p1: 5, p2: 2 }, decided: { p1: true, p2: false } },
+    };
+    for (const viewer of ["p1", "p2"] as const) {
+      const local = projectGameState(state, viewer);
+      const online = projectionFromRedacted(redactGame(state, viewer));
+      expect(local.piles).toEqual(online.piles);
+      expect(local.piles.you.mulliganCount).toBe(viewer === "p1" ? 0 : 2);
+      expect(local.piles.opponent.mulliganCount).toBe(viewer === "p1" ? 2 : 0);
+    }
+    expect(projectGameState({ ...state, turn: 1 }, "p1").piles.you.mulliganCount).toBe(0);
+  });
+
   it("projects every zone for the p1 viewer", () => {
     const state = turnOneState();
     const projection = projectGameState(state, "p1");
@@ -640,11 +665,7 @@ describe("projectGameState — phase-derived fields", () => {
     // "Discard an Energy from this Pokémon" with only the attackEpilogue stage
     // queued — the turn tail is not seeded yet, so koParkActiveSeat has to count
     // attackEpilogue as in-turn or the board would show NO owner mid-attack.
-    let state = driveSetup(
-      3,
-      { p1: ATTACK_PARK_DECK, p2: ATTACK_PARK_DECK },
-      { first: "p2" },
-    );
+    let state = driveSetup(3, { p1: ATTACK_PARK_DECK, p2: ATTACK_PARK_DECK }, { first: "p2" });
     state = mustApply(state, { type: "endTurn", seat: "p2" }).state; // → P1's turn 2
     state = setActiveFromDeck(state, "p1", "sv02-028");
     state = setActiveFromDeck(state, "p2", "fix-bigbody");
@@ -886,7 +907,12 @@ describe("projectGameState — battle state", () => {
   });
 
   it("copies special conditions into battle.conditions — a copy, never an alias", () => {
-    const conditioned = { rotation: "asleep", poisonDamage: 20, burned: true, confusionDamage: 30 } as const;
+    const conditioned = {
+      rotation: "asleep",
+      poisonDamage: 20,
+      burned: true,
+      confusionDamage: 30,
+    } as const;
     const state = setConditions(turnOneState(), "p1", conditioned);
 
     const mine = projectGameState(state, "p1");
@@ -935,11 +961,7 @@ describe("projectGameState — the persistent zones (M4 slice 3)", () => {
   /** p1 on turn 2 (p2 went first, passed) holding Beach Court + Bravery
       Charm via test surgery, on STADIUM_TOOL_DECK boards. */
   function stadiumToolState(): GameState {
-    let state = driveSetup(
-      SEED,
-      { p1: STADIUM_TOOL_DECK, p2: STADIUM_TOOL_DECK },
-      { first: "p2" },
-    );
+    let state = driveSetup(SEED, { p1: STADIUM_TOOL_DECK, p2: STADIUM_TOOL_DECK }, { first: "p2" });
     state = mustApply(state, { type: "endTurn", seat: "p2" }).state;
     state = handFromDeck(state, "p1", "sv01-167", 1);
     return handFromDeck(state, "p1", "sv02-173", 1);
@@ -1414,12 +1436,18 @@ describe("projectionFromRedacted — the wire round-trip equals the local projec
     };
     const state: GameState = {
       ...p1Turn,
-      phase: { kind: "effect:choose", seat: "p1", prompt: { kind: "confirm", note: "Choose 1: …", labels }, cont },
+      phase: {
+        kind: "effect:choose",
+        seat: "p1",
+        prompt: { kind: "confirm", note: "Choose 1: …", labels },
+        cont,
+      },
     };
     const local = projectGameState(state, "p1");
     expect(projectionFromRedacted(redactGame(state, "p1"))).toEqual(local);
     const decision = local.pendingDecision;
-    if (decision?.kind !== "effectChoose" || decision.prompt.kind !== "confirm") throw new Error("expected confirm");
+    if (decision?.kind !== "effectChoose" || decision.prompt.kind !== "confirm")
+      throw new Error("expected confirm");
     expect(decision.prompt.labels).toEqual(labels);
   });
 });

@@ -8,7 +8,7 @@ import "./glowBackground.css";
 // layout transition tween isn't interrupted when the page changes. The same
 // signals that drive the CSS fallback drive this:
 //   - layout (sides/stacked) from the pathname, mirroring RootLayout
-//   - perspective flip from <body data-perspective>, set imperatively by Playmat
+//   - turn rotation from <body data-perspective>, set imperatively by Playmat
 export function GlowBackground() {
   const mountRef = useRef<HTMLDivElement>(null);
   const rendererRef = useRef<GlowRenderer | null>(null);
@@ -34,7 +34,7 @@ export function GlowBackground() {
   }, [pathname]);
 
   // Playmat sets/clears body[data-perspective] per active player; observe it so
-  // the opponent's turn flips the glow top-to-bottom.
+  // the opponent's turn rotates the glow half a turn.
   useEffect(() => {
     const apply = () => {
       rendererRef.current?.setPerspective(

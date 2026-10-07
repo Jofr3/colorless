@@ -140,6 +140,8 @@ export const NO_CONDITIONS: BattleConditions = Object.freeze({
     ProjectedPiles; optional on the view so the mock board renders unchanged. */
 export interface PileState {
   deckCount: number;
+  /** Pending bonus cards this owner can draw from the opponent's mulligans. */
+  mulliganCount?: number;
   discard: CardModel[];
 }
 

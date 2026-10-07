@@ -1,7 +1,7 @@
-import { engineVersion } from "@luminous/engine";
+import { engineVersion, type GameState } from "@luminous/engine";
 import { readPersisted, writePersisted } from "../../lib/persistedState";
 import { projectGameState } from "../game/projection";
-import type { LocalGameSetup } from "../game/useLocalGame";
+import type { LocalGameSetup, LocalTurnSnapshot } from "../game/useLocalGame";
 
 export const SIMULATOR_SAVE_KEY = "luminous:simulator:game";
 const SAVE_VERSION = 1;
@@ -9,9 +9,27 @@ const SAVE_VERSION = 1;
 /** Full engine state includes the card pool, shuffled piles, RNG and effect
     continuations. Restoring never refetches decks or re-deals their cards. */
 export function saveSimulator(snapshot: LocalGameSetup): void {
+  // Every turn uses the same catalog and UID mapping. Store those once in the
+  // current state to avoid duplicating them throughout the saved history.
+  const compactTurn = (turn: LocalTurnSnapshot) => ({
+    ...turn,
+    game: { ...turn.game, cardPool: undefined, cardIdByUid: undefined },
+  });
+  const savedSnapshot = snapshot.resume
+    ? {
+        ...snapshot,
+        resume: {
+          ...snapshot.resume,
+          turns: snapshot.resume.turns?.map(compactTurn),
+          latestTurn: snapshot.resume.latestTurn
+            ? compactTurn(snapshot.resume.latestTurn)
+            : undefined,
+        },
+      }
+    : snapshot;
   writePersisted(
     SIMULATOR_SAVE_KEY,
-    JSON.stringify({ version: SAVE_VERSION, engineVersion, snapshot }),
+    JSON.stringify({ version: SAVE_VERSION, engineVersion, snapshot: savedSnapshot }),
   );
 }
 
@@ -43,6 +61,49 @@ function parseSave(raw: string): LocalGameSetup | undefined {
   const viewer = snapshot.resume?.viewerSeat;
   if (viewer !== "p1" && viewer !== "p2") return;
   const state = snapshot.state;
+  if (!validState(state)) return;
+  const resume = snapshot.resume;
+  if (resume?.turns !== undefined) {
+    if (
+      !Array.isArray(resume.turns) ||
+      resume.turns.length === 0 ||
+      !Number.isInteger(resume.turnIndex) ||
+      resume.turnIndex === undefined ||
+      resume.turnIndex < 0 ||
+      resume.turnIndex >= resume.turns.length ||
+      !resume.latestTurn
+    )
+      return;
+    const restoreTurn = (turn: LocalTurnSnapshot): LocalTurnSnapshot => {
+      if (
+        !turn ||
+        !Array.isArray(turn.log) ||
+        (turn.viewerSeat !== "p1" && turn.viewerSeat !== "p2")
+      ) {
+        throw new Error("Invalid saved turn");
+      }
+      const game = { ...turn.game, cardPool: state.cardPool, cardIdByUid: state.cardIdByUid };
+      if (!validState(game)) throw new Error("Invalid saved turn state");
+      return { ...turn, game };
+    };
+    resume.turns = resume.turns.map(restoreTurn);
+    resume.latestTurn = restoreTurn(resume.latestTurn);
+    if (
+      resume.turns[resume.turnIndex]?.game.turn !== state.turn ||
+      resume.turns.at(-1)?.game.turn !== resume.latestTurn.game.turn ||
+      resume.turns.some(
+        (turn, index) =>
+          index > 0 &&
+          (turn.game.turn < (resume.turns?.[index - 1]?.game.turn ?? 0) ||
+            (turn.game.turn > 0 && turn.game.turn === resume.turns?.[index - 1]?.game.turn)),
+      )
+    )
+      return;
+  }
+  return snapshot;
+}
+
+function validState(state: GameState): boolean {
   if (
     !state ||
     !Number.isInteger(state.turn) ||
@@ -52,17 +113,17 @@ function parseSave(raw: string): LocalGameSetup | undefined {
     !state.cardIdByUid ||
     !Array.isArray(state.pending)
   )
-    return;
+    return false;
   for (const seat of ["p1", "p2"] as const) {
     const side = state.players?.[seat];
     if (
       !side ||
       ![side.hand, side.deck, side.discard, side.prizes, side.bench].every(Array.isArray)
     )
-      return;
+      return false;
     // These are the same reads the board will make after restore. Malformed
     // snapshots throw here and readPersisted falls back to the deck picker.
     projectGameState(state, seat);
   }
-  return snapshot;
+  return true;
 }

@@ -7,6 +7,8 @@ import {
   handFromDeck,
   handUid,
   TRAINER_DECK,
+  ALL_BASIC_DECK,
+  mustCreate,
 } from "../../../packages/engine/src/testFixtures";
 import { MemoryRouter } from "react-router-dom";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
@@ -353,6 +355,80 @@ describe("Play deck setup", () => {
 });
 
 describe("Simulator saved games", () => {
+  it("rewinds setup handoffs across refresh and replays the starting-player choice", () => {
+    const created = mustCreate(170, { p1: ALL_BASIC_DECK, p2: ALL_BASIC_DECK });
+    saveSimulator(savedSetup(created.state));
+    stubApi();
+    renderPage();
+    fireEvent.click(screen.getByRole("button", { name: "Go first" }));
+    const placements: PlaymatViewProps[] = [];
+    for (let player = 0; player < 2; player++) {
+      const props = currentView();
+      placements.push(props);
+      const basic = props.board.you.hand[0];
+      if (!basic) throw new Error("Expected an opening Basic");
+      act(() =>
+        props.onMoveCard({
+          cardId: basic.id,
+          from: { owner: "you", zone: "hand" },
+          to: { owner: "you", zone: "active" },
+        }),
+      );
+      fireEvent.click(screen.getByRole("button", { name: "Ready" }));
+    }
+    const started = currentView();
+    expect(started.turn.turn).toBe(1);
+    act(() => currentView().onPreviousTurn?.());
+    expect(currentView().turn.turn).toBe(0);
+    expect(currentView().board).toEqual(placements[1]?.board);
+    expect(currentView().nextTurnDisabled).toBe(false);
+    reloadPage();
+    expect(currentView().board).toEqual(placements[1]?.board);
+    act(() => currentView().onNextTurn?.());
+    expect(currentView().board).toEqual(started.board);
+    act(() => currentView().onPreviousTurn?.());
+    act(() => currentView().onPreviousTurn?.());
+    expect(currentView().board).toEqual(placements[0]?.board);
+    act(() => currentView().onPreviousTurn?.());
+    expect(screen.getByRole("region", { name: "Starting player" })).toBeTruthy();
+    expect(currentView().previousTurnDisabled).toBe(true);
+    fireEvent.click(screen.getByRole("button", { name: "Go second" }));
+    expect(loadSimulatorSave()?.state.firstPlayer).toBe("p2");
+    expect(currentView().nextTurnDisabled).toBe(true);
+  });
+
+  it("restores a rewound turn and its future, then replaces that future when replaying", () => {
+    saveSimulator(savedSetup());
+    stubApi();
+    renderPage();
+    const first = currentView();
+    act(() => first.onPassTurn?.());
+    const second = currentView();
+    act(() => second.onPassTurn?.());
+    const latest = currentView();
+    act(() => latest.onPreviousTurn?.());
+    expect(currentView().turn.turn).toBe(2);
+    expect(currentView().nextTurnDisabled).toBe(false);
+    const raw = JSON.parse(localStorage.getItem(SIMULATOR_SAVE_KEY) ?? "null");
+    expect(raw.snapshot.resume.turns[0].game.cardPool).toBeUndefined();
+    const saved = loadSimulatorSave();
+    expect(saved?.resume?.turns?.[0]?.game.cardPool).toEqual(saved?.state.cardPool);
+    reloadPage();
+    expect(currentView().board).toEqual(second.board);
+    act(() => currentView().onNextTurn?.());
+    expect(currentView().board).toEqual(latest.board);
+    expect(currentView().nextTurnDisabled).toBe(true);
+    act(() => currentView().onPreviousTurn?.());
+    act(() => currentView().onPreviousTurn?.());
+    expect(currentView().board).toEqual(first.board);
+    act(() => currentView().onPassTurn?.());
+    expect(currentView().turn.turn).toBe(2);
+    expect(currentView().nextTurnDisabled).toBe(true);
+    reloadPage();
+    expect(currentView().nextTurnDisabled).toBe(true);
+    expect(currentView().previousTurnDisabled).toBe(false);
+  });
+
   it("plays an Item dropped on the mat and opens its choice dialog", async () => {
     const state = handFromDeck(
       driveSetup(7, { p1: TRAINER_DECK, p2: TRAINER_DECK }, { first: "p1" }),

@@ -5,8 +5,8 @@
 // is evaluated in float precision and a triangular-PDF dither (~1 LSB) is added
 // just before the 8-bit write — the textbook cure that removes banding outright
 // rather than hiding it. The layout swap (home `sides` <-> `stacked`) and the
-// playmat perspective flip become animated uniforms, tweened with gsap to match
-// the 1s easing the CSS transition used to do.
+// playmat turn rotation become animated uniforms, tweened with gsap. Turn swaps
+// use a brisk sweep that gradually eases into its final position.
 //
 // Mirrors the CardSheen pattern: a per-component Pixi Application driving a
 // Filter over a full-screen quad, rendered on demand (mount, tween frames,
@@ -17,23 +17,25 @@ import {
   Filter,
   GlProgram,
   Graphics,
+  RendererType,
   UniformGroup,
 } from "pixi.js";
 import { gsap } from "gsap";
 import { CustomEase } from "gsap/CustomEase";
 import { initPixiApplication } from "../../lib/pixi/initPixiApplication";
+import { glowGeometry } from "./glowGeometry";
 
 gsap.registerPlugin(CustomEase);
 
 // Quick start, fast middle, gentle settle. The control points cross over
 // (x1 > x2) to steepen the mid-sweep while y2=1 keeps a soft landing. The same
-// curve drives the CSS fallback: cubic-bezier(0.4, 0, 0.3, 1).
+// curve also drives the CSS fallback through the shared animated angle.
 const GLOW_EASE = CustomEase.create("glowSweep", "M0,0 C0.4,0 0.3,1 1,1");
 
 export type GlowLayout = "sides" | "stacked";
 
 // The animatable glow parameters gsap tweens between layouts.
-type GlowState = { angle: number; w: number; h: number; flip: number };
+type GlowState = { angle: number };
 
 const MAX_RENDER_RESOLUTION = 2;
 
@@ -48,7 +50,8 @@ uniform highp vec4 uOutputFrame; // filtered region origin (xy) + size (zw)
 
 uniform vec2 uBlue;   // blue glow centre, 0..1 across the viewport (top-left origin)
 uniform vec2 uRed;    // red glow centre,  0..1
-uniform vec2 uRadii;  // ellipse radii as viewport fractions (rx of width, ry of height)
+uniform vec2 uRadii;  // ellipse radii along the edge and into the screen
+uniform vec2 uAxis;   // long axis, rotating with the sweep in viewport space
 
 const vec3 BASE = vec3(0.05490, 0.05490, 0.07843); // #0e0e14, --color-bg
 const vec3 BLUE = vec3(0.14902, 0.58431, 1.00000); // rgb(38,149,255)
@@ -61,7 +64,9 @@ const float PI = 3.14159265359;
 // Raised-cosine elliptical falloff: peak at the centre, smoothly to 0 at STOP
 // with zero slope at both ends (no hot core, no hard edge ring).
 float glow(vec2 uv, vec2 c, float peak) {
-  float d = length((uv - c) / uRadii); // 1.0 on the ellipse boundary
+  vec2 delta = uv - c;
+  vec2 local = vec2(dot(delta, uAxis), dot(delta, vec2(-uAxis.y, uAxis.x)));
+  float d = length(local / uRadii); // 1.0 on the rotated ellipse boundary
   float t = clamp(d / STOP, 0.0, 1.0);
   return peak * (0.5 + 0.5 * cos(PI * t));
 }
@@ -96,20 +101,13 @@ void main() {
 }
 `;
 
-// Per-layout glow geometry, lifted straight from index.css:
-//   sides  -> --glow-angle:180deg; --glow-w:52%;  --glow-h:120% (blue left, red right)
-//   stacked-> --glow-angle:90deg;  --glow-w:120%; --glow-h:55%  (blue bottom, red top)
-const LAYOUTS: Record<GlowLayout, { angle: number; w: number; h: number }> = {
-  // Separation axis (sides=w, stacked=h) stays at the original tight value so
-  // each glow hugs its edge; the long axis runs past 100% so it reaches the
-  // far corners — the glow spans the full edge without bleeding to mid-screen.
-  sides: { angle: Math.PI, w: 0.52, h: 1.2 },
-  stacked: { angle: Math.PI / 2, w: 1.2, h: 0.55 },
+// Resting angles match the CSS fallback: blue left on home, bottom elsewhere.
+const LAYOUTS: Record<GlowLayout, { angle: number }> = {
+  sides: { angle: Math.PI },
+  stacked: { angle: Math.PI / 2 },
 };
-// --glow-bulge: the orbit radius shrinks toward the 45° mid-points so the glows
-// sweep on a rounded arc rather than sliding straight between layouts.
-const BULGE = 0.14;
-const TWEEN_DURATION = 1; // matches the CSS 1000ms transition
+const QUARTER_TURN_DURATION = 1; // Home-to-Decks travels 90° in one second.
+const TURN_QUARTER_DURATION = 0.4; // A full player swap takes 0.8 seconds.
 
 export class GlowRenderer {
   private app: Application | null = null;
@@ -126,16 +124,14 @@ export class GlowRenderer {
   // centres from them each frame. Starts at the `stacked` defaults.
   private readonly state: GlowState = {
     angle: LAYOUTS.stacked.angle,
-    w: LAYOUTS.stacked.w,
-    h: LAYOUTS.stacked.h,
-    flip: 1,
   };
   private layout: GlowLayout = "stacked";
-  private flipTarget: 1 | -1 = 1;
+  private perspective: 1 | -1 = 1;
 
   async mount(host: HTMLElement) {
     this.host = host;
     this.reducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
+    this.apply();
 
     let app: Application;
     try {
@@ -150,21 +146,30 @@ export class GlowRenderer {
         height: host.clientHeight || window.innerHeight,
       });
     } catch {
-      // No WebGL — the CSS gradient fallback in index.css stays visible.
+      // Continue animating the CSS layers with the same clock without WebGL.
+      this.ready = true;
       return;
     }
     if (this.destroyed) {
       app.destroy({ removeView: true });
       return;
     }
+    // Pixi can fall back to Canvas even when WebGL is preferred. Canvas cannot
+    // render this fragment filter; keep our CSS glow visible in that case.
+    if (app.renderer.type !== RendererType.WEBGL) {
+      app.destroy({ removeView: true }, { children: true });
+      this.ready = true;
+      return;
+    }
 
     app.stop(); // render on demand only
 
-    const { uBlue, uRed } = this.centres();
+    const { uBlue, uRed, axis, radii } = glowGeometry(this.state.angle);
     const uniforms = new UniformGroup({
       uBlue: { value: new Float32Array(uBlue), type: "vec2<f32>" },
       uRed: { value: new Float32Array(uRed), type: "vec2<f32>" },
-      uRadii: { value: new Float32Array([this.state.w, this.state.h]), type: "vec2<f32>" },
+      uRadii: { value: new Float32Array(radii), type: "vec2<f32>" },
+      uAxis: { value: new Float32Array(axis), type: "vec2<f32>" },
     });
     const filter = new Filter({
       glProgram: GlProgram.from({
@@ -183,7 +188,7 @@ export class GlowRenderer {
     host.appendChild(app.canvas);
 
     // After a GPU/context reset this on-demand canvas would stay blank (only the
-    // CSS gradient fallback in index.css shows through meanwhile) since nothing
+    // CSS gradient fallback shows through meanwhile) since nothing
     // re-renders until the next layout tween or resize. Repaint once the browser
     // restores the context — Pixi rebuilds its own GL resources on restore, so we
     // just re-render on the next frame. No `webglcontextlost` handler: Pixi owns
@@ -207,60 +212,68 @@ export class GlowRenderer {
     }
     this.layout = layout;
     const target = LAYOUTS[layout];
-    this.tweenTo({ angle: target.angle, w: target.w, h: target.h });
+    this.tweenTo({
+      angle: target.angle + (layout === "stacked" && this.perspective === -1 ? Math.PI : 0),
+    });
   }
 
-  setPerspective(flip: 1 | -1) {
-    if (flip === this.flipTarget) {
+  setPerspective(perspective: 1 | -1) {
+    if (perspective === this.perspective) {
       return;
     }
-    this.flipTarget = flip;
-    this.tweenTo({ flip });
+    this.perspective = perspective;
+    this.tweenTo(
+      {
+        angle:
+          LAYOUTS[this.layout].angle +
+          (this.layout === "stacked" && perspective === -1 ? Math.PI : 0),
+      },
+      "power2.out",
+      TURN_QUARTER_DURATION,
+    );
   }
 
-  private tweenTo(vars: Partial<GlowState>) {
+  private tweenTo(
+    vars: GlowState,
+    ease: string | gsap.EaseFunction = GLOW_EASE,
+    quarterTurnDuration = QUARTER_TURN_DURATION,
+  ) {
     // Before the app is ready (the layout/perspective effects can fire during
     // the async init), just snap the state — the first paint reflects it.
     if (!this.ready || this.reducedMotion) {
       Object.assign(this.state, vars);
-      if (this.ready) {
-        this.apply();
-      }
+      this.apply();
       return;
     }
     gsap.to(this.state, {
       ...vars,
-      duration: TWEEN_DURATION,
-      // Quick start, brisk middle, gentle settle — see GLOW_EASE.
-      ease: GLOW_EASE,
+      // Interrupted sweeps scale their duration to the remaining distance.
+      duration: (quarterTurnDuration * Math.abs(vars.angle - this.state.angle)) / (Math.PI / 2),
+      // Route changes keep their original ease; turn swaps have a longer,
+      // gentler deceleration so the glow settles rather than stopping abruptly.
+      ease,
       overwrite: "auto",
       onUpdate: this.apply,
     });
   }
 
-  // Blue/red glow centres derived from the orbit angle, exactly as index.css
-  // derives --blue-glow-* / --red-glow-* via calc(cos/sin).
-  private centres() {
-    const { angle, flip } = this.state;
-    const m = 0.5 - BULGE * Math.sin(2 * angle);
-    const cos = m * Math.cos(angle);
-    const sin = m * Math.sin(angle) * flip;
-    return {
-      uBlue: [0.5 + cos, 0.5 + sin] as [number, number],
-      uRed: [0.5 - cos, 0.5 - sin] as [number, number],
-    };
-  }
-
   private readonly apply = () => {
-    const { app, uniforms } = this;
-    if (this.destroyed || !app || !uniforms) {
+    if (this.destroyed || !this.host) {
       return;
     }
-    const { uBlue, uRed } = this.centres();
+    // The fallback follows the exact same angle/timing, including interrupted
+    // swaps; it doesn't run an independent CSS transition behind the canvas.
+    this.host.style.setProperty("--glow-angle", `${this.state.angle}rad`);
+    const { app, uniforms } = this;
+    if (!app || !uniforms) {
+      return;
+    }
+    const { uBlue, uRed, axis, radii } = glowGeometry(this.state.angle);
     // Reassign (don't mutate in place) so the UniformGroup flags itself dirty.
     uniforms.uniforms.uBlue = new Float32Array(uBlue);
     uniforms.uniforms.uRed = new Float32Array(uRed);
-    uniforms.uniforms.uRadii = new Float32Array([this.state.w, this.state.h]);
+    uniforms.uniforms.uRadii = new Float32Array(radii);
+    uniforms.uniforms.uAxis = new Float32Array(axis);
     app.render();
   };
 
@@ -292,8 +305,8 @@ export class GlowRenderer {
     this.canvas = null;
     this.resizeObserver?.disconnect();
     this.resizeObserver = null;
+    gsap.killTweensOf(this.state);
     if (this.app) {
-      gsap.killTweensOf(this.state);
       this.app.destroy({ removeView: true }, { children: true });
     }
     this.app = null;

@@ -3,6 +3,7 @@ import { CheckIcon } from "../../components/icons";
 import { useTiltJuice } from "../../components/useTiltJuice";
 import { cardImageUrl } from "../../lib/api";
 import { FOCUS_RING_INSET } from "../../lib/glass";
+import "./CardChoice.css";
 
 export function cardChoiceGridClass(count: number): string {
   const columns =
@@ -14,7 +15,7 @@ export function cardChoiceGridClass(count: number): string {
           ? "grid-cols-2 sm:grid-cols-3"
           : "grid-cols-2 sm:grid-cols-3 md:grid-cols-4";
   // Leave room for the combined hover tilt and selection bounce inside the scroller.
-  return `mt-3 grid min-h-0 gap-4 overflow-x-hidden overflow-y-auto overscroll-contain p-5 ${columns}`;
+  return `grid gap-4 p-5 ${columns}`;
 }
 
 export function cardChoiceDialogClass(count: number): string {

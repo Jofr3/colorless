@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 import type { BoardState, PlayerBoard } from "../types";
-import { setupDealsBetween, type SetupDealSnapshot } from "./setupDeals";
+import {
+  pendingMulliganDrawCounts,
+  setupDealsBetween,
+  turnDrawsBetween,
+  type SetupDealSnapshot,
+} from "./setupDeals";
 
 function side(handSize: number, prizesRemaining = 0): PlayerBoard {
   return {
@@ -91,5 +96,97 @@ describe("setup deal animations", () => {
     expect(setupDealsBetween(null, restored)).toEqual([]);
     expect(setupDealsBetween(restored, restored)).toEqual([]);
     expect(setupDealsBetween({ ...restored, turn: 1 }, { ...restored, turn: 2 })).toEqual([]);
+  });
+});
+
+describe("start-of-turn draw animations", () => {
+  it("draws the incoming player's new card from their physical deck after a hot-seat swap", () => {
+    const previous = snapshot(side(4, 6), side(6, 6), { turn: 3 });
+    const next = snapshot(side(7, 6), side(4, 6), {
+      turn: 4,
+      blueBackPlayer: "opponent",
+    });
+    expect(turnDrawsBetween(previous, next)).toEqual([
+      { tone: "red", kind: "turn-draw", index: 6 },
+    ]);
+  });
+
+  it("draws the opponent's card in an online match without changing perspective", () => {
+    const previous = snapshot(side(4, 6), side(6, 6), { turn: 1 });
+    const next = snapshot(side(4, 6), side(7, 6), { turn: 2, activePlayer: "opponent" });
+    expect(turnDrawsBetween(previous, next)).toEqual([
+      { tone: "red", kind: "turn-draw", index: 6 },
+    ]);
+  });
+
+  it("queues the first turn draw after the mulligan bonuses without duplicating them", () => {
+    const previous = snapshot(side(6, 6), side(6, 6));
+    const next = snapshot(side(9, 6), side(7, 6), { turn: 1 });
+    expect([...setupDealsBetween(previous, next), ...turnDrawsBetween(previous, next)]).toEqual([
+      { tone: "blue", kind: "draw", index: 6 },
+      { tone: "blue", kind: "draw", index: 7 },
+      { tone: "red", kind: "draw", index: 6 },
+      { tone: "blue", kind: "turn-draw", index: 8 },
+    ]);
+  });
+
+  it("finds the first turn draw when setup placement and the draw keep the same hand size", () => {
+    const previous = snapshot(side(7, 6), side(6, 6));
+    const hand = [
+      ...previous.board.you.hand.slice(1),
+      { id: "turn-card", name: "Turn card", cardId: "card", type: "pokemon" as const },
+    ];
+    const next = snapshot({ ...previous.board.you, hand }, side(6, 6), { turn: 1 });
+    expect(turnDrawsBetween(previous, next)).toEqual([
+      { tone: "blue", kind: "turn-draw", index: 6 },
+    ]);
+  });
+
+  it("does not replay restored hands, mid-turn draws, rewinds, or a failed deck-out draw", () => {
+    const previous = snapshot(side(6, 6), side(6, 6), { turn: 2 });
+    expect(turnDrawsBetween(null, previous)).toEqual([]);
+    expect(turnDrawsBetween(previous, snapshot(side(7, 6), side(6, 6), { turn: 2 }))).toEqual([]);
+    expect(turnDrawsBetween(previous, { ...previous, turn: 1 })).toEqual([]);
+    expect(turnDrawsBetween(previous, { ...previous, turn: 3 })).toEqual([]);
+    expect(turnDrawsBetween(previous, snapshot(side(0, 6), side(6, 6), { turn: 3 }))).toEqual([]);
+  });
+
+  it("does not mistake a newly revealed hot-seat hand for a draw from an empty deck", () => {
+    const previous = snapshot(side(4, 6), side(6, 6), {
+      turn: 1,
+      deckCounts: { you: 20, opponent: 0 },
+    });
+    const hand = side(6).hand.map((card) => ({ ...card, id: `revealed-${card.id}` }));
+    const next = snapshot({ ...side(6, 6), hand }, side(4, 6), {
+      turn: 2,
+      blueBackPlayer: "opponent",
+      deckCounts: { you: 0, opponent: 20 },
+    });
+    expect(turnDrawsBetween(previous, next)).toEqual([]);
+  });
+});
+
+describe("mulligan dice during queued draws", () => {
+  it("keeps both recipients' counts while Prize cards animate ahead of the bonus draws", () => {
+    expect(
+      pendingMulliganDrawCounts([
+        { deal: { tone: "red", kind: "prizes", index: 0 }, started: true },
+        { deal: { tone: "blue", kind: "draw", index: 6 }, started: false },
+        { deal: { tone: "blue", kind: "draw", index: 7 }, started: false },
+        { deal: { tone: "red", kind: "draw", index: 6 }, started: false },
+        { deal: { tone: "blue", kind: "turn-draw", index: 8 }, started: false },
+      ]),
+    ).toEqual({ blue: 2, red: 1 });
+  });
+
+  it("removes a recipient's die on their first draw while preserving the other's queued die", () => {
+    expect(
+      pendingMulliganDrawCounts([
+        { deal: { tone: "blue", kind: "draw", index: 6 }, started: true },
+        { deal: { tone: "blue", kind: "draw", index: 7 }, started: false },
+        { deal: { tone: "red", kind: "draw", index: 6 }, started: false },
+      ]),
+    ).toEqual({ blue: 0, red: 1 });
+    expect(pendingMulliganDrawCounts([])).toEqual({ blue: 0, red: 0 });
   });
 });

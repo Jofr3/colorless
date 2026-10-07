@@ -25306,6 +25306,7 @@ export { formatElapsed, logFromEvents, STATUS_LABELS } from "./log";
 export type { LogContext } from "./log";
 export type { CoinFace } from "./rng";
 export { createGame } from "./setup";
+export { pendingMulligansOf } from "./mulligans";
 export type { CreateErrorCode, CreateGameOptions, CreateGameResult } from "./setup";
 export {
   BENCH_CEILING,

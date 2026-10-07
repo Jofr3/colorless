@@ -87,7 +87,12 @@ function SidePiles({
                 : { bottom: "100%", marginBottom: SIDE_PILE_STACK_GAP }
             }
           >
-            <DeckPile owner={owner} tone={cardBackTone} count={pile?.deckCount} />
+            <DeckPile
+              owner={owner}
+              tone={cardBackTone}
+              count={pile?.deckCount}
+              mulliganCount={pile?.mulliganCount}
+            />
           </div>
         </div>
       </div>

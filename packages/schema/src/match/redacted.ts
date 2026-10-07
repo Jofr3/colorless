@@ -151,6 +151,8 @@ export const redactedSideSchema = z.object({
       count above only — no uid and no card id of a face-down prize is on the wire. */
   faceUpPrizes: z.array(redactedFaceUpPrizeSchema),
   deckCount: z.number(),
+  /** Public bonus card count; cleared when this player draws the cards. */
+  mulliganCount: z.number().int().nonnegative().optional(),
   discard: z.array(redactedCardSchema),
 });
 export type RedactedSide = z.infer<typeof redactedSideSchema>;

@@ -11,7 +11,15 @@ import { EnergyChoiceArea } from "./components/EnergyChoiceArea";
 import { PlayerSide } from "./components/PlayerSide";
 import { StadiumSlot } from "./components/StadiumSlot";
 import { TurnBanner, TurnControls } from "./components/TurnHud";
-import type { BoardState, CardMoveRequest, LogEntry, PileState, PlayerId, TurnInfo } from "./types";
+import type {
+  BoardState,
+  CardBackTone,
+  CardMoveRequest,
+  LogEntry,
+  PileState,
+  PlayerId,
+  TurnInfo,
+} from "./types";
 import type { PlacementPredicate } from "./utils/cardMovement";
 import { opponentOf } from "./utils/players";
 
@@ -26,15 +34,16 @@ export interface PlaymatViewProps {
   perspective: PlayerId;
   /** What <body data-perspective> gets (drives the shared background glow).
       Defaults to `perspective`; the game page overrides it per seat so the
-      glow still flips in hot-seat play, where `perspective` is fixed. */
+      glow still rotates in hot-seat play, where `perspective` is fixed. */
   glowPerspective?: PlayerId;
   onMoveCard: (request: CardMoveRequest) => void;
-  /** Give the board its own ⟶ pass control by giving it something to call
-      (P5-4). Absent — the /play and online drivers — no control is rendered: on
-      those surfaces the turn panel covers that corner exactly when passing is
-      legal, so the panel carries its own `Pass` instead. */
+  /** Right-edge pass control, with optional local turn-history navigation. */
   onPassTurn?: () => void;
   passDisabled?: boolean;
+  onPreviousTurn?: () => void;
+  onNextTurn?: () => void;
+  previousTurnDisabled?: boolean;
+  nextTurnDisabled?: boolean;
   passAnimationKey?: number;
   logEntries: LogEntry[];
   /** Deck counts + public discards — the game projection's `piles`. */
@@ -67,6 +76,10 @@ export function PlaymatView({
   onMoveCard,
   onPassTurn,
   passDisabled = false,
+  onPreviousTurn,
+  onNextTurn,
+  previousTurnDisabled = true,
+  nextTurnDisabled = true,
   passAnimationKey = 0,
   logEntries,
   piles,
@@ -78,7 +91,12 @@ export function PlaymatView({
 }: PlaymatViewProps) {
   const playmatRef = useRef<HTMLElement>(null);
   const [setupAnimation, setSetupAnimation] = useState<SetupAnimationStage | null>(null);
-  const setupAnimating = setupAnimation !== null;
+  const [pendingMulliganDraws, setPendingMulliganDraws] = useState<Record<CardBackTone, number>>({
+    blue: 0,
+    red: 0,
+  });
+  const cardsAnimating = setupAnimation !== null;
+  const setupAnimating = cardsAnimating && setupAnimation !== "turn-draw";
   const displayedTurn = setupAnimating && turn.turn > 0 ? { ...turn, turn: 0 } : turn;
 
   const bottomPlayer = perspective;
@@ -89,10 +107,19 @@ export function PlaymatView({
   const bottomBenchLimit = benchLimitFor(board, bottomPlayer);
 
   // Mirror the perspective onto <body> so the shared background glow
-  // (index.css) flips blue/red top-to-bottom on the opponent's turn.
+  // (index.css) rotates blue/red around the board on the opponent's turn.
   const bodyPerspective = glowPerspective ?? perspective;
   // Keep card backs tied to the physical seats when the hot-seat projection re-bases.
   const blueBackPlayer = bodyPerspective === "you" ? bottomPlayer : topPlayer;
+  function displayedPile(owner: PlayerId): PileState | undefined {
+    const pile = piles?.[owner];
+    if (!pile) return undefined;
+    const tone = owner === blueBackPlayer ? "blue" : "red";
+    return {
+      ...pile,
+      mulliganCount: Math.max(pile.mulliganCount ?? 0, pendingMulliganDraws[tone]),
+    };
+  }
   useEffect(() => {
     document.body.dataset.perspective = bodyPerspective;
     return () => {
@@ -107,7 +134,7 @@ export function PlaymatView({
       aria-label="Trading card game playmat"
       data-setup-animation={setupAnimation ?? undefined}
     >
-      <div className="contents" inert={interactionDisabled || setupAnimating || undefined}>
+      <div className="contents" inert={interactionDisabled || cardsAnimating || undefined}>
         {/* A drop-only surface for Items and Supporters, outside the hand. */}
         <div
           className="pointer-events-none absolute inset-x-0 top-0"
@@ -126,7 +153,7 @@ export function PlaymatView({
           side="top"
           activeTurn={turn.activePlayer === topPlayer}
           benchLimit={topBenchLimit}
-          pile={piles?.[topPlayer]}
+          pile={displayedPile(topPlayer)}
         />
         <PlayerSide
           owner={bottomPlayer}
@@ -135,7 +162,7 @@ export function PlaymatView({
           side="bottom"
           activeTurn={turn.activePlayer === bottomPlayer}
           benchLimit={bottomBenchLimit}
-          pile={piles?.[bottomPlayer]}
+          pile={displayedPile(bottomPlayer)}
         />
         <Hand cards={board[bottomPlayer].hand} owner={bottomPlayer} />
         <EnergyChoiceArea board={board} onMoveCard={onMoveCard} />
@@ -149,7 +176,16 @@ export function PlaymatView({
         >
           <StadiumSlot card={board.stadium} />
         </div>
-        {onPassTurn && <TurnControls onPassTurn={onPassTurn} passDisabled={passDisabled} />}
+        {onPassTurn && (
+          <TurnControls
+            onPassTurn={onPassTurn}
+            passDisabled={passDisabled}
+            onPreviousTurn={onPreviousTurn}
+            onNextTurn={onNextTurn}
+            previousTurnDisabled={previousTurnDisabled}
+            nextTurnDisabled={nextTurnDisabled}
+          />
+        )}
         <TurnBanner info={displayedTurn} passAnimationKey={passAnimationKey} />
         <BackToMenu confirm={leaveConfirm} onLeave={onLeave} />
         <GameLog entries={logEntries} turn={turn.turn} />
@@ -160,20 +196,26 @@ export function PlaymatView({
           blueBackPlayer={blueBackPlayer}
           turnNumber={turn.turn}
           activePlayer={turn.activePlayer}
+          deckCounts={piles && { you: piles.you.deckCount, opponent: piles.opponent.deckCount }}
           holdSetupReveal={setupAnimating && turn.turn > 0}
           onSetupAnimationChange={setSetupAnimation}
+          onPendingMulliganDrawsChange={setPendingMulliganDraws}
           playmatRef={playmatRef}
           onMoveCard={onMoveCard}
           placementPredicate={placementPredicate}
           usableTrainerIds={usableTrainerIds}
         />
       </div>
-      <div className="contents" inert={setupAnimating || undefined}>
-        {(!setupAnimating || turn.turn === 0) && children}
+      <div className="contents" inert={cardsAnimating || undefined}>
+        {(!cardsAnimating || turn.turn === 0) && children}
       </div>
-      {setupAnimating && (
+      {cardsAnimating && (
         <output className="sr-only" aria-live="polite">
-          {setupAnimation === "prizes" ? "Setting Prize cards." : "Drawing mulligan bonus cards."}
+          {setupAnimation === "prizes"
+            ? "Setting Prize cards."
+            : setupAnimation === "draw"
+              ? "Drawing mulligan bonus cards."
+              : "Drawing a card for the turn."}
         </output>
       )}
     </section>

@@ -1,3 +1,4 @@
+import { DialogScrollArea } from "../../../components/DialogScrollArea";
 import { useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { CardImage } from "../../../components/CardImage";
@@ -62,8 +63,8 @@ export function DiscardPileDialog({
       <div
         className={`flex max-h-[88svh] w-[min(54rem,calc(100vw-2rem))] flex-col leading-normal ${GLASS_DIALOG_PANEL}`}
       >
-        <div className="flex shrink-0 items-start justify-between gap-4">
-          <div>
+        <div className="flex shrink-0 items-start justify-end gap-4">
+          <div className="sr-only">
             <h2 className="text-lg font-semibold">{title}</h2>
             <p className="mt-1 text-sm text-white/55">
               {cards.length} {cards.length === 1 ? "card" : "cards"} · Newest first
@@ -81,11 +82,15 @@ export function DiscardPileDialog({
         {cards.length === 0 ? (
           <p className="py-8 text-center text-sm text-white/55">No discarded cards yet.</p>
         ) : (
-          <ul className="mt-3 grid min-h-0 grid-cols-2 gap-4 overflow-x-hidden overflow-y-auto overscroll-contain p-5 sm:grid-cols-3 md:grid-cols-4">
+          <DialogScrollArea
+            className="mt-3"
+            contentClassName="grid grid-cols-2 gap-4 p-5 sm:grid-cols-3 md:grid-cols-4"
+            trackInset={20}
+          >
             {[...cards].reverse().map((card) => (
               <DiscardCard key={card.id} card={card} />
             ))}
-          </ul>
+          </DialogScrollArea>
         )}
       </div>
     </dialog>,

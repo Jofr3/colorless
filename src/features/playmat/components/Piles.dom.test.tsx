@@ -4,7 +4,7 @@ import { StrictMode } from "react";
 import { afterEach, beforeAll, describe, expect, it } from "vitest";
 import { installDomShims } from "../../../test/domShims";
 import type { CardModel } from "../types";
-import { DiscardPile } from "./Piles";
+import { DeckPile, DiscardPile } from "./Piles";
 
 beforeAll(installDomShims);
 afterEach(cleanup);
@@ -14,6 +14,19 @@ const cards: CardModel[] = [
   { id: "dunsparce-1", cardId: "dunsparce", name: "Dunsparce", type: "pokemon" },
   { id: "budew-2", cardId: "budew", name: "Budew", type: "pokemon" },
 ];
+
+it("shows a mulligan die on its owner's deck and removes it after the bonus draw", () => {
+  const { rerender } = render(<DeckPile owner="you" tone="blue" count={53} mulliganCount={6} />);
+  const die = screen.getByRole("img", { name: "Your mulligan bonus cards: 6" });
+  expect(die.closest('[data-card-pile="deck"]')?.getAttribute("data-card-owner")).toBe("you");
+  expect(die.querySelectorAll(".mulligan-die__pip")).toHaveLength(6);
+  rerender(<DeckPile owner="opponent" tone="red" count={47} mulliganCount={12} />);
+  const large = screen.getByRole("img", { name: "Opponent's mulligan bonus cards: 12" });
+  expect(large.getAttribute("data-tone")).toBe("red");
+  expect(large.textContent).toBe("12");
+  rerender(<DeckPile owner="opponent" tone="red" count={47} mulliganCount={0} />);
+  expect(screen.queryByRole("img")).toBeNull();
+});
 
 describe("discard pile popup", () => {
   it("shows every physical card newest first without changing the pile", () => {

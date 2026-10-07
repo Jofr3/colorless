@@ -6,9 +6,12 @@ import { describe, expect, it } from "vitest";
 import type { GameState, Phase, Seat } from "@luminous/engine";
 import {
   MIXED_DECK,
+  ALL_BASIC_DECK,
   deckOf,
   driveSetup,
   attachFromDeck,
+  handFromDeck,
+  handUid,
   mustApply,
   mustCreate,
 } from "../../../packages/engine/src/testFixtures";
@@ -82,6 +85,111 @@ function freshSetup(): LocalGameSetup {
 }
 
 describe("initHost / hostReducer", () => {
+  it("rewinds to a turn's start and returns to the complete latest position", () => {
+    const state = handFromDeck(
+      driveSetup(
+        11,
+        {
+          p1: deckOf({ "fix-attacker": 30, "fix-fire-energy": 30 }),
+          p2: MIXED_DECK,
+        },
+        { first: "p1", active: { p1: "fix-attacker" } },
+      ),
+      "p1",
+      "fix-fire-energy",
+      2,
+    );
+    const uid = handUid(state, "p1", "fix-fire-energy");
+    const start = initHost({ state, events: [], names: NAMES, startedAt: 0 });
+    const attached = hostReducer(start, {
+      action: { type: "attachEnergy", seat: "p1", uid, target: { spot: "active" } },
+      at: 1000,
+    });
+    expect(attached.lastError).toBeNull();
+    const second = hostReducer(attached, { action: { type: "endTurn", seat: "p1" }, at: 2000 });
+    const third = hostReducer(second, { action: { type: "endTurn", seat: "p2" }, at: 3000 });
+    const nextEnergy = handUid(third.game, "p1", "fix-fire-energy");
+    const latest = hostReducer(third, {
+      action: { type: "attachEnergy", seat: "p1", uid: nextEnergy, target: { spot: "active" } },
+      at: 4000,
+    });
+    expect(latest.lastError).toBeNull();
+    const back = hostReducer(hostReducer(latest, { type: "previousTurn" }), {
+      type: "previousTurn",
+    });
+    expect(back.game).toEqual(start.game);
+    expect(back.log).toEqual(start.log);
+    expect(back.viewerSeat).toBe(start.viewerSeat);
+    expect(back.game.players.p1.hand).toContain(uid);
+    expect(back.game.rngState).toBe(start.game.rngState);
+    expect(hostReducer(back, { type: "previousTurn" })).toBe(back);
+    const forward = hostReducer(hostReducer(back, { type: "nextTurn" }), { type: "nextTurn" });
+    expect(forward.game).toBe(latest.game);
+    expect(forward.log).toBe(latest.log);
+    expect(hostReducer(forward, { type: "nextTurn" })).toBe(forward);
+  });
+
+  it("keeps future turns after rejection and replaces them after a replayed action", () => {
+    const start = initHost({ state: driveSetup(170), events: [], names: NAMES, startedAt: 0 });
+    const second = hostReducer(start, { action: { type: "endTurn", seat: "p1" }, at: 1000 });
+    const latest = hostReducer(second, { action: { type: "endTurn", seat: "p2" }, at: 2000 });
+    const back = hostReducer(latest, { type: "previousTurn" });
+    const rejected = hostReducer(back, { action: { type: "endTurn", seat: "p1" }, at: 3000 });
+    expect(rejected.lastError?.code).toBe("WRONG_SEAT");
+    expect(hostReducer(rejected, { type: "nextTurn" }).game).toBe(latest.game);
+    const replayed = hostReducer(back, { action: { type: "endTurn", seat: "p2" }, at: 4000 });
+    expect(replayed.game).toEqual(latest.game);
+    expect(replayed.log).not.toEqual(latest.log);
+    expect(hostReducer(replayed, { type: "nextTurn" })).toBe(replayed);
+    expect(hostReducer(replayed, { type: "previousTurn" }).game).toBe(second.game);
+  });
+
+  it("rewinds both setup players and the starting-player choice, and allows replay", () => {
+    const result = mustCreate(170, { p1: ALL_BASIC_DECK, p2: ALL_BASIC_DECK });
+    const created = { state: result.state, events: result.events, names: NAMES, startedAt: 0 };
+    if (created.state.phase.kind !== "setup:chooseFirst") throw new Error("expected chooseFirst");
+    const initial = initHost(created);
+    let host = hostReducer(initial, {
+      action: { type: "chooseFirstPlayer", seat: created.state.phase.coinWinner, first: "p1" },
+      at: 1000,
+    });
+    const firstSetup = host;
+    for (let player = 0; player < 2; player++) {
+      const uid = host.game.players[host.viewerSeat].hand[0];
+      if (!uid) throw new Error("Expected an opening Basic");
+      host = hostReducer(host, {
+        action: { type: "setupPlaceActive", seat: host.viewerSeat, uid },
+        at: 2000,
+      });
+      host = hostReducer(host, {
+        action: { type: "setupReady", seat: host.viewerSeat },
+        at: 3000,
+      });
+      expect(host.lastError).toBeNull();
+    }
+    expect(host.game.turn).toBe(1);
+    expect(host.turns).toHaveLength(4);
+    const secondSetup = hostReducer(host, { type: "previousTurn" });
+    expect(secondSetup.game.phase.kind).toBe("setup:place");
+    expect(secondSetup.viewerSeat).not.toBe(firstSetup.viewerSeat);
+    expect(secondSetup.game.players[secondSetup.viewerSeat].active).toBeNull();
+    expect(secondSetup.game.players[firstSetup.viewerSeat].prizes).toHaveLength(6);
+    const back = hostReducer(secondSetup, { type: "previousTurn" });
+    expect(back.game).toBe(firstSetup.game);
+    expect(back.viewerSeat).toBe(firstSetup.viewerSeat);
+    const choice = hostReducer(back, { type: "previousTurn" });
+    expect(choice.game).toBe(initial.game);
+    expect(choice.log).toEqual(initial.log);
+    expect(hostReducer(choice, { type: "previousTurn" })).toBe(choice);
+    const replayed = hostReducer(choice, {
+      action: { type: "chooseFirstPlayer", seat: choice.viewerSeat, first: "p2" },
+      at: 4000,
+    });
+    expect(replayed.game.firstPlayer).toBe("p2");
+    expect(replayed.turns).toHaveLength(2);
+    expect(hostReducer(replayed, { type: "nextTurn" })).toBe(replayed);
+  });
+
   it("initializes with the creation log and the coin winner as viewer", () => {
     const setup = freshSetup();
     const host = initHost(setup);

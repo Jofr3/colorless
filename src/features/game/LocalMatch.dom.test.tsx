@@ -67,6 +67,43 @@ function renderMatch() {
 }
 
 describe("LocalMatch HUD across turns", () => {
+  it("keeps the current turn and revealed board during a turn draw, then restores the actions", () => {
+    renderMatch();
+    act(() => cardsLayer.mock.calls.at(-1)?.[0].onSetupAnimationChange("turn-draw"));
+    const playmat = screen.getByRole("region", { name: "Trading card game playmat" });
+    expect(playmat.getAttribute("data-setup-animation")).toBe("turn-draw");
+    expect(screen.getByText(/^Turn 1\./)).toBeTruthy();
+    expect(cardsLayer.mock.calls.at(-1)?.[0].holdSetupReveal).toBe(false);
+    expect(screen.getByText("Drawing a card for the turn.")).toBeTruthy();
+    expect(screen.queryByRole("region", { name: "Turn actions" })).toBeNull();
+    expect(screen.getByRole("button", { name: "Pass turn" }).closest("[inert]")).not.toBeNull();
+    act(() => cardsLayer.mock.calls.at(-1)?.[0].onSetupAnimationChange(null));
+    expect(playmat.hasAttribute("data-setup-animation")).toBe(false);
+    expect(screen.getByRole("region", { name: "Turn actions" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Pass turn" }).closest("[inert]")).toBeNull();
+  });
+
+  it("passes from the restored control and enables history only for recorded turns", () => {
+    renderMatch();
+    const previous = () => screen.getByRole<HTMLButtonElement>("button", { name: "Previous turn" });
+    const next = () => screen.getByRole<HTMLButtonElement>("button", { name: "Next turn" });
+    expect(previous().disabled).toBe(true);
+    expect(next().disabled).toBe(true);
+    const firstBoard = cardsLayer.mock.calls.at(-1)?.[0].board;
+    fireEvent.click(screen.getByRole("button", { name: "Pass turn" }));
+    expect(cardsLayer.mock.calls.at(-1)?.[0].turnNumber).toBe(2);
+    expect(previous().disabled).toBe(false);
+    expect(next().disabled).toBe(true);
+    const secondBoard = cardsLayer.mock.calls.at(-1)?.[0].board;
+    fireEvent.click(previous());
+    expect(cardsLayer.mock.calls.at(-1)?.[0].board).toEqual(firstBoard);
+    expect(previous().disabled).toBe(true);
+    expect(next().disabled).toBe(false);
+    fireEvent.click(next());
+    expect(cardsLayer.mock.calls.at(-1)?.[0].board).toEqual(secondBoard);
+    expect(next().disabled).toBe(true);
+  });
+
   it("returns an unusable Trainer drag silently without changing the saved game", () => {
     const initial = driveSetup(3, { p1: ALL_BASIC_DECK, p2: ALL_BASIC_DECK }, { first: "p1" });
     const uid = initial.players.p1.hand[0];
@@ -185,6 +222,11 @@ describe("LocalMatch HUD across turns", () => {
     );
     const saved = onSave.mock.calls.at(-1)?.[0];
     expect(saved.state.phase.kind).toBe("turn:action");
+    expect(
+      saved.resume.turns.every(
+        (turn: { game: { phase: { kind: string } } }) => turn.game.phase.kind !== "setup:drawExtra",
+      ),
+    ).toBe(true);
     for (const seat of ["p1", "p2"] as const) {
       expect(saved.state.players[seat].prizes).toEqual(pending.players[seat].prizes);
       expect(saved.state.players[seat].hand).toHaveLength(
@@ -237,9 +279,7 @@ describe("LocalMatch HUD across turns", () => {
 
     // Each pass flips the hot-seat viewer and bumps game.turn — both parts
     // of seatKey — so every turn exercises the keyed remount. Driven from the
-    // panel's own `Pass`, which since P5-4 is the only pass control this surface
-    // has: the playmat's ⟶ was enabled exactly when the panel covered it, so it
-    // was never clickable here, and it is no longer rendered.
+    // panel's own `Pass`, alongside the restored right-side control.
     for (let turn = 1; turn <= 6; turn += 1) {
       fireEvent.click(screen.getByRole("button", { name: "Pass" }));
       expect(
@@ -253,12 +293,7 @@ describe("LocalMatch HUD across turns", () => {
     expect(document.body.textContent).not.toContain("No attacking on the first turn");
   });
 
-  it("passes the turn from the IN-PANEL Pass button — the only one here", () => {
-    // History: the playmat's ⟶ control (aria-label "Pass turn") was COVERED by
-    // this panel at every ordinary viewport height — z-[75] bottom-right vs the
-    // control's z-20 right-edge-centred box — so a real click there landed on an
-    // attack row. The panel took over passing, and P5-4 removed the ⟶ from this
-    // surface entirely rather than leave a control that could never be clicked.
+  it("also passes the turn from the in-panel Pass button", () => {
     renderMatch();
     // Turn 1 is the going-first player's, so the §4 note is up — the probe the
     // leak test above uses for "this panel belongs to the current turn".

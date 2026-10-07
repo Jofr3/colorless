@@ -188,6 +188,14 @@ export function OnlineMatch({
       passAnimationKey={projection.turn}
       placementPredicate={placementPredicate}
       usableTrainerIds={usableTrainerIds}
+      onPassTurn={
+        spectating
+          ? undefined
+          : () => {
+              if (isViewerTurn) onAction({ type: "endTurn", seat });
+            }
+      }
+      passDisabled={!isViewerTurn}
       leaveConfirm={
         spectating
           ? LEAVE_CONFIRM_WATCHING

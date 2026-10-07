@@ -70,22 +70,53 @@ function PassTurnButton({ onClick, disabled }: { onClick: () => void; disabled?:
   );
 }
 
-/** The playmat's own ⟶ pass control, rendered only for a driver that asks for
-    one (`PlaymatView`'s optional `onPassTurn`) — in practice the /simulator
-    sandbox, where nothing covers it.
+function HistoryButton({
+  direction,
+  onClick,
+  disabled,
+}: {
+  direction: "previous" | "next";
+  onClick?: () => void;
+  disabled: boolean;
+}) {
+  return (
+    <CircleIconButton
+      ariaLabel={direction === "previous" ? "Previous turn" : "Next turn"}
+      size="sm"
+      onClick={onClick}
+      disabled={disabled}
+    >
+      <svg
+        width="16"
+        height="16"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2.4"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <path d={direction === "previous" ? "M15 6l-6 6 6 6" : "M9 6l6 6-6 6"} />
+      </svg>
+    </CircleIconButton>
+  );
+}
 
-    It used to sit here for every driver, above a Previous/Forward pair. Both are
-    gone (P5-4): the arrows were never wired to anything on any surface — no
-    handler, no history to navigate — so they announced navigation that did not
-    exist; and on /play and online this button is ENABLED exactly when the turn
-    panel renders over it, which is to say it was never clickable there. Those
-    panels have carried their own `Pass` since 2026-07-26. */
+/** Pass above the restored history arrows, at the right edge of the board. */
 export function TurnControls({
   onPassTurn,
   passDisabled = false,
+  onPreviousTurn,
+  onNextTurn,
+  previousTurnDisabled = true,
+  nextTurnDisabled = true,
 }: {
   onPassTurn: () => void;
   passDisabled?: boolean;
+  onPreviousTurn?: () => void;
+  onNextTurn?: () => void;
+  previousTurnDisabled?: boolean;
+  nextTurnDisabled?: boolean;
 }) {
   return (
     <div
@@ -93,6 +124,16 @@ export function TurnControls({
       style={{ right: 24, top: "50%", transform: "translateY(-50%)" }}
     >
       <PassTurnButton onClick={onPassTurn} disabled={passDisabled} />
+      {onPreviousTurn && onNextTurn && (
+        <div className="flex gap-2">
+          <HistoryButton
+            direction="previous"
+            onClick={onPreviousTurn}
+            disabled={previousTurnDisabled}
+          />
+          <HistoryButton direction="next" onClick={onNextTurn} disabled={nextTurnDisabled} />
+        </div>
+      )}
     </div>
   );
 }

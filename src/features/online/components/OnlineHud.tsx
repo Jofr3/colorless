@@ -1,3 +1,4 @@
+import { DialogScrollArea } from "../../../components/DialogScrollArea";
 import { AutoMulliganDraw } from "../../game/AutoMulliganDraw";
 import { CardChoice, cardChoiceDialogClass, cardChoiceGridClass } from "../../game/CardChoice";
 import { ConfirmCardChoices } from "../../game/ConfirmCardChoices";
@@ -667,7 +668,7 @@ function ChoosePokemonMultiDialog({
             ? " Taking none is allowed."
             : ""}
       </output>
-      <ul className="mt-3 flex max-h-64 flex-col gap-1.5 overflow-y-auto">
+      <DialogScrollArea className="mt-3 max-h-64" contentClassName="flex flex-col gap-1.5">
         {prompt.candidates.map((ref) => {
           const selected = pickedKeys.has(refKey(ref));
           // At the cap a further click is refused, and the row says so (the one
@@ -698,7 +699,7 @@ function ChoosePokemonMultiDialog({
             </li>
           );
         })}
-      </ul>
+      </DialogScrollArea>
       <div className="mt-5 flex justify-end">
         <button
           type="button"
@@ -878,7 +879,7 @@ function MoveEnergyDialog({
             )}
             :
           </output>
-          <ul className="mt-2 flex max-h-40 flex-col gap-1.5 overflow-y-auto">
+          <DialogScrollArea className="mt-2 max-h-40" contentClassName="flex flex-col gap-1.5">
             {offered.map(({ uid, from }) => {
               const selected = pickedUids.includes(uid);
               const name = energyName(board, seat, from, uid);
@@ -899,7 +900,7 @@ function MoveEnergyDialog({
                 </li>
               );
             })}
-          </ul>
+          </DialogScrollArea>
           <p className="mt-3 text-sm text-white/55">Move to:</p>
           <ul className="mt-2 flex flex-col gap-1.5">
             {dests.map((ref) => {
@@ -1061,7 +1062,7 @@ function MoveEnergySpreadDialog({
             }`
           : `Moving ${moves.length}/${prompt.max}. Where does ${pendingName} go?`}
       </output>
-      <ul className="mt-3 flex max-h-52 flex-col gap-1.5 overflow-y-auto">
+      <DialogScrollArea className="mt-3 max-h-52" contentClassName="flex flex-col gap-1.5">
         {prompt.movable.map(({ uid, from }) => {
           const dest = destOf(uid);
           const selected = pending === uid;
@@ -1102,7 +1103,7 @@ function MoveEnergySpreadDialog({
             </li>
           );
         })}
-      </ul>
+      </DialogScrollArea>
       {pending !== null && (
         <>
           <p className="mt-3 text-sm text-white/55">Move to:</p>
@@ -1267,7 +1268,7 @@ function DiscardEnergyDialog({
               ? `Pick ${required} Energy to discard (${picked.length}/${required}).`
               : "Pick the Energy to discard."}
       </output>
-      <div className="mt-3 flex max-h-64 flex-col gap-3 overflow-y-auto">
+      <DialogScrollArea as="div" className="mt-3 max-h-64" contentClassName="flex flex-col gap-3">
         {/* fieldset/legend so a screen reader says WHICH Pokémon the Energy comes
             off — the host + spot ride the legend (two Pokémon can share a name),
             plus the `opponent` marker (this dialog serves both boards). */}
@@ -1311,7 +1312,7 @@ function DiscardEnergyDialog({
             </ul>
           </fieldset>
         ))}
-      </div>
+      </DialogScrollArea>
       <div className="mt-5 flex justify-end">
         <button
           type="button"
@@ -1392,7 +1393,7 @@ function DiscardToolsDialog({
           ? `Pick up to ${cap} Pokémon Tool${cap === 1 ? "" : "s"} to discard (${picked.length} selected).`
           : `Pick ${cap} Pokémon Tool${cap === 1 ? "" : "s"} to discard (${picked.length}/${cap}).`}
       </output>
-      <div className="mt-3 flex max-h-64 flex-col gap-3 overflow-y-auto">
+      <DialogScrollArea as="div" className="mt-3 max-h-64" contentClassName="flex flex-col gap-3">
         {groups.map((group) => (
           <fieldset key={group.key} className="min-w-0">
             <legend className="text-[10px] font-semibold uppercase tracking-wide text-white/40">
@@ -1426,7 +1427,7 @@ function DiscardToolsDialog({
             </ul>
           </fieldset>
         ))}
-      </div>
+      </DialogScrollArea>
       <div className="mt-5 flex justify-end">
         <button
           type="button"
@@ -1562,7 +1563,10 @@ function ChooseCardsDialog({
             }`
           : `Pick up to ${prompt.max} (${picked.length}/${prompt.max}).`}
       </output>
-      <ul className={cardChoiceGridClass(prompt.candidates.length)}>
+      <DialogScrollArea
+        contentClassName={cardChoiceGridClass(prompt.candidates.length)}
+        trackInset={20}
+      >
         {prompt.candidates.map((card) => {
           const selected = picked.includes(card.id);
           const refused = !selected && picked.length >= prompt.max;
@@ -1578,7 +1582,7 @@ function ChooseCardsDialog({
             />
           );
         })}
-      </ul>
+      </DialogScrollArea>
       <div className="mt-5 flex justify-end">
         <button
           type="button"
@@ -1644,7 +1648,7 @@ function OrderCardsDialog({
             }`
           : `All ${total} placed — #1 is the new top card.`}
       </output>
-      <ul className="mt-3 flex max-h-64 flex-col gap-1.5 overflow-y-auto">
+      <DialogScrollArea className="mt-3 max-h-64" contentClassName="flex flex-col gap-1.5">
         {prompt.candidates.map((card) => {
           // Rendered in the deck order they ARRIVED in and never re-sorted into
           // the pick order: a list that reshuffled under the cursor would move the
@@ -1672,7 +1676,7 @@ function OrderCardsDialog({
             </li>
           );
         })}
-      </ul>
+      </DialogScrollArea>
       <div className="mt-5 flex justify-between gap-2">
         <button
           type="button"
@@ -1807,7 +1811,7 @@ function AttachCardsDialog({
             }`
           : `Attaching ${assignments.length}/${prompt.max}. Where does ${pendingName} go?`}
       </output>
-      <ul className="mt-3 flex max-h-52 flex-col gap-1.5 overflow-y-auto">
+      <DialogScrollArea className="mt-3 max-h-52" contentClassName="flex flex-col gap-1.5">
         {prompt.candidates.map((card) => {
           const dest = destOf(card.id);
           const selected = pending === card.id;
@@ -1849,7 +1853,7 @@ function AttachCardsDialog({
             </li>
           );
         })}
-      </ul>
+      </DialogScrollArea>
       {pending !== null && (
         <>
           <p className="mt-3 text-sm text-white/55">Attach to:</p>
@@ -1975,7 +1979,7 @@ function ChooseAttackDialog({
     disabled off a server-folded `disabled` flag with the greyed row's `reason`
     tooltip, dispatching `useAbility` / `playTrainer`), and the retreat entry point
     (disabled off the server-computed `retreat.can`, opening the RetreatDialog).
-    Bottom-right, clear of the pass control, mirroring the local TurnPanel.
+    Bottom-left, just above the hand, mirroring the local TurnPanel.
     🆕 **STADIUM ROWS APPEAR HERE FROM D288, AND NEEDED NO CODE BELOW.** A Stadium
     dispatches the same `playTrainer` action every other non-Rare-Candy row does
     (`playTrainer` routes it to `playStadium`), so the widening was entirely
@@ -2050,7 +2054,7 @@ function AttackPanel({
     <>
       <section
         aria-label="Turn actions"
-        className={`pointer-events-auto absolute bottom-[calc(var(--hand-h)+16px)] right-4 z-[75] w-72 rounded-2xl p-4 ${GLASS_PANEL}`}
+        className={`pointer-events-auto absolute bottom-[calc(var(--hand-h)+16px)] left-4 z-[75] w-72 rounded-2xl p-4 ${GLASS_PANEL}`}
       >
         <div className="flex items-baseline justify-between">
           <span className="truncate text-sm font-semibold text-white">{active.name}</span>
@@ -2249,13 +2253,7 @@ function AttackPanel({
             </ul>
           </div>
         )}
-        {/* Retreat + Pass share the footer. Pass lives HERE, not only on the
-            playmat's ⟶ control, because this panel (z-[75], bottom-right) COVERS
-            that control (z-20, right-edge centred) at every ordinary viewport
-            height — a click there lands on an attack row instead. This panel
-            renders exactly when `waitingOn === "you" && turn:action`, which is
-            exactly OnlineMatch's `passDisabled === false`, so the button needs no
-            disabled state: if it is on screen, passing is legal. */}
+        {/* The footer also offers Pass while this seat can act. */}
         <div className="mt-3 flex items-center justify-end gap-2">
           {retreat !== null && (
             <button
@@ -2456,7 +2454,7 @@ function RetreatDialog({
             Discard exactly {cost} attached energ{cost === 1 ? "y" : "ies"} ({chosen.length}/{cost}
             ):
           </p>
-          <ul className="mt-2 flex max-h-[22svh] shrink-0 flex-col gap-1.5 overflow-y-auto">
+          <DialogScrollArea className="mt-2 max-h-[22svh]" contentClassName="flex flex-col gap-1.5">
             {energies.map((energy) => {
               const selected = chosen.includes(energy.id);
               return (
@@ -2474,7 +2472,7 @@ function RetreatDialog({
                 </li>
               );
             })}
-          </ul>
+          </DialogScrollArea>
         </>
       )}
       <p className="mt-3 text-sm text-white/55">Promote to Active:</p>
@@ -2714,7 +2712,13 @@ function Dialog({
   const dialogRef = useRef<HTMLDialogElement>(null);
   useEffect(() => {
     const dialog = dialogRef.current;
-    if (dialog && !dialog.open) dialog.showModal();
+    if (dialog && !dialog.open) {
+      dialog.showModal();
+      // Chrome may focus the scroll viewport before its choice buttons.
+      dialog
+        .querySelector<HTMLElement>("button:not(:disabled), input:not(:disabled)")
+        ?.focus({ preventScroll: true });
+    }
   }, []);
   return (
     <dialog
@@ -2727,7 +2731,7 @@ function Dialog({
       className="m-auto border-0 bg-transparent p-0 text-white"
     >
       <div
-        className={`${cardCount !== undefined ? cardChoiceDialogClass(cardCount) : "w-[min(24rem,calc(100vw-2.5rem))]"} ${GLASS_DIALOG_PANEL}`}
+        className={`game-choice-dialog ${cardCount !== undefined ? cardChoiceDialogClass(cardCount) : "w-[min(24rem,calc(100vw-2.5rem))]"} ${GLASS_DIALOG_PANEL}`}
       >
         {children}
       </div>

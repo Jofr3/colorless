@@ -1,5 +1,5 @@
 // Engine-driven local match shared by the Play setup and regression fixtures.
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { otherSeat, type GameAction } from "@luminous/engine";
 import { TransientErrorPill } from "../../components/TransientErrorPill";
 import { PlaymatView } from "../playmat/PlaymatView";
@@ -13,7 +13,6 @@ import { usableTrainerIdsForGame } from "./trainerUse";
 import { useLocalGame, type LocalGameSetup } from "./useLocalGame";
 
 const ERROR_TTL_MS = 4000;
-const FLIP_BANNER_TTL_MS = 1800;
 
 /** Exported for the dom regression suite (LocalMatch.dom.test.tsx), which
     injects an engine-driven setup instead of walking the pregame flow. */
@@ -41,6 +40,10 @@ export function LocalMatch({
     logEntries,
     lastError,
     coinFlipBatch,
+    previousTurn,
+    nextTurn,
+    previousTurnDisabled,
+    nextTurnDisabled,
   } = useLocalGame(setup, onSave);
   const [shownCoinBatch, setShownCoinBatch] = useState<number | null>(null);
   const tossing = coinFlipBatch !== null && coinFlipBatch.id !== shownCoinBatch;
@@ -97,21 +100,6 @@ export function LocalMatch({
     opponentName: names[otherSeat(viewerSeat)],
   };
 
-  // Hot-seat flip banner: announce whose decision the board now shows. Only
-  // a nonce is state — the name renders from the live viewerSeat, so it can
-  // never lag a flip by a frame. The ref guard keeps the initial mount (and
-  // StrictMode's double-run of it) silent; a re-flip restarts the clock via
-  // the effect cleanup.
-  const [flipNonce, setFlipNonce] = useState<number | null>(null);
-  const previousSeatRef = useRef(viewerSeat);
-  useEffect(() => {
-    if (previousSeatRef.current === viewerSeat) return;
-    previousSeatRef.current = viewerSeat;
-    setFlipNonce((prev) => (prev ?? 0) + 1);
-    const timer = setTimeout(() => setFlipNonce(null), FLIP_BANNER_TTL_MS);
-    return () => clearTimeout(timer);
-  }, [viewerSeat]);
-
   // Transient pill for engine-rejected actions, DERIVED from the reducer's
   // lastError instead of mirrored into state: it hides once its nonce is
   // dismissed (button or TTL) and vanishes the moment an accepted action
@@ -134,12 +122,19 @@ export function LocalMatch({
       turn={turnInfo}
       perspective="you"
       // The projection re-bases so the viewer is always "you"; the glow still
-      // flips per seat, exactly like the mock's per-turn flip.
+      // rotates per seat, exactly like the mock's per-turn change.
       glowPerspective={viewerSeat === "p1" ? "you" : "opponent"}
       onMoveCard={handleMoveCard}
       placementPredicate={placementPredicate}
       usableTrainerIds={usableTrainerIds}
+      onPassTurn={() => {
+        if (!passDisabled) dispatch({ type: "endTurn", seat: viewerSeat });
+      }}
       passDisabled={passDisabled}
+      onPreviousTurn={previousTurn}
+      onNextTurn={nextTurn}
+      previousTurnDisabled={previousTurnDisabled}
+      nextTurnDisabled={nextTurnDisabled}
       passAnimationKey={projection.turn}
       logEntries={logEntries}
       piles={projection.piles}
@@ -156,16 +151,6 @@ export function LocalMatch({
           onPlayAgain={onPlayAgain}
           chooseStartOrder={chooseStartOrder}
         />
-      )}
-      {!tossing && flipNonce !== null && (
-        <div
-          key={flipNonce}
-          className="pointer-events-none absolute left-1/2 top-1/3 z-[82] -translate-x-1/2 rounded-full bg-[#16161f]/90 px-6 py-3 shadow-[0_12px_40px_rgba(0,0,0,0.5)] ring-1 ring-inset ring-white/15 backdrop-blur-xl"
-        >
-          <output className="text-base font-semibold text-white">
-            {names[viewerSeat]} — you're up
-          </output>
-        </div>
       )}
       {shownError !== null && (
         <TransientErrorPill

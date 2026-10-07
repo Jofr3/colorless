@@ -54,6 +54,7 @@ import type {
 } from "@luminous/schema";
 import { EMPTY_CARD_ID, EMPTY_CARD_NAME, HIDDEN_CARD_ID, HIDDEN_CARD_NAME } from "@luminous/schema";
 import { attackCostAt, costMet } from "./attack";
+import { pendingMulligansOf } from "./mulligans";
 import {
   abilityBodyGateClause,
   abilityBodyGateMet,
@@ -1247,6 +1248,7 @@ function redactedSideOf(state: GameState, seat: Seat, visibility: SideVisibility
       side.faceUpPrizes.includes(uid) ? [{ index, card: redactedCardOf(state, uid) }] : [],
     ),
     deckCount: side.deck.length,
+    mulliganCount: pendingMulligansOf(state, seat),
     // §2 — the discard pile is ordered and public.
     discard: side.discard.map((uid) => redactedCardOf(state, uid)),
   };

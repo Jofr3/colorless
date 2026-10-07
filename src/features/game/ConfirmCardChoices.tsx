@@ -1,3 +1,4 @@
+import { DialogScrollArea } from "../../components/DialogScrollArea";
 import { GLASS_NEUTRAL_BUTTON } from "../../lib/glass";
 import { CardChoice, cardChoiceGridClass } from "./CardChoice";
 
@@ -20,7 +21,7 @@ export function ConfirmCardChoices({
 }) {
   return (
     <>
-      <ul className={cardChoiceGridClass(cards.length)}>
+      <DialogScrollArea contentClassName={cardChoiceGridClass(cards.length)} trackInset={20}>
         {cards.map((card) => (
           <CardChoice
             key={String(card.yes)}
@@ -32,7 +33,7 @@ export function ConfirmCardChoices({
             onSelect={() => onAnswer(card.yes)}
           />
         ))}
-      </ul>
+      </DialogScrollArea>
       {!cards.some((card) => !card.yes) && (
         <div className="mt-5 flex justify-end">
           <button type="button" className={GLASS_NEUTRAL_BUTTON} onClick={() => onAnswer(false)}>

@@ -196,9 +196,8 @@ describe("MayDrawDialog — the printed 'may' answered by the other seat", () =>
 
   it("names the deciding player, so a hot-seat device cannot be answered by the wrong one", () => {
     // This is the only dialog that appears because of something the viewer did
-    // NOT do, in the middle of an opponent's turn. The handoff banner that
-    // normally names the seat renders outside the modal, so once showModal()
-    // runs it is inert and backdrop-covered — the dialog has to say it itself.
+    // NOT do, in the middle of an opponent's turn. The dialog must identify
+    // the answering seat itself.
     const asked = parkedMayDraw();
     renderHud(asked, "p2", () => {});
     screen.getByText(/Tide — your opponent's card is asking/);

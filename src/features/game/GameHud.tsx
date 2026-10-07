@@ -1,3 +1,4 @@
+import { DialogScrollArea } from "../../components/DialogScrollArea";
 // The phase-driven HUD layered over the playmat on /play. THE gating rule
 // (D17): every control here checks `projection.waitingOn === "you"`, never
 // turn ownership — during ko:promote the acting seat is the KO'd NON-turn
@@ -549,7 +550,13 @@ function HudDialog({
   const dialogRef = useRef<HTMLDialogElement>(null);
   useEffect(() => {
     const dialog = dialogRef.current;
-    if (dialog && !dialog.open) dialog.showModal();
+    if (dialog && !dialog.open) {
+      dialog.showModal();
+      // Chrome may focus the scroll viewport before its choice buttons.
+      dialog
+        .querySelector<HTMLElement>("button:not(:disabled), input:not(:disabled)")
+        ?.focus({ preventScroll: true });
+    }
   }, []);
   return (
     <dialog
@@ -562,7 +569,7 @@ function HudDialog({
       className="leave-dialog m-auto border-0 bg-transparent p-0 text-white"
     >
       <div
-        className={`${cardCount !== undefined ? cardChoiceDialogClass(cardCount) : "w-[min(24rem,calc(100vw-2.5rem))]"} ${GLASS_DIALOG_PANEL}`}
+        className={`game-choice-dialog ${cardCount !== undefined ? cardChoiceDialogClass(cardCount) : "w-[min(24rem,calc(100vw-2.5rem))]"} ${GLASS_DIALOG_PANEL}`}
       >
         {children}
       </div>
@@ -838,8 +845,8 @@ function TurnPanel(props: GameHudProps) {
 
   return (
     <>
-      {/* Just above the hand, clear of the pass-turn control at right-center. */}
-      <HudPanel label="Turn actions" className="bottom-[calc(var(--hand-h)+16px)] right-4 w-72">
+      {/* Left side, just above the hand. */}
+      <HudPanel label="Turn actions" className="bottom-[calc(var(--hand-h)+16px)] left-4 w-72">
         <div className="flex items-baseline justify-between">
           <span className="truncate text-sm font-semibold text-white">{activeCard.name}</span>
           {battle !== undefined && battle.hp !== null && (
@@ -1062,13 +1069,7 @@ function TurnPanel(props: GameHudProps) {
             </ul>
           </div>
         )}
-        {/* Retreat + Pass share the panel's footer. Pass lives HERE because this
-            panel (z-[75], bottom-right) COVERED the playmat's old ⟶ control
-            (z-20, right-edge centred) at every ordinary viewport height — a click
-            there landed on an attack row instead — and since P5-4 that control is
-            not rendered on this surface at all. The panel appears exactly when
-            `waitingOn === "you" && turn:action`, so this button needs no disabled
-            state: if it is on screen, passing is legal. */}
+        {/* The footer also offers Pass while this seat can act. */}
         <div className="mt-3 flex items-center justify-between gap-2">
           <button
             type="button"
@@ -1083,10 +1084,6 @@ function TurnPanel(props: GameHudProps) {
             className={`${ACCENT_BUTTON_CLASS} px-3 py-1.5 text-xs`}
             onClick={() => dispatch({ type: "endTurn", seat: viewerSeat })}
           >
-            {/* "Pass", not "Pass turn": the name was chosen while the playmat's
-                ⟶ still owned that label, and it is kept because it is the name
-                this control has been verified and tested under. The "Turn
-                actions" region label supplies the context. */}
             Pass
           </button>
         </div>
@@ -1276,7 +1273,7 @@ function RetreatDialog({
             Discard exactly {cost} attached energ{cost === 1 ? "y" : "ies"} ({chosen.length}/{cost}
             ):
           </p>
-          <ul className="mt-2 flex max-h-[22svh] shrink-0 flex-col gap-1.5 overflow-y-auto">
+          <DialogScrollArea className="mt-2 max-h-[22svh]" contentClassName="flex flex-col gap-1.5">
             {energyUids.map((uid) => {
               const selected = chosen.includes(uid);
               return (
@@ -1294,7 +1291,7 @@ function RetreatDialog({
                 </li>
               );
             })}
-          </ul>
+          </DialogScrollArea>
         </>
       )}
       <p className="mt-3 text-sm text-white/55">Promote to Active:</p>
@@ -1727,10 +1724,8 @@ function MayDrawDialog({
           dialog in this file appears because the viewer just did something, so
           "you" is unambiguous; this one appears on the other player's screen in
           the middle of an opponent's turn, and on a hot-seat device the wrong
-          player is holding it. The only other thing that names a seat is the
-          handoff banner, and that sits OUTSIDE the modal — once <dialog>
-          showModal() runs, the banner is in the inert, backdrop-covered
-          subtree. Without this line the device says "You may draw a card" to
+          player is holding it. The dialog must identify the answering seat.
+          Without this line the device says "You may draw a card" to
           whoever is looking at it, and the engine accepts the answer. */}
       <p className="text-xs font-semibold uppercase tracking-wide text-white/45">
         {names[viewerSeat]} — your opponent's card is asking
@@ -1992,7 +1987,10 @@ function ChooseCardsDialog({
             }`
           : `Pick up to ${prompt.max} (${picked.length}/${prompt.max}).`}
       </output>
-      <ul className={cardChoiceGridClass(prompt.candidates.length)}>
+      <DialogScrollArea
+        contentClassName={cardChoiceGridClass(prompt.candidates.length)}
+        trackInset={20}
+      >
         {prompt.candidates.map((uid) => {
           const selected = picked.includes(uid);
           // At the cap a further click is REFUSED, which for a cost is every
@@ -2015,7 +2013,7 @@ function ChooseCardsDialog({
             />
           );
         })}
-      </ul>
+      </DialogScrollArea>
       <div className="mt-5 flex justify-end">
         <button
           type="button"
@@ -2106,7 +2104,7 @@ function OrderCardsDialog({
             }`
           : `All ${total} placed — #1 is the new top card.`}
       </output>
-      <ul className="mt-3 flex max-h-64 flex-col gap-1.5 overflow-y-auto">
+      <DialogScrollArea className="mt-3 max-h-64" contentClassName="flex flex-col gap-1.5">
         {prompt.candidates.map((uid) => {
           // The candidates render in the deck order they ARRIVED in and are never
           // re-sorted into the pick order: the offer is the deck as it stands, and
@@ -2136,7 +2134,7 @@ function OrderCardsDialog({
             </li>
           );
         })}
-      </ul>
+      </DialogScrollArea>
       <div className="mt-5 flex justify-between gap-2">
         <button
           type="button"
@@ -2343,7 +2341,7 @@ function ChoosePokemonMultiDialog({
             ? " Taking none is allowed."
             : ""}
       </output>
-      <ul className="mt-3 flex max-h-64 flex-col gap-1.5 overflow-y-auto">
+      <DialogScrollArea className="mt-3 max-h-64" contentClassName="flex flex-col gap-1.5">
         {prompt.candidates.map((ref) => {
           const selected = pickedKeys.has(keyOf(ref));
           // At the cap a further click is REFUSED, and the row SAYS so — the one
@@ -2376,7 +2374,7 @@ function ChoosePokemonMultiDialog({
             </li>
           );
         })}
-      </ul>
+      </DialogScrollArea>
       <div className="mt-5 flex justify-end">
         <button
           type="button"
@@ -2592,7 +2590,7 @@ function MoveEnergyDialog({
             )}
             :
           </output>
-          <ul className="mt-2 flex max-h-40 flex-col gap-1.5 overflow-y-auto">
+          <DialogScrollArea className="mt-2 max-h-40" contentClassName="flex flex-col gap-1.5">
             {offered.map(({ uid, from }) => {
               const selected = pickedUids.includes(uid);
               const name = cardOfUid(game, uid)?.name ?? uid;
@@ -2615,7 +2613,7 @@ function MoveEnergyDialog({
                 </li>
               );
             })}
-          </ul>
+          </DialogScrollArea>
           <p className="mt-3 text-sm text-white/55">Move to:</p>
           <ul className="mt-2 flex flex-col gap-1.5">
             {dests.map((ref) => {
@@ -2806,7 +2804,7 @@ function MoveEnergySpreadDialog({
             }`
           : `Moving ${moves.length}/${prompt.max}. Where does ${pendingName} go?`}
       </output>
-      <ul className="mt-3 flex max-h-52 flex-col gap-1.5 overflow-y-auto">
+      <DialogScrollArea className="mt-3 max-h-52" contentClassName="flex flex-col gap-1.5">
         {prompt.movable.map(({ uid, from }) => {
           const dest = destOf(uid);
           const selected = pending === uid;
@@ -2850,7 +2848,7 @@ function MoveEnergySpreadDialog({
             </li>
           );
         })}
-      </ul>
+      </DialogScrollArea>
       {pending !== null && (
         <>
           <p className="mt-3 text-sm text-white/55">Move to:</p>
@@ -3018,7 +3016,7 @@ function DiscardEnergyDialog({
               ? `Pick ${required} Energy to discard (${picked.length}/${required}).`
               : "Pick the Energy to discard."}
       </output>
-      <div className="mt-3 flex max-h-64 flex-col gap-3 overflow-y-auto">
+      <DialogScrollArea as="div" className="mt-3 max-h-64" contentClassName="flex flex-col gap-3">
         {/* fieldset/legend, not a bare heading + list: this is the only HUD
             dialog whose candidate rows are GROUPED, and every row reads
             "Basic Energy" or the like, so without the host being part of the
@@ -3084,7 +3082,7 @@ function DiscardEnergyDialog({
             </ul>
           </fieldset>
         ))}
-      </div>
+      </DialogScrollArea>
       <div className="mt-5 flex justify-end">
         <button
           type="button"
@@ -3177,7 +3175,7 @@ function DiscardToolsDialog({
           ? `Pick up to ${cap} Pokémon Tool${cap === 1 ? "" : "s"} to discard (${picked.length} selected).`
           : `Pick ${cap} Pokémon Tool${cap === 1 ? "" : "s"} to discard (${picked.length}/${cap}).`}
       </output>
-      <div className="mt-3 flex max-h-64 flex-col gap-3 overflow-y-auto">
+      <DialogScrollArea as="div" className="mt-3 max-h-64" contentClassName="flex flex-col gap-3">
         {groups.map((group) => (
           <fieldset key={group.key} className="min-w-0">
             <legend className="text-[10px] font-semibold uppercase tracking-wide text-white/40">
@@ -3212,7 +3210,7 @@ function DiscardToolsDialog({
             </ul>
           </fieldset>
         ))}
-      </div>
+      </DialogScrollArea>
       <div className="mt-5 flex justify-end">
         <button
           type="button"
@@ -3388,7 +3386,7 @@ function AttachCardsDialog({
             }`
           : `Attaching ${assignments.length}/${prompt.max}. Where does ${pendingName} go?`}
       </output>
-      <ul className="mt-3 flex max-h-52 flex-col gap-1.5 overflow-y-auto">
+      <DialogScrollArea className="mt-3 max-h-52" contentClassName="flex flex-col gap-1.5">
         {prompt.candidates.map((uid) => {
           const dest = destOf(uid);
           const selected = pending === uid;
@@ -3445,7 +3443,7 @@ function AttachCardsDialog({
             </li>
           );
         })}
-      </ul>
+      </DialogScrollArea>
       {pending !== null && (
         <>
           <p className="mt-3 text-sm text-white/55">Attach to:</p>

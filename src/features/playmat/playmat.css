@@ -1,7 +1,7 @@
 /* Playmat surface ---------------------------------------------------------
 
    The blue/red glow is the shared <body> layer (see index.css); on this route
-   it uses the `stacked` layout and flips with `data-perspective` on the
+   it uses the `stacked` layout and rotates with `data-perspective` on the
    opponent's turn. The wrapper is transparent so that glow shows through behind
    the cards. */
 
@@ -27,6 +27,51 @@
   right: max(16px, calc((50% - var(--board-right-extent) - var(--prompt-w)) / 2));
   top: max(5rem, 30dvh);
   transform: translateY(-50%);
+}
+
+.mulligan-die {
+  --die-size: clamp(24px, calc(var(--card-w) * 0.28), 40px);
+  --die-light: #1f3d73;
+  --die-mid: #172b55;
+  --die-dark: #101a35;
+  position: absolute;
+  left: 50%;
+  top: 28%;
+  z-index: 61;
+  display: grid;
+  grid-template: repeat(3, 1fr) / repeat(3, 1fr);
+  place-items: center;
+  width: var(--die-size);
+  height: var(--die-size);
+  padding: calc(var(--die-size) * 0.17);
+  border-radius: 12%;
+  background: linear-gradient(145deg, var(--die-light), var(--die-mid) 44%, var(--die-dark));
+  box-shadow: inset 0 1px 2px #ffffff18, inset 0 -2px 3px #0005, 3px 5px 7px #0008;
+  transform: translate(-50%, -50%) rotate(-12deg);
+  pointer-events: none;
+  color: #f6faff;
+  line-height: 1;
+}
+
+.mulligan-die[data-tone="red"] {
+  --die-light: #6b1e34;
+  --die-mid: #481627;
+  --die-dark: #2a0d18;
+}
+
+.mulligan-die__pip {
+  width: 65%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: currentColor;
+  box-shadow: inset 0 1px 2px #101a3588;
+}
+
+.mulligan-die__number {
+  grid-area: 1 / 1 / 4 / 4;
+  font-size: calc(var(--die-size) * 0.45);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
 }
 
 /* Cards ------------------------------------------------------------------ */

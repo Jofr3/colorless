@@ -24,159 +24,43 @@ body,
 
 /* Shared background glow (no-WebGL fallback) -------------------------------
 
-   The blue/red glow is normally rendered by the WebGL GlowBackground component
-   (src/features/background/), which computes it in float precision and dithers
-   away the 8-bit banding. This CSS version is the fallback: it paints on <body>
-   behind the opaque glow canvas, so it only shows during the canvas's async
-   init (avoiding a flash of flat colour) or when WebGL is unavailable. The
-   shader mirrors these exact angles/sizes/colours, so the handoff is seamless.
+   GlowBackground normally renders a dithered shader. Its CSS layers underneath
+   use the same rounded screen contour and rotating ellipse orientation, so they
+   also rotate around the edges during route and player changes.
 
-   The two glows sit at opposite
-   ends of a diameter through the viewport centre; --glow-angle rotates that
-   diameter, so changing layout sweeps them around the centre on an elliptical
-   arc (a rotation) rather than sliding straight from A to B. Blue/red positions
-   are derived from the angle with cos()/sin(), and --glow-flip (+1/-1) mirrors
-   only the vertical axis — giving the playmat's perspective swap a clean
-   top/bottom flip without spinning the whole diameter.
-
-   `data-glow` (set per route in RootLayout) picks the layout — `sides` on the
-   home dashboard, `stacked` (top/bottom) everywhere else. `data-perspective`
-   (set by Playmat) drives the flip on the opponent's turn. Page surfaces
-   (app-backdrop, playmat-wrapper) are transparent so this glow shows through. */
+   Body attributes choose the resting angle; GlowRenderer animates it on the
+   shared background host, so shader and fallback keep the same timing. */
 @property --glow-angle {
   syntax: "<angle>";
   inherits: true;
   initial-value: 90deg;
 }
-@property --glow-flip {
-  syntax: "<number>";
-  inherits: true;
-  initial-value: 1;
-}
-@property --glow-bulge {
-  syntax: "<percentage>";
-  inherits: true;
-  initial-value: 14%;
-}
-@property --glow-w {
-  syntax: "<percentage>";
-  inherits: true;
-  initial-value: 85%;
-}
-@property --glow-h {
-  syntax: "<percentage>";
-  inherits: true;
-  initial-value: 55%;
-}
-@property --blue-glow-x {
-  syntax: "<percentage>";
-  inherits: true;
-  initial-value: 50%;
-}
-@property --blue-glow-y {
-  syntax: "<percentage>";
-  inherits: true;
-  initial-value: 100%;
-}
-@property --red-glow-x {
-  syntax: "<percentage>";
-  inherits: true;
-  initial-value: 50%;
-}
-@property --red-glow-y {
-  syntax: "<percentage>";
-  inherits: true;
-  initial-value: 0%;
-}
 
 body {
   margin: 0;
   color: var(--color-fg);
-  /* Default app font. The runtime choice from Settings (FontProvider) overrides
-     this with an inline font-family on <body>; this keeps first paint flash-free. */
+  /* Settings overrides this on <body> through FontProvider. */
   font-family: "Rajdhani", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
-  /* Orbit radius swells by --glow-bulge toward the 45° mid-points (sin(2*angle)
-     peaks there) and is exactly 50% on the axes — so the rest positions stay
-     pinned to the edges while the travel path bows out toward the corners,
-     giving a rounded, circular sweep instead of a flat A->B arc. */
-  --blue-glow-x: calc(
-    50% +
-    (50% - var(--glow-bulge) * sin(2 * var(--glow-angle))) *
-    cos(var(--glow-angle))
-  );
-  --blue-glow-y: calc(
-    50% +
-    (50% - var(--glow-bulge) * sin(2 * var(--glow-angle))) *
-    sin(var(--glow-angle)) *
-    var(--glow-flip)
-  );
-  --red-glow-x: calc(
-    50% -
-    (50% - var(--glow-bulge) * sin(2 * var(--glow-angle))) *
-    cos(var(--glow-angle))
-  );
-  --red-glow-y: calc(
-    50% -
-    (50% - var(--glow-bulge) * sin(2 * var(--glow-angle))) *
-    sin(var(--glow-angle)) *
-    var(--glow-flip)
-  );
-  /* Falloff follows a raised-cosine curve (the same one the shader uses): ease
-     in at the centre, out at the tail with zero slope at both ends, so the glow
-     feathers in with no hard edge. As the fallback this can still band slightly
-     in 8-bit — the WebGL path is what dithers it away — but it stays close
-     enough that the canvas handoff is invisible. */
-  background: radial-gradient(
-      ellipse var(--glow-w) var(--glow-h) at var(--blue-glow-x) var(--blue-glow-y),
-      rgba(38, 149, 255, 0.16) 0%,
-      rgba(38, 149, 255, 0.151) 12%,
-      rgba(38, 149, 255, 0.127) 24%,
-      rgba(38, 149, 255, 0.092) 36%,
-      rgba(38, 149, 255, 0.055) 48%,
-      rgba(38, 149, 255, 0.023) 60%,
-      rgba(38, 149, 255, 0.004) 72%,
-      rgba(38, 149, 255, 0) 80%
-    ),
-    radial-gradient(
-      ellipse var(--glow-w) var(--glow-h) at var(--red-glow-x) var(--red-glow-y),
-      rgba(255, 52, 86, 0.13) 0%,
-      rgba(255, 52, 86, 0.123) 12%,
-      rgba(255, 52, 86, 0.103) 24%,
-      rgba(255, 52, 86, 0.075) 36%,
-      rgba(255, 52, 86, 0.045) 48%,
-      rgba(255, 52, 86, 0.019) 60%,
-      rgba(255, 52, 86, 0.003) 72%,
-      rgba(255, 52, 86, 0) 80%
-    ), var(--color-bg);
-  background-repeat: no-repeat;
-  /* Quick start, fast middle, gentle settle (mirrors the shader's GLOW_EASE):
-     control points cross over for a steeper mid-sweep, y2=1 keeps a soft end. */
-  transition: --glow-angle 1000ms cubic-bezier(0.4, 0, 0.3, 1), --glow-flip 1000ms
-    cubic-bezier(0.4, 0, 0.3, 1), --glow-w 1000ms cubic-bezier(0.4, 0, 0.3, 1), --glow-h 1000ms
-    cubic-bezier(0.4, 0, 0.3, 1);
+  background: var(--color-bg);
 }
 
-/* Home dashboard: diameter horizontal — blue hugs the left, red the right. */
+/* Home: blue at the left edge, red at the right. */
 body[data-glow="sides"] {
   --glow-angle: 180deg;
-  --glow-w: 52%;
-  --glow-h: 120%;
 }
 
-/* Every other page: diameter vertical — blue along the bottom, red the top. */
+/* Other pages: blue at the bottom, red at the top. */
 body[data-glow="stacked"] {
   --glow-angle: 90deg;
-  --glow-w: 120%;
-  --glow-h: 55%;
 }
 
-/* Playmat only: the opponent's turn mirrors the glow top-to-bottom. */
-body[data-perspective="opponent"] {
-  --glow-flip: -1;
+/* Rotate around the screen for the opponent's turn. */
+body[data-glow="stacked"][data-perspective="opponent"] {
+  --glow-angle: 270deg;
 }
 
-/* Routed content fades in on navigation (the glow itself slides via the body
-   transition above). Keyed by pathname in RootLayout so it replays each time. */
+/* Routed content fades in on navigation. Keyed by pathname in RootLayout so
+   it replays each time. */
 .route-view {
   animation: route-view-in 280ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
@@ -188,10 +72,6 @@ body[data-perspective="opponent"] {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  body {
-    transition: none;
-  }
-
   .route-view {
     animation: none;
   }

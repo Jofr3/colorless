@@ -56,6 +56,7 @@ import {
   inSetup,
   otherSeat,
   phaseViewOf,
+  pendingMulligansOf,
   topUid,
 } from "@luminous/engine";
 import type {
@@ -86,6 +87,8 @@ import { EMPTY_CARD_ID, EMPTY_CARD_NAME, HIDDEN_CARD_ID, HIDDEN_CARD_NAME } from
 export interface ProjectedPiles {
   /** Cards left in the deck — contents hidden, only the count is visible. */
   deckCount: number;
+  /** Pending bonus cards this owner can draw from the opponent's mulligans. */
+  mulliganCount?: number;
   /** The discard pile, fully public, oldest → newest (engine order). */
   discard: CardModel[];
 }
@@ -180,7 +183,8 @@ function withEnergyChoice(projection: GameProjection): GameProjection {
   const decision = projection.pendingDecision;
   if (projection.waitingOn !== "you" || decision?.kind !== "effectChoose") return projection;
   const prompt = decision.prompt;
-  if (prompt.kind !== "confirm" || prompt.cards === undefined || prompt.targets === undefined) return projection;
+  if (prompt.kind !== "confirm" || prompt.cards === undefined || prompt.targets === undefined)
+    return projection;
   const ids = [prompt.cards.yes, ...(prompt.cards.no === undefined ? [] : [prompt.cards.no])];
   const board = projection.board;
   return {
@@ -189,8 +193,11 @@ function withEnergyChoice(projection: GameProjection): GameProjection {
       ...board,
       energyChoice: {
         cards: ids.flatMap((id) => board.you.hand.filter((card) => card.id === id)),
-        targets: prompt.targets.map((ref) => ({ owner: "you", zone: ref.spot.spot,
-          ...(ref.spot.spot === "bench" ? { index: ref.spot.index } : {}) })),
+        targets: prompt.targets.map((ref) => ({
+          owner: "you",
+          zone: ref.spot.spot,
+          ...(ref.spot.spot === "bench" ? { index: ref.spot.index } : {}),
+        })),
       },
       you: { ...board.you, hand: board.you.hand.filter((card) => !ids.includes(card.id)) },
     },
@@ -260,6 +267,7 @@ function pilesOf(state: GameState, seat: Seat): ProjectedPiles {
   const side = state.players[seat];
   return {
     deckCount: side.deck.length,
+    mulliganCount: pendingMulligansOf(state, seat),
     discard: side.discard.map((uid) => cardModelOf(state, uid)),
   };
 }
@@ -469,10 +477,15 @@ export function projectionFromRedacted(game: RedactedGame): GameProjection {
   });
 }
 
-function playerBoardFromRedacted(side: RedactedSide, stadiumCardId: string | undefined): PlayerBoard {
+function playerBoardFromRedacted(
+  side: RedactedSide,
+  stadiumCardId: string | undefined,
+): PlayerBoard {
   // 🆕🆕🆕 D577 — the same per-seat limit off the wire's public card ids (the Stadium and this
   // side's in-play top cards), through the engine's `benchLimitForIds`.
-  const inPlay = [...(side.active === null ? [] : [side.active]), ...side.bench].map((card) => card.cardId);
+  const inPlay = [...(side.active === null ? [] : [side.active]), ...side.bench].map(
+    (card) => card.cardId,
+  );
   return {
     hand: side.hand.map(cardModelFromRedacted),
     active: side.active === null ? null : cardModelFromRedacted(side.active),
@@ -480,7 +493,10 @@ function playerBoardFromRedacted(side: RedactedSide, stadiumCardId: string | und
     prizesRemaining: side.prizesRemaining,
     // 🆕🆕🆕 D551 — the wire already carries the face-up slots (D548); rebuilt card by card so
     // the round trip equals the local projection's `faceUpPrizes` exactly.
-    faceUpPrizes: side.faceUpPrizes.map((p) => ({ index: p.index, card: cardModelFromRedacted(p.card) })),
+    faceUpPrizes: side.faceUpPrizes.map((p) => ({
+      index: p.index,
+      card: cardModelFromRedacted(p.card),
+    })),
     ...benchLimitField(benchLimitForIds(stadiumCardId, inPlay)),
   };
 }
@@ -488,6 +504,7 @@ function playerBoardFromRedacted(side: RedactedSide, stadiumCardId: string | und
 function pilesFromRedacted(side: RedactedSide): ProjectedPiles {
   return {
     deckCount: side.deckCount,
+    mulliganCount: side.mulliganCount ?? 0,
     discard: side.discard.map(cardModelFromRedacted),
   };
 }
@@ -578,7 +595,10 @@ function effectDecisionFromPrompt(
       };
     case "guessHp":
       // 🆕🆕🆕 D577 — Tyme's guess: the name and the note are the whole prompt (R-TY3).
-      return { kind: "effectChoose", prompt: { kind: "guessHp", name: prompt.name, note: prompt.note } };
+      return {
+        kind: "effectChoose",
+        prompt: { kind: "guessHp", name: prompt.name, note: prompt.note },
+      };
     case "confirm":
       // The printed "you may" — the whole prompt is its sentence, so the
       // round-trip is the identity and the engine prompt rebuilds field for
@@ -596,10 +616,12 @@ function effectDecisionFromPrompt(
             : { labels: { yes: prompt.labels.yes, no: prompt.labels.no } }),
           ...(prompt.cards === undefined
             ? {}
-            : { cards: {
-                yes: prompt.cards.yes.id,
-                ...(prompt.cards.no === undefined ? {} : { no: prompt.cards.no.id }),
-              } }),
+            : {
+                cards: {
+                  yes: prompt.cards.yes.id,
+                  ...(prompt.cards.no === undefined ? {} : { no: prompt.cards.no.id }),
+                },
+              }),
           ...(prompt.targets === undefined ? {} : { targets: prompt.targets.map(refFromWire) }),
         },
       };

@@ -5,6 +5,7 @@ import { createPixiApplication } from "../../../lib/pixi/createPixiApplication";
 import type {
   BoardState,
   CardModel,
+  CardBackTone,
   CardMoveRequest,
   CardOwner,
   CardPlacement,
@@ -31,6 +32,8 @@ import {
   SETUP_DEAL_STAGGER,
   ownerForTone,
   setupDealsBetween,
+  turnDrawsBetween,
+  pendingMulliganDrawCounts,
   type SetupAnimationStage,
   type SetupDeal,
   type SetupDealSnapshot,
@@ -61,8 +64,10 @@ interface AnimatedCardsLayerProps {
   blueBackPlayer?: PlayerId;
   turnNumber: number;
   activePlayer?: PlayerId;
+  deckCounts?: Record<PlayerId, number>;
   holdSetupReveal?: boolean;
   onSetupAnimationChange?: (stage: SetupAnimationStage | null) => void;
+  onPendingMulliganDrawsChange?: (counts: Record<CardBackTone, number>) => void;
   playmatRef: RefObject<HTMLElement | null>;
   onMoveCard: (request: CardMoveRequest) => void;
   /** Drop-legality gate consulted for drop-zone filtering, the live reorder
@@ -146,6 +151,7 @@ interface SetupFlight {
   faceUrl: string;
   revealed: boolean;
   started: boolean;
+  landed: boolean;
 }
 
 // Slightly larger than the CSS protrusion: the host Pokémon still covers the
@@ -467,8 +473,10 @@ export function AnimatedCardsLayer({
   blueBackPlayer = "you",
   turnNumber,
   activePlayer = perspectivePlayer,
+  deckCounts,
   holdSetupReveal = false,
   onSetupAnimationChange,
+  onPendingMulliganDrawsChange,
   playmatRef,
   onMoveCard,
   placementPredicate,
@@ -480,9 +488,12 @@ export function AnimatedCardsLayer({
   const setupFlightSequenceRef = useRef(0);
   const setupAnimationRef = useRef<SetupAnimationStage | null>(null);
   const onSetupAnimationChangeRef = useRef(onSetupAnimationChange);
+  const pendingMulliganDrawsRef = useRef({ blue: 0, red: 0 });
+  const onPendingMulliganDrawsChangeRef = useRef(onPendingMulliganDrawsChange);
   const currentSetupRef = useRef({ blueBackPlayer, perspectivePlayer, backDesign });
   currentSetupRef.current = { blueBackPlayer, perspectivePlayer, backDesign };
   onSetupAnimationChangeRef.current = onSetupAnimationChange;
+  onPendingMulliganDrawsChangeRef.current = onPendingMulliganDrawsChange;
   const mountRef = useRef<HTMLDivElement>(null);
   const trainerUseLabelRef = useRef<HTMLOutputElement>(null);
   const trainerUseCardIdRef = useRef<string | null>(null);
@@ -813,6 +824,14 @@ export function AnimatedCardsLayer({
     onSetupAnimationChangeRef.current?.(stage);
   }
 
+  function publishPendingMulliganDraws() {
+    const counts = pendingMulliganDrawCounts(setupFlightsRef.current);
+    const previous = pendingMulliganDrawsRef.current;
+    if (counts.blue === previous.blue && counts.red === previous.red) return;
+    pendingMulliganDrawsRef.current = counts;
+    onPendingMulliganDrawsChangeRef.current?.(counts);
+  }
+
   function clearSetupFlights(announce = true) {
     for (const flight of setupFlightsRef.current) {
       if (flight.destinationId) {
@@ -822,8 +841,13 @@ export function AnimatedCardsLayer({
       flight.view.destroy();
     }
     setupFlightsRef.current = [];
-    if (announce) publishSetupAnimation(null);
-    else setupAnimationRef.current = null;
+    if (announce) {
+      publishSetupAnimation(null);
+      publishPendingMulliganDraws();
+    } else {
+      setupAnimationRef.current = null;
+      pendingMulliganDrawsRef.current = { blue: 0, red: 0 };
+    }
   }
 
   function queueSetupDeals(deals: SetupDeal[]) {
@@ -833,7 +857,7 @@ export function AnimatedCardsLayer({
       performance.now() / 1000,
       ...setupFlightsRef.current.map((flight) => flight.endsAt),
     );
-    for (const kind of ["prizes", "draw"] as const) {
+    for (const kind of ["prizes", "draw", "turn-draw"] as const) {
       const batch = deals.filter((deal) => deal.kind === kind);
       if (!batch.length) continue;
       const duration = kind === "prizes" ? PRIZE_FLIP_DURATION : BONUS_DEAL_DURATION;
@@ -841,7 +865,12 @@ export function AnimatedCardsLayer({
         const startAt = nextStart + index * SETUP_DEAL_STAGGER;
         const view = new CardView({
           id: `setup-deal-${++setupFlightSequenceRef.current}`,
-          name: kind === "prizes" ? "Face-down Prize card" : "Mulligan bonus card",
+          name:
+            kind === "prizes"
+              ? "Face-down Prize card"
+              : kind === "draw"
+                ? "Mulligan bonus card"
+                : "Start-of-turn card",
           textureUrl: cardBackImageUrl(currentSetupRef.current.backDesign, deal.tone),
           seed: index / batch.length,
           reducedMotion: false,
@@ -860,11 +889,13 @@ export function AnimatedCardsLayer({
           faceUrl: "",
           revealed: false,
           started: false,
+          landed: false,
         });
       }
       nextStart += (batch.length - 1) * SETUP_DEAL_STAGGER + duration;
     }
     publishSetupAnimation(setupFlightsRef.current[0]?.deal.kind ?? null);
+    publishPendingMulliganDraws();
   }
 
   function measureSetupFlights() {
@@ -873,8 +904,26 @@ export function AnimatedCardsLayer({
     if (!root || !snapshot) return;
     for (const flight of setupFlightsRef.current) {
       const owner = ownerForTone(flight.deal.tone, currentSetupRef.current.blueBackPlayer);
-      const source = viewsRef.current.get(deckBackId(owner))?.getTargetSnapshot();
-      if (!source && flight.deal.kind === "draw") continue;
+      let source = viewsRef.current.get(deckBackId(owner))?.getTargetSnapshot();
+      // The final draw removes the deck's back anchor. Its empty slot still
+      // gives the flight a source, including after a hot-seat handoff.
+      const emptyDeck = root.querySelector<HTMLElement>(
+        `[data-card-pile="deck"][data-card-owner="${owner}"] [data-deck-draw-source="true"]`,
+      );
+      if (emptyDeck) {
+        const rect = emptyDeck.getBoundingClientRect();
+        const rootRect = root.getBoundingClientRect();
+        source = {
+          x: rect.left + rect.width / 2 - rootRect.left,
+          y: rect.top + rect.height / 2 - rootRect.top,
+          width: rect.width,
+          height: rect.height,
+          rotation: 0,
+          zIndex: 1,
+          placement: { owner, zone: "stadium" },
+        };
+      }
+      if (!source && flight.deal.kind !== "prizes") continue;
       flight.source = source ?? null;
       let destinationId: string | undefined;
       let faceUrl = "";
@@ -923,7 +972,7 @@ export function AnimatedCardsLayer({
       if (
         time < flight.startAt ||
         !flight.destination ||
-        (flight.deal.kind === "draw" && !flight.source)
+        (flight.deal.kind !== "prizes" && !flight.source)
       ) {
         flight.view.hide();
         continue;
@@ -934,10 +983,31 @@ export function AnimatedCardsLayer({
         flight.view.setTarget(destination, true);
         if (!flight.started) flight.view.flipIntoView(PRIZE_FLIP_DURATION);
         flight.started = true;
-      } else if (!flight.started && flight.source) {
-        flight.view.setTarget(flight.source, true);
+      } else if (flight.source && !flight.landed) {
+        const source = flight.source;
+        const distance = Math.hypot(destination.x - source.x, destination.y - source.y);
+        // Stop just short of the slot so the drop spring finishes the landing.
+        const landingGap = Math.min(destination.height * 0.16, distance * 0.08);
+        const progress = Math.min(1, elapsed / BONUS_TRAVEL_DURATION);
+        const eased = 1 - (1 - progress) ** 2;
+        const travel = eased * (distance > 0 ? 1 - landingGap / distance : 1);
+        flight.view.setTarget(
+          {
+            ...destination,
+            x: source.x + (destination.x - source.x) * travel,
+            y: source.y + (destination.y - source.y) * travel,
+            width: source.width + (destination.width - source.width) * eased,
+            height: source.height + (destination.height - source.height) * eased,
+            rotation: source.rotation + (destination.rotation - source.rotation) * eased,
+            zIndex: 10_000 + flight.deal.index,
+          },
+          true,
+        );
         flight.started = true;
-        flight.view.slingTo({ ...destination, zIndex: 10_000 + flight.deal.index });
+        if (progress === 1) {
+          flight.view.slingTo({ ...destination, zIndex: 10_000 + flight.deal.index });
+          flight.landed = true;
+        }
       } else {
         const target = flight.view.getTargetSnapshot();
         if (
@@ -950,7 +1020,7 @@ export function AnimatedCardsLayer({
         }
       }
       if (
-        flight.deal.kind === "draw" &&
+        flight.deal.kind !== "prizes" &&
         elapsed >= BONUS_TRAVEL_DURATION - 0.04 &&
         !flight.revealed &&
         flight.faceUrl
@@ -959,7 +1029,7 @@ export function AnimatedCardsLayer({
         flight.revealed = true;
       }
       flight.view.container.alpha =
-        flight.deal.kind === "draw" && !flight.destinationId
+        flight.deal.kind !== "prizes" && !flight.destinationId
           ? 1 -
             Math.max(
               0,
@@ -969,6 +1039,7 @@ export function AnimatedCardsLayer({
       flight.view.update(dt, time);
     }
     setupFlightsRef.current = remaining;
+    publishPendingMulliganDraws();
     const active = remaining.find((flight) => time >= flight.startAt) ?? remaining[0];
     publishSetupAnimation(active?.deal.kind ?? null);
   }
@@ -1932,11 +2003,14 @@ export function AnimatedCardsLayer({
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: sync/measurement functions read mutable Pixi refs and should only react to descriptor changes.
   useLayoutEffect(() => {
-    const snapshot = { board, blueBackPlayer, turn: turnNumber, activePlayer };
+    const snapshot = { board, blueBackPlayer, turn: turnNumber, activePlayer, deckCounts };
     const handoff =
       previousSetupRef.current !== null &&
       previousSetupRef.current.blueBackPlayer !== blueBackPlayer;
-    const deals = setupDealsBetween(previousSetupRef.current, snapshot);
+    const deals = [
+      ...setupDealsBetween(previousSetupRef.current, snapshot),
+      ...turnDrawsBetween(previousSetupRef.current, snapshot),
+    ];
     previousSetupRef.current = snapshot;
     const turnChanged = previousTurnRef.current !== turnNumber;
     previousTurnRef.current = turnNumber;
@@ -1944,7 +2018,14 @@ export function AnimatedCardsLayer({
     queueSetupDeals(deals);
     measureCards(turnChanged || handoff);
     scheduleMeasure();
-  }, [descriptors, turnNumber, blueBackPlayer, activePlayer]);
+  }, [
+    descriptors,
+    turnNumber,
+    blueBackPlayer,
+    activePlayer,
+    deckCounts?.you,
+    deckCounts?.opponent,
+  ]);
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: Pixi app lifecycle is tied to the mount node, not React render callbacks.
   useEffect(() => {

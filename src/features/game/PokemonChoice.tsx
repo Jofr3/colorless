@@ -1,3 +1,4 @@
+import { DialogScrollArea } from "../../components/DialogScrollArea";
 import type { CSSProperties } from "react";
 import { CardImage } from "../../components/CardImage";
 import { CheckIcon } from "../../components/icons";
@@ -14,7 +15,7 @@ import { shouldCollapseBenchAttachments } from "../playmat/utils/benchLayout";
 import type { CardModel } from "../playmat/types";
 
 export const POKEMON_CHOICE_GRID_CLASS =
-  "mt-3 grid min-h-0 grid-cols-[repeat(auto-fit,minmax(min(100%,7.5rem),1fr))] items-start gap-4 overflow-x-hidden overflow-y-auto overscroll-contain p-5";
+  "grid grid-cols-[repeat(auto-fit,minmax(min(100%,7.5rem),1fr))] items-start gap-4 p-5";
 
 export function PokemonChoices({
   cards,
@@ -45,7 +46,7 @@ export function PokemonChoices({
   };
 
   return (
-    <ul className={POKEMON_CHOICE_GRID_CLASS}>
+    <DialogScrollArea contentClassName={POKEMON_CHOICE_GRID_CLASS} trackInset={20}>
       {cards.map((card, index) => (
         <PokemonChoice
           key={card.id}
@@ -57,7 +58,7 @@ export function PokemonChoices({
           spacing={spacing}
         />
       ))}
-    </ul>
+    </DialogScrollArea>
   );
 }
 

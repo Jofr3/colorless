@@ -2,13 +2,14 @@ import type { BoardState, CardBackTone, PlayerId } from "../types";
 import { opponentOf } from "./players";
 import { PRIZE_COUNT } from "./piles";
 
-export type SetupAnimationStage = "prizes" | "draw";
+export type SetupAnimationStage = "prizes" | "draw" | "turn-draw";
 
 export interface SetupDealSnapshot {
   board: BoardState;
   blueBackPlayer: PlayerId;
   turn: number;
   activePlayer: PlayerId;
+  deckCounts?: Record<PlayerId, number>;
 }
 
 export interface SetupDeal {
@@ -18,13 +19,51 @@ export interface SetupDeal {
   index: number;
 }
 
+/** Keep each recipient's die until their first bonus card leaves the deck. */
+export function pendingMulliganDrawCounts(
+  flights: readonly { deal: SetupDeal; started: boolean }[],
+): Record<CardBackTone, number> {
+  const counts = { blue: 0, red: 0 };
+  for (const tone of ["blue", "red"] as const) {
+    const draws = flights.filter(
+      (flight) => flight.deal.kind === "draw" && flight.deal.tone === tone,
+    );
+    if (!draws.some((flight) => flight.started)) counts[tone] = draws.length;
+  }
+  return counts;
+}
+
 export const SETUP_DEAL_STAGGER = 0.09;
 export const PRIZE_FLIP_DURATION = 0.24;
 export const BONUS_TRAVEL_DURATION = 0.46;
-export const BONUS_DEAL_DURATION = 0.7;
+// Leave the full release-pop envelope (0.4s) after the travel phase.
+export const BONUS_DEAL_DURATION = BONUS_TRAVEL_DURATION + 0.4;
 
 export function ownerForTone(tone: CardBackTone, blueBackPlayer: PlayerId): PlayerId {
   return tone === "blue" ? blueBackPlayer : opponentOf(blueBackPlayer);
+}
+
+/** The start-of-turn draw is the last card appended to the incoming hand. */
+export function turnDrawsBetween(
+  previous: SetupDealSnapshot | null,
+  next: SetupDealSnapshot,
+): SetupDeal[] {
+  if (previous === null || next.turn < 1 || next.turn !== previous.turn + 1) return [];
+  const tone = next.activePlayer === next.blueBackPlayer ? "blue" : "red";
+  const previousOwner = ownerForTone(tone, previous.blueBackPlayer);
+  const before = previous.board[previousOwner];
+  const after = next.board[next.activePlayer];
+  if (
+    previous.deckCounts &&
+    next.deckCounts &&
+    next.deckCounts[next.activePlayer] >= previous.deckCounts[previousOwner]
+  )
+    return [];
+  const index = after.hand.length - 1;
+  const card = after.hand[index];
+  // No draw on deck-out, or when navigating to a snapshot with the same hand.
+  if (!card || before.hand.some((existing) => existing.id === card.id)) return [];
+  return [{ tone, kind: "turn-draw", index }];
 }
 
 /** Compare physical seats, even when local hot-seat play swaps you/opponent. */

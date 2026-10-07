@@ -3,6 +3,7 @@ import { CardImage } from "../../../components/CardImage";
 import { useTiltJuice } from "../../../components/useTiltJuice";
 import { FOCUS_RING_INSET } from "../../../lib/glass";
 import { DiscardPileDialog } from "./DiscardPileDialog";
+import { MulliganDie } from "./MulliganDie";
 import { CARD_SIZE_STYLE, CARD_SLOT_STYLE, FRAME_CLASS, PRIZE_GRID_STYLE } from "../constants";
 import type { CardBackSize, CardBackTone, CardModel, FaceUpPrize, PlayerId } from "../types";
 import { PRIZE_COLUMNS, PRIZE_ROWS, deckBackId, prizeBackId, prizeSlotFaces } from "../utils/piles";
@@ -67,6 +68,7 @@ export function DeckPile({
   owner,
   tone,
   count,
+  mulliganCount = 0,
 }: {
   owner: PlayerId;
   tone: CardBackTone;
@@ -74,17 +76,19 @@ export function DeckPile({
       At 0 the anchor is not rendered, which hides the synthetic Pixi back
       (measureCards hides any view whose DOM anchor is gone). */
   count?: number;
+  mulliganCount?: number;
 }) {
   return (
     <div className="relative inline-block" data-card-pile="deck" data-card-owner={owner}>
       <PileFrame>
         {count === 0 ? (
-          <div style={CARD_SIZE_STYLE} />
+          <div style={CARD_SIZE_STYLE} data-deck-draw-source="true" />
         ) : (
           <CardBack tone={tone} anchorId={deckBackId(owner)} />
         )}
       </PileFrame>
       {count !== undefined && <PileCountChip count={count} />}
+      {mulliganCount > 0 && <MulliganDie owner={owner} tone={tone} count={mulliganCount} />}
     </div>
   );
 }

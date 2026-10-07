@@ -99,6 +99,31 @@ const GAME: RedactedGame = {
   outcome: null,
 };
 
+it("passes from the restored right-side control only on the viewer's turn", () => {
+  const onAction = vi.fn();
+  const props = {
+    log: [],
+    youName: "You",
+    opponentName: "Opp",
+    opponentAway: null,
+    actionError: null,
+    onAction,
+    onRematch: vi.fn(),
+  };
+  const { rerender } = wrap(<OnlineMatch {...props} game={GAME} />);
+  fireEvent.click(screen.getByRole("button", { name: "Pass turn" }));
+  expect(onAction).toHaveBeenCalledExactlyOnceWith({ type: "endTurn", seat: "p1" });
+  rerender(
+    <MemoryRouter>
+      <OnlineMatch {...props} game={{ ...GAME, activePlayer: "opponent", waitingOn: "opponent" }} />
+    </MemoryRouter>,
+  );
+  const pass = screen.getByRole<HTMLButtonElement>("button", { name: "Pass turn" });
+  expect(pass.disabled).toBe(true);
+  fireEvent.click(pass);
+  expect(onAction).toHaveBeenCalledTimes(1);
+});
+
 it("takes the full online mulligan bonus once, without showing a prompt", () => {
   const created = mustCreate(1, { p1: ONE_BASIC_DECK, p2: ONE_BASIC_DECK });
   if (created.state.phase.kind !== "setup:chooseFirst") throw new Error("Expected coin choice");
