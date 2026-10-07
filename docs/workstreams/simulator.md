@@ -18384,6 +18384,7 @@ Two of the nine are the interesting ones. **"Draw 3 cards." lands on two card NA
 that are neither of them Nemona** — Friends in Paldea (`sv08.5-109`/`-137`) and Cheren
 (`sv10.5w-081`): the SENTENCE is the key, not the name, which is the whole content of
 the reprint idiom stated at its limit. And **`sv06-123` Heatran** shares Armarouge's
+[🆕🆕🆕 D584 (D539): no longer — Heatran is keyed on the renamed copy `INCANDESCENT_BODY`, the same ops under its printed name]
 `onDamagedByAttack` trigger, whose antecedent is byte-identical to Counterattack
 Quills' — a passive — so the two are one skim apart and the only thing separating them
 is the consequent.
@@ -29817,8 +29818,8 @@ decisions (1) and (2) after D580. Engine 0.464.0 → 0.465.0. The Mega ex rule i
   Suite: `megaEvolutionRuleD582.test.ts`.
 - **Alias tier.** 99 `me` registry keys on existing objects (56 faces, 32 same-Ability Pokémon, 11 same-text nameless
   passives), MID-MAP; five `me02.5` Tera reprints in banners.ts. Suite: `reprintAliasMeD582.test.ts`. Not aliased,
-  named there: Cinccino ex ×3, Turtonator, Numel ×2 (twin Heatran's D190 program logs "Scorching Armor"), Team Rocket's
-  Energy `me02.5-217` [🆕🆕🆕 D583 (D539): WITHDRAWN — `me02.5-217` is ALIASED on `sv10-182`'s object at D583; cards.ts reads a Special Energy off its printed text, so the tag no longer separates the faces], the Fade Out / Surf Back printings.
+  named there: Cinccino ex ×3, Turtonator, Numel ×2 (twin Heatran's D190 program logs "Scorching Armor") [🆕🆕🆕 D584: all six are KEYED at D584 on renamed copies (`SMOOTH_COAT`, `SHELL_SPIKES`, `INCANDESCENT_BODY`), and Heatran moved to `INCANDESCENT_BODY` — the wrong-name log is fixed], Team Rocket's
+  Energy `me02.5-217` [🆕🆕🆕 D583 (D539): WITHDRAWN — `me02.5-217` is ALIASED on `sv10-182`'s object at D583; cards.ts reads a Special Energy off its printed text, so the tag no longer separates the faces], the Fade Out / Surf Back printings [🆕🆕🆕 D584: Surf Back ×2 (Drifloon) BUILT on `FLOAT_UP`].
 - **Census.** Standard pool attacks **2461 / 2771**, abilities **417 / 610**, trainers **318 / 447**, special energy
   **13 / 22**; 671 `me` printings fully built. censusAtHead's D582 block (a fifth list in the D273 partition).
 - **Gaps named.** `energy_type` Normal on Special Energies (all `me`, three `sv`) [🆕🆕🆕 D583 (D539): WITHDRAWN for the ENGINE — cards.ts `isBasicEnergy` / `isSpecialEnergy` read the printed rules text since D583, so the "Normal" tag no longer makes a Special a Basic Energy there; the deck builder's copy rule still reads the catalog tag until a re-ingest writes map.ts's D583 "Special"]; `me` Tera printings with new text.
@@ -29840,4 +29841,21 @@ decisions (1) and (2) after D580. Engine 0.464.0 → 0.465.0. The Mega ex rule i
   created before the D581 re-ingest gets TM Fluorite's attack and the fossils' Ability back. Suite:
   `apps/api/src/lobby/poolMigrationD583.test.ts` (the pure step and the read-migrate-write over a fake slot). Deploy:
   re-ingest the remote D1 first, then deploy; a rollback to any MRV-41 build retires v42 records.
+- **Owed.** See `progress.md` NEXT. The whole-corpus sweep is PENDING.
+
+## D584 — the `me` alias tier 2: renamed copies, parameter copies, whitespace twins (engine 0.468.0, `MATCH_RECORD_VERSION` stays 42)
+
+**Status:** ✅ BUILT in the `luminous_ui-mega` worktree on D583 (`d906fc45`), NOT committed.
+
+- **On existing objects (4).** Ultra Ball `me02.5-213` / `-264` (one newline from `sv01-196`), Zoroark `30th-096`
+  (`SECRET_FOREST_PATH`; tcgdex prints {C}{C} as "ColorlessColorless"), Hop's Pincurchin ex `me02.5-068`
+  (`COUNTERATTACK_QUILLS`; "place" for "put", same Ability name). Both passives name no Ability.
+- **Eight new objects (14 printings)**, each the twin's ops under the printed name or number: `SMOOTH_COAT` (Cinccino ex
+  ×3), `SHELL_SPIKES` (Turtonator), `INCANDESCENT_BODY` (Numel ×2 and Heatran `sv06-123`, which logged "Scorching Armor"
+  until now), `AERIAL_DRAW` (Toucannon ×2), `SHARE_HAPPINESS` (Nidorina ×2), `INTIMIDATING_FANG` (Pyroar, 30),
+  `DOPEY_FACE` (Slowpoke, Confused), `FLOAT_UP` (Drifloon ×2, Surf Back's sentence at attack index 0).
+- **Suite.** `reprintAliasMeD584.test.ts`: every `me` text pinned to its twin's (normalised, one stated delta), the
+  registry relation per kind, and boards that log each printed name. No op, field or persisted shape moved.
+- **Census.** Standard pool attacks **2463 / 2771**, abilities **431 / 610**, trainers **320 / 447**, special energy
+  **14 / 22**; 690 `me` printings fully built (censusAtHead's D584 block).
 - **Owed.** See `progress.md` NEXT. The whole-corpus sweep is PENDING.

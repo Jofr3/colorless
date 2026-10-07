@@ -167,7 +167,7 @@ function fight(state: GameState, defender: string): GameState {
 }
 
 describe("D190 — the 22 STANDARD-LEGAL reprint aliases", () => {
-  it("resolves every new id to the SAME PROGRAM OBJECT as its twin", () => {
+  it("resolves ~~every~~ new id to the SAME PROGRAM OBJECT as its twin (🆕🆕🆕 D584 (D539): *every* WITHDRAWN — 21 of 22; Heatran `sv06-123` is the renamed copy `INCANDESCENT_BODY`, the twin's ops under its printed name)", () => {
     // `toBe`, not `toEqual`: the map's documented idiom is that reprints of one
     // SENTENCE share the program object, and a second literal that happened to be
     // deep-equal today is exactly the drift this refuses. It is also the assertion
@@ -175,6 +175,16 @@ describe("D190 — the 22 STANDARD-LEGAL reprint aliases", () => {
     // line and leaving it pointed at the neighbour's program.
     for (const { id, twin, card } of ALIASES) {
       expect(programFor(id), `${id} (${card}) has no program`).toBeDefined();
+      // 🆕🆕🆕 D584 (D539): Heatran `sv06-123` is WITHDRAWN from the shared-object claim — the
+      // shared `SCORCHING_ARMOR` logged Armarouge's "Scorching Armor"; it is the D584 renamed copy
+      // `INCANDESCENT_BODY`: the twin's ops under the printed name (reprintAliasMeD584.test.ts).
+      if (id === "sv06-123") {
+        expect(programFor(id)).not.toBe(programFor(twin));
+        expect(JSON.stringify(programFor(id)).replace("Incandescent Body", "Scorching Armor")).toBe(
+          JSON.stringify(programFor(twin)),
+        );
+        continue;
+      }
       expect(programFor(id), `${id} (${card}) does not SHARE ${twin}'s program`).toBe(
         programFor(twin),
       );
@@ -198,7 +208,7 @@ describe("D190 — the 22 STANDARD-LEGAL reprint aliases", () => {
     }
   });
 
-  it("pins the NINE targets' actual shapes — the thing every alias inherits", () => {
+  it("pins the NINE targets' actual shapes — the thing ~~every alias~~ inherits (🆕🆕🆕 D584 (D539): *every alias* WITHDRAWN for Heatran `sv06-123` — it inherits the ops, not Armarouge's name)", () => {
     // An alias is only as good as what it points at, so the targets are named
     // here: a change to any one of them changes up to eight more cards than its
     // author may have in mind. These are also the assertions that separate the
@@ -209,7 +219,8 @@ describe("D190 — the 22 STANDARD-LEGAL reprint aliases", () => {
     expect(programFor("sv05-139")?.passive).toEqual({ damageAttacker: { amount: 30 } });
     expect(programFor("sv06-123")?.triggered).toEqual([
       {
-        name: "Scorching Armor",
+        // 🆕🆕🆕 D584 (D539): ~~"Scorching Armor"~~ — Heatran logs its printed name since D584.
+        name: "Incandescent Body",
         trigger: "onDamagedByAttack",
         activeOnly: true,
         program: [{ op: "applyStatus", target: "defender", status: "burned" }],
@@ -234,7 +245,7 @@ describe("D190 — the 22 STANDARD-LEGAL reprint aliases", () => {
     ]);
   });
 
-  it("keeps every PRE-EXISTING print of the same nine sentences on that one program", () => {
+  it("keeps every PRE-EXISTING print of the same nine sentences on ~~that one program~~ (🆕🆕🆕 D584 (D539): *one program* WITHDRAWN for the Burn sentence — Armarouge alone, Heatran with Numel ×2 on `INCANDESCENT_BODY`)", () => {
     // The aliases are additions, not a re-pointing: the rows that were already
     // there must still resolve to the same object, or this slice has MOVED a card
     // while claiming to have added one. D180's four rows ride here too.
@@ -242,7 +253,10 @@ describe("D190 — the 22 STANDARD-LEGAL reprint aliases", () => {
       ["sv02-150", "sv02-245", "sv06-002", "sv10.5w-170"],
       ["sv01-121", "sv05-010", "sv08.5-088"],
       ["sv01-005", "sv01-006", "sv05-139", "sv08-200"],
-      ["sv03-044", "sv06-123"],
+      // 🆕🆕🆕 D584 (D539): ~~["sv03-044", "sv06-123"]~~ — Heatran left Armarouge's object for the
+      // D584 renamed copy it shares with Numel ×2 (the same ops, its printed name).
+      ["sv03-044"],
+      ["sv06-123", "me02.5-027", "me02.5-223"],
       ["sv02-113", "sv08.5-067"],
       ["sv01-180", "sv08.5-109", "sv10.5w-081"],
       ["sv06.5-059", "sv06.5-088", "sv08.5-112", "sv08.5-173"],

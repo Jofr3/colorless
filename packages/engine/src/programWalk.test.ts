@@ -295,6 +295,10 @@ describe("the pool sweep, structurally", () => {
     // ⚠️ NOT A BARE INEQUALITY. The exact ids are pinned, because "more" would stay
     // green if the extra ops were the wrong ones.
     expect(missed.sort()).toEqual([
+      // 🆕🆕🆕 D584 — Drifloon `30th-073` / `-136` "Float Up" (`FLOAT_UP`, attack index 0): Surf
+      // Back's `optional { then: [returnSelf] }` at index 0, one row per key (they sort first).
+      "30th-073 authored attack 0 :: returnSelf",
+      "30th-136 authored attack 0 :: returnSelf",
       // 🆕 🛑 D317 — THE FIRST ENTRY ON THIS LIST THAT IS A `coinFlipGate.otherwise`
       // MISS, AND IT IS THE GAP PROVING ITSELF. The enumerated walk reproduced
       // above descends `coinFlipGate.then` ALONE (that is the defect this file

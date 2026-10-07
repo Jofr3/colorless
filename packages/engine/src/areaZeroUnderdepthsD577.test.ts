@@ -327,8 +327,8 @@ describe("D577 §1 — the printed text, the registry row, BENCH_CEILING and the
     expect(isBenchIndex("5")).toBe(false);
   });
 
-  it("is built at engine 0.467.0", () => {
-    expect(engineVersion).toBe("0.467.0");
+  it("is built at engine 0.468.0", () => {
+    expect(engineVersion).toBe("0.468.0");
   });
 });
 

@@ -20252,6 +20252,18 @@ import type { GameState, Seat } from "./types";
     `expect(manifest.version)`, `it(…)` titles, the declaration and `package.json` —
     **not** as a value-keyed grep — because a value-keyed grep is precisely the mechanism
     that ate D500's heading.)
+    🆕🆕🆕 engineVersion 0.467.0 → **0.468.0** (D584 — THE `me` ALIAS TIER 2: RENAMED COPIES, PARAMETER COPIES AND
+    WHITESPACE TWINS; `MATCH_RECORD_VERSION` STAYS 42 (apps/api match.ts "STAYS 42 AT D584")). registry.ts keys 18 `me`
+    printings / 11 texts whose twin is built on an `sv` id: Ultra Ball `me02.5-213` / `-264` (one newline from
+    `sv01-196`), Zoroark `30th-096` (tcgdex's "ColorlessColorless" for {C}{C}) and Hop's Pincurchin ex `me02.5-068`
+    ("place" for "put", the same Ability name) on the twin's OBJECT; the other 14 on EIGHT NEW objects carrying the
+    twin's ops under the printed name or number — `SMOOTH_COAT` (Cinccino ex ×3), `SHELL_SPIKES` (Turtonator),
+    `INCANDESCENT_BODY` (Numel ×2), `AERIAL_DRAW` (Toucannon ×2), `SHARE_HAPPINESS` (Nidorina ×2), `INTIMIDATING_FANG`
+    (Pyroar, 30), `DOPEY_FACE` (Slowpoke, Confused) and `FLOAT_UP` (Drifloon ×2, Surf Back's sentence at attack index
+    0). Heatran `sv06-123` moves from Armarouge's `SCORCHING_ARMOR` to `INCANDESCENT_BODY`, so its Burn logs its
+    printed name (the D582-named defect). No op, field, reader or persisted shape moved. Census: Standard pool
+    attacks 2463 / 2771, abilities 431 / 610, trainers 320 / 447, special energy 14 / 22; 690 `me` printings fully
+    built. `reprintAliasMeD584.test.ts`.)
     🆕🆕🆕 engineVersion 0.466.0 → **0.467.0** (D583 — THE FIX-UP SLICE: SPECIAL ENERGY READ OFF THE PRINTED TEXT, AND
     THE PERSISTED POOL MIGRATED; `MATCH_RECORD_VERSION` 41 → 42 (apps/api match.ts "41 → 42 AT D583")). **(1) The
     predicate** (cards.ts): `isSpecialEnergy` is true of an Energy tagged "Special" OR printing rules text, and the NEW
@@ -25119,7 +25131,7 @@ import type { GameState, Seat } from "./types";
     WITNESS** — the count was re-derived every slice and the word *"three"* was carried.
     A successor of this slice inherits **81 / 61 / 17** again, over **FIVE** history
     occurrences: those four plus `deckMillFilteredScale.test.ts`'s own header arrow.) */
-export const engineVersion = "0.467.0";
+export const engineVersion = "0.468.0";
 
 export type {
   ApplyResult,

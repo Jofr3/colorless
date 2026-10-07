@@ -6,6 +6,25 @@
 > `coverage-backlog-legal.md`; its pool is unchanged and whole. The suite-side figures are
 > `censusAtHead.test.ts`'s D581 block and `censusAttackCorpusMe.ts`.
 
+## 🆕 D584 update (engine 0.468.0) — alias tier 2 (WP01)
+
+18 `me` printings / 11 texts keyed (registry.ts D584 block; `reprintAliasMeD584.test.ts`): Ultra Ball ×2, Zoroark
+`30th-096` and Hop's Pincurchin ex `me02.5-068` on existing objects; Cinccino ex ×3, Turtonator, Numel ×2, Toucannon ×2,
+Nidorina ×2, Pyroar, Slowpoke and Drifloon ×2 on eight new renamed / parameter / attack-index copies. Heatran `sv06-123`
+now logs its own "Incandescent Body".
+
+| Column | `me` built / units (D584) | Standard pool D584 |
+|---|---|---|
+| Attacks | 731 / 1,039 (+2: Float Up) | **2,463 / 2,771** |
+| Abilities | 55 / 234 (+14) | **431 / 610** |
+| Trainers | 56 / 183 (+2) | **320 / 447** |
+| Special Energy | 3 / 11 | **14 / 22** |
+
+**Fully built `me` printings: 690** (672 + 18; every other attack these Pokémon print is reader-built). Still owed from
+the D582 list: "Fade Out" ×5 (Drifblim, Meowth ex ×3, Emolga — other index, other name). Named, not in WP01: Mega Scrafty
+ex ×3 prints Counterattack Quills at "place 5" (a 50 `damageAttacker` copy) and Antique Skull Fossil `me05-073` prints
+the "place 3" text on a fossil face.
+
 ## 🆕 D583 update (engine 0.467.0) — Special Energy by printed text
 
 The D582 gap *"tcgdex tags every `me` Special Energy `energy_type` Normal"* is closed in the ENGINE: cards.ts
@@ -38,9 +57,9 @@ block; `reprintAliasMeD582.test.ts`), and banners.ts marks the five `me02.5` Ter
 49 Mega ex (46 + Mega Chandelure ex ×3 via the alias tier), 37 other aliased Pokémon, 54 Trainers, 2 Special Energy.
 D581's "alias-ready" figures, re-measured: of 47 ability units, 6 are NOT aliased (Cinccino ex ×3, Turtonator — the
 twin program names its Ability; Numel ×2 — twin Heatran `sv06-123`'s D190 program is Armarouge's and logs "Scorching
-Armor"; a renamed copy is owed each); of 3 Special Energy, Team Rocket's Energy `me02.5-217` is not
+Armor"; a renamed copy is owed each) [🆕🆕🆕 D584: all six BUILT on renamed copies; Heatran fixed]; of 3 Special Energy, Team Rocket's Energy `me02.5-217` is not
 (tcgdex tags it `energy_type` Normal, its `sv` twin Special) [🆕 D583: aliased]; of 8 attack units, only Prism Charge prints at its twin's
-index — "Fade Out" ×5 and "Surf Back" ×2 need a new object each. **New named gaps:** tcgdex tags every `me` Special
+index — "Fade Out" ×5 and "Surf Back" ×2 need a new object each [🆕🆕🆕 D584: Surf Back ×2 BUILT, `FLOAT_UP`]. **New named gaps:** tcgdex tags every `me` Special
 Energy (and three `sv` ones: Reversal, Prism, Ignition) `energy_type` Normal, so the engine's `isSpecialEnergy` answers
 false for them and the `basicEnergy` filter ("Basic Energy" searches) admits them [🆕 D583 (D539): WITHDRAWN — see the D583 update]; `me` Tera printings with NEW text (Koraidon ex `me02.5-121` prints the banner) are
 not in banners.ts. The sections below are the D581 measurement.
@@ -343,7 +362,7 @@ group wins; the grouping is a reading aid, not a census figure).
 - 3× **Lunar Cycle** — Once during your turn, if you have Solrock in play, you may discard a Basic {F} Energy card from your hand in order to use this Ability. Draw 3 cards. You can't use more than 1 Lunar Cycle Ability each turn.
 - 3× **Nighttime Maneuvers** — Once during your turn, if this Pokémon is in the Active Spot, you may use this Ability. Search your deck for a card. Shuffle your deck, then put that card on top of it.
 - 3× **Sinister Surge** — Once during your turn, you may use this Ability. Search your deck for a Basic {D} Energy card and attach it to 1 of your Benched {D} Pokémon. Then, shuffle your deck. If you attached Energy to a Pokémon in this way, place 2 damage counters on that Pokémon.
-- 2× **Aerial Draw** — Once during your turn, you may use this Ability. Draw a card.
+- 2× **Aerial Draw** — Once during your turn, you may use this Ability. Draw a card. [🆕🆕🆕 D584: BUILT]
 - 2× **Boisterous Wind** — Once during your turn, you may use this Ability. Flip a coin. If heads, put an Energy attached to your opponent's Active Pokémon into their hand.
 - 2× **Call a Buddy** — Once during your turn, if you have no cards in your hand, you may use this Ability. Search your deck for a Supporter card, reveal it, and put it into your hand. Then, shuffle your deck.
 - 2× **Destructive Headbutting** — Once during your turn, if this Pokémon is in the Active Spot, you may use this Ability. Flip a coin. If heads, discard an Energy from your opponent's Active Pokémon.
@@ -354,7 +373,7 @@ group wins; the grouping is a reading aid, not a census figure).
 - 2× **Frilled Generator** — Once during your turn, if you played Canari from your hand this turn, you may use this Ability. Search your deck for up to 2 Basic {L} Energy cards and attach them to this Pokémon. Then, shuffle your deck.
 - 2× **Frosty Flapping** — Once during your turn, if you have Moltres and Zapdos in play, you may use this Ability. Attach a Basic Water Energy card from your hand to this Pokémon.
 - 2× **Gathering of Blossoms** — Once during your turn, you may use this Ability. Search your deck for an Erika's Pokémon, reveal it, and put it into your hand. Then, shuffle your deck.
-- 2× **Share Happiness** — Once during your turn, you may use this Ability. Heal 30 damage from 1 of your Pokémon.
+- 2× **Share Happiness** — Once during your turn, you may use this Ability. Heal 30 damage from 1 of your Pokémon. [🆕🆕🆕 D584: BUILT]
 - 2× **Sky Hunt** — Once during your turn, you may use this Ability. Flip a coin. If heads, discard a random card from your opponent's hand.
 - 2× **Stone Arms** — Once during your turn, you may use this Ability. Attach a Basic {F} Energy card from your hand to 1 of your {F} Pokémon.
 - 1× **Alluring Wings** — Once during your turn, if this Pokémon is in the Active Spot, you may use this Ability. Each player draws a card.
@@ -389,7 +408,7 @@ group wins; the grouping is a reading aid, not a census figure).
 - 2× **Photon Cord** — If this Pokémon is in the Active Spot and is Knocked Out by damage from an attack from your opponent's Pokémon, move up to 2 Basic {L} Energy cards from this Pokémon to 1 of your Benched Pokémon.
 - 2× **Spiteful Swirl** — If your Active {D} Pokémon is damaged by an attack from your opponent's Pokémon (even if your Active {D} Pokémon is Knocked Out), place 1 damage counter on the Attacking Pokémon.
 - 1× **Counterattack Grouping** — If your Wishiwashi or Wishiwashi ex is in the Active Spot and is damaged by an attack from your opponent's Pokémon (even if your Pokémon  is Knocked Out), place 3 damage counters on the Attacking Pokémon.
-- 1× **Counterattack Quills** — If this Pokémon is in the Active Spot and is damaged by an attack from your opponent's Pokémon (even if this Pokémon is Knocked Out), place 3 damage counters on the Attacking Pokémon.
+- 1× **Counterattack Quills** — If this Pokémon is in the Active Spot and is damaged by an attack from your opponent's Pokémon (even if this Pokémon is Knocked Out), place 3 damage counters on the Attacking Pokémon. [🆕🆕🆕 D584: BUILT]
 - 1× **Durable Body** — If this Pokémon would be Knocked Out by damage from an attack, flip a coin. If heads, this Pokémon is not Knocked Out, and its remaining HP becomes 10.
 - 1× **Final Chain** — If this Pokémon is Knocked Out by damage from an attack from your opponent's Pokémon, search your deck for a card and put it into your hand. Then, shuffle your deck.
 - 1× **Infinite Shadow** — If this Pokémon is Knocked Out by damage from an attack from your opponent's Pokémon, put it into your hand instead of the discard pile. (Discard all attached cards.)
@@ -402,7 +421,7 @@ group wins; the grouping is a reading aid, not a census figure).
 - 2× **Thick Fat** — This Pokémon takes 30 less damage from attacks from your opponent's {R} or {W} Pokémon (after applying Weakness and Resistance).
 - 2× **Tundra Wall** — All of your Pokémon that have any {W} Energy attached take 50 less damage from attacks from your opponent's Pokémon (after applying Weakness and Resistance). The effect of Tundra Wall doesn't stack.
 - 1× **Gloomy Garbage** — Attacks used by your opponent's Active Pokémon that has a Pokémon Tool attached do 20 less damage (before applying Weakness and Resistance).
-- 1× **Intimidating Fang** — As long as this Pokémon is in the Active Spot, attacks used by your opponent's Active Pokémon do 30 less damage (before applying Weakness and Resistance).
+- 1× **Intimidating Fang** — As long as this Pokémon is in the Active Spot, attacks used by your opponent's Active Pokémon do 30 less damage (before applying Weakness and Resistance). [🆕🆕🆕 D584: BUILT]
 - 1× **Supreme Overlord** — Attacks used by this Pokémon do 30 more damage to your opponent's Active Pokémon for each Prize card your opponent has taken (before applying Weakness and Resistance).
 
 ### HP, Retreat, type and Energy-provision passives — 8 text(s) / 15 printing(s)
@@ -413,7 +432,7 @@ group wins; the grouping is a reading aid, not a census figure).
 - 2× **Slimy Sliding** — When your opponent's Active Pokémon retreats, your opponent flips a coin. If tails, Energy for its Retreat Cost is not discarded, and they don't switch Pokémon. The effect of Slimy Sliding doesn't stack.
 - 2× **Tyrannically Gutsy** — If this Pokémon has any Special Energy attached, it gets +150 HP.
 - 2× **Wild Growth** — Each Basic {G} Energy attached to all of your Pokémon provides {G}{G} Energy. The effect of Wild Growth doesn't stack.
-- 1× **Nighttime Byway** — As long as this Pokémon is on your Bench, your Active Pokémon's Retreat Cost is ColorlessColorless less.
+- 1× **Nighttime Byway** — As long as this Pokémon is on your Bench, your Active Pokémon's Retreat Cost is ColorlessColorless less. [🆕🆕🆕 D584: BUILT]
 - 1× **Scale Up** — If this Pokémon has 6 or more {G} Energy attached, it gets +250 HP.
 
 ### Prevention / immunity passives — 6 text(s) / 14 printing(s)
@@ -421,7 +440,7 @@ group wins; the grouping is a reading aid, not a census figure).
 - 4× **Hide 'n' Sneak** — Prevent all effects of your opponent's Pokémon's attacks and Abilities done to this Pokémon. (Damage is not an effect.)
 - 4× **Luminous Wing** — Prevent all effects of your opponent's Pokémon's Abilities done to this Pokémon.
 - 3× **Damp** — Pokémon in play (both yours and your opponent's) lose any Ability that requires the Pokémon using it to Knock Out itself.
-- 1× **Dopey Face** — This Pokémon can't be Confused.
+- 1× **Dopey Face** — This Pokémon can't be Confused. [🆕🆕🆕 D584: BUILT]
 - 1× **Life-Locked** — Your opponent's Active Pokémon can't be healed.
 - 1× **Watchful Eye** — Damage counters on each Pokémon (both yours and your opponent's) can't be moved to other Pokémon.
 
@@ -469,7 +488,7 @@ Your opponent shuffles their hand and puts it on the bottom of their deck. If th
 - 1× **Transformation Tome** — You must play 2 Transformation Tome cards at once. (This effect works one time for 2 cards.)
 
 Choose a Basic Pokémon in your discard pile and switch it with 1 of your Basic Pokémon in play. Any attached cards, damage counters, Special Conditions, turns in play, and any other effects remain on the new Pokémon.
-- 2× **Ultra Ball** — You can use this card only if you discard 2 other cards from your hand.
+- 2× **Ultra Ball** — You can use this card only if you discard 2 other cards from your hand. [🆕🆕🆕 D584: BUILT]
 Search your deck for a Pokémon, reveal it, and put it into your hand. Then, shuffle your deck.
 - 2× **Wondrous Patch** — Attach a Basic {P} Energy card from your discard pile to 1 of your Benched {P} Pokémon.
 

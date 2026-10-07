@@ -2159,6 +2159,13 @@ export interface MatchRecord {
     `turn:action.discardable` — 🛑 **DEPLOY THE SERVER FIRST**: an old client's `z.object` STRIPS
     the unknown key, while a new client's REQUIRED key refuses an old server's frame.
 
+    🆕🆕🆕 **STAYS 42 AT D584 — THE `me` ALIAS TIER 2 ADDS NO GameState, PendingStage, PROMPT OR WIRE KEY.**
+    (Placed ABOVE the D583 block, D563's placement.) What moved is the id-keyed registry only: 18 `me` ids
+    gain a program (eight new objects built of shipped ops and fields) and Heatran `sv06-123`'s trigger is
+    renamed "Incandescent Body". No card row is READ differently, so a persisted `cardPool` needs nothing; a
+    parked `damagedTrigger` stage names a uid and re-reads its Ability. As at D582, a v42 match in flight
+    gains those programs mid-match (and a 0.467 rollback drops them) — the stated cost; no re-ingest.
+
     🆕🆕🆕 **41 → 42 AT D583 — THE FIFTEENTH POSITION, AND THE FIRST MIGRATION: A v41 RECORD'S PERSISTED
     TRAINER FACES ARE REFRESHED, NOT RETIRED.** (Placed ABOVE the D582 block, out of date order — D563's
     placement.) The address (D456's rule): **`state.cardPool`** — the whole catalog `Card` of every deck id,

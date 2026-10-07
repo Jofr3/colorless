@@ -133,15 +133,13 @@ const ALIASES: readonly (readonly [string, string, "face" | "pokemon" | "text", 
 /** The `me` printings that print a built TEXT and were deliberately NOT aliased, with why. */
 const NOT_ALIASED: readonly (readonly [string, string])[] = [
   // The twin's program NAMES its Ability, so the alias would log the wrong name: a renamed copy.
-  ["me04-073", "Cinccino ex — Smooth Coat ~ Kecleon's Expert Hider (`preventDamageOnCoinFlip.ability`)"],
-  ["me04-105", "Cinccino ex — the same"],
-  ["me04-119", "Cinccino ex — the same"],
-  ["me03-017", "Turtonator — Shell Spikes ~ Klawf ex's Counterattacking Pincer (`triggered[].name`)"],
+  // [🆕🆕🆕 D584: ~~Cinccino ex `me04-073` / `-105` / `-119`~~ and ~~Turtonator `me03-017`~~ are KEYED at
+  // D584 on the renamed copies `SMOOTH_COAT` / `SHELL_SPIKES` (reprintAliasMeD584.test.ts).]
   // The twin's TEXT and Ability name match, but the twin's program does not: Heatran `sv06-123`
   // ("Incandescent Body") is a D190 alias of Armarouge's SCORCHING_ARMOR, which logs "Scorching
   // Armor" (`triggered[0].name`). The defect is inherited from D190; D582 does not copy it further.
-  ["me02.5-027", "Numel — Incandescent Body; Heatran's program logs Armarouge's `Scorching Armor`"],
-  ["me02.5-223", "Numel — the same"],
+  // [🆕🆕🆕 D584: ~~Numel `me02.5-027` / `-223`~~ are KEYED at D584 on `INCANDESCENT_BODY`, and
+  // Heatran moved there too — the defect is fixed.]
   // The face differs in `energy_type`: tcgdex tags the `me` row Normal, the `sv` twin Special.
   // [🆕🆕🆕 D583 (D539): ~~Team Rocket's Energy `me02.5-217`~~ is ALIASED at D583 — cards.ts reads a Special
   // Energy off its printed text, so the tag no longer separates the faces (specialEnergyTagD583.test.ts §4).]
@@ -151,8 +149,15 @@ const NOT_ALIASED: readonly (readonly [string, string])[] = [
   ["me03-107", "Meowth ex — the same"],
   ["me03-121", "Meowth ex — the same"],
   ["me04-030", "Emolga — Sky Return (idx 1) ~ Fade Out"],
-  ["30th-073", "Drifloon — Float Up (idx 0) ~ Gholdengo's Surf Back (idx 1)"],
-  ["30th-136", "Drifloon — the same"],
+  // [🆕🆕🆕 D584: ~~Drifloon `30th-073` / `-136`~~ (Float Up idx 0 ~ Gholdengo's Surf Back idx 1) are
+  // KEYED at D584 on the new `FLOAT_UP` (Surf Back's ops at index 0).]
+];
+
+/** 🆕🆕🆕 D584 — the `me` ids the D584 tier 2 keys (reprintAliasMeD584.test.ts pins each one). */
+const KEYED_AT_D584 = [
+  "me02.5-213", "me02.5-264", "30th-096", "me02.5-068", "me04-073", "me04-105", "me04-119", "me03-017",
+  "me02.5-027", "me02.5-223", "me05-068", "me05-094", "mep-101", "30th-088", "me01-024", "mep-086",
+  "30th-073", "30th-136",
 ];
 
 /** The five `me` Tera reprints banners.ts carries (each printed face checked on tcgdex's image). */
@@ -235,10 +240,12 @@ describe("D582 — the `me` reprint-alias tier: 99 printings on 66 existing prog
     expect(new Set(ALIASES.map(([, twin]) => programFor(twin))).size).toBe(66);
   });
 
-  it("the registry's `me` keys are EXACTLY this table — nothing keyed outside it (🆕🆕🆕 D583: plus Team Rocket's Energy `me02.5-217`)", () => {
+  it("the registry's `me` keys are EXACTLY this table — nothing keyed outside it (🆕🆕🆕 D583: plus Team Rocket's Energy `me02.5-217`; 🆕🆕🆕 D584: plus the 18 tier-2 keys)", () => {
     const me = registryCardIds().filter((id) => /^(me|30th)/.test(id));
     // 🆕🆕🆕 D583 — the one `me` key outside the D582 table: Team Rocket's Energy, on `sv10-182`'s object.
-    expect(me.sort()).toEqual([...ALIASES.map(([id]) => id), "me02.5-217"].sort());
+    // 🆕🆕🆕 D584 — and the 18 tier-2 keys (`KEYED_AT_D584`).
+    expect(KEYED_AT_D584).toHaveLength(18);
+    expect(me.sort()).toEqual([...ALIASES.map(([id]) => id), "me02.5-217", ...KEYED_AT_D584].sort());
     // …and no twin is a `me` id: every program the tier reaches was built for the `sv` serie.
     for (const [, twin] of ALIASES) expect(/^(me|30th)/.test(twin), twin).toBe(false);
   });
@@ -261,7 +268,9 @@ describe("D582 — the `me` reprint-alias tier: 99 printings on 66 existing prog
         expect(printed, `${id} (${name}) logs "${named}"`).toContain(named);
     }
     // The exclusion this rung enforces: Heatran's program (the Numel twin) names Armarouge's Ability.
-    expect(programAbilityNames(programFor("sv06-123"))).toEqual(["Scorching Armor"]);
+    // [🆕🆕🆕 D584 (D539): ~~"Scorching Armor"~~ — WITHDRAWN: Heatran is keyed on the D584 renamed copy
+    // and names its printed Ability, so the exclusion is lifted and Numel ×2 share it.]
+    expect(programAbilityNames(programFor("sv06-123"))).toEqual(["Incandescent Body"]);
   });
 
   it("the deliberately NOT-aliased printings stay unregistered", () => {

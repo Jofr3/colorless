@@ -16355,6 +16355,88 @@ const PLUME_PROTECTION: CardProgram = {
   passive: { preventDamageWhileBenched: true },
 };
 
+// ── 🆕🆕🆕 D584 — THE `me` ALIAS TIER 2: RENAMED AND PARAMETER COPIES. Eight NEW objects, each a
+//    built twin's ops under the `me` printing's own Ability / attack (no new op, field or reader).
+//    The twin's program NAMES its Ability (or the text differs by one parameter), so D582's
+//    same-object alias would log the twin's name or the twin's number. Printed texts off the LOCAL
+//    D1 (2026-10-07); `reprintAliasMeD584.test.ts` pins every twin by face and every logged name. ──
+
+/** Cinccino ex `me04-073` / `-105` / `-119` — "Smooth Coat": Kecleon `sv08-150` "Expert Hider"'s
+    sentence word for word ("If any damage is done to this Pokémon by attacks, flip a coin. If
+    heads, prevent that damage."); `EXPERT_HIDER`'s field under the printed name, which the
+    `ABILITY_COIN_FLIP` row logs. */
+const SMOOTH_COAT: CardProgram = {
+  passive: { preventDamageOnCoinFlip: { ability: "Smooth Coat" } },
+};
+
+/** Turtonator `me03-017` — "Shell Spikes": Klawf ex `sv03-120` "Counterattacking Pincer"'s
+    sentence word for word; `COUNTERATTACKING_PINCER`'s trigger under the printed name. */
+const SHELL_SPIKES: CardProgram = {
+  triggered: [
+    {
+      name: "Shell Spikes",
+      trigger: "onDamagedByAttack",
+      activeOnly: true,
+      program: [{ op: "discardEnergy", from: "opponentActive", filter: { kind: "anyEnergy" } }],
+    },
+  ],
+};
+
+/** Heatran `sv06-123` and Numel `me02.5-027` / `-223` — "Incandescent Body": Armarouge
+    `sv03-044` "Scorching Armor"'s sentence word for word; `SCORCHING_ARMOR`'s trigger under the
+    printed name. Heatran was a D190 alias of `SCORCHING_ARMOR` and logged "Scorching Armor"
+    until D584 (the D582-named wrong-name defect); it moves here with the two Numel. */
+const INCANDESCENT_BODY: CardProgram = {
+  triggered: [
+    {
+      name: "Incandescent Body",
+      trigger: "onDamagedByAttack",
+      activeOnly: true,
+      program: [{ op: "applyStatus", target: "defender", status: "burned" }],
+    },
+  ],
+};
+
+/** Toucannon `me05-068` / `-094` — "Aerial Draw": *"Once during your turn, you may use this
+    Ability. Draw a card."* — Rapidash `sv10-030` "Hurried Gait" (*"…you may draw a card."*) in the
+    `me` wording; `HURRIED_GAIT`'s program under the printed name (`useAbility` matches it). */
+const AERIAL_DRAW: CardProgram = {
+  abilities: [{ name: "Aerial Draw", oncePerTurn: true, activeOnly: false, program: [{ op: "drawCards", count: 1 }] }],
+};
+
+/** Nidorina `mep-101` / `30th-088` — "Share Happiness": *"Once during your turn, you may use this
+    Ability. Heal 30 damage from 1 of your Pokémon."* — Alcremie ex `sv09-075` "Confectionary
+    Gift" in the `me` wording; `CONFECTIONARY_GIFT`'s program under the printed name. */
+const SHARE_HAPPINESS: CardProgram = {
+  abilities: [{ name: "Share Happiness", oncePerTurn: true, activeOnly: false, program: [{ op: "healChosen", amount: 30 }] }],
+};
+
+/** Pyroar `me01-024` — "Intimidating Fang": Entei `sv03-030` "Pressure" with 30 for 20 (*"…do 30
+    less damage (before applying Weakness and Resistance)."*). `PRESSURE`'s field at the printed
+    number; nameless, like its twin. */
+const INTIMIDATING_FANG: CardProgram = { passive: { opponentActiveAttackDebuff: 30 } };
+
+/** Slowpoke `mep-086` — "Dopey Face": *"This Pokémon can't be Confused."* — Pachirisu `sv01-068`
+    "Electricity Pouches" with one `StatusName` changed (Hoothoot's `INSOMNIA` idiom). */
+const DOPEY_FACE: CardProgram = { passive: { statusImmunities: ["confused"] } };
+
+/** Drifloon `30th-073` / `-136` — "Float Up" (attack index **0**, 20 damage): Gholdengo
+    `sv08-131` "Surf Back"'s sentence (*"You may shuffle this Pokémon and all attached cards into
+    your deck."*) at index 0, where `SURF_BACK` authors index 1 (index precision: the alias would
+    leave index 0 unsimulated). The attack NAME is the card's, read off its row. */
+const FLOAT_UP: CardProgram = {
+  attack: {
+    0: [
+      {
+        op: "optional",
+        note: "You may shuffle this Pokémon and all attached cards into your deck.",
+        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
+        then: [{ op: "returnSelf", dest: "deck" }],
+      },
+    ],
+  },
+};
+
 const REGISTRY: Record<string, CardProgram> = {
   // Professor's Research (SV base prints)
   "sv01-189": PROFESSORS_RESEARCH,
@@ -17177,6 +17259,9 @@ const REGISTRY: Record<string, CardProgram> = {
   //     Numel `me02.5-027` / `-223`: they print Heatran `sv06-123`'s "Incandescent Body", but
   //     Heatran's D190 alias is Armarouge's `SCORCHING_ARMOR`, whose `triggered[0].name` logs
   //     "Scorching Armor" (the same wrong-name defect, inherited, not copied further).
+  //     [🆕🆕🆕 D584: all six are keyed in the D584 block below on renamed copies (`SMOOTH_COAT`,
+  //     `SHELL_SPIKES`, `INCANDESCENT_BODY`), and Heatran's defect is fixed — it moves to
+  //     `INCANDESCENT_BODY` too.]
   // The Tera reprints among them (Pikachu ex ×2, Terapagos ex) also carry the banner (banners.ts).
   // `reprintAliasMeD582.test.ts` pins every row's twin (`toBe`, the SAME object) and the measured
   // counts; the printed bytes are the LOCAL D1's (no `me` row is a fixture), as D190's were.
@@ -17283,10 +17368,36 @@ const REGISTRY: Record<string, CardProgram> = {
   "me05-115": TRAP_TERRITORY, // Mega Chandelure ex — twin `sv01-019` (Spidops ex, same text)
   "30th-028": PRESSURE, // Pikachu — twin `sv03-030` (Entei, same text)
   "30th-033": CURIOUS_TEA_PARTY, // Pikachu — twin `sv06-020` (Poltchageist, same text)
+  // 🆕🆕🆕 D584 — THE `me` ALIAS TIER 2: 18 printings / 11 texts, MID-MAP (D395/D396), so `raw[last]`
+  // does not move. Four on EXISTING objects (a face equal to the twin's once tcgdex's markup is
+  // normalised: Ultra Ball's one-newline gap, Zoroark's "ColorlessColorless" for {C}{C}, Hop's
+  // Pincurchin ex's "place" for "put" under the SAME Ability name; each twin is a nameless passive
+  // or a Trainer). Fourteen on the eight NEW D584 objects above (the printed name, or the printed
+  // number). `reprintAliasMeD584.test.ts` pins every twin by face.
+  "me02.5-213": ULTRA_BALL, // Ultra Ball — twin `sv01-196` (one newline fewer)
+  "me02.5-264": ULTRA_BALL, // Ultra Ball — twin `sv01-196` (one newline fewer)
+  "30th-096": SECRET_FOREST_PATH, // Zoroark "Nighttime Byway" — twin `sv09-089` (Toedscruel; tcgdex prints {C}{C} as "ColorlessColorless")
+  "me02.5-068": COUNTERATTACK_QUILLS, // Hop's Pincurchin ex "Counterattack Quills" — twin `sv01-005` (Cacnea; "place" for "put")
+  "me04-073": SMOOTH_COAT, // Cinccino ex "Smooth Coat" — twin `sv08-150` (Kecleon "Expert Hider")
+  "me04-105": SMOOTH_COAT, // Cinccino ex
+  "me04-119": SMOOTH_COAT, // Cinccino ex
+  "me03-017": SHELL_SPIKES, // Turtonator "Shell Spikes" — twin `sv03-120` (Klawf ex "Counterattacking Pincer")
+  "me02.5-027": INCANDESCENT_BODY, // Numel "Incandescent Body" — twin `sv03-044` (Armarouge "Scorching Armor"), with Heatran `sv06-123`
+  "me02.5-223": INCANDESCENT_BODY, // Numel
+  "me05-068": AERIAL_DRAW, // Toucannon "Aerial Draw" — twin `sv10-030` (Rapidash "Hurried Gait")
+  "me05-094": AERIAL_DRAW, // Toucannon
+  "mep-101": SHARE_HAPPINESS, // Nidorina "Share Happiness" — twin `sv09-075` (Alcremie ex "Confectionary Gift")
+  "30th-088": SHARE_HAPPINESS, // Nidorina
+  "me01-024": INTIMIDATING_FANG, // Pyroar "Intimidating Fang" — twin `sv03-030` (Entei "Pressure"), 30 for 20
+  "mep-086": DOPEY_FACE, // Slowpoke "Dopey Face" — twin `sv01-068` (Pachirisu "Electricity Pouches"), Confused for Paralyzed
+  "30th-073": FLOAT_UP, // Drifloon "Float Up" (attack 0) — twin `sv08-131` (Gholdengo "Surf Back", attack 1)
+  "30th-136": FLOAT_UP, // Drifloon
   // ── D190 — THE **STANDARD-LEGAL** REPRINT-ALIAS MAP (Tier 0 of
   //    `docs/reference/coverage-backlog-legal.md`). 22 printings, 9 map targets,
   //    ZERO new code: every row below prints a sentence that is already authored
   //    on a registered id, byte-for-byte.
+  //    [🆕🆕🆕 D584 (D539): Heatran `sv06-123` no longer shares Armarouge's object — its D190 row
+  //    logged "Scorching Armor"; it is keyed on the D584 renamed copy `INCANDESCENT_BODY` (same ops).]
   //
   //    ⚠️ MEASURED, NOT CARRIED. The text-equality sweep of unbuilt-against-built
   //    was RE-RUN against the REMOTE D1 `luminous`
@@ -17328,7 +17439,7 @@ const REGISTRY: Record<string, CardProgram> = {
   "sv08-200": COUNTERATTACK_QUILLS, // Bruxish (reprint)
   // — the same antecedent with a BURN consequent — 1 legal printing (1 in the
   //   catalog); the trigger, not the passive. —
-  "sv06-123": SCORCHING_ARMOR, // Heatran — "Incandescent Body" (mark H)
+  "sv06-123": INCANDESCENT_BODY, // Heatran — "Incandescent Body" (mark H). 🆕🆕🆕 D584 (D539): was `SCORCHING_ARMOR`, which logged Armarouge's "Scorching Armor"; the D584 renamed copy, shared with Numel ×2
   // — "All of your Pokémon take 10 less damage from attacks from your opponent's
   //   Pokémon (after applying Weakness and Resistance)." — 1 legal printing. —
   "sv08.5-067": HARIYAMA, // Bronzong — "Protective Bell" (mark H)
