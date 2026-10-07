@@ -104,10 +104,14 @@ export function Bench({
                 />
               </div>
               {battle !== undefined && (
-                <DamageChip battle={battle} className="-right-1.5 -top-1.5" />
+                <DamageChip battle={battle} cardId={card.id} className="-right-1.5 -top-1.5" />
               )}
               {battle?.conditions !== undefined && (
-                <StatusChips conditions={battle.conditions} className="-left-1.5 -top-1.5" />
+                <StatusChips
+                  conditions={battle.conditions}
+                  cardId={card.id}
+                  className="-left-1.5 -top-1.5"
+                />
               )}
             </div>
           );

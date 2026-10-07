@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import type { SetupAnimationStage } from "./utils/setupDeals";
 import "./playmat.css";
 import { benchLimitFor, CENTER_LINE_TOP, PLAYMAT_WRAPPER_CLASS } from "./constants";
@@ -22,6 +22,7 @@ import type {
 } from "./types";
 import type { PlacementPredicate } from "./utils/cardMovement";
 import { opponentOf } from "./utils/players";
+import { pilesWithoutUsedTrainers, usedTrainersForTurn } from "./utils/usedTrainers";
 
 export interface PlaymatViewProps {
   board: BoardState;
@@ -90,6 +91,17 @@ export function PlaymatView({
   children,
 }: PlaymatViewProps) {
   const playmatRef = useRef<HTMLElement>(null);
+  const usedTrainers = useMemo(
+    () => usedTrainersForTurn(logEntries, turn.turn),
+    [logEntries, turn.turn],
+  );
+  const visiblePiles = useMemo(
+    () => pilesWithoutUsedTrainers(usedTrainers, piles),
+    [usedTrainers, piles],
+  );
+  function trainersFor(owner: PlayerId) {
+    return { turn: turn.turn, cards: owner === turn.activePlayer ? usedTrainers : [] };
+  }
   const [setupAnimation, setSetupAnimation] = useState<SetupAnimationStage | null>(null);
   const [pendingMulliganDraws, setPendingMulliganDraws] = useState<Record<CardBackTone, number>>({
     blue: 0,
@@ -112,7 +124,7 @@ export function PlaymatView({
   // Keep card backs tied to the physical seats when the hot-seat projection re-bases.
   const blueBackPlayer = bodyPerspective === "you" ? bottomPlayer : topPlayer;
   function displayedPile(owner: PlayerId): PileState | undefined {
-    const pile = piles?.[owner];
+    const pile = visiblePiles?.[owner];
     if (!pile) return undefined;
     const tone = owner === blueBackPlayer ? "blue" : "red";
     return {
@@ -145,7 +157,7 @@ export function PlaymatView({
           data-card-zone="playmat"
         />
         {/* Screen-reader-only mirror of the board (the canvas is aria-hidden). */}
-        <BoardSummary board={board} perspectivePlayer={bottomPlayer} piles={piles} />
+        <BoardSummary board={board} perspectivePlayer={bottomPlayer} piles={visiblePiles} />
         <PlayerSide
           owner={topPlayer}
           blueBackPlayer={blueBackPlayer}
@@ -154,6 +166,7 @@ export function PlaymatView({
           activeTurn={turn.activePlayer === topPlayer}
           benchLimit={topBenchLimit}
           pile={displayedPile(topPlayer)}
+          usedTrainers={trainersFor(topPlayer)}
         />
         <PlayerSide
           owner={bottomPlayer}
@@ -163,6 +176,7 @@ export function PlaymatView({
           activeTurn={turn.activePlayer === bottomPlayer}
           benchLimit={bottomBenchLimit}
           pile={displayedPile(bottomPlayer)}
+          usedTrainers={trainersFor(bottomPlayer)}
         />
         <Hand cards={board[bottomPlayer].hand} owner={bottomPlayer} />
         <EnergyChoiceArea board={board} onMoveCard={onMoveCard} />
@@ -196,8 +210,13 @@ export function PlaymatView({
           blueBackPlayer={blueBackPlayer}
           turnNumber={turn.turn}
           activePlayer={turn.activePlayer}
-          deckCounts={piles && { you: piles.you.deckCount, opponent: piles.opponent.deckCount }}
-          piles={piles}
+          deckCounts={
+            visiblePiles && {
+              you: visiblePiles.you.deckCount,
+              opponent: visiblePiles.opponent.deckCount,
+            }
+          }
+          piles={visiblePiles}
           holdSetupReveal={setupAnimating && turn.turn > 0}
           onSetupAnimationChange={setSetupAnimation}
           onPendingMulliganDrawsChange={setPendingMulliganDraws}

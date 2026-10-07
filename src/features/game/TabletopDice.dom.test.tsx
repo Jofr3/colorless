@@ -27,7 +27,7 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-function hammerSetup(face: "heads" | "tails"): LocalGameSetup {
+function hammerSetup(face: "heads" | "tails", distinctEnergy = true): LocalGameSetup {
   const deck = deckOf({
     "fix-basic-1": 30,
     "fix-fire-energy": 10,
@@ -38,7 +38,7 @@ function hammerSetup(face: "heads" | "tails"): LocalGameSetup {
   state = handFromDeck(state, "p1", "sv01-168", 2);
   // Distinct choices prevent the engine auto-selecting interchangeable Energy.
   state = attachFromDeck(state, "p2", "fix-fire-energy", 1);
-  state = attachFromDeck(state, "p2", "fix-water-energy", 1);
+  if (distinctEnergy) state = attachFromDeck(state, "p2", "fix-water-energy", 1);
   const hammer = state.cardPool["sv01-168"];
   if (!hammer) throw new Error("missing Hammer fixture");
   let rngState = 1;
@@ -55,6 +55,59 @@ function hammerSetup(face: "heads" | "tails"): LocalGameSetup {
 }
 
 describe("simulator tabletop dice", () => {
+  it.each(["heads", "tails"] as const)(
+    "holds a forced Hammer %s result on the board and in the log until the dice finish",
+    (face) => {
+      const setup = hammerSetup(face, false);
+      const energy = setup.state.players.p2.active?.energy[0];
+      if (!energy) throw new Error("missing opponent Energy");
+      const expected = applyAction(setup.state, {
+        type: "playTrainer",
+        seat: "p1",
+        uid: handUid(setup.state, "p1", "sv01-168"),
+      });
+      if (!expected.ok) throw new Error(expected.error.message);
+      expect(expected.state.players.p2.discard.includes(energy)).toBe(face === "heads");
+      let saved: LocalGameSetup | undefined;
+      render(
+        <StrictMode>
+          <MemoryRouter>
+            <LocalMatch
+              setup={setup}
+              onPlayAgain={() => {}}
+              onSave={(value) => {
+                saved = value;
+              }}
+            />
+          </MemoryRouter>
+        </StrictMode>,
+      );
+      const attachment = () =>
+        document.querySelector(`.playmat-card__attached--energy[data-card-id="${energy}"]`);
+      fireEvent.click(screen.getByRole("button", { name: "Show game log" }));
+      const log = document.querySelector('[aria-label="Game log"]');
+      const previousLog = log?.textContent;
+      const hammerButton = screen.getAllByRole("button", { name: "Crushing Hammer" })[0];
+      if (!hammerButton) throw new Error("missing Hammer button");
+      fireEvent.click(hammerButton);
+      // The resolved outcome is saved immediately, but the visible Energy and log stay put.
+      expect(saved?.state).toEqual(expected.state);
+      expect(attachment()).not.toBeNull();
+      expect(log?.textContent).toBe(previousLog);
+      act(() => vi.advanceTimersByTime(1000));
+      expect(screen.getByText(face === "heads" ? "Heads" : "Tails")).toBeTruthy();
+      expect(attachment()).not.toBeNull();
+      expect(log?.textContent).toBe(previousLog);
+      act(() => vi.advanceTimersByTime(999));
+      expect(attachment()).not.toBeNull();
+      act(() => vi.advanceTimersByTime(1));
+      expect(document.querySelector(".tabletop-dice")).toBeNull();
+      expect(attachment() !== null).toBe(face === "tails");
+      expect(log?.textContent).not.toBe(previousLog);
+      expect(saved?.state).toEqual(expected.state);
+    },
+  );
+
   it.each(["heads", "tails"] as const)(
     "shows Crushing Hammer's actual %s before continuing",
     (face) => {

@@ -214,6 +214,7 @@ function expectedActionType(
   sourceType: CardType,
   target: CardPlacement,
   board: BoardState,
+  sourceStage?: string | null,
 ): string {
   if (phase.kind === "setup:place") {
     return target.zone === "active" ? "setupPlaceActive" : "setupPlaceBench";
@@ -222,11 +223,11 @@ function expectedActionType(
   if (sourceType === "energy") return "attachEnergy";
   if (sourceType === "tool") return "attachTool";
   if (sourceType === "stadium" || sourceType === "trainer") return "playTrainer";
-  // A Pokémon dropped onto an occupied own slot (Active, or an occupied bench
-  // index) is an evolve gesture (§10); onto a free bench slot it is a Basic.
+  // Basics insert into the Bench. Other Pokémon over an occupied slot evolve.
   if (target.zone === "active") return "evolve";
   if (
     target.zone === "bench" &&
+    sourceStage !== "Basic" &&
     target.index !== undefined &&
     board.you.bench[target.index]?.type === "pokemon"
   ) {
@@ -266,7 +267,9 @@ function expectLockstep(state: GameState, viewerSeat: Seat, phase?: Phase): void
       if (allowed) {
         expect(action, label).not.toBeNull();
         if (action === null) continue; // narrow for TS; unreachable after the expect
-        expect(action.type, label).toBe(expectedActionType(stateAt.phase, model.type, to, board));
+        expect(action.type, label).toBe(
+          expectedActionType(stateAt.phase, model.type, to, board, model.stage),
+        );
       } else if (action !== null) {
         expect(applyAction(stateAt, action).ok, label).toBe(false);
       }
@@ -571,28 +574,31 @@ describe("gamePlacementPredicate — turn:action structure", () => {
     },
   );
 
-  it("a Basic may aim at the bench but not a full one", () => {
-    const roomy = turnState();
-    const roomyBoard = projectGameState(roomy, "p1").board;
-    const from: CardPlacement = { owner: "you", zone: "hand", index: 0 };
-    expect(
-      gamePlacementPredicate(roomy, "p1")(
-        roomyBoard,
-        from,
-        { owner: "you", zone: "bench" },
-        "pokemon",
-      ),
-    ).toBe(true);
-
-    const capped = benchFullTurnState();
-    const cappedBoard = projectGameState(capped, "p1").board;
-    expect(
-      gamePlacementPredicate(capped, "p1")(
-        cappedBoard,
-        from,
-        { owner: "you", zone: "bench" },
-        "pokemon",
-      ),
-    ).toBe(false);
+  it("Basics insert over occupied slots only with Bench room on both transports", () => {
+    for (const [state, allowed] of [
+      [turnState(), true],
+      [benchFullTurnState(), false],
+    ] as const) {
+      const boards = [
+        projectGameState(state, "p1").board,
+        projectionFromRedacted(redactGame(state, "p1")).board,
+      ];
+      const gates = [
+        gamePlacementPredicate(state, "p1"),
+        placementPredicateFor({ phaseKind: "turn:action", isViewerTurn: true, isReady: false }),
+      ];
+      for (const [transport, board] of boards.entries()) {
+        const gate = gates[transport];
+        if (!gate) throw new Error("Missing placement gate");
+        const index = board.you.hand.findIndex((card) => card.stage === "Basic");
+        expect(index).toBeGreaterThanOrEqual(0);
+        const from: CardPlacement = { owner: "you", zone: "hand", index };
+        for (const targetIndex of [undefined, 0, board.you.bench.length]) {
+          expect(
+            gate(board, from, { owner: "you", zone: "bench", index: targetIndex }, "pokemon"),
+          ).toBe(allowed);
+        }
+      }
+    }
   });
 });

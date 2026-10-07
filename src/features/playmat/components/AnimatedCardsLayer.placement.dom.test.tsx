@@ -1,16 +1,18 @@
 // @vitest-environment jsdom
-import { cleanup, fireEvent, render, waitFor } from "@testing-library/react";
-import { Container } from "pixi.js";
+import { act, cleanup, fireEvent, render, waitFor } from "@testing-library/react";
+import { Container, type Ticker } from "pixi.js";
 import { useRef } from "react";
 import { afterEach, beforeAll, beforeEach, expect, it, vi } from "vitest";
 import { installDomShims } from "../../../test/domShims";
 import { placementPredicateFor } from "../../game/placement";
 import type { CardViewTarget } from "../pixi/CardView";
-import type { BoardState, CardModel, CardMoveRequest } from "../types";
+import type { BoardState, CardModel, CardMoveRequest, CardType, PlayerId } from "../types";
+import { NO_CONDITIONS } from "../types";
 import { AnimatedCardsLayer } from "./AnimatedCardsLayer";
 import { PlayerSide } from "./PlayerSide";
 
 const mocks = vi.hoisted(() => ({ constructed: vi.fn(), createApplication: vi.fn() }));
+const ticker = { add: vi.fn<(callback: (ticker: Ticker) => void) => void>(), remove: vi.fn() };
 vi.mock("../../../lib/pixi/createPixiApplication", () => ({
   createPixiApplication: mocks.createApplication,
 }));
@@ -38,6 +40,7 @@ vi.mock("../pixi/CardView", () => ({
     });
     getTargetSnapshot = () => this.target;
     getPosition = () => this.position;
+    getCardCenter = () => this.position;
     hitTest = (point: { x: number; y: number }) =>
       this.target !== null &&
       Math.abs(point.x - this.position.x) < this.target.width / 2 &&
@@ -80,26 +83,56 @@ function view(id: string): TestView {
 function pokemon(id: string, stage = "Basic"): CardModel {
   return { id, name: id, cardId: id, type: "pokemon", stage };
 }
+const usedTrainers = {
+  turn: 1,
+  cards: [
+    { id: "used", cardId: "sv01-196", name: "Used Trainer", type: "trainer" } satisfies CardModel,
+  ],
+};
 function Scene({
   stage,
   onMove,
   targets = [],
   isViewerTurn = true,
   activeStage = "Basic",
+  handType = "pokemon",
+  usedTrainerOwner,
+  usableTrainerIds,
+  benchLimit = 5,
+  damaged = false,
 }: {
   stage: string;
   onMove: (move: CardMoveRequest) => void;
   targets?: readonly string[];
   isViewerTurn?: boolean;
   activeStage?: string;
+  handType?: CardType;
+  usedTrainerOwner?: PlayerId;
+  usableTrainerIds?: ReadonlySet<string>;
+  benchLimit?: number;
+  damaged?: boolean;
 }) {
   const root = useRef<HTMLDivElement>(null);
   const board: BoardState = {
     stadium: null,
     you: {
-      hand: [{ ...pokemon("dragged", stage), evolutionTargetIds: targets }],
-      active: pokemon("active", activeStage),
-      bench: [pokemon("bench-0"), pokemon("bench-1", "Stage1")],
+      hand: [{ ...pokemon("dragged", stage), type: handType, evolutionTargetIds: targets }],
+      active: {
+        ...pokemon("active", activeStage),
+        battle: damaged
+          ? { damage: 30, hp: 70, conditions: { ...NO_CONDITIONS, burned: true } }
+          : undefined,
+      },
+      bench: [
+        {
+          ...pokemon("bench-0"),
+          battle: damaged
+            ? { damage: 20, hp: 60, conditions: { ...NO_CONDITIONS, burned: true } }
+            : undefined,
+        },
+        pokemon("bench-1", "Stage1"),
+      ],
+      benchLimit,
       prizesRemaining: 0,
       faceUpPrizes: [],
     },
@@ -108,7 +141,24 @@ function Scene({
   return (
     <div ref={root} data-testid="root">
       <div data-card-anchor="true" data-card-id="dragged" />
-      <PlayerSide owner="you" side="bottom" player={board.you} benchLimit={5} />
+      <PlayerSide
+        owner="you"
+        side="bottom"
+        player={board.you}
+        benchLimit={benchLimit}
+        usedTrainers={usedTrainerOwner === "you" ? usedTrainers : undefined}
+      />
+      {usedTrainerOwner === "opponent" && (
+        <PlayerSide
+          owner="opponent"
+          side="top"
+          player={board.opponent}
+          benchLimit={5}
+          usedTrainers={usedTrainers}
+        />
+      )}
+      <div data-card-drop-zone="true" data-card-owner="you" data-card-zone="playmat" />
+      <button type="button">Other control</button>
       <AnimatedCardsLayer
         board={board}
         turnNumber={1}
@@ -116,6 +166,7 @@ function Scene({
         backDesign="twilight"
         playmatRef={root}
         onMoveCard={onMove}
+        usableTrainerIds={usableTrainerIds}
         placementPredicate={placementPredicateFor({
           phaseKind: "turn:action",
           isViewerTurn,
@@ -129,6 +180,8 @@ function Scene({
 beforeAll(installDomShims);
 beforeEach(() => {
   mocks.constructed.mockClear();
+  ticker.add.mockClear();
+  ticker.remove.mockClear();
   vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockImplementation(function (
     this: HTMLElement,
   ) {
@@ -139,7 +192,12 @@ beforeEach(() => {
     let width = 800;
     let height = 600;
     const isActive = id === "active" || this.dataset.cardZone === "active";
-    if (id || this.dataset.cardZone === "bench" || isActive) {
+    if (this.dataset.usedTrainersDropZone === "true") {
+      x = 650;
+      y = 100;
+      width = 120;
+      height = 100;
+    } else if (id || this.dataset.cardZone === "bench" || isActive) {
       x = id === "dragged" ? 350 : isActive ? 550 : id === "bench-1" || index === "1" ? 300 : 200;
       y = id === "dragged" ? 400 : isActive ? 100 : 200;
       width = this.dataset.cardZone === "bench" && index === undefined ? 200 : 80;
@@ -159,7 +217,7 @@ beforeEach(() => {
   });
   mocks.createApplication.mockResolvedValue({
     stage: new Container(),
-    ticker: { add: vi.fn(), remove: vi.fn() },
+    ticker,
     canvas: document.createElement("canvas"),
     destroy: vi.fn(),
   });
@@ -180,6 +238,120 @@ function pointer(target: HTMLElement | Window, type: string, x: number, y: numbe
   Object.defineProperty(event, "pointerId", { value: 1 });
   fireEvent(target, event);
 }
+
+it.each([
+  ["active", 590, 150, -190, 170],
+  ["bench-0", 240, 250, 160, 70],
+] as const)(
+  "moves %s's damage and status badges with its drag, then returns them on cancellation",
+  async (id, x, y, dx, dy) => {
+    const onMove = vi.fn();
+    const { getByTestId, container, unmount } = render(
+      <Scene stage="Basic" onMove={onMove} damaged />,
+    );
+    await waitFor(() => expect(view(id).target).toBeTruthy());
+    const badges = [...container.querySelectorAll<HTMLElement>(`[data-card-badge-for="${id}"]`)];
+    const otherId = id === "active" ? "bench-0" : "active";
+    const otherBadge = container.querySelector<HTMLElement>(
+      `[data-damage-chip][data-card-badge-for="${otherId}"]`,
+    );
+    expect(badges).toHaveLength(2);
+    const root = getByTestId("root");
+    pointer(root, "pointerdown", x, y);
+    pointer(root, "pointermove", 400, 320);
+    const tick = ticker.add.mock.calls[0]?.[0];
+    if (!tick) throw new Error("Missing card animation ticker");
+    act(() => tick({ deltaMS: 16 } as Ticker));
+    for (const badge of badges)
+      expect(badge.style.transform).toBe(`translate3d(${dx}px, ${dy}px, 0)`);
+    expect(otherBadge?.style.transform).toBe("translate3d(0px, 0px, 0)");
+    pointer(window, "pointercancel", 400, 320);
+    await waitFor(() => {
+      for (const badge of badges) expect(badge.style.transform).toBe("translate3d(0px, 0px, 0)");
+    });
+    expect(onMove).not.toHaveBeenCalled();
+    unmount();
+    for (const badge of badges) expect(badge.style.transform).toBe("");
+  },
+);
+
+it("plays a Trainer dropped over a used card and preserves click-to-open", async () => {
+  const onMove = vi.fn();
+  const { getByTestId, getByRole, queryByRole, container } = render(
+    <Scene
+      stage="Basic"
+      handType="trainer"
+      usedTrainerOwner="you"
+      onMove={onMove}
+      usableTrainerIds={new Set(["dragged"])}
+    />,
+  );
+  await waitFor(() => expect(view("dragged").target).toBeTruthy());
+  const button = getByRole("button", { name: "View 1 Trainer card used this turn" });
+  const usedCard = button.querySelector<HTMLElement>("[data-used-trainer-id]");
+  if (!usedCard) throw new Error("Missing used Trainer card");
+  pointer(getByTestId("root"), "pointerdown", 390, 450);
+  pointer(usedCard, "pointermove", 700, 150);
+  expect(container.querySelector(".trainer-use-label.is-visible:not(.is-unusable)")).toBeTruthy();
+  pointer(usedCard, "pointerup", 700, 150);
+  expect(onMove).toHaveBeenCalledExactlyOnceWith({
+    cardId: "dragged",
+    from: { owner: "you", zone: "hand", index: 0 },
+    to: { owner: "you", zone: "playmat" },
+  });
+  expect(queryByRole("dialog")).toBeNull();
+  fireEvent.click(button);
+  expect(getByRole("dialog", { name: "Trainer cards used this turn" })).toBeTruthy();
+});
+
+it.each([
+  {
+    handType: "trainer" as const,
+    usedTrainerOwner: "you" as const,
+    usableTrainerIds: new Set<string>(),
+    isViewerTurn: true,
+    otherControl: false,
+  },
+  {
+    handType: "trainer" as const,
+    usedTrainerOwner: "you" as const,
+    usableTrainerIds: new Set(["dragged"]),
+    isViewerTurn: false,
+    otherControl: false,
+  },
+  {
+    handType: "trainer" as const,
+    usedTrainerOwner: "opponent" as const,
+    usableTrainerIds: new Set(["dragged"]),
+    isViewerTurn: true,
+    otherControl: false,
+  },
+  {
+    handType: "energy" as const,
+    usedTrainerOwner: "you" as const,
+    usableTrainerIds: undefined,
+    isViewerTurn: true,
+    otherControl: false,
+  },
+  {
+    handType: "trainer" as const,
+    usedTrainerOwner: "you" as const,
+    usableTrainerIds: new Set(["dragged"]),
+    isViewerTurn: true,
+    otherControl: true,
+  },
+])("rejects an unauthorized used-Trainer drop: %j", async ({ otherControl, ...props }) => {
+  const onMove = vi.fn();
+  const { getByTestId, getByRole } = render(<Scene stage="Basic" onMove={onMove} {...props} />);
+  await waitFor(() => expect(view("dragged").target).toBeTruthy());
+  const target = getByRole("button", {
+    name: otherControl ? "Other control" : "View 1 Trainer card used this turn",
+  });
+  pointer(getByTestId("root"), "pointerdown", 390, 450);
+  pointer(target, "pointermove", 700, 150);
+  pointer(target, "pointerup", 700, 150);
+  expect(onMove).not.toHaveBeenCalled();
+});
 
 it.each([
   ["bench-0", 0, 1, 240, 360],
@@ -242,7 +414,8 @@ it.each(["Stage1", "Stage2", "VMAX", "VSTAR"])(
 );
 
 it("still opens a new Bench slot for a Basic", async () => {
-  const { getByTestId } = render(<Scene stage="Basic" onMove={vi.fn()} />);
+  const onMove = vi.fn();
+  const { getByTestId } = render(<Scene stage="Basic" onMove={onMove} />);
   await waitFor(() => expect(view("dragged").target).toBeTruthy());
   const first = view("bench-0");
   const previousX = first.target.x;
@@ -251,6 +424,25 @@ it("still opens a new Bench slot for a Basic", async () => {
   pointer(getByTestId("root"), "pointermove", 260, 250);
   expect(first.setTarget).toHaveBeenCalled();
   expect(first.target.x).not.toBe(previousX);
+  pointer(window, "pointerup", 260, 250);
+  expect(onMove).toHaveBeenCalledExactlyOnceWith({
+    cardId: "dragged",
+    from: { owner: "you", zone: "hand", index: 0 },
+    to: { owner: "you", zone: "bench", index: 1 },
+  });
+});
+
+it("does not open a space or dispatch a Basic over a full Bench", async () => {
+  const onMove = vi.fn();
+  const { getByTestId } = render(<Scene stage="Basic" onMove={onMove} benchLimit={2} />);
+  await waitFor(() => expect(view("dragged").target).toBeTruthy());
+  const bench = [view("bench-0"), view("bench-1")];
+  for (const card of bench) card.setTarget.mockClear();
+  pointer(getByTestId("root"), "pointerdown", 390, 450);
+  pointer(getByTestId("root"), "pointermove", 260, 250);
+  for (const card of bench) expect(card.setTarget).not.toHaveBeenCalled();
+  pointer(window, "pointerup", 260, 250);
+  expect(onMove).not.toHaveBeenCalled();
 });
 
 it("does not dispatch an evolution dropped onto empty Bench space", async () => {

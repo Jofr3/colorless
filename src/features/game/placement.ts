@@ -176,14 +176,14 @@ export function placementPredicateFor(ctx: PlacementContext): PlacementPredicate
           return false;
         }
         if (sourceType === "pokemon") {
-          // A Pokémon dropped ONTO an own occupant is an evolve gesture (§10):
-          // the Active always hosts one, and a bench drop hosts one when the
-          // indexed slot is occupied. Whether the card actually evolves from
-          // that target (name match, timing) stays the engine's — the pill
-          // then names a rule the drop gestured at. A bench drop on a free
-          // slot is playBasicToBench (dense append; the index is cosmetic).
+          // Basics insert into the Bench, including over an occupied slot.
+          // Evolution cards need an existing host; the engine checks the
+          // evolution match and timing. The Active always targets its occupant.
           if (target.zone === "active") return board.you.active?.type === "pokemon";
           if (target.zone !== "bench") return false;
+          if (sourceCard?.stage === "Basic") {
+            return board.you.bench.length < benchLimitFor(board, "you");
+          }
           if (target.index !== undefined && board.you.bench[target.index]?.type === "pokemon") {
             return true; // evolve the benched Pokémon at this slot
           }

@@ -68,9 +68,11 @@ export type TiltJuiceOptions = {
 /** Wires the Balatro tilt + juice onto a card: attach `tiltRef`/`tiltStyle` and
     the returned pointer `handlers` to the leaning surface, and wrap it in a
     `juiceLayerRef`/`juiceStyle` element that carries the squash-and-wobble. */
-export function useTiltJuice<T extends HTMLElement>(options: TiltJuiceOptions = {}) {
+export function useTiltJuice<T extends HTMLElement, J extends HTMLElement = HTMLDivElement>(
+  options: TiltJuiceOptions = {},
+) {
   const tiltRef = useRef<T>(null);
-  const juiceLayerRef = useRef<HTMLDivElement>(null);
+  const juiceLayerRef = useRef<J>(null);
   const tiltFrame = useRef<number | null>(null);
   const juiceFrame = useRef<number | null>(null);
   const juiceState = useRef<JuiceState | null>(null);

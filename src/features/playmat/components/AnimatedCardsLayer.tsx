@@ -144,6 +144,13 @@ interface SlotAnchor {
   index: number;
 }
 
+interface CardBadgeAnchor {
+  element: HTMLElement;
+  cardId: string;
+  x: number;
+  y: number;
+}
+
 interface SetupFlight {
   deal: SetupDeal;
   view: CardView;
@@ -478,8 +485,19 @@ function isPointerOverZone(point: { x: number; y: number }, zone: DropZoneSnapsh
   );
 }
 
-function shouldIgnorePointer(event: PointerEvent) {
-  return event.target instanceof Element && Boolean(event.target.closest(INTERACTIVE_SELECTOR));
+function shouldIgnorePointer(event: PointerEvent, drag?: DragState) {
+  if (!(event.target instanceof Element)) return false;
+  const control = event.target.closest<HTMLElement>(INTERACTIVE_SELECTOR);
+  if (!control) return false;
+  // The used-card gallery is also a play target. Only a Trainer dragged
+  // from this player's hand may bypass its normal button interaction.
+  return !(
+    drag?.moved &&
+    drag.cardType === "trainer" &&
+    drag.from.zone === "hand" &&
+    control.dataset.usedTrainersDropZone === "true" &&
+    control.dataset.cardOwner === drag.from.owner
+  );
 }
 
 export function AnimatedCardsLayer({
@@ -526,6 +544,7 @@ export function AnimatedCardsLayer({
   const hoveredCardIdRef = useRef<string | null>(null);
   const hoveredCardIdsRef = useRef(new Set<string>());
   const rafRef = useRef<number | null>(null);
+  const cardBadgesRef = useRef<CardBadgeAnchor[]>([]);
   const reducedMotionRef = useRef(false);
   const onMoveCardRef = useRef(onMoveCard);
   const boardRef = useRef(board);
@@ -773,6 +792,7 @@ export function AnimatedCardsLayer({
     const rootRect = root.getBoundingClientRect();
     const descriptorsById = descriptorsRef.current;
     const measuredCardIds = new Set<string>();
+    const cardCenters = new Map<string, { x: number; y: number }>();
 
     for (const element of root.querySelectorAll<HTMLElement>('[data-card-anchor="true"]')) {
       const cardId = element.dataset.cardId;
@@ -793,11 +813,16 @@ export function AnimatedCardsLayer({
       // resizes even for hovered cards.
       view.setPlaymatSize(rootRect.width, rootRect.height);
 
+      const rect = element.getBoundingClientRect();
+      cardCenters.set(cardId, {
+        x: rect.left - rootRect.left + rect.width / 2,
+        y: rect.top - rootRect.top + rect.height / 2,
+      });
+
       if (view.isDragging) {
         continue;
       }
 
-      const rect = element.getBoundingClientRect();
       const rotation = Number(element.dataset.cardRotation ?? "0") || 0;
       const target: CardViewTarget = {
         x: rect.left - rootRect.left + rect.width / 2,
@@ -817,6 +842,14 @@ export function AnimatedCardsLayer({
         view.hide();
       }
     }
+
+    clearCardBadges();
+    for (const element of root.querySelectorAll<HTMLElement>("[data-card-badge-for]")) {
+      const cardId = element.dataset.cardBadgeFor;
+      const center = cardId ? cardCenters.get(cardId) : undefined;
+      if (cardId && center) cardBadgesRef.current.push({ element, cardId, ...center });
+    }
+    positionCardBadges();
 
     dropZonesRef.current = [...root.querySelectorAll<HTMLElement>('[data-card-drop-zone="true"]')]
       .map((element) => {
@@ -839,6 +872,22 @@ export function AnimatedCardsLayer({
     positionTrainerUseLabel();
     measureSetupFlights();
     measureDiscardFlights();
+  }
+
+  function positionCardBadges() {
+    // Follow the rendered spring position rather than the pointer or slot,
+    // so badges stay with their card during drags, reorders, and release.
+    for (const badge of cardBadgesRef.current) {
+      const center = viewsRef.current.get(badge.cardId)?.getCardCenter();
+      if (center) {
+        badge.element.style.transform = `translate3d(${center.x - badge.x}px, ${center.y - badge.y}px, 0)`;
+      }
+    }
+  }
+
+  function clearCardBadges() {
+    for (const badge of cardBadgesRef.current) badge.element.style.removeProperty("transform");
+    cardBadgesRef.current = [];
   }
 
   function discardTarget(owner: PlayerId): CardViewTarget | null {
@@ -1181,7 +1230,7 @@ export function AnimatedCardsLayer({
       drag.moved &&
       drag.cardType === "trainer" &&
       drag.from.zone === "hand" &&
-      !shouldIgnorePointer(event) &&
+      !shouldIgnorePointer(event, drag) &&
       playmatZone !== undefined;
     const canUse =
       isTrainerPlay &&
@@ -2072,7 +2121,7 @@ export function AnimatedCardsLayer({
     clearTrainerPlayPreview();
     const view = viewsRef.current.get(drag.cardId);
     const dropZone =
-      drag.moved && !shouldIgnorePointer(event)
+      drag.moved && !shouldIgnorePointer(event, drag)
         ? findDropZone(point, drag.from, drag.cardType)
         : undefined;
     let toPlacement: CardPlacement | undefined = dropZone?.placement;
@@ -2204,6 +2253,7 @@ export function AnimatedCardsLayer({
       }
       advanceSetupFlights(time, ticker.deltaMS / 1000);
       advanceDiscardFlights(time, ticker.deltaMS / 1000);
+      positionCardBadges();
       positionTrainerUseLabel();
     };
 
@@ -2249,6 +2299,7 @@ export function AnimatedCardsLayer({
         rafRef.current = null;
       }
       app?.ticker.remove(tick);
+      clearCardBadges();
       clearSetupFlights(false);
       clearDiscardFlights();
       for (const view of viewsRef.current.values()) {

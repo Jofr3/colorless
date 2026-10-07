@@ -42,16 +42,16 @@ export function LocalMatch({
     logEntries,
     lastError,
     coinFlipBatch,
+    finishCoinFlip: completeCoinFlip,
     previousTurn,
     nextTurn,
     previousTurnDisabled,
     nextTurnDisabled,
   } = useLocalGame(setup, onSave);
-  const [shownCoinBatch, setShownCoinBatch] = useState<number | null>(null);
-  const tossing = coinFlipBatch !== null && coinFlipBatch.id !== shownCoinBatch;
+  const tossing = coinFlipBatch !== null;
   const finishCoinFlip = useCallback(() => {
-    if (coinFlipBatch !== null) setShownCoinBatch(coinFlipBatch.id);
-  }, [coinFlipBatch]);
+    if (coinFlipBatch !== null) completeCoinFlip(coinFlipBatch.id);
+  }, [coinFlipBatch, completeCoinFlip]);
   const dispatch = useCallback(
     (action: GameAction) => {
       if (!tossing) dispatchAction(action);

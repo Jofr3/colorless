@@ -16,13 +16,18 @@ const CHIP_CLASS =
     it. `className` carries the placement offsets (they differ by anchor box).
     Rendered only when damaged; aria-hidden — BoardSummary is the accessible
     surface. */
-export function DamageChip({ battle, className }: { battle: BattleState; className: string }) {
+export function DamageChip({
+  battle,
+  cardId,
+  className,
+}: { battle: BattleState; cardId: string; className: string }) {
   if (battle.damage <= 0) return null;
   return (
     <div
       className={`pointer-events-none absolute z-[61] bg-rose-600/95 ${CHIP_CLASS} ${className}`}
       aria-hidden="true"
       data-damage-chip="true"
+      data-card-badge-for={cardId}
     >
       {battle.damage}
       {battle.hp !== null && (
@@ -76,9 +81,11 @@ function statusChipsOf(conditions: BattleConditions): StatusChipModel[] {
     region; the plain text labels (SLP/PAR/CNF/PSN/BRN) stay readable in DOM. */
 export function StatusChips({
   conditions,
+  cardId,
   className,
 }: {
   conditions: BattleConditions;
+  cardId: string;
   className: string;
 }) {
   const chips = statusChipsOf(conditions);
@@ -88,6 +95,7 @@ export function StatusChips({
       className={`pointer-events-none absolute z-[61] flex flex-col items-start gap-1 ${className}`}
       aria-hidden="true"
       data-status-chips="true"
+      data-card-badge-for={cardId}
     >
       {chips.map((chip) => (
         <div

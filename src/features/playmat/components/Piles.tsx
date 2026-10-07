@@ -11,8 +11,9 @@ import { PRIZE_COLUMNS, PRIZE_ROWS, deckBackId, prizeBackId, prizeSlotFaces } fr
 /** Card-count badge on a pile frame. Purely visual (aria-hidden): as an
     <output> it was an implicit polite live region, announcing four bare
     numbers on every draw/discard — the accessible deck/discard counts live in
-    BoardSummary instead. z-[61] floats it above the Pixi canvas (z-60); it
-    sits OUTSIDE its frame so no slot styling can trap it below. */
+    BoardSummary instead. z-[61] floats it above card surfaces; the discard
+    pile's stacking context keeps its badge below the Pixi animation canvas.
+    It sits OUTSIDE its frame so slot styling cannot trap it below the pile. */
 function PileCountChip({ count }: { count: number }) {
   return (
     <span
@@ -144,11 +145,12 @@ export function DiscardPile({ owner, discard }: { owner: PlayerId; discard?: Car
   const [open, setOpen] = useState(false);
   const title = owner === "you" ? "Your discard pile" : "Opponent's discard pile";
   const label = `View ${title.toLowerCase()}`;
-  // The top (newest) discard animates in the DOM above the Pixi canvas;
-  // discard cards are not board zones. Mock (prop absent) keeps the empty frame.
+  // Keep the entire pile below the Pixi canvas (z=60), so cards flying from
+  // deck to hand or into discard pass in front of its face and count badge.
+  // The top discard animates in the DOM; mock (prop absent) keeps the empty frame.
   const top = discard === undefined ? undefined : discard[discard.length - 1];
   return (
-    <div className="relative inline-block" data-card-pile="discard" data-card-owner={owner}>
+    <div className="relative z-[59] inline-block" data-card-pile="discard" data-card-owner={owner}>
       <PileFrame>
         {top === undefined ? (
           discard === undefined ? (

@@ -50,6 +50,8 @@ export interface GameError {
 interface HostState {
   /** Transient presentation only — never persisted or replayed on refresh. */
   coinFlipBatch: CoinFlipBatch | null;
+  /** Hold the visible board, log and viewer until the dice finish. Saves use `game`. */
+  coinFlipPresentation: LocalTurnSnapshot | null;
   game: GameState;
   names: Record<Seat, string>;
   startedAt: number;
@@ -68,7 +70,10 @@ interface HostActionEvent {
   at: number;
 }
 
-type HostEvent = HostActionEvent | { type: "previousTurn" | "nextTurn" };
+type HostEvent =
+  | HostActionEvent
+  | { type: "previousTurn" | "nextTurn" }
+  | { type: "finishCoinFlip"; id: number };
 
 /** The seat the hot-seat screen should hand the device to: the projection's
     own phase→seat mapping (phaseViewOf — THE one exhaustive switch over the
@@ -85,6 +90,12 @@ export function waitingSeatOf(state: GameState, current: Seat): Seat {
     → keep the game, surface the error (nonce-bumped so repeats
     re-announce). */
 export function hostReducer(prev: HostState, event: HostEvent): HostState {
+  if ("type" in event && event.type === "finishCoinFlip") {
+    return prev.coinFlipPresentation !== null && prev.coinFlipBatch?.id === event.id
+      ? { ...prev, coinFlipPresentation: null }
+      : prev;
+  }
+  if (prev.coinFlipPresentation !== null) return prev;
   if ("type" in event) {
     const turnIndex = prev.turnIndex + (event.type === "previousTurn" ? -1 : 1);
     const turn = turnIndex === prev.turns.length - 1 ? prev.latestTurn : prev.turns[turnIndex];
@@ -131,6 +142,8 @@ export function hostReducer(prev: HostState, event: HostEvent): HostState {
   }
   return {
     ...prev,
+    coinFlipPresentation:
+      flips.length > 0 ? { game: prev.game, log: prev.log, viewerSeat: prev.viewerSeat } : null,
     coinFlipBatch:
       flips.length > 0
         ? {
@@ -171,6 +184,7 @@ export function initHost(setup: LocalGameSetup): HostState {
   );
   return {
     coinFlipBatch: null,
+    coinFlipPresentation: null,
     game: setup.state,
     names: setup.names,
     startedAt: setup.startedAt,
@@ -185,6 +199,7 @@ export function initHost(setup: LocalGameSetup): HostState {
 
 export interface LocalGame {
   coinFlipBatch: CoinFlipBatch | null;
+  finishCoinFlip: (id: number) => void;
   /** Full engine state — legitimate for a local hot-seat host (the HUD reads
       attacks/allowances from it); rendering still goes through `projection`. */
   game: GameState;
@@ -241,20 +256,23 @@ export function useLocalGame(
   }, []);
   const previousTurn = useCallback(() => dispatchHost({ type: "previousTurn" }), []);
   const nextTurn = useCallback(() => dispatchHost({ type: "nextTurn" }), []);
+  const finishCoinFlip = useCallback((id: number) => dispatchHost({ type: "finishCoinFlip", id }), []);
 
+  const presentation = host.coinFlipPresentation ?? host;
   const projection = useMemo(
-    () => projectGameState(host.game, host.viewerSeat),
-    [host.game, host.viewerSeat],
+    () => projectGameState(presentation.game, presentation.viewerSeat),
+    [presentation.game, presentation.viewerSeat],
   );
   const logEntries = useMemo(
-    () => viewLogEntries(host.log, host.viewerSeat),
-    [host.log, host.viewerSeat],
+    () => viewLogEntries(presentation.log, presentation.viewerSeat),
+    [presentation.log, presentation.viewerSeat],
   );
 
   return {
-    coinFlipBatch: host.coinFlipBatch,
-    game: host.game,
-    viewerSeat: host.viewerSeat,
+    coinFlipBatch: host.coinFlipPresentation === null ? null : host.coinFlipBatch,
+    finishCoinFlip,
+    game: presentation.game,
+    viewerSeat: presentation.viewerSeat,
     names: host.names,
     projection,
     logEntries,

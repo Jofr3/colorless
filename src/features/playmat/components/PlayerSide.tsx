@@ -11,6 +11,7 @@ import { cardBackToneFor } from "../utils/players";
 import { Bench } from "./Bench";
 import { CardSlot, DamageChip, PlaymatCard, StatusChips } from "./Card";
 import { DeckPile, DiscardPile, PrizeGrid } from "./Piles";
+import { UsedTrainers } from "./UsedTrainers";
 
 const SIDE_PILE_STACK_GAP = "calc(var(--slot-gap) + 4px)";
 // Side piles sit at the bench frame's edges (left/right: 100%), so they track
@@ -21,10 +22,12 @@ function ActiveCardSlot({
   card,
   active,
   owner,
+  usedTrainers,
 }: {
   card: CardModel | null;
   active: boolean;
   owner: PlayerId;
+  usedTrainers?: { turn: number; cards: CardModel[] };
 }) {
   return (
     <div
@@ -36,13 +39,22 @@ function ActiveCardSlot({
       <CardSlot highlighted={active}>
         {card ? <PlaymatCard card={card} priority /> : <div style={CARD_SIZE_STYLE} />}
       </CardSlot>
+      {usedTrainers && (
+        <UsedTrainers key={usedTrainers.turn} cards={usedTrainers.cards} owner={owner} />
+      )}
       {/* Siblings of the frame, not inside it, so z-[61] clears the Pixi
           canvas. right-0/top-0 on the frame box lands exactly where -1.5
           offsets on the card box did (--pile-pad is the same 6px); the
           status markers mirror it on the left corner, clear of the chip. */}
-      {card?.battle !== undefined && <DamageChip battle={card.battle} className="right-0 top-0" />}
+      {card?.battle !== undefined && (
+        <DamageChip battle={card.battle} cardId={card.id} className="right-0 top-0" />
+      )}
       {card?.battle?.conditions !== undefined && (
-        <StatusChips conditions={card.battle.conditions} className="left-0 top-0" />
+        <StatusChips
+          conditions={card.battle.conditions}
+          cardId={card.id}
+          className="left-0 top-0"
+        />
       )}
     </div>
   );
@@ -154,6 +166,7 @@ export function PlayerSide({
   activeTurn = false,
   benchLimit,
   pile,
+  usedTrainers,
 }: {
   owner: PlayerId;
   blueBackPlayer?: PlayerId;
@@ -163,9 +176,17 @@ export function PlayerSide({
   benchLimit: number;
   /** Deck count + public discard (game page); absent on the mock. */
   pile?: PileState;
+  usedTrainers?: { turn: number; cards: CardModel[] };
 }) {
   const isTop = side === "top";
-  const activeSlot = <ActiveCardSlot card={player.active} active={activeTurn} owner={owner} />;
+  const activeSlot = (
+    <ActiveCardSlot
+      card={player.active}
+      active={activeTurn}
+      owner={owner}
+      usedTrainers={usedTrainers}
+    />
+  );
   const bench = (
     <BenchArea
       owner={owner}

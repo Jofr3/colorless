@@ -56,6 +56,8 @@ export const seatLogEntrySchema = z.discriminatedUnion("kind", [
     who: seatLogSourceSchema,
     elapsed: z.string(),
     segments: z.array(logSegmentSchema),
+    /** Public identity of a Trainer played/attached on this row. Older logs omit it. */
+    playedTrainer: z.object({ id: z.string(), cardId: z.string(), name: z.string() }).optional(),
   }),
   z.object({ kind: z.literal("turn"), turn: z.number() }),
 ]);

@@ -163,6 +163,8 @@ export type LogEntry =
       who: LogSource;
       elapsed: string;
       segments: LogSegment[];
+      /** Public card identity captured when a Trainer is played, independent of its current zone. */
+      playedTrainer?: { id: string; cardId: string; name: string };
     }
   | {
       kind: "turn";
