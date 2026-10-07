@@ -63,6 +63,7 @@ import {
   fossilPlayable,
   programPlayable,
   rareCandyOptions,
+  trainerProgramPlayable,
 } from "./cardplay";
 import { cardOfUid, topCardOf, topUid } from "./cards";
 import {
@@ -981,7 +982,7 @@ function redactedTrainersOf(
       !isStadium &&
       (isFossil
         ? !fossilPlayable(state, viewerSeat)
-        : !programPlayable(state, program.trainer ?? [], viewerSeat));
+        : !trainerProgramPlayable(state, program.trainer ?? [], viewerSeat));
     // ⚠️ THE §4 TERM CARRIES THE CARD'S OWN EXEMPTION (D223,
     // `trainerFirstTurnExempt`: Carmine's "If you go first, you may use this card
     // during your first turn."). Without it this mirror would grey out a row

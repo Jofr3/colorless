@@ -1348,6 +1348,19 @@ function recorded(record: EffectRecord, slot: EffectSlot): readonly string[] {
   return record[slot] ?? [];
 }
 
+/** Eligible discard cards, shared by retrieval prompts and play validation. */
+export function discardRetrievalCandidates(
+  state: GameState,
+  seat: Seat,
+  op: Extract<EffectOp, { op: "discardPileRetrieval" }>,
+  record: EffectRecord = {},
+): string[] {
+  const barred = new Set(op.exclude === undefined ? [] : recorded(record, op.exclude));
+  return state.players[seat].discard.filter(
+    (uid) => !barred.has(uid) && matchesFilter(cardOf(state, uid), op.filter),
+  );
+}
+
 /** 🆕🆕 D488 — how many of the uids filed under `slot` SCORE, once the printed noun
     has narrowed them. An ABSENT `filter` is every uid, which is byte-for-byte the
     `.length` this replaced, so the 13 printings already reading a slot do not move.
@@ -3572,10 +3585,7 @@ function stepOp(
       // the only place it can bite: the offer is what resolveEffect's
       // validateChoice checks a pick against, so an excluded uid is unreachable
       // from the wire as well as absent from the dialog.
-      const barred = new Set(op.exclude === undefined ? [] : recorded(record, op.exclude));
-      const candidates = state.players[ctx.seat].discard.filter(
-        (uid) => !barred.has(uid) && matchesFilter(cardOf(state, uid), op.filter),
-      );
+      const candidates = discardRetrievalCandidates(state, ctx.seat, op, record);
       // 🆕🆕🆕 **D538 — `max: "all"` IS THE ONE VALUE OF THIS FIELD THAT DOES NOT PARK.**
       // *"Then, shuffle **those** Energy cards into your deck."* (corpus FILE LINE 412)
       // prints NO quantifier and is MANDATORY, so the whole matching pile moves and

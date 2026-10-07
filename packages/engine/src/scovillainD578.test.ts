@@ -488,6 +488,7 @@ const ALLOWLIST: Record<string, string> = {
   "filter · interpreter.ts · conditionHolds · topCardOf(state, body) · { kind: \"bannerPokemon\", banner: cond.banner }": B,
   "filter · interpreter.ts · countCardsInDiscardPile · cardOfUid(state, uid) · filter": `${P} — a discard card`,
   "filter · interpreter.ts · countCardsInHand · cardOfUid(state, uid) · filter": `${P} — a hand card`,
+  "filter · interpreter.ts · discardRetrievalCandidates · cardOf(state, uid) · op.filter": `${P} — a discard card`,
   "filter · interpreter.ts · counterEachAll · card · filter": `${E} — \`inPlayCardOf\``,
   "filter · interpreter.ts · countPokemonInPlay · card · filter": `${E} — \`inPlayCardOf\``,
   "filter · interpreter.ts · eachAttachTopUp · cardOf(given.state, uid) · op.filter": `${P} — a deck / discard card`,

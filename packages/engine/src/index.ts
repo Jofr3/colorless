@@ -25250,7 +25250,7 @@ export { handCostAction, handCostUnmet } from "./interpreter";
     up anyway. Reads only counts and boards the viewer can see (its own limit:
     hidden-zone CONTENTS never decide playability — the Poké Ball rule), so the
     hot-seat HUD may call it freely; the P4 projection caveat above applies. */
-export { programPlayable } from "./cardplay";
+export { programPlayable, trainerProgramPlayable } from "./cardplay";
 /** 🆕🆕🆕 D576 — the Antique Fossil play's one gate (a free Bench slot), shared by both Trainer
     lists and `playTrainer` so a fossil row greys exactly when the play is refused. */
 export { fossilPlayable } from "./cardplay";

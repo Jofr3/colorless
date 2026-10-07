@@ -19,7 +19,8 @@ import {
 //   • Pal Pad (sv01-182) — up to 2 Supporters from discard → deck (then shuffle);
 //   • Super Rod (sv02-188) — up to 3 Pokémon/Basic Energy from discard → deck.
 // Like searchDeck it is "up to" (declinable) and parks on the SAME chooseCards
-// prompt; an empty match is a no-op, and any trailing shuffleDeck still fires.
+// prompt; a standalone retrieval to hand needs a match to be played, while
+// retrieval programs with a trailing shuffleDeck can still shuffle without one.
 
 function find<T extends GameEvent["type"]>(
   events: GameEvent[],
@@ -239,17 +240,13 @@ describe("M5 op-slice — discardPileRetrieval", () => {
     expect(onlyEnergy.players.p1.discard).toContain(leftoverPoke); // the unpicked Pokémon stays
   });
 
-  it("Energy Retrieval with no Basic Energy in the discard is a no-op (never parks)", () => {
+  it("rejects Energy Retrieval with no Basic Energy in the discard", () => {
     let state = board(4);
     state = discardFromDeck(state, "p1", "fix-basic-1", 1); // only a Pokémon in the discard
     state = handFromDeck(state, "p1", "sv01-171", 1);
     const uid = handUid(state, "p1", "sv01-171");
-    const { state: after, events } = mustApply(state, { type: "playTrainer", seat: "p1", uid });
-    expect(after.phase.kind).toBe("turn:action");
-    expect(types(events)).not.toContain("DISCARD_RETRIEVED");
-    expect(types(events)).not.toContain("EFFECT_PENDING");
-    // Energy Retrieval has no trailing shuffle, so nothing scrambles either.
-    expect(types(events)).not.toContain("SHUFFLE");
+    expectErr(state, { type: "playTrainer", seat: "p1", uid }, "NO_LEGAL_TARGET");
+    expect(state.players.p1.hand).toContain(uid);
   });
 
   it("Pal Pad with no Supporters in the discard still shuffles (the trailing shuffle, like a whiffed search)", () => {

@@ -54,6 +54,7 @@ import {
   otherSeat,
   programFor,
   programPlayable,
+  trainerProgramPlayable,
   providedEnergy,
   rareCandyOptions,
   retreatLocked,
@@ -190,7 +191,7 @@ function playableTrainers(game: GameState, seat: Seat): TrainerOption[] {
       !isStadium &&
       (isFossil
         ? !fossilPlayable(game, seat)
-        : !programPlayable(game, program.trainer ?? [], seat));
+        : !trainerProgramPlayable(game, program.trainer ?? [], seat));
     // ⚠️ THE §4 TERM CARRIES THE CARD'S OWN EXEMPTION (D223,
     // `trainerFirstTurnExempt`: Carmine's "If you go first, you may use this card
     // during your first turn."), exactly as redact.ts's online twin does. A flag

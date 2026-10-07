@@ -38,6 +38,7 @@ import {
   // 🆕🆕🆕 D572 — Adrena-Brain's source funnel.
   counterToOpponentSources,
   discardEnergyPlayable,
+  discardRetrievalCandidates,
   // 🆕🆕🆕 D557 — the Tool offer's own funnel, so the grey-out and the offer agree.
   discardableTools,
   firstAttachableEnergy,
@@ -194,7 +195,7 @@ export function playTrainer(state: GameState, action: PlayTrainerAction): ApplyR
       `${card.name} can only be used if you ${handCostAction(unpayable, true)}`,
     );
   }
-  if (!programPlayable(state, program, action.seat)) {
+  if (!trainerProgramPlayable(state, program, action.seat)) {
     return err("NO_LEGAL_TARGET", `${card.name} has no legal target`);
   }
 
@@ -1605,6 +1606,26 @@ export function programPlayable(
     }
   }
   return true;
+}
+
+/** Trainer target validation, shared by playTrainer and both HUD offers. */
+export function trainerProgramPlayable(
+  state: GameState,
+  program: readonly EffectOp[],
+  seat: Seat,
+): boolean {
+  // A standalone retrieval into hand has no effect without an eligible discard
+  // card (Night Stretcher / Energy Retrieval). Check before discarding the Trainer.
+  // Mixed programs may still act through a draw, shuffle, or earlier discard cost.
+  const onlyOp = program.length === 1 ? program[0] : undefined;
+  if (
+    onlyOp?.op === "discardPileRetrieval" &&
+    onlyOp.dest === "hand" &&
+    discardRetrievalCandidates(state, seat, onlyOp).length === 0
+  ) {
+    return false;
+  }
+  return programPlayable(state, program, seat);
 }
 
 /** Resolve one of the actor's own in-play Pokémon off a wire target: the
