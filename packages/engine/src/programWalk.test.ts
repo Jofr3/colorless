@@ -402,6 +402,9 @@ describe("the pool sweep, structurally", () => {
       // one with no change to the pool — so a sweep keyed on "which fixtures exist" would
       // have seen nothing, and only a sweep keyed on what the READERS return catches it.
       "fix-trainerops attack 7 :: switchActive",
+      // 🆕🆕🆕 D582 — Team Rocket's Great Ball `me02.5-205`, a reprint-alias key on `sv10-175`'s
+      // object: the same `coinFlipGate.otherwise` miss, one row per KEY.
+      "me02.5-205 trainer :: searchDeck",
       // 🆕🆕🆕 D560 — Whimsicott `sv05-015` / `sv08.5-008` "Wafting Heal": `conditionGate →
       // conditionGate → optional { then: [heal "all", discardEnergy "all"] }`. The walk
       // descends both gates and SEES the `optional`, never its `then`: two rows per id.

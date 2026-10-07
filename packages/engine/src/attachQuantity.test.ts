@@ -300,7 +300,7 @@ function registryAttachOps(): Map<string, Extract<EffectOp, { op: "attachEnergyF
 // ── 1. THE POPULATION, WALKED OFF **BOTH** PRODUCERS ─────────────────────────
 
 describe("D359 §1 — the quantity population, over the registry AND the deriver", () => {
-  it("🛑 the REGISTRY half is exactly 8 printings on 3 sentences, by id", () => {
+  it("🛑 the REGISTRY half is exactly ~~8~~ printings on 3 sentences, by id (🆕🆕🆕 D582 (D539): *8* WITHDRAWN — 9 since the `me` alias Ethan's Ho-Oh ex `me02.5-026`)", () => {
     const withCount = [...registryAttachOps()]
       .filter(([, ops]) => ops.some((op) => op.count !== undefined))
       .map(([id]) => id)
@@ -310,9 +310,12 @@ describe("D359 §1 — the quantity population, over the registry AND the derive
         ...QUANTITY_IDS.goldenFlame,
         ...QUANTITY_IDS.battleHardened,
         ...QUANTITY_IDS.spikeClad,
+        // 🆕🆕🆕 D582 — Ethan's Ho-Oh ex `me02.5-026`, a reprint-alias of `sv10-039` (the SAME
+        // `ETHANS_HO_OH_EX` object): the 8 are now 9 printings, still 3 sentences.
+        "me02.5-026",
       ].sort(),
     );
-    expect(withCount).toHaveLength(8);
+    expect(withCount).toHaveLength(9);
   });
 
   it("🛑🛑 the DERIVER half is 5 more printings the registry cannot see", () => {
@@ -882,7 +885,7 @@ describe("D359 §6 — the ids this file rests on are real and locally seated", 
     // attack), Relicanth `sv05-084` / `sv05-173` (`MEMORY_DIVE`, a `passive`) and Team Rocket's Energy
     // `sv10-182` (`TEAM_ROCKETS_ENERGY`, an `energy`). Real catalog ids, no `fix-*` key, inserted
     // MID-MAP after D577's rows; no `attackGate`.
-    expect(registryCardIds()).toHaveLength(988); // (🆕🆕🆕 **D580 +2** — Iron Treads `sv05-118` (`DUAL_CORE`, a `passive`) and Mr. Mime `sv05-063` (an attack-only row), two registry ids inserted MID-MAP; neither carries an `attackGate`.) (🆕🆕🆕 **D579 +1** — Walking Wake `sv06-063`, one attack-only registry id, inserted MID-MAP.)
+    expect(registryCardIds()).toHaveLength(1087); // (🆕🆕🆕 **D582 +99** — the Mega Evolution serie's reprint-alias tier: 99 `me` ids on EXISTING program objects, inserted MID-MAP; Terapagos ex `me02.5-179` shares `sv07-128`'s `attackGate`.) (🆕🆕🆕 **D580 +2** — Iron Treads `sv05-118` (`DUAL_CORE`, a `passive`) and Mr. Mime `sv05-063` (an attack-only row), two registry ids inserted MID-MAP; neither carries an `attackGate`.) (🆕🆕🆕 **D579 +1** — Walking Wake `sv06-063`, one attack-only registry id, inserted MID-MAP.)
     for (const id of Object.values(QUANTITY_IDS).flat()) {
       if (programFor(id) === undefined) continue;
       // Every id that DOES have a program had one before this slice: the eight

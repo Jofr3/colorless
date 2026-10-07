@@ -38,7 +38,8 @@ import { koByEffectMarker } from "./types";
 
 // ── 🆕🆕🆕 D568 — THE TERA BANNER UNLOCK, SLICE 1: 19 PRINTINGS ─────────────────────────────
 //
-//   The datum      banners.ts `BANNER_BY_ID` (98 Tera ids) / `bannerOf` / cards.ts `isTeraPokemon`
+//   The datum      banners.ts `BANNER_BY_ID` (~~98~~ Tera ids) / `bannerOf` / cards.ts `isTeraPokemon`
+//                  (🆕🆕🆕 D582 (D539): *98 Tera ids* WITHDRAWN — 103: 98 `sv` + 5 `me` reprints)
 //   The rule       continuous.ts `benchShieldScan` — "As long as this Pokémon is on your Bench,
 //                  prevent all damage done to this Pokémon by attacks (both yours and your
 //                  opponent's)." — R-TB1 ⚠️ UNRULED (Feint Attack does not null it)
@@ -406,7 +407,7 @@ function playRejected(state: GameState, id: string): string {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-describe("§1 — the datum: `banners.ts`' 98 Tera ids, two sources plus the printed face", () => {
+describe("§1 — the datum: `banners.ts`' ~~98~~ Tera ids, two sources plus the printed face (🆕🆕🆕 D582 (D539): *98* WITHDRAWN — 103: 98 `sv` + 5 `me` reprints)", () => {
   // 🆕🆕🆕 D569 — RE-SCOPED TO THE TERA ROWS. The table now also carries the 86 Ancient/Future
   // ids (Slice 2 part a, `paradoxBannerD569.test.ts` pins them), so "every id is Tera" and "every
   // id is a legal Pokémon ex" are claims about the TERA rows only — a Paradox banner is printed on
@@ -414,18 +415,25 @@ describe("§1 — the datum: `banners.ts`' 98 Tera ids, two sources plus the pri
   const ids = Object.keys(BANNER_BY_ID).filter((id) => BANNER_BY_ID[id] === "Tera");
   const pool = new Map(LEGAL_EX_POOL.map((row) => [row[0], row] as const));
 
-  it("98 Tera ids (🆕 D569: beside 86 Ancient/Future ids — Slice 2 part a)", () => {
-    expect(ids).toHaveLength(98);
+  it("~~98~~ Tera ids (🆕 D569: beside 86 Ancient/Future ids — Slice 2 part a) (🆕🆕🆕 D582 (D539): *98* WITHDRAWN — 103: 98 `sv` + 5 `me` reprints)", () => {
+    // 🆕🆕🆕 D582 — 98 `sv` Tera ids, plus FIVE `me` Tera reprints (`me02.5-038`/`-057`/`-160`/
+    // `-179`/`-277`, each printed face checked on tcgdex's image and pinned BY ID in
+    // `reprintAliasMeD582.test.ts`): 103 Tera, 189 in all.
+    expect(ids.filter((id) => !id.startsWith("me"))).toHaveLength(98);
+    expect(ids).toHaveLength(103);
     // (🆕🆕🆕 D569 (D539): ~~Ancient/Future are Slice 2 and are NOT here~~ WITHDRAWN — they are
-    // here now: 98 + 86 = 184, three banner values.)
-    expect(Object.keys(BANNER_BY_ID)).toHaveLength(184);
+    // here now: 98 + 86 = 184, three banner values.) (🆕🆕🆕 D582: 184 + 5 = 189.)
+    expect(Object.keys(BANNER_BY_ID)).toHaveLength(189);
     expect(new Set(Object.values(BANNER_BY_ID))).toEqual(new Set(["Tera", "Ancient", "Future"]));
   });
 
-  it("🛑 every TERA id is a Standard-legal Pokémon ex in the local pool (353 rows)", () => {
+  it("🛑 every ~~TERA~~ `sv` TERA id is a Standard-legal Pokémon ex in the local pool (353 rows) (🆕🆕🆕 D582 (D539): *every TERA id* WITHDRAWN — the 5 `me` Tera ids are not in this `sv` pool; pinned by id in `reprintAliasMeD582.test.ts`)", () => {
     expect(LEGAL_EX_POOL).toHaveLength(353);
     for (const row of LEGAL_EX_POOL) expect(row[1].endsWith(" ex"), row[0]).toBe(true);
-    for (const id of ids) expect(pool.has(id), id).toBe(true);
+    // 🆕🆕🆕 D582 — the pool is the `sv` serie's (353 rows); the five `me` Tera ids are pinned BY ID
+    // in `reprintAliasMeD582.test.ts` (on a placeholder battler — no `me` face is a fixture or in
+    // this pool, so their printed faces are a recorded check on tcgdex's images, not a pin).
+    for (const id of ids.filter((i) => !i.startsWith("me"))) expect(pool.has(id), id).toBe(true);
   });
 
   it("🛑 REPRINT CONSISTENCY: legal printings sharing name, HP, attack and ability names agree on membership", () => {
@@ -1117,8 +1125,8 @@ describe("§9 — the three attacks: Shining Blaze, Jewel Breaker, Prism Charge"
 
 // ─────────────────────────────────────────────────────────────────────────────
 describe("§10 — the version", () => {
-  it("the engine is 0.465.0", () => {
-    expect(engineVersion).toBe("0.465.0");
-    expect(manifest.version).toBe("0.465.0");
+  it("the engine is 0.466.0", () => {
+    expect(engineVersion).toBe("0.466.0");
+    expect(manifest.version).toBe("0.466.0");
   });
 });

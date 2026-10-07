@@ -17156,6 +17156,130 @@ const REGISTRY: Record<string, CardProgram> = {
   //    move. ──
   "sv05-118": DUAL_CORE, // Iron Treads — Dual Core: {F} and {M} while a Future Booster Energy Capsule is attached
   "sv05-063": MR_MIME_LOOK_ALIKE_SHOW, // Mr. Mime — Look-Alike Show: reveal the opponent's hand, use 1 Supporter's effect
+  // 🆕🆕🆕 D582 — THE MEGA EVOLUTION SERIE'S REPRINT-ALIAS TIER: 99 `me` printings, every one
+  // mapped to a program object that ALREADY EXISTS (no new object, no new op, no new field) —
+  // D190's idiom, keyed by the `me` id, MID-MAP (D395/D396) so `raw[last]` does not move. Measured on the LOCAL D1 (2026-10-07) against every
+  // registry id's own catalog row, `legal_standard = 1`, `serie_id = 'me'`:
+  //   • 56 Trainer / Special Energy rows whose WHOLE printed face is the twin's, byte for byte —
+  //     `effect`, `trainer_type`, `energy_type`, `hp`, `abilities_json`, `attacks_json` and the
+  //     ACE SPEC rarity (Urbain / Cheren print Nemona's "Draw 3 cards." — the sentence is the key,
+  //     as Cheren `sv10.5w-081` already is);
+  //   • 32 Pokémon whose `abilities_json` is the twin's (names AND texts) and whose attacks at
+  //     every index the twin's program authors (`attack` / `attackGate`) are the twin's, and
+  //     whose program names no Ability but the printed one;
+  //   • 11 Pokémon whose ONE Ability prints the twin's TEXT under another NAME, aliased only
+  //     where the program is a bare `passive` that carries no Ability name (Mega Diancie ex,
+  //     Empoleon ex, Mega Chandelure ex, Charmander, Pikachu `30th`). The four whose program
+  //     NAMES its Ability (Cinccino ex ×3 "Smooth Coat" ~ Expert Hider, Turtonator "Shell
+  //     Spikes" ~ Counterattacking Pincer) need a renamed copy and are NOT here — and neither are
+  //     Numel `me02.5-027` / `-223`: they print Heatran `sv06-123`'s "Incandescent Body", but
+  //     Heatran's D190 alias is Armarouge's `SCORCHING_ARMOR`, whose `triggered[0].name` logs
+  //     "Scorching Armor" (the same wrong-name defect, inherited, not copied further).
+  // The Tera reprints among them (Pikachu ex ×2, Terapagos ex) also carry the banner (banners.ts).
+  // `reprintAliasMeD582.test.ts` pins every row's twin (`toBe`, the SAME object) and the measured
+  // counts; the printed bytes are the LOCAL D1's (no `me` row is a fixture), as D190's were.
+  // — Trainers and Special Energy (56) —
+  "me01-114": BOSSS_ORDERS, // Boss's Orders — twin `sv02-172`
+  "me01-115": ENERGY_SWITCH, // Energy Switch — twin `sv01-173`
+  "me01-125": RARE_CANDY, // Rare Candy — twin `sv01-191`
+  "me01-130": SWITCH, // Switch — twin `sv01-194`
+  "me01-131": ULTRA_BALL, // Ultra Ball — twin `sv01-196`
+  "me01-166": AIR_BALLOON, // Air Balloon — twin `sv10.5b-079`
+  "me01-167": BUDDY_BUDDY_POFFIN, // Buddy-Buddy Poffin — twin `sv05-144`
+  "me01-173": NIGHT_STRETCHER, // Night Stretcher — twin `sv06.5-061`
+  "me01-175": RARE_CANDY, // Rare Candy — twin `sv01-191`
+  "mep-092": PARADISE_RESORT, // Paradise Resort — twin `svp-150`
+  "me02-123": SWITCH, // Switch — twin `sv01-194`
+  "me02-124": IGNITION_ENERGY, // Ignition Energy — twin `sv10.5w-086`
+  "me02.5-181": AIR_BALLOON, // Air Balloon — twin `sv10.5b-079`
+  "me02.5-183": BOSSS_ORDERS, // Boss's Orders — twin `sv02-172`
+  "me02.5-184": BUDDY_BUDDY_POFFIN, // Buddy-Buddy Poffin — twin `sv05-144`
+  "me02.5-186": COUNTER_GAIN, // Counter Gain — twin `sv08-169`
+  "me02.5-189": GLASS_TRUMPET, // Glass Trumpet — twin `sv07-135`
+  "me02.5-190": IRISS_FIGHTING_SPIRIT, // Iris's Fighting Spirit — twin `sv09-149`
+  "me02.5-195": NS_PP_UP, // N's PP Up — twin `sv09-153`
+  "me02.5-196": NIGHT_STRETCHER, // Night Stretcher — twin `sv06.5-061`
+  "me02.5-200": SURFER, // Surfer — twin `sv08-187`
+  "me02.5-201": TEAM_ROCKETS_ARCHER, // Team Rocket's Archer — twin `sv10-170`
+  "me02.5-202": TEAM_ROCKETS_ARIANA, // Team Rocket's Ariana — twin `sv10-171`
+  "me02.5-203": TEAM_ROCKETS_FACTORY, // Team Rocket's Factory — twin `sv10-173`
+  "me02.5-204": TEAM_ROCKETS_GIOVANNI, // Team Rocket's Giovanni — twin `sv10-174`
+  "me02.5-205": TEAM_ROCKETS_GREAT_BALL, // Team Rocket's Great Ball — twin `sv10-175`
+  "me02.5-207": TRAINER_SEARCH, // Team Rocket's Petrel — twin `sv10-176`
+  "me02.5-208": TEAM_ROCKETS_PROTON, // Team Rocket's Proton — twin `sv10-177`
+  "me02.5-209": TEAM_ROCKETS_TRANSCEIVER, // Team Rocket's Transceiver — twin `sv10-178`
+  "me02.5-210": TEAM_ROCKETS_WATCHTOWER, // Team Rocket's Watchtower — twin `sv10-180`
+  "me02.5-212": TOOL_SCRAPPER, // Tool Scrapper — twin `sv10.5w-085`
+  "me02.5-214": NEMONA, // Urbain — twin `sv01-180` (Nemona, same text)
+  "me02.5-216": PRISM_ENERGY, // Prism Energy — twin `sv10.5b-086`
+  "me02.5-255": BLACK_BELTS_TRAINING, // Black Belt's Training — twin `sv08.5-096`
+  "me02.5-256": BOSSS_ORDERS, // Boss's Orders — twin `sv02-172`
+  "me02.5-258": NEMONA, // Cheren — twin `sv01-180` (Nemona, same text)
+  "me02.5-259": COUNTER_GAIN, // Counter Gain — twin `sv08-169`
+  "me02.5-260": GLASS_TRUMPET, // Glass Trumpet — twin `sv07-135`
+  "me02.5-261": JAMMING_TOWER, // Jamming Tower — twin `sv06-153`
+  "me02.5-262": NS_PP_UP, // N's PP Up — twin `sv09-153`
+  "me02.5-263": TEAM_ROCKETS_TRANSCEIVER, // Team Rocket's Transceiver — twin `sv10-178`
+  "me02.5-292": IRISS_FIGHTING_SPIRIT, // Iris's Fighting Spirit — twin `sv09-149`
+  "me02.5-293": SURFER, // Surfer — twin `sv08-187`
+  "me03-071": CRUSHING_HAMMER, // Crushing Hammer — twin `sv01-168`
+  "me03-072": ENERGY_SEARCH, // Energy Search — twin `sv01-172`
+  "me03-076": JUDGE, // Judge — twin `sv01-176`
+  "me03-080": POKE_BALL, // Poké Ball — twin `sv01-185`
+  "me03-082": POKEMON_CATCHER, // Pokémon Catcher — twin `sv01-187`
+  "me03-083": POTION, // Potion — twin `sv01-188`
+  "me03-108": ENERGY_RECYCLER, // Energy Recycler — twin `sv10-164`
+  "me03-115": SACRED_ASH, // Sacred Ash — twin `sv10-168`
+  "me04-108": ENERGY_RETRIEVAL, // Energy Retrieval — twin `sv01-171`
+  "me04-115": TOOL_SCRAPPER, // Tool Scrapper — twin `sv10.5w-085`
+  "me05-104": BRAVE_BANGLE, // Brave Bangle — twin `sv10.5w-080`
+  "me05-105": CRUSHING_HAMMER, // Crushing Hammer — twin `sv01-168`
+  "me05-107": ENERGY_SWITCH, // Energy Switch — twin `sv01-173`
+  // — Pokémon, same Abilities (32) —
+  "me02.5-019": CHARGING_UP, // Team Rocket's Spidops — twin `sv10-020`
+  "me02.5-024": MELT_AWAY, // Ethan's Magcargo — twin `sv10-036`
+  "me02.5-026": ETHANS_HO_OH_EX, // Ethan's Ho-Oh ex — twin `sv10-039`
+  "me02.5-057": KO_SURVIVAL, // Pikachu ex — twin `sv08-057`
+  "me02.5-060": DYNAMOTOR, // Eelektrik — twin `sv10.5b-031`
+  "me02.5-070": IONOS_BELLIBOLT_EX, // Iono's Bellibolt ex — twin `sv09-053`
+  "me02.5-072": FLASHING_DRAW, // Iono's Kilowattrel — twin `svp-182`
+  "me02.5-076": FAIRY_ZONE, // Lillie's Clefairy ex — twin `sv09-056`
+  "me02.5-079": POWER_SAVER, // Team Rocket's Mewtwo ex — twin `svp-205`
+  "me02.5-082": WONDER_KISS, // Togekiss — twin `sv08-072`
+  "me02.5-099": ADRENA_BRAIN, // Munkidori — twin `sv06-095`
+  "me02.5-110": CHAMPIONS_CALL, // Cynthia's Gabite — twin `sv10-103`
+  "me02.5-137": NS_ZOROARK_EX, // N's Zoroark ex — twin `sv09-098`
+  "me02.5-142": FLIP_THE_SCRIPT, // Fezandipiti ex — twin `sv06.5-038`
+  "me02.5-159": DRAKLOAK, // Drakloak — twin `sv06-129`
+  "me02.5-171": FAN_CALL, // Fan Rotom — twin `sv07-118`
+  "me02.5-178": PRISM_CHARGE, // Terapagos — twin `sv08-161`
+  "me02.5-179": TERAPAGOS_EX_UNIFIED_BEATDOWN, // Terapagos ex — twin `sv07-128`
+  "me02.5-222": MELT_AWAY, // Ethan's Magcargo — twin `sv10-036`
+  "me02.5-235": WONDER_KISS, // Togekiss — twin `sv08-072`
+  "me02.5-248": DRAKLOAK, // Drakloak — twin `sv06-129`
+  "me02.5-250": FAN_CALL, // Fan Rotom — twin `sv07-118`
+  "me02.5-277": KO_SURVIVAL, // Pikachu ex — twin `sv08-057`
+  "me02.5-279": IONOS_BELLIBOLT_EX, // Iono's Bellibolt ex — twin `sv09-053`
+  "me02.5-280": FAIRY_ZONE, // Lillie's Clefairy ex — twin `sv09-056`
+  "me02.5-281": POWER_SAVER, // Team Rocket's Mewtwo ex — twin `svp-205`
+  "me02.5-286": NS_ZOROARK_EX, // N's Zoroark ex — twin `sv09-098`
+  "me02.5-287": MARNIES_GRIMMSNARL_EX, // Marnie's Grimmsnarl ex — twin `sv10-136`
+  "me02.5-288": FLIP_THE_SCRIPT, // Fezandipiti ex — twin `sv06.5-038`
+  "me02.5-289": X_BOOT, // Steven's Metagross ex — twin `sv10-145`
+  "me04-002": STONJOURNER, // Kakuna — twin `sv01-121` (Stonjourner, same text)
+  "me04-052": POISON_POINT, // Qwilfish — twin `sv05-008` (Roselia, same text)
+  // — Pokémon, same Ability text under another name, a nameless passive (11) —
+  "me02-011": MELT_AWAY, // Charmander — twin `sv10-036` (Ethan's Magcargo, same text)
+  "me02-041": COPPERAJAH_EX, // Mega Diancie ex — twin `sv02-150` (Copperajah ex, same text)
+  "me02-070": UNAWARE, // Empoleon ex — twin `sv08-031` (Skeledirge, same text)
+  "me02-114": UNAWARE, // Empoleon ex — twin `sv08-031` (Skeledirge, same text)
+  "me02.5-267": COPPERAJAH_EX, // Mega Diancie ex — twin `sv02-150` (Copperajah ex, same text)
+  "me02.5-282": COPPERAJAH_EX, // Mega Diancie ex — twin `sv02-150` (Copperajah ex, same text)
+  "me05-038": TRAP_TERRITORY, // Mega Chandelure ex — twin `sv01-019` (Spidops ex, same text)
+  "me05-099": TRAP_TERRITORY, // Mega Chandelure ex — twin `sv01-019` (Spidops ex, same text)
+  "me05-115": TRAP_TERRITORY, // Mega Chandelure ex — twin `sv01-019` (Spidops ex, same text)
+  "30th-028": PRESSURE, // Pikachu — twin `sv03-030` (Entei, same text)
+  "30th-033": CURIOUS_TEA_PARTY, // Pikachu — twin `sv06-020` (Poltchageist, same text)
   // ── D190 — THE **STANDARD-LEGAL** REPRINT-ALIAS MAP (Tier 0 of
   //    `docs/reference/coverage-backlog-legal.md`). 22 printings, 9 map targets,
   //    ZERO new code: every row below prints a sentence that is already authored

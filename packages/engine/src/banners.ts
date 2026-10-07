@@ -190,6 +190,17 @@ export const BANNER_BY_ID: Readonly<Record<string, Banner>> = {
   "svp-174": "Tera", // Eevee ex
   "svp-175": "Tera", // Espeon ex
   "svp-176": "Tera", // Umbreon ex
+  // ── 🆕🆕🆕 D582 — the Mega Evolution serie's TERA REPRINTS, 5 ids: every legal `me` Pokémon whose
+  // whole face (name, HP, `attacks_json`, `abilities_json`) is a Tera printing's, measured on the
+  // LOCAL D1 (2026-10-07), and each printed face checked (assets.tcgdex.net/en/me/me02.5/<n>):
+  // all five print the banner and the Tera rule. `me` Tera printings with NEW text (Koraidon ex
+  // `me02.5-121` prints the banner; Miraidon ex `me02.5-073`, the `mep` / `30th` ex …) are NOT
+  // measured here — a named gap, `reprintAliasMeD582.test.ts`.
+  "me02.5-038": "Tera", // Cinderace ex (= sv07-157)
+  "me02.5-057": "Tera", // Pikachu ex (= sv08-057; a D582 registry alias)
+  "me02.5-160": "Tera", // Dragapult ex (= sv06-130)
+  "me02.5-179": "Tera", // Terapagos ex (= sv07-128; a D582 registry alias)
+  "me02.5-277": "Tera", // Pikachu ex (= sv08-057; a D582 registry alias)
   // ── 🆕🆕🆕 D569 — the Paradox banners (Slice 2 part a), 86 ids. ──
   // Ancient — 44 (40 Pokémon, 4 Trainers)
   "sv05-038": "Ancient", // Gouging Fire ex

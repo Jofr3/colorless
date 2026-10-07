@@ -33,6 +33,11 @@ import type { Card } from "@luminous/schema";
 // open after it whatever the order, and 0.464's cached `?hpMin` / `hp-desc` bodies keep the
 // Trainers; D581 bumps `CACHE_VERSION` to v7 (apps/api catalog/cache.ts) so 0.465 starts cold,
 // which closes (3) only if the remote re-ingest has FINISHED before the deploy.
+// [🆕🆕🆕 D582 (D539): *"the match pool"* is WITHDRAWN for the ONLINE match — its Durable Object reads the pool
+// from D1 directly (lobby/cardPool.ts `loadCardPool`) and never touches the KV cache; only the LOCAL match
+// fetches through `/cards/:id`. And the pool is PERSISTED in every match (`GameState.cardPool`), so a match
+// created before the re-ingest keeps the old rows for its whole life whatever the cache holds — a FOURTH
+// window, named in apps/api lobby/match.ts "STAYS 41 AT D582".]
 //
 // What stays here is RULE text, not printed face: WHICH printings are Antique Fossils (the
 // banner-table precedent, `banners.ts` — a fixed fact about a printing, keyed by id), and the

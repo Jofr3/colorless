@@ -611,7 +611,13 @@ describe("the blast radius — what this slice did NOT change", () => {
     // difference the auditor cannot see is not a defect. **The
     // `%You can't use more than 1%` ladder is now COMPLETE: 5 + 3 + 2 = the whole
     // 10 legal printings, every one of them built.**
+    // 🆕🆕🆕 D582 — +4 `me` reprint-alias keys on the SAME objects: Fezandipiti ex `me02.5-142` /
+    // `me02.5-288` (Flip the Script) and Fan Rotom `me02.5-171` / `me02.5-250` (Fan Call).
     expect(shared.sort()).toEqual([
+      "me02.5-142",
+      "me02.5-171",
+      "me02.5-250",
+      "me02.5-288",
       "sv06.5-038",
       "sv06.5-039",
       "sv06.5-084",
@@ -687,7 +693,12 @@ describe("the blast radius — what this slice did NOT change", () => {
     // 🆕🆕🆕 **D560 — AND THEN IT WAS 10**: Thwackey `sv06-015`/`svp-115` "Boom Boom
     // Groove" on the NEW `yourActiveHasAbility` (the printed Festival Lead name on the
     // Active's top card; a lock does not falsify it, R-TW ⚠️ UNRULED).
+    // 🆕🆕🆕 D582 — +4 `me` reprint-alias keys on the SAME objects (Fezandipiti ex ×2, Fan Rotom ×2).
     expect(gated.sort()).toEqual([
+      "me02.5-142",
+      "me02.5-171",
+      "me02.5-250",
+      "me02.5-288",
       "sv06-015",
       "sv06.5-029", // 🆕🆕🆕 D564 — Crobat "Shadowy Envoy"
       "sv06.5-038",

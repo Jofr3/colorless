@@ -406,9 +406,13 @@ describe("§1 — the datum: `banners.ts`' 86 Paradox ids, two sources plus the 
     expect(BANNER_BY_ID[MIRAIDON]).toBe("Future");
   });
 
-  it("the Tera rows are untouched: 98, and no id carries two banners (a Record cannot)", () => {
-    expect(Object.keys(BANNER_BY_ID).filter((id) => BANNER_BY_ID[id] === "Tera")).toHaveLength(98);
-    expect(Object.keys(BANNER_BY_ID)).toHaveLength(184);
+  it("the ~~Tera~~ `sv` Tera rows are untouched: 98, and no id carries two banners (a Record cannot) (🆕🆕🆕 D582 (D539): *the Tera rows are 98* WITHDRAWN — 103: 98 `sv` + 5 `me` reprints)", () => {
+    // 🆕🆕🆕 D582 — the `sv` Tera rows are still 98; the table gained FIVE `me` Tera reprints
+    // (`me02.5-*`, `reprintAliasMeD582.test.ts`), so 103 Tera / 189 in all.
+    const tera = Object.keys(BANNER_BY_ID).filter((id) => BANNER_BY_ID[id] === "Tera");
+    expect(tera.filter((id) => !id.startsWith("me"))).toHaveLength(98);
+    expect(tera).toHaveLength(103);
+    expect(Object.keys(BANNER_BY_ID)).toHaveLength(189);
   });
 });
 
@@ -873,8 +877,8 @@ describe("§8 — R-PX5: Iron Thorns ex is FUTURE now, and its own Initializatio
 
 // ─────────────────────────────────────────────────────────────────────────────
 describe("§9 — the version", () => {
-  it("the engine is 0.465.0", () => {
-    expect(engineVersion).toBe("0.465.0");
-    expect(manifest.version).toBe("0.465.0");
+  it("the engine is 0.466.0", () => {
+    expect(engineVersion).toBe("0.466.0");
+    expect(manifest.version).toBe("0.466.0");
   });
 });

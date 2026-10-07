@@ -534,14 +534,16 @@ describe("D444 §2 — the population, and the honest zero", () => {
     for (const [, text] of gated) expect(timingGateFromAttackText(text), text).toBeDefined();
   });
 
-  it("🛑 17 registry ids carry `attackGate`, and the 5 DISTINCT values are the 4 leading-clause derivations plus the trailing gate (🆕 D541 — which DERIVES too now, so the old either/or in this title is withdrawn)", () => {
+  it("🛑 ~~17~~ registry ids carry `attackGate` (🆕🆕🆕 D582 (D539): *17* WITHDRAWN — 18 since the `me` alias Terapagos ex `me02.5-179`; 17 is the `sv` figure), and the 5 DISTINCT values are the 4 leading-clause derivations plus the trailing gate (🆕 D541 — which DERIVES too now, so the old either/or in this title is withdrawn)", () => {
     // 🛑 **THE AGREEMENT RUNG, AND IT IS THE GAP THIS SLICE ACTUALLY CLOSES.** Until
     // D444 the clause LIST and the gate VALUES were two independent hand
     // transcriptions of the same four printed sentences with nothing tying them, and
     // D281's own doc block names the polarity confusion as the easiest thing here to
     // get wrong. This is the tie, computed off the LIVE registry.
     const gatedIds = registryCardIds().filter((id) => programFor(id)?.attackGate !== undefined);
-    expect(gatedIds.length).toBe(17);
+    // 🆕🆕🆕 D582 — 17 -> **18** ids: Terapagos ex `me02.5-179`, a reprint-alias key on `sv07-128`'s
+    // object, so the DISTINCT values below stand at 5 (the title's "17" is the `sv` figure).
+    expect(gatedIds.length).toBe(18);
 
     const derivable = [BAN_TEXT, LICENCE_TEXT, GATE_TEXT, ROLLOUT_TEXT].map((t) =>
       JSON.stringify(timingGateFromAttackText(t)),
@@ -873,6 +875,6 @@ describe("D444 §6 — `MATCH_RECORD_VERSION` stays 29, driven over bytes both w
     // D208's debt and D275's mutant: `engineVersion` and `packages/engine/package.json`
     // are one fact with two spellings, and the pin is authored HERE rather than
     // inherited (D427 — count your own suite's pin).
-    expect(engineVersion).toBe("0.465.0");
+    expect(engineVersion).toBe("0.466.0");
   });
 });

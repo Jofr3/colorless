@@ -6,6 +6,30 @@
 > `coverage-backlog-legal.md`; its pool is unchanged and whole. The suite-side figures are
 > `censusAtHead.test.ts`'s D581 block and `censusAttackCorpusMe.ts`.
 
+## 🆕 D582 update (engine 0.466.0) — the Mega ex rule and the alias tier
+
+The 3-Prize **Mega Evolution ex rule** is built (cards.ts `prizeValueOf` / `isMegaEvolutionPokemonEx`; 133 legal
+printings, 41 names). The **reprint-alias tier** keys 99 `me` ids on existing program objects (registry.ts D582
+block; `reprintAliasMeD582.test.ts`), and banners.ts marks the five `me02.5` Tera reprints.
+
+| Column | `me` built / units (D582) | Standard pool D582 |
+|---|---|---|
+| Attacks | 729 / 1,039 (+1: Prism Charge `me02.5-178`) | **2,461 / 2,771** |
+| Abilities | 41 / 234 | **417 / 610** |
+| Trainers | 54 / 183 | **318 / 447** |
+| Special Energy | 2 / 11 | **13 / 22** |
+
+**Fully built `me` printings: 671** (was 576) — 16 basic Energy, 513 Pokémon with derived attacks and no Ability,
+49 Mega ex (46 + Mega Chandelure ex ×3 via the alias tier), 37 other aliased Pokémon, 54 Trainers, 2 Special Energy.
+D581's "alias-ready" figures, re-measured: of 47 ability units, 6 are NOT aliased (Cinccino ex ×3, Turtonator — the
+twin program names its Ability; Numel ×2 — twin Heatran `sv06-123`'s D190 program is Armarouge's and logs "Scorching
+Armor"; a renamed copy is owed each); of 3 Special Energy, Team Rocket's Energy `me02.5-217` is not
+(tcgdex tags it `energy_type` Normal, its `sv` twin Special); of 8 attack units, only Prism Charge prints at its twin's
+index — "Fade Out" ×5 and "Surf Back" ×2 need a new object each. **New named gaps:** tcgdex tags every `me` Special
+Energy (and three `sv` ones: Reversal, Prism, Ignition) `energy_type` Normal, so the engine's `isSpecialEnergy` answers
+false for them and the `basicEnergy` filter ("Basic Energy" searches) admits them; `me` Tera printings with NEW text (Koraidon ex `me02.5-121` prints the banner) are
+not in banners.ts. The sections below are the D581 measurement.
+
 ## Headline
 
 | Column | `sv` (built / units) | `me` (built / units) | Standard pool D581 | `me` alias-ready |
@@ -19,7 +43,7 @@ Legal rows: `sv` 2,021 (18 sets) + `me` 1,266 (9 sets; `30th-c` is not Standard-
 
 - **"Built"** for an attack is the census's four-arm predicate (a reader, the gate splitter,
   the trailing splitter, or a registry row **keyed by the id**). No `me` id is a registry key,
-  so the `me` non-attack columns are 0 built.
+  so the `me` non-attack columns are 0 built. [🆕 D582 (D539): WITHDRAWN — the alias tier keys 99 `me` ids; see the D582 update above.]
 - **"Alias-ready"** means the exact printed text is already built on a registry id (of any
   legality), so one registry line naming the `me` id would build it with no new code. For a
   Trainer the whole printed face must match (the four `me` fossils share the fossil rule text

@@ -717,7 +717,7 @@ describe("§5 — on a BOARD: each of the three cancels and lands, and the ids a
     // attack), Relicanth `sv05-084` / `sv05-173` (`MEMORY_DIVE`, a `passive`) and Team Rocket's Energy
     // `sv10-182` (`TEAM_ROCKETS_ENERGY`, an `energy`). Real catalog ids, no `fix-*` key, inserted
     // MID-MAP after D577's rows; no `attackGate`.
-    expect(ids).toHaveLength(988); // (🆕🆕🆕 **D580 +2** — Iron Treads `sv05-118` (`DUAL_CORE`, a `passive`) and Mr. Mime `sv05-063` (an attack-only row), two registry ids inserted MID-MAP; neither carries an `attackGate`.) (🆕🆕🆕 **D579 +1** — Walking Wake `sv06-063`, one attack-only registry id, inserted MID-MAP.)
+    expect(ids).toHaveLength(1087); // (🆕🆕🆕 **D582 +99** — the Mega Evolution serie's reprint-alias tier: 99 `me` ids on EXISTING program objects, inserted MID-MAP.) (🆕🆕🆕 **D580 +2** — Iron Treads `sv05-118` (`DUAL_CORE`, a `passive`) and Mr. Mime `sv05-063` (an attack-only row), two registry ids inserted MID-MAP; neither carries an `attackGate`.) (🆕🆕🆕 **D579 +1** — Walking Wake `sv06-063`, one attack-only registry id, inserted MID-MAP.)
     for (const id of BOUGHT_IDS) {
       expect(ids, id).not.toContain(id);
       expect(programFor(id), id).toBeUndefined();
@@ -726,11 +726,13 @@ describe("§5 — on a BOARD: each of the three cancels and lands, and the ids a
 });
 
 describe("§6 — `allOf` gains its first DERIVED producer, and nothing downstream moves", () => {
-  it("🛑 every `allOf` before this slice was authored in registry.ts — 5 sites, 14 ids", () => {
+  it("🛑 every `allOf` before this slice was authored in registry.ts — 5 sites, ~~14~~ ids (🆕🆕🆕 D582 (D539): *14* WITHDRAWN — 15 since the `me` alias Terapagos ex `me02.5-179`)", () => {
     const withAllOf = registryCardIds().filter((id) =>
       JSON.stringify(programFor(id) ?? {}).includes('"allOf"'),
     );
-    expect(withAllOf).toHaveLength(14);
+    // 🆕🆕🆕 D582 — 14 -> **15** ids, still 5 sites: Terapagos ex `me02.5-179`, a reprint-alias key on
+    // `sv07-128`'s object (its `attackGate` condition is the `allOf`).
+    expect(withAllOf).toHaveLength(15);
     // …and NONE of them is one of this slice's ids, so the derived producer is
     // genuinely new rather than a second path to an existing value.
     for (const id of BOUGHT_IDS) expect(withAllOf, id).not.toContain(id);

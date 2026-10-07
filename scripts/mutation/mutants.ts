@@ -6235,7 +6235,7 @@ export const MUTANTS: Mutant[] = [
     // CORPUS QUOTES** (D414/D415), so a value-keyed sweep over `toBe("0.391.0")` cannot
     // see it — this row's `find` spells the DECLARATION, not an assertion. Run
     // `precheck` after every version bump, not after the sweep tells you.
-    find: 'export const engineVersion = "0.465.0";',
+    find: 'export const engineVersion = "0.466.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -46713,5 +46713,82 @@ export const MUTANTS: Mutant[] = [
     find: 'const CACHE_VERSION = "v7";',
     replace: 'const CACHE_VERSION = "v6";',
     expectKilledBy: ["apps/api/src/catalog/cache.test.ts", "apps/api/src/catalog/routes.test.ts"],
+  },
+  // ── 🆕 D582 — THE MEGA EVOLUTION ex RULE (cards.ts `prizeValueOf` / `isMegaEvolutionPokemonEx`) AND THE `me`
+  //    REPRINT-ALIAS TIER (99 registry keys on EXISTING objects; five `me` Tera ids in banners.ts — DATA, outside
+  //    the whitelist since D538, pinned by reprintAliasMeD582 and the two banner suites). `MATCH_RECORD_VERSION`
+  //    STAYS 41. Every `find` asserted to occur exactly once, by script, before it was written here (D540); every
+  //    replace names only what its file binds (binding-gate.ts). ──
+  {
+    id: "D582-mega-ex-pays-the-ex-rule",
+    decision: "D582",
+    what: "`prizeValueOf` forgets the Mega Evolution ex rule: a Mega ex Knocked Out owes 2 Prizes (the Pokémon ex rule's) instead of the printed 3, and every modifier composes over the wrong base. Killed by megaEvolutionRuleD582 §2 and §3.",
+    file: "packages/engine/src/cards.ts",
+    find: '  return suffix === "VMAX" || isMegaEvolutionPokemonEx(card) ? 3 : 2;',
+    replace: '  return suffix === "VMAX" ? 3 : 2;',
+    expectKilledBy: ["packages/engine/src/megaEvolutionRuleD582.test.ts"],
+  },
+  {
+    id: "D582-mega-predicate-asks-no-ex",
+    decision: "D582",
+    what: "`isMegaEvolutionPokemonEx` drops the ` ex` conjunct: any Pokémon whose name starts \"Mega \" is a Mega ex, rule box or not. Killed by megaEvolutionRuleD582 §1's near-miss rung.",
+    file: "packages/engine/src/cards.ts",
+    find: '  return pokemonSuffixOf(card) === "ex" && card.name.startsWith("Mega ");',
+    replace: '  return card.category === "Pokemon" && card.name.startsWith("Mega ");',
+    expectKilledBy: ["packages/engine/src/megaEvolutionRuleD582.test.ts"],
+  },
+  {
+    id: "D582-mega-predicate-asks-no-prefix",
+    decision: "D582",
+    what: "`isMegaEvolutionPokemonEx` drops the \"Mega \" prefix: every Pokémon ex owes 3 Prizes. Killed by megaEvolutionRuleD582 §1-§3 (the plain-ex contrasts).",
+    file: "packages/engine/src/cards.ts",
+    find: '  return pokemonSuffixOf(card) === "ex" && card.name.startsWith("Mega ");',
+    replace: '  return pokemonSuffixOf(card) === "ex";',
+    expectKilledBy: ["packages/engine/src/megaEvolutionRuleD582.test.ts"],
+  },
+  {
+    id: "D582-mega-predicate-drops-the-space",
+    decision: "D582",
+    what: "`isMegaEvolutionPokemonEx` matches the prefix \"Mega\" without its space: a \"Meganium ex\" would owe 3 Prizes. Killed by megaEvolutionRuleD582 §1's constructed Meganium ex rung.",
+    file: "packages/engine/src/cards.ts",
+    find: '  return pokemonSuffixOf(card) === "ex" && card.name.startsWith("Mega ");',
+    replace: '  return pokemonSuffixOf(card) === "ex" && card.name.startsWith("Mega");',
+    expectKilledBy: ["packages/engine/src/megaEvolutionRuleD582.test.ts"],
+  },
+  {
+    id: "D582-alias-points-at-the-neighbour",
+    decision: "D582",
+    what: "the realistic authoring slip in a 99-line block: Urbain `me02.5-214` is keyed to the neighbouring Supporter's program (Boss's Orders) instead of Nemona's \"Draw 3 cards.\". Killed by reprintAliasMeD582's twin rung and its board rung.",
+    file: "packages/engine/src/registry.ts",
+    find: '  "me02.5-214": NEMONA, // Urbain — twin `sv01-180` (Nemona, same text)',
+    replace: '  "me02.5-214": BOSSS_ORDERS, // Urbain — twin `sv01-180` (Nemona, same text)',
+    expectKilledBy: ["packages/engine/src/reprintAliasMeD582.test.ts"],
+  },
+  {
+    id: "D582-alias-row-dropped",
+    decision: "D582",
+    what: "one `text`-tier alias row is lost (Mega Chandelure ex `me05-038`, Binding Flame on Spidops ex's nameless passive): the printing is unbuilt again while the census still counts it. Killed by reprintAliasMeD582's twin and count rungs and the census suite's D581 / D273 partition rungs.",
+    file: "packages/engine/src/registry.ts",
+    find: '  "me05-038": TRAP_TERRITORY, // Mega Chandelure ex — twin `sv01-019` (Spidops ex, same text)\n',
+    replace: "",
+    expectKilledBy: ["packages/engine/src/reprintAliasMeD582.test.ts", "packages/engine/src/censusAtHead.test.ts"],
+  },
+  {
+    id: "D582-alias-keeps-the-wrong-name",
+    decision: "D582",
+    what: "the review-round exclusion undone: Numel `me02.5-223` (\"Incandescent Body\") is keyed to Heatran's D190 program SCORCHING_ARMOR, whose `triggered[0].name` logs Armarouge's \"Scorching Armor\" — the wrong-name alias the tier's own rule forbids. Killed by reprintAliasMeD582's exact-key and NOT-aliased rungs and the census suite's D273 partition rung.",
+    file: "packages/engine/src/registry.ts",
+    find: '  "me02.5-235": WONDER_KISS, // Togekiss — twin `sv08-072`\n',
+    replace: '  "me02.5-223": SCORCHING_ARMOR, // Numel — twin `sv06-123` (Heatran, same text)\n  "me02.5-235": WONDER_KISS, // Togekiss — twin `sv08-072`\n',
+    expectKilledBy: ["packages/engine/src/reprintAliasMeD582.test.ts", "packages/engine/src/censusAtHead.test.ts"],
+  },
+  {
+    id: "D582-census-energy-alias-unrecorded",
+    decision: "D582",
+    what: "the D582 census's Special Energy list forgets Ignition Energy `me02-124`: a registry key ships with no census visit (D272's defect). Killed by the census suite's D273 partition rung and the D582 count rungs.",
+    file: "packages/engine/src/censusAtHead.test.ts",
+    find: '  "me02-124", // Ignition Energy\n',
+    replace: "",
+    expectKilledBy: ["packages/engine/src/censusAtHead.test.ts"],
   },
 ];

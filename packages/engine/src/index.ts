@@ -20252,6 +20252,20 @@ import type { GameState, Seat } from "./types";
     `expect(manifest.version)`, `it(…)` titles, the declaration and `package.json` —
     **not** as a value-keyed grep — because a value-keyed grep is precisely the mechanism
     that ate D500's heading.)
+    🆕🆕🆕 engineVersion 0.465.0 → **0.466.0** (D582 — THE MEGA EVOLUTION ex RULE AND THE `me` REPRINT-ALIAS TIER;
+    `MATCH_RECORD_VERSION` STAYS 41 (apps/api match.ts "STAYS 41 AT D582")). **The rule** (cards.ts): the printed
+    *"Mega Evolution ex rule — When your Mega Evolution Pokémon ex is Knocked Out, your opponent takes 3 Prize cards."*
+    — `prizeValueOf` answers 3 for a Pokémon `isMegaEvolutionPokemonEx` (NEW, exported: the NAME is "Mega <Species>
+    ex"; tcgdex's `suffix` column never says MEGA). It is the BASE every Prize modifier already composes over in
+    flow.ts `planPrizes` (Legacy Energy's "1 fewer" → 2, Greedy Eater's "1 more" → 4, the clamp at the Prizes left).
+    Nothing else changes for a Mega ex: it evolves from its printed `evolveFrom` (or is a Basic), its turn does NOT
+    end on evolving (the 2014 M-EX rule; no `me` printing carries it), and it is still a Pokémon ex. 133 legal `me`
+    printings / 41 names. **The alias tier** (registry.ts, MID-MAP): 99 `me` ids keyed on EXISTING program objects —
+    56 Trainer / Special Energy faces byte-identical to a built twin, 32 Pokémon with the twin's Abilities, 11 whose
+    one Ability is a nameless `passive` printing the twin's text. banners.ts gains the five `me02.5` Tera reprints.
+    Census (censusAtHead.test.ts D582 block): Standard pool attacks 2461 / 2771, abilities 417 / 610, trainers
+    318 / 447, special energy 13 / 22; 671 `me` printings fully built. The client shows no Prize value; no deck rule
+    names a Mega ex.)
     🆕🆕🆕 engineVersion 0.464.0 → **0.465.0** (D581 — THE DATA SLICE: THE MEGA EVOLUTION SERIE INGESTED INTO THE LOCAL
     D1 AND A TRAINER'S PRINTED POKÉMON FACE KEPT BY THE INGEST; `MATCH_RECORD_VERSION` STAYS 41 (apps/api match.ts
     "STAYS 41 AT D581"). `apps/api/src/ingest/map.ts`'s Trainer branch keeps `hp` / `abilities` / `attacks` (the
@@ -20266,12 +20280,12 @@ import type { GameState, Seat } from "./types";
     engine BACK TO BACK, re-ingest first: this engine on an old catalog plays the four fossils with no Ability and TM
     Fluorite grants nothing; 0.464 on a re-ingested catalog lacks the three category guards (a fossil Item matches
     `abilityPokemon`, TM Fluorite `attackNamePokemon` — no harmful reach found) — the benign window. A THIRD window is
-    the API's KV catalog cache (1-hour TTL): a `/cards/:id` row cached before the re-ingest (the match pool's fetch)
+    the API's KV catalog cache (1-hour TTL): a `/cards/:id` row cached before the re-ingest (the match pool's fetch [🆕🆕🆕 D582 (D539): the LOCAL match's only — the online pool reads D1 directly, and every match PERSISTS its pool: a fourth window, apps/api match.ts "STAYS 41 AT D582"])
     would keep the first window open after it whatever the order, so the API's `CACHE_VERSION` steps v6 → v7 with
     this deploy (catalog/cache.ts; review round) — 0.465 starts cold, which closes it if the re-ingest FINISHED first.
     Census re-baselined over `sv` + `me` (censusAtHead.test.ts D581 block; `censusAttackCorpusMe.ts`): attacks
     2460 / 2771, abilities 376 / 610, trainers 264 / 447, special energy 11 / 22 — the `sv` halves unchanged and whole,
-    no `me` printing a registry key. catalogManifest.ts regenerated (5084 rows / 30 sets; the six-set slice `sixSet`).)
+    no `me` printing a registry key [🆕🆕🆕 D582 (D539): WITHDRAWN — the D582 alias tier keys 99 `me` ids]. catalogManifest.ts regenerated (5084 rows / 30 sets; the six-set slice `sixSet`).)
     🆕🆕🆕 engineVersion 0.463.0 → **0.464.0** (D580 — THE LAST ATTACK AND THE LAST ABILITY: MR. MIME `sv05-063` "LOOK-ALIKE
     SHOW" + IRON TREADS `sv05-118` "DUAL CORE", 2 PRINTINGS / 2 TEXTS; `MATCH_RECORD_VERSION` STAYS 41 (apps/api match.ts
     "STAYS 41 AT D580"). THE WHOLE INGESTED LEGAL STANDARD POOL IS BUILT: attacks 1732 / 1732, abilities 376 / 376, trainers
@@ -25091,7 +25105,7 @@ import type { GameState, Seat } from "./types";
     WITNESS** — the count was re-derived every slice and the word *"three"* was carried.
     A successor of this slice inherits **81 / 61 / 17** again, over **FIVE** history
     occurrences: those four plus `deckMillFilteredScale.test.ts`'s own header arrow.) */
-export const engineVersion = "0.465.0";
+export const engineVersion = "0.466.0";
 
 export type {
   ApplyResult,
@@ -25129,6 +25143,7 @@ export {
   hpOf,
   isBasicPokemon,
   isEnergyCard,
+  isMegaEvolutionPokemonEx,
   isSpecialEnergy,
   parseAttackDamage,
   pokemonSuffixOf,

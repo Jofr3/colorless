@@ -2159,18 +2159,39 @@ export interface MatchRecord {
     `turn:action.discardable` — 🛑 **DEPLOY THE SERVER FIRST**: an old client's `z.object` STRIPS
     the unknown key, while a new client's REQUIRED key refuses an old server's frame.
 
+    🆕🆕🆕 **STAYS 41 AT D582 — THE MEGA EVOLUTION ex RULE AND THE `me` REPRINT-ALIAS TIER ADD NO GameState,
+    PendingStage, PROMPT OR WIRE KEY.** (Placed ABOVE the D581 block, out of date order — D563's placement.)
+    What moved is a RULE read at Knock Out time and two id-keyed tables, none persisted: cards.ts
+    `prizeValueOf` answers 3 for a "Mega … ex" (`isMegaEvolutionPokemonEx`, read off the card NAME in the
+    match's `cardPool`), the registry keys 99 `me` ids on EXISTING program objects, and banners.ts marks five
+    `me` Tera reprints. Every op a 0.466 match can park on those ids is an op 0.465 already ships, so a 0.465
+    rollback reads every v41 byte. 🛑 **THE RULE IS NOT VERSIONED, AND THAT IS THE STATED COST:** a v41
+    match in flight across the deploy pays 3 Prizes for a Mega ex KO from its next Knock Out on (the printed
+    rule — 0.465 paid 2), and a rollback pays 2 again; a `me` alias id gains (or, rolled back, loses) its
+    program mid-match. Same class as every D5xx rule slice that stayed 41 (D580). No re-ingest is owed.
+    [🆕🆕🆕 D582 (D539) — TWO D581 PREMISES BELOW ARE WITHDRAWN. ① *"A v41 state carries card IDS, never card
+    faces"* is FALSE: `GameState.cardPool` holds the whole catalog `Card` of every deck id, loaded from D1 at
+    match creation (lobbyDO.ts `loadCardPool`) and persisted with the state. So the D581 deploy has a FOURTH
+    window the three-window list missed: a match created before the remote re-ingest keeps its pre-D581 rows
+    for its WHOLE LIFE (TM Fluorite grants nothing, a fossil face has no Ability), and one created under 0.465
+    keeps the re-ingested rows under a 0.464 rollback (no category guards). Re-ingesting first does not close
+    it; only the end of those matches does. ② *"the match pool is fetched through GET `/cards/:id`"* is true
+    of the LOCAL match only (src/features/game/cardPool.ts); this file's online pool reads D1 directly and
+    never touches the KV cache.]
+
     🆕🆕🆕 **STAYS 41 AT D581 — THE DATA SLICE ADDS NO GameState, PendingStage, PROMPT OR WIRE KEY.** (Placed
     ABOVE the D580 block, out of date order — D563's placement — so every anchored line below stays byte-
     identical.) What moved is CATALOG data and two catalog READS, none of them persisted: the ingest keeps a
     Trainer's printed face (`hp` / `abilities` / `attacks`), the fossil face reads its Ability off the row, the
     attack menu's Tool section reads the Tool card's own `attacks` (`toolAttacks` became a flag), and
     `attacksOf` / `hasPrintedAbility` ask the category. A v41 state carries card IDS, never card faces, so a
-    0.464 rollback reads every v41 byte as before. 🛑 **DEPLOY ORDER IS A DATA ORDER, NOT A CLIENT/SERVER ONE:
+    0.464 rollback reads every v41 byte as before. [🆕🆕🆕 D582 (D539): WITHDRAWN — see ① in the D582 block above.] 🛑 **DEPLOY ORDER IS A DATA ORDER, NOT A CLIENT/SERVER ONE:
     re-ingest the REMOTE D1 first** (the nine sets whose Trainers print a face, and the `me` serie) — this
     server reads the fossil Ability and the TM attack OFF THE CATALOG, so against an un-re-ingested D1 the four
     fossils play with no Ability and Technical Machine: Fluorite grants nothing. The KV catalog cache steps to
     `v7` with this deploy (catalog/cache.ts): the match pool is fetched through GET `/cards/:id`, so a v6 body
-    cached before the re-ingest would otherwise serve that old row for up to the 1-hour TTL after it.
+    cached before the re-ingest would otherwise serve that old row for up to the 1-hour TTL after it. [🆕🆕🆕 D582 (D539): the LOCAL
+    match's pool only — see ② in the D582 block above.]
 
     🆕🆕🆕 **STAYS 41 AT D580 — MR. MIME "LOOK-ALIKE SHOW" AND IRON TREADS "DUAL CORE" ADD NO GameState,
     PendingStage OR REQUIRED KEY; THE ONE NEW PERSISTED SHAPE IS A PARKED OP, AND A 0.463 ROLLBACK READS

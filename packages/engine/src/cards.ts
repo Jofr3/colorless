@@ -302,11 +302,32 @@ export function attacksOf(card: Card): readonly Attack[] {
     behaviour is pinned by prizeValue.test.ts (the KO→count wiring) and the unit
     cases in cards.test.ts. Both prize read sites clamp `count` to the Prizes that
     remain (flow.ts's takePrizes handler + the §14 tie-guard slice), so a 2-Prize
-    KO with one Prize left takes the last one and wins rather than over-drawing. */
+    KO with one Prize left takes the last one and wins rather than over-drawing.
+    🆕🆕🆕 D582 — AND 3 FOR A MEGA EVOLUTION POKÉMON ex. The printed rule box (every `me` Mega ex,
+    e.g. Mega Venusaur ex `me01-003`): *"Mega Evolution ex rule — When your Mega Evolution Pokémon
+    ex is Knocked Out, your opponent takes 3 Prize cards."* It REPLACES the Pokémon ex rule's 2 — a
+    Mega ex prints this box and not the ex one — so it is the BASE count every existing Prize
+    modifier already composes over (flow.ts `planPrizes`: the "1 fewer" reductions subtract from
+    it, the "1 more" bonuses add to it, the clamp caps it at the Prizes left). */
 export function prizeValueOf(card: Card): number {
   const suffix = pokemonSuffixOf(card);
   if (suffix === null) return 1;
-  return suffix === "VMAX" ? 3 : 2;
+  return suffix === "VMAX" || isMegaEvolutionPokemonEx(card) ? 3 : 2;
+}
+
+/** 🆕🆕🆕 D582 — Is this a MEGA EVOLUTION POKÉMON ex? Read off the NAME, exactly as
+    `pokemonSuffixOf` reads the rule box: every one is printed "Mega <Species> ex" (Mega
+    Charizard X ex, Mega Venusaur ex). The catalog's `suffix` column cannot answer it: tcgdex tags
+    the 133 legal `me` "Mega … ex" printings `ex` (94), `EX` (27) or nothing (12), never "MEGA"
+    (LOCAL D1, 2026-10-07). The "Mega " prefix with its space is load-bearing — Meganium is not a
+    Mega — and so is the ` ex` suffix (the Trainer Mega Signal is no Pokémon at all).
+    🛑 NOTHING ELSE CHANGES FOR ONE: a modern Mega ex EVOLVES like any Pokémon, from its printed
+    `evolveFrom` stage (Mega Venusaur ex is a Stage 2 from Ivysaur; a Basic Mega ex is played to
+    the Bench), and its turn does NOT end when it evolves — that was the 2014 "M Pokémon-EX" rule,
+    which no `me` printing carries. It is still a Pokémon ex (`pokemonSuffixOf` is `"ex"`), so
+    every "Pokémon ex" sentence reaches it. */
+export function isMegaEvolutionPokemonEx(card: Card): boolean {
+  return pokemonSuffixOf(card) === "ex" && card.name.startsWith("Mega ");
 }
 
 /** The printed rule-box SUFFIX of a Pokémon — the "V" / "VMAX" / "VSTAR" /

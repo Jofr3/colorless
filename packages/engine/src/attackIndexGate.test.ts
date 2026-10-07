@@ -793,7 +793,9 @@ describe("D281 — MATCH_RECORD_VERSION stays 14, and the reachability claim is 
     // per-body window. The reachability claim is UNCHANGED and re-measured rather
     // than assumed — that condition is a two-field record with no `then` and no op
     // anywhere inside it, so this sweep still answers 0.
-    expect(gatesFound).toBe(17);
+    // 🆕🆕🆕 D582 — 17 -> **18**: Terapagos ex `me02.5-179`, a reprint-alias key on `sv07-128`'s
+    // object (Unified Beatdown's ban), so the counter steps by 1 and the object count not at all.
+    expect(gatesFound).toBe(18);
     expect(opsInGates).toBe(0);
   });
 

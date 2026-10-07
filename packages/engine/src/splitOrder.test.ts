@@ -218,7 +218,7 @@ describe("§1 — the census D282 priced its refusal against: counts reproduce, 
     expect(units(gateAll) - units(firstTurn)).toBe(6);
   });
 
-  it("S2 — 17 of 968 registry ids carry an `attackGate`, in three kinds", () => {
+  it("S2 — ~~17 of 968~~ registry ids carry an `attackGate`, in three kinds (🆕🆕🆕 D582 (D539): the figures are WITHDRAWN — 18 of 1,087 at D582)", () => {
     // The registry side of the same 13, walked independently of the text side:
     // a count that agrees across two surfaces is a count, not a transcription.
     // 🆕🆕 D396 — 14 -> **17**, and this is the FIRST slice on which the registry
@@ -396,15 +396,17 @@ describe("§1 — the census D282 priced its refusal against: counts reproduce, 
     // attack), Relicanth `sv05-084` / `sv05-173` (`MEMORY_DIVE`, a `passive`) and Team Rocket's Energy
     // `sv10-182` (`TEAM_ROCKETS_ENERGY`, an `energy`). Real catalog ids, no `fix-*` key, inserted
     // MID-MAP after D577's rows; no `attackGate`.
-    expect(ids.length).toBe(988); // (🆕🆕🆕 **D580 +2** — Iron Treads `sv05-118` (`DUAL_CORE`, a `passive`) and Mr. Mime `sv05-063` (an attack-only row), two registry ids inserted MID-MAP; neither carries an `attackGate`.) (🆕🆕🆕 **D579 +1** — Walking Wake `sv06-063`, one attack-only registry id, inserted MID-MAP.)
+    expect(ids.length).toBe(1087); // (🆕🆕🆕 **D582 +99** — the Mega Evolution serie's reprint-alias tier: 99 `me` ids on EXISTING program objects, inserted MID-MAP.) (🆕🆕🆕 **D580 +2** — Iron Treads `sv05-118` (`DUAL_CORE`, a `passive`) and Mr. Mime `sv05-063` (an attack-only row), two registry ids inserted MID-MAP; neither carries an `attackGate`.) (🆕🆕🆕 **D579 +1** — Walking Wake `sv06-063`, one attack-only registry id, inserted MID-MAP.)
     const gated = ids.filter((id) => programFor(id)?.attackGate !== undefined);
-    expect(gated.length).toBe(17);
+    // 🆕🆕🆕 D582 — 17 -> **18**: Terapagos ex `me02.5-179`, a reprint-alias key on `sv07-128`'s
+    // object — the ELEVENTH `barredIf`, at index 0.
+    expect(gated.length).toBe(18);
     const kinds = gated.flatMap((id) =>
       Object.values(programFor(id)?.attackGate ?? {}).map((g) => g.kind),
     );
     // 🆕🆕 D396 — 7 -> **10**: Sylveon ex's three printings are the EIGHTH, NINTH
     // and TENTH `barredIf`, and the first whose condition is not §4's turn order.
-    expect(kinds.filter((k) => k === "barredIf").length).toBe(10);
+    expect(kinds.filter((k) => k === "barredIf").length).toBe(11); // 🆕🆕🆕 D582 +1 (`me02.5-179`)
     // 🆕🆕 D395 — 3 -> **4**: Miltank `sv08.5-081` is the FOURTH `onlyIf` and the
     // first whose condition is not the §4 `allOf([youGoSecond, yourFirstTurn])`.
     expect(kinds.filter((k) => k === "onlyIf").length).toBe(4);
@@ -417,7 +419,7 @@ describe("§1 — the census D282 priced its refusal against: counts reproduce, 
     // majority at index 0 is now 13 of 17 rather than 13 of 14 — so an index-blind
     // read is wrong on FOUR printings across TWO cards and two polarities.
     const indices = gated.flatMap((id) => Object.keys(programFor(id)?.attackGate ?? {}));
-    expect(indices.filter((k) => k === "0").length).toBe(13);
+    expect(indices.filter((k) => k === "0").length).toBe(14); // 🆕🆕🆕 D582 +1 (`me02.5-179`)
     expect(indices.filter((k) => k === "1").length).toBe(4);
   });
 });

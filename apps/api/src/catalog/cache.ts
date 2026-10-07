@@ -64,7 +64,8 @@ const CACHE_TTL_SECONDS = 3600;
     re-ingest would play a fossil with no Ability and TM Fluorite with no
     attack for up to a TTL after the deploy. The bump makes 0.465 start cold;
     it closes both only when the remote re-ingest has FINISHED before the
-    deploy (a v7 entry written against the old rows is the same hour again). */
+    deploy (a v7 entry written against the old rows is the same hour again).
+    [🆕🆕🆕 D582 (D539): *"the match pool"* is WITHDRAWN for the ONLINE match — its Durable Object reads the pool from D1 directly (lobby/cardPool.ts `loadCardPool`) and never touches this cache; only the LOCAL match fetches through `/cards/:id`. And the pool is PERSISTED in every match (`GameState.cardPool`), so a match created before the re-ingest keeps the old rows for its whole life whatever this cache holds — a FOURTH window, named in apps/api lobby/match.ts "STAYS 41 AT D582".] */
 const CACHE_VERSION = "v7";
 
 /**

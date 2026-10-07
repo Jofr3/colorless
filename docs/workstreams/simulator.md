@@ -17771,7 +17771,7 @@ declare-instead-of-fix with the pin KEPT — dies on it and on nothing else.
    the previous deploy's RECORD hold the shape the new code expects?* Nothing persisted
    changed: no field on any persisted type, no `PendingStage` kind, no op, no widened enum
    on anything that can sit in `phase.cont`. **A `MatchRecord` stores card IDs, never `Card`
-   bodies**, so a fixture's `types` and attack list are not in the record at all.
+   bodies** [🆕 D582 (D539): WITHDRAWN — false when written; `MatchRecord.state.cardPool` persists `Card` bodies since P3-M1], so a fixture's `types` and attack list are not in the record at all.
 3. **VOICE — nothing moved.** No new row, no new arm, no prompt text.
 4. **§9 — untouched as a mechanism**, and its counting arguments were **re-READ rather than
    re-pointed**: none of them ever depended on Spiritomb having no attack.
@@ -29798,6 +29798,8 @@ decisions (1) and (2) after D580. Engine 0.464.0 → 0.465.0. The Mega ex rule i
   🛑 Re-ingest the REMOTE D1 and ship 0.465 back to back, re-ingest first (0.465 on the old catalog loses the fossil
   Ability and the TM grant; 0.464 on the new one lacks the category guards — no harmful reach found). The KV catalog
   cache steps v6 → v7 with the deploy, because its 1-hour TTL would otherwise hold pre-re-ingest `/cards/:id` rows.
+  [🆕 D582: a FOURTH window — every match persists its `cardPool`, so a match created before the remote re-ingest keeps
+  the old rows for its whole life; the online pool reads D1 directly (apps/api match.ts "STAYS 41 AT D582").]
 - **Census.** `catalogManifest.ts` regenerated (5084 rows / 30 sets, the measured six-set slice `sixSet`, `trainerFaces`).
   The `sv` attack corpus re-run on the LOCAL D1 is byte-identical; the `me` column is `censusAttackCorpusMe.ts`. Standard
   pool D581: attacks **2460 / 2771**, abilities **376 / 610**, trainers **264 / 447**, special energy **11 / 22**.
@@ -29805,3 +29807,19 @@ decisions (1) and (2) after D580. Engine 0.464.0 → 0.465.0. The Mega ex rule i
 - **Owed.** See `progress.md` NEXT for the pasted figures. The whole-corpus sweep is PENDING. `precheck` carries 20 broken
   rows from the eight post-D580 UI commits (not D581's).
 
+## D582 — the Mega Evolution ex rule and the `me` reprint-alias tier (engine 0.466.0, `MATCH_RECORD_VERSION` stays 41)
+
+**Status:** ✅ BUILT in the `luminous_ui-mega` worktree on D581 (`874df707`), NOT committed.
+
+- **Rule.** cards.ts `prizeValueOf` returns 3 for `isMegaEvolutionPokemonEx` (the printed *"Mega Evolution ex rule"*;
+  read off the NAME, since tcgdex's `suffix` never says MEGA). It is the base `planPrizes` composes over (Legacy Energy
+  → 2, Greedy Eater → 4, the clamp). Evolution is ordinary and the turn does not end. 133 legal printings / 41 names.
+  Suite: `megaEvolutionRuleD582.test.ts`.
+- **Alias tier.** 99 `me` registry keys on existing objects (56 faces, 32 same-Ability Pokémon, 11 same-text nameless
+  passives), MID-MAP; five `me02.5` Tera reprints in banners.ts. Suite: `reprintAliasMeD582.test.ts`. Not aliased,
+  named there: Cinccino ex ×3, Turtonator, Numel ×2 (twin Heatran's D190 program logs "Scorching Armor"), Team Rocket's
+  Energy `me02.5-217`, the Fade Out / Surf Back printings.
+- **Census.** Standard pool attacks **2461 / 2771**, abilities **417 / 610**, trainers **318 / 447**, special energy
+  **13 / 22**; 671 `me` printings fully built. censusAtHead's D582 block (a fifth list in the D273 partition).
+- **Gaps named.** `energy_type` Normal on Special Energies (all `me`, three `sv`); `me` Tera printings with new text.
+- **Owed.** See `progress.md` NEXT. The whole-corpus sweep is PENDING.

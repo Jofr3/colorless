@@ -1,0 +1,350 @@
+import type { Card } from "@luminous/schema";
+import { describe, expect, it } from "vitest";
+import { bannerOf } from "./banners";
+import { isTeraPokemon } from "./cards";
+import { CATALOG_MANIFEST as M } from "./catalogManifest";
+import type { GameState } from "./index";
+import { applyAction, createGame } from "./index";
+import { programFor, registryCardIds } from "./registry";
+import { FIXTURE_POOL, battler, deckOf, trainerCard } from "./testFixtures";
+
+// ── 🆕🆕🆕 D582 — THE MEGA EVOLUTION SERIE'S REPRINT-ALIAS TIER ──
+//
+// D190's idiom on the `me` serie: a `me` printing whose text is ALREADY built on a registry id
+// is keyed to that id's program OBJECT (`toBe`, never a copy), with no new op, field or object.
+// Measured on the LOCAL D1 (`apps/api/.wrangler/…/8437d866….sqlite`), 2026-10-07: every
+// `legal_standard = 1` row of `serie_id = 'me'` joined against every registry id's own row —
+//
+//   • "face"    — a Trainer / Special Energy whose whole printed face is the twin's: `effect`,
+//                 `trainer_type`, `energy_type`, `hp`, `abilities_json`, `attacks_json`, and the
+//                 ACE SPEC rarity. 56 rows (54 Trainers, 2 Special Energy).
+//   • "pokemon" — a Pokémon whose `abilities_json` is the twin's (Ability NAMES and texts), whose
+//                 attacks at every index the twin's program authors are the twin's, and whose
+//                 program names no Ability but the printed one. 32.
+//   • "text"    — a Pokémon whose one Ability prints the twin's TEXT under another NAME, kept only
+//                 where the twin's program is a bare `passive` that names no Ability. 11.
+//
+// The printed bytes live in the LOCAL D1 and in this table's provenance; no `me` row is a fixture
+// (the manifest's fixture slice is the six-set one), so this file pins the RELATION and the counts.
+
+/** [me id, twin id, tier, printed name] — the twin is the WARRANT. */
+const ALIASES: readonly (readonly [string, string, "face" | "pokemon" | "text", string])[] = [
+  ["me01-114", "sv02-172", "face", "Boss's Orders"],
+  ["me01-115", "sv01-173", "face", "Energy Switch"],
+  ["me01-125", "sv01-191", "face", "Rare Candy"],
+  ["me01-130", "sv01-194", "face", "Switch"],
+  ["me01-131", "sv01-196", "face", "Ultra Ball"],
+  ["me01-166", "sv10.5b-079", "face", "Air Balloon"],
+  ["me01-167", "sv05-144", "face", "Buddy-Buddy Poffin"],
+  ["me01-173", "sv06.5-061", "face", "Night Stretcher"],
+  ["me01-175", "sv01-191", "face", "Rare Candy"],
+  ["mep-092", "svp-150", "face", "Paradise Resort"],
+  ["me02-123", "sv01-194", "face", "Switch"],
+  ["me02-124", "sv10.5w-086", "face", "Ignition Energy"],
+  ["me02.5-019", "sv10-020", "pokemon", "Team Rocket's Spidops"],
+  ["me02.5-024", "sv10-036", "pokemon", "Ethan's Magcargo"],
+  ["me02.5-026", "sv10-039", "pokemon", "Ethan's Ho-Oh ex"],
+  ["me02.5-057", "sv08-057", "pokemon", "Pikachu ex"],
+  ["me02.5-060", "sv10.5b-031", "pokemon", "Eelektrik"],
+  ["me02.5-070", "sv09-053", "pokemon", "Iono's Bellibolt ex"],
+  ["me02.5-072", "svp-182", "pokemon", "Iono's Kilowattrel"],
+  ["me02.5-076", "sv09-056", "pokemon", "Lillie's Clefairy ex"],
+  ["me02.5-079", "svp-205", "pokemon", "Team Rocket's Mewtwo ex"],
+  ["me02.5-082", "sv08-072", "pokemon", "Togekiss"],
+  ["me02.5-099", "sv06-095", "pokemon", "Munkidori"],
+  ["me02.5-110", "sv10-103", "pokemon", "Cynthia's Gabite"],
+  ["me02.5-137", "sv09-098", "pokemon", "N's Zoroark ex"],
+  ["me02.5-142", "sv06.5-038", "pokemon", "Fezandipiti ex"],
+  ["me02.5-159", "sv06-129", "pokemon", "Drakloak"],
+  ["me02.5-171", "sv07-118", "pokemon", "Fan Rotom"],
+  ["me02.5-178", "sv08-161", "pokemon", "Terapagos"],
+  ["me02.5-179", "sv07-128", "pokemon", "Terapagos ex"],
+  ["me02.5-181", "sv10.5b-079", "face", "Air Balloon"],
+  ["me02.5-183", "sv02-172", "face", "Boss's Orders"],
+  ["me02.5-184", "sv05-144", "face", "Buddy-Buddy Poffin"],
+  ["me02.5-186", "sv08-169", "face", "Counter Gain"],
+  ["me02.5-189", "sv07-135", "face", "Glass Trumpet"],
+  ["me02.5-190", "sv09-149", "face", "Iris's Fighting Spirit"],
+  ["me02.5-195", "sv09-153", "face", "N's PP Up"],
+  ["me02.5-196", "sv06.5-061", "face", "Night Stretcher"],
+  ["me02.5-200", "sv08-187", "face", "Surfer"],
+  ["me02.5-201", "sv10-170", "face", "Team Rocket's Archer"],
+  ["me02.5-202", "sv10-171", "face", "Team Rocket's Ariana"],
+  ["me02.5-203", "sv10-173", "face", "Team Rocket's Factory"],
+  ["me02.5-204", "sv10-174", "face", "Team Rocket's Giovanni"],
+  ["me02.5-205", "sv10-175", "face", "Team Rocket's Great Ball"],
+  ["me02.5-207", "sv10-176", "face", "Team Rocket's Petrel"],
+  ["me02.5-208", "sv10-177", "face", "Team Rocket's Proton"],
+  ["me02.5-209", "sv10-178", "face", "Team Rocket's Transceiver"],
+  ["me02.5-210", "sv10-180", "face", "Team Rocket's Watchtower"],
+  ["me02.5-212", "sv10.5w-085", "face", "Tool Scrapper"],
+  ["me02.5-214", "sv01-180", "face", "Urbain"],
+  ["me02.5-216", "sv10.5b-086", "face", "Prism Energy"],
+  ["me02.5-222", "sv10-036", "pokemon", "Ethan's Magcargo"],
+  ["me02.5-235", "sv08-072", "pokemon", "Togekiss"],
+  ["me02.5-248", "sv06-129", "pokemon", "Drakloak"],
+  ["me02.5-250", "sv07-118", "pokemon", "Fan Rotom"],
+  ["me02.5-255", "sv08.5-096", "face", "Black Belt's Training"],
+  ["me02.5-256", "sv02-172", "face", "Boss's Orders"],
+  ["me02.5-258", "sv01-180", "face", "Cheren"],
+  ["me02.5-259", "sv08-169", "face", "Counter Gain"],
+  ["me02.5-260", "sv07-135", "face", "Glass Trumpet"],
+  ["me02.5-261", "sv06-153", "face", "Jamming Tower"],
+  ["me02.5-262", "sv09-153", "face", "N's PP Up"],
+  ["me02.5-263", "sv10-178", "face", "Team Rocket's Transceiver"],
+  ["me02.5-277", "sv08-057", "pokemon", "Pikachu ex"],
+  ["me02.5-279", "sv09-053", "pokemon", "Iono's Bellibolt ex"],
+  ["me02.5-280", "sv09-056", "pokemon", "Lillie's Clefairy ex"],
+  ["me02.5-281", "svp-205", "pokemon", "Team Rocket's Mewtwo ex"],
+  ["me02.5-286", "sv09-098", "pokemon", "N's Zoroark ex"],
+  ["me02.5-287", "sv10-136", "pokemon", "Marnie's Grimmsnarl ex"],
+  ["me02.5-288", "sv06.5-038", "pokemon", "Fezandipiti ex"],
+  ["me02.5-289", "sv10-145", "pokemon", "Steven's Metagross ex"],
+  ["me02.5-292", "sv09-149", "face", "Iris's Fighting Spirit"],
+  ["me02.5-293", "sv08-187", "face", "Surfer"],
+  ["me03-071", "sv01-168", "face", "Crushing Hammer"],
+  ["me03-072", "sv01-172", "face", "Energy Search"],
+  ["me03-076", "sv01-176", "face", "Judge"],
+  ["me03-080", "sv01-185", "face", "Poké Ball"],
+  ["me03-082", "sv01-187", "face", "Pokémon Catcher"],
+  ["me03-083", "sv01-188", "face", "Potion"],
+  ["me03-108", "sv10-164", "face", "Energy Recycler"],
+  ["me03-115", "sv10-168", "face", "Sacred Ash"],
+  ["me04-002", "sv01-121", "pokemon", "Kakuna"],
+  ["me04-052", "sv05-008", "pokemon", "Qwilfish"],
+  ["me04-108", "sv01-171", "face", "Energy Retrieval"],
+  ["me04-115", "sv10.5w-085", "face", "Tool Scrapper"],
+  ["me05-104", "sv10.5w-080", "face", "Brave Bangle"],
+  ["me05-105", "sv01-168", "face", "Crushing Hammer"],
+  ["me05-107", "sv01-173", "face", "Energy Switch"],
+  ["me02-011", "sv10-036", "text", "Charmander"],
+  ["me02-041", "sv02-150", "text", "Mega Diancie ex"],
+  ["me02-070", "sv08-031", "text", "Empoleon ex"],
+  ["me02-114", "sv08-031", "text", "Empoleon ex"],
+  ["me02.5-267", "sv02-150", "text", "Mega Diancie ex"],
+  ["me02.5-282", "sv02-150", "text", "Mega Diancie ex"],
+  ["me05-038", "sv01-019", "text", "Mega Chandelure ex"],
+  ["me05-099", "sv01-019", "text", "Mega Chandelure ex"],
+  ["me05-115", "sv01-019", "text", "Mega Chandelure ex"],
+  ["30th-028", "sv03-030", "text", "Pikachu"],
+  ["30th-033", "sv06-020", "text", "Pikachu"],
+];
+
+/** The `me` printings that print a built TEXT and were deliberately NOT aliased, with why. */
+const NOT_ALIASED: readonly (readonly [string, string])[] = [
+  // The twin's program NAMES its Ability, so the alias would log the wrong name: a renamed copy.
+  ["me04-073", "Cinccino ex — Smooth Coat ~ Kecleon's Expert Hider (`preventDamageOnCoinFlip.ability`)"],
+  ["me04-105", "Cinccino ex — the same"],
+  ["me04-119", "Cinccino ex — the same"],
+  ["me03-017", "Turtonator — Shell Spikes ~ Klawf ex's Counterattacking Pincer (`triggered[].name`)"],
+  // The twin's TEXT and Ability name match, but the twin's program does not: Heatran `sv06-123`
+  // ("Incandescent Body") is a D190 alias of Armarouge's SCORCHING_ARMOR, which logs "Scorching
+  // Armor" (`triggered[0].name`). The defect is inherited from D190; D582 does not copy it further.
+  ["me02.5-027", "Numel — Incandescent Body; Heatran's program logs Armarouge's `Scorching Armor`"],
+  ["me02.5-223", "Numel — the same"],
+  // The face differs in `energy_type`: tcgdex tags the `me` row Normal, the `sv` twin Special.
+  ["me02.5-217", "Team Rocket's Energy — `energy_type` Normal vs `sv10-182`'s Special"],
+  // A registry ATTACK sentence at another INDEX under another attack NAME: a new object each.
+  ["mep-006", "Drifblim — Balloon Return (idx 1) ~ Lillie's Comfey's Fade Out"],
+  ["me03-062", "Meowth ex — Tuck Tail (idx 0) ~ Fade Out; its Ability Last-Ditch Catch is unbuilt"],
+  ["me03-107", "Meowth ex — the same"],
+  ["me03-121", "Meowth ex — the same"],
+  ["me04-030", "Emolga — Sky Return (idx 1) ~ Fade Out"],
+  ["30th-073", "Drifloon — Float Up (idx 0) ~ Gholdengo's Surf Back (idx 1)"],
+  ["30th-136", "Drifloon — the same"],
+];
+
+/** The five `me` Tera reprints banners.ts carries (each printed face checked on tcgdex's image). */
+const ME_TERA = ["me02.5-038", "me02.5-057", "me02.5-160", "me02.5-179", "me02.5-277"] as const;
+
+/** The Ability NAMES each aliased `me` Pokémon prints (LOCAL D1 `abilities_json`, 2026-10-07).
+    Terapagos `me02.5-178` / Terapagos ex `me02.5-179` print none. */
+const PRINTED_ABILITY: Readonly<Record<string, readonly string[]>> = {
+  "me02.5-019": ["Charging Up"],
+  "me02.5-024": ["Melt Away"],
+  "me02.5-026": ["Golden Flame"],
+  "me02.5-057": ["Resolute Heart"],
+  "me02.5-060": ["Dynamotor"],
+  "me02.5-070": ["Electric Streamer"],
+  "me02.5-072": ["Flashing Draw"],
+  "me02.5-076": ["Fairy Zone"],
+  "me02.5-079": ["Power Saver"],
+  "me02.5-082": ["Wonder Kiss"],
+  "me02.5-099": ["Adrena-Brain"],
+  "me02.5-110": ["Champion's Call"],
+  "me02.5-137": ["Trade"],
+  "me02.5-142": ["Flip the Script"],
+  "me02.5-159": ["Recon Directive"],
+  "me02.5-171": ["Fan Call"],
+  "me02.5-178": [],
+  "me02.5-179": [],
+  "me02.5-222": ["Melt Away"],
+  "me02.5-235": ["Wonder Kiss"],
+  "me02.5-248": ["Recon Directive"],
+  "me02.5-250": ["Fan Call"],
+  "me02.5-277": ["Resolute Heart"],
+  "me02.5-279": ["Electric Streamer"],
+  "me02.5-280": ["Fairy Zone"],
+  "me02.5-281": ["Power Saver"],
+  "me02.5-286": ["Trade"],
+  "me02.5-287": ["Punk Up"],
+  "me02.5-288": ["Flip the Script"],
+  "me02.5-289": ["X-Boot"],
+  "me04-002": ["Exoskeleton"],
+  "me04-052": ["Poison Point"],
+  "me02-011": ["Agile"],
+  "me02-041": ["Diamond Coat"],
+  "me02-070": ["Emperor's Stance"],
+  "me02-114": ["Emperor's Stance"],
+  "me02.5-267": ["Diamond Coat"],
+  "me02.5-282": ["Diamond Coat"],
+  "me05-038": ["Binding Flame"],
+  "me05-099": ["Binding Flame"],
+  "me05-115": ["Binding Flame"],
+  "30th-028": ["Lonely Gaze"],
+  "30th-033": ["Keep Hidden"],
+};
+
+/** Every Ability name a program carries — `abilities[].name`, `triggered[].name`, and any
+    `ability` string nested in a passive (e.g. `koPrizeBonus.ability`) — i.e. what the log shows. */
+function programAbilityNames(v: unknown, out: string[] = []): string[] {
+  if (Array.isArray(v)) for (const x of v) programAbilityNames(x, out);
+  else if (v !== null && typeof v === "object")
+    for (const [k, x] of Object.entries(v)) {
+      if ((k === "name" || k === "ability") && typeof x === "string") out.push(x);
+      programAbilityNames(x, out);
+    }
+  return out;
+}
+
+describe("D582 — the `me` reprint-alias tier: 99 printings on 66 existing programs", () => {
+  it("resolves every `me` id to the SAME PROGRAM OBJECT as its twin", () => {
+    for (const [id, twin, , name] of ALIASES) {
+      expect(programFor(twin), `${twin} (twin of ${id}) has no program`).toBeDefined();
+      expect(programFor(id), `${id} (${name}) does not SHARE ${twin}'s program`).toBe(programFor(twin));
+    }
+  });
+
+  it("99 rows: 56 faces, 32 same-Ability Pokémon, 11 same-text passives; 66 twins, 66 objects", () => {
+    expect(ALIASES).toHaveLength(99);
+    const tier = (t: string) => ALIASES.filter(([, , k]) => k === t).length;
+    expect([tier("face"), tier("pokemon"), tier("text")]).toEqual([56, 32, 11]);
+    expect(new Set(ALIASES.map(([id]) => id)).size).toBe(99);
+    expect(new Set(ALIASES.map(([, twin]) => twin)).size).toBe(66);
+    expect(new Set(ALIASES.map(([, twin]) => programFor(twin))).size).toBe(66);
+  });
+
+  it("the registry's `me` keys are EXACTLY this table — nothing keyed outside it", () => {
+    const me = registryCardIds().filter((id) => /^(me|30th)/.test(id));
+    expect(me.sort()).toEqual(ALIASES.map(([id]) => id).sort());
+    // …and no twin is a `me` id: every program the tier reaches was built for the `sv` serie.
+    for (const [, twin] of ALIASES) expect(/^(me|30th)/.test(twin), twin).toBe(false);
+  });
+
+  it("a `text` alias's program names no Ability — the condition that makes the rename harmless", () => {
+    for (const [id, twin, tier] of ALIASES) {
+      if (tier !== "text") continue;
+      expect(Object.keys(programFor(id) ?? {}), id).toEqual(["passive"]);
+      expect(JSON.stringify(programFor(twin)), twin).not.toContain('"ability"');
+    }
+  });
+
+  it("every Pokémon alias's program names only Abilities its `me` printing prints (no wrong-name log)", () => {
+    const pokemon = ALIASES.filter(([, , t]) => t !== "face");
+    expect(pokemon).toHaveLength(43);
+    expect(Object.keys(PRINTED_ABILITY).sort()).toEqual(pokemon.map(([id]) => id).sort());
+    for (const [id, , , name] of pokemon) {
+      const printed = PRINTED_ABILITY[id] ?? [];
+      for (const named of programAbilityNames(programFor(id)))
+        expect(printed, `${id} (${name}) logs "${named}"`).toContain(named);
+    }
+    // The exclusion this rung enforces: Heatran's program (the Numel twin) names Armarouge's Ability.
+    expect(programAbilityNames(programFor("sv06-123"))).toEqual(["Scorching Armor"]);
+  });
+
+  it("the deliberately NOT-aliased printings stay unregistered", () => {
+    for (const [id, why] of NOT_ALIASED) expect(programFor(id), `${id}: ${why}`).toBeUndefined();
+  });
+
+  it("no `me` id is a fixture or a manifest printing — the reason this file pins no TEXT", () => {
+    for (const [id] of ALIASES) {
+      expect(FIXTURE_POOL[id], id).toBeUndefined();
+      expect(M.printed[id], id).toBeUndefined();
+    }
+  });
+});
+
+describe("D582 — the five `me` Tera reprints carry the banner", () => {
+  it("banners.ts marks them Tera, by id — and the three that are registry aliases share their twin's program", () => {
+    for (const id of ME_TERA) expect(bannerOf(battler(id, { name: "x ex" })), id).toBe("Tera");
+    expect(isTeraPokemon(battler("me02.5-057", { name: "Pikachu ex" }))).toBe(true);
+    // A Pikachu ex printing the banner table does not name is NOT Tera — by id, never by name.
+    expect(isTeraPokemon(battler("me02.5-276", { name: "Pikachu ex" }))).toBe(false);
+    for (const [id, twin] of [
+      ["me02.5-057", "sv08-057"],
+      ["me02.5-277", "sv08-057"],
+      ["me02.5-179", "sv07-128"],
+    ] as const) {
+      expect(programFor(id), id).toBe(programFor(twin));
+      expect(bannerOf(battler(twin, { name: "x ex" })), twin).toBe("Tera");
+    }
+  });
+});
+
+// ── ON A BOARD: an aliased `me` Trainer plays through its twin's program ──
+
+const URBAIN = "me02.5-214"; // Urbain prints Nemona's "Draw 3 cards." (twin `sv01-180`)
+const FILLER = "d582a-filler";
+const POOL: Record<string, Card> = {
+  ...FIXTURE_POOL,
+  [URBAIN]: { ...trainerCard(URBAIN, "Supporter", "Draw 3 cards."), name: "Urbain" },
+  [FILLER]: battler(FILLER, { hp: 900 }),
+};
+const DECK = deckOf({ [URBAIN]: 4, [FILLER]: 36, "fix-energy": 20 });
+
+function must(result: ReturnType<typeof applyAction>): GameState {
+  if (!result.ok) throw new Error(`action failed: ${result.error.code} ${result.error.message}`);
+  return result.state;
+}
+
+function p1Turn(seed: number): GameState {
+  const created = createGame({ seed, decks: { p1: DECK, p2: DECK }, cardPool: POOL });
+  if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
+  let state = created.state;
+  if (state.phase.kind !== "setup:chooseFirst") throw new Error("expected setup:chooseFirst");
+  state = must(applyAction(state, { type: "chooseFirstPlayer", seat: state.phase.coinWinner, first: "p2" }));
+  while (state.phase.kind === "setup:drawExtra") {
+    const phase = state.phase;
+    const s = (["p1", "p2"] as const).find((x) => !phase.decided[x]);
+    if (s === undefined) throw new Error("setup:drawExtra with every seat decided");
+    state = must(applyAction(state, { type: "setupDrawExtra", seat: s, count: phase.owed[s] }));
+  }
+  for (const s of ["p1", "p2"] as const) {
+    const uid = state.players[s].hand.find((h) => POOL[state.cardIdByUid[h] ?? ""]?.stage === "Basic");
+    if (uid === undefined) throw new Error(`no Basic in ${s}'s hand`);
+    state = must(applyAction(state, { type: "setupPlaceActive", seat: s, uid }));
+  }
+  for (const s of ["p1", "p2"] as const) state = must(applyAction(state, { type: "setupReady", seat: s }));
+  return must(applyAction(state, { type: "endTurn", seat: "p2" }));
+}
+
+describe("D582 — an aliased `me` Supporter on a board", () => {
+  it("Urbain `me02.5-214` plays as Nemona: the card leaves the hand and 3 are drawn", () => {
+    let state = p1Turn(5822);
+    const side = state.players.p1;
+    let uid = side.hand.find((u) => state.cardIdByUid[u] === URBAIN);
+    if (uid === undefined) {
+      uid = side.deck.find((u) => state.cardIdByUid[u] === URBAIN) as string;
+      state = {
+        ...state,
+        players: { ...state.players, p1: { ...side, hand: [...side.hand, uid], deck: side.deck.filter((u) => u !== uid) } },
+      };
+    }
+    const before = state.players.p1.hand.length;
+    const deck = state.players.p1.deck.length;
+    const after = must(applyAction(state, { type: "playTrainer", seat: "p1", uid }));
+    expect(after.players.p1.hand.length).toBe(before - 1 + 3);
+    expect(after.players.p1.deck.length).toBe(deck - 3);
+    expect(after.players.p1.discard).toContain(uid);
+  });
+});
