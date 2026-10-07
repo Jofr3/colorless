@@ -2159,6 +2159,15 @@ export interface MatchRecord {
     `turn:action.discardable` — 🛑 **DEPLOY THE SERVER FIRST**: an old client's `z.object` STRIPS
     the unknown key, while a new client's REQUIRED key refuses an old server's frame.
 
+    🆕🆕🆕 **STAYS 42 AT D591 — WP20a ADDS NO OP, KEY, GameState, PendingStage, PROMPT OR WIRE KEY.**
+    (Placed ABOVE the D590 block.) 19 `me` printings gain an activated Ability on seven new registry
+    objects, keyed by card id; no card row is read differently, so a v42 match in flight holding those
+    faces in its persisted `cardPool` gains the Abilities mid-match (a 0.474 rollback loses them; a
+    `"*:Run Errand"` / `"*:Lunar Cycle"` entry left in `allowances.abilitiesUsed` is an inert string,
+    Flip the Script's key shape). Every op is a shipped one (`drawCards`, `attachEnergyFrom`,
+    `payFromHand`, `drawUntilHandSize`); `attachEnergyFrom` `toSelf` never parks, and `payFromHand`
+    parks only on a hand of Basic Energy that can be told apart, on keys a v42 record already holds.
+
     🆕🆕🆕 **STAYS 42 AT D590 — WP05 ADDS NO OP, KEY, GameState, PendingStage, PROMPT OR WIRE KEY.**
     (Placed ABOVE the D589 block.) 13 `me` printings gain an `onEvolve` program on nine new objects, and
     *"Shuffle this Pokémon and all attached cards into your deck."* now derives (`returnSelf` to the

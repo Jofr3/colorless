@@ -108,7 +108,12 @@ export interface AbilityProgram {
       BUILT now (`FESTIVAL_LEAD`, `PassiveEffects.attackTwiceIf`); it is an ATTACK licence,
       not a `playableIf`, so the "10 printings on 4 cards and 4 members" count above is
       unchanged, and V1 still reads the PRINTED Ability name (a locked Festival Lead Active
-      still satisfies Boom Boom Groove, R-TW). */
+      still satisfies Boom Boom Groove, R-TW).
+      🆕🆕🆕 D591 NOTE (D539) — "10 printings on 4 cards and 4 members" is WITHDRAWN as a live
+      figure (Crobat `sv06.5-029` joined at D564 and the `me` aliases at D582). D591 adds the
+      Flapping trio ×9 (`allOf` over two `yourNamedPokemonInPlay`, the field's first `allOf`) and
+      Lunatone ×3 (`yourNamedPokemonInPlay` Solrock): 27 ids, pinned by id in
+      `flipTheScript.test.ts`. All board reads; the per-body rule above is untouched. */
   playableIf?: BoardCondition;
   /** 🆕 **D310 — §9's PER-BODY printed gate, and the field the block above asked
       for by name.** *"Once during your turn, if this Pokémon's remaining HP is 30
@@ -17040,6 +17045,153 @@ const HAPHAZARD_HAMMER: CardProgram = {
   ],
 };
 
+// ── 🆕🆕🆕 D591 — WP20a: THE `me` ACTIVATED ABILITIES (the Flapping trio and the draw engines). Seven
+//    objects, 19 printings, all on shipped vocabulary. Each "Once during your turn" lock is read off
+//    the print: `"sharedByName"` where the card adds "You can't use more than 1 … Ability each turn"
+//    (Run Errand, Lunar Cycle — Flip the Script's reading), `true` (per Pokémon) everywhere else. The
+//    printed "you may use this Ability" is the use itself (§9.1), so nothing below asks again. A
+//    `30th` face that spells the type as a word ("Basic Fire Energy card") shares the `{R}` face's
+//    object: the same sentence (Zoroark `30th-096`'s "ColorlessColorless" precedent). ──
+
+/** 🆕🆕🆕 **D591 — Mega Kangaskhan ex `me01-104` / `-164` / `-182`, `mep-025` (4 legal) "Run
+    Errand"**: *"Once during your turn, if this Pokémon is in the Active Spot, you may use this
+    Ability. Draw 2 cards. You can't use more than 1 Run Errand Ability each turn."* `activeOnly`
+    for the Active Spot clause, Flip the Script's cross-copy name lock for the last sentence: a
+    second Kangaskhan switched into the Active Spot the same turn is refused. */
+const RUN_ERRAND: CardProgram = {
+  abilities: [
+    {
+      name: "Run Errand",
+      oncePerTurn: "sharedByName",
+      activeOnly: true,
+      program: [{ op: "drawCards", count: 2 }],
+    },
+  ],
+};
+
+/** 🆕🆕🆕 **D591 — Frosmoth `me02.5-053` (1 legal) "Alluring Wings"**: *"Once during your turn, if
+    this Pokémon is in the Active Spot, you may use this Ability. Each player draws a card."*
+    Chandelure's "Alluring Light" (`ALLURING_LIGHT`, `drawCards` `who: "eachPlayer"`, controller
+    first) with `activeOnly` for the Active Spot clause. */
+const ALLURING_WINGS: CardProgram = {
+  abilities: [
+    {
+      name: "Alluring Wings",
+      oncePerTurn: true,
+      activeOnly: true,
+      program: [{ op: "drawCards", count: 1, who: "eachPlayer" }],
+    },
+  ],
+};
+
+/** 🆕🆕🆕 **D591 — Moltres `mep-096`, `30th-011` / `-130` (3 legal) "Fiery Flapping"**: *"Once during
+    your turn, if you have Articuno and Zapdos in play, you may use this Ability. Attach a Basic {R}
+    Energy card from your hand to this Pokémon."* The gate is `allOf` over two D279
+    `yourNamedPokemonInPlay` conjuncts (exact names: an "Articuno ex" is not an Articuno), checked
+    by `useAbility`'s `playableIf` (Flip the Script's scope); the attach is Charging Up's `toSelf`
+    from the hand, refused by `programPlayable` with no Basic {R} Energy card in hand. Per Pokémon:
+    no name lock is printed. */
+const FIERY_FLAPPING: CardProgram = {
+  abilities: [
+    {
+      name: "Fiery Flapping",
+      oncePerTurn: true,
+      activeOnly: false,
+      playableIf: {
+        kind: "allOf",
+        conditions: [
+          { kind: "yourNamedPokemonInPlay", name: "Articuno" },
+          { kind: "yourNamedPokemonInPlay", name: "Zapdos" },
+        ],
+      },
+      program: [{ op: "attachEnergyFrom", source: "hand", energyType: "Fire", toSelf: true }],
+    },
+  ],
+};
+
+/** 🆕🆕🆕 **D591 — Zapdos `mep-098`, `30th-055` / `-133` (3 legal) "Flash-Pop Flapping"**: *"…if you
+    have Moltres and Articuno in play, … Attach a Basic {L} Energy card from your hand to this
+    Pokémon."* Fiery Flapping's program at {L} over Moltres and Articuno. */
+const FLASH_POP_FLAPPING: CardProgram = {
+  abilities: [
+    {
+      name: "Flash-Pop Flapping",
+      oncePerTurn: true,
+      activeOnly: false,
+      playableIf: {
+        kind: "allOf",
+        conditions: [
+          { kind: "yourNamedPokemonInPlay", name: "Moltres" },
+          { kind: "yourNamedPokemonInPlay", name: "Articuno" },
+        ],
+      },
+      program: [{ op: "attachEnergyFrom", source: "hand", energyType: "Lightning", toSelf: true }],
+    },
+  ],
+};
+
+/** 🆕🆕🆕 **D591 — Articuno `mep-097`, `30th-018` / `-132` (3 legal) "Frosty Flapping"**: *"…if you
+    have Moltres and Zapdos in play, … Attach a Basic {W} Energy card from your hand to this
+    Pokémon."* Fiery Flapping's program at {W} over Moltres and Zapdos. (The `30th` faces' attack
+    still carries tcgdex's `<em>` markup, so those two stay unfinished: the markup fix, WP06.) */
+const FROSTY_FLAPPING: CardProgram = {
+  abilities: [
+    {
+      name: "Frosty Flapping",
+      oncePerTurn: true,
+      activeOnly: false,
+      playableIf: {
+        kind: "allOf",
+        conditions: [
+          { kind: "yourNamedPokemonInPlay", name: "Moltres" },
+          { kind: "yourNamedPokemonInPlay", name: "Zapdos" },
+        ],
+      },
+      program: [{ op: "attachEnergyFrom", source: "hand", energyType: "Water", toSelf: true }],
+    },
+  ],
+};
+
+/** 🆕🆕🆕 **D591 — Lunatone `me01-074`, `mep-004`, `me02.5-105` (3 legal) "Lunar Cycle"**: *"Once
+    during your turn, if you have Solrock in play, you may discard a Basic {F} Energy card from your
+    hand in order to use this Ability. Draw 3 cards. You can't use more than 1 Lunar Cycle Ability
+    each turn."* The board gate is one `yourNamedPokemonInPlay`; the cost is Torrid Scales'
+    `payFromHand` at {F} (fungible, so it asks nothing; `handCostUnmet` refuses it without one);
+    the draw is Tinkaton's; the name lock is Flip the Script's. */
+const LUNAR_CYCLE: CardProgram = {
+  abilities: [
+    {
+      name: "Lunar Cycle",
+      oncePerTurn: "sharedByName",
+      activeOnly: false,
+      playableIf: { kind: "yourNamedPokemonInPlay", name: "Solrock" },
+      program: [
+        { op: "payFromHand", count: 1, to: "discard", filter: { kind: "basicEnergy", energyType: "Fighting" } },
+        { op: "drawCards", count: 3 },
+      ],
+    },
+  ],
+};
+
+/** 🆕🆕🆕 **D591 — Delphox `me04-013`, `mep-074` (2 legal) "Flaring Magic"**: *"Once during your
+    turn, you may discard a Basic {R} Energy card from your hand in order to use this Ability. Draw
+    cards until you have 7 cards in your hand."* Revavroom's "Rumbling Engine" order (the cost
+    first, so the draw counts the hand after it) at a Basic {R} cost and a hand of 7. Per Pokémon:
+    no name lock is printed, so two Delphox are two uses. */
+const FLARING_MAGIC: CardProgram = {
+  abilities: [
+    {
+      name: "Flaring Magic",
+      oncePerTurn: true,
+      activeOnly: false,
+      program: [
+        { op: "payFromHand", count: 1, to: "discard", filter: { kind: "basicEnergy", energyType: "Fire" } },
+        { op: "drawUntilHandSize", size: 7 },
+      ],
+    },
+  ],
+};
+
 const REGISTRY: Record<string, CardProgram> = {
   // Professor's Research (SV base prints)
   "sv01-189": PROFESSORS_RESEARCH,
@@ -18082,6 +18234,27 @@ const REGISTRY: Record<string, CardProgram> = {
   "me05-088": ENRICHING_MELODY, // Primarina
   "me02.5-012": MULTIPLYING_COCOON, // Silcoon — a Silcoon or a Cascoon onto the Bench
   "me01-097": HAPHAZARD_HAMMER, // Tinkatuff — coin, then an Energy off the opponent's Active
+  // 🆕🆕🆕 D591 — WP20a: the `me` activated Abilities, MID-MAP (`raw[last]` does not move). Non-attack
+  // keys: every printed attack keeps deriving. `activatedMeD591.test.ts` drives each one.
+  "me01-104": RUN_ERRAND, // Mega Kangaskhan ex — draw 2, Active only, one Run Errand per turn
+  "me01-164": RUN_ERRAND, // Mega Kangaskhan ex
+  "me01-182": RUN_ERRAND, // Mega Kangaskhan ex
+  "mep-025": RUN_ERRAND, // Mega Kangaskhan ex
+  "me02.5-053": ALLURING_WINGS, // Frosmoth — each player draws a card, Active only
+  "mep-096": FIERY_FLAPPING, // Moltres — Articuno and Zapdos in play; a Basic {R} from hand to itself
+  "30th-011": FIERY_FLAPPING, // Moltres ("Basic Fire Energy card")
+  "30th-130": FIERY_FLAPPING, // Moltres
+  "mep-098": FLASH_POP_FLAPPING, // Zapdos — Moltres and Articuno in play; a Basic {L}
+  "30th-055": FLASH_POP_FLAPPING, // Zapdos ("Basic Lightning Energy card")
+  "30th-133": FLASH_POP_FLAPPING, // Zapdos
+  "mep-097": FROSTY_FLAPPING, // Articuno — Moltres and Zapdos in play; a Basic {W}
+  "30th-018": FROSTY_FLAPPING, // Articuno ("Basic Water Energy card")
+  "30th-132": FROSTY_FLAPPING, // Articuno
+  "me01-074": LUNAR_CYCLE, // Lunatone — Solrock in play; discard a Basic {F}, draw 3; one Lunar Cycle per turn
+  "mep-004": LUNAR_CYCLE, // Lunatone
+  "me02.5-105": LUNAR_CYCLE, // Lunatone
+  "me04-013": FLARING_MAGIC, // Delphox — discard a Basic {R}, draw until 7
+  "mep-074": FLARING_MAGIC, // Delphox ("Basic Fire Energy card")
   // ── D190 — THE **STANDARD-LEGAL** REPRINT-ALIAS MAP (Tier 0 of
   //    `docs/reference/coverage-backlog-legal.md`). 22 printings, 9 map targets,
   //    ZERO new code: every row below prints a sentence that is already authored

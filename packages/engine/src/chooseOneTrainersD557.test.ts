@@ -505,8 +505,8 @@ describe("D557 §5 — `MATCH_RECORD_VERSION` HOLDS AT 35: the labels are a wide
     expect(dealt(bare)?.dealt).toBe(50 + KIERAN_BONUS);
   });
 
-  it("the engine is 0.474.0", () => {
-    expect(engineVersion).toBe("0.474.0");
+  it("the engine is 0.475.0", () => {
+    expect(engineVersion).toBe("0.475.0");
   });
 });
 

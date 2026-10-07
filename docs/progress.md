@@ -3,7 +3,9 @@
 > Update this at the **end of every session**: bump the status table, append a
 > session-log entry, and rewrite the **Resume point** to the next concrete action.
 
-**Last updated:** 2026-10-07 — build session #530 (**P3-M5 — D590, *WP05 — THE `me` ON-EVOLVE ABILITIES AND THE MANDATORY SELF-SHUFFLE: 13 `me` printings / 9 Ability texts on nine new `onEvolve` objects, plus *"Shuffle this Pokémon and all attached cards into your deck."* (3 printings) read by `deriveAttackEffect`; Prison Panic and Psychic Draw behind a confirm; Flygon ×3 dropped (its KO half); Standard pool attacks 2492 / 2771, abilities 470 / 610; 782 `me` printings fully built*** — engine 0.474.0, MRV 42, NOT committed; the sweep PENDING)
+**Last updated:** 2026-10-08 — build session #531 (**P3-M5 — D591, *WP20a — THE `me` ACTIVATED ABILITIES, THE FLAPPING TRIO AND THE DRAW ENGINES: 19 `me` printings / 11 Ability texts on seven new `abilities` objects (Run Errand, Alluring Wings, Fiery / Flash-Pop / Frosty Flapping, Lunar Cycle, Flaring Magic) on shipped vocabulary; name locks only where printed; Mega Kangaskhan ex ×4 finished; Standard pool abilities 489 / 610; 796 `me` printings fully built*** — engine 0.475.0, MRV 42, NOT committed; the sweep PENDING)
+
+**Last updated (was):** 2026-10-07 — build session #530 (**P3-M5 — D590, *WP05 — THE `me` ON-EVOLVE ABILITIES AND THE MANDATORY SELF-SHUFFLE: 13 `me` printings / 9 Ability texts on nine new `onEvolve` objects, plus *"Shuffle this Pokémon and all attached cards into your deck."* (3 printings) read by `deriveAttackEffect`; Prison Panic and Psychic Draw behind a confirm; Flygon ×3 dropped (its KO half); Standard pool attacks 2492 / 2771, abilities 470 / 610; 782 `me` printings fully built*** — engine 0.474.0, MRV 42, NOT committed; the sweep PENDING)
 
 **Last updated (was):** 2026-10-07 — build session #529 (**P3-M5 — D589, *WP08 — MEGA GRENINJA EX AND THE OPTIONAL-COST FAMILY: 4 `me` attack sentences / 9 printings on a third `deriveAttackOptionalCostBoost` skeleton (*"… and have this attack do N more damage."*) over four cost rows, plus Mega Greninja ex ×5 "Mortal Shuriken" on Meowscarada ex's `payFromHand` + `damageChosen` shape; Mega Greninja ex ×5 and Mega Manectric ex ×2 finished; Standard pool attacks 2489 / 2771, abilities 457 / 610; 771 `me` printings fully built*** — engine 0.473.0, MRV 42, NOT committed; the sweep PENDING)
 
@@ -805,6 +807,37 @@
 
 ## NEXT (resume point)
 
+> ### ▶ THE NEXT CONCRETE ACTION (written 2026-10-08, after D591)
+>
+> 🛑 **D591 IS BUILT AND NOT COMMITTED** (worktree `/home/jofre/projects/luminous_ui-mega`, branch `mega-ingest`, on D590 = `75e48365`). D591 is WP20a of the Mega backlog: the activated Abilities (the Flapping trio and the draw engines). Next: a review of D591, then the landing of D581–D591 (rebase `mega-ingest` onto main; never `git add -A` — `apps/api/.wrangler` is the setup symlink).
+>
+> ✅ **`bun run check` IS GREEN**: `typecheck-coverage` OK (913 TypeScript files in 6 projects), `tsc -b`, `lint-coverage` OK (915 source files), `biome lint --error-on-warnings` (956 files), `Test Files 634 passed (634) / Tests 15011 passed (15011) / CHECK_EXIT=0` (D590: 633 / 14978; D591 adds `activatedMeD591.test.ts` (31) and two census rungs).
+>
+> **(a) THE SLICE.** registry.ts: seven new `abilities` objects on 19 `me` printings, all shipped vocabulary — `RUN_ERRAND` (Mega Kangaskhan ex `me01-104` / `-164` / `-182`, `mep-025`: draw 2, `activeOnly`, `oncePerTurn: "sharedByName"`); `ALLURING_WINGS` (Frosmoth `me02.5-053`: `drawCards` `who: "eachPlayer"`, `activeOnly`); `FIERY_FLAPPING` / `FLASH_POP_FLAPPING` / `FROSTY_FLAPPING` (Moltres / Zapdos / Articuno, a `mep` and two `30th` faces each: `playableIf` `allOf` over two exact-name `yourNamedPokemonInPlay`, `attachEnergyFrom` from the hand `toSelf`); `LUNAR_CYCLE` (Lunatone `me01-074`, `mep-004`, `me02.5-105`: `playableIf` Solrock, `payFromHand` a Basic {F}, draw 3, `"sharedByName"`); `FLARING_MAGIC` (Delphox `me04-013`, `mep-074`: `payFromHand` a Basic {R}, `drawUntilHandSize` 7). Locks follow the print: `"sharedByName"` only on Run Errand and Lunar Cycle (the two that print *"You can't use more than 1 … Ability each turn"*), per Pokémon on the rest — the suite drives the name lock with two printings and the per-Pokémon lock with two bodies. Nothing dropped.
+>
+> **(b) MRV STAYS 42** (match.ts "STAYS 42 AT D591"): keys by card id only, no card row read differently; a v42 match in flight gains the Abilities mid-match (a 0.474 rollback loses them). The first `allOf` on an Ability `playableIf` is read off the registry before the program runs and never enters a continuation (`callBell.test.ts`'s pin re-measured: 9 ids).
+>
+> | Column | `me` D591 | Standard pool D591 |
+> |---|---|---|
+> | Attacks | 760 / 1039 | **2492 / 2771** |
+> | Abilities | 113 / 234 | **489 / 610** |
+> | Trainers | 92 / 183 | **356 / 447** |
+> | Special Energy | 3 / 11 | **14 / 22** |
+>
+> **796 `me` printings fully built** (782 + 14: Mega Kangaskhan ex ×4, Moltres ×3, Zapdos ×3, Articuno `mep-097`, Lunatone ×3). Not finished, each waiting on an attack: Delphox ×2 "Energized Storm", Frosmoth "Cold Cyclone", Articuno `30th-018` / `-132` "Hail" (tcgdex `<em>` markup, WP06). Registry 1181 → 1200, non-attack 1021 → 1040. Other pins moved: `flipTheScript.test.ts` (shared-scope +7, `playableIf` +12), `callBell.test.ts` (Ability `allOf` 0 → 9 ids), `requirementFloor.test.ts` (`allOf` 15 → 24 ids, 5 → 8 sites), `reprintAliasMeD582.test.ts` `KEYED_AT_D591`, the five registry-length pins.
+>
+> **(c) THE MUTATION RECORD.** +23 D591 rows (4459 in all). precheck: 4459 mutants, the same 20 pre-existing broken rows (none in a D591 file). Probe `run.ts --decision D591 --allow-dirty`: 23 killed · 0 known · 0 GAP · 0 error, tree byte-identical after. Gate-witness `--only` (the 18 `opaque-anatomy-gate.ts` / `residue-census-gate.ts` rows): 18 killed · 0 error. Gates: residue-census, opaque-anatomy, splice, partition all OK.
+>
+> 🛑 **(0) THE WHOLE-CORPUS SWEEP IS PENDING** (D581–D590's too). Predicted: **4389 killed · 50 known survivor(s) · 0 GAP(S) · 20 error(s)** over **4,459** rows — 4436 + 23 = 4459; 4366 + 23 = 4389 killed; 4389 + 50 + 20 = 4459. The 20 errors are precheck's 20 broken rows (none D581–D591's); the 23 D591 rows are measured killed by the probe; the 18 gate-witness rows are measured killed. It assumes D590's prediction (4366 · 50 · 0 · 20 over 4436) holds. If it fails: an error count ≠ 20 means a `find` was spliced by a later edit (precheck names it); a new GAP or survivor in a D581–D590 row is that slice's open prediction failing, not D591's; one in an older row that names registry.ts, `flipTheScript.test.ts`, `callBell.test.ts`, `requirementFloor.test.ts` or a census file is a D591 edit moving it (those pins are the suspects, in that order) and owes a row-level re-measure before the landing.
+>
+> **D539 sweep.** One prose figure withdrawn: registry.ts's `playableIf` doc block *"10 printings on 4 cards and 4 members"* (already stale since D564 / D582) is annotated WITHDRAWN as a live figure (27 ids at D591, pinned by id in `flipTheScript.test.ts`); `git grep -n "10 printings on 4 cards"` finds it only in that block and its own annotation. `flipTheScript.test.ts`'s *"exactly ELEVEN ids"* and `requirementFloor.test.ts`'s *"5 sites"* titles are annotated with the D591 live figures. Version tax: `0.474.0` outside `docs/` was 144 files / 230 lines; 229 stepped (it() titles and the D275 `find` included), 1 kept (index.ts' D590 heading).
+>
+> Still owed from the Mega backlog: Flygon ×3 (an Active-Spot / by-attack gate on an `onKnockOut` program), Alakazam ×3's "Powerful Hand" (WP14), Pokémon Center Lady, WP33 (split in two), WP02, "Fade Out" ×5, the markup-normalising ingest fix (it also finishes the two `30th` Articuno), then the residue by mechanism.
+>
+> ---
+>
+> **ARCHIVED — the resume point D591 was built from, kept rather than overwritten** (D590 has since been committed on `mega-ingest` as `75e48365`):
+>
 > ### ▶ THE NEXT CONCRETE ACTION (written 2026-10-07, after D590)
 >
 > 🛑 **D590 IS BUILT AND NOT COMMITTED** (worktree `/home/jofre/projects/luminous_ui-mega`, branch `mega-ingest`, on D589 = `2d93c80b`). D590 is WP05 of the Mega backlog: the on-evolve Abilities and the shuffle-self attack. A first review's findings are fixed in the checkout (below, "THE REVIEW FIX"). Next: a re-review of D590, then the landing of D581–D590 (rebase `mega-ingest` onto main; never `git add -A` — `apps/api/.wrangler` is the setup symlink).
@@ -34744,7 +34777,8 @@ the next api deploy (D18).
 |---|---|---|
 | backend-data | P1 | ✅ M1–M9 + P2-M1 + task-17 api deployed (Worker `9b1ec1d1`, 2026-07-16); OAuth secrets pending (user) |
 | deck-builder | P2 | ✅ ALL 19 tasks closed (task 17 landed + e2e-verified locally); only follow-ups left |
-| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D590, *WP05 — the `me` on-evolve Abilities and the self-shuffle: 13 `me` printings / 9 Ability texts on nine new `onEvolve` objects plus Jumping Shot / Aqua Return ×2 derived; Flygon ×3 dropped; attacks 2492 / 2771, abilities 470 / 610*** — engine 0.474.0, MRV 42, NOT committed; the sweep PENDING) |
+| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D591, *WP20a — the `me` activated Abilities: 19 `me` printings / 11 Ability texts on seven new objects (the Flapping trio, Run Errand, Alluring Wings, Lunar Cycle, Flaring Magic); Mega Kangaskhan ex ×4 finished; abilities 489 / 610*** — engine 0.475.0, MRV 42, NOT committed; the sweep PENDING) |
+| simulator (prior) | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D590, *WP05 — the `me` on-evolve Abilities and the self-shuffle: 13 `me` printings / 9 Ability texts on nine new `onEvolve` objects plus Jumping Shot / Aqua Return ×2 derived; Flygon ×3 dropped; attacks 2492 / 2771, abilities 470 / 610*** — engine 0.474.0, MRV 42, NOT committed; the sweep PENDING) |
 | simulator (prior) | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D589, *WP08 — Mega Greninja ex and the optional-cost family: 4 `me` attack sentences / 9 printings on a third optional-cost skeleton plus Mortal Shuriken ×5; Mega Greninja ex ×5 and Mega Manectric ex ×2 finished; attacks 2489 / 2771, abilities 457 / 610*** — engine 0.473.0, MRV 42, NOT committed; the sweep PENDING) |
 | simulator (prior) | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D588, *WP22 — Trainer parameters II: 17 `me` Trainer printings / 8 texts on eight new objects plus the `stage2Only` attach rider; Pokémon Center Lady dropped; trainers 356 / 447*** — engine 0.472.0, MRV 42, NOT committed; the sweep PENDING) |
 | simulator (prior) | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D587, *WP04 — Trainer parameters I: 19 `me` Trainer printings / 9 texts on nine new objects (shipped vocabulary), Energy Swatter's caption and Repel's play gate; trainers 339 / 447*** — engine 0.471.0, MRV 42, NOT committed; the sweep PENDING) |
@@ -34952,6 +34986,16 @@ the next api deploy (D18).
 Legend: 📝 backlog · 📋 specced · 🔎 research · 🚧 in progress · ✅ done
 
 ## Session log
+
+### 2026-10-08 — build session #531 (P3-M5 — D591)
+
+**WP20a — THE `me` ACTIVATED ABILITIES, THE FLAPPING TRIO AND THE DRAW ENGINES. `MATCH_RECORD_VERSION` STAYS 42.**
+
+Built in the `luminous_ui-mega` worktree on D590 (`75e48365`); the main checkout was not touched. Every id `git grep`-ped
+(none referenced) and every text read off the LOCAL D1 first: 11 texts / 19 printings, as briefed. Seven new `abilities`
+objects on shipped vocabulary; locks follow the print (`"sharedByName"` on Run Errand and Lunar Cycle only). Nothing
+dropped. `activatedMeD591.test.ts` (31): programs and locks against the printed wording, and a board per Ability. Version
+tax 229 stepped / 1 kept. +23 mutant rows, all KILLED. Sweep PENDING (NEXT (0)). NOT committed.
 
 ### 2026-10-07 — build session #530 (P3-M5 — D590)
 

@@ -20253,6 +20253,17 @@ import type { GameState, Seat } from "./types";
     `expect(manifest.version)`, `it(…)` titles, the declaration and `package.json` —
     **not** as a value-keyed grep — because a value-keyed grep is precisely the mechanism
     that ate D500's heading.)
+    🆕🆕🆕 engineVersion 0.474.0 → **0.475.0** (D591 — WP20a: THE `me` ACTIVATED ABILITIES, THE
+    FLAPPING TRIO AND THE DRAW ENGINES; `MATCH_RECORD_VERSION` STAYS 42 (apps/api match.ts "STAYS 42
+    AT D591")). registry.ts keys 19 `me` printings on SEVEN NEW `abilities` objects: `RUN_ERRAND`
+    (Mega Kangaskhan ex ×4, draw 2, `activeOnly`, `oncePerTurn: "sharedByName"`); `ALLURING_WINGS`
+    (Frosmoth, Alluring Light's `drawCards` `who: "eachPlayer"`, `activeOnly`); `FIERY_FLAPPING` /
+    `FLASH_POP_FLAPPING` / `FROSTY_FLAPPING` (Moltres / Zapdos / Articuno ×3 each, `playableIf`
+    `allOf` over two `yourNamedPokemonInPlay`, `attachEnergyFrom` `source: "hand"` `toSelf` of the
+    printed type); `LUNAR_CYCLE` (Lunatone ×3, `playableIf` Solrock, `payFromHand` Basic {F},
+    draw 3, `"sharedByName"`); `FLARING_MAGIC` (Delphox ×2, `payFromHand` Basic {R},
+    `drawUntilHandSize` 7). No new op, member or field; nothing dropped. Census: Standard pool
+    abilities 489 / 610; 796 `me` printings fully built. `activatedMeD591.test.ts`.)
     🆕🆕🆕 engineVersion 0.473.0 → **0.474.0** (D590 — WP05: THE `me` ON-EVOLVE ABILITIES AND THE
     MANDATORY SELF-SHUFFLE; `MATCH_RECORD_VERSION` STAYS 42 (apps/api match.ts "STAYS 42 AT D590")).
     registry.ts keys 13 `me` printings on NINE NEW `onEvolve` objects: `PSYCHIC_DRAW_3` (Alakazam ×3)
@@ -25212,7 +25223,7 @@ import type { GameState, Seat } from "./types";
     WITNESS** — the count was re-derived every slice and the word *"three"* was carried.
     A successor of this slice inherits **81 / 61 / 17** again, over **FIVE** history
     occurrences: those four plus `deckMillFilteredScale.test.ts`'s own header arrow.) */
-export const engineVersion = "0.474.0";
+export const engineVersion = "0.475.0";
 
 export type {
   ApplyResult,

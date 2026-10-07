@@ -522,7 +522,18 @@ describe("D280 — MATCH_RECORD_VERSION stays 14, and the reachability claim is 
       .map((a) => a.playableIf)
       .filter((c): c is BoardCondition => c !== undefined);
     expect(abilityGates.length).toBeGreaterThan(0);
-    expect(abilityGates.filter((c) => c.kind === "allOf")).toEqual([]);
+    // 🆕🆕🆕 D591 — the Flapping trio ×9 (Moltres / Zapdos / Articuno, "if you have A and B in play")
+    // are the first `allOf` here. An Ability's `playableIf` is read off the REGISTRY by `useAbility`
+    // and redact.ts before the program runs and never enters a continuation, so the constant is
+    // unmoved; what this line still guards is that no OTHER Ability grows one unexamined.
+    expect(
+      registryCardIds()
+        .filter((id) => programFor(id)?.abilities?.some((a) => a.playableIf?.kind === "allOf"))
+        .sort(),
+    ).toEqual(
+      ["mep-096", "30th-011", "30th-130", "mep-098", "30th-055", "30th-133", "mep-097", "30th-018", "30th-132"].sort(),
+    );
+    expect(abilityGates.filter((c) => c.kind === "allOf")).toHaveLength(9);
   });
 
   it("a gated Call Bell writes exactly the keys the CONTROL Item writes — a DIFF with an ANCHOR", () => {

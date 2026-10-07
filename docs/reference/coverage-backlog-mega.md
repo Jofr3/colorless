@@ -6,6 +6,26 @@
 > `coverage-backlog-legal.md`; its pool is unchanged and whole. The suite-side figures are
 > `censusAtHead.test.ts`'s D581 block and `censusAttackCorpusMe.ts`.
 
+## 🆕 D591 update (engine 0.475.0) — the activated Abilities: the Flapping trio and the draw engines (WP20a)
+
+11 activated Ability texts / 19 `me` printings are keyed on seven new `abilities` objects (registry.ts D591 block;
+`activatedMeD591.test.ts`): Run Errand ×4 (Mega Kangaskhan ex; draw 2, Active only, one Run Errand per turn), Alluring Wings
+(Frosmoth; each player draws a card, Active only), Fiery / Flash-Pop / Frosty Flapping ×3 each (both partners in play by
+exact name; a Basic Energy of the printed type from the hand to itself), Lunar Cycle ×3 (Lunatone; Solrock in play, pay a
+Basic {F}, draw 3, one Lunar Cycle per turn) and Flaring Magic ×2 (Delphox; pay a Basic {R}, draw until 7). No new op,
+member or field; nothing dropped. **Finished:** Mega Kangaskhan ex ×4, Moltres ×3, Zapdos ×3, Articuno `mep-097`,
+Lunatone ×3. Still waiting on an attack: Delphox ×2 "Energized Storm", Frosmoth "Cold Cyclone", and the `30th` Articuno ×2
+"Hail" (tcgdex's `<em>` markup, WP06).
+
+| Column | `me` built / units (D591) | Standard pool D591 |
+|---|---|---|
+| Attacks | 760 / 1,039 | **2,492 / 2,771** |
+| Abilities | 113 / 234 (+19) | **489 / 610** |
+| Trainers | 92 / 183 | **356 / 447** |
+| Special Energy | 3 / 11 | **14 / 22** |
+
+**Fully built `me` printings: 796** (782 + 14).
+
 ## 🆕 D590 update (engine 0.474.0) — the on-evolve Abilities and the self-shuffle (WP05)
 
 9 on-evolve Ability texts / 13 `me` printings are keyed on nine new `onEvolve` objects (registry.ts D590 block;
@@ -472,8 +492,8 @@ group wins; the grouping is a reading aid, not a census figure).
 
 - 5× **Mortal Shuriken** — Once during your turn, if this Pokémon is in the Active Spot, you may discard a Basic {W} Energy card from your hand in order to use this Ability. Place 6 damage counters on 1 of your opponent's Pokémon. [🆕🆕🆕 D589: BUILT]
 - 5× **Sky Transport** — Once during your turn, you may use this Ability. Switch your Active Pokémon with 1 of your Benched Pokémon. [🆕🆕🆕 D585: BUILT]
-- 4× **Run Errand** — Once during your turn, if this Pokémon is in the Active Spot, you may use this Ability. Draw 2 cards. You can't use more than 1 Run Errand Ability each turn.
-- 3× **Lunar Cycle** — Once during your turn, if you have Solrock in play, you may discard a Basic {F} Energy card from your hand in order to use this Ability. Draw 3 cards. You can't use more than 1 Lunar Cycle Ability each turn.
+- 4× **Run Errand** — Once during your turn, if this Pokémon is in the Active Spot, you may use this Ability. Draw 2 cards. You can't use more than 1 Run Errand Ability each turn. [🆕🆕🆕 D591: BUILT]
+- 3× **Lunar Cycle** — Once during your turn, if you have Solrock in play, you may discard a Basic {F} Energy card from your hand in order to use this Ability. Draw 3 cards. You can't use more than 1 Lunar Cycle Ability each turn. [🆕🆕🆕 D591: BUILT]
 - 3× **Nighttime Maneuvers** — Once during your turn, if this Pokémon is in the Active Spot, you may use this Ability. Search your deck for a card. Shuffle your deck, then put that card on top of it.
 - 3× **Sinister Surge** — Once during your turn, you may use this Ability. Search your deck for a Basic {D} Energy card and attach it to 1 of your Benched {D} Pokémon. Then, shuffle your deck. If you attached Energy to a Pokémon in this way, place 2 damage counters on that Pokémon.
 - 2× **Aerial Draw** — Once during your turn, you may use this Ability. Draw a card. [🆕🆕🆕 D584: BUILT]
@@ -482,21 +502,21 @@ group wins; the grouping is a reading aid, not a census figure).
 - 2× **Destructive Headbutting** — Once during your turn, if this Pokémon is in the Active Spot, you may use this Ability. Flip a coin. If heads, discard an Energy from your opponent's Active Pokémon.
 - 2× **Evidence Gathering** — Once during your turn, you may use this Ability. Switch a card from your hand with the top card of your deck.
 - 2× **Fermented Juice** — Once during your turn, if this Pokémon has any {G} Energy attached, you may use this Ability. Heal 30 damage from 1 of your Pokémon.
-- 2× **Fiery Flapping** — Once during your turn, if you have Articuno and Zapdos in play, you may use this Ability. Attach a Basic Fire Energy card from your hand to this Pokémon.
-- 2× **Flash-Pop Flapping** — Once during your turn, if you have Moltres and Articuno in play, you may use this Ability. Attach a Basic Lightning Energy card from your hand to this Pokémon.
+- 2× **Fiery Flapping** — Once during your turn, if you have Articuno and Zapdos in play, you may use this Ability. Attach a Basic Fire Energy card from your hand to this Pokémon. [🆕🆕🆕 D591: BUILT]
+- 2× **Flash-Pop Flapping** — Once during your turn, if you have Moltres and Articuno in play, you may use this Ability. Attach a Basic Lightning Energy card from your hand to this Pokémon. [🆕🆕🆕 D591: BUILT]
 - 2× **Frilled Generator** — Once during your turn, if you played Canari from your hand this turn, you may use this Ability. Search your deck for up to 2 Basic {L} Energy cards and attach them to this Pokémon. Then, shuffle your deck.
-- 2× **Frosty Flapping** — Once during your turn, if you have Moltres and Zapdos in play, you may use this Ability. Attach a Basic Water Energy card from your hand to this Pokémon.
+- 2× **Frosty Flapping** — Once during your turn, if you have Moltres and Zapdos in play, you may use this Ability. Attach a Basic Water Energy card from your hand to this Pokémon. [🆕🆕🆕 D591: BUILT]
 - 2× **Gathering of Blossoms** — Once during your turn, you may use this Ability. Search your deck for an Erika's Pokémon, reveal it, and put it into your hand. Then, shuffle your deck.
 - 2× **Share Happiness** — Once during your turn, you may use this Ability. Heal 30 damage from 1 of your Pokémon. [🆕🆕🆕 D584: BUILT]
 - 2× **Sky Hunt** — Once during your turn, you may use this Ability. Flip a coin. If heads, discard a random card from your opponent's hand.
 - 2× **Stone Arms** — Once during your turn, you may use this Ability. Attach a Basic {F} Energy card from your hand to 1 of your {F} Pokémon. [🆕🆕🆕 D585: BUILT]
-- 1× **Alluring Wings** — Once during your turn, if this Pokémon is in the Active Spot, you may use this Ability. Each player draws a card.
+- 1× **Alluring Wings** — Once during your turn, if this Pokémon is in the Active Spot, you may use this Ability. Each player draws a card. [🆕🆕🆕 D591: BUILT]
 - 1× **Evolutionary Guidance** — Once during your turn, if this Pokémon has any Energy attached, you may use this Ability. Search your deck for an Evolution Pokémon, reveal it, and put it into your hand. Then, shuffle your deck.
-- 1× **Fiery Flapping** — Once during your turn, if you have Articuno and Zapdos in play, you may use this Ability. Attach a Basic {R} Energy card from your hand to this Pokémon.
-- 1× **Flaring Magic** — Once during your turn, you may discard a Basic Fire Energy card from your hand in order to use this Ability. Draw cards until you have 7 cards in your hand.
-- 1× **Flaring Magic** — Once during your turn, you may discard a Basic {R} Energy card from your hand in order to use this Ability. Draw cards until you have 7 cards in your hand.
-- 1× **Flash-Pop Flapping** — Once during your turn, if you have Moltres and Articuno in play, you may use this Ability. Attach a Basic {L} Energy card from your hand to this Pokémon.
-- 1× **Frosty Flapping** — Once during your turn, if you have Moltres and Zapdos in play, you may use this Ability. Attach a Basic {W} Energy card from your hand to this Pokémon.
+- 1× **Fiery Flapping** — Once during your turn, if you have Articuno and Zapdos in play, you may use this Ability. Attach a Basic {R} Energy card from your hand to this Pokémon. [🆕🆕🆕 D591: BUILT]
+- 1× **Flaring Magic** — Once during your turn, you may discard a Basic Fire Energy card from your hand in order to use this Ability. Draw cards until you have 7 cards in your hand. [🆕🆕🆕 D591: BUILT]
+- 1× **Flaring Magic** — Once during your turn, you may discard a Basic {R} Energy card from your hand in order to use this Ability. Draw cards until you have 7 cards in your hand. [🆕🆕🆕 D591: BUILT]
+- 1× **Flash-Pop Flapping** — Once during your turn, if you have Moltres and Articuno in play, you may use this Ability. Attach a Basic {L} Energy card from your hand to this Pokémon. [🆕🆕🆕 D591: BUILT]
+- 1× **Frosty Flapping** — Once during your turn, if you have Moltres and Zapdos in play, you may use this Ability. Attach a Basic {W} Energy card from your hand to this Pokémon. [🆕🆕🆕 D591: BUILT]
 - 1× **Grand Wing** — Once during your turn, you may use this Ability. Your opponent shuffles their hand and puts it on the bottom of their deck. If they put any cards on the bottom of their deck in this way, they draw 4 cards.
 - 1× **Guiding Dance** — Once during your turn, you may use this Ability. Flip a coin. If heads, search your deck for a Pokémon, reveal it, and put it into your hand. Then, shuffle your deck.
 - 1× **Lethargic Charge** — Once during your turn, if this Pokémon is on your Bench, you may use this Ability. Attach an Energy card from your hand to your Active Larry's Pokémon.

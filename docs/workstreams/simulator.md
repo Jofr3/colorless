@@ -29983,3 +29983,25 @@ decisions (1) and (2) after D580. Engine 0.464.0 → 0.465.0. The Mega ex rule i
 - **Census.** Standard pool attacks **2492 / 2771**, abilities **470 / 610** (`me` 760 / 1,039 and 94 / 234; trainers
   356 / 447 and special energy 14 / 22 unmoved); 782 `me` printings fully built.
 - **Owed.** See `progress.md` NEXT. The whole-corpus sweep is PENDING.
+
+## D591 — WP20a: the `me` activated Abilities, the Flapping trio and the draw engines (engine 0.475.0, `MATCH_RECORD_VERSION` stays 42)
+
+**Status:** ✅ BUILT in the `luminous_ui-mega` worktree on D590 (`75e48365`), NOT committed.
+
+- **11 Ability texts / 19 `me` printings** on seven new `abilities` objects: Run Errand ×4 (Mega Kangaskhan ex, draw 2,
+  `activeOnly`, `oncePerTurn: "sharedByName"`), Alluring Wings (Frosmoth, Alluring Light's `drawCards` `who: "eachPlayer"`,
+  `activeOnly`), Fiery / Flash-Pop / Frosty Flapping ×3 each (`playableIf` `allOf` over two exact-name
+  `yourNamedPokemonInPlay`, then `attachEnergyFrom` from the hand `toSelf`), Lunar Cycle ×3 (`playableIf` Solrock,
+  `payFromHand` a Basic {F}, draw 3, `"sharedByName"`) and Flaring Magic ×2 (`payFromHand` a Basic {R}, then
+  `drawUntilHandSize` 7).
+- **Locks follow the print.** `"sharedByName"` only where the card adds *"You can't use more than 1 … Ability each
+  turn"* (Run Errand, Lunar Cycle); per Pokémon everywhere else. The `30th` / `mep-074` faces that spell the type as a
+  word share the `{R}` / `{L}` / `{W}` face's object.
+- **No new op, member or field; nothing dropped.** The Flapping trio carries the first `allOf` on an Ability's
+  `playableIf`; it is read off the registry before the program runs and never enters a continuation.
+- **Suite.** `activatedMeD591.test.ts` (31): the programs and locks against the printed wording, and a board per Ability
+  (the Active Spot clause, both partners and the exact-name gate, the cost refusals, the cross-copy name lock driven
+  with two printings, and the per-Pokémon lock driven with two bodies).
+- **Census.** Standard pool abilities **489 / 610** (`me` 113 / 234; attacks 2492 / 2771, trainers 356 / 447 and special
+  energy 14 / 22 unmoved); 796 `me` printings fully built.
+- **Owed.** See `progress.md` NEXT. The whole-corpus sweep is PENDING.

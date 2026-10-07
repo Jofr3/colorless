@@ -613,11 +613,20 @@ describe("the blast radius — what this slice did NOT change", () => {
     // 10 legal printings, every one of them built.**
     // 🆕🆕🆕 D582 — +4 `me` reprint-alias keys on the SAME objects: Fezandipiti ex `me02.5-142` /
     // `me02.5-288` (Flip the Script) and Fan Rotom `me02.5-171` / `me02.5-250` (Fan Call).
+    // 🆕🆕🆕 D591 — +7 on two NEW objects, each printing the second sentence: Mega Kangaskhan ex ×4
+    // "Run Errand" and Lunatone ×3 "Lunar Cycle".
     expect(shared.sort()).toEqual([
+      "me01-074",
+      "me01-104",
+      "me01-164",
+      "me01-182",
+      "me02.5-105",
       "me02.5-142",
       "me02.5-171",
       "me02.5-250",
       "me02.5-288",
+      "mep-004",
+      "mep-025",
       "sv06.5-038",
       "sv06.5-039",
       "sv06.5-084",
@@ -631,7 +640,7 @@ describe("the blast radius — what this slice did NOT change", () => {
     ]);
   });
 
-  it("`playableIf` is authored on exactly ELEVEN ids, and nowhere else", () => {
+  it("`playableIf` is authored on exactly ELEVEN ids, and nowhere else (🆕🆕🆕 D591: ELEVEN is the `sv` count; 27 live with the `me` keys)", () => {
     // The gate's own population. Of the 29 legal printings on `%Once during your
     // turn, if %`, 15 are the Active-Spot clause `activeOnly` already covers; of
     // the 14 that remain, NINE name THIS POKÉMON (Munkidori ×3, Meowscarada,
@@ -694,11 +703,25 @@ describe("the blast radius — what this slice did NOT change", () => {
     // Groove" on the NEW `yourActiveHasAbility` (the printed Festival Lead name on the
     // Active's top card; a lock does not falsify it, R-TW ⚠️ UNRULED).
     // 🆕🆕🆕 D582 — +4 `me` reprint-alias keys on the SAME objects (Fezandipiti ex ×2, Fan Rotom ×2).
+    // 🆕🆕🆕 D591 — +12 on four NEW objects: the Flapping trio ×9 (`allOf` over two
+    // `yourNamedPokemonInPlay`) and Lunatone ×3 "Lunar Cycle" (Solrock in play).
     expect(gated.sort()).toEqual([
+      "30th-011",
+      "30th-018",
+      "30th-055",
+      "30th-130",
+      "30th-132",
+      "30th-133",
+      "me01-074",
+      "me02.5-105",
       "me02.5-142",
       "me02.5-171",
       "me02.5-250",
       "me02.5-288",
+      "mep-004",
+      "mep-096",
+      "mep-097",
+      "mep-098",
       "sv06-015",
       "sv06.5-029", // 🆕🆕🆕 D564 — Crobat "Shadowy Envoy"
       "sv06.5-038",
