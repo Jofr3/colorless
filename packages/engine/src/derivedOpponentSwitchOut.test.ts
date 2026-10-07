@@ -63,12 +63,16 @@ import {
 // for their own slice — an activated Ability is a card PLAY and goes through
 // `programPlayable`, which has no arm for this op and must not get a speculative
 // one. Recorded in `coverage-backlog-legal.md`.
+// 🆕🆕🆕 D587 (D539): "no arm for this op" is WITHDRAWN — Repel `me01-126` prints the op ALONE
+// on a Trainer, so `programPlayable` gained `gust`'s empty-Bench line for it (§5's seam rung).
 // 🆕🆕🆕 D555 — **"DELIBERATELY LEFT FOR THEIR OWN SLICE" IS WITHDRAWN (D539): D555 IS
 // THAT SLICE.** `TORRENTIAL_WHIRLPOOL` (registry.ts) keys both ids on Interjet's
 // program byte for byte, so a card PLAY now reaches this op — behind `recordGate`,
 // after `switchActive`, whose own `programPlayable` arm gates the use. The second
 // half STAYS TRUE: `programPlayable` gets no `opponentSwitchOut` arm (an empty
 // opponent Bench leaves the self-switch playable; the opponent is never asked).
+// [🆕🆕🆕 D587 (D539): "gets no arm" is WITHDRAWN for the TOP-LEVEL op (Repel); the
+// parenthesis stays true — the `recordGate`-nested op is not scanned.]
 // §5's seam rung is RE-POINTED (D418) from `FIXTURE_POOL`'s top-level ops to a deep
 // walk over `registryCardIds()`, which is what can actually see the new producer.
 
@@ -779,7 +783,7 @@ describe("end to end — Iron Bundle's compound, and the gate that is not decora
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("the seam — the gates and surfaces this op deliberately does not touch", () => {
-  it("`programPlayable` gets NO arm — the one card PLAY that reaches the op (D555) reaches it behind `switchActive`'s gate", () => {
+  it("~~`programPlayable` gets NO arm~~ — the one card PLAY that reaches the op (D555) reaches it behind `switchActive`'s gate (🆕🆕🆕 D587 (D539): WITHDRAWN — Repel `me01-126` is a top-level producer and the arm is written)", () => {
     // `gust` has one (an empty opponent Bench makes Boss's Orders unplayable), and
     // copying it here would have been the vacuous guard conventions.md forbids:
     // this op is derived from ATTACK text only, and §8 declares an attack against
@@ -788,13 +792,15 @@ describe("the seam — the gates and surfaces this op deliberately does not touc
     const state = ready(71, 1, 0);
     expect(state.players.p2.bench).toHaveLength(0);
     expect(programPlayable(state, [{ op: "gust" }], "p1")).toBe(false);
-    expect(programPlayable(state, [{ op: "opponentSwitchOut" }], "p1")).toBe(true);
+    // 🆕🆕🆕 D587 — WAS `.toBe(true)`: Repel `me01-126` (`REPEL`) is the bare op on a Trainer, so the
+    // gate refuses it on an empty opponent Bench, `gust`'s line one op over.
+    expect(programPlayable(state, [{ op: "opponentSwitchOut" }], "p1")).toBe(false);
     // …and the ATTACK on the same board is used, not refused — the difference the
     // predicate above is about.
     const { events } = mustApply(state, { type: "attack", seat: "p1", index: KICK_AWAY });
     expect(all(events, "ATTACK_EFFECT_SKIPPED")).toHaveLength(0);
     // No registry row prints this op today, which is what keeps the arm's absence
-    // honest rather than lucky.
+    // honest rather than lucky. [🆕🆕🆕 D587 (D539): WITHDRAWN — `REPEL` prints it; see above.]
     // 🆕🆕🆕 D555 — **FALSE AT THIS HEAD, AND THE CHECK THAT STOOD HERE COULD NOT SAY
     // SO** (kept above verbatim, D539). It walked `FIXTURE_POOL`'s TOP-LEVEL `trainer`
     // and `abilities` ops, so Samurott's op — a REAL id outside the pool, nested in a
@@ -813,8 +819,10 @@ describe("the seam — the gates and surfaces this op deliberately does not touc
       ];
       return programs.some((ops) => walkProgram(ops).some((op) => op.op === "opponentSwitchOut"));
     });
-    expect(authored).toEqual(["sv10.5w-023", "sv10.5w-107"]);
-    for (const id of authored) {
+    // 🆕🆕🆕 D587 — plus Repel `me01-126`, the op ALONE at a Trainer's top level (the gated one).
+    expect([...authored].sort()).toEqual(["me01-126", "sv10.5w-023", "sv10.5w-107"]);
+    expect(programFor("me01-126")?.trainer).toEqual([{ op: "opponentSwitchOut" }]);
+    for (const id of ["sv10.5w-023", "sv10.5w-107"]) {
       const program = programFor(id)?.abilities?.[0]?.program ?? [];
       // Never at the top level: behind the gate, after the gated switch.
       expect(program.map((op) => op.op)).toEqual(["switchActive", "recordGate"]);

@@ -21105,7 +21105,7 @@ paragraph.** The Ability's program is `switchActive {recordAs: "moved"}` →
   argument for that descent is ruling/906's *"the flip is PROCEDURE, not effect"*,
   which a §9.2 record gate does not share (`switchActive`'s own comment already
   says the gate stays off the consequent, for Giovanni). So `opponentSwitchOut` is
-  **never at top level** on any printing in the pool.
+  **never at top level** on any printing in the pool. [🆕🆕🆕 D587 (D539): WITHDRAWN for the top-level op — Repel `me01-126` prints `opponentSwitchOut` alone, so `programPlayable` now refuses it on an empty opponent Bench; the `recordGate`-nested Samurott op is still not gated.]
 * The compound's **ANTECEDENT** is a `switchActive` the gate already refuses when
   the controller's Bench is empty — which is also the printed behaviour, since the
   consequent is gated on the antecedent having happened.
@@ -21113,7 +21113,7 @@ paragraph.** The Ability's program is `switchActive {recordAs: "moved"}` →
   same predicate with the same arguments (`redact.ts`, `GameHud.tsx` line 245).
 
 So the twin is 1 registry object for 2 legal printings and **zero engine code**,
-and the arm stays unwritten: *a gate no printing reaches is a vacuous guard*. The
+and the arm stays unwritten: *a gate no printing reaches is a vacuous guard*. [🆕🆕🆕 D587 (D539): WITHDRAWN for the top-level op — Repel `me01-126` prints `opponentSwitchOut` alone, so `programPlayable` now refuses it on an empty opponent Bench; the `recordGate`-nested Samurott op is still not gated.] The
 finding is pinned in `derivedSelfEnergyMove.test.ts` ("✅ NO NEW `programPlayable`
 ARM WAS OWED"), including the positive case a speculative arm would have BROKEN —
 Samurott with an own Bench and an EMPTY opponent Bench is still playable, because
@@ -29893,4 +29893,27 @@ decisions (1) and (2) after D580. Engine 0.464.0 → 0.465.0. The Mega ex rule i
   a control on the other side of its threshold.
 - **Census.** Standard pool attacks **2480 / 2771**, abilities **452 / 610** (trainers 320 / 447, special energy
   14 / 22); the live `me` attack residue 178 / 286 (from 186 / 303); 726 `me` printings fully built.
+- **Owed.** See `progress.md` NEXT. The whole-corpus sweep is PENDING.
+
+## D587 — WP04: Trainer parameters I (engine 0.471.0, `MATCH_RECORD_VERSION` stays 42)
+
+**Status:** ✅ BUILT in the `luminous_ui-mega` worktree on D586 (`d262cffc`), NOT committed.
+
+- **19 `me` Trainer printings / 9 texts** keyed on nine new registry objects, each a built program's op at the printed
+  parameter (registry.ts D587 block): Wondrous Patch ×2 and Philippe ×2 (N's PP Up's `attachEnergyFrom` from the
+  discard — {P} to a Benched {P}; {M} with `count: 2`, so D359's quantity axis asks 0 / 1 / 2), Jacinthe ×3 (Poké
+  Vital A's `healChosen` with `filter` {P}, read in play), Firebreather ×2 (Shivery Chill's search at Basic {R} / 7),
+  Fighting Gong ×3 (Ethan's Adventure's `anyOf`, Basic {F} Energy or Basic {F} Pokémon, 1), Tarragon ×2 (Lana's Aid's
+  `anyOf` retrieval at {F} / 4), Poké Pad ×3 (Master Ball with `noRuleBox`), Energy Swatter (Ortega's
+  `bottomFromOpponentHand` with `anyEnergy`, no draw) and Repel (`opponentSwitchOut`, the derived attack sentence).
+- **Two engine lines.** interpreter.ts `bottomFromOpponentHandNote` gains Energy Swatter's printed caption; cardplay.ts
+  `programPlayable` refuses a top-level `opponentSwitchOut` on an empty opponent Bench (`gust`'s line). D227's "no arm
+  for this op" is withdrawn for the top-level case and annotated at each site.
+- **Brief deviation.** Wondrous Patch uses `attachEnergyFrom` (its twin's op), not `attachFromDiscard` (Glass Trumpet's
+  "to each of them" grammar). Nothing dropped.
+- **Tooling.** `mutants.ts` crossed Biome's 4 MiB `files.maxSize`; `biome.json` now 8 MiB, the D460 row follows.
+- **Suite.** `trainerParamsMeD587.test.ts` (26): each face rebuilt from its twin's, each program against its twin's,
+  and a board per Trainer with its refusal.
+- **Census.** Standard pool trainers **339 / 447** (`me` 75 / 183; attacks 2480 / 2771, abilities 452 / 610, special
+  energy 14 / 22 unmoved); 745 `me` printings fully built.
 - **Owed.** See `progress.md` NEXT. The whole-corpus sweep is PENDING.

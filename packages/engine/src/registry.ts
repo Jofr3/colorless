@@ -13972,7 +13972,8 @@ const BECKONING_TAIL: CardProgram = {
     own Bench is refused); `opponentSwitchOut` has NO `programPlayable` arm and gets
     none — with the opponent's Bench empty the self-switch still happens and the
     opponent is never asked (`parkOrForce`'s zero-candidate ending), otherwise it
-    parks with the OPPONENT as answerer. */
+    parks with the OPPONENT as answerer.
+    [🆕🆕🆕 D587 (D539): WITHDRAWN for the top-level op — Repel `me01-126` prints `opponentSwitchOut` alone, so `programPlayable` now refuses it on an empty opponent Bench; the `recordGate`-nested Samurott op is still not gated.] */
 const TORRENTIAL_WHIRLPOOL: CardProgram = {
   abilities: [
     {
@@ -16566,6 +16567,156 @@ const SYNCHRO_PULSE: CardProgram = {
     "Psychic"]`. Its printed attack "Counter Jewel" keeps deriving (a D586 clause row). */
 const DOUBLE_TYPE_FP: CardProgram = { passive: { typesInPlay: ["Fighting", "Psychic"] } };
 
+// ── 🆕🆕🆕 D587 — WP04: TRAINER PARAMETERS I. Nine NEW objects for 19 `me` printings / 9 texts,
+//    each a built `sv` Trainer's (or Ability's) op at the printed parameter: a type, an amount, a
+//    count, a filter. No new op, field or filter member. Printed texts off the LOCAL D1
+//    (2026-10-07); `trainerParamsMeD587.test.ts` rebuilds each face from its twin's and plays each
+//    program on a board. Two engine lines ride with them: Energy Swatter's caption arm
+//    (interpreter.ts `bottomFromOpponentHandNote`) and Repel's empty-Bench play gate (cardplay.ts
+//    `programPlayable`, `gust`'s line one op over). ──
+
+/** Wondrous Patch `me02-094` / `me03-117` (Item) — *"Attach a Basic {P} Energy card from your
+    discard pile to 1 of your Benched {P} Pokémon."* N's PP Up `sv09-153` (`NS_PP_UP`) with the
+    printed {P} on the card (`energyType`) and on the target (`targetType` for `ownerPokemon`).
+    `attachEnergyFrom` rather than Glass Trumpet's `attachFromDiscard`: the sentence is N's PP Up's
+    ("to 1 of your …"), not Glass Trumpet's "to each of them". No {P} in the discard or no Benched
+    {P} body refuses the Item (`attachAlternativesAllWhiff`). */
+const WONDROUS_PATCH: CardProgram = {
+  trainer: [
+    {
+      op: "attachEnergyFrom",
+      source: "discard",
+      energyType: "Psychic",
+      targetType: "Psychic",
+      benchOnly: true,
+    },
+  ],
+};
+
+/** Philippe `me04-079` / `-110` (Supporter) — *"Attach up to 2 Basic {M} Energy cards from your
+    discard pile to 1 of your {M} Pokémon."* Wondrous Patch's op at {M}, without the Bench word, and
+    with D205's `count: 2`: the batch is pinned to the ONE body the print names, and D359's
+    quantity axis honours the printed "up to" (the park carries `upTo: 2` and asks even over one
+    body, so 0, 1 or 2 are all answers; a one-card pile attaches one). Ethan's Ho-Oh ex's reading. */
+const PHILIPPE: CardProgram = {
+  trainer: [
+    {
+      op: "attachEnergyFrom",
+      source: "discard",
+      energyType: "Metal",
+      targetType: "Metal",
+      count: 2,
+    },
+  ],
+};
+
+/** Jacinthe `me03-075` / `-110` / `-122` (Supporter) — *"Heal 150 damage from 1 of your {P}
+    Pokémon."* Poké Vital A `sv06.5-062` (`POKE_VITAL_A`, without its discard-pile clause) with
+    D569's `healChosen.filter` at the printed {P}. The filter reads the IN-PLAY type
+    (`healChosenTargets` → `refTopCard` → `inPlayCardOf`), so Carbink's "Double Type" {P} counts.
+    No {P} Pokémon in play refuses the Supporter. */
+const JACINTHE: CardProgram = {
+  trainer: [
+    { op: "healChosen", amount: 150, filter: { kind: "typedPokemon", pokemonType: "Psychic" } },
+  ],
+};
+
+/** Firebreather `me02-089` / `-119` (Supporter) — *"Search your deck for up to 7 Basic {R} Energy
+    cards, reveal them, and put them into your hand. Then, shuffle your deck."* Chien-Pao ex
+    `sv02-061` "Shivery Chill"'s program (D585's `SCENT_COLLECTION` at {P}) at {R} and 7, on the
+    Trainer surface. */
+const FIREBREATHER: CardProgram = {
+  trainer: [
+    {
+      op: "searchDeck",
+      filter: { kind: "basicEnergy", energyType: "Fire" },
+      dest: "hand",
+      max: 7,
+      reveal: true,
+    },
+    { op: "shuffleDeck" },
+  ],
+};
+
+/** Fighting Gong `me01-116` / `-168`, `me02.5-187` (Item) — *"Search your deck for a Basic {F}
+    Energy card or a Basic {F} Pokémon, reveal it, and put it into your hand. Then, shuffle your
+    deck."* Ethan's Adventure `sv10-165` (`ETHANS_ADVENTURE`)'s `anyOf` search at `max: 1`, its two
+    nouns in the printed order: a Basic {F} Energy card, a BASIC {F} Pokémon (`typedPokemon`
+    `stage: "basic"` — a Stage 1 {F} is not offered). */
+const FIGHTING_GONG: CardProgram = {
+  trainer: [
+    {
+      op: "searchDeck",
+      filter: {
+        kind: "anyOf",
+        filters: [
+          { kind: "basicEnergy", energyType: "Fighting" },
+          { kind: "typedPokemon", pokemonType: "Fighting", stage: "basic" },
+        ],
+      },
+      dest: "hand",
+      max: 1,
+      reveal: true,
+    },
+    { op: "shuffleDeck" },
+  ],
+};
+
+/** Tarragon `me03-085` / `-116` (Supporter) — *"Put up to 4 in any combination of {F} Pokémon and
+    Basic {F} Energy cards from your discard pile into your hand."* Max Rod `sv08.5-116`
+    (`MAX_ROD`) at 4 and typed. `pokemonOrBasicEnergy` takes no type, so the typed pair is Lana's
+    Aid's `anyOf` (`LANAS_AID`) with `typedPokemon` / `basicEnergy` at {F}; any stage. An empty
+    match in the discard refuses the Supporter (`trainerProgramPlayable`). */
+const TARRAGON: CardProgram = {
+  trainer: [
+    {
+      op: "discardPileRetrieval",
+      filter: {
+        kind: "anyOf",
+        filters: [
+          { kind: "typedPokemon", pokemonType: "Fighting" },
+          { kind: "basicEnergy", energyType: "Fighting" },
+        ],
+      },
+      dest: "hand",
+      max: 4,
+    },
+  ],
+};
+
+/** Poké Pad `me02.5-198`, `me03-081` / `-113` (Item) — *"Search your deck for a Pokémon that
+    doesn't have a Rule Box, reveal it, and put it into your hand. Then, shuffle your deck.
+    (Pokémon ex, Pokémon V, etc. have Rule Boxes.)"* Master Ball `sv05-153` (`MASTER_BALL`) with
+    Lana's Aid's `noRuleBox` on `anyPokemon` (any stage; a Mega Evolution Pokémon ex is an "ex",
+    `hasRuleBox`). `30th-126` prints no text and is not keyed. */
+const POKE_PAD: CardProgram = {
+  trainer: [
+    {
+      op: "searchDeck",
+      filter: { kind: "anyPokemon", noRuleBox: true },
+      dest: "hand",
+      max: 1,
+      reveal: true,
+    },
+    { op: "shuffleDeck" },
+  ],
+};
+
+/** Energy Swatter `me03-073` (Item) — *"Your opponent reveals their hand, and you choose an Energy
+    card you find there and put it on the bottom of their deck."* Ortega `sv03-190` (`ORTEGA`)'s
+    first op with an `anyEnergy` filter (Greavard's `supporter` one member over) and without the
+    "in this way … may draw" sentence, so no `recordAs` and no gate. An empty opponent hand refuses
+    the Item; a hand with no Energy reveals and whiffs (the filtered-op rule in `programPlayable`). */
+const ENERGY_SWATTER: CardProgram = {
+  trainer: [{ op: "bottomFromOpponentHand", filter: { kind: "anyEnergy" } }],
+};
+
+/** Repel `me01-126` (Item) — *"Switch out your opponent's Active Pokémon to the Bench. (Your
+    opponent chooses the new Active Pokémon.)"* The attack sentence `deriveAttackEffect` already
+    reads as `opponentSwitchOut` (D227), byte for byte, on the Trainer surface. The first Trainer
+    with this op at top level, so `programPlayable` gains its empty-Bench line (`gust`'s). */
+const REPEL: CardProgram = { trainer: [{ op: "opponentSwitchOut" }] };
+
 const REGISTRY: Record<string, CardProgram> = {
   // Professor's Research (SV base prints)
   "sv01-189": PROFESSORS_RESEARCH,
@@ -17546,6 +17697,27 @@ const REGISTRY: Record<string, CardProgram> = {
   // (`raw[last]` does not move). `conditionRowsMeD586.test.ts` pins the face.
   "me02.5-117": DOUBLE_TYPE_FP, // Carbink "Double Type" — twin `sv08-037` (Scovillain ex), {F}{P} for {G}{R}
   "me02.5-242": DOUBLE_TYPE_FP, // Carbink
+  // 🆕🆕🆕 D587 — WP04: 19 Trainer printings / 9 texts on the nine objects above, MID-MAP
+  // (`raw[last]` does not move). `trainerParamsMeD587.test.ts` pins every face against its twin's.
+  "me02-094": WONDROUS_PATCH, // Wondrous Patch — twin `sv09-153` (N's PP Up), {P} card to a Benched {P} body
+  "me03-117": WONDROUS_PATCH, // Wondrous Patch
+  "me04-079": PHILIPPE, // Philippe — up to 2 Basic {M} from the discard to 1 {M} body (`count: 2`)
+  "me04-110": PHILIPPE, // Philippe
+  "me03-075": JACINTHE, // Jacinthe — twin `sv06.5-062` (Poké Vital A), 150 to a {P} body
+  "me03-110": JACINTHE, // Jacinthe
+  "me03-122": JACINTHE, // Jacinthe
+  "me02-089": FIREBREATHER, // Firebreather — twin `sv02-061` (Chien-Pao ex "Shivery Chill"), 7 Basic {R}
+  "me02-119": FIREBREATHER, // Firebreather
+  "me01-116": FIGHTING_GONG, // Fighting Gong — twin `sv10-165` (Ethan's Adventure), Basic {F} Energy or Basic {F} Pokémon
+  "me01-168": FIGHTING_GONG, // Fighting Gong
+  "me02.5-187": FIGHTING_GONG, // Fighting Gong
+  "me03-085": TARRAGON, // Tarragon — twin `sv08.5-116` (Max Rod), 4, {F} Pokémon and Basic {F} Energy
+  "me03-116": TARRAGON, // Tarragon
+  "me02.5-198": POKE_PAD, // Poké Pad — twin `sv05-153` (Master Ball), no Rule Box
+  "me03-081": POKE_PAD, // Poké Pad
+  "me03-113": POKE_PAD, // Poké Pad
+  "me03-073": ENERGY_SWATTER, // Energy Swatter — twin `sv03-190` (Ortega), an Energy card, no draw
+  "me01-126": REPEL, // Repel — the derived attack sentence's `opponentSwitchOut`
   // ── D190 — THE **STANDARD-LEGAL** REPRINT-ALIAS MAP (Tier 0 of
   //    `docs/reference/coverage-backlog-legal.md`). 22 printings, 9 map targets,
   //    ZERO new code: every row below prints a sentence that is already authored

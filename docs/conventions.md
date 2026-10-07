@@ -9671,7 +9671,8 @@ hard-coding it, so raising the limit raises the check with it. Raised 2 MiB → 
 raise now carries its own mutation row (`D460-maxsize-refuses-the-corpus`, killed by
 `bun scripts/lint-coverage.ts`), which is D212's `include` pair applied to the other field of
 the same object. **Expect this again around 4 MiB; a corpus that grows ~20 KB a slice reaches
-it in roughly a hundred.**
+it in roughly a hundred.** [🆕🆕🆕 D587: it came, at 4,195,627 bytes with D587's rows — raised 4 MiB → 8 MiB
+(`biome.json` `8388608`), the D460 row's `find` following the value.]
 
 ## A new fixture is a census delta in FOUR places, not one (D460)
 

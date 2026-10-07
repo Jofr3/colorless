@@ -300,7 +300,7 @@ function registryAttachOps(): Map<string, Extract<EffectOp, { op: "attachEnergyF
 // ── 1. THE POPULATION, WALKED OFF **BOTH** PRODUCERS ─────────────────────────
 
 describe("D359 §1 — the quantity population, over the registry AND the deriver", () => {
-  it("🛑 the REGISTRY half is exactly ~~8~~ printings on 3 sentences, by id (🆕🆕🆕 D582 (D539): *8* WITHDRAWN — 9 since the `me` alias Ethan's Ho-Oh ex `me02.5-026`)", () => {
+  it("🛑 the REGISTRY half is exactly ~~8~~ printings on 3 sentences, by id (🆕🆕🆕 D582 (D539): *8* WITHDRAWN — 9 since the `me` alias Ethan's Ho-Oh ex `me02.5-026`; 🆕🆕🆕 D587: 11 printings on 4 sentences since Philippe ×2)", () => {
     const withCount = [...registryAttachOps()]
       .filter(([, ops]) => ops.some((op) => op.count !== undefined))
       .map(([id]) => id)
@@ -313,9 +313,15 @@ describe("D359 §1 — the quantity population, over the registry AND the derive
         // 🆕🆕🆕 D582 — Ethan's Ho-Oh ex `me02.5-026`, a reprint-alias of `sv10-039` (the SAME
         // `ETHANS_HO_OH_EX` object): the 8 are now 9 printings, still 3 sentences.
         "me02.5-026",
+        // 🆕🆕🆕 D587 — Philippe `me04-079` / `-110` (`PHILIPPE`): *"Attach up to 2 Basic {M} Energy
+        // cards from your discard pile to 1 of your {M} Pokémon."* — the same `count: 2` reading
+        // (the batch pinned to the one named body, the printed {0, 1, 2} on this axis), a fourth
+        // sentence. `trainerParamsMeD587.test.ts` §4 drives its park.
+        "me04-079",
+        "me04-110",
       ].sort(),
     );
-    expect(withCount).toHaveLength(9);
+    expect(withCount).toHaveLength(11);
   });
 
   it("🛑🛑 the DERIVER half is 5 more printings the registry cannot see", () => {
@@ -885,7 +891,7 @@ describe("D359 §6 — the ids this file rests on are real and locally seated", 
     // attack), Relicanth `sv05-084` / `sv05-173` (`MEMORY_DIVE`, a `passive`) and Team Rocket's Energy
     // `sv10-182` (`TEAM_ROCKETS_ENERGY`, an `energy`). Real catalog ids, no `fix-*` key, inserted
     // MID-MAP after D577's rows; no `attackGate`.
-    expect(registryCardIds()).toHaveLength(1127); // (🆕🆕🆕 **D586 +2** — WP03: Carbink `me02.5-117` / `-242` on the new `DOUBLE_TYPE_FP` ({F}{P} copy of Scovillain's `typesInPlay`), MID-MAP, non-attack; no `attackGate`.) (🆕🆕🆕 **D585 +19** — WP19's parameter copies: 19 `me` ids, MID-MAP, on eight NEW objects (Tundra Wall ×2, Wash Out, Powerful a-Salt ×2, Counterattacking Crest ×3, Stone Arms ×2, Scent Collection, Sky Transport ×5, Synchro Pulse ×3), all non-attack; no `attackGate`.) (🆕🆕🆕 **D584 +18** — the `me` alias tier 2: 18 `me` ids, MID-MAP — Ultra Ball ×2, Zoroark `30th-096` and Hop's Pincurchin ex `me02.5-068` on EXISTING objects, fourteen on the eight NEW D584 objects (Smooth Coat ×3, Shell Spikes, Incandescent Body ×2, Aerial Draw ×2, Share Happiness ×2, Intimidating Fang, Dopey Face, Float Up ×2 — the last two attack-only); no `attackGate`.) (🆕🆕🆕 **D583 +1** — Team Rocket's Energy `me02.5-217`, a reprint-alias key on `sv10-182`'s object, inserted MID-MAP; no `attackGate`.) (🆕🆕🆕 **D582 +99** — the Mega Evolution serie's reprint-alias tier: 99 `me` ids on EXISTING program objects, inserted MID-MAP; Terapagos ex `me02.5-179` shares `sv07-128`'s `attackGate`.) (🆕🆕🆕 **D580 +2** — Iron Treads `sv05-118` (`DUAL_CORE`, a `passive`) and Mr. Mime `sv05-063` (an attack-only row), two registry ids inserted MID-MAP; neither carries an `attackGate`.) (🆕🆕🆕 **D579 +1** — Walking Wake `sv06-063`, one attack-only registry id, inserted MID-MAP.)
+    expect(registryCardIds()).toHaveLength(1146); // (🆕🆕🆕 **D587 +19** — WP04: 19 `me` Trainer ids, MID-MAP, on nine NEW objects (Wondrous Patch ×2, Philippe ×2, Jacinthe ×3, Firebreather ×2, Fighting Gong ×3, Tarragon ×2, Poké Pad ×3, Energy Swatter, Repel), all non-attack; no `attackGate`.) (🆕🆕🆕 **D586 +2** — WP03: Carbink `me02.5-117` / `-242` on the new `DOUBLE_TYPE_FP` ({F}{P} copy of Scovillain's `typesInPlay`), MID-MAP, non-attack; no `attackGate`.) (🆕🆕🆕 **D585 +19** — WP19's parameter copies: 19 `me` ids, MID-MAP, on eight NEW objects (Tundra Wall ×2, Wash Out, Powerful a-Salt ×2, Counterattacking Crest ×3, Stone Arms ×2, Scent Collection, Sky Transport ×5, Synchro Pulse ×3), all non-attack; no `attackGate`.) (🆕🆕🆕 **D584 +18** — the `me` alias tier 2: 18 `me` ids, MID-MAP — Ultra Ball ×2, Zoroark `30th-096` and Hop's Pincurchin ex `me02.5-068` on EXISTING objects, fourteen on the eight NEW D584 objects (Smooth Coat ×3, Shell Spikes, Incandescent Body ×2, Aerial Draw ×2, Share Happiness ×2, Intimidating Fang, Dopey Face, Float Up ×2 — the last two attack-only); no `attackGate`.) (🆕🆕🆕 **D583 +1** — Team Rocket's Energy `me02.5-217`, a reprint-alias key on `sv10-182`'s object, inserted MID-MAP; no `attackGate`.) (🆕🆕🆕 **D582 +99** — the Mega Evolution serie's reprint-alias tier: 99 `me` ids on EXISTING program objects, inserted MID-MAP; Terapagos ex `me02.5-179` shares `sv07-128`'s `attackGate`.) (🆕🆕🆕 **D580 +2** — Iron Treads `sv05-118` (`DUAL_CORE`, a `passive`) and Mr. Mime `sv05-063` (an attack-only row), two registry ids inserted MID-MAP; neither carries an `attackGate`.) (🆕🆕🆕 **D579 +1** — Walking Wake `sv06-063`, one attack-only registry id, inserted MID-MAP.)
     for (const id of Object.values(QUANTITY_IDS).flat()) {
       if (programFor(id) === undefined) continue;
       // Every id that DOES have a program had one before this slice: the eight

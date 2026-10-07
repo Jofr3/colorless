@@ -1369,6 +1369,15 @@ export function programPlayable(
     // printing that shipped before this one: with no rider the funnel returns
     // `oppBenchRefs`, whose length IS the bench length this used to read.
     if (op.op === "gust" && gustTargets(state, seat, op).length === 0) return false;
+    // 🆕🆕🆕 D587 — Repel `me01-126`, the first Trainer with a top-level `opponentSwitchOut`: the
+    // `gust` line above with the op's own candidate set (the interpreter parks on `oppBenchRefs`,
+    // the whole opponent Bench, unnarrowed), so an empty opponent Bench refuses the Item rather
+    // than spending it on nothing (ruling/906 — Bench size is public). No other Trainer or Ability
+    // carries the op at top level (its other producers are attack derivations), so every shipped
+    // program is unchanged through this line.
+    if (op.op === "opponentSwitchOut" && state.players[otherSeat(seat)].bench.length === 0) {
+      return false;
+    }
     // 🆕🛑 D345 — THE SAME CORRECTION AS THE `gust` LINE ABOVE, ONE OP OVER, AND
     // IT WAS A LIVE DEFECT RATHER THAN A TIDY-UP. This read
     // `players[opponent].bench.length === 0` for EVERY `damageChosen`, which is

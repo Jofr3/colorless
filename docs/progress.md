@@ -3,7 +3,9 @@
 > Update this at the **end of every session**: bump the status table, append a
 > session-log entry, and rewrite the **Resume point** to the next concrete action.
 
-**Last updated:** 2026-10-07 — build session #526 (**P3-M5 — D586, *WP03 — ROWS ON EXISTING CONDITION MEMBERS: 8 attack sentences / 17 `me` printings on shipped readers (an Abyss Eye KO anchor; `opponentPrizesRemaining` [0–3] / [0–2]; `yourEnergyInPlayAtLeast` 4 {L}/{R}/{W}; `yourHandExactly` 7; a 4 Basic {R} cancel head) plus Carbink ×2 "Double Type" on a {F}{P} `typesInPlay` copy; Mega Darkrai ex ×5 finished; Standard pool attacks 2480 / 2771, abilities 452 / 610; 726 `me` printings fully built*** — engine 0.470.0, MRV stays 42, NOT committed; the whole-corpus sweep PENDING)
+**Last updated:** 2026-10-07 — build session #527 (**P3-M5 — D587, *WP04 — TRAINER PARAMETERS I: 19 `me` Trainer printings / 9 texts on nine new registry objects (Wondrous Patch, Philippe, Jacinthe, Firebreather, Fighting Gong, Tarragon, Poké Pad, Energy Swatter, Repel), shipped ops / fields / filters only, plus Energy Swatter's caption arm and Repel's empty-Bench play gate; Standard pool trainers 339 / 447; 745 `me` printings fully built*** — engine 0.471.0, MRV 42, NOT committed; the sweep PENDING)
+
+**Last updated (was):** 2026-10-07 — build session #526 (**P3-M5 — D586, *WP03 — ROWS ON EXISTING CONDITION MEMBERS: 8 attack sentences / 17 `me` printings on shipped readers (an Abyss Eye KO anchor; `opponentPrizesRemaining` [0–3] / [0–2]; `yourEnergyInPlayAtLeast` 4 {L}/{R}/{W}; `yourHandExactly` 7; a 4 Basic {R} cancel head) plus Carbink ×2 "Double Type" on a {F}{P} `typesInPlay` copy; Mega Darkrai ex ×5 finished; Standard pool attacks 2480 / 2771, abilities 452 / 610; 726 `me` printings fully built*** — engine 0.470.0, MRV stays 42, NOT committed; the whole-corpus sweep PENDING)
 
 **Last updated (was):** 2026-10-07 — build session #525 (**P3-M5 — D585, *WP19 — PARAMETER COPIES OF PASSIVES AND ABILITIES: 19 `me` printings / 8 texts on eight new registry objects (Tundra Wall, Wash Out, Powerful a-Salt, Counterattacking Crest, Stone Arms, Scent Collection, Sky Transport, Synchro Pulse), existing fields only; Mega Scrafty ex ×3 and Mega Dragonite ex ×5 finished; Standard pool abilities 450 / 610; 709 `me` printings fully built*** — engine 0.469.0, MRV stays 42, NOT committed; the whole-corpus sweep PENDING)
 
@@ -797,6 +799,37 @@
 
 ## NEXT (resume point)
 
+> ### ▶ THE NEXT CONCRETE ACTION (written 2026-10-07, after D587)
+>
+> 🛑 **D587 IS BUILT AND NOT COMMITTED** (worktree `/home/jofre/projects/luminous_ui-mega`, branch `mega-ingest`, on D586 = `d262cffc`). D587 is WP04 of the Mega backlog: Trainer parameters I. Next: a review of D587, then the landing of D581–D587 (rebase `mega-ingest` onto main; never `git add -A` — `apps/api/.wrangler` is the setup symlink).
+>
+> ✅ **`bun run check` IS GREEN**: `typecheck-coverage` OK (909 TypeScript files in 6 projects), `tsc -b`, `lint-coverage` OK (911 source files), `biome lint --error-on-warnings` (952 files), `Test Files 630 passed (630) / Tests 14892 passed (14892) / CHECK_EXIT=0` (D586: 629 / 14864; D587 adds `trainerParamsMeD587.test.ts` (26) and two census rungs).
+>
+> **(a) THE SLICE.** registry.ts, nine NEW objects on 19 `me` Trainer ids (MID-MAP): `WONDROUS_PATCH` ×2 (N's PP Up's `attachEnergyFrom` at {P} / {P}, Benched), `PHILIPPE` ×2 ({M}, `count: 2` — D359's 0 / 1 / 2), `JACINTHE` ×3 (Poké Vital A + `filter` {P}, in-play type), `FIREBREATHER` ×2 (Shivery Chill's search at Basic {R} / 7), `FIGHTING_GONG` ×3 (Ethan's Adventure's `anyOf` at 1), `TARRAGON` ×2 (Lana's Aid's `anyOf` retrieval at {F} / 4), `POKE_PAD` ×3 (Master Ball + `noRuleBox`), `ENERGY_SWATTER` (Ortega's first op + `anyEnergy`) and `REPEL` (`opponentSwitchOut`). Engine lines: interpreter.ts `bottomFromOpponentHandNote` (Energy Swatter's caption) and cardplay.ts `programPlayable` (top-level `opponentSwitchOut` refused on an empty opponent Bench). Brief deviation: Wondrous Patch uses `attachEnergyFrom`, not `attachFromDiscard` (D587 row). Nothing dropped; Premium Power Pro / Iron Defender stay WP23.
+>
+> **(b) MRV STAYS 42** (match.ts "STAYS 42 AT D587"): no persisted shape; a v42 match gains the 19 Trainers mid-match (the D582 / D584–D586 class).
+>
+> | Column | `me` D587 | Standard pool D587 |
+> |---|---|---|
+> | Attacks | 748 / 1039 | **2480 / 2771** |
+> | Abilities | 76 / 234 | **452 / 610** |
+> | Trainers | 75 / 183 | **339 / 447** |
+> | Special Energy | 3 / 11 | **14 / 22** |
+>
+> **745 `me` printings fully built** (726 + 19). Registry 1127 → 1146, non-attack 967 → 986. Other pins moved: `searchDeck` population 123 → 131, revealClause `REVEALING` 50 → 53 / classified 74 → 77 / swept 167 → 175, attachQuantity's `count` registry half 9 → 11 (Philippe).
+>
+> **(c) THE MUTATION RECORD.** +16 D587 rows (4362 in all). precheck: 4362 mutants, the same 20 pre-existing broken rows (none in a D587 file). Probe `run.ts --decision D587 --allow-dirty`: 16 killed · 0 known · 0 GAP · 0 error, tree byte-identical after. Gate-witness `--only` (the 18 `opaque-anatomy-gate.ts` / `residue-census-gate.ts` rows): 18 killed · 0 error. Moved `find`s: `D275-engine-version-drifts-again` and `D460-maxsize-refuses-the-corpus` killed. Gates: residue-census, opaque-anatomy, splice, partition all OK.
+>
+> 🛑 **(0) THE WHOLE-CORPUS SWEEP IS PENDING** (D581–D586's too). Predicted: **4292 killed · 50 known survivor(s) · 0 GAP(S) · 20 error(s)** over **4,362** rows — 4346 + 16 = 4362; 4276 + 16 = 4292 killed; 4292 + 50 + 20 = 4362. It assumes D586's prediction holds and no D587 edit moves an older verdict; if a row differs, the difference is that row.
+>
+> **D539 sweep.** WITHDRAWN: "`programPlayable` has no arm for `opponentSwitchOut`" (D227 / D229 / D555) — for the top-level op only; annotated at decisions D227 / D229 / D555, progress, simulator, coverage-backlog-legal (×2), index.ts (×2), effects.ts (×2, the D227 block and its D555 annotation), registry.ts (`TORRENTIAL_WHIRLPOOL`), `derivedOpponentSwitchOut.test.ts` (header ×2, the seam rung's title, assertion and producer list) and `derivedSelfEnergyMove.test.ts` (title, assertion). Version tax: `0.470.0` outside `docs/` was 142 files / 226 lines; 225 stepped (it() titles and the D275 `find` included), 1 kept (index.ts' D586 heading). **Tooling:** `mutants.ts` crossed Biome's 4 MiB `files.maxSize` (4,195,627 bytes) — `biome.json` raised to 8 MiB, the D460 row's `find` follows, conventions.md annotated.
+>
+> Still owed from the Mega backlog: WP22 (Trainer parameters II) next by rank, "Fade Out" ×5, the markup-normalising ingest fix, then the residue by mechanism.
+>
+> ---
+>
+> **ARCHIVED — the resume point D587 was built from, kept rather than overwritten** (D586 has since been committed on `mega-ingest` as `d262cffc`):
+>
 > ### ▶ THE NEXT CONCRETE ACTION (written 2026-10-07, after D586)
 >
 > 🛑 **D586 IS BUILT AND NOT COMMITTED** (worktree `/home/jofre/projects/luminous_ui-mega`, branch `mega-ingest`, on D585 = `415ef046` + the D583 follow-up `1c7e1653`). D586 is WP03 of the Mega backlog: rows on existing condition members. Next: a review of D586, then the landing of D581–D586 (rebase `mega-ingest` onto main; never `git add -A` — `apps/api/.wrangler` is the setup symlink).
@@ -13068,6 +13101,7 @@
 > 🆕 ⚠️ **AND A DEADLINE WORTH KNOWING**: `scripts/mutation/mutants.ts` is now **2,608,763 bytes**
 > against Biome's `files.maxSize` of **4,194,304**. At ~20 KB/slice that is **~79 slices** of
 > headroom before D460's failure recurs. Not urgent; not invisible either.
+> [🆕🆕🆕 D587: the deadline arrived — `mutants.ts` crossed 4 MiB (4,195,627 bytes) and `biome.json`'s `files.maxSize` is now 8 MiB.]
 >
 > **(6) THE TARGETING RULES, fifty-five clauses.** (a)–(zz) as at D495, plus: (aaa) 🆕 **D496-i: a
 > PAIR of anchors needs a PAIR of probes**, and an anchor-shape defect is **invisible to every census
@@ -34607,7 +34641,8 @@ the next api deploy (D18).
 |---|---|---|
 | backend-data | P1 | ✅ M1–M9 + P2-M1 + task-17 api deployed (Worker `9b1ec1d1`, 2026-07-16); OAuth secrets pending (user) |
 | deck-builder | P2 | ✅ ALL 19 tasks closed (task 17 landed + e2e-verified locally); only follow-ups left |
-| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D586, *WP03 — rows on existing condition members: 8 attack sentences / 17 `me` printings on shipped readers plus Carbink ×2 "Double Type"; Mega Darkrai ex ×5 finished; attacks 2480 / 2771, abilities 452 / 610*** — engine 0.470.0, MRV 42, NOT committed; the sweep PENDING) |
+| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D587, *WP04 — Trainer parameters I: 19 `me` Trainer printings / 9 texts on nine new objects (shipped vocabulary), Energy Swatter's caption and Repel's play gate; trainers 339 / 447*** — engine 0.471.0, MRV 42, NOT committed; the sweep PENDING) |
+| simulator (prior) | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D586, *WP03 — rows on existing condition members: 8 attack sentences / 17 `me` printings on shipped readers plus Carbink ×2 "Double Type"; Mega Darkrai ex ×5 finished; attacks 2480 / 2771, abilities 452 / 610*** — engine 0.470.0, MRV 42, NOT committed; the sweep PENDING) |
 | simulator (prior) | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D585, *WP19 — parameter copies of passives and Abilities: 19 `me` printings / 8 texts on eight new objects (existing fields only); Mega Scrafty ex ×3 and Mega Dragonite ex ×5 finished; abilities 450 / 610*** — engine 0.469.0, MRV 42, NOT committed; the sweep PENDING) |
 | simulator (prior) | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D584, *the `me` alias tier 2 — 18 printings / 11 texts (4 on existing objects, 14 on eight new renamed / parameter / attack-index copies); Heatran's wrong-name log fixed; attacks 2463 / 2771, abilities 431 / 610, trainers 320 / 447*** — engine 0.468.0, MRV 42, NOT committed; the sweep PENDING) |
 | simulator (prior) | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D583, *the fix-up slice — Special Energy read off the printed text (14 Normal-tagged legal Specials; `isBasicEnergy`; map.ts normalises) and the persisted pool migrated (MRV 41 → 42, a v41 record's Trainer faces re-read from D1); Team Rocket's Energy `me02.5-217` aliased; special energy 14 / 22*** — engine 0.467.0, MRV 42, NOT committed; the sweep PENDING) |
@@ -34811,6 +34846,17 @@ the next api deploy (D18).
 Legend: 📝 backlog · 📋 specced · 🔎 research · 🚧 in progress · ✅ done
 
 ## Session log
+
+### 2026-10-07 — build session #527 (P3-M5 — D587)
+
+**WP04 — TRAINER PARAMETERS I. `MATCH_RECORD_VERSION` STAYS 42.**
+
+Built in the `luminous_ui-mega` worktree on D586 (`d262cffc`); the main checkout was not touched. Every id `git grep`-ped
+(none present) and every text read off the LOCAL D1 first. 19 `me` Trainer printings / 9 texts on nine new registry
+objects (shipped ops, fields, filters), plus Energy Swatter's caption arm and Repel's empty-Bench play gate (D227's "no
+arm" withdrawn for the top-level op). `trainerParamsMeD587.test.ts` (26): faces from twins, programs against twins, a
+board per Trainer with its refusal. Biome `files.maxSize` 4 → 8 MiB (mutants.ts crossed it). Version tax 225 stepped /
+1 kept. +16 mutant rows, all KILLED. Sweep PENDING (NEXT (0)). NOT committed.
 
 ### 2026-10-07 — build session #526 (P3-M5 — D586)
 
@@ -46036,6 +46082,7 @@ patches the tree.**
 **(8) 🆕 A DEADLINE NOBODY WAS TRACKING.** `scripts/mutation/mutants.ts` is now **2,608,763 bytes**
 against Biome's `files.maxSize` of **4,194,304**. At ~20 KB per slice that is roughly **79 slices**
 of headroom before D460's failure recurs. Not urgent; not invisible either.
+[🆕🆕🆕 D587: the deadline arrived — `mutants.ts` crossed 4 MiB (4,195,627 bytes) and `biome.json`'s `files.maxSize` is now 8 MiB.]
 
 ### 2026-09-10 — build session #435 (P3-M5 — D495)
 
@@ -73809,7 +73856,7 @@ survivors / 0 GAPS / 0 stale / 0 skipped(dirty) / 0 clobbers / 0 errors,
   empty own Bench, which is also the printed behaviour. **Both HUD row-lighting mirrors are
   unaffected**, because they call the same predicate with the same arguments. So the twin
   is **1 registry object for 2 legal printings and ZERO engine code**, and the arm stays
-  unwritten: *a gate no printing reaches is a vacuous guard*. ⚠️ **The finding is three
+  unwritten: *a gate no printing reaches is a vacuous guard*. [🆕🆕🆕 D587 (D539): WITHDRAWN for the top-level op — Repel `me01-126` prints `opponentSwitchOut` alone, so `programPlayable` now refuses it on an empty opponent Bench; the `recordGate`-nested Samurott op is still not gated.] ⚠️ **The finding is three
   assertions, not a paragraph** — including the POSITIVE case a speculative arm would have
   BROKEN: Samurott with an own Bench and an EMPTY opponent Bench is still playable, because
   the card does the first half of what it prints.

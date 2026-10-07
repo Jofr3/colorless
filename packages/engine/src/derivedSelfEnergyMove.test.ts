@@ -809,7 +809,7 @@ describe("programPlayable — the gate and the op read the SAME endpoints", () =
     expect(programPlayable(specialOnly, CLAUSES[BASIC].program, "p1")).toBe(false);
   });
 
-  it("✅ NO NEW `programPlayable` ARM WAS OWED, and that is a MEASURED result", () => {
+  it("✅ NO NEW `programPlayable` ARM WAS OWED, and that is a MEASURED result (🆕🆕🆕 D587: true of Samurott; Repel `me01-126` then owed the top-level arm)", () => {
     // ⚠️ THE HANDOFF THIS SLICE INHERITED ASKED FOR ONE ARM AND THE ANSWER IS
     // ZERO, WHICH IS WHY THE SLICE MOVED. The gate is a CARD-PLAY gate — it runs
     // for `playTrainer`, `useAbility` and `useStadiumAbility` — and all 13 legal
@@ -848,6 +848,9 @@ describe("programPlayable — the gate and the op read the SAME endpoints", () =
     // declined: the gate has no `opponentSwitchOut` line, so an empty opponent
     // Bench does not refuse it. Recorded as behaviour so a future arm has to argue
     // with a test rather than with a comment.
-    expect(programPlayable(state, [{ op: "opponentSwitchOut" }], "p1")).toBe(true);
+    // 🆕🆕🆕 D587 (D539): WITHDRAWN — the future arm argued with this test and won: Repel
+    // `me01-126` prints the op ALONE on a Trainer, so the gate refuses it on an empty opponent
+    // Bench (`gust`'s line). The Samurott rung above is unchanged (the nested op is not scanned).
+    expect(programPlayable(state, [{ op: "opponentSwitchOut" }], "p1")).toBe(false);
   });
 });

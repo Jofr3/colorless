@@ -6,6 +6,25 @@
 > `coverage-backlog-legal.md`; its pool is unchanged and whole. The suite-side figures are
 > `censusAtHead.test.ts`'s D581 block and `censusAttackCorpusMe.ts`.
 
+## 🆕 D587 update (engine 0.471.0) — Trainer parameters I (WP04)
+
+19 `me` Trainer printings / 9 texts keyed on nine new registry objects (registry.ts D587 block;
+`trainerParamsMeD587.test.ts`), each a built program's op at the printed parameter: Wondrous Patch ×2 and Philippe ×2
+(N's PP Up's `attachEnergyFrom`, {P} Benched / {M} with `count: 2`), Jacinthe ×3 (Poké Vital A's heal, `filter` {P}),
+Firebreather ×2 (Shivery Chill's search at {R} / 7), Fighting Gong ×3 (Ethan's Adventure's `anyOf` at 1), Tarragon ×2
+(Lana's Aid's `anyOf` retrieval at {F} / 4), Poké Pad ×3 (Master Ball with `noRuleBox`), Energy Swatter (Ortega's
+first op, `anyEnergy`) and Repel (`opponentSwitchOut`). Two engine lines: Energy Swatter's caption arm and Repel's
+empty-Bench play gate. Nothing dropped from the brief; Premium Power Pro and Iron Defender stay out (WP23).
+
+| Column | `me` built / units (D587) | Standard pool D587 |
+|---|---|---|
+| Attacks | 748 / 1,039 | **2,480 / 2,771** |
+| Abilities | 76 / 234 | **452 / 610** |
+| Trainers | 75 / 183 (+19) | **339 / 447** |
+| Special Energy | 3 / 11 | **14 / 22** |
+
+**Fully built `me` printings: 745** (726 + 19).
+
 ## 🆕 D586 update (engine 0.470.0) — rows on existing condition members (WP03)
 
 8 attack sentences / 17 `me` printings now derive through shipped readers (effects.ts D586 rows;
@@ -506,8 +525,8 @@ group wins; the grouping is a reading aid, not a census figure).
 
 Discard a Pokémon Tool or Special Energy card from 1 of your opponent's Pokémon, or discard a Stadium in play.
 - 2× **Dark Bell** — Both Active non-{D} Pokémon are now Confused.
-- 1× **Energy Swatter** — Your opponent reveals their hand, and you choose an Energy card you find there and put it on the bottom of their deck.
-- 3× **Fighting Gong** — Search your deck for a Basic {F} Energy card or a Basic {F} Pokémon, reveal it, and put it into your hand. Then, shuffle your deck.
+- 1× **Energy Swatter** — Your opponent reveals their hand, and you choose an Energy card you find there and put it on the bottom of their deck. [🆕🆕🆕 D587: BUILT]
+- 3× **Fighting Gong** — Search your deck for a Basic {F} Energy card or a Basic {F} Pokémon, reveal it, and put it into your hand. Then, shuffle your deck. [🆕🆕🆕 D587: BUILT]
 - 1× **Great Haul Net** — Choose 1 or both:
 • Shuffle up to 3 {W} Pokémon from your discard pile into your deck.
 • Shuffle up to 3 Basic {W} Energy cards from your discard pile into your deck.
@@ -515,9 +534,9 @@ Discard a Pokémon Tool or Special Energy card from 1 of your opponent's Pokémo
 - 2× **Iron Defender** — During your opponent's next turn, all of your {M} Pokémon take 30 less damage from attacks from your opponent's Pokémon (after applying Weakness and Resistance). (This includes new Pokémon that come into play.)
 - 2× **Jumbo Ice Cream** — Heal 80 damage from your Active Pokémon that has 3 or more Energy attached.
 - 1× **Lumiose Galette** — Heal 20 damage and remove a Special Condition from your Active Pokémon.
-- 3× **Poké Pad** — Search your deck for a Pokémon that doesn't have a Rule Box, reveal it, and put it into your hand. Then, shuffle your deck. (Pokémon ex, Pokémon V, etc. have Rule Boxes.)
+- 3× **Poké Pad** — Search your deck for a Pokémon that doesn't have a Rule Box, reveal it, and put it into your hand. Then, shuffle your deck. (Pokémon ex, Pokémon V, etc. have Rule Boxes.) [🆕🆕🆕 D587: BUILT]
 - 3× **Premium Power Pro** — During this turn, attacks used by your {F} Pokémon do 30 more damage to your opponent's Active Pokémon (before applying Weakness and Resistance).
-- 1× **Repel** — Switch out your opponent's Active Pokémon to the Bench. (Your opponent chooses the new Active Pokémon.)
+- 1× **Repel** — Switch out your opponent's Active Pokémon to the Bench. (Your opponent chooses the new Active Pokémon.) [🆕🆕🆕 D587: BUILT]
 - 2× **Special Red Card** — You can use this card only if your opponent has 3 or fewer Prize cards remaining.
 
 Your opponent shuffles their hand and puts it on the bottom of their deck. If they put any cards on the bottom of their deck in this way, they draw 3 cards.
@@ -527,7 +546,7 @@ Your opponent shuffles their hand and puts it on the bottom of their deck. If th
 Choose a Basic Pokémon in your discard pile and switch it with 1 of your Basic Pokémon in play. Any attached cards, damage counters, Special Conditions, turns in play, and any other effects remain on the new Pokémon.
 - 2× **Ultra Ball** — You can use this card only if you discard 2 other cards from your hand. [🆕🆕🆕 D584: BUILT]
 Search your deck for a Pokémon, reveal it, and put it into your hand. Then, shuffle your deck.
-- 2× **Wondrous Patch** — Attach a Basic {P} Energy card from your discard pile to 1 of your Benched {P} Pokémon.
+- 2× **Wondrous Patch** — Attach a Basic {P} Energy card from your discard pile to 1 of your Benched {P} Pokémon. [🆕🆕🆕 D587: BUILT]
 
 ### Pokémon-faced Trainers (fossils, Core Memory) — 5 text(s) / 5 printing(s)
 
@@ -583,17 +602,17 @@ During this turn, if your opponent's Active Pokémon is Knocked Out by damage fr
 Search your deck for up to 4 {L} Pokémon, reveal them, and put them into your hand. Then, shuffle your deck.
 - 3× **Dawn** — Search your deck for a Basic Pokémon, a Stage 1 Pokémon, and a Stage 2 Pokémon, reveal them, and put them into your hand. Then, shuffle your deck.
 - 2× **Emma** — Your opponent reveals their hand, and you draw a card for each Pokémon you find there.
-- 2× **Firebreather** — Search your deck for up to 7 Basic {R} Energy cards, reveal them, and put them into your hand. Then, shuffle your deck.
+- 2× **Firebreather** — Search your deck for up to 7 Basic {R} Energy cards, reveal them, and put them into your hand. Then, shuffle your deck. [🆕🆕🆕 D587: BUILT]
 - 3× **Gladion's Final Battle** — You can use this card only when it is the last card in your hand.
 During this turn, attacks used by your Pokémon that don't have a Rule Box do 80 more damage to your opponent's Active Pokémon (before applying Weakness and Resistance). (Pokémon ex, Pokémon V, etc. have Rule Boxes.)
 - 2× **Grimsley's Move** — Look at the top 7 cards of your deck and put a {D} Pokémon you find there onto your Bench. Shuffle the other cards and put them on the bottom of your deck. You can't use this card during your first turn.
 - 3× **Gwynn** — Discard up to 2 Pokémon that don't have a Rule Box from your hand, and draw 3 cards for each card you discarded in this way. (Pokémon ex, Pokémon V, etc. have Rule Boxes.)
-- 3× **Jacinthe** — Heal 150 damage from 1 of your {P} Pokémon.
+- 3× **Jacinthe** — Heal 150 damage from 1 of your {P} Pokémon. [🆕🆕🆕 D587: BUILT]
 - 4× **Lillie's Determination** — Shuffle your hand into your deck. Then, draw 6 cards. If you have exactly 6 Prize cards remaining, draw 8 cards instead.
 - 3× **Lt. Surge's Bargain** — Ask your opponent if each player may take a Prize card. If yes, each player takes a Prize card. If no, you draw 4 cards.
 - 2× **Misty's Vitality** — Search your deck for up to 4 Basic {W} Energy cards and attach them to 1 of your Pokémon. Then, shuffle your deck. Your turn ends.
 - 2× **Naveen** — Draw cards until you have 5 cards in your hand. Before drawing cards, you may discard any number of cards from your hand. (If you can't draw any cards in this way, you can't use this card.)
-- 2× **Philippe** — Attach up to 2 Basic {M} Energy cards from your discard pile to 1 of your {M} Pokémon.
+- 2× **Philippe** — Attach up to 2 Basic {M} Energy cards from your discard pile to 1 of your {M} Pokémon. [🆕🆕🆕 D587: BUILT]
 - 1× **Pokémon Center Lady** — Heal 60 damage from 1 of your Pokémon, and it recovers from all Special Conditions.
 - 3× **Rosa's Encouragement** — You can use this card only if you have more Prize cards remaining than your opponent.
 
@@ -602,7 +621,7 @@ Attach up to 2 Basic Energy cards from your discard pile to 1 of your Stage 2 Po
 - 2× **Rust Syndicate Grunt** — You can use this card only if any of your Pokémon were Knocked Out during your opponent's last turn.
 
 Discard an Energy from 1 of your opponent's Pokémon.
-- 2× **Tarragon** — Put up to 4 in any combination of {F} Pokémon and Basic {F} Energy cards from your discard pile into your hand.
+- 2× **Tarragon** — Put up to 4 in any combination of {F} Pokémon and Basic {F} Energy cards from your discard pile into your hand. [🆕🆕🆕 D587: BUILT]
 - 1× **Waitress** — Look at the top 6 cards of your deck and attach a Basic Energy card you find there to 1 of your Pokémon. Shuffle the other cards back into your deck.
 
 ### Tool — Mega Evolution-conditioned — 1 text(s) / 2 printing(s)

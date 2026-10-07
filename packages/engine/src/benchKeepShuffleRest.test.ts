@@ -882,8 +882,8 @@ describe("D537 §7 — the parked op IS persisted, and `MATCH_RECORD_VERSION` st
   });
 
   it("🛑 the engine version is the CURRENT one in BOTH places (🆕 D538 — 0.422.0 → 0.423.0; the title is de-valued so the version tax is one edit per site, not two)", () => {
-    expect(engineVersion).toBe("0.470.0");
-    expect(manifest.version).toBe("0.470.0");
+    expect(engineVersion).toBe("0.471.0");
+    expect(manifest.version).toBe("0.471.0");
   });
 });
 

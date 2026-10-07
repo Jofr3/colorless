@@ -2159,6 +2159,16 @@ export interface MatchRecord {
     `turn:action.discardable` — 🛑 **DEPLOY THE SERVER FIRST**: an old client's `z.object` STRIPS
     the unknown key, while a new client's REQUIRED key refuses an old server's frame.
 
+    🆕🆕🆕 **STAYS 42 AT D587 — WP04'S TRAINER PROGRAMS ADD NO GameState, PendingStage, PROMPT OR WIRE KEY.**
+    (Placed ABOVE the D586 block.) 19 `me` Trainer ids gain a program on nine new objects built of shipped
+    ops, fields and filters; every prompt they park on (`choosePokemon` with or without `upTo`,
+    `chooseCards`, the opponent-answered switch) is a shape a v42 record already holds. A persisted
+    `cardPool` keeps whole Card faces and programs are looked up by id at play time, so nothing persisted
+    is read differently except that those 19 Trainers now play instead of being unbuilt: a v42 match in
+    flight gains them mid-match (and a 0.470 rollback loses them; a Trainer parked at rollback resumes off
+    its persisted continuation), as at D582 / D584–D586 — the stated cost; no re-ingest. The cardplay.ts
+    empty-Bench gate and Energy Swatter's caption are play-time reads, not persisted.
+
     🆕🆕🆕 **STAYS 42 AT D586 — WP03'S CLAUSE ROWS ADD NO GameState, PendingStage, PROMPT OR WIRE KEY.**
     (Placed ABOVE the D585 block.) Eight `me` attack sentences now derive through shipped readers (one
     anchor, seven clause-table rows, all on shipped `BoardCondition` members and ops) and Carbink ×2 gains

@@ -6946,6 +6946,7 @@ import type { GameState, Seat } from "./types";
     compound. They are REGISTRY rows and are left for their own slice — an
     activated Ability is a card PLAY and goes through `programPlayable`, which gets
     no speculative arm here (a gate no printing reaches is a vacuous guard).
+    [🆕🆕🆕 D587 (D539): WITHDRAWN for the top-level op — Repel `me01-126` prints `opponentSwitchOut` alone, so `programPlayable` now refuses it on an empty opponent Bench; the `recordGate`-nested Samurott op is still not gated.]
 
     🛑 **THREE GUARDS WENT RED THAT NOBODY PREDICTED, AND ALL THREE WERE REAL.**
     (1) `clauseApostrophe.test.ts` caught the anchors shipping with NO curly-quote
@@ -7349,7 +7350,7 @@ import type { GameState, Seat } from "./types";
     is deliberately NOT descended into by `programPlayable` (only `coinFlipGate.then`
     is, on ruling/906's flip-is-procedure argument); its ANTECEDENT is a
     `switchActive` the gate already refuses on an empty own Bench. So the arm is
-    still unreachable, both HUD row-lighting mirrors are unaffected, and the honest
+    still unreachable [🆕🆕🆕 D587 (D539): WITHDRAWN for the top-level op — Repel `me01-126` prints `opponentSwitchOut` alone, so `programPlayable` now refuses it on an empty opponent Bench; the `recordGate`-nested Samurott op is still not gated.], both HUD row-lighting mirrors are unaffected, and the honest
     outcome is a bigger row — which is what the handoff itself said to do. The
     finding is pinned as three assertions in `derivedSelfEnergyMove.test.ts` rather
     than as a paragraph, because **a refusal that cannot go red is just prose**.
@@ -20252,6 +20253,20 @@ import type { GameState, Seat } from "./types";
     `expect(manifest.version)`, `it(…)` titles, the declaration and `package.json` —
     **not** as a value-keyed grep — because a value-keyed grep is precisely the mechanism
     that ate D500's heading.)
+    🆕🆕🆕 engineVersion 0.470.0 → **0.471.0** (D587 — WP04: TRAINER PARAMETERS I;
+    `MATCH_RECORD_VERSION` STAYS 42 (apps/api match.ts "STAYS 42 AT D587")). registry.ts keys 19 `me`
+    Trainer printings / 9 texts on NINE NEW objects, each a built program's op at the printed parameter:
+    `WONDROUS_PATCH` (×2; N's PP Up's `attachEnergyFrom` at {P} / {P}, Benched), `PHILIPPE` (×2; the same
+    op at {M} with `count: 2` — D359's quantity axis), `JACINTHE` (×3; Poké Vital A's heal with
+    `filter` {P}), `FIREBREATHER` (×2; Shivery Chill's search at {R} / 7), `FIGHTING_GONG` (×3; Ethan's
+    Adventure's `anyOf` at Basic {F} Energy or Basic {F} Pokémon, 1), `TARRAGON` (×2; Lana's Aid's
+    `anyOf` retrieval at {F} / 4), `POKE_PAD` (×3; Master Ball with `noRuleBox`), `ENERGY_SWATTER` (Ortega's
+    `bottomFromOpponentHand` with `anyEnergy`, no draw) and `REPEL` (`opponentSwitchOut`, the derived
+    attack sentence). Two engine lines: interpreter.ts `bottomFromOpponentHandNote` gains Energy
+    Swatter's printed caption, and cardplay.ts `programPlayable` refuses a top-level `opponentSwitchOut`
+    on an empty opponent Bench (`gust`'s line; D227's "no arm" is withdrawn). No op, field or filter
+    member moved. Census: Standard pool trainers 339 / 447 (attacks 2480 / 2771, abilities 452 / 610,
+    special energy 14 / 22 unmoved); 745 `me` printings fully built. `trainerParamsMeD587.test.ts`.)
     🆕🆕🆕 engineVersion 0.469.0 → **0.470.0** (D586 — WP03: ROWS ON EXISTING CONDITION MEMBERS;
     `MATCH_RECORD_VERSION` STAYS 42 (apps/api match.ts "STAYS 42 AT D586")). effects.ts: one
     `deriveAttackEffect` anchor (`OPPONENT_ACTIVE_SPECIAL_CONDITION_KO`, Mega Darkrai ex "Abyss Eye" ×5:
@@ -25154,7 +25169,7 @@ import type { GameState, Seat } from "./types";
     WITNESS** — the count was re-derived every slice and the word *"three"* was carried.
     A successor of this slice inherits **81 / 61 / 17** again, over **FIVE** history
     occurrences: those four plus `deckMillFilteredScale.test.ts`'s own header arrow.) */
-export const engineVersion = "0.470.0";
+export const engineVersion = "0.471.0";
 
 export type {
   ApplyResult,

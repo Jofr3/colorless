@@ -16201,6 +16201,12 @@ function bottomFromOpponentHandNote(
   if (op.filter?.kind === "supporter") {
     return "Your opponent reveals their hand. Choose a Supporter card you find there and put it on the bottom of their deck.";
   }
+  // 🆕🆕🆕 D587 — Energy Swatter `me03-073`'s printed form: Ortega's sentence with "an Energy card"
+  // for "a card" (one printed form per card, the Greavard branch's rule). Without it the dialog
+  // would say "a card" over an offer of Energy cards only.
+  if (op.filter?.kind === "anyEnergy") {
+    return "Your opponent reveals their hand, and you choose an Energy card you find there and put it on the bottom of their deck.";
+  }
   return "Your opponent reveals their hand, and you choose a card you find there and put it on the bottom of their deck.";
 }
 

@@ -318,7 +318,7 @@ estimate, and flagged as such.
 > mirrors are therefore unaffected too** — they call the same predicate with the
 > same arguments. So the twin is **1 registry object for 2 legal printings and
 > nothing else**, and the arm stays unwritten because *a gate no printing reaches
-> is a vacuous guard*. Pinned red-able in `derivedSelfEnergyMove.test.ts`
+> is a vacuous guard*. [🆕🆕🆕 D587 (D539): WITHDRAWN for the top-level op — Repel `me01-126` prints `opponentSwitchOut` alone, so `programPlayable` now refuses it on an empty opponent Bench; the `recordGate`-nested Samurott op is still not gated.] Pinned red-able in `derivedSelfEnergyMove.test.ts`
 > ("NO NEW `programPlayable` ARM WAS OWED"), not in prose.
 >
 > ✅ **AND ROW 4 IS BUILT (D227, 2026-08-05) — 13 of its 14, struck through above.**
@@ -339,7 +339,7 @@ estimate, and flagged as such.
 >   switch out your opponent's Active Pokémon to the Bench. (…)"*. **The op now
 >   exists**, so this is 1 registry object for 2 legal printings — but an activated
 >   Ability is a card PLAY, so it goes through `programPlayable`, which has no arm
->   for `opponentSwitchOut` and deliberately did not get a speculative one. **That
+>   for `opponentSwitchOut` and deliberately did not get a speculative one. [🆕🆕🆕 D587 (D539): WITHDRAWN for the top-level op — Repel `me01-126` prints `opponentSwitchOut` alone, so `programPlayable` now refuses it on an empty opponent Bench; the `recordGate`-nested Samurott op is still not gated.] **That
 >   arm plus the row is the whole of the follow-up.**
 > **The non-attack built figure is unmoved by D227** (it is an attack-text slice):
 > still 147 of 651, 22.6 %.

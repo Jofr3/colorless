@@ -8530,7 +8530,11 @@ export type EffectOp =
 
       §11: **untouched** by a wide `{ effects: true }` block, for `gust`'s reason
       and no other — the printed subject is the opponent's BENCHED body coming up,
-      not the shielded Active. Classified and DRIVEN in `preventBlock.test.ts`. */
+      not the shielded Active. Classified and DRIVEN in `preventBlock.test.ts`.
+
+      🆕🆕🆕 D587 — its first TRAINER printing, Repel `me01-126` (registry.ts `REPEL`, the bare op).
+      `programPlayable` now refuses it on an empty opponent Bench with its OWN line — `gust`'s
+      refusal still answers only for `gust`, as above. */
   | { op: "opponentSwitchOut"; recordAs?: EffectSlot }
   /** 🆕 **D299 — TAKE ONE BENCHED POKÉMON OFF THE BOARD, WITH EVERYTHING
       ATTACHED TO IT, AND PUT THE WHOLE PILE INTO ITS OWNER'S `dest`.** The first
@@ -25001,12 +25005,14 @@ const ATTACK_SELF_SWITCH_TYPED =
 // PLAY, so it goes through `programPlayable` — which has no arm for this op and
 // must not get a speculative one (a gate no printing reaches is the vacuous guard
 // conventions.md forbids). Recorded in `coverage-backlog-legal.md`.
+// [🆕🆕🆕 D587 (D539): WITHDRAWN for the top-level op — Repel `me01-126` prints `opponentSwitchOut` alone, so `programPlayable` now refuses it on an empty opponent Bench; the `recordGate`-nested Samurott op is still not gated.]
 // 🆕🆕🆕 D555 — **"deliberately left for their own slice" IS WITHDRAWN (D539): D555 IS
 // THAT SLICE.** registry.ts `TORRENTIAL_WHIRLPOOL` keys both ids on this arm's program
 // byte for byte (the Ability surface), and `refusedPrintings.ts`'s two rows are deleted.
 // The rest of the paragraph STAYS TRUE: `programPlayable` has no arm for this op and
 // gets none — the play is gated by `switchActive`'s own arm, and with an empty opponent
 // Bench the self-switch still happens and the opponent is never asked.
+// [🆕🆕🆕 D587 (D539): WITHDRAWN for the top-level op — Repel `me01-126` prints `opponentSwitchOut` alone, so `programPlayable` now refuses it on an empty opponent Bench; the `recordGate`-nested Samurott op is still not gated.]
 //
 // ⚠️⚠️ BOTH APOSTROPHES ON ALL THREE, LIKE THE TWO GUST ANCHORS 40 LINES UP AND
 // UNLIKE THE TWO SELF-SWITCH ANCHORS DIRECTLY ABOVE — AND THE FIRST DRAFT GOT
