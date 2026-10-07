@@ -697,6 +697,6 @@ describe("§4 — the census step this slice is", () => {
   });
 
   it("the engine version moved with the behaviour", () => {
-    expect(engineVersion).toBe("0.468.0");
+    expect(engineVersion).toBe("0.469.0");
   });
 });

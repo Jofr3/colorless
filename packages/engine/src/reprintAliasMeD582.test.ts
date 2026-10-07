@@ -160,6 +160,13 @@ const KEYED_AT_D584 = [
   "30th-073", "30th-136",
 ];
 
+/** 🆕🆕🆕 D585 — the `me` ids WP19's parameter copies key (paramCopiesMeD585.test.ts pins each one). */
+const KEYED_AT_D585 = [
+  "me03-024", "me03-092", "me03-019", "me01-084", "me01-147", "me02.5-135", "me02.5-270", "me02.5-285",
+  "mep-065", "me03-043", "me03-036", "me02.5-152", "me02.5-271", "me02.5-290", "me02.5-295", "mep-091",
+  "me04-029", "me04-090", "mep-075",
+];
+
 /** The five `me` Tera reprints banners.ts carries (each printed face checked on tcgdex's image). */
 const ME_TERA = ["me02.5-038", "me02.5-057", "me02.5-160", "me02.5-179", "me02.5-277"] as const;
 
@@ -240,12 +247,16 @@ describe("D582 — the `me` reprint-alias tier: 99 printings on 66 existing prog
     expect(new Set(ALIASES.map(([, twin]) => programFor(twin))).size).toBe(66);
   });
 
-  it("the registry's `me` keys are EXACTLY this table — nothing keyed outside it (🆕🆕🆕 D583: plus Team Rocket's Energy `me02.5-217`; 🆕🆕🆕 D584: plus the 18 tier-2 keys)", () => {
+  it("the registry's `me` keys are EXACTLY this table — nothing keyed outside it (🆕🆕🆕 D583: plus Team Rocket's Energy `me02.5-217`; 🆕🆕🆕 D584: plus the 18 tier-2 keys; 🆕🆕🆕 D585: plus the 19 WP19 keys)", () => {
     const me = registryCardIds().filter((id) => /^(me|30th)/.test(id));
     // 🆕🆕🆕 D583 — the one `me` key outside the D582 table: Team Rocket's Energy, on `sv10-182`'s object.
     // 🆕🆕🆕 D584 — and the 18 tier-2 keys (`KEYED_AT_D584`).
     expect(KEYED_AT_D584).toHaveLength(18);
-    expect(me.sort()).toEqual([...ALIASES.map(([id]) => id), "me02.5-217", ...KEYED_AT_D584].sort());
+    // 🆕🆕🆕 D585 — and WP19's 19 parameter-copy keys (`KEYED_AT_D585`).
+    expect(KEYED_AT_D585).toHaveLength(19);
+    expect(me.sort()).toEqual(
+      [...ALIASES.map(([id]) => id), "me02.5-217", ...KEYED_AT_D584, ...KEYED_AT_D585].sort(),
+    );
     // …and no twin is a `me` id: every program the tier reaches was built for the `sv` serie.
     for (const [, twin] of ALIASES) expect(/^(me|30th)/.test(twin), twin).toBe(false);
   });

@@ -6,6 +6,23 @@
 > `coverage-backlog-legal.md`; its pool is unchanged and whole. The suite-side figures are
 > `censusAtHead.test.ts`'s D581 block and `censusAttackCorpusMe.ts`.
 
+## 🆕 D585 update (engine 0.469.0) — parameter copies of passives and Abilities (WP19)
+
+19 `me` printings / 8 texts keyed on eight new registry objects (registry.ts D585 block; `paramCopiesMeD585.test.ts`),
+each a built `sv` program's op or field at the printed parameter: Tundra Wall (Aurorus ×2), Wash Out (Dewgong),
+Powerful a-Salt (Garganacl ×2), Counterattacking Crest (Mega Scrafty ex ×3), Stone Arms (Barbaracle ×2), Scent
+Collection (Aromatisse), Sky Transport (Mega Dragonite ex ×5), Synchro Pulse (Ampharos ×3). No new vocabulary.
+
+| Column | `me` built / units (D585) | Standard pool D585 |
+|---|---|---|
+| Attacks | 731 / 1,039 | **2,463 / 2,771** |
+| Abilities | 74 / 234 (+19) | **450 / 610** |
+| Trainers | 56 / 183 | **320 / 447** |
+| Special Energy | 3 / 11 | **14 / 22** |
+
+**Fully built `me` printings: 709** (690 + 19; each one's attack is already reader-built). Mega Scrafty ex ×3 and
+Mega Dragonite ex ×5 are finished.
+
 ## 🆕 D584 update (engine 0.468.0) — alias tier 2 (WP01)
 
 18 `me` printings / 11 texts keyed (registry.ts D584 block; `reprintAliasMeD584.test.ts`): Ultra Ball ×2, Zoroark
@@ -22,7 +39,7 @@ now logs its own "Incandescent Body".
 
 **Fully built `me` printings: 690** (672 + 18; every other attack these Pokémon print is reader-built). Still owed from
 the D582 list: "Fade Out" ×5 (Drifblim, Meowth ex ×3, Emolga — other index, other name). Named, not in WP01: Mega Scrafty
-ex ×3 prints Counterattack Quills at "place 5" (a 50 `damageAttacker` copy) and Antique Skull Fossil `me05-073` prints
+ex ×3 prints Counterattack Quills at "place 5" (a 50 `damageAttacker` copy) [🆕🆕🆕 D585: BUILT, `COUNTERATTACKING_CREST`] and Antique Skull Fossil `me05-073` prints
 the "place 3" text on a fossil face.
 
 ## 🆕 D583 update (engine 0.467.0) — Special Energy by printed text
@@ -357,7 +374,7 @@ group wins; the grouping is a reading aid, not a census figure).
 ### Once-per-turn activated Abilities — 34 text(s) / 65 printing(s)
 
 - 5× **Mortal Shuriken** — Once during your turn, if this Pokémon is in the Active Spot, you may discard a Basic {W} Energy card from your hand in order to use this Ability. Place 6 damage counters on 1 of your opponent's Pokémon.
-- 5× **Sky Transport** — Once during your turn, you may use this Ability. Switch your Active Pokémon with 1 of your Benched Pokémon.
+- 5× **Sky Transport** — Once during your turn, you may use this Ability. Switch your Active Pokémon with 1 of your Benched Pokémon. [🆕🆕🆕 D585: BUILT]
 - 4× **Run Errand** — Once during your turn, if this Pokémon is in the Active Spot, you may use this Ability. Draw 2 cards. You can't use more than 1 Run Errand Ability each turn.
 - 3× **Lunar Cycle** — Once during your turn, if you have Solrock in play, you may discard a Basic {F} Energy card from your hand in order to use this Ability. Draw 3 cards. You can't use more than 1 Lunar Cycle Ability each turn.
 - 3× **Nighttime Maneuvers** — Once during your turn, if this Pokémon is in the Active Spot, you may use this Ability. Search your deck for a card. Shuffle your deck, then put that card on top of it.
@@ -375,7 +392,7 @@ group wins; the grouping is a reading aid, not a census figure).
 - 2× **Gathering of Blossoms** — Once during your turn, you may use this Ability. Search your deck for an Erika's Pokémon, reveal it, and put it into your hand. Then, shuffle your deck.
 - 2× **Share Happiness** — Once during your turn, you may use this Ability. Heal 30 damage from 1 of your Pokémon. [🆕🆕🆕 D584: BUILT]
 - 2× **Sky Hunt** — Once during your turn, you may use this Ability. Flip a coin. If heads, discard a random card from your opponent's hand.
-- 2× **Stone Arms** — Once during your turn, you may use this Ability. Attach a Basic {F} Energy card from your hand to 1 of your {F} Pokémon.
+- 2× **Stone Arms** — Once during your turn, you may use this Ability. Attach a Basic {F} Energy card from your hand to 1 of your {F} Pokémon. [🆕🆕🆕 D585: BUILT]
 - 1× **Alluring Wings** — Once during your turn, if this Pokémon is in the Active Spot, you may use this Ability. Each player draws a card.
 - 1× **Evolutionary Guidance** — Once during your turn, if this Pokémon has any Energy attached, you may use this Ability. Search your deck for an Evolution Pokémon, reveal it, and put it into your hand. Then, shuffle your deck.
 - 1× **Fiery Flapping** — Once during your turn, if you have Articuno and Zapdos in play, you may use this Ability. Attach a Basic {R} Energy card from your hand to this Pokémon.
@@ -387,7 +404,7 @@ group wins; the grouping is a reading aid, not a census figure).
 - 1× **Guiding Dance** — Once during your turn, you may use this Ability. Flip a coin. If heads, search your deck for a Pokémon, reveal it, and put it into your hand. Then, shuffle your deck.
 - 1× **Lethargic Charge** — Once during your turn, if this Pokémon is on your Bench, you may use this Ability. Attach an Energy card from your hand to your Active Larry's Pokémon.
 - 1× **Lovely Fragrance** — Once during your turn, you may use this Ability. Heal 30 damage from each of your Pokémon.
-- 1× **Scent Collection** — Once during your turn, you may use this Ability. Search your deck for up to 2 Basic {P} Energy cards, reveal them, and put them into your hand. Then, shuffle your deck.
+- 1× **Scent Collection** — Once during your turn, you may use this Ability. Search your deck for up to 2 Basic {P} Energy cards, reveal them, and put them into your hand. Then, shuffle your deck. [🆕🆕🆕 D585: BUILT]
 - 1× **Spiteful Evolution** — Once during your turn, you may use this Ability. Choose a card in your hand that evolves from this Pokémon and put it onto this Pokémon to evolve it. If you do, place 2 damage counters on the Pokémon you evolved in this way. You can't use this Ability during your first turn.
 - 1× **Sunrise** — Once during your turn, if this Pokémon is on your Bench, you may use this Ability. Search your deck for up to 2 Basic Metal Energy cards and attach them to this Pokémon. Then, shuffle your deck.
 
@@ -395,12 +412,12 @@ group wins; the grouping is a reading aid, not a census figure).
 
 - 4× **Solar Transfer** — As often as you like during your turn, you may use this Ability. Move a Basic {G} Energy from 1 of your Pokémon to another of your Pokémon.
 - 1× **Bubble Gathering** — As often as you like during your turn, you may use this Ability. Move an Energy from 1 of your other Pokémon to this Pokémon.
-- 1× **Wash Out** — As often as you like during your turn, you may use this Ability. Move a {W} Energy from 1 of your Benched Pokémon to your Active Pokémon.
+- 1× **Wash Out** — As often as you like during your turn, you may use this Ability. Move a {W} Energy from 1 of your Benched Pokémon to your Active Pokémon. [🆕🆕🆕 D585: BUILT]
 
 ### Knock Out / damage-taken triggers — 14 text(s) / 27 printing(s)
 
 - 5× **Shadowy Concealment** — If 1 of your {D} Pokémon is Knocked Out by damage from an attack from your opponent's Pokémon ex, that player takes 1 fewer Prize card. The effect of Shadowy Concealment doesn't stack.
-- 3× **Counterattacking Crest** — If this Pokémon is in the Active Spot and is damaged by an attack from your opponent's Pokémon (even if this Pokémon is Knocked Out), place 5 damage counters on the Attacking Pokémon.
+- 3× **Counterattacking Crest** — If this Pokémon is in the Active Spot and is damaged by an attack from your opponent's Pokémon (even if this Pokémon is Knocked Out), place 5 damage counters on the Attacking Pokémon. [🆕🆕🆕 D585: BUILT]
 - 3× **Tenacious Body** — If this Pokémon would be Knocked Out by damage from an attack, flip a coin. If heads, this Pokémon is not Knocked Out, and its remaining HP becomes 10.
 - 2× **Damp** — Pokémon in play (both yours and your opponent's) lose all Abilities that require those Pokémon to be Knocked Out.
 - 2× **Fainting Spell** — If this Pokémon is Knocked Out by damage from an attack from your opponent's Pokémon, flip a coin. If heads, the Attacking Pokémon is Knocked Out.
@@ -416,10 +433,10 @@ group wins; the grouping is a reading aid, not a census figure).
 
 ### Damage modifiers (more / less damage, takes less damage) — 7 text(s) / 12 printing(s)
 
-- 3× **Synchro Pulse** — If you have the same number of cards in your hand as your opponent, attacks used by this Pokémon do 80 more damage to your opponent's Active Pokémon (before applying Weakness and Resistance).
-- 2× **Powerful a-Salt** — Attacks used by your {F} Pokémon do 30 more damage to your opponent's Active Pokémon (before applying Weakness and Resistance).
+- 3× **Synchro Pulse** — If you have the same number of cards in your hand as your opponent, attacks used by this Pokémon do 80 more damage to your opponent's Active Pokémon (before applying Weakness and Resistance). [🆕🆕🆕 D585: BUILT]
+- 2× **Powerful a-Salt** — Attacks used by your {F} Pokémon do 30 more damage to your opponent's Active Pokémon (before applying Weakness and Resistance). [🆕🆕🆕 D585: BUILT]
 - 2× **Thick Fat** — This Pokémon takes 30 less damage from attacks from your opponent's {R} or {W} Pokémon (after applying Weakness and Resistance).
-- 2× **Tundra Wall** — All of your Pokémon that have any {W} Energy attached take 50 less damage from attacks from your opponent's Pokémon (after applying Weakness and Resistance). The effect of Tundra Wall doesn't stack.
+- 2× **Tundra Wall** — All of your Pokémon that have any {W} Energy attached take 50 less damage from attacks from your opponent's Pokémon (after applying Weakness and Resistance). The effect of Tundra Wall doesn't stack. [🆕🆕🆕 D585: BUILT]
 - 1× **Gloomy Garbage** — Attacks used by your opponent's Active Pokémon that has a Pokémon Tool attached do 20 less damage (before applying Weakness and Resistance).
 - 1× **Intimidating Fang** — As long as this Pokémon is in the Active Spot, attacks used by your opponent's Active Pokémon do 30 less damage (before applying Weakness and Resistance). [🆕🆕🆕 D584: BUILT]
 - 1× **Supreme Overlord** — Attacks used by this Pokémon do 30 more damage to your opponent's Active Pokémon for each Prize card your opponent has taken (before applying Weakness and Resistance).

@@ -29859,3 +29859,19 @@ decisions (1) and (2) after D580. Engine 0.464.0 → 0.465.0. The Mega ex rule i
 - **Census.** Standard pool attacks **2463 / 2771**, abilities **431 / 610**, trainers **320 / 447**, special energy
   **14 / 22**; 690 `me` printings fully built (censusAtHead's D584 block).
 - **Owed.** See `progress.md` NEXT. The whole-corpus sweep is PENDING.
+
+## D585 — WP19: parameter copies of passives and Abilities (engine 0.469.0, `MATCH_RECORD_VERSION` stays 42)
+
+**Status:** ✅ BUILT in the `luminous_ui-mega` worktree on D584 (`97317879`), NOT committed.
+
+- **Eight new objects (19 `me` printings / 8 texts)**, each a built `sv` program's op or field at the printed
+  parameter: `TUNDRA_WALL` (Aurorus ×2; Gear Coating at {W} / 50 with `noStack`), `WASH_OUT` (Dewgong; Fire Off with
+  {W}), `POWERFUL_A_SALT` (Garganacl ×2; `seatDamageBonusBeforeWR` +30 for {F}), `COUNTERATTACKING_CREST` (Mega
+  Scrafty ex ×3; `damageAttacker` 50), `STONE_ARMS` (Barbaracle ×2; a Basic {F} from hand to an {F} target),
+  `SCENT_COLLECTION` (Aromatisse; up to 2 Basic {P} to hand), `SKY_TRANSPORT` (Mega Dragonite ex ×5; `switchActive`),
+  `SYNCHRO_PULSE` (Ampharos ×3; +80 on `handSizesEqual`). The `me` "you may use this Ability. X" is the `sv` "you may x".
+- **Suite.** `paramCopiesMeD585.test.ts`: each face rebuilt from its twin's text through stated edits, each object
+  pinned against its twin, and a board per object with a control. No op, field or persisted shape moved.
+- **Census.** Standard pool abilities **450 / 610** (attacks 2463 / 2771, trainers 320 / 447, special energy 14 / 22);
+  709 `me` printings fully built (censusAtHead's D585 block).
+- **Owed.** See `progress.md` NEXT. The whole-corpus sweep is PENDING.

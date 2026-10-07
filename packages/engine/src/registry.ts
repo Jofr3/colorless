@@ -16437,6 +16437,129 @@ const FLOAT_UP: CardProgram = {
   },
 };
 
+// ── 🆕🆕🆕 D585 — WP19: PARAMETER COPIES OF PASSIVES AND ABILITIES. Eight NEW objects for 19 `me`
+//    printings / 8 texts, each a built `sv` program's op or field at the printed parameter (type,
+//    amount, name, condition). No new op, field or reader. Printed texts off the LOCAL D1
+//    (2026-10-07); `paramCopiesMeD585.test.ts` pins each face against its twin's and drives each
+//    program on a board. The `me` wording "you may use this Ability. X" is the `sv` "you may x". ──
+
+/** Aurorus `me03-024` / `-092` — "Tundra Wall": *"All of your Pokémon that have any {W} Energy
+    attached take 50 less damage from attacks from your opponent's Pokémon (after applying Weakness
+    and Resistance). The effect of Tundra Wall doesn't stack."* Klinklang's `GEAR_COATING` at {W}
+    and 50, plus the printed `noStack` (the `seatDamageReduction` ledger caps two Aurorus at 50). */
+const TUNDRA_WALL: CardProgram = {
+  passive: {
+    seatDamageReductionAfterWR: {
+      amount: 50,
+      beneficiaryHasEnergy: "Water",
+      noStack: "Tundra Wall",
+    },
+  },
+};
+
+/** Dewgong `me03-019` — "Wash Out": *"As often as you like during your turn, you may use this
+    Ability. Move a {W} Energy from 1 of your Benched Pokémon to your Active Pokémon."* Armarouge
+    `sv01-041` "Fire Off" (`ARMAROUGE`) with {W} for {R}, under the printed name. */
+const WASH_OUT: CardProgram = {
+  abilities: [
+    {
+      name: "Wash Out",
+      oncePerTurn: false,
+      activeOnly: false,
+      program: [
+        {
+          op: "moveEnergy",
+          filter: { kind: "providesEnergy", energyType: "Water" },
+          max: 1,
+          route: "benchToActive",
+        },
+      ],
+    },
+  ],
+};
+
+/** Garganacl `me01-084` / `-147` — "Powerful a-Salt": *"Attacks used by your {F} Pokémon do 30
+    more damage to your opponent's Active Pokémon (before applying Weakness and Resistance)."*
+    Victini `sv08-021` "Victory Cheer" (`VICTORY_CHEER`) at 30, its beneficiary without the stage. */
+const POWERFUL_A_SALT: CardProgram = {
+  passive: {
+    seatDamageBonusBeforeWR: {
+      amount: 30,
+      beneficiary: { kind: "typedPokemon", pokemonType: "Fighting" },
+    },
+  },
+};
+
+/** Mega Scrafty ex `me02.5-135` / `-270` / `-285` — "Counterattacking Crest": Cacnea `sv01-005`
+    "Counterattack Quills" with 5 damage counters for 3 ("place" for "put", D584). Nameless, like
+    its twin. */
+const COUNTERATTACKING_CREST: CardProgram = { passive: { damageAttacker: { amount: 50 } } };
+
+/** Barbaracle `mep-065` / `me03-043` — "Stone Arms": *"Once during your turn, you may use this
+    Ability. Attach a Basic {F} Energy card from your hand to 1 of your {F} Pokémon."* Quaquaval
+    `sv01-054` "Energy Carnival" (`QUAQUAVAL`) with the printed {F} on the card and on the target
+    (`targetType`, Gardevoir ex's rider). */
+const STONE_ARMS: CardProgram = {
+  abilities: [
+    {
+      name: "Stone Arms",
+      oncePerTurn: true,
+      activeOnly: false,
+      program: [
+        { op: "attachEnergyFrom", source: "hand", energyType: "Fighting", targetType: "Fighting" },
+      ],
+    },
+  ],
+};
+
+/** Aromatisse `me03-036` — "Scent Collection": *"Once during your turn, you may use this Ability.
+    Search your deck for up to 2 Basic {P} Energy cards, reveal them, and put them into your hand.
+    Then, shuffle your deck."* Chien-Pao ex `sv02-061` "Shivery Chill" (`CHIEN_PAO`'s Ability) with
+    {P} for {W} and without its Active Spot clause. */
+const SCENT_COLLECTION: CardProgram = {
+  abilities: [
+    {
+      name: "Scent Collection",
+      oncePerTurn: true,
+      activeOnly: false,
+      program: [
+        {
+          op: "searchDeck",
+          filter: { kind: "basicEnergy", energyType: "Psychic" },
+          dest: "hand",
+          max: 2,
+          reveal: true,
+        },
+        { op: "shuffleDeck" },
+      ],
+    },
+  ],
+};
+
+/** Mega Dragonite ex `me02.5-152` / `-271` / `-290` / `-295`, `mep-091` — "Sky Transport": *"Once
+    during your turn, you may use this Ability. Switch your Active Pokémon with 1 of your Benched
+    Pokémon."* Samurott `sv10.5w-023` "Torrential Whirlpool"'s first sentence (`switchActive`),
+    without its "If you do" rider. */
+const SKY_TRANSPORT: CardProgram = {
+  abilities: [
+    {
+      name: "Sky Transport",
+      oncePerTurn: true,
+      activeOnly: false,
+      program: [{ op: "switchActive" }],
+    },
+  ],
+};
+
+/** Ampharos `me04-029` / `-090`, `mep-075` — "Synchro Pulse": *"If you have the same number of
+    cards in your hand as your opponent, attacks used by this Pokémon do 80 more damage to your
+    opponent's Active Pokémon (before applying Weakness and Resistance)."* Okidogi's
+    `damageBonusBeforeWRIf` (folded off the attacker alone: "this Pokémon") at 80, on Noivern
+    `sv09-128`'s printed condition `handSizesEqual`. */
+const SYNCHRO_PULSE: CardProgram = {
+  passive: { damageBonusBeforeWRIf: { amount: 80, cond: { kind: "handSizesEqual" } } },
+};
+
 const REGISTRY: Record<string, CardProgram> = {
   // Professor's Research (SV base prints)
   "sv01-189": PROFESSORS_RESEARCH,
@@ -17392,6 +17515,27 @@ const REGISTRY: Record<string, CardProgram> = {
   "mep-086": DOPEY_FACE, // Slowpoke "Dopey Face" — twin `sv01-068` (Pachirisu "Electricity Pouches"), Confused for Paralyzed
   "30th-073": FLOAT_UP, // Drifloon "Float Up" (attack 0) — twin `sv08-131` (Gholdengo "Surf Back", attack 1)
   "30th-136": FLOAT_UP, // Drifloon
+  // 🆕🆕🆕 D585 — WP19: 19 printings / 8 texts on the eight parameter copies above, MID-MAP
+  // (`raw[last]` does not move). `paramCopiesMeD585.test.ts` pins every face against its twin's.
+  "me03-024": TUNDRA_WALL, // Aurorus "Tundra Wall" — twin `sv10.5b-063` (Klinklang "Gear Coating"), {W} / 50 / no stack
+  "me03-092": TUNDRA_WALL, // Aurorus
+  "me03-019": WASH_OUT, // Dewgong "Wash Out" — twin `sv01-041` (Armarouge "Fire Off"), {W} for {R}
+  "me01-084": POWERFUL_A_SALT, // Garganacl "Powerful a-Salt" — twin `sv08-021` (Victini "Victory Cheer"), {F} / 30
+  "me01-147": POWERFUL_A_SALT, // Garganacl
+  "me02.5-135": COUNTERATTACKING_CREST, // Mega Scrafty ex "Counterattacking Crest" — twin `sv01-005` (Cacnea), 5 counters for 3
+  "me02.5-270": COUNTERATTACKING_CREST, // Mega Scrafty ex
+  "me02.5-285": COUNTERATTACKING_CREST, // Mega Scrafty ex
+  "mep-065": STONE_ARMS, // Barbaracle "Stone Arms" — twin `sv01-054` (Quaquaval "Energy Carnival"), {F} card to an {F} target
+  "me03-043": STONE_ARMS, // Barbaracle
+  "me03-036": SCENT_COLLECTION, // Aromatisse "Scent Collection" — twin `sv02-061` (Chien-Pao ex "Shivery Chill"), {P}, any spot
+  "me02.5-152": SKY_TRANSPORT, // Mega Dragonite ex "Sky Transport" — twin `sv10.5w-023` (Samurott, first sentence)
+  "me02.5-271": SKY_TRANSPORT, // Mega Dragonite ex
+  "me02.5-290": SKY_TRANSPORT, // Mega Dragonite ex
+  "me02.5-295": SKY_TRANSPORT, // Mega Dragonite ex
+  "mep-091": SKY_TRANSPORT, // Mega Dragonite ex
+  "me04-029": SYNCHRO_PULSE, // Ampharos "Synchro Pulse" — Okidogi's field at 80 on Noivern `sv09-128`'s `handSizesEqual`
+  "me04-090": SYNCHRO_PULSE, // Ampharos
+  "mep-075": SYNCHRO_PULSE, // Ampharos
   // ── D190 — THE **STANDARD-LEGAL** REPRINT-ALIAS MAP (Tier 0 of
   //    `docs/reference/coverage-backlog-legal.md`). 22 printings, 9 map targets,
   //    ZERO new code: every row below prints a sentence that is already authored

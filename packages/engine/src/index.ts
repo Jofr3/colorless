@@ -20252,6 +20252,17 @@ import type { GameState, Seat } from "./types";
     `expect(manifest.version)`, `it(…)` titles, the declaration and `package.json` —
     **not** as a value-keyed grep — because a value-keyed grep is precisely the mechanism
     that ate D500's heading.)
+    🆕🆕🆕 engineVersion 0.468.0 → **0.469.0** (D585 — WP19: PARAMETER COPIES OF PASSIVES AND ABILITIES;
+    `MATCH_RECORD_VERSION` STAYS 42 (apps/api match.ts "STAYS 42 AT D585")). registry.ts keys 19 `me` printings /
+    8 texts on EIGHT NEW objects, each a built `sv` program's op or field at the printed parameter: `TUNDRA_WALL`
+    (Aurorus ×2; Gear Coating's field at {W} / 50 with the printed `noStack`), `WASH_OUT` (Dewgong; Fire Off with
+    {W}), `POWERFUL_A_SALT` (Garganacl ×2; Victory Cheer's field at {F} / 30), `COUNTERATTACKING_CREST` (Mega
+    Scrafty ex ×3; Counterattack Quills at 5 counters), `STONE_ARMS` (Barbaracle ×2; a Basic {F} from hand to an
+    {F} target), `SCENT_COLLECTION` (Aromatisse; Shivery Chill with {P}, any spot), `SKY_TRANSPORT` (Mega Dragonite
+    ex ×5; `switchActive`) and `SYNCHRO_PULSE` (Ampharos ×3; `damageBonusBeforeWRIf` +80 on `handSizesEqual`). No
+    op, field, reader or persisted shape moved. Census: Standard pool abilities 450 / 610 (attacks 2463 / 2771,
+    trainers 320 / 447, special energy 14 / 22 unmoved); 709 `me` printings fully built.
+    `paramCopiesMeD585.test.ts`.)
     🆕🆕🆕 engineVersion 0.467.0 → **0.468.0** (D584 — THE `me` ALIAS TIER 2: RENAMED COPIES, PARAMETER COPIES AND
     WHITESPACE TWINS; `MATCH_RECORD_VERSION` STAYS 42 (apps/api match.ts "STAYS 42 AT D584")). registry.ts keys 18 `me`
     printings / 11 texts whose twin is built on an `sv` id: Ultra Ball `me02.5-213` / `-264` (one newline from
@@ -25131,7 +25142,7 @@ import type { GameState, Seat } from "./types";
     WITNESS** — the count was re-derived every slice and the word *"three"* was carried.
     A successor of this slice inherits **81 / 61 / 17** again, over **FIVE** history
     occurrences: those four plus `deckMillFilteredScale.test.ts`'s own header arrow.) */
-export const engineVersion = "0.468.0";
+export const engineVersion = "0.469.0";
 
 export type {
   ApplyResult,
