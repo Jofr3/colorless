@@ -625,6 +625,14 @@ export const redactedEffectPromptSchema = z.discriminatedUnion("kind", [
     candidates: z.array(redactedPokemonRefSchema),
     upTo: z.number().int().positive().optional(),
     takeVerb: z.enum(["move", "put"]).optional(),
+    /** Public Adrena-Brain targeting context; absent on other Pokémon choices. */
+    counterTransfer: z
+      .object({
+        upTo: z.number().int().positive(),
+        abilitySourceUid: z.string().optional(),
+        from: redactedPokemonRefSchema.optional(),
+      })
+      .optional(),
     note: z.string(),
   }),
   /** Pick `min`..`max` in-play Pokémon — the multi-target snipe. `declinable`

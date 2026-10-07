@@ -15,6 +15,7 @@ import type {
   BoardState,
   CardBackTone,
   CardMoveRequest,
+  CardSelection,
   LogEntry,
   PileState,
   PlayerId,
@@ -28,6 +29,7 @@ export interface PlaymatViewProps {
   board: BoardState;
   /** Suspend board input while a tabletop effect resolves. */
   interactionDisabled?: boolean;
+  cardSelection?: CardSelection;
   turn: TurnInfo;
   /** Which board side renders at the bottom (hand shown, cards draggable).
       The mock passes the active player; the game page always passes "you"
@@ -71,6 +73,7 @@ export interface PlaymatViewProps {
 export function PlaymatView({
   board,
   interactionDisabled = false,
+  cardSelection,
   turn,
   perspective,
   glowPerspective,
@@ -224,6 +227,7 @@ export function PlaymatView({
           onMoveCard={onMoveCard}
           placementPredicate={placementPredicate}
           usableTrainerIds={usableTrainerIds}
+          cardSelection={cardSelection}
         />
       </div>
       <div className="contents" inert={cardsAnimating || undefined}>

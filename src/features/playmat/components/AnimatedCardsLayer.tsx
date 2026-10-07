@@ -7,6 +7,7 @@ import type {
   CardModel,
   CardBackTone,
   CardMoveRequest,
+  CardSelection,
   CardOwner,
   CardPlacement,
   CardType,
@@ -80,6 +81,7 @@ interface AnimatedCardsLayerProps {
       drop the page's engine cannot express. */
   placementPredicate?: PlacementPredicate;
   usableTrainerIds?: ReadonlySet<string>;
+  cardSelection?: CardSelection;
 }
 
 interface DropZoneSnapshot {
@@ -516,6 +518,7 @@ export function AnimatedCardsLayer({
   onMoveCard,
   placementPredicate,
   usableTrainerIds,
+  cardSelection,
 }: AnimatedCardsLayerProps) {
   const previousTurnRef = useRef(turnNumber);
   const previousSetupRef = useRef<SetupDealSnapshot | null>(null);
@@ -552,6 +555,14 @@ export function AnimatedCardsLayer({
   // once (to the playmat node) and would otherwise capture a stale predicate.
   const placementPredicateRef = useRef(placementPredicate ?? canPlace);
   const usableTrainerIdsRef = useRef(usableTrainerIds);
+  const cardSelectionRef = useRef(cardSelection);
+  cardSelectionRef.current = cardSelection;
+  const blueBackPlayerRef = useRef(blueBackPlayer);
+  blueBackPlayerRef.current = blueBackPlayer;
+  const abilityCardIdRef = useRef<string | undefined>(undefined);
+  const selectedIdsRef = useRef(new Set<string>());
+  const selectionPhaseRef = useRef<CardSelection["phase"] | undefined>(undefined);
+  const selectionButtonsRef = useRef(new Map<string, HTMLButtonElement>());
 
   const descriptors = useMemo(
     () =>
@@ -883,6 +894,86 @@ export function AnimatedCardsLayer({
         badge.element.style.transform = `translate3d(${center.x - badge.x}px, ${center.y - badge.y}px, 0)`;
       }
     }
+    positionSelectionButtons();
+  }
+
+  function positionSelectionButtons() {
+    const root = playmatRef.current;
+    if (!root || selectionButtonsRef.current.size === 0) return;
+    for (const [id, button] of selectionButtonsRef.current) {
+      const view = viewsRef.current.get(id);
+      const target = view?.getTargetSnapshot();
+      const rect = target
+        ? undefined
+        : root
+            .querySelector<HTMLElement>(`[data-card-anchor="true"][data-card-id="${id}"]`)
+            ?.getBoundingClientRect();
+      const rootRect = rect ? root.getBoundingClientRect() : null;
+      const center =
+        view?.getCardCenter() ??
+        (rect &&
+          rootRect && {
+            x: rect.left - rootRect.left + rect.width / 2,
+            y: rect.top - rootRect.top + rect.height / 2,
+          });
+      if (!center) continue;
+      button.style.left = `${center.x}px`;
+      button.style.top = `${center.y}px`;
+      button.style.width = `${target?.width ?? rect?.width ?? 0}px`;
+      button.style.height = `${target?.height ?? rect?.height ?? 0}px`;
+    }
+  }
+
+  function finishingCardSelection(id: string) {
+    const selection = cardSelectionRef.current;
+    return (
+      (selection?.phase === "submitted" || selection?.phase === "shake") &&
+      selection.selectedIds.includes(id)
+    );
+  }
+
+  function syncCardSelection() {
+    const selection = cardSelectionRef.current;
+    const selected = new Set(selection?.selectedIds ?? []);
+    const glowing = new Set([...selectedIdsRef.current, ...selected]);
+    if (abilityCardIdRef.current) glowing.add(abilityCardIdRef.current);
+    if (selection?.abilityCardId) glowing.add(selection.abilityCardId);
+    for (const id of glowing) {
+      viewsRef.current.get(id)?.setSelected(selected.has(id));
+      const abilityTone =
+        id === selection?.abilityCardId
+          ? descriptorsRef.current.get(id)?.placement.owner === blueBackPlayerRef.current
+            ? "blue"
+            : "red"
+          : undefined;
+      viewsRef.current
+        .get(id)
+        ?.setAbilityGlow(
+          abilityTone === "blue" ? 0x2695ff : abilityTone === "red" ? 0xff3456 : null,
+        );
+      const anchor = playmatRef.current?.querySelector<HTMLElement>(
+        `[data-card-anchor="true"][data-card-id="${id}"]`,
+      );
+      if (anchor) {
+        if (selected.has(id)) anchor.dataset.adrenaSelected = "true";
+        else delete anchor.dataset.adrenaSelected;
+        if (abilityTone) anchor.dataset.adrenaAbilityGlow = abilityTone;
+        else delete anchor.dataset.adrenaAbilityGlow;
+      }
+    }
+    selectedIdsRef.current = selected;
+    abilityCardIdRef.current = selection?.abilityCardId;
+    if (selection?.phase === "shake" && selectionPhaseRef.current !== "shake") {
+      for (const id of selected) viewsRef.current.get(id)?.shake();
+    }
+    selectionPhaseRef.current = selection?.phase;
+    for (const [id, view] of viewsRef.current) {
+      if (!descriptorsRef.current.has(id) && !finishingCardSelection(id)) {
+        view.destroy();
+        viewsRef.current.delete(id);
+      }
+    }
+    positionSelectionButtons();
   }
 
   function clearCardBadges() {
@@ -1293,7 +1384,7 @@ export function AnimatedCardsLayer({
     }
 
     for (const [cardId, view] of viewsRef.current) {
-      if (!nextDescriptorMap.has(cardId)) {
+      if (!nextDescriptorMap.has(cardId) && !finishingCardSelection(cardId)) {
         view.destroy();
         viewsRef.current.delete(cardId);
       }
@@ -1327,7 +1418,11 @@ export function AnimatedCardsLayer({
   }
 
   function updateHover(point: { x: number; y: number }, event: PointerEvent) {
-    if (dragRef.current || shouldIgnorePointer(event)) {
+    // Selection buttons cover the card faces, so their pointer movement still
+    // drives card hover. Other controls continue to suppress card interaction.
+    const selectingCard =
+      event.target instanceof Element && event.target.closest(".adrena-brain-target") !== null;
+    if (dragRef.current || (shouldIgnorePointer(event) && !selectingCard)) {
       clearHover();
       return;
     }
@@ -1345,7 +1440,13 @@ export function AnimatedCardsLayer({
     if (view) {
       view.updateHoverPoint(point);
       const descriptor = descriptorsRef.current.get(view.id);
-      setCursor(descriptor?.draggable ? "grab" : "");
+      setCursor(
+        selectingCard
+          ? "pointer"
+          : descriptor?.draggable && !cardSelectionRef.current
+            ? "grab"
+            : "",
+      );
       return;
     }
 
@@ -1467,7 +1568,7 @@ export function AnimatedCardsLayer({
   }
 
   function handlePointerDown(event: PointerEvent) {
-    if (setupFlightsRef.current.length > 0) return;
+    if (setupFlightsRef.current.length > 0 || cardSelectionRef.current !== undefined) return;
     const root = playmatRef.current;
     if (!root || event.button !== 0 || shouldIgnorePointer(event)) {
       return;
@@ -2231,6 +2332,11 @@ export function AnimatedCardsLayer({
     piles,
   ]);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: selection synchronisation reads the current Pixi views through refs.
+  useLayoutEffect(() => {
+    syncCardSelection();
+  }, [cardSelection, descriptors]);
+
   // biome-ignore lint/correctness/useExhaustiveDependencies: Pixi app lifecycle is tied to the mount node, not React render callbacks.
   useEffect(() => {
     const mountElement = mountRef.current;
@@ -2287,6 +2393,7 @@ export function AnimatedCardsLayer({
       appRef.current = app;
       sceneRef.current = scene;
       syncViews(descriptorsRef.current.size ? [...descriptorsRef.current.values()] : descriptors);
+      syncCardSelection();
       scheduleMeasure();
     }
 
@@ -2388,6 +2495,19 @@ export function AnimatedCardsLayer({
   return (
     <>
       <div ref={mountRef} className="pixi-cards-layer" aria-hidden="true" />
+      {cardSelection?.candidates.map((card) => (
+        <button
+          key={card.id}
+          ref={(element) => {
+            if (element) selectionButtonsRef.current.set(card.id, element);
+            else selectionButtonsRef.current.delete(card.id);
+          }}
+          type="button"
+          aria-label={`Select ${card.name} for Adrena-Brain`}
+          className="adrena-brain-target"
+          onClick={() => cardSelection.onSelect(card.id)}
+        />
+      ))}
       <output
         ref={trainerUseLabelRef}
         className="trainer-use-label"

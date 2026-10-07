@@ -9,6 +9,7 @@ import { useRetreatDrag } from "../../game/useRetreatDrag";
 import { usableTrainerIdsFromRedacted } from "../../game/trainerUse";
 import { GAME_OVER_DETAIL, projectionFromRedacted } from "../../game/projection";
 import { viewLogEntries } from "../../game/viewLog";
+import { adrenaBrainDecision, useAdrenaBrain } from "../../game/useAdrenaBrain";
 import type { LeaveConfirmCopy } from "../../playmat/components/BackToMenu";
 import { PlaymatView } from "../../playmat/PlaymatView";
 import type { CardMoveRequest, TurnInfo } from "../../playmat/types";
@@ -114,6 +115,16 @@ export function OnlineMatch({
   // clients; only the labels differ per seat).
   const logEntries = useMemo(() => viewLogEntries(log, seat), [log, seat]);
   const board = projection.board;
+  const counterDecision = useMemo(
+    () => (spectating ? null : adrenaBrainDecision(game)),
+    [game, spectating],
+  );
+  const adrenaBrain = useAdrenaBrain({
+    decision: counterDecision,
+    board,
+    seat,
+    dispatch: onAction,
+  });
   const phaseKind = game.phase.kind;
   const isViewerTurn = phaseKind === "turn:action" && projection.activePlayer === "you";
   const usableTrainerIds = useMemo(() => usableTrainerIdsFromRedacted(game), [game]);
@@ -200,6 +211,7 @@ export function OnlineMatch({
   return (
     <PlaymatView
       board={board}
+      cardSelection={adrenaBrain.selection}
       turn={turnInfo}
       perspective="you"
       glowPerspective={projection.activePlayer ?? "you"}
@@ -211,10 +223,11 @@ export function OnlineMatch({
         spectating
           ? undefined
           : () => {
-              if (isViewerTurn) onAction({ type: "endTurn", seat });
+              if (isViewerTurn && adrenaBrain.selection === undefined)
+                onAction({ type: "endTurn", seat });
             }
       }
-      passDisabled={!isViewerTurn}
+      passDisabled={!isViewerTurn || adrenaBrain.selection !== undefined}
       leaveConfirm={
         spectating
           ? LEAVE_CONFIRM_WATCHING
@@ -226,9 +239,10 @@ export function OnlineMatch({
       piles={projection.piles}
     >
       {retreatDialog}
+      {adrenaBrain.controls}
       {/* Every control below is for a SEATED player. A spectator gets the board,
           the log and the result — nothing that acts on the game. */}
-      {!spectating && (
+      {!spectating && adrenaBrain.selection === undefined && (
         <OnlineHud
           game={game}
           waitingOn={projection.waitingOn}

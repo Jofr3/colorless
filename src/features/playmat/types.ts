@@ -25,6 +25,16 @@ export interface CardMoveRequest {
   to: CardPlacement;
 }
 
+/** Board-based targeting and the presentation of a damage-counter transfer. */
+export interface CardSelection {
+  candidates: readonly CardModel[];
+  selectedIds: readonly string[];
+  abilityCardId?: string;
+  phase: "choose" | "hold" | "shake" | "submitted";
+  count: number;
+  onSelect: (cardId: string) => void;
+}
+
 export type CardType = "pokemon" | "trainer" | "tool" | "energy" | "stadium";
 
 export interface AttachedCards {

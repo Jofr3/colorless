@@ -404,3 +404,45 @@
     animation: none;
   }
 }
+.adrena-brain-target {
+  position: absolute;
+  z-index: 70;
+  transform: translate(-50%, -50%);
+  border-radius: 6px;
+  cursor: pointer;
+  border: 0;
+  background: transparent;
+}
+
+.adrena-brain-target:focus-visible {
+  outline: 2px solid #ffffff;
+  outline-offset: 3px;
+  box-shadow: 0 0 11px rgba(255, 255, 255, 0.4);
+}
+
+/* Selection remains visible if the renderer falls back to static card faces. */
+.playmat-wrapper:not(.has-pixi-cards) [data-adrena-selected="true"] > .static-card {
+  border-radius: 6px;
+  transform: scale(1.1);
+  box-shadow: 0 0 13px rgba(255, 255, 255, 0.6);
+}
+
+.playmat-wrapper:not(.has-pixi-cards) [data-adrena-ability-glow="blue"] > .static-card {
+  border-radius: 6px;
+  box-shadow: 0 0 13px rgba(38, 149, 255, 0.6);
+}
+
+.playmat-wrapper:not(.has-pixi-cards) [data-adrena-ability-glow="red"] > .static-card {
+  border-radius: 6px;
+  box-shadow: 0 0 13px rgba(255, 52, 86, 0.6);
+}
+
+@media (max-width: 800px) and (min-height: 600px) {
+  /* Portrait boards leave their centre clear; the narrow hand tray does not
+     have room for instructions without covering a benched target. */
+  .adrena-brain-controls {
+    top: 50%;
+    bottom: auto;
+    transform: translateY(-50%);
+  }
+}

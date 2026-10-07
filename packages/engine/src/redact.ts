@@ -255,7 +255,25 @@ function redactedPromptOf(
 ): RedactedEffectPrompt | null {
   const answerer = phase.answerer ?? phase.seat;
   if (answerer !== viewerSeat) return null;
-  return redactPrompt(state, phase.prompt);
+  const prompt = redactPrompt(state, phase.prompt);
+  const op = phase.cont.pendingOp;
+  // Public presentation metadata lets online clients target Adrena-Brain on the
+  // board and recover the chosen source after reconnecting mid-ability.
+  if (prompt.kind === "choosePokemon" && op.op === "moveCountersToOpponentChosen") {
+    return {
+      ...prompt,
+      counterTransfer: {
+        upTo: op.upTo,
+        abilitySourceUid: phase.cont.ctx.sourceUid,
+        ...(op.from === undefined
+          ? {}
+          : {
+              from: redactedRefOf({ seat: phase.seat, spot: op.from }),
+            }),
+      },
+    };
+  }
+  return prompt;
 }
 
 /** Map the engine's full `EffectPrompt` to the neutral wire shape — the answerer

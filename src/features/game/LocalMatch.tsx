@@ -13,6 +13,7 @@ import { retreatOptionForGame } from "./retreat";
 import { useRetreatDrag } from "./useRetreatDrag";
 import { usableTrainerIdsForGame } from "./trainerUse";
 import { useLocalGame, type LocalGameSetup } from "./useLocalGame";
+import { adrenaBrainDecision, useAdrenaBrain } from "./useAdrenaBrain";
 
 const ERROR_TTL_MS = 4000;
 
@@ -63,6 +64,13 @@ export function LocalMatch({
   // Other translated actions retain their usual rejection feedback.
   const phase = game.phase;
   const board = projection.board;
+  const counterDecision = useMemo(() => adrenaBrainDecision(game), [game]);
+  const adrenaBrain = useAdrenaBrain({
+    decision: counterDecision,
+    board,
+    seat: viewerSeat,
+    dispatch,
+  });
   const { handleRetreatDrag, retreatDialog } = useRetreatDrag({
     board,
     retreat: tossing ? null : retreatOptionForGame(game, viewerSeat),
@@ -94,7 +102,9 @@ export function LocalMatch({
     [game, viewerSeat],
   );
 
-  const passDisabled = !(projection.waitingOn === "you" && phase.kind === "turn:action");
+  const passDisabled =
+    adrenaBrain.selection !== undefined ||
+    !(projection.waitingOn === "you" && phase.kind === "turn:action");
 
   const turnInfo: TurnInfo = {
     turn: projection.turn,
@@ -123,6 +133,7 @@ export function LocalMatch({
   return (
     <PlaymatView
       interactionDisabled={tossing}
+      cardSelection={adrenaBrain.selection}
       board={board}
       turn={turnInfo}
       perspective="you"
@@ -138,8 +149,8 @@ export function LocalMatch({
       passDisabled={passDisabled}
       onPreviousTurn={previousTurn}
       onNextTurn={nextTurn}
-      previousTurnDisabled={previousTurnDisabled}
-      nextTurnDisabled={nextTurnDisabled}
+      previousTurnDisabled={previousTurnDisabled || adrenaBrain.selection !== undefined}
+      nextTurnDisabled={nextTurnDisabled || adrenaBrain.selection !== undefined}
       passAnimationKey={projection.turn}
       logEntries={logEntries}
       piles={projection.piles}
@@ -147,7 +158,8 @@ export function LocalMatch({
       onLeave={onLeave}
     >
       {retreatDialog}
-      {!tossing && (
+      {adrenaBrain.controls}
+      {!tossing && adrenaBrain.selection === undefined && (
         <GameHud
           game={game}
           projection={projection}

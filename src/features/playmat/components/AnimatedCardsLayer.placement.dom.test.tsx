@@ -6,7 +6,14 @@ import { afterEach, beforeAll, beforeEach, expect, it, vi } from "vitest";
 import { installDomShims } from "../../../test/domShims";
 import { placementPredicateFor } from "../../game/placement";
 import type { CardViewTarget } from "../pixi/CardView";
-import type { BoardState, CardModel, CardMoveRequest, CardType, PlayerId } from "../types";
+import type {
+  BoardState,
+  CardModel,
+  CardMoveRequest,
+  CardSelection,
+  CardType,
+  PlayerId,
+} from "../types";
 import { NO_CONDITIONS } from "../types";
 import { AnimatedCardsLayer } from "./AnimatedCardsLayer";
 import { PlayerSide } from "./PlayerSide";
@@ -54,10 +61,12 @@ vi.mock("../pixi/CardView", () => ({
     release = () => {
       this.isDragging = false;
     };
-    destroy = () => this.container.destroy();
+    destroy = vi.fn(() => this.container.destroy());
     setHovered = vi.fn();
     updateHoverPoint = vi.fn();
     shake = vi.fn();
+    setSelected = vi.fn();
+    setAbilityGlow = vi.fn();
     startPress = vi.fn();
     stopPress = vi.fn();
     setPresentationOptions = vi.fn();
@@ -74,6 +83,12 @@ interface TestView {
   target: CardViewTarget;
   setTarget: ReturnType<typeof vi.fn>;
   shake: ReturnType<typeof vi.fn>;
+  setSelected: ReturnType<typeof vi.fn>;
+  setAbilityGlow: ReturnType<typeof vi.fn>;
+  destroy: ReturnType<typeof vi.fn>;
+  setHovered: ReturnType<typeof vi.fn>;
+  updateHoverPoint: ReturnType<typeof vi.fn>;
+  isDragging: boolean;
 }
 function view(id: string): TestView {
   const found = mocks.constructed.mock.calls.find(([candidate]) => candidate.id === id)?.[0];
@@ -100,6 +115,9 @@ function Scene({
   usableTrainerIds,
   benchLimit = 5,
   damaged = false,
+  cardSelection,
+  activeRemoved = false,
+  blueBackPlayer = "you",
 }: {
   stage: string;
   onMove: (move: CardMoveRequest) => void;
@@ -111,18 +129,23 @@ function Scene({
   usableTrainerIds?: ReadonlySet<string>;
   benchLimit?: number;
   damaged?: boolean;
+  cardSelection?: CardSelection;
+  activeRemoved?: boolean;
+  blueBackPlayer?: PlayerId;
 }) {
   const root = useRef<HTMLDivElement>(null);
   const board: BoardState = {
     stadium: null,
     you: {
       hand: [{ ...pokemon("dragged", stage), type: handType, evolutionTargetIds: targets }],
-      active: {
-        ...pokemon("active", activeStage),
-        battle: damaged
-          ? { damage: 30, hp: 70, conditions: { ...NO_CONDITIONS, burned: true } }
-          : undefined,
-      },
+      active: activeRemoved
+        ? null
+        : {
+            ...pokemon("active", activeStage),
+            battle: damaged
+              ? { damage: 30, hp: 70, conditions: { ...NO_CONDITIONS, burned: true } }
+              : undefined,
+          },
       bench: [
         {
           ...pokemon("bench-0"),
@@ -164,9 +187,11 @@ function Scene({
         turnNumber={1}
         perspectivePlayer="you"
         backDesign="twilight"
+        blueBackPlayer={blueBackPlayer}
         playmatRef={root}
         onMoveCard={onMove}
         usableTrainerIds={usableTrainerIds}
+        cardSelection={cardSelection}
         placementPredicate={placementPredicateFor({
           phaseKind: "turn:action",
           isViewerTurn,
@@ -238,6 +263,43 @@ function pointer(target: HTMLElement | Window, type: string, x: number, y: numbe
   Object.defineProperty(event, "pointerId", { value: 1 });
   fireEvent(target, event);
 }
+
+it("lets a knocked-out selected card finish its shake before removing its view", async () => {
+  const onMove = vi.fn();
+  const selection: CardSelection = {
+    candidates: [],
+    selectedIds: ["active", "bench-0"],
+    phase: "hold",
+    count: 3,
+    onSelect: vi.fn(),
+  };
+  const { rerender } = render(<Scene stage="Basic" onMove={onMove} cardSelection={selection} />);
+  await waitFor(() => expect(view("active").target).toBeTruthy());
+  const target = view("active");
+  rerender(
+    <Scene
+      stage="Basic"
+      onMove={onMove}
+      activeRemoved
+      cardSelection={{ ...selection, phase: "submitted" }}
+    />,
+  );
+  expect(target.destroy).not.toHaveBeenCalled();
+  expect(target.shake).not.toHaveBeenCalled();
+  rerender(
+    <Scene
+      stage="Basic"
+      onMove={onMove}
+      activeRemoved
+      cardSelection={{ ...selection, phase: "shake" }}
+    />,
+  );
+  expect(target.destroy).not.toHaveBeenCalled();
+  expect(target.shake).toHaveBeenCalledOnce();
+  expect(view("bench-0").shake).toHaveBeenCalledOnce();
+  rerender(<Scene stage="Basic" onMove={onMove} activeRemoved />);
+  expect(target.destroy).toHaveBeenCalledOnce();
+});
 
 it.each([
   ["active", 590, 150, -190, 170],
@@ -453,6 +515,104 @@ it("does not dispatch an evolution dropped onto empty Bench space", async () => 
   pointer(getByTestId("root"), "pointermove", 390, 250);
   pointer(window, "pointerup", 390, 250);
   expect(onMove).not.toHaveBeenCalled();
+});
+
+it.each([
+  ["you", 0x2695ff, "blue"],
+  ["opponent", 0xff3456, "red"],
+] as const)(
+  "glows only the ability's caster in the %s player's color",
+  async (blueBackPlayer, color, tone) => {
+    const onMove = vi.fn();
+    const selection: CardSelection = {
+      candidates: [pokemon("bench-0")],
+      selectedIds: [],
+      abilityCardId: "active",
+      phase: "choose",
+      count: 3,
+      onSelect: vi.fn(),
+    };
+    const { container, rerender } = render(
+      <Scene
+        stage="Basic"
+        onMove={onMove}
+        blueBackPlayer={blueBackPlayer}
+        cardSelection={selection}
+      />,
+    );
+    await waitFor(() => expect(view("active").target).toBeTruthy());
+    expect(view("active").setAbilityGlow).toHaveBeenLastCalledWith(color);
+    expect(view("active").setSelected).toHaveBeenLastCalledWith(false);
+    expect(
+      container.querySelector('[data-card-id="active"]')?.getAttribute("data-adrena-ability-glow"),
+    ).toBe(tone);
+    rerender(
+      <Scene
+        stage="Basic"
+        onMove={onMove}
+        blueBackPlayer={blueBackPlayer}
+        cardSelection={{ ...selection, selectedIds: ["active", "bench-0"], phase: "shake" }}
+      />,
+    );
+    expect(view("active").setAbilityGlow).toHaveBeenLastCalledWith(color);
+    expect(view("bench-0").setAbilityGlow).toHaveBeenLastCalledWith(null);
+    rerender(<Scene stage="Basic" onMove={onMove} blueBackPlayer={blueBackPlayer} />);
+    expect(view("active").setAbilityGlow).toHaveBeenLastCalledWith(null);
+    expect(container.querySelector("[data-adrena-ability-glow]")).toBeNull();
+  },
+);
+
+it("juices selected Adrena-Brain cards, shakes both once, and disables drags during targeting", async () => {
+  const onMove = vi.fn();
+  const onSelect = vi.fn();
+  const selection: CardSelection = {
+    candidates: [pokemon("active")],
+    selectedIds: [],
+    phase: "choose",
+    count: 3,
+    onSelect,
+  };
+  const { getByTestId, getByRole, rerender } = render(
+    <Scene stage="Basic" onMove={onMove} cardSelection={selection} />,
+  );
+  await waitFor(() => expect(view("active").target).toBeTruthy());
+  const button = getByRole("button", { name: "Select active for Adrena-Brain" });
+  expect(button.style.left).toBe("590px");
+  expect(button.style.top).toBe("150px");
+  pointer(button, "pointermove", 590, 150);
+  expect(view("active").setHovered).toHaveBeenLastCalledWith(true);
+  expect(view("active").updateHoverPoint).toHaveBeenLastCalledWith({ x: 590, y: 150 });
+  pointer(button, "pointerdown", 590, 150);
+  pointer(button, "pointermove", 595, 155);
+  pointer(window, "pointerup", 595, 155);
+  expect(view("active").isDragging).toBe(false);
+  expect(onMove).not.toHaveBeenCalled();
+  pointer(getByRole("button", { name: "Other control" }), "pointermove", 590, 150);
+  expect(view("active").setHovered).toHaveBeenLastCalledWith(false);
+  fireEvent.click(button);
+  expect(onSelect).toHaveBeenCalledExactlyOnceWith("active");
+  pointer(getByTestId("root"), "pointerdown", 390, 450);
+  pointer(getByTestId("root"), "pointermove", 260, 250);
+  pointer(window, "pointerup", 260, 250);
+  expect(onMove).not.toHaveBeenCalled();
+  const selected = {
+    ...selection,
+    candidates: [],
+    selectedIds: ["active", "bench-0"],
+    phase: "hold" as const,
+  };
+  rerender(<Scene stage="Basic" onMove={onMove} cardSelection={selected} />);
+  expect(view("active").setSelected).toHaveBeenLastCalledWith(true);
+  expect(view("bench-0").setSelected).toHaveBeenLastCalledWith(true);
+  expect(view("active").shake).not.toHaveBeenCalled();
+  const shaking = { ...selected, phase: "shake" as const };
+  rerender(<Scene stage="Basic" onMove={onMove} cardSelection={shaking} />);
+  rerender(<Scene stage="Basic" onMove={onMove} cardSelection={{ ...shaking }} />);
+  expect(view("active").shake).toHaveBeenCalledOnce();
+  expect(view("bench-0").shake).toHaveBeenCalledOnce();
+  rerender(<Scene stage="Basic" onMove={onMove} />);
+  expect(view("active").setSelected).toHaveBeenLastCalledWith(false);
+  expect(view("bench-0").setSelected).toHaveBeenLastCalledWith(false);
 });
 
 it.each([
