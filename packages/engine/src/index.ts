@@ -20253,6 +20253,20 @@ import type { GameState, Seat } from "./types";
     `expect(manifest.version)`, `it(…)` titles, the declaration and `package.json` —
     **not** as a value-keyed grep — because a value-keyed grep is precisely the mechanism
     that ate D500's heading.)
+    🆕🆕🆕 engineVersion 0.473.0 → **0.474.0** (D590 — WP05: THE `me` ON-EVOLVE ABILITIES AND THE
+    MANDATORY SELF-SHUFFLE; `MATCH_RECORD_VERSION` STAYS 42 (apps/api match.ts "STAYS 42 AT D590")).
+    registry.ts keys 13 `me` printings on NINE NEW `onEvolve` objects: `PSYCHIC_DRAW_3` (Alakazam ×3)
+    and `PSYCHIC_DRAW_2` (Kadabra) — `drawCards` behind an inner `optional` confirm; `PRISON_PANIC`
+    (Brambleghast, Confused, behind the same confirm); `ENERGIZED_STEPS` (Grumpig, `attachFromTop` 4 / `"any"`);
+    `HEAVE_HO_CATCHER` (Hariyama, `gust`); `CAST_OFF_SHELL` (Ninjask ×2, a Shedinja onto the Bench);
+    `ENRICHING_MELODY` (Primarina ×2, `healChosen` `"all"`); `MULTIPLYING_COCOON` (Silcoon, a Silcoon
+    or a Cascoon onto the Bench); `HAPHAZARD_HAMMER` (Tinkatuff, coin + an Energy off the opponent's
+    Active). effects.ts `deriveAttackEffect` reads *"Shuffle this Pokémon and all attached cards into
+    your deck."* as `returnSelf` `dest: "deck"` (`ATTACK_RETURN_SELF_TO_DECK`; Lokix "Jumping Shot",
+    Primarina "Aqua Return" ×2). No new op, member or field. **Dropped:** Flygon ×3 "Sandy Flapping"
+    (its KO half needs an Active-Spot / by-attack gate an `onKnockOut` program does not have).
+    Alakazam's "Powerful Hand" stays unbuilt (WP14). Census: Standard pool attacks 2492 / 2771,
+    abilities 470 / 610; 782 `me` printings fully built. `onEvolveMeD590.test.ts`.)
     🆕🆕🆕 engineVersion 0.472.0 → **0.473.0** (D589 — WP08: MEGA GRENINJA EX AND THE OPTIONAL-COST
     FAMILY; `MATCH_RECORD_VERSION` STAYS 42 (apps/api match.ts "STAYS 42 AT D589")). effects.ts gives
     `deriveAttackOptionalCostBoost` a THIRD skeleton, `OPTIONAL_COST_AND_HAVE_BOOST` (*"You may {cost}
@@ -25198,7 +25212,7 @@ import type { GameState, Seat } from "./types";
     WITNESS** — the count was re-derived every slice and the word *"three"* was carried.
     A successor of this slice inherits **81 / 61 / 17** again, over **FIVE** history
     occurrences: those four plus `deckMillFilteredScale.test.ts`'s own header arrow.) */
-export const engineVersion = "0.473.0";
+export const engineVersion = "0.474.0";
 
 export type {
   ApplyResult,

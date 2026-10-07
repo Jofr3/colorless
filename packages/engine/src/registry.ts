@@ -16844,6 +16844,202 @@ const MORTAL_SHURIKEN: CardProgram = {
   ],
 };
 
+// ── 🆕🆕🆕 D590 — WP05: THE `me` ON-EVOLVE ABILITIES. Every text opens *"Once during your turn,
+//    when you play this Pokémon from your hand to evolve 1 of your Pokémon, you may use this
+//    Ability."* — the `onEvolve` moment (turn.ts `evolve`), met once by construction (Jewel Seeker's
+//    reading: no `oncePerTurn` key). `optional: true` is the printed "you may" and AUTO-FIRES (D560's
+//    note) — it is NOT a claim that each consequent is pure upside. Two consequents carry a real
+//    confirm (an inner `optional`, Wafting Heal's shape): Psychic Draw (a forced draw can deck its
+//    owner out, §14.3) and Prison Panic (`applyStatus` overwrites the rotation slot, so a forced
+//    Confused would replace an Asleep or Paralyzed Defending Pokémon's condition). The rest auto-fire,
+//    with two NAMED deviations: Heave-Ho Catcher's forced `gust` cannot be declined, and switching a
+//    Defending Pokémon to the Bench clears its Special Conditions (Defiant Horn's shipped row shares
+//    it); and the three "Then, shuffle" / "Shuffle the other cards back" programs shuffle the deck
+//    even when the "up to" pick takes nothing (Jewel Seeker's precedent). Each consequent is the
+//    op `deriveAttackEffect` reads off the same sentence on an attack, or a shipped row's. 9 objects,
+//    13 printings. Flygon ×3 "Sandy Flapping" is NOT here: its KO half fires only "if this Pokémon
+//    is in the Active Spot and is Knocked Out by damage from an attack", and an `onKnockOut` program
+//    has no Active-Spot or cause gate (`TriggeredAbility.activeOnly` is not read for it). ──
+
+const PSYCHIC_DRAW_3_TEXT =
+  "Once during your turn, when you play this Pokémon from your hand to evolve 1 of your Pokémon, you may use this Ability. Draw 3 cards.";
+const PSYCHIC_DRAW_2_TEXT =
+  "Once during your turn, when you play this Pokémon from your hand to evolve 1 of your Pokémon, you may use this Ability. Draw 2 cards.";
+
+/** 🆕🆕🆕 **D590 — Alakazam `me01-056` / `mep-003` / `mep-009` (3 legal) "Psychic Draw"**: draw 3,
+    behind the confirm. The Ability only: the printed attack "Powerful Hand" (2 counters per card in
+    your hand) needs a hand-count source (WP14) and keeps refusing, so these printings are not fully
+    built. */
+const PSYCHIC_DRAW_3: CardProgram = {
+  triggered: [
+    {
+      name: "Psychic Draw",
+      trigger: "onEvolve",
+      optional: true,
+      program: [
+        {
+          op: "optional",
+          note: PSYCHIC_DRAW_3_TEXT,
+          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
+          then: [{ op: "drawCards", count: 3 }],
+        },
+      ],
+    },
+  ],
+};
+
+/** 🆕🆕🆕 **D590 — Kadabra `me01-055` (1 legal) "Psychic Draw"**: `PSYCHIC_DRAW_3` at 2. */
+const PSYCHIC_DRAW_2: CardProgram = {
+  triggered: [
+    {
+      name: "Psychic Draw",
+      trigger: "onEvolve",
+      optional: true,
+      program: [
+        {
+          op: "optional",
+          note: PSYCHIC_DRAW_2_TEXT,
+          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
+          then: [{ op: "drawCards", count: 2 }],
+        },
+      ],
+    },
+  ],
+};
+
+const PRISON_PANIC_TEXT =
+  "Once during your turn, when you play this Pokémon from your hand to evolve 1 of your Pokémon, you may use this Ability. Make your opponent's Active Pokémon Confused.";
+
+/** 🆕🆕🆕 **D590 — Brambleghast `me02-047` (1 legal) "Prison Panic"**: *"Make your opponent's Active
+    Pokémon Confused."* `applyStatus` on `"defender"` (the opponent's Active on every surface), behind
+    a real confirm: `applyStatus` overwrites the rotation slot, so a Defending Pokémon already Asleep
+    (it stays so on tails at each checkup) or Paralyzed would lose that condition to Confused, and the
+    printed "you may" is the player's way to keep it. Psychic Draw's shape. */
+const PRISON_PANIC: CardProgram = {
+  triggered: [
+    {
+      name: "Prison Panic",
+      trigger: "onEvolve",
+      optional: true,
+      program: [
+        {
+          op: "optional",
+          note: PRISON_PANIC_TEXT,
+          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
+          then: [{ op: "applyStatus", target: "defender", status: "confused" }],
+        },
+      ],
+    },
+  ],
+};
+
+/** 🆕🆕🆕 **D590 — Grumpig `me01-063` (1 legal) "Energized Steps"**: *"Look at the top 4 cards of
+    your deck and attach any number of Basic Energy cards you find there to your Pokémon in any way
+    you like. Shuffle the other cards back into your deck."* `attachFromTop` at 4 / `"any"`, no Bench
+    or type narrowing, then the shuffle (Electric Generator's shape). */
+const ENERGIZED_STEPS: CardProgram = {
+  triggered: [
+    {
+      name: "Energized Steps",
+      trigger: "onEvolve",
+      optional: true,
+      program: [
+        { op: "attachFromTop", n: 4, filter: { kind: "basicEnergy" }, max: "any" },
+        { op: "shuffleDeck" },
+      ],
+    },
+  ],
+};
+
+/** 🆕🆕🆕 **D590 — Hariyama `me01-073` (1 legal) "Heave-Ho Catcher"**: a bare `gust`, Defiant Horn's
+    row under another name. Its attack "Wild Press" keeps deriving. ⚠️ A NAMED DEVIATION, shared with
+    Defiant Horn: the "you may" auto-fires and `gust` has no decline, so a player cannot keep a
+    Poisoned, Burned, Asleep or Paralyzed Defending Pokémon in the Active Spot (the switch clears its
+    Special Conditions) when the opponent has a Benched Pokémon. */
+const HEAVE_HO_CATCHER: CardProgram = {
+  triggered: [{ name: "Heave-Ho Catcher", trigger: "onEvolve", optional: true, program: [{ op: "gust" }] }],
+};
+
+/** 🆕🆕🆕 **D590 — Ninjask `me01-017` / `me01-137` (2 legal) "Cast-Off Shell"**: *"Search your deck
+    for a Shedinja and put it onto your Bench. Then, shuffle your deck."* The program
+    `deriveAttackEffect` reads off that sentence. Shedinja is a Stage 1; a search onto the Bench
+    places the card as a new Pokémon (Familial March's Maushold row). */
+const CAST_OFF_SHELL: CardProgram = {
+  triggered: [
+    {
+      name: "Cast-Off Shell",
+      trigger: "onEvolve",
+      optional: true,
+      program: [
+        { op: "searchDeck", filter: { kind: "byName", name: "Shedinja" }, dest: "bench", max: 1 },
+        { op: "shuffleDeck" },
+      ],
+    },
+  ],
+};
+
+/** 🆕🆕🆕 **D590 — Primarina `me05-020` / `me05-088` (2 legal) "Enriching Melody"**: Arboliva's
+    "Enriching Oil" program (`healChosen` at `"all"`). Its attack "Aqua Return" derives (D590's
+    `ATTACK_RETURN_SELF_TO_DECK`). */
+const ENRICHING_MELODY: CardProgram = {
+  triggered: [
+    {
+      name: "Enriching Melody",
+      trigger: "onEvolve",
+      optional: true,
+      program: [{ op: "healChosen", amount: "all" }],
+    },
+  ],
+};
+
+/** 🆕🆕🆕 **D590 — Silcoon `me02.5-012` (1 legal) "Multiplying Cocoon"**: *"Search your deck for a
+    Silcoon or a Cascoon and put it onto your Bench. Then, shuffle your deck."* One card over an
+    `anyOf` of the two names (Familial March's union, at `max: 1`). */
+const MULTIPLYING_COCOON: CardProgram = {
+  triggered: [
+    {
+      name: "Multiplying Cocoon",
+      trigger: "onEvolve",
+      optional: true,
+      program: [
+        {
+          op: "searchDeck",
+          filter: {
+            kind: "anyOf",
+            filters: [
+              { kind: "byName", name: "Silcoon" },
+              { kind: "byName", name: "Cascoon" },
+            ],
+          },
+          dest: "bench",
+          max: 1,
+        },
+        { op: "shuffleDeck" },
+      ],
+    },
+  ],
+};
+
+/** 🆕🆕🆕 **D590 — Tinkatuff `me01-097` (1 legal) "Haphazard Hammer"**: *"Flip a coin. If heads,
+    discard an Energy from your opponent's Active Pokémon."* The program `deriveAttackEffect` reads
+    off that sentence. */
+const HAPHAZARD_HAMMER: CardProgram = {
+  triggered: [
+    {
+      name: "Haphazard Hammer",
+      trigger: "onEvolve",
+      optional: true,
+      program: [
+        {
+          op: "coinFlipGate",
+          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
+          then: [{ op: "discardEnergy", from: "opponentActive", filter: { kind: "anyEnergy" } }],
+        },
+      ],
+    },
+  ],
+};
+
 const REGISTRY: Record<string, CardProgram> = {
   // Professor's Research (SV base prints)
   "sv01-189": PROFESSORS_RESEARCH,
@@ -17871,6 +18067,21 @@ const REGISTRY: Record<string, CardProgram> = {
   "me04-100": MORTAL_SHURIKEN, // Mega Greninja ex
   "me04-116": MORTAL_SHURIKEN, // Mega Greninja ex
   "me04-122": MORTAL_SHURIKEN, // Mega Greninja ex
+  // 🆕🆕🆕 D590 — WP05: the `me` on-evolve Abilities, MID-MAP (`raw[last]` does not move). Non-attack
+  // keys: every printed attack keeps deriving. `onEvolveMeD590.test.ts` drives each one.
+  "me01-056": PSYCHIC_DRAW_3, // Alakazam — draw 3 (confirm); "Powerful Hand" still unbuilt (WP14)
+  "mep-003": PSYCHIC_DRAW_3, // Alakazam
+  "mep-009": PSYCHIC_DRAW_3, // Alakazam
+  "me01-055": PSYCHIC_DRAW_2, // Kadabra — draw 2 (confirm)
+  "me02-047": PRISON_PANIC, // Brambleghast — Confused (confirm)
+  "me01-063": ENERGIZED_STEPS, // Grumpig — top 4, any Basic Energy
+  "me01-073": HEAVE_HO_CATCHER, // Hariyama — Defiant Horn's gust
+  "me01-017": CAST_OFF_SHELL, // Ninjask — a Shedinja onto the Bench
+  "me01-137": CAST_OFF_SHELL, // Ninjask
+  "me05-020": ENRICHING_MELODY, // Primarina — Enriching Oil's heal
+  "me05-088": ENRICHING_MELODY, // Primarina
+  "me02.5-012": MULTIPLYING_COCOON, // Silcoon — a Silcoon or a Cascoon onto the Bench
+  "me01-097": HAPHAZARD_HAMMER, // Tinkatuff — coin, then an Energy off the opponent's Active
   // ── D190 — THE **STANDARD-LEGAL** REPRINT-ALIAS MAP (Tier 0 of
   //    `docs/reference/coverage-backlog-legal.md`). 22 printings, 9 map targets,
   //    ZERO new code: every row below prints a sentence that is already authored

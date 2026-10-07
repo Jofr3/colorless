@@ -29958,3 +29958,28 @@ decisions (1) and (2) after D580. Engine 0.464.0 → 0.465.0. The Mega ex rule i
 - **Census.** Standard pool attacks **2489 / 2771**, abilities **457 / 610** (`me` 757 / 1,039 and 81 / 234; trainers
   356 / 447 and special energy 14 / 22 unmoved); 771 `me` printings fully built.
 - **Owed.** See `progress.md` NEXT. The whole-corpus sweep is PENDING.
+
+## D590 — WP05: the `me` on-evolve Abilities and the self-shuffle (engine 0.474.0, `MATCH_RECORD_VERSION` stays 42)
+
+**Status:** ✅ BUILT in the `luminous_ui-mega` worktree on D589 (`2d93c80b`), NOT committed.
+
+- **9 Ability texts / 13 `me` printings** on nine new `onEvolve` objects: Psychic Draw ×4 (Alakazam ×3 draw 3, Kadabra
+  draw 2 — each behind a confirm, since a forced draw can deck its owner out), Prison Panic (Confused, behind a confirm,
+  since `applyStatus` would overwrite an Asleep or Paralyzed Defending Pokémon's condition), Energized Steps
+  (`attachFromTop` 4 / any), Heave-Ho Catcher (`gust`), Cast-Off Shell ×2 (a Shedinja onto the Bench), Enriching Melody ×2
+  (`healChosen` all), Multiplying Cocoon (a Silcoon or a Cascoon onto the Bench) and Haphazard Hammer (coin, then an Energy
+  off the opponent's Active).
+- **The self-shuffle** *"Shuffle this Pokémon and all attached cards into your deck."* derives as `returnSelf` to the deck
+  (`deriveAttackEffect` arm 46): Lokix "Jumping Shot", Primarina ×2 "Aqua Return".
+- **No new op, member or field.** **Dropped:** Flygon ×3 "Sandy Flapping" (its KO half needs an Active-Spot / by-attack
+  gate on an `onKnockOut` program). Alakazam ×3 keeps an unbuilt attack (WP14).
+- **Named deviations.** The other six objects auto-fire (D560's note; no pure-upside claim). Heave-Ho Catcher's forced
+  `gust` cannot be declined, so a Defending Pokémon with Special Conditions is switched out and loses them (Defiant
+  Horn's row shares this). Energized Steps, Cast-Off Shell and Multiplying Cocoon shuffle even when nothing is taken
+  (Jewel Seeker's precedent).
+- **Suite.** `onEvolveMeD590.test.ts` (29): the programs, the self-shuffle reading and near misses, a board per Ability
+  and per attack, Prison Panic's decline over an Asleep / Paralyzed Defending Pokémon, a Rare Candy evolve into
+  Alakazam, and Aqua Return over an evolution stack.
+- **Census.** Standard pool attacks **2492 / 2771**, abilities **470 / 610** (`me` 760 / 1,039 and 94 / 234; trainers
+  356 / 447 and special energy 14 / 22 unmoved); 782 `me` printings fully built.
+- **Owed.** See `progress.md` NEXT. The whole-corpus sweep is PENDING.

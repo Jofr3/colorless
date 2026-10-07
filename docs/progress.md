@@ -3,7 +3,9 @@
 > Update this at the **end of every session**: bump the status table, append a
 > session-log entry, and rewrite the **Resume point** to the next concrete action.
 
-**Last updated:** 2026-10-07 — build session #529 (**P3-M5 — D589, *WP08 — MEGA GRENINJA EX AND THE OPTIONAL-COST FAMILY: 4 `me` attack sentences / 9 printings on a third `deriveAttackOptionalCostBoost` skeleton (*"… and have this attack do N more damage."*) over four cost rows, plus Mega Greninja ex ×5 "Mortal Shuriken" on Meowscarada ex's `payFromHand` + `damageChosen` shape; Mega Greninja ex ×5 and Mega Manectric ex ×2 finished; Standard pool attacks 2489 / 2771, abilities 457 / 610; 771 `me` printings fully built*** — engine 0.473.0, MRV 42, NOT committed; the sweep PENDING)
+**Last updated:** 2026-10-07 — build session #530 (**P3-M5 — D590, *WP05 — THE `me` ON-EVOLVE ABILITIES AND THE MANDATORY SELF-SHUFFLE: 13 `me` printings / 9 Ability texts on nine new `onEvolve` objects, plus *"Shuffle this Pokémon and all attached cards into your deck."* (3 printings) read by `deriveAttackEffect`; Prison Panic and Psychic Draw behind a confirm; Flygon ×3 dropped (its KO half); Standard pool attacks 2492 / 2771, abilities 470 / 610; 782 `me` printings fully built*** — engine 0.474.0, MRV 42, NOT committed; the sweep PENDING)
+
+**Last updated (was):** 2026-10-07 — build session #529 (**P3-M5 — D589, *WP08 — MEGA GRENINJA EX AND THE OPTIONAL-COST FAMILY: 4 `me` attack sentences / 9 printings on a third `deriveAttackOptionalCostBoost` skeleton (*"… and have this attack do N more damage."*) over four cost rows, plus Mega Greninja ex ×5 "Mortal Shuriken" on Meowscarada ex's `payFromHand` + `damageChosen` shape; Mega Greninja ex ×5 and Mega Manectric ex ×2 finished; Standard pool attacks 2489 / 2771, abilities 457 / 610; 771 `me` printings fully built*** — engine 0.473.0, MRV 42, NOT committed; the sweep PENDING)
 
 **Last updated (was):** 2026-10-07 — build session #528 (**P3-M5 — D588, *WP22 — TRAINER PARAMETERS II: 17 `me` Trainer printings / 8 texts on eight new registry objects (Canari, Lillie's Determination, Misty's Vitality, Rosa's Encouragement, Rust Syndicate Grunt, Waitress, Hole-Digging Shovel, Lumiose Galette) plus one new target rider, `stage2Only`; Pokémon Center Lady dropped; Standard pool trainers 356 / 447; 762 `me` printings fully built*** — engine 0.472.0, MRV 42, NOT committed; the sweep PENDING)
 
@@ -803,6 +805,41 @@
 
 ## NEXT (resume point)
 
+> ### ▶ THE NEXT CONCRETE ACTION (written 2026-10-07, after D590)
+>
+> 🛑 **D590 IS BUILT AND NOT COMMITTED** (worktree `/home/jofre/projects/luminous_ui-mega`, branch `mega-ingest`, on D589 = `2d93c80b`). D590 is WP05 of the Mega backlog: the on-evolve Abilities and the shuffle-self attack. A first review's findings are fixed in the checkout (below, "THE REVIEW FIX"). Next: a re-review of D590, then the landing of D581–D590 (rebase `mega-ingest` onto main; never `git add -A` — `apps/api/.wrangler` is the setup symlink).
+>
+> ✅ **`bun run check` IS GREEN**: `typecheck-coverage` OK (912 TypeScript files in 6 projects), `tsc -b`, `lint-coverage` OK (914 source files), `biome lint --error-on-warnings` (955 files), `Test Files 633 passed (633) / Tests 14978 passed (14978) / CHECK_EXIT=0` (D589: 632 / 14946; D590 adds `onEvolveMeD590.test.ts` (29) and three census rungs).
+>
+> **(a) THE SLICE.** registry.ts: nine new `onEvolve` objects (`optional: true`, no `oncePerTurn` — Jewel Seeker's reading) on 13 `me` printings — `PSYCHIC_DRAW_3` (Alakazam `me01-056` / `mep-003` / `mep-009`) and `PSYCHIC_DRAW_2` (Kadabra `me01-055`), each a `drawCards` behind an inner `optional` confirm (a forced draw can deck its owner out); `PRISON_PANIC` (Brambleghast `me02-047`, Confused, behind the same inner confirm — `applyStatus` overwrites the rotation slot); `ENERGIZED_STEPS` (Grumpig `me01-063`, `attachFromTop` 4 / `"any"` + shuffle); `HEAVE_HO_CATCHER` (Hariyama `me01-073`, Defiant Horn's `gust`); `CAST_OFF_SHELL` (Ninjask `me01-017` / `-137`, a Shedinja onto the Bench); `ENRICHING_MELODY` (Primarina `me05-020` / `-088`, Enriching Oil's `healChosen` `"all"`); `MULTIPLYING_COCOON` (Silcoon `me02.5-012`, a Silcoon or a Cascoon onto the Bench); `HAPHAZARD_HAMMER` (Tinkatuff `me01-097`, coin + an Energy off the opponent's Active). effects.ts: `deriveAttackEffect` arm 46, `ATTACK_RETURN_SELF_TO_DECK` — *"Shuffle this Pokémon and all attached cards into your deck."* → `returnSelf` `dest: "deck"` (Lokix `me02-010` "Jumping Shot", Primarina ×2 "Aqua Return"). No new op, member or field.
+>
+> **Dropped:** Flygon `me02-053` / `me02-101` / `mep-016` "Sandy Flapping" — its second use fires only *"if this Pokémon is in the Active Spot and is Knocked Out by damage from an attack from your opponent's Pokémon"*, and an `onKnockOut` program has no Active-Spot or cause gate (`activeOnly` is not read for it); keying the on-evolve half alone would build half an Ability. **Alakazam ×3** is keyed (its Ability is whole, so the 3 Ability units count) but NOT finished: "Powerful Hand" needs WP14's hand-count source.
+>
+> **(b) MRV STAYS 42** (match.ts "STAYS 42 AT D590"): no new key anywhere; a v42 match in flight gains the derived attack mid-match (persisted `cardPool` faces are read for text, as at D589).
+>
+> | Column | `me` D590 | Standard pool D590 |
+> |---|---|---|
+> | Attacks | 760 / 1039 | **2492 / 2771** |
+> | Abilities | 94 / 234 | **470 / 610** |
+> | Trainers | 92 / 183 | **356 / 447** |
+> | Special Energy | 3 / 11 | **14 / 22** |
+>
+> **782 `me` printings fully built** (771 + 11: Kadabra, Brambleghast, Grumpig, Hariyama, Ninjask ×2, Primarina ×2, Silcoon, Tinkatuff, Lokix). Registry 1168 → 1181, non-attack 1008 → 1021; live `me` attack tally reader [262, 736] → [263, 739], residue [174, 277] → [173, 274]. Other pins moved: `programWalk.test.ts` +5 rows (Psychic Draw's draw ×4 and Prison Panic's Confused inside the confirm), `revealClause.test.ts` `NOT_REVEALING` 24 → 26 / classified 78 → 80 / swept 178 → 181, `reprintAliasMeD582.test.ts` `KEYED_AT_D590`.
+>
+> **THE REVIEW FIX.** (1, blocking) Prison Panic auto-fired a Confused that overwrites an Asleep or Paralyzed Defending Pokémon, and the D590 draft said "every auto-fired consequent is pure upside or an 'up to'" (decisions row, registry block) — D560's withdrawn claim in narrower form. Prison Panic now carries Psychic Draw's inner confirm (suite §1 / §4: prompt, yes, decline over Asleep and Paralyzed; mutant `D590-prison-panic-no-confirm`), and the sentence is withdrawn in both places (`git grep -i "pure upside\|pure-upside"` finds no D590 line asserting it). Named deviations instead: Heave-Ho Catcher's forced `gust` (no decline; switching out clears the Defending Pokémon's Special Conditions; Defiant Horn's row shares it) and the three search / look programs shuffling when nothing is taken (Jewel Seeker's precedent). (Minor) match.ts's MRV note now lists every op the programs run and each that parks (`discardEnergy`, `coinFlipGate` were missing); suite +2: a Rare Candy evolve into Alakazam (the confirm fires on that route) and Aqua Return over a Primarina with Brionne under it (the evolution card goes to the deck).
+>
+> **(c) THE MUTATION RECORD.** +26 D590 rows (4436 in all). precheck: 4436 mutants, the same 20 pre-existing broken rows (none in a D590 file; the derive arm sits at the END of `deriveAttackEffect` because a first placement after the self-switch arm broke `D468-typed-switch-arm-moves-behind-the-bare-one`'s span). Probe `run.ts --decision D590 --allow-dirty`: 26 killed · 0 known · 0 GAP · 0 error, tree byte-identical after. Gate-witness `--only` (the 18 `opaque-anatomy-gate.ts` / `residue-census-gate.ts` rows): 18 killed · 0 error. Gates: residue-census, opaque-anatomy, splice, partition all OK.
+>
+> 🛑 **(0) THE WHOLE-CORPUS SWEEP IS PENDING** (D581–D589's too). Predicted: **4366 killed · 50 known survivor(s) · 0 GAP(S) · 20 error(s)** over **4,436** rows — 4410 + 26 = 4436; 4340 + 26 = 4366 killed; 4366 + 50 + 20 = 4436. The 20 errors are precheck's 20 broken rows (none D581–D590's); the 26 D590 rows are measured killed by the probe; the 18 gate-witness rows are measured killed. It assumes D589's prediction (4340 · 50 · 0 · 20 over 4410) holds. If it fails: an error count ≠ 20 means a `find` was spliced by a later edit (precheck names it); a new GAP or survivor in a D581–D589 row is that slice's open prediction failing, not D590's; one in an older row that names registry.ts, effects.ts, `programWalk.test.ts`, `revealClause.test.ts` or a census file is a D590 edit moving it (the D590 pins are the suspects, in that order) and owes a row-level re-measure before the landing.
+>
+> **D539 sweep.** No shipped claim withdrawn. The D590 draft's own "every auto-fired consequent is pure upside or an 'up to'" (never committed) is withdrawn and swept: `git grep -n -i "pure upside\|pure-upside"` over the tree finds it in no D590 line; the older hits are D560-era rows already carrying their own withdrawal. Version tax: `0.473.0` outside `docs/` was 143 files / 228 lines; 227 stepped (it() titles and the D275 `find` included), 1 kept (index.ts' D589 heading).
+>
+> Still owed from the Mega backlog: Flygon ×3 (an Active-Spot / by-attack gate on an `onKnockOut` program), Alakazam ×3's "Powerful Hand" (WP14), Pokémon Center Lady, WP33 (split in two), WP20a, WP02, "Fade Out" ×5, the markup-normalising ingest fix, then the residue by mechanism.
+>
+> ---
+>
+> **ARCHIVED — the resume point D590 was built from, kept rather than overwritten** (D589 has since been committed on `mega-ingest` as `2d93c80b`):
+>
 > ### ▶ THE NEXT CONCRETE ACTION (written 2026-10-07, after D589)
 >
 > 🛑 **D589 IS BUILT AND NOT COMMITTED** (worktree `/home/jofre/projects/luminous_ui-mega`, branch `mega-ingest`, on D588 = `4869c966`). D589 is WP08 of the Mega backlog: Mega Greninja ex and the optional-cost family. Next: a review of D589, then the landing of D581–D589 (rebase `mega-ingest` onto main; never `git add -A` — `apps/api/.wrangler` is the setup symlink).
@@ -34707,7 +34744,8 @@ the next api deploy (D18).
 |---|---|---|
 | backend-data | P1 | ✅ M1–M9 + P2-M1 + task-17 api deployed (Worker `9b1ec1d1`, 2026-07-16); OAuth secrets pending (user) |
 | deck-builder | P2 | ✅ ALL 19 tasks closed (task 17 landed + e2e-verified locally); only follow-ups left |
-| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D589, *WP08 — Mega Greninja ex and the optional-cost family: 4 `me` attack sentences / 9 printings on a third optional-cost skeleton plus Mortal Shuriken ×5; Mega Greninja ex ×5 and Mega Manectric ex ×2 finished; attacks 2489 / 2771, abilities 457 / 610*** — engine 0.473.0, MRV 42, NOT committed; the sweep PENDING) |
+| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D590, *WP05 — the `me` on-evolve Abilities and the self-shuffle: 13 `me` printings / 9 Ability texts on nine new `onEvolve` objects plus Jumping Shot / Aqua Return ×2 derived; Flygon ×3 dropped; attacks 2492 / 2771, abilities 470 / 610*** — engine 0.474.0, MRV 42, NOT committed; the sweep PENDING) |
+| simulator (prior) | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D589, *WP08 — Mega Greninja ex and the optional-cost family: 4 `me` attack sentences / 9 printings on a third optional-cost skeleton plus Mortal Shuriken ×5; Mega Greninja ex ×5 and Mega Manectric ex ×2 finished; attacks 2489 / 2771, abilities 457 / 610*** — engine 0.473.0, MRV 42, NOT committed; the sweep PENDING) |
 | simulator (prior) | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D588, *WP22 — Trainer parameters II: 17 `me` Trainer printings / 8 texts on eight new objects plus the `stage2Only` attach rider; Pokémon Center Lady dropped; trainers 356 / 447*** — engine 0.472.0, MRV 42, NOT committed; the sweep PENDING) |
 | simulator (prior) | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D587, *WP04 — Trainer parameters I: 19 `me` Trainer printings / 9 texts on nine new objects (shipped vocabulary), Energy Swatter's caption and Repel's play gate; trainers 339 / 447*** — engine 0.471.0, MRV 42, NOT committed; the sweep PENDING) |
 | simulator (prior) | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D586, *WP03 — rows on existing condition members: 8 attack sentences / 17 `me` printings on shipped readers plus Carbink ×2 "Double Type"; Mega Darkrai ex ×5 finished; attacks 2480 / 2771, abilities 452 / 610*** — engine 0.470.0, MRV 42, NOT committed; the sweep PENDING) |
@@ -34914,6 +34952,23 @@ the next api deploy (D18).
 Legend: 📝 backlog · 📋 specced · 🔎 research · 🚧 in progress · ✅ done
 
 ## Session log
+
+### 2026-10-07 — build session #530 (P3-M5 — D590)
+
+**WP05 — THE `me` ON-EVOLVE ABILITIES AND THE MANDATORY SELF-SHUFFLE. `MATCH_RECORD_VERSION` STAYS 42.**
+
+Built in the `luminous_ui-mega` worktree on D589 (`2d93c80b`); the main checkout was not touched. Every id `git grep`-ped
+(none referenced) and every text read off the LOCAL D1 first: 11 texts / 19 printings in the brief. Nine Ability texts / 13
+printings keyed on nine new `onEvolve` objects; the self-shuffle sentence (3 printings) derives as `returnSelf` to the deck.
+Flygon ×3 dropped (its KO half needs a gate an `onKnockOut` program lacks); Alakazam ×3 keyed but unfinished (WP14).
+`onEvolveMeD590.test.ts` (25): programs, readings, near misses and a board per Ability and per attack. Version tax 227
+stepped / 1 kept. +25 mutant rows, all KILLED. Sweep PENDING (NEXT (0)). NOT committed.
+
+Review fix (same session, same checkout): Prison Panic gains Psychic Draw's inner confirm (a forced Confused overwrote an
+Asleep or Paralyzed Defending Pokémon); the draft's "every auto-fired consequent is pure upside" is withdrawn in the
+decisions row and the registry block, replaced by two named deviations (Heave-Ho Catcher's forced `gust`; the shuffle when
+nothing is taken). match.ts's MRV op list completed. Suite 25 → 29 (Prison Panic program, prompt and decline; a Rare Candy
+evolve; Aqua Return over an evolution stack); `programWalk.test.ts` +1 row; +1 mutant row (26, all KILLED); 4436 rows.
 
 ### 2026-10-07 — build session #529 (P3-M5 — D589)
 

@@ -2159,6 +2159,17 @@ export interface MatchRecord {
     `turn:action.discardable` — 🛑 **DEPLOY THE SERVER FIRST**: an old client's `z.object` STRIPS
     the unknown key, while a new client's REQUIRED key refuses an old server's frame.
 
+    🆕🆕🆕 **STAYS 42 AT D590 — WP05 ADDS NO OP, KEY, GameState, PendingStage, PROMPT OR WIRE KEY.**
+    (Placed ABOVE the D589 block.) 13 `me` printings gain an `onEvolve` program on nine new objects, and
+    *"Shuffle this Pokémon and all attached cards into your deck."* now derives (`returnSelf` to the
+    deck: Lokix, Primarina ×2). The derived attack is read off the card TEXT in the persisted
+    `GameState.cardPool`, so a v42 match in flight holding those faces gains it mid-match (a 0.473
+    rollback loses it) — D589's stated cost; no re-ingest. Every op these programs run is a shipped one
+    (`optional`, `drawCards`, `applyStatus`, `attachFromTop`, `shuffleDeck`, `gust`, `searchDeck`,
+    `healChosen`, `coinFlipGate`, `discardEnergy`, `returnSelf`), and each one that parks (`optional`,
+    `attachFromTop`, `gust`, `searchDeck`, `healChosen`, and `discardEnergy` when the Defending Pokémon
+    holds Energy that can be told apart) uses only keys a v42 record already holds.
+
     🆕🆕🆕 **STAYS 42 AT D589 — WP08 ADDS NO OP, KEY, GameState, PendingStage, PROMPT OR WIRE KEY.**
     (Placed ABOVE the D588 block.) Four `me` attack sentences now derive through
     `deriveAttackOptionalCostBoost` (a third skeleton and four cost rows), and Mega Greninja ex ×5 gain

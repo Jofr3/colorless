@@ -24895,6 +24895,13 @@ const ATTACK_FLIP_GUST =
     pins that). */
 const SELF_SWITCH_CLAUSE = "this Pokémon with 1 of your Benched Pokémon\\.";
 const ATTACK_SELF_SWITCH = new RegExp(`^Switch ${SELF_SWITCH_CLAUSE}$`);
+/** 🆕🆕🆕 **D590 — the MANDATORY self-shuffle**, *"Shuffle this Pokémon and all attached cards into
+    your deck."* (`censusAttackCorpusMe.ts`: 3 `me` printings — Lokix `me02-010` "Jumping Shot",
+    Primarina `me05-020` / `-088` "Aqua Return"; not printed bare in the legal `sv` corpus). D311's
+    `returnSelf` at `dest: "deck"` (its deck arm shuffles as it places), with no `optional`: unlike
+    Surf Back's *"You may"*, nothing here asks. The printed damage lands first (§8.5) and the
+    §8.1 promotion seam fills the emptied Active Spot (D312). */
+const ATTACK_RETURN_SELF_TO_DECK = /^Shuffle this Pokémon and all attached cards into your deck\.$/;
 const ATTACK_FLIP_SELF_SWITCH = new RegExp(
   `^Flip a coin\\. If heads, switch ${SELF_SWITCH_CLAUSE}$`,
 );
@@ -34223,6 +34230,11 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   //     opposite trade for the opposite reason: it has three captures).
   if (SELF_HEAL_DEALT.test(effect)) {
     return [{ op: "heal", target: "self", amount: "dealt" }];
+  }
+
+  // 46. 🆕🆕🆕 D590 — the mandatory self-shuffle (Jumping Shot, Aqua Return ×2); see the anchor.
+  if (ATTACK_RETURN_SELF_TO_DECK.test(effect)) {
+    return [{ op: "returnSelf", dest: "deck" }];
   }
 
   return null;

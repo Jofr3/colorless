@@ -6,6 +6,26 @@
 > `coverage-backlog-legal.md`; its pool is unchanged and whole. The suite-side figures are
 > `censusAtHead.test.ts`'s D581 block and `censusAttackCorpusMe.ts`.
 
+## 🆕 D590 update (engine 0.474.0) — the on-evolve Abilities and the self-shuffle (WP05)
+
+9 on-evolve Ability texts / 13 `me` printings are keyed on nine new `onEvolve` objects (registry.ts D590 block;
+`onEvolveMeD590.test.ts`) — Psychic Draw ×4 (Alakazam ×3, Kadabra; draw behind a confirm), Prison Panic (behind a confirm), Energized Steps,
+Heave-Ho Catcher, Cast-Off Shell ×2, Enriching Melody ×2, Multiplying Cocoon, Haphazard Hammer — and *"Shuffle this Pokémon
+and all attached cards into your deck."* ×3 derives as `returnSelf` to the deck. No new op. **Dropped:** Flygon ×3 "Sandy
+Flapping" (its KO half needs an Active-Spot / by-attack gate on an `onKnockOut` program). **Finished:** Kadabra, Brambleghast,
+Grumpig, Hariyama, Ninjask ×2, Primarina ×2, Silcoon, Tinkatuff, Lokix `me02-010`. Alakazam ×3 still waits on "Powerful
+Hand" (WP14). Named deviations: Heave-Ho Catcher's forced `gust` (no decline; Defiant Horn's row), and the three
+search / look programs shuffle even when nothing is taken.
+
+| Column | `me` built / units (D590) | Standard pool D590 |
+|---|---|---|
+| Attacks | 760 / 1,039 (+3) | **2,492 / 2,771** |
+| Abilities | 94 / 234 (+13) | **470 / 610** |
+| Trainers | 92 / 183 | **356 / 447** |
+| Special Energy | 3 / 11 | **14 / 22** |
+
+**Fully built `me` printings: 782** (771 + 11).
+
 ## 🆕 D589 update (engine 0.473.0) — Mega Greninja ex and the optional-cost family (WP08)
 
 4 `me` attack sentences / 9 printings derive through `deriveAttackOptionalCostBoost`'s third skeleton (*"You may {cost}
@@ -370,7 +390,7 @@ group wins; the grouping is a reading aid, not a census figure).
 
 ### Energy: attach / accelerate — 6 text(s) / 9 printing(s)
 
-- 3× Shuffle this Pokémon and all attached cards into your deck.
+- 3× Shuffle this Pokémon and all attached cards into your deck. [🆕🆕🆕 D590: BUILT]
 - 2× Choose Basic {L} Energy cards from your discard pile up to the amount of Energy attached to all of your opponent's Pokémon and attach them to your {L} Pokémon in any way you like.
 - 1× Each player may attach up to 3 Basic Energy cards from their hand to their Pokémon in any way they like. Your opponent does this first.
 - 1× If this Pokémon has no Voltaic {L} Energy attached, this attack does nothing.
@@ -435,18 +455,18 @@ group wins; the grouping is a reading aid, not a census figure).
 ### On-evolve / on-bench / on-move triggers ("when you play this Pokémon …", "when … moves …") — 13 text(s) / 23 printing(s)
 
 - 3× **Last-Ditch Catch** — Once during your turn, when you play this Pokémon from your hand onto your Bench, you may use this Ability. Search your deck for a Supporter card, reveal it, and put it into your hand. Then, shuffle your deck. You can't use more than 1 Ability that has "Last-Ditch" in its name each turn.
-- 3× **Psychic Draw** — Once during your turn, when you play this Pokémon from your hand to evolve 1 of your Pokémon, you may use this Ability. Draw 3 cards.
-- 3× **Sandy Flapping** — Once during your turn, when you play this Pokémon from your hand to evolve 1 of your Pokémon, you may use this Ability. You may also use this Ability if this Pokémon is in the Active Spot and is Knocked Out by damage from an attack from your opponent's Pokémon. Discard the top 2 cards of your opponent's deck.
-- 2× **Cast-Off Shell** — Once during your turn, when you play this Pokémon from your hand to evolve 1 of your Pokémon, you may use this Ability. Search your deck for a Shedinja and put it onto your Bench. Then, shuffle your deck.
-- 2× **Enriching Melody** — Once during your turn, when you play this Pokémon from your hand to evolve 1 of your Pokémon, you may use this Ability. Heal all damage from 1 of your Pokémon.
+- 3× **Psychic Draw** — Once during your turn, when you play this Pokémon from your hand to evolve 1 of your Pokémon, you may use this Ability. Draw 3 cards. [🆕🆕🆕 D590: BUILT]
+- 3× **Sandy Flapping** — Once during your turn, when you play this Pokémon from your hand to evolve 1 of your Pokémon, you may use this Ability. You may also use this Ability if this Pokémon is in the Active Spot and is Knocked Out by damage from an attack from your opponent's Pokémon. Discard the top 2 cards of your opponent's deck. [🆕🆕🆕 D590: NOT BUILT — the KO half needs an Active-Spot / by-attack gate on an `onKnockOut` program]
+- 2× **Cast-Off Shell** — Once during your turn, when you play this Pokémon from your hand to evolve 1 of your Pokémon, you may use this Ability. Search your deck for a Shedinja and put it onto your Bench. Then, shuffle your deck. [🆕🆕🆕 D590: BUILT]
+- 2× **Enriching Melody** — Once during your turn, when you play this Pokémon from your hand to evolve 1 of your Pokémon, you may use this Ability. Heal all damage from 1 of your Pokémon. [🆕🆕🆕 D590: BUILT]
 - 2× **Fall Back to Reload** — Once during your turn, when this Pokémon moves from the Active Spot to your Bench, you may use this Ability. Attach up to 2 Basic {W} Energy cards from your hand to this Pokémon.
 - 2× **Metal Road** — Once during your turn, when this Pokémon moves from your Bench to the Active Spot, you may use this Ability. Move any amount of {M} Energy from your other Pokémon to this Pokémon.
-- 1× **Energized Steps** — Once during your turn, when you play this Pokémon from your hand to evolve 1 of your Pokémon, you may use this Ability. Look at the top 4 cards of your deck and attach any number of Basic Energy cards you find there to your Pokémon in any way you like. Shuffle the other cards back into your deck.
-- 1× **Haphazard Hammer** — Once during your turn, when you play this Pokémon from your hand to evolve 1 of your Pokémon, you may use this Ability. Flip a coin. If heads, discard an Energy from your opponent's Active Pokémon.
-- 1× **Heave-Ho Catcher** — Once during your turn, when you play this Pokémon from your hand to evolve 1 of your Pokémon, you may use this Ability. Switch in 1 of your opponent's Benched Pokémon to the Active Spot.
-- 1× **Multiplying Cocoon** — Once during your turn, when you play this Pokémon from your hand to evolve 1 of your Pokémon, you may use this Ability. Search your deck for a Silcoon or a Cascoon and put it onto your Bench. Then, shuffle your deck.
-- 1× **Prison Panic** — Once during your turn, when you play this Pokémon from your hand to evolve 1 of your Pokémon, you may use this Ability. Make your opponent's Active Pokémon Confused.
-- 1× **Psychic Draw** — Once during your turn, when you play this Pokémon from your hand to evolve 1 of your Pokémon, you may use this Ability. Draw 2 cards.
+- 1× **Energized Steps** — Once during your turn, when you play this Pokémon from your hand to evolve 1 of your Pokémon, you may use this Ability. Look at the top 4 cards of your deck and attach any number of Basic Energy cards you find there to your Pokémon in any way you like. Shuffle the other cards back into your deck. [🆕🆕🆕 D590: BUILT]
+- 1× **Haphazard Hammer** — Once during your turn, when you play this Pokémon from your hand to evolve 1 of your Pokémon, you may use this Ability. Flip a coin. If heads, discard an Energy from your opponent's Active Pokémon. [🆕🆕🆕 D590: BUILT]
+- 1× **Heave-Ho Catcher** — Once during your turn, when you play this Pokémon from your hand to evolve 1 of your Pokémon, you may use this Ability. Switch in 1 of your opponent's Benched Pokémon to the Active Spot. [🆕🆕🆕 D590: BUILT]
+- 1× **Multiplying Cocoon** — Once during your turn, when you play this Pokémon from your hand to evolve 1 of your Pokémon, you may use this Ability. Search your deck for a Silcoon or a Cascoon and put it onto your Bench. Then, shuffle your deck. [🆕🆕🆕 D590: BUILT]
+- 1× **Prison Panic** — Once during your turn, when you play this Pokémon from your hand to evolve 1 of your Pokémon, you may use this Ability. Make your opponent's Active Pokémon Confused. [🆕🆕🆕 D590: BUILT, behind a confirm]
+- 1× **Psychic Draw** — Once during your turn, when you play this Pokémon from your hand to evolve 1 of your Pokémon, you may use this Ability. Draw 2 cards. [🆕🆕🆕 D590: BUILT]
 
 ### Once-per-turn activated Abilities — 34 text(s) / 65 printing(s)
 
