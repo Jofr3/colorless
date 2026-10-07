@@ -2159,7 +2159,16 @@ export interface MatchRecord {
     `turn:action.discardable` — 🛑 **DEPLOY THE SERVER FIRST**: an old client's `z.object` STRIPS
     the unknown key, while a new client's REQUIRED key refuses an old server's frame.
 
-    🆕🆕🆕 **STAYS 42 AT D588 — WP22 ADDS ONE OPTIONAL OP KEY AND NO GameState, PendingStage, PROMPT OR WIRE KEY.**
+    🆕🆕🆕 **STAYS 42 AT D589 — WP08 ADDS NO OP, KEY, GameState, PendingStage, PROMPT OR WIRE KEY.**
+    (Placed ABOVE the D588 block.) Four `me` attack sentences now derive through
+    `deriveAttackOptionalCostBoost` (a third skeleton and four cost rows), and Mega Greninja ex ×5 gain
+    `MORTAL_SHURIKEN`. The derived programs are read off the card TEXT in the persisted
+    `GameState.cardPool`, so a v42 match in flight holding these faces gains the attacks mid-match (a
+    0.472 rollback loses them) — the stated cost, as at D586; no re-ingest. Every op they park on
+    (`optional`, `discardEnergy` with `providesEnergy` / `to`, `payFromHand`, `damageChosen`) uses only
+    keys a v42 record already holds, so a confirm or a target pick parked at either version resumes.
+
+    🆕🆕🆕 **STAYS 42 AT D588 —WP22 ADDS ONE OPTIONAL OP KEY AND NO GameState, PendingStage, PROMPT OR WIRE KEY.**
     (Placed ABOVE the D587 block.) 17 `me` Trainer ids gain a program on eight new objects; the one new
     field, `attachEnergyFrom.stage2Only` (Rosa's Encouragement), is an optional `EffectOp` key no v42
     deploy could write (D125's widening). It is read only when the target list is built, so a Rosa

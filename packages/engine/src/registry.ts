@@ -16822,6 +16822,28 @@ const LUMIOSE_GALETTE: CardProgram = {
   trainer: [{ op: "heal", target: "self", amount: 20 }, { op: "recoverOneStatus" }],
 };
 
+/** 🆕🆕🆕 **D589 — Mega Greninja ex `mep-081` / `me04-022` / `-100` / `-116` / `-122` (5 legal
+    printings)** "Mortal Shuriken": *"Once during your turn, if this Pokémon is in the Active Spot,
+    you may discard a Basic {W} Energy card from your hand in order to use this Ability. Place 6
+    damage counters on 1 of your opponent's Pokémon."* Meowscarada ex `sv02-015` "Bouquet Magic"'s
+    shape (`payFromHand` first, then `damageChosen` with `source: "ability"`, the counter path) at
+    {W}, 6 counters and `opponentAny` (Active or Bench, no Weakness or Resistance on placed
+    counters), with `activeOnly: true` for the printed Active Spot clause. Its printed attack "Ninja
+    Spinner" derives through `deriveAttackOptionalCostBoost` (a D589 cost row). */
+const MORTAL_SHURIKEN: CardProgram = {
+  abilities: [
+    {
+      name: "Mortal Shuriken",
+      oncePerTurn: true,
+      activeOnly: true,
+      program: [
+        { op: "payFromHand", count: 1, to: "discard", filter: { kind: "basicEnergy", energyType: "Water" } },
+        { op: "damageChosen", target: "opponentAny", amount: 60, count: 1, source: "ability" },
+      ],
+    },
+  ],
+};
+
 const REGISTRY: Record<string, CardProgram> = {
   // Professor's Research (SV base prints)
   "sv01-189": PROFESSORS_RESEARCH,
@@ -17842,6 +17864,13 @@ const REGISTRY: Record<string, CardProgram> = {
   "me02.5-215": WAITRESS, // Waitress — twin `sv01-170` (Electric Generator), top 6, 1 Basic Energy
   "me03-074": HOLE_DIGGING_SHOVEL, // Hole-Digging Shovel — the derived "Discard the top 2 cards of your deck."
   "me03-078": LUMIOSE_GALETTE, // Lumiose Galette — Obliging Heal's program at 20
+  // 🆕🆕🆕 D589 — WP08: Mega Greninja ex ×5 "Mortal Shuriken", MID-MAP (`raw[last]` does not move).
+  // Non-attack keys: "Ninja Spinner" keeps deriving. `optionalCostMeD589.test.ts` drives the Ability.
+  "mep-081": MORTAL_SHURIKEN, // Mega Greninja ex — Meowscarada ex `sv02-015`'s shape at {W}, 60, `opponentAny`, Active only
+  "me04-022": MORTAL_SHURIKEN, // Mega Greninja ex
+  "me04-100": MORTAL_SHURIKEN, // Mega Greninja ex
+  "me04-116": MORTAL_SHURIKEN, // Mega Greninja ex
+  "me04-122": MORTAL_SHURIKEN, // Mega Greninja ex
   // ── D190 — THE **STANDARD-LEGAL** REPRINT-ALIAS MAP (Tier 0 of
   //    `docs/reference/coverage-backlog-legal.md`). 22 printings, 9 map targets,
   //    ZERO new code: every row below prints a sentence that is already authored

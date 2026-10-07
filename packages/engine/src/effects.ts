@@ -36823,6 +36823,28 @@ const OPTIONAL_COST_TURN_PRIZE_FACE_UP = /^turn 1 of your face-down Prize cards 
     that `$` is D381's C5 guard, and a payoff-side widening would admit the reminder behind
     every cost row at once. */
 const OPTIONAL_COST_FACE_UP_REMINDER = " (That Prize card remains face up for the rest of the game.)";
+/** 🆕🆕🆕 D589 — WP08: the THIRD skeleton and four cost rows, all from the `me` serie (LOCAL D1,
+    2026-10-07; 4 sentences / 9 printings, none printed in `sv`):
+
+        *"You may discard 3 {M} Energy from this Pokémon and have this attack do 150 more damage."* (Metagross ×1)
+        *"You may discard all Energy from this Pokémon and have this attack do 130 more damage."* (Mega Manectric ex ×2)
+        *"You may put a {W} Energy attached to this Pokémon into your hand and have this attack do 80 more damage."* (Mega Greninja ex ×5)
+        *"You may shuffle all Energy attached to this Pokémon into your deck and have this attack do 80 more damage."* (Dialga ×1)
+
+    The connective is *"and have this attack do"* — D524's purpose skeleton with `and` for `to`,
+    the same infinitive `do` and the same inline `moreDamage` payoff. It is a separate constant
+    rather than a widening of `OPTIONAL_COST_PURPOSE_BOOST`, so the D524 rows that quote that line
+    keep their one occurrence. Each cost row is whole-string `^…$`, lower-case at its own anchor
+    (D246/D316), and its `cond` is the op's payability exactly (D385's obligation): the typed rows
+    read `yourActiveEnergyAtLeast` with `energy` (a CARD count by provision, the same predicate the
+    `providesEnergy` filter applies), the `all` rows read it at 1, and the to-hand row keeps D572's
+    `yourInPlayToHandAllowed`. No new op, member or field: the shuffle-into-deck row is D383's
+    `to: "deck"` + `shuffleDeck` at `count: "all"`. `optionalCostMeD589.test.ts` drives each. */
+const OPTIONAL_COST_AND_HAVE_BOOST = /^You may (.+) and have this attack do (\d+) more damage\.$/;
+const OPTIONAL_COST_DISCARD_TYPED_SELF_ENERGY = new RegExp(`^discard (\\d+) \\{([${ENERGY_CODES}])\\} Energy from this Pokémon$`);
+const OPTIONAL_COST_DISCARD_ALL_SELF_ENERGY = /^discard all Energy from this Pokémon$/;
+const OPTIONAL_COST_PUT_TYPED_SELF_ENERGY_TO_HAND = new RegExp(`^put a \\{([${ENERGY_CODES}])\\} Energy attached to this Pokémon into your hand$`);
+const OPTIONAL_COST_SHUFFLE_ALL_SELF_ENERGY = /^shuffle all Energy attached to this Pokémon into your deck$/;
 const OPTIONAL_COST_PAYOFF_MORE_DAMAGE = /^this attack does (\d+) more damage\.$/;
 /** 🆕🆕 D383 — the SECOND payoff row. Lower-case `this`, sharing its body with
     `ALSO_BENCHED_SNIPE` so the two spellings of one printed clause cannot drift. */
@@ -36898,7 +36920,16 @@ function optionalCostOps(cost: string): { cond: BoardCondition; ops: EffectOp[] 
   // necessary-and-sufficient obligation: the op turns exactly one prize whenever one is face
   // down, and nothing otherwise). ONE LINE for the D524 note's reason, directly above.
   if (OPTIONAL_COST_TURN_PRIZE_FACE_UP.test(cost)) return { cond: { kind: "yourFaceDownPrizeRemains" }, ops: [{ op: "turnPrizeFaceUp" }] };
-  const shuffle = OPTIONAL_COST_SHUFFLE_SELF_ENERGY.exec(cost);
+  // 🆕🆕🆕 D589 — WP08's four rows (see the anchors), ONE LINE each for the D524 note's reason. A
+  // printed 0 charges nothing and is refused, the shuffle row's own guard below.
+  const typedDiscard = OPTIONAL_COST_DISCARD_TYPED_SELF_ENERGY.exec(cost);
+  const typedDiscardEnergy = ENERGY_TYPE_BY_CODE[typedDiscard?.[2] ?? ""];
+  if (typedDiscard !== null && typedDiscardEnergy !== undefined && Number(typedDiscard[1]) >= 1) return { cond: { kind: "yourActiveEnergyAtLeast", count: Number(typedDiscard[1]), energy: typedDiscardEnergy }, ops: [{ op: "discardEnergy", from: "yourActive", filter: { kind: "providesEnergy", energyType: typedDiscardEnergy }, count: Number(typedDiscard[1]) }] };
+  if (OPTIONAL_COST_DISCARD_ALL_SELF_ENERGY.test(cost)) return { cond: { kind: "yourActiveEnergyAtLeast", count: 1 }, ops: [{ op: "discardEnergy", from: "yourActive", filter: { kind: "anyEnergy" }, count: "all" }] };
+  const typedToHandEnergy = ENERGY_TYPE_BY_CODE[OPTIONAL_COST_PUT_TYPED_SELF_ENERGY_TO_HAND.exec(cost)?.[1] ?? ""];
+  if (typedToHandEnergy !== undefined) return { cond: { kind: "allOf", conditions: [{ kind: "yourActiveEnergyAtLeast", count: 1, energy: typedToHandEnergy }, { kind: "yourInPlayToHandAllowed" }] }, ops: [{ op: "discardEnergy", from: "yourActive", filter: { kind: "providesEnergy", energyType: typedToHandEnergy }, to: "hand" }] };
+  if (OPTIONAL_COST_SHUFFLE_ALL_SELF_ENERGY.test(cost)) return { cond: { kind: "yourActiveEnergyAtLeast", count: 1 }, ops: [{ op: "discardEnergy", from: "yourActive", filter: { kind: "anyEnergy" }, count: "all", to: "deck" }, { op: "shuffleDeck" }] };
+  const shuffle =OPTIONAL_COST_SHUFFLE_SELF_ENERGY.exec(cost);
   if (shuffle !== null) {
     const count = Number(shuffle[1]);
     // A printed 0 charges nothing — the guard every captured amount in this file
@@ -37008,6 +37039,12 @@ function optionalCostPayoff(payoff: string): AttackOptionalCostPayoff | null {
 export function deriveAttackOptionalCostBoost(text: string): AttackOptionalCostBoost | null {
   const match = OPTIONAL_COST_BOOST.exec(text.trim());
   if (match === null) {
+    // 🆕🆕🆕 D589 — THE THIRD SKELETON, *"… and have this attack do N more damage."* (WP08; see
+    // `OPTIONAL_COST_AND_HAVE_BOOST`). The cost goes through the same table and the payoff is built
+    // inline, D524's arm below with its connective swapped; a printed 0 bonus is refused.
+    const andHave = OPTIONAL_COST_AND_HAVE_BOOST.exec(text.trim());
+    const andHaveCost = andHave === null ? null : optionalCostOps(andHave[1] ?? "");
+    if (andHave !== null) return andHaveCost === null || Number(andHave[2]) < 1 ? null : { cond: andHaveCost.cond, ops: andHaveCost.ops, payoff: { kind: "moreDamage", bonus: Number(andHave[2]) } };
     // 🆕🆕🆕 D524 — THE SECOND SKELETON: the purpose connective (corpus FILE LINE 652). The
     // cost half goes through the SAME table — never read as text here — and the payoff is
     // `moreDamage` BUILT INLINE from the captured digit, because the purpose spelling's verb

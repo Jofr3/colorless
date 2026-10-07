@@ -3,7 +3,9 @@
 > Update this at the **end of every session**: bump the status table, append a
 > session-log entry, and rewrite the **Resume point** to the next concrete action.
 
-**Last updated:** 2026-10-07 — build session #528 (**P3-M5 — D588, *WP22 — TRAINER PARAMETERS II: 17 `me` Trainer printings / 8 texts on eight new registry objects (Canari, Lillie's Determination, Misty's Vitality, Rosa's Encouragement, Rust Syndicate Grunt, Waitress, Hole-Digging Shovel, Lumiose Galette) plus one new target rider, `stage2Only`; Pokémon Center Lady dropped; Standard pool trainers 356 / 447; 762 `me` printings fully built*** — engine 0.472.0, MRV 42, NOT committed; the sweep PENDING)
+**Last updated:** 2026-10-07 — build session #529 (**P3-M5 — D589, *WP08 — MEGA GRENINJA EX AND THE OPTIONAL-COST FAMILY: 4 `me` attack sentences / 9 printings on a third `deriveAttackOptionalCostBoost` skeleton (*"… and have this attack do N more damage."*) over four cost rows, plus Mega Greninja ex ×5 "Mortal Shuriken" on Meowscarada ex's `payFromHand` + `damageChosen` shape; Mega Greninja ex ×5 and Mega Manectric ex ×2 finished; Standard pool attacks 2489 / 2771, abilities 457 / 610; 771 `me` printings fully built*** — engine 0.473.0, MRV 42, NOT committed; the sweep PENDING)
+
+**Last updated (was):** 2026-10-07 — build session #528 (**P3-M5 — D588, *WP22 — TRAINER PARAMETERS II: 17 `me` Trainer printings / 8 texts on eight new registry objects (Canari, Lillie's Determination, Misty's Vitality, Rosa's Encouragement, Rust Syndicate Grunt, Waitress, Hole-Digging Shovel, Lumiose Galette) plus one new target rider, `stage2Only`; Pokémon Center Lady dropped; Standard pool trainers 356 / 447; 762 `me` printings fully built*** — engine 0.472.0, MRV 42, NOT committed; the sweep PENDING)
 
 **Last updated (was):** 2026-10-07 — build session #527 (**P3-M5 — D587, *WP04 — TRAINER PARAMETERS I: 19 `me` Trainer printings / 9 texts on nine new registry objects (Wondrous Patch, Philippe, Jacinthe, Firebreather, Fighting Gong, Tarragon, Poké Pad, Energy Swatter, Repel), shipped ops / fields / filters only, plus Energy Swatter's caption arm and Repel's empty-Bench play gate; Standard pool trainers 339 / 447; 745 `me` printings fully built*** — engine 0.471.0, MRV 42, NOT committed; the sweep PENDING)
 
@@ -801,6 +803,37 @@
 
 ## NEXT (resume point)
 
+> ### ▶ THE NEXT CONCRETE ACTION (written 2026-10-07, after D589)
+>
+> 🛑 **D589 IS BUILT AND NOT COMMITTED** (worktree `/home/jofre/projects/luminous_ui-mega`, branch `mega-ingest`, on D588 = `4869c966`). D589 is WP08 of the Mega backlog: Mega Greninja ex and the optional-cost family. Next: a review of D589, then the landing of D581–D589 (rebase `mega-ingest` onto main; never `git add -A` — `apps/api/.wrangler` is the setup symlink).
+>
+> ✅ **`bun run check` IS GREEN**: `typecheck-coverage` OK (911 TypeScript files in 6 projects), `tsc -b`, `lint-coverage` OK (913 source files), `biome lint --error-on-warnings` (954 files), `Test Files 632 passed (632) / Tests 14946 passed (14946) / CHECK_EXIT=0` (D588: 631 / 14918; D589 adds `optionalCostMeD589.test.ts` (25) and three census rungs).
+>
+> **(a) THE SLICE.** effects.ts: a third `deriveAttackOptionalCostBoost` skeleton, `OPTIONAL_COST_AND_HAVE_BOOST` (*"You may {cost} and have this attack do N more damage."*, D524's purpose arm with `and` for `to`), and four one-line `optionalCostOps` rows — `discard N {T} Energy from this Pokémon` (Metagross `me04-061`), `discard all Energy from this Pokémon` (Mega Manectric ex `me01-050` / `-158`), `put a {T} Energy attached to this Pokémon into your hand` (Mega Greninja ex ×5, D572's `yourInPlayToHandAllowed` kept) and `shuffle all Energy attached to this Pokémon into your deck` (Dialga `me01-095`; D383's deck return at `count: "all"` — no new op was needed for the brief's allowed piece). registry.ts: `MORTAL_SHURIKEN` on Mega Greninja ex `mep-081`, `me04-022` / `-100` / `-116` / `-122` (Meowscarada ex `sv02-015`'s shape at Basic {W}, 60, `opponentAny`, `activeOnly: true`). No new op, member or field; nothing dropped.
+>
+> **(b) MRV STAYS 42** (match.ts "STAYS 42 AT D589"): no new key anywhere; a v42 match in flight gains the derived attacks and the Ability mid-match.
+>
+> | Column | `me` D589 | Standard pool D589 |
+> |---|---|---|
+> | Attacks | 757 / 1039 | **2489 / 2771** |
+> | Abilities | 81 / 234 | **457 / 610** |
+> | Trainers | 92 / 183 | **356 / 447** |
+> | Special Energy | 3 / 11 | **14 / 22** |
+>
+> **771 `me` printings fully built** (762 + 9). Registry 1163 → 1168, non-attack 1003 → 1008; live `me` attack tally reader [258, 727] → [262, 736], residue [178, 286] → [174, 277]. Other pin moved: `discardShuffleBack.test.ts`'s `{ op: "shuffleDeck" }` producer count 19 → 20.
+>
+> **(c) THE MUTATION RECORD.** +25 D589 rows (4410 in all). precheck: 4410 mutants, the same 20 pre-existing broken rows (none in a D589 file). Probe `run.ts --decision D589 --allow-dirty`: 25 killed · 0 known · 0 GAP · 0 error, tree byte-identical after. Gate-witness `--only` (the 18 `opaque-anatomy-gate.ts` / `residue-census-gate.ts` rows): 18 killed · 0 error. The neighbouring `--decision D524` / `D383` / `D381` probes: 10 / 12 / 8 killed. Gates: residue-census, opaque-anatomy, splice, partition all OK.
+>
+> 🛑 **(0) THE WHOLE-CORPUS SWEEP IS PENDING** (D581–D588's too). Predicted: **4340 killed · 50 known survivor(s) · 0 GAP(S) · 20 error(s)** over **4,410** rows — 4385 + 25 = 4410; 4315 + 25 = 4340 killed; 4340 + 50 + 20 = 4410. It assumes D588's prediction holds and no D589 edit moves an older verdict; if a row differs, the difference is that row.
+>
+> **D539 sweep.** No claim withdrawn: D524's "every cost row transfers across BOTH skeletons" (effects.ts) named the two skeletons it shipped with and stays true of them. Version tax: `0.472.0` outside `docs/` was 142 files / 226 lines; 225 stepped (it() titles and the D275 `find` included), 1 kept (index.ts' D588 heading).
+>
+> Still owed from the Mega backlog: Pokémon Center Lady (a heal-then-recover rider on the healed body), WP33 (split in two), WP05, WP20a, WP02, "Fade Out" ×5, the markup-normalising ingest fix, then the residue by mechanism.
+>
+> ---
+>
+> **ARCHIVED — the resume point D589 was built from, kept rather than overwritten** (D588 has since been committed on `mega-ingest` as `4869c966`):
+>
 > ### ▶ THE NEXT CONCRETE ACTION (written 2026-10-07, after D588)
 >
 > 🛑 **D588 IS BUILT AND NOT COMMITTED** (worktree `/home/jofre/projects/luminous_ui-mega`, branch `mega-ingest`, on D587 = `75f4bd42`). D588 is WP22 of the Mega backlog: Trainer parameters II. Next: a review of D588, then the landing of D581–D588 (rebase `mega-ingest` onto main; never `git add -A` — `apps/api/.wrangler` is the setup symlink).
@@ -34674,7 +34707,8 @@ the next api deploy (D18).
 |---|---|---|
 | backend-data | P1 | ✅ M1–M9 + P2-M1 + task-17 api deployed (Worker `9b1ec1d1`, 2026-07-16); OAuth secrets pending (user) |
 | deck-builder | P2 | ✅ ALL 19 tasks closed (task 17 landed + e2e-verified locally); only follow-ups left |
-| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D588, *WP22 — Trainer parameters II: 17 `me` Trainer printings / 8 texts on eight new objects plus the `stage2Only` attach rider; Pokémon Center Lady dropped; trainers 356 / 447*** — engine 0.472.0, MRV 42, NOT committed; the sweep PENDING) |
+| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D589, *WP08 — Mega Greninja ex and the optional-cost family: 4 `me` attack sentences / 9 printings on a third optional-cost skeleton plus Mortal Shuriken ×5; Mega Greninja ex ×5 and Mega Manectric ex ×2 finished; attacks 2489 / 2771, abilities 457 / 610*** — engine 0.473.0, MRV 42, NOT committed; the sweep PENDING) |
+| simulator (prior) | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D588, *WP22 — Trainer parameters II: 17 `me` Trainer printings / 8 texts on eight new objects plus the `stage2Only` attach rider; Pokémon Center Lady dropped; trainers 356 / 447*** — engine 0.472.0, MRV 42, NOT committed; the sweep PENDING) |
 | simulator (prior) | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D587, *WP04 — Trainer parameters I: 19 `me` Trainer printings / 9 texts on nine new objects (shipped vocabulary), Energy Swatter's caption and Repel's play gate; trainers 339 / 447*** — engine 0.471.0, MRV 42, NOT committed; the sweep PENDING) |
 | simulator (prior) | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D586, *WP03 — rows on existing condition members: 8 attack sentences / 17 `me` printings on shipped readers plus Carbink ×2 "Double Type"; Mega Darkrai ex ×5 finished; attacks 2480 / 2771, abilities 452 / 610*** — engine 0.470.0, MRV 42, NOT committed; the sweep PENDING) |
 | simulator (prior) | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D585, *WP19 — parameter copies of passives and Abilities: 19 `me` printings / 8 texts on eight new objects (existing fields only); Mega Scrafty ex ×3 and Mega Dragonite ex ×5 finished; abilities 450 / 610*** — engine 0.469.0, MRV 42, NOT committed; the sweep PENDING) |
@@ -34880,6 +34914,17 @@ the next api deploy (D18).
 Legend: 📝 backlog · 📋 specced · 🔎 research · 🚧 in progress · ✅ done
 
 ## Session log
+
+### 2026-10-07 — build session #529 (P3-M5 — D589)
+
+**WP08 — MEGA GRENINJA EX AND THE OPTIONAL-COST FAMILY. `MATCH_RECORD_VERSION` STAYS 42.**
+
+Built in the `luminous_ui-mega` worktree on D588 (`4869c966`); the main checkout was not touched. Every id `git grep`-ped
+(none referenced) and every text read off the LOCAL D1 first: 5 texts / 14 units / 9 printings. Four attack sentences derive
+through a third `deriveAttackOptionalCostBoost` skeleton over four new cost rows; Mega Greninja ex ×5 keyed on
+`MORTAL_SHURIKEN`. No new op, member or field; nothing dropped. `optionalCostMeD589.test.ts` (25): readings, near misses,
+and a yes / no board per attack plus the Ability's target, once-per-turn, Bench and cost refusals. Version tax 225 stepped /
+1 kept. +25 mutant rows, all KILLED. Sweep PENDING (NEXT (0)). NOT committed.
 
 ### 2026-10-07 — build session #528 (P3-M5 — D588)
 

@@ -6,6 +6,24 @@
 > `coverage-backlog-legal.md`; its pool is unchanged and whole. The suite-side figures are
 > `censusAtHead.test.ts`'s D581 block and `censusAttackCorpusMe.ts`.
 
+## 🆕 D589 update (engine 0.473.0) — Mega Greninja ex and the optional-cost family (WP08)
+
+4 `me` attack sentences / 9 printings derive through `deriveAttackOptionalCostBoost`'s third skeleton (*"You may {cost}
+and have this attack do N more damage."*) over four new cost rows — Metallic Hammer (discard 3 {M}), Riotous Blasting ×2
+(discard all), Ninja Spinner ×5 (a {W} to the hand) and Chrono Burst (shuffle all into the deck) — and Mega Greninja ex ×5
+"Mortal Shuriken" is keyed on `MORTAL_SHURIKEN` (Meowscarada ex `sv02-015`'s shape at {W}, 60, `opponentAny`, Active only;
+`optionalCostMeD589.test.ts`). No new op; nothing dropped. **Finished:** Mega Greninja ex ×5, Mega Manectric ex ×2,
+Metagross `me04-061`, Dialga `me01-095`.
+
+| Column | `me` built / units (D589) | Standard pool D589 |
+|---|---|---|
+| Attacks | 757 / 1,039 (+9) | **2,489 / 2,771** |
+| Abilities | 81 / 234 (+5) | **457 / 610** |
+| Trainers | 92 / 183 | **356 / 447** |
+| Special Energy | 3 / 11 | **14 / 22** |
+
+**Fully built `me` printings: 771** (762 + 9).
+
 ## 🆕 D588 update (engine 0.472.0) — Trainer parameters II (WP22)
 
 17 `me` Trainer printings / 8 texts keyed on eight new registry objects (registry.ts D588 block;
@@ -300,14 +318,14 @@ group wins; the grouping is a reading aid, not a census figure).
 
 ### Conditional damage bonus / base change — 22 text(s) / 37 printing(s)
 
-- 5× You may put a {W} Energy attached to this Pokémon into your hand and have this attack do 80 more damage.
+- 5× You may put a {W} Energy attached to this Pokémon into your hand and have this attack do 80 more damage. [🆕🆕🆕 D589: BUILT]
 - 4× If this Pokémon was damaged by an attack during your opponent's last turn, this attack does that much more damage.
 - 3× If you have 4 or more Pokémon that have the Hide 'n' Sneak Ability in your discard pile, this attack does 140 more damage.
 - 3× If you have no cards in your hand, this attack does 160 more damage.
 - 2× If Rosa's Encouragement is in your discard pile, this attack does 150 more damage.
 - 2× If this Pokémon is Burned or Poisoned, this attack does 100 more damage.
 - 2× If your Benched Pokémon have any Shadowy {D} Energy attached, this attack does 70 more damage.
-- 2× You may discard all Energy from this Pokémon and have this attack do 130 more damage.
+- 2× You may discard all Energy from this Pokémon and have this attack do 130 more damage. [🆕🆕🆕 D589: BUILT]
 - 1× During your opponent's next turn, this Pokémon takes 100 less damage from attacks from Evolution Pokémon (after applying Weakness and Resistance).
 - 1× During your opponent's next turn, this Pokémon takes 100 more damage from attacks (after applying Weakness and Resistance).
 - 1× If this Pokémon evolved from Magneton during this turn, this attack does 120 more damage.
@@ -320,8 +338,8 @@ group wins; the grouping is a reading aid, not a census figure).
 - 1× If you played Emma from your hand during this turn, this attack does 60 more damage.
 - 1× If you played a Supporter card that has "Team Rocket" in its name from your hand during this turn, this attack does 100 more damage.
 - 1× If your opponent's Active Pokémon has no Retreat Cost, this attack does 80 more damage.
-- 1× You may discard 3 {M} Energy from this Pokémon and have this attack do 150 more damage.
-- 1× You may shuffle all Energy attached to this Pokémon into your deck and have this attack do 80 more damage.
+- 1× You may discard 3 {M} Energy from this Pokémon and have this attack do 150 more damage. [🆕🆕🆕 D589: BUILT]
+- 1× You may shuffle all Energy attached to this Pokémon into your deck and have this attack do 80 more damage. [🆕🆕🆕 D589: BUILT]
 
 ### Next-turn effects on either Active (protection, vulnerability, locks) — 6 text(s) / 7 printing(s)
 
@@ -432,7 +450,7 @@ group wins; the grouping is a reading aid, not a census figure).
 
 ### Once-per-turn activated Abilities — 34 text(s) / 65 printing(s)
 
-- 5× **Mortal Shuriken** — Once during your turn, if this Pokémon is in the Active Spot, you may discard a Basic {W} Energy card from your hand in order to use this Ability. Place 6 damage counters on 1 of your opponent's Pokémon.
+- 5× **Mortal Shuriken** — Once during your turn, if this Pokémon is in the Active Spot, you may discard a Basic {W} Energy card from your hand in order to use this Ability. Place 6 damage counters on 1 of your opponent's Pokémon. [🆕🆕🆕 D589: BUILT]
 - 5× **Sky Transport** — Once during your turn, you may use this Ability. Switch your Active Pokémon with 1 of your Benched Pokémon. [🆕🆕🆕 D585: BUILT]
 - 4× **Run Errand** — Once during your turn, if this Pokémon is in the Active Spot, you may use this Ability. Draw 2 cards. You can't use more than 1 Run Errand Ability each turn.
 - 3× **Lunar Cycle** — Once during your turn, if you have Solrock in play, you may discard a Basic {F} Energy card from your hand in order to use this Ability. Draw 3 cards. You can't use more than 1 Lunar Cycle Ability each turn.

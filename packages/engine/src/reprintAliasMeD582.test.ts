@@ -184,6 +184,9 @@ const KEYED_AT_D588 = [
   "me03-078",
 ];
 
+/** 🆕🆕🆕 D589 — the `me` ids WP08 keys: Mega Greninja ex ×5 "Mortal Shuriken" (optionalCostMeD589.test.ts pins the program). */
+const KEYED_AT_D589 = ["mep-081", "me04-022", "me04-100", "me04-116", "me04-122"];
+
 /** The five `me` Tera reprints banners.ts carries (each printed face checked on tcgdex's image). */
 const ME_TERA = ["me02.5-038", "me02.5-057", "me02.5-160", "me02.5-179", "me02.5-277"] as const;
 
@@ -264,7 +267,7 @@ describe("D582 — the `me` reprint-alias tier: 99 printings on 66 existing prog
     expect(new Set(ALIASES.map(([, twin]) => programFor(twin))).size).toBe(66);
   });
 
-  it("the registry's `me` keys are EXACTLY this table — nothing keyed outside it (🆕🆕🆕 D583: plus Team Rocket's Energy `me02.5-217`; 🆕🆕🆕 D584: plus the 18 tier-2 keys; 🆕🆕🆕 D585: plus the 19 WP19 keys; 🆕🆕🆕 D586: plus Carbink ×2; 🆕🆕🆕 D587: plus the 19 WP04 Trainer keys; 🆕🆕🆕 D588: plus the 17 WP22 Trainer keys)", () => {
+  it("the registry's `me` keys are EXACTLY this table — nothing keyed outside it (🆕🆕🆕 D583: plus Team Rocket's Energy `me02.5-217`; 🆕🆕🆕 D584: plus the 18 tier-2 keys; 🆕🆕🆕 D585: plus the 19 WP19 keys; 🆕🆕🆕 D586: plus Carbink ×2; 🆕🆕🆕 D587: plus the 19 WP04 Trainer keys; 🆕🆕🆕 D588: plus the 17 WP22 Trainer keys; 🆕🆕🆕 D589: plus Mega Greninja ex ×5)", () => {
     const me = registryCardIds().filter((id) => /^(me|30th)/.test(id));
     // 🆕🆕🆕 D583 — the one `me` key outside the D582 table: Team Rocket's Energy, on `sv10-182`'s object.
     // 🆕🆕🆕 D584 — and the 18 tier-2 keys (`KEYED_AT_D584`).
@@ -277,6 +280,8 @@ describe("D582 — the `me` reprint-alias tier: 99 printings on 66 existing prog
     expect(KEYED_AT_D587).toHaveLength(19);
     // 🆕🆕🆕 D588 — and WP22's 17 Trainer keys (`KEYED_AT_D588`).
     expect(KEYED_AT_D588).toHaveLength(17);
+    // 🆕🆕🆕 D589 — and WP08's Mega Greninja ex ×5 (`KEYED_AT_D589`).
+    expect(KEYED_AT_D589).toHaveLength(5);
     expect(me.sort()).toEqual(
       [
         ...ALIASES.map(([id]) => id),
@@ -286,6 +291,7 @@ describe("D582 — the `me` reprint-alias tier: 99 printings on 66 existing prog
         ...KEYED_AT_D586,
         ...KEYED_AT_D587,
         ...KEYED_AT_D588,
+        ...KEYED_AT_D589,
       ].sort(),
     );
     // …and no twin is a `me` id: every program the tier reaches was built for the `sv` serie.

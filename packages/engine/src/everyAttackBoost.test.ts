@@ -780,6 +780,6 @@ describe("§9 — `MATCH_RECORD_VERSION` STAYS 30: the null value round-trips, a
       revived.turn !== turn || revived.attackIndex !== index ? 0 : revived.amount;
     for (const i of [REV_UP, STRIKE, SWIPE, REST, PICK_OFF, SPRAY]) expect(v30Reader(i, 5)).toBe(0);
     // …and the version is a widening, not a bump.
-    expect(engineVersion).toBe("0.472.0");
+    expect(engineVersion).toBe("0.473.0");
   });
 });

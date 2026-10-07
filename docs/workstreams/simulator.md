@@ -29940,3 +29940,21 @@ decisions (1) and (2) after D580. Engine 0.464.0 → 0.465.0. The Mega ex rule i
 - **Census.** Standard pool trainers **356 / 447** (`me` 92 / 183; attacks 2480 / 2771, abilities 452 / 610, special
   energy 14 / 22 unmoved); 762 `me` printings fully built.
 - **Owed.** See `progress.md` NEXT. The whole-corpus sweep is PENDING.
+
+## D589 — WP08: Mega Greninja ex and the optional-cost family (engine 0.473.0, `MATCH_RECORD_VERSION` stays 42)
+
+**Status:** ✅ BUILT in the `luminous_ui-mega` worktree on D588 (`4869c966`), NOT committed.
+
+- **4 `me` attack sentences / 9 printings** derive through `deriveAttackOptionalCostBoost`'s third skeleton,
+  `OPTIONAL_COST_AND_HAVE_BOOST` (*"You may {cost} and have this attack do N more damage."*), over four new one-line cost
+  rows: Metallic Hammer (discard 3 {M}, typed gate), Riotous Blasting ×2 (discard all), Ninja Spinner ×5 (a {W} to the
+  hand, with D572's `yourInPlayToHandAllowed`) and Chrono Burst (shuffle all into the deck — D383's `to: "deck"` +
+  `shuffleDeck` at `count: "all"`, so the brief's allowed piece needed no new op).
+- **Mortal Shuriken ×5** on the new `MORTAL_SHURIKEN`: Meowscarada ex `sv02-015`'s `payFromHand` + `damageChosen` at
+  Basic {W}, 60 counters, `opponentAny`, `activeOnly: true`.
+- **No new op, member or field; nothing dropped.** Mega Greninja ex ×5 and Mega Manectric ex ×2 are finished.
+- **Suite.** `optionalCostMeD589.test.ts` (25): the readings and their near misses, a yes / no board per attack, and the
+  Ability's target, Weakness, once-per-turn, Bench and cost refusals.
+- **Census.** Standard pool attacks **2489 / 2771**, abilities **457 / 610** (`me` 757 / 1,039 and 81 / 234; trainers
+  356 / 447 and special energy 14 / 22 unmoved); 771 `me` printings fully built.
+- **Owed.** See `progress.md` NEXT. The whole-corpus sweep is PENDING.

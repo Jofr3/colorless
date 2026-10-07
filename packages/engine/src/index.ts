@@ -20253,6 +20253,20 @@ import type { GameState, Seat } from "./types";
     `expect(manifest.version)`, `it(…)` titles, the declaration and `package.json` —
     **not** as a value-keyed grep — because a value-keyed grep is precisely the mechanism
     that ate D500's heading.)
+    🆕🆕🆕 engineVersion 0.472.0 → **0.473.0** (D589 — WP08: MEGA GRENINJA EX AND THE OPTIONAL-COST
+    FAMILY; `MATCH_RECORD_VERSION` STAYS 42 (apps/api match.ts "STAYS 42 AT D589")). effects.ts gives
+    `deriveAttackOptionalCostBoost` a THIRD skeleton, `OPTIONAL_COST_AND_HAVE_BOOST` (*"You may {cost}
+    and have this attack do N more damage."*, D524's purpose arm with `and` for `to`), and
+    `optionalCostOps` four one-line cost rows: `discard N {T} Energy from this Pokémon` (typed
+    `yourActiveEnergyAtLeast` gate, `providesEnergy` discard), `discard all Energy from this Pokémon`,
+    `put a {T} Energy attached to this Pokémon into your hand` (D572's `yourInPlayToHandAllowed` kept)
+    and `shuffle all Energy attached to this Pokémon into your deck` (D383's `to: "deck"` +
+    `shuffleDeck` at `count: "all"`). 4 `me` sentences / 9 printings derive: Metallic Hammer, Riotous
+    Blasting ×2, Ninja Spinner ×5, Chrono Burst. registry.ts keys Mega Greninja ex ×5 on the NEW
+    `MORTAL_SHURIKEN` (Meowscarada ex `sv02-015`'s `payFromHand` + `damageChosen` at {W}, 60,
+    `opponentAny`, `activeOnly`). No new op, member or field. Census: Standard pool attacks 2489 /
+    2771, abilities 457 / 610 (trainers 356 / 447, special energy 14 / 22 unmoved); 771 `me`
+    printings fully built. `optionalCostMeD589.test.ts`.)
     🆕🆕🆕 engineVersion 0.471.0 → **0.472.0** (D588 — WP22: TRAINER PARAMETERS II;
     `MATCH_RECORD_VERSION` STAYS 42 (apps/api match.ts "STAYS 42 AT D588")). registry.ts keys 17 `me`
     Trainer printings / 8 texts on EIGHT NEW objects: `CANARI` (×3; Earthen Vessel's hand cost over a
@@ -25184,7 +25198,7 @@ import type { GameState, Seat } from "./types";
     WITNESS** — the count was re-derived every slice and the word *"three"* was carried.
     A successor of this slice inherits **81 / 61 / 17** again, over **FIVE** history
     occurrences: those four plus `deckMillFilteredScale.test.ts`'s own header arrow.) */
-export const engineVersion = "0.472.0";
+export const engineVersion = "0.473.0";
 
 export type {
   ApplyResult,
