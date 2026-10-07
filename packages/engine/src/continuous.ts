@@ -4098,7 +4098,8 @@ function specialEnergyUids(state: GameState, pokemon: InPlayPokemon): string[] {
     in your opponent's discard pile."* resolves to
     `{kind: "cardsInDiscardPile", filter: {kind: "basicEnergy"}}` — so the question
     *"is this card a Basic Energy card"* was already answered in `cards.ts`, and a
-    second `card.energyType === "Normal"` here would be two readers of one noun, free
+    second `card.energyType === "Normal"` [🆕🆕🆕 D583 (D539): the answer is cards.ts `isBasicEnergy` —
+    "Normal" AND no printed rules text — since D583] here would be two readers of one noun, free
     to disagree. What the two count sources do NOT share is the VOCABULARY that
     reaches them: a discard-pile count is narrowed by a `CardFilter` over cards, while
     an attached count is narrowed by the energy-token value this function serves. One

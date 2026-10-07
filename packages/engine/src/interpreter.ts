@@ -11,6 +11,7 @@ import {
   energyProvidesOf,
   evolveFromOf,
   hasPrintedAbility,
+  isBasicEnergy,
   isBasicPokemon,
   isEnergyCard,
   isExOrV,
@@ -6200,7 +6201,7 @@ export function conditionHolds(state: GameState, seat: Seat, cond: BoardConditio
       // already: about the PRINT, never `providesEnergy`.
       //
       // 🛑 SO THE PREDICATE IS `matchesFilter`'s AND IS NOT RE-SPELLED HERE. The
-      // `basicEnergy` arm is `energyType === "Normal"` (which excludes every Special,
+      // `basicEnergy` arm is `energyType === "Normal"` [🆕🆕🆕 D583 (D539): the tag alone is WITHDRAWN as the test — cards.ts `isBasicEnergy` / `isSpecialEnergy` also read the printed rules text] (which excludes every Special,
       // wildcard or not) AND `energyProvidesOf(card) === filter.energyType` (which on
       // a Basic is a NAME parse and nothing else). Re-implementing it inline is D222's
       // defect in miniature — two readers of one printed noun, free to drift apart.
@@ -17229,7 +17230,7 @@ function attachableEnergies(
   max: number,
   /** ⚠️⚠️ D246 — THE PRINTED BARE NOUN (`attachEnergyFrom.anyEnergy`). The
       family's ordinary noun is *"a **Basic** Energy card"*, which is the
-      `"Normal"` test below and the reason this op has never reached a Special
+      `"Normal"` test below [🆕🆕🆕 D583 (D539): WITHDRAWN as spelled — the test below is cards.ts `isBasicEnergy(card)`, "Normal" AND no printed rules text] and the reason this op has never reached a Special
       Energy; two legal printings spell *"**an** Energy card"* instead (Snorlax
       `sv06-136` from the hand, Landorus `sv08-110` from the discard pile) and
       mean the whole category. THE NARROWING LIVES HERE AND NOWHERE ELSE: this is
@@ -17258,14 +17259,15 @@ function attachableEnergies(
     if (
       card !== undefined &&
       isEnergyCard(card) &&
-      // "Normal" = a BASIC energy (Special is a special energy). ⚠️ D246 — the
+      // "Normal" = a BASIC energy (Special is a special energy) [🆕🆕🆕 D583: `isBasicEnergy` —
+      // "Normal" AND no rules text, since tcgdex tags 14 legal Specials "Normal"]. ⚠️ D246 — the
       // printed bare noun lifts the test rather than replacing it: `anyEnergy`
       // admits BOTH kinds, which is what "an Energy card" says, and is not a
       // Special-only filter (`specialEnergy` is that, one vocabulary over).
       // ⚠️ D353 — a printed proper NAME lifts it too, and for a different
       // reason: `anyEnergy` widens the category, a name replaces the category
       // question outright.
-      (anyEnergy || energyName !== undefined || card.energyType === "Normal") &&
+      (anyEnergy || energyName !== undefined || isBasicEnergy(card)) &&
       (energyType === undefined || energyProvidesOf(card) === energyType) &&
       // D353 — answered by the CardFilter predicate that already exists, so the
       // op adds a field and no predicate.
@@ -18659,7 +18661,7 @@ export function discardableEnergies(
 function cardIdentity(state: GameState, uid: string): string {
   const card = cardOf(state, uid);
   if (card === undefined) return `?${uid}`;
-  return isEnergyCard(card) && card.energyType === "Normal"
+  return isBasicEnergy(card)
     ? `basic:${energyProvidesOf(card)}`
     : `card:${card.id}`;
 }

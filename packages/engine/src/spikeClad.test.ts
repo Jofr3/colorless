@@ -63,6 +63,7 @@ import { battler, deckOf, itemTrainer, specialEnergy, typedEnergy } from "./test
 //   holds Basic {F} Energy in the same discard pile: the attach would take those.
 // * Dropping the name test from `attachableEnergies` is the same case.
 // * Keeping the name test but ALSO demanding `energyType === "Normal"` is caught
+//   [🆕🆕🆕 D583 (D539): the Basic test is `isBasicEnergy(card)` since D583]
 //   by §2 alone — Spiky Energy is a SPECIAL Energy and would become unreachable.
 //   That is this slice's ONE design call and it has its own mutant.
 // * Dropping `count: 2` lands 1 where it must land 2 (§2).

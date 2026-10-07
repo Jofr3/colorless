@@ -10926,6 +10926,8 @@ const NEO_UPPER_ENERGY: CardProgram = {
     population is 11 and not 8 because this column splits by `cards.category`: 8
     Special Energy plus 3 BASIC energy carrying effect text"*). `category` is
     `'Energy'`, so this printing lands in that column exactly as `sv05-162` does.
+    🆕🆕🆕 D583 (D539): the tag no longer matters to the ENGINE either — cards.ts `isSpecialEnergy`
+    reads the printed rules text since D583, so this printing is a SPECIAL Energy there.
 
     THE POPULATION, RE-QUERIED AND NOT INHERITED (remote D1 `luminous`,
     `instr(effect,'provides every type of Energy') > 0 AND legal_standard = 1`,
@@ -13324,7 +13326,7 @@ const CURSED_BLAST_13: CardProgram = {
 
     ⚠️ **NO `energyType`, AND THE ABSENCE IS THE PRINT.** The noun is *"Basic
     Energy cards"* with no brace code, which is `attachableEnergies`' default
-    (`card.energyType === "Normal"`, no `anyEnergy`) — every Basic Energy in the
+    (`card.energyType === "Normal"`, no `anyEnergy`) [🆕🆕🆕 D583 (D539): WITHDRAWN as spelled — the default is cards.ts `isBasicEnergy(card)`, "Normal" AND no printed rules text] — every Basic Energy in the
     pile and no Special one. `targetType: "Lightning"` is the OTHER printed noun
     (*"your {L} Pokémon"*), read off `topCardOf` [🆕🆕🆕 D578 (D539): *"read off `topCardOf`"*
     is WITHDRAWN — interpreter.ts `attachEnergyTargets` now reads the TOP card's IN-PLAY view,
@@ -16267,7 +16269,7 @@ const DESTRUCTO_PRESS: CardProgram = {
     `discardAtEndOfYourTurn` (flow.ts `endTurn`, R-IG1). ⚠️ CARRIED DEBT, named and not fixed:
     the catalog tags it `energyType "Normal"`, so cards.ts `basicEnergy` matches it (Basic
     Energy searches, the deck-count rule) — Prism's and Reversal's debt, and its fix is
-    catalog data outside this whitelist (D538). */
+    catalog data outside this whitelist (D538). [🆕🆕🆕 D583 (D539): WITHDRAWN for the ENGINE — cards.ts `isBasicEnergy` / `isSpecialEnergy` read the printed rules text since D583, so the "Normal" tag no longer makes a Special a Basic Energy there; the deck builder's copy rule still reads the catalog tag until a re-ingest writes map.ts's D583 "Special"] */
 const IGNITION_ENERGY: CardProgram = {
   energy: {
     provides: ["Colorless"],
@@ -17212,6 +17214,7 @@ const REGISTRY: Record<string, CardProgram> = {
   "me02.5-212": TOOL_SCRAPPER, // Tool Scrapper — twin `sv10.5w-085`
   "me02.5-214": NEMONA, // Urbain — twin `sv01-180` (Nemona, same text)
   "me02.5-216": PRISM_ENERGY, // Prism Energy — twin `sv10.5b-086`
+  "me02.5-217": TEAM_ROCKETS_ENERGY, // 🆕🆕🆕 D583 — Team Rocket's Energy — twin `sv10-182` (tcgdex tags this row "Normal"; cards.ts `isSpecialEnergy` reads its printed text since D583)
   "me02.5-255": BLACK_BELTS_TRAINING, // Black Belt's Training — twin `sv08.5-096`
   "me02.5-256": BOSSS_ORDERS, // Boss's Orders — twin `sv02-172`
   "me02.5-258": NEMONA, // Cheren — twin `sv01-180` (Nemona, same text)

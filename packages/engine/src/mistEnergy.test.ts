@@ -102,6 +102,7 @@ import {
 //     of its two other clauses, which is why D262 did NOT take it as a second row.
 // ⚠️ `POPULATION.specialEnergyUnits` is **11**, not 8: the census column splits by
 // `cards.category`, and 3 of the 11 are BASIC energy carrying effect text.
+// [🆕🆕🆕 D583 (D539): those 3 are BASIC only by the D1 `energy_type` TAG — Reversal, Prism and Ignition print rules text, so the engine reads them as SPECIAL Energy since D583 (cards.ts `isSpecialEnergy`)]
 //
 // ── ROW A COSTS *ZERO ENGINE LINES*, AND THAT IS WHY IT IS FIRST ─────────────
 // D174 made an attached Energy the THIRD SOURCE CLASS of `passivesOf` — `sources`

@@ -96,11 +96,11 @@ import {
 } from "./logic";
 import {
   applyMatchAction,
+  loadMatchRecord,
   MATCH_RECORD_VERSION,
   type MatchLoad,
   type MatchRecord,
   matchSeatOf,
-  readMatchRecord,
   SEAT_OF_SLOT,
   startMatch,
 } from "./match";
@@ -871,12 +871,21 @@ export class LobbyDO {
   /** Read the persisted match WITHOUT side effects: absent, usable, or written by
       a deploy this build can't trust (`readMatchRecord`, match.ts). Every read of
       `MATCH_KEY` goes through here so no call site ever touches a record whose
-      `log`/`names`/`state` it can't rely on. */
+      `log`/`names`/`state` it can't rely on.
+      🆕🆕🆕 D583 — ONE side effect, once per match: a v41 record (`MIGRATABLE_MATCH_RECORD_VERSION`)
+      is MIGRATED rather than retired — its pool's Trainer faces re-read from D1 and the v42 record
+      PERSISTED before any caller acts on it (match.ts "41 → 42 AT D583"). */
   private async peekMatch(): Promise<MatchLoad> {
-    const raw = await this.state.storage.get(MATCH_KEY);
-    if (raw === undefined) return { kind: "none" };
-    const record = readMatchRecord(raw);
-    return record === null ? { kind: "stale" } : { kind: "ok", record };
+    // 🆕🆕🆕 D583 — the read, the migration's D1 load, the re-read and the write are match.ts
+    // `loadMatchRecord` (driven with a fake slot in poolMigrationD583.test.ts); the D1 read is
+    // external I/O, so the DO's input gate opens while it runs — hence the re-read there.
+    return loadMatchRecord(
+      {
+        get: () => this.state.storage.get(MATCH_KEY),
+        put: (record) => this.state.storage.put(MATCH_KEY, record),
+      },
+      (ids) => loadCardPool(drizzle(this.env.DB), ids),
+    );
   }
 
   /** Retire a match this deploy can't read (the no-storage-migration gap,

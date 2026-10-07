@@ -707,14 +707,14 @@ export type CardFilter =
   | { kind: "anyCard" }
   /** A Pokémon OR a Basic Energy card — Super Rod's "any combination of Pokémon
       and Basic Energy cards" (a basic Energy is `energyType: "Normal"`; a
-      Special Energy is excluded). */
+      Special Energy is excluded) [🆕🆕🆕 D583 (D539): the tag alone is WITHDRAWN as the test — cards.ts `isBasicEnergy` / `isSpecialEnergy` also read the printed rules text]. */
   | { kind: "pokemonOrBasicEnergy" }
   /** Any Energy card — Basic OR Special (Poppy "Move up to 2 Energy", which
       unlike Energy Switch's "a Basic Energy" moves either kind). Distinct from
       `basicEnergy` (basics only) and `pokemonOrBasicEnergy` (which excludes
       Special Energy and admits Pokémon). */
   | { kind: "anyEnergy" }
-  /** A SPECIAL Energy card (§6.1 — the catalog's `energyType: "Special"`), the
+  /** A SPECIAL Energy card (§6.1 — the catalog's `energyType: "Special"` [🆕🆕🆕 D583 (D539): the tag alone is WITHDRAWN as the test — cards.ts `isBasicEnergy` / `isSpecialEnergy` also read the printed rules text]), the
       exact complement of `basicEnergy` inside `anyEnergy`. The energy-removal
       family's narrow arm: Giacomo and Mawile discard "a Special Energy", where
       Crushing Hammer takes any. */
@@ -21466,7 +21466,7 @@ const CLAUSE_ENERGY_TOKENS: ReadonlyMap<string, BasicEnergyType | "special" | "b
      `BasicEnergyType | "special"` rather than a widened type union."* `Basic` is that
      same axis's other value: `matchesFilter`'s `basicEnergy` arm is
      `isEnergyCard(card) && card.energyType === "Normal"`, which is exactly
-     `isSpecialEnergy`'s complement inside `isEnergyCard`.
+     `isSpecialEnergy`'s complement inside `isEnergyCard`. [🆕🆕🆕 D583 (D539): WITHDRAWN as spelled — the arm is cards.ts `isBasicEnergy(card)` ("Normal" AND no printed rules text) since D583]
 
      🛑 **IT IS A CARD QUESTION AND NOT A PROVISION QUESTION, AND THE TWO COME APART ON
      A REAL FIXTURE.** A Special Energy may PROVIDE a basic type — `fix-blend`'s
@@ -34494,7 +34494,7 @@ export interface AttackDamageBonus {
     (D376) settled this for the pile and this member inherits it rather than re-deciding
     it. ⚠️ **AND IT IS RE-VERIFIED AT THE PREDICATE RATHER THAN INHERITED FROM PROSE**:
     `matchesFilter`'s `anyEnergy` arm is `isEnergyCard(card)` and its `basicEnergy` arm
-    is `isEnergyCard(card) && card.energyType === "Normal" && …` — both PRINT reads —
+    is `isEnergyCard(card) && card.energyType === "Normal" && …` [🆕🆕🆕 D583 (D539): WITHDRAWN as spelled — the arm is cards.ts `isBasicEnergy(card)` ("Normal" AND no printed rules text) since D583] — both PRINT reads —
     and its `providesEnergy` arm returns **false, always**, with the pile argument
     written into the arm itself. So the filter union cannot express a provision reading
     of a pile even if a successor asked it to.
@@ -34692,7 +34692,7 @@ export type DamageCountSource =
           refused one step LATER, by `CLAUSE_ENERGY_TOKENS` having no `Basic` key.
           ⚠️ **IT IS A CARDS READING AND NOT A PROVISION ONE**: `countAttachedEnergy`'s
           new arm asks `card.energyType === "Normal"` through `matchesFilter`'s shipped
-          `basicEnergy` arm, so a Special Energy that PROVIDES a basic type (`fix-blend`
+          `basicEnergy` arm [🆕🆕🆕 D583 (D539): WITHDRAWN as spelled — the arm is cards.ts `isBasicEnergy(card)` ("Normal" AND no printed rules text) since D583], so a Special Energy that PROVIDES a basic type (`fix-blend`
           provides `["Fire", "Water"]`) is counted OUT here and counted IN by a `{W}`
           sentence. Those are different numbers on one board, which is why
           `basicEnergyScaling.test.ts` fields both cards. */

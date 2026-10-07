@@ -119,8 +119,18 @@ export function mapCard(card: TcgdexCard): CardRow {
     case "Energy":
       return {
         ...base,
-        energyType: normalizeSentinel(card.energyType),
+        energyType: energyTypeOf(card.energyType, card.effect),
         effect: card.effect ?? null,
       };
   }
+}
+
+/** 🆕🆕🆕 D583 — the Energy subtype the row stores. tcgdex tags `energyType: "Normal"` on 14
+    Standard-legal Special Energies (every `me` one, and `sv` Reversal / Prism / Ignition — LOCAL
+    D1, 2026-10-07), so a "Normal" Energy that PRINTS RULES TEXT is written "Special": a Basic
+    Energy card prints none. The engine reads the same rule off the face (cards.ts
+    `isSpecialEnergy`), so a row ingested before this fix still plays right. */
+export function energyTypeOf(energyType: string | undefined, effect: string | undefined): string | null {
+  const tag = normalizeSentinel(energyType);
+  return tag === "Normal" && (effect ?? "").trim() !== "" ? "Special" : tag;
 }

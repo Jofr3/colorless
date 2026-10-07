@@ -65,7 +65,7 @@ import {
 // DRIVEN.** A Special Energy may PROVIDE a basic type — `fix-blend`'s registry
 // `EnergyProgram` provides `["Fire", "Water"]` — so *"each Basic Energy attached"* and
 // *"each {W} Energy attached"* count DIFFERENT CARDS on one board. The new arm asks
-// `matchesFilter`'s shipped `basicEnergy` predicate (`card.energyType === "Normal"`),
+// `matchesFilter`'s shipped `basicEnergy` predicate (`card.energyType === "Normal"` [🆕🆕🆕 D583 (D539): the tag alone is WITHDRAWN as the test — cards.ts `isBasicEnergy` / `isSpecialEnergy` also read the printed rules text]),
 // which is the same predicate the DISCARD-PILE reader already resolves this printed
 // noun to — one noun, one answer (D159) — reached through a different vocabulary
 // because an attached count is narrowed by an energy token and a pile count by a
@@ -706,6 +706,8 @@ describe("D500 §7 — the version stays 29, and the address is named before the
     // token. Two vocabularies, one field NAME, and the first draft of this rung
     // asserted the name absent and went red for the wrong reason. The catalog column
     // is what the new `"basic"` arm READS through `matchesFilter`; it did not change.
+    // [🆕🆕🆕 D583 (D539): the arm reads the tag AND the printed rules text (cards.ts `isBasicEnergy`)
+    // since D583, so the tag alone no longer decides it; the wire still carries it unchanged.]
     expect(wire).toContain('"energyType":"Normal"');
     expect(wire).toContain('"energyType":"Special"');
   });
@@ -734,7 +736,7 @@ describe("D500 §7 — the version stays 29, and the address is named before the
     });
     expect(produced).toEqual([]);
     // …and the engine version DID move, because a card can reach the behaviour change.
-    expect(engineVersion).toBe("0.466.0");
+    expect(engineVersion).toBe("0.467.0");
   });
 });
 

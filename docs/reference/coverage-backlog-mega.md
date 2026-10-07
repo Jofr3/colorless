@@ -6,6 +6,21 @@
 > `coverage-backlog-legal.md`; its pool is unchanged and whole. The suite-side figures are
 > `censusAtHead.test.ts`'s D581 block and `censusAttackCorpusMe.ts`.
 
+## 🆕 D583 update (engine 0.467.0) — Special Energy by printed text
+
+The D582 gap *"tcgdex tags every `me` Special Energy `energy_type` Normal"* is closed in the ENGINE: cards.ts
+`isSpecialEnergy` reads the printed rules text as well as the tag (14 legal printings: 11 `me`, `sv` Reversal / Prism /
+Ignition), and map.ts writes "Special" from the next ingest (neither D1 re-ingested yet). Team Rocket's Energy
+`me02.5-217`, the alias D582 refused on its tag alone, is keyed on `sv10-182`'s object.
+
+| Column | `me` built / units (D583) | Standard pool D583 |
+|---|---|---|
+| Special Energy | 3 / 11 | **14 / 22** |
+
+The other columns stand at D582's. **Fully built `me` printings: 672.** The 8 unbuilt `me` Special Energies are the
+eight new ones (Growing Grass, Rocky Fighting, Telepathic Psychic, Bubbly Water, Magnetic Metal, Nitro Fire, Shadowy
+Darkness, Voltaic Lightning): each still provides one {C} (the unauthored fallback), now as a Special.
+
 ## 🆕 D582 update (engine 0.466.0) — the Mega ex rule and the alias tier
 
 The 3-Prize **Mega Evolution ex rule** is built (cards.ts `prizeValueOf` / `isMegaEvolutionPokemonEx`; 133 legal
@@ -24,10 +39,10 @@ block; `reprintAliasMeD582.test.ts`), and banners.ts marks the five `me02.5` Ter
 D581's "alias-ready" figures, re-measured: of 47 ability units, 6 are NOT aliased (Cinccino ex ×3, Turtonator — the
 twin program names its Ability; Numel ×2 — twin Heatran `sv06-123`'s D190 program is Armarouge's and logs "Scorching
 Armor"; a renamed copy is owed each); of 3 Special Energy, Team Rocket's Energy `me02.5-217` is not
-(tcgdex tags it `energy_type` Normal, its `sv` twin Special); of 8 attack units, only Prism Charge prints at its twin's
+(tcgdex tags it `energy_type` Normal, its `sv` twin Special) [🆕 D583: aliased]; of 8 attack units, only Prism Charge prints at its twin's
 index — "Fade Out" ×5 and "Surf Back" ×2 need a new object each. **New named gaps:** tcgdex tags every `me` Special
 Energy (and three `sv` ones: Reversal, Prism, Ignition) `energy_type` Normal, so the engine's `isSpecialEnergy` answers
-false for them and the `basicEnergy` filter ("Basic Energy" searches) admits them; `me` Tera printings with NEW text (Koraidon ex `me02.5-121` prints the banner) are
+false for them and the `basicEnergy` filter ("Basic Energy" searches) admits them [🆕 D583 (D539): WITHDRAWN — see the D583 update]; `me` Tera printings with NEW text (Koraidon ex `me02.5-121` prints the banner) are
 not in banners.ts. The sections below are the D581 measurement.
 
 ## Headline

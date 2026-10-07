@@ -145,7 +145,7 @@ const ENERGY_L = "fix-d346-energy-lightning";
 const ENERGY_F = "fix-d346-energy-fighting";
 const ENERGY_W = "fix-d346-energy-water";
 /** A SPECIAL Energy. `anyEnergy` is ABSENT on this row, so `attachableEnergies`
-    tests `card.energyType === "Normal"` and this card is out of reach — the printed
+    tests `card.energyType === "Normal"` [🆕🆕🆕 D583 (D539): the tag alone is WITHDRAWN as the test — cards.ts `isBasicEnergy` / `isSpecialEnergy` also read the printed rules text] and this card is out of reach — the printed
     word "Basic", driven rather than described. */
 const ENERGY_SPECIAL = "fix-d346-energy-special";
 
@@ -487,6 +487,7 @@ describe("D346 §3 — the two printed NOUNS, each narrowing a different thing",
 
   it("…but a SPECIAL Energy is out of reach — the printed word is \"Basic\"", () => {
     // `anyEnergy` is ABSENT, so `attachableEnergies` tests `energyType === "Normal"`.
+    // [🆕🆕🆕 D583 (D539): the tag alone is WITHDRAWN as the test — cards.ts `isBasicEnergy` / `isSpecialEnergy` also read the printed rules text]
     // A pile of Special Energy alone makes the attach whiff, which `programPlayable`
     // turns into a refusal (see §5).
     let state = board({ p1: [MAGNETON, LIGHTNING_A], p2: [WALL] });

@@ -2159,6 +2159,26 @@ export interface MatchRecord {
     `turn:action.discardable` — 🛑 **DEPLOY THE SERVER FIRST**: an old client's `z.object` STRIPS
     the unknown key, while a new client's REQUIRED key refuses an old server's frame.
 
+    🆕🆕🆕 **41 → 42 AT D583 — THE FIFTEENTH POSITION, AND THE FIRST MIGRATION: A v41 RECORD'S PERSISTED
+    TRAINER FACES ARE REFRESHED, NOT RETIRED.** (Placed ABOVE the D582 block, out of date order — D563's
+    placement.) The address (D456's rule): **`state.cardPool`** — the whole catalog `Card` of every deck id,
+    persisted at match creation (D582 ①). A v41 record created before the D581 re-ingest holds a Trainer
+    row with no printed face, and THIS deploy reads that face off the pool (TM Fluorite `sv08-188`'s attack,
+    the four Antique Fossils' Ability and 60 HP): read as-is, TM Fluorite grants nothing and a fossil has no
+    Ability for the rest of the match — D124's "reads back fine and plays subtly wrong", so the version is
+    owed. But the fix is a DATA refresh with a known source, so the record is MIGRATED instead of retired:
+    `migrateMatchRecord` (below, PURE) takes a v41 record and the pool ids re-read from D1
+    (`loadMatchRecord` below, which lobbyDO.ts `peekMatch` calls and which persists the result before
+    anything acts on it) and replaces every
+    **Trainer** face whose fresh row is a Trainer; Pokémon and Energy faces, the state and the log are kept
+    byte for byte (D581 moved only the Trainer branch of the ingest). Driven in `poolMigrationD583.test.ts`
+    (a v41 record with `attacks: null` on `sv08-188` offers the TM attack after the migration). 🛑 **IT
+    REFRESHES FROM WHATEVER D1 HOLDS**: the deploy order stays "re-ingest the REMOTE D1 first" (D581), or a
+    v41 record migrates onto the old rows and is stamped v42 with them. A rollback to any build at
+    `MATCH_RECORD_VERSION` 41 (the live 0.464, or 0.465 / 0.466) retires every v42 record (D124 — the
+    version gate), which is the stated cost. A failed D1 read writes nothing (`loadMatchRecord`). No other byte moves; any other version is
+    retired as before. The D582 block's *"only the end of those matches does"* is WITHDRAWN (D539) by this.
+
     🆕🆕🆕 **STAYS 41 AT D582 — THE MEGA EVOLUTION ex RULE AND THE `me` REPRINT-ALIAS TIER ADD NO GameState,
     PendingStage, PROMPT OR WIRE KEY.** (Placed ABOVE the D581 block, out of date order — D563's placement.)
     What moved is a RULE read at Knock Out time and two id-keyed tables, none persisted: cards.ts
@@ -2175,7 +2195,8 @@ export interface MatchRecord {
     window the three-window list missed: a match created before the remote re-ingest keeps its pre-D581 rows
     for its WHOLE LIFE (TM Fluorite grants nothing, a fossil face has no Ability), and one created under 0.465
     keeps the re-ingested rows under a 0.464 rollback (no category guards). Re-ingesting first does not close
-    it; only the end of those matches does. ② *"the match pool is fetched through GET `/cards/:id`"* is true
+    it; only the end of those matches does [🆕🆕🆕 D583 (D539): WITHDRAWN — a v41 record's Trainer faces are
+    refreshed from D1 on its first load, "41 → 42 AT D583" above]. ② *"the match pool is fetched through GET `/cards/:id`"* is true
     of the LOCAL match only (src/features/game/cardPool.ts); this file's online pool reads D1 directly and
     never touches the KV cache.]
 
@@ -2319,7 +2340,78 @@ export interface MatchRecord {
     the `trimBench` `EffectOp` (parked in `cont`, a D125 widening carried by (ii)), the events
     `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side
     `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */
-export const MATCH_RECORD_VERSION = 41;
+export const MATCH_RECORD_VERSION = 42;
+
+/** 🆕🆕🆕 D583 — the one version this deploy MIGRATES rather than retires ("41 → 42 AT D583" above). */
+export const MIGRATABLE_MATCH_RECORD_VERSION = 41;
+
+/** 🆕🆕🆕 D583 — the catalog ids a v41 record's pool holds (what `loadMatchRecord` re-reads from D1), or
+    `null` for anything that is not a well-formed v41 record. PURE. */
+export function migratablePoolIdsOf(raw: unknown): string[] | null {
+  const record = readMigratableRecord(raw);
+  return record === null ? null : Object.keys(record.state.cardPool);
+}
+
+/** 🆕🆕🆕 D583 — migrate a v41 record to this deploy's version: every persisted TRAINER face whose
+    `fresh` row is also a Trainer is replaced by that row; every other byte is kept. `null` for
+    anything that is not a well-formed v41 record. PURE — `loadMatchRecord` (below) loads `fresh`
+    from D1 and persists the result. */
+export function migrateMatchRecord(raw: unknown, fresh: Record<string, Card>): MatchRecord | null {
+  const record = readMigratableRecord(raw);
+  if (record === null) return null;
+  const cardPool: Record<string, Card> = { ...record.state.cardPool };
+  for (const [id, card] of Object.entries(cardPool)) {
+    const row = fresh[id];
+    if (card.category === "Trainer" && row?.category === "Trainer") cardPool[id] = row;
+  }
+  return { ...record, version: MATCH_RECORD_VERSION, state: { ...record.state, cardPool } };
+}
+
+/** 🆕🆕🆕 D583 — the one persisted match slot `loadMatchRecord` reads and writes (the DO's
+    `MATCH_KEY` in its storage, narrowed so the step is testable without a Durable Object). */
+export interface MatchSlot {
+  get(): Promise<unknown>;
+  put(record: MatchRecord): Promise<void>;
+}
+
+/** 🆕🆕🆕 D583 — read the persisted match: absent, usable, or stale; a v41 record is MIGRATED and
+    the v42 record written back before it is returned (lobbyDO.ts `peekMatch` is this call).
+    `loadPool` is external I/O (D1), so the slot is RE-READ after it: another event may have
+    migrated, advanced or ended the match meanwhile, and only a record still at v41 is migrated.
+    A failed `loadPool` rejects and writes nothing, so the v41 record waits for the next read:
+    from a socket frame that event fails; from the DO's `alarm()` the platform retries the alarm;
+    from `handoffToMatch` the handoff fails. Playing the record unmigrated is never an option:
+    this build cannot trust a v41 pool. */
+export async function loadMatchRecord(
+  slot: MatchSlot,
+  loadPool: (ids: readonly string[]) => Promise<Record<string, Card>>,
+): Promise<MatchLoad> {
+  const raw = await slot.get();
+  if (raw === undefined) return { kind: "none" };
+  const record = readMatchRecord(raw);
+  if (record !== null) return { kind: "ok", record };
+  const ids = migratablePoolIdsOf(raw);
+  if (ids === null) return { kind: "stale" };
+  const fresh = await loadPool(ids);
+  const again = await slot.get();
+  if (again === undefined) return { kind: "none" };
+  const current = readMatchRecord(again);
+  if (current !== null) return { kind: "ok", record: current };
+  const migrated = migrateMatchRecord(again, fresh);
+  if (migrated === null) return { kind: "stale" };
+  await slot.put(migrated);
+  return { kind: "ok", record: migrated };
+}
+
+/** A v41 record passed through `readMatchRecord`'s own shape checks, or `null`. */
+function readMigratableRecord(raw: unknown): MatchRecord | null {
+  if (typeof raw !== "object" || raw === null) return null;
+  if ((raw as { version?: unknown }).version !== MIGRATABLE_MATCH_RECORD_VERSION) return null;
+  const record = readMatchRecord({ ...raw, version: MATCH_RECORD_VERSION });
+  if (record === null) return null;
+  const pool = (record.state as { cardPool?: unknown }).cardPool;
+  return typeof pool === "object" && pool !== null ? record : null;
+}
 
 /** How a persisted match read back: absent, usable, or written by an
     incompatible deploy (`stale` — the caller decides whether to retire it). */

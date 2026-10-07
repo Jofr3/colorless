@@ -22082,7 +22082,7 @@ export const STATUS_IMMUNITY_DECK = deckOf({
       • sv03-193 Poppy — "Move up to 2 Energy from 1 of your Pokémon to another of
         your Pokémon", the pool's ONLY program that can move a SPECIAL Energy
         (`filter: anyEnergy`; every `attachEnergyFrom` route filters to
-        `energyType === "Normal"`). It is what makes the flow.ts `settleProgram`
+        `energyType === "Normal"` [🆕🆕🆕 D583 (D539): the tag alone is WITHDRAWN as the test — cards.ts `isBasicEnergy` / `isSpecialEnergy` also read the printed rules text]). It is what makes the flow.ts `settleProgram`
         half of the recovery seam drivable off a printed card instead of surgery;
       • fix-bigbody (200 HP) — the NON-IMMUNE, no-Energy control under every
         declaration, and the mulligan-free dominant Basic;

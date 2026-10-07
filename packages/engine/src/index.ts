@@ -16779,7 +16779,7 @@ import type { GameState, Seat } from "./types";
     Energy `sv09-159`/`sv09-190` is a SPECIAL Energy, which this op has excluded
     since M5. A proper name picks out exactly one printed card and cannot disagree
     with itself about what kind of Energy that card is, so `energyName` lifts the
-    `"Normal"` test rather than conjoining with it — and the catalog does not vary
+    `"Normal"` test [🆕🆕🆕 D583 (D539): the Basic test is cards.ts `isBasicEnergy(card)` since D583, and the name still lifts it] rather than conjoining with it — and the catalog does not vary
     it: the only OTHER by-name attach sentence (Wigglytuff `sv02-084`/`sv04.5-147`,
     *"a **Therapeutic Energy** card"*, both ROTATED) names a Special too, so on 4
     printings of 4 the name names a Special. Installed and killed as
@@ -20252,6 +20252,20 @@ import type { GameState, Seat } from "./types";
     `expect(manifest.version)`, `it(…)` titles, the declaration and `package.json` —
     **not** as a value-keyed grep — because a value-keyed grep is precisely the mechanism
     that ate D500's heading.)
+    🆕🆕🆕 engineVersion 0.466.0 → **0.467.0** (D583 — THE FIX-UP SLICE: SPECIAL ENERGY READ OFF THE PRINTED TEXT, AND
+    THE PERSISTED POOL MIGRATED; `MATCH_RECORD_VERSION` 41 → 42 (apps/api match.ts "41 → 42 AT D583")). **(1) The
+    predicate** (cards.ts): `isSpecialEnergy` is true of an Energy tagged "Special" OR printing rules text, and the NEW
+    exported `isBasicEnergy` ("Normal" and no text) is the one reader of the Basic noun (`basicEnergy` /
+    `pokemonOrBasicEnergy`, `energyProvidesOf`, the interpreter's hand/discard attach and its identity key). tcgdex tags
+    14 legal Specials "Normal" (all 11 `me`; `sv` Reversal / Prism / Ignition): until 0.467 they matched every "Basic
+    Energy" search (Energy Search offered Prism Energy — `specialEnergyTagD583.test.ts` §3) and no Special-only reader
+    saw them; their provision was always right (registry by id). Read at the predicate, so a persisted
+    `GameState.cardPool` with the old tag reads right; `apps/api/src/ingest/map.ts` (`energyTypeOf`) writes "Special"
+    from the next ingest (neither D1 is re-ingested). Team Rocket's Energy `me02.5-217` — D582's one alias blocked only
+    by the tag — is keyed on `sv10-182`'s object (registry.ts). Census: Standard pool special energy 14 / 22.
+    **(2) The pool migration** (apps/api): a v41 record is no longer read; `loadMatchRecord` (lobbyDO.ts `peekMatch`) re-reads its
+    pool's Trainer rows from D1 and persists it as v42 (`migrateMatchRecord`), so a match created before the D581 re-ingest gets TM
+    Fluorite's attack and the fossils' Ability back — `poolMigrationD583.test.ts`. No engine shape moved.)
     🆕🆕🆕 engineVersion 0.465.0 → **0.466.0** (D582 — THE MEGA EVOLUTION ex RULE AND THE `me` REPRINT-ALIAS TIER;
     `MATCH_RECORD_VERSION` STAYS 41 (apps/api match.ts "STAYS 41 AT D582")). **The rule** (cards.ts): the printed
     *"Mega Evolution ex rule — When your Mega Evolution Pokémon ex is Knocked Out, your opponent takes 3 Prize cards."*
@@ -20280,7 +20294,7 @@ import type { GameState, Seat } from "./types";
     engine BACK TO BACK, re-ingest first: this engine on an old catalog plays the four fossils with no Ability and TM
     Fluorite grants nothing; 0.464 on a re-ingested catalog lacks the three category guards (a fossil Item matches
     `abilityPokemon`, TM Fluorite `attackNamePokemon` — no harmful reach found) — the benign window. A THIRD window is
-    the API's KV catalog cache (1-hour TTL): a `/cards/:id` row cached before the re-ingest (the match pool's fetch [🆕🆕🆕 D582 (D539): the LOCAL match's only — the online pool reads D1 directly, and every match PERSISTS its pool: a fourth window, apps/api match.ts "STAYS 41 AT D582"])
+    the API's KV catalog cache (1-hour TTL): a `/cards/:id` row cached before the re-ingest (the match pool's fetch [🆕🆕🆕 D582 (D539): the LOCAL match's only — the online pool reads D1 directly, and every match PERSISTS its pool: a fourth window, apps/api match.ts "STAYS 41 AT D582"] [🆕🆕🆕 D583: CLOSED for the ONLINE match — `MATCH_RECORD_VERSION` 41 → 42 migrates a v41 record, re-reading its pool's Trainer faces from D1 on first load (apps/api match.ts "41 → 42 AT D583"); the remote re-ingest must still FINISH before the deploy.])
     would keep the first window open after it whatever the order, so the API's `CACHE_VERSION` steps v6 → v7 with
     this deploy (catalog/cache.ts; review round) — 0.465 starts cold, which closes it if the re-ingest FINISHED first.
     Census re-baselined over `sv` + `me` (censusAtHead.test.ts D581 block; `censusAttackCorpusMe.ts`): attacks
@@ -20545,7 +20559,7 @@ import type { GameState, Seat } from "./types";
     the non-matching cards is a named DISPLAY DEBT (no event names them). **Ignition Energy**: Reversal's
     `"Evolution"` provision with three Colorless units and the NEW `EnergyProgram.discardAtEndOfYourTurn`, paid
     by flow.ts's `endTurn` stage on the TURN OWNER's bodies (one `ENERGY_DISCARDED` per body, after Powerglass
-    and Amarys — R-IG1 ⚠️ UNRULED); its catalog `energyType "Normal"` debt (cards.ts `basicEnergy` matches it)
+    and Amarys — R-IG1 ⚠️ UNRULED); its catalog `energyType "Normal"` debt (cards.ts `basicEnergy` matches it) [🆕🆕🆕 D583 (D539): WITHDRAWN for the ENGINE — cards.ts `isBasicEnergy` / `isSpecialEnergy` read the printed rules text since D583, so the "Normal" tag no longer makes a Special a Basic Energy there; the deck builder's copy rule still reads the catalog tag until a re-ingest writes map.ts's D583 "Special"]
     is carried, as Prism's and Reversal's are. **`MATCH_RECORD_VERSION` STAYS 37**: no GameState, PendingStage
     or Card key is added, nothing parks, and every addition is a catalog-only key or a new union member — see
     docs/decisions.md D571 and apps/api match.ts.)
@@ -25105,7 +25119,7 @@ import type { GameState, Seat } from "./types";
     WITNESS** — the count was re-derived every slice and the word *"three"* was carried.
     A successor of this slice inherits **81 / 61 / 17** again, over **FIVE** history
     occurrences: those four plus `deckMillFilteredScale.test.ts`'s own header arrow.) */
-export const engineVersion = "0.466.0";
+export const engineVersion = "0.467.0";
 
 export type {
   ApplyResult,
@@ -25141,6 +25155,7 @@ export {
   energyProvidesOf,
   evolveFromOf,
   hpOf,
+  isBasicEnergy,
   isBasicPokemon,
   isEnergyCard,
   isMegaEvolutionPokemonEx,

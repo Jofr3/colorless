@@ -143,7 +143,8 @@ const NOT_ALIASED: readonly (readonly [string, string])[] = [
   ["me02.5-027", "Numel — Incandescent Body; Heatran's program logs Armarouge's `Scorching Armor`"],
   ["me02.5-223", "Numel — the same"],
   // The face differs in `energy_type`: tcgdex tags the `me` row Normal, the `sv` twin Special.
-  ["me02.5-217", "Team Rocket's Energy — `energy_type` Normal vs `sv10-182`'s Special"],
+  // [🆕🆕🆕 D583 (D539): ~~Team Rocket's Energy `me02.5-217`~~ is ALIASED at D583 — cards.ts reads a Special
+  // Energy off its printed text, so the tag no longer separates the faces (specialEnergyTagD583.test.ts §4).]
   // A registry ATTACK sentence at another INDEX under another attack NAME: a new object each.
   ["mep-006", "Drifblim — Balloon Return (idx 1) ~ Lillie's Comfey's Fade Out"],
   ["me03-062", "Meowth ex — Tuck Tail (idx 0) ~ Fade Out; its Ability Last-Ditch Catch is unbuilt"],
@@ -234,9 +235,10 @@ describe("D582 — the `me` reprint-alias tier: 99 printings on 66 existing prog
     expect(new Set(ALIASES.map(([, twin]) => programFor(twin))).size).toBe(66);
   });
 
-  it("the registry's `me` keys are EXACTLY this table — nothing keyed outside it", () => {
+  it("the registry's `me` keys are EXACTLY this table — nothing keyed outside it (🆕🆕🆕 D583: plus Team Rocket's Energy `me02.5-217`)", () => {
     const me = registryCardIds().filter((id) => /^(me|30th)/.test(id));
-    expect(me.sort()).toEqual(ALIASES.map(([id]) => id).sort());
+    // 🆕🆕🆕 D583 — the one `me` key outside the D582 table: Team Rocket's Energy, on `sv10-182`'s object.
+    expect(me.sort()).toEqual([...ALIASES.map(([id]) => id), "me02.5-217"].sort());
     // …and no twin is a `me` id: every program the tier reaches was built for the `sv` serie.
     for (const [, twin] of ALIASES) expect(/^(me|30th)/.test(twin), twin).toBe(false);
   });

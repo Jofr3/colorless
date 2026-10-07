@@ -3042,9 +3042,11 @@ export const MUTANTS: Mutant[] = [
     // to this very expression, so the quote rotted by EDIT rather than by move. The
     // mutation is unchanged in intent: it deletes the `anyEnergy` disjunct and leaves
     // the other two, so the op still carries the field and the helper still ignores it.
+    // 🆕🆕🆕 D583 — RE-ANCHORED off the bytes (D540): the line's Basic test is `isBasicEnergy(card)` since
+    // D583 (the "Normal" tag is no longer the whole test); the mutation and its claim are unchanged.
     find:
-      '      (anyEnergy || energyName !== undefined || card.energyType === "Normal") &&',
-    replace: '      (energyName !== undefined || card.energyType === "Normal") &&',
+      '      (anyEnergy || energyName !== undefined || isBasicEnergy(card)) &&',
+    replace: '      (energyName !== undefined || isBasicEnergy(card)) &&',
     expectKilledBy: ["packages/engine/src/derivedGatedAttach.test.ts"],
   },
   {
@@ -3054,8 +3056,10 @@ export const MUTANTS: Mutant[] = [
     file: "packages/engine/src/interpreter.ts",
     // ⚠️ RE-POINTED AT D353 for the reason above — a third disjunct joined the same
     // expression. The mutation still makes the widening unconditional.
+    // 🆕🆕🆕 D583 — RE-ANCHORED off the bytes (D540): the line's Basic test is `isBasicEnergy(card)` since
+    // D583 (the "Normal" tag is no longer the whole test); the mutation and its claim are unchanged.
     find:
-      '      (anyEnergy || energyName !== undefined || card.energyType === "Normal") &&',
+      '      (anyEnergy || energyName !== undefined || isBasicEnergy(card)) &&',
     replace: "      (anyEnergy || energyName !== undefined || true) &&",
     expectKilledBy: [
       "packages/engine/src/derivedGatedAttach.test.ts",
@@ -6235,7 +6239,7 @@ export const MUTANTS: Mutant[] = [
     // CORPUS QUOTES** (D414/D415), so a value-keyed sweep over `toBe("0.391.0")` cannot
     // see it — this row's `find` spells the DECLARATION, not an assertion. Run
     // `precheck` after every version bump, not after the sweep tells you.
-    find: 'export const engineVersion = "0.466.0";',
+    find: 'export const engineVersion = "0.467.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -11444,8 +11448,9 @@ export const MUTANTS: Mutant[] = [
     // 🆕🆕🆕 D576 - stepped with the constant, 38 -> 39 (the TWELFTH position); one step back, as always.
     // 🆕🆕🆕 D577 — RE-ANCHORED off the bytes (D540) — D577 stepped the constant 39 → 40; the patch is still ONE step back.
     // 🆕🆕🆕 D579 — RE-ANCHORED off the bytes (D540) — D579 stepped the constant 40 → 41; the patch is still ONE step back.
-    find: "export const MATCH_RECORD_VERSION = 41;",
-    replace: "export const MATCH_RECORD_VERSION = 40;",
+    // 🆕🆕🆕 D583 — RE-ANCHORED off the bytes (D540) — D583 stepped the constant 41 → 42; the patch is still ONE step back.
+    find: "export const MATCH_RECORD_VERSION = 42;",
+    replace: "export const MATCH_RECORD_VERSION = 41;",
     expectKilledBy: ["apps/api/src/lobby/match.test.ts"],
   },
   // == D327 - THE COST SEAM'S SECOND AND THIRD COUNT SOURCES. Every row below is a
@@ -14077,11 +14082,13 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D353-named-energy-still-demands-basic",
     decision: "D353",
-    what: '🛑🛑 THE ONE DESIGN CALL THIS SLICE MAKES, INVERTED. The name no longer subsumes the Basic/Special test, so a named SPECIAL Energy has to pass `energyType === "Normal"` as well and matches nothing — Spike-Clad becomes a card that does literally nothing on every board, and `programPlayable` would refuse it outright if a gate could reach it. It survives every SHAPE assertion (the registry row is untouched and the field is read), which is exactly why the design call needed a driven case rather than a paragraph',
+    what: '🛑🛑 THE ONE DESIGN CALL THIS SLICE MAKES, INVERTED. The name no longer subsumes the Basic/Special test, so a named SPECIAL Energy has to pass `energyType === "Normal"` [🆕🆕🆕 D583: `isBasicEnergy(card)`] as well and matches nothing — Spike-Clad becomes a card that does literally nothing on every board, and `programPlayable` would refuse it outright if a gate could reach it. It survives every SHAPE assertion (the registry row is untouched and the field is read), which is exactly why the design call needed a driven case rather than a paragraph',
     file: "packages/engine/src/interpreter.ts",
+    // 🆕🆕🆕 D583 — RE-ANCHORED off the bytes (D540): the line's Basic test is `isBasicEnergy(card)` since
+    // D583 (the "Normal" tag is no longer the whole test); the mutation and its claim are unchanged.
     find:
-      '      (anyEnergy || energyName !== undefined || card.energyType === "Normal") &&',
-    replace: '      (anyEnergy || card.energyType === "Normal") &&',
+      '      (anyEnergy || energyName !== undefined || isBasicEnergy(card)) &&',
+    replace: '      (anyEnergy || isBasicEnergy(card)) &&',
     expectKilledBy: ["packages/engine/src/spikeClad.test.ts"],
   },
   {
@@ -29529,8 +29536,9 @@ export const MUTANTS: Mutant[] = [
     // 🆕🆕🆕 D576 - stepped with the constant, 38 -> 39 (the TWELFTH position); one step back, as always.
     // 🆕🆕🆕 D577 — RE-ANCHORED off the bytes (D540) — D577 stepped the constant 39 → 40; the patch is still ONE step back.
     // 🆕🆕🆕 D579 — RE-ANCHORED off the bytes (D540) — D579 stepped the constant 40 → 41; the patch is still ONE step back.
-    find: "export const MATCH_RECORD_VERSION = 41;\n",
-    replace: "export const MATCH_RECORD_VERSION = 40;\n",
+    // 🆕🆕🆕 D583 — RE-ANCHORED off the bytes (D540) — D583 stepped the constant 41 → 42; the patch is still ONE step back.
+    find: "export const MATCH_RECORD_VERSION = 42;\n",
+    replace: "export const MATCH_RECORD_VERSION = 41;\n",
     expectKilledBy: ["apps/api/src/lobby/match.test.ts"],
   },
   // ────────────────────────────────────────────────────────────────────────────
@@ -30608,7 +30616,7 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D513-partition-keyed-on-the-category-not-the-provision",
     decision: "D513",
-    what: "\ud83d\uded1 C7 \u2014 **THE PARTITION IS KEYED ON THE NEIGHBOUR'S FIRST CONJUNCT INSTEAD OF ITS SECOND, AND IT COLLAPSES TO ONE CELL.** `matchesFilter`'s `basicEnergy` arm reads `card.energyType === \"Normal\" && energyProvidesOf(card) === filter.energyType` \u2014 two different questions one line apart \u2014 so an author partitioning 'by type' reaching for `card.energyType` is copying a REAL neighbour, not inventing a straw. Every Basic Energy answers `\"Normal\"`, so all four cells fuse into ONE cap of ONE and the printed *'up to 3'* becomes *'exactly at most 1'*. \u26a0\ufe0f **IT IS A NARROWING, NOT A WIDENING, so every rung that only refuses a same-type pair stays GREEN** \u2014 it is caught by \u00a73's cell COUNT and by the three-card answer being accepted, which is why that section asserts the partition in both directions.",
+    what: "\ud83d\uded1 C7 \u2014 **THE PARTITION IS KEYED ON THE NEIGHBOUR'S FIRST CONJUNCT INSTEAD OF ITS SECOND, AND IT COLLAPSES TO ONE CELL.** `matchesFilter`'s `basicEnergy` arm reads `card.energyType === \"Normal\" && energyProvidesOf(card) === filter.energyType` [🆕🆕🆕 D583 (D539): the arm reads `isBasicEnergy(card) && …` since D583 — the \"Normal\" tag AND no printed rules text; `card.energyType` is still the real neighbour this mutant copies, one function away] \u2014 two different questions one line apart \u2014 so an author partitioning 'by type' reaching for `card.energyType` is copying a REAL neighbour, not inventing a straw. Every Basic Energy answers `\"Normal\"` [🆕🆕🆕 D583 (D539): still TRUE — every Basic Energy is tagged \"Normal\"; the converse is WITHDRAWN, 14 legal Special Energies are tagged \"Normal\" too], so all four cells fuse into ONE cap of ONE and the printed *'up to 3'* becomes *'exactly at most 1'*. \u26a0\ufe0f **IT IS A NARROWING, NOT A WIDENING, so every rung that only refuses a same-type pair stays GREEN** \u2014 it is caught by \u00a73's cell COUNT and by the three-card answer being accepted, which is why that section asserts the partition in both directions.",
     file: "packages/engine/src/interpreter.ts",
     find: "          const key = energyProvidesOf(card);",
     replace: "          const key = String(card.energyType);",
@@ -34920,7 +34928,8 @@ export const MUTANTS: Mutant[] = [
     //    pre-bump value). Sixteenth consecutive bump to move these rows.
     // 🆕🆕🆕 D577 — RE-ANCHORED off the bytes (D540) — D577's THIRTEENTH POSITION now sits between D576's doc tail and the constant, so the anchor is D577's last two lines; the patch drops the constant to 30, the row's own pre-bump value.
     // 🆕🆕🆕 D579 — RE-ANCHORED off the bytes (D540): D579 places its FOURTEENTH POSITION above the D578 and D577 blocks, so D577's doc tail is unchanged and only the constant's value in the anchor moves (40 → 41); the patch value is unchanged.
-    find: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 41;",
+    // 🆕🆕🆕 D583 — RE-ANCHORED off the bytes (D540): the constant in this `find` is 42 since D583; the replace and the claim are unchanged.
+    find: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 42;",
     // 🆕🆕🆕 D549 - RE-ANCHORED AGAIN off the bytes (D540): D549's block now sits between
     //    D548's doc tail and the constant, so the anchor is D549's last two lines and the
     //    patch drops the constant THREE steps, to D547's pre-bump 30.
@@ -35122,7 +35131,8 @@ export const MUTANTS: Mutant[] = [
     //    pre-bump value). Sixteenth consecutive bump to move these rows.
     // 🆕🆕🆕 D577 — RE-ANCHORED off the bytes (D540) — D577's THIRTEENTH POSITION now sits between D576's doc tail and the constant, so the anchor is D577's last two lines; the patch drops the constant to 31, the row's own pre-bump value.
     // 🆕🆕🆕 D579 — RE-ANCHORED off the bytes (D540): D579 places its FOURTEENTH POSITION above the D578 and D577 blocks, so D577's doc tail is unchanged and only the constant's value in the anchor moves (40 → 41); the patch value is unchanged.
-    find: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 41;",
+    // 🆕🆕🆕 D583 — RE-ANCHORED off the bytes (D540): the constant in this `find` is 42 since D583; the replace and the claim are unchanged.
+    find: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 42;",
     // 🆕🆕🆕 D549 - RE-ANCHORED off the bytes onto D549's doc tail; the patch drops the
     //    constant TWO steps, to D548's pre-bump 31 (a different patch from
     //    `D549-record-version-not-bumped`, one step, same anchor).
@@ -35622,7 +35632,8 @@ export const MUTANTS: Mutant[] = [
     //    pre-bump value). Sixteenth consecutive bump to move these rows.
     // 🆕🆕🆕 D577 — RE-ANCHORED off the bytes (D540) — D577's THIRTEENTH POSITION now sits between D576's doc tail and the constant, so the anchor is D577's last two lines; the patch drops the constant to 32, the row's own pre-bump value.
     // 🆕🆕🆕 D579 — RE-ANCHORED off the bytes (D540): D579 places its FOURTEENTH POSITION above the D578 and D577 blocks, so D577's doc tail is unchanged and only the constant's value in the anchor moves (40 → 41); the patch value is unchanged.
-    find: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 41;",
+    // 🆕🆕🆕 D583 — RE-ANCHORED off the bytes (D540): the constant in this `find` is 42 since D583; the replace and the claim are unchanged.
+    find: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 42;",
     replace: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 32;",
     expectKilledBy: ["packages/engine/src/sideAttackLock.test.ts", "apps/api/src/lobby/match.test.ts"],
   },
@@ -36216,7 +36227,8 @@ export const MUTANTS: Mutant[] = [
     //    pre-bump value). Sixteenth consecutive bump to move these rows.
     // 🆕🆕🆕 D577 — RE-ANCHORED off the bytes (D540) — D577's THIRTEENTH POSITION now sits between D576's doc tail and the constant, so the anchor is D577's last two lines; the patch drops the constant to 33, the row's own pre-bump value.
     // 🆕🆕🆕 D579 — RE-ANCHORED off the bytes (D540): D579 places its FOURTEENTH POSITION above the D578 and D577 blocks, so D577's doc tail is unchanged and only the constant's value in the anchor moves (40 → 41); the patch value is unchanged.
-    find: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 41;",
+    // 🆕🆕🆕 D583 — RE-ANCHORED off the bytes (D540): the constant in this `find` is 42 since D583; the replace and the claim are unchanged.
+    find: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 42;",
     replace: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 33;",
     expectKilledBy: ["apps/api/src/lobby/match.test.ts"],
   },
@@ -37152,7 +37164,8 @@ export const MUTANTS: Mutant[] = [
     //    pre-bump value). Sixteenth consecutive bump to move these rows.
     // 🆕🆕🆕 D577 — RE-ANCHORED off the bytes (D540) — D577's THIRTEENTH POSITION now sits between D576's doc tail and the constant, so the anchor is D577's last two lines; the patch drops the constant to 34, the row's own pre-bump value.
     // 🆕🆕🆕 D579 — RE-ANCHORED off the bytes (D540): D579 places its FOURTEENTH POSITION above the D578 and D577 blocks, so D577's doc tail is unchanged and only the constant's value in the anchor moves (40 → 41); the patch value is unchanged.
-    find: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 41;",
+    // 🆕🆕🆕 D583 — RE-ANCHORED off the bytes (D540): the constant in this `find` is 42 since D583; the replace and the claim are unchanged.
+    find: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 42;",
     replace: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 34;",
     expectKilledBy: ["apps/api/src/lobby/match.test.ts"],
   },
@@ -40491,7 +40504,8 @@ export const MUTANTS: Mutant[] = [
     //    pre-bump value). Sixteenth consecutive bump to move these rows.
     // 🆕🆕🆕 D577 — RE-ANCHORED off the bytes (D540) — D577's THIRTEENTH POSITION now sits between D576's doc tail and the constant, so the anchor is D577's last two lines; the patch drops the constant to 35, the row's own pre-bump value.
     // 🆕🆕🆕 D579 — RE-ANCHORED off the bytes (D540): D579 places its FOURTEENTH POSITION above the D578 and D577 blocks, so D577's doc tail is unchanged and only the constant's value in the anchor moves (40 → 41); the patch value is unchanged.
-    find: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 41;",
+    // 🆕🆕🆕 D583 — RE-ANCHORED off the bytes (D540): the constant in this `find` is 42 since D583; the replace and the claim are unchanged.
+    find: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 42;",
     replace: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 35;",
     expectKilledBy: ["apps/api/src/lobby/match.test.ts"],
   },
@@ -43350,7 +43364,8 @@ export const MUTANTS: Mutant[] = [
     //    pre-bump value). Sixteenth consecutive bump to move these rows.
     // 🆕🆕🆕 D577 — RE-ANCHORED off the bytes (D540) — D577's THIRTEENTH POSITION now sits between D576's doc tail and the constant, so the anchor is D577's last two lines; the patch drops the constant to 36, the row's own pre-bump value.
     // 🆕🆕🆕 D579 — RE-ANCHORED off the bytes (D540): D579 places its FOURTEENTH POSITION above the D578 and D577 blocks, so D577's doc tail is unchanged and only the constant's value in the anchor moves (40 → 41); the patch value is unchanged.
-    find: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 41;",
+    // 🆕🆕🆕 D583 — RE-ANCHORED off the bytes (D540): the constant in this `find` is 42 since D583; the replace and the claim are unchanged.
+    find: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 42;",
     replace: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 36;",
     expectKilledBy: ["apps/api/src/lobby/match.test.ts"],
   },
@@ -44784,7 +44799,8 @@ export const MUTANTS: Mutant[] = [
     //    pre-bump value). Sixteenth consecutive bump to move these rows.
     // 🆕🆕🆕 D577 — RE-ANCHORED off the bytes (D540) — D577's THIRTEENTH POSITION now sits between D576's doc tail and the constant, so the anchor is D577's last two lines; the patch drops the constant to 37, the row's own pre-bump value.
     // 🆕🆕🆕 D579 — RE-ANCHORED off the bytes (D540): D579 places its FOURTEENTH POSITION above the D578 and D577 blocks, so D577's doc tail is unchanged and only the constant's value in the anchor moves (40 → 41); the patch value is unchanged.
-    find: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 41;",
+    // 🆕🆕🆕 D583 — RE-ANCHORED off the bytes (D540): the constant in this `find` is 42 since D583; the replace and the claim are unchanged.
+    find: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 42;",
     replace: "    `BENCH_TRIMMED`, `POKEMON_NAMED`, `HP_GUESSED` (not persisted, D141), and the catalog-side\n    `StadiumEffects.benchLimitWithTera` / `EnergyProgram.returnAfterAttackDiscard`. */\nexport const MATCH_RECORD_VERSION = 37;",
     expectKilledBy: ["apps/api/src/lobby/match.test.ts"],
   },
@@ -46235,7 +46251,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D579",
     what: "🛑 **`MATCH_RECORD_VERSION` STAYS 40 WHILE THE FOURTEENTH POSITION LANDS** — this deploy accepts a v40 record with no `GameState.recentAttackers` and throws at its first attack's end (D326), and a 0.462 rollback silently drops a live +150 window. Killed by match.test.ts's pin and Koraidon §5's raw-source rung.",
     file: "apps/api/src/lobby/match.ts",
-    find: "export const MATCH_RECORD_VERSION = 41;",
+    // 🆕🆕🆕 D583 — RE-ANCHORED off the bytes (D540): D583 stepped the constant 41 → 42; the patch still writes 40, the claim unchanged.
+    find: "export const MATCH_RECORD_VERSION = 42;",
     replace: "export const MATCH_RECORD_VERSION = 40;",
     expectKilledBy: ["apps/api/src/lobby/match.test.ts", "packages/engine/src/koraidonD579.test.ts"],
   },
@@ -46790,5 +46807,154 @@ export const MUTANTS: Mutant[] = [
     find: '  "me02-124", // Ignition Energy\n',
     replace: "",
     expectKilledBy: ["packages/engine/src/censusAtHead.test.ts"],
+  },
+  // ── 🆕🆕🆕 D583 — THE FIX-UP SLICE: SPECIAL ENERGY READ OFF THE PRINTED TEXT (cards.ts `isSpecialEnergy` /
+  //    `isBasicEnergy`, the interpreter's hand/discard attach, map.ts `energyTypeOf`), Team Rocket's Energy
+  //    `me02.5-217` aliased, and `MATCH_RECORD_VERSION` 41 → 42 with the persisted-pool MIGRATION (match.ts
+  //    `migrateMatchRecord`). Every `find` asserted to occur exactly once by precheck; every replace names only
+  //    what its file binds. ──
+  {
+    id: "D583-special-reads-only-the-tag",
+    decision: "D583",
+    what: "`isSpecialEnergy` asks the tcgdex tag alone again: the 14 Normal-tagged legal Specials (every `me` one; Reversal, Prism, Ignition) read as non-Special, so every Special-only reader skips them. Killed by specialEnergyTagD583 §1.",
+    file: "packages/engine/src/cards.ts",
+    find: "  return card.category === \"Energy\" && (card.energyType === \"Special\" || printsRulesText(card));",
+    replace: "  return card.category === \"Energy\" && card.energyType === \"Special\";",
+    expectKilledBy: ["packages/engine/src/specialEnergyTagD583.test.ts"],
+  },
+  {
+    id: "D583-basic-forgets-the-special-test",
+    decision: "D583",
+    what: "`isBasicEnergy` drops its `!isSpecialEnergy` conjunct: a Normal-tagged Special is a Basic Energy again, and Energy Search offers Prism Energy. Killed by specialEnergyTagD583 §1, §3 and §3b.",
+    file: "packages/engine/src/cards.ts",
+    find: "  return card.category === \"Energy\" && card.energyType === \"Normal\" && !isSpecialEnergy(card);",
+    replace: "  return card.category === \"Energy\" && card.energyType === \"Normal\";",
+    expectKilledBy: ["packages/engine/src/specialEnergyTagD583.test.ts"],
+  },
+  {
+    id: "D583-rules-text-untrimmed",
+    decision: "D583",
+    what: "`printsRulesText` stops trimming: a whitespace-only `effect` counts as rules text and turns a Basic Energy Special. Killed by specialEnergyTagD583 §1's whitespace rung.",
+    file: "packages/engine/src/cards.ts",
+    find: "  return (card.effect ?? \"\").trim() !== \"\";",
+    replace: "  return (card.effect ?? \"\") !== \"\";",
+    expectKilledBy: ["packages/engine/src/specialEnergyTagD583.test.ts"],
+  },
+  {
+    id: "D583-basic-filter-reads-the-tag",
+    decision: "D583",
+    what: "`matchesFilter`'s `basicEnergy` arm reads the tag instead of `isBasicEnergy` — the one reader the slice routes every \"Basic Energy\" search through. Killed by specialEnergyTagD583 §1 and §3 (Energy Search offers Prism).",
+    file: "packages/engine/src/cards.ts",
+    find: "        isBasicEnergy(card) &&\n        (filter.energyType === undefined || energyProvidesOf(card) === filter.energyType)",
+    replace: "        isEnergyCard(card) &&\n        card.energyType === \"Normal\" &&\n        (filter.energyType === undefined || energyProvidesOf(card) === filter.energyType)",
+    expectKilledBy: ["packages/engine/src/specialEnergyTagD583.test.ts"],
+  },
+  {
+    id: "D583-pokemon-or-basic-reads-the-tag",
+    decision: "D583",
+    what: "`pokemonOrBasicEnergy` reads the tag again: a Normal-tagged Special passes \"Pokémon and Basic Energy cards\" (Super Rod's noun). Killed by specialEnergyTagD583 §1.",
+    file: "packages/engine/src/cards.ts",
+    find: "      return card.category === \"Pokemon\" || isBasicEnergy(card);",
+    replace: "      return card.category === \"Pokemon\" || (isEnergyCard(card) && card.energyType === \"Normal\");",
+    expectKilledBy: ["packages/engine/src/specialEnergyTagD583.test.ts"],
+  },
+  {
+    id: "D583-hand-attach-reads-the-tag",
+    decision: "D583",
+    what: "the interpreter's `attachableEnergies` reads the tag again: \"Attach a Basic Energy card from your hand\" attaches Prism Energy. Killed by specialEnergyTagD583 §3b.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      (anyEnergy || energyName !== undefined || isBasicEnergy(card)) &&",
+    replace: "      (anyEnergy || energyName !== undefined || card.energyType === \"Normal\") &&",
+    expectKilledBy: ["packages/engine/src/specialEnergyTagD583.test.ts"],
+  },
+  {
+    id: "D583-alias-row-dropped",
+    decision: "D583",
+    what: "Team Rocket's Energy `me02.5-217` loses its alias row: the printing is unbuilt (a {C} fallback with no owner rule) while the census counts it. Killed by specialEnergyTagD583 §4, the census suite's partition / D583 rungs and reprintAliasMeD582's exact-key rung.",
+    file: "packages/engine/src/registry.ts",
+    find: "  \"me02.5-217\": TEAM_ROCKETS_ENERGY, // 🆕🆕🆕 D583 — Team Rocket's Energy — twin `sv10-182` (tcgdex tags this row \"Normal\"; cards.ts `isSpecialEnergy` reads its printed text since D583)\n",
+    replace: "",
+    expectKilledBy: ["packages/engine/src/specialEnergyTagD583.test.ts", "packages/engine/src/censusAtHead.test.ts", "packages/engine/src/reprintAliasMeD582.test.ts"],
+  },
+  {
+    id: "D583-census-energy-alias-unrecorded",
+    decision: "D583",
+    what: "the D583 census list forgets Team Rocket's Energy `me02.5-217`: a registry key ships with no census visit (D272's defect). Killed by the census suite's D273 partition rung and the D583 rungs.",
+    file: "packages/engine/src/censusAtHead.test.ts",
+    find: "  \"me02.5-217\", // Team Rocket's Energy\n",
+    replace: "",
+    expectKilledBy: ["packages/engine/src/censusAtHead.test.ts"],
+  },
+  {
+    id: "D583-ingest-keeps-the-tag",
+    decision: "D583",
+    what: "the ingest stops normalising: a Normal-tagged Energy that prints rules text is written \"Normal\" again. Killed by map.test.ts's Prism Energy and `energyTypeOf` rungs.",
+    file: "apps/api/src/ingest/map.ts",
+    find: "  return tag === \"Normal\" && (effect ?? \"\").trim() !== \"\" ? \"Special\" : tag;",
+    replace: "  return tag;",
+    expectKilledBy: ["apps/api/src/ingest/map.test.ts"],
+  },
+  {
+    id: "D583-migration-keeps-the-stale-face",
+    decision: "D583",
+    what: "`migrateMatchRecord` stamps v42 without refreshing a face: a match created before the D581 re-ingest keeps TM Fluorite with no attack for life. Killed by poolMigrationD583's write and board rungs.",
+    file: "apps/api/src/lobby/match.ts",
+    find: "    if (card.category === \"Trainer\" && row?.category === \"Trainer\") cardPool[id] = row;\n",
+    replace: "",
+    expectKilledBy: ["apps/api/src/lobby/poolMigrationD583.test.ts"],
+  },
+  {
+    id: "D583-migration-refreshes-every-face",
+    decision: "D583",
+    what: "`migrateMatchRecord` replaces EVERY face D1 returns: a Pokémon's persisted face (and any category change) moves mid-match. Killed by poolMigrationD583's keep rungs.",
+    file: "apps/api/src/lobby/match.ts",
+    find: "    if (card.category === \"Trainer\" && row?.category === \"Trainer\") cardPool[id] = row;",
+    replace: "    if (row !== undefined) cardPool[id] = row;",
+    expectKilledBy: ["apps/api/src/lobby/poolMigrationD583.test.ts"],
+  },
+  {
+    id: "D583-migration-stamps-the-old-version",
+    decision: "D583",
+    what: "the migrated record keeps version 41: `readMatchRecord` refuses it, so the DO would re-migrate on every read. Killed by poolMigrationD583's gate rung.",
+    file: "apps/api/src/lobby/match.ts",
+    find: "  return { ...record, version: MATCH_RECORD_VERSION, state: { ...record.state, cardPool } };",
+    replace: "  return { ...record, version: MIGRATABLE_MATCH_RECORD_VERSION, state: { ...record.state, cardPool } };",
+    expectKilledBy: ["apps/api/src/lobby/poolMigrationD583.test.ts"],
+  },
+  {
+    id: "D583-migration-takes-any-version",
+    decision: "D583",
+    what: "the migration gate drops its version test: a v40 (or v43) record is migrated and stamped v42 instead of retired. Killed by poolMigrationD583's every-other-version rung.",
+    file: "apps/api/src/lobby/match.ts",
+    find: "  if ((raw as { version?: unknown }).version !== MIGRATABLE_MATCH_RECORD_VERSION) return null;\n",
+    replace: "",
+    expectKilledBy: ["apps/api/src/lobby/poolMigrationD583.test.ts"],
+  },
+  {
+    id: "D583-identity-reads-the-tag",
+    decision: "D583",
+    what: "`cardIdentity` keys a Basic Energy off the tag again: Prism and Reversal Energy are both `basic:Colorless`, so a one-Energy discard over the two collapses to one candidate and resolves with no prompt. Killed by specialEnergyTagD583 §5 (review round).",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  return isBasicEnergy(card)\n    ? `basic:",
+    replace: "  return isEnergyCard(card) && card.energyType === \"Normal\"\n    ? `basic:",
+    expectKilledBy: ["packages/engine/src/specialEnergyTagD583.test.ts"],
+  },
+  {
+    id: "D583-load-skips-the-reread",
+    decision: "D583",
+    what: "`loadMatchRecord` migrates the record it read BEFORE the D1 load: a record another event migrated, advanced or ended during the load is overwritten with a stale v42. Killed by poolMigrationD583's concurrent rungs (review round).",
+    file: "apps/api/src/lobby/match.ts",
+    find: "  const again = await slot.get();\n",
+    replace: "  const again = raw;\n",
+    expectKilledBy: ["apps/api/src/lobby/poolMigrationD583.test.ts"],
+  },
+  {
+    id: "D583-load-does-not-persist",
+    decision: "D583",
+    what: "`loadMatchRecord` returns the migrated record without writing it: every read re-migrates against D1. Killed by poolMigrationD583's write rung (review round).",
+    file: "apps/api/src/lobby/match.ts",
+    find: "  await slot.put(migrated);\n",
+    replace: "",
+    expectKilledBy: ["apps/api/src/lobby/poolMigrationD583.test.ts"],
   },
 ];

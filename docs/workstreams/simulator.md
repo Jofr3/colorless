@@ -1670,7 +1670,7 @@ matching `filter` from the controller's discard pile:
 
 Two new **`CardFilter`** kinds — **`supporter`** (Trainer + trainerType
 "Supporter") and **`pokemonOrBasicEnergy`** (category "Pokemon" OR a basic Energy
-`energyType:"Normal"` — Special Energy excluded) — and one new event
+`energyType:"Normal"` — Special Energy excluded) [🆕🆕🆕 D583 (D539): the `energyType:"Normal"` tag alone is WITHDRAWN as the Basic test — cards.ts `isBasicEnergy` is "Normal" AND no printed rules text since D583, so a "Normal"-tagged Special (Prism, Reversal, Ignition, the `me` Specials) is excluded too] — and one new event
 **`DISCARD_RETRIEVED {seat, dest, uids}`** (count-only in the log; the discard pile
 is public). Representatives (verified vs the local D1 catalog, all Items):
 **Energy Retrieval** (sv01-171 — 2 Basic Energy → hand), **Pal Pad** (sv01-182 — 2
@@ -17379,7 +17379,7 @@ at all** (p2 Paralyzes p1's Active with a real attack, a real Checkup leaves it 
 attaches, recovers, and can then attack), and the program site through **Poppy `sv03-193`** —
 *"Move up to 2 Energy from 1 of your Pokémon to another of your Pokémon"* — **the pool's ONLY
 program that can move a SPECIAL Energy** (every `attachEnergyFrom` route filters to
-`energyType === "Normal"`).
+`energyType === "Normal"` [🆕🆕🆕 D583 (D539): the tag alone is WITHDRAWN as the test — cards.ts `isBasicEnergy` / `isSpecialEnergy` also read the printed rules text]).
 
 **ACTIVE ONLY, and the bench premise is asserted rather than assumed**: `applyStatus` resolves
 only to `players[seat].active` and every route off the Active Spot runs `noConditions()`, so a
@@ -29195,7 +29195,7 @@ killed. Census: `BUILT.ability` 382, `BUILT.trainer` 254 (unmoved, checked), `BU
 1707; residue 18/25, OPAQUE 13/20. ~~Owed:~~ 🆕 PAID, EXACTLY, on the first launch (D571 close-out `b83179da`, `tmp/sweep-D571.log:7882`): the whole-corpus sweep (predicted `3883 · 52` over 3,935, stacked on D570's
 ~~still-PENDING~~ 🆕 PAID-EXACTLY `3868 · 52` over 3,920, close-out `b3a0d539`). Carried: the reveal display debt (the non-matching revealed cards are not
 logged), Ignition's catalog `energyType "Normal"` debt (cards.ts `basicEnergy` matches it — outside the whitelist,
-D538). NEXT: see `progress.md` NEXT — calm-divers or chooseNumber-A (one, not both; re-price the rider now that Ignition
+D538) [🆕🆕🆕 D583 (D539): WITHDRAWN for the ENGINE — cards.ts `isBasicEnergy` / `isSpecialEnergy` read the printed rules text since D583, so the "Normal" tag no longer makes a Special a Basic Energy there; the deck builder's copy rule still reads the catalog tag until a re-ingest writes map.ts's D583 "Special"]. NEXT: see `progress.md` NEXT — calm-divers or chooseNumber-A (one, not both; re-price the rider now that Ignition
 is spent), then the Paradox MRV trio (37 → 38). (🆕🆕🆕 D572: calm-divers TAKEN — built as D572 below.)
 
 ## D572 — "calm divers": 6 printings / 4 texts / 4 objects (engine 0.456.0, `MATCH_RECORD_VERSION` stays 37)
@@ -29799,7 +29799,7 @@ decisions (1) and (2) after D580. Engine 0.464.0 → 0.465.0. The Mega ex rule i
   Ability and the TM grant; 0.464 on the new one lacks the category guards — no harmful reach found). The KV catalog
   cache steps v6 → v7 with the deploy, because its 1-hour TTL would otherwise hold pre-re-ingest `/cards/:id` rows.
   [🆕 D582: a FOURTH window — every match persists its `cardPool`, so a match created before the remote re-ingest keeps
-  the old rows for its whole life; the online pool reads D1 directly (apps/api match.ts "STAYS 41 AT D582").]
+  the old rows for its whole life; the online pool reads D1 directly (apps/api match.ts "STAYS 41 AT D582").] [🆕🆕🆕 D583: CLOSED for the ONLINE match — `MATCH_RECORD_VERSION` 41 → 42 migrates a v41 record, re-reading its pool's Trainer faces from D1 on first load (apps/api match.ts "41 → 42 AT D583"); the remote re-ingest must still FINISH before the deploy.]
 - **Census.** `catalogManifest.ts` regenerated (5084 rows / 30 sets, the measured six-set slice `sixSet`, `trainerFaces`).
   The `sv` attack corpus re-run on the LOCAL D1 is byte-identical; the `me` column is `censusAttackCorpusMe.ts`. Standard
   pool D581: attacks **2460 / 2771**, abilities **376 / 610**, trainers **264 / 447**, special energy **11 / 22**.
@@ -29818,8 +29818,26 @@ decisions (1) and (2) after D580. Engine 0.464.0 → 0.465.0. The Mega ex rule i
 - **Alias tier.** 99 `me` registry keys on existing objects (56 faces, 32 same-Ability Pokémon, 11 same-text nameless
   passives), MID-MAP; five `me02.5` Tera reprints in banners.ts. Suite: `reprintAliasMeD582.test.ts`. Not aliased,
   named there: Cinccino ex ×3, Turtonator, Numel ×2 (twin Heatran's D190 program logs "Scorching Armor"), Team Rocket's
-  Energy `me02.5-217`, the Fade Out / Surf Back printings.
+  Energy `me02.5-217` [🆕🆕🆕 D583 (D539): WITHDRAWN — `me02.5-217` is ALIASED on `sv10-182`'s object at D583; cards.ts reads a Special Energy off its printed text, so the tag no longer separates the faces], the Fade Out / Surf Back printings.
 - **Census.** Standard pool attacks **2461 / 2771**, abilities **417 / 610**, trainers **318 / 447**, special energy
   **13 / 22**; 671 `me` printings fully built. censusAtHead's D582 block (a fifth list in the D273 partition).
-- **Gaps named.** `energy_type` Normal on Special Energies (all `me`, three `sv`); `me` Tera printings with new text.
+- **Gaps named.** `energy_type` Normal on Special Energies (all `me`, three `sv`) [🆕🆕🆕 D583 (D539): WITHDRAWN for the ENGINE — cards.ts `isBasicEnergy` / `isSpecialEnergy` read the printed rules text since D583, so the "Normal" tag no longer makes a Special a Basic Energy there; the deck builder's copy rule still reads the catalog tag until a re-ingest writes map.ts's D583 "Special"]; `me` Tera printings with new text.
+- **Owed.** See `progress.md` NEXT. The whole-corpus sweep is PENDING.
+
+## D583 — the fix-up slice: Special Energy by printed text, and the persisted pool migrated (engine 0.467.0, `MATCH_RECORD_VERSION` 41 → 42)
+
+**Status:** ✅ BUILT in the `luminous_ui-mega` worktree on D582 (`d5f7130d`), NOT committed.
+
+- **Special Energy.** tcgdex tags 14 legal Specials `energy_type` Normal (all 11 `me`; `sv` Reversal, Prism, Ignition);
+  at 0.466 the engine treated them as Basic Energy (Energy Search offered Prism). cards.ts `isSpecialEnergy` now reads
+  "tagged Special OR prints rules text"; the new `isBasicEnergy` is the one Basic reader (filters, `energyProvidesOf`,
+  the interpreter's attach and identity reads). Read at the predicate so a persisted `cardPool` is covered; map.ts
+  `energyTypeOf` writes "Special" from the next ingest (no D1 re-ingested). Suite: `specialEnergyTagD583.test.ts`.
+- **Alias.** Team Rocket's Energy `me02.5-217` keyed on `sv10-182`'s object. Special energy **14 / 22**; 672 `me`
+  printings fully built; the other columns stand at D582's.
+- **Pool migration.** A v41 record is migrated, not retired: match.ts `loadMatchRecord` (lobbyDO.ts `peekMatch`) re-reads its pool from D1,
+  match.ts `migrateMatchRecord` replaces each Trainer face with its Trainer row and the v42 record is persisted. A match
+  created before the D581 re-ingest gets TM Fluorite's attack and the fossils' Ability back. Suite:
+  `apps/api/src/lobby/poolMigrationD583.test.ts` (the pure step and the read-migrate-write over a fake slot). Deploy:
+  re-ingest the remote D1 first, then deploy; a rollback to any MRV-41 build retires v42 records.
 - **Owed.** See `progress.md` NEXT. The whole-corpus sweep is PENDING.

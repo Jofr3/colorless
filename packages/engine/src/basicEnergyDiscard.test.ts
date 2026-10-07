@@ -589,7 +589,7 @@ describe("§3 — THE PROVISION AXIS: a card CLASS and a printed TYPE, never a p
   it("🛑 an UNAUTHORED Special is refused too, by CLASS rather than by provision", () => {
     // `fix-special` provides Colorless (`energyProvidesOf`'s fallback), so a
     // provision-shaped reading would already miss it. It is here because the member
-    // must refuse it for the RIGHT reason — `energyType === "Normal"` — and a second,
+    // must refuse it for the RIGHT reason — `energyType === "Normal"` [🆕🆕🆕 D583 (D539): the tag alone is WITHDRAWN as the test — cards.ts `isBasicEnergy` / `isSpecialEnergy` also read the printed rules text] — and a second,
     // differently-shaped Special is what tells "refuses Specials" apart from "refuses
     // the wildcard".
     const nine = pile(ready(8104), "p1", ["fix-fire-energy", 9], ["fix-special", 1]);

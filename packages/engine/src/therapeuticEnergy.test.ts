@@ -1206,7 +1206,7 @@ describe("⚠️ the recovery's FOUR pre-D562 CALL SITES (the FIFTH, `playStadiu
     // Poppy (sv03-193, Supporter): "Move up to 2 Energy from 1 of your Pokémon to
     // another of your Pokémon" — `filter: anyEnergy`, the pool's ONLY program that
     // can move a SPECIAL Energy (every `attachEnergyFrom` route filters to
-    // `energyType === "Normal"`). So the Energy arrives on a Paralyzed Active from
+    // `energyType === "Normal"` [🆕🆕🆕 D583 (D539): the tag alone is WITHDRAWN as the test — cards.ts `isBasicEnergy` / `isSpecialEnergy` also read the printed rules text]). So the Energy arrives on a Paralyzed Active from
     // a BENCHED body, inside a parked program, and the recovery fires when the
     // program settles.
     //

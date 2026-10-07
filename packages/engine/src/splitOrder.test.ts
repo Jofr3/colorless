@@ -396,7 +396,7 @@ describe("§1 — the census D282 priced its refusal against: counts reproduce, 
     // attack), Relicanth `sv05-084` / `sv05-173` (`MEMORY_DIVE`, a `passive`) and Team Rocket's Energy
     // `sv10-182` (`TEAM_ROCKETS_ENERGY`, an `energy`). Real catalog ids, no `fix-*` key, inserted
     // MID-MAP after D577's rows; no `attackGate`.
-    expect(ids.length).toBe(1087); // (🆕🆕🆕 **D582 +99** — the Mega Evolution serie's reprint-alias tier: 99 `me` ids on EXISTING program objects, inserted MID-MAP.) (🆕🆕🆕 **D580 +2** — Iron Treads `sv05-118` (`DUAL_CORE`, a `passive`) and Mr. Mime `sv05-063` (an attack-only row), two registry ids inserted MID-MAP; neither carries an `attackGate`.) (🆕🆕🆕 **D579 +1** — Walking Wake `sv06-063`, one attack-only registry id, inserted MID-MAP.)
+    expect(ids.length).toBe(1088); // (🆕🆕🆕 **D583 +1** — Team Rocket's Energy `me02.5-217`, a reprint-alias key on `sv10-182`'s object, inserted MID-MAP; no `attackGate`.) (🆕🆕🆕 **D582 +99** — the Mega Evolution serie's reprint-alias tier: 99 `me` ids on EXISTING program objects, inserted MID-MAP.) (🆕🆕🆕 **D580 +2** — Iron Treads `sv05-118` (`DUAL_CORE`, a `passive`) and Mr. Mime `sv05-063` (an attack-only row), two registry ids inserted MID-MAP; neither carries an `attackGate`.) (🆕🆕🆕 **D579 +1** — Walking Wake `sv06-063`, one attack-only registry id, inserted MID-MAP.)
     const gated = ids.filter((id) => programFor(id)?.attackGate !== undefined);
     // 🆕🆕🆕 D582 — 17 -> **18**: Terapagos ex `me02.5-179`, a reprint-alias key on `sv07-128`'s
     // object — the ELEVENTH `barredIf`, at index 0.

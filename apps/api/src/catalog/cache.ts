@@ -65,7 +65,7 @@ const CACHE_TTL_SECONDS = 3600;
     attack for up to a TTL after the deploy. The bump makes 0.465 start cold;
     it closes both only when the remote re-ingest has FINISHED before the
     deploy (a v7 entry written against the old rows is the same hour again).
-    [🆕🆕🆕 D582 (D539): *"the match pool"* is WITHDRAWN for the ONLINE match — its Durable Object reads the pool from D1 directly (lobby/cardPool.ts `loadCardPool`) and never touches this cache; only the LOCAL match fetches through `/cards/:id`. And the pool is PERSISTED in every match (`GameState.cardPool`), so a match created before the re-ingest keeps the old rows for its whole life whatever this cache holds — a FOURTH window, named in apps/api lobby/match.ts "STAYS 41 AT D582".] */
+    [🆕🆕🆕 D582 (D539): *"the match pool"* is WITHDRAWN for the ONLINE match — its Durable Object reads the pool from D1 directly (lobby/cardPool.ts `loadCardPool`) and never touches this cache; only the LOCAL match fetches through `/cards/:id`. And the pool is PERSISTED in every match (`GameState.cardPool`), so a match created before the re-ingest keeps the old rows for its whole life whatever this cache holds — a FOURTH window, named in apps/api lobby/match.ts "STAYS 41 AT D582".] [🆕🆕🆕 D583: CLOSED for the ONLINE match — `MATCH_RECORD_VERSION` 41 → 42 migrates a v41 record, re-reading its pool's Trainer faces from D1 on first load (apps/api match.ts "41 → 42 AT D583"); the remote re-ingest must still FINISH before the deploy.] */
 const CACHE_VERSION = "v7";
 
 /**

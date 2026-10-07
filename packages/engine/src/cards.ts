@@ -155,14 +155,33 @@ export function isEnergyCard(card: Card): boolean {
   return card.category === "Energy";
 }
 
-/** A Special Energy (§6.1) — the catalog tags them `energyType: "Special"`
-    (basic energies are "Normal"). Special energies carry rules text (provision,
-    on-attach effects, holder conditions), authored in the registry
+/** A Special Energy (§6.1) — ~~the catalog tags them `energyType: "Special"`
+    (basic energies are "Normal")~~ 🆕🆕🆕 D583 (D539): WITHDRAWN as the whole test — tcgdex tags
+    14 legal Special Energies "Normal" (every `me` one, and `sv` Reversal / Prism / Ignition). A
+    Special Energy is one tagged "Special" OR one that PRINTS RULES TEXT: a Basic Energy card
+    prints none (the schema's `Card.effect`: "null on basic energies"), and on the LOCAL D1
+    (2026-10-07) the text separates the 81 Energy rows exactly — 52 without, all Basic; 29 with,
+    all Special (`specialEnergyTagD583.test.ts`). Read here, at the predicate, so a persisted
+    `GameState.cardPool` that holds the old tag answers right too. Special energies carry rules
+    text (provision, on-attach effects, holder conditions), authored in the registry
     (registry.ts EnergyProgram); an unauthored one degrades to a plain
     Colorless provider (continuous.ts providedEnergy) rather than a loud reject,
     since an energy always provides SOMETHING. */
 export function isSpecialEnergy(card: Card): boolean {
-  return card.category === "Energy" && card.energyType === "Special";
+  return card.category === "Energy" && (card.energyType === "Special" || printsRulesText(card));
+}
+
+/** 🆕🆕🆕 D583 — A BASIC Energy card (§6.1): tagged "Normal" and printing no rules text — the
+    exact complement of `isSpecialEnergy` among "Normal"-tagged Energy. The ONE reader of the
+    noun: `matchesFilter`'s `basicEnergy` / `pokemonOrBasicEnergy` arms, `energyProvidesOf` and
+    the interpreter's attach and identity reads all ask it. */
+export function isBasicEnergy(card: Card): boolean {
+  return card.category === "Energy" && card.energyType === "Normal" && !isSpecialEnergy(card);
+}
+
+/** 🆕🆕🆕 D583 — does this card print rules text (a non-blank `effect`)? */
+function printsRulesText(card: Card): boolean {
+  return (card.effect ?? "").trim() !== "";
 }
 
 /** The provided-unit token for "any one type of Energy" (§6.4) — a WILDCARD
@@ -566,7 +585,7 @@ export function hasPrintedAbility(card: Card | undefined): boolean {
 export function energyProvidesOf(card: Card): string {
   const named = /^(?:Basic )?(.+) Energy$/.exec(card.name)?.[1];
   if (
-    card.energyType === "Normal" &&
+    isBasicEnergy(card) &&
     named !== undefined &&
     (BASIC_ENERGY_TYPES as readonly string[]).includes(named)
   ) {
@@ -792,8 +811,7 @@ export function matchesFilter(card: Card | undefined, filter: CardFilter): boole
       return card.category === "Trainer" && card.trainerType === "Tool";
     case "basicEnergy":
       return (
-        isEnergyCard(card) &&
-        card.energyType === "Normal" &&
+        isBasicEnergy(card) &&
         (filter.energyType === undefined || energyProvidesOf(card) === filter.energyType)
       );
     case "byName":
@@ -865,7 +883,8 @@ export function matchesFilter(card: Card | undefined, filter: CardFilter): boole
     case "pokemonOrBasicEnergy":
       // A basic Energy is `energyType: "Normal"` (Special is excluded, matching
       // Super Rod's "Basic Energy"); a Pokémon is any category "Pokemon".
-      return card.category === "Pokemon" || (isEnergyCard(card) && card.energyType === "Normal");
+      // 🆕🆕🆕 D583 — `isBasicEnergy`: "Normal" AND no rules text.
+      return card.category === "Pokemon" || isBasicEnergy(card);
     case "anyEnergy":
       // Any Energy card — Basic OR Special (Poppy moves "up to 2 Energy").
       return isEnergyCard(card);

@@ -6,13 +6,14 @@ import { tcgdexCardSchema, tcgdexSerieSchema, tcgdexSetSchema } from "@luminous/
 import { describe, expect, it } from "vitest";
 import cardEnergyBasic from "../../../../packages/schema/src/tcgdex/__fixtures__/card-energy-basic-sve-002.json";
 import cardEnergySpecial from "../../../../packages/schema/src/tcgdex/__fixtures__/card-energy-special-sv02-191.json";
+import cardEnergyNormalTag from "../../../../packages/schema/src/tcgdex/__fixtures__/card-energy-special-normal-tag-sv10.5b-086.json";
 import cardPokemonAbility from "../../../../packages/schema/src/tcgdex/__fixtures__/card-pokemon-ability-sv01-081.json";
 import cardTrainerFossil from "../../../../packages/schema/src/tcgdex/__fixtures__/card-trainer-fossil-sv07-129.json";
 import cardTrainer from "../../../../packages/schema/src/tcgdex/__fixtures__/card-trainer-sv01-181.json";
 import cardTrainerTm from "../../../../packages/schema/src/tcgdex/__fixtures__/card-trainer-tm-sv08-188.json";
 import serieFull from "../../../../packages/schema/src/tcgdex/__fixtures__/serie-full-sv.json";
 import setFull from "../../../../packages/schema/src/tcgdex/__fixtures__/set-full-sv01.json";
-import { mapCard, mapSerie, mapSet } from "./map";
+import { energyTypeOf, mapCard, mapSerie, mapSet } from "./map";
 
 describe("mapSerie", () => {
   it("maps the full sv serie, keeping the extensionless origin logo URL", () => {
@@ -188,6 +189,28 @@ describe("mapCard", () => {
     const row = mapCard(card);
     expect(row.category).toBe("Energy");
     expect(row.effect).not.toBeNull();
+  });
+
+  // 🆕🆕🆕 D583 — tcgdex tags 14 legal Special Energies "Normal" (every `me` one; `sv` Reversal,
+  // Prism, Ignition). The verbatim Prism Energy payload (fetched 2026-10-07) is one of them.
+  it("writes \"Special\" for a Normal-tagged Energy that prints rules text (Prism Energy sv10.5b-086)", () => {
+    const card = tcgdexCardSchema.parse(cardEnergyNormalTag);
+    expect(card.category === "Energy" ? card.energyType : null).toBe("Normal");
+    const row = mapCard(card);
+    expect(row.energyType).toBe("Special");
+    expect(row.effect).toContain("provides every type of Energy");
+    // A Special tagged Special is unchanged.
+    expect(mapCard(tcgdexCardSchema.parse(cardEnergySpecial)).energyType).toBe("Special");
+  });
+
+  it("energyTypeOf: no text keeps the tag; blank text is no text; a sentinel is still NULL", () => {
+    expect(energyTypeOf("Normal", undefined)).toBe("Normal");
+    expect(energyTypeOf("Normal", "")).toBe("Normal");
+    expect(energyTypeOf("Normal", " \n ")).toBe("Normal");
+    expect(energyTypeOf("Normal", "Rules.")).toBe("Special");
+    expect(energyTypeOf("Special", undefined)).toBe("Special");
+    expect(energyTypeOf("None", "Rules.")).toBeNull();
+    expect(energyTypeOf(undefined, undefined)).toBeNull();
   });
 
   it("normalises upstream 'None' sentinels to NULL instead of storing them", () => {

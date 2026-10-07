@@ -38,6 +38,7 @@ import type { Card } from "@luminous/schema";
 // fetches through `/cards/:id`. And the pool is PERSISTED in every match (`GameState.cardPool`), so a match
 // created before the re-ingest keeps the old rows for its whole life whatever the cache holds — a FOURTH
 // window, named in apps/api lobby/match.ts "STAYS 41 AT D582".]
+// [🆕🆕🆕 D583: CLOSED for the ONLINE match — `MATCH_RECORD_VERSION` 41 → 42 migrates a v41 record, re-reading its pool's Trainer faces from D1 on first load (apps/api match.ts "41 → 42 AT D583"); the remote re-ingest must still FINISH before the deploy.]
 //
 // What stays here is RULE text, not printed face: WHICH printings are Antique Fossils (the
 // banner-table precedent, `banners.ts` — a fixed fact about a printing, keyed by id), and the
