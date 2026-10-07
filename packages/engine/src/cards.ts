@@ -890,7 +890,9 @@ export function matchesFilter(card: Card | undefined, filter: CardFilter): boole
       return isEnergyCard(card);
     case "specialEnergy":
       // A SPECIAL Energy only (Giacomo / Mawile) — the exact complement of
-      // `basicEnergy` inside `anyEnergy`, off the catalog's own tag.
+      // `basicEnergy` inside `anyEnergy`, ~~off the catalog's own tag~~
+      // (D583 (D539): WITHDRAWN — `isSpecialEnergy` is the "Special" tag OR
+      // printed rules text).
       return isSpecialEnergy(card);
     case "providesEnergy":
       // FALSE, always — and deliberately, not as a gap. This function scans

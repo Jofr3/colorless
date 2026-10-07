@@ -648,7 +648,7 @@ describe("§11 — the rows say what this path keeps true (D421)", () => {
 // §12 — `MATCH_RECORD_VERSION` 30 → 31.
 // ─────────────────────────────────────────────────────────────────────────────
 
-describe("§12 — the v31 bytes round-trip, and a v30-shaped body is why the version moved (🆕🆕🆕 D547's bump; the record is v32 since D548 and v33 since D549; 34 since D552; 35 since D556; 36 since D564; 37 since D570, 38 since D575, 39 since D576, 40 since D577, 41 since D579, and still carries the field)", () => {
+describe("§12 — the v31 bytes round-trip, and a v30-shaped body is why the version moved (🆕🆕🆕 D547's bump; the record is v32 since D548 and v33 since D549; 34 since D552; 35 since D556; 36 since D564; 37 since D570, 38 since D575, 39 since D576, 40 since D577, 41 since D579, 42 since D583, and still carries the field)", () => {
   const RAW: Record<string, string> = (
     import.meta as unknown as {
       glob(
