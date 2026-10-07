@@ -2159,6 +2159,14 @@ export interface MatchRecord {
     `turn:action.discardable` — 🛑 **DEPLOY THE SERVER FIRST**: an old client's `z.object` STRIPS
     the unknown key, while a new client's REQUIRED key refuses an old server's frame.
 
+    🆕🆕🆕 **STAYS 42 AT D586 — WP03'S CLAUSE ROWS ADD NO GameState, PendingStage, PROMPT OR WIRE KEY.**
+    (Placed ABOVE the D585 block.) Eight `me` attack sentences now derive through shipped readers (one
+    anchor, seven clause-table rows, all on shipped `BoardCondition` members and ops) and Carbink ×2 gains
+    a `typesInPlay` passive. A persisted `cardPool` keeps whole Card faces and attack programs derive from
+    the printed text at resolution, so nothing persisted is re-read differently except that those eight
+    texts now resolve instead of being skipped: a v42 match in flight gains them mid-match (and a 0.469
+    rollback drops them), as at D582 / D584 / D585 — the stated cost; no re-ingest.
+
     🆕🆕🆕 **STAYS 42 AT D585 — WP19'S PARAMETER COPIES ADD NO GameState, PendingStage, PROMPT OR WIRE KEY.**
     (Placed ABOVE the D584 block.) 19 `me` ids gain a program — eight new objects built of shipped ops,
     fields, filters and one shipped `BoardCondition` (`handSizesEqual`); every prompt they park on

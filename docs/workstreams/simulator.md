@@ -29875,3 +29875,22 @@ decisions (1) and (2) after D580. Engine 0.464.0 → 0.465.0. The Mega ex rule i
 - **Census.** Standard pool abilities **450 / 610** (attacks 2463 / 2771, trainers 320 / 447, special energy 14 / 22);
   709 `me` printings fully built (censusAtHead's D585 block).
 - **Owed.** See `progress.md` NEXT. The whole-corpus sweep is PENDING.
+
+## D586 — WP03: rows on existing condition members (engine 0.470.0, `MATCH_RECORD_VERSION` stays 42)
+
+**Status:** ✅ BUILT in the `luminous_ui-mega` worktree on D585 (`415ef046`, + the D583 follow-up `1c7e1653`), NOT committed.
+
+- **Eight attack sentences / 17 `me` printings** now derive, on shipped members and ops only (effects.ts): the
+  `OPPONENT_ACTIVE_SPECIAL_CONDITION_KO` anchor (Mega Darkrai ex ×5 "Abyss Eye"; arm 6a-ii with the gate swapped for
+  `opponentActiveHasSpecialCondition`); `CONDITIONAL_DAMAGE_CLAUSES` rows for `opponentPrizesRemaining` [0–3] (Zacian ×3)
+  and [0–2] (Carbink ×2) and `yourEnergyInPlayAtLeast` 4 {L}/{R}/{W} (Raikou, Entei, Suicune); an
+  `ATTACK_REQUIREMENT_CLAUSES` row `yourHandExactly` 7 (Medicham ×2); an `ATTACK_CANCEL_HEADS` row for
+  "Discard 4 Basic {R} …" (Ceruledge ×2; the head was already arm 6f's `payFromHand`).
+- **Carbink ×2 "Double Type"** keyed on `DOUBLE_TYPE_FP` (Scovillain ex's `typesInPlay` at {F}{P}).
+- **The template question (D119/D494).** A one-slot "at least N {T} Energy in play" pattern would claim exactly the
+  four literal rows over the `sv` + `me` attack columns, so it is still refused; measured in the suite.
+- **Suite.** `conditionRowsMeD586.test.ts`: the texts against the `me` corpus, each reading, and a board per row with
+  a control on the other side of its threshold.
+- **Census.** Standard pool attacks **2480 / 2771**, abilities **452 / 610** (trainers 320 / 447, special energy
+  14 / 22); the live `me` attack residue 178 / 286 (from 186 / 303); 726 `me` printings fully built.
+- **Owed.** See `progress.md` NEXT. The whole-corpus sweep is PENDING.

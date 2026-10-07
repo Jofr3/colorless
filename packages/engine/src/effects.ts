@@ -1946,7 +1946,9 @@ export type BoardCondition =
       hand"*); a second printing at a different single value flips nothing, because
       that is the axis `count` already varies on — the same reason D119 gave for
       `opponentHandAtMost`'s parameter, vindicated when Mienshao printed a second
-      threshold.
+      threshold. (🆕🆕🆕 D586: the `me` serie prints that second value — Medicham
+      `me02.5-104` / `-241` "Seventh Kick", *"exactly 7"* — a row at `count: 7`; still no
+      disjunction. *"the only own-hand exact read"* is scoped to the `sv` column.)
 
       ⚠️ **STRICT EQUALITY, WHICH IS NOT THE USUAL POLARITY IN THIS CORNER.** The
       skeleton owns the printed *"don't"*, so the POSITIVE fact stored here is
@@ -17693,6 +17695,12 @@ const BOTH_ACTIVES_KO = /^Both Active Pokémon are Knocked Out\.$/;
 // asymmetry rather than by any rung.
 const OPPONENT_ACTIVE_SPECIAL_ENERGY_KO =
   /^If your opponent['’]s Active Pokémon has any Special Energy attached, it is Knocked Out\.$/;
+// 🆕🆕🆕 D586 — Mega Darkrai ex "Abyss Eye" (`mep-090`, `me05-048`/`-101`/`-116`/`-120`, 5 legal
+// printings, LOCAL D1). The two anchors above with the gate swapped once more: the shipped
+// `opponentActiveHasSpecialCondition` (D116, Sableye's +70 clause) behind `knockOutDefender`.
+// A literal anchor, not a widening of either neighbour; `['’]` from the first draft (D136/D137).
+const OPPONENT_ACTIVE_SPECIAL_CONDITION_KO =
+  /^If your opponent['’]s Active Pokémon is affected by a Special Condition, it is Knocked Out\.$/;
 // 🆕🆕 D517 — `censusAttackCorpus.ts` **FILE LINE 342**, **1 sentence / 1 legal
 // printing**, and it is the two anchors above with the CONDITION re-seated and the
 // CONSEQUENT swapped: same `^If <clause>, <consequent>\.$` shape, same
@@ -20715,6 +20723,18 @@ const CONDITIONAL_DAMAGE_CLAUSES = new Map<string, BoardCondition>([
     "your opponent has 4 or fewer Prize cards remaining",
     { kind: "opponentPrizesRemaining", counts: [0, 1, 2, 3, 4] },
   ],
+  // 🆕🆕🆕 D586 — the same "N or fewer" spelling at two more thresholds, D367's set
+  // enumeration (0 included): Zacian "Limit Break" (`mep-015`, `me02-045`/`-100`, +90,
+  // 3 legal printings) and Carbink "Counter Jewel" (`me02.5-117`/`-242`, +100, 2 legal
+  // printings). LOCAL D1. Two literal rows for D118's reason above (the count list varies).
+  [
+    "your opponent has 3 or fewer Prize cards remaining",
+    { kind: "opponentPrizesRemaining", counts: [0, 1, 2, 3] },
+  ],
+  [
+    "your opponent has 2 or fewer Prize cards remaining",
+    { kind: "opponentPrizesRemaining", counts: [0, 1, 2] },
+  ],
   // Absol ex sv03-135/-214 "Cursed Slug" (+120) — the two printings are
   // byte-identical in rules text, so one fixture serves both ids. "their hand",
   // possessive, is the cross-board half of the pair; the own-hand clause below
@@ -21023,6 +21043,15 @@ const CONDITIONAL_DAMAGE_CLAUSES = new Map<string, BoardCondition>([
   // neighbours it DOES round-trip from `conditionNote` byte for byte once the leading
   // "If " and the trailing comma are put back.
   ["you have 3 or more Energy in play", { kind: "yourEnergyInPlayAtLeast", energy: null, count: 3 }],
+  // 🆕🆕🆕 D586 — Raikou "Electro Fall" `me01-048`, Entei "Flare Fall" `me02.5-025` and Suicune
+  // "Crystal Fall" `me02-026` (+90, 1 legal printing each, LOCAL D1): the Absol row two up at
+  // count 4 and three types. **THE TEMPLATE IS STILL REFUSED (D119/D494), MEASURED AGAIN:** a
+  // one-slot pattern `^you have at least (\d+) \{([A-Z])\} Energy in play$` would claim exactly
+  // these four printed clauses over the `sv` + `me` attack columns and no fifth, so it buys
+  // nothing a row does not; four literal rows, matched first, leave a later template free.
+  ["you have at least 4 {L} Energy in play", { kind: "yourEnergyInPlayAtLeast", energy: "Lightning", count: 4 }],
+  ["you have at least 4 {R} Energy in play", { kind: "yourEnergyInPlayAtLeast", energy: "Fire", count: 4 }],
+  ["you have at least 4 {W} Energy in play", { kind: "yourEnergyInPlayAtLeast", energy: "Water", count: 4 }],
   // 🆕🆕 D376 — Chandelure sv10.5w-018 "Incendiary Pillar" (50+, **+100**) and its
   // Illustration-rare reprint sv10.5w-103, byte-identical in rules text, so one row
   // and one fixture serve both. It sits directly under the row above because the two
@@ -22207,6 +22236,9 @@ const ATTACK_REQUIREMENT_CLAUSES = new Map<string, BoardCondition>([
   // (D137). It carries NO é, which is the ordinary case for a clause that never
   // says "Pokémon".
   ["you don't have exactly 3 cards in your hand", { kind: "yourHandExactly", count: 3 }],
+  // 🆕🆕🆕 D586 — Medicham "Seventh Kick" (`me02.5-104`/`-241`, {F}, 150, 2 legal printings,
+  // LOCAL D1): the row above at count 7. Strict equality, the skeleton owns the "don't".
+  ["you don't have exactly 7 cards in your hand", { kind: "yourHandExactly", count: 7 }],
 ]);
 
 /** The board fact an attack REQUIRES in order to do anything, or null when the
@@ -22470,6 +22502,8 @@ const ATTACK_CANCEL_TRAILING =
     IMPLIES `program !== null` and removing the conjunct would still move no assertion
     in the repo. It stays written from the RULE (D130/D205), and the row that would
     drive it is exactly the row this correction forbids.
+    (🆕🆕🆕 D586: *"All four"* is now FIVE — Ceruledge's *"Discard 4 Basic {R} …"* head is arm 6f's
+    too, so the implication still holds.)
 
     A `Map` for `CONDITIONAL_DAMAGE_CLAUSES`' reason: arbitrary printed text must
     not reach `Object.prototype`. Read through `literalClauseRow` (D137) like every
@@ -22494,6 +22528,7 @@ const ATTACK_CANCEL_HEADS = new Map<string, BoardCondition>([
   ["Discard a Stadium in play.", { kind: "stadiumInPlay" }],
   // 🆕🆕 D420 — THE HAND-ENERGY COST FAMILY: three heads, four legal printings, one
   // `BoardCondition` member (`yourBasicEnergyInHandAtLeast`) at three thresholds.
+  // (🆕🆕🆕 D586: a fourth threshold, Ceruledge's 4 Basic {R}, is the last row below.)
   //
   // 🛑 EACH OF THESE THREE ROWS SHIPS BESIDE A `deriveAttackEffect` ARM, AND THE
   // CORRECTION ABOVE IS WHY. Eternatus's row could stand alone because D380 had
@@ -22521,6 +22556,15 @@ const ATTACK_CANCEL_HEADS = new Map<string, BoardCondition>([
   [
     "Discard a Basic {G} Energy card from your hand.",
     { kind: "yourBasicEnergyInHandAtLeast", energy: "Grass", count: 1 },
+  ],
+  // 🆕🆕🆕 D586 — Ceruledge "Infernal Slash" (`mep-014`, `me02-020`, {R}, 220, 2 legal
+  // printings, LOCAL D1), behind the named-referent cancel *"If you can't discard 4 cards in
+  // this way, …"*. The head is ALREADY claimed by arm 6f (`HAND_BASIC_ENERGY_COST`, generic
+  // over count and code → `payFromHand` 4 Basic {R}), so by the corrected rule above this row
+  // costs a row and nothing else. Key digit = value count (§2 of `handEnergyCancel.test.ts`).
+  [
+    "Discard 4 Basic {R} Energy cards from your hand.",
+    { kind: "yourBasicEnergyInHandAtLeast", energy: "Fire", count: 4 },
   ],
 ]);
 
@@ -28839,6 +28883,21 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
       {
         op: "conditionGate",
         cond: { kind: "opponentActiveHasEnergyAttached", energy: "special" },
+        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
+        then: [{ op: "knockOutDefender" }],
+      },
+    ];
+  }
+
+  // 6a-ii-b. 🆕🆕🆕 D586 — "If your opponent's Active Pokémon is affected by a Special
+  //     Condition, it is Knocked Out." (Mega Darkrai ex ×5). Arm 6a-ii with the `cond`
+  //     swapped for the shipped `opponentActiveHasSpecialCondition`; nothing else moves.
+  match = OPPONENT_ACTIVE_SPECIAL_CONDITION_KO.exec(effect);
+  if (match !== null) {
+    return [
+      {
+        op: "conditionGate",
+        cond: { kind: "opponentActiveHasSpecialCondition" },
         // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
         then: [{ op: "knockOutDefender" }],
       },

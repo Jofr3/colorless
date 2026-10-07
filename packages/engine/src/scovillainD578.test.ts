@@ -214,8 +214,8 @@ function damageRow(events: readonly GameEvent[]): Extract<GameEvent, { type: "DA
 const SCOV_SPOT: Spot = { id: SCOVILLAIN, under: [CAPSAKID] };
 
 describe("D578 Scovillain §0 — the version", () => {
-  it("is built at engine 0.469.0", () => {
-    expect(engineVersion).toBe("0.469.0");
+  it("is built at engine 0.470.0", () => {
+    expect(engineVersion).toBe("0.470.0");
   });
 });
 
@@ -357,6 +357,9 @@ describe("D578 Scovillain §6 — R-WT1: the Watchtower's {C} read stays PRINTED
     "sv08-216": ["Fire"],
     // 🆕🆕🆕 D580 — Iron Treads "Dual Core" ({F}{M} while a Future Booster Energy Capsule is attached).
     "sv05-118": ["Metal"],
+    // 🆕🆕🆕 D586 — Carbink "Double Type" ({F}{P}), LOCAL D1 `types_json` ["Fighting"].
+    "me02.5-117": ["Fighting"],
+    "me02.5-242": ["Fighting"],
   };
 
   it("every `typesInPlay` value, and every holder's printed types, exclude {C} — a retype can neither add nor remove {C}", () => {

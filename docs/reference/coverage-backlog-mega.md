@@ -6,6 +6,26 @@
 > `coverage-backlog-legal.md`; its pool is unchanged and whole. The suite-side figures are
 > `censusAtHead.test.ts`'s D581 block and `censusAttackCorpusMe.ts`.
 
+## 🆕 D586 update (engine 0.470.0) — rows on existing condition members (WP03)
+
+8 attack sentences / 17 `me` printings now derive through shipped readers (effects.ts D586 rows;
+`conditionRowsMeD586.test.ts`): Abyss Eye (Mega Darkrai ex ×5, a KO anchor on `opponentActiveHasSpecialCondition`),
+Limit Break (Zacian ×3, `opponentPrizesRemaining` [0–3]), Counter Jewel (Carbink ×2, [0–2]), Electro / Flare / Crystal
+Fall (Raikou, Entei, Suicune, `yourEnergyInPlayAtLeast` 4 {L}/{R}/{W}), Seventh Kick (Medicham ×2, `yourHandExactly` 7),
+Infernal Slash (Ceruledge ×2, a cancel-head row). Carbink ×2's "Double Type" is keyed on a {F}{P} copy of Scovillain ex's
+`typesInPlay` program. No new vocabulary. The "at least N {T} Energy in play" template stays refused: it would claim
+exactly the four literal rows.
+
+| Column | `me` built / units (D586) | Standard pool D586 |
+|---|---|---|
+| Attacks | 748 / 1,039 (+17) | **2,480 / 2,771** |
+| Abilities | 76 / 234 (+2) | **452 / 610** |
+| Trainers | 56 / 183 | **320 / 447** |
+| Special Energy | 3 / 11 | **14 / 22** |
+
+**Fully built `me` printings: 726** (709 + 17). Mega Darkrai ex ×5 is finished. The live `me` attack residue
+(`censusAtHead.test.ts` D581 tally) is 178 sentences / 286 printings (from 186 / 303).
+
 ## 🆕 D585 update (engine 0.469.0) — parameter copies of passives and Abilities (WP19)
 
 19 `me` printings / 8 texts keyed on eight new registry objects (registry.ts D585 block; `paramCopiesMeD585.test.ts`),
@@ -143,16 +163,16 @@ group wins; the grouping is a reading aid, not a census figure).
 
 ### Knock Out / Prize clauses — 16 text(s) / 36 printing(s)
 
-- 5× If your opponent's Active Pokémon is affected by a Special Condition, it is Knocked Out.
+- 5× If your opponent's Active Pokémon is affected by a Special Condition, it is Knocked Out. [🆕🆕🆕 D586: BUILT]
 - 3× Choose a Pokémon in play (yours or your opponent's) that has the least HP remaining, except for this Pokémon, and it is Knocked Out.
-- 3× If your opponent has 3 or fewer Prize cards remaining, this attack does 90 more damage.
+- 3× If your opponent has 3 or fewer Prize cards remaining, this attack does 90 more damage. [🆕🆕🆕 D586: BUILT]
 - 3× If your opponent's Active Pokémon has exactly 6 damage counters on it, that Pokémon is Knocked Out.
 - 3× If your opponent's Pokémon is Knocked Out by damage from this attack, during your opponent's next turn, prevent all damage from and effects of attacks done to this Pokémon.
 - 3× This attack does 70 damage for each Prize card you have taken.
 - 2× If any of your Hop's Pokémon were Knocked Out by damage from an attack during your opponent's last turn, this attack does 100 more damage.
 - 2× If you have exactly 30 cards in your hand, take 2 Prize cards. If you do, shuffle your hand into your deck.
 - 2× If you have exactly 6 Prize cards remaining, this attack does 200 more damage.
-- 2× If your opponent has 2 or fewer Prize cards remaining, this attack does 100 more damage.
+- 2× If your opponent has 2 or fewer Prize cards remaining, this attack does 100 more damage. [🆕🆕🆕 D586: BUILT]
 - 2× Knock Out each of your opponent's Pokémon that has 50 HP or less remaining.
 - 2× This attack does 80 damage for each Prize card you have taken.
 - 1× During your opponent's next turn, if this Pokémon is damaged by an attack (even if this Pokémon is Knocked Out), place 12 damage counters on the Attacking Pokémon.
@@ -255,9 +275,9 @@ group wins; the grouping is a reading aid, not a census figure).
 - 1× If this Pokémon used Spiky Rolling during your last turn, this attack does 80 more damage.
 - 1× If this Pokémon's remaining HP is 50 or less, this attack does 170 more damage.
 - 1× If you have any Stage 2 {D} Pokémon on your Bench, this attack does 70 more damage.
-- 1× If you have at least 4 {L} Energy in play, this attack does 90 more damage.
-- 1× If you have at least 4 {R} Energy in play, this attack does 90 more damage.
-- 1× If you have at least 4 {W} Energy in play, this attack does 90 more damage.
+- 1× If you have at least 4 {L} Energy in play, this attack does 90 more damage. [🆕🆕🆕 D586: BUILT]
+- 1× If you have at least 4 {R} Energy in play, this attack does 90 more damage. [🆕🆕🆕 D586: BUILT]
+- 1× If you have at least 4 {W} Energy in play, this attack does 90 more damage. [🆕🆕🆕 D586: BUILT]
 - 1× If you played Emma from your hand during this turn, this attack does 60 more damage.
 - 1× If you played a Supporter card that has "Team Rocket" in its name from your hand during this turn, this attack does 100 more damage.
 - 1× If your opponent's Active Pokémon has no Retreat Cost, this attack does 80 more damage.
@@ -304,7 +324,7 @@ group wins; the grouping is a reading aid, not a census figure).
 
 - 3× Discard all Pokémon Tools and Special Energy from all of your opponent's Pokémon.
 - 3× You may discard 2 {L} Energy from this Pokémon and make your opponent's Active Pokémon Paralyzed.
-- 2× Discard 4 Basic {R} Energy cards from your hand. If you can't discard 4 cards in this way, this attack does nothing.
+- 2× Discard 4 Basic {R} Energy cards from your hand. If you can't discard 4 cards in this way, this attack does nothing. [🆕🆕🆕 D586: BUILT]
 - 1× Discard 2 Energy from this Pokémon, and your opponent's Active Pokémon is now Paralyzed.
 - 1× Discard a &lt;span class="energy-symbol Fire" title="Fire">Fire&lt;/span> Energy, a &lt;span class="energy-symbol Water" title="Water">Water&lt;/span> Energy, and a &lt;span class="energy-symbol Lightning" title="Lightning">Lightning&lt;/span> Energy from this Pokémon.
 - 1× Shuffle up to 3 in any combination of Pokémon and Basic Energy cards from your discard pile into your deck.
@@ -314,7 +334,7 @@ group wins; the grouping is a reading aid, not a census figure).
 - 3× Search your deck for any number of Basic Pokémon and put them onto your Bench. Then, shuffle your deck.
 - 3× Your opponent reveals their hand, and you discard a card you find there.
 - 2× Discard the top 3 cards of your deck and put 1 of them into your hand.
-- 2× If you don't have exactly 7 cards in your hand, this attack does nothing.
+- 2× If you don't have exactly 7 cards in your hand, this attack does nothing. [🆕🆕🆕 D586: BUILT]
 - 2× If your opponent's Active Pokémon is an evolved Pokémon, devolve it by putting the highest Stage Evolution card on it into your opponent's hand.
 - 2× Your opponent shuffles their hand into their deck and draws 4 cards.
 - 1× Choose a random card from your opponent's hand, and your opponent reveals that card and shuffles it into their deck.
@@ -444,7 +464,7 @@ group wins; the grouping is a reading aid, not a census figure).
 ### HP, Retreat, type and Energy-provision passives — 8 text(s) / 15 printing(s)
 
 - 3× **Multi Adapter** — Each of your Pokémon that has "Rotom" in its name may have up to 2 Pokémon Tool cards attached. If this Ability goes away, discard Pokémon Tools from those Pokémon until only 1 remains on each.
-- 2× **Double Type** — As long as this Pokémon is in play, it is {F} and {P} type.
+- 2× **Double Type** — As long as this Pokémon is in play, it is {F} and {P} type. [🆕🆕🆕 D586: BUILT]
 - 2× **Scale Up** — If this Pokémon has 6 or more Grass Energy attached, it gets +250 HP.
 - 2× **Slimy Sliding** — When your opponent's Active Pokémon retreats, your opponent flips a coin. If tails, Energy for its Retreat Cost is not discarded, and they don't switch Pokémon. The effect of Slimy Sliding doesn't stack.
 - 2× **Tyrannically Gutsy** — If this Pokémon has any Special Energy attached, it gets +150 HP.

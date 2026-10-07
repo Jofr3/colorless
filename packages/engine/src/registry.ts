@@ -16560,6 +16560,12 @@ const SYNCHRO_PULSE: CardProgram = {
   passive: { damageBonusBeforeWRIf: { amount: 80, cond: { kind: "handSizesEqual" } } },
 };
 
+/** 🆕🆕🆕 **D586 — Carbink `me02.5-117` / `-242` (2 legal printings)** "Double Type": *"As long as
+    this Pokémon is in play, it is {F} and {P} type."* `DOUBLE_TYPE` (Scovillain ex, D578) at the
+    printed pair: the holder's printed type is {F}, so the in-play list is `["Fighting",
+    "Psychic"]`. Its printed attack "Counter Jewel" keeps deriving (a D586 clause row). */
+const DOUBLE_TYPE_FP: CardProgram = { passive: { typesInPlay: ["Fighting", "Psychic"] } };
+
 const REGISTRY: Record<string, CardProgram> = {
   // Professor's Research (SV base prints)
   "sv01-189": PROFESSORS_RESEARCH,
@@ -17536,6 +17542,10 @@ const REGISTRY: Record<string, CardProgram> = {
   "me04-029": SYNCHRO_PULSE, // Ampharos "Synchro Pulse" — Okidogi's field at 80 on Noivern `sv09-128`'s `handSizesEqual`
   "me04-090": SYNCHRO_PULSE, // Ampharos
   "mep-075": SYNCHRO_PULSE, // Ampharos
+  // 🆕🆕🆕 D586 — WP03: Carbink ×2 on the {F}{P} copy of Scovillain's program, MID-MAP
+  // (`raw[last]` does not move). `conditionRowsMeD586.test.ts` pins the face.
+  "me02.5-117": DOUBLE_TYPE_FP, // Carbink "Double Type" — twin `sv08-037` (Scovillain ex), {F}{P} for {G}{R}
+  "me02.5-242": DOUBLE_TYPE_FP, // Carbink
   // ── D190 — THE **STANDARD-LEGAL** REPRINT-ALIAS MAP (Tier 0 of
   //    `docs/reference/coverage-backlog-legal.md`). 22 printings, 9 map targets,
   //    ZERO new code: every row below prints a sentence that is already authored

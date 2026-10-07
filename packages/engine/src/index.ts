@@ -20252,6 +20252,18 @@ import type { GameState, Seat } from "./types";
     `expect(manifest.version)`, `it(…)` titles, the declaration and `package.json` —
     **not** as a value-keyed grep — because a value-keyed grep is precisely the mechanism
     that ate D500's heading.)
+    🆕🆕🆕 engineVersion 0.469.0 → **0.470.0** (D586 — WP03: ROWS ON EXISTING CONDITION MEMBERS;
+    `MATCH_RECORD_VERSION` STAYS 42 (apps/api match.ts "STAYS 42 AT D586")). effects.ts: one
+    `deriveAttackEffect` anchor (`OPPONENT_ACTIVE_SPECIAL_CONDITION_KO`, Mega Darkrai ex "Abyss Eye" ×5:
+    `conditionGate` on `opponentActiveHasSpecialCondition` around `knockOutDefender`), five
+    `CONDITIONAL_DAMAGE_CLAUSES` rows (`opponentPrizesRemaining` [0–3] Zacian ×3 and [0–2] Carbink ×2;
+    `yourEnergyInPlayAtLeast` 4 {L}/{R}/{W}, Raikou / Entei / Suicune — the template D119/D494 refused
+    stays refused: it would claim exactly these four rows), one `ATTACK_REQUIREMENT_CLAUSES` row
+    (`yourHandExactly` 7, Medicham ×2) and one `ATTACK_CANCEL_HEADS` row (4 Basic {R} from hand,
+    Ceruledge ×2; the head was already arm 6f's). registry.ts keys Carbink `me02.5-117` / `-242` on
+    `DOUBLE_TYPE_FP` (Scovillain's `typesInPlay` at {F}{P}). No op, field, member or persisted shape
+    moved. Census: Standard pool attacks 2480 / 2771, abilities 452 / 610 (trainers 320 / 447, special
+    energy 14 / 22 unmoved); 726 `me` printings fully built. `conditionRowsMeD586.test.ts`.)
     🆕🆕🆕 engineVersion 0.468.0 → **0.469.0** (D585 — WP19: PARAMETER COPIES OF PASSIVES AND ABILITIES;
     `MATCH_RECORD_VERSION` STAYS 42 (apps/api match.ts "STAYS 42 AT D585")). registry.ts keys 19 `me` printings /
     8 texts on EIGHT NEW objects, each a built `sv` program's op or field at the printed parameter: `TUNDRA_WALL`
@@ -25142,7 +25154,7 @@ import type { GameState, Seat } from "./types";
     WITNESS** — the count was re-derived every slice and the word *"three"* was carried.
     A successor of this slice inherits **81 / 61 / 17** again, over **FIVE** history
     occurrences: those four plus `deckMillFilteredScale.test.ts`'s own header arrow.) */
-export const engineVersion = "0.469.0";
+export const engineVersion = "0.470.0";
 
 export type {
   ApplyResult,

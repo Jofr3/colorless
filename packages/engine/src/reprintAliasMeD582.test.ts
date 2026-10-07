@@ -167,6 +167,9 @@ const KEYED_AT_D585 = [
   "me04-029", "me04-090", "mep-075",
 ];
 
+/** 🆕🆕🆕 D586 — the `me` ids WP03 keys: Carbink "Double Type" (conditionRowsMeD586.test.ts pins the face). */
+const KEYED_AT_D586 = ["me02.5-117", "me02.5-242"];
+
 /** The five `me` Tera reprints banners.ts carries (each printed face checked on tcgdex's image). */
 const ME_TERA = ["me02.5-038", "me02.5-057", "me02.5-160", "me02.5-179", "me02.5-277"] as const;
 
@@ -247,15 +250,17 @@ describe("D582 — the `me` reprint-alias tier: 99 printings on 66 existing prog
     expect(new Set(ALIASES.map(([, twin]) => programFor(twin))).size).toBe(66);
   });
 
-  it("the registry's `me` keys are EXACTLY this table — nothing keyed outside it (🆕🆕🆕 D583: plus Team Rocket's Energy `me02.5-217`; 🆕🆕🆕 D584: plus the 18 tier-2 keys; 🆕🆕🆕 D585: plus the 19 WP19 keys)", () => {
+  it("the registry's `me` keys are EXACTLY this table — nothing keyed outside it (🆕🆕🆕 D583: plus Team Rocket's Energy `me02.5-217`; 🆕🆕🆕 D584: plus the 18 tier-2 keys; 🆕🆕🆕 D585: plus the 19 WP19 keys; 🆕🆕🆕 D586: plus Carbink ×2)", () => {
     const me = registryCardIds().filter((id) => /^(me|30th)/.test(id));
     // 🆕🆕🆕 D583 — the one `me` key outside the D582 table: Team Rocket's Energy, on `sv10-182`'s object.
     // 🆕🆕🆕 D584 — and the 18 tier-2 keys (`KEYED_AT_D584`).
     expect(KEYED_AT_D584).toHaveLength(18);
     // 🆕🆕🆕 D585 — and WP19's 19 parameter-copy keys (`KEYED_AT_D585`).
     expect(KEYED_AT_D585).toHaveLength(19);
+    // 🆕🆕🆕 D586 — and WP03's Carbink ×2 (`KEYED_AT_D586`).
+    expect(KEYED_AT_D586).toHaveLength(2);
     expect(me.sort()).toEqual(
-      [...ALIASES.map(([id]) => id), "me02.5-217", ...KEYED_AT_D584, ...KEYED_AT_D585].sort(),
+      [...ALIASES.map(([id]) => id), "me02.5-217", ...KEYED_AT_D584, ...KEYED_AT_D585, ...KEYED_AT_D586].sort(),
     );
     // …and no twin is a `me` id: every program the tier reaches was built for the `sv` serie.
     for (const [, twin] of ALIASES) expect(/^(me|30th)/.test(twin), twin).toBe(false);

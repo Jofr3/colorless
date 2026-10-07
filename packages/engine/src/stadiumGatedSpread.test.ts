@@ -738,7 +738,7 @@ const RAW: Record<string, string> = (
 describe("D522 §4 — the version steps, the heading is written, the prose is corrected, and what stands still", () => {
   it("engineVersion and `manifest.version` agree, and the bump is owed for BEHAVIOUR", () => {
     // ⚠️ The version is NOT spelled in this `it(…)` title (D460's fourth class).
-    expect(engineVersion).toBe("0.469.0");
+    expect(engineVersion).toBe("0.470.0");
     expect(manifest.version).toBe(engineVersion);
   });
 
@@ -758,7 +758,9 @@ describe("D522 §4 — the version steps, the heading is written, the prose is c
     // program without the `op: "…",` form (D516/D520 (4)/D521): 16 → 17, 9 → 10, 5 → 6, MEASURED.
     // 🆕🆕🆕 D575 — 17 → 18: N's Sigilyph "Victory Symbol"'s arm (`WIN_AT_ONE_PRIZE`) is one new
     // CODE site of the form, a `conditionGate` on `yourPrizesRemaining [1]` around `winGame`. MEASURED.
-    expect(effects.split('op: "conditionGate",').length - 1).toBe(18);
+    // 🆕🆕🆕 D586 — 18 → 19: Mega Darkrai ex "Abyss Eye"'s arm (`OPPONENT_ACTIVE_SPECIAL_CONDITION_KO`),
+    // a `conditionGate` on `opponentActiveHasSpecialCondition` around `knockOutDefender`. MEASURED.
+    expect(effects.split('op: "conditionGate",').length - 1).toBe(19);
     expect(effects.split('op: "spreadDamage",').length - 1).toBe(10);
     expect(effects.split('{ op: "discardStadium" }').length - 1).toBe(6);
   });

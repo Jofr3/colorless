@@ -3,7 +3,9 @@
 > Update this at the **end of every session**: bump the status table, append a
 > session-log entry, and rewrite the **Resume point** to the next concrete action.
 
-**Last updated:** 2026-10-07 — build session #525 (**P3-M5 — D585, *WP19 — PARAMETER COPIES OF PASSIVES AND ABILITIES: 19 `me` printings / 8 texts on eight new registry objects (Tundra Wall, Wash Out, Powerful a-Salt, Counterattacking Crest, Stone Arms, Scent Collection, Sky Transport, Synchro Pulse), existing fields only; Mega Scrafty ex ×3 and Mega Dragonite ex ×5 finished; Standard pool abilities 450 / 610; 709 `me` printings fully built*** — engine 0.469.0, MRV stays 42, NOT committed; the whole-corpus sweep PENDING)
+**Last updated:** 2026-10-07 — build session #526 (**P3-M5 — D586, *WP03 — ROWS ON EXISTING CONDITION MEMBERS: 8 attack sentences / 17 `me` printings on shipped readers (an Abyss Eye KO anchor; `opponentPrizesRemaining` [0–3] / [0–2]; `yourEnergyInPlayAtLeast` 4 {L}/{R}/{W}; `yourHandExactly` 7; a 4 Basic {R} cancel head) plus Carbink ×2 "Double Type" on a {F}{P} `typesInPlay` copy; Mega Darkrai ex ×5 finished; Standard pool attacks 2480 / 2771, abilities 452 / 610; 726 `me` printings fully built*** — engine 0.470.0, MRV stays 42, NOT committed; the whole-corpus sweep PENDING)
+
+**Last updated (was):** 2026-10-07 — build session #525 (**P3-M5 — D585, *WP19 — PARAMETER COPIES OF PASSIVES AND ABILITIES: 19 `me` printings / 8 texts on eight new registry objects (Tundra Wall, Wash Out, Powerful a-Salt, Counterattacking Crest, Stone Arms, Scent Collection, Sky Transport, Synchro Pulse), existing fields only; Mega Scrafty ex ×3 and Mega Dragonite ex ×5 finished; Standard pool abilities 450 / 610; 709 `me` printings fully built*** — engine 0.469.0, MRV stays 42, NOT committed; the whole-corpus sweep PENDING)
 
 **Last updated (was):** 2026-10-07 — build session #524 (**P3-M5 — D584, *THE `me` ALIAS TIER 2 (WP01): 18 `me` printings / 11 texts keyed — 4 on existing objects (Ultra Ball ×2, Zoroark `30th-096`, Hop's Pincurchin ex `me02.5-068`), 14 on EIGHT NEW renamed / parameter / attack-index copies (Smooth Coat, Shell Spikes, Incandescent Body, Aerial Draw, Share Happiness, Intimidating Fang, Dopey Face, Float Up); Heatran `sv06-123` logs its own "Incandescent Body"; Standard pool attacks 2463 / 2771, abilities 431 / 610, trainers 320 / 447, special energy 14 / 22; 690 `me` printings fully built*** — engine 0.468.0, MRV stays 42, NOT committed; the whole-corpus sweep PENDING)
 
@@ -795,6 +797,37 @@
 
 ## NEXT (resume point)
 
+> ### ▶ THE NEXT CONCRETE ACTION (written 2026-10-07, after D586)
+>
+> 🛑 **D586 IS BUILT AND NOT COMMITTED** (worktree `/home/jofre/projects/luminous_ui-mega`, branch `mega-ingest`, on D585 = `415ef046` + the D583 follow-up `1c7e1653`). D586 is WP03 of the Mega backlog: rows on existing condition members. Next: a review of D586, then the landing of D581–D586 (rebase `mega-ingest` onto main; never `git add -A` — `apps/api/.wrangler` is the setup symlink).
+>
+> ✅ **`bun run check` IS GREEN**: `typecheck-coverage` OK (908 TypeScript files in 6 projects), `tsc -b`, `lint-coverage` OK (910 source files), `biome lint --error-on-warnings` (951 files), `Test Files 629 passed (629) / Tests 14864 passed (14864) / CHECK_EXIT=0` (D585: 628 / 14836; D586 adds `conditionRowsMeD586.test.ts` (25) and three census rungs).
+>
+> **(a) THE SLICE.** effects.ts: the `OPPONENT_ACTIVE_SPECIAL_CONDITION_KO` anchor (Mega Darkrai ex ×5 "Abyss Eye", arm 6a-ii with the gate `opponentActiveHasSpecialCondition`); `CONDITIONAL_DAMAGE_CLAUSES` rows `opponentPrizesRemaining` [0–3] (Zacian ×3) and [0–2] (Carbink ×2), `yourEnergyInPlayAtLeast` 4 {L}/{R}/{W} (Raikou, Entei, Suicune); `ATTACK_REQUIREMENT_CLAUSES` `yourHandExactly` 7 (Medicham ×2); `ATTACK_CANCEL_HEADS` 4 Basic {R} (Ceruledge ×2; head already arm 6f's). registry.ts: `DOUBLE_TYPE_FP` on Carbink ×2 (MID-MAP). Nothing dropped from the brief; no new vocabulary. **The template (D119/D494):** a one-slot "at least N {T} Energy in play" pattern would claim exactly the four literal rows over `sv` + `me` — still refused, measured in the suite.
+>
+> **(b) MRV STAYS 42** (match.ts "STAYS 42 AT D586"): no persisted shape; a persisted `cardPool` keeps whole faces and attack programs derive from printed text, so a match in flight gains the eight texts mid-match (the D582 / D584 / D585 class).
+>
+> | Column | `me` D586 | Standard pool D586 |
+> |---|---|---|
+> | Attacks | 748 / 1039 | **2480 / 2771** |
+> | Abilities | 76 / 234 | **452 / 610** |
+> | Trainers | 56 / 183 | **320 / 447** |
+> | Special Energy | 3 / 11 | **14 / 22** |
+>
+> **726 `me` printings fully built** (709 + 17). Registry 1125 → 1127, non-attack 965 → 967. Live D581 `me` tally re-pinned: reader 258 / 727, residue **178 / 286** (from 186 / 303); the D581 / D582 / D584 live attack figures stepped +17 (2460 → 2477, 729 → 746, 731 → 748), titles annotated.
+>
+> **(c) THE MUTATION RECORD.** +12 D586 rows (4346 in all). precheck: 4346 mutants, the same 20 pre-existing broken rows (none in a D586 file). Probe `run.ts --decision D586 --allow-dirty`: 12 killed · 0 known · 0 GAP · 0 error, tree byte-identical after. Gate-witness `--only` (the 18 `opaque-anatomy-gate.ts` / `residue-census-gate.ts` rows): 18 killed · 0 error; `D275-engine-version-drifts-again`: killed. Gates: residue-census, opaque-anatomy, splice, partition all OK.
+>
+> 🛑 **(0) THE WHOLE-CORPUS SWEEP IS PENDING** (D581–D585's too). Predicted: **4276 killed · 50 known survivor(s) · 0 GAP(S) · 20 error(s)** over **4,346** rows — 4334 + 12 = 4346; 4264 + 12 = 4276 killed; 4276 + 50 + 20 = 4346. It assumes D585's prediction holds and no D586 edit moves an older verdict; if a row differs, the difference is that row.
+>
+> **D539 sweep.** No prose claim withdrawn; stale counts annotated in place (effects.ts: `ATTACK_CANCEL_HEADS` "All four heads" → five, the D420 "three thresholds" comment, `yourHandExactly`'s "only own-hand exact read" scoped to `sv`; handEnergyCancel §2 "3 of 4"; the D581 / D582 / D584 census titles). Version tax: `0.469.0` outside `docs/` was 141 files / 224 lines; 223 stepped (it() titles and the D275 mutant `find` included), 1 kept (index.ts' D585 heading).
+>
+> Still owed from the Mega backlog: WP04 (Trainer parameters I) next by rank, "Fade Out" ×5, the markup-normalising ingest fix, then the residue by mechanism.
+>
+> ---
+>
+> **ARCHIVED — the resume point D586 was built from, kept rather than overwritten** (D585 has since been committed on `mega-ingest` as `415ef046`):
+>
 > ### ▶ THE NEXT CONCRETE ACTION (written 2026-10-07, after D585)
 >
 > 🛑 **D585 IS BUILT AND NOT COMMITTED** (worktree `/home/jofre/projects/luminous_ui-mega`, branch `mega-ingest`, on D584 = `97317879`). D585 is WP19 of the Mega backlog: parameter copies of passives and Abilities. Next: a review of D585, then the landing of D581–D585 (rebase `mega-ingest` onto main; never `git add -A` — `apps/api/.wrangler` is the setup symlink).
@@ -34574,7 +34607,8 @@ the next api deploy (D18).
 |---|---|---|
 | backend-data | P1 | ✅ M1–M9 + P2-M1 + task-17 api deployed (Worker `9b1ec1d1`, 2026-07-16); OAuth secrets pending (user) |
 | deck-builder | P2 | ✅ ALL 19 tasks closed (task 17 landed + e2e-verified locally); only follow-ups left |
-| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D585, *WP19 — parameter copies of passives and Abilities: 19 `me` printings / 8 texts on eight new objects (existing fields only); Mega Scrafty ex ×3 and Mega Dragonite ex ×5 finished; abilities 450 / 610*** — engine 0.469.0, MRV 42, NOT committed; the sweep PENDING) |
+| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D586, *WP03 — rows on existing condition members: 8 attack sentences / 17 `me` printings on shipped readers plus Carbink ×2 "Double Type"; Mega Darkrai ex ×5 finished; attacks 2480 / 2771, abilities 452 / 610*** — engine 0.470.0, MRV 42, NOT committed; the sweep PENDING) |
+| simulator (prior) | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D585, *WP19 — parameter copies of passives and Abilities: 19 `me` printings / 8 texts on eight new objects (existing fields only); Mega Scrafty ex ×3 and Mega Dragonite ex ×5 finished; abilities 450 / 610*** — engine 0.469.0, MRV 42, NOT committed; the sweep PENDING) |
 | simulator (prior) | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D584, *the `me` alias tier 2 — 18 printings / 11 texts (4 on existing objects, 14 on eight new renamed / parameter / attack-index copies); Heatran's wrong-name log fixed; attacks 2463 / 2771, abilities 431 / 610, trainers 320 / 447*** — engine 0.468.0, MRV 42, NOT committed; the sweep PENDING) |
 | simulator (prior) | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D583, *the fix-up slice — Special Energy read off the printed text (14 Normal-tagged legal Specials; `isBasicEnergy`; map.ts normalises) and the persisted pool migrated (MRV 41 → 42, a v41 record's Trainer faces re-read from D1); Team Rocket's Energy `me02.5-217` aliased; special energy 14 / 22*** — engine 0.467.0, MRV 42, NOT committed; the sweep PENDING) |
 | simulator (prior) | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D582, *the Mega Evolution ex rule (3 Prizes, composing with every modifier) and the `me` reprint-alias tier (99 ids on existing objects, five Tera reprints); Standard pool attacks 2461 / 2771, abilities 417 / 610, trainers 318 / 447, special energy 13 / 22*** — engine 0.466.0, MRV 41, NOT committed; the sweep PENDING) |
@@ -34777,6 +34811,17 @@ the next api deploy (D18).
 Legend: 📝 backlog · 📋 specced · 🔎 research · 🚧 in progress · ✅ done
 
 ## Session log
+
+### 2026-10-07 — build session #526 (P3-M5 — D586)
+
+**WP03 — ROWS ON EXISTING CONDITION MEMBERS. `MATCH_RECORD_VERSION` STAYS 42.**
+
+Built in the `luminous_ui-mega` worktree on D585 (`415ef046` + `1c7e1653`); the main checkout was not touched. Every id
+and text read off the LOCAL D1 first; no id was referenced in the tree. 8 attack sentences / 17 `me` printings on one KO
+anchor and seven clause-table rows (shipped members only), plus Carbink ×2 on `DOUBLE_TYPE_FP`. The "Energy in play"
+template stays refused (it would claim exactly the four rows). `conditionRowsMeD586.test.ts` (25): texts, readings, a
+board per row with a control. Census re-pinned (residue 178 / 286); version tax 223 stepped / 1 kept. +12 mutant rows,
+all KILLED. Sweep PENDING (NEXT (0)). NOT committed.
 
 ### 2026-10-07 — build session #525 (P3-M5 — D585)
 

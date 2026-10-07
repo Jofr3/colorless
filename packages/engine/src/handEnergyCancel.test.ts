@@ -443,11 +443,11 @@ describe("§2 — the guard the widening owes: the row's DIGIT is the row's COUN
     // A copy here would be a second table free to drift from the first, which is the
     // defect this rung exists to prevent one level down.
     const rows = attackCancelHeadRows();
-    expect(rows.length).toBe(4);
+    expect(rows.length).toBe(5); // 🆕🆕🆕 D586 — 4 → 5: Ceruledge's "Discard 4 Basic {R} …" head.
     // FORWARD — every value carrying a `count` has a key whose printed cardinality
     // is that same number, with the article "a" reading as 1.
     const counted = rows.filter(([, cond]) => "count" in cond);
-    expect(counted.length).toBe(3);
+    expect(counted.length).toBe(4); // 🆕🆕🆕 D586 — 3 → 4 (Ceruledge, count 4).
     for (const [key, cond] of counted) {
       const printed = /^Discard (\d+|a) /.exec(key)?.[1];
       const value = printed === "a" ? 1 : Number(printed);
@@ -465,7 +465,7 @@ describe("§2 — the guard the widening owes: the row's DIGIT is the row's COUN
         [String((cond as { count: number }).count)],
       ]);
     }
-    // 🛑 AND THE ROW WITHOUT A COUNT IS NAMED, so "3 of 4" is a partition rather
+    // 🛑 AND THE ROW WITHOUT A COUNT IS NAMED, so "4 of 5" (D586; "3 of 4" before it) is a partition rather
     // than an arithmetic coincidence: D417's Stadium row prints no cardinality and
     // its member carries none.
     expect(rows.filter(([, cond]) => !("count" in cond)).map(([key]) => key)).toEqual([
