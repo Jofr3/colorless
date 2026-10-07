@@ -177,6 +177,13 @@ const KEYED_AT_D587 = [
   "me03-113", "me03-073", "me01-126",
 ];
 
+/** 🆕🆕🆕 D588 — the `me` ids WP22 keys: eight Trainer texts (trainerParamsMeD588.test.ts pins each face). */
+const KEYED_AT_D588 = [
+  "me02.5-185", "me02.5-257", "me02.5-291", "me01-119", "me01-169", "me01-184", "me02.5-192", "me05-080",
+  "me05-111", "me03-084", "me03-114", "me03-123", "me05-081", "me05-112", "me02.5-215", "me03-074",
+  "me03-078",
+];
+
 /** The five `me` Tera reprints banners.ts carries (each printed face checked on tcgdex's image). */
 const ME_TERA = ["me02.5-038", "me02.5-057", "me02.5-160", "me02.5-179", "me02.5-277"] as const;
 
@@ -257,7 +264,7 @@ describe("D582 — the `me` reprint-alias tier: 99 printings on 66 existing prog
     expect(new Set(ALIASES.map(([, twin]) => programFor(twin))).size).toBe(66);
   });
 
-  it("the registry's `me` keys are EXACTLY this table — nothing keyed outside it (🆕🆕🆕 D583: plus Team Rocket's Energy `me02.5-217`; 🆕🆕🆕 D584: plus the 18 tier-2 keys; 🆕🆕🆕 D585: plus the 19 WP19 keys; 🆕🆕🆕 D586: plus Carbink ×2; 🆕🆕🆕 D587: plus the 19 WP04 Trainer keys)", () => {
+  it("the registry's `me` keys are EXACTLY this table — nothing keyed outside it (🆕🆕🆕 D583: plus Team Rocket's Energy `me02.5-217`; 🆕🆕🆕 D584: plus the 18 tier-2 keys; 🆕🆕🆕 D585: plus the 19 WP19 keys; 🆕🆕🆕 D586: plus Carbink ×2; 🆕🆕🆕 D587: plus the 19 WP04 Trainer keys; 🆕🆕🆕 D588: plus the 17 WP22 Trainer keys)", () => {
     const me = registryCardIds().filter((id) => /^(me|30th)/.test(id));
     // 🆕🆕🆕 D583 — the one `me` key outside the D582 table: Team Rocket's Energy, on `sv10-182`'s object.
     // 🆕🆕🆕 D584 — and the 18 tier-2 keys (`KEYED_AT_D584`).
@@ -268,6 +275,8 @@ describe("D582 — the `me` reprint-alias tier: 99 printings on 66 existing prog
     expect(KEYED_AT_D586).toHaveLength(2);
     // 🆕🆕🆕 D587 — and WP04's 19 Trainer keys (`KEYED_AT_D587`).
     expect(KEYED_AT_D587).toHaveLength(19);
+    // 🆕🆕🆕 D588 — and WP22's 17 Trainer keys (`KEYED_AT_D588`).
+    expect(KEYED_AT_D588).toHaveLength(17);
     expect(me.sort()).toEqual(
       [
         ...ALIASES.map(([id]) => id),
@@ -276,6 +285,7 @@ describe("D582 — the `me` reprint-alias tier: 99 printings on 66 existing prog
         ...KEYED_AT_D585,
         ...KEYED_AT_D586,
         ...KEYED_AT_D587,
+        ...KEYED_AT_D588,
       ].sort(),
     );
     // …and no twin is a `me` id: every program the tier reaches was built for the `sv` serie.

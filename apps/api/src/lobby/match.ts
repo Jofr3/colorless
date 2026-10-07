@@ -2159,6 +2159,16 @@ export interface MatchRecord {
     `turn:action.discardable` — 🛑 **DEPLOY THE SERVER FIRST**: an old client's `z.object` STRIPS
     the unknown key, while a new client's REQUIRED key refuses an old server's frame.
 
+    🆕🆕🆕 **STAYS 42 AT D588 — WP22 ADDS ONE OPTIONAL OP KEY AND NO GameState, PendingStage, PROMPT OR WIRE KEY.**
+    (Placed ABOVE the D587 block.) 17 `me` Trainer ids gain a program on eight new objects; the one new
+    field, `attachEnergyFrom.stage2Only` (Rosa's Encouragement), is an optional `EffectOp` key no v42
+    deploy could write (D125's widening). It is read only when the target list is built, so a Rosa
+    parked at a 0.471 rollback resumes on its persisted candidates and attaches as answered. Every
+    prompt these programs park on (`choosePokemon` with `upTo`, `chooseCards`, `attachCards` with
+    `oneTarget`, `discardEnergy`, the labelled `optional`) is a shape a v42 record already holds, and
+    `trainerEndsTurn` rides the existing `phase.endsTurn`. As at D582 / D584–D587, a v42 match in
+    flight gains the 17 Trainers mid-match (a 0.471 rollback loses them) — the stated cost; no re-ingest.
+
     🆕🆕🆕 **STAYS 42 AT D587 — WP04'S TRAINER PROGRAMS ADD NO GameState, PendingStage, PROMPT OR WIRE KEY.**
     (Placed ABOVE the D586 block.) 19 `me` Trainer ids gain a program on nine new objects built of shipped
     ops, fields and filters; every prompt they park on (`choosePokemon` with or without `upTo`,

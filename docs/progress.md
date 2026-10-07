@@ -3,7 +3,9 @@
 > Update this at the **end of every session**: bump the status table, append a
 > session-log entry, and rewrite the **Resume point** to the next concrete action.
 
-**Last updated:** 2026-10-07 — build session #527 (**P3-M5 — D587, *WP04 — TRAINER PARAMETERS I: 19 `me` Trainer printings / 9 texts on nine new registry objects (Wondrous Patch, Philippe, Jacinthe, Firebreather, Fighting Gong, Tarragon, Poké Pad, Energy Swatter, Repel), shipped ops / fields / filters only, plus Energy Swatter's caption arm and Repel's empty-Bench play gate; Standard pool trainers 339 / 447; 745 `me` printings fully built*** — engine 0.471.0, MRV 42, NOT committed; the sweep PENDING)
+**Last updated:** 2026-10-07 — build session #528 (**P3-M5 — D588, *WP22 — TRAINER PARAMETERS II: 17 `me` Trainer printings / 8 texts on eight new registry objects (Canari, Lillie's Determination, Misty's Vitality, Rosa's Encouragement, Rust Syndicate Grunt, Waitress, Hole-Digging Shovel, Lumiose Galette) plus one new target rider, `stage2Only`; Pokémon Center Lady dropped; Standard pool trainers 356 / 447; 762 `me` printings fully built*** — engine 0.472.0, MRV 42, NOT committed; the sweep PENDING)
+
+**Last updated (was):** 2026-10-07 — build session #527 (**P3-M5 — D587, *WP04 — TRAINER PARAMETERS I: 19 `me` Trainer printings / 9 texts on nine new registry objects (Wondrous Patch, Philippe, Jacinthe, Firebreather, Fighting Gong, Tarragon, Poké Pad, Energy Swatter, Repel), shipped ops / fields / filters only, plus Energy Swatter's caption arm and Repel's empty-Bench play gate; Standard pool trainers 339 / 447; 745 `me` printings fully built*** — engine 0.471.0, MRV 42, NOT committed; the sweep PENDING)
 
 **Last updated (was):** 2026-10-07 — build session #526 (**P3-M5 — D586, *WP03 — ROWS ON EXISTING CONDITION MEMBERS: 8 attack sentences / 17 `me` printings on shipped readers (an Abyss Eye KO anchor; `opponentPrizesRemaining` [0–3] / [0–2]; `yourEnergyInPlayAtLeast` 4 {L}/{R}/{W}; `yourHandExactly` 7; a 4 Basic {R} cancel head) plus Carbink ×2 "Double Type" on a {F}{P} `typesInPlay` copy; Mega Darkrai ex ×5 finished; Standard pool attacks 2480 / 2771, abilities 452 / 610; 726 `me` printings fully built*** — engine 0.470.0, MRV stays 42, NOT committed; the whole-corpus sweep PENDING)
 
@@ -799,6 +801,37 @@
 
 ## NEXT (resume point)
 
+> ### ▶ THE NEXT CONCRETE ACTION (written 2026-10-07, after D588)
+>
+> 🛑 **D588 IS BUILT AND NOT COMMITTED** (worktree `/home/jofre/projects/luminous_ui-mega`, branch `mega-ingest`, on D587 = `75f4bd42`). D588 is WP22 of the Mega backlog: Trainer parameters II. Next: a review of D588, then the landing of D581–D588 (rebase `mega-ingest` onto main; never `git add -A` — `apps/api/.wrangler` is the setup symlink).
+>
+> ✅ **`bun run check` IS GREEN**: `typecheck-coverage` OK (910 TypeScript files in 6 projects), `tsc -b`, `lint-coverage` OK (912 source files), `biome lint --error-on-warnings` (953 files), `Test Files 631 passed (631) / Tests 14918 passed (14918) / CHECK_EXIT=0` (D587: 630 / 14892; D588 adds `trainerParamsMeD588.test.ts` (24) and two census rungs).
+>
+> **(a) THE SLICE.** registry.ts, eight NEW objects on 17 `me` Trainer ids (MID-MAP): `CANARI` ×3 (Earthen Vessel's hand cost + a {L} Pokémon search at 4), `LILLIES_DETERMINATION` ×4 (Lacey's if/else on `yourPrizesRemaining` [6]: 8 else 6), `MISTYS_VITALITY` ×2 (derived `attachFromDeck` Basic {W} 4 `oneTarget` + `trainerEndsTurn`), `ROSAS_ENCOURAGEMENT` ×3 (`morePrizesThanOpponent` gate; `attachEnergyFrom` discard `count: 2` + the NEW `stage2Only`), `RUST_SYNDICATE_GRUNT` ×2 (last-turn-KO gate; Crushing Hammer's heads op), `WAITRESS` (Electric Generator's look at 6 / 1), `HOLE_DIGGING_SHOVEL` (`discardDeckTop self 2`) and `LUMIOSE_GALETTE` (Obliging Heal's program at 20). Engine: `AttachTargetRiders.stage2Only` (effects.ts, declared on `attachEnergyFrom`), read in interpreter.ts `attachEnergyTargets` via `isStage2Pokemon` and captioned by `attachTargetNoun`. **Dropped: Pokémon Center Lady `me01-123`** (its recovery addresses the healed body — a second `healChosen` rider, beyond the brief's one field). Dawn ×3 stays WP23. Brief deviation: Rosa rides `attachEnergyFrom`, not `attachFromDiscard` (D588 row).
+>
+> **(b) MRV STAYS 42** (match.ts "STAYS 42 AT D588"): `stage2Only` is an optional op key (D125's widening), read only when targets are built; a v42 match gains the 17 Trainers mid-match.
+>
+> | Column | `me` D588 | Standard pool D588 |
+> |---|---|---|
+> | Attacks | 748 / 1039 | **2480 / 2771** |
+> | Abilities | 76 / 234 | **452 / 610** |
+> | Trainers | 92 / 183 | **356 / 447** |
+> | Special Energy | 3 / 11 | **14 / 22** |
+>
+> **762 `me` printings fully built** (745 + 17). Registry 1146 → 1163, non-attack 986 → 1003. Other pins moved: `searchDeck` population 131 → 134, revealClause `REVEALING` 53 → 54 / classified 77 → 78 / swept 175 → 178, attachQuantity's `count` registry half 11 → 14 (Rosa), `handRefresh` producers 35 → 39 and `yourPrizesRemaining` carriers 2 → 6 (Lillie).
+>
+> **(c) THE MUTATION RECORD.** +23 D588 rows (4385 in all). precheck: 4385 mutants, the same 20 pre-existing broken rows (none in a D588 file). Probe `run.ts --decision D588 --allow-dirty`: 23 killed · 0 known · 0 GAP · 0 error, tree byte-identical after. Gate-witness `--only` (the 18 `opaque-anatomy-gate.ts` / `residue-census-gate.ts` rows) plus the moved-`find` `D275-engine-version-drifts-again` and `D460-maxsize-refuses-the-corpus`: 20 killed · 0 error. Gates: residue-census, opaque-anatomy, splice, partition all OK.
+>
+> 🛑 **(0) THE WHOLE-CORPUS SWEEP IS PENDING** (D581–D587's too). Predicted: **4315 killed · 50 known survivor(s) · 0 GAP(S) · 20 error(s)** over **4,385** rows — 4362 + 23 = 4385; 4292 + 23 = 4315 killed; 4315 + 50 + 20 = 4385. It assumes D587's prediction holds and no D588 edit moves an older verdict; if a row differs, the difference is that row.
+>
+> **D539 sweep.** No claim withdrawn: the "no `stage` counterpart" notes on `ownerPokemon` (effects.ts, interpreter.ts, simulator.md) are scoped to that rider's eight printings and stay true. Version tax: `0.471.0` outside `docs/` was 142 files / 226 lines; 225 stepped (it() titles and the D275 `find` included), 1 kept (index.ts' D587 heading).
+>
+> Still owed from the Mega backlog: Pokémon Center Lady (a heal-then-recover rider on the healed body), WP33 next by rank (split in two), then WP08, "Fade Out" ×5, the markup-normalising ingest fix, then the residue by mechanism.
+>
+> ---
+>
+> **ARCHIVED — the resume point D588 was built from, kept rather than overwritten** (D587 has since been committed on `mega-ingest` as `75f4bd42`):
+>
 > ### ▶ THE NEXT CONCRETE ACTION (written 2026-10-07, after D587)
 >
 > 🛑 **D587 IS BUILT AND NOT COMMITTED** (worktree `/home/jofre/projects/luminous_ui-mega`, branch `mega-ingest`, on D586 = `d262cffc`). D587 is WP04 of the Mega backlog: Trainer parameters I. Next: a review of D587, then the landing of D581–D587 (rebase `mega-ingest` onto main; never `git add -A` — `apps/api/.wrangler` is the setup symlink).
@@ -34641,7 +34674,8 @@ the next api deploy (D18).
 |---|---|---|
 | backend-data | P1 | ✅ M1–M9 + P2-M1 + task-17 api deployed (Worker `9b1ec1d1`, 2026-07-16); OAuth secrets pending (user) |
 | deck-builder | P2 | ✅ ALL 19 tasks closed (task 17 landed + e2e-verified locally); only follow-ups left |
-| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D587, *WP04 — Trainer parameters I: 19 `me` Trainer printings / 9 texts on nine new objects (shipped vocabulary), Energy Swatter's caption and Repel's play gate; trainers 339 / 447*** — engine 0.471.0, MRV 42, NOT committed; the sweep PENDING) |
+| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D588, *WP22 — Trainer parameters II: 17 `me` Trainer printings / 8 texts on eight new objects plus the `stage2Only` attach rider; Pokémon Center Lady dropped; trainers 356 / 447*** — engine 0.472.0, MRV 42, NOT committed; the sweep PENDING) |
+| simulator (prior) | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D587, *WP04 — Trainer parameters I: 19 `me` Trainer printings / 9 texts on nine new objects (shipped vocabulary), Energy Swatter's caption and Repel's play gate; trainers 339 / 447*** — engine 0.471.0, MRV 42, NOT committed; the sweep PENDING) |
 | simulator (prior) | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D586, *WP03 — rows on existing condition members: 8 attack sentences / 17 `me` printings on shipped readers plus Carbink ×2 "Double Type"; Mega Darkrai ex ×5 finished; attacks 2480 / 2771, abilities 452 / 610*** — engine 0.470.0, MRV 42, NOT committed; the sweep PENDING) |
 | simulator (prior) | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D585, *WP19 — parameter copies of passives and Abilities: 19 `me` printings / 8 texts on eight new objects (existing fields only); Mega Scrafty ex ×3 and Mega Dragonite ex ×5 finished; abilities 450 / 610*** — engine 0.469.0, MRV 42, NOT committed; the sweep PENDING) |
 | simulator (prior) | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D584, *the `me` alias tier 2 — 18 printings / 11 texts (4 on existing objects, 14 on eight new renamed / parameter / attack-index copies); Heatran's wrong-name log fixed; attacks 2463 / 2771, abilities 431 / 610, trainers 320 / 447*** — engine 0.468.0, MRV 42, NOT committed; the sweep PENDING) |
@@ -34846,6 +34880,17 @@ the next api deploy (D18).
 Legend: 📝 backlog · 📋 specced · 🔎 research · 🚧 in progress · ✅ done
 
 ## Session log
+
+### 2026-10-07 — build session #528 (P3-M5 — D588)
+
+**WP22 — TRAINER PARAMETERS II. `MATCH_RECORD_VERSION` STAYS 42.**
+
+Built in the `luminous_ui-mega` worktree on D587 (`75f4bd42`); the main checkout was not touched. Every id `git grep`-ped
+(none keyed) and every text read off the LOCAL D1 first. 17 `me` Trainer printings / 8 texts on eight new registry
+objects, plus one new rider, `AttachTargetRiders.stage2Only` (Rosa's Encouragement). Pokémon Center Lady dropped (needs
+a heal-then-recover rider on the healed body). `trainerParamsMeD588.test.ts` (24): faces and derived sentences, programs
+against twins, a board per Trainer with its refusals. Version tax 225 stepped / 1 kept. +23 mutant rows, all KILLED.
+Sweep PENDING (NEXT (0)). NOT committed.
 
 ### 2026-10-07 — build session #527 (P3-M5 — D587)
 

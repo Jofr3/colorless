@@ -17355,6 +17355,7 @@ export function attachEnergyTargets(
     if (
       riders.targetType !== undefined ||
       riders.basicOnly === true ||
+      riders.stage2Only === true ||
       riders.ownerPokemon !== undefined ||
       riders.targetBanner !== undefined
     ) {
@@ -17373,6 +17374,8 @@ export function attachEnergyTargets(
         if (!wantedTypes.some((wanted) => cardTypes.includes(wanted))) return false;
       }
       if (riders.basicOnly === true && (card === undefined || !isBasicPokemon(card))) return false;
+      // 🆕🆕🆕 D588 — Rosa's Encouragement's printed "Stage 2", `basicOnly`'s line one stage word over.
+      if (riders.stage2Only === true && (card === undefined || !isStage2Pokemon(card))) return false;
       // The owner-prefixed subgroup, read through `matchesFilter`'s OWN
       // `ownerPokemon` arm rather than re-implemented here. What is shared is the
       // PREDICATE, not the type: three conjuncts D200 established against the
@@ -19796,6 +19799,10 @@ function attachTargetNoun(riders: AttachTargetRiders): string {
   const owner =
     riders.targetBanner === undefined ? ownerNoun(riders.ownerPokemon) : `${riders.targetBanner} `;
   const types = targetTypeNames(riders.targetType);
+  // 🆕🆕🆕 D588 — the printed stage word ("1 of your Stage 2 Pokémon", Rosa's Encouragement), so the
+  // dialog names the set its rows are drawn from. Its own line ahead of D354's, which stays byte for
+  // byte (opponentDiscardAttach.test.ts pins it); no printing pairs the word with a type or an owner.
+  if (riders.stage2Only === true) return `${zone}Stage 2 Pokémon`;
   // 🆕🆕 D354 — NO TYPE: the bare noun, byte-identical to the pre-D354 spelling.
   if (types.length === 0) return `${zone}${owner}Pokémon`;
   // 🆕🆕 D354 — the union REPEATS THE NOUN, because the card does: X-Boot prints

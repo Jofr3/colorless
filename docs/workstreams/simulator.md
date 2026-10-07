@@ -29917,3 +29917,26 @@ decisions (1) and (2) after D580. Engine 0.464.0 → 0.465.0. The Mega ex rule i
 - **Census.** Standard pool trainers **339 / 447** (`me` 75 / 183; attacks 2480 / 2771, abilities 452 / 610, special
   energy 14 / 22 unmoved); 745 `me` printings fully built.
 - **Owed.** See `progress.md` NEXT. The whole-corpus sweep is PENDING.
+
+## D588 — WP22: Trainer parameters II (engine 0.472.0, `MATCH_RECORD_VERSION` stays 42)
+
+**Status:** ✅ BUILT in the `luminous_ui-mega` worktree on D587 (`75f4bd42`), NOT committed.
+
+- **17 `me` Trainer printings / 8 texts** keyed on eight new registry objects (registry.ts D588 block): Canari ×3
+  (Earthen Vessel's hand cost, then a {L} Pokémon search at 4), Lillie's Determination ×4 (Lacey's if/else on
+  `yourPrizesRemaining` [6], 8 else 6), Misty's Vitality ×2 (derived `attachFromDeck` Basic {W} 4 `oneTarget` and
+  `trainerEndsTurn`), Rosa's Encouragement ×3 (`morePrizesThanOpponent` gate, `attachEnergyFrom` discard `count: 2` with
+  `stage2Only`), Rust Syndicate Grunt ×2 (last-turn-KO gate, Crushing Hammer's heads op), Waitress (Electric
+  Generator's look at 6 / 1), Hole-Digging Shovel (`discardDeckTop self 2`) and Lumiose Galette (Obliging Heal's
+  program at 20).
+- **One new field.** `AttachTargetRiders.stage2Only?: true`, declared on `attachEnergyFrom`, read in `attachEnergyTargets`
+  through `isStage2Pokemon` (the in-play card's printed stage), captioned "Stage 2 Pokémon" by `attachTargetNoun`.
+- **Dropped.** Pokémon Center Lady `me01-123`: "it recovers from all Special Conditions" addresses the healed body, which
+  needs a second `healChosen` rider. Dawn ×3 stays WP23.
+- **Brief deviation.** Rosa rides `attachEnergyFrom` (Oricorio's / Philippe's op for "up to 2 … to 1 of your"), not
+  `attachFromDiscard`.
+- **Suite.** `trainerParamsMeD588.test.ts` (24): each program against its twin or its derived sentence, and a board per
+  Trainer with its refusals.
+- **Census.** Standard pool trainers **356 / 447** (`me` 92 / 183; attacks 2480 / 2771, abilities 452 / 610, special
+  energy 14 / 22 unmoved); 762 `me` printings fully built.
+- **Owed.** See `progress.md` NEXT. The whole-corpus sweep is PENDING.

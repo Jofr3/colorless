@@ -16717,6 +16717,111 @@ const ENERGY_SWATTER: CardProgram = {
     with this op at top level, so `programPlayable` gains its empty-Bench line (`gust`'s). */
 const REPEL: CardProgram = { trainer: [{ op: "opponentSwitchOut" }] };
 
+// ── 🆕🆕🆕 D588 — WP22: TRAINER PARAMETERS II. Eight NEW objects for 17 `me` printings / 8 texts,
+//    each a built program (or derived sentence) at the printed parameter. One new rider,
+//    `AttachTargetRiders.stage2Only` (Rosa's Encouragement's "Stage 2"); no new op. Printed texts
+//    off the LOCAL D1 (2026-10-07); `trainerParamsMeD588.test.ts` rebuilds each face from its
+//    twin's and plays each program on a board. Pokémon Center Lady `me01-123` is NOT keyed: "it
+//    recovers from all Special Conditions" needs a `healChosen` rider on the healed body (new
+//    vocabulary beyond the brief). Dawn ×3 stays out (a multi-slot search, WP23). ──
+
+/** Canari `me02.5-185` / `-257` / `-291` (Supporter) — *"You can use this card only if you discard
+    another card from your hand. / Search your deck for up to 4 {L} Pokémon, reveal them, and put
+    them into your hand. Then, shuffle your deck."* Earthen Vessel `sv06.5-096` (`EARTHEN_VESSEL`)'s
+    hand cost, then the search `deriveAttackEffect` reads off the second paragraph (`typedPokemon`
+    Lightning, any stage, 4). */
+const CANARI: CardProgram = {
+  trainer: [
+    { op: "payFromHand", count: 1, to: "discard" },
+    {
+      op: "searchDeck",
+      filter: { kind: "typedPokemon", pokemonType: "Lightning" },
+      dest: "hand",
+      max: 4,
+      reveal: true,
+    },
+    { op: "shuffleDeck" },
+  ],
+};
+
+/** Lillie's Determination `me01-119` / `-169` / `-184`, `me02.5-192` (Supporter) — *"Shuffle your
+    hand into your deck. Then, draw 6 cards. If you have exactly 6 Prize cards remaining, draw 8
+    cards instead."* Lacey `sv07-139` (`LACEY`)'s if/else refresh on the seat mirror
+    `yourPrizesRemaining` at the printed exactly 6, drawing 8 or 6. */
+const LILLIES_DETERMINATION: CardProgram = {
+  trainer: [
+    {
+      op: "conditionGate",
+      cond: { kind: "yourPrizesRemaining", counts: [6] },
+      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
+      then: [{ op: "handRefresh", who: "you", draw: { kind: "fixed", count: 8 } }],
+      otherwise: [{ op: "handRefresh", who: "you", draw: { kind: "fixed", count: 6 } }],
+    },
+  ],
+};
+
+/** Misty's Vitality `me05-080` / `-111` (Supporter) — *"Search your deck for up to 4 Basic {W}
+    Energy cards and attach them to 1 of your Pokémon. Then, shuffle your deck. Your turn ends."*
+    The first two sentences are what `deriveAttackEffect` reads (`attachFromDeck` with D457's
+    `oneTarget`, then the shuffle); "Your turn ends." is Boxed Order's `trainerEndsTurn`. */
+const MISTYS_VITALITY: CardProgram = {
+  trainer: [
+    {
+      op: "attachFromDeck",
+      filter: { kind: "basicEnergy", energyType: "Water" },
+      max: 4,
+      oneTarget: true,
+    },
+    { op: "shuffleDeck" },
+  ],
+  trainerEndsTurn: true,
+};
+
+/** Rosa's Encouragement `me03-084` / `-114` / `-123` (Supporter) — *"You can use this card only if
+    you have more Prize cards remaining than your opponent. / Attach up to 2 Basic Energy cards
+    from your discard pile to 1 of your Stage 2 Pokémon."* Fighting Au Lait's play gate
+    (`morePrizesThanOpponent`) over Oricorio "Energy Assist"'s derived `attachEnergyFrom` (`count:
+    2`, any Basic Energy) with the NEW `stage2Only` rider. No Stage 2 in play, or no Basic Energy in
+    the discard, refuses the Supporter (`attachAlternativesAllWhiff`). */
+const ROSAS_ENCOURAGEMENT: CardProgram = {
+  trainerPlayableIf: { kind: "morePrizesThanOpponent" },
+  trainer: [{ op: "attachEnergyFrom", source: "discard", count: 2, stage2Only: true }],
+};
+
+/** Rust Syndicate Grunt `me05-081` / `-112` (Supporter) — *"You can use this card only if any of
+    your Pokémon were Knocked Out during your opponent's last turn. / Discard an Energy from 1 of
+    your opponent's Pokémon."* Hassel's play gate (`yourPokemonKoedOnOpponentsLastTurn`) over
+    Crushing Hammer's heads op without the coin (`opponentChosen`, `anyEnergy`). An Energy-less
+    opponent board refuses it (`discardEnergyPlayable`). */
+const RUST_SYNDICATE_GRUNT: CardProgram = {
+  trainerPlayableIf: { kind: "yourPokemonKoedOnOpponentsLastTurn" },
+  trainer: [{ op: "discardEnergy", from: "opponentChosen", filter: { kind: "anyEnergy" } }],
+};
+
+/** Waitress `me02.5-215` (Supporter) — *"Look at the top 6 cards of your deck and attach a Basic
+    Energy card you find there to 1 of your Pokémon. Shuffle the other cards back into your deck."*
+    Electric Generator `sv01-170` (`ELECTRIC_GENERATOR`)'s `attachFromTop` at 6 / 1, any Basic
+    Energy, no target rider, and its trailing shuffle. */
+const WAITRESS: CardProgram = {
+  trainer: [
+    { op: "attachFromTop", n: 6, filter: { kind: "basicEnergy" }, max: 1 },
+    { op: "shuffleDeck" },
+  ],
+};
+
+/** Hole-Digging Shovel `me03-074` (Item) — *"Discard the top 2 cards of your deck."* The sentence
+    `deriveAttackEffect` reads, byte for byte, on the Trainer surface. */
+const HOLE_DIGGING_SHOVEL: CardProgram = {
+  trainer: [{ op: "discardDeckTop", whose: "self", count: 2 }],
+};
+
+/** Lumiose Galette `me03-078` (Item) — *"Heal 20 damage and remove a Special Condition from your
+    Active Pokémon."* Indeedee "Obliging Heal" (`OBLIGING_HEAL`)'s program at 20: `heal self` (the
+    controller's Active) then D560's `recoverOneStatus` (one condition, the player's pick). */
+const LUMIOSE_GALETTE: CardProgram = {
+  trainer: [{ op: "heal", target: "self", amount: 20 }, { op: "recoverOneStatus" }],
+};
+
 const REGISTRY: Record<string, CardProgram> = {
   // Professor's Research (SV base prints)
   "sv01-189": PROFESSORS_RESEARCH,
@@ -17718,6 +17823,25 @@ const REGISTRY: Record<string, CardProgram> = {
   "me03-113": POKE_PAD, // Poké Pad
   "me03-073": ENERGY_SWATTER, // Energy Swatter — twin `sv03-190` (Ortega), an Energy card, no draw
   "me01-126": REPEL, // Repel — the derived attack sentence's `opponentSwitchOut`
+  // 🆕🆕🆕 D588 — WP22: 17 Trainer printings / 8 texts on the eight objects above, MID-MAP
+  // (`raw[last]` does not move). `trainerParamsMeD588.test.ts` pins every face against its twin's.
+  "me02.5-185": CANARI, // Canari — twin `sv06.5-096` (Earthen Vessel), up to 4 {L} Pokémon
+  "me02.5-257": CANARI, // Canari
+  "me02.5-291": CANARI, // Canari
+  "me01-119": LILLIES_DETERMINATION, // Lillie's Determination — twin `sv07-139` (Lacey), exactly 6 Prizes: 8 else 6
+  "me01-169": LILLIES_DETERMINATION, // Lillie's Determination
+  "me01-184": LILLIES_DETERMINATION, // Lillie's Determination
+  "me02.5-192": LILLIES_DETERMINATION, // Lillie's Determination
+  "me05-080": MISTYS_VITALITY, // Misty's Vitality — up to 4 Basic {W} to 1 body (`oneTarget`), turn ends
+  "me05-111": MISTYS_VITALITY, // Misty's Vitality
+  "me03-084": ROSAS_ENCOURAGEMENT, // Rosa's Encouragement — behind on Prizes; up to 2 Basic to 1 Stage 2 (`stage2Only`)
+  "me03-114": ROSAS_ENCOURAGEMENT, // Rosa's Encouragement
+  "me03-123": ROSAS_ENCOURAGEMENT, // Rosa's Encouragement
+  "me05-081": RUST_SYNDICATE_GRUNT, // Rust Syndicate Grunt — last-turn KO gate; an Energy off 1 opponent body
+  "me05-112": RUST_SYNDICATE_GRUNT, // Rust Syndicate Grunt
+  "me02.5-215": WAITRESS, // Waitress — twin `sv01-170` (Electric Generator), top 6, 1 Basic Energy
+  "me03-074": HOLE_DIGGING_SHOVEL, // Hole-Digging Shovel — the derived "Discard the top 2 cards of your deck."
+  "me03-078": LUMIOSE_GALETTE, // Lumiose Galette — Obliging Heal's program at 20
   // ── D190 — THE **STANDARD-LEGAL** REPRINT-ALIAS MAP (Tier 0 of
   //    `docs/reference/coverage-backlog-legal.md`). 22 printings, 9 map targets,
   //    ZERO new code: every row below prints a sentence that is already authored

@@ -6,6 +6,26 @@
 > `coverage-backlog-legal.md`; its pool is unchanged and whole. The suite-side figures are
 > `censusAtHead.test.ts`'s D581 block and `censusAttackCorpusMe.ts`.
 
+## 🆕 D588 update (engine 0.472.0) — Trainer parameters II (WP22)
+
+17 `me` Trainer printings / 8 texts keyed on eight new registry objects (registry.ts D588 block;
+`trainerParamsMeD588.test.ts`): Canari ×3 (Earthen Vessel shape, up to 4 {L} Pokémon), Lillie's Determination ×4 (Lacey
+shape on `yourPrizesRemaining` [6]), Misty's Vitality ×2 (`attachFromDeck` Basic {W} 4 `oneTarget` + `trainerEndsTurn`),
+Rosa's Encouragement ×3 (`morePrizesThanOpponent` + `attachEnergyFrom` discard `count: 2` with the NEW
+`AttachTargetRiders.stage2Only`), Rust Syndicate Grunt ×2 (last-turn-KO gate + `discardEnergy` `opponentChosen`),
+Waitress (`attachFromTop` 6 / 1), Hole-Digging Shovel (`discardDeckTop self 2`) and Lumiose Galette (`heal self` 20 +
+`recoverOneStatus`). **Dropped:** Pokémon Center Lady (its recovery addresses the healed body — a second `healChosen`
+rider). Dawn ×3 stays WP23.
+
+| Column | `me` built / units (D588) | Standard pool D588 |
+|---|---|---|
+| Attacks | 748 / 1,039 | **2,480 / 2,771** |
+| Abilities | 76 / 234 | **452 / 610** |
+| Trainers | 92 / 183 (+17) | **356 / 447** |
+| Special Energy | 3 / 11 | **14 / 22** |
+
+**Fully built `me` printings: 762** (745 + 17).
+
 ## 🆕 D587 update (engine 0.471.0) — Trainer parameters I (WP04)
 
 19 `me` Trainer printings / 9 texts keyed on nine new registry objects (registry.ts D587 block;
@@ -530,10 +550,10 @@ Discard a Pokémon Tool or Special Energy card from 1 of your opponent's Pokémo
 - 1× **Great Haul Net** — Choose 1 or both:
 • Shuffle up to 3 {W} Pokémon from your discard pile into your deck.
 • Shuffle up to 3 Basic {W} Energy cards from your discard pile into your deck.
-- 1× **Hole-Digging Shovel** — Discard the top 2 cards of your deck.
+- 1× **Hole-Digging Shovel** — Discard the top 2 cards of your deck. [🆕🆕🆕 D588: BUILT]
 - 2× **Iron Defender** — During your opponent's next turn, all of your {M} Pokémon take 30 less damage from attacks from your opponent's Pokémon (after applying Weakness and Resistance). (This includes new Pokémon that come into play.)
 - 2× **Jumbo Ice Cream** — Heal 80 damage from your Active Pokémon that has 3 or more Energy attached.
-- 1× **Lumiose Galette** — Heal 20 damage and remove a Special Condition from your Active Pokémon.
+- 1× **Lumiose Galette** — Heal 20 damage and remove a Special Condition from your Active Pokémon. [🆕🆕🆕 D588: BUILT]
 - 3× **Poké Pad** — Search your deck for a Pokémon that doesn't have a Rule Box, reveal it, and put it into your hand. Then, shuffle your deck. (Pokémon ex, Pokémon V, etc. have Rule Boxes.) [🆕🆕🆕 D587: BUILT]
 - 3× **Premium Power Pro** — During this turn, attacks used by your {F} Pokémon do 30 more damage to your opponent's Active Pokémon (before applying Weakness and Resistance).
 - 1× **Repel** — Switch out your opponent's Active Pokémon to the Bench. (Your opponent chooses the new Active Pokémon.) [🆕🆕🆕 D587: BUILT]
@@ -599,7 +619,7 @@ Choose 1 of your Pokémon in play. During your opponent's next turn, prevent all
 During this turn, if your opponent's Active Pokémon is Knocked Out by damage from an attack used by your N's Pokémon, take 3 more Prize cards.
 - 3× **Canari** — You can use this card only if you discard another card from your hand.
 
-Search your deck for up to 4 {L} Pokémon, reveal them, and put them into your hand. Then, shuffle your deck.
+Search your deck for up to 4 {L} Pokémon, reveal them, and put them into your hand. Then, shuffle your deck. [🆕🆕🆕 D588: BUILT]
 - 3× **Dawn** — Search your deck for a Basic Pokémon, a Stage 1 Pokémon, and a Stage 2 Pokémon, reveal them, and put them into your hand. Then, shuffle your deck.
 - 2× **Emma** — Your opponent reveals their hand, and you draw a card for each Pokémon you find there.
 - 2× **Firebreather** — Search your deck for up to 7 Basic {R} Energy cards, reveal them, and put them into your hand. Then, shuffle your deck. [🆕🆕🆕 D587: BUILT]
@@ -608,21 +628,21 @@ During this turn, attacks used by your Pokémon that don't have a Rule Box do 80
 - 2× **Grimsley's Move** — Look at the top 7 cards of your deck and put a {D} Pokémon you find there onto your Bench. Shuffle the other cards and put them on the bottom of your deck. You can't use this card during your first turn.
 - 3× **Gwynn** — Discard up to 2 Pokémon that don't have a Rule Box from your hand, and draw 3 cards for each card you discarded in this way. (Pokémon ex, Pokémon V, etc. have Rule Boxes.)
 - 3× **Jacinthe** — Heal 150 damage from 1 of your {P} Pokémon. [🆕🆕🆕 D587: BUILT]
-- 4× **Lillie's Determination** — Shuffle your hand into your deck. Then, draw 6 cards. If you have exactly 6 Prize cards remaining, draw 8 cards instead.
+- 4× **Lillie's Determination** — Shuffle your hand into your deck. Then, draw 6 cards. If you have exactly 6 Prize cards remaining, draw 8 cards instead. [🆕🆕🆕 D588: BUILT]
 - 3× **Lt. Surge's Bargain** — Ask your opponent if each player may take a Prize card. If yes, each player takes a Prize card. If no, you draw 4 cards.
-- 2× **Misty's Vitality** — Search your deck for up to 4 Basic {W} Energy cards and attach them to 1 of your Pokémon. Then, shuffle your deck. Your turn ends.
+- 2× **Misty's Vitality** — Search your deck for up to 4 Basic {W} Energy cards and attach them to 1 of your Pokémon. Then, shuffle your deck. Your turn ends. [🆕🆕🆕 D588: BUILT]
 - 2× **Naveen** — Draw cards until you have 5 cards in your hand. Before drawing cards, you may discard any number of cards from your hand. (If you can't draw any cards in this way, you can't use this card.)
 - 2× **Philippe** — Attach up to 2 Basic {M} Energy cards from your discard pile to 1 of your {M} Pokémon. [🆕🆕🆕 D587: BUILT]
-- 1× **Pokémon Center Lady** — Heal 60 damage from 1 of your Pokémon, and it recovers from all Special Conditions.
+- 1× **Pokémon Center Lady** — Heal 60 damage from 1 of your Pokémon, and it recovers from all Special Conditions. [🆕🆕🆕 D588: DROPPED — the recovery addresses the healed body; needs a `healChosen` rider]
 - 3× **Rosa's Encouragement** — You can use this card only if you have more Prize cards remaining than your opponent.
 
-Attach up to 2 Basic Energy cards from your discard pile to 1 of your Stage 2 Pokémon.
+Attach up to 2 Basic Energy cards from your discard pile to 1 of your Stage 2 Pokémon. [🆕🆕🆕 D588: BUILT]
 - 3× **Roxie's Performance** — During your opponent's next turn, their Poisoned Pokémon can't retreat. (This includes newly Poisoned Pokémon.)
 - 2× **Rust Syndicate Grunt** — You can use this card only if any of your Pokémon were Knocked Out during your opponent's last turn.
 
-Discard an Energy from 1 of your opponent's Pokémon.
+Discard an Energy from 1 of your opponent's Pokémon. [🆕🆕🆕 D588: BUILT]
 - 2× **Tarragon** — Put up to 4 in any combination of {F} Pokémon and Basic {F} Energy cards from your discard pile into your hand. [🆕🆕🆕 D587: BUILT]
-- 1× **Waitress** — Look at the top 6 cards of your deck and attach a Basic Energy card you find there to 1 of your Pokémon. Shuffle the other cards back into your deck.
+- 1× **Waitress** — Look at the top 6 cards of your deck and attach a Basic Energy card you find there to 1 of your Pokémon. Shuffle the other cards back into your deck. [🆕🆕🆕 D588: BUILT]
 
 ### Tool — Mega Evolution-conditioned — 1 text(s) / 2 printing(s)
 

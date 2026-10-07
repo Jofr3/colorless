@@ -4061,6 +4061,13 @@ export interface AttachTargetRiders {
   targetType?: string | readonly string[];
   /** Only BASIC Pokémon (Koraidon ex's "your Basic {F} Pokémon"). */
   basicOnly?: true;
+  /** 🆕🆕🆕 **D588 — only STAGE 2 Pokémon** (Rosa's Encouragement `me03-084` / `-114` / `-123`:
+      *"Attach up to 2 Basic Energy cards from your discard pile to 1 of your **Stage 2**
+      Pokémon."*). `basicOnly`'s twin one stage word over, read on the body's IN-PLAY card through
+      `cards.ts` `isStage2Pokemon` (the printed `stage` string, so a VSTAR is not a Stage 2).
+      Declared on `attachEnergyFrom` only — the one op a printing sets it on. Absent = no stage
+      narrowing (D135). */
+  stage2Only?: true;
   /** Only Pokémon in the printed OWNER-PREFIXED SUBGROUP — Iono's Bellibolt ex's
       *"1 of your **Iono's** Pokémon"*, N's PP Up's *"1 of your Benched **N's**
       Pokémon"*, Marnie's Grimmsnarl ex's *"your **Marnie's** Pokémon"*. The value
@@ -9836,6 +9843,8 @@ export type EffectOp =
       energyName?: string;
       targetType?: string;
       basicOnly?: true;
+      /** 🆕🆕🆕 D588 — the printed "Stage 2" target (Rosa's Encouragement); `AttachTargetRiders.stage2Only`. */
+      stage2Only?: true;
       /** The owner-prefixed subgroup the attach may land on — Iono's Bellibolt
           ex's "1 of your **Iono's** Pokémon", N's PP Up's "1 of your **Benched
           N's** Pokémon" (D204, with `benchOnly` for the zone word). See

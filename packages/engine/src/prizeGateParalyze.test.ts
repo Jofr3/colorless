@@ -685,7 +685,7 @@ describe("D517 §7 — the price, and both version constants", () => {
   });
 
   it("🛑 the ENGINE version moved and `MATCH_RECORD_VERSION` did not, and both are argued", () => {
-    expect(engineVersion).toBe("0.471.0");
+    expect(engineVersion).toBe("0.472.0");
   });
 
   it("🛑 REACHABILITY IS EMPTY, MEASURED OVER EVERY PRODUCER RATHER THAN ASSERTED", () => {
@@ -783,7 +783,10 @@ describe("D517 §7 — the price, and both version constants", () => {
     // than a walk that missed (D200 — a guard that cannot go red is not a guard).
     // 🆕🆕🆕 D575 — 1 → 2: N's Sigilyph "Victory Symbol" carries the member too, at index 0 of its
     // derived list and around the non-parking `winGame`, so the invariant still holds of both.
-    expect(carriers).toBe(2);
+    // 🆕🆕🆕 D588 — 2 → 6: Lillie's Determination ×4 (`LILLIES_DETERMINATION`) gates its refresh on
+    // `yourPrizesRemaining` [6], at index 0 of its one-op `trainer` list around two non-parking
+    // `handRefresh` arms, so the invariant holds of all six.
+    expect(carriers).toBe(6);
     expect(opLists).toBeGreaterThan(100);
     expect(derived).toBeGreaterThan(200);
   });

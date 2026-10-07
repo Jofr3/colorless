@@ -994,8 +994,8 @@ describe("D562 tools §7 — Handheld Fan, R-HF", () => {
 
 // ────────────────────────────────────────────────────────────────────────────
 describe("D562 tools §8 — `MATCH_RECORD_VERSION` holds at 35, and every 0.445 rollback reading named", () => {
-  it("the engine is 0.471.0", () => {
-    expect(engineVersion).toBe("0.471.0");
+  it("the engine is 0.472.0", () => {
+    expect(engineVersion).toBe("0.472.0");
   });
 
   it("a parked Klawf with a Tool-uid stage queued behind it revives identically through JSON", () => {

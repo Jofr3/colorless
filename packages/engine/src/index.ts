@@ -20253,6 +20253,21 @@ import type { GameState, Seat } from "./types";
     `expect(manifest.version)`, `it(…)` titles, the declaration and `package.json` —
     **not** as a value-keyed grep — because a value-keyed grep is precisely the mechanism
     that ate D500's heading.)
+    🆕🆕🆕 engineVersion 0.471.0 → **0.472.0** (D588 — WP22: TRAINER PARAMETERS II;
+    `MATCH_RECORD_VERSION` STAYS 42 (apps/api match.ts "STAYS 42 AT D588")). registry.ts keys 17 `me`
+    Trainer printings / 8 texts on EIGHT NEW objects: `CANARI` (×3; Earthen Vessel's hand cost over a
+    {L} Pokémon search at 4), `LILLIES_DETERMINATION` (×4; Lacey's if/else on `yourPrizesRemaining` [6],
+    8 else 6), `MISTYS_VITALITY` (×2; the derived `attachFromDeck` Basic {W} 4 `oneTarget` + shuffle,
+    with `trainerEndsTurn`), `ROSAS_ENCOURAGEMENT` (×3; `morePrizesThanOpponent` gate, `attachEnergyFrom`
+    discard `count: 2` with the NEW `stage2Only`), `RUST_SYNDICATE_GRUNT` (×2; the last-turn-KO gate over
+    Crushing Hammer's heads op), `WAITRESS` (Electric Generator's look at 6 / 1, any Basic Energy),
+    `HOLE_DIGGING_SHOVEL` (the derived `discardDeckTop self 2`) and `LUMIOSE_GALETTE` (Obliging Heal's
+    program at 20). One new rider: `AttachTargetRiders.stage2Only` (effects.ts, declared on
+    `attachEnergyFrom`), read in interpreter.ts `attachEnergyTargets` through `isStage2Pokemon` and
+    captioned by `attachTargetNoun` ("Stage 2 Pokémon"). Pokémon Center Lady `me01-123` is NOT keyed
+    (a heal-then-recover rider on the healed body is beyond the brief). Census: Standard pool trainers
+    356 / 447 (attacks 2480 / 2771, abilities 452 / 610, special energy 14 / 22 unmoved); 762 `me`
+    printings fully built. `trainerParamsMeD588.test.ts`.)
     🆕🆕🆕 engineVersion 0.470.0 → **0.471.0** (D587 — WP04: TRAINER PARAMETERS I;
     `MATCH_RECORD_VERSION` STAYS 42 (apps/api match.ts "STAYS 42 AT D587")). registry.ts keys 19 `me`
     Trainer printings / 9 texts on NINE NEW objects, each a built program's op at the printed parameter:
@@ -25169,7 +25184,7 @@ import type { GameState, Seat } from "./types";
     WITNESS** — the count was re-derived every slice and the word *"three"* was carried.
     A successor of this slice inherits **81 / 61 / 17** again, over **FIVE** history
     occurrences: those four plus `deckMillFilteredScale.test.ts`'s own header arrow.) */
-export const engineVersion = "0.471.0";
+export const engineVersion = "0.472.0";
 
 export type {
   ApplyResult,
