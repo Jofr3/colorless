@@ -670,6 +670,13 @@ export class CardView {
     }
   }
 
+  /** Brief wobble when a dragged evolution enters this Pokémon's slot. */
+  shake() {
+    if (!this.reducedMotion && !this.isDragging) {
+      this.juiceUp(0.025, (this.seed > 0.5 ? 1 : -1) * 0.12);
+    }
+  }
+
   private applyReleaseMotion(velocity: ReleaseVelocity, accepted: boolean) {
     if (accepted) {
       // Accepted drop: tiny velocity nudge gives a little overshoot before

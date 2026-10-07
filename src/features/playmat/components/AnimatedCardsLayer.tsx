@@ -127,6 +127,7 @@ interface DragState {
   // so we can snap the previously previewed zone back to canonical layout
   // when the cursor moves to a different zone.
   previewZone: { owner: PlayerId; zone: "hand" | "bench" } | null;
+  evolutionTargetId: string | null;
 }
 
 interface PressRevealState {
@@ -1478,6 +1479,7 @@ export function AnimatedCardsLayer({
       attachedCards,
       reorderIndex: null,
       previewZone: null,
+      evolutionTargetId: null,
     };
     dragRef.current = dragState;
 
@@ -1535,6 +1537,7 @@ export function AnimatedCardsLayer({
     view.dragTo(draggedX, draggedY);
     moveAttachedCardsWithHost(drag, draggedX, draggedY);
     updateTrainerPlayPreview(drag, point, event);
+    updateEvolutionPreview(drag, point, event);
 
     const nextPreviewZone = detectPreviewZone(drag, point);
 
@@ -1605,6 +1608,32 @@ export function AnimatedCardsLayer({
     drag.previewZone = nextPreviewZone;
   }
 
+  function updateEvolutionPreview(
+    drag: DragState,
+    point: { x: number; y: number },
+    event: PointerEvent,
+  ) {
+    let targetId: string | null = null;
+    if (drag.cardType === "pokemon" && drag.from.zone === "hand" && !shouldIgnorePointer(event)) {
+      const board = boardRef.current;
+      const card = board[drag.from.owner].hand.find((candidate) => candidate.id === drag.cardId);
+      const placement = findDropZone(point, drag.from, drag.cardType)?.placement;
+      if (placement?.owner === drag.from.owner) {
+        const target =
+          placement.zone === "active"
+            ? board[placement.owner].active
+            : placement.zone === "bench" && placement.index !== undefined
+              ? board[placement.owner].bench[placement.index]
+              : undefined;
+        if (target && card?.evolutionTargetIds?.includes(target.id)) targetId = target.id;
+      }
+    }
+    if (targetId !== null && targetId !== drag.evolutionTargetId) {
+      viewsRef.current.get(targetId)?.shake();
+    }
+    drag.evolutionTargetId = targetId;
+  }
+
   function detectPreviewZone(
     drag: DragState,
     point: { x: number; y: number },
@@ -1633,9 +1662,14 @@ export function AnimatedCardsLayer({
       // previews as a reorder or a compacted gap is the pointermove handler's
       // predicate call). External insertion requires the drop to be legal.
       const isSourceZone = drag.from.owner === owner && drag.from.zone === zone;
+      // An occupied bench slot can accept an evolution without adding a
+      // sibling. Only preview insertion when the whole zone accepts a new
+      // occupant, preserving the original slot index for evolution drops.
+      const previewTarget: CardPlacement =
+        zone === "bench" && !isSourceZone ? { owner, zone } : dz.placement;
       if (
         !isSourceZone &&
-        !placementPredicateRef.current(board, drag.from, dz.placement, drag.cardType)
+        !placementPredicateRef.current(board, drag.from, previewTarget, drag.cardType)
       ) {
         continue;
       }

@@ -37,6 +37,10 @@ export interface CardModel {
   name: string;
   cardId: string;
   type: CardType;
+  /** Printed Pokémon stage; absent on hidden cards and older sandbox models. */
+  stage?: string | null;
+  /** Current legal evolution hosts, computed by the engine for own hand cards. */
+  evolutionTargetIds?: readonly string[];
   imageUrl?: string;
   attached?: AttachedCards;
   /** Battle numbers + conditions for an in-play Pokémon top card; absent on

@@ -111,6 +111,10 @@ export const redactedCardSchema = z.object({
   category: cardCategorySchema,
   /** Trainer subtype (drives the Tool/Stadium/Item distinction); null off-Trainer. */
   trainerType: z.string().nullable(),
+  /** Printed Pokémon stage for placement previews; omitted on hidden cards. */
+  stage: z.string().nullable().optional(),
+  /** Legal evolution hosts for an own hand card; absent on hidden cards. */
+  evolutionTargetIds: z.array(z.string()).optional(),
   hasImage: z.boolean(),
 });
 export type RedactedCard = z.infer<typeof redactedCardSchema>;

@@ -76,6 +76,44 @@ function card() {
   return new CardView({ id: "test", name: "Test", textureUrl: "", seed: 0, reducedMotion: false });
 }
 
+describe("evolution target shake", () => {
+  it("wobbles in its slot and settles without changing its placement", () => {
+    const view = card();
+    const target: CardViewTarget = {
+      x: 240,
+      y: 250,
+      width: 80,
+      height: 110,
+      rotation: 0,
+      zIndex: 1,
+      placement: { owner: "you", zone: "bench", index: 0 },
+    };
+    view.setPresentationOptions({ slotLocked: true });
+    view.setTarget(target, true);
+    view.update(1 / 60, performance.now() / 1000);
+    const width = view.container.width;
+    const position = view.getPosition();
+    view.shake();
+    const time = performance.now() / 1000;
+    view.update(1 / 60, time + 0.04);
+    expect(view.container.width).not.toBeCloseTo(width);
+    expect(view.getPosition()).toEqual(position);
+    expect(view.placement).toEqual(target.placement);
+    view.update(1 / 60, time + 1);
+    expect(view.container.width).toBeCloseTo(width);
+    view.destroy();
+  });
+
+  it("respects reduced motion", () => {
+    const view = card();
+    view.setReducedMotion(true);
+    const width = view.container.width;
+    view.shake();
+    expect(view.container.width).toBe(width);
+    view.destroy();
+  });
+});
+
 describe("Prize flip entrance", () => {
   it("opens from edge-on to full width while staying in its slot", () => {
     const view = card();

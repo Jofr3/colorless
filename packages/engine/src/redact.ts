@@ -92,7 +92,7 @@ import {
   handCostUnmet,
 } from "./interpreter";
 import { inSetup, phaseViewOf } from "./phaseView";
-import { discardableTargets } from "./turn";
+import { discardableTargets, evolutionTargetUids } from "./turn";
 import { programFor } from "./registry";
 import type {
   GameOutcome,
@@ -1218,7 +1218,12 @@ function redactedSideOf(state: GameState, seat: Seat, visibility: SideVisibility
   const side = state.players[seat];
   return {
     hand: visibility.faceUpHand
-      ? side.hand.map((uid) => redactedCardOf(state, uid))
+      ? side.hand.map((uid) => {
+          const card = redactedCardOf(state, uid);
+          return card.category === "Pokemon"
+            ? { ...card, evolutionTargetIds: evolutionTargetUids(state, seat, uid) }
+            : card;
+        })
       : hiddenHand(side.hand.length),
     active:
       side.active === null
@@ -1305,6 +1310,7 @@ function redactedCardOf(state: GameState, uid: string): RedactedCard {
     name: card.name,
     category: card.category,
     trainerType: card.trainerType,
+    ...(card.category === "Pokemon" ? { stage: card.stage } : {}),
     hasImage: card.image !== null,
   };
 }

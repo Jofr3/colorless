@@ -25340,7 +25340,7 @@ export type {
 } from "./types";
 /** Exported for effect handlers: the shared turn gate every in-turn action
     runs first, and the M2 cost matcher. */
-export { turnGate } from "./turn";
+export { turnGate, evolutionTargetUids } from "./turn";
 /** 🆕🆕🆕 D576 — the actor's own spots whose top card (an Antique Fossil) may be discarded from
     play right now: the ONE offer funnel GameHud's buttons and the wire's `discardable` share. */
 export { discardableTargets } from "./turn";
