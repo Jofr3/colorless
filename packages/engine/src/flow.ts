@@ -2536,7 +2536,7 @@ function resolveTakePrizes(
 }
 
 /** Promote bench[index] into the empty Active spot (§8.1). The bench stays
-    dense — the same compaction rule retreat uses (events.ts RETREATED). */
+    dense by closing up the vacated slot. */
 function resolvePromotion(
   state: GameState,
   seat: Seat,

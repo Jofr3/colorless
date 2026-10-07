@@ -197,6 +197,7 @@ export function PlaymatView({
           turnNumber={turn.turn}
           activePlayer={turn.activePlayer}
           deckCounts={piles && { you: piles.you.deckCount, opponent: piles.opponent.deckCount }}
+          piles={piles}
           holdSetupReveal={setupAnimating && turn.turn > 0}
           onSetupAnimationChange={setSetupAnimation}
           onPendingMulliganDrawsChange={setPendingMulliganDraws}

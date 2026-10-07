@@ -551,7 +551,7 @@ describe("§10 sheds every entry, never one of them", () => {
       discardEnergy: active.energy.slice(0, 1),
       promoteBenchIndex: 0,
     });
-    expect(retreated.players.p1.bench.at(-1)?.lockedAttacks).toEqual([]);
+    expect(retreated.players.p1.bench[0]?.lockedAttacks).toEqual([]);
   });
 });
 

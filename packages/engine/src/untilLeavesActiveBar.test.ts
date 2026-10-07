@@ -526,7 +526,7 @@ describe("§5 — the bar is lifted by leaving the Active Spot, and by nothing e
       discardEnergy: active.energy.slice(0, 2),
       promoteBenchIndex: 0,
     });
-    const wasActive = retreated.players.p1.bench.at(-1);
+    const wasActive = retreated.players.p1.bench[0];
     expect(wasActive?.lockedAttacks ?? []).toEqual([]);
   });
 

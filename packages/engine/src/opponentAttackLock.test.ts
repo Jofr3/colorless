@@ -674,7 +674,7 @@ describe("§10 sheds it — every clear driven from the VICTIM's chair", () => {
       discardEnergy: must0(withEnergy.players.p2.active).energy.slice(0, 1),
       promoteBenchIndex: 0,
     });
-    expect(retreated.players.p2.bench.at(-1)?.lockedAttacks ?? []).toEqual([]);
+    expect(retreated.players.p2.bench[0]?.lockedAttacks ?? []).toEqual([]);
   });
 
   it("EVOLVING inside the window frees the barred attack — and points at NOTHING", () => {

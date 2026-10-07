@@ -12,6 +12,7 @@ import type {
   CardType,
   CardZone,
   PlayerId,
+  PileState,
   SidePosition,
 } from "../types";
 import { cardBackImageUrl } from "../pixi/cardBackTexture";
@@ -25,6 +26,7 @@ import {
 import { canPlace, type PlacementPredicate } from "../utils/cardMovement";
 import { shouldCollapseBenchAttachments } from "../utils/benchLayout";
 import { deckBackId, prizeBackId } from "../utils/piles";
+import { energyDiscardsBetween, type EnergyDiscardSnapshot } from "../utils/energyDiscards";
 import {
   BONUS_DEAL_DURATION,
   PRIZE_FLIP_DURATION,
@@ -65,6 +67,7 @@ interface AnimatedCardsLayerProps {
   turnNumber: number;
   activePlayer?: PlayerId;
   deckCounts?: Record<PlayerId, number>;
+  piles?: Record<PlayerId, PileState>;
   holdSetupReveal?: boolean;
   onSetupAnimationChange?: (stage: SetupAnimationStage | null) => void;
   onPendingMulliganDrawsChange?: (counts: Record<CardBackTone, number>) => void;
@@ -153,6 +156,18 @@ interface SetupFlight {
   started: boolean;
   landed: boolean;
 }
+
+interface DiscardFlight {
+  owner: PlayerId;
+  view: CardView;
+  startAt: number;
+  endsAt: number;
+  destination: CardViewTarget;
+  started: boolean;
+}
+
+const DISCARD_FLIGHT_DURATION = 0.65;
+const DISCARD_FLIGHT_STAGGER = 0.07;
 
 // Slightly larger than the CSS protrusion: the host Pokémon still covers the
 // extra painted area, but the attached card no longer looks overly sliced off
@@ -474,6 +489,7 @@ export function AnimatedCardsLayer({
   turnNumber,
   activePlayer = perspectivePlayer,
   deckCounts,
+  piles,
   holdSetupReveal = false,
   onSetupAnimationChange,
   onPendingMulliganDrawsChange,
@@ -485,6 +501,8 @@ export function AnimatedCardsLayer({
   const previousTurnRef = useRef(turnNumber);
   const previousSetupRef = useRef<SetupDealSnapshot | null>(null);
   const setupFlightsRef = useRef<SetupFlight[]>([]);
+  const previousDiscardRef = useRef<EnergyDiscardSnapshot | null>(null);
+  const discardFlightsRef = useRef<DiscardFlight[]>([]);
   const setupFlightSequenceRef = useRef(0);
   const setupAnimationRef = useRef<SetupAnimationStage | null>(null);
   const onSetupAnimationChangeRef = useRef(onSetupAnimationChange);
@@ -554,7 +572,10 @@ export function AnimatedCardsLayer({
       for (const view of viewsRef.current.values()) {
         view.setReducedMotion(event.matches);
       }
-      if (event.matches) clearSetupFlights();
+      if (event.matches) {
+        clearSetupFlights();
+        clearDiscardFlights();
+      }
     };
     query.addEventListener("change", handleChange);
     return () => query.removeEventListener("change", handleChange);
@@ -816,6 +837,104 @@ export function AnimatedCardsLayer({
       .filter((zone): zone is DropZoneSnapshot => Boolean(zone));
     positionTrainerUseLabel();
     measureSetupFlights();
+    measureDiscardFlights();
+  }
+
+  function discardTarget(owner: PlayerId): CardViewTarget | null {
+    const root = playmatRef.current;
+    const element = root?.querySelector<HTMLElement>(
+      `[data-card-pile="discard"][data-card-owner="${owner}"] > div`,
+    );
+    if (!root || !element) return null;
+    const rootRect = root.getBoundingClientRect();
+    const rect = element.getBoundingClientRect();
+    // The frame includes padding; the flight lands on the card inside it.
+    const card = element.querySelector<HTMLElement>("[data-discard-card], button");
+    const targetRect = card?.getBoundingClientRect() ?? rect;
+    if (targetRect.width === 0 || targetRect.height === 0) return null;
+    return {
+      x: targetRect.left - rootRect.left + targetRect.width / 2,
+      y: targetRect.top - rootRect.top + targetRect.height / 2,
+      width: targetRect.width,
+      height: targetRect.height,
+      rotation: 0,
+      zIndex: 10_000,
+      placement: { owner, zone: "stadium" },
+    };
+  }
+
+  function clearDiscardFlights() {
+    for (const flight of discardFlightsRef.current) flight.view.destroy();
+    discardFlightsRef.current = [];
+  }
+
+  function queueEnergyDiscards(snapshot: EnergyDiscardSnapshot) {
+    const previous = previousDiscardRef.current;
+    previousDiscardRef.current = snapshot;
+    if (
+      previous &&
+      (previous.turn !== snapshot.turn || previous.blueBackPlayer !== snapshot.blueBackPlayer)
+    ) {
+      clearDiscardFlights();
+    }
+    if (reducedMotionRef.current || !sceneRef.current) return;
+    const time = performance.now() / 1000;
+    for (const [index, { cardId, owner }] of energyDiscardsBetween(previous, snapshot).entries()) {
+      const view = viewsRef.current.get(cardId);
+      const source = view?.getTargetSnapshot();
+      const destination = discardTarget(owner);
+      if (!view || !source || !destination) continue;
+      // Transfer the existing face from the board to the flight before syncViews removes it.
+      viewsRef.current.delete(cardId);
+      view.setHovered(false);
+      view.stopPress();
+      view.setPresentationOptions({ slotLocked: true });
+      view.setTarget({ ...source, ...view.getPosition(), zIndex: 10_000 + index }, true);
+      const startAt = time + index * DISCARD_FLIGHT_STAGGER;
+      discardFlightsRef.current.push({
+        owner,
+        view,
+        startAt,
+        endsAt: startAt + DISCARD_FLIGHT_DURATION,
+        destination: { ...destination, zIndex: 10_000 + index },
+        started: false,
+      });
+    }
+  }
+
+  function measureDiscardFlights() {
+    for (const flight of discardFlightsRef.current) {
+      const target = discardTarget(flight.owner);
+      if (!target) continue;
+      const previous = flight.destination;
+      flight.destination = { ...target, zIndex: previous.zIndex };
+      if (
+        flight.started &&
+        (previous.x !== target.x ||
+          previous.y !== target.y ||
+          previous.width !== target.width ||
+          previous.height !== target.height)
+      ) {
+        flight.view.slingTo(flight.destination);
+      }
+    }
+  }
+
+  function advanceDiscardFlights(time: number, dt: number) {
+    const remaining: DiscardFlight[] = [];
+    for (const flight of discardFlightsRef.current) {
+      if (time >= flight.endsAt) {
+        flight.view.destroy();
+        continue;
+      }
+      if (!flight.started && time >= flight.startAt) {
+        flight.view.slingTo(flight.destination);
+        flight.started = true;
+      }
+      flight.view.update(dt, time);
+      remaining.push(flight);
+    }
+    discardFlightsRef.current = remaining;
   }
 
   function publishSetupAnimation(stage: SetupAnimationStage | null) {
@@ -2014,6 +2133,7 @@ export function AnimatedCardsLayer({
     previousSetupRef.current = snapshot;
     const turnChanged = previousTurnRef.current !== turnNumber;
     previousTurnRef.current = turnNumber;
+    queueEnergyDiscards({ board, piles, turn: turnNumber, blueBackPlayer });
     syncViews(descriptors, turnChanged || handoff);
     queueSetupDeals(deals);
     measureCards(turnChanged || handoff);
@@ -2025,6 +2145,7 @@ export function AnimatedCardsLayer({
     activePlayer,
     deckCounts?.you,
     deckCounts?.opponent,
+    piles,
   ]);
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: Pixi app lifecycle is tied to the mount node, not React render callbacks.
@@ -2048,6 +2169,7 @@ export function AnimatedCardsLayer({
         view.update(ticker.deltaMS / 1000, time);
       }
       advanceSetupFlights(time, ticker.deltaMS / 1000);
+      advanceDiscardFlights(time, ticker.deltaMS / 1000);
       positionTrainerUseLabel();
     };
 
@@ -2094,6 +2216,7 @@ export function AnimatedCardsLayer({
       }
       app?.ticker.remove(tick);
       clearSetupFlights(false);
+      clearDiscardFlights();
       for (const view of viewsRef.current.values()) {
         view.destroy();
       }

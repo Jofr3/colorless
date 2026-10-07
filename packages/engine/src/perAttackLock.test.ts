@@ -779,7 +779,7 @@ describe("§10 sheds it — the three clears, and the sweep that keeps them toge
       promoteBenchIndex: 0,
     });
     // The barred body is on the Bench now, carrying nothing.
-    const wasActive = retreated.players.p1.bench.at(-1);
+    const wasActive = retreated.players.p1.bench[0];
     expect(wasActive?.lockedAttacks ?? []).toEqual([]);
   });
 

@@ -44,20 +44,17 @@ import {
   attackAgainBarred,
   attackBarredByAbility,
   attackTimingBlocked,
-  effectiveRetreatCost,
   firstTurnAttackBanned,
   handPlayBarred,
   isImmobilized,
   lockedAttackIndexes,
   lockedAttackNames,
-  opposingRetreatBlocked,
   otherSeat,
   programFor,
   programPlayable,
   trainerProgramPlayable,
   providedEnergy,
   rareCandyOptions,
-  retreatLocked,
   STATUS_LABELS,
   topCardOf,
   topUid,
@@ -70,6 +67,7 @@ import {
   GLASS_PANEL,
 } from "../../lib/glass";
 import { EnergyDots } from "./EnergyDots";
+import { retreatOptionForGame } from "./retreat";
 import {
   ATTACK_ROW_BASE,
   PICK_ROW_BASE,
@@ -795,34 +793,10 @@ function TurnPanel(props: GameHudProps) {
   const attackAgainWindow = game.allowances.attackAgainUid !== null;
   const attackAgainBarredNow = attackAgainBarred(game, viewerSeat, active);
 
-  // THE retreat derivation site — RetreatDialog receives these as props. The
-  // cost is the CONTINUOUS one (§7.3 — Beach Court discounts Basics), the
-  // same number the engine's retreat handler will check.
-  const retreatCost = effectiveRetreatCost(game, active);
-  const canRetreat =
-    !immobilized &&
-    // §11 — an attack effect holding it in place ("the Defending Pokémon can't
-    // retreat"). Read off raw GameState: it is not a §12 condition, so it is
-    // deliberately absent from the projected/wire `conditions` shape.
-    //
-    // 🛑 D412 — THROUGH THE ENGINE'S OWN PREDICATE NOW, EXACTLY AS THE ATTACK LOCK
-    // ABOVE IS, AND THIS SITE IS WHY THAT RULE EXISTS. The fact lives in TWO fields
-    // since D412 — the imposed `retreatBlocked` and the self-installed
-    // `retreatLockedTurn` stamp — and this line read only the first. A body locked
-    // by its OWN attack would have been offered a retreat button that `retreat`
-    // then rejects with RETREAT_PREVENTED: an afford-then-reject, on the one board
-    // where the player has the card in front of them saying it should not be there.
-    // ⚠️ IT IS A THIRD READ SITE AND `redact.ts` IS ONLY THE SECOND — the wire twin
-    // is `redactedRetreatOf`'s `can`, and a slice that fixed the engine and the wire
-    // and stopped there would have left this one silently wrong (D213's shape).
-    !retreatLocked(game, active) &&
-    // §11 — the same hold from an opposing CONTINUOUS Ability (Snorlax "Block"),
-    // read live off both Active spots rather than off a flag on this Pokémon.
-    !opposingRetreatBlocked(game, active) &&
-    !game.allowances.retreated &&
-    !attackAgainWindow &&
-    side.bench.length > 0 &&
-    active.energy.length >= retreatCost;
+  // Share the engine-derived retreat gate with the bench-to-Active drag.
+  const retreat = retreatOptionForGame(game, viewerSeat);
+  const retreatCost = retreat?.cost ?? 0;
+  const canRetreat = retreat?.can ?? false;
 
   // Trainer/Ability plays (§7/§9) — read off raw GameState like payability
   // above (the acknowledged P4 blocker); the engine still owns fine legality.

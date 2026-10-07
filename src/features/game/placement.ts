@@ -4,7 +4,10 @@
 // the PHASE-AWARE gate the animation layer consults for drop-zone filtering,
 // the live previews and the accept/reject release animation.
 //
-// THE CONTRACT — deliberately COARSE, gesture-class not legality simulation:
+// Hand drops use a coarse gesture-class gate; bench-to-Active retreat uses
+// the engine-derived retreat option and is routed by useRetreatDrag, which
+// requests an energy choice when the Active has surplus attachments.
+// THE HAND-DROP CONTRACT — deliberately COARSE, gesture-class not legality simulation:
 // the predicate rejects only drops that can NEVER succeed — moveToAction
 // would translate them to null (nothing to dispatch, e.g. a hand reorder),
 // or the routed action is structurally impossible from this board (attaching
@@ -24,6 +27,7 @@
 import type { GameState, Phase, Seat } from "@luminous/engine";
 import { benchLimitFor } from "../playmat/constants";
 import type { PlacementPredicate } from "../playmat/utils/cardMovement";
+import { retreatOptionForGame, type RetreatOption } from "./retreat";
 
 /** The transport-agnostic slice of the phase the drop gate reads — a phase
     KIND, whether it is the viewer's own turn (`turn:action`), and whether the
@@ -35,17 +39,19 @@ export interface PlacementContext {
   isViewerTurn: boolean;
   isReady: boolean;
   bonusCards?: readonly string[];
+  retreat?: RetreatOption | null;
 }
 
 /** Local wrapper: derive the drop-gate context from the full engine state.
     `game` is the state the board was projected FROM, `viewerSeat` the seat it
-    was projected FOR. Memoizing on [game.phase, viewerSeat] is enough. */
+    was projected FOR. Memoize on [game, viewerSeat] to keep retreat legality current. */
 export function gamePlacementPredicate(game: GameState, viewerSeat: Seat): PlacementPredicate {
   const phase = game.phase;
   return placementPredicateFor({
     phaseKind: phase.kind,
     isViewerTurn: phase.kind === "turn:action" && phase.seat === viewerSeat,
     isReady: phase.kind === "setup:place" && phase.ready[viewerSeat],
+    retreat: retreatOptionForGame(game, viewerSeat),
     bonusCards:
       phase.kind === "setup:place" && phase.stage === "bonus"
         ? (phase.bonusCards?.[viewerSeat] ?? [])
@@ -58,6 +64,19 @@ export function gamePlacementPredicate(game: GameState, viewerSeat: Seat): Place
     own side is always "you"), so the context alone — no seat — closes it. */
 export function placementPredicateFor(ctx: PlacementContext): PlacementPredicate {
   return (board, source, target, sourceType) => {
+    if (source.owner === "you" && source.zone === "bench") {
+      return (
+        ctx.phaseKind === "turn:action" &&
+        ctx.isViewerTurn &&
+        ctx.retreat?.can === true &&
+        sourceType === "pokemon" &&
+        source.index !== undefined &&
+        board.you.bench[source.index]?.type === "pokemon" &&
+        target.owner === "you" &&
+        target.zone === "active" &&
+        board.you.active?.type === "pokemon"
+      );
+    }
     if (ctx.phaseKind === "effect:choose" && board.energyChoice !== undefined) {
       if (
         source.owner === "you" &&
@@ -84,7 +103,7 @@ export function placementPredicateFor(ctx: PlacementContext): PlacementPredicate
     // Every translatable move starts in the viewer's own hand and lands on
     // their own board — moveToAction's first gate, mirrored here so a drag
     // that would translate to null never shows a legal-drop affordance.
-    // (Board-to-board drags — retreat, promotion — are dialog flows.) The
+    // (Bench-to-Active retreat is handled above.) The
     // one shared exception, also mirrored: a Stadium aimed at the global
     // stadium slot (§7.3).
     if (source.owner !== "you" || source.zone !== "hand") return false;

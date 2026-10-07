@@ -134,11 +134,10 @@ export type GameEvent =
   | { type: "TURN_STARTED"; turn: number; seat: Seat }
   | { type: "ENERGY_ATTACHED"; seat: Seat; uid: string; target: PokemonTarget }
   /** `retreated`/`promoted` are the top uids of the two stacks that swapped.
-      The bench stays dense, so the swap re-indexes it: the promoted Pokémon
-      vacates `promotedFrom` (everything after it slides down one) and the
-      retreater lands at `benchedTo`. Both indices are in the payload so an
+      The bench stays dense: the retreater fills the promoted Pokémon's
+      `promotedFrom` slot at `benchedTo`. Both indices are in the payload so an
       animator — or a P4 client addressing the bench positionally — never has
-      to re-derive the reducer's compaction rule. `discardedEnergy` lists the
+      to re-derive the reducer's placement rule. `discardedEnergy` lists the
       cost payment in the order the discard pile gained it (§2 — pile order,
       i.e. attachment order), NOT the order the action named them — the same
       contract as KNOCKED_OUT's `discarded`. */
@@ -1181,8 +1180,8 @@ export type GameEvent =
   /** `seat` must promote a benched Pokémon into the empty Active spot
       (§8.1) — the ko:promote prompt twin of PRIZES_OWED. */
   | { type: "PROMOTION_REQUIRED"; seat: Seat }
-  /** `uid` (top of its stack) moved bench → Active; the bench compacts the
-      same way RETREATED describes. */
+  /** `uid` (top of its stack) moved bench → Active; the vacated bench slot
+      closes up. */
   | { type: "POKEMON_PROMOTED"; seat: Seat; uid: string; benchIndex: number }
   // — M4 Trainer / Ability plays (§7/§9) and the effect ops they run (§15). —
   /** `seat` played a Trainer `uid` from hand. Where the card LANDS follows
@@ -2080,8 +2079,9 @@ export type GameEvent =
   /** An effect switched `seat`'s Active with their benched `nowActive`
       (Switch / Boss's Orders gust): the old Active (`wasActive`) went to the
       bench from `fromBench`'s freed slot and landed at `toBench`; the bench
-      compacts like RETREATED. Conditions cleared on the outgoing Active are a
-      separate STATUS_CLEARED reason "benched". No energy is paid (not a retreat). */
+      compacts and the old Active is appended. Conditions cleared on the
+      outgoing Active are a separate STATUS_CLEARED reason "benched".
+      No energy is paid (not a retreat). */
   | {
       type: "POKEMON_SWITCHED";
       seat: Seat;

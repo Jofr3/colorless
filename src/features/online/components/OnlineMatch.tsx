@@ -5,6 +5,7 @@ import { TransientErrorPill } from "../../../components/TransientErrorPill";
 import { GLASS_HUD_BUTTON, SOLID_PRIMARY_BUTTON } from "../../../lib/glass";
 import { moveToAction } from "../../game/moveToAction";
 import { placementPredicateFor } from "../../game/placement";
+import { useRetreatDrag } from "../../game/useRetreatDrag";
 import { usableTrainerIdsFromRedacted } from "../../game/trainerUse";
 import { GAME_OVER_DETAIL, projectionFromRedacted } from "../../game/projection";
 import { viewLogEntries } from "../../game/viewLog";
@@ -116,15 +117,32 @@ export function OnlineMatch({
   const phaseKind = game.phase.kind;
   const isViewerTurn = phaseKind === "turn:action" && projection.activePlayer === "you";
   const usableTrainerIds = useMemo(() => usableTrainerIdsFromRedacted(game), [game]);
+  const retreat = !spectating && game.phase.kind === "turn:action" ? game.phase.retreat : null;
+  const { handleRetreatDrag, retreatDialog } = useRetreatDrag({
+    board,
+    retreat,
+    seat,
+    dispatch: onAction,
+  });
 
   const handleMove = useCallback(
     (request: CardMoveRequest) => {
       if (spectating) return;
+      if (handleRetreatDrag(request)) return;
       if (request.to.zone === "playmat" && !usableTrainerIds.has(request.cardId)) return;
       const action = moveToAction(request, { phaseKind, isViewerTurn, viewerSeat: seat, board });
       if (action !== null) onAction(action);
     },
-    [phaseKind, isViewerTurn, seat, board, onAction, spectating, usableTrainerIds],
+    [
+      phaseKind,
+      isViewerTurn,
+      seat,
+      board,
+      onAction,
+      spectating,
+      usableTrainerIds,
+      handleRetreatDrag,
+    ],
   );
 
   // The same drop-legality gate the local page uses, from the redacted phase —
@@ -137,13 +155,14 @@ export function OnlineMatch({
         : placementPredicateFor({
             phaseKind,
             isViewerTurn,
+            retreat,
             isReady: game.phase.kind === "setup:place" && game.phase.ready.you,
             bonusCards:
               game.phase.kind === "setup:place" && game.phase.stage === "bonus"
                 ? (game.phase.bonusCards ?? [])
                 : undefined,
           }),
-    [phaseKind, isViewerTurn, game.phase, spectating],
+    [phaseKind, isViewerTurn, game.phase, spectating, retreat],
   );
 
   const turnInfo: TurnInfo = {
@@ -206,6 +225,7 @@ export function OnlineMatch({
       logEntries={logEntries}
       piles={projection.piles}
     >
+      {retreatDialog}
       {/* Every control below is for a SEATED player. A spectator gets the board,
           the log and the result — nothing that acts on the game. */}
       {!spectating && (

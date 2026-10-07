@@ -67,8 +67,8 @@ export function moveToAction(
   }
   // Every translatable move starts in the viewer's own hand: setup places,
   // attachments, bench plays and Trainer plays all come from hand. Board-to-board drags
-  // (bench reorder, active swap) have no M2 action — retreat and promotion go
-  // through their dialogs, where the cost/choice is explicit.
+  // are handled separately: useRetreatDrag pays the retreat cost or opens
+  // its energy choice before dispatching the swap.
   if (from.owner !== "you" || from.zone !== "hand") return null;
   // The one non-own drop target: the SHARED stadium slot (owner "global" —
   // §7.3, one zone for both players). Everything else must land on the

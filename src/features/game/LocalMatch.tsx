@@ -9,6 +9,8 @@ import { GameHud } from "./GameHud";
 import { TabletopDice } from "./TabletopDice";
 import { moveToAction } from "./moveToAction";
 import { gamePlacementPredicate } from "./placement";
+import { retreatOptionForGame } from "./retreat";
+import { useRetreatDrag } from "./useRetreatDrag";
 import { usableTrainerIdsForGame } from "./trainerUse";
 import { useLocalGame, type LocalGameSetup } from "./useLocalGame";
 
@@ -61,12 +63,19 @@ export function LocalMatch({
   // Other translated actions retain their usual rejection feedback.
   const phase = game.phase;
   const board = projection.board;
+  const { handleRetreatDrag, retreatDialog } = useRetreatDrag({
+    board,
+    retreat: tossing ? null : retreatOptionForGame(game, viewerSeat),
+    seat: viewerSeat,
+    dispatch,
+  });
   const usableTrainerIds = useMemo(
     () => usableTrainerIdsForGame(game, viewerSeat),
     [game, viewerSeat],
   );
   const handleMoveCard = useCallback(
     (request: CardMoveRequest) => {
+      if (handleRetreatDrag(request)) return;
       const action = moveToAction(request, {
         phaseKind: phase.kind,
         isViewerTurn: phase.kind === "turn:action" && phase.seat === viewerSeat,
@@ -76,14 +85,10 @@ export function LocalMatch({
       if (request.to.zone === "playmat" && !usableTrainerIds.has(request.cardId)) return;
       if (action !== null) dispatch(action);
     },
-    [phase, viewerSeat, board, dispatch, usableTrainerIds],
+    [phase, viewerSeat, board, dispatch, usableTrainerIds, handleRetreatDrag],
   );
 
-  // Drop affordances follow the same phase the translator routes by, so the
-  // layer never previews a gesture-class moveToAction would null. The factory
-  // reads only phase + seat (occupancy comes from the board at call time);
-  // the layer snapshots the prop via ref, so this memo is tidiness, not
-  // correctness.
+  // Drop affordances follow the phase and the current retreat legality.
   const placementPredicate = useMemo(
     () => gamePlacementPredicate(game, viewerSeat),
     [game, viewerSeat],
@@ -141,6 +146,7 @@ export function LocalMatch({
       leaveConfirm={leaveConfirm}
       onLeave={onLeave}
     >
+      {retreatDialog}
       {!tossing && (
         <GameHud
           game={game}

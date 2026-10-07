@@ -637,7 +637,7 @@ describe("promotedTurn — the state itself", () => {
     expect(retreated.players.p1.active?.promotedTurn).toBe(retreated.turn);
     // The RETREATER went the other way and was never promoted — the stamp is
     // per-Pokémon, so the body that left the spot keeps its null.
-    expect(retreated.players.p1.bench.at(-1)?.promotedTurn).toBeNull();
+    expect(retreated.players.p1.bench[0]?.promotedTurn).toBeNull();
     expect(conditionHolds(retreated, "p1", COND)).toBe(true);
   });
 

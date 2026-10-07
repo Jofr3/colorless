@@ -828,7 +828,7 @@ describe("§10 sheds it — and here that is a LOSS rather than an escape", () =
       discardEnergy: must0(window.players.p1.active).energy.slice(0, 1),
       promoteBenchIndex: 0,
     });
-    const wasActive = retreated.players.p1.bench.at(-1);
+    const wasActive = retreated.players.p1.bench[0];
     expect(wasActive?.boostedAttack ?? null).toBeNull();
   });
 

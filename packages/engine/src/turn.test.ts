@@ -251,9 +251,9 @@ describe("retreat", () => {
     // is: it moved up from the Bench on this turn (D124's `promotedTurn`).
     expect(next.players.p1.active).toEqual({ ...promoted, promotedTurn: state.turn });
     expect(promoted.promotedTurn).toBeNull();
-    // The retreater sits at the end of the (dense) bench, cost discarded.
-    expect(next.players.p1.bench.at(-1)?.stack).toEqual(retreater.stack);
-    expect(next.players.p1.bench.at(-1)?.energy).toEqual([]);
+    // The retreater fills the promoted Pokémon's slot, cost discarded.
+    expect(next.players.p1.bench[0]?.stack).toEqual(retreater.stack);
+    expect(next.players.p1.bench[0]?.energy).toEqual([]);
     expect(next.players.p1.discard).toContain(energy);
     expect(events).toEqual([
       {
@@ -265,7 +265,7 @@ describe("retreat", () => {
         retreated: topUid(retreater),
         promoted: topUid(promoted),
         promotedFrom: 0,
-        benchedTo: next.players.p1.bench.length - 1,
+        benchedTo: 0,
         discardedEnergy: [energy],
       },
     ]);

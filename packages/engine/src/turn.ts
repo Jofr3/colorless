@@ -1011,13 +1011,11 @@ export function retreat(state: GameState, action: RetreatAction): ApplyResult {
   // (types.ts) — the same primitive KO cleanup uses.
   const paid = discardFromStack(side, active, chosenSet);
   const benched = clearOnLeavingActive(paid.pokemon);
-  // The bench stays dense: the promoted Pokémon's slot closes up and the
-  // retreater goes to the end. Both indices ride along on the event so
-  // consumers never re-derive this rule (events.ts).
+  // Swap into the promoted Pokémon's bench slot, preserving the other slots.
   const bench = [
     ...side.bench.slice(0, promoteBenchIndex),
-    ...side.bench.slice(promoteBenchIndex + 1),
     benched,
+    ...side.bench.slice(promoteBenchIndex + 1),
   ];
   const next: GameState = {
     ...withSide(state, action.seat, {
@@ -1036,7 +1034,7 @@ export function retreat(state: GameState, action: RetreatAction): ApplyResult {
       retreated: activeTopUid,
       promoted: promotedTopUid,
       promotedFrom: promoteBenchIndex,
-      benchedTo: bench.length - 1,
+      benchedTo: promoteBenchIndex,
       // In PILE order (discardFromStack appends stack → energy → tools, so a
       // cost payment lands in attachment order), NOT the caller's chosen
       // order — the event reports what the public, ordered pile gained (§2),

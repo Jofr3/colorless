@@ -551,7 +551,7 @@ describe("§5 — retreat, a forced switch and evolution each clear it", () => {
       discardEnergy: must0(window.players.p1.active).energy.slice(0, 1),
       promoteBenchIndex: 0,
     });
-    const wasActive = state.players.p1.bench.at(-1);
+    const wasActive = state.players.p1.bench[0];
     expect(state.cardIdByUid[wasActive?.stack[0] ?? ""]).toBe("d544-fang");
     expect(wasActive?.boostedAttack ?? null).toBeNull();
   });

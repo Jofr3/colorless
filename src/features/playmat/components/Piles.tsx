@@ -148,7 +148,7 @@ export function DiscardPile({ owner, discard }: { owner: PlayerId; discard?: Car
   // discard cards are not board zones. Mock (prop absent) keeps the empty frame.
   const top = discard === undefined ? undefined : discard[discard.length - 1];
   return (
-    <div className="relative inline-block">
+    <div className="relative inline-block" data-card-pile="discard" data-card-owner={owner}>
       <PileFrame>
         {top === undefined ? (
           discard === undefined ? (
