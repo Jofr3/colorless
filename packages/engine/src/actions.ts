@@ -40,6 +40,15 @@ export interface SetupReadyAction {
   seat: Seat;
 }
 
+export interface ReorderBenchAction {
+  type: "reorderBench";
+  seat: Seat;
+  /** Current top-card uid, so a stale drag cannot move a different Pokémon. */
+  uid: string;
+  /** Final position in the bench, after removing the dragged Pokémon. */
+  index: number;
+}
+
 export interface AttachEnergyAction {
   type: "attachEnergy";
   seat: Seat;
@@ -190,6 +199,7 @@ export type GameAction =
   | SetupPlaceActiveAction
   | SetupPlaceBenchAction
   | SetupReadyAction
+  | ReorderBenchAction
   | AttachEnergyAction
   | PlayBasicToBenchAction
   | EvolveAction

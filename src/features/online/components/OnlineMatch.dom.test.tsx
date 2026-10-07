@@ -124,6 +124,59 @@ it("passes from the restored right-side control only on the viewer's turn", () =
   expect(onAction).toHaveBeenCalledTimes(1);
 });
 
+it("routes bench reordering online and renders the server's accepted order", () => {
+  const first = active("Sneasel-a");
+  const second = active("Sneasel-b");
+  const third = active("Sneasel-c");
+  const bench = [first, second, third];
+  const game = { ...GAME, board: { ...GAME.board, you: { ...GAME.board.you, bench } } };
+  const onAction = vi.fn();
+  const match = (snapshot: RedactedGame, spectating = false) => (
+    <MemoryRouter>
+      <OnlineMatch
+        game={snapshot}
+        log={[]}
+        youName="You"
+        opponentName="Opp"
+        opponentAway={null}
+        actionError={null}
+        onAction={onAction}
+        onRematch={vi.fn()}
+        spectating={spectating}
+      />
+    </MemoryRouter>
+  );
+  const { rerender } = render(match(game));
+  const props = cardsLayer.mock.calls.at(-1)?.[0] as PlaymatViewProps;
+  const request = {
+    cardId: "Sneasel-a",
+    from: { owner: "you", zone: "bench", index: 0 },
+    to: { owner: "you", zone: "bench", index: 2 },
+  } as const;
+  expect(props.placementPredicate?.(props.board, request.from, request.to, "pokemon")).toBe(true);
+  props.onMoveCard(request);
+  expect(onAction).toHaveBeenCalledExactlyOnceWith({
+    type: "reorderBench",
+    seat: "p1",
+    uid: "Sneasel-a",
+    index: 2,
+  });
+  const reordered = [second, third, first];
+  rerender(
+    match({ ...game, board: { ...game.board, you: { ...game.board.you, bench: reordered } } }),
+  );
+  expect(
+    cardsLayer.mock.calls.at(-1)?.[0].board.you.bench.map((card: { id: string }) => card.id),
+  ).toEqual(reordered.map((card) => card.id));
+  rerender(match(game, true));
+  const watching = cardsLayer.mock.calls.at(-1)?.[0] as PlaymatViewProps;
+  expect(watching.placementPredicate?.(watching.board, request.from, request.to, "pokemon")).toBe(
+    false,
+  );
+  watching.onMoveCard(request);
+  expect(onAction).toHaveBeenCalledTimes(1);
+});
+
 it("takes the full online mulligan bonus once, without showing a prompt", () => {
   const created = mustCreate(1, { p1: ONE_BASIC_DECK, p2: ONE_BASIC_DECK });
   if (created.state.phase.kind !== "setup:chooseFirst") throw new Error("Expected coin choice");

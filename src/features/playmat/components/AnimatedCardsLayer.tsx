@@ -1576,7 +1576,7 @@ export function AnimatedCardsLayer({
     // fewer card while the player is staging a play onto the bench. Whether
     // sliding into a NEW slot is even possible is the predicate's call: the
     // mock's canPlace allows hand/bench reorders, while /play's phase-aware
-    // gate rejects them (the engine owns zone order) — and previewing a
+    // gate allows bench reorders during setup and the viewer's turn. Previewing a
     // reorder that can never dispatch would be a lie, so an illegal source
     // reorder previews as "compact" too and the drop springs back.
     if (

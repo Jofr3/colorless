@@ -65,6 +65,19 @@ export function gamePlacementPredicate(game: GameState, viewerSeat: Seat): Place
 export function placementPredicateFor(ctx: PlacementContext): PlacementPredicate {
   return (board, source, target, sourceType) => {
     if (source.owner === "you" && source.zone === "bench") {
+      if (target.owner === "you" && target.zone === "bench") {
+        return (
+          ((ctx.phaseKind === "setup:place" && !ctx.isReady) ||
+            (ctx.phaseKind === "turn:action" && ctx.isViewerTurn)) &&
+          sourceType === "pokemon" &&
+          source.index !== undefined &&
+          board.you.bench[source.index]?.type === "pokemon" &&
+          (target.index === undefined ||
+            (Number.isInteger(target.index) &&
+              target.index >= 0 &&
+              target.index < board.you.bench.length))
+        );
+      }
       return (
         ctx.phaseKind === "turn:action" &&
         ctx.isViewerTurn &&
@@ -100,10 +113,10 @@ export function placementPredicateFor(ctx: PlacementContext): PlacementPredicate
         )
       );
     }
-    // Every translatable move starts in the viewer's own hand and lands on
+    // The remaining translatable moves start in the viewer's own hand and land on
     // their own board — moveToAction's first gate, mirrored here so a drag
     // that would translate to null never shows a legal-drop affordance.
-    // (Bench-to-Active retreat is handled above.) The
+    // (Bench reordering and bench-to-Active retreat are handled above.) The
     // one shared exception, also mirrored: a Stadium aimed at the global
     // stadium slot (§7.3).
     if (source.owner !== "you" || source.zone !== "hand") return false;

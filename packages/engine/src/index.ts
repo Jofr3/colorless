@@ -21,6 +21,7 @@
 import type { ApplyResult, GameAction } from "./actions";
 import { err, ok } from "./actions";
 import { attack, promote, takePrizes } from "./attack";
+import { reorderBench } from "./bench";
 import {
   attachTool,
   playTrainer,
@@ -25088,6 +25089,7 @@ export type {
   PlayTrainerAction,
   PromoteAction,
   RareCandyAction,
+  ReorderBenchAction,
   ResolveEffectAction,
   RetreatAction,
   SetupDrawExtraAction,
@@ -25398,6 +25400,8 @@ function dispatchAction(state: GameState, action: GameAction): ApplyResult {
       return setupPlaceBench(state, action);
     case "setupReady":
       return setupReady(state, action);
+    case "reorderBench":
+      return reorderBench(state, action);
     case "attachEnergy":
       return attachEnergy(state, action);
     case "playBasicToBench":

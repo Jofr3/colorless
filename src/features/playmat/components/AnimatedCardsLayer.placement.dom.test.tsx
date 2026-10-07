@@ -181,6 +181,39 @@ function pointer(target: HTMLElement | Window, type: string, x: number, y: numbe
   fireEvent(target, event);
 }
 
+it.each([
+  ["bench-0", 0, 1, 240, 360],
+  ["bench-1", 1, 0, 340, 220],
+] as const)(
+  "previews and drops %s into a new bench position",
+  async (id, fromIndex, toIndex, startX, endX) => {
+    const onMove = vi.fn();
+    const { getByTestId } = render(<Scene stage="Basic" onMove={onMove} />);
+    await waitFor(() => expect(view(id).target).toBeTruthy());
+    const sibling = view(fromIndex === 0 ? "bench-1" : "bench-0");
+    const previousX = sibling.target.x;
+    pointer(getByTestId("root"), "pointerdown", startX, 250);
+    pointer(getByTestId("root"), "pointermove", endX, 250);
+    expect(sibling.target.x).not.toBe(previousX);
+    pointer(window, "pointerup", endX, 250);
+    expect(onMove).toHaveBeenCalledExactlyOnceWith({
+      cardId: id,
+      from: { owner: "you", zone: "bench", index: fromIndex },
+      to: { owner: "you", zone: "bench", index: toIndex },
+    });
+  },
+);
+
+it("rejects bench reorder drops during the opponent's turn", async () => {
+  const onMove = vi.fn();
+  const { getByTestId } = render(<Scene stage="Basic" onMove={onMove} isViewerTurn={false} />);
+  await waitFor(() => expect(view("bench-0").target).toBeTruthy());
+  pointer(getByTestId("root"), "pointerdown", 240, 250);
+  pointer(getByTestId("root"), "pointermove", 360, 250);
+  pointer(window, "pointerup", 360, 250);
+  expect(onMove).not.toHaveBeenCalled();
+});
+
 it.each(["Stage1", "Stage2", "VMAX", "VSTAR"])(
   "keeps Bench cards still and preserves the occupied drop slot for %s",
   async (stage) => {

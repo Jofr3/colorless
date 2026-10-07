@@ -2378,6 +2378,7 @@ export const MATCH_ACTION_DISPOSITION = {
   setupPlaceActive: "supported",
   setupPlaceBench: "supported",
   setupReady: "supported",
+  reorderBench: "supported",
   attachEnergy: "supported",
   playBasicToBench: "supported",
   evolve: "supported",

@@ -31,6 +31,21 @@ export function moveToAction(
   ctx: MoveTranslationContext,
 ): GameAction | null {
   const { from, to, cardId } = request;
+  if (from.owner === "you" && from.zone === "bench" && to.owner === "you" && to.zone === "bench") {
+    if (ctx.phaseKind !== "setup:place" && !(ctx.phaseKind === "turn:action" && ctx.isViewerTurn))
+      return null;
+    const fromIndex = ctx.board.you.bench.findIndex((card) => card.id === cardId);
+    const index = to.index ?? ctx.board.you.bench.length - 1;
+    if (
+      fromIndex < 0 ||
+      from.index !== fromIndex ||
+      !Number.isInteger(index) ||
+      index < 0 ||
+      index >= ctx.board.you.bench.length
+    )
+      return null;
+    return { type: "reorderBench", seat: ctx.viewerSeat, uid: cardId, index };
+  }
   if (ctx.phaseKind === "effect:choose" && ctx.board.energyChoice !== undefined) {
     const choice = ctx.board.energyChoice;
     if (from.owner !== "you" || from.zone !== "choice" || to.owner !== "you") return null;
@@ -65,8 +80,8 @@ export function moveToAction(
       choice: { kind: "confirm", yes: index === 0, target: { seat: ctx.viewerSeat, spot } },
     };
   }
-  // Every translatable move starts in the viewer's own hand: setup places,
-  // attachments, bench plays and Trainer plays all come from hand. Board-to-board drags
+  // The remaining translatable moves start in the viewer's own hand: setup places,
+  // attachments, bench plays and Trainer plays all come from hand. Bench-to-Active drags
   // are handled separately: useRetreatDrag pays the retreat cost or opens
   // its energy choice before dispatching the swap.
   if (from.owner !== "you" || from.zone !== "hand") return null;

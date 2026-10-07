@@ -67,6 +67,40 @@ function renderMatch() {
 }
 
 describe("LocalMatch HUD across turns", () => {
+  it("reorders the bench by drag and saves the complete Pokémon in the new order", () => {
+    const state = driveSetup(
+      3,
+      { p1: ALL_BASIC_DECK, p2: ALL_BASIC_DECK },
+      {
+        first: "p1",
+        bench: { p1: Array(5).fill("fix-basic-1") },
+      },
+    );
+    const onSave = vi.fn();
+    render(
+      <MemoryRouter>
+        <LocalMatch
+          setup={{ state, events: [], names: { p1: "One", p2: "Two" }, startedAt: 0 }}
+          onPlayAgain={() => {}}
+          onSave={onSave}
+        />
+      </MemoryRouter>,
+    );
+    const props = cardsLayer.mock.calls.at(-1)?.[0] as PlaymatViewProps;
+    const first = props.board.you.bench[0];
+    if (first === undefined) throw new Error("Expected a benched Pokémon");
+    const from = { owner: "you", zone: "bench", index: 0 } as const;
+    const to = { owner: "you", zone: "bench", index: 4 } as const;
+    expect(props.placementPredicate?.(props.board, from, to, "pokemon")).toBe(true);
+    act(() => props.onMoveCard({ cardId: first.id, from, to }));
+    const current = cardsLayer.mock.calls.at(-1)?.[0] as PlaymatViewProps;
+    expect(current.board.you.bench).toEqual([...props.board.you.bench.slice(1), first]);
+    expect(onSave.mock.calls.at(-1)?.[0].state.players.p1.bench).toEqual([
+      ...state.players.p1.bench.slice(1),
+      state.players.p1.bench[0],
+    ]);
+    expect(screen.queryByRole("alert")).toBeNull();
+  });
   it("keeps the current turn and revealed board during a turn draw, then restores the actions", () => {
     renderMatch();
     act(() => cardsLayer.mock.calls.at(-1)?.[0].onSetupAnimationChange("turn-draw"));

@@ -275,6 +275,42 @@ function expectLockstep(state: GameState, viewerSeat: Seat, phase?: Phase): void
 }
 
 describe("gamePlacementPredicate ↔ moveToAction lockstep", () => {
+  it("reorders a full bench during setup and a turn, including dropping onto the frame", () => {
+    for (const state of [benchFullPlacingState(), benchFullTurnState()]) {
+      const board = projectGameState(state, "p1").board;
+      const card = board.you.bench[0];
+      if (card === undefined) throw new Error("Expected a benched Pokémon");
+      const from = { owner: "you", zone: "bench", index: 0 } as const;
+      const predicate = gamePlacementPredicate(state, "p1");
+      for (const index of [1, 4, undefined]) {
+        const to = { owner: "you", zone: "bench", index } as const;
+        expect(predicate(board, from, to, "pokemon")).toBe(true);
+        const action = moveToAction(
+          { cardId: card.id, from, to },
+          moveCtx(state.phase, "p1", board),
+        );
+        expect(action).toEqual({
+          type: "reorderBench",
+          seat: "p1",
+          uid: card.id,
+          index: index ?? 4,
+        });
+        if (action === null) throw new Error("Expected reorder action");
+        const applied = applyAction(state, action);
+        expect(applied.ok).toBe(true);
+        if (!applied.ok) throw new Error(applied.error.message);
+        const projected = projectGameState(applied.state, "p1").board;
+        expect(projected.you.bench[index ?? 4]?.id).toBe(card.id);
+        expect(projected.you.bench).toHaveLength(5);
+      }
+      expect(
+        moveToAction(
+          { cardId: "stale-id", from, to: { owner: "you", zone: "bench", index: 1 } },
+          moveCtx(state.phase, "p1", board),
+        ),
+      ).toBeNull();
+    }
+  });
   it("holds through setup:place (fresh, mid-placement, ready, bench-capped)", () => {
     expectLockstep(placingState(), "p1");
     expectLockstep(placingState(), "p2");
