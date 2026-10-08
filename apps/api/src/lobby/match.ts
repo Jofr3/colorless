@@ -2159,6 +2159,14 @@ export interface MatchRecord {
     `turn:action.discardable` — 🛑 **DEPLOY THE SERVER FIRST**: an old client's `z.object` STRIPS
     the unknown key, while a new client's REQUIRED key refuses an old server's frame.
 
+    🆕🆕🆕 **STAYS 42 AT D602 — WP20b ADDS NO OP, KEY, GameState, PendingStage, PROMPT, EVENT OR WIRE KEY.**
+    (Placed ABOVE the D600 block.) Nine `me` Pokémon ids are keyed on six new `abilities` objects built
+    from shipped ops and fields only (`searchDeck`, `shuffleDeck`, `coinFlipGate`, `healChosen`,
+    `healEach`, `attachFromDeck`, `playableIf`, `requiresEnergyType`, `benchOnly`); their parks are
+    the shapes those ops already persist. Programs are looked up by id, and no card row is read
+    differently, so a v42 match holding these faces in its `cardPool` gains the Abilities mid-match
+    (a 0.484 rollback puts them back to unusable).
+
     🆕🆕🆕 **STAYS 42 AT D600 — WP14 + WP33b ADD NO OP, GameState, PendingStage, PROMPT, EVENT OR WIRE KEY.**
     (Placed ABOVE the D599 block.) Five `BoardCondition` members and a `DamageCountSource` member
     (`cardsInYourHand`) are read off the board at attack time and never persisted. `damageActive`

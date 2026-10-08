@@ -475,7 +475,7 @@ describe("§1 — the prints and the registry rows", () => {
     }
   });
 
-  it("🛑 `benchOnly` is carried by exactly Flustered Leap's two ids, and NO row pairs it with `activeOnly`", () => {
+  it("🛑 `benchOnly` is carried by exactly Flustered Leap's two ids, and NO row pairs it with `activeOnly` (🆕🆕🆕 D602 (D539): \"exactly Flustered Leap's two ids\" is WITHDRAWN as a live figure — plus Solgaleo `30th-105` \"Sunrise\")", () => {
     const benchOnly: string[] = [];
     for (const id of registryCardIds()) {
       for (const ability of programFor(id)?.abilities ?? []) {
@@ -484,7 +484,8 @@ describe("§1 — the prints and the registry rows", () => {
         expect(ability.activeOnly && ability.benchOnly === true, id).toBe(false);
       }
     }
-    expect(benchOnly.sort()).toEqual([...PSYDUCK].sort());
+    // 🆕🆕🆕 D602 — Solgaleo `30th-105` "Sunrise" prints the same Bench clause (`SUNRISE`).
+    expect(benchOnly.sort()).toEqual([...PSYDUCK, "30th-105"].sort());
   });
 
   it("the TRIGGERED `oncePerTurn` is carried by Zero to Hero alone", () => {
@@ -498,8 +499,8 @@ describe("§1 — the prints and the registry rows", () => {
     expect(abilityUsedKey("p1#7", zero)).toBe("p1#7:Zero to Hero");
   });
 
-  it("the engine is 0.484.0", () => {
-    expect(engineVersion).toBe("0.484.0");
+  it("the engine is 0.485.0", () => {
+    expect(engineVersion).toBe("0.485.0");
   });
 });
 

@@ -113,7 +113,10 @@ export interface AbilityProgram {
       figure (Crobat `sv06.5-029` joined at D564 and the `me` aliases at D582). D591 adds the
       Flapping trio ×9 (`allOf` over two `yourNamedPokemonInPlay`, the field's first `allOf`) and
       Lunatone ×3 (`yourNamedPokemonInPlay` Solrock): 27 ids, pinned by id in
-      `flipTheScript.test.ts`. All board reads; the per-body rule above is untouched. */
+      `flipTheScript.test.ts`. All board reads; the per-body rule above is untouched.
+      🆕🆕🆕 D602 NOTE (D539) — "27 ids" is WITHDRAWN as a live figure: Silvally ×2 "Call a Buddy"
+      (`yourHandExactly` 0, "if you have no cards in your hand", a board read of the controller's
+      hand) makes 29, pinned by id in `flipTheScript.test.ts`. */
   playableIf?: BoardCondition;
   /** 🆕 **D310 — §9's PER-BODY printed gate, and the field the block above asked
       for by name.** *"Once during your turn, if this Pokémon's remaining HP is 30
@@ -17435,6 +17438,133 @@ const FINAL_CHAIN: CardProgram = {
   ],
 };
 
+// ── 🆕🆕🆕 D602 — WP20b: THE `me` ACTIVATED ABILITIES (search / heal / attach). Six objects, 9
+//    printings, all on shipped vocabulary; texts off the LOCAL D1. Every one prints a bare "Once during
+//    your turn" and no "You can't use more than 1 … Ability each turn", so every lock is `true` (per
+//    Pokémon). The printed "you may use this Ability" is the use itself (§9.1). Dropped and named
+//    (vocabulary beyond the brief): Dragonair `me02.5-151` "Evolutionary Guidance" (an UNTYPED
+//    per-body Energy gate; `requiresEnergyType` takes a type) and Larry's Komala `me02.5-175`
+//    "Lethargic Charge" (an Active-only attach target; no `AttachTargetRiders` member says "Active").
+//    `activatedMeD602.test.ts` drives each one. ──
+
+/** 🆕🆕🆕 **D602 — Silvally `me05-070` / `-095` "Call a Buddy"**: *"Once during your turn, if you have
+    no cards in your hand, you may use this Ability. Search your deck for a Supporter card, reveal it,
+    and put it into your hand. Then, shuffle your deck."* The gate is a board read on the
+    controller's hand (`yourHandExactly` 0, Slowbro "All Out"'s row, reason "you have no cards in
+    your hand"); the search is Call Bell's. */
+const CALL_A_BUDDY: CardProgram = {
+  abilities: [
+    {
+      name: "Call a Buddy",
+      oncePerTurn: true,
+      activeOnly: false,
+      playableIf: { kind: "yourHandExactly", count: 0 },
+      program: [
+        { op: "searchDeck", filter: { kind: "supporter" }, dest: "hand", max: 1, reveal: true },
+        { op: "shuffleDeck" },
+      ],
+    },
+  ],
+};
+
+/** 🆕🆕🆕 **D602 — Erika's Tangela `me02.5-007` / `-218` "Gathering of Blossoms"**: *"Once during
+    your turn, you may use this Ability. Search your deck for an Erika's Pokémon, reveal it, and put
+    it into your hand. Then, shuffle your deck."* Master Ball's search on D200's `ownerPokemon`
+    filter (the printed name prefix, `category` Pokémon). */
+const GATHERING_OF_BLOSSOMS: CardProgram = {
+  abilities: [
+    {
+      name: "Gathering of Blossoms",
+      oncePerTurn: true,
+      activeOnly: false,
+      program: [
+        {
+          op: "searchDeck",
+          filter: { kind: "ownerPokemon", owner: "Erika" },
+          dest: "hand",
+          max: 1,
+          reveal: true,
+        },
+        { op: "shuffleDeck" },
+      ],
+    },
+  ],
+};
+
+/** 🆕🆕🆕 **D602 — Vivillon `30th-008` "Guiding Dance"**: *"Once during your turn, you may use this
+    Ability. Flip a coin. If heads, search your deck for a Pokémon, reveal it, and put it into your
+    hand. Then, shuffle your deck."* Poké Ball's program on the Ability surface: the search AND the
+    shuffle sit inside the heads branch (tails does nothing), Poké Ball's reading of the same
+    sentence. The use is spent on either face. */
+const GUIDING_DANCE: CardProgram = {
+  abilities: [
+    {
+      name: "Guiding Dance",
+      oncePerTurn: true,
+      activeOnly: false,
+      program: [
+        {
+          op: "coinFlipGate",
+          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
+          then: [
+            { op: "searchDeck", filter: { kind: "anyPokemon" }, dest: "hand", max: 1, reveal: true },
+            { op: "shuffleDeck" },
+          ],
+        },
+      ],
+    },
+  ],
+};
+
+/** 🆕🆕🆕 **D602 — Shuckle `me01-011` / `-136` "Fermented Juice"**: *"Once during your turn, if this
+    Pokémon has any {G} Energy attached, you may use this Ability. Heal 30 damage from 1 of your
+    Pokémon."* Munkidori's per-body `requiresEnergyType` at Grass (the D118 provision rule) over
+    Confectionary Gift's `healChosen` 30. */
+const FERMENTED_JUICE: CardProgram = {
+  abilities: [
+    {
+      name: "Fermented Juice",
+      oncePerTurn: true,
+      activeOnly: false,
+      requiresEnergyType: "Grass",
+      program: [{ op: "healChosen", amount: 30 }],
+    },
+  ],
+};
+
+/** 🆕🆕🆕 **D602 — Erika's Vileplume ex `me02.5-003` "Lovely Fragrance"**: *"Once during your turn,
+    you may use this Ability. Heal 30 damage from each of your Pokémon."* Fennel's `healEach` at 30
+    (the controller's Active and Bench, each clamped; no would-whiff gate, Fennel's silent whiff). */
+const LOVELY_FRAGRANCE: CardProgram = {
+  abilities: [
+    {
+      name: "Lovely Fragrance",
+      oncePerTurn: true,
+      activeOnly: false,
+      program: [{ op: "healEach", amount: 30 }],
+    },
+  ],
+};
+
+/** 🆕🆕🆕 **D602 — Solgaleo `30th-105` "Sunrise"**: *"Once during your turn, if this Pokémon is on
+    your Bench, you may use this Ability. Search your deck for up to 2 Basic Metal Energy cards and
+    attach them to this Pokémon. Then, shuffle your deck."* Yanmega ex's Buzzing Boost program at
+    Metal and 2 behind Misty's Psyduck's `benchOnly` spot gate. */
+const SUNRISE: CardProgram = {
+  abilities: [
+    {
+      name: "Sunrise",
+      oncePerTurn: true,
+      activeOnly: false,
+      benchOnly: true,
+      program: [
+        { op: "attachFromDeck", filter: { kind: "basicEnergy", energyType: "Metal" }, max: 2, toSelf: true },
+        { op: "shuffleDeck" },
+      ],
+    },
+  ],
+};
+
 const REGISTRY: Record<string, CardProgram> = {
   // Professor's Research (SV base prints)
   "sv01-189": PROFESSORS_RESEARCH,
@@ -18531,6 +18661,17 @@ const REGISTRY: Record<string, CardProgram> = {
   "me01-144": FRAGILE_HUSK, // Shedinja
   "me03-050": INFINITE_SHADOW, // Gengar — KO'd by an attack, the Pokémon goes to the hand
   "me02.5-143": FINAL_CHAIN, // Pecharunt — KO'd by an attack, search the deck for a card
+  // 🆕🆕🆕 D602 — WP20b: 9 activated Ability keys / 6 objects, MID-MAP (`raw[last]` does not move).
+  // Non-attack keys: every printed attack keeps deriving. `activatedMeD602.test.ts`.
+  "me05-070": CALL_A_BUDDY, // Silvally — no cards in hand; a Supporter from the deck
+  "me05-095": CALL_A_BUDDY, // Silvally
+  "me02.5-007": GATHERING_OF_BLOSSOMS, // Erika's Tangela — an Erika's Pokémon from the deck
+  "me02.5-218": GATHERING_OF_BLOSSOMS, // Erika's Tangela
+  "30th-008": GUIDING_DANCE, // Vivillon — coin; heads, a Pokémon from the deck
+  "me01-011": FERMENTED_JUICE, // Shuckle — any {G} Energy on itself; heal 30 from 1 of your Pokémon
+  "me01-136": FERMENTED_JUICE, // Shuckle
+  "me02.5-003": LOVELY_FRAGRANCE, // Erika's Vileplume ex — heal 30 from each of your Pokémon
+  "30th-105": SUNRISE, // Solgaleo — on the Bench; up to 2 Basic {M} from the deck to itself
   // ── D190 — THE **STANDARD-LEGAL** REPRINT-ALIAS MAP (Tier 0 of
   //    `docs/reference/coverage-backlog-legal.md`). 22 printings, 9 map targets,
   //    ZERO new code: every row below prints a sentence that is already authored

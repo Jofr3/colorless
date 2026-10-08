@@ -3,7 +3,9 @@
 > Update this at the **end of every session**: bump the status table, append a
 > session-log entry, and rewrite the **Resume point** to the next concrete action.
 
-**Last updated:** 2026-10-08 — build session #541 (**P3-M5 — D601, *D598's OPEN REVIEW FINDINGS CLOSED: Shadowy Concealment's two unrecorded readings recorded UNRULED (R-GC2: the attached reductions answer first, so a Legacy Energy is spent; R-GC3: 1 fewer per {D} Knock Out in a batch, now tested), R-TN1 amended (self-damage never asks the coin, inherited from Sturdy), and `koByOpponentAttack`'s fail-closed miss arm kept and recorded (M2); no engine behaviour change*** — engine 0.484.0, MRV 42, NOT committed; the sweep PENDING)
+**Last updated:** 2026-10-08 — build session #542 (**P3-M5 — D602, *WP20b — THE `me` ACTIVATED ABILITIES, SEARCH / HEAL / ATTACH: 6 texts / 9 `me` printings on six new `abilities` objects — Silvally ×2 "Call a Buddy" (empty-hand gate, a Supporter), Erika's Tangela ×2 "Gathering of Blossoms" (an Erika's Pokémon), Vivillon "Guiding Dance" (coin, a Pokémon), Shuckle ×2 "Fermented Juice" ({G} on itself, heal 30 from 1), Erika's Vileplume ex "Lovely Fragrance" (heal 30 from each), Solgaleo "Sunrise" (Bench, up to 2 Basic {M} to itself); Dragonair and Larry's Komala dropped and named; Standard pool abilities 513 / 610; 895 `me` printings fully built*** — engine 0.485.0, MRV 42, NOT committed; the sweep PENDING)
+
+**Last updated (was):** 2026-10-08 — build session #541 (**P3-M5 — D601, *D598's OPEN REVIEW FINDINGS CLOSED: Shadowy Concealment's two unrecorded readings recorded UNRULED (R-GC2: the attached reductions answer first, so a Legacy Energy is spent; R-GC3: 1 fewer per {D} Knock Out in a batch, now tested), R-TN1 amended (self-damage never asks the coin, inherited from Sturdy), and `koByOpponentAttack`'s fail-closed miss arm kept and recorded (M2); no engine behaviour change*** — engine 0.484.0, MRV 42, NOT committed; the sweep PENDING)
 
 **Last updated (was):** 2026-10-08 — build session #540 (**P3-M5 — D600, *WP14 + WP33b — THE HAND COUNT AND FIVE BONUS CONDITIONS: 7 texts / 12 `me` printings — `DamageCountSource.cardsInYourHand` (Galarian Meowth "Treasure Rush" ×2 on the `×` fold; Alakazam "Powerful Hand" ×3 as `damageActive.per`) and five clause rows on five new `BoardCondition` members (Weavile, Carnivine, Serperior ×2, Sableye, Zarude ×2); Gholdengo "Celebration" ×2 dropped; `sv` reader output byte-identical; Standard pool attacks 2588 / 2771; 886 `me` printings fully built*** — engine 0.484.0, MRV 42, NOT committed; the sweep PENDING)
 
@@ -827,6 +829,37 @@
 
 ## NEXT (resume point)
 
+> ### ▶ THE NEXT CONCRETE ACTION (written 2026-10-08, after D602)
+>
+> 🛑 **D602 IS BUILT AND NOT COMMITTED** (worktree `/home/jofre/projects/luminous_ui-mega`, branch `mega-ingest`, on D601 = `3e0f4b2d`). D602 is WP20b of the Mega backlog. Next: a review of D602, then the next package or the landing of D581–D602 (rebase `mega-ingest` onto main; never `git add -A` — `apps/api/.wrangler` is the setup symlink).
+>
+> ✅ **`bun run check` IS GREEN**: `Test Files 644 passed (644) / Tests 15264 passed (15264) / CHECK_EXIT=0` (D601: 643 / 15239; D602 adds `activatedMeD602.test.ts` (22) and the census D602 block (3)).
+>
+> **(a) THE SLICE.** 6 texts / 9 printings, six NEW `abilities` objects on shipped vocabulary (registry.ts D602 block), every lock `oncePerTurn: true` (none prints a name lock): Silvally `me05-070` / `-095` "Call a Buddy" (`playableIf` `yourHandExactly` 0; a Supporter, reveal, shuffle), Erika's Tangela `me02.5-007` / `-218` "Gathering of Blossoms" (`searchDeck` `ownerPokemon` Erika), Vivillon `30th-008` "Guiding Dance" (Poké Ball's coin-gated program), Shuckle `me01-011` / `-136` "Fermented Juice" (`requiresEnergyType` Grass, `healChosen` 30), Erika's Vileplume ex `me02.5-003` "Lovely Fragrance" (`healEach` 30) and Solgaleo `30th-105` "Sunrise" (`benchOnly`, `attachFromDeck` up to 2 Basic {M} `toSelf`, shuffle). **Dropped and named:** Dragonair `me02.5-151` "Evolutionary Guidance" (an untyped per-body Energy gate) and Larry's Komala `me02.5-175` "Lethargic Charge" (an Active-only attach target).
+>
+> **(b) MRV STAYS 42** (match.ts "STAYS 42 AT D602"): registry keys on shipped ops; no op, field, stage, prompt or event; programs are looked up by id, so persisted `cardPool` faces are untouched.
+>
+> | Column | `me` D602 | Standard pool D602 |
+> |---|---|---|
+> | Attacks | 856 / 1039 | **2588 / 2771** |
+> | Abilities | 137 / 234 | **513 / 610** |
+> | Trainers | 96 / 183 | **360 / 447** |
+> | Special Energy | 3 / 11 | **14 / 22** |
+>
+> **895 `me` printings fully built** (886 + 9; each prints one Ability and one already-built attack). Pins re-measured: registry length 1226 → 1235 (five suites), `nonAttackRegistryIds()` 1059 → 1068, the D273 partition, the D581 `me`-key rung, `reprintAliasMeD582`'s key table, `flipTheScript`'s `playableIf` population (27 → 29), `abilityBundleD565`'s `benchOnly` population (+ Solgaleo), `revealClause`'s tables (`REVEALING` 54 → 57, objects 81 → 84, swept 182 → 187).
+>
+> **(c) THE MUTATION RECORD.** +21 D602 rows (4705 in all). precheck: 4705 mutants, the same 20 pre-existing broken rows. Probe `run.ts --decision D602 --allow-dirty`: 21 killed · 0 known survivor(s) · 0 GAP(S) · 0 stale · 0 skipped(dirty) · 0 clobber(s) · 0 error(s), tree byte-identical after. Gate-witness `--only` (the 18 `opaque-anatomy-gate.ts` / `residue-census-gate.ts` rows): 18 killed · 0 error. Gates: residue-census, opaque-anatomy, splice, partition all OK. Version tax: 247 occurrences stepped to 0.485.0 outside docs (150 test files: `expect(engineVersion)`, `expect(manifest.version)`, 71 `it()` titles; `package.json`, the declaration, the mutants.ts `find`); the D600 changelog heading in index.ts keeps 0.484.0.
+>
+> 🛑 **(0) THE WHOLE-CORPUS SWEEP IS PENDING** (D581–D601's too). Predicted: **4635 killed · 50 known survivor(s) · 0 GAP(S) · 20 error(s)** over **4,705** rows — 4684 + 21 = 4705; 4614 + 21 = 4635 killed; 4635 + 50 + 20 = 4705. It assumes D601's prediction (4614 · 50 · 0 · 20 over 4684) holds. If it holds, D581–D602 close together. If it fails: an error count ≠ 20 means a `find` was spliced by a later edit (precheck names it); a new GAP or survivor in a D581–D601 row is that slice's open prediction failing; one in an older row whose killer is a registry-length pin, the D273 partition, the `playableIf` / `benchOnly` populations or the reveal tables is a D602 re-pin moving it and owes a row-level re-anchor.
+>
+> **Pending decisions (UNRULED readings).** None new at D602: every open point inherits a shipped reading — tails does nothing (Poké Ball), usable with nothing damaged (Confectionary Gift, Fennel), {G} by provision (Munkidori, D572), the name prefix (D200), a short deck search stands (Buzzing Boost). R-GC2, R-GC3 and R-TN1 (D601) and R-CW1 (D600) stand as recorded in the archived blocks below.
+>
+> Still owed from the Mega backlog: WP20b's two drops (Dragonair "Evolutionary Guidance", Larry's Komala "Lethargic Charge"), Gholdengo "Celebration" ×2 (a `takePrize` continuation), "that much more damage" ×4 (Juggernaut Horn / Counter, damage-taken memory), WP24b (Acerola's Mischief, Roxie's Performance) and WP24a's five drops, WP32's five drops, WP29's four drops, the seven WP13 drops, Meowth ex ×3's Last-Ditch Catch, Mega Clefable ex ×4's Luminous Wing, Flygon ×3, Pokémon Center Lady, Mega Absol ex ×3's Terminal Period (WP36), the markup-normalising ingest fix, then the residue by mechanism.
+>
+> ---
+>
+> **ARCHIVED — the resume point D602 was built from, kept rather than overwritten** (D601 has since been committed on `mega-ingest` as `3e0f4b2d`):
+>
 > ### ▶ THE NEXT CONCRETE ACTION (written 2026-10-08, after D601)
 >
 > 🛑 **D601 IS BUILT AND NOT COMMITTED** (worktree `/home/jofre/projects/luminous_ui-mega`, branch `mega-ingest`, on D600 = `70cf5520`). D601 closes D598's OPEN REVIEW FINDINGS (`d80f4089`'s body): B1, B2, M1 and M2. M3 (the new vocabulary) and M4 (Infinite Shadow logs no `ABILITY_TRIGGERED`) were for the record only and stay as accepted. Next: a review of D601, then the next package or the landing of D581–D601 (rebase `mega-ingest` onto main; never `git add -A` — `apps/api/.wrangler` is the setup symlink).
@@ -35121,7 +35154,8 @@ the next api deploy (D18).
 |---|---|---|
 | backend-data | P1 | ✅ M1–M9 + P2-M1 + task-17 api deployed (Worker `9b1ec1d1`, 2026-07-16); OAuth secrets pending (user) |
 | deck-builder | P2 | ✅ ALL 19 tasks closed (task 17 landed + e2e-verified locally); only follow-ups left |
-| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D601, *D598's open review findings closed: R-GC2 (Legacy Energy answers before Shadowy Concealment) and R-GC3 (1 fewer per {D} Knock Out in a batch, tested) recorded UNRULED, R-TN1 amended (self-damage never asks the coin), `koByOpponentAttack`'s fail-closed miss arm recorded; no engine behaviour change*** — engine 0.484.0, MRV 42, NOT committed; the sweep PENDING) |
+| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D602, *WP20b — the `me` activated Abilities, search / heal / attach: 6 texts / 9 `me` printings on six new `abilities` objects (an empty-hand Supporter search, an Erika's Pokémon search, a coin-gated Pokémon search, a {G}-gated heal, a heal-each, a Bench-only Metal attach); Dragonair and Larry's Komala dropped and named; abilities 513 / 610*** — engine 0.485.0, MRV 42, NOT committed; the sweep PENDING) |
+| simulator (prior) | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D601, *D598's open review findings closed: R-GC2 (Legacy Energy answers before Shadowy Concealment) and R-GC3 (1 fewer per {D} Knock Out in a batch, tested) recorded UNRULED, R-TN1 amended (self-damage never asks the coin), `koByOpponentAttack`'s fail-closed miss arm recorded; no engine behaviour change*** — engine 0.484.0, MRV 42, NOT committed; the sweep PENDING) |
 | simulator (prior) | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D600, *WP14 + WP33b — the hand count and five bonus conditions: 7 texts / 12 `me` printings (`cardsInYourHand` on the `×` fold and on `damageActive.per`; remaining HP, no Retreat Cost, a named card in your discard, Stage 2 {D} on your Bench, Shadowy {D} Energy on your Bench); Celebration dropped; attacks 2588 / 2771*** — engine 0.484.0, MRV 42, NOT committed; the sweep PENDING) |
 | simulator (prior) | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D599, *WP24a — two WP24 Supporters: 2 texts / 4 `me` printings (Briar's Prize bonus at 3 on N's Pokémon behind a six-name gate; a draw per Pokémon in the revealed opponent hand); five texts dropped and named; trainers 360 / 447*** — engine 0.483.0, MRV 42, NOT committed; the sweep PENDING) |
 | simulator (prior) | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D598, *WP32 — KO / damage-taken Abilities: 6 texts / 13 `me` printings (a seat-wide Prize reduction, the coin-flip survive, an ex-gated Prize guard, return-to-hand on KO, a cause-gated on-KO search); five texts dropped and named; abilities 504 / 610*** — engine 0.482.0, MRV 42, NOT committed; the sweep PENDING) |
@@ -35340,6 +35374,16 @@ the next api deploy (D18).
 Legend: 📝 backlog · 📋 specced · 🔎 research · 🚧 in progress · ✅ done
 
 ## Session log
+
+### 2026-10-08 — build session #542 (P3-M5 — D602)
+
+**WP20b — THE `me` ACTIVATED ABILITIES, SEARCH / HEAL / ATTACH. `MATCH_RECORD_VERSION` STAYS 42.**
+
+Built in the `luminous_ui-mega` worktree on D601 (`3e0f4b2d`); the main checkout was not touched. Every id `git grep`-ped
+(none referenced) and every text read off the LOCAL D1 first. 6 texts / 9 printings on six new `abilities` objects, shipped
+vocabulary only; every lock per Pokémon, as printed. Dragonair "Evolutionary Guidance" and Larry's Komala "Lethargic Charge"
+dropped and named. No new reading. `activatedMeD602.test.ts` (22), census D602 block (3); check 644 / 15264. Version tax 247
+stepped / 1 kept. +21 mutant rows, all KILLED. Sweep PENDING (NEXT (0)). NOT committed.
 
 ### 2026-10-08 — build session #541 (P3-M5 — D601)
 

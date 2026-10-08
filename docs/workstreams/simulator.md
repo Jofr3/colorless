@@ -30217,3 +30217,20 @@ decisions (1) and (2) after D580. Engine 0.464.0 → 0.465.0. The Mega ex rule i
 - **Suite.** `koAbilitiesMeD598.test.ts` 34 → 36: a two-{D}-KO batch (R-GC3) and the miss arm (M2). The Legacy case is
   tagged R-GC2 and pins the spent latch. +2 mutant rows.
 - **Owed.** See `progress.md` NEXT. The whole-corpus sweep is PENDING.
+
+## D602 — WP20b: the `me` activated Abilities, search / heal / attach (engine 0.485.0, `MATCH_RECORD_VERSION` stays 42)
+
+**Status:** ✅ BUILT in the `luminous_ui-mega` worktree on D601 (`3e0f4b2d`), NOT committed.
+
+- **6 texts / 9 `me` printings on six new `abilities` objects, shipped vocabulary only.** Silvally ×2 "Call a Buddy"
+  (`playableIf` `yourHandExactly` 0, a Supporter), Erika's Tangela ×2 "Gathering of Blossoms" (`ownerPokemon` Erika),
+  Vivillon `30th-008` "Guiding Dance" (Poké Ball's coin-gated search), Shuckle ×2 "Fermented Juice" (`requiresEnergyType`
+  Grass, `healChosen` 30), Erika's Vileplume ex "Lovely Fragrance" (`healEach` 30), Solgaleo `30th-105` "Sunrise"
+  (`benchOnly`, up to 2 Basic {M} from the deck to itself).
+- **Locks.** Every one `oncePerTurn: true`: none of the six prints a name lock.
+- **Dropped and named:** Dragonair "Evolutionary Guidance" (untyped per-body Energy gate) and Larry's Komala "Lethargic
+  Charge" (an Active-only attach target).
+- **Readings.** None new; each open point inherits a shipped one (`progress.md` NEXT).
+- **Suite.** `activatedMeD602.test.ts` (22) and a census D602 block (3). +21 mutant rows.
+- **Census.** Standard pool abilities **513 / 610**; 895 `me` printings fully built.
+- **Owed.** See `progress.md` NEXT. The whole-corpus sweep is PENDING.

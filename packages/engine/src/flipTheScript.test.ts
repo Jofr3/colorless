@@ -640,7 +640,7 @@ describe("the blast radius — what this slice did NOT change", () => {
     ]);
   });
 
-  it("`playableIf` is authored on exactly ELEVEN ids, and nowhere else (🆕🆕🆕 D591: ELEVEN is the `sv` count; 27 live with the `me` keys)", () => {
+  it("`playableIf` is authored on exactly ELEVEN ids, and nowhere else (🆕🆕🆕 D591: ELEVEN is the `sv` count; 27 live with the `me` keys; 🆕🆕🆕 D602: 29 live)", () => {
     // The gate's own population. Of the 29 legal printings on `%Once during your
     // turn, if %`, 15 are the Active-Spot clause `activeOnly` already covers; of
     // the 14 that remain, NINE name THIS POKÉMON (Munkidori ×3, Meowscarada,
@@ -705,6 +705,8 @@ describe("the blast radius — what this slice did NOT change", () => {
     // 🆕🆕🆕 D582 — +4 `me` reprint-alias keys on the SAME objects (Fezandipiti ex ×2, Fan Rotom ×2).
     // 🆕🆕🆕 D591 — +12 on four NEW objects: the Flapping trio ×9 (`allOf` over two
     // `yourNamedPokemonInPlay`) and Lunatone ×3 "Lunar Cycle" (Solrock in play).
+    // 🆕🆕🆕 D602 — +2 on one NEW object: Silvally ×2 "Call a Buddy" (`yourHandExactly` 0, "if you
+    // have no cards in your hand" — a board read of the controller's hand, not a per-body one).
     expect(gated.sort()).toEqual([
       "30th-011",
       "30th-018",
@@ -718,6 +720,8 @@ describe("the blast radius — what this slice did NOT change", () => {
       "me02.5-171",
       "me02.5-250",
       "me02.5-288",
+      "me05-070",
+      "me05-095",
       "mep-004",
       "mep-096",
       "mep-097",

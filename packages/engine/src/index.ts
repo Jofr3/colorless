@@ -20258,6 +20258,17 @@ import type { GameState, Seat } from "./types";
     `expect(manifest.version)`, `it(…)` titles, the declaration and `package.json` —
     **not** as a value-keyed grep — because a value-keyed grep is precisely the mechanism
     that ate D500's heading.)
+    🆕🆕🆕 engineVersion 0.484.0 → **0.485.0** (D602 — WP20b: THE `me` ACTIVATED ABILITIES, SEARCH /
+    HEAL / ATTACH; `MATCH_RECORD_VERSION` STAYS 42 (apps/api match.ts "STAYS 42 AT D602")). registry.ts:
+    six NEW `abilities` objects over 9 `me` printings, shipped vocabulary only — Silvally ×2 "Call a
+    Buddy" (`playableIf` `yourHandExactly` 0; Call Bell's Supporter search), Erika's Tangela ×2
+    "Gathering of Blossoms" (`searchDeck` `ownerPokemon` Erika), Vivillon `30th-008` "Guiding Dance"
+    (Poké Ball's coin-gated search), Shuckle ×2 "Fermented Juice" (`requiresEnergyType` Grass,
+    `healChosen` 30), Erika's Vileplume ex "Lovely Fragrance" (`healEach` 30) and Solgaleo `30th-105`
+    "Sunrise" (`benchOnly`, `attachFromDeck` 2 Basic {M} `toSelf`). Every lock per Pokémon, as printed.
+    Dropped and named: Dragonair "Evolutionary Guidance" (untyped per-body Energy gate) and Larry's
+    Komala "Lethargic Charge" (Active-only attach target). Census: Standard pool abilities 513 / 610;
+    895 `me` printings fully built. `activatedMeD602.test.ts`.)
     🆕🆕🆕 engineVersion 0.483.0 → **0.484.0** (D600 — WP14 + WP33b: THE HAND COUNT AND FIVE BONUS
     CONDITIONS; `MATCH_RECORD_VERSION` STAYS 42 (apps/api match.ts "STAYS 42 AT D600")). effects.ts:
     `DamageCountSource.cardsInYourHand` (Galarian Meowth "Treasure Rush" ×2, `YOUR_HAND_COUNT_MULTIPLY`)
@@ -25326,7 +25337,7 @@ import type { GameState, Seat } from "./types";
     WITNESS** — the count was re-derived every slice and the word *"three"* was carried.
     A successor of this slice inherits **81 / 61 / 17** again, over **FIVE** history
     occurrences: those four plus `deckMillFilteredScale.test.ts`'s own header arrow.) */
-export const engineVersion = "0.484.0";
+export const engineVersion = "0.485.0";
 
 export type {
   ApplyResult,
