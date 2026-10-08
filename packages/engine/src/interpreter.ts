@@ -1327,7 +1327,8 @@ export function runProgram(
         // The prompt describes its own op; a §9.2 gate makes the ANSWER buy
         // something the op cannot see. `queue` is the only place that is
         // knowable, which is why this is folded in here and not in the note.
-        prompt: withConsequence(stepped.park, op, queue),
+        // 🆕🆕🆕 D611 — and so does a later `countersOnRecordedBody` on the same slot.
+        prompt: withCountersConsequence(withConsequence(stepped.park, op, queue), op, queue),
         cont: { pendingOp: op, rest: [...queue], ctx, ...carriedRecord(record) },
         ...(stepped.decider === undefined ? {} : { decider: stepped.decider }),
       };
@@ -1508,6 +1509,26 @@ function withConsequence(
   return condition === null
     ? prompt
     : { ...prompt, note: `${prompt.note} ${condition}, ${clause}.` };
+}
+
+/** 🆕🆕🆕 D611 — §9.2's "the prompt must say what the answer buys", for the one consequent
+    that is not a `recordGate`: a `countersOnRecordedBody` reading the slot the parked op files
+    (Sinister Surge's `attachFromDeck`, Spiteful Evolution's `evolveFromDeck` `fromHand`). The
+    answer decides which body takes the counters, so the note says the counters follow. */
+function withCountersConsequence(
+  prompt: EffectPrompt,
+  op: EffectOp,
+  queue: readonly EffectOp[],
+): EffectPrompt {
+  const slot = op.op === "evolveFromDeck" ? op.recordAs : recordSlotOf(op);
+  if (slot === undefined) return prompt;
+  const counters = queue.find((q) => q.op === "countersOnRecordedBody" && q.slot === slot);
+  if (counters === undefined || counters.op !== "countersOnRecordedBody") return prompt;
+  const n = counters.amount / 10;
+  return {
+    ...prompt,
+    note: `${prompt.note} If you do, place ${n} damage counter${n === 1 ? "" : "s"} on that Pokémon.`,
+  };
 }
 
 /** The gate's CONDITION as a printed phrase, or null when there is none to give.
@@ -2523,6 +2544,8 @@ function stepOp(
       };
     case "damageSubject":
       return { done: damageSubject(state, op.amount, ctx, events) };
+    case "countersOnRecordedBody":
+      return { done: countersOnRecordedBody(state, op, ctx, events, record) };
     case "healSubject":
       return { done: healSubject(state, op.amount, ctx, events) };
     case "moveCountersToDefender":
@@ -3445,6 +3468,20 @@ function stepOp(
       // 🆕 D310 — `op.names`, when the printed sentence names its targets instead
       // of describing them. Threaded into the offer, where it REPLACES the chain
       // predicate rather than narrowing it (the doc block in `effects.ts`).
+      // 🆕🆕🆕 D611 — `fromHand` (Spiteful Evolution): the same offer over the HAND, MANDATORY
+      // (*"Choose a card in your hand"*), so one candidate is forced and two or more park at
+      // `min: 1`; the placed card is filed for the printed *"If you do"*.
+      if (op.fromHand === true) {
+        const handOffer = evolveFromDeckOffer(state, ctx, undefined, undefined, undefined, true);
+        const candidates = handOffer?.candidates ?? [];
+        if (candidates.length <= 1) {
+          const placed = evolveFromHandMove(state, candidates, ctx, events);
+          recordMoved(record, op.recordAs, placed.moved);
+          return { done: placed.state };
+        }
+        const note = `Choose a card in your hand that evolves from ${handOffer?.name} and put it onto ${handOffer?.name} to evolve it.`;
+        return { park: { kind: "chooseCards", candidates, min: 1, max: 1, dest: "evolve", note } };
+      }
       const offer = evolveFromDeckOffer(state, ctx, op.onto, op.names, op.noAbilities);
       if (offer === undefined || offer.candidates.length === 0) return { done: state };
       return {
@@ -6824,6 +6861,9 @@ export function conditionHolds(state: GameState, seat: Seat, cond: BoardConditio
       // rather than a borrowed TRUE. No `phaseViewOf` guard is owed, and adding
       // one would be a conjunct no board can make false.
       return isFirstTurnOf(state, seat);
+    case "notYourFirstTurn":
+      // 🆕🆕🆕 D611 — the flat complement (Spiteful Evolution's printed first-turn ban).
+      return !isFirstTurnOf(state, seat);
   }
 }
 
@@ -7981,6 +8021,10 @@ export function conditionNote(cond: BoardCondition): string {
       // no pronoun to resolve (D116) — "your" is the reader, and this note is
       // always shown to the seat the condition was evaluated for.
       return "it is your first turn";
+    case "notYourFirstTurn":
+      // 🆕🆕🆕 D611 — the negation of the arm above, so the reject reads "…can only be used if it
+      // is not your first turn".
+      return "it is not your first turn";
   }
 }
 
@@ -8176,6 +8220,12 @@ export function applyChoice(
       return searched.state;
     }
     case "evolveFromDeck":
+      // 🆕🆕🆕 D611 — the HAND route (Spiteful Evolution) files the placement for its "If you do".
+      if (op.fromHand === true) {
+        const placed = choice.kind === "cards" ? evolveFromHandMove(state, choice.uids, ctx, events) : undefined;
+        recordMoved(record, op.recordAs, placed?.moved ?? []);
+        return placed?.state ?? state;
+      }
       return choice.kind === "cards"
         ? evolveFromDeckMove(state, choice.uids, ctx, events, op.onto, op.names, op.noAbilities)
         : state;
@@ -13093,6 +13143,40 @@ function damageActive(
   return withActive(state, opponent, { ...active, damage: active.damage + amount });
 }
 
+/** 🆕🆕🆕 D611 — "place `amount` damage counters on THAT Pokémon": the controller's body holding
+    the first card filed under `op.slot` (in its stack, Energy or Tools), so it survives the
+    top-card change an evolution makes. Nothing filed, or the card no longer on that board, is a
+    silent whiff — the printed *"If you do"*. See the op's doc block (effects.ts). */
+function countersOnRecordedBody(
+  state: GameState,
+  op: Extract<EffectOp, { op: "countersOnRecordedBody" }>,
+  ctx: EffectContext,
+  events: GameEvent[],
+  record: EffectRecord,
+): GameState {
+  const [filed] = recorded(record, op.slot);
+  if (filed === undefined) return state;
+  const side = state.players[ctx.seat];
+  const holds = (pokemon: InPlayPokemon) => stackUids(pokemon).includes(filed);
+  const place = (pokemon: InPlayPokemon): InPlayPokemon => {
+    events.push({
+      type: "COUNTERS_PLACED",
+      seat: ctx.seat,
+      uid: topUid(pokemon) ?? filed,
+      amount: op.amount,
+      source: "ability",
+    });
+    return { ...pokemon, damage: pokemon.damage + op.amount };
+  };
+  if (side.active !== null && holds(side.active)) return withActive(state, ctx.seat, place(side.active));
+  const index = side.bench.findIndex(holds);
+  if (index === -1) return state;
+  return withSide(state, ctx.seat, {
+    ...side,
+    bench: side.bench.map((pokemon, i) => (i === index ? place(pokemon) : pokemon)),
+  });
+}
+
 /** 🆕 D319 — "put `amount` damage counters on THAT POKÉMON" (Team Rocket's
     Ampharos "Darkest Impulse" 4, Gengar ex "Gnawing Curse" 2). The referent is
     `ctx.subjectUid`: the body the opponent's own watched action was performed
@@ -14193,7 +14277,10 @@ function searchAttachToSelf(
     OMISSION.** `turn.ts` refuses an evolve when the target `turnPlayed >=
     state.turn` (§10's "came into play this turn") and during the first turn (§4)
     — both are rules about **playing a Pokémon from your hand**, which this
-    sentence is not doing. Exeggcute's own registry gate (`firstTurnExempt`,
+    sentence is not doing. [🆕🆕🆕 D611 (D539): "which this sentence is not doing" no longer holds
+    of every op — `fromHand` (Spiteful Evolution) DOES take the card from the hand. The offer still
+    skips both bans there: the card prints its own first-turn ban (a `playableIf`) and no
+    put-into-play-this-turn ban, R-SE1 ⚠️ UNRULED.] Exeggcute's own registry gate (`firstTurnExempt`,
     D281/D282) exists because the *attack* needed licensing on turn one, and it
     licenses the attack rather than the placement.
     🆕🆕🆕 D558 — Salvatore `sv05-160`/`-202`/`-212` PRINTS the "put into play this
@@ -14234,6 +14321,9 @@ function evolveFromDeckOffer(
       predicate is in force, keeping only cards whose `abilities` is empty or absent
       (R-SV2). Absent on every pre-D558 op and record, which reads as unfiltered. */
   noAbilities?: true,
+  /** 🆕🆕🆕 D611 — the op's `fromHand`: the candidates are read off the controller's HAND
+      instead of the deck (Spiteful Evolution). Absent on every pre-D611 call. */
+  fromHand?: true,
 ):
   | {
       target: PokemonTarget;
@@ -14258,7 +14348,7 @@ function evolveFromDeckOffer(
     body,
     bodyUid,
     name: top.name,
-    candidates: side.deck.filter((uid) => {
+    candidates: (fromHand === true ? side.hand : side.deck).filter((uid) => {
       const card = cardOf(state, uid);
       // An unresolvable deck uid is not a candidate — `evolveFromOf` demands a
       // `Card`, and a missing catalog row must fall OUT of the offer rather than
@@ -14298,6 +14388,9 @@ function evolveFromDeckOffer(
     placement satisfies no printed antecedent; and an evolution that drops
     effective max HP below the carried damage is Knocked Out by §8.1
     `finishAttack`, which sweeps the ATTACKER's own board after the program.
+    [🆕🆕🆕 D611: the `fromHand` placement (Spiteful Evolution, an ABILITY) is swept by
+    `settleProgram`'s mid-turn Knock Out check instead, and runs no trigger either (R-SE2 ⚠️ UNRULED:
+    no legal card that evolves from Phantump prints one).]
 
     Wire-safe like `searchMove`: only a uid still in the deck AND still a legal
     evolution for this body moves, re-derived here rather than trusted off the
@@ -14345,6 +14438,36 @@ function evolveFromDeckMove(
     uid,
     events,
   ).state;
+}
+
+/** 🆕🆕🆕 D611 — resolve an `evolveFromDeck { fromHand }` pick (Spiteful Evolution): the card leaves
+    the HAND and goes onto the program's own body through the same `evolveOnto`, re-derived against
+    the offer like `evolveFromDeckMove` (a uid the offer does not hold moves nothing). Hands back the
+    uid actually placed, for the op's `recordAs`. The hand route is authored alone: no printing sets
+    `onto`, `names` or `noAbilities` beside `fromHand`, so none is read here. */
+function evolveFromHandMove(
+  state: GameState,
+  uids: readonly string[],
+  ctx: EffectContext,
+  events: GameEvent[],
+): { state: GameState; moved: string[] } {
+  const offer = evolveFromDeckOffer(state, ctx, undefined, undefined, undefined, true);
+  const uid = uids[0];
+  if (offer === undefined || uid === undefined || !offer.candidates.includes(uid)) return { state, moved: [] };
+  const side = state.players[ctx.seat];
+  const pulled = withSide(state, ctx.seat, { ...side, hand: side.hand.filter((inHand) => inHand !== uid) });
+  const evolved = evolveOnto(pulled, ctx.seat, offer.target, offer.benchIndex, offer.body, offer.bodyUid, uid, events);
+  return { state: evolved.state, moved: [uid] };
+}
+
+/** 🆕🆕🆕 D611 — does `seat`'s hand hold a card that evolves from the body `sourceUid` names?
+    `programPlayable`'s gate for `evolveFromDeck { fromHand }` (Spiteful Evolution), so the
+    Ability is refused rather than spent on a whiff. The offer's own predicate, asked once. */
+export function evolveFromHandAvailable(state: GameState, seat: Seat, sourceUid: string | undefined): boolean {
+  return (
+    (evolveFromDeckOffer(state, { seat, sourceUid }, undefined, undefined, undefined, true)?.candidates
+      .length ?? 0) > 0
+  );
 }
 
 /** Move the chosen retrieved cards discard → dest (§7.1 recovery Items): hand
@@ -14619,8 +14742,23 @@ function payFromHandApply(
     paid.push(uid);
   }
   if (paid.length === 0) return { state, paid };
-  events.push({ type: "HAND_COST_PAID", seat: ctx.seat, uids: [...paid], to: op.to });
   const hand = side.hand.filter((uid) => !spent.has(uid));
+  // 🆕🆕🆕 D611 — Evidence Gathering's *"Switch a card from your hand with the top card of your
+  // deck"*: the OLD top card goes into the hand first, then the paid card goes on top. An empty
+  // deck is refused before the use (`handCostUnmet`, R-EG1), so `took` is never empty here.
+  if (op.swapWithTop === true) {
+    const took = side.deck.slice(0, 1);
+    events.push({ type: "HAND_COST_PAID", seat: ctx.seat, uids: [...paid], to: op.to, took });
+    return {
+      state: withSide(state, ctx.seat, {
+        ...side,
+        hand: [...hand, ...took],
+        deck: [...paid, ...side.deck.slice(took.length)],
+      }),
+      paid,
+    };
+  }
+  events.push({ type: "HAND_COST_PAID", seat: ctx.seat, uids: [...paid], to: op.to });
   // 🆕🆕🆕 D561 (V1) — Academy at Night's *"on top of their deck"*: the paid card(s) go
   // IN FRONT of the deck, in the order picked. Taken ahead of the two-arm spread below
   // so its bytes are D455's, unchanged.
@@ -16727,6 +16865,8 @@ export function handCostUnmet(
     // `playTrainer` now reaches this line; driven in `trainersD561.test.ts` §2.)
     if (op.count === "any") continue;
     if (handCostCandidates(state, seat, op, excludeUid).length < op.count) return op;
+    // 🆕🆕🆕 D611 — the swap needs a top card to switch with (R-EG1 ⚠️ UNRULED).
+    if (op.swapWithTop === true && state.players[seat].deck.length === 0) return op;
   }
   return null;
 }
@@ -16770,6 +16910,8 @@ export function handCostAction(
   other: boolean,
 ): string {
   const phrase = handCostPhrase(op, other);
+  // 🆕🆕🆕 D611 — Evidence Gathering's printed verb, ahead of the plain top-of-deck payment.
+  if (op.swapWithTop === true) return `switch ${phrase} from your hand with the top card of your deck`;
   // 🆕🆕🆕 D561 (V1) — the two new destinations speak their own printed verbs, ahead of
   // the older two so those stay byte-identical: Academy at Night's *"put a card from
   // their hand on top of their deck"*, and Perrin's declinable *"Reveal up to 2 Pokémon

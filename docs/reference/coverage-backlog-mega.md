@@ -6,6 +6,28 @@
 > `coverage-backlog-legal.md`; its pool is unchanged and whole. The suite-side figures are
 > `censusAtHead.test.ts`'s D581 block and `censusAttackCorpusMe.ts`.
 
+## 🆕 D611 update (engine 0.494.0) — the rest of the activated Abilities (WP21), plus Dragonair
+
+9 Ability texts / 17 `me` printings keyed on nine new `abilities` objects (`activatedMeD611.test.ts`). On shipped ops: Nighttime
+Maneuvers ×3 (Crobat; Ciphermaniac's deck-top search at one card), Boisterous Wind ×2 (Dustox), Destructive Headbutting ×2
+(Rampardos ex), Sky Hunt ×2 (Talonflame) and Grand Wing (Vivillon `me03-009`). New pieces: Evidence Gathering ×2 (Gumshoos;
+`payFromHand.swapWithTop`), Spiteful Evolution (Phantump; `evolveFromDeck.fromHand`, `countersOnRecordedBody`,
+`notYourFirstTurn`), Sinister Surge ×3 (Toxtricity; `countersOnRecordedBody` on the body the Energy went to) and, from WP20b's
+drops, Evolutionary Guidance (Dragonair; `requiresEnergyType: "any"`). **Finished:** all 17 cards. **Dropped and named:** Larry's
+Komala `me02.5-175` "Lethargic Charge" (an Active-only target and a which-Energy-card choice — two pieces; the "Larry's" filter is `attachEnergyFrom`'s shipped `ownerPokemon`, and `attachFromHand` has neither an Active nor a name rider). Heliolisk ×2
+"Frilled Generator" stays with WP15. Four new readings (UNRULED): R-EG1 (Evidence Gathering refused with an empty deck), R-SE1
+(Spiteful Evolution evolves a Phantump put into play this turn), R-SE2 (no `onEvolve` trigger on the hand evolve), R-SE3 (review: it evolves under "Evolution Jammer")
+(`progress.md` NEXT).
+
+| Column | `me` built / units (D611) | Standard pool D611 |
+|---|---|---|
+| Attacks | 908 / 1,039 | **2,640 / 2,771** |
+| Abilities | 177 / 234 (+17) | **553 / 610** |
+| Trainers | 109 / 183 | **373 / 447** |
+| Special Energy | 11 / 11 | **22 / 22** |
+
+**Fully built `me` printings: 1005** (988 + 17).
+
 ## 🆕 D610 update (engine 0.493.0) — the first part of the on-move / as-often / HP passives (WP37a)
 
 8 Ability texts / 16 `me` printings keyed on seven new objects (`onMoveHpMeD610.test.ts`). Solar Transfer ×4 (Mega Venusaur
@@ -171,7 +193,8 @@ heal 60 from 1), Excited Dash (Linoone; on the Bench, any Mega ex, switch with t
 (Vivillon `30th-008`; coin, a Pokémon), Fermented Juice ×2 (Shuckle; {G} on itself, heal 30 from 1), Lovely Fragrance
 (Erika's Vileplume ex; heal 30 from each) and Sunrise (Solgaleo `30th-105`; on the Bench, up to 2 Basic {M} to itself). Every
 lock per Pokémon, as printed. **Finished:** all 9. **Dropped:** Dragonair `me02.5-151` "Evolutionary Guidance" (an untyped
-per-body Energy gate) and Larry's Komala `me02.5-175` "Lethargic Charge" (an Active-only attach target).
+per-body Energy gate) and Larry's Komala `me02.5-175` "Lethargic Charge" (an Active-only attach target). [🆕🆕🆕 D611: Dragonair
+BUILT; Larry's Komala dropped again (it also needs a which-Energy-card choice).]
 
 | Column | `me` built / units (D602) | Standard pool D602 |
 |---|---|---|
@@ -844,13 +867,13 @@ group wins; the grouping is a reading aid, not a census figure).
 - 5× **Sky Transport** — Once during your turn, you may use this Ability. Switch your Active Pokémon with 1 of your Benched Pokémon. [🆕🆕🆕 D585: BUILT]
 - 4× **Run Errand** — Once during your turn, if this Pokémon is in the Active Spot, you may use this Ability. Draw 2 cards. You can't use more than 1 Run Errand Ability each turn. [🆕🆕🆕 D591: BUILT]
 - 3× **Lunar Cycle** — Once during your turn, if you have Solrock in play, you may discard a Basic {F} Energy card from your hand in order to use this Ability. Draw 3 cards. You can't use more than 1 Lunar Cycle Ability each turn. [🆕🆕🆕 D591: BUILT]
-- 3× **Nighttime Maneuvers** — Once during your turn, if this Pokémon is in the Active Spot, you may use this Ability. Search your deck for a card. Shuffle your deck, then put that card on top of it.
-- 3× **Sinister Surge** — Once during your turn, you may use this Ability. Search your deck for a Basic {D} Energy card and attach it to 1 of your Benched {D} Pokémon. Then, shuffle your deck. If you attached Energy to a Pokémon in this way, place 2 damage counters on that Pokémon.
+- 3× **Nighttime Maneuvers** — Once during your turn, if this Pokémon is in the Active Spot, you may use this Ability. Search your deck for a card. Shuffle your deck, then put that card on top of it. [🆕🆕🆕 D611: BUILT]
+- 3× **Sinister Surge** — Once during your turn, you may use this Ability. Search your deck for a Basic {D} Energy card and attach it to 1 of your Benched {D} Pokémon. Then, shuffle your deck. If you attached Energy to a Pokémon in this way, place 2 damage counters on that Pokémon. [🆕🆕🆕 D611: BUILT]
 - 2× **Aerial Draw** — Once during your turn, you may use this Ability. Draw a card. [🆕🆕🆕 D584: BUILT]
-- 2× **Boisterous Wind** — Once during your turn, you may use this Ability. Flip a coin. If heads, put an Energy attached to your opponent's Active Pokémon into their hand.
+- 2× **Boisterous Wind** — Once during your turn, you may use this Ability. Flip a coin. If heads, put an Energy attached to your opponent's Active Pokémon into their hand. [🆕🆕🆕 D611: BUILT]
 - 2× **Call a Buddy** — Once during your turn, if you have no cards in your hand, you may use this Ability. Search your deck for a Supporter card, reveal it, and put it into your hand. Then, shuffle your deck. [🆕🆕🆕 D602: BUILT]
-- 2× **Destructive Headbutting** — Once during your turn, if this Pokémon is in the Active Spot, you may use this Ability. Flip a coin. If heads, discard an Energy from your opponent's Active Pokémon.
-- 2× **Evidence Gathering** — Once during your turn, you may use this Ability. Switch a card from your hand with the top card of your deck.
+- 2× **Destructive Headbutting** — Once during your turn, if this Pokémon is in the Active Spot, you may use this Ability. Flip a coin. If heads, discard an Energy from your opponent's Active Pokémon. [🆕🆕🆕 D611: BUILT]
+- 2× **Evidence Gathering** — Once during your turn, you may use this Ability. Switch a card from your hand with the top card of your deck. [🆕🆕🆕 D611: BUILT]
 - 2× **Fermented Juice** — Once during your turn, if this Pokémon has any {G} Energy attached, you may use this Ability. Heal 30 damage from 1 of your Pokémon. [🆕🆕🆕 D602: BUILT]
 - 2× **Fiery Flapping** — Once during your turn, if you have Articuno and Zapdos in play, you may use this Ability. Attach a Basic Fire Energy card from your hand to this Pokémon. [🆕🆕🆕 D591: BUILT]
 - 2× **Flash-Pop Flapping** — Once during your turn, if you have Moltres and Articuno in play, you may use this Ability. Attach a Basic Lightning Energy card from your hand to this Pokémon. [🆕🆕🆕 D591: BUILT]
@@ -858,21 +881,21 @@ group wins; the grouping is a reading aid, not a census figure).
 - 2× **Frosty Flapping** — Once during your turn, if you have Moltres and Zapdos in play, you may use this Ability. Attach a Basic Water Energy card from your hand to this Pokémon. [🆕🆕🆕 D591: BUILT]
 - 2× **Gathering of Blossoms** — Once during your turn, you may use this Ability. Search your deck for an Erika's Pokémon, reveal it, and put it into your hand. Then, shuffle your deck. [🆕🆕🆕 D602: BUILT]
 - 2× **Share Happiness** — Once during your turn, you may use this Ability. Heal 30 damage from 1 of your Pokémon. [🆕🆕🆕 D584: BUILT]
-- 2× **Sky Hunt** — Once during your turn, you may use this Ability. Flip a coin. If heads, discard a random card from your opponent's hand.
+- 2× **Sky Hunt** — Once during your turn, you may use this Ability. Flip a coin. If heads, discard a random card from your opponent's hand. [🆕🆕🆕 D611: BUILT]
 - 2× **Stone Arms** — Once during your turn, you may use this Ability. Attach a Basic {F} Energy card from your hand to 1 of your {F} Pokémon. [🆕🆕🆕 D585: BUILT]
 - 1× **Alluring Wings** — Once during your turn, if this Pokémon is in the Active Spot, you may use this Ability. Each player draws a card. [🆕🆕🆕 D591: BUILT]
-- 1× **Evolutionary Guidance** — Once during your turn, if this Pokémon has any Energy attached, you may use this Ability. Search your deck for an Evolution Pokémon, reveal it, and put it into your hand. Then, shuffle your deck. [🆕🆕🆕 D602: dropped — an untyped per-body Energy gate]
+- 1× **Evolutionary Guidance** — Once during your turn, if this Pokémon has any Energy attached, you may use this Ability. Search your deck for an Evolution Pokémon, reveal it, and put it into your hand. Then, shuffle your deck. [🆕🆕🆕 D602: dropped — an untyped per-body Energy gate] [🆕🆕🆕 D611: BUILT]
 - 1× **Fiery Flapping** — Once during your turn, if you have Articuno and Zapdos in play, you may use this Ability. Attach a Basic {R} Energy card from your hand to this Pokémon. [🆕🆕🆕 D591: BUILT]
 - 1× **Flaring Magic** — Once during your turn, you may discard a Basic Fire Energy card from your hand in order to use this Ability. Draw cards until you have 7 cards in your hand. [🆕🆕🆕 D591: BUILT]
 - 1× **Flaring Magic** — Once during your turn, you may discard a Basic {R} Energy card from your hand in order to use this Ability. Draw cards until you have 7 cards in your hand. [🆕🆕🆕 D591: BUILT]
 - 1× **Flash-Pop Flapping** — Once during your turn, if you have Moltres and Articuno in play, you may use this Ability. Attach a Basic {L} Energy card from your hand to this Pokémon. [🆕🆕🆕 D591: BUILT]
 - 1× **Frosty Flapping** — Once during your turn, if you have Moltres and Zapdos in play, you may use this Ability. Attach a Basic {W} Energy card from your hand to this Pokémon. [🆕🆕🆕 D591: BUILT]
-- 1× **Grand Wing** — Once during your turn, you may use this Ability. Your opponent shuffles their hand and puts it on the bottom of their deck. If they put any cards on the bottom of their deck in this way, they draw 4 cards.
+- 1× **Grand Wing** — Once during your turn, you may use this Ability. Your opponent shuffles their hand and puts it on the bottom of their deck. If they put any cards on the bottom of their deck in this way, they draw 4 cards. [🆕🆕🆕 D611: BUILT]
 - 1× **Guiding Dance** — Once during your turn, you may use this Ability. Flip a coin. If heads, search your deck for a Pokémon, reveal it, and put it into your hand. Then, shuffle your deck. [🆕🆕🆕 D602: BUILT]
-- 1× **Lethargic Charge** — Once during your turn, if this Pokémon is on your Bench, you may use this Ability. Attach an Energy card from your hand to your Active Larry's Pokémon. [🆕🆕🆕 D602: dropped — an Active-only attach target]
+- 1× **Lethargic Charge** — Once during your turn, if this Pokémon is on your Bench, you may use this Ability. Attach an Energy card from your hand to your Active Larry's Pokémon. [🆕🆕🆕 D602: dropped — an Active-only attach target] [🆕🆕🆕 D611: dropped again — also a which-Energy-card choice]
 - 1× **Lovely Fragrance** — Once during your turn, you may use this Ability. Heal 30 damage from each of your Pokémon. [🆕🆕🆕 D602: BUILT]
 - 1× **Scent Collection** — Once during your turn, you may use this Ability. Search your deck for up to 2 Basic {P} Energy cards, reveal them, and put them into your hand. Then, shuffle your deck. [🆕🆕🆕 D585: BUILT]
-- 1× **Spiteful Evolution** — Once during your turn, you may use this Ability. Choose a card in your hand that evolves from this Pokémon and put it onto this Pokémon to evolve it. If you do, place 2 damage counters on the Pokémon you evolved in this way. You can't use this Ability during your first turn.
+- 1× **Spiteful Evolution** — Once during your turn, you may use this Ability. Choose a card in your hand that evolves from this Pokémon and put it onto this Pokémon to evolve it. If you do, place 2 damage counters on the Pokémon you evolved in this way. You can't use this Ability during your first turn. [🆕🆕🆕 D611: BUILT]
 - 1× **Sunrise** — Once during your turn, if this Pokémon is on your Bench, you may use this Ability. Search your deck for up to 2 Basic Metal Energy cards and attach them to this Pokémon. Then, shuffle your deck. [🆕🆕🆕 D602: BUILT]
 
 ### "As often as you like" Energy movers / attachers — 3 text(s) / 6 printing(s)

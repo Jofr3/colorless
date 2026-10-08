@@ -10394,7 +10394,10 @@ import type { GameState, Seat } from "./types";
     route. The DECK route reaches neither: (a) every printed on-evolve Ability says
     *"when you play this Pokémon **from your hand** to evolve"* (all 8 `onEvolve`
     registry rows; over the whole legal catalog only Pidove `sv05-133` and Team
-    Rocket's Ampharos `sv10-074` omit the phrase and **neither is a trigger**), so
+    Rocket's Ampharos `sv10-074` omit the phrase and **neither is a trigger**
+    [🆕🆕🆕 D611 (D539): WITHDRAWN for the Standard pool — Phantump `me04-038`
+    "Spiteful Evolution" is a third, again no trigger: an on-demand evolve FROM THE
+    HAND (`fromHand`), which runs no trigger either, R-SE2]), so
     a deck-sourced placement satisfies no printed antecedent; and (b) an evolution
     that drops effective max HP below the carried damage is swept by §8.1
     `finishAttack`, which already reads the ATTACKER's own board. Both DRIVEN on a
@@ -17555,6 +17558,7 @@ import type { GameState, Seat } from "./types";
     'on top of it')` over all three text columns returns exactly those 4 rows,
     the second width `'then put those cards on top'` returns the same 4, and
     `'on top of your deck'` returns **ZERO** — the family is CLOSED at four.
+    [🆕🆕🆕 D611 (D539): WITHDRAWN for the Standard pool — Crobat ×3 "Nighttime Maneuvers" (`me`).]
 
     **Cost: 0 new `EffectOp`, 0 new prompt kinds, 0 new choice kinds, 0
     `continuationOps` members — 1 new `searchDeck.dest` inhabitant (`"deckTop"`)
@@ -20261,6 +20265,17 @@ import type { GameState, Seat } from "./types";
     `expect(manifest.version)`, `it(…)` titles, the declaration and `package.json` —
     **not** as a value-keyed grep — because a value-keyed grep is precisely the mechanism
     that ate D500's heading.)
+    🆕🆕🆕 engineVersion 0.493.0 → **0.494.0** (D611 — WP21: THE REST OF THE `me` ACTIVATED ABILITIES,
+    PLUS DRAGONAIR; `MATCH_RECORD_VERSION` STAYS 42 (apps/api match.ts "STAYS 42 AT D611")).
+    registry.ts: nine NEW objects over 17 printings — Nighttime Maneuvers ×3 (Crobat; Active, any card to
+    the deck top), Sinister Surge ×3 (Toxtricity), Boisterous Wind ×2 (Dustox), Destructive Headbutting ×2
+    (Rampardos ex), Evidence Gathering ×2 (Gumshoos), Sky Hunt ×2 (Talonflame), Grand Wing (Vivillon
+    `me03-009`), Spiteful Evolution (Phantump) and Evolutionary Guidance (Dragonair). New pieces:
+    `payFromHand.swapWithTop` (+ `HAND_COST_PAID.took`), `evolveFromDeck.fromHand` / `recordAs`, the op
+    `countersOnRecordedBody`, the `BoardCondition` `notYourFirstTurn` and `AbilityProgram.requiresEnergyType:
+    "any"`; redact.ts passes the body's uid to `programPlayable`. R-EG1, R-SE1, R-SE2, R-SE3 UNRULED. Larry's
+    Komala "Lethargic Charge" dropped again (an Active-only target and a which-Energy-card choice); Frilled
+    Generator (WP15) stays. `activatedMeD611.test.ts`.)
     🆕🆕🆕 engineVersion 0.492.0 → **0.493.0** (D610 — WP37a: THE FIRST PART OF THE `me` ON-MOVE /
     AS-OFTEN / HP PASSIVES; `MATCH_RECORD_VERSION` STAYS 42 (apps/api match.ts "STAYS 42 AT D610")).
     registry.ts: seven NEW objects over 16 printings — Solar Transfer ×4 (Mega Venusaur ex; Happy
@@ -25423,7 +25438,7 @@ import type { GameState, Seat } from "./types";
     WITNESS** — the count was re-derived every slice and the word *"three"* was carried.
     A successor of this slice inherits **81 / 61 / 17** again, over **FIVE** history
     occurrences: those four plus `deckMillFilteredScale.test.ts`'s own header arrow.) */
-export const engineVersion = "0.493.0";
+export const engineVersion = "0.494.0";
 
 export type {
   ApplyResult,

@@ -3640,6 +3640,12 @@ export type BoardCondition =
       the union's public-state invariant holds. FALSE during setup (`turn` is 0)
       by the same arithmetic, with no guard spelled. */
   | { kind: "yourFirstTurn" }
+  /** 🆕🆕🆕 **D611 — the exact COMPLEMENT of the member above, a FLAT member (D368's
+      `yourActiveUndamaged` precedent, not the `not` combinator D125 refused).** Phantump
+      `me04-038` "Spiteful Evolution": *"You can't use this Ability during your first turn."*
+      `!isFirstTurnOf`, so it is TRUE during setup (`turn` 0) — unreachable as an Ability gate
+      there, since no Ability is used before the first turn. */
+  | { kind: "notYourFirstTurn" }
   /** D280 — YOU are the player who GOES SECOND, i.e. `state.firstPlayer` is your
       opponent. A SEAT-ASSIGNMENT fact, true on every turn of the game from the
       moment the flip is resolved; NOT a fact about which turn it is.
@@ -6358,6 +6364,22 @@ export type EffectOp =
       readers take for a Trainer, and the reason the field is optional rather than a
       second required member of `EffectContext`. */
   | { op: "damageSubject"; amount: number }
+  /** 🆕🆕🆕 **D611 — Put `amount` HP of damage counters on THE CONTROLLER'S BODY HOLDING THE CARD
+      AN EARLIER OP FILED under `slot`** — the printed *"If you [attached Energy / evolved] … in
+      this way, place 2 damage counters on THAT Pokémon"*. Two producers, both Abilities:
+      Toxtricity `me02-068` / `-103` / `mep-017` "Sinister Surge" (the Energy `attachFromDeck`
+      filed) and Phantump `me04-038` "Spiteful Evolution" (the evolution card `evolveFromDeck`
+      filed). `damageSubject`'s pronoun read off the §9.2 record instead of a watched action:
+      the body is found by the uid in its stack, Energy or Tools, so it survives the top-card
+      change an evolution makes (`sourceRef` reads the TOP uid and would whiff). An empty slot
+      (nothing attached / evolved) places nothing — the printed *"If you do"*. Placement, not
+      damage: no W/R, no shield, `COUNTERS_PLACED` source `"ability"`; a lethal total is swept by
+      `settleProgram`'s mid-turn Knock Out check, the Prize going to the opponent. Never parks.
+      A new `EffectOp` member (D125): it can sit in `phase.cont.rest` behind the producer's park,
+      and a 0.493 ROLLBACK does NOT whiff on it: 0.493's `stepOp` has no `default:` arm, so the
+      unknown op returns `undefined` and `runProgram`'s `"park" in stepped` throws a TypeError
+      (match.ts "STAYS 42 AT D611"). */
+  | { op: "countersOnRecordedBody"; slot: EffectSlot; amount: number }
   /** 🆕 D356 — HEAL `amount` HP from the body the watched action was performed
       ON — the pronoun half of `damageSubject`, for the SELF direction of the same
       sweep. Magearna `sv09-107` "Auto Heal": *"…whenever you attach an Energy
@@ -8042,7 +8064,9 @@ export type EffectOp =
           instr(abilities_json,'from your hand to evolve') = 0` returns exactly
           TWO rows, NEITHER of them a trigger: Pidove `sv05-133` (this same
           placement printed as an on-demand Ability) and Team Rocket's Ampharos
-          `sv10-074` (the OPPONENT's evolve). A card that never was in hand did not
+          `sv10-074` (the OPPONENT's evolve). [🆕🆕🆕 D611 (D539): "exactly TWO rows" WITHDRAWN for
+          the Standard pool — Phantump `me04-038` "Spiteful Evolution" is a third, again no trigger:
+          an on-demand evolve FROM THE HAND (`fromHand`), which runs no trigger either, R-SE2.] A card that never was in hand did not
           satisfy the printed antecedent, so `turn.ts evolveOnto` is called
           WITHOUT the trigger — the source zone, not a park inside a park.
         • **THE KO TAIL IS SWEPT BY THE ATTACK EPILOGUE.** §8.1 `finishAttack`
@@ -8165,6 +8189,27 @@ export type EffectOp =
           this op has no evolved-this-turn gate, so it lands — **R-GT1: the Stage 2 step is
           exempt from "evolved this turn" for THAT body only, as printed.** OPTIONAL (D125). */
       thenEvolveAgain?: true;
+      /** 🆕🆕🆕 **D611 — THE SOURCE ZONE IS THE HAND** (Phantump `me04-038` "Spiteful Evolution":
+          *"Choose a card in your hand that evolves from this Pokémon and put it onto this Pokémon
+          to evolve it."*). The same chain predicate and the same `evolveOnto` placement, asked of
+          the controller's hand: MANDATORY (`min: 1`, *"Choose a card"*, no *"up to"*), forced
+          when the hand holds one candidate, and refused before the use when it holds none
+          (`programPlayable`, so the Ability never whiffs). No §10 timing ban is read here
+          (R-SE1 ⚠️ UNRULED: a Phantump put into play this turn evolves; the card prints only the
+          first-turn ban, carried by `playableIf`) and no `onEvolve` trigger runs (R-SE2 ⚠️
+          UNRULED; no legal Trevenant prints one), and no `pokemonPlayBarred` is asked, so it evolves
+          under Bronzong's "Evolution Jammer" bar (R-SE3 ⚠️ UNRULED: not a play from the hand). Authored ALONE: no printing sets `onto`, `names` or
+          `noAbilities` beside it, and the hand route (`evolveFromHandMove`) reads none of them, nor
+          `thenEvolveAgain`. A 0.493 ROLLBACK reads the key as absent and
+          offers the DECK, so a parked hand pick resolves to nothing (the answer's uid is not in
+          that offer) (D125) — and the `countersOnRecordedBody` behind it in `cont.rest` then throws
+          on 0.493 (that op's doc block). */
+      fromHand?: true;
+      /** 🆕🆕🆕 D611 — file the evolution card actually placed (`[]` on a whiff), for the printed
+          *"If you do, place 2 damage counters on the Pokémon you evolved in this way"*
+          (`countersOnRecordedBody`). Read on the `fromHand` route only, its one producer; absent on
+          every pre-D611 op. */
+      recordAs?: EffectSlot;
     }
   /** 🆕 **D308 — "For each of your Benched Pokémon, search your deck for a card
       that evolves from that Pokémon and put it onto that Pokémon to evolve it.
@@ -12745,6 +12790,17 @@ export type EffectOp =
           Superior Energy Retrieval excludes them from its retrieval, Dendra
           gates its draw on them ("if you do"). */
       recordAs?: EffectSlot;
+      /** 🆕🆕🆕 **D611 — THE PRINTED *"Switch a card from your hand with the top card of your
+          deck"*** (Gumshoos `me01-110` / `-153` "Evidence Gathering"). Only beside `to:
+          "deckTop"` and `count: 1`: the old top card goes into the hand, then the paid card goes
+          on top, so the card chosen out of the hand can never be the one it is swapped for. The
+          pick is made before the top card is seen (the hand park runs first). `handCostUnmet`
+          also reads it: an EMPTY DECK has no top card to switch with, so the use is refused
+          (R-EG1 ⚠️ UNRULED; reversal: the card goes on top and nothing comes back). The moved
+          top card rides `HAND_COST_PAID.took`. A v42 record written by 0.493 carries no such key
+          and reads `undefined`, the plain top-of-deck payment (D125); a 0.493 ROLLBACK resumes a
+          parked swap as that plain payment (the card goes on top, nothing is taken). */
+      swapWithTop?: true;
     }
   /** 🆕🆕🆕 **D489 — THE DECLINABLE HAND DISCARD, SPLIT OUT SO THE UNPRINTED
       COMBINATIONS STAY UNREPRESENTABLE (`discardEnergy`'s `opponentEach` idiom,
@@ -12830,6 +12886,8 @@ export type EffectOp =
       to: "discard" | "deckBottom";
       filter?: CardFilter;
       recordAs?: EffectSlot;
+      /** 🆕🆕🆕 D611 — the swap is an exact one-card payment; unrepresentable here. */
+      swapWithTop?: never;
     }
   /** REVEAL the opponent's hand, then the CONTROLLER chooses one card matching
       `filter` from it and puts it on the bottom of the OPPONENT's deck — the
@@ -28364,6 +28422,8 @@ const ATTACK_OPPONENT_TOP_LOOK_SHUFFLE =
     the same 4; and `instr(<col>,'on top of your deck')` returns **ZERO** — there
     is no possessive spelling of this destination anywhere in the catalog, so the
     family is CLOSED at four and no wider anchor is being left on the table.
+    [🆕🆕🆕 D611 (D539): "CLOSED at four" WITHDRAWN for the Standard pool — Crobat ×3 `me` "Nighttime
+    Maneuvers" prints *"…then put that card on top of it"* (an Ability, one card, registry-keyed).]
 
     🛑 **THE PROGRAM IS THREE OPS AND NOT ONE, AND ALL THREE ALREADY EXISTED
     EXCEPT FOR A `dest` INHABITANT.** `shuffleDeck` + `searchDeck { dest:

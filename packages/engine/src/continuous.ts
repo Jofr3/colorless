@@ -3930,8 +3930,11 @@ export function providesEnergyType(
 export function hasAttachedEnergy(
   state: GameState,
   pokemon: InPlayPokemon,
-  energy: BasicEnergyType | "special" | "basic",
+  energy: BasicEnergyType | "special" | "basic" | "any",
 ): boolean {
+  // 🆕🆕🆕 D611 — the UNTYPED clause (Dragonair "Evolutionary Guidance": *"if this Pokémon has any
+  // Energy attached"*): any attached Energy card, whatever it provides.
+  if (energy === "any") return pokemon.energy.length > 0;
   // 🆕🆕 D500 — the OTHER card class, inserted ABOVE its complement so a reader meets
   // the pair together. No printing spells *"has any Basic Energy attached"*; the value
   // arrives because the clause resolves through the shared token map (D118).

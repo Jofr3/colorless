@@ -2159,6 +2159,20 @@ export interface MatchRecord {
     `turn:action.discardable` — 🛑 **DEPLOY THE SERVER FIRST**: an old client's `z.object` STRIPS
     the unknown key, while a new client's REQUIRED key refuses an old server's frame.
 
+    🆕🆕🆕 **STAYS 42 AT D611 — WP21 ADDS ONE `EffectOp` (`countersOnRecordedBody`), ONE `BoardCondition`
+    MEMBER (`notYourFirstTurn`), OPTIONAL KEYS (`payFromHand.swapWithTop`, `evolveFromDeck.fromHand` /
+    `recordAs`, `HAND_COST_PAID.took`) AND ONE REGISTRY VALUE (`requiresEnergyType: "any"`), NO PROMPT
+    KIND OR STAGE.** (Placed ABOVE the D610 block.) A parked
+    Evidence Gathering (`payFromHand` + `swapWithTop`) or Spiteful Evolution (`evolveFromDeck` +
+    `fromHand`, with `countersOnRecordedBody` in `cont.rest`) rides `phase.cont`: every key is optional and
+    absent on every v42 writer (D125). No card row is read differently, so the 17 faces in a v42
+    `cardPool` gain their Abilities mid-match. Rollback to 0.493 is NOT clean: a parked swap resumes as
+    a plain top-of-deck payment (nothing comes back to the hand), but a parked Sinister Surge
+    (`attachFromDeck`) or Spiteful Evolution carries `countersOnRecordedBody` in `cont.rest`, and 0.493's
+    `stepOp` has no `default:` arm — the unknown op returns `undefined` and `runProgram`'s
+    `"park" in stepped` THROWS a TypeError on resume (it does not whiff). Only a match parked inside
+    one of those two Abilities at the moment of a rollback is exposed.
+
     🆕🆕🆕 **STAYS 42 AT D610 — WP37a ADDS ONE OPTIONAL `hpBonus` KEY AND WIDENS ONE `hpBonus` VALUE, NO OP,
     PROMPT, STAGE OR EVENT.** (Placed ABOVE the D609 block.) `requiresEnergyCount` and the "special"
     `requiresEnergyType` live on registry passives, read at use time and never persisted. The seven new

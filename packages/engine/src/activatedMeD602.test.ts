@@ -29,6 +29,8 @@ import {
 // Ability each turn", so every lock is per Pokémon (`true`). Dropped and named: Dragonair
 // `me02.5-151` "Evolutionary Guidance" (an untyped per-body Energy gate) and Larry's Komala
 // `me02.5-175` "Lethargic Charge" (an Active-only attach target) — both stay unkeyed (§8).
+// [🆕🆕🆕 D611 (D539): WITHDRAWN for Dragonair — keyed at D611 (`activatedMeD611.test.ts`); Larry's Komala
+// stays unkeyed (dropped again at D611). §8 pins both.]
 
 const CALL_A_BUDDY =
   "Once during your turn, if you have no cards in your hand, you may use this Ability. Search your deck for a Supporter card, reveal it, and put it into your hand. Then, shuffle your deck.";
@@ -502,13 +504,13 @@ describe("D602 §7 — Sunrise: on the Bench, up to 2 Basic {M} Energy from the 
   });
 });
 
-describe("D602 §8 — the two dropped texts stay unkeyed, and the version", () => {
-  it("Dragonair `me02.5-151` and Larry's Komala `me02.5-175` carry no program", () => {
-    expect(programFor("me02.5-151")).toBeUndefined();
+describe("D602 §8 — the two dropped texts stay unkeyed, and the version (🆕🆕🆕 D611 (D539): \"stay unkeyed\" WITHDRAWN for Dragonair — keyed at D611)", () => {
+  it("Dragonair `me02.5-151` and Larry's Komala `me02.5-175` carry no program (🆕🆕🆕 D611 (D539): WITHDRAWN for Dragonair — it carries its D611 Ability)", () => {
+    expect(programFor("me02.5-151")?.abilities?.[0]?.name).toBe("Evolutionary Guidance");
     expect(programFor("me02.5-175")).toBeUndefined();
   });
 
-  it("is built at engine 0.493.0", () => {
-    expect(engineVersion).toBe("0.493.0");
+  it("is built at engine 0.494.0", () => {
+    expect(engineVersion).toBe("0.494.0");
   });
 });

@@ -1640,6 +1640,10 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
       const cards = `${n} card${n === 1 ? "" : "s"}`;
       // 🆕🆕🆕 D561 — Academy at Night's *"on top of their deck"*: hidden → hidden like
       // the deck bottom, so the count and the verb are all there is to say.
+      // 🆕🆕🆕 D611 — Evidence Gathering's swap: the old top card went into the hand.
+      if (event.took !== undefined) {
+        return row(event.seat, [plain(`switched ${cards} from their hand with the top card of their deck`)]);
+      }
       if (event.to === "deckTop") {
         return row(event.seat, [plain(`put ${cards} from their hand on top of their deck`)]);
       }

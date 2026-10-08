@@ -49,6 +49,10 @@ import { FIXTURE_POOL, battler, deckOf, trainerCard, typedEnergy } from "./testF
 //         the anchor is not leaving a wider grammar on the table — the family is
 //         **CLOSED AT FOUR** and a `dest` that reads only "on top of it" reads
 //         all of it.
+//         [🆕🆕🆕 D611 (D539): "CLOSED AT FOUR" and "the SAME 4" WITHDRAWN for the
+//         Standard pool — Crobat ×3 `me` "Nighttime Maneuvers" prints *"…then put
+//         that card on top of it"* (an Ability, one card, registry-keyed), so (b)
+//         returns 7 rows today. Kept as written: this file pins the 4 attack rows.]
 //
 //   (e) THE STANDING-STILL, MEASURED RATHER THAN ASSUMED. All three
 //       Ciphermaniac's ids carry `attacks_json IS NULL` AND `abilities_json IS

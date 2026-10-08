@@ -30230,10 +30230,31 @@ decisions (1) and (2) after D580. Engine 0.464.0 → 0.465.0. The Mega ex rule i
   (`benchOnly`, up to 2 Basic {M} from the deck to itself).
 - **Locks.** Every one `oncePerTurn: true`: none of the six prints a name lock.
 - **Dropped and named:** Dragonair "Evolutionary Guidance" (untyped per-body Energy gate) and Larry's Komala "Lethargic
-  Charge" (an Active-only attach target).
+  Charge" (an Active-only attach target). [D611: Dragonair BUILT; Larry's Komala dropped again — it also needs a
+  which-Energy-card choice.]
 - **Readings.** None new; each open point inherits a shipped one (`progress.md` NEXT).
 - **Suite.** `activatedMeD602.test.ts` (22) and a census D602 block (3). +21 mutant rows.
 - **Census.** Standard pool abilities **513 / 610**; 895 `me` printings fully built.
+- **Owed.** See `progress.md` NEXT. The whole-corpus sweep is PENDING.
+
+## D611 — WP21: the rest of the `me` activated Abilities, plus Dragonair (engine 0.494.0, `MATCH_RECORD_VERSION` stays 42)
+
+**Status:** ✅ BUILT in the `luminous_ui-mega` worktree on D610 (`994a949d`), NOT committed.
+
+- **Vocabulary.** `payFromHand.swapWithTop` (the old top card goes to the hand; `HAND_COST_PAID.took`), `evolveFromDeck.fromHand`
+  + `recordAs` (a mandatory evolve from the hand, refused by `programPlayable` with no candidate), the op
+  `countersOnRecordedBody` (counters on the body holding a filed card), the flat `BoardCondition` `notYourFirstTurn`, and
+  `requiresEnergyType: "any"` (continuous.ts `hasAttachedEnergy`). redact.ts passes the body uid to `programPlayable`.
+- **9 texts / 17 `me` printings, nine objects.** Nighttime Maneuvers ×3 (Crobat), Sinister Surge ×3 (Toxtricity), Boisterous
+  Wind ×2 (Dustox), Destructive Headbutting ×2 (Rampardos ex), Evidence Gathering ×2 (Gumshoos), Sky Hunt ×2 (Talonflame),
+  Grand Wing (Vivillon `me03-009`), Spiteful Evolution (Phantump), Evolutionary Guidance (Dragonair) — all 17 fully built.
+- **Dropped and named.** Larry's Komala "Lethargic Charge" (an Active-only target and a which-Energy-card choice; the "Larry's" filter is `attachEnergyFrom`'s shipped `ownerPokemon`, and `attachFromHand`, which does choose, has neither an Active nor a name rider). Heliolisk
+  "Frilled Generator" is WP15.
+- **Readings.** Four new, UNRULED: **R-EG1** (Evidence Gathering refused with an empty deck), **R-SE1** (Spiteful Evolution
+  evolves a Phantump put into play this turn), **R-SE2** (the hand evolve runs no `onEvolve` trigger); review: **R-SE3** (it evolves under Bronzong's "Evolution Jammer" bar).
+- **Suite.** `activatedMeD611.test.ts` (30) and a census D611 block (3). +33 mutant rows, all killed; D455's hand-cost row
+  re-pointed.
+- **Census.** Standard pool abilities **553 / 610**; 1005 `me` printings fully built.
 - **Owed.** See `progress.md` NEXT. The whole-corpus sweep is PENDING.
 
 ## D610 — WP37a: the first part of the `me` on-move / as-often / HP passives (engine 0.493.0, `MATCH_RECORD_VERSION` stays 42)

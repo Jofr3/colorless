@@ -640,7 +640,7 @@ describe("the blast radius — what this slice did NOT change", () => {
     ]);
   });
 
-  it("`playableIf` is authored on exactly ELEVEN ids, and nowhere else (🆕🆕🆕 D591: ELEVEN is the `sv` count; 27 live with the `me` keys; 🆕🆕🆕 D602: 29 live; 🆕🆕🆕 D603: 35 live; 🆕🆕🆕 D610: 37 live)", () => {
+  it("`playableIf` is authored on exactly ELEVEN ids, and nowhere else (🆕🆕🆕 D591: ELEVEN is the `sv` count; 27 live with the `me` keys; 🆕🆕🆕 D602: 29 live; 🆕🆕🆕 D603: 35 live; 🆕🆕🆕 D610: 37 live; 🆕🆕🆕 D611: 38 live)", () => {
     // The gate's own population. Of the 29 legal printings on `%Once during your
     // turn, if %`, 15 are the Active-Spot clause `activeOnly` already covers; of
     // the 14 that remain, NINE name THIS POKÉMON (Munkidori ×3, Meowscarada,
@@ -712,6 +712,8 @@ describe("the blast radius — what this slice did NOT change", () => {
     // "if this Pokémon is on your Bench" is the separate `benchOnly`).
     // 🆕🆕🆕 D610 — +2 on one NEW object: Cobalion ex ×2 "Metal Road", Buzzing Boost's
     // `yourActivePromotedThisTurn` under `activeOnly` (the same conjunction, the same printed clause).
+    // 🆕🆕🆕 D611 — +1: Phantump `me04-038` "Spiteful Evolution", the NEW `notYourFirstTurn` (a board
+    // read of the turn ordinal, "You can't use this Ability during your first turn").
     expect(gated.sort()).toEqual([
       "30th-011",
       "30th-018",
@@ -730,6 +732,7 @@ describe("the blast radius — what this slice did NOT change", () => {
       "me02.5-171",
       "me02.5-250",
       "me02.5-288",
+      "me04-038", // 🆕🆕🆕 D611 — Phantump "Spiteful Evolution"
       "me04-064", // 🆕🆕🆕 D610 — Cobalion ex "Metal Road"
       "me04-103",
       "me05-070",

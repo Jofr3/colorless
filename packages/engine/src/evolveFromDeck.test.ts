@@ -60,7 +60,11 @@ import {
 //      instr(abilities_json,'from your hand to evolve') = 0` returns exactly TWO
 //      rows and **neither is a trigger** — Pidove `sv05-133` (this same placement
 //      printed as an on-demand Ability, HP-gated and name-filtered, carrying no
-//      program) and Team Rocket's Ampharos `sv10-074` (the OPPONENT's evolve). So
+//      program) and Team Rocket's Ampharos `sv10-074` (the OPPONENT's evolve).
+//      [🆕🆕🆕 D611 (D539): "exactly TWO rows" WITHDRAWN for the Standard pool —
+//      Phantump `me04-038` "Spiteful Evolution" is a third, again no trigger: an
+//      on-demand evolve FROM THE HAND (`fromHand`), which runs no trigger either,
+//      R-SE2.] So
 //      a card that was never in hand satisfies no printed antecedent, and the
 //      price is a SOURCE-ZONE distinction rather than a park inside a park. §4
 //      drives BOTH directions on one board.

@@ -1330,6 +1330,10 @@ export type GameEvent =
       seat: Seat;
       uids: string[];
       to: "discard" | "deckBottom" | "deckTop";
+      /** 🆕🆕🆕 D611 — `payFromHand.swapWithTop` (Evidence Gathering): the old TOP card of the
+          deck, which went into the hand as the paid card went on top. Hidden → hidden like the
+          payment, so the log counts it. Absent on every other payment. */
+      took?: string[];
     }
   /** A TRIGGERED Ability fired automatically (§9): `seat`'s in-play `uid`
       reached its trigger condition — played to the Bench / evolved (during

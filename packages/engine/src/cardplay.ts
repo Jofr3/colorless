@@ -41,6 +41,8 @@ import {
   discardRetrievalCandidates,
   // 🆕🆕🆕 D557 — the Tool offer's own funnel, so the grey-out and the offer agree.
   discardableTools,
+  // 🆕🆕🆕 D611 — Spiteful Evolution's hand offer, so the refusal and the offer agree.
+  evolveFromHandAvailable,
   firstAttachableEnergy,
   gustTargets,
   healChosenTargets,
@@ -831,6 +833,7 @@ export function abilityBodyGateMet(
   // 🆕🆕🆕 D572 — Munkidori "Adrena-Brain"'s *"if this Pokémon has any {D} Energy attached"*,
   // through `hasAttachedEnergy` (the D118 provision rule). Asked FIRST and returning only on a
   // fail, so a row carrying no such field falls through to the HP gate byte-identically.
+  // 🆕🆕🆕 D611 — and Dragonair's untyped `"any"`, which `hasAttachedEnergy` answers as "any card".
   if (ability.requiresEnergyType !== undefined && !hasAttachedEnergy(state, pokemon, ability.requiresEnergyType)) {
     return false;
   }
@@ -850,6 +853,8 @@ export function abilityBodyGateMet(
     reason. The Energy clause first, `abilityBodyGateMet`'s own order; `null` for a row with no
     per-body gate. */
 export function abilityBodyGateClause(ability: AbilityProgram): string | null {
+  // 🆕🆕🆕 D611 — the untyped clause prints no type word.
+  if (ability.requiresEnergyType === "any") return "this Pokémon has any Energy attached";
   if (ability.requiresEnergyType !== undefined) {
     return `this Pokémon has any ${ability.requiresEnergyType} Energy attached`;
   }
@@ -1379,6 +1384,12 @@ export function programPlayable(
     // printing that shipped before this one: with no rider the funnel returns
     // `oppBenchRefs`, whose length IS the bench length this used to read.
     if (op.op === "gust" && gustTargets(state, seat, op).length === 0) return false;
+    // 🆕🆕🆕 D611 — Spiteful Evolution's *"Choose a card in your hand that evolves from this
+    // Pokémon"*: a hand with no such card can only whiff, so the use is refused (the hand is the
+    // controller's own zone, unlike the deck `evolveFromDeck` otherwise reads, which stays ungated).
+    if (op.op === "evolveFromDeck" && op.fromHand === true && !evolveFromHandAvailable(state, seat, sourceUid)) {
+      return false;
+    }
     // 🆕🆕🆕 D587 — Repel `me01-126`, the first Trainer with a top-level `opponentSwitchOut`: the
     // `gust` line above with the op's own candidate set (the interpreter parks on `oppBenchRefs`,
     // the whole opponent Bench, unnarrowed), so an empty opponent Bench refuses the Item rather

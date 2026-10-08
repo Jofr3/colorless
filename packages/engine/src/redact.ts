@@ -809,7 +809,9 @@ function redactedAbilitiesOf(
       // No excludeUid: an Ability's card is on the BOARD, not the hand it pays out
       // of (which is why none of these cards prints the Trainer's "other").
       const costUnmet = handCostUnmet(state, viewerSeat, ability.program);
-      const noTarget = !programPlayable(state, ability.program, viewerSeat);
+      // 🆕🆕🆕 D611 — the body's `uid` is passed, as `useAbility` and GameHud pass it: a gate that
+      // reads "this Pokémon" (Spiteful Evolution's hand offer) has no referent without it.
+      const noTarget = !programPlayable(state, ability.program, viewerSeat, uid);
       // D272 — the §9 printed board gate (Fezandipiti ex), folded in beside the
       // rest so the HUD greys a row `useAbility` would reject with
       // ABILITY_CONDITION_NOT_MET. Unlike Active-only/already-used it is NOT

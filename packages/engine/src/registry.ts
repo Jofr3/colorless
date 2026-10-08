@@ -120,7 +120,9 @@ export interface AbilityProgram {
       🆕🆕🆕 D603 NOTE (D539) — "makes 29" is WITHDRAWN as a live figure: Oricorio ex ×3, Ludicolo ×2
       and Linoone `me02-082` (`yourMegaExInPlay`, a board read of the controller's side) make 35.
       🆕🆕🆕 D610 NOTE (D539) — "make 35" is WITHDRAWN as a live figure: Cobalion ex ×2 "Metal Road"
-      (Buzzing Boost's `yourActivePromotedThisTurn` under `activeOnly`) make 37. */
+      (Buzzing Boost's `yourActivePromotedThisTurn` under `activeOnly`) make 37.
+      🆕🆕🆕 D611 NOTE (D539) — "make 37" is WITHDRAWN as a live figure: Phantump `me04-038` "Spiteful
+      Evolution" (`notYourFirstTurn`, a board read of the turn ordinal) makes 38. */
   playableIf?: BoardCondition;
   /** 🆕 **D310 — §9's PER-BODY printed gate, and the field the block above asked
       for by name.** *"Once during your turn, if this Pokémon's remaining HP is 30
@@ -200,8 +202,11 @@ export interface AbilityProgram {
       text branches through `abilityBodyGateClause`, the one spelling of the clause. A
       sibling of `remainingHpAtMost` rather than a widening of it: the two are different
       predicates and no printing carries both. Optional and absent-means-no-gate, so every
-      existing row is byte-identical. */
-  requiresEnergyType?: BasicEnergyType;
+      existing row is byte-identical.
+      🆕🆕🆕 **D611 — WIDENED TO `"any"`**: Dragonair `me02.5-151` "Evolutionary Guidance" prints
+      *"if this Pokémon has any Energy attached"* — no type, so any attached Energy card passes
+      (`abilityBodyGateMet`); the reason text drops the type word. */
+  requiresEnergyType?: BasicEnergyType | "any";
   /** The Ability may only be used while this Pokémon is the Active (Chien-Pao's
       "if this Pokémon is in the Active Spot"). */
   activeOnly: boolean;
@@ -17506,6 +17511,8 @@ const FINAL_CHAIN: CardProgram = {
 //    (vocabulary beyond the brief): Dragonair `me02.5-151` "Evolutionary Guidance" (an UNTYPED
 //    per-body Energy gate; `requiresEnergyType` takes a type) and Larry's Komala `me02.5-175`
 //    "Lethargic Charge" (an Active-only attach target; no `AttachTargetRiders` member says "Active").
+//    [🆕🆕🆕 D611 (D539): Dragonair BUILT at D611 (`requiresEnergyType: "any"`, `EVOLUTIONARY_GUIDANCE`);
+//    Larry's Komala still dropped (it also needs a which-Energy-card choice, see the D611 block).]
 //    `activatedMeD602.test.ts` drives each one. ──
 
 /** 🆕🆕🆕 **D602 — Silvally `me05-070` / `-095` "Call a Buddy"**: *"Once during your turn, if you have
@@ -18028,6 +18035,208 @@ const SCALE_UP: CardProgram = {
     Special Energy attached, it gets +150 HP."* Okidogi's `hpBonus` gate at the card class "special". */
 const TYRANNICALLY_GUTSY: CardProgram = {
   passive: { hpBonus: { amount: 150, requiresEnergyType: "special" } },
+};
+
+// ── 🆕🆕🆕 D611 — WP21: THE REST OF THE `me` ACTIVATED ABILITIES, plus Dragonair (one of WP20b's two
+//    drops). Nine objects, 17 printings; texts off the LOCAL D1. None prints "You can't use more than 1 …
+//    Ability each turn", so every lock is `true` (per Pokémon); the printed "you may use this Ability"
+//    is the use itself (§9.1). Five take shipped ops only; the new pieces are `payFromHand.swapWithTop`
+//    (Evidence Gathering), `evolveFromDeck.fromHand` + `recordAs` with the NEW op
+//    `countersOnRecordedBody` (Spiteful Evolution; Sinister Surge reuses the op), the NEW
+//    `BoardCondition` `notYourFirstTurn` and `requiresEnergyType: "any"` (Evolutionary Guidance).
+//    Dropped and named: Larry's Komala `me02.5-175` "Lethargic Charge" — an Active-only attach target
+//    AND a choice of WHICH Energy card (`attachEnergyFrom` `anyEnergy` attaches the first one in the
+//    hand, D246's attack reading): two pieces, not one. The printed "Larry's" filter is not a third:
+//    `attachEnergyFrom` carries it as `ownerPokemon`; `attachFromHand`, which does choose the card,
+//    has neither an Active nor a name rider. `activatedMeD611.test.ts` drives each one. ──
+
+/** 🆕🆕🆕 **D611 — Crobat `me04-051` / `-093` / `mep-076` "Nighttime Maneuvers"**: *"Once during your
+    turn, if this Pokémon is in the Active Spot, you may use this Ability. Search your deck for a
+    card. Shuffle your deck, then put that card on top of it."* Ciphermaniac's Codebreaking program
+    (`searchTopOrderProgram`) at one card, without its `reorderTop` (one card has no order). */
+const NIGHTTIME_MANEUVERS: CardProgram = {
+  abilities: [
+    {
+      name: "Nighttime Maneuvers",
+      oncePerTurn: true,
+      activeOnly: true,
+      program: [
+        { op: "shuffleDeck" },
+        { op: "searchDeck", filter: { kind: "anyCard" }, max: 1, exact: true, dest: "deckTop" },
+      ],
+    },
+  ],
+};
+
+/** 🆕🆕🆕 **D611 — Toxtricity `me02-068` / `-103` / `mep-017` "Sinister Surge"**: *"Once during your
+    turn, you may use this Ability. Search your deck for a Basic {D} Energy card and attach it to 1 of
+    your Benched {D} Pokémon. Then, shuffle your deck. If you attached Energy to a Pokémon in this way,
+    place 2 damage counters on that Pokémon."* An `attachFromDeck` to a Benched {D} body that files
+    the Energy, the shuffle, then the NEW `countersOnRecordedBody` on the body holding it (nothing
+    attached, nothing placed). */
+const SINISTER_SURGE: CardProgram = {
+  abilities: [
+    {
+      name: "Sinister Surge",
+      oncePerTurn: true,
+      activeOnly: false,
+      program: [
+        {
+          op: "attachFromDeck",
+          filter: { kind: "basicEnergy", energyType: "Darkness" },
+          max: 1,
+          targetType: "Darkness",
+          benchOnly: true,
+          recordAs: "moved",
+        },
+        { op: "shuffleDeck" },
+        { op: "countersOnRecordedBody", slot: "moved", amount: 20 },
+      ],
+    },
+  ],
+};
+
+/** 🆕🆕🆕 **D611 — Dustox `me02.5-015` / `-220` "Boisterous Wind"**: *"Once during your turn, you may
+    use this Ability. Flip a coin. If heads, put an Energy attached to your opponent's Active Pokémon
+    into their hand."* Chill Teaser Toy's `discardEnergy … to: "hand"` at the opponent's Active,
+    behind the coin. */
+const BOISTEROUS_WIND: CardProgram = {
+  abilities: [
+    {
+      name: "Boisterous Wind",
+      oncePerTurn: true,
+      activeOnly: false,
+      program: [
+        {
+          op: "coinFlipGate",
+          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
+          then: [{ op: "discardEnergy", from: "opponentActive", filter: { kind: "anyEnergy" }, to: "hand" }],
+        },
+      ],
+    },
+  ],
+};
+
+/** 🆕🆕🆕 **D611 — Rampardos ex `me05-045` / `-100` "Destructive Headbutting"**: *"Once during your
+    turn, if this Pokémon is in the Active Spot, you may use this Ability. Flip a coin. If heads,
+    discard an Energy from your opponent's Active Pokémon."* Haphazard Hammer's program behind
+    `activeOnly`. */
+const DESTRUCTIVE_HEADBUTTING: CardProgram = {
+  abilities: [
+    {
+      name: "Destructive Headbutting",
+      oncePerTurn: true,
+      activeOnly: true,
+      program: [
+        {
+          op: "coinFlipGate",
+          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
+          then: [
+            // Haphazard Hammer's consequent (D590), spelled over three lines so its mutant finds stay unique.
+            { op: "discardEnergy", from: "opponentActive", filter: { kind: "anyEnergy" } },
+          ],
+        },
+      ],
+    },
+  ],
+};
+
+/** 🆕🆕🆕 **D611 — Gumshoos `me01-110` / `-153` "Evidence Gathering"**: *"Once during your turn, you
+    may use this Ability. Switch a card from your hand with the top card of your deck."* Academy at
+    Night's `payFromHand { count: 1, to: "deckTop" }` with the NEW `swapWithTop` (the old top card
+    goes into the hand). Refused with an empty hand or an empty deck (R-EG1). */
+const EVIDENCE_GATHERING: CardProgram = {
+  abilities: [
+    {
+      name: "Evidence Gathering",
+      oncePerTurn: true,
+      activeOnly: false,
+      program: [{ op: "payFromHand", count: 1, to: "deckTop", swapWithTop: true }],
+    },
+  ],
+};
+
+/** 🆕🆕🆕 **D611 — Talonflame `me03-014` / `-091` "Sky Hunt"**: *"Once during your turn, you may use
+    this Ability. Flip a coin. If heads, discard a random card from your opponent's hand."*
+    `randomFromOpponentHand` to the discard, behind the coin. */
+const SKY_HUNT: CardProgram = {
+  abilities: [
+    {
+      name: "Sky Hunt",
+      oncePerTurn: true,
+      activeOnly: false,
+      program: [
+        {
+          op: "coinFlipGate",
+          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect gate's step list, not a thenable.
+          then: [{ op: "randomFromOpponentHand", to: "discard" }],
+        },
+      ],
+    },
+  ],
+};
+
+/** 🆕🆕🆕 **D611 — Vivillon `me03-009` "Grand Wing"**: *"Once during your turn, you may use this
+    Ability. Your opponent shuffles their hand and puts it on the bottom of their deck. If they put
+    any cards on the bottom of their deck in this way, they draw 4 cards."* Iono's `handRefresh`
+    shape (`toBottom`, `onlyIfAnyMoved`) at `who: "opponent"` and a fixed 4. */
+const GRAND_WING: CardProgram = {
+  abilities: [
+    {
+      name: "Grand Wing",
+      oncePerTurn: true,
+      activeOnly: false,
+      program: [
+        {
+          op: "handRefresh",
+          who: "opponent",
+          toBottom: true,
+          onlyIfAnyMoved: true,
+          draw: { kind: "fixed", count: 4 },
+        },
+      ],
+    },
+  ],
+};
+
+/** 🆕🆕🆕 **D611 — Phantump `me04-038` "Spiteful Evolution"**: *"Once during your turn, you may use
+    this Ability. Choose a card in your hand that evolves from this Pokémon and put it onto this
+    Pokémon to evolve it. If you do, place 2 damage counters on the Pokémon you evolved in this way.
+    You can't use this Ability during your first turn."* The NEW `notYourFirstTurn` gate, the
+    `evolveFromDeck` placement from the HAND (`fromHand`, filed), then `countersOnRecordedBody` on the
+    evolved body. R-SE1 / R-SE2 ⚠️ UNRULED (see `evolveFromDeck.fromHand`). */
+const SPITEFUL_EVOLUTION: CardProgram = {
+  abilities: [
+    {
+      name: "Spiteful Evolution",
+      oncePerTurn: true,
+      activeOnly: false,
+      playableIf: { kind: "notYourFirstTurn" },
+      program: [
+        { op: "evolveFromDeck", fromHand: true, recordAs: "moved" },
+        { op: "countersOnRecordedBody", slot: "moved", amount: 20 },
+      ],
+    },
+  ],
+};
+
+/** 🆕🆕🆕 **D611 — Dragonair `me02.5-151` "Evolutionary Guidance"** (dropped at D602): *"Once during
+    your turn, if this Pokémon has any Energy attached, you may use this Ability. Search your deck
+    for an Evolution Pokémon, reveal it, and put it into your hand. Then, shuffle your deck."*
+    `requiresEnergyType` widened to `"any"`, over a revealed `evolutionPokemon` search. */
+const EVOLUTIONARY_GUIDANCE: CardProgram = {
+  abilities: [
+    {
+      name: "Evolutionary Guidance",
+      oncePerTurn: true,
+      activeOnly: false,
+      requiresEnergyType: "any",
+      program: [
+        { op: "searchDeck", filter: { kind: "evolutionPokemon" }, dest: "hand", max: 1, reveal: true },
+        { op: "shuffleDeck" },
+      ],
+    },
+  ],
 };
 
 const REGISTRY: Record<string, CardProgram> = {
@@ -19192,6 +19401,24 @@ const REGISTRY: Record<string, CardProgram> = {
   "30th-129": SCALE_UP, // Alolan Exeggutor
   "mep-066": TYRANNICALLY_GUTSY, // Tyrantrum — any Special Energy attached: +150 HP
   "me03-045": TYRANNICALLY_GUTSY, // Tyrantrum
+  // 🆕🆕🆕 D611 — WP21 + Dragonair: 17 non-attack keys / 9 objects, MID-MAP (`raw[last]` does not move).
+  "me04-051": NIGHTTIME_MANEUVERS, // Crobat — Active: a card from the deck onto its top
+  "me04-093": NIGHTTIME_MANEUVERS, // Crobat
+  "mep-076": NIGHTTIME_MANEUVERS, // Crobat
+  "me02-068": SINISTER_SURGE, // Toxtricity — a Basic {D} to a Benched {D} body, 2 counters on it
+  "me02-103": SINISTER_SURGE, // Toxtricity
+  "mep-017": SINISTER_SURGE, // Toxtricity
+  "me02.5-015": BOISTEROUS_WIND, // Dustox — heads: an Energy off the opponent's Active into their hand
+  "me02.5-220": BOISTEROUS_WIND, // Dustox
+  "me05-045": DESTRUCTIVE_HEADBUTTING, // Rampardos ex — Active, heads: discard an Energy off the opponent's Active
+  "me05-100": DESTRUCTIVE_HEADBUTTING, // Rampardos ex
+  "me01-110": EVIDENCE_GATHERING, // Gumshoos — switch a hand card with the deck's top card
+  "me01-153": EVIDENCE_GATHERING, // Gumshoos
+  "me03-014": SKY_HUNT, // Talonflame — heads: discard a random card from the opponent's hand
+  "me03-091": SKY_HUNT, // Talonflame
+  "me03-009": GRAND_WING, // Vivillon — the opponent's hand under their deck; any moved: they draw 4
+  "me04-038": SPITEFUL_EVOLUTION, // Phantump — evolve from hand, 2 counters on the evolved body
+  "me02.5-151": EVOLUTIONARY_GUIDANCE, // Dragonair — any Energy attached: an Evolution Pokémon from the deck
   // ── D190 — THE **STANDARD-LEGAL** REPRINT-ALIAS MAP (Tier 0 of
   //    `docs/reference/coverage-backlog-legal.md`). 22 printings, 9 map targets,
   //    ZERO new code: every row below prints a sentence that is already authored
