@@ -39,12 +39,16 @@ vi.mock("../pixi/CardView", () => ({
       return this.target?.placement;
     }
     get zIndex() {
-      return this.target?.zIndex ?? 0;
+      return this.container.zIndex;
     }
     setTarget = vi.fn((target: CardViewTarget) => {
       this.target = target;
       this.position = { x: target.x, y: target.y };
+      this.container.zIndex = this.isDragging ? 10_000 : target.zIndex;
     });
+    setRenderParent = (parent: Container) => {
+      if (this.container.parent !== parent) parent.addChild(this.container);
+    };
     getTargetSnapshot = () => this.target;
     getPosition = () => this.position;
     getCardCenter = () => this.position;
@@ -57,9 +61,11 @@ vi.mock("../pixi/CardView", () => ({
     };
     startDrag = () => {
       this.isDragging = true;
+      this.container.zIndex = 10_000;
     };
     release = () => {
       this.isDragging = false;
+      this.container.zIndex = this.target?.zIndex ?? 0;
     };
     destroy = vi.fn(() => this.container.destroy());
     setHovered = vi.fn();
@@ -80,6 +86,7 @@ vi.mock("../pixi/CardView", () => ({
 
 interface TestView {
   id: string;
+  container: Container;
   target: CardViewTarget;
   setTarget: ReturnType<typeof vi.fn>;
   shake: ReturnType<typeof vi.fn>;
@@ -205,6 +212,7 @@ function Scene({
 beforeAll(installDomShims);
 beforeEach(() => {
   mocks.constructed.mockClear();
+  mocks.createApplication.mockClear();
   ticker.add.mockClear();
   ticker.remove.mockClear();
   vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockImplementation(function (
@@ -240,12 +248,13 @@ beforeEach(() => {
       toJSON: () => ({}),
     };
   });
-  mocks.createApplication.mockResolvedValue({
+  mocks.createApplication.mockImplementation(async () => ({
     stage: new Container(),
     ticker,
     canvas: document.createElement("canvas"),
     destroy: vi.fn(),
-  });
+    render: vi.fn(),
+  }));
 });
 afterEach(() => {
   cleanup();
@@ -315,7 +324,7 @@ it.each([
     const badges = [...container.querySelectorAll<HTMLElement>(`[data-card-badge-for="${id}"]`)];
     const otherId = id === "active" ? "bench-0" : "active";
     const otherBadge = container.querySelector<HTMLElement>(
-      `[data-damage-chip][data-card-badge-for="${otherId}"]`,
+      `[data-damage-dice][data-card-badge-for="${otherId}"]`,
     );
     expect(badges).toHaveLength(2);
     const root = getByTestId("root");
@@ -324,13 +333,24 @@ it.each([
     const tick = ticker.add.mock.calls[0]?.[0];
     if (!tick) throw new Error("Missing card animation ticker");
     act(() => tick({ deltaMS: 16 } as Ticker));
-    for (const badge of badges)
+    const boardApp = await mocks.createApplication.mock.results[0]?.value;
+    const liftedApp = await mocks.createApplication.mock.results[1]?.value;
+    expect(view(id).container.parent).toBe(liftedApp.stage.children[0]);
+    expect(view(otherId).container.parent).toBe(boardApp.stage.children[0]);
+    expect(liftedApp.render).toHaveBeenCalled();
+    for (const badge of badges) {
       expect(badge.style.transform).toBe(`translate3d(${dx}px, ${dy}px, 0)`);
+      expect(badge.hasAttribute("data-card-badge-lifted")).toBe(true);
+    }
+    expect(otherBadge?.hasAttribute("data-card-badge-lifted")).toBe(false);
     expect(otherBadge?.style.transform).toBe("translate3d(0px, 0px, 0)");
     pointer(window, "pointercancel", 400, 320);
     await waitFor(() => {
       for (const badge of badges) expect(badge.style.transform).toBe("translate3d(0px, 0px, 0)");
     });
+    act(() => tick({ deltaMS: 16 } as Ticker));
+    expect(view(id).container.parent).toBe(boardApp.stage.children[0]);
+    for (const badge of badges) expect(badge.hasAttribute("data-card-badge-lifted")).toBe(false);
     expect(onMove).not.toHaveBeenCalled();
     unmount();
     for (const badge of badges) expect(badge.style.transform).toBe("");

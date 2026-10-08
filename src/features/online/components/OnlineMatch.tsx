@@ -215,6 +215,7 @@ export function OnlineMatch({
       turn={turnInfo}
       perspective="you"
       glowPerspective={projection.activePlayer ?? "you"}
+      blueBackPlayer={seat === "p1" ? "you" : "opponent"}
       onMoveCard={handleMove}
       passAnimationKey={projection.turn}
       placementPredicate={placementPredicate}

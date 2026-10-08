@@ -9,7 +9,7 @@ import type {
 } from "../types";
 import { cardBackToneFor } from "../utils/players";
 import { Bench } from "./Bench";
-import { CardSlot, DamageChip, PlaymatCard, StatusChips } from "./Card";
+import { CardSlot, DamageDice, PlaymatCard, StatusChips } from "./Card";
 import { DeckPile, DiscardPile, PrizeGrid } from "./Piles";
 import { UsedTrainers } from "./UsedTrainers";
 
@@ -22,11 +22,13 @@ function ActiveCardSlot({
   card,
   active,
   owner,
+  blueBackPlayer,
   usedTrainers,
 }: {
   card: CardModel | null;
   active: boolean;
   owner: PlayerId;
+  blueBackPlayer?: PlayerId;
   usedTrainers?: { turn: number; cards: CardModel[] };
 }) {
   return (
@@ -42,12 +44,14 @@ function ActiveCardSlot({
       {usedTrainers && (
         <UsedTrainers key={usedTrainers.turn} cards={usedTrainers.cards} owner={owner} />
       )}
-      {/* Siblings of the frame, not inside it, so z-[61] clears the Pixi
-          canvas. right-0/top-0 on the frame box lands exactly where -1.5
-          offsets on the card box did (--pile-pad is the same 6px); the
-          status markers mirror it on the left corner, clear of the chip. */}
+      {/* The dice and status markers sit above the Pixi canvas and follow
+          their Pokémon through the shared card-badge anchor. */}
       {card?.battle !== undefined && (
-        <DamageChip battle={card.battle} cardId={card.id} className="right-0 top-0" />
+        <DamageDice
+          battle={card.battle}
+          cardId={card.id}
+          tone={cardBackToneFor(owner, blueBackPlayer)}
+        />
       )}
       {card?.battle?.conditions !== undefined && (
         <StatusChips
@@ -145,7 +149,13 @@ function BenchArea({
 }) {
   return (
     <div className="relative">
-      <Bench cards={player.bench} owner={owner} side={side} benchLimit={benchLimit} />
+      <Bench
+        cards={player.bench}
+        owner={owner}
+        side={side}
+        benchLimit={benchLimit}
+        tone={cardBackToneFor(owner, blueBackPlayer)}
+      />
       <SidePiles
         owner={owner}
         blueBackPlayer={blueBackPlayer}
@@ -184,6 +194,7 @@ export function PlayerSide({
       card={player.active}
       active={activeTurn}
       owner={owner}
+      blueBackPlayer={blueBackPlayer}
       usedTrainers={usedTrainers}
     />
   );

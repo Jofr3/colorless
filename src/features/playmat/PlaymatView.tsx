@@ -39,6 +39,8 @@ export interface PlaymatViewProps {
       Defaults to `perspective`; the game page overrides it per seat so the
       glow still rotates in hot-seat play, where `perspective` is fixed. */
   glowPerspective?: PlayerId;
+  /** Physical blue seat, independent of the background glow in online matches. */
+  blueBackPlayer?: PlayerId;
   onMoveCard: (request: CardMoveRequest) => void;
   /** Right-edge pass control, with optional local turn-history navigation. */
   onPassTurn?: () => void;
@@ -77,6 +79,7 @@ export function PlaymatView({
   turn,
   perspective,
   glowPerspective,
+  blueBackPlayer: fixedBlueBackPlayer,
   onMoveCard,
   onPassTurn,
   passDisabled = false,
@@ -111,7 +114,7 @@ export function PlaymatView({
     red: 0,
   });
   const cardsAnimating = setupAnimation !== null;
-  const setupAnimating = cardsAnimating && setupAnimation !== "turn-draw";
+  const setupAnimating = setupAnimation === "prizes" || setupAnimation === "draw";
   const displayedTurn = setupAnimating && turn.turn > 0 ? { ...turn, turn: 0 } : turn;
 
   const bottomPlayer = perspective;
@@ -125,7 +128,7 @@ export function PlaymatView({
   // (index.css) rotates blue/red around the board on the opponent's turn.
   const bodyPerspective = glowPerspective ?? perspective;
   // Keep card backs tied to the physical seats when the hot-seat projection re-bases.
-  const blueBackPlayer = bodyPerspective === "you" ? bottomPlayer : topPlayer;
+  const blueBackPlayer = fixedBlueBackPlayer ?? (bodyPerspective === "you" ? bottomPlayer : topPlayer);
   function displayedPile(owner: PlayerId): PileState | undefined {
     const pile = visiblePiles?.[owner];
     if (!pile) return undefined;
@@ -239,7 +242,9 @@ export function PlaymatView({
             ? "Setting Prize cards."
             : setupAnimation === "draw"
               ? "Drawing mulligan bonus cards."
-              : "Drawing a card for the turn."}
+              : setupAnimation === "prize-take"
+                ? "Adding Prize cards to the player's hand."
+                : "Drawing a card for the turn."}
         </output>
       )}
     </section>

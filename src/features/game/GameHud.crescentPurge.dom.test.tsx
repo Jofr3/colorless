@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 // 🆕🆕🆕 D548 — CRESCENT PURGE ON THE **LOCAL** SURFACE: the choose-a-prize dialog, the
-// face-up tile in the ko:takePrizes picker, and the wire round trip that feeds the same
+// automatic collection of a face-up prize, and the wire round trip that feeds the same
 // decision online.
 //
 // ⚠️ THE PARKS ARE DRIVEN, NOT CONSTRUCTED: the real Cresselia `sv06.5-021` attacks with
@@ -140,31 +140,19 @@ describe("🛑 the local choose-a-prize dialog", () => {
   });
 });
 
-describe("🛑 the local ko:takePrizes picker paints a FACE-UP prize and keeps it pickable", () => {
-  it("🛑 the turned slot shows its card, and picking it dispatches its index", () => {
-    // A paid Purge (160) Knocks Out the 150-HP defender after turning slot 3.
-    const state = pick(purgeYes(ready("d548-frail")), 3);
+describe("local automatic prize collection", () => {
+  it("collects a face-up prize without opening a picker", () => {
+    const state = pick(purgeYes(ready("d548-frail")), 5);
     expect(state.phase).toEqual({ kind: "ko:takePrizes", seat: "p1", count: 1 });
-    const uid = state.players.p1.prizes[3] as string;
-    const name = POOL[state.cardIdByUid[uid] as string]?.name as string;
     const dispatch = vi.fn();
     renderHud(state, "p1", dispatch);
-    expect(screen.getByText(/face-up ones included/)).toBeTruthy();
-    const faceUp = screen.getByRole("button", { name: `Prize 4 — ${name} (face up)` });
-    expect(faceUp.textContent).toBe(name);
-    expect(screen.getAllByRole("button", { name: /^Prize \d$/ })).toHaveLength(5);
-    fireEvent.click(faceUp);
-    fireEvent.click(screen.getByRole("button", { name: "Take 1/1" }));
-    expect(dispatch).toHaveBeenCalledWith({ type: "takePrizes", seat: "p1", prizeIndices: [3] });
-    // The caption's face-up clause is CONDITIONAL. TEST SURGERY: the same parked take with
-    // the flip erased — a row with NO face-up slot (every normal game) says nothing of one.
-    cleanup();
-    const plain: GameState = {
-      ...state,
-      players: { ...state.players, p1: { ...state.players.p1, faceUpPrizes: [] } },
-    };
-    renderHud(plain, "p1", vi.fn());
-    expect(screen.getByText(/to add to your hand\.$/)).toBeTruthy();
-    expect(screen.queryByText(/face-up/)).toBeNull();
+    expect(screen.queryByRole("dialog", { name: "Take prizes" })).toBeNull();
+    expect(screen.queryByRole("button", { name: /^Prize / })).toBeNull();
+    expect(dispatch).toHaveBeenCalledExactlyOnceWith({
+      type: "takePrizes", seat: "p1", prizeIndices: [5],
+    });
+    const collected = act(state, dispatch.mock.calls[0]?.[0]);
+    expect(collected.players.p1.hand).toContain(state.players.p1.prizes[5]);
+    expect(collected.players.p1.faceUpPrizes).toEqual([]);
   });
 });

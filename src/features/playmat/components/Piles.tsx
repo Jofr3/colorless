@@ -217,6 +217,8 @@ export function PrizeGrid({
                 return (
                   <div
                     key={columnIndex}
+                    data-prize-source={slotIndex}
+                    data-card-owner={owner}
                     style={{
                       marginLeft: columnIndex === 0 ? 0 : "var(--prize-gap-x)",
                       zIndex: slotIndex,

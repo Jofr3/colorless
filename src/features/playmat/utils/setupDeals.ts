@@ -2,7 +2,7 @@ import type { BoardState, CardBackTone, PlayerId } from "../types";
 import { opponentOf } from "./players";
 import { PRIZE_COUNT } from "./piles";
 
-export type SetupAnimationStage = "prizes" | "draw" | "turn-draw";
+export type SetupAnimationStage = "prizes" | "draw" | "prize-take" | "turn-draw";
 
 export interface SetupDealSnapshot {
   board: BoardState;
@@ -17,6 +17,8 @@ export interface SetupDeal {
   kind: SetupAnimationStage;
   /** Prize slot, or the appended card's index in its owner's hand. */
   index: number;
+  /** The vacated grid slot for a collected Prize card, including empty slots. */
+  prizeSlot?: number;
 }
 
 /** Keep each recipient's die until their first bonus card leaves the deck. */
@@ -64,6 +66,40 @@ export function turnDrawsBetween(
   // No draw on deck-out, or when navigating to a snapshot with the same hand.
   if (!card || before.hand.some((existing) => existing.id === card.id)) return [];
   return [{ tone, kind: "turn-draw", index }];
+}
+
+/** Prize awards can advance the turn and swap the local viewer in the same update. */
+export function prizeTakesBetween(
+  previous: SetupDealSnapshot | null,
+  next: SetupDealSnapshot,
+  perspectivePlayer: PlayerId = "you",
+): SetupDeal[] {
+  if (previous === null || previous.turn < 1 || next.turn < previous.turn) return [];
+  const deals: SetupDeal[] = [];
+  const turnDraws = turnDrawsBetween(previous, next);
+  for (const tone of ["blue", "red"] as const) {
+    const before = previous.board[ownerForTone(tone, previous.blueBackPlayer)];
+    const owner = ownerForTone(tone, next.blueBackPlayer);
+    const after = next.board[owner];
+    const count = before.prizesRemaining - after.prizesRemaining;
+    if (count <= 0) continue;
+    // The ordinary turn draw, when present, follows the awarded prizes.
+    const drawCount = turnDraws.filter((draw) => draw.tone === tone).length;
+    const first = after.hand.length - count - drawCount;
+    if (first < 0) continue;
+    for (let offset = 0; offset < count; offset++) {
+      deals.push({
+        tone,
+        kind: "prize-take",
+        index: first + offset,
+        prizeSlot:
+          owner === perspectivePlayer
+            ? after.prizesRemaining + offset
+            : PRIZE_COUNT - before.prizesRemaining + offset,
+      });
+    }
+  }
+  return deals;
 }
 
 /** Compare physical seats, even when local hot-seat play swaps you/opponent. */

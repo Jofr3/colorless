@@ -35,6 +35,7 @@ import {
   SETUP_DEAL_STAGGER,
   ownerForTone,
   setupDealsBetween,
+  prizeTakesBetween,
   turnDrawsBetween,
   pendingMulliganDrawCounts,
   type SetupAnimationStage,
@@ -535,10 +536,12 @@ export function AnimatedCardsLayer({
   onSetupAnimationChangeRef.current = onSetupAnimationChange;
   onPendingMulliganDrawsChangeRef.current = onPendingMulliganDrawsChange;
   const mountRef = useRef<HTMLDivElement>(null);
+  const liftedMountRef = useRef<HTMLDivElement>(null);
   const trainerUseLabelRef = useRef<HTMLOutputElement>(null);
   const trainerUseCardIdRef = useRef<string | null>(null);
   const appRef = useRef<Application | null>(null);
   const sceneRef = useRef<Container | null>(null);
+  const liftedSceneRef = useRef<Container | null>(null);
   const viewsRef = useRef(new Map<string, CardView>());
   const descriptorsRef = useRef(new Map<string, CardDescriptor>());
   const dropZonesRef = useRef<DropZoneSnapshot[]>([]);
@@ -889,10 +892,15 @@ export function AnimatedCardsLayer({
     // Follow the rendered spring position rather than the pointer or slot,
     // so badges stay with their card during drags, reorders, and release.
     for (const badge of cardBadgesRef.current) {
-      const center = viewsRef.current.get(badge.cardId)?.getCardCenter();
+      const view = viewsRef.current.get(badge.cardId);
+      const center = view?.getCardCenter();
       if (center) {
         badge.element.style.transform = `translate3d(${center.x - badge.x}px, ${center.y - badge.y}px, 0)`;
       }
+      badge.element.toggleAttribute(
+        "data-card-badge-lifted",
+        Boolean(liftedSceneRef.current && view?.container.parent === liftedSceneRef.current),
+      );
     }
     positionSelectionButtons();
   }
@@ -977,8 +985,26 @@ export function AnimatedCardsLayer({
   }
 
   function clearCardBadges() {
-    for (const badge of cardBadgesRef.current) badge.element.style.removeProperty("transform");
+    for (const badge of cardBadgesRef.current) {
+      badge.element.style.removeProperty("transform");
+      badge.element.removeAttribute("data-card-badge-lifted");
+    }
     cardBadgesRef.current = [];
+  }
+
+  function positionLiftedCards() {
+    const scene = sceneRef.current;
+    const liftedScene = liftedSceneRef.current;
+    if (!scene || !liftedScene) return;
+    // DOM badges sit above the board canvas. Lift dragged cards (and their
+    // attachments/flights) into a second canvas to preserve that depth order.
+    const positionView = (view: CardView) => {
+      const parent = view.zIndex >= 9_998 ? liftedScene : scene;
+      view.setRenderParent(parent);
+    };
+    for (const view of viewsRef.current.values()) positionView(view);
+    for (const flight of setupFlightsRef.current) positionView(flight.view);
+    for (const flight of discardFlightsRef.current) positionView(flight.view);
   }
 
   function discardTarget(owner: PlayerId): CardViewTarget | null {
@@ -1117,7 +1143,7 @@ export function AnimatedCardsLayer({
       performance.now() / 1000,
       ...setupFlightsRef.current.map((flight) => flight.endsAt),
     );
-    for (const kind of ["prizes", "draw", "turn-draw"] as const) {
+    for (const kind of ["prizes", "draw", "prize-take", "turn-draw"] as const) {
       const batch = deals.filter((deal) => deal.kind === kind);
       if (!batch.length) continue;
       const duration = kind === "prizes" ? PRIZE_FLIP_DURATION : BONUS_DEAL_DURATION;
@@ -1130,7 +1156,9 @@ export function AnimatedCardsLayer({
               ? "Face-down Prize card"
               : kind === "draw"
                 ? "Mulligan bonus card"
-                : "Start-of-turn card",
+                : kind === "prize-take"
+                  ? "Prize card"
+                  : "Start-of-turn card",
           textureUrl: cardBackImageUrl(currentSetupRef.current.backDesign, deal.tone),
           seed: index / batch.length,
           reducedMotion: false,
@@ -1165,13 +1193,16 @@ export function AnimatedCardsLayer({
     for (const flight of setupFlightsRef.current) {
       const owner = ownerForTone(flight.deal.tone, currentSetupRef.current.blueBackPlayer);
       let source = viewsRef.current.get(deckBackId(owner))?.getTargetSnapshot();
-      // The final draw removes the deck's back anchor. Its empty slot still
-      // gives the flight a source, including after a hot-seat handoff.
-      const emptyDeck = root.querySelector<HTMLElement>(
-        `[data-card-pile="deck"][data-card-owner="${owner}"] [data-deck-draw-source="true"]`,
+      // Empty Prize slots and an exhausted deck retain a measurable source,
+      // including after a hot-seat handoff.
+      const sourceSlot = root.querySelector<HTMLElement>(
+        flight.deal.kind === "prize-take"
+          ? `[data-prize-source="${flight.deal.prizeSlot}"][data-card-owner="${owner}"]`
+          : `[data-card-pile="deck"][data-card-owner="${owner}"] [data-deck-draw-source="true"]`,
       );
-      if (emptyDeck) {
-        const rect = emptyDeck.getBoundingClientRect();
+      if (flight.deal.kind === "prize-take") source = undefined;
+      if (sourceSlot) {
+        const rect = sourceSlot.getBoundingClientRect();
         const rootRect = root.getBoundingClientRect();
         source = {
           x: rect.left + rect.width / 2 - rootRect.left,
@@ -1638,6 +1669,8 @@ export function AnimatedCardsLayer({
     view.startPress();
     view.startDrag();
     startAttachedCardsDrag(dragState, viewPosition.x, viewPosition.y);
+    positionLiftedCards();
+    positionCardBadges();
     startPressedReveal(revealHostCardId ?? view.id, event.pointerId);
   }
 
@@ -2312,6 +2345,7 @@ export function AnimatedCardsLayer({
       previousSetupRef.current.blueBackPlayer !== blueBackPlayer;
     const deals = [
       ...setupDealsBetween(previousSetupRef.current, snapshot),
+      ...prizeTakesBetween(previousSetupRef.current, snapshot, perspectivePlayer),
       ...turnDrawsBetween(previousSetupRef.current, snapshot),
     ];
     previousSetupRef.current = snapshot;
@@ -2340,15 +2374,21 @@ export function AnimatedCardsLayer({
   // biome-ignore lint/correctness/useExhaustiveDependencies: Pixi app lifecycle is tied to the mount node, not React render callbacks.
   useEffect(() => {
     const mountElement = mountRef.current;
-    if (!mountElement) {
+    const liftedMountElement = liftedMountRef.current;
+    if (!mountElement || !liftedMountElement) {
       return undefined;
     }
     const mount = mountElement;
+    const liftedMount = liftedMountElement;
 
     let disposed = false;
     let app: Application | null = null;
+    let liftedApp: Application | null = null;
     const scene = new Container();
     scene.sortableChildren = true;
+    const liftedScene = new Container();
+    liftedScene.sortableChildren = true;
+    let liftedWasVisible = false;
 
     ensureGsapPixi();
 
@@ -2359,14 +2399,22 @@ export function AnimatedCardsLayer({
       }
       advanceSetupFlights(time, ticker.deltaMS / 1000);
       advanceDiscardFlights(time, ticker.deltaMS / 1000);
+      positionLiftedCards();
       positionCardBadges();
       positionTrainerUseLabel();
+      const liftedVisible = liftedScene.children.length > 0;
+      if (liftedVisible || liftedWasVisible) liftedApp?.render();
+      liftedWasVisible = liftedVisible;
     };
 
     async function start() {
-      let created: Application;
+      let created: Application | null = null;
+      let createdLifted: Application | null = null;
       try {
         created = await createPixiApplication(mount);
+        if (!disposed) {
+          createdLifted = await createPixiApplication(liftedMount, { autoStart: false });
+        }
       } catch (error) {
         // WebGL is unavailable/blocked or the context failed to create. Drop the
         // class that hides the static DOM card faces so the playmat degrades to
@@ -2377,21 +2425,30 @@ export function AnimatedCardsLayer({
         );
         playmatRef.current?.classList.remove("has-pixi-cards");
         clearSetupFlights();
+        created?.destroy({ removeView: true }, { children: true });
+        createdLifted?.destroy({ removeView: true }, { children: true });
+        return;
+      }
+
+      if (disposed) {
+        created.destroy({ removeView: true }, { children: true });
+        createdLifted?.destroy({ removeView: true }, { children: true });
         return;
       }
       app = created;
-
-      if (disposed) {
-        app.destroy({ removeView: true }, { children: true });
-        return;
-      }
+      liftedApp = createdLifted;
 
       app.stage.sortableChildren = true;
       app.stage.addChild(scene);
+      if (liftedApp) {
+        liftedApp.stage.addChild(liftedScene);
+        liftedMount.appendChild(liftedApp.canvas);
+      }
       app.ticker.add(tick);
       mount.appendChild(app.canvas);
       appRef.current = app;
       sceneRef.current = scene;
+      liftedSceneRef.current = liftedScene;
       syncViews(descriptorsRef.current.size ? [...descriptorsRef.current.values()] : descriptors);
       syncCardSelection();
       scheduleMeasure();
@@ -2414,9 +2471,12 @@ export function AnimatedCardsLayer({
       }
       viewsRef.current.clear();
       scene.destroy({ children: true });
+      liftedScene.destroy({ children: true });
       app?.destroy({ removeView: true }, { children: true });
+      liftedApp?.destroy({ removeView: true }, { children: true });
       appRef.current = null;
       sceneRef.current = null;
+      liftedSceneRef.current = null;
     };
   }, []);
 
@@ -2495,6 +2555,11 @@ export function AnimatedCardsLayer({
   return (
     <>
       <div ref={mountRef} className="pixi-cards-layer" aria-hidden="true" />
+      <div
+        ref={liftedMountRef}
+        className="pixi-cards-layer pixi-cards-layer--lifted"
+        aria-hidden="true"
+      />
       {cardSelection?.candidates.map((card) => (
         <button
           key={card.id}

@@ -3,6 +3,7 @@ import { cleanup, fireEvent, render, screen, within } from "@testing-library/rea
 import type { RedactedGame, RedactedInPlay, RedactedPhase } from "@luminous/schema";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { installDomShims } from "../../../test/domShims";
+import { StrictMode } from "react";
 import { OnlineHud } from "./OnlineHud";
 
 // The online HUD is driven purely by the redacted wire snapshot (no full engine
@@ -471,23 +472,27 @@ describe("OnlineHud — turn:action Rare Candy (3b-ii)", () => {
 });
 
 describe("OnlineHud — ko:takePrizes", () => {
-  it("dispatches the picked prize indices once exactly `count` are chosen", () => {
+  it("automatically collects multiple prizes once, even with StrictMode and repeated snapshots", () => {
     const onAction = vi.fn();
-    render(
-      <OnlineHud
-        game={game({ phase: { kind: "ko:takePrizes", count: 1 }, you: { prizesRemaining: 4 } })}
-        waitingOn="you"
-        activePlaced={false}
-        onAction={onAction}
-      />,
+    const pending = game({ phase: { kind: "ko:takePrizes", count: 2 }, you: { prizesRemaining: 4 } });
+    const hud = (snapshot: RedactedGame, waitingOn: "you" | "opponent" = "you") => (
+      <StrictMode>
+        <OnlineHud game={snapshot} waitingOn={waitingOn} activePlaced={false} onAction={onAction} />
+      </StrictMode>
     );
-    const take = screen.getByRole<HTMLButtonElement>("button", { name: /Take 0\/1/ });
-    expect(take.disabled).toBe(true);
-    fireEvent.click(screen.getByRole("button", { name: "Prize 2" }));
-    const armed = screen.getByRole<HTMLButtonElement>("button", { name: /Take 1\/1/ });
-    expect(armed.disabled).toBe(false);
-    fireEvent.click(armed);
-    expect(onAction).toHaveBeenCalledWith({ type: "takePrizes", seat: "p1", prizeIndices: [1] });
+    const { rerender } = render(hud(pending));
+    expect(screen.queryByRole("dialog", { name: "Take prizes" })).toBeNull();
+    expect(onAction).toHaveBeenCalledExactlyOnceWith({
+      type: "takePrizes", seat: "p1", prizeIndices: [2, 3],
+    });
+    rerender(hud({ ...pending }));
+    expect(onAction).toHaveBeenCalledTimes(1);
+    // A second queued award in the same turn is a new decision.
+    rerender(hud(game({ phase: { kind: "ko:takePrizes", count: 1 }, you: { prizesRemaining: 2 } })));
+    expect(onAction).toHaveBeenLastCalledWith({ type: "takePrizes", seat: "p1", prizeIndices: [1] });
+    expect(onAction).toHaveBeenCalledTimes(2);
+    rerender(hud(pending, "opponent"));
+    expect(onAction).toHaveBeenCalledTimes(2);
   });
 });
 

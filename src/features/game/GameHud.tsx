@@ -7,6 +7,7 @@ import { DialogScrollArea } from "../../components/DialogScrollArea";
 // always for the person holding the device; the gate stays anyway. GameHud
 // enforces it ONCE, at its phase switch — the panels never re-check it.
 
+import { AutoTakePrizes } from "./AutoTakePrizes";
 import { AutoMulliganDraw } from "./AutoMulliganDraw";
 import { CardChoice, cardChoiceDialogClass, cardChoiceGridClass } from "./CardChoice";
 import { ConfirmCardChoices } from "./ConfirmCardChoices";
@@ -1303,8 +1304,7 @@ function RetreatDialog({
   );
 }
 
-/** 🆕🆕🆕 D548 — ONE prize tile, shared by both prize pickers in this HUD (the ko:takePrizes
-    grid and Crescent Purge's `choosePrize`). A FACE-DOWN tile is the card back
+/** 🆕🆕🆕 D548 — A prize tile for Crescent Purge's `choosePrize` cost. A FACE-DOWN tile is the card back
     (`PRIZE_CARD_BASE`); a FACE-UP one lays the card's name over it (`PRIZE_CARD_FACE_UP`)
     and says so in its accessible name. `faceUp` is the card NAME or null — the tile never
     sees a uid. */
@@ -1331,74 +1331,6 @@ function PrizeTile({
     >
       {faceUp === null ? null : <span className={PRIZE_CARD_FACE_UP}>{faceUp}</span>}
     </button>
-  );
-}
-
-/** ko:takePrizes — pick exactly `count` of the REMAINING face-down slots.
-    Legal indices are 0..prizes.length-1 (the engine's row compacts as prizes
-    leave, takePrizes validation), so the grid is built from the live count.
-    Mounted only while the decision is parked on the viewer (the phase
-    switch), so the useState initializer is the fresh-picks-per-decision
-    reset. (🆕🆕🆕 D548: *"face-down"* is partly false now — a slot Crescent Purge
-    turned face up is painted with its card and is JUST AS PICKABLE: a face-up prize is
-    still a prize. The caption says so.) */
-function PrizeDialog({ game, projection, viewerSeat, dispatch }: GameHudProps) {
-  const [picked, setPicked] = useState<number[]>([]);
-  const pending = projection.pendingDecision;
-  // Narrowing only — the phase switch mounts this exactly when the viewer's
-  // takePrizes decision is parked.
-  if (pending?.kind !== "takePrizes") return null;
-  const count = pending.count;
-  const side = game.players[viewerSeat];
-  const remaining = side.prizes.length;
-  const faceUpName = (index: number): string | null => {
-    const uid = side.prizes[index];
-    return uid !== undefined && side.faceUpPrizes.includes(uid)
-      ? (cardOfUid(game, uid)?.name ?? uid)
-      : null;
-  };
-
-  const toggle = (index: number) => {
-    setPicked((prev) =>
-      prev.includes(index)
-        ? prev.filter((i) => i !== index)
-        : prev.length < count
-          ? [...prev, index]
-          : prev,
-    );
-  };
-
-  return (
-    <HudDialog label="Take prizes">
-      <h2 className="text-lg font-semibold text-white">
-        Take {count} prize card{count === 1 ? "" : "s"}
-      </h2>
-      <p className="mt-1.5 text-sm text-white/55">
-        Pick {count} of your prize card{count === 1 ? "" : "s"} to add to your hand
-        {side.faceUpPrizes.length > 0 ? " — face-up ones included" : ""}.
-      </p>
-      <div className="mt-3 flex flex-wrap gap-2">
-        {Array.from({ length: remaining }, (_, index) => (
-          <PrizeTile
-            key={index}
-            index={index}
-            faceUp={faceUpName(index)}
-            selected={picked.includes(index)}
-            onPick={() => toggle(index)}
-          />
-        ))}
-      </div>
-      <div className="mt-5 flex justify-end">
-        <button
-          type="button"
-          className={ACCENT_BUTTON_CLASS}
-          disabled={picked.length !== count}
-          onClick={() => dispatch({ type: "takePrizes", seat: viewerSeat, prizeIndices: picked })}
-        >
-          Take {picked.length}/{count}
-        </button>
-      </div>
-    </HudDialog>
   );
 }
 
@@ -1516,7 +1448,7 @@ function EffectChooseDialog(props: GameHudProps): ReactElement | null {
 /** 🆕🆕🆕 D548 — Crescent Purge's cost: pick ONE of your own face-down prizes to turn face
     up. (🆕🆕🆕 D567: or one of the OPPONENT's — Team Rocket's Bother-Bot parks the same prompt over
     their row; the tiles are drawn by index, so nothing here moves, and the heading is the note.) Offers ONLY the face-down slots the prompt names (a face-up one is not a legal
-    answer — `validateChoice` refuses it), on the same `PrizeTile` the take picker uses.
+    answer — `validateChoice` refuses it), on a `PrizeTile`.
     `ChooseAttackDialog`'s shape: no local state and no Confirm, because picking IS the
     whole decision (the engine never parks this below two face-down prizes, and the
     decline was the confirm in front of it). Escape is swallowed: the program is parked on
@@ -3573,7 +3505,7 @@ export function GameHud(props: GameHudProps) {
   // no actor — waitingOn is null — so the outcome overlay sits OUTSIDE the
   // acting gate.
   const acting = projection.waitingOn === "you";
-  // Keys tie panel-local state (retreat picks, prize picks) to
+  // Keys tie panel-local state (retreat picks) to
   // the seat and turn they were opened for — a hot-seat flip must never
   // inherit them. The switch mounts at most ONE panel, so the keys only
   // govern remount-on-seat/turn; there is no sibling list to keep unique.
@@ -3601,7 +3533,15 @@ export function GameHud(props: GameHudProps) {
     case "turn:action":
       return acting ? <TurnPanel key={`turn:${seatKey}`} {...props} /> : null;
     case "ko:takePrizes":
-      return acting ? <PrizeDialog key={`prizes:${seatKey}`} {...props} /> : null;
+      return acting ? (
+        <AutoTakePrizes
+          key={`prizes:${seatKey}`}
+          seat={props.viewerSeat}
+          count={game.phase.count}
+          remaining={game.players[props.viewerSeat].prizes.length}
+          onAction={props.dispatch}
+        />
+      ) : null;
     case "ko:promote":
       return acting ? <PromoteDialog {...props} /> : null;
     case "effect:choose":

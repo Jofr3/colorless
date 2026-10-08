@@ -7,13 +7,17 @@ import { initPixiApplication } from "./initPixiApplication";
 // retina displays, where 3×+ would be far heavier for little visible gain.
 const RENDER_RESOLUTION = 2;
 
-export async function createPixiApplication(resizeTo: HTMLElement) {
+export async function createPixiApplication(
+  resizeTo: HTMLElement,
+  { autoStart = true }: { autoStart?: boolean } = {},
+) {
   const app = await initPixiApplication({
     resizeTo,
     backgroundAlpha: 0,
     antialias: true,
     autoDensity: true,
     resolution: RENDER_RESOLUTION,
+    autoStart,
   });
 
   app.canvas.className = "pixi-cards-canvas";

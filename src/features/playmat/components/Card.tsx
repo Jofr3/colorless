@@ -1,38 +1,65 @@
 import type { CSSProperties, ReactNode } from "react";
+import { DieCube } from "../../game/DieCube";
 import { CardImage } from "../../../components/CardImage";
 import { ACTIVE_SLOT_CLASS, CARD_RENDER_WIDTH, CARD_SLOT_STYLE, FRAME_CLASS } from "../constants";
-import type { BattleConditions, BattleState, CardModel, SidePosition } from "../types";
+import type { BattleConditions, BattleState, CardBackTone, CardModel, SidePosition } from "../types";
 
-/** The shared chip/pill look of every battle badge (damage + statuses). */
+/** Compact pills for Special Conditions. */
 const CHIP_CLASS =
   "flex items-center rounded-full px-1.5 py-0.5 text-[10px] font-extrabold leading-none text-white shadow-[0_2px_8px_rgba(0,0,0,0.45)] ring-1 ring-inset ring-white/25";
 
-/** Damage badge for an in-play Pokémon: "30" (+ "/70" max HP when known).
-    DOM-level on purpose (D17 wire-up: no Pixi involvement) — z-[61] floats it
-    just above the Pixi card canvas (z-60, playmat.css). Slot owners render it
-    as a SIBLING of the frame/card subtree, never inside it: no ancestor up to
-    the playmat section may create a stacking context (element backdrop-filter,
-    positioned z-index), or the z-[61] resolves too low and the canvas covers
-    it. `className` carries the placement offsets (they differ by anchor box).
-    Rendered only when damaged; aria-hidden — BoardSummary is the accessible
-    surface. */
-export function DamageChip({
+/** Seed the angles by card and die so re-renders and movement keep the same pose. */
+function diceTilt(seed: string, maxDegrees: number) {
+  let hash = 0x811c9dc5;
+  for (const character of seed) hash = Math.imul(hash ^ character.charCodeAt(0), 0x01000193);
+  hash = Math.imul(hash ^ (hash >>> 16), 0x85ebca6b);
+  hash = Math.imul(hash ^ (hash >>> 13), 0xc2b2ae35);
+  hash ^= hash >>> 16;
+  return `${(((hash >>> 0) / 0xffffffff * 2 - 1) * maxDegrees).toFixed(1)}deg`;
+}
+
+/** One pip is one damage counter (10 HP); fill each die to six before adding
+    another. BoardSummary supplies the accessible damage and HP description. */
+export function DamageDice({
   battle,
   cardId,
-  className,
-}: { battle: BattleState; cardId: string; className: string }) {
+  tone,
+}: {
+  battle: BattleState;
+  cardId: string;
+  tone: CardBackTone;
+}) {
   if (battle.damage <= 0) return null;
+  const counters = Math.ceil(battle.damage / 10);
+  const dice = Array.from({ length: Math.ceil(counters / 6) }, (_, index) =>
+    Math.min(6, counters - index * 6),
+  );
   return (
     <div
-      className={`pointer-events-none absolute z-[61] bg-rose-600/95 ${CHIP_CLASS} ${className}`}
+      className="damage-dice"
       aria-hidden="true"
-      data-damage-chip="true"
+      data-damage-dice="true"
+      data-damage-total={battle.damage}
       data-card-badge-for={cardId}
     >
-      {battle.damage}
-      {battle.hp !== null && (
-        <span className="ml-0.5 font-semibold text-white/75">/{battle.hp}</span>
-      )}
+      <div
+        className="damage-dice__stack"
+        style={{ "--damage-stack-tilt": diceTilt(`${cardId}:stack`, 8) } as CSSProperties}
+      >
+        {dice.map((value, index) => (
+          <div
+            key={`${index}:${value}`}
+            className="tabletop-die damage-die"
+            data-tone={tone}
+            data-value={value}
+            data-damage-value={value * 10}
+            style={{ "--damage-die-tilt": diceTilt(`${cardId}:die:${index}`, 14) } as CSSProperties}
+          >
+            <div className="tabletop-die-shadow" />
+            <DieCube value={value} />
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
@@ -72,11 +99,11 @@ function statusChipsOf(conditions: BattleConditions): StatusChipModel[] {
   return chips;
 }
 
-/** Special-condition markers for an in-play Pokémon — the DamageChip's twin,
-    same chip language and the same stacking rules (sibling of the frame,
+/** Special-condition markers for an in-play Pokémon, with the same
+    stacking rules as damage dice (sibling of the frame,
     z-[61], no stacking-context ancestors). Anchored per slot via `className`
-    on the OPPOSITE corner from the damage chip, stacking downward, so the
-    two never collide. aria-hidden like the damage chip — BoardSummary is the
+    on the upper-left corner, clear of the dice on the card face.
+    aria-hidden like the damage dice — BoardSummary is the
     accessible surface, and the chips would be drag-and-drop noise in a live
     region; the plain text labels (SLP/PAR/CNF/PSN/BRN) stay readable in DOM. */
 export function StatusChips({

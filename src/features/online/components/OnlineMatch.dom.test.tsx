@@ -99,6 +99,28 @@ const GAME: RedactedGame = {
   outcome: null,
 };
 
+it.each(["p1", "p2"] as const)("keeps %s's physical card backs fixed when the turn changes", (seat) => {
+  const match = (activePlayer: "you" | "opponent") => (
+    <MemoryRouter>
+      <OnlineMatch
+        game={{ ...GAME, seat, activePlayer, waitingOn: activePlayer }}
+        log={[]}
+        youName="You"
+        opponentName="Opp"
+        opponentAway={null}
+        actionError={null}
+        onAction={vi.fn()}
+        onRematch={vi.fn()}
+      />
+    </MemoryRouter>
+  );
+  const { rerender } = render(match("you"));
+  const blueBackPlayer = seat === "p1" ? "you" : "opponent";
+  expect(cardsLayer.mock.calls.at(-1)?.[0].blueBackPlayer).toBe(blueBackPlayer);
+  rerender(match("opponent"));
+  expect(cardsLayer.mock.calls.at(-1)?.[0].blueBackPlayer).toBe(blueBackPlayer);
+});
+
 it("passes from the restored right-side control only on the viewer's turn", () => {
   const onAction = vi.fn();
   const props = {

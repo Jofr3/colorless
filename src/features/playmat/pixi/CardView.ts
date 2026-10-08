@@ -527,6 +527,17 @@ export class CardView {
     this.container.visible = false;
   }
 
+  /** Move between canvases, rebuilding Graphics batches for the new renderer. */
+  setRenderParent(parent: Container) {
+    if (this.container.parent === parent) return;
+    parent.addChild(this.container);
+    // Pixi's Graphics batches belong to each renderer. An unchanged clipping
+    // mask otherwise arrives with no batches and hides the attached card.
+    this.lastDrawWidth = -1;
+    const width = this.target?.width ?? 100;
+    this.redrawCard(this.cardLayer.label, width, this.target?.height ?? targetAspectHeight(width));
+  }
+
   setPlaymatSize(width: number, height: number) {
     this.playmatSize = { width, height };
   }
