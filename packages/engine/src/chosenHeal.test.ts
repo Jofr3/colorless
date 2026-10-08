@@ -407,7 +407,10 @@ describe("the anchor — 10 printings, 7 clauses, one regex with two captures", 
   it("accepts the UNPRINTED cross product — 'all' with no zone — on purpose", () => {
     // "Heal all damage from 1 of your Pokémon." is printed by NOTHING in the pool
     // today: the two "all" printings are both Benched, and the three any-zone
-    // clauses all carry a number. This anchor accepts it anyway, and that is the
+    // clauses all carry a number. (🆕🆕🆕 D595: no longer the whole pool — Miltank `me01-106`
+    // prints the any-zone "all" clause lowercased behind a two-coin gate, "…, heal all damage
+    // from 1 of your Pokémon.", and arm 46b gives it this cross product's `healChosen { all }`; the capitalised
+    // bare sentence is still unprinted.) This anchor accepts it anyway, and that is the
     // D131 call rather than an oversight — the sentence is unambiguous and the op
     // expresses it EXACTLY (`amount` has taken `number | "all"` since 0.x), which
     // is the same test `DECK_TOP_MILL` applied to the unprinted "the top 1 cards".

@@ -2159,6 +2159,15 @@ export interface MatchRecord {
     `turn:action.discardable` — 🛑 **DEPLOY THE SERVER FIRST**: an old client's `z.object` STRIPS
     the unknown key, while a new client's REQUIRED key refuses an old server's frame.
 
+    🆕🆕🆕 **STAYS 42 AT D595 — WP13 ADDS NO OP, KEY, GameState, PendingStage, PROMPT OR WIRE KEY.**
+    (Placed ABOVE the D594 block.) The readers claim 8 more `me` attack TEXTS (11 printings): five
+    `coinFlipGate`s over shipped ops and three `programPerHeads` over shipped ops. The card row is not
+    read differently; its printed attack TEXT is, at attack time — so a v42 match in flight holding
+    those faces in its persisted `cardPool` gains the programs mid-match (a 0.478 rollback puts them
+    back on the skipped-effect path). The ops that park (`healChosen`, `knockOutChosen`, `searchDeck`,
+    `gust`, `attachEnergyFrom`) park on prompt kinds a v42 record already holds, and a gate's `coins`
+    key (D355) is one every v42 reader already reads.
+
     🆕🆕🆕 **STAYS 42 AT D594 — WP33a ADDS NO OP, KEY, GameState, PendingStage, PROMPT OR WIRE KEY.**
     (Placed ABOVE the D593 block.) Four clause rows read 4 `me` attack TEXTS (8 printings) on shipped
     members, and two `me` ids gain Ability keys: Chesnaught's `damageAttacker` (shipped fields) and

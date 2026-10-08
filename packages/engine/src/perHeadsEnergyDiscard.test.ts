@@ -396,9 +396,13 @@ describe("§2 — the anchors derive their own literals", () => {
     // …and the two crossings that must derive NOTHING at all, both for reasons already on
     // record: the until-tails singular mill (nothing prints it — D452's refusal) and the
     // until-tails random hand (the invented string `untilTailsFlip.test.ts` carried).
+    // 🆕🆕🆕 D595 (D539): WITHDRAWN for the mill — `me` prints it ×3 and D595 builds it, as a
+    // `discardDeckTop` (never this slice's `discardEnergy`, which is the claim that matters here).
     expect(
-      deriveAttackCoinFlip("Flip a coin until you get tails. For each heads, discard the top card of your opponent's deck."),
-    ).toBeNull();
+      JSON.stringify(
+        deriveAttackCoinFlip("Flip a coin until you get tails. For each heads, discard the top card of your opponent's deck."),
+      ),
+    ).not.toContain("discardEnergy");
     expect(
       deriveAttackCoinFlip("Flip a coin until you get tails. For each heads, discard a random card from your opponent's hand."),
     ).toBeNull();
@@ -769,11 +773,11 @@ describe("§7 — purity and the structural answers", () => {
     expect(activeEnergy(truncated.state, "p2")).toHaveLength(2);
   });
 
-  it("engineVersion is 0.478.0 and the bump is owed for BEHAVIOUR", () => {
+  it("engineVersion is 0.479.0 and the bump is owed for BEHAVIOUR", () => {
     // 🆕🆕 D463 — 0.361.0 → **0.362.0**. Two printed sentences that derived to `null` now
     // derive to a program, and a fielded card (Krookodile sv01-117) that took no flip at
     // all now takes an unbounded sequence of them: an OBSERVABLE change to what the engine
     // does with real catalog rows, which is the bump's whole trigger.
-    expect(engineVersion).toBe("0.478.0");
+    expect(engineVersion).toBe("0.479.0");
   });
 });

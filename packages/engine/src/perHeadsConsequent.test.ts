@@ -384,9 +384,11 @@ describe("§2 — the anchors derive their own ops, and the co-variance is fence
     const untilRows = legalAttackCorpus().filter(([, s]) => s.startsWith("Flip a coin until you get tails."));
     expect(untilRows.filter(([, s]) => s.includes("For each heads, discard the top"))).toHaveLength(0);
     expect(untilRows.filter(([, s]) => s.includes("random card from your opponent's hand"))).toHaveLength(0);
+    // 🆕🆕🆕 D595 (D539): WITHDRAWN for the mill — the `me` serie prints it ×3 (`mep-066`, `me02.5-100`,
+    // `me03-045`) and `ATTACK_COIN_MILL_ONE_UNTIL_TAILS` builds it. The `sv` column still prints neither.
     expect(
       deriveAttackCoinFlip("Flip a coin until you get tails. For each heads, discard the top card of your opponent's deck."),
-    ).toBeNull();
+    ).not.toBeNull();
     expect(
       deriveAttackCoinFlip("Flip a coin until you get tails. For each heads, discard a random card from your opponent's hand."),
     ).toBeNull();
@@ -569,7 +571,7 @@ describe("§3 — no new persisted byte, in three directions", () => {
   });
 
   it("the engine version moved and the record version did not", () => {
-    expect(engineVersion).toBe("0.478.0");
+    expect(engineVersion).toBe("0.479.0");
   });
 });
 

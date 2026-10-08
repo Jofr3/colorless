@@ -724,7 +724,7 @@ const RAW: Record<string, string> = (
 describe("D521 §4 — the version steps, the heading is written, and what stands still", () => {
   it("engineVersion and `manifest.version` agree, and the bump is owed for BEHAVIOUR", () => {
     // ⚠️ The version is NOT spelled in this `it(…)` title (D460's fourth class).
-    expect(engineVersion).toBe("0.478.0");
+    expect(engineVersion).toBe("0.479.0");
     expect(manifest.version).toBe(engineVersion);
   });
 
@@ -741,7 +741,8 @@ describe("D521 §4 — the version steps, the heading is written, and what stand
     expect(index).toContain("THE PARENTHETICAL IS CORRECTED IN PLACE (D442/D508)");
     // …and the anchor's own commentary does NOT spell the `op: "…",` form (D516/D520 (4)): the
     // raw producer count of the two ops reads CODE — one new site each.
-    expect(effects.split('op: "coinFlipGate",').length - 1).toBe(21);
+    // 🆕🆕🆕 D595 — 21 → 22: arm 46b's one `coinFlipGate` producer (the WP13 coin gates). Stepped off the red run.
+    expect(effects.split('op: "coinFlipGate",').length - 1).toBe(22);
     expect(effects.split('op: "damageSelf",').length - 1).toBe(6);
   });
 

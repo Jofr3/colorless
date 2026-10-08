@@ -16174,7 +16174,9 @@ const DEFENDER_CANT_ATTACK_NEXT_TURN =
 // counted. SEAT (`your opponent's`/`the Defending Pokémon` ↔ `your`/`this
 // Pokémon`) and VERB (`attack` ↔ `use attacks` ↔ `retreat`) are both INERT on the
 // verdict (D491): all six GATE-present points refuse and all six GATE-absent
-// points build, measured over the 2×2×3 sub-lattice.
+// points build, measured over the 2×2×3 sub-lattice. (🆕🆕🆕 D595 (D539): WITHDRAWN as a live
+// fact for ONE point — the heads × opponent × `retreat` point is Murkrow `30th-093`'s print and
+// builds through arm 46b's coin gate; the lattice stays the D495 measurement.)
 //
 // ⚠️ WHY `residue-census.ts` FILED THIS `OPAQUE`, MEASURED RATHER THAN GUESSED —
 // and it is ONE CHARACTER. Deleting the gate prefix leaves *"during your
@@ -23218,6 +23220,9 @@ const ATTACK_COIN_MILL_UNTIL_TAILS =
 //   column, and an anchor for it would author a card — the refusal
 //   `FLIP_OPPONENT_ACTIVE_DISCARD` makes below, verbatim. A parameterised COUNT
 //   inside a printed shape is a different thing from a printed SHAPE nobody prints.
+//   (🆕🆕🆕 D595 (D539): WITHDRAWN — the `me` serie prints it (Tyrantrum `mep-066` / `me03-045`,
+//   Team Rocket's Diglett `me02.5-100`), and `ATTACK_COIN_MILL_ONE_UNTIL_TAILS` builds it. Still true
+//   of the legal `sv` column.)
 //
 // • THE RANDOM HAND DISCARD (corpus line 216) — "Flip 3 coins. For each heads,
 //   discard a random card from your opponent's hand." The bare sentence ("Discard a
@@ -23315,6 +23320,7 @@ const ATTACK_COIN_HAND_PRINTED =
 // TWO DECISIONS AGREE RATHER THAN CONFLICT. D452 refused its twin because NOTHING IN
 // THE COLUMN PRINTS IT ("an anchor for it would author a card"); the test is what the
 // column prints, not symmetry between the counts. This consequent is printed at both.
+// (🆕🆕🆕 D595: the `me` serie prints the singular twin, and it is built — same test, same answer.)
 //
 // 🛑 WHAT THIS SLICE ACTUALLY BOUGHT IS THE DRIVE, NOT THE EXPRESSION. D130 wrote
 // that a parking op is "the one thing D130's expansion cannot express" and D423
@@ -23476,6 +23482,22 @@ const ATTACK_COIN_RETRIEVAL_UP_TO_HEADS =
 // and NO apostrophe class — the sentence has no apostrophe slot (D136/D137).
 const ATTACK_COIN_ATTACH_UP_TO_HEADS =
   /^Flip (\d+) coins\. Attach a number of Basic \{([A-Z])\} Energy cards up to the number of heads from your discard pile to your Benched Pokémon in any way you like\.$/;
+/** 🆕🆕🆕 D595 — WP13: three `me` coin sentences read as `programPerHeads` over shipped ops.
+    • `ATTACK_COIN_ATTACH_ANY_UP_TO_HEADS` — Smeargle `me02-080` "Energizing Sketch": the D528 attach
+      twin with no type ("an amount of Basic Energy"), so the op omits `energyType` exactly as the bare
+      "Attach up to 3 Basic Energy cards … in any way you like." derives it.
+    • `ATTACK_COIN_MILL_ONE_UNTIL_TAILS` — Tyrantrum ×2 / Team Rocket's Diglett "Wreak Havoc" /
+      "Relentless Burrowing": D452's singular mill over D130's until-tails count.
+    • `ATTACK_COIN_HAND_TO_DECK_UNTIL_TAILS` — Houndstone ×2 "Horrifying Bite": one copy of the bare
+      Astonish op (`randomFromOpponentHand { to: "deck" }`) per heads; each copy draws from the hand
+      that is left, so the H cards are distinct, and an empty hand makes the rest no-ops.
+    No /i, `^…$`; the possessive carries `['’]` (D136/D137). */
+const ATTACK_COIN_ATTACH_ANY_UP_TO_HEADS =
+  /^Flip (\d+) coins\. Attach an amount of Basic Energy up to the number of heads from your discard pile to your Benched Pokémon in any way you like\.$/;
+const ATTACK_COIN_MILL_ONE_UNTIL_TAILS =
+  /^Flip a coin until you get tails\. For each heads, discard the top card of your opponent['’]s deck\.$/;
+const ATTACK_COIN_HAND_TO_DECK_UNTIL_TAILS =
+  /^Flip a coin until you get tails\. For each heads, choose a random card from your opponent['’]s hand\. Your opponent reveals those cards and shuffles them into their deck\.$/;
 
 // 🆕🆕🆕 D526 — THE THREE-TIER HEADS LADDER, corpus FILE LINE 218 (1 legal printing):
 // "Flip 3 coins. If 1 of them is heads, this attack does 20 more damage. If 2 of them
@@ -24354,6 +24376,35 @@ export function deriveAttackCoinFlip(text: string): AttackCoinFlip | null {
       face: "heads",
     };
   }
+  // 🆕🆕🆕 D595 — WP13's three `programPerHeads` arms (see the anchors). The printed-count arm keeps
+  // the family's two flip guards; the until-tails arms have no digit to guard (D463's rule).
+  const attachAnyUpToHeads = ATTACK_COIN_ATTACH_ANY_UP_TO_HEADS.exec(effect);
+  if (attachAnyUpToHeads !== null) {
+    const sketchCoins = Number(attachAnyUpToHeads[1]);
+    if (sketchCoins < 2 || sketchCoins > MAX_PRINTED_FLIPS) return null;
+    return {
+      kind: "programPerHeads",
+      flips: { kind: "printed", count: sketchCoins },
+      ops: [{ op: "attachEnergyFrom", source: "discard", benchOnly: true, declinable: true }],
+      face: "heads",
+    };
+  }
+  if (ATTACK_COIN_MILL_ONE_UNTIL_TAILS.test(effect)) {
+    return {
+      kind: "programPerHeads",
+      flips: { kind: "untilTails" },
+      ops: [{ op: "discardDeckTop", whose: "opponent", count: 1 }],
+      face: "heads",
+    };
+  }
+  if (ATTACK_COIN_HAND_TO_DECK_UNTIL_TAILS.test(effect)) {
+    return {
+      kind: "programPerHeads",
+      flips: { kind: "untilTails" },
+      ops: [{ op: "randomFromOpponentHand", to: "deck" }],
+      face: "heads",
+    };
+  }
   // 🆕🆕🆕 D526 — THE THREE-TIER HEADS LADDER, corpus FILE LINE 218. The count is PINNED
   // at 3 by the anchor ("all of them" is the third tier), so there is no `n` to guard
   // here and no `MAX_PRINTED_FLIPS` read; the three captured amounts are the printed
@@ -24977,6 +25028,41 @@ const ATTACK_RETURN_SELF_TO_DECK = /^Shuffle this Pokémon and all attached card
     specialEnergy, "all" }`, printed order, neither parks; each body's attack shield filters it. */
 const ATTACK_DISCARD_ALL_TOOLS_AND_SPECIAL =
   /^Discard all Pokémon Tools and Special Energy from all of your opponent['’]s Pokémon\.$/;
+/** 🆕🆕🆕 **D595 — WP13: a coin gate over a shipped consequent.** *"Flip a coin. If heads, X"*,
+    *"Flip 2 coins. If both of them are heads, X"*, *"Flip 3 coins. If all of them are heads, X"* —
+    the head fixes `coinFlipGate.coins` (absent / 2 / 3, D355's unanimous reading) and X is looked up
+    in `COIN_GATED_CONSEQUENTS`, a CLOSED table of the five printed `me` consequents. Each row's ops
+    are the program the readers already give the bare sentence (or, for the "switch … with their
+    Active Pokémon" wording, `ATTACK_FLIP_GUST`'s `then`); a consequent not in the table stays null.
+    Measured: no legal `sv` sentence reaches the arm (every reader's output over both corpora is
+    byte-identical except the five `me` sentences).
+    ⚠️ HEAD × CONSEQUENT, NOT FIVE PAIRS: the arm accepts all 3 × 5 = 15 crossings and only 5 are
+    printed, so the other 10 (e.g. *"Flip a coin. If heads, Knock Out 1 of your opponent's
+    Pokémon."*) derive too. Admitted under D131 — each crossing is unambiguous and the ops express it
+    exactly — and in tension with D451's co-variance rule (an unprinted crossing authors a card).
+    `coinGateMeD595.test.ts` §2 pins all 15 building and exactly 5 printed in either corpus. */
+const COIN_GATE_HEAD =
+  /^(Flip a coin\. If heads|Flip 2 coins\. If both of them are heads|Flip 3 coins\. If all of them are heads), (.+)$/;
+const COIN_GATE_COINS: Readonly<Record<string, number | undefined>> = {
+  "Flip a coin. If heads": undefined,
+  "Flip 2 coins. If both of them are heads": 2,
+  "Flip 3 coins. If all of them are heads": 3,
+};
+const COIN_GATED_CONSEQUENTS: ReadonlyMap<string, readonly EffectOp[]> = new Map<string, readonly EffectOp[]>([
+  // Miltank `me01-106` "Bellyful of Milk" (2 coins) — "Heal all damage from 1 of your Pokémon."
+  ["heal all damage from 1 of your Pokémon.", [{ op: "healChosen", amount: "all" }]],
+  // Team Rocket's Exeggutor `me02.5-078` "Tri Kinesis" (3 coins) — D416's chosen Knock Out, whole board.
+  ["Knock Out 1 of your opponent's Pokémon.", [{ op: "knockOutChosen", target: "opponentAny" }]],
+  // Murkrow `30th-093` "Clumsily Clutch" — "During your opponent's next turn, the Defending Pokémon can't retreat."
+  ["during your opponent's next turn, the Defending Pokémon can't retreat.", [{ op: "preventRetreat" }]],
+  // Gimmighoul `30th-081` "Strolls So Much" — "Search your deck for a card and put it into your hand. …"
+  [
+    "search your deck for a card and put it into your hand. Then, shuffle your deck.",
+    [{ op: "searchDeck", filter: { kind: "anyCard" }, dest: "hand", max: 1 }, { op: "shuffleDeck" }],
+  ],
+  // Drifloon `mep-005` "Pull" — the attacker's pick, `ATTACK_FLIP_GUST`'s op.
+  ["switch 1 of your opponent's Benched Pokémon with their Active Pokémon.", [{ op: "gust" }]],
+]);
 const ATTACK_FLIP_SELF_SWITCH = new RegExp(
   `^Flip a coin\\. If heads, switch ${SELF_SWITCH_CLAUSE}$`,
 );
@@ -34347,6 +34433,17 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   // 46. 🆕🆕🆕 D590 — the mandatory self-shuffle (Jumping Shot, Aqua Return ×2); see the anchor.
   if (ATTACK_RETURN_SELF_TO_DECK.test(effect)) {
     return [{ op: "returnSelf", dest: "deck" }];
+  }
+
+  // 46b. 🆕🆕🆕 D595 — WP13: a coin gate over a shipped consequent; see `COIN_GATE_HEAD`.
+  const coinGate = COIN_GATE_HEAD.exec(effect);
+  if (coinGate !== null) {
+    const gated = literalClauseRow(COIN_GATED_CONSEQUENTS, coinGate[2] ?? "");
+    if (gated !== undefined) {
+      const coins = COIN_GATE_COINS[coinGate[1] ?? ""];
+      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
+      return [{ op: "coinFlipGate", ...(coins === undefined ? {} : { coins }), then: [...gated] }];
+    }
   }
 
   // 47. 🆕🆕🆕 D592 — Corrosive Liquid (Mega Dragalge ex ×3); see the anchor.

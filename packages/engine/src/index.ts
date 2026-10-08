@@ -20253,6 +20253,17 @@ import type { GameState, Seat } from "./types";
     `expect(manifest.version)`, `it(…)` titles, the declaration and `package.json` —
     **not** as a value-keyed grep — because a value-keyed grep is precisely the mechanism
     that ate D500's heading.)
+    🆕🆕🆕 engineVersion 0.478.0 → **0.479.0** (D595 — WP13: COIN-GATE COMPOSITIONS;
+    `MATCH_RECORD_VERSION` STAYS 42 (apps/api match.ts "STAYS 42 AT D595")). effects.ts
+    `deriveAttackEffect` arm 46b reads *"Flip a coin. If heads, X"* / *"Flip 2 coins. If both of them
+    are heads, X"* / *"Flip 3 coins. If all of them are heads, X"* as `coinFlipGate` (D355's `coins`)
+    over a CLOSED five-row consequent table (`COIN_GATED_CONSEQUENTS`: `healChosen` all,
+    `knockOutChosen` opponentAny, `preventRetreat`, the any-card search, `gust`); `deriveAttackCoinFlip`
+    gains three `programPerHeads` arms (Smeargle's untyped discard attach, the until-tails singular mill,
+    the until-tails random hand-to-deck). 8 texts / 11 printings; no op, member or field; the `sv`
+    reader output is byte-identical. Dropped and named: Bombirdier, Bewear, Gholdengo, Pikachu, Snorlax,
+    Shiftry, Octillery. Census: Standard pool attacks 2,544 / 2,771; 835 `me` printings fully built.
+    `coinGateMeD595.test.ts`.)
     🆕🆕🆕 engineVersion 0.477.0 → **0.478.0** (D594 — WP33a: BONUS / REQUIREMENT ROWS ON SHIPPED
     CONDITION MEMBERS; `MATCH_RECORD_VERSION` STAYS 42 (apps/api match.ts "STAYS 42 AT D594")).
     effects.ts: three `CONDITIONAL_DAMAGE_CLAUSES` rows — Chi-Yu "Whirling Envy"
@@ -24683,7 +24694,8 @@ import type { GameState, Seat } from "./types";
     third axis (D494) — the slot's three inhabitants are absent / `If heads,` / `If tails,`
     and the tails value refuses on BOTH consequents. SEAT and VERB are INERT on the verdict
     (D491): all six GATE-present points of the 2 × 2 × 3 sub-lattice refuse and all six
-    GATE-absent points build.
+    GATE-absent points build. (🆕🆕🆕 D595 (D539): WITHDRAWN as a live fact for the heads ×
+    opponent × `retreat` point — Murkrow `30th-093`'s print, built by effects.ts arm 46b.)
 
     🛑 **THE ANCHOR BEAT THE COMPOSITION FOR THE FOURTH CONSECUTIVE SLICE, AND BOTH
     BRANCHES WERE PRICED ALONE** with the canonical residue predicate copied verbatim out
@@ -25255,7 +25267,7 @@ import type { GameState, Seat } from "./types";
     WITNESS** — the count was re-derived every slice and the word *"three"* was carried.
     A successor of this slice inherits **81 / 61 / 17** again, over **FIVE** history
     occurrences: those four plus `deckMillFilteredScale.test.ts`'s own header arrow.) */
-export const engineVersion = "0.478.0";
+export const engineVersion = "0.479.0";
 
 export type {
   ApplyResult,

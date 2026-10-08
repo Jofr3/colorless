@@ -6,6 +6,28 @@
 > `coverage-backlog-legal.md`; its pool is unchanged and whole. The suite-side figures are
 > `censusAtHead.test.ts`'s D581 block and `censusAttackCorpusMe.ts`.
 
+## 🆕 D595 update (engine 0.479.0) — coin-gate compositions (WP13)
+
+8 texts / 11 `me` printings (`coinGateMeD595.test.ts`). Five coin gates over consequents the readers already build:
+Bellyful of Milk (2 coins, heal all from 1), Tri Kinesis (3 coins, Knock Out 1 of the opponent's Pokémon), Clumsily Clutch
+(the Defending Pokémon can't retreat), Strolls So Much (search for any card) and Pull (gust). Three per-heads arms:
+Energizing Sketch (any Basic Energy from the discard to the Bench, one per heads), Wreak Havoc ×2 / Relentless Burrowing
+(one card milled per heads, until tails) and Horrifying Bite ×2 (one random card from hand to deck per heads, until tails).
+**Finished:** Miltank, Team Rocket's Exeggutor, Houndstone ×2, Team Rocket's Diglett, Murkrow, Gimmighoul, Drifloon,
+Smeargle (Tyrantrum ×2 still wait on Tyrannically Gutsy). **Dropped:** Challenging Delivery (the bench search reads
+"a Pokémon" as a card name; only a Basic may go onto the Bench, so it needs a Basic bench-search arm), Hyper Lariat (a threshold bonus needs a new coin
+member), All-You-Can-Grab, Gormandizer and Charge-Up Dash (a deck source capped at the heads count; Charge-Up Dash also
+needs WP06), Reversing Gust (the shuffled body may be the Active) and Jet of Ink (a two-coin flip lock).
+
+| Column | `me` built / units (D595) | Standard pool D595 |
+|---|---|---|
+| Attacks | 812 / 1,039 (+11) | **2,544 / 2,771** |
+| Abilities | 115 / 234 | **491 / 610** |
+| Trainers | 92 / 183 | **356 / 447** |
+| Special Energy | 3 / 11 | **14 / 22** |
+
+**Fully built `me` printings: 835** (826 + 9).
+
 ## 🆕 D594 update (engine 0.478.0) — bonus / requirement rows on shipped members (WP33a)
 
 6 texts / 10 `me` printings (`conditionRowsMeD594.test.ts`), the first half of WP33. Four attack clause rows: Whirling
@@ -368,25 +390,25 @@ group wins; the grouping is a reading aid, not a census figure).
 ### Coin flips — 21 text(s) / 32 printing(s)
 
 - 5× For each of your opponent's Pokémon, flip a coin. If heads, this attack does 150 damage to that Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)
-- 3× Flip a coin until you get tails. For each heads, discard the top card of your opponent's deck.
+- 3× Flip a coin until you get tails. For each heads, discard the top card of your opponent's deck. [🆕🆕🆕 D595: BUILT]
 - 2× Choose 1 of your opponent's Pokémon and flip a coin for each of your Pokémon in play that has "Tauros" in its name. This attack does 50 damage to the chosen Pokémon for each heads. (Don't apply Weakness and Resistance for Benched Pokémon.)
 - 2× Flip 3 coins. For each heads, search your deck for up to 2 Basic Energy cards and attach them to your Pokémon in any way you like. Then, shuffle your deck.
 - 2× Flip 3 coins. If any of them are heads, your opponent reveals their hand. For each heads, choose a card you find there and shuffle it into your opponent's deck.
 - 2× Flip a coin for each Maushold you have in play. For each heads, discard the top 2 cards of your opponent's deck.
-- 2× Flip a coin until you get tails. For each heads, choose a random card from your opponent's hand. Your opponent reveals those cards and shuffles them into their deck.
+- 2× Flip a coin until you get tails. For each heads, choose a random card from your opponent's hand. Your opponent reveals those cards and shuffles them into their deck. [🆕🆕🆕 D595: BUILT]
 - 1× During your opponent's next turn, whenever they try to use a Trainer card from their hand, they flip a coin. If tails, your opponent discards that Trainer card instead of using it.
-- 1× Flip 2 coins. If both of them are heads, heal all damage from 1 of your Pokémon.
-- 1× Flip 2 coins. If both of them are heads, search your deck for a Pokémon and put it onto your Bench. Then, shuffle your deck.
-- 1× Flip 2 coins. If both of them are heads, this attack does 100 more damage.
-- 1× Flip 3 coins. Attach an amount of Basic Energy up to the number of heads from your discard pile to your Benched Pokémon in any way you like.
-- 1× Flip a coin until you get tails. Search your deck for a number of cards up to the number of heads and put them into your hand. Then, shuffle your deck.
-- 1× Flip a coin until you get tails. Search your deck for an amount of Basic &lt;span class="energy-symbol Lightning" title="Lightning">Lightning&lt;/span> Energy up to the number of heads and attach it to this Pokémon. Then, shuffle your deck.
-- 1× Flip a coin until you get tails. Search your deck for an amount of Basic Energy up to the number of heads and attach it to this Pokémon. Then, shuffle your deck.
-- 1× Flip a coin. If heads, choose 1 of your opponent's Pokémon. Shuffle that Pokémon and all attached cards into their deck.
+- 1× Flip 2 coins. If both of them are heads, heal all damage from 1 of your Pokémon. [🆕🆕🆕 D595: BUILT]
+- 1× Flip 2 coins. If both of them are heads, search your deck for a Pokémon and put it onto your Bench. Then, shuffle your deck. [🆕🆕🆕 D595: dropped from WP13 — the bench search reads "a Pokémon" as a card name; only a Basic may go onto the Bench, so it needs a Basic bench-search arm]
+- 1× Flip 2 coins. If both of them are heads, this attack does 100 more damage. [🆕🆕🆕 D595: dropped from WP13 — a bonus behind a coin threshold needs a new `AttackCoinFlip` member]
+- 1× Flip 3 coins. Attach an amount of Basic Energy up to the number of heads from your discard pile to your Benched Pokémon in any way you like. [🆕🆕🆕 D595: BUILT]
+- 1× Flip a coin until you get tails. Search your deck for a number of cards up to the number of heads and put them into your hand. Then, shuffle your deck. [🆕🆕🆕 D595: dropped from WP13 — a deck source capped at the heads count]
+- 1× Flip a coin until you get tails. Search your deck for an amount of Basic &lt;span class="energy-symbol Lightning" title="Lightning">Lightning&lt;/span> Energy up to the number of heads and attach it to this Pokémon. Then, shuffle your deck. [🆕🆕🆕 D595: dropped from WP13 — a deck source capped at the heads count, and WP06's markup]
+- 1× Flip a coin until you get tails. Search your deck for an amount of Basic Energy up to the number of heads and attach it to this Pokémon. Then, shuffle your deck. [🆕🆕🆕 D595: dropped from WP13 — a deck source capped at the heads count]
+- 1× Flip a coin. If heads, choose 1 of your opponent's Pokémon. Shuffle that Pokémon and all attached cards into their deck. [🆕🆕🆕 D595: dropped from WP13 — `returnBenched` cannot take the Active]
 - 1× Flip a coin. If heads, choose a Special Condition. Your opponent's Active Pokémon is now affected by that Special Condition.
-- 1× Flip a coin. If heads, during your opponent's next turn, the Defending Pokémon can't retreat.
-- 1× Flip a coin. If heads, search your deck for a card and put it into your hand. Then, shuffle your deck.
-- 1× Flip a coin. If heads, switch 1 of your opponent's Benched Pokémon with their Active Pokémon.
+- 1× Flip a coin. If heads, during your opponent's next turn, the Defending Pokémon can't retreat. [🆕🆕🆕 D595: BUILT]
+- 1× Flip a coin. If heads, search your deck for a card and put it into your hand. Then, shuffle your deck. [🆕🆕🆕 D595: BUILT]
+- 1× Flip a coin. If heads, switch 1 of your opponent's Benched Pokémon with their Active Pokémon. [🆕🆕🆕 D595: BUILT]
 - 1× Flip a coin. If tails, during your next turn, this Pokémon can't use attacks. [🆕🆕🆕 D592: BUILT]
 
 ### Scaled damage ("… for each …") — 25 text(s) / 50 printing(s)
@@ -446,7 +468,7 @@ group wins; the grouping is a reading aid, not a census figure).
 
 - 2× During your opponent's next turn, prevent all damage done to this Pokémon by attacks from Evolution Pokémon.
 - 1× During your opponent's next turn, Energy can't be attached from your opponent's hand to the Defending Pokémon.
-- 1× During your opponent's next turn, if the Defending Pokémon tries to use an attack, your opponent flips 2 coins. If either of them is tails, that attack doesn't happen.
+- 1× During your opponent's next turn, if the Defending Pokémon tries to use an attack, your opponent flips 2 coins. If either of them is tails, that attack doesn't happen. [🆕🆕🆕 D595: dropped from WP13 — `flipLockAttack` is one coin and field-free]
 - 1× During your opponent's next turn, prevent all damage done to this Pokémon by attacks from Burned Pokémon.
 - 1× During your opponent's next turn, prevent all damage done to this Pokémon by attacks from Pokémon that have an Ability.
 - 1× The Defending Pokémon's Weakness is now &lt;span class="energy-symbol Lightning" title="Lightning">Lightning&lt;/span> until the end of your next turn. &lt;em>(Apply Weakness as ×2.)&lt;/em>

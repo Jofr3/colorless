@@ -30074,3 +30074,34 @@ decisions (1) and (2) after D580. Engine 0.464.0 → 0.465.0. The Mega ex rule i
   Shinx → Luxio → Luxray chain, a §9 lock on each Ability, Needly Armor's KO and Bench boards. +18 mutant rows.
 - **Census.** Standard pool attacks **2533 / 2771**, abilities **491 / 610**; 826 `me` printings fully built.
 - **Owed.** See `progress.md` NEXT. The whole-corpus sweep is PENDING.
+
+## D595 — WP13: coin-gate compositions (engine 0.479.0, `MATCH_RECORD_VERSION` stays 42)
+
+**Status:** ✅ BUILT in the `luminous_ui-mega` worktree on D594 (`8ded76b4`), NOT committed.
+
+- **8 texts / 11 `me` printings.** `deriveAttackEffect` arm 46b: `COIN_GATE_HEAD` (one coin / "2 coins … both" /
+  "3 coins … all") sets `coinFlipGate.coins` (D355) over a closed five-row `COIN_GATED_CONSEQUENTS` table — Miltank
+  "Bellyful of Milk" (`healChosen` all), Team Rocket's Exeggutor "Tri Kinesis" (`knockOutChosen` opponentAny), Murkrow
+  "Clumsily Clutch" (`preventRetreat`), Gimmighoul "Strolls So Much" (any-card search + shuffle), Drifloon "Pull" (`gust`).
+  `deriveAttackCoinFlip`: three `programPerHeads` arms — Smeargle "Energizing Sketch" (untyped discard-to-Bench attach),
+  Tyrantrum ×2 / Team Rocket's Diglett (until-tails singular mill), Houndstone ×2 "Horrifying Bite" (until-tails random
+  hand-to-deck).
+- **No op, member or field.** Each row's ops are the bare sentence's own program; the `sv` reader output is byte-identical
+  (before/after dump over the 933 corpus sentences; only the 8 `me` sentences differ).
+- **Dropped (beyond WP13's brief):** Bombirdier (the bench search reads "a Pokémon" as `byName "Pokémon"`; only a Basic
+  may go onto the Bench, so it needs a Basic bench-search arm outside the coin reader), Bewear (a threshold bonus needs a new coin member), Gholdengo / Snorlax / Pikachu (a deck source
+  capped at the heads count; Pikachu's row is also markup), Shiftry (`returnBenched` cannot take the Active), Octillery (a
+  two-coin flip lock).
+- **D539.** D452's "the until-tails singular mill is printed by nothing" and D491's "all six GATE-present points refuse"
+  are withdrawn in place for the `me` prints (effects.ts, index.ts, four suites, and the D495 rows in decisions.md and
+  progress.md).
+- **Crossings.** Arm 46b is head × consequent: all 15 crossings derive, 5 are printed (D131; in tension with D451's
+  co-variance rule). Pinned in §2.
+- **Known limitation (inherited).** Smeargle's untyped `attachEnergyFrom` takes the first Basic Energy in pile order; only
+  the target parks, so the player cannot pick which Energy. The five shipped `sv` discard-attach sentences behave the same.
+- **Reading R-HB1 (UNRULED).** Horrifying Bite's per-heads picks are without replacement, each card shuffled in as it is
+  taken; heads beyond the hand size do nothing.
+- **Suite.** `coinGateMeD595.test.ts` (18): programs against the bare twins, near misses, the seven drops, and each text on a
+  board. +22 mutant rows.
+- **Census.** Standard pool attacks **2544 / 2771**; 835 `me` printings fully built.
+- **Owed.** See `progress.md` NEXT. The whole-corpus sweep is PENDING.

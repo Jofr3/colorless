@@ -368,7 +368,8 @@ describe("§2 — the 2² lattice, and why it warrants a whole-sentence anchor",
   });
 
   it("SEAT and VERB are INERT on the verdict (D491)", () => {
-    // All six GATE-present points refuse; all six GATE-absent points build. So the
+    // All six GATE-present points refuse; all six GATE-absent points build. (🆕🆕🆕 D595: the
+    // heads × opponent × retreat point now builds — excluded below as the printed one is.) So the
     // 2 × 2 × 3 sub-lattice's verdict depends on the GATE alone, and listing SEAT or
     // VERB as axes would carry dimensions that cannot move it.
     const SEAT = [
@@ -385,7 +386,10 @@ describe("§2 — the 2² lattice, and why it warrants a whole-sentence anchor",
         // ⚠️ THE PRE-SLICE VERDICT, DERIVED FROM THE CURRENT ONE (D491) — the print
         // itself is now BUILT, so quoting today's answer would report the slice
         // rather than the lattice.
-        gated.push(deriveAttackEffect(point) !== null && point !== PRINTED);
+        // 🆕🆕🆕 D595 — the retreat point is Murkrow `30th-093`'s print, BUILT by arm 46b's coin gate;
+        // it is excluded for the same reason (the D491 lattice is the pre-D495 verdict).
+        const clutch = "Flip a coin. If heads, during your opponent's next turn, the Defending Pokémon can't retreat.";
+        gated.push(deriveAttackEffect(point) !== null && point !== PRINTED && point !== clutch);
         bare.push(deriveAttackEffect(`During ${tail}`) !== null);
       }
     }
@@ -711,8 +715,8 @@ describe("§8 — the census moves in exactly ONE summand", () => {
     expect(programFor("fix-deflock")).toBeUndefined();
   });
 
-  it("engineVersion is 0.478.0", () => {
-    expect(engineVersion).toBe("0.478.0");
+  it("engineVersion is 0.479.0", () => {
+    expect(engineVersion).toBe("0.479.0");
   });
 
   it("the demonstrator costs ZERO `FIXTURE_POOL` ids (D414/D452)", () => {

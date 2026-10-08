@@ -1153,7 +1153,8 @@ describe("constructed near-misses stay NULL", () => {
     }
     // The PRINTED-count opening reaches both D452 arms; the UNTIL-TAILS opening
     // reaches neither, because neither of D452's sentences is printed that way and an
-    // anchor for one would author a card.
+    // anchor for one would author a card. (🆕🆕🆕 D595 (D539): WITHDRAWN for the mill — `me`
+    // prints it ×3 and `ATTACK_COIN_MILL_ONE_UNTIL_TAILS` builds it; the random DISCARD stays null.)
     expect(
       deriveAttackCoinFlip("Flip 2 coins. For each heads, discard the top card of your opponent's deck."),
     ).not.toBeNull();
@@ -1164,7 +1165,7 @@ describe("constructed near-misses stay NULL", () => {
       deriveAttackCoinFlip(
         "Flip a coin until you get tails. For each heads, discard the top card of your opponent's deck.",
       ),
-    ).toBeNull();
+    ).not.toBeNull();
     expect(
       deriveAttackCoinFlip(
         "Flip a coin until you get tails. For each heads, discard a random card from your opponent's hand.",
