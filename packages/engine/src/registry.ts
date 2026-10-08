@@ -3462,7 +3462,14 @@ export type EnergyOnAttach =
       ⚠️ `count` IS CATALOG DATA ON THE ROW, NOT A LITERAL IN THE ARM, by D260's
       test for which way to go: a second printing of this mechanism would need a
       different number, so the number belongs to the registry row. */
-  | { kind: "draw"; count: number };
+  | { kind: "draw"; count: number }
+  /** 🆕🆕🆕 D604 — Telepathic Psychic Energy `me03-088`: *"When you attach this card from your hand to a
+      {P} Pokémon, search your deck for up to 2 Basic {P} Pokémon and put them onto your Bench. Then,
+      shuffle your deck."* Run by turn.ts `attachEnergy` as Nest Ball's `searchDeck` (`dest: "bench"`,
+      up to `max`) plus `shuffleDeck`, folded through `settleProgram` as the attach's LAST step,
+      after the §12 recovery and the watched attach triggers, because its park cannot be threaded
+      after (R-TP1 ⚠️ UNRULED). The {P} is `EnergyProgram.holderType`, read at the attach. */
+  | { kind: "benchSearch"; filter: CardFilter; max: number };
 
 /** A Special Energy's rules text (§6.1), read while attached. `provides` is the
     units it contributes to attack costs (a concrete type, or `ANY_ENERGY` for
@@ -3478,8 +3485,18 @@ export interface EnergyProgram {
       discard pile to that Pokémon after attacking."* Read by interpreter.ts
       `discardEnergyApply` (the ONE writer of an attack's Energy discard, R-BE1/R-BE5), which
       records the uid on the queued `attackEpilogue`; flow.ts `returnBoomerangs` re-attaches
-      it (R-BE2). */
-  returnAfterAttackDiscard?: true;
+      it (R-BE2).
+      🆕🆕🆕 D604 — `"hand"` is Nitro Fire Energy `me04-086`'s *"put this card into your hand after
+      attack damage and effects"*: the same record, returned to the HAND by `returnBoomerangs`, which
+      asks no question of the attacker (R-NF1 ⚠️ UNRULED). */
+  returnAfterAttackDiscard?: true | "hand";
+  /** 🆕🆕🆕 D604 — the printed {T} on *"the {T} Pokémon this card is attached to"* (the Mega Evolution
+      typed Special Energies, `me03-086` … `me05-084`). The card's OTHER rules — `passive`, `onAttach`
+      and `returnAfterAttackDiscard` — apply only while (or when) the holder is a Pokémon of this type,
+      read off its in-play types (`effectiveTypesOf`) by the ONE predicate continuous.ts
+      `energyRulesApply` (R-TE1 ⚠️ UNRULED). `provides` is NEVER gated (*"As long as this card is
+      attached to a Pokémon, it provides {T} Energy"*). Catalog-only: never persisted. */
+  holderType?: PokemonType;
   /** Luminous: the units provided INSTEAD when the holder already has another
       Special Energy attached ("this card provides {C} Energy instead"). */
   demoteWithOtherSpecial?: string[];
@@ -17659,6 +17676,81 @@ const JETT: CardProgram = {
   ],
 };
 
+// ── 🆕🆕🆕 D604 — WP18: THE MEGA EVOLUTION TYPED SPECIAL ENERGIES. Eight objects, 8 `me` printings. Each
+//    provides its printed type (`provides`, never gated) and carries ONE rule gated on the holder's
+//    type by the NEW `EnergyProgram.holderType` (continuous.ts `energyRulesApply`, R-TE1): six shipped
+//    Energy / Tool / Ability shapes on `passive` (Vitality Band, Mist Energy, Therapeutic Energy,
+//    Plume Protection, a flat `hpBonus`, Punk Out's `noRetreatCostSelf` read by the NEW
+//    `energyFreesRetreat`), Boomerang's record returned to the hand (`returnAfterAttackDiscard:
+//    "hand"`, R-NF1) and the NEW `EnergyOnAttach.benchSearch` (R-TP1). Texts off the LOCAL D1
+//    (2026-10-08). `typedSpecialEnergyMeD604.test.ts`. ──
+
+/** 🆕🆕🆕 **D604 — Growing Grass Energy `me03-086`**: *"As long as this card is attached to a Pokémon, it
+    provides {G} Energy. The {G} Pokémon this card is attached to gets +20 HP."* */
+const GROWING_GRASS_ENERGY: CardProgram = {
+  energy: { provides: ["Grass"], holderType: "Grass", passive: { hpBonus: { amount: 20 } } },
+};
+
+/** 🆕🆕🆕 **D604 — Rocky Fighting Energy `me03-087`**: *"… it provides {F} Energy. Prevent all effects of
+    attacks used by your opponent's Pokémon done to the {F} Pokémon this card is attached to. (Existing
+    effects are not removed. Damage is not an effect.)"* Mist Energy's shield on the {F} gate. */
+const ROCKY_FIGHTING_ENERGY: CardProgram = {
+  energy: { provides: ["Fighting"], holderType: "Fighting", passive: { preventAttackEffects: true } },
+};
+
+/** 🆕🆕🆕 **D604 — Telepathic Psychic Energy `me03-088`**: *"… it provides {P} Energy. When you attach this
+    card from your hand to a {P} Pokémon, search your deck for up to 2 Basic {P} Pokémon and put them
+    onto your Bench. Then, shuffle your deck."* The NEW `benchSearch` rider (R-TP1). */
+const TELEPATHIC_PSYCHIC_ENERGY: CardProgram = {
+  energy: {
+    provides: ["Psychic"],
+    holderType: "Psychic",
+    onAttach: { kind: "benchSearch", filter: { kind: "typedPokemon", pokemonType: "Psychic", stage: "basic" }, max: 2 },
+  },
+};
+
+/** 🆕🆕🆕 **D604 — Bubbly Water Energy `me04-084`**: *"… it provides {W} Energy. The {W} Pokémon this card
+    is attached to recovers from all Special Conditions and can't be affected by any Special
+    Conditions."* Therapeutic Energy's pair, all five, on the {W} gate. */
+const BUBBLY_WATER_ENERGY: CardProgram = {
+  energy: {
+    provides: ["Water"],
+    holderType: "Water",
+    passive: {
+      statusRecovery: ["asleep", "burned", "confused", "paralyzed", "poisoned"],
+      statusImmunities: ["asleep", "burned", "confused", "paralyzed", "poisoned"],
+    },
+  },
+};
+
+/** 🆕🆕🆕 **D604 — Magnetic Metal Energy `me04-085`**: *"… it provides {M} Energy. The {M} Pokémon this card
+    is attached to has no Retreat Cost."* Punk Out's unconditional `noRetreatCostSelf`, read off the
+    Energy by continuous.ts `energyFreesRetreat`. */
+const MAGNETIC_METAL_ENERGY: CardProgram = {
+  energy: { provides: ["Metal"], holderType: "Metal", passive: { noRetreatCostSelf: {} } },
+};
+
+/** 🆕🆕🆕 **D604 — Nitro Fire Energy `me04-086`**: *"… it provides {R} Energy. If this card is discarded by
+    an effect of an attack used by the {R} Pokémon this card is attached to, put this card into your
+    hand after attack damage and effects."* Boomerang Energy's record, to the hand (R-NF1). */
+const NITRO_FIRE_ENERGY: CardProgram = {
+  energy: { provides: ["Fire"], holderType: "Fire", returnAfterAttackDiscard: "hand" },
+};
+
+/** 🆕🆕🆕 **D604 — Shadowy Darkness Energy `me05-083`**: *"… it provides {D} Energy. As long as the {D}
+    Pokémon this card is attached to is on your Bench, prevent all damage done to it by attacks from
+    your opponent's Pokémon."* Plume Protection's field on the {D} gate. */
+const SHADOWY_DARKNESS_ENERGY: CardProgram = {
+  energy: { provides: ["Darkness"], holderType: "Darkness", passive: { preventDamageWhileBenched: true } },
+};
+
+/** 🆕🆕🆕 **D604 — Voltaic Lightning Energy `me05-084`**: *"… it provides {L} Energy. Attacks used by the
+    {L} Pokémon this card is attached to do 20 more damage to your opponent's Active Pokémon (before
+    applying Weakness and Resistance)."* Vitality Band's bonus at 20 on the {L} gate. */
+const VOLTAIC_LIGHTNING_ENERGY: CardProgram = {
+  energy: { provides: ["Lightning"], holderType: "Lightning", passive: { damageBonusBeforeWR: 20 } },
+};
+
 const REGISTRY: Record<string, CardProgram> = {
   // Professor's Research (SV base prints)
   "sv01-189": PROFESSORS_RESEARCH,
@@ -18779,6 +18871,15 @@ const REGISTRY: Record<string, CardProgram> = {
   "me01-171": MEGA_SIGNAL, // Mega Signal
   "me02.5-193": MEGA_SIGNAL, // Mega Signal
   "me05-079": JETT, // Jett — a card per opponent's Mega Evolution Pokémon ex in play
+  // 🆕🆕🆕 D604 — WP18: the 8 typed `me` Special Energies / 8 objects, MID-MAP (`raw[last]` does not move).
+  "me03-086": GROWING_GRASS_ENERGY, // Growing Grass Energy — {G}; the {G} holder +20 HP
+  "me03-087": ROCKY_FIGHTING_ENERGY, // Rocky Fighting Energy — {F}; the {F} holder's attack-effects shield
+  "me03-088": TELEPATHIC_PSYCHIC_ENERGY, // Telepathic Psychic Energy — {P}; onto a {P}: up to 2 Basic {P} to the Bench
+  "me04-084": BUBBLY_WATER_ENERGY, // Bubbly Water Energy — {W}; the {W} holder recovers / is immune
+  "me04-085": MAGNETIC_METAL_ENERGY, // Magnetic Metal Energy — {M}; the {M} holder has no Retreat Cost
+  "me04-086": NITRO_FIRE_ENERGY, // Nitro Fire Energy — {R}; its {R} holder's attack discards it: to the hand
+  "me05-083": SHADOWY_DARKNESS_ENERGY, // Shadowy Darkness Energy — {D}; the Benched {D} holder takes no attack damage
+  "me05-084": VOLTAIC_LIGHTNING_ENERGY, // Voltaic Lightning Energy — {L}; the {L} holder's attacks +20 before W/R
   // ── D190 — THE **STANDARD-LEGAL** REPRINT-ALIAS MAP (Tier 0 of
   //    `docs/reference/coverage-backlog-legal.md`). 22 printings, 9 map targets,
   //    ZERO new code: every row below prints a sentence that is already authored

@@ -203,7 +203,10 @@ describe("D577 Boomerang §1 — the registry row", () => {
 
   it("returnsAfterAttackDiscard reads the card, not the zone", () => {
     const { state, energy } = table({ active: DISCARDER, energy: [BOOMERANG, "fix-energy"] });
-    expect(energy.map((uid) => returnsAfterAttackDiscard(state, uid))).toEqual([true, false]);
+    // 🆕🆕🆕 D604 — the predicate takes the holder too (Nitro Fire's {R} gate); Boomerang names no type.
+    const holder = state.players.p1.active;
+    if (holder === null) throw new Error("no Active");
+    expect(energy.map((uid) => returnsAfterAttackDiscard(state, uid, holder))).toEqual([true, false]);
   });
 });
 

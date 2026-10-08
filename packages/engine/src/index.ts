@@ -20258,6 +20258,17 @@ import type { GameState, Seat } from "./types";
     `expect(manifest.version)`, `it(…)` titles, the declaration and `package.json` —
     **not** as a value-keyed grep — because a value-keyed grep is precisely the mechanism
     that ate D500's heading.)
+    🆕🆕🆕 engineVersion 0.486.0 → **0.487.0** (D604 — WP18: THE MEGA EVOLUTION TYPED SPECIAL ENERGIES;
+    `MATCH_RECORD_VERSION` STAYS 42 (apps/api match.ts "STAYS 42 AT D604")). registry.ts: eight NEW `energy`
+    objects over the 8 unbuilt `me` Special Energies, each providing its printed type, and two NEW pieces:
+    `EnergyProgram.holderType` (the printed "the {T} Pokémon this card is attached to", read by continuous.ts
+    `energyRulesApply` at `passivesOf`'s Energy source, the NEW `energyFreesRetreat`, turn.ts's `onAttach`
+    and `returnsAfterAttackDiscard`; R-TE1) and `EnergyOnAttach.benchSearch` (Telepathic Psychic: up to 2
+    Basic {P} to the Bench, the attach's last step; R-TP1). `returnAfterAttackDiscard` widens to `"hand"`
+    (Nitro Fire; flow.ts `returnBoomerangs`; R-NF1). Shipped shapes: Growing Grass `hpBonus` 20, Rocky
+    Fighting Mist's `preventAttackEffects`, Bubbly Water Therapeutic's pair ×5, Magnetic Metal
+    `noRetreatCostSelf`, Shadowy Darkness Plume's `preventDamageWhileBenched`, Voltaic Lightning Vitality
+    Band's +20. `typedSpecialEnergyMeD604.test.ts`.)
     🆕🆕🆕 engineVersion 0.485.0 → **0.486.0** (D603 — WP11: THE MEGA-GATED TEXTS; `MATCH_RECORD_VERSION`
     STAYS 42 (apps/api match.ts "STAYS 42 AT D603")). effects.ts: `BoardCondition.yourMegaExInPlay
     { type? }` (YOUR Active and Bench, in-play card, D582's `isMegaEvolutionPokemonEx`) and
@@ -25348,7 +25359,7 @@ import type { GameState, Seat } from "./types";
     WITNESS** — the count was re-derived every slice and the word *"three"* was carried.
     A successor of this slice inherits **81 / 61 / 17** again, over **FIVE** history
     occurrences: those four plus `deckMillFilteredScale.test.ts`'s own header arrow.) */
-export const engineVersion = "0.486.0";
+export const engineVersion = "0.487.0";
 
 export type {
   ApplyResult,

@@ -28,18 +28,21 @@ import {
   effectiveRetreatCost,
   // 🆕🆕🆕 D578 — Team Rocket's Energy's owner restriction, at the hand attach.
   energyMayBeAttachedTo,
+  energyRulesApply,
   intoPlayOnlyViaOf,
   opposingRetreatBlocked,
   liveHandAttachMark,
   pokemonPlayBarred,
   retreatLocked,
 } from "./continuous";
+import type { EffectOp } from "./effects";
 import type { GameEvent } from "./events";
 import {
   advance,
   isLethallyDamaged,
   recoverStatuses,
   resolveMidTurnKnockOuts,
+  settleProgram,
   turnTail,
 } from "./flow";
 import {
@@ -47,6 +50,7 @@ import {
   conditionNote,
   evolveAliasLicensed,
   evolveEarlyLicensed,
+  runProgram,
   switchInto,
 } from "./interpreter";
 import { programFor } from "./registry";
@@ -279,7 +283,17 @@ export function attachEnergy(state: GameState, action: AttachEnergyAction): Appl
   // switch move (interpreter.ts), which clears the outgoing Active's conditions
   // and emits POKEMON_SWITCHED — the bench index is still valid (attaching does
   // not reorder the bench).
-  const onAttach = programFor(card.id)?.energy?.onAttach;
+  // 🆕🆕🆕 D604 — a typed Special Energy's rider fires only onto a holder of its printed type
+  // (`energyRulesApply`, read on the attach-moment board — `next`, still `atAttach` here; R-TE1).
+  const energyProgram = programFor(card.id)?.energy;
+  const landedOn = action.target.spot === "active" ? next.players[action.seat].active : next.players[action.seat].bench[action.target.index];
+  const onAttach =
+    landedOn != null && energyRulesApply(next, landedOn, energyProgram) ? energyProgram?.onAttach : undefined;
+  // 🆕🆕🆕 D604 — Telepathic Psychic Energy's Bench search (R-TP1): run LAST, below, because it parks.
+  const benchSearch: EffectOp[] | undefined =
+    onAttach?.kind === "benchSearch"
+      ? [{ op: "searchDeck", filter: onAttach.filter, dest: "bench", max: onAttach.max }, { op: "shuffleDeck" }]
+      : undefined;
   if (onAttach?.kind === "switchIfBenched" && action.target.spot === "bench") {
     next = switchInto(
       next,
@@ -378,6 +392,8 @@ export function attachEnergy(state: GameState, action: AttachEnergyAction): Appl
     );
     if (watched !== next) {
       next = watched;
+      // 🆕🆕🆕 D604 — the search's settle runs the mid-turn sweep once it is done (R-TP1).
+      if (benchSearch !== undefined) return searchAfterAttach(next, action.seat, benchSearch, endsTurn, events);
       // The counters can be lethal, and this is the acting seat's own board
       // mid-turn — `placeEvolution`'s sweep, for `placeEvolution`'s reason.
       // 🆕🆕🆕 D575 — Hypno's turn end rides BEHIND the sweep's prize / promotion stages in
@@ -395,8 +411,23 @@ export function attachEnergy(state: GameState, action: AttachEnergyAction): Appl
   // 🆕🆕🆕 D575 — Hypno "Daydream": the attach onto the marked Defending Pokémon ENDS the turn,
   // seeded here after the §6.1 riders, the §12 recovery and the watched triggers have all run
   // (R-HY2 ⚠️ UNRULED) — the Koraidon "Dino Cry" fold, `settleProgram`'s `endsTurn`.
+  if (benchSearch !== undefined) return searchAfterAttach(next, action.seat, benchSearch, endsTurn, events);
   if (endsTurn) return advance({ ...next, pending: turnTail(action.seat) }, events);
   return ok(next, events);
+}
+
+/** 🆕🆕🆕 D604 — Telepathic Psychic Energy `me03-088`'s *"search your deck for up to 2 Basic {P} Pokémon and
+    put them onto your Bench. Then, shuffle your deck."*, the hand attach's LAST step (R-TP1 ⚠️ UNRULED):
+    folded through `settleProgram`, which parks the pick and, once done, runs the mid-turn KO sweep or —
+    on a Hypno "Daydream" attach — ends the turn. */
+function searchAfterAttach(
+  state: GameState,
+  seat: Seat,
+  program: EffectOp[],
+  endsTurn: boolean,
+  events: GameEvent[],
+): ApplyResult {
+  return settleProgram(runProgram(state, program, { seat }, events), seat, events, endsTurn ? { endsTurn: true } : {});
 }
 
 /** 🆕 D319 — the top-card uid of the body on `seat`'s board that is CARRYING the

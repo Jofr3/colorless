@@ -577,8 +577,9 @@ describe("D593 §7 — Spiky Rolling: +80 when this Pokémon used Spiky Rolling 
 });
 
 describe("D593 §8 — Giga Railgun: does nothing without a Voltaic Lightning Energy attached", () => {
-  it("with Voltaic Lightning Energy attached: 260", () => {
-    expect(dealt(table("me05-026", [[L, 2], [VOLTAIC, 1]]), 1)).toBe(260);
+  it("with Voltaic Lightning Energy attached: 260 (🆕🆕🆕 D604 (D539): \"260\" is WITHDRAWN as the dealt figure — the Voltaic is a built Energy since D604, +20 on its {L} holder's attacks to the Active: 280)", () => {
+    // 🆕🆕🆕 D604 — Vikavolt is {L}, so its Voltaic adds 20 before W/R (typedSpecialEnergyMeD604.test.ts).
+    expect(dealt(table("me05-026", [[L, 2], [VOLTAIC, 1]]), 1)).toBe(280);
   });
 
   it("Basic {L} only: nothing is dealt", () => {
@@ -674,7 +675,7 @@ describe("D593 §11 — \"Fade Out\" under three printed names", () => {
 });
 
 describe("D593 §12 — the version", () => {
-  it("is built at engine 0.486.0", () => {
-    expect(engineVersion).toBe("0.486.0");
+  it("is built at engine 0.487.0", () => {
+    expect(engineVersion).toBe("0.487.0");
   });
 });

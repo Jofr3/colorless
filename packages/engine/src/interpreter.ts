@@ -18458,7 +18458,7 @@ function discardEnergyApply(
   // beside this one, so the cards are appended and the deck is randomised in the
   // open (D342's split, one op over).
   const toDeck = op.to === "deck";
-  const pulled: { target: PokemonTarget; host: string; uids: string[] }[] = [];
+  const pulled: { target: PokemonTarget; host: string; uids: string[]; body: InPlayPokemon }[] = [];
   const strip = (pokemon: InPlayPokemon, target: PokemonTarget): InPlayPokemon => {
     const taken: string[] = [];
     const kept = pokemon.energy.filter((uid) => {
@@ -18467,7 +18467,7 @@ function discardEnergyApply(
       return false;
     });
     if (taken.length === 0) return pokemon;
-    pulled.push({ target, host: topUid(pokemon) ?? "", uids: taken });
+    pulled.push({ target, host: topUid(pokemon) ?? "", uids: taken, body: pokemon });
     return { ...pokemon, energy: kept };
   };
   const active = side.active === null ? null : strip(side.active, { spot: "active" });
@@ -18523,8 +18523,8 @@ function discardEnergyApply(
       ? []
       : pulled
           .filter((entry) => entry.host === ctx.sourceUid)
-          .flatMap((entry) => entry.uids)
-          .filter((uid) => returnsAfterAttackDiscard(state, uid));
+          // 🆕🆕🆕 D604 — the pre-strip attacker answers Nitro Fire's {R} gate (R-NF1).
+          .flatMap((entry) => entry.uids.filter((uid) => returnsAfterAttackDiscard(state, uid, entry.body)));
   return { ...result, state: recordBoomerang(result.state, ctx.sourceUid, boomerang) };
 }
 

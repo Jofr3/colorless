@@ -2477,11 +2477,32 @@ function runBenchTrim(state: GameState, seat: Seat, events: GameEvent[]): ApplyR
     `ENERGY_ATTACHED` (the card lands face up). `recoverStatuses` runs after an attach, the
     settle invariant D174 states for every Energy writer. */
 function returnBoomerangs(
-  state: GameState,
+  start: GameState,
   stage: Extract<PendingStage, { kind: "attackEpilogue" }>,
   events: GameEvent[],
 ): GameState {
-  const uids = stage.boomerang ?? [];
+  const recorded = stage.boomerang ?? [];
+  if (recorded.length === 0) return start;
+  // 🆕🆕🆕 D604 — Nitro Fire Energy `me04-086` (`returnAfterAttackDiscard: "hand"`): *"put this card into
+  // your hand after attack damage and effects"* — from the discard pile to the hand, asking nothing of
+  // the attacker (R-NF1 ⚠️ UNRULED); announced with the shipped `DISCARD_RETRIEVED`. The rest re-attach.
+  const toHand = (uid: string): boolean => {
+    const id = start.cardIdByUid[uid];
+    return id !== undefined && programFor(id)?.energy?.returnAfterAttackDiscard === "hand";
+  };
+  const before = start.players[stage.seat];
+  const handed = recorded.filter((uid, i) => toHand(uid) && before.discard.includes(uid) && recorded.indexOf(uid) === i);
+  if (handed.length > 0)
+    events.push({ type: "DISCARD_RETRIEVED", seat: stage.seat, dest: "hand", uids: [...handed] });
+  const state =
+    handed.length === 0
+      ? start
+      : withSide(start, stage.seat, {
+          ...before,
+          hand: [...before.hand, ...handed],
+          discard: before.discard.filter((uid) => !handed.includes(uid)),
+        });
+  const uids = recorded.filter((uid) => !toHand(uid));
   if (uids.length === 0) return state;
   const side = state.players[stage.seat];
   const onBench = side.bench.findIndex((body) => topUid(body) === stage.uid);

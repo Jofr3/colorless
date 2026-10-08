@@ -3,7 +3,9 @@
 > Update this at the **end of every session**: bump the status table, append a
 > session-log entry, and rewrite the **Resume point** to the next concrete action.
 
-**Last updated:** 2026-10-08 — build session #543 (**P3-M5 — D603, *WP11 — THE MEGA-GATED TEXTS: 6 texts / 11 `me` printings on six new objects over two new members (`yourMegaExInPlay { type? }`, `megaEvolutionEx`) — Oricorio ex ×3 "Excited Turbo", Ludicolo ×2 "Excited Heal", Linoone "Excited Dash", Seviper "Excited Power", Mega Signal ×3, Jett; Latios "Lustrous Assist" and Wally's Compassion ×3 dropped and named; abilities 520 / 610, trainers 364 / 447; 906 `me` printings fully built*** — engine 0.486.0, MRV 42, NOT committed; the sweep PENDING)
+**Last updated:** 2026-10-08 — build session #544 (**P3-M5 — D604, *WP18 — THE MEGA EVOLUTION TYPED SPECIAL ENERGIES: 8 texts / 8 `me` printings on eight new `energy` objects, each providing its printed type, over `EnergyProgram.holderType` (the "{T} Pokémon this card is attached to" gate) and `EnergyOnAttach.benchSearch`; Growing Grass, Rocky Fighting, Telepathic Psychic, Bubbly Water, Magnetic Metal, Nitro Fire, Shadowy Darkness, Voltaic Lightning; R-TE1 / R-TP1 / R-NF1 recorded UNRULED; special energy 22 / 22; 914 `me` printings fully built*** — engine 0.487.0, MRV 42, NOT committed; the sweep PENDING)
+
+**Last updated (was):** 2026-10-08 — build session #543 (**P3-M5 — D603, *WP11 — THE MEGA-GATED TEXTS: 6 texts / 11 `me` printings on six new objects over two new members (`yourMegaExInPlay { type? }`, `megaEvolutionEx`) — Oricorio ex ×3 "Excited Turbo", Ludicolo ×2 "Excited Heal", Linoone "Excited Dash", Seviper "Excited Power", Mega Signal ×3, Jett; Latios "Lustrous Assist" and Wally's Compassion ×3 dropped and named; abilities 520 / 610, trainers 364 / 447; 906 `me` printings fully built*** — engine 0.486.0, MRV 42, NOT committed; the sweep PENDING)
 
 **Last updated (was):** 2026-10-08 — build session #542 (**P3-M5 — D602, *WP20b — THE `me` ACTIVATED ABILITIES, SEARCH / HEAL / ATTACH: 6 texts / 9 `me` printings on six new `abilities` objects — Silvally ×2 "Call a Buddy" (empty-hand gate, a Supporter), Erika's Tangela ×2 "Gathering of Blossoms" (an Erika's Pokémon), Vivillon "Guiding Dance" (coin, a Pokémon), Shuckle ×2 "Fermented Juice" ({G} on itself, heal 30 from 1), Erika's Vileplume ex "Lovely Fragrance" (heal 30 from each), Solgaleo "Sunrise" (Bench, up to 2 Basic {M} to itself); Dragonair and Larry's Komala dropped and named; Standard pool abilities 513 / 610; 895 `me` printings fully built*** — engine 0.485.0, MRV 42, NOT committed; the sweep PENDING)
 
@@ -831,6 +833,42 @@
 
 ## NEXT (resume point)
 
+> ### ▶ THE NEXT CONCRETE ACTION (written 2026-10-08, after D604)
+>
+> 🛑 **D604 IS BUILT AND NOT COMMITTED** (worktree `/home/jofre/projects/luminous_ui-mega`, branch `mega-ingest`, on D603 = `b3ecdeed` + `4b1d4622`). D604 is WP18 of the Mega backlog. Next: a review of D604, then the next package or the landing of D581–D604 (rebase `mega-ingest` onto main; never `git add -A` — `apps/api/.wrangler` is the setup symlink).
+>
+> ✅ **`bun run check` IS GREEN**: `Test Files 646 passed (646) / Tests 15316 passed (15316) / CHECK_EXIT=0` (D603: 645 / 15292; D604 adds `typedSpecialEnergyMeD604.test.ts` (22) and the census D604 block (2)).
+>
+> **(a) THE SLICE.** The 8 unbuilt `me` Special Energies on eight NEW `energy` objects (registry.ts D604 block), each `provides` its printed type on ANY holder and carries one rule gated by the NEW `EnergyProgram.holderType` (continuous.ts `energyRulesApply`, read at `passivesOf`'s Energy source, the NEW `energyFreesRetreat`, turn.ts's `onAttach` and `returnsAfterAttackDiscard`): Growing Grass `me03-086` (`hpBonus` 20), Rocky Fighting `me03-087` (Mist's `preventAttackEffects`), Telepathic Psychic `me03-088` (the NEW `EnergyOnAttach.benchSearch`: up to 2 Basic {P} to the Bench, then shuffle), Bubbly Water `me04-084` (Therapeutic's `statusRecovery` / `statusImmunities`, all five), Magnetic Metal `me04-085` (`noRetreatCostSelf`, read off the Energy by `energyFreesRetreat`), Nitro Fire `me04-086` (`returnAfterAttackDiscard: "hand"`; flow.ts `returnBoomerangs` returns it to the hand), Shadowy Darkness `me05-083` (Plume's `preventDamageWhileBenched`), Voltaic Lightning `me05-084` (Vitality Band's `damageBonusBeforeWR` 20). Unblocked as the brief said: D583's `isSpecialEnergy` reads all eight faces as Special. The brief's "9 texts" is 8 on the LOCAL D1 (Team Rocket's Energy was aliased at D583). Nothing dropped.
+>
+> **(b) MRV STAYS 42** (match.ts "STAYS 42 AT D604"): the three new pieces are registry data looked up by id. The eight are ENERGY faces in a v42 `cardPool` (D583 refreshed Trainer faces only) and are read as before; an in-flight match sees each provide its type (was {C}). A Nitro uid can ride `attackEpilogue.boomerang` (v40); a 0.486 rollback would re-attach it.
+>
+> | Column | `me` D604 | Standard pool D604 |
+> |---|---|---|
+> | Attacks | 856 / 1039 | **2588 / 2771** |
+> | Abilities | 144 / 234 | **520 / 610** |
+> | Trainers | 100 / 183 | **364 / 447** |
+> | Special Energy | 11 / 11 | **22 / 22** |
+>
+> **914 `me` printings fully built** (906 + 8). Pins re-measured: registry length 1246 → 1254 (five suites), `nonAttackRegistryIds()` 1079 → 1087, the D273 partition, the D581 `me`-key rung, `reprintAliasMeD582`'s key table. D539: `clauseRowsMeD593`'s Giga Railgun "260" withdrawn in its title (a built Voltaic adds 20 on its {L} Vikavolt: 280); `boomerangEnergyD577` passes the holder to `returnsAfterAttackDiscard`. D593's "Voltaic … provides {C}" known limit (decisions, progress, simulator, backlog) and the D583 backlog note "each still provides one {C}", annotated in place.
+>
+> **(c) THE MUTATION RECORD.** +28 D604 rows (4758 in all); D261-energy-source-loses-its-exemption, D357-the-moment-board-is-captured-after-the-rider and D558-rescue-free-tier-dropped RE-POINTED (their lines moved), all three KILLED under `--only`. precheck: 4758 mutants, the same 20 pre-existing broken rows. Probe `run.ts --decision D604 --allow-dirty`: 28 killed · 0 known survivor(s) · 0 GAP(S) · 0 stale · 0 skipped(dirty) · 0 clobber(s) · 0 error(s), tree byte-identical after. Gate-witness `--only` (the 18 `opaque-anatomy-gate.ts` / `residue-census-gate.ts` rows): 18 killed · 0 error. Gates: residue-census, opaque-anatomy, splice, partition all OK. Version tax: 251 occurrences stepped to 0.487.0 outside docs (152 test files: `expect(engineVersion)`, `expect(manifest.version)`, `it()` titles; `package.json`, the declaration, the mutants.ts `find`); the D603 changelog heading in index.ts keeps 0.486.0.
+>
+> 🛑 **(0) THE WHOLE-CORPUS SWEEP IS PENDING** (D581–D603's too). Predicted: **4688 killed · 50 known survivor(s) · 0 GAP(S) · 20 error(s)** over **4,758** rows — 4730 + 28 = 4758; 4660 + 28 = 4688 killed; 4688 + 50 + 20 = 4758. It assumes D603's prediction (4660 · 50 · 0 · 20 over 4730) holds. If it holds, D581–D604 close together. If it fails: an error count ≠ 20 means a `find` was spliced by a later edit (precheck names it); a new GAP or survivor in a D581–D603 row is that slice's open prediction failing; one in an older row whose killer is a registry-length pin, the D273 partition, the Giga Railgun figure, or the Mist / Therapeutic / Boomerang / Auto Heal / D558 retreat suites (the three re-pointed rows' neighbours) is a D604 edit moving it and owes a row-level re-anchor.
+>
+> **Pending decisions (UNRULED readings), NEW at D604:**
+> - **R-TE1** — *"the {T} Pokémon this card is attached to"* is read LIVE off the holder's in-play types (`effectiveTypesOf`: a retype counts, a §9-locked retyper reads its printed types). `provides` is never gated: on an off-type holder the card still provides its type and only its rule is off.
+> - **R-TP1** — Telepathic Psychic Energy's search fires on the §6.2 hand attach only (Jet / Enriching's scope: an effect that attaches from hand, such as Excited Turbo, does not fire it), with the {P} read on the holder at the attach. It resolves as the attach's LAST step, after the §12 recovery and the watched attach triggers (an opposing Gnawing Curse's counters land first), because its park cannot be threaded after them. The search is mandatory and "up to 2" allows 0, so no inner confirm.
+> - **R-NF1** — Nitro Fire Energy returns at the attack epilogue (Boomerang's "after attacking" moment, before the KO sweep), only when the attack's own program discarded it to the discard pile off the attacker (R-BE1's scope), with the {R} read on the attacker before the discard. It returns even if the attacker has left play, provided the card is still in the discard pile.
+>
+> R-PX6 (D603), R-GC2, R-GC3 and R-TN1 (D601) and R-CW1 (D600) stand as recorded in the archived blocks below.
+>
+> Still owed from the Mega backlog: unchanged from D603 (below); the Special Energy column is now whole.
+>
+> ---
+>
+> **ARCHIVED — the resume point D604 was built from, kept rather than overwritten** (D603 has since been committed on `mega-ingest` as `b3ecdeed`, its R-SB1 → R-SB2 rename as `4b1d4622`):
+>
 > ### ▶ THE NEXT CONCRETE ACTION (written 2026-10-08, after D603)
 >
 > 🛑 **D603 IS BUILT AND NOT COMMITTED** (worktree `/home/jofre/projects/luminous_ui-mega`, branch `mega-ingest`, on D602 = `757efac0`). D603 is WP11 of the Mega backlog. Next: a review of D603, then the next package or the landing of D581–D603 (rebase `mega-ingest` onto main; never `git add -A` — `apps/api/.wrangler` is the setup symlink).
@@ -1163,7 +1201,7 @@
 > | Trainers | 92 / 183 | **356 / 447** |
 > | Special Energy | 3 / 11 | **14 / 22** |
 >
-> **816 `me` printings fully built** (804 + 12). Meowth ex ×3 is keyed but still waits on Last-Ditch Catch. Census D581 tally: reader [274, 757] → [281, 766], gate [3, 4] → [4, 5], residue [162, 256] → [154, 246]; registry 1200 → 1205 (non-attack unmoved at 1040); the D582–D592 rungs subtract WP07's +10 row-built printings. Known limit, not this slice's: Voltaic Lightning Energy is an unauthored Special Energy and provides {C}.
+> **816 `me` printings fully built** (804 + 12). Meowth ex ×3 is keyed but still waits on Last-Ditch Catch. Census D581 tally: reader [274, 757] → [281, 766], gate [3, 4] → [4, 5], residue [162, 256] → [154, 246]; registry 1200 → 1205 (non-attack unmoved at 1040); the D582–D592 rungs subtract WP07's +10 row-built printings. Known limit, not this slice's: Voltaic Lightning Energy is an unauthored Special Energy and provides {C}. [🆕🆕🆕 D604 (D539): WITHDRAWN — Voltaic Lightning Energy is built since D604: it provides {L} and adds 20 on its {L} holder]
 >
 > **(c) THE MUTATION RECORD.** +29 D593 rows (4506 in all). precheck: 4506 mutants, the same 20 pre-existing broken rows (none in a D593 file). Probe `run.ts --decision D593 --allow-dirty`: 29 killed · 0 known · 0 GAP · 0 error, tree byte-identical after. Gate-witness `--only` (the 18 `opaque-anatomy-gate.ts` / `residue-census-gate.ts` rows): 18 killed · 0 error. Gates: residue-census, opaque-anatomy, splice, partition all OK.
 >
@@ -35187,7 +35225,8 @@ the next api deploy (D18).
 |---|---|---|
 | backend-data | P1 | ✅ M1–M9 + P2-M1 + task-17 api deployed (Worker `9b1ec1d1`, 2026-07-16); OAuth secrets pending (user) |
 | deck-builder | P2 | ✅ ALL 19 tasks closed (task 17 landed + e2e-verified locally); only follow-ups left |
-| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D603, *WP11 — the Mega-gated texts: 6 texts / 11 `me` printings on six new objects over `yourMegaExInPlay { type? }` and `megaEvolutionEx` (three gated Abilities, a gated passive, a Mega ex search, a draw per opposing Mega ex); Latios and Wally's Compassion dropped and named; abilities 520 / 610, trainers 364 / 447*** — engine 0.486.0, MRV 42, NOT committed; the sweep PENDING) |
+| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D604, *WP18 — the Mega Evolution typed Special Energies: 8 texts / 8 `me` printings on eight new `energy` objects over `EnergyProgram.holderType` and `EnergyOnAttach.benchSearch`; R-TE1 / R-TP1 / R-NF1 UNRULED; special energy 22 / 22*** — engine 0.487.0, MRV 42, NOT committed; the sweep PENDING) |
+| simulator (prior) | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D603, *WP11 — the Mega-gated texts: 6 texts / 11 `me` printings on six new objects over `yourMegaExInPlay { type? }` and `megaEvolutionEx` (three gated Abilities, a gated passive, a Mega ex search, a draw per opposing Mega ex); Latios and Wally's Compassion dropped and named; abilities 520 / 610, trainers 364 / 447*** — engine 0.486.0, MRV 42, NOT committed; the sweep PENDING) |
 | simulator (prior) | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D602, *WP20b — the `me` activated Abilities, search / heal / attach: 6 texts / 9 `me` printings on six new `abilities` objects (an empty-hand Supporter search, an Erika's Pokémon search, a coin-gated Pokémon search, a {G}-gated heal, a heal-each, a Bench-only Metal attach); Dragonair and Larry's Komala dropped and named; abilities 513 / 610*** — engine 0.485.0, MRV 42, NOT committed; the sweep PENDING) |
 | simulator (prior) | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D601, *D598's open review findings closed: R-GC2 (Legacy Energy answers before Shadowy Concealment) and R-GC3 (1 fewer per {D} Knock Out in a batch, tested) recorded UNRULED, R-TN1 amended (self-damage never asks the coin), `koByOpponentAttack`'s fail-closed miss arm recorded; no engine behaviour change*** — engine 0.484.0, MRV 42, NOT committed; the sweep PENDING) |
 | simulator (prior) | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D600, *WP14 + WP33b — the hand count and five bonus conditions: 7 texts / 12 `me` printings (`cardsInYourHand` on the `×` fold and on `damageActive.per`; remaining HP, no Retreat Cost, a named card in your discard, Stage 2 {D} on your Bench, Shadowy {D} Energy on your Bench); Celebration dropped; attacks 2588 / 2771*** — engine 0.484.0, MRV 42, NOT committed; the sweep PENDING) |
@@ -35408,6 +35447,17 @@ the next api deploy (D18).
 Legend: 📝 backlog · 📋 specced · 🔎 research · 🚧 in progress · ✅ done
 
 ## Session log
+
+### 2026-10-08 — build session #544 (P3-M5 — D604)
+
+**WP18 — THE MEGA EVOLUTION TYPED SPECIAL ENERGIES. `MATCH_RECORD_VERSION` STAYS 42.**
+
+Built in the `luminous_ui-mega` worktree on D603 (`4b1d4622`); the main checkout was not touched. Every id `git grep`-ped
+(each only as a face in `specialEnergyTagD583.test.ts` and the playmat mock; Shadowy / Voltaic also as D600 / D593 fixtures)
+and every text read off the LOCAL D1 first. Two new pieces (`EnergyProgram.holderType`, `EnergyOnAttach.benchSearch`) and
+`returnAfterAttackDiscard: "hand"`; 8 texts / 8 printings on eight new objects, nothing dropped. R-TE1, R-TP1, R-NF1
+recorded UNRULED. `typedSpecialEnergyMeD604.test.ts` (22), census D604 block (2); check 646 / 15316. Version tax 251
+stepped / 1 kept. +28 mutant rows, all KILLED; three older rows re-pointed. Sweep PENDING (NEXT (0)). NOT committed.
 
 ### 2026-10-08 — build session #543 (P3-M5 — D603)
 

@@ -30047,7 +30047,7 @@ decisions (1) and (2) after D580. Engine 0.464.0 → 0.465.0. The Mega ex rule i
   idx 1). No `optional`: nothing is printed "you may". Meowth ex's Ability stays unbuilt.
 - **The `sv` reader output is byte-identical**: every `deriveAttack*` reader and both splitters over the 1,091 corpus sentences
   were dumped before and after; only the 8 `me` row sentences differ.
-- **Known limit (not this slice's):** Voltaic Lightning Energy is an unauthored Special Energy and provides {C}.
+- **Known limit (not this slice's):** Voltaic Lightning Energy is an unauthored Special Energy and provides {C}. [🆕🆕🆕 D604 (D539): WITHDRAWN — Voltaic Lightning Energy is built since D604: it provides {L} and adds 20 on its {L} holder]
 - **Suite.** `clauseRowsMeD593.test.ts` (31): the texts against the `me` corpus, the readings, near misses, the eighth gate
   row's disjointness, and each row on a board against a control (Spiky Rolling and Brain Crush also played out over two turns).
 - **Census.** Standard pool attacks **2525 / 2771** (`me` 793 / 1,039; abilities 489 / 610, trainers 356 / 447 and special
@@ -30233,6 +30233,22 @@ decisions (1) and (2) after D580. Engine 0.464.0 → 0.465.0. The Mega ex rule i
 - **Readings.** None new; each open point inherits a shipped one (`progress.md` NEXT).
 - **Suite.** `activatedMeD602.test.ts` (22) and a census D602 block (3). +21 mutant rows.
 - **Census.** Standard pool abilities **513 / 610**; 895 `me` printings fully built.
+- **Owed.** See `progress.md` NEXT. The whole-corpus sweep is PENDING.
+
+## D604 — WP18: the Mega Evolution typed Special Energies (engine 0.487.0, `MATCH_RECORD_VERSION` stays 42)
+
+**Status:** ✅ BUILT in the `luminous_ui-mega` worktree on D603 (`4b1d4622`), NOT committed.
+
+- **Vocabulary.** `EnergyProgram.holderType` (the printed "{T} Pokémon this card is attached to", continuous.ts
+  `energyRulesApply`; `provides` is never gated), `EnergyOnAttach.benchSearch`, `returnAfterAttackDiscard: "hand"` and
+  continuous.ts `energyFreesRetreat`.
+- **8 texts / 8 `me` printings on eight new `energy` objects**, each providing its type: Growing Grass (+20 HP), Rocky
+  Fighting (Mist's effects shield), Telepathic Psychic (up to 2 Basic {P} to the Bench on a hand attach), Bubbly Water
+  (recovers from / immune to all five), Magnetic Metal (no Retreat Cost), Nitro Fire (to the hand after its {R} holder's
+  attack discards it), Shadowy Darkness (Benched: no attack damage), Voltaic Lightning (+20 to the Active). Nothing dropped.
+- **Readings.** R-TE1, R-TP1, R-NF1, UNRULED (`progress.md` NEXT).
+- **Suite.** `typedSpecialEnergyMeD604.test.ts` (22) and a census D604 block (2). +28 mutant rows; three older rows re-pointed.
+- **Census.** Standard pool special energy **22 / 22**; 914 `me` printings fully built.
 - **Owed.** See `progress.md` NEXT. The whole-corpus sweep is PENDING.
 
 ## D603 — WP11: the Mega-gated texts (engine 0.486.0, `MATCH_RECORD_VERSION` stays 42)

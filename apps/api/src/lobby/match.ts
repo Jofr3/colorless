@@ -2159,6 +2159,17 @@ export interface MatchRecord {
     `turn:action.discardable` — 🛑 **DEPLOY THE SERVER FIRST**: an old client's `z.object` STRIPS
     the unknown key, while a new client's REQUIRED key refuses an old server's frame.
 
+    🆕🆕🆕 **STAYS 42 AT D604 — WP18 ADDS TWO CATALOG FIELDS AND ONE `EnergyOnAttach` MEMBER, NO OP, KEY, STAGE OR EVENT.**
+    (Placed ABOVE the D603 block.) `EnergyProgram.holderType`, `EnergyOnAttach.benchSearch` and
+    `returnAfterAttackDiscard: "hand"` are registry data, looked up by card id and never persisted. The
+    eight `me` Special Energies are ENERGY faces in a v42 `cardPool` (D583 refreshed Trainer faces
+    only): their programs are keyed by id and `isSpecialEnergy` reads the persisted printed text, so a
+    v42 face is read as before — an in-flight match simply sees each provide its type (was {C}) and its
+    rule switch on. The Telepathic Psychic search parks Nest Ball's `searchDeck` on `phase.cont`, a
+    shipped op. A Nitro Fire uid can now ride `attackEpilogue.boomerang` (a v40 field); no 0.486 byte
+    string holds one. Rollback to 0.486: the eight go back to unauthored {C}, and a Nitro uid on a
+    parked epilogue would be RE-ATTACHED to its attacker (0.486 reads every recorded uid as a Boomerang).
+
     🆕🆕🆕 **STAYS 42 AT D603 — WP11 ADDS A `CardFilter` AND A `BoardCondition` MEMBER, NO OP, KEY, STAGE OR EVENT.**
     (Placed ABOVE the D602 block.) `BoardCondition.yourMegaExInPlay` is read off the board at use /
     attack time and never persisted. `CardFilter.megaEvolutionEx` IS at a persisted address — Mega

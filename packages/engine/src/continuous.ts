@@ -46,6 +46,7 @@ import { phaseViewOf } from "./phaseView";
 import { flipCoin } from "./rng";
 import type {
   AttackTimingGate,
+  EnergyProgram,
   KoPrizeReduction,
   MaxHpScale,
   PassiveEffects,
@@ -158,9 +159,25 @@ export function benchTrimStages(
 /** 🆕🆕🆕 §6.1 (D577) — does the Energy card `uid` print Boomerang Energy's *"attach this card
     from your discard pile to that Pokémon after attacking"* (`EnergyProgram.returnAfterAttackDiscard`)?
     The ONE read interpreter.ts `discardEnergyApply` asks of a card it discarded. */
-export function returnsAfterAttackDiscard(state: GameState, uid: string): boolean {
+export function returnsAfterAttackDiscard(state: GameState, uid: string, holder: InPlayPokemon): boolean {
   const id = state.cardIdByUid[uid];
-  return id !== undefined && programFor(id)?.energy?.returnAfterAttackDiscard === true;
+  const energy = id === undefined ? undefined : programFor(id)?.energy;
+  // 🆕🆕🆕 D604 — `"hand"` (Nitro Fire) is recorded the same way; its {R} is the holder gate (R-NF1).
+  return energy?.returnAfterAttackDiscard !== undefined && energyRulesApply(state, holder, energy);
+}
+
+/** 🆕🆕🆕 D604 — do the attached Energy `energy`'s printed rules apply on `holder`? TRUE unless the
+    program names a `holderType` the holder's in-play types (`effectiveTypesOf`) lack: *"The {G}
+    Pokémon this card is attached to …"* (the Mega Evolution typed Special Energies, R-TE1 ⚠️
+    UNRULED). The ONE predicate behind the four read sites: `passivesOf`'s Energy source,
+    `energyFreesRetreat`, turn.ts `attachEnergy`'s `onAttach` and `returnsAfterAttackDiscard`. */
+export function energyRulesApply(
+  state: GameState,
+  holder: InPlayPokemon,
+  energy: EnergyProgram | undefined,
+): boolean {
+  const type = energy?.holderType;
+  return type === undefined || effectiveTypesOf(state, holder).includes(type);
 }
 
 /** 🆕🆕🆕 D580 — a card's SUPPORTER EFFECT as Mr. Mime `sv05-063` "Look-Alike Show" uses it
@@ -1640,7 +1657,9 @@ export function passivesOf(
     }),
     ...pokemon.energy.map((uid) => {
       const id = state.cardIdByUid[uid];
-      return id === undefined ? undefined : programFor(id)?.energy?.passive;
+      const energy = id === undefined ? undefined : programFor(id)?.energy;
+      // 🆕🆕🆕 D604 — a typed Special Energy's passive only on a holder of its printed type (R-TE1).
+      return energyRulesApply(state, pokemon, energy) ? energy?.passive : undefined;
     }),
   ];
   const isBasic = top !== undefined && isBasicPokemon(top);
@@ -5792,7 +5811,8 @@ export function effectiveRetreatCost(state: GameState, pokemon: InPlayPokemon): 
   // 🆕🆕🆕 D558 — the free tier's TOOL and STADIUM members, each its own top-level
   // predicate: Rescue Board at 30 remaining HP or less (R-RB, live-read), N's Castle
   // over its filter at any stage (R-NC). Neither is an Ability, so neither is gated.
-  if (toolFreesRetreat(state, pokemon) || stadiumFreesRetreat(state, top)) return 0;
+  if (toolFreesRetreat(state, pokemon) || energyFreesRetreat(state, pokemon) || stadiumFreesRetreat(state, top))
+    return 0;
   const printed = retreatCostOf(top);
   // 🆕🆕🆕 D549 — the attack-installed COST TAX is a FIFTH term in the ONE floored sum
   // (R3): below the free-retreat tier above, which still zeroes the cost outright, and
@@ -5835,6 +5855,19 @@ export function toolFreesRetreat(state: GameState, pokemon: InPlayPokemon): bool
     const atMost =
       id === undefined ? undefined : programFor(id)?.passive?.retreatCostDiscount?.freeAtRemainingHpAtMost;
     return atMost !== undefined && remainingHpWithin(state, pokemon, atMost);
+  });
+}
+
+/** 🆕🆕🆕 §11 (D604) — Magnetic Metal Energy `me04-085`: *"The {M} Pokémon this card is attached to
+    has no Retreat Cost."* An attached Energy whose `passive.noRetreatCostSelf` is set and whose
+    rules apply on the holder (`energyRulesApply`, the {M} gate) frees the retreat: a member of
+    `effectiveRetreatCost`'s free tier beside `toolFreesRetreat`. NOT §9-gated (an Energy is no
+    Ability); the field's two riders are Ability conditions and are not read here. */
+export function energyFreesRetreat(state: GameState, pokemon: InPlayPokemon): boolean {
+  return pokemon.energy.some((uid) => {
+    const id = state.cardIdByUid[uid];
+    const energy = id === undefined ? undefined : programFor(id)?.energy;
+    return energy?.passive?.noRetreatCostSelf !== undefined && energyRulesApply(state, pokemon, energy);
   });
 }
 

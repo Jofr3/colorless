@@ -6,6 +6,23 @@
 > `coverage-backlog-legal.md`; its pool is unchanged and whole. The suite-side figures are
 > `censusAtHead.test.ts`'s D581 block and `censusAttackCorpusMe.ts`.
 
+## 🆕 D604 update (engine 0.487.0) — the typed Special Energies (WP18)
+
+8 texts / 8 `me` printings on eight new `energy` objects (registry.ts D604 block; `typedSpecialEnergyMeD604.test.ts`): every
+unbuilt `me` Special Energy below. Each provides its printed type; its rule applies only on a holder of that type (the new
+`EnergyProgram.holderType`, R-TE1). New pieces: `EnergyOnAttach.benchSearch` (Telepathic Psychic, R-TP1),
+`returnAfterAttackDiscard: "hand"` (Nitro Fire, R-NF1) and `energyFreesRetreat` (Magnetic Metal). **Finished:** all 8.
+Nothing dropped.
+
+| Column | `me` built / units (D604) | Standard pool D604 |
+|---|---|---|
+| Attacks | 856 / 1,039 | **2,588 / 2,771** |
+| Abilities | 144 / 234 | **520 / 610** |
+| Trainers | 100 / 183 | **364 / 447** |
+| Special Energy | 11 / 11 (+8) | **22 / 22** |
+
+**Fully built `me` printings: 914** (906 + 8).
+
 ## 🆕 D603 update (engine 0.486.0) — the Mega-gated texts (WP11)
 
 6 texts / 11 `me` printings on six new objects (registry.ts D603 block; `megaGatedMeD603.test.ts`), on two new members over
@@ -184,7 +201,7 @@ Brain Crush (opponent's Active Confused), plus Facade ×2 on the one new member 
 Riposte is the eighth `ATTACK_GATE_CLAUSES` row (`alternateCostIf` at {D}). "Fade Out" ×5 is keyed on three new
 attack-only objects named for the printed attack (Balloon Return, Tuck Tail ×3, Sky Return). Nothing dropped. **Finished:**
 Pangoro, Hop's Trevenant ×2, Magnezone, Crawdaunt, Vikavolt, Larry's Staraptor ×2, Togedemaru ex, Malamar, Drifblim, Emolga.
-Meowth ex ×3 still waits on its Ability, Last-Ditch Catch. Voltaic Lightning Energy itself is unbuilt (it provides {C}).
+Meowth ex ×3 still waits on its Ability, Last-Ditch Catch. Voltaic Lightning Energy itself is unbuilt (it provides {C}). [🆕🆕🆕 D604 (D539): WITHDRAWN — Voltaic Lightning Energy is built since D604: it provides {L} and adds 20 on its {L} holder]
 
 | Column | `me` built / units (D593) | Standard pool D593 |
 |---|---|---|
@@ -383,7 +400,7 @@ Ignition), and map.ts writes "Special" from the next ingest (neither D1 re-inges
 
 The other columns stand at D582's. **Fully built `me` printings: 672.** The 8 unbuilt `me` Special Energies are the
 eight new ones (Growing Grass, Rocky Fighting, Telepathic Psychic, Bubbly Water, Magnetic Metal, Nitro Fire, Shadowy
-Darkness, Voltaic Lightning): each still provides one {C} (the unauthored fallback), now as a Special.
+Darkness, Voltaic Lightning): each still provides one {C} (the unauthored fallback), now as a Special. [🆕🆕🆕 D604 (D539): WITHDRAWN — all eight are built since D604; each provides its printed type]
 
 ## 🆕 D582 update (engine 0.466.0) — the Mega ex rule and the alias tier
 
@@ -927,7 +944,7 @@ Discard an Energy from 1 of your opponent's Pokémon. [🆕🆕🆕 D588: BUILT]
 - 1× **Team Rocket's Hypnotizer** — If the Team Rocket's Pokémon this card is attached to is in the Active Spot and is damaged by an attack from your opponent's Pokémon (even if this Team Rocket's Pokémon is Knocked Out), the Attacking Pokémon is now Asleep.
 - 1× **Thick Scale** — The {N} Pokémon this card is attached to takes 50 less damage from attacks from your opponent's {G}, {R}, {W}, or {L} Pokémon (after applying Weakness and Resistance).
 
-## Special Energy — 8 unbuilt texts / 8 printings
+## Special Energy — 8 unbuilt texts / 8 printings [🆕🆕🆕 D604: all 8 BUILT — see the D604 update]
 
 ### The Mega Evolution typed Special Energies — 8 text(s) / 8 printing(s)
 

@@ -673,10 +673,10 @@ describe("§7 — purity and the structural answers", () => {
     }
   });
 
-  it("engineVersion is 0.486.0 and the bump is owed for BEHAVIOUR", () => {
+  it("engineVersion is 0.487.0 and the bump is owed for BEHAVIOUR", () => {
     // 🆕🆕 D462 — 0.360.0 → **0.361.0**. One printed sentence that derived to `null`
     // now derives to a program: an OBSERVABLE change to what the engine does with a
     // real catalog row, which is the bump's whole trigger.
-    expect(engineVersion).toBe("0.486.0");
+    expect(engineVersion).toBe("0.487.0");
   });
 });
