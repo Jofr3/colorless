@@ -5224,7 +5224,7 @@ function stepOp(
       // `byAttackFor` all already scan the Active AND the Bench.
       return parkOrForce(
         state,
-        unshieldedRefs(state, knockOutChosenTargets(state, ctx.seat, op), ctx, events),
+        unshieldedRefs(state, knockOutChosenTargets(state, ctx.seat, op, ctx.sourceUid), ctx, events),
         (ref) => doomBodyAt(state, ref, koByEffectMarker(state.turn)),
         knockOutChosenNote(op),
       );
@@ -6618,6 +6618,12 @@ export function conditionHolds(state: GameState, seat: Seat, cond: BoardConditio
       const ownActive = state.players[seat].active;
       return ownActive !== null && remainingHpWithin(state, ownActive, cond.hp);
     }
+    case "opponentActiveDamageCountersExactly": {
+      // 🆕🆕🆕 D609 — Mega Absol ex "Terminal Period": `damageCountersOn`, Euclase's window, on the
+      // defender. Empty Spot: FALSE.
+      const defending = state.players[otherSeat(seat)].active;
+      return defending !== null && damageCountersOn(defending) === cond.count;
+    }
     case "opponentDiscardHasNameContaining":
       // 🆕🆕🆕 D563 — Kyurem "Plasma Bane"'s *"your opponent has any cards in their
       // discard pile that have "Colress" in the name"*: the OTHER seat's pile only (R-PB),
@@ -7856,6 +7862,9 @@ export function conditionNote(cond: BoardCondition): string {
     // brace code spelled as the type name (D118); Zarude's names the card.
     case "yourActiveRemainingHpAtMost":
       return `your Active Pokémon's remaining HP is ${String(cond.hp)} or less`;
+    // 🆕🆕🆕 D609 — the printed clause (Terminal Period); `knockOutChosenNote`'s window wording.
+    case "opponentActiveDamageCountersExactly":
+      return `your opponent's Active Pokémon has exactly ${String(cond.count)} damage counters on it`;
     case "opponentActiveNoRetreatCost":
       return "your opponent's Active Pokémon has no Retreat Cost";
     case "yourDiscardHasNamed":
@@ -12892,8 +12901,9 @@ function counterEachAll(
   ctx: EffectContext,
   events: GameEvent[],
 ): GameState {
-  const { amount, filter, exceptNamed } = op;
-  if (amount <= 0) return state;
+  // 🆕🆕🆕 D609 — the printed amount is `printedAmount`; `amount` is the per-body figure below.
+  const { amount: printedAmount, filter, exceptNamed } = op;
+  if (printedAmount <= 0) return state;
   const walked = ((): readonly Seat[] => {
     switch (op.side) {
       case "both":
@@ -12910,6 +12920,11 @@ function counterEachAll(
       const card = inPlayCardOf(next, pokemon);
       if (!matchesFilter(card, filter)) return pokemon;
       if (exceptNamed !== undefined && card?.name === exceptNamed) return pokemon;
+      // 🆕🆕🆕 D609 — Snow Coating: the printed amount once per counter already on this body, read
+      // before it changes; a body with none takes nothing and is not asked §11.
+      const amount =
+        op.perDamageCounterOnTarget === true ? printedAmount * damageCountersOn(pokemon) : printedAmount;
+      if (amount <= 0) return pokemon;
       if (op.damagedOnly === true && !hasAnyDamageCounters(pokemon)) return pokemon;
       const uid = topUid(pokemon);
       if (uid === undefined) return pokemon;
@@ -12947,7 +12962,8 @@ function counterEachAll(
 
     ⚠️ **THE FLOOR IS PER BODY AND IT IS `healEachAll`'s, NOT `counterEachAll`'s.**
     Those two ops guard `amount <= 0` ONCE, above the walk, because their amount is a
-    constant handed in by the producer. This one's varies per body, so the guard has to
+    constant handed in by the producer. [🆕🆕🆕 D609 (D539): no longer true of `counterEachAll` —
+    its `perDamageCounterOnTarget` rider (Snow Coating) makes the amount per body, guarded per body.] This one's varies per body, so the guard has to
     vary with it: a body already AT or BELOW the destination takes zero, files no
     `COUNTERS_PLACED` and leaves its neighbours alone — exactly the way an undamaged
     body heals 0 and emits nothing two ops up. Never negative.
@@ -17042,8 +17058,28 @@ export function knockOutChosenTargets(
   state: GameState,
   seat: Seat,
   op: Extract<EffectOp, { op: "knockOutChosen" }>,
+  /** 🆕🆕🆕 D609 — the attacker's top-card uid, the printed "except for this Pokémon" of
+      `anyExceptSelf`. Absent: nothing is excluded. */
+  sourceUid?: string,
 ): PokemonRef[] {
-  const scope = op.target === "opponentAny" ? oppAnyRefs(state, seat) : oppBenchRefs(state, seat);
+  // 🆕🆕🆕 D609 — a total `switch` where the ternary stood (D447's rule): the third member.
+  let scope: PokemonRef[];
+  switch (op.target) {
+    case "opponentAny":
+      scope = oppAnyRefs(state, seat);
+      break;
+    case "opponentBench":
+      scope = oppBenchRefs(state, seat);
+      break;
+    case "anyExceptSelf":
+      // Both sides, Active first on each, the attacker dropped by uid.
+      scope = [...ownInPlayRefs(state, seat), ...oppAnyRefs(state, seat)].filter((ref) => {
+        const pokemon = refPokemon(state, ref);
+        return pokemon !== undefined && (sourceUid === undefined || topUid(pokemon) !== sourceUid);
+      });
+      break;
+  }
+  if (op.leastHpRemaining === true) return leastHpRemainingRefs(state, scope);
   const inWindow =
     op.damageCountersExactly === undefined
       ? scope
@@ -17061,6 +17097,19 @@ export function knockOutChosenTargets(
   });
 }
 
+/** 🆕🆕🆕 D609 — the refs in `scope` whose remaining HP (`effectiveMaxHp − damage`) is the
+    minimum over it: Inteleon "Bring Down". A body with no readable maximum is not compared
+    (`remainingHpWithin`'s refuse direction). Never co-printed with the other two riders. */
+function leastHpRemainingRefs(state: GameState, scope: readonly PokemonRef[]): PokemonRef[] {
+  const remaining = scope.flatMap((ref): [PokemonRef, number][] => {
+    const pokemon = refPokemon(state, ref);
+    const max = pokemon === undefined ? null : effectiveMaxHp(state, pokemon);
+    return pokemon === undefined || max === null ? [] : [[ref, max - pokemon.damage]];
+  });
+  const least = Math.min(...remaining.map(([, hp]) => hp));
+  return remaining.filter(([, hp]) => hp === least).map(([ref]) => ref);
+}
+
 /** 🆕🆕 D416 — the printed noun for a `knockOutChosen`'s candidates, in the card's
     own word order. `gustTargetNoun`'s twin and for its reason: the caption must
     name exactly the set the funnel offers, or the dialog contradicts its own
@@ -17068,6 +17117,10 @@ export function knockOutChosenTargets(
     opponent's Benched Basic Pokémon."* and *"Knock Out 1 of your opponent's Pokémon
     that has exactly 6 damage counters on it."* */
 function knockOutChosenNote(op: Extract<EffectOp, { op: "knockOutChosen" }>): string {
+  // 🆕🆕🆕 D609 — Bring Down's own sentence; its scope and window are not the two above.
+  if (op.target === "anyExceptSelf") {
+    return "Choose a Pokémon in play (yours or your opponent's) that has the least HP remaining, except for this Pokémon, and it is Knocked Out.";
+  }
   const scope = op.target === "opponentBench" ? "Benched " : "";
   const stage = op.basicOnly === true ? "Basic " : "";
   // The window rides AFTER the noun because that is where the print puts it, and

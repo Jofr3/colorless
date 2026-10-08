@@ -6,6 +6,25 @@
 > `coverage-backlog-legal.md`; its pool is unchanged and whole. The suite-side figures are
 > `censusAtHead.test.ts`'s D581 block and `censusAttackCorpusMe.ts`.
 
+## 🆕 D609 update (engine 0.492.0) — KO / damage-counter attacks (WP36)
+
+4 attack texts / 8 `me` printings newly read (`koCountersMeD609.test.ts`). Mega Absol ex ×3 "Terminal Period" is a
+`conditionGate` on the new `opponentActiveDamageCountersExactly` around `knockOutDefender`; Inteleon ×3 "Bring Down" is
+`knockOutChosen` at the new `target: "anyExceptSelf"` with the new `leastHpRemaining` (R-BD1, UNRULED: the least is taken
+before the §11 filter); N's Vanilluxe "Snow Coating" is `counterEachAll` with the new `perDamageCounterOnTarget`; Bramblin
+"Sneaky Placement" is the singular "Place 1 damage counter" on D449's any-zone put. **Finished:** all 8 cards. **WP36 rest,
+dropped and named** (2 texts / 3 printings): Yveltal ex ×2 "Soul Destroyer" (a Knock Out sweep at an HP threshold) and Unown
+`30th-072` "Mysterious Signal" (a this-attack Prize bonus).
+
+| Column | `me` built / units (D609) | Standard pool D609 |
+|---|---|---|
+| Attacks | 908 / 1,039 (+8) | **2,640 / 2,771** |
+| Abilities | 144 / 234 | **520 / 610** |
+| Trainers | 109 / 183 | **373 / 447** |
+| Special Energy | 11 / 11 | **22 / 22** |
+
+**Fully built `me` printings: 972** (964 + 8).
+
 ## 🆕 D608 update (engine 0.491.0) — snipe / spread wording (WP30)
 
 7 attack texts / 13 `me` printings newly read, plus 5 `30th` printings keyed by id (`snipeSpreadMeD608.test.ts`). "each of 2"
@@ -304,7 +323,7 @@ Shellnado Spin, Ghostly Blow, Chaotic Pain ×2, Swirling Resentment), the two co
 identity on every legal `sv` sentence and splitter fragment. Corrosive Liquid ×3 is Megaton Blower's two sweeps on an attack.
 No new op, member or field; nothing dropped. **Finished:** Mega Dragalge ex ×3, Mega Slowbro ex `me05-031`, Haunter
 `me03-049`, Eternatus `me02-069`, Aipom `me02-078`, Hisuian Zoroark `30th-123`. Still waiting on another text: Mega Absol ex ×3
-(Terminal Period), Miraidon `mep-082`, Annihilape `me05-041` and Gengar ex ×2 (an Ability each) [🆕🆕🆕 D598: Annihilape finished (Durable Body)]. Five other `me` sentences
+(Terminal Period) [🆕🆕🆕 D609: Terminal Period BUILT, Mega Absol ex ×3 finished], Miraidon `mep-082`, Annihilape `me05-041` and Gengar ex ×2 (an Ability each) [🆕🆕🆕 D598: Annihilape finished (Durable Body)]. Five other `me` sentences
 print "place … damage counters on" and stay unbuilt (they need more than a synonym).
 
 | Column | `me` built / units (D592) | Standard pool D592 |
@@ -571,20 +590,20 @@ group wins; the grouping is a reading aid, not a census figure).
 ### Knock Out / Prize clauses — 16 text(s) / 36 printing(s)
 
 - 5× If your opponent's Active Pokémon is affected by a Special Condition, it is Knocked Out. [🆕🆕🆕 D586: BUILT]
-- 3× Choose a Pokémon in play (yours or your opponent's) that has the least HP remaining, except for this Pokémon, and it is Knocked Out.
+- 3× Choose a Pokémon in play (yours or your opponent's) that has the least HP remaining, except for this Pokémon, and it is Knocked Out. [🆕🆕🆕 D609: BUILT]
 - 3× If your opponent has 3 or fewer Prize cards remaining, this attack does 90 more damage. [🆕🆕🆕 D586: BUILT]
-- 3× If your opponent's Active Pokémon has exactly 6 damage counters on it, that Pokémon is Knocked Out.
+- 3× If your opponent's Active Pokémon has exactly 6 damage counters on it, that Pokémon is Knocked Out. [🆕🆕🆕 D609: BUILT]
 - 3× If your opponent's Pokémon is Knocked Out by damage from this attack, during your opponent's next turn, prevent all damage from and effects of attacks done to this Pokémon.
 - 3× This attack does 70 damage for each Prize card you have taken.
 - 2× If any of your Hop's Pokémon were Knocked Out by damage from an attack during your opponent's last turn, this attack does 100 more damage. [🆕🆕🆕 D593: BUILT]
 - 2× If you have exactly 30 cards in your hand, take 2 Prize cards. If you do, shuffle your hand into your deck. [🆕🆕🆕 D594: dropped from WP33a — `takePrize` queues behind the program, so the "if you do" shuffle would run first] [🆕🆕🆕 D600: dropped again from WP33b, same reason]
 - 2× If you have exactly 6 Prize cards remaining, this attack does 200 more damage. [🆕🆕🆕 D594: BUILT]
 - 2× If your opponent has 2 or fewer Prize cards remaining, this attack does 100 more damage. [🆕🆕🆕 D586: BUILT]
-- 2× Knock Out each of your opponent's Pokémon that has 50 HP or less remaining.
+- 2× Knock Out each of your opponent's Pokémon that has 50 HP or less remaining. [🆕🆕🆕 D609: WP36 rest]
 - 2× This attack does 80 damage for each Prize card you have taken.
 - 1× During your opponent's next turn, if this Pokémon is damaged by an attack (even if this Pokémon is Knocked Out), place 12 damage counters on the Attacking Pokémon. [🆕🆕🆕 D592: BUILT]
 - 1× Flip 3 coins. If all of them are heads, Knock Out 1 of your opponent's Pokémon.
-- 1× If your opponent's Pokémon is Knocked Out by damage from this attack, take 1 more Prize card.
+- 1× If your opponent's Pokémon is Knocked Out by damage from this attack, take 1 more Prize card. [🆕🆕🆕 D609: WP36 rest]
 - 1× This attack does 60 more damage for each Prize card your opponent took during their last turn. [🆕🆕🆕 D607: WP28b]
 
 ### Damage-counter placement and manipulation — 24 text(s) / 34 printing(s)
@@ -598,7 +617,7 @@ group wins; the grouping is a reading aid, not a census figure).
 - 2× This attack does 40 damage for each damage counter on all of your Benched Rattata. [🆕🆕🆕 D607: BUILT]
 - 2× This attack does 50 more damage for each of your Benched Pokémon that has any damage counters on it. [🆕🆕🆕 D607: WP28b]
 - 1× Discard all Energy from this Pokémon and place 12 damage counters on 1 of your opponent's Pokémon. [🆕🆕🆕 D608: BUILT]
-- 1× Double the number of damage counters on each of your opponent's Pokémon.
+- 1× Double the number of damage counters on each of your opponent's Pokémon. [🆕🆕🆕 D609: BUILT]
 - 1× During your opponent's next turn, whenever they attach an Energy card from their hand to the Defending Pokémon, place 8 damage counters on that Pokémon.
 - 1× If any of your Benched Pancham have any damage counters on them, this attack does 120 more damage. [🆕🆕🆕 D593: BUILT]
 - 1× If this Pokémon has 2 or more damage counters on it, this attack does 90 more damage. This attack's damage isn't affected by Weakness. [🆕🆕🆕 D594: BUILT]
@@ -606,7 +625,7 @@ group wins; the grouping is a reading aid, not a census figure).
 - 1× If you have 13 or more Pokémon that have the Hide 'n' Sneak Ability in your discard pile, choose 2 of your opponent's Pokémon and quadruple the number of damage counters on each of them.
 - 1× If you have 6 or more Pokémon that have the Hide 'n' Sneak Ability in your discard pile, place 4 damage counters on each of your opponent's Pokémon.
 - 1× If your opponent's Active Pokémon is affected by a Special Condition, place 6 damage counters on 1 of your opponent's Benched Pokémon. [🆕🆕🆕 D608: WP30 rest]
-- 1× Place 1 damage counter on 1 of your opponent's Pokémon.
+- 1× Place 1 damage counter on 1 of your opponent's Pokémon. [🆕🆕🆕 D609: BUILT]
 - 1× Place 1 damage counter on your opponent's Active Pokémon.
 - 1× Place 3 damage counters on your opponent's Active Pokémon. [🆕🆕🆕 D592: BUILT]
 - 1× Place 5 damage counters on 1 of your opponent's Benched Pokémon. [🆕🆕🆕 D592: BUILT]

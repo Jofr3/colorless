@@ -30236,6 +30236,22 @@ decisions (1) and (2) after D580. Engine 0.464.0 → 0.465.0. The Mega ex rule i
 - **Census.** Standard pool abilities **513 / 610**; 895 `me` printings fully built.
 - **Owed.** See `progress.md` NEXT. The whole-corpus sweep is PENDING.
 
+## D609 — WP36: the `me` KO / damage-counter attacks (engine 0.492.0, `MATCH_RECORD_VERSION` stays 42)
+
+**Status:** ✅ BUILT in the `luminous_ui-mega` worktree on D608 (`221a6544`), NOT committed.
+
+- **Vocabulary.** The NEW `BoardCondition` `opponentActiveDamageCountersExactly` (Terminal Period's gate around
+  `knockOutDefender`); `knockOutChosen` gains `target: "anyExceptSelf"` and `leastHpRemaining` (Bring Down; the funnel is a
+  total `switch`, the attacker dropped by `ctx.sourceUid`); `counterEachAll` gains `perDamageCounterOnTarget` (Snow Coating's
+  double). D592's "Place" row and D449's any-zone put take the singular "1 damage counter" (Sneaky Placement).
+- **4 texts / 8 `me` printings.** Mega Absol ex ×3, Inteleon ×3, N's Vanilluxe, Bramblin — all 8 fully built.
+- **Dropped and named.** Yveltal ex ×2 "Soul Destroyer" (a Knock Out sweep at an HP threshold), Unown `30th-072`
+  "Mysterious Signal" (a this-attack Prize bonus).
+- **Readings.** R-BD1 (UNRULED): Bring Down's least HP is taken before the §11 filter.
+- **Suite.** `koCountersMeD609.test.ts` (21) and a census D609 block (2). +26 mutant rows; six rows re-pointed.
+- **Census.** Standard pool attacks **2,640 / 2,771**; 972 `me` printings fully built.
+- **Owed.** See `progress.md` NEXT. The whole-corpus sweep is PENDING.
+
 ## D608 — WP30: the `me` snipe / spread wording (engine 0.491.0, `MATCH_RECORD_VERSION` stays 42)
 
 **Status:** ✅ BUILT in the `luminous_ui-mega` worktree on D607 (`e6239436`), NOT committed.

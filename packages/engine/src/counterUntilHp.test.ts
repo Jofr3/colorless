@@ -568,7 +568,7 @@ describe("§3 — a NEW `EffectOp` inhabitant, and the record version does not m
   });
 
   it("the engine version moved and the record version did not", () => {
-    expect(engineVersion).toBe("0.491.0");
+    expect(engineVersion).toBe("0.492.0");
   });
 });
 
@@ -732,7 +732,8 @@ describe("§6 — a body already at or below the destination takes nothing", () 
 
   it("🛑 the floor is PER BODY, which is `healEachAll`'s shape and not `counterEachAll`'s", () => {
     // The two whole-op guards in this family (`counterEachAll`'s and `damageActive`'s
-    // `amount <= 0`) sit ABOVE the walk, because their amount is a constant. A guard
+    // `amount <= 0`) sit ABOVE the walk, because their amount is a constant [🆕🆕🆕 D609 (D539): not
+    // under `counterEachAll.perDamageCounterOnTarget`, which also guards per body]. A guard
     // placed there here would refuse the WHOLE fold the moment ONE body was already
     // under the destination — which is the defect this board catches: bench 2 is under
     // it and benches 0 and 1 still fill.

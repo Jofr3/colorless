@@ -393,8 +393,8 @@ function render(events: GameEvent[], state: GameState): string[] {
 }
 
 describe("D580 Look-Alike Show §0 — the version, the registry row, the census claim", () => {
-  it("is built at engine 0.491.0", () => {
-    expect(engineVersion).toBe("0.491.0");
+  it("is built at engine 0.492.0", () => {
+    expect(engineVersion).toBe("0.492.0");
   });
 
   it("sv05-063 authors index 0 only: the reveal, then the NEW op; Eerie Wave (index 1) keeps deriving", () => {

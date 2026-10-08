@@ -20258,6 +20258,16 @@ import type { GameState, Seat } from "./types";
     `expect(manifest.version)`, `it(…)` titles, the declaration and `package.json` —
     **not** as a value-keyed grep — because a value-keyed grep is precisely the mechanism
     that ate D500's heading.)
+    🆕🆕🆕 engineVersion 0.491.0 → **0.492.0** (D609 — WP36: THE `me` KO / DAMAGE-COUNTER ATTACKS;
+    `MATCH_RECORD_VERSION` STAYS 42 (apps/api match.ts "STAYS 42 AT D609")). effects.ts: three literal
+    anchors — Terminal Period ×3 (`conditionGate` on the NEW `BoardCondition`
+    `opponentActiveDamageCountersExactly` → `knockOutDefender`), Bring Down ×3 (`knockOutChosen` at the
+    NEW `target: "anyExceptSelf"` with the NEW `leastHpRemaining`; R-BD1 UNRULED) and Snow Coating
+    (`counterEachAll` with the NEW `perDamageCounterOnTarget`); D592's "Place" synonym and D449's
+    `COUNTER_PUT_ON_OPPONENT_ANY` take the singular "damage counter" (Sneaky Placement). interpreter.ts:
+    `conditionHolds` / `conditionNote` arms, `knockOutChosenTargets` as a total `switch` plus
+    `leastHpRemainingRefs`, Bring Down's caption, `counterEachAll`'s per-body amount. 8 `me` attack
+    printings. Soul Destroyer ×2 and Unown `30th-072` dropped and named. `koCountersMeD609.test.ts`.)
     🆕🆕🆕 engineVersion 0.490.0 → **0.491.0** (D608 — WP30: THE `me` SNIPE / SPREAD WORDING;
     `MATCH_RECORD_VERSION` STAYS 42 (apps/api match.ts "STAYS 42 AT D608")). effects.ts: "each of 2"
     read as the shipped arity on `CHOSEN_ANY_TARGET` / `SELF_DISCARD_THEN_ANY_TARGET` (Mega Eelektross
@@ -25398,7 +25408,7 @@ import type { GameState, Seat } from "./types";
     WITNESS** — the count was re-derived every slice and the word *"three"* was carried.
     A successor of this slice inherits **81 / 61 / 17** again, over **FIVE** history
     occurrences: those four plus `deckMillFilteredScale.test.ts`'s own header arrow.) */
-export const engineVersion = "0.491.0";
+export const engineVersion = "0.492.0";
 
 export type {
   ApplyResult,

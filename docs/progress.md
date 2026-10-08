@@ -3,7 +3,9 @@
 > Update this at the **end of every session**: bump the status table, append a
 > session-log entry, and rewrite the **Resume point** to the next concrete action.
 
-**Last updated:** 2026-10-08 — build session #548 (**P3-M5 — D608, *WP30 — THE `me` SNIPE / SPREAD WORDING: 7 attack texts / 13 `me` printings read and 5 `30th` printings keyed — "each of 2" (Split Bomb ×3, Dual Tail ×2), Disaster Shock ×3 (a fourth optional-cost skeleton, `defenderStatus`, inner confirm), Sonic Ripper ×2, Bone Sniper (`damageChosen.specialEnergyOnly`), Phantasmal Barrage, Stealthy Slash ×3 and Photon Bullets ×3 (keyed); WP30's other 8 texts named; attacks 2,632 / 2,771, 964 `me` printings fully built*** — engine 0.491.0, MRV 42, NOT committed; the whole-corpus sweep PENDING).
+**Last updated:** 2026-10-08 — build session #549 (**P3-M5 — D609, *WP36 — THE `me` KO / DAMAGE-COUNTER ATTACKS: 4 attack texts / 8 `me` printings — Terminal Period ×3 (`opponentActiveDamageCountersExactly` → `knockOutDefender`), Bring Down ×3 (`knockOutChosen` `anyExceptSelf` + `leastHpRemaining`, R-BD1 UNRULED), Snow Coating (`counterEachAll.perDamageCounterOnTarget`) and Sneaky Placement (the singular counter put); Soul Destroyer ×2 and Unown `30th-072` dropped and named; attacks 2,640 / 2,771, 972 `me` printings fully built*** — engine 0.492.0, MRV 42, NOT committed; the whole-corpus sweep PENDING)
+
+**Last updated (was):** 2026-10-08 — build session #548 (**P3-M5 — D608, *WP30 — THE `me` SNIPE / SPREAD WORDING: 7 attack texts / 13 `me` printings read and 5 `30th` printings keyed — "each of 2" (Split Bomb ×3, Dual Tail ×2), Disaster Shock ×3 (a fourth optional-cost skeleton, `defenderStatus`, inner confirm), Sonic Ripper ×2, Bone Sniper (`damageChosen.specialEnergyOnly`), Phantasmal Barrage, Stealthy Slash ×3 and Photon Bullets ×3 (keyed); WP30's other 8 texts named; attacks 2,632 / 2,771, 964 `me` printings fully built*** — engine 0.491.0, MRV 42, NOT committed; the whole-corpus sweep PENDING).
 
 **Last updated (was):** 2026-10-08 — build session #547 (**P3-M5 — D607, *WP28a — THE FIRST HALF OF THE SCALING COUNT SOURCES: 8 attack texts / 14 `me` printings — three new nullary `DamageCountSource` members (`energyInPlayBothSides` Delphox ×2, `toolsInPlayBothSides` Bronzong, `basicEnergyTypesOnYourBoard` Sylveon ex ×3) and four texts on shipped members (Beedrill ex ×2, Paldean Tauros, Raticate ×2, Tinkaton, Beautifly ×2); WP28b's 7 texts / 11 printings named; no new reading; attacks 2,614 / 2,771; 949 `me` printings fully built*** — engine 0.490.0, MRV 42, NOT committed; the sweep PENDING)
 
@@ -841,6 +843,41 @@
 
 ## NEXT (resume point)
 
+> ### ▶ THE NEXT CONCRETE ACTION (written 2026-10-08, after D609)
+>
+> 🛑 **D609 IS BUILT AND NOT COMMITTED** (worktree `/home/jofre/projects/luminous_ui-mega`, branch `mega-ingest`, on D608 = `221a6544`). D609 is WP36 of the Mega backlog (KO / damage-counter attacks). Next: a review of D609 (and a ruling on R-BD1), then another package, or the landing of D581–D609 (rebase `mega-ingest` onto main; never `git add -A` — `apps/api/.wrangler` is a symlink to the main checkout's local D1).
+>
+> ✅ **`bun run check` IS GREEN**: `Test Files 651 passed (651) / Tests 15437 passed (15437) / CHECK_EXIT=0` (D608: 650 / 15414; D609 adds `koCountersMeD609.test.ts` (21) and the census D609 block (2)).
+>
+> **(a) THE SLICE.** WP36 is 6 texts / 11 printings; 4 texts / 8 printings taken, all on the brief's three pieces. effects.ts, three literal anchors beside arm 6e: Mega Absol ex ×3 "Terminal Period" → `conditionGate` on the NEW `BoardCondition` `opponentActiveDamageCountersExactly { count }` (interpreter.ts `damageCountersOn`) around `knockOutDefender`; Inteleon ×3 "Bring Down" → `knockOutChosen { target: "anyExceptSelf", leastHpRemaining: true }` (both NEW; interpreter.ts `knockOutChosenTargets` is now a total `switch`, the attacker is dropped by `ctx.sourceUid`, `leastHpRemainingRefs` keeps the minimum of `effectiveMaxHp − damage`, a tie parks on `choosePokemon` captioned with the printed sentence); N's Vanilluxe "Snow Coating" → `counterEachAll { amount: 10, side: "opponent", perDamageCounterOnTarget: true }` (NEW rider: 10 per counter already on each body, §11 per body, an undamaged body is skipped). Bramblin `me02-046` "Sneaky Placement": D592's capitalised "Place" row and D449's `COUNTER_PUT_ON_OPPONENT_ANY` take the singular "1 damage counter" (number agreement kept; the lower-case row unchanged). Reader output over both corpora byte-identical but for the 4 sentences; the normaliser also rewrites the unbuilt "Place 1 damage counter on your opponent's Active Pokémon." (still null everywhere).
+>
+> **(b) WP36 REST, DROPPED AND NAMED** (2 texts / 3 printings, vocabulary beyond the brief): Yveltal ex `me03-053` / `-105` "Soul Destroyer" (*"Knock Out each of your opponent's Pokémon that has 50 HP or less remaining."* — a Knock Out sweep at an HP threshold, no op walks and dooms) and Unown `30th-072` "Mysterious Signal" (*"…Knocked Out by damage from this attack, take 1 more Prize card."* — a this-attack Prize bonus; `bountyDefender` is next-turn, Briar a Supporter).
+>
+> **(c) MRV STAYS 42** (match.ts "STAYS 42 AT D609"): Bring Down's new `target` value and `leastHpRemaining` can ride `phase.cont.pendingOp` on a tie — a widening the resumed half (`doomBodyAt`) never reads; the condition member and the `counterEachAll` rider sit in programs that never park. The 8 `me` faces in a v42 `cardPool` are unchanged.
+>
+> | Column | `me` D609 | Standard pool D609 |
+> |---|---|---|
+> | Attacks | 908 / 1039 | **2640 / 2771** |
+> | Abilities | 144 / 234 | **520 / 610** |
+> | Trainers | 109 / 183 | **373 / 447** |
+> | Special Energy | 11 / 11 | **22 / 22** |
+>
+> **972 `me` printings fully built** (964 + 8: Mega Absol ex ×3, Inteleon ×3, N's Vanilluxe, Bramblin; their other texts — Claw of Darkness, Water Shot, Blizzard — were built, pinned in the census D609 block). Pins stepped off the red run: the census D581 tally (reader [330, 866] → [334, 874], residue [105, 146] → [101, 138], built 885 → 893, headline 2,617 → 2,625) and every later block's `- 8`; D582 / D584 literals 886 → 894 / 888 → 896; `op: "conditionGate",` 20 → 21 (`stadiumGatedSpread.test.ts`). Version tax: 259 stepped (258 outside index.ts + the declaration) / 1 kept (the D608 heading).
+>
+> **D539 sweep.** Annotated in place, kept as written: `counterEachAll`'s "amount is a constant" (interpreter.ts `counterUntilRemainingHp` doc, `counterUntilHp.test.ts`), `wordingDriftMeD592.test.ts`'s "five that stay unbuilt" (now 7 rewritten: Sneaky Placement built, the Active singular not) and its singular control; coverage-backlog-mega.md's D592 "Still waiting … Mega Absol ex ×3 (Terminal Period)".
+>
+> **(d) THE MUTATION RECORD.** +26 D609 rows (4872 in all). precheck: 4872 mutants, the same 20 pre-existing broken rows (the slice first broke 10; six were re-pointed — `D416-funnel-scope-ternary-swaps-its-arms`, `D416-shield-comes-off-the-candidate-set`, `D449-any-anchor-loses-its-tail-anchor`, `D449-any-anchor-gains-the-zone-word`, `D592-place-row-dropped`, `D592-place-bare-counters` — and the code was reshaped so D340 / D345 / D450 ×2 / D451 kept their bytes; `--only` over the six re-pointed rows and six neighbours — D340, D345, D450 ×2, D451, `D592-lowercase-place-row-dropped`: 12 killed). Probe `run.ts --decision D609 --allow-dirty`: 26 killed · 0 known · 0 GAP · 0 error, tree byte-identical after. Gate-witness `--only` (the 18 `opaque-anatomy-gate.ts` / `residue-census-gate.ts` rows): 18 killed · 0 error. Gates: residue-census, opaque-anatomy, splice, partition all OK.
+>
+> 🛑 **(0) THE WHOLE-CORPUS SWEEP IS PENDING** (D581–D608's too). Predicted: **4804 killed · 48 known survivor(s) · 0 GAP(S) · 20 error(s)** over **4,872** rows — 4846 + 26 = 4872; 4778 + 26 = 4804 killed; 48 survivors unchanged; 4804 + 48 + 20 = 4872. It assumes D608's prediction (4778 · 48 · 0 · 20 over 4846) holds. If it holds, D581–D609 close together. If it fails: an error count ≠ 20 means a broken `find` outside the pre-existing 20 (start with the six rows re-pointed above), a survivor count ≠ 48 means a D581–D609 row survived (name it, kill it or declare it), and a killed count short by k with errors at 20 means k rows GAP or are stale.
+>
+> **Pending decisions (UNRULED readings):** **R-BD1 (D609, NEW)** — Inteleon "Bring Down": the least HP remaining is taken over the printed scope (both sides, the attacker excluded) BEFORE the §11 "prevent all effects of attacks" filter, so a shielded least-HP body is not replaced by the next-least one and nothing is Knocked Out (`koCountersMeD609.test.ts` §4 drives it). Reversal: take the minimum over `unshieldedRefs`' survivors. Ties are the attacker's pick; a body with no readable maximum HP is not compared. R-LC1 / R-CF1 (D606), R-NZ1 / R-MP1 / R-KW1 (D605), R-TE1 / R-TP1 / R-NF1 (D604), R-PX6 (D603), R-GC2, R-GC3, R-TN1 (D601) and R-CW1 (D600) stand as recorded in the archived blocks below.
+>
+> Still owed from the Mega backlog: as at D608 (below), less WP36's taken texts (Mega Absol ex ×3's Terminal Period is built); the WP36 rest is (b) above.
+>
+> ---
+>
+> **ARCHIVED — the resume point D609 was built from, kept rather than overwritten** (D608 has since been committed on `mega-ingest` as `221a6544`):
+>
 > ### ▶ THE NEXT CONCRETE ACTION (written 2026-10-08, after D608)
 >
 > 🛑 **D608 IS BUILT AND NOT COMMITTED** (worktree `/home/jofre/projects/luminous_ui-mega`, branch `mega-ingest`, on D607 = `e6239436`). D608 is WP30 of the Mega backlog (snipe / spread wording). Next: a review of D608, then the WP30 rest (b) or another package, or the landing of D581–D608 (rebase `mega-ingest` onto main; never `git add -A` — `apps/api/.wrangler` is a symlink to the main checkout's local D1).
@@ -35374,7 +35411,8 @@ the next api deploy (D18).
 |---|---|---|
 | backend-data | P1 | ✅ M1–M9 + P2-M1 + task-17 api deployed (Worker `9b1ec1d1`, 2026-07-16); OAuth secrets pending (user) |
 | deck-builder | P2 | ✅ ALL 19 tasks closed (task 17 landed + e2e-verified locally); only follow-ups left |
-| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D608, *WP30 — the `me` snipe / spread wording: 7 attack texts / 13 `me` printings read ("each of 2", Disaster Shock's optional-cost skeleton, three literal compounds, `damageChosen.specialEnergyOnly`, the unbenched counter snipe) and 5 `30th` printings keyed; WP30's other 8 texts named; attacks 2,632 / 2,771*** — engine 0.491.0, MRV 42, NOT committed; the sweep PENDING) |
+| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D609, *WP36 — the `me` KO / damage-counter attacks: 4 attack texts / 8 `me` printings (Terminal Period's exact-counter gate, Bring Down's least-HP Knock Out on either side, Snow Coating's doubled counters, the singular counter put); Soul Destroyer and Mysterious Signal named; R-BD1 UNRULED; attacks 2,640 / 2,771*** — engine 0.492.0, MRV 42, NOT committed; the sweep PENDING) |
+| simulator (prior) | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D608, *WP30 — the `me` snipe / spread wording: 7 attack texts / 13 `me` printings read ("each of 2", Disaster Shock's optional-cost skeleton, three literal compounds, `damageChosen.specialEnergyOnly`, the unbenched counter snipe) and 5 `30th` printings keyed; WP30's other 8 texts named; attacks 2,632 / 2,771*** — engine 0.491.0, MRV 42, NOT committed; the sweep PENDING) |
 | simulator (prior) | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D607, *WP28a — the first half of the scaling count sources: 8 attack texts / 14 `me` printings over three new nullary `DamageCountSource` members (both-board Energy, both-board Tools, Basic Energy types) and four texts on shipped members; WP28b's seven named; attacks 2,614 / 2,771*** — engine 0.490.0, MRV 42, NOT committed; the sweep PENDING) |
 | simulator (prior) | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D606, *WP25a — the first half of the `me` Stadiums: 5 texts / 9 `me` printings (Prism Tower, Surfing Beach, Nighttime Mine, Lumiose City, Celebratory Fanfare) over `StadiumAbility.endsTurn` and `StadiumEffects.attackCostSurcharge`; the D210 / D213 pinned survivors KILLED; six Stadiums dropped and named; R-LC1 / R-CF1 UNRULED; trainers 373 / 447*** — engine 0.489.0, MRV 42, NOT committed; the sweep PENDING) |
 | simulator (prior) | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D605, *WP34 — coin (the rest): 5 texts / 12 `me` printings over `damageChosen.perHeadsInPlay` / `flipEach`, a choose-a-Special-Condition coin row and a coin per named body in play; Watchog and Ditto dropped and named; R-NZ1 / R-MP1 / R-KW1 UNRULED; attacks 2,600 / 2,771*** — engine 0.488.0, MRV 42, NOT committed; the sweep PENDING) |
@@ -35600,6 +35638,17 @@ the next api deploy (D18).
 Legend: 📝 backlog · 📋 specced · 🔎 research · 🚧 in progress · ✅ done
 
 ## Session log
+
+### 2026-10-08 — build session #549 (P3-M5 — D609)
+
+**WP36 — THE `me` KO / DAMAGE-COUNTER ATTACKS. `MATCH_RECORD_VERSION` STAYS 42.**
+
+Built in the `luminous_ui-mega` worktree on D608 (`221a6544`); the main checkout was not touched. Every id `git grep`-ped and
+every text read off the LOCAL D1 first. 4 texts / 8 printings taken on the brief's three pieces (the exact-counter condition,
+the least-HP Knock Out, the doubled counters) plus the singular counter put; all 8 cards fully built. Soul Destroyer ×2 and
+Unown `30th-072` dropped and named. One new reading, R-BD1 (UNRULED). `koCountersMeD609.test.ts` (21), census D609 block (2);
+check 651 / 15437. Version tax 259 stepped / 1 kept. +26 mutant rows, all KILLED; six rows re-pointed. Sweep PENDING
+(NEXT (0)). NOT committed.
 
 ### 2026-10-08 — build session #548 (P3-M5 — D608)
 

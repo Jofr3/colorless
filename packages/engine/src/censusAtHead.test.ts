@@ -11666,7 +11666,7 @@ describe("D581 — the Standard pool after the Mega Evolution ingest, measured (
     for (const id of ["sv01-001", "svp-001", "sve-001", "fix-energy"]) expect(ME_ID.test(id), id).toBe(false);
   });
 
-  it("BUILT over the `me` attack column, LIVE: 728 of 1,039 printings (262 of 451 sentences) (🆕🆕🆕 D586: 745 / 270 live — the title's figures are the D581 baseline; 🆕🆕🆕 D589: 754 / 274 live; 🆕🆕🆕 D590: 757 / 275 live; 🆕🆕🆕 D592: 775 / 286 live; 🆕🆕🆕 D593: 785 / 294 live; 🆕🆕🆕 D594: 793 / 298 live; 🆕🆕🆕 D595: 804 / 306 live; 🆕🆕🆕 D596: 818 / 309 live; 🆕🆕🆕 D597: 834 / 316 live; 🆕🆕🆕 D600: 846 / 323 live; 🆕🆕🆕 D605: 858 / 328 live; 🆕🆕🆕 D607: 872 / 336 live; 🆕🆕🆕 D608: 885 / 343 live)", () => {
+  it("BUILT over the `me` attack column, LIVE: 728 of 1,039 printings (262 of 451 sentences) (🆕🆕🆕 D586: 745 / 270 live — the title's figures are the D581 baseline; 🆕🆕🆕 D589: 754 / 274 live; 🆕🆕🆕 D590: 757 / 275 live; 🆕🆕🆕 D592: 775 / 286 live; 🆕🆕🆕 D593: 785 / 294 live; 🆕🆕🆕 D594: 793 / 298 live; 🆕🆕🆕 D595: 804 / 306 live; 🆕🆕🆕 D596: 818 / 309 live; 🆕🆕🆕 D597: 834 / 316 live; 🆕🆕🆕 D600: 846 / 323 live; 🆕🆕🆕 D605: 858 / 328 live; 🆕🆕🆕 D607: 872 / 336 live; 🆕🆕🆕 D608: 885 / 343 live; 🆕🆕🆕 D609: 893 / 347 live)", () => {
     type Tally = [sentences: number, printings: number];
     const tally: Record<"reader" | "gate" | "trailing" | "registryText" | "residue", Tally> = {
       reader: [0, 0],
@@ -11711,8 +11711,10 @@ describe("D581 — the Standard pool after the Mega Evolution ingest, measured (
     // 🆕🆕🆕 D608 — reader [323, 853] → [330, 866] and residue [112, 159] → [105, 146]: WP30's seven
     // snipe / spread sentences (13 printings). The two `<em>` sentences (5 printings) stay residue here
     // (text-keyed; keyed BY ID in the D608 block). MEASURED.
+    // 🆕🆕🆕 D609 — reader [330, 866] → [334, 874] and residue [105, 146] → [101, 138]: WP36's four
+    // KO / damage-counter sentences (8 printings). MEASURED.
     expect(tally).toEqual({
-      reader: [330, 866],
+      reader: [334, 874],
       gate: [4, 5],
       trailing: [9, 14],
       // A REGISTRY sentence printed on a `me` id: not built (no row names the id). The three
@@ -11729,10 +11731,10 @@ describe("D581 — the Standard pool after the Mega Evolution ingest, measured (
       // [🆕🆕🆕 D593: "Fade Out" ×5 is BUILT — keyed BY ID on three new objects at each printed index
       // (`BALLOON_RETURN`, `TUCK_TAIL`, `SKY_RETURN`); the D593 block counts it. This tally stays text-keyed.]
       registryText: [3, 8],
-      residue: [105, 146],
+      residue: [101, 138],
     });
     const built = tally.reader[1] + tally.gate[1] + tally.trailing[1];
-    expect(built).toBe(885); // 🆕🆕🆕 D608 — 872 → 885 (+13, WP30). 🆕🆕🆕 D607 — 858 → 872 (+14, WP28a). 🆕🆕🆕 D605 — 846 → 858 (+12, WP34). 🆕🆕🆕 D600 — 834 → 846 (+12, WP14 + WP33b). 🆕🆕🆕 D597 — 818 → 834 (+16, WP29's seven sentences). 🆕🆕🆕 D596 — 804 → 818 (+14, WP09's three sentences). 🆕🆕🆕 D595 — 793 → 804 (+11, WP13's coin sentences). 🆕🆕🆕 D594 — 785 → 793 (+8, WP33a's rows). 🆕🆕🆕 D586 — 728 → 745 (+17, WP03's clause rows). 🆕🆕🆕 D589 — 745 → 754 (+9, WP08). 🆕🆕🆕 D590 — 754 → 757 (+3, WP05's self-shuffle). 🆕🆕🆕 D592 — 757 → 775 (+18, WP02). 🆕🆕🆕 D593 — 775 → 785 (+10, WP07's rows).
+    expect(built).toBe(893); // 🆕🆕🆕 D609 — 885 → 893 (+8, WP36). 🆕🆕🆕 D608 — 872 → 885 (+13, WP30). 🆕🆕🆕 D607 — 858 → 872 (+14, WP28a). 🆕🆕🆕 D605 — 846 → 858 (+12, WP34). 🆕🆕🆕 D600 — 834 → 846 (+12, WP14 + WP33b). 🆕🆕🆕 D597 — 818 → 834 (+16, WP29's seven sentences). 🆕🆕🆕 D596 — 804 → 818 (+14, WP09's three sentences). 🆕🆕🆕 D595 — 793 → 804 (+11, WP13's coin sentences). 🆕🆕🆕 D594 — 785 → 793 (+8, WP33a's rows). 🆕🆕🆕 D586 — 728 → 745 (+17, WP03's clause rows). 🆕🆕🆕 D589 — 745 → 754 (+9, WP08). 🆕🆕🆕 D590 — 754 → 757 (+3, WP05's self-shuffle). 🆕🆕🆕 D592 — 757 → 775 (+18, WP02). 🆕🆕🆕 D593 — 775 → 785 (+10, WP07's rows).
     expect(built + tally.registryText[1] + tally.residue[1]).toBe(POPULATION_ME.attackUnits);
     // Every `me` sentence the `sv` column ALSO prints is built, except those three: the
     // whole unbuilt `me` residue is text the `sv` pool never printed.
@@ -11741,7 +11743,7 @@ describe("D581 — the Standard pool after the Mega Evolution ingest, measured (
     expect(unbuiltShared).toEqual([]);
   });
 
-  it("the D581 headline: attacks 2,460 / 2,771, abilities 376 / 610, trainers 264 / 447, special energy 11 / 22 (🆕🆕🆕 D586: the live attack figure is 2,477 — the title is the D581 baseline; 🆕🆕🆕 D589: 2,486; 🆕🆕🆕 D590: 2,489; 🆕🆕🆕 D592: 2,507; 🆕🆕🆕 D593: 2,517; 🆕🆕🆕 D594: 2,525; 🆕🆕🆕 D595: 2,536; 🆕🆕🆕 D596: 2,550; 🆕🆕🆕 D597: 2,566; 🆕🆕🆕 D600: 2,578; 🆕🆕🆕 D605: 2,590; 🆕🆕🆕 D607: 2,604; 🆕🆕🆕 D608: 2,617)", () => {
+  it("the D581 headline: attacks 2,460 / 2,771, abilities 376 / 610, trainers 264 / 447, special energy 11 / 22 (🆕🆕🆕 D586: the live attack figure is 2,477 — the title is the D581 baseline; 🆕🆕🆕 D589: 2,486; 🆕🆕🆕 D590: 2,489; 🆕🆕🆕 D592: 2,507; 🆕🆕🆕 D593: 2,517; 🆕🆕🆕 D594: 2,525; 🆕🆕🆕 D595: 2,536; 🆕🆕🆕 D596: 2,550; 🆕🆕🆕 D597: 2,566; 🆕🆕🆕 D600: 2,578; 🆕🆕🆕 D605: 2,590; 🆕🆕🆕 D607: 2,604; 🆕🆕🆕 D608: 2,617; 🆕🆕🆕 D609: 2,625)", () => {
     const meBuiltAttack = meAttackCorpus().reduce((sum, [n, text]) => {
       const a = meArm(text);
       return a === "reader" || a === "gate" || a === "trailing" ? sum + n : sum;
@@ -11760,8 +11762,9 @@ describe("D581 — the Standard pool after the Mega Evolution ingest, measured (
     // 🆕🆕🆕 D605 — 2,578 → 2,590 and 193 → 181: WP34's 12.
     // 🆕🆕🆕 D607 — 2,590 → 2,604 and 181 → 167: WP28a's 14.
     // 🆕🆕🆕 D608 — 2,604 → 2,617 and 167 → 154: WP30's 13 reader-built (the 5 keyed are the D608 block's).
-    expect(BUILT.attack + meBuiltAttack).toBe(2617);
-    expect(POPULATION_D581.attackUnits - (BUILT.attack + meBuiltAttack)).toBe(154);
+    // 🆕🆕🆕 D609 — 2,617 → 2,625 and 154 → 146: WP36's 8.
+    expect(BUILT.attack + meBuiltAttack).toBe(2625);
+    expect(POPULATION_D581.attackUnits - (BUILT.attack + meBuiltAttack)).toBe(146);
     // The non-attack `sv` halves are WHOLE (D580: every legal `sv` ability unit, Trainer and
     // Special Energy is built — the join of `nonAttackRegistryIds()` against the catalog), and
     // the `me` halves are ZERO (the registry holds no `me` id — the rung above).
@@ -11931,7 +11934,7 @@ describe("D582 — the `me` reprint-alias tier and the Standard pool it builds, 
       const a = meArm(text);
       return a === "reader" || a === "gate" || a === "trailing" ? sum + n : sum;
     }, 0);
-    expect(readerBuilt + 1).toBe(886); // 🆕🆕🆕 D608 — 873 → 886 (WP30's +13 reader-built). 🆕🆕🆕 D607 — 859 → 873 (WP28a's +14 reader-built). 🆕🆕🆕 D605 — 847 → 859 (WP34's +12 reader-built). 🆕🆕🆕 D600 — 835 → 847 (WP14 + WP33b's +12 reader-built). 🆕🆕🆕 D597 — 819 → 835 (WP29's +16 reader-built). 🆕🆕🆕 D596 — 805 → 819 (WP09's +14). 🆕🆕🆕 D595 — 794 → 805 (WP13's +11). 🆕🆕🆕 D594 — 786 → 794 (WP33a's +8). 🆕🆕🆕 D586 — 729 → 746: the readers' 728 is 745 live (WP03's +17). 🆕🆕🆕 D589 — 746 → 755 (WP08's +9). 🆕🆕🆕 D590 — 755 → 758 (WP05's +3). 🆕🆕🆕 D592 — 758 → 776 (WP02's +18). 🆕🆕🆕 D593 — 776 → 786 (WP07's +10 row-built).
+    expect(readerBuilt + 1).toBe(894); // 🆕🆕🆕 D609 — 886 → 894 (WP36's +8 reader-built). 🆕🆕🆕 D608 — 873 → 886 (WP30's +13 reader-built). 🆕🆕🆕 D607 — 859 → 873 (WP28a's +14 reader-built). 🆕🆕🆕 D605 — 847 → 859 (WP34's +12 reader-built). 🆕🆕🆕 D600 — 835 → 847 (WP14 + WP33b's +12 reader-built). 🆕🆕🆕 D597 — 819 → 835 (WP29's +16 reader-built). 🆕🆕🆕 D596 — 805 → 819 (WP09's +14). 🆕🆕🆕 D595 — 794 → 805 (WP13's +11). 🆕🆕🆕 D594 — 786 → 794 (WP33a's +8). 🆕🆕🆕 D586 — 729 → 746: the readers' 728 is 745 live (WP03's +17). 🆕🆕🆕 D589 — 746 → 755 (WP08's +9). 🆕🆕🆕 D590 — 755 → 758 (WP05's +3). 🆕🆕🆕 D592 — 758 → 776 (WP02's +18). 🆕🆕🆕 D593 — 776 → 786 (WP07's +10 row-built).
     // Abilities: the 41 Pokémon keys that print one Ability each (recorded: the LOCAL D1's
     // `json_each(abilities_json)` over these ids returns 41 units). Numel `me02.5-027` / `-223` are
     // NOT here (review round): Heatran's program logs Armarouge's "Scorching Armor".
@@ -12041,7 +12044,7 @@ describe("D584 — the `me` alias tier 2 and the Standard pool it builds, measur
       return a === "reader" || a === "gate" || a === "trailing" ? sum + n : sum;
     }, 0);
     // The readers' 728, Prism Charge `me02.5-178` (D582) and the two Float Up keys.
-    expect(readerBuilt + 1 + keyed.length).toBe(888); // 🆕🆕🆕 D608 — 875 → 888 (WP30's +13 reader-built). 🆕🆕🆕 D607 — 861 → 875 (WP28a's +14 reader-built). 🆕🆕🆕 D605 — 849 → 861 (WP34's +12 reader-built). 🆕🆕🆕 D600 — 837 → 849 (WP14 + WP33b's +12 reader-built). 🆕🆕🆕 D597 — 821 → 837 (WP29's +16 reader-built). 🆕🆕🆕 D596 — 807 → 821 (WP09's +14). 🆕🆕🆕 D595 — 796 → 807 (WP13's +11). 🆕🆕🆕 D594 — 788 → 796 (WP33a's +8). 🆕🆕🆕 D586 — 731 → 748 (WP03's +17 reader printings). 🆕🆕🆕 D589 — 748 → 757 (WP08's +9). 🆕🆕🆕 D590 — 757 → 760 (WP05's +3). 🆕🆕🆕 D592 — 760 → 778 (WP02's +18). 🆕🆕🆕 D593 — 778 → 788 (WP07's +10 row-built; its 5 keys are the D593 block's).
+    expect(readerBuilt + 1 + keyed.length).toBe(896); // 🆕🆕🆕 D609 — 888 → 896 (WP36's +8 reader-built). 🆕🆕🆕 D608 — 875 → 888 (WP30's +13 reader-built). 🆕🆕🆕 D607 — 861 → 875 (WP28a's +14 reader-built). 🆕🆕🆕 D605 — 849 → 861 (WP34's +12 reader-built). 🆕🆕🆕 D600 — 837 → 849 (WP14 + WP33b's +12 reader-built). 🆕🆕🆕 D597 — 821 → 837 (WP29's +16 reader-built). 🆕🆕🆕 D596 — 807 → 821 (WP09's +14). 🆕🆕🆕 D595 — 796 → 807 (WP13's +11). 🆕🆕🆕 D594 — 788 → 796 (WP33a's +8). 🆕🆕🆕 D586 — 731 → 748 (WP03's +17 reader printings). 🆕🆕🆕 D589 — 748 → 757 (WP08's +9). 🆕🆕🆕 D590 — 757 → 760 (WP05's +3). 🆕🆕🆕 D592 — 760 → 778 (WP02's +18). 🆕🆕🆕 D593 — 778 → 788 (WP07's +10 row-built; its 5 keys are the D593 block's).
     // Abilities: the 14 tier-2 Pokémon keys print one Ability each (LOCAL D1 `json_each`).
     expect(41 + CENSUS_ME_POKEMON_D584.length).toBe(55);
     expect(CENSUS_ME_TRAINER_D582.length + CENSUS_ME_TRAINER_D584.length).toBe(56);
@@ -12180,9 +12183,10 @@ describe("D586 — WP03's clause rows and Carbink, and the Standard pool they bu
     // 🆕🆕🆕 D605 — and 858 live (WP34's +12): the last `- 12` below.
     // 🆕🆕🆕 D607 — and 872 live (WP28a's +14): the last `- 14` below.
     // 🆕🆕🆕 D608 — and 885 live (WP30's +13): the last `- 13` below.
-    expect(readerBuilt - 9 - 3 - 18 - 10 - 8 - 11 - 14 - 16 - 12 - 12 - 14 - 13).toBe(745);
+    // 🆕🆕🆕 D609 — and 893 live (WP36's +8): the last `- 8` below.
+    expect(readerBuilt - 9 - 3 - 18 - 10 - 8 - 11 - 14 - 16 - 12 - 12 - 14 - 13 - 8).toBe(745);
     // The readers' 745, Prism Charge `me02.5-178` (D582) and Float Up ×2 (D584).
-    expect(readerBuilt - 9 - 3 - 18 - 10 - 8 - 11 - 14 - 16 - 12 - 12 - 14 - 13 + 1 + 2).toBe(748);
+    expect(readerBuilt - 9 - 3 - 18 - 10 - 8 - 11 - 14 - 16 - 12 - 12 - 14 - 13 - 8 + 1 + 2).toBe(748);
     expect(POPULATION_ME.attackUnits - 748).toBe(291);
     expect(41 + CENSUS_ME_POKEMON_D584.length + CENSUS_ME_POKEMON_D585.length + CENSUS_ME_POKEMON_D586.length).toBe(76);
     expect(POPULATION_ME.abilityUnits - 76).toBe(158);
@@ -12363,9 +12367,10 @@ describe("D589 — WP08's optional-cost rows and Mortal Shuriken, and the Standa
     // 🆕🆕🆕 D605 — and 858 live (WP34's +12): the last `- 12` below.
     // 🆕🆕🆕 D607 — and 872 live (WP28a's +14): the last `- 14` below.
     // 🆕🆕🆕 D608 — and 885 live (WP30's +13): the last `- 13` below.
-    expect(readerBuilt - 3 - 18 - 10 - 8 - 11 - 14 - 16 - 12 - 12 - 14 - 13).toBe(754);
+    // 🆕🆕🆕 D609 — and 893 live (WP36's +8): the last `- 8` below.
+    expect(readerBuilt - 3 - 18 - 10 - 8 - 11 - 14 - 16 - 12 - 12 - 14 - 13 - 8).toBe(754);
     // The readers' 754, Prism Charge `me02.5-178` (D582) and Float Up ×2 (D584).
-    expect(readerBuilt - 3 - 18 - 10 - 8 - 11 - 14 - 16 - 12 - 12 - 14 - 13 + 1 + 2).toBe(757);
+    expect(readerBuilt - 3 - 18 - 10 - 8 - 11 - 14 - 16 - 12 - 12 - 14 - 13 - 8 + 1 + 2).toBe(757);
     expect(POPULATION_ME.attackUnits - 757).toBe(282);
     const meAbilities =
       41 +
@@ -12449,9 +12454,10 @@ describe("D590 — WP05's on-evolve Abilities and the self-shuffle, and the Stan
     // 🆕🆕🆕 D605 — and 858 live (WP34's +12): the last `- 12` below.
     // 🆕🆕🆕 D607 — and 872 live (WP28a's +14): the last `- 14` below.
     // 🆕🆕🆕 D608 — and 885 live (WP30's +13): the last `- 13` below.
-    expect(readerBuilt - 18 - 10 - 8 - 11 - 14 - 16 - 12 - 12 - 14 - 13).toBe(757);
+    // 🆕🆕🆕 D609 — and 893 live (WP36's +8): the last `- 8` below.
+    expect(readerBuilt - 18 - 10 - 8 - 11 - 14 - 16 - 12 - 12 - 14 - 13 - 8).toBe(757);
     // The readers' 757, Prism Charge `me02.5-178` (D582) and Float Up ×2 (D584).
-    expect(readerBuilt - 18 - 10 - 8 - 11 - 14 - 16 - 12 - 12 - 14 - 13 + 1 + 2).toBe(760);
+    expect(readerBuilt - 18 - 10 - 8 - 11 - 14 - 16 - 12 - 12 - 14 - 13 - 8 + 1 + 2).toBe(760);
     expect(POPULATION_ME.attackUnits - 760).toBe(279);
     const meAbilities =
       41 +
@@ -12542,7 +12548,8 @@ describe("D591 — WP20a's activated Abilities, and the Standard pool they build
     // 🆕🆕🆕 D605 — and 858 live (WP34's +12): the last `- 12` below.
     // 🆕🆕🆕 D607 — and 872 live (WP28a's +14): the last `- 14` below.
     // 🆕🆕🆕 D608 — and 885 live (WP30's +13): the last `- 13` below.
-    expect(readerBuilt - 18 - 10 - 8 - 11 - 14 - 16 - 12 - 12 - 14 - 13 + 1 + 2).toBe(760);
+    // 🆕🆕🆕 D609 — and 893 live (WP36's +8): the last `- 8` below.
+    expect(readerBuilt - 18 - 10 - 8 - 11 - 14 - 16 - 12 - 12 - 14 - 13 - 8 + 1 + 2).toBe(760);
     const meAbilities =
       41 +
       CENSUS_ME_POKEMON_D584.length +
@@ -12609,9 +12616,10 @@ describe("D592 — WP02's wording drift and Corrosive Liquid, and the Standard p
     // 🆕🆕🆕 D605 — and 858 live (WP34's +12): the last `- 12` below.
     // 🆕🆕🆕 D607 — and 872 live (WP28a's +14): the last `- 14` below.
     // 🆕🆕🆕 D608 — and 885 live (WP30's +13): the last `- 13` below.
-    expect(readerBuilt - 10 - 8 - 11 - 14 - 16 - 12 - 12 - 14 - 13).toBe(775);
+    // 🆕🆕🆕 D609 — and 893 live (WP36's +8): the last `- 8` below.
+    expect(readerBuilt - 10 - 8 - 11 - 14 - 16 - 12 - 12 - 14 - 13 - 8).toBe(775);
     // The readers' 775, Prism Charge `me02.5-178` (D582) and Float Up ×2 (D584).
-    expect(readerBuilt - 10 - 8 - 11 - 14 - 16 - 12 - 12 - 14 - 13 + 1 + 2).toBe(778);
+    expect(readerBuilt - 10 - 8 - 11 - 14 - 16 - 12 - 12 - 14 - 13 - 8 + 1 + 2).toBe(778);
     expect(POPULATION_ME.attackUnits - 778).toBe(261);
     expect(BUILT.attack + 778).toBe(2510);
     expect(POPULATION_D581.attackUnits - 2510).toBe(261);
@@ -12673,9 +12681,10 @@ describe("D593 — WP07's clause rows and the Fade Out objects, and the Standard
     // 🆕🆕🆕 D605 — and 858 live (WP34's +12): the last `- 12` below.
     // 🆕🆕🆕 D607 — and 872 live (WP28a's +14): the last `- 14` below.
     // 🆕🆕🆕 D608 — and 885 live (WP30's +13): the last `- 13` below.
-    expect(readerBuilt - 8 - 11 - 14 - 16 - 12 - 12 - 14 - 13).toBe(785);
+    // 🆕🆕🆕 D609 — and 893 live (WP36's +8): the last `- 8` below.
+    expect(readerBuilt - 8 - 11 - 14 - 16 - 12 - 12 - 14 - 13 - 8).toBe(785);
     // The readers' 785, Prism Charge `me02.5-178` (D582), Float Up ×2 (D584) and Fade Out ×5 (D593).
-    expect(readerBuilt - 8 - 11 - 14 - 16 - 12 - 12 - 14 - 13 + 1 + 2 + KEYED_ATTACK_ME_D593.length).toBe(793);
+    expect(readerBuilt - 8 - 11 - 14 - 16 - 12 - 12 - 14 - 13 - 8 + 1 + 2 + KEYED_ATTACK_ME_D593.length).toBe(793);
     expect(POPULATION_ME.attackUnits - 793).toBe(246);
     expect(BUILT.attack + 793).toBe(2525);
     expect(POPULATION_D581.attackUnits - 2525).toBe(246);
@@ -12736,9 +12745,10 @@ describe("D594 — WP33a's condition rows and two Abilities, and the Standard po
     // 🆕🆕🆕 D605 — and 858 live (WP34's +12): the last `- 12` below.
     // 🆕🆕🆕 D607 — and 872 live (WP28a's +14): the last `- 14` below.
     // 🆕🆕🆕 D608 — and 885 live (WP30's +13): the last `- 13` below.
-    expect(readerBuilt - 11 - 14 - 16 - 12 - 12 - 14 - 13).toBe(793);
+    // 🆕🆕🆕 D609 — and 893 live (WP36's +8): the last `- 8` below.
+    expect(readerBuilt - 11 - 14 - 16 - 12 - 12 - 14 - 13 - 8).toBe(793);
     // The readers' 793, Prism Charge `me02.5-178` (D582), Float Up ×2 (D584) and Fade Out ×5 (D593).
-    expect(readerBuilt - 11 - 14 - 16 - 12 - 12 - 14 - 13 + 1 + 2 + KEYED_ATTACK_ME_D593.length).toBe(801);
+    expect(readerBuilt - 11 - 14 - 16 - 12 - 12 - 14 - 13 - 8 + 1 + 2 + KEYED_ATTACK_ME_D593.length).toBe(801);
     expect(POPULATION_ME.attackUnits - 801).toBe(238);
     expect(BUILT.attack + 801).toBe(2533);
     expect(POPULATION_D581.attackUnits - 2533).toBe(238);
@@ -12801,9 +12811,10 @@ describe("D595 — WP13's coin-gate compositions, and the Standard pool they bui
     // 🆕🆕🆕 D605 — and 858 live (WP34's +12): the last `- 12` below.
     // 🆕🆕🆕 D607 — and 872 live (WP28a's +14): the last `- 14` below.
     // 🆕🆕🆕 D608 — and 885 live (WP30's +13): the last `- 13` below.
-    expect(readerBuilt - 14 - 16 - 12 - 12 - 14 - 13).toBe(804);
+    // 🆕🆕🆕 D609 — and 893 live (WP36's +8): the last `- 8` below.
+    expect(readerBuilt - 14 - 16 - 12 - 12 - 14 - 13 - 8).toBe(804);
     // The readers' 804, Prism Charge `me02.5-178` (D582), Float Up ×2 (D584) and Fade Out ×5 (D593).
-    expect(readerBuilt - 14 - 16 - 12 - 12 - 14 - 13 + 1 + 2 + KEYED_ATTACK_ME_D593.length).toBe(812);
+    expect(readerBuilt - 14 - 16 - 12 - 12 - 14 - 13 - 8 + 1 + 2 + KEYED_ATTACK_ME_D593.length).toBe(812);
     expect(POPULATION_ME.attackUnits - 812).toBe(227);
     expect(BUILT.attack + 812).toBe(2544);
     expect(POPULATION_D581.attackUnits - 2544).toBe(227);
@@ -12847,9 +12858,10 @@ describe("D596 — WP09's Mega Gardevoir ex and Xerneas texts, and the Standard 
     // 🆕🆕🆕 D605 — and 858 live (WP34's +12): the last `- 12` below.
     // 🆕🆕🆕 D607 — and 872 live (WP28a's +14): the last `- 14` below.
     // 🆕🆕🆕 D608 — and 885 live (WP30's +13): the last `- 13` below.
-    expect(readerBuilt - 16 - 12 - 12 - 14 - 13).toBe(818);
+    // 🆕🆕🆕 D609 — and 893 live (WP36's +8): the last `- 8` below.
+    expect(readerBuilt - 16 - 12 - 12 - 14 - 13 - 8).toBe(818);
     // The readers' 818, Prism Charge `me02.5-178` (D582), Float Up ×2 (D584) and Fade Out ×5 (D593).
-    expect(readerBuilt - 16 - 12 - 12 - 14 - 13 + 1 + 2 + KEYED_ATTACK_ME_D593.length).toBe(826);
+    expect(readerBuilt - 16 - 12 - 12 - 14 - 13 - 8 + 1 + 2 + KEYED_ATTACK_ME_D593.length).toBe(826);
     expect(POPULATION_ME.attackUnits - 826).toBe(213);
     expect(BUILT.attack + 826).toBe(2558);
     expect(POPULATION_D581.attackUnits - 2558).toBe(213);
@@ -12908,10 +12920,11 @@ describe("D597 — WP29's discard-scaled attacks, and the Standard pool they bui
     // 🆕🆕🆕 D605 — and 858 live (WP34's +12).
     // 🆕🆕🆕 D607 — and 872 live (WP28a's +14): the last `- 14` below.
     // 🆕🆕🆕 D608 — and 885 live (WP30's +13): the last `- 13` below.
-    expect(readerBuilt - 12 - 12 - 14 - 13).toBe(834);
+    // 🆕🆕🆕 D609 — and 893 live (WP36's +8): the last `- 8` below.
+    expect(readerBuilt - 12 - 12 - 14 - 13 - 8).toBe(834);
     // The readers' 834, Prism Charge `me02.5-178` (D582), Float Up ×2 (D584), Fade Out ×5 (D593) and
     // Inferno X ×2 (D597).
-    expect(readerBuilt - 12 - 12 - 14 - 13 + 1 + 2 + KEYED_ATTACK_ME_D593.length + KEYED_ATTACK_ME_D597.length).toBe(844);
+    expect(readerBuilt - 12 - 12 - 14 - 13 - 8 + 1 + 2 + KEYED_ATTACK_ME_D593.length + KEYED_ATTACK_ME_D597.length).toBe(844);
     expect(POPULATION_ME.attackUnits - 844).toBe(195);
     expect(BUILT.attack + 844).toBe(2576);
     expect(POPULATION_D581.attackUnits - 2576).toBe(195);
@@ -12978,7 +12991,8 @@ describe("D598 — WP32's KO / damage-taken Abilities, and the Standard pool the
     }, 0);
     // 🆕🆕🆕 D607 — and 872 live (WP28a's +14): the last `- 14` below.
     // 🆕🆕🆕 D608 — and 885 live (WP30's +13): the last `- 13` below.
-    expect(readerBuilt - 12 - 12 - 14 - 13 + 1 + 2 + KEYED_ATTACK_ME_D593.length + KEYED_ATTACK_ME_D597.length).toBe(844);
+    // 🆕🆕🆕 D609 — and 893 live (WP36's +8): the last `- 8` below.
+    expect(readerBuilt - 12 - 12 - 14 - 13 - 8 + 1 + 2 + KEYED_ATTACK_ME_D593.length + KEYED_ATTACK_ME_D597.length).toBe(844);
   });
 });
 
@@ -13063,10 +13077,11 @@ describe("D600 — WP14 + WP33b's hand count and bonus conditions, and the Stand
     // 🆕🆕🆕 D605 — the readers' 846 is 858 live (WP34's +12); the D600 figures below are its own.
     // 🆕🆕🆕 D607 — and 872 live (WP28a's +14): the last `- 14` below.
     // 🆕🆕🆕 D608 — and 885 live (WP30's +13): the last `- 13` below.
-    expect(readerBuilt - 12 - 14 - 13).toBe(846);
+    // 🆕🆕🆕 D609 — and 893 live (WP36's +8): the last `- 8` below.
+    expect(readerBuilt - 12 - 14 - 13 - 8).toBe(846);
     // The readers' 846, Prism Charge `me02.5-178` (D582), Float Up ×2 (D584), Fade Out ×5 (D593) and
     // Inferno X ×2 (D597).
-    expect(readerBuilt - 12 - 14 - 13 + 1 + 2 + KEYED_ATTACK_ME_D593.length + KEYED_ATTACK_ME_D597.length).toBe(856);
+    expect(readerBuilt - 12 - 14 - 13 - 8 + 1 + 2 + KEYED_ATTACK_ME_D593.length + KEYED_ATTACK_ME_D597.length).toBe(856);
     expect(POPULATION_ME.attackUnits - 856).toBe(183);
     expect(BUILT.attack + 856).toBe(2588);
     expect(POPULATION_D581.attackUnits - 2588).toBe(183);
@@ -13292,10 +13307,11 @@ describe("D605 — WP34's coin texts, and the Standard pool they build, measured
     }, 0);
     // 🆕🆕🆕 D607 — the readers' 858 is 872 live (WP28a's +14); the D605 figures below are its own.
     // 🆕🆕🆕 D608 — and 885 live (WP30's +13): the last `- 13` below.
-    expect(readerBuilt - 14 - 13).toBe(858);
+    // 🆕🆕🆕 D609 — and 893 live (WP36's +8): the last `- 8` below.
+    expect(readerBuilt - 14 - 13 - 8).toBe(858);
     // The readers' 858, Prism Charge `me02.5-178` (D582), Float Up ×2 (D584), Fade Out ×5 (D593) and
     // Inferno X ×2 (D597).
-    expect(readerBuilt - 14 - 13 + 1 + 2 + KEYED_ATTACK_ME_D593.length + KEYED_ATTACK_ME_D597.length).toBe(868);
+    expect(readerBuilt - 14 - 13 - 8 + 1 + 2 + KEYED_ATTACK_ME_D593.length + KEYED_ATTACK_ME_D597.length).toBe(868);
     expect(POPULATION_ME.attackUnits - 868).toBe(171);
     expect(BUILT.attack + 868).toBe(2600);
     expect(POPULATION_D581.attackUnits - 2600).toBe(171);
@@ -13392,10 +13408,11 @@ describe("D607 — WP28a's scaling count sources, and the Standard pool they bui
       return a === "reader" || a === "gate" || a === "trailing" ? sum + n : sum;
     }, 0);
     // 🆕🆕🆕 D608 — the readers' 872 is 885 live (WP30's +13); the D607 figures below are its own.
-    expect(readerBuilt - 13).toBe(872);
+    // 🆕🆕🆕 D609 — and 893 live (WP36's +8): the last `- 8` below.
+    expect(readerBuilt - 13 - 8).toBe(872);
     // The readers' 872, Prism Charge `me02.5-178` (D582), Float Up ×2 (D584), Fade Out ×5 (D593) and
     // Inferno X ×2 (D597).
-    expect(readerBuilt - 13 + 1 + 2 + KEYED_ATTACK_ME_D593.length + KEYED_ATTACK_ME_D597.length).toBe(882);
+    expect(readerBuilt - 13 - 8 + 1 + 2 + KEYED_ATTACK_ME_D593.length + KEYED_ATTACK_ME_D597.length).toBe(882);
     expect(POPULATION_ME.attackUnits - 882).toBe(157);
     expect(BUILT.attack + 882).toBe(2614);
     expect(POPULATION_D581.attackUnits - 2614).toBe(157);
@@ -13471,11 +13488,12 @@ describe("D608 — WP30's snipe / spread wording, and the Standard pool it build
       const a = meArm(text);
       return a === "reader" || a === "gate" || a === "trailing" ? sum + n : sum;
     }, 0);
-    expect(readerBuilt).toBe(885);
+    // 🆕🆕🆕 D609 — the readers' 885 is 893 live (WP36's +8); the D608 figures below are its own.
+    expect(readerBuilt - 8).toBe(885);
     // The readers' 885, Prism Charge `me02.5-178` (D582), Float Up ×2 (D584), Fade Out ×5 (D593),
     // Inferno X ×2 (D597) and the five D608 keys.
     expect(
-      readerBuilt + 1 + 2 + KEYED_ATTACK_ME_D593.length + KEYED_ATTACK_ME_D597.length + KEYED_ATTACK_ME_D608.length,
+      readerBuilt - 8 + 1 + 2 + KEYED_ATTACK_ME_D593.length + KEYED_ATTACK_ME_D597.length + KEYED_ATTACK_ME_D608.length,
     ).toBe(900);
     expect(POPULATION_ME.attackUnits - 900).toBe(139);
     expect(BUILT.attack + 900).toBe(2632);
@@ -13483,5 +13501,64 @@ describe("D608 — WP30's snipe / spread wording, and the Standard pool it build
     // The 949 base is D607's measured count (its block's comment); this pins the +15 (13 reader-built
     // sentence printings on 10 cards — Mega Eelektross ex ×3 print two — plus the 5 keys).
     expect(949 + 10 + KEYED_ATTACK_ME_D608.length).toBe(964);
+  });
+});
+
+// ── 🆕🆕🆕 D609 — WP36: THE `me` KO / DAMAGE-COUNTER ATTACKS, MEASURED ───────────────────────────────────────
+//
+// Readers claim 4 more `me` sentences / 8 printings: Terminal Period ×3 (the new
+// `opponentActiveDamageCountersExactly` gate), Bring Down ×3 (`knockOutChosen` at `anyExceptSelf` with
+// `leastHpRemaining`), Snow Coating (`counterEachAll.perDamageCounterOnTarget`) and Sneaky Placement (the
+// singular "Place 1 damage counter"). LOCAL D1, 2026-10-08: every other text the 8 cards carry was already
+// built (pinned below), so all 8 become fully built (964 → 972 `me` printings). WP36's other two texts
+// (Soul Destroyer ×2, Unown `30th-072` "Mysterious Signal") stay residue. `koCountersMeD609.test.ts`.
+
+/** The 4 `me` sentences this slice's arms claim, with their legal `me` printings. */
+const KO_ROWS_D609: readonly (readonly [string, number])[] = [
+  ["If your opponent's Active Pokémon has exactly 6 damage counters on it, that Pokémon is Knocked Out.", 3],
+  [
+    "Choose a Pokémon in play (yours or your opponent's) that has the least HP remaining, except for this Pokémon, and it is Knocked Out.",
+    3,
+  ],
+  ["Double the number of damage counters on each of your opponent's Pokémon.", 1],
+  ["Place 1 damage counter on 1 of your opponent's Pokémon.", 1],
+];
+
+/** The other attack texts the 8 cards print (Mega Absol ex, Inteleon, N's Vanilluxe), LOCAL D1. */
+const KO_CARD_OTHER_TEXTS_D609: readonly string[] = [
+  "Your opponent reveals their hand, and you discard a card you find there.",
+  "Discard an Energy from this Pokémon.",
+  "This attack also does 10 damage to each of your opponent's Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)",
+];
+
+describe("D609 — WP36's KO / damage-counter attacks, and the Standard pool they build, measured", () => {
+  it("4 `me` sentences / 8 printings, each now reader-built, none printed in `sv`; the cards' other texts built", () => {
+    const me = new Map(meAttackCorpus().map(([n, text]) => [text, n]));
+    const sv = new Set(legalAttackCorpus().map(([, text]) => text));
+    for (const [text, n] of KO_ROWS_D609) {
+      expect([text, me.get(text)]).toEqual([text, n]);
+      expect([text, meArm(text)]).toEqual([text, "reader"]);
+      expect(sv.has(text), text).toBe(false);
+    }
+    expect(KO_ROWS_D609.reduce((sum, [, n]) => sum + n, 0)).toBe(8);
+    for (const text of KO_CARD_OTHER_TEXTS_D609) expect(meArm(text), text).not.toBeNull();
+  });
+
+  it("BUILT over the `me` pool: attacks 908 / 1,039; the D609 headline: attacks 2,640 / 2,771 (972 `me` printings fully built)", () => {
+    const readerBuilt = meAttackCorpus().reduce((sum, [n, text]) => {
+      const a = meArm(text);
+      return a === "reader" || a === "gate" || a === "trailing" ? sum + n : sum;
+    }, 0);
+    expect(readerBuilt).toBe(893);
+    // The readers' 893, Prism Charge `me02.5-178` (D582), Float Up ×2 (D584), Fade Out ×5 (D593),
+    // Inferno X ×2 (D597) and the five D608 keys.
+    expect(
+      readerBuilt + 1 + 2 + KEYED_ATTACK_ME_D593.length + KEYED_ATTACK_ME_D597.length + KEYED_ATTACK_ME_D608.length,
+    ).toBe(908);
+    expect(POPULATION_ME.attackUnits - 908).toBe(131);
+    expect(BUILT.attack + 908).toBe(2640);
+    expect(POPULATION_D581.attackUnits - 2640).toBe(131);
+    // The 964 base is D608's measured count (its block's comment); this pins the +8 (one sentence each).
+    expect(964 + KO_ROWS_D609.reduce((sum, [, n]) => sum + n, 0)).toBe(972);
   });
 });

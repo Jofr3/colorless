@@ -2159,6 +2159,15 @@ export interface MatchRecord {
     `turn:action.discardable` — 🛑 **DEPLOY THE SERVER FIRST**: an old client's `z.object` STRIPS
     the unknown key, while a new client's REQUIRED key refuses an old server's frame.
 
+    🆕🆕🆕 **STAYS 42 AT D609 — WP36 ADDS ONE `BoardCondition` MEMBER, ONE `knockOutChosen.target` VALUE AND
+    TWO OPTIONAL KEYS, NO OP, PROMPT, STAGE OR EVENT.** (Placed ABOVE the D608 block.) Bring Down's
+    `{ target: "anyExceptSelf", leastHpRemaining: true }` can ride `phase.cont.pendingOp` (a least-HP
+    tie), a WIDENING: no v42 record holds either, and the resumed half (`doomBodyAt` on the answered ref)
+    reads neither. `opponentActiveDamageCountersExactly` (Terminal Period) and
+    `counterEachAll.perDamageCounterOnTarget` (Snow Coating) sit in programs that never park. No card
+    row is read differently: the 8 `me` faces in a v42 `cardPool` are unchanged. Rollback to 0.491: the
+    texts fall back to the unbuilt path; a parked Bring Down pick resumes on the prompt it parked with.
+
     🆕🆕🆕 **STAYS 42 AT D608 — WP30 ADDS ONE OPTIONAL KEY ON A PARKING OP (`damageChosen.specialEnergyOnly`),
     NO OP, PROMPT, STAGE OR EVENT.** (Placed ABOVE the D607 block.) The key can ride
     `phase.cont.pendingOp` (Bone Sniper over two or more candidates), but it is a WIDENING: no v42

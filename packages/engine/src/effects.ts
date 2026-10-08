@@ -3849,6 +3849,12 @@ export type BoardCondition =
       continuous.ts `remainingHpWithin` (effective max HP − damage), shared with the three
       `remainingHpAtMost` fields. An empty Active Spot is FALSE. */
   | { kind: "yourActiveRemainingHpAtMost"; hp: number }
+  /** 🆕🆕🆕 **D609 — YOUR OPPONENT'S ACTIVE POKÉMON HAS EXACTLY `count` DAMAGE COUNTERS ON IT.**
+      Mega Absol ex "Terminal Period" ×3 (`me01-086` / `-161` / `-180`), the gate in front of
+      `knockOutDefender`. Spelled in COUNTERS, the printed unit, and read through interpreter.ts
+      `damageCountersOn` — the predicate `knockOutChosen.damageCountersExactly` reads (Euclase). An
+      empty Active Spot is FALSE. Public: damage counters are face up. */
+  | { kind: "opponentActiveDamageCountersExactly"; count: number }
   /** 🆕🆕🆕 **D560 (V4) — YOUR OPPONENT'S ACTIVE POKÉMON'S TOP CARD PRINTS AN
       ABILITY.** Galvantula `sv06.5-002` "Compound Eyes" — *"Attacks used by this
       Pokémon do 50 more damage to your opponent's Active Pokémon that has an Ability
@@ -5631,6 +5637,12 @@ export type EffectOp =
       source: "ability" | "attack";
       exceptNamed?: string;
       damagedOnly?: true;
+      /** 🆕🆕🆕 D609 — N's Vanilluxe "Snow Coating": *"Double the number of damage counters on
+          each of your opponent's Pokémon."* Each body takes `amount` once per damage counter
+          ALREADY on it (`damageCountersOn`, read per body before it changes), so `amount: 10` is
+          the doubling. `damageChosen.perDamageCounterOnTarget`'s name. A body with no counters
+          takes nothing and is not asked §11. */
+      perDamageCounterOnTarget?: true;
     }
   /** 🆕🆕🆕 **D451 — PUT DAMAGE COUNTERS UNTIL A BODY'S *REMAINING HP* IS `remainingHp`.**
       *"Put damage counters on each of your opponent's Benched Pokémon until its
@@ -9426,7 +9438,9 @@ export type EffectOp =
           `opponentAny` — 1 of ALL the opponent's Pokémon, Active OR Bench (the
           damage-counter sentence). `damageChosen`'s two member names verbatim,
           over `oppBenchRefs` / `oppAnyRefs`. */
-      target: "opponentBench" | "opponentAny";
+      /** 🆕🆕🆕 D609 — `anyExceptSelf`: every Pokémon in play, YOURS OR YOUR OPPONENT'S,
+          except the attacker (`ctx.sourceUid`) — Inteleon "Bring Down". */
+      target: "opponentBench" | "opponentAny" | "anyExceptSelf";
       /** *"…Benched **Basic** Pokémon"*. `gust.basicOnly` verbatim, read through
           `matchesFilter`'s `basicPokemon` arm so board-side "Basic" stays ONE
           predicate. Absent = every body in scope. */
@@ -9436,6 +9450,13 @@ export type EffectOp =
           hard-coded, so a second printing at a different count needs no arm.
           Absent = no counter window at all. */
       damageCountersExactly?: number;
+      /** 🆕🆕🆕 D609 — *"…that has the **least HP remaining**"* (Inteleon "Bring Down" ×3). Only
+          the bodies whose remaining HP (`effectiveMaxHp − damage`) is the minimum over the scope
+          are offered; a tie parks, a lone one is forced. A body with no readable maximum is not
+          compared. Taken over the printed scope BEFORE the §11 filter (R-BD1 ⚠️ UNRULED): a
+          shielded least-HP body is not replaced by the next one. An optional widening on a parking
+          op (no v42 record holds it). */
+      leastHpRemaining?: true;
     }
   /** 🆕🆕 **D431 — §8.1, THE FIRST PRIZE TAKEN WITHOUT A KNOCK OUT.**
       *"Discard all Energy from this Pokémon, and take a Prize card."* — **1 sentence /
@@ -15204,8 +15225,10 @@ const COUNTER_SPREAD_ON_OPPONENT =
 // The count is a bare `(\d+)` for D139's reason — a count has no CLOSED vocabulary
 // to be rejected against. ONE apostrophe slot, classed `['’]` (D136/D137): the
 // sentence carries two possessives and only "opponent's" is written with a mark.
+// 🆕🆕🆕 D609 — and the singular at exactly 1, number agreement kept (Bramblin "Sneaky Placement"
+// `me02-046`, its printed "Place" rewritten by `normaliseMeWording`): the count is `[1] ?? [2]`.
 const COUNTER_PUT_ON_OPPONENT_ANY =
-  /^Put (\d+) damage counters on 1 of your opponent['’]s Pokémon\.$/;
+  /^Put (?:(\d+) damage counters|(1) damage counter) on 1 of your opponent['’]s Pokémon\.$/;
 // 🆕🆕🆕 **D449 — THE SAME ACTION WITH THE PICK PRINTED FIRST.** *"Choose {M} of
 // your opponent's Pokémon and put {N} damage counters on each of them."* —
 // `censusAttackCorpus.ts` line **83**, **1 sentence / 1 legal printing**, carrier
@@ -17899,6 +17922,17 @@ const FLIP_KO_ACTIVE_OR_BENCHED_BASIC =
 // possible way for a Knock Out to be wrong.
 const KO_EXACT_DAMAGE_COUNTERS =
   /^Knock Out 1 of your opponent['’]s Pokémon that has exactly (\d+) damage counters on it\.$/;
+// 🆕🆕🆕 D609 — WP36, three literal `me` anchors (LOCAL D1, 2026-10-08), none printed in legal `sv`.
+// Mega Absol ex "Terminal Period" ×3: arm 6a-ii-b's gate swapped for the new
+// `opponentActiveDamageCountersExactly`; the count is captured (`>= 1`, the window rule above).
+const OPPONENT_ACTIVE_EXACT_COUNTERS_KO =
+  /^If your opponent['’]s Active Pokémon has exactly (\d+) damage counters on it, that Pokémon is Knocked Out\.$/;
+// Inteleon "Bring Down" ×3: `knockOutChosen` over `anyExceptSelf` with `leastHpRemaining`.
+const LEAST_HP_ANY_KO =
+  /^Choose a Pokémon in play \(yours or your opponent['’]s\) that has the least HP remaining, except for this Pokémon, and it is Knocked Out\.$/;
+// N's Vanilluxe "Snow Coating": `counterEachAll` with `perDamageCounterOnTarget` (10 per counter).
+const DOUBLE_OPPONENT_COUNTERS =
+  /^Double the number of damage counters on each of your opponent['’]s Pokémon\.$/;
 
 
 // D131 — the UNCONDITIONAL MILL, both directions on ONE anchor: "Discard the top
@@ -28990,8 +29024,10 @@ const TR_ENERGY_COST_THEN_DISCARD_DEFENDER =
 const ME_WORDING_SYNONYMS: readonly (readonly [RegExp, string])[] = [
   // "Place N damage counters on" → "Put N damage counters on" (and the bare "Place damage counters
   // on … until …"): Haunt, Ghostly Blow, Chaotic Pain ×2, Swirling Resentment, and the lower-case
-  // mid-sentence form in Pernicious Poison ×3 and Shellnado Spin.
-  [/\bPlace (?=(?:\d+ )?damage counters on )/g, "Put "],
+  // mid-sentence form in Pernicious Poison ×3 and Shellnado Spin. 🆕🆕🆕 D609 — the capitalised row also
+  // takes the singular "Place 1 damage counter on" (Bramblin "Sneaky Placement"; no legal `sv` sentence
+  // prints it). The lower-case row stays plural: no `me` sentence prints a mid-sentence singular.
+  [/\bPlace (?=(?:\d+ )?damage counters? on )/g, "Put "],
   [/\bplace (?=(?:\d+ )?damage counters on )/g, "put "],
   // Claw of Darkness ×3: ", and you discard a card you find there." → ". Discard a card …".
   [/(?<=^Your opponent reveals their hand), and you discard a card you find there\.$/, ". Discard a card you find there."],
@@ -29564,6 +29600,37 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
     if (counters >= 1) {
       return [{ op: "knockOutChosen", target: "opponentAny", damageCountersExactly: counters }];
     }
+  }
+
+  // 6e-bis. 🆕🆕🆕 D609 — WP36's three KO / damage-counter sentences (anchors beside 6e's).
+  match = OPPONENT_ACTIVE_EXACT_COUNTERS_KO.exec(effect);
+  if (match !== null) {
+    const exactCounters = Number(match[1]);
+    if (exactCounters >= 1) {
+      return [
+        {
+          op: "conditionGate",
+          cond: { kind: "opponentActiveDamageCountersExactly", count: exactCounters },
+          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
+          then: [{ op: "knockOutDefender" }],
+        },
+      ];
+    }
+  }
+  if (LEAST_HP_ANY_KO.test(effect)) {
+    return [{ op: "knockOutChosen", target: "anyExceptSelf", leastHpRemaining: true }];
+  }
+  if (DOUBLE_OPPONENT_COUNTERS.test(effect)) {
+    return [
+      {
+        op: "counterEachAll",
+        amount: 10,
+        filter: { kind: "anyPokemon" },
+        side: "opponent",
+        source: "attack",
+        perDamageCounterOnTarget: true,
+      },
+    ];
   }
 
   // 6f. 🆕🆕 D420 — "Discard {N} Basic {X} Energy cards from your hand." / "Discard a
@@ -31873,7 +31940,7 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   if (match !== null) {
     // ⚠️ COUNTERS → HP (one counter = 10, §12), at the PRODUCER — arms 22, 23, 23a
     // and 25 all convert here, and the interpreter never sees the printed unit.
-    const anyZoneCounters = Number(match[1]);
+    const anyZoneCounters = Number(match[1] ?? match[2]);
     // `>= 1`, the guard every arm here carries: a printed 0 would PARK the attacker on
     // a choice with no possible outcome. Leave it loud.
     if (anyZoneCounters >= 1) {
