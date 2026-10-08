@@ -3,7 +3,9 @@
 > Update this at the **end of every session**: bump the status table, append a
 > session-log entry, and rewrite the **Resume point** to the next concrete action.
 
-**Last updated:** 2026-10-08 — build session #535 (**P3-M5 — D595, *WP13 — COIN-GATE COMPOSITIONS: 8 texts / 11 `me` printings — five `coinFlipGate`s over a closed consequent table (Miltank, Team Rocket's Exeggutor, Murkrow, Gimmighoul, Drifloon) and three `programPerHeads` arms (Smeargle, Tyrantrum ×2 / Team Rocket's Diglett, Houndstone ×2); Bombirdier, Bewear, Gholdengo, Snorlax, Pikachu, Shiftry and Octillery dropped and named; `sv` reader output byte-identical; Standard pool attacks 2544 / 2771; 835 `me` printings fully built*** — engine 0.479.0, MRV 42, NOT committed; the sweep PENDING)
+**Last updated:** 2026-10-08 — build session #536 (**P3-M5 — D596, *WP09 — MEGA GARDEVOIR ex AND XERNEAS: 3 texts / 14 `me` printings — Mega Symphonia ×6 and Geo Storm ×2 on the `×` board-wide own-Energy count (`SELF_BOARD_ENERGY_MULTIPLY`, `energyOnSelf` at the board zone), Overflowing Wishes ×6 on `attachFromDeck` `benchOnly` + the one new field `each` (one Basic {P} Energy per Benched Pokémon); nothing dropped; `sv` reader output byte-identical; Standard pool attacks 2558 / 2771; 843 `me` printings fully built*** — engine 0.480.0, MRV 42, NOT committed; the sweep PENDING)
+
+**Last updated (was):** 2026-10-08 — build session #535 (**P3-M5 — D595, *WP13 — COIN-GATE COMPOSITIONS: 8 texts / 11 `me` printings — five `coinFlipGate`s over a closed consequent table (Miltank, Team Rocket's Exeggutor, Murkrow, Gimmighoul, Drifloon) and three `programPerHeads` arms (Smeargle, Tyrantrum ×2 / Team Rocket's Diglett, Houndstone ×2); Bombirdier, Bewear, Gholdengo, Snorlax, Pikachu, Shiftry and Octillery dropped and named; `sv` reader output byte-identical; Standard pool attacks 2544 / 2771; 835 `me` printings fully built*** — engine 0.479.0, MRV 42, NOT committed; the sweep PENDING)
 
 **Last updated (was):** 2026-10-08 — build session #534 (**P3-M5 — D594, *WP33a — BONUS / REQUIREMENT ROWS ON SHIPPED CONDITION MEMBERS: 6 texts / 10 `me` printings — four attack clause rows (Chi-Yu, Steelix ×2, Slowbro ×3, Solrock ×2) and two Abilities on shipped passive fields (Luxio's `evolveEarlyExempt.ifCondition`, Chesnaught's `damageAttacker` per {G}); Weavile, Carnivine and Gholdengo ×2 dropped and named; `sv` reader output byte-identical; Standard pool attacks 2533 / 2771, abilities 491 / 610; 826 `me` printings fully built*** — engine 0.478.0, MRV 42, NOT committed; the sweep PENDING)
 
@@ -815,6 +817,39 @@
 
 ## NEXT (resume point)
 
+> ### ▶ THE NEXT CONCRETE ACTION (written 2026-10-08, after D596)
+>
+> 🛑 **D596 IS BUILT AND NOT COMMITTED** (worktree `/home/jofre/projects/luminous_ui-mega`, branch `mega-ingest`, on D595 = `fe789bff`). D596 is WP09 of the Mega backlog: Mega Gardevoir ex and Xerneas. Next: a review of D596, then the next package or the landing of D581–D596 (rebase `mega-ingest` onto main; never `git add -A` — `apps/api/.wrangler` is the setup symlink).
+>
+> ✅ **`bun run check` IS GREEN**: `typecheck-coverage`, `tsc -b`, `lint-coverage`, `biome lint --error-on-warnings`, `Test Files 639 passed (639) / Tests 15129 passed (15129) / CHECK_EXIT=0` (D595: 638 / 15114; D596 adds `megaGardevoirD596.test.ts` (13) and the census D596 block (2)).
+>
+> **(a) THE SLICE.** effects.ts: `SELF_BOARD_ENERGY_MULTIPLY`, a separate anchor beside `SELF_ENERGY_MULTIPLY` (bytes and rows untouched), reads *"This attack does N damage for each {P} Energy attached to all of your Pokémon."* as `energyOnSelf { zone: "board" }` on the `×` fold (D407's evaluator arm, unchanged): Mega Gardevoir ex "Mega Symphonia" ×6 (`me01-060` / `-159` / `-178` / `-187`, `mep-032`, `me02.5-089`) and Xerneas "Geo Storm" ×2 (`me04-042` / `-091`). `EACH_BENCHED_DECK_ATTACH` reads "Overflowing Wishes" ×6 as `attachFromDeck { basicEnergy {P}, max: 1, benchOnly, each }` + `shuffleDeck`. The one new op field, `attachFromDeck.each`, is the brief's "one per Benched Pokémon" maximum: interpreter.ts `perBodyDeckOp` offers `max` × the Benched bodies with `maxPerTarget` `max`, and the park spells that `maxPerTarget` on the existing `attachCards` prompt (no prompt, HUD or wire byte). No top-up (unlike `attachFromDiscard.each`): a deck search may come up short. Nothing dropped. **The `sv` reader output is byte-identical:** every `deriveAttack*` reader over the 1,091 corpus rows dumped before and after; only the 3 `me` sentences differ.
+>
+> **(b) MRV STAYS 42** (match.ts "STAYS 42 AT D596"): the damage count is derived and never persisted; `each` can ride `pendingOp` (a D125 widening); a parked Overflowing Wishes resumes AS BUILT on a 0.479 rollback (the apply reads the persisted prompt, never `each`).
+>
+> | Column | `me` D596 | Standard pool D596 |
+> |---|---|---|
+> | Attacks | 826 / 1039 | **2558 / 2771** |
+> | Abilities | 115 / 234 | **491 / 610** |
+> | Trainers | 92 / 183 | **356 / 447** |
+> | Special Energy | 3 / 11 | **14 / 22** |
+>
+> **843 `me` printings fully built** (835 + 8: Mega Gardevoir ex ×6, Xerneas ×2). Census D581 tally: reader [293, 785] → [296, 799], residue [142, 227] → [139, 213]; the D582–D595 rungs subtract WP09's +14. Registry unchanged.
+>
+> **(c) THE MUTATION RECORD.** +16 D596 rows (4562 in all). precheck: 4562 mutants, the same 20 pre-existing broken rows (none in a D596 file; the `each` arithmetic lives in the new `perBodyDeckOp` so D457's `const cap` row and D569's `? op.max * targets.length` row stay unique). Probe `run.ts --decision D596 --allow-dirty`: 16 killed · 0 known survivor(s) · 0 GAP(S) · 0 stale · 0 skipped(dirty) · 0 clobber(s) · 0 error(s), tree byte-identical after. Gate-witness `--only` (the 18 `opaque-anatomy-gate.ts` / `residue-census-gate.ts` rows): 18 killed · 0 error. The 36 older rows whose killers this slice edited (boardWideEnergyScaling, selfEnergyScaling, discardShuffleBack) plus D457 / D568 / D569's offer rows: 34 killed · 1 known survivor(s) (D196's declared `D196-live-active`) · 0 GAP(S) · 1 error (`D568-trumpet-riders-ignored`, one of precheck's 20). Gates: residue-census, opaque-anatomy, splice, partition all OK.
+>
+> 🛑 **(0) THE WHOLE-CORPUS SWEEP IS PENDING** (D581–D595's too). Predicted: **4492 killed · 50 known survivor(s) · 0 GAP(S) · 20 error(s)** over **4,562** rows — 4546 + 16 = 4562; 4476 + 16 = 4492 killed; 4492 + 50 + 20 = 4562. The 20 errors are precheck's 20 broken rows (none D581–D596's); the 16 D596 rows and the 18 gate-witness rows are measured killed. It assumes D595's prediction (4476 · 50 · 0 · 20 over 4546) holds. If it holds, D581–D596 close together. If it fails: an error count ≠ 20 means a `find` was spliced by a later edit (precheck names it); a new GAP or survivor in a D581–D595 row is that slice's open prediction failing, not D596's; one in an older row that names effects.ts' `deriveAttackDamageMultiplier` tail, `deriveAttackEffect`'s deck-attach arms, interpreter.ts' `attachFromDeck` case / note, the suites re-pointed below or a census file is a D596 edit moving it and owes a row-level re-measure before the landing.
+>
+> **D539 sweep.** Withdrawn in place as a pool-wide fact: D407's "the `×` spelling of a board-wide OWN Energy count is printed NOWHERE" (effects.ts ×2, index.ts, `boardWideEnergyScaling.test.ts` — its §2 absence rung re-pointed to the board reading —, `selfEnergyScaling.test.ts` — the untyped `×` board spelling now reads —, the `D407-multiply-widens-for-symmetry` row's `what`, decisions.md D407, this file's D407 session log, simulator.md); it still holds of the `sv` column. Producer count stepped off the red run: `{ op: "shuffleDeck" }` 21 → 22 (discardShuffleBack). Version tax: `0.479.0` outside `docs/` was 153 files / 240 occurrences; 239 stepped (it() titles, `package.json`, the declaration and the D275 `find` included), 1 kept (index.ts' D595 heading).
+>
+> **Pending decisions (UNRULED readings).** **R-OW1** — Overflowing Wishes (Mega Gardevoir ex ×6): "For each of your Benched Pokémon, search your deck for a Basic {P} Energy card and attach it to that Pokémon." is read as ONE search answered as one map — up to one Basic {P} Energy onto each Benched Pokémon, the Active never — and a short or empty answer stands (the hidden-zone rule every deck search here follows). Reversal: a ruling that each body is searched for in turn changes only the prompt count, never which boards are reachable; a ruling that a findable card must be attached adds a top-up like `attachFromDiscard.each`'s. **R-HB1** — Horrifying Bite (Houndstone ×2), carried from D595: one random pick per heads from the hand that is LEFT, each card revealed and shuffled in as it is taken; heads beyond the hand size do nothing.
+>
+> Still owed from the Mega backlog: the seven WP13 drops (a coin-threshold bonus member, a deck "up to heads" ceiling, `returnBenched` on the Active, a two-coin flip lock, the bench "a Pokémon" noun), WP33b, the three WP33a drops, Meowth ex ×3's Last-Ditch Catch, Flygon ×3, Alakazam ×3's "Powerful Hand" (WP14), Pokémon Center Lady, Mega Absol ex ×3's Terminal Period (WP36), the markup-normalising ingest fix, then the residue by mechanism.
+>
+> ---
+>
+> **ARCHIVED — the resume point D596 was built from, kept rather than overwritten** (D595 has since been committed on `mega-ingest` as `fe789bff`):
+>
 > ### ▶ THE NEXT CONCRETE ACTION (written 2026-10-08, after D595)
 >
 > 🛑 **D595 IS BUILT AND NOT COMMITTED** (worktree `/home/jofre/projects/luminous_ui-mega`, branch `mega-ingest`, on D594 = `8ded76b4`). D595 is WP13 of the Mega backlog: coin-gate compositions. Next: a review of D595, then the next package or the landing of D581–D595 (rebase `mega-ingest` onto main; never `git add -A` — `apps/api/.wrangler` is the setup symlink).
@@ -34913,7 +34948,8 @@ the next api deploy (D18).
 |---|---|---|
 | backend-data | P1 | ✅ M1–M9 + P2-M1 + task-17 api deployed (Worker `9b1ec1d1`, 2026-07-16); OAuth secrets pending (user) |
 | deck-builder | P2 | ✅ ALL 19 tasks closed (task 17 landed + e2e-verified locally); only follow-ups left |
-| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D595, *WP13 — coin-gate compositions: 8 texts / 11 `me` printings (five coin gates over a closed consequent table, three per-heads arms); seven texts dropped and named; attacks 2544 / 2771*** — engine 0.479.0, MRV 42, NOT committed; the sweep PENDING) |
+| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D596, *WP09 — Mega Gardevoir ex and Xerneas: 3 texts / 14 `me` printings (the `×` board-wide own-Energy count; a per-Benched-body deck attach on the new `attachFromDeck.each`); nothing dropped; attacks 2558 / 2771*** — engine 0.480.0, MRV 42, NOT committed; the sweep PENDING) |
+| simulator (prior) | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D595, *WP13 — coin-gate compositions: 8 texts / 11 `me` printings (five coin gates over a closed consequent table, three per-heads arms); seven texts dropped and named; attacks 2544 / 2771*** — engine 0.479.0, MRV 42, NOT committed; the sweep PENDING) |
 | simulator (prior) | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D594, *WP33a — bonus / requirement rows on shipped condition members: 6 texts / 10 `me` printings (four clause rows, Luxio's `ifCondition` licence, Chesnaught's per-{G} recoil); attacks 2533 / 2771, abilities 491 / 610*** — engine 0.478.0, MRV 42, NOT committed; the sweep PENDING) |
 | simulator (prior) | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D593, *WP07 — more `me` clause rows and the "Fade Out" objects: 9 attack texts / 15 `me` printings (seven clause rows, Facade on `yourActiveBurnedOrPoisoned`, Cutting Riposte's {D} gate row, Fade Out ×5 on three objects); attacks 2525 / 2771*** — engine 0.477.0, MRV 42, NOT committed; the sweep PENDING) |
 | simulator (prior) | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D592, *WP02 — the `me` reader wording drift and Corrosive Liquid: 11 attack texts / 18 `me` printings read by `deriveAttackEffect` (a six-row synonym table onto the `sv` wording, `sv` classification byte-identical); Mega Dragalge ex ×3 finished; attacks 2510 / 2771*** — engine 0.476.0, MRV 42, NOT committed; the sweep PENDING) |
@@ -35126,6 +35162,18 @@ the next api deploy (D18).
 Legend: 📝 backlog · 📋 specced · 🔎 research · 🚧 in progress · ✅ done
 
 ## Session log
+
+### 2026-10-08 — build session #536 (P3-M5 — D596)
+
+**WP09 — MEGA GARDEVOIR ex AND XERNEAS. `MATCH_RECORD_VERSION` STAYS 42.**
+
+Built in the `luminous_ui-mega` worktree on D595 (`fe789bff`); the main checkout was not touched. Every id `git grep`-ped
+(none referenced) and every text read off the LOCAL D1 first. All of WP09 built: 3 texts / 14 printings — Mega Symphonia ×6
+and Geo Storm ×2 on the new `SELF_BOARD_ENERGY_MULTIPLY` (`energyOnSelf` at the board zone, `×` fold) and Overflowing
+Wishes ×6 on `attachFromDeck` `benchOnly` plus the one new field `each`. `sv` reader output byte-identical by a
+before/after dump. D407's "the `×` board spelling is printed nowhere" withdrawn in place as a pool-wide fact. Reading
+R-OW1 recorded as UNRULED. `megaGardevoirD596.test.ts` (13). Version tax 239 stepped / 1 kept. +16 mutant rows, all
+KILLED. Sweep PENDING (NEXT (0)). NOT committed.
 
 ### 2026-10-08 — build session #535 (P3-M5 — D595)
 
@@ -53578,7 +53626,7 @@ rule's polarity veto is not engaged.
 **ADDITIVE-ONLY ON THIS ZONE, AND THE MIRROR IS EXACT.** The `×` spelling of a board-wide own Energy
 count is printed NOWHERE in the legal attack column, so `SELF_ENERGY_MULTIPLY` keeps its bare *"this
 Pokémon"* tail. On the opponent side the `×` reader carries the zone and the `+` reader hard-codes
-one; here it is the other way round. Two folds, two one-reader zone captures, each absence pinned.
+one; here it is the other way round. Two folds, two one-reader zone captures, each absence pinned. (🆕🆕🆕 D596 (D539): true of the `sv` column only — the `me` column prints the `×` spelling, Mega Symphonia ×6 / Geo Storm ×2, read by the separate `SELF_BOARD_ENERGY_MULTIPLY`.)
 
 **THE NEAR MISS IS AN OWNER-PREFIXED BOARD**, one word wider than the anchor: *"This attack does 20
 more damage for each {L} Energy attached to all of your Iono's Pokémon."* (1 legal printing) names a

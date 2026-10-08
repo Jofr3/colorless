@@ -69,7 +69,8 @@ import {
 // Energy was counted" are different numbers.
 //
 // ⚠️ **THE MEMBER IS ADDITIVE-ONLY ON THIS ZONE, AND THAT IS AN ABSENCE THIS SUITE
-// PINS RATHER THAN AN OVERSIGHT.** The `×` spelling of a board-wide OWN Energy
+// PINS RATHER THAN AN OVERSIGHT.** (🆕🆕🆕 D596 (D539): WITHDRAWN for the pool — the `me` column
+// prints the `×` spelling; §2's rung is re-pointed to the board-zone reading.) The `×` spelling of a board-wide OWN Energy
 // count is printed nowhere in the legal attack column, so `SELF_ENERGY_MULTIPLY`
 // keeps its bare "this Pokémon" tail — the exact mirror of `energyOnOpponent`,
 // whose `×` reader carries the zone and whose `+` reader hard-codes one.
@@ -106,7 +107,10 @@ const OWNER_PREFIXED_BOARD =
 
 /** The `×` twin of the built sentence. **PRINTED NOWHERE** — the column's only
     bare-fold "attached to all of your Pokémon" sentence counts Pokémon TOOLS
-    (D406) — so this is an ABSENCE and is pinned as such. */
+    (D406) — so this is an ABSENCE and is pinned as such. (🆕🆕🆕 D596 (D539): true of the
+    `sv` column only — the `me` column prints it typed {P} (Mega Symphonia ×6, Geo Storm ×2), and
+    `SELF_BOARD_ENERGY_MULTIPLY` reads it. The constant keeps its name; the rung below is
+    re-pointed.) */
 const UNPRINTED_MULTIPLY =
   "This attack does 30 damage for each {G} Energy attached to all of your Pokémon.";
 
@@ -299,11 +303,15 @@ describe("§2 — deriveAttackDamageBonus: the zone D196 refused", () => {
     expect(deriveAttackEffect(OWNER_PREFIXED_BOARD)).toBeNull();
   });
 
-  it("🛑 ADDITIVE-ONLY on this zone: the `×` twin is an ABSENCE and stays loud", () => {
-    // The column prints no bare-fold board-wide OWN Energy sentence at all, so
-    // `SELF_ENERGY_MULTIPLY` keeps its "this Pokémon" tail. Turns red the moment
-    // somebody widens the multiply pattern "for symmetry".
-    expect(deriveAttackDamageMultiplier(UNPRINTED_MULTIPLY)).toBeNull();
+  it("🛑 the `×` twin reads at the BOARD zone (D596), never as the attacking body alone", () => {
+    // 🆕🆕🆕 D596 (D539): this rung pinned the `×` twin as an absence; the `me` column prints it
+    // (Mega Symphonia, Geo Storm) and `SELF_BOARD_ENERGY_MULTIPLY` reads it. What must still not
+    // happen is the old "for symmetry" widening of `SELF_ENERGY_MULTIPLY`, which would read it
+    // ZONE-LESS (the attacking body): the zone is asserted, and the additive reader still refuses.
+    expect(deriveAttackDamageMultiplier(UNPRINTED_MULTIPLY)).toEqual({
+      per: 30,
+      count: { kind: "energyOnSelf", zone: "board", energyType: "Grass" },
+    });
     expect(deriveAttackDamageBonus(UNPRINTED_MULTIPLY)).toBeNull();
     // …while the `×` reader's OWN zone-less spelling still answers, so the null
     // above is a statement about the ZONE rather than about a dead reader.
@@ -597,6 +605,6 @@ describe("§5 — the persisted question, and the version pair", () => {
     expect(deriveAttackDamageBonus(BOARD_ENERGY)).not.toBeNull();
     // 🆕🆕 D416 — 0.319.0 → **0.320.0**, moved with the behaviour: THE PARKING KO PAIR (*"Flip a coin. If heads, Knock Out your opponent's Active Basic Pokémon. If tails, Knock Out 1 of your opponent's Benched Basic Pokémon."*, 4 printings, and *"Knock Out 1 of your opponent's Pokémon that has exactly 6 damage counters on it."*, 2 printings — **2 sentences / 6 printings**, both claimed WHOLE by `deriveAttackEffect`) is a WIDENING — ONE new PARKING `EffectOp` (`knockOutChosen`, required `target` plus two optional riders) reached through the EXISTING `choosePokemon` prompt and the EXISTING `KNOCKED_OUT` sweep, ZERO new persisted record fields — so the engine version moves and `MATCH_RECORD_VERSION` STAYS 26 (D307's paragraph: no v26 deploy can author `{ op: "knockOutChosen", … }` into a record THIS deploy reads).
     // 🆕🆕 D417 — 0.320.0 → **0.321.0**, moved with the behaviour: THE TRAILING CANCEL (*"Discard a Stadium in play. If you can't, this attack does nothing."*, Eternatus `sv08-141`, **1 legal printing**) gains a TWELFTH whole-sentence reader, `deriveAttackCancelRequirement` — the anaphoric cancel `deriveAttackRequirement`'s leading `^If` could never see. `MATCH_RECORD_VERSION` **STAYS 26**, asked rather than assumed: the reader returns an EXISTING `BoardCondition` through the EXISTING requirement channel and adds NO persisted field, so no v26 record gains a shape this deploy would not already read.
-    expect(engineVersion).toBe("0.479.0");
+    expect(engineVersion).toBe("0.480.0");
   });
 });

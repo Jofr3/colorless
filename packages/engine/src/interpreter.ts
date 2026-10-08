@@ -4016,7 +4016,8 @@ function stepOp(
       // that stays a property of the PROGRAMS rather than an accident of which
       // branch remembered. With three recording ops now, the one that differed
       // would have been this one.
-      const { candidates, targets, max } = attachFromDeckOffer(state, ctx, op);
+      // 🆕🆕🆕 D596 — `each` is offered as the per-target map it means (`perBodyDeckOp`).
+      const { candidates, targets, max } = attachFromDeckOffer(state, ctx, perBodyDeckOp(state, ctx, op));
       if (candidates.length === 0 || targets.length === 0 || max <= 0) {
         recordMoved(record, op.recordAs, []);
         return { done: state };
@@ -4027,7 +4028,12 @@ function stepOp(
           candidates,
           targets,
           max,
-          ...(op.maxPerTarget === undefined ? {} : { maxPerTarget: op.maxPerTarget }),
+          // 🆕🆕🆕 D596 — `each` parks its per-body count as the prompt's `maxPerTarget`.
+          ...(op.each === true
+            ? { maxPerTarget: op.max }
+            : op.maxPerTarget === undefined
+              ? {}
+              : { maxPerTarget: op.maxPerTarget }),
           // 🆕 D457 — the printed "attach them to 1 of your Pokémon", carried to
           // the prompt the same way `maxPerTarget` is: spread rather than written
           // as `oneTarget: undefined`, so a park that does not constrain the map
@@ -17665,6 +17671,21 @@ function attachFromDeckOffer(
   return { candidates, targets, max: Math.min(cap, candidates.length) };
 }
 
+/** 🆕🆕🆕 D596 — `attachFromDeck.each` (Overflowing Wishes: *"For each of your Benched Pokémon,
+    search your deck for a Basic {P} Energy card and attach it to that Pokémon."*) read as the map
+    it means: `max` per offered body, so the reachable total is `max` × the bodies and the
+    per-target cap is `max` — `attachFromDiscardOffer`'s `each` arithmetic. Every other op is
+    returned as it is. The park spells the same `maxPerTarget` (the `attachFromDeck` case). */
+function perBodyDeckOp(
+  state: GameState,
+  ctx: EffectContext,
+  op: Extract<EffectOp, { op: "attachFromDeck" }>,
+): Extract<EffectOp, { op: "attachFromDeck" }> {
+  if (op.each !== true) return op;
+  const bodies = attachEnergyTargets(state, ctx.seat, op).length;
+  return { ...op, max: op.max * bodies, maxPerTarget: op.max };
+}
+
 /** 🆕🆕🆕 D568 — What an `attachFromDiscard` op is offering (Glass Trumpet): the
     controller's DISCARD cards its filter admits, collapsed by card identity to at most
     the reachable total (`attachFromDeckOffer`'s collapse — the player picks "a Fire
@@ -20007,6 +20028,10 @@ function attachFromDeckNote(op: Extract<EffectOp, { op: "attachFromDeck" }>): st
       : `Search your deck for ${singular} and attach it to this Pokémon.`;
   }
   const where = attachTargetNoun(op);
+  // 🆕🆕🆕 D596 — the printed per-body sentence (Overflowing Wishes), its shuffle left to the next op.
+  if (op.each === true) {
+    return `For each of your ${where}, search your deck for ${singular} and attach it to that Pokémon.`;
+  }
   if (op.maxPerTarget !== undefined) {
     // "attach 1 to each", not "attach a Basic Darkness Energy card to each" —
     // the noun is already in the first clause, and repeating it there produced a

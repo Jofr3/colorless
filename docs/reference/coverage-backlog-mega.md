@@ -6,6 +6,22 @@
 > `coverage-backlog-legal.md`; its pool is unchanged and whole. The suite-side figures are
 > `censusAtHead.test.ts`'s D581 block and `censusAttackCorpusMe.ts`.
 
+## 🆕 D596 update (engine 0.480.0) — Mega Gardevoir ex and Xerneas (WP09)
+
+3 texts / 14 `me` printings (`megaGardevoirD596.test.ts`). Mega Symphonia ×6 and Geo Storm ×2: the `×` board-wide own
+Energy count (`SELF_BOARD_ENERGY_MULTIPLY`, `energyOnSelf` at the board zone). Overflowing Wishes ×6: `attachFromDeck`
+with `benchOnly` and the new `each` (one Basic {P} Energy per Benched Pokémon). **Finished:** Mega Gardevoir ex ×6,
+Xerneas `me04-042` / `-091`. Nothing dropped. WP09 is closed.
+
+| Column | `me` built / units (D596) | Standard pool D596 |
+|---|---|---|
+| Attacks | 826 / 1,039 (+14) | **2,558 / 2,771** |
+| Abilities | 115 / 234 | **491 / 610** |
+| Trainers | 92 / 183 | **356 / 447** |
+| Special Energy | 3 / 11 | **14 / 22** |
+
+**Fully built `me` printings: 843** (835 + 8).
+
 ## 🆕 D595 update (engine 0.479.0) — coin-gate compositions (WP13)
 
 8 texts / 11 `me` printings (`coinGateMeD595.test.ts`). Five coin gates over consequents the readers already build:

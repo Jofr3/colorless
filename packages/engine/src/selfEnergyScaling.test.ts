@@ -995,11 +995,14 @@ describe("the EXCLUSIONS — neighbourhoods that route elsewhere or stay loud", 
     // NOWHERE on the `×` fold, so that reader still may not invent it. Both halves
     // are asserted, because the next author to see two Energy members will assume
     // both reach both zones — and on this side exactly one of them does.
+    // 🆕🆕🆕 D596 (D539): "printed NOWHERE on the `×` fold" is WITHDRAWN for the pool — the `me`
+    // column prints it typed {P} (Mega Symphonia, Geo Storm), read by the separate
+    // `SELF_BOARD_ENERGY_MULTIPLY`, so the untyped spelling now reads at the board zone too.
     expect(
       deriveAttackDamageMultiplier(
         "This attack does 60 damage for each Energy attached to all of your Pokémon.",
       ),
-    ).toBeNull();
+    ).toEqual({ per: 60, count: { kind: "energyOnSelf", zone: "board", energyType: null } });
     expect(
       deriveAttackDamageBonus(
         "This attack does 30 more damage for each {G} Energy attached to all of your Pokémon.",
@@ -1259,7 +1262,7 @@ describe("the record-shape derivation, made rather than inherited", () => {
     ).toEqual({ per: 30, count: { kind: "energyOnSelf", zone: "board", energyType: "special" } });
   });
 
-  it("engineVersion is 0.479.0 and `manifest.version` agrees", () => {
+  it("engineVersion is 0.480.0 and `manifest.version` agrees", () => {
     // 🆕🆕 D459 — 0.357.0 → **0.358.0**, and the bump is owed for BEHAVIOUR and for
     // nothing else, which is the same shape D458's was: no op, no field, no prompt
     // key, no wire byte and no vocabulary diff moved, so a reader looking for one
@@ -1273,6 +1276,6 @@ describe("the record-shape derivation, made rather than inherited", () => {
     // forecast of "36 / 40" reproduced TO THE DIGIT — the first inherited figure in
     // this series to be checked and found right. This rung is the 37th assertion,
     // so a successor inherits 37 / 41 (D427's mechanism as arithmetic).
-    expect(engineVersion).toBe("0.479.0");
+    expect(engineVersion).toBe("0.480.0");
   });
 });

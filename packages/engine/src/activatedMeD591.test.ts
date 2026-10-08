@@ -554,7 +554,7 @@ describe("D591 §7 — the printed attacks these keys carry, and the version", (
     ).toBe(2);
   });
 
-  it("is built at engine 0.479.0", () => {
-    expect(engineVersion).toBe("0.479.0");
+  it("is built at engine 0.480.0", () => {
+    expect(engineVersion).toBe("0.480.0");
   });
 });

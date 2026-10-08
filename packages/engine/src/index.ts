@@ -12645,7 +12645,9 @@ import type { GameState, Seat } from "./types";
     spelling of a board-wide OWN Energy count, so `SELF_ENERGY_MULTIPLY` keeps its bare
     *"this Pokémon"* tail. On the opponent side the `×` reader carries the zone and the
     `+` reader hard-codes one; on this side it is the other way round. Two folds, two
-    one-reader zone captures, and each absence pinned by a test.
+    one-reader zone captures, and each absence pinned by a test. (🆕🆕🆕 D596 (D539): WITHDRAWN
+    as a pool-wide fact — the `me` column prints the `×` spelling (Mega Symphonia, Geo Storm),
+    read by the separate `SELF_BOARD_ENERGY_MULTIPLY`; still true of the `sv` column.)
 
     ⚠️ **THE REAL CATALOG NEAR MISS IS AN OWNER-PREFIXED BOARD**: *"This attack does 20
     more damage for each {L} Energy attached to all of your Iono's Pokémon."* (1 legal
@@ -20253,6 +20255,15 @@ import type { GameState, Seat } from "./types";
     `expect(manifest.version)`, `it(…)` titles, the declaration and `package.json` —
     **not** as a value-keyed grep — because a value-keyed grep is precisely the mechanism
     that ate D500's heading.)
+    🆕🆕🆕 engineVersion 0.479.0 → **0.480.0** (D596 — WP09: MEGA GARDEVOIR ex AND XERNEAS;
+    `MATCH_RECORD_VERSION` STAYS 42 (apps/api match.ts "STAYS 42 AT D596")). effects.ts
+    `SELF_BOARD_ENERGY_MULTIPLY` reads *"This attack does N damage for each {P} Energy attached to
+    all of your Pokémon."* as `energyOnSelf { zone: "board" }` on the `×` fold (Mega Symphonia ×6,
+    Geo Storm ×2); `EACH_BENCHED_DECK_ATTACH` reads Overflowing Wishes ×6 as `attachFromDeck
+    { basicEnergy {P}, max: 1, benchOnly, each }` + `shuffleDeck`. ONE new op field,
+    `attachFromDeck.each` (the per-body count; no top-up — a deck search may come up short).
+    3 texts / 14 printings; the `sv` reader output is byte-identical. Census: Standard pool
+    attacks 2,558 / 2,771; 843 `me` printings fully built. `megaGardevoirD596.test.ts`.)
     🆕🆕🆕 engineVersion 0.478.0 → **0.479.0** (D595 — WP13: COIN-GATE COMPOSITIONS;
     `MATCH_RECORD_VERSION` STAYS 42 (apps/api match.ts "STAYS 42 AT D595")). effects.ts
     `deriveAttackEffect` arm 46b reads *"Flip a coin. If heads, X"* / *"Flip 2 coins. If both of them
@@ -25267,7 +25278,7 @@ import type { GameState, Seat } from "./types";
     WITNESS** — the count was re-derived every slice and the word *"three"* was carried.
     A successor of this slice inherits **81 / 61 / 17** again, over **FIVE** history
     occurrences: those four plus `deckMillFilteredScale.test.ts`'s own header arrow.) */
-export const engineVersion = "0.479.0";
+export const engineVersion = "0.480.0";
 
 export type {
   ApplyResult,

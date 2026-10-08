@@ -11193,6 +11193,16 @@ export type EffectOp =
           source ref is not filtered), while `maxPerTarget` would still cap the
           count. Authoring it alone is the rule; this doc is the enforcement. */
       toSelf?: true;
+      /** 🆕🆕🆕 **D596 — "FOR EACH of your Benched Pokémon, search your deck for a Basic {P}
+          Energy card and attach it to THAT Pokémon"** (Mega Gardevoir ex "Overflowing Wishes").
+          `max` becomes the PER-BODY count: the reachable total is `max` × the offered bodies and
+          the parked prompt's `maxPerTarget` is `max` — `attachFromDiscard.each`'s arithmetic, so
+          the total follows the Bench instead of a printed number. ⚠️ NOT that field's MANDATORY
+          top-up: a deck is a hidden zone and a search for a stated card may come up short, so a
+          short or empty answer stands, as on every `attachFromDeck`. Printed only beside
+          `benchOnly`; never beside `maxPerTarget`, `oneTarget` or `toSelf`. A v42 record written by
+          0.479 carries no such key and reads `undefined` (D125). */
+      each?: true;
       recordAs?: EffectSlot;
     }
   /** 🆕🆕🆕 **D568 — GLASS TRUMPET `sv07-135`/`sv08.5-110`**: *"Choose up to 2 of your
@@ -19985,6 +19995,9 @@ const OPPONENT_ENERGY_MULTIPLY =
 // Pokémon" sentence in it counts Pokémon TOOLS (D406). So on the opponent side the
 // `×` reader carries the zone and the `+` reader hard-codes one; on this side it is
 // the other way round. Each absence is pinned by a test rather than inferred.
+// 🆕🆕🆕 D596 (D539): WITHDRAWN as a pool-wide fact — the `me` column prints the `×` twin
+// (Mega Symphonia ×6, Geo Storm ×2), read by `SELF_BOARD_ENERGY_MULTIPLY` below. It still
+// holds of the `sv` column, and `SELF_ENERGY_MULTIPLY`'s tail is unchanged.
 //
 // 🛑 AND THE REAL CATALOG NEAR MISS IS AN OWNER-PREFIXED BOARD, ONE WORD WIDER:
 // "This attack does 20 more damage for each {L} Energy attached to all of your
@@ -20091,6 +20104,16 @@ const SELF_ENERGY_FILTERED_SCALE =
   /^This attack does (\d+) more damage for each (?:(.+) )?Energy attached to all of your ((?!opponent)[^.]+ Pokémon)\.$/;
 const SELF_ENERGY_MULTIPLY =
   /^This attack does (\d+) damage for each (?:(.+) )?Energy(?: card)? attached to this Pokémon\.$/;
+/** 🆕🆕🆕 **D596 — THE `×` TWIN OF THE BOARD-WIDE OWN-ENERGY COUNT, PRINTED IN THE `me` COLUMN.**
+    *"This attack does 50 damage for each {P} Energy attached to all of your Pokémon."* (Mega
+    Gardevoir ex "Mega Symphonia", 6 printings) and the same at 30 (Xerneas `me04-042`/`-091`
+    "Geo Storm"). The `sv` column still prints no such sentence. A SEPARATE anchor rather than a
+    widened `SELF_ENERGY_MULTIPLY` tail (D441), so that anchor's bytes and its mutant rows stay
+    as they are; the two are disjoint by their literal tails. It reads the zone `SELF_ENERGY_SCALE`
+    reads (`energyOnSelf` at `zone: "board"`, D407) on the `×` fold. No ` card` spelling: none is
+    printed with this tail. */
+const SELF_BOARD_ENERGY_MULTIPLY =
+  /^This attack does (\d+) damage for each (?:(.+) )?Energy attached to all of your Pokémon\.$/;
 // D196 — THE THIRD ZONE, and the first thing this family counts that BOTH SEATS
 // contribute to: the Energy attached to the two Active Pokémon, added together.
 // `OpponentEnergyZone` deliberately does not reach it (D193 said so), and no
@@ -27002,6 +27025,17 @@ const DECK_SEARCH_ATTACH = new RegExp(
     `(?: and up to (\\d+) Basic (?:\\{([${Object.keys(ENERGY_TYPE_BY_CODE).join("")}])\\} )?Energy cards)?` +
     ` and attach them) to ([^.]+)\\. Then, shuffle your deck\\.(?: (${DECK_SEARCH_POISON_TAIL}))?$`,
 );
+/** 🆕🆕🆕 **D596 — THE PER-BENCHED-BODY DECK ATTACH.** *"For each of your Benched Pokémon, search
+    your deck for a Basic {P} Energy card and attach it to that Pokémon. Then, shuffle your deck."*
+    (Mega Gardevoir ex "Overflowing Wishes", 6 `me` printings; the `sv` column prints none). Group 1
+    is the optional brace code, built from `ENERGY_TYPE_BY_CODE` like `DECK_SEARCH_ATTACH`'s. The
+    program is `attachFromDeck { basicEnergy, max: 1, benchOnly, each }` and the trailing
+    `shuffleDeck`: one answer maps up to one card onto each Benched body (R-OW1, UNRULED). A
+    separate anchor because the head ("For each of your Benched Pokémon, search …") is not
+    `DECK_SEARCH_ATTACH`'s "Search your deck for …" and the destination is a pronoun. */
+const EACH_BENCHED_DECK_ATTACH = new RegExp(
+  `^For each of your Benched Pokémon, search your deck for a Basic (?:\\{([${Object.keys(ENERGY_TYPE_BY_CODE).join("")}])\\} )?Energy card and attach it to that Pokémon\\. Then, shuffle your deck\\.$`,
+);
 
 // ⚠️⚠️ D236 — ATTACH FROM THE **HAND** (backlog row 12), THE EXACT MIRROR OF
 // D234'S ANCHOR ONE WORD OVER, AND THE **CONTROL** FOR D235'S OWN FINDING. That
@@ -33655,6 +33689,25 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
           ];
     }
   }
+  // 🆕🆕🆕 D596 — Overflowing Wishes: one Basic Energy per Benched body, the per-body count on
+  // `attachFromDeck.each` (the op's doc). An unresolvable code stays loud; the brace class is
+  // built from the same map, so that guard is the type system's.
+  match = EACH_BENCHED_DECK_ATTACH.exec(effect);
+  if (match !== null) {
+    const energyType = match[1] === undefined ? undefined : ENERGY_TYPE_BY_CODE[match[1]];
+    if (match[1] === undefined || energyType !== undefined) {
+      return [
+        {
+          op: "attachFromDeck",
+          filter: { kind: "basicEnergy", ...(energyType === undefined ? {} : { energyType }) },
+          max: 1,
+          benchOnly: true,
+          each: true,
+        },
+        { op: "shuffleDeck" },
+      ];
+    }
+  }
   // ⚠️⚠️ D237 — the discard pile into the HAND or onto the BENCH, backlog row 13.
   // ONE anchor for five printed sentences and 10 of the row's 16 legal attack
   // printings (26 of the family's 39 CATALOG printings); the census, the graded
@@ -34605,7 +34658,10 @@ export interface AttackDamageBonus {
     prints no `×` spelling of a board-wide OWN Energy count, so `SELF_ENERGY_MULTIPLY`
     keeps its bare "this Pokémon" tail and `deriveAttackDamageMultiplier` can only
     ever produce the zone-less shape. `energyOnOpponent` is the exact mirror — its
-    `×` reader carries the zone and its `+` reader hard-codes one.
+    `×` reader carries the zone and its `+` reader hard-codes one. (🆕🆕🆕 D596 (D539):
+    WITHDRAWN for the `me` column — Mega Symphonia / Geo Storm print the `×` board spelling and
+    `SELF_BOARD_ENERGY_MULTIPLY` produces `zone: "board"` on that fold; `SELF_ENERGY_MULTIPLY`
+    itself still produces only the zone-less shape.)
 
     It is the LARGEST member of the family (21 legal printings, 38 catalog) and it
     arrived LAST, because its sentence was load-bearing as a NEGATIVE: Entei
@@ -36117,6 +36173,16 @@ export function deriveAttackDamageMultiplier(text: string): AttackDamageBonus | 
     const energyType = attachedEnergyFilter(selfEnergy[2]);
     if (per >= 1 && energyType !== undefined) {
       return { per, count: { kind: "energyOnSelf", energyType } };
+    }
+  }
+  // 🆕🆕🆕 D596 — the same count over ALL of the attacker's Pokémon (Mega Symphonia, Geo Storm):
+  // `SELF_ENERGY_SCALE`'s board arm on the `×` fold, with that arm's two guards.
+  const boardEnergy = SELF_BOARD_ENERGY_MULTIPLY.exec(effect);
+  if (boardEnergy !== null) {
+    const per = Number(boardEnergy[1]);
+    const energyType = attachedEnergyFilter(boardEnergy[2]);
+    if (per >= 1 && energyType !== undefined) {
+      return { per, count: { kind: "energyOnSelf", zone: "board", energyType } };
     }
   }
   // 🆕 D406 — the POKÉMON TOOLS on the attacker's whole board. Last in the chain

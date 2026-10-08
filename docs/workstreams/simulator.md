@@ -26849,7 +26849,7 @@ rather than by assuming, so the shape rule's polarity veto is not engaged.
 The `×` spelling of a board-wide OWN Energy count is printed **nowhere** in the legal attack column —
 the column's only bare-fold *"attached to all of your Pokémon"* sentence counts Pokémon TOOLS (D406)
 — so `SELF_ENERGY_MULTIPLY` keeps its bare *"this Pokémon"* tail and that absence is a rung rather
-than an inference.
+than an inference. (🆕🆕🆕 D596 (D539): true of the `sv` column only — the `me` column prints the `×` spelling, Mega Symphonia ×6 / Geo Storm ×2, read by the separate `SELF_BOARD_ENERGY_MULTIPLY`.)
 
 ### 🛑 The near miss is an OWNER-PREFIXED board, one word wider than the anchor
 
@@ -30104,4 +30104,24 @@ decisions (1) and (2) after D580. Engine 0.464.0 → 0.465.0. The Mega ex rule i
 - **Suite.** `coinGateMeD595.test.ts` (18): programs against the bare twins, near misses, the seven drops, and each text on a
   board. +22 mutant rows.
 - **Census.** Standard pool attacks **2544 / 2771**; 835 `me` printings fully built.
+- **Owed.** See `progress.md` NEXT. The whole-corpus sweep is PENDING.
+
+## D596 — WP09: Mega Gardevoir ex and Xerneas (engine 0.480.0, `MATCH_RECORD_VERSION` stays 42)
+
+**Status:** ✅ BUILT in the `luminous_ui-mega` worktree on D595 (`fe789bff`), NOT committed.
+
+- **3 texts / 14 `me` printings.** `SELF_BOARD_ENERGY_MULTIPLY` reads "N damage for each {P} Energy attached to all of
+  your Pokémon" as `energyOnSelf { zone: "board" }` on the `×` fold: Mega Symphonia ×6, Geo Storm ×2. A separate anchor,
+  so `SELF_ENERGY_MULTIPLY` and its mutant rows are untouched. `EACH_BENCHED_DECK_ATTACH` reads Overflowing Wishes ×6 as
+  `attachFromDeck { basicEnergy {P}, max: 1, benchOnly, each }` + `shuffleDeck`.
+- **One new op field.** `attachFromDeck.each`: `max` per Benched body (interpreter.ts `perBodyDeckOp`; the park's
+  `maxPerTarget` is `max`). No top-up, unlike `attachFromDiscard.each`: a deck search may come up short. No prompt, HUD or
+  wire change. The `sv` reader output is byte-identical.
+- **D539.** D407's "the `×` board spelling is printed nowhere" is withdrawn as a pool-wide fact (code, two suites, the
+  D407 mutant row and doc rows); true of the `sv` column only.
+- **Reading R-OW1 (UNRULED).** One answer, up to one Basic {P} Energy per Benched Pokémon; a short answer stands.
+- **Suite.** `megaGardevoirD596.test.ts` (13): readings, near misses, both counts on boards (Active + Bench, type and seat
+  exclusions), the attach park (targets, ceiling, refusal of two on one body, short answer, decline, empty Bench). +16
+  mutant rows.
+- **Census.** Standard pool attacks **2558 / 2771**; 843 `me` printings fully built.
 - **Owed.** See `progress.md` NEXT. The whole-corpus sweep is PENDING.

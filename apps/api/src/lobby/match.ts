@@ -2159,6 +2159,18 @@ export interface MatchRecord {
     `turn:action.discardable` — 🛑 **DEPLOY THE SERVER FIRST**: an old client's `z.object` STRIPS
     the unknown key, while a new client's REQUIRED key refuses an old server's frame.
 
+    🆕🆕🆕 **STAYS 42 AT D596 — WP09 ADDS ONE OPTIONAL OP KEY (`attachFromDeck.each`) AND NO
+    GameState, PendingStage, PROMPT OR WIRE KEY.** (Placed ABOVE the D595 block.) The readers claim 3
+    more `me` attack TEXTS (14 printings): Mega Symphonia / Geo Storm (`energyOnSelf` at the board zone
+    on the `×` fold — a derived damage count, never persisted) and Overflowing Wishes (`attachFromDeck
+    { each }` + `shuffleDeck`). The card row is not read differently; its printed TEXT is, at attack time,
+    so a v42 match in flight holding these faces in its persisted `cardPool` gains the programs
+    mid-match. `each` can ride `pendingOp` (D125 widening; a 0.479 record never holds it). The park is
+    the EXISTING `attachCards` prompt with `max` and `maxPerTarget` already spelled, so the 0.479
+    ROLLBACK reading of a parked Overflowing Wishes is "resumes AS BUILT" (its apply is
+    `attachFromZoneApply` against the persisted prompt and never reads `each`); off the park, 0.479
+    has neither reader row, so the three sentences are skipped loudly.
+
     🆕🆕🆕 **STAYS 42 AT D595 — WP13 ADDS NO OP, KEY, GameState, PendingStage, PROMPT OR WIRE KEY.**
     (Placed ABOVE the D594 block.) The readers claim 8 more `me` attack TEXTS (11 printings): five
     `coinFlipGate`s over shipped ops and three `programPerHeads` over shipped ops. The card row is not
