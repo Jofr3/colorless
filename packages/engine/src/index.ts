@@ -20253,6 +20253,17 @@ import type { GameState, Seat } from "./types";
     `expect(manifest.version)`, `it(…)` titles, the declaration and `package.json` —
     **not** as a value-keyed grep — because a value-keyed grep is precisely the mechanism
     that ate D500's heading.)
+    🆕🆕🆕 engineVersion 0.476.0 → **0.477.0** (D593 — WP07: MORE `me` CLAUSE ROWS AND THE "FADE
+    OUT" OBJECTS; `MATCH_RECORD_VERSION` STAYS 42 (apps/api match.ts "STAYS 42 AT D593")).
+    effects.ts: five `CONDITIONAL_DAMAGE_CLAUSES` rows on shipped members (Pancham, Hop's,
+    Magneton, Spiky Rolling) plus Facade on the ONE new member `yourActiveBurnedOrPoisoned`;
+    two `ATTACK_REQUIREMENT_CLAUSES` rows (Voltaic Lightning Energy, opponent's Active
+    Confused); the EIGHTH `ATTACK_GATE_CLAUSES` row, Cutting Riposte's `alternateCostIf` {D}.
+    registry.ts: "Fade Out" ×5 on three attack-only objects named for the printed attack
+    (`BALLOON_RETURN`, `TUCK_TAIL`, `SKY_RETURN`). 9 texts / 15 printings; the `sv` reader
+    output is byte-identical. Census: Standard pool attacks 2,525 / 2,771 (`me` 793 / 1,039);
+    816 `me` printings fully built (Meowth ex ×3 still wait on Last-Ditch Catch).
+    `clauseRowsMeD593.test.ts`.)
     🆕🆕🆕 engineVersion 0.475.0 → **0.476.0** (D592 — WP02: THE `me` READER WORDING DRIFT AND
     CORROSIVE LIQUID; `MATCH_RECORD_VERSION` STAYS 42 (apps/api match.ts "STAYS 42 AT D592")).
     effects.ts `deriveAttackEffect` reads its trimmed text through `normaliseMeWording`, a
@@ -25233,7 +25244,7 @@ import type { GameState, Seat } from "./types";
     WITNESS** — the count was re-derived every slice and the word *"three"* was carried.
     A successor of this slice inherits **81 / 61 / 17** again, over **FIVE** history
     occurrences: those four plus `deckMillFilteredScale.test.ts`'s own header arrow.) */
-export const engineVersion = "0.476.0";
+export const engineVersion = "0.477.0";
 
 export type {
   ApplyResult,

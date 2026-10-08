@@ -6,6 +6,26 @@
 > `coverage-backlog-legal.md`; its pool is unchanged and whole. The suite-side figures are
 > `censusAtHead.test.ts`'s D581 block and `censusAttackCorpusMe.ts`.
 
+## 🆕 D593 update (engine 0.477.0) — more clause rows and the "Fade Out" objects (WP07)
+
+9 attack texts / 15 `me` printings (`clauseRowsMeD593.test.ts`). Seven clause rows on shipped members: Master's Punch
+(Benched Pancham damaged), Horrifying Revenge ×2 (a Hop's Pokémon KO'd by an attack last turn), Upper Spark (evolved from
+Magneton this turn), Spiky Rolling (used Spiky Rolling last turn), Giga Railgun (needs Voltaic Lightning Energy attached),
+Brain Crush (opponent's Active Confused), plus Facade ×2 on the one new member `yourActiveBurnedOrPoisoned`. Cutting
+Riposte is the eighth `ATTACK_GATE_CLAUSES` row (`alternateCostIf` at {D}). "Fade Out" ×5 is keyed on three new
+attack-only objects named for the printed attack (Balloon Return, Tuck Tail ×3, Sky Return). Nothing dropped. **Finished:**
+Pangoro, Hop's Trevenant ×2, Magnezone, Crawdaunt, Vikavolt, Larry's Staraptor ×2, Togedemaru ex, Malamar, Drifblim, Emolga.
+Meowth ex ×3 still waits on its Ability, Last-Ditch Catch. Voltaic Lightning Energy itself is unbuilt (it provides {C}).
+
+| Column | `me` built / units (D593) | Standard pool D593 |
+|---|---|---|
+| Attacks | 793 / 1,039 (+15) | **2,525 / 2,771** |
+| Abilities | 113 / 234 | **489 / 610** |
+| Trainers | 92 / 183 | **356 / 447** |
+| Special Energy | 3 / 11 | **14 / 22** |
+
+**Fully built `me` printings: 816** (804 + 12).
+
 ## 🆕 D592 update (engine 0.476.0) — the reader wording drift and Corrosive Liquid (WP02)
 
 11 attack texts / 18 `me` printings are now read by `deriveAttackEffect` (effects.ts; `wordingDriftMeD592.test.ts`).
@@ -177,7 +197,7 @@ now logs its own "Incandescent Body".
 | Special Energy | 3 / 11 | **14 / 22** |
 
 **Fully built `me` printings: 690** (672 + 18; every other attack these Pokémon print is reader-built). Still owed from
-the D582 list: "Fade Out" ×5 (Drifblim, Meowth ex ×3, Emolga — other index, other name). Named, not in WP01: Mega Scrafty
+the D582 list: "Fade Out" ×5 (Drifblim, Meowth ex ×3, Emolga — other index, other name) [🆕🆕🆕 D593: BUILT, three new objects]. Named, not in WP01: Mega Scrafty
 ex ×3 prints Counterattack Quills at "place 5" (a 50 `damageAttacker` copy) [🆕🆕🆕 D585: BUILT, `COUNTERATTACKING_CREST`] and Antique Skull Fossil `me05-073` prints
 the "place 3" text on a fossil face.
 
@@ -215,7 +235,7 @@ D581's "alias-ready" figures, re-measured: of 47 ability units, 6 are NOT aliase
 twin program names its Ability; Numel ×2 — twin Heatran `sv06-123`'s D190 program is Armarouge's and logs "Scorching
 Armor"; a renamed copy is owed each) [🆕🆕🆕 D584: all six BUILT on renamed copies; Heatran fixed]; of 3 Special Energy, Team Rocket's Energy `me02.5-217` is not
 (tcgdex tags it `energy_type` Normal, its `sv` twin Special) [🆕 D583: aliased]; of 8 attack units, only Prism Charge prints at its twin's
-index — "Fade Out" ×5 and "Surf Back" ×2 need a new object each [🆕🆕🆕 D584: Surf Back ×2 BUILT, `FLOAT_UP`]. **New named gaps:** tcgdex tags every `me` Special
+index — "Fade Out" ×5 and "Surf Back" ×2 need a new object each [🆕🆕🆕 D584: Surf Back ×2 BUILT, `FLOAT_UP`] [🆕🆕🆕 D593: Fade Out ×5 BUILT, `BALLOON_RETURN` / `TUCK_TAIL` / `SKY_RETURN`]. **New named gaps:** tcgdex tags every `me` Special
 Energy (and three `sv` ones: Reversal, Prism, Ignition) `energy_type` Normal, so the engine's `isSpecialEnergy` answers
 false for them and the `basicEnergy` filter ("Basic Energy" searches) admits them [🆕 D583 (D539): WITHDRAWN — see the D583 update]; `me` Tera printings with NEW text (Koraidon ex `me02.5-121` prints the banner) are
 not in banners.ts. The sections below are the D581 measurement.
@@ -288,7 +308,7 @@ group wins; the grouping is a reading aid, not a census figure).
 - 3× If your opponent's Active Pokémon has exactly 6 damage counters on it, that Pokémon is Knocked Out.
 - 3× If your opponent's Pokémon is Knocked Out by damage from this attack, during your opponent's next turn, prevent all damage from and effects of attacks done to this Pokémon.
 - 3× This attack does 70 damage for each Prize card you have taken.
-- 2× If any of your Hop's Pokémon were Knocked Out by damage from an attack during your opponent's last turn, this attack does 100 more damage.
+- 2× If any of your Hop's Pokémon were Knocked Out by damage from an attack during your opponent's last turn, this attack does 100 more damage. [🆕🆕🆕 D593: BUILT]
 - 2× If you have exactly 30 cards in your hand, take 2 Prize cards. If you do, shuffle your hand into your deck.
 - 2× If you have exactly 6 Prize cards remaining, this attack does 200 more damage.
 - 2× If your opponent has 2 or fewer Prize cards remaining, this attack does 100 more damage. [🆕🆕🆕 D586: BUILT]
@@ -312,9 +332,9 @@ group wins; the grouping is a reading aid, not a census figure).
 - 1× Discard all Energy from this Pokémon and place 12 damage counters on 1 of your opponent's Pokémon.
 - 1× Double the number of damage counters on each of your opponent's Pokémon.
 - 1× During your opponent's next turn, whenever they attach an Energy card from their hand to the Defending Pokémon, place 8 damage counters on that Pokémon.
-- 1× If any of your Benched Pancham have any damage counters on them, this attack does 120 more damage.
+- 1× If any of your Benched Pancham have any damage counters on them, this attack does 120 more damage. [🆕🆕🆕 D593: BUILT]
 - 1× If this Pokémon has 2 or more damage counters on it, this attack does 90 more damage. This attack's damage isn't affected by Weakness.
-- 1× If this Pokémon has any damage counters on it, this attack can be used for {D}.
+- 1× If this Pokémon has any damage counters on it, this attack can be used for {D}. [🆕🆕🆕 D593: BUILT]
 - 1× If you have 13 or more Pokémon that have the Hide 'n' Sneak Ability in your discard pile, choose 2 of your opponent's Pokémon and quadruple the number of damage counters on each of them.
 - 1× If you have 6 or more Pokémon that have the Hide 'n' Sneak Ability in your discard pile, place 4 damage counters on each of your opponent's Pokémon.
 - 1× If your opponent's Active Pokémon is affected by a Special Condition, place 6 damage counters on 1 of your opponent's Benched Pokémon.
@@ -385,13 +405,13 @@ group wins; the grouping is a reading aid, not a census figure).
 - 3× If you have 4 or more Pokémon that have the Hide 'n' Sneak Ability in your discard pile, this attack does 140 more damage.
 - 3× If you have no cards in your hand, this attack does 160 more damage.
 - 2× If Rosa's Encouragement is in your discard pile, this attack does 150 more damage.
-- 2× If this Pokémon is Burned or Poisoned, this attack does 100 more damage.
+- 2× If this Pokémon is Burned or Poisoned, this attack does 100 more damage. [🆕🆕🆕 D593: BUILT]
 - 2× If your Benched Pokémon have any Shadowy {D} Energy attached, this attack does 70 more damage.
 - 2× You may discard all Energy from this Pokémon and have this attack do 130 more damage. [🆕🆕🆕 D589: BUILT]
 - 1× During your opponent's next turn, this Pokémon takes 100 less damage from attacks from Evolution Pokémon (after applying Weakness and Resistance).
 - 1× During your opponent's next turn, this Pokémon takes 100 more damage from attacks (after applying Weakness and Resistance).
-- 1× If this Pokémon evolved from Magneton during this turn, this attack does 120 more damage.
-- 1× If this Pokémon used Spiky Rolling during your last turn, this attack does 80 more damage.
+- 1× If this Pokémon evolved from Magneton during this turn, this attack does 120 more damage. [🆕🆕🆕 D593: BUILT]
+- 1× If this Pokémon used Spiky Rolling during your last turn, this attack does 80 more damage. [🆕🆕🆕 D593: BUILT]
 - 1× If this Pokémon's remaining HP is 50 or less, this attack does 170 more damage.
 - 1× If you have any Stage 2 {D} Pokémon on your Bench, this attack does 70 more damage.
 - 1× If you have at least 4 {L} Energy in play, this attack does 90 more damage. [🆕🆕🆕 D586: BUILT]
@@ -435,7 +455,7 @@ group wins; the grouping is a reading aid, not a census figure).
 - 3× Shuffle this Pokémon and all attached cards into your deck. [🆕🆕🆕 D590: BUILT]
 - 2× Choose Basic {L} Energy cards from your discard pile up to the amount of Energy attached to all of your opponent's Pokémon and attach them to your {L} Pokémon in any way you like.
 - 1× Each player may attach up to 3 Basic Energy cards from their hand to their Pokémon in any way they like. Your opponent does this first.
-- 1× If this Pokémon has no Voltaic {L} Energy attached, this attack does nothing.
+- 1× If this Pokémon has no Voltaic {L} Energy attached, this attack does nothing. [🆕🆕🆕 D593: BUILT]
 - 1× Put 2 {R} Energy attached to this Pokémon into your hand.
 - 1× Search your deck for an Energy card and attach it to 1 of your Benched {G} Pokémon. Then, shuffle your deck.
 
@@ -474,7 +494,7 @@ group wins; the grouping is a reading aid, not a census figure).
 
 ### Special Conditions — 2 text(s) / 2 printing(s)
 
-- 1× If your opponent's Active Pokémon isn't Confused, this attack does nothing.
+- 1× If your opponent's Active Pokémon isn't Confused, this attack does nothing. [🆕🆕🆕 D593: BUILT]
 - 1× You may have this Pokémon also do 60 damage to itself and make your opponent's Active Pokémon Paralyzed.
 
 ### Other — 4 text(s) / 8 printing(s)

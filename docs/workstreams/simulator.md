@@ -30027,3 +30027,27 @@ decisions (1) and (2) after D580. Engine 0.464.0 → 0.465.0. The Mega ex rule i
 - **Census.** Standard pool attacks **2510 / 2771** (`me` 778 / 1,039; abilities 489 / 610, trainers 356 / 447 and special
   energy 14 / 22 unmoved); 804 `me` printings fully built.
 - **Owed.** See `progress.md` NEXT. The whole-corpus sweep is PENDING.
+
+## D593 — WP07: more `me` clause rows and the "Fade Out" objects (engine 0.477.0, `MATCH_RECORD_VERSION` stays 42)
+
+**Status:** ✅ BUILT in the `luminous_ui-mega` worktree on D592 (`641272f4`), NOT committed.
+
+- **9 attack texts / 15 `me` printings.** Five `CONDITIONAL_DAMAGE_CLAUSES` rows: Pancham (`yourBenchNamedDamaged`), Hop's
+  (`yourPokemonKoedOnOpponentsLastTurn` with `owner` and `byAttack`), Magneton (`yourActiveEvolvedFromThisTurn`), Spiky Rolling
+  (`yourActiveUsedAttackLastTurn`), and Facade on the one new member `yourActiveBurnedOrPoisoned`. Two
+  `ATTACK_REQUIREMENT_CLAUSES` rows: "Voltaic Lightning Energy" (`yourActiveHasNamedEnergyAttached`) and the opponent's Active
+  Confused (`opponentActiveConfused`).
+- **Cutting Riposte** is the eighth `ATTACK_GATE_CLAUSES` row: `alternateCostIf` `yourActiveDamaged` at {D}, the {F} row at
+  the printed type. Derived rather than a registry `attackGate`, because every registry gate is tied to a derivation
+  (`derivedAttackGate.test.ts`). The seven-row ordinal claims are annotated.
+- **"Fade Out" ×5**: Lillie's Comfey's `returnSelf` to hand on three new attack-only objects named for the printed attack and
+  keyed at its printed index — `BALLOON_RETURN` (Drifblim, idx 1), `TUCK_TAIL` (Meowth ex ×3, idx 0), `SKY_RETURN` (Emolga,
+  idx 1). No `optional`: nothing is printed "you may". Meowth ex's Ability stays unbuilt.
+- **The `sv` reader output is byte-identical**: every `deriveAttack*` reader and both splitters over the 1,091 corpus sentences
+  were dumped before and after; only the 8 `me` row sentences differ.
+- **Known limit (not this slice's):** Voltaic Lightning Energy is an unauthored Special Energy and provides {C}.
+- **Suite.** `clauseRowsMeD593.test.ts` (31): the texts against the `me` corpus, the readings, near misses, the eighth gate
+  row's disjointness, and each row on a board against a control (Spiky Rolling and Brain Crush also played out over two turns).
+- **Census.** Standard pool attacks **2525 / 2771** (`me` 793 / 1,039; abilities 489 / 610, trainers 356 / 447 and special
+  energy 14 / 22 unmoved); 816 `me` printings fully built.
+- **Owed.** See `progress.md` NEXT. The whole-corpus sweep is PENDING.

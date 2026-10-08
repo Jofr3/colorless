@@ -403,7 +403,8 @@ const SECOND_PLAYERS_FIRST_TURN = {
 //    `PassiveEffects.attackCostClause`, Noivern / Kyurem, read by `attackCostAt` through
 //    `passivesOf` and §9-suppressible — which NO row of this table derives and no
 //    `attackGate` row authors; this table, its seven rows and `ABILITY_ATTACK_GATE_IDS`' 17
-//    stand.)
+//    stand.) (🆕🆕🆕 D593: *"its seven rows"* is D545's figure — EIGHT; row 8 is Cutting Riposte's
+//    {D} cost clause, a `me` printing, driven in `clauseRowsMeD593.test.ts`.)
 
 describe("D444 §1 — the clause→gate table, driven row against row", () => {
   it("🛑 the two `If you go …` rows are OPPOSITE, and one of them carries NO condition", () => {
@@ -875,6 +876,6 @@ describe("D444 §6 — `MATCH_RECORD_VERSION` stays 29, driven over bytes both w
     // D208's debt and D275's mutant: `engineVersion` and `packages/engine/package.json`
     // are one fact with two spellings, and the pin is authored HERE rather than
     // inherited (D427 — count your own suite's pin).
-    expect(engineVersion).toBe("0.476.0");
+    expect(engineVersion).toBe("0.477.0");
   });
 });

@@ -301,7 +301,7 @@ describe("§1 — both sentences are WHOLE gate clauses, and nothing else moved"
     });
   });
 
-  it("all SEVEN rows are pairwise disjoint under the leading AND trailing splits", () => {
+  it("all SEVEN rows are pairwise disjoint under the leading AND trailing splits (🆕🆕🆕 D593: the list's EIGHTH row, Cutting Riposte's {D}, is clauseRowsMeD593 §1's)", () => {
     const all = [...OLD_CLAUSES, ALT, WAIVE];
     expect(new Set(all).size).toBe(7);
     for (const a of all) {

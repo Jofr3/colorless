@@ -2159,6 +2159,15 @@ export interface MatchRecord {
     `turn:action.discardable` — 🛑 **DEPLOY THE SERVER FIRST**: an old client's `z.object` STRIPS
     the unknown key, while a new client's REQUIRED key refuses an old server's frame.
 
+    🆕🆕🆕 **STAYS 42 AT D593 — WP07 ADDS NO OP, KEY, GameState, PendingStage, PROMPT OR WIRE KEY.**
+    (Placed ABOVE the D592 block.) One `BoardCondition` member (`yourActiveBurnedOrPoisoned`) is
+    new, but a condition is read off the board at attack time and never persisted: no op, stage or
+    record carries one. Seven clause rows and an eighth `ATTACK_GATE_CLAUSES` row read 8 `me` attack
+    TEXTS (10 printings) differently, and five `me` ids gain attack-only registry keys ("Fade Out"
+    as `returnSelf` to hand, an op v42 already carries). No card row is read differently, so a v42
+    match in flight holding those faces in its persisted `cardPool` gains the programs mid-match (a
+    0.476 rollback puts them back on the skipped-effect path).
+
     🆕🆕🆕 **STAYS 42 AT D592 — WP02 ADDS NO OP, KEY, GameState, PendingStage, PROMPT OR WIRE KEY.**
     (Placed ABOVE the D591 block.) `deriveAttackEffect` now reads 11 more `me` attack sentences (18
     printings): ten `me` phrasings through effects.ts `normaliseMeWording` and Corrosive Liquid. The

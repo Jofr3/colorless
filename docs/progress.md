@@ -3,7 +3,9 @@
 > Update this at the **end of every session**: bump the status table, append a
 > session-log entry, and rewrite the **Resume point** to the next concrete action.
 
-**Last updated:** 2026-10-08 — build session #532 (**P3-M5 — D592, *WP02 — THE `me` READER WORDING DRIFT AND CORROSIVE LIQUID: 11 attack texts / 18 `me` printings read by `deriveAttackEffect` — ten `me` phrasings through a six-row synonym table (`normaliseMeWording`) onto the shipped `sv` wording, `sv` classification byte-identical, and Corrosive Liquid as Megaton Blower's two sweeps; Mega Dragalge ex ×3 finished; Standard pool attacks 2510 / 2771; 804 `me` printings fully built*** — engine 0.476.0, MRV 42, NOT committed; the sweep PENDING)
+**Last updated:** 2026-10-08 — build session #533 (**P3-M5 — D593, *WP07 — MORE `me` CLAUSE ROWS AND THE "FADE OUT" OBJECTS: 9 attack texts / 15 `me` printings — seven clause rows on shipped members plus Facade on the one new member `yourActiveBurnedOrPoisoned`, Cutting Riposte as the eighth gate-clause row, and "Fade Out" ×5 on three attack-only objects named for the printed attack; `sv` reader output byte-identical; Standard pool attacks 2525 / 2771; 816 `me` printings fully built*** — engine 0.477.0, MRV 42, NOT committed; the sweep PENDING)
+
+**Last updated (was):** 2026-10-08 — build session #532 (**P3-M5 — D592, *WP02 — THE `me` READER WORDING DRIFT AND CORROSIVE LIQUID: 11 attack texts / 18 `me` printings read by `deriveAttackEffect` — ten `me` phrasings through a six-row synonym table (`normaliseMeWording`) onto the shipped `sv` wording, `sv` classification byte-identical, and Corrosive Liquid as Megaton Blower's two sweeps; Mega Dragalge ex ×3 finished; Standard pool attacks 2510 / 2771; 804 `me` printings fully built*** — engine 0.476.0, MRV 42, NOT committed; the sweep PENDING)
 
 **Last updated (was):** 2026-10-08 — build session #531 (**P3-M5 — D591, *WP20a — THE `me` ACTIVATED ABILITIES, THE FLAPPING TRIO AND THE DRAW ENGINES: 19 `me` printings / 11 Ability texts on seven new `abilities` objects (Run Errand, Alluring Wings, Fiery / Flash-Pop / Frosty Flapping, Lunar Cycle, Flaring Magic) on shipped vocabulary; name locks only where printed; Mega Kangaskhan ex ×4 finished; Standard pool abilities 489 / 610; 796 `me` printings fully built*** — engine 0.475.0, MRV 42, NOT committed; the sweep PENDING)
 
@@ -809,6 +811,37 @@
 
 ## NEXT (resume point)
 
+> ### ▶ THE NEXT CONCRETE ACTION (written 2026-10-08, after D593)
+>
+> 🛑 **D593 IS BUILT AND NOT COMMITTED** (worktree `/home/jofre/projects/luminous_ui-mega`, branch `mega-ingest`, on D592 = `641272f4`). D593 is WP07 of the Mega backlog: more clause rows and the "Fade Out" objects. Next: a review of D593, then the landing of D581–D593 (rebase `mega-ingest` onto main; never `git add -A` — `apps/api/.wrangler` is the setup symlink).
+>
+> ✅ **`bun run check` IS GREEN**: `typecheck-coverage` OK (915 TypeScript files in 6 projects), `tsc -b`, `lint-coverage` OK (917 source files), `biome lint --error-on-warnings` (958 files), `Test Files 636 passed (636) / Tests 15063 passed (15063) / CHECK_EXIT=0` (D592: 635 / 15029; D593 adds `clauseRowsMeD593.test.ts` (31) and the census D593 block (3)).
+>
+> **(a) THE SLICE.** effects.ts: five `CONDITIONAL_DAMAGE_CLAUSES` rows on shipped members — Pancham (`yourBenchNamedDamaged`; Pangoro `me02.5-140`), Hop's (`yourPokemonKoedOnOpponentsLastTurn` `owner: "Hop"`, `byAttack`; Hop's Trevenant `me02.5-096` / `-237`), Magneton (`yourActiveEvolvedFromThisTurn`; Magnezone `me01-047`), Spiky Rolling (`yourActiveUsedAttackLastTurn`; Togedemaru ex `me02.5-149`) — and Facade (Larry's Staraptor `me02.5-170` / `-249`) on the ONE new `BoardCondition` member `yourActiveBurnedOrPoisoned` (interpreter.ts: `presentStatuses` of the caller's Active includes Burned or Poisoned; note "your Active Pokémon is Burned or Poisoned"). Two `ATTACK_REQUIREMENT_CLAUSES` rows: "Voltaic Lightning Energy" (`yourActiveHasNamedEnergyAttached`; Vikavolt `me05-026` — the printed "Voltaic {L} Energy" is `me05-084`'s name) and `opponentActiveConfused` (Malamar `me05-052`). Cutting Riposte (Crawdaunt `me01-085`) is the EIGHTH `ATTACK_GATE_CLAUSES` row, `alternateCostIf` `yourActiveDamaged` at {D}: a derived row rather than a registry `attackGate` (which the brief named), because `derivedAttackGate.test.ts` ties every registry gate to a derivation. registry.ts: `BALLOON_RETURN` (Drifblim `mep-006`, idx 1), `TUCK_TAIL` (Meowth ex `me03-062` / `-107` / `-121`, idx 0), `SKY_RETURN` (Emolga `me04-030`, idx 1) — Lillie's Comfey's `returnSelf` to hand, no `optional` (nothing printed "you may"). Nothing dropped. **The `sv` reader output is byte-identical:** every `deriveAttack*` reader and both splitters over the 1,091 corpus sentences were dumped before and after; only the 8 `me` row sentences differ.
+>
+> **(b) MRV STAYS 42** (match.ts "STAYS 42 AT D593"): a `BoardCondition` is read at attack time and never persisted; `returnSelf` to hand is a shipped op. A v42 match in flight gains the programs mid-match (a 0.476 rollback puts them back on the skipped-effect path).
+>
+> | Column | `me` D593 | Standard pool D593 |
+> |---|---|---|
+> | Attacks | 793 / 1039 | **2525 / 2771** |
+> | Abilities | 113 / 234 | **489 / 610** |
+> | Trainers | 92 / 183 | **356 / 447** |
+> | Special Energy | 3 / 11 | **14 / 22** |
+>
+> **816 `me` printings fully built** (804 + 12). Meowth ex ×3 is keyed but still waits on Last-Ditch Catch. Census D581 tally: reader [274, 757] → [281, 766], gate [3, 4] → [4, 5], residue [162, 256] → [154, 246]; registry 1200 → 1205 (non-attack unmoved at 1040); the D582–D592 rungs subtract WP07's +10 row-built printings. Known limit, not this slice's: Voltaic Lightning Energy is an unauthored Special Energy and provides {C}.
+>
+> **(c) THE MUTATION RECORD.** +29 D593 rows (4506 in all). precheck: 4506 mutants, the same 20 pre-existing broken rows (none in a D593 file). Probe `run.ts --decision D593 --allow-dirty`: 29 killed · 0 known · 0 GAP · 0 error, tree byte-identical after. Gate-witness `--only` (the 18 `opaque-anatomy-gate.ts` / `residue-census-gate.ts` rows): 18 killed · 0 error. Gates: residue-census, opaque-anatomy, splice, partition all OK.
+>
+> 🛑 **(0) THE WHOLE-CORPUS SWEEP IS PENDING** (D581–D592's too). Predicted: **4436 killed · 50 known survivor(s) · 0 GAP(S) · 20 error(s)** over **4,506** rows — 4477 + 29 = 4506; 4407 + 29 = 4436 killed; 4436 + 50 + 20 = 4506. The 20 errors are precheck's 20 broken rows (none D581–D593's); the 29 D593 rows are measured killed by the probe; the 18 gate-witness rows are measured killed. It assumes D592's prediction (4407 · 50 · 0 · 20 over 4477) holds. If it holds, D581–D593 close together. If it fails: an error count ≠ 20 means a `find` was spliced by a later edit (precheck names it); a new GAP or survivor in a D581–D592 row is that slice's open prediction failing, not D593's; one in an older row that names effects.ts' clause tables or `ATTACK_GATE_CLAUSES`, interpreter.ts' condition switch, `attackCostClause.test.ts`, `derivedAttackGate.test.ts` or a census file is a D593 edit moving it and owes a row-level re-measure before the landing.
+>
+> **D539 sweep.** No claim withdrawn outright; the seven-row ordinal of `ATTACK_GATE_CLAUSES` is annotated EIGHT where it is stated in the present tense (effects.ts `AttackGateClause` and `splitAttackGateClause` blocks, the tripwire comment, `derivedAttackGate.test.ts`'s D563 note, `attackCostClause.test.ts`'s disjointness title); the dated D545 figures stand. D582's NOT_ALIASED "Fade Out" rows are struck through (`reprintAliasMeD582.test.ts`) and the census `registryText` comment annotated. Version tax: `0.476.0` outside `docs/` was 146 files / 234 lines; 233 stepped (it() titles, `package.json`, the declaration and the D275 `find` included), 1 kept (index.ts' D592 heading).
+>
+> Still owed from the Mega backlog: Meowth ex ×3's Last-Ditch Catch, Flygon ×3 (an Active-Spot / by-attack gate on an `onKnockOut` program), Alakazam ×3's "Powerful Hand" (WP14), Pokémon Center Lady, WP33 (split in two), Mega Absol ex ×3's Terminal Period (WP36), the markup-normalising ingest fix, then the residue by mechanism.
+>
+> ---
+>
+> **ARCHIVED — the resume point D593 was built from, kept rather than overwritten** (D592 has since been committed on `mega-ingest` as `641272f4`):
+>
 > ### ▶ THE NEXT CONCRETE ACTION (written 2026-10-08, after D592)
 >
 > 🛑 **D592 IS BUILT AND NOT COMMITTED** (worktree `/home/jofre/projects/luminous_ui-mega`, branch `mega-ingest`, on D591 = `52e966a4`). D592 is WP02 of the Mega backlog: the reader wording drift and Corrosive Liquid. Next: a review of D592, then the landing of D581–D592 (rebase `mega-ingest` onto main; never `git add -A` — `apps/api/.wrangler` is the setup symlink).
@@ -34810,7 +34843,8 @@ the next api deploy (D18).
 |---|---|---|
 | backend-data | P1 | ✅ M1–M9 + P2-M1 + task-17 api deployed (Worker `9b1ec1d1`, 2026-07-16); OAuth secrets pending (user) |
 | deck-builder | P2 | ✅ ALL 19 tasks closed (task 17 landed + e2e-verified locally); only follow-ups left |
-| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D592, *WP02 — the `me` reader wording drift and Corrosive Liquid: 11 attack texts / 18 `me` printings read by `deriveAttackEffect` (a six-row synonym table onto the `sv` wording, `sv` classification byte-identical); Mega Dragalge ex ×3 finished; attacks 2510 / 2771*** — engine 0.476.0, MRV 42, NOT committed; the sweep PENDING) |
+| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D593, *WP07 — more `me` clause rows and the "Fade Out" objects: 9 attack texts / 15 `me` printings (seven clause rows, Facade on `yourActiveBurnedOrPoisoned`, Cutting Riposte's {D} gate row, Fade Out ×5 on three objects); attacks 2525 / 2771*** — engine 0.477.0, MRV 42, NOT committed; the sweep PENDING) |
+| simulator (prior) | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D592, *WP02 — the `me` reader wording drift and Corrosive Liquid: 11 attack texts / 18 `me` printings read by `deriveAttackEffect` (a six-row synonym table onto the `sv` wording, `sv` classification byte-identical); Mega Dragalge ex ×3 finished; attacks 2510 / 2771*** — engine 0.476.0, MRV 42, NOT committed; the sweep PENDING) |
 | simulator (prior) | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D591, *WP20a — the `me` activated Abilities: 19 `me` printings / 11 Ability texts on seven new objects (the Flapping trio, Run Errand, Alluring Wings, Lunar Cycle, Flaring Magic); Mega Kangaskhan ex ×4 finished; abilities 489 / 610*** — engine 0.475.0, MRV 42, NOT committed; the sweep PENDING) |
 | simulator (prior) | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D590, *WP05 — the `me` on-evolve Abilities and the self-shuffle: 13 `me` printings / 9 Ability texts on nine new `onEvolve` objects plus Jumping Shot / Aqua Return ×2 derived; Flygon ×3 dropped; attacks 2492 / 2771, abilities 470 / 610*** — engine 0.474.0, MRV 42, NOT committed; the sweep PENDING) |
 | simulator (prior) | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D589, *WP08 — Mega Greninja ex and the optional-cost family: 4 `me` attack sentences / 9 printings on a third optional-cost skeleton plus Mortal Shuriken ×5; Mega Greninja ex ×5 and Mega Manectric ex ×2 finished; attacks 2489 / 2771, abilities 457 / 610*** — engine 0.473.0, MRV 42, NOT committed; the sweep PENDING) |
@@ -35020,6 +35054,17 @@ the next api deploy (D18).
 Legend: 📝 backlog · 📋 specced · 🔎 research · 🚧 in progress · ✅ done
 
 ## Session log
+
+### 2026-10-08 — build session #533 (P3-M5 — D593)
+
+**WP07 — MORE `me` CLAUSE ROWS AND THE "FADE OUT" OBJECTS. `MATCH_RECORD_VERSION` STAYS 42.**
+
+Built in the `luminous_ui-mega` worktree on D592 (`641272f4`); the main checkout was not touched. Every id `git grep`-ped
+(only D582's five NOT-aliased "Fade Out" rows referenced) and every text read off the LOCAL D1 first: 9 texts / 15
+printings, as briefed; nothing dropped. Seven clause rows plus the one new member `yourActiveBurnedOrPoisoned`; Cutting
+Riposte as the eighth gate-clause row (derived, not a registry gate — the brief's wording, changed for the agreement rung);
+three attack-only "Fade Out" objects. `sv` reader output byte-identical by a before/after dump. `clauseRowsMeD593.test.ts`
+(31). Version tax 233 stepped / 1 kept. +29 mutant rows, all KILLED. Sweep PENDING (NEXT (0)). NOT committed.
 
 ### 2026-10-08 — build session #532 (P3-M5 — D592)
 

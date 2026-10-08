@@ -1540,6 +1540,15 @@ export type BoardCondition =
       of `opponentActivePoisoned` and read the same way (`poisonDamage > 0`, as
       the Checkup reads it). False with an empty Active Spot. */
   | { kind: "yourActivePoisoned" }
+  /** 🆕🆕🆕 **D593** — §12, YOUR Active Pokémon is **Burned or Poisoned**: Larry's Staraptor
+      `me02.5-170` / `-249` "Facade" ({C}, 60+, **+100**), 2 legal printings (LOCAL D1). The
+      member above widened by one status, read through `presentStatuses` (the projection
+      `opponentActiveBurned` reads), so each half is a narrowing of
+      `yourActiveHasSpecialCondition` by construction. ONE member and not an `anyOf`: the
+      union has no disjunction, and this is the only printed self "Burned or Poisoned". A
+      Confused / Asleep / Paralyzed Active alone does not satisfy it. False with an empty
+      Active Spot. */
+  | { kind: "yourActiveBurnedOrPoisoned" }
   /** 🆕 D377 — §12, your opponent's Active Pokémon is **BURNED**: Slugma
       `sv05-028` "Roasting Heat" ({R}, 10+, **+40**), 1 legal printing, and — read
       from the OTHER consequent — Centiskorch `sv05-037` "Charring Breath"
@@ -20507,6 +20516,12 @@ const CONDITIONAL_DAMAGE_CLAUSES = new Map<string, BoardCondition>([
     "any of your Benched Cubone have any damage counters on them",
     { kind: "yourBenchNamedDamaged", name: "Cubone" },
   ],
+  // 🆕🆕🆕 D593 — Pangoro "Master's Punch" (`me02.5-140`, 80+, +120, 1 legal printing, LOCAL D1):
+  // the row above at the printed name. Still a literal row, for the reason above.
+  [
+    "any of your Benched Pancham have any damage counters on them",
+    { kind: "yourBenchNamedDamaged", name: "Pancham" },
+  ],
   // Seviper sv01-128 "Venoshock" (+120) and Paldean Clodsire sv03-129, same
   // attack NAME and same clause on two different cards. NOT the same clause as
   // Okidogi ex sv06.5-036/-082/-090's "If THIS Pokémon is Poisoned" (+130), which
@@ -20526,6 +20541,9 @@ const CONDITIONAL_DAMAGE_CLAUSES = new Map<string, BoardCondition>([
   // as Talonflame's does four rows up; the CROSS-BOARD twin two rows up is one
   // possessive apart, and the pool prints no third reading of "is Poisoned".
   ["this Pokémon is Poisoned", { kind: "yourActivePoisoned" }],
+  // 🆕🆕🆕 D593 — Larry's Staraptor "Facade" (`me02.5-170`/`-249`, 60+, +100, 2 legal printings,
+  // LOCAL D1): the row above widened by one status, on the one new member this slice buys.
+  ["this Pokémon is Burned or Poisoned", { kind: "yourActiveBurnedOrPoisoned" }],
   // 🆕🆕 D377 — Slugma `sv05-028` "Roasting Heat" ({R}, 10+, **+40**), 1 legal
   // printing. THE SAME MEMBER IS READ FROM THE OTHER CONSEQUENT: Centiskorch
   // `sv05-037` "Charring Breath" prints the NEGATION under "does nothing", and that
@@ -21323,6 +21341,12 @@ const CONDITIONAL_DAMAGE_CLAUSES = new Map<string, BoardCondition>([
     "this Pokémon evolved from Salandit during this turn",
     { kind: "yourActiveEvolvedFromThisTurn", name: "Salandit" },
   ],
+  // 🆕🆕🆕 D593 — Magnezone "Upper Spark" (`me01-047`, 50+, +120, 1 legal printing, LOCAL D1): the
+  // Gimmighoul row at the printed name; a fourth literal row, D393's template refusal unchanged.
+  [
+    "this Pokémon evolved from Magneton during this turn",
+    { kind: "yourActiveEvolvedFromThisTurn", name: "Magneton" },
+  ],
   // 🆕🆕 D394 — "this Pokémon used {AttackName} during your last turn": Falinks
   // `sv07-088` "All-Out Attack" ({C}{C}, 30+, +90, index 1 of TWO — its own index 0
   // is "Form Ranks") and Weezing `sv09-092` "Crazy Blast" ({D}{C}, 50+, +120,
@@ -21365,6 +21389,13 @@ const CONDITIONAL_DAMAGE_CLAUSES = new Map<string, BoardCondition>([
     "this Pokémon used Pervasive Gas during your last turn",
     { kind: "yourActiveUsedAttackLastTurn", attack: "Pervasive Gas" },
   ],
+  // 🆕🆕🆕 D593 — Togedemaru ex "Spiky Rolling" (`me02.5-149`, 80+, +80, 1 legal printing, LOCAL D1):
+  // the attack names ITSELF (index 1 of two), so the window is the body's own previous Spiky
+  // Rolling. A third literal row; D394's refusal of the template stands.
+  [
+    "this Pokémon used Spiky Rolling during your last turn",
+    { kind: "yourActiveUsedAttackLastTurn", attack: "Spiky Rolling" },
+  ],
   // 🆕 D326 — the "revenge" clause, and the family's first that reads a window
   // which has CLOSED rather than the board in front of the attacker: Iron Leaves
   // sv06-019 "Avenging Edge" (100+, +60), Revavroom sv06-125 "Rally Back"
@@ -21403,6 +21434,12 @@ const CONDITIONAL_DAMAGE_CLAUSES = new Map<string, BoardCondition>([
   [
     "any of your Ethan's Pokémon were Knocked Out by damage from an attack during your opponent's last turn",
     { kind: "yourPokemonKoedOnOpponentsLastTurn", owner: "Ethan", byAttack: true },
+  ],
+  // 🆕🆕🆕 D593 — Hop's Trevenant "Horrifying Revenge" (`me02.5-096`/`-237`, 30+, +100, 2 legal
+  // printings, LOCAL D1): the second owner the paragraph above anticipated. Still a literal row.
+  [
+    "any of your Hop's Pokémon were Knocked Out by damage from an attack during your opponent's last turn",
+    { kind: "yourPokemonKoedOnOpponentsLastTurn", owner: "Hop", byAttack: true },
   ],
 ]);
 // The printed energy-type notations, BOTH of them: the modern brace CODE
@@ -22254,6 +22291,16 @@ const ATTACK_REQUIREMENT_CLAUSES = new Map<string, BoardCondition>([
   // 🆕🆕🆕 D586 — Medicham "Seventh Kick" (`me02.5-104`/`-241`, {F}, 150, 2 legal printings,
   // LOCAL D1): the row above at count 7. Strict equality, the skeleton owns the "don't".
   ["you don't have exactly 7 cards in your hand", { kind: "yourHandExactly", count: 7 }],
+  // 🆕🆕🆕 D593 — Vikavolt "Giga Railgun" (`me05-026`, {L}{L}, 260, 1 legal printing, LOCAL D1): the
+  // Team Rocket's Zapdos bonus member read under the cancel consequent. The printed "Voltaic {L}
+  // Energy" is the CARD NAME "Voltaic Lightning Energy" (`me05-084`, LOCAL D1), compared by name.
+  [
+    "this Pokémon has no Voltaic {L} Energy attached",
+    { kind: "yourActiveHasNamedEnergyAttached", name: "Voltaic Lightning Energy" },
+  ],
+  // 🆕🆕🆕 D593 — Malamar "Brain Crush" (`me05-052`, {D}, 130, 1 legal printing, LOCAL D1): Tapu
+  // Lele's bonus member under the cancel consequent (Centiskorch's arrangement, one status over).
+  ["your opponent's Active Pokémon isn't Confused", { kind: "opponentActiveConfused" }],
 ]);
 
 /** The board fact an attack REQUIRES in order to do anything, or null when the
@@ -37703,6 +37750,9 @@ const ATTACK_GATE_CLAUSES = [
   // text (D395's clause-only path, `body === ""`). See `ATTACK_GATE_CLAUSE_GATES`.
   "If this Pokémon has any damage counters on it, this attack can be used for {F}.",
   "If this Pokémon is affected by a Special Condition, ignore all Energy in this attack's cost.",
+  // 🆕🆕🆕 D593 — the eighth row: Crawdaunt "Cutting Riposte" (`me01-085`, 1 legal printing,
+  // LOCAL D1), row 6 at {D}. A COST clause, whole printed text (`body === ""`).
+  "If this Pokémon has any damage counters on it, this attack can be used for {D}.",
 ] as const;
 
 /** 🆕🆕 D444 — the four printed spellings, AS A TYPE. `as const` above turns the
@@ -37729,7 +37779,10 @@ const ATTACK_GATE_CLAUSES = [
     tuple: 4 rows at D517 (`53dde5bc`), 5 at D541 (`54e67649`), 5 at D544 (`0f4d7257`), 7
     here. Rows 6 and 7 are COST clauses, not timing clauses (see the D545 note on
     `ATTACK_GATE_CLAUSES`). The block's point is unmoved and is why this line could rot
-    again: the union steps with the tuple BY CONSTRUCTION. */
+    again: the union steps with the tuple BY CONSTRUCTION.
+    🆕🆕🆕 **D593 — *"AT D545's HEAD THE LIST CARRIES SEVEN"* IS D545's FIGURE: AT D593 IT
+    CARRIES EIGHT.** Row 8 is Crawdaunt `me01-085` "Cutting Riposte", row 6 at {D} — a third
+    COST clause, a `me` printing (the `sv` gate population is unmoved). */
 export type AttackGateClause = (typeof ATTACK_GATE_CLAUSES)[number];
 
 /** The condition 10 of the 14 printings share, spelled once: the going-SECOND
@@ -37883,13 +37936,21 @@ const ATTACK_GATE_CLAUSE_GATES: Record<AttackGateClause, AttackTimingGate> = {
     kind: "costWaivedIf",
     condition: { kind: "yourActiveHasSpecialCondition" },
   },
+  // 🆕🆕🆕 D593 — the eighth row (Crawdaunt `me01-085` "Cutting Riposte", printed {D}{D}{C}): the
+  // sixth row's gate at the printed alternate. Never stricter than printed (D545).
+  "If this Pokémon has any damage counters on it, this attack can be used for {D}.": {
+    kind: "alternateCostIf",
+    condition: { kind: "yourActiveDamaged" },
+    cost: ["Darkness"],
+  },
 };
 
 /** 🛑 D282 — THE SPLIT ANCHOR: take a printed timing-gate clause off an attack's
     effect text and hand back the body sentence beside it, or `null` when the text
     carries none. 🆕🆕🆕 **D545 LANDING — *"timing-gate clause"* IS WITHDRAWN AS A
     DESCRIPTION OF EVERY ROW**: the closed list has SEVEN rows and rows 6 and 7 are COST
-    clauses (corpus `:316`, `:324`), each claimed whole with `body: ""`; the splitter
+    clauses (corpus `:316`, `:324`), each claimed whole with `body: ""` [🆕🆕🆕 D593: EIGHT rows —
+    row 8, Cutting Riposte's {D}, is a third COST clause, claimed the same way]; the splitter
     treats them exactly as it treats the five timing rows. 🆕🆕🆕 **D541 — "off the FRONT" / "the body sentence BEHIND it" /
     "does not OPEN with one" is what this sentence used to say, and all three are
     withdrawn together**: the clause is taken off the FRONT or off the END, keyed on
@@ -37999,7 +38060,8 @@ export function splitAttackGateClause(
   // accounted-for clause in front and ANOTHER behind it, and a loop that returned
   // at the first hit would hand the caller a `body` that still contains a printed
   // timing gate the caller has been told it does not (🆕🆕🆕 D545: or COST clause —
-  // rows 6 and 7 of the seven are cost clauses, and the tripwire covers them unchanged). Nothing in the catalog
+  // rows 6 and 7 of the seven are cost clauses, and the tripwire covers them unchanged; 🆕🆕🆕 D593: and
+  // row 8 of eight, Cutting Riposte's {D}). Nothing in the catalog
   // prints two — measured over all 640 corpus sentences / 1,732 legal units at
   // this head, `leading.length + trailing.length <= 1` for every one — and **the
   // day one does is not the day to guess which end the caller accounted for**.

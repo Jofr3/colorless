@@ -5658,6 +5658,15 @@ export function conditionHolds(state: GameState, seat: Seat, cond: BoardConditio
       const active = state.players[seat].active;
       return active !== null && active.conditions.poisonDamage > 0;
     }
+    case "yourActiveBurnedOrPoisoned": {
+      // 🆕🆕🆕 D593 — Larry's Staraptor "Facade": "If this Pokémon is Burned or Poisoned".
+      // The SELF seat, through `presentStatuses` (`opponentActiveBurned`'s projection), so
+      // either half alone holds and a rotation status alone does not.
+      const active = state.players[seat].active;
+      if (active === null) return false;
+      const present = presentStatuses(active.conditions);
+      return present.includes("burned") || present.includes("poisoned");
+    }
     case "opponentActiveBurned": {
       // 🆕 D377 — "your opponent's Active Pokémon is Burned" (Slugma sv05-028
       // "Roasting Heat", +40) and, through `ATTACK_REQUIREMENT_CLAUSES`, the printed
@@ -7290,6 +7299,9 @@ export function conditionNote(cond: BoardCondition): string {
       // The printed pronoun is dropped exactly as `yourActiveDamaged` drops it —
       // a reject/tooltip fragment is read off the BOARD (D116).
       return "your Active Pokémon is Poisoned";
+    case "yourActiveBurnedOrPoisoned":
+      // 🆕🆕🆕 D593 — the pronoun dropped as `yourActivePoisoned` drops it (D116).
+      return "your Active Pokémon is Burned or Poisoned";
     case "opponentActiveBurned":
       // 🆕 D377 — a full round-trip, like the two Poison notes and unlike D376's
       // neighbour: the clause names no pronoun, no timing word and no energy glyph,

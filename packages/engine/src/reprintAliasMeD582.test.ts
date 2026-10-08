@@ -144,11 +144,9 @@ const NOT_ALIASED: readonly (readonly [string, string])[] = [
   // [🆕🆕🆕 D583 (D539): ~~Team Rocket's Energy `me02.5-217`~~ is ALIASED at D583 — cards.ts reads a Special
   // Energy off its printed text, so the tag no longer separates the faces (specialEnergyTagD583.test.ts §4).]
   // A registry ATTACK sentence at another INDEX under another attack NAME: a new object each.
-  ["mep-006", "Drifblim — Balloon Return (idx 1) ~ Lillie's Comfey's Fade Out"],
-  ["me03-062", "Meowth ex — Tuck Tail (idx 0) ~ Fade Out; its Ability Last-Ditch Catch is unbuilt"],
-  ["me03-107", "Meowth ex — the same"],
-  ["me03-121", "Meowth ex — the same"],
-  ["me04-030", "Emolga — Sky Return (idx 1) ~ Fade Out"],
+  // [🆕🆕🆕 D593: ~~Drifblim `mep-006`~~, ~~Meowth ex `me03-062` / `-107` / `-121`~~ and ~~Emolga
+  // `me04-030`~~ are KEYED at D593 on the new `BALLOON_RETURN` / `TUCK_TAIL` / `SKY_RETURN` (Fade Out's
+  // op at each printed index; clauseRowsMeD593.test.ts). Meowth ex's Last-Ditch Catch is still unbuilt.]
   // [🆕🆕🆕 D584: ~~Drifloon `30th-073` / `-136`~~ (Float Up idx 0 ~ Gholdengo's Surf Back idx 1) are
   // KEYED at D584 on the new `FLOAT_UP` (Surf Back's ops at index 0).]
 ];
@@ -226,6 +224,9 @@ const KEYED_AT_D591 = [
   "me04-013",
   "mep-074",
 ];
+
+/** 🆕🆕🆕 D593 — the `me` ids WP07 keys: "Fade Out" ×5 under three printed names (clauseRowsMeD593.test.ts). */
+const KEYED_AT_D593 = ["mep-006", "me03-062", "me03-107", "me03-121", "me04-030"];
 
 /** The five `me` Tera reprints banners.ts carries (each printed face checked on tcgdex's image). */
 const ME_TERA = ["me02.5-038", "me02.5-057", "me02.5-160", "me02.5-179", "me02.5-277"] as const;
@@ -307,7 +308,7 @@ describe("D582 — the `me` reprint-alias tier: 99 printings on 66 existing prog
     expect(new Set(ALIASES.map(([, twin]) => programFor(twin))).size).toBe(66);
   });
 
-  it("the registry's `me` keys are EXACTLY this table — nothing keyed outside it (🆕🆕🆕 D583: plus Team Rocket's Energy `me02.5-217`; 🆕🆕🆕 D584: plus the 18 tier-2 keys; 🆕🆕🆕 D585: plus the 19 WP19 keys; 🆕🆕🆕 D586: plus Carbink ×2; 🆕🆕🆕 D587: plus the 19 WP04 Trainer keys; 🆕🆕🆕 D588: plus the 17 WP22 Trainer keys; 🆕🆕🆕 D589: plus Mega Greninja ex ×5; 🆕🆕🆕 D590: plus the 13 WP05 on-evolve keys; 🆕🆕🆕 D591: plus the 19 WP20a activated Ability keys)", () => {
+  it("the registry's `me` keys are EXACTLY this table — nothing keyed outside it (🆕🆕🆕 D583: plus Team Rocket's Energy `me02.5-217`; 🆕🆕🆕 D584: plus the 18 tier-2 keys; 🆕🆕🆕 D585: plus the 19 WP19 keys; 🆕🆕🆕 D586: plus Carbink ×2; 🆕🆕🆕 D587: plus the 19 WP04 Trainer keys; 🆕🆕🆕 D588: plus the 17 WP22 Trainer keys; 🆕🆕🆕 D589: plus Mega Greninja ex ×5; 🆕🆕🆕 D590: plus the 13 WP05 on-evolve keys; 🆕🆕🆕 D591: plus the 19 WP20a activated Ability keys; 🆕🆕🆕 D593: plus the 5 WP07 Fade Out keys)", () => {
     const me = registryCardIds().filter((id) => /^(me|30th)/.test(id));
     // 🆕🆕🆕 D583 — the one `me` key outside the D582 table: Team Rocket's Energy, on `sv10-182`'s object.
     // 🆕🆕🆕 D584 — and the 18 tier-2 keys (`KEYED_AT_D584`).
@@ -326,6 +327,8 @@ describe("D582 — the `me` reprint-alias tier: 99 printings on 66 existing prog
     expect(KEYED_AT_D590).toHaveLength(13);
     // 🆕🆕🆕 D591 — and WP20a's 19 activated Ability keys (`KEYED_AT_D591`).
     expect(KEYED_AT_D591).toHaveLength(19);
+    // 🆕🆕🆕 D593 — and WP07's 5 attack-only Fade Out keys (`KEYED_AT_D593`).
+    expect(KEYED_AT_D593).toHaveLength(5);
     expect(me.sort()).toEqual(
       [
         ...ALIASES.map(([id]) => id),
@@ -338,6 +341,7 @@ describe("D582 — the `me` reprint-alias tier: 99 printings on 66 existing prog
         ...KEYED_AT_D589,
         ...KEYED_AT_D590,
         ...KEYED_AT_D591,
+        ...KEYED_AT_D593,
       ].sort(),
     );
     // …and no twin is a `me` id: every program the tier reaches was built for the `sv` serie.

@@ -17192,6 +17192,30 @@ const FLARING_MAGIC: CardProgram = {
   ],
 };
 
+// ── 🆕🆕🆕 D593 — WP07: "Fade Out" UNDER THREE `me` ATTACK NAMES. Lillie's Comfey `sv09-068`'s index-1
+//    op (*"Put this Pokémon and all attached cards into your hand."*, no "you may", so no `optional`)
+//    on three NEW attack-only objects named for the printed attack, each at its own printed index
+//    (the alias would sit at the wrong index or log the wrong name). Texts off the LOCAL D1. ──
+
+/** 🆕🆕🆕 **D593 — Drifblim `mep-006` "Balloon Return"** (attack index **1**, {P}{P}, 110). Index 0
+    "Disruptive Wind" keeps deriving. */
+const BALLOON_RETURN: CardProgram = {
+  attack: { 1: [{ op: "returnSelf", dest: "hand" }] },
+};
+
+/** 🆕🆕🆕 **D593 — Meowth ex `me03-062` / `-107` / `-121` "Tuck Tail"** (attack index **0**,
+    {C}{C}{C}, 60). Attack-only: its Ability "Last-Ditch Catch" stays UNBUILT, so the three
+    printings are not fully built. */
+const TUCK_TAIL: CardProgram = {
+  attack: { 0: [{ op: "returnSelf", dest: "hand" }] },
+};
+
+/** 🆕🆕🆕 **D593 — Emolga `me04-030` "Sky Return"** (attack index **1**, {L}, 30). Index 0
+    "Minor Errand-Running" keeps deriving. */
+const SKY_RETURN: CardProgram = {
+  attack: { 1: [{ op: "returnSelf", dest: "hand" }] },
+};
+
 const REGISTRY: Record<string, CardProgram> = {
   // Professor's Research (SV base prints)
   "sv01-189": PROFESSORS_RESEARCH,
@@ -18255,6 +18279,13 @@ const REGISTRY: Record<string, CardProgram> = {
   "me02.5-105": LUNAR_CYCLE, // Lunatone
   "me04-013": FLARING_MAGIC, // Delphox — discard a Basic {R}, draw until 7
   "mep-074": FLARING_MAGIC, // Delphox ("Basic Fire Energy card")
+  // 🆕🆕🆕 D593 — WP07: "Fade Out" ×5 under three printed names, MID-MAP (`raw[last]` does not move).
+  // ATTACK-only keys. `clauseRowsMeD593.test.ts` pins each face and drives the bounce.
+  "mep-006": BALLOON_RETURN, // Drifblim "Balloon Return" (attack 1) — twin `sv09-068` (Lillie's Comfey "Fade Out", attack 1)
+  "me03-062": TUCK_TAIL, // Meowth ex "Tuck Tail" (attack 0) — Ability "Last-Ditch Catch" unbuilt
+  "me03-107": TUCK_TAIL, // Meowth ex
+  "me03-121": TUCK_TAIL, // Meowth ex
+  "me04-030": SKY_RETURN, // Emolga "Sky Return" (attack 1)
   // ── D190 — THE **STANDARD-LEGAL** REPRINT-ALIAS MAP (Tier 0 of
   //    `docs/reference/coverage-backlog-legal.md`). 22 printings, 9 map targets,
   //    ZERO new code: every row below prints a sentence that is already authored
