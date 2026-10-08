@@ -2,6 +2,7 @@ import { DialogScrollArea } from "../../../components/DialogScrollArea";
 import { AutoMulliganDraw } from "../../game/AutoMulliganDraw";
 import { CardChoice, cardChoiceDialogClass, cardChoiceGridClass } from "../../game/CardChoice";
 import { ConfirmCardChoices } from "../../game/ConfirmCardChoices";
+import { DiscardEnergyChoices, energyDiscardHosts } from "../../game/DiscardEnergyChoices";
 import { PokemonChoices } from "../../game/PokemonChoice";
 import { benchLimitFor } from "../../playmat/constants";
 import { cardModelFromRedacted, projectionFromRedacted } from "../../game/projection";
@@ -1255,9 +1256,24 @@ function DiscardEnergyDialog({
   // 0..`max` is a valid answer and the empty one is the decline. The mandatory
   // scopes still need their exact count.
   const ready = scope.kind === "upTo" || picked.length === required;
+  const hosts = energyDiscardHosts(
+    {
+      you: {
+        active: board.you.active === null ? null : cardModelFromRedacted(board.you.active),
+        bench: board.you.bench.map(cardModelFromRedacted),
+      },
+      opponent: {
+        active:
+          board.opponent.active === null ? null : cardModelFromRedacted(board.opponent.active),
+        bench: board.opponent.bench.map(cardModelFromRedacted),
+      },
+    },
+    seat,
+    prompt.discardable,
+  );
 
   return (
-    <Dialog label="Discard Energy">
+    <Dialog label="Discard Energy" cardCount={hosts.length}>
       <h2 className="text-lg font-semibold text-white">{prompt.note}</h2>
       <output className="mt-1.5 block text-sm text-white/55">
         {scope.kind === "each"
@@ -1268,51 +1284,7 @@ function DiscardEnergyDialog({
               ? `Pick ${required} Energy to discard (${picked.length}/${required}).`
               : "Pick the Energy to discard."}
       </output>
-      <DialogScrollArea as="div" className="mt-3 max-h-64" contentClassName="flex flex-col gap-3">
-        {/* fieldset/legend so a screen reader says WHICH Pokémon the Energy comes
-            off — the host + spot ride the legend (two Pokémon can share a name),
-            plus the `opponent` marker (this dialog serves both boards). */}
-        {groups.map((group) => (
-          <fieldset key={group.key} className="min-w-0">
-            <legend className="text-[10px] font-semibold uppercase tracking-wide text-white/40">
-              {refName(board, seat, group.ref)} · {spotLabel(group.ref)}
-              {group.ref.seat !== seat && " · opponent"}
-            </legend>
-            <ul className="mt-1.5 flex flex-col gap-1.5">
-              {group.uids.map((uid) => {
-                const selected = picked.includes(uid);
-                // 🆕 D543 — the "upTo" cap closes rows off too, and it says so
-                // rather than going silently inert: `pick` REFUSES at `max`, and a
-                // row that does nothing when clicked is the one thing the <output>
-                // above cannot announce. The local HUD's disjunction verbatim.
-                const refused =
-                  !selected &&
-                  ((scope.kind === "total" && scope.count > 1 && picked.length >= scope.count) ||
-                    (scope.kind === "upTo" && picked.length >= scope.max));
-                return (
-                  <li key={uid}>
-                    <button
-                      type="button"
-                      aria-pressed={selected}
-                      aria-disabled={refused || undefined}
-                      onClick={() => pick(group.uids, uid)}
-                      className={`${ROW_BUTTON_BASE} ${
-                        selected
-                          ? ROW_BUTTON_SELECTED
-                          : refused
-                            ? ROW_BUTTON_DISABLED
-                            : ROW_BUTTON_ENABLED
-                      }`}
-                    >
-                      <span className="truncate">{energyName(board, seat, group.ref, uid)}</span>
-                    </button>
-                  </li>
-                );
-              })}
-            </ul>
-          </fieldset>
-        ))}
-      </DialogScrollArea>
+      <DiscardEnergyChoices hosts={hosts} scope={scope} picked={picked} onPick={pick} />
       <div className="mt-5 flex justify-end">
         <button
           type="button"

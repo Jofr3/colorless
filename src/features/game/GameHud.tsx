@@ -10,6 +10,7 @@ import { DialogScrollArea } from "../../components/DialogScrollArea";
 import { AutoMulliganDraw } from "./AutoMulliganDraw";
 import { CardChoice, cardChoiceDialogClass, cardChoiceGridClass } from "./CardChoice";
 import { ConfirmCardChoices } from "./ConfirmCardChoices";
+import { DiscardEnergyChoices, energyDiscardHosts } from "./DiscardEnergyChoices";
 import { PokemonChoices } from "./PokemonChoice";
 import { benchLimitFor } from "../playmat/constants";
 import type { CardModel } from "../playmat/types";
@@ -2909,7 +2910,7 @@ function MoveEnergySpreadDialog({
     group, and Confirm stays disabled until every group has its pick. Mounted
     only while parked on the viewer, so the useState is the per-decision reset. */
 function DiscardEnergyDialog({
-  game,
+  projection,
   viewerSeat,
   dispatch,
   prompt,
@@ -2970,9 +2971,10 @@ function DiscardEnergyDialog({
   const required =
     scope.kind === "total" ? scope.count : scope.kind === "upTo" ? scope.max : groups.length;
   const ready = scope.kind === "upTo" || picked.length === required;
+  const hosts = energyDiscardHosts(projection.board, viewerSeat, prompt.discardable);
 
   return (
-    <HudDialog label="Discard Energy">
+    <HudDialog label="Discard Energy" cardCount={hosts.length}>
       <h2 className="text-lg font-semibold text-white">{prompt.note}</h2>
       {/* <output> — an implicit polite LIVE REGION (the house pattern), because
           the running total is otherwise unannounceable:
@@ -2991,73 +2993,7 @@ function DiscardEnergyDialog({
               ? `Pick ${required} Energy to discard (${picked.length}/${required}).`
               : "Pick the Energy to discard."}
       </output>
-      <DialogScrollArea as="div" className="mt-3 max-h-64" contentClassName="flex flex-col gap-3">
-        {/* fieldset/legend, not a bare heading + list: this is the only HUD
-            dialog whose candidate rows are GROUPED, and every row reads
-            "Basic Energy" or the like, so without the host being part of the
-            group's accessible name a screen reader never says WHICH Pokémon
-            the Energy would come off. The flat-list siblings need nothing. */}
-        {groups.map((group) => (
-          <fieldset key={group.key} className="min-w-0">
-            {/* The SPOT rides the legend — unlike the flat sibling dialogs, which
-                name the Pokémon alone — because for a Crushing Hammer WHICH host
-                loses the Energy is the entire decision, and two Pokémon sharing a
-                name would otherwise give two identical legends. (Interchangeable
-                copies of one Energy print on ONE Pokémon collapse in the engine to
-                as many rows as the pick could want — so a one-Energy discard shows
-                a single row, and only an exact-N discard can show repeats, where
-                identical rows are genuinely interchangeable answers.)
-                The SIDE rides it too, the same `opponent` marker
-                ChoosePokemonDialog puts on its rows: this dialog now serves both
-                boards — the opponent's for the hammer family and the viewer's OWN
-                Active for a self-discard attack cost — and the legend is the only
-                context a screen reader gets for the rows under it. */}
-            <legend className="text-[10px] font-semibold uppercase tracking-wide text-white/40">
-              {refName(game, group.ref)} ·{" "}
-              {group.ref.spot.spot === "active" ? "Active" : `Bench ${group.ref.spot.index + 1}`}
-              {group.ref.seat !== viewerSeat && " · opponent"}
-            </legend>
-            <ul className="mt-1.5 flex flex-col gap-1.5">
-              {group.uids.map((uid) => {
-                const selected = picked.includes(uid);
-                // A row the cap has closed off says so, rather than just doing
-                // nothing when clicked: `pick` REFUSES at `count` (above 1), and
-                // a silently inert row is the one thing the <output> above cannot
-                // announce — nothing changes, so nothing is spoken. Marked
-                // aria-disabled and NOT `disabled`, so it stays focusable: the
-                // rows are how you read the offer, and dropping them out of the
-                // tab order at the cap would hide half the board from a keyboard
-                // user mid-decision.
-                // `scope.count > 1` matters: at count 1 a click REPLACES the pick,
-                // so no row is ever refused there — mirroring `pick` exactly.
-                const refused =
-                  !selected &&
-                  ((scope.kind === "total" && scope.count > 1 && picked.length >= scope.count) ||
-                    (scope.kind === "upTo" && picked.length >= scope.max));
-                return (
-                  <li key={uid}>
-                    <button
-                      type="button"
-                      aria-pressed={selected}
-                      aria-disabled={refused || undefined}
-                      onClick={() => pick(group.uids, uid)}
-                      className={`${ROW_BUTTON_BASE} ${
-                        selected
-                          ? "bg-white/[0.12] text-white ring-white/40"
-                          : refused
-                            ? ROW_BUTTON_DISABLED
-                            : ROW_BUTTON_ENABLED
-                      }`}
-                    >
-                      <span className="truncate">{cardOfUid(game, uid)?.name ?? uid}</span>
-                    </button>
-                  </li>
-                );
-              })}
-            </ul>
-          </fieldset>
-        ))}
-      </DialogScrollArea>
+      <DiscardEnergyChoices hosts={hosts} scope={scope} picked={picked} onPick={pick} />
       <div className="mt-5 flex justify-end">
         <button
           type="button"
