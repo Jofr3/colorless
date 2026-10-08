@@ -1424,7 +1424,7 @@ the whole prior suite passes unchanged).
 catalog) for the guard, and **fix-onko** (a FIXTURE — "Last Wish" searches a
 Basic → hand, which parks) for the resume-the-tail path, because no real SV-era
 on-KO Ability requires a decision (Glimmora/Munkidori are a coin flip / a fixed
-condition) — the fix-sniper demonstrator precedent. Neither is in the demo decks.
+condition) — the fix-sniper demonstrator precedent [🆕🆕🆕 D598 (D539): of the `sv` column only — Pecharunt `me02.5-143` "Final Chain" is a live `me` on-KO search that parks]. Neither is in the demo decks.
 
 **Web.** The projection's `effect:choose` case reads the turn owner via
 **`koParkActiveSeat`** when `resumeTail` (so `activeSeat` ≠ `waitingSeat` — the
@@ -30145,4 +30145,24 @@ decisions (1) and (2) after D580. Engine 0.464.0 → 0.465.0. The Mega ex rule i
 - **Suite.** `discardScaledMeD597.test.ts` (22): readings, near misses, each attack on a board (offers, ceilings, filters,
   decline, the kept base, the mill count). +29 mutant rows.
 - **Census.** Standard pool attacks **2576 / 2771**; 857 `me` printings fully built.
+- **Owed.** See `progress.md` NEXT. The whole-corpus sweep is PENDING.
+
+## D598 — WP32: KO / damage-taken Abilities (engine 0.482.0, `MATCH_RECORD_VERSION` stays 42)
+
+**Status:** ✅ BUILT in the `luminous_ui-mega` worktree on D597 (`2b832f64`), NOT committed.
+
+- **6 texts / 13 `me` printings, 13 registry keys on 6 objects.** Mega Gengar ex "Shadowy Concealment" ×5
+  (`seatKoPrizeReduction`, a seat aura on the KO'd side read in `planPrizes`), Mega Hawlucha ex "Tenacious Body" ×3 and
+  Annihilape "Durable Body" (`survivesKoOnCoinFlip`, `koSurvivalCoinFlip` at the four §8.5 damage writes), Shedinja
+  "Fragile Husk" ×2 (`onKoPrizeGuard: "pokemonExAttackPrevent"`), Gengar "Infinite Shadow" (`koSelfToHand` through
+  D572's `toHand`; the log tail now counts what moved, log.ts `koToHandTail`) and Pecharunt "Final Chain" (an on-KO search behind `byOpponentAttack`).
+- **The cause predicates.** flow.ts `koByOpponentAttack` (an attack epilogue from the other seat, lethal by damage) and
+  `koByOpponentPokemonEx` (plus an ex attacker, read off the attacker's uid).
+- **No op, persisted member, prompt or event.** Every event already existed.
+- **Dropped and named:** Fainting Spell ×2, Photon Cord ×2, Spiteful Swirl ×2, Counterattack Grouping, Damp ×2.
+- **Readings (UNRULED).** R-IS1, R-GC1, R-TN1, R-KO1, R-PD1, R-SB1 (`progress.md` NEXT). R-SB1: a Survival Brace / full-HP Sturdy
+  answers first and no coin is flipped (`clamped === null ? koSurvivalCoinFlip(…) : …` at all four writes).
+- **Suite.** `koAbilitiesMeD598.test.ts` (34): each Ability on a board, with the cause, lock and stacking controls,
+  the coin's rng advance at three damage writes, the R-SB1 Brace-first order at all four, and the Knock Out log tail. +47 mutant rows; D208's `survived` row, D425's spread row and D572's post-KO-board row re-anchored.
+- **Census.** Standard pool abilities **504 / 610**; 870 `me` printings fully built.
 - **Owed.** See `progress.md` NEXT. The whole-corpus sweep is PENDING.

@@ -1,7 +1,7 @@
 import type { Card } from "@luminous/schema";
 import type { ApplyResult, ConcedeAction } from "./actions";
 import { err, ok } from "./actions";
-import { activeTop, cardOfUid, matchesFilter, prizeValueOf, topCardOf, topUid } from "./cards";
+import { activeTop, cardOfUid, matchesFilter, pokemonSuffixOf, prizeValueOf, topCardOf, topUid } from "./cards";
 import {
   // 🆕🆕🆕 D577 — the Area Zero Underdepths state check, queued at the three sweeps.
   benchTrimStages,
@@ -12,9 +12,12 @@ import {
   inPlayCardOf,
   isLethallyDamaged,
   koEnergyRescueUids,
+  // 🆕🆕🆕 D598 — Infinite Shadow's return-to-hand and Shadowy Concealment's seat scan.
+  koSelfToHandUids,
   passivesOf,
   seatBurnExtraCounters,
   seatKoPrizeBonuses,
+  seatKoPrizeReductionOf,
   stadiumPoisonExtraCounters,
   stadiumShieldsStatus,
 } from "./continuous";
@@ -130,7 +133,7 @@ export function knockOut(
   prizeSeat: Seat,
   events: GameEvent[],
   byAttack = false,
-  /** 🆕🆕🆕 D572 — the uids Huntail "Diver's Catch" sends to `koedSeat`'s HAND instead of the
+  /** 🆕🆕🆕 D572 — the uids Huntail "Diver's Catch" [🆕🆕🆕 D598: or Gengar "Infinite Shadow", its own stack] sends to `koedSeat`'s HAND instead of the
       discard pile (`koEnergyRescueUids`, decided by the caller off the pre-batch board). Empty
       (the default) on every other Knock Out, which is then byte-identical. */
   toHand: readonly string[] = [],
@@ -485,6 +488,65 @@ function koPrizeReduction(
   if (name !== undefined && !inPlay.some((body) => topCardOf(state, body)?.name === name))
     return null;
   return Math.max(0, baseCount - reduction.by);
+}
+
+/** 🆕🆕🆕 §8.1 (D598) — *"is Knocked Out by damage from an attack from your opponent's Pokémon"*,
+    per body, on the PRE-batch board: an attack epilogue (`attackerSeat` present — pass 0 only),
+    the attacker on the OTHER seat (a recoil or self-damage KO of the attacker's own body is
+    refused), and the body made lethal by DAMAGE (not `knockOutDefender`'s doom). The clauses
+    Amulet of Hope reads in `collectKnockOutPass` (D566), as one predicate the D598 rows share. */
+export function koByOpponentAttack(
+  state: GameState,
+  ref: { seat: Seat; uid: string },
+  attackerSeat: Seat | undefined,
+): boolean {
+  if (attackerSeat === undefined || attackerSeat === ref.seat) return false;
+  const body = preBatchBody(state, ref);
+  return body !== undefined && !lethalByEffect(body, state.turn);
+}
+
+/** 🆕🆕🆕 §8.1 (D598) — THE "KO'd BY AN ex" CONDITION: `koByOpponentAttack` AND the attacking body
+    (`attackerUid`, `finishAttack`'s — resolved off the uid, never off a spot) is a Pokémon ex
+    (`pokemonSuffixOf`, so a Mega Evolution Pokémon ex counts). Shadowy Concealment and Fragile
+    Husk. False with no attacker uid (the Checkup and mid-turn sweeps). */
+export function koByOpponentPokemonEx(
+  state: GameState,
+  ref: { seat: Seat; uid: string },
+  attackerSeat: Seat | undefined,
+  attackerUid: string | undefined,
+): boolean {
+  if (attackerUid === undefined || !koByOpponentAttack(state, ref, attackerSeat)) return false;
+  const attacker = cardOfUid(state, attackerUid);
+  return attacker !== undefined && pokemonSuffixOf(attacker) === "ex";
+}
+
+/** 🆕🆕🆕 §8.1 (D598) — Mega Gengar ex "Shadowy Concealment" applied to one KO's running count:
+    *"If 1 of your {D} Pokémon is Knocked Out by damage from an attack from your opponent's Pokémon
+    ex, that player takes 1 fewer Prize card."* Composed onto `attachedPrizeReductions`' result in
+    `planPrizes` (after it, before the bonuses — D323's printed order). Nothing left to reduce is
+    not an application (its `count === 0` rule): no row. Otherwise `ABILITY_TRIGGERED` on the
+    holder and one `PRIZE_REDUCED`, the count clamped at 0. */
+function seatPrizeReduction(
+  reduced: { state: GameState; count: number; events: GameEvent[] },
+  ref: { seat: Seat; uid: string },
+  attackerSeat: Seat | undefined,
+  attackerUid: string | undefined,
+): { state: GameState; count: number; events: GameEvent[] } {
+  const { state, count } = reduced;
+  if (count === 0 || !koByOpponentPokemonEx(state, ref, attackerSeat, attackerUid)) return reduced;
+  const body = preBatchBody(state, ref);
+  const holder = seatKoPrizeReductionOf(state, ref.seat, body === undefined ? undefined : inPlayCardOf(state, body));
+  if (holder === null) return reduced;
+  const next = Math.max(0, count - holder.rule.by);
+  return {
+    state,
+    count: next,
+    events: [
+      ...reduced.events,
+      { type: "ABILITY_TRIGGERED", seat: ref.seat, uid: holder.uid, ability: holder.rule.ability },
+      { type: "PRIZE_REDUCED", seat: ref.seat, uid: ref.uid, by: count - next, count: next },
+    ],
+  };
 }
 
 /** 🆕 §8.1 (D298) — the same reduction borne by an ATTACHED CARD rather than by
@@ -847,7 +909,10 @@ function collectKnockOutPass(
       otherSeat(entry.ref.seat),
       events,
       byAttackFor(entry.ref),
-      rescuable === undefined ? [] : koEnergyRescueUids(state, entry.ref.seat, rescuable),
+      rescuable === undefined
+        ? []
+        : // 🆕🆕🆕 D598 — Infinite Shadow's own stack rides the same `toHand` (R-IS1).
+          [...koEnergyRescueUids(state, entry.ref.seat, rescuable), ...koSelfToHandUids(state, entry.ref.seat, rescuable)],
     );
     next = ko.state;
     for (const guardEvent of entry.guardEvents) events.push(guardEvent);
@@ -1079,7 +1144,11 @@ function planPrizes(
     const card = cardOfUid(next, ref.uid);
     const baseCount = card === undefined ? 1 : prizeValueOf(card);
     const ability = onKnockOutTrigger(next, ref.uid);
-    const hasProgram = ability !== undefined && ability.program.length > 0;
+    const hasProgram =
+      ability !== undefined &&
+      ability.program.length > 0 &&
+      // 🆕🆕🆕 D598 — Final Chain's printed cause (`byOpponentAttack`); absent = every Knock Out.
+      (ability.byOpponentAttack !== true || koByOpponentAttack(next, ref, attackerSeat));
     // 🆕 D298 — every push in this loop goes through here, so the ATTACHED
     // reduction (Legacy Energy, Lillie's Pearl) rides EVERY on-KO Ability path and
     // not just the bare one: a Munkidori ex wearing a Legacy Energy pays both, and
@@ -1100,7 +1169,13 @@ function planPrizes(
     // A build that keyed on `count === 0` would collapse the two and silently
     // give the prohibition's answer to the clamp.
     const push = (count: number, guardEvents: GameEvent[], denied = false): void => {
-      const attached = attachedPrizeReductions(next, ref, attackerSeat, count);
+      // 🆕🆕🆕 D598 — Shadowy Concealment composed onto the attached reductions (`seatPrizeReduction`).
+      const attached = seatPrizeReduction(
+        attachedPrizeReductions(next, ref, attackerSeat, count),
+        ref,
+        attackerSeat,
+        attackerUid,
+      );
       next = attached.state;
       const bonus = denied
         ? { state: next, count: attached.count, events: [] as GameEvent[] }
@@ -1133,6 +1208,19 @@ function planPrizes(
             count,
           },
         ]);
+      }
+      continue;
+    }
+    // 🆕🆕🆕 D598 — Fragile Husk: Glimmora's prohibition with the "KO'd by an ex" cause for a coin.
+    if (ability?.onKoPrizeGuard === "pokemonExAttackPrevent") {
+      if (koByOpponentPokemonEx(next, ref, attackerSeat, attackerUid)) {
+        const prevented: GameEvent[] = [
+          { type: "ABILITY_TRIGGERED", seat: ref.seat, uid: ref.uid, ability: ability.name },
+          { type: "PRIZE_PREVENTED", seat: ref.seat, uid: ref.uid },
+        ];
+        push(0, prevented, true);
+      } else {
+        push(baseCount, []);
       }
       continue;
     }

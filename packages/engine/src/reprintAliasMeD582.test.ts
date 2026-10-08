@@ -234,6 +234,13 @@ const KEYED_AT_D594 = ["me03-027", "me04-007"];
 /** 🆕🆕🆕 D597 — the `me` ids WP29 keys: the "[R]" Mega Charizard X ex "Inferno X" (discardScaledMeD597.test.ts). */
 const KEYED_AT_D597 = ["mep-023", "mep-029"];
 
+/** 🆕🆕🆕 D598 — the `me` ids WP32 keys: six KO / damage-taken Abilities (koAbilitiesMeD598.test.ts). */
+const KEYED_AT_D598 = [
+  ...["me02-056", "me02.5-125", "me02.5-269", "me02.5-284", "mep-073"],
+  ...["me02.5-116", "me02.5-268", "me02.5-283", "me05-041"],
+  ...["me01-061", "me01-144", "me03-050", "me02.5-143"],
+];
+
 /** The five `me` Tera reprints banners.ts carries (each printed face checked on tcgdex's image). */
 const ME_TERA = ["me02.5-038", "me02.5-057", "me02.5-160", "me02.5-179", "me02.5-277"] as const;
 
@@ -314,7 +321,7 @@ describe("D582 — the `me` reprint-alias tier: 99 printings on 66 existing prog
     expect(new Set(ALIASES.map(([, twin]) => programFor(twin))).size).toBe(66);
   });
 
-  it("the registry's `me` keys are EXACTLY this table — nothing keyed outside it (🆕🆕🆕 D583: plus Team Rocket's Energy `me02.5-217`; 🆕🆕🆕 D584: plus the 18 tier-2 keys; 🆕🆕🆕 D585: plus the 19 WP19 keys; 🆕🆕🆕 D586: plus Carbink ×2; 🆕🆕🆕 D587: plus the 19 WP04 Trainer keys; 🆕🆕🆕 D588: plus the 17 WP22 Trainer keys; 🆕🆕🆕 D589: plus Mega Greninja ex ×5; 🆕🆕🆕 D590: plus the 13 WP05 on-evolve keys; 🆕🆕🆕 D591: plus the 19 WP20a activated Ability keys; 🆕🆕🆕 D593: plus the 5 WP07 Fade Out keys; 🆕🆕🆕 D594: plus the 2 WP33a Ability keys; 🆕🆕🆕 D597: plus the 2 WP29 Inferno X keys)", () => {
+  it("the registry's `me` keys are EXACTLY this table — nothing keyed outside it (🆕🆕🆕 D583: plus Team Rocket's Energy `me02.5-217`; 🆕🆕🆕 D584: plus the 18 tier-2 keys; 🆕🆕🆕 D585: plus the 19 WP19 keys; 🆕🆕🆕 D586: plus Carbink ×2; 🆕🆕🆕 D587: plus the 19 WP04 Trainer keys; 🆕🆕🆕 D588: plus the 17 WP22 Trainer keys; 🆕🆕🆕 D589: plus Mega Greninja ex ×5; 🆕🆕🆕 D590: plus the 13 WP05 on-evolve keys; 🆕🆕🆕 D591: plus the 19 WP20a activated Ability keys; 🆕🆕🆕 D593: plus the 5 WP07 Fade Out keys; 🆕🆕🆕 D594: plus the 2 WP33a Ability keys; 🆕🆕🆕 D597: plus the 2 WP29 Inferno X keys; 🆕🆕🆕 D598: plus the 13 WP32 Ability keys)", () => {
     const me = registryCardIds().filter((id) => /^(me|30th)/.test(id));
     // 🆕🆕🆕 D583 — the one `me` key outside the D582 table: Team Rocket's Energy, on `sv10-182`'s object.
     // 🆕🆕🆕 D584 — and the 18 tier-2 keys (`KEYED_AT_D584`).
@@ -339,6 +346,8 @@ describe("D582 — the `me` reprint-alias tier: 99 printings on 66 existing prog
     expect(KEYED_AT_D594).toHaveLength(2);
     // 🆕🆕🆕 D597 — and WP29's 2 attack-only Inferno X keys (`KEYED_AT_D597`).
     expect(KEYED_AT_D597).toHaveLength(2);
+    // 🆕🆕🆕 D598 — and WP32's 13 Ability keys (`KEYED_AT_D598`).
+    expect(KEYED_AT_D598).toHaveLength(13);
     expect(me.sort()).toEqual(
       [
         ...ALIASES.map(([id]) => id),
@@ -354,6 +363,7 @@ describe("D582 — the `me` reprint-alias tier: 99 printings on 66 existing prog
         ...KEYED_AT_D593,
         ...KEYED_AT_D594,
         ...KEYED_AT_D597,
+        ...KEYED_AT_D598,
       ].sort(),
     );
     // …and no twin is a `me` id: every program the tier reaches was built for the `sv` serie.

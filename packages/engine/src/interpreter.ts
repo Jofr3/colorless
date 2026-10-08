@@ -67,6 +67,7 @@ import {
   installedVulnerabilityOf,
   installedWeaknessRetypeOf,
   koSurvivalClamp,
+  koSurvivalCoinFlip,
   // 🆕🆕🆕 D575 — the hand-attach mark's one reader (Glimmora's bar, Hypno's turn end).
   liveHandAttachMark,
   opposingAttackDebuff,
@@ -11233,7 +11234,11 @@ function spreadDamage(
     // 🆕🆕🆕 D562 — `ctx.seat` is the attacker's seat: a Survival Brace answers only an
     // OPPONENT's attack, so the `"yourBench"` arm reaches Resolute Heart and never a Brace.
     const clamped = koSurvivalClamp(state, pokemon, dealt, ctx.seat);
-    const damage = clamped?.damage ?? pokemon.damage + dealt;
+    // 🆕🆕🆕 D598 — the coin-flip survival (Tenacious Body), after the clamp, on the loop's rng.
+    const [coinSaved, survivalRng] =
+      clamped === null ? koSurvivalCoinFlip({ ...state, rngState: rng }, pokemon, victim, dealt, events) : [null, rng];
+    rng = survivalRng;
+    const damage = clamped?.damage ?? coinSaved ?? pokemon.damage + dealt;
     events.push({
       type: "DAMAGE_DEALT",
       seat: victim,
@@ -11251,7 +11256,7 @@ function spreadDamage(
       resistance: null,
       reduction: reduction > 0 ? reduction : undefined,
       prevented: prevented ? true : undefined,
-      survived: clamped === null ? undefined : true,
+      survived: clamped === null && coinSaved === null ? undefined : true,
       dealt,
       damage,
     });
@@ -11608,7 +11613,11 @@ function placeSnipe(
     // already denies that arm Weakness, Resistance and every reduction passive.
     // So the clamp goes exactly where the pipeline goes and no further.
     const clamped = koSurvivalClamp(next, pokemon, dealt, ctx.seat);
-    const damage = clamped?.damage ?? pokemon.damage + dealt;
+    // 🆕🆕🆕 D598 — the coin-flip survival, `spreadDamage`'s lines verbatim (the sniped body's seat).
+    const [coinSaved, survivalRng] =
+      clamped === null ? koSurvivalCoinFlip({ ...next, rngState: rng }, pokemon, benchVictim, dealt, events) : [null, rng];
+    rng = survivalRng;
+    const damage = clamped?.damage ?? coinSaved ?? pokemon.damage + dealt;
     // 🆕🆕 D425 said of the row below: *"placeSnipe's `deals` arm aims across the
     // table."* 🆕🆕🆕 **D447 CORRECTS THAT SENTENCE IN PLACE (D442): IT NO LONGER
     // ALWAYS DOES.** `by` is the ATTACKER on every board — unchanged, and what makes the
@@ -11633,7 +11642,7 @@ function placeSnipe(
       resistance: null,
       reduction: reduction > 0 ? reduction : undefined,
       prevented: prevented ? true : undefined,
-      survived: clamped === null ? undefined : true,
+      survived: clamped === null && coinSaved === null ? undefined : true,
       dealt,
       damage,
     });
@@ -11958,7 +11967,10 @@ function snipeActive(
   // sites. `target.active` is the pre-hit body; this arm runs the FULL §8.5
   // pipeline, so it is unambiguously "damage from an attack".
   const clamped = koSurvivalClamp(state, target.active, dealt, ctx.seat);
-  const damage = clamped?.damage ?? target.active.damage + dealt;
+  // 🆕🆕🆕 D598 — the coin-flip survival, on the shield's advanced rng.
+  const [coinSaved, survivalRng] =
+    clamped === null ? koSurvivalCoinFlip({ ...state, rngState }, target.active, opponent, dealt, events) : [null, rngState];
+  const damage = clamped?.damage ?? coinSaved ?? target.active.damage + dealt;
   events.push({
     type: "DAMAGE_DEALT",
     seat: opponent,
@@ -11972,14 +11984,14 @@ function snipeActive(
     reduction: reduction > 0 ? reduction : undefined,
     vulnerability: activeExposure > 0 ? activeExposure : undefined, // 🆕🆕🆕 D547 (D149).
     prevented: prevented ? true : undefined,
-    survived: clamped === null ? undefined : true,
+    survived: clamped === null && coinSaved === null ? undefined : true,
     dealt,
     damage,
   });
   // 🆕🆕🆕 D562 — the consumed Tools leave the sniped Active for its owner's pile, after
   // the row (`spreadDamage`'s consumption, verbatim).
   const spent = consumedTools(prevented ? [] : berry.toolUids, clamped);
-  const struck = withActive({ ...state, rngState }, opponent, {
+  const struck = withActive({ ...state, rngState: survivalRng }, opponent, {
     ...consumeTools(target.active, spent, opponent, events),
     damage,
   });

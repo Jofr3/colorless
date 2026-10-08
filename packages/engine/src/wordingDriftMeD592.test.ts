@@ -231,10 +231,11 @@ describe("D592 §4 — Corrosive Liquid: Megaton Blower's two sweeps on an attac
     expect(deriveAttackEffect(CORROSIVE_LIQUID.replace("'", "’"))).toEqual(program);
   });
 
-  it("no printing of this slice is registry-keyed", () => {
-    for (const id of ["me04-065", "me04-104", "me04-118", "me01-086", "mep-082", "me02-069", "me02-078", "me03-049", "me05-031", "me05-041", "30th-090", "30th-154", "30th-123"]) {
+  it("no printing of this slice is registry-keyed (🆕🆕🆕 D598 (D539): WITHDRAWN for Annihilape `me05-041` — keyed for its Ability \"Durable Body\"; its attack is still the reader's)", () => {
+    for (const id of ["me04-065", "me04-104", "me04-118", "me01-086", "mep-082", "me02-069", "me02-078", "me03-049", "me05-031", "30th-090", "30th-154", "30th-123"]) {
       expect(programFor(id), id).toBeUndefined();
     }
+    expect(Object.keys(programFor("me05-041") ?? {})).toEqual(["passive"]);
   });
 });
 
@@ -454,7 +455,7 @@ describe("D592 §6 — Claw of Darkness and Thunder on a board", () => {
 });
 
 describe("D592 §7 — the version", () => {
-  it("is built at engine 0.481.0", () => {
-    expect(engineVersion).toBe("0.481.0");
+  it("is built at engine 0.482.0", () => {
+    expect(engineVersion).toBe("0.482.0");
   });
 });

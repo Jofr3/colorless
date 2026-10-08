@@ -567,6 +567,8 @@ describe("⚠️ passivesOf's THIRD SOURCE CLASS — an attached ENERGY", () => 
     // it is the axis on which a future reader would most easily assume wrong.
     // FALSE here, like every other field, because no body on this board carries it.
     expect(fold.survivesKoAtFullHp).toBe(false);
+    // 🆕🆕🆕 D598 — its coin-flip sibling (Tenacious Body), null on this board for the same reason.
+    expect(fold.survivesKoOnCoinFlip).toBeNull();
     // D242 — the fold's fourteenth key, and the second COLLECTED-RAW list beside
     // its two conditional damage-bonus siblings: an always-on §8 attack GATE
     // (`cantAttackUnless`). EMPTY here, like every other field, because no body on
@@ -788,6 +790,9 @@ describe("⚠️ passivesOf's THIRD SOURCE CLASS — an attached ENERGY", () => 
         "statusRecovery",
         "suppressTargetEffectsOnAttack",
         "survivesKoAtFullHp",
+        // 🆕🆕🆕 D598 — the coin-flip survival's Ability NAME (Tenacious Body), null here: an
+        // Ability-only field, and Therapeutic Energy writes nothing (THIS board's sources).
+        "survivesKoOnCoinFlip",
         "targetConditionalDamageBonusBeforeWR",
       ].sort(),
     );

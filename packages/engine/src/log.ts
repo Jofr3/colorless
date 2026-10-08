@@ -65,6 +65,20 @@ function cardName(state: GameState, uid: string): string {
   return cardOfUid(state, uid)?.name ?? "a card";
 }
 
+/** 🆕🆕🆕 D598 — the `KNOCKED_OUT.toHand` tail, counted by what MOVED: Energy cards (Huntail
+    "Diver's Catch", D572 — only Basic Energy reach it) as "N Basic Energy", every other card
+    (Gengar "Infinite Shadow" — the Pokémon's own stack) as "N Pokémon card(s)". An all-Energy
+    split is D572's string byte for byte. */
+function koToHandTail(state: GameState, uids: readonly string[]): string {
+  const energy = uids.filter((uid) => cardOfUid(state, uid)?.category === "Energy").length;
+  const pokemon = uids.length - energy;
+  const parts = [
+    ...(pokemon === 0 ? [] : [`${pokemon} Pokémon card${pokemon === 1 ? "" : "s"}`]),
+    ...(energy === 0 ? [] : [`${energy} Basic Energy`]),
+  ];
+  return ` — ${parts.join(" and ")} put into the hand instead of the discard pile`;
+}
+
 /** §11 (D239) — the printed ATTACKER CLASS as a player-facing noun modifier:
     "Basic", "Basic non-Colorless". The ONE renderer of `AttackerClass`, and it
     exists rather than being an interpolation because the record's two keys are
@@ -482,6 +496,9 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
       // event carries no member to tell apart. "survived the Knock Out" is a bare
       // past-tense statement about the damage, true from either chair, and it
       // borrows the printed sentence's own words ("it is not Knocked Out").
+      // [🆕🆕🆕 D598 (D539): "TWO printed Ability names" is WITHDRAWN as the whole set, kept as
+      // written — the coin-flip survival (Tenacious Body, Durable Body) sets the flag too, and its
+      // own `ABILITY_COIN_FLIP` row names the Ability; "survived the Knock Out" stays true of it.]
       //
       // NO HP NUMBER, deliberately. "its remaining HP becomes 10" is printed on
       // all seven cards, but the remaining HP this row would have to quote is
@@ -1306,9 +1323,10 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
         { text: "Knocked Out", tone: "damage" },
         // 🆕🆕🆕 D572 — Huntail "Diver's Catch": the Energy that went to the hand instead of the
         // discard pile, COUNTED (the cards were face up in play; the count is what the row adds).
-        ...(event.toHand === undefined
-          ? []
-          : [plain(` — ${event.toHand.length} Basic Energy put into the hand instead of the discard pile`)]),
+        // [🆕🆕🆕 D598 (D539): *"the Energy that went to the hand"* is WITHDRAWN as the whole of
+        // `toHand`, kept as written — Gengar "Infinite Shadow" sends the Pokémon's own cards, so the
+        // tail now counts what MOVED (`koToHandTail`); an all-Energy split reads byte-identically.]
+        ...(event.toHand === undefined ? [] : [plain(koToHandTail(state, event.toHand))]),
       ]);
     case "POKEMON_RETURNED": {
       // 🆕 D299 — a benched body left play without being Knocked Out. Attributed

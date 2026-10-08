@@ -2159,6 +2159,17 @@ export interface MatchRecord {
     `turn:action.discardable` — 🛑 **DEPLOY THE SERVER FIRST**: an old client's `z.object` STRIPS
     the unknown key, while a new client's REQUIRED key refuses an old server's frame.
 
+    🆕🆕🆕 **STAYS 42 AT D598 — WP32 ADDS NO OP, GameState, PendingStage, PROMPT, EVENT OR WIRE KEY.**
+    (Placed ABOVE the D597 block.) 13 `me` Ability ids are keyed on registry-only fields
+    (`PassiveEffects.seatKoPrizeReduction` / `survivesKoOnCoinFlip` / `koSelfToHand`,
+    `TriggeredAbility.byOpponentAttack`, the `onKoPrizeGuard` member `"pokemonExAttackPrevent"`); a
+    registry program is never persisted. Every event used exists (`ABILITY_COIN_FLIP`, `PRIZE_REDUCED`,
+    `PRIZE_PREVENTED`, D572's `KNOCKED_OUT.toHand`, `DAMAGE_DEALT.survived`); the Final Chain park is
+    the existing `koTrigger` stage and `chooseCards` prompt. The card ROW is read as before, so a v42
+    match whose persisted `cardPool` holds these faces gains the Abilities mid-match; a 0.481 rollback
+    finds no key and the Abilities fall silent (a parked Final Chain still resumes: its continuation
+    is persisted).
+
     🆕🆕🆕 **STAYS 42 AT D597 — WP29 ADDS NO OP, OP KEY, GameState, PendingStage, PROMPT OR WIRE KEY.**
     (Placed ABOVE the D596 block.) The readers claim 7 more `me` attack TEXTS (16 printings) as
     shipped ops (`discardEnergy` / `payFromHand` + `damageDefender`, D488's mill + `countFilter`), and

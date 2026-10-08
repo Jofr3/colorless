@@ -6,6 +6,25 @@
 > `coverage-backlog-legal.md`; its pool is unchanged and whole. The suite-side figures are
 > `censusAtHead.test.ts`'s D581 block and `censusAttackCorpusMe.ts`.
 
+## 🆕 D598 update (engine 0.482.0) — KO / damage-taken Abilities (WP32)
+
+6 texts / 13 `me` printings (`koAbilitiesMeD598.test.ts`). Shadowy Concealment ×5 (a seat-wide Prize reduction on the
+KO'd side), Tenacious Body ×3 and Durable Body (the coin-flip survive), Fragile Husk ×2 (no Prize for a KO by an ex),
+Infinite Shadow (return-to-hand on KO) and Final Chain (an on-KO search behind the attack cause). **Finished:** Mega
+Gengar ex ×5, Mega Hawlucha ex ×3, Annihilape `me05-041`, Shedinja ×2, Gengar `me03-050`, Pecharunt `me02.5-143`.
+**Still open in WP32 (named):** Gengar ex "Fainting Spell" ×2 (KO the Attacking Pokémon on heads), Miraidon "Photon
+Cord" ×2 (an Energy move off the dying body), Spiritomb "Spiteful Swirl" ×2 and Wishiwashi "Counterattack Grouping"
+(a seat-wide filtered recoil), Damp ×2 (WP38).
+
+| Column | `me` built / units (D598) | Standard pool D598 |
+|---|---|---|
+| Attacks | 844 / 1,039 | **2,576 / 2,771** |
+| Abilities | 128 / 234 (+13) | **504 / 610** |
+| Trainers | 92 / 183 | **356 / 447** |
+| Special Energy | 3 / 11 | **14 / 22** |
+
+**Fully built `me` printings: 870** (857 + 13).
+
 ## 🆕 D597 update (engine 0.481.0) — the discard-scaled attacks (WP29)
 
 8 texts / 18 `me` printings (`discardScaledMeD597.test.ts`). Inferno X ×4, Garland Ray ×3, Steel Cutter, Double
@@ -114,7 +133,7 @@ Shellnado Spin, Ghostly Blow, Chaotic Pain ×2, Swirling Resentment), the two co
 identity on every legal `sv` sentence and splitter fragment. Corrosive Liquid ×3 is Megaton Blower's two sweeps on an attack.
 No new op, member or field; nothing dropped. **Finished:** Mega Dragalge ex ×3, Mega Slowbro ex `me05-031`, Haunter
 `me03-049`, Eternatus `me02-069`, Aipom `me02-078`, Hisuian Zoroark `30th-123`. Still waiting on another text: Mega Absol ex ×3
-(Terminal Period), Miraidon `mep-082`, Annihilape `me05-041` and Gengar ex ×2 (an Ability each). Five other `me` sentences
+(Terminal Period), Miraidon `mep-082`, Annihilape `me05-041` and Gengar ex ×2 (an Ability each) [🆕🆕🆕 D598: Annihilape finished (Durable Body)]. Five other `me` sentences
 print "place … damage counters on" and stay unbuilt (they need more than a synonym).
 
 | Column | `me` built / units (D592) | Standard pool D592 |
@@ -596,7 +615,7 @@ group wins; the grouping is a reading aid, not a census figure).
 
 - 3× **Last-Ditch Catch** — Once during your turn, when you play this Pokémon from your hand onto your Bench, you may use this Ability. Search your deck for a Supporter card, reveal it, and put it into your hand. Then, shuffle your deck. You can't use more than 1 Ability that has "Last-Ditch" in its name each turn.
 - 3× **Psychic Draw** — Once during your turn, when you play this Pokémon from your hand to evolve 1 of your Pokémon, you may use this Ability. Draw 3 cards. [🆕🆕🆕 D590: BUILT]
-- 3× **Sandy Flapping** — Once during your turn, when you play this Pokémon from your hand to evolve 1 of your Pokémon, you may use this Ability. You may also use this Ability if this Pokémon is in the Active Spot and is Knocked Out by damage from an attack from your opponent's Pokémon. Discard the top 2 cards of your opponent's deck. [🆕🆕🆕 D590: NOT BUILT — the KO half needs an Active-Spot / by-attack gate on an `onKnockOut` program]
+- 3× **Sandy Flapping** — Once during your turn, when you play this Pokémon from your hand to evolve 1 of your Pokémon, you may use this Ability. You may also use this Ability if this Pokémon is in the Active Spot and is Knocked Out by damage from an attack from your opponent's Pokémon. Discard the top 2 cards of your opponent's deck. [🆕🆕🆕 D590: NOT BUILT — the KO half needs an Active-Spot / by-attack gate on an `onKnockOut` program] [🆕🆕🆕 D598: the by-attack half exists — `TriggeredAbility.byOpponentAttack`; the Active-Spot gate is still owed]
 - 2× **Cast-Off Shell** — Once during your turn, when you play this Pokémon from your hand to evolve 1 of your Pokémon, you may use this Ability. Search your deck for a Shedinja and put it onto your Bench. Then, shuffle your deck. [🆕🆕🆕 D590: BUILT]
 - 2× **Enriching Melody** — Once during your turn, when you play this Pokémon from your hand to evolve 1 of your Pokémon, you may use this Ability. Heal all damage from 1 of your Pokémon. [🆕🆕🆕 D590: BUILT]
 - 2× **Fall Back to Reload** — Once during your turn, when this Pokémon moves from the Active Spot to your Bench, you may use this Ability. Attach up to 2 Basic {W} Energy cards from your hand to this Pokémon.
@@ -653,19 +672,19 @@ group wins; the grouping is a reading aid, not a census figure).
 
 ### Knock Out / damage-taken triggers — 14 text(s) / 27 printing(s)
 
-- 5× **Shadowy Concealment** — If 1 of your {D} Pokémon is Knocked Out by damage from an attack from your opponent's Pokémon ex, that player takes 1 fewer Prize card. The effect of Shadowy Concealment doesn't stack.
+- 5× **Shadowy Concealment** — If 1 of your {D} Pokémon is Knocked Out by damage from an attack from your opponent's Pokémon ex, that player takes 1 fewer Prize card. The effect of Shadowy Concealment doesn't stack. [🆕🆕🆕 D598: BUILT]
 - 3× **Counterattacking Crest** — If this Pokémon is in the Active Spot and is damaged by an attack from your opponent's Pokémon (even if this Pokémon is Knocked Out), place 5 damage counters on the Attacking Pokémon. [🆕🆕🆕 D585: BUILT]
-- 3× **Tenacious Body** — If this Pokémon would be Knocked Out by damage from an attack, flip a coin. If heads, this Pokémon is not Knocked Out, and its remaining HP becomes 10.
+- 3× **Tenacious Body** — If this Pokémon would be Knocked Out by damage from an attack, flip a coin. If heads, this Pokémon is not Knocked Out, and its remaining HP becomes 10. [🆕🆕🆕 D598: BUILT]
 - 2× **Damp** — Pokémon in play (both yours and your opponent's) lose all Abilities that require those Pokémon to be Knocked Out.
 - 2× **Fainting Spell** — If this Pokémon is Knocked Out by damage from an attack from your opponent's Pokémon, flip a coin. If heads, the Attacking Pokémon is Knocked Out.
-- 2× **Fragile Husk** — If this Pokémon is Knocked Out by damage from an attack from your opponent's Pokémon ex, your opponent can't take any Prize cards for it.
+- 2× **Fragile Husk** — If this Pokémon is Knocked Out by damage from an attack from your opponent's Pokémon ex, your opponent can't take any Prize cards for it. [🆕🆕🆕 D598: BUILT]
 - 2× **Photon Cord** — If this Pokémon is in the Active Spot and is Knocked Out by damage from an attack from your opponent's Pokémon, move up to 2 Basic {L} Energy cards from this Pokémon to 1 of your Benched Pokémon.
 - 2× **Spiteful Swirl** — If your Active {D} Pokémon is damaged by an attack from your opponent's Pokémon (even if your Active {D} Pokémon is Knocked Out), place 1 damage counter on the Attacking Pokémon.
 - 1× **Counterattack Grouping** — If your Wishiwashi or Wishiwashi ex is in the Active Spot and is damaged by an attack from your opponent's Pokémon (even if your Pokémon  is Knocked Out), place 3 damage counters on the Attacking Pokémon.
 - 1× **Counterattack Quills** — If this Pokémon is in the Active Spot and is damaged by an attack from your opponent's Pokémon (even if this Pokémon is Knocked Out), place 3 damage counters on the Attacking Pokémon. [🆕🆕🆕 D584: BUILT]
-- 1× **Durable Body** — If this Pokémon would be Knocked Out by damage from an attack, flip a coin. If heads, this Pokémon is not Knocked Out, and its remaining HP becomes 10.
-- 1× **Final Chain** — If this Pokémon is Knocked Out by damage from an attack from your opponent's Pokémon, search your deck for a card and put it into your hand. Then, shuffle your deck.
-- 1× **Infinite Shadow** — If this Pokémon is Knocked Out by damage from an attack from your opponent's Pokémon, put it into your hand instead of the discard pile. (Discard all attached cards.)
+- 1× **Durable Body** — If this Pokémon would be Knocked Out by damage from an attack, flip a coin. If heads, this Pokémon is not Knocked Out, and its remaining HP becomes 10. [🆕🆕🆕 D598: BUILT]
+- 1× **Final Chain** — If this Pokémon is Knocked Out by damage from an attack from your opponent's Pokémon, search your deck for a card and put it into your hand. Then, shuffle your deck. [🆕🆕🆕 D598: BUILT]
+- 1× **Infinite Shadow** — If this Pokémon is Knocked Out by damage from an attack from your opponent's Pokémon, put it into your hand instead of the discard pile. (Discard all attached cards.) [🆕🆕🆕 D598: BUILT]
 - 1× **Needly Armor** — If this Pokémon is in the Active Spot and is damaged by an attack from your opponent's Pokémon (even if this Pokémon is Knocked Out), place 3 damage counters on the Attacking Pokémon for each {G} Energy attached to this Pokémon. [🆕🆕🆕 D594: BUILT]
 
 ### Damage modifiers (more / less damage, takes less damage) — 7 text(s) / 12 printing(s)

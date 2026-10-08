@@ -312,6 +312,10 @@ export type GameEvent =
           left it standing on 10 HP instead (Pikachu ex "Resolute Heart", Crustle
           "Sturdy" — continuous.ts `koSurvivalClamp`). Present only when it
           actually fired.
+          [🆕🆕🆕 D598 (D539): *"the defender had FULL HP"* is WITHDRAWN as the only case, kept as
+          written — the flag is also set when the coin-flip survival saved the body on heads (Mega
+          Hawlucha ex "Tenacious Body", Annihilape "Durable Body" — continuous.ts
+          `koSurvivalCoinFlip`), which has no full-HP antecedent.]
 
           ⚠️ THIS IS THE ONE ROW WHERE `damage` IS NOT `the previous total + dealt`,
           AND THE FLAG EXISTS TO SAY SO RATHER THAN TO LET A READER GUESS. `dealt`
@@ -1132,8 +1136,11 @@ export type GameEvent =
       🆕🆕🆕 D572 — `toHand` is the OPTIONAL split (Huntail "Diver's Catch"): the Basic {W}
       Energy that went to `seat`'s HAND instead, and then `discarded` lists only what reached
       the pile (the two partition the stack). ABSENT on every other Knock Out (D135), so those
-      rows are byte-identical; `GameEvent` is not persisted (D141), so no record moves. */
-  | { type: "KNOCKED_OUT"; seat: Seat; uid: string; discarded: string[]; toHand?: string[] }
+      rows are byte-identical; `GameEvent` is not persisted (D141), so no record moves.
+      [🆕🆕🆕 D598 (D539): *"the Basic {W} Energy that went to `seat`'s HAND"* is WITHDRAWN as the
+      whole of `toHand`, kept as written — Gengar "Infinite Shadow" puts the Pokémon's own `stack`
+      there too (its Energy and Tools stay in `discarded`); log.ts `koToHandTail` counts each kind.] */
+  | { type: "KNOCKED_OUT";seat: Seat; uid: string; discarded: string[]; toHand?: string[] }
   /** `seat` owes a prize pick (which face-down cards, §8.1) — announced when
       the game parks on ko:takePrizes so an event-only client never hangs on
       an unseen prompt. Forced picks resolve straight to PRIZES_TAKEN.

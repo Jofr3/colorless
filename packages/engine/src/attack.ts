@@ -60,6 +60,7 @@ import {
   installedVulnerabilityOf,
   installedWeaknessRetypeOf,
   koSurvivalClamp,
+  koSurvivalCoinFlip,
   lockedAttackIndexes,
   lockedAttackNames,
   // 🆕🆕🆕 D562 — the Berry's §8.5 summand and its "not asked" answer.
@@ -3789,7 +3790,12 @@ export function attack(
     // 🆕🆕🆕 D562 — `action.seat` rides in for Survival Brace's "from your opponent's
     // Pokémon"; the result names the Brace that answered, if one did.
     const clamped = koSurvivalClamp(next, defender, dealt, action.seat);
-    defended = { ...defender, damage: clamped?.damage ?? defender.damage + dealt };
+    // 🆕🆕🆕 D598 — Tenacious Body / Durable Body: the coin-flip survival, asked only when the
+    // clamp did not answer (continuous.ts `koSurvivalCoinFlip`).
+    const [coinSaved, survivalRng] =
+      clamped === null ? koSurvivalCoinFlip(next, defender, defenderSeat, dealt, events) : [null, next.rngState];
+    next = { ...next, rngState: survivalRng };
+    defended = { ...defender, damage: clamped?.damage ?? coinSaved ?? defender.damage + dealt };
     next = withSide(next, defenderSeat, { ...next.players[defenderSeat], active: defended });
     events.push({
       type: "DAMAGE_DEALT",
@@ -3814,7 +3820,7 @@ export function attack(
       // 🆕🆕🆕 D547 — the post-W/R ADDITION beside it, its own field (D149).
       vulnerability: vulnerability > 0 ? vulnerability : undefined,
       prevented: prevented ? true : undefined,
-      survived: clamped === null ? undefined : true,
+      survived: clamped === null && coinSaved === null ? undefined : true,
       dealt,
       damage: defended.damage,
     });

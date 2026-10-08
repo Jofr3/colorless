@@ -416,8 +416,22 @@ export interface TriggeredAbility {
       the interpreter: it modifies the KO's Prize, and the prize/KO tail is
       flow.ts's alone (the interpreter never touches it). Kept separate from
       `program` (a general on-KO effect run as a koTrigger stage) — an on-KO
-      Ability carries at most one of the two in the representative set. */
-  onKoPrizeGuard?: "coinFlipPrevent";
+      Ability carries at most one of the two in the representative set.
+
+      🆕🆕🆕 **D598 — `"pokemonExAttackPrevent"`**, Shedinja `me01-061` / `-144` "Fragile Husk":
+      *"If this Pokémon is Knocked Out by damage from an attack from your opponent's Pokémon ex,
+      your opponent can't take any Prize cards for it."* No coin; the same PROHIBITION as
+      Glimmora's heads (`PRIZE_PREVENTED`, no bonus may follow — D323), gated on flow.ts
+      `koByOpponentPokemonEx` (the "KO'd by an ex" condition). Refused on a Checkup / mid-turn
+      KO, on the attacker's own board, on a `knockOutDefender` doom and on a non-ex attacker. */
+  onKoPrizeGuard?: "coinFlipPrevent" | "pokemonExAttackPrevent";
+  /** 🆕🆕🆕 **D598 — `onKnockOut` only: the printed CAUSE on an on-KO PROGRAM** — *"If this Pokémon
+      is Knocked Out by damage from an attack from your opponent's Pokémon, …"* (Pecharunt
+      `me02.5-143` "Final Chain"). The koTrigger stage is queued only when flow.ts
+      `koByOpponentAttack` holds (Amulet of Hope's two clauses, D566: `byAttackFor` and the
+      attacker on the other seat). Absent = the program runs on every Knock Out (the `fix-onko`
+      fixture), byte-identical. */
+  byOpponentAttack?: true;
   /** `onKnockOut` only — a CAUSE-CONDITIONED Prize REDUCTION (Munkidori ex
       sv06.5-037/-083/-091 "Oh No You Don't": "If this Pokémon is Knocked Out by
       damage from an attack from your opponent's Pokémon, and if you have any
@@ -1237,6 +1251,15 @@ export interface PassiveEffects {
       paragraph asked for, at the clamp site, with the uid in hand. This field is still
       Ability-only (Resolute Heart / Sturdy). */
   survivesKoAtFullHp?: true;
+  /** 🆕🆕🆕 **D598 — THE COIN-FLIP SURVIVAL**, the value the printed Ability NAME (the coin row
+      names it): *"If this Pokémon would be Knocked Out by damage from an attack, flip a coin. If
+      heads, this Pokémon is not Knocked Out, and its remaining HP becomes 10."* — Mega Hawlucha ex
+      "Tenacious Body" (`me02.5-116` / `-268` / `-283`) and Annihilape `me05-041` "Durable Body".
+      No full-HP antecedent. Read by continuous.ts `koSurvivalCoinFlip` at the four §8.5 damage
+      writes, asked only when `koSurvivalClamp` did not answer; one `ABILITY_COIN_FLIP` per lethal
+      hit, and heads leaves `hp − 10` (`survived: true` on the row). Through `passivesOf`, so a §9
+      lock switches it off. A placed counter is not damage, so no counter writer asks it. */
+  survivesKoOnCoinFlip?: string;
   /** §9 continuous Ability-lock AURA: while this Pokémon is in play (and, when
       `requiresActive`, in the Active Spot), every in-play Pokémon matching the
       target predicate "has no Abilities" — the engine suppresses its activated /
@@ -1433,6 +1456,25 @@ export interface PassiveEffects {
       instead of the discard is pure upside), so nothing parks. Two Huntail do not stack: the
       rescue is all-or-nothing per body. */
   koBasicEnergyToHand?: BasicEnergyType;
+  /** 🆕🆕🆕 **D598 — RETURN-TO-HAND ON KNOCK OUT:** Gengar `me03-050` "Infinite Shadow" — *"If this
+      Pokémon is Knocked Out by damage from an attack from your opponent's Pokémon, put it into your
+      hand instead of the discard pile. (Discard all attached cards.)"* Read by flow.ts
+      `collectKnockOutPass` beside `koBasicEnergyToHand`, off the PRE-batch body, under the same
+      two cause clauses: continuous.ts `koSelfToHandUids` returns the body's `stack` (every card of
+      the Pokémon — R-IS1, ⚠️ UNRULED) when its own Ability is unsuppressed and the move is not
+      locked (`inPlayToHandBlocked`); Energy and Tools take the discard path. Through `knockOut`'s
+      D572 `toHand`, so the Prize is still taken and `KNOCKED_OUT.toHand` names the cards. */
+  koSelfToHand?: true;
+  /** 🆕🆕🆕 **D598 — A SEAT-WIDE PRIZE REDUCTION ON THE KO'd SIDE:** Mega Gengar ex "Shadowy
+      Concealment" (`me02-056`, `me02.5-125` / `-269` / `-284`, `mep-073`) — *"If 1 of your {D}
+      Pokémon is Knocked Out by damage from an attack from your opponent's Pokémon ex, that player
+      takes 1 fewer Prize card. The effect of Shadowy Concealment doesn't stack."* The aura sits on
+      the DYING body's side (Togekiss's `koPrizeBonus` sits on the taker's). Read by flow.ts
+      `seatPrizeReduction` inside `planPrizes`, after the attached reductions: the first live,
+      unsuppressed holder on the pre-KO board (the dying body itself included) answers, so a
+      second copy adds nothing ("doesn't stack"); `koTarget` is matched against the dying body's
+      in-play card; the cause is `koByOpponentPokemonEx`. `by` is clamped at 0. */
+  seatKoPrizeReduction?: { ability: string; by: number; koTarget: CardFilter };
   /** §8.5 continuous ATTACKER-side suppression (D192): "Damage from attacks used
       by this Pokémon isn't affected by any effects on your opponent's Active
       Pokémon." — Walking Wake ex "Azure Seas" (sv05-050/-189/-205/-215,
@@ -6847,7 +6889,10 @@ const FIX_KOPRIZE: CardProgram = {
     sweep resumes draining prizes/promotions afterwards. No real SV-era on-KO
     Ability requires a decision (Glimmora / Munkidori are a coin flip / a fixed
     condition), so — like the fix-sniper spread demonstrator (slice 4) — a fixture
-    proves the machinery until a live card lands with the coverage fan-out. */
+    proves the machinery until a live card lands with the coverage fan-out.
+    [🆕🆕🆕 D598 (D539): *"No real … on-KO Ability requires a decision"* is WITHDRAWN as a pool-wide
+    fact, kept as written (true of the `sv` column) — Pecharunt `me02.5-143` "Final Chain" is a live
+    on-KO search that parks the same way (`FINAL_CHAIN`, `koAbilitiesMeD598.test.ts` §7).] */
 const FIX_ONKO: CardProgram = {
   triggered: [
     {
@@ -17284,6 +17329,62 @@ const INFERNO_X: CardProgram = {
   },
 };
 
+// ── 🆕🆕🆕 D598 — WP32: KO / DAMAGE-TAKEN ABILITIES. Texts off the LOCAL D1. `koAbilitiesMeD598.test.ts`. ──
+
+/** 🆕🆕🆕 **D598 — Mega Gengar ex "Shadowy Concealment"** (×5) — *"If 1 of your {D} Pokémon is
+    Knocked Out by damage from an attack from your opponent's Pokémon ex, that player takes 1 fewer
+    Prize card. The effect of Shadowy Concealment doesn't stack."* `seatKoPrizeReduction`. */
+const SHADOWY_CONCEALMENT: CardProgram = {
+  passive: {
+    seatKoPrizeReduction: {
+      ability: "Shadowy Concealment",
+      by: 1,
+      koTarget: { kind: "typedPokemon", pokemonType: "Darkness" },
+    },
+  },
+};
+
+/** 🆕🆕🆕 **D598 — Mega Hawlucha ex "Tenacious Body"** (×3) — *"If this Pokémon would be Knocked
+    Out by damage from an attack, flip a coin. If heads, this Pokémon is not Knocked Out, and its
+    remaining HP becomes 10."* `survivesKoOnCoinFlip`. */
+const TENACIOUS_BODY: CardProgram = { passive: { survivesKoOnCoinFlip: "Tenacious Body" } };
+
+/** 🆕🆕🆕 **D598 — Annihilape `me05-041` "Durable Body"** — Tenacious Body's sentence under another
+    name; its own object so the coin row names the printed Ability. */
+const DURABLE_BODY: CardProgram = { passive: { survivesKoOnCoinFlip: "Durable Body" } };
+
+/** 🆕🆕🆕 **D598 — Shedinja `me01-061` / `-144` "Fragile Husk"** — *"If this Pokémon is Knocked Out
+    by damage from an attack from your opponent's Pokémon ex, your opponent can't take any Prize
+    cards for it."* Glimmora's guard slot, the coin replaced by the ex cause. */
+const FRAGILE_HUSK: CardProgram = {
+  triggered: [
+    { name: "Fragile Husk", trigger: "onKnockOut", program: [], onKoPrizeGuard: "pokemonExAttackPrevent" },
+  ],
+};
+
+/** 🆕🆕🆕 **D598 — Gengar `me03-050` "Infinite Shadow"** — *"If this Pokémon is Knocked Out by damage
+    from an attack from your opponent's Pokémon, put it into your hand instead of the discard pile.
+    (Discard all attached cards.)"* `koSelfToHand`. */
+const INFINITE_SHADOW: CardProgram = { passive: { koSelfToHand: true } };
+
+/** 🆕🆕🆕 **D598 — Pecharunt `me02.5-143` "Final Chain"** — *"If this Pokémon is Knocked Out by damage
+    from an attack from your opponent's Pokémon, search your deck for a card and put it into your
+    hand. Then, shuffle your deck."* An on-KO program behind the new `byOpponentAttack` cause; the
+    program is `deriveAttackEffect`'s for the same consequent, byte for byte (the test pins it). */
+const FINAL_CHAIN: CardProgram = {
+  triggered: [
+    {
+      name: "Final Chain",
+      trigger: "onKnockOut",
+      byOpponentAttack: true,
+      program: [
+        { op: "searchDeck", filter: { kind: "anyCard" }, dest: "hand", max: 1 },
+        { op: "shuffleDeck" },
+      ],
+    },
+  ],
+};
+
 const REGISTRY: Record<string, CardProgram> = {
   // Professor's Research (SV base prints)
   "sv01-189": PROFESSORS_RESEARCH,
@@ -18360,6 +18461,20 @@ const REGISTRY: Record<string, CardProgram> = {
   // 🆕🆕🆕 D597 — WP29: the two "[R]" Inferno X, ATTACK-only keys, MID-MAP (`raw[last]` does not move).
   "mep-023": INFERNO_X, // Mega Charizard X ex "Inferno X" (attack 0) — the `me02` sentence with tcgdex's "[R]"
   "mep-029": INFERNO_X, // Mega Charizard X ex
+  // 🆕🆕🆕 D598 — WP32: 13 Ability keys / 6 objects, MID-MAP (`raw[last]` does not move). `koAbilitiesMeD598.test.ts`.
+  "me02-056": SHADOWY_CONCEALMENT, // Mega Gengar ex — 1 fewer Prize for a {D} body KO'd by an ex's attack
+  "me02.5-125": SHADOWY_CONCEALMENT, // Mega Gengar ex
+  "me02.5-269": SHADOWY_CONCEALMENT, // Mega Gengar ex
+  "me02.5-284": SHADOWY_CONCEALMENT, // Mega Gengar ex
+  "mep-073": SHADOWY_CONCEALMENT, // Mega Gengar ex
+  "me02.5-116": TENACIOUS_BODY, // Mega Hawlucha ex — coin-flip survival on 10 HP
+  "me02.5-268": TENACIOUS_BODY, // Mega Hawlucha ex
+  "me02.5-283": TENACIOUS_BODY, // Mega Hawlucha ex
+  "me05-041": DURABLE_BODY, // Annihilape — Tenacious Body's sentence
+  "me01-061": FRAGILE_HUSK, // Shedinja — no Prize for a KO by an ex's attack
+  "me01-144": FRAGILE_HUSK, // Shedinja
+  "me03-050": INFINITE_SHADOW, // Gengar — KO'd by an attack, the Pokémon goes to the hand
+  "me02.5-143": FINAL_CHAIN, // Pecharunt — KO'd by an attack, search the deck for a card
   // ── D190 — THE **STANDARD-LEGAL** REPRINT-ALIAS MAP (Tier 0 of
   //    `docs/reference/coverage-backlog-legal.md`). 22 printings, 9 map targets,
   //    ZERO new code: every row below prints a sentence that is already authored

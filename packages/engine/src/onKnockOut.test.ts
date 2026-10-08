@@ -28,6 +28,7 @@ import {
 //   • fix-onko "Last Wish" (FIXTURE) — the resume-the-tail PARKING demonstrator:
 //     an on-KO program (search a Basic → hand) that PARKS on effect:choose (no
 //     real SV on-KO Ability requires a decision — the fix-sniper precedent).
+//     [🆕🆕🆕 D598 (D539): of the `sv` column only — Pecharunt `me02.5-143` "Final Chain" parks the same way.]
 
 function find<T extends GameEvent["type"]>(
   events: GameEvent[],

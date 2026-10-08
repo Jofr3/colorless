@@ -699,6 +699,24 @@ export function koEnergyRescueUids(state: GameState, seat: Seat, body: InPlayPok
   );
 }
 
+/** 🆕🆕🆕 §8.1 (D598) — the uids Gengar `me03-050` "Infinite Shadow" puts into `seat`'s HAND
+    instead of the discard pile when `body` (on `seat`'s board) is Knocked Out, or `[]`. Asked of
+    the PRE-batch board by flow.ts `collectKnockOutPass` beside `koEnergyRescueUids`, and only for
+    a Knock Out by damage from an attack from the opponent's Pokémon (the caller's clauses). The
+    body's OWN top card must carry `koSelfToHand` and its Ability must be live
+    (`disabledAbilityUids`), and the move must not be locked (`inPlayToHandBlocked`, Milotic).
+    "It" is the Pokémon: every card of its `stack` (R-IS1, ⚠️ UNRULED — an evolved Gengar takes
+    its Gastly and Haunter with it); "(Discard all attached cards.)" is the Energy and Tools,
+    which stay on the discard path. */
+export function koSelfToHandUids(state: GameState, seat: Seat, body: InPlayPokemon): string[] {
+  const top = topCardOf(state, body);
+  if (top === undefined || programFor(top.id)?.passive?.koSelfToHand !== true) return [];
+  const uid = topUid(body);
+  if (uid !== undefined && disabledAbilityUids(state).has(uid)) return []; // §9
+  if (inPlayToHandBlocked(state, seat)) return [];
+  return [...body.stack];
+}
+
 /** 🆕🆕🆕 §13.1 (D561) — the EXTRA Poison damage the in-play Stadium owes a Poisoned
     body whose top card is `top`: Perilous Jungle `sv05-156` (*"…put 2 more damage
     counters on each Poisoned non-{D} Pokémon (both yours and your opponent's)."*).
@@ -1343,7 +1361,8 @@ export function passivesOf(
       "Sturdy" — 7 printings / 7 Standard-legal.)
 
       ⚠️ THE ONLY FIELD THIS FOLD RETURNS THAT IS NOT READ INSIDE THE §8.5 DAMAGE
-      PIPELINE — it is read at the WRITE that ends it. Every prevention and
+      PIPELINE — it is read at the WRITE that ends it. [🆕🆕🆕 D598 (D539): *"THE ONLY FIELD"* is
+      WITHDRAWN, kept as written — `survivesKoOnCoinFlip` below is read at the same four writes.] Every prevention and
       reduction beside it bites BEFORE the number lands (they change `dealt`);
       this one lets the full number be computed and then clamps the TOTAL the
       board stores, because the printed sentence is about the resulting HP and not
@@ -1357,6 +1376,9 @@ export function passivesOf(
       HP", "would be Knocked Out" and "becomes 10" cannot drift apart across
       them. */
   survivesKoAtFullHp: boolean;
+  /** 🆕🆕🆕 D598 — the printed NAME of this body's coin-flip survival Ability (Tenacious Body,
+      Durable Body), or null. Consumed only by `koSurvivalCoinFlip`. */
+  survivesKoOnCoinFlip: string | null;
 } {
   const top = topCardOf(state, pokemon);
   // A locked Pokémon's own printed passive (an Ability) is suppressed; its Tools
@@ -1654,6 +1676,7 @@ export function passivesOf(
   let preventAttackEffects = false;
   let suppressTargetEffectsOnAttack = false;
   let survivesKoAtFullHp = false;
+  let survivesKoOnCoinFlip: string | null = null;
   // D257 — the DAMAGE THRESHOLD, and the family's first NUMERIC accumulator.
   // `undefined` is the "no such aura" value rather than `Infinity`, so the read
   // sites cannot mistake "shields nothing" for "shields at an absurd number".
@@ -1906,6 +1929,8 @@ export function passivesOf(
     // it writes `survivesKoAtFullHpFromOpponentThenDiscard`, read by `survivalBraceOf`
     // inside `koSurvivalClamp`. This field still has no Tool or Energy writer.
     if (passive.survivesKoAtFullHp === true) survivesKoAtFullHp = true;
+    // 🆕🆕🆕 D598 — Tenacious Body / Durable Body, in this loop for the same §9 reason (an Ability).
+    if (passive.survivesKoOnCoinFlip !== undefined) survivesKoOnCoinFlip ??= passive.survivesKoOnCoinFlip;
     // D242 — the §8 attack GATE, collected RAW exactly like the two conditional
     // damage-bonus lists above it, and IN THIS LOOP for `survivesKoAtFullHp`'s
     // reason: the §9 drop on `sources[0]` is what makes Klefki's Ability-lock
@@ -2003,6 +2028,7 @@ export function passivesOf(
     statusRecovery,
     suppressTargetEffectsOnAttack,
     survivesKoAtFullHp,
+    survivesKoOnCoinFlip,
   };
 }
 
@@ -2131,6 +2157,37 @@ export function koSurvivalClamp(
   return { damage: Math.max(0, hp - KO_SURVIVAL_REMAINING_HP), toolUid };
 }
 
+/** 🆕🆕🆕 §8.1 (D598) — THE COIN-FLIP SURVIVAL: Mega Hawlucha ex "Tenacious Body" ×3 and
+    Annihilape "Durable Body" — *"If this Pokémon would be Knocked Out by damage from an attack,
+    flip a coin. If heads, this Pokémon is not Knocked Out, and its remaining HP becomes 10."*
+    `koSurvivalClamp`'s placement (the four §8.5 damage WRITES, so a placed counter never asks it)
+    and `coinFlipShieldPrevents`' event shape (one `ABILITY_COIN_FLIP` naming the Ability, under
+    the damaged body's `seat`). The callers ask it ONLY when the clamp returned null, so a Survival
+    Brace or a full-HP Sturdy answers without a coin.
+
+    Returns `[damage, rngState]`: `damage` is the total that leaves 10 HP on heads and null
+    otherwise (no flip, or tails). No coin unless all hold: a live, unsuppressed source
+    (`passivesOf` — a §9 lock drops it); a known max HP (`effectiveMaxHp`); the body NOT already
+    lethally damaged (`damage < hp` — "would be Knocked Out" by THIS hit); and the hit lethal
+    (`damage + dealt >= hp`, `isLethallyDamaged`'s comparison). No "full HP" antecedent. */
+export function koSurvivalCoinFlip(
+  state: GameState,
+  pokemon: InPlayPokemon,
+  seat: Seat,
+  dealt: number,
+  events: GameEvent[],
+): [damage: number | null, rngState: number] {
+  const ability = passivesOf(state, pokemon).survivesKoOnCoinFlip;
+  if (ability === null) return [null, state.rngState];
+  const hp = effectiveMaxHp(state, pokemon);
+  if (hp === null || pokemon.damage >= hp || pokemon.damage + dealt < hp) return [null, state.rngState];
+  const uid = topUid(pokemon);
+  if (uid === undefined) return [null, state.rngState];
+  const [face, rngState] = flipCoin(state.rngState);
+  events.push({ type: "ABILITY_COIN_FLIP", seat, uid, ability, result: face });
+  return [face === "heads" ? Math.max(0, hp - KO_SURVIVAL_REMAINING_HP) : null, rngState];
+}
+
 /** §8.5 (D159) — does `attacker` belong to one of the printed TYPES a holder's
     prevention aura names? The resolution half of `passivesOf`'s
     `preventDamageFromTypes`, and `attackerMatchesClass`'s sibling two functions
@@ -2245,7 +2302,8 @@ export function preventedByDamageThreshold(threshold: number | undefined, damage
     record's SHAPE is untouched, which is D146's no-bump case and not D239's retype;
     `expertHider.test.ts` drives it as a REPLAY rather than asserting it in prose.
 
-    ⚠️ THIS IS THE ONLY FUNCTION IN THIS FILE THAT WRITES EVENTS, and it is here
+    ⚠️ THIS IS THE ONLY FUNCTION IN THIS FILE THAT WRITES EVENTS [🆕🆕🆕 D598 (D539): WITHDRAWN, kept as
+    written — `koSurvivalCoinFlip` writes its `ABILITY_COIN_FLIP` the same way, for the same reason], and it is here
     because it is where its own first argument comes from and because attack.ts and
     interpreter.ts cannot import each other (attack.ts imports the interpreter). It is
     NOT part of `passivesOf`, which must stay a pure aggregation — the split is the
@@ -5543,6 +5601,32 @@ export function seatKoPrizeBonuses(
     entries.push({ uid: sourceUid, bonus });
   }
   return entries;
+}
+
+/** 🆕🆕🆕 §8.1 (D598) — the seat-wide Prize REDUCTION on the KO'd side: Mega Gengar ex "Shadowy
+    Concealment". `seatKoPrizeBonuses`' scan one function up, on the DYING body's own `seat`
+    (Active then Bench, pre-KO board, the dying body itself included), FIRST-MATCH: the first live,
+    unsuppressed holder whose `koTarget` admits `koCard` answers and no second copy is looked for —
+    the printed "doesn't stack". The CAUSE (by damage from an attack from the opponent's Pokémon
+    ex) is the caller's (flow.ts `seatPrizeReduction`). Null on a board with no holder. */
+export function seatKoPrizeReductionOf(
+  state: GameState,
+  seat: Seat,
+  /** The DYING body's IN-PLAY card, for the `koTarget` filter. */
+  koCard: Card | undefined,
+): { uid: string; rule: NonNullable<PassiveEffects["seatKoPrizeReduction"]> } | null {
+  const side = state.players[seat];
+  const holders = side.active === null ? side.bench : [side.active, ...side.bench];
+  for (const holder of holders) {
+    const top = topCardOf(state, holder);
+    const rule = top === undefined ? undefined : programFor(top.id)?.passive?.seatKoPrizeReduction;
+    if (rule === undefined) continue;
+    const uid = topUid(holder);
+    if (uid === undefined || disabledAbilityUids(state).has(uid)) continue; // §9
+    if (!matchesFilter(koCard, rule.koTarget)) continue;
+    return { uid, rule };
+  }
+  return null;
 }
 
 /** §7.3/§8.5 (D159) — does the in-play STADIUM prevent all attack damage from

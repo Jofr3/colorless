@@ -6384,7 +6384,10 @@ import type { GameState, Seat } from "./types";
     deliberately has no member to tell apart — so a crumb naming a source or an
     owner would be false or spoken from the wrong chair. A bare past-tense
     statement about the damage, in the printed sentence's own words ("it is not
-    Knocked Out"), is true from either chair. ⚠️ **AND IT QUOTES NO HP NUMBER**,
+    Knocked Out"), is true from either chair. [🆕🆕🆕 D598 (D539): "two printed
+    Ability names" is WITHDRAWN as the whole set, kept as written — the coin-flip
+    survival (Tenacious Body, Durable Body) sets the flag too, and its own
+    `ABILITY_COIN_FLIP` row names the Ability.] ⚠️ **AND IT QUOTES NO HP NUMBER**,
     which is a decision and not an omission: "its remaining HP becomes 10" is on
     all seven cards, but the number the row would have to print is
     `effectiveMaxHp − 10` against a maximum the event does not carry — **the
@@ -20255,6 +20258,19 @@ import type { GameState, Seat } from "./types";
     `expect(manifest.version)`, `it(…)` titles, the declaration and `package.json` —
     **not** as a value-keyed grep — because a value-keyed grep is precisely the mechanism
     that ate D500's heading.)
+    🆕🆕🆕 engineVersion 0.481.0 → **0.482.0** (D598 — WP32: KO / DAMAGE-TAKEN ABILITIES;
+    `MATCH_RECORD_VERSION` STAYS 42 (apps/api match.ts "STAYS 42 AT D598")). 13 Ability keys / 6
+    objects: Mega Gengar ex "Shadowy Concealment" ×5 (`PassiveEffects.seatKoPrizeReduction`, read by
+    flow.ts `seatPrizeReduction` in `planPrizes`), Mega Hawlucha ex "Tenacious Body" ×3 and Annihilape
+    "Durable Body" (`survivesKoOnCoinFlip`, continuous.ts `koSurvivalCoinFlip` at the four §8.5 damage
+    writes, asked only when `koSurvivalClamp` did not answer — R-SB1, a Survival Brace goes first),
+    Shedinja "Fragile Husk" ×2 (`onKoPrizeGuard: "pokemonExAttackPrevent"`), Gengar "Infinite
+    Shadow" (`koSelfToHand`, through D572's `toHand`; log.ts `koToHandTail` now counts what moved —
+    "N Pokémon cards" beside D572's "N Basic Energy") and Pecharunt "Final Chain" (an on-KO program
+    behind `TriggeredAbility.byOpponentAttack`). flow.ts `koByOpponentAttack` / `koByOpponentPokemonEx`
+    are the shared cause predicates ("KO'd by an ex"). Registry-only fields; no persisted member.
+    Fainting Spell, Photon Cord, Spiteful Swirl, Counterattack Grouping and Damp dropped and named.
+    `koAbilitiesMeD598.test.ts`.)
     🆕🆕🆕 engineVersion 0.480.0 → **0.481.0** (D597 — WP29: THE DISCARD-SCALED ATTACKS;
     `MATCH_RECORD_VERSION` STAYS 42 (apps/api match.ts "STAYS 42 AT D597")). effects.ts
     `COMMA_DISCARD_SCALED_DAMAGE` (arm 10d) reads the `me` comma spelling of D402's `×` fold — Inferno X
@@ -25288,7 +25304,7 @@ import type { GameState, Seat } from "./types";
     WITNESS** — the count was re-derived every slice and the word *"three"* was carried.
     A successor of this slice inherits **81 / 61 / 17** again, over **FIVE** history
     occurrences: those four plus `deckMillFilteredScale.test.ts`'s own header arrow.) */
-export const engineVersion = "0.481.0";
+export const engineVersion = "0.482.0";
 
 export type {
   ApplyResult,

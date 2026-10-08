@@ -1923,7 +1923,8 @@ export const FIXTURE_POOL: Record<string, Card> = {
   /** fix-onko — the FIXTURE on-KO PARKER (registry FIX_ONKO): "Last Wish" searches
       the deck for a Basic Pokémon → hand when Knocked Out, so it PARKS mid-KO-
       sweep (the resume-the-tail path no real SV on-KO Ability exercises). 30 HP
-      for a one-Bite KO. */
+      for a one-Bite KO. [🆕🆕🆕 D598 (D539): of the `sv` column only — Pecharunt
+      `me02.5-143` "Final Chain" is a live `me` on-KO search that takes this path.] */
   "fix-onko": battler("fix-onko", { name: "fix-onko", hp: 30 }),
   /** fix-koprize — the FIXTURE on-KO PRIZE-REDUCER (registry FIX_KOPRIZE, D164):
       Munkidori ex's "Oh No You Don't" on a body worth ONE Prize instead of two.

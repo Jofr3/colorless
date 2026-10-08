@@ -706,6 +706,9 @@ describe("the log — rendered under BOTH seats and READ, not copied", () => {
     // a SOURCE would be spoken from the wrong chair — and the source is unknowable
     // here anyway: TWO printed Ability names set this one flag and the event
     // carries no member telling them apart.
+    // [🆕🆕🆕 D598 (D539): "TWO printed Ability names" is WITHDRAWN as the whole set, kept as
+    // written — the coin-flip survival (Tenacious Body, Durable Body) sets the flag too, and its
+    // own `ABILITY_COIN_FLIP` row names the Ability; the attacker's-seat voice stays true of it.]
     const { state, events } = mustApply(board(71), { type: "attack", seat: "p1", index: BLAST });
     expect(find(events, "DAMAGE_DEALT")?.seat).toBe("p2"); // the victim's seat…
     expect(render(state, events)).toContain("p1: "); // …and P1's row.

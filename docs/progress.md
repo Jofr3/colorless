@@ -3,7 +3,9 @@
 > Update this at the **end of every session**: bump the status table, append a
 > session-log entry, and rewrite the **Resume point** to the next concrete action.
 
-**Last updated:** 2026-10-08 — build session #537 (**P3-M5 — D597, *WP29 — THE DISCARD-SCALED ATTACKS: 8 texts / 18 `me` printings — the `me` comma spelling of D402's `×` fold (`COMMA_DISCARD_SCALED_DAMAGE`: Inferno X ×4, Garland Ray ×3, Steel Cutter, Double Eater), D488's mill on "Basic {W} Energy card" (Hammer-lanche ×2, Iceberg Breaker), the `handDiscard` boost member (Shooting Moons ×4) and the two "[R]" Inferno X keyed on `INFERNO_X`; Eelektross, Slowpoke, Honchkrow and Pawmot dropped and named; `sv` reader output byte-identical; Standard pool attacks 2576 / 2771; 857 `me` printings fully built*** — engine 0.481.0, MRV 42, NOT committed; the sweep PENDING)
+**Last updated:** 2026-10-08 — build session #538 (**P3-M5 — D598, *WP32 — KO / DAMAGE-TAKEN ABILITIES: 6 texts / 13 `me` printings — Mega Gengar ex "Shadowy Concealment" ×5 (a seat-wide Prize reduction on the KO'd side, `seatKoPrizeReduction`), Mega Hawlucha ex "Tenacious Body" ×3 and Annihilape "Durable Body" (the coin-flip survive, `koSurvivalCoinFlip` at the four damage writes), Shedinja "Fragile Husk" ×2 (`onKoPrizeGuard` "pokemonExAttackPrevent"), Gengar "Infinite Shadow" (return-to-hand on KO) and Pecharunt "Final Chain" (an on-KO search behind `byOpponentAttack`); Fainting Spell, Photon Cord, Spiteful Swirl, Counterattack Grouping and Damp dropped and named; Standard pool abilities 504 / 610; 870 `me` printings fully built*** — engine 0.482.0, MRV 42, NOT committed; the sweep PENDING)
+
+**Last updated (was):** 2026-10-08 — build session #537 (**P3-M5 — D597, *WP29 — THE DISCARD-SCALED ATTACKS: 8 texts / 18 `me` printings — the `me` comma spelling of D402's `×` fold (`COMMA_DISCARD_SCALED_DAMAGE`: Inferno X ×4, Garland Ray ×3, Steel Cutter, Double Eater), D488's mill on "Basic {W} Energy card" (Hammer-lanche ×2, Iceberg Breaker), the `handDiscard` boost member (Shooting Moons ×4) and the two "[R]" Inferno X keyed on `INFERNO_X`; Eelektross, Slowpoke, Honchkrow and Pawmot dropped and named; `sv` reader output byte-identical; Standard pool attacks 2576 / 2771; 857 `me` printings fully built*** — engine 0.481.0, MRV 42, NOT committed; the sweep PENDING)
 
 **Last updated (was):** 2026-10-08 — build session #536 (**P3-M5 — D596, *WP09 — MEGA GARDEVOIR ex AND XERNEAS: 3 texts / 14 `me` printings — Mega Symphonia ×6 and Geo Storm ×2 on the `×` board-wide own-Energy count (`SELF_BOARD_ENERGY_MULTIPLY`, `energyOnSelf` at the board zone), Overflowing Wishes ×6 on `attachFromDeck` `benchOnly` + the one new field `each` (one Basic {P} Energy per Benched Pokémon); nothing dropped; `sv` reader output byte-identical; Standard pool attacks 2558 / 2771; 843 `me` printings fully built*** — engine 0.480.0, MRV 42, NOT committed; the sweep PENDING)
 
@@ -819,6 +821,39 @@
 
 ## NEXT (resume point)
 
+> ### ▶ THE NEXT CONCRETE ACTION (written 2026-10-08, after D598)
+>
+> 🛑 **D598 IS BUILT AND NOT COMMITTED** (worktree `/home/jofre/projects/luminous_ui-mega`, branch `mega-ingest`, on D597 = `2b832f64`). D598 is WP32 of the Mega backlog: the KO / damage-taken Abilities. Next: a review of D598, then the next package or the landing of D581–D598 (rebase `mega-ingest` onto main; never `git add -A` — `apps/api/.wrangler` is the setup symlink).
+>
+> ✅ **`bun run check` IS GREEN**: `typecheck-coverage`, `tsc -b`, `lint-coverage`, `biome lint --error-on-warnings`, `Test Files 641 passed (641) / Tests 15191 passed (15191) / CHECK_EXIT=0` (D597: 640 / 15154; D598 adds `koAbilitiesMeD598.test.ts` (34) and the census D598 block (3)).
+>
+> **(a) THE SLICE.** WP32 is 11 texts / 22 printings; the Mega Gengar ex and Mega Hawlucha ex families were taken first, with the siblings that need only the brief's three new pieces (coin-flip survive, "KO'd by an ex", return-to-hand on KO): 6 texts / 13 printings, 13 registry keys on 6 objects. Mega Gengar ex "Shadowy Concealment" ×5 (`me02-056`, `me02.5-125` / `-269` / `-284`, `mep-073`): `PassiveEffects.seatKoPrizeReduction`, read by flow.ts `seatPrizeReduction` inside `planPrizes` after the attached reductions (first live holder on the KO'd side answers — "doesn't stack"; {D} by in-play type). Mega Hawlucha ex "Tenacious Body" ×3 (`me02.5-116` / `-268` / `-283`) and Annihilape "Durable Body" (`me05-041`): `survivesKoOnCoinFlip`, continuous.ts `koSurvivalCoinFlip` at the four §8.5 damage writes, asked only when `koSurvivalClamp` did not answer; heads leaves 10 HP and sets `DAMAGE_DEALT.survived`. Shedinja "Fragile Husk" ×2 (`me01-061` / `-144`): `onKoPrizeGuard: "pokemonExAttackPrevent"`, Glimmora's prohibition gated on the cause. Gengar "Infinite Shadow" (`me03-050`): `koSelfToHand`, continuous.ts `koSelfToHandUids` through D572's `toHand` (§9- and Milotic-gated; the Prize is still taken). The `KNOCKED_OUT` log tail now counts what moved (log.ts `koToHandTail`): "— 3 Pokémon cards put into the hand instead of the discard pile"; an all-Energy split is D572's string byte for byte. Pecharunt "Final Chain" (`me02.5-143`): an on-KO search behind the new `TriggeredAbility.byOpponentAttack`. The cause predicates are flow.ts `koByOpponentAttack` / `koByOpponentPokemonEx`. **Dropped and named:** Gengar ex "Fainting Spell" ×2 (KO the Attacking Pokémon on heads), Miraidon "Photon Cord" ×2 (an Energy move off the dying body), Spiritomb "Spiteful Swirl" ×2 and Wishiwashi "Counterattack Grouping" (a seat-wide filtered recoil), Damp ×2 (WP38).
+>
+> **(b) MRV STAYS 42** (match.ts "STAYS 42 AT D598"): registry-only fields; no op, persisted member, prompt or event (every event used already existed); the Final Chain park is the existing `koTrigger` stage and `chooseCards` prompt.
+>
+> | Column | `me` D598 | Standard pool D598 |
+> |---|---|---|
+> | Attacks | 844 / 1039 | **2576 / 2771** |
+> | Abilities | 128 / 234 | **504 / 610** |
+> | Trainers | 92 / 183 | **356 / 447** |
+> | Special Energy | 3 / 11 | **14 / 22** |
+>
+> **870 `me` printings fully built** (857 + 13: every printing keyed here; their attacks were already reader-built — the census D598 block pins the six attack texts reader-built and the +13; the 857 base is D597's count, not re-derived). Registry +13 (1209 → 1222; `nonAttackRegistryIds()` 1042 → 1055; `CENSUS_ME_POKEMON_D598`). `revealClause`'s NOT_REVEALING 26 → 27 (Final Chain), classified 80 → 81, swept 181 → 182.
+>
+> **(c) THE MUTATION RECORD.** +47 D598 rows (4638 in all; four added at the first review: the coin's rng advance in `spreadDamage`, `placeSnipe` and `snipeActive`, and the log tail; four at the second: the R-SB1 `clamped === null` guard at each of the four damage writes, `D598-*-coin-after-brace`). precheck: 4638 mutants, the same 20 pre-existing broken rows; three older rows re-anchored because the build rewrote their line (`D208-survived-flag`, `D425-damage-row-names-the-victim-as-the-dealer`, `D572-huntail-post-ko-board` — each edit HEAD's). Probe `run.ts --decision D598 --allow-dirty`: 47 killed · 0 known survivor(s) · 0 GAP(S) · 0 stale · 0 skipped(dirty) · 0 clobber(s) · 0 error(s), tree byte-identical after. Gate-witness `--only` (the 18 `opaque-anatomy-gate.ts` / `residue-census-gate.ts` rows): 18 killed · 0 error. The neighbouring older rows (D164, D208, D298, D323, D572, plus every row on `koSurvivalClamp` / `consumedTools` / `survived:` / `struck`): 92 killed · 0 known survivor(s) · 0 GAP(S) · 0 error(s). Gates: residue-census, opaque-anatomy, splice, partition all OK.
+>
+> 🛑 **(0) THE WHOLE-CORPUS SWEEP IS PENDING** (D581–D597's too). Predicted: **4568 killed · 50 known survivor(s) · 0 GAP(S) · 20 error(s)** over **4,638** rows — 4591 + 47 = 4638; 4521 + 47 = 4568 killed; 4568 + 50 + 20 = 4638. The 20 errors are precheck's 20 broken rows (none D581–D598's); the 47 D598 rows, the 18 gate-witness rows and the 92 neighbours are measured killed. It assumes D597's prediction (4521 · 50 · 0 · 20 over 4591) holds. If it holds, D581–D598 close together. If it fails: an error count ≠ 20 means a `find` was spliced by a later edit (precheck names it); a new GAP or survivor in a D581–D597 row is that slice's open prediction failing, not D598's; one in an older row that names flow.ts `planPrizes` / `collectKnockOutPass`, continuous.ts `passivesOf` / `koSurvivalClamp`, a `DAMAGE_DEALT` write, or a suite re-pointed below is a D598 edit moving it and owes a row-level re-measure before the landing.
+>
+> **D539 sweep.** Withdrawn in place: `passivesOf`'s "THE ONLY FIELD … read at the WRITE" and `coinFlipShieldPrevents`' "THE ONLY FUNCTION IN THIS FILE THAT WRITES EVENTS" (continuous.ts), `DAMAGE_DEALT.survived`'s full-HP-only reading (events.ts; log.ts', `koSurvival.test.ts`' and index.ts' D208 changelog's "TWO printed Ability names"), "no real on-KO Ability requires a decision" as a pool-wide fact (registry.ts `FIX_ONKO`, `onKnockOut.test.ts`, testFixtures.ts' `fix-onko`, decisions.md D30, this file's M4 slice-9 log (both copies), simulator.md), D592's "no printing of this slice is registry-keyed" for Annihilape (`wordingDriftMeD592.test.ts`'s it() title, now asserting a `passive`-only key), coverage-backlog's D592 waiting list, and D572's "the Basic {W} Energy" / "the Energy that went to the hand" as the whole of `KNOCKED_OUT.toHand` (events.ts, log.ts); D590's Sandy Flapping note gains "the by-attack half exists". Counts stepped off the red run: registry ids 1209 → 1222 (attachQuantity, benchCountRequirement, benchNamedBonus, requirementFloor, splitOrder, the census D273 rungs, reprintAliasMeD582's key table), `passivesOf`'s key audit (therapeuticEnergy +`survivesKoOnCoinFlip`), scovillainD578's allowlist (+`seatKoPrizeReductionOf`). Version tax: `0.481.0` outside `docs/` was 151 files / 244 occurrences; 243 stepped (it() titles, `package.json`, the declaration and the D275 `find` included), 1 kept (index.ts' D597 heading).
+>
+> **Pending decisions (UNRULED readings).** **R-IS1** — Infinite Shadow's "put it into your hand" is the whole Pokémon: every card of the evolution stack (Gastly, Haunter, Gengar); "(Discard all attached cards.)" is the Energy and Tools. Reversal: `koSelfToHandUids` returns the top card only (the `D598-infinite-shadow-top-card-only` row is that board). **R-GC1** — Shadowy Concealment reads the pre-KO board: a Mega Gengar ex that is itself the dying body, or dies in the same batch, still reduces (D164's "in play is read before the batch resolves"). **R-TN1** — Tenacious Body / Durable Body sit on `koSurvivalClamp`'s boundary: any attack's damage (an own-Bench spread included), never a placed counter, and still asked under Feint (as Sturdy is). **R-KO1** — Fragile Husk and Final Chain ride `onKnockOutTrigger`, which is not §9-gated (Glimmora's and Munkidori ex's inherited stance), while Shadowy Concealment, Tenacious Body and Infinite Shadow are; reversal: gate `onKnockOutTrigger` for all on-KO rows. **R-PD1** — "by damage from an attack" is the inherited D414/D566/D572 boundary (`byAttackFor`, `koByOpponentAttack`): only a `knockOutDefender` doom is excluded, so a Knock Out from damage counters an opponent's attack PLACED counts as "by damage" for Fragile Husk, Final Chain, Infinite Shadow and Shadowy Concealment (Tenacious Body / Durable Body, at the damage writes, never see a placed counter); reversal: mark counter-placement lethality like `knockOutDefender`'s, for every reader of the boundary at once. **R-SB1** — on a full-HP Mega Hawlucha ex / Annihilape holding a Survival Brace (or any body where `koSurvivalClamp` answers), the Brace applies first and no coin is flipped: the Brace is always spent, Tenacious Body / Durable Body never asked (the texts do not order two replacement effects on one Knock Out; the owner choosing the order is the other reading). Pinned by `koAbilitiesMeD598.test.ts` §5's R-SB1 case at all four damage writes and the four `D598-*-coin-after-brace` rows; reversal: ask the coin first and the clamp only on tails, at all four writes. **R-IX1**, **R-OW1** and **R-HB1** carried (see the archived blocks below).
+>
+> Still owed from the Mega backlog: WP32's five drops (above), WP29's four drops, the seven WP13 drops, WP33b, the three WP33a drops, Meowth ex ×3's Last-Ditch Catch, Mega Clefable ex ×4's Luminous Wing, Flygon ×3, Alakazam ×3's "Powerful Hand" (WP14), Pokémon Center Lady, Mega Absol ex ×3's Terminal Period (WP36), the markup-normalising ingest fix, then the residue by mechanism.
+>
+> ---
+>
+> **ARCHIVED — the resume point D598 was built from, kept rather than overwritten** (D597 has since been committed on `mega-ingest` as `2b832f64`):
+>
 > ### ▶ THE NEXT CONCRETE ACTION (written 2026-10-08, after D597)
 >
 > 🛑 **D597 IS BUILT AND NOT COMMITTED** (worktree `/home/jofre/projects/luminous_ui-mega`, branch `mega-ingest`, on D596 = `11741ce6`). D597 is WP29 of the Mega backlog: the discard-scaled attacks. Next: a review of D597, then the next package or the landing of D581–D597 (rebase `mega-ingest` onto main; never `git add -A` — `apps/api/.wrangler` is the setup symlink).
@@ -34930,7 +34965,7 @@ prize/promotion tail instead of folding back to a turn. Batch order:
 PRIZES-first, then koTriggers, then promotions; a §14 game-ending prize skips the
 program, while the guard (resolved earlier) can DENY a winning prize.
 Behaviour-neutral for every card with no on-KO Ability. Representatives Glimmora
-(sv02-126, real) + fix-onko (FIXTURE — no real SV on-KO Ability parks). **Web:**
+(sv02-126, real) + fix-onko (FIXTURE — no real SV on-KO Ability parks [🆕🆕🆕 D598 (D539): of the `sv` column only — Pecharunt `me02.5-143` "Final Chain" parks the same way])). **Web:**
 the projection's `effect:choose` case reads the turn owner via `koParkActiveSeat`
 when `resumeTail` (activeSeat ≠ waitingSeat — the KO'd player owes it
 mid-opponent-turn); the parked decision reuses the `chooseCards` dialog; two new
@@ -34983,7 +35018,8 @@ the next api deploy (D18).
 |---|---|---|
 | backend-data | P1 | ✅ M1–M9 + P2-M1 + task-17 api deployed (Worker `9b1ec1d1`, 2026-07-16); OAuth secrets pending (user) |
 | deck-builder | P2 | ✅ ALL 19 tasks closed (task 17 landed + e2e-verified locally); only follow-ups left |
-| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D597, *WP29 — the discard-scaled attacks: 8 texts / 18 `me` printings (the comma spelling of the `×` discard fold, the typed Basic mill noun, the `handDiscard` boost member, two "[R]" keys); four texts dropped and named; attacks 2576 / 2771*** — engine 0.481.0, MRV 42, NOT committed; the sweep PENDING) |
+| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D598, *WP32 — KO / damage-taken Abilities: 6 texts / 13 `me` printings (a seat-wide Prize reduction, the coin-flip survive, an ex-gated Prize guard, return-to-hand on KO, a cause-gated on-KO search); five texts dropped and named; abilities 504 / 610*** — engine 0.482.0, MRV 42, NOT committed; the sweep PENDING) |
+| simulator (prior) | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D597, *WP29 — the discard-scaled attacks: 8 texts / 18 `me` printings (the comma spelling of the `×` discard fold, the typed Basic mill noun, the `handDiscard` boost member, two "[R]" keys); four texts dropped and named; attacks 2576 / 2771*** — engine 0.481.0, MRV 42, NOT committed; the sweep PENDING) |
 | simulator (prior) | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D596, *WP09 — Mega Gardevoir ex and Xerneas: 3 texts / 14 `me` printings (the `×` board-wide own-Energy count; a per-Benched-body deck attach on the new `attachFromDeck.each`); nothing dropped; attacks 2558 / 2771*** — engine 0.480.0, MRV 42, NOT committed; the sweep PENDING) |
 | simulator (prior) | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D595, *WP13 — coin-gate compositions: 8 texts / 11 `me` printings (five coin gates over a closed consequent table, three per-heads arms); seven texts dropped and named; attacks 2544 / 2771*** — engine 0.479.0, MRV 42, NOT committed; the sweep PENDING) |
 | simulator (prior) | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D594, *WP33a — bonus / requirement rows on shipped condition members: 6 texts / 10 `me` printings (four clause rows, Luxio's `ifCondition` licence, Chesnaught's per-{G} recoil); attacks 2533 / 2771, abilities 491 / 610*** — engine 0.478.0, MRV 42, NOT committed; the sweep PENDING) |
@@ -35198,6 +35234,18 @@ the next api deploy (D18).
 Legend: 📝 backlog · 📋 specced · 🔎 research · 🚧 in progress · ✅ done
 
 ## Session log
+
+### 2026-10-08 — build session #538 (P3-M5 — D598)
+
+**WP32 — KO / DAMAGE-TAKEN ABILITIES. `MATCH_RECORD_VERSION` STAYS 42.**
+
+Built in the `luminous_ui-mega` worktree on D597 (`2b832f64`); the main checkout was not touched. Every id `git grep`-ped
+and every text read off the LOCAL D1 first. WP32 is 22 printings; the Mega Gengar ex / Mega Hawlucha ex families were taken
+with the siblings the brief's three new pieces cover: 6 texts / 13 printings — Shadowy Concealment ×5, Tenacious Body ×3,
+Durable Body, Fragile Husk ×2, Infinite Shadow, Final Chain. Five texts dropped and named. Readings R-IS1, R-GC1, R-TN1,
+R-KO1, R-PD1 and R-SB1 recorded as UNRULED. `koAbilitiesMeD598.test.ts` (34). Version tax 243 stepped / 1 kept. +47 mutant rows, all
+KILLED; three older rows re-anchored. Review fixes: the `KNOCKED_OUT.toHand` log tail counts what moved (it read "Basic
+Energy" for Infinite Shadow's Pokémon cards); two ruling ids renamed off D568's R-TB1 / R-SC1; second review: the D539 sweep finished (koSurvival.test.ts, index.ts' D208 changelog, testFixtures.ts `fix-onko`, the M4 slice-9 log's second copy) and R-SB1 recorded and pinned (+1 test, +4 rows). Sweep PENDING (NEXT (0)). NOT committed.
 
 ### 2026-10-08 — build session #537 (P3-M5 — D597)
 
@@ -78764,7 +78812,7 @@ survivors / 0 GAPS / 0 stale / 0 skipped(dirty) / 0 clobbers / 0 errors,
   whole prior suite passes unchanged). Representatives: **Glimmora** (sv02-126,
   real — verified vs the local catalog) for the guard, **fix-onko** (a FIXTURE —
   "Last Wish" searches a Basic → hand, parking) for the resume-the-tail path (no
-  real SV-era on-KO Ability requires a decision; the fix-sniper precedent);
+  real SV-era on-KO Ability requires a decision; the fix-sniper precedent [🆕🆕🆕 D598 (D539): of the `sv` column only — Pecharunt `me02.5-143` "Final Chain" is a live `me` on-KO search that parks]);
   neither in the demo decks. New events `ABILITY_COIN_FLIP` / `PRIZE_PREVENTED`;
   new `PendingStage` `koTrigger`; `Phase.effect:choose` += `resumeTail?: true`.
   **Web:** the projection's `effect:choose` case reads the turn owner via
