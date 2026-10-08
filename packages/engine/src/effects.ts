@@ -1804,6 +1804,12 @@ export type BoardCondition =
       same card. They disagree on a real board: a plain Special satisfies
       `energy: "special"` and not this, and `Team Rocket's Energy` satisfies BOTH. */
   | { kind: "yourActiveHasNamedEnergyAttached"; name: string }
+  /** 🆕🆕🆕 **D600 — ANY OF YOUR BENCHED POKÉMON HAS AN ENERGY NAMED `name` ATTACHED.** Zarude
+      "Shadowy Whip" (`mep-088`, `me05-056`): *"If your Benched Pokémon have any Shadowy {D} Energy
+      attached, …"*. The member above, read over your Bench (Active Spot excluded, the printed word
+      is "Benched"); the printed "Shadowy {D} Energy" is the card name "Shadowy Darkness Energy"
+      (`me05-083`), D593's Voltaic reading. False with an empty Bench. Public: attached cards. */
+  | { kind: "yourBenchHasNamedEnergyAttached"; name: string }
   /** §3.8 — your opponent's REMAINING Prize count is one of `counts`: Krokorok
       sv01-116 "Payback" (+90, `[1]`) and Houndstone sv03-101 "Two Four-ocious"
       (+120, `[2, 4]`). The member is set MEMBERSHIP and NOT a threshold ENCODING
@@ -2539,6 +2545,11 @@ export type BoardCondition =
       face-up Stadium or a face-up Ability, so the union's public-state invariant
       holds and redact.ts needs no byte. */
   | { kind: "opponentActiveRetreatCostAtLeast"; count: number }
+  /** 🆕🆕🆕 **D600 — YOUR OPPONENT'S ACTIVE POKÉMON HAS NO RETREAT COST.** Carnivine "Chomp
+      Whole" (`me04-004`): *"If your opponent's Active Pokémon has no Retreat Cost, …"*. The member
+      above's fold (`effectiveRetreatCost`) at zero — the EFFECTIVE cost, not the printed column
+      (R-CW1, UNRULED). False with an empty Active Spot. */
+  | { kind: "opponentActiveNoRetreatCost" }
   /** 🆕 **D370 — YOU HAVE AT LEAST ONE Pokémon OF TYPE `type` ON YOUR BENCH.**
       *"If you have any {M} Pokémon on your Bench, this attack does 80 more
       damage."*, **2 legal printings** — measured off `legalAttackCorpus()`, the
@@ -2608,6 +2619,11 @@ export type BoardCondition =
       Resistance make in §8.5. Types are public the moment a Pokémon is in play, so
       the union's public-state invariant holds. */
   | { kind: "yourBenchHasType"; type: PokemonType }
+  /** 🆕🆕🆕 **D600 — YOU HAVE A STAGE 2 Pokémon OF TYPE `type` ON YOUR BENCH.** Sableye "Cocky
+      Claw" (`me02-059`): *"If you have any Stage 2 {D} Pokémon on your Bench, …"*. The member
+      above with `cards.ts` `isStage2Pokemon` on the SAME body (both facts off its in-play top
+      card), so it is a member and not an `allOf`. Empty Bench: FALSE. */
+  | { kind: "yourBenchHasStage2OfType"; type: PokemonType }
   /** 🆕 **D390 — YOUR OPPONENT HAS AT LEAST ONE Pokémon OF TYPE `type` ANYWHERE IN
       PLAY.** Electivire `sv05-054` "Short-Circuit Knuckle" ({C}{C}, **40+**, +120,
       index 0 of TWO — confirmed by id against tcgdex, which returns both attacks):
@@ -3822,6 +3838,11 @@ export type BoardCondition =
       Mochi's `yourActivePoisoned` block, verbatim; D560 R-AN). An empty Active Spot is
       FALSE. */
   | { kind: "yourActiveDamageCountersAtLeast"; count: number }
+  /** 🆕🆕🆕 **D600 — "THIS POKÉMON'S REMAINING HP IS `hp` OR LESS".** Weavile "Retaliatory Claw"
+      (`mep-021`). "This Pokémon" is your Active (the member above's reading); the predicate is
+      continuous.ts `remainingHpWithin` (effective max HP − damage), shared with the three
+      `remainingHpAtMost` fields. An empty Active Spot is FALSE. */
+  | { kind: "yourActiveRemainingHpAtMost"; hp: number }
   /** 🆕🆕🆕 **D560 (V4) — YOUR OPPONENT'S ACTIVE POKÉMON'S TOP CARD PRINTS AN
       ABILITY.** Galvantula `sv06.5-002` "Compound Eyes" — *"Attacks used by this
       Pokémon do 50 more damage to your opponent's Active Pokémon that has an Ability
@@ -3843,6 +3864,11 @@ export type BoardCondition =
       kind counts ("any cards"), so a Pokémon, a Trainer or an Energy whose name holds the
       fragment all satisfy it. Public: a discard pile is face up. */
   | { kind: "opponentDiscardHasNameContaining"; fragment: string }
+  /** 🆕🆕🆕 **D600 — A CARD NAMED `name` IS IN YOUR DISCARD PILE.** Serperior "Solar Coiling"
+      (`mep-064`, `me03-006`): *"If Rosa's Encouragement is in your discard pile, …"*. The OWNER-side
+      exact-name twin of the member above (YOUR pile only; any card kind; the card side folded,
+      `yourActiveHasNamedEnergyAttached`'s D154 call). Public: a discard pile is face up. */
+  | { kind: "yourDiscardHasNamed"; name: string }
   /** 🆕🆕🆕 **D564 — YOU played, from your hand THIS TURN, a Supporter whose NAME is
       `name` (exact) or CONTAINS `nameContains` (substring).** Two printed readers:
       Team Rocket's Factory `sv10-173` (*"if they played a Supporter card that has "Team
@@ -5713,7 +5739,18 @@ export type EffectOp =
       contract, same event, same `seat`. The whole difference is one enum value in
       the row's provenance, which is exactly what a field is for. A second op
       would have been two copies of five lines told apart by a log label. */
-  | { op: "damageActive"; amount: number; source: "ability" | "attack" }
+  | {
+      op: "damageActive";
+      amount: number;
+      source: "ability" | "attack";
+      /** 🆕🆕🆕 **D600 — WP14**: Alakazam "Powerful Hand" (`me01-056`, `mep-003`, `mep-009`):
+          *"Place 2 damage counters on your opponent's Active Pokémon for each card in your hand."*
+          `amount` is the printed per-card HP and this multiplies it by the controller's hand
+          size, read at resolve. OPTIONAL: every other producer omits it and places `amount`. The
+          op never parks and the one printing is a lone op, so the key rides no `rest` and is never
+          persisted (`MATCH_RECORD_VERSION` stays 42). */
+      per?: Extract<DamageCountSource, { kind: "cardsInYourHand" }>;
+    }
   /** "Move all damage counters from 1 of your Benched Pokémon to your opponent's
       Active Pokémon." — Dedenne ex sv02-093/-239 "Tail Swap" (D138). ONE printed
       action with a CHOICE in front of it and two halves behind it:
@@ -14930,6 +14967,10 @@ const COUNTER_MOVE_OPPONENT_ANY_WAY =
 // unread sentence needs a live witness, and that one WAS re-pointed.
 const COUNTER_PUT_ON_DEFENDER =
   /^Put (\d+) damage counters on your opponent['’]s Active Pokémon\.$/;
+// 🆕🆕🆕 D600 — WP14: the same put, once per card in the ATTACKER's hand (Alakazam "Powerful Hand"
+// ×3, whose printed "Place" `normaliseMeWording` reads as "Put"). A separate anchor (D441).
+const COUNTER_PUT_ON_DEFENDER_PER_HAND_CARD =
+  /^Put (\d+) damage counters on your opponent['’]s Active Pokémon for each card in your hand\.$/;
 // "Put {N} damage counters on 1 of your opponent's Benched Pokémon." — the BENCH
 // half of the same printed action, and the ONE clause it has (D140). Ting-Lu ex
 // sv02-127/-243/-263/-275 "Land Scoop" ({F}{F}{F}, 2 counters) — FOUR printings of
@@ -19792,6 +19833,8 @@ const MILLED_TYPED_BASIC_NOUN = /^Basic \{([A-Z])\} Energy card$/;
 // EXECUTABLE**: `opponentHandScaling.test.ts` §6 pins the zero as a census row, so
 // the day the column prints a fold over YOUR hand it goes RED and this member gains
 // a sibling.
+// [🆕🆕🆕 D600: the legal `sv` column still prints none; the `me` column prints one (Galarian Meowth
+// "Treasure Rush" ×2) and the sibling is `cardsInYourHand` (`YOUR_HAND_COUNT_MULTIPLY`).]
 //
 // ⚠️ **THE POSSESSIVE IS SPELLED `['’]` AND THE CORPUS BYTE IS U+0027, MEASURED
 // RATHER THAN REMEMBERED** (D421's byte): corpus row 564 carries exactly one
@@ -19802,6 +19845,9 @@ const OPPONENT_HAND_COUNT_MULTIPLY =
   /^This attack does (\d+) damage for each ([^.]+) in your opponent['’]s hand\.$/;
 const ATTACK_REVEAL_AND_TRAINER_SCALE =
   /^Your opponent reveals their hand\. This attack does (\d+) damage for each ([^.]+) you find there\.$/;
+// 🆕🆕🆕 D600 — WP14: the ATTACKER's own hand, the bare noun only (Galarian Meowth "Treasure Rush"
+// `30th-101`/`-141`). A separate literal anchor, D441's rule: no noun capture, so no filter map.
+const YOUR_HAND_COUNT_MULTIPLY = /^This attack does (\d+) damage for each card in your hand\.$/;
 /** The two printed nouns, mapped to the `CardFilter` members that already spell
     them. **ZERO new `CardFilter` members** — D440's test applied rather than copied,
     and it matters for the same two consumers: `retrieveNoun`'s exhaustive switch
@@ -21505,6 +21551,18 @@ const CONDITIONAL_DAMAGE_CLAUSES = new Map<string, BoardCondition>([
   [
     "any of your Hop's Pokémon were Knocked Out by damage from an attack during your opponent's last turn",
     { kind: "yourPokemonKoedOnOpponentsLastTurn", owner: "Hop", byAttack: true },
+  ],
+  // 🆕🆕🆕 D600 — WP33b, five literal rows on five NEW members (LOCAL D1, 2026-10-08, legal `me`):
+  // Weavile "Retaliatory Claw" (`mep-021`, 20+, +170), Carnivine "Chomp Whole" (`me04-004`, 80+,
+  // +80), Serperior "Solar Coiling" (`mep-064`/`me03-006`, 100+, +150), Sableye "Cocky Claw"
+  // (`me02-059`, 20+, +70) and Zarude "Shadowy Whip" (`mep-088`/`me05-056`, 100+, +70).
+  ["this Pokémon's remaining HP is 50 or less", { kind: "yourActiveRemainingHpAtMost", hp: 50 }],
+  ["your opponent's Active Pokémon has no Retreat Cost", { kind: "opponentActiveNoRetreatCost" }],
+  ["Rosa's Encouragement is in your discard pile", { kind: "yourDiscardHasNamed", name: "Rosa's Encouragement" }],
+  ["you have any Stage 2 {D} Pokémon on your Bench", { kind: "yourBenchHasStage2OfType", type: "Darkness" }],
+  [
+    "your Benched Pokémon have any Shadowy {D} Energy attached",
+    { kind: "yourBenchHasNamedEnergyAttached", name: "Shadowy Darkness Energy" },
   ],
 ]);
 // The printed energy-type notations, BOTH of them: the modern brace CODE
@@ -31374,6 +31432,15 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
     }
   }
 
+  // 22-bis. 🆕🆕🆕 D600 — WP14: arm 22 × the controller's hand size, read at resolve
+  //     (`damageActive.per`). Counters → HP here, as arm 22; the printed-zero guard as arm 22.
+  match = COUNTER_PUT_ON_DEFENDER_PER_HAND_CARD.exec(effect);
+  if (match !== null && Number(match[1]) >= 1) {
+    return [
+      { op: "damageActive", amount: Number(match[1]) * 10, source: "attack", per: { kind: "cardsInYourHand" } },
+    ];
+  }
+
   // 23. "Put {N} damage counters on 1 of your opponent's Benched Pokémon." —
   //     D140's PUT on the BENCH, 4 printings across 1 clause (Ting-Lu ex
   //     sv02-127/-243/-263/-275 "Land Scoop" at 2 counters). D132's INVENTORY RULE
@@ -35017,6 +35084,7 @@ export interface AttackDamageBonus {
     into the member NAME, D168's convention, and the falsifier is executable:
     `opponentHandScaling.test.ts` §6 pins the zero as a census row, so the day the column
     prints a fold over your own hand it goes RED and this member gains a sibling.
+    [🆕🆕🆕 D600: the `me` column prints one (Treasure Rush ×2) — the sibling is `cardsInYourHand`.]
 
     🛑 **THE WALK IS `countCardsInHand` (interpreter.ts) — D420's OWN LOOP, GENERALISED
     IN PLACE**, which is the move D440 made for the pile and explicitly deferred for the
@@ -35279,7 +35347,13 @@ export type DamageCountSource =
   | { kind: "pokemonInPlay"; seat: CountSeat; filter: CardFilter; damagedOnly?: true }
   | { kind: "bothSidesPokemonInPlay"; filter: CardFilter }
   | { kind: "cardsInDiscardPile"; seat: DiscardPileSeat; filter: CardFilter }
-  | { kind: "cardsInOpponentHand"; filter: CardFilter };
+  | { kind: "cardsInOpponentHand"; filter: CardFilter }
+  /** 🆕🆕🆕 **D600 — WP14: THE CARDS IN THE ATTACKER'S OWN HAND**, every card (the printed noun is
+      the bare "card"). Galarian Meowth "Treasure Rush" (`30th-101`/`-141`, `10×`) on the fold, and
+      `damageActive.per` for Alakazam "Powerful Hand". NULLARY: no printing filters it, and the
+      SIZE of a hand is public (the count shows), so the fold leaks nothing (D445's argument).
+      Counted by interpreter.ts `countCardsInHand` over `anyCard`, the opponent member's walk. */
+  | { kind: "cardsInYourHand" };
 
 /** WHOSE discard pile a `cardsInDiscardPile` count walks (D440). CONTROLLER-RELATIVE,
     like every other side-valued field in this vocabulary — `you` is the seat that
@@ -36214,6 +36288,11 @@ export function deriveAttackDamageMultiplier(text: string): AttackDamageBonus | 
     if (per >= 1 && filter !== null) {
       return { per, count: { kind: "cardsInOpponentHand", filter } };
     }
+  }
+  // 🆕🆕🆕 D600 — WP14: "…for each card in your hand." (`cardsInYourHand`, the printed-zero guard).
+  const ownHand = YOUR_HAND_COUNT_MULTIPLY.exec(effect);
+  if (ownHand !== null && Number(ownHand[1]) >= 1) {
+    return { per: Number(ownHand[1]), count: { kind: "cardsInYourHand" } };
   }
   const revealedHand = ATTACK_REVEAL_AND_TRAINER_SCALE.exec(effect);
   if (revealedHand !== null) {

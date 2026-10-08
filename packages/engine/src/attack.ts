@@ -756,6 +756,8 @@ function scaledAttackDamage(
       // sibling member rather than this arm gaining a branch — the falsifier
       // `opponentHandScaling.test.ts` §6 pins on the population.
       //
+      // [🆕🆕🆕 D600: the `me` column prints the "your hand" fold, and it got the sibling member,
+      // `cardsInYourHand`, the arm after this one.]
       // ⚠️ **THIS IS THE ONE ARM IN THE SWITCH WHOSE ZONE THE OTHER PLAYER CANNOT
       // SEE**, and the damage it produces IS public — so the fold is an information
       // channel in a way none of its sixteen siblings is. What keeps it honest is the
@@ -765,6 +767,8 @@ function scaledAttackDamage(
       // `DamageCountSource.cardsInOpponentHand`'s own block; this line is where it
       // would be silently untrue if a successor widened the vocabulary onto an
       // unrevealed sentence.
+      // [🆕🆕🆕 D600 (D539): "THE ONE ARM … THE OTHER PLAYER CANNOT SEE" is WITHDRAWN, kept as
+      // written — `cardsInYourHand` below reads a hidden zone too, but only its SIZE (public).]
       //
       // The walk is `countCardsInHand` (interpreter.ts) — D420's own loop, GENERALISED
       // at its site rather than copied here, so the `BoardCondition` threshold over a
@@ -775,6 +779,10 @@ function scaledAttackDamage(
       // and on this fold (printed base dropped) that is no DAMAGE_DEALT row at all,
       // which is the printed floor.
       return countCardsInHand(state, defenderSeat, bonus.count.filter) * bonus.per;
+    case "cardsInYourHand":
+      // 🆕🆕🆕 D600 — WP14: the ATTACKER's own hand, every card (Galarian Meowth "Treasure Rush"),
+      // by the arm above's walk. Read at declaration; an empty hand is 0 (no DAMAGE_DEALT row).
+      return countCardsInHand(state, attackerSeat, { kind: "anyCard" }) * bonus.per;
     case "extraEnergyUnitsBeyondCost":
       // 🆕🆕 D436 — the 0-or-1 INDICATOR again, but read against the DECLARATION.
       // "…at least N extra Energy attached (in addition to this attack's cost)".

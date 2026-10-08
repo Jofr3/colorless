@@ -16989,7 +16989,8 @@ const PSYCHIC_DRAW_2_TEXT =
 /** 🆕🆕🆕 **D590 — Alakazam `me01-056` / `mep-003` / `mep-009` (3 legal) "Psychic Draw"**: draw 3,
     behind the confirm. The Ability only: the printed attack "Powerful Hand" (2 counters per card in
     your hand) needs a hand-count source (WP14) and keeps refusing, so these printings are not fully
-    built. */
+    built. [🆕🆕🆕 D600 (D539): WITHDRAWN, kept as written — WP14 reads "Powerful Hand"
+    (`damageActive.per`, `cardsInYourHand`), so all three printings are fully built.] */
 const PSYCHIC_DRAW_3: CardProgram = {
   triggered: [
     {
@@ -18469,7 +18470,7 @@ const REGISTRY: Record<string, CardProgram> = {
   "me04-122": MORTAL_SHURIKEN, // Mega Greninja ex
   // 🆕🆕🆕 D590 — WP05: the `me` on-evolve Abilities, MID-MAP (`raw[last]` does not move). Non-attack
   // keys: every printed attack keeps deriving. `onEvolveMeD590.test.ts` drives each one.
-  "me01-056": PSYCHIC_DRAW_3, // Alakazam — draw 3 (confirm); "Powerful Hand" still unbuilt (WP14)
+  "me01-056": PSYCHIC_DRAW_3, // Alakazam — draw 3 (confirm); "Powerful Hand" still unbuilt (WP14) [D600: built]
   "mep-003": PSYCHIC_DRAW_3, // Alakazam
   "mep-009": PSYCHIC_DRAW_3, // Alakazam
   "me01-055": PSYCHIC_DRAW_2, // Kadabra — draw 2 (confirm)

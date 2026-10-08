@@ -177,7 +177,12 @@ describe("D592 §2 — the table cannot reach an `sv` sentence", () => {
     expect(changed.filter((text) => drift.has(text))).toHaveLength(10);
     // Each still needs vocabulary beyond a synonym (a hand-count source, a gate, a trigger, …).
     expect(unbuilt).toHaveLength(5);
-    for (const text of unbuilt) expect(deriveAttackEffect(text), text).toBeNull();
+    // 🆕🆕🆕 D600 (D539): "five that stay unbuilt" is WITHDRAWN, kept as written — four: Powerful Hand
+    // ×3 is built by WP14's hand-count source (`damageActive.per`), the vocabulary named above.
+    const powerfulHand = "Place 2 damage counters on your opponent's Active Pokémon for each card in your hand.";
+    expect(unbuilt).toContain(powerfulHand);
+    expect(deriveAttackEffect(powerfulHand)).not.toBeNull();
+    for (const text of unbuilt.filter((t) => t !== powerfulHand)) expect(deriveAttackEffect(text), text).toBeNull();
   });
 });
 
@@ -185,8 +190,9 @@ describe("D592 §3 — near misses stay null, one token apart each", () => {
   it("every control is unbuilt", () => {
     const controls: Record<string, string> = {
       "a singular counter (no 'counters')": "Place 1 damage counter on your opponent's Active Pokémon.",
-      "Powerful Hand (a hand-count source, WP14)":
-        "Place 2 damage counters on your opponent's Active Pokémon for each card in your hand.",
+      // 🆕🆕🆕 D600 (D539): the printed Powerful Hand is BUILT (WP14) — this control is its seat near miss.
+      "Powerful Hand over THEIR hand (the printed row is built, WP14)":
+        "Place 2 damage counters on your opponent's Active Pokémon for each card in their hand.",
       "the comma-join on another head": "Look at your opponent's hand, and you discard a card you find there.",
       "the comma-join with another count": "Your opponent reveals their hand, and you discard 2 cards you find there.",
       "Astonish's comma-join to another zone":
@@ -455,7 +461,7 @@ describe("D592 §6 — Claw of Darkness and Thunder on a board", () => {
 });
 
 describe("D592 §7 — the version", () => {
-  it("is built at engine 0.483.0", () => {
-    expect(engineVersion).toBe("0.483.0");
+  it("is built at engine 0.484.0", () => {
+    expect(engineVersion).toBe("0.484.0");
   });
 });

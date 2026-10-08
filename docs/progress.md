@@ -3,7 +3,9 @@
 > Update this at the **end of every session**: bump the status table, append a
 > session-log entry, and rewrite the **Resume point** to the next concrete action.
 
-**Last updated:** 2026-10-08 — build session #539 (**P3-M5 — D599, *WP24a — TWO WP24 SUPPORTERS: 2 texts / 4 `me` printings — Anthea & Concordia ×2 (Briar's `supporterKoPrizeBonus` at 3 on N's Pokémon, a six-name play gate) and Emma ×2 (reveal, then `drawCards` with the new `per` member `cardsInOpponentHand`); AZ's Tranquility, Gladion's Final Battle, Grimsley's Move, Gwynn and Naveen dropped and named; Standard pool Trainers 360 / 447; 874 `me` printings fully built*** — engine 0.483.0, MRV 42, NOT committed; the sweep PENDING)
+**Last updated:** 2026-10-08 — build session #540 (**P3-M5 — D600, *WP14 + WP33b — THE HAND COUNT AND FIVE BONUS CONDITIONS: 7 texts / 12 `me` printings — `DamageCountSource.cardsInYourHand` (Galarian Meowth "Treasure Rush" ×2 on the `×` fold; Alakazam "Powerful Hand" ×3 as `damageActive.per`) and five clause rows on five new `BoardCondition` members (Weavile, Carnivine, Serperior ×2, Sableye, Zarude ×2); Gholdengo "Celebration" ×2 dropped; `sv` reader output byte-identical; Standard pool attacks 2588 / 2771; 886 `me` printings fully built*** — engine 0.484.0, MRV 42, NOT committed; the sweep PENDING)
+
+**Last updated (was):** 2026-10-08 — build session #539 (**P3-M5 — D599, *WP24a — TWO WP24 SUPPORTERS: 2 texts / 4 `me` printings — Anthea & Concordia ×2 (Briar's `supporterKoPrizeBonus` at 3 on N's Pokémon, a six-name play gate) and Emma ×2 (reveal, then `drawCards` with the new `per` member `cardsInOpponentHand`); AZ's Tranquility, Gladion's Final Battle, Grimsley's Move, Gwynn and Naveen dropped and named; Standard pool Trainers 360 / 447; 874 `me` printings fully built*** — engine 0.483.0, MRV 42, NOT committed; the sweep PENDING)
 
 **Last updated (was):** 2026-10-08 — build session #538 (**P3-M5 — D598, *WP32 — KO / DAMAGE-TAKEN ABILITIES: 6 texts / 13 `me` printings — Mega Gengar ex "Shadowy Concealment" ×5 (a seat-wide Prize reduction on the KO'd side, `seatKoPrizeReduction`), Mega Hawlucha ex "Tenacious Body" ×3 and Annihilape "Durable Body" (the coin-flip survive, `koSurvivalCoinFlip` at the four damage writes), Shedinja "Fragile Husk" ×2 (`onKoPrizeGuard` "pokemonExAttackPrevent"), Gengar "Infinite Shadow" (return-to-hand on KO) and Pecharunt "Final Chain" (an on-KO search behind `byOpponentAttack`); Fainting Spell, Photon Cord, Spiteful Swirl, Counterattack Grouping and Damp dropped and named; Standard pool abilities 504 / 610; 870 `me` printings fully built*** — engine 0.482.0, MRV 42, NOT committed; the sweep PENDING)
 
@@ -823,6 +825,39 @@
 
 ## NEXT (resume point)
 
+> ### ▶ THE NEXT CONCRETE ACTION (written 2026-10-08, after D600)
+>
+> 🛑 **D600 IS BUILT AND NOT COMMITTED** (worktree `/home/jofre/projects/luminous_ui-mega`, branch `mega-ingest`, on D599 = `9728cfdb`). D600 is WP14 + WP33b of the Mega backlog. Next: a review of D600, then the next package or the landing of D581–D600 (rebase `mega-ingest` onto main; never `git add -A` — `apps/api/.wrangler` is the setup symlink).
+>
+> ✅ **`bun run check` IS GREEN**: `Test Files 643 passed (643) / Tests 15237 passed (15237) / CHECK_EXIT=0` (D599: 642 / 15213; D600 adds `handCountConditionsMeD600.test.ts` (22) and the census D600 block (2)).
+>
+> **(a) THE SLICE.** 7 texts / 12 printings, all attacks, no registry key. **WP14:** one count source, `DamageCountSource.cardsInYourHand` (nullary; `countCardsInHand` over `anyCard` on the attacker's seat) — Galarian Meowth "Treasure Rush" ×2 (`30th-101` / `-141`) on the `×` fold (`YOUR_HAND_COUNT_MULTIPLY`), and Alakazam "Powerful Hand" ×3 (`me01-056`, `mep-003`, `mep-009`) as `damageActive` with the new optional `per` (arm 22-bis, read at resolve). **WP33b:** five literal `CONDITIONAL_DAMAGE_CLAUSES` rows on five new members — `yourActiveRemainingHpAtMost` (Weavile `mep-021`), `opponentActiveNoRetreatCost` (Carnivine `me04-004`), `yourDiscardHasNamed` (Serperior `mep-064` / `me03-006`), `yourBenchHasStage2OfType` (Sableye `me02-059`) and `yourBenchHasNamedEnergyAttached` (Zarude `mep-088` / `me05-056`; "Shadowy {D} Energy" is the card "Shadowy Darkness Energy" `me05-083`). The `sv` reader output is byte-identical (18 reader/splitter exports dumped over both corpora before and after). **Dropped and named:** Gholdengo "Celebration" ×2 (`takePrize` parks, so the "If you do" shuffle would run first). "That much more damage" ×4 stays excluded (persisted damage-taken memory).
+>
+> **(b) MRV STAYS 42** (match.ts "STAYS 42 AT D600"): the members are read off the board at attack time; `damageActive.per` is an optional key on an op that never parks, alone in its program.
+>
+> | Column | `me` D600 | Standard pool D600 |
+> |---|---|---|
+> | Attacks | 856 / 1039 | **2588 / 2771** |
+> | Abilities | 128 / 234 | **504 / 610** |
+> | Trainers | 96 / 183 | **360 / 447** |
+> | Special Energy | 3 / 11 | **14 / 22** |
+>
+> **886 `me` printings fully built** (874 + 12; every other text on the 12 was built, Alakazam's Psychic Draw at D590). The live census pins (the D581 tally, the D582 / D584 rungs and the D586–D598 blocks) carry the +12; `COUNT_KINDS` 20 → 21 in `damagedBodyScaling` / `specialConditionCount`; the Scovillain allowlist classifies `benched.types` as EFFECTIVE.
+>
+> **(c) THE MUTATION RECORD.** +28 D600 rows (4682 in all). precheck: 4682 mutants, the same 20 pre-existing broken rows. Probe `run.ts --decision D600 --allow-dirty`: 28 killed · 0 known survivor(s) · 0 GAP(S) · 0 stale · 0 skipped(dirty) · 0 clobber(s) · 0 error(s), tree byte-identical after. Re-probed the rows whose killers this slice re-pointed: `--decision D445` 13 killed · 1 known survivor (`D445-log-row-derives-the-actor`, equivalent) · 0 GAP; `--decision D592` 18 killed. Gate-witness `--only` (the 18 `opaque-anatomy-gate.ts` / `residue-census-gate.ts` rows): 18 killed · 0 error. Version tax: 245 occurrences stepped to 0.484.0 outside docs; the D599 changelog heading in index.ts keeps 0.483.0.
+>
+> 🛑 **(0) THE WHOLE-CORPUS SWEEP IS PENDING** (D581–D599's too). Predicted: **4612 killed · 50 known survivor(s) · 0 GAP(S) · 20 error(s)** over **4,682** rows — 4654 + 28 = 4682; 4584 + 28 = 4612 killed; 4612 + 50 + 20 = 4682. It assumes D599's prediction (4584 · 50 · 0 · 20 over 4654) holds. If it holds, D581–D600 close together. If it fails: an error count ≠ 20 means a `find` was spliced by a later edit (precheck names it); a new GAP or survivor in a D581–D599 row is that slice's open prediction failing; one in an older row that names `opponentHandScaling`'s re-pointed own-hand rung, D592's controls, D594's near misses, a `COUNT_KINDS` pin, a live census pin, the Scovillain allowlist or interpreter.ts' `damageActive` arm is a D600 edit moving it and owes a row-level re-anchor.
+>
+> **D539 sweep.** Withdrawn in place, kept as written: `opponentHandScaling.test.ts`'s "a YOUR-hand fold is refused" (the constructed sentence now reads as the sibling `cardsInYourHand`) and the effects.ts / attack.ts "your own [hand] on none" notes (still true of the legal `sv` column); attack.ts's "THE ONE ARM … THE OTHER PLAYER CANNOT SEE"; the "NO op … carries a `DamageCountSource`" rungs as a repo-wide claim (`drawCards.per`, D557/D569/D599, and now `damageActive.per` sit outside the walked `sv` population); `COUNT_KINDS`' "TWENTY"; D592's "five that stay unbuilt" and its Powerful Hand control; D594's two dropped near misses (Weavile, Carnivine); D590's census rung "Powerful Hand ×3 is not", the `PSYCHIC_DRAW_3` note, the D590 changelog line and decisions row.
+>
+> **Pending decisions (UNRULED readings).** **R-CW1** — Carnivine "Chomp Whole"'s "has no Retreat Cost" reads the EFFECTIVE Retreat Cost (`effectiveRetreatCost` = 0, after Stadium / Tool / Ability modifiers), the reading Talonflame "Aero Chase"'s `opponentActiveRetreatCostAtLeast` ships. Reversal: read the printed `retreat` column in `opponentActiveNoRetreatCost`.
+>
+> Still owed from the Mega backlog: Gholdengo "Celebration" ×2 (a `takePrize` continuation), "that much more damage" ×4 (Juggernaut Horn / Counter, damage-taken memory), D598's two open review findings (each owed an R-entry), WP24b (Acerola's Mischief, Roxie's Performance) and WP24a's five drops, WP32's five drops, WP29's four drops, the seven WP13 drops, Meowth ex ×3's Last-Ditch Catch, Mega Clefable ex ×4's Luminous Wing, Flygon ×3, Pokémon Center Lady, Mega Absol ex ×3's Terminal Period (WP36), the markup-normalising ingest fix, then the residue by mechanism.
+>
+> ---
+>
+> **ARCHIVED — the resume point D600 was built from, kept rather than overwritten** (D599 has since been committed on `mega-ingest` as `9728cfdb`):
+>
 > ### ▶ THE NEXT CONCRETE ACTION (written 2026-10-08, after D599)
 >
 > 🛑 **D599 IS BUILT AND NOT COMMITTED** (worktree `/home/jofre/projects/luminous_ui-mega`, branch `mega-ingest`, on D598 = `d80f4089`). D599 is WP24a of the Mega backlog: the first half of the WP24 Supporters. Next: a review of D599, then the next package or the landing of D581–D599 (rebase `mega-ingest` onto main; never `git add -A` — `apps/api/.wrangler` is the setup symlink).
@@ -35062,7 +35097,8 @@ the next api deploy (D18).
 |---|---|---|
 | backend-data | P1 | ✅ M1–M9 + P2-M1 + task-17 api deployed (Worker `9b1ec1d1`, 2026-07-16); OAuth secrets pending (user) |
 | deck-builder | P2 | ✅ ALL 19 tasks closed (task 17 landed + e2e-verified locally); only follow-ups left |
-| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D599, *WP24a — two WP24 Supporters: 2 texts / 4 `me` printings (Briar's Prize bonus at 3 on N's Pokémon behind a six-name gate; a draw per Pokémon in the revealed opponent hand); five texts dropped and named; trainers 360 / 447*** — engine 0.483.0, MRV 42, NOT committed; the sweep PENDING) |
+| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D600, *WP14 + WP33b — the hand count and five bonus conditions: 7 texts / 12 `me` printings (`cardsInYourHand` on the `×` fold and on `damageActive.per`; remaining HP, no Retreat Cost, a named card in your discard, Stage 2 {D} on your Bench, Shadowy {D} Energy on your Bench); Celebration dropped; attacks 2588 / 2771*** — engine 0.484.0, MRV 42, NOT committed; the sweep PENDING) |
+| simulator (prior) | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D599, *WP24a — two WP24 Supporters: 2 texts / 4 `me` printings (Briar's Prize bonus at 3 on N's Pokémon behind a six-name gate; a draw per Pokémon in the revealed opponent hand); five texts dropped and named; trainers 360 / 447*** — engine 0.483.0, MRV 42, NOT committed; the sweep PENDING) |
 | simulator (prior) | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D598, *WP32 — KO / damage-taken Abilities: 6 texts / 13 `me` printings (a seat-wide Prize reduction, the coin-flip survive, an ex-gated Prize guard, return-to-hand on KO, a cause-gated on-KO search); five texts dropped and named; abilities 504 / 610*** — engine 0.482.0, MRV 42, NOT committed; the sweep PENDING) |
 | simulator (prior) | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D597, *WP29 — the discard-scaled attacks: 8 texts / 18 `me` printings (the comma spelling of the `×` discard fold, the typed Basic mill noun, the `handDiscard` boost member, two "[R]" keys); four texts dropped and named; attacks 2576 / 2771*** — engine 0.481.0, MRV 42, NOT committed; the sweep PENDING) |
 | simulator (prior) | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D596, *WP09 — Mega Gardevoir ex and Xerneas: 3 texts / 14 `me` printings (the `×` board-wide own-Energy count; a per-Benched-body deck attach on the new `attachFromDeck.each`); nothing dropped; attacks 2558 / 2771*** — engine 0.480.0, MRV 42, NOT committed; the sweep PENDING) |
@@ -35279,6 +35315,17 @@ the next api deploy (D18).
 Legend: 📝 backlog · 📋 specced · 🔎 research · 🚧 in progress · ✅ done
 
 ## Session log
+
+### 2026-10-08 — build session #540 (P3-M5 — D600)
+
+**WP14 + WP33b — THE HAND COUNT AND FIVE BONUS CONDITIONS. `MATCH_RECORD_VERSION` STAYS 42.**
+
+Built in the `luminous_ui-mega` worktree on D599 (`9728cfdb`); the main checkout was not touched. Every id `git grep`-ped
+(none referenced) and every text read off the LOCAL D1 first. 7 texts / 12 printings: `cardsInYourHand` (Treasure Rush ×2,
+Powerful Hand ×3 via `damageActive.per`) and five clause rows on five new members (Weavile, Carnivine, Serperior ×2, Sableye,
+Zarude ×2). Gholdengo "Celebration" ×2 dropped and named. Reading R-CW1 recorded as UNRULED. `handCountConditionsMeD600.test.ts`
+(22), census D600 block (2); check 643 / 15237. Version tax 245 stepped / 1 kept. +28 mutant rows, all KILLED. Sweep PENDING
+(NEXT (0)). NOT committed.
 
 ### 2026-10-08 — build session #539 (P3-M5 — D599)
 

@@ -933,15 +933,24 @@ const COUNT_KINDS: Record<DamageCountSource["kind"], true> = {
   bothSidesPokemonInPlay: true,
   cardsInDiscardPile: true,
   cardsInOpponentHand: true,
+  // 🆕🆕🆕 D600 — WP14's `cardsInYourHand` (Galarian Meowth's fold, Alakazam's `damageActive.per`).
+  cardsInYourHand: true,
 };
 
 describe("D519 §6 — `MATCH_RECORD_VERSION` HOLDS at 30: there is still no carrier", () => {
   it("🛑 the union is UNMOVED at TWENTY members — this slice bought a FIELD, not a member", () => {
-    expect(Object.keys(COUNT_KINDS)).toHaveLength(20);
+    // 🆕🆕🆕 D600 (D539): "TWENTY" is the count at this slice, kept as written — 21 since WP14's
+    // `cardsInYourHand`.
+    expect(Object.keys(COUNT_KINDS)).toHaveLength(21);
     expect(COUNT_KINDS.pokemonInPlay).toBe(true);
   });
 
   it("🛑 NO op any producer in this repo emits carries a `DamageCountSource` — walked, not cited", () => {
+    // [🆕🆕🆕 D600 (D539): "NO op any producer in this repo emits" is WITHDRAWN as a repo-wide
+    // claim, kept as written — the walk below covers the legal `sv` attack column and the
+    // registry's ATTACK programs only. `drawCards.per` (D557/D569/D599, Trainer programs; D557's
+    // rides a parked `rest`) and D600's `damageActive.per` (`cardsInYourHand`, derived for the `me`
+    // Alakazam "Powerful Hand") carry one outside it. The walked population is still carrier-free.]
     // 🛑 THE VERSION QUESTION, RE-DERIVED RATHER THAN INHERITED (D517's rule). D518 settled
     // it for a new MEMBER; this slice widens an EXISTING member's shape, which is the same
     // question about a different edit and is answered the same way — by walking every op
@@ -1039,7 +1048,7 @@ describe("D519 §6 — `MATCH_RECORD_VERSION` HOLDS at 30: there is still no car
   });
 
   it("the engine version moved with the behaviour, and `manifest.version` agrees", () => {
-    expect(engineVersion).toBe("0.483.0");
-    expect(manifest.version).toBe("0.483.0");
+    expect(engineVersion).toBe("0.484.0");
+    expect(manifest.version).toBe("0.484.0");
   });
 });

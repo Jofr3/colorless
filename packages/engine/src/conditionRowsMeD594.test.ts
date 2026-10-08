@@ -74,11 +74,17 @@ describe("D594 §1 — the texts: 4 attack sentences / 8 printings, 2 Abilities 
       "If you don't have Solrock on your Bench, this attack does nothing. This attack's damage isn't affected by Weakness or Resistance.",
       "If you have exactly 5 Prize cards remaining, this attack does 200 more damage.",
       "If your opponent has no cards in their hand, this attack does 160 more damage.",
-      // WP33a's two dropped texts (see decisions.md D594): no shipped member reads either.
+    ]) {
+      expect(resolvedByAnyReader(near), near).toBe(false);
+    }
+    // WP33a's two dropped texts (see decisions.md D594): no shipped member reads either.
+    // [🆕🆕🆕 D600 (D539): WITHDRAWN, kept as written — WP33b builds both on two new members
+    // (`yourActiveRemainingHpAtMost`, `opponentActiveNoRetreatCost`; handCountConditionsMeD600).]
+    for (const dropped of [
       "If this Pokémon's remaining HP is 50 or less, this attack does 170 more damage.",
       "If your opponent's Active Pokémon has no Retreat Cost, this attack does 80 more damage.",
     ]) {
-      expect(resolvedByAnyReader(near), near).toBe(false);
+      expect(resolvedByAnyReader(dropped), dropped).toBe(true);
     }
   });
 });
@@ -586,7 +592,7 @@ describe("D594 §8 — Needly Armor: 3 damage counters on the Attacking Pokémon
 });
 
 describe("D594 §9 — the version", () => {
-  it("is built at engine 0.483.0", () => {
-    expect(engineVersion).toBe("0.483.0");
+  it("is built at engine 0.484.0", () => {
+    expect(engineVersion).toBe("0.484.0");
   });
 });

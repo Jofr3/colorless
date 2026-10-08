@@ -20258,6 +20258,16 @@ import type { GameState, Seat } from "./types";
     `expect(manifest.version)`, `it(…)` titles, the declaration and `package.json` —
     **not** as a value-keyed grep — because a value-keyed grep is precisely the mechanism
     that ate D500's heading.)
+    🆕🆕🆕 engineVersion 0.483.0 → **0.484.0** (D600 — WP14 + WP33b: THE HAND COUNT AND FIVE BONUS
+    CONDITIONS; `MATCH_RECORD_VERSION` STAYS 42 (apps/api match.ts "STAYS 42 AT D600")). effects.ts:
+    `DamageCountSource.cardsInYourHand` (Galarian Meowth "Treasure Rush" ×2, `YOUR_HAND_COUNT_MULTIPLY`)
+    and `damageActive.per` (Alakazam "Powerful Hand" ×3, `COUNTER_PUT_ON_DEFENDER_PER_HAND_CARD`,
+    counted at resolve); five `CONDITIONAL_DAMAGE_CLAUSES` rows on five new `BoardCondition` members —
+    `yourActiveRemainingHpAtMost` (Weavile), `opponentActiveNoRetreatCost` (Carnivine, R-CW1),
+    `yourDiscardHasNamed` (Serperior ×2), `yourBenchHasStage2OfType` (Sableye) and
+    `yourBenchHasNamedEnergyAttached` (Zarude ×2). 7 texts / 12 printings; the `sv` reader output is
+    byte-identical. Gholdengo "Celebration" ×2 dropped (`takePrize` parks). Census: Standard pool
+    attacks 2,588 / 2,771; 886 `me` printings fully built. `handCountConditionsMeD600.test.ts`.)
     🆕🆕🆕 engineVersion 0.482.0 → **0.483.0** (D599 — WP24a: TWO WP24 SUPPORTERS;
     `MATCH_RECORD_VERSION` STAYS 42 (apps/api match.ts "STAYS 42 AT D599")). 4 Supporter keys / 2
     objects: Anthea & Concordia ×2 (Briar's `supporterKoPrizeBonus` at 3 on `ownerPokemon` N, a
@@ -20364,7 +20374,7 @@ import type { GameState, Seat } from "./types";
     your deck."* as `returnSelf` `dest: "deck"` (`ATTACK_RETURN_SELF_TO_DECK`; Lokix "Jumping Shot",
     Primarina "Aqua Return" ×2). No new op, member or field. **Dropped:** Flygon ×3 "Sandy Flapping"
     (its KO half needs an Active-Spot / by-attack gate an `onKnockOut` program does not have).
-    Alakazam's "Powerful Hand" stays unbuilt (WP14). Census: Standard pool attacks 2492 / 2771,
+    Alakazam's "Powerful Hand" stays unbuilt (WP14) [🆕🆕🆕 D600: built]. Census: Standard pool attacks 2492 / 2771,
     abilities 470 / 610; 782 `me` printings fully built. `onEvolveMeD590.test.ts`.)
     🆕🆕🆕 engineVersion 0.472.0 → **0.473.0** (D589 — WP08: MEGA GRENINJA EX AND THE OPTIONAL-COST
     FAMILY; `MATCH_RECORD_VERSION` STAYS 42 (apps/api match.ts "STAYS 42 AT D589")). effects.ts gives
@@ -25316,7 +25326,7 @@ import type { GameState, Seat } from "./types";
     WITNESS** — the count was re-derived every slice and the word *"three"* was carried.
     A successor of this slice inherits **81 / 61 / 17** again, over **FIVE** history
     occurrences: those four plus `deckMillFilteredScale.test.ts`'s own header arrow.) */
-export const engineVersion = "0.483.0";
+export const engineVersion = "0.484.0";
 
 export type {
   ApplyResult,

@@ -2159,6 +2159,14 @@ export interface MatchRecord {
     `turn:action.discardable` — 🛑 **DEPLOY THE SERVER FIRST**: an old client's `z.object` STRIPS
     the unknown key, while a new client's REQUIRED key refuses an old server's frame.
 
+    🆕🆕🆕 **STAYS 42 AT D600 — WP14 + WP33b ADD NO OP, GameState, PendingStage, PROMPT, EVENT OR WIRE KEY.**
+    (Placed ABOVE the D599 block.) Five `BoardCondition` members and a `DamageCountSource` member
+    (`cardsInYourHand`) are read off the board at attack time and never persisted. `damageActive`
+    gains an OPTIONAL `per` (D125): the op never parks and Alakazam's program is that lone op, so
+    the key reaches no `phase.cont` here. No card row is read differently — the printed attack
+    TEXT is, at attack time — so a v42 match holding these faces in its `cardPool` gains the
+    readings mid-match (a 0.483 rollback puts them back on the skipped-effect path).
+
     🆕🆕🆕 **STAYS 42 AT D599 — WP24a ADDS NO OP, GameState, PendingStage, PROMPT, EVENT OR WIRE KEY.**
     (Placed ABOVE the D598 block.) 4 `me` Supporter ids are keyed: Anthea & Concordia on Briar's
     card-level `supporterKoPrizeBonus` (read off `allowances.supporterPlayedUid`, nothing new

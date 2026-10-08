@@ -517,7 +517,13 @@ describe("§2 — two anchors, one noun map, and the first two-reader sentence",
     // (§6 pins that as a population claim), so this rung is a claim about the READER:
     // the anchors carry the possessive as a LITERAL, not as a capture, which is what
     // makes the missing `seat` field safe rather than lucky.
-    expect(deriveAttackDamageMultiplier(CONSTRUCTED_YOUR_HAND)).toBeNull();
+    // [🆕🆕🆕 D600 (D539): "a YOUR-hand fold is refused" is WITHDRAWN, kept as written — the `me`
+    // column prints one (Galarian Meowth "Treasure Rush", `30th-101`/`-141`), and it reads as the
+    // SIBLING member `cardsInYourHand`, never as this member: the anchors still keep the seats apart.]
+    expect(deriveAttackDamageMultiplier(CONSTRUCTED_YOUR_HAND)).toEqual({
+      per: 30,
+      count: { kind: "cardsInYourHand" },
+    });
     expect(deriveAttackDamageBonus(CONSTRUCTED_YOUR_HAND)).toBeNull();
   });
 
@@ -1006,6 +1012,8 @@ describe("§6 — the population claims this slice rests on", () => {
       ([, s]) => /damage for each .*in your hand\./.test(s) || /damage for each .*in their hand\./.test(s),
     );
     expect(yourHand).toEqual([]);
+    // [🆕🆕🆕 D600: still 0 over the legal `sv` column; the `me` column prints the fold (Treasure Rush
+    // ×2), and this member gained its sibling, `cardsInYourHand`, as the paragraph above said.]
   });
 
   it("🆕 REFUSAL 1 IS SPENT — the mandatory SWEEP is BUILT, and its own falsifier fired", () => {

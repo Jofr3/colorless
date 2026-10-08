@@ -214,8 +214,8 @@ function damageRow(events: readonly GameEvent[]): Extract<GameEvent, { type: "DA
 const SCOV_SPOT: Spot = { id: SCOVILLAIN, under: [CAPSAKID] };
 
 describe("D578 Scovillain §0 — the version", () => {
-  it("is built at engine 0.483.0", () => {
-    expect(engineVersion).toBe("0.483.0");
+  it("is built at engine 0.484.0", () => {
+    expect(engineVersion).toBe("0.484.0");
   });
 });
 
@@ -438,6 +438,8 @@ const ALLOWLIST: Record<string, string> = {
   "types · continuous.ts · stadiumRetreatDelta · top.types": `${E} — \`effectiveRetreatCost\` passes \`inPlayCardOf\``,
   "types · interpreter.ts · attachEnergyTargets · card?.types": `${E} — \`inPlayCardOf\``,
   "types · interpreter.ts · conditionHolds · inPlayCardOf(state, p)?.types": `${E}`,
+  // 🆕🆕🆕 D600 — Sableye's `yourBenchHasStage2OfType`: `benched` is `inPlayCardOf(state, p)`.
+  "types · interpreter.ts · conditionHolds · benched.types": `${E}`,
   "types · interpreter.ts · conditionHolds · (inPlayCardOf(state, spot.active) ?? spot.card).types": `${E}`,
   "types · interpreter.ts · healEach · card?.types": `${E} — \`inPlayCardOf\``,
   // ── `matchesFilter` calls ──

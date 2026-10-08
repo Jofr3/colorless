@@ -6,6 +6,24 @@
 > `coverage-backlog-legal.md`; its pool is unchanged and whole. The suite-side figures are
 > `censusAtHead.test.ts`'s D581 block and `censusAttackCorpusMe.ts`.
 
+## 🆕 D600 update (engine 0.484.0) — the hand count and five bonus conditions (WP14 + WP33b)
+
+7 texts / 12 `me` printings (`handCountConditionsMeD600.test.ts`). WP14: Powerful Hand ×3 and Treasure Rush ×2 on the new
+count source `cardsInYourHand`. WP33b: Retaliatory Claw (remaining HP), Chomp Whole (no Retreat Cost), Solar Coiling ×2
+(Rosa's Encouragement in your discard), Cocky Claw (Stage 2 {D} on your Bench), Shadowy Whip ×2 (Shadowy {D} Energy on your
+Bench), each a literal row on a new member. **Finished:** Alakazam ×3, Galarian Meowth ×2, Weavile, Carnivine, Serperior ×2,
+Sableye, Zarude ×2. **Dropped:** Celebration ×2 (the take-then-shuffle order). "That much more damage" ×4 stays out
+(damage-taken memory).
+
+| Column | `me` built / units (D600) | Standard pool D600 |
+|---|---|---|
+| Attacks | 856 / 1,039 (+12) | **2,588 / 2,771** |
+| Abilities | 128 / 234 | **504 / 610** |
+| Trainers | 96 / 183 | **360 / 447** |
+| Special Energy | 3 / 11 | **14 / 22** |
+
+**Fully built `me` printings: 886** (874 + 12).
+
 ## 🆕 D599 update (engine 0.483.0) — two WP24 Supporters (WP24a)
 
 2 texts / 4 `me` printings (`supportersMeD599.test.ts`): Anthea & Concordia ×2 (Briar's Prize bonus at 3 on N's Pokémon,
@@ -109,7 +127,7 @@ Envy (2 or more damage counters, Weakness ignored), Cosmic Beam ×2 (needs a Ben
 while the opponent's Active is a Pokémon ex; a new `ifCondition` on `evolveEarlyExempt`; a Luxio evolved from Shinx this turn may evolve again) and Needly Armor (3 counters per
 {G} Energy). **Finished:** Chi-Yu, Solrock ×2, Steelix ×2, Slowbro ×3, Luxio, Chesnaught. **Dropped:** Retaliatory Claw
 (remaining HP), Chomp Whole (no Retreat Cost) and Celebration ×2 (the take-then-shuffle order). WP33b keeps Solar
-Coiling ×2, Juggernaut Horn / Counter ×4, Cocky Claw and Shadowy Whip ×2.
+Coiling ×2, Juggernaut Horn / Counter ×4, Cocky Claw and Shadowy Whip ×2. [🆕🆕🆕 D600: built — except Juggernaut Horn / Counter ×4, excluded.]
 
 | Column | `me` built / units (D594) | Standard pool D594 |
 |---|---|---|
@@ -190,7 +208,7 @@ Heave-Ho Catcher, Cast-Off Shell ×2, Enriching Melody ×2, Multiplying Cocoon, 
 and all attached cards into your deck."* ×3 derives as `returnSelf` to the deck. No new op. **Dropped:** Flygon ×3 "Sandy
 Flapping" (its KO half needs an Active-Spot / by-attack gate on an `onKnockOut` program). **Finished:** Kadabra, Brambleghast,
 Grumpig, Hariyama, Ninjask ×2, Primarina ×2, Silcoon, Tinkatuff, Lokix `me02-010`. Alakazam ×3 still waits on "Powerful
-Hand" (WP14). Named deviations: Heave-Ho Catcher's forced `gust` (no decline; Defiant Horn's row), and the three
+Hand" (WP14) [🆕🆕🆕 D600: built]. Named deviations: Heave-Ho Catcher's forced `gust` (no decline; Defiant Horn's row), and the three
 search / look programs shuffle even when nothing is taken.
 
 | Column | `me` built / units (D590) | Standard pool D590 |
@@ -423,7 +441,7 @@ group wins; the grouping is a reading aid, not a census figure).
 - 3× If your opponent's Pokémon is Knocked Out by damage from this attack, during your opponent's next turn, prevent all damage from and effects of attacks done to this Pokémon.
 - 3× This attack does 70 damage for each Prize card you have taken.
 - 2× If any of your Hop's Pokémon were Knocked Out by damage from an attack during your opponent's last turn, this attack does 100 more damage. [🆕🆕🆕 D593: BUILT]
-- 2× If you have exactly 30 cards in your hand, take 2 Prize cards. If you do, shuffle your hand into your deck. [🆕🆕🆕 D594: dropped from WP33a — `takePrize` queues behind the program, so the "if you do" shuffle would run first]
+- 2× If you have exactly 30 cards in your hand, take 2 Prize cards. If you do, shuffle your hand into your deck. [🆕🆕🆕 D594: dropped from WP33a — `takePrize` queues behind the program, so the "if you do" shuffle would run first] [🆕🆕🆕 D600: dropped again from WP33b, same reason]
 - 2× If you have exactly 6 Prize cards remaining, this attack does 200 more damage. [🆕🆕🆕 D594: BUILT]
 - 2× If your opponent has 2 or fewer Prize cards remaining, this attack does 100 more damage. [🆕🆕🆕 D586: BUILT]
 - 2× Knock Out each of your opponent's Pokémon that has 50 HP or less remaining.
@@ -435,7 +453,7 @@ group wins; the grouping is a reading aid, not a census figure).
 
 ### Damage-counter placement and manipulation — 24 text(s) / 34 printing(s)
 
-- 3× Place 2 damage counters on your opponent's Active Pokémon for each card in your hand.
+- 3× Place 2 damage counters on your opponent's Active Pokémon for each card in your hand. [🆕🆕🆕 D600: BUILT]
 - 3× Your opponent's Active Pokémon is now Poisoned. During Pokémon Checkup, place 16 damage counters on that Pokémon instead of 1. [🆕🆕🆕 D592: BUILT]
 - 2× Flip a coin. If heads, search your deck for a Pokémon and switch it with this Pokémon. Any attached cards, damage counters, Special Conditions, turns in play, and any other effects remain on the new Pokémon. If you switched a Pokémon in this way, put this card into your deck. Then, shuffle your deck.
 - 2× If your opponent's Active Pokémon already has any damage counters on it, this attack's base damage is 30.
@@ -494,7 +512,7 @@ group wins; the grouping is a reading aid, not a census figure).
 - 3× This attack does 50 damage for each type of Basic Energy attached to all of your Pokémon.
 - 2× Discard any amount of [R] Energy from among your Pokémon, and this attack does 90 damage for each card you discarded in this way. [🆕🆕🆕 D597: BUILT — keyed by id on `INFERNO_X`]
 - 2× Discard the top 6 cards of your deck, and this attack does 100 damage for each Basic {W} Energy card that you discarded in this way. [🆕🆕🆕 D597: BUILT]
-- 2× This attack does 10 damage for each card in your hand.
+- 2× This attack does 10 damage for each card in your hand. [🆕🆕🆕 D600: BUILT]
 - 2× This attack does 110 damage for each of your Beedrill and Beedrill ex in play.
 - 2× This attack does 30 damage for each Energy attached to all Pokémon.
 - 2× This attack does 30 damage for each {P} Energy attached to all of your Pokémon.
@@ -518,22 +536,22 @@ group wins; the grouping is a reading aid, not a census figure).
 - 4× If this Pokémon was damaged by an attack during your opponent's last turn, this attack does that much more damage.
 - 3× If you have 4 or more Pokémon that have the Hide 'n' Sneak Ability in your discard pile, this attack does 140 more damage.
 - 3× If you have no cards in your hand, this attack does 160 more damage. [🆕🆕🆕 D594: BUILT]
-- 2× If Rosa's Encouragement is in your discard pile, this attack does 150 more damage.
+- 2× If Rosa's Encouragement is in your discard pile, this attack does 150 more damage. [🆕🆕🆕 D600: BUILT]
 - 2× If this Pokémon is Burned or Poisoned, this attack does 100 more damage. [🆕🆕🆕 D593: BUILT]
-- 2× If your Benched Pokémon have any Shadowy {D} Energy attached, this attack does 70 more damage.
+- 2× If your Benched Pokémon have any Shadowy {D} Energy attached, this attack does 70 more damage. [🆕🆕🆕 D600: BUILT]
 - 2× You may discard all Energy from this Pokémon and have this attack do 130 more damage. [🆕🆕🆕 D589: BUILT]
 - 1× During your opponent's next turn, this Pokémon takes 100 less damage from attacks from Evolution Pokémon (after applying Weakness and Resistance).
 - 1× During your opponent's next turn, this Pokémon takes 100 more damage from attacks (after applying Weakness and Resistance).
 - 1× If this Pokémon evolved from Magneton during this turn, this attack does 120 more damage. [🆕🆕🆕 D593: BUILT]
 - 1× If this Pokémon used Spiky Rolling during your last turn, this attack does 80 more damage. [🆕🆕🆕 D593: BUILT]
-- 1× If this Pokémon's remaining HP is 50 or less, this attack does 170 more damage. [🆕🆕🆕 D594: dropped from WP33a — needs a remaining-HP member]
-- 1× If you have any Stage 2 {D} Pokémon on your Bench, this attack does 70 more damage.
+- 1× If this Pokémon's remaining HP is 50 or less, this attack does 170 more damage. [🆕🆕🆕 D594: dropped from WP33a — needs a remaining-HP member] [🆕🆕🆕 D600: BUILT]
+- 1× If you have any Stage 2 {D} Pokémon on your Bench, this attack does 70 more damage. [🆕🆕🆕 D600: BUILT]
 - 1× If you have at least 4 {L} Energy in play, this attack does 90 more damage. [🆕🆕🆕 D586: BUILT]
 - 1× If you have at least 4 {R} Energy in play, this attack does 90 more damage. [🆕🆕🆕 D586: BUILT]
 - 1× If you have at least 4 {W} Energy in play, this attack does 90 more damage. [🆕🆕🆕 D586: BUILT]
 - 1× If you played Emma from your hand during this turn, this attack does 60 more damage.
 - 1× If you played a Supporter card that has "Team Rocket" in its name from your hand during this turn, this attack does 100 more damage.
-- 1× If your opponent's Active Pokémon has no Retreat Cost, this attack does 80 more damage. [🆕🆕🆕 D594: dropped from WP33a — needs a "no Retreat Cost" member]
+- 1× If your opponent's Active Pokémon has no Retreat Cost, this attack does 80 more damage. [🆕🆕🆕 D594: dropped from WP33a — needs a "no Retreat Cost" member] [🆕🆕🆕 D600: BUILT]
 - 1× You may discard 3 {M} Energy from this Pokémon and have this attack do 150 more damage. [🆕🆕🆕 D589: BUILT]
 - 1× You may shuffle all Energy attached to this Pokémon into your deck and have this attack do 80 more damage. [🆕🆕🆕 D589: BUILT]
 

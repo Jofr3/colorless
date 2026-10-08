@@ -30183,3 +30183,20 @@ decisions (1) and (2) after D580. Engine 0.464.0 → 0.465.0. The Mega ex rule i
 - **Suite.** `supportersMeD599.test.ts` (19) and `lookAlikeShowD580.test.ts` §8 (Emma through the copy). +16 mutant rows.
 - **Census.** Standard pool Trainers **360 / 447**; 874 `me` printings fully built.
 - **Owed.** See `progress.md` NEXT. The whole-corpus sweep is PENDING.
+
+## D600 — WP14 + WP33b: the hand count and five bonus conditions (engine 0.484.0, `MATCH_RECORD_VERSION` stays 42)
+
+**Status:** ✅ BUILT in the `luminous_ui-mega` worktree on D599 (`9728cfdb`), NOT committed.
+
+- **7 texts / 12 `me` printings, all attacks, no registry key.** WP14: `DamageCountSource.cardsInYourHand` (nullary,
+  `countCardsInHand` over `anyCard` on the attacker's seat) — Galarian Meowth "Treasure Rush" ×2 on the `×` fold and
+  Alakazam "Powerful Hand" ×3 as `damageActive` with the new optional `per` (counted at resolve). Finishes Alakazam ×3.
+- **WP33b:** five `CONDITIONAL_DAMAGE_CLAUSES` literal rows on five new `BoardCondition` members:
+  `yourActiveRemainingHpAtMost` (Weavile), `opponentActiveNoRetreatCost` (Carnivine), `yourDiscardHasNamed`
+  (Serperior ×2), `yourBenchHasStage2OfType` (Sableye) and `yourBenchHasNamedEnergyAttached` (Zarude ×2).
+- **No persisted member, prompt or event.** `damageActive` never parks. The `sv` reader output is byte-identical.
+- **Dropped and named:** Gholdengo "Celebration" ×2 (`takePrize` parks, so the "If you do" shuffle would run first).
+- **Readings (UNRULED).** R-CW1 (`progress.md` NEXT).
+- **Suite.** `handCountConditionsMeD600.test.ts` (22) and a census D600 block (2). +28 mutant rows.
+- **Census.** Standard pool attacks **2588 / 2771**; 886 `me` printings fully built.
+- **Owed.** See `progress.md` NEXT. The whole-corpus sweep is PENDING.

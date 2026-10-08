@@ -715,15 +715,24 @@ const COUNT_KINDS: Record<DamageCountSource["kind"], true> = {
   bothSidesPokemonInPlay: true,
   cardsInDiscardPile: true,
   cardsInOpponentHand: true,
+  // 🆕🆕🆕 D600 — WP14's `cardsInYourHand` (Galarian Meowth's fold, Alakazam's `damageActive.per`).
+  cardsInYourHand: true,
 };
 
 describe("D518 §6 — `MATCH_RECORD_VERSION` HOLDS at 30: there is no carrier at all", () => {
   it("🛑 the union has TWENTY members, and the count is asked of the TYPE", () => {
-    expect(Object.keys(COUNT_KINDS)).toHaveLength(20);
+    // 🆕🆕🆕 D600 (D539): "TWENTY" is the count at this slice, kept as written — 21 since WP14's
+    // `cardsInYourHand`.
+    expect(Object.keys(COUNT_KINDS)).toHaveLength(21);
     expect(COUNT_KINDS.specialConditionsOnOpponentActive).toBe(true);
   });
 
   it("🛑 NO op any producer in this repo emits carries a `DamageCountSource` — walked, not grepped", () => {
+    // [🆕🆕🆕 D600 (D539): "NO op any producer in this repo emits" is WITHDRAWN as a repo-wide
+    // claim, kept as written — the walk below covers the legal `sv` attack column and the
+    // registry's ATTACK programs only. `drawCards.per` (D557/D569/D599, Trainer programs; D557's
+    // rides a parked `rest`) and D600's `damageActive.per` (`cardsInYourHand`, derived for the `me`
+    // Alakazam "Powerful Hand") carry one outside it. The walked population is still carrier-free.]
     // 🛑 THE VERSION QUESTION, SETTLED EITHER WAY RATHER THAN LEFT IMPLIED (D517's rule).
     // A `BoardCondition` DOES reach a persisted address, through `EffectContinuation.rest`
     // inside `MatchRecord.state.phase`. A `DamageCountSource` does not, because nothing
@@ -787,7 +796,7 @@ describe("D518 §6 — `MATCH_RECORD_VERSION` HOLDS at 30: there is no carrier a
   });
 
   it("the engine version moved with the behaviour, and `manifest.version` agrees", () => {
-    expect(engineVersion).toBe("0.483.0");
-    expect(manifest.version).toBe("0.483.0");
+    expect(engineVersion).toBe("0.484.0");
+    expect(manifest.version).toBe("0.484.0");
   });
 });

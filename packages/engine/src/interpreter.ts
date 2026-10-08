@@ -2510,7 +2510,17 @@ function stepOp(
     case "counterUntilRemainingHp":
       return { done: counterUntilRemainingHp(state, op, ctx, events) };
     case "damageActive":
-      return { done: damageActive(state, op.amount, op.source, ctx, events) };
+      // 🆕🆕🆕 D600 — `per` (Alakazam "Powerful Hand"): the printed amount once per card in the
+      // CONTROLLER's hand, read here at resolve; absent `per` places `amount` byte for byte.
+      return {
+        done: damageActive(
+          state,
+          op.per === undefined ? op.amount : op.amount * countCardsInHand(state, ctx.seat, { kind: "anyCard" }),
+          op.source,
+          ctx,
+          events,
+        ),
+      };
     case "damageSubject":
       return { done: damageSubject(state, op.amount, ctx, events) };
     case "healSubject":
@@ -5789,6 +5799,14 @@ export function conditionHolds(state: GameState, seat: Seat, cond: BoardConditio
         return card !== undefined && foldApostrophes(card.name) === cond.name;
       });
     }
+    case "yourBenchHasNamedEnergyAttached":
+      // 🆕🆕🆕 D600 — Zarude "Shadowy Whip": the arm above over your BENCHED bodies (Active excluded).
+      return state.players[seat].bench.some((p) =>
+        p.energy.some((uid) => {
+          const attached = cardOfUid(state, uid);
+          return attached !== undefined && foldApostrophes(attached.name) === cond.name;
+        }),
+      );
     case "opponentPrizesRemaining":
       // §3.8 — what is still face down on their side, the same read
       // `morePrizesThanOpponent` makes and the complement of `takenPrizes`. The
@@ -6056,6 +6074,11 @@ export function conditionHolds(state: GameState, seat: Seat, cond: BoardConditio
       const active = state.players[otherSeat(seat)].active;
       return active !== null && effectiveRetreatCost(state, active) >= cond.count;
     }
+    case "opponentActiveNoRetreatCost": {
+      // 🆕🆕🆕 D600 — Carnivine "Chomp Whole": the arm above's fold at zero (R-CW1, UNRULED).
+      const foeActive = state.players[otherSeat(seat)].active;
+      return foeActive !== null && effectiveRetreatCost(state, foeActive) === 0;
+    }
     case "yourBenchHasType":
       // 🆕 D370 — the FIELD of the arm directly above (`Card.types`, the same read
       // Weakness and Resistance make in §8.5) over the ZONE of the arm directly
@@ -6079,6 +6102,12 @@ export function conditionHolds(state: GameState, seat: Seat, cond: BoardConditio
         // 🆕🆕🆕 D578 — the IN-PLAY types (`inPlayCardOf`).
         (p) => p !== null && (inPlayCardOf(state, p)?.types ?? []).includes(cond.type),
       );
+    case "yourBenchHasStage2OfType":
+      // 🆕🆕🆕 D600 — Sableye "Cocky Claw": the arm above AND `isStage2Pokemon`, on ONE benched body.
+      return state.players[seat].bench.some((p) => {
+        const benched = inPlayCardOf(state, p);
+        return benched !== undefined && isStage2Pokemon(benched) && (benched.types ?? []).includes(cond.type);
+      });
     case "opponentInPlayHasType":
       // 🆕 D390 — Electivire sv05-054 "Short-Circuit Knuckle" ({C}{C}, 40+): "If
       // your opponent has any {W} Pokémon in play, this attack does 120 more
@@ -6568,6 +6597,12 @@ export function conditionHolds(state: GameState, seat: Seat, cond: BoardConditio
       const spot = activeTop(state, otherSeat(seat));
       return spot !== null && hasPrintedAbility(spot.card);
     }
+    case "yourActiveRemainingHpAtMost": {
+      // 🆕🆕🆕 D600 — Weavile "Retaliatory Claw": `remainingHpWithin` (effective max HP − damage) on
+      // your Active, the attacker. Empty Spot: FALSE.
+      const ownActive = state.players[seat].active;
+      return ownActive !== null && remainingHpWithin(state, ownActive, cond.hp);
+    }
     case "opponentDiscardHasNameContaining":
       // 🆕🆕🆕 D563 — Kyurem "Plasma Bane"'s *"your opponent has any cards in their
       // discard pile that have "Colress" in the name"*: the OTHER seat's pile only (R-PB),
@@ -6575,6 +6610,12 @@ export function conditionHolds(state: GameState, seat: Seat, cond: BoardConditio
       return state.players[otherSeat(seat)].discard.some(
         (uid) => cardOf(state, uid)?.name.includes(cond.fragment) === true,
       );
+    case "yourDiscardHasNamed":
+      // 🆕🆕🆕 D600 — Serperior "Solar Coiling": YOUR pile, an EXACT name (the card side folded).
+      return state.players[seat].discard.some((uid) => {
+        const discarded = cardOfUid(state, uid);
+        return discarded !== undefined && foldApostrophes(discarded.name) === cond.name;
+      });
     case "youPlayedSupporterNamedThisTurn": {
       // 🆕🆕🆕 D564 — Team Rocket's Factory's *"if they played a Supporter card that has
       // "Team Rocket" in its name from their hand this turn"* and Crobat "Shadowy Envoy"'s
@@ -7784,6 +7825,18 @@ export function conditionNote(cond: BoardCondition): string {
       // 🆕🆕🆕 D560 — the printed pronoun is dropped exactly as `yourActiveDamaged`'s note
       // drops it (D116); the unit is the printed one.
       return `your Active Pokémon has ${cond.count} or more damage counters on it`;
+    // 🆕🆕🆕 D600 — WP33b: each note is the printed clause, the pronoun dropped (D116) and the
+    // brace code spelled as the type name (D118); Zarude's names the card.
+    case "yourActiveRemainingHpAtMost":
+      return `your Active Pokémon's remaining HP is ${String(cond.hp)} or less`;
+    case "opponentActiveNoRetreatCost":
+      return "your opponent's Active Pokémon has no Retreat Cost";
+    case "yourDiscardHasNamed":
+      return `${cond.name} is in your discard pile`;
+    case "yourBenchHasStage2OfType":
+      return `you have any Stage 2 ${cond.type} Pokémon on your Bench`;
+    case "yourBenchHasNamedEnergyAttached":
+      return `your Benched Pokémon have any ${cond.name} attached`;
     case "opponentActiveHasAbility":
       // 🆕🆕🆕 D560 — "your opponent's Active Pokémon that has an Ability" as a clause.
       return "your opponent's Active Pokémon has an Ability";
