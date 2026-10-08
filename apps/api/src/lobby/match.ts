@@ -2159,7 +2159,16 @@ export interface MatchRecord {
     `turn:action.discardable` — 🛑 **DEPLOY THE SERVER FIRST**: an old client's `z.object` STRIPS
     the unknown key, while a new client's REQUIRED key refuses an old server's frame.
 
-    🆕🆕🆕 **STAYS 42 AT D604 — WP18 ADDS TWO CATALOG FIELDS AND ONE `EnergyOnAttach` MEMBER, NO OP, KEY, STAGE OR EVENT.**
+    🆕🆕🆕 **STAYS 42 AT D605 — WP34 ADDS TWO OPTIONAL `damageChosen` RIDERS, NO OP, PROMPT, KEY, STAGE OR EVENT.**
+    (Placed ABOVE the D604 block.) `damageChosen.perHeadsInPlay?: CardFilter` (Tauros "Target
+    Together") rides `phase.cont.pendingOp` while the pick is open — an optional key on a parking op,
+    the D530 / D538 widening; no v42 record written before 0.488 holds it. `damageChosen.flipEach` is
+    only ever written with `count: "all"`, which never parks, so it never reaches a record. Miraculous
+    Paint parks shipped `optional` confirms (D557 `labels`); Gnaw Together and Kaleidowaltz expand
+    shipped ops at the attack's flip site. Rollback to 0.487: a parked Target Together resolves as a
+    flat 50 to the pick with no coins (0.487 reads no rider); nothing else is reachable.
+
+    🆕🆕🆕 **STAYS 42 AT D604 —WP18 ADDS TWO CATALOG FIELDS AND ONE `EnergyOnAttach` MEMBER, NO OP, KEY, STAGE OR EVENT.**
     (Placed ABOVE the D603 block.) `EnergyProgram.holderType`, `EnergyOnAttach.benchSearch` and
     `returnAfterAttackDiscard: "hand"` are registry data, looked up by card id and never persisted. The
     eight `me` Special Energies are ENERGY faces in a v42 `cardPool` (D583 refreshed Trainer faces

@@ -3018,6 +3018,19 @@ function stepOp(
           }
           return { done: next };
         }
+        // 🆕🆕🆕 D605 — Nullifying Zero: one coin per candidate, every coin before any damage;
+        // the heads targets take the hit together (R-NZ1).
+        if (op.flipEach === true) {
+          const [flipped, faces] = flipCoinsFor(state, candidates.length, ctx, events);
+          const hit = candidates.filter((_, index) => faces[index] === "heads");
+          return {
+            done: placeSnipe(flipped, hit, amount, op.deals === true, op.ignoreWR === true, op.source, ctx, events),
+          };
+        }
+        // 🆕🆕🆕 D605 — Target Together with one candidate: the pick is forced, then the coins.
+        if (op.perHeadsInPlay !== undefined) {
+          return { done: perHeadsHit(state, op, op.perHeadsInPlay, candidates, amount, ctx, events) };
+        }
         return {
           done: placeSnipe(
             state,
@@ -3047,6 +3060,7 @@ function stepOp(
             op.damagedOnly === true,
             op.filter,
             op.perDamageCounterOnTarget === true,
+            op.perHeadsInPlay !== undefined,
           ),
         },
       };
@@ -8552,6 +8566,10 @@ export function applyChoice(
         }
         return resumed;
       }
+      // 🆕🆕🆕 D605 — Target Together: the pick is made, THEN the coins are flipped.
+      if (choice.kind === "pokemonMulti" && op.perHeadsInPlay !== undefined) {
+        return perHeadsHit(state, op, op.perHeadsInPlay, choice.refs, snipeAmount(op, state, ctx, record), ctx, events);
+      }
       // Recompute the (possibly Prize-scaled) amount from state: no KO has
       // happened between parking and this pick, so the count is unchanged — the
       // same value snipeNote quoted in the prompt.
@@ -11377,6 +11395,41 @@ function spreadDamage(
     unrelated reason, which nothing asserted. It is asserted now
     (counterBenchPut.test.ts sweeps the whole fixture pool through the deriver and
     refuses `"ability"` on every op it produces). */
+/** 🆕🆕🆕 D605 — `count` coins for `ctx.seat`, one `ATTACK_EFFECT_COIN_FLIP` row each, in order
+    (`runProgram`'s `coinFlipGate` idiom: every coin is taken and announced before it is read). */
+function flipCoinsFor(
+  state: GameState,
+  count: number,
+  ctx: EffectContext,
+  events: GameEvent[],
+): [GameState, CoinFace[]] {
+  const faces: CoinFace[] = [];
+  let rngState = state.rngState;
+  for (let flip = 0; flip < count; flip += 1) {
+    const [drawn, advanced] = flipCoin(rngState);
+    faces.push(drawn);
+    rngState = advanced;
+  }
+  for (const drawn of faces) events.push({ type: "ATTACK_EFFECT_COIN_FLIP", seat: ctx.seat, result: drawn });
+  return [{ ...state, rngState }, faces];
+}
+
+/** 🆕🆕🆕 D605 — Target Together's hit: one coin per own body in play matching `filter`, then
+    `amount × heads` to the chosen `refs` (0 heads places nothing). */
+function perHeadsHit(
+  state: GameState,
+  op: Extract<EffectOp, { op: "damageChosen" }>,
+  filter: CardFilter,
+  refs: readonly PokemonRef[],
+  amount: number,
+  ctx: EffectContext,
+  events: GameEvent[],
+): GameState {
+  const [flipped, faces] = flipCoinsFor(state, countPokemonInPlay(state, ctx.seat, filter), ctx, events);
+  const heads = faces.filter((face) => face === "heads").length;
+  return placeSnipe(flipped, refs, amount * heads, op.deals === true, op.ignoreWR === true, op.source, ctx, events);
+}
+
 function placeSnipe(
   state: GameState,
   refs: readonly PokemonRef[],
@@ -12506,6 +12559,9 @@ function snipeNote(
       `handCostPhrase` precedent, a caption that names the rule where the number is not
       known at the park. */
   perDamageCounterOnTarget = false,
+  /** 🆕🆕🆕 D605 — `op.perHeadsInPlay`: the coins are flipped after the pick, so the caption
+      quotes the printed rule (*"(50 damage for each heads)"*), D530's precedent one line up. */
+  perHeads = false,
 ): string {
   const verb = optional ? "You may choose" : "Choose";
   const each = deals
@@ -12542,6 +12598,7 @@ function snipeNote(
   if (perDamageCounterOnTarget) {
     return `${verb} ${count} of ${owner} ${zone}${window} (${amount} damage for each damage counter on it).`;
   }
+  if (perHeads) return `${verb} ${count} of ${owner} ${zone}${window} (${amount} damage for each heads).`;
   return `${verb} ${count} of ${owner} ${zone}${window} (${each} each).`;
 }
 

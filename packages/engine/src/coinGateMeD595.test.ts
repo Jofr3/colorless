@@ -181,6 +181,8 @@ describe("D595 §2 — near misses and the dropped texts stay null", () => {
   });
 
   it("arm 46b is head × consequent: all 15 crossings build, exactly 5 are printed (D131, not D451)", () => {
+    // 🆕🆕🆕 D605 (D539): these are D595's five rows; the table has six now (Miraculous Paint) —
+    // `coinRestMeD605.test.ts` §2 pins the 18 crossings and 6 printed.
     const heads = ["Flip a coin. If heads, ", "Flip 2 coins. If both of them are heads, ", "Flip 3 coins. If all of them are heads, "];
     const tails = [T.bellyful, T.triKinesis, T.clutch, T.strolls, T.pull].map((s) => s.slice(s.indexOf(", ") + 2));
     const printed = new Set([...legalAttackCorpus(), ...meAttackCorpus()].map(([, text]) => text));
@@ -494,7 +496,7 @@ describe("D595 §5 — the `programPerHeads` arms on a board", () => {
 });
 
 describe("D595 §6 — the version", () => {
-  it("is built at engine 0.487.0", () => {
-    expect(engineVersion).toBe("0.487.0");
+  it("is built at engine 0.488.0", () => {
+    expect(engineVersion).toBe("0.488.0");
   });
 });

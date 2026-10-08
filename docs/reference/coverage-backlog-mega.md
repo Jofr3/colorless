@@ -6,6 +6,27 @@
 > `coverage-backlog-legal.md`; its pool is unchanged and whole. The suite-side figures are
 > `censusAtHead.test.ts`'s D581 block and `censusAttackCorpusMe.ts`.
 
+## 🆕 D605 update (engine 0.488.0) — coin (the rest) (WP34)
+
+5 texts / 12 `me` printings, attack readers only (`coinRestMeD605.test.ts`). New pieces: `damageChosen.perHeadsInPlay`
+(Tauros ×2 "Target Together": pick first, then one coin per own body with "Tauros" in its name, 50 × heads),
+`damageChosen.flipEach` (Mega Zygarde ex ×5 "Nullifying Zero": one coin per opposing Pokémon, 150 to each heads target;
+R-NZ1), "choose a Special Condition" as four labelled `optional` confirms behind the coin gate (Grafaiai "Miraculous Paint";
+R-MP1), and a flip count by name in play (`pokemonInPlay` over `byName`, Maushold ×2 "Gnaw Together"). Mega Audino ex ×2
+"Kaleidowaltz" repeats the bare search-and-attach per heads (R-KW1). **Finished:** Mega Zygarde ex ×5, Mega Audino ex ×2,
+Tauros ×2, Maushold ×2, Grafaiai. **Dropped and named:** Watchog ×2 "Snap Inspection" (a revealed-hand pick shuffled into
+the deck: `bottomFromOpponentHand.dest` has no shuffle member) and Ditto ×2 "Surprisingly Transform" (a deck Pokémon swapped
+in for the attacker: no op).
+
+| Column | `me` built / units (D605) | Standard pool D605 |
+|---|---|---|
+| Attacks | 868 / 1,039 (+12) | **2,600 / 2,771** |
+| Abilities | 144 / 234 | **520 / 610** |
+| Trainers | 100 / 183 | **364 / 447** |
+| Special Energy | 11 / 11 | **22 / 22** |
+
+**Fully built `me` printings: 926** (914 + 12).
+
 ## 🆕 D604 update (engine 0.487.0) — the typed Special Energies (WP18)
 
 8 texts / 8 `me` printings on eight new `energy` objects (registry.ts D604 block; `typedSpecialEnergyMeD604.test.ts`): every
@@ -509,7 +530,7 @@ group wins; the grouping is a reading aid, not a census figure).
 
 - 3× Place 2 damage counters on your opponent's Active Pokémon for each card in your hand. [🆕🆕🆕 D600: BUILT]
 - 3× Your opponent's Active Pokémon is now Poisoned. During Pokémon Checkup, place 16 damage counters on that Pokémon instead of 1. [🆕🆕🆕 D592: BUILT]
-- 2× Flip a coin. If heads, search your deck for a Pokémon and switch it with this Pokémon. Any attached cards, damage counters, Special Conditions, turns in play, and any other effects remain on the new Pokémon. If you switched a Pokémon in this way, put this card into your deck. Then, shuffle your deck.
+- 2× Flip a coin. If heads, search your deck for a Pokémon and switch it with this Pokémon. Any attached cards, damage counters, Special Conditions, turns in play, and any other effects remain on the new Pokémon. If you switched a Pokémon in this way, put this card into your deck. Then, shuffle your deck. [🆕🆕🆕 D605: dropped from WP34 — a deck Pokémon switched in for the attacker needs a new op]
 - 2× If your opponent's Active Pokémon already has any damage counters on it, this attack's base damage is 30.
 - 2× Place 13 damage counters on 1 of your opponent's Pokémon. [🆕🆕🆕 D592: BUILT]
 - 2× This attack does 30 damage to 1 of your opponent's Pokémon for each damage counter on that Pokémon. &lt;em>(Don't apply Weakness and Resistance for Benched Pokémon.)&lt;/em>
@@ -534,12 +555,12 @@ group wins; the grouping is a reading aid, not a census figure).
 
 ### Coin flips — 21 text(s) / 32 printing(s)
 
-- 5× For each of your opponent's Pokémon, flip a coin. If heads, this attack does 150 damage to that Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)
+- 5× For each of your opponent's Pokémon, flip a coin. If heads, this attack does 150 damage to that Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.) [🆕🆕🆕 D605: BUILT]
 - 3× Flip a coin until you get tails. For each heads, discard the top card of your opponent's deck. [🆕🆕🆕 D595: BUILT]
-- 2× Choose 1 of your opponent's Pokémon and flip a coin for each of your Pokémon in play that has "Tauros" in its name. This attack does 50 damage to the chosen Pokémon for each heads. (Don't apply Weakness and Resistance for Benched Pokémon.)
-- 2× Flip 3 coins. For each heads, search your deck for up to 2 Basic Energy cards and attach them to your Pokémon in any way you like. Then, shuffle your deck.
-- 2× Flip 3 coins. If any of them are heads, your opponent reveals their hand. For each heads, choose a card you find there and shuffle it into your opponent's deck.
-- 2× Flip a coin for each Maushold you have in play. For each heads, discard the top 2 cards of your opponent's deck.
+- 2× Choose 1 of your opponent's Pokémon and flip a coin for each of your Pokémon in play that has "Tauros" in its name. This attack does 50 damage to the chosen Pokémon for each heads. (Don't apply Weakness and Resistance for Benched Pokémon.) [🆕🆕🆕 D605: BUILT]
+- 2× Flip 3 coins. For each heads, search your deck for up to 2 Basic Energy cards and attach them to your Pokémon in any way you like. Then, shuffle your deck. [🆕🆕🆕 D605: BUILT]
+- 2× Flip 3 coins. If any of them are heads, your opponent reveals their hand. For each heads, choose a card you find there and shuffle it into your opponent's deck. [🆕🆕🆕 D605: dropped from WP34 — the revealed-hand pick goes into the deck; `bottomFromOpponentHand.dest` has no shuffle member]
+- 2× Flip a coin for each Maushold you have in play. For each heads, discard the top 2 cards of your opponent's deck. [🆕🆕🆕 D605: BUILT]
 - 2× Flip a coin until you get tails. For each heads, choose a random card from your opponent's hand. Your opponent reveals those cards and shuffles them into their deck. [🆕🆕🆕 D595: BUILT]
 - 1× During your opponent's next turn, whenever they try to use a Trainer card from their hand, they flip a coin. If tails, your opponent discards that Trainer card instead of using it.
 - 1× Flip 2 coins. If both of them are heads, heal all damage from 1 of your Pokémon. [🆕🆕🆕 D595: BUILT]
@@ -550,7 +571,7 @@ group wins; the grouping is a reading aid, not a census figure).
 - 1× Flip a coin until you get tails. Search your deck for an amount of Basic &lt;span class="energy-symbol Lightning" title="Lightning">Lightning&lt;/span> Energy up to the number of heads and attach it to this Pokémon. Then, shuffle your deck. [🆕🆕🆕 D595: dropped from WP13 — a deck source capped at the heads count, and WP06's markup]
 - 1× Flip a coin until you get tails. Search your deck for an amount of Basic Energy up to the number of heads and attach it to this Pokémon. Then, shuffle your deck. [🆕🆕🆕 D595: dropped from WP13 — a deck source capped at the heads count]
 - 1× Flip a coin. If heads, choose 1 of your opponent's Pokémon. Shuffle that Pokémon and all attached cards into their deck. [🆕🆕🆕 D595: dropped from WP13 — `returnBenched` cannot take the Active]
-- 1× Flip a coin. If heads, choose a Special Condition. Your opponent's Active Pokémon is now affected by that Special Condition.
+- 1× Flip a coin. If heads, choose a Special Condition. Your opponent's Active Pokémon is now affected by that Special Condition. [🆕🆕🆕 D605: BUILT]
 - 1× Flip a coin. If heads, during your opponent's next turn, the Defending Pokémon can't retreat. [🆕🆕🆕 D595: BUILT]
 - 1× Flip a coin. If heads, search your deck for a card and put it into your hand. Then, shuffle your deck. [🆕🆕🆕 D595: BUILT]
 - 1× Flip a coin. If heads, switch 1 of your opponent's Benched Pokémon with their Active Pokémon. [🆕🆕🆕 D595: BUILT]

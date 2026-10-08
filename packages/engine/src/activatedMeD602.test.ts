@@ -508,7 +508,7 @@ describe("D602 §8 — the two dropped texts stay unkeyed, and the version", () 
     expect(programFor("me02.5-175")).toBeUndefined();
   });
 
-  it("is built at engine 0.487.0", () => {
-    expect(engineVersion).toBe("0.487.0");
+  it("is built at engine 0.488.0", () => {
+    expect(engineVersion).toBe("0.488.0");
   });
 });

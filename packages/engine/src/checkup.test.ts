@@ -901,7 +901,9 @@ describe("deriveAttackEffect (effects.ts)", () => {
       // than shortened silently (D501's move): it is claimed WHOLE by its own anchor
       // (`POISON_AND_BAR_HAND_ATTACH`), so `deriveAttackEffect` no longer returns null on it — pinned
       // positively below. `DEFENDER_NOW`'s `\.$` still refuses it (`defenderStatusPair.test.ts` §2).
-      "Flip a coin. If heads, choose a Special Condition. Your opponent's Active Pokémon is now affected by that Special Condition.", // sv01-010
+      // 🆕🆕🆕 D605 — `sv01-010`'s "Flip a coin. If heads, choose a Special Condition. …" LEFT THIS LIST,
+      // removed rather than shortened silently (D501's move): arm 46b claims it WHOLE (the sixth
+      // `COIN_GATED_CONSEQUENTS` row, Grafaiai `me01-092`'s print) — `coinRestMeD605.test.ts` §1.
       "The Defending Pokémon is now Asleep.", // old-era phrasing
       "Flip a coin. If tails, your opponent's Active Pokémon is now Asleep.",
       "Your opponent's Active Pokémon is now Asleep", // no period

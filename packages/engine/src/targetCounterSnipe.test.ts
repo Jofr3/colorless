@@ -748,7 +748,7 @@ const RAW: Record<string, string> = (
 describe("D530 §6 — the version steps and the bytes this suite drove are the bytes that shipped", () => {
   it("engineVersion and `manifest.version` agree, and the bump is owed for BEHAVIOUR", () => {
     // ⚠️ The version is NOT spelled in this `it(…)` title (D460's fourth class).
-    expect(engineVersion).toBe("0.487.0");
+    expect(engineVersion).toBe("0.488.0");
     expect(manifest.version).toBe(engineVersion);
   });
 
@@ -769,7 +769,9 @@ describe("D530 §6 — the version steps and the bytes this suite drove are the 
     expect(interpreter).toContain("snipeAmount(op, next, ctx, record, ref)");
     expect(interpreter).toContain("snipeAmount(op, resumed, ctx, record, ref)");
     // The three shipped call sites are UNTOUCHED: the park, the spread, the resumed flat pick.
-    expect(interpreter.split("snipeAmount(op, state, ctx, record)")).toHaveLength(4);
+    // 🆕🆕🆕 D605 — 4 → 5: a FOURTH site, Target Together's resumed pick (`perHeadsHit`'s amount);
+    // the three above are byte-intact. Stepped off the red run.
+    expect(interpreter.split("snipeAmount(op, state, ctx, record)")).toHaveLength(5);
     // NO new op, no new prompt kind: the widening is one optional key.
     expect(effects).not.toContain('op: "damageChosenScaled"');
   });

@@ -111,7 +111,13 @@ const CLAUSES = [
     another still-unmapped clause — never delete it. The suite's claim is that an
     unread sentence stays LOUD, and that claim needs a live witness. */
 const REAL_NEAR_MISSES = [
-  "Flip a coin. If heads, choose a Special Condition. Your opponent's Active Pokémon is now affected by that Special Condition.",
+  // 🆕🆕🆕 **RE-POINTED AT D605, THE STANDING INSTRUCTION FOLLOWED A THIRD TIME.** This slot held
+  // Vivillon `sv01-010`'s *"Flip a coin. If heads, choose a Special Condition. …"*, which arm 46b
+  // now READS (`COIN_GATED_CONSEQUENTS`' sixth row, Grafaiai `me01-092`'s print). Its replacement
+  // is Shiftry `me01-015`'s *"…choose 1 of your opponent's Pokémon. Shuffle that Pokémon …"*
+  // (D595 dropped it; `returnBenched` reads the Bench only), the same lowercase "choose" behind
+  // the shared prefix, refused by the consequent.
+  "Flip a coin. If heads, choose 1 of your opponent's Pokémon. Shuffle that Pokémon and all attached cards into their deck.",
   // 🆕 **RE-POINTED AT D299, THE STANDING INSTRUCTION BEING FOLLOWED FOR THE
   // SECOND TIME.** This slot held Sylveon `svp-172`/`sv06.5-022`'s *"…choose 1 of
   // your opponent's Benched Pokémon. Shuffle that Pokémon and all attached cards

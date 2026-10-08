@@ -7099,7 +7099,7 @@ themselves (not by eye): **45 mapped / 31 unmapped** after this slice.
 | `…is now Paralyzed and Poisoned.` | 2 | ❌ a COMPOUND status, not a `StatusName` |
 | `…search your deck for up to 5 Grass Energy cards…` | 2 | ❌ a deck search behind a gate |
 | `…switch in 1 of your opponent's Benched Pokémon…` / `…switch this Pokémon with 1 of your Benched…` | 1 + 1 | ❌ a gust / a self-switch |
-| `…choose a Special Condition…` / `…choose an attack from 1 of your opponent's Pokémon…` / `…choose 1 of your opponent's Benched Pokémon. Shuffle…` | 3 | ❌ three parks |
+| `…choose a Special Condition…` / `…choose an attack from 1 of your opponent's Pokémon…` / `…choose 1 of your opponent's Benched Pokémon. Shuffle…` | 3 | ❌ three parks (🆕🆕🆕 D605 (D539): the first is built — arm 46b's sixth row) |
 | `…put your opponent's Active Pokémon and all attached cards into your opponent's hand.` | 1 | ❌ a scoop |
 | `…they can't play any Item cards…` | 1 | ❌ an Item lock |
 | `…this attack does 10 damage to 1 of your opponent's Pokémon.` | 1 | ❌ a gated snipe |
@@ -30082,7 +30082,7 @@ decisions (1) and (2) after D580. Engine 0.464.0 → 0.465.0. The Mega ex rule i
 **Status:** ✅ BUILT in the `luminous_ui-mega` worktree on D594 (`8ded76b4`), NOT committed.
 
 - **8 texts / 11 `me` printings.** `deriveAttackEffect` arm 46b: `COIN_GATE_HEAD` (one coin / "2 coins … both" /
-  "3 coins … all") sets `coinFlipGate.coins` (D355) over a closed five-row `COIN_GATED_CONSEQUENTS` table — Miltank
+  "3 coins … all") sets `coinFlipGate.coins` (D355) over a closed five-row (🆕🆕🆕 D605 (D539): SIX rows now — Grafaiai's Miraculous Paint; 18 crossings, 6 printed) `COIN_GATED_CONSEQUENTS` table — Miltank
   "Bellyful of Milk" (`healChosen` all), Team Rocket's Exeggutor "Tri Kinesis" (`knockOutChosen` opponentAny), Murkrow
   "Clumsily Clutch" (`preventRetreat`), Gimmighoul "Strolls So Much" (any-card search + shuffle), Drifloon "Pull" (`gust`).
   `deriveAttackCoinFlip`: three `programPerHeads` arms — Smeargle "Energizing Sketch" (untyped discard-to-Bench attach),
@@ -30097,7 +30097,7 @@ decisions (1) and (2) after D580. Engine 0.464.0 → 0.465.0. The Mega ex rule i
 - **D539.** D452's "the until-tails singular mill is printed by nothing" and D491's "all six GATE-present points refuse"
   are withdrawn in place for the `me` prints (effects.ts, index.ts, four suites, and the D495 rows in decisions.md and
   progress.md).
-- **Crossings.** Arm 46b is head × consequent: all 15 crossings derive, 5 are printed (D131; in tension with D451's
+- **Crossings.** Arm 46b is head × consequent: all 15 crossings derive, 5 are printed (🆕🆕🆕 D605 (D539): SIX rows now — Grafaiai's Miraculous Paint; 18 crossings, 6 printed) (D131; in tension with D451's
   co-variance rule). Pinned in §2.
 - **Known limitation (inherited).** Smeargle's untyped `attachEnergyFrom` takes the first Basic Energy in pile order; only
   the target parks, so the player cannot pick which Energy. The five shipped `sv` discard-attach sentences behave the same.
@@ -30233,6 +30233,26 @@ decisions (1) and (2) after D580. Engine 0.464.0 → 0.465.0. The Mega ex rule i
 - **Readings.** None new; each open point inherits a shipped one (`progress.md` NEXT).
 - **Suite.** `activatedMeD602.test.ts` (22) and a census D602 block (3). +21 mutant rows.
 - **Census.** Standard pool abilities **513 / 610**; 895 `me` printings fully built.
+- **Owed.** See `progress.md` NEXT. The whole-corpus sweep is PENDING.
+
+## D605 — WP34: coin (the rest) (engine 0.488.0, `MATCH_RECORD_VERSION` stays 42)
+
+**Status:** ✅ BUILT in the `luminous_ui-mega` worktree on D604 (`2b194185`), NOT committed.
+
+- **Vocabulary.** Two optional `damageChosen` riders: `perHeadsInPlay` (the pick first, then one coin per own body in play
+  matching the filter, `amount × heads`; interpreter.ts `perHeadsHit`) and `flipEach` (one coin per candidate, every coin
+  before any damage, the heads targets hit together; only with `count: "all"`, never parks). No new op, prompt or member.
+- **5 texts / 12 `me` printings.** Target Together ×2 (Tauros; arm 46c), Nullifying Zero ×5 (Mega Zygarde ex; arm 46d),
+  Miraculous Paint (Grafaiai; a sixth `COIN_GATED_CONSEQUENTS` row: four labelled `optional` confirms in
+  `STATUS_WORD_OF` order, every answer path one condition on the Defending Pokémon), Gnaw Together ×2 (Maushold;
+  `programPerHeads` over `pokemonInPlay` + `byName`), Kaleidowaltz ×2 (Mega Audino ex; `programPerHeads` over the bare
+  search-and-attach). The Miraculous Paint row also builds Vivillon `sv01-010` (not Standard-legal).
+- **Dropped and named.** Watchog ×2 "Snap Inspection" (a revealed-hand pick shuffled into the deck) and Ditto ×2
+  "Surprisingly Transform" (a deck Pokémon switched in for the attacker).
+- **Readings.** R-NZ1, R-MP1, R-KW1, UNRULED (`progress.md` NEXT).
+- **Suite.** `coinRestMeD605.test.ts` (24) and a census D605 block (2). +35 mutant rows. D595's "five-row" table claims
+  annotated in place; `flipGatedOp.test.ts`'s near-miss witness re-pointed to Shiftry `me01-015`.
+- **Census.** Standard pool attacks **2,600 / 2,771**; 926 `me` printings fully built.
 - **Owed.** See `progress.md` NEXT. The whole-corpus sweep is PENDING.
 
 ## D604 — WP18: the Mega Evolution typed Special Energies (engine 0.487.0, `MATCH_RECORD_VERSION` stays 42)

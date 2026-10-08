@@ -20258,6 +20258,16 @@ import type { GameState, Seat } from "./types";
     `expect(manifest.version)`, `it(…)` titles, the declaration and `package.json` —
     **not** as a value-keyed grep — because a value-keyed grep is precisely the mechanism
     that ate D500's heading.)
+    🆕🆕🆕 engineVersion 0.487.0 → **0.488.0** (D605 — WP34: COIN (THE REST); `MATCH_RECORD_VERSION`
+    STAYS 42 (apps/api match.ts "STAYS 42 AT D605")). effects.ts: two NEW `damageChosen` riders —
+    `perHeadsInPlay` (Tauros "Target Together": the pick first, then one coin per own body in play
+    with "Tauros" in its name, `amount × heads`; interpreter.ts `perHeadsHit`) and `flipEach` (Mega
+    Zygarde ex "Nullifying Zero": one coin per opposing Pokémon, the heads targets take 150; R-NZ1) —
+    arms 46c / 46d; a sixth `COIN_GATED_CONSEQUENTS` row (Grafaiai "Miraculous Paint": "choose a
+    Special Condition" as four labelled `optional` confirms; R-MP1); and two `deriveAttackCoinFlip`
+    `programPerHeads` arms (Maushold "Gnaw Together": `pokemonInPlay` over `byName`; Mega Audino ex
+    "Kaleidowaltz": the bare search-and-attach per heads; R-KW1). Dropped: Watchog, Ditto.
+    `coinRestMeD605.test.ts`.)
     🆕🆕🆕 engineVersion 0.486.0 → **0.487.0** (D604 — WP18: THE MEGA EVOLUTION TYPED SPECIAL ENERGIES;
     `MATCH_RECORD_VERSION` STAYS 42 (apps/api match.ts "STAYS 42 AT D604")). registry.ts: eight NEW `energy`
     objects over the 8 unbuilt `me` Special Energies, each providing its printed type, and two NEW pieces:
@@ -20345,7 +20355,7 @@ import type { GameState, Seat } from "./types";
     `MATCH_RECORD_VERSION` STAYS 42 (apps/api match.ts "STAYS 42 AT D595")). effects.ts
     `deriveAttackEffect` arm 46b reads *"Flip a coin. If heads, X"* / *"Flip 2 coins. If both of them
     are heads, X"* / *"Flip 3 coins. If all of them are heads, X"* as `coinFlipGate` (D355's `coins`)
-    over a CLOSED five-row consequent table (`COIN_GATED_CONSEQUENTS`: `healChosen` all,
+    over a CLOSED five-row consequent table [🆕🆕🆕 D605 (D539): six rows now — Miraculous Paint] (`COIN_GATED_CONSEQUENTS`: `healChosen` all,
     `knockOutChosen` opponentAny, `preventRetreat`, the any-card search, `gust`); `deriveAttackCoinFlip`
     gains three `programPerHeads` arms (Smeargle's untyped discard attach, the until-tails singular mill,
     the until-tails random hand-to-deck). 8 texts / 11 printings; no op, member or field; the `sv`
@@ -25359,7 +25369,7 @@ import type { GameState, Seat } from "./types";
     WITNESS** — the count was re-derived every slice and the word *"three"* was carried.
     A successor of this slice inherits **81 / 61 / 17** again, over **FIVE** history
     occurrences: those four plus `deckMillFilteredScale.test.ts`'s own header arrow.) */
-export const engineVersion = "0.487.0";
+export const engineVersion = "0.488.0";
 
 export type {
   ApplyResult,

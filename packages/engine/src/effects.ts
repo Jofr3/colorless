@@ -6966,6 +6966,23 @@ export type EffectOp =
           v30 bytes in THREE directions, the LOSS direction included, in
           `counterScaledPileShuffle.test.ts` §7. */
       perDiscardPileCard?: CardFilter;
+      /** 🆕🆕🆕 **D605 — Tauros "Target Together"** (*"Choose 1 of your opponent's Pokémon and
+          flip a coin for each of your Pokémon in play that has "Tauros" in its name. This attack
+          does 50 damage to the chosen Pokémon for each heads."*). The SIXTH rider: AFTER the pick
+          (the printed order), the controller flips one coin per own body in play matching this
+          filter (`countPokemonInPlay`, Active + Bench) and the hit is `amount × heads`. The flips
+          are taken where the hit is placed (interpreter.ts `perHeadsHit`, both the forced and the
+          resumed branch), so the caption quotes the rule rather than a number. Parks, so the key
+          can ride `phase.cont.pendingOp` — a widening; `MATCH_RECORD_VERSION` holds at 42
+          (apps/api match.ts "STAYS 42 AT D605"). */
+      perHeadsInPlay?: CardFilter;
+      /** 🆕🆕🆕 **D605 — Mega Zygarde ex "Nullifying Zero"** (*"For each of your opponent's
+          Pokémon, flip a coin. If heads, this attack does 150 damage to that Pokémon."*). One coin
+          per candidate, in `snipeTargets` order (Active, then Bench by slot), every coin before any
+          damage; the heads targets take `amount` through one `placeSnipe` (the Active with W/R,
+          the Bench flat). Only ever written with `count: "all"`, which never parks, so the key
+          never reaches a record (R-NZ1). */
+      flipEach?: true;
     }
   /** Deal `per × N` ATTACK damage to the DEFENDER (the opponent's Active), where
       N is how many cards an earlier op filed under the `count` §9.2 slot —
@@ -23616,6 +23633,18 @@ const ATTACK_COIN_MILL_ONE_UNTIL_TAILS =
   /^Flip a coin until you get tails\. For each heads, discard the top card of your opponent['’]s deck\.$/;
 const ATTACK_COIN_HAND_TO_DECK_UNTIL_TAILS =
   /^Flip a coin until you get tails\. For each heads, choose a random card from your opponent['’]s hand\. Your opponent reveals those cards and shuffles them into their deck\.$/;
+/** 🆕🆕🆕 D605 — WP34: two `me` coin sentences read as `programPerHeads` over shipped ops.
+    • `ATTACK_COIN_MILL_PER_NAMED_IN_PLAY` — Maushold `30th-125` / `-146` "Gnaw Together": one coin per
+      own body in play NAMED the captured word (`pokemonInPlay` over `byName`, Active + Bench, the
+      attacker included), the D130 mill per heads. The noun is one capitalised ASCII word, so
+      "Pokémon" and every class noun stay off this anchor (the D474 arm reads those).
+    • `ATTACK_COIN_DECK_ATTACH_PER_HEADS` — Mega Audino ex `me02.5-172` / `-253` "Kaleidowaltz": per
+      heads, the bare sentence's own program (`attachFromDeck { basicEnergy, max }` + `shuffleDeck`),
+      so each heads is its own search and shuffle and 0 heads searches nothing (R-KW1). */
+const ATTACK_COIN_MILL_PER_NAMED_IN_PLAY =
+  /^Flip a coin for each ([A-Z][a-z]+) you have in play\. For each heads, discard the top (\d+) cards of your opponent['’]s deck\.$/;
+const ATTACK_COIN_DECK_ATTACH_PER_HEADS =
+  /^Flip (\d+) coins\. For each heads, search your deck for up to (\d+) Basic Energy cards and attach them to your Pokémon in any way you like\. Then, shuffle your deck\.$/;
 
 // 🆕🆕🆕 D526 — THE THREE-TIER HEADS LADDER, corpus FILE LINE 218 (1 legal printing):
 // "Flip 3 coins. If 1 of them is heads, this attack does 20 more damage. If 2 of them
@@ -24523,6 +24552,31 @@ export function deriveAttackCoinFlip(text: string): AttackCoinFlip | null {
       face: "heads",
     };
   }
+  // 🆕🆕🆕 D605 — WP34's two `programPerHeads` arms (see the anchors). The board count needs no
+  // ceiling (D474's rule); the printed count keeps the family's two flip guards.
+  const millPerNamed = ATTACK_COIN_MILL_PER_NAMED_IN_PLAY.exec(effect);
+  if (millPerNamed !== null) {
+    const gnawCount = Number(millPerNamed[2]);
+    if (gnawCount < 1) return null;
+    return {
+      kind: "programPerHeads",
+      flips: { kind: "pokemonInPlay", filter: { kind: "byName", name: millPerNamed[1] ?? "" } },
+      ops: [{ op: "discardDeckTop", whose: "opponent", count: gnawCount }],
+      face: "heads",
+    };
+  }
+  const deckAttachPerHeads = ATTACK_COIN_DECK_ATTACH_PER_HEADS.exec(effect);
+  if (deckAttachPerHeads !== null) {
+    const waltzCoins = Number(deckAttachPerHeads[1]);
+    const waltzMax = Number(deckAttachPerHeads[2]);
+    if (waltzCoins < 2 || waltzCoins > MAX_PRINTED_FLIPS || waltzMax < 1) return null;
+    return {
+      kind: "programPerHeads",
+      flips: { kind: "printed", count: waltzCoins },
+      ops: [{ op: "attachFromDeck", filter: { kind: "basicEnergy" }, max: waltzMax }, { op: "shuffleDeck" }],
+      face: "heads",
+    };
+  }
   // 🆕🆕🆕 D526 — THE THREE-TIER HEADS LADDER, corpus FILE LINE 218. The count is PINNED
   // at 3 by the anchor ("all of them" is the third tier), so there is no `n` to guard
   // here and no `MAX_PRINTED_FLIPS` read; the three captured amounts are the printed
@@ -25182,7 +25236,9 @@ const ATTACK_DISCARD_ALL_TOOLS_AND_SPECIAL =
     printed, so the other 10 (e.g. *"Flip a coin. If heads, Knock Out 1 of your opponent's
     Pokémon."*) derive too. Admitted under D131 — each crossing is unambiguous and the ops express it
     exactly — and in tension with D451's co-variance rule (an unprinted crossing authors a card).
-    `coinGateMeD595.test.ts` §2 pins all 15 building and exactly 5 printed in either corpus. */
+    `coinGateMeD595.test.ts` §2 pins all 15 building and exactly 5 printed in either corpus.
+    🆕🆕🆕 D605 (D539): "five" / "3 × 5 = 15" / "only 5" are D595's figures — the table has SIX rows
+    now (Grafaiai's Miraculous Paint), 18 crossings, 6 printed; `coinRestMeD605.test.ts` §2 pins those. */
 const COIN_GATE_HEAD =
   /^(Flip a coin\. If heads|Flip 2 coins\. If both of them are heads|Flip 3 coins\. If all of them are heads), (.+)$/;
 const COIN_GATE_COINS: Readonly<Record<string, number | undefined>> = {
@@ -25204,7 +25260,49 @@ const COIN_GATED_CONSEQUENTS: ReadonlyMap<string, readonly EffectOp[]> = new Map
   ],
   // Drifloon `mep-005` "Pull" — the attacker's pick, `ATTACK_FLIP_GUST`'s op.
   ["switch 1 of your opponent's Benched Pokémon with their Active Pokémon.", [{ op: "gust" }]],
+  // 🆕🆕🆕 D605 — Grafaiai `me01-092` "Miraculous Paint": the five-way pick asked as four labelled
+  // `optional` confirms in `STATUS_WORD_OF` order (no five-option prompt kind exists, and one would be
+  // a new persisted prompt — a `MATCH_RECORD_VERSION` change). Every answer path applies exactly one
+  // condition to the Defending Pokémon (R-MP1).
+  [
+    "choose a Special Condition. Your opponent's Active Pokémon is now affected by that Special Condition.",
+    chooseSpecialConditionProgram(),
+  ],
 ]);
+/** 🆕🆕🆕 D605 — "choose a Special Condition" as a chain of labelled `optional` confirms: `yes` applies
+    the named condition, `no` asks the next; the last confirm's two buttons are the last two. */
+function chooseSpecialConditionProgram(): EffectOp[] {
+  const words = Object.values(STATUS_WORD_OF);
+  const apply = (word: StatusWord): EffectOp[] => [
+    { op: "applyStatus", target: "defender", status: STATUS_OF_WORD[word] },
+  ];
+  const ask = (index: number): EffectOp[] => {
+    const word = words[index] as StatusWord;
+    const rest = words.slice(index + 1);
+    const last = rest.length === 1;
+    return [
+      {
+        op: "optional",
+        note: "Choose a Special Condition. Your opponent's Active Pokémon is now affected by that Special Condition.",
+        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
+        then: apply(word),
+        otherwise: last ? apply(rest[0] as StatusWord) : ask(index + 1),
+        labels: { yes: word, no: `${rest.slice(0, -1).join(", ")}${last ? "" : " or "}${rest.at(-1) ?? ""}` },
+      },
+    ];
+  };
+  return ask(0);
+}
+/** 🆕🆕🆕 **D605 — Tauros "Target Together"** (`me04-069` / `-096`): the chosen snipe whose amount is
+    `per × heads` over one coin per own body in play with the printed name fragment
+    (`damageChosen.perHeadsInPlay`, `pokemonNameContaining`). No legal `sv` sentence reaches it. */
+const CHOSEN_PER_HEADS_IN_PLAY =
+  /^Choose 1 of your opponent['’]s Pokémon and flip a coin for each of your Pokémon in play that has "([^"]+)" in its name\. This attack does (\d+) damage to the chosen Pokémon for each heads\. \(Don['’]t apply Weakness and Resistance for Benched Pokémon\.\)$/;
+/** 🆕🆕🆕 **D605 — Mega Zygarde ex "Nullifying Zero"** (`mep-071`, `me03-047` / `-104` / `-120` /
+    `-124`): one coin per opposing Pokémon, `amount` to each heads target (`damageChosen.flipEach`,
+    `count: "all"`). No legal `sv` sentence reaches it. */
+const FLIP_EACH_OPPONENT_SNIPE =
+  /^For each of your opponent['’]s Pokémon, flip a coin\. If heads, this attack does (\d+) damage to that Pokémon\. \(Don['’]t apply Weakness and Resistance for Benched Pokémon\.\)$/;
 const ATTACK_FLIP_SELF_SWITCH = new RegExp(
   `^Flip a coin\\. If heads, switch ${SELF_SWITCH_CLAUSE}$`,
 );
@@ -34666,6 +34764,36 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
       const coins = COIN_GATE_COINS[coinGate[1] ?? ""];
       // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
       return [{ op: "coinFlipGate", ...(coins === undefined ? {} : { coins }), then: [...gated] }];
+    }
+  }
+
+  // 46c. 🆕🆕🆕 D605 — Target Together (Tauros ×2); see the anchor.
+  const targetTogether = CHOSEN_PER_HEADS_IN_PLAY.exec(effect);
+  if (targetTogether !== null) {
+    const perHeads = Number(targetTogether[2]);
+    if (perHeads >= 1) {
+      return [
+        {
+          op: "damageChosen",
+          target: "opponentAny",
+          amount: perHeads,
+          count: 1,
+          source: "attack",
+          deals: true,
+          perHeadsInPlay: { kind: "pokemonNameContaining", fragment: targetTogether[1] ?? "" },
+        },
+      ];
+    }
+  }
+
+  // 46d. 🆕🆕🆕 D605 — Nullifying Zero (Mega Zygarde ex ×5); see the anchor.
+  const nullifyingZero = FLIP_EACH_OPPONENT_SNIPE.exec(effect);
+  if (nullifyingZero !== null) {
+    const amount = Number(nullifyingZero[1]);
+    if (amount >= 1) {
+      return [
+        { op: "damageChosen", target: "opponentAny", amount, count: "all", source: "attack", deals: true, flipEach: true },
+      ];
     }
   }
 
