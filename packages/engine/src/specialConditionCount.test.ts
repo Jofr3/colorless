@@ -717,13 +717,17 @@ const COUNT_KINDS: Record<DamageCountSource["kind"], true> = {
   cardsInOpponentHand: true,
   // 🆕🆕🆕 D600 — WP14's `cardsInYourHand` (Galarian Meowth's fold, Alakazam's `damageActive.per`).
   cardsInYourHand: true,
+  // 🆕🆕🆕 D607 — WP28a's three nullary members (Delphox, Bronzong, Sylveon ex folds).
+  energyInPlayBothSides: true,
+  toolsInPlayBothSides: true,
+  basicEnergyTypesOnYourBoard: true,
 };
 
 describe("D518 §6 — `MATCH_RECORD_VERSION` HOLDS at 30: there is no carrier at all", () => {
   it("🛑 the union has TWENTY members, and the count is asked of the TYPE", () => {
     // 🆕🆕🆕 D600 (D539): "TWENTY" is the count at this slice, kept as written — 21 since WP14's
-    // `cardsInYourHand`.
-    expect(Object.keys(COUNT_KINDS)).toHaveLength(21);
+    // `cardsInYourHand`. 🆕🆕🆕 D607: 24 since WP28a's three.
+    expect(Object.keys(COUNT_KINDS)).toHaveLength(24);
     expect(COUNT_KINDS.specialConditionsOnOpponentActive).toBe(true);
   });
 
@@ -796,7 +800,7 @@ describe("D518 §6 — `MATCH_RECORD_VERSION` HOLDS at 30: there is no carrier a
   });
 
   it("the engine version moved with the behaviour, and `manifest.version` agrees", () => {
-    expect(engineVersion).toBe("0.489.0");
-    expect(manifest.version).toBe("0.489.0");
+    expect(engineVersion).toBe("0.490.0");
+    expect(manifest.version).toBe("0.490.0");
   });
 });

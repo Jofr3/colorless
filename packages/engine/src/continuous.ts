@@ -4136,6 +4136,26 @@ export function countToolsInPlay(state: GameState, seat: Seat): number {
   return total;
 }
 
+/** 🆕🆕🆕 D607 — WP28a: how many DIFFERENT Basic Energy types are attached across everything
+    `seat` has in play (Sylveon ex "Colorful Harmony", *"…for each type of Basic Energy attached to
+    all of your Pokémon."*). Each attached card is read by `energyProvidesOf`, which names a type
+    ONLY for a Basic Energy card (`isBasicEnergy`) whose name parses and answers "Colorless" for
+    everything else — so a Special Energy that provides a basic type, and an unparsed Basic, add
+    no type. */
+export function countBasicEnergyTypesInPlay(state: GameState, seat: Seat): number {
+  const side = state.players[seat];
+  const holders = side.active === null ? side.bench : [side.active, ...side.bench];
+  const types = new Set<string>();
+  for (const holder of holders) {
+    for (const uid of holder.energy) {
+      const card = cardOfUid(state, uid);
+      const provided = card === undefined ? "Colorless" : energyProvidesOf(card);
+      if (provided !== "Colorless") types.add(provided);
+    }
+  }
+  return types.size;
+}
+
 /** 🆕🆕 **D469 — HOW MANY DAMAGE COUNTERS ARE ON EVERYTHING `seat` HAS IN PLAY**
     (§6.3 + §12), the third sibling of `countEnergyInPlay` / `countToolsInPlay` and
     placed beside them for their own stated reason: *"all of your opponent's

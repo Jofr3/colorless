@@ -2159,6 +2159,13 @@ export interface MatchRecord {
     `turn:action.discardable` — 🛑 **DEPLOY THE SERVER FIRST**: an old client's `z.object` STRIPS
     the unknown key, while a new client's REQUIRED key refuses an old server's frame.
 
+    🆕🆕🆕 **STAYS 42 AT D607 — WP28a ADDS THREE `DamageCountSource` MEMBERS, NO OP, PROMPT, KEY, STAGE OR
+    EVENT.** (Placed ABOVE the D606 block.) The three members are produced only by the damage-fold
+    readers and evaluated at declaration; no op field carries them (`damageActive.per` / `drawCards.per`
+    never take one), so nothing persisted names them. No card row is read differently: the 14 `me`
+    faces in a v42 `cardPool` are unchanged, and only their attack TEXT reads now. Rollback to 0.489:
+    the eight texts fall back to the unbuilt path there; no in-flight state depends on them.
+
     🆕🆕🆕 **STAYS 42 AT D606 — WP25a ADDS TWO CATALOG FIELDS (`StadiumAbility.endsTurn`,
     `StadiumEffects.attackCostSurcharge`), NO OP, PROMPT, KEY, STAGE OR EVENT.** (Placed ABOVE the D605
     block.) Both fields are registry data, looked up by the Stadium's card id and never persisted; the

@@ -20258,6 +20258,15 @@ import type { GameState, Seat } from "./types";
     `expect(manifest.version)`, `it(…)` titles, the declaration and `package.json` —
     **not** as a value-keyed grep — because a value-keyed grep is precisely the mechanism
     that ate D500's heading.)
+    🆕🆕🆕 engineVersion 0.489.0 → **0.490.0** (D607 — WP28a: THE FIRST HALF OF THE SCALING COUNT
+    SOURCES; `MATCH_RECORD_VERSION` STAYS 42 (apps/api match.ts "STAYS 42 AT D607")). effects.ts: three
+    NEW nullary `DamageCountSource` members on three literal `×` anchors — `energyInPlayBothSides`
+    (Delphox ×2), `toolsInPlayBothSides` (Bronzong), `basicEnergyTypesOnYourBoard` (Sylveon ex ×3;
+    continuous.ts `countBasicEnergyTypesInPlay`) — with attack.ts arms; and four texts on shipped
+    members: body-map keys "Beedrill and Beedrill ex", "Rattata", `Pokémon that has "Tauros" in its
+    name` (Beedrill ex ×2, Raticate ×2 on a widened `BENCH_COUNTER_FILTERED_MULTIPLY`, Paldean
+    Tauros), `OPPONENT_ENERGY_PENALTY` (Tinkaton), and the comma-joined reveal plus an "Energy card"
+    hand noun (Beautifly ×2). 14 `me` printings. `scalingCountsMeD607.test.ts`.)
     🆕🆕🆕 engineVersion 0.488.0 → **0.489.0** (D606 — WP25a: THE FIRST HALF OF THE `me` STADIUMS;
     `MATCH_RECORD_VERSION` STAYS 42 (apps/api match.ts "STAYS 42 AT D606")). registry.ts: five NEW
     `stadium` objects over 9 `me` printings — Prism Tower ×2 (`payFromHand` 2 to the discard, draw 1),
@@ -25379,7 +25388,7 @@ import type { GameState, Seat } from "./types";
     WITNESS** — the count was re-derived every slice and the word *"three"* was carried.
     A successor of this slice inherits **81 / 61 / 17** again, over **FIVE** history
     occurrences: those four plus `deckMillFilteredScale.test.ts`'s own header arrow.) */
-export const engineVersion = "0.489.0";
+export const engineVersion = "0.490.0";
 
 export type {
   ApplyResult,

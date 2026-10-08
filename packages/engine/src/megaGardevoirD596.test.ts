@@ -104,11 +104,17 @@ describe("D596 §2 — near misses stay null", () => {
     expect(deriveAttackDamageMultiplier(T.symphonia.replace("your Pokémon", "your Iono's Pokémon"))).toBeNull();
     expect(deriveAttackDamageMultiplier(T.symphonia.replace("{P} Energy", "Energy card"))).toBeNull();
     // Sylveon ex "Colorful Harmony" (`me` ×3): a TYPE count, not an Energy count — still unbuilt.
+    // [🆕🆕🆕 D607 (D539): "still unbuilt" is WITHDRAWN, kept as written — WP28a builds it on its own
+    // member, `basicEnergyTypesOnYourBoard`; it is still not THIS anchor's Energy count.]
     expect(
       resolvedByAnyReader(
         "This attack does 50 damage for each type of Basic Energy attached to all of your Pokémon.",
       ),
-    ).toBe(false);
+    ).toBe(true);
+    expect(
+      deriveAttackDamageMultiplier("This attack does 50 damage for each type of Basic Energy attached to all of your Pokémon.")
+        ?.count.kind,
+    ).toBe("basicEnergyTypesOnYourBoard");
     // The opponent's board stays `energyOnOpponent`'s.
     expect(deriveAttackDamageMultiplier(T.symphonia.replace("your Pokémon", "your opponent's Pokémon"))?.count).toEqual({
       kind: "energyOnOpponent",
@@ -379,7 +385,7 @@ describe("D596 §4 — Overflowing Wishes on a board", () => {
 });
 
 describe("D596 §5 — the version", () => {
-  it("is built at engine 0.489.0", () => {
-    expect(engineVersion).toBe("0.489.0");
+  it("is built at engine 0.490.0", () => {
+    expect(engineVersion).toBe("0.490.0");
   });
 });

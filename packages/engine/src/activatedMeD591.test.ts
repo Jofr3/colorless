@@ -543,7 +543,7 @@ describe("D591 §6 — Flaring Magic: a Basic {R} Energy paid, draw until 7, onc
 });
 
 describe("D591 §7 — the printed attacks these keys carry, and the version", () => {
-  it("the attacks left unbuilt are Delphox's, Frosmoth's and the `30th` Hail's markup — five printings", () => {
+  it("the attacks left unbuilt are Delphox's, Frosmoth's and the `30th` Hail's markup — five printings (🆕🆕🆕 D607: Delphox's is built — WP28a; three left)", () => {
     const me = new Map(meAttackCorpus().map(([n, text]) => [text, n]));
     expect(me.get("This attack does 30 damage for each Energy attached to all Pokémon.")).toBe(2);
     expect(me.get("Move a {W} Energy from this Pokémon to 1 of your Benched Pokémon.")).toBe(1);
@@ -554,7 +554,7 @@ describe("D591 §7 — the printed attacks these keys carry, and the version", (
     ).toBe(2);
   });
 
-  it("is built at engine 0.489.0", () => {
-    expect(engineVersion).toBe("0.489.0");
+  it("is built at engine 0.490.0", () => {
+    expect(engineVersion).toBe("0.490.0");
   });
 });

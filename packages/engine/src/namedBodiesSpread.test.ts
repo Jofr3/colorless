@@ -624,6 +624,7 @@ describe("D539 §2 — the `IN_PLAY_BODY_NOUNS` row", () => {
     // (🆕🆕🆕 D569 (D539): §5's sum is `10 + 11 + 11 = 32` now — D569's tenth key, "Ancient
     // Pokémon", was missed by the landing and moved BY HAND at its final review, the same
     // failure a second time.)
+    // (🆕🆕🆕 D607 (D539): 13 exact keys / 35 nouns — `13 + 11 + 11 = 35`, moved by hand again, none with an apostrophe.)
     //
     // This rung asserts only the part that is this slice's and that it can actually reach:
     // the ninth key is a key, it reaches a reading, and it carries no apostrophe — which is
@@ -1129,7 +1130,7 @@ describe("D539 §7 — the widening at a persisted address, and the version does
   });
 
   it("the engine version moved and the two spellings agree", () => {
-    expect(engineVersion).toBe("0.489.0");
+    expect(engineVersion).toBe("0.490.0");
     expect(manifest.version).toBe(engineVersion);
   });
 });

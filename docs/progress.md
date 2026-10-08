@@ -3,7 +3,9 @@
 > Update this at the **end of every session**: bump the status table, append a
 > session-log entry, and rewrite the **Resume point** to the next concrete action.
 
-**Last updated:** 2026-10-08 — build session #546 (**P3-M5 — D606, *WP25a — THE FIRST HALF OF THE `me` STADIUMS: 5 texts / 9 `me` printings — Prism Tower ×2 (discard 2, draw 1), Surfing Beach ×2 (Active {W} ↔ Benched {W}), Nighttime Mine (Tera attacks cost {C} more, `StadiumEffects.attackCostSurcharge`), Lumiose City ×2 and Celebratory Fanfare ×2 (the turn-ending Stadium use, `StadiumAbility.endsTurn`); Surfing Beach flips the D210 / D213 pinned survivors to KILLED; Battle Cage, Mystery Garden, Forest of Vitality, Dizzying Valley, Fossil Quarry and Risky Ruins dropped and named; R-LC1 / R-CF1 recorded UNRULED; trainers 373 / 447; 935 `me` printings fully built*** — engine 0.489.0, MRV 42, NOT committed; the sweep PENDING)
+**Last updated:** 2026-10-08 — build session #547 (**P3-M5 — D607, *WP28a — THE FIRST HALF OF THE SCALING COUNT SOURCES: 8 attack texts / 14 `me` printings — three new nullary `DamageCountSource` members (`energyInPlayBothSides` Delphox ×2, `toolsInPlayBothSides` Bronzong, `basicEnergyTypesOnYourBoard` Sylveon ex ×3) and four texts on shipped members (Beedrill ex ×2, Paldean Tauros, Raticate ×2, Tinkaton, Beautifly ×2); WP28b's 7 texts / 11 printings named; no new reading; attacks 2,614 / 2,771; 949 `me` printings fully built*** — engine 0.490.0, MRV 42, NOT committed; the sweep PENDING)
+
+**Last updated (was):** 2026-10-08 — build session #546 (**P3-M5 — D606, *WP25a — THE FIRST HALF OF THE `me` STADIUMS: 5 texts / 9 `me` printings — Prism Tower ×2 (discard 2, draw 1), Surfing Beach ×2 (Active {W} ↔ Benched {W}), Nighttime Mine (Tera attacks cost {C} more, `StadiumEffects.attackCostSurcharge`), Lumiose City ×2 and Celebratory Fanfare ×2 (the turn-ending Stadium use, `StadiumAbility.endsTurn`); Surfing Beach flips the D210 / D213 pinned survivors to KILLED; Battle Cage, Mystery Garden, Forest of Vitality, Dizzying Valley, Fossil Quarry and Risky Ruins dropped and named; R-LC1 / R-CF1 recorded UNRULED; trainers 373 / 447; 935 `me` printings fully built*** — engine 0.489.0, MRV 42, NOT committed; the sweep PENDING)
 
 **Last updated (was):** 2026-10-08 — build session #545 (**P3-M5 — D605, *WP34 — COIN (THE REST): 5 texts / 12 `me` printings — Tauros ×2 "Target Together" (`damageChosen.perHeadsInPlay`: pick, then a coin per own Tauros), Mega Zygarde ex ×5 "Nullifying Zero" (`damageChosen.flipEach`: a coin per opposing Pokémon), Grafaiai "Miraculous Paint" (choose a Special Condition as four labelled confirms), Maushold ×2 "Gnaw Together" (a coin per Maushold in play), Mega Audino ex ×2 "Kaleidowaltz"; Watchog ×2 and Ditto ×2 dropped and named; R-NZ1 / R-MP1 / R-KW1 recorded UNRULED; attacks 2,600 / 2,771; 926 `me` printings fully built*** — engine 0.488.0, MRV 42, NOT committed; the sweep PENDING)
 
@@ -837,6 +839,39 @@
 
 ## NEXT (resume point)
 
+> ### ▶ THE NEXT CONCRETE ACTION (written 2026-10-08, after D607)
+>
+> 🛑 **D607 IS BUILT AND NOT COMMITTED** (worktree `/home/jofre/projects/luminous_ui-mega`, branch `mega-ingest`, on D606 = `59dcf041`). D607 is WP28a of the Mega backlog (the first half of WP28 scaling count sources). Next: a review of D607, then WP28b (the seven texts below) or another package, or the landing of D581–D607 (rebase `mega-ingest` onto main; never `git add -A` — `apps/api/.wrangler` is the setup symlink).
+>
+> ✅ **`bun run check` IS GREEN**: `Test Files 649 passed (649) / Tests 15388 passed (15388) / CHECK_EXIT=0` (D606: 648 / 15372; D607 adds `scalingCountsMeD607.test.ts` (14) and the census D607 block (2)).
+>
+> **(a) THE SLICE.** 8 attack texts / 14 `me` printings, readers only, no registry key. effects.ts: three NEW nullary `DamageCountSource` members on literal `×` anchors with attack.ts arms — `energyInPlayBothSides` (Delphox `mep-074` / `me04-013`, every Energy card on both boards), `toolsInPlayBothSides` (Bronzong `me02-072`, every Tool on both boards), `basicEnergyTypesOnYourBoard` (Sylveon ex `mep-100` / `30th-071` / `30th-153`; continuous.ts `countBasicEnergyTypesInPlay`, distinct types named by `energyProvidesOf`, so a Special or an unparsed Basic adds none). Four texts on shipped members: body-map keys "Beedrill and Beedrill ex" (Beedrill ex `me04-003` / `-098`), "Rattata" (Raticate `me03-061` / `-099`; `BENCH_COUNTER_FILTERED_MULTIPLY`'s noun widened to `((?!Pokémon\.)[^.]+)`) and `Pokémon that has "Tauros" in its name` (Paldean Tauros `me02-048`, `damagedOnly`); `OPPONENT_ENERGY_PENALTY` (Tinkaton `me01-098`, 240 − 60 per Energy on the opponent's Active, floored); the reveal anchor admits ", and this attack does" and `OPPONENT_HAND_NOUNS` gains "Energy card" → `anyEnergy` (Beautifly `me02.5-013` / `-219`). `sv` reader output byte-identical (before/after dump, 18 readers × both corpora: only the 8 target sentences moved). No new rules reading.
+>
+> **(b) LEFT FOR WP28b, NAMED** (7 texts / 11 printings, each needing vocabulary beyond this slice): Doublade ×3 "Weaponized Swords" (reveal any number from hand), Kyogre `me01-034` "Riptide" (discard count, then shuffle those back), Igglybuff `30th-120` "Bouncy Circle" (Benched max HP 30), Pikachu `30th-034` "Pika Chain" (tcgdex `<em>` markup — WP06), Armarouge `me05-012` / `-086` "Flame Legion" (Benched with {R} attached), Gourgeist ex `me04-041` / `-102` "Horrifying Rondo" (damaged Benched count), Okidogi `me02.5-122` "Settle the Score" (Prizes taken last turn — needs a record).
+>
+> **(c) MRV STAYS 42** (match.ts "STAYS 42 AT D607"): the three members are produced only by the fold readers and read at declaration; no op field carries them. The 14 faces in a v42 `cardPool` are unchanged — only their attack text reads now.
+>
+> | Column | `me` D607 | Standard pool D607 |
+> |---|---|---|
+> | Attacks | 882 / 1039 | **2614 / 2771** |
+> | Abilities | 144 / 234 | **520 / 610** |
+> | Trainers | 109 / 183 | **373 / 447** |
+> | Special Energy | 11 / 11 | **22 / 22** |
+>
+> **949 `me` printings fully built** (935 + 14). Pins stepped off the red run: the census D581 tally (reader [315, 839] → [323, 853], residue [120, 173] → [112, 159], built 858 → 872, headline 2,590 → 2,604) and every later block's `- 14`; D582 / D584 literals 859 → 873 / 861 → 875; `COUNT_KINDS` 21 → 24 (`damagedBodyScaling`, `specialConditionCount`); `benchNounScaling` §5 hand list 10 → 13 keys, sum 32 → 35 (moved BY HAND). D539: Delphox's "waits on an attack" (activatedMeD591 title, census D591 block and rung), Colorful Harmony's "still unbuilt" (megaGardevoirD596 §2) and the 10 / 32 noun counts (effects.ts ×3, namedBodiesSpread, the D439 row's reason) annotated. Version tax: 257 stepped / 1 kept (D606's heading).
+>
+> **(d) THE MUTATION RECORD.** +15 D607 rows (4825 in all). precheck: 4825 mutants, the same 20 pre-existing broken rows (four rows this slice broke were re-pointed: `D438-zero-guard-admits-a-printed-zero`, `D440-energy-noun-reads-provision`, `D467-counter-anchor-loses-its-terminator`, `D596-board-anchor-tail-widened`; with `D275-engine-version-drifts-again`, `--only`: 5 killed). Probe `run.ts --decision D607 --allow-dirty`: 15 killed · 0 known survivor(s) · 0 GAP(S) · 0 stale · 0 skipped(dirty) · 0 clobber(s) · 0 error(s), tree byte-identical after. The other 26 existing rows anchored within 25 lines of a D607 hunk, plus the two D439 vocabulary rows (28): 27 killed · 1 known survivor (`D439-vocabulary-order-loses-the-owner`, equivalent, as declared). Gate-witness `--only` (the 18 `opaque-anatomy-gate.ts` / `residue-census-gate.ts` rows): 18 killed · 0 error. Gates: residue-census, opaque-anatomy, splice, partition all OK.
+>
+> 🛑 **(0) THE WHOLE-CORPUS SWEEP IS PENDING** (D581–D606's too). Predicted: **4757 killed · 48 known survivor(s) · 0 GAP(S) · 20 error(s)** over **4,825** rows — 4810 + 15 = 4825; 4742 + 15 = 4757 killed; 48 survivors unchanged; 4757 + 48 + 20 = 4825. It assumes D606's prediction (4742 · 48 · 0 · 20 over 4810) holds. If it holds, D581–D607 close together. If it fails: an error count ≠ 20 means a `find` was spliced (precheck names it); a SURVIVED D607 row means a §3 / §4 board stopped discriminating; a STALE `D439-vocabulary-order-loses-the-owner` means a body-map key now reaches the owner or typed branch; any other new GAP or survivor is a D581–D606 prediction failing, not D607's.
+>
+> **Pending decisions (UNRULED readings):** none new at D607 — each count is the printed noun over a shipped walk (CARDS for Energy, D193; top-card names, §1.2; the penalty floor, D163). R-LC1 / R-CF1 (D606), R-NZ1 / R-MP1 / R-KW1 (D605), R-TE1 / R-TP1 / R-NF1 (D604), R-PX6 (D603), R-GC2, R-GC3, R-TN1 (D601) and R-CW1 (D600) stand as recorded in the archived blocks below.
+>
+> Still owed from the Mega backlog: as at D606 (below), less WP28a's eight texts; WP28b's seven are (b) above.
+>
+> ---
+>
+> **ARCHIVED — the resume point D607 was built from, kept rather than overwritten** (D606 has since been committed on `mega-ingest` as `59dcf041`):
+>
 > ### ▶ THE NEXT CONCRETE ACTION (written 2026-10-08, after D606)
 >
 > 🛑 **D606 IS BUILT AND NOT COMMITTED** (worktree `/home/jofre/projects/luminous_ui-mega`, branch `mega-ingest`, on D605 = `8717d9cb`). D606 is WP25a of the Mega backlog (the first half of WP25 Stadiums). Next: a review of D606, then the next package (WP25's second half is the six drops below) or the landing of D581–D606 (rebase `mega-ingest` onto main; never `git add -A` — `apps/api/.wrangler` is the setup symlink).
@@ -1340,7 +1375,7 @@
 > | Trainers | 92 / 183 | **356 / 447** |
 > | Special Energy | 3 / 11 | **14 / 22** |
 >
-> **796 `me` printings fully built** (782 + 14: Mega Kangaskhan ex ×4, Moltres ×3, Zapdos ×3, Articuno `mep-097`, Lunatone ×3). Not finished, each waiting on an attack: Delphox ×2 "Energized Storm", Frosmoth "Cold Cyclone", Articuno `30th-018` / `-132` "Hail" (tcgdex `<em>` markup, WP06). Registry 1181 → 1200, non-attack 1021 → 1040. Other pins moved: `flipTheScript.test.ts` (shared-scope +7, `playableIf` +12), `callBell.test.ts` (Ability `allOf` 0 → 9 ids), `requirementFloor.test.ts` (`allOf` 15 → 24 ids, 5 → 8 sites), `reprintAliasMeD582.test.ts` `KEYED_AT_D591`, the five registry-length pins.
+> **796 `me` printings fully built** (782 + 14: Mega Kangaskhan ex ×4, Moltres ×3, Zapdos ×3, Articuno `mep-097`, Lunatone ×3). Not finished, each waiting on an attack: Delphox ×2 "Energized Storm", Frosmoth "Cold Cyclone", Articuno `30th-018` / `-132` "Hail" (tcgdex `<em>` markup, WP06). [🆕🆕🆕 D607: Delphox ×2's "Energized Storm" is BUILT (WP28a); both are fully built.] Registry 1181 → 1200, non-attack 1021 → 1040. Other pins moved: `flipTheScript.test.ts` (shared-scope +7, `playableIf` +12), `callBell.test.ts` (Ability `allOf` 0 → 9 ids), `requirementFloor.test.ts` (`allOf` 15 → 24 ids, 5 → 8 sites), `reprintAliasMeD582.test.ts` `KEYED_AT_D591`, the five registry-length pins.
 >
 > **(c) THE MUTATION RECORD.** +23 D591 rows (4459 in all). precheck: 4459 mutants, the same 20 pre-existing broken rows (none in a D591 file). Probe `run.ts --decision D591 --allow-dirty`: 23 killed · 0 known · 0 GAP · 0 error, tree byte-identical after. Gate-witness `--only` (the 18 `opaque-anatomy-gate.ts` / `residue-census-gate.ts` rows): 18 killed · 0 error. Gates: residue-census, opaque-anatomy, splice, partition all OK.
 >
@@ -35302,7 +35337,8 @@ the next api deploy (D18).
 |---|---|---|
 | backend-data | P1 | ✅ M1–M9 + P2-M1 + task-17 api deployed (Worker `9b1ec1d1`, 2026-07-16); OAuth secrets pending (user) |
 | deck-builder | P2 | ✅ ALL 19 tasks closed (task 17 landed + e2e-verified locally); only follow-ups left |
-| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D606, *WP25a — the first half of the `me` Stadiums: 5 texts / 9 `me` printings (Prism Tower, Surfing Beach, Nighttime Mine, Lumiose City, Celebratory Fanfare) over `StadiumAbility.endsTurn` and `StadiumEffects.attackCostSurcharge`; the D210 / D213 pinned survivors KILLED; six Stadiums dropped and named; R-LC1 / R-CF1 UNRULED; trainers 373 / 447*** — engine 0.489.0, MRV 42, NOT committed; the sweep PENDING) |
+| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D607, *WP28a — the first half of the scaling count sources: 8 attack texts / 14 `me` printings over three new nullary `DamageCountSource` members (both-board Energy, both-board Tools, Basic Energy types) and four texts on shipped members; WP28b's seven named; attacks 2,614 / 2,771*** — engine 0.490.0, MRV 42, NOT committed; the sweep PENDING) |
+| simulator (prior) | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D606, *WP25a — the first half of the `me` Stadiums: 5 texts / 9 `me` printings (Prism Tower, Surfing Beach, Nighttime Mine, Lumiose City, Celebratory Fanfare) over `StadiumAbility.endsTurn` and `StadiumEffects.attackCostSurcharge`; the D210 / D213 pinned survivors KILLED; six Stadiums dropped and named; R-LC1 / R-CF1 UNRULED; trainers 373 / 447*** — engine 0.489.0, MRV 42, NOT committed; the sweep PENDING) |
 | simulator (prior) | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D605, *WP34 — coin (the rest): 5 texts / 12 `me` printings over `damageChosen.perHeadsInPlay` / `flipEach`, a choose-a-Special-Condition coin row and a coin per named body in play; Watchog and Ditto dropped and named; R-NZ1 / R-MP1 / R-KW1 UNRULED; attacks 2,600 / 2,771*** — engine 0.488.0, MRV 42, NOT committed; the sweep PENDING) |
 | simulator (prior) | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D604, *WP18 — the Mega Evolution typed Special Energies: 8 texts / 8 `me` printings on eight new `energy` objects over `EnergyProgram.holderType` and `EnergyOnAttach.benchSearch`; R-TE1 / R-TP1 / R-NF1 UNRULED; special energy 22 / 22*** — engine 0.487.0, MRV 42, NOT committed; the sweep PENDING) |
 | simulator (prior) | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D603, *WP11 — the Mega-gated texts: 6 texts / 11 `me` printings on six new objects over `yourMegaExInPlay { type? }` and `megaEvolutionEx` (three gated Abilities, a gated passive, a Mega ex search, a draw per opposing Mega ex); Latios and Wally's Compassion dropped and named; abilities 520 / 610, trainers 364 / 447*** — engine 0.486.0, MRV 42, NOT committed; the sweep PENDING) |
@@ -35526,6 +35562,16 @@ the next api deploy (D18).
 Legend: 📝 backlog · 📋 specced · 🔎 research · 🚧 in progress · ✅ done
 
 ## Session log
+
+### 2026-10-08 — build session #547 (P3-M5 — D607)
+
+**WP28a — THE FIRST HALF OF THE SCALING COUNT SOURCES. `MATCH_RECORD_VERSION` STAYS 42.**
+
+Built in the `luminous_ui-mega` worktree on D606 (`59dcf041`); the main checkout was not touched. Every id `git grep`-ped
+(only Delphox ×2, an Ability key since D591) and every text read off the LOCAL D1 first. Three new nullary count members, four
+texts on shipped ones; 8 texts / 14 printings, all fully built; WP28b's 7 texts / 11 printings named. No new reading.
+`scalingCountsMeD607.test.ts` (14), census D607 block (2); check 649 / 15388. Version tax 257 stepped / 1 kept. +15 mutant
+rows, all KILLED; four rows re-pointed. Sweep PENDING (NEXT (0)). NOT committed.
 
 ### 2026-10-08 — build session #546 (P3-M5 — D606)
 

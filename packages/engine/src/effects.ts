@@ -18095,6 +18095,10 @@ const RETREAT_COST_MULTIPLY =
 // engine cost, and the ATTACK READER SURFACE STANDS STILL AT 13.
 const RETREAT_COST_PENALTY =
   /^This attack does (\d+) less damage for each \{C\} in your opponent['’]s Active Pokémon['’]s Retreat Cost\.$/;
+// 🆕🆕🆕 D607 — WP28a: the penalty fold's THIRD source, the shipped `energyOnOpponent` (active,
+// untyped). Tinkaton "Windup Swing" (`me01-098`, `240-`). Literal: the column prints no typed twin.
+const OPPONENT_ENERGY_PENALTY =
+  /^This attack does (\d+) less damage for each Energy attached to your opponent['’]s Active Pokémon\.$/;
 // D168 — the OPPONENT-SIDE damage-counter count, and the first count source this
 // family reads off the DEFENDING body's own `damage` field. "This attack does
 // {10|30} more damage for each damage counter on your opponent's Active Pokémon."
@@ -18390,8 +18394,11 @@ const BENCH_COUNTER_MULTIPLY =
     whole board on the `+` fold and a different member entirely. The additive cell
     is left EMPTY. `Pokémon` carries the real é (U+00E9); no /i, whole-sentence
     anchored with a required trailing period and a capital `This`. */
+// 🆕🆕🆕 D607 — WP28a: the noun no longer has to end "Pokémon" (Raticate "Retaliatory Incisors",
+// "…all of your Benched Rattata.", the body map's "Rattata" key). `(?!Pokémon\.)` keeps the bare
+// "Benched Pokémon." on `BENCH_COUNTER_MULTIPLY` alone, so the two anchors stay disjoint.
 const BENCH_COUNTER_FILTERED_MULTIPLY =
-  /^This attack does (\d+) damage for each damage counter on all of your Benched ([^.]+ Pokémon)\.$/;
+  /^This attack does (\d+) damage for each damage counter on all of your Benched ((?!Pokémon\.)[^.]+)\.$/;
 /** 🆕🆕 D493 — THE SAME HEAD WITH ITS PRINTED **WEAKNESS-ONLY SUPPRESSION
     RIDER**: *"This attack does 10 damage for each damage counter on all of your
     Benched Cynthia's Pokémon. This attack's damage isn't affected by Weakness."*
@@ -19058,6 +19065,7 @@ const IN_PLAY_BODY_NOUNS: ReadonlyMap<string, CardFilter> = new Map<string, Card
   // and `inPlayBodyFilter`'s three branches stay pairwise disjoint.
   // (🆕🆕🆕 D569 (D539): "now **9** / **31**" is STALE — D569's tenth key, "Ancient Pokémon"
   // (below), makes it **10** exact keys and **32** nouns; it carries no apostrophe either.)
+  // (🆕🆕🆕 D607 (D539): 13 exact keys / 35 nouns since WP28a's three keys, none with an apostrophe.)
   //
   // 🛑 **AND THE COUNT IS *NOT* DERIVED FROM `IN_PLAY_BODY_NOUNS.size` — D539 CHECKED THE
   // CLAIM THAT SAID IT WAS AND WITHDREW IT** (`inPlayBodyFilter`'s doc block below, and
@@ -19087,13 +19095,29 @@ const IN_PLAY_BODY_NOUNS: ReadonlyMap<string, CardFilter> = new Map<string, Card
   // `CLAUSE_POKEMON_TYPES`: it is a banner, not a type) — which means the "Ancient Pokémon"
   // witness `inPlayBodyFilter`'s doc gives for "the map refuses, not the regex" is SPENT
   // (annotated there). The exact keys are now **10** and the vocabulary **32** (10 exact + 11
-  // `POKEMON_TYPES` names + 11 `{X}` codes). Like every key here it is the vocabulary of the
+  // `POKEMON_TYPES` names + 11 `{X}` codes). (🆕🆕🆕 D607 (D539): 13 exact keys / 35 nouns since WP28a's three keys, none with an apostrophe.) Like every key here it is the vocabulary of the
   // sibling anchors too; the column prints "Ancient Pokémon" in no other sentence they reach
   // (measured over `legalAttackCorpus()` — the Benched Ancient heal/move are registry rows,
   // and Iron Moth's "attacks from Ancient Pokémon" is a different reader, still unbuilt).
   // (🆕🆕🆕 D575 (D539): ~~"still unbuilt"~~ — Iron Moth's sentence is BUILT at D575 by its OWN anchor,
   // `PREVENT_DAMAGE_FROM_ANCIENT`; it is still a different reader, so this key's vocabulary is unchanged)
   ["Ancient Pokémon", { kind: "bannerPokemon", banner: "Ancient" }],
+  // 🆕🆕🆕 D607 — WP28a: three more exact keys, so **13** exact keys and **35** nouns (13 + 11 + 11);
+  // none carries an apostrophe. A Drifloon-shaped name pair (Beedrill ex "Rumbling Bees" — "Beedrill
+  // ex" is the printed card name), a bare card name (Raticate's "Benched Rattata", Charjabug's shape)
+  // and a quoted name fragment (Paldean Tauros "Raging Charge", `pokemonNameContaining`).
+  [
+    "Beedrill and Beedrill ex",
+    {
+      kind: "anyOf",
+      filters: [
+        { kind: "byName", name: "Beedrill" },
+        { kind: "byName", name: "Beedrill ex" },
+      ],
+    },
+  ],
+  ["Rattata", { kind: "byName", name: "Rattata" }],
+  ['Pokémon that has "Tauros" in its name', { kind: "pokemonNameContaining", fragment: "Tauros" }],
 ]);
 /** 🆕🆕🆕 **D492 — THE TWO CLASS NOUNS THIS COLUMN PRINTS IN A WHOLE-SIDE SPREAD'S
     TARGET SLOT**, and they are a SHORTLIST OVER `IN_PLAY_BODY_NOUNS` rather than a
@@ -19288,6 +19312,7 @@ const IN_PLAY_TYPED_NOUN = /^(.+) Pokémon$/;
     and it carries no apostrophe, so the disjointness argument is unchanged. Re-derived by
     reading the map at this head; `benchNounScaling.test.ts` §5's hand list and hand sum were
     moved BY HAND to match, for the reason given below.)
+    (🆕🆕🆕 D607 (D539): 13 exact keys / 35 nouns since WP28a's three keys, none with an apostrophe.)
     🆕 **D539 — `30 nouns / 8 exact keys` UNTIL NOW**, and it is RE-DERIVED at the new
     count rather than incremented on faith: the ninth exact key is
     *"Drifloon and Drifblim"* and it carries no apostrophe either. ⚠️ **The rung that
@@ -19872,8 +19897,10 @@ const MILLED_TYPED_BASIC_NOUN = /^Basic \{([A-Z])\} Energy card$/;
 // D137's standing insurance against a punctuation-normalising re-ingest.
 const OPPONENT_HAND_COUNT_MULTIPLY =
   /^This attack does (\d+) damage for each ([^.]+) in your opponent['’]s hand\.$/;
+// 🆕🆕🆕 D607 — WP28a: also the comma-joined `me` wording, "…reveals their hand, and this attack
+// does…" (Beautifly "Energy Straw"); the reveal op and the fold both read this one anchor.
 const ATTACK_REVEAL_AND_TRAINER_SCALE =
-  /^Your opponent reveals their hand\. This attack does (\d+) damage for each ([^.]+) you find there\.$/;
+  /^Your opponent reveals their hand(?:\. This|, and this) attack does (\d+) damage for each ([^.]+) you find there\.$/;
 // 🆕🆕🆕 D600 — WP14: the ATTACKER's own hand, the bare noun only (Galarian Meowth "Treasure Rush"
 // `30th-101`/`-141`). A separate literal anchor, D441's rule: no noun capture, so no filter map.
 const YOUR_HAND_COUNT_MULTIPLY = /^This attack does (\d+) damage for each card in your hand\.$/;
@@ -19905,6 +19932,8 @@ const OPPONENT_HAND_NOUNS: ReadonlyMap<string, CardFilter> = new Map<string, Car
   // real member rather than an absent filter because this count's payload is
   // REQUIRED — see the union member's own block for why.
   ["card", { kind: "anyCard" }],
+  // 🆕🆕🆕 D607 — Beautifly "Energy Straw"'s noun: any Energy card, Basic or Special.
+  ["Energy card", { kind: "anyEnergy" }],
 ]);
 /** 🆕🆕 D445 — the printed noun in an opponent-hand count, resolved to the
     `CardFilter` that already answers it, or `null` when this file has no way to
@@ -20320,6 +20349,15 @@ const SELF_ENERGY_BOTH_ACTIVES_SCALE =
 // period and a capital `This`, for the family's stated reason.
 const YOUR_TOOLS_MULTIPLY =
   /^This attack does (\d+) damage for each Pokémon Tool attached to all of your Pokémon\.$/;
+// 🆕🆕🆕 D607 — WP28a: three literal `×` anchors, one new count member each (no noun capture, so
+// no filter map — D441's rule). "all Pokémon" (no "of your") is BOTH boards: Bronzong "Tool Drop"
+// and Delphox "Energized Storm". Sylveon ex "Colorful Harmony" counts distinct Basic Energy types.
+const BOTH_SIDES_TOOLS_MULTIPLY =
+  /^This attack does (\d+) damage for each Pokémon Tool attached to all Pokémon\.$/;
+const BOTH_SIDES_ENERGY_MULTIPLY =
+  /^This attack does (\d+) damage for each Energy attached to all Pokémon\.$/;
+const BASIC_ENERGY_TYPES_MULTIPLY =
+  /^This attack does (\d+) damage for each type of Basic Energy attached to all of your Pokémon\.$/;
 // 🆕🆕🆕 **D543 — THE TOOL DISCARD AT THE PROGRAM TAIL, THE OTHER HALF OF THE
 // `/Pokémon Tool/` SWEEP THIS FILE HAS BEEN NAMING AS UNBUILT SINCE D406.**
 // *"Discard up to 2 Pokémon Tools from your opponent's Pokémon."* —
@@ -35493,7 +35531,23 @@ export type DamageCountSource =
       `damageActive.per` for Alakazam "Powerful Hand". NULLARY: no printing filters it, and the
       SIZE of a hand is public (the count shows), so the fold leaks nothing (D445's argument).
       Counted by interpreter.ts `countCardsInHand` over `anyCard`, the opponent member's walk. */
-  | { kind: "cardsInYourHand" };
+  | { kind: "cardsInYourHand" }
+  /** 🆕🆕🆕 **D607 — WP28a: EVERY ENERGY CARD ATTACHED TO EVERY POKÉMON IN PLAY, BOTH SEATS.**
+      Delphox "Energized Storm" (`mep-074`/`me04-013`, `30×`): *"…for each Energy attached to all
+      Pokémon."* CARDS, untyped: continuous.ts `countEnergyInPlay(…, null)` per seat, summed — the
+      `energyOnSelf`/`energyOnOpponent` board arms' own walk. NULLARY (no printing types it). */
+  | { kind: "energyInPlayBothSides" }
+  /** 🆕🆕🆕 **D607 — WP28a: EVERY POKÉMON TOOL ON BOTH BOARDS.** Bronzong "Tool Drop" (`me02-072`,
+      `40×`): *"…for each Pokémon Tool attached to all Pokémon."* — `toolsOnYourBoard`'s
+      `countToolsInPlay` per seat, summed. NULLARY. */
+  | { kind: "toolsInPlayBothSides" }
+  /** 🆕🆕🆕 **D607 — WP28a: HOW MANY DIFFERENT BASIC ENERGY TYPES ARE ATTACHED ACROSS THE
+      ATTACKER'S BOARD.** Sylveon ex "Colorful Harmony" (`mep-100`/`30th-071`/`30th-153`, `50×`):
+      *"…for each type of Basic Energy attached to all of your Pokémon."* continuous.ts
+      `countBasicEnergyTypesInPlay`: Basic Energy CARDS only, each counted by the type it names
+      (`energyProvidesOf`) — a Special Energy that provides a basic type adds no type.
+      Two {W} and one {R} is 2. NULLARY. */
+  | { kind: "basicEnergyTypesOnYourBoard" };
 
 /** WHOSE discard pile a `cardsInDiscardPile` count walks (D440). CONTROLLER-RELATIVE,
     like every other side-valued field in this vocabulary — `you` is the seat that
@@ -35972,6 +36026,11 @@ export function deriveAttackDamagePenalty(text: string): AttackDamageBonus | nul
   if (retreatCost !== null) {
     const per = Number(retreatCost[1]);
     if (per >= 1) return { per, count: { kind: "opponentActiveRetreatCost" } };
+  }
+  const opponentEnergy = OPPONENT_ENERGY_PENALTY.exec(effect);
+  if (opponentEnergy !== null) {
+    const per = Number(opponentEnergy[1]);
+    if (per >= 1) return { per, count: { kind: "energyOnOpponent", zone: "active", energyType: null } };
   }
   return null;
 }
@@ -36504,6 +36563,18 @@ export function deriveAttackDamageMultiplier(text: string): AttackDamageBonus | 
   if (yourTools !== null) {
     const per = Number(yourTools[1]);
     if (per >= 1) return { per, count: { kind: "toolsOnYourBoard" } };
+  }
+  const allTools = BOTH_SIDES_TOOLS_MULTIPLY.exec(effect);
+  if (allTools !== null && Number(allTools[1]) >= 1) {
+    return { per: Number(allTools[1]), count: { kind: "toolsInPlayBothSides" } };
+  }
+  const allEnergy = BOTH_SIDES_ENERGY_MULTIPLY.exec(effect);
+  if (allEnergy !== null && Number(allEnergy[1]) >= 1) {
+    return { per: Number(allEnergy[1]), count: { kind: "energyInPlayBothSides" } };
+  }
+  const energyTypes = BASIC_ENERGY_TYPES_MULTIPLY.exec(effect);
+  if (energyTypes !== null && Number(energyTypes[1]) >= 1) {
+    return { per: Number(energyTypes[1]), count: { kind: "basicEnergyTypesOnYourBoard" } };
   }
   return null;
 }

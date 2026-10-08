@@ -47,6 +47,7 @@ import {
   coinFlipShieldPrevents,
   countAttachedEnergy,
   countDamageCountersInPlay,
+  countBasicEnergyTypesInPlay,
   countEnergyInPlay,
   countToolsInPlay,
   effectiveAttackCost,
@@ -618,6 +619,19 @@ function scaledAttackDamage(
       // empty board is 0 and, with the printed "30×" base dropped, that is no
       // DAMAGE_DEALT row at all.
       return countToolsInPlay(state, attackerSeat) * bonus.per;
+    case "toolsInPlayBothSides":
+      // 🆕🆕🆕 D607 — WP28a: every Tool on BOTH boards (Bronzong "Tool Drop"), the arm above per seat.
+      return (countToolsInPlay(state, attackerSeat) + countToolsInPlay(state, defenderSeat)) * bonus.per;
+    case "energyInPlayBothSides":
+      // 🆕🆕🆕 D607 — WP28a: every Energy CARD attached on BOTH boards (Delphox "Energized Storm"),
+      // the untyped board walk of `energyOnSelf`/`energyOnOpponent` per seat.
+      return (
+        (countEnergyInPlay(state, attackerSeat, null) + countEnergyInPlay(state, defenderSeat, null)) *
+        bonus.per
+      );
+    case "basicEnergyTypesOnYourBoard":
+      // 🆕🆕🆕 D607 — WP28a: distinct Basic Energy types on the attacker's board (Sylveon ex).
+      return countBasicEnergyTypesInPlay(state, attackerSeat) * bonus.per;
     case "pokemonInPlay": {
       // 🆕🆕 D439 — the ATTACKER's BODIES IN PLAY matching the printed noun
       // ("This attack does 30 damage for each of your {G} Pokémon in play.").

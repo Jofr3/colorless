@@ -6240,7 +6240,7 @@ export const MUTANTS: Mutant[] = [
     // CORPUS QUOTES** (D414/D415), so a value-keyed sweep over `toBe("0.391.0")` cannot
     // see it — this row's `find` spells the DECLARATION, not an assertion. Run
     // `precheck` after every version bump, not after the sweep tells you.
-    find: 'export const engineVersion = "0.489.0";',
+    find: 'export const engineVersion = "0.490.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -20965,8 +20965,10 @@ export const MUTANTS: Mutant[] = [
     decision: "D438",
     what: "⚠️ C5 — **THE ZERO GUARD ON THE NEW ARM ADMITS `per = 0`**, dropping the guard *\"every arm in both families carries\"*. A printed 0 subtracts nothing, so claiming it would mark a sentence SIMULATED that the engine does nothing about — the coverage-instrument defect (D190b/D199 at the instrument layer), and the one this whole family's `>= 1` exists to refuse. ⚠️ **THE MUTATION IS OBSERVABLE ONLY THROUGH A CONSTRUCTED STRING, AND THAT IS STATED RATHER THAN HIDDEN** (D420): the catalog prints no `0 less` row, so no board and no census figure moves — §2's near-miss ladder carries the constructed printed-0 as one of its nine one-axis rows, and a rung beside it asserts the string really reaches the regex so the GUARD is what is being tested and not the match",
     file: "packages/engine/src/effects.ts",
-    find: "    const per = Number(retreatCost[1]);\n    if (per >= 1) return { per, count: { kind: \"opponentActiveRetreatCost\" } };\n  }\n  return null;",
-    replace: "    const per = Number(retreatCost[1]);\n    if (per >= 0) return { per, count: { kind: \"opponentActiveRetreatCost\" } };\n  }\n  return null;",
+    // 🆕🆕🆕 D607 — RE-POINTED: the penalty reader gained a third arm after this one, so the tail
+    // anchor is its first line rather than `return null;`.
+    find: "    const per = Number(retreatCost[1]);\n    if (per >= 1) return { per, count: { kind: \"opponentActiveRetreatCost\" } };\n  }\n  const opponentEnergy = OPPONENT_ENERGY_PENALTY.exec(effect);",
+    replace: "    const per = Number(retreatCost[1]);\n    if (per >= 0) return { per, count: { kind: \"opponentActiveRetreatCost\" } };\n  }\n  const opponentEnergy = OPPONENT_ENERGY_PENALTY.exec(effect);",
     expectKilledBy: ["packages/engine/src/retreatCostPenalty.test.ts"],
   },
   {
@@ -21067,7 +21069,7 @@ export const MUTANTS: Mutant[] = [
     survives: {
       kind: "equivalent",
       reason:
-        "The three branches of `inPlayBodyFilter` are PAIRWISE DISJOINT, measured exhaustively rather than argued: the vocabulary is 32 nouns — the 10 exact keys of `IN_PLAY_BODY_NOUNS` (🆕🆕🆕 D569 (D539): this copy said \"30 nouns — the 8 exact keys\", stale since D539's ninth key and D569's tenth, \"Ancient Pokémon\", which carries no apostrophe either), the 11 `POKEMON_TYPES` names and the 11 `{X}` codes — and NOT ONE matches `IN_PLAY_OWNER_NOUN`, because no Pokémon type name ends in a possessive and no exact key carries an apostrophe. So no noun can resolve down two branches and any permutation of the three lookups computes the identical function. ⚠️ THE DECLARATION IS PREFERRED OVER DELETING THE ROW FOR D427's REASON: the day a type name gains a `'s`, or an exact key gains one, the branches overlap, this mutation becomes observable, the row reports STALE-SURVIVOR and the run FAILS. The property it rests on is also pinned directly, over the whole of `POKEMON_TYPES`, by `bodiesInPlayScaling.test.ts` §2 — so the same change reddens a suite AND invalidates this reason, which is two independent alarms on one fact. 🆕 **D466 — THE REASON'S ARITHMETIC WAS STALE AND IS RE-DERIVED HERE RATHER THAN LEFT STANDING (D442).** It said *“25 nouns — the 3 exact keys”*, which was D439's count and was already wrong at D446 (which added `Pokémon ex` and `Pokémon ex and Pokémon V`); D466 adds `Stage 1 Pokémon` and `Stage 2 Pokémon`, so the exact keys are **7** and the vocabulary is **29**. ⚠️ **THE PROPERTY IS UNCHANGED AND WAS RE-CHECKED KEY BY KEY, NOT INFERRED**: none of the seven carries an apostrophe, so none can reach `IN_PLAY_OWNER_NOUN`; and the exact-map lookup sits AHEAD of both permuted branches in the `find` AND in the `replace`, so the two new keys resolve before either branch runs in both worlds. The row still SURVIVES, and it survives for the reason as corrected rather than for the reason as written. 🆕🆕 **D467 — RE-DERIVED AGAIN, ONE SLICE LATER, AND THE ROT WAS IN A SECOND PLACE THIS TIME.** D467 adds `Charjabug` (the map's first CARD-NAME key), so the exact keys are **8** and the vocabulary is **30**. ⚠️ **AND D466 CORRECTED THIS `reason` WHILE LEAVING THE DOC BLOCK IT WAS TRANSCRIBED FROM SAYING *“25 nouns — the 3 exact keys”*** — so for a whole slice the mutant row and `inPlayBodyFilter`'s own comment disagreed by four keys and nothing went red. D467 fixes BOTH, and moves the count out of prose altogether: `benchNounScaling.test.ts` §5 DERIVES it through the reader (each exact key must resolve, each of the 22 type tokens must resolve, none may match `IN_PLAY_OWNER_NOUN`, and the three sizes must sum to 30), so the next key to land reddens a rung instead of quietly disagreeing with two comments. ⚠️ **THE PROPERTY IS UNCHANGED AND WAS RE-CHECKED FOR THE NEW KEY SPECIFICALLY**: `Charjabug` carries no apostrophe, so it cannot reach `IN_PLAY_OWNER_NOUN`; and it is an EXACT key, so it resolves ahead of both permuted branches in the `find` AND in the `replace`.",
+        "The three branches of `inPlayBodyFilter` are PAIRWISE DISJOINT, measured exhaustively rather than argued: the vocabulary is 32 nouns — the 10 exact keys of `IN_PLAY_BODY_NOUNS` [🆕🆕🆕 D607 (D539): 13 exact keys / 35 nouns since WP28a's three keys, none with an apostrophe; the property is unchanged.] (🆕🆕🆕 D569 (D539): this copy said \"30 nouns — the 8 exact keys\", stale since D539's ninth key and D569's tenth, \"Ancient Pokémon\", which carries no apostrophe either), the 11 `POKEMON_TYPES` names and the 11 `{X}` codes — and NOT ONE matches `IN_PLAY_OWNER_NOUN`, because no Pokémon type name ends in a possessive and no exact key carries an apostrophe. So no noun can resolve down two branches and any permutation of the three lookups computes the identical function. ⚠️ THE DECLARATION IS PREFERRED OVER DELETING THE ROW FOR D427's REASON: the day a type name gains a `'s`, or an exact key gains one, the branches overlap, this mutation becomes observable, the row reports STALE-SURVIVOR and the run FAILS. The property it rests on is also pinned directly, over the whole of `POKEMON_TYPES`, by `bodiesInPlayScaling.test.ts` §2 — so the same change reddens a suite AND invalidates this reason, which is two independent alarms on one fact. 🆕 **D466 — THE REASON'S ARITHMETIC WAS STALE AND IS RE-DERIVED HERE RATHER THAN LEFT STANDING (D442).** It said *“25 nouns — the 3 exact keys”*, which was D439's count and was already wrong at D446 (which added `Pokémon ex` and `Pokémon ex and Pokémon V`); D466 adds `Stage 1 Pokémon` and `Stage 2 Pokémon`, so the exact keys are **7** and the vocabulary is **29**. ⚠️ **THE PROPERTY IS UNCHANGED AND WAS RE-CHECKED KEY BY KEY, NOT INFERRED**: none of the seven carries an apostrophe, so none can reach `IN_PLAY_OWNER_NOUN`; and the exact-map lookup sits AHEAD of both permuted branches in the `find` AND in the `replace`, so the two new keys resolve before either branch runs in both worlds. The row still SURVIVES, and it survives for the reason as corrected rather than for the reason as written. 🆕🆕 **D467 — RE-DERIVED AGAIN, ONE SLICE LATER, AND THE ROT WAS IN A SECOND PLACE THIS TIME.** D467 adds `Charjabug` (the map's first CARD-NAME key), so the exact keys are **8** and the vocabulary is **30**. ⚠️ **AND D466 CORRECTED THIS `reason` WHILE LEAVING THE DOC BLOCK IT WAS TRANSCRIBED FROM SAYING *“25 nouns — the 3 exact keys”*** — so for a whole slice the mutant row and `inPlayBodyFilter`'s own comment disagreed by four keys and nothing went red. D467 fixes BOTH, and moves the count out of prose altogether: `benchNounScaling.test.ts` §5 DERIVES it through the reader (each exact key must resolve, each of the 22 type tokens must resolve, none may match `IN_PLAY_OWNER_NOUN`, and the three sizes must sum to 30), so the next key to land reddens a rung instead of quietly disagreeing with two comments. ⚠️ **THE PROPERTY IS UNCHANGED AND WAS RE-CHECKED FOR THE NEW KEY SPECIFICALLY**: `Charjabug` carries no apostrophe, so it cannot reach `IN_PLAY_OWNER_NOUN`; and it is an EXACT key, so it resolves ahead of both permuted branches in the `find` AND in the `replace`.",
     },
     file: "packages/engine/src/effects.ts",
     find: "  const owner = IN_PLAY_OWNER_NOUN.exec(noun);\n  if (owner !== null && owner[1] !== undefined) {\n    return { kind: \"ownerPokemon\", owner: owner[1] };\n  }\n  const typed = IN_PLAY_TYPED_NOUN.exec(noun);\n  if (typed !== null) {\n    const pokemonType = literalClauseRow(CLAUSE_POKEMON_TYPES, typed[1] ?? \"\");\n    if (pokemonType !== undefined) return { kind: \"typedPokemon\", pokemonType };\n  }\n  return null;",
@@ -21176,8 +21178,10 @@ export const MUTANTS: Mutant[] = [
     decision: "D440",
     what: "🛑 C6 — **THE ENERGY NOUN IS SPELLED AS A PROVISION FILTER**, which is §6.5's hazard reached through the VOCABULARY rather than through the walk (C1 is the same mistake at the fold). An author who has just written four `energyOnSelf`-style arms reaches for `providesEnergy` by habit — and `matchesFilter`'s own arm returns **false, always**, for that filter, with the pile argument written into the arm, so every count silently becomes 0 and index 0 deals its bare printed base of **20**. ⚠️ **THE ROW IS ALSO THE HONEST FORM OF \"COUNTS UNITS RATHER THAN CARDS\", WHICH IS NOT REACHABLE HERE AND IS SAID SO RATHER THAN FAKED**: `matchesFilter` is a per-CARD boolean, so a `matchesFilter`-based count is cards by construction and there is no unit reading to mutate into (D436's comparand rule does not bite — this is a COUNT with no symbol comparand)",
     file: "packages/engine/src/effects.ts",
-    find: "  [\"Energy card\", { kind: \"anyEnergy\" }],",
-    replace: "  [\"Energy card\", { kind: \"providesEnergy\", energyType: \"Fire\" }],",
+    // 🆕🆕🆕 D607 — RE-POINTED: `OPPONENT_HAND_NOUNS` gained the same key, so the find carries the
+    // discard-pile map's own comment line.
+    find: "  // adjective — the widest of the three Energy readings this union spells.\n  [\"Energy card\", { kind: \"anyEnergy\" }],",
+    replace: "  // adjective — the widest of the three Energy readings this union spells.\n  [\"Energy card\", { kind: \"providesEnergy\", energyType: \"Fire\" }],",
     expectKilledBy: ["packages/engine/src/discardPileScaling.test.ts"],
   },
   {
@@ -24896,8 +24900,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D467",
     what: "The counter anchor's required trailing period goes. It breaks the PRINTED row (which ends in one) and admits a truncated near-miss, so it fails in both directions at once \u2014 \u00a72's derived value and \u00a73's `.slice(0, -1)` rung.",
     file: "packages/engine/src/effects.ts",
-    find: "  /^This attack does (\\d+) damage for each damage counter on all of your Benched ([^.]+ Pok\u00e9mon)\\.$/;",
-    replace: "  /^This attack does (\\d+) damage for each damage counter on all of your Benched ([^.]+ Pok\u00e9mon)$/;",
+    // 🆕🆕🆕 D607 — RE-POINTED at the widened noun group (`((?!Pokémon\.)[^.]+)`, WP28a's "Rattata").
+    find: "  /^This attack does (\\d+) damage for each damage counter on all of your Benched ((?!Pok\u00e9mon\\.)[^.]+)\\.$/;",
+    replace: "  /^This attack does (\\d+) damage for each damage counter on all of your Benched ((?!Pok\u00e9mon\\.)[^.]+)$/;",
     expectKilledBy: ["packages/engine/src/benchNounScaling.test.ts"],
   },
   {
@@ -49182,8 +49187,10 @@ export const MUTANTS: Mutant[] = [
     decision: "D596",
     what: "the `×` board tail admits a subgroup: \"…all of your Iono's Pokémon.\" scores off the whole board. Killed by megaGardevoirD596 §2.",
     file: "packages/engine/src/effects.ts",
-    find: "Energy attached to all of your Pokémon\\.$/;",
-    replace: "Energy attached to all of your (?:[^.]+ )?Pokémon\\.$/;",
+    // 🆕🆕🆕 D607 — RE-POINTED: WP28a's type-count anchor ends the same way, so the find carries the
+    // optional token group.
+    find: "for each (?:(.+) )?Energy attached to all of your Pokémon\\.$/;",
+    replace: "for each (?:(.+) )?Energy attached to all of your (?:[^.]+ )?Pokémon\\.$/;",
     expectKilledBy: ["packages/engine/src/megaGardevoirD596.test.ts"],
   },
   {
@@ -51544,5 +51551,143 @@ export const MUTANTS: Mutant[] = [
     find: "  return surcharge !== undefined && matchesFilter(top, surcharge.attacker) ? surcharge.amount : 0;\n",
     replace: "  return surcharge !== undefined ? surcharge.amount : 0;\n",
     expectKilledBy: ["packages/engine/src/stadiumsMeD606.test.ts"],
+  },
+  // ── 🆕🆕🆕 D607 — WP28a: THE FIRST HALF OF THE SCALING COUNT SOURCES. One row per new anchor, arm and
+  //    seat, per noun key and per widening. Every `find` occurs once (precheck); no replace names an
+  //    identifier its file does not bind. ──
+  {
+    id: "D607-alltools-own-board",
+    decision: "D607",
+    what: "Tool Drop reads as the shipped one-board `toolsOnYourBoard`: the opponent's Tools stop counting. Killed by scalingCountsMeD607 §2's reading and §3's both-board count.",
+    file: "packages/engine/src/effects.ts",
+    find: "    return { per: Number(allTools[1]), count: { kind: \"toolsInPlayBothSides\" } };\n",
+    replace: "    return { per: Number(allTools[1]), count: { kind: \"toolsOnYourBoard\" } };\n",
+    expectKilledBy: ["packages/engine/src/scalingCountsMeD607.test.ts"],
+  },
+  {
+    id: "D607-allenergy-dropped",
+    decision: "D607",
+    what: "the both-board Energy anchor stops answering: Energized Storm is unbuilt again. Killed by scalingCountsMeD607 §1/§2 and the census D607 block.",
+    file: "packages/engine/src/effects.ts",
+    find: "  if (allEnergy !== null && Number(allEnergy[1]) >= 1) {\n",
+    replace: "  if (allEnergy !== null && Number(allEnergy[1]) >= 1000) {\n",
+    expectKilledBy: ["packages/engine/src/scalingCountsMeD607.test.ts", "packages/engine/src/censusAtHead.test.ts"],
+  },
+  {
+    id: "D607-types-dropped",
+    decision: "D607",
+    what: "the Basic-Energy-type anchor stops answering: Colorful Harmony is unbuilt again. Killed by scalingCountsMeD607 §1/§2, megaGardevoirD596 §2 and the census D607 block.",
+    file: "packages/engine/src/effects.ts",
+    find: "  if (energyTypes !== null && Number(energyTypes[1]) >= 1) {\n",
+    replace: "  if (energyTypes !== null && Number(energyTypes[1]) >= 1000) {\n",
+    expectKilledBy: ["packages/engine/src/scalingCountsMeD607.test.ts", "packages/engine/src/censusAtHead.test.ts", "packages/engine/src/megaGardevoirD596.test.ts"],
+  },
+  {
+    id: "D607-tools-one-seat",
+    decision: "D607",
+    what: "the both-board Tool arm counts the attacker's board twice. Killed by scalingCountsMeD607 §3 (1 + 2 Tools → 120).",
+    file: "packages/engine/src/attack.ts",
+    find: "      return (countToolsInPlay(state, attackerSeat) + countToolsInPlay(state, defenderSeat)) * bonus.per;\n",
+    replace: "      return (countToolsInPlay(state, attackerSeat) + countToolsInPlay(state, attackerSeat)) * bonus.per;\n",
+    expectKilledBy: ["packages/engine/src/scalingCountsMeD607.test.ts"],
+  },
+  {
+    id: "D607-energy-one-seat",
+    decision: "D607",
+    what: "the both-board Energy arm counts the attacker's board twice. Killed by scalingCountsMeD607 §3 (3 + 2 Energy → 150).",
+    file: "packages/engine/src/attack.ts",
+    find: "        (countEnergyInPlay(state, attackerSeat, null) + countEnergyInPlay(state, defenderSeat, null)) *\n",
+    replace: "        (countEnergyInPlay(state, attackerSeat, null) + countEnergyInPlay(state, attackerSeat, null)) *\n",
+    expectKilledBy: ["packages/engine/src/scalingCountsMeD607.test.ts"],
+  },
+  {
+    id: "D607-types-wrong-seat",
+    decision: "D607",
+    what: "Colorful Harmony counts the DEFENDER's Basic Energy types. Killed by scalingCountsMeD607 §3.",
+    file: "packages/engine/src/attack.ts",
+    find: "      return countBasicEnergyTypesInPlay(state, attackerSeat) * bonus.per;\n",
+    replace: "      return countBasicEnergyTypesInPlay(state, defenderSeat) * bonus.per;\n",
+    expectKilledBy: ["packages/engine/src/scalingCountsMeD607.test.ts"],
+  },
+  {
+    id: "D607-types-counts-cards",
+    decision: "D607",
+    what: "the type count adds each card rather than each type: two {P} count 2. Killed by scalingCountsMeD607 §3.",
+    file: "packages/engine/src/continuous.ts",
+    find: "      if (provided !== \"Colorless\") types.add(provided);\n",
+    replace: "      if (provided !== \"Colorless\") types.add(uid);\n",
+    expectKilledBy: ["packages/engine/src/scalingCountsMeD607.test.ts"],
+  },
+  {
+    id: "D607-types-counts-colorless",
+    decision: "D607",
+    what: "the type count keeps \"Colorless\": an unparsed Basic or a Special adds a type. Killed by scalingCountsMeD607 §3 (fix-energy / fix-blend).",
+    file: "packages/engine/src/continuous.ts",
+    find: "      if (provided !== \"Colorless\") types.add(provided);\n",
+    replace: "      types.add(provided);\n",
+    expectKilledBy: ["packages/engine/src/scalingCountsMeD607.test.ts"],
+  },
+  {
+    id: "D607-penalty-board",
+    decision: "D607",
+    what: "Windup Swing counts Energy on the opponent's whole board, not its Active. Killed by scalingCountsMeD607 §2's reading and §4's Benched {R} rung.",
+    file: "packages/engine/src/effects.ts",
+    find: "    if (per >= 1) return { per, count: { kind: \"energyOnOpponent\", zone: \"active\", energyType: null } };\n",
+    replace: "    if (per >= 1) return { per, count: { kind: \"energyOnOpponent\", zone: \"board\", energyType: null } };\n",
+    expectKilledBy: ["packages/engine/src/scalingCountsMeD607.test.ts"],
+  },
+  {
+    id: "D607-beedrill-ex-half",
+    decision: "D607",
+    what: "the body-map pair loses \"Beedrill ex\": Beedrill ex stops counting itself. Killed by scalingCountsMeD607 §2/§4.",
+    file: "packages/engine/src/effects.ts",
+    find: "        { kind: \"byName\", name: \"Beedrill\" },\n        { kind: \"byName\", name: \"Beedrill ex\" },\n",
+    replace: "        { kind: \"byName\", name: \"Beedrill\" },\n",
+    expectKilledBy: ["packages/engine/src/scalingCountsMeD607.test.ts"],
+  },
+  {
+    id: "D607-rattata-any",
+    decision: "D607",
+    what: "the \"Rattata\" key names any Pokémon: the Benched Raticate's counters count. Killed by scalingCountsMeD607 §2/§4.",
+    file: "packages/engine/src/effects.ts",
+    find: "  [\"Rattata\", { kind: \"byName\", name: \"Rattata\" }],\n",
+    replace: "  [\"Rattata\", { kind: \"anyPokemon\" }],\n",
+    expectKilledBy: ["packages/engine/src/scalingCountsMeD607.test.ts"],
+  },
+  {
+    id: "D607-tauros-exact",
+    decision: "D607",
+    what: "the Tauros key reads the exact name \"Paldean Tauros\": a damaged plain Tauros stops counting. Killed by scalingCountsMeD607 §2/§4.",
+    file: "packages/engine/src/effects.ts",
+    find: "  ['Pokémon that has \"Tauros\" in its name', { kind: \"pokemonNameContaining\", fragment: \"Tauros\" }],\n",
+    replace: "  ['Pokémon that has \"Tauros\" in its name', { kind: \"byName\", name: \"Paldean Tauros\" }],\n",
+    expectKilledBy: ["packages/engine/src/scalingCountsMeD607.test.ts"],
+  },
+  {
+    id: "D607-bench-noun-pokemon-only",
+    decision: "D607",
+    what: "the bench-counter anchor goes back to nouns ending \"Pokémon\": Retaliatory Incisors is unbuilt again. Killed by scalingCountsMeD607 §1/§2 and the census D607 block.",
+    file: "packages/engine/src/effects.ts",
+    find: "  /^This attack does (\\d+) damage for each damage counter on all of your Benched ((?!Pokémon\\.)[^.]+)\\.$/;\n",
+    replace: "  /^This attack does (\\d+) damage for each damage counter on all of your Benched ([^.]+ Pokémon)\\.$/;\n",
+    expectKilledBy: ["packages/engine/src/scalingCountsMeD607.test.ts", "packages/engine/src/censusAtHead.test.ts"],
+  },
+  {
+    id: "D607-reveal-comma-dropped",
+    decision: "D607",
+    what: "the reveal anchor loses the comma-joined wording: Energy Straw is unbuilt again. Killed by scalingCountsMeD607 §1/§2 and the census D607 block.",
+    file: "packages/engine/src/effects.ts",
+    find: "  /^Your opponent reveals their hand(?:\\. This|, and this) attack does (\\d+) damage for each ([^.]+) you find there\\.$/;\n",
+    replace: "  /^Your opponent reveals their hand(?:\\. This) attack does (\\d+) damage for each ([^.]+) you find there\\.$/;\n",
+    expectKilledBy: ["packages/engine/src/scalingCountsMeD607.test.ts", "packages/engine/src/censusAtHead.test.ts"],
+  },
+  {
+    id: "D607-energy-card-basic",
+    decision: "D607",
+    what: "\"Energy card\" in the opponent's hand reads as Basic Energy only: the Special stops counting. Killed by scalingCountsMeD607 §2/§4.",
+    file: "packages/engine/src/effects.ts",
+    find: "  // 🆕🆕🆕 D607 — Beautifly \"Energy Straw\"'s noun: any Energy card, Basic or Special.\n  [\"Energy card\", { kind: \"anyEnergy\" }],\n",
+    replace: "  // 🆕🆕🆕 D607 — Beautifly \"Energy Straw\"'s noun: any Energy card, Basic or Special.\n  [\"Energy card\", { kind: \"basicEnergy\" }],\n",
+    expectKilledBy: ["packages/engine/src/scalingCountsMeD607.test.ts"],
   },
 ];

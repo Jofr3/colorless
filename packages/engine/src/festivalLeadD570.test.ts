@@ -713,7 +713,7 @@ describe("§8 — the bytes, and THE TENTH POSITION (`MATCH_RECORD_VERSION` 36 �
     expect(all(run(v36, { type: "endTurn", seat: "p1" }).events, "TURN_ENDED")).toHaveLength(1);
   });
 
-  it("the engine is 0.489.0", () => {
-    expect(engineVersion).toBe("0.489.0");
+  it("the engine is 0.490.0", () => {
+    expect(engineVersion).toBe("0.490.0");
   });
 });

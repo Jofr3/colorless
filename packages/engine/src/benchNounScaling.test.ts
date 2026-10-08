@@ -333,7 +333,7 @@ describe("§1 — the two printed rows, their printing counts, and the fixture",
     // 🛑 The attacker is FIGHTING on purpose — it is what makes the ZONE axis
     // readable on the counter board (see `counterBoard`'s block).
     expect(card?.types).toEqual(["Fighting"]);
-    expect(engineVersion).toBe("0.489.0");
+    expect(engineVersion).toBe("0.490.0");
   });
 });
 
@@ -512,7 +512,7 @@ describe("§4 — DISJOINTNESS, driven over the whole column", () => {
 });
 
 describe("§5 — the `inPlayBodyFilter` vocabulary, DERIVED rather than transcribed", () => {
-  it("🛑 the vocabulary is 10 exact keys + 11 names + 11 codes = 32, and none is possessive", () => {
+  it("🛑 the vocabulary is 10 exact keys + 11 names + 11 codes = 32, and none is possessive (🆕🆕🆕 D607: 13 + 11 + 11 = 35)", () => {
     // 🆕🆕 **D467 — THIS COUNT LIVED IN TWO FILES AND ROTTED IN BOTH.**
     // `inPlayBodyFilter`'s doc block said *"25 nouns — the 3 exact keys"* from D439
     // until D467, which was already wrong at D446 and wronger at D466; D466 fixed
@@ -541,6 +541,11 @@ describe("§5 — the `inPlayBodyFilter` vocabulary, DERIVED rather than transcr
       // went red — the exact failure the D539 note below records, a second time; the
       // final review caught it, and both were moved BY HAND.
       "Ancient Pokémon",
+      // 🆕🆕🆕 **D607 — KEYS 11–13** (WP28a), moved BY HAND: Beedrill ex's name pair, Raticate's bare
+      // "Rattata", Paldean Tauros's quoted fragment. None carries an apostrophe.
+      "Beedrill and Beedrill ex",
+      "Rattata",
+      'Pokémon that has "Tauros" in its name',
     ];
     const OWNER_SHAPE = /['’]s Pokémon$/;
     for (const noun of EXACT) {
@@ -578,7 +583,7 @@ describe("§5 — the `inPlayBodyFilter` vocabulary, DERIVED rather than transcr
     // (D453/D455: a doc block's "recorded as X" names a file and is one grep from being
     // checked, and three of four such claims in shipped source were false); closing it
     // needs an export, which is a change to `effects.ts`'s surface and not this slice's.
-    expect(EXACT.length + POKEMON_TYPES.length + CODES.length).toBe(32); // 🆕🆕🆕 D569: 31 → 32 (the tenth key, "Ancient Pokémon")
+    expect(EXACT.length + POKEMON_TYPES.length + CODES.length).toBe(35); // 🆕🆕🆕 D607: 32 → 35 (WP28a's three keys). 🆕🆕🆕 D569: 31 → 32 (the tenth key, "Ancient Pokémon")
   });
 
   it("🛑 the `Charjabug` row is reachable from the OTHER anchors too, and that is DELIBERATE", () => {

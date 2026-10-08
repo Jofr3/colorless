@@ -30236,6 +30236,23 @@ decisions (1) and (2) after D580. Engine 0.464.0 → 0.465.0. The Mega ex rule i
 - **Census.** Standard pool abilities **513 / 610**; 895 `me` printings fully built.
 - **Owed.** See `progress.md` NEXT. The whole-corpus sweep is PENDING.
 
+## D607 — WP28a: the first half of the scaling count sources (engine 0.490.0, `MATCH_RECORD_VERSION` stays 42)
+
+**Status:** ✅ BUILT in the `luminous_ui-mega` worktree on D606 (`59dcf041`), NOT committed.
+
+- **Vocabulary.** Three nullary `DamageCountSource` members, each one literal `×` anchor and one attack.ts arm:
+  `energyInPlayBothSides` (every Energy card on both boards), `toolsInPlayBothSides` (every Tool on both boards),
+  `basicEnergyTypesOnYourBoard` (continuous.ts `countBasicEnergyTypesInPlay`: distinct types named by `energyProvidesOf`).
+  Shipped members reached by new rows: three body-map keys, a widened Benched-counter noun, a third penalty source
+  (`energyOnOpponent` active) and the comma-joined reveal with an "Energy card" hand noun. No op, prompt, key or event.
+- **8 texts / 14 `me` printings.** Delphox ×2, Bronzong, Sylveon ex ×3, Beedrill ex ×2, Paldean Tauros, Raticate ×2,
+  Tinkaton, Beautifly ×2 — all fully built. `sv` reader output byte-identical.
+- **Left for WP28b.** Doublade ×3, Kyogre, Igglybuff, Pikachu `30th-034` (WP06 markup), Armarouge ×2, Gourgeist ex ×2, Okidogi.
+- **Readings.** None new.
+- **Suite.** `scalingCountsMeD607.test.ts` (14) and a census D607 block (2). +15 mutant rows; four rows re-pointed.
+- **Census.** Standard pool attacks **2,614 / 2,771**; 949 `me` printings fully built.
+- **Owed.** See `progress.md` NEXT. The whole-corpus sweep is PENDING.
+
 ## D606 — WP25a: the first half of the `me` Stadiums (engine 0.489.0, `MATCH_RECORD_VERSION` stays 42)
 
 **Status:** ✅ BUILT in the `luminous_ui-mega` worktree on D605 (`8717d9cb`), NOT committed.
