@@ -122,7 +122,7 @@ const MILOTIC = "sv06-050";
 const LEGACY = "sv06-167";
 /** Togekiss — "Wonder Kiss" (registry `WONDER_KISS`): a coin for 1 more Prize when the opposing Active is KO'd. */
 const TOGEKISS = "sv08-072";
-/** Survival Brace — the full-HP KO-survival Tool (registry, D562): answers before the coin (R-SB1). */
+/** Survival Brace — the full-HP KO-survival Tool (registry, D562): answers before the coin (R-SB2). */
 const BRACE = "sv06-164";
 const E = "fix-energy";
 const D = "d598-darkness";
@@ -582,7 +582,7 @@ describe("D598 §5 — Tenacious Body / Durable Body: a coin for the would-be Kn
     expect([saved, rng]).toEqual([240, flipCoin(rngFor("heads"))[1]]);
   });
 
-  it("R-SB1: a Survival Brace answers first at all four writes — the Brace is spent, no coin, the rng unmoved", () => {
+  it("R-SB2: a Survival Brace answers first at all four writes — the Brace is spent, no coin, the rng unmoved", () => {
     const pick = (spot: { spot: "active" } | { spot: "bench"; index: number }): GameAction =>
       ({ type: "resolveEffect", seat: "p1", choice: { kind: "pokemonMulti", refs: [{ seat: "p2", spot }] } }) as GameAction;
     const braced = (where: "active" | number) => {

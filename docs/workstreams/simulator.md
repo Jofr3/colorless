@@ -30160,11 +30160,11 @@ decisions (1) and (2) after D580. Engine 0.464.0 → 0.465.0. The Mega ex rule i
   `koByOpponentPokemonEx` (plus an ex attacker, read off the attacker's uid).
 - **No op, persisted member, prompt or event.** Every event already existed.
 - **Dropped and named:** Fainting Spell ×2, Photon Cord ×2, Spiteful Swirl ×2, Counterattack Grouping, Damp ×2.
-- **Readings (UNRULED).** R-IS1, R-GC1, R-TN1, R-KO1, R-PD1, R-SB1 (`progress.md` NEXT). R-SB1: a Survival Brace / full-HP Sturdy
+- **Readings (UNRULED).** R-IS1, R-GC1, R-TN1, R-KO1, R-PD1, R-SB2 (`progress.md` NEXT). R-SB2: a Survival Brace / full-HP Sturdy
   answers first and no coin is flipped (`clamped === null ? koSurvivalCoinFlip(…) : …` at all four writes).
   🆕 D601: plus R-GC2 and R-GC3 (two Shadowy Concealment readings), and R-TN1 amended (self-damage never asks the coin).
 - **Suite.** `koAbilitiesMeD598.test.ts` (34): each Ability on a board, with the cause, lock and stacking controls,
-  the coin's rng advance at three damage writes, the R-SB1 Brace-first order at all four, and the Knock Out log tail. +47 mutant rows; D208's `survived` row, D425's spread row and D572's post-KO-board row re-anchored.
+  the coin's rng advance at three damage writes, the R-SB2 Brace-first order at all four, and the Knock Out log tail. +47 mutant rows; D208's `survived` row, D425's spread row and D572's post-KO-board row re-anchored.
 - **Census.** Standard pool abilities **504 / 610**; 870 `me` printings fully built.
 - **Owed.** See `progress.md` NEXT. The whole-corpus sweep is PENDING.
 

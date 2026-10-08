@@ -49937,7 +49937,7 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D598-main-hit-coin-after-brace",
     decision: "D598",
-    what: "the main hit asks the coin even after a Survival Brace answered: a spurious ABILITY_COIN_FLIP and an advanced rng. Killed by koAbilitiesMeD598 §5 (R-SB1).",
+    what: "the main hit asks the coin even after a Survival Brace answered: a spurious ABILITY_COIN_FLIP and an advanced rng. Killed by koAbilitiesMeD598 §5 (R-SB2).",
     file: "packages/engine/src/attack.ts",
     find: "      clamped === null ? koSurvivalCoinFlip(next, defender, defenderSeat, dealt, events) : [null, next.rngState];",
     replace: "      koSurvivalCoinFlip(next, defender, defenderSeat, dealt, events);",
@@ -49946,7 +49946,7 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D598-spread-coin-after-brace",
     decision: "D598",
-    what: "a Bench spread asks the coin even after a Survival Brace answered. Killed by koAbilitiesMeD598 §5 (R-SB1).",
+    what: "a Bench spread asks the coin even after a Survival Brace answered. Killed by koAbilitiesMeD598 §5 (R-SB2).",
     file: "packages/engine/src/interpreter.ts",
     find: "      clamped === null ? koSurvivalCoinFlip({ ...state, rngState: rng }, pokemon, victim, dealt, events) : [null, rng];",
     replace: "      koSurvivalCoinFlip({ ...state, rngState: rng }, pokemon, victim, dealt, events);",
@@ -49955,7 +49955,7 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D598-bench-snipe-coin-after-brace",
     decision: "D598",
-    what: "`placeSnipe`'s `deals` arm asks the coin even after a Survival Brace answered. Killed by koAbilitiesMeD598 §5 (R-SB1).",
+    what: "`placeSnipe`'s `deals` arm asks the coin even after a Survival Brace answered. Killed by koAbilitiesMeD598 §5 (R-SB2).",
     file: "packages/engine/src/interpreter.ts",
     find: "      clamped === null ? koSurvivalCoinFlip({ ...next, rngState: rng }, pokemon, benchVictim, dealt, events) : [null, rng];",
     replace: "      koSurvivalCoinFlip({ ...next, rngState: rng }, pokemon, benchVictim, dealt, events);",
@@ -49964,7 +49964,7 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D598-active-snipe-coin-after-brace",
     decision: "D598",
-    what: "`snipeActive` asks the coin even after a Survival Brace answered. Killed by koAbilitiesMeD598 §5 (R-SB1).",
+    what: "`snipeActive` asks the coin even after a Survival Brace answered. Killed by koAbilitiesMeD598 §5 (R-SB2).",
     file: "packages/engine/src/interpreter.ts",
     find: "    clamped === null ? koSurvivalCoinFlip({ ...state, rngState }, target.active, opponent, dealt, events) : [null, rngState];",
     replace: "    koSurvivalCoinFlip({ ...state, rngState }, target.active, opponent, dealt, events);",

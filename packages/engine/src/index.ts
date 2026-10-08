@@ -20303,7 +20303,7 @@ import type { GameState, Seat } from "./types";
     objects: Mega Gengar ex "Shadowy Concealment" ×5 (`PassiveEffects.seatKoPrizeReduction`, read by
     flow.ts `seatPrizeReduction` in `planPrizes`), Mega Hawlucha ex "Tenacious Body" ×3 and Annihilape
     "Durable Body" (`survivesKoOnCoinFlip`, continuous.ts `koSurvivalCoinFlip` at the four §8.5 damage
-    writes, asked only when `koSurvivalClamp` did not answer — R-SB1, a Survival Brace goes first),
+    writes, asked only when `koSurvivalClamp` did not answer — R-SB2, a Survival Brace goes first),
     Shedinja "Fragile Husk" ×2 (`onKoPrizeGuard: "pokemonExAttackPrevent"`), Gengar "Infinite
     Shadow" (`koSelfToHand`, through D572's `toHand`; log.ts `koToHandTail` now counts what moved —
     "N Pokémon cards" beside D572's "N Basic Energy") and Pecharunt "Final Chain" (an on-KO program
