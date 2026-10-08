@@ -20258,6 +20258,17 @@ import type { GameState, Seat } from "./types";
     `expect(manifest.version)`, `it(…)` titles, the declaration and `package.json` —
     **not** as a value-keyed grep — because a value-keyed grep is precisely the mechanism
     that ate D500's heading.)
+    🆕🆕🆕 engineVersion 0.485.0 → **0.486.0** (D603 — WP11: THE MEGA-GATED TEXTS; `MATCH_RECORD_VERSION`
+    STAYS 42 (apps/api match.ts "STAYS 42 AT D603")). effects.ts: `BoardCondition.yourMegaExInPlay
+    { type? }` (YOUR Active and Bench, in-play card, D582's `isMegaEvolutionPokemonEx`) and
+    `CardFilter.megaEvolutionEx`, with their `conditionHolds` / `conditionNote` / `matchesFilter` /
+    `retrieveNoun` arms. registry.ts: six NEW objects over 11 `me` printings — Oricorio ex ×3 "Excited
+    Turbo" (repeatable Basic {R} hand attach to a Benched {R}, {R} gate), Ludicolo ×2 "Excited Heal"
+    (`healChosen` 60, {G} gate), Linoone "Excited Dash" (`benchOnly`, Showtime's switch, untyped gate),
+    Seviper "Excited Power" (`damageBonusBeforeWRIf` 120, {D} gate), Mega Signal ×3 (search a Mega ex)
+    and Jett (`drawCards.per` over the opponent's Mega ex; R-PX6 inherited). Dropped and named: Latios
+    "Lustrous Assist" (a NAMED Active's move gate) and Wally's Compassion ×3 (all Energy to hand from the
+    healed body). `megaGatedMeD603.test.ts`.)
     🆕🆕🆕 engineVersion 0.484.0 → **0.485.0** (D602 — WP20b: THE `me` ACTIVATED ABILITIES, SEARCH /
     HEAL / ATTACH; `MATCH_RECORD_VERSION` STAYS 42 (apps/api match.ts "STAYS 42 AT D602")). registry.ts:
     six NEW `abilities` objects over 9 `me` printings, shipped vocabulary only — Silvally ×2 "Call a
@@ -25337,7 +25348,7 @@ import type { GameState, Seat } from "./types";
     WITNESS** — the count was re-derived every slice and the word *"three"* was carried.
     A successor of this slice inherits **81 / 61 / 17** again, over **FIVE** history
     occurrences: those four plus `deckMillFilteredScale.test.ts`'s own header arrow.) */
-export const engineVersion = "0.485.0";
+export const engineVersion = "0.486.0";
 
 export type {
   ApplyResult,

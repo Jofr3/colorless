@@ -214,8 +214,8 @@ function damageRow(events: readonly GameEvent[]): Extract<GameEvent, { type: "DA
 const SCOV_SPOT: Spot = { id: SCOVILLAIN, under: [CAPSAKID] };
 
 describe("D578 Scovillain §0 — the version", () => {
-  it("is built at engine 0.485.0", () => {
-    expect(engineVersion).toBe("0.485.0");
+  it("is built at engine 0.486.0", () => {
+    expect(engineVersion).toBe("0.486.0");
   });
 });
 
@@ -440,6 +440,8 @@ const ALLOWLIST: Record<string, string> = {
   "types · interpreter.ts · conditionHolds · inPlayCardOf(state, p)?.types": `${E}`,
   // 🆕🆕🆕 D600 — Sableye's `yourBenchHasStage2OfType`: `benched` is `inPlayCardOf(state, p)`.
   "types · interpreter.ts · conditionHolds · benched.types": `${E}`,
+  // 🆕🆕🆕 D603 — WP11's `yourMegaExInPlay` type rider: `card` is `inPlayCardOf(state, body)`.
+  "types · interpreter.ts · conditionHolds · card.types": `${E}`,
   "types · interpreter.ts · conditionHolds · (inPlayCardOf(state, spot.active) ?? spot.card).types": `${E}`,
   "types · interpreter.ts · healEach · card?.types": `${E} — \`inPlayCardOf\``,
   // ── `matchesFilter` calls ──
@@ -493,6 +495,8 @@ const ALLOWLIST: Record<string, string> = {
   "filter · interpreter.ts · conditionHolds · cardOfUid(state, entry.uid) · { kind: \"bannerPokemon\", banner: cond.banner }": B,
   "filter · interpreter.ts · conditionHolds · spot.card · { kind: \"ownerPokemon\", owner: cond.owner }": B,
   "filter · interpreter.ts · conditionHolds · topCardOf(state, body) · { kind: \"bannerPokemon\", banner: cond.banner }": B,
+  // 🆕🆕🆕 D603 — `yourMegaExInPlay`'s class read: the D582 NAME predicate, keyed on no type.
+  "filter · interpreter.ts · conditionHolds · card · { kind: \"megaEvolutionEx\" }": B,
   "filter · interpreter.ts · countCardsInDiscardPile · cardOfUid(state, uid) · filter": `${P} — a discard card`,
   "filter · interpreter.ts · countCardsInHand · cardOfUid(state, uid) · filter": `${P} — a hand card`,
   "filter · interpreter.ts · discardRetrievalCandidates · cardOf(state, uid) · op.filter": `${P} — a discard card`,

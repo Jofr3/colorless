@@ -640,7 +640,7 @@ describe("the blast radius — what this slice did NOT change", () => {
     ]);
   });
 
-  it("`playableIf` is authored on exactly ELEVEN ids, and nowhere else (🆕🆕🆕 D591: ELEVEN is the `sv` count; 27 live with the `me` keys; 🆕🆕🆕 D602: 29 live)", () => {
+  it("`playableIf` is authored on exactly ELEVEN ids, and nowhere else (🆕🆕🆕 D591: ELEVEN is the `sv` count; 27 live with the `me` keys; 🆕🆕🆕 D602: 29 live; 🆕🆕🆕 D603: 35 live)", () => {
     // The gate's own population. Of the 29 legal printings on `%Once during your
     // turn, if %`, 15 are the Active-Spot clause `activeOnly` already covers; of
     // the 14 that remain, NINE name THIS POKÉMON (Munkidori ×3, Meowscarada,
@@ -707,6 +707,9 @@ describe("the blast radius — what this slice did NOT change", () => {
     // `yourNamedPokemonInPlay`) and Lunatone ×3 "Lunar Cycle" (Solrock in play).
     // 🆕🆕🆕 D602 — +2 on one NEW object: Silvally ×2 "Call a Buddy" (`yourHandExactly` 0, "if you
     // have no cards in your hand" — a board read of the controller's hand, not a per-body one).
+    // 🆕🆕🆕 D603 — +6 on three NEW objects: Oricorio ex ×3 "Excited Turbo", Ludicolo ×2 "Excited Heal"
+    // and Linoone "Excited Dash" (`yourMegaExInPlay`, a board read of the controller's side; Linoone's
+    // "if this Pokémon is on your Bench" is the separate `benchOnly`).
     expect(gated.sort()).toEqual([
       "30th-011",
       "30th-018",
@@ -715,6 +718,11 @@ describe("the blast radius — what this slice did NOT change", () => {
       "30th-132",
       "30th-133",
       "me01-074",
+      "me02-007", // 🆕🆕🆕 D603 — Ludicolo "Excited Heal"
+      "me02-018", // 🆕🆕🆕 D603 — Oricorio ex "Excited Turbo"
+      "me02-082", // 🆕🆕🆕 D603 — Linoone "Excited Dash"
+      "me02-095",
+      "me02-110",
       "me02.5-105",
       "me02.5-142",
       "me02.5-171",
@@ -723,6 +731,7 @@ describe("the blast radius — what this slice did NOT change", () => {
       "me05-070",
       "me05-095",
       "mep-004",
+      "mep-024", // 🆕🆕🆕 D603 — Oricorio ex "Excited Turbo"
       "mep-096",
       "mep-097",
       "mep-098",

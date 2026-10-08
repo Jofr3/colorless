@@ -1430,6 +1430,8 @@ describe("§6 — `MATCH_RECORD_VERSION` STAYS 29, driven at all THREE addresses
       attackNamePokemon: { kind: "attackNamePokemon", attack: "Round" },
       pokemonNameContaining: { kind: "pokemonNameContaining", fragment: "Weezing" },
       suffixPokemon: { kind: "suffixPokemon", suffix: "ex" },
+      // 🆕🆕🆕 D603 — Mega Signal's / Jett's noun; the alphabet gate fired a SEVENTH time.
+      megaEvolutionEx: { kind: "megaEvolutionEx" },
       // 🆕🆕🆕 D568 — Tera Orb's / Prism Charge's noun; the alphabet gate fired a FIFTH time.
       bannerPokemon: { kind: "bannerPokemon", banner: "Tera" },
       // 🆕🆕🆕 D569 — Roaring Moon's "Ancient card" noun; the alphabet gate fired a SIXTH time.
@@ -1488,7 +1490,12 @@ describe("§6 — `MATCH_RECORD_VERSION` STAYS 29, driven at all THREE addresses
     // `switch`es — `matchesFilter`, `retrieveNoun` — were written first). Its ANTI-VACUITY,
     // like `bannerPokemon`'s, is carried by `paradoxBannerD569.test.ts` (an Ancient Trainer
     // and an Ancient Pokémon counted, a Future card and a bannerless card not).
-    expect(Object.keys(EVERY_KIND)).toHaveLength(27);
+    // 🆕🆕🆕 **D603 — A SEVENTH TIME, 27 → 28**: adding `megaEvolutionEx` made `tsc` fail HERE with
+    // `TS2741: Property 'megaEvolutionEx' is missing` and nowhere else in `packages/**` (the
+    // `switch`es — `matchesFilter`, `retrieveNoun` — were written first). The CAST holds no Mega ex,
+    // so the member answers false to all of it: its ANTI-VACUITY is carried by
+    // `megaGatedMeD603.test.ts` (a Mega ex, a plain ex and a "Mega"-named Trainer).
+    expect(Object.keys(EVERY_KIND)).toHaveLength(28);
     // 🛑 **THE BYTES.** Each filter is written out and read back the way
     // `MatchRecord.state` is, and `matchesFilter` must give the IDENTICAL answer over
     // a cast that spans every category the catalog has — a Pokémon with a rule box
@@ -1674,7 +1681,7 @@ describe("§6 — `MATCH_RECORD_VERSION` STAYS 29, driven at all THREE addresses
   });
 
   it("the engine version moved with the behaviour", () => {
-    expect(engineVersion).toBe("0.485.0");
+    expect(engineVersion).toBe("0.486.0");
   });
 });
 

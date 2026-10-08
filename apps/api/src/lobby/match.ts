@@ -2159,6 +2159,16 @@ export interface MatchRecord {
     `turn:action.discardable` — 🛑 **DEPLOY THE SERVER FIRST**: an old client's `z.object` STRIPS
     the unknown key, while a new client's REQUIRED key refuses an old server's frame.
 
+    🆕🆕🆕 **STAYS 42 AT D603 — WP11 ADDS A `CardFilter` AND A `BoardCondition` MEMBER, NO OP, KEY, STAGE OR EVENT.**
+    (Placed ABOVE the D602 block.) `BoardCondition.yourMegaExInPlay` is read off the board at use /
+    attack time and never persisted. `CardFilter.megaEvolutionEx` IS at a persisted address — Mega
+    Signal's `searchDeck` parks a `chooseCards` whose op rides `phase.cont` — but it is a WIDENING
+    (D333): no v42 byte string a 0.485 deploy wrote can hold it. Eleven `me` ids are keyed on six new
+    objects; programs are looked up by id and `isMegaEvolutionPokemonEx` reads the persisted NAME, so a
+    v42 `cardPool` face is read exactly as before. Rollback to 0.485: the Abilities and Trainers go
+    back to unusable, and a Mega Signal parked mid-search carries a filter kind the 0.485
+    `matchesFilter` has no arm for, so any 0.485 re-read of that filter answers false.
+
     🆕🆕🆕 **STAYS 42 AT D602 — WP20b ADDS NO OP, KEY, GameState, PendingStage, PROMPT, EVENT OR WIRE KEY.**
     (Placed ABOVE the D600 block.) Nine `me` Pokémon ids are keyed on six new `abilities` objects built
     from shipped ops and fields only (`searchDeck`, `shuffleDeck`, `coinFlipGate`, `healChosen`,

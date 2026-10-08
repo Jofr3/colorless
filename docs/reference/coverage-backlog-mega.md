@@ -6,6 +6,25 @@
 > `coverage-backlog-legal.md`; its pool is unchanged and whole. The suite-side figures are
 > `censusAtHead.test.ts`'s D581 block and `censusAttackCorpusMe.ts`.
 
+## 🆕 D603 update (engine 0.486.0) — the Mega-gated texts (WP11)
+
+6 texts / 11 `me` printings on six new objects (registry.ts D603 block; `megaGatedMeD603.test.ts`), on two new members over
+D582's `isMegaEvolutionPokemonEx`: `BoardCondition.yourMegaExInPlay { type? }` and `CardFilter.megaEvolutionEx`. Excited Turbo
+×3 (Oricorio ex; {R} gate, as often as you like, a Basic {R} from hand to a Benched {R}), Excited Heal ×2 (Ludicolo; {G} gate,
+heal 60 from 1), Excited Dash (Linoone; on the Bench, any Mega ex, switch with the Active), Excited Power (Seviper; {D} gate,
++120 before W/R), Mega Signal ×3 (a Mega ex from the deck) and Jett (a card per opponent's Mega ex). **Finished:** all 11.
+**Dropped:** Latios `me01-101` "Lustrous Assist" (a gate on a named Active's Bench-to-Active move) and Wally's Compassion ×3
+(all Energy to the hand from the healed body). **Excluded by the brief:** Tremendous Bomb ×2, Ange Floette, Core Memory.
+
+| Column | `me` built / units (D603) | Standard pool D603 |
+|---|---|---|
+| Attacks | 856 / 1,039 | **2,588 / 2,771** |
+| Abilities | 144 / 234 (+7) | **520 / 610** |
+| Trainers | 100 / 183 (+4) | **364 / 447** |
+| Special Energy | 3 / 11 | **14 / 22** |
+
+**Fully built `me` printings: 906** (895 + 11).
+
 ## 🆕 D602 update (engine 0.485.0) — the activated Abilities: search / heal / attach (WP20b)
 
 6 texts / 9 `me` printings on six new `abilities` objects (registry.ts D602 block; `activatedMeD602.test.ts`): Call a Buddy
@@ -658,11 +677,11 @@ group wins; the grouping is a reading aid, not a census figure).
 
 ### Mega Evolution-conditioned ("if you have any … Mega Evolution Pokémon ex in play") — 5 text(s) / 8 printing(s)
 
-- 3× **Excited Turbo** — As often as you like during your turn, if you have any {R} Mega Evolution Pokémon ex in play, you may use this Ability. Attach a Basic {R} Energy card from your hand to 1 of your Benched {R} Pokémon.
-- 2× **Excited Heal** — Once during your turn, if you have any {G} Mega Evolution Pokémon ex in play, you may use this Ability. Heal 60 damage from 1 of your Pokémon.
-- 1× **Excited Dash** — Once during your turn, if this Pokémon is on your Bench, and if you have any Mega Evolution Pokémon ex in play, you may use this Ability. Switch this Pokémon with your Active Pokémon.
-- 1× **Excited Power** — If you have any {D} Mega Evolution Pokémon ex in play, attacks used by this Pokémon do 120 more damage to your opponent's Active Pokémon (before applying Weakness and Resistance).
-- 1× **Lustrous Assist** — Once during your turn, when your Mega Latias ex moves from your Bench to the Active Spot, you may use this Ability. Move any amount of Energy from your Benched Pokémon to your Active Pokémon.
+- 3× **Excited Turbo** — As often as you like during your turn, if you have any {R} Mega Evolution Pokémon ex in play, you may use this Ability. Attach a Basic {R} Energy card from your hand to 1 of your Benched {R} Pokémon. [🆕🆕🆕 D603: BUILT]
+- 2× **Excited Heal** — Once during your turn, if you have any {G} Mega Evolution Pokémon ex in play, you may use this Ability. Heal 60 damage from 1 of your Pokémon. [🆕🆕🆕 D603: BUILT]
+- 1× **Excited Dash** — Once during your turn, if this Pokémon is on your Bench, and if you have any Mega Evolution Pokémon ex in play, you may use this Ability. Switch this Pokémon with your Active Pokémon. [🆕🆕🆕 D603: BUILT]
+- 1× **Excited Power** — If you have any {D} Mega Evolution Pokémon ex in play, attacks used by this Pokémon do 120 more damage to your opponent's Active Pokémon (before applying Weakness and Resistance). [🆕🆕🆕 D603: BUILT]
+- 1× **Lustrous Assist** — Once during your turn, when your Mega Latias ex moves from your Bench to the Active Spot, you may use this Ability. Move any amount of Energy from your Benched Pokémon to your Active Pokémon. [🆕🆕🆕 D603: dropped — a gate on a named Active's Bench-to-Active move]
 
 ### On-evolve / on-bench / on-move triggers ("when you play this Pokémon …", "when … moves …") — 13 text(s) / 23 printing(s)
 
@@ -787,7 +806,7 @@ group wins; the grouping is a reading aid, not a census figure).
 
 ### Item — Mega Evolution-conditioned — 1 text(s) / 3 printing(s)
 
-- 3× **Mega Signal** — Search your deck for a Mega Evolution Pokémon ex, reveal it, and put it into your hand. Then, shuffle your deck.
+- 3× **Mega Signal** — Search your deck for a Mega Evolution Pokémon ex, reveal it, and put it into your hand. Then, shuffle your deck. [🆕🆕🆕 D603: BUILT]
 
 ### Item — 17 text(s) / 30 printing(s)
 
@@ -855,8 +874,8 @@ Each Mega Floette ex in play (both yours and your opponent's) gets +150 HP.
 
 ### Supporter — Mega Evolution-conditioned — 2 text(s) / 4 printing(s)
 
-- 1× **Jett** — Draw a card for each of your opponent's Mega Evolution Pokémon ex in play.
-- 3× **Wally's Compassion** — Heal all damage from 1 of your Mega Evolution Pokémon ex. If you healed any damage in this way, put all Energy attached to that Pokémon into your hand.
+- 1× **Jett** — Draw a card for each of your opponent's Mega Evolution Pokémon ex in play. [🆕🆕🆕 D603: BUILT]
+- 3× **Wally's Compassion** — Heal all damage from 1 of your Mega Evolution Pokémon ex. If you healed any damage in this way, put all Energy attached to that Pokémon into your hand. [🆕🆕🆕 D603: dropped — all Energy to the hand from the healed body]
 
 ### Supporter — 22 text(s) / 55 printing(s)
 

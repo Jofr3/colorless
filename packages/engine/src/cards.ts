@@ -786,6 +786,9 @@ export function matchesFilter(card: Card | undefined, filter: CardFilter): boole
       // `pokemonSuffixOf` returns null for a non-Pokémon, so the category question
       // is answered inside the read, exactly as it is one arm up.
       return pokemonSuffixOf(card) === filter.suffix;
+    case "megaEvolutionEx":
+      // 🆕🆕🆕 D603 — "a Mega Evolution Pokémon ex" (Mega Signal, Jett): D582's predicate, whole.
+      return isMegaEvolutionPokemonEx(card);
     case "ownerPokemon":
       // An owner-prefixed subgroup Pokémon (Cynthia's Gabite "Champion's Call").
       // THREE conjuncts, and each one is load-bearing:

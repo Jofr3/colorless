@@ -116,7 +116,9 @@ export interface AbilityProgram {
       `flipTheScript.test.ts`. All board reads; the per-body rule above is untouched.
       🆕🆕🆕 D602 NOTE (D539) — "27 ids" is WITHDRAWN as a live figure: Silvally ×2 "Call a Buddy"
       (`yourHandExactly` 0, "if you have no cards in your hand", a board read of the controller's
-      hand) makes 29, pinned by id in `flipTheScript.test.ts`. */
+      hand) makes 29, pinned by id in `flipTheScript.test.ts`.
+      🆕🆕🆕 D603 NOTE (D539) — "makes 29" is WITHDRAWN as a live figure: Oricorio ex ×3, Ludicolo ×2
+      and Linoone `me02-082` (`yourMegaExInPlay`, a board read of the controller's side) make 35. */
   playableIf?: BoardCondition;
   /** 🆕 **D310 — §9's PER-BODY printed gate, and the field the block above asked
       for by name.** *"Once during your turn, if this Pokémon's remaining HP is 30
@@ -17565,6 +17567,98 @@ const SUNRISE: CardProgram = {
   ],
 };
 
+// ── 🆕🆕🆕 D603 — WP11: THE MEGA-GATED TEXTS. Six objects, 11 `me` printings, on D582's
+//    `isMegaEvolutionPokemonEx` read twice: the NEW `BoardCondition.yourMegaExInPlay { type? }` (four
+//    Abilities' "if you have any [{T}] Mega Evolution Pokémon ex in play") and the NEW
+//    `CardFilter.megaEvolutionEx` (Mega Signal's search, Jett's count). Everything else is shipped.
+//    Texts off the LOCAL D1. Dropped and named (vocabulary beyond the brief): Latios `me01-101`
+//    "Lustrous Assist" (a gate on a NAMED Active's Bench-to-Active move) and Wally's Compassion
+//    `me01-132` / `-176` / `-186` (an all-Energy-to-hand consequent on the healed body). Excluded by
+//    the brief: Tremendous Bomb ×2, Ange Floette, Core Memory. `megaGatedMeD603.test.ts`. ──
+
+/** 🆕🆕🆕 **D603 — Oricorio ex `mep-024`, `me02-018` / `-110` "Excited Turbo"**: *"As often as you like
+    during your turn, if you have any {R} Mega Evolution Pokémon ex in play, you may use this Ability.
+    Attach a Basic {R} Energy card from your hand to 1 of your Benched {R} Pokémon."* Inferno
+    Fandango's repeatable hand attach (`oncePerTurn: false`) with Wondrous Patch's two target riders
+    ({R}, Benched), behind the typed board gate. */
+const EXCITED_TURBO: CardProgram = {
+  abilities: [
+    {
+      name: "Excited Turbo",
+      oncePerTurn: false,
+      activeOnly: false,
+      playableIf: { kind: "yourMegaExInPlay", type: "Fire" },
+      program: [
+        { op: "attachEnergyFrom", source: "hand", energyType: "Fire", targetType: "Fire", benchOnly: true },
+      ],
+    },
+  ],
+};
+
+/** 🆕🆕🆕 **D603 — Ludicolo `me02-007` / `-095` "Excited Heal"**: *"Once during your turn, if you have
+    any {G} Mega Evolution Pokémon ex in play, you may use this Ability. Heal 60 damage from 1 of your
+    Pokémon."* Fermented Juice's `healChosen` at 60 behind the typed board gate. */
+const EXCITED_HEAL: CardProgram = {
+  abilities: [
+    {
+      name: "Excited Heal",
+      oncePerTurn: true,
+      activeOnly: false,
+      playableIf: { kind: "yourMegaExInPlay", type: "Grass" },
+      program: [{ op: "healChosen", amount: 60 }],
+    },
+  ],
+};
+
+/** 🆕🆕🆕 **D603 — Linoone `me02-082` "Excited Dash"**: *"Once during your turn, if this Pokémon is on
+    your Bench, and if you have any Mega Evolution Pokémon ex in play, you may use this Ability. Switch
+    this Pokémon with your Active Pokémon."* Meowscarada "Showtime"'s `switchActive fromSource` behind
+    Flustered Leap's `benchOnly` and the UNTYPED board gate. */
+const EXCITED_DASH: CardProgram = {
+  abilities: [
+    {
+      name: "Excited Dash",
+      oncePerTurn: true,
+      activeOnly: false,
+      benchOnly: true,
+      playableIf: { kind: "yourMegaExInPlay" },
+      program: [{ op: "switchActive", fromSource: true }],
+    },
+  ],
+};
+
+/** 🆕🆕🆕 **D603 — Seviper `me02-062` "Excited Power"**: *"If you have any {D} Mega Evolution Pokémon ex
+    in play, attacks used by this Pokémon do 120 more damage to your opponent's Active Pokémon (before
+    applying Weakness and Resistance)."* Lose Cool's `damageBonusBeforeWRIf` at 120 on the typed
+    board gate, read for the attacker's seat. */
+const EXCITED_POWER: CardProgram = {
+  passive: { damageBonusBeforeWRIf: { amount: 120, cond: { kind: "yourMegaExInPlay", type: "Darkness" } } },
+};
+
+/** 🆕🆕🆕 **D603 — Mega Signal `me01-121` / `-171`, `me02.5-193` (Item)**: *"Search your deck for a Mega
+    Evolution Pokémon ex, reveal it, and put it into your hand. Then, shuffle your deck."* Master
+    Ball's search on the NEW `megaEvolutionEx` filter. */
+const MEGA_SIGNAL: CardProgram = {
+  trainer: [
+    { op: "searchDeck", filter: { kind: "megaEvolutionEx" }, dest: "hand", max: 1, reveal: true },
+    { op: "shuffleDeck" },
+  ],
+};
+
+/** 🆕🆕🆕 **D603 — Jett `me05-079` (Supporter)**: *"Draw a card for each of your opponent's Mega
+    Evolution Pokémon ex in play."* Awakening Drum's `drawCards.per` `pokemonInPlay` on the OTHER
+    seat over the NEW `megaEvolutionEx` filter. None in play draws 0 and the card is still played
+    (R-PX6, ⚠️ UNRULED, inherited from Awakening Drum). */
+const JETT: CardProgram = {
+  trainer: [
+    {
+      op: "drawCards",
+      count: 1,
+      per: { kind: "pokemonInPlay", seat: "opponent", filter: { kind: "megaEvolutionEx" } },
+    },
+  ],
+};
+
 const REGISTRY: Record<string, CardProgram> = {
   // Professor's Research (SV base prints)
   "sv01-189": PROFESSORS_RESEARCH,
@@ -18672,6 +18766,19 @@ const REGISTRY: Record<string, CardProgram> = {
   "me01-136": FERMENTED_JUICE, // Shuckle
   "me02.5-003": LOVELY_FRAGRANCE, // Erika's Vileplume ex — heal 30 from each of your Pokémon
   "30th-105": SUNRISE, // Solgaleo — on the Bench; up to 2 Basic {M} from the deck to itself
+  // 🆕🆕🆕 D603 — WP11: 11 Mega-gated keys / 6 objects, MID-MAP (`raw[last]` does not move).
+  // Non-attack keys: every printed attack keeps deriving. `megaGatedMeD603.test.ts`.
+  "mep-024": EXCITED_TURBO, // Oricorio ex — any {R} Mega ex in play; a Basic {R} from hand to a Benched {R}
+  "me02-018": EXCITED_TURBO, // Oricorio ex
+  "me02-110": EXCITED_TURBO, // Oricorio ex
+  "me02-007": EXCITED_HEAL, // Ludicolo — any {G} Mega ex in play; heal 60 from 1 of your Pokémon
+  "me02-095": EXCITED_HEAL, // Ludicolo
+  "me02-082": EXCITED_DASH, // Linoone — on the Bench, any Mega ex in play; switch with the Active
+  "me02-062": EXCITED_POWER, // Seviper — any {D} Mega ex in play; its attacks +120 before W/R
+  "me01-121": MEGA_SIGNAL, // Mega Signal — a Mega Evolution Pokémon ex from the deck
+  "me01-171": MEGA_SIGNAL, // Mega Signal
+  "me02.5-193": MEGA_SIGNAL, // Mega Signal
+  "me05-079": JETT, // Jett — a card per opponent's Mega Evolution Pokémon ex in play
   // ── D190 — THE **STANDARD-LEGAL** REPRINT-ALIAS MAP (Tier 0 of
   //    `docs/reference/coverage-backlog-legal.md`). 22 printings, 9 map targets,
   //    ZERO new code: every row below prints a sentence that is already authored

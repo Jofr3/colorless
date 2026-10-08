@@ -6713,6 +6713,18 @@ export function conditionHolds(state: GameState, seat: Seat, cond: BoardConditio
         return top !== undefined && isStage2Pokemon(top);
       });
     }
+    case "yourMegaExInPlay": {
+      // 🆕🆕🆕 D603 — WP11's *"if you have any [{T}] Mega Evolution Pokémon ex in play"*: YOUR Active
+      // AND Bench, each body's IN-PLAY card (`inPlayCardOf`, D578) through `megaEvolutionEx` and, when
+      // typed, that card's in-play `types`.
+      const own = state.players[seat];
+      return [own.active, ...own.bench].some((body) => {
+        if (body === null) return false;
+        const card = inPlayCardOf(state, body);
+        if (card === undefined || !matchesFilter(card, { kind: "megaEvolutionEx" })) return false;
+        return cond.type === undefined || (card.types ?? []).includes(cond.type);
+      });
+    }
     case "yourInPlayToHandAllowed":
       // 🆕🆕🆕 D572 — the negation of the Milotic lock on the READING seat's own cards (Zarude
       // "Jungle Whip"'s cost gate, D385).
@@ -7874,6 +7886,11 @@ export function conditionNote(cond: BoardCondition): string {
     case "opponentStage2PokemonInPlay":
       // 🆕🆕🆕 D572 — Emergency Rotation's printed clause verbatim, minus the "and".
       return "your opponent has any Stage 2 Pokémon in play";
+    case "yourMegaExInPlay":
+      // 🆕🆕🆕 D603 — the printed clause minus the "if", the brace code spelled as the type (D118).
+      return cond.type === undefined
+        ? "you have any Mega Evolution Pokémon ex in play"
+        : `you have any ${cond.type} Mega Evolution Pokémon ex in play`;
     case "yourInPlayToHandAllowed":
       // 🆕🆕🆕 D572 — no printed clause (the gate is D385's, not the card's); named after the lock.
       return "your Pokémon in play and attached cards can be put into your hand";
@@ -20725,6 +20742,10 @@ export function retrieveNoun(filter: CardFilter): { singular: string; plural: st
         singular: `a Pokémon that has "${filter.fragment}" in its name`,
         plural: `Pokémon that have "${filter.fragment}" in their names`,
       };
+    case "megaEvolutionEx":
+      // 🆕🆕🆕 D603 — "a Mega Evolution Pokémon ex" (Mega Signal), invariant in number (Jett's
+      // "Mega Evolution Pokémon ex in play").
+      return { singular: "a Mega Evolution Pokémon ex", plural: "Mega Evolution Pokémon ex" };
     case "bannerPokemon":
       // 🆕🆕🆕 D568 — "a Tera Pokémon" (Tera Orb). Invariant in number, like "Basic Pokémon".
       return { singular: `a ${filter.banner} Pokémon`, plural: `${filter.banner} Pokémon` };

@@ -3,7 +3,9 @@
 > Update this at the **end of every session**: bump the status table, append a
 > session-log entry, and rewrite the **Resume point** to the next concrete action.
 
-**Last updated:** 2026-10-08 — build session #542 (**P3-M5 — D602, *WP20b — THE `me` ACTIVATED ABILITIES, SEARCH / HEAL / ATTACH: 6 texts / 9 `me` printings on six new `abilities` objects — Silvally ×2 "Call a Buddy" (empty-hand gate, a Supporter), Erika's Tangela ×2 "Gathering of Blossoms" (an Erika's Pokémon), Vivillon "Guiding Dance" (coin, a Pokémon), Shuckle ×2 "Fermented Juice" ({G} on itself, heal 30 from 1), Erika's Vileplume ex "Lovely Fragrance" (heal 30 from each), Solgaleo "Sunrise" (Bench, up to 2 Basic {M} to itself); Dragonair and Larry's Komala dropped and named; Standard pool abilities 513 / 610; 895 `me` printings fully built*** — engine 0.485.0, MRV 42, NOT committed; the sweep PENDING)
+**Last updated:** 2026-10-08 — build session #543 (**P3-M5 — D603, *WP11 — THE MEGA-GATED TEXTS: 6 texts / 11 `me` printings on six new objects over two new members (`yourMegaExInPlay { type? }`, `megaEvolutionEx`) — Oricorio ex ×3 "Excited Turbo", Ludicolo ×2 "Excited Heal", Linoone "Excited Dash", Seviper "Excited Power", Mega Signal ×3, Jett; Latios "Lustrous Assist" and Wally's Compassion ×3 dropped and named; abilities 520 / 610, trainers 364 / 447; 906 `me` printings fully built*** — engine 0.486.0, MRV 42, NOT committed; the sweep PENDING)
+
+**Last updated (was):** 2026-10-08 — build session #542 (**P3-M5 — D602, *WP20b — THE `me` ACTIVATED ABILITIES, SEARCH / HEAL / ATTACH: 6 texts / 9 `me` printings on six new `abilities` objects — Silvally ×2 "Call a Buddy" (empty-hand gate, a Supporter), Erika's Tangela ×2 "Gathering of Blossoms" (an Erika's Pokémon), Vivillon "Guiding Dance" (coin, a Pokémon), Shuckle ×2 "Fermented Juice" ({G} on itself, heal 30 from 1), Erika's Vileplume ex "Lovely Fragrance" (heal 30 from each), Solgaleo "Sunrise" (Bench, up to 2 Basic {M} to itself); Dragonair and Larry's Komala dropped and named; Standard pool abilities 513 / 610; 895 `me` printings fully built*** — engine 0.485.0, MRV 42, NOT committed; the sweep PENDING)
 
 **Last updated (was):** 2026-10-08 — build session #541 (**P3-M5 — D601, *D598's OPEN REVIEW FINDINGS CLOSED: Shadowy Concealment's two unrecorded readings recorded UNRULED (R-GC2: the attached reductions answer first, so a Legacy Energy is spent; R-GC3: 1 fewer per {D} Knock Out in a batch, now tested), R-TN1 amended (self-damage never asks the coin, inherited from Sturdy), and `koByOpponentAttack`'s fail-closed miss arm kept and recorded (M2); no engine behaviour change*** — engine 0.484.0, MRV 42, NOT committed; the sweep PENDING)
 
@@ -829,6 +831,37 @@
 
 ## NEXT (resume point)
 
+> ### ▶ THE NEXT CONCRETE ACTION (written 2026-10-08, after D603)
+>
+> 🛑 **D603 IS BUILT AND NOT COMMITTED** (worktree `/home/jofre/projects/luminous_ui-mega`, branch `mega-ingest`, on D602 = `757efac0`). D603 is WP11 of the Mega backlog. Next: a review of D603, then the next package or the landing of D581–D603 (rebase `mega-ingest` onto main; never `git add -A` — `apps/api/.wrangler` is the setup symlink).
+>
+> ✅ **`bun run check` IS GREEN**: `Test Files 645 passed (645) / Tests 15292 passed (15292) / CHECK_EXIT=0` (D602: 644 / 15264; D603 adds `megaGatedMeD603.test.ts` (26) and the census D603 block (2)).
+>
+> **(a) THE SLICE.** 6 texts / 11 printings on six NEW objects (registry.ts D603 block) and two NEW members (effects.ts): `BoardCondition.yourMegaExInPlay { type? }` (your Active and Bench, in-play card, D582's `isMegaEvolutionPokemonEx`, the type off the in-play `types`) and `CardFilter.megaEvolutionEx`. Oricorio ex `mep-024`, `me02-018` / `-110` "Excited Turbo" (`oncePerTurn: false`, {R} gate, a Basic {R} from hand to a Benched {R}), Ludicolo `me02-007` / `-095` "Excited Heal" ({G} gate, `healChosen` 60), Linoone `me02-082` "Excited Dash" (`benchOnly`, untyped gate, Showtime's switch), Seviper `me02-062` "Excited Power" (`damageBonusBeforeWRIf` 120, {D} gate), Mega Signal `me01-121` / `-171`, `me02.5-193` (search a Mega ex, reveal, shuffle) and Jett `me05-079` (`drawCards.per` over the opponent's Mega ex). **Dropped and named:** Latios `me01-101` "Lustrous Assist" (a gate on a NAMED Active's Bench-to-Active move) and Wally's Compassion `me01-132` / `-176` / `-186` (all Energy to the hand from the healed body). **Excluded by the brief:** Tremendous Bomb ×2, Ange Floette, Core Memory.
+>
+> **(b) MRV STAYS 42** (match.ts "STAYS 42 AT D603"): the condition is read at use / attack time and never persisted; the filter can ride a parked Mega Signal search but is a widening (D333). Programs are looked up by id and the Mega read is the persisted NAME, so `cardPool` faces are read as before. A 0.485 rollback re-reads a parked `megaEvolutionEx` as false.
+>
+> | Column | `me` D603 | Standard pool D603 |
+> |---|---|---|
+> | Attacks | 856 / 1039 | **2588 / 2771** |
+> | Abilities | 144 / 234 | **520 / 610** |
+> | Trainers | 100 / 183 | **364 / 447** |
+> | Special Energy | 3 / 11 | **14 / 22** |
+>
+> **906 `me` printings fully built** (895 + 11; the four Pokémon's attacks print damage only). Pins re-measured: registry length 1235 → 1246 (five suites), `nonAttackRegistryIds()` 1068 → 1079, the D273 partition, the D581 `me`-key rung, `reprintAliasMeD582`'s key table, `flipTheScript`'s `playableIf` population (29 → 35), `abilityBundleD565`'s `benchOnly` population (+ Linoone), `revealClause`'s tables (`REVEALING` 57 → 58, objects 84 → 85, swept 187 → 190), `derivedBenchSearchMove`'s `searchDeck` count (134 → 137), `bodiesInPlayScaling`'s `CardFilter` kinds (27 → 28), the `scovillainD578` allowlist (+2 `conditionHolds` reads).
+>
+> **(c) THE MUTATION RECORD.** +25 D603 rows (4730 in all). precheck: 4730 mutants, the same 20 pre-existing broken rows. Probe `run.ts --decision D603 --allow-dirty`: 25 killed · 0 known survivor(s) · 0 GAP(S) · 0 stale · 0 skipped(dirty) · 0 clobber(s) · 0 error(s), tree byte-identical after. Gate-witness `--only` (the 18 `opaque-anatomy-gate.ts` / `residue-census-gate.ts` rows): 18 killed · 0 error. Gates: residue-census, opaque-anatomy, splice, partition all OK. Version tax: 249 occurrences stepped to 0.486.0 outside docs (151 test files: `expect(engineVersion)`, `expect(manifest.version)`, `it()` titles; `package.json`, the declaration, the mutants.ts `find`); the D602 changelog heading in index.ts keeps 0.485.0. No row is written for the in-play-card read of the type (`inPlayCardOf` vs `topCardOf`): no legal Mega ex is retyped, so neither direction is observable (D420).
+>
+> 🛑 **(0) THE WHOLE-CORPUS SWEEP IS PENDING** (D581–D602's too). Predicted: **4660 killed · 50 known survivor(s) · 0 GAP(S) · 20 error(s)** over **4,730** rows — 4705 + 25 = 4730; 4635 + 25 = 4660 killed; 4660 + 50 + 20 = 4730. It assumes D602's prediction (4635 · 50 · 0 · 20 over 4705) holds. If it holds, D581–D603 close together. If it fails: an error count ≠ 20 means a `find` was spliced by a later edit (precheck names it); a new GAP or survivor in a D581–D602 row is that slice's open prediction failing; one in an older row whose killer is a registry-length pin, the D273 partition, the `playableIf` / `benchOnly` populations, the reveal tables, the `searchDeck` count, the `CardFilter` kinds count or the Scovillain allowlist is a D603 re-pin moving it and owes a row-level re-anchor.
+>
+> **Pending decisions (UNRULED readings).** None new at D603: Jett with no opposing Mega ex draws 0 and is played (R-PX6, inherited from Awakening Drum); the rest inherit shipped readings — Inferno Fandango's repeatable attach, Wondrous Patch's typed Bench target, Fermented Juice's heal, Showtime / Flustered Leap's switch (an activated Ability's "you may" is the use itself, §9.1), Lose Cool's attacker (R-AN), Master Ball's search. R-GC2, R-GC3 and R-TN1 (D601) and R-CW1 (D600) stand as recorded in the archived blocks below.
+>
+> Still owed from the Mega backlog: WP11's two drops (Latios "Lustrous Assist", Wally's Compassion ×3) and its three exclusions (Tremendous Bomb, Ange Floette, Core Memory), WP20b's two drops (Dragonair "Evolutionary Guidance", Larry's Komala "Lethargic Charge"), Gholdengo "Celebration" ×2, "that much more damage" ×4, WP24b and WP24a's five drops, WP32's five drops, WP29's four drops, the seven WP13 drops, Meowth ex ×3's Last-Ditch Catch, Mega Clefable ex ×4's Luminous Wing, Flygon ×3, Pokémon Center Lady, Mega Absol ex ×3's Terminal Period (WP36), the markup-normalising ingest fix, then the residue by mechanism.
+>
+> ---
+>
+> **ARCHIVED — the resume point D603 was built from, kept rather than overwritten** (D602 has since been committed on `mega-ingest` as `757efac0`):
+>
 > ### ▶ THE NEXT CONCRETE ACTION (written 2026-10-08, after D602)
 >
 > 🛑 **D602 IS BUILT AND NOT COMMITTED** (worktree `/home/jofre/projects/luminous_ui-mega`, branch `mega-ingest`, on D601 = `3e0f4b2d`). D602 is WP20b of the Mega backlog. Next: a review of D602, then the next package or the landing of D581–D602 (rebase `mega-ingest` onto main; never `git add -A` — `apps/api/.wrangler` is the setup symlink).
@@ -35154,7 +35187,8 @@ the next api deploy (D18).
 |---|---|---|
 | backend-data | P1 | ✅ M1–M9 + P2-M1 + task-17 api deployed (Worker `9b1ec1d1`, 2026-07-16); OAuth secrets pending (user) |
 | deck-builder | P2 | ✅ ALL 19 tasks closed (task 17 landed + e2e-verified locally); only follow-ups left |
-| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D602, *WP20b — the `me` activated Abilities, search / heal / attach: 6 texts / 9 `me` printings on six new `abilities` objects (an empty-hand Supporter search, an Erika's Pokémon search, a coin-gated Pokémon search, a {G}-gated heal, a heal-each, a Bench-only Metal attach); Dragonair and Larry's Komala dropped and named; abilities 513 / 610*** — engine 0.485.0, MRV 42, NOT committed; the sweep PENDING) |
+| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D603, *WP11 — the Mega-gated texts: 6 texts / 11 `me` printings on six new objects over `yourMegaExInPlay { type? }` and `megaEvolutionEx` (three gated Abilities, a gated passive, a Mega ex search, a draw per opposing Mega ex); Latios and Wally's Compassion dropped and named; abilities 520 / 610, trainers 364 / 447*** — engine 0.486.0, MRV 42, NOT committed; the sweep PENDING) |
+| simulator (prior) | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D602, *WP20b — the `me` activated Abilities, search / heal / attach: 6 texts / 9 `me` printings on six new `abilities` objects (an empty-hand Supporter search, an Erika's Pokémon search, a coin-gated Pokémon search, a {G}-gated heal, a heal-each, a Bench-only Metal attach); Dragonair and Larry's Komala dropped and named; abilities 513 / 610*** — engine 0.485.0, MRV 42, NOT committed; the sweep PENDING) |
 | simulator (prior) | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D601, *D598's open review findings closed: R-GC2 (Legacy Energy answers before Shadowy Concealment) and R-GC3 (1 fewer per {D} Knock Out in a batch, tested) recorded UNRULED, R-TN1 amended (self-damage never asks the coin), `koByOpponentAttack`'s fail-closed miss arm recorded; no engine behaviour change*** — engine 0.484.0, MRV 42, NOT committed; the sweep PENDING) |
 | simulator (prior) | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D600, *WP14 + WP33b — the hand count and five bonus conditions: 7 texts / 12 `me` printings (`cardsInYourHand` on the `×` fold and on `damageActive.per`; remaining HP, no Retreat Cost, a named card in your discard, Stage 2 {D} on your Bench, Shadowy {D} Energy on your Bench); Celebration dropped; attacks 2588 / 2771*** — engine 0.484.0, MRV 42, NOT committed; the sweep PENDING) |
 | simulator (prior) | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D599, *WP24a — two WP24 Supporters: 2 texts / 4 `me` printings (Briar's Prize bonus at 3 on N's Pokémon behind a six-name gate; a draw per Pokémon in the revealed opponent hand); five texts dropped and named; trainers 360 / 447*** — engine 0.483.0, MRV 42, NOT committed; the sweep PENDING) |
@@ -35374,6 +35408,17 @@ the next api deploy (D18).
 Legend: 📝 backlog · 📋 specced · 🔎 research · 🚧 in progress · ✅ done
 
 ## Session log
+
+### 2026-10-08 — build session #543 (P3-M5 — D603)
+
+**WP11 — THE MEGA-GATED TEXTS. `MATCH_RECORD_VERSION` STAYS 42.**
+
+Built in the `luminous_ui-mega` worktree on D602 (`757efac0`); the main checkout was not touched. Every id `git grep`-ped
+(only Mega Signal `me01-121`, as a Trainer face in a D582 suite) and every text read off the LOCAL D1 first. Two new members
+on D582's `isMegaEvolutionPokemonEx` (`yourMegaExInPlay { type? }`, `megaEvolutionEx`); 6 texts / 11 printings on six new
+objects. Latios "Lustrous Assist" and Wally's Compassion ×3 dropped and named. No new reading. `megaGatedMeD603.test.ts`
+(26), census D603 block (2); check 645 / 15292. Version tax 249 stepped / 1 kept. +25 mutant rows, all KILLED. Sweep
+PENDING (NEXT (0)). NOT committed.
 
 ### 2026-10-08 — build session #542 (P3-M5 — D602)
 

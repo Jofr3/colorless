@@ -515,6 +515,12 @@ export type CardFilter =
       exactly one marker each, so `anyPokemon.noRuleBox` NEGATED is not this member
       and could not be. */
   | { kind: "suffixPokemon"; suffix: PokemonSuffix }
+  /** 🆕🆕🆕 **D603 — a MEGA EVOLUTION POKÉMON ex** ("Search your deck for a Mega Evolution Pokémon
+      ex": Mega Signal; "each of your opponent's Mega Evolution Pokémon ex in play": Jett). cards.ts
+      `isMegaEvolutionPokemonEx` (D582: "Mega " name prefix and the ` ex` suffix), so a Mega ex is
+      ALSO a `suffixPokemon ex`, never the reverse. Nullary: the type rider lives on the board
+      condition `yourMegaExInPlay`, the only printing that types the noun. */
+  | { kind: "megaEvolutionEx" }
   /** 🆕🆕🆕 **D568 — a Pokémon printing a BANNER** ("a Tera Pokémon": Tera Orb `sv08-189`;
       "your Tera Pokémon": Terapagos `sv08-161` "Prism Charge"'s attach target). Read by
       printing ID through `banners.ts`' `bannerOf` (D135) — the banner is on no ingested
@@ -3941,6 +3947,12 @@ export type BoardCondition =
       one printing names one stage, so a `stage` field would be a value nothing reads (D138).
       Catalog-only — it never rides an `EffectOp`. Public. */
   | { kind: "opponentStage2PokemonInPlay" }
+  /** 🆕🆕🆕 **D603 — "if you have any [{T}] Mega Evolution Pokémon ex in play"** (WP11: Oricorio ex
+      "Excited Turbo" {R}, Ludicolo "Excited Heal" {G}, Seviper "Excited Power" {D}, Linoone "Excited
+      Dash" untyped). YOUR Active AND Bench, each body's IN-PLAY card (`inPlayCardOf`, D578), through
+      the `megaEvolutionEx` filter (cards.ts `isMegaEvolutionPokemonEx`, D582's name read) and, when
+      `type` is set, that card's in-play `types`. Absent `type` is the untyped printing. Public. */
+  | { kind: "yourMegaExInPlay"; type?: PokemonType }
   /** 🆕🆕🆕 **D572 — your in-play cards CAN be put into your hand right now**: the negation of
       continuous.ts `inPlayToHandBlocked(state, seat)` (Milotic "Mentally Calm" opposite).
       Bought by D385's necessary-and-sufficient obligation on Zarude `sv08-011` "Jungle Whip"'s

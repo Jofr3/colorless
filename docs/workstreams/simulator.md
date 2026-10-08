@@ -30234,3 +30234,20 @@ decisions (1) and (2) after D580. Engine 0.464.0 → 0.465.0. The Mega ex rule i
 - **Suite.** `activatedMeD602.test.ts` (22) and a census D602 block (3). +21 mutant rows.
 - **Census.** Standard pool abilities **513 / 610**; 895 `me` printings fully built.
 - **Owed.** See `progress.md` NEXT. The whole-corpus sweep is PENDING.
+
+## D603 — WP11: the Mega-gated texts (engine 0.486.0, `MATCH_RECORD_VERSION` stays 42)
+
+**Status:** ✅ BUILT in the `luminous_ui-mega` worktree on D602 (`757efac0`), NOT committed.
+
+- **Vocabulary.** `BoardCondition.yourMegaExInPlay { type? }` (your Active and Bench, in-play card, D582's
+  `isMegaEvolutionPokemonEx`) and `CardFilter.megaEvolutionEx`.
+- **6 texts / 11 `me` printings on six new objects.** Oricorio ex ×3 "Excited Turbo" (repeatable Basic {R} hand attach to a
+  Benched {R}), Ludicolo ×2 "Excited Heal" (`healChosen` 60), Linoone "Excited Dash" (`benchOnly`, Showtime's switch,
+  untyped gate), Seviper "Excited Power" (`damageBonusBeforeWRIf` 120), Mega Signal ×3 (search a Mega ex) and Jett
+  (`drawCards.per` over the opponent's Mega ex).
+- **Dropped and named:** Latios "Lustrous Assist" (a named Active's move gate) and Wally's Compassion ×3 (all Energy to
+  the hand from the healed body). Tremendous Bomb, Ange Floette and Core Memory stay out (the brief).
+- **Readings.** None new; Jett with none in play inherits R-PX6 (`progress.md` NEXT).
+- **Suite.** `megaGatedMeD603.test.ts` (26) and a census D603 block (2). +25 mutant rows.
+- **Census.** Standard pool abilities **520 / 610**, trainers **364 / 447**; 906 `me` printings fully built.
+- **Owed.** See `progress.md` NEXT. The whole-corpus sweep is PENDING.

@@ -592,7 +592,7 @@ describe("D594 §8 — Needly Armor: 3 damage counters on the Attacking Pokémon
 });
 
 describe("D594 §9 — the version", () => {
-  it("is built at engine 0.485.0", () => {
-    expect(engineVersion).toBe("0.485.0");
+  it("is built at engine 0.486.0", () => {
+    expect(engineVersion).toBe("0.486.0");
   });
 });
