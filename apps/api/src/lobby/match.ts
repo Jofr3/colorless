@@ -2159,6 +2159,16 @@ export interface MatchRecord {
     `turn:action.discardable` — 🛑 **DEPLOY THE SERVER FIRST**: an old client's `z.object` STRIPS
     the unknown key, while a new client's REQUIRED key refuses an old server's frame.
 
+    🆕🆕🆕 **STAYS 42 AT D608 — WP30 ADDS ONE OPTIONAL KEY ON A PARKING OP (`damageChosen.specialEnergyOnly`),
+    NO OP, PROMPT, STAGE OR EVENT.** (Placed ABOVE the D607 block.) The key can ride
+    `phase.cont.pendingOp` (Bone Sniper over two or more candidates), but it is a WIDENING: no v42
+    record holds it, absence means what it always meant, and it is read only in `snipeTargets`, which
+    `applyChoice` never re-derives (the resumed pick reads the parked prompt). The `defenderStatus`
+    optional-cost payoff is a reader output, never persisted; the five `30th` registry keys are looked
+    up by id. No card row is read differently: the 18 `me` faces in a v42 `cardPool` are unchanged.
+    Rollback to 0.490: the texts fall back to the unbuilt path; a parked Bone Sniper pick resumes on
+    the prompt it parked with.
+
     🆕🆕🆕 **STAYS 42 AT D607 — WP28a ADDS THREE `DamageCountSource` MEMBERS, NO OP, PROMPT, KEY, STAGE OR
     EVENT.** (Placed ABOVE the D606 block.) The three members are produced only by the damage-fold
     readers and evaluated at declaration; no op field carries them (`damageActive.per` / `drawCards.per`

@@ -20258,6 +20258,16 @@ import type { GameState, Seat } from "./types";
     `expect(manifest.version)`, `it(…)` titles, the declaration and `package.json` —
     **not** as a value-keyed grep — because a value-keyed grep is precisely the mechanism
     that ate D500's heading.)
+    🆕🆕🆕 engineVersion 0.490.0 → **0.491.0** (D608 — WP30: THE `me` SNIPE / SPREAD WORDING;
+    `MATCH_RECORD_VERSION` STAYS 42 (apps/api match.ts "STAYS 42 AT D608")). effects.ts: "each of 2"
+    read as the shipped arity on `CHOSEN_ANY_TARGET` / `SELF_DISCARD_THEN_ANY_TARGET` (Mega Eelektross
+    ex "Split Bomb" ×3, Ambipom "Dual Tail" ×2); a fourth optional-cost skeleton and payoff
+    `defenderStatus` (Disaster Shock ×3, an inner confirm); three literal compounds (Mega Skarmory ex
+    "Sonic Ripper" ×2, Mandibuzz "Bone Sniper", Spectrier "Phantasmal Barrage"); the new
+    `damageChosen.specialEnergyOnly` narrowing (interpreter.ts `snipeTargets` / `snipeNote`);
+    `BENCHED_SNIPE_TARGET_COUNTERS` without "Benched" is `opponentAny` (Greninja ex `mep-099`).
+    registry.ts: `PHOTON_BULLETS` (Mewtwo ex ×3) and `STEALTHY_SLASH` (Greninja ex ×2), five `30th`
+    attack-only keys (`<em>` markup). 18 `me` attack printings. `snipeSpreadMeD608.test.ts`.)
     🆕🆕🆕 engineVersion 0.489.0 → **0.490.0** (D607 — WP28a: THE FIRST HALF OF THE SCALING COUNT
     SOURCES; `MATCH_RECORD_VERSION` STAYS 42 (apps/api match.ts "STAYS 42 AT D607")). effects.ts: three
     NEW nullary `DamageCountSource` members on three literal `×` anchors — `energyInPlayBothSides`
@@ -25388,7 +25398,7 @@ import type { GameState, Seat } from "./types";
     WITNESS** — the count was re-derived every slice and the word *"three"* was carried.
     A successor of this slice inherits **81 / 61 / 17** again, over **FIVE** history
     occurrences: those four plus `deckMillFilteredScale.test.ts`'s own header arrow.) */
-export const engineVersion = "0.490.0";
+export const engineVersion = "0.491.0";
 
 export type {
   ApplyResult,

@@ -30140,7 +30140,7 @@ decisions (1) and (2) after D580. Engine 0.464.0 → 0.465.0. The Mega ex rule i
   `deriveAttackDiscardScaledBoost` gains `handDiscard` (Shooting Moons ×4, printed base kept). registry.ts `INFERNO_X`
   keys the two "[R]" `mep` Inferno X.
 - **No new op, field or persisted member.** The `sv` reader output is byte-identical.
-- **Dropped and named:** Mega Eelektross ex "Disaster Shock" ×3, Slowpoke "All-You-Can-Yeet", Team Rocket's Honchkrow
+- **Dropped and named:** Mega Eelektross ex "Disaster Shock" ×3 [🆕🆕🆕 D608: BUILT — WP30], Slowpoke "All-You-Can-Yeet", Team Rocket's Honchkrow
   "Rocket Feathers", Pawmot "Voltaic Fist".
 - **Reading R-IX1 (UNRULED).** tcgdex's "[R]" on the two `mep` Inferno X is read as {R}.
 - **Suite.** `discardScaledMeD597.test.ts` (22): readings, near misses, each attack on a board (offers, ceilings, filters,
@@ -30234,6 +30234,23 @@ decisions (1) and (2) after D580. Engine 0.464.0 → 0.465.0. The Mega ex rule i
 - **Readings.** None new; each open point inherits a shipped one (`progress.md` NEXT).
 - **Suite.** `activatedMeD602.test.ts` (22) and a census D602 block (3). +21 mutant rows.
 - **Census.** Standard pool abilities **513 / 610**; 895 `me` printings fully built.
+- **Owed.** See `progress.md` NEXT. The whole-corpus sweep is PENDING.
+
+## D608 — WP30: the `me` snipe / spread wording (engine 0.491.0, `MATCH_RECORD_VERSION` stays 42)
+
+**Status:** ✅ BUILT in the `luminous_ui-mega` worktree on D607 (`e6239436`), NOT committed.
+
+- **Vocabulary.** "each of N" (N ≥ 2) on `CHOSEN_ANY_TARGET` / `SELF_DISCARD_THEN_ANY_TARGET`, read as the shipped arity;
+  `BENCHED_SNIPE_TARGET_COUNTERS` without "Benched" → `opponentAny`; three literal compounds (Sonic Ripper, Bone Sniper,
+  Phantasmal Barrage); the NEW `damageChosen.specialEnergyOnly` narrowing (`snipeTargets`, `snipeNote`); a fourth
+  optional-cost skeleton with the `defenderStatus` payoff (gate → inner confirm → cost → Paralyzed). Two attack-only registry
+  objects for the `30th` `<em>` faces: `PHOTON_BULLETS` (the ex-only spread, no `ignoreWR`) and `STEALTHY_SLASH`.
+- **7 texts / 13 `me` printings read, 5 keyed.** Mega Eelektross ex ×3 (Split Bomb, Disaster Shock), Ambipom ×2, Mega
+  Skarmory ex ×2, Mandibuzz, Greninja ex ×3, Spectrier, Mewtwo ex ×3 — all 15 fully built. `sv` reader output byte-identical.
+- **WP30 rest, named.** Pikachu `30th-051`, Mismagius, Coalossal, Genesect, Seaking, Frosmoth, Ferrothorn `30th-104`, Deoxys.
+- **Readings.** None new.
+- **Suite.** `snipeSpreadMeD608.test.ts` (23) and a census D608 block (3). +21 mutant rows; four rows re-pointed.
+- **Census.** Standard pool attacks **2,632 / 2,771**; 964 `me` printings fully built.
 - **Owed.** See `progress.md` NEXT. The whole-corpus sweep is PENDING.
 
 ## D607 — WP28a: the first half of the scaling count sources (engine 0.490.0, `MATCH_RECORD_VERSION` stays 42)

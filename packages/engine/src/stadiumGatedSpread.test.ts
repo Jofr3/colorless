@@ -738,7 +738,7 @@ const RAW: Record<string, string> = (
 describe("D522 §4 — the version steps, the heading is written, the prose is corrected, and what stands still", () => {
   it("engineVersion and `manifest.version` agree, and the bump is owed for BEHAVIOUR", () => {
     // ⚠️ The version is NOT spelled in this `it(…)` title (D460's fourth class).
-    expect(engineVersion).toBe("0.490.0");
+    expect(engineVersion).toBe("0.491.0");
     expect(manifest.version).toBe(engineVersion);
   });
 
@@ -760,7 +760,9 @@ describe("D522 §4 — the version steps, the heading is written, the prose is c
     // CODE site of the form, a `conditionGate` on `yourPrizesRemaining [1]` around `winGame`. MEASURED.
     // 🆕🆕🆕 D586 — 18 → 19: Mega Darkrai ex "Abyss Eye"'s arm (`OPPONENT_ACTIVE_SPECIAL_CONDITION_KO`),
     // a `conditionGate` on `opponentActiveHasSpecialCondition` around `knockOutDefender`. MEASURED.
-    expect(effects.split('op: "conditionGate",').length - 1).toBe(19);
+    // 🆕🆕🆕 D608 — 19 → 20: Disaster Shock's `defenderStatus` assembly in `optionalCostBoostProgram`, a
+    // `conditionGate` on the cost's payability around the confirm. MEASURED.
+    expect(effects.split('op: "conditionGate",').length - 1).toBe(20);
     expect(effects.split('op: "spreadDamage",').length - 1).toBe(10);
     expect(effects.split('{ op: "discardStadium" }').length - 1).toBe(6);
   });

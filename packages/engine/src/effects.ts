@@ -6983,6 +6983,13 @@ export type EffectOp =
           the Bench flat). Only ever written with `count: "all"`, which never parks, so the key
           never reaches a record (R-NZ1). */
       flipEach?: true;
+      /** 🆕🆕🆕 **D608 — Mandibuzz "Bone Sniper"** (*"This attack does 70 damage to 1 of your opponent's
+          Pokémon that has any Special Energy attached."*). A BOARD narrowing at `snipeTargets`, beside
+          `damagedOnly`: a candidate must hold a Special Energy (continuous.ts `hasAttachedEnergy(…,
+          "special")`, the predicate D252's shield reads). An empty set is the silent no-op. Parks, so
+          the key can ride `phase.cont.pendingOp` — a widening read only where the candidates are built
+          (`applyChoice` never re-derives them); `MATCH_RECORD_VERSION` holds at 42. */
+      specialEnergyOnly?: true;
     }
   /** Deal `per × N` ATTACK damage to the DEFENDER (the opponent's Active), where
       N is how many cards an earlier op filed under the `count` §9.2 slot —
@@ -17111,8 +17118,10 @@ const BENCHED_SNIPE_TAKEN_PRIZES = new RegExp(
 // per-ref fold keeps a registry-authored count-2 op honest regardless (each pick
 // reads ITS OWN counters). The op is `damageChosen` with `perDamageCounterOnTarget`
 // — see the rider's block for why the multiplier is read at the ANSWER.
+// 🆕🆕🆕 D608 — WP30: `Benched ` is optional (group 2). Without it the target is ANY of the
+// opponent's Pokémon (Greninja ex "Stealthy Slash", `mep-099`): `opponentAny`, the Active taking W/R.
 const BENCHED_SNIPE_TARGET_COUNTERS = new RegExp(
-  `^This attack does (\\d+) damage to 1 of your opponent['’]s Benched Pokémon ` +
+  `^This attack does (\\d+) damage to 1 of your opponent['’]s (Benched )?Pokémon ` +
     "for each damage counter on that Pokémon\\." +
     `(?: \\(Don['’]t apply Weakness and Resistance for Benched Pokémon\\.\\))?$`,
 );
@@ -17401,8 +17410,11 @@ const CONDITIONAL_BENCH_SNIPE = new RegExp(`^If (.+), this ${ALSO_BENCHED_SNIPE_
 // both the count clause and Umbreon's W/R tail; the legal column prints **zero** such
 // sentences, so resolving one would be authoring (D190b). It falls to the loud
 // `ATTACK_EFFECT_SKIPPED` path exactly as a printed 0 and a disagreeing number word do.
+// 🆕🆕🆕 D608 — WP30: also the `me` spelling *"…to each of 2 of your opponent's Pokémon."* (Mega
+// Eelektross ex "Split Bomb"), the shipped arity read with "each of" in front. The lookahead admits
+// it only before a count of 2 or more; "each of 1" is printed nowhere.
 const CHOSEN_ANY_TARGET = new RegExp(
-  `^This attack does (\\d+) damage to (\\d+) of your opponent['’]s Pokémon` +
+  `^This attack does (\\d+) damage to (?:each of (?=[2-9]))?(\\d+) of your opponent['’]s Pokémon` +
     "( for each Energy attached to this Pokémon)?\\." +
     `(?: \\(Don['’]t apply Weakness and Resistance for Benched Pokémon\\.\\)` +
     `|( This attack['’]s damage isn['’]t affected by Weakness or Resistance` +
@@ -17597,11 +17609,29 @@ const SELF_DISCARD_ALL = /^Discard all Energy from this Pokémon\.$/;
 // `(all|\d+)` is the printed set exactly — three sentences say "all" and one says
 // "2" — and the "an" spelling `SELF_DISCARD_ONE` reads is NOT admitted, because no
 // compound prints it. No /i, on the family's standing reason.
+// 🆕🆕🆕 D608 — WP30: the same "each of" spelling (Ambipom "Dual Tail"), `CHOSEN_ANY_TARGET`'s guard.
 const SELF_DISCARD_THEN_ANY_TARGET = new RegExp(
   "^Discard (all|\\d+) Energy from this Pokémon(?:\\. This|, and this) " +
-    `attack does (\\d+) damage to (\\d+) of your opponent['’]s Pokémon\\.` +
+    `attack does (\\d+) damage to (?:each of (?=[2-9]))?(\\d+) of your opponent['’]s Pokémon\\.` +
     `(?: \\(Don['’]t apply Weakness and Resistance for Benched Pokémon\\.\\))?$`,
 );
+// 🆕🆕🆕 D608 — WP30: three literal `me` snipe anchors (LOCAL D1, 2026-10-08), none printed in `sv`.
+//   Mega Skarmory ex "Sonic Ripper" ×2 — the D589 shuffle-all cost row's ops, then the any-target hit.
+//   Mandibuzz "Bone Sniper" — the any-target hit narrowed to bodies holding a Special Energy.
+//   Spectrier "Phantasmal Barrage" — the discard-all cost, then 12 counters on any target (placed,
+//   not dealt: `damageChosen` without `deals`, the shipped counter arm's op).
+// Each is `^…$`; the clarifier is the family's optional tail (absent on the Spectrier sentence). The
+// counter anchor spells "put": it is matched AFTER `normaliseMeWording` rewrote the printed "place".
+const SELF_SHUFFLE_ALL_THEN_ANY_TARGET = new RegExp(
+  "^Shuffle all Energy attached to this Pokémon into your deck, and this attack does (\\d+) damage to 1 of " +
+    `your opponent['’]s Pokémon\\.(?: \\(Don['’]t apply Weakness and Resistance for Benched Pokémon\\.\\))?$`,
+);
+const CHOSEN_ANY_TARGET_SPECIAL_ENERGY = new RegExp(
+  `^This attack does (\\d+) damage to 1 of your opponent['’]s Pokémon that has any Special Energy attached\\.` +
+    `(?: \\(Don['’]t apply Weakness and Resistance for Benched Pokémon\\.\\))?$`,
+);
+const SELF_DISCARD_ALL_THEN_COUNTERS =
+  /^Discard all Energy from this Pokémon and put (\d+) damage counters on 1 of your opponent['’]s Pokémon\.$/;
 
 // 🆕🆕🆕 D489 — THE **HAND** DISCARD IN FRONT OF A SNIPE WHOSE AMOUNT IS THE DISCARD'S
 // OWN COUNT. *"Discard up to 3 Energy cards from your hand. This attack does 60 damage
@@ -30006,6 +30036,7 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   //     is read PER REF at the answer (interpreter.ts `snipeAmount`'s fifth argument,
   //     at both sites that deal damage) and never at the park. The count is the
   //     printed literal `1`. A printed 0-per is not a real card — left on the loud path.
+  //     🆕🆕🆕 D608 — without the printed `Benched ` the target is `opponentAny` (Stealthy Slash).
   match = BENCHED_SNIPE_TARGET_COUNTERS.exec(effect);
   if (match !== null) {
     const per = Number(match[1]);
@@ -30013,7 +30044,7 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
       return [
         {
           op: "damageChosen",
-          target: "opponentBench",
+          target: match[2] === undefined ? "opponentAny" : "opponentBench",
           amount: per,
           count: 1,
           source: "attack",
@@ -30431,6 +30462,38 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
         { op: "damageChosen", target: "opponentAny", amount, count, source: "attack", deals: true },
       ];
     }
+  }
+
+  // 9b′. 🆕🆕🆕 D608 — WP30's three literal snipe compounds (see the anchors). Printed order, the
+  //     cost first. A printed 0 is not a real card — left on the loud path.
+  match = SELF_SHUFFLE_ALL_THEN_ANY_TARGET.exec(effect);
+  if (match !== null && Number(match[1]) >= 1) {
+    return [
+      { op: "discardEnergy", from: "yourActive", filter: { kind: "anyEnergy" }, count: "all", to: "deck" },
+      { op: "shuffleDeck" },
+      { op: "damageChosen", target: "opponentAny", amount: Number(match[1]), count: 1, source: "attack", deals: true },
+    ];
+  }
+  match = CHOSEN_ANY_TARGET_SPECIAL_ENERGY.exec(effect);
+  if (match !== null && Number(match[1]) >= 1) {
+    return [
+      {
+        op: "damageChosen",
+        target: "opponentAny",
+        amount: Number(match[1]),
+        count: 1,
+        source: "attack",
+        deals: true,
+        specialEnergyOnly: true,
+      },
+    ];
+  }
+  match = SELF_DISCARD_ALL_THEN_COUNTERS.exec(effect);
+  if (match !== null && Number(match[1]) >= 1) {
+    return [
+      { op: "discardEnergy", from: "yourActive", filter: { kind: "anyEnergy" }, count: "all" },
+      { op: "damageChosen", target: "opponentAny", amount: Number(match[1]) * 10, count: 1, source: "attack" },
+    ];
   }
 
   // 9c. 🆕🆕🆕 D489 — "Discard up to N Energy cards from your hand. This attack does A
@@ -37392,7 +37455,11 @@ export type AttackOptionalCostPayoff =
       reason — one printed clause, one reading — so a reprint of THIS sentence at
       *"2 of"* needs no row, and the number the offer's `then` places is the number
       the sentence printed rather than a constant this reader re-asserted. */
-  | { kind: "benchSnipe"; amount: number; count: number };
+  | { kind: "benchSnipe"; amount: number; count: number }
+  /** 🆕🆕🆕 **D608 — *"…and make your opponent's Active Pokémon Paralyzed."*** (Disaster Shock).
+      The printed base stays in the pre-program pipeline, `benchSnipe`'s reason: the status is an
+      ADDITIONAL effect, and a decline still deals the 190. */
+  | { kind: "defenderStatus"; status: "paralyzed" };
 
 /** 🆕🆕 **D385 — THE CONNECTIVE, WIDENED FROM ONE LITERAL TO A CLOSED ALTERNATION
     OF TWO, AND THE LICENCE IS `cond`.**
@@ -37517,6 +37584,11 @@ const OPTIONAL_COST_FACE_UP_REMINDER = " (That Prize card remains face up for th
     `yourInPlayToHandAllowed`. No new op, member or field: the shuffle-into-deck row is D383's
     `to: "deck"` + `shuffleDeck` at `count: "all"`. `optionalCostMeD589.test.ts` drives each. */
 const OPTIONAL_COST_AND_HAVE_BOOST = /^You may (.+) and have this attack do (\d+) more damage\.$/;
+/** 🆕🆕🆕 D608 — WP30: the FOURTH skeleton, *"You may <cost> and make your opponent's Active Pokémon
+    Paralyzed."* (Mega Eelektross ex "Disaster Shock" ×3, `190`). The cost goes through the same
+    table (the D589 typed row: 2 {L}); the payoff is the `defenderStatus` member, built inline. The
+    status is the literal printed word: no other is printed after this connective. */
+const OPTIONAL_COST_AND_MAKE_PARALYZED = /^You may (.+) and make your opponent['’]s Active Pokémon Paralyzed\.$/;
 const OPTIONAL_COST_DISCARD_TYPED_SELF_ENERGY = new RegExp(`^discard (\\d+) \\{([${ENERGY_CODES}])\\} Energy from this Pokémon$`);
 const OPTIONAL_COST_DISCARD_ALL_SELF_ENERGY = /^discard all Energy from this Pokémon$/;
 const OPTIONAL_COST_PUT_TYPED_SELF_ENERGY_TO_HAND = new RegExp(`^put a \\{([${ENERGY_CODES}])\\} Energy attached to this Pokémon into your hand$`);
@@ -37721,6 +37793,10 @@ export function deriveAttackOptionalCostBoost(text: string): AttackOptionalCostB
     const andHave = OPTIONAL_COST_AND_HAVE_BOOST.exec(text.trim());
     const andHaveCost = andHave === null ? null : optionalCostOps(andHave[1] ?? "");
     if (andHave !== null) return andHaveCost === null || Number(andHave[2]) < 1 ? null : { cond: andHaveCost.cond, ops: andHaveCost.ops, payoff: { kind: "moreDamage", bonus: Number(andHave[2]) } };
+    // 🆕🆕🆕 D608 — THE FOURTH SKELETON (`OPTIONAL_COST_AND_MAKE_PARALYZED`): same cost table, inline payoff.
+    const andMake = OPTIONAL_COST_AND_MAKE_PARALYZED.exec(text.trim());
+    const andMakeCost = andMake === null ? null : optionalCostOps(andMake[1] ?? "");
+    if (andMakeCost !== null) return { cond: andMakeCost.cond, ops: andMakeCost.ops, payoff: { kind: "defenderStatus", status: "paralyzed" } };
     // 🆕🆕🆕 D524 — THE SECOND SKELETON: the purpose connective (corpus FILE LINE 652). The
     // cost half goes through the SAME table — never read as text here — and the payoff is
     // `moreDamage` BUILT INLINE from the captured digit, because the purpose spelling's verb
@@ -37797,6 +37873,14 @@ export function optionalCostBoostProgram(
 ): EffectOp[] {
   if (reading.payoff.kind === "benchSnipe") {
     return costSnipeProgram(reading, reading.payoff.amount, reading.payoff.count, note);
+  }
+  // 🆕🆕🆕 D608 — Disaster Shock: `costSnipeProgram`'s ONE gate + ONE confirm, no decline arm (the
+  // printed base is dealt before the program on every answer). The status follows the cost.
+  if (reading.payoff.kind === "defenderStatus") {
+    const then: EffectOp[] = [...reading.ops, { op: "applyStatus", target: "defender", status: reading.payoff.status }];
+    const offer: EffectOp = { op: "optional", note, then };
+    // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
+    return [{ op: "conditionGate", cond: reading.cond, then: [offer] }];
   }
   const [boosted, otherwise] = boostedArms(base, reading.payoff.bonus, []);
   const then = [...reading.ops, ...boosted];

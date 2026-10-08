@@ -182,7 +182,14 @@ describe("D592 §2 — the table cannot reach an `sv` sentence", () => {
     const powerfulHand = "Place 2 damage counters on your opponent's Active Pokémon for each card in your hand.";
     expect(unbuilt).toContain(powerfulHand);
     expect(deriveAttackEffect(powerfulHand)).not.toBeNull();
-    for (const text of unbuilt.filter((t) => t !== powerfulHand)) expect(deriveAttackEffect(text), text).toBeNull();
+    // 🆕🆕🆕 D608 (D539): and three — Phantasmal Barrage is built by WP30's literal compound
+    // (`SELF_DISCARD_ALL_THEN_COUNTERS`, read after this table rewrote its "place").
+    const barrage = "Discard all Energy from this Pokémon and place 12 damage counters on 1 of your opponent's Pokémon.";
+    expect(unbuilt).toContain(barrage);
+    expect(deriveAttackEffect(barrage)).not.toBeNull();
+    for (const text of unbuilt.filter((t) => t !== powerfulHand && t !== barrage)) {
+      expect(deriveAttackEffect(text), text).toBeNull();
+    }
   });
 });
 
@@ -461,7 +468,7 @@ describe("D592 §6 — Claw of Darkness and Thunder on a board", () => {
 });
 
 describe("D592 §7 — the version", () => {
-  it("is built at engine 0.490.0", () => {
-    expect(engineVersion).toBe("0.490.0");
+  it("is built at engine 0.491.0", () => {
+    expect(engineVersion).toBe("0.491.0");
   });
 });

@@ -3,7 +3,9 @@
 > Update this at the **end of every session**: bump the status table, append a
 > session-log entry, and rewrite the **Resume point** to the next concrete action.
 
-**Last updated:** 2026-10-08 — build session #547 (**P3-M5 — D607, *WP28a — THE FIRST HALF OF THE SCALING COUNT SOURCES: 8 attack texts / 14 `me` printings — three new nullary `DamageCountSource` members (`energyInPlayBothSides` Delphox ×2, `toolsInPlayBothSides` Bronzong, `basicEnergyTypesOnYourBoard` Sylveon ex ×3) and four texts on shipped members (Beedrill ex ×2, Paldean Tauros, Raticate ×2, Tinkaton, Beautifly ×2); WP28b's 7 texts / 11 printings named; no new reading; attacks 2,614 / 2,771; 949 `me` printings fully built*** — engine 0.490.0, MRV 42, NOT committed; the sweep PENDING)
+**Last updated:** 2026-10-08 — build session #548 (**P3-M5 — D608, *WP30 — THE `me` SNIPE / SPREAD WORDING: 7 attack texts / 13 `me` printings read and 5 `30th` printings keyed — "each of 2" (Split Bomb ×3, Dual Tail ×2), Disaster Shock ×3 (a fourth optional-cost skeleton, `defenderStatus`, inner confirm), Sonic Ripper ×2, Bone Sniper (`damageChosen.specialEnergyOnly`), Phantasmal Barrage, Stealthy Slash ×3 and Photon Bullets ×3 (keyed); WP30's other 8 texts named; attacks 2,632 / 2,771, 964 `me` printings fully built*** — engine 0.491.0, MRV 42, NOT committed; the whole-corpus sweep PENDING).
+
+**Last updated (was):** 2026-10-08 — build session #547 (**P3-M5 — D607, *WP28a — THE FIRST HALF OF THE SCALING COUNT SOURCES: 8 attack texts / 14 `me` printings — three new nullary `DamageCountSource` members (`energyInPlayBothSides` Delphox ×2, `toolsInPlayBothSides` Bronzong, `basicEnergyTypesOnYourBoard` Sylveon ex ×3) and four texts on shipped members (Beedrill ex ×2, Paldean Tauros, Raticate ×2, Tinkaton, Beautifly ×2); WP28b's 7 texts / 11 printings named; no new reading; attacks 2,614 / 2,771; 949 `me` printings fully built*** — engine 0.490.0, MRV 42, NOT committed; the sweep PENDING)
 
 **Last updated (was):** 2026-10-08 — build session #546 (**P3-M5 — D606, *WP25a — THE FIRST HALF OF THE `me` STADIUMS: 5 texts / 9 `me` printings — Prism Tower ×2 (discard 2, draw 1), Surfing Beach ×2 (Active {W} ↔ Benched {W}), Nighttime Mine (Tera attacks cost {C} more, `StadiumEffects.attackCostSurcharge`), Lumiose City ×2 and Celebratory Fanfare ×2 (the turn-ending Stadium use, `StadiumAbility.endsTurn`); Surfing Beach flips the D210 / D213 pinned survivors to KILLED; Battle Cage, Mystery Garden, Forest of Vitality, Dizzying Valley, Fossil Quarry and Risky Ruins dropped and named; R-LC1 / R-CF1 recorded UNRULED; trainers 373 / 447; 935 `me` printings fully built*** — engine 0.489.0, MRV 42, NOT committed; the sweep PENDING)
 
@@ -839,6 +841,41 @@
 
 ## NEXT (resume point)
 
+> ### ▶ THE NEXT CONCRETE ACTION (written 2026-10-08, after D608)
+>
+> 🛑 **D608 IS BUILT AND NOT COMMITTED** (worktree `/home/jofre/projects/luminous_ui-mega`, branch `mega-ingest`, on D607 = `e6239436`). D608 is WP30 of the Mega backlog (snipe / spread wording). Next: a review of D608, then the WP30 rest (b) or another package, or the landing of D581–D608 (rebase `mega-ingest` onto main; never `git add -A` — `apps/api/.wrangler` is a symlink to the main checkout's local D1).
+>
+> ✅ **`bun run check` IS GREEN**: `Test Files 650 passed (650) / Tests 15414 passed (15414) / CHECK_EXIT=0` (D607: 649 / 15388; D608 adds `snipeSpreadMeD608.test.ts` (23) and the census D608 block (3)).
+>
+> **(a) THE SLICE.** WP30 is 16 texts / 23 printings, over 20: the Mega families (Mega Eelektross ex ×3 with Disaster Shock, Mega Skarmory ex ×2) and the cheapest wording were taken. effects.ts: "each of N" (N ≥ 2) on `CHOSEN_ANY_TARGET` / `SELF_DISCARD_THEN_ANY_TARGET` as the shipped arity (Split Bomb ×3, Ambipom "Dual Tail" ×2); `BENCHED_SNIPE_TARGET_COUNTERS` without "Benched" → `opponentAny` (Greninja ex `mep-099`); literal compounds for Sonic Ripper ×2 (shuffle all Energy into the deck, then 220), Bone Sniper `me05-050` (the NEW `damageChosen.specialEnergyOnly`, interpreter.ts `snipeTargets` / `snipeNote`) and Phantasmal Barrage `me02.5-098` (discard all, 12 counters placed); the fourth optional-cost skeleton *"You may <cost> and make your opponent's Active Pokémon Paralyzed."* with payoff `defenderStatus` (Disaster Shock ×3: 190 first, then gate → inner confirm → discard 2 {L} → Paralyzed). registry.ts: `PHOTON_BULLETS` (Mewtwo ex `30th-064` / `-151` / `-157`, the ex-only spread without `ignoreWR`) and `STEALTHY_SLASH` (Greninja ex `30th-021` / `-148`) — attack-only keys for tcgdex's `<em>` faces. `sv` reader output byte-identical (before/after dump over both corpora; exactly the 7 `me` sentences differ).
+>
+> **(b) WP30 REST, NAMED** (8 texts / 8 printings, each needing vocabulary beyond the brief): Pikachu `30th-051` "Lightning Crash" (`<em>` / span markup and a typed discard-all before the any-target hit), Mismagius `me02.5-086` "Assassin's Magic" (a Special-Condition gate before Benched counters), Coalossal `me02.5-120` "Tar Cannon" (a discard-pile count gate behind a snipe), Genesect `me02-008` "Bug's Cannon" and Seaking `me05-014` "Hydro Jet" (a TYPED per-Energy multiplier on a chosen target), Frosmoth `me01-043` "Chilling Wings" and Ferrothorn `30th-104` "Kaboom Needles" (a clause after the parenthetical; the trailing splitter cuts at the first period), Deoxys `me04-032` "Psyspear" (an extra-Energy gate, a count source, on a bench snipe).
+>
+> **(c) MRV STAYS 42** (match.ts "STAYS 42 AT D608"): `specialEnergyOnly` is an optional key on a parking op, a widening read only in `snipeTargets` (`applyChoice` never re-derives it); `defenderStatus` is a reader output; the five keys are looked up by id. The 18 `me` faces in a v42 `cardPool` are unchanged.
+>
+> | Column | `me` D608 | Standard pool D608 |
+> |---|---|---|
+> | Attacks | 900 / 1039 | **2632 / 2771** |
+> | Abilities | 144 / 234 | **520 / 610** |
+> | Trainers | 109 / 183 | **373 / 447** |
+> | Special Energy | 11 / 11 | **22 / 22** |
+>
+> **964 `me` printings fully built** (949 + 15: Mega Eelektross ex ×3, Ambipom ×2, Mega Skarmory ex ×2, Mandibuzz, Greninja ex ×3, Spectrier, Mewtwo ex ×3). Pins stepped off the red run: the census D581 tally (reader [323, 853] → [330, 866], residue [112, 159] → [105, 146], built 872 → 885, headline 2,604 → 2,617) and every later block's `- 13`; D582 / D584 literals 873 → 886 / 875 → 888; registry size 1263 → 1268 (five files and the D273 raw length); D233's attack-id table and D581's / D582's `me` key lists (+5); producer counts `{ op: "shuffleDeck" }` 23 → 24 and `op: "conditionGate",` 19 → 20. Version tax: 258 stepped / 1 kept (the D607 heading).
+>
+> **D539 sweep.** Withdrawn in place, kept as written: `targetCounterSnipe.test.ts`'s "`Pokémon` without `Benched` … none is a printed sentence" (the `me` serie prints it; it reads at `opponentAny`) and its anchor-bytes rung; `wordingDriftMeD592.test.ts`'s unbuilt rewrites (three: Phantasmal Barrage is built); D597's Disaster Shock drop in decisions.md, progress.md, simulator.md and coverage-backlog-mega.md (built).
+>
+> **(d) THE MUTATION RECORD.** +21 D608 rows (4846 in all). precheck: 4846 mutants, the same 20 pre-existing broken rows (four rows this slice broke were re-pointed: `D400-anchor-count-back-to-the-literal`, `D401-compound-anchor-loses-its-terminator`, `D437-note-forgets-the-window`, `D530-anchor-loses-the-head`; `--only`: 4 killed). Probe `run.ts --decision D608 --allow-dirty`: 21 killed · 0 known · 0 GAP · 0 error, tree byte-identical after. Gate-witness `--only` (the 18 `opaque-anatomy-gate.ts` / `residue-census-gate.ts` rows): 18 killed · 0 error. Gates: residue-census, opaque-anatomy, splice, partition all OK.
+>
+> 🛑 **(0) THE WHOLE-CORPUS SWEEP IS PENDING** (D581–D607's too). Predicted: **4778 killed · 48 known survivor(s) · 0 GAP(S) · 20 error(s)** over **4,846** rows — 4825 + 21 = 4846; 4757 + 21 = 4778 killed; 48 survivors unchanged; 4778 + 48 + 20 = 4846. It assumes D607's prediction (4757 · 48 · 0 · 20 over 4825) holds. If it holds, D581–D608 close together. If it fails: an error count ≠ 20 means a broken `find` outside the pre-existing 20 (start with the four rows re-pointed above), a survivor count ≠ 48 means a D581–D608 row survived (name it, kill it or declare it), and a killed count short by k with errors at 20 means k rows GAP or are stale.
+>
+> **Pending decisions (UNRULED readings):** none new at D608 — "each of 2" is the shipped "2 of" arity (two different bodies, §8.6 when fewer), the Bone Sniper / Photon Bullets narrowings are D437's / D492's empty-set and Active-W/R readings, and Disaster Shock's typed cost is D589's row. R-LC1 / R-CF1 (D606), R-NZ1 / R-MP1 / R-KW1 (D605), R-TE1 / R-TP1 / R-NF1 (D604), R-PX6 (D603), R-GC2, R-GC3, R-TN1 (D601) and R-CW1 (D600) stand as recorded in the archived blocks below.
+>
+> Still owed from the Mega backlog: as at D607 (below), less WP30's taken texts; the WP30 rest is (b) above.
+>
+> ---
+>
+> **ARCHIVED — the resume point D608 was built from, kept rather than overwritten** (D607 has since been committed on `mega-ingest` as `e6239436`):
+>
 > ### ▶ THE NEXT CONCRETE ACTION (written 2026-10-08, after D607)
 >
 > 🛑 **D607 IS BUILT AND NOT COMMITTED** (worktree `/home/jofre/projects/luminous_ui-mega`, branch `mega-ingest`, on D606 = `59dcf041`). D607 is WP28a of the Mega backlog (the first half of WP28 scaling count sources). Next: a review of D607, then WP28b (the seven texts below) or another package, or the landing of D581–D607 (rebase `mega-ingest` onto main; never `git add -A` — `apps/api/.wrangler` is the setup symlink).
@@ -1170,7 +1207,7 @@
 >
 > ✅ **`bun run check` IS GREEN**: `typecheck-coverage`, `tsc -b`, `lint-coverage`, `biome lint --error-on-warnings`, `Test Files 640 passed (640) / Tests 15154 passed (15154) / CHECK_EXIT=0` (D596: 639 / 15129; D597 adds `discardScaledMeD597.test.ts` (22) and the census D597 block (3)).
 >
-> **(a) THE SLICE.** WP29 is 12 texts / 24 printings, over 20, so the Mega Charizard X ex / Mega Diancie ex / Mega Abomasnow ex subset was taken first, plus the siblings on the same readers: 8 texts / 18 printings. effects.ts `COMMA_DISCARD_SCALED_DAMAGE` (arm 10d, a separate anchor beside `ENERGY_DISCARD_SCALED_DAMAGE`, whose bytes and D402 rows are untouched) reads *"Discard <any amount of / up to N> <noun> from <among your Pokémon / this Pokémon / your hand>, and this attack does N damage for each card you discarded in this way."*: Inferno X ×4 (`me02-013` / `-109` / `-125` / `-130`; `discardEnergy` from `yours`, {R}), Garland Ray ×3 (`me02-041`, `me02.5-267` / `-282`; from `yourActive`, cap 2), Steel Cutter (`me05-060`) and Double Eater (`me03-032`) on D489's declinable `payFromHand` (it requires the printed ceiling, so "any amount of … from your hand" stays loud). `milledCardFilter` reads "Basic {W} Energy card", mill-only (Hammer-lanche `me01-036` / `-157`, Iceberg Breaker `me04-024`). `deriveAttackDiscardScaledBoost` gains `handDiscard` (Shooting Moons `mep-072`, `me03-031` / `-103` / `-119`: `payFromHand` cap 4, then `damageDefender` with the printed base; the "You may" is the declinable pick itself). registry.ts `INFERNO_X` keys `mep-023` / `-029`, whose text prints tcgdex's "[R]" — the `{R}` arm's program byte for byte. **Dropped and named:** Mega Eelektross ex "Disaster Shock" ×3 (status payoff; Split Bomb is WP30), Slowpoke "All-You-Can-Yeet" `me05-029`, Team Rocket's Honchkrow "Rocket Feathers" `me02.5-127`, Pawmot "Voltaic Fist" `me02-034`. **The `sv` reader output is byte-identical:** every `deriveAttack*` reader and both splitters over the 1,091 corpus rows dumped before and after; only the 7 `me` reader sentences differ.
+> **(a) THE SLICE.** WP29 is 12 texts / 24 printings, over 20, so the Mega Charizard X ex / Mega Diancie ex / Mega Abomasnow ex subset was taken first, plus the siblings on the same readers: 8 texts / 18 printings. effects.ts `COMMA_DISCARD_SCALED_DAMAGE` (arm 10d, a separate anchor beside `ENERGY_DISCARD_SCALED_DAMAGE`, whose bytes and D402 rows are untouched) reads *"Discard <any amount of / up to N> <noun> from <among your Pokémon / this Pokémon / your hand>, and this attack does N damage for each card you discarded in this way."*: Inferno X ×4 (`me02-013` / `-109` / `-125` / `-130`; `discardEnergy` from `yours`, {R}), Garland Ray ×3 (`me02-041`, `me02.5-267` / `-282`; from `yourActive`, cap 2), Steel Cutter (`me05-060`) and Double Eater (`me03-032`) on D489's declinable `payFromHand` (it requires the printed ceiling, so "any amount of … from your hand" stays loud). `milledCardFilter` reads "Basic {W} Energy card", mill-only (Hammer-lanche `me01-036` / `-157`, Iceberg Breaker `me04-024`). `deriveAttackDiscardScaledBoost` gains `handDiscard` (Shooting Moons `mep-072`, `me03-031` / `-103` / `-119`: `payFromHand` cap 4, then `damageDefender` with the printed base; the "You may" is the declinable pick itself). registry.ts `INFERNO_X` keys `mep-023` / `-029`, whose text prints tcgdex's "[R]" — the `{R}` arm's program byte for byte. **Dropped and named:** Mega Eelektross ex "Disaster Shock" ×3 (status payoff; Split Bomb is WP30) [🆕🆕🆕 D608: both BUILT — WP30], Slowpoke "All-You-Can-Yeet" `me05-029`, Team Rocket's Honchkrow "Rocket Feathers" `me02.5-127`, Pawmot "Voltaic Fist" `me02-034`. **The `sv` reader output is byte-identical:** every `deriveAttack*` reader and both splitters over the 1,091 corpus rows dumped before and after; only the 7 `me` reader sentences differ.
 >
 > **(b) MRV STAYS 42** (match.ts "STAYS 42 AT D597"): no op, op key or persisted member; every park is an existing prompt (`discardEnergy`, `chooseCards`) whose continuation is persisted, so a 0.480 rollback resumes it AS BUILT.
 >
@@ -35337,7 +35374,8 @@ the next api deploy (D18).
 |---|---|---|
 | backend-data | P1 | ✅ M1–M9 + P2-M1 + task-17 api deployed (Worker `9b1ec1d1`, 2026-07-16); OAuth secrets pending (user) |
 | deck-builder | P2 | ✅ ALL 19 tasks closed (task 17 landed + e2e-verified locally); only follow-ups left |
-| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D607, *WP28a — the first half of the scaling count sources: 8 attack texts / 14 `me` printings over three new nullary `DamageCountSource` members (both-board Energy, both-board Tools, Basic Energy types) and four texts on shipped members; WP28b's seven named; attacks 2,614 / 2,771*** — engine 0.490.0, MRV 42, NOT committed; the sweep PENDING) |
+| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D608, *WP30 — the `me` snipe / spread wording: 7 attack texts / 13 `me` printings read ("each of 2", Disaster Shock's optional-cost skeleton, three literal compounds, `damageChosen.specialEnergyOnly`, the unbenched counter snipe) and 5 `30th` printings keyed; WP30's other 8 texts named; attacks 2,632 / 2,771*** — engine 0.491.0, MRV 42, NOT committed; the sweep PENDING) |
+| simulator (prior) | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D607, *WP28a — the first half of the scaling count sources: 8 attack texts / 14 `me` printings over three new nullary `DamageCountSource` members (both-board Energy, both-board Tools, Basic Energy types) and four texts on shipped members; WP28b's seven named; attacks 2,614 / 2,771*** — engine 0.490.0, MRV 42, NOT committed; the sweep PENDING) |
 | simulator (prior) | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D606, *WP25a — the first half of the `me` Stadiums: 5 texts / 9 `me` printings (Prism Tower, Surfing Beach, Nighttime Mine, Lumiose City, Celebratory Fanfare) over `StadiumAbility.endsTurn` and `StadiumEffects.attackCostSurcharge`; the D210 / D213 pinned survivors KILLED; six Stadiums dropped and named; R-LC1 / R-CF1 UNRULED; trainers 373 / 447*** — engine 0.489.0, MRV 42, NOT committed; the sweep PENDING) |
 | simulator (prior) | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D605, *WP34 — coin (the rest): 5 texts / 12 `me` printings over `damageChosen.perHeadsInPlay` / `flipEach`, a choose-a-Special-Condition coin row and a coin per named body in play; Watchog and Ditto dropped and named; R-NZ1 / R-MP1 / R-KW1 UNRULED; attacks 2,600 / 2,771*** — engine 0.488.0, MRV 42, NOT committed; the sweep PENDING) |
 | simulator (prior) | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D604, *WP18 — the Mega Evolution typed Special Energies: 8 texts / 8 `me` printings on eight new `energy` objects over `EnergyProgram.holderType` and `EnergyOnAttach.benchSearch`; R-TE1 / R-TP1 / R-NF1 UNRULED; special energy 22 / 22*** — engine 0.487.0, MRV 42, NOT committed; the sweep PENDING) |
@@ -35562,6 +35600,17 @@ the next api deploy (D18).
 Legend: 📝 backlog · 📋 specced · 🔎 research · 🚧 in progress · ✅ done
 
 ## Session log
+
+### 2026-10-08 — build session #548 (P3-M5 — D608)
+
+**WP30 — THE `me` SNIPE / SPREAD WORDING. `MATCH_RECORD_VERSION` STAYS 42.**
+
+Built in the `luminous_ui-mega` worktree on D607 (`e6239436`); the main checkout was not touched. Every id `git grep`-ped
+(none in the tree) and every text read off the LOCAL D1 first. Over 20 printings, so the Mega families and the cheapest wording
+were taken: 7 texts / 13 printings read, 5 `30th` printings keyed, 15 cards fully built; WP30's other 8 texts named. One new
+op field (`damageChosen.specialEnergyOnly`), one new payoff member (`defenderStatus`). No new reading.
+`snipeSpreadMeD608.test.ts` (23), census D608 block (3); check 650 / 15414. Version tax 258 stepped / 1 kept. +21 mutant
+rows, all KILLED; four rows re-pointed. Sweep PENDING (NEXT (0)). NOT committed.
 
 ### 2026-10-08 — build session #547 (P3-M5 — D607)
 

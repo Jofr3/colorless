@@ -3061,6 +3061,7 @@ function stepOp(
             op.filter,
             op.perDamageCounterOnTarget === true,
             op.perHeadsInPlay !== undefined,
+            op.specialEnergyOnly === true,
           ),
         },
       };
@@ -12562,6 +12563,8 @@ function snipeNote(
   /** 🆕🆕🆕 D605 — `op.perHeadsInPlay`: the coins are flipped after the pick, so the caption
       quotes the printed rule (*"(50 damage for each heads)"*), D530's precedent one line up. */
   perHeads = false,
+  /** 🆕🆕🆕 D608 — `op.specialEnergyOnly`: the caption names the narrowed set (D437's reason). */
+  specialEnergyOnly = false,
 ): string {
   const verb = optional ? "You may choose" : "Choose";
   const each = deals
@@ -12594,7 +12597,11 @@ function snipeNote(
   // refuses it against any count but 1 on exactly that number agreement, so a plural
   // spelling here would be a branch no build can reach — the unreachable arm D205
   // says to remove rather than test around.
-  const window = damagedOnly ? " that has any damage counters on it" : "";
+  const window = damagedOnly
+    ? " that has any damage counters on it"
+    : specialEnergyOnly
+      ? " that has any Special Energy attached"
+      : "";
   if (perDamageCounterOnTarget) {
     return `${verb} ${count} of ${owner} ${zone}${window} (${amount} damage for each damage counter on it).`;
   }
@@ -19427,6 +19434,14 @@ export function snipeTargets(
           // 🆕🆕🆕 D578 — the IN-PLAY card (`inPlayCardOf`), for a typed narrowing.
           return pokemon !== undefined && matchesFilter(inPlayCardOf(state, pokemon), narrowing);
         });
+  // 🆕🆕🆕 D608 — Bone Sniper's BOARD narrowing: a candidate must hold a Special Energy. A ref
+  // that resolves to no body is DROPPED, the window's rule below. Never co-printed with it.
+  if (op.specialEnergyOnly === true) {
+    return classed.filter((ref) => {
+      const pokemon = refPokemon(state, ref);
+      return pokemon !== undefined && hasAttachedEnergy(state, pokemon, "special");
+    });
+  }
   if (op.damagedOnly !== true) return classed;
   // A ref that resolves to no body is DROPPED rather than admitted — the narrowed
   // sentence must not offer a body it cannot read (`knockOutChosenTargets`' rule

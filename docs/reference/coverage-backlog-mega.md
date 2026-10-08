@@ -6,6 +6,27 @@
 > `coverage-backlog-legal.md`; its pool is unchanged and whole. The suite-side figures are
 > `censusAtHead.test.ts`'s D581 block and `censusAttackCorpusMe.ts`.
 
+## 🆕 D608 update (engine 0.491.0) — snipe / spread wording (WP30)
+
+7 attack texts / 13 `me` printings newly read, plus 5 `30th` printings keyed by id (`snipeSpreadMeD608.test.ts`). "each of 2"
+is the shipped arity (Mega Eelektross ex ×3 "Split Bomb", Ambipom ×2 "Dual Tail"); Disaster Shock ×3 is a fourth optional-cost
+skeleton with a `defenderStatus` payoff (inner confirm); Mega Skarmory ex ×2 "Sonic Ripper" and Spectrier "Phantasmal Barrage"
+are literal cost-then-snipe compounds; Mandibuzz "Bone Sniper" uses the new `damageChosen.specialEnergyOnly`; Greninja ex
+`mep-099` "Stealthy Slash" is the counter-scaled snipe at `opponentAny`. Keyed (`<em>` markup): Mewtwo ex ×3 "Photon Bullets"
+(the ex-only spread, no `ignoreWR`) and Greninja ex `30th-021` / `-148`. **Finished:** all 15 cards. **WP30 rest, named**
+(8 texts / 8 printings): Pikachu `30th-051` (markup + typed discard), Mismagius `me02.5-086` (gated counters), Coalossal
+`me02.5-120` (discard-pile gate behind a snipe), Genesect `me02-008` / Seaking `me05-014` (typed per-Energy snipe), Frosmoth
+`me01-043` / Ferrothorn `30th-104` (a clause after the parenthetical), Deoxys `me04-032` (extra-Energy gate on a bench snipe).
+
+| Column | `me` built / units (D608) | Standard pool D608 |
+|---|---|---|
+| Attacks | 900 / 1,039 (+18) | **2,632 / 2,771** |
+| Abilities | 144 / 234 | **520 / 610** |
+| Trainers | 109 / 183 | **373 / 447** |
+| Special Energy | 11 / 11 | **22 / 22** |
+
+**Fully built `me` printings: 964** (949 + 15).
+
 ## 🆕 D607 update (engine 0.490.0) — the first half of the scaling count sources (WP28a)
 
 8 attack texts / 14 `me` printings, readers only (`scalingCountsMeD607.test.ts`). Three new nullary `DamageCountSource` members:
@@ -183,7 +204,7 @@ Eater: the `me` comma spelling of D402's `×` fold (`COMMA_DISCARD_SCALED_DAMAGE
 Moons ×4: `deriveAttackDiscardScaledBoost`'s new `handDiscard` member. The two "[R]" Inferno X `mep-023` / `-029`:
 keyed on `INFERNO_X`. **Finished:** Mega Charizard X ex ×6, Mega Abomasnow ex ×2, Mega Diancie ex ×3, Avalugg
 `me04-024`, Skarmory `me05-060`, Mawile `me03-032`. Mega Clefable ex ×4 still wait on "Luminous Wing".
-**Still open in WP29 (named):** Mega Eelektross ex "Disaster Shock" ×3 (status payoff; Split Bomb is WP30), Slowpoke
+**Still open in WP29 (named):** Mega Eelektross ex "Disaster Shock" ×3 (status payoff; Split Bomb is WP30) [🆕🆕🆕 D608: both BUILT — WP30], Slowpoke
 "All-You-Can-Yeet" `me05-029`, Team Rocket's Honchkrow "Rocket Feathers" `me02.5-127`, Pawmot "Voltaic Fist"
 `me02-034`.
 
@@ -573,10 +594,10 @@ group wins; the grouping is a reading aid, not a census figure).
 - 2× Flip a coin. If heads, search your deck for a Pokémon and switch it with this Pokémon. Any attached cards, damage counters, Special Conditions, turns in play, and any other effects remain on the new Pokémon. If you switched a Pokémon in this way, put this card into your deck. Then, shuffle your deck. [🆕🆕🆕 D605: dropped from WP34 — a deck Pokémon switched in for the attacker needs a new op]
 - 2× If your opponent's Active Pokémon already has any damage counters on it, this attack's base damage is 30.
 - 2× Place 13 damage counters on 1 of your opponent's Pokémon. [🆕🆕🆕 D592: BUILT]
-- 2× This attack does 30 damage to 1 of your opponent's Pokémon for each damage counter on that Pokémon. &lt;em>(Don't apply Weakness and Resistance for Benched Pokémon.)&lt;/em>
+- 2× This attack does 30 damage to 1 of your opponent's Pokémon for each damage counter on that Pokémon. &lt;em>(Don't apply Weakness and Resistance for Benched Pokémon.)&lt;/em> [🆕🆕🆕 D608: BUILT]
 - 2× This attack does 40 damage for each damage counter on all of your Benched Rattata. [🆕🆕🆕 D607: BUILT]
 - 2× This attack does 50 more damage for each of your Benched Pokémon that has any damage counters on it. [🆕🆕🆕 D607: WP28b]
-- 1× Discard all Energy from this Pokémon and place 12 damage counters on 1 of your opponent's Pokémon.
+- 1× Discard all Energy from this Pokémon and place 12 damage counters on 1 of your opponent's Pokémon. [🆕🆕🆕 D608: BUILT]
 - 1× Double the number of damage counters on each of your opponent's Pokémon.
 - 1× During your opponent's next turn, whenever they attach an Energy card from their hand to the Defending Pokémon, place 8 damage counters on that Pokémon.
 - 1× If any of your Benched Pancham have any damage counters on them, this attack does 120 more damage. [🆕🆕🆕 D593: BUILT]
@@ -584,13 +605,13 @@ group wins; the grouping is a reading aid, not a census figure).
 - 1× If this Pokémon has any damage counters on it, this attack can be used for {D}. [🆕🆕🆕 D593: BUILT]
 - 1× If you have 13 or more Pokémon that have the Hide 'n' Sneak Ability in your discard pile, choose 2 of your opponent's Pokémon and quadruple the number of damage counters on each of them.
 - 1× If you have 6 or more Pokémon that have the Hide 'n' Sneak Ability in your discard pile, place 4 damage counters on each of your opponent's Pokémon.
-- 1× If your opponent's Active Pokémon is affected by a Special Condition, place 6 damage counters on 1 of your opponent's Benched Pokémon.
+- 1× If your opponent's Active Pokémon is affected by a Special Condition, place 6 damage counters on 1 of your opponent's Benched Pokémon. [🆕🆕🆕 D608: WP30 rest]
 - 1× Place 1 damage counter on 1 of your opponent's Pokémon.
 - 1× Place 1 damage counter on your opponent's Active Pokémon.
 - 1× Place 3 damage counters on your opponent's Active Pokémon. [🆕🆕🆕 D592: BUILT]
 - 1× Place 5 damage counters on 1 of your opponent's Benched Pokémon. [🆕🆕🆕 D592: BUILT]
 - 1× Place damage counters on your opponent's Active Pokémon until its remaining HP is 50. [🆕🆕🆕 D592: BUILT]
-- 1× This attack does 30 damage to 1 of your opponent's Pokémon for each damage counter on that Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)
+- 1× This attack does 30 damage to 1 of your opponent's Pokémon for each damage counter on that Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.) [🆕🆕🆕 D608: BUILT]
 - 1× This attack does 40 damage for each of your Pokémon that has "Tauros" in its name that has any damage counters on it. [🆕🆕🆕 D607: BUILT]
 
 ### Coin flips — 21 text(s) / 32 printing(s)
@@ -682,20 +703,20 @@ group wins; the grouping is a reading aid, not a census figure).
 ### Spread / snipe damage — 15 text(s) / 27 printing(s)
 
 - 6× For each of your Benched Pokémon, search your deck for a Basic {P} Energy card and attach it to that Pokémon. Then, shuffle your deck.
-- 3× This attack does 50 damage to each of your opponent's Pokémon &lt;em>ex&lt;/em>. &lt;em>(Don't apply Weakness and Resistance for Benched Pokémon.)&lt;/em>
-- 3× This attack does 60 damage to each of 2 of your opponent's Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)
-- 2× Discard 2 Energy from this Pokémon, and this attack does 60 damage to each of 2 of your opponent's Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)
+- 3× This attack does 50 damage to each of your opponent's Pokémon &lt;em>ex&lt;/em>. &lt;em>(Don't apply Weakness and Resistance for Benched Pokémon.)&lt;/em> [🆕🆕🆕 D608: BUILT]
+- 3× This attack does 60 damage to each of 2 of your opponent's Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.) [🆕🆕🆕 D608: BUILT]
+- 2× Discard 2 Energy from this Pokémon, and this attack does 60 damage to each of 2 of your opponent's Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.) [🆕🆕🆕 D608: BUILT]
 - 2× If you have no cards in your hand, choose an attack from 1 of your opponent's Pokémon in play and use it as this attack.
-- 2× Shuffle all Energy attached to this Pokémon into your deck, and this attack does 220 damage to 1 of your opponent's Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)
-- 1× Discard all &lt;span class="energy-symbol Lightning" title="Lightning">Lightning&lt;/span> Energy from this Pokémon, and this attack does 90 damage to 1 of your opponent's Pokémon. &lt;em>(Don't apply Weakness and Resistance for Benched Pokémon.)&lt;/em>
-- 1× If this Pokémon has at least 2 extra Energy attached (in addition to this attack's cost), this attack also does 120 damage to 1 of your opponent's Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)
+- 2× Shuffle all Energy attached to this Pokémon into your deck, and this attack does 220 damage to 1 of your opponent's Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.) [🆕🆕🆕 D608: BUILT]
+- 1× Discard all &lt;span class="energy-symbol Lightning" title="Lightning">Lightning&lt;/span> Energy from this Pokémon, and this attack does 90 damage to 1 of your opponent's Pokémon. &lt;em>(Don't apply Weakness and Resistance for Benched Pokémon.)&lt;/em> [🆕🆕🆕 D608: WP30 rest]
+- 1× If this Pokémon has at least 2 extra Energy attached (in addition to this attack's cost), this attack also does 120 damage to 1 of your opponent's Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.) [🆕🆕🆕 D608: WP30 rest]
 - 1× Move a {W} Energy from this Pokémon to 1 of your Benched Pokémon.
-- 1× This attack does 140 damage to 1 of your opponent's Pokémon. If you don't have 10 or more Basic {F} Energy cards in your discard pile, this attack does nothing. (Don't apply Weakness and Resistance for Benched Pokémon.)
-- 1× This attack does 20 damage to 1 of your opponent's Pokémon for each {G} Energy attached to this Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)
-- 1× This attack does 20 damage to each of your opponent's Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.) Your opponent's Active Pokémon is now Asleep.
-- 1× This attack does 30 damage to 1 of your opponent's Pokémon for each {W} Energy attached to this Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)
-- 1× This attack does 50 damage to each of your opponent's Pokémon. &lt;em>(Don't apply Weakness and Resistance for Benched Pokémon.) &lt;/em>This Pokémon also does 130 damage to itself.
-- 1× This attack does 70 damage to 1 of your opponent's Pokémon that has any Special Energy attached. (Don't apply Weakness and Resistance for Benched Pokémon.)
+- 1× This attack does 140 damage to 1 of your opponent's Pokémon. If you don't have 10 or more Basic {F} Energy cards in your discard pile, this attack does nothing. (Don't apply Weakness and Resistance for Benched Pokémon.) [🆕🆕🆕 D608: WP30 rest]
+- 1× This attack does 20 damage to 1 of your opponent's Pokémon for each {G} Energy attached to this Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.) [🆕🆕🆕 D608: WP30 rest]
+- 1× This attack does 20 damage to each of your opponent's Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.) Your opponent's Active Pokémon is now Asleep. [🆕🆕🆕 D608: WP30 rest]
+- 1× This attack does 30 damage to 1 of your opponent's Pokémon for each {W} Energy attached to this Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.) [🆕🆕🆕 D608: WP30 rest]
+- 1× This attack does 50 damage to each of your opponent's Pokémon. &lt;em>(Don't apply Weakness and Resistance for Benched Pokémon.) &lt;/em>This Pokémon also does 130 damage to itself. [🆕🆕🆕 D608: WP30 rest]
+- 1× This attack does 70 damage to 1 of your opponent's Pokémon that has any Special Energy attached. (Don't apply Weakness and Resistance for Benched Pokémon.) [🆕🆕🆕 D608: BUILT]
 
 ### Energy: attach / accelerate — 6 text(s) / 9 printing(s)
 
@@ -709,7 +730,7 @@ group wins; the grouping is a reading aid, not a census figure).
 ### Energy: discard / move / return as a cost or effect — 6 text(s) / 11 printing(s)
 
 - 3× Discard all Pokémon Tools and Special Energy from all of your opponent's Pokémon. [🆕🆕🆕 D592: BUILT]
-- 3× You may discard 2 {L} Energy from this Pokémon and make your opponent's Active Pokémon Paralyzed.
+- 3× You may discard 2 {L} Energy from this Pokémon and make your opponent's Active Pokémon Paralyzed. [🆕🆕🆕 D608: BUILT]
 - 2× Discard 4 Basic {R} Energy cards from your hand. If you can't discard 4 cards in this way, this attack does nothing. [🆕🆕🆕 D586: BUILT]
 - 1× Discard 2 Energy from this Pokémon, and your opponent's Active Pokémon is now Paralyzed.
 - 1× Discard a &lt;span class="energy-symbol Fire" title="Fire">Fire&lt;/span> Energy, a &lt;span class="energy-symbol Water" title="Water">Water&lt;/span> Energy, and a &lt;span class="energy-symbol Lightning" title="Lightning">Lightning&lt;/span> Energy from this Pokémon.

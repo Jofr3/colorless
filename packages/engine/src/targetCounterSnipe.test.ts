@@ -358,11 +358,24 @@ describe("D530 §1 — file line 551 derives to EXACTLY the count-1 opponentBenc
     expect(splitAttackTrailingClause(suffixed)).toBeNull();
   });
 
-  it("🛑 the single-axis near-misses: `2 of`, `Pokémon` without `Benched`, and `on this Pokémon` are null on EVERY reader — none is a printed sentence", () => {
+  it("🛑 the single-axis near-misses: `2 of`, `Pokémon` without `Benched`, and `on this Pokémon` are null on EVERY reader — none is a printed sentence (🆕🆕🆕 D608 (D539): ~~`Pokémon` without `Benched`~~ — WITHDRAWN: the `me` serie prints it (Greninja ex \"Stealthy Slash\", 30 per counter) and it reads at `opponentAny` since D608; the other two still hold, and none of the three is printed in `sv`)", () => {
     const twoOf = PRINTED.replace("to 1 of", "to 2 of");
     const unbenched = PRINTED.replace("Benched Pokémon for", "Pokémon for");
     const onThis = PRINTED.replace("on that Pokémon", "on this Pokémon");
-    for (const s of [twoOf, unbenched, onThis]) {
+    // 🆕🆕🆕 D608 (D539): the unbenched spelling is a `me` sentence now read at `opponentAny`.
+    expect(legalAttackCorpus().some(([, t]) => t === unbenched)).toBe(false);
+    expect(deriveAttackEffect(unbenched)).toEqual([
+      {
+        op: "damageChosen",
+        target: "opponentAny",
+        amount: 20,
+        count: 1,
+        source: "attack",
+        deals: true,
+        perDamageCounterOnTarget: true,
+      },
+    ]);
+    for (const s of [twoOf, onThis]) {
       expect(s).not.toBe(PRINTED);
       expect(legalAttackCorpus().some(([, t]) => t === s), s).toBe(false);
       for (const reader of READERS) expect(reader(s), `${reader.name}: ${s.slice(24, 60)}`).toBeNull();
@@ -748,7 +761,7 @@ const RAW: Record<string, string> = (
 describe("D530 §6 — the version steps and the bytes this suite drove are the bytes that shipped", () => {
   it("engineVersion and `manifest.version` agree, and the bump is owed for BEHAVIOUR", () => {
     // ⚠️ The version is NOT spelled in this `it(…)` title (D460's fourth class).
-    expect(engineVersion).toBe("0.490.0");
+    expect(engineVersion).toBe("0.491.0");
     expect(manifest.version).toBe(engineVersion);
   });
 
@@ -758,7 +771,8 @@ describe("D530 §6 — the version steps and the bytes this suite drove are the 
     expect(index).toContain("engineVersion 0.415.0 → **0.416.0** (D530");
     const effects = Object.entries(RAW).find(([k]) => k.endsWith("/effects.ts"))?.[1] ?? "";
     expect(effects).toContain(
-      "const BENCHED_SNIPE_TARGET_COUNTERS = new RegExp(\n  `^This attack does (\\\\d+) damage to 1 of your opponent['’]s Benched Pokémon ` +\n    \"for each damage counter on that Pokémon\\\\.\" +\n    `(?: \\\\(Don['’]t apply Weakness and Resistance for Benched Pokémon\\\\.\\\\))?$`,\n);",
+      // 🆕🆕🆕 D608 (D539): `Benched ` is an optional group since WP30's Stealthy Slash.
+      "const BENCHED_SNIPE_TARGET_COUNTERS = new RegExp(\n  `^This attack does (\\\\d+) damage to 1 of your opponent['’]s (Benched )?Pokémon ` +\n    \"for each damage counter on that Pokémon\\\\.\" +\n    `(?: \\\\(Don['’]t apply Weakness and Resistance for Benched Pokémon\\\\.\\\\))?$`,\n);",
     );
     expect(effects).toContain("          deals: true,\n          perDamageCounterOnTarget: true,\n");
     expect(effects).toContain("      perDamageCounterOnTarget?: true;");

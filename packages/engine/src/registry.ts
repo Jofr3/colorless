@@ -17850,6 +17850,50 @@ const CELEBRATORY_FANFARE: CardProgram = {
   },
 };
 
+// ── 🆕🆕🆕 D608 — WP30: TWO `30th` ATTACK OBJECTS, KEYED BY ID. Text off the LOCAL D1; both print
+//    tcgdex's `<em>` markup (WP06), so no reader claims them. `snipeSpreadMeD608.test.ts`. ──
+
+/** 🆕🆕🆕 **D608 — Mewtwo ex `30th-064` / `-151` / `-157` "Photon Bullets"** (attack index **0**,
+    {P}{P}, no printed damage): *"This attack does 50 damage to each of your opponent's Pokémon
+    <em>ex</em>. <em>(Don't apply Weakness and Resistance for Benched Pokémon.)</em>"* The ex-only
+    whole-side spread: D492's `count: "all"` + `suffixPokemon ex` op WITHOUT `ignoreWR` (the printed
+    parenthetical is the reminder, D539's reading), so an ex Active takes W/R and a non-ex Active is
+    not hit. */
+const PHOTON_BULLETS: CardProgram = {
+  attack: {
+    0: [
+      {
+        op: "damageChosen",
+        target: "opponentAny",
+        amount: 50,
+        count: "all",
+        source: "attack",
+        deals: true,
+        filter: { kind: "suffixPokemon", suffix: "ex" },
+      },
+    ],
+  },
+};
+
+/** 🆕🆕🆕 **D608 — Greninja ex `30th-021` / `-148` "Stealthy Slash"** (attack index **0**, {W}): the
+    `mep-099` sentence with its parenthetical in `<em>`. effects.ts `BENCHED_SNIPE_TARGET_COUNTERS`'s
+    `opponentAny` program for that sentence, byte for byte (the suite pins the equality). */
+const STEALTHY_SLASH: CardProgram = {
+  attack: {
+    0: [
+      {
+        op: "damageChosen",
+        target: "opponentAny",
+        amount: 30,
+        count: 1,
+        source: "attack",
+        deals: true,
+        perDamageCounterOnTarget: true,
+      },
+    ],
+  },
+};
+
 const REGISTRY: Record<string, CardProgram> = {
   // Professor's Research (SV base prints)
   "sv01-189": PROFESSORS_RESEARCH,
@@ -18989,6 +19033,12 @@ const REGISTRY: Record<string, CardProgram> = {
   "me03-111": LUMIOSE_CITY, // Lumiose City
   "mep-028": CELEBRATORY_FANFARE, // Celebratory Fanfare — heal 10 from each; healed any: the turn ends
   "mep-120": CELEBRATORY_FANFARE, // Celebratory Fanfare
+  // 🆕🆕🆕 D608 — WP30: 5 `30th` ATTACK-only keys / 2 objects, MID-MAP (`raw[last]` does not move).
+  "30th-064": PHOTON_BULLETS, // Mewtwo ex "Photon Bullets" (attack 0) — 50 to each of the opponent's Pokémon ex
+  "30th-151": PHOTON_BULLETS, // Mewtwo ex
+  "30th-157": PHOTON_BULLETS, // Mewtwo ex
+  "30th-021": STEALTHY_SLASH, // Greninja ex "Stealthy Slash" (attack 0) — 30 per counter on the chosen body
+  "30th-148": STEALTHY_SLASH, // Greninja ex
   // ── D190 — THE **STANDARD-LEGAL** REPRINT-ALIAS MAP (Tier 0 of
   //    `docs/reference/coverage-backlog-legal.md`). 22 printings, 9 map targets,
   //    ZERO new code: every row below prints a sentence that is already authored
