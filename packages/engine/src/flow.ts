@@ -494,7 +494,14 @@ function koPrizeReduction(
     per body, on the PRE-batch board: an attack epilogue (`attackerSeat` present — pass 0 only),
     the attacker on the OTHER seat (a recoil or self-damage KO of the attacker's own body is
     refused), and the body made lethal by DAMAGE (not `knockOutDefender`'s doom). The clauses
-    Amulet of Hope reads in `collectKnockOutPass` (D566), as one predicate the D598 rows share. */
+    Amulet of Hope reads in `collectKnockOutPass` (D566), as one predicate the D598 rows share.
+    🆕🆕🆕 D601 (D598 review M2) — ONE ARM DIFFERS FROM `byAttackFor`, ON PURPOSE: a ref whose body
+    cannot be found answers FALSE here and TRUE there. `byAttackFor`'s TRUE degrades a miss to the
+    pre-D414 batch-level mark six shipped printings had; the D598 rows had no such reading, and
+    for them "the behaviour already shipped" is no effect, so FALSE is the same rule. The arm is
+    unreachable (`planPrizes` only sees refs read off that board; it writes latches and the rng,
+    never a body), so aligning it would be an engine change nothing observes. Pinned by
+    `koAbilitiesMeD598.test.ts` §3 and `D601-cause-miss-answers-true`. */
 export function koByOpponentAttack(
   state: GameState,
   ref: { seat: Seat; uid: string },
@@ -523,7 +530,9 @@ export function koByOpponentPokemonEx(
 /** 🆕🆕🆕 §8.1 (D598) — Mega Gengar ex "Shadowy Concealment" applied to one KO's running count:
     *"If 1 of your {D} Pokémon is Knocked Out by damage from an attack from your opponent's Pokémon
     ex, that player takes 1 fewer Prize card."* Composed onto `attachedPrizeReductions`' result in
-    `planPrizes` (after it, before the bonuses — D323's printed order). Nothing left to reduce is
+    `planPrizes` (after it, before the bonuses — D323's printed order [🆕🆕🆕 D601: D323 orders only
+    reductions before bonuses; Concealment AFTER the attached reductions is R-GC2, UNRULED, and one
+    application per Knock Out in a batch is R-GC3, UNRULED]). Nothing left to reduce is
     not an application (its `count === 0` rule): no row. Otherwise `ABILITY_TRIGGERED` on the
     holder and one `PRIZE_REDUCED`, the count clamped at 0. */
 function seatPrizeReduction(

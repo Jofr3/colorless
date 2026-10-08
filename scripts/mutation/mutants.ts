@@ -50373,4 +50373,25 @@ export const MUTANTS: Mutant[] = [
     replace: "",
     expectKilledBy: ["packages/engine/src/censusAtHead.test.ts"],
   },
+  // ── 🆕🆕🆕 D601 — D598's open review findings: R-GC3 (Shadowy Concealment per Knock Out) and M2 (the
+  //    cause predicate's miss arm). Every `find` occurs once (precheck); every replace names only what
+  //    flow.ts binds. ──
+  {
+    id: "D601-concealment-once-per-batch",
+    decision: "D601",
+    what: "Shadowy Concealment answers only for the first Knock Out of a batch (a stand-in for R-GC3's once-per-Prize-taking reversal): the second {D} body KO'd by the same ex attack pays full. Killed by koAbilitiesMeD598 §2 (R-GC3).",
+    file: "packages/engine/src/flow.ts",
+    find: "      const attached = seatPrizeReduction(\n        attachedPrizeReductions(next, ref, attackerSeat, count),\n        ref,\n        attackerSeat,\n        attackerUid,\n      );",
+    replace: "      const attached = seatPrizeReduction(\n        attachedPrizeReductions(next, ref, attackerSeat, count),\n        ref,\n        attackerSeat,\n        entries.length > 0 ? undefined : attackerUid,\n      );",
+    expectKilledBy: ["packages/engine/src/koAbilitiesMeD598.test.ts"],
+  },
+  {
+    id: "D601-cause-miss-answers-true",
+    decision: "D601",
+    what: "`koByOpponentAttack` aligned with `byAttackFor`'s miss arm: a ref with no body on the board answers true. Killed by koAbilitiesMeD598 §3 (D601, M2).",
+    file: "packages/engine/src/flow.ts",
+    find: "  return body !== undefined && !lethalByEffect(body, state.turn);\n}",
+    replace: "  return body === undefined || !lethalByEffect(body, state.turn);\n}",
+    expectKilledBy: ["packages/engine/src/koAbilitiesMeD598.test.ts"],
+  },
 ];

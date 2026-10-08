@@ -30162,6 +30162,7 @@ decisions (1) and (2) after D580. Engine 0.464.0 → 0.465.0. The Mega ex rule i
 - **Dropped and named:** Fainting Spell ×2, Photon Cord ×2, Spiteful Swirl ×2, Counterattack Grouping, Damp ×2.
 - **Readings (UNRULED).** R-IS1, R-GC1, R-TN1, R-KO1, R-PD1, R-SB1 (`progress.md` NEXT). R-SB1: a Survival Brace / full-HP Sturdy
   answers first and no coin is flipped (`clamped === null ? koSurvivalCoinFlip(…) : …` at all four writes).
+  🆕 D601: plus R-GC2 and R-GC3 (two Shadowy Concealment readings), and R-TN1 amended (self-damage never asks the coin).
 - **Suite.** `koAbilitiesMeD598.test.ts` (34): each Ability on a board, with the cause, lock and stacking controls,
   the coin's rng advance at three damage writes, the R-SB1 Brace-first order at all four, and the Knock Out log tail. +47 mutant rows; D208's `survived` row, D425's spread row and D572's post-KO-board row re-anchored.
 - **Census.** Standard pool abilities **504 / 610**; 870 `me` printings fully built.
@@ -30199,4 +30200,20 @@ decisions (1) and (2) after D580. Engine 0.464.0 → 0.465.0. The Mega ex rule i
 - **Readings (UNRULED).** R-CW1 (`progress.md` NEXT).
 - **Suite.** `handCountConditionsMeD600.test.ts` (22) and a census D600 block (2). +28 mutant rows.
 - **Census.** Standard pool attacks **2588 / 2771**; 886 `me` printings fully built.
+- **Owed.** See `progress.md` NEXT. The whole-corpus sweep is PENDING.
+
+## D601 — D598's open review findings (engine stays 0.484.0, `MATCH_RECORD_VERSION` stays 42)
+
+**Status:** ✅ BUILT in the `luminous_ui-mega` worktree on D600 (`70cf5520`), NOT committed.
+
+- **No engine behaviour change.** flow.ts gets doc comments only, so there is no version bump. No card or registry key changes.
+- **Readings (UNRULED, `progress.md` NEXT).**
+  - R-GC2: Shadowy Concealment answers after the attached reductions, so a Legacy Energy is spent first. Reversal:
+    Concealment first.
+  - R-GC3: 1 fewer per {D} Knock Out in a batch. Reversal: 1 fewer per Prize-taking.
+  - R-TN1 amended: `damageSelf` recoil and `hitOwnActive`'s `deals` arm never ask the coin, inherited from Sturdy.
+- **M2, kept and recorded.** `koByOpponentAttack` fails closed on a missing body, where `byAttackFor` fails open. The
+  D598 rows have no pre-D414 reading to degrade to, and the arm is unreachable.
+- **Suite.** `koAbilitiesMeD598.test.ts` 34 → 36: a two-{D}-KO batch (R-GC3) and the miss arm (M2). The Legacy case is
+  tagged R-GC2 and pins the spent latch. +2 mutant rows.
 - **Owed.** See `progress.md` NEXT. The whole-corpus sweep is PENDING.

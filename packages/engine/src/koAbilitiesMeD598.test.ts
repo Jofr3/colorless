@@ -365,18 +365,45 @@ describe("D598 §2 — Shadowy Concealment: 1 fewer Prize for a {D} body KO'd by
     expect(of(events, "PRIZE_REDUCED").map((e) => e.count)).toEqual([0]);
   });
 
-  it("nothing left to reduce is not an application: Legacy Energy took the 1-Prize {D} body to 0 first", () => {
+  // 🆕🆕🆕 D601 — R-GC2 (UNRULED): the attached reductions answer BEFORE Shadowy Concealment, so a Legacy
+  // Energy on a 1-Prize {D} body is spent (its once-per-game latch) and Concealment finds 0. Reversal:
+  // Concealment first, which reaches 0 alone and leaves Legacy unspent.
+  it("nothing left to reduce is not an application: Legacy Energy took the 1-Prize {D} body to 0 first (R-GC2)", () => {
     const state = attachFromDeck(gengarBench(DARK), "p2", LEGACY, 1);
     const { state: after, events } = mustApply(state, attack(0));
     expect(owed(after)).toBe(0);
     expect(of(events, "PRIZE_REDUCED")).toHaveLength(1);
     expect(of(events, "ABILITY_TRIGGERED")).toEqual([]);
+    expect(after.oncePerGameSpent.p2).toHaveLength(1); // the Legacy latch is the one spent
   });
 
   it("doesn't stack: two Mega Gengar ex reduce once", () => {
     const { state: after, events } = mustApply(gengarBench(DARK_EX, FOE_EX, [MEGA_GENGAR[0], MEGA_GENGAR[1]]), attack(0));
     expect(owed(after)).toBe(1);
     expect(of(events, "ABILITY_TRIGGERED")).toHaveLength(1);
+  });
+
+  // 🆕🆕🆕 D601 — R-GC3 (UNRULED): "If 1 of your {D} Pokémon is Knocked Out … 1 fewer" is read PER KNOCK
+  // OUT, so one ex attack that KOs two {D} bodies reduces each. The reversal (1 fewer for the whole
+  // Prize-taking) would leave 3 here.
+  it("R-GC3: two {D} ex KO'd by one ex attack (the Active and a benched one): 1 fewer for EACH, 2 → 1 twice", () => {
+    const state = hurt(gengarBench(DARK_EX, FOE_EX, [MEGA_GENGAR[0], DARK_EX]), "p2", "active", 190);
+    const gengar = state.players.p2.bench[0]?.stack.at(-1);
+    const active = top(state, "p2");
+    const benched = state.players.p2.bench[1]?.stack.at(-1);
+    const { state: after, events } = mustApply(state, attack(4)); // Wide Splash: 10 to the Active, 200 to each Benched
+    expect(of(events, "KNOCKED_OUT").map((e) => e.uid).sort()).toEqual([active, benched].sort());
+    expect(of(events, "ABILITY_TRIGGERED")).toEqual([
+      { type: "ABILITY_TRIGGERED", seat: "p2", uid: gengar, ability: "Shadowy Concealment" },
+      { type: "ABILITY_TRIGGERED", seat: "p2", uid: gengar, ability: "Shadowy Concealment" },
+    ]);
+    expect(of(events, "PRIZE_REDUCED").map((e) => [e.uid, e.by, e.count])).toEqual([
+      [active, 1, 1],
+      [benched, 1, 1],
+    ]);
+    // Two Prize stages of 1 each (the first is the parked pick): P1 takes 2, not 4 and not 3.
+    expect(owed(after)).toBe(1);
+    expect(after.pending.filter((s) => s.kind === "takePrizes").map((s) => s.count)).toEqual([1, 1]);
   });
 
   it("§9: an Active Iron Thorns ex (an ex attacker) silences the benched Mega Gengar ex", () => {
@@ -411,6 +438,14 @@ describe("D598 §3 — the \"KO'd by an ex\" condition, by clause", () => {
     expect(koByOpponentAttack(doomed, ref, "p1")).toBe(false);
     expect(koByOpponentPokemonEx(doomed, ref, "p1", exUid)).toBe(false);
     expect(koByOpponentAttack(state, ref, "p1")).toBe(true);
+  });
+
+  // 🆕🆕🆕 D601 (D598 review M2) — a ref with no body on the board answers FALSE, not `byAttackFor`'s TRUE:
+  // the D598 rows had no pre-D414 behaviour to degrade to, so a miss withholds (decisions.md D601).
+  it("a ref whose body is not on the board answers false (fail-closed, unlike `byAttackFor`)", () => {
+    const ghost = { seat: "p2" as Seat, uid: "d601-no-such-body" };
+    expect(koByOpponentAttack(state, ghost, "p1")).toBe(false);
+    expect(koByOpponentPokemonEx(state, ghost, "p1", exUid)).toBe(false);
   });
 });
 
