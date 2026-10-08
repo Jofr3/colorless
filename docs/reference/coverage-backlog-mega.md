@@ -6,6 +6,28 @@
 > `coverage-backlog-legal.md`; its pool is unchanged and whole. The suite-side figures are
 > `censusAtHead.test.ts`'s D581 block and `censusAttackCorpusMe.ts`.
 
+## 🆕 D592 update (engine 0.476.0) — the reader wording drift and Corrosive Liquid (WP02)
+
+11 attack texts / 18 `me` printings are now read by `deriveAttackEffect` (effects.ts; `wordingDriftMeD592.test.ts`).
+Ten are `me` phrasings of sentences the readers already build in their `sv` wording, rewritten by a six-row synonym table
+(`normaliseMeWording`) before the anchors run: "Place" → "Put" before "damage counters on" (Haunt, Pernicious Poison ×3,
+Shellnado Spin, Ghostly Blow, Chaotic Pain ×2, Swirling Resentment), the two comma-joins (Claw of Darkness ×3, Astonish),
+"This Pokémon does N damage to itself." (Thunder) and the coin-flipped "can't use attacks" (Power Rush). The table is the
+identity on every legal `sv` sentence and splitter fragment. Corrosive Liquid ×3 is Megaton Blower's two sweeps on an attack.
+No new op, member or field; nothing dropped. **Finished:** Mega Dragalge ex ×3, Mega Slowbro ex `me05-031`, Haunter
+`me03-049`, Eternatus `me02-069`, Aipom `me02-078`, Hisuian Zoroark `30th-123`. Still waiting on another text: Mega Absol ex ×3
+(Terminal Period), Miraidon `mep-082`, Annihilape `me05-041` and Gengar ex ×2 (an Ability each). Five other `me` sentences
+print "place … damage counters on" and stay unbuilt (they need more than a synonym).
+
+| Column | `me` built / units (D592) | Standard pool D592 |
+|---|---|---|
+| Attacks | 778 / 1,039 (+18) | **2,510 / 2,771** |
+| Abilities | 113 / 234 | **489 / 610** |
+| Trainers | 92 / 183 | **356 / 447** |
+| Special Energy | 3 / 11 | **14 / 22** |
+
+**Fully built `me` printings: 804** (796 + 8).
+
 ## 🆕 D591 update (engine 0.475.0) — the activated Abilities: the Flapping trio and the draw engines (WP20a)
 
 11 activated Ability texts / 19 `me` printings are keyed on seven new `abilities` objects (registry.ts D591 block;
@@ -272,7 +294,7 @@ group wins; the grouping is a reading aid, not a census figure).
 - 2× If your opponent has 2 or fewer Prize cards remaining, this attack does 100 more damage. [🆕🆕🆕 D586: BUILT]
 - 2× Knock Out each of your opponent's Pokémon that has 50 HP or less remaining.
 - 2× This attack does 80 damage for each Prize card you have taken.
-- 1× During your opponent's next turn, if this Pokémon is damaged by an attack (even if this Pokémon is Knocked Out), place 12 damage counters on the Attacking Pokémon.
+- 1× During your opponent's next turn, if this Pokémon is damaged by an attack (even if this Pokémon is Knocked Out), place 12 damage counters on the Attacking Pokémon. [🆕🆕🆕 D592: BUILT]
 - 1× Flip 3 coins. If all of them are heads, Knock Out 1 of your opponent's Pokémon.
 - 1× If your opponent's Pokémon is Knocked Out by damage from this attack, take 1 more Prize card.
 - 1× This attack does 60 more damage for each Prize card your opponent took during their last turn.
@@ -280,10 +302,10 @@ group wins; the grouping is a reading aid, not a census figure).
 ### Damage-counter placement and manipulation — 24 text(s) / 34 printing(s)
 
 - 3× Place 2 damage counters on your opponent's Active Pokémon for each card in your hand.
-- 3× Your opponent's Active Pokémon is now Poisoned. During Pokémon Checkup, place 16 damage counters on that Pokémon instead of 1.
+- 3× Your opponent's Active Pokémon is now Poisoned. During Pokémon Checkup, place 16 damage counters on that Pokémon instead of 1. [🆕🆕🆕 D592: BUILT]
 - 2× Flip a coin. If heads, search your deck for a Pokémon and switch it with this Pokémon. Any attached cards, damage counters, Special Conditions, turns in play, and any other effects remain on the new Pokémon. If you switched a Pokémon in this way, put this card into your deck. Then, shuffle your deck.
 - 2× If your opponent's Active Pokémon already has any damage counters on it, this attack's base damage is 30.
-- 2× Place 13 damage counters on 1 of your opponent's Pokémon.
+- 2× Place 13 damage counters on 1 of your opponent's Pokémon. [🆕🆕🆕 D592: BUILT]
 - 2× This attack does 30 damage to 1 of your opponent's Pokémon for each damage counter on that Pokémon. &lt;em>(Don't apply Weakness and Resistance for Benched Pokémon.)&lt;/em>
 - 2× This attack does 40 damage for each damage counter on all of your Benched Rattata.
 - 2× This attack does 50 more damage for each of your Benched Pokémon that has any damage counters on it.
@@ -298,9 +320,9 @@ group wins; the grouping is a reading aid, not a census figure).
 - 1× If your opponent's Active Pokémon is affected by a Special Condition, place 6 damage counters on 1 of your opponent's Benched Pokémon.
 - 1× Place 1 damage counter on 1 of your opponent's Pokémon.
 - 1× Place 1 damage counter on your opponent's Active Pokémon.
-- 1× Place 3 damage counters on your opponent's Active Pokémon.
-- 1× Place 5 damage counters on 1 of your opponent's Benched Pokémon.
-- 1× Place damage counters on your opponent's Active Pokémon until its remaining HP is 50.
+- 1× Place 3 damage counters on your opponent's Active Pokémon. [🆕🆕🆕 D592: BUILT]
+- 1× Place 5 damage counters on 1 of your opponent's Benched Pokémon. [🆕🆕🆕 D592: BUILT]
+- 1× Place damage counters on your opponent's Active Pokémon until its remaining HP is 50. [🆕🆕🆕 D592: BUILT]
 - 1× This attack does 30 damage to 1 of your opponent's Pokémon for each damage counter on that Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)
 - 1× This attack does 40 damage for each of your Pokémon that has "Tauros" in its name that has any damage counters on it.
 
@@ -326,7 +348,7 @@ group wins; the grouping is a reading aid, not a census figure).
 - 1× Flip a coin. If heads, during your opponent's next turn, the Defending Pokémon can't retreat.
 - 1× Flip a coin. If heads, search your deck for a card and put it into your hand. Then, shuffle your deck.
 - 1× Flip a coin. If heads, switch 1 of your opponent's Benched Pokémon with their Active Pokémon.
-- 1× Flip a coin. If tails, during your next turn, this Pokémon can't use attacks.
+- 1× Flip a coin. If tails, during your next turn, this Pokémon can't use attacks. [🆕🆕🆕 D592: BUILT]
 
 ### Scaled damage ("… for each …") — 25 text(s) / 50 printing(s)
 
@@ -419,7 +441,7 @@ group wins; the grouping is a reading aid, not a census figure).
 
 ### Energy: discard / move / return as a cost or effect — 6 text(s) / 11 printing(s)
 
-- 3× Discard all Pokémon Tools and Special Energy from all of your opponent's Pokémon.
+- 3× Discard all Pokémon Tools and Special Energy from all of your opponent's Pokémon. [🆕🆕🆕 D592: BUILT]
 - 3× You may discard 2 {L} Energy from this Pokémon and make your opponent's Active Pokémon Paralyzed.
 - 2× Discard 4 Basic {R} Energy cards from your hand. If you can't discard 4 cards in this way, this attack does nothing. [🆕🆕🆕 D586: BUILT]
 - 1× Discard 2 Energy from this Pokémon, and your opponent's Active Pokémon is now Paralyzed.
@@ -429,12 +451,12 @@ group wins; the grouping is a reading aid, not a census figure).
 ### Hand, deck and discard-pile effects — 21 text(s) / 29 printing(s)
 
 - 3× Search your deck for any number of Basic Pokémon and put them onto your Bench. Then, shuffle your deck.
-- 3× Your opponent reveals their hand, and you discard a card you find there.
+- 3× Your opponent reveals their hand, and you discard a card you find there. [🆕🆕🆕 D592: BUILT]
 - 2× Discard the top 3 cards of your deck and put 1 of them into your hand.
 - 2× If you don't have exactly 7 cards in your hand, this attack does nothing. [🆕🆕🆕 D586: BUILT]
 - 2× If your opponent's Active Pokémon is an evolved Pokémon, devolve it by putting the highest Stage Evolution card on it into your opponent's hand.
 - 2× Your opponent shuffles their hand into their deck and draws 4 cards.
-- 1× Choose a random card from your opponent's hand, and your opponent reveals that card and shuffles it into their deck.
+- 1× Choose a random card from your opponent's hand, and your opponent reveals that card and shuffles it into their deck. [🆕🆕🆕 D592: BUILT]
 - 1× Devolve each of your opponent's evolved Pokémon by putting the highest Stage Evolution card on it into your opponent's hand.
 - 1× Discard random cards from your opponent's hand until they have 5 cards in their hand.
 - 1× Discard the top card of your deck, and if that card is a Supporter card, use the effect of that card as the effect of this attack.
@@ -460,7 +482,7 @@ group wins; the grouping is a reading aid, not a census figure).
 - 3× Heal 30 damage from each Pokémon (both yours and your opponent's).
 - 2× Heal 120 damage from 1 of your Benched {P} Pokémon.
 - 2× If you don't have Lunatone on your Bench, this attack does nothing. This attack's damage isn't affected by Weakness or Resistance.
-- 1× This Pokémon does 30 damage to itself.
+- 1× This Pokémon does 30 damage to itself. [🆕🆕🆕 D592: BUILT]
 
 ## Abilities — 100 unbuilt texts / 187 printings
 

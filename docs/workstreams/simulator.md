@@ -30005,3 +30005,25 @@ decisions (1) and (2) after D580. Engine 0.464.0 → 0.465.0. The Mega ex rule i
 - **Census.** Standard pool abilities **489 / 610** (`me` 113 / 234; attacks 2492 / 2771, trainers 356 / 447 and special
   energy 14 / 22 unmoved); 796 `me` printings fully built.
 - **Owed.** See `progress.md` NEXT. The whole-corpus sweep is PENDING.
+
+## D592 — WP02: the `me` reader wording drift and Corrosive Liquid (engine 0.476.0, `MATCH_RECORD_VERSION` stays 42)
+
+**Status:** ✅ BUILT in the `luminous_ui-mega` worktree on D591 (`52e966a4`), NOT committed.
+
+- **11 attack texts / 18 `me` printings** now read by `deriveAttackEffect`. Ten are `me` phrasings of sentences the readers
+  already build in their `sv` wording; `normaliseMeWording` (effects.ts) rewrites each before the anchors run, through six
+  synonym rows: *"Place"* / *"place"* → *"Put"* / *"put"* before `(N )damage counters on` (6 sentences / 9 printings), the
+  two comma-joins (Claw of Darkness ×3, Astonish; each pinned to its printed head), *"This Pokémon does N damage to
+  itself."* (Thunder) and the coin-flipped *"can't use attacks."* (Power Rush). No anchor widened.
+- **Corrosive Liquid ×3** (Mega Dragalge ex): arm 47, Megaton Blower's `discardTools { "all" }` + `discardEnergy {
+  opponentEach, specialEnergy, "all" }` on an attack. Neither parks.
+- **The `sv` classification is byte-identical.** Every `deriveAttack*` reader's output and both splitters' over the 640 `sv`
+  and 451 `me` sentences were dumped before and after; only the 11 `me` sentences differ. The suite asserts the table is
+  the identity on every legal `sv` sentence and splitter fragment.
+- **Withdrawn:** the "also"-less recoil *"stays on the loud skipped path"* (effects.ts `SELF_DAMAGE`, `selfDamage.test.ts`).
+- **Suite.** `wordingDriftMeD592.test.ts` (16): each sentence against its `sv` wording's program, the `sv` identity, near
+  misses one token apart, Corrosive Liquid on a board (Tools and Special Energy off every opponent body; Basic Energy and the
+  attacker's own Tool stay), Claw of Darkness's pick and Thunder's recoil on a board.
+- **Census.** Standard pool attacks **2510 / 2771** (`me` 778 / 1,039; abilities 489 / 610, trainers 356 / 447 and special
+  energy 14 / 22 unmoved); 804 `me` printings fully built.
+- **Owed.** See `progress.md` NEXT. The whole-corpus sweep is PENDING.

@@ -20253,6 +20253,16 @@ import type { GameState, Seat } from "./types";
     `expect(manifest.version)`, `it(…)` titles, the declaration and `package.json` —
     **not** as a value-keyed grep — because a value-keyed grep is precisely the mechanism
     that ate D500's heading.)
+    🆕🆕🆕 engineVersion 0.475.0 → **0.476.0** (D592 — WP02: THE `me` READER WORDING DRIFT AND
+    CORROSIVE LIQUID; `MATCH_RECORD_VERSION` STAYS 42 (apps/api match.ts "STAYS 42 AT D592")).
+    effects.ts `deriveAttackEffect` reads its trimmed text through `normaliseMeWording`, a
+    six-row synonym table rewriting `me` phrasings to the shipped `sv` wording ("Place" → "Put"
+    before "damage counters on", two comma-joins, "This Pokémon does N damage to itself.",
+    the coin-flipped "can't use attacks"): 10 sentences / 15 printings. The table is the
+    identity on every legal `sv` sentence (every reader's output over both corpora is
+    byte-identical except those 10). Arm 47 reads Corrosive Liquid (Mega Dragalge ex ×3) as
+    Megaton Blower's two sweeps. No new op, member or field. Census: Standard pool attacks
+    2,510 / 2,771 (`me` 778 / 1,039); 804 `me` printings fully built. `wordingDriftMeD592.test.ts`.)
     🆕🆕🆕 engineVersion 0.474.0 → **0.475.0** (D591 — WP20a: THE `me` ACTIVATED ABILITIES, THE
     FLAPPING TRIO AND THE DRAW ENGINES; `MATCH_RECORD_VERSION` STAYS 42 (apps/api match.ts "STAYS 42
     AT D591")). registry.ts keys 19 `me` printings on SEVEN NEW `abilities` objects: `RUN_ERRAND`
@@ -25223,7 +25233,7 @@ import type { GameState, Seat } from "./types";
     WITNESS** — the count was re-derived every slice and the word *"three"* was carried.
     A successor of this slice inherits **81 / 61 / 17** again, over **FIVE** history
     occurrences: those four plus `deckMillFilteredScale.test.ts`'s own header arrow.) */
-export const engineVersion = "0.475.0";
+export const engineVersion = "0.476.0";
 
 export type {
   ApplyResult,

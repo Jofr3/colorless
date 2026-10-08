@@ -2159,6 +2159,15 @@ export interface MatchRecord {
     `turn:action.discardable` — 🛑 **DEPLOY THE SERVER FIRST**: an old client's `z.object` STRIPS
     the unknown key, while a new client's REQUIRED key refuses an old server's frame.
 
+    🆕🆕🆕 **STAYS 42 AT D592 — WP02 ADDS NO OP, KEY, GameState, PendingStage, PROMPT OR WIRE KEY.**
+    (Placed ABOVE the D591 block.) `deriveAttackEffect` now reads 11 more `me` attack sentences (18
+    printings): ten `me` phrasings through effects.ts `normaliseMeWording` and Corrosive Liquid. The
+    card row is not read differently; its printed attack TEXT is, at attack time — so a v42 match in
+    flight holding those faces in its persisted `cardPool` gains the programs mid-match (a 0.475
+    rollback puts them back on the skipped-effect path). Every op is a shipped one; the ones that park
+    (`bottomFromOpponentHand`, `damageChosen`) park on prompt kinds a v42 record already holds, and
+    `installRecoil` writes the side state Shellnado Spin's `sv` twin already writes.
+
     🆕🆕🆕 **STAYS 42 AT D591 — WP20a ADDS NO OP, KEY, GameState, PendingStage, PROMPT OR WIRE KEY.**
     (Placed ABOVE the D590 block.) 19 `me` printings gain an activated Ability on seven new registry
     objects, keyed by card id; no card row is read differently, so a v42 match in flight holding those

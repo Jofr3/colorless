@@ -11624,7 +11624,7 @@ describe("D581 — the Standard pool after the Mega Evolution ingest, measured (
     for (const id of ["sv01-001", "svp-001", "sve-001", "fix-energy"]) expect(ME_ID.test(id), id).toBe(false);
   });
 
-  it("BUILT over the `me` attack column, LIVE: 728 of 1,039 printings (262 of 451 sentences) (🆕🆕🆕 D586: 745 / 270 live — the title's figures are the D581 baseline; 🆕🆕🆕 D589: 754 / 274 live; 🆕🆕🆕 D590: 757 / 275 live)", () => {
+  it("BUILT over the `me` attack column, LIVE: 728 of 1,039 printings (262 of 451 sentences) (🆕🆕🆕 D586: 745 / 270 live — the title's figures are the D581 baseline; 🆕🆕🆕 D589: 754 / 274 live; 🆕🆕🆕 D590: 757 / 275 live; 🆕🆕🆕 D592: 775 / 286 live)", () => {
     type Tally = [sentences: number, printings: number];
     const tally: Record<"reader" | "gate" | "trailing" | "registryText" | "residue", Tally> = {
       reader: [0, 0],
@@ -11646,8 +11646,11 @@ describe("D581 — the Standard pool after the Mega Evolution ingest, measured (
     // Chrono Burst) are claimed by `deriveAttackOptionalCostBoost`. MEASURED.
     // 🆕🆕🆕 D590 — reader [262, 736] → [263, 739] and residue [174, 277] → [173, 274]: the mandatory
     // self-shuffle (Jumping Shot, Aqua Return ×2) is claimed by `deriveAttackEffect`. MEASURED.
+    // 🆕🆕🆕 D592 — reader [263, 739] → [274, 757] and residue [173, 274] → [162, 256]: WP02's ten
+    // wording-drift sentences / 15 printings (`normaliseMeWording`) and Corrosive Liquid ×3 are
+    // claimed by `deriveAttackEffect`. MEASURED.
     expect(tally).toEqual({
-      reader: [263, 739],
+      reader: [274, 757],
       gate: [3, 4],
       trailing: [9, 14],
       // A REGISTRY sentence printed on a `me` id: not built (no row names the id). The three
@@ -11662,10 +11665,10 @@ describe("D581 — the Standard pool after the Mega Evolution ingest, measured (
       // [🆕🆕🆕 D584: "Surf Back" ×2 is BUILT — Drifloon `30th-073` / `-136` on the new `FLOAT_UP`
       // (index 0); the D584 block counts it. This tally stays the D581 baseline.]
       registryText: [3, 8],
-      residue: [173, 274],
+      residue: [162, 256],
     });
     const built = tally.reader[1] + tally.gate[1] + tally.trailing[1];
-    expect(built).toBe(757); // 🆕🆕🆕 D586 — 728 → 745 (+17, WP03's clause rows). 🆕🆕🆕 D589 — 745 → 754 (+9, WP08). 🆕🆕🆕 D590 — 754 → 757 (+3, WP05's self-shuffle).
+    expect(built).toBe(775); // 🆕🆕🆕 D586 — 728 → 745 (+17, WP03's clause rows). 🆕🆕🆕 D589 — 745 → 754 (+9, WP08). 🆕🆕🆕 D590 — 754 → 757 (+3, WP05's self-shuffle). 🆕🆕🆕 D592 — 757 → 775 (+18, WP02).
     expect(built + tally.registryText[1] + tally.residue[1]).toBe(POPULATION_ME.attackUnits);
     // Every `me` sentence the `sv` column ALSO prints is built, except those three: the
     // whole unbuilt `me` residue is text the `sv` pool never printed.
@@ -11674,7 +11677,7 @@ describe("D581 — the Standard pool after the Mega Evolution ingest, measured (
     expect(unbuiltShared).toEqual([]);
   });
 
-  it("the D581 headline: attacks 2,460 / 2,771, abilities 376 / 610, trainers 264 / 447, special energy 11 / 22 (🆕🆕🆕 D586: the live attack figure is 2,477 — the title is the D581 baseline; 🆕🆕🆕 D589: 2,486; 🆕🆕🆕 D590: 2,489)", () => {
+  it("the D581 headline: attacks 2,460 / 2,771, abilities 376 / 610, trainers 264 / 447, special energy 11 / 22 (🆕🆕🆕 D586: the live attack figure is 2,477 — the title is the D581 baseline; 🆕🆕🆕 D589: 2,486; 🆕🆕🆕 D590: 2,489; 🆕🆕🆕 D592: 2,507)", () => {
     const meBuiltAttack = meAttackCorpus().reduce((sum, [n, text]) => {
       const a = meArm(text);
       return a === "reader" || a === "gate" || a === "trailing" ? sum + n : sum;
@@ -11683,8 +11686,9 @@ describe("D581 — the Standard pool after the Mega Evolution ingest, measured (
     // 🆕🆕🆕 D586 — 2,460 → 2,477 and 311 → 294: the reader-built `me` half moves by WP03's 17.
     // 🆕🆕🆕 D589 — 2,477 → 2,486 and 294 → 285: WP08's 9.
     // 🆕🆕🆕 D590 — 2,486 → 2,489 and 285 → 282: WP05's 3.
-    expect(BUILT.attack + meBuiltAttack).toBe(2489);
-    expect(POPULATION_D581.attackUnits - (BUILT.attack + meBuiltAttack)).toBe(282);
+    // 🆕🆕🆕 D592 — 2,489 → 2,507 and 282 → 264: WP02's 18.
+    expect(BUILT.attack + meBuiltAttack).toBe(2507);
+    expect(POPULATION_D581.attackUnits - (BUILT.attack + meBuiltAttack)).toBe(264);
     // The non-attack `sv` halves are WHOLE (D580: every legal `sv` ability unit, Trainer and
     // Special Energy is built — the join of `nonAttackRegistryIds()` against the catalog), and
     // the `me` halves are ZERO (the registry holds no `me` id — the rung above).
@@ -11839,7 +11843,7 @@ describe("D582 — the `me` reprint-alias tier and the Standard pool it builds, 
     expect(Object.keys(programFor("me02.5-178") ?? {})).toEqual(["attack"]);
   });
 
-  it("BUILT over the `me` pool: attacks 729 / 1,039, abilities 41 / 234, trainers 54 / 183, special energy 2 / 11 (🆕🆕🆕 D586: attacks 746 live — the D586 block; 🆕🆕🆕 D589: 755; 🆕🆕🆕 D590: 758)", () => {
+  it("BUILT over the `me` pool: attacks 729 / 1,039, abilities 41 / 234, trainers 54 / 183, special energy 2 / 11 (🆕🆕🆕 D586: attacks 746 live — the D586 block; 🆕🆕🆕 D589: 755; 🆕🆕🆕 D590: 758; 🆕🆕🆕 D592: 776)", () => {
     // Attacks: the readers' 728 (the D581 rung, unmoved — `meArm` keys the registry on TEXT) plus
     // the ONE `me` printing of a registry sentence that is now keyed BY ID: Prism Charge on
     // `me02.5-178`. The other two registry sentences ("Fade Out" ×5, "Surf Back" ×2) print at
@@ -11853,7 +11857,7 @@ describe("D582 — the `me` reprint-alias tier and the Standard pool it builds, 
       const a = meArm(text);
       return a === "reader" || a === "gate" || a === "trailing" ? sum + n : sum;
     }, 0);
-    expect(readerBuilt + 1).toBe(758); // 🆕🆕🆕 D586 — 729 → 746: the readers' 728 is 745 live (WP03's +17). 🆕🆕🆕 D589 — 746 → 755 (WP08's +9). 🆕🆕🆕 D590 — 755 → 758 (WP05's +3).
+    expect(readerBuilt + 1).toBe(776); // 🆕🆕🆕 D586 — 729 → 746: the readers' 728 is 745 live (WP03's +17). 🆕🆕🆕 D589 — 746 → 755 (WP08's +9). 🆕🆕🆕 D590 — 755 → 758 (WP05's +3). 🆕🆕🆕 D592 — 758 → 776 (WP02's +18).
     // Abilities: the 41 Pokémon keys that print one Ability each (recorded: the LOCAL D1's
     // `json_each(abilities_json)` over these ids returns 41 units). Numel `me02.5-027` / `-223` are
     // NOT here (review round): Heatran's program logs Armarouge's "Scorching Armor".
@@ -11950,7 +11954,7 @@ describe("D584 — the `me` alias tier 2 and the Standard pool it builds, measur
     expect(programFor("30th-073")).toBe(programFor("30th-136"));
   });
 
-  it("BUILT over the `me` pool: attacks 731 / 1,039, abilities 55 / 234, trainers 56 / 183, special energy 3 / 11 (🆕🆕🆕 D586: attacks 748 live — the D586 block; 🆕🆕🆕 D589: 757; 🆕🆕🆕 D590: 760)", () => {
+  it("BUILT over the `me` pool: attacks 731 / 1,039, abilities 55 / 234, trainers 56 / 183, special energy 3 / 11 (🆕🆕🆕 D586: attacks 748 live — the D586 block; 🆕🆕🆕 D589: 757; 🆕🆕🆕 D590: 760; 🆕🆕🆕 D592: 778)", () => {
     // Attacks: D582's 729 plus Drifloon ×2 — the "Surf Back" sentence (`registryText` in the D581
     // tally, 2 printings) now keyed BY ID at its printed index 0.
     const surfBack = meAttackCorpus().filter(
@@ -11963,7 +11967,7 @@ describe("D584 — the `me` alias tier 2 and the Standard pool it builds, measur
       return a === "reader" || a === "gate" || a === "trailing" ? sum + n : sum;
     }, 0);
     // The readers' 728, Prism Charge `me02.5-178` (D582) and the two Float Up keys.
-    expect(readerBuilt + 1 + keyed.length).toBe(760); // 🆕🆕🆕 D586 — 731 → 748 (WP03's +17 reader printings). 🆕🆕🆕 D589 — 748 → 757 (WP08's +9). 🆕🆕🆕 D590 — 757 → 760 (WP05's +3).
+    expect(readerBuilt + 1 + keyed.length).toBe(778); // 🆕🆕🆕 D586 — 731 → 748 (WP03's +17 reader printings). 🆕🆕🆕 D589 — 748 → 757 (WP08's +9). 🆕🆕🆕 D590 — 757 → 760 (WP05's +3). 🆕🆕🆕 D592 — 760 → 778 (WP02's +18).
     // Abilities: the 14 tier-2 Pokémon keys print one Ability each (LOCAL D1 `json_each`).
     expect(41 + CENSUS_ME_POKEMON_D584.length).toBe(55);
     expect(CENSUS_ME_TRAINER_D582.length + CENSUS_ME_TRAINER_D584.length).toBe(56);
@@ -12089,16 +12093,16 @@ describe("D586 — WP03's clause rows and Carbink, and the Standard pool they bu
     }
   });
 
-  it("BUILT over the `me` pool: attacks 748 / 1,039, abilities 76 / 234; the D586 headline: attacks 2,480 / 2,771, abilities 452 / 610 (🆕🆕🆕 D589: attacks 757 / 2,489 live — the D589 block; 🆕🆕🆕 D590: 760 / 2,492 — the D590 block)", () => {
+  it("BUILT over the `me` pool: attacks 748 / 1,039, abilities 76 / 234; the D586 headline: attacks 2,480 / 2,771, abilities 452 / 610 (🆕🆕🆕 D589: attacks 757 / 2,489 live — the D589 block; 🆕🆕🆕 D590: 760 / 2,492 — the D590 block; 🆕🆕🆕 D592: 778 / 2,510 — the D592 block)", () => {
     const readerBuilt = meAttackCorpus().reduce((sum, [n, text]) => {
       const a = meArm(text);
       return a === "reader" || a === "gate" || a === "trailing" ? sum + n : sum;
     }, 0);
     // 🆕🆕🆕 D589 — the readers' 745 is 754 live (WP08's +9); the D586 figures below are its own.
-    // 🆕🆕🆕 D590 — and 757 live (WP05's +3).
-    expect(readerBuilt - 9 - 3).toBe(745);
+    // 🆕🆕🆕 D590 — and 757 live (WP05's +3). 🆕🆕🆕 D592 — and 775 live (WP02's +18).
+    expect(readerBuilt - 9 - 3 - 18).toBe(745);
     // The readers' 745, Prism Charge `me02.5-178` (D582) and Float Up ×2 (D584).
-    expect(readerBuilt - 9 - 3 + 1 + 2).toBe(748);
+    expect(readerBuilt - 9 - 3 - 18 + 1 + 2).toBe(748);
     expect(POPULATION_ME.attackUnits - 748).toBe(291);
     expect(41 + CENSUS_ME_POKEMON_D584.length + CENSUS_ME_POKEMON_D585.length + CENSUS_ME_POKEMON_D586.length).toBe(76);
     expect(POPULATION_ME.abilityUnits - 76).toBe(158);
@@ -12272,9 +12276,10 @@ describe("D589 — WP08's optional-cost rows and Mortal Shuriken, and the Standa
       return a === "reader" || a === "gate" || a === "trailing" ? sum + n : sum;
     }, 0);
     // 🆕🆕🆕 D590 — the readers' 754 is 757 live (WP05's +3); the D589 figures below are its own.
-    expect(readerBuilt - 3).toBe(754);
+    // 🆕🆕🆕 D592 — and 775 live (WP02's +18).
+    expect(readerBuilt - 3 - 18).toBe(754);
     // The readers' 754, Prism Charge `me02.5-178` (D582) and Float Up ×2 (D584).
-    expect(readerBuilt - 3 + 1 + 2).toBe(757);
+    expect(readerBuilt - 3 - 18 + 1 + 2).toBe(757);
     expect(POPULATION_ME.attackUnits - 757).toBe(282);
     const meAbilities =
       41 +
@@ -12350,9 +12355,10 @@ describe("D590 — WP05's on-evolve Abilities and the self-shuffle, and the Stan
       const a = meArm(text);
       return a === "reader" || a === "gate" || a === "trailing" ? sum + n : sum;
     }, 0);
-    expect(readerBuilt).toBe(757);
+    // 🆕🆕🆕 D592 — the readers' 757 is 775 live (WP02's +18); the D590 figures below are its own.
+    expect(readerBuilt - 18).toBe(757);
     // The readers' 757, Prism Charge `me02.5-178` (D582) and Float Up ×2 (D584).
-    expect(readerBuilt + 1 + 2).toBe(760);
+    expect(readerBuilt - 18 + 1 + 2).toBe(760);
     expect(POPULATION_ME.attackUnits - 760).toBe(279);
     const meAbilities =
       41 +
@@ -12434,7 +12440,8 @@ describe("D591 — WP20a's activated Abilities, and the Standard pool they build
       return a === "reader" || a === "gate" || a === "trailing" ? sum + n : sum;
     }, 0);
     // The attack column stands at D590's: the readers' 757, Prism Charge and Float Up ×2.
-    expect(readerBuilt + 1 + 2).toBe(760);
+    // 🆕🆕🆕 D592 — the readers' 757 is 775 live (WP02's +18); the D591 figures below are its own.
+    expect(readerBuilt - 18 + 1 + 2).toBe(760);
     const meAbilities =
       41 +
       CENSUS_ME_POKEMON_D584.length +
@@ -12449,6 +12456,59 @@ describe("D591 — WP20a's activated Abilities, and the Standard pool they build
     expect(POPULATION.abilityUnits + 113).toBe(489);
     expect([POPULATION_D581.attackUnits, POPULATION_D581.abilityUnits]).toEqual([2771, 610]);
     // The other two columns stand at D588's: trainers 356, special energy 14.
+    expect(BUILT.specialEnergy + CENSUS_ME_ENERGY_D582.length + CENSUS_ME_ENERGY_D583.length).toBe(14);
+  });
+});
+
+// ── 🆕🆕🆕 D592 — WP02: THE `me` READER WORDING DRIFT AND CORROSIVE LIQUID, MEASURED ───────────────────
+//
+// No registry key moves. `deriveAttackEffect` claims 11 more `me` sentences / 18 printings: ten through
+// `normaliseMeWording` (the `me` phrasing rewritten to the shipped `sv` one) and Corrosive Liquid
+// (arm 47). LOCAL D1, 2026-10-08. 8 printings become fully built (796 → 804 `me` printings): Mega
+// Dragalge ex ×3, Mega Slowbro ex `me05-031`, Haunter `me03-049`, Eternatus `me02-069`, Aipom
+// `me02-078`, Hisuian Zoroark `30th-123`. `wordingDriftMeD592.test.ts` drives each one.
+
+/** The 11 `me` sentences this slice claims, with their legal `me` printings. */
+const WORDING_DRIFT_D592: readonly (readonly [string, number])[] = [
+  ["Your opponent reveals their hand, and you discard a card you find there.", 3],
+  ["This Pokémon does 30 damage to itself.", 1],
+  ["Flip a coin. If tails, during your next turn, this Pokémon can't use attacks.", 1],
+  ["Choose a random card from your opponent's hand, and your opponent reveals that card and shuffles it into their deck.", 1],
+  ["Place 3 damage counters on your opponent's Active Pokémon.", 1],
+  ["Your opponent's Active Pokémon is now Poisoned. During Pokémon Checkup, place 16 damage counters on that Pokémon instead of 1.", 3],
+  ["During your opponent's next turn, if this Pokémon is damaged by an attack (even if this Pokémon is Knocked Out), place 12 damage counters on the Attacking Pokémon.", 1],
+  ["Place 5 damage counters on 1 of your opponent's Benched Pokémon.", 1],
+  ["Place 13 damage counters on 1 of your opponent's Pokémon.", 2],
+  ["Place damage counters on your opponent's Active Pokémon until its remaining HP is 50.", 1],
+  ["Discard all Pokémon Tools and Special Energy from all of your opponent's Pokémon.", 3],
+];
+
+describe("D592 — WP02's wording drift and Corrosive Liquid, and the Standard pool they build, measured", () => {
+  it("11 `me` sentences / 18 printings, each now `deriveAttackEffect`-built, none printed in `sv`", () => {
+    const me = new Map(meAttackCorpus().map(([n, text]) => [text, n]));
+    const sv = new Set(legalAttackCorpus().map(([, text]) => text));
+    for (const [text, n] of WORDING_DRIFT_D592) {
+      expect([text, me.get(text)]).toEqual([text, n]);
+      expect([text, meArm(text)]).toEqual([text, "reader"]);
+      expect(deriveAttackEffect(text), text).not.toBeNull();
+      expect(sv.has(text), text).toBe(false);
+    }
+    expect(WORDING_DRIFT_D592.reduce((sum, [, n]) => sum + n, 0)).toBe(18);
+  });
+
+  it("BUILT over the `me` pool: attacks 778 / 1,039; the D592 headline: attacks 2,510 / 2,771", () => {
+    const readerBuilt = meAttackCorpus().reduce((sum, [n, text]) => {
+      const a = meArm(text);
+      return a === "reader" || a === "gate" || a === "trailing" ? sum + n : sum;
+    }, 0);
+    expect(readerBuilt).toBe(775);
+    // The readers' 775, Prism Charge `me02.5-178` (D582) and Float Up ×2 (D584).
+    expect(readerBuilt + 1 + 2).toBe(778);
+    expect(POPULATION_ME.attackUnits - 778).toBe(261);
+    expect(BUILT.attack + 778).toBe(2510);
+    expect(POPULATION_D581.attackUnits - 2510).toBe(261);
+    // The other columns stand at D591's: abilities 489, trainers 356, special energy 14.
+    expect(POPULATION.abilityUnits + 113).toBe(489);
     expect(BUILT.specialEnergy + CENSUS_ME_ENERGY_D582.length + CENSUS_ME_ENERGY_D583.length).toBe(14);
   });
 });

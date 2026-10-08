@@ -17648,9 +17648,11 @@ const REVEAL_BOTTOM_SUPPORTER =
   /^Your opponent reveals their hand\. Choose a Supporter card you find there and put it on the bottom of their deck\.$/;
 // The recoil clause (Skeledirge sv01-038 "Blazing Shout") — a self-damage the
 // attack does IN ADDITION to its main numeric damage, hence the printed "also".
-// Anchored verbatim like every rule here: a hypothetical "This Pokémon does N
+// Anchored verbatim like every rule here: ~~a hypothetical "This Pokémon does N
 // damage to itself." without the "also" (a pure-recoil attack with no defender
-// damage — none in sv01–03), or a "This attack …" phrasing, stays on the loud
+// damage — none in sv01–03), or~~ (WITHDRAWN at D592: Miraidon `mep-082` prints it
+// as a whole sentence on a damaging attack, and `normaliseMeWording` rewrites it to
+// this sentence before the anchor runs) a "This attack …" phrasing stays on the loud
 // skipped path. No /i, for the family's stated reason: capitalisation + the
 // anchors are what keep a mid-sentence clause off the derived path.
 // D145 — CENSUSED: this sentence is printed BARE on 47 of its 48 printings (the
@@ -24902,6 +24904,13 @@ const ATTACK_SELF_SWITCH = new RegExp(`^Switch ${SELF_SWITCH_CLAUSE}$`);
     Surf Back's *"You may"*, nothing here asks. The printed damage lands first (§8.5) and the
     §8.1 promotion seam fills the emptied Active Spot (D312). */
 const ATTACK_RETURN_SELF_TO_DECK = /^Shuffle this Pokémon and all attached cards into your deck\.$/;
+/** 🆕🆕🆕 **D592 — Corrosive Liquid**, *"Discard all Pokémon Tools and Special Energy from all of
+    your opponent's Pokémon."* (`censusAttackCorpusMe.ts`: Mega Dragalge ex `me04-065` / `-104` /
+    `-118`, attack 0; not printed in the legal `sv` corpus). Megaton Blower's first two sweeps
+    (D557) on an attack: `discardTools { "all" }` then Cursed Edge's `discardEnergy { opponentEach,
+    specialEnergy, "all" }`, printed order, neither parks; each body's attack shield filters it. */
+const ATTACK_DISCARD_ALL_TOOLS_AND_SPECIAL =
+  /^Discard all Pokémon Tools and Special Energy from all of your opponent['’]s Pokémon\.$/;
 const ATTACK_FLIP_SELF_SWITCH = new RegExp(
   `^Flip a coin\\. If heads, switch ${SELF_SWITCH_CLAUSE}$`,
 );
@@ -28497,11 +28506,48 @@ const HAND_COST_THEN_OPPONENT_DISCARD =
 const TR_ENERGY_COST_THEN_DISCARD_DEFENDER =
   /^Discard a Team Rocket['’]s Energy from this Pokémon\. If you do, discard your opponent['’]s Active Pokémon and all attached cards\.$/;
 
+/** 🆕🆕🆕 **D592 — THE `me` WORDING DRIFT, NORMALISED TO THE SHIPPED `sv` WORDING (WP02).** The
+    Mega Evolution serie reprints five phrasings of sentences `deriveAttackEffect` already reads in
+    their `sv` wording. Each of the six rows rewrites one `me` phrasing to the `sv` one, same rules
+    meaning, and is anchored so it cannot reach an `sv` sentence: no legal `sv` sentence prints *"place … damage
+    counters"*, either comma-join, *"This Pokémon does N damage to itself."* as a whole sentence, or
+    the coin-flipped *"can't use attacks"* (measured: every reader's output and both splitters' over
+    the 640 `sv` and 451 `me` sentences are byte-identical before and after, except the 10 `me`
+    sentences / 15 printings these rows build). The anchors stay unwidened: the table runs before
+    them, so a sentence that is unbuilt after rewriting stays on the skipped-effect path. Replacements
+    are plain strings with no `$`. */
+const ME_WORDING_SYNONYMS: readonly (readonly [RegExp, string])[] = [
+  // "Place N damage counters on" → "Put N damage counters on" (and the bare "Place damage counters
+  // on … until …"): Haunt, Ghostly Blow, Chaotic Pain ×2, Swirling Resentment, and the lower-case
+  // mid-sentence form in Pernicious Poison ×3 and Shellnado Spin.
+  [/\bPlace (?=(?:\d+ )?damage counters on )/g, "Put "],
+  [/\bplace (?=(?:\d+ )?damage counters on )/g, "put "],
+  // Claw of Darkness ×3: ", and you discard a card you find there." → ". Discard a card …".
+  [/(?<=^Your opponent reveals their hand), and you discard a card you find there\.$/, ". Discard a card you find there."],
+  // Astonish: ", and your opponent reveals that card …" → ". Your opponent reveals that card …".
+  [
+    /(?<=^Choose a random card from your opponent['’]s hand), and your opponent reveals that card and shuffles it into their deck\.$/,
+    ". Your opponent reveals that card and shuffles it into their deck.",
+  ],
+  // Thunder (Miraidon): "This Pokémon does N damage to itself." → "This Pokémon also does …".
+  [/^This Pokémon does (?=\d+ damage to itself\.$)/, "This Pokémon also does "],
+  // Power Rush (Eternatus): the coin-flipped "can't use attacks." → "can't attack."
+  [/(?<=^Flip a coin\. If tails, during your next turn, )this Pokémon can['’]t use attacks\.$/, "this Pokémon can't attack."],
+];
+
+/** Apply `ME_WORDING_SYNONYMS` in order (D592). Exported for the suite's identity check over the `sv` corpus. */
+export function normaliseMeWording(text: string): string {
+  let out = text;
+  for (const [pattern, synonym] of ME_WORDING_SYNONYMS) out = out.replace(pattern, synonym);
+  return out;
+}
+
 /** Parse printed attack text into executable ops, or null when the text is
     ANYTHING but one of the recognized whole sentences (leading/trailing
-    whitespace excepted) — null keeps the attack on the skipped-effect path. */
+    whitespace excepted) — null keeps the attack on the skipped-effect path.
+    🆕🆕🆕 D592 — the trimmed text is read through `normaliseMeWording` first. */
 export function deriveAttackEffect(text: string): EffectOp[] | null {
-  const effect = text.trim();
+  const effect = normaliseMeWording(text.trim());
 
   // 1. "Your opponent's Active Pokémon is now {X}."
   let match = DEFENDER_NOW.exec(effect);
@@ -34235,6 +34281,14 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   // 46. 🆕🆕🆕 D590 — the mandatory self-shuffle (Jumping Shot, Aqua Return ×2); see the anchor.
   if (ATTACK_RETURN_SELF_TO_DECK.test(effect)) {
     return [{ op: "returnSelf", dest: "deck" }];
+  }
+
+  // 47. 🆕🆕🆕 D592 — Corrosive Liquid (Mega Dragalge ex ×3); see the anchor.
+  if (ATTACK_DISCARD_ALL_TOOLS_AND_SPECIAL.test(effect)) {
+    return [
+      { op: "discardTools", count: "all" },
+      { op: "discardEnergy", from: "opponentEach", filter: { kind: "specialEnergy" }, count: "all" },
+    ];
   }
 
   return null;

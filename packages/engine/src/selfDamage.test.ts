@@ -84,9 +84,11 @@ describe("damageSelf — the derived recoil op", () => {
 
   it("refuses the near-misses — the anchors are load-bearing, both of them", () => {
     for (const text of [
-      // The printed "also" is required: a pure-recoil variant (none in sv01–03)
-      // stays on the loud skipped path rather than being guessed.
-      "This Pokémon does 30 damage to itself.",
+      // ~~The printed "also" is required: a pure-recoil variant (none in sv01–03)
+      // stays on the loud skipped path rather than being guessed.~~ WITHDRAWN at
+      // D592: Miraidon `mep-082` "Thunder" prints "This Pokémon does 30 damage to
+      // itself." on a 90-damage attack — the same rule as the "also" sentence — and
+      // `normaliseMeWording` reads it as that sentence (asserted below this list).
       // A different subject / a different destination is a different card.
       "This attack does 30 damage to itself.",
       "This Pokémon also does 30 damage to each of your opponent's Benched Pokémon.",
@@ -104,6 +106,10 @@ describe("damageSelf — the derived recoil op", () => {
     ]) {
       expect(deriveAttackEffect(text)).toBeNull();
     }
+    // 🆕🆕🆕 D592 — the "also"-less whole sentence derives to the "also" program.
+    expect(deriveAttackEffect("This Pokémon does 30 damage to itself.")).toEqual([
+      { op: "damageSelf", amount: 30 },
+    ]);
   });
 });
 
