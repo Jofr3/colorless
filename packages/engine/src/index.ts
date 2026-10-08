@@ -20258,6 +20258,16 @@ import type { GameState, Seat } from "./types";
     `expect(manifest.version)`, `it(…)` titles, the declaration and `package.json` —
     **not** as a value-keyed grep — because a value-keyed grep is precisely the mechanism
     that ate D500's heading.)
+    🆕🆕🆕 engineVersion 0.488.0 → **0.489.0** (D606 — WP25a: THE FIRST HALF OF THE `me` STADIUMS;
+    `MATCH_RECORD_VERSION` STAYS 42 (apps/api match.ts "STAYS 42 AT D606")). registry.ts: five NEW
+    `stadium` objects over 9 `me` printings — Prism Tower ×2 (`payFromHand` 2 to the discard, draw 1),
+    Surfing Beach ×2 (`yourActiveHasType Water` gate, `switchActive` `targetType Water` — the first
+    printed Stadium program `programPlayable` can refuse), Nighttime Mine (the NEW
+    `StadiumEffects.attackCostSurcharge { amount, attacker }`, `bannerPokemon Tera`; continuous.ts
+    `stadiumFilteredCostSurcharge` in `effectiveAttackCost`'s Stadium term), Lumiose City ×2 and
+    Celebratory Fanfare ×2 (the NEW `StadiumAbility.endsTurn: "always" | "ifHealed"`, cardplay.ts
+    `stadiumUseEndsTurn` → `settleProgram`'s shipped `endsTurn`; R-LC1, R-CF1). Dropped: Battle Cage,
+    Mystery Garden, Forest of Vitality, Dizzying Valley, Fossil Quarry, Risky Ruins. `stadiumsMeD606.test.ts`.)
     🆕🆕🆕 engineVersion 0.487.0 → **0.488.0** (D605 — WP34: COIN (THE REST); `MATCH_RECORD_VERSION`
     STAYS 42 (apps/api match.ts "STAYS 42 AT D605")). effects.ts: two NEW `damageChosen` riders —
     `perHeadsInPlay` (Tauros "Target Together": the pick first, then one coin per own body in play
@@ -25369,7 +25379,7 @@ import type { GameState, Seat } from "./types";
     WITNESS** — the count was re-derived every slice and the word *"three"* was carried.
     A successor of this slice inherits **81 / 61 / 17** again, over **FIVE** history
     occurrences: those four plus `deckMillFilteredScale.test.ts`'s own header arrow.) */
-export const engineVersion = "0.488.0";
+export const engineVersion = "0.489.0";
 
 export type {
   ApplyResult,

@@ -877,8 +877,8 @@ describe("§8 — R-PX5: Iron Thorns ex is FUTURE now, and its own Initializatio
 
 // ─────────────────────────────────────────────────────────────────────────────
 describe("§9 — the version", () => {
-  it("the engine is 0.488.0", () => {
-    expect(engineVersion).toBe("0.488.0");
-    expect(manifest.version).toBe("0.488.0");
+  it("the engine is 0.489.0", () => {
+    expect(engineVersion).toBe("0.489.0");
+    expect(manifest.version).toBe("0.489.0");
   });
 });

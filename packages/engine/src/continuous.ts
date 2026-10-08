@@ -6252,9 +6252,11 @@ export function effectiveAttackCost(
 ): readonly string[] {
   const top = topCardOf(state, pokemon);
   if (top === undefined) return cost;
-  const stadium = isBasicPokemon(top)
-    ? (stadiumEffectsOf(state)?.basicAttackCostSurcharge ?? 0)
-    : 0;
+  // 🆕🆕🆕 D606 — plus Nighttime Mine's FILTERED twin of League HQ's term (each Tera Pokémon in
+  // play, both sides), matched on the same TOP card; the two sum into the one Stadium term.
+  const stadium =
+    (isBasicPokemon(top) ? (stadiumEffectsOf(state)?.basicAttackCostSurcharge ?? 0) : 0) +
+    stadiumFilteredCostSurcharge(state, top);
   // 🆕🆕🆕 D549 — …and the attack-installed COST TAX on the Defending Pokémon's own
   // attacks ("attacks used by the Defending Pokémon cost {C} more"), a third ADDED
   // source netted against the discount like the other two.
@@ -6270,6 +6272,14 @@ export function effectiveAttackCost(
   return anyType === 0
     ? colorlessAdjusted
     : anyTypeCostRemoval(colorlessAdjusted, providedEnergy(state, pokemon), anyType);
+}
+
+/** 🆕🆕🆕 D606 — the in-play Stadium's `attackCostSurcharge` (Nighttime Mine `me02.5-197`: each
+    Tera Pokémon in play, both sides) for an attacker whose TOP card is `top`: its `amount` when
+    the filter matches, else 0. */
+function stadiumFilteredCostSurcharge(state: GameState, top: Card): number {
+  const surcharge = stadiumEffectsOf(state)?.attackCostSurcharge;
+  return surcharge !== undefined && matchesFilter(top, surcharge.attacker) ? surcharge.amount : 0;
 }
 
 /** The {C}-only half of `effectiveAttackCost`, split out at D568 unchanged: `net` Colorless

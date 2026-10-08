@@ -59,7 +59,7 @@ import {
   swapDiscardCards,
   switchActiveTargets,
 } from "./interpreter";
-import type { AbilityProgram } from "./registry";
+import type { AbilityProgram, StadiumAbility } from "./registry";
 import { programFor } from "./registry";
 import { isBenchIndex, isPokemonTarget, placeEvolution, turnGate } from "./turn";
 import type { GameState, InPlayPokemon, PlayerSide, PokemonTarget, Seat } from "./types";
@@ -1082,11 +1082,21 @@ export function useStadiumAbility(state: GameState, action: UseStadiumAbilityAct
     ...state,
     allowances: { ...state.allowances, stadiumAbilityUsed: true },
   };
-  return settleProgram(
-    runProgram(next, ability.program, { seat: action.seat, sourceUid: stadium.uid }, events),
-    action.seat,
-    events,
-  );
+  const result = runProgram(next, ability.program, { seat: action.seat, sourceUid: stadium.uid }, events);
+  return settleProgram(result, action.seat, events, {
+    endsTurn: stadiumUseEndsTurn(ability, events, action.seat),
+  });
+}
+
+/** 🆕🆕🆕 D606 — does this Stadium use end the actor's turn (`StadiumAbility.endsTurn`)?
+    `"always"` (Lumiose City, R-LC1) is unconditional; `"ifHealed"` (Celebratory Fanfare, R-CF1)
+    asks whether the use's own program emitted a `HEALED` row for the actor — `events` holds
+    only this action's rows, and the program (`healEach`) never parks, so the answer is final
+    here. Absent = false (every pre-D606 Stadium). */
+function stadiumUseEndsTurn(ability: StadiumAbility, events: readonly GameEvent[], seat: Seat): boolean {
+  if (ability.endsTurn === "always") return true;
+  if (ability.endsTurn !== "ifHealed") return false;
+  return events.some((event) => event.type === "HEALED" && event.seat === seat && event.amount > 0);
 }
 
 /** Resolve the parked effect:choose decision: validate the choice against the

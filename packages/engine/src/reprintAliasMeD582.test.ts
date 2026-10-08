@@ -275,6 +275,9 @@ const KEYED_AT_D603 = [
 /** 🆕🆕🆕 D604 — the `me` ids WP18 keys: the 8 typed Special Energies (typedSpecialEnergyMeD604.test.ts pins the programs). */
 const KEYED_AT_D604 = ["me03-086", "me03-087", "me03-088", "me04-084", "me04-085", "me04-086", "me05-083", "me05-084"];
 
+/** 🆕🆕🆕 D606 — the `me` ids WP25a keys: the 9 Stadiums (stadiumsMeD606.test.ts pins the programs). */
+const KEYED_AT_D606 = ["me04-080", "me04-111", "me01-129", "me04-114", "me02.5-197", "me03-077", "me03-111", "mep-028", "mep-120"];
+
 /** The five `me` Tera reprints banners.ts carries (each printed face checked on tcgdex's image). */
 const ME_TERA = ["me02.5-038", "me02.5-057", "me02.5-160", "me02.5-179", "me02.5-277"] as const;
 
@@ -355,7 +358,7 @@ describe("D582 — the `me` reprint-alias tier: 99 printings on 66 existing prog
     expect(new Set(ALIASES.map(([, twin]) => programFor(twin))).size).toBe(66);
   });
 
-  it("the registry's `me` keys are EXACTLY this table — nothing keyed outside it (🆕🆕🆕 D583: plus Team Rocket's Energy `me02.5-217`; 🆕🆕🆕 D584: plus the 18 tier-2 keys; 🆕🆕🆕 D585: plus the 19 WP19 keys; 🆕🆕🆕 D586: plus Carbink ×2; 🆕🆕🆕 D587: plus the 19 WP04 Trainer keys; 🆕🆕🆕 D588: plus the 17 WP22 Trainer keys; 🆕🆕🆕 D589: plus Mega Greninja ex ×5; 🆕🆕🆕 D590: plus the 13 WP05 on-evolve keys; 🆕🆕🆕 D591: plus the 19 WP20a activated Ability keys; 🆕🆕🆕 D593: plus the 5 WP07 Fade Out keys; 🆕🆕🆕 D594: plus the 2 WP33a Ability keys; 🆕🆕🆕 D597: plus the 2 WP29 Inferno X keys; 🆕🆕🆕 D598: plus the 13 WP32 Ability keys; 🆕🆕🆕 D599: plus the 4 WP24a Supporter keys; 🆕🆕🆕 D602: plus the 9 WP20b activated Ability keys; 🆕🆕🆕 D603: plus the 11 WP11 Mega-gated keys; 🆕🆕🆕 D604: plus the 8 WP18 typed Special Energy keys)", () => {
+  it("the registry's `me` keys are EXACTLY this table — nothing keyed outside it (🆕🆕🆕 D583: plus Team Rocket's Energy `me02.5-217`; 🆕🆕🆕 D584: plus the 18 tier-2 keys; 🆕🆕🆕 D585: plus the 19 WP19 keys; 🆕🆕🆕 D586: plus Carbink ×2; 🆕🆕🆕 D587: plus the 19 WP04 Trainer keys; 🆕🆕🆕 D588: plus the 17 WP22 Trainer keys; 🆕🆕🆕 D589: plus Mega Greninja ex ×5; 🆕🆕🆕 D590: plus the 13 WP05 on-evolve keys; 🆕🆕🆕 D591: plus the 19 WP20a activated Ability keys; 🆕🆕🆕 D593: plus the 5 WP07 Fade Out keys; 🆕🆕🆕 D594: plus the 2 WP33a Ability keys; 🆕🆕🆕 D597: plus the 2 WP29 Inferno X keys; 🆕🆕🆕 D598: plus the 13 WP32 Ability keys; 🆕🆕🆕 D599: plus the 4 WP24a Supporter keys; 🆕🆕🆕 D602: plus the 9 WP20b activated Ability keys; 🆕🆕🆕 D603: plus the 11 WP11 Mega-gated keys; 🆕🆕🆕 D604: plus the 8 WP18 typed Special Energy keys; 🆕🆕🆕 D606: plus the 9 WP25a Stadium keys)", () => {
     const me = registryCardIds().filter((id) => /^(me|30th)/.test(id));
     // 🆕🆕🆕 D583 — the one `me` key outside the D582 table: Team Rocket's Energy, on `sv10-182`'s object.
     // 🆕🆕🆕 D584 — and the 18 tier-2 keys (`KEYED_AT_D584`).
@@ -390,6 +393,8 @@ describe("D582 — the `me` reprint-alias tier: 99 printings on 66 existing prog
     expect(KEYED_AT_D603).toHaveLength(11);
     // 🆕🆕🆕 D604 — and WP18's 8 typed Special Energy keys (`KEYED_AT_D604`).
     expect(KEYED_AT_D604).toHaveLength(8);
+    // 🆕🆕🆕 D606 — and WP25a's 9 Stadium keys (`KEYED_AT_D606`).
+    expect(KEYED_AT_D606).toHaveLength(9);
     expect(me.sort()).toEqual(
       [
         ...ALIASES.map(([id]) => id),
@@ -410,6 +415,7 @@ describe("D582 — the `me` reprint-alias tier: 99 printings on 66 existing prog
         ...KEYED_AT_D602,
         ...KEYED_AT_D603,
         ...KEYED_AT_D604,
+        ...KEYED_AT_D606,
       ].sort(),
     );
     // …and no twin is a `me` id: every program the tier reaches was built for the `sv` serie.

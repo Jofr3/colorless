@@ -947,6 +947,7 @@ until 1c broadcasts the redacted view.
     `redactStadiumAbility.test.ts` asserts all 7 (🆕🆕🆕 D561: 8) printings stay playable under the most adverse board
     `programPlayable` has gates for, beside a control op that DOES gate — so the day a Stadium ability
     carries a whiff-gated op, the pin goes red and the greying is re-verified.
+    ("UNREACHABLE" and "the pin goes red" — 🆕🆕🆕 D606 (D539): WITHDRAWN — Surfing Beach `me01-129` / `me04-114` (`switchActive { targetType: "Water" }`) whiff-gates on a {W} Active with no Benched {W}; `D210-programPlayable` and `D213-programPlayable` are now KILLED (the D606 blocks of `redactStadiumAbility.test.ts` and `GameHud.stadiumAbility.dom.test.tsx`), and the pins did not go red on their own (they scan a hand-kept id list).)
     `MATCH_RECORD_VERSION` **stays 12** and the derivation is the rule's own: a redaction/projection is a
     VIEW, never persisted state — `MatchRecord` carries `GameState` + `SeatLogEntry[]`, neither of which
     moved (no `types.ts` diff, no log diff), and `RedactedGame` is rebuilt per socket on every frame.

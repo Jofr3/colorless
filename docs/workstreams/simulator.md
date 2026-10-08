@@ -422,6 +422,7 @@ printed Stadium ability whiff-gates, so the "No legal target" branch is unreacha
 from any authored card. The last block proves that instead — all seven printings
 playable under the most adverse board, beside a `gust` control that *is* false there —
 the same admission `redactStadiumAbility.test.ts` makes for the wire fold's copy.
+("No printed Stadium ability whiff-gates" — 🆕🆕🆕 D606 (D539): WITHDRAWN — Surfing Beach `me01-129` / `me04-114` (`switchActive { targetType: "Water" }`) whiff-gates on a {W} Active with no Benched {W}; `D210-programPlayable` and `D213-programPlayable` are now KILLED (the D606 blocks of `redactStadiumAbility.test.ts` and `GameHud.stadiumAbility.dom.test.tsx`), and the pins did not go red on their own (they scan a hand-kept id list).)
 ⚠️ The first draft of the guard was **green for the wrong reason**: it queried the row
 by the Stadium's *name*, and a second copy of the same Stadium in hand renders its own
 (disabled) row in the **Trainers** list, so "Beach Court is on screen" was true on a
@@ -30233,6 +30234,29 @@ decisions (1) and (2) after D580. Engine 0.464.0 → 0.465.0. The Mega ex rule i
 - **Readings.** None new; each open point inherits a shipped one (`progress.md` NEXT).
 - **Suite.** `activatedMeD602.test.ts` (22) and a census D602 block (3). +21 mutant rows.
 - **Census.** Standard pool abilities **513 / 610**; 895 `me` printings fully built.
+- **Owed.** See `progress.md` NEXT. The whole-corpus sweep is PENDING.
+
+## D606 — WP25a: the first half of the `me` Stadiums (engine 0.489.0, `MATCH_RECORD_VERSION` stays 42)
+
+**Status:** ✅ BUILT in the `luminous_ui-mega` worktree on D605 (`8717d9cb`), NOT committed.
+
+- **Vocabulary.** `StadiumAbility.endsTurn?: "always" | "ifHealed"` (cardplay.ts `stadiumUseEndsTurn` → `settleProgram`'s
+  shipped `endsTurn`, which rides `phase.endsTurn` across a park; `"ifHealed"` reads the use's own `HEALED` rows) and
+  `StadiumEffects.attackCostSurcharge?: { amount; attacker: CardFilter }` (League HQ's term with a filter, summed into
+  `effectiveAttackCost`'s Stadium term by continuous.ts `stadiumFilteredCostSurcharge`). No op, prompt, key or event.
+- **5 texts / 9 `me` printings.** Prism Tower ×2 (Reconstitute's `payFromHand` 2 + draw 1; R-AN's hand-cost refusal),
+  Surfing Beach ×2 (`yourActiveHasType Water` gate + `switchActive targetType Water`), Nighttime Mine (`bannerPokemon Tera`),
+  Lumiose City ×2 (Artazon's Bench search, unnarrowed, `endsTurn "always"`), Celebratory Fanfare ×2 (`healEach 10`,
+  `endsTurn "ifHealed"`). No inner confirm: the Stadium use is itself the printed "may".
+- **The pinned survivors flip.** Surfing Beach is the first printed Stadium program `programPlayable` refuses (a {W} Active
+  with no Benched {W}), so `D210-programPlayable` (wire) and `D213-programPlayable` (local HUD) lose their `survives` and are
+  KILLED by new D606 blocks in `redactStadiumAbility.test.ts` and `GameHud.stadiumAbility.dom.test.tsx`; the
+  "no printed Stadium ability whiff-gates" claim is annotated WITHDRAWN at every site (D539).
+- **Dropped and named.** Battle Cage ×2, Mystery Garden ×3, Forest of Vitality ×3, Dizzying Valley, Fossil Quarry, Risky
+  Ruins. Ange Floette excluded by the brief.
+- **Readings.** R-LC1, R-CF1, UNRULED (`progress.md` NEXT).
+- **Suite.** `stadiumsMeD606.test.ts` (23) and a census D606 block (2). +17 mutant rows.
+- **Census.** Standard pool trainers **373 / 447**; 935 `me` printings fully built.
 - **Owed.** See `progress.md` NEXT. The whole-corpus sweep is PENDING.
 
 ## D605 — WP34: coin (the rest) (engine 0.488.0, `MATCH_RECORD_VERSION` stays 42)

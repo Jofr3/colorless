@@ -214,8 +214,8 @@ function damageRow(events: readonly GameEvent[]): Extract<GameEvent, { type: "DA
 const SCOV_SPOT: Spot = { id: SCOVILLAIN, under: [CAPSAKID] };
 
 describe("D578 Scovillain §0 — the version", () => {
-  it("is built at engine 0.488.0", () => {
-    expect(engineVersion).toBe("0.488.0");
+  it("is built at engine 0.489.0", () => {
+    expect(engineVersion).toBe("0.489.0");
   });
 });
 
@@ -460,6 +460,9 @@ const ALLOWLIST: Record<string, string> = {
   "filter · continuous.ts · koEnergyRescueUids · cardOfUid(state, uid) · { kind: \"basicEnergy\", energyType }": `${P} — an Energy card`,
   "filter · continuous.ts · koEnergyRescueUids · inPlayCardOf(state, body) · { kind: \"typedPokemon\", pokemonType: rescued }": E,
   "filter · continuous.ts · opposingRetreatSurcharge · targetTop · aura.target": E,
+  // 🆕🆕🆕 D606 — Nighttime Mine's `attackCostSurcharge.attacker`: its one producer is `bannerPokemon Tera`
+  // (keyed on the printing id, D568), so the read is blind to type.
+  "filter · continuous.ts · stadiumFilteredCostSurcharge · top · surcharge.attacker": B,
   "filter · continuous.ts · passivesOf · holderCard · stageFree.beneficiary": E,
   "filter · continuous.ts · passivesOf · holderCard · targeted.holder": E,
   "filter · continuous.ts · pokemonPlayBarredByOpponentActive · card · bar.except": `${P} — the card being PLAYED from the hand`,

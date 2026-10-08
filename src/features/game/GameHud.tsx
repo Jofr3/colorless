@@ -450,7 +450,12 @@ function usableAbilities(game: GameState, seat: Seat): AbilityOption[] {
     currently return false and no board over the real pool can discriminate it. It
     is kept because the engine gate has it, and the vacuity is PINNED rather than
     papered over — `packages/engine/src/redactStadiumAbility.test.ts` fails the day
-    a registry Stadium ability carries a gated op. */
+    a registry Stadium ability carries a gated op.
+    🆕🆕🆕 D606 (D539) — "TODAY, UNREACHABLE" and "fails the day …" are WITHDRAWN: Surfing
+    Beach `me01-129` / `me04-114` (`switchActive { targetType: "Water" }`) greys this row "No
+    legal target" on a {W} Active with no Benched {W} — driven in
+    `GameHud.stadiumAbility.dom.test.tsx`'s D606 block, which now kills D213-programPlayable —
+    and the pin did not fail on its own (its loop scans a hand-kept id list). */
 interface StadiumAbilityOption {
   /** `StadiumAbility.label` — the Stadium's own name, the same string the
       STADIUM_ABILITY_ACTIVATED log row carries. */

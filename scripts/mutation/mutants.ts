@@ -551,7 +551,7 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D210-programPlayable",
     decision: "D210",
-    what: "the wire's `!programPlayable` whiff gate is dropped — D210's ONE survivor, PINNED as vacuity rather than shipped as a fifth vacuous guard",
+    what: "the wire's `!programPlayable` whiff gate is dropped — D210's ONE survivor, PINNED as vacuity rather than shipped as a fifth vacuous guard (🆕🆕🆕 D606: no longer a survivor — Surfing Beach reaches the term and kills it)",
     file: "packages/engine/src/redact.ts",
     // ⚠️ ANCHORED PAST `redactedAbilitiesOf`, which spells a BYTE-IDENTICAL
     // `const noTarget = !programPlayable(state, ability.program, viewerSeat);`
@@ -568,11 +568,10 @@ export const MUTANTS: Mutant[] = [
       "  const noTarget = false;\n" +
       "  // 🆕🆕🆕 D561 (R-AN) — the printed hand cost; no `excludeUid` (the Stadium is in the\n",
     expectKilledBy: ["packages/engine/src/redactStadiumAbility.test.ts"],
-    survives: {
-      kind: "unreachable-population",
-      reason:
-        '⚠️ THIS ROW IS THE PIN, AND DECLARING IT IS THE POINT. Every implemented Stadium ability searches a deck or retrieves from a discard (🆕🆕🆕 D561: or, Academy at Night, pays a hand card to the deck top — `payFromHand`, which `programPlayable` does not gate; its hand cost is the separate, REACHABLE `costUnmet` term of the fold), and `programPlayable` gates neither — so no printed Stadium ability whiff-gates and `"No legal target"` is unreachable from any authored card. D210 kept the term anyway because the engine gate has it. THE DAY A WHIFF-GATED STADIUM PROGRAM LANDS, this row reports STALE-SURVIVOR and someone re-reads the pin. Omitting it would silently lose that.',
-    },
+    // 🆕🆕🆕 D606 — NO LONGER A DECLARED SURVIVOR (its own `survives.reason` named this day: "THE DAY A
+    // WHIFF-GATED STADIUM PROGRAM LANDS"). Surfing Beach `me01-129` / `me04-114` is a `switchActive {
+    // targetType: "Water" }`; on a {W} Active with no Benched {W} the fold must grey "No legal target",
+    // and `redactStadiumAbility.test.ts`'s D606 block asserts it — so `noTarget = false` is KILLED there.
   },
 
   // ── D212 · the lint-coverage guard ─────────────────────────────────────────
@@ -603,6 +602,7 @@ export const MUTANTS: Mutant[] = [
 
   // ── D213 · the same activation on the LOCAL hot-seat HUD ───────────────────
   // "7 of 8 mutants die; `!programPlayable` SURVIVES and is PINNED AS VACUITY."
+  // (🆕🆕🆕 D606: no longer — Surfing Beach reaches the term; D213-programPlayable is KILLED.)
   // ⚠️ Both rows live under `src/**`, which at D215's commit is a live agent's
   // working tree — so they are expected to report SKIPPED-DIRTY until it lands.
   // That is the harness working: a skip is a stated non-answer, not a pass.
@@ -619,7 +619,7 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D213-programPlayable",
     decision: "D213",
-    what: "the local fold's `!programPlayable` whiff gate is dropped — D213's ONE survivor, pinned as vacuity on D210's precedent",
+    what: "the local fold's `!programPlayable` whiff gate is dropped — D213's ONE survivor, pinned as vacuity on D210's precedent (🆕🆕🆕 D606: no longer a survivor — Surfing Beach reaches the term and kills it)",
     file: "src/features/game/GameHud.tsx",
     // ⚠️ Anchored past `usableAbilities`, which spells the same line at a deeper
     // indent 90 lines up — the same trap as D210-programPlayable, one file over.
@@ -636,11 +636,10 @@ export const MUTANTS: Mutant[] = [
       "  const noTarget = false;\n" +
       "  // 🆕🆕🆕 D561 (R-AN) — `useStadiumAbility` now refuses an unpayable printed hand cost\n",
     expectKilledBy: ["src/features/game/GameHud.stadiumAbility.dom.test.tsx"],
-    survives: {
-      kind: "unreachable-population",
-      reason:
-        '⚠️ THE SECOND PIN, and the same fact as D210-programPlayable one surface over: no printed Stadium ability whiff-gates, so "No legal target" is unreachable from any authored card and D213 asserted all seven (🆕🆕🆕 D561: eight — Academy at Night joins the list, and stays playable there — 🆕🆕🆕 D561 landing fix: playable as far as `programPlayable` goes; its hand cost is the separate, REACHABLE `costUnmet` term, and on that empty-hand board `useStadiumAbility` refuses it) printings playable under the most adverse board, beside a `gust` control that IS false there. Kept because the engine gate has it. If this is ever KILLED, a whiff-gated Stadium program has landed and BOTH pins need re-reading.',
-    },
+    // 🆕🆕🆕 D606 — NO LONGER A DECLARED SURVIVOR ("If this is ever KILLED, a whiff-gated Stadium program
+    // has landed and BOTH pins need re-reading" — both were re-read). Surfing Beach greys the local row
+    // "No legal target" on a {W} Active with no Benched {W}: `GameHud.stadiumAbility.dom.test.tsx`'s D606
+    // block kills `noTarget = false`.
   },
 
   // ── D221 · Teal Dance — the SELF target and the §9.2 slot on attachEnergyFrom ─
@@ -6241,7 +6240,7 @@ export const MUTANTS: Mutant[] = [
     // CORPUS QUOTES** (D414/D415), so a value-keyed sweep over `toBe("0.391.0")` cannot
     // see it — this row's `find` spells the DECLARATION, not an assertion. Run
     // `precheck` after every version bump, not after the sweep tells you.
-    find: 'export const engineVersion = "0.488.0";',
+    find: 'export const engineVersion = "0.489.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -51389,5 +51388,161 @@ export const MUTANTS: Mutant[] = [
     find: "  for (const drawn of faces) events.push({ type: \"ATTACK_EFFECT_COIN_FLIP\", seat: ctx.seat, result: drawn });\n",
     replace: "",
     expectKilledBy: ["packages/engine/src/coinRestMeD605.test.ts"],
+  },
+  // ── 🆕🆕🆕 D606 — WP25a: THE FIRST HALF OF THE `me` STADIUMS. One row per printed parameter, gate, turn
+  //    end and key, and per arm of the two new fields. Every `find` occurs once (precheck); no replace names
+  //    an identifier its file does not bind. D210-programPlayable / D213-programPlayable flip to KILLED. ──
+  {
+    id: "D606-prism-cost-one",
+    decision: "D606",
+    what: "Prism Tower's hand cost falls to 1 card: one card in hand pays and draws. Killed by stadiumsMeD606 §1's program and §2's park and refusal.",
+    file: "packages/engine/src/registry.ts",
+    find: "      label: \"Prism Tower\",\n      program: [\n        { op: \"payFromHand\", count: 2, to: \"discard\" },\n",
+    replace: "      label: \"Prism Tower\",\n      program: [\n        { op: \"payFromHand\", count: 1, to: \"discard\" },\n",
+    expectKilledBy: ["packages/engine/src/stadiumsMeD606.test.ts"],
+  },
+  {
+    id: "D606-prism-no-draw",
+    decision: "D606",
+    what: "Prism Tower pays its 2 cards and draws nothing. Killed by stadiumsMeD606 §1's program and §2's hand.",
+    file: "packages/engine/src/registry.ts",
+    find: "      label: \"Prism Tower\",\n      program: [\n        { op: \"payFromHand\", count: 2, to: \"discard\" },\n        { op: \"drawCards\", count: 1 },\n",
+    replace: "      label: \"Prism Tower\",\n      program: [\n        { op: \"payFromHand\", count: 2, to: \"discard\" },\n",
+    expectKilledBy: ["packages/engine/src/stadiumsMeD606.test.ts"],
+  },
+  {
+    id: "D606-surf-ungated",
+    decision: "D606",
+    what: "Surfing Beach loses its printed \"Active {W}\" gate: a non-{W} Active switches. Killed by stadiumsMeD606 §1's program and §3's refusal.",
+    file: "packages/engine/src/registry.ts",
+    find: "      label: \"Surfing Beach\",\n      playableIf: { kind: \"yourActiveHasType\", type: \"Water\" },\n",
+    replace: "      label: \"Surfing Beach\",\n",
+    expectKilledBy: ["packages/engine/src/stadiumsMeD606.test.ts"],
+  },
+  {
+    id: "D606-surf-untyped-bench",
+    decision: "D606",
+    what: "Surfing Beach's Bench end loses the printed {W}: any Benched body is offered. Killed by stadiumsMeD606 §1's program, §3's candidate set and NO_LEGAL_TARGET rung, and redactStadiumAbility's D606 block.",
+    file: "packages/engine/src/registry.ts",
+    find: "      playableIf: { kind: \"yourActiveHasType\", type: \"Water\" },\n      program: [{ op: \"switchActive\", targetType: \"Water\" }],\n",
+    replace: "      playableIf: { kind: \"yourActiveHasType\", type: \"Water\" },\n      program: [{ op: \"switchActive\" }],\n",
+    expectKilledBy: ["packages/engine/src/stadiumsMeD606.test.ts", "packages/engine/src/redactStadiumAbility.test.ts"],
+  },
+  {
+    id: "D606-mine-wrong-banner",
+    decision: "D606",
+    what: "Nighttime Mine taxes Ancient Pokémon, not the printed Tera. Killed by stadiumsMeD606 §1's program and §4's boards.",
+    file: "packages/engine/src/registry.ts",
+    find: "stadium: { attackCostSurcharge: { amount: 1, attacker: { kind: \"bannerPokemon\", banner: \"Tera\" } } },",
+    replace: "stadium: { attackCostSurcharge: { amount: 1, attacker: { kind: \"bannerPokemon\", banner: \"Ancient\" } } },",
+    expectKilledBy: ["packages/engine/src/stadiumsMeD606.test.ts"],
+  },
+  {
+    id: "D606-mine-two-colorless",
+    decision: "D606",
+    what: "Nighttime Mine adds {C}{C}, not the printed {C}. Killed by stadiumsMeD606 §1's program and §4's cost arrays.",
+    file: "packages/engine/src/registry.ts",
+    find: "stadium: { attackCostSurcharge: { amount: 1, attacker: { kind: \"bannerPokemon\", banner: \"Tera\" } } },",
+    replace: "stadium: { attackCostSurcharge: { amount: 2, attacker: { kind: \"bannerPokemon\", banner: \"Tera\" } } },",
+    expectKilledBy: ["packages/engine/src/stadiumsMeD606.test.ts"],
+  },
+  {
+    id: "D606-lumiose-turn-continues",
+    decision: "D606",
+    what: "Lumiose City loses its printed \"their turn ends\". Killed by stadiumsMeD606 §1's program and §5's turn rungs.",
+    file: "packages/engine/src/registry.ts",
+    find: "        { op: \"shuffleDeck\" },\n      ],\n      endsTurn: \"always\",\n",
+    replace: "        { op: \"shuffleDeck\" },\n      ],\n",
+    expectKilledBy: ["packages/engine/src/stadiumsMeD606.test.ts"],
+  },
+  {
+    id: "D606-lumiose-no-rule-box",
+    decision: "D606",
+    what: "Lumiose City keeps Artazon's Rule Box narrowing the card does not print. Killed by stadiumsMeD606 §1's program.",
+    file: "packages/engine/src/registry.ts",
+    find: "        { op: \"searchDeck\", filter: { kind: \"basicPokemon\" }, dest: \"bench\", max: 1 },\n        { op: \"shuffleDeck\" },\n      ],\n      endsTurn: \"always\",\n",
+    replace: "        { op: \"searchDeck\", filter: { kind: \"basicPokemon\", noRuleBox: true }, dest: \"bench\", max: 1 },\n        { op: \"shuffleDeck\" },\n      ],\n      endsTurn: \"always\",\n",
+    expectKilledBy: ["packages/engine/src/stadiumsMeD606.test.ts"],
+  },
+  {
+    id: "D606-fanfare-always-ends",
+    decision: "D606",
+    what: "Celebratory Fanfare ends the turn even when nothing healed (R-CF1 inverted). Killed by stadiumsMeD606 §1's program and §6's undamaged rung.",
+    file: "packages/engine/src/registry.ts",
+    find: "      endsTurn: \"ifHealed\",\n",
+    replace: "      endsTurn: \"always\",\n",
+    expectKilledBy: ["packages/engine/src/stadiumsMeD606.test.ts"],
+  },
+  {
+    id: "D606-fanfare-never-ends",
+    decision: "D606",
+    what: "Celebratory Fanfare loses its printed \"their turn ends\". Killed by stadiumsMeD606 §1's program and §6's damaged rung.",
+    file: "packages/engine/src/registry.ts",
+    find: "        { op: \"healEach\", amount: 10 },\n      ],\n      endsTurn: \"ifHealed\",\n",
+    replace: "        { op: \"healEach\", amount: 10 },\n      ],\n",
+    expectKilledBy: ["packages/engine/src/stadiumsMeD606.test.ts"],
+  },
+  {
+    id: "D606-prism-unkeyed",
+    decision: "D606",
+    what: "Prism Tower `me04-111` loses its key: one printing stays unbuilt. Killed by stadiumsMeD606 §1's id loop, the census D606 block and reprintAliasMeD582's `me` key table.",
+    file: "packages/engine/src/registry.ts",
+    find: "  \"me04-111\": PRISM_TOWER, // Prism Tower\n",
+    replace: "",
+    expectKilledBy: ["packages/engine/src/stadiumsMeD606.test.ts", "packages/engine/src/censusAtHead.test.ts", "packages/engine/src/reprintAliasMeD582.test.ts"],
+  },
+  {
+    id: "D606-census-key-unrecorded",
+    decision: "D606",
+    what: "the D606 census list forgets Nighttime Mine: a registry key ships with no census visit (D272's defect). Killed by the census suite's D273 partition rung, the D581 me-key rung and the D606 block.",
+    file: "packages/engine/src/censusAtHead.test.ts",
+    find: "  \"me02.5-197\", // Nighttime Mine\n",
+    replace: "",
+    expectKilledBy: ["packages/engine/src/censusAtHead.test.ts"],
+  },
+  {
+    id: "D606-stadium-ends-turn-unread",
+    decision: "D606",
+    what: "`useStadiumAbility` never folds `StadiumAbility.endsTurn`: neither Stadium ends the turn. Killed by stadiumsMeD606 §5 and §6.",
+    file: "packages/engine/src/cardplay.ts",
+    find: "    endsTurn: stadiumUseEndsTurn(ability, events, action.seat),\n",
+    replace: "    endsTurn: false,\n",
+    expectKilledBy: ["packages/engine/src/stadiumsMeD606.test.ts"],
+  },
+  {
+    id: "D606-always-unread",
+    decision: "D606",
+    what: "the `\"always\"` arm is dropped: Lumiose City's use keeps the turn. Killed by stadiumsMeD606 §5.",
+    file: "packages/engine/src/cardplay.ts",
+    find: "  if (ability.endsTurn === \"always\") return true;\n",
+    replace: "",
+    expectKilledBy: ["packages/engine/src/stadiumsMeD606.test.ts"],
+  },
+  {
+    id: "D606-if-healed-unconditional",
+    decision: "D606",
+    what: "`\"ifHealed\"` stops reading the HEALED rows: an undamaged Celebratory Fanfare ends the turn. Killed by stadiumsMeD606 §6's R-CF1 rung.",
+    file: "packages/engine/src/cardplay.ts",
+    find: "  return events.some((event) => event.type === \"HEALED\" && event.seat === seat && event.amount > 0);\n",
+    replace: "  return true;\n",
+    expectKilledBy: ["packages/engine/src/stadiumsMeD606.test.ts"],
+  },
+  {
+    id: "D606-mine-unread",
+    decision: "D606",
+    what: "`effectiveAttackCost` drops the filtered Stadium term: Nighttime Mine costs nothing. Killed by stadiumsMeD606 §4.",
+    file: "packages/engine/src/continuous.ts",
+    find: "    (isBasicPokemon(top) ? (stadiumEffectsOf(state)?.basicAttackCostSurcharge ?? 0) : 0) +\n    stadiumFilteredCostSurcharge(state, top);\n",
+    replace: "    (isBasicPokemon(top) ? (stadiumEffectsOf(state)?.basicAttackCostSurcharge ?? 0) : 0);\n",
+    expectKilledBy: ["packages/engine/src/stadiumsMeD606.test.ts"],
+  },
+  {
+    id: "D606-mine-filter-ignored",
+    decision: "D606",
+    what: "the surcharge stops asking its `attacker` filter: every Pokémon's attacks cost {C} more under Nighttime Mine. Killed by stadiumsMeD606 §4's non-Tera rung.",
+    file: "packages/engine/src/continuous.ts",
+    find: "  return surcharge !== undefined && matchesFilter(top, surcharge.attacker) ? surcharge.amount : 0;\n",
+    replace: "  return surcharge !== undefined ? surcharge.amount : 0;\n",
+    expectKilledBy: ["packages/engine/src/stadiumsMeD606.test.ts"],
   },
 ];

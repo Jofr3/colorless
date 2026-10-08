@@ -3221,6 +3221,17 @@ export interface StadiumAbility {
       only the engine can see is an afford-then-reject (D190/D222). Absent means ungated
       (D135) — every pre-D564 Stadium ability. CATALOG data, never persisted. */
   playableIf?: BoardCondition;
+  /** 🆕🆕🆕 §7.3 (D606) — THE STADIUM USE THAT ENDS THE TURN, `AbilityProgram.endsTurn`'s twin one
+      card class over. `"always"`: Lumiose City `me03-077`/`-111` (*"If a player searches their deck
+      in this way, their turn ends."* — the use IS the search, R-LC1). `"ifHealed"`: Celebratory
+      Fanfare `mep-028`/`-120` (*"If a player healed any damage in this way, their turn ends."* —
+      read off the `HEALED` rows the use's own program emitted for the actor, R-CF1; its
+      `healEach` never parks, so the answer is known when `useStadiumAbility` folds). Folded by
+      flow.ts `settleProgram`'s shipped `endsTurn` (Koraidon "Dino Cry", Misty's Vitality), which
+      rides `phase.endsTurn` across a park. No inner confirm: the activation is itself the printed
+      *"may"* (a player action, never auto-fired). Absent = the turn continues. CATALOG data,
+      never persisted. */
+  endsTurn?: "always" | "ifHealed";
   program: EffectOp[];
 }
 
@@ -3245,6 +3256,14 @@ export interface StadiumEffects {
   /** Attacks of every Basic Pokémon in play cost this many {C} more
       (Pokémon League Headquarters). */
   basicAttackCostSurcharge?: number;
+  /** 🆕🆕🆕 §8.2 (D606) — League HQ's sentence with the Basic noun replaced by a FILTER: Nighttime
+      Mine `me02.5-197` (*"Attacks used by each Tera Pokémon in play (both yours and your
+      opponent's) cost {C} more."* — `bannerPokemon Tera`, D568's printing-id banner). Matched on
+      the attacker's TOP card in continuous.ts `effectiveAttackCost` and added to the same {C}
+      term as `basicAttackCostSurcharge`, so every reader of that function (the attack gate,
+      `redactedAttacksOf`, both HUDs) sees it. `damageBonusBeforeWR`'s `{ amount, attacker }`
+      shape. Not §9-gated (a Stadium is no Ability). */
+  attackCostSurcharge?: { amount: number; attacker: CardFilter };
   /** §8.5 — prevent ALL attack damage done to any Pokémon WITHOUT a Rule Box, on
       BOTH boards, when the attacker is a Pokémon ex or a Pokémon V (Neutralization
       Zone sv06.5-060 — "Prevent all damage done to Pokémon that don't have a Rule
@@ -17751,6 +17770,86 @@ const VOLTAIC_LIGHTNING_ENERGY: CardProgram = {
   energy: { provides: ["Lightning"], holderType: "Lightning", passive: { damageBonusBeforeWR: 20 } },
 };
 
+// ── 🆕🆕🆕 D606 — WP25a: THE FIRST HALF OF THE `me` STADIUMS. Five objects, 9 `me` printings, on the
+//    Artazon / Community Center / League HQ shapes plus ONE new piece, the turn-ending Stadium use
+//    (`StadiumAbility.endsTurn`), and League HQ's filtered twin (`StadiumEffects.attackCostSurcharge`).
+//    Texts off the LOCAL D1. Dropped and named (vocabulary beyond the brief): Battle Cage ×2 (a Bench
+//    damage-counter shield — the brief's other new piece), Mystery Garden ×3 (a draw-until count
+//    source), Forest of Vitality ×3 (a same-turn evolution rule), Dizzying Valley (Confusion kept
+//    through evolution), Fossil Quarry (Antique Items deck-to-Bench) and Risky Ruins (a Stadium
+//    on-Bench trigger). Excluded by the brief: Ange Floette. `stadiumsMeD606.test.ts`. ──
+
+/** 🆕🆕🆕 **D606 — Prism Tower `me04-080` / `-111` (Stadium)**: *"Once during each player's turn, that
+    player may discard 2 cards from their hand in order to draw a card."* Team Rocket's Porygon-Z
+    "Reconstitute"'s program (`payFromHand` 2 to the discard, draw 1) on the Stadium path, whose hand
+    cost `useStadiumAbility` refuses short (`handCostUnmet` — Academy at Night's R-AN). */
+const PRISM_TOWER: CardProgram = {
+  stadium: {
+    ability: {
+      label: "Prism Tower",
+      program: [
+        { op: "payFromHand", count: 2, to: "discard" },
+        { op: "drawCards", count: 1 },
+      ],
+    },
+  },
+};
+
+/** 🆕🆕🆕 **D606 — Surfing Beach `me01-129`, `me04-114` (Stadium)**: *"Once during each player's turn,
+    that player may switch their Active {W} Pokémon with 1 of their Benched {W} Pokémon."* The
+    Active end is the gate (`yourActiveHasType Water`, Dragon Elixir's member), the Bench end
+    Pecharunt ex's `switchActive.targetType`. ⚠️ The FIRST printed Stadium program `programPlayable`
+    can refuse (no Benched {W}: NO_LEGAL_TARGET) — D210 / D213's pinned survivors are now killed. */
+const SURFING_BEACH: CardProgram = {
+  stadium: {
+    ability: {
+      label: "Surfing Beach",
+      playableIf: { kind: "yourActiveHasType", type: "Water" },
+      program: [{ op: "switchActive", targetType: "Water" }],
+    },
+  },
+};
+
+/** 🆕🆕🆕 **D606 — Nighttime Mine `me02.5-197` (Stadium)**: *"Attacks used by each Tera Pokémon in play
+    (both yours and your opponent's) cost {C} more."* League HQ's surcharge on D568's Tera banner. */
+const NIGHTTIME_MINE: CardProgram = {
+  stadium: { attackCostSurcharge: { amount: 1, attacker: { kind: "bannerPokemon", banner: "Tera" } } },
+};
+
+/** 🆕🆕🆕 **D606 — Lumiose City `me03-077` / `-111` (Stadium)**: *"Once during each player's turn, that
+    player may search their deck for a Basic Pokémon and put it onto their Bench. Then, that player
+    shuffles their deck. If a player searches their deck in this way, their turn ends."* Artazon's
+    program without the Rule Box narrowing, and the use ends the turn (`endsTurn: "always"`, R-LC1). */
+const LUMIOSE_CITY: CardProgram = {
+  stadium: {
+    ability: {
+      label: "Lumiose City",
+      program: [
+        { op: "searchDeck", filter: { kind: "basicPokemon" }, dest: "bench", max: 1 },
+        { op: "shuffleDeck" },
+      ],
+      endsTurn: "always",
+    },
+  },
+};
+
+/** 🆕🆕🆕 **D606 — Celebratory Fanfare `mep-028`, `mep-120` (Stadium)**: *"Once during each player's
+    turn, that player may heal 10 damage from each of their Pokémon. If a player healed any damage in
+    this way, their turn ends."* Community Center's `healEach 10` without the Supporter gate, and the
+    turn ends only if a body actually healed (`endsTurn: "ifHealed"`, R-CF1). */
+const CELEBRATORY_FANFARE: CardProgram = {
+  stadium: {
+    ability: {
+      label: "Celebratory Fanfare",
+      // Spelled over three lines so `D564-community-center-heals-20`'s one-line `find` stays unique.
+      program: [
+        { op: "healEach", amount: 10 },
+      ],
+      endsTurn: "ifHealed",
+    },
+  },
+};
+
 const REGISTRY: Record<string, CardProgram> = {
   // Professor's Research (SV base prints)
   "sv01-189": PROFESSORS_RESEARCH,
@@ -18880,6 +18979,16 @@ const REGISTRY: Record<string, CardProgram> = {
   "me04-086": NITRO_FIRE_ENERGY, // Nitro Fire Energy — {R}; its {R} holder's attack discards it: to the hand
   "me05-083": SHADOWY_DARKNESS_ENERGY, // Shadowy Darkness Energy — {D}; the Benched {D} holder takes no attack damage
   "me05-084": VOLTAIC_LIGHTNING_ENERGY, // Voltaic Lightning Energy — {L}; the {L} holder's attacks +20 before W/R
+  // 🆕🆕🆕 D606 — WP25a: 9 `me` Stadium keys / 5 objects, MID-MAP (`raw[last]` does not move).
+  "me04-080": PRISM_TOWER, // Prism Tower — discard 2 from hand, draw 1
+  "me04-111": PRISM_TOWER, // Prism Tower
+  "me01-129": SURFING_BEACH, // Surfing Beach — Active {W} switches with a Benched {W}
+  "me04-114": SURFING_BEACH, // Surfing Beach
+  "me02.5-197": NIGHTTIME_MINE, // Nighttime Mine — each Tera Pokémon's attacks cost {C} more
+  "me03-077": LUMIOSE_CITY, // Lumiose City — a Basic from the deck to the Bench; the turn ends
+  "me03-111": LUMIOSE_CITY, // Lumiose City
+  "mep-028": CELEBRATORY_FANFARE, // Celebratory Fanfare — heal 10 from each; healed any: the turn ends
+  "mep-120": CELEBRATORY_FANFARE, // Celebratory Fanfare
   // ── D190 — THE **STANDARD-LEGAL** REPRINT-ALIAS MAP (Tier 0 of
   //    `docs/reference/coverage-backlog-legal.md`). 22 printings, 9 map targets,
   //    ZERO new code: every row below prints a sentence that is already authored

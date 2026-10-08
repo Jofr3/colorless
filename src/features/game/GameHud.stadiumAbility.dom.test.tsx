@@ -31,6 +31,8 @@
 //       so out loud rather than shipping a guard that cannot fail. No printed
 //       Stadium ability can whiff-gate, so no board over the real pool
 //       discriminates it; the vacuity is pinned there instead.
+//       (🆕🆕🆕 D606 (D539): WITHDRAWN — Surfing Beach `me01-129` / `me04-114` whiff-gates on a
+//       {W} Active with no Benched {W}; the D606 block at the end kills (e).)
 
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
@@ -38,6 +40,9 @@ import type { GameAction, GameState, Seat } from "@luminous/engine";
 import { applyAction, programFor, programPlayable } from "@luminous/engine";
 import {
   STADIUM_ABILITY_DECK,
+  battler,
+  benchFromDeck,
+  clearBench,
   driveSetup,
   handFromDeck,
   handUid,
@@ -403,7 +408,7 @@ describe("GameHud — the Stadium row's printed GATE (D564, Community Center)", 
 // ─────────────────────────────────────────────────────────────────────────────
 // THE `programPlayable` TERM, AND THE HONEST ADMISSION ABOUT IT.
 
-describe("the `programPlayable` term in the LOCAL fold is correct and, today, UNREACHABLE", () => {
+describe("the `programPlayable` term in the LOCAL fold is correct and, today, UNREACHABLE (🆕🆕🆕 D606 (D539): \"UNREACHABLE\" is WITHDRAWN — Surfing Beach reaches it; the D606 block below)", () => {
   /** Every printed Stadium ability the registry implements — D209's census, kept
       as a literal because `REGISTRY` is not exported and this list is the claim.
       The engine-side twin lives in `redactStadiumAbility.test.ts`; this copy
@@ -424,7 +429,7 @@ describe("the `programPlayable` term in the LOCAL fold is correct and, today, UN
     "sv06.5-054", // Academy at Night
   ];
 
-  it("NO printed Stadium program can whiff-gate — so no DOM case above can grey the row that way", () => {
+  it("NO printed Stadium program can whiff-gate — so no DOM case above can grey the row that way (🆕🆕🆕 D606 (D539): WITHDRAWN as a claim about EVERY printed Stadium — it holds for the ids listed; Surfing Beach whiff-gates)", () => {
     // The most adverse board `programPlayable` has gates for: nothing in either
     // deck, hand or discard, no Bench on either side, no Energy anywhere.
     const base = p1Turn2(1);
@@ -447,7 +452,8 @@ describe("the `programPlayable` term in the LOCAL fold is correct and, today, UN
       // target" tooltip is UNREACHABLE from any authored card, and mutant (e)
       // SURVIVES. No assertion in this file pretends otherwise — a DOM case that
       // "proved" the greyed-with-reason row would have had to fabricate a Stadium
-      // program the registry does not contain.
+      // program the registry does not contain. (🆕🆕🆕 D606 (D539): of the LISTED ids only —
+      // Surfing Beach is in the registry now, and the D606 block kills mutant (e).)
       expect(programPlayable(stripped, ability.program, "p1")).toBe(true);
     }
     // The control that makes the loop mean something: this state DOES make
@@ -455,5 +461,71 @@ describe("the `programPlayable` term in the LOCAL fold is correct and, today, UN
     // these programs and not about this board. RED the day a gated op joins one
     // of the seven (🆕🆕🆕 D561: eight) — at which point the local case becomes writable.
     expect(programPlayable(stripped, [{ op: "gust" }], "p1")).toBe(false);
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 🆕🆕🆕 D606 — SURFING BEACH REACHES THE `programPlayable` TERM ON THIS SURFACE TOO.
+//
+// Surfing Beach `me01-129` (*"Once during each player's turn, that player may switch their Active
+// {W} Pokémon with 1 of their Benched {W} Pokémon."*) is a `switchActive { targetType: "Water" }`
+// behind a `yourActiveHasType Water` gate: a {W} Active with no Benched {W} passes the gate and
+// leaves the switch no candidate, so `useStadiumAbility` answers NO_LEGAL_TARGET and the local fold
+// greys the row "No legal target" — mutant (e), D213-programPlayable, now KILLED here. Grafted as
+// Academy at Night is above; the Active's card id is the one surgery.
+
+const SURFING_BEACH = "me01-129";
+const D606_WATER = "d606-water";
+function withSurfingBeach(state: GameState, benchedWater: boolean): GameState {
+  const base = clearBench(state, "p1");
+  const side = base.players.p1;
+  const activeUid = side.active?.stack[0] as string;
+  const surfUid = "d606-surf-0";
+  const waterUid = "d606-water-1";
+  const grafted: GameState = {
+    ...base,
+    cardPool: {
+      ...base.cardPool,
+      [SURFING_BEACH]: {
+        ...trainerCard(
+          SURFING_BEACH,
+          "Stadium",
+          "Once during each player's turn, that player may switch their Active {W} Pokémon with 1 of their Benched {W} Pokémon.",
+        ),
+        name: "Surfing Beach",
+      },
+      [D606_WATER]: battler(D606_WATER, { name: "D606 Water", hp: 200, types: ["Water"] }),
+    },
+    cardIdByUid: { ...base.cardIdByUid, [surfUid]: SURFING_BEACH, [activeUid]: D606_WATER, [waterUid]: D606_WATER },
+    players: { ...base.players, p1: { ...side, hand: [...side.hand, surfUid], deck: [...side.deck, waterUid] } },
+  };
+  const played = must(applyAction(grafted, { type: "playTrainer", seat: "p1", uid: surfUid }));
+  return benchedWater ? benchFromDeck(played, "p1", D606_WATER) : played;
+}
+
+describe("GameHud — the Stadium row's `programPlayable` term, REACHED (D606, Surfing Beach)", () => {
+  it("greys \"No legal target\" on a {W} Active with no Benched {W}, refuses to dispatch, and the engine agrees", () => {
+    const board = withSurfingBeach(p1Turn2(1), false);
+    const dispatch = vi.fn<(action: GameAction) => void>();
+    renderHud(board, "p1", dispatch);
+    // RED IF the fold drops `!programPlayable`: the row would light for a click `useStadiumAbility`
+    // answers NO_LEGAL_TARGET.
+    expect(stadiumRow()?.textContent).toBe("Surfing Beach");
+    expect(stadiumRow()?.disabled).toBe(true);
+    expect((stadiumSection() as HTMLElement).querySelector("li")?.getAttribute("title")).toBe("No legal target");
+    fireEvent.click(stadiumRow() as HTMLButtonElement);
+    expect(dispatch).not.toHaveBeenCalled();
+    const refused = applyAction(board, { type: "useStadiumAbility", seat: "p1" });
+    expect(refused.ok).toBe(false);
+    if (!refused.ok) expect(refused.error.code).toBe("NO_LEGAL_TARGET");
+  });
+
+  it("lights with a Benched {W}, and the click's own payload is accepted by the engine", () => {
+    const board = withSurfingBeach(p1Turn2(1), true);
+    const dispatch = vi.fn<(action: GameAction) => void>();
+    renderHud(board, "p1", dispatch);
+    expect(stadiumRow()?.disabled).toBe(false);
+    fireEvent.click(stadiumRow() as HTMLButtonElement);
+    mustApply(board, dispatch.mock.calls[0]?.[0] as GameAction);
   });
 });

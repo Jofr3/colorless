@@ -6,6 +6,9 @@ import { redactGame } from "./redact";
 import {
   FIXTURE_POOL,
   STADIUM_ABILITY_DECK,
+  battler,
+  benchFromDeck,
+  clearBench,
   deepFreeze,
   driveSetup,
   handFromDeck,
@@ -41,7 +44,9 @@ import type { GameState, Seat } from "./types";
 //   (c) dropping the `programPlayable` term — NOT killable against the printed
 //       pool, and this file says so out loud rather than shipping a guard that
 //       cannot fail (D200/D204/D205's mistake, three times this session). The
-//       vacuity is PINNED instead: see the last block.
+//       vacuity is PINNED instead: see the last block. (🆕🆕🆕 D606 (D539): "NOT
+//       killable" is WITHDRAWN — Surfing Beach `me01-129` / `me04-114` whiff-gates on a
+//       {W} Active with no Benched {W}, and the D606 block at the end kills (c).)
 //   (d) dispatching without the seat — a client-side mutant, killed in
 //       `src/features/online/components/OnlineHud.stadiumAbility.dom.test.tsx`.
 
@@ -332,7 +337,7 @@ describe("redactGame — Levincia sv09-150, the Standard-legal driver (D209's fi
 // ─────────────────────────────────────────────────────────────────────────────
 // THE `programPlayable` TERM, AND THE HONEST ADMISSION ABOUT IT.
 
-describe("the `programPlayable` term in the fold is correct and, today, UNREACHABLE", () => {
+describe("the `programPlayable` term in the fold is correct and, today, UNREACHABLE (🆕🆕🆕 D606 (D539): \"UNREACHABLE\" is WITHDRAWN — Surfing Beach reaches it; the D606 block below)", () => {
   /** Every printed Stadium ability the registry implements — D209's census, kept
       as a literal because `REGISTRY` is not exported and this list is the claim. */
   const STADIUM_ABILITY_IDS = [
@@ -356,6 +361,15 @@ describe("the `programPlayable` term in the fold is correct and, today, UNREACHA
     // and `healEach 10`, which `programPlayable` gates NEITHER, so the loop below still holds.
     "sv10-173", // Team Rocket's Factory
     "sv06-146", // Community Center
+    // 🆕🆕🆕 D606 — three of WP25a's four `me` Stadium-ability programs: `payFromHand` + `drawCards`,
+    // a Bench search and `healEach`, none of which `programPlayable` gates, so the loop below holds
+    // for them. The FOURTH, Surfing Beach, is NOT here: its `switchActive` IS gated — the D606 block.
+    "me04-080", // Prism Tower
+    "me04-111", // Prism Tower
+    "me03-077", // Lumiose City
+    "me03-111", // Lumiose City
+    "mep-028", // Celebratory Fanfare
+    "mep-120", // Celebratory Fanfare
   ];
 
   it("the census is real — every id above carries an ability, and the fixture pool holds no OTHERS", () => {
@@ -372,7 +386,7 @@ describe("the `programPlayable` term in the fold is correct and, today, UNREACHA
     expect(inPool.sort()).toEqual(["sv01-178", "sv02-171", "sv03-196"]);
   });
 
-  it("NO printed Stadium program can whiff-gate — so no test over the pool can kill this term", () => {
+  it("NO printed Stadium program can whiff-gate — so no test over the pool can kill this term (🆕🆕🆕 D606 (D539): WITHDRAWN as a claim about EVERY printed Stadium — it holds for the ids listed; Surfing Beach whiff-gates)", () => {
     // The most adverse board `programPlayable` has gates for: nothing in either
     // deck, discard or hand, no opponent Bench, no Energy anywhere. If ANY of the
     // seven (🆕🆕🆕 D561: eight; 🆕🆕🆕 D564: ten) programs contained a `gust` / `switchActive` / `moveEnergy` /
@@ -397,12 +411,83 @@ describe("the `programPlayable` term in the fold is correct and, today, UNREACHA
       // cardplay.ts — "a deck search is always playable enough"). So the term
       // `!programPlayable(...)` in `redactedStadiumAbilityOf` cannot currently
       // return true, mutant (c) SURVIVES against the real pool, and no assertion
-      // in this file pretends otherwise.
+      // in this file pretends otherwise. (🆕🆕🆕 D606 (D539): of the LISTED ids only — Surfing
+      // Beach is not listed, and the D606 block kills mutant (c).)
       expect(programPlayable(stripped, ability.program, "p1")).toBe(true);
     }
     // The control that makes the loop above mean something: this state DOES make
     // `programPlayable` false for a gated op, so "true" is a fact about these
     // programs and not about this state.
     expect(programPlayable(stripped, [{ op: "gust" }], "p1")).toBe(false);
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 🆕🆕🆕 D606 — SURFING BEACH, THE FIRST PRINTED STADIUM PROGRAM `programPlayable` REFUSES.
+//
+// Surfing Beach `me01-129` / `me04-114` (*"Once during each player's turn, that player may switch
+// their Active {W} Pokémon with 1 of their Benched {W} Pokémon."*) is a `switchActive { targetType:
+// "Water" }` behind a `yourActiveHasType Water` gate. With a {W} Active (the gate holds) and no
+// Benched {W}, the switch has no candidate: `useStadiumAbility` answers NO_LEGAL_TARGET and the fold
+// greys the row "No legal target" — the term D210 pinned as unreachable, now driven, so the
+// `D210-programPlayable` row is KILLED here. The Stadium and a {W} body are GRAFTED into the pool;
+// the Stadium is put into play by the real `playTrainer`, and the Active's card id is the surgery.
+
+const SURFING_BEACH = "me01-129";
+const D606_WATER = "d606-water";
+
+function surfingBeachBoard(benchedWater: boolean): GameState {
+  const base = clearBench(p1Turn2(1), "p1");
+  const side = base.players.p1;
+  const activeUid = side.active?.stack[0] as string;
+  const surfUid = "d606-surf-0";
+  const waterUid = "d606-water-1";
+  const grafted: GameState = {
+    ...base,
+    cardPool: {
+      ...base.cardPool,
+      [SURFING_BEACH]: {
+        ...trainerCard(
+          SURFING_BEACH,
+          "Stadium",
+          "Once during each player's turn, that player may switch their Active {W} Pokémon with 1 of their Benched {W} Pokémon.",
+        ),
+        name: "Surfing Beach",
+      },
+      [D606_WATER]: battler(D606_WATER, { name: "D606 Water", hp: 200, types: ["Water"] }),
+    },
+    cardIdByUid: { ...base.cardIdByUid, [surfUid]: SURFING_BEACH, [activeUid]: D606_WATER, [waterUid]: D606_WATER },
+    players: { ...base.players, p1: { ...side, hand: [...side.hand, surfUid], deck: [...side.deck, waterUid] } },
+  };
+  const played = must(applyAction(grafted, { type: "playTrainer", seat: "p1", uid: surfUid }));
+  return benchedWater ? benchFromDeck(played, "p1", D606_WATER) : played;
+}
+
+describe("🆕🆕🆕 D606 — the `programPlayable` term, REACHED by Surfing Beach", () => {
+  it("a {W} Active with no Benched {W}: the row greys \"No legal target\" and the engine refuses NO_LEGAL_TARGET", () => {
+    const board = deepFreeze(surfingBeachBoard(false));
+    expect(board.players.p1.bench).toEqual([]);
+    // RED IF the fold drops `!programPlayable` (D210-programPlayable): the row would light for a click
+    // `useStadiumAbility` answers NO_LEGAL_TARGET.
+    expect(offerFor(board, "p1")).toEqual({ label: "Surfing Beach", disabled: true, reason: "No legal target" });
+    const refused = applyAction(board, { type: "useStadiumAbility", seat: "p1" });
+    expect(refused.ok).toBe(false);
+    if (!refused.ok) expect(refused.error.code).toBe("NO_LEGAL_TARGET");
+  });
+
+  it("a Benched {W} lights the row, and the engine accepts the use", () => {
+    const board = deepFreeze(surfingBeachBoard(true));
+    expect(offerFor(board, "p1")).toEqual({ label: "Surfing Beach", disabled: false, reason: null });
+    const { state } = mustApply(board, { type: "useStadiumAbility", seat: "p1" });
+    expect(state.cardIdByUid[state.players.p1.active?.stack[0] as string]).toBe(D606_WATER);
+    expect(state.players.p1.bench).toHaveLength(1);
+  });
+
+  it("the stripped board of the pin above DOES refuse Surfing Beach's program — the inversion, measured", () => {
+    const board = surfingBeachBoard(false);
+    const ability = programFor(SURFING_BEACH)?.stadium?.ability;
+    if (ability === undefined) throw new Error("Surfing Beach has no stadium ability");
+    expect(programPlayable(board, ability.program, "p1")).toBe(false);
+    expect(programPlayable(surfingBeachBoard(true), ability.program, "p1")).toBe(true);
   });
 });

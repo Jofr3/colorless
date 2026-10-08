@@ -2159,6 +2159,15 @@ export interface MatchRecord {
     `turn:action.discardable` — 🛑 **DEPLOY THE SERVER FIRST**: an old client's `z.object` STRIPS
     the unknown key, while a new client's REQUIRED key refuses an old server's frame.
 
+    🆕🆕🆕 **STAYS 42 AT D606 — WP25a ADDS TWO CATALOG FIELDS (`StadiumAbility.endsTurn`,
+    `StadiumEffects.attackCostSurcharge`), NO OP, PROMPT, KEY, STAGE OR EVENT.** (Placed ABOVE the D605
+    block.) Both fields are registry data, looked up by the Stadium's card id and never persisted; the
+    nine `me` Stadiums are TRAINER faces in a v42 `cardPool` (D583's refresh), and no card row is read
+    differently. A parked Lumiose City search carries the shipped `phase.endsTurn` (Koraidon's key since
+    M5); Prism Tower and Surfing Beach park shipped `payFromHand` / `switchActive` ops; Celebratory
+    Fanfare's `healEach` never parks. Rollback to 0.488: a parked Lumiose City still ends the turn (the
+    flag is on the phase); 0.488 has no program for the nine ids, so their uses are unavailable there.
+
     🆕🆕🆕 **STAYS 42 AT D605 — WP34 ADDS TWO OPTIONAL `damageChosen` RIDERS, NO OP, PROMPT, KEY, STAGE OR EVENT.**
     (Placed ABOVE the D604 block.) `damageChosen.perHeadsInPlay?: CardFilter` (Tauros "Target
     Together") rides `phase.cont.pendingOp` while the pick is open — an optional key on a parking op,

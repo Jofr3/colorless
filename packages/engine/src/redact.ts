@@ -1158,6 +1158,12 @@ function redactedRareCandyOf(
     program lands. That day is PINNED, not hoped for: `redactStadiumAbility.test.ts`
     fails the moment a registry Stadium ability carries a gated op, so the
     unreachability is re-checked instead of inherited.
+    🆕🆕🆕 D606 (D539) — "TODAY, UNREACHABLE" and "cannot currently return false" are
+    WITHDRAWN: Surfing Beach `me01-129` / `me04-114` is a `switchActive { targetType: "Water" }`,
+    and a {W} Active with no Benched {W} greys this row "No legal target" — driven in
+    `redactStadiumAbility.test.ts`'s D606 block, which now kills D210-programPlayable. And the
+    pin did NOT fail on its own when that program landed: its loop scans a hand-kept id list,
+    not the registry.
 
     Nothing hidden leaves the DO: the Stadium card is PUBLIC to both viewers
     already (`board.stadium`), so the only thing this adds to the wire is the
