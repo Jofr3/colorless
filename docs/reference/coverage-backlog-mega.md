@@ -6,6 +6,27 @@
 > `coverage-backlog-legal.md`; its pool is unchanged and whole. The suite-side figures are
 > `censusAtHead.test.ts`'s D581 block and `censusAttackCorpusMe.ts`.
 
+## 🆕 D610 update (engine 0.493.0) — the first part of the on-move / as-often / HP passives (WP37a)
+
+8 Ability texts / 16 `me` printings keyed on seven new objects (`onMoveHpMeD610.test.ts`). Solar Transfer ×4 (Mega Venusaur
+ex) and Bubble Gathering (Azumarill ex) are "as often as you like" `moveEnergy` Abilities; Metal Road ×2 (Cobalion ex) is Buzzing
+Boost's promoted-this-turn gate over a typed any-amount sweep; Swirling Prose ×2 (Mismagius ex) and Holes ×2 (Team Rocket's
+Dugtrio) ride Lava Zone's opponent-side `onActiveMovedToBench`; Scale Up ×3 and Tyrannically Gutsy ×2 are `hpBonus` gates (the new
+`requiresEnergyCount`, and "special"). **Finished:** all 16 cards (Mega Venusaur ex ×4 among them). **WP37 rest, left and named**
+(8 texts / 17 printings): Fall Back to Reload ×2, Last-Ditch Catch ×3, Luminous Wing ×4 (WP37b — Mega Clefable ex ×4 still waits
+on it), Supreme Overlord, Gloomy Garbage, Sniper's Eye ×2, Ancient Bulwark ×3, Life-Locked. Two new readings (UNRULED): R-HL1, Holes
+resolves before Palafin's Zero to Hero with no Knock Out check between; R-MR1, Metal Road's moment is a use-time gate, which affords
+a delayed use (`progress.md` NEXT).
+
+| Column | `me` built / units (D610) | Standard pool D610 |
+|---|---|---|
+| Attacks | 908 / 1,039 | **2,640 / 2,771** |
+| Abilities | 160 / 234 (+16) | **536 / 610** |
+| Trainers | 109 / 183 | **373 / 447** |
+| Special Energy | 11 / 11 | **22 / 22** |
+
+**Fully built `me` printings: 988** (972 + 16).
+
 ## 🆕 D609 update (engine 0.492.0) — KO / damage-counter attacks (WP36)
 
 4 attack texts / 8 `me` printings newly read (`koCountersMeD609.test.ts`). Mega Absol ex ×3 "Terminal Period" is a
@@ -260,7 +281,7 @@ Bellyful of Milk (2 coins, heal all from 1), Tri Kinesis (3 coins, Knock Out 1 o
 Energizing Sketch (any Basic Energy from the discard to the Bench, one per heads), Wreak Havoc ×2 / Relentless Burrowing
 (one card milled per heads, until tails) and Horrifying Bite ×2 (one random card from hand to deck per heads, until tails).
 **Finished:** Miltank, Team Rocket's Exeggutor, Houndstone ×2, Team Rocket's Diglett, Murkrow, Gimmighoul, Drifloon,
-Smeargle (Tyrantrum ×2 still wait on Tyrannically Gutsy). **Dropped:** Challenging Delivery (the bench search reads
+Smeargle (Tyrantrum ×2 still wait on Tyrannically Gutsy [🆕🆕🆕 D610 (D539): no longer — built at D610]). **Dropped:** Challenging Delivery (the bench search reads
 "a Pokémon" as a card name; only a Basic may go onto the Bench, so it needs a Basic bench-search arm), Hyper Lariat (a threshold bonus needs a new coin
 member), All-You-Can-Grab, Gormandizer and Charge-Up Dash (a deck source capped at the heads count; Charge-Up Dash also
 needs WP06), Reversing Gust (the shuffled body may be the Active) and Jet of Ink (a two-coin flip lock).
@@ -803,13 +824,13 @@ group wins; the grouping is a reading aid, not a census figure).
 
 ### On-evolve / on-bench / on-move triggers ("when you play this Pokémon …", "when … moves …") — 13 text(s) / 23 printing(s)
 
-- 3× **Last-Ditch Catch** — Once during your turn, when you play this Pokémon from your hand onto your Bench, you may use this Ability. Search your deck for a Supporter card, reveal it, and put it into your hand. Then, shuffle your deck. You can't use more than 1 Ability that has "Last-Ditch" in its name each turn.
+- 3× **Last-Ditch Catch** — Once during your turn, when you play this Pokémon from your hand onto your Bench, you may use this Ability. Search your deck for a Supporter card, reveal it, and put it into your hand. Then, shuffle your deck. You can't use more than 1 Ability that has "Last-Ditch" in its name each turn. [🆕🆕🆕 D610: left — a name lock on an `onPlayToBench` trigger]
 - 3× **Psychic Draw** — Once during your turn, when you play this Pokémon from your hand to evolve 1 of your Pokémon, you may use this Ability. Draw 3 cards. [🆕🆕🆕 D590: BUILT]
 - 3× **Sandy Flapping** — Once during your turn, when you play this Pokémon from your hand to evolve 1 of your Pokémon, you may use this Ability. You may also use this Ability if this Pokémon is in the Active Spot and is Knocked Out by damage from an attack from your opponent's Pokémon. Discard the top 2 cards of your opponent's deck. [🆕🆕🆕 D590: NOT BUILT — the KO half needs an Active-Spot / by-attack gate on an `onKnockOut` program] [🆕🆕🆕 D598: the by-attack half exists — `TriggeredAbility.byOpponentAttack`; the Active-Spot gate is still owed]
 - 2× **Cast-Off Shell** — Once during your turn, when you play this Pokémon from your hand to evolve 1 of your Pokémon, you may use this Ability. Search your deck for a Shedinja and put it onto your Bench. Then, shuffle your deck. [🆕🆕🆕 D590: BUILT]
 - 2× **Enriching Melody** — Once during your turn, when you play this Pokémon from your hand to evolve 1 of your Pokémon, you may use this Ability. Heal all damage from 1 of your Pokémon. [🆕🆕🆕 D590: BUILT]
-- 2× **Fall Back to Reload** — Once during your turn, when this Pokémon moves from the Active Spot to your Bench, you may use this Ability. Attach up to 2 Basic {W} Energy cards from your hand to this Pokémon.
-- 2× **Metal Road** — Once during your turn, when this Pokémon moves from your Bench to the Active Spot, you may use this Ability. Move any amount of {M} Energy from your other Pokémon to this Pokémon.
+- 2× **Fall Back to Reload** — Once during your turn, when this Pokémon moves from the Active Spot to your Bench, you may use this Ability. Attach up to 2 Basic {W} Energy cards from your hand to this Pokémon. [🆕🆕🆕 D610: left — a hand-attach choice inside the non-parking Active→Bench self sweep]
+- 2× **Metal Road** — Once during your turn, when this Pokémon moves from your Bench to the Active Spot, you may use this Ability. Move any amount of {M} Energy from your other Pokémon to this Pokémon. [🆕🆕🆕 D610: BUILT]
 - 1× **Energized Steps** — Once during your turn, when you play this Pokémon from your hand to evolve 1 of your Pokémon, you may use this Ability. Look at the top 4 cards of your deck and attach any number of Basic Energy cards you find there to your Pokémon in any way you like. Shuffle the other cards back into your deck. [🆕🆕🆕 D590: BUILT]
 - 1× **Haphazard Hammer** — Once during your turn, when you play this Pokémon from your hand to evolve 1 of your Pokémon, you may use this Ability. Flip a coin. If heads, discard an Energy from your opponent's Active Pokémon. [🆕🆕🆕 D590: BUILT]
 - 1× **Heave-Ho Catcher** — Once during your turn, when you play this Pokémon from your hand to evolve 1 of your Pokémon, you may use this Ability. Switch in 1 of your opponent's Benched Pokémon to the Active Spot. [🆕🆕🆕 D590: BUILT]
@@ -856,8 +877,8 @@ group wins; the grouping is a reading aid, not a census figure).
 
 ### "As often as you like" Energy movers / attachers — 3 text(s) / 6 printing(s)
 
-- 4× **Solar Transfer** — As often as you like during your turn, you may use this Ability. Move a Basic {G} Energy from 1 of your Pokémon to another of your Pokémon.
-- 1× **Bubble Gathering** — As often as you like during your turn, you may use this Ability. Move an Energy from 1 of your other Pokémon to this Pokémon.
+- 4× **Solar Transfer** — As often as you like during your turn, you may use this Ability. Move a Basic {G} Energy from 1 of your Pokémon to another of your Pokémon. [🆕🆕🆕 D610: BUILT]
+- 1× **Bubble Gathering** — As often as you like during your turn, you may use this Ability. Move an Energy from 1 of your other Pokémon to this Pokémon. [🆕🆕🆕 D610: BUILT]
 - 1× **Wash Out** — As often as you like during your turn, you may use this Ability. Move a {W} Energy from 1 of your Benched Pokémon to your Active Pokémon. [🆕🆕🆕 D585: BUILT]
 
 ### Knock Out / damage-taken triggers — 14 text(s) / 27 printing(s)
@@ -891,17 +912,17 @@ group wins; the grouping is a reading aid, not a census figure).
 
 - 3× **Multi Adapter** — Each of your Pokémon that has "Rotom" in its name may have up to 2 Pokémon Tool cards attached. If this Ability goes away, discard Pokémon Tools from those Pokémon until only 1 remains on each.
 - 2× **Double Type** — As long as this Pokémon is in play, it is {F} and {P} type. [🆕🆕🆕 D586: BUILT]
-- 2× **Scale Up** — If this Pokémon has 6 or more Grass Energy attached, it gets +250 HP.
+- 2× **Scale Up** — If this Pokémon has 6 or more Grass Energy attached, it gets +250 HP. [🆕🆕🆕 D610: BUILT]
 - 2× **Slimy Sliding** — When your opponent's Active Pokémon retreats, your opponent flips a coin. If tails, Energy for its Retreat Cost is not discarded, and they don't switch Pokémon. The effect of Slimy Sliding doesn't stack.
-- 2× **Tyrannically Gutsy** — If this Pokémon has any Special Energy attached, it gets +150 HP.
-- 2× **Wild Growth** — Each Basic {G} Energy attached to all of your Pokémon provides {G}{G} Energy. The effect of Wild Growth doesn't stack.
+- 2× **Tyrannically Gutsy** — If this Pokémon has any Special Energy attached, it gets +150 HP. [🆕🆕🆕 D610: BUILT]
+- 2× **Wild Growth** — Each Basic {G} Energy attached to all of your Pokémon provides {G}{G} Energy. The effect of Wild Growth doesn't stack. [🆕🆕🆕 D610 forward note: Scale Up's "6 or more {G} Energy" counts Energy CARDS (`countAttachedEnergy`, D128 / D391 / R-TRE2); with Wild Growth in play that choice decides whether three Basic {G} reach the threshold — settle it when this is built.]
 - 1× **Nighttime Byway** — As long as this Pokémon is on your Bench, your Active Pokémon's Retreat Cost is ColorlessColorless less. [🆕🆕🆕 D584: BUILT]
-- 1× **Scale Up** — If this Pokémon has 6 or more {G} Energy attached, it gets +250 HP.
+- 1× **Scale Up** — If this Pokémon has 6 or more {G} Energy attached, it gets +250 HP. [🆕🆕🆕 D610: BUILT]
 
 ### Prevention / immunity passives — 6 text(s) / 14 printing(s)
 
 - 4× **Hide 'n' Sneak** — Prevent all effects of your opponent's Pokémon's attacks and Abilities done to this Pokémon. (Damage is not an effect.)
-- 4× **Luminous Wing** — Prevent all effects of your opponent's Pokémon's Abilities done to this Pokémon.
+- 4× **Luminous Wing** — Prevent all effects of your opponent's Pokémon's Abilities done to this Pokémon. [🆕🆕🆕 D610: left — WP37b (prevent Ability effects)]
 - 3× **Damp** — Pokémon in play (both yours and your opponent's) lose any Ability that requires the Pokémon using it to Knock Out itself.
 - 1× **Dopey Face** — This Pokémon can't be Confused. [🆕🆕🆕 D584: BUILT]
 - 1× **Life-Locked** — Your opponent's Active Pokémon can't be healed.
@@ -911,9 +932,9 @@ group wins; the grouping is a reading aid, not a census figure).
 
 - 3× **Ancient Bulwark** — As long as this Pokémon is on your Bench, prevent all damage done to each of your Pokémon by attacks from your opponent's Pokémon that have 2 or less Energy attached.
 - 3× **Memory Helix** — This Pokémon can use the attacks of any of your Benched Pokémon. (You still need the necessary Energy to use each attack.)
-- 2× **Holes** — Whenever your opponent's Active Pokémon moves to the Bench during their turn, place 2 damage counters on that Pokémon.
+- 2× **Holes** — Whenever your opponent's Active Pokémon moves to the Bench during their turn, place 2 damage counters on that Pokémon. [🆕🆕🆕 D610: BUILT]
 - 2× **Sniper's Eye** — If your opponent has exactly 4 cards in their hand, ignore all {C} Energy in the costs of attacks used by this Pokémon.
-- 2× **Swirling Prose** — As long as this Pokémon is in the Active Spot, whenever your opponent's Active Pokémon moves to the Bench during their turn, their new Active Pokémon is now Confused.
+- 2× **Swirling Prose** — As long as this Pokémon is in the Active Spot, whenever your opponent's Active Pokémon moves to the Bench during their turn, their new Active Pokémon is now Confused. [🆕🆕🆕 D610: BUILT]
 - 1× **Explosiveness** — If this Pokémon is in your hand when you are setting up to play, you may put it face down in the Active Spot.
 - 1× **Fighting Roar** — If your opponent's Active Pokémon is a Pokémon ex, this Pokémon can evolve during your first turn or the turn you play it. [🆕🆕🆕 D594: BUILT]
 - 1× **Good Sleep** — If this Pokémon remains Asleep during Pokémon Checkup, heal all damage from this Pokémon.

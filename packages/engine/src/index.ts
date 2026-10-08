@@ -11074,7 +11074,8 @@ import type { GameState, Seat } from "./types";
     CLAUSE WHOSE READER WAS ALREADY IN THE FILE.** Magcargo `sv05-029`
     "Lava Zone" — *"Whenever your opponent's Active Pokémon moves to the Bench
     during their turn, their new Active Pokémon is now Burned."* 1 legal sentence,
-    1 legal printing, and the family closes at 1 of 1.
+    1 legal printing, and the family closes at 1 of 1. [🆕🆕🆕 D610 (D539): WITHDRAWN for the
+    Standard pool — Swirling Prose ×2 and Holes ×2 (`me`) print this moment, built at D610.]
 
     🛑 **TWO SCAN SITES, AND A ONE-SITE BUILD SHIPS THE SENTENCE'S COMMONEST
     TRIGGER DEAD.** `switchInto` (interpreter.ts) looks like the sole funnel and
@@ -17229,6 +17230,8 @@ import type { GameState, Seat } from "./types";
     switched back DOWN in the same turn — and the divergence REFUSES rather than
     affords (D222's direction). `buzzingBoost.test.ts` §6 drives it, so it is a
     measured decision and not an unknown.
+    [🆕🆕🆕 D610 (D539): "exactly one board" / "REFUSES rather than affords" WITHDRAWN — a
+    use delayed to later in the same turn is a second board, and it affords (R-MR1).]
 
     **ZERO new ops, ZERO new op fields, ZERO new `BoardCondition` members, ZERO new
     `TriggerTiming`s, ZERO new prompt kinds, ZERO new events, ZERO new error codes,
@@ -20258,6 +20261,18 @@ import type { GameState, Seat } from "./types";
     `expect(manifest.version)`, `it(…)` titles, the declaration and `package.json` —
     **not** as a value-keyed grep — because a value-keyed grep is precisely the mechanism
     that ate D500's heading.)
+    🆕🆕🆕 engineVersion 0.492.0 → **0.493.0** (D610 — WP37a: THE FIRST PART OF THE `me` ON-MOVE /
+    AS-OFTEN / HP PASSIVES; `MATCH_RECORD_VERSION` STAYS 42 (apps/api match.ts "STAYS 42 AT D610")).
+    registry.ts: seven NEW objects over 16 printings — Solar Transfer ×4 (Mega Venusaur ex; Happy
+    Switch typed {G}, as often as you like), Bubble Gathering (Azumarill ex; `othersToSelf`, 1 Energy),
+    Metal Road ×2 (Cobalion ex; Buzzing Boost's promoted-this-turn gate over a typed `othersToSelf`
+    sweep), Swirling Prose ×2 (Mismagius ex; Lava Zone + `activeOnly`, Confused), Holes ×2 (Team
+    Rocket's Dugtrio; Lava Zone's moment, `damageSubject` 20), Scale Up ×3 and Tyrannically Gutsy ×2.
+    continuous.ts/registry.ts: the NEW `hpBonus.requiresEnergyCount` ("6 or more") and
+    `requiresEnergyType` widened to "special". R-HL1 UNRULED (triggers.ts: Holes resolves before
+    Palafin's Zero to Hero, no Knock Out check between); R-MR1 UNRULED (registry.ts: Metal Road's
+    moment read as a use-time gate, which affords a delayed use). Fall Back to Reload ×2, Last-Ditch Catch ×3,
+    Luminous Wing ×4 (WP37b) and five passives left and named. `onMoveHpMeD610.test.ts`.)
     🆕🆕🆕 engineVersion 0.491.0 → **0.492.0** (D609 — WP36: THE `me` KO / DAMAGE-COUNTER ATTACKS;
     `MATCH_RECORD_VERSION` STAYS 42 (apps/api match.ts "STAYS 42 AT D609")). effects.ts: three literal
     anchors — Terminal Period ×3 (`conditionGate` on the NEW `BoardCondition`
@@ -25408,7 +25423,7 @@ import type { GameState, Seat } from "./types";
     WITNESS** — the count was re-derived every slice and the word *"three"* was carried.
     A successor of this slice inherits **81 / 61 / 17** again, over **FIVE** history
     occurrences: those four plus `deckMillFilteredScale.test.ts`'s own header arrow.) */
-export const engineVersion = "0.492.0";
+export const engineVersion = "0.493.0";
 
 export type {
   ApplyResult,

@@ -85,7 +85,13 @@ describe("D595 §1 — the eight sentences and their programs", () => {
       expect(sv.has(text), text).toBe(false);
       expect(resolvedByAnyReader(text), text).toBe(true);
       expect(ids).toHaveLength(n);
-      for (const id of ids) expect(programFor(id), id).toBeUndefined();
+      // 🆕🆕🆕 D610 (D539): "none registry-keyed" now means no ATTACK key — Tyrantrum `mep-066` /
+      // `me03-045` carry D610's "Tyrannically Gutsy" passive; Wreak Havoc still derives.
+      for (const id of ids) expect(programFor(id)?.attack, id).toBeUndefined();
+      for (const id of ids)
+        expect(Object.keys(programFor(id) ?? {}), id).toEqual(
+          ["mep-066", "me03-045"].includes(id) ? ["passive"] : [],
+        );
     }
     expect(ROWS.reduce((sum, [, n]) => sum + n, 0)).toBe(11);
   });
@@ -496,7 +502,7 @@ describe("D595 §5 — the `programPerHeads` arms on a board", () => {
 });
 
 describe("D595 §6 — the version", () => {
-  it("is built at engine 0.492.0", () => {
-    expect(engineVersion).toBe("0.492.0");
+  it("is built at engine 0.493.0", () => {
+    expect(engineVersion).toBe("0.493.0");
   });
 });

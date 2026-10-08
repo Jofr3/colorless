@@ -1575,6 +1575,10 @@ export function passivesOf(
   //                                printing arrives. None today — the one writer
   //                                is an Ability, Okidogi, so a §9 lock takes the
   //                                +100 off through the `sources[0]` drop.
+  //                                [🆕🆕🆕 D610 (D539): "the one writer" is WITHDRAWN
+  //                                — Scale Up ×3 and Tyrannically Gutsy ×2 write it
+  //                                too (+ `requiresEnergyCount`, "special"); all
+  //                                three are Abilities, so the §9 drop still holds.]
   //   hpBonusPer                   reachable ✔ correct — and the source class is
   //                                MORE than invisible to it, it is the arithmetic
   //                                itself: an Energy-borne `attachedEnergy` scale
@@ -1769,7 +1773,12 @@ export function passivesOf(
       stageFree !== undefined &&
       (stageFree.beneficiary === undefined || matchesFilter(holderCard, stageFree.beneficiary)) &&
       (stageFree.requiresEnergyType === undefined ||
-        hasAttachedEnergy(state, pokemon, stageFree.requiresEnergyType))
+        hasAttachedEnergy(state, pokemon, stageFree.requiresEnergyType)) &&
+      // 🆕🆕🆕 D610 — Scale Up's "6 or more": a count threshold beside the "any" gate (absent = no
+      // threshold, byte for byte). Cards by provision, `countAttachedEnergy`'s D128 count.
+      (stageFree.requiresEnergyCount === undefined ||
+        countAttachedEnergy(state, pokemon, stageFree.requiresEnergyType ?? null) >=
+          stageFree.requiresEnergyCount)
     ) {
       hpBonus += stageFree.amount;
     }

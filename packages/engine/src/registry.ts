@@ -118,7 +118,9 @@ export interface AbilityProgram {
       (`yourHandExactly` 0, "if you have no cards in your hand", a board read of the controller's
       hand) makes 29, pinned by id in `flipTheScript.test.ts`.
       🆕🆕🆕 D603 NOTE (D539) — "makes 29" is WITHDRAWN as a live figure: Oricorio ex ×3, Ludicolo ×2
-      and Linoone `me02-082` (`yourMegaExInPlay`, a board read of the controller's side) make 35. */
+      and Linoone `me02-082` (`yourMegaExInPlay`, a board read of the controller's side) make 35.
+      🆕🆕🆕 D610 NOTE (D539) — "make 35" is WITHDRAWN as a live figure: Cobalion ex ×2 "Metal Road"
+      (Buzzing Boost's `yourActivePromotedThisTurn` under `activeOnly`) make 37. */
   playableIf?: BoardCondition;
   /** 🆕 **D310 — §9's PER-BODY printed gate, and the field the block above asked
       for by name.** *"Once during your turn, if this Pokémon's remaining HP is 30
@@ -1021,8 +1023,21 @@ export interface PassiveEffects {
         sites (turn.ts) and a discard-from-play is not necessarily one of them, so
         this is RECORDED rather than claimed: the shrink is observable through
         `effectiveMaxHp` immediately, and whether a mid-turn sweep runs for it is
-        the same open seam D324 recorded for Gravity Mountain on the play. */
-  hpBonus?: { amount: number; beneficiary?: CardFilter; requiresEnergyType?: BasicEnergyType };
+        the same open seam D324 recorded for Gravity Mountain on the play.
+
+      • 🆕🆕🆕 D610 — `requiresEnergyType` WIDENED to the card class `"special"` (Tyrantrum
+        `mep-066` / `me03-045` "Tyrannically Gutsy", *"If this Pokémon has any Special Energy
+        attached, it gets +150 HP."*), `hasAttachedEnergy`'s own `"special"` arm. And
+        `requiresEnergyCount` (NEW) is the printed *"N or more"* (Alolan Exeggutor `mep-094`,
+        `30th-002` / `-129` "Scale Up", *"6 or more {G} Energy"*): the gate is then
+        `countAttachedEnergy(type) >= N` (cards, by provision, the D128 count), and absent it is
+        `hasAttachedEnergy` byte for byte. */
+  hpBonus?: {
+    amount: number;
+    beneficiary?: CardFilter;
+    requiresEnergyType?: BasicEnergyType | "special";
+    requiresEnergyCount?: number;
+  };
   /** §8.1 (D325) — max HP added to the holder ONCE PER SOMETHING COUNTED ON THE
       LIVE BOARD, where every other field in this family is FLAT. Two printed
       sentences, both the holder's own Ability:
@@ -9488,7 +9503,10 @@ const AUTO_HEAL: CardProgram = {
     Pokémon moves to the Bench during their turn, their new Active Pokémon is now
     Burned."*
 
-    **1 legal printing on ONE sentence, and the family CLOSES at 1 of 1.** The
+    **1 legal printing on ONE sentence, and the family CLOSES at 1 of 1.** [🆕🆕🆕 D610 (D539):
+    WITHDRAWN for the Standard pool — the `me` serie prints this moment twice more, Mismagius ex
+    `me02-036` / `-112` "Swirling Prose" and Team Rocket's Dugtrio `me02.5-101` / `-239` "Holes"
+    (LOCAL D1), both built at D610 on this trigger.] The
     literal `'moves to the Bench'` returns exactly ONE row over all 3,786 across
     `abilities_json`, `attacks_json` AND `effect`; so does `'during their turn'`
     over `abilities_json` (remote D1 `luminous`, 2026-08-10). The wider
@@ -13570,6 +13588,11 @@ const OVERVOLT_DISCHARGE: CardProgram = {
     means a new `TriggerTiming` plus an optional-trigger confirm — a mechanism
     authored on the evidence of a board no printing rewards. A later slice that
     wants it changes this row, not the engine.
+    [🆕🆕🆕 D610 NOTE (D539) — "exactly one board" and "REFUSES rather than affords" are
+    WITHDRAWN: the gate also differs on a SECOND board, a use DELAYED to a later point of the
+    same turn, which the printed moment does not allow, and that one AFFORDS (here the timing;
+    for Cobalion ex "Metal Road" `METAL_ROAD`, {M} put on the Bench after the move is swept up
+    too). Recorded as R-MR1 ⚠️ UNRULED (progress.md NEXT), driven in `onMoveHpMeD610.test.ts` §4.]
 
     ⚠️ **`programPlayable` DOES NOT GATE THIS**, per `attachFromDeck`'s own doc: the
     card prints *"Then, shuffle your deck"*, a clause that always resolves, so an
@@ -17894,6 +17917,119 @@ const STEALTHY_SLASH: CardProgram = {
   },
 };
 
+// ── 🆕🆕🆕 D610 — WP37a: THE FIRST PART OF THE `me` ON-MOVE / AS-OFTEN / HP PASSIVES. Seven objects,
+//    16 printings; texts off the LOCAL D1. One new piece: `hpBonus.requiresEnergyCount` (and
+//    `requiresEnergyType` widened to "special"). Everything else is a shipped shape under a new name.
+//    `onMoveHpMeD610.test.ts` drives each one. ──
+
+/** 🆕🆕🆕 **D610 — Mega Venusaur ex `me01-003` / `-155` / `-177`, `mep-013` "Solar Transfer"**: *"As
+    often as you like during your turn, you may use this Ability. Move a Basic {G} Energy from 1 of
+    your Pokémon to another of your Pokémon."* Blissey ex "Happy Switch" (`HAPPY_SWITCH`) typed
+    Grass, with Armarouge's `oncePerTurn: false` for "as often as you like". */
+const SOLAR_TRANSFER: CardProgram = {
+  abilities: [
+    {
+      name: "Solar Transfer",
+      oncePerTurn: false,
+      activeOnly: false,
+      program: [{ op: "moveEnergy", filter: { kind: "basicEnergy", energyType: "Grass" }, max: 1 }],
+    },
+  ],
+};
+
+/** 🆕🆕🆕 **D610 — Azumarill ex `me02.5-084` "Bubble Gathering"**: *"As often as you like during your
+    turn, you may use this Ability. Move an Energy from 1 of your other Pokémon to this Pokémon."*
+    D244's `othersToSelf` route (destination = this body by uid) at one Energy off ONE source (no
+    `anySource`: the print says "1 of your other Pokémon"). */
+const BUBBLE_GATHERING: CardProgram = {
+  abilities: [
+    {
+      name: "Bubble Gathering",
+      oncePerTurn: false,
+      activeOnly: false,
+      program: [{ op: "moveEnergy", filter: { kind: "anyEnergy" }, max: 1, route: "othersToSelf" }],
+    },
+  ],
+};
+
+/** 🆕🆕🆕 **D610 — Cobalion ex `me04-064` / `-103` "Metal Road"**: *"Once during your turn, when this
+    Pokémon moves from your Bench to the Active Spot, you may use this Ability. Move any amount of {M}
+    Energy from your other Pokémon to this Pokémon."* Yanmega ex "Buzzing Boost"'s frame
+    (`BUZZING_BOOST`: `activeOnly` + `playableIf yourActivePromotedThisTurn`, the moment read as a
+    use-time gate) over Iron Leaves ex's tail typed {M} (`othersToSelf` + `anySource`,
+    `max: "any"`, D442's typed noun as `providesEnergy`).
+    ⚠️ **R-MR1 ⚠️ UNRULED — THE GATE AFFORDS HERE.** `promotedTurn` stays equal to `state.turn` for
+    the rest of the turn, so Metal Road can be used at ANY later point of it while Cobalion stays
+    Active, and {M} attached to the Bench after the move (by hand, or by another effect) rides the
+    sweep; the print allows the use only at the move. Reversal: a Bench-to-Active trigger with an
+    optional confirm — not built, since this consequent parks and the move's sweeps do not (R-ZH1).
+    Driven in `onMoveHpMeD610.test.ts` §4. */
+const METAL_ROAD: CardProgram = {
+  abilities: [
+    {
+      name: "Metal Road",
+      oncePerTurn: true,
+      activeOnly: true,
+      playableIf: { kind: "yourActivePromotedThisTurn" },
+      program: [
+        {
+          op: "moveEnergy",
+          filter: { kind: "providesEnergy", energyType: "Metal" },
+          max: "any",
+          route: "othersToSelf",
+          anySource: true,
+        },
+      ],
+    },
+  ],
+};
+
+/** 🆕🆕🆕 **D610 — Mismagius ex `me02-036` / `-112` "Swirling Prose"**: *"As long as this Pokémon is
+    in the Active Spot, whenever your opponent's Active Pokémon moves to the Bench during their turn,
+    their new Active Pokémon is now Confused."* Magcargo "Lava Zone" (`LAVA_ZONE`) with Confused for
+    Burned and the printed Active-Spot clause as `activeOnly` (read on the watcher's board at the
+    moment, D357). */
+const SWIRLING_PROSE: CardProgram = {
+  triggered: [
+    {
+      name: "Swirling Prose",
+      trigger: "onActiveMovedToBench",
+      opponentAction: true,
+      activeOnly: true,
+      program: [{ op: "applyStatus", target: "defender", status: "confused" }],
+    },
+  ],
+};
+
+/** 🆕🆕🆕 **D610 — Team Rocket's Dugtrio `me02.5-101` / `-239` "Holes"**: *"Whenever your opponent's
+    Active Pokémon moves to the Bench during their turn, place 2 damage counters on that Pokémon."*
+    Lava Zone's moment with Gnawing Curse's consequent (`damageSubject` 20 on the body that moved,
+    `ctx.subjectUid`). No spot clause, so it fires from the Bench too. The KO the counters may cause is
+    the mover's sweep (retreat: turn.ts; a switch: `settleProgram`). */
+const HOLES: CardProgram = {
+  triggered: [
+    {
+      name: "Holes",
+      trigger: "onActiveMovedToBench",
+      opponentAction: true,
+      program: [{ op: "damageSubject", amount: 20 }],
+    },
+  ],
+};
+
+/** 🆕🆕🆕 **D610 — Alolan Exeggutor `mep-094` / `30th-002` / `-129` "Scale Up"**: *"If this Pokémon has
+    6 or more {G} Energy attached, it gets +250 HP."* (the `30th` faces spell "Grass Energy"). Okidogi's
+    `hpBonus` gate with the NEW `requiresEnergyCount` 6. */
+const SCALE_UP: CardProgram = {
+  passive: { hpBonus: { amount: 250, requiresEnergyType: "Grass", requiresEnergyCount: 6 } },
+};
+
+/** 🆕🆕🆕 **D610 — Tyrantrum `mep-066` / `me03-045` "Tyrannically Gutsy"**: *"If this Pokémon has any
+    Special Energy attached, it gets +150 HP."* Okidogi's `hpBonus` gate at the card class "special". */
+const TYRANNICALLY_GUTSY: CardProgram = {
+  passive: { hpBonus: { amount: 150, requiresEnergyType: "special" } },
+};
+
 const REGISTRY: Record<string, CardProgram> = {
   // Professor's Research (SV base prints)
   "sv01-189": PROFESSORS_RESEARCH,
@@ -19039,6 +19175,23 @@ const REGISTRY: Record<string, CardProgram> = {
   "30th-157": PHOTON_BULLETS, // Mewtwo ex
   "30th-021": STEALTHY_SLASH, // Greninja ex "Stealthy Slash" (attack 0) — 30 per counter on the chosen body
   "30th-148": STEALTHY_SLASH, // Greninja ex
+  // 🆕🆕🆕 D610 — WP37a: 16 non-attack keys / 7 objects, MID-MAP (`raw[last]` does not move).
+  "me01-003": SOLAR_TRANSFER, // Mega Venusaur ex — as often as you like: a Basic {G} between your Pokémon
+  "me01-155": SOLAR_TRANSFER, // Mega Venusaur ex
+  "me01-177": SOLAR_TRANSFER, // Mega Venusaur ex
+  "mep-013": SOLAR_TRANSFER, // Mega Venusaur ex
+  "me02.5-084": BUBBLE_GATHERING, // Azumarill ex — as often as you like: an Energy from another of yours to itself
+  "me04-064": METAL_ROAD, // Cobalion ex — moved up this turn: any {M} from your other Pokémon to itself
+  "me04-103": METAL_ROAD, // Cobalion ex
+  "me02-036": SWIRLING_PROSE, // Mismagius ex — Active: the opponent's new Active (after a bench move) is Confused
+  "me02-112": SWIRLING_PROSE, // Mismagius ex
+  "me02.5-101": HOLES, // Team Rocket's Dugtrio — 2 counters on the opponent's Active that moved to the Bench
+  "me02.5-239": HOLES, // Team Rocket's Dugtrio
+  "mep-094": SCALE_UP, // Alolan Exeggutor — 6 or more {G} Energy attached: +250 HP
+  "30th-002": SCALE_UP, // Alolan Exeggutor ("Grass Energy")
+  "30th-129": SCALE_UP, // Alolan Exeggutor
+  "mep-066": TYRANNICALLY_GUTSY, // Tyrantrum — any Special Energy attached: +150 HP
+  "me03-045": TYRANNICALLY_GUTSY, // Tyrantrum
   // ── D190 — THE **STANDARD-LEGAL** REPRINT-ALIAS MAP (Tier 0 of
   //    `docs/reference/coverage-backlog-legal.md`). 22 printings, 9 map targets,
   //    ZERO new code: every row below prints a sentence that is already authored
@@ -19980,7 +20133,8 @@ const REGISTRY: Record<string, CardProgram> = {
   "sv05-193": GNAWING_CURSE, // (reprint)
   // 🆕 D320 — THE THIRD OPPONENT-ACTION VERB, and the one D319 named as left
   // over from its own eight-row antecedent sweep. `instr(abilities_json,
-  // 'moves to the Bench') > 0` returns ONE row over all 3,786 — and so does the
+  // 'moves to the Bench') > 0` returns ONE row over all 3,786 [🆕🆕🆕 D610 (D539): of the `sv`
+  // catalog; the `me` serie adds Swirling Prose ×2 and Holes ×2, keyed at D610] — and so does the
   // same literal over `attacks_json` and `effect` (ZERO each), so no text reader
   // can see this sentence and `BUILT.attack` cannot move. ⚠️ ONE NEW ID, NON-
   // ATTACK, so `nonAttackRegistryIds()` and `raw.length` step by **+1 each** for

@@ -126,6 +126,10 @@ import { makeInPlay } from "./types";
 // literal reading costs a new `TriggerTiming` plus an optional-trigger confirm —
 // a mechanism authored on the evidence of a board no printing rewards. §7 drives
 // the divergence so it is a measured decision and not an unknown.
+// [🆕🆕🆕 D610 NOTE (D539) — "exactly one board" and "REFUSES rather than affords" are
+// WITHDRAWN: a use DELAYED to a later point of the same turn is a second board, and it
+// AFFORDS (the timing here; for Cobalion ex "Metal Road", {M} attached to the Bench after
+// the move is swept up too). R-MR1 ⚠️ UNRULED, driven in `onMoveHpMeD610.test.ts` §4.]
 
 const YANMEGA = "sv10-003";
 const YANMEGA_IR = "sv10-206";
@@ -702,6 +706,9 @@ describe("D347 §6 — the OTHER promotion routes, and §8.1's free correctness"
     // on exactly this board. It REFUSES rather than affords, which is the direction
     // D222 asks for, and it is driven here so the divergence is a measured decision
     // rather than an unknown.
+    // [🆕🆕🆕 D610 (D539): "exactly this board" / "REFUSES rather than affords"
+    // WITHDRAWN — a delayed use later the same turn is a second board, and it affords
+    // (R-MR1, `onMoveHpMeD610.test.ts` §4).]
     const retreated = retreatInto(ready(), 0);
     // Retreat again, sending the promoted Yanmega back to the Bench in the same
     // turn. The retreat allowance is per-turn, so the board is reached by paying the

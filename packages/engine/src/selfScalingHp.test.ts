@@ -847,6 +847,12 @@ describe("D329 §8 — the retreat sweep runs BEHIND the Active→Bench trigger"
   // Checkup). The board D328 asked for is genuinely unbuildable, and so is every
   // board on which this trigger contributes lethality. **THE DECLARED REASON WAS
   // NOT A WEAKER FORM OF THE TRUE ONE; IT WAS ABOUT A CARD THAT DOES NOT EXIST.**
+  // [🆕🆕🆕 D610 (D539): "genuinely unbuildable" is WITHDRAWN for the pool — Team
+  // Rocket's Dugtrio `me02.5-101` "Holes" places 2 counters on the body that MOVED,
+  // so a board where `onActiveMovedToBench` counters ALONE are lethal now exists
+  // (`onMoveHpMeD610.test.ts` §6). It still does not separate the two orderings:
+  // the counters land inside the trigger and the closing sweep takes the Knock Out
+  // under either order, so the COST below remains the separator.]
   //
   // 🛑 **THE ORDER IS STILL OBSERVABLE, THROUGH THE LETHALITY THAT IS REALLY
   // THERE.** The retreat COST is the one that kills (§6's rows), and a sweep moved

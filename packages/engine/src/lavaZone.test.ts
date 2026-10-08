@@ -58,7 +58,9 @@ import {
 // direction: there the consequent was exact and the antecedent wide.
 //
 // **So the family is 1 of 1 legal sentence / 1 of 1 legal printing, and it
-// CLOSES here.** `attacks_json` and `effect` return ZERO at every width, so no
+// CLOSES here.** [🆕🆕🆕 D610 (D539): WITHDRAWN for the Standard pool — the `me` serie
+// prints the moment twice more (Mismagius ex "Swirling Prose", Team Rocket's Dugtrio
+// "Holes"), both built at D610; `onMoveHpMeD610.test.ts`.] `attacks_json` and `effect` return ZERO at every width, so no
 // text reader can see this sentence and `BUILT.attack` cannot move.
 //
 // ── THE FIVE WAYS A BUILD OF THIS PASSES A SUITE IT SHOULD FAIL ─────────────

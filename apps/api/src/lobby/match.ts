@@ -2159,6 +2159,15 @@ export interface MatchRecord {
     `turn:action.discardable` — 🛑 **DEPLOY THE SERVER FIRST**: an old client's `z.object` STRIPS
     the unknown key, while a new client's REQUIRED key refuses an old server's frame.
 
+    🆕🆕🆕 **STAYS 42 AT D610 — WP37a ADDS ONE OPTIONAL `hpBonus` KEY AND WIDENS ONE `hpBonus` VALUE, NO OP,
+    PROMPT, STAGE OR EVENT.** (Placed ABOVE the D609 block.) `requiresEnergyCount` and the "special"
+    `requiresEnergyType` live on registry passives, read at use time and never persisted. The seven new
+    objects are keyed by id on shipped ops; the only park they open is `moveEnergy`'s, whose `pendingOp`
+    keys (`filter`, `max`, `route`, `anySource`) a v42 record already carries. No card row is read
+    differently, so the 16 faces in a v42 `cardPool` gain their Abilities mid-match. Rollback to 0.492:
+    the Abilities and the HP grants go away (a damaged Scale Up / Tyrantrum body is not swept until the
+    next mid-turn KO check, D325's recorded seam).
+
     🆕🆕🆕 **STAYS 42 AT D609 — WP36 ADDS ONE `BoardCondition` MEMBER, ONE `knockOutChosen.target` VALUE AND
     TWO OPTIONAL KEYS, NO OP, PROMPT, STAGE OR EVENT.** (Placed ABOVE the D608 block.) Bring Down's
     `{ target: "anyExceptSelf", leastHpRemaining: true }` can ride `phase.cont.pendingOp` (a least-HP

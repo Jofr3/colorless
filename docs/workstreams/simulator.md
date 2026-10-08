@@ -30236,6 +30236,29 @@ decisions (1) and (2) after D580. Engine 0.464.0 → 0.465.0. The Mega ex rule i
 - **Census.** Standard pool abilities **513 / 610**; 895 `me` printings fully built.
 - **Owed.** See `progress.md` NEXT. The whole-corpus sweep is PENDING.
 
+## D610 — WP37a: the first part of the `me` on-move / as-often / HP passives (engine 0.493.0, `MATCH_RECORD_VERSION` stays 42)
+
+**Status:** ✅ BUILT in the `luminous_ui-mega` worktree on D609 (`1928f466`), NOT committed.
+
+- **Vocabulary.** One new piece: `PassiveEffects.hpBonus.requiresEnergyCount` ("N or more", `countAttachedEnergy`), and
+  `hpBonus.requiresEnergyType` widened to the card class `"special"`. Everything else is a shipped shape: Happy Switch's
+  free-route move, `othersToSelf`, Buzzing Boost's promoted-this-turn gate, Lava Zone's `onActiveMovedToBench` +
+  `opponentAction`, Gnawing Curse's `damageSubject`.
+- **8 texts / 16 `me` printings, seven objects.** Solar Transfer ×4 (Mega Venusaur ex), Bubble Gathering (Azumarill ex), Metal
+  Road ×2 (Cobalion ex), Swirling Prose ×2 (Mismagius ex), Holes ×2 (Team Rocket's Dugtrio), Scale Up ×3 (Alolan Exeggutor),
+  Tyrannically Gutsy ×2 (Tyrantrum) — all 16 fully built.
+- **Left and named.** Fall Back to Reload ×2, Last-Ditch Catch ×3, Luminous Wing ×4 (WP37b; Mega Clefable ex not finished),
+  Supreme Overlord, Gloomy Garbage, Sniper's Eye ×2, Ancient Bulwark ×3, Life-Locked.
+- **Readings.** Two new, **R-HL1 ⚠️ UNRULED**: on the Active→Bench move the opponent's watched triggers (Holes) resolve
+  before the mover's own (Palafin "Zero to Hero"), with no Knock Out check between, so lethal Holes counters on Palafin
+  ride onto the swapped-in Palafin ex. And **R-MR1 ⚠️ UNRULED**: Metal Road's printed moment is read as Buzzing Boost's
+  use-time gate, so it can be used later the same turn and sweeps {M} attached to the Bench after the move. That affords,
+  so Buzzing Boost's "exactly one board … REFUSES rather than affords" is withdrawn (D539).
+- **Suite.** `onMoveHpMeD610.test.ts` (22; Holes driven on retreat and a Switch) and a census D610 block (2). +19 mutant
+  rows; D320 / D347 re-pointed; the declared survivor `D320-subject-is-the-promoted-body` retired (Holes kills it).
+- **Census.** Standard pool abilities **536 / 610**; 988 `me` printings fully built.
+- **Owed.** See `progress.md` NEXT. The whole-corpus sweep is PENDING.
+
 ## D609 — WP36: the `me` KO / damage-counter attacks (engine 0.492.0, `MATCH_RECORD_VERSION` stays 42)
 
 **Status:** ✅ BUILT in the `luminous_ui-mega` worktree on D608 (`221a6544`), NOT committed.

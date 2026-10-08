@@ -1138,6 +1138,9 @@ export function retreat(state: GameState, action: RetreatAction): ApplyResult {
   // cannot make anything lethal here at all (Burn is dealt at the Checkup). The
   // trigger is the engine's ONLY `onActiveMovedToBench` row, so on today's pool
   // this move has exactly ONE lethality source and it is the cost.
+  // [🆕🆕🆕 D610 (D539): WITHDRAWN — Palafin "Zero to Hero" (D565) is a second row, and Team
+  // Rocket's Dugtrio "Holes" (D610) places 2 counters on the body that MOVED, a second lethality
+  // source on this path; this sweep takes that Knock Out (`onMoveHpMeD610.test.ts` §6).]
   //
   // The ORDER is still owed, and it is owed for the ordinary reason: an Ability
   // whose antecedent is this move fires as part of the move, and a sweep in front

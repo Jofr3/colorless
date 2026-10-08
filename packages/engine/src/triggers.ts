@@ -378,7 +378,9 @@ function sweepTriggers(
     sentence's consequent says *"their **new** Active Pokémon"* and reaches it
     through `applyStatus`'s `defender` arm, since `ctx.seat` in a watched
     trigger is the WATCHER. Passing the antecedent's real subject is the honest
-    value even though no op in today's one program reads it. */
+    value even though no op in today's one program reads it. [🆕🆕🆕 D610 (D539):
+    WITHDRAWN — Team Rocket's Dugtrio "Holes" (`damageSubject` 20) reads it: its counters go on
+    the body that moved.] */
 export function runActiveBenchedTriggers(
   state: GameState,
   seat: Seat,
@@ -399,6 +401,11 @@ export function runActiveBenchedTriggers(
   // already call this function, so retreat and every `switchInto` route reach it.
   // NON-PARKING by construction (`sweepTriggers` keeps `.state`), which is why the one
   // program is a forced swap (R-ZH1).
+  // 🆕🆕🆕 D610 — R-HL1 ⚠️ UNRULED: THE ORDER IS A READING. The opponent's watched triggers above run
+  // FIRST, then this self sweep, with no Knock Out check between them. Team Rocket's Dugtrio "Holes"
+  // can make the moved body's damage lethal and Zero to Hero then swaps Palafin ex in with it, so no
+  // Knock Out follows (`onMoveHpMeD610.test.ts` §6). Reversals: the Knock Out first, or the self
+  // sweep first (Holes would then miss — its subject uid has gone to the deck).
   return sweepTriggers(
     watched,
     seat,

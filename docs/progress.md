@@ -3,7 +3,9 @@
 > Update this at the **end of every session**: bump the status table, append a
 > session-log entry, and rewrite the **Resume point** to the next concrete action.
 
-**Last updated:** 2026-10-08 — build session #549 (**P3-M5 — D609, *WP36 — THE `me` KO / DAMAGE-COUNTER ATTACKS: 4 attack texts / 8 `me` printings — Terminal Period ×3 (`opponentActiveDamageCountersExactly` → `knockOutDefender`), Bring Down ×3 (`knockOutChosen` `anyExceptSelf` + `leastHpRemaining`, R-BD1 UNRULED), Snow Coating (`counterEachAll.perDamageCounterOnTarget`) and Sneaky Placement (the singular counter put); Soul Destroyer ×2 and Unown `30th-072` dropped and named; attacks 2,640 / 2,771, 972 `me` printings fully built*** — engine 0.492.0, MRV 42, NOT committed; the whole-corpus sweep PENDING)
+**Last updated:** 2026-10-08 — build session #550 (**P3-M5 — D610, *WP37a — THE FIRST PART OF THE `me` ON-MOVE / AS-OFTEN / HP PASSIVES: 8 texts / 16 `me` printings on seven new objects — Solar Transfer ×4, Bubble Gathering, Metal Road ×2 (Buzzing Boost's gate), Swirling Prose ×2 and Holes ×2 (Lava Zone's moment), Scale Up ×3 (the new `hpBonus.requiresEnergyCount`) and Tyrannically Gutsy ×2 ("special"); R-HL1 UNRULED (Holes before Zero to Hero, no Knock Out check between) and R-MR1 UNRULED (Metal Road's moment as a use-time gate, which affords a delayed use); WP37's other 8 texts / 17 printings named; abilities 536 / 610, 988 `me` printings fully built*** — engine 0.493.0, MRV 42, NOT committed; the whole-corpus sweep PENDING)
+
+**Last updated (was):** 2026-10-08 — build session #549 (**P3-M5 — D609, *WP36 — THE `me` KO / DAMAGE-COUNTER ATTACKS: 4 attack texts / 8 `me` printings — Terminal Period ×3 (`opponentActiveDamageCountersExactly` → `knockOutDefender`), Bring Down ×3 (`knockOutChosen` `anyExceptSelf` + `leastHpRemaining`, R-BD1 UNRULED), Snow Coating (`counterEachAll.perDamageCounterOnTarget`) and Sneaky Placement (the singular counter put); Soul Destroyer ×2 and Unown `30th-072` dropped and named; attacks 2,640 / 2,771, 972 `me` printings fully built*** — engine 0.492.0, MRV 42, NOT committed; the whole-corpus sweep PENDING)
 
 **Last updated (was):** 2026-10-08 — build session #548 (**P3-M5 — D608, *WP30 — THE `me` SNIPE / SPREAD WORDING: 7 attack texts / 13 `me` printings read and 5 `30th` printings keyed — "each of 2" (Split Bomb ×3, Dual Tail ×2), Disaster Shock ×3 (a fourth optional-cost skeleton, `defenderStatus`, inner confirm), Sonic Ripper ×2, Bone Sniper (`damageChosen.specialEnergyOnly`), Phantasmal Barrage, Stealthy Slash ×3 and Photon Bullets ×3 (keyed); WP30's other 8 texts named; attacks 2,632 / 2,771, 964 `me` printings fully built*** — engine 0.491.0, MRV 42, NOT committed; the whole-corpus sweep PENDING).
 
@@ -843,6 +845,41 @@
 
 ## NEXT (resume point)
 
+> ### ▶ THE NEXT CONCRETE ACTION (written 2026-10-08, after D610)
+>
+> 🛑 **D610 IS BUILT AND NOT COMMITTED** (worktree `/home/jofre/projects/luminous_ui-mega`, branch `mega-ingest`, on D609 = `1928f466`). D610 is WP37a, the first part of WP37 (on-move, as-often, HP/damage and prevention passives). Next: a review of D610, then WP37b (Luminous Wing ×4, which finishes Mega Clefable ex ×4) or another package, or the landing of D581–D610 (rebase `mega-ingest` onto main; never `git add -A` — `apps/api/.wrangler` is a symlink to the main checkout's local D1).
+>
+> ✅ **`bun run check` IS GREEN**: `Test Files 652 passed (652) / Tests 15461 passed (15461) / CHECK_EXIT=0` (D609: 651 / 15437; D610 adds `onMoveHpMeD610.test.ts` (22) and the census D610 block (2)).
+>
+> **(a) THE SLICE.** WP37 is 16 texts / 33 printings; 8 texts / 16 printings taken, on seven NEW registry objects (registry.ts D610 block). Solar Transfer ×4 (Mega Venusaur ex) = Happy Switch typed {G} with `oncePerTurn: false`; Bubble Gathering (Azumarill ex) = `moveEnergy` `othersToSelf`, one Energy, no `anySource`; Metal Road ×2 (Cobalion ex) = Buzzing Boost's `activeOnly` + `playableIf yourActivePromotedThisTurn` over `othersToSelf` + `anySource` + `max: "any"` on `providesEnergy` Metal; Swirling Prose ×2 (Mismagius ex) = Lava Zone + `activeOnly`, Confused; Holes ×2 (Team Rocket's Dugtrio) = Lava Zone's `onActiveMovedToBench` + `opponentAction` with Gnawing Curse's `damageSubject` 20 (the body that moved; retreat's and `settleProgram`'s sweeps take the Knock Out); Scale Up ×3 (Alolan Exeggutor, `{G}` and `30th` "Grass" faces, one object) = `hpBonus` 250 with the NEW `requiresEnergyCount` 6; Tyrannically Gutsy ×2 = `hpBonus` 150 at `requiresEnergyType: "special"` (WIDENED). continuous.ts adds the count conjunct beside D325's "any" gate, whose bytes are kept. The brief's second allowed piece (a Bench-to-Active trigger) was not built: Metal Road's consequent parks and the move's trigger sweeps do not (R-ZH1), so it takes Buzzing Boost's use-time gate instead. TWO new readings (UNRULED, below): R-HL1, Holes resolves before Palafin's Zero to Hero with no Knock Out check between; R-MR1, Metal Road's moment read as a use-time gate. Otherwise inherited — Scale Up `countAttachedEnergy`'s cards-not-units count (D128 / D391 / R-TRE2; Wild Growth will make it decide outcomes — noted on its backlog line), both HP grants D325's shrink seam. The three `moveEnergy` captions follow the printed sentences, with {G} / {M} spelled "Grass" / "Metal" (the project convention), so they are not verbatim. Holes is driven on BOTH movers (retreat and a Switch, each with its lethal Knock Out).
+>
+> **(b) WP37 REST, LEFT AND NAMED** (8 texts / 17 printings): Clawitzer `me01-038` / `-141` "Fall Back to Reload" (a hand-attach choice inside the NON-PARKING Active→Bench self sweep, or a new moved-to-Bench stamp — beyond the brief), Meowth ex `me03-062` / `-107` / `-121` "Last-Ditch Catch" (a name lock on an `onPlayToBench` trigger; `runBoardTrigger` reads no use lock), Mega Clefable ex `mep-072`, `me03-031` / `-103` / `-119` "Luminous Wing" (prevent Ability effects — WP37b, out of scope, so the Mega Clefable family is NOT finished), Kingambit `me02.5-148` "Supreme Overlord", Garbodor `me04-057` "Gloomy Garbage", Decidueye ex `me03-012` / `-100` "Sniper's Eye", Bastiodon `mep-085`, `me05-062` / `-093` "Ancient Bulwark", Yveltal `30th-100` "Life-Locked".
+>
+> **(c) MRV STAYS 42** (match.ts "STAYS 42 AT D610"): the new key and the widened value live on registry passives, never persisted; the only park the seven objects open is `moveEnergy`'s, whose `pendingOp` keys a v42 record already carries. The 16 faces in a v42 `cardPool` gain their Abilities mid-match.
+>
+> | Column | `me` D610 | Standard pool D610 |
+> |---|---|---|
+> | Attacks | 908 / 1039 | **2640 / 2771** |
+> | Abilities | 160 / 234 | **536 / 610** |
+> | Trainers | 109 / 183 | **373 / 447** |
+> | Special Energy | 11 / 11 | **22 / 22** |
+>
+> **988 `me` printings fully built** (972 + 16; each prints one attack, already built — pinned in the census D610 block). Pins stepped off the red run: registry length 1268 → 1284 (census D273 and five suites), non-attack 1096 → 1112, the `me` key tables (census D581, `reprintAliasMeD582.test.ts` `KEYED_AT_D610`), `playableIf` 35 → 37 (`flipTheScript.test.ts`), D595's "none registry-keyed" (Tyrantrum now carries a passive; the attack is still unkeyed). Version tax: 260 stepped (259 outside index.ts + the declaration) / 1 kept (the D609 heading).
+>
+> **D539 sweep.** Annotated in place, kept as written: Lava Zone's "family closes at 1 of 1" (registry.ts doc and map comment, `lavaZone.test.ts`, `censusAtHead.test.ts`), triggers.ts `runActiveBenchedTriggers`' "no op in today's one program reads it" (Holes reads `subjectUid`), turn.ts's and this file's "exactly ONE lethality source" (Holes is a second), continuous.ts's "the one writer is … Okidogi", registry.ts `playableIf`'s "make 35". After the second review: Buzzing Boost's "exactly one board … REFUSES rather than affords" (registry.ts doc, `buzzingBoost.test.ts` ×2, index.ts's D347 changelog, this file's D347 record — R-MR1 is a second board, and it affords), the D328 row's "the COST is the only lethality here", and `selfScalingHp.test.ts` §8's / this file's D329 "the board D328 asked for is unbuildable" (Holes builds it; it still does not separate the orderings — the closing sweep takes that Knock Out either way, measured: `onMoveHpMeD610.test.ts` stays green under that mutant). After review, also: index.ts's D320 changelog and this file's session #260 "closes at 1 of 1", this file's D320 "ONE DECLARED SURVIVOR … no board this catalog can build separates the two uids" record and its :15790 needle note, the D320 mutant row's `what` / `survives.reason`, and decisions.md D565's uid census "`subjectUid` … read by nothing".
+>
+> **(d) THE MUTATION RECORD.** +19 D610 rows (4891 in all). precheck: 4891 mutants, the same 20 pre-existing broken rows (the slice first broke 4: `D320-lava-zone-loses-its-direction` and `D347-buzzing-boost-drops-the-active-only-half` re-pointed on the object's name; the fold was reshaped so `D325-energy-gate-dropped` / `-reads-the-holders-type` kept their bytes; `--only` over those four plus `D325-scaled-hp-not-folded`: 5 killed). Probe `run.ts --decision D610 --allow-dirty`: 19 killed · 0 known · 0 GAP · 0 error, tree byte-identical after. Gate-witness `--only` (the 18 `opaque-anatomy-gate.ts` / `residue-census-gate.ts` rows): 18 killed · 0 error. Gates: residue-census, opaque-anatomy, splice, partition all OK. After review: the DECLARED survivor `D320-subject-is-the-promoted-body` is RETIRED (no `survives`; `expectKilledBy` + `onMoveHpMeD610.test.ts`) — Holes reads `subjectUid`, so the Switch case in §6 kills it: `--only` 1 killed.
+>
+> 🛑 **(0) THE WHOLE-CORPUS SWEEP IS PENDING** (D581–D609's too). Predicted: **4824 killed · 47 known survivor(s) · 0 GAP(S) · 20 error(s)** over **4,891** rows — 4872 + 19 = 4891; 4804 + 19 + 1 = 4824 killed (the 19 D610 rows and the retired D320 survivor); 48 − 1 = 47 survivors; 4824 + 47 + 20 = 4891. It assumes D609's prediction (4804 · 48 · 0 · 20 over 4872) holds. If it holds, D581–D610 close together. If it fails: an error count ≠ 20 means a broken `find` outside the pre-existing 20 (start with the four rows named in (d)), a survivor count ≠ 47 means a D581–D610 row survived (name it, kill it or declare it) or, at 48 with killed 4823, the D320 row still survives (re-read its retirement), and a killed count short by k with errors at 20 means k rows GAP or are stale.
+>
+> **Pending decisions (UNRULED readings):** NEW at D610: **R-MR1 ⚠️ UNRULED** — Cobalion ex `me04-064` / `-103` "Metal Road" prints a moment (*"when this Pokémon moves from your Bench to the Active Spot, you may use this Ability"*); the engine reads it as Buzzing Boost's use-time gate (`activeOnly` + `playableIf yourActivePromotedThisTurn`), so it can be used at any later point of that turn while Cobalion stays Active. Measured (`onMoveHpMeD610.test.ts` §4): Cobalion moves up with 2 {M} on the Bench, p1 then attaches a third {M} from hand to a Benched Pokémon, and Metal Road sweeps all 3. The reading AFFORDS (the print offers only the 2). Reversal: a Bench-to-Active trigger with an optional confirm, which needs a parking trigger sweep on every Bench-to-Active route. **R-HL1 ⚠️ UNRULED** — on the Active→Bench move `runActiveBenchedTriggers` runs the opponent's watched triggers first (Holes), then the mover's own (Palafin `sv06-060` "Zero to Hero"), with NO Knock Out check between them. Measured (`onMoveHpMeD610.test.ts` §6): p2's Palafin (100 HP) with 80 damage retreats over p1's Dugtrio; Holes makes it 100 (lethal), Zero to Hero swaps Palafin ex in with the 100 damage, and the result is `turn:action`, p2's Bench `[["sv06-061", 100]]`, no Knock Out, no Prize (with no Palafin ex in the deck the same counters Knock Palafin Out for p1). Reversals: the Knock Out resolves first (p1 takes a Prize), or Zero to Hero resolves first and Holes misses (its subject uid has gone to the deck). Standing: R-BD1 (D609), R-LC1 / R-CF1 (D606), R-NZ1 / R-MP1 / R-KW1 (D605), R-TE1 / R-TP1 / R-NF1 (D604), R-PX6 (D603), R-GC2, R-GC3, R-TN1 (D601) and R-CW1 (D600) stand as recorded in the archived blocks below.
+>
+> Still owed from the Mega backlog: as at D609 (below), less WP37a's taken texts; the WP37 rest is (b) above.
+>
+> ---
+>
+> **ARCHIVED — the resume point D610 was built from, kept rather than overwritten** (D609 has since been committed on `mega-ingest` as `1928f466`):
+>
 > ### ▶ THE NEXT CONCRETE ACTION (written 2026-10-08, after D609)
 >
 > 🛑 **D609 IS BUILT AND NOT COMMITTED** (worktree `/home/jofre/projects/luminous_ui-mega`, branch `mega-ingest`, on D608 = `221a6544`). D609 is WP36 of the Mega backlog (KO / damage-counter attacks). Next: a review of D609 (and a ruling on R-BD1), then another package, or the landing of D581–D609 (rebase `mega-ingest` onto main; never `git add -A` — `apps/api/.wrangler` is a symlink to the main checkout's local D1).
@@ -1321,7 +1358,7 @@
 > | Trainers | 92 / 183 | **356 / 447** |
 > | Special Energy | 3 / 11 | **14 / 22** |
 >
-> **835 `me` printings fully built** (826 + 9; Tyrantrum ×2 still wait on "Tyrannically Gutsy"). Census D581 tally: reader [285, 774] → [293, 785], residue [150, 238] → [142, 227]; the D582–D594 rungs subtract WP13's +11. Registry unchanged (1207 / 1042).
+> **835 `me` printings fully built** (826 + 9; Tyrantrum ×2 still wait on "Tyrannically Gutsy" [🆕🆕🆕 D610 (D539): no longer — built at D610]). Census D581 tally: reader [285, 774] → [293, 785], residue [150, 238] → [142, 227]; the D582–D594 rungs subtract WP13's +11. Registry unchanged (1207 / 1042).
 >
 > **(c) THE MUTATION RECORD.** +22 D595 rows (4546 in all). precheck: 4546 mutants, the same 20 pre-existing broken rows (none in a D595 file; arm 46b sits ABOVE Corrosive Liquid's arm because four D592 rows anchor on that arm's `return null;` tail). Probe `run.ts --decision D595 --allow-dirty`: 22 killed · 0 known survivor(s) · 0 GAP(S) · 0 stale · 0 skipped(dirty) · 0 clobber(s) · 0 error(s), tree byte-identical after. Gate-witness `--only` (the 18 `opaque-anatomy-gate.ts` / `residue-census-gate.ts` rows): 18 killed · 0 error. The 55 older rows whose killers this slice edited (perHeadsConsequent, perHeadsEnergyDiscard, perHeadsProgram, flipDefenderAttackLock, twoCoinTailsRecoil, discardShuffleBack): 54 killed · 1 known survivor(s) · 0 GAP(S) · 0 error(s) (the known one is D463's declared `D463-audit-d130-empty-program-survives-zero-heads`). Gates: residue-census, opaque-anatomy, splice, partition all OK.
 >
@@ -15750,7 +15787,7 @@
 > steps ran anyway: **all 40 needled for the structures this slice extends, 4 hits read
 > individually** (`D259` quantifies over *trainer* programs — this adds an attack arm; `D317`/`D318`
 > over `program === null` for named printings, and line 263 is claimed by **exactly one reader**,
-> measured; `D320` over `subjectUid`/`damageSubject`, which this program does not use). Witness:
+> measured; `D320` over `subjectUid`/`damageSubject`, which this program does not use [🆕🆕🆕 D610 (D539): the D320 survivor is RETIRED — Holes reads `subjectUid`]). Witness:
 > `precheck` re-finding all **2,217** `find` strings exactly once (D469). Distribution
 > 12/11/7/5/2/1/1/1 = **40**, reproduced from the module.
 >
@@ -35411,7 +35448,8 @@ the next api deploy (D18).
 |---|---|---|
 | backend-data | P1 | ✅ M1–M9 + P2-M1 + task-17 api deployed (Worker `9b1ec1d1`, 2026-07-16); OAuth secrets pending (user) |
 | deck-builder | P2 | ✅ ALL 19 tasks closed (task 17 landed + e2e-verified locally); only follow-ups left |
-| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D609, *WP36 — the `me` KO / damage-counter attacks: 4 attack texts / 8 `me` printings (Terminal Period's exact-counter gate, Bring Down's least-HP Knock Out on either side, Snow Coating's doubled counters, the singular counter put); Soul Destroyer and Mysterious Signal named; R-BD1 UNRULED; attacks 2,640 / 2,771*** — engine 0.492.0, MRV 42, NOT committed; the sweep PENDING) |
+| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D610, *WP37a — the first part of the `me` on-move / as-often / HP passives: 8 texts / 16 `me` printings on seven new objects (Solar Transfer, Bubble Gathering, Metal Road, Swirling Prose, Holes, Scale Up, Tyrannically Gutsy) over the new `hpBonus.requiresEnergyCount`; WP37's other 8 texts named; abilities 536 / 610*** — engine 0.493.0, MRV 42, NOT committed; the sweep PENDING) |
+| simulator (prior) | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D609, *WP36 — the `me` KO / damage-counter attacks: 4 attack texts / 8 `me` printings (Terminal Period's exact-counter gate, Bring Down's least-HP Knock Out on either side, Snow Coating's doubled counters, the singular counter put); Soul Destroyer and Mysterious Signal named; R-BD1 UNRULED; attacks 2,640 / 2,771*** — engine 0.492.0, MRV 42, NOT committed; the sweep PENDING) |
 | simulator (prior) | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D608, *WP30 — the `me` snipe / spread wording: 7 attack texts / 13 `me` printings read ("each of 2", Disaster Shock's optional-cost skeleton, three literal compounds, `damageChosen.specialEnergyOnly`, the unbenched counter snipe) and 5 `30th` printings keyed; WP30's other 8 texts named; attacks 2,632 / 2,771*** — engine 0.491.0, MRV 42, NOT committed; the sweep PENDING) |
 | simulator (prior) | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D607, *WP28a — the first half of the scaling count sources: 8 attack texts / 14 `me` printings over three new nullary `DamageCountSource` members (both-board Energy, both-board Tools, Basic Energy types) and four texts on shipped members; WP28b's seven named; attacks 2,614 / 2,771*** — engine 0.490.0, MRV 42, NOT committed; the sweep PENDING) |
 | simulator (prior) | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D606, *WP25a — the first half of the `me` Stadiums: 5 texts / 9 `me` printings (Prism Tower, Surfing Beach, Nighttime Mine, Lumiose City, Celebratory Fanfare) over `StadiumAbility.endsTurn` and `StadiumEffects.attackCostSurcharge`; the D210 / D213 pinned survivors KILLED; six Stadiums dropped and named; R-LC1 / R-CF1 UNRULED; trainers 373 / 447*** — engine 0.489.0, MRV 42, NOT committed; the sweep PENDING) |
@@ -35638,6 +35676,18 @@ the next api deploy (D18).
 Legend: 📝 backlog · 📋 specced · 🔎 research · 🚧 in progress · ✅ done
 
 ## Session log
+
+### 2026-10-08 — build session #550 (P3-M5 — D610)
+
+**WP37a — THE FIRST PART OF THE `me` ON-MOVE / AS-OFTEN / HP PASSIVES. `MATCH_RECORD_VERSION` STAYS 42.**
+
+Built in the `luminous_ui-mega` worktree on D609 (`1928f466`); the main checkout was not touched. Every id `git grep`-ped and
+every text read off the LOCAL D1 first. 8 texts / 16 printings taken on seven new objects, one new piece
+(`hpBonus.requiresEnergyCount`, plus "special"); all 16 cards fully built. Mega Clefable ex ×4 is not finished (Luminous Wing is
+WP37b). Fall Back to Reload, Last-Ditch Catch and five passives left and named. One new reading, R-HL1 UNRULED (Holes before
+Palafin's Zero to Hero, no Knock Out check between). `onMoveHpMeD610.test.ts` (22), census D610 block (2); check 652 / 15461. After the second review, R-MR1 UNRULED (Metal Road's moment as a use-time gate, which affords a delayed use).
+Version tax 260 stepped / 1 kept. +19 mutant rows, all KILLED; two rows re-pointed; the D320 declared survivor retired.
+Sweep PENDING (NEXT (0)). NOT committed.
 
 ### 2026-10-08 — build session #549 (P3-M5 — D609)
 
@@ -60889,6 +60939,8 @@ affords (D222's direction), it takes two switch effects in one turn to reach, an
 the literal reading costs a new `TriggerTiming` plus an optional-trigger confirm — a
 mechanism authored on the evidence of a board no printing rewards. `buzzingBoost.test.ts`
 §6 drives it, so it is a measured decision and not an unknown.
+[🆕🆕🆕 D610 (D539): "exactly one board" / "REFUSES rather than affords" WITHDRAWN — a use
+delayed to later in the same turn is a second board, and it affords (R-MR1, Metal Road).]
 
 #### The numbers
 
@@ -64078,7 +64130,8 @@ printed consequent is *"their **new Active Pokémon** is now Burned"* and its pr
 `{ op: "applyStatus", target: "defender", status: "burned" }` — a DIFFERENT BODY from the one that
 moved, a §12 condition rather than damage, and dealt at the Checkup. So the requested board is
 unbuildable **and so is every board on which this trigger contributes lethality**; the retreat has
-exactly ONE lethality source on today's pool and it is the cost.
+exactly ONE lethality source on today's pool and it is the cost. [🆕🆕🆕 D610 (D539): WITHDRAWN —
+Team Rocket's Dugtrio "Holes" places 2 counters on the body that moved, a second lethality source.]
 
 ⚠️ **THE ORDER IS STILL OBSERVABLE, THROUGH THE LETHALITY THAT IS REALLY THERE.** The mutant
 inserts a sweep and leaves the tail one, so on a board where the COST kills — D325's Conkeldurr at
@@ -64086,7 +64139,9 @@ inserts a sweep and leaves the tail one, so on a board where the COST kills — 
 opponent's Prize decision **before the Ability has fired**. `selfScalingHp.test.ts` §8 drives three
 rows on that board: `ABILITY_TRIGGERED{Lava Zone}` precedes `KNOCKED_OUT`, the burn lands on the
 PROMOTED body with no `COUNTERS_PLACED` row anywhere, and a Magcargo-less control keeps the two
-"it fired" assertions from passing on an absence. **The board D328 asked for cannot exist; the row
+"it fired" assertions from passing on an absence. **The board D328 asked for cannot exist [🆕🆕🆕 D610
+(D539): WITHDRAWN — Holes' lethal counters build it (`onMoveHpMeD610.test.ts` §6); it still does not
+separate the orderings, since the closing sweep takes that Knock Out either way]; the row
 is killable anyway, and no amount of re-reading the declaration would have said so — only reading
 the CARD did.**
 
@@ -65538,7 +65593,8 @@ IT?**
 
 **The slice.** Magcargo `sv05-029` "Lava Zone": *"Whenever your opponent's Active
 Pokémon moves to the Bench during their turn, their new Active Pokémon is now
-Burned."* **1 legal sentence, 1 legal printing, and the family closes at 1 of 1.**
+Burned."* **1 legal sentence, 1 legal printing, and the family closes at 1 of 1.** [🆕🆕🆕 D610 (D539): WITHDRAWN
+for the Standard pool — Swirling Prose ×2 and Holes ×2 (`me`) print this moment, built at D610.]
 It is the third verb of D319's opponent-action family and the first whose MOMENT
 is a board move rather than a hand play, and the first whose CONSEQUENT is a §12
 Special Condition rather than damage counters. Engine **0.225.0 → 0.226.0**;
@@ -65704,7 +65760,8 @@ op (`damageSubject`, D319) that this program does not use, so no board this
 catalog can build separates the two uids at this site. Declared rather than
 deleted because the value is a CLAIM about which body the antecedent names — the
 day a second sentence at this timing places counters on the body that LEFT, the
-row stops surviving and says so. **Residue 14 → 15.**
+row stops surviving and says so. [🆕🆕🆕 D610 (D539): WITHDRAWN — Team Rocket's Dugtrio "Holes" (`damageSubject`)
+is that sentence; a Switch separates the uids (`onMoveHpMeD610.test.ts` §6) and the row is RETIRED as a survivor.] **Residue 14 → 15.**
 
 **The full sweep: **689 killed · 15 known survivors · 0 GAPs · 0 stale · 0 skipped(dirty) · 0 clobbers · 0 baseline errors · 2,074.3 s (~35 min) over 704 rows****
 
