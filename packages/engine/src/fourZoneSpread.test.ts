@@ -823,7 +823,7 @@ const RAW: Record<string, string> = (
 describe("D520 §8 — the version steps, and the heading is written", () => {
   it("engineVersion and `manifest.version` agree, and the bump is owed for BEHAVIOUR", () => {
     // ⚠️ The version is NOT spelled in this `it(…)` title (D460's fourth class).
-    expect(engineVersion).toBe("0.480.0");
+    expect(engineVersion).toBe("0.481.0");
     expect(manifest.version).toBe(engineVersion);
   });
 
@@ -868,7 +868,10 @@ describe("D520 §9 — no new op kind, the producer counts moved as stated, and 
     // 🆕🆕🆕 D579 — `damageDefender` 12 → 13: registry.ts `UNDULATING_SLICE`'s top-level `{ op:
     // "damageDefender", per: 20, count: "placed" }` is one more raw site; `spreadDamage` untouched
     // at 10. Outside the census sweep's shape, found by the full run (D419/D521 (4)).
-    expect(producers("damageDefender")).toBe(13);
+    // 🆕🆕🆕 D597 — `damageDefender` 13 → 16: effects.ts arm 10d's `commaHit`, the `handDiscard` case of
+    // `discardScaledBoostProgram` and registry.ts `INFERNO_X` are three more raw sites; `spreadDamage`
+    // untouched at 10.
+    expect(producers("damageDefender")).toBe(16);
   });
 
   it("🛑 `MATCH_RECORD_VERSION` HOLDS at 30: zero new serialized bytes, no op parks, the gate is spliced", () => {

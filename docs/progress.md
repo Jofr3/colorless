@@ -3,7 +3,9 @@
 > Update this at the **end of every session**: bump the status table, append a
 > session-log entry, and rewrite the **Resume point** to the next concrete action.
 
-**Last updated:** 2026-10-08 — build session #536 (**P3-M5 — D596, *WP09 — MEGA GARDEVOIR ex AND XERNEAS: 3 texts / 14 `me` printings — Mega Symphonia ×6 and Geo Storm ×2 on the `×` board-wide own-Energy count (`SELF_BOARD_ENERGY_MULTIPLY`, `energyOnSelf` at the board zone), Overflowing Wishes ×6 on `attachFromDeck` `benchOnly` + the one new field `each` (one Basic {P} Energy per Benched Pokémon); nothing dropped; `sv` reader output byte-identical; Standard pool attacks 2558 / 2771; 843 `me` printings fully built*** — engine 0.480.0, MRV 42, NOT committed; the sweep PENDING)
+**Last updated:** 2026-10-08 — build session #537 (**P3-M5 — D597, *WP29 — THE DISCARD-SCALED ATTACKS: 8 texts / 18 `me` printings — the `me` comma spelling of D402's `×` fold (`COMMA_DISCARD_SCALED_DAMAGE`: Inferno X ×4, Garland Ray ×3, Steel Cutter, Double Eater), D488's mill on "Basic {W} Energy card" (Hammer-lanche ×2, Iceberg Breaker), the `handDiscard` boost member (Shooting Moons ×4) and the two "[R]" Inferno X keyed on `INFERNO_X`; Eelektross, Slowpoke, Honchkrow and Pawmot dropped and named; `sv` reader output byte-identical; Standard pool attacks 2576 / 2771; 857 `me` printings fully built*** — engine 0.481.0, MRV 42, NOT committed; the sweep PENDING)
+
+**Last updated (was):** 2026-10-08 — build session #536 (**P3-M5 — D596, *WP09 — MEGA GARDEVOIR ex AND XERNEAS: 3 texts / 14 `me` printings — Mega Symphonia ×6 and Geo Storm ×2 on the `×` board-wide own-Energy count (`SELF_BOARD_ENERGY_MULTIPLY`, `energyOnSelf` at the board zone), Overflowing Wishes ×6 on `attachFromDeck` `benchOnly` + the one new field `each` (one Basic {P} Energy per Benched Pokémon); nothing dropped; `sv` reader output byte-identical; Standard pool attacks 2558 / 2771; 843 `me` printings fully built*** — engine 0.480.0, MRV 42, NOT committed; the sweep PENDING)
 
 **Last updated (was):** 2026-10-08 — build session #535 (**P3-M5 — D595, *WP13 — COIN-GATE COMPOSITIONS: 8 texts / 11 `me` printings — five `coinFlipGate`s over a closed consequent table (Miltank, Team Rocket's Exeggutor, Murkrow, Gimmighoul, Drifloon) and three `programPerHeads` arms (Smeargle, Tyrantrum ×2 / Team Rocket's Diglett, Houndstone ×2); Bombirdier, Bewear, Gholdengo, Snorlax, Pikachu, Shiftry and Octillery dropped and named; `sv` reader output byte-identical; Standard pool attacks 2544 / 2771; 835 `me` printings fully built*** — engine 0.479.0, MRV 42, NOT committed; the sweep PENDING)
 
@@ -817,6 +819,39 @@
 
 ## NEXT (resume point)
 
+> ### ▶ THE NEXT CONCRETE ACTION (written 2026-10-08, after D597)
+>
+> 🛑 **D597 IS BUILT AND NOT COMMITTED** (worktree `/home/jofre/projects/luminous_ui-mega`, branch `mega-ingest`, on D596 = `11741ce6`). D597 is WP29 of the Mega backlog: the discard-scaled attacks. Next: a review of D597, then the next package or the landing of D581–D597 (rebase `mega-ingest` onto main; never `git add -A` — `apps/api/.wrangler` is the setup symlink).
+>
+> ✅ **`bun run check` IS GREEN**: `typecheck-coverage`, `tsc -b`, `lint-coverage`, `biome lint --error-on-warnings`, `Test Files 640 passed (640) / Tests 15154 passed (15154) / CHECK_EXIT=0` (D596: 639 / 15129; D597 adds `discardScaledMeD597.test.ts` (22) and the census D597 block (3)).
+>
+> **(a) THE SLICE.** WP29 is 12 texts / 24 printings, over 20, so the Mega Charizard X ex / Mega Diancie ex / Mega Abomasnow ex subset was taken first, plus the siblings on the same readers: 8 texts / 18 printings. effects.ts `COMMA_DISCARD_SCALED_DAMAGE` (arm 10d, a separate anchor beside `ENERGY_DISCARD_SCALED_DAMAGE`, whose bytes and D402 rows are untouched) reads *"Discard <any amount of / up to N> <noun> from <among your Pokémon / this Pokémon / your hand>, and this attack does N damage for each card you discarded in this way."*: Inferno X ×4 (`me02-013` / `-109` / `-125` / `-130`; `discardEnergy` from `yours`, {R}), Garland Ray ×3 (`me02-041`, `me02.5-267` / `-282`; from `yourActive`, cap 2), Steel Cutter (`me05-060`) and Double Eater (`me03-032`) on D489's declinable `payFromHand` (it requires the printed ceiling, so "any amount of … from your hand" stays loud). `milledCardFilter` reads "Basic {W} Energy card", mill-only (Hammer-lanche `me01-036` / `-157`, Iceberg Breaker `me04-024`). `deriveAttackDiscardScaledBoost` gains `handDiscard` (Shooting Moons `mep-072`, `me03-031` / `-103` / `-119`: `payFromHand` cap 4, then `damageDefender` with the printed base; the "You may" is the declinable pick itself). registry.ts `INFERNO_X` keys `mep-023` / `-029`, whose text prints tcgdex's "[R]" — the `{R}` arm's program byte for byte. **Dropped and named:** Mega Eelektross ex "Disaster Shock" ×3 (status payoff; Split Bomb is WP30), Slowpoke "All-You-Can-Yeet" `me05-029`, Team Rocket's Honchkrow "Rocket Feathers" `me02.5-127`, Pawmot "Voltaic Fist" `me02-034`. **The `sv` reader output is byte-identical:** every `deriveAttack*` reader and both splitters over the 1,091 corpus rows dumped before and after; only the 7 `me` reader sentences differ.
+>
+> **(b) MRV STAYS 42** (match.ts "STAYS 42 AT D597"): no op, op key or persisted member; every park is an existing prompt (`discardEnergy`, `chooseCards`) whose continuation is persisted, so a 0.480 rollback resumes it AS BUILT.
+>
+> | Column | `me` D597 | Standard pool D597 |
+> |---|---|---|
+> | Attacks | 844 / 1039 | **2576 / 2771** |
+> | Abilities | 115 / 234 | **491 / 610** |
+> | Trainers | 92 / 183 | **356 / 447** |
+> | Special Energy | 3 / 11 | **14 / 22** |
+>
+> **857 `me` printings fully built** (843 + 14: Mega Charizard X ex ×6, Mega Abomasnow ex ×2, Mega Diancie ex ×3, Avalugg, Skarmory, Mawile; Mega Clefable ex ×4 still wait on "Luminous Wing"). Census D581 tally: reader [296, 799] → [303, 815], residue [139, 213] → [132, 197]; the D582–D596 rungs subtract WP29's +16. Registry +2 (1207 → 1209; attack-only `KEYED_ATTACK_ME_D597`); `damageDefender` producer sites 13 → 16.
+>
+> **(c) THE MUTATION RECORD.** +29 D597 rows (4591 in all). precheck: 4591 mutants, the same 20 pre-existing broken rows (none in a D597 file; the new code was written so D403's base row, D488's owner row and D489's two payment rows keep a unique `find`). Probe `run.ts --decision D597 --allow-dirty`: 29 killed · 0 known survivor(s) · 0 GAP(S) · 0 stale · 0 skipped(dirty) · 0 clobber(s) · 0 error(s), tree byte-identical after. Gate-witness `--only` (the 18 `opaque-anatomy-gate.ts` / `residue-census-gate.ts` rows): 18 killed · 0 error. The neighbouring older rows (D402, D403, D488, D489, D490, D552): 109 killed · 1 known survivor(s) (D490's declared `D490-arm-order-swapped`) · 0 GAP(S) · 0 error(s). Gates: residue-census, opaque-anatomy, splice, partition all OK.
+>
+> 🛑 **(0) THE WHOLE-CORPUS SWEEP IS PENDING** (D581–D596's too). Predicted: **4521 killed · 50 known survivor(s) · 0 GAP(S) · 20 error(s)** over **4,591** rows — 4562 + 29 = 4591; 4492 + 29 = 4521 killed; 4521 + 50 + 20 = 4591. The 20 errors are precheck's 20 broken rows (none D581–D597's); the 29 D597 rows and the 18 gate-witness rows are measured killed. It assumes D596's prediction (4492 · 50 · 0 · 20 over 4562) holds. If it holds, D581–D597 close together. If it fails: an error count ≠ 20 means a `find` was spliced by a later edit (precheck names it); a new GAP or survivor in a D581–D596 row is that slice's open prediction failing, not D597's; one in an older row that names effects.ts' arm 10b–10d, `milledCardFilter`, `deriveAttackDiscardScaledBoost` / `discardScaledBoostProgram`, registry.ts' `INFERNO_X`, or a suite re-pointed below is a D597 edit moving it and owes a row-level re-measure before the landing.
+>
+> **D539 sweep.** Withdrawn in place as pool-wide facts (true of the `sv` period spelling only): D402's "the catalog prints NEITHER 'Discard any amount of' NOR 'You may discard all'" (effects.ts, `discardScaledDamage.test.ts`'s comment, the D403 C6 row's `what`, simulator.md) and "a bare 'Energy' appears only behind the Bench-only additive spellings" (`discardScaledDamage.test.ts`'s it() title and comment). Annotated in place: `milledCardFilter`'s "the two branches below are the two nouns that are printed" (three now), the boost union's "TWO MEMBERS" (four), "true of all three members" and "TRUE OF TWO MEMBERS OF THREE" (three of four). Counts stepped off the red run: registry ids 1207 → 1209 (attachQuantity, benchCountRequirement, benchNamedBonus, requirementFloor, splitOrder, the census D233 / D273 rungs, reprintAliasMeD582's key table) and `damageDefender` producers 13 → 16 (bothBenchSpread, fourZoneSpread). Version tax: `0.480.0` outside `docs/` was 150 files / 242 occurrences; 241 stepped (it() titles, `package.json`, the declaration and the D275 `find` included), 1 kept (index.ts' D596 heading).
+>
+> **Pending decisions (UNRULED readings).** **R-IX1** — Inferno X (Mega Charizard X ex `mep-023` / `-029`): tcgdex prints "[R]" where the `me02` printings print "{R}"; it is read as {R} (keyed by id on the `{R}` program). Reversal: none expected — the WP06 markup normaliser would make the text identical and the key redundant. **R-OW1** (Overflowing Wishes) and **R-HB1** (Horrifying Bite), carried from D596 / D595 (see the archived block below).
+>
+> Still owed from the Mega backlog: WP29's four drops (above), the seven WP13 drops, WP33b, the three WP33a drops, Meowth ex ×3's Last-Ditch Catch, Mega Clefable ex ×4's Luminous Wing, Flygon ×3, Alakazam ×3's "Powerful Hand" (WP14), Pokémon Center Lady, Mega Absol ex ×3's Terminal Period (WP36), the markup-normalising ingest fix, then the residue by mechanism.
+>
+> ---
+>
+> **ARCHIVED — the resume point D597 was built from, kept rather than overwritten** (D596 has since been committed on `mega-ingest` as `11741ce6`):
+>
 > ### ▶ THE NEXT CONCRETE ACTION (written 2026-10-08, after D596)
 >
 > 🛑 **D596 IS BUILT AND NOT COMMITTED** (worktree `/home/jofre/projects/luminous_ui-mega`, branch `mega-ingest`, on D595 = `fe789bff`). D596 is WP09 of the Mega backlog: Mega Gardevoir ex and Xerneas. Next: a review of D596, then the next package or the landing of D581–D596 (rebase `mega-ingest` onto main; never `git add -A` — `apps/api/.wrangler` is the setup symlink).
@@ -34948,7 +34983,8 @@ the next api deploy (D18).
 |---|---|---|
 | backend-data | P1 | ✅ M1–M9 + P2-M1 + task-17 api deployed (Worker `9b1ec1d1`, 2026-07-16); OAuth secrets pending (user) |
 | deck-builder | P2 | ✅ ALL 19 tasks closed (task 17 landed + e2e-verified locally); only follow-ups left |
-| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D596, *WP09 — Mega Gardevoir ex and Xerneas: 3 texts / 14 `me` printings (the `×` board-wide own-Energy count; a per-Benched-body deck attach on the new `attachFromDeck.each`); nothing dropped; attacks 2558 / 2771*** — engine 0.480.0, MRV 42, NOT committed; the sweep PENDING) |
+| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D597, *WP29 — the discard-scaled attacks: 8 texts / 18 `me` printings (the comma spelling of the `×` discard fold, the typed Basic mill noun, the `handDiscard` boost member, two "[R]" keys); four texts dropped and named; attacks 2576 / 2771*** — engine 0.481.0, MRV 42, NOT committed; the sweep PENDING) |
+| simulator (prior) | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D596, *WP09 — Mega Gardevoir ex and Xerneas: 3 texts / 14 `me` printings (the `×` board-wide own-Energy count; a per-Benched-body deck attach on the new `attachFromDeck.each`); nothing dropped; attacks 2558 / 2771*** — engine 0.480.0, MRV 42, NOT committed; the sweep PENDING) |
 | simulator (prior) | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D595, *WP13 — coin-gate compositions: 8 texts / 11 `me` printings (five coin gates over a closed consequent table, three per-heads arms); seven texts dropped and named; attacks 2544 / 2771*** — engine 0.479.0, MRV 42, NOT committed; the sweep PENDING) |
 | simulator (prior) | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D594, *WP33a — bonus / requirement rows on shipped condition members: 6 texts / 10 `me` printings (four clause rows, Luxio's `ifCondition` licence, Chesnaught's per-{G} recoil); attacks 2533 / 2771, abilities 491 / 610*** — engine 0.478.0, MRV 42, NOT committed; the sweep PENDING) |
 | simulator (prior) | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D593, *WP07 — more `me` clause rows and the "Fade Out" objects: 9 attack texts / 15 `me` printings (seven clause rows, Facade on `yourActiveBurnedOrPoisoned`, Cutting Riposte's {D} gate row, Fade Out ×5 on three objects); attacks 2525 / 2771*** — engine 0.477.0, MRV 42, NOT committed; the sweep PENDING) |
@@ -35162,6 +35198,18 @@ the next api deploy (D18).
 Legend: 📝 backlog · 📋 specced · 🔎 research · 🚧 in progress · ✅ done
 
 ## Session log
+
+### 2026-10-08 — build session #537 (P3-M5 — D597)
+
+**WP29 — THE DISCARD-SCALED ATTACKS. `MATCH_RECORD_VERSION` STAYS 42.**
+
+Built in the `luminous_ui-mega` worktree on D596 (`11741ce6`); the main checkout was not touched. Every id `git grep`-ped
+and every text read off the LOCAL D1 first. WP29 is 24 printings, so the Mega Charizard X ex / Diancie / Abomasnow subset
+was taken first with its same-reader siblings: 8 texts / 18 printings — the comma `×` arm (Inferno X ×4, Garland Ray ×3,
+Steel Cutter, Double Eater), the typed Basic mill noun (Hammer-lanche ×2, Iceberg Breaker), the `handDiscard` boost member
+(Shooting Moons ×4) and `INFERNO_X` for the two "[R]" printings. Four texts dropped and named. `sv` reader output
+byte-identical by a before/after dump. Reading R-IX1 recorded as UNRULED. `discardScaledMeD597.test.ts` (22). Version tax
+241 stepped / 1 kept. +29 mutant rows, all KILLED. Sweep PENDING (NEXT (0)). NOT committed.
 
 ### 2026-10-08 — build session #536 (P3-M5 — D596)
 

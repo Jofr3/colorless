@@ -20255,6 +20255,16 @@ import type { GameState, Seat } from "./types";
     `expect(manifest.version)`, `it(…)` titles, the declaration and `package.json` —
     **not** as a value-keyed grep — because a value-keyed grep is precisely the mechanism
     that ate D500's heading.)
+    🆕🆕🆕 engineVersion 0.480.0 → **0.481.0** (D597 — WP29: THE DISCARD-SCALED ATTACKS;
+    `MATCH_RECORD_VERSION` STAYS 42 (apps/api match.ts "STAYS 42 AT D597")). effects.ts
+    `COMMA_DISCARD_SCALED_DAMAGE` (arm 10d) reads the `me` comma spelling of D402's `×` fold — Inferno X
+    ×4 (`discardEnergy` from `yours`), Garland Ray ×3 (from `yourActive`), Steel Cutter and Double Eater
+    (D489's declinable `payFromHand`); `milledCardFilter` reads "Basic {W} Energy card" (Hammer-lanche ×2,
+    Iceberg Breaker); `deriveAttackDiscardScaledBoost` gains a FOURTH member, `handDiscard` (Shooting
+    Moons ×4, the printed base kept); registry.ts `INFERNO_X` keys the two "[R]" `mep` printings. NO new
+    op, field or member of a persisted union. 8 texts / 18 printings; the `sv` reader output is
+    byte-identical. Census: Standard pool attacks 2,576 / 2,771; 857 `me` printings fully built.
+    `discardScaledMeD597.test.ts`.)
     🆕🆕🆕 engineVersion 0.479.0 → **0.480.0** (D596 — WP09: MEGA GARDEVOIR ex AND XERNEAS;
     `MATCH_RECORD_VERSION` STAYS 42 (apps/api match.ts "STAYS 42 AT D596")). effects.ts
     `SELF_BOARD_ENERGY_MULTIPLY` reads *"This attack does N damage for each {P} Energy attached to
@@ -25278,7 +25288,7 @@ import type { GameState, Seat } from "./types";
     WITNESS** — the count was re-derived every slice and the word *"three"* was carried.
     A successor of this slice inherits **81 / 61 / 17** again, over **FIVE** history
     occurrences: those four plus `deckMillFilteredScale.test.ts`'s own header arrow.) */
-export const engineVersion = "0.480.0";
+export const engineVersion = "0.481.0";
 
 export type {
   ApplyResult,

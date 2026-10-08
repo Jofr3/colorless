@@ -6,6 +6,27 @@
 > `coverage-backlog-legal.md`; its pool is unchanged and whole. The suite-side figures are
 > `censusAtHead.test.ts`'s D581 block and `censusAttackCorpusMe.ts`.
 
+## 🆕 D597 update (engine 0.481.0) — the discard-scaled attacks (WP29)
+
+8 texts / 18 `me` printings (`discardScaledMeD597.test.ts`). Inferno X ×4, Garland Ray ×3, Steel Cutter, Double
+Eater: the `me` comma spelling of D402's `×` fold (`COMMA_DISCARD_SCALED_DAMAGE`; the hand zone is D489's declinable
+`payFromHand`). Hammer-lanche ×2, Iceberg Breaker: D488's mill on the typed "Basic {W} Energy card" noun. Shooting
+Moons ×4: `deriveAttackDiscardScaledBoost`'s new `handDiscard` member. The two "[R]" Inferno X `mep-023` / `-029`:
+keyed on `INFERNO_X`. **Finished:** Mega Charizard X ex ×6, Mega Abomasnow ex ×2, Mega Diancie ex ×3, Avalugg
+`me04-024`, Skarmory `me05-060`, Mawile `me03-032`. Mega Clefable ex ×4 still wait on "Luminous Wing".
+**Still open in WP29 (named):** Mega Eelektross ex "Disaster Shock" ×3 (status payoff; Split Bomb is WP30), Slowpoke
+"All-You-Can-Yeet" `me05-029`, Team Rocket's Honchkrow "Rocket Feathers" `me02.5-127`, Pawmot "Voltaic Fist"
+`me02-034`.
+
+| Column | `me` built / units (D597) | Standard pool D597 |
+|---|---|---|
+| Attacks | 844 / 1,039 (+18) | **2,576 / 2,771** |
+| Abilities | 115 / 234 | **491 / 610** |
+| Trainers | 92 / 183 | **356 / 447** |
+| Special Energy | 3 / 11 | **14 / 22** |
+
+**Fully built `me` printings: 857** (843 + 14).
+
 ## 🆕 D596 update (engine 0.480.0) — Mega Gardevoir ex and Xerneas (WP09)
 
 3 texts / 14 `me` printings (`megaGardevoirD596.test.ts`). Mega Symphonia ×6 and Geo Storm ×2: the `×` board-wide own
@@ -430,22 +451,22 @@ group wins; the grouping is a reading aid, not a census figure).
 ### Scaled damage ("… for each …") — 25 text(s) / 50 printing(s)
 
 - 6× This attack does 50 damage for each {P} Energy attached to all of your Pokémon.
-- 4× Discard any amount of {R} Energy from among your Pokémon, and this attack does 90 damage for each card you discarded in this way.
-- 4× You may discard up to 4 Energy cards from your hand, and this attack does 40 more damage for each card you discarded in this way.
-- 3× Discard up to 2 Energy cards from this Pokémon, and this attack does 120 damage for each card you discarded in this way.
+- 4× Discard any amount of {R} Energy from among your Pokémon, and this attack does 90 damage for each card you discarded in this way. [🆕🆕🆕 D597: BUILT]
+- 4× You may discard up to 4 Energy cards from your hand, and this attack does 40 more damage for each card you discarded in this way. [🆕🆕🆕 D597: BUILT]
+- 3× Discard up to 2 Energy cards from this Pokémon, and this attack does 120 damage for each card you discarded in this way. [🆕🆕🆕 D597: BUILT]
 - 3× Reveal any number of Honedge, Doublade, and Aegislash from your hand, and this attack does 60 damage for each card you revealed in this way.
 - 3× This attack does 50 damage for each type of Basic Energy attached to all of your Pokémon.
-- 2× Discard any amount of [R] Energy from among your Pokémon, and this attack does 90 damage for each card you discarded in this way.
-- 2× Discard the top 6 cards of your deck, and this attack does 100 damage for each Basic {W} Energy card that you discarded in this way.
+- 2× Discard any amount of [R] Energy from among your Pokémon, and this attack does 90 damage for each card you discarded in this way. [🆕🆕🆕 D597: BUILT — keyed by id on `INFERNO_X`]
+- 2× Discard the top 6 cards of your deck, and this attack does 100 damage for each Basic {W} Energy card that you discarded in this way. [🆕🆕🆕 D597: BUILT]
 - 2× This attack does 10 damage for each card in your hand.
 - 2× This attack does 110 damage for each of your Beedrill and Beedrill ex in play.
 - 2× This attack does 30 damage for each Energy attached to all Pokémon.
 - 2× This attack does 30 damage for each {P} Energy attached to all of your Pokémon.
 - 2× This attack does 40 more damage for each of your Benched Pokémon that has any {R} Energy attached.
 - 2× Your opponent reveals their hand, and this attack does 80 damage for each Energy card you find there.
-- 1× Discard the top 6 cards of your deck, and this attack does 60 damage for each Basic {W} Energy card you discarded in this way.
-- 1× Discard up to 2 Basic {M} Energy cards from your hand, and this attack does 40 damage for each card you discarded in this way.
-- 1× Discard up to 2 Energy cards from your hand, and this attack does 60 damage for each card you discarded in this way.
+- 1× Discard the top 6 cards of your deck, and this attack does 60 damage for each Basic {W} Energy card you discarded in this way. [🆕🆕🆕 D597: BUILT]
+- 1× Discard up to 2 Basic {M} Energy cards from your hand, and this attack does 40 damage for each card you discarded in this way. [🆕🆕🆕 D597: BUILT]
+- 1× Discard up to 2 Energy cards from your hand, and this attack does 60 damage for each card you discarded in this way. [🆕🆕🆕 D597: BUILT]
 - 1× Reveal the bottom 7 cards of your deck, and this attack does 50 damage for each Pokémon you find there that has the Bug Out attack. Then, shuffle any revealed Pokémon back into your deck. Discard the other cards.
 - 1× This attack does 20 damage for each Basic {W} Energy card in your discard pile. Then, shuffle those cards into your deck.
 - 1× This attack does 30 damage for each of your Benched Pokémon that has a maximum HP of 30.

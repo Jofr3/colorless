@@ -1079,7 +1079,10 @@ describe("D507 §8 — the FOUR-ZONE sibling is REFUSED, and the condition that 
     // 🆕🆕🆕 D579 — `damageDefender` 12 → 13: registry.ts `UNDULATING_SLICE`'s top-level `{ op:
     // "damageDefender", per: 20, count: "placed" }` is one more raw site; `spreadDamage` untouched
     // at 10. Outside the census sweep's shape, found by the full run (D419/D521 (4)).
-    expect(producers("damageDefender")).toBe(13);
+    // 🆕🆕🆕 D597 — `damageDefender` 13 → 16: effects.ts arm 10d's `commaHit`, the `handDiscard` case of
+    // `discardScaledBoostProgram` and registry.ts `INFERNO_X` are three more raw sites; `spreadDamage`
+    // untouched at 10.
+    expect(producers("damageDefender")).toBe(16);
     expect(producers("spreadDamage")).toBe(10);
     expect(producers("damageDefender")).toBeGreaterThan(producers("spreadDamage") - 4);
   });

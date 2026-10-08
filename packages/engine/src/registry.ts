@@ -17261,6 +17261,29 @@ const NEEDLY_ARMOR: CardProgram = {
   passive: { damageAttacker: { amount: 30, perAttachedEnergy: "Grass" } },
 };
 
+// ── 🆕🆕🆕 D597 — WP29: THE TWO `mep` MEGA CHARIZARD X ex, KEYED BY ID. Text off the LOCAL D1. ──
+
+/** 🆕🆕🆕 **D597 — Mega Charizard X ex `mep-023` / `mep-029` "Inferno X"** (attack index **0**,
+    {R}{R}, "90×"): *"Discard any amount of [R] Energy from among your Pokémon, and this attack does
+    90 damage for each card you discarded in this way."* — the `me02` printings' sentence with
+    tcgdex's "[R]" for "{R}" (markup, WP06), so effects.ts `COMMA_DISCARD_SCALED_DAMAGE` cannot read
+    it. This is that arm's program for the `{R}` sentence, byte for byte (`discardScaledMeD597.test.ts`
+    pins the equality). A program that deals the damage drops the printed base (attack.ts). */
+const INFERNO_X: CardProgram = {
+  attack: {
+    0: [
+      {
+        op: "discardEnergy",
+        from: "yours",
+        filter: { kind: "providesEnergy", energyType: "Fire" },
+        count: "any",
+        recordAs: "discarded",
+      },
+      { op: "damageDefender", per: 90, count: "discarded" },
+    ],
+  },
+};
+
 const REGISTRY: Record<string, CardProgram> = {
   // Professor's Research (SV base prints)
   "sv01-189": PROFESSORS_RESEARCH,
@@ -18334,6 +18357,9 @@ const REGISTRY: Record<string, CardProgram> = {
   // 🆕🆕🆕 D594 — WP33a: two Ability keys, MID-MAP (`raw[last]` does not move). `conditionRowsMeD594.test.ts`.
   "me03-027": FIGHTING_ROAR, // Luxio "Fighting Roar" — evolve early if the opponent's Active is a Pokémon ex
   "me04-007": NEEDLY_ARMOR, // Chesnaught "Needly Armor" — 3 counters per {G} Energy on the Attacking Pokémon
+  // 🆕🆕🆕 D597 — WP29: the two "[R]" Inferno X, ATTACK-only keys, MID-MAP (`raw[last]` does not move).
+  "mep-023": INFERNO_X, // Mega Charizard X ex "Inferno X" (attack 0) — the `me02` sentence with tcgdex's "[R]"
+  "mep-029": INFERNO_X, // Mega Charizard X ex
   // ── D190 — THE **STANDARD-LEGAL** REPRINT-ALIAS MAP (Tier 0 of
   //    `docs/reference/coverage-backlog-legal.md`). 22 printings, 9 map targets,
   //    ZERO new code: every row below prints a sentence that is already authored

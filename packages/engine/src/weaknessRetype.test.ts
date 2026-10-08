@@ -606,8 +606,8 @@ describe("§8 — the v34 bytes round-trip, and a v33-shaped body is why the ver
     expect(v33).toBeNull();
   });
 
-  it("the engine version stepped to 0.480.0 in BOTH places", () => {
-    expect(engineVersion).toBe("0.480.0");
-    expect(manifest.version).toBe("0.480.0");
+  it("the engine version stepped to 0.481.0 in BOTH places", () => {
+    expect(engineVersion).toBe("0.481.0");
+    expect(manifest.version).toBe("0.481.0");
   });
 });

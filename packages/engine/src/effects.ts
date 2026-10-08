@@ -19681,7 +19681,9 @@ const DECK_MILL_FILTERED_SCALED_DAMAGE =
     discarded card, and not one of them printed on this shape. That is the matrix D361
     refuses: not because the engine would invent a BEHAVIOUR (it would not) but because
     a reader claiming sentences the column does not print cannot be falsified by the
-    column. The two branches below are the two nouns that are printed.
+    column. The two branches below are the two nouns that are printed. (🆕🆕🆕 D597 (D539):
+    THREE — the `me` column prints a third noun, *"Basic {W} Energy card"*, read by the typed
+    Basic branch between them; no pile key and no possessive matches `^Basic \{`.)
 
     Two branches and they are DISJOINT by construction rather than by order:
     `DISCARD_PILE_NOUNS`' four keys are *"Energy card"*, *"Basic Energy card"*, *"Item
@@ -19690,10 +19692,19 @@ const DECK_MILL_FILTERED_SCALED_DAMAGE =
 function milledCardFilter(noun: string): CardFilter | null {
   const zoneNoun = discardPileFilter(noun);
   if (zoneNoun !== null) return zoneNoun;
+  // 🆕🆕🆕 D597 — WP29: a THIRD printed noun, "Basic {W} Energy card" (Mega Abomasnow ex
+  // "Hammer-lanche" ×2, Avalugg "Iceberg Breaker" `me04-024`). MILL-ONLY on purpose: adding it to
+  // `DISCARD_PILE_NOUNS` would also widen D440's pile anchors (the block above). The code is read
+  // off `ENERGY_TYPE_BY_CODE` at call time; an unmapped code stays loud.
+  const typedBasic = MILLED_TYPED_BASIC_NOUN.exec(noun);
+  const milledType = typedBasic === null ? undefined : ENERGY_TYPE_BY_CODE[typedBasic[1] ?? ""];
+  if (milledType !== undefined) return { kind: "basicEnergy", energyType: milledType };
   const owner = IN_PLAY_OWNER_NOUN.exec(noun);
   if (owner !== null && owner[1] !== undefined) return { kind: "ownerPokemon", owner: owner[1] };
   return null;
 }
+/** 🆕🆕🆕 D597 — the milled "Basic {X} Energy card" noun (see `milledCardFilter`). */
+const MILLED_TYPED_BASIC_NOUN = /^Basic \{([A-Z])\} Energy card$/;
 // 🆕🆕 **D445 — THE OPPONENT'S HAND, COUNTED, AND IT IS THE FIRST DAMAGE FOLD IN
 // THIS ENGINE OVER A ZONE THAT IS NOT PUBLIC.** Two printed sentences / **4 legal
 // printings**, measured over `legalAttackCorpus()` (the committed
@@ -24784,7 +24795,9 @@ const SELF_DISCARD_THEN_BENCH_SNIPE = new RegExp(
 // up to N)` tail, on D361's rule: the catalog prints "You may discard any amount
 // of", "Discard all" and "Discard up to N" and prints NEITHER "Discard any amount
 // of" NOR "You may discard all", so a matrix would derive two sentences nobody
-// prints. ⚠️ THE ZONE, BY CONTRAST, *IS* A FREE PARAMETER and that is deliberate:
+// prints. (🆕🆕🆕 D597 (D539): WITHDRAWN as a pool-wide fact — the `me` column prints
+// "Discard any amount of" in the COMMA spelling (Inferno X), read by the separate
+// `COMMA_DISCARD_SCALED_DAMAGE`; this PERIOD spelling still prints neither.) ⚠️ THE ZONE, BY CONTRAST, *IS* A FREE PARAMETER and that is deliberate:
 // `this Pokémon` and `your Pokémon` are one field (`from`) at two values the
 // interpreter already resolves identically well, the way the TYPE is one field at
 // nine — where D361's refused matrix would have made the engine INVENT a
@@ -24806,6 +24819,28 @@ const SELF_DISCARD_THEN_BENCH_SNIPE = new RegExp(
 const ENERGY_DISCARD_SCALED_DAMAGE = new RegExp(
   `^(?:You may discard (any amount) of|Discard (all)|Discard up to (\\d+)) (?:\\{([${Object.keys(ENERGY_TYPE_BY_CODE).join("")}])\\}` +
     `|(${Object.keys(ENERGY_TYPE_BY_NAME).join("|")})|(Basic)) Energy(?: cards)? from (this|your) Pokémon\\. This attack does (\\d+) damage for each card you discarded in this way\\.$`,
+);
+
+// 🆕🆕🆕 D597 — WP29: THE `me` COMMA SPELLING OF THE SAME `×` FOLD, A SEPARATE ANCHOR BESIDE
+// `ENERGY_DISCARD_SCALED_DAMAGE` (whose bytes and D402 rows are untouched). Four printed `me`
+// sentences / 9 legal printings (LOCAL D1, 2026-10-08), each *"Discard <quantifier> <noun> from
+// <zone>, and this attack does N damage for each card you discarded in this way."*:
+//   4  "…any amount of {R} Energy from among your Pokémon, and … 90 …"  (Mega Charizard X ex, `me02`)
+//   3  "…up to 2 Energy cards from this Pokémon, and … 120 …"           (Mega Diancie ex)
+//   1  "…up to 2 Basic {M} Energy cards from your hand, and … 40 …"    (Skarmory `me05-060`)
+//   1  "…up to 2 Energy cards from your hand, and … 60 …"              (Mawile `me03-032`)
+// (The two `mep` Mega Charizard X ex print "[R]" — tcgdex markup, WP06 — and are keyed BY ID on
+// registry.ts `INFERNO_X`, which is this arm's own program.) The zone is the free parameter the
+// D402 block allows (every value is a board action the engine performs): "among your Pokémon" is
+// `discardEnergy` from `yours`, "this Pokémon" from `yourActive`, and "your hand" is the
+// declinable `payFromHand` arm (D489), which REQUIRES the printed "up to N" — so "any amount of
+// … from your hand" stays loud. The filter reads as D402's: a brace code is `providesEnergy`,
+// the printed "Basic" is `basicEnergy` (typed when a code follows), and the bare noun is
+// `anyEnergy`. Captures: [1] "any amount", [2] the cap, [3] "Basic", [4] the code, [5] the zone,
+// [6] the per-card amount. Disjoint from `ENERGY_DISCARD_SCALED_DAMAGE` (`Pokémon\. This`) and
+// from `HAND_DISCARD_THEN_SCALED_ANY_TARGET` (`hand\. This`) by the printed comma. No /i.
+const COMMA_DISCARD_SCALED_DAMAGE = new RegExp(
+  `^Discard (?:(any amount) of|up to (\\d+)) (?:(Basic) )?(?:\\{([${Object.keys(ENERGY_TYPE_BY_CODE).join("")}])\\} )?Energy(?: cards)? from (among your Pokémon|this Pokémon|your hand), and this attack does (\\d+) damage for each card you discarded in this way\\.$`,
 );
 
 // ── D181: the TRAINER-PATH OPS, printed as ATTACK text. ─────────────────────
@@ -30511,6 +30546,48 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
         { op: "discardDeckTop", whose: "self" as const, count, recordAs: "discarded" as const },
         { op: "damageDefender", per, count: "discarded" as const, countFilter: filter },
       ];
+    }
+  }
+
+  // 10d. 🆕🆕🆕 D597 — WP29: "Discard <any amount of | up to N> <noun> from <among your Pokémon |
+  //      this Pokémon | your hand>, and this attack does P damage for each card you discarded in
+  //      this way." — 10b's two ops (or D489's declinable hand payment) behind the `me` comma
+  //      spelling. 4 sentences / 9 legal printings; see the anchor's own block.
+  match = COMMA_DISCARD_SCALED_DAMAGE.exec(effect);
+  if (match !== null) {
+    const commaCap = match[2] === undefined ? undefined : Number(match[2]);
+    const commaPer = Number(match[6]);
+    const commaType = match[4] === undefined ? undefined : ENERGY_TYPE_BY_CODE[match[4]];
+    const commaFilter: CardFilter =
+      match[3] !== undefined
+        ? { kind: "basicEnergy", ...(commaType === undefined ? {} : { energyType: commaType }) }
+        : commaType !== undefined
+          ? { kind: "providesEnergy", energyType: commaType }
+          : { kind: "anyEnergy" };
+    // D145's guards: a printed 0 per card and a printed "up to 0" stay loud.
+    if (commaPer >= 1 && (commaCap === undefined || commaCap >= 1)) {
+      const commaHit = { op: "damageDefender", per: commaPer, count: "discarded" } as const;
+      if (match[5] !== "your hand") {
+        return [
+          {
+            op: "discardEnergy",
+            from: match[5] === "this Pokémon" ? "yourActive" : "yours",
+            filter: commaFilter,
+            count: "any",
+            ...(commaCap === undefined ? {} : { cap: commaCap }),
+            recordAs: "discarded",
+          },
+          commaHit,
+        ];
+      }
+      // The declinable hand arm REQUIRES its printed ceiling (D489): "any amount of … from your
+      // hand" is printed nowhere and stays loud.
+      if (commaCap !== undefined) {
+        return [
+          { op: "payFromHand", count: "any", cap: commaCap, to: "discard", filter: commaFilter, recordAs: "discarded" },
+          commaHit,
+        ];
+      }
     }
   }
 
@@ -37640,11 +37717,29 @@ export interface AttackEachDeckMillScaledBoost {
 /** 🆕🆕 D490 — the additive §9.2 fold, read from either of its two printed heads.
     Asymmetric payloads (a declinable ceiling and a movement filter against a bare
     per-card amount) ⇒ TWO MEMBERS with the discriminator as a field, which is D440's
-    union rule and NOT the "one member, discriminator as a field" branch of it. */
+    union rule and NOT the "one member, discriminator as a field" branch of it.
+    (🆕🆕🆕 D597: four members — D552's `selfHandAttach` and D597's `handDiscard`.) */
 export type AttackDiscardScaledBoost =
   | AttackBenchDiscardScaledBoost
   | AttackEachDeckMillScaledBoost
-  | AttackSelfHandAttachScaledBoost;
+  | AttackSelfHandAttachScaledBoost
+  | AttackHandDiscardScaledBoost;
+
+/** 🆕🆕🆕 D597 — WP29: THE FOURTH MEMBER, THE OWN HAND AS THE DECLINABLE SOURCE OF THE
+    ADDITIVE FOLD. *"You may discard up to 4 Energy cards from your hand, and this attack does
+    40 more damage for each card you discarded in this way."* — Mega Clefable ex "Shooting
+    Moons" `mep-072`, `me03-031`/`-103`/`-119` (4 legal printings, LOCAL D1, 2026-10-08;
+    printed "120+"). The program is D489's declinable `payFromHand { count: "any", cap }` then
+    `damageDefender { base, per, count: "discarded" }` — the printed base kept, as for
+    `benchDiscard`. The printed "You may" needs no separate confirm: the pick is 0..cap and
+    declining is answering with none (the base alone). */
+export interface AttackHandDiscardScaledBoost {
+  kind: "handDiscard";
+  /** The printed "up to N" ceiling on the hand discard. */
+  cap: number;
+  /** The printed extra damage each discarded card buys. */
+  per: number;
+}
 
 /** 🆕🆕🆕 D552 — THE THIRD MEMBER, AND THE FIRST WHOSE §9.2 COST IS AN **ATTACH**
     RATHER THAN A DISCARD: the printed multiplier whose count the attack itself may
@@ -37675,7 +37770,7 @@ export type AttackDiscardScaledBoost =
     export by NAME and every `toHaveLength(13)` rung and hand-listed `READERS` array
     moves). The reader's real contract is "a §9.2 slot folded into the attack's own
     hit, assembled at attack.ts with a number only attack.ts owns" — true of all
-    three members. A rename is a separate slice.
+    three members (🆕🆕🆕 D597: and of the fourth, `handDiscard`). A rename is a separate slice.
 
     ⚠️ **THE PRINTED BASE IS UNUSED FOR THIS MEMBER** — the head is a multiplier, so
     attack.ts passes the declaration-time `per × W` as `base` rather than the printed
@@ -37715,6 +37810,12 @@ const EACH_DECK_MILL_SCALED_BOOST =
 // multiplier's own anchor) by that anchor's `\.$`, which refuses the second sentence.
 const SELF_HAND_ATTACH_SCALED =
   /^This attack does (\d+) damage for each \{W\} Energy attached to this Pokémon\. Before doing damage, you may attach any number of Basic \{W\} Energy cards from your hand to this Pokémon\.$/;
+// 🆕🆕🆕 D597 — Shooting Moons (`AttackHandDiscardScaledBoost`). Two captures (the ceiling and
+// the per-card amount); the noun, the zone and the comma are literals. Disjoint from
+// `BENCH_DISCARD_SCALED_BOOST` by its zone ("from your hand, and" against "from your Benched
+// Pokémon. This"). No /i.
+const HAND_DISCARD_SCALED_BOOST =
+  /^You may discard up to (\d+) Energy cards from your hand, and this attack does (\d+) more damage for each card you discarded in this way\.$/;
 
 /** Parse the Bench-discard additive boost into its ceiling, its filter and its
     per-card damage, or null for anything else.
@@ -37759,6 +37860,14 @@ export function deriveAttackDiscardScaledBoost(text: string): AttackDiscardScale
     // `ATTACK_EFFECT_SKIPPED` path is the point.
     return perEnergy < 1 ? null : { kind: "selfHandAttach", per: perEnergy, energyType: "Water" };
   }
+  // 🆕🆕🆕 D597 — the hand discard (Shooting Moons), disjoint from the Bench anchor below by its
+  // zone, so its place here is legibility. Two printed numbers, two positivity guards (D145).
+  const handBoost = HAND_DISCARD_SCALED_BOOST.exec(text.trim());
+  if (handBoost !== null) {
+    const handCap = Number(handBoost[1]);
+    const handPer = Number(handBoost[2]);
+    return handCap >= 1 && handPer >= 1 ? { kind: "handDiscard", cap: handCap, per: handPer } : null;
+  }
   const match = BENCH_DISCARD_SCALED_BOOST.exec(text.trim());
   if (match === null) return null;
   const cap = Number(match[1]);
@@ -37801,7 +37910,7 @@ export function deriveAttackDiscardScaledBoost(text: string): AttackDiscardScale
     a swapped order counts an empty slot and deals the bare base forever.
 
     🆕🆕🆕 **D552 — "given the attack's PRINTED BASE" IS TRUE OF TWO MEMBERS OF
-    THREE.** For `selfHandAttach` attack.ts passes the DECLARATION-TIME head
+    THREE.** (🆕🆕🆕 D597: of THREE of FOUR — `handDiscard` keeps the printed base.) For `selfHandAttach` attack.ts passes the DECLARATION-TIME head
     multiplier as `base` (the printed digits are the per-Energy amount, "30×"), and
     the program's ORDER is attach-then-damage for the same record-reading reason. */
 export function discardScaledBoostProgram(
@@ -37868,6 +37977,13 @@ export function discardScaledBoostProgram(
           recordAs: "moved",
         },
         { op: "damageDefender", base, per: reading.per, count: "moved" },
+      ];
+    case "handDiscard":
+      // 🆕🆕🆕 D597 — discard, then damage (the record-reading order, as `benchDiscard`): D489's
+      // declinable hand payment files what was paid, and the printed base is kept.
+      return [
+        { op: "payFromHand", count: "any", cap: reading.cap, to: "discard", filter: { kind: "anyEnergy" }, recordAs: "discarded" },
+        { op: "damageDefender", base, count: "discarded", per: reading.per },
       ];
   }
 }

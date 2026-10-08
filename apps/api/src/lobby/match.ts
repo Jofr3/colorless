@@ -2159,6 +2159,17 @@ export interface MatchRecord {
     `turn:action.discardable` — 🛑 **DEPLOY THE SERVER FIRST**: an old client's `z.object` STRIPS
     the unknown key, while a new client's REQUIRED key refuses an old server's frame.
 
+    🆕🆕🆕 **STAYS 42 AT D597 — WP29 ADDS NO OP, OP KEY, GameState, PendingStage, PROMPT OR WIRE KEY.**
+    (Placed ABOVE the D596 block.) The readers claim 7 more `me` attack TEXTS (16 printings) as
+    shipped ops (`discardEnergy` / `payFromHand` + `damageDefender`, D488's mill + `countFilter`), and
+    two `mep` ids are keyed on the attack-only `INFERNO_X`. The new `handDiscard` member of
+    `AttackDiscardScaledBoost` is a reader result, never persisted. The card row is not read
+    differently; its printed TEXT is, at attack time, so a v42 match in flight holding these faces in
+    its persisted `cardPool` gains the programs mid-match. Every park is an EXISTING prompt
+    (`discardEnergy`, `chooseCards`) whose continuation is persisted, so the 0.480 ROLLBACK reading of a
+    parked D597 attack is "resumes AS BUILT"; off the park, 0.480 has none of the reader rows or keys,
+    so the sentences are skipped loudly.
+
     🆕🆕🆕 **STAYS 42 AT D596 — WP09 ADDS ONE OPTIONAL OP KEY (`attachFromDeck.each`) AND NO
     GameState, PendingStage, PROMPT OR WIRE KEY.** (Placed ABOVE the D595 block.) The readers claim 3
     more `me` attack TEXTS (14 printings): Mega Symphonia / Geo Storm (`energyOnSelf` at the board zone

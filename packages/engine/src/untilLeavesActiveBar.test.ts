@@ -952,7 +952,7 @@ describe("§9 — a v26 record still means what it meant, and this one is readab
   });
 
   it("the engine version moved with the behaviour", () => {
-    expect(engineVersion).toBe("0.480.0");
+    expect(engineVersion).toBe("0.481.0");
   });
 });
 

@@ -25741,7 +25741,9 @@ hand-spelled the same phrase since D226 and now delegates; its bytes are unchang
 * **The QUANTIFIER is three COUPLED literals**, not a `(?:You may )?` prefix times an
   `(any amount|all|up to N)` tail. The column prints *"You may discard any amount of"*,
   *"Discard all"* and *"Discard up to N"* and prints NEITHER crossing, so a matrix would have
-  derived two sentences nobody prints (D361's refusal, re-derived).
+  derived two sentences nobody prints (D361's refusal, re-derived). (🆕🆕🆕 D597 (D539): true of the period
+  spelling only — the `me` column prints *"Discard any amount of"* in the comma spelling, Inferno X, read by the separate
+  `COMMA_DISCARD_SCALED_DAMAGE`.)
 * **The ZONE is a free parameter**, and deliberately so: `this Pokémon` and `your Pokémon` are one
   field (`from`) at two values the interpreter already resolves, the way the TYPE is one field at
   nine. Where D361's refused matrix would have made the engine INVENT a behaviour, every
@@ -30124,4 +30126,23 @@ decisions (1) and (2) after D580. Engine 0.464.0 → 0.465.0. The Mega ex rule i
   exclusions), the attach park (targets, ceiling, refusal of two on one body, short answer, decline, empty Bench). +16
   mutant rows.
 - **Census.** Standard pool attacks **2558 / 2771**; 843 `me` printings fully built.
+- **Owed.** See `progress.md` NEXT. The whole-corpus sweep is PENDING.
+
+## D597 — WP29: the discard-scaled attacks (engine 0.481.0, `MATCH_RECORD_VERSION` stays 42)
+
+**Status:** ✅ BUILT in the `luminous_ui-mega` worktree on D596 (`11741ce6`), NOT committed.
+
+- **8 texts / 18 `me` printings.** `COMMA_DISCARD_SCALED_DAMAGE` (arm 10d, a separate anchor beside D402's
+  `ENERGY_DISCARD_SCALED_DAMAGE`) reads the `me` comma spelling of the `×` fold: Inferno X ×4 (`discardEnergy` from
+  `yours`), Garland Ray ×3 (from `yourActive`, cap 2), Steel Cutter and Double Eater (D489's declinable `payFromHand`).
+  `milledCardFilter` reads "Basic {W} Energy card", mill-only (Hammer-lanche ×2, Iceberg Breaker).
+  `deriveAttackDiscardScaledBoost` gains `handDiscard` (Shooting Moons ×4, printed base kept). registry.ts `INFERNO_X`
+  keys the two "[R]" `mep` Inferno X.
+- **No new op, field or persisted member.** The `sv` reader output is byte-identical.
+- **Dropped and named:** Mega Eelektross ex "Disaster Shock" ×3, Slowpoke "All-You-Can-Yeet", Team Rocket's Honchkrow
+  "Rocket Feathers", Pawmot "Voltaic Fist".
+- **Reading R-IX1 (UNRULED).** tcgdex's "[R]" on the two `mep` Inferno X is read as {R}.
+- **Suite.** `discardScaledMeD597.test.ts` (22): readings, near misses, each attack on a board (offers, ceilings, filters,
+  decline, the kept base, the mill count). +29 mutant rows.
+- **Census.** Standard pool attacks **2576 / 2771**; 857 `me` printings fully built.
 - **Owed.** See `progress.md` NEXT. The whole-corpus sweep is PENDING.

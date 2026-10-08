@@ -553,7 +553,9 @@ describe("D402 §3 — the refusals, each pinned on ONE printed byte", () => {
     // D361's rule. The column prints "You may discard any amount of", "Discard all"
     // and "Discard up to N"; it prints NEITHER of the two crossings below, so a
     // `(?:You may )?` prefix times an `(any amount|all|up to N)` tail would have
-    // derived two sentences nobody prints.
+    // derived two sentences nobody prints. (🆕🆕🆕 D597 (D539): true of this PERIOD
+    // spelling only — the `me` column prints "Discard any amount of" with a comma
+    // (Inferno X), read by `COMMA_DISCARD_SCALED_DAMAGE`; the rung below still holds.)
     for (const text of [
       "Discard any amount of {W} Energy from your Pokémon. This attack does 60 damage for each card you discarded in this way.",
       "You may discard all {W} Energy from your Pokémon. This attack does 60 damage for each card you discarded in this way.",
@@ -563,10 +565,12 @@ describe("D402 §3 — the refusals, each pinned on ONE printed byte", () => {
     }
   });
 
-  it("an UNTYPED noun is refused — this half of the family never prints one", () => {
+  it("an UNTYPED noun is refused — this half of the family never prints one (🆕🆕🆕 D597 (D539): of the PERIOD spelling only — the `me` comma spelling prints a bare noun, Garland Ray / Double Eater)", () => {
     // The filter is REQUIRED. Every multiply printing narrows the discard to a type
     // or to "Basic"; a bare "Energy" appears only behind the Bench-only additive
-    // spellings, so admitting `anyEnergy` here would resolve a sentence the column
+    // spellings (🆕🆕🆕 D597 (D539): in the `sv` column — the `me` comma spelling's
+    // Garland Ray ×3 and Double Eater print "Energy cards", read by
+    // `COMMA_DISCARD_SCALED_DAMAGE` as `anyEnergy`), so admitting `anyEnergy` here would resolve a sentence the column
     // does not carry on this shape.
     expect(
       deriveAttackEffect(
