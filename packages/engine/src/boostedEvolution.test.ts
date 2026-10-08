@@ -79,6 +79,10 @@ import {
 // `placeEvolution` stamps `turnPlayed`. The licence lifts the first of those and
 // **cannot be observed lifting the second**, because evolving replaces the top
 // card and so removes the very Ability that granted it.
+// [🆕🆕🆕 D594 (D539): "cannot be observed lifting the second" is WITHDRAWN as a fact about the
+// licence, kept as written — it holds for Eevee (and Karrablast / Shelmet), whose licence sits on a
+// Basic. Luxio `me03-027` "Fighting Roar" sits on a Stage 1, so evolving INTO it keeps the licence on
+// top and Shinx → Luxio → Luxray in one turn is observable (`conditionRowsMeD594.test.ts` §7).]
 //
 // ⚠️ `rareCandy` / `rareCandyOptions` (cardplay.ts) carry a coinciding pair —
 // three more ban lines — and the licence DELIBERATELY DOES NOT REACH THEM. See
@@ -538,6 +542,8 @@ describe("D278 — BAN 1 (§4/§10 first turn) and its licence, through `evolve`
         expect(active.stack[active.stack.length - 1], `${seed}/${first}`).toBe(uid);
         // …and the licence is GONE the instant the Eevee stops being the top card,
         // which is what makes the "twice in one turn" half of ban 2 unobservable.
+        // [🆕🆕🆕 D594 (D539): scoped to Eevee — Luxio `me03-027` keeps the licence on top when it is
+        // the card evolved INTO, so the half is observable there (`conditionRowsMeD594.test.ts` §7).]
         expect(evolveEarlyLicensed(result.state, first, active), `${seed}/${first}`).toBe(false);
       }
     }
@@ -783,6 +789,8 @@ describe("D278 — what the licence does NOT do", () => {
     // dies with the step that stamps the field — and the second evolve is refused
     // on a board where the first was legal. This is the conflation being harmless
     // rather than resolved, pinned so a future split has a case to point at.
+    // [🆕🆕🆕 D594 (D539): "harmless" is scoped to a licence on a Basic — Luxio `me03-027` carries it
+    // on a Stage 1, and there the conflation decides a board (`conditionRowsMeD594.test.ts` §7).]
     const state = board(SEEDS[0], "p1", "p1", "sv08-143", 2);
     const first = handUidOf(state, "p1", STAGE1);
     const evolved = must(applyAction(state, evolveActive("p1", first)));

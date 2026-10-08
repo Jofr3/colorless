@@ -7124,6 +7124,9 @@ export function attackTimingNote(gate: BlockingAttackGate): string {
       • Karrablast `sv10.5b-009`/`-094`, Shelmet `sv10.5w-008`/`-093` "Stimulated
         Evolution" — while the NAMED PARTNER is anywhere in `seat`'s play,
         **Active Spot or Bench, and in EITHER zone for the holder itself**.
+      [🆕🆕🆕 D594 (D539): this list is WITHDRAWN as complete, kept as written — a third licence:
+        • Luxio `me03-027` "Fighting Roar" — while the OPPONENT'S Active (from `seat`) is a
+          Pokémon ex (`ifCondition`, `opponentActiveIsEx`), in EITHER zone for the holder.]
 
     🛑 **ONE PREDICATE FOR TWO BANS, AND THAT PAIRING IS THE WHOLE POINT.** The
     printed sentence is *"it can evolve during your first turn **or the turn you
@@ -7160,6 +7163,8 @@ export function attackTimingNote(gate: BlockingAttackGate): string {
     say "Active Spot" and four say nothing, and a blanket zone gate REFUSES a
     benched Karrablast the card licenses. That failure is invisible to every
     assertion made on an Active body.
+    [🆕🆕🆕 D594 (D539): *"three of the seven … four say nothing"* is WITHDRAWN, kept as written —
+    with Luxio `me03-027` it is three of the EIGHT Standard-legal printings, and FIVE say nothing.]
 
     ⚠️ **THE §4 CHECK HAD TO MOVE BELOW TARGET RESOLUTION IN `evolve`.** Before
     D278 it refused on `isFirstTurnOf` as its SECOND statement, before the target
@@ -7407,6 +7412,8 @@ export function conditionNote(cond: BoardCondition): string {
       // its reject pill reads through here — so the singular is now a printed shape and
       // has its branch. The plural line below is kept byte-identical.
       if (cond.count === 1) return "you have exactly 1 card in your hand";
+      // 🆕🆕🆕 D594 — Slowbro "All Out" prints the zero as "no cards" (the bonus row's key).
+      if (cond.count === 0) return "you have no cards in your hand";
       return `you have exactly ${cond.count} cards in your hand`;
     case "yourHandNotEmpty":
       // 🆕🆕 D385 — NULLARY, so there is no parameter to build from and the string is
@@ -11997,6 +12004,9 @@ function snipeActive(
   // DEVIATION named in docs/decisions.md D559 (reversal: a bench recoil read built at
   // `spreadDamage` / `placeSnipe`). Still right for Rocky Helmet, Counterattack Quills,
   // Custom Trap and the `onDamagedByAttack` stage.
+  // [🆕🆕🆕 D594: and for Chesnaught `me04-007` "Needly Armor", which prints the Active clause
+  // but carries no `activeOnly` — so that reversal must add the rider to every Active-clause
+  // `damageAttacker` holder, or a benched Chesnaught would retaliate (registry.ts `damageAttacker`).]
   //
   // ⚠️ GATED ON `invokedBy === "attack"` because the printed clause is, and because
   // the stage it queues only makes sense inside an attack's epilogue queue. An

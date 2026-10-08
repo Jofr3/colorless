@@ -20253,6 +20253,17 @@ import type { GameState, Seat } from "./types";
     `expect(manifest.version)`, `it(…)` titles, the declaration and `package.json` —
     **not** as a value-keyed grep — because a value-keyed grep is precisely the mechanism
     that ate D500's heading.)
+    🆕🆕🆕 engineVersion 0.477.0 → **0.478.0** (D594 — WP33a: BONUS / REQUIREMENT ROWS ON SHIPPED
+    CONDITION MEMBERS; `MATCH_RECORD_VERSION` STAYS 42 (apps/api match.ts "STAYS 42 AT D594")).
+    effects.ts: three `CONDITIONAL_DAMAGE_CLAUSES` rows — Chi-Yu "Whirling Envy"
+    (`yourActiveDamageCountersAtLeast` 2, through D494's Weakness-only anchor), Steelix "Welcoming
+    Tail" (`yourPrizesRemaining` [6]), Slowbro ×3 "All Out" (`yourHandExactly` 0) — and one
+    `ATTACK_REQUIREMENT_CLAUSES` row, Solrock ×2 "Cosmic Beam" (`yourBenchHasNamed` Lunatone).
+    interpreter.ts: `conditionNote` spells `yourHandExactly` 0 as "no cards". registry.ts:
+    `evolveEarlyExempt` gains `ifCondition` (Luxio "Fighting Roar", `opponentActiveIsEx`) and
+    Chesnaught "Needly Armor" is `damageAttacker { 30, perAttachedEnergy: "Grass" }`. 6 texts / 10
+    printings; the `sv` reader output is byte-identical. Census: Standard pool attacks 2,533 /
+    2,771, abilities 491 / 610; 826 `me` printings fully built. `conditionRowsMeD594.test.ts`.)
     🆕🆕🆕 engineVersion 0.476.0 → **0.477.0** (D593 — WP07: MORE `me` CLAUSE ROWS AND THE "FADE
     OUT" OBJECTS; `MATCH_RECORD_VERSION` STAYS 42 (apps/api match.ts "STAYS 42 AT D593")).
     effects.ts: five `CONDITIONAL_DAMAGE_CLAUSES` rows on shipped members (Pancham, Hop's,
@@ -25244,7 +25255,7 @@ import type { GameState, Seat } from "./types";
     WITNESS** — the count was re-derived every slice and the word *"three"* was carried.
     A successor of this slice inherits **81 / 61 / 17** again, over **FIVE** history
     occurrences: those four plus `deckMillFilteredScale.test.ts`'s own header arrow.) */
-export const engineVersion = "0.477.0";
+export const engineVersion = "0.478.0";
 
 export type {
   ApplyResult,

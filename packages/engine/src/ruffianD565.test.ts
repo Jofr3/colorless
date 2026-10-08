@@ -192,8 +192,8 @@ describe("§1 — the print and the registry row", () => {
     expect(programFor(RUFFIAN[1])).toBe(first);
   });
 
-  it("the engine is 0.477.0", () => {
-    expect(engineVersion).toBe("0.477.0");
+  it("the engine is 0.478.0", () => {
+    expect(engineVersion).toBe("0.478.0");
   });
 });
 

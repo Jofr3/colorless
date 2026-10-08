@@ -228,6 +228,9 @@ const KEYED_AT_D591 = [
 /** 🆕🆕🆕 D593 — the `me` ids WP07 keys: "Fade Out" ×5 under three printed names (clauseRowsMeD593.test.ts). */
 const KEYED_AT_D593 = ["mep-006", "me03-062", "me03-107", "me03-121", "me04-030"];
 
+/** 🆕🆕🆕 D594 — the `me` ids WP33a keys: Luxio "Fighting Roar" and Chesnaught "Needly Armor" (conditionRowsMeD594.test.ts). */
+const KEYED_AT_D594 = ["me03-027", "me04-007"];
+
 /** The five `me` Tera reprints banners.ts carries (each printed face checked on tcgdex's image). */
 const ME_TERA = ["me02.5-038", "me02.5-057", "me02.5-160", "me02.5-179", "me02.5-277"] as const;
 
@@ -308,7 +311,7 @@ describe("D582 — the `me` reprint-alias tier: 99 printings on 66 existing prog
     expect(new Set(ALIASES.map(([, twin]) => programFor(twin))).size).toBe(66);
   });
 
-  it("the registry's `me` keys are EXACTLY this table — nothing keyed outside it (🆕🆕🆕 D583: plus Team Rocket's Energy `me02.5-217`; 🆕🆕🆕 D584: plus the 18 tier-2 keys; 🆕🆕🆕 D585: plus the 19 WP19 keys; 🆕🆕🆕 D586: plus Carbink ×2; 🆕🆕🆕 D587: plus the 19 WP04 Trainer keys; 🆕🆕🆕 D588: plus the 17 WP22 Trainer keys; 🆕🆕🆕 D589: plus Mega Greninja ex ×5; 🆕🆕🆕 D590: plus the 13 WP05 on-evolve keys; 🆕🆕🆕 D591: plus the 19 WP20a activated Ability keys; 🆕🆕🆕 D593: plus the 5 WP07 Fade Out keys)", () => {
+  it("the registry's `me` keys are EXACTLY this table — nothing keyed outside it (🆕🆕🆕 D583: plus Team Rocket's Energy `me02.5-217`; 🆕🆕🆕 D584: plus the 18 tier-2 keys; 🆕🆕🆕 D585: plus the 19 WP19 keys; 🆕🆕🆕 D586: plus Carbink ×2; 🆕🆕🆕 D587: plus the 19 WP04 Trainer keys; 🆕🆕🆕 D588: plus the 17 WP22 Trainer keys; 🆕🆕🆕 D589: plus Mega Greninja ex ×5; 🆕🆕🆕 D590: plus the 13 WP05 on-evolve keys; 🆕🆕🆕 D591: plus the 19 WP20a activated Ability keys; 🆕🆕🆕 D593: plus the 5 WP07 Fade Out keys; 🆕🆕🆕 D594: plus the 2 WP33a Ability keys)", () => {
     const me = registryCardIds().filter((id) => /^(me|30th)/.test(id));
     // 🆕🆕🆕 D583 — the one `me` key outside the D582 table: Team Rocket's Energy, on `sv10-182`'s object.
     // 🆕🆕🆕 D584 — and the 18 tier-2 keys (`KEYED_AT_D584`).
@@ -329,6 +332,8 @@ describe("D582 — the `me` reprint-alias tier: 99 printings on 66 existing prog
     expect(KEYED_AT_D591).toHaveLength(19);
     // 🆕🆕🆕 D593 — and WP07's 5 attack-only Fade Out keys (`KEYED_AT_D593`).
     expect(KEYED_AT_D593).toHaveLength(5);
+    // 🆕🆕🆕 D594 — and WP33a's 2 Ability keys (`KEYED_AT_D594`).
+    expect(KEYED_AT_D594).toHaveLength(2);
     expect(me.sort()).toEqual(
       [
         ...ALIASES.map(([id]) => id),
@@ -342,6 +347,7 @@ describe("D582 — the `me` reprint-alias tier: 99 printings on 66 existing prog
         ...KEYED_AT_D590,
         ...KEYED_AT_D591,
         ...KEYED_AT_D593,
+        ...KEYED_AT_D594,
       ].sort(),
     );
     // …and no twin is a `me` id: every program the tier reaches was built for the `sv` serie.

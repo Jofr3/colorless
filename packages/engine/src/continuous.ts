@@ -887,6 +887,9 @@ export function passivesOf(
           "Stimulated Evolution" — *"**If you have Shelmet in play**, this
           Pokémon can evolve during your first turn or the turn you play it."*
           (each names the OTHER body; 4 printings, 2 sentences).
+          [🆕🆕🆕 D594 (D539): *"Two printed sentences carry it"* is WITHDRAWN, kept as written —
+          a third does: Luxio `me03-027` "Fighting Roar" — *"If your opponent's Active Pokémon is a
+          Pokémon ex, this Pokémon can evolve during your first turn or the turn you play it."*]
 
       🛑 **THE TWO ANTECEDENTS ARE ANSWERED IN TWO DIFFERENT PLACES, AND THAT IS
       THE WHOLE SHAPE OF THIS FIELD.** Eevee's clause is about THIS BODY'S ZONE,
@@ -894,6 +897,9 @@ export function passivesOf(
       appear here once it holds. Karrablast's is about the SEAT'S BOARD, and
       `passivesOf` HAS NO SEAT — so it is collected RAW and evaluated at the read
       site, `cantAttackUnless`/`attackBarredByAbility` (interpreter.ts) verbatim.
+      [🆕🆕🆕 D594 (D539): *"THE TWO ANTECEDENTS"* is WITHDRAWN, kept as written — there are three;
+      the TWO PLACES stand. Luxio's (the opponent's Active is a Pokémon ex) is seat-relative too, so
+      the fold pushes its `ifCondition` raw and `evolveEarlyLicensed` answers it beside Karrablast's.]
 
       🛑 **AND THE ZONE GATE MUST NOT BE APPLIED TO THE PARTNER-GATED FOUR.**
       D278 welded `&& !onBench` into the fold line because its only printing said
@@ -903,6 +909,9 @@ export function passivesOf(
       rather than allowing illegal ones, so no "the licence works" assertion made
       on an Active body can see it. A BENCHED Karrablast is the only board that
       can, and there is one in `stimulatedEvolution.test.ts` and a mutant on it.
+      [🆕🆕🆕 D594 (D539): *"THE PARTNER-GATED FOUR"* as the whole unzoned set is WITHDRAWN, kept as
+      written — Luxio `me03-027` prints no zone clause either and carries no `activeOnly`; its
+      BENCHED board is in `conditionRowsMeD594.test.ts`.]
 
       Entry values: `undefined` is *"nothing further to check"* (Eevee, whose one
       clause the fold consumed); a `BoardCondition` is the seat-relative
@@ -1917,6 +1926,8 @@ export function passivesOf(
     // shape (four lines up) rather than `attackFirstTurnExempt`'s boolean OR,
     // because the two printings that carry it gate on two DIFFERENT KINDS of
     // antecedent and only one of them is answerable here.
+    // [🆕🆕🆕 D594 (D539): "the two printings" / "two DIFFERENT KINDS" is WITHDRAWN, kept as written —
+    // Luxio "Fighting Roar" is a third antecedent (`ifCondition`), seat-relative, pushed raw like `ifInPlay`.]
     //
     // `activeOnly` is Eevee's *"As long as this Pokémon is in the Active Spot"*,
     // and it is `preventDamageAndEffectsWhileBenched`'s `&& onBench` (D253) with
@@ -1947,7 +1958,8 @@ export function passivesOf(
     if (licence !== undefined && (licence.activeOnly !== true || !onBench)) {
       evolveEarlyExempt.push(
         licence.ifInPlay === undefined
-          ? undefined
+          ? // 🆕🆕🆕 D594 — Luxio "Fighting Roar": a shipped condition pushed as printed.
+            licence.ifCondition
           : { kind: "yourNamedPokemonInPlay", name: licence.ifInPlay },
       );
     }

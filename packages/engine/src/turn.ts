@@ -614,6 +614,8 @@ export function evolve(state: GameState, action: EvolveAction): ApplyResult {
   // licenses both — a build that consulted it at only the first would be green on
   // every turn-1 board in this repo (a SETUP Pokémon carries turnPlayed 0, so ban
   // 2 does not fire there) and wrong on the turn you play it, the quiet direction.
+  // [🆕🆕🆕 D594 (D539): the two-sentence enumeration above is WITHDRAWN as complete, kept as
+  // written — Luxio `me03-027` "Fighting Roar" (opponent's Active is a Pokémon ex) is a third.]
   //
   // ⚠️ `action.seat` IS THE RIGHT SEAT AND IT IS NOT THE BODY'S OWN: "you have
   // Shelmet in play" addresses the EVOLVING player. The gate above already proved
@@ -647,6 +649,15 @@ export function evolve(state: GameState, action: EvolveAction): ApplyResult {
   // removes the Ability granting the licence. The conflation is therefore
   // harmless here rather than resolved, and that is a fact about the print
   // (no Standard body prints this licence on a card that stays on top).
+  // [🆕🆕🆕 D594 (D539): "CANNOT BE OBSERVED", "harmless" and "no Standard body prints this licence
+  // on a card that stays on top" are WITHDRAWN, kept as written — Luxio `me03-027` "Fighting Roar"
+  // is a Stage 1 that carries the licence, so evolving Shinx INTO it stamps `turnPlayed` and puts
+  // the licence holder ON top. With the opponent's Active a Pokémon ex, Shinx → Luxio → Luxray in
+  // one turn is ALLOWED here: the licence now observably lifts the "twice in one turn" half too.
+  // That is the reading taken, not an accident: for an evolution card "the turn you play it" is
+  // the turn it evolved (the Forest of Giant Plants Oddish → Gloom → Vileplume precedent), so the
+  // conflation stands and is pinned — `conditionRowsMeD594.test.ts` §7, mutant
+  // `D594-roar-chain-only-came-into-play`. Still true of Eevee, Karrablast and Shelmet (Basics).]
   if (!licensed && target.turnPlayed >= state.turn) {
     return err(
       "EVOLVE_TOO_SOON",

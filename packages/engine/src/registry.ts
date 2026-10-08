@@ -1095,6 +1095,13 @@ export interface PassiveEffects {
       Orthworm hit by a spread or a snipe SHOULD retaliate and does not — **R-O1, a
       reachable DEVIATION, named in docs/decisions.md D559**; reversal: a bench recoil
       read built at `spreadDamage` / `placeSnipe`.
+      [🆕🆕🆕 D594: ⚠️ THAT REVERSAL IS NOT A READ-SITE CHANGE ALONE. Chesnaught `me04-007`
+      "Needly Armor" PRINTS *"If this Pokémon is in the Active Spot"* and carries no
+      `activeOnly` — it relies on today's Active-only read (`NEEDLY_ARMOR`'s doc). A bench
+      read built for Orthworm would make a BENCHED Chesnaught retaliate too, so the slice that
+      builds it owes an `activeOnly` rider here and on `NEEDLY_ARMOR` (and on Counterattack
+      Quills / Custom Trap, which print the same clause). Today's behaviour is pinned by
+      `conditionRowsMeD594.test.ts` §8's bench board.]
 
       • `perAttachedEnergy` (🆕🆕🆕 D559, Orthworm ex) — the printed *"for each {M}
         Energy attached to this Pokémon"*: the amount is MULTIPLIED by
@@ -2973,6 +2980,8 @@ export interface PassiveEffects {
       currently unprinted.** Widened rather than joined by a second boolean field
       (D131): it is ONE printed permission with one read site, and two fields
       would give the read site two channels for one reading.
+      [🆕🆕🆕 D594 (D539): *"TWO KEYS BECAUSE THE POOL PRINTS TWO ANTECEDENTS"* is WITHDRAWN, kept as
+      written — Luxio `me03-027` prints a third, a board fact (`ifCondition`, see the end of this block).]
 
       🛑 **THE ZONE CLAUSE IS PER-PRINTING, AND D278's BUILD MADE IT LOOK LIKE A
       PROPERTY OF THE FIELD.** `activeOnly` is `preventDamageAndEffectsWhileBenched`'s
@@ -2993,6 +3002,10 @@ export interface PassiveEffects {
       `string` here rather than a `BoardCondition` because the printed clause has
       exactly one degree of freedom, the partner's NAME, and letting a registry
       author write any condition would invite gates no printing carries.
+      [🆕🆕🆕 D594 (D539): the `string` stands for `ifInPlay`; Luxio's antecedent is a different board
+      fact with a shipped member, so it rides the separate `ifCondition` key and not a wider `ifInPlay`.
+      That key IS a `BoardCondition`, so the exposure this paragraph declined is taken there, on one
+      printed row, and held to its text by `conditionRowsMeD594.test.ts`.]
 
       §9-SUPPRESSIBLE like every flag in that loop: the licence IS a printed
       Ability, so a Klefki `sv01-096` Ability-lock silences "Boosted Evolution"
@@ -3004,7 +3017,9 @@ export interface PassiveEffects {
       printings) ARE BUILT AS OF D279** — the two mechanisms D278 named are the
       two that were needed and no more. ⚠️ **THEY ARE FOUR PRINTINGS ON *TWO*
       SENTENCES, NOT ONE**: Karrablast names Shelmet and Shelmet names Karrablast,
-      so there are TWO `CardProgram` objects here, unlike Eevee's one. ⚠️ An
+      so there are TWO `CardProgram` objects here, unlike Eevee's one.
+      [🆕🆕🆕 D594 (D539): *"the two mechanisms D278 named are the two that were needed and no more"*
+      is WITHDRAWN, kept as written — Luxio `me03-027` needed a third, `ifCondition` (D594).] ⚠️ An
       inherited note called their gate *"`yourBenchHasNamed`'s sentence on a field
       that does not exist"*; the member DOES exist (effects.ts) and it is
       **BENCH-ONLY BY CONSTRUCTION**, so the answer was a SECOND member
@@ -3015,8 +3030,14 @@ export interface PassiveEffects {
 
       ⚠️ **NO `MATCH_RECORD_VERSION` BUMP IS OWED**, for `attackFirstTurnExempt`'s
       reason verbatim: nothing is persisted, the licence is a CATALOG fact
-      re-derived from the live board on every read. */
-  evolveEarlyExempt?: { activeOnly?: true; ifInPlay?: string };
+      re-derived from the live board on every read.
+
+      🆕🆕🆕 **D594 — `ifCondition`**: Luxio `me03-027` "Fighting Roar" (*"If your opponent's
+      Active Pokémon is a Pokémon ex, this Pokémon can evolve during your first turn or the turn
+      you play it."*) gates the same licence on a shipped `BoardCondition`
+      (`opponentActiveIsEx`), read at the evolve from the evolving player's seat. No print
+      carries both gates; `ifInPlay` wins if one ever did. Still nothing persisted. */
+  evolveEarlyExempt?: { activeOnly?: true; ifInPlay?: string; ifCondition?: BoardCondition };
   /** 🆕🆕🆕 **§8.2 (D563) — A COST CLAUSE THE HOLDER'S OWN ABILITY PRINTS ON ONE OF ITS
       OWN ATTACKS, NAMED BY THE PRINTED ATTACK NAME.** Two legal printings:
 
@@ -17216,6 +17237,30 @@ const SKY_RETURN: CardProgram = {
   attack: { 1: [{ op: "returnSelf", dest: "hand" }] },
 };
 
+// ── 🆕🆕🆕 D594 — WP33a: TWO `me` ABILITIES ON SHIPPED PASSIVE FIELDS. Texts off the LOCAL D1. ──
+
+/** 🆕🆕🆕 **D594 — Luxio `me03-027` "Fighting Roar"** — *"If your opponent's Active Pokémon is a
+    Pokémon ex, this Pokémon can evolve during your first turn or the turn you play it."*
+    Stimulated Evolution's licence (both bans, D278) on the NEW `ifCondition` rider, the shipped
+    `opponentActiveIsEx`. No Active clause, so no `activeOnly` (a benched Luxio is licensed).
+    A Stage 1, so a Shinx evolved into it THIS turn stays licensed and may evolve again (turn.ts
+    D594 note; `conditionRowsMeD594.test.ts` §7). */
+const FIGHTING_ROAR: CardProgram = {
+  passive: { evolveEarlyExempt: { ifCondition: { kind: "opponentActiveIsEx" } } },
+};
+
+/** 🆕🆕🆕 **D594 — Chesnaught `me04-007` "Needly Armor"** — *"If this Pokémon is in the Active Spot
+    and is damaged by an attack from your opponent's Pokémon (even if this Pokémon is Knocked Out),
+    place 3 damage counters on the Attacking Pokémon for each {G} Energy attached to this
+    Pokémon."* Counterattack Quills' recoil with Orthworm ex's `perAttachedEnergy` (D559). The
+    recoil is read at the Active main hit only, which is this print's own Active clause.
+    ⚠️ That makes the Active clause a property of the READ SITE, not of this object: D559's R-O1
+    reversal (a bench recoil read for Orthworm ex) must add `activeOnly` here, or a benched
+    Chesnaught retaliates (`damageAttacker`'s doc). Pinned: `conditionRowsMeD594.test.ts` §8. */
+const NEEDLY_ARMOR: CardProgram = {
+  passive: { damageAttacker: { amount: 30, perAttachedEnergy: "Grass" } },
+};
+
 const REGISTRY: Record<string, CardProgram> = {
   // Professor's Research (SV base prints)
   "sv01-189": PROFESSORS_RESEARCH,
@@ -18286,6 +18331,9 @@ const REGISTRY: Record<string, CardProgram> = {
   "me03-107": TUCK_TAIL, // Meowth ex
   "me03-121": TUCK_TAIL, // Meowth ex
   "me04-030": SKY_RETURN, // Emolga "Sky Return" (attack 1)
+  // 🆕🆕🆕 D594 — WP33a: two Ability keys, MID-MAP (`raw[last]` does not move). `conditionRowsMeD594.test.ts`.
+  "me03-027": FIGHTING_ROAR, // Luxio "Fighting Roar" — evolve early if the opponent's Active is a Pokémon ex
+  "me04-007": NEEDLY_ARMOR, // Chesnaught "Needly Armor" — 3 counters per {G} Energy on the Attacking Pokémon
   // ── D190 — THE **STANDARD-LEGAL** REPRINT-ALIAS MAP (Tier 0 of
   //    `docs/reference/coverage-backlog-legal.md`). 22 printings, 9 map targets,
   //    ZERO new code: every row below prints a sentence that is already authored

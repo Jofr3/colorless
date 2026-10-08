@@ -831,7 +831,7 @@ describe("§9 — the bytes, and THE NINTH POSITION (`MATCH_RECORD_VERSION` 35 �
     expect(endTurn(amarys).state.players.p1.hand).toHaveLength(5);
   });
 
-  it("the engine is 0.477.0", () => {
-    expect(engineVersion).toBe("0.477.0");
+  it("the engine is 0.478.0", () => {
+    expect(engineVersion).toBe("0.478.0");
   });
 });

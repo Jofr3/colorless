@@ -2159,6 +2159,15 @@ export interface MatchRecord {
     `turn:action.discardable` — 🛑 **DEPLOY THE SERVER FIRST**: an old client's `z.object` STRIPS
     the unknown key, while a new client's REQUIRED key refuses an old server's frame.
 
+    🆕🆕🆕 **STAYS 42 AT D594 — WP33a ADDS NO OP, KEY, GameState, PendingStage, PROMPT OR WIRE KEY.**
+    (Placed ABOVE the D593 block.) Four clause rows read 4 `me` attack TEXTS (8 printings) on shipped
+    members, and two `me` ids gain Ability keys: Chesnaught's `damageAttacker` (shipped fields) and
+    Luxio's `evolveEarlyExempt.ifCondition` — a REGISTRY field on a catalog program, never persisted
+    (the licence is re-derived from the live board). The card row is not read differently; its printed
+    attack TEXT is, at attack time, and the two Ability rows are catalog lookups by id — so a v42 match
+    in flight holding those faces in its persisted `cardPool` gains the programs mid-match (a 0.477
+    rollback puts them back on the skipped-effect path). Nothing parks on a new prompt kind.
+
     🆕🆕🆕 **STAYS 42 AT D593 — WP07 ADDS NO OP, KEY, GameState, PendingStage, PROMPT OR WIRE KEY.**
     (Placed ABOVE the D592 block.) One `BoardCondition` member (`yourActiveBurnedOrPoisoned`) is
     new, but a condition is read off the board at attack time and never persisted: no op, stage or

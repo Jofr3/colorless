@@ -30051,3 +30051,26 @@ decisions (1) and (2) after D580. Engine 0.464.0 → 0.465.0. The Mega ex rule i
 - **Census.** Standard pool attacks **2525 / 2771** (`me` 793 / 1,039; abilities 489 / 610, trainers 356 / 447 and special
   energy 14 / 22 unmoved); 816 `me` printings fully built.
 - **Owed.** See `progress.md` NEXT. The whole-corpus sweep is PENDING.
+
+## D594 — WP33a: bonus / requirement rows on shipped condition members (engine 0.478.0, `MATCH_RECORD_VERSION` stays 42)
+
+**Status:** ✅ BUILT in the `luminous_ui-mega` worktree on D593 (`4b2b46cc`), NOT committed.
+
+- **6 texts / 10 `me` printings.** Three `CONDITIONAL_DAMAGE_CLAUSES` rows: Chi-Yu "Whirling Envy"
+  (`yourActiveDamageCountersAtLeast` 2, D494's Weakness-only anchor), Steelix ×2 "Welcoming Tail" (`yourPrizesRemaining` [6]),
+  Slowbro ×3 "All Out" (`yourHandExactly` 0). One `ATTACK_REQUIREMENT_CLAUSES` row: Solrock ×2 "Cosmic Beam"
+  (`yourBenchHasNamed` Lunatone, W/R companion split off).
+- **Two Abilities on shipped fields.** Luxio "Fighting Roar": `evolveEarlyExempt` gains an optional `ifCondition`
+  (`opponentActiveIsEx`). Chesnaught "Needly Armor": `damageAttacker { 30, perAttachedEnergy: "Grass" }`.
+- **Dropped (new vocabulary):** Weavile "Retaliatory Claw" (remaining HP), Carnivine "Chomp Whole" (no Retreat Cost),
+  Gholdengo ×2 "Celebration" (`takePrize` queues its stage, so the "if you do" shuffle would run first).
+- **The `sv` reader output is byte-identical** (before/after dump; only the 4 `me` sentences differ).
+- **Reading R-LX1.** Luxio is a Stage 1, so a Shinx evolved into it this turn keeps the licence and may evolve again
+  (Shinx → Luxio → Luxray in one turn, against an ex). turn.ts' older "the twice-in-one-turn half cannot be observed"
+  is withdrawn in place (D539); "the turn you play it" is read as the turn it evolved.
+- **R-O1 trap.** Chesnaught prints the Active clause but relies on the Active-only recoil read; D559's bench-recoil
+  reversal owes an `activeOnly` rider (noted at registry.ts `damageAttacker` / `NEEDLY_ARMOR`, interpreter.ts).
+- **Suite.** `conditionRowsMeD594.test.ts` (28): texts, readings, near misses, each row on a board against a control, the
+  Shinx → Luxio → Luxray chain, a §9 lock on each Ability, Needly Armor's KO and Bench boards. +18 mutant rows.
+- **Census.** Standard pool attacks **2533 / 2771**, abilities **491 / 610**; 826 `me` printings fully built.
+- **Owed.** See `progress.md` NEXT. The whole-corpus sweep is PENDING.

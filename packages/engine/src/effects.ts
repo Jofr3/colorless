@@ -1998,6 +1998,8 @@ export type BoardCondition =
       says the guard on `yourActiveEnergyAtLeast` is that its arity comes off the
       printed digit. Measured over `legalAttackCorpus()` at this head: there is no
       own-hand THRESHOLD printed anywhere in the legal attack column, at any value.
+      [🆕🆕🆕 D594: dated, kept as written — Slowbro "All Out" ×3 (`me`) now sits beside it as
+      `yourHandExactly` 0, "no cards in your hand": an empty-hand read, still not a threshold.]
       **WHAT WOULD FLIP IT is a printed own-hand floor** (*"if you have 3 or more
       cards in your hand"*); a second sentence discarding the whole hand flips
       nothing, because that is not an axis anything varies on. (🆕🆕🆕 2026-09-25 D556
@@ -3565,7 +3567,8 @@ export type BoardCondition =
       a census: Carmine + Team Rocket's Proton **6** LIFT the §4 Supporter lock
       (`trainerFirstTurnExempt`); Meloetta ex **3** LIFTS the §4 attack ban
       (`PassiveEffects.attackFirstTurnExempt`, D277); Eevee + Karrablast + Shelmet
-      **7** LIFT the §4/§10 evolve ban — **ALL SEVEN NOW BUILT**
+      **7** LIFT the §4/§10 evolve ban — **ALL SEVEN NOW BUILT** [🆕🆕🆕 D594: a dated
+      `sv` census (remote D1, 2026-08-08), kept as written — Luxio `me03-027` is an eighth, built]
       (`PassiveEffects.evolveEarlyExempt`: Eevee's 3 at D278 under a ZONE gate,
       the partner-gated 4 at D279 under `yourNamedPokemonInPlay`, the member two
       up, which `yourBenchHasNamed` could not supply because it is Bench-only by
@@ -8186,7 +8189,9 @@ export type EffectOp =
           by `evolveEarlyLicensed` (Eevee "Boosted Evolution", Karrablast/Shelmet) gets NO
           exemption** — the ban is printed on Grand Tree, and an Ability on the target cannot
           lift a restriction a different card prints about its own use (D278's Rare Candy
-          argument, verbatim); reversal: a ruling that the licence reaches Grand Tree. */
+          argument, verbatim); reversal: a ruling that the licence reaches Grand Tree.
+          [🆕🆕🆕 D594 (D539): the parenthesised licence list is WITHDRAWN as complete, kept as
+          written — Luxio `me03-027` "Fighting Roar" is a third, and R-GT3 reads it the same.] */
       evolveTimingGates?: true;
       /** 🆕🆕🆕 D567 — the chained, OPTIONAL Stage 2 step: rides onto the `evolveFromDeck`
           the body answer buys (`evolveBodyAnswered`), see that op's `thenEvolveAgain`. */
@@ -20474,6 +20479,10 @@ const CONDITIONAL_DAMAGE_CLAUSES = new Map<string, BoardCondition>([
   // two tables, two seats, two consequents — and the whole-sentence anchors are
   // what keep them apart.
   ["this Pokémon has no damage counters on it", { kind: "yourActiveUndamaged" }],
+  // 🆕🆕🆕 D594 — Chi-Yu "Whirling Envy" (`me05-059`, {D}, 20+, +90, 1 legal printing, LOCAL D1),
+  // read through D494's `CONDITIONAL_BONUS_SUPPRESSED` (its Weakness-only rider): Annihilape's
+  // shipped `yourActiveDamageCountersAtLeast` (D560) at the printed counter count. A literal row.
+  ["this Pokémon has 2 or more damage counters on it", { kind: "yourActiveDamageCountersAtLeast", count: 2 }],
   // Tyranitar ex sv03-066/-211 "Lightning Rampage" (+100) — the two printings are
   // byte-identical in rules text, so one fixture serves both ids.
   ["your Benched Pokémon have any damage counters on them", { kind: "yourBenchDamaged" }],
@@ -20768,6 +20777,12 @@ const CONDITIONAL_DAMAGE_CLAUSES = new Map<string, BoardCondition>([
     "your opponent has 2 or fewer Prize cards remaining",
     { kind: "opponentPrizesRemaining", counts: [0, 1, 2] },
   ],
+  // 🆕🆕🆕 D594 — Steelix "Welcoming Tail" (`me01-093`/`-150`, 40+, +200, 2 legal printings, LOCAL
+  // D1): the attacker's OWN row at one value — the shipped `yourPrizesRemaining` (Lacey's member).
+  ["you have exactly 6 Prize cards remaining", { kind: "yourPrizesRemaining", counts: [6] }],
+  // 🆕🆕🆕 D594 — Slowbro "All Out" (`mep-083`, `me05-030`/`-090`, 50+, +160, 3 legal printings,
+  // LOCAL D1): the shipped `yourHandExactly` (D379) at 0 — "no cards" is strict equality at zero.
+  ["you have no cards in your hand", { kind: "yourHandExactly", count: 0 }],
   // Absol ex sv03-135/-214 "Cursed Slug" (+120) — the two printings are
   // byte-identical in rules text, so one fixture serves both ids. "their hand",
   // possessive, is the cross-board half of the pair; the own-hand clause below
@@ -22301,6 +22316,10 @@ const ATTACK_REQUIREMENT_CLAUSES = new Map<string, BoardCondition>([
   // 🆕🆕🆕 D593 — Malamar "Brain Crush" (`me05-052`, {D}, 130, 1 legal printing, LOCAL D1): Tapu
   // Lele's bonus member under the cancel consequent (Centiskorch's arrangement, one status over).
   ["your opponent's Active Pokémon isn't Confused", { kind: "opponentActiveConfused" }],
+  // 🆕🆕🆕 D594 — Solrock "Cosmic Beam" (`me01-075`, `me02.5-106`, {F}, 70, 2 legal printings, LOCAL
+  // D1): the Uxie / Azelf row at ONE name, the shipped `yourBenchHasNamed` (stack top, Bench only).
+  // Its "…isn't affected by Weakness or Resistance." companion is Sawk's, split off as before.
+  ["you don't have Lunatone on your Bench", { kind: "yourBenchHasNamed", name: "Lunatone" }],
 ]);
 
 /** The board fact an attack REQUIRES in order to do anything, or null when the

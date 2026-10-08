@@ -6,6 +6,25 @@
 > `coverage-backlog-legal.md`; its pool is unchanged and whole. The suite-side figures are
 > `censusAtHead.test.ts`'s D581 block and `censusAttackCorpusMe.ts`.
 
+## 🆕 D594 update (engine 0.478.0) — bonus / requirement rows on shipped members (WP33a)
+
+6 texts / 10 `me` printings (`conditionRowsMeD594.test.ts`), the first half of WP33. Four attack clause rows: Whirling
+Envy (2 or more damage counters, Weakness ignored), Cosmic Beam ×2 (needs a Benched Lunatone), Welcoming Tail ×2 (exactly
+6 Prizes left) and All Out ×3 (no cards in hand). Two Abilities on shipped passive fields: Fighting Roar (evolve early
+while the opponent's Active is a Pokémon ex; a new `ifCondition` on `evolveEarlyExempt`; a Luxio evolved from Shinx this turn may evolve again) and Needly Armor (3 counters per
+{G} Energy). **Finished:** Chi-Yu, Solrock ×2, Steelix ×2, Slowbro ×3, Luxio, Chesnaught. **Dropped:** Retaliatory Claw
+(remaining HP), Chomp Whole (no Retreat Cost) and Celebration ×2 (the take-then-shuffle order). WP33b keeps Solar
+Coiling ×2, Juggernaut Horn / Counter ×4, Cocky Claw and Shadowy Whip ×2.
+
+| Column | `me` built / units (D594) | Standard pool D594 |
+|---|---|---|
+| Attacks | 801 / 1,039 (+8) | **2,533 / 2,771** |
+| Abilities | 115 / 234 (+2) | **491 / 610** |
+| Trainers | 92 / 183 | **356 / 447** |
+| Special Energy | 3 / 11 | **14 / 22** |
+
+**Fully built `me` printings: 826** (816 + 10).
+
 ## 🆕 D593 update (engine 0.477.0) — more clause rows and the "Fade Out" objects (WP07)
 
 9 attack texts / 15 `me` printings (`clauseRowsMeD593.test.ts`). Seven clause rows on shipped members: Master's Punch
@@ -309,8 +328,8 @@ group wins; the grouping is a reading aid, not a census figure).
 - 3× If your opponent's Pokémon is Knocked Out by damage from this attack, during your opponent's next turn, prevent all damage from and effects of attacks done to this Pokémon.
 - 3× This attack does 70 damage for each Prize card you have taken.
 - 2× If any of your Hop's Pokémon were Knocked Out by damage from an attack during your opponent's last turn, this attack does 100 more damage. [🆕🆕🆕 D593: BUILT]
-- 2× If you have exactly 30 cards in your hand, take 2 Prize cards. If you do, shuffle your hand into your deck.
-- 2× If you have exactly 6 Prize cards remaining, this attack does 200 more damage.
+- 2× If you have exactly 30 cards in your hand, take 2 Prize cards. If you do, shuffle your hand into your deck. [🆕🆕🆕 D594: dropped from WP33a — `takePrize` queues behind the program, so the "if you do" shuffle would run first]
+- 2× If you have exactly 6 Prize cards remaining, this attack does 200 more damage. [🆕🆕🆕 D594: BUILT]
 - 2× If your opponent has 2 or fewer Prize cards remaining, this attack does 100 more damage. [🆕🆕🆕 D586: BUILT]
 - 2× Knock Out each of your opponent's Pokémon that has 50 HP or less remaining.
 - 2× This attack does 80 damage for each Prize card you have taken.
@@ -333,7 +352,7 @@ group wins; the grouping is a reading aid, not a census figure).
 - 1× Double the number of damage counters on each of your opponent's Pokémon.
 - 1× During your opponent's next turn, whenever they attach an Energy card from their hand to the Defending Pokémon, place 8 damage counters on that Pokémon.
 - 1× If any of your Benched Pancham have any damage counters on them, this attack does 120 more damage. [🆕🆕🆕 D593: BUILT]
-- 1× If this Pokémon has 2 or more damage counters on it, this attack does 90 more damage. This attack's damage isn't affected by Weakness.
+- 1× If this Pokémon has 2 or more damage counters on it, this attack does 90 more damage. This attack's damage isn't affected by Weakness. [🆕🆕🆕 D594: BUILT]
 - 1× If this Pokémon has any damage counters on it, this attack can be used for {D}. [🆕🆕🆕 D593: BUILT]
 - 1× If you have 13 or more Pokémon that have the Hide 'n' Sneak Ability in your discard pile, choose 2 of your opponent's Pokémon and quadruple the number of damage counters on each of them.
 - 1× If you have 6 or more Pokémon that have the Hide 'n' Sneak Ability in your discard pile, place 4 damage counters on each of your opponent's Pokémon.
@@ -403,7 +422,7 @@ group wins; the grouping is a reading aid, not a census figure).
 - 5× You may put a {W} Energy attached to this Pokémon into your hand and have this attack do 80 more damage. [🆕🆕🆕 D589: BUILT]
 - 4× If this Pokémon was damaged by an attack during your opponent's last turn, this attack does that much more damage.
 - 3× If you have 4 or more Pokémon that have the Hide 'n' Sneak Ability in your discard pile, this attack does 140 more damage.
-- 3× If you have no cards in your hand, this attack does 160 more damage.
+- 3× If you have no cards in your hand, this attack does 160 more damage. [🆕🆕🆕 D594: BUILT]
 - 2× If Rosa's Encouragement is in your discard pile, this attack does 150 more damage.
 - 2× If this Pokémon is Burned or Poisoned, this attack does 100 more damage. [🆕🆕🆕 D593: BUILT]
 - 2× If your Benched Pokémon have any Shadowy {D} Energy attached, this attack does 70 more damage.
@@ -412,14 +431,14 @@ group wins; the grouping is a reading aid, not a census figure).
 - 1× During your opponent's next turn, this Pokémon takes 100 more damage from attacks (after applying Weakness and Resistance).
 - 1× If this Pokémon evolved from Magneton during this turn, this attack does 120 more damage. [🆕🆕🆕 D593: BUILT]
 - 1× If this Pokémon used Spiky Rolling during your last turn, this attack does 80 more damage. [🆕🆕🆕 D593: BUILT]
-- 1× If this Pokémon's remaining HP is 50 or less, this attack does 170 more damage.
+- 1× If this Pokémon's remaining HP is 50 or less, this attack does 170 more damage. [🆕🆕🆕 D594: dropped from WP33a — needs a remaining-HP member]
 - 1× If you have any Stage 2 {D} Pokémon on your Bench, this attack does 70 more damage.
 - 1× If you have at least 4 {L} Energy in play, this attack does 90 more damage. [🆕🆕🆕 D586: BUILT]
 - 1× If you have at least 4 {R} Energy in play, this attack does 90 more damage. [🆕🆕🆕 D586: BUILT]
 - 1× If you have at least 4 {W} Energy in play, this attack does 90 more damage. [🆕🆕🆕 D586: BUILT]
 - 1× If you played Emma from your hand during this turn, this attack does 60 more damage.
 - 1× If you played a Supporter card that has "Team Rocket" in its name from your hand during this turn, this attack does 100 more damage.
-- 1× If your opponent's Active Pokémon has no Retreat Cost, this attack does 80 more damage.
+- 1× If your opponent's Active Pokémon has no Retreat Cost, this attack does 80 more damage. [🆕🆕🆕 D594: dropped from WP33a — needs a "no Retreat Cost" member]
 - 1× You may discard 3 {M} Energy from this Pokémon and have this attack do 150 more damage. [🆕🆕🆕 D589: BUILT]
 - 1× You may shuffle all Energy attached to this Pokémon into your deck and have this attack do 80 more damage. [🆕🆕🆕 D589: BUILT]
 
@@ -501,7 +520,7 @@ group wins; the grouping is a reading aid, not a census figure).
 
 - 3× Heal 30 damage from each Pokémon (both yours and your opponent's).
 - 2× Heal 120 damage from 1 of your Benched {P} Pokémon.
-- 2× If you don't have Lunatone on your Bench, this attack does nothing. This attack's damage isn't affected by Weakness or Resistance.
+- 2× If you don't have Lunatone on your Bench, this attack does nothing. This attack's damage isn't affected by Weakness or Resistance. [🆕🆕🆕 D594: BUILT]
 - 1× This Pokémon does 30 damage to itself. [🆕🆕🆕 D592: BUILT]
 
 ## Abilities — 100 unbuilt texts / 187 printings
@@ -588,7 +607,7 @@ group wins; the grouping is a reading aid, not a census figure).
 - 1× **Durable Body** — If this Pokémon would be Knocked Out by damage from an attack, flip a coin. If heads, this Pokémon is not Knocked Out, and its remaining HP becomes 10.
 - 1× **Final Chain** — If this Pokémon is Knocked Out by damage from an attack from your opponent's Pokémon, search your deck for a card and put it into your hand. Then, shuffle your deck.
 - 1× **Infinite Shadow** — If this Pokémon is Knocked Out by damage from an attack from your opponent's Pokémon, put it into your hand instead of the discard pile. (Discard all attached cards.)
-- 1× **Needly Armor** — If this Pokémon is in the Active Spot and is damaged by an attack from your opponent's Pokémon (even if this Pokémon is Knocked Out), place 3 damage counters on the Attacking Pokémon for each {G} Energy attached to this Pokémon.
+- 1× **Needly Armor** — If this Pokémon is in the Active Spot and is damaged by an attack from your opponent's Pokémon (even if this Pokémon is Knocked Out), place 3 damage counters on the Attacking Pokémon for each {G} Energy attached to this Pokémon. [🆕🆕🆕 D594: BUILT]
 
 ### Damage modifiers (more / less damage, takes less damage) — 7 text(s) / 12 printing(s)
 
@@ -628,7 +647,7 @@ group wins; the grouping is a reading aid, not a census figure).
 - 2× **Sniper's Eye** — If your opponent has exactly 4 cards in their hand, ignore all {C} Energy in the costs of attacks used by this Pokémon.
 - 2× **Swirling Prose** — As long as this Pokémon is in the Active Spot, whenever your opponent's Active Pokémon moves to the Bench during their turn, their new Active Pokémon is now Confused.
 - 1× **Explosiveness** — If this Pokémon is in your hand when you are setting up to play, you may put it face down in the Active Spot.
-- 1× **Fighting Roar** — If your opponent's Active Pokémon is a Pokémon ex, this Pokémon can evolve during your first turn or the turn you play it.
+- 1× **Fighting Roar** — If your opponent's Active Pokémon is a Pokémon ex, this Pokémon can evolve during your first turn or the turn you play it. [🆕🆕🆕 D594: BUILT]
 - 1× **Good Sleep** — If this Pokémon remains Asleep during Pokémon Checkup, heal all damage from this Pokémon.
 - 1× **Startling Drop** — During your opponent's turn, if this Pokémon is discarded from your deck by an effect of an attack or Ability from your opponent's Pokémon, or by an effect of your opponent's Item or Supporter cards, discard the top 8 cards of your opponent's deck.
 - 1× **Supereffective Pheromones** — If you have Volbeat in play, apply Weakness for both Active Pokémon as ×3.
