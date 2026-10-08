@@ -70,6 +70,7 @@ const COMMUNITY_CENTER = "sv06-146";
 const UNAWARE = "fix-unaware";
 const NEST_BALL = "sv01-181"; // a REGISTERED Item (FIXTURE_POOL) — a trainer program that is not a Supporter
 const UNNERVE = "fix-unnerve";
+const EMMA = "me04-077"; // 🆕🆕🆕 D599 — an `me` Supporter with a registry `trainer` program (§8)
 
 /** EVERY Standard-legal Supporter NAME, one representative printing each — 51 names over 140 legal
     printings, measured off the 2026-09-25 audit card JSON (tcgdex) at 7eed24e8, where every printing
@@ -157,6 +158,10 @@ const LOCAL_CARDS: Record<string, Card> = {
   [L_E]: typedEnergy(L_E, "Lightning"),
   [UNPROGRAMMED]: { ...trainerCard(UNPROGRAMMED, "Supporter", "(constructed, no program)"), name: "D580 Blank" },
   [COMMUNITY_CENTER]: { ...trainerCard(COMMUNITY_CENTER, "Stadium", "Community Center"), name: "Community Center" },
+  [EMMA]: {
+    ...trainerCard(EMMA, "Supporter", "Your opponent reveals their hand, and you draw a card for each Pokémon you find there."),
+    name: "Emma",
+  },
   ...Object.fromEntries(
     SUPPORTERS.map(([id, name]) => [id, { ...trainerCard(id, "Supporter", `(${name})`), name }] as const),
   ),
@@ -388,8 +393,8 @@ function render(events: GameEvent[], state: GameState): string[] {
 }
 
 describe("D580 Look-Alike Show §0 — the version, the registry row, the census claim", () => {
-  it("is built at engine 0.482.0", () => {
-    expect(engineVersion).toBe("0.482.0");
+  it("is built at engine 0.483.0", () => {
+    expect(engineVersion).toBe("0.483.0");
   });
 
   it("sv05-063 authors index 0 only: the reveal, then the NEW op; Eerie Wave (index 1) keeps deriving", () => {
@@ -566,6 +571,9 @@ describe("D580 Look-Alike Show §5 — the population pins (R-LA3, R-LA6)", () =
   });
 
   it("R-LA6: the card-level keys live on Briar / Carmine / Team Rocket's Proton only, and the copy hands over only `ops` + `playableIf`", () => {
+    // 🆕🆕🆕 D599 (D539): "only" is over THESE 51 `sv` names (the 2026-09-25 snapshot). The `me`
+    // Supporter Anthea & Concordia `me02.5-182` also carries `supporterKoPrizeBonus` now; R-LA6
+    // holds for it the same way (the copy hands over `ops` + `playableIf`, its `ops` empty).
     const carriers = SUPPORTERS.filter(([id]) => {
       const p = programFor(id);
       return p?.supporterKoPrizeBonus !== undefined || p?.trainerFirstTurnExempt !== undefined;
@@ -761,5 +769,27 @@ describe("D580 Look-Alike Show §7 — the wire, the replay, and MRV 41 under a 
     expect(types(rolled.events)).not.toContain("SUPPORTER_EFFECT_USED");
     expect(JSON.stringify(rolled.state)).toBe(JSON.stringify(run(parked, decline).state));
     expect(turnPassed(rolled.state)).toBe(true);
+  });
+});
+
+describe("D580 Look-Alike Show §8 — 🆕🆕🆕 D599: an `me` Supporter through the copy (Emma `me04-077`)", () => {
+  it("Emma is offered and used for the ATTACKER: p2 reveals again and p1 draws one card per Pokémon in p2's hand", () => {
+    // p2's hand: Emma (a Trainer), 2 Pokémon, an Item → 2. p1's own hand holds 3 Pokémon, so a
+    // count of the attacker's hand would draw 3.
+    const state = board([EMMA, PLAIN, FILLER, ITEM]);
+    const emma = state.players.p2.hand[0] ?? "";
+    expect(opponentSupporterOffer(state, { seat: "p1" })).toEqual([emma]);
+    const declared = run(state, look).state;
+    const before = declared.players.p1.hand.length;
+    const picked = run(declared, use(emma));
+    expect(picked.events).toContainEqual({ type: "SUPPORTER_EFFECT_USED", seat: "p1", uid: emma });
+    expect(picked.events.filter((e) => e.type === "HAND_REVEALED")).toEqual([
+      expect.objectContaining({ seat: "p2", uids: declared.players.p2.hand }),
+    ]);
+    const draws = picked.events.filter((e): e is Extract<GameEvent, { type: "CARDS_DRAWN" }> => e.type === "CARDS_DRAWN");
+    expect(draws.filter((d) => d.seat === "p1").reduce((n, d) => n + d.uids.length, 0)).toBe(2);
+    expect(picked.state.players.p1.hand.length).toBe(before + 2);
+    expect(picked.state.players.p2.hand).toContain(emma);
+    expect(turnPassed(picked.state)).toBe(true);
   });
 });

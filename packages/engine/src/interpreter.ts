@@ -1595,6 +1595,9 @@ function describeBranch(ops: readonly EffectOp[]): string | null {
         // words), so a gated per-Bench draw is never captioned as a flat one.
         if (op.per !== undefined) {
           // 🆕🆕🆕 D569 — Awakening Drum's noun ("your Ancient Pokémon in play").
+          // 🆕🆕🆕 D599 — Emma's member is SILENT here (null): its one program draws at top
+          // level and no gate branch holds it, so a caption would be a line no board reaches.
+          if (op.per.kind === "cardsInOpponentHand") return null;
           parts.push(
             op.per.kind === "opponentBenchCount"
               ? "draw a card for each of your opponent's Benched Pokémon"
@@ -3099,6 +3102,10 @@ function stepOp(
               per.filter,
               per.damagedOnly === true,
             );
+          // 🆕🆕🆕 D599 — Emma's *"a card for each Pokémon you find there"*: the opponent's
+          // hand (revealed by the op before), scanned by the attack fold's own walk.
+          case "cardsInOpponentHand":
+            return countCardsInHand(state, otherSeat(ctx.seat), per.filter);
         }
       })();
       const count = op.count * perCount;

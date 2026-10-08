@@ -20258,6 +20258,14 @@ import type { GameState, Seat } from "./types";
     `expect(manifest.version)`, `it(…)` titles, the declaration and `package.json` —
     **not** as a value-keyed grep — because a value-keyed grep is precisely the mechanism
     that ate D500's heading.)
+    🆕🆕🆕 engineVersion 0.482.0 → **0.483.0** (D599 — WP24a: TWO WP24 SUPPORTERS;
+    `MATCH_RECORD_VERSION` STAYS 42 (apps/api match.ts "STAYS 42 AT D599")). 4 Supporter keys / 2
+    objects: Anthea & Concordia ×2 (Briar's `supporterKoPrizeBonus` at 3 on `ownerPokemon` N, a
+    six-name `allOf` play gate) and Emma ×2 (`revealOpponentHand`, then `drawCards` with the NEW
+    third `per` member `cardsInOpponentHand`, counted by `countCardsInHand`). AZ's Tranquility,
+    Gladion's Final Battle, Grimsley's Move, Gwynn and Naveen dropped and named. D539: D516's
+    "only evaluator" claim on `cardsInOpponentHand` withdrawn in place across the tree.
+    `supportersMeD599.test.ts`.)
     🆕🆕🆕 engineVersion 0.481.0 → **0.482.0** (D598 — WP32: KO / DAMAGE-TAKEN ABILITIES;
     `MATCH_RECORD_VERSION` STAYS 42 (apps/api match.ts "STAYS 42 AT D598")). 13 Ability keys / 6
     objects: Mega Gengar ex "Shadowy Concealment" ×5 (`PassiveEffects.seatKoPrizeReduction`, read by
@@ -24012,7 +24020,11 @@ import type { GameState, Seat } from "./types";
     🛑 **THE ROAD NOT TAKEN, PRICED.** `DamageCountSource.cardsInOpponentHand` spells the
     identical printed phrase at corpus file line 564, so *"reuse the shipped count"* looks like
     D159's own rule. It is not: that union's ONLY evaluator is `attack.ts`'s
-    `scaledAttackDamage(attacker, bonus, state, defenderSeat, attackerSeat, cost)`, and FOUR of
+    `scaledAttackDamage(attacker, bonus, state, defenderSeat, attackerSeat, cost)` [🆕🆕🆕
+    D599 (D539): "ONLY evaluator" is WITHDRAWN, kept as written — interpreter.ts `stepOp`'s
+    `drawCards.per` arm (a Trainer path) evaluates `cardsInOpponentHand` for Emma
+    `me04-077`/`-107` through the same `countCardsInHand` walk; union-wide already stale since the D557/D569
+    `opponentBenchCount`/`pokemonInPlay` Extracts], and FOUR of
     those six parameters are ATTACK-DECLARATION facts that do not exist on the Trainer and
     Ability paths where `registry.ts` authors every other `handRefresh`. Embedding it would buy
     a SECOND evaluator for a 19-member union (D159's own failure mode) or plumb an
@@ -25304,7 +25316,7 @@ import type { GameState, Seat } from "./types";
     WITNESS** — the count was re-derived every slice and the word *"three"* was carried.
     A successor of this slice inherits **81 / 61 / 17** again, over **FIVE** history
     occurrences: those four plus `deckMillFilteredScale.test.ts`'s own header arrow.) */
-export const engineVersion = "0.482.0";
+export const engineVersion = "0.483.0";
 
 export type {
   ApplyResult,

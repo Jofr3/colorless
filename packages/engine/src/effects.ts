@@ -874,7 +874,12 @@ export type EffectSlot = "paid" | "moved" | "discarded" | "turnedPrize" | "revea
     identical printed phrase one file line apart (corpus file line 564, *"This attack
     does 30 damage for each card in your opponent's hand."*) — but its ONLY evaluator is
     `attack.ts`'s `scaledAttackDamage(attacker, bonus, state, defenderSeat, attackerSeat,
-    cost)`, and FOUR of those six parameters are ATTACK-DECLARATION facts that do not
+    cost)` [🆕🆕🆕 D599 (D539): "ONLY evaluator" is WITHDRAWN, kept as written —
+    interpreter.ts `stepOp`'s `drawCards.per` arm (a Trainer path) evaluates
+    `cardsInOpponentHand` for Emma `me04-077`/`-107` through the same `countCardsInHand`
+    walk, which needs none of the four attack-declaration parameters; union-wide the
+    claim was already stale since the D557/D569 `opponentBenchCount`/`pokemonInPlay`
+    Extracts], and FOUR of those six parameters are ATTACK-DECLARATION facts that do not
     exist on the Trainer and Ability paths where `registry.ts` authors every other
     `handRefresh` (Youngster, Judge, Brassius, Katy, Iono, Skwovet, Gothitelle, Lacey,
     Drasna, Harlequin, Unfair Stamp and Team Rocket's Archer — **30 registry card ids**,
@@ -7341,7 +7346,9 @@ export type EffectOp =
       (D159: one printed noun, one name) — but NOT the whole union: this op's evaluator
       is one line in `stepOp` and cannot answer the attack-declaration members
       (`HandRefreshDraw`'s D516 argument, which is why the rider admits exactly the one
-      member a Trainer prints). OPTIONAL (D135): every shipped producer omits it and
+      member a Trainer prints [🆕🆕🆕 D599 (D539): "exactly the one member" is WITHDRAWN as a
+      count, kept as written — D569 admitted `pokemonInPlay` and D599 `cardsInOpponentHand`;
+      each is still a member a Trainer prints, admitted one at a time]). OPTIONAL (D135): every shipped producer omits it and
       draws the byte-identical `count`. `drawCards` never parks ITSELF, but it RIDES a
       parked op's `rest`: Morty's own `payFromHand 1` parks whenever the hand holds two
       or more non-interchangeable cost candidates, and the stored continuation is
@@ -7367,7 +7374,14 @@ export type EffectOp =
             `countPokemonInPlay` (Active + Bench, TOP cards, `damagedOnly` honoured). Read
             at resolve like the first; an Item's lone `drawCards` never parks or rides a
             `rest`, so the member is never persisted. */
-        | Extract<DamageCountSource, { kind: "pokemonInPlay" }>;
+        | Extract<DamageCountSource, { kind: "pokemonInPlay" }>
+        /** 🆕🆕🆕 **D599 — Emma `me04-077`/`-107`**: *"Your opponent reveals their hand, and you
+            draw a card for each Pokémon you find there."* The THIRD `per` member, D445's
+            `cardsInOpponentHand` reused by `Extract` (D159) and counted by the one scan,
+            interpreter.ts `countCardsInHand` (the attack fold's own). Read at resolve, after
+            the program's `revealOpponentHand`. Neither op of Emma's program parks, so
+            this `drawCards` never rides a `rest` and the member is never persisted. */
+        | Extract<DamageCountSource, { kind: "cardsInOpponentHand" }>;
     }
   /** "Draw cards until you have `size` cards in your hand" (Grusha) — draw
       `size − hand.length`, i.e. nothing at all when the hand already holds

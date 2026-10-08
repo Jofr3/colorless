@@ -1136,7 +1136,9 @@ describe("§7 — `MATCH_RECORD_VERSION` STAYS 29, driven over the bytes", () =>
   // (D443's rule — "the version question" is not one question):
   //   · `DamageCountSource.cardsInOpponentHand` — a PARSE-TIME type, derived from card
   //     text and consumed in the same tick. No op carries one, no field stores one, no
-  //     event names one. **Not persisted.**
+  //     event names one. **Not persisted.** [🆕🆕🆕 D599 (D539): "No op carries one" is
+  //     WITHDRAWN, kept as written — Emma's `drawCards.per` carries this member. "Not
+  //     persisted" stands: that program never parks, so the op never reaches `phase.cont`.]
   //   · `CARD_DISCARDED_FROM_HAND` — a `GameEvent`, and no `GameEvent` is in a
   //     `MatchRecord` at all (`{version, seed, startedAt, names, state, log}`; `state` is a
   //     `GameState`, which holds no events, and `log` is RENDERED). **Not persisted**, so

@@ -1091,7 +1091,9 @@ function koPrizeBonus(
   return { state: next, count, events };
 }
 
-/** 🆕🆕🆕 §8.1 (D568) — BRIAR's +1 (`CardProgram.supporterKoPrizeBonus`): *"During this turn,
+/** 🆕🆕🆕 §8.1 (D568) — BRIAR's +1 (`CardProgram.supporterKoPrizeBonus`) [🆕🆕🆕 D599 (D539): not
+    Briar's alone — Anthea & Concordia `me02.5-182`/`-254` is the field's second producer, +3 on
+    `ownerPokemon` N; the function pays `rule.amount`, and every conjunct below reads the same]: *"During this turn,
     if your opponent's Active Pokémon is Knocked Out by damage from an attack used by your
     Tera Pokémon, take 1 more Prize card."* Every conjunct on the PRE-KO board:
       • the TAKER's played Supporter this turn carries the field — read off

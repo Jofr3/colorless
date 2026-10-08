@@ -2159,6 +2159,17 @@ export interface MatchRecord {
     `turn:action.discardable` — 🛑 **DEPLOY THE SERVER FIRST**: an old client's `z.object` STRIPS
     the unknown key, while a new client's REQUIRED key refuses an old server's frame.
 
+    🆕🆕🆕 **STAYS 42 AT D599 — WP24a ADDS NO OP, GameState, PendingStage, PROMPT, EVENT OR WIRE KEY.**
+    (Placed ABOVE the D598 block.) 4 `me` Supporter ids are keyed: Anthea & Concordia on Briar's
+    card-level `supporterKoPrizeBonus` (read off `allowances.supporterPlayedUid`, nothing new
+    persisted) and Emma on `drawCards.per`'s NEW member `cardsInOpponentHand` — a union widening of
+    an op that never parks in its one program, so it never reaches `phase.cont`. The card ROW is
+    read as before, so a v42 match whose persisted `cardPool` holds these faces gains the programs
+    mid-match; a 0.482 rollback finds no key and refuses the play (`TRAINER_NOT_SIMULATED`), and an Anthea
+    & Concordia already played that turn pays no +3 there (no key to read); an Emma program cannot
+    be mid-flight (it never parks), and a parked Look-Alike Show pick naming Emma resumes there as
+    an empty splice (`supporterEffectOf` finds no program — the D580 inert whiff).
+
     🆕🆕🆕 **STAYS 42 AT D598 — WP32 ADDS NO OP, GameState, PendingStage, PROMPT, EVENT OR WIRE KEY.**
     (Placed ABOVE the D597 block.) 13 `me` Ability ids are keyed on registry-only fields
     (`PassiveEffects.seatKoPrizeReduction` / `survivesKoOnCoinFlip` / `koSelfToHand`,

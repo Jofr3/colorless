@@ -3987,7 +3987,8 @@ export interface CardProgram {
       Active on the pre-KO board, the batch is an attack's epilogue (not the Checkup, not the
       mid-turn sweep), the body was made lethal by DAMAGE (`knockOutDefender`'s doom is not —
       D414), and the attack's seat is the taker's ("YOUR Tera Pokémon"). Honoured on the ONE
-      path, like the other `trainer…` fields. */
+      path, like the other `trainer…` fields. 🆕🆕🆕 D599 — the second producer: Anthea &
+      Concordia (`ANTHEA_AND_CONCORDIA`), `{ amount: 3, attacker: ownerPokemon N }`. */
   supporterKoPrizeBonus?: { amount: number; attacker: CardFilter };
   /** 🆕🆕🆕 **§7.4 (D578) — A TOOL THAT GRANTS ATTACKS: the attacks printed ON THE TOOL**, which
       *"The Pokémon this card is attached to can use"* — Technical Machine: Fluorite `sv08-188`
@@ -16893,6 +16894,54 @@ const LUMIOSE_GALETTE: CardProgram = {
   trainer: [{ op: "heal", target: "self", amount: 20 }, { op: "recoverOneStatus" }],
 };
 
+// ── 🆕🆕🆕 D599 — WP24a: TWO SUPPORTERS FROM WP24, 4 `me` printings / 2 texts on two NEW objects.
+//    One new piece: `drawCards.per`'s third member, `cardsInOpponentHand` (Emma). Anthea &
+//    Concordia is Briar's shape at 3 with a six-name play gate. Printed texts off the LOCAL D1
+//    (2026-10-08); `supportersMeD599.test.ts` plays each. Dropped and named (vocabulary beyond
+//    the brief): AZ's Tranquility (heal the demoted body, gated on it being an ex), Gladion's
+//    Final Battle (an ATTACKER filter on the side-wide bonus), Grimsley's Move (a "not your first
+//    turn" play gate), Gwynn (a draw per recorded card) and Naveen (an uncapped declinable hand
+//    discard and a deck-not-empty play gate). Acerola's Mischief and Roxie's Performance are
+//    WP24b. ──
+
+/** Anthea & Concordia `me02.5-182` / `-254` (Supporter) — *"You can use this card only if you
+    have N's Darmanitan, N's Zoroark ex, N's Vanilluxe, N's Klinklang, N's Reshiram, and N's Zekrom
+    in play. / During this turn, if your opponent's Active Pokémon is Knocked Out by damage from an
+    attack used by your N's Pokémon, take 3 more Prize cards."* Briar (`BRIAR`)'s shape: no op,
+    `supporterKoPrizeBonus` read by flow.ts `briarPrizeBonus` off the turn's played Supporter, at
+    3 and on `ownerPokemon` N (the attacker's CARD, resolved off its uid). The gate is six exact
+    `yourNamedPokemonInPlay` conjuncts under `allOf` (the Flapping trio's spelling), checked at
+    play only — R-AC1 (UNRULED): a named body leaving play later in the turn does not withdraw the
+    bonus. */
+const ANTHEA_AND_CONCORDIA: CardProgram = {
+  trainer: [],
+  trainerPlayableIf: {
+    kind: "allOf",
+    conditions: [
+      { kind: "yourNamedPokemonInPlay", name: "N's Darmanitan" },
+      { kind: "yourNamedPokemonInPlay", name: "N's Zoroark ex" },
+      { kind: "yourNamedPokemonInPlay", name: "N's Vanilluxe" },
+      { kind: "yourNamedPokemonInPlay", name: "N's Klinklang" },
+      { kind: "yourNamedPokemonInPlay", name: "N's Reshiram" },
+      { kind: "yourNamedPokemonInPlay", name: "N's Zekrom" },
+    ],
+  },
+  supporterKoPrizeBonus: { amount: 3, attacker: { kind: "ownerPokemon", owner: "N" } },
+};
+
+/** Emma `me04-077` / `-107` (Supporter) — *"Your opponent reveals their hand, and you draw a card
+    for each Pokémon you find there."* D232's `revealOpponentHand`, then `drawCards` at the rate 1
+    with the NEW `per` member `cardsInOpponentHand` over `anyPokemon` (a Pokémon CARD: a fossil
+    Item in that hand is a Trainer and is not counted — R-EM2, UNRULED). No play gate: an empty
+    or Pokémon-less opponent hand still reveals and draws 0 (R-EM1, UNRULED — D232's "an EMPTY
+    hand still reveals"). */
+const EMMA: CardProgram = {
+  trainer: [
+    { op: "revealOpponentHand" },
+    { op: "drawCards", count: 1, per: { kind: "cardsInOpponentHand", filter: { kind: "anyPokemon" } } },
+  ],
+};
+
 /** 🆕🆕🆕 **D589 — Mega Greninja ex `mep-081` / `me04-022` / `-100` / `-116` / `-122` (5 legal
     printings)** "Mortal Shuriken": *"Once during your turn, if this Pokémon is in the Active Spot,
     you may discard a Basic {W} Energy card from your hand in order to use this Ability. Place 6
@@ -18405,6 +18454,12 @@ const REGISTRY: Record<string, CardProgram> = {
   "me02.5-215": WAITRESS, // Waitress — twin `sv01-170` (Electric Generator), top 6, 1 Basic Energy
   "me03-074": HOLE_DIGGING_SHOVEL, // Hole-Digging Shovel — the derived "Discard the top 2 cards of your deck."
   "me03-078": LUMIOSE_GALETTE, // Lumiose Galette — Obliging Heal's program at 20
+  // 🆕🆕🆕 D599 — WP24a: 4 Supporter printings / 2 texts, MID-MAP (`raw[last]` does not move).
+  // `supportersMeD599.test.ts` plays both.
+  "me02.5-182": ANTHEA_AND_CONCORDIA, // Anthea & Concordia — Briar's shape at 3 on N's Pokémon, six-name gate
+  "me02.5-254": ANTHEA_AND_CONCORDIA, // Anthea & Concordia
+  "me04-077": EMMA, // Emma — reveal, then a card per Pokémon in the opponent's hand (`per` cardsInOpponentHand)
+  "me04-107": EMMA, // Emma
   // 🆕🆕🆕 D589 — WP08: Mega Greninja ex ×5 "Mortal Shuriken", MID-MAP (`raw[last]` does not move).
   // Non-attack keys: "Ninja Spinner" keeps deriving. `optionalCostMeD589.test.ts` drives the Ability.
   "mep-081": MORTAL_SHURIKEN, // Mega Greninja ex — Meowscarada ex `sv02-015`'s shape at {W}, 60, `opponentAny`, Active only

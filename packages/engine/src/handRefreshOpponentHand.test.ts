@@ -53,7 +53,10 @@ import {
 // THE EVALUATOR RATHER THAN THE NOUN.** `DamageCountSource.cardsInOpponentHand` spells
 // the identical printed phrase at corpus file line 564. Its ONLY evaluator is
 // `attack.ts`'s `scaledAttackDamage(attacker, bonus, state, defenderSeat, attackerSeat,
-// cost)`, and FOUR of those six parameters are ATTACK-DECLARATION facts — there is no
+// cost)` [🆕🆕🆕 D599 (D539): "ONLY evaluator" is WITHDRAWN, kept as written —
+// interpreter.ts `stepOp`'s `drawCards.per` arm (a Trainer path) evaluates
+// `cardsInOpponentHand` for Emma `me04-077`/`-107` through the same `countCardsInHand`
+// walk], and FOUR of those six parameters are ATTACK-DECLARATION facts — there is no
 // attacker, no defender seat and no effective cost on the Trainer and Ability paths that
 // author every OTHER `handRefresh` in the engine (Youngster, Judge, Brassius, Katy, Iono,
 // Skwovet, Gothitelle, Lacey, Drasna, Harlequin, Unfair Stamp and Team Rocket's Archer —
@@ -592,7 +595,7 @@ describe("D516 §7 — what this slice did NOT buy, measured", () => {
     // write. The claim therefore rests on REACHABILITY (D450) ALONE, and reachability is
     // a measurement over the PRODUCERS rather than a property of the op — which is what
     // the rung below drives.
-    expect(engineVersion).toBe("0.482.0");
+    expect(engineVersion).toBe("0.483.0");
   });
 
   it("🛑 REACHABILITY IS EMPTY, MEASURED OVER EVERY PRODUCER RATHER THAN ASSERTED", () => {

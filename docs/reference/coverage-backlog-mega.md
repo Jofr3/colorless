@@ -6,6 +6,23 @@
 > `coverage-backlog-legal.md`; its pool is unchanged and whole. The suite-side figures are
 > `censusAtHead.test.ts`'s D581 block and `censusAttackCorpusMe.ts`.
 
+## 🆕 D599 update (engine 0.483.0) — two WP24 Supporters (WP24a)
+
+2 texts / 4 `me` printings (`supportersMeD599.test.ts`): Anthea & Concordia ×2 (Briar's Prize bonus at 3 on N's Pokémon,
+six-name play gate) and Emma ×2 (reveal, then a card per Pokémon in the opponent's hand — the new `drawCards.per` member).
+**Still open in WP24 (named):** AZ's Tranquility ×3 (heal the demoted ex), Gladion's Final Battle ×3 (an attacker filter on
+the side-wide bonus), Grimsley's Move ×2 (a "not your first turn" gate), Gwynn ×3 (a draw per recorded card), Naveen ×2
+(an uncapped hand discard and a deck-not-empty gate); WP24b: Acerola's Mischief ×4, Roxie's Performance ×3.
+
+| Column | `me` built / units (D599) | Standard pool D599 |
+|---|---|---|
+| Attacks | 844 / 1,039 | **2,576 / 2,771** |
+| Abilities | 128 / 234 | **504 / 610** |
+| Trainers | 96 / 183 (+4) | **360 / 447** |
+| Special Energy | 3 / 11 | **14 / 22** |
+
+**Fully built `me` printings: 874** (870 + 4).
+
 ## 🆕 D598 update (engine 0.482.0) — KO / damage-taken Abilities (WP32)
 
 6 texts / 13 `me` printings (`koAbilitiesMeD598.test.ts`). Shadowy Concealment ×5 (a seat-wide Prize reduction on the
@@ -807,28 +824,28 @@ Each Mega Floette ex in play (both yours and your opponent's) gets +150 HP.
 
 ### Supporter — 22 text(s) / 55 printing(s)
 
-- 3× **AZ's Tranquility** — Switch your Active Pokémon with 1 of your Benched Pokémon. If you moved a Pokémon ex to your Bench in this way, heal 80 damage from that Pokémon.
+- 3× **AZ's Tranquility** — Switch your Active Pokémon with 1 of your Benched Pokémon. If you moved a Pokémon ex to your Bench in this way, heal 80 damage from that Pokémon. [🆕🆕🆕 D599: DROPPED — heal the demoted body, gated on it being an ex]
 - 4× **Acerola's Mischief** — You can use this card only if your opponent has 2 or fewer Prize cards remaining.
 
 Choose 1 of your Pokémon in play. During your opponent's next turn, prevent all damage from and effects of attacks done to that Pokémon by your opponent's Pokémon ex.
 - 2× **Anthea & Concordia** — You can use this card only if you have N's Darmanitan, N's Zoroark ex, N's Vanilluxe, N's Klinklang, N's Reshiram, and N's Zekrom in play.
 
-During this turn, if your opponent's Active Pokémon is Knocked Out by damage from an attack used by your N's Pokémon, take 3 more Prize cards.
+During this turn, if your opponent's Active Pokémon is Knocked Out by damage from an attack used by your N's Pokémon, take 3 more Prize cards. [🆕🆕🆕 D599: BUILT]
 - 3× **Canari** — You can use this card only if you discard another card from your hand.
 
 Search your deck for up to 4 {L} Pokémon, reveal them, and put them into your hand. Then, shuffle your deck. [🆕🆕🆕 D588: BUILT]
 - 3× **Dawn** — Search your deck for a Basic Pokémon, a Stage 1 Pokémon, and a Stage 2 Pokémon, reveal them, and put them into your hand. Then, shuffle your deck.
-- 2× **Emma** — Your opponent reveals their hand, and you draw a card for each Pokémon you find there.
+- 2× **Emma** — Your opponent reveals their hand, and you draw a card for each Pokémon you find there. [🆕🆕🆕 D599: BUILT]
 - 2× **Firebreather** — Search your deck for up to 7 Basic {R} Energy cards, reveal them, and put them into your hand. Then, shuffle your deck. [🆕🆕🆕 D587: BUILT]
 - 3× **Gladion's Final Battle** — You can use this card only when it is the last card in your hand.
-During this turn, attacks used by your Pokémon that don't have a Rule Box do 80 more damage to your opponent's Active Pokémon (before applying Weakness and Resistance). (Pokémon ex, Pokémon V, etc. have Rule Boxes.)
-- 2× **Grimsley's Move** — Look at the top 7 cards of your deck and put a {D} Pokémon you find there onto your Bench. Shuffle the other cards and put them on the bottom of your deck. You can't use this card during your first turn.
-- 3× **Gwynn** — Discard up to 2 Pokémon that don't have a Rule Box from your hand, and draw 3 cards for each card you discarded in this way. (Pokémon ex, Pokémon V, etc. have Rule Boxes.)
+During this turn, attacks used by your Pokémon that don't have a Rule Box do 80 more damage to your opponent's Active Pokémon (before applying Weakness and Resistance). (Pokémon ex, Pokémon V, etc. have Rule Boxes.) [🆕🆕🆕 D599: DROPPED — the last-card gate ships (D554); the side bonus needs an attacker filter]
+- 2× **Grimsley's Move** — Look at the top 7 cards of your deck and put a {D} Pokémon you find there onto your Bench. Shuffle the other cards and put them on the bottom of your deck. You can't use this card during your first turn. [🆕🆕🆕 D599: DROPPED — a "not your first turn" play gate]
+- 3× **Gwynn** — Discard up to 2 Pokémon that don't have a Rule Box from your hand, and draw 3 cards for each card you discarded in this way. (Pokémon ex, Pokémon V, etc. have Rule Boxes.) [🆕🆕🆕 D599: DROPPED — a draw per recorded card]
 - 3× **Jacinthe** — Heal 150 damage from 1 of your {P} Pokémon. [🆕🆕🆕 D587: BUILT]
 - 4× **Lillie's Determination** — Shuffle your hand into your deck. Then, draw 6 cards. If you have exactly 6 Prize cards remaining, draw 8 cards instead. [🆕🆕🆕 D588: BUILT]
 - 3× **Lt. Surge's Bargain** — Ask your opponent if each player may take a Prize card. If yes, each player takes a Prize card. If no, you draw 4 cards.
 - 2× **Misty's Vitality** — Search your deck for up to 4 Basic {W} Energy cards and attach them to 1 of your Pokémon. Then, shuffle your deck. Your turn ends. [🆕🆕🆕 D588: BUILT]
-- 2× **Naveen** — Draw cards until you have 5 cards in your hand. Before drawing cards, you may discard any number of cards from your hand. (If you can't draw any cards in this way, you can't use this card.)
+- 2× **Naveen** — Draw cards until you have 5 cards in your hand. Before drawing cards, you may discard any number of cards from your hand. (If you can't draw any cards in this way, you can't use this card.) [🆕🆕🆕 D599: DROPPED — an uncapped declinable hand discard and a deck-not-empty gate]
 - 2× **Philippe** — Attach up to 2 Basic {M} Energy cards from your discard pile to 1 of your {M} Pokémon. [🆕🆕🆕 D587: BUILT]
 - 1× **Pokémon Center Lady** — Heal 60 damage from 1 of your Pokémon, and it recovers from all Special Conditions. [🆕🆕🆕 D588: DROPPED — the recovery addresses the healed body; needs a `healChosen` rider]
 - 3× **Rosa's Encouragement** — You can use this card only if you have more Prize cards remaining than your opponent.

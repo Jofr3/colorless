@@ -30166,3 +30166,20 @@ decisions (1) and (2) after D580. Engine 0.464.0 → 0.465.0. The Mega ex rule i
   the coin's rng advance at three damage writes, the R-SB1 Brace-first order at all four, and the Knock Out log tail. +47 mutant rows; D208's `survived` row, D425's spread row and D572's post-KO-board row re-anchored.
 - **Census.** Standard pool abilities **504 / 610**; 870 `me` printings fully built.
 - **Owed.** See `progress.md` NEXT. The whole-corpus sweep is PENDING.
+
+## D599 — WP24a: two WP24 Supporters (engine 0.483.0, `MATCH_RECORD_VERSION` stays 42)
+
+**Status:** ✅ BUILT in the `luminous_ui-mega` worktree on D598 (`d80f4089`), NOT committed.
+
+- **2 texts / 4 `me` printings, 4 registry keys on 2 objects.** Anthea & Concordia ×2 (Briar's shape: card-level
+  `supporterKoPrizeBonus { 3, ownerPokemon N }`, read by flow.ts `briarPrizeBonus`; a six-name `allOf` play gate) and
+  Emma ×2 (`revealOpponentHand`, then `drawCards` with the NEW `per` member `cardsInOpponentHand`, `anyPokemon`).
+- **The one new piece** is that `per` member (interpreter.ts `countCardsInHand` on the opponent's hand). The last-card
+  gate was already shipped (`yourHandExactly 1`, D554), but Gladion's Final Battle still needs an attacker filter.
+- **No op, persisted member, prompt or event.** Emma's program never parks.
+- **Dropped and named:** AZ's Tranquility ×3, Gladion's Final Battle ×3, Grimsley's Move ×2, Gwynn ×3, Naveen ×2
+  (each needs vocabulary beyond the brief; `decisions.md` D599). Acerola's Mischief ×4 and Roxie's Performance ×3 are WP24b.
+- **Readings (UNRULED).** R-AC1, R-EM1, R-EM2 (`progress.md` NEXT).
+- **Suite.** `supportersMeD599.test.ts` (19) and `lookAlikeShowD580.test.ts` §8 (Emma through the copy). +16 mutant rows.
+- **Census.** Standard pool Trainers **360 / 447**; 874 `me` printings fully built.
+- **Owed.** See `progress.md` NEXT. The whole-corpus sweep is PENDING.
