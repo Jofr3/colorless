@@ -30237,6 +30237,27 @@ decisions (1) and (2) after D580. Engine 0.464.0 → 0.465.0. The Mega ex rule i
 - **Census.** Standard pool abilities **513 / 610**; 895 `me` printings fully built.
 - **Owed.** See `progress.md` NEXT. The whole-corpus sweep is PENDING.
 
+## D616 — WP31b: the second part of the `me` deck / hand / discard / Energy misc (engine 0.499.0, `MATCH_RECORD_VERSION` stays 42)
+
+**Status:** ✅ BUILT in the `luminous_ui-mega` worktree on D615 (`7b1ab8d2`), NOT committed.
+
+- **The readings.** effects.ts arm 6e-quater, nine literal anchors onto shipped programs: Ice Prison (`discardEnergy` 2 +
+  `applyStatus` Paralyzed), Backfire (`discardEnergy` `to: "hand"`, 2 `providesEnergy` Fire), Soothing Melody ×2 (`healChosen`
+  Bench + `typedPokemon` Psychic), Devolution Ray ×2 (`devolveChosen` with the NEW `defenderOnly`; interpreter.ts narrows the
+  evolved set to the Active before §11, so it is forced or a no-op), Trials and Trip-ulations (`searchDeck` `byName`
+  "Transformation Tome"), Roto Call (`optional` over a `pokemonNameContaining` Bench search and its shuffle), Reversed Clock
+  (Super Rod's program), Traverse Time (`searchDeck` `anyOf` {G} Pokémon / Stadium) and Fetch and Hide
+  (`bottomFromOpponentHand` over `item`).
+- **Reading.** R-RCL1 ⚠️ UNRULED: Roto Call's "You may" is a confirm; a "no" does not shuffle. Fennel's and the "You may search
+  your deck for a card" attack derivations still shuffle on a zero pick, unchanged.
+- **Dropped (WP31c).** Elemental Blast needs a matched multi-type discard (Legacy Energy fills any slot); Send Flowers a deck
+  attach of any Energy; Chirp a Resistance filter; Tail Generator, Hand Trim, Select a Snack, Pleasing Present, Skill Thief.
+- **Suite.** `deckHandMiscMeD616.test.ts` (31) and a census D616 block (2). +32 mutant rows, all killed; two D540 rows
+  re-pointed onto the narrowed set. D539: `devolveChosen`'s FIELD-FREE claims annotated; D615 §1, census D613 and `discardShuffleBack.test.ts`'s producer counts stepped.
+- **Census.** Standard pool attacks **2,685 / 2,771**; 1054 `me` printings fully built (all 11 finished). WP31's other 8 texts /
+  11 printings stay for WP31c.
+- **Owed.** See `progress.md` NEXT. The whole-corpus sweep is PENDING.
+
 ## D615 — WP31a: the first part of the `me` deck / hand / discard / Energy misc (engine 0.498.0, `MATCH_RECORD_VERSION` stays 42)
 
 **Status:** ✅ BUILT in the `luminous_ui-mega` worktree on D614 (`5dace4c0`), NOT committed.

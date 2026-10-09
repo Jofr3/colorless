@@ -20266,6 +20266,15 @@ import type { GameState, Seat } from "./types";
     `expect(manifest.version)`, `it(…)` titles, the declaration and `package.json` —
     **not** as a value-keyed grep — because a value-keyed grep is precisely the mechanism
     that ate D500's heading.)
+    🆕🆕🆕 engineVersion 0.498.0 → **0.499.0** (D616 — WP31b: THE SECOND PART OF THE `me` DECK / HAND /
+    DISCARD / ENERGY MISC; `MATCH_RECORD_VERSION` STAYS 42 (apps/api match.ts "STAYS 42 AT D616")).
+    effects.ts arm 6e-quater, nine literal anchors onto shipped programs: Ice Prison (`discardEnergy` 2 +
+    `applyStatus` Paralyzed), Backfire (`discardEnergy` `to: "hand"`, typed, 2), Soothing Melody ×2
+    (`healChosen` Bench + `typedPokemon` filter), Devolution Ray ×2 (`devolveChosen` with the NEW
+    `defenderOnly`), Trials and Trip-ulations (`searchDeck` `byName` "Transformation Tome"), Roto Call
+    (`optional` over a `pokemonNameContaining` Bench search), Reversed Clock (Super Rod's program), Traverse
+    Time (`searchDeck` `anyOf` {G} Pokémon / Stadium) and Fetch and Hide (`bottomFromOpponentHand` Item).
+    11 `me` attack printings. WP31's other 8 texts stay for WP31c. `deckHandMiscMeD616.test.ts`.)
     🆕🆕🆕 engineVersion 0.497.0 → **0.498.0** (D615 — WP31a: THE FIRST PART OF THE `me` DECK / HAND /
     DISCARD / ENERGY MISC; `MATCH_RECORD_VERSION` STAYS 42 (apps/api match.ts "STAYS 42 AT D615")).
     effects.ts arm 6e-ter, eight literal anchors onto shipped programs: Trick Portal (`lookAtTopN` → Bench)
@@ -22232,7 +22241,8 @@ import type { GameState, Seat } from "./types";
     ONE new anchor `DEVOLVE_CHOSEN_TO_HAND` (both apostrophes MEASURED U+0027 at sentence
     indices **26** and **113**, the `é` a single real U+00E9 and not decomposed; two
     `['’]` slots kept for D137's re-ingest reason), ONE new arm **41-ter**, ONE new
-    FIELD-FREE `EffectOp` member `devolveChosen`, ONE `stepOp` case, ONE `applyChoice` case,
+    FIELD-FREE `EffectOp` member `devolveChosen` (🆕🆕🆕 D616 (D539): ~~FIELD-FREE~~ WITHDRAWN — it gains the
+    optional `defenderOnly`), ONE `stepOp` case, ONE `applyChoice` case,
     ONE new writer `devolveBodyToHand`, ONE new note `devolveChosenNote`, TWO extractions,
     and ONE optional `GameEvent` rider.
     🛑 **A WITHDRAWN CLAIM THAT NO `git grep -F` OVER THE SENTENCE COULD FIND, RE-POINTED
@@ -25483,7 +25493,7 @@ import type { GameState, Seat } from "./types";
     WITNESS** — the count was re-derived every slice and the word *"three"* was carried.
     A successor of this slice inherits **81 / 61 / 17** again, over **FIVE** history
     occurrences: those four plus `deckMillFilteredScale.test.ts`'s own header arrow.) */
-export const engineVersion = "0.498.0";
+export const engineVersion = "0.499.0";
 
 export type {
   ApplyResult,

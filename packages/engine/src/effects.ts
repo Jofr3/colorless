@@ -9570,7 +9570,8 @@ export type EffectOp =
       exactly as written. 🆕🆕🆕 **RE-POINTED AT D540: the two sentences that
       followed it here — *"Row 87 is left on the loud `ATTACK_EFFECT_SKIPPED` path and
       used as this suite's skip witness instead"* — HAVE EXPIRED.** Row 87 is BUILT, as
-      the SIBLING FIELD-FREE op `devolveChosen` (its own block is immediately below
+      the SIBLING FIELD-FREE op `devolveChosen` [🆕🆕🆕 D616 (D539): ~~FIELD-FREE~~ WITHDRAWN as a live
+      claim — it carries the optional `defenderOnly` (Devolution Ray)] (its own block is immediately below
       this one), which is the door this paragraph left open rather than a reversal of
       it. The `/[Dd]evolv/` family is now CLOSED at 2 sentences / 4 printings with zero
       unresolved rows. ✅ **AND THE PRESCRIPTION IN THE NEXT SENTENCE WAS HONOURED**:
@@ -9635,7 +9636,9 @@ export type EffectOp =
       — D121's warrant unmet twice over. That refused a PARAMETERISED op; a SECOND
       FIELD-FREE op is the door it left open, and the door it explicitly named.
 
-      🛑 **FIELD-FREE, BECAUSE EVERY TOKEN IS SPENT** — the sibling's read one row
+      🛑 **FIELD-FREE, BECAUSE EVERY TOKEN IS SPENT** (🆕🆕🆕 D616 (D539): ~~FIELD-FREE~~ WITHDRAWN as a
+      live claim — Devolution Ray varies the candidate set, so the op carries the optional `defenderOnly`
+      (below); row 87 still captures nothing, as stated) — the sibling's read one row
       over, re-run on this string rather than copied: *"1 of your opponent's"* is the
       side AND the cardinality, *"evolved"* is the `stack.length >= 2` filter (§1.2's
       identity rule), *"the highest Stage Evolution card"* is ONE card off the top of
@@ -9658,8 +9661,14 @@ export type EffectOp =
       no new prompt kind — `choosePokemon` and the `{kind:"pokemon"; ref?}` answer are
       reused. Driven in BOTH D450 directions in `devolveChosen.test.ts` §10, over the
       SERIALIZED BYTES and with `"cont" in phase === true`, which is the half the
-      sibling's suite could not reach. */
-  | { op: "devolveChosen" }
+      sibling's suite could not reach.
+
+      🆕🆕🆕 **D616 — `defenderOnly`: Claydol `me04-047` / `-092` "Devolution Ray"**, *"If your opponent's
+      Active Pokémon is an evolved Pokémon, devolve it by putting the highest Stage Evolution card on it into
+      your opponent's hand."* The candidates narrow to the Defending Pokémon (`devolveTargets` first, then
+      §11, as above); the printed "If … evolved" is that narrowing, so an unevolved Active is the silent no-op.
+      One candidate at most, so it never parks and no v42 record holds the key. Absent = row 87 byte for byte. */
+  | { op: "devolveChosen"; defenderOnly?: true }
   /** 🆕🆕 **D380 — §7.3, THE STADIUM ZONE EMPTIED BY AN ATTACK.** *"Discard a
       Stadium in play."* — Hisuian Growlithe `sv06-099`/`sv06-181` "Blazing
       Destruction" (**no Energy cost**, no damage), Skarmory `sv06-119` "Big Storm"
@@ -18023,6 +18032,32 @@ const DEVOLVE_EACH_TO_HAND =
   /^Devolve each of your opponent['’]s evolved Pokémon by putting the highest Stage Evolution card on it into your opponent['’]s hand\.$/;
 // Frosmoth "Cold Cyclone": `ATTACK_MOVE_BASIC_ENERGY_SELF_TO_BENCH` with a typed noun (`providesEnergy`).
 const MOVE_TYPED_ENERGY_SELF_TO_BENCH = /^Move a \{([A-Z])\} Energy from this Pokémon to 1 of your Benched Pokémon\.$/;
+// 🆕🆕🆕 D616 — WP31b, nine more literal `me` anchors (LOCAL D1, 2026-10-09), none printed in legal `sv`, each
+// onto a shipped op (arm 6e-quater). Regice ex "Ice Prison": the self-discard, then the Paralysis.
+const SELF_DISCARD_THEN_PARALYZE =
+  /^Discard (\d+) Energy from this Pokémon, and your opponent['’]s Active Pokémon is now Paralyzed\.$/;
+// Volcanion "Backfire": `PUT_SELF_ENERGY_TO_HAND`'s op at a printed typed count.
+const PUT_TYPED_SELF_ENERGY_TO_HAND = /^Put (\d+) \{([A-Z])\} Energy attached to this Pokémon into your hand\.$/;
+// Meloetta "Soothing Melody" ×2: `healChosen` on the Bench, a typed candidate filter (D569's `filter`).
+const HEAL_ONE_BENCHED_TYPED = /^Heal (\d+) damage from 1 of your Benched \{([A-Z])\} Pokémon\.$/;
+// Claydol "Devolution Ray" ×2: `devolveChosen` narrowed to the Defending Pokémon (`defenderOnly`, NEW).
+const DEVOLVE_ACTIVE_TO_HAND =
+  /^If your opponent['’]s Active Pokémon is an evolved Pokémon, devolve it by putting the highest Stage Evolution card on it into your opponent['’]s hand\.$/;
+// Sudowoodo "Trials and Trip-ulations": a two-word card name (`NAMED_CARD_NOUN` takes one word), so a literal.
+const SEARCH_TRANSFORMATION_TOME =
+  /^Search your deck for up to (\d+) Transformation Tome cards, reveal them, and put them into your hand\. Then, shuffle your deck\.$/;
+// Rotom "Roto Call": a name-fragment Bench search behind the printed "You may" (`optional`).
+const MAY_SEARCH_NAMED_FRAGMENT_TO_BENCH =
+  /^You may search your deck for any number of Pokémon that have ["“]([A-Z][a-z]+)["”] in their name and put them onto your Bench\. Then, shuffle your deck\.$/;
+// Dialga "Reversed Clock": Super Rod's program (`pokemonOrBasicEnergy` → deck, then shuffle).
+const SHUFFLE_POKEMON_OR_BASIC_ENERGY_FROM_DISCARD =
+  /^Shuffle up to (\d+) in any combination of Pokémon and Basic Energy cards from your discard pile into your deck\.$/;
+// Celebi "Traverse Time": a revealed hand search over `anyOf` a typed Pokémon and a Stadium.
+const SEARCH_TYPED_POKEMON_OR_STADIUM =
+  /^Search your deck for up to (\d+) in any combination of \{([A-Z])\} Pokémon and Stadium cards, reveal them, and put them into your hand\. Then, shuffle your deck\.$/;
+// Eevee "Fetch and Hide": `REVEAL_BOTTOM_SUPPORTER`'s op over an Item.
+const REVEAL_BOTTOM_ITEM =
+  /^Your opponent reveals their hand, and you put an Item card you find there on the bottom of your opponent['’]s deck\.$/;
 
 
 // D131 — the UNCONDITIONAL MILL, both directions on ONE anchor: "Discard the top
@@ -28610,7 +28645,8 @@ const DEVOLVE_EACH_TO_DECK = new RegExp(
 // `devolvedBodyOf`), and the near-total reuse of shipped machinery.
 //
 // ⚠️ **A SECOND FIELD-FREE OP, NOT A PARAMETERISED ONE, AND D433's OWN REFUSAL IS THE
-// WARRANT.** That paragraph refused a `{ whose, count, dest }` op because rows 87 and
+// WARRANT.** (🆕🆕🆕 D616 (D539): ~~FIELD-FREE~~ WITHDRAWN as a live claim — `devolveChosen.defenderOnly`;
+// this anchor still emits the bare op.) That paragraph refused a `{ whose, count, dest }` op because rows 87 and
 // 88 vary on TWO axes at once and each field would carry a pool of ONE (D121's
 // precondition is two printings with ONE token varying). It refused a PARAMETER; it
 // did not refuse a SIBLING. Every token of THIS sentence is spent too — `1 of your
@@ -29783,6 +29819,104 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
       ];
     }
   }
+
+  // 6e-quater. 🆕🆕🆕 D616 — WP31b's nine deck / hand / discard / Energy sentences, each a shipped op's
+  //     program (the one new field is `devolveChosen.defenderOnly`). Printed counts keep the family guard.
+  match = SELF_DISCARD_THEN_PARALYZE.exec(effect);
+  if (match !== null) {
+    const shed = Number(match[1]);
+    if (shed >= 1 && shed <= MAX_PRINTED_ATTACH_COUNT) {
+      return [
+        { op: "discardEnergy", from: "yourActive", filter: { kind: "anyEnergy" }, count: shed },
+        { op: "applyStatus", target: "defender", status: "paralyzed" },
+      ];
+    }
+  }
+  match = PUT_TYPED_SELF_ENERGY_TO_HAND.exec(effect);
+  if (match !== null) {
+    const returned = Number(match[1]);
+    const returnedType = ENERGY_TYPE_BY_CODE[match[2] ?? ""];
+    if (returnedType !== undefined && returned >= 1 && returned <= MAX_PRINTED_ATTACH_COUNT) {
+      return [
+        {
+          op: "discardEnergy",
+          from: "yourActive",
+          filter: { kind: "providesEnergy", energyType: returnedType },
+          count: returned,
+          to: "hand",
+        },
+      ];
+    }
+  }
+  match = HEAL_ONE_BENCHED_TYPED.exec(effect);
+  if (match !== null) {
+    const healed = Number(match[1]);
+    const healedType = POKEMON_TYPE_BY_CODE[match[2] ?? ""];
+    if (healedType !== undefined && healed >= 1) {
+      return [
+        { op: "healChosen", amount: healed, zone: "bench", filter: { kind: "typedPokemon", pokemonType: healedType } },
+      ];
+    }
+  }
+  if (DEVOLVE_ACTIVE_TO_HAND.test(effect)) return [{ op: "devolveChosen", defenderOnly: true }];
+  match = SEARCH_TRANSFORMATION_TOME.exec(effect);
+  if (match !== null) {
+    const tomes = Number(match[1]);
+    if (tomes >= 1 && tomes <= MAX_PRINTED_ATTACH_COUNT) {
+      return [
+        {
+          op: "searchDeck",
+          filter: { kind: "byName", name: "Transformation Tome", cardNoun: true },
+          dest: "hand",
+          max: tomes,
+          reveal: true,
+        },
+        { op: "shuffleDeck" },
+      ];
+    }
+  }
+  match = MAY_SEARCH_NAMED_FRAGMENT_TO_BENCH.exec(effect);
+  if (match !== null) {
+    return [
+      {
+        op: "optional",
+        note: effect,
+        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
+        then: [
+          { op: "searchDeck", filter: { kind: "pokemonNameContaining", fragment: match[1] ?? "" }, dest: "bench", max: "any" },
+          { op: "shuffleDeck" },
+        ],
+      },
+    ];
+  }
+  match = SHUFFLE_POKEMON_OR_BASIC_ENERGY_FROM_DISCARD.exec(effect);
+  if (match !== null) {
+    const shuffledBack = Number(match[1]);
+    if (shuffledBack >= 1 && shuffledBack <= MAX_PRINTED_ATTACH_COUNT) {
+      return [
+        { op: "discardPileRetrieval", filter: { kind: "pokemonOrBasicEnergy" }, dest: "deck", max: shuffledBack },
+        { op: "shuffleDeck" },
+      ];
+    }
+  }
+  match = SEARCH_TYPED_POKEMON_OR_STADIUM.exec(effect);
+  if (match !== null) {
+    const found = Number(match[1]);
+    const foundType = POKEMON_TYPE_BY_CODE[match[2] ?? ""];
+    if (foundType !== undefined && found >= 1 && found <= MAX_PRINTED_ATTACH_COUNT) {
+      return [
+        {
+          op: "searchDeck",
+          filter: { kind: "anyOf", filters: [{ kind: "typedPokemon", pokemonType: foundType }, { kind: "stadium" }] },
+          dest: "hand",
+          max: found,
+          reveal: true,
+        },
+        { op: "shuffleDeck" },
+      ];
+    }
+  }
+  if (REVEAL_BOTTOM_ITEM.test(effect)) return [{ op: "bottomFromOpponentHand", filter: { kind: "item" } }];
 
   // 6f. 🆕🆕 D420 — "Discard {N} Basic {X} Energy cards from your hand." / "Discard a
   //     Basic {X} Energy card from your hand." — THE PRINTED HAND COST, ALONE.

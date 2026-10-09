@@ -122,6 +122,19 @@ const WP31_REST: readonly (readonly [string, readonly string[]])[] = [
   ],
 ];
 
+/** 🆕🆕🆕 D616 — the first printing of each WP31_REST text WP31b builds. */
+const BUILT_AT_D616: ReadonlySet<string> = new Set([
+  "me02.5-048",
+  "mep-026",
+  "me04-047",
+  "me01-025",
+  "me04-043",
+  "me01-012",
+  "30th-103",
+  "me02.5-092",
+  "30th-116",
+]);
+
 describe("D615 §1 — the texts", () => {
   it("8 sentences / 13 printings, each a row of the committed `me` corpus, none printed in legal `sv`, each now read", () => {
     const me = new Map(meAttackCorpus().map(([n, text]) => [text, n]));
@@ -135,13 +148,15 @@ describe("D615 §1 — the texts", () => {
     expect(SENTENCES.flatMap(([, ids]) => ids)).toHaveLength(13);
   });
 
-  it("WP31's rest stays unbuilt: 17 texts / 22 printings, named", () => {
+  it("WP31's rest stays unbuilt: 17 texts / 22 printings, named (🆕🆕🆕 D616: 9 of them / 11 printings are built — WP31b; 8 / 11 stay)", () => {
     const me = new Map(meAttackCorpus().map(([n, text]) => [text, n]));
     for (const [text, ids] of WP31_REST) {
       expect([text, me.get(text)]).toEqual([text, ids.length]);
-      expect(resolvedByAnyReader(text), text).toBe(false);
+      // 🆕🆕🆕 D616 (D539): WP31b reads nine of these (`deckHandMiscMeD616.test.ts`); the rest stay unbuilt.
+      expect(resolvedByAnyReader(text), text).toBe(BUILT_AT_D616.has(ids[0] ?? ""));
       for (const id of ids) expect(programFor(id)?.attack, id).toBeUndefined();
     }
+    expect(WP31_REST.filter(([, ids]) => BUILT_AT_D616.has(ids[0] ?? "")).flatMap(([, ids]) => ids)).toHaveLength(11);
     expect(WP31_REST).toHaveLength(17);
     expect(WP31_REST.flatMap(([, ids]) => ids)).toHaveLength(22);
   });
@@ -680,6 +695,6 @@ describe("D615 §9 — Cold Cyclone: a {W} Energy from this Pokémon to a Benche
 
 describe("D615 §10 — the version", () => {
   it("the engine version moved with the behaviour", () => {
-    expect(engineVersion).toBe("0.498.0");
+    expect(engineVersion).toBe("0.499.0");
   });
 });

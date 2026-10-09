@@ -5357,7 +5357,10 @@ function stepOp(
     // `resolveMidTurnKnockOuts`, never this line — `devolveEach`'s seam, and what
     // the op DOES owe here is the CAUSE (D414's stamp, inside the writer).
     case "devolveChosen": {
-      const offered = unshieldedRefs(state, devolveTargets(state, ctx.seat), ctx, events);
+      // 🆕🆕🆕 D616 — `defenderOnly` (Devolution Ray): the evolved set narrowed to the Active, before §11.
+      const evolved = devolveTargets(state, ctx.seat);
+      const narrowed = op.defenderOnly === true ? evolved.filter((ref) => ref.spot.spot === "active") : evolved;
+      const offered = unshieldedRefs(state, narrowed, ctx, events);
       return parkOrForce(
         state,
         offered,

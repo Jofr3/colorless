@@ -2159,6 +2159,16 @@ export interface MatchRecord {
     `turn:action.discardable` — 🛑 **DEPLOY THE SERVER FIRST**: an old client's `z.object` STRIPS
     the unknown key, while a new client's REQUIRED key refuses an old server's frame.
 
+    🆕🆕🆕 **STAYS 42 AT D616 — NINE READER ANCHORS ONTO SHIPPED PROGRAMS AND ONE OPTIONAL OP FIELD.**
+    (Placed ABOVE the D615 block.) `devolveChosen.defenderOnly` (Devolution Ray) narrows the offer to the
+    Defending Pokémon, at most one candidate, so the op is forced or a no-op and never parks: no v42 record
+    can hold the key. The other eight sentences derive shipped op shapes; Roto Call's `optional` parks a
+    confirm whose `then` (`searchDeck` over `pokemonNameContaining`, `shuffleDeck`) is shipped vocabulary,
+    as are the `searchDeck`, `discardPileRetrieval`, `healChosen`, `discardEnergy` and
+    `bottomFromOpponentHand` parks. The 11 `me` faces in a v42 `cardPool` are unchanged and the text is read
+    at attack time. Rollback to 0.498: the texts fall back to the unbuilt path; a parked pick resumes on the
+    shipped op it parked with.
+
     🆕🆕🆕 **STAYS 42 AT D615 — EIGHT READER ANCHORS ONTO SHIPPED PROGRAMS AND ONE OPTIONAL OP FIELD.**
     (Placed ABOVE the D614 block.) `devolveEach.toHand` (Miraculous Shine) is an optional key on an op
     that never parks, so no v42 record can hold it. The other seven sentences derive shipped op shapes
